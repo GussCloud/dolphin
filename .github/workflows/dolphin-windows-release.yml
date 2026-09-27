@@ -5,11 +5,16 @@ name: Dolphin Windows Release
 # under the Dolphin identity (docs/reference/fork-identity.md) and publishes it with the repo's
 # own GITHUB_TOKEN, so the in-app updater (pointed at this repo) finds latest.yml beside it.
 #
-# Cut a release: bump package.json "version", merge to main, then either push tag v<version> on
-# that commit or dispatch this workflow with the version (the tag is then created on the commit).
+# Cut a release: bump package.json "version" and merge to main. A main push that lands a version
+# with no release yet builds and publishes it; a push tag v<version> or a manual dispatch do too.
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - package.json
+      - .github/workflows/dolphin-windows-release.yml
     tags:
       - 'v*'
   workflow_dispatch:
@@ -28,7 +33,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dolphin-windows-release-${{ inputs.version || github.ref_name }}
+  group: dolphin-windows-release-${{ inputs.version || github.ref_name }}-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -42,8 +47,9 @@ jobs:
       contents: write
     env:
       NODE_OPTIONS: --max-old-space-size=4096
-      # Why both: a tag push carries the version in its ref; a dispatch carries it as an input.
-      VERSION: ${{ inputs.version || github.ref_name }}
+      # Why three sources: a dispatch names the version, a tag push carries it in its ref, and a
+      # main push releases whatever package.json now says (resolved in the first step).
+      REQUESTED_VERSION: ${{ inputs.version || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || '' }}
 
     steps:
       - name: Checkout
@@ -52,28 +58,43 @@ jobs:
           persist-credentials: false
 
       - name: Check the requested version
+        id: version
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          VERSION="${VERSION#v}"
+          packaged="$(node -p "require('./package.json').version")"
+          VERSION="${REQUESTED_VERSION#v}"
+          VERSION="${VERSION:-$packaged}"
           echo "VERSION=$VERSION" >>"$GITHUB_ENV"
           echo "TAG=v$VERSION" >>"$GITHUB_ENV"
+          # Why skip rather than fail: most main pushes that touch package.json change deps, not the
+          # version, and must not error on a release that already exists.
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* ]] \
+            && gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "v$VERSION is already released; nothing to do."
+            echo "skip=true" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >>"$GITHUB_OUTPUT"
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::version '$VERSION' is not semver."
             exit 1
           fi
-          packaged="$(node -p "require('./package.json').version")"
           if [[ "$packaged" != "$VERSION" ]]; then
             echo "::error::package.json is at $packaged, not $VERSION. Bump it on main first."
             exit 1
           fi
 
       - name: Setup pnpm
+        if: steps.version.outputs.skip != 'true'
         uses: pnpm/setup@v2
         with:
           install: false
 
       - name: Setup Node.js
+        if: steps.version.outputs.skip != 'true'
         uses: actions/setup-node@v6
         with:
           node-version-file: package.json
@@ -83,6 +104,7 @@ jobs:
             mobile/pnpm-lock.yaml
 
       - name: Cache electron-builder downloads
+        if: steps.version.outputs.skip != 'true'
         uses: actions/cache@v5
         with:
           path: |
@@ -95,6 +117,7 @@ jobs:
       # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
       # returns transient 504s.
       - name: Install dependencies
+        if: steps.version.outputs.skip != 'true'
         uses: nick-fields/retry@v4
         with:
           timeout_minutes: 10
@@ -103,14 +126,17 @@ jobs:
           command: pnpm install --frozen-lockfile
 
       - uses: ./.github/actions/install-mobile-dependencies
+        if: steps.version.outputs.skip != 'true'
 
       - name: Build Windows process-table addon for the relay
+        if: steps.version.outputs.skip != 'true'
         shell: bash
         run: |
           node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=x64
           node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=arm64
 
       - name: Build app
+        if: steps.version.outputs.skip != 'true'
         shell: bash
         run: pnpm build:release
         env:
@@ -119,6 +145,7 @@ jobs:
           # stable/rc identities, so the fork build stays silent.
 
       - name: Package Windows installer
+        if: steps.version.outputs.skip != 'true'
         shell: pwsh
         run: |
           node config/scripts/ensure-native-runtime.mjs --runtime=electron
@@ -131,6 +158,7 @@ jobs:
       # Why assert before publishing: the updater resolves a tag, then fetches latest.yml from it;
       # a release with the installer but no manifest is one updates 404 on.
       - name: Collect release assets
+        if: steps.version.outputs.skip != 'true'
         id: assets
         shell: bash
         run: |
@@ -147,6 +175,7 @@ jobs:
           ls -la dist/*.exe dist/*.blockmap dist/latest.yml
 
       - name: Publish GitHub release
+        if: steps.version.outputs.skip != 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
