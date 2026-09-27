@@ -32,6 +32,9 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
           `  Oldest session age:   ${formatDuration(d.collectedAt - sessions.oldestDaemonSessionCreatedAt)}`
         ]),
     ...formatLifecycleLines(d),
+    ...(sessions.matchedSessionCount === undefined
+      ? []
+      : [`  Matched (main+daemon): ${sessions.matchedSessionCount}`]),
     `  Inconsistencies:      ${sessions.inconsistencies.length}`,
     ...sessions.inconsistencies
       .slice(0, MAX_LISTED_INCONSISTENCIES)
@@ -55,6 +58,10 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
       ? [`  Committed (private):  ${formatByteCount(memory.totalPrivateMemory)}`]
       : []),
     `  Metric:               ${memory.processMemoryMetric}`,
+    ...(d.memoryWarnings ?? []).map(
+      (w) =>
+        `  ! ${w.kind} over budget: ${w.subject}  ${formatByteCount(w.bytes)} > ${formatByteCount(w.limitBytes)}`
+    ),
     '',
     'Disk',
     ...storage.entries.map(

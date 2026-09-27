@@ -462,6 +462,7 @@ import {
   SpeechModelAction
 } from './speech-params'
 import { SshTarget } from './ssh-params'
+import { StorageGcParams } from './storage-params'
 import {
   AttachParams,
   CancelParams,
@@ -1119,6 +1120,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'ssh.listTargets': null,
   'stats.summary': null,
   'status.get': null,
+  'storage.gc': StorageGcParams,
   'terminal.adoptOrphans': TerminalAdoptOrphans,
   'terminal.agentStatus': TerminalHandle,
   'terminal.clearBuffer': TerminalHandle,
