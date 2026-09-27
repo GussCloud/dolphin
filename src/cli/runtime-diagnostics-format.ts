@@ -55,6 +55,10 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
       ? [`  Committed (private):  ${formatByteCount(memory.totalPrivateMemory)}`]
       : []),
     `  Metric:               ${memory.processMemoryMetric}`,
+    ...(d.memoryWarnings ?? []).map(
+      (w) =>
+        `  ! ${w.kind} over budget: ${w.subject}  ${formatByteCount(w.bytes)} > ${formatByteCount(w.limitBytes)}`
+    ),
     '',
     'Disk',
     ...storage.entries.map(

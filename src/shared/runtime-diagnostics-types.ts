@@ -44,6 +44,13 @@ export type SessionInconsistency = {
   pid: number | null
 }
 
+export type MemoryBudgetWarning = {
+  kind: 'renderer' | 'session' | 'daemon'
+  subject: string
+  bytes: number
+  limitBytes: number
+}
+
 export type RuntimeDiagnostics = {
   collectedAt: number
   runtime: {
@@ -70,5 +77,7 @@ export type RuntimeDiagnostics = {
     rejectedLifecycleTransitions?: number
   }
   memory: MemorySnapshot
+  /** Over-budget owners; absent from older hosts. */
+  memoryWarnings?: MemoryBudgetWarning[]
   storage: StorageFootprint
 }

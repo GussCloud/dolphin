@@ -6,6 +6,7 @@ import type { DaemonSessionInfo } from '../daemon/types'
 import { listRegisteredPtys } from '../memory/pty-registry'
 import { localPtySessionLifecycle } from '../session/session-lifecycle-ledger'
 import { findSessionInconsistencies, probeLocalPid } from './session-inconsistencies'
+import { evaluateMemoryBudget, readMemoryBudget } from './memory-budget'
 import { listStorageFootprintRoots, measureStorageFootprint } from './storage-footprint'
 
 export type RuntimeDiagnosticsDeps = {
@@ -72,6 +73,7 @@ export async function collectRuntimeDiagnostics(
         .reduce((sum, record) => sum + record.rejectedTransitions, 0)
     },
     memory,
+    memoryWarnings: evaluateMemoryBudget(memory, readMemoryBudget()),
     storage
   }
 }
