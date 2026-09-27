@@ -1,3 +1,4 @@
+import { FORK_IDENTITY } from '../../../shared/fork-identity'
 import { reserveNotificationCooldown } from '../../../shared/notification-burst-cooldown'
 // Why: the out-of-band leg of the mobile notification fan-out. Every event that
 // already went to connected sockets is offered to the push gateway so a phone
@@ -138,7 +139,7 @@ export class PushDispatcher {
           notificationEpoch: event.notificationEpoch,
           source: 'agent-task-complete',
           agentState: null,
-          title: 'Orca',
+          title: FORK_IDENTITY.productName,
           body: '',
           sound: false
         }

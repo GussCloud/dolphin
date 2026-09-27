@@ -37,6 +37,8 @@ export type WindowsProcessResourceRow = {
   memory: number
   /** Committed private bytes, resident or paged out. Absent when the host did not report it. */
   privateMemory?: number
+  /** Image name (e.g. OpenConsole.exe). Absent from the typeperf fallback. */
+  name?: string
 }
 
 export type WindowsCpuTimes = {
@@ -71,12 +73,14 @@ export function parseWindowsProcessSample(stdout: string): ParsedWindowsProcessS
       continue
     }
     const privateMemory = parseCimPageFileBytes(fields[6])
+    const name = fields[7]
     rows.push({
       pid,
       ppid,
       cpu: 0,
       memory: Number.isFinite(memory) && memory > 0 ? memory : 0,
-      ...(privateMemory === null ? {} : { privateMemory })
+      ...(privateMemory === null ? {} : { privateMemory }),
+      ...(name ? { name } : {})
     })
 
     const kernelTicks = parseUnsignedBigInt(fields[3])
@@ -100,7 +104,7 @@ function parseCimTabFields(line: string): string[] {
   if (line.length > PROCESS_OUTPUT_FIELD_SCAN_MAX_CHARS) {
     return []
   }
-  return line.split('\t', 7).map((field) => field.trim())
+  return line.split('\t', 8).map((field) => field.trim())
 }
 
 /**

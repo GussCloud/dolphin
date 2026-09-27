@@ -767,6 +767,10 @@ jobs:
           filter: blob:none
           persist-credentials: false
 
+      # Why: the harness skews against upstream Orca release tags, which a fork's clone lacks.
+      - name: Fetch upstream release tags
+        run: git fetch --no-tags https://github.com/stablyai/orca.git '+refs/tags/v1.*:refs/tags/v1.*'
+
       - uses: ./.github/actions/install-node-dependencies
         with:
           native-runtime: node
@@ -930,8 +934,10 @@ jobs:
           rpm="dist/orca-ide-${version}.x86_64.rpm"
           test -s "$deb"
           test -s "$rpm"
-          deb_marker="$(dpkg-deb --fsys-tarfile "$deb" | tar -xOf - ./opt/Orca/resources/package-type)"
-          rpm_marker="$(rpm2cpio "$rpm" | cpio --quiet --extract --to-stdout ./opt/Orca/resources/package-type)"
+          # Why: electron-builder installs under /opt/<productName>, which the fork identity owns.
+          product="$(node -p "require('./src/shared/fork-identity.json').productName")"
+          deb_marker="$(dpkg-deb --fsys-tarfile "$deb" | tar -xOf - "./opt/$product/resources/package-type")"
+          rpm_marker="$(rpm2cpio "$rpm" | cpio --quiet --extract --to-stdout "./opt/$product/resources/package-type")"
           [[ "$deb_marker" == deb ]] || { echo "Expected deb marker, got: $deb_marker"; exit 1; }
           [[ "$rpm_marker" == rpm ]] || { echo "Expected rpm marker, got: $rpm_marker"; exit 1; }
 
@@ -1104,7 +1110,10 @@ jobs:
         run: pnpm exec electron-builder --config config/electron-builder.config.cjs --dir
 
       - name: Smoke packaged Windows PTY native capability
-        run: pnpm run smoke:windows-pty-native-capability -- --exe=dist/win-unpacked/Orca.exe
+        shell: bash
+        run: |
+          exe="$(node -p "require('./src/shared/fork-identity.json').executableName")"
+          pnpm run smoke:windows-pty-native-capability -- "--exe=dist/win-unpacked/$exe.exe"
 
       - name: Smoke packaged CLI
         run: node config/scripts/smoke-packaged-cli.mjs --app-dir=dist/win-unpacked
