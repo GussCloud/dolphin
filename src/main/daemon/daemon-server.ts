@@ -52,6 +52,7 @@ export class DaemonServer {
       spawnSubprocess: options.spawnSubprocess,
       reportReadinessEvent: (event, details) => this.log.log(event, details),
       onSessionReaped: (sessionId) => {
+        this.log.log('session-reaped', { sessionId })
         this.attachments.release(sessionId)
         this.transientFactRelay.onSessionExit(sessionId)
         this.streamDataBatcher.refreshSessionDroppability(sessionId)

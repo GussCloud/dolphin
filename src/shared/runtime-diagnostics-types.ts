@@ -1,4 +1,5 @@
 import type { MemorySnapshot } from './process-stats-types'
+import type { SessionLifecycleState } from './session-lifecycle'
 
 export type StorageFootprintKind =
   | 'terminal-history'
@@ -34,13 +35,24 @@ export type SessionInconsistencyKind =
   | 'registered-pty-exited'
   /** Main tracks a PTY the daemon does not list. */
   | 'registered-pty-missing-from-daemon'
-  /** The daemon hosts a live session main does not track. */
+  /** The daemon hosts a live session main does not track, though a saved tab still names it. */
   | 'daemon-session-untracked'
+  /** The daemon hosts a live session nothing tracks or references: it costs resources with no UI. */
+  | 'daemon-session-orphaned'
+  /** A saved tab names a session that is neither live nor restorable; reopening starts fresh. */
+  | 'saved-tab-session-unavailable'
 
 export type SessionInconsistency = {
   kind: SessionInconsistencyKind
   sessionId: string
   pid: number | null
+}
+
+export type MemoryBudgetWarning = {
+  kind: 'renderer' | 'session' | 'daemon'
+  subject: string
+  bytes: number
+  limitBytes: number
 }
 
 export type RuntimeDiagnostics = {
@@ -63,7 +75,15 @@ export type RuntimeDiagnostics = {
     daemonInventoryComplete: boolean
     oldestDaemonSessionCreatedAt: number | null
     inconsistencies: SessionInconsistency[]
+    /** Tracked PTYs the daemon agrees are live. Absent from older hosts. */
+    matchedSessionCount?: number
+    /** Main's view of local PTY lifecycles, including recently reaped ones. Absent from older hosts. */
+    localLifecycleByState?: Partial<Record<SessionLifecycleState, number>>
+    /** Transitions the state machine refused; nonzero means layers disagree about a session. */
+    rejectedLifecycleTransitions?: number
   }
   memory: MemorySnapshot
+  /** Over-budget owners; absent from older hosts. */
+  memoryWarnings?: MemoryBudgetWarning[]
   storage: StorageFootprint
 }
