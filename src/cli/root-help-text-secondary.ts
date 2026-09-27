@@ -40,6 +40,7 @@ export const ROOT_HELP_TEXT_SECONDARY = [
   '  orca status [--json]',
   '  orca diagnostics memory [--json]',
   '  orca diagnostics runtime [--json]',
+  '  orca gc [--dry-run] [--older-than <30d>] [--max-size <5GB>] [--json]',
   '  orca agent-context [--json]',
   '  orca search <query> [--scope conversation|all] [--fresh] [--limit <n>] [--cursor <c>] [--agent <id>] [--path <p>] [--since <iso>] [--sort relevance|newest] [--debug] [--json]',
   '  orca search --index-status [--json]',
