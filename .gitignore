@@ -147,6 +147,13 @@ docs/**
 !docs/reference/wsl-command-execution.md
 !docs/reference/wsl-probe-failure-semantics.md
 !docs/reference/xterm-patch-regeneration.md
+# Fork (Dolphin) docs.
+!docs/reference/fork-identity.md
+!docs/reference/session-lifecycle.md
+!docs/reference/session-lifecycle-benchmark.md
+!docs/reference/storage-gc.md
+!docs/releases/
+!docs/releases/**
 
 # Stably CLI (only docs/ are tracked)
 .stably/*
