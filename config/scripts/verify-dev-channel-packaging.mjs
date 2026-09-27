@@ -15,10 +15,12 @@ import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+const { releaseRepo } = createRequire(import.meta.url)('../../src/shared/fork-identity.json')
+
 const CHANNEL_REPOS = {
-  hourly: 'orca-hourly',
-  daily: 'orca-daily',
-  adhoc: 'orca-adhoc'
+  hourly: `${releaseRepo}-hourly`,
+  daily: `${releaseRepo}-daily`,
+  adhoc: `${releaseRepo}-adhoc`
 }
 
 const CHANNEL_VERSION_ENV = {

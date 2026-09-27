@@ -48,7 +48,7 @@ describe('electron-builder dev-channel identity', () => {
 
     expect(config.win.signtoolOptions.publisherName).toBe('SignPath Foundation')
     expect(config.win.verifyUpdateCodeSignature).toBeUndefined()
-    expect(config.publish.repo).toBe('orca')
+    expect(config.publish.repo).toBe('dolphin')
     expect(config.publish.releaseType).toBe('draft')
   })
 
@@ -78,9 +78,9 @@ describe('electron-builder dev-channel identity', () => {
   })
 
   it.each([
-    ['hourly', { ORCA_WIN_HOURLY: '1' }, 'orca-hourly'],
-    ['daily', { ORCA_WIN_DAILY: '1' }, 'orca-daily'],
-    ['adhoc', { ORCA_WIN_ADHOC: '1' }, 'orca-adhoc']
+    ['hourly', { ORCA_WIN_HOURLY: '1' }, 'dolphin-hourly'],
+    ['daily', { ORCA_WIN_DAILY: '1' }, 'dolphin-daily'],
+    ['adhoc', { ORCA_WIN_ADHOC: '1' }, 'dolphin-adhoc']
   ])('publishes %s Windows builds to its own repo as a prerelease', (_channel, env, repo) => {
     const config = loadConfigWithEnv(env)
 
@@ -106,13 +106,13 @@ describe('electron-builder dev-channel identity', () => {
     })
 
     expect(config.mac.notarize).toBe(true)
-    expect(config.publish.repo).toBe('orca-adhoc')
+    expect(config.publish.repo).toBe('dolphin-adhoc')
   })
 })
 
 describe('collectDevChannelPackagingProblems', () => {
   const goodWinConfig = {
-    publish: { repo: 'orca-adhoc', releaseType: 'prerelease' },
+    publish: { repo: 'dolphin-adhoc', releaseType: 'prerelease' },
     extraMetadata: { version: '1.4.178-adhoc.20260819010203' },
     win: { verifyUpdateCodeSignature: false }
   }
@@ -135,11 +135,11 @@ describe('collectDevChannelPackagingProblems', () => {
     const problems = collectDevChannelPackagingProblems({
       channel: 'adhoc',
       platform: 'win32',
-      config: { ...goodWinConfig, publish: { repo: 'orca', releaseType: 'release' } },
+      config: { ...goodWinConfig, publish: { repo: 'dolphin', releaseType: 'release' } },
       env
     })
 
-    expect(problems.join('\n')).toContain('must publish to "orca-adhoc"')
+    expect(problems.join('\n')).toContain('must publish to "dolphin-adhoc"')
     expect(problems.join('\n')).toContain('rebase it onto a main that does')
   })
 
@@ -176,7 +176,7 @@ describe('collectDevChannelPackagingProblems', () => {
         channel: 'adhoc',
         platform: 'darwin',
         config: {
-          publish: { repo: 'orca-adhoc', releaseType: 'prerelease' },
+          publish: { repo: 'dolphin-adhoc', releaseType: 'prerelease' },
           extraMetadata: { version: '1.4.178-adhoc.20260819010203' },
           win: { signtoolOptions: { publisherName: 'SignPath Foundation' } }
         },
