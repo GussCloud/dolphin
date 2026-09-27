@@ -1,3 +1,4 @@
+import { FORK_ISSUES_URL } from '../../../../shared/fork-identity'
 import { useEffect, useState } from 'react'
 import { translate } from '@/i18n/i18n'
 import { resolveClientEnvironmentFooter } from '@/lib/client-environment-info'
@@ -268,10 +269,7 @@ export function TerminalErrorToast({
                 'auto.components.terminal.pane.TerminalErrorToast.5c8ce20be6',
                 'If this persists, please'
               )}{' '}
-              <a
-                href="https://github.com/stablyai/orca/issues"
-                style={{ color: 'inherit', textDecoration: 'underline' }}
-              >
+              <a href={FORK_ISSUES_URL} style={{ color: 'inherit', textDecoration: 'underline' }}>
                 {translate(
                   'auto.components.terminal.pane.TerminalErrorToast.a7e2fd2699',
                   'file an issue'

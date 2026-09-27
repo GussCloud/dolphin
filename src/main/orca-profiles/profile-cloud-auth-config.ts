@@ -1,3 +1,4 @@
+import { FORK_CLOUD_ORIGINS } from '../../shared/fork-identity'
 import { app } from 'electron'
 import {
   cleanCloudServiceUrl as cleanUrl,
@@ -21,9 +22,9 @@ export type OrcaCloudAuthConfig = {
 }
 
 const DEFAULT_SCOPE = 'openid profile email offline_access'
-const PRODUCTION_API_BASE_URL = 'https://login.onorca.dev'
-const PRODUCTION_CLIENT_ID = 'orca-desktop'
-const PRODUCTION_RELAY_DIRECTOR_URL = 'https://relay.onorca.dev'
+const PRODUCTION_API_BASE_URL = FORK_CLOUD_ORIGINS.auth
+const PRODUCTION_CLIENT_ID = 'dolphin-desktop'
+const PRODUCTION_RELAY_DIRECTOR_URL = FORK_CLOUD_ORIGINS.relay
 
 // Why: packaged main bundles never define NODE_ENV, so packaged-ness is the
 // only reliable production signal for gating dev-only auth escape hatches.

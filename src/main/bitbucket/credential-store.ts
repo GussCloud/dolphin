@@ -1,3 +1,4 @@
+import { FORK_HOME_STATE_DIR_NAME } from '../../shared/fork-identity'
 import { existsSync, mkdirSync, readFileSync, unlinkSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -49,7 +50,7 @@ let cachedSecret: BitbucketStoredSecret | null = null
 let credentialError: string | null = null
 
 function getOrcaDir(): string {
-  return join(homedir(), '.orca')
+  return join(homedir(), FORK_HOME_STATE_DIR_NAME)
 }
 
 function getMetadataPath(): string {

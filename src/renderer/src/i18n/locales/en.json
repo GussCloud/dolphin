@@ -4330,7 +4330,7 @@
         "share": {
           "card": {
             "utils": {
-              "19f4b4dc75": "github.com/stablyai/orca",
+              "19f4b4dc75": "github.com/GussCloud/orca",
               "d864fc5f98": "output",
               "5d66fdd7c2": "input",
               "7080aeaebb": "Reasoning",
@@ -4720,7 +4720,7 @@
           "157de228b4": "Inspect skill",
           "69236de8d6": "Checking…",
           "27672470d9": "Opening the link does not install anything. Review the immutable version first.",
-          "66cff7a804": "https://app.orca.dev/skills/share/…",
+          "66cff7a804": "https://share.dolphin.guss.dev.br/skills/share/…",
           "93eb0fe8c7": "Orca skill link",
           "releaseNotes": "Release notes:",
           "targetHeader": "Installation Target"

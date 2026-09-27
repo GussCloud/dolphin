@@ -1,3 +1,4 @@
+import { FORK_HOME_STATE_DIR_NAME } from '../../shared/fork-identity'
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -24,7 +25,7 @@ const cachedTokens = new Map<string, string>()
 export const credentialErrors = new Map<string, string>()
 
 function getOrcaDir(): string {
-  return join(homedir(), '.orca')
+  return join(homedir(), FORK_HOME_STATE_DIR_NAME)
 }
 
 function getSiteFilePath(): string {

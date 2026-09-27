@@ -4174,7 +4174,7 @@
         "share": {
           "card": {
             "utils": {
-              "19f4b4dc75": "github.com/stablyai/orca",
+              "19f4b4dc75": "github.com/GussCloud/orca",
               "d864fc5f98": "输出",
               "5d66fdd7c2": "输入",
               "7080aeaebb": "推理",
@@ -4679,7 +4679,7 @@
           "157de228b4": "检验技能",
           "69236de8d6": "检查…",
           "27672470d9": "打开链接不会安装任何东西。首先查看不可变版本。",
-          "66cff7a804": "https://app.orca.dev/skills/share/…",
+          "66cff7a804": "https://share.dolphin.guss.dev.br/skills/share/…",
           "93eb0fe8c7": "Orca 技能链接",
           "releaseNotes": "发行说明：",
           "targetHeader": "安装目标"

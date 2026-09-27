@@ -468,7 +468,7 @@ describe('SkillInstallManagementDialog', () => {
         shares: [
           {
             id: 'share_bundle',
-            url: 'https://app.orca.dev/skills/share/share_bundle',
+            url: 'https://share.dolphin.guss.dev.br/skills/share/share_bundle',
             createdAt: '2026-08-12T00:00:00.000Z'
           }
         ]

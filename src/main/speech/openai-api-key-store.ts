@@ -1,3 +1,4 @@
+import { FORK_HOME_STATE_DIR_NAME } from '../../shared/fork-identity'
 import { getSecretStore } from '../../shared/secret-store'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -11,7 +12,7 @@ const OPENAI_SPEECH_TOKEN_FILE = 'openai-speech-token.enc'
 let cachedOpenAiSpeechApiKey: string | null = null
 
 function getOrcaDir(): string {
-  return join(homedir(), '.orca')
+  return join(homedir(), FORK_HOME_STATE_DIR_NAME)
 }
 
 function ensureOrcaDir(): void {

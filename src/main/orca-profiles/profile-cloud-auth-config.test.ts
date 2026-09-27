@@ -37,7 +37,7 @@ describe('Orca cloud auth config', () => {
         orgEndpoint: 'https://orca-cloud.example/v1/desktop/auth/org',
         logoutEndpoint: 'https://orca-cloud.example/v1/desktop/auth/logout',
         relayTokenEndpoint: 'https://orca-cloud.example/v1/desktop/auth/relay-token',
-        relayDirectorUrl: 'https://relay.onorca.dev',
+        relayDirectorUrl: 'https://relay.dolphin.guss.dev.br',
         clientId: 'desktop-client',
         scope: 'openid profile email offline_access'
       }
@@ -48,17 +48,17 @@ describe('Orca cloud auth config', () => {
     expect(getOrcaCloudAuthConfig({}, true)).toEqual({
       configured: true,
       config: {
-        apiBaseUrl: 'https://login.onorca.dev',
-        authorizeEndpoint: 'https://login.onorca.dev/v1/desktop/auth/authorize',
-        sessionEndpoint: 'https://login.onorca.dev/v1/desktop/auth/session',
-        refreshEndpoint: 'https://login.onorca.dev/v1/desktop/auth/refresh',
-        capabilitiesEndpoint: 'https://login.onorca.dev/v1/desktop/auth/capabilities',
-        profileEndpoint: 'https://login.onorca.dev/v1/desktop/auth/profile',
-        orgEndpoint: 'https://login.onorca.dev/v1/desktop/auth/org',
-        logoutEndpoint: 'https://login.onorca.dev/v1/desktop/auth/logout',
-        relayTokenEndpoint: 'https://login.onorca.dev/v1/desktop/auth/relay-token',
-        relayDirectorUrl: 'https://relay.onorca.dev',
-        clientId: 'orca-desktop',
+        apiBaseUrl: 'https://auth.dolphin.guss.dev.br',
+        authorizeEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/authorize',
+        sessionEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/session',
+        refreshEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/refresh',
+        capabilitiesEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/capabilities',
+        profileEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/profile',
+        orgEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/org',
+        logoutEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/logout',
+        relayTokenEndpoint: 'https://auth.dolphin.guss.dev.br/v1/desktop/auth/relay-token',
+        relayDirectorUrl: 'https://relay.dolphin.guss.dev.br',
+        clientId: 'dolphin-desktop',
         scope: 'openid profile email offline_access'
       }
     })

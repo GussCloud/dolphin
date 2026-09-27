@@ -1,3 +1,4 @@
+import { FORK_HOME_STATE_DIR_NAME } from '../../shared/fork-identity'
 import { safeStorage } from 'electron'
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -15,7 +16,7 @@ type MiniMaxCookieEnvelope = {
 }
 
 function getOrcaDir(): string {
-  return join(homedir(), '.orca')
+  return join(homedir(), FORK_HOME_STATE_DIR_NAME)
 }
 
 function getMiniMaxCookiePath(): string {

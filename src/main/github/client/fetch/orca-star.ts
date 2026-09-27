@@ -1,5 +1,6 @@
+import { FORK_REPOSITORY_SLUG } from '../../../../shared/fork-identity'
 import { ghExecFileAsync, acquire, release } from '../../gh-utils'
-export const ORCA_REPO = 'stablyai/orca'
+export const ORCA_REPO = FORK_REPOSITORY_SLUG
 
 /**
  * Deadline for the two star-nag gh calls.

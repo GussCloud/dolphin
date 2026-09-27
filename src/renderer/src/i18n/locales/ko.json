@@ -4174,7 +4174,7 @@
         "share": {
           "card": {
             "utils": {
-              "19f4b4dc75": "github.com/stablyai/orca",
+              "19f4b4dc75": "github.com/GussCloud/orca",
               "d864fc5f98": "출력",
               "5d66fdd7c2": "입력",
               "7080aeaebb": "추론",
@@ -4653,7 +4653,7 @@
           "157de228b4": "스킬 점검",
           "69236de8d6": "확인 중…",
           "27672470d9": "링크를 열어도 아무것도 설치되지 않습니다. 먼저 변경할 수 없는 버전을 검토하세요.",
-          "66cff7a804": "https://app.orca.dev/skills/share/…",
+          "66cff7a804": "https://share.dolphin.guss.dev.br/skills/share/…",
           "93eb0fe8c7": "Orca 스킬 링크",
           "releaseNotes": "릴리스 노트:",
           "targetHeader": "설치 대상"

@@ -1,3 +1,4 @@
+import { FORK_WEB_URLS } from '../shared/fork-identity'
 import { net } from 'electron'
 import { compareVersions, isValidVersion } from './updater-fallback'
 
@@ -9,7 +10,7 @@ export type NudgeConfig = {
 
 export async function fetchNudge(): Promise<NudgeConfig | null> {
   try {
-    const res = await net.fetch('https://onorca.dev/whats-new/nudge.json', {
+    const res = await net.fetch(FORK_WEB_URLS.whatsNewNudge, {
       signal: AbortSignal.timeout(5000)
     })
     if (!res.ok) {

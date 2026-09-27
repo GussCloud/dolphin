@@ -4174,7 +4174,7 @@
         "share": {
           "card": {
             "utils": {
-              "19f4b4dc75": "github.com/stablyai/orca",
+              "19f4b4dc75": "github.com/GussCloud/orca",
               "d864fc5f98": "出力",
               "5d66fdd7c2": "入力",
               "7080aeaebb": "推論",
@@ -4653,7 +4653,7 @@
           "157de228b4": "スキルを検査する",
           "69236de8d6": "確認中…",
           "27672470d9": "リンクを開いても何もインストールされません。まず不変バージョンを確認してください。",
-          "66cff7a804": "https://app.orca.dev/skills/share/…",
+          "66cff7a804": "https://share.dolphin.guss.dev.br/skills/share/…",
           "93eb0fe8c7": "Orca のスキルリンク",
           "releaseNotes": "リリースノート:",
           "targetHeader": "インストール対象"

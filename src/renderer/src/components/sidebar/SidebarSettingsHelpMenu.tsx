@@ -1,3 +1,8 @@
+import {
+  FORK_RELEASES_URL,
+  FORK_REPOSITORY_URL,
+  FORK_WEB_URLS
+} from '../../../../shared/fork-identity'
 import React, { useState } from 'react'
 import {
   BookOpen,
@@ -47,9 +52,9 @@ const SidebarFeedbackDialog = lazyWithRetry(
   { reloadKey: 'sidebar-feedback-dialog' }
 )
 
-const DOCS_URL = 'https://www.onorca.dev/docs'
-const CHANGELOG_URL = 'https://onorca.dev/changelog'
-const GITHUB_URL = 'https://github.com/stablyai/orca'
+const DOCS_URL = FORK_WEB_URLS.docs
+const CHANGELOG_URL = FORK_RELEASES_URL
+const GITHUB_URL = FORK_REPOSITORY_URL
 const DISCORD_URL = 'https://discord.gg/fzjDKHxv8Q'
 const X_URL = 'https://x.com/orca_build'
 const NO_UPDATE_CHECK_MODIFIERS = {

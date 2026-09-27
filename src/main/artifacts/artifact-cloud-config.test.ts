@@ -6,7 +6,9 @@ import {
 
 describe('resolveArtifactCloudApiUrl', () => {
   it('uses the first-party production origin by default', () => {
-    expect(resolveArtifactCloudApiUrl(undefined, {}, true)).toBe('https://share.onorca.dev')
+    expect(resolveArtifactCloudApiUrl(undefined, {}, true)).toBe(
+      'https://share.dolphin.guss.dev.br'
+    )
   })
 
   it('allows loopback HTTP only in development', () => {
@@ -22,11 +24,11 @@ describe('resolveArtifactCloudApiUrl', () => {
 
   it('rejects origins that could receive an Orca access token', () => {
     expect(() => resolveArtifactCloudApiUrl('https://example.com', {}, false)).toThrow(
-      /onorca\.dev/
+      /dolphin\.guss\.dev\.br/
     )
-    expect(() => resolveArtifactCloudApiUrl('https://share.onorca.dev/path', {}, false)).toThrow(
-      /origin/
-    )
+    expect(() =>
+      resolveArtifactCloudApiUrl('https://share.dolphin.guss.dev.br/path', {}, false)
+    ).toThrow(/origin/)
   })
 
   it('allows auth token overrides only in non-production development builds', () => {

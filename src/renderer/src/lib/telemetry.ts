@@ -1,3 +1,4 @@
+import { FORK_WEB_URLS } from '../../../shared/fork-identity'
 // Typed renderer-side wrapper around the preload bridge: gives call sites EventMap type safety, while main stays the single validator.
 // Security invariant: the renderer bundles no PostHog SDK — the sole client lives in main, off the renderer's attack surface.
 
@@ -8,7 +9,7 @@ import type { TelemetryConsentState } from '../../../shared/telemetry-consent-ty
 export { tuiAgentToAgentKind } from '../../../shared/agent-kind'
 
 // Single source-of-truth for the privacy doc URL so FirstLaunchBanner and PrivacyPane can't drift.
-export const PRIVACY_URL = 'https://www.onorca.dev/docs/telemetry'
+export const PRIVACY_URL = FORK_WEB_URLS.telemetryPrivacy
 
 // Why: the IPC boundary is untyped at runtime, so validate before the Privacy pane trusts a payload from main.
 function isTelemetryConsentState(x: unknown): x is TelemetryConsentState {

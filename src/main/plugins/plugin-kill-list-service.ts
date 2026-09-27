@@ -1,3 +1,4 @@
+import { FORK_WEB_URLS } from '../../shared/fork-identity'
 import {
   findKilledPlugin,
   isPluginKillListTooFarInFuture,
@@ -7,7 +8,7 @@ import {
 } from '../../shared/plugins/plugin-kill-list'
 import { PluginKillListStore } from './plugin-kill-list-store'
 
-export const PLUGIN_KILL_LIST_URL = 'https://onorca.dev/plugins/kill-list.json'
+export const PLUGIN_KILL_LIST_URL = FORK_WEB_URLS.pluginKillList
 const PLUGIN_KILL_LIST_DOWNLOAD_LIMIT = 4 * 1024 * 1024
 
 type PluginKillListFetcher = () => Promise<PluginKillList>

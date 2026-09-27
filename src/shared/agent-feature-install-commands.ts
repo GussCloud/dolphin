@@ -1,6 +1,8 @@
+import { FORK_REPOSITORY_URL } from './fork-identity'
 import { isUsableSkillsCliAgentKey } from './skills-cli-agent-keys'
 
-export const ORCA_SKILLS_REPOSITORY_URL = 'https://github.com/stablyai/orca'
+// Why the fork: agents must install the skills this app ships, not upstream Orca's.
+export const ORCA_SKILLS_REPOSITORY_URL = FORK_REPOSITORY_URL
 
 export const ORCA_CLI_SKILL_NAME = 'orca-cli'
 export const COMPUTER_USE_SKILL_NAME = 'computer-use'

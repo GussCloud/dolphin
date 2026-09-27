@@ -1,3 +1,4 @@
+import { FORK_CLOUD_ORIGINS } from '../../shared/fork-identity'
 import { net } from 'electron'
 import { appendFeedbackImagesToFormData } from './feedback-image-attachments'
 import type {
@@ -10,7 +11,7 @@ import type {
 // endpoint rejects. Electron's net module runs in the main process and is not
 // subject to CORS, so we proxy the submission through IPC. This mirrors the
 // same pattern used by updater-changelog.ts and updater-nudge.ts.
-export const FEEDBACK_API_URL = 'https://www.onorca.dev/v1/feedback'
+export const FEEDBACK_API_URL = `${FORK_CLOUD_ORIGINS.api}/v1/feedback`
 const FEEDBACK_REQUEST_TIMEOUT_MS = 10_000
 const DIAGNOSTIC_BUNDLE_CONTENT_TYPE = 'application/x-ndjson'
 
