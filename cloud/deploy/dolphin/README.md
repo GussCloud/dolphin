@@ -22,7 +22,7 @@ Not deployed yet:
 ## Deploy
 
 ```bash
-git clone https://github.com/GussCloud/orca.git && cd orca/cloud/deploy/dolphin
+git clone https://github.com/GussCloud/dolphin.git && cd dolphin/cloud/deploy/dolphin
 cp .env.example .env
 # Set ACME_EMAIL and RELAY_ASSIGNMENT_SIGNING_KEY (openssl rand -base64 48)
 docker compose up -d --build

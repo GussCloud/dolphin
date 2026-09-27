@@ -38,7 +38,7 @@ concurrency:
 
 jobs:
   build-win:
-    if: github.repository == 'GussCloud/orca'
+    if: github.repository == 'GussCloud/dolphin'
     # Why windows-2022: windows-latest's VS 2026 image breaks node-gyp native installs (see
     # dev-channel-win-build.yml).
     runs-on: windows-2022

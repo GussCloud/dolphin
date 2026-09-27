@@ -70,15 +70,15 @@ const devChannelBuildVersion = isHourlyChannel
 // to install. Keeping adhoc/daily separate from hourly too means a branch build
 // or a once-a-day cut cannot be picked up by someone who only meant to ride
 // main's hourlies.
-const devChannelRepo = isHourlyChannel
-  ? 'orca-hourly'
-  : isDailyChannel
-    ? 'orca-daily'
-    : isAdhocChannel
-      ? 'orca-adhoc'
-      : null
 // Why one source: the fork's identity must match what the app computes at runtime.
 const forkIdentity = require('../src/shared/fork-identity.json')
+const devChannelRepo = isHourlyChannel
+  ? `${forkIdentity.releaseRepo}-hourly`
+  : isDailyChannel
+    ? `${forkIdentity.releaseRepo}-daily`
+    : isAdhocChannel
+      ? `${forkIdentity.releaseRepo}-adhoc`
+      : null
 const appId = forkIdentity.appId
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
