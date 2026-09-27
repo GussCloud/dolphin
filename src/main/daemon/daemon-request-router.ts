@@ -199,6 +199,7 @@ export class DaemonRequestRouter {
     const canceledPendingSpawn = this.options.preparations.cancel(sessionId)
     this.options.attachments.clearInput(sessionId)
     const attribution = { sessionId, immediate: immediate === true, clientId }
+    this.options.log.log('session-stop-requested', attribution)
     try {
       await this.options.host.kill(sessionId, { immediate })
     } catch (error) {

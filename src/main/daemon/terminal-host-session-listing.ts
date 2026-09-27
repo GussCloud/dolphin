@@ -22,7 +22,8 @@ export function listLiveTerminalHostSessions(
     result.push({
       sessionId: session.sessionId,
       incarnationId: session.incarnationId,
-      state: session.state,
+      // Why: a session mid-kill is still alive; 'exiting' lets readers tell stopping from running.
+      state: session.isTerminating ? 'exiting' : session.state,
       shellState: session.shellState,
       isAlive: true,
       ...(session.terminalHandle ? { terminalHandle: session.terminalHandle } : {}),
