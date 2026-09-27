@@ -51,6 +51,7 @@ export {
   formatAutomationShow
 } from './automation-format'
 export type { AutomationListPayload, AutomationShowPayload } from './automation-format'
+export { formatRuntimeDiagnostics } from './runtime-diagnostics-format'
 export {
   formatEnvironment,
   formatEnvironmentList,

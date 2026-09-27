@@ -89,7 +89,7 @@ function formatProcessMemoryMetric(metric: MemorySnapshot['processMemoryMetric']
     : 'summed RSS; shared or aliased pages may repeat'
 }
 
-function formatByteCount(bytes: number): string {
+export function formatByteCount(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) {
     return '0 B'
   }
