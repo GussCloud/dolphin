@@ -143,17 +143,19 @@ export function planTerminalHistoryGc(args: {
   return { remove, keptByReason, totalBytes }
 }
 
-/** Every string anywhere in `value` that names a known session id. */
+/** Every string anywhere in `value` (as a value or a key) that `isSessionId` accepts. */
 export function collectReferencedSessionIds(
   value: unknown,
-  knownSessionIds: ReadonlySet<string>
+  isSessionId: ReadonlySet<string> | ((candidate: string) => boolean)
 ): Set<string> {
+  const matches =
+    typeof isSessionId === 'function' ? isSessionId : (c: string) => isSessionId.has(c)
   const found = new Set<string>()
   const stack: unknown[] = [value]
   while (stack.length > 0) {
     const current = stack.pop()
     if (typeof current === 'string') {
-      if (knownSessionIds.has(current)) {
+      if (matches(current)) {
         found.add(current)
       }
     } else if (Array.isArray(current)) {
@@ -161,7 +163,7 @@ export function collectReferencedSessionIds(
     } else if (current && typeof current === 'object') {
       // Why keys too: some maps are keyed by pty id (e.g. per-leaf bindings).
       for (const [key, child] of Object.entries(current)) {
-        if (knownSessionIds.has(key)) {
+        if (matches(key)) {
           found.add(key)
         }
         stack.push(child)
