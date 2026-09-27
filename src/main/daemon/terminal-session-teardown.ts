@@ -1,5 +1,10 @@
 import { killWithDescendantSweep } from '../pty-descendant-termination'
 import { terminateShutdownDescendants } from './terminal-descendant-shutdown'
+import {
+  confirmShutdownDescendantSurvivors,
+  type DescendantSurvivorReport
+} from './descendant-survivor-confirmation'
+import type { DescendantSnapshot } from '../pty-descendant-termination'
 import type { Session } from './session'
 
 type TeardownOperation = {
@@ -17,7 +22,21 @@ type TeardownOperation = {
 export class TerminalSessionTeardown {
   private operations = new Map<string, TeardownOperation>()
 
-  constructor(private sessions: ReadonlyMap<string, Session>) {}
+  constructor(
+    private sessions: ReadonlyMap<string, Session>,
+    private reportSurvivors: DescendantSurvivorReport = () => {}
+  ) {}
+
+  /** Terminates, then follows up in the background on anything the verdict left alive. */
+  private terminateAndConfirm(sessionId: string, snapshot: DescendantSnapshot) {
+    const verification = terminateShutdownDescendants(snapshot)
+    void verification
+      .then((verdict) =>
+        confirmShutdownDescendantSurvivors(sessionId, snapshot, verdict, this.reportSurvivors)
+      )
+      .catch(() => {})
+    return verification
+  }
 
   get(sessionId: string): Promise<void> | undefined {
     return this.operations.get(sessionId)?.promise
@@ -122,7 +141,7 @@ export class TerminalSessionTeardown {
     await killWithDescendantSweep(session.pid, () => {}, {
       ownsRoot: () => this.sessions.get(sessionId) === session && session.isAlive,
       terminateOwnedTree: () => session.terminateOwnedTree(),
-      terminateDescendants: terminateShutdownDescendants,
+      terminateDescendants: (snapshot) => this.terminateAndConfirm(sessionId, snapshot),
       awaitEscalation: true
     })
     await session.forceKillAndWaitForExit()
@@ -176,7 +195,7 @@ export class TerminalSessionTeardown {
             ownsRoot: () => this.sessions.get(sessionId) === session && session.isAlive,
             terminateOwnedTree: () => session.terminateOwnedTree(),
             terminateDescendants: (snapshot) => {
-              entry.descendantVerification = terminateShutdownDescendants(snapshot)
+              entry.descendantVerification = this.terminateAndConfirm(sessionId, snapshot)
               return entry.descendantVerification
             },
             awaitEscalation: () => entry.immediate
