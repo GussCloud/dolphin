@@ -1,3 +1,4 @@
+import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { BrowserWindow, nativeTheme, powerMonitor, screen } from 'electron'
 import { is } from '@electron-toolkit/utils'
 import { join } from 'node:path'
@@ -102,7 +103,7 @@ export function createMainWindow(
     ...(savedBounds ? { x: savedBounds.x, y: savedBounds.y } : {}),
     minWidth: MIN_WIDTH,
     minHeight: MIN_HEIGHT,
-    title: opts?.title ?? 'Orca',
+    title: opts?.title ?? FORK_IDENTITY.productName,
     show: false,
     // Why: macOS swallows the app-activating click by default, so clicking back into Orca needed a second click (Windows/Linux already deliver it).
     acceptFirstMouse: true,

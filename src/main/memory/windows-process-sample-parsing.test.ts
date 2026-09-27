@@ -51,6 +51,15 @@ describe('parseWindowsProcessOutput', () => {
     expect(parseWindowsProcessOutput('100\t1\t2048\t0\t0\t1\t')[0].privateMemory).toBeUndefined()
   })
 
+  it('reads the trailing image name when CIM reports it', async () => {
+    const { parseWindowsProcessOutput } = await loadWindowsProcessSampleParsing()
+
+    expect(
+      parseWindowsProcessOutput('19248\t22048\t11534336\t0\t0\t1\t2048\tOpenConsole.exe')[0].name
+    ).toBe('OpenConsole.exe')
+    expect(parseWindowsProcessOutput('100\t1\t2048\t0\t0\t1\t0')[0].name).toBeUndefined()
+  })
+
   it('keeps a zero PageFileUsage distinct from an unreported one', async () => {
     const { parseWindowsProcessOutput } = await loadWindowsProcessSampleParsing()
 
