@@ -52,6 +52,18 @@ export type SessionMemory = UsageValues & {
   sessionId: string
   paneKey: string | null
   pid: number
+  /** Processes attributed to this session's subtree in this sweep. Absent from older hosts. */
+  processCount?: number
+}
+
+/** The terminal daemon's own process, excluding subtrees attributed to registered sessions. */
+export type DaemonMemory = UsageValues & {
+  pid: number
+  /**
+   * Descendants of the daemon that no registered session claimed: a PTY the main process no
+   * longer tracks, or a child that outlived its session. Nonzero is worth investigating.
+   */
+  untrackedDescendantCount: number
 }
 
 /** The top-level cpu/memory are the sum of sessions. */
@@ -101,5 +113,12 @@ export type MemorySnapshot = {
    * so exceeding host.totalMemory is the signal, not a bug.
    */
   totalPrivateMemory?: number
+  /**
+   * Absent when no daemon is running, the host predates the field, or the sweep missed its pid.
+   * Not included in totalMemory, which keeps its existing app + sessions meaning.
+   */
+  daemon?: DaemonMemory
+  /** Processes in every registered session subtree. Absent from older hosts. */
+  trackedProcessCount?: number
   collectedAt: number
 }

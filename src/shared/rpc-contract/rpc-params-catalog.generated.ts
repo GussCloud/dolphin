@@ -462,6 +462,7 @@ import {
   SpeechModelAction
 } from './speech-params'
 import { SshTarget } from './ssh-params'
+import { StorageGcParams } from './storage-params'
 import {
   AttachParams,
   CancelParams,
@@ -728,6 +729,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'computer.setValue': SetValue,
   'computer.typeText': TypeText,
   'diagnostics.memory': null,
+  'diagnostics.runtime': null,
   'emulator.attach': AttachParamsOfEmulatorParams,
   'emulator.availability': EmulatorAvailabilityParams,
   'emulator.ax': AxParams,
@@ -1118,6 +1120,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'ssh.listTargets': null,
   'stats.summary': null,
   'status.get': null,
+  'storage.gc': StorageGcParams,
   'terminal.adoptOrphans': TerminalAdoptOrphans,
   'terminal.agentStatus': TerminalHandle,
   'terminal.clearBuffer': TerminalHandle,

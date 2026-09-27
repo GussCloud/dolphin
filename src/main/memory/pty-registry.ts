@@ -14,6 +14,8 @@
  * cannot be queried with our local `ps` tree.
  */
 
+import { localPtySessionLifecycle } from '../session/session-lifecycle-ledger'
+
 export type PtyRegistration = {
   ptyId: string
   worktreeId: string | null
@@ -32,10 +34,22 @@ const registry = new Map<string, PtyRegistration>()
 
 export function registerPty(entry: PtyRegistration): void {
   registry.set(entry.ptyId, entry)
+  localPtySessionLifecycle.transition(entry.ptyId, 'running')
+}
+
+/** A stop was requested; the PTY stays registered until its teardown unregisters it. */
+export function markRegisteredPtyStopping(ptyId: string): void {
+  if (registry.has(ptyId)) {
+    localPtySessionLifecycle.transition(ptyId, 'stopping')
+  }
 }
 
 export function unregisterPty(ptyId: string): void {
-  registry.delete(ptyId)
+  // Why guarded: teardown is idempotent and also runs for never-registered (SSH) ids.
+  if (registry.delete(ptyId)) {
+    localPtySessionLifecycle.transition(ptyId, 'terminated')
+    localPtySessionLifecycle.transition(ptyId, 'reaped')
+  }
 }
 
 /** Snapshot of currently-registered local PTYs for the collector to walk. */

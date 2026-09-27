@@ -151,7 +151,8 @@ export class DaemonTerminalAdmission {
     }
     this.options.log.log(result.isNew ? 'session-created' : 'session-attached', {
       sessionId: routedSessionId,
-      pid: result.pid
+      pid: result.pid,
+      incarnationId: result.incarnationId
     })
     return {
       isNew: result.isNew,

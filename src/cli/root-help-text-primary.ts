@@ -10,6 +10,8 @@ export const ROOT_HELP_TEXT_PRIMARY = [
   '',
   'Diagnostics:',
   '  diagnostics memory        Collect a memory snapshot for Orca and managed terminals',
+  '  diagnostics runtime       Report sessions, processes, memory, and disk used by Orca',
+  '  gc                        Reclaim disk held by old terminal session history',
   '',
   'Agent Discovery:',
   '  agent-context             Print the machine-readable command schema for agents',
