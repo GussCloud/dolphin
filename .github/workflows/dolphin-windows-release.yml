@@ -5,10 +5,13 @@ name: Dolphin Windows Release
 # under the Dolphin identity (docs/reference/fork-identity.md) and publishes it with the repo's
 # own GITHUB_TOKEN, so the in-app updater (pointed at this repo) finds latest.yml beside it.
 #
-# Cut a release: bump package.json "version", merge to main, then dispatch this workflow with
-# that version. The tag v<version> is created on the dispatched commit.
+# Cut a release: bump package.json "version", merge to main, then either push tag v<version> on
+# that commit or dispatch this workflow with the version (the tag is then created on the commit).
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -25,7 +28,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dolphin-windows-release-${{ inputs.version }}
+  group: dolphin-windows-release-${{ inputs.version || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -39,8 +42,8 @@ jobs:
       contents: write
     env:
       NODE_OPTIONS: --max-old-space-size=4096
-      VERSION: ${{ inputs.version }}
-      TAG: v${{ inputs.version }}
+      # Why both: a tag push carries the version in its ref; a dispatch carries it as an input.
+      VERSION: ${{ inputs.version || github.ref_name }}
 
     steps:
       - name: Checkout
@@ -52,6 +55,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >>"$GITHUB_ENV"
+          echo "TAG=v$VERSION" >>"$GITHUB_ENV"
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "::error::version '$VERSION' is not semver."
             exit 1
@@ -144,7 +150,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          PRERELEASE: ${{ inputs.prerelease }}
+          PRERELEASE: ${{ inputs.prerelease || 'false' }}
         run: |
           set -euo pipefail
           flags=(--target "$GITHUB_SHA" --title "Dolphin $TAG")
