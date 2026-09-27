@@ -4,6 +4,7 @@ import type { MemorySnapshot } from '../../shared/process-stats-types'
 import type { RuntimeDiagnostics } from '../../shared/runtime-diagnostics-types'
 import type { DaemonSessionInfo } from '../daemon/types'
 import { listRegisteredPtys } from '../memory/pty-registry'
+import { localPtySessionLifecycle } from '../session/session-lifecycle-ledger'
 import { findSessionInconsistencies, probeLocalPid } from './session-inconsistencies'
 import { listStorageFootprintRoots, measureStorageFootprint } from './storage-footprint'
 
@@ -64,7 +65,11 @@ export async function collectRuntimeDiagnostics(
         daemonSessions: completeSessions,
         expectRegisteredInDaemon: !daemonDegraded,
         probePid: probeLocalPid
-      })
+      }),
+      localLifecycleByState: localPtySessionLifecycle.countByState(),
+      rejectedLifecycleTransitions: localPtySessionLifecycle
+        .list()
+        .reduce((sum, record) => sum + record.rejectedTransitions, 0)
     },
     memory,
     storage

@@ -1,4 +1,5 @@
 import type { MemorySnapshot } from './process-stats-types'
+import type { SessionLifecycleState } from './session-lifecycle'
 
 export type StorageFootprintKind =
   | 'terminal-history'
@@ -63,6 +64,10 @@ export type RuntimeDiagnostics = {
     daemonInventoryComplete: boolean
     oldestDaemonSessionCreatedAt: number | null
     inconsistencies: SessionInconsistency[]
+    /** Main's view of local PTY lifecycles, including recently reaped ones. Absent from older hosts. */
+    localLifecycleByState?: Partial<Record<SessionLifecycleState, number>>
+    /** Transitions the state machine refused; nonzero means layers disagree about a session. */
+    rejectedLifecycleTransitions?: number
   }
   memory: MemorySnapshot
   storage: StorageFootprint

@@ -31,6 +31,7 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
       : [
           `  Oldest session age:   ${formatDuration(d.collectedAt - sessions.oldestDaemonSessionCreatedAt)}`
         ]),
+    ...formatLifecycleLines(d),
     `  Inconsistencies:      ${sessions.inconsistencies.length}`,
     ...sessions.inconsistencies
       .slice(0, MAX_LISTED_INCONSISTENCIES)
@@ -65,6 +66,22 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
     `  ${'total:'.padEnd(22)}${formatByteCount(storage.totalBytes)}`
   ]
   return lines.join('\n')
+}
+
+function formatLifecycleLines(d: RuntimeDiagnostics): string[] {
+  const counts = d.sessions.localLifecycleByState
+  if (!counts) {
+    return []
+  }
+  const parts = Object.entries(counts)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([state, count]) => `${state} ${count}`)
+  return [
+    `  Lifecycle (main):     ${parts.length > 0 ? parts.join(', ') : 'none'}`,
+    ...(d.sessions.rejectedLifecycleTransitions
+      ? [`  Rejected transitions: ${d.sessions.rejectedLifecycleTransitions}`]
+      : [])
+  ]
 }
 
 function formatDaemonSessionCount(d: RuntimeDiagnostics): string {
