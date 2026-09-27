@@ -1,5 +1,7 @@
 import { defineMethod } from '../core'
 import { collectRuntimeDiagnostics } from '../../../diagnostics/runtime-diagnostics'
+import { getDaemonHistoryDir } from '../../../daemon/daemon-launch-paths'
+import { scanTerminalHistorySessionTrees } from '../../../daemon/terminal-history-session-retention'
 import {
   isDaemonDegraded,
   listDaemonSessionInventory,
@@ -22,7 +24,12 @@ export const DIAGNOSTICS_METHODS = [
         getMemorySnapshot: () => runtime.getMemorySnapshot(),
         listDaemonSessions: listDaemonSessionInventory,
         readDaemonPid: () => readCurrentDaemonIdentity()?.pid ?? null,
-        isDaemonDegraded
+        isDaemonDegraded,
+        readLocalPersistedWorkspaceSession: () => runtime.readPersistedWorkspaceSessions('local'),
+        listRestorableSessionIds: async () =>
+          new Set(
+            (await scanTerminalHistorySessionTrees(getDaemonHistoryDir())).map((t) => t.sessionId)
+          )
       })
     }
   })
