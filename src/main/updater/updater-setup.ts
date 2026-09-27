@@ -1,3 +1,4 @@
+import { FORK_RELEASES_URL } from '../../shared/fork-identity'
 import { app, powerMonitor } from 'electron'
 import type { BrowserWindow } from 'electron'
 import { is } from '@electron-toolkit/utils'
@@ -161,7 +162,7 @@ export class UpdaterSetup extends UpdaterDownloadInstall {
     if (this.activeUpdateSource === 'release') {
       autoUpdater.setFeedURL({
         provider: 'generic',
-        url: 'https://github.com/stablyai/orca/releases/latest/download'
+        url: `${FORK_RELEASES_URL}/latest/download`
       })
     }
     if (this.autoUpdaterInitialized) {

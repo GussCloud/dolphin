@@ -12,7 +12,8 @@ internal static class OrcaCliLauncher
             string launcherDirectory = Path.GetDirectoryName(typeof(OrcaCliLauncher).Assembly.Location);
             string resourcesDirectory = Directory.GetParent(launcherDirectory).FullName;
             string appDirectory = Directory.GetParent(resourcesDirectory).FullName;
-            string electronPath = Path.Combine(appDirectory, "Orca.exe");
+            // Why a list: a fork ships the same launcher next to a differently named app exe.
+            string electronPath = FindAppExecutable(appDirectory, new[] { "Dolphin.exe", "Orca.exe" });
             string cliPath = Path.Combine(
                 resourcesDirectory,
                 "app.asar.unpacked",
@@ -23,7 +24,7 @@ internal static class OrcaCliLauncher
 
             if (!File.Exists(electronPath))
             {
-                Console.Error.WriteLine("Unable to locate Orca.exe next to \"{0}\"", resourcesDirectory);
+                Console.Error.WriteLine("Unable to locate the app executable next to \"{0}\"", resourcesDirectory);
                 return 1;
             }
 
@@ -65,6 +66,19 @@ internal static class OrcaCliLauncher
             Console.Error.WriteLine("Unable to start the Orca CLI: {0}", error.Message);
             return 1;
         }
+    }
+
+    private static string FindAppExecutable(string appDirectory, string[] names)
+    {
+        foreach (string name in names)
+        {
+            string candidate = Path.Combine(appDirectory, name);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+        return Path.Combine(appDirectory, names[0]);
     }
 
     private static void MoveEnvironmentVariable(string sourceName, string targetName)

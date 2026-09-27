@@ -1,3 +1,4 @@
+import { FORK_RELEASES_URL } from '../../shared/fork-identity'
 import { app } from 'electron'
 import {
   fetchNewerReleaseTagsWithReadiness,
@@ -208,7 +209,7 @@ export abstract class UpdaterReleaseFeed extends UpdaterInstallExecution {
     }
     this.clearPrereleaseFallbackContext()
     this.clearPublishingWindowLastGoodCheck()
-    const url = 'https://github.com/stablyai/orca/releases/latest/download'
+    const url = `${FORK_RELEASES_URL}/latest/download`
     console.info(
       `[updater] release feed fallback: current=${currentVersion} includePrerelease=${includePrerelease} → ${url}`
     )

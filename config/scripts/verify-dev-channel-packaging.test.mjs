@@ -24,6 +24,8 @@ function loadConfigWithEnv(env) {
   }
 }
 
+const WIN_SIGNED_ENV = { ORCA_WIN_SIGNPATH_SIGNED: '1' }
+
 const WIN_ADHOC_ENV = {
   ORCA_WIN_ADHOC: '1',
   ORCA_ADHOC_BUILD_VERSION: '1.4.178-adhoc.20260819010203'
@@ -34,8 +36,15 @@ afterEach(() => {
 })
 
 describe('electron-builder dev-channel identity', () => {
-  it('keeps the SignPath publisherName on stable Windows builds', () => {
+  it('ships stable Windows builds unsigned unless SignPath signing is declared', () => {
     const config = loadConfigWithEnv({})
+
+    expect(config.win.signtoolOptions.publisherName).toBeUndefined()
+    expect(config.win.verifyUpdateCodeSignature).toBe(false)
+  })
+
+  it('keeps the SignPath publisherName on signed stable Windows builds', () => {
+    const config = loadConfigWithEnv(WIN_SIGNED_ENV)
 
     expect(config.win.signtoolOptions.publisherName).toBe('SignPath Foundation')
     expect(config.win.verifyUpdateCodeSignature).toBeUndefined()
@@ -58,11 +67,13 @@ describe('electron-builder dev-channel identity', () => {
   // the CI SignPath request. Carrying it must not drag a publisherName onto a
   // dev build, which is the failure the split above exists to prevent.
   it('carries the uninstaller sign hook without changing publisherName semantics', () => {
-    for (const env of [{}, WIN_ADHOC_ENV]) {
+    for (const env of [{}, WIN_SIGNED_ENV, WIN_ADHOC_ENV]) {
       const config = loadConfigWithEnv(env)
       expect(typeof config.win.signtoolOptions.sign).toBe('function')
     }
-    expect(loadConfigWithEnv({}).win.signtoolOptions.publisherName).toBe('SignPath Foundation')
+    expect(loadConfigWithEnv(WIN_SIGNED_ENV).win.signtoolOptions.publisherName).toBe(
+      'SignPath Foundation'
+    )
     expect(loadConfigWithEnv(WIN_ADHOC_ENV).win.signtoolOptions.publisherName).toBeUndefined()
   })
 

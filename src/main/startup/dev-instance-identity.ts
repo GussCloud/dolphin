@@ -2,8 +2,11 @@ import { createHash } from 'node:crypto'
 import path from 'node:path'
 import type { AppIdentity } from '../../shared/app-identity'
 
-const BASE_APP_NAME = 'Orca'
-const BASE_APP_USER_MODEL_ID = 'com.stablyai.orca'
+import { FORK_IDENTITY } from '../../shared/fork-identity'
+
+// Why the fork identity: the Windows AUMID groups taskbar, jump lists, and toasts per app.
+const BASE_APP_NAME = FORK_IDENTITY.productName
+const BASE_APP_USER_MODEL_ID = FORK_IDENTITY.appId
 const MAX_LABEL_LENGTH = 80
 
 export type DevInstanceIdentity = AppIdentity & {

@@ -1,0 +1,10 @@
+{
+  "productName": "Dolphin",
+  "appId": "com.gusscloud.dolphin",
+  "executableName": "Dolphin",
+  "userDataDirName": "dolphin",
+  "cliAliasName": "dolphin",
+  "installerArtifactBaseName": "dolphin-windows-setup",
+  "releaseOwner": "GussCloud",
+  "releaseRepo": "orca"
+}

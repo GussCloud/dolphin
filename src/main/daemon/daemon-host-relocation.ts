@@ -1,3 +1,4 @@
+import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { randomBytes } from 'node:crypto'
 import {
   existsSync,
@@ -47,7 +48,8 @@ const HOST_SUBDIR = 'daemon-host'
 const MARKER_NAME = '.materialized.json'
 
 // LOCAL appData (not roaming) so OneDrive/roaming never syncs this ~260MB runtime. Shared with NSIS uninstall (config/nsis/orca-installer-hooks.nsh) — keep in sync.
-const LOCAL_HOST_ROOT_NAME = 'Orca'
+// Why productName: matches the NSIS `${PRODUCT_NAME}` dir, and keeps a fork's copies apart from Orca's.
+const LOCAL_HOST_ROOT_NAME = FORK_IDENTITY.productName
 
 type MaterializeMarker = {
   version: string

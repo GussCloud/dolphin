@@ -47,6 +47,9 @@ const isWinHourly = process.env.ORCA_WIN_HOURLY === '1'
 const isWinDaily = process.env.ORCA_WIN_DAILY === '1'
 const isWinAdhoc = process.env.ORCA_WIN_ADHOC === '1'
 const isWinDevChannel = isWinHourly || isWinDaily || isWinAdhoc
+// Why opt-in: the fork has no SignPath certificate, so its installers ship unsigned and must not
+// bake a publisherName the updater would then demand of the next (also unsigned) installer.
+const isWinUnsigned = isWinDevChannel || process.env.ORCA_WIN_SIGNPATH_SIGNED !== '1'
 const isMacRelease = process.env.ORCA_MAC_RELEASE === '1' || isMacHourly || isMacDaily || isMacAdhoc
 const isLinuxArm64Release = process.env.ORCA_LINUX_ARM64_RELEASE === '1'
 const localBuildVersion =
@@ -74,7 +77,9 @@ const devChannelRepo = isHourlyChannel
     : isAdhocChannel
       ? 'orca-adhoc'
       : null
-const appId = 'com.stablyai.orca'
+// Why one source: the fork's identity must match what the app computes at runtime.
+const forkIdentity = require('../src/shared/fork-identity.json')
+const appId = forkIdentity.appId
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
   to: 'onboarding/feature-wall'
@@ -172,14 +177,18 @@ const windowsRuntimeResources = existsSync(
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
   appId,
-  productName: 'Orca',
-  protocols: [{ name: 'Orca', schemes: ['orca'] }],
+  productName: forkIdentity.productName,
+  protocols: [{ name: forkIdentity.productName, schemes: [forkIdentity.userDataDirName] }],
   toolsets: { appimage: '1.0.3' },
-  ...(devChannelBuildVersion
-    ? { extraMetadata: { version: devChannelBuildVersion } }
-    : localBuildVersion
-      ? { extraMetadata: { version: localBuildVersion } }
-      : {}),
+  // Why name: packaged userData and the updater cache derive from package.json's name.
+  extraMetadata: {
+    name: forkIdentity.userDataDirName,
+    ...(devChannelBuildVersion
+      ? { version: devChannelBuildVersion }
+      : localBuildVersion
+        ? { version: localBuildVersion }
+        : {})
+  },
   directories: {
     buildResources: 'resources/build'
   },
@@ -427,7 +436,7 @@ module.exports = {
     }
   },
   win: {
-    executableName: 'Orca',
+    executableName: forkIdentity.executableName,
     // Why: Windows installers are signed after electron-builder packaging by
     // SignPath, so the packager cannot infer the updater publisherName.
     //
@@ -447,9 +456,9 @@ module.exports = {
     // its existing channel split above.
     signtoolOptions: {
       sign: signWindowsUninstallerViaSignPath,
-      ...(isWinDevChannel ? {} : { publisherName: 'SignPath Foundation' })
+      ...(isWinUnsigned ? {} : { publisherName: 'SignPath Foundation' })
     },
-    ...(isWinDevChannel ? { verifyUpdateCodeSignature: false } : {}),
+    ...(isWinUnsigned ? { verifyUpdateCodeSignature: false } : {}),
     extraResources: [
       ...commonExtraResources,
       ...windowsRuntimeResources,
@@ -457,6 +466,12 @@ module.exports = {
       {
         from: 'resources/win32/bin/orca.cmd',
         to: 'bin/orca.cmd'
+      },
+      // Why an alias: `orca` stays for agents inside this app's terminals; outside them, a
+      // second install of the official Orca may own `orca` on PATH.
+      {
+        from: 'resources/win32/bin/orca.cmd',
+        to: `bin/${forkIdentity.cliAliasName}.cmd`
       },
       {
         from: 'native/windows-cli-launcher/.build/orca.exe',
@@ -474,7 +489,7 @@ module.exports = {
     ]
   },
   nsis: {
-    artifactName: 'orca-windows-setup.${ext}',
+    artifactName: `${forkIdentity.installerArtifactBaseName}.\${ext}`,
     shortcutName: '${productName}',
     uninstallDisplayName: '${productName}',
     createDesktopShortcut: 'always',
@@ -678,8 +693,8 @@ module.exports = {
   npmRebuild: true,
   publish: {
     provider: 'github',
-    owner: 'stablyai',
-    repo: devChannelRepo ?? 'orca',
+    owner: forkIdentity.releaseOwner,
+    repo: devChannelRepo ?? forkIdentity.releaseRepo,
     // Why draft on the main repo: `--publish always` otherwise creates a
     // public GitHub release as soon as the first platform uploads, and
     // /releases/latest serves a missing Windows exe. release-cut undrafts
