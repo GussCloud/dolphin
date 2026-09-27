@@ -1,0 +1,56 @@
+# Dolphin self-hosted services for one VPS. Build context is cloud/.
+#   cp .env.example .env && edit it, then: docker compose up -d --build
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOLPHIN_DOMAIN: ${DOLPHIN_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./site:/srv/site:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - auth
+      - relay
+
+  auth:
+    build:
+      context: ../..
+      dockerfile: apps/auth/Dockerfile
+    restart: unless-stopped
+    environment:
+      DOLPHIN_AUTH_ISSUER: https://auth.${DOLPHIN_DOMAIN}
+    volumes:
+      - auth-data:/data
+
+  relay:
+    build:
+      context: ../..
+      dockerfile: apps/relay/Dockerfile
+    restart: unless-stopped
+    environment:
+      ORCA_RELAY_ROLE: combined
+      ORCA_RELAY_PUBLIC_URL: https://relay.${DOLPHIN_DOMAIN}
+      ORCA_RELAY_CELL_URL: https://relay.${DOLPHIN_DOMAIN}
+      ORCA_RELAY_AUTH_ISSUER: https://auth.${DOLPHIN_DOMAIN}
+      ORCA_RELAY_JWKS_URL: https://auth.${DOLPHIN_DOMAIN}/.well-known/jwks.json
+      ORCA_RELAY_ASSIGNMENT_SIGNING_KEY: ${RELAY_ASSIGNMENT_SIGNING_KEY}
+      # Required by the schema; only used by GCP admin routes, which this deployment never calls.
+      ORCA_RELAY_ADMIN_AUDIENCE: https://relay.${DOLPHIN_DOMAIN}/admin
+      ORCA_RELAY_DEPLOY_SERVICE_ACCOUNT: unused@${DOLPHIN_DOMAIN}
+      ORCA_RELAY_DATA_DIR: /data
+    volumes:
+      - relay-data:/data
+
+volumes:
+  caddy-data:
+  caddy-config:
+  auth-data:
+  relay-data:

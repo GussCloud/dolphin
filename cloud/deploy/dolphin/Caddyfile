@@ -1,0 +1,38 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# Static site: docs, update changelog/nudge feeds, plugin kill-list.
+{$DOLPHIN_DOMAIN} {
+	root * /srv/site
+	# In-app links target /docs/<topic>; serve the docs index until those pages exist.
+	@docs path /docs /docs/*
+	handle @docs {
+		try_files {path} {path}/index.html /docs/index.html
+		file_server
+	}
+	header /whats-new/* Cache-Control "public, max-age=300"
+	header /plugins/* Cache-Control "public, max-age=300"
+	file_server
+}
+
+auth.{$DOLPHIN_DOMAIN} {
+	reverse_proxy auth:8080
+}
+
+# Feedback and crash reports land on the auth service's /v1/feedback.
+api.{$DOLPHIN_DOMAIN} {
+	@feedback path /v1/feedback
+	handle @feedback {
+		request_body {
+			max_size 8MB
+		}
+		reverse_proxy auth:8080
+	}
+	respond 404
+}
+
+# Director and cell in one process; Caddy upgrades WebSockets transparently.
+relay.{$DOLPHIN_DOMAIN} {
+	reverse_proxy relay:8080
+}

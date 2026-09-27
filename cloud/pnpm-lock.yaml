@@ -21,6 +21,37 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@24.13.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.28.2)(tsx@4.23.15))
 
+  apps/auth:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^1.19.17
+        version: 1.19.17(hono@4.13.7)
+      hono:
+        specifier: ^4.13.7
+        version: 4.13.7
+      jose:
+        specifier: ^6.1.3
+        version: 6.2.3
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.0
+        version: 24.13.2
+      tsx:
+        specifier: ^4.21.0
+        version: 4.23.15
+      tweetnacl:
+        specifier: ^1.0.3
+        version: 1.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@24.13.2)(vite@8.0.16(@types/node@24.13.2)(esbuild@0.28.2)(tsx@4.23.15))
+
   apps/push:
     dependencies:
       '@hono/node-server':
