@@ -1,3 +1,4 @@
+import { FORK_IDENTITY } from '../../shared/fork-identity'
 import {
   cpSync,
   lstatSync,
@@ -58,12 +59,18 @@ export function getOrcaUserDataPath(): string {
   // Why: CLI hook commands import this module outside Electron. Mirror the CLI
   // runtime metadata path so offline hook status/on/off uses the same userData.
   if (process.platform === 'darwin') {
-    return join(homedir(), 'Library', 'Application Support', 'orca')
+    return join(homedir(), 'Library', 'Application Support', FORK_IDENTITY.userDataDirName)
   }
   if (process.platform === 'win32') {
-    return join(process.env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'), 'orca')
+    return join(
+      process.env.APPDATA ?? join(homedir(), 'AppData', 'Roaming'),
+      FORK_IDENTITY.userDataDirName
+    )
   }
-  return join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'orca')
+  return join(
+    process.env.XDG_CONFIG_HOME || join(homedir(), '.config'),
+    FORK_IDENTITY.userDataDirName
+  )
 }
 
 // Why: each managed home (the shared runtime mirror, or a per-account

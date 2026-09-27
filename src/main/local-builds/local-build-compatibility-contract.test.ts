@@ -1,3 +1,4 @@
+import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { describe, expect, it } from 'vitest'
 import { SCHEMA_VERSION } from '../../shared/constants'
 import compatibilityContract from '../../shared/local-build-compatibility-contract.json'
@@ -11,7 +12,7 @@ describe('packaged local build compatibility contract', () => {
   it('stays aligned with runtime state and daemon constants', () => {
     expect(LOCAL_BUILD_COMPATIBILITY_CONTRACT).toEqual(compatibilityContract)
     expect(compatibilityContract).toMatchObject({
-      appId: 'com.stablyai.orca',
+      appId: FORK_IDENTITY.appId,
       stateSchemaVersion: SCHEMA_VERSION,
       readableStateSchemaVersions: [SCHEMA_VERSION],
       daemonProtocolVersion: PROTOCOL_VERSION,

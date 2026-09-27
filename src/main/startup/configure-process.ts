@@ -1,3 +1,4 @@
+import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { app } from 'electron'
 import { mkdirSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -209,6 +210,8 @@ export function configureDevUserDataPath(isDev: boolean): void {
   }
 
   if (!isDev) {
+    // Why explicit: never share the official Orca's profile, whatever name Electron derived.
+    app.setPath('userData', join(app.getPath('appData'), FORK_IDENTITY.userDataDirName))
     return
   }
   const overrideUserDataPath = process.env.ORCA_DEV_USER_DATA_PATH

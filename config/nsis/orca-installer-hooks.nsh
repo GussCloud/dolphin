@@ -24,7 +24,8 @@
 ; MARKDOWN_PROGID must stay in sync with the extension list handled by
 ; isMarkdownDocumentName() in src/main/ipc/markdown-documents.ts.
 ; ---------------------------------------------------------------------------
-!define MARKDOWN_PROGID "Orca.Markdown"
+; Why PRODUCT_NAME: a fork installed beside Orca must not delete Orca's ProgID on uninstall.
+!define MARKDOWN_PROGID "${PRODUCT_NAME}.Markdown"
 
 !macro ORCA_REGISTER_MARKDOWN_OPEN_WITH EXT
   WriteRegNone SHELL_CONTEXT "Software\Classes\${EXT}\OpenWithProgids" "${MARKDOWN_PROGID}"
@@ -62,7 +63,7 @@
 ; part of uninstallOldVersion on EVERY update, and killing the daemon there would
 ; defeat the whole feature. Only clean up on a genuine uninstall.
 ;
-; The LOCALAPPDATA folder name must stay in sync with LOCAL_HOST_ROOT_NAME in
+; The LOCALAPPDATA folder name (PRODUCT_NAME) must stay in sync with LOCAL_HOST_ROOT_NAME in
 ; src/main/daemon/daemon-host-relocation.ts. See
 ; docs/reference/windows-daemon-host-relocation.md.
 !macro customUnInstall
@@ -88,14 +89,18 @@
     ${endIf}
     nsExec::Exec 'taskkill /F /IM "${APP_EXECUTABLE_FILENAME}" $2'
     Pop $0
-    nsExec::Exec 'taskkill /F /IM "orca-terminal-daemon.exe" $2'
-    Pop $0
+    ; Why Orca-only: builds under another product name never shipped this host, and killing
+    ; it by image name would reach an Orca installed beside them.
+    !if "${PRODUCT_NAME}" == "Orca"
+      nsExec::Exec 'taskkill /F /IM "orca-terminal-daemon.exe" $2'
+      Pop $0
+    !endif
     Pop $2
     Pop $1
     Pop $0
     ; Give the OS a moment to release the image lock before removing the tree.
     Sleep 500
-    RMDir /r "$LOCALAPPDATA\Orca\daemon-host"
+    RMDir /r "$LOCALAPPDATA\${PRODUCT_NAME}\daemon-host"
   ${endIf}
   ; Why outside the ${isUpdated} guard: customInstall rewrites these on every update, so
   ; dropping them during uninstallOldVersion is correct and keeps the pair symmetric.
