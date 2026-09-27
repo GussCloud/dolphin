@@ -11,6 +11,10 @@ export function findSessionInconsistencies(args: {
   /** False in degraded mode, where fresh PTYs legitimately run outside the daemon. */
   expectRegisteredInDaemon: boolean
   probePid: (pid: number) => PidLiveness
+  /** Session ids any saved tab names; omitted means unknown, so no orphan verdicts. */
+  referencedBySavedTabs?: ReadonlySet<string>
+  /** Session ids with history on disk that a reopen could cold-restore. */
+  restorableSessionIds?: ReadonlySet<string>
 }): SessionInconsistency[] {
   const findings: SessionInconsistency[] = []
   const registeredIds = new Set(args.registered.map((pty) => pty.ptyId))
@@ -35,11 +39,23 @@ export function findSessionInconsistencies(args: {
 
   for (const session of args.daemonSessions ?? []) {
     if (session.isAlive && !registeredIds.has(session.sessionId)) {
+      const orphaned =
+        args.referencedBySavedTabs !== undefined &&
+        !args.referencedBySavedTabs.has(session.sessionId)
       findings.push({
-        kind: 'daemon-session-untracked',
+        kind: orphaned ? 'daemon-session-orphaned' : 'daemon-session-untracked',
         sessionId: session.sessionId,
         pid: session.pid
       })
+    }
+  }
+
+  // Why only with a complete inventory: otherwise "not live" is merely unknown.
+  if (daemonIds && args.referencedBySavedTabs && args.restorableSessionIds) {
+    for (const sessionId of args.referencedBySavedTabs) {
+      if (!daemonIds.has(sessionId) && !args.restorableSessionIds.has(sessionId)) {
+        findings.push({ kind: 'saved-tab-session-unavailable', sessionId, pid: null })
+      }
     }
   }
   return findings
