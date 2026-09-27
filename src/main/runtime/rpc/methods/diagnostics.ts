@@ -2,11 +2,10 @@ import { defineMethod } from '../core'
 import { collectRuntimeDiagnostics } from '../../../diagnostics/runtime-diagnostics'
 import { getDaemonHistoryDir } from '../../../daemon/daemon-launch-paths'
 import { scanTerminalHistorySessionTrees } from '../../../daemon/terminal-history-session-retention'
-import {
-  isDaemonDegraded,
-  listDaemonSessionInventory,
-  readCurrentDaemonIdentity
-} from '../../../daemon/daemon-session-inventory'
+
+// Why lazy: the inventory pulls the daemon router and headless emulator, whose xterm polyfill
+// installs a global `window` in every process that merely loads the RPC method table.
+const loadDaemonSessionInventory = () => import('../../../daemon/daemon-session-inventory')
 
 export const DIAGNOSTICS_METHODS = [
   defineMethod({
@@ -20,6 +19,8 @@ export const DIAGNOSTICS_METHODS = [
     name: 'diagnostics.runtime',
     params: null,
     handler: async (_params, { runtime }) => {
+      const { isDaemonDegraded, listDaemonSessionInventory, readCurrentDaemonIdentity } =
+        await loadDaemonSessionInventory()
       return await collectRuntimeDiagnostics({
         getMemorySnapshot: () => runtime.getMemorySnapshot(),
         listDaemonSessions: listDaemonSessionInventory,

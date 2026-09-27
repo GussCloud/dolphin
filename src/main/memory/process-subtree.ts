@@ -11,6 +11,8 @@ export type ProcRow = {
   memory: number
   /** Committed bytes, resident or paged out. Absent when the host cannot report it. */
   privateMemory?: number
+  /** Image name, when the sweep reports one (Windows CIM only). */
+  name?: string
 }
 
 /** Indexed view of a single host process sweep. */
@@ -72,7 +74,22 @@ export function collectDaemonUsage(
   if (!row) {
     return undefined
   }
-  const untracked = collectSubtree(index, daemonPid, claimed).filter((pid) => pid !== daemonPid)
+  // Why: a Windows ConPTY session is two daemon children, the shell and its OpenConsole host; the
+  // host is expected once per claimed shell, and only a surplus one is unexplained.
+  let excusedConsoleHosts = (index.childrenOf.get(daemonPid) ?? []).filter((pid) =>
+    claimed.has(pid)
+  ).length
+  const untracked = collectSubtree(index, daemonPid, claimed).filter((pid) => {
+    if (pid === daemonPid) {
+      return false
+    }
+    const row = index.byPid.get(pid)
+    if (row?.ppid === daemonPid && isConsoleHostName(row.name) && excusedConsoleHosts > 0) {
+      excusedConsoleHosts -= 1
+      return false
+    }
+    return true
+  })
   return {
     pid: daemonPid,
     cpu: clampMemoryMetric(row.cpu),
@@ -80,4 +97,10 @@ export function collectDaemonUsage(
     ...optionalCommitField(index.hasPrivateMemory, clampMemoryMetric(row.privateMemory)),
     untrackedDescendantCount: untracked.length
   }
+}
+
+const CONSOLE_HOST_NAMES = new Set(['openconsole.exe', 'conhost.exe'])
+
+function isConsoleHostName(name: string | undefined): boolean {
+  return name !== undefined && CONSOLE_HOST_NAMES.has(name.toLowerCase())
 }
