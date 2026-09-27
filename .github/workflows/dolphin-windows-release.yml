@@ -1,0 +1,166 @@
+name: Dolphin Windows Release
+
+# Why its own workflow: upstream's release-cut and dev-channel legs are gated to stablyai/orca and
+# need SignPath and App tokens this fork does not have. This builds an unsigned NSIS installer
+# under the Dolphin identity (docs/reference/fork-identity.md) and publishes it with the repo's
+# own GITHUB_TOKEN, so the in-app updater (pointed at this repo) finds latest.yml beside it.
+#
+# Cut a release: bump package.json "version", merge to main, then dispatch this workflow with
+# that version. The tag v<version> is created on the dispatched commit.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, without the leading v; must equal package.json
+        required: true
+        type: string
+      prerelease:
+        description: Mark the GitHub release as a prerelease
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dolphin-windows-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  build-win:
+    if: github.repository == 'GussCloud/orca'
+    # Why windows-2022: windows-latest's VS 2026 image breaks node-gyp native installs (see
+    # dev-channel-win-build.yml).
+    runs-on: windows-2022
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      VERSION: ${{ inputs.version }}
+      TAG: v${{ inputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check the requested version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::version '$VERSION' is not semver."
+            exit 1
+          fi
+          packaged="$(node -p "require('./package.json').version")"
+          if [[ "$packaged" != "$VERSION" ]]; then
+            echo "::error::package.json is at $packaged, not $VERSION. Bump it on main first."
+            exit 1
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: electron-builder-win-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-builder-win-
+
+      # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
+      # returns transient 504s.
+      - name: Install dependencies
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: pnpm install --frozen-lockfile
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Build Windows process-table addon for the relay
+        shell: bash
+        run: |
+          node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=x64
+          node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=arm64
+
+      - name: Build app
+        shell: bash
+        run: pnpm build:release
+        env:
+          ORCA_REQUIRE_RELAY_NATIVE_ADDONS: 'x64,arm64'
+          # Why ORCA_BUILD_IDENTITY and PostHog stay unset: telemetry only transmits for upstream's
+          # stable/rc identities, so the fork build stays silent.
+
+      - name: Package Windows installer
+        shell: pwsh
+        run: |
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --win --publish never
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        env:
+          ORCA_BUILD_COMMIT: ${{ github.sha }}
+
+      # Why assert before publishing: the updater resolves a tag, then fetches latest.yml from it;
+      # a release with the installer but no manifest is one updates 404 on.
+      - name: Collect release assets
+        id: assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          installer="dist/dolphin-windows-setup.exe"
+          for required in "$installer" "$installer.blockmap" dist/latest.yml; do
+            if [[ ! -f "$required" ]]; then
+              echo "::error::missing $required"
+              ls -la dist
+              exit 1
+            fi
+          done
+          echo "Packaged:"
+          ls -la dist/*.exe dist/*.blockmap dist/latest.yml
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          flags=(--target "$GITHUB_SHA" --title "Dolphin $TAG")
+          if [[ -f "docs/releases/$TAG.md" ]]; then
+            flags+=(--notes-file "docs/releases/$TAG.md")
+          else
+            flags+=(--generate-notes)
+          fi
+          if [[ "$PRERELEASE" == "true" ]]; then
+            flags+=(--prerelease)
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::release $TAG already exists; bump the version instead of overwriting it."
+            exit 1
+          fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" "${flags[@]}" \
+            dist/dolphin-windows-setup.exe \
+            dist/dolphin-windows-setup.exe.blockmap \
+            dist/latest.yml
