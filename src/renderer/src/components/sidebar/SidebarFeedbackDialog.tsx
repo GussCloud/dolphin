@@ -1,3 +1,4 @@
+import { FORK_ISSUES_URL } from '../../../../shared/fork-identity'
 /* oxlint-disable react-doctor/no-adjust-state-on-prop-change -- Why: feedback viewer details are loaded through GitHub IPC after the dialog receives the issue URL. */
 import React, { useRef, useState } from 'react'
 import { ExternalLink, Github } from 'lucide-react'
@@ -26,7 +27,7 @@ import { SidebarFeedbackImageAttachments } from './SidebarFeedbackImageAttachmen
 import { useSidebarFeedbackEnvironmentPrefill } from './use-sidebar-feedback-environment-prefill'
 import { useSidebarFeedbackImages } from './use-sidebar-feedback-images'
 
-const GITHUB_ISSUES_URL = 'https://github.com/stablyai/orca/issues/'
+const GITHUB_ISSUES_URL = `${FORK_ISSUES_URL}/`
 const DISCORD_URL = 'https://discord.gg/fzjDKHxv8Q'
 const X_URL = 'https://x.com/orca_build'
 

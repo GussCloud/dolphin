@@ -21,13 +21,32 @@ The packaged `resources\bin` still ships `orca.exe` and `orca.cmd`. Agents, skil
 
 Dolphin's Windows installers are unsigned: there is no SignPath certificate. Unless `ORCA_WIN_SIGNPATH_SIGNED=1` is set, the builder omits `publisherName` and sets `verifyUpdateCodeSignature: false`. Without that, every update would fail Authenticode verification. Windows SmartScreen warns on first run.
 
+## Upstream endpoints
+
+Every link and service the app reaches is defined in `src/shared/fork-identity.ts`. Nothing reaches `stablyai/orca` or `*.onorca.dev` any more, except the mobile app download links (the official Orca mobile app is the only one, and it pairs with Dolphin).
+
+| What | Now |
+|---|---|
+| Skills installed into agents (`npx skills add`) | `GussCloud/orca` |
+| GitHub links, issues, star prompt, share card | `GussCloud/orca` |
+| Docs, telemetry notice | `https://dolphin.guss.dev.br/docs` |
+| Changelog page | GitHub releases of this repo |
+| Update changelog/nudge feeds, plugin kill-list | `https://dolphin.guss.dev.br/{whats-new,plugins}/...` (fail soft while absent) |
+| Cloud sign-in (`dolphin-desktop` client) | `https://auth.dolphin.guss.dev.br` |
+| Mobile relay director | `https://relay.dolphin.guss.dev.br` |
+| Push gateway | `https://push.dolphin.guss.dev.br` |
+| Artifact and skill sharing (host allowlist too) | `https://share.dolphin.guss.dev.br` |
+| Feedback and crash reports | `https://api.dolphin.guss.dev.br/v1/feedback` |
+
+## Home state
+
+Credentials move to `~/.dolphin` (Jira, Linear, Bitbucket, MiniMax, OpenAI speech key), so Dolphin never reads or overwrites the official Orca's.
+
+`~/.orca/agent-hooks` stays shared on purpose. Agent configs such as `~/.claude/settings.json` point at that single script, and the script forwards each event to the app whose terminal launched the agent (`ORCA_AGENT_HOOK_PORT`). A second, Dolphin-only path would register every hook twice and let each app prune the other's entries. `~/.orca-remote` on SSH hosts and the `orcad` state root stay too, for the same reason.
+
 ## Not yet separated
 
-These still point at upstream or are shared with it:
-
-- `~/.orca` home state, which dev and prod already share: hooks, Jira credentials, agent-teams shim.
+- In-app "Orca" branding strings and the `orca` CLI name.
+- `TERM_PROGRAM=Orca`, which CLIs use to detect the terminal.
 - The WSL bridge path.
-- The upstream changelog and nudge feeds on onorca.dev.
-- In-app "Orca" branding strings.
-
-None of these affect installing Dolphin beside Orca.
+- The mobile app itself (`mobile/`), which still builds as `com.stably.orca.mobile`.

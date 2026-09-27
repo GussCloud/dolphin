@@ -1,3 +1,4 @@
+import { FORK_REPOSITORY_URL } from '../../../shared/fork-identity'
 import { useCallback, useEffect, useState } from 'react'
 import { ExternalLink, Star, X } from 'lucide-react'
 import { Card } from './ui/card'
@@ -5,7 +6,7 @@ import { Button } from './ui/button'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
 
-const ORCA_REPO_URL = 'https://github.com/stablyai/orca'
+const ORCA_REPO_URL = FORK_REPOSITORY_URL
 type StarNagMode = 'gh' | 'web'
 
 /**

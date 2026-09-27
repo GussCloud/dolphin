@@ -1,3 +1,4 @@
+import { FORK_ISSUES_URL } from '../../../../shared/fork-identity'
 import React from 'react'
 import { ExternalLink, KanbanSquare, Map as MapIcon, Table as TableIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,7 @@ import { GhAuthErrorHelp } from './GhAuthErrorHelp'
 import type { GitHubProjectViewSummary } from '../../../../shared/github/project-types'
 import type { GitHubProjectViewError } from '../../../../shared/github/project-result-types'
 
-const ORCA_FEATURE_REQUEST_URL = 'https://github.com/stablyai/orca/issues/new'
+const ORCA_FEATURE_REQUEST_URL = `${FORK_ISSUES_URL}/new`
 
 export function ProjectViewTabStrip({
   views,

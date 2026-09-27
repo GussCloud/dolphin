@@ -118,7 +118,9 @@ describe('SkillCloudService bearer links', () => {
     vi.stubEnv('ORCA_CLOUD_AUTH_TOKEN', 'desktop-e2e-token')
 
     await expect(
-      new SkillCloudService(userDataPath()).listOwnedShares({ apiUrl: 'https://share.onorca.dev' })
+      new SkillCloudService(userDataPath()).listOwnedShares({
+        apiUrl: 'https://share.dolphin.guss.dev.br'
+      })
     ).rejects.toThrow('available only in development builds')
   })
 })

@@ -1,5 +1,6 @@
+import { FORK_CLOUD_ORIGINS } from './fork-identity'
 const SHARE_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/
-const PRODUCTION_HOSTS = new Set(['app.orca.dev', 'share.onorca.dev'])
+const PRODUCTION_HOSTS = new Set([new URL(FORK_CLOUD_ORIGINS.share).hostname])
 
 export function parseSkillShareId(value: string): string | null {
   const trimmed = value.trim()

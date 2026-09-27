@@ -1,3 +1,4 @@
+import { FORK_RELEASES_URL, FORK_WEB_URLS } from '../shared/fork-identity'
 import { net } from 'electron'
 import type { ChangelogData } from '../shared/update-status-types'
 import { compareVersions } from './updater-fallback'
@@ -10,7 +11,7 @@ type ChangelogEntry = {
   releaseNotesUrl: string
 }
 
-const CHANGELOG_URL = 'https://onorca.dev/changelog'
+const CHANGELOG_URL = FORK_RELEASES_URL
 
 function isValidEntry(entry: ChangelogEntry): boolean {
   return (
@@ -42,7 +43,7 @@ export async function fetchChangelog(
   incomingVersion: string,
   localVersion: string
 ): Promise<ChangelogData | null> {
-  const res = await net.fetch('https://onorca.dev/whats-new/changelog.json', {
+  const res = await net.fetch(FORK_WEB_URLS.whatsNewChangelog, {
     signal: AbortSignal.timeout(5000)
   })
   if (!res.ok) {
