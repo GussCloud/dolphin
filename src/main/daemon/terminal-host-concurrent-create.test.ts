@@ -69,6 +69,7 @@ describe('concurrent createOrAttach across the async spawn', () => {
     expect(spawnSubprocess).toHaveBeenCalledOnce()
     expect(results.map((result) => result.isNew).sort()).toEqual([false, true])
     expect(host.listSessions()).toHaveLength(1)
+    expect(host.listSessions()[0].createdAt).toBeGreaterThan(0)
 
     await host.dispose()
   })

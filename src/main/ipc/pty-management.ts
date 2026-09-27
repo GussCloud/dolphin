@@ -1,13 +1,11 @@
 import { ipcMain } from 'electron'
-import { DaemonPtyRouter } from '../daemon/daemon-pty-router'
-import { DegradedDaemonPtyProvider } from '../daemon/degraded-daemon-pty-provider'
-import type { DaemonPtyAdapter } from '../daemon/daemon-pty-adapter'
+import { getCurrentDaemonMacTccAttributionHealth, restartDaemon } from '../daemon/daemon-init'
 import {
-  getCurrentDaemonMacTccAttributionHealth,
-  getDaemonProvider,
-  restartDaemon
-} from '../daemon/daemon-init'
-import { getCurrentDaemonAdapter } from '../daemon/daemon-provider-routing'
+  collectDaemonSessions as collectSessions,
+  getDaemonAdapters,
+  isDaemonDegraded,
+  readCurrentDaemonIdentity
+} from '../daemon/daemon-session-inventory'
 import {
   getDaemonFolderAccessMismatch,
   refreshDaemonFolderAccessProbe,
@@ -18,8 +16,8 @@ import {
   type DaemonFolderAccessResetResult
 } from '../daemon/daemon-folder-access-reset'
 import type { MacDaemonTccAttributionHealth } from '../daemon/daemon-tcc-attribution'
-import type { DaemonEndpointIdentity } from '../daemon/daemon-hello-protocol'
 import type { DaemonSessionInfo } from '../daemon/types'
+import { setMemorySnapshotDaemonPidReader } from '../memory/daemon-pid-source'
 
 // Why: poll past the daemon's 5s SIGTERM→SIGKILL ladder (KILL_TIMEOUT_MS in session.ts), else slow-exiting shells falsely look "refused".
 const MAX_POLL_ATTEMPTS = 65
@@ -29,47 +27,8 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-function getDaemonAdapters(): DaemonPtyAdapter[] {
-  const provider = getDaemonProvider()
-  if (!provider) {
-    return []
-  }
-  if (provider instanceof DaemonPtyRouter || provider instanceof DegradedDaemonPtyProvider) {
-    return [...provider.getAllAdapters()]
-  }
-  return [provider]
-}
-
-// Why: surface degraded mode (daemon alive but cannot spawn fresh PTYs) so the UI can warn new terminals lack persistence.
-function isDaemonDegraded(): boolean {
-  const provider = getDaemonProvider()
-  return (
-    provider instanceof DegradedDaemonPtyProvider &&
-    provider.routesFreshSpawnsToLocalProvider === true
-  )
-}
-
-// Why the current adapter only: evidence is keyed to the daemon now spawning terminals, so a
-// legacy adapter's daemon must never satisfy the identity match that keeps the notice up.
-function readCurrentDaemonIdentity(): DaemonEndpointIdentity | null {
-  const provider = getDaemonProvider()
-  return provider ? getCurrentDaemonAdapter(provider).getDaemonIdentity() : null
-}
-
-async function collectSessions(adapters: DaemonPtyAdapter[]): Promise<DaemonSessionInfo[]> {
-  const results = await Promise.allSettled(
-    adapters.map(async (adapter) => {
-      const sessions = await adapter.listSessions()
-      return sessions.map<DaemonSessionInfo>((s) => ({
-        ...s,
-        protocolVersion: adapter.protocolVersion
-      }))
-    })
-  )
-  return results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
-}
-
 export function registerDaemonManagementHandlers(): void {
+  setMemorySnapshotDaemonPidReader(() => readCurrentDaemonIdentity()?.pid ?? null)
   ipcMain.removeHandler('pty:management:listSessions')
   ipcMain.removeHandler('pty:management:killAll')
   ipcMain.removeHandler('pty:management:killOne')

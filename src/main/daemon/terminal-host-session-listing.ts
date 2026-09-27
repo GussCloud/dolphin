@@ -2,6 +2,13 @@ import type { ClaimedAgentPtyOwnerRegistry } from '../../shared/claimed-agent-pt
 import type { Session } from './session'
 import type { SessionInfo } from './types'
 
+// Why a side table: Session is at its size budget, and only the listing reads the timestamp.
+const createdAtBySession = new WeakMap<Session, number>()
+
+export function recordTerminalHostSessionCreated(session: Session, createdAt = Date.now()): void {
+  createdAtBySession.set(session, createdAt)
+}
+
 export function listLiveTerminalHostSessions(
   sessions: ReadonlyMap<string, Session>,
   agentSessionOwners: ClaimedAgentPtyOwnerRegistry
@@ -24,7 +31,7 @@ export function listLiveTerminalHostSessions(
       cwd: session.getCwd(),
       cols: size?.cols ?? 0,
       rows: size?.rows ?? 0,
-      createdAt: 0,
+      createdAt: createdAtBySession.get(session) ?? 0,
       agentSessionOwners: agentSessionOwners.listForPty(session.sessionId)
     })
   }

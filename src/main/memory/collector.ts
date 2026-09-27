@@ -34,6 +34,8 @@ import { listRegisteredPtys } from './pty-registry'
 import { enumerateWindowsProcessResources } from './windows-process-resource-collector'
 import { collectHostMemory } from './host-memory'
 import { getProcessMemoryMetric } from './process-memory-metric'
+import { readMemorySnapshotDaemonPid } from './daemon-pid-source'
+import { collectDaemonUsage, collectSubtree, type ProcIndex, type ProcRow } from './process-subtree'
 import {
   createEmptyWorktreeMemoryBucket,
   pushAppMemoryHistory,
@@ -53,6 +55,7 @@ import {
 } from './memory-snapshot-values'
 
 export type { MemorySnapshotStore } from './memory-snapshot-buckets'
+export { collectDaemonUsage, collectSubtree } from './process-subtree'
 
 // ─── Module state ───────────────────────────────────────────────────
 
@@ -84,30 +87,6 @@ export async function collectMemorySnapshot(store: MemorySnapshotStore): Promise
 const execAsync = promisify(exec)
 const PS_EXEC_TIMEOUT_MS = 5_000
 const PS_MAX_BUFFER = 10 * 1024 * 1024
-
-/** One row from the host-wide process listing. */
-type ProcRow = {
-  pid: number
-  ppid: number
-  /** Percent of one core (may exceed 100 on multi-core). */
-  cpu: number
-  /** Resident memory in bytes. */
-  memory: number
-  /** Committed bytes, resident or paged out. Absent when the host cannot report it. */
-  privateMemory?: number
-}
-
-/** Indexed view of a single host process sweep. */
-type ProcIndex = {
-  byPid: Map<number, ProcRow>
-  childrenOf: Map<number, number[]>
-  /**
-   * Whether this sweep reported committed bytes at all. Data-driven rather than
-   * platform-driven: the Windows typeperf fallback can be missing the counter,
-   * and reporting a 0 sum then would read as "agents commit nothing".
-   */
-  hasPrivateMemory: boolean
-}
 
 // ─── Host process enumeration ───────────────────────────────────────
 
@@ -178,40 +157,6 @@ export function parsePsOutput(stdout: string): ProcRow[] {
 async function enumerateWindows(): Promise<ProcRow[]> {
   return enumerateWindowsProcessResources()
 }
-/** Walk every descendant PID of `root`, inclusive. Exported for tests. */
-export function collectSubtree(
-  index: ProcIndex,
-  root: number,
-  excludedPids?: ReadonlySet<number>
-): number[] {
-  const result: number[] = []
-  const seen = new Set<number>()
-  const queue = [root]
-  while (queue.length > 0) {
-    const pid = queue.pop()
-    if (pid === undefined) {
-      break
-    }
-    // Once a PID was attributed to an earlier PTY, its complete subtree was
-    // already traversed. Do not walk those descendants again for overlapping
-    // PTY roots (common when several panes share a supervisor).
-    if (seen.has(pid) || excludedPids?.has(pid)) {
-      continue
-    }
-    seen.add(pid)
-    if (index.byPid.has(pid)) {
-      result.push(pid)
-    }
-    const kids = index.childrenOf.get(pid)
-    if (kids) {
-      for (const kid of kids) {
-        queue.push(kid)
-      }
-    }
-  }
-  return result
-}
-
 // ─── Electron app process bucketing ─────────────────────────────────
 
 type AppBucketsRaw = Omit<AppMemory, 'history'>
@@ -300,6 +245,7 @@ async function runSnapshot(store: MemorySnapshotStore): Promise<MemorySnapshot> 
     let sessionCpu = 0
     let sessionMemory = 0
     let sessionPrivateMemory = 0
+    let sessionProcessCount = 0
 
     if (pty.pid != null) {
       for (const pid of collectSubtree(processIndex, pty.pid, claimed)) {
@@ -311,6 +257,7 @@ async function runSnapshot(store: MemorySnapshotStore): Promise<MemorySnapshot> 
           continue
         }
         claimed.add(pid)
+        sessionProcessCount += 1
         sessionCpu += row.cpu
         sessionMemory += row.memory
         // Why the whole subtree: an agent's committed bytes live in the
@@ -325,7 +272,8 @@ async function runSnapshot(store: MemorySnapshotStore): Promise<MemorySnapshot> 
       pid: pty.pid ?? 0,
       cpu: clampMemoryMetric(sessionCpu),
       memory: clampMemoryMetric(sessionMemory),
-      ...optionalCommitField(processIndex.hasPrivateMemory, sessionPrivateMemory)
+      ...optionalCommitField(processIndex.hasPrivateMemory, sessionPrivateMemory),
+      processCount: sessionProcessCount
     }
 
     let bucket: WorktreeMemoryBucket
@@ -374,6 +322,8 @@ async function runSnapshot(store: MemorySnapshotStore): Promise<MemorySnapshot> 
     history: readMemoryHistory(b.worktreeId)
   }))
 
+  const daemon = collectDaemonUsage(processIndex, readMemorySnapshotDaemonPid(), claimed)
+
   let sessionCpuTotal = 0
   let sessionMemoryTotal = 0
   let sessionPrivateTotal = 0
@@ -394,6 +344,8 @@ async function runSnapshot(store: MemorySnapshotStore): Promise<MemorySnapshot> 
     ),
     totalCpu: appBuckets.cpu + sessionCpuTotal,
     totalMemory: appBuckets.memory + sessionMemoryTotal,
+    ...(daemon ? { daemon } : {}),
+    trackedProcessCount: claimed.size,
     collectedAt: now
   }
 }

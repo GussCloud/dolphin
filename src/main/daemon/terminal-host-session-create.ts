@@ -4,6 +4,7 @@ import { getDaemonSessionResultMetadata } from './daemon-create-or-attach-result
 import { enumerateDirectoryOnce } from './directory-enumeration-probe'
 import { normalizePtySize } from './daemon-pty-size'
 import { Session } from './session'
+import { recordTerminalHostSessionCreated } from './terminal-host-session-listing'
 import { shellPathSupportsPtyStartupBarrier } from './shell-ready'
 import type { InternalCreateOrAttachOptions } from './terminal-host-agent-session-claim'
 import type { CreateOrAttachResult } from './terminal-host-create-contract'
@@ -163,6 +164,7 @@ async function spawnAndPublishSession(
       ? { shellReadyTimeoutMs: opts.shellReadyTimeoutMs }
       : {})
   })
+  recordTerminalHostSessionCreated(session)
 
   if (opts.isCanceled?.()) {
     // Retain cleanup ownership if the native child refuses to exit.
