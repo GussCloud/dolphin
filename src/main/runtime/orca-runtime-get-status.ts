@@ -158,9 +158,9 @@ export class OrcaRuntimeWithGetStatus extends OrcaRuntimeWithGetRuntimeId {
   }
 
   /** The name status publishes: the configured override, else the detected one. */
-  /** Every host's persisted workspace session, for storage GC's saved-tab ownership check. */
-  readPersistedWorkspaceSessions(): unknown[] {
-    const hostIds = this.store?.getWorkspaceSessionHostIds?.() ?? []
+  /** Persisted workspace sessions: every host's for GC ownership, or only the local partition. */
+  readPersistedWorkspaceSessions(scope: 'all' | 'local' = 'all'): unknown[] {
+    const hostIds = scope === 'all' ? (this.store?.getWorkspaceSessionHostIds?.() ?? []) : []
     // Why the default partition too: it holds the local host's tabs whether or not it is listed.
     return [
       this.store?.getWorkspaceSession?.(),

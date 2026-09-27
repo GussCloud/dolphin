@@ -82,3 +82,50 @@ describe('probeLocalPid', () => {
     expect(probeLocalPid(process.pid)).toBe('live')
   })
 })
+
+describe('findSessionInconsistencies with saved-tab references', () => {
+  const base = {
+    registered: [],
+    expectRegisteredInDaemon: true,
+    probePid: () => 'live' as const
+  }
+
+  it('calls a live session nothing tracks or references orphaned', () => {
+    expect(
+      findSessionInconsistencies({
+        ...base,
+        daemonSessions: [
+          { sessionId: 'orphan', pid: 5, isAlive: true },
+          { sessionId: 'parked-tab', pid: 6, isAlive: true }
+        ],
+        referencedBySavedTabs: new Set(['parked-tab']),
+        restorableSessionIds: new Set()
+      })
+    ).toEqual([
+      { kind: 'daemon-session-orphaned', sessionId: 'orphan', pid: 5 },
+      { kind: 'daemon-session-untracked', sessionId: 'parked-tab', pid: 6 }
+    ])
+  })
+
+  it('flags a saved tab whose session is neither live nor restorable', () => {
+    expect(
+      findSessionInconsistencies({
+        ...base,
+        daemonSessions: [],
+        referencedBySavedTabs: new Set(['gone', 'cold-restorable']),
+        restorableSessionIds: new Set(['cold-restorable'])
+      })
+    ).toEqual([{ kind: 'saved-tab-session-unavailable', sessionId: 'gone', pid: null }])
+  })
+
+  it('makes no saved-tab verdicts without a complete daemon inventory', () => {
+    expect(
+      findSessionInconsistencies({
+        ...base,
+        daemonSessions: null,
+        referencedBySavedTabs: new Set(['gone']),
+        restorableSessionIds: new Set()
+      })
+    ).toEqual([])
+  })
+})
