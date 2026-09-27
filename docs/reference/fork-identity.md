@@ -10,7 +10,7 @@ This fork ships as **Dolphin** so it can be installed beside the official Orca w
 | userData | `%APPDATA%\orca` | `%APPDATA%\dolphin` | `configure-process.ts`, CLI `metadata.ts`, `codex-home-paths.ts`, builder `extraMetadata.name` |
 | Relocated daemon host | `%LOCALAPPDATA%\Orca\daemon-host` | `%LOCALAPPDATA%\Dolphin\daemon-host` | `daemon-host-relocation.ts`, NSIS `${PRODUCT_NAME}` |
 | Markdown ProgID | `Orca.Markdown` | `Dolphin.Markdown` | NSIS `${PRODUCT_NAME}` |
-| Update feed | `stablyai/orca` | `GussCloud/orca` | `release-channel.ts`, `updater-setup.ts`, `updater-release-feed.ts`, `updater-prerelease-feed.ts`, builder `publish` |
+| Update feed | `stablyai/orca` | `GussCloud/dolphin` | `release-channel.ts`, `updater-setup.ts`, `updater-release-feed.ts`, `updater-prerelease-feed.ts`, builder `publish` |
 | Installer | `orca-windows-setup.exe` | `dolphin-windows-setup.exe` | builder `nsis.artifactName` |
 
 ## CLI
@@ -27,8 +27,8 @@ Every link and service the app reaches is defined in `src/shared/fork-identity.t
 
 | What | Now |
 |---|---|
-| Skills installed into agents (`npx skills add`) | `GussCloud/orca` |
-| GitHub links, issues, star prompt, share card | `GussCloud/orca` |
+| Skills installed into agents (`npx skills add`) | `GussCloud/dolphin` |
+| GitHub links, issues, star prompt, share card | `GussCloud/dolphin` |
 | Docs, telemetry notice | `https://dolphin.guss.dev.br/docs` |
 | Changelog page | GitHub releases of this repo |
 | Update changelog/nudge feeds, plugin kill-list | `https://dolphin.guss.dev.br/{whats-new,plugins}/...` (fail soft while absent) |

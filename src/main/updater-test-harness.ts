@@ -264,7 +264,7 @@ export function createUpdaterMocks(): UpdaterMocks {
           : result
       },
       getReleaseDownloadUrl: (tag: string) =>
-        `https://github.com/GussCloud/orca/releases/download/${tag}`
+        `https://github.com/GussCloud/dolphin/releases/download/${tag}`
     }),
     localBuildSwitch: () => ({ chooseLocalBuild: chooseLocalBuildMock }),
     localBuildFeedServer: () => ({ startLocalBuildFeed: startLocalBuildFeedMock })

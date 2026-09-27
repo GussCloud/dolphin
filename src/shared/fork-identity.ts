@@ -11,7 +11,7 @@ export const FORK_IDENTITY = {
   cliAliasName: 'dolphin',
   installerArtifactBaseName: 'dolphin-windows-setup',
   releaseOwner: 'GussCloud',
-  releaseRepo: 'orca'
+  releaseRepo: 'dolphin'
 } as const
 
 export const FORK_REPOSITORY_SLUG = `${FORK_IDENTITY.releaseOwner}/${FORK_IDENTITY.releaseRepo}`

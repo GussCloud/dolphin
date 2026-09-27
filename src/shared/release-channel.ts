@@ -23,9 +23,9 @@ export const RELEASE_CHANNEL_LABELS: Readonly<Record<ReleaseChannel, string>> = 
  *  releases atom feed, which only exposes the 10 newest entries — 24 hourly
  *  tags a day would evict every stable/RC entry and strand real users. */
 // Why the fork owner: a fork build must never update itself from, or into, upstream Orca.
-export const HOURLY_RELEASE_REPO = `${FORK_IDENTITY.releaseOwner}/orca-hourly`
-export const DAILY_RELEASE_REPO = `${FORK_IDENTITY.releaseOwner}/orca-daily`
-export const ADHOC_RELEASE_REPO = `${FORK_IDENTITY.releaseOwner}/orca-adhoc`
+export const HOURLY_RELEASE_REPO = `${FORK_IDENTITY.releaseOwner}/${FORK_IDENTITY.releaseRepo}-hourly`
+export const DAILY_RELEASE_REPO = `${FORK_IDENTITY.releaseOwner}/${FORK_IDENTITY.releaseRepo}-daily`
+export const ADHOC_RELEASE_REPO = `${FORK_IDENTITY.releaseOwner}/${FORK_IDENTITY.releaseRepo}-adhoc`
 export const MAIN_RELEASE_REPO = `${FORK_IDENTITY.releaseOwner}/${FORK_IDENTITY.releaseRepo}`
 
 export const HOURLY_PRERELEASE_IDENTIFIER = 'hourly'

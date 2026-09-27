@@ -6,5 +6,5 @@
   "cliAliasName": "dolphin",
   "installerArtifactBaseName": "dolphin-windows-setup",
   "releaseOwner": "GussCloud",
-  "releaseRepo": "orca"
+  "releaseRepo": "dolphin"
 }
