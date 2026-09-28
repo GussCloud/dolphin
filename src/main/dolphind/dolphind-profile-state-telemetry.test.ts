@@ -15,7 +15,11 @@ const selection: DolphindProfileStateAuthoritySelection = {
 
 describe('dolphind profile-state telemetry', () => {
   it('formats a bounded machine-readable authority selection event', () => {
-    expect(JSON.parse(formatDolphindProfileStateAuthoritySelected(selection).slice(18))).toEqual({
+    expect(
+      JSON.parse(
+        formatDolphindProfileStateAuthoritySelected(selection).slice('[dolphind-telemetry] '.length)
+      )
+    ).toEqual({
       event: 'profile_state_authority_selected',
       ...selection
     })
