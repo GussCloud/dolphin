@@ -102,7 +102,7 @@ const PATCH_TARGETS = [
   {
     relativePath: ['lib', 'windowsPtyAgent.js'],
     originalSha256: '8636d16b38266112204061a22b135734177c242837982fd3a4055be726efa64a',
-    patchedSha256: '1e23ef480569e73706e3ab4f5482c7e553c76f51414ae8e7b0bdcc2fd75f7280',
+    patchedSha256: '2f6ff07294fffbb03cc296607fd529864b977221f56e33661f99aa8ab0c34251',
     replacements: [
       [
         '                this._ptyNative.kill(this._pty, this._useConptyDll);\n                this._conoutSocketWorker.dispose();\n',

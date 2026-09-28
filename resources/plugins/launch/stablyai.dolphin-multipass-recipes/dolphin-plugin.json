@@ -5,7 +5,7 @@
   "name": "Multipass VM Recipes",
   "version": "1.0.0",
   "description": "A reviewed starter lifecycle for disposable Multipass workspaces.",
-  "repository": "https://github.com/GussCloud/dolphin-multipass-recipes",
+  "repository": "https://github.com/stablyai/dolphin-multipass-recipes",
   "engines": { "dolphin": ">=1.4.0" },
   "pluginApi": 1,
   "contributes": {
