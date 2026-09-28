@@ -6,6 +6,7 @@ import { UNVERIFIED_PROCESS_EXIT_CODE } from '../../../../shared/terminal-exit-c
 import type { Store } from '../../../persistence'
 import { retireTerminalSurfaceFromPersistence } from '../../../runtime/mobile-session-terminal-persistence-retirement'
 import type { DolphinRuntimeService } from '../../../runtime/dolphin-runtime'
+import type { RuntimeTerminalResolvePane as ResolvedPane } from '../../../../shared/runtime-terminal-contracts'
 import type { IPtyProvider, PtySpawnOptions, PtySpawnResult } from '../../../providers/types'
 import { parseAppSshPtyId } from '../../../providers/ssh-pty-id'
 import {
@@ -77,8 +78,8 @@ export function resolveStablePaneOwner(
   if (!paneKey || !worktreeId) {
     return null
   }
-  let resolved: ReturnType<DolphinRuntimeService['resolveTerminalPane']> | null = null
-  let resolvedHandleCandidate: typeof resolved = null
+  let resolved: ResolvedPane | null = null
+  let resolvedHandleCandidate: ResolvedPane | null = null
   if (runtime && typeof runtime.resolveTerminalPane === 'function') {
     try {
       const candidate = runtime.resolveTerminalPane(paneKey, worktreeId)
@@ -270,12 +271,8 @@ export async function attachStablePaneOwner(
     // the marked half observed the process, so only it may certify a death; the rest publishes the
     // stop sentinel its sibling handlePtyReattachFailure publishes, which every reader resolves to
     // `stop_unverified` (docs/reference/ssh-execution-boundary.md).
-    runtime?.onPtyExit(
-      owner.ptyId,
-      UNVERIFIED_PROCESS_EXIT_CODE,
-      owner.incarnationId,
-      isObservedPtyExitEvidence(error) ? { hostExitConfirmed: true } : {}
-    )
+    const exitEvidence = isObservedPtyExitEvidence(error) ? { hostExitConfirmed: true } : {}
+    runtime?.onPtyExit(owner.ptyId, UNVERIFIED_PROCESS_EXIT_CODE, owner.incarnationId, exitEvidence)
     clearProviderPtyState(owner.ptyId)
     ptyOwnership.delete(owner.ptyId)
     if (
