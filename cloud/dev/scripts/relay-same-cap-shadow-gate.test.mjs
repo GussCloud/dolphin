@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { readRelayWorkflow } from './relay-repository.mjs'
 import {
   READ_ATTEMPTS,
   evaluateShadowGate,
@@ -224,21 +223,6 @@ test('the verdict is the worst check, and an unverified read never reads as PASS
     'WOULD_BLOCK'
   )
 })
-
-// The step that owns each stamp, so a stamp's presence is judged where it has to be written.
-const STAMP_STEPS = {
-  drain: '- name: Reversibly isolate and drain only the selected cell',
-  apply: '- name: Apply only the selected same-cap template and MIG',
-  'verify-target': '- name: Verify new incarnation, exact image, protocol, and durable safety'
-}
-
-// One step's own lines: from its marker to the next sibling step at the same indent.
-function stepBody(workflow, marker) {
-  const start = workflow.indexOf(marker)
-  assert.notEqual(start, -1, `the job no longer has a step named ${marker}`)
-  const next = workflow.indexOf('\n      - ', start + marker.length)
-  return workflow.slice(start, next === -1 ? undefined : next)
-}
 
 const C28_INSTANCE = '5031087219978409220'
 
@@ -478,70 +462,5 @@ test('the gate stops reading at its own deadline and still reports a verdict', a
   for (const { options } of seam.calls) {
     assert.ok(options.timeoutMs > 0)
     assert.ok(options.timeoutMs <= SHADOW_GATE_THRESHOLDS.readTimeoutMs)
-  }
-})
-
-test('the job runs the gate report-only, after verification, and uploads its artifact', () => {
-  const workflow = readRelayWorkflow('deploy-relay-production-same-cap-job.yml')
-  const gate = workflow.slice(workflow.indexOf('- name: Shadow health gate (report only)'))
-  assert.notEqual(gate, '')
-  // Two independent guarantees that no verdict can fail a cell: the step's own exit code and this.
-  assert.match(gate.slice(0, gate.indexOf('run:')), /continue-on-error: true/)
-  assert.match(gate, /relay-same-cap-shadow-gate\.mjs/)
-  // The gate and its upload must be bounded in time as well as in outcome: a step that runs past
-  // the job's timeout-minutes gets the job cancelled, and cancellation stops the whole wave.
-  const gateHeader = gate.slice(0, gate.indexOf('run:'))
-  assert.match(gateHeader, /timeout-minutes: (\d+)/)
-  const stepTimeoutMinutes = Number(/timeout-minutes: (\d+)/.exec(gateHeader)[1])
-  assert.equal(stepTimeoutMinutes, 8)
-  // The script has to settle on its own before the runner kills it, or the artifact is never
-  // written and the step reports nothing at all.
-  assert.ok(
-    SHADOW_GATE_THRESHOLDS.overallDeadlineMs < stepTimeoutMinutes * 60_000,
-    'the gate deadline must leave the step time to write its verdict'
-  )
-  const upload = workflow.slice(workflow.indexOf('- name: Publish the shadow health gate verdict'))
-  assert.match(upload.slice(0, upload.indexOf('uses:')), /timeout-minutes: 2/)
-  assert.match(
-    workflow,
-    /name: relay-same-cap-shadow-gate-\$\{\{ inputs\.target-cell-id \}\}-\$\{\{ github\.run_id \}\}\.json/
-  )
-  // The gate is judged over the wave it just ran, so the job has to stamp its own steps, and the
-  // stamps reach the script through the environment rather than being expanded into its shell.
-  for (const [step, output] of [
-    ['drain', 'drain-started-at'],
-    ['apply', 'apply-started-at'],
-    ['apply', 'apply-completed-at'],
-    ['verify-target', 'verify-ended-at']
-  ]) {
-    // Scoped to the step that owns the stamp: a stamp written anywhere else in the job would
-    // still satisfy a whole-file match while recording the wrong instant.
-    assert.match(
-      stepBody(workflow, STAMP_STEPS[step]),
-      new RegExp(`${output}=\\$\\(date -u \\+%FT%TZ\\)`),
-      `${output} must be stamped inside the ${step} step`
-    )
-    assert.match(gate, new RegExp(`\\$\\{\\{ steps\\.${step}\\.outputs\\.${output} \\}\\}`))
-    assert.match(gate, new RegExp(`--${output} "\\$\\{[A-Z_]+\\}"`))
-  }
-  // The apply-start stamp has to precede the operation that can restart the instance, or the
-  // listener it bounds the search by has already happened. Presence is asserted before order,
-  // because indexOf answers -1 for an absent stamp and -1 precedes everything.
-  const applyStep = stepBody(workflow, STAMP_STEPS.apply)
-  const stampedAt = applyStep.indexOf('apply-started-at=')
-  const appliedAt = applyStep.indexOf('terraform -chdir=infra/terraform apply')
-  assert.notEqual(stampedAt, -1, 'the apply step does not stamp apply-started-at at all')
-  assert.notEqual(appliedAt, -1, 'the apply step no longer runs terraform apply')
-  assert.ok(stampedAt < appliedAt, 'apply-started-at must be stamped before terraform apply')
-  // Verification has to have happened first, or the gate judges a cell nothing checked, and the
-  // restore too, so reading logs never holds the cell out of admission for longer than today.
-  for (const earlier of [
-    '- name: Verify new incarnation, exact image, protocol, and durable safety',
-    '- name: Restore only the verified selected cell to its entry admission'
-  ]) {
-    assert.ok(
-      workflow.indexOf(earlier) < workflow.indexOf('- name: Shadow health gate (report only)'),
-      earlier
-    )
   }
 })

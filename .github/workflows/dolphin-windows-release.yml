@@ -1,7 +1,7 @@
 name: Dolphin Windows Release
 
-# Why its own workflow: upstream's release-cut and dev-channel legs are gated to GussCloud/dolphin and
-# need SignPath and App tokens this fork does not have. This builds an unsigned NSIS installer
+# Why its own workflow: signed releases need SignPath and App tokens this repository does not
+# have, so this is the only release path. It builds an unsigned NSIS installer
 # under the Dolphin identity (docs/reference/fork-identity.md) and publishes it with the repo's
 # own GITHUB_TOKEN, so the in-app updater (pointed at this repo) finds latest.yml beside it.
 #
@@ -39,8 +39,7 @@ concurrency:
 jobs:
   build-win:
     if: github.repository == 'GussCloud/dolphin'
-    # Why windows-2022: windows-latest's VS 2026 image breaks node-gyp native installs (see
-    # dev-channel-win-build.yml).
+    # Why windows-2022: windows-latest's VS 2026 image breaks node-gyp native installs.
     runs-on: windows-2022
     timeout-minutes: 90
     permissions:

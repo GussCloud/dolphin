@@ -27,7 +27,6 @@ export const PR_CHECK_JOBS = [
   'test',
   'dolphind_browser',
   'mobile_web_app',
-  'cross-version-wire',
   'managed_hook_node18',
   'package',
   'package_windows'
@@ -134,33 +133,6 @@ const MOBILE_WEB_APP_PREFIXES = [
 function changesMobileWebApp(changedFiles) {
   return changedFiles.some((file) => matchesPrefix(file, MOBILE_WEB_APP_PREFIXES))
 }
-
-const CROSS_VERSION_WIRE_PREFIXES = [
-  'tests/e2e/cross-version-wire/',
-  'src/shared/protocol-version',
-  'src/shared/terminal-stream-protocol',
-  'src/shared/browser-client-host-protocol',
-  'src/shared/browser-network-tunnel-protocol',
-  'src/shared/browser-client-host-placement',
-  'src/shared/agent-launch-intent',
-  'src/shared/rpc-contract/agent-launch-params',
-  'src/shared/agent-session-wire',
-  'src/shared/agent-session-mutation-envelope',
-  'src/shared/agent-session-record',
-  'src/shared/agent-session-journal-',
-  'src/main/ai-vault/structured-session-ownership.ts',
-  'src/main/native-chat/agent-session-journal/',
-  'src/main/native-chat/agent-session-wire/',
-  'src/main/runtime/agent-session-record-store',
-  'src/main/runtime/rpc/dispatcher',
-  'src/main/runtime/rpc/methods/agent-launch',
-  'src/main/runtime/rpc/methods/ai-vault.ts',
-  'src/main/runtime/rpc/methods/browser-tab-create-schema',
-  'src/main/runtime/rpc/methods/session-tabs.ts',
-  'src/main/runtime/rpc/methods/structured-agent-session',
-  'src/main/runtime/rpc/methods/terminal',
-  'src/renderer/src/runtime/remote-runtime-terminal-multiplexer'
-]
 
 const MANAGED_HOOK_PREFIXES = [
   'config/scripts/smoke-managed-hook-runtime-node18',
@@ -308,9 +280,7 @@ const DESKTOP_IRRELEVANT_PREFIXES = [
   'mobile/',
   'cloud/',
   '.github/workflows/cloud-',
-  '.github/workflows/mobile.yml',
-  '.github/workflows/mobile-ios-release.yml',
-  '.github/workflows/mobile-android-release.yml'
+  '.github/workflows/mobile.yml'
 ]
 
 const STATIC_ANALYSIS_AUDIT_SCRIPTS = [
@@ -427,8 +397,6 @@ function jobDetector(job) {
     // returns true, which would run this job on every desktop-relevant PR.
     case 'mobile_web_app':
       return changesMobileWebApp
-    case 'cross-version-wire':
-      return (files) => files.some((file) => matchesPrefix(file, CROSS_VERSION_WIRE_PREFIXES))
     case 'managed_hook_node18':
       return (files) => files.some((file) => matchesPrefix(file, MANAGED_HOOK_PREFIXES))
     case 'package':

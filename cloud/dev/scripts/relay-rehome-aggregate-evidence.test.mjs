@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { parseRegionalRehomeInventory } from './relay-rehome-aggregate-evidence.mjs'
-import { readRelayWorkflow } from './relay-repository.mjs'
 
 const now = Date.parse('2026-08-14T12:00:00Z')
 
@@ -110,26 +109,4 @@ test('refuses a line missing a required field, or repeating one', () => {
     ),
     /no aggregate/
   )
-})
-
-// The third edge of the chain the enable workflow depends on. The formatter is
-// pinned against this parser in the relay package's inventory-line census; this
-// pins the parser against the summary an operator reads, so a field that
-// reaches the evidence JSON and stops there fails here.
-test('publishes every parsed counter in the operator step summary', () => {
-  const job = readRelayWorkflow('operate-relay-production-rehome-job.yml')
-  // The jq program and the file it reads sit on separate continuation lines, so
-  // match the whole render rather than one line of it.
-  const summary = /jq -r '([^']*)' \\\n\s*"\$\{RUNNER_TEMP\}\/relay-rehome-inventory\.json"/.exec(job)?.[1]
-  assert.ok(summary, 'the rehome job no longer renders the inventory evidence')
-  const evidence = parseRegionalRehomeInventory([{
-    timestamp: '2026-08-14T11:58:00Z',
-    textPayload:
-      '[dolphin-relay] regional rehome inventory active=0 awaitingReceipt=0 targetRegistered=0' +
-      ' completedLast24Hours=0 abortedLast24Hours=0 hostNotArrivedLast24Hours=0 oldestActiveAgeMs=none'
-  }], { now, maxAgeMs: 5 * 60_000 })
-  for (const key of Object.keys(evidence)) {
-    if (key === 'timestamp') continue
-    assert.ok(summary.includes(`.${key}`), `${key} is missing from the step summary`)
-  }
 })

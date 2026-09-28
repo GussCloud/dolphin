@@ -29,7 +29,7 @@ variable "github_repo" {
 variable "github_repo_id" {
   type        = string
   description = "Numeric GitHub repository ID of github_owner/github_repo."
-  default     = "1183888342"
+  default     = "1391458496"
 
   validation {
     condition     = can(regex("^[0-9]+$", var.github_repo_id))
@@ -40,7 +40,7 @@ variable "github_repo_id" {
 variable "github_owner_id" {
   type        = string
   description = "Numeric GitHub owner ID of github_owner."
-  default     = "127256420"
+  default     = "56303449"
 
   validation {
     condition     = can(regex("^[0-9]+$", var.github_owner_id))

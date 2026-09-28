@@ -74,22 +74,6 @@ test('no Relay workflow authenticates as the shared staging deploy identity', ()
   }
 })
 
-test('the five staging Relay workflows name the relay deploy pair', () => {
-  for (const name of DEPLOY_WORKFLOWS) {
-    const source = workflow(name)
-    assert.match(source, /vars\.STAGING_GCP_RELAY_DEPLOY_WORKLOAD_IDENTITY_PROVIDER\b/, name)
-    assert.match(source, /vars\.STAGING_GCP_RELAY_DEPLOY_SERVICE_ACCOUNT\b/, name)
-  }
-})
-
-// Why: the Asia workflow serves both environments from one job. Repointing its staging arm must
-// not move production off the relay-owned shared account.
-test('the Asia admission production arm keeps the production deploy pair', () => {
-  const source = workflow('operate-relay-asia-admission.yml')
-  assert.match(source, /vars\.PRODUCTION_GCP_RELAY_DEPLOY_WORKLOAD_IDENTITY_PROVIDER\b/)
-  assert.match(source, /vars\.PRODUCTION_GCP_RELAY_DEPLOY_SERVICE_ACCOUNT\b/)
-})
-
 test('the provider allowlists exactly those five workflow refs', () => {
   const files = providerWorkflowFiles()
   assert.deepEqual([...files].sort(), [...DEPLOY_WORKFLOWS].sort())
@@ -137,7 +121,7 @@ test('the rendered attribute condition stays inside the provider limit', () => {
     `(${workflowRefs.map((ref) => `assertion.workflow_ref == '${ref}'`).join(' || ')})`
   ].join(' && ')
   assert.ok(rendered.length < 4096, `rendered condition is ${rendered.length} characters`)
-  assert.equal(rendered.length, 815)
+  assert.equal(rendered.length, 814)
 })
 
 // Why: the census is the point. A binding added here without a workflow step behind it, or one

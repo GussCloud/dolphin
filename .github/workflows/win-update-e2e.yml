@@ -9,19 +9,7 @@ name: Windows Update-Survival E2E
 # delete it. A fresh runner has no Dolphin registered, so it is the only safe home
 # for install-based testing. Manual dispatch only.
 
-# Why: workflow_dispatch only works once a workflow is on the default branch.
-# To exercise this from the unmerged feature branch WITHOUT touching main, a
-# push trigger scoped to that exact branch runs the workflow from the branch's
-# own tree. The paths filter keeps it to harness/workflow edits so ordinary
-# commits don't spend 30 min of Windows runner time. Push runs have no inputs,
-# so every parameter falls back to a default below.
 on:
-  push:
-    branches:
-      - Jinwoo-H/windows-update-survival
-    paths:
-      - 'tests/tools/win-update-e2e/**'
-      - '.github/workflows/win-update-e2e.yml'
   workflow_dispatch:
     inputs:
       from_tag:

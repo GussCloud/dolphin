@@ -6,7 +6,6 @@ const NON_TEST_FILES = new Set([
   'mobile/Gemfile',
   'mobile/Gemfile.lock',
   'mobile/README.md',
-  '.github/workflows/mobile-ios-release.yml',
   'config/scripts/pr-code-change-scope.mjs',
   'config/scripts/pr-code-change-scope.test.mjs',
   'config/scripts/mobile-release-check-scope.mjs',

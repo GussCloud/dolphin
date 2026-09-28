@@ -3,10 +3,8 @@
 # Builds the prebuilt iOS workspace, signs it with the distribution identity
 # imported into the CI keychain plus an explicit App Store provisioning profile
 # fetched via the App Store Connect API key, uploads the .ipa, then distributes
-# the processed build to external TestFlight testers. Credentials come from CI
-# env vars
-# (see .github/workflows/mobile-ios-release.yml) so nothing secret lives in the
-# repo.
+# the processed build to external TestFlight testers. Credentials come from
+# env vars so nothing secret lives in the repo.
 #
 # Why manual signing (not -allowProvisioningUpdates / automatic cloud signing):
 # mixing a pre-imported distribution .p12 with xcodebuild's cloud-managed

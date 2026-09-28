@@ -33,10 +33,9 @@ on:
       # change can break mobile's typecheck with no other mobile signal.
       - 'src/shared/rpc-contract/**'
       # Why: this job holds the only checks that load the Fastfile, so edits to
-      # it or to the release workflow it guards must re-run them.
+      # it must re-run them.
       - '.github/workflows/mobile.yml'
       - '.github/actions/install-node-dependencies/**'
-      - '.github/workflows/mobile-ios-release.yml'
       - 'config/scripts/mobile-release-check-scope*'
       - 'config/scripts/mobile-test-change-scope*'
       - 'config/scripts/pr-code-change-scope.mjs'

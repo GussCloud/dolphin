@@ -6,8 +6,6 @@ import { MOBILE_WEB_APP_DEPENDENCIES_REQUIRED_ENV } from './mobile-web-app-bundl
 
 const workflow = parse(readFileSync('.github/workflows/pr.yml', 'utf8'))
 const prTestLocWorkflow = parse(readFileSync('.github/workflows/pr-test-loc.yml', 'utf8'))
-const trackingWorkflow = parse(readFileSync('.github/workflows/track-community-prs.yaml', 'utf8'))
-const releasePolicyWorkflow = parse(readFileSync('.github/workflows/release-policy.yml', 'utf8'))
 const issueLabelWorkflow = parse(readFileSync('.github/workflows/issue-os-labeler.yaml', 'utf8'))
 const unitTestWorkflow = parse(readFileSync('.github/workflows/unit-tests.yml', 'utf8'))
 const nodeNextWorkflow = parse(readFileSync('.github/workflows/node-next-compat.yml', 'utf8'))
@@ -53,8 +51,6 @@ describe('PR workflow parallelism', () => {
     expect(workflow.jobs.typecheck['runs-on']).toBe('ubuntu-24.04-arm')
     expect(workflow.jobs.verify['runs-on']).toBe('ubuntu-slim')
     expect(prTestLocWorkflow.jobs.loc['runs-on']).toBe('ubuntu-slim')
-    expect(trackingWorkflow.jobs['track-community-pr']['runs-on']).toBe('ubuntu-slim')
-    expect(releasePolicyWorkflow.jobs.enforce['runs-on']).toBe('ubuntu-slim')
     expect(issueLabelWorkflow.jobs['apply-os-label']['runs-on']).toBe('ubuntu-slim')
   })
 
@@ -506,7 +502,6 @@ describe('PR workflow parallelism', () => {
       'test',
       'dolphind_browser',
       'mobile_web_app',
-      'cross-version-wire',
       'managed_hook_node18',
       'package',
       'package_windows'
@@ -520,8 +515,6 @@ describe('PR workflow parallelism', () => {
     // DOLPHIN_BROWSER_EXECUTABLE, so it only guards anything if verify actually reads it.
     expect(verifyStep.env.DOLPHIND_BROWSER).toBe('${{ needs.dolphind_browser.result }}')
     expect(verifyStep.run).toContain('"$DOLPHIND_BROWSER"')
-    expect(verifyStep.env.CROSS_VERSION_WIRE).toBe('${{ needs.cross-version-wire.result }}')
-    expect(verifyStep.run).toContain('"$CROSS_VERSION_WIRE"')
     // Same reason as the browser provider: the render check fails loudly on a runner with no
     // Chrome, which only guards the page if verify reads the job's result.
     expect(verifyStep.env.MOBILE_WEB_APP).toBe('${{ needs.mobile_web_app.result }}')

@@ -8,7 +8,7 @@ artifact_repository_id = "dolphin-cloud"
 # The relay source lives in the public GussCloud/dolphin repository, where the workflows carry a
 # `cloud-` file prefix. github_owner and github_owner_id keep their defaults.
 github_repo                 = "dolphin"
-github_repo_id              = "1183888342"
+github_repo_id              = "1391458496"
 github_workflow_file_prefix = "cloud-"
 
 auth_base_url = "https://auth-staging.dolphin.guss.dev.br"

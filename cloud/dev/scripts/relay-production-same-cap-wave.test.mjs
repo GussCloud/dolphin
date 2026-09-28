@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { execFileSync, spawnSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -14,7 +14,6 @@ import {
   validateSameCapWave,
   verifyCanaryAuthority
 } from './relay-production-same-cap-wave.mjs'
-import { readRelayWorkflow } from './relay-repository.mjs'
 
 const targetDigest = `sha256:${'a'.repeat(64)}`
 const rollbackDigest = `sha256:${'b'.repeat(64)}`
@@ -83,28 +82,6 @@ test('a batch fills the serial cell chain and never overflows it', () => {
   assert.equal(batch(10).cells.length, 10)
   assert.throws(() => batch(11), /same-cap wave cells are invalid/)
   assert.throws(() => batch(1), /batch mode requires two to ten cells/)
-})
-
-// The validator's ten-cell bound is only true if the workflow really declares ten strictly
-// serial cell jobs and frees the lease after all of them.
-test('the wave workflow chains exactly ten serial cell jobs', () => {
-  const dispatch = readRelayWorkflow('deploy-relay-production-same-cap.yml')
-  for (let index = 0; index < 10; index += 1) {
-    const job = index + 1
-    assert.match(dispatch, new RegExp(`\n  cell_${job}:\n`), `cell_${job} is missing`)
-    assert.match(dispatch, new RegExp(`fromJSON\\(needs\\.gate\\.outputs\\.cells\\)\\[${index}\\]`))
-    assert.match(dispatch, new RegExp(`wave-index: '${index}'`))
-    if (index > 0) {
-      assert.match(dispatch, new RegExp(`needs: \\[gate, cell_${index}\\]`))
-      assert.match(
-        dispatch,
-        new RegExp(`if: \\$\\{\\{ needs\\.cell_${index}\\.result == 'success' && ` +
-          `fromJSON\\(needs\\.gate\\.outputs\\.cells\\)\\[${index}\\] != null \\}\\}`)
-      )
-    }
-    assert.match(dispatch, new RegExp(`\n      - cell_${job}\n`), `release_lease must need cell_${job}`)
-  }
-  assert.doesNotMatch(dispatch, /\n  cell_11:/)
 })
 
 test('lists only C17 and C18 as migration-only now that C30 is promoted', () => {
@@ -557,65 +534,4 @@ test('refuses a canary sealed on a cell of the other admission class', () => {
   )
 })
 
-// The dispatch workflow is the only caller, so the class check only binds anything if that
-// step actually hands the batch over; run the step's own shell exactly as written.
-function verifyCanaryStepScript() {
-  const dispatch = readRelayWorkflow('deploy-relay-production-same-cap.yml')
-  const first = '          node dev/scripts/relay-production-same-cap-wave.mjs verify-canary \\\n'
-  const start = dispatch.indexOf(first)
-  assert.notEqual(start, -1, 'the dispatch workflow has no verify-canary step')
-  const last = '            --rehome-generation "${REHOME_GENERATION}"\n'
-  const end = dispatch.indexOf(last, start)
-  assert.notEqual(end, -1, 'the verify-canary step does not end at the rehome generation')
-  return dispatch.slice(start, end + last.length).replace(/^ {10}/gm, '')
-}
 
-async function runVerifyCanaryStep(authority, cellIds) {
-  const temporary = await mkdtemp(join(tmpdir(), 'relay-same-cap-verify-'))
-  try {
-    await mkdir(join(temporary, 'relay-same-cap-canary'), { recursive: true })
-    await writeFile(
-      join(temporary, 'relay-same-cap-canary', 'authority.json'),
-      JSON.stringify(authority)
-    )
-    return spawnSync('bash', ['-euo', 'pipefail', '-c', verifyCanaryStepScript()], {
-      cwd: new URL('../..', import.meta.url),
-      env: {
-        ...process.env,
-        RUNNER_TEMP: temporary,
-        GITHUB_SHA: authority.commitSha,
-        CANARY_RUN_ID: authority.runId,
-        CELL_IDS: cellIds,
-        TARGET_DIGEST: targetDigest,
-        ROLLBACK_DIGEST: rollbackDigest,
-        SELECTOR_GENERATION: '99',
-        REHOME_GENERATION: '4'
-      },
-      encoding: 'utf8'
-    })
-  } finally {
-    await rm(temporary, { recursive: true, force: true })
-  }
-}
-
-test('the batch gate hands its own cells to the canary check', async () => {
-  const accepted = await runVerifyCanaryStep(
-    sealedCanary('production-gce-c7'),
-    'production-gce-c8,production-gce-c9'
-  )
-  assert.equal(accepted.status, 0, accepted.stderr)
-  const crossed = await runVerifyCanaryStep(
-    sealedCanary('production-gce-c17'),
-    'production-gce-c8,production-gce-c9'
-  )
-  assert.equal(crossed.status, 1, crossed.stdout)
-  assert.match(
-    crossed.stderr,
-    /canary authority cell production-gce-c17 is migration-only, but this batch is general/
-  )
-  const migrationOnly = await runVerifyCanaryStep(
-    sealedCanary('production-gce-c17'),
-    SAME_CAP_MIGRATION_ONLY_CELLS.join(',')
-  )
-  assert.equal(migrationOnly.status, 0, migrationOnly.stderr)
-})

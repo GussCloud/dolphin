@@ -1,7 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
-import { relayWorkflowUrl } from './relay-repository.mjs'
 import { prepareCapacityCanary } from './prepare-relay-capacity-canary.mjs'
 
 function harness(initialState, options = {}) {
@@ -277,24 +275,4 @@ test('reports a rejected legacy admission write without draining', async () => {
   const operation = prepareCapacityCanary(config, { fetch: testHarness.fetch, token: 'masked' })
   await assert.rejects(operation, /cell-state returned 401/)
   assert.equal(testHarness.drains(), 0)
-})
-
-test('the staging workflow supplies every required capacity transition argument', () => {
-  const workflow = readFileSync(
-    relayWorkflowUrl('prove-relay-staging-capacity.yml'),
-    'utf8'
-  )
-  const verifyCalls = workflow.match(
-    /node dev\/scripts\/verify-relay-capacity-transition\.mjs[\s\S]*?(?=\n\s*\n|\n\s*- name:)/g
-  )
-  assert.ok(verifyCalls?.length >= 5)
-  for (const call of verifyCalls) {
-    for (const flag of ['--cell-origin', '--heartbeat', '--admission', '--draining', '--activity']) {
-      assert.match(call, new RegExp(flag))
-    }
-  }
-  const isolate = workflow.match(
-    /node dev\/scripts\/prepare-relay-capacity-canary\.mjs[\s\S]*?--mode isolate/
-  )?.[0]
-  assert.match(isolate, /--cell-origin/)
 })

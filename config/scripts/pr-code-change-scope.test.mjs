@@ -23,7 +23,6 @@ const expensiveJobs = [
   'shell_contracts',
   'test',
   'dolphind_browser',
-  'cross-version-wire',
   'managed_hook_node18',
   'package',
   'package_windows'
@@ -325,43 +324,6 @@ describe('per-job path classification', () => {
     for (const file of ['docs/reference/x.md', 'src/main/dolphind/dolphind-native-preflight.ts']) {
       expect(classifyPrJobs([file]).mobile_web_app, file).toBe(false)
     }
-  })
-
-  it('runs cross-version wire checks for every working-tree wire module', () => {
-    for (const file of [
-      'src/shared/protocol-version.ts',
-      'src/shared/terminal-stream-protocol.ts',
-      'src/shared/agent-session-wire.ts',
-      'src/shared/agent-session-mutation-envelope.ts',
-      'src/shared/agent-session-journal-item-key.ts',
-      'src/shared/agent-session-journal-types.ts',
-      'src/main/ai-vault/structured-session-ownership.ts',
-      'src/main/native-chat/agent-session-journal/journal-cursor.ts',
-      'src/main/native-chat/agent-session-journal/journal-reducer.ts',
-      'src/main/native-chat/agent-session-journal/journal-row-schema.ts',
-      'src/main/native-chat/agent-session-wire/structured-agent-session-host.ts',
-      'src/main/runtime/agent-session-record-store.ts',
-      'src/main/runtime/rpc/dispatcher.ts',
-      'src/main/runtime/rpc/methods/ai-vault.ts',
-      'src/main/runtime/rpc/methods/browser-tab-create-schema.ts',
-      'src/main/runtime/rpc/methods/session-tabs.ts',
-      'src/main/runtime/rpc/methods/structured-agent-session.ts',
-      'src/main/runtime/rpc/methods/structured-agent-session-gate.ts',
-      'src/main/runtime/rpc/methods/structured-agent-session-hold.ts',
-      'src/main/runtime/rpc/methods/structured-agent-session-schemas.ts',
-      'src/main/runtime/rpc/methods/terminal.ts',
-      'src/renderer/src/runtime/remote-runtime-terminal-multiplexer.ts'
-    ]) {
-      expectClassification([file], {
-        'cross-version-wire': true,
-        package: true,
-        package_windows: true
-      })
-    }
-    expectClassification(
-      ['tests/e2e/cross-version-wire/cross-version-terminal-wire.unit.test.ts'],
-      { 'cross-version-wire': true }
-    )
   })
 
   it('runs workflow-self-change and lockfile diffs as force-all', () => {

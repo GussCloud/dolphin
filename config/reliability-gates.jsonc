@@ -17912,7 +17912,7 @@
       },
       "promotionCriteria": [
         "Establish a stable material-diff threshold across platforms via nightly runs.",
-        "Promotion means membership in the release-blocking terminal-rendering-golden suite that release-cut.yml runs against every release tag; never PR-blocking.",
+        "Promotion means membership in a release-blocking terminal-rendering-golden suite run against every release tag; never PR-blocking.",
         "Add Linux and Windows GPU evidence or retain those platform gaps explicitly."
       ],
       "knownGaps": [

@@ -40,7 +40,7 @@ plan is orderable again; the `Plan:` line still reflects the standing cell-templ
 ### Workload Identity trusts the public repository
 
 The cutover closed on 2026-09-03. Every relay Workload Identity provider now accepts exactly one
-repository, `GussCloud/dolphin` (`1183888342`, owner `127256420`), and every workflow ref it names is
+repository, `GussCloud/dolphin` (`1391458496`, owner `56303449`), and every workflow ref it names is
 built from `github_workflow_file_prefix` (`cloud-`), which is the rename the public repo applies to
 the workflow files it carries. `github_repo`, `github_repo_id`, and that prefix are set in both
 `environments/*.tfvars` as well as defaulted here, and `github_accepted_repositories` is empty.

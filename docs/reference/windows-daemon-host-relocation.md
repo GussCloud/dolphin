@@ -127,6 +127,5 @@ any change to this file or to the NSIS macro needs the packaged harnesses:
 - `.github/workflows/win-update-e2e.yml` — release-tag-to-release-tag update, both `survival` and
   `cold-restore` profiles.
 
-All four are `workflow_dispatch`-only (the two update workflows also carry a push trigger pinned to
-one historical feature branch), so they must be dispatched by hand against this branch before
+All four are `workflow_dispatch`-only, so they must be dispatched by hand against this branch before
 merging a change here — which requires the workflow files to already exist on `main`.
