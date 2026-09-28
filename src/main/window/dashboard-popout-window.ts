@@ -160,7 +160,7 @@ export function createOrFocusDashboardPopout(
     title: 'Dolphin Agent Dashboard',
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0a0a0a' : '#ffffff',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0b1220' : '#ffffff',
     // Why: the pop-out uses a standard native frame so it is movable, closable,
     // and minimizable on every platform without reimplementing the main
     // window's custom titlebar/drag-region/window-control chrome. The main

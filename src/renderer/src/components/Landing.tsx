@@ -13,7 +13,7 @@ import {
 import { ShortcutKeyCombo } from './ShortcutKeyCombo'
 import { useShortcutKeyDetails, type ShortcutKeyComboDetails } from '@/hooks/useShortcutLabel'
 import { useMountedRef } from '@/hooks/useMountedRef'
-import logo from '../../../../resources/logo.svg'
+import logo from '../../../../resources/logo-gradient.svg'
 import { translate } from '@/i18n/i18n'
 import { hasGitHubBackedProject, type PreflightIssue } from './landing-preflight-issues'
 import { useLandingPreflightRuntime } from './landing-preflight-runtime'

@@ -1,0 +1,82 @@
+@import 'tailwindcss';
+
+/* Dolphin brand kit palette (brand/BRAND-GUIDE.md). */
+@theme {
+  --color-background: #0b1220;
+  --color-surface: #0f1729;
+  --color-surface-raised: #141d31;
+  --color-foreground: #f8fafc;
+  --color-body: #e2e8f0;
+  --color-muted: #8b95a8;
+  --color-subtle: #5d6779;
+  --color-line: rgb(226 232 240 / 0.08);
+  --color-line-strong: rgb(226 232 240 / 0.14);
+  --color-primary: #2563eb;
+  --color-primary-deep: #1d4ed8;
+  --color-accent: #06b6d4;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-body);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(37 99 235 / 0.45);
+  color: #fff;
+}
+
+.brand-gradient-text {
+  background: linear-gradient(120deg, #2563eb 0%, #06b6d4 55%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-glow {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgb(37 99 235 / 0.22), transparent 70%),
+    radial-gradient(40% 35% at 70% 10%, rgb(6 182 212 / 0.12), transparent 70%);
+}
+
+.mockup-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.08) transparent;
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 1.4s linear infinite;
+}
+
+@keyframes pulse-bar {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-bar {
+  animation: pulse-bar 1.8s ease-in-out infinite;
+}
