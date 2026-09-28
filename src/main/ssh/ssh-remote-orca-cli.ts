@@ -1,3 +1,4 @@
+import { LEGACY_CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import type { CliStatusResult, RuntimeStatus } from '../../shared/runtime-types'
 import { runtimeHostConnectionState } from '../../shared/runtime-host-connection-state'
 import { projectRemoteAppStatus } from '../../shared/cli-app-status-projection'
@@ -40,13 +41,13 @@ export type { RemoteOrcaCliRequest, RemoteOrcaCliResult } from './ssh-remote-cli
 // cannot host. Everything else routes through the full host CLI.
 const HOST_INTERACTIVE_COMMANDS: Record<string, string> = {
   serve:
-    'orca serve starts a foreground headless Orca server and cannot run through the SSH relay bridge. Run it directly on the machine that should host Orca.',
+    'dolphin serve starts a foreground headless Orca server and cannot run through the SSH relay bridge. Run it directly on the machine that should host Orca.',
   'claude-teams':
-    'orca claude-teams starts an interactive Claude Code session and cannot run through the SSH relay bridge. Run it in a terminal on the Orca host machine.',
+    'dolphin claude-teams starts an interactive Claude Code session and cannot run through the SSH relay bridge. Run it in a terminal on the Orca host machine.',
   'agent-teams-tmux':
-    'orca agent-teams-tmux is a tmux pane shim for the Orca host machine and cannot run through the SSH relay bridge.',
+    'dolphin agent-teams-tmux is a tmux pane shim for the Orca host machine and cannot run through the SSH relay bridge.',
   'account add':
-    'orca account add runs an interactive agent login and cannot run through the buffered SSH relay bridge. Run it directly in a terminal on the Orca host machine.'
+    'dolphin account add runs an interactive agent login and cannot run through the buffered SSH relay bridge. Run it directly in a terminal on the Orca host machine.'
 }
 
 export async function runRemoteOrcaCli(
@@ -241,7 +242,7 @@ async function dispatchRemoteCli(
           types: optionalRemoteCliString(parsed.flags, 'types'),
           format: parsed.flags.has('format') ? true : undefined,
           inject: parsed.flags.has('inject') ? true : undefined,
-          compatibilityCliCommand: 'orca',
+          compatibilityCliCommand: LEGACY_CLI_COMMAND_NAME,
           run: optionalRemoteCliString(parsed.flags, 'run'),
           ack: optionalRemoteCliString(parsed.flags, 'ack'),
           wait: parsed.flags.has('wait') ? true : undefined,
@@ -261,7 +262,7 @@ async function dispatchRemoteCli(
           timeoutMs: optionalRemoteCliNumber(parsed.flags, 'timeout-ms'),
           from: resolveRemoteCliHandle(parsed.flags, env, 'from'),
           run: optionalRemoteCliString(parsed.flags, 'run'),
-          compatibilityCliCommand: 'orca'
+          compatibilityCliCommand: LEGACY_CLI_COMMAND_NAME
         },
         {
           ...compatibilityEnvelope,

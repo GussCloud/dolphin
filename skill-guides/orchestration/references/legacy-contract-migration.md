@@ -40,14 +40,14 @@ receipt explicitly authorizes it.
 A pending ask, reply, final Dispatch settlement, and consuming check have
 durable recovery identities. Heartbeat and escalation remain at-least-once
 across a manual contract-boundary retry. If an ask may already have been
-answered, run the exact non-consuming recovery check printed by Orca before
+answered, run the exact non-consuming recovery check printed by Dolphin before
 creating any new question. Never guess among identical question threads.
 
 On packaged Windows, a legacy ask uses a two-step commit/resume protocol. The
 initial command commits the question, prints its exact
 `ask --resume <message_id>` command, and exits with launcher status `75`. Run
 that exact resume after the launcher or update boundary. For an attested WSL
-launch, preserve the printed `orca-ide` executable and distro route. Older WSL
+launch, preserve the printed `dolphin-ide` executable and distro route. Older WSL
 workers without launch proof remain lifecycle read-only even while their
 terminal and filesystem work continue.
 
@@ -82,6 +82,6 @@ another coordinator. It fences only the old coordinator and moves pending mail
 into current Run delivery. It preserves live workers, Tasks, Dispatches, processes, and files.
 Never take over while the original coordinator is actively coordinating.
 
-Do not launch a replacement editor merely because Orca updated or authority is
+Do not launch a replacement editor merely because Dolphin updated or authority is
 unclear. Keep the original worker as the only editor until a stable handoff
 point, then use a fresh current Dispatch in a conflict-free placement.

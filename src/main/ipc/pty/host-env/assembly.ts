@@ -1,3 +1,4 @@
+import { CLI_COMMAND_NAME } from '../../../../shared/cli-command-names'
 import { resolveSetupAgentSequenceLaunchCommand } from '../../../../shared/setup-agent-sequencing'
 import { selectOpenCodeHookAgent } from '../../../../shared/opencode-launch-command'
 import {
@@ -285,7 +286,7 @@ export function buildPtyHostEnv(
   // Why: WSL shells need the managed userData root for shell-ready wrappers; dev-mode terminals need the same export so `orca` targets the live dev instance.
   if (opts.isWsl) {
     baseEnv.ORCA_USER_DATA_PATH = opts.userDataPath
-    // Why: managed WSL registration uses `orca-ide`; exposing that literal scopes agent guidance to WSL without a bare-orca shim.
+    // Why: managed WSL registration uses the Linux command name; exposing it scopes agent guidance to WSL without a bare-name shim.
     baseEnv.ORCA_CLI_COMMAND = getWslCliCommandName(opts.isPackaged)
     const managedCliDir = getManagedWslCliDir(opts)
     if (managedCliDir) {
@@ -308,7 +309,7 @@ export function buildPtyHostEnv(
     baseEnv.BROWSER === undefined &&
     process.env.BROWSER === undefined
   ) {
-    const cliCommand = opts.isWsl ? getWslCliCommandName(opts.isPackaged) : 'orca'
+    const cliCommand = opts.isWsl ? getWslCliCommandName(opts.isPackaged) : CLI_COMMAND_NAME
     baseEnv.BROWSER = `${cliCommand} open-url --url %s`
   }
 

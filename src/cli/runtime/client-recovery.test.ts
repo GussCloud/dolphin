@@ -329,7 +329,8 @@ describe('RuntimeClient orchestration recovery identity', () => {
     expect(error).toBeInstanceOf(RuntimeClientError)
     expect(error).not.toBeInstanceOf(RuntimeRpcFailureError)
     expectPromptRetryBlockedJson(error, 'prompt-downgraded-lost-reply')
-    expect(JSON.stringify((error as RuntimeClientError).data)).not.toContain('Update Orca')
+    const errorData = error instanceof RuntimeClientError ? error.data : undefined
+    expect(JSON.stringify(errorData)).not.toContain('Update Dolphin')
   })
 
   it('reports an unknown legacy prompt outcome without advertising an unsafe retry', async () => {
@@ -371,7 +372,7 @@ describe('RuntimeClient orchestration recovery identity', () => {
         retrySafe: false,
         nextSteps: expect.arrayContaining([
           'Inspect the terminal output and agent state without sending input.',
-          'Update Orca on the execution host before future prompt sends that need durable retry.'
+          'Update Dolphin on the execution host before future prompt sends that need durable retry.'
         ])
       }
     })

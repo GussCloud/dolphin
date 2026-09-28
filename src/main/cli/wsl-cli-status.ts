@@ -1,7 +1,8 @@
+import { LINUX_CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import type { CliInstallStatus } from '../../shared/cli-install-types'
 import { getBridgePathFromCommandPath, getPosixDirname, quoteShell } from './wsl-cli-scripts'
 
-const WSL_COMMAND_NAME = 'orca-ide'
+const WSL_COMMAND_NAME = LINUX_CLI_COMMAND_NAME
 
 export type ReadyWslCliState = {
   distro: string

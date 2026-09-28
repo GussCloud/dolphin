@@ -230,7 +230,7 @@ describe('orchestration worker-start CLI contract', () => {
 
   it.each([
     ['JSON', 'orca-dev', true],
-    ['plain', 'orca-ide', false]
+    ['plain', 'dolphin-ide', false]
   ] as const)(
     'renders %s recovery commands through the resolved %s executable',
     async (_format, executable, json) => {
@@ -243,8 +243,8 @@ describe('orchestration worker-start CLI contract', () => {
           effects: [],
           residualResources: [],
           nextCommands: [
-            'orca orchestration worker-show --dispatch ctx_unknown --json',
-            'orca orchestration worker-abandon --dispatch ctx_unknown --json'
+            'dolphin orchestration worker-show --dispatch ctx_unknown --json',
+            'dolphin orchestration worker-abandon --dispatch ctx_unknown --json'
           ]
         }
       })

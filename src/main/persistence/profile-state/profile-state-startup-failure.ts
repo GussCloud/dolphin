@@ -70,9 +70,9 @@ export function formatProfileStateStartupFailure(error: unknown): string | undef
       retainedBackups,
       'Retained JSON exports:',
       retainedExports,
-      'Stop Orca, then run `orca profile state exports` and choose a known-good recovery artifact.',
-      'Restore SQLite with `orca profile state rollback --backup <id>`, or restore a JSON export with',
-      '`orca profile state rollback --revision <revision>`.'
+      'Stop Orca, then run `dolphin profile state exports` and choose a known-good recovery artifact.',
+      'Restore SQLite with `dolphin profile state rollback --backup <id>`, or restore a JSON export with',
+      '`dolphin profile state rollback --revision <revision>`.'
     ].join('\n')
   }
 
@@ -81,9 +81,9 @@ export function formatProfileStateStartupFailure(error: unknown): string | undef
       `Orca cannot safely choose a profile-state authority: ${error.message}`,
       'An older build may have changed the JSON file. Both copies are preserved; neither is selected automatically.',
       'Stop Orca and copy the profile directory before choosing which state to keep.',
-      'To keep the current JSON, including edits from an older build, run `orca profile state rollback --current-json`. This archives both copies and does not merge their contents.',
-      'Run `orca profile state exports` to inspect retained recovery points.',
-      'Use `orca profile state rollback --backup <id>` or `orca profile state rollback --revision <revision>` only after selecting the state you want to restore.'
+      'To keep the current JSON, including edits from an older build, run `dolphin profile state rollback --current-json`. This archives both copies and does not merge their contents.',
+      'Run `dolphin profile state exports` to inspect retained recovery points.',
+      'Use `dolphin profile state rollback --backup <id>` or `dolphin profile state rollback --revision <revision>` only after selecting the state you want to restore.'
     ].join('\n')
   }
 

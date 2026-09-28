@@ -19,9 +19,9 @@ describe('dev CLI terminal wrappers', () => {
     expect(wrapper).toContain(`set "ORCA_USER_DATA_PATH=${userDataPath}"`)
     expect(wrapper).toContain('set "ORCA_DEV_CLI_INVOCATION=1"')
     expect(wrapper).toContain(`node "${path.join(root, 'out', 'cli', 'index.js')}" %*`)
-    expect(readFileSync(path.join(userDataPath, 'cli', 'bin', 'orca.cmd'), 'utf8')).toBe(wrapper)
+    expect(readFileSync(path.join(userDataPath, 'cli', 'bin', 'dolphin.cmd'), 'utf8')).toBe(wrapper)
     expect(readFileSync(path.join(root, 'out', 'bin', 'orca-dev.cmd'), 'utf8')).toBe(wrapper)
-    expect(readFileSync(path.join(root, 'out', 'bin', 'orca.cmd'), 'utf8')).toBe(wrapper)
+    expect(readFileSync(path.join(root, 'out', 'bin', 'dolphin.cmd'), 'utf8')).toBe(wrapper)
   })
 
   it('escapes literal percent signs in every Windows batch path', () => {
@@ -44,7 +44,7 @@ describe('dev CLI terminal wrappers', () => {
       `node "${path.join(root, 'out', 'cli', 'index.js').replaceAll('%', '%%')}" %*`
     )
     expect(readFileSync(path.join(root, 'out', 'bin', 'orca-dev.cmd'), 'utf8')).toBe(wrapper)
-    expect(readFileSync(path.join(root, 'out', 'bin', 'orca.cmd'), 'utf8')).toBe(wrapper)
+    expect(readFileSync(path.join(root, 'out', 'bin', 'dolphin.cmd'), 'utf8')).toBe(wrapper)
   })
 
   it('writes executable-style POSIX wrappers with the same profile identity', () => {
@@ -63,8 +63,8 @@ describe('dev CLI terminal wrappers', () => {
     expect(wrapper).toContain(
       `exec node ${JSON.stringify(path.join(root, 'out', 'cli', 'index.js'))}`
     )
-    expect(readFileSync(path.join(userDataPath, 'cli', 'bin', 'orca'), 'utf8')).toBe(wrapper)
+    expect(readFileSync(path.join(userDataPath, 'cli', 'bin', 'dolphin'), 'utf8')).toBe(wrapper)
     expect(readFileSync(path.join(root, 'out', 'bin', 'orca-dev'), 'utf8')).toBe(wrapper)
-    expect(readFileSync(path.join(root, 'out', 'bin', 'orca'), 'utf8')).toBe(wrapper)
+    expect(readFileSync(path.join(root, 'out', 'bin', 'dolphin'), 'utf8')).toBe(wrapper)
   })
 })

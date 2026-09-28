@@ -163,7 +163,7 @@ describe('parsePathInput', () => {
     })
   })
 
-  it('`Documents/orca` commits `Documents` and filters by `orca`', () => {
+  it('`Documents/orca` commits `Documents` and filters by `dolphin`', () => {
     expect(parsePathInput('Documents/orca')).toEqual({
       mode: 'path',
       base: 'cwd',

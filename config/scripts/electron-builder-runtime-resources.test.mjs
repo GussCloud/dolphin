@@ -159,7 +159,7 @@ describe('packaged runtime resources', () => {
     }
   })
 
-  it('ignores member calls onto Orca methods that are themselves named require', async () => {
+  it('ignores member calls onto Dolphin methods that are themselves named require', async () => {
     const resourcesDir = await mkdtemp(join(tmpdir(), 'orca-runtime-member-require-'))
     try {
       await writeFile(join(resourcesDir, 'app.asar'), '', 'utf8')
@@ -470,7 +470,7 @@ describe('packaged runtime resources', () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-electron-builder-config-'))
       try {
         const resourcesDir = join(root, 'linux-unpacked', 'resources')
-        const launcherPath = join(resourcesDir, 'bin', 'orca-ide')
+        const launcherPath = join(resourcesDir, 'bin', 'dolphin-ide')
         await mkdir(join(resourcesDir, 'bin'), { recursive: true })
         await cp(
           join(process.cwd(), 'resources', 'plugins', 'launch'),

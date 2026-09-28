@@ -24,7 +24,7 @@ describe('computer-use skill guidance', () => {
       'Use only when a visible window needs GUI control those cannot reach.'
     )
     expect(description).toContain('external browser windows')
-    expect(description).toContain("Do not use for Orca's embedded browser (`orca-cli`)")
+    expect(description).toContain("Do not use for Dolphin's embedded browser (`orca-cli`)")
     expect(description).not.toMatch(/Playwright/iu)
     expect(description).not.toContain('page-only')
     expect(description).not.toContain('OS/window-level')
@@ -36,7 +36,9 @@ describe('computer-use skill guidance', () => {
   it('keeps web-app targeting on the computer-use surface', () => {
     const skill = readFileSync(guidePath, 'utf8')
 
-    expect(skill).toContain('Use this skill to drive a visible app window through `orca computer`')
+    expect(skill).toContain(
+      'Use this skill to drive a visible app window through `dolphin computer`'
+    )
     expect(skill).toContain(
       'Prefer a programmatic path (shell, filesystem, git, HTTP, existing CLIs) whenever it can complete the task'
     )
@@ -102,11 +104,11 @@ describe('computer-use install stub', () => {
 
     expect(stub).toContain('discovery stub')
     expect(stub).toContain('ORCA skills get computer-use')
-    // The safe CLI-resolution contract must survive in the stub, never a bare `orca`.
+    // The safe CLI-resolution contract must survive in the stub, never a bare `dolphin`.
     expect(stub).toContain('ORCA_CLI_COMMAND')
     expect(stub).toContain('orca-dev')
-    expect(stub).toContain('orca-ide')
-    expect(stub).toContain('GNOME Orca screen reader')
+    expect(stub).toContain('dolphin-ide')
+    expect(stub).toContain('KDE Dolphin file manager')
     expect(stub).not.toMatch(/^orca /mu)
   })
 

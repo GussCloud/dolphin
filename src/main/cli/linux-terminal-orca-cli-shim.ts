@@ -1,3 +1,4 @@
+import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import {
   chmodSync,
   existsSync,
@@ -215,7 +216,7 @@ function ensureShimForLauncher(userDataPath: string, launcherPath: string): stri
 
 function ensureShimForScript(userDataPath: string, script: string): string | null {
   const shimDir = join(userDataPath, SHIM_DIR_NAME)
-  const shimPath = join(shimDir, 'orca')
+  const shimPath = join(shimDir, CLI_COMMAND_NAME)
   try {
     if (readShim(shimPath) !== script) {
       mkdirSync(shimDir, { recursive: true })

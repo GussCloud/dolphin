@@ -1,3 +1,4 @@
+import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import { randomUUID } from 'node:crypto'
 import { constants, existsSync } from 'node:fs'
 import { copyFile, link, lstat, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises'
@@ -55,7 +56,7 @@ export type LinuxBareOrcaDispatcherResult = {
 export async function installLinuxBareOrcaDispatcher(
   options: LinuxBareOrcaDispatcherOptions
 ): Promise<LinuxBareOrcaDispatcherResult> {
-  const dispatcherPath = join(options.homePath ?? homedir(), '.local', 'bin', 'orca')
+  const dispatcherPath = join(options.homePath ?? homedir(), '.local', 'bin', CLI_COMMAND_NAME)
   if (existsSync(dispatcherPath) && !(await isOwnedDispatcher(dispatcherPath))) {
     return { state: 'skipped-foreign', dispatcherPath, target: null }
   }

@@ -392,14 +392,14 @@ describe('CliSkillRuntimeSetup runtime helpers', () => {
   it('does not wrap unrelated Windows host commands', () => {
     expect(
       buildSkillCommandForRuntime(
-        'orca skills list',
+        'dolphin skills list',
         {
           runtime: 'host',
           label: 'Windows'
         },
         'win32'
       )
-    ).toBe('orca skills list')
+    ).toBe('dolphin skills list')
   })
 
   it('emits a cmd.exe payload that cannot break its own if/else block', () => {

@@ -1,15 +1,22 @@
+import {
+  DEV_CLI_COMMAND_NAME,
+  getCliCommandNameForPlatform,
+  parseCliCommandName
+} from '../../shared/cli-command-names'
+
 export function resolveOrchestrationCliExecutable(
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform
 ): string {
   const configured = env.ORCA_CLI_COMMAND?.trim()
   if (configured) {
-    return configured
+    // Why: an older launcher may still export a legacy name; recovery must name the installed command.
+    return parseCliCommandName(configured) ?? configured
   }
   if (env.ORCA_DEV_REPO_ROOT) {
-    return 'orca-dev'
+    return DEV_CLI_COMMAND_NAME
   }
-  return platform === 'linux' ? 'orca-ide' : 'orca'
+  return getCliCommandNameForPlatform(platform)
 }
 
 export function buildOrchestrationRecoveryCommand(

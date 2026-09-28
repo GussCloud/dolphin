@@ -218,7 +218,7 @@ describe('agent-session create operation ledger', () => {
 
     expect(createTerminal).toHaveBeenCalledWith(
       'id:worktree-1',
-      expect.objectContaining({ command: expect.stringContaining('orca-ide claude-teams') })
+      expect.objectContaining({ command: expect.stringContaining('dolphin-ide claude-teams') })
     )
   })
 

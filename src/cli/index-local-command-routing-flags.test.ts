@@ -204,7 +204,9 @@ describe('runtime-selector flags on locally pinned CLI commands', () => {
 
   it('reports an unreachable runtime as an error instead of inventing a name', async () => {
     const { RuntimeClientError } = await import('./runtime/types.js')
-    callMock.mockRejectedValue(new RuntimeClientError('runtime_unavailable', 'Orca is not running'))
+    callMock.mockRejectedValue(
+      new RuntimeClientError('runtime_unavailable', 'Dolphin is not running')
+    )
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await main(['host', 'name', '--json'], '/tmp/repo')
@@ -229,7 +231,7 @@ describe('runtime-selector flags on locally pinned CLI commands', () => {
     const printed = JSON.parse(String(logSpy.mock.calls[0]?.[0]))
     expect(printed.ok).toBe(false)
     expect(printed.error.code).toBe('invalid_argument')
-    expect(printed.error.message).toContain('`--environment` does not retarget `orca host list`')
+    expect(printed.error.message).toContain('`--environment` does not retarget `dolphin host list`')
     expect(process.exitCode).toBe(1)
     expect(callMock).not.toHaveBeenCalled()
     expect(runtimeClientConstructorMock).not.toHaveBeenCalledWith(null, 'm4air')
@@ -246,7 +248,7 @@ describe('runtime-selector flags on locally pinned CLI commands', () => {
     expect(printed.ok).toBe(false)
     expect(printed.error.code).toBe('invalid_argument')
     expect(printed.error.message).toContain(
-      '`--environment` does not retarget `orca environment list`'
+      '`--environment` does not retarget `dolphin environment list`'
     )
     process.exitCode = 0
   })

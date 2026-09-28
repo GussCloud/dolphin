@@ -35,6 +35,7 @@
  * SAME handle rather than a stale or fresh one.
  */
 
+import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import { getAppEnvironment, hasAppEnvironment } from '../../shared/app-environment'
 import { prependOrcaCliDirToChildPath } from '../cli/orca-cli-child-path'
 import { ORCA_STRUCTURED_SESSION_ENV } from '../../shared/structured-session-marker'
@@ -51,7 +52,7 @@ export function structuredWorkerChildIdentityEnv(
   const env: Record<string, string> = {
     ...childEnv,
     ORCA_TERMINAL_HANDLE: identity.handle,
-    ORCA_CLI_COMMAND: 'orca'
+    ORCA_CLI_COMMAND: CLI_COMMAND_NAME
   }
   applyOrcaCliPath(env)
   return env

@@ -1,24 +1,35 @@
+import {
+  getCliCommandNameForPlatform,
+  LEGACY_CLI_COMMAND_NAME,
+  LEGACY_LINUX_CLI_COMMAND_NAME,
+  type LegacyCliCommandName,
+  parseCliCommandName,
+  toWireCliCommandName
+} from '../../../shared/cli-command-names'
+import { FORK_IDENTITY } from '../../../shared/fork-identity'
 import { RuntimeClientError } from '../../runtime-client'
 
-export function resolveCompatibilityCliCommand(): 'orca' | 'orca-ide' | 'orca-dev' {
-  const configured = process.env.ORCA_CLI_COMMAND
-  if (configured === 'orca' || configured === 'orca-ide' || configured === 'orca-dev') {
-    return configured
-  }
-  return process.platform === 'linux' ? 'orca-ide' : 'orca'
+/** The command this CLI was launched as, in the legacy token hosts of every age accept. */
+export function resolveCompatibilityCliCommand(): LegacyCliCommandName {
+  const configured = parseCliCommandName(process.env.ORCA_CLI_COMMAND)
+  return toWireCliCommandName(configured ?? getCliCommandNameForPlatform(process.platform))
 }
 
-export function resolvePackagedWindowsCompatibilityCommand(): 'orca' | 'orca-ide' | undefined {
+export function resolvePackagedWindowsCompatibilityCommand():
+  | typeof LEGACY_CLI_COMMAND_NAME
+  | typeof LEGACY_LINUX_CLI_COMMAND_NAME
+  | undefined {
   if (process.env.ORCA_WINDOWS_PACKAGED_CLI_LAUNCHER !== '1') {
     return undefined
   }
-  const command = process.env.ORCA_CLI_COMMAND
-  if (command === 'orca' || command === 'orca-ide') {
-    return command
+  const command = parseCliCommandName(process.env.ORCA_CLI_COMMAND)
+  const wire = command ? toWireCliCommandName(command) : undefined
+  if (wire === LEGACY_CLI_COMMAND_NAME || wire === LEGACY_LINUX_CLI_COMMAND_NAME) {
+    return wire
   }
   throw new RuntimeClientError(
     'invalid_argument',
-    'The packaged Orca launcher did not provide a valid resume command. No question was created.'
+    `The packaged ${FORK_IDENTITY.productName} launcher did not provide a valid resume command. No question was created.`
   )
 }
 

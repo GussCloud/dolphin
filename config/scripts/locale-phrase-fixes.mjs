@@ -169,7 +169,11 @@ export const LOCALE_PHRASE_FIXES = {
       whenEnIncludes: 'Listening for shortcut'
     },
     { pattern: /寻找捷径/g, replacement: '搜索快捷键', whenEnIncludes: 'Find shortcuts' },
-    { pattern: /连接到Dolphin/g, replacement: '连接到 Dolphin', whenEnIncludes: 'Connect to Dolphin' },
+    {
+      pattern: /连接到Dolphin/g,
+      replacement: '连接到 Dolphin',
+      whenEnIncludes: 'Connect to Dolphin'
+    },
     {
       pattern: /开始使用Dolphin/g,
       replacement: '开始使用 Dolphin',

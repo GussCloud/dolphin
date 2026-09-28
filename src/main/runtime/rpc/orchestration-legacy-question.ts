@@ -1,3 +1,4 @@
+import { LEGACY_CLI_COMMAND_NAME, toCurrentCliCommandName } from '../../../shared/cli-command-names'
 import { clampOrchestrationAskTimeoutMs } from '../../../shared/orchestration-ask-timeout'
 import type { RpcRequest } from './core'
 import type { OrcaRuntimeService } from '../orca-runtime'
@@ -71,8 +72,11 @@ export async function handleLegacyAsk(args: {
         (match) => match.question.status === 'answered' && !match.answerAcknowledged
       )
       if (lostAnswer) {
-        const cliCommand =
-          params.compatibilityCliCommand ?? params.compatibilityWindowsCommand ?? 'orca'
+        const cliCommand = toCurrentCliCommandName(
+          params.compatibilityCliCommand ??
+            params.compatibilityWindowsCommand ??
+            LEGACY_CLI_COMMAND_NAME
+        )
         throw new OrchestrationError(
           'operation_unknown',
           `A matching legacy answer may have been accepted before the update. Run ${cliCommand} orchestration check --terminal ${principal.terminal_handle} before asking again.`
@@ -114,7 +118,7 @@ export async function handleLegacyAsk(args: {
       timeoutMs,
       legacyCompatibility: {
         resumeRequired: true,
-        resumeCommand: `${params.compatibilityWindowsCommand} orchestration ask --resume ${questionId}`
+        resumeCommand: `${toCurrentCliCommandName(params.compatibilityWindowsCommand)} orchestration ask --resume ${questionId}`
       }
     }
   }

@@ -1,9 +1,9 @@
 import { accessSync, constants, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { DEV_CLI_COMMAND_NAME as DEV_COMMAND_NAME } from '../../shared/cli-command-names'
 import { getBundledLauncherPath } from '../cli/bundled-cli-launcher-path'
 
 const DEV_LAUNCHER_DIR = ['cli', 'bin']
-const DEV_COMMAND_NAME = 'orca-dev'
 
 export type CodexShellLaunchPreflightCommandOptions = {
   hooksEnabled: boolean

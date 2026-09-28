@@ -1,3 +1,4 @@
+import { LINUX_CLI_COMMAND_NAME } from '../../../../shared/cli-command-names'
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
@@ -70,7 +71,7 @@ export function WslCliRegistration({
 
   const isEnabled = status?.state === 'installed'
   const isSupported = status?.supported ?? false
-  const commandName = status?.commandName ?? 'orca-ide'
+  const commandName = status?.commandName ?? LINUX_CLI_COMMAND_NAME
 
   const handleInstall = async (): Promise<void> => {
     setBusyAction('install')
@@ -162,7 +163,7 @@ export function WslCliRegistration({
                 : (status?.detail ??
                   translate(
                     'auto.components.settings.WslCliRegistration.7aa456a460',
-                    'Register `orca-ide` in ~/.local/bin inside WSL.'
+                    'Register `dolphin-ide` in ~/.local/bin inside WSL.'
                   ))}
             </p>
           </div>

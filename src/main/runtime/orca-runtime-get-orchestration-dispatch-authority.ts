@@ -2,6 +2,7 @@
 import { OrcaRuntimeWithVerifyOrchestrationCompatibilityCaller } from './orca-runtime-verify-orchestration-compatibility-caller'
 import type { OrchestrationCompatibilityTerminalAuthority } from './runtime-terminal-contracts'
 import { createHash } from 'node:crypto'
+import { CLI_COMMAND_NAME, DEV_CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import {
   isTerminalLeafId,
   makePaneKey,
@@ -254,17 +255,17 @@ export class OrcaRuntimeWithGetOrchestrationDispatchAuthority extends OrcaRuntim
       const ptyId = this.resolveLeafForHandle(handle)?.ptyId
       pty = ptyId ? (this.ptysById.get(ptyId) ?? null) : null
     } catch {
-      return 'orca'
+      return CLI_COMMAND_NAME
     }
     if (!pty) {
-      return 'orca'
+      return CLI_COMMAND_NAME
     }
     return resolveTerminalOrchestrationCliCommand({
       connectionId: pty.connectionId,
       isWsl: pty.isWsl,
       worktreeId: pty.worktreeId,
-      // Dev builds run the CLI as `orca-dev`; a packaged app must not advertise it.
-      runtimeCliCommand: getAppEnvironment().isPackaged() ? undefined : 'orca-dev',
+      // Dev builds run the CLI under the dev name; a packaged app must not advertise it.
+      runtimeCliCommand: getAppEnvironment().isPackaged() ? undefined : DEV_CLI_COMMAND_NAME,
       projectRuntime: this.store
         ? resolveLocalProjectRuntimeForWorktreeId(this.requireStore(), pty.worktreeId)
         : undefined

@@ -8,7 +8,7 @@ import { createRemoteCliInstallPlan } from './ssh-remote-cli-launcher'
 import { getRemoteHostPlatform } from './ssh-remote-platform'
 
 // Why: the compile case is six process creations - powershell.exe -> csc.exe,
-// then the freshly built orca.exe -> node.exe, twice - and hosted Windows
+// then the freshly built dolphin.exe -> node.exe, twice - and hosted Windows
 // runners periodically slow process creation down. Across 176 native-smoke runs
 // it spanned 1.9s-35.4s (p50 4.3s) while this file's powershell-only test held
 // its median, so the cost is the runner, not the assertions. The shared 30s
@@ -45,9 +45,9 @@ describe('SSH remote Orca CLI launcher', () => {
   it('compiles a native Windows launcher without a cmd.exe argument bridge', () => {
     const plan = windowsInstallPlan()
 
-    expect(plan.launcherPath).toBe('C:/Users/me user/.orca-relay/bin/orca.exe')
+    expect(plan.launcherPath).toBe('C:/Users/me user/.orca-relay/bin/dolphin.exe')
     expect(plan.files).toHaveLength(1)
-    expect(plan.files[0]?.path).toBe('C:/Users/me user/.orca-relay/bin/orca-launcher.cs')
+    expect(plan.files[0]?.path).toBe('C:/Users/me user/.orca-relay/bin/dolphin-launcher.cs')
     expect(plan.files[0]?.contents).toContain('ProcessStartInfo')
     expect(plan.files[0]?.contents).toContain('"--orca-cli"')
     expect(plan.files[0]?.contents).toContain('socketPath + ".credential"')
@@ -64,21 +64,21 @@ describe('SSH remote Orca CLI launcher', () => {
     expect(compileScript).toContain(
       "Set-Location -ErrorAction Stop -LiteralPath 'C:/Users/me user/.orca-relay/bin'"
     )
-    expect(compileScript).toContain('/out:orca.exe')
-    expect(compileScript).toContain('C:/Users/me user/.orca-relay/bin/orca-launcher.cs')
-    expect(compileScript).toContain('C:/Users/me user/.orca-relay/bin/orca.cmd')
+    expect(compileScript).toContain('/out:dolphin.exe')
+    expect(compileScript).toContain('C:/Users/me user/.orca-relay/bin/dolphin-launcher.cs')
+    expect(compileScript).toContain('C:/Users/me user/.orca-relay/bin/dolphin.cmd')
   })
 
-  it('removes the legacy orca.cmd only after every compile guard has passed', () => {
+  it('removes the legacy dolphin.cmd only after every compile guard has passed', () => {
     const script = decodePowerShellCommand(windowsInstallPlan().postWriteCommands[0] ?? '')
     const legacyShimRemoval =
-      "Remove-Item -LiteralPath 'C:/Users/me user/.orca-relay/bin/orca.cmd' -Force -ErrorAction SilentlyContinue"
+      "Remove-Item -LiteralPath 'C:/Users/me user/.orca-relay/bin/dolphin.cmd' -Force -ErrorAction SilentlyContinue"
     // Why: a host missing csc.exe or failing the compile must keep its existing
     // CLI, so every fail-closed guard precedes the legacy %* shim removal.
     const guards = [
       "if (-not $compiler) { Write-Error 'Unable to find the .NET Framework C# compiler required for the Orca SSH CLI launcher.'; exit 1 }",
       'if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }',
-      "if (-not (Test-Path -LiteralPath 'C:/Users/me user/.orca-relay/bin/orca.exe' -PathType Leaf))"
+      "if (-not (Test-Path -LiteralPath 'C:/Users/me user/.orca-relay/bin/dolphin.exe' -PathType Leaf))"
     ]
     expect(script).toContain(legacyShimRemoval)
     for (const guard of guards) {
@@ -183,12 +183,12 @@ describe('SSH remote Orca CLI launcher', () => {
     }
   })
 
-  itWindows('preserves the existing orca.cmd when the compiler is missing', () => {
+  itWindows('preserves the existing dolphin.cmd when the compiler is missing', () => {
     const root = mkdtempSync(join(tmpdir(), 'orca remote cli '))
     try {
       const binDir = join(root, 'bin').replaceAll('\\', '/')
       mkdirSync(binDir, { recursive: true })
-      const legacyShimPath = join(binDir, 'orca.cmd')
+      const legacyShimPath = join(binDir, 'dolphin.cmd')
       writeFileSync(legacyShimPath, '@echo legacy orca cli\r\n', 'utf8')
 
       const plan = createRemoteCliInstallPlan({
@@ -221,7 +221,7 @@ describe('SSH remote Orca CLI launcher', () => {
       )
 
       expect(compile.status).not.toBe(0)
-      expect(existsSync(legacyShimPath), 'existing orca.cmd must survive a failed install').toBe(
+      expect(existsSync(legacyShimPath), 'existing dolphin.cmd must survive a failed install').toBe(
         true
       )
     } finally {
@@ -238,10 +238,10 @@ describe('SSH remote Orca CLI launcher', () => {
       hostPlatform: getRemoteHostPlatform('linux-x64')
     })
 
-    expect(plan.launcherPath).toBe('/home/me/.orca-relay/bin/orca')
+    expect(plan.launcherPath).toBe('/home/me/.orca-relay/bin/dolphin')
     expect(plan.files).toEqual([
       expect.objectContaining({
-        path: '/home/me/.orca-relay/bin/orca',
+        path: '/home/me/.orca-relay/bin/dolphin',
         contents: expect.stringContaining('--orca-cli "$@"')
       })
     ])
