@@ -3,69 +3,22 @@
   "family": "mobileWeb.bundle-fetch",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "af339fef2c684d5709c6d3f279e5f0d9c33d17b6d4e5c89e501963400901b564",
-  "scenarioSha256": "9bab59797b04304d8e25573664b011949e9b15010270ccbfd0e3d2a4d772180c",
-  "platform": "darwin",
+  "scenarioSha256": "e9b7fec8933d8d56b3a1df73cfe75bc0b8a6115b5692c51d5e4b099d6fe83d37",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "0fed70367a30": {
+    "23e0c23b29ad": {
       "name": "mobileWeb.bundle.chunk#3",
       "ordinal": 8,
-      "json": "{\"id\":\"frame-4\",\"deviceToken\":\"recording-device\",\"method\":\"mobileWeb.bundle.chunk\",\"params\":{\"buildId\":\"973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177\",\"path\":\"assets/app.js\",\"offset\":0}}"
+      "json": "{\"id\":\"frame-4\",\"deviceToken\":\"recording-device\",\"method\":\"mobileWeb.bundle.chunk\",\"params\":{\"buildId\":\"38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a\",\"path\":\"assets/app.js\",\"offset\":0}}"
     },
-    "1432380f161f": {
-      "name": "mobileWeb.bundle.chunk#1",
-      "ordinal": 6,
-      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"mobileWeb.bundle.chunk\",\"params\":{\"buildId\":\"973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177\",\"path\":\"index.html\",\"offset\":0}}"
-    },
-    "1e1466cc72ac": {
-      "name": "mobileWeb.bundle.chunk#3",
-      "ordinal": 5,
-      "args": [
-        {
-          "name": "method",
-          "value": "mobileWeb.bundle.chunk"
-        },
-        {
-          "name": "params",
-          "value": {
-            "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
-            "offset": 0,
-            "path": "assets/app.js"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "undefined"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "id": "frame-4",
-          "ok": true,
-          "result": {
-            "assetByteLength": 11,
-            "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
-            "dataBase64": "b3JjYS5ib290KCk=",
-            "eof": true,
-            "offset": 0,
-            "path": "assets/app.js",
-            "sha256": "e99170780c392398db81fbb3dcaebc1a2c8264d4d8a9cd5932887e9c7206dc3d"
-          }
-        }
-      }
-    },
-    "23871e324a00": {
+    "53e55621956f": {
       "name": "mobileWeb.bundle.manifest#1",
       "ordinal": 1,
       "args": [
@@ -101,16 +54,16 @@
                   "byteLength": 11,
                   "contentType": "text/javascript; charset=utf-8",
                   "path": "assets/app.js",
-                  "sha256": "e99170780c392398db81fbb3dcaebc1a2c8264d4d8a9cd5932887e9c7206dc3d"
+                  "sha256": "80e7d31737117bbf91a7817504a506d1735593ae6be28201e6927f1c1a4ff17f"
                 },
                 {
                   "byteLength": 26,
                   "contentType": "text/html; charset=utf-8",
                   "path": "index.html",
-                  "sha256": "483f915496f213c851665840f49b69e05b7a6bf70ec9d6939a831b15d298f31e"
+                  "sha256": "8d239d1b6e05c0547830f72f3ded2674d134d1f9055b3f29df7563a1533c6d64"
                 }
               ],
-              "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
+              "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
               "desktopVersion": "1.4.201",
               "entrypoint": "index.html",
               "minCompatibleRuntimeProtocolVersion": 2,
@@ -127,7 +80,102 @@
       "ordinal": 2,
       "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"mobileWeb.bundle.manifest\",\"params\":null}"
     },
-    "789e8791b648": {
+    "79725d734e7d": {
+      "assets": {
+        "$rpc": "null"
+      },
+      "outcome": "refused: mobile_web_bundle_build_changed"
+    },
+    "82b2a7971876": {
+      "status": "rejected",
+      "startedAt": 0,
+      "settledAt": 0,
+      "error": {
+        "category": "Error",
+        "message": "invalid_argument: mobile_web_bundle_build_changed",
+        "isRpcDeliveryUnknown": false
+      }
+    },
+    "96f4b810548e": {
+      "name": "mobileWeb.bundle.chunk#3",
+      "ordinal": 5,
+      "args": [
+        {
+          "name": "method",
+          "value": "mobileWeb.bundle.chunk"
+        },
+        {
+          "name": "params",
+          "value": {
+            "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
+            "offset": 0,
+            "path": "assets/app.js"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "undefined"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "id": "frame-4",
+          "ok": true,
+          "result": {
+            "assetByteLength": 11,
+            "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
+            "dataBase64": "bWFpbi5ib290KCk=",
+            "eof": true,
+            "offset": 0,
+            "path": "assets/app.js",
+            "sha256": "80e7d31737117bbf91a7817504a506d1735593ae6be28201e6927f1c1a4ff17f"
+          }
+        }
+      }
+    },
+    "abc7c706d9a9": {
+      "name": "bundle-progress",
+      "ordinal": 9,
+      "value": {
+        "completedAssets": 1,
+        "receivedBytes": 11,
+        "totalAssets": 2
+      }
+    },
+    "b81904b1f644": {
+      "name": "mobileWeb.bundle.chunk#2",
+      "ordinal": 4,
+      "args": [
+        {
+          "name": "method",
+          "value": "mobileWeb.bundle.chunk"
+        },
+        {
+          "name": "params",
+          "value": {
+            "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
+            "offset": 16,
+            "path": "index.html"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "undefined"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "pending",
+        "startedAt": 0
+      }
+    },
+    "c59deae266e2": {
       "name": "mobileWeb.bundle.chunk#1",
       "ordinal": 3,
       "args": [
@@ -138,7 +186,7 @@
         {
           "name": "params",
           "value": {
-            "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
+            "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
             "offset": 0,
             "path": "index.html"
           }
@@ -164,63 +212,15 @@
         }
       }
     },
-    "79725d734e7d": {
-      "assets": {
-        "$rpc": "null"
-      },
-      "outcome": "refused: mobile_web_bundle_build_changed"
-    },
-    "82b2a7971876": {
-      "status": "rejected",
-      "startedAt": 0,
-      "settledAt": 0,
-      "error": {
-        "category": "Error",
-        "message": "invalid_argument: mobile_web_bundle_build_changed",
-        "isRpcDeliveryUnknown": false
-      }
-    },
-    "abc7c706d9a9": {
-      "name": "bundle-progress",
-      "ordinal": 9,
-      "value": {
-        "completedAssets": 1,
-        "receivedBytes": 11,
-        "totalAssets": 2
-      }
-    },
-    "e1ea0d150db4": {
-      "name": "mobileWeb.bundle.chunk#2",
-      "ordinal": 4,
-      "args": [
-        {
-          "name": "method",
-          "value": "mobileWeb.bundle.chunk"
-        },
-        {
-          "name": "params",
-          "value": {
-            "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
-            "offset": 16,
-            "path": "index.html"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "undefined"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "pending",
-        "startedAt": 0
-      }
-    },
-    "f09d3e39d35e": {
+    "d0e1188e0430": {
       "name": "mobileWeb.bundle.chunk#2",
       "ordinal": 7,
-      "json": "{\"id\":\"frame-3\",\"deviceToken\":\"recording-device\",\"method\":\"mobileWeb.bundle.chunk\",\"params\":{\"buildId\":\"973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177\",\"path\":\"index.html\",\"offset\":16}}"
+      "json": "{\"id\":\"frame-3\",\"deviceToken\":\"recording-device\",\"method\":\"mobileWeb.bundle.chunk\",\"params\":{\"buildId\":\"38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a\",\"path\":\"index.html\",\"offset\":16}}"
+    },
+    "d34f8b5fcd31": {
+      "name": "mobileWeb.bundle.chunk#1",
+      "ordinal": 6,
+      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"mobileWeb.bundle.chunk\",\"params\":{\"buildId\":\"38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a\",\"path\":\"index.html\",\"offset\":0}}"
     }
   },
   "recording": {
@@ -229,8 +229,8 @@
       {
         "id": "bundle-build-changed",
         "observation": {
-          "sender": ["23871e324a00", "789e8791b648", "e1ea0d150db4", "1e1466cc72ac"],
-          "payloads": ["775bfa42070b", "1432380f161f", "f09d3e39d35e", "0fed70367a30"],
+          "sender": ["53e55621956f", "c59deae266e2", "b81904b1f644", "96f4b810548e"],
+          "payloads": ["775bfa42070b", "d34f8b5fcd31", "d0e1188e0430", "23e0c23b29ad"],
           "settlements": {
             "fetch": "82b2a7971876"
           },

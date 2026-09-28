@@ -3,12 +3,12 @@
   "family": "settings.task-workspace-create",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "c2eed306311a844cd6f2f84b6513c0a1182f86a5e3cace434385b8287c80d7c5",
-  "scenarioSha256": "7e4c5bb29e0f630cda8a09233575b9295e485f3d3e315ebdc0458c69515fcfc7",
-  "platform": "darwin",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "b63e99a80feec16cd581074d39b58059b36108b6d185ffdfc6742ec0c73d7c33",
+  "scenarioSha256": "73b433c77e4f56176634627512c4afc82709bc0e35896a761dd17fefaa1e430b",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -99,51 +99,6 @@
       "ordinal": 8,
       "value": {
         "$rpc": "null"
-      }
-    },
-    "2142af96648c": {
-      "name": "worktree.create#1",
-      "ordinal": 6,
-      "args": [
-        {
-          "name": "method",
-          "value": "worktree.create"
-        },
-        {
-          "name": "params",
-          "value": {
-            "activate": true,
-            "createdWithAgent": "claude",
-            "displayName": "ORC-1 Recorded issue",
-            "displayNameKind": "generated",
-            "linkedLinearIssue": "ORC-1",
-            "name": "orc-1",
-            "repo": "id:repo-1",
-            "setupDecision": "inherit",
-            "startupDraft": "https://linear.app/dolphin/issue/ORC-1"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "timeoutMs": 600000
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "id": "frame-2",
-          "ok": true,
-          "result": {
-            "worktree": {
-              "displayName": "ORC-1 Recorded issue",
-              "id": "wt-1"
-            }
-          }
-        }
       }
     },
     "33e3b949d4c5": {
@@ -256,6 +211,11 @@
       "name": "error",
       "ordinal": 7,
       "value": "Selected agent is disabled. Choose an enabled agent before creating."
+    },
+    "4cc52f50ebb1": {
+      "name": "worktree.create#1",
+      "ordinal": 7,
+      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"worktree.create\",\"params\":{\"repo\":\"id:repo-1\",\"name\":\"orc-1\",\"displayName\":\"ORC-1 Recorded issue\",\"displayNameKind\":\"generated\",\"linkedLinearIssue\":\"ORC-1\",\"setupDecision\":\"inherit\",\"activate\":true,\"startupDraft\":\"https://linear.app/dolphin/issue/ORC-1\",\"createdWithAgent\":\"claude\"}}"
     },
     "563b6d30cbc3": {
       "name": "runtimeTaskSettings",
@@ -466,6 +426,51 @@
       "error": "",
       "settings": {}
     },
+    "c9e34f1c0398": {
+      "name": "worktree.create#1",
+      "ordinal": 6,
+      "args": [
+        {
+          "name": "method",
+          "value": "worktree.create"
+        },
+        {
+          "name": "params",
+          "value": {
+            "activate": true,
+            "createdWithAgent": "claude",
+            "displayName": "ORC-1 Recorded issue",
+            "displayNameKind": "generated",
+            "linkedLinearIssue": "ORC-1",
+            "name": "orc-1",
+            "repo": "id:repo-1",
+            "setupDecision": "inherit",
+            "startupDraft": "https://linear.app/dolphin/issue/ORC-1"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "timeoutMs": 600000
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "id": "frame-2",
+          "ok": true,
+          "result": {
+            "worktree": {
+              "displayName": "ORC-1 Recorded issue",
+              "id": "wt-1"
+            }
+          }
+        }
+      }
+    },
     "ce455f0c9a54": {
       "name": "actionItem",
       "ordinal": 8,
@@ -552,11 +557,6 @@
           }
         }
       }
-    },
-    "e0423a9e6995": {
-      "name": "worktree.create#1",
-      "ordinal": 7,
-      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"worktree.create\",\"params\":{\"repo\":\"id:repo-1\",\"name\":\"orc-1\",\"displayName\":\"ORC-1 Recorded issue\",\"displayNameKind\":\"generated\",\"linkedLinearIssue\":\"ORC-1\",\"setupDecision\":\"inherit\",\"activate\":true,\"startupDraft\":\"https://linear.app/dolphin/issue/ORC-1\",\"createdWithAgent\":\"claude\"}}"
     },
     "e0a8ee1f3c00": {
       "name": "creatingKey",
@@ -666,8 +666,8 @@
       {
         "id": "settings-task-workspace-create-linear.normal:created",
         "observation": {
-          "sender": ["8ac371cf7234", "2142af96648c"],
-          "payloads": ["975f2ff9a730", "e0423a9e6995"],
+          "sender": ["8ac371cf7234", "c9e34f1c0398"],
+          "payloads": ["975f2ff9a730", "4cc52f50ebb1"],
           "settlements": {
             "mount": "eb79a9b3682a",
             "submit": "eb79a9b3682a"
@@ -728,8 +728,8 @@
       {
         "id": "settings-task-workspace-create-linear.inner-ok-missing:created",
         "observation": {
-          "sender": ["8811969aea41", "2142af96648c"],
-          "payloads": ["975f2ff9a730", "e0423a9e6995"],
+          "sender": ["8811969aea41", "c9e34f1c0398"],
+          "payloads": ["975f2ff9a730", "4cc52f50ebb1"],
           "settlements": {
             "mount": "eb79a9b3682a",
             "submit": "eb79a9b3682a"
@@ -750,8 +750,8 @@
       {
         "id": "settings-task-workspace-create-linear.inner-false-string-error:created",
         "observation": {
-          "sender": ["377e2658e1c6", "2142af96648c"],
-          "payloads": ["975f2ff9a730", "e0423a9e6995"],
+          "sender": ["377e2658e1c6", "c9e34f1c0398"],
+          "payloads": ["975f2ff9a730", "4cc52f50ebb1"],
           "settlements": {
             "mount": "eb79a9b3682a",
             "submit": "eb79a9b3682a"
@@ -772,8 +772,8 @@
       {
         "id": "settings-task-workspace-create-linear.inner-false-object-error:created",
         "observation": {
-          "sender": ["143586ed2364", "2142af96648c"],
-          "payloads": ["975f2ff9a730", "e0423a9e6995"],
+          "sender": ["143586ed2364", "c9e34f1c0398"],
+          "payloads": ["975f2ff9a730", "4cc52f50ebb1"],
           "settlements": {
             "mount": "eb79a9b3682a",
             "submit": "eb79a9b3682a"

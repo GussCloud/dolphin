@@ -3,21 +3,16 @@
   "family": "aiVault.resume-launch",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "2f43211e4084c0493bd02ec98868acf53a4c748f89a70cd9657c9c3ee87b12fb",
-  "scenarioSha256": "f721ab4438c4183927ce5ebc5fd6f1f18414701a5fa3b2807c359785829962a3",
-  "platform": "darwin",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "a92ede0a09b116a913a395cada4359e83a5d33d0531efe5cd55efce087084b99",
+  "scenarioSha256": "d4102931a76f90f7c62c1811b182713d3ea80db3ef00d14cac8cfbd82ce81b4a",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "0bce25f5646d": {
-      "name": "session.tabs.createTerminal#1",
-      "ordinal": 2,
-      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"session.tabs.createTerminal\",\"params\":{\"worktree\":\"id:workspace-1\",\"env\":{\"DOLPHIN_RESUME\":\"1\"},\"envToDelete\":[\"CODEX_HOME\"],\"launchAgent\":\"codex\",\"clientMutationId\":\"resume-mutation-1\",\"activate\":false,\"select\":true,\"navigation\":\"caller\"}}"
-    },
     "133463600de6": {
       "failure": "Failed to create terminal",
       "launched": "unlaunched"
@@ -42,57 +37,7 @@
         "isRpcDeliveryUnknown": false
       }
     },
-    "400d946a183d": {
-      "failure": {
-        "$rpc": "null"
-      },
-      "launched": {
-        "id": "tab-9",
-        "terminal": "terminal-9",
-        "title": "codex"
-      }
-    },
-    "41a658e859b8": {
-      "name": "session.tabs.createTerminal#1",
-      "ordinal": 1,
-      "args": [
-        {
-          "name": "method",
-          "value": "session.tabs.createTerminal"
-        },
-        {
-          "name": "params",
-          "value": {
-            "activate": false,
-            "clientMutationId": "resume-mutation-1",
-            "env": {
-              "DOLPHIN_RESUME": "1"
-            },
-            "envToDelete": ["CODEX_HOME"],
-            "launchAgent": "codex",
-            "navigation": "caller",
-            "select": true,
-            "worktree": "id:workspace-1"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "timeoutMs": 30000
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "id": "frame-1",
-          "ok": true
-        }
-      }
-    },
-    "4593130c572f": {
+    "32d014aacc71": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -130,13 +75,136 @@
           "id": "frame-1",
           "ok": true,
           "result": {
-            "error": "inner refused",
-            "ok": false
+            "$rpc": "null"
           }
         }
       }
     },
-    "47254074ef8b": {
+    "400d946a183d": {
+      "failure": {
+        "$rpc": "null"
+      },
+      "launched": {
+        "id": "tab-9",
+        "terminal": "terminal-9",
+        "title": "codex"
+      }
+    },
+    "475c44cf88f2": {
+      "name": "session.tabs.createTerminal#1",
+      "ordinal": 1,
+      "args": [
+        {
+          "name": "method",
+          "value": "session.tabs.createTerminal"
+        },
+        {
+          "name": "params",
+          "value": {
+            "activate": false,
+            "clientMutationId": "resume-mutation-1",
+            "env": {
+              "DOLPHIN_RESUME": "1"
+            },
+            "envToDelete": ["CODEX_HOME"],
+            "launchAgent": "codex",
+            "navigation": "caller",
+            "select": true,
+            "worktree": "id:workspace-1"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "timeoutMs": 30000
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "error": {
+            "code": "method_not_found",
+            "message": "Unknown method"
+          },
+          "id": "frame-1",
+          "ok": false
+        }
+      }
+    },
+    "478ad4afe83e": {
+      "status": "rejected",
+      "startedAt": 0,
+      "settledAt": 0,
+      "error": {
+        "category": "Error",
+        "message": "The host sent a reply this app could not read (session.tabs.createTerminal)",
+        "isRpcDeliveryUnknown": false
+      }
+    },
+    "51e6b387221e": {
+      "name": "session.tabs.createTerminal#1",
+      "ordinal": 1,
+      "args": [
+        {
+          "name": "method",
+          "value": "session.tabs.createTerminal"
+        },
+        {
+          "name": "params",
+          "value": {
+            "activate": false,
+            "clientMutationId": "resume-mutation-1",
+            "env": {
+              "DOLPHIN_RESUME": "1"
+            },
+            "envToDelete": ["CODEX_HOME"],
+            "launchAgent": "codex",
+            "navigation": "caller",
+            "select": true,
+            "worktree": "id:workspace-1"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "timeoutMs": 30000
+          }
+        }
+      ],
+      "settlement": {
+        "status": "rejected",
+        "startedAt": 0,
+        "settledAt": 0,
+        "error": {
+          "category": "Error",
+          "message": "",
+          "isRpcDeliveryUnknown": true
+        }
+      }
+    },
+    "54558214b507": {
+      "failure": "Unknown method",
+      "launched": "unlaunched"
+    },
+    "6e79da536ca9": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": {
+        "id": "tab-9",
+        "terminal": "terminal-9",
+        "title": "codex"
+      }
+    },
+    "7d9e7036f3d0": {
+      "name": "terminal.send#1",
+      "ordinal": 4,
+      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"terminal.send\",\"params\":{\"terminal\":\"terminal-9\",\"text\":\"codex resume rollout\",\"enter\":true}}"
+    },
+    "7eb654471221": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -180,125 +248,11 @@
         }
       }
     },
-    "478ad4afe83e": {
-      "status": "rejected",
-      "startedAt": 0,
-      "settledAt": 0,
-      "error": {
-        "category": "Error",
-        "message": "The host sent a reply this app could not read (session.tabs.createTerminal)",
-        "isRpcDeliveryUnknown": false
-      }
-    },
-    "53623411feb6": {
-      "name": "session.tabs.createTerminal#1",
-      "ordinal": 1,
-      "args": [
-        {
-          "name": "method",
-          "value": "session.tabs.createTerminal"
-        },
-        {
-          "name": "params",
-          "value": {
-            "activate": false,
-            "clientMutationId": "resume-mutation-1",
-            "env": {
-              "DOLPHIN_RESUME": "1"
-            },
-            "envToDelete": ["CODEX_HOME"],
-            "launchAgent": "codex",
-            "navigation": "caller",
-            "select": true,
-            "worktree": "id:workspace-1"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "timeoutMs": 30000
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "error": {
-            "code": "refused",
-            "message": ""
-          },
-          "id": "frame-1",
-          "ok": false
-        }
-      }
-    },
-    "54558214b507": {
-      "failure": "Unknown method",
-      "launched": "unlaunched"
-    },
-    "6e79da536ca9": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": {
-        "id": "tab-9",
-        "terminal": "terminal-9",
-        "title": "codex"
-      }
-    },
-    "7d9e7036f3d0": {
-      "name": "terminal.send#1",
-      "ordinal": 4,
-      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"terminal.send\",\"params\":{\"terminal\":\"terminal-9\",\"text\":\"codex resume rollout\",\"enter\":true}}"
-    },
-    "7e87236eeb8a": {
-      "name": "session.tabs.createTerminal#1",
-      "ordinal": 1,
-      "args": [
-        {
-          "name": "method",
-          "value": "session.tabs.createTerminal"
-        },
-        {
-          "name": "params",
-          "value": {
-            "activate": false,
-            "clientMutationId": "resume-mutation-1",
-            "env": {
-              "DOLPHIN_RESUME": "1"
-            },
-            "envToDelete": ["CODEX_HOME"],
-            "launchAgent": "codex",
-            "navigation": "caller",
-            "select": true,
-            "worktree": "id:workspace-1"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "timeoutMs": 30000
-          }
-        }
-      ],
-      "settlement": {
-        "status": "rejected",
-        "startedAt": 0,
-        "settledAt": 0,
-        "error": {
-          "category": "Error",
-          "message": "",
-          "isRpcDeliveryUnknown": true
-        }
-      }
-    },
     "84a5c9365ee8": {
       "failure": "The host sent a reply this app could not read (session.tabs.createTerminal)",
       "launched": "unlaunched"
     },
-    "919c7f3e8c27": {
+    "851d894378ac": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -336,15 +290,12 @@
           "id": "frame-1",
           "ok": true,
           "result": {
-            "error": {
-              "message": "inner refused"
-            },
-            "ok": false
+            "error": "refused"
           }
         }
       }
     },
-    "9d457a90f569": {
+    "8965c3665b19": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -385,7 +336,7 @@
         }
       }
     },
-    "a67829619e64": {
+    "92ba8e926411": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -433,6 +384,50 @@
         }
       }
     },
+    "96df2584d210": {
+      "name": "session.tabs.createTerminal#1",
+      "ordinal": 1,
+      "args": [
+        {
+          "name": "method",
+          "value": "session.tabs.createTerminal"
+        },
+        {
+          "name": "params",
+          "value": {
+            "activate": false,
+            "clientMutationId": "resume-mutation-1",
+            "env": {
+              "DOLPHIN_RESUME": "1"
+            },
+            "envToDelete": ["CODEX_HOME"],
+            "launchAgent": "codex",
+            "navigation": "caller",
+            "select": true,
+            "worktree": "id:workspace-1"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "timeoutMs": 30000
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "error": {
+            "code": "refused",
+            "message": ""
+          },
+          "id": "frame-1",
+          "ok": false
+        }
+      }
+    },
     "a947768bc0ed": {
       "status": "rejected",
       "startedAt": 0,
@@ -443,7 +438,7 @@
         "isRpcDeliveryUnknown": true
       }
     },
-    "b0e4a76fd545": {
+    "b817a5dcacab": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -481,7 +476,8 @@
           "id": "frame-1",
           "ok": true,
           "result": {
-            "$rpc": "null"
+            "error": "inner refused",
+            "ok": false
           }
         }
       }
@@ -495,6 +491,11 @@
         "message": "Unknown method",
         "isRpcDeliveryUnknown": false
       }
+    },
+    "c7158448bbd4": {
+      "name": "session.tabs.createTerminal#1",
+      "ordinal": 2,
+      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"session.tabs.createTerminal\",\"params\":{\"worktree\":\"id:workspace-1\",\"env\":{\"DOLPHIN_RESUME\":\"1\"},\"envToDelete\":[\"CODEX_HOME\"],\"launchAgent\":\"codex\",\"clientMutationId\":\"resume-mutation-1\",\"activate\":false,\"select\":true,\"navigation\":\"caller\"}}"
     },
     "c7584e82c72f": {
       "status": "rejected",
@@ -544,15 +545,7 @@
         }
       }
     },
-    "e105057c5765": {
-      "failure": "transport failure",
-      "launched": "unlaunched"
-    },
-    "efa7e20c5a6f": {
-      "failure": "outer refused",
-      "launched": "unlaunched"
-    },
-    "f0411f7ef116": {
+    "dd187c07d33d": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -590,16 +583,19 @@
           "id": "frame-1",
           "ok": true,
           "result": {
-            "error": "refused"
+            "error": {
+              "message": "inner refused"
+            },
+            "ok": false
           }
         }
       }
     },
-    "f1f50b49b8de": {
-      "failure": "",
+    "e105057c5765": {
+      "failure": "transport failure",
       "launched": "unlaunched"
     },
-    "fec16432436b": {
+    "e392e58d41ca": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -634,14 +630,18 @@
         "startedAt": 0,
         "settledAt": 0,
         "value": {
-          "error": {
-            "code": "method_not_found",
-            "message": "Unknown method"
-          },
           "id": "frame-1",
-          "ok": false
+          "ok": true
         }
       }
+    },
+    "efa7e20c5a6f": {
+      "failure": "outer refused",
+      "launched": "unlaunched"
+    },
+    "f1f50b49b8de": {
+      "failure": "",
+      "launched": "unlaunched"
     }
   },
   "recording": {
@@ -650,8 +650,8 @@
       {
         "id": "aivault-resume-launch-sent.normal:resumed",
         "observation": {
-          "sender": ["a67829619e64", "cceac9bcb36d"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "cceac9bcb36d"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "6e79da536ca9"
           },
@@ -662,8 +662,8 @@
       {
         "id": "aivault-resume-launch-sent.result-absent:resumed",
         "observation": {
-          "sender": ["41a658e859b8"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["e392e58d41ca"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "478ad4afe83e"
           },
@@ -674,8 +674,8 @@
       {
         "id": "aivault-resume-launch-sent.result-null:resumed",
         "observation": {
-          "sender": ["b0e4a76fd545"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["32d014aacc71"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "478ad4afe83e"
           },
@@ -686,8 +686,8 @@
       {
         "id": "aivault-resume-launch-sent.inner-ok-missing:resumed",
         "observation": {
-          "sender": ["f0411f7ef116"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["851d894378ac"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "478ad4afe83e"
           },
@@ -698,8 +698,8 @@
       {
         "id": "aivault-resume-launch-sent.inner-false-string-error:resumed",
         "observation": {
-          "sender": ["4593130c572f"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["b817a5dcacab"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "478ad4afe83e"
           },
@@ -710,8 +710,8 @@
       {
         "id": "aivault-resume-launch-sent.inner-false-object-error:resumed",
         "observation": {
-          "sender": ["919c7f3e8c27"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["dd187c07d33d"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "478ad4afe83e"
           },
@@ -722,8 +722,8 @@
       {
         "id": "aivault-resume-launch-sent.outer-refused:resumed",
         "observation": {
-          "sender": ["47254074ef8b"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["7eb654471221"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "32a7c0ae7918"
           },
@@ -734,8 +734,8 @@
       {
         "id": "aivault-resume-launch-sent.outer-refused-no-message:resumed",
         "observation": {
-          "sender": ["53623411feb6"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["96df2584d210"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "30ec57518c05"
           },
@@ -746,8 +746,8 @@
       {
         "id": "aivault-resume-launch-sent.method-not-found:resumed",
         "observation": {
-          "sender": ["fec16432436b"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["475c44cf88f2"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "b948e8307e81"
           },
@@ -758,8 +758,8 @@
       {
         "id": "aivault-resume-launch-sent.transport-rejection:resumed",
         "observation": {
-          "sender": ["9d457a90f569"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["8965c3665b19"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "a947768bc0ed"
           },
@@ -770,8 +770,8 @@
       {
         "id": "aivault-resume-launch-sent.transport-rejection-no-message:resumed",
         "observation": {
-          "sender": ["7e87236eeb8a"],
-          "payloads": ["0bce25f5646d"],
+          "sender": ["51e6b387221e"],
+          "payloads": ["c7158448bbd4"],
           "settlements": {
             "full": "c7584e82c72f"
           },

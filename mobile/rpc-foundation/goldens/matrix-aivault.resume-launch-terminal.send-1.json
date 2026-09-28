@@ -3,21 +3,16 @@
   "family": "aiVault.resume-launch",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "2f43211e4084c0493bd02ec98868acf53a4c748f89a70cd9657c9c3ee87b12fb",
-  "scenarioSha256": "aa812132ede83e4aced73a644e996df82a38bfc70ead70a5db2e9af8a8b1bfff",
-  "platform": "darwin",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "a92ede0a09b116a913a395cada4359e83a5d33d0531efe5cd55efce087084b99",
+  "scenarioSha256": "cfb872ed10ec70fecdae125b98254ad877c14d0bebf59dc2f37af83ee4a67158",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "0bce25f5646d": {
-      "name": "session.tabs.createTerminal#1",
-      "ordinal": 2,
-      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"session.tabs.createTerminal\",\"params\":{\"worktree\":\"id:workspace-1\",\"env\":{\"DOLPHIN_RESUME\":\"1\"},\"envToDelete\":[\"CODEX_HOME\"],\"launchAgent\":\"codex\",\"clientMutationId\":\"resume-mutation-1\",\"activate\":false,\"select\":true,\"navigation\":\"caller\"}}"
-    },
     "1953443d1eef": {
       "status": "rejected",
       "startedAt": 0,
@@ -223,47 +218,7 @@
         "isRpcDeliveryUnknown": false
       }
     },
-    "96a8247b729c": {
-      "name": "terminal.send#1",
-      "ordinal": 3,
-      "args": [
-        {
-          "name": "method",
-          "value": "terminal.send"
-        },
-        {
-          "name": "params",
-          "value": {
-            "enter": true,
-            "terminal": "terminal-9",
-            "text": "codex resume rollout"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "timeoutMs": 30000
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "id": "frame-2",
-          "ok": true,
-          "result": {
-            "$rpc": "null"
-          }
-        }
-      }
-    },
-    "96f24b3825b5": {
-      "failure": "Failed to send resume command",
-      "launched": "unlaunched"
-    },
-    "a67829619e64": {
+    "92ba8e926411": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -310,6 +265,46 @@
           }
         }
       }
+    },
+    "96a8247b729c": {
+      "name": "terminal.send#1",
+      "ordinal": 3,
+      "args": [
+        {
+          "name": "method",
+          "value": "terminal.send"
+        },
+        {
+          "name": "params",
+          "value": {
+            "enter": true,
+            "terminal": "terminal-9",
+            "text": "codex resume rollout"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "timeoutMs": 30000
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "id": "frame-2",
+          "ok": true,
+          "result": {
+            "$rpc": "null"
+          }
+        }
+      }
+    },
+    "96f24b3825b5": {
+      "failure": "Failed to send resume command",
+      "launched": "unlaunched"
     },
     "a947768bc0ed": {
       "status": "rejected",
@@ -371,6 +366,11 @@
         "message": "Unknown method",
         "isRpcDeliveryUnknown": false
       }
+    },
+    "c7158448bbd4": {
+      "name": "session.tabs.createTerminal#1",
+      "ordinal": 2,
+      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"session.tabs.createTerminal\",\"params\":{\"worktree\":\"id:workspace-1\",\"env\":{\"DOLPHIN_RESUME\":\"1\"},\"envToDelete\":[\"CODEX_HOME\"],\"launchAgent\":\"codex\",\"clientMutationId\":\"resume-mutation-1\",\"activate\":false,\"select\":true,\"navigation\":\"caller\"}}"
     },
     "c71e5404242d": {
       "name": "terminal.send#1",
@@ -580,8 +580,8 @@
       {
         "id": "aivault-resume-launch-sent.normal:resumed",
         "observation": {
-          "sender": ["a67829619e64", "cceac9bcb36d"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "cceac9bcb36d"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "6e79da536ca9"
           },
@@ -592,8 +592,8 @@
       {
         "id": "aivault-resume-launch-sent.result-absent:resumed",
         "observation": {
-          "sender": ["a67829619e64", "f4b97a58af06"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "f4b97a58af06"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "1953443d1eef"
           },
@@ -604,8 +604,8 @@
       {
         "id": "aivault-resume-launch-sent.result-null:resumed",
         "observation": {
-          "sender": ["a67829619e64", "96a8247b729c"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "96a8247b729c"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "1953443d1eef"
           },
@@ -616,8 +616,8 @@
       {
         "id": "aivault-resume-launch-sent.inner-ok-missing:resumed",
         "observation": {
-          "sender": ["a67829619e64", "59a693e61f7f"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "59a693e61f7f"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "6e79da536ca9"
           },
@@ -628,8 +628,8 @@
       {
         "id": "aivault-resume-launch-sent.inner-false-string-error:resumed",
         "observation": {
-          "sender": ["a67829619e64", "aaec35c3c986"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "aaec35c3c986"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "6e79da536ca9"
           },
@@ -640,8 +640,8 @@
       {
         "id": "aivault-resume-launch-sent.inner-false-object-error:resumed",
         "observation": {
-          "sender": ["a67829619e64", "69a3762ddd69"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "69a3762ddd69"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "6e79da536ca9"
           },
@@ -652,8 +652,8 @@
       {
         "id": "aivault-resume-launch-sent.outer-refused:resumed",
         "observation": {
-          "sender": ["a67829619e64", "c71e5404242d"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "c71e5404242d"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "32a7c0ae7918"
           },
@@ -664,8 +664,8 @@
       {
         "id": "aivault-resume-launch-sent.outer-refused-no-message:resumed",
         "observation": {
-          "sender": ["a67829619e64", "dd3aa7f2cd31"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "dd3aa7f2cd31"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "8511f0debfc0"
           },
@@ -676,8 +676,8 @@
       {
         "id": "aivault-resume-launch-sent.method-not-found:resumed",
         "observation": {
-          "sender": ["a67829619e64", "7cc4cda01467"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "7cc4cda01467"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "b948e8307e81"
           },
@@ -688,8 +688,8 @@
       {
         "id": "aivault-resume-launch-sent.transport-rejection:resumed",
         "observation": {
-          "sender": ["a67829619e64", "e7f336fd1821"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "e7f336fd1821"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "a947768bc0ed"
           },
@@ -700,8 +700,8 @@
       {
         "id": "aivault-resume-launch-sent.transport-rejection-no-message:resumed",
         "observation": {
-          "sender": ["a67829619e64", "21981de13ba2"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "21981de13ba2"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "c7584e82c72f"
           },

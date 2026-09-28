@@ -3,12 +3,12 @@
   "family": "aiVault.history-screen",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "c78ab47eea594b7e1988403321ff9ba135ca60c513bb9d5848bdde26c0ffe3c3",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "db3743b76b77a123567241b25197a5eb7d369c5c4f1cd4cb9f8420efb7a00845",
   "scenarioSha256": "b146be741484f2a6dca25e97f52b9ed10f8a2b28bd00e6b56acffbcd82136b2f",
-  "platform": "darwin",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -73,7 +73,7 @@
         "startedAt": 0
       }
     },
-    "0be231dddda1": {
+    "0314443c5238": {
       "crash": {
         "$rpc": "null"
       },
@@ -125,41 +125,21 @@
         }
       }
     },
-    "18ef6596b779": {
+    "1e9892fff064": {
       "crash": {
         "$rpc": "null"
       },
       "elements": {
+        "ActivityIndicator": 1,
         "ChevronLeft": 1,
-        "Pressable": 3,
+        "Pressable": 2,
         "RefreshCw": 1,
         "SafeAreaView": 1,
-        "Text": 5,
+        "Text": 2,
         "View": 4
       },
       "labels": ["Back", "Refresh agent sessions"],
-      "text": ["Agent Session History", "dolphin-history", "Unable to Load", "Retry"]
-    },
-    "22141179786a": {
-      "crash": {
-        "$rpc": "null"
-      },
-      "elements": {
-        "ChevronLeft": 1,
-        "Pressable": 3,
-        "RefreshCw": 1,
-        "SafeAreaView": 1,
-        "Text": 5,
-        "View": 4
-      },
-      "labels": ["Back", "Refresh agent sessions"],
-      "text": [
-        "Agent Session History",
-        "dolphin-history",
-        "Unable to Load",
-        "Unknown method",
-        "Retry"
-      ]
+      "text": ["Agent Session History", "dolphin-history"]
     },
     "2813efdd7233": {
       "name": "status.get#2",
@@ -266,27 +246,6 @@
         }
       }
     },
-    "4af220e500d6": {
-      "crash": {
-        "$rpc": "null"
-      },
-      "elements": {
-        "ChevronLeft": 1,
-        "Pressable": 3,
-        "RefreshCw": 1,
-        "SafeAreaView": 1,
-        "Text": 5,
-        "View": 4
-      },
-      "labels": ["Back", "Refresh agent sessions"],
-      "text": [
-        "Agent Session History",
-        "dolphin-history",
-        "Unable to Load",
-        "outer refused",
-        "Retry"
-      ]
-    },
     "4cebf6258ec1": {
       "name": "worktree.ps#1",
       "ordinal": 1,
@@ -383,6 +342,27 @@
         }
       }
     },
+    "55f0603d2360": {
+      "crash": {
+        "$rpc": "null"
+      },
+      "elements": {
+        "ChevronLeft": 1,
+        "Pressable": 3,
+        "RefreshCw": 1,
+        "SafeAreaView": 1,
+        "Text": 5,
+        "View": 4
+      },
+      "labels": ["Back", "Refresh agent sessions"],
+      "text": [
+        "Agent Session History",
+        "dolphin-history",
+        "Unable to Load",
+        "Unable to reach host",
+        "Retry"
+      ]
+    },
     "6eacae1aa018": {
       "name": "status.get#2",
       "ordinal": 5,
@@ -417,6 +397,21 @@
           "ok": false
         }
       }
+    },
+    "73e65666615c": {
+      "crash": {
+        "$rpc": "null"
+      },
+      "elements": {
+        "ChevronLeft": 1,
+        "Pressable": 3,
+        "RefreshCw": 1,
+        "SafeAreaView": 1,
+        "Text": 5,
+        "View": 4
+      },
+      "labels": ["Back", "Refresh agent sessions"],
+      "text": ["Agent Session History", "dolphin-history", "Unable to Load", "Retry"]
     },
     "74bb5a1c3c97": {
       "name": "status.get#2",
@@ -453,7 +448,7 @@
         }
       }
     },
-    "7f2073d8dcc1": {
+    "7adccab9e629": {
       "crash": {
         "$rpc": "null"
       },
@@ -470,7 +465,7 @@
         "Agent Session History",
         "dolphin-history",
         "Unable to Load",
-        "transport failure",
+        "outer refused",
         "Retry"
       ]
     },
@@ -509,7 +504,7 @@
         }
       }
     },
-    "8cc4f2d607a6": {
+    "8d79135c8f1c": {
       "crash": {
         "$rpc": "null"
       },
@@ -526,7 +521,7 @@
         "Agent Session History",
         "dolphin-history",
         "Unable to Load",
-        "The host sent a reply this app could not read (status.get)",
+        "transport failure",
         "Retry"
       ]
     },
@@ -609,6 +604,27 @@
         }
       }
     },
+    "a9e0b40fdc3c": {
+      "crash": {
+        "$rpc": "null"
+      },
+      "elements": {
+        "ChevronLeft": 1,
+        "Pressable": 3,
+        "RefreshCw": 1,
+        "SafeAreaView": 1,
+        "Text": 5,
+        "View": 4
+      },
+      "labels": ["Back", "Refresh agent sessions"],
+      "text": [
+        "Agent Session History",
+        "dolphin-history",
+        "Unable to Load",
+        "The host sent a reply this app could not read (status.get)",
+        "Retry"
+      ]
+    },
     "acf501fa9958": {
       "name": "status.get#1",
       "ordinal": 2,
@@ -643,7 +659,17 @@
         }
       }
     },
-    "af9574769167": {
+    "cee4e3edb0a1": {
+      "name": "status.get#2",
+      "ordinal": 6,
+      "json": "{\"id\":\"frame-3\",\"deviceToken\":\"recording-device\",\"method\":\"status.get\"}"
+    },
+    "d3c3ce66625d": {
+      "name": "aiVault.listSessions#1",
+      "ordinal": 8,
+      "json": "{\"id\":\"frame-4\",\"deviceToken\":\"recording-device\",\"method\":\"aiVault.listSessions\",\"params\":{\"limit\":500,\"force\":false,\"scopePaths\":[\"/repo/feature\"]}}"
+    },
+    "df8e8eedd22c": {
       "crash": {
         "$rpc": "null"
       },
@@ -660,35 +686,9 @@
         "Agent Session History",
         "dolphin-history",
         "Unable to Load",
-        "Unable to reach host",
+        "Unknown method",
         "Retry"
       ]
-    },
-    "cee4e3edb0a1": {
-      "name": "status.get#2",
-      "ordinal": 6,
-      "json": "{\"id\":\"frame-3\",\"deviceToken\":\"recording-device\",\"method\":\"status.get\"}"
-    },
-    "d22bb2f62cea": {
-      "crash": {
-        "$rpc": "null"
-      },
-      "elements": {
-        "ActivityIndicator": 1,
-        "ChevronLeft": 1,
-        "Pressable": 2,
-        "RefreshCw": 1,
-        "SafeAreaView": 1,
-        "Text": 2,
-        "View": 4
-      },
-      "labels": ["Back", "Refresh agent sessions"],
-      "text": ["Agent Session History", "dolphin-history"]
-    },
-    "d3c3ce66625d": {
-      "name": "aiVault.listSessions#1",
-      "ordinal": 8,
-      "json": "{\"id\":\"frame-4\",\"deviceToken\":\"recording-device\",\"method\":\"aiVault.listSessions\",\"params\":{\"limit\":500,\"force\":false,\"scopePaths\":[\"/repo/feature\"]}}"
     },
     "e94db4168535": {
       "name": "status.get#2",
@@ -742,7 +742,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "d22bb2f62cea",
+          "state": "1e9892fff064",
           "effects": []
         }
       },
@@ -754,7 +754,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "d22bb2f62cea",
+          "state": "1e9892fff064",
           "effects": []
         }
       },
@@ -766,7 +766,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "8cc4f2d607a6",
+          "state": "a9e0b40fdc3c",
           "effects": []
         }
       },
@@ -778,7 +778,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "8cc4f2d607a6",
+          "state": "a9e0b40fdc3c",
           "effects": []
         }
       },
@@ -790,7 +790,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "0be231dddda1",
+          "state": "0314443c5238",
           "effects": []
         }
       },
@@ -802,7 +802,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "0be231dddda1",
+          "state": "0314443c5238",
           "effects": []
         }
       },
@@ -814,7 +814,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "0be231dddda1",
+          "state": "0314443c5238",
           "effects": []
         }
       },
@@ -826,7 +826,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "4af220e500d6",
+          "state": "7adccab9e629",
           "effects": []
         }
       },
@@ -838,7 +838,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "af9574769167",
+          "state": "55f0603d2360",
           "effects": []
         }
       },
@@ -850,7 +850,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "22141179786a",
+          "state": "df8e8eedd22c",
           "effects": []
         }
       },
@@ -862,7 +862,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "7f2073d8dcc1",
+          "state": "8d79135c8f1c",
           "effects": []
         }
       },
@@ -874,7 +874,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "18ef6596b779",
+          "state": "73e65666615c",
           "effects": []
         }
       }
