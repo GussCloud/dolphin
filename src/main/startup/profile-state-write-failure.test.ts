@@ -29,8 +29,8 @@ it('tells desktop users saving stopped without silently restarting the writer', 
   expect(fixture.show).toHaveBeenCalledExactlyOnceWith({
     type: 'error',
     title: 'Saving stopped',
-    message: 'Orca has stopped saving this profile.',
-    detail: 'Recent changes may not be saved. Restart Orca before continuing.',
+    message: 'Dolphin has stopped saving this profile.',
+    detail: 'Recent changes may not be saved. Restart Dolphin before continuing.',
     buttons: ['OK']
   })
 })

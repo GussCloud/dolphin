@@ -108,7 +108,7 @@ function fixture() {
   writeFileSync(databaseFile, 'broken database')
   writeFileSync(exportFile, JSON.stringify(restored))
   const argv = [
-    'Orca',
+    'Dolphin',
     '--serve',
     PROFILE_STATE_RECOVERY_FLAG,
     JSON.stringify({ userDataPath: root, selector: { kind: 'json', revision: 1 } })
@@ -143,7 +143,7 @@ describe('Electron recovery preflight', () => {
   })
 
   it('leaves ordinary startup untouched', () => {
-    expect(runProfileStateRecoveryPreflight(['Orca', '--serve'])).toBe(false)
+    expect(runProfileStateRecoveryPreflight(['Dolphin', '--serve'])).toBe(false)
     expect(mocks.background).not.toHaveBeenCalled()
     expect(mocks.setPath).not.toHaveBeenCalled()
     expect(mocks.exit).not.toHaveBeenCalled()
@@ -192,7 +192,7 @@ describe('Electron recovery preflight', () => {
     expect(response()).toMatchObject({
       ok: false,
       code: 'runtime_error',
-      message: expect.stringContaining('Stop Orca')
+      message: expect.stringContaining('Stop Dolphin')
     })
     expect(readFileSync(item.databaseFile, 'utf8')).toBe('broken database')
     expect(JSON.parse(readFileSync(item.dataFile, 'utf8'))).toEqual({ old: true })
@@ -236,7 +236,7 @@ describe('Electron recovery preflight', () => {
         markerWrite(...args)
       })
     const argv = [
-      'Orca',
+      'Dolphin',
       '--serve',
       PROFILE_STATE_RECOVERY_FLAG,
       JSON.stringify({ userDataPath: item.root, selector: { kind: 'sqlite', backupId } })
@@ -272,16 +272,16 @@ describe('Electron recovery preflight', () => {
   })
 
   it.each([
-    ['Orca', PROFILE_STATE_RECOVERY_FLAG, '{}'],
-    ['Orca', '--serve', PROFILE_STATE_RECOVERY_FLAG],
-    ['Orca', '--serve', PROFILE_STATE_RECOVERY_FLAG, '{}'],
+    ['Dolphin', PROFILE_STATE_RECOVERY_FLAG, '{}'],
+    ['Dolphin', '--serve', PROFILE_STATE_RECOVERY_FLAG],
+    ['Dolphin', '--serve', PROFILE_STATE_RECOVERY_FLAG, '{}'],
     [
-      'Orca',
+      'Dolphin',
       '--serve',
       PROFILE_STATE_RECOVERY_FLAG,
       JSON.stringify({ userDataPath: 'relative', selector: { kind: 'json', revision: 1 } })
     ],
-    ['Orca', '--serve', PROFILE_STATE_RECOVERY_FLAG, '{}', PROFILE_STATE_RECOVERY_FLAG, '{}']
+    ['Dolphin', '--serve', PROFILE_STATE_RECOVERY_FLAG, '{}', PROFILE_STATE_RECOVERY_FLAG, '{}']
   ])('fails closed for malformed launch %j', (...argv) => {
     expect(runProfileStateRecoveryPreflight(argv)).toBe(true)
     expect(response()).toMatchObject({ ok: false })
@@ -294,8 +294,8 @@ describe('Electron recovery preflight', () => {
     function desktopArgv(item: ReturnType<typeof fixture>) {
       writeFileSync(item.dataFile, JSON.stringify(item.restored))
       return [
-        'Orca',
-        ...profileStateDesktopRecoveryArgs(['Orca', '--inspect', 'orca://share/1'], {
+        'Dolphin',
+        ...profileStateDesktopRecoveryArgs(['Dolphin', '--inspect', 'orca://share/1'], {
           userDataPath: item.root,
           selector: { kind: 'current-json' }
         })
@@ -322,15 +322,15 @@ describe('Electron recovery preflight', () => {
       await vi.waitFor(() => expect(mocks.exit).toHaveBeenCalledWith(1))
       expect(mocks.relaunch).not.toHaveBeenCalled()
       expect(mocks.showMessageBox).toHaveBeenCalledWith(
-        expect.objectContaining({ detail: expect.stringContaining('Stop Orca') })
+        expect.objectContaining({ detail: expect.stringContaining('Stop Dolphin') })
       )
       expect(readFileSync(item.databaseFile, 'utf8')).toBe('broken database')
     })
 
     it.each([
-      ['Orca', PROFILE_STATE_DESKTOP_RECOVERY_FLAG, '{}'],
-      ['Orca', '--serve', PROFILE_STATE_DESKTOP_RECOVERY_FLAG, '{}'],
-      ['Orca', PROFILE_STATE_DESKTOP_RECOVERY_FLAG, '{}', PROFILE_STATE_RECOVERY_FLAG, '{}']
+      ['Dolphin', PROFILE_STATE_DESKTOP_RECOVERY_FLAG, '{}'],
+      ['Dolphin', '--serve', PROFILE_STATE_DESKTOP_RECOVERY_FLAG, '{}'],
+      ['Dolphin', PROFILE_STATE_DESKTOP_RECOVERY_FLAG, '{}', PROFILE_STATE_RECOVERY_FLAG, '{}']
     ])('fails closed for malformed desktop launch %j', async (...argv) => {
       vi.spyOn(console, 'error').mockImplementation(() => {})
       expect(runProfileStateRecoveryPreflight(argv)).toBe(true)

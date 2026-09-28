@@ -10,7 +10,8 @@ import {
 vi.mock('electron', () => ({ app: { getLocale: () => 'en-US' } }))
 
 const POISON: InstallDirAclPoisonDiagnosis = {
-  detail: "Windows permissions on Orca's install folder are blocking its own sandboxed processes.",
+  detail:
+    "Windows permissions on Dolphin's install folder are blocking its own sandboxed processes.",
   commands: ['icacls "C:\\Orca" /grant "*S-1-15-2-2:(OI)(CI)(RX)"', 'icacls "C:\\Orca" /grant b']
 }
 
@@ -58,7 +59,7 @@ describe('presentRendererRecoveryPrompt', () => {
   it('interpolates the recovery count', async () => {
     const { run, shown } = harness({ recentRecoveryCount: 7 })
     await run()
-    expect(shown[0].detail).toContain('Orca tried to recover 7 times in a row')
+    expect(shown[0].detail).toContain('Dolphin tried to recover 7 times in a row')
     expect(shown[0].detail).not.toContain('{{')
   })
 
