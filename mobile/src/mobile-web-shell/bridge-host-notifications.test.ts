@@ -286,10 +286,10 @@ describe('externalLink', () => {
   it('hands an allowed URL to the caller and asks the client for nothing', () => {
     const bridge = harness()
     bridge.host.receive(clientFrame({ type: 'ready' }))
-    bridge.host.receive(open('https://github.com/stablyai/dolphin/pull/1'))
+    bridge.host.receive(open('https://github.com/GussCloud/dolphin/pull/1'))
     bridge.host.receive(open('mailto:someone@example.com'))
     expect(bridge.externalLinks).toEqual([
-      'https://github.com/stablyai/dolphin/pull/1',
+      'https://github.com/GussCloud/dolphin/pull/1',
       'mailto:someone@example.com'
     ])
     expect(bridge.client.requests).toHaveLength(0)

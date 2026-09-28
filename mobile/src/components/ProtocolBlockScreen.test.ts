@@ -26,7 +26,7 @@ vi.mock('expo-router', () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), back: vi.fn(), dismissTo: vi.fn() })
 }))
 
-const RELEASES_URL = 'https://github.com/stablyai/dolphin/releases'
+const RELEASES_URL = 'https://github.com/GussCloud/dolphin/releases'
 
 let renderer: ReactTestRenderer | null = null
 

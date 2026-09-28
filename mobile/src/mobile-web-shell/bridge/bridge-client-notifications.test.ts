@@ -170,12 +170,12 @@ describe('externalLink', () => {
 
   it('posts an allowed URL under its own grant', () => {
     const page = granted()
-    expect(page.client.notifyExternalLink('https://github.com/stablyai/dolphin')).toBe(true)
+    expect(page.client.notifyExternalLink('https://github.com/GussCloud/dolphin')).toBe(true)
     expect(page.frames().at(-1)).toEqual({
       v: BRIDGE_PROTOCOL_VERSION,
       type: 'notify',
       name: BRIDGE_EXTERNAL_LINK_GRANT,
-      url: 'https://github.com/stablyai/dolphin'
+      url: 'https://github.com/GussCloud/dolphin'
     })
   })
 

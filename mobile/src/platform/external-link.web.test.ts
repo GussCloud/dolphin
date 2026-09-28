@@ -19,8 +19,8 @@ describe('opening a URL from inside the shell', () => {
       asked.push(url)
       return true
     })
-    openExternalLink('https://github.com/stablyai/dolphin')
-    expect(asked).toEqual(['https://github.com/stablyai/dolphin'])
+    openExternalLink('https://github.com/GussCloud/dolphin')
+    expect(asked).toEqual(['https://github.com/GussCloud/dolphin'])
     expect(warned).not.toHaveBeenCalled()
   })
 
