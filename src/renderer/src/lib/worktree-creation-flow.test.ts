@@ -207,9 +207,9 @@ describe('runBackgroundWorktreeCreation', () => {
         id: 'repo-1',
         connectionId: null,
         gitRemoteIdentity: {
-          canonicalKey: 'github.com/GussCloud/dolphin',
+          canonicalKey: 'github.com/stablyai/dolphin',
           remoteName: 'origin',
-          remoteUrl: 'git@github.com:GussCloud/dolphin.git'
+          remoteUrl: 'git@github.com:stablyai/dolphin.git'
         }
       } as never
     ]
@@ -252,7 +252,7 @@ describe('runBackgroundWorktreeCreation', () => {
     expect(prepareEphemeralVmWorkspaceTargetMock).toHaveBeenCalledWith({
       repoId: 'repo-1',
       recipeId: 'cloud-sandbox',
-      projectId: 'github:GussCloud/dolphin',
+      projectId: 'github:stablyai/dolphin',
       workspaceName: 'feature',
       provisionId: 'creation-1',
       setupExistingFolder: store.setupProjectExistingFolder
@@ -299,7 +299,7 @@ describe('runBackgroundWorktreeCreation', () => {
         ephemeralVmRecipe: {
           sourceRepoId: 'repo-1',
           recipeId: 'cloud-sandbox',
-          projectId: 'github:GussCloud/dolphin'
+          projectId: 'github:stablyai/dolphin'
         },
         baseBranch: 'abc123',
         compareBaseRef: 'refs/remotes/origin/main',

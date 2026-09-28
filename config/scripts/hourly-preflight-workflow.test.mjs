@@ -33,7 +33,7 @@ async function checkFreshness(overrides = {}) {
       env: {
         ...process.env,
         GITHUB_OUTPUT: output,
-        GITHUB_REPOSITORY: 'GussCloud/dolphin',
+        GITHUB_REPOSITORY: 'stablyai/dolphin',
         MAIN_REPO_TOKEN: 'main-token',
         HOURLY_REPO: 'stablyai/dolphin-hourly',
         HEAD_SHA: head,

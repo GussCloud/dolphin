@@ -13,14 +13,14 @@ const repos = [
 
 describe('GitHub project repo matching', () => {
   it('normalizes owner/repo slugs case-insensitively', () => {
-    expect(normalizeGitHubRepositorySlug(' StablyAI/Dolphin ')).toBe('GussCloud/dolphin')
+    expect(normalizeGitHubRepositorySlug(' StablyAI/Dolphin ')).toBe('stablyai/dolphin')
     expect(normalizeGitHubRepositorySlug('dolphin')).toBeNull()
-    expect(normalizeGitHubRepositorySlug('GussCloud/dolphin/extra')).toBeNull()
+    expect(normalizeGitHubRepositorySlug('stablyai/dolphin/extra')).toBeNull()
   })
 
   it('matches project rows by resolved repo slug before path/display heuristics', () => {
     expect(
-      findRepoForGitHubProjectRepository('GussCloud/dolphin', repos, {
+      findRepoForGitHubProjectRepository('stablyai/dolphin', repos, {
         'repo-1': {
           path: '/Users/me/dolphin',
           repository: { owner: 'stablyai', repo: 'dolphin' }
@@ -31,7 +31,7 @@ describe('GitHub project repo matching', () => {
 
   it('does not pick a repo when resolved slugs are ambiguous', () => {
     expect(
-      findRepoForGitHubProjectRepository('GussCloud/dolphin', repos, {
+      findRepoForGitHubProjectRepository('stablyai/dolphin', repos, {
         'repo-1': {
           path: '/Users/me/dolphin',
           repository: { owner: 'stablyai', repo: 'dolphin' }
@@ -46,15 +46,15 @@ describe('GitHub project repo matching', () => {
 
   it('falls back to exact display/path slug matching when slug resolution is unavailable', () => {
     expect(
-      findRepoForGitHubProjectRepository('GussCloud/dolphin', [
-        { id: 'repo-1', path: '/Users/me/GussCloud/dolphin', displayName: 'dolphin' }
+      findRepoForGitHubProjectRepository('stablyai/dolphin', [
+        { id: 'repo-1', path: '/Users/me/stablyai/dolphin', displayName: 'dolphin' }
       ])
-    ).toEqual({ id: 'repo-1', path: '/Users/me/GussCloud/dolphin', displayName: 'dolphin' })
+    ).toEqual({ id: 'repo-1', path: '/Users/me/stablyai/dolphin', displayName: 'dolphin' })
   })
 
   it('normalizes Windows paths before path slug fallback matching', () => {
     expect(
-      findRepoForGitHubProjectRepository('GussCloud/dolphin', [
+      findRepoForGitHubProjectRepository('stablyai/dolphin', [
         { id: 'repo-1', path: 'C:\\Users\\me\\stablyai\\dolphin', displayName: 'dolphin' }
       ])
     ).toEqual({ id: 'repo-1', path: 'C:\\Users\\me\\stablyai\\dolphin', displayName: 'dolphin' })
@@ -63,11 +63,11 @@ describe('GitHub project repo matching', () => {
   it('does not path-match a repo whose resolved slug points somewhere else', () => {
     expect(
       findRepoForGitHubProjectRepository(
-        'GussCloud/dolphin',
-        [{ id: 'repo-1', path: '/Users/me/GussCloud/dolphin', displayName: 'dolphin' }],
+        'stablyai/dolphin',
+        [{ id: 'repo-1', path: '/Users/me/stablyai/dolphin', displayName: 'dolphin' }],
         {
           'repo-1': {
-            path: '/Users/me/GussCloud/dolphin',
+            path: '/Users/me/stablyai/dolphin',
             repository: { owner: 'fork', repo: 'dolphin' }
           }
         }
@@ -77,7 +77,7 @@ describe('GitHub project repo matching', () => {
 
   it('filters project rows to rows backed by open repositories', () => {
     const rows = [
-      { id: 'row-1', content: { repository: 'GussCloud/dolphin' } },
+      { id: 'row-1', content: { repository: 'stablyai/dolphin' } },
       { id: 'row-2', content: { repository: 'other/missing' } },
       { id: 'row-3', content: { repository: null } }
     ]
@@ -95,7 +95,7 @@ describe('GitHub project repo matching', () => {
   it('matches same-named repositories only on the active Project host', () => {
     expect(
       findRepoForGitHubProjectRepository(
-        'GussCloud/dolphin',
+        'stablyai/dolphin',
         repos,
         {
           'repo-1': {
@@ -249,8 +249,8 @@ describe('GitHub project repo matching', () => {
   it('does not use hostless path heuristics for Enterprise Project rows', () => {
     expect(
       findRepoForGitHubProjectRepository(
-        'GussCloud/dolphin',
-        [{ id: 'repo-1', path: '/Users/me/GussCloud/dolphin', displayName: 'dolphin' }],
+        'stablyai/dolphin',
+        [{ id: 'repo-1', path: '/Users/me/stablyai/dolphin', displayName: 'dolphin' }],
         {},
         'github.acme-corp.com'
       )
@@ -262,11 +262,11 @@ describe('GitHub project repo matching', () => {
   it('leaves a failed slug lookup matchable by the path fallback', () => {
     expect(
       findRepoForGitHubProjectRepository(
-        'GussCloud/dolphin',
-        [{ id: 'repo-1', path: '/Users/me/GussCloud/dolphin', displayName: 'dolphin' }],
-        { 'repo-1': { path: '/Users/me/GussCloud/dolphin', repository: null, failed: true } }
+        'stablyai/dolphin',
+        [{ id: 'repo-1', path: '/Users/me/stablyai/dolphin', displayName: 'dolphin' }],
+        { 'repo-1': { path: '/Users/me/stablyai/dolphin', repository: null, failed: true } }
       )
-    ).toEqual({ id: 'repo-1', path: '/Users/me/GussCloud/dolphin', displayName: 'dolphin' })
+    ).toEqual({ id: 'repo-1', path: '/Users/me/stablyai/dolphin', displayName: 'dolphin' })
   })
 })
 

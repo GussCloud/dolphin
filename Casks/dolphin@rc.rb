@@ -47,10 +47,10 @@ cask "dolphin@rc" do
   zap trash: [
     "~/.dolphin",
     "~/Library/Application Support/Dolphin",
-    "~/Library/Caches/com.stablyai.dolphin",
-    "~/Library/Caches/com.stablyai.dolphin.ShipIt",
-    "~/Library/HTTPStorages/com.stablyai.dolphin",
-    "~/Library/Preferences/com.stablyai.dolphin.plist",
-    "~/Library/Saved Application State/com.stablyai.dolphin.savedState",
+    "~/Library/Caches/com.gusscloud.dolphin",
+    "~/Library/Caches/com.gusscloud.dolphin.ShipIt",
+    "~/Library/HTTPStorages/com.gusscloud.dolphin",
+    "~/Library/Preferences/com.gusscloud.dolphin.plist",
+    "~/Library/Saved Application State/com.gusscloud.dolphin.savedState",
   ]
 end

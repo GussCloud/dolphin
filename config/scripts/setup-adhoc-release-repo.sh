@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Creates stablyai/dolphin-adhoc and grants the existing release App write access to
+# Creates GussCloud/dolphin-adhoc and grants the existing release App write access to
 # it, so adhoc-mac-build.yml can publish there.
 #
 # Why a separate repo rather than reusing dolphin-hourly: an adhoc build is somebody's

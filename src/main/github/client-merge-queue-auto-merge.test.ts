@@ -71,7 +71,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
           number: 7,
           title: 'PR',
           state: 'OPEN',
-          url: 'https://github.com/GussCloud/dolphin/pull/7',
+          url: 'https://github.com/stablyai/dolphin/pull/7',
           statusCheckRollup: [],
           updatedAt: '2026-04-01T00:00:00Z',
           isDraft: false,
@@ -101,7 +101,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
     expect(getOwnerRepoMock).not.toHaveBeenCalled()
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       1,
-      ['api', 'repos/GussCloud/dolphin/pulls/7'],
+      ['api', 'repos/stablyai/dolphin/pulls/7'],
       {
         cwd: '/repo-root',
         host: 'github.com'
@@ -114,7 +114,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
         'view',
         '7',
         '--repo',
-        'GussCloud/dolphin',
+        'stablyai/dolphin',
         '--json',
         'number,title,state,url,statusCheckRollup,updatedAt,isDraft,mergeable,reviewDecision,mergeStateStatus,autoMergeRequest,baseRefName,headRefName,baseRefOid,headRefOid'
       ],
@@ -122,7 +122,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       3,
-      ['pr', 'merge', '7', '--squash', '--repo', 'GussCloud/dolphin'],
+      ['pr', 'merge', '7', '--squash', '--repo', 'stablyai/dolphin'],
       expect.objectContaining({
         cwd: '/repo-root',
         env: expect.objectContaining({ GH_PROMPT_DISABLED: '1' }),
@@ -131,7 +131,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       4,
-      ['pr', 'edit', '7', '--title', 'New title', '--repo', 'GussCloud/dolphin'],
+      ['pr', 'edit', '7', '--title', 'New title', '--repo', 'stablyai/dolphin'],
       { cwd: '/repo-root', host: 'github.com' }
     )
   })
@@ -161,14 +161,14 @@ describe('GitHub GraphQL rate-limit guard', () => {
 
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       1,
-      ['api', 'repos/GussCloud/dolphin/pulls/7'],
+      ['api', 'repos/stablyai/dolphin/pulls/7'],
       {
         host: 'github.com'
       }
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       2,
-      ['pr', 'view', '7', '--json', 'id,headRefOid,baseRefName', '--repo', 'GussCloud/dolphin'],
+      ['pr', 'view', '7', '--json', 'id,headRefOid,baseRefName', '--repo', 'stablyai/dolphin'],
       { host: 'github.com' }
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
@@ -190,7 +190,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       4,
-      ['pr', 'merge', '7', '--disable-auto', '--repo', 'GussCloud/dolphin'],
+      ['pr', 'merge', '7', '--disable-auto', '--repo', 'stablyai/dolphin'],
       expect.objectContaining({
         env: expect.objectContaining({ GH_PROMPT_DISABLED: '1' }),
         host: 'github.com'
@@ -304,7 +304,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       4,
-      ['pr', 'merge', '7', '--auto', '--squash', '--repo', 'GussCloud/dolphin'],
+      ['pr', 'merge', '7', '--auto', '--squash', '--repo', 'stablyai/dolphin'],
       expect.objectContaining({
         cwd: '/repo-root',
         env: expect.objectContaining({ GH_PROMPT_DISABLED: '1' }),
@@ -326,7 +326,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
           number: 7,
           title: 'PR',
           state: 'OPEN',
-          url: 'https://github.com/GussCloud/dolphin/pull/7',
+          url: 'https://github.com/stablyai/dolphin/pull/7',
           statusCheckRollup: [],
           updatedAt: '2026-04-01T00:00:00Z',
           isDraft: false,
@@ -360,7 +360,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
       number: 7,
       title: 'PR',
       state: 'OPEN',
-      url: 'https://github.com/GussCloud/dolphin/pull/7',
+      url: 'https://github.com/stablyai/dolphin/pull/7',
       statusCheckRollup: [],
       updatedAt: '2026-04-01T00:00:00Z',
       isDraft: false,
@@ -411,7 +411,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
       number: 7,
       title: 'PR',
       state: 'OPEN',
-      url: 'https://github.com/GussCloud/dolphin/pull/7',
+      url: 'https://github.com/stablyai/dolphin/pull/7',
       statusCheckRollup: [],
       updatedAt: '2026-04-01T00:00:00Z',
       isDraft: false,
@@ -455,7 +455,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
           number: prViewCount,
           title: 'PR',
           state: 'OPEN',
-          url: `https://github.com/GussCloud/dolphin/pull/${prViewCount}`,
+          url: `https://github.com/stablyai/dolphin/pull/${prViewCount}`,
           statusCheckRollup: [],
           updatedAt: '2026-04-01T00:00:00Z',
           isDraft: false,
@@ -561,7 +561,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
           number: 7,
           title: 'PR',
           state: 'OPEN',
-          url: 'https://github.com/GussCloud/dolphin/pull/7',
+          url: 'https://github.com/stablyai/dolphin/pull/7',
           statusCheckRollup: [],
           updatedAt: '2026-04-01T00:00:00Z',
           isDraft: false,
@@ -604,7 +604,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
           number: 7,
           title: 'PR',
           state: 'OPEN',
-          url: 'https://github.com/GussCloud/dolphin/pull/7',
+          url: 'https://github.com/stablyai/dolphin/pull/7',
           statusCheckRollup: [],
           updatedAt: '2026-04-01T00:00:00Z',
           isDraft: false,
@@ -627,7 +627,7 @@ describe('GitHub GraphQL rate-limit guard', () => {
     expect(ghExecFileAsyncMock).toHaveBeenCalledTimes(3)
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       3,
-      ['pr', 'merge', '7', '--squash', '--repo', 'GussCloud/dolphin'],
+      ['pr', 'merge', '7', '--squash', '--repo', 'stablyai/dolphin'],
       expect.objectContaining({
         env: expect.objectContaining({ GH_PROMPT_DISABLED: '1' })
       })

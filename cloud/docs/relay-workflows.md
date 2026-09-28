@@ -4,7 +4,7 @@ The `cloud-*` workflows in `.github/workflows/` are the Relay deploy and
 operate surface. Every one of them is gated on the repository variable
 `DOLPHIN_CLOUD_OPERATIONS_ENABLED == 'true'` and does nothing until the repository
 owner sets it. The app and auth deploy workflows this document once also
-covered stay in the private `stablyai/dolphin-cloud` repository.
+covered stay in the private `GussCloud/dolphin-cloud` repository.
 
 Set these staging environment variables before running the staging deploy workflow:
 

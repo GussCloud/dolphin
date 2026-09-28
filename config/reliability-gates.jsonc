@@ -3372,7 +3372,7 @@
       "coveredProviders": ["lan", "tailscale", "cloud-relay"],
       "coverageNotes": "Deterministic TypeScript tests cover shared close-code policy, foreground retry timers, continuous-outage escalation, persistent pairing-rejection escalation, a bounded background Relay grace, direct-winner and background cancellation, credential-gated Relay presentation, and concurrent LAN/Tailscale authentication. Physical iOS/Android radios, GFE, and production relay recovery remain live-test gaps.",
       "motivatingLinks": [
-        "https://github.com/stablyai/dolphin-cloud/pull/96",
+        "https://github.com/GussCloud/dolphin-cloud/pull/96",
         "https://linear.app/stably/issue/STA-4587",
         "https://linear.app/stably/issue/STA-4681"
       ],
@@ -3716,7 +3716,7 @@
       "coveredPlatforms": ["macos"],
       "coveredProviders": ["cloud-relay"],
       "coverageNotes": "Deterministic main-process tests cover duplicate drain notifications, full-jitter backoff, Retry-After during initial setup and drain recovery, successful recovery, and broker-close cleanup. Packaged desktop, mixed-version fleets, GFE, and production Cloud SQL remain live-test gaps.",
-      "motivatingLinks": ["https://github.com/stablyai/dolphin-cloud/actions/runs/30223521062"],
+      "motivatingLinks": ["https://github.com/GussCloud/dolphin-cloud/actions/runs/30223521062"],
       "invariant": "One relay host may have at most one assignment attempt or retry timer per recovery path. Sustained director failure must increase the retry window up to five minutes, a bounded Retry-After must be respected during initial setup and drain recovery, shutdown must cancel pending work, and recovery must activate the authoritative assigned origin.",
       "oracle": "Inject duplicate drain events, deterministic randomness, fake time, repeated assignment failures, a 30-second Retry-After during initial setup and drain recovery, broker close, and eventual director recovery. Count every assignment call, require 500 ms then 1,000 ms retry windows, reject duplicate fanout, require no pre-hint retry or post-close work, and prove the recovered cell becomes authoritative.",
       "commands": [

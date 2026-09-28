@@ -252,7 +252,7 @@ describe('launchWorkItemDirect', () => {
         type: 'pr',
         number: 6934,
         title: 'Fix the bug',
-        url: 'https://github.com/GussCloud/dolphin/pull/6934',
+        url: 'https://github.com/stablyai/dolphin/pull/6934',
         branchName: 'feature/fix',
         baseRefName: 'main',
         isCrossRepository: true
@@ -309,7 +309,7 @@ describe('launchWorkItemDirect', () => {
           type: 'pr',
           number: 6933,
           title: 'The board columns are displayed backwards',
-          url: 'https://github.com/GussCloud/dolphin/issues/6933',
+          url: 'https://github.com/stablyai/dolphin/issues/6933',
           branchName: 'fix-issue-6933',
           baseRefName: 'main',
           isCrossRepository: true

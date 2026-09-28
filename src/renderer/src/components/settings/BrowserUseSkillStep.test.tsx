@@ -16,7 +16,7 @@ vi.mock('./AgentSkillSetupPanel', () => ({
 describe('BrowserUseSkillStep', () => {
   it('forwards a single-skill installed command even when setup installs a bundle', () => {
     const bundleInstallCommand =
-      'npx skills add https://github.com/GussCloud/dolphin --skill dolphin-cli --skill orchestration --global'
+      'npx skills add https://github.com/stablyai/dolphin --skill dolphin-cli --skill orchestration --global'
     const updateCommand = 'npx skills update dolphin-cli --global'
 
     renderToStaticMarkup(

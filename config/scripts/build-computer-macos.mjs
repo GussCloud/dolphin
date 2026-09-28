@@ -14,7 +14,7 @@ const entitlementsPath = path.join(
   'build',
   'entitlements.computer-use.mac.plist'
 )
-const bundleId = process.env.DOLPHIN_COMPUTER_MACOS_BUNDLE_ID ?? 'com.stablyai.dolphin.computer-use'
+const bundleId = process.env.DOLPHIN_COMPUTER_MACOS_BUNDLE_ID ?? 'com.gusscloud.dolphin.computer-use'
 const displayName = 'Dolphin Computer Use'
 const signingIdentity = resolveSigningIdentity()
 const universalTriples = ['arm64-apple-macosx', 'x86_64-apple-macosx']

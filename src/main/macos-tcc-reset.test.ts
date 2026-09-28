@@ -24,10 +24,10 @@ beforeEach(() => {
 
 describe('readMacosBundleId', () => {
   it('reads CFBundleIdentifier out of the bundle’s Info.plist', async () => {
-    runProcessMock.mockResolvedValue(processResult({ stdout: 'com.stablyai.dolphin\n' }))
+    runProcessMock.mockResolvedValue(processResult({ stdout: 'com.gusscloud.dolphin\n' }))
 
     await expect(readMacosBundleId('/Applications/Dolphin.app')).resolves.toBe(
-      'com.stablyai.dolphin'
+      'com.gusscloud.dolphin'
     )
     expect(runProcessMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -58,12 +58,12 @@ describe('resetMacosTccPermission', () => {
     runProcessMock.mockResolvedValue(processResult({}))
 
     await expect(
-      resetMacosTccPermission('SystemPolicyDocumentsFolder', 'com.stablyai.dolphin')
+      resetMacosTccPermission('SystemPolicyDocumentsFolder', 'com.gusscloud.dolphin')
     ).resolves.toEqual({ ok: true })
     expect(runProcessMock).toHaveBeenCalledWith(
       expect.objectContaining({
         program: '/usr/bin/tccutil',
-        args: ['reset', 'SystemPolicyDocumentsFolder', 'com.stablyai.dolphin']
+        args: ['reset', 'SystemPolicyDocumentsFolder', 'com.gusscloud.dolphin']
       })
     )
   })
@@ -97,7 +97,7 @@ describe('resetMacosTccPermission', () => {
     runProcessMock.mockResolvedValue(result)
 
     await expect(
-      resetMacosTccPermission('SystemPolicyDownloadsFolder', 'com.stablyai.dolphin')
+      resetMacosTccPermission('SystemPolicyDownloadsFolder', 'com.gusscloud.dolphin')
     ).resolves.toEqual({ ok: false, detail })
   })
 
@@ -105,7 +105,7 @@ describe('resetMacosTccPermission', () => {
     runProcessMock.mockRejectedValue(new Error('EACCES'))
 
     await expect(
-      resetMacosTccPermission('SystemPolicyDocumentsFolder', 'com.stablyai.dolphin')
+      resetMacosTccPermission('SystemPolicyDocumentsFolder', 'com.gusscloud.dolphin')
     ).resolves.toEqual({ ok: false, detail: 'EACCES' })
   })
 })

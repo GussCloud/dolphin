@@ -1,4 +1,4 @@
 provider: github
-owner: stablyai
+owner: GussCloud
 repo: dolphin
 updaterCacheDirName: dolphin-updater

@@ -1,6 +1,6 @@
 import { shell } from 'electron'
 
-const MACOS_PACKAGED_BUNDLE_ID = 'com.stablyai.dolphin'
+const MACOS_PACKAGED_BUNDLE_ID = 'com.gusscloud.dolphin'
 const MACOS_NOTIFICATION_SETTINGS_URL =
   'x-apple.systempreferences:com.apple.Notifications-Settings.extension'
 

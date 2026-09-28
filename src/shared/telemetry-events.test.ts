@@ -150,7 +150,7 @@ describe('app_starred_dolphin schema', () => {
   it('rejects extra keys via .strict()', () => {
     const parsed = eventSchemas.app_starred_dolphin.safeParse({
       source: 'landing',
-      repo: 'GussCloud/dolphin'
+      repo: 'stablyai/dolphin'
     })
     expect(parsed.success).toBe(false)
   })

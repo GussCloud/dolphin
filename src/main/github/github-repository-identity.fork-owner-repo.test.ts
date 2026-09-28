@@ -41,14 +41,14 @@ const SSH_FORK_PATH = '/tmp/ssh-fork-checkout'
 const REMOTE_URLS_BY_REPO: Record<string, Record<string, string>> = {
   [FORK_PATH]: {
     origin: 'https://github.com/fsdwen/dolphin.git',
-    upstream: 'https://github.com/GussCloud/dolphin.git'
+    upstream: 'https://github.com/stablyai/dolphin.git'
   },
   [NON_FORK_PATH]: {
-    origin: 'https://github.com/GussCloud/dolphin.git'
+    origin: 'https://github.com/stablyai/dolphin.git'
   },
   [SSH_FORK_PATH]: {
     origin: 'git@github.com:fsdwen/dolphin.git',
-    upstream: 'git@github.com:GussCloud/dolphin.git'
+    upstream: 'git@github.com:stablyai/dolphin.git'
   }
 }
 

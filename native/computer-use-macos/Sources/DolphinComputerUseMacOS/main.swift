@@ -4108,8 +4108,8 @@ private func isTrustedDolphinApplication(_ pid: pid_t) -> Bool {
     }
     // Why: dev validation runs from per-worktree wrapper apps with stable
     // Dolphin-owned bundle ids; the sidecar peer check must still authorize them.
-    return bundleId == "com.stablyai.dolphin" ||
-        bundleId.hasPrefix("com.stablyai.dolphin.dev.") ||
+    return bundleId == "com.gusscloud.dolphin" ||
+        bundleId.hasPrefix("com.gusscloud.dolphin.dev.") ||
         bundleId == "com.github.Electron"
 }
 

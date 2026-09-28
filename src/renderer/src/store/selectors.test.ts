@@ -463,7 +463,7 @@ describe('store selectors', () => {
     ]
     const projects = [
       {
-        id: 'github:GussCloud/dolphin',
+        id: 'github:stablyai/dolphin',
         displayName: 'dolphin',
         badgeColor: '#737373',
         sourceRepoIds: ['local-dolphin'],
@@ -482,7 +482,7 @@ describe('store selectors', () => {
     const projectHostSetups = [
       {
         id: 'local-setup',
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'local' as const,
         repoId: 'local-dolphin',
         path: '/Users/alice/stably/dolphin',
@@ -512,11 +512,11 @@ describe('store selectors', () => {
       projectHostSetups
     })
 
-    expect(projection.projects.map((project) => project.id)).toEqual(['github:GussCloud/dolphin'])
+    expect(projection.projects.map((project) => project.id)).toEqual(['github:stablyai/dolphin'])
     expect(projection.setups).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'local-setup', projectId: 'github:GussCloud/dolphin' }),
-        expect.objectContaining({ id: 'vm-setup', projectId: 'github:GussCloud/dolphin' })
+        expect.objectContaining({ id: 'local-setup', projectId: 'github:stablyai/dolphin' }),
+        expect.objectContaining({ id: 'vm-setup', projectId: 'github:stablyai/dolphin' })
       ])
     )
   })
@@ -539,14 +539,14 @@ describe('store selectors', () => {
 
     expect(projection.projects).toEqual([
       expect.objectContaining({
-        id: 'github:GussCloud/dolphin',
+        id: 'github:stablyai/dolphin',
         sourceRepoIds: ['repo-1']
       })
     ])
     expect(projection.setups).toEqual([
       expect.objectContaining({
         id: 'repo-1',
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         repoId: 'repo-1',
         hostId: 'local',
         path: '/Users/alice/dolphin'

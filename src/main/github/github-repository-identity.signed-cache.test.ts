@@ -29,7 +29,7 @@ const REPO = '/tmp/signed-cache-repo'
 const THIRTY_SECONDS = 30_000
 const FOUR_MINUTES = 4 * 60_000
 
-let remoteUrl = 'https://github.com/GussCloud/dolphin.git'
+let remoteUrl = 'https://github.com/stablyai/dolphin.git'
 
 const remoteGetUrlCalls = (): number =>
   gitExecFileAsyncMock.mock.calls.filter(([args]) => (args as string[])[1] === 'get-url').length
@@ -38,7 +38,7 @@ beforeEach(() => {
   _resetOwnerRepoCache()
   vi.useRealTimers()
   gitExecFileAsyncMock.mockReset()
-  remoteUrl = 'https://github.com/GussCloud/dolphin.git'
+  remoteUrl = 'https://github.com/stablyai/dolphin.git'
   readLocalGitConfigSignatureMock.mockReset()
   readLocalGitConfigSignatureMock.mockImplementation(async () => 'sig-1')
   gitExecFileAsyncMock.mockImplementation(async () => ({ stdout: remoteUrl }))

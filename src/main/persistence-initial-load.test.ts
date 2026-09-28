@@ -262,20 +262,20 @@ describe('Store', () => {
 
     expect(store.getProjects()).toEqual([
       expect.objectContaining({
-        id: 'github:GussCloud/dolphin',
+        id: 'github:stablyai/dolphin',
         sourceRepoIds: ['local-repo', 'remote-repo']
       })
     ])
     expect(store.getProjectHostSetups()).toEqual([
       expect.objectContaining({
         id: 'local-repo',
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'local',
         path: '/Users/alice/dolphin'
       }),
       expect.objectContaining({
         id: 'remote-repo',
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'ssh:gpu-vm',
         path: '/home/alice/dolphin'
       })

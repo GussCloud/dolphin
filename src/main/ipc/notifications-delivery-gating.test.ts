@@ -60,7 +60,7 @@ describe('registerNotificationHandlers', () => {
     const originalPlatform = process.platform
     const originalBundleId = process.env.DOLPHIN_DEV_MACOS_BUNDLE_ID
     Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true })
-    process.env.DOLPHIN_DEV_MACOS_BUNDLE_ID = 'com.stablyai.dolphin.dev.fb5a47066f08'
+    process.env.DOLPHIN_DEV_MACOS_BUNDLE_ID = 'com.gusscloud.dolphin.dev.fb5a47066f08'
     try {
       registerNotificationHandlers({
         getSettings: () => ({
@@ -77,7 +77,7 @@ describe('registerNotificationHandlers', () => {
       handler({})
 
       expect(shellOpenExternalMock).toHaveBeenCalledWith(
-        'x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=com.stablyai.dolphin.dev.fb5a47066f08'
+        'x-apple.systempreferences:com.apple.Notifications-Settings.extension?id=com.gusscloud.dolphin.dev.fb5a47066f08'
       )
     } finally {
       Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true })

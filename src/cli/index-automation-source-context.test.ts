@@ -58,7 +58,7 @@ describe('dolphin cli worktree awareness', () => {
     const sourceContext = {
       kind: 'task-source',
       provider: 'github',
-      projectId: 'github:GussCloud/dolphin',
+      projectId: 'github:stablyai/dolphin',
       hostId: 'runtime:gpu',
       projectHostSetupId: 'setup-gpu',
       repoId: 'repo-gpu',

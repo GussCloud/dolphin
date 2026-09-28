@@ -28,7 +28,7 @@ describe('renderer document navigation', () => {
   it('accepts the packaged renderer document but not a blocked external load', () => {
     const fixture = createFixture('file:///opt/dolphin/renderer/index.html')
 
-    fixture.navigate?.({}, 'https://github.com/GussCloud/dolphin/issues', false, true)
+    fixture.navigate?.({}, 'https://github.com/stablyai/dolphin/issues', false, true)
     expect(fixture.onStarted).not.toHaveBeenCalled()
     fixture.navigate?.({}, 'file:///opt/dolphin/renderer/index.html?reload=1', false, true)
     expect(fixture.onStarted).toHaveBeenCalledOnce()

@@ -178,7 +178,7 @@ ${docker} rm -f ${shellQuote(target.containerName)} >/dev/null
   execFileSync('git', ['init'], { cwd: repoPath })
   execFileSync('git', ['config', 'user.email', 'e2e@test.local'], { cwd: repoPath })
   execFileSync('git', ['config', 'user.name', 'Dolphin E2E'], { cwd: repoPath })
-  execFileSync('git', ['remote', 'add', 'origin', 'https://github.com/GussCloud/dolphin.git'], {
+  execFileSync('git', ['remote', 'add', 'origin', 'https://github.com/stablyai/dolphin.git'], {
     cwd: repoPath
   })
   execFileSync('git', ['add', '.'], { cwd: repoPath })

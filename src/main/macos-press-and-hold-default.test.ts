@@ -13,7 +13,7 @@ import {
   type PressAndHoldRecord
 } from './macos-press-and-hold-default'
 
-const DOLPHIN_DOMAIN = 'com.stablyai.dolphin'
+const DOLPHIN_DOMAIN = 'com.gusscloud.dolphin'
 
 type HostOverrides = Partial<PressAndHoldHost> & { record?: PressAndHoldRecord | null }
 
@@ -141,11 +141,11 @@ describe('ensureMacPressAndHoldDefault', () => {
     })
 
     it('accepts Dolphin and its channel-scoped bundles, and nothing else', () => {
-      expect(isDolphinPreferencesDomain('com.stablyai.dolphin')).toBe(true)
-      expect(isDolphinPreferencesDomain('com.stablyai.dolphin.dev')).toBe(true)
+      expect(isDolphinPreferencesDomain('com.gusscloud.dolphin')).toBe(true)
+      expect(isDolphinPreferencesDomain('com.gusscloud.dolphin.dev')).toBe(true)
       expect(isDolphinPreferencesDomain('com.github.Electron')).toBe(false)
       // Why: a prefix test without the dot would accept a lookalike bundle id.
-      expect(isDolphinPreferencesDomain('com.stablyai.dolphinfake')).toBe(false)
+      expect(isDolphinPreferencesDomain('com.gusscloud.dolphinfake')).toBe(false)
     })
   })
 
@@ -245,10 +245,10 @@ describe('readBundleIdentifierFromExecutablePath', () => {
   it('reads CFBundleIdentifier from the plist beside the executable', () => {
     const exe = bundleWithPlist(
       '<plist><dict>\n<key>CFBundleName</key>\n<string>Dolphin</string>\n' +
-        '<key>CFBundleIdentifier</key>\n\t<string>com.stablyai.dolphin</string>\n</dict></plist>'
+        '<key>CFBundleIdentifier</key>\n\t<string>com.gusscloud.dolphin</string>\n</dict></plist>'
     )
 
-    expect(readBundleIdentifierFromExecutablePath(exe)).toBe('com.stablyai.dolphin')
+    expect(readBundleIdentifierFromExecutablePath(exe)).toBe('com.gusscloud.dolphin')
   })
 
   it('returns null when the plist is missing or carries no identifier', () => {

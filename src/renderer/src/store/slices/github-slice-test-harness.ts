@@ -212,7 +212,7 @@ export function githubSourceContext(
   return {
     kind: 'task-source',
     provider: 'github',
-    projectId: 'github:GussCloud/dolphin',
+    projectId: 'github:stablyai/dolphin',
     hostId,
     projectHostSetupId: 'setup-1',
     repoId,

@@ -72,7 +72,7 @@ const stalePidRecord: ParsedDaemonPid = {
   linuxStartTicks: null,
   bootId: null,
   spawnerExecPath:
-    '/Users/alice/Library/Caches/com.stablyai.dolphin.ShipIt/u/Dolphin.app/Contents/MacOS/Dolphin',
+    '/Users/alice/Library/Caches/com.gusscloud.dolphin.ShipIt/u/Dolphin.app/Contents/MacOS/Dolphin',
   cgroupUnit: null
 }
 const origin = {

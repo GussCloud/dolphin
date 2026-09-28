@@ -349,16 +349,14 @@ describe('buildWorktreeMetaUpdates', () => {
 
   it('rejects issue URLs in the PR input', () => {
     expect(
-      buildUpdates({ reviewInput: 'https://github.com/GussCloud/dolphin/issues/6933' })
+      buildUpdates({ reviewInput: 'https://github.com/stablyai/dolphin/issues/6933' })
     ).toEqual({})
   })
 
   it('accepts PR URLs in the PR input', () => {
-    expect(buildUpdates({ reviewInput: 'https://github.com/GussCloud/dolphin/pull/6934' })).toEqual(
-      {
-        linkedPR: 6934
-      }
-    )
+    expect(buildUpdates({ reviewInput: 'https://github.com/stablyai/dolphin/pull/6934' })).toEqual({
+      linkedPR: 6934
+    })
   })
 
   it('records suppression when the user clears an explicit PR link', () => {
@@ -381,7 +379,7 @@ describe('buildWorktreeMetaUpdates', () => {
   it('accepts issue URLs in the issue input', () => {
     expect(
       buildUpdates(
-        { issueInput: 'https://github.com/GussCloud/dolphin/issues/6933' },
+        { issueInput: 'https://github.com/stablyai/dolphin/issues/6933' },
         {},
         { linkedLinearIssue: 'STA-335' }
       )
@@ -394,7 +392,7 @@ describe('buildWorktreeMetaUpdates', () => {
   })
 
   it('rejects PR URLs in the issue input', () => {
-    expect(buildUpdates({ issueInput: 'https://github.com/GussCloud/dolphin/pull/6934' })).toEqual(
+    expect(buildUpdates({ issueInput: 'https://github.com/stablyai/dolphin/pull/6934' })).toEqual(
       {}
     )
   })

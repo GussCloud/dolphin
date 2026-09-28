@@ -134,7 +134,7 @@ describe('Store', () => {
 
     expect(store.getProjects()).toEqual([
       expect.objectContaining({
-        id: 'github:GussCloud/dolphin',
+        id: 'github:stablyai/dolphin',
         displayName: 'renamed',
         sourceRepoIds: ['r1']
       })
@@ -142,7 +142,7 @@ describe('Store', () => {
     expect(store.getProjectHostSetups()).toEqual([
       expect.objectContaining({
         id: 'r1',
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         displayName: 'renamed',
         worktreeBasePath: '../new-worktrees'
       })

@@ -7,7 +7,7 @@ import {
 
 describe('work item link query bounds', () => {
   it('allows normal work item link queries', () => {
-    expect(isWorkItemLinkQueryTooLarge('https://github.com/GussCloud/dolphin/issues/923')).toBe(
+    expect(isWorkItemLinkQueryTooLarge('https://github.com/stablyai/dolphin/issues/923')).toBe(
       false
     )
   })

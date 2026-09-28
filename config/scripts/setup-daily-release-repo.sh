@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Creates stablyai/dolphin-daily and grants the existing release App write access to
+# Creates GussCloud/dolphin-daily and grants the existing release App write access to
 # it, so daily-mac-build.yml can publish there.
 #
 # Why a separate repo rather than reusing dolphin-hourly: the daily channel is a

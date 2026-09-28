@@ -38,10 +38,10 @@ describe('resolveProjectCloneUrlPrefill', () => {
     expect(
       resolveProjectCloneUrlPrefill(
         [project(['repo-1'])],
-        [repo('repo-1', 'git@github.com:GussCloud/dolphin.git')],
+        [repo('repo-1', 'git@github.com:stablyai/dolphin.git')],
         'project-dolphin'
       )
-    ).toBe('git@github.com:GussCloud/dolphin.git')
+    ).toBe('git@github.com:stablyai/dolphin.git')
   })
 
   it('returns empty when the project, repo, or remote is missing', () => {

@@ -427,7 +427,7 @@ describe('createFilePathLinkProvider range bounds', () => {
   it('does not steal macOS ctrl-click context-menu gestures in the URL fallback', async () => {
     setPlatform('Macintosh')
     storeState.settings = { openLinksInApp: false }
-    const rows = [makeBufferLine('Open https://github.com/GussCloud/dolphin/pull/2914')]
+    const rows = [makeBufferLine('Open https://github.com/stablyai/dolphin/pull/2914')]
     const { terminal, element } = makeFallbackTerminal(rows)
     const disposable = installHttpLinkClickFallback(terminal, { worktreeId: 'wt-1' })
     const mouseUp = getRegisteredBubbleMouseUpHandler(element)
@@ -504,7 +504,7 @@ describe('createFilePathLinkProvider range bounds', () => {
   it('does not double-open URLs when xterm already handled the mouseup', () => {
     setPlatform('Macintosh')
     storeState.settings = { openLinksInApp: false }
-    const rows = [makeBufferLine('Open https://github.com/GussCloud/dolphin/pull/2914')]
+    const rows = [makeBufferLine('Open https://github.com/stablyai/dolphin/pull/2914')]
     const { terminal, element } = makeFallbackTerminal(rows)
     const disposable = installHttpLinkClickFallback(terminal, { worktreeId: 'wt-1' })
     const mouseUp = getRegisteredBubbleMouseUpHandler(element)
@@ -528,8 +528,8 @@ describe('createFilePathLinkProvider range bounds', () => {
   it('opens a deeply wrapped absolute path from its final short continuation row', async () => {
     setPlatform('Macintosh')
     const rows = [
-      makeBufferLine('/private/tmp/or'),
-      makeBufferLine('ca-setup-e2e.hO'),
+      makeBufferLine('/private/tmp/dp'),
+      makeBufferLine('h-setup-e2e.hO'),
       makeBufferLine('W01f/workspaces'),
       makeBufferLine('/test-wt-5/mob'),
       makeBufferLine('ile/packages/ex'),
@@ -543,9 +543,9 @@ describe('createFilePathLinkProvider range bounds', () => {
     ]
 
     const opened = openFilePathLinkAtBufferPosition(makeBuffer(rows), { x: 4, y: 12 }, 15, {
-      startupCwd: '/private/tmp/dolphin-setup-e2e.hOW01f/workspaces/test-wt-5',
+      startupCwd: '/private/tmp/dph-setup-e2e.hOW01f/workspaces/test-wt-5',
       worktreeId: 'wt-1',
-      worktreePath: '/private/tmp/dolphin-setup-e2e.hOW01f/workspaces/test-wt-5',
+      worktreePath: '/private/tmp/dph-setup-e2e.hOW01f/workspaces/test-wt-5',
       runtimeEnvironmentId: null,
       openWithSystemDefault: true
     })
@@ -553,7 +553,7 @@ describe('createFilePathLinkProvider range bounds', () => {
 
     expect(opened).toBe(true)
     expect(openFilePathMock).toHaveBeenCalledWith(
-      '/private/tmp/dolphin-setup-e2e.hOW01f/workspaces/test-wt-5/mobile/packages/expo-two-way-audio/android/src/main/java/expo/modules/twowayaudio/ExpoTwoWayAudioLifeCycleListener.kt'
+      '/private/tmp/dph-setup-e2e.hOW01f/workspaces/test-wt-5/mobile/packages/expo-two-way-audio/android/src/main/java/expo/modules/twowayaudio/ExpoTwoWayAudioLifeCycleListener.kt'
     )
   })
 

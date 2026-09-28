@@ -53,7 +53,7 @@ function renderHeader({
         state: 'open',
         url: isGitLab
           ? 'https://gitlab.com/acme/dolphin/-/merge_requests/31'
-          : 'https://github.com/GussCloud/dolphin/pull/2964',
+          : 'https://github.com/stablyai/dolphin/pull/2964',
         status: 'pending',
         updatedAt: '2026-05-31T22:58:01Z',
         mergeable: 'UNKNOWN'

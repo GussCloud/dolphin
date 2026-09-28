@@ -15,7 +15,7 @@ const REAL_PROMPT_LINE =
 
 // Same shape, but the #9756 case: an agent CLI accesses, Dolphin is held responsible.
 const DOLPHIN_APPDATA_LINE =
-  '2026-07-27 15:40:02.001 Df tccd[79149:c81551c] [com.apple.TCC:access] AUTHREQ_PROMPTING: msgID=80871.99, service=kTCCServiceSystemPolicyAppData, subject=Sub:{node-5555494487fbc7467d473fd8b0a397018cbf954b}Resp:{TCCDProcess: identifier=com.stablyai.dolphin, pid=47548, auid=501, euid=501, binary_path=/opt/homebrew/Cellar/node/26.5.0/bin/node},'
+  '2026-07-27 15:40:02.001 Df tccd[79149:c81551c] [com.apple.TCC:access] AUTHREQ_PROMPTING: msgID=80871.99, service=kTCCServiceSystemPolicyAppData, subject=Sub:{node-5555494487fbc7467d473fd8b0a397018cbf954b}Resp:{TCCDProcess: identifier=com.gusscloud.dolphin, pid=47548, auid=501, euid=501, binary_path=/opt/homebrew/Cellar/node/26.5.0/bin/node},'
 
 // Preflight checks dominate the TCC subsystem and must never count as a dialog.
 const PREFLIGHT_LINE =
@@ -34,7 +34,7 @@ describe('parseTccPromptEvent', () => {
   it('separates the accessing binary from the responsible app', () => {
     const event = parseTccPromptEvent(DOLPHIN_APPDATA_LINE)
     // The whole point of #9756: the dialog says Dolphin, but node did the access.
-    expect(event?.responsibleIdentifier).toBe('com.stablyai.dolphin')
+    expect(event?.responsibleIdentifier).toBe('com.gusscloud.dolphin')
     expect(event?.accessingIdentifier).toBe('node-5555494487fbc7467d473fd8b0a397018cbf954b')
     expect(event?.binaryPath).toBe('/opt/homebrew/Cellar/node/26.5.0/bin/node')
   })
@@ -51,12 +51,12 @@ describe('parseTccPromptEvent', () => {
 describe('isDolphinAttributedPrompt', () => {
   it('accepts the app and detached terminal helper across Dolphin build identities', () => {
     for (const id of [
-      'com.stablyai.dolphin',
-      'com.stablyai.dolphin.helper',
-      'com.stablyai.dolphin.dev',
-      'com.stablyai.dolphin.dev.helper',
-      'com.stablyai.dolphin.local',
-      'com.stablyai.dolphin.local.helper'
+      'com.gusscloud.dolphin',
+      'com.gusscloud.dolphin.helper',
+      'com.gusscloud.dolphin.dev',
+      'com.gusscloud.dolphin.dev.helper',
+      'com.gusscloud.dolphin.local',
+      'com.gusscloud.dolphin.local.helper'
     ]) {
       expect(
         isDolphinAttributedPrompt({
@@ -83,7 +83,7 @@ describe('isDolphinAttributedPrompt', () => {
       isDolphinAttributedPrompt({
         service: 'kTCCServiceMicrophone',
         accessingIdentifier: 'dolphin',
-        responsibleIdentifier: 'com.stablyai.dolphin'
+        responsibleIdentifier: 'com.gusscloud.dolphin'
       })
     ).toBe(false)
   })
@@ -152,7 +152,7 @@ describe('MacosTccPromptWatch', () => {
     expect(onPrompt).toHaveBeenCalledTimes(1)
     expect(onPrompt.mock.calls[0][0]).toMatchObject({
       service: 'kTCCServiceSystemPolicyAppData',
-      responsibleIdentifier: 'com.stablyai.dolphin'
+      responsibleIdentifier: 'com.gusscloud.dolphin'
     })
     watch.stop()
   })

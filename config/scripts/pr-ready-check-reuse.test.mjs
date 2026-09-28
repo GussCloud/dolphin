@@ -33,7 +33,7 @@ const env = {
   GITHUB_SHA: identity.sourceSha,
   PR_CHECK_WORKFLOW_SHA: identity.workflowSha,
   GITHUB_RUN_ID: identity.runId,
-  GITHUB_REPOSITORY: 'GussCloud/dolphin',
+  GITHUB_REPOSITORY: 'stablyai/dolphin',
   GH_TOKEN: 'read-only-test-token'
 }
 const response = (runs) => ({ ok: true, json: async () => ({ workflow_runs: runs }) })
@@ -74,7 +74,7 @@ describe('ready-for-review required check reuse', () => {
     expect(request).toHaveBeenCalledTimes(1)
     const [url, options] = request.mock.calls[0]
     expect(url.origin).toBe('https://api.github.com')
-    expect(url.pathname).toBe('/repos/GussCloud/dolphin/actions/workflows/pr.yml/runs')
+    expect(url.pathname).toBe('/repos/stablyai/dolphin/actions/workflows/pr.yml/runs')
     expect(Object.fromEntries(url.searchParams)).toEqual({
       event: 'pull_request',
       head_sha: identity.headSha,

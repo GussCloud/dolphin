@@ -73,7 +73,7 @@ describe('DolphinRuntimeService', () => {
       expect(cloned).not.toHaveProperty('executionHostId')
 
       const result = await runtime.setupProjectExistingFolder({
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'runtime:env-1',
         path: clonePath,
         kind: 'git',
@@ -147,7 +147,7 @@ describe('DolphinRuntimeService', () => {
 
     try {
       const result = await runtime.setupProjectClone({
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'runtime:env-2',
         url: 'https://example.com/dolphin.git',
         destination

@@ -23,7 +23,7 @@ import {
  * them apart, so if `defaults` could not either, "only write when unset" would be unimplementable.
  *
  * Every domain used here is a throwaway UUID under Dolphin's own prefix, deleted along with its plist
- * in `afterEach`; the real `com.stablyai.dolphin` domain is never read or written.
+ * in `afterEach`; the real `com.gusscloud.dolphin` domain is never read or written.
  */
 
 // Why a real Dolphin-owned domain shape: the ownership guard rejects anything else, so a fake prefix
@@ -34,7 +34,7 @@ const domains: string[] = []
 const DEFAULTS_MISSING_EXIT_CODE = 1
 
 function throwawayDomain(): string {
-  const domain = `com.stablyai.dolphin.defaults-domain-test.${randomUUID()}`
+  const domain = `com.gusscloud.dolphin.defaults-domain-test.${randomUUID()}`
   domains.push(domain)
   return domain
 }

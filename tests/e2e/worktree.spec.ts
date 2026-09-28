@@ -297,7 +297,7 @@ test.describe('Create Workspace', () => {
     dolphinPage
   }) => {
     const title = `E2E smart URL resolution ${Date.now()}`
-    const url = 'https://github.com/GussCloud/dolphin/pull/2049'
+    const url = 'https://github.com/stablyai/dolphin/pull/2049'
     const linkedWorkspacePattern = new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
 
     try {
@@ -414,7 +414,7 @@ test.describe('Create Workspace', () => {
     dolphinPage
   }) => {
     const title = `E2E selected URL resolution ${Date.now()}`
-    const url = 'https://github.com/GussCloud/dolphin/pull/2050'
+    const url = 'https://github.com/stablyai/dolphin/pull/2050'
     const linkedWorkspacePattern = new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
 
     try {

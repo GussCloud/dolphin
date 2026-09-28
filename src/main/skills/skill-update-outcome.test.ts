@@ -207,7 +207,7 @@ describe('skillUpdateFailedNames over a real inventory', () => {
           'dolphin-cli': {
             skillFolderHash,
             skillPath: 'skills/dolphin-cli',
-            source: 'github.com/GussCloud/dolphin'
+            source: 'github.com/stablyai/dolphin'
           }
         }
       })

@@ -47,7 +47,7 @@ const withAdhocEnv = (assert) => withEnv({ DOLPHIN_MAC_ADHOC: '1' }, assert)
 describe('electron-builder mac channel config', () => {
   // Why: Squirrel.Mac swaps the .app in place only when the replacement carries the
   // same bundle id and a valid Developer ID signature. A hourly built on the local
-  // (com.stablyai.dolphin.local, ad-hoc) identity would be un-installable over a real
+  // (com.gusscloud.dolphin.local, ad-hoc) identity would be un-installable over a real
   // Dolphin — the whole point of the channel.
   it('builds hourly artifacts with the release signing identity', () => {
     withHourlyEnv((config) => {

@@ -5,7 +5,7 @@ describe('gitExecMutatesRepository', () => {
   it.each([
     [['remote', 'add', 'pr-contributor-dolphin', 'https://github.com/contributor/dolphin.git']],
     [['remote', 'remove', 'pr-contributor-dolphin']],
-    [['clone', '--', 'https://github.com/GussCloud/dolphin.git', 'dolphin']],
+    [['clone', '--', 'https://github.com/stablyai/dolphin.git', 'dolphin']],
     [['commit', '--allow-empty', '-m', 'Initial commit']],
     [['init']]
   ])('treats %j as mutating', (args) => {

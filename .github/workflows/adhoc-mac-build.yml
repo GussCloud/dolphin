@@ -11,7 +11,7 @@ name: Adhoc macOS + Windows Dev Build
 #   - Windows is unsigned; the published release notes explain the one-time
 #     SmartScreen/manual-install requirement.
 #
-# Artifacts publish to stablyai/dolphin-adhoc — separate from both dolphin and
+# Artifacts publish to GussCloud/dolphin-adhoc — separate from both dolphin and
 # dolphin-hourly. Separate from dolphin because the main repo's releases atom feed
 # exposes only its 10 newest entries. Separate from dolphin-hourly because a build
 # from someone's branch must never be picked up by a developer who only meant to
@@ -73,7 +73,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ADHOC_REPO: stablyai/dolphin-adhoc
+  ADHOC_REPO: GussCloud/dolphin-adhoc
   # Why age and not a count like hourly: this channel is low-volume and bursty, so
   # a count would either hold one week's experiments forever or evict a build
   # someone is still running after a busy afternoon. A month is well past the "few
@@ -278,7 +278,7 @@ jobs:
         with:
           app-id: ${{ secrets.HOURLY_RELEASE_APP_ID }}
           private-key: ${{ secrets.HOURLY_RELEASE_APP_PRIVATE_KEY }}
-          owner: stablyai
+          owner: GussCloud
           repositories: dolphin-adhoc
 
       - name: Create adhoc release

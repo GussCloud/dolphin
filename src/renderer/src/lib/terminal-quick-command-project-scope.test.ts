@@ -25,7 +25,7 @@ function command(repoId: string): TerminalQuickCommand {
 function setup(
   hostId: ExecutionHostId,
   repoId: string,
-  projectId = 'github:GussCloud/dolphin'
+  projectId = 'github:stablyai/dolphin'
 ): ScopeSetup {
   return { hostId, projectId, repoId }
 }
@@ -59,9 +59,9 @@ describe('terminalQuickCommandMatchesWorkspaceProject', () => {
       addedAt: 100,
       kind: 'git',
       gitRemoteIdentity: {
-        canonicalKey: 'github.com/GussCloud/dolphin',
+        canonicalKey: 'github.com/stablyai/dolphin',
         remoteName: 'origin',
-        remoteUrl: 'git@github.com:GussCloud/dolphin.git'
+        remoteUrl: 'git@github.com:stablyai/dolphin.git'
       },
       ...(executionHostId ? { executionHostId } : {})
     })

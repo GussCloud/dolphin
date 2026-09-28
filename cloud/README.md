@@ -98,7 +98,7 @@ on fork pull requests, so it configures no backend and holds no credential.
 ## What is not here
 
 The `terraform-foundation` and `terraform-apps` roots and the API and auth
-services live in the private `stablyai/dolphin-cloud` repository. Scripts and
+services live in the private `GussCloud/dolphin-cloud` repository. Scripts and
 tests that spanned both trees were narrowed to the relay side rather than
 carrying a dangling reference.
 

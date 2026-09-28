@@ -212,5 +212,5 @@ output "push_dns_record" {
     type = "CNAME"
     data = "ghs.googlehosted.com."
   } : null
-  description = "Record the stablyai/dolphin-cloud apps root must publish in the dolphin.guss.dev.br zone."
+  description = "Record the GussCloud/dolphin-cloud apps root must publish in the dolphin.guss.dev.br zone."
 }

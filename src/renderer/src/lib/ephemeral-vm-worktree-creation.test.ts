@@ -71,7 +71,7 @@ it('carries the captured provisioned-root ref identity into adoption', async () 
     ephemeralVmRecipe: {
       sourceRepoId: 'repo-1',
       recipeId: 'cloud-sandbox',
-      projectId: 'github:GussCloud/dolphin',
+      projectId: 'github:stablyai/dolphin',
       checkoutMode: 'provisioned-root'
     }
   })

@@ -193,7 +193,7 @@ describe('GitHub issue source split', () => {
             number: 923,
             title: 'Use upstream issues',
             state: 'open',
-            html_url: 'https://github.com/GussCloud/dolphin/issues/923',
+            html_url: 'https://github.com/stablyai/dolphin/issues/923',
             labels: [],
             updated_at: '2026-04-01T00:00:00Z',
             user: { login: 'octocat' }
@@ -219,7 +219,7 @@ describe('GitHub issue source split', () => {
 
     await listWorkItems('/repo-root', 10)
 
-    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, issueSearchArgs('GussCloud/dolphin'), {
+    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, issueSearchArgs('stablyai/dolphin'), {
       cwd: '/repo-root'
     })
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(2, prListArgs('fork/dolphin'), {
@@ -238,7 +238,7 @@ describe('GitHub issue source split', () => {
 
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       1,
-      issueSearchArgs('GussCloud/dolphin', { noCache: true }),
+      issueSearchArgs('stablyai/dolphin', { noCache: true }),
       { cwd: '/repo-root' }
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(2, prListArgs('fork/dolphin'), {
@@ -265,7 +265,7 @@ describe('GitHub issue source split', () => {
       {}
     )
     expect(getOwnerRepoMock).toHaveBeenCalledWith('/home/jinwoo/dolphin', 'openclaw-2', {})
-    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, issueSearchArgs('GussCloud/dolphin'), {})
+    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, issueSearchArgs('stablyai/dolphin'), {})
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(2, prListArgs('fork/dolphin'), {})
   })
 
@@ -276,7 +276,7 @@ describe('GitHub issue source split', () => {
 
     await listWorkItems('/repo-root', 10, 'is:issue')
 
-    expect(decodedIssueSearchPath(0)).toContain('q=repo:GussCloud/dolphin is:issue')
+    expect(decodedIssueSearchPath(0)).toContain('q=repo:stablyai/dolphin is:issue')
 
     ghExecFileAsyncMock.mockClear()
     getIssueOwnerRepoMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
@@ -335,7 +335,7 @@ describe('GitHub issue source split', () => {
 
     await listWorkItems('/repo-root', 10, undefined, undefined, 'upstream')
 
-    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(2, prListArgs('GussCloud/dolphin'), {
+    expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(2, prListArgs('stablyai/dolphin'), {
       cwd: '/repo-root'
     })
   })
@@ -352,7 +352,7 @@ describe('GitHub issue source split', () => {
     await listWorkItems('/repo-root', 10, 'is:pr is:open', undefined, 'upstream')
 
     expect(ghExecFileAsyncMock).toHaveBeenCalledWith(
-      expect.arrayContaining(['--repo', 'GussCloud/dolphin']),
+      expect.arrayContaining(['--repo', 'stablyai/dolphin']),
       { cwd: '/repo-root' }
     )
   })
@@ -375,7 +375,7 @@ describe('GitHub issue source split', () => {
         'api',
         '--cache',
         '120s',
-        `search/issues?q=${encodeURIComponent('repo:GussCloud/dolphin is:pull-request is:open')}&per_page=1`,
+        `search/issues?q=${encodeURIComponent('repo:stablyai/dolphin is:pull-request is:open')}&per_page=1`,
         '--jq',
         '.total_count'
       ],
@@ -424,7 +424,7 @@ describe('GitHub issue source split', () => {
         'api',
         '--cache',
         '120s',
-        `search/issues?q=${encodeURIComponent('repo:GussCloud/dolphin is:issue is:open')}&per_page=1`,
+        `search/issues?q=${encodeURIComponent('repo:stablyai/dolphin is:issue is:open')}&per_page=1`,
         '--jq',
         '.total_count'
       ],
@@ -491,7 +491,7 @@ describe('GitHub issue source split', () => {
         number: 42,
         title: 'Upstream PR',
         state: 'open',
-        url: 'https://github.com/GussCloud/dolphin/pull/42',
+        url: 'https://github.com/stablyai/dolphin/pull/42',
         labels: [],
         updatedAt: '2026-04-02T00:00:00Z',
         author: { login: 'octocat' },
@@ -507,7 +507,7 @@ describe('GitHub issue source split', () => {
         'view',
         '42',
         '--repo',
-        'GussCloud/dolphin',
+        'stablyai/dolphin',
         '--json',
         expect.stringContaining('reviewDecision')
       ],
@@ -620,7 +620,7 @@ describe('GitHub issue source split', () => {
 
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       1,
-      ['api', 'repos/GussCloud/dolphin/issues/42'],
+      ['api', 'repos/stablyai/dolphin/issues/42'],
       { cwd: '/repo-root' }
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
@@ -724,7 +724,7 @@ describe('GitHub issue source split', () => {
       const result = await listWorkItems('/repo-root', 10, undefined, undefined, 'auto')
 
       expect(resolveIssueSourceMock).toHaveBeenCalledWith('/repo-root', 'auto', undefined, {})
-      expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, issueSearchArgs('GussCloud/dolphin'), {
+      expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, issueSearchArgs('stablyai/dolphin'), {
         cwd: '/repo-root'
       })
       expect(result.issueSourceFellBack).toBeUndefined()
@@ -765,7 +765,7 @@ describe('GitHub issue source split', () => {
 
       expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
         2,
-        expect.arrayContaining(['--repo', 'GussCloud/dolphin']),
+        expect.arrayContaining(['--repo', 'stablyai/dolphin']),
         { cwd: '/repo-root' }
       )
       expect(result.sources).toEqual({
@@ -791,7 +791,7 @@ describe('GitHub issue source split', () => {
           'api',
           '--cache',
           '120s',
-          `search/issues?q=${encodeURIComponent('repo:GussCloud/dolphin is:open')}&per_page=1`,
+          `search/issues?q=${encodeURIComponent('repo:stablyai/dolphin is:open')}&per_page=1`,
           '--jq',
           '.total_count'
         ],
@@ -811,7 +811,7 @@ describe('GitHub issue source split', () => {
 
       const result = await listWorkItems('/repo-root', 10, undefined, undefined, 'upstream')
 
-      expect(decodedIssueSearchPath(0)).toContain('q=repo:GussCloud/dolphin is:issue is:open')
+      expect(decodedIssueSearchPath(0)).toContain('q=repo:stablyai/dolphin is:issue is:open')
       expect(result.issueSourceFellBack).toBeUndefined()
     })
 

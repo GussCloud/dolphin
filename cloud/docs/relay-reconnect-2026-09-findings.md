@@ -472,7 +472,7 @@ carries #478.
    `google_compute_router_nat.relay_gce` in `cloud/infra/terraform/relay-gce-foundation.tf`, targeted
    apply; durable fix is a private IP on the Cloud SQL instance. Online, no VM restart.
 1. **Cloud SQL disk** (Finding 10): 49 GB PD-SSD saturated since 11:58Z, checkpoint loop, fleet-wide
-   4–6 s stalls every ~45 s. Fix: bigger disk and/or `max_wal_size`. Owner: `stablyai/dolphin-cloud`
+   4–6 s stalls every ~45 s. Fix: bigger disk and/or `max_wal_size`. Owner: `GussCloud/dolphin-cloud`
    `infra/terraform-foundation/database.tf` `google_sql_database_instance.auth` (no `disk_size`,
    `disk_autoresize`, or `database_flags` set today, so Terraform is at defaults: 10 GB initial, autoresize
    grew it to 49 GB). Add `disk_size = 200` (+ `disk_autoresize = true`) and optionally

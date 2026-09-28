@@ -23,7 +23,7 @@ describe('classifyDaemonSpawnerPath', () => {
     ).toBe('applications')
     expect(
       classifyDaemonSpawnerPath(
-        '/Users/a/Library/Caches/com.stablyai.dolphin.ShipIt/update.abc/Dolphin.app/Contents/MacOS/Dolphin',
+        '/Users/a/Library/Caches/com.gusscloud.dolphin.ShipIt/update.abc/Dolphin.app/Contents/MacOS/Dolphin',
         alwaysExists
       )
     ).toBe('updater-cache')

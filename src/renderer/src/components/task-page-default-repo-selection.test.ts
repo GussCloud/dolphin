@@ -29,7 +29,7 @@ describe('getTaskEligibleRepos', () => {
           type: 'image',
           src: 'https://github.com/stablyai.png?size=64',
           source: 'github',
-          label: 'GussCloud/dolphin'
+          label: 'stablyai/dolphin'
         }
       }),
       repo({
@@ -294,7 +294,7 @@ describe('getTaskProjectPickerGroups', () => {
 
     expect(groups).toHaveLength(2)
     expect(groups[0]).toMatchObject({
-      projectKey: 'github:GussCloud/dolphin',
+      projectKey: 'github:stablyai/dolphin',
       repo: { id: 'local-dolphin' }
     })
     expect(groups[0]?.sources.map((source) => source.id)).toEqual(['local-dolphin', 'ssh-dolphin'])

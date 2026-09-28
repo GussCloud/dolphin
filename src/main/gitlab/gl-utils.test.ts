@@ -99,12 +99,12 @@ describe('gitlab project ref resolution', () => {
   it('prefers upstream for issue project ref resolution', async () => {
     mockGitRemoteCommands({
       origin: 'git@gitlab.com:fork/dolphin.git\n',
-      upstream: 'git@gitlab.com:GussCloud/dolphin.git\n'
+      upstream: 'git@gitlab.com:stablyai/dolphin.git\n'
     })
 
     await expect(getIssueProjectRef('/repo')).resolves.toEqual({
       host: 'gitlab.com',
-      path: 'GussCloud/dolphin'
+      path: 'stablyai/dolphin'
     })
     expect(gitRemoteGetUrlCalls('upstream')).toHaveLength(1)
   })
@@ -128,7 +128,7 @@ describe('gitlab project ref resolution', () => {
   it('falls back to origin when upstream is present but non-GitLab', async () => {
     mockGitRemoteCommands({
       origin: 'git@gitlab.com:fork/dolphin.git\n',
-      upstream: 'git@example.com:GussCloud/dolphin.git\n'
+      upstream: 'git@example.com:stablyai/dolphin.git\n'
     })
 
     await expect(getIssueProjectRef('/repo')).resolves.toEqual({
@@ -142,7 +142,7 @@ describe('gitlab project ref resolution', () => {
   it('does not mix origin and upstream cache entries for the same repo path', async () => {
     mockGitRemoteCommands({
       origin: 'git@gitlab.com:fork/dolphin.git\n',
-      upstream: 'git@gitlab.com:GussCloud/dolphin.git\n'
+      upstream: 'git@gitlab.com:stablyai/dolphin.git\n'
     })
 
     await expect(getProjectRef('/repo')).resolves.toEqual({
@@ -151,7 +151,7 @@ describe('gitlab project ref resolution', () => {
     })
     await expect(getIssueProjectRef('/repo')).resolves.toEqual({
       host: 'gitlab.com',
-      path: 'GussCloud/dolphin'
+      path: 'stablyai/dolphin'
     })
   })
 
@@ -231,7 +231,7 @@ describe('gitlab project ref resolution', () => {
 
   it('bounds cached project refs for distinct repo paths', async () => {
     gitExecFileAsyncMock.mockResolvedValue({
-      stdout: 'git@gitlab.com:GussCloud/dolphin.git\n',
+      stdout: 'git@gitlab.com:stablyai/dolphin.git\n',
       stderr: ''
     })
 
@@ -410,11 +410,11 @@ describe('resolveIssueSource', () => {
   it("'auto' + upstream exists → upstream, fellBack=false", async () => {
     mockGitRemoteCommands({
       origin: 'git@gitlab.com:fork/dolphin.git\n',
-      upstream: 'git@gitlab.com:GussCloud/dolphin.git\n'
+      upstream: 'git@gitlab.com:stablyai/dolphin.git\n'
     })
 
     await expect(resolveIssueSource('/repo', 'auto')).resolves.toEqual({
-      source: { host: 'gitlab.com', path: 'GussCloud/dolphin' },
+      source: { host: 'gitlab.com', path: 'stablyai/dolphin' },
       fellBack: false
     })
     expect(gitRemoteGetUrlCalls('upstream')).toHaveLength(1)
@@ -423,7 +423,7 @@ describe('resolveIssueSource', () => {
   it("'auto' + no gitlab upstream → origin, fellBack=false", async () => {
     mockGitRemoteCommands({
       origin: 'git@gitlab.com:solo/dolphin.git\n',
-      upstream: 'git@example.com:GussCloud/dolphin.git\n'
+      upstream: 'git@example.com:stablyai/dolphin.git\n'
     })
 
     await expect(resolveIssueSource('/repo', 'auto')).resolves.toEqual({
@@ -462,11 +462,11 @@ describe('resolveIssueSource', () => {
   it('undefined preference is treated identically to auto', async () => {
     mockGitRemoteCommands({
       origin: 'git@gitlab.com:fork/dolphin.git\n',
-      upstream: 'git@gitlab.com:GussCloud/dolphin.git\n'
+      upstream: 'git@gitlab.com:stablyai/dolphin.git\n'
     })
 
     await expect(resolveIssueSource('/repo', undefined)).resolves.toEqual({
-      source: { host: 'gitlab.com', path: 'GussCloud/dolphin' },
+      source: { host: 'gitlab.com', path: 'stablyai/dolphin' },
       fellBack: false
     })
   })

@@ -60,16 +60,13 @@ describe('getPRForBranch', () => {
         }
       })
     })
-    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:GussCloud/dolphin.git')
+    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:stablyai/dolphin.git')
 
     const target = await getPullRequestPushTarget('/repo-root', 1738)
 
-    expect(ghExecFileAsyncMock).toHaveBeenCalledWith(
-      ['api', 'repos/GussCloud/dolphin/pulls/1738'],
-      {
-        cwd: '/repo-root'
-      }
-    )
+    expect(ghExecFileAsyncMock).toHaveBeenCalledWith(['api', 'repos/stablyai/dolphin/pulls/1738'], {
+      cwd: '/repo-root'
+    })
     expect(target).toEqual({
       pushTarget: {
         remoteName: 'pr-prateek-dolphin',
@@ -135,7 +132,7 @@ describe('getPRForBranch', () => {
         }
       })
     })
-    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:GussCloud/dolphin.git')
+    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:stablyai/dolphin.git')
 
     await expect(getPullRequestPushTarget('/repo-root', 1738)).resolves.toEqual({
       pushTarget: {
@@ -155,10 +152,10 @@ describe('getPRForBranch', () => {
         head: {
           ref: 'fix-sidebar',
           repo: {
-            full_name: 'GussCloud/dolphin',
+            full_name: 'stablyai/dolphin',
             name: 'dolphin',
-            clone_url: 'https://github.com/GussCloud/dolphin.git',
-            ssh_url: 'git@github.com:GussCloud/dolphin.git',
+            clone_url: 'https://github.com/stablyai/dolphin.git',
+            ssh_url: 'git@github.com:stablyai/dolphin.git',
             owner: { login: 'stablyai' }
           }
         }
@@ -181,10 +178,10 @@ describe('getPRForBranch', () => {
         head: {
           ref: 'fix-sidebar',
           repo: {
-            full_name: 'GussCloud/dolphin',
+            full_name: 'stablyai/dolphin',
             name: 'dolphin',
-            clone_url: 'https://github.com/GussCloud/dolphin.git',
-            ssh_url: 'git@github.com:GussCloud/dolphin.git',
+            clone_url: 'https://github.com/stablyai/dolphin.git',
+            ssh_url: 'git@github.com:stablyai/dolphin.git',
             owner: { login: 'stablyai' }
           }
         }
@@ -395,7 +392,7 @@ describe('getPRForBranch', () => {
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       2,
-      ['api', 'repos/GussCloud/dolphin/pulls/1849'],
+      ['api', 'repos/stablyai/dolphin/pulls/1849'],
       { cwd: '/repo-root' }
     )
   })

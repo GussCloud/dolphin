@@ -272,7 +272,7 @@ jobs:
         with:
           app-id: ${{ secrets.HOURLY_RELEASE_APP_ID }}
           private-key: ${{ secrets.HOURLY_RELEASE_APP_PRIVATE_KEY }}
-          owner: stablyai
+          owner: GussCloud
           repositories: dolphin-${{ inputs.channel }}
 
       # Why: electron-builder's publisher creates a release when it cannot find
@@ -285,8 +285,8 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           set -euo pipefail
-          if ! gh release view "$TAG" --repo "stablyai/dolphin-$CHANNEL" --json tagName >/dev/null 2>&1; then
-            echo "::error::Release $TAG no longer exists in stablyai/dolphin-$CHANNEL; the mac leg most likely failed and discarded it. Not creating a Windows-only release."
+          if ! gh release view "$TAG" --repo "GussCloud/dolphin-$CHANNEL" --json tagName >/dev/null 2>&1; then
+            echo "::error::Release $TAG no longer exists in GussCloud/dolphin-$CHANNEL; the mac leg most likely failed and discarded it. Not creating a Windows-only release."
             exit 1
           fi
 
@@ -317,7 +317,7 @@ jobs:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
         run: |
           set -euo pipefail
-          assets="$(gh release view "$TAG" --repo "stablyai/dolphin-$CHANNEL" --json assets --jq '.assets[].name')"
+          assets="$(gh release view "$TAG" --repo "GussCloud/dolphin-$CHANNEL" --json assets --jq '.assets[].name')"
           echo "Assets on $TAG:"
           echo "$assets"
           for required in latest.yml dolphin-windows-setup.exe; do

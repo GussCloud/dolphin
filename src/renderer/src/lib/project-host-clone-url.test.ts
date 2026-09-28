@@ -26,7 +26,7 @@ describe('getProjectHostCloneUrl', () => {
           }
         })
       )
-    ).toBe('https://github.com/GussCloud/dolphin.git')
+    ).toBe('https://github.com/stablyai/dolphin.git')
   })
 
   it('preserves an authenticated Enterprise host and port', () => {

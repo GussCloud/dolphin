@@ -149,7 +149,7 @@ describe('git remote operations', () => {
         return { stdout: 'refs/heads/imp/chinese-translation\n', stderr: '' }
       }
       if (args[0] === 'remote' && args[1] === 'get-url') {
-        return { stdout: 'https://github.com/GussCloud/dolphin.git\n', stderr: '' }
+        return { stdout: 'https://github.com/stablyai/dolphin.git\n', stderr: '' }
       }
       if (args[0] === 'remote') {
         return { stdout: 'origin\n', stderr: '' }
@@ -188,7 +188,7 @@ describe('git remote operations', () => {
         return { stdout: 'refs/heads/imp/chinese-translation\n', stderr: '' }
       }
       if (args[0] === 'remote' && args[1] === 'get-url' && args[2] === 'origin') {
-        return { stdout: 'https://github.com/GussCloud/dolphin.git\n', stderr: '' }
+        return { stdout: 'https://github.com/stablyai/dolphin.git\n', stderr: '' }
       }
       if (args[0] === 'remote' && args[1] === 'get-url' && args[2] === 'pr-pynickle-dolphin') {
         return { stdout: 'https://github.com/pynickle/dolphin.git\n', stderr: '' }
@@ -196,8 +196,8 @@ describe('git remote operations', () => {
       if (args[0] === 'remote' && args[1] === '-v') {
         return {
           stdout: [
-            'origin\thttps://github.com/GussCloud/dolphin.git (fetch)',
-            'origin\thttps://github.com/GussCloud/dolphin.git (push)',
+            'origin\thttps://github.com/stablyai/dolphin.git (fetch)',
+            'origin\thttps://github.com/stablyai/dolphin.git (push)',
             'pr-pynickle-dolphin\thttps://github.com/pynickle/dolphin.git (fetch)',
             'pr-pynickle-dolphin\thttps://github.com/pynickle/dolphin.git (push)'
           ].join('\n'),
@@ -222,7 +222,7 @@ describe('git remote operations', () => {
   // serial `git remote get-url` per remote -- 59 subprocesses on a 58-remote repo.
   it('normalizes a URL-valued push remote from one remote table read at 58 remotes', async () => {
     const remotes = [
-      { name: 'origin', url: 'https://github.com/GussCloud/dolphin.git' },
+      { name: 'origin', url: 'https://github.com/stablyai/dolphin.git' },
       ...Array.from({ length: 56 }, (_, index) => ({
         name: `pr-user${index}-dolphin`,
         url: `https://github.com/user${index}/dolphin.git`

@@ -73,7 +73,7 @@ describe('RepositoryIconPicker GitHub avatar refresh', () => {
         type: 'image',
         src: 'https://github.com/stablyai.png?size=64',
         source: 'github',
-        label: 'GussCloud/dolphin'
+        label: 'stablyai/dolphin'
       }
     })
     apiMocks.repoUpstream.mockResolvedValueOnce(null)
@@ -103,7 +103,7 @@ describe('RepositoryIconPicker GitHub avatar refresh', () => {
         type: 'image',
         src: 'https://github.com/stablyai.png?size=64',
         source: 'github',
-        label: 'GussCloud/dolphin'
+        label: 'stablyai/dolphin'
       }
     })
     // Offline/unauthed: the parent lookup returns null. The same-name origin

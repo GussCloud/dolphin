@@ -23,7 +23,7 @@ describe('new workspace project targets', () => {
     ])
 
     expect(options).toHaveLength(1)
-    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'GussCloud/dolphin' })
+    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'stablyai/dolphin' })
   })
 
   it('shows the provider slug recovered from canonical git identity', () => {
@@ -33,14 +33,14 @@ describe('new workspace project targets', () => {
         displayName: 'dolphin',
         path: '/src/dolphin',
         gitRemoteIdentity: {
-          canonicalKey: 'github.com/GussCloud/dolphin',
+          canonicalKey: 'github.com/stablyai/dolphin',
           remoteName: 'origin',
-          remoteUrl: 'git@github.com:GussCloud/dolphin.git'
+          remoteUrl: 'git@github.com:stablyai/dolphin.git'
         }
       }
     ])
 
-    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'GussCloud/dolphin' })
+    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'stablyai/dolphin' })
   })
 
   it('labels local, SSH, and paired runtime targets', () => {

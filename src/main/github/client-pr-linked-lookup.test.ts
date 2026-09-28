@@ -78,7 +78,7 @@ describe('getPRForBranch', () => {
         'view',
         '99',
         '--repo',
-        'GussCloud/dolphin',
+        'stablyai/dolphin',
         '--json',
         'number,title,state,url,statusCheckRollup,updatedAt,isDraft,mergeable,reviewDecision,mergeStateStatus,autoMergeRequest,baseRefName,headRefName,baseRefOid,headRefOid'
       ],

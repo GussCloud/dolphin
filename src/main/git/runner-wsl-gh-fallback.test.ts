@@ -237,7 +237,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: TRANSIENT_502, code: 1 }))
 
     await expect(
-      ghExecFileAsync(['api', '-X', 'POST', 'repos/GussCloud/dolphin/issues'])
+      ghExecFileAsync(['api', '-X', 'POST', 'repos/stablyai/dolphin/issues'])
     ).rejects.toThrow('HTTP 502 Bad Gateway')
 
     expect(spawnMock).toHaveBeenCalledTimes(1)
@@ -262,7 +262,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: TRANSIENT_502, code: 1 }))
 
     await expect(
-      ghExecFileAsync(['issue', 'edit', '5', '--repo', 'GussCloud/dolphin'])
+      ghExecFileAsync(['issue', 'edit', '5', '--repo', 'stablyai/dolphin'])
     ).rejects.toThrow('HTTP 502 Bad Gateway')
 
     expect(spawnMock).toHaveBeenCalledTimes(1)
@@ -380,7 +380,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: TRANSIENT_502, code: 1 }))
 
     await expect(
-      glabExecFileAsync(['issue', 'update', '5', '-R', 'GussCloud/dolphin'], {
+      glabExecFileAsync(['issue', 'update', '5', '-R', 'stablyai/dolphin'], {
         cwd: String.raw`C:\repo`
       })
     ).rejects.toThrow('HTTP 502 Bad Gateway')

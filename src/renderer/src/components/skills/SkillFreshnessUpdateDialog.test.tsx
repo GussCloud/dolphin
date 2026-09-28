@@ -380,11 +380,11 @@ describe('SkillFreshnessUpdateDialog', () => {
       state: 'success',
       names: ['dolphin-cli'],
       finishedAt: 2,
-      output: 'Checking skills from source: GussCloud/dolphin\n  ✓ Updated dolphin-cli'
+      output: 'Checking skills from source: stablyai/dolphin\n  ✓ Updated dolphin-cli'
     })
 
     expect(container?.querySelector('pre')?.textContent).toContain(
-      'Checking skills from source: GussCloud/dolphin'
+      'Checking skills from source: stablyai/dolphin'
     )
   })
 

@@ -19,12 +19,12 @@ export type LogStreamChild = ChildProcessByStdio<null, Readable, Readable>
 
 /** Why: terminals run from the detached helper, which TCC can hold responsible independently. */
 const DOLPHIN_RESPONSIBLE_IDENTIFIERS = new Set([
-  'com.stablyai.dolphin',
-  'com.stablyai.dolphin.helper',
-  'com.stablyai.dolphin.dev',
-  'com.stablyai.dolphin.dev.helper',
-  'com.stablyai.dolphin.local',
-  'com.stablyai.dolphin.local.helper'
+  'com.gusscloud.dolphin',
+  'com.gusscloud.dolphin.helper',
+  'com.gusscloud.dolphin.dev',
+  'com.gusscloud.dolphin.dev.helper',
+  'com.gusscloud.dolphin.local',
+  'com.gusscloud.dolphin.local.helper'
 ])
 
 /** Why: the prompt classes #9756 is about — other-apps' data plus the protected home folders agents sweep. */

@@ -96,12 +96,12 @@ describe('parseArgs', () => {
 
   it('preserves a project selector before the project command', () => {
     const parsed = parseArgs(
-      ['--project', 'github:GussCloud/dolphin', 'project', 'setups'],
+      ['--project', 'github:stablyai/dolphin', 'project', 'setups'],
       [['project', 'setups']]
     )
 
     expect(parsed.commandPath).toEqual(['project', 'setups'])
-    expect(parsed.flags.get('project')).toBe('github:GussCloud/dolphin')
+    expect(parsed.flags.get('project')).toBe('github:stablyai/dolphin')
   })
 
   it('preserves a selector value that is also a registered command', () => {

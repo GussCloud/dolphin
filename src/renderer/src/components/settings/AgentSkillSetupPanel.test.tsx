@@ -8,7 +8,7 @@ import { AgentSkillSetupPanel } from './AgentSkillSetupPanel'
 import { TooltipProvider } from '../ui/tooltip'
 
 const INSTALL_COMMAND =
-  'npx skills add https://github.com/GussCloud/dolphin --skill dolphin-cli --global'
+  'npx skills add https://github.com/stablyai/dolphin --skill dolphin-cli --global'
 const UPDATE_COMMAND = 'npx skills update dolphin-cli --global'
 
 const mocks = vi.hoisted(() => ({

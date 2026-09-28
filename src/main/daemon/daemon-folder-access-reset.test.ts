@@ -14,7 +14,7 @@ const {
   trackMock: vi.fn(),
   getPathMock: vi.fn(() => '/Applications/Dolphin.app/Contents/MacOS/Dolphin'),
   opendirMock: vi.fn(),
-  readMacosBundleIdMock: vi.fn<() => Promise<string | null>>(async () => 'com.stablyai.dolphin'),
+  readMacosBundleIdMock: vi.fn<() => Promise<string | null>>(async () => 'com.gusscloud.dolphin'),
   resetMacosTccPermissionMock: vi.fn<() => Promise<{ ok: boolean; detail?: string }>>(async () => ({
     ok: true
   })),
@@ -58,7 +58,7 @@ beforeEach(() => {
   trackMock.mockReset()
   getPathMock.mockReset().mockReturnValue('/Applications/Dolphin.app/Contents/MacOS/Dolphin')
   opendirMock.mockReset().mockResolvedValue(fakeDir())
-  readMacosBundleIdMock.mockReset().mockResolvedValue('com.stablyai.dolphin')
+  readMacosBundleIdMock.mockReset().mockResolvedValue('com.gusscloud.dolphin')
   resetMacosTccPermissionMock.mockReset().mockResolvedValue({ ok: true })
   getTargetMock
     .mockReset()
@@ -124,7 +124,7 @@ describe('resetFolderAccessForDaemon runs the remedy', () => {
     await resetFolderAccessForDaemon(DAEMON)
 
     expect(readMacosBundleIdMock).toHaveBeenCalledWith('/Applications/Dolphin.app')
-    expect(resetMacosTccPermissionMock).toHaveBeenCalledWith(service, 'com.stablyai.dolphin')
+    expect(resetMacosTccPermissionMock).toHaveBeenCalledWith(service, 'com.gusscloud.dolphin')
   })
 
   // The prompt is attributed to whoever makes the syscall, so the app has to be what reads it.

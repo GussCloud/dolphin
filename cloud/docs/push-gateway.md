@@ -360,7 +360,7 @@ the first four characters of a fingerprint are the most that may appear.
 
 The Cloud Run domain mapping is created here, and Google issues and renews the certificate. The
 `dolphin.guss.dev.br` zone is not in this root: it is a Cloudflare zone whose Terraform-managed records
-live in the apps root in `stablyai/dolphin-cloud`, and whose relay and auth records are managed by
+live in the apps root in `GussCloud/dolphin-cloud`, and whose relay and auth records are managed by
 hand. The push record follows the relay's precedent and was created by hand on 2026-09-04:
 
 ```text

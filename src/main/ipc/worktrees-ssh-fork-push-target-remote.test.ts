@@ -110,7 +110,7 @@ describe('registerWorktreeHandlers', () => {
     const exec = vi.fn().mockImplementation(async (args: string[]) => {
       validateGitExecArgs(args)
       if (args[0] === 'remote' && args[1] === 'get-url') {
-        return { stdout: 'git@github.com:GussCloud/dolphin.git\n', stderr: '' }
+        return { stdout: 'git@github.com:stablyai/dolphin.git\n', stderr: '' }
       }
       if (args[0] === 'remote' && args.length === 1) {
         return { stdout: 'origin\n', stderr: '' }

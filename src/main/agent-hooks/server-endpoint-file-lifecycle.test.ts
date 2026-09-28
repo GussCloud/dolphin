@@ -141,12 +141,12 @@ describe('Endpoint file lifecycle', () => {
     await server.start({
       env: 'development',
       userDataPath,
-      endpointNamespace: 'com.stablyai.dolphin.dev.test123'
+      endpointNamespace: 'com.gusscloud.dolphin.dev.test123'
     })
     try {
       const env = server.buildPtyEnv()
       expect(env.DOLPHIN_AGENT_HOOK_ENDPOINT).toBe(server.endpointFilePath)
-      expect(env.DOLPHIN_AGENT_HOOK_ENDPOINT).toContain('com.stablyai.dolphin.dev.test123')
+      expect(env.DOLPHIN_AGENT_HOOK_ENDPOINT).toContain('com.gusscloud.dolphin.dev.test123')
       expect(env.DOLPHIN_AGENT_HOOK_PORT).toBeTruthy()
       expect(env.DOLPHIN_AGENT_HOOK_TOKEN).toBeTruthy()
     } finally {

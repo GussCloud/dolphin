@@ -5,7 +5,7 @@
   "name": "Português do Brasil",
   "version": "1.0.0",
   "description": "Brazilian Portuguese translations for common Dolphin navigation.",
-  "repository": "https://github.com/stablyai/dolphin-portuguese",
+  "repository": "https://github.com/GussCloud/dolphin-portuguese",
   "engines": { "dolphin": ">=1.4.0" },
   "pluginApi": 1,
   "contributes": {

@@ -27,7 +27,7 @@ const repo: Repo = {
   executionHostId: 'runtime:hub'
 }
 const project: Project = {
-  id: 'github:GussCloud/dolphin',
+  id: 'github:stablyai/dolphin',
   displayName: 'Dolphin',
   badgeColor: '#737373',
   sourceRepoIds: [repo.id],

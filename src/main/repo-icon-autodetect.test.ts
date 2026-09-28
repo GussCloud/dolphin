@@ -250,7 +250,7 @@ describe('detectRepoIcon', () => {
   it('falls back to the GitHub owner avatar for GitHub repos', async () => {
     const repoPath = await makeTempRepoDir()
     await gitExecFileAsync(['init'], { cwd: repoPath })
-    await gitExecFileAsync(['remote', 'add', 'origin', 'git@github.com:GussCloud/dolphin.git'], {
+    await gitExecFileAsync(['remote', 'add', 'origin', 'git@github.com:stablyai/dolphin.git'], {
       cwd: repoPath
     })
 
@@ -260,7 +260,7 @@ describe('detectRepoIcon', () => {
       type: 'image',
       src: 'https://github.com/stablyai.png?size=64',
       source: 'github',
-      label: 'GussCloud/dolphin'
+      label: 'stablyai/dolphin'
     })
   })
 
@@ -268,15 +268,12 @@ describe('detectRepoIcon', () => {
     const repoPath = await makeTempRepoDir()
     await writeFile(
       join(repoPath, 'package.json'),
-      JSON.stringify({ homepage: 'https://github.com/GussCloud/dolphin' })
+      JSON.stringify({ homepage: 'https://github.com/stablyai/dolphin' })
     )
     await gitExecFileAsync(['init'], { cwd: repoPath })
-    await gitExecFileAsync(
-      ['remote', 'add', 'origin', 'https://github.com/GussCloud/dolphin.git'],
-      {
-        cwd: repoPath
-      }
-    )
+    await gitExecFileAsync(['remote', 'add', 'origin', 'https://github.com/stablyai/dolphin.git'], {
+      cwd: repoPath
+    })
 
     await expect(
       detectRepoIcon({ repoPath, kind: 'git', executionHostId: 'local' })
@@ -284,7 +281,7 @@ describe('detectRepoIcon', () => {
       type: 'image',
       src: 'https://github.com/stablyai.png?size=64',
       source: 'github',
-      label: 'GussCloud/dolphin'
+      label: 'stablyai/dolphin'
     })
   })
 
@@ -305,7 +302,7 @@ describe('detectRepoIcon', () => {
     await gitExecFileAsync(['remote', 'add', 'origin', 'git@github.com:tmchow/dolphin.git'], {
       cwd: repoPath
     })
-    await gitExecFileAsync(['remote', 'add', 'upstream', 'git@github.com:GussCloud/dolphin.git'], {
+    await gitExecFileAsync(['remote', 'add', 'upstream', 'git@github.com:stablyai/dolphin.git'], {
       cwd: repoPath
     })
 
@@ -313,15 +310,15 @@ describe('detectRepoIcon', () => {
       detectRepoIconAndUpstream({ repoPath, kind: 'git', executionHostId: 'local' })
     ).resolves.toEqual({
       gitRemoteIdentity: {
-        canonicalKey: 'github.com/GussCloud/dolphin',
+        canonicalKey: 'github.com/stablyai/dolphin',
         remoteName: 'upstream',
-        remoteUrl: 'git@github.com:GussCloud/dolphin.git'
+        remoteUrl: 'git@github.com:stablyai/dolphin.git'
       },
       repoIcon: {
         type: 'image',
         src: 'https://github.com/stablyai.png?size=64',
         source: 'github',
-        label: 'GussCloud/dolphin'
+        label: 'stablyai/dolphin'
       },
       // Why: fork parents resolve host-qualified so avatars/links stay on the fork's server.
       upstream: { owner: 'stablyai', repo: 'dolphin', host: 'github.com' }

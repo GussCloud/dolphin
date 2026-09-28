@@ -221,7 +221,7 @@ describe('bridge round trip: notifications and state', () => {
   it('asks the shell to open a URL outside the app, normalized once and the same on both sides', async () => {
     const pair = await ready(createFakeBridgePortPair())
     const inputs = [
-      'https://github.com/GussCloud/dolphin/pull/1',
+      'https://github.com/stablyai/dolphin/pull/1',
       'ht\ntps://example.com',
       'https://example.com/a\r\n',
       '  https://example.com/a  ',
@@ -239,7 +239,7 @@ describe('bridge round trip: notifications and state', () => {
       .map((frame: { url: string }) => frame.url)
     expect(pair.externalLinks).toEqual(posted)
     expect(posted).toEqual([
-      'https://github.com/GussCloud/dolphin/pull/1',
+      'https://github.com/stablyai/dolphin/pull/1',
       'https://example.com/',
       'https://example.com/a',
       'https://example.com/a',

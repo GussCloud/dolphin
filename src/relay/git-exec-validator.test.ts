@@ -236,24 +236,18 @@ describe('validateGitExecArgs', () => {
 
   describe('git clone', () => {
     it('allows only the project setup clone shape', () => {
-      expectAllowed(['clone', '--', 'https://github.com/GussCloud/dolphin.git', 'dolphin'])
-      expectAllowed([
-        'clone',
-        '--progress',
-        '--',
-        'git@github.com:GussCloud/dolphin.git',
-        'dolphin'
-      ])
+      expectAllowed(['clone', '--', 'https://github.com/stablyai/dolphin.git', 'dolphin'])
+      expectAllowed(['clone', '--progress', '--', 'git@github.com:stablyai/dolphin.git', 'dolphin'])
     })
 
     it.each([
-      [['clone', 'https://github.com/GussCloud/dolphin.git']],
-      [['clone', 'https://github.com/GussCloud/dolphin.git', 'dolphin']],
-      [['clone', '--depth=1', '--', 'https://github.com/GussCloud/dolphin.git', 'dolphin']],
-      [['clone', '--', 'https://github.com/GussCloud/dolphin.git', '.']],
-      [['clone', '--', 'https://github.com/GussCloud/dolphin.git', '..']],
-      [['clone', '--', 'https://github.com/GussCloud/dolphin.git', 'nested/dolphin']],
-      [['clone', '--', 'https://github.com/GussCloud/dolphin.git', 'nested\\dolphin']]
+      [['clone', 'https://github.com/stablyai/dolphin.git']],
+      [['clone', 'https://github.com/stablyai/dolphin.git', 'dolphin']],
+      [['clone', '--depth=1', '--', 'https://github.com/stablyai/dolphin.git', 'dolphin']],
+      [['clone', '--', 'https://github.com/stablyai/dolphin.git', '.']],
+      [['clone', '--', 'https://github.com/stablyai/dolphin.git', '..']],
+      [['clone', '--', 'https://github.com/stablyai/dolphin.git', 'nested/dolphin']],
+      [['clone', '--', 'https://github.com/stablyai/dolphin.git', 'nested\\dolphin']]
     ])('rejects unsafe clone args %j', (args) => {
       expectBlocked(args, 'git clone')
     })

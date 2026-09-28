@@ -44,7 +44,7 @@ repository, `GussCloud/dolphin` (`1183888342`, owner `127256420`), and every wor
 built from `github_workflow_file_prefix` (`cloud-`), which is the rename the public repo applies to
 the workflow files it carries. `github_repo`, `github_repo_id`, and that prefix are set in both
 `environments/*.tfvars` as well as defaulted here, and `github_accepted_repositories` is empty.
-Nothing in this root trusts `stablyai/dolphin-cloud` any more; the apps and foundation roots still do,
+Nothing in this root trusts `GussCloud/dolphin-cloud` any more; the apps and foundation roots still do,
 because the app workflows still live there.
 
 `github_accepted_repositories` stays available for the next repository move. Each entry renders its

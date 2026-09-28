@@ -70,14 +70,14 @@ function json(status, body) {
 function storedRecord({
   holderKey,
   expiresAt,
-  repository = 'GussCloud/dolphin',
+  repository = 'stablyai/dolphin',
   workflow = 'Deploy Relay Production'
 }) {
   return {
     repository,
     workflow,
     run_id: '9001',
-    run_url: 'https://github.com/GussCloud/dolphin/actions/runs/9001',
+    run_url: 'https://github.com/stablyai/dolphin/actions/runs/9001',
     run_attempt: '1',
     acquired_at: NOW - 60_000,
     expires_at: expiresAt,
@@ -129,7 +129,7 @@ test('refuses a live lease held by another run and never writes', async () => {
   const storage = fakeStorage({
     object: {
       generation: '1500',
-      body: storedRecord({ holderKey: 'GussCloud/dolphin/9001', expiresAt: NOW + 60_000 })
+      body: storedRecord({ holderKey: 'stablyai/dolphin/9001', expiresAt: NOW + 60_000 })
     }
   })
 
@@ -138,8 +138,8 @@ test('refuses a live lease held by another run and never writes', async () => {
     .catch((thrown) => thrown)
 
   assert.ok(error instanceof LeaseConflict)
-  assert.equal(error.holder.repository, 'GussCloud/dolphin')
-  assert.equal(error.holder.run_url, 'https://github.com/GussCloud/dolphin/actions/runs/9001')
+  assert.equal(error.holder.repository, 'stablyai/dolphin')
+  assert.equal(error.holder.run_url, 'https://github.com/stablyai/dolphin/actions/runs/9001')
   assert.equal(
     storage.state.requests.filter((request) => request.method !== 'GET').length,
     0,
@@ -174,9 +174,9 @@ test('takes over an expired lease and warns naming the stale holder', async () =
     object: {
       generation: '1500',
       body: storedRecord({
-        holderKey: 'GussCloud/dolphin/9001',
+        holderKey: 'stablyai/dolphin/9001',
         expiresAt: NOW - 1,
-        repository: 'GussCloud/dolphin',
+        repository: 'stablyai/dolphin',
         workflow: 'Deploy Relay Production Capacity'
       })
     }
@@ -213,7 +213,7 @@ test('refuses to release a lease another run now holds', async () => {
   const storage = fakeStorage({
     object: {
       generation: '1500',
-      body: storedRecord({ holderKey: 'GussCloud/dolphin/9001', expiresAt: NOW + 60_000 })
+      body: storedRecord({ holderKey: 'stablyai/dolphin/9001', expiresAt: NOW + 60_000 })
     }
   })
 
@@ -251,7 +251,7 @@ test('fails closed when permission is denied', async () => {
 
 test('treats an unreadable record as held, not free', async () => {
   const storage = fakeStorage({
-    object: { generation: '1500', body: { holder_key: 'GussCloud/dolphin/9001' } }
+    object: { generation: '1500', body: { holder_key: 'stablyai/dolphin/9001' } }
   })
 
   const error = await leaseFor(storage)
@@ -293,7 +293,7 @@ test('renewal stops once the object belongs to someone else', async () => {
   const storage = fakeStorage({
     object: {
       generation: '1500',
-      body: storedRecord({ holderKey: 'GussCloud/dolphin/9001', expiresAt: NOW + 60_000 })
+      body: storedRecord({ holderKey: 'stablyai/dolphin/9001', expiresAt: NOW + 60_000 })
     }
   })
 

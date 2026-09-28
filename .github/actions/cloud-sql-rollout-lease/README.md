@@ -5,7 +5,7 @@ A compare-and-swap lease on one Cloud Storage object, used to serialize Cloud SQ
 
 `concurrency.group: production-cloud-sql-rollout` only serializes runs inside a single repository.
 Once the relay workflows live in `GussCloud/dolphin` and the app workflows stay in
-`stablyai/dolphin-cloud`, there are two independent queues pointed at one shared Cloud SQL instance.
+`GussCloud/dolphin-cloud`, there are two independent queues pointed at one shared Cloud SQL instance.
 `relay-cloud-sql-connection-budget.mjs` computes `rolloutOverlap` as a `Math.max` over the relay
 director, api, auth and relay-cell candidates, which is only sound when exactly one rollout is in
 flight. This lease is what keeps that assumption true. Keep the per-repo concurrency groups **and**

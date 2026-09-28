@@ -41,7 +41,7 @@ const repoMap = new Map<string, Repo>([
     {
       id: 'repo-1',
       path: '/repo/dolphin',
-      displayName: 'GussCloud/dolphin',
+      displayName: 'stablyai/dolphin',
       badgeColor: '#22c55e',
       addedAt: 0
     }
@@ -464,7 +464,7 @@ describe('worktree-palette-search', () => {
         makeWorktree({ id: 'wt-issue', linkedIssue: 14198 }),
         makeWorktree({ id: 'wt-other', linkedIssue: 7, displayName: 'github.com' })
       ],
-      'https://github.com/GussCloud/dolphin/issues/14198',
+      'https://github.com/stablyai/dolphin/issues/14198',
       repoMap
     )
 
@@ -494,12 +494,12 @@ describe('worktree-palette-search', () => {
             type: 'pr',
             number: 12789,
             title: 'Perf',
-            url: 'https://github.com/GussCloud/dolphin/pull/12789'
+            url: 'https://github.com/stablyai/dolphin/pull/12789'
           }
         }),
         makeWorktree({ id: 'wt-issue', linkedIssue: 12789 })
       ],
-      'https://github.com/GussCloud/dolphin/pull/12789',
+      'https://github.com/stablyai/dolphin/pull/12789',
       repoMap
     )
 

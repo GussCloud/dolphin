@@ -20,10 +20,10 @@ import {
 } from './terminal-url-link-hit-testing'
 import { buildHardWrappedPathLogicalLineCandidates } from './wrapped-terminal-link-ranges'
 
-const LINE_1 = 'Repo: https://github.com/GussCloud/dolphin/'
+const LINE_1 = 'Repo: https://github.com/stablyai/dolphin/'
 const LINE_2 = 'Description: 123'
-const EXPECTED_URL = 'https://github.com/GussCloud/dolphin/'
-const BUGGY_URL = 'https://github.com/GussCloud/dolphin/Description'
+const EXPECTED_URL = 'https://github.com/stablyai/dolphin/'
+const BUGGY_URL = 'https://github.com/stablyai/dolphin/Description'
 
 const openUrlMock = vi.fn()
 
@@ -112,7 +112,7 @@ describe('#8832 hard-wrapped path candidates glue next-line text into URLs', () 
 
     const glued = multiRow.find((candidate) => candidate.text.includes('https://'))
     expect(glued).toBeDefined()
-    expect(glued!.text).toContain('https://github.com/GussCloud/dolphin/Description')
+    expect(glued!.text).toContain('https://github.com/stablyai/dolphin/Description')
   })
 
   it('HTTP extraction on a path logical line still yields the glued URL', () => {

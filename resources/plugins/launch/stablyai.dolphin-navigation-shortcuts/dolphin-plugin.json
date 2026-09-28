@@ -5,7 +5,7 @@
   "name": "Dolphin Navigation Shortcuts",
   "version": "1.0.0",
   "description": "Command aliases and optional shortcuts for frequent Dolphin views.",
-  "repository": "https://github.com/stablyai/dolphin-navigation-shortcuts",
+  "repository": "https://github.com/GussCloud/dolphin-navigation-shortcuts",
   "engines": { "dolphin": ">=1.4.0" },
   "pluginApi": 1,
   "contributes": {

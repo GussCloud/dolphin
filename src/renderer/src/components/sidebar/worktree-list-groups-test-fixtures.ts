@@ -53,7 +53,7 @@ export const remoteWorktree: Worktree = {
 }
 
 export const project: Project = {
-  id: 'github:GussCloud/dolphin',
+  id: 'github:stablyai/dolphin',
   displayName: 'Dolphin',
   badgeColor: '#737373',
   sourceRepoIds: [repo.id, remoteRepo.id],

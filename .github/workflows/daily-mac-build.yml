@@ -20,7 +20,7 @@ name: Daily macOS Dev Build
 #     a ticket every daily reads as a new client and silently loses file access
 #     under Documents/Desktop/Downloads.
 #
-# Artifacts publish to stablyai/dolphin-daily, never to GussCloud/dolphin: the main
+# Artifacts publish to GussCloud/dolphin-daily, never to GussCloud/dolphin: the main
 # repo's releases atom feed exposes only its 10 newest entries, so high-volume
 # dev tags would evict every stable/RC entry and break updates for real users.
 # Separate from dolphin-hourly so someone riding main's hourlies never sees the
@@ -65,7 +65,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  DAILY_REPO: stablyai/dolphin-daily
+  DAILY_REPO: GussCloud/dolphin-daily
   # Keep ~30 days so a regression can be bisected without holding a full year.
   DAILY_RETAIN_COUNT: 30
 
@@ -104,7 +104,7 @@ jobs:
         with:
           app-id: ${{ secrets.HOURLY_RELEASE_APP_ID }}
           private-key: ${{ secrets.HOURLY_RELEASE_APP_PRIVATE_KEY }}
-          owner: stablyai
+          owner: GussCloud
           repositories: dolphin-daily
 
       # Why: main is often idle. Rebuilding an unchanged commit burns a runner
@@ -269,7 +269,7 @@ jobs:
         with:
           app-id: ${{ secrets.HOURLY_RELEASE_APP_ID }}
           private-key: ${{ secrets.HOURLY_RELEASE_APP_PRIVATE_KEY }}
-          owner: stablyai
+          owner: GussCloud
           repositories: dolphin-daily
 
       - name: Create daily release
@@ -365,7 +365,7 @@ jobs:
         with:
           app-id: ${{ secrets.HOURLY_RELEASE_APP_ID }}
           private-key: ${{ secrets.HOURLY_RELEASE_APP_PRIVATE_KEY }}
-          owner: stablyai
+          owner: GussCloud
           repositories: dolphin-daily
 
       # Why: the updater resolves a tag, then fetches latest-mac.yml from it. A

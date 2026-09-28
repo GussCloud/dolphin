@@ -8,7 +8,7 @@ Prerequisites:
 
 - Node 24 and pnpm 10
 - `gcloud` authenticated for `dolphin-cloud` and `dolphin-cloud-staging`
-- `gh` authenticated with read access to `stablyai/dolphin-cloud`
+- `gh` authenticated with read access to `GussCloud/dolphin-cloud`
 
 From the repository root:
 

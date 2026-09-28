@@ -34,11 +34,11 @@ let root: Root
 const projects: NewWorkspaceProjectOption[] = [
   {
     kind: 'project',
-    id: 'github:GussCloud/dolphin',
-    projectId: 'github:GussCloud/dolphin',
+    id: 'github:stablyai/dolphin',
+    projectId: 'github:stablyai/dolphin',
     displayName: 'dolphin',
     badgeColor: '#111111',
-    detail: 'GussCloud/dolphin'
+    detail: 'stablyai/dolphin'
   },
   {
     kind: 'project',
@@ -114,7 +114,7 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:GussCloud/dolphin"
+          value="github:stablyai/dolphin"
           onValueChange={vi.fn()}
         />
       )
@@ -147,7 +147,7 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:GussCloud/dolphin"
+          value="github:stablyai/dolphin"
           onValueChange={onValueChange}
         />
       )
@@ -290,7 +290,7 @@ describe('ProjectCombobox', () => {
 
     type('noq')
     expect(container.textContent).toContain('stablyai/noqa')
-    expect(container.textContent).not.toContain('GussCloud/dolphin')
+    expect(container.textContent).not.toContain('stablyai/dolphin')
   })
 
   it('commits the armed row on Enter', () => {
@@ -346,7 +346,7 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:GussCloud/dolphin"
+          value="github:stablyai/dolphin"
           onValueChange={vi.fn()}
         />
       )
@@ -377,7 +377,7 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:GussCloud/dolphin"
+          value="github:stablyai/dolphin"
           onValueChange={vi.fn()}
         />
       )

@@ -316,7 +316,7 @@ describe('getVersionManagerBinPaths', () => {
 })
 
 describe('withCliRuntimeOnPath', () => {
-  it('pairs a version-manager CLI with its sibling node (GussCloud/dolphin#10932)', () => {
+  it('pairs a version-manager CLI with its sibling node (stablyai/dolphin#10932)', () => {
     const root = mkdtempSync(join(tmpdir(), 'dolphin-pair-'))
     const v20 = join(root, '.nvm', 'versions', 'node', 'v20.11.0', 'bin')
     const v22 = join(root, '.nvm', 'versions', 'node', 'v22.9.0', 'bin')

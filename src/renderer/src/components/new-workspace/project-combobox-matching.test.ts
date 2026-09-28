@@ -10,7 +10,7 @@ function project(id: string, displayName: string, detail: string): NewWorkspaceP
   return { kind: 'project', id, projectId: id, displayName, badgeColor: '#111', detail }
 }
 
-const dolphin = project('dolphin', 'dolphin', 'GussCloud/dolphin')
+const dolphin = project('dolphin', 'dolphin', 'stablyai/dolphin')
 const relay = project('relay', 'dolphin-relay', 'stablyai/dolphin-relay')
 const gateway = project('gateway', 'api-gateway', 'acme/api-gateway')
 

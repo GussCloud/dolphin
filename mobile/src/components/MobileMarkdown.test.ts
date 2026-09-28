@@ -83,14 +83,14 @@ describe('parseMobileMarkdown', () => {
 </h1>
 
 <p align="center">
-  <a href="https://github.com/GussCloud/dolphin/stargazers"><img src="https://badgen.net/github/stars/GussCloud/dolphin" alt="GitHub stars" /></a>
+  <a href="https://github.com/stablyai/dolphin/stargazers"><img src="https://badgen.net/github/stars/stablyai/dolphin" alt="GitHub stars" /></a>
   <strong>The AI Orchestrator</strong><br/>
   Run Codex side-by-side.
 </p>
 `)
 
     expect(normalized).toContain('# [Dolphin](https://dolphin.guss.dev.br)')
-    expect(normalized).toContain('[GitHub stars](https://github.com/GussCloud/dolphin/stargazers)')
+    expect(normalized).toContain('[GitHub stars](https://github.com/stablyai/dolphin/stargazers)')
     expect(normalized).toContain('**The AI Orchestrator**')
     expect(normalized).not.toContain('<h1')
     expect(normalized).not.toContain('<img')

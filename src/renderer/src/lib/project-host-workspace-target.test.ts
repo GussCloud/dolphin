@@ -78,10 +78,10 @@ describe('project-host workspace target resolution', () => {
       makeRepo('dolphin-local'),
       makeRepo('dolphin-ssh', { connectionId: 'openclaw-2' })
     ]
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin-local', 'dolphin-ssh'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin-local', 'dolphin-ssh'])]
     const projectHostSetups = [
-      makeSetup('dolphin-local', 'github:GussCloud/dolphin', 'local', 'dolphin-local'),
-      makeSetup('dolphin-ssh', 'github:GussCloud/dolphin', 'ssh:openclaw-2', 'dolphin-ssh')
+      makeSetup('dolphin-local', 'github:stablyai/dolphin', 'local', 'dolphin-local'),
+      makeSetup('dolphin-ssh', 'github:stablyai/dolphin', 'ssh:openclaw-2', 'dolphin-ssh')
     ]
 
     expect(
@@ -89,7 +89,7 @@ describe('project-host workspace target resolution', () => {
         eligibleRepos: repos,
         projects,
         projectHostSetups,
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         focusedHostScope: 'ssh:openclaw-2'
       })
     ).toBe('dolphin-ssh')
@@ -101,10 +101,10 @@ describe('project-host workspace target resolution', () => {
       path: '/remote/dolphin',
       connectionId: 'builder'
     })
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin'])]
     const projectHostSetups = [
-      makeSetup('local-setup', 'github:GussCloud/dolphin', 'local', 'dolphin'),
-      makeSetup('ssh-setup', 'github:GussCloud/dolphin', 'ssh:builder', 'dolphin')
+      makeSetup('local-setup', 'github:stablyai/dolphin', 'local', 'dolphin'),
+      makeSetup('ssh-setup', 'github:stablyai/dolphin', 'ssh:builder', 'dolphin')
     ]
 
     const resolution = resolveWorkspaceCreationTarget({
@@ -126,10 +126,10 @@ describe('project-host workspace target resolution', () => {
   it('keeps a focused duplicate repo id on its selected host', () => {
     const localRepo = makeRepo('dolphin', { path: '/local/dolphin' })
     const sshRepo = makeRepo('dolphin', { path: '/remote/dolphin', connectionId: 'builder' })
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin'])]
     const projectHostSetups = [
-      makeSetup('local-setup', 'github:GussCloud/dolphin', 'local', 'dolphin'),
-      makeSetup('ssh-setup', 'github:GussCloud/dolphin', 'ssh:builder', 'dolphin')
+      makeSetup('local-setup', 'github:stablyai/dolphin', 'local', 'dolphin'),
+      makeSetup('ssh-setup', 'github:stablyai/dolphin', 'ssh:builder', 'dolphin')
     ]
 
     expect(
@@ -153,10 +153,10 @@ describe('project-host workspace target resolution', () => {
   it('resolves duplicate repo ids to a ready setup when no host is focused', () => {
     const localRepo = makeRepo('dolphin', { path: '/local/dolphin' })
     const sshRepo = makeRepo('dolphin', { path: '/remote/dolphin', connectionId: 'builder' })
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin'])]
     const projectHostSetups = [
-      makeSetup('local-setup', 'github:GussCloud/dolphin', 'local', 'dolphin'),
-      makeSetup('ssh-setup', 'github:GussCloud/dolphin', 'ssh:builder', 'dolphin')
+      makeSetup('local-setup', 'github:stablyai/dolphin', 'local', 'dolphin'),
+      makeSetup('ssh-setup', 'github:stablyai/dolphin', 'ssh:builder', 'dolphin')
     ]
 
     expect(
@@ -184,24 +184,24 @@ describe('project-host workspace target resolution', () => {
       makeRepo('dolphin-local'),
       makeRepo('dolphin-runtime', { executionHostId: 'runtime:gpu-1' })
     ]
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin-local', 'dolphin-runtime'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin-local', 'dolphin-runtime'])]
     const projectHostSetups = [
-      makeSetup('dolphin-local', 'github:GussCloud/dolphin', 'local', 'dolphin-local'),
-      makeSetup('dolphin-runtime', 'github:GussCloud/dolphin', 'runtime:gpu-1', 'dolphin-runtime')
+      makeSetup('dolphin-local', 'github:stablyai/dolphin', 'local', 'dolphin-local'),
+      makeSetup('dolphin-runtime', 'github:stablyai/dolphin', 'runtime:gpu-1', 'dolphin-runtime')
     ]
 
     const resolution = resolveWorkspaceCreationTarget({
       eligibleRepos: repos,
       projects,
       projectHostSetups,
-      projectId: 'github:GussCloud/dolphin',
+      projectId: 'github:stablyai/dolphin',
       hostId: 'runtime:gpu-1'
     })
 
     expect(resolution).toMatchObject({
       status: 'ready',
       target: {
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'runtime:gpu-1',
         projectHostSetupId: 'dolphin-runtime',
         repoId: 'dolphin-runtime'
@@ -214,10 +214,10 @@ describe('project-host workspace target resolution', () => {
     // can still name a duplicate local setup; creation must land in the displayed path, not a
     // transient worktree path the user never sees.
     const repos = [makeRepo('dolphin-main'), makeRepo('dolphin-worktree')]
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin-main', 'dolphin-worktree'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin-main', 'dolphin-worktree'])]
     const projectHostSetups = [
-      makeSetup('dolphin-main', 'github:GussCloud/dolphin', 'local', 'dolphin-main'),
-      makeSetup('dolphin-worktree', 'github:GussCloud/dolphin', 'local', 'dolphin-worktree')
+      makeSetup('dolphin-main', 'github:stablyai/dolphin', 'local', 'dolphin-main'),
+      makeSetup('dolphin-worktree', 'github:stablyai/dolphin', 'local', 'dolphin-worktree')
     ]
 
     const resolution = resolveWorkspaceCreationTarget({
@@ -235,10 +235,10 @@ describe('project-host workspace target resolution', () => {
 
   it('keeps an explicit setup id that is the only one on its host', () => {
     const repos = [makeRepo('dolphin-local'), makeRepo('dolphin-ssh', { connectionId: 'builder' })]
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin-local', 'dolphin-ssh'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin-local', 'dolphin-ssh'])]
     const projectHostSetups = [
-      makeSetup('dolphin-local', 'github:GussCloud/dolphin', 'local', 'dolphin-local'),
-      makeSetup('dolphin-ssh', 'github:GussCloud/dolphin', 'ssh:builder', 'dolphin-ssh')
+      makeSetup('dolphin-local', 'github:stablyai/dolphin', 'local', 'dolphin-local'),
+      makeSetup('dolphin-ssh', 'github:stablyai/dolphin', 'ssh:builder', 'dolphin-ssh')
     ]
 
     expect(
@@ -271,15 +271,15 @@ describe('project-host workspace target resolution', () => {
 
   it('reports unavailable when the project is not set up on the selected host', () => {
     const repo = makeRepo('dolphin')
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin'])]
-    const projectHostSetups = [makeSetup('dolphin', 'github:GussCloud/dolphin', 'local', 'dolphin')]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin'])]
+    const projectHostSetups = [makeSetup('dolphin', 'github:stablyai/dolphin', 'local', 'dolphin')]
 
     expect(
       resolveWorkspaceCreationTarget({
         eligibleRepos: [repo],
         projects,
         projectHostSetups,
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'ssh:openclaw-2'
       })
     ).toEqual({
@@ -291,9 +291,9 @@ describe('project-host workspace target resolution', () => {
   it('does not fall back to another host when only a host is selected', () => {
     const localRepo = makeRepo('dolphin-local')
     const remoteRepo = makeRepo('dolphin-ssh', { connectionId: 'builder' })
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin-local', 'dolphin-ssh'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin-local', 'dolphin-ssh'])]
     const projectHostSetups = [
-      makeSetup('dolphin-local', 'github:GussCloud/dolphin', 'local', 'dolphin-local')
+      makeSetup('dolphin-local', 'github:stablyai/dolphin', 'local', 'dolphin-local')
     ]
 
     expect(
@@ -313,10 +313,10 @@ describe('project-host workspace target resolution', () => {
 
   it('reports setup-not-ready when the selected host has pending setup metadata', () => {
     const repo = makeRepo('dolphin')
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin'])]
     const projectHostSetups = [
-      makeSetup('dolphin', 'github:GussCloud/dolphin', 'local', 'dolphin'),
-      makeSetup('gpu-pending', 'github:GussCloud/dolphin', 'runtime:gpu', '', {
+      makeSetup('dolphin', 'github:stablyai/dolphin', 'local', 'dolphin'),
+      makeSetup('gpu-pending', 'github:stablyai/dolphin', 'runtime:gpu', '', {
         path: '',
         setupState: 'setting-up',
         setupMethod: 'provisioned'
@@ -328,7 +328,7 @@ describe('project-host workspace target resolution', () => {
         eligibleRepos: [repo],
         projects,
         projectHostSetups,
-        projectId: 'github:GussCloud/dolphin',
+        projectId: 'github:stablyai/dolphin',
         hostId: 'runtime:gpu'
       })
     ).toEqual({
@@ -339,9 +339,9 @@ describe('project-host workspace target resolution', () => {
 
   it('reports unavailable when an explicit setup is not ready', () => {
     const repo = makeRepo('dolphin')
-    const projects = [makeProject('github:GussCloud/dolphin', ['dolphin'])]
+    const projects = [makeProject('github:stablyai/dolphin', ['dolphin'])]
     const projectHostSetups = [
-      makeSetup('dolphin', 'github:GussCloud/dolphin', 'local', 'dolphin', {
+      makeSetup('dolphin', 'github:stablyai/dolphin', 'local', 'dolphin', {
         setupState: 'setting-up'
       })
     ]

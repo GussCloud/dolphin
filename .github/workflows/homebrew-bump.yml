@@ -143,7 +143,7 @@ jobs:
         with:
           app-id: 2590194
           private-key: ${{ secrets.BUFO_BOT_PRIVATE_KEY }}
-          owner: stablyai
+          owner: GussCloud
           repositories: homebrew-dolphin
 
       - name: Checkout tap

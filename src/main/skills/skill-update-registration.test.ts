@@ -28,18 +28,18 @@ describe('global skill update registration', () => {
           orchestration: {
             skillFolderHash: 'hash',
             skillPath: 'skills/orchestration/SKILL.md',
-            source: 'GussCloud/dolphin'
+            source: 'stablyai/dolphin'
           },
           copied: {},
           emptyHash: {
             skillFolderHash: '',
             skillPath: 'skills/empty-hash/SKILL.md',
-            source: 'GussCloud/dolphin'
+            source: 'stablyai/dolphin'
           },
           emptyPath: {
             skillFolderHash: 'hash',
             skillPath: '',
-            source: 'GussCloud/dolphin'
+            source: 'stablyai/dolphin'
           }
         }
       })
@@ -62,7 +62,7 @@ describe('global skill update registration', () => {
           'dolphin-cli': {
             skillFolderHash: 'hash',
             skillPath: 'skills/dolphin-cli/SKILL.md',
-            source: 'GussCloud/dolphin'
+            source: 'stablyai/dolphin'
           }
         }
       })

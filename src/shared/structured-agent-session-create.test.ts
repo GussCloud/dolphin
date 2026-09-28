@@ -82,7 +82,7 @@ describe('structured agent session create params', () => {
       })
     )
     expect(createParams().envelope.payloadFingerprint).toBe(
-      '56cb15e22414c0f62fd89d77d00d2d6a0a422f16e95edee154fb8b5bf53fbbc3'
+      'dc9465e894fa8780f5b1af8ea21fa3ed21df08550be4a43ca8416593e205cf5c'
     )
   })
 })

@@ -57,7 +57,7 @@ describe('resolveMissingRepoProjectDialogState', () => {
       slugIndexReady: true,
       slugDialog,
       repoNotInDolphin,
-      lookupSlug: (slug) => (slug === 'GussCloud/dolphin' ? [{ id: 'repo-1' }] : []),
+      lookupSlug: (slug) => (slug === 'stablyai/dolphin' ? [{ id: 'repo-1' }] : []),
       selectedRepoIds: new Set(['repo-1'])
     })
 
@@ -72,7 +72,7 @@ describe('resolveMissingRepoProjectDialogState', () => {
       slugIndexReady: true,
       slugDialog,
       repoNotInDolphin,
-      lookupSlug: (slug) => (slug === 'GussCloud/dolphin' ? [{ id: 'repo-1' }] : []),
+      lookupSlug: (slug) => (slug === 'stablyai/dolphin' ? [{ id: 'repo-1' }] : []),
       selectedRepoIds: new Set(['repo-1'])
     })
 

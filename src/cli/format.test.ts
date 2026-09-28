@@ -212,7 +212,7 @@ describe('formatAutomationShow', () => {
       automation: automation({
         runContext: {
           kind: 'workspace-run',
-          projectId: 'github:GussCloud/dolphin',
+          projectId: 'github:stablyai/dolphin',
           hostId: 'runtime:gpu',
           projectHostSetupId: 'setup-gpu',
           repoId: 'repo-gpu',
@@ -221,7 +221,7 @@ describe('formatAutomationShow', () => {
       })
     })
 
-    expect(output).toContain('runProjectId: github:GussCloud/dolphin')
+    expect(output).toContain('runProjectId: github:stablyai/dolphin')
     expect(output).toContain('runHostId: runtime:gpu')
     expect(output).toContain('projectHostSetupId: setup-gpu')
     expect(output).toContain('runRepoId: repo-gpu')

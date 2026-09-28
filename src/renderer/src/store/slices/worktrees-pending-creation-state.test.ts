@@ -75,7 +75,7 @@ describe('pending worktree creation state', () => {
         taskSourceContext: {
           kind: 'task-source',
           provider: 'github',
-          projectId: 'github:GussCloud/dolphin',
+          projectId: 'github:stablyai/dolphin',
           hostId: 'local',
           projectHostSetupId: 'setup-local',
           repoId: 'repo-local',
@@ -83,7 +83,7 @@ describe('pending worktree creation state', () => {
         },
         workspaceRunContext: {
           kind: 'workspace-run',
-          projectId: 'github:GussCloud/dolphin',
+          projectId: 'github:stablyai/dolphin',
           hostId: 'ssh:ssh-1',
           projectHostSetupId: 'setup-ssh',
           repoId: 'repo-ssh',

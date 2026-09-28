@@ -5,7 +5,7 @@ domain. That prevents held keys from repeating in terminal applications such as 
 eligible launch, Dolphin writes:
 
 ```sh
-defaults write com.stablyai.dolphin ApplePressAndHoldEnabled -bool false
+defaults write com.gusscloud.dolphin ApplePressAndHoldEnabled -bool false
 ```
 
 The write is scoped to Dolphin's packaged bundle domain. Bare Electron development bundles and
@@ -33,14 +33,14 @@ timeouts, and other exit statuses leave the preference alone.
 Set the preference explicitly, then restart Dolphin:
 
 ```sh
-defaults write com.stablyai.dolphin ApplePressAndHoldEnabled -bool true
+defaults write com.gusscloud.dolphin ApplePressAndHoldEnabled -bool true
 ```
 
 After Dolphin has recorded its one-time decision, deleting the key also restores the macOS default
 without Dolphin recreating it:
 
 ```sh
-defaults delete com.stablyai.dolphin ApplePressAndHoldEnabled
+defaults delete com.gusscloud.dolphin ApplePressAndHoldEnabled
 ```
 
 Development and prerelease channels may use a channel-suffixed Dolphin bundle identifier; use that

@@ -62,7 +62,7 @@ describe('extractGitHubIssueSourceFallback', () => {
     ).toEqual({
       repoId: 'repo-1',
       repoPath: '/work/dolphin',
-      repoLabel: 'GussCloud/dolphin'
+      repoLabel: 'stablyai/dolphin'
     })
   })
 

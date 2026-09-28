@@ -85,8 +85,8 @@ describe('parseGitRemoteFetchUrls', () => {
 
 describe('findGitRemoteNameByFetchUrl', () => {
   const stdout = verbose([
-    ['origin', 'https://github.com/GussCloud/dolphin.git (fetch)'],
-    ['origin', 'https://github.com/GussCloud/dolphin.git (push)'],
+    ['origin', 'https://github.com/stablyai/dolphin.git (fetch)'],
+    ['origin', 'https://github.com/stablyai/dolphin.git (push)'],
     ['first-fork', `${SSH_URL} (fetch)`],
     ['first-fork', `${SSH_URL} (push)`],
     ['second-fork', `${SSH_URL} (fetch)`],
