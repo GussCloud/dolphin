@@ -395,9 +395,8 @@ export type CellInventoryLockMode =
 // ordinary dormancy — which stays governed by the 24h rule.
 const STRANDED_MIN_GRANT_AGE_MS = 60_000
 const STRANDED_RECENT_ACTIVITY_MS = 15 * 60_000
-// Why: a roll's isolate step writes exactly this state
-// (cloud/dev/scripts/prepare-relay-production-capacity-canary.mjs:136) and its
-// restore writes 'general' (same line). 'existing-only' is C3's decommission
+// Why: a roll's isolate step writes exactly this state and its restore writes
+// 'general'. 'existing-only' is C3's decommission
 // posture, where the cell still serves the hosts it already has, so it is
 // deliberately not an isolation signal here.
 const ROLL_ISOLATED_ADMISSION: CellAdmissionState = 'migration-only'

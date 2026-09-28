@@ -1,10 +1,9 @@
-# Dolphin Relay
+# Dolphin Cloud
 
-The relay that connects the Dolphin mobile app to a desktop host. Phones and
-desktops never talk to each other directly: each opens an outbound WebSocket
-to a relay cell, the relay pairs the two sessions, and it splices frames
-between them. A director assigns hosts to cells and coordinates migrations;
-cells carry the user connections.
+The servers the Dolphin apps talk to: sign-in, the relay that connects the
+mobile app to a desktop host, and the mobile push gateway. Phones and desktops
+never talk to each other directly: each opens an outbound WebSocket to the
+relay, which pairs the two sessions and splices frames between them.
 
 This directory is an independent pnpm workspace inside the Dolphin monorepo. Run
 its commands from `cloud/`, not the repository root. The source is covered by
@@ -12,95 +11,25 @@ the repository's root [MIT license](../LICENSE).
 
 ## Packages
 
-- `packages/relay-contract`: the wire contract shared by the relay, the
-  desktop app, and the mobile app (frame shapes, close codes, admission budgets,
-  splice state machine).
-- `apps/relay`: the relay server. The same image runs as a director or a cell
-  depending on `DOLPHIN_RELAY_ROLE`.
-- `apps/relay-fence-broker`: a private, IAM-only service that owns the durable
-  mutation lease, the Terraform checkout, and the narrow Compute mutation used
-  when a registered target is superseded. The workflow that calls it holds read
-  and invoke rights only, never those mutation permissions.
-- `apps/relay-ops`: the relay operations console and the incident monitor
-  behind `pnpm ops:relay`, `pnpm incident:relay`, and
-  `pnpm incident:relay-preflight`.
-- `apps/push` and `packages/push-contract`: the mobile push gateway that holds
-  the APNs key and sends to phones through APNs and FCM, and its wire contract.
-  It is deployed and operated from here but is not part of the relay data path;
-  see [docs/push-gateway.md](docs/push-gateway.md).
+- `apps/auth`: cloud sign-in for the desktop app, the relay host tokens, the
+  JWKS the relay trusts, and the feedback endpoint.
+- `apps/relay` and `packages/relay-contract`: the relay server and the wire
+  contract it shares with the desktop and mobile apps (frame shapes, close
+  codes, admission budgets, splice state machine). The same image runs as a
+  director, a cell, or both in one process, depending on `DOLPHIN_RELAY_ROLE`.
+- `apps/push` and `packages/push-contract`: the mobile push gateway and its wire
+  contract. The desktop host authenticates with the same X25519 key it uses for
+  the relay, registers each paired phone's native push token, and asks the
+  gateway to send through APNs and FCM. Logging is aggregate counters only.
+- `packages/postgres-schema`: the shared PostgreSQL schema tooling.
 
-## Mobile push gateway
+Storage is PostgreSQL in production and SQLite for tests and local development.
 
-`apps/push` is a separate Cloud Run service from the relay. Phones never hold an
-Dolphin credential for it: the desktop host authenticates with the same X25519
-key it uses for the relay, answering an encrypted challenge to mint a 24 hour
-session, then registers each paired phone's native push token and asks the
-gateway to push. The gateway queues each event as its own notification,
-enforces per-host quotas and request limits, and retires a
-registration as soon as Apple or Google reports the token unregistered.
-Provider push is the only ordinary mobile OS-banner path. The notification
-socket is retained only for live dismissal and reconnect tray reconciliation;
-it never creates or recovers banners. Desktop notification categories remain
-authoritative.
-Each delivery is persisted as one notification event. Before deploying an
-incompatible queue format, stop all older push gateway revisions and clear only
-unpublished push delivery fixtures; no queue preservation or migration is required.
-FCM notification messages are inherently collapsible while offline and have a
-small concurrent collapse-key budget, so every pending alert is not guaranteed.
+## Deploying
 
-Storage follows the relay pattern: PostgreSQL in production, SQLite for tests
-and local development. Configure it with `DOLPHIN_PUSH_PUBLIC_URL`, `DOLPHIN_PUSH_FCM_PROJECT_ID`,
-`DOLPHIN_PUSH_DATABASE_URL`, the three APNs variables (`DOLPHIN_PUSH_APNS_KEY`,
-`DOLPHIN_PUSH_APNS_KEY_ID`, `DOLPHIN_PUSH_APPLE_TEAM_ID`, all three or none), and
-optionally `DOLPHIN_PUSH_APNS_TOPIC`. The FCM credential comes from
-the runtime service account, so no key material is configured for Android. See
-[push gateway operations](docs/push-gateway.md) for deployment and recovery.
-
-Logging is aggregate counters only. Tokens, notification titles, notification
-bodies, and full host fingerprints never reach a log line.
-
-## Infrastructure and operations
-
-- `infra/terraform`: the relay Terraform root. It owns the cells, the director,
-  the shared Cloud SQL instance, DNS, observability, and every GitHub Workload
-  Identity provider the relay workflows authenticate through. `backend/` holds
-  the per-environment backend configuration and `environments/` the tfvars.
-  Drive it through `pnpm infra:init`, `pnpm infra:plan`, and `pnpm infra:apply`.
-- `dev/scripts`: the deploy, capacity, admission, rehome, monitoring, and load
-  scripts the workflows call, plus the contract tests that pin each workflow
-  and Terraform surface. Run them with `pnpm test`.
-- `dev/contracts` and `dev/fixtures`: the checked-in data those contract tests
-  read, including the Terraform root partition.
-- `docs/`: the relay runbooks, capacity-testing guide, incident-monitor
-  reference, the workflow variable reference in `docs/relay-workflows.md`, and
-  the push gateway runbook in `docs/push-gateway.md`.
-
-## Workflows
-
-The 25 `.github/workflows/cloud-*.yml` workflows are the deploy and operate
-surface: publish and deploy the director, roll GCE cell capacity, operate Asia
-admission and regional rehoming, prove staging capacity, monitor production,
-power staging up and down, and deploy the mobile push gateway.
-`.github/actions/cloud-sql-rollout-lease` is the compare-and-swap lease that
-serializes rollouts against the shared Cloud SQL instance. Push reuses that
-action with its own lease object and deployment concurrency group.
-
-Every one of them is inert. Each top-level job is gated on
-`vars.DOLPHIN_CLOUD_OPERATIONS_ENABLED == 'true'`, a repository variable that is
-unset here, so the two scheduled triggers and every manual dispatch skip
-without running a step. Only the repository owner, holding the GCP identities
-these workflows authenticate as, can turn them on.
-
-`Cloud Verify` is not gated. It builds, typechecks, lints, tests, secret-scans,
-and validates the relay Terraform on every change under `cloud/`, and it runs
-on fork pull requests, so it configures no backend and holds no credential.
-
-## What is not here
-
-The `terraform-foundation` and `terraform-apps` roots and the API and auth
-services live in the private `GussCloud/dolphin-cloud` repository. Scripts and
-tests that spanned both trees were narrowed to the relay side rather than
-carrying a dangling reference.
+[`deploy/dolphin`](deploy/dolphin/README.md) runs `auth` and `relay` behind Caddy
+on a single VPS with Docker Compose. `Cloud Verify` builds, typechecks, lints,
+tests and secret-scans this directory on every change under `cloud/`.
 
 ## Local development
 

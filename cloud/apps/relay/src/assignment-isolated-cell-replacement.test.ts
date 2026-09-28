@@ -16,11 +16,10 @@ import {
 } from './database.js'
 
 // `migration-only` alone says nothing about a roll: it is the admission class
-// (cloud/docs/dolphin-relay-operations.md:229-233) that evacuation targets, Asia
+// that evacuation targets, Asia
 // `--mode rollback`, a failed wave's re-isolate and newly registered cells all
 // occupy durably while holding hosts. The same-cap roll's isolate step is the
-// only writer of the roll stamp, via `rollIsolatedCells` on the selector apply
-// (cloud/dev/scripts/prepare-relay-production-capacity-canary.mjs isolate mode);
+// only writer of the roll stamp, via `rollIsolatedCells` on the selector apply;
 // restore moves the cell to 'general', which clears the stamp in the same
 // statement that writes the state.
 const HEARTBEAT_TTL_MS = 45_000
