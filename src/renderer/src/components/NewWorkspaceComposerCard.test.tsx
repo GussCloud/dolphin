@@ -150,7 +150,7 @@ const localReadyHostOption: ProjectHostSetupOption = {
   repoId: 'repo-a',
   label: 'Local Mac',
   detail: 'Dolphin',
-  path: '/Users/alice/orca'
+  path: '/Users/alice/dolphin'
 }
 
 const devboxNeedsSetupHostOption: ProjectHostSetupOption = {
@@ -199,7 +199,7 @@ const vmRecipeHostOptions: ProjectHostSetupOption[] = [
     repoId: 'repo-a',
     label: 'Builder',
     detail: 'Dolphin',
-    path: '/workspace/orca'
+    path: '/workspace/dolphin'
   }
 ]
 
@@ -821,8 +821,8 @@ describe('NewWorkspaceComposerCard folder task source mode', () => {
         {
           id: 'vercel',
           name: 'Vercel Sandbox',
-          create: './scripts/orca-vm/vercel.start.sh',
-          destroy: './scripts/orca-vm/vercel.cleanup.sh',
+          create: './scripts/dolphin-vm/vercel.start.sh',
+          destroy: './scripts/dolphin-vm/vercel.cleanup.sh',
           destroyDisabled: false
         }
       ] as never,
@@ -862,7 +862,7 @@ describe('NewWorkspaceComposerCard folder task source mode', () => {
         {
           id: 'vercel',
           name: 'Vercel Sandbox',
-          create: './scripts/orca-vm/vercel.start.sh',
+          create: './scripts/dolphin-vm/vercel.start.sh',
           destroyDisabled: true
         }
       ] as never,

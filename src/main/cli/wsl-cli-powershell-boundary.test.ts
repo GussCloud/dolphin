@@ -16,8 +16,8 @@ const FORWARDED_ARGS = [
   'tui-idle',
   '--wsl',
   'forwarded-wsl-value',
-  '--orca',
-  'forwarded-orca-value',
+  '--dolphin',
+  'forwarded-dolphin-value',
   '--debug',
   'forwarded-debug-value',
   '--deps',
@@ -36,11 +36,11 @@ describe('WSL CLI PowerShell boundary', () => {
   it.skipIf(process.platform === 'win32')(
     'forwards the distro as one argument and omits it when absent',
     async () => {
-      const root = await mkdtemp(join(tmpdir(), 'orca-wsl-launcher-argv-'))
+      const root = await mkdtemp(join(tmpdir(), 'dolphin-wsl-launcher-argv-'))
       try {
         const launcherPath = join(root, 'launcher.sh')
         const expectedCwd = await realpath(root)
-        await writeFile(launcherPath, buildWslLauncher('C:\\Orca\\orca.exe', '/bridge.ps1'))
+        await writeFile(launcherPath, buildWslLauncher('C:\\Dolphin\\dolphin.exe', '/bridge.ps1'))
         await writeFile(join(root, 'wslpath'), '#!/bin/bash\nprintf "%s" "$2"\n', {
           mode: 0o700
         })
@@ -69,7 +69,7 @@ describe('WSL CLI PowerShell boundary', () => {
             'Bypass',
             '-File',
             '/bridge.ps1',
-            'C:\\Orca\\orca.exe',
+            'C:\\Dolphin\\dolphin.exe',
             '-WslCwd',
             expectedCwd,
             ...(distro ? ['-WslDistro', distro] : []),
@@ -86,10 +86,10 @@ describe('WSL CLI PowerShell boundary', () => {
   )
 
   it('keeps forwarded argv outside PowerShell parsing', () => {
-    const launcher = buildWslLauncher('C:\\Program Files\\Orca\\orca.exe')
+    const launcher = buildWslLauncher('C:\\Program Files\\Dolphin\\dolphin.exe')
     const bridge = buildWslBridgeScript()
 
-    expect(launcher).toContain('"$ORCA_WIN_LAUNCHER" -WslCwd "$ORCA_WSL_CWD_WIN" "$@"')
+    expect(launcher).toContain('"$DOLPHIN_WIN_LAUNCHER" -WslCwd "$DOLPHIN_WSL_CWD_WIN" "$@"')
     expect(bridge).not.toContain('[CmdletBinding')
     expect(bridge).not.toMatch(/^param\(/m)
     expect(bridge).toContain('$ForwardArgs = @($args[$ForwardArgStart..($args.Count - 1)])')
@@ -100,9 +100,9 @@ describe('WSL CLI PowerShell boundary', () => {
   it.skipIf(process.platform !== 'win32')(
     'preserves native argv and exit status through Windows PowerShell 5.1',
     async () => {
-      const root = await mkdtemp(join(tmpdir(), 'orca-wsl-powershell-boundary-'))
+      const root = await mkdtemp(join(tmpdir(), 'dolphin-wsl-powershell-boundary-'))
       const fixtureDir = join(root, 'fixture with spaces')
-      const bridgePath = join(fixtureDir, 'orca-wsl-bridge.ps1')
+      const bridgePath = join(fixtureDir, 'dolphin-wsl-bridge.ps1')
       const targetPath = join(fixtureDir, 'argv-target.cjs')
       const wslCwd = join(root, 'WSL cwd with spaces')
 
@@ -111,7 +111,7 @@ describe('WSL CLI PowerShell boundary', () => {
         await writeFile(bridgePath, buildWslBridgeScript(), 'utf8')
         await writeFile(
           targetPath,
-          'process.stdout.write(JSON.stringify({ argv: process.argv.slice(2), cwd: process.env.ORCA_CLI_CWD ?? null, distro: process.env.ORCA_CLI_WSL_DISTRO ?? null }))\n',
+          'process.stdout.write(JSON.stringify({ argv: process.argv.slice(2), cwd: process.env.DOLPHIN_CLI_CWD ?? null, distro: process.env.DOLPHIN_CLI_WSL_DISTRO ?? null }))\n',
           'utf8'
         )
         const invocations = [
@@ -157,8 +157,8 @@ describe('WSL CLI PowerShell boundary', () => {
               windowsHide: true,
               env: {
                 ...process.env,
-                ORCA_CLI_CWD: 'stale',
-                ORCA_CLI_WSL_DISTRO: 'stale-distro',
+                DOLPHIN_CLI_CWD: 'stale',
+                DOLPHIN_CLI_WSL_DISTRO: 'stale-distro',
                 WSL_DISTRO_NAME: 'wrong-distro'
               }
             }
@@ -196,15 +196,15 @@ describe('WSL CLI PowerShell boundary', () => {
   it.skipIf(process.platform !== 'win32')(
     'pins a non-ASCII app identity and the dev launcher env through Windows PowerShell 5.1',
     async () => {
-      const root = await mkdtemp(join(tmpdir(), 'orca-wsl-managed-bridge-'))
-      const userDataPath = join(root, "张三's O\u2019Brien Orca")
+      const root = await mkdtemp(join(tmpdir(), 'dolphin-wsl-managed-bridge-'))
+      const userDataPath = join(root, "张三's O\u2019Brien Dolphin")
       const cliEntryPath = join(root, 'cli \u2018entry\u2019.cjs')
-      const bridgePath = join(root, 'orca-wsl-bridge.ps1')
+      const bridgePath = join(root, 'dolphin-wsl-bridge.ps1')
       try {
         await writeFile(bridgePath, buildWslBridgeScript({ userDataPath, cliEntryPath }), 'utf8')
         await writeFile(
           cliEntryPath,
-          'console.error("to stderr"); const e = process.env; console.log(JSON.stringify({ argv: process.argv.slice(2), owner: e.ORCA_USER_DATA_PATH, app: e.ORCA_APP_EXECUTABLE, nodeOptions: e.NODE_OPTIONS ?? null, stashed: e.ORCA_NODE_OPTIONS, cliDir: e.ORCA_WSL_CLI_DIR ?? null }))\n',
+          'console.error("to stderr"); const e = process.env; console.log(JSON.stringify({ argv: process.argv.slice(2), owner: e.DOLPHIN_USER_DATA_PATH, app: e.DOLPHIN_APP_EXECUTABLE, nodeOptions: e.NODE_OPTIONS ?? null, stashed: e.DOLPHIN_NODE_OPTIONS, cliDir: e.DOLPHIN_WSL_CLI_DIR ?? null }))\n',
           'utf8'
         )
         const result = spawnSync(
@@ -226,9 +226,9 @@ describe('WSL CLI PowerShell boundary', () => {
             windowsHide: true,
             env: {
               ...process.env,
-              ORCA_APP_EXECUTABLE: '',
+              DOLPHIN_APP_EXECUTABLE: '',
               NODE_OPTIONS: '--max-old-space-size=4096',
-              ORCA_WSL_CLI_DIR: 'C:\\guest-only'
+              DOLPHIN_WSL_CLI_DIR: 'C:\\guest-only'
             }
           }
         )

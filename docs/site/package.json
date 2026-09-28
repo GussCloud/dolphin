@@ -1,8 +1,8 @@
 {
-  "name": "@orca/docs",
+  "name": "@dolphin/docs",
   "version": "0.1.0",
   "private": true,
-  "description": "Open-source Orca product documentation site (https://www.onorca.dev/docs)",
+  "description": "Open-source Dolphin product documentation site (https://dolphin.guss.dev.br/docs)",
   "scripts": {
     "dev": "next dev --port 3004",
     "build": "next build",

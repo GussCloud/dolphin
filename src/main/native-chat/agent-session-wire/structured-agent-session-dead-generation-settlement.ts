@@ -168,7 +168,7 @@ export async function settleStructuredAgentSessionDeadGeneration(input: {
     if (showUnexpectedExitOutcome) {
       mutations.push({
         kind: 'item',
-        identity: { provider: 'orca', clientMessageId: input.settlementId },
+        identity: { provider: 'dolphin', clientMessageId: input.settlementId },
         body: {
           kind: 'status',
           text: boundJournalStatusText(
@@ -234,7 +234,7 @@ export async function settleStaleStructuredAgentSessionState(input: {
   if (verdict.state === 'interrupted' && items.some(isInProgressItem)) {
     mutations.unshift({
       kind: 'item',
-      identity: { provider: 'orca', clientMessageId: settlementId },
+      identity: { provider: 'dolphin', clientMessageId: settlementId },
       body: {
         kind: 'status',
         text: boundJournalStatusText(unexpectedProviderExitOutcome(input.deathEvidence?.detail))

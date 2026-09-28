@@ -9,7 +9,7 @@ import {
   discoverBunProfileTests
 } from './bun-profile-change-scope.mjs'
 import { bunProfileTestPaths } from './bun-profile-test-paths.mjs'
-import { ORCAD_CHILD_ENTRY_POINTS } from './orcad-entry-build.mjs'
+import { DOLPHIND_CHILD_ENTRY_POINTS } from './dolphind-entry-build.mjs'
 
 const temporaryDirs = []
 afterEach(() => {
@@ -103,9 +103,9 @@ describe('the actual Bun build and profile-test dependency graph', () => {
   })
 
   it.each([
-    ...Object.values(ORCAD_CHILD_ENTRY_POINTS),
+    ...Object.values(DOLPHIND_CHILD_ENTRY_POINTS),
     'src/shared/keybindings/definitions-core-1.ts',
-    'src/main/runtime/orca-runtime.ts',
+    'src/main/runtime/dolphin-runtime.ts',
     'src/main/windows/windows-process-table.ts',
     'src/main/worker-thread-entry-path.ts',
     'config/scripts/zip-extractor-command.mjs',

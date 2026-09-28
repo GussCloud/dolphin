@@ -117,7 +117,7 @@ it('preserves the offer when the original submission receives its provider echo'
 })
 
 // Teardown judged the chat working, and only the user moving on withdraws that. A send the
-// provider proves it never received is still the chat Orca stopped; the continuation asks the agent
+// provider proves it never received is still the chat Dolphin stopped; the continuation asks the agent
 // to check what finished rather than refusing.
 it('still continues a chat whose last send acquisition proves was never delivered', async () => {
   const { host, acquire, dispatch } = await interruptedRestart('submission')

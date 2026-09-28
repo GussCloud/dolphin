@@ -3,7 +3,7 @@ import { translate } from '@/i18n/i18n'
 import type { ResumeFailure } from './native-chat-resume-on-restart-grouping'
 
 /**
- * What Orca tells the user after acting on a restart offer.
+ * What Dolphin tells the user after acting on a restart offer.
  *
  * Resuming sends a message, so every string here has to say one went out — and an opted-in launch
  * has no dialog in front of it, which makes these toasts the only place that user learns it did.
@@ -131,7 +131,7 @@ function announceNotContinued(
   })
 }
 
-/** A dismissal Orca could not confirm. The offer belongs to the host, so say it may still be there. */
+/** A dismissal Dolphin could not confirm. The offer belongs to the host, so say it may still be there. */
 export function announceRestartDismissUnconfirmed(): void {
   toast(
     translate(

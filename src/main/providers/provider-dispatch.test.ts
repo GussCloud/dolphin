@@ -12,7 +12,7 @@ const { handleMock, onMock, removeHandlerMock, removeAllListenersMock } = vi.hoi
 vi.mock('electron', () => ({
   app: {
     isPackaged: true,
-    getPath: vi.fn().mockReturnValue('/tmp/orca-test-userdata')
+    getPath: vi.fn().mockReturnValue('/tmp/dolphin-test-userdata')
   },
   ipcMain: {
     handle: handleMock,
@@ -165,9 +165,9 @@ describe('PTY provider dispatch', () => {
         'CLAUDE_CODE_CHILD_SESSION',
         'CLAUDE_CODE_SESSION_ID',
         'CLAUDE_CODE_BRIDGE_SESSION_ID',
-        'ORCA_PI_STATUS_OWNED',
-        'ORCA_PRIME_AGENT_STATUS_OWNED',
-        'ORCA_PI_TITLE_MARKER_OWNED'
+        'DOLPHIN_PI_STATUS_OWNED',
+        'DOLPHIN_PRIME_AGENT_STATUS_OWNED',
+        'DOLPHIN_PI_TITLE_MARKER_OWNED'
       ].sort()
     )
     expect(mockSshProvider.spawn).toHaveBeenCalledWith(

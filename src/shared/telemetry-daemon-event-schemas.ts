@@ -156,7 +156,7 @@ export const daemonAuditEligibilitySchema = z.discriminatedUnion('exact_incarnat
 ])
 
 // Rollout signal for granting Codex hook trust via codex app-server RPCs
-// instead of Orca's self-computed trusted_hash. `fallback`/`verify_failed`
+// instead of Dolphin's self-computed trusted_hash. `fallback`/`verify_failed`
 // spikes mean the RPC lane is not taking; steady-state ledger skips are not
 // reported (they would only measure launch volume). `lane` attributes the
 // grant surface (real ~/.codex vs managed home); `error_class`/`verify_class`
@@ -209,7 +209,7 @@ export const profileStateAuthoritySelectedSchema = z
     backend: z.enum(['json', 'sqlite']),
     classification: z.enum(['neither', 'json-only', 'sqlite-only', 'both']),
     authority_mode: z.enum(['legacy', 'sqlite-candidate', 'sqlite-established']),
-    runtime: z.enum(['desktop', 'orcad']),
+    runtime: z.enum(['desktop', 'dolphind']),
     migrated: z.boolean()
   })
   .strict()

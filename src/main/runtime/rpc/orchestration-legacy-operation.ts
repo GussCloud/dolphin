@@ -1,4 +1,4 @@
-import { toCurrentCliCommandName, type WireCliCommandName } from '../../../shared/cli-command-names'
+import { type CliCommandName } from '../../../shared/cli-command-names'
 import { createHash, randomUUID } from 'node:crypto'
 import type { RpcRequest } from './core'
 import type { MessageType } from '../orchestration/db'
@@ -31,7 +31,7 @@ export type LegacyCheckParams = {
   timeoutMs?: number
   compatibilityAck?: string
   compatibilityQuestionAck?: string
-  compatibilityCliCommand?: WireCliCommandName
+  compatibilityCliCommand?: CliCommandName
 }
 
 export type LegacyAskParams = {
@@ -42,8 +42,8 @@ export type LegacyAskParams = {
   resume?: string
   options?: string
   timeoutMs?: number
-  compatibilityCliCommand?: WireCliCommandName
-  compatibilityWindowsCommand?: WireCliCommandName
+  compatibilityCliCommand?: CliCommandName
+  compatibilityWindowsCommand?: CliCommandName
 }
 
 export type LegacyReplyParams = {
@@ -163,7 +163,7 @@ export function parseLegacyOptions(raw: string | undefined): string[] {
 export function supportedLegacyHints(
   message: MessageRow,
   principal: LegacyCompatibilityPrincipalRow,
-  cliCommand: WireCliCommandName
+  cliCommand: CliCommandName
 ): string[] {
   if (
     principal.role !== 'coordinator' ||
@@ -172,7 +172,7 @@ export function supportedLegacyHints(
     return []
   }
   return [
-    `${toCurrentCliCommandName(cliCommand)} orchestration reply --id ${message.id} --from ${principal.terminal_handle} --body "..."`
+    `${cliCommand} orchestration reply --id ${message.id} --from ${principal.terminal_handle} --body "..."`
   ]
 }
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { resolveTerminalOrchestrationCliCommand } from './cli-command'
 
 describe('resolveTerminalOrchestrationCliCommand', () => {
-  it('uses orca-ide for a pane recorded as WSL', () => {
+  it('uses dolphin-ide for a pane recorded as WSL', () => {
     expect(
       resolveTerminalOrchestrationCliCommand({
         connectionId: null,
@@ -40,7 +40,7 @@ describe('resolveTerminalOrchestrationCliCommand', () => {
     ).toBe('dolphin-ide')
   })
 
-  it('preserves native and SSH bare-orca commands', () => {
+  it('preserves native and SSH bare-dolphin commands', () => {
     expect(
       resolveTerminalOrchestrationCliCommand({
         connectionId: null,
@@ -63,15 +63,15 @@ describe('resolveTerminalOrchestrationCliCommand', () => {
         connectionId: null,
         isWsl: true,
         worktreeId: 'repo::C:\\repo',
-        runtimeCliCommand: 'orca-dev'
+        runtimeCliCommand: 'dolphin-dev'
       })
-    ).toBe('orca-dev')
+    ).toBe('dolphin-dev')
     expect(
       resolveTerminalOrchestrationCliCommand({
         connectionId: 'ssh-1',
         isWsl: true,
         worktreeId: 'repo::C:\\repo',
-        runtimeCliCommand: 'orca-dev'
+        runtimeCliCommand: 'dolphin-dev'
       })
     ).toBe('dolphin')
   })

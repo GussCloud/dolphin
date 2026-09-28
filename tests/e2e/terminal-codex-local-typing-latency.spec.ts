@@ -1,7 +1,7 @@
 import type { Page } from '@stablyai/playwright-test'
 import { existsSync } from 'node:fs'
 import path from 'node:path'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {
   getTerminalContent,
@@ -194,10 +194,12 @@ async function waitForCodexComposer(page: Page): Promise<string> {
 }
 
 test.describe('local Codex terminal typing latency', () => {
-  test('keeps Codex prompt typing responsive @local-real-codex', async ({ orcaPage }, testInfo) => {
+  test('keeps Codex prompt typing responsive @local-real-codex', async ({
+    dolphinPage
+  }, testInfo) => {
     test.skip(
-      process.env.ORCA_E2E_REAL_CODEX !== '1',
-      'Set ORCA_E2E_REAL_CODEX=1 to exercise the locally installed Codex TUI'
+      process.env.DOLPHIN_E2E_REAL_CODEX !== '1',
+      'Set DOLPHIN_E2E_REAL_CODEX=1 to exercise the locally installed Codex TUI'
     )
     test.skip(process.platform === 'win32', 'local Codex command is POSIX-shell oriented')
 
@@ -212,43 +214,43 @@ test.describe('local Codex terminal typing latency', () => {
     )
     test.skip(!existsSync(codexSource), 'local Codex checkout is missing')
 
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForSessionReady(dolphinPage)
+    await waitForActiveWorktree(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(dolphinPage)
     const launchCommand =
       `cd ${JSON.stringify(codexSource)} && CODEX_HOME=${JSON.stringify(realCodexHome)} ` +
       'codex --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust\r'
 
     try {
-      await sendToTerminal(orcaPage, ptyId, launchCommand)
-      await dismissCodexPromptsIfPresent(orcaPage)
-      const composerMarker = await waitForCodexComposer(orcaPage)
+      await sendToTerminal(dolphinPage, ptyId, launchCommand)
+      await dismissCodexPromptsIfPresent(dolphinPage)
+      const composerMarker = await waitForCodexComposer(dolphinPage)
       testInfo.annotations.push({
         type: 'codex-composer-ready-marker',
         description: composerMarker
       })
-      await focusActiveTerminalInput(orcaPage)
-      await forceCursorProbeTheme(orcaPage)
-      const blinkSamples = await sampleCursorBlink(orcaPage)
-      await focusActiveTerminalInput(orcaPage)
+      await focusActiveTerminalInput(dolphinPage)
+      await forceCursorProbeTheme(dolphinPage)
+      const blinkSamples = await sampleCursorBlink(dolphinPage)
+      await focusActiveTerminalInput(dolphinPage)
 
       const typed = Array.from(
         { length: TOTAL_KEYSTROKES },
         (_value, index) => TYPING_ALPHABET[index % TYPING_ALPHABET.length]
       ).join('')
-      await installCodexEchoLatencyProbe(orcaPage, typed)
+      await installCodexEchoLatencyProbe(dolphinPage, typed)
       for (const char of typed) {
-        await orcaPage.keyboard.type(char)
+        await dolphinPage.keyboard.type(char)
         // Why: spacing keys past one frame keeps each sample an isolated echo
         // instead of measuring a burst the scheduler coalesced into one write.
-        await orcaPage.waitForTimeout(KEYSTROKE_INTERVAL_MS)
+        await dolphinPage.waitForTimeout(KEYSTROKE_INTERVAL_MS)
       }
       // Why: the last keystroke's echo can still be in flight when typing ends.
-      await orcaPage.waitForTimeout(1_000)
-      const report = await collectCodexEchoLatencyReport(orcaPage)
+      await dolphinPage.waitForTimeout(1_000)
+      const report = await collectCodexEchoLatencyReport(dolphinPage)
 
       const measured = report.samples.filter((sample) => sample.index >= WARMUP_KEYSTROKES)
       const parseLatencies = measured.map((sample) => sample.keyToParseMs)
@@ -282,7 +284,7 @@ test.describe('local Codex terminal typing latency', () => {
       expect(echo.p95).toBeLessThan(MAX_P95_ECHO_LATENCY_MS)
       expect(echo.max).toBeLessThan(MAX_WORST_ECHO_LATENCY_MS)
     } finally {
-      await sendToTerminal(orcaPage, ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
     }
   })
 })

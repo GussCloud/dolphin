@@ -29,7 +29,7 @@ export const CORE_COMMAND_SPECS: CommandSpec[] = [
     allowedFlags: [...GLOBAL_FLAGS],
     notes: [
       'Passes all following arguments through to Claude Code after enabling Agent Teams native panes.',
-      'Must be run from inside an Dolphin terminal. Starts Claude Code Agent Teams in the current pane and opens teammates as native Dolphin splits.'
+      'Must be run from inside a Dolphin terminal. Starts Claude Code Agent Teams in the current pane and opens teammates as native Dolphin splits.'
     ],
     examples: ['dolphin claude-teams', 'dolphin claude-teams --resume <session-id>']
   },
@@ -129,7 +129,7 @@ export const CORE_COMMAND_SPECS: CommandSpec[] = [
     examples: [
       'dolphin worktree create --name agent-task --agent codex --prompt "hi" --json',
       'dolphin worktree create --repo id:<repoId> --name related-task --json',
-      'dolphin worktree create --project github:stablyai/orca --host runtime:03ef704c-b180-4b10-998d-e28fbd5de9a3 --name benchmark --json',
+      'dolphin worktree create --project github:GussCloud/dolphin --host runtime:03ef704c-b180-4b10-998d-e28fbd5de9a3 --name benchmark --json',
       'dolphin worktree create --repo id:<repoId> --name linear-task --linear-issue https://linear.app/stably/issue/STA-335/test-issue --json',
       'dolphin worktree create --repo id:<repoId> --name agent-task --agent codex --prompt "hi" --json',
       'dolphin worktree create --repo id:<repoId> --name folder-child --parent-worktree folder:<folderId> --json',
@@ -176,7 +176,7 @@ export const CORE_COMMAND_SPECS: CommandSpec[] = [
       'dolphin worktree rm --worktree <selector> [--force] [--run-hooks] [--allow-failed-archive-hook] [--json]',
     allowedFlags: [...GLOBAL_FLAGS, 'worktree', 'force', 'run-hooks', 'allow-failed-archive-hook'],
     notes: [
-      'Repo-defined orca.yaml archive hooks are skipped unless --run-hooks is passed.',
+      'Repo-defined dolphin.yaml archive hooks are skipped unless --run-hooks is passed.',
       'With --run-hooks, a failed archive hook blocks the removal: nothing is stopped, deleted or deregistered, and the command exits non-zero with error code worktree_archive_hook_failed. --force does not waive this.',
       'Pass --allow-failed-archive-hook to delete anyway after the hook has run and failed; the waived failure is reported back on result.archiveHookOverride. It requires --run-hooks and is rejected without it, because with no hook running there is no failure to waive.',
       'For Git worktrees, removal also attempts to delete the checked-out local branch, with or without --force. Dolphin retains branches it knows predated the worktree and any branch whose changes it cannot prove are already merged.'
@@ -256,7 +256,7 @@ export const CORE_COMMAND_SPECS: CommandSpec[] = [
       'Creates a visible terminal tab without switching focus when possible; falls back to a background handle if the UI cannot adopt it. Pass --focus to switch to it.',
       'Use this, not worktree create, for a fresh agent in the current checkout.',
       '--shell picks the shell the terminal IS on a Windows host (cmd.exe, powershell.exe, pwsh.exe, wsl.exe, bash.exe, git-bash); --command is typed into whatever shell the host started, so `--command cmd.exe` leaves a cmd running INSIDE the default shell and exiting it drops back to that shell.',
-      'A host that cannot apply --shell refuses the create rather than quietly spawning its default shell: macOS and Linux execution hosts spawn the login shell, terminals routed over SSH resolve their shell on the SSH host, a --shell that contradicts the project execution runtime (WSL vs Windows host) is refused, and an Dolphin host older than --shell is refused by the CLI.'
+      'A host that cannot apply --shell refuses the create rather than quietly spawning its default shell: macOS and Linux execution hosts spawn the login shell, terminals routed over SSH resolve their shell on the SSH host, a --shell that contradicts the project execution runtime (WSL vs Windows host) is refused, and a Dolphin host older than --shell is refused by the CLI.'
     ],
     examples: [
       'dolphin terminal create --json',

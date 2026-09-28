@@ -59,7 +59,7 @@ const LOCAL_TARGET = { kind: 'local' } as const
 function saveSelection(model: string): void {
   useAppStore.setState({
     settings: {
-      ...getDefaultSettings('/tmp/orca-workspaces'),
+      ...getDefaultSettings('/tmp/dolphin-workspaces'),
       nativeChatSessionOptions: { codex: { model } }
     }
   })

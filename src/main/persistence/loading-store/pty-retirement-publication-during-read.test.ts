@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { fixture } from './profile-state-delayed-authority-fixture'
-import { OrcaRuntimeService } from '../../runtime/orca-runtime'
+import { DolphinRuntimeService } from '../../runtime/dolphin-runtime'
 import type { RuntimeMobileSessionTabsSnapshot } from '../../../shared/runtime-types'
 
 vi.mock('../../telemetry/client', () => ({ track: vi.fn() }))
@@ -19,7 +19,7 @@ const binding = {
   ptyId: 'retiring-pty',
   incarnationId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 }
-class RetirementRuntime extends OrcaRuntimeService {
+class RetirementRuntime extends DolphinRuntimeService {
   readVisibleState() {
     return this.readVisibleTerminalState(binding.ptyId)
   }

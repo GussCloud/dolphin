@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PreloadApi } from './api-types'
 import {
-  ORCA_APP_RESTART_ABORTED_EVENT,
-  ORCA_APP_RESTART_STARTED_EVENT
+  DOLPHIN_APP_RESTART_ABORTED_EVENT,
+  DOLPHIN_APP_RESTART_STARTED_EVENT
 } from '../shared/updater-renderer-events'
 import { KEYBOARD_LAYOUT_CHANGED_CHANNEL } from '../shared/keyboard-layout-events'
 
@@ -62,7 +62,7 @@ describe('native preload destructive app actions', () => {
     it(`prepares and awaits durability before ${action}`, async () => {
       const api = await loadApi()
       const calls: string[] = []
-      eventTarget.addEventListener(ORCA_APP_RESTART_STARTED_EVENT, () => calls.push('prepared'))
+      eventTarget.addEventListener(DOLPHIN_APP_RESTART_STARTED_EVENT, () => calls.push('prepared'))
       invoke.mockImplementation(async (channel: string) => {
         calls.push(channel)
         return channel === 'app:await-before-unload-checkpoint' ? { ok: true } : undefined
@@ -76,7 +76,7 @@ describe('native preload destructive app actions', () => {
     it(`refuses ${action} when the durable checkpoint fails`, async () => {
       const api = await loadApi()
       const aborted = vi.fn()
-      eventTarget.addEventListener(ORCA_APP_RESTART_ABORTED_EVENT, aborted)
+      eventTarget.addEventListener(DOLPHIN_APP_RESTART_ABORTED_EVENT, aborted)
       invoke.mockImplementation(async (channel: string) =>
         channel === 'app:await-before-unload-checkpoint' ? { ok: false } : undefined
       )
@@ -128,7 +128,7 @@ describe('native preload destructive app actions', () => {
   it('awaits renderer durability before profile maintenance and preserves its result', async () => {
     const api = await loadApi()
     const started = vi.fn()
-    eventTarget.addEventListener(ORCA_APP_RESTART_STARTED_EVENT, started)
+    eventTarget.addEventListener(DOLPHIN_APP_RESTART_STARTED_EVENT, started)
     let finishCheckpoint = (_result: { ok: boolean }): void => {}
     const checkpoint = new Promise((resolve) => {
       finishCheckpoint = resolve
@@ -138,15 +138,15 @@ describe('native preload destructive app actions', () => {
       channel === 'app:await-before-unload-checkpoint' ? checkpoint : Promise.resolve(result)
     )
 
-    const switching = api.orcaProfiles.switchProfile({ profileId: 'target' })
+    const switching = api.dolphinProfiles.switchProfile({ profileId: 'target' })
     await vi.waitFor(() =>
       expect(invoke).toHaveBeenCalledWith('app:await-before-unload-checkpoint')
     )
     expect(started).toHaveBeenCalledOnce()
-    expect(invoke).not.toHaveBeenCalledWith('orcaProfiles:switch', expect.anything())
+    expect(invoke).not.toHaveBeenCalledWith('dolphinProfiles:switch', expect.anything())
     finishCheckpoint({ ok: true })
     await expect(switching).resolves.toBe(result)
-    expect(invoke).toHaveBeenLastCalledWith('orcaProfiles:switch', { profileId: 'target' })
+    expect(invoke).toHaveBeenLastCalledWith('dolphinProfiles:switch', { profileId: 'target' })
   })
 
   it.each(['checkpoint-failed', 'switch-failed', 'already-active'])(
@@ -154,7 +154,7 @@ describe('native preload destructive app actions', () => {
     async (outcome) => {
       const api = await loadApi()
       const aborted = vi.fn()
-      eventTarget.addEventListener(ORCA_APP_RESTART_ABORTED_EVENT, aborted)
+      eventTarget.addEventListener(DOLPHIN_APP_RESTART_ABORTED_EVENT, aborted)
       invoke.mockImplementation(async (channel: string) => {
         if (channel === 'app:await-before-unload-checkpoint') {
           return { ok: outcome !== 'checkpoint-failed' }
@@ -164,13 +164,13 @@ describe('native preload destructive app actions', () => {
         }
         return { status: 'already-active' }
       })
-      const switching = api.orcaProfiles.switchProfile({ profileId: 'target' })
+      const switching = api.dolphinProfiles.switchProfile({ profileId: 'target' })
       await (outcome === 'already-active'
         ? expect(switching).resolves.toEqual({ status: 'already-active' })
         : expect(switching).rejects.toThrow())
       expect(aborted).toHaveBeenCalledOnce()
       if (outcome === 'checkpoint-failed') {
-        expect(invoke).not.toHaveBeenCalledWith('orcaProfiles:switch', expect.anything())
+        expect(invoke).not.toHaveBeenCalledWith('dolphinProfiles:switch', expect.anything())
       }
     }
   )
@@ -181,8 +181,8 @@ describe('native preload destructive app actions', () => {
       const api = await loadApi()
       const started = vi.fn()
       const aborted = vi.fn()
-      eventTarget.addEventListener(ORCA_APP_RESTART_STARTED_EVENT, started)
-      eventTarget.addEventListener(ORCA_APP_RESTART_ABORTED_EVENT, aborted)
+      eventTarget.addEventListener(DOLPHIN_APP_RESTART_STARTED_EVENT, started)
+      eventTarget.addEventListener(DOLPHIN_APP_RESTART_ABORTED_EVENT, aborted)
       const args = {
         sourceProfileId: outcome === 'inactive' ? 'inactive' : 'active',
         targetProfileId: 'target',
@@ -194,7 +194,7 @@ describe('native preload destructive app actions', () => {
           ? { status: 'duplicate-target' }
           : { status: 'transferred', willRelaunch: outcome === 'move' }
       invoke.mockImplementation(async (channel: string) => {
-        if (channel === 'orcaProfiles:list') {
+        if (channel === 'dolphinProfiles:list') {
           return { activeProfileId: 'active' }
         }
         if (channel === 'app:await-before-unload-checkpoint') {
@@ -209,14 +209,14 @@ describe('native preload destructive app actions', () => {
         return result
       })
 
-      const transfer = api.orcaProfiles.transferProject(args)
+      const transfer = api.dolphinProfiles.transferProject(args)
       await (outcome === 'recovery'
         ? expect(transfer).rejects.toThrow('move requires recovery')
         : expect(transfer).resolves.toBe(result))
       const needsPreparation = outcome !== 'copy' && outcome !== 'inactive'
       expect(started).toHaveBeenCalledTimes(needsPreparation ? 1 : 0)
       expect(aborted).toHaveBeenCalledTimes(outcome === 'duplicate' ? 1 : 0)
-      expect(invoke).toHaveBeenLastCalledWith('orcaProfiles:transferProject', args)
+      expect(invoke).toHaveBeenLastCalledWith('dolphinProfiles:transferProject', args)
     }
   )
 })

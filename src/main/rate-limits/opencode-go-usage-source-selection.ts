@@ -12,7 +12,7 @@ import {
 import { fetchOpenCodeGoRateLimits, normalizeCookieInput } from './opencode-go-usage-fetcher'
 
 export type OpenCodeGoUsageSourceInput = {
-  /** Explicit Orca override; the highest-precedence key tier. */
+  /** Explicit Dolphin override; the highest-precedence key tier. */
   settingsApiKey?: string
   cookie: string
   workspaceIdOverride?: string
@@ -89,8 +89,8 @@ function apiFailureResult(
  * The keyed `GET /zen/go/v1/usage` endpoint is tried first because it needs no
  * console session; the legacy cookie path stays as the fallback for Black and
  * other legacy-console accounts, which upstream `fe51b0b19a` still serves.
- * @param input.settingsApiKey - Explicit Orca override, if the user set one.
- * @param input.cookie - The opencode.ai cookie header from Orca settings.
+ * @param input.settingsApiKey - Explicit Dolphin override, if the user set one.
+ * @param input.cookie - The opencode.ai cookie header from Dolphin settings.
  * @returns A provider snapshot for the status bar.
  */
 export async function fetchOpenCodeGoUsage(

@@ -16,7 +16,7 @@ describe('profile-state startup failure formatting', () => {
     const error = new ProfileStateDatabaseOpenError('newer-schema', 'Newer schema: 999')
     expect(profileStateStartupFailureClass(error)).toBe('newer-schema')
     const message = formatProfileStateStartupFailure(error)
-    expect(message).toContain('newer version of Orca')
+    expect(message).toContain('newer version of Dolphin')
     expect(message).not.toContain('rollback')
     expect(message).not.toContain('unreadable')
   })
@@ -24,7 +24,7 @@ describe('profile-state startup failure formatting', () => {
   it('prints recovery paths and the offline rollback command', () => {
     const error = new ProfileStateRecoveryRequiredError(
       {
-        dataFile: '/profile/orca-data.json',
+        dataFile: '/profile/dolphin-data.json',
         databaseFile: '/profile/profile-state.db',
         profileId: 'profile-a'
       },
@@ -44,7 +44,7 @@ describe('profile-state startup failure formatting', () => {
     )
 
     expect(message).toContain(
-      'Orca cannot safely choose a profile-state authority: both profile stores are present'
+      'Dolphin cannot safely choose a profile-state authority: both profile stores are present'
     )
     expect(message).toContain('neither is selected automatically')
     expect(message).toContain('dolphin profile state rollback --current-json')
@@ -59,7 +59,7 @@ describe('profile-state startup failure formatting', () => {
   it('shows retained SQLite backups and their explicit recovery command without JSON exports', () => {
     const message = formatProfileStateStartupFailure({
       code: 'profile-state-recovery-required',
-      dataFile: '/profile/orca-data.json',
+      dataFile: '/profile/dolphin-data.json',
       databaseFile: '/profile/profile-state.db',
       exportPaths: [],
       backupPaths: ['/profile/profile-state.db.backup.latest.db']
@@ -84,13 +84,13 @@ describe('profile-state startup failure formatting', () => {
     )
     expect(profileStateStartupFailureClass(error)).toBe('writer-unavailable')
     expect(formatProfileStateStartupFailure(error)).toBe(
-      'Orca could not start profile persistence. Restart Orca; if the problem continues, repair or reinstall this build.'
+      'Dolphin could not start profile persistence. Restart Dolphin; if the problem continues, repair or reinstall this build.'
     )
   })
 
   it('reports an admission race as a conflicting writer', () => {
     const error = new ProfileStateRevisionConflictError(2, 3)
     expect(profileStateStartupFailureClass(error)).toBe('revision-conflict')
-    expect(formatProfileStateStartupFailure(error)).toContain('Close other Orca processes')
+    expect(formatProfileStateStartupFailure(error)).toContain('Close other Dolphin processes')
   })
 })

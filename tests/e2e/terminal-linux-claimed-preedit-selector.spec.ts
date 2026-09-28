@@ -1,5 +1,5 @@
 import type { CDPSession } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   createTerminalImeByteReader,
   removeTerminalImeByteReader,
@@ -68,15 +68,15 @@ async function dispatchPlainKey(
 
 // CDP exercises Linux renderer policy and PTY bytes; it does not simulate native fcitx5/Sogou.
 test('Linux candidate selectors reach the IME, not the PTY, for a preedit with no composition session', async ({
-  orcaPage,
+  dolphinPage,
   testRepoPath
 }, testInfo) => {
-  await applyImePlatformPolicy(orcaPage, 'linux')
-  const arena = await openTerminalImePaneArena(orcaPage)
+  await applyImePlatformPolicy(dolphinPage, 'linux')
+  const arena = await openTerminalImePaneArena(dolphinPage)
   const reader = createTerminalImeByteReader(testRepoPath, 1)
   let completed = false
   try {
-    await startTerminalImeByteReader(orcaPage, arena.ptyId, reader)
+    await startTerminalImeByteReader(dolphinPage, arena.ptyId, reader)
 
     // Space picks the first candidate.
     await dispatchClaimedLetter(arena.session, 'KeyN', 'n', 78)
@@ -102,7 +102,7 @@ test('Linux candidate selectors reach the IME, not the PTY, for a preedit with n
     await dispatchPlainKey(arena.session, '7', 'Digit7', 55)
 
     await dispatchPlainEnter(arena.session)
-    expect(await waitForTerminalImeBytes(orcaPage, reader)).toEqual([
+    expect(await waitForTerminalImeBytes(dolphinPage, reader)).toEqual([
       Buffer.from('你好 ls7\n').toString('hex')
     ])
     completed = true

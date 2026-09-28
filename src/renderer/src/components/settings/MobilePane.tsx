@@ -43,7 +43,7 @@ export function MobilePane(): React.JSX.Element {
   const [refreshingNetworkInterfaces, setRefreshingNetworkInterfaces] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
   const [deviceCountAtQr, setDeviceCountAtQr] = useState<number | null>(null)
-  const signedIn = useAppStore((state) => state.orcaProfileAuthStatus?.state === 'connected')
+  const signedIn = useAppStore((state) => state.dolphinProfileAuthStatus?.state === 'connected')
   const settingsSearchQuery = useAppStore((state) => state.settingsSearchQuery)
   const [connectionMode, setConnectionMode] = useMobilePairingConnectionMode()
   const [rotateNextQr, setRotateNextQr] = useState(false)
@@ -222,7 +222,7 @@ export function MobilePane(): React.JSX.Element {
             setRelayMintFailure(result.relayFailure)
             // Why: a revoked session is the likeliest cause; re-read it so the
             // notice can offer sign-in instead of a retry that cannot succeed.
-            void useAppStore.getState().fetchOrcaProfileAuthStatus()
+            void useAppStore.getState().fetchDolphinProfileAuthStatus()
           } else {
             setRelayMintFailure(null)
             // Why: IPC now forwards reason/guidance for all unavailability paths;

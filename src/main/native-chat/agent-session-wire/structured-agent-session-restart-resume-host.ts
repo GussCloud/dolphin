@@ -143,7 +143,7 @@ export function createStructuredAgentSessionRestartResume(
     const markers = await readMarkers()
     await revealMarkers(markers)
     // A live chat remains an offer. The user may have opened it to inspect the context and still
-    // explicitly choose whether Orca should ask the agent to continue.
+    // explicitly choose whether Dolphin should ask the agent to continue.
     const { candidates, superseded } = derive(markers, 'may-be-held')
     retireSuperseded(superseded)
     return candidates

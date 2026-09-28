@@ -3,7 +3,7 @@ import { SignJWT } from 'jose'
 import type { CloudIdentity } from './session-service.js'
 import type { SigningKey } from './signing-key.js'
 
-export const RELAY_TOKEN_AUDIENCE = 'orca-relay'
+export const RELAY_TOKEN_AUDIENCE = 'dolphin-relay'
 
 /** The relay re-derives this at hello; issuing a token for any other id would only fail later. */
 export function relayHostIdForPublicKey(hostPublicKeyB64: string): string | null {

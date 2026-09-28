@@ -56,7 +56,7 @@ describe('Windows Bun PTY gated launch', () => {
       { file, args, cwd: 'C:\\work tree', env: { TERM: 'xterm-256color' } },
       { workerPath }
     )
-    const gate = launch.env.ORCA_BUN_PTY_JOB_GATE
+    const gate = launch.env.DOLPHIN_BUN_PTY_JOB_GATE
     const directory = dirname(gate)
     try {
       const request = readWindowsBunPtyGateRequest(launch.command.at(-1)!)
@@ -66,7 +66,7 @@ describe('Windows Bun PTY gated launch', () => {
       expect(child.args).toEqual(args)
       expect(child.windowsVerbatimArguments).toBeUndefined()
       expect(child.stdio).toBe('inherit')
-      expect(child.env).not.toHaveProperty('ORCA_BUN_PTY_JOB_GATE')
+      expect(child.env).not.toHaveProperty('DOLPHIN_BUN_PTY_JOB_GATE')
       expect(launch.windowsVerbatimArguments).toBe(false)
       expect(launch.command).toContain('--no-env-file')
       expect(launch.command).toContain(`--config=${join(directory, 'bunfig.toml')}`)
@@ -143,7 +143,7 @@ describe('Windows Bun PTY gated launch', () => {
 
   it('resolves adjacent, factored-chunk, and unpacked desktop layouts', () => {
     const name = 'windows-bun-pty-gate-entry.js'
-    expect(resolveWindowsBunPtyGateEntry('/orcad', () => true)).toBe(join('/orcad', name))
+    expect(resolveWindowsBunPtyGateEntry('/dolphind', () => true)).toBe(join('/dolphind', name))
     expect(
       resolveWindowsBunPtyGateEntry(
         '/app/out/main/chunks',

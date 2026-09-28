@@ -162,7 +162,7 @@ describe('SkillInstallDialog', () => {
 
     await inspectSkill(sharedVersion.description)
     expect(screen.getByRole('button', { name: new RegExp(longName) })).toBeTruthy()
-    expect(screen.queryByText(/Published by Orca user/)).toBeNull()
+    expect(screen.queryByText(/Published by Dolphin user/)).toBeNull()
     expect(
       screen.getByText(
         (_, element) =>
@@ -621,7 +621,7 @@ describe('SkillInstallDialog', () => {
     const skills = installApi(previewInstall)
     Object.defineProperty(window, 'api', { configurable: true, value: { skills } })
     const changed = vi.fn()
-    window.addEventListener('orca:installed-agent-skills-changed', changed)
+    window.addEventListener('dolphin:installed-agent-skills-changed', changed)
     render(<SkillInstallDialog open onOpenChange={() => undefined} />)
     await inspectSkill()
 
@@ -629,7 +629,7 @@ describe('SkillInstallDialog', () => {
 
     await screen.findByText('Installed and verified.')
     expect(changed).toHaveBeenCalledOnce()
-    window.removeEventListener('orca:installed-agent-skills-changed', changed)
+    window.removeEventListener('dolphin:installed-agent-skills-changed', changed)
   })
 
   it('cancels an active destination-owned install and renders the structured result', async () => {

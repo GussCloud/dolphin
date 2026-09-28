@@ -8,7 +8,7 @@ describe('measureStorageFootprint', () => {
   let dir: string
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'orca-footprint-'))
+    dir = await mkdtemp(join(tmpdir(), 'dolphin-footprint-'))
   })
 
   afterEach(async () => {

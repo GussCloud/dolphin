@@ -64,7 +64,7 @@ describe('CliInstaller', () => {
         platform: 'darwin',
         isPackaged: false,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         commandPathOverride: installPath,
         processPathEnv: join(fixture.root, 'bin')
@@ -80,8 +80,8 @@ describe('CliInstaller', () => {
 
       const launcherContent = await readFile(installed.launcherPath as string, 'utf8')
       expect(launcherContent).toContain('ELECTRON_RUN_AS_NODE=1 exec "$ELECTRON" "$CLI" "$@"')
-      expect(launcherContent).toContain(`export ORCA_USER_DATA_PATH='${fixture.userDataPath}'`)
-      expect(launcherContent).toContain('export ORCA_APP_EXECUTABLE="$ELECTRON"')
+      expect(launcherContent).toContain(`export DOLPHIN_USER_DATA_PATH='${fixture.userDataPath}'`)
+      expect(launcherContent).toContain('export DOLPHIN_APP_EXECUTABLE="$ELECTRON"')
       expect(launcherContent).toContain(join(fixture.appPath, 'out', 'cli', 'index.js'))
 
       const removed = await installer.remove()
@@ -99,7 +99,7 @@ describe('CliInstaller', () => {
         platform: 'linux',
         isPackaged: false,
         userDataPath: fixture.userDataPath,
-        execPath: '/opt/Orca/dolphin-ide',
+        execPath: '/opt/Dolphin/dolphin-ide',
         appPath: fixture.appPath,
         commandPathOverride: installPath,
         processPathEnv: '/usr/bin'
@@ -113,7 +113,7 @@ describe('CliInstaller', () => {
 
       const launcherContent = await readFile(installed.launcherPath as string, 'utf8')
       expect(launcherContent).toContain('ELECTRON_RUN_AS_NODE=1 exec "$ELECTRON" "$CLI" "$@"')
-      expect(launcherContent).toContain(`export ORCA_USER_DATA_PATH='${fixture.userDataPath}'`)
+      expect(launcherContent).toContain(`export DOLPHIN_USER_DATA_PATH='${fixture.userDataPath}'`)
 
       const removed = await installer.remove()
       expect(removed.state).toBe('not_installed')
@@ -121,9 +121,9 @@ describe('CliInstaller', () => {
   )
 
   // Why: dev installs are useful for validation, but they must not replace the
-  // packaged `orca` / `orca-ide` commands developers rely on day to day.
+  // packaged `dolphin` / `dolphin-ide` commands developers rely on day to day.
   it.skipIf(process.platform === 'win32')(
-    'uses a separate orca-dev command for default development installs',
+    'uses a separate dolphin-dev command for default development installs',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -132,7 +132,7 @@ describe('CliInstaller', () => {
         platform: 'linux',
         isPackaged: false,
         userDataPath: fixture.userDataPath,
-        execPath: '/opt/Orca/dolphin-ide',
+        execPath: '/opt/Dolphin/dolphin-ide',
         appPath: fixture.appPath,
         homePath,
         processPathEnv: commandDir
@@ -140,9 +140,9 @@ describe('CliInstaller', () => {
 
       const installed = await installer.install()
       expect(installed.state).toBe('installed')
-      expect(installed.commandName).toBe('orca-dev')
-      expect(installed.commandPath).toBe(join(commandDir, 'orca-dev'))
-      expect(installed.launcherPath).toBe(join(fixture.userDataPath, 'cli', 'bin', 'orca-dev'))
+      expect(installed.commandName).toBe('dolphin-dev')
+      expect(installed.commandPath).toBe(join(commandDir, 'dolphin-dev'))
+      expect(installed.launcherPath).toBe(join(fixture.userDataPath, 'cli', 'bin', 'dolphin-dev'))
       await expect(readlink(installed.commandPath as string)).resolves.toBe(installed.launcherPath)
       await expect(
         readFile(join(fixture.userDataPath, 'cli', 'bin', 'dolphin'), 'utf8')
@@ -160,7 +160,7 @@ describe('CliInstaller', () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, '.local', 'bin')
       const installPath = join(commandDir, 'dolphin-ide')
-      const appImagePath = join(fixture.root, 'Orca.AppImage')
+      const appImagePath = join(fixture.root, 'Dolphin.AppImage')
       const cacheRootPath = join(fixture.root, 'cache')
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', {
         encoding: 'utf8',
@@ -218,7 +218,7 @@ describe('CliInstaller', () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, '.local', 'bin')
       const installPath = join(commandDir, 'dolphin-ide')
-      const appImagePath = join(fixture.root, 'Orca.AppImage')
+      const appImagePath = join(fixture.root, 'Dolphin.AppImage')
       const cacheRootPath = join(fixture.root, 'cache')
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', {
         encoding: 'utf8',
@@ -264,7 +264,7 @@ describe('CliInstaller', () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, '.local', 'bin')
       const installPath = join(commandDir, 'dolphin-ide')
-      const appImagePath = join(fixture.root, "Orca's AppImage.AppImage")
+      const appImagePath = join(fixture.root, "Dolphin's AppImage.AppImage")
       const cacheRootPath = join(fixture.root, 'cache')
       await mkdir(commandDir, { recursive: true })
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', { encoding: 'utf8', mode: 0o755 })
@@ -301,18 +301,18 @@ describe('CliInstaller', () => {
     }
   )
 
-  // Why: Linux renamed the public command to avoid shadowing GNOME Orca, so
-  // upgrading must clean up only the old symlink owned by prior Orca installs.
+  // Why: Linux renamed the public command to avoid shadowing KDE Dolphin, so
+  // upgrading must clean up only the old symlink owned by prior Dolphin installs.
   it.skipIf(process.platform === 'win32')(
-    'removes the old managed linux orca symlink when installing orca-ide',
+    'removes the old managed linux dolphin symlink when installing dolphin-ide',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
       const commandDir = join(homePath, '.local', 'bin')
       const resourcesPath = join(fixture.root, 'resources')
       const launcherPath = join(resourcesPath, 'bin', 'dolphin-ide')
-      const oldLauncherPath = join(resourcesPath, 'bin', 'orca')
-      const legacyCommandPath = join(commandDir, 'orca')
+      const oldLauncherPath = join(resourcesPath, 'bin', 'dolphin')
+      const legacyCommandPath = join(commandDir, 'dolphin')
       await mkdir(commandDir, { recursive: true })
       await mkdir(join(resourcesPath, 'bin'), { recursive: true })
       await writeFile(launcherPath, '#!/usr/bin/env bash\n', 'utf8')
@@ -336,13 +336,13 @@ describe('CliInstaller', () => {
   )
 
   it.skipIf(process.platform === 'win32')(
-    'removes a legacy linux orca symlink when registering from an AppImage',
+    'removes a legacy linux dolphin symlink when registering from an AppImage',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
       const commandDir = join(homePath, '.local', 'bin')
-      const legacyCommandPath = join(commandDir, 'orca')
-      const appImagePath = join(fixture.root, 'Orca.AppImage')
+      const legacyCommandPath = join(commandDir, 'dolphin')
+      const appImagePath = join(fixture.root, 'Dolphin.AppImage')
       const cacheRootPath = join(fixture.root, 'cache')
       await mkdir(commandDir, { recursive: true })
       await writeFile(appImagePath, '#!/usr/bin/env bash\n', {
@@ -350,7 +350,7 @@ describe('CliInstaller', () => {
         mode: 0o755
       })
       const extractedRoot = resolveAppImageExtractedRoot({ appImagePath, cacheRootPath })!
-      await symlink(join(dirname(extractedRoot.payloadLauncherPath), 'orca'), legacyCommandPath)
+      await symlink(join(dirname(extractedRoot.payloadLauncherPath), 'dolphin'), legacyCommandPath)
 
       const installer = new CliInstaller({
         platform: 'linux',
@@ -376,8 +376,8 @@ describe('CliInstaller', () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
       const commandDir = join(homePath, '.local', 'bin')
-      const legacyCommandPath = join(commandDir, 'orca')
-      const appImagePath = join(fixture.root, 'Orca.AppImage')
+      const legacyCommandPath = join(commandDir, 'dolphin')
+      const appImagePath = join(fixture.root, 'Dolphin.AppImage')
       const foreignAppImagePath = join(fixture.root, 'Other.AppImage')
       const cacheRootPath = join(fixture.root, 'cache')
       await mkdir(commandDir, { recursive: true })
@@ -436,7 +436,7 @@ describe('CliInstaller', () => {
         platform: 'darwin',
         isPackaged: false,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         commandPathOverride: installPath,
         privilegedRunner: async (command: string) => {

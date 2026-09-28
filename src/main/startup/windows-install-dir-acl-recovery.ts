@@ -176,7 +176,7 @@ function startRepair(
         clearInstallDirAclPoisonMarker(options.userDataPath)
         // The GPU child deaths were never a driver fault, so safe graphics — and the
         // --in-process-gpu launch that hides the next crash's evidence — must not outlive the repair.
-        // Never a user-confirmed marker: "keep safe graphics" is a choice, not Orca's latch.
+        // Never a user-confirmed marker: "keep safe graphics" is a choice, not Dolphin's latch.
         const gpuMarker = readGpuFallbackMarker(options.userDataPath)
         if (gpuMarker?.userConfirmed === false) {
           // Kept: a probe reading that later disproves this claim restores the marker,

@@ -99,7 +99,7 @@ function providerSink() {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-append-delivery-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-append-delivery-'))
   resetHostTestOperationIds()
   generation = 0
   acquire = vi.fn(async ({ fence, spawnToken }) => ({
@@ -160,7 +160,7 @@ describe('an open chat receives every row its journal commits', () => {
 
   it('shows a revision the provider queued with no publish behind it', async () => {
     const pane = liveReader()
-    const identity = { provider: 'orca' as const, clientMessageId: 'context-usage' }
+    const identity = { provider: 'dolphin' as const, clientMessageId: 'context-usage' }
     const body = { kind: 'status' as const, text: 'context usage answered after the turn' }
 
     expect(providerSink().tryReviseResolvedItem?.(4_096, () => ({ identity, body }))).toEqual({
@@ -179,7 +179,7 @@ describe('an open chat receives every row its journal commits', () => {
     }
 
     await journal.appendItem(
-      { provider: 'orca', clientMessageId: 'host-note' },
+      { provider: 'dolphin', clientMessageId: 'host-note' },
       { kind: 'status', text: 'written by a writer that publishes nothing' },
       { fence: store.getRecord(SESSION)?.lease.runtimeFence ?? 0 }
     )
@@ -199,7 +199,7 @@ describe('an open chat receives each row once', () => {
     const readSince = vi.spyOn(journal, 'readSince')
 
     sink.appendItem(
-      { provider: 'orca', clientMessageId: 'streamed' },
+      { provider: 'dolphin', clientMessageId: 'streamed' },
       { kind: 'status', text: 'streamed row' }
     )
     sink.publish()
@@ -218,7 +218,7 @@ describe('an open chat receives each row once', () => {
     }
 
     await journal.appendItem(
-      { provider: 'orca', clientMessageId: 'host-row' },
+      { provider: 'dolphin', clientMessageId: 'host-row' },
       { kind: 'status', text: 'host row' },
       { fence: store.getRecord(SESSION)?.lease.runtimeFence ?? 0 }
     )

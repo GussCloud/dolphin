@@ -87,7 +87,10 @@ describe('evaluateMemoryBudget', () => {
 describe('readMemoryBudget', () => {
   it('reads megabyte overrides and ignores invalid ones', () => {
     expect(
-      readMemoryBudget({ ORCA_WARN_RENDERER_MEMORY_MB: '800', ORCA_WARN_DAEMON_MEMORY_MB: 'nope' })
+      readMemoryBudget({
+        DOLPHIN_WARN_RENDERER_MEMORY_MB: '800',
+        DOLPHIN_WARN_DAEMON_MEMORY_MB: 'nope'
+      })
     ).toEqual({ ...DEFAULT_MEMORY_BUDGET, rendererBytes: 800 * MB })
   })
 })

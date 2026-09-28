@@ -208,7 +208,7 @@ describe('NativeChatStructuredSession delivery', () => {
 
   function seedOutbox(sessionId: string, entries: unknown[]): void {
     localStorage.setItem(
-      `orca:desktopStructuredAgentSessionOutbox:v1:${encodeURIComponent(sessionId)}`,
+      `dolphin:desktopStructuredAgentSessionOutbox:v1:${encodeURIComponent(sessionId)}`,
       JSON.stringify(entries)
     )
   }

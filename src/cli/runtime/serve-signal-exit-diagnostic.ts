@@ -1,6 +1,6 @@
 import { RuntimeClientError } from './types'
 
-export const MAC_CRASH_REPORT_GLOB = '~/Library/Logs/DiagnosticReports/Orca-*.ips'
+export const MAC_CRASH_REPORT_GLOB = '~/Library/Logs/DiagnosticReports/Dolphin-*.ips'
 
 export function serveSignalExitError(
   signal: NodeJS.Signals | null,

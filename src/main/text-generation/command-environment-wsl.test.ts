@@ -43,7 +43,7 @@ describe('command environment on WSL', () => {
       'Ubuntu'
     )
     expect(explicit).toContain('/same/home')
-    expect(explicit).not.toContain('.orca-default-codex-home')
+    expect(explicit).not.toContain('.dolphin-default-codex-home')
     expect(explicit).not.toBe(managed)
   })
 })

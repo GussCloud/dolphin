@@ -1,6 +1,6 @@
 import type { IpcMainEvent, IpcMainInvokeEvent } from 'electron'
 import type { PtyRendererDelivery } from '../session'
-import type { OrcaRuntimeService } from '../../../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../../../runtime/dolphin-runtime'
 import type { IPtyProvider } from '../../../providers/types'
 import { isPtyWriteUnavailableError } from '../../../providers/pty-write-unavailable-error'
 import {
@@ -30,7 +30,7 @@ export type PtyViewportClaimPayload = { id: string; cols: number; rows: number }
 
 export function createPtyWriteInput(deps: {
   mainWindow?: PtyRendererDelivery
-  runtime?: OrcaRuntimeService
+  runtime?: DolphinRuntimeService
 }): {
   writePtyInput: (args: PtyWritePayload) => boolean | Promise<boolean>
   writePtyInputAccepted: (args: PtyWritePayload) => boolean | Promise<boolean>

@@ -14,7 +14,7 @@ function run(command, args, options = {}) {
 }
 
 function createFixture() {
-  const root = mkdtempSync(join(tmpdir(), 'orca-install-node-action-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-install-node-action-'))
   const workspace = join(root, 'checkout')
   const detachedCwd = join(root, 'action cwd')
   const bin = join(root, 'bin')

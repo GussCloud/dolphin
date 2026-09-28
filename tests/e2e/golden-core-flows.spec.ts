@@ -8,7 +8,7 @@ import { mkdtemp } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import type { ElectronApplication, Page } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {
   countVisibleTerminalPanes,
@@ -405,22 +405,22 @@ async function completeWorkspaceCreationTour(page: Page, workspaceName: string):
 test.describe('Existing-user golden core flow', () => {
   test('adds project, creates workspace, opens a terminal tab, and splits a pane', async ({
     electronApp,
-    orcaPage
+    dolphinPage
   }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    const repoPath = await createGitRepo('orca-e2e-golden-existing-', 'golden-existing-project')
+    await waitForSessionReady(dolphinPage)
+    await waitForActiveWorktree(dolphinPage)
+    const repoPath = await createGitRepo('dolphin-e2e-golden-existing-', 'golden-existing-project')
 
-    await addProjectFromSidebar(orcaPage, electronApp, repoPath)
+    await addProjectFromSidebar(dolphinPage, electronApp, repoPath)
     const workspaceName = `golden-existing-${Date.now()}`
-    await createWorkspace(orcaPage, workspaceName)
-    await expectActiveWorkspaceBelongsToRepo(orcaPage, workspaceName, repoPath)
-    await ensureTerminalVisible(orcaPage)
-    await expectTerminalSurface(orcaPage)
-    await waitForTerminalPaneManager(orcaPage)
+    await createWorkspace(dolphinPage, workspaceName)
+    await expectActiveWorkspaceBelongsToRepo(dolphinPage, workspaceName, repoPath)
+    await ensureTerminalVisible(dolphinPage)
+    await expectTerminalSurface(dolphinPage)
+    await waitForTerminalPaneManager(dolphinPage)
 
-    await createTerminalTabThroughMenu(orcaPage)
-    await splitTerminalPaneAndAssertIdentity(orcaPage)
+    await createTerminalTabThroughMenu(dolphinPage)
+    await splitTerminalPaneAndAssertIdentity(dolphinPage)
   })
 })
 
@@ -429,45 +429,49 @@ test.describe('New-user golden core flow', () => {
 
   test('completes onboarding, adds a project, and follows the workspace tour handoff', async ({
     electronApp,
-    orcaPage
+    dolphinPage
   }) => {
-    await waitForSessionReady(orcaPage)
-    await expect(orcaPage.getByRole('heading', { name: /Pick your default agent/i })).toBeVisible({
+    await waitForSessionReady(dolphinPage)
+    await expect(
+      dolphinPage.getByRole('heading', { name: /Pick your default agent/i })
+    ).toBeVisible({
       timeout: 15_000
     })
 
-    await selectCodexAgent(orcaPage)
-    await continueOnboarding(orcaPage)
-    await expect(orcaPage.getByRole('heading', { name: /Make it feel like home/i })).toBeVisible()
-    await chooseOppositeTheme(orcaPage)
-    await continueOnboarding(orcaPage)
-    await continueThroughOptionalSetupToNotifications(orcaPage)
-    await expect(orcaPage.getByRole('button', { name: /Send Test Notification/i })).toBeVisible()
-    await chooseNotificationSound(orcaPage)
-    await continueFromNotificationsToAddProject(orcaPage)
+    await selectCodexAgent(dolphinPage)
+    await continueOnboarding(dolphinPage)
+    await expect(
+      dolphinPage.getByRole('heading', { name: /Make it feel like home/i })
+    ).toBeVisible()
+    await chooseOppositeTheme(dolphinPage)
+    await continueOnboarding(dolphinPage)
+    await continueThroughOptionalSetupToNotifications(dolphinPage)
+    await expect(dolphinPage.getByRole('button', { name: /Send Test Notification/i })).toBeVisible()
+    await chooseNotificationSound(dolphinPage)
+    await continueFromNotificationsToAddProject(dolphinPage)
 
-    const repoPath = await createGitRepo('orca-e2e-golden-new-', 'golden-new-project')
+    const repoPath = await createGitRepo('dolphin-e2e-golden-new-', 'golden-new-project')
     await chooseFolderInNativeDialog(electronApp, repoPath)
-    await orcaPage
+    await dolphinPage
       .getByRole('button', { name: /Browse for a folder|Open a folder|Browse folder/i })
       .click()
-    await waitForRepoLoaded(orcaPage, repoPath)
-    await expectProjectVisible(orcaPage, repoPath)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await expectTerminalSurface(orcaPage)
-    await waitForTerminalPaneManager(orcaPage)
+    await waitForRepoLoaded(dolphinPage, repoPath)
+    await expectProjectVisible(dolphinPage, repoPath)
+    await waitForActiveWorktree(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
+    await expectTerminalSurface(dolphinPage)
+    await waitForTerminalPaneManager(dolphinPage)
 
-    await requestAgentSessionsTour(orcaPage)
-    const paneCountBeforeTourSplit = await countVisibleTerminalPanes(orcaPage)
-    await orcaPage.getByRole('button', { name: /^Split terminal$/ }).click()
-    await waitForPaneCount(orcaPage, paneCountBeforeTourSplit + 1)
-    await waitForPaneIdentitySnapshot(orcaPage, paneCountBeforeTourSplit + 1)
+    await requestAgentSessionsTour(dolphinPage)
+    const paneCountBeforeTourSplit = await countVisibleTerminalPanes(dolphinPage)
+    await dolphinPage.getByRole('button', { name: /^Split terminal$/ }).click()
+    await waitForPaneCount(dolphinPage, paneCountBeforeTourSplit + 1)
+    await waitForPaneIdentitySnapshot(dolphinPage, paneCountBeforeTourSplit + 1)
 
     await expect(
-      orcaPage.getByRole('dialog', { name: /Start another task in parallel/i })
+      dolphinPage.getByRole('dialog', { name: /Start another task in parallel/i })
     ).toBeVisible()
-    const createControl = orcaPage
+    const createControl = dolphinPage
       .locator('[data-contextual-tour-target="workspace-create-control"]')
       .first()
     await expect(createControl).toBeVisible()
@@ -478,7 +482,7 @@ test.describe('New-user golden core flow', () => {
     await createControl.click()
 
     const workspaceName = `golden-new-${Date.now()}`
-    await completeWorkspaceCreationTour(orcaPage, workspaceName)
-    await expectActiveWorkspaceBelongsToRepo(orcaPage, workspaceName, repoPath)
+    await completeWorkspaceCreationTour(dolphinPage, workspaceName)
+    await expectActiveWorkspaceBelongsToRepo(dolphinPage, workspaceName, repoPath)
   })
 })

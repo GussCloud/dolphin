@@ -1,4 +1,4 @@
-// Pure analysis for session-lifecycle-benchmark.mjs; takes `orca diagnostics runtime --json` samples.
+// Pure analysis for session-lifecycle-benchmark.mjs; takes `dolphin diagnostics runtime --json` samples.
 
 /** The figures a leak shows up in, pulled from one diagnostics sample. */
 export function summarizeSample(sample) {

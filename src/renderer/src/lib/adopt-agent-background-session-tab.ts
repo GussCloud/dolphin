@@ -44,10 +44,10 @@ export function reserveAgentBackgroundSessionIdentity(args: {
     launchRegistration,
     paneEnv: {
       ...args.env,
-      ORCA_PANE_KEY: paneKey,
-      ORCA_TAB_ID: reservedTabId,
-      ORCA_WORKTREE_ID: args.worktreeId,
-      ORCA_AGENT_LAUNCH_TOKEN: launchToken
+      DOLPHIN_PANE_KEY: paneKey,
+      DOLPHIN_TAB_ID: reservedTabId,
+      DOLPHIN_WORKTREE_ID: args.worktreeId,
+      DOLPHIN_AGENT_LAUNCH_TOKEN: launchToken
     }
   }
 }

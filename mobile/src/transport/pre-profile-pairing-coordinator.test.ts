@@ -23,8 +23,8 @@ const relayOffer: PairingOffer = {
   ...directOffer,
   relay: {
     v: 1,
-    directorUrl: 'https://relay.onorca.dev',
-    cellUrl: 'https://relay-c1.onorca.dev',
+    directorUrl: 'https://relay.dolphin.guss.dev.br',
+    cellUrl: 'https://relay-c1.dolphin.guss.dev.br',
     assignmentEpoch: 7,
     relayHostId: 'AbCdEf0123_-xyZ9',
     inviteToken: 'abcdefghijklmnopqrstuvwxyzABCDEFGH012345678',
@@ -445,7 +445,7 @@ describe('pre-profile pairing coordinator', () => {
         ts: now,
         level: 'info',
         message: 'Relay: dialing cell',
-        detail: 'relay-c1.onorca.dev'
+        detail: 'relay-c1.dolphin.guss.dev.br'
       })
       return relay
     })
@@ -463,7 +463,7 @@ describe('pre-profile pairing coordinator', () => {
       'Relay: dialing cell',
       'Pairing path selected'
     ])
-    expect(entries[0]!.detail).toBe('relay-c1.onorca.dev')
+    expect(entries[0]!.detail).toBe('relay-c1.dolphin.guss.dev.br')
     expect(entries[2]).toMatchObject({ level: 'success', detail: 'winner: relay' })
   })
 
@@ -498,7 +498,7 @@ describe('pre-profile pairing coordinator', () => {
         ts: now,
         level: 'info',
         message: 'Relay: dialing cell',
-        detail: 'relay-c1.onorca.dev'
+        detail: 'relay-c1.dolphin.guss.dev.br'
       })
       connectArgs.onLog?.({ id: 'relay-open', ts: now, level: 'info', message: 'Cell socket open' })
       return relay

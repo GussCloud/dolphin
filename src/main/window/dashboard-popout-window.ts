@@ -19,7 +19,7 @@ const MIN_WIDTH = 480
 const MIN_HEIGHT = 360
 const DEFAULT_WIDTH = 960
 const DEFAULT_HEIGHT = 720
-const DASHBOARD_POPOUT_PARTITION = 'orca-dashboard-popout'
+const DASHBOARD_POPOUT_PARTITION = 'dolphin-dashboard-popout'
 
 // Why: singleton — the dashboard is a companion surface, so a second "Pop Out"
 // request focuses the existing window rather than spawning duplicates.

@@ -32,7 +32,7 @@ import {
   type RegionCorrectionResponse,
   type IdleRegionalRehomeCommit,
   type IdleRegionalRehomeRequest,
-} from '@orca-cloud/relay-contract'
+} from '@dolphin-cloud/relay-contract'
 import {
   cellAdmissionState,
   cellAdmissionStates,
@@ -1011,7 +1011,7 @@ export class RelayAssignmentStore {
             // cannot be undone without the rehome worker.
             events.push(
               JSON.stringify({
-                event: 'orca_relay_sticky_replacement_deferred',
+                event: 'dolphin_relay_sticky_replacement_deferred',
                 reason: 'no_same_region_headroom',
                 cellId: current.cellId,
                 region: current.region
@@ -1104,7 +1104,7 @@ export class RelayAssignmentStore {
         // drained cell's host count.
         events.push(
           JSON.stringify({
-            event: 'orca_relay_sticky_replaced_off_isolated_cell',
+            event: 'dolphin_relay_sticky_replaced_off_isolated_cell',
             fromCellId: isolatedIncumbent.cellId,
             fromRegion: isolatedIncumbent.region,
             admissionState: ROLL_ISOLATED_ADMISSION,
@@ -3671,7 +3671,7 @@ export class RelayAssignmentStore {
       // Rolled back whole: no attempt, migration or reservation survives, so the
       // outcome report never sees it and the director moves to its next candidate.
       console.warn(JSON.stringify({
-        event: 'orca_relay_idle_rehome_target_deferred',
+        event: 'dolphin_relay_idle_rehome_target_deferred',
         attemptId: request.attemptId,
         targetCellId: request.targetCellId,
         cause: targetDeferral
@@ -3828,7 +3828,7 @@ export class RelayAssignmentStore {
       // rather than costing every other host on the cell its renewal.
       console.warn(
         JSON.stringify({
-          event: 'orca_relay_control_renewal_batch_failed',
+          event: 'dolphin_relay_control_renewal_batch_failed',
           rows: ordered.length,
           message: String((error as { message?: unknown }).message)
         })
@@ -6076,7 +6076,7 @@ export class RelayAssignmentStore {
     let event: Record<string, string | number> | null = null
     if (disabled.length > 0) {
       event = {
-        event: 'orca_relay_regional_rehome_safety_disabled',
+        event: 'dolphin_relay_regional_rehome_safety_disabled',
         reason,
         controlGeneration: integer(disabled[0]!, 'generation'),
         now,
@@ -6143,7 +6143,7 @@ export class RelayAssignmentStore {
     // nothing records that the failure budget, not an operator, turned it off.
     if (disabled.length === 0) return null
     return {
-      event: 'orca_relay_regional_rehome_failure_budget_disabled',
+      event: 'dolphin_relay_regional_rehome_failure_budget_disabled',
       controlGeneration: integer(disabled[0]!, 'generation'),
       consecutiveFailures: failures,
       now
@@ -8495,7 +8495,7 @@ export function cellInventoryLockOptions(mode: CellInventoryLockMode): RelayLock
 function warnSweepCellInventoryBusy(sweep: string, skipped: number): void {
   if (skipped === 0) return
   console.warn(
-    JSON.stringify({ event: 'orca_relay_sweep_cell_inventory_busy', sweep, skipped })
+    JSON.stringify({ event: 'dolphin_relay_sweep_cell_inventory_busy', sweep, skipped })
   )
 }
 
@@ -8533,7 +8533,7 @@ function warnRegionalRehomeCandidateFailure(
   const message = error instanceof Error ? error.message : ''
   console.warn(
     JSON.stringify({
-      event: 'orca_relay_regional_rehome_candidate_failed',
+      event: 'dolphin_relay_regional_rehome_candidate_failed',
       operation,
       attemptId,
       reason: /^[a-z0-9_]{1,64}$/.test(message) ? message : 'redacted'
@@ -8545,7 +8545,7 @@ function warnRegionalRehomeCandidateFailure(
 function noteRegionalRehomeActivityCountsRepaired(attemptId: string): void {
   console.warn(
     JSON.stringify({
-      event: 'orca_relay_regional_rehome_activity_counts_repaired',
+      event: 'dolphin_relay_regional_rehome_activity_counts_repaired',
       attemptId
     })
   )

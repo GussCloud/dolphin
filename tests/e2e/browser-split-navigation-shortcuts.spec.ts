@@ -1,7 +1,7 @@
 // STA-8147: history, reload, zoom, and address-bar chords act on the split that sent them.
 
 import type { Page } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import { focusActiveTerminalInput } from './helpers/terminal'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {
@@ -102,122 +102,127 @@ async function expectFirstSplitReloaded(page: Page, fixture: BrowserSplitFixture
 test.describe('browser split navigation shortcuts', () => {
   let server: BrowserSplitPageServer
 
-  test.beforeEach(async ({ orcaPage }) => {
+  test.beforeEach(async ({ dolphinPage }) => {
     server = await startBrowserSplitPageServer()
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
+    await waitForSessionReady(dolphinPage)
+    await waitForActiveWorktree(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
   })
 
   test.afterEach(async () => {
     await server.close()
   })
 
-  test('Back and Forward typed in one guest move only that split', async ({ orcaPage }) => {
-    const fixture = await createBrowserSplitWithHistory(orcaPage, server)
+  test('Back and Forward typed in one guest move only that split', async ({ dolphinPage }) => {
+    const fixture = await createBrowserSplitWithHistory(dolphinPage, server)
 
-    await pressInGuest(orcaPage, fixture, backChord)
-    await waitForGuestUrl(orcaPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
-    await expectSecondSplitUntouched(orcaPage, fixture, server)
+    await pressInGuest(dolphinPage, fixture, backChord)
+    await waitForGuestUrl(dolphinPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
+    await expectSecondSplitUntouched(dolphinPage, fixture, server)
 
-    await pressInGuest(orcaPage, fixture, forwardChord)
-    await waitForGuestUrl(orcaPage, fixture.firstBrowserTabId, server.pageUrl('a', 2))
-    await expectSecondSplitUntouched(orcaPage, fixture, server)
+    await pressInGuest(dolphinPage, fixture, forwardChord)
+    await waitForGuestUrl(dolphinPage, fixture.firstBrowserTabId, server.pageUrl('a', 2))
+    await expectSecondSplitUntouched(dolphinPage, fixture, server)
   })
 
-  test('Reload and Hard Reload typed in one guest reload only that split', async ({ orcaPage }) => {
-    const fixture = await createBrowserSplitWithHistory(orcaPage, server)
+  test('Reload and Hard Reload typed in one guest reload only that split', async ({
+    dolphinPage
+  }) => {
+    const fixture = await createBrowserSplitWithHistory(dolphinPage, server)
 
-    await pressInGuest(orcaPage, fixture, reloadChord)
-    await expectFirstSplitReloaded(orcaPage, fixture)
-    await expectSecondSplitUntouched(orcaPage, fixture, server)
+    await pressInGuest(dolphinPage, fixture, reloadChord)
+    await expectFirstSplitReloaded(dolphinPage, fixture)
+    await expectSecondSplitUntouched(dolphinPage, fixture, server)
 
-    await recordGuestLoadStarts(orcaPage, [fixture.firstBrowserTabId])
-    await pressInGuest(orcaPage, fixture, hardReloadChord)
-    await expectFirstSplitReloaded(orcaPage, fixture)
-    await expectSecondSplitUntouched(orcaPage, fixture, server)
-    expect(await guestUrl(orcaPage, fixture.firstBrowserTabId)).toBe(server.pageUrl('a', 2))
+    await recordGuestLoadStarts(dolphinPage, [fixture.firstBrowserTabId])
+    await pressInGuest(dolphinPage, fixture, hardReloadChord)
+    await expectFirstSplitReloaded(dolphinPage, fixture)
+    await expectSecondSplitUntouched(dolphinPage, fixture, server)
+    expect(await guestUrl(dolphinPage, fixture.firstBrowserTabId)).toBe(server.pageUrl('a', 2))
   })
 
   // Ctrl+wheel is not covered: before-mouse-event only fires for OS input, not sendInputEvent.
-  test('page zoom typed in one guest zooms only that split', async ({ orcaPage }) => {
-    const fixture = await createBrowserSplitWithHistory(orcaPage, server)
+  test('page zoom typed in one guest zooms only that split', async ({ dolphinPage }) => {
+    const fixture = await createBrowserSplitWithHistory(dolphinPage, server)
     const firstZoom = (): Promise<number | null> =>
-      guestZoomLevel(orcaPage, fixture.firstBrowserTabId)
+      guestZoomLevel(dolphinPage, fixture.firstBrowserTabId)
     const secondZoom = (): Promise<number | null> =>
-      guestZoomLevel(orcaPage, fixture.secondBrowserTabId)
+      guestZoomLevel(dolphinPage, fixture.secondBrowserTabId)
     const initialFirstZoom = await firstZoom()
     const initialSecondZoom = await secondZoom()
     expect(initialFirstZoom).not.toBeNull()
 
-    await pressInGuest(orcaPage, fixture, { guestKeyCode: '=', guestModifiers: [guestModifier] })
+    await pressInGuest(dolphinPage, fixture, { guestKeyCode: '=', guestModifiers: [guestModifier] })
     await expect.poll(firstZoom).toBeGreaterThan(initialFirstZoom ?? 0)
     expect(await secondZoom()).toBe(initialSecondZoom)
 
-    await pressInGuest(orcaPage, fixture, { guestKeyCode: '-', guestModifiers: [guestModifier] })
-    await pressInGuest(orcaPage, fixture, { guestKeyCode: '-', guestModifiers: [guestModifier] })
+    await pressInGuest(dolphinPage, fixture, { guestKeyCode: '-', guestModifiers: [guestModifier] })
+    await pressInGuest(dolphinPage, fixture, { guestKeyCode: '-', guestModifiers: [guestModifier] })
     await expect.poll(firstZoom).toBeLessThan(initialFirstZoom ?? 0)
     expect(await secondZoom()).toBe(initialSecondZoom)
   })
 
-  test('Focus Address Bar typed in one guest focuses only that split', async ({ orcaPage }) => {
-    const fixture = await createBrowserSplitWithHistory(orcaPage, server)
+  test('Focus Address Bar typed in one guest focuses only that split', async ({ dolphinPage }) => {
+    const fixture = await createBrowserSplitWithHistory(dolphinPage, server)
 
-    await pressInGuest(orcaPage, fixture, { guestKeyCode: 'L', guestModifiers: [guestModifier] })
+    await pressInGuest(dolphinPage, fixture, { guestKeyCode: 'L', guestModifiers: [guestModifier] })
 
-    await expect(browserAddressBar(orcaPage, fixture.firstBrowserTabId)).toBeFocused()
-    await expect(browserAddressBar(orcaPage, fixture.secondBrowserTabId)).not.toBeFocused()
+    await expect(browserAddressBar(dolphinPage, fixture.firstBrowserTabId)).toBeFocused()
+    await expect(browserAddressBar(dolphinPage, fixture.secondBrowserTabId)).not.toBeFocused()
   })
 
   test('Back and Reload pressed from one split toolbar act on only that split', async ({
-    orcaPage
+    dolphinPage
   }) => {
-    const fixture = await createBrowserSplitWithHistory(orcaPage, server)
-    const reloadButton = browserOverlay(orcaPage, fixture.firstBrowserTabId).getByRole('button', {
-      name: 'Reload',
-      exact: true
-    })
+    const fixture = await createBrowserSplitWithHistory(dolphinPage, server)
+    const reloadButton = browserOverlay(dolphinPage, fixture.firstBrowserTabId).getByRole(
+      'button',
+      {
+        name: 'Reload',
+        exact: true
+      }
+    )
 
     await reloadButton.focus()
-    await waitForFocusedGroup(orcaPage, fixture.firstBrowserGroupId)
-    await orcaPage.keyboard.press(backChord.renderer)
-    await waitForGuestUrl(orcaPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
-    await expectSecondSplitUntouched(orcaPage, fixture, server)
+    await waitForFocusedGroup(dolphinPage, fixture.firstBrowserGroupId)
+    await dolphinPage.keyboard.press(backChord.renderer)
+    await waitForGuestUrl(dolphinPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
+    await expectSecondSplitUntouched(dolphinPage, fixture, server)
 
-    await recordGuestLoadStarts(orcaPage, [fixture.firstBrowserTabId])
+    await recordGuestLoadStarts(dolphinPage, [fixture.firstBrowserTabId])
     await reloadButton.focus()
-    await orcaPage.keyboard.press(reloadChord.renderer)
-    await expectFirstSplitReloaded(orcaPage, fixture)
-    await expectSecondSplitUntouched(orcaPage, fixture, server)
+    await dolphinPage.keyboard.press(reloadChord.renderer)
+    await expectFirstSplitReloaded(dolphinPage, fixture)
+    await expectSecondSplitUntouched(dolphinPage, fixture, server)
   })
 
   test('Back and Reload pressed in a focused terminal leave the browser split alone', async ({
-    orcaPage
+    dolphinPage
   }) => {
-    const fixture = await createTerminalBrowserSplit(orcaPage, server.pageUrl('a', 1))
-    await waitForGuestUrl(orcaPage, fixture.browserTabId, server.pageUrl('a', 1))
-    await navigateGuest(orcaPage, fixture.browserTabId, server.pageUrl('a', 2))
-    await waitForGuestIdle(orcaPage, fixture.browserTabId)
-    await recordGuestLoadStarts(orcaPage, [fixture.browserTabId])
+    const fixture = await createTerminalBrowserSplit(dolphinPage, server.pageUrl('a', 1))
+    await waitForGuestUrl(dolphinPage, fixture.browserTabId, server.pageUrl('a', 1))
+    await navigateGuest(dolphinPage, fixture.browserTabId, server.pageUrl('a', 2))
+    await waitForGuestIdle(dolphinPage, fixture.browserTabId)
+    await recordGuestLoadStarts(dolphinPage, [fixture.browserTabId])
 
-    await focusBrowserGroup(orcaPage, fixture.terminalGroupId)
-    await focusActiveTerminalInput(orcaPage)
-    await waitForFocusedGroup(orcaPage, fixture.terminalGroupId)
-    await orcaPage.keyboard.press(backChord.renderer)
-    await orcaPage.keyboard.press(reloadChord.renderer)
-    await orcaPage.keyboard.press(hardReloadChord.renderer)
+    await focusBrowserGroup(dolphinPage, fixture.terminalGroupId)
+    await focusActiveTerminalInput(dolphinPage)
+    await waitForFocusedGroup(dolphinPage, fixture.terminalGroupId)
+    await dolphinPage.keyboard.press(backChord.renderer)
+    await dolphinPage.keyboard.press(reloadChord.renderer)
+    await dolphinPage.keyboard.press(hardReloadChord.renderer)
     // Why: the next toolbar press proves these chords reach the pane in this app; it only has to lose here.
-    const reloadButton = browserOverlay(orcaPage, fixture.browserTabId).getByRole('button', {
+    const reloadButton = browserOverlay(dolphinPage, fixture.browserTabId).getByRole('button', {
       name: 'Reload',
       exact: true
     })
-    await waitForGuestIdle(orcaPage, fixture.browserTabId)
-    expect(await guestLoadStarts(orcaPage, fixture.browserTabId)).toBe(0)
-    expect(await guestUrl(orcaPage, fixture.browserTabId)).toBe(server.pageUrl('a', 2))
+    await waitForGuestIdle(dolphinPage, fixture.browserTabId)
+    expect(await guestLoadStarts(dolphinPage, fixture.browserTabId)).toBe(0)
+    expect(await guestUrl(dolphinPage, fixture.browserTabId)).toBe(server.pageUrl('a', 2))
 
     await reloadButton.focus()
-    await waitForFocusedGroup(orcaPage, fixture.browserGroupId)
-    await orcaPage.keyboard.press(backChord.renderer)
-    await waitForGuestUrl(orcaPage, fixture.browserTabId, server.pageUrl('a', 1))
+    await waitForFocusedGroup(dolphinPage, fixture.browserGroupId)
+    await dolphinPage.keyboard.press(backChord.renderer)
+    await waitForGuestUrl(dolphinPage, fixture.browserTabId, server.pageUrl('a', 1))
   })
 })

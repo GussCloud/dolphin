@@ -4,7 +4,7 @@ import { openHttpLink, type HttpLinkSourceOwner } from '@/lib/http-link-routing'
 // Catalog keys keep their original terminal namespace: they are opaque ids with
 // shipped translations, and the popover is now shared with native chat.
 
-export type HttpLinkDestination = 'orca' | 'system'
+export type HttpLinkDestination = 'dolphin' | 'system'
 
 export type HttpLinkActionDestinations = {
   primary: HttpLinkDestination
@@ -17,7 +17,7 @@ export type HttpLinkAction = {
   run: () => void | Promise<void>
 }
 
-export function canSourceOwnerOpenInOrca(
+export function canSourceOwnerOpenInDolphin(
   sourceOwner: HttpLinkSourceOwner,
   canOpenOwnedBrowser: boolean
 ): boolean {
@@ -28,24 +28,24 @@ export function canSourceOwnerOpenInOrca(
 }
 
 /** Which destinations a clicked link offers, primary first; a remote source that
- *  cannot reach Orca's managed browser offers only the system browser. */
+ *  cannot reach Dolphin's managed browser offers only the system browser. */
 export function httpLinkActionDestinationsFor(
   settings: { openLinksInApp?: boolean } | null | undefined,
   sourceOwner: HttpLinkSourceOwner,
   canOpenOwnedBrowser: boolean
 ): HttpLinkActionDestinations {
-  if (!canSourceOwnerOpenInOrca(sourceOwner, canOpenOwnedBrowser)) {
+  if (!canSourceOwnerOpenInDolphin(sourceOwner, canOpenOwnedBrowser)) {
     return { primary: 'system' }
   }
   return settings?.openLinksInApp === true
-    ? { primary: 'orca', alternate: 'system' }
-    : { primary: 'system', alternate: 'orca' }
+    ? { primary: 'dolphin', alternate: 'system' }
+    : { primary: 'system', alternate: 'dolphin' }
 }
 
 export function httpLinkDestinationLabel(destination: HttpLinkDestination): string {
-  return destination === 'orca'
+  return destination === 'dolphin'
     ? translate(
-        'auto.components.terminal.pane.TerminalLinkActionPopover.orcaBrowser',
+        'auto.components.terminal.pane.TerminalLinkActionPopover.dolphinBrowser',
         'Dolphin Browser'
       )
     : translate(
@@ -100,7 +100,7 @@ export function openRoutedHttpLink(url: string, deps: RoutedHttpLinkOptions): vo
     openHttpLink(url, {
       allowRemoteInApp: true,
       worktreeId: deps.worktreeId,
-      forceInApp: deps.forceDestination === 'orca',
+      forceInApp: deps.forceDestination === 'dolphin',
       forceSystemBrowser: deps.forceDestination === 'system',
       sourceOwner
     })
@@ -130,11 +130,11 @@ export function openRoutedHttpLink(url: string, deps: RoutedHttpLinkOptions): vo
   // Suppress the browser's default link handling first, then route after the
   // persisted choice is available.
   void Promise.resolve(preferenceDecision)
-    .then((openInOrca) => {
+    .then((openInDolphin) => {
       openHttpLink(url, {
         allowRemoteInApp: true,
         worktreeId: deps.worktreeId,
-        forceSystemBrowser: !openInOrca,
+        forceSystemBrowser: !openInDolphin,
         sourceOwner
       })
     })

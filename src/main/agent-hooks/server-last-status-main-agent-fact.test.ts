@@ -30,7 +30,7 @@ describe('The main agent fact across a restart', () => {
   let userDataPath: string
 
   beforeEach(() => {
-    userDataPath = mkdtempSync(join(tmpdir(), 'orca-main-agent-fact-'))
+    userDataPath = mkdtempSync(join(tmpdir(), 'dolphin-main-agent-fact-'))
   })
 
   afterEach(() => {

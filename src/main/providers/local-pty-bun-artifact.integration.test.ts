@@ -5,16 +5,17 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { runProcess } from '../../shared/child-process/run-process'
-import { orcadBunRuntimeFilename } from '../../shared/orcad-artifacts'
-import { ORCAD_BUN_VERSION } from '../../shared/orcad-bun-runtime'
+import { dolphindBunRuntimeFilename } from '../../shared/dolphind-artifacts'
+import { DOLPHIND_BUN_VERSION } from '../../shared/dolphind-bun-runtime'
 import { removeTreeSync } from '../../shared/windows-transient-lock-removal'
 
 const runtime =
-  process.env.BUN_EXECUTABLE ?? resolve('out/orcad', orcadBunRuntimeFilename(process.platform))
+  process.env.BUN_EXECUTABLE ??
+  resolve('out/dolphind', dolphindBunRuntimeFilename(process.platform))
 
 describe.skipIf(!existsSync(runtime))('isolated Bun in-process PTY artifact', () => {
   it('spawns, reattaches, delivers data and retires a shell without node-pty installed', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'orca-bun-local-pty-'))
+    const directory = await mkdtemp(join(tmpdir(), 'dolphin-bun-local-pty-'))
     try {
       const entry = join(directory, 'local-pty.cjs')
       const external = ['node-pty', 'electron', 'bun:ffi', '@parcel/watcher', '*.node']
@@ -44,12 +45,12 @@ describe.skipIf(!existsSync(runtime))('isolated Bun in-process PTY artifact', ()
               })
               const again = await provider.spawn({sessionId:first.id, cols:100, rows:30})
               provider.write(first.id, process.platform === 'win32'
-                ? 'echo ORCA_BUN_FALLBACK_READY & exit 17\\r'
-                : 'printf ORCA_BUN_FALLBACK_READY; exit 17\\r')
+                ? 'echo DOLPHIN_BUN_FALLBACK_READY & exit 17\\r'
+                : 'printf DOLPHIN_BUN_FALLBACK_READY; exit 17\\r')
               const code = await exit
               clearTimeout(deadline)
               console.log(JSON.stringify({
-                version:process.versions.bun, code, output:output.includes('ORCA_BUN_FALLBACK_READY'),
+                version:process.versions.bun, code, output:output.includes('DOLPHIN_BUN_FALLBACK_READY'),
                 reattached:again.isReattach === true && again.pid === first.pid,
                 retired:provider.getPtyProcess(first.id) === undefined
               }))
@@ -77,7 +78,7 @@ describe.skipIf(!existsSync(runtime))('isolated Bun in-process PTY artifact', ()
           logLevel: 'silent'
         })
       }
-      const isolatedRuntime = join(directory, orcadBunRuntimeFilename(process.platform))
+      const isolatedRuntime = join(directory, dolphindBunRuntimeFilename(process.platform))
       await copyFile(runtime, isolatedRuntime)
       const result = await runProcess({
         program: isolatedRuntime,
@@ -85,16 +86,16 @@ describe.skipIf(!existsSync(runtime))('isolated Bun in-process PTY artifact', ()
         cwd: directory,
         env: {
           ...process.env,
-          ORCA_BACKGROUND_LAUNCH: '1',
-          ORCA_DISABLE_MACOS_LOGIN_SHELL: '1',
-          ORCA_USER_DATA_PATH: directory
+          DOLPHIN_BACKGROUND_LAUNCH: '1',
+          DOLPHIN_DISABLE_MACOS_LOGIN_SHELL: '1',
+          DOLPHIN_USER_DATA_PATH: directory
         },
         timeoutMs: 15_000,
         terminationBarrier: true
       })
       expect(result.code, result.stderr).toBe(0)
       expect(JSON.parse(result.stdout)).toEqual({
-        version: ORCAD_BUN_VERSION,
+        version: DOLPHIND_BUN_VERSION,
         code: 17,
         output: true,
         reattached: true,

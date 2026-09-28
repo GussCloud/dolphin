@@ -1,4 +1,4 @@
-import type { OrcaRuntimeService } from '../orca-runtime'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import type { RpcContext, RpcMethod, RpcRequest } from './core'
 import { routeDispatcherClientHostedBrowserRpc } from './dispatcher-client-browser-routing'
 import { needsLocalCallerFingerprint } from './dispatcher-caller-fingerprint'
@@ -10,7 +10,7 @@ import type {
 import { recordRuntimeFeatureInteraction } from './runtime-feature-interaction'
 
 type DispatcherUnaryMethodInvocation = {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   request: RpcRequest
   method: RpcMethod
   params: unknown
@@ -83,7 +83,7 @@ export async function invokeDispatcherUnaryMethod({
     effectiveParams,
     invoke,
     legacyCoordinator?.mutationCallerFingerprint ?? authenticatedCallerFingerprint,
-    context.orchestrationCaller?.orcaSessionId
+    context.orchestrationCaller?.dolphinSessionId
   )
   recordRuntimeFeatureInteraction(runtime, request.method, result, undefined, request.params)
   return result

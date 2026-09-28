@@ -11,14 +11,17 @@ vi.mock('react-native', mocks['react-native'])
 vi.mock('expo-clipboard', mocks['expo-clipboard'])
 vi.mock('expo-haptics', mocks['expo-haptics'])
 vi.mock('expo-document-picker', mocks['expo-document-picker'])
-vi.mock('@orca/expo-two-way-audio', mocks['@orca/expo-two-way-audio'])
+vi.mock('@dolphin/expo-two-way-audio', mocks['@dolphin/expo-two-way-audio'])
 vi.mock('expo-keep-awake', mocks['expo-keep-awake'])
 vi.mock('expo-image-picker', mocks['expo-image-picker'])
 vi.mock('expo-file-system', mocks['expo-file-system'])
 vi.mock('lucide-react-native', mocks['lucide-react-native'])
 vi.mock('react-native-safe-area-context', mocks['react-native-safe-area-context'])
 vi.mock('expo-router', mocks['expo-router'])
-vi.mock('../../modules/orca-mobile-web-shell/src', mocks['../../modules/orca-mobile-web-shell/src'])
+vi.mock(
+  '../../modules/dolphin-mobile-web-shell/src',
+  mocks['../../modules/dolphin-mobile-web-shell/src']
+)
 vi.mock('../transport/client-context', mocks['../transport/client-context'])
 vi.mock('./use-page-host-snapshot', mocks['./use-page-host-snapshot'])
 vi.mock('./use-mobile-web-shell-session', mocks['./use-mobile-web-shell-session'])
@@ -69,7 +72,7 @@ describe('the hybrid shell screen', () => {
       kind: 'wall',
       verdict: { kind: 'blocked', reason: 'bundle-unavailable' }
     })
-    expect(textOf(tree)).toContain('Update Orca on your computer')
+    expect(textOf(tree)).toContain('Update Dolphin on your computer')
     expect(byName(tree, 'ShellViewProbe')).toEqual([])
   })
 

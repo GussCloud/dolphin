@@ -3,10 +3,13 @@ import { copyFile, link, mkdtemp, rm } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { getAppEnvironment } from '../../shared/app-environment'
 import { waitForPromiseWithSignal } from '../../shared/abort-signal-reason'
-import { ORCAD_BUN_RELEASE_ASSETS, type OrcadBunTarget } from '../../shared/orcad-bun-runtime'
+import {
+  DOLPHIND_BUN_RELEASE_ASSETS,
+  type DolphindBunTarget
+} from '../../shared/dolphind-bun-runtime'
 import type { SshConnection } from './ssh-connection'
-import { resolveOrcadDeploymentTarget } from './orcad-deployment-target'
-import { materializeCachedOrcadBunRuntime } from './orcad-bun-runtime-materializer'
+import { resolveDolphindDeploymentTarget } from './dolphind-deployment-target'
+import { materializeCachedDolphindBunRuntime } from './dolphind-bun-runtime-materializer'
 import { execCommand, isUnconfirmedSshCommandTermination } from './ssh-relay-deploy-helpers'
 import { uploadRelayDirectory, writeRelayFile } from './ssh-relay-install-transfers'
 import {
@@ -156,11 +159,11 @@ async function install(
     throw new Error('The host did not complete its SQLite read probe.')
   }
   let executable = node.executable
-  let target: OrcadBunTarget | undefined
+  let target: DolphindBunTarget | undefined
   let localRuntime: string | undefined
   if (node.status === 'unsupported') {
-    target = await resolveOrcadDeploymentTarget({ conn, host, signal, exec })
-    const expectedHash = ORCAD_BUN_RELEASE_ASSETS[target].executableSha256
+    target = await resolveDolphindDeploymentTarget({ conn, host, signal, exec })
+    const expectedHash = DOLPHIND_BUN_RELEASE_ASSETS[target].executableSha256
     executable = joinRemotePath(
       host,
       remoteHome,
@@ -184,7 +187,7 @@ async function install(
       executable = cached.executable
     } else if (cached.status === 'missing') {
       const cacheRoot =
-        options.cacheRoot ?? join(getAppEnvironment().getPath('userData'), 'orcad-artifacts')
+        options.cacheRoot ?? join(getAppEnvironment().getPath('userData'), 'dolphind-artifacts')
       localRuntime = await cachedRuntime(target, cacheRoot, signal)
       signal.throwIfAborted()
     } else {
@@ -233,7 +236,7 @@ async function install(
               nodePath: options.nodePath,
               stagedBinary: joinRemotePath(host, stageDir, 'payload', binaryName),
               executable,
-              expectedHash: ORCAD_BUN_RELEASE_ASSETS[target].executableSha256,
+              expectedHash: DOLPHIND_BUN_RELEASE_ASSETS[target].executableSha256,
               repairToken: token
             })
           )
@@ -282,14 +285,14 @@ async function install(
 }
 
 function cachedRuntime(
-  target: OrcadBunTarget,
+  target: DolphindBunTarget,
   cacheRoot: string,
   signal: AbortSignal
 ): Promise<string> {
   const key = `${cacheRoot}\0${target}`
   let pending = downloads.get(key)
   if (!pending) {
-    pending = materializeCachedOrcadBunRuntime(target, cacheRoot, {
+    pending = materializeCachedDolphindBunRuntime(target, cacheRoot, {
       signal: AbortSignal.timeout(SETUP_TIMEOUT_MS)
     }).finally(() => downloads.delete(key))
     downloads.set(key, pending)

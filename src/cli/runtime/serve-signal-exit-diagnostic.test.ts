@@ -35,7 +35,7 @@ function superviseUntilExit(code: number | null, signal: NodeJS.Signals | null):
 
 function superviseChild(child: FakeChildProcess): Promise<number> {
   return superviseForegroundServe({
-    executable: '/Applications/Orca.app/Contents/MacOS/Orca',
+    executable: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
     childArgs: ['--serve'],
     spawnOptions: {},
     spawnChild: vi.fn() as never,
@@ -62,7 +62,7 @@ describe('serveSignalExitError', () => {
     expect(error.data).toMatchObject({
       nextSteps: [
         expect.stringContaining('macOS desktop login'),
-        expect.stringContaining('~/Library/Logs/DiagnosticReports/Orca-*.ips')
+        expect.stringContaining('~/Library/Logs/DiagnosticReports/Dolphin-*.ips')
       ]
     })
   })
@@ -166,11 +166,11 @@ describe('superviseForegroundServe signal exits', () => {
 
   it('does not terminate an exited child when update handoff completion fails late', async () => {
     vi.useFakeTimers()
-    const missingParent = await mkdtemp(join(tmpdir(), 'orca-serve-missing-handoff-'))
+    const missingParent = await mkdtemp(join(tmpdir(), 'dolphin-serve-missing-handoff-'))
     await rm(missingParent, { recursive: true })
     const child = new FakeChildProcess()
     const supervised = superviseForegroundServe({
-      executable: '/Applications/Orca.app/Contents/MacOS/Orca',
+      executable: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
       childArgs: ['--serve'],
       spawnOptions: {},
       spawnChild: vi.fn() as never,
@@ -187,7 +187,7 @@ describe('superviseForegroundServe signal exits', () => {
     vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
 
     child.emit('message', {
-      type: 'orca:serve-ready',
+      type: 'dolphin:serve-ready',
       version: '1.0.61',
       runtimeId: 'runtime-new'
     })

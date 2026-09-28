@@ -35,7 +35,7 @@ async function createStore() {
   vi.resetModules()
   const { Store, initDataPath } = await import('./persistence')
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 const makeTerminalTab = (overrides: Partial<TerminalTab> = {}): TerminalTab => ({
@@ -56,7 +56,7 @@ const LIVE = 'repo-gone::/workspace/live'
 
 describe('worktree removal across host session partitions', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-test-'))
   })
 
   afterEach(async () => {

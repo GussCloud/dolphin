@@ -1,4 +1,3 @@
-import { LEGACY_CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import { existsSync } from 'node:fs'
 import { lstat, readFile, readlink } from 'node:fs/promises'
 import { basename, dirname, resolve } from 'node:path'
@@ -12,9 +11,9 @@ import { isPathInsideOrEqual, samePathEntry } from './cli-install-path-format'
 import { extractLegacyAppImageCliWrapperTarget } from './legacy-appimage-cli-wrapper'
 
 // Why: electron-builder's /opt directory name varies with productName sanitization, which is why
-// resources/linux/packaging/after-install.sh enumerates all three of these. A symlink into one is a
-// previous packaged Orca and is ours to reclaim; anything else stays a conflict.
-const PACKAGED_LINUX_LAUNCHER_DIRECTORIES = ['/opt/Dolphin', '/opt/dolphin-ide', '/opt/orca-ide']
+// resources/linux/packaging/after-install.sh enumerates both of these. A symlink into one is a
+// previous packaged Dolphin and is ours to reclaim; anything else stays a conflict.
+const PACKAGED_LINUX_LAUNCHER_DIRECTORIES = ['/opt/Dolphin', '/opt/dolphin-ide']
 
 export class CliCommandInspection extends CliInstallLocation {
   protected async inspectSymlink(
@@ -37,7 +36,7 @@ export class CliCommandInspection extends CliInstallLocation {
               supported: true,
               state: 'stale',
               currentTarget: managedTarget,
-              detail: `${commandPath} contains an older Orca launcher.`
+              detail: `${commandPath} contains an older Dolphin launcher.`
             })
           }
         }
@@ -49,7 +48,7 @@ export class CliCommandInspection extends CliInstallLocation {
           supported: true,
           state: 'conflict',
           currentTarget: null,
-          detail: `${commandPath} exists but is not an Orca symlink.`
+          detail: `${commandPath} exists but is not a Dolphin symlink.`
         })
       }
 
@@ -71,8 +70,8 @@ export class CliCommandInspection extends CliInstallLocation {
         detail: isInstalled
           ? `Registered at ${commandPath}.`
           : isManagedStaleTarget
-            ? `${commandPath} points to an older Orca launcher.`
-            : `${commandPath} points to a non-Orca launcher.`
+            ? `${commandPath} points to an older Dolphin launcher.`
+            : `${commandPath} points to a non-Dolphin launcher.`
       })
     } catch (error) {
       if (isMissingError(error)) {
@@ -83,7 +82,7 @@ export class CliCommandInspection extends CliInstallLocation {
           supported: true,
           state: 'not_installed',
           currentTarget: null,
-          detail: `Register ${commandPath} to use Orca from the terminal.`
+          detail: `Register ${commandPath} to use Dolphin from the terminal.`
         })
       }
       throw error
@@ -106,7 +105,7 @@ export class CliCommandInspection extends CliInstallLocation {
     }
 
     if (this.platform === 'darwin') {
-      // Why: reclaim symlinks to an older Orca.app launcher, but never replace arbitrary user-owned symlinks.
+      // Why: reclaim symlinks to an older Dolphin.app launcher, but never replace arbitrary user-owned symlinks.
       return /(?:^|[/\\])[^/\\]+\.app[/\\]Contents[/\\]Resources[/\\]bin[/\\][^/\\]+$/.test(
         resolvedTarget
       )
@@ -125,7 +124,7 @@ export class CliCommandInspection extends CliInstallLocation {
     return false
   }
 
-  /** A launcher inside a packaged Linux install tree, left behind by a deb/rpm Orca. */
+  /** A launcher inside a packaged Linux install tree, left behind by a deb/rpm Dolphin. */
   protected isPackagedLinuxLauncherTarget(resolvedTarget: string, expectedName: string): boolean {
     return PACKAGED_LINUX_LAUNCHER_DIRECTORIES.some(
       (directory) => resolvedTarget === `${directory}/resources/bin/${expectedName}`
@@ -136,8 +135,7 @@ export class CliCommandInspection extends CliInstallLocation {
     resolvedTarget: string,
     packagedLauncherName: string
   ): boolean {
-    // Why the legacy name: dev launcher dirs from before the rename still hold a bare `orca` alias.
-    const names = [packagedLauncherName, DEV_COMMAND_NAME, LEGACY_CLI_COMMAND_NAME]
+    const names = [packagedLauncherName, DEV_COMMAND_NAME]
     if (!names.includes(basename(resolvedTarget))) {
       return false
     }
@@ -146,7 +144,7 @@ export class CliCommandInspection extends CliInstallLocation {
     const siblingDevUserDataPath = `${packagedUserDataPath}-dev`
     const siblingDevLauncherDir = resolve(siblingDevUserDataPath, ...DEV_LAUNCHER_DIR)
 
-    // Why: dev builds generate launchers under the sibling `*-dev` profile; packaged Orca must reclaim that command.
+    // Why: dev builds generate launchers under the sibling `*-dev` profile; packaged Dolphin must reclaim that command.
     return (
       basename(siblingDevUserDataPath) === `${basename(packagedUserDataPath)}-dev` &&
       isPathInsideOrEqual(siblingDevLauncherDir, resolvedTarget)
@@ -184,7 +182,7 @@ export class CliCommandInspection extends CliInstallLocation {
           supported: true,
           state: 'conflict',
           currentTarget: null,
-          detail: `${commandPath} exists but is not an Orca launcher script.`
+          detail: `${commandPath} exists but is not a Dolphin launcher script.`
         })
       }
 
@@ -223,7 +221,7 @@ export class CliCommandInspection extends CliInstallLocation {
           supported: true,
           state: 'not_installed',
           currentTarget: null,
-          detail: `Register ${commandPath} to use Orca from Command Prompt or PowerShell.`
+          detail: `Register ${commandPath} to use Dolphin from Command Prompt or PowerShell.`
         })
       }
       throw error

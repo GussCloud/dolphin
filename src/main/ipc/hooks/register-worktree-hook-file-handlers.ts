@@ -6,7 +6,7 @@ import { isFolderRepo } from '../../../shared/repo-kind'
 import { joinWorktreeRelativePath } from '../../runtime/runtime-relative-paths'
 import { getSshFilesystemProvider } from '../../providers/ssh-filesystem-dispatch'
 import { isENOENT } from '../filesystem-path-containment'
-import { parseOrcaYaml } from '../../hooks'
+import { parseDolphinYaml } from '../../hooks'
 import {
   isIssueCommandIgnoredByGit,
   readIssueCommand,
@@ -35,7 +35,7 @@ export function registerWorktreeHookFileHandlers(context: WorktreeIpcContext): v
       }
       const connectionId = getStoredRepoSshConnectionId(repo)
       if (connectionId) {
-        const issueCommandPath = joinWorktreeRelativePath(repo.path, '.orca/issue-command')
+        const issueCommandPath = joinWorktreeRelativePath(repo.path, '.dolphin/issue-command')
         const fsProvider = getSshFilesystemProvider(connectionId)
         if (!fsProvider) {
           return {
@@ -60,10 +60,12 @@ export function registerWorktreeHookFileHandlers(context: WorktreeIpcContext): v
           }
         }
         try {
-          const result = await fsProvider.readFile(joinWorktreeRelativePath(repo.path, 'orca.yaml'))
+          const result = await fsProvider.readFile(
+            joinWorktreeRelativePath(repo.path, 'dolphin.yaml')
+          )
           sharedContent = result.isBinary
             ? null
-            : parseOrcaYaml(result.content)?.issueCommand?.trim() || null
+            : parseDolphinYaml(result.content)?.issueCommand?.trim() || null
         } catch (error) {
           if (!isENOENT(error)) {
             status = 'error'
@@ -96,7 +98,7 @@ export function registerWorktreeHookFileHandlers(context: WorktreeIpcContext): v
       }
       const connectionId = getStoredRepoSshConnectionId(repo)
       if (connectionId) {
-        const issueCommandPath = joinWorktreeRelativePath(repo.path, '.orca/issue-command')
+        const issueCommandPath = joinWorktreeRelativePath(repo.path, '.dolphin/issue-command')
         const fsProvider = getSshFilesystemProvider(connectionId)
         if (!fsProvider) {
           throw new Error(
@@ -112,7 +114,7 @@ export function registerWorktreeHookFileHandlers(context: WorktreeIpcContext): v
           })
           return
         }
-        await fsProvider.createDir(joinWorktreeRelativePath(repo.path, '.orca'))
+        await fsProvider.createDir(joinWorktreeRelativePath(repo.path, '.dolphin'))
         if (await isIssueCommandIgnoredByGit(repo.path, connectionId)) {
           await fsProvider.writeFile(issueCommandPath, `${trimmed}\n`)
           return
@@ -120,15 +122,15 @@ export function registerWorktreeHookFileHandlers(context: WorktreeIpcContext): v
         const gitignorePath = joinWorktreeRelativePath(repo.path, '.gitignore')
         try {
           const result = await fsProvider.readFile(gitignorePath)
-          if (!result.isBinary && !/^\.orca\/?$/m.test(result.content)) {
+          if (!result.isBinary && !/^\.dolphin\/?$/m.test(result.content)) {
             const separator = result.content.endsWith('\n') ? '' : '\n'
-            await fsProvider.writeFile(gitignorePath, `${result.content}${separator}.orca\n`)
+            await fsProvider.writeFile(gitignorePath, `${result.content}${separator}.dolphin\n`)
           }
         } catch (error) {
           if (!isENOENT(error)) {
             throw error
           }
-          await fsProvider.writeFile(gitignorePath, '.orca\n')
+          await fsProvider.writeFile(gitignorePath, '.dolphin\n')
         }
         await fsProvider.writeFile(issueCommandPath, `${trimmed}\n`)
         return

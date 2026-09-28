@@ -45,7 +45,7 @@ afterEach(() => {
 })
 
 function fixture(names = ['primary.db', 'backup.db'], large = true) {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-recovery-batch-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-recovery-batch-'))
   directories.push(directory)
   const files = names.map((name, index) => {
     const sourceDirectory = join(directory, `source-${index}`)
@@ -74,7 +74,7 @@ function expectIndependent(files: ReturnType<typeof fixture>['files']): void {
 }
 
 function expectNoTemporary(directory: string): void {
-  expect(readdirSync(directory).some((name) => name.startsWith('.orca-recovery-clone-'))).toBe(
+  expect(readdirSync(directory).some((name) => name.startsWith('.dolphin-recovery-clone-'))).toBe(
     false
   )
 }

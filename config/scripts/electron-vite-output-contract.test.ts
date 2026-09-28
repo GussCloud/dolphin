@@ -109,7 +109,7 @@ describe('Electron Vite output contract', () => {
     }
 
     for (const name of [
-      'orca-profiles/profile-index-store',
+      'dolphin-profiles/profile-index-store',
       'persistence/profile-state/profile-state-access',
       'persistence/profile-state/profile-state-active-location',
       'persistence/profile-state/profile-state-backup-path',
@@ -126,7 +126,7 @@ describe('Electron Vite output contract', () => {
     }
     expect(electronBuilderConfig.asarUnpack).toContain('out/main/persistence/profile-state/**')
     expect(electronBuilderConfig.asarUnpack).toContain(
-      'out/main/orca-profiles/profile-index-store.js'
+      'out/main/dolphin-profiles/profile-index-store.js'
     )
     expect(electronBuilderConfig.asarUnpack).toContain(
       'out/main/startup/http1-compatibility-marker.js'
@@ -192,7 +192,7 @@ describe('Electron Vite output contract', () => {
   })
 
   it('records the bootstrap failure it exits on, since the guard hides Electron dialog', () => {
-    const logDirectory = mkdtempSync(join(tmpdir(), 'orca-bootstrap-fatal-'))
+    const logDirectory = mkdtempSync(join(tmpdir(), 'dolphin-bootstrap-fatal-'))
     const logPath = join(logDirectory, 'fatal.log')
     const stderrWrites: string[] = []
 
@@ -213,7 +213,7 @@ describe('Electron Vite output contract', () => {
   })
 
   it('creates the parent directory an overridden log path names but does not have', () => {
-    const logDirectory = mkdtempSync(join(tmpdir(), 'orca-bootstrap-fatal-'))
+    const logDirectory = mkdtempSync(join(tmpdir(), 'dolphin-bootstrap-fatal-'))
     const logPath = join(logDirectory, 'nested', 'diagnostics', 'fatal.log')
 
     try {
@@ -229,7 +229,7 @@ describe('Electron Vite output contract', () => {
   })
 
   it('falls back to the default location when the overridden log path is unwritable', () => {
-    const logDirectory = mkdtempSync(join(tmpdir(), 'orca-bootstrap-fatal-'))
+    const logDirectory = mkdtempSync(join(tmpdir(), 'dolphin-bootstrap-fatal-'))
     const fallbackDirectory = join(logDirectory, 'fallback')
 
     try {
@@ -258,7 +258,7 @@ describe('Electron Vite output contract', () => {
     expect(targetConfig).toContain('Object.hasOwn(configByTarget, target)')
   })
 
-  it('gives the dev terminal daemon helper the TCC identity watched by Orca', () => {
+  it('gives the dev terminal daemon helper the TCC identity watched by Dolphin', () => {
     // Asserted on the values rather than the source text: the ids moved into
     // dev-electron-bundle-identity.mjs so every dev bundle signs to one cdhash.
     expect(DEV_HELPER_BUNDLE_ID).toBe(`${DEV_BUNDLE_ID}.helper`)

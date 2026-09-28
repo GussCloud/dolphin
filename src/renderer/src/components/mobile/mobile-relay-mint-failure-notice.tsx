@@ -26,7 +26,7 @@ export function MobileRelayMintFailureNotice({
   const providerMissing = failure.stage === 'provider_missing'
   // Why: a revoked cloud session fails every mint; "retry or use LAN" hides the one action that works.
   const reconnectRequired = useAppStore(
-    (state) => state.orcaProfileAuthStatus?.state === 'reconnect-required'
+    (state) => state.dolphinProfileAuthStatus?.state === 'reconnect-required'
   )
   const [showBusyFeedback, setShowBusyFeedback] = useState(false)
   useEffect(() => {

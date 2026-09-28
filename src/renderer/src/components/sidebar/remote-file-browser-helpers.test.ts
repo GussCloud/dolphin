@@ -121,7 +121,7 @@ describe('isPathMode', () => {
 
 describe('shouldDeferRemoteFileBrowserPasteResolve', () => {
   it('keeps small path and filter pastes on the immediate resolver path', () => {
-    expect(shouldDeferRemoteFileBrowserPasteResolve('/workspaces/orca/src')).toBe(false)
+    expect(shouldDeferRemoteFileBrowserPasteResolve('/workspaces/dolphin/src')).toBe(false)
     expect(shouldDeferRemoteFileBrowserPasteResolve('remote notes')).toBe(false)
   })
 
@@ -163,12 +163,12 @@ describe('parsePathInput', () => {
     })
   })
 
-  it('`Documents/orca` commits `Documents` and filters by `dolphin`', () => {
-    expect(parsePathInput('Documents/orca')).toEqual({
+  it('`Documents/dolphin` commits `Documents` and filters by `dolphin`', () => {
+    expect(parsePathInput('Documents/dolphin')).toEqual({
       mode: 'path',
       base: 'cwd',
       committedSegments: ['Documents'],
-      trailingFilter: 'orca'
+      trailingFilter: 'dolphin'
     })
   })
 
@@ -251,7 +251,7 @@ describe('resolveSegmentStep', () => {
   const listing: DirEntry[] = [
     { name: 'Documents', isDirectory: true },
     { name: 'Downloads', isDirectory: true },
-    { name: 'orca-internal', isDirectory: true },
+    { name: 'dolphin-internal', isDirectory: true },
     { name: 'notes.txt', isDirectory: false }
   ]
 
@@ -263,9 +263,9 @@ describe('resolveSegmentStep', () => {
   })
 
   it('unique prefix descends', () => {
-    expect(resolveSegmentStep('orca', '/home/neil', listing)).toEqual({
+    expect(resolveSegmentStep('dolphin', '/home/neil', listing)).toEqual({
       type: 'descend',
-      name: 'orca-internal'
+      name: 'dolphin-internal'
     })
   })
 

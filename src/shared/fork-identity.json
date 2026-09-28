@@ -5,7 +5,7 @@
   "userDataDirName": "dolphin",
   "cliCommandName": "dolphin",
   "linuxCliCommandName": "dolphin-ide",
-  "devCliCommandName": "orca-dev",
+  "devCliCommandName": "dolphin-dev",
   "installerArtifactBaseName": "dolphin-windows-setup",
   "releaseOwner": "GussCloud",
   "releaseRepo": "dolphin"

@@ -56,7 +56,7 @@ function antigravityPosixCommands(path: string): string[] {
   return ANTIGRAVITY_EVENTS.map((event) =>
     wrapPosixHookCommand(
       path,
-      { ORCA_ANTIGRAVITY_EVENT: event.eventName },
+      { DOLPHIN_ANTIGRAVITY_EVENT: event.eventName },
       event.eventName === 'PreToolUse' ? { fallbackStdout: ANTIGRAVITY_PRE_TOOL_USE_DECISION } : {}
     )
   )
@@ -117,7 +117,7 @@ const buildersByAgent = new Map<string, CommandBuilders>([
     {
       local: (path) => [getGrokManagedCommand(path)],
       // Why: grok-hook-remote-install.ts calls this wrapper directly, with the pane guard.
-      remote: (path) => [wrapPosixHookCommand(path, {}, { requiredEnvVar: 'ORCA_PANE_KEY' })]
+      remote: (path) => [wrapPosixHookCommand(path, {}, { requiredEnvVar: 'DOLPHIN_PANE_KEY' })]
     }
   ],
   [
@@ -126,7 +126,7 @@ const buildersByAgent = new Map<string, CommandBuilders>([
       local: (path) => COPILOT_EVENTS.map((event) => getCopilotCommand(path, event)),
       remote: (path) =>
         COPILOT_EVENTS.map((event) =>
-          wrapPosixHookCommand(path, { ORCA_COPILOT_HOOK_EVENT: event })
+          wrapPosixHookCommand(path, { DOLPHIN_COPILOT_HOOK_EVENT: event })
         )
     }
   ],
@@ -190,10 +190,10 @@ describe('managed hook command contract', () => {
       const extension = platform === 'win32' && agent !== 'kimi' ? 'cmd' : 'sh'
       const homes =
         platform === 'win32' ? ['C:/Users/test', 'C:/Users/test user'] : ['/home/test user']
-      const paths = homes.map((home) => `${home}/.orca/agent-hooks/${agent}-hook.${extension}`)
+      const paths = homes.map((home) => `${home}/.dolphin/agent-hooks/${agent}-hook.${extension}`)
       const commands = [
         ...paths.flatMap((path) => builders.local(path)),
-        ...builders.remote(`/home/remote user/.orca/agent-hooks/${agent}-hook.sh`)
+        ...builders.remote(`/home/remote user/.dolphin/agent-hooks/${agent}-hook.sh`)
       ]
       expect(commands.length).toBeGreaterThan(0)
       for (const command of commands) {

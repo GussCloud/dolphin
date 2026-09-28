@@ -9,7 +9,7 @@ import {
 } from './runs/run-coordinator-mail-routing'
 import { createTables } from './schema/create-tables'
 import { migrate } from './schema/migrate'
-import { backfillStructuredWorkerOrcaSessionIds } from './schema/structured-worker-orca-session-backfill'
+import { backfillStructuredWorkerDolphinSessionIds } from './schema/structured-worker-dolphin-session-backfill'
 
 class OrchestrationDbCore {
   db: Database.Database
@@ -31,7 +31,7 @@ class OrchestrationDbCore {
     createTables.call(this as unknown as OrchestrationDb)
     migrate.call(this as unknown as OrchestrationDb)
     backfillFederatedStubHomeRuns(this.db)
-    backfillStructuredWorkerOrcaSessionIds(this.db)
+    backfillStructuredWorkerDolphinSessionIds(this.db)
     createCoordinatorMailRoutingTrigger.call(this as unknown as OrchestrationDb)
     rememberCurrentRunCoordinatorHandles.call(this as unknown as OrchestrationDb)
     hardenOrchestrationDatabaseFiles(dbPath)

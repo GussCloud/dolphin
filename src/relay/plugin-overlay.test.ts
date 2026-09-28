@@ -38,7 +38,7 @@ describe('PluginOverlayManager', () => {
     manager.setSources({ opencodePluginSource: 'export const X = 1' })
     const dir = manager.materializeOpenCode('tab-1:0')
     expect(dir).not.toBeNull()
-    const expected = join(dir!, 'plugins', 'orca-opencode-status.js')
+    const expected = join(dir!, 'plugins', 'dolphin-opencode-status.js')
     expect(existsSync(expected)).toBe(true)
     expect(readFileSync(expected, 'utf8')).toBe('export const X = 1')
   })
@@ -48,10 +48,10 @@ describe('PluginOverlayManager', () => {
     expect(manager.hasOpenCodeSource('opencode2')).toBe(true)
     const dir = manager.materializeOpenCode('tab-2:0', undefined, 'opencode2')
     expect(dir).not.toBeNull()
-    expect(readFileSync(join(dir!, 'plugins', 'orca-opencode2-status.js'), 'utf8')).toBe(
+    expect(readFileSync(join(dir!, 'plugins', 'dolphin-opencode2-status.js'), 'utf8')).toBe(
       'export const V2 = 1'
     )
-    expect(existsSync(join(dir!, 'plugins', 'orca-opencode-status.js'))).toBe(false)
+    expect(existsSync(join(dir!, 'plugins', 'dolphin-opencode-status.js'))).toBe(false)
   })
 
   it('installs OpenCode plugins in the canonical XDG config roots', () => {
@@ -67,40 +67,46 @@ describe('PluginOverlayManager', () => {
       manager.installOpenCodePlugin('opencode2', { XDG_CONFIG_HOME: join(homeDir, 'xdg') })
     ).toBe(true)
     expect(
-      readFileSync(join(homeDir, 'xdg', 'opencode', 'plugins', 'orca-opencode-status.js'), 'utf8')
+      readFileSync(
+        join(homeDir, 'xdg', 'opencode', 'plugins', 'dolphin-opencode-status.js'),
+        'utf8'
+      )
     ).toBe('v1 plugin')
     expect(
-      readFileSync(join(homeDir, 'xdg', 'opencode', 'plugins', 'orca-opencode2-status.js'), 'utf8')
+      readFileSync(
+        join(homeDir, 'xdg', 'opencode', 'plugins', 'dolphin-opencode2-status.js'),
+        'utf8'
+      )
     ).toBe('v2 plugin')
   })
 
-  it('mirrors a preexisting remote OpenCode config dir before adding Orca plugin', () => {
+  it('mirrors a preexisting remote OpenCode config dir before adding Dolphin plugin', () => {
     const userConfigDir = join(homeDir, 'company-opencode')
     mkdirSync(join(userConfigDir, 'plugins'), { recursive: true })
     writeFileSync(join(userConfigDir, 'opencode.json'), '{"provider":"custom"}')
     writeFileSync(join(userConfigDir, 'plugins', 'user-plugin.js'), 'user plugin')
-    writeFileSync(join(userConfigDir, 'plugins', 'orca-opencode-status.js'), 'user same-name')
+    writeFileSync(join(userConfigDir, 'plugins', 'dolphin-opencode-status.js'), 'user same-name')
 
-    manager.setSources({ opencodePluginSource: 'orca plugin' })
+    manager.setSources({ opencodePluginSource: 'dolphin plugin' })
     const dir = manager.materializeOpenCode('tab-opencode:0', userConfigDir)
 
     expect(dir).not.toBeNull()
     expect(readFileSync(join(dir!, 'opencode.json'), 'utf8')).toBe('{"provider":"custom"}')
     expect(readFileSync(join(dir!, 'plugins', 'user-plugin.js'), 'utf8')).toBe('user plugin')
-    expect(readFileSync(join(dir!, 'plugins', 'orca-opencode-status.js'), 'utf8')).toBe(
-      'orca plugin'
+    expect(readFileSync(join(dir!, 'plugins', 'dolphin-opencode-status.js'), 'utf8')).toBe(
+      'dolphin plugin'
     )
-    expect(readFileSync(join(userConfigDir, 'plugins', 'orca-opencode-status.js'), 'utf8')).toBe(
+    expect(readFileSync(join(userConfigDir, 'plugins', 'dolphin-opencode-status.js'), 'utf8')).toBe(
       'user same-name'
     )
   })
 
-  // Why: the remote/guest config root keeps whichever Orca plugin files earlier
+  // Why: the remote/guest config root keeps whichever Dolphin plugin files earlier
   // launches installed. Mirroring the other major's file into this overlay would
   // hand the agent a plugin whose variant gate registers nothing.
   it.each([
-    { agent: 'opencode', stale: 'orca-opencode2-status.js', own: 'orca-opencode-status.js' },
-    { agent: 'opencode2', stale: 'orca-opencode-status.js', own: 'orca-opencode2-status.js' }
+    { agent: 'opencode', stale: 'dolphin-opencode2-status.js', own: 'dolphin-opencode-status.js' },
+    { agent: 'opencode2', stale: 'dolphin-opencode-status.js', own: 'dolphin-opencode2-status.js' }
   ] as const)(
     "keeps the other major's stale plugin out of the $agent overlay",
     ({ agent, stale, own }) => {
@@ -118,7 +124,7 @@ describe('PluginOverlayManager', () => {
   )
 
   it('does not override a missing preexisting OpenCode config dir', () => {
-    manager.setSources({ opencodePluginSource: 'orca plugin' })
+    manager.setSources({ opencodePluginSource: 'dolphin plugin' })
 
     expect(manager.materializeOpenCode('tab-missing:0', join(homeDir, 'missing'))).toBeNull()
   })
@@ -127,15 +133,15 @@ describe('PluginOverlayManager', () => {
     manager.setSources({ piExtensionSource: '// pi extension' })
     const result = manager.materializePi('tab-2:0')
     expect(result?.sourceAgentDir).toBeDefined()
-    const file = join(result!.sourceAgentDir!, 'extensions', 'orca-agent-status.ts')
+    const file = join(result!.sourceAgentDir!, 'extensions', 'dolphin-agent-status.ts')
     expect(result?.statusExtensionPath).toBe(file)
     expect(existsSync(file)).toBe(true)
-    expect(readFileSync(file, 'utf8')).toContain('@orca-managed-pi-extension')
+    expect(readFileSync(file, 'utf8')).toContain('@dolphin-managed-pi-extension')
   })
 
   it("does not overwrite a user's same-named remote Pi extension file", () => {
     const piAgentDir = join(homeDir, '.pi', 'agent')
-    const extensionFile = join(piAgentDir, 'extensions', 'orca-agent-status.ts')
+    const extensionFile = join(piAgentDir, 'extensions', 'dolphin-agent-status.ts')
     mkdirSync(join(piAgentDir, 'extensions'), { recursive: true })
     writeFileSync(extensionFile, 'user-owned remote status extension')
 
@@ -156,10 +162,13 @@ describe('PluginOverlayManager', () => {
     expect(piResult?.sourceAgentDir).toBeDefined()
     expect(ompResult?.sourceAgentDir).toBeDefined()
     expect(
-      readFileSync(join(piResult!.sourceAgentDir!, 'extensions', 'orca-agent-status.ts'), 'utf8')
+      readFileSync(join(piResult!.sourceAgentDir!, 'extensions', 'dolphin-agent-status.ts'), 'utf8')
     ).toContain('// pi extension')
     expect(
-      readFileSync(join(ompResult!.sourceAgentDir!, 'extensions', 'orca-agent-status.ts'), 'utf8')
+      readFileSync(
+        join(ompResult!.sourceAgentDir!, 'extensions', 'dolphin-agent-status.ts'),
+        'utf8'
+      )
     ).toContain('// omp extension')
   })
 
@@ -174,7 +183,7 @@ describe('PluginOverlayManager', () => {
     expect(readFileSync(result!.statusExtensionPath!, 'utf8')).not.toContain('// pi extension')
   })
 
-  it('installs Orca status extension into the remote default Pi agent dir', () => {
+  it('installs Dolphin status extension into the remote default Pi agent dir', () => {
     const piAgentDir = join(homeDir, '.pi', 'agent')
     mkdirSync(join(piAgentDir, 'skills', 'my-skill'), { recursive: true })
     mkdirSync(join(piAgentDir, 'extensions', 'user-ext'), { recursive: true })
@@ -206,7 +215,7 @@ describe('PluginOverlayManager', () => {
       'user extension'
     )
     expect(readdirSync(join(dir!, 'extensions')).sort()).toEqual([
-      'orca-agent-status.ts',
+      'dolphin-agent-status.ts',
       'user-ext'
     ])
     expect(JSON.parse(readFileSync(join(dir!, 'settings.json'), 'utf8'))).toEqual({
@@ -243,7 +252,7 @@ describe('PluginOverlayManager', () => {
     expect(dir).toBeDefined()
     expect(readFileSync(join(dir!, 'auth.json'), 'utf8')).toBe('custom token')
     expect(readFileSync(join(dir!, 'extensions', 'custom.ts'), 'utf8')).toBe('custom extension')
-    expect(readFileSync(join(dir!, 'extensions', 'orca-agent-status.ts'), 'utf8')).toContain(
+    expect(readFileSync(join(dir!, 'extensions', 'dolphin-agent-status.ts'), 'utf8')).toContain(
       '// pi extension'
     )
   })
@@ -258,7 +267,7 @@ describe('PluginOverlayManager', () => {
     const content = 'agent.db relay credentials'
 
     expect(existsSync(sourcePath)).toBe(false)
-    expect(existsSync(join(homeDir, '.orca-relay', 'omp-overlays'))).toBe(false)
+    expect(existsSync(join(homeDir, '.dolphin-relay', 'omp-overlays'))).toBe(false)
     expect(existsSync(join(sourceDir, 'history.db'))).toBe(false)
     writeFileSync(sourcePath, content)
 
@@ -295,7 +304,7 @@ describe('PluginOverlayManager', () => {
       expect(readFileSync(join(dir!, 'auth.json'), 'utf8')).toBe('pi token')
       const extensions = readdirSync(join(dir!, 'extensions')).sort()
       expect(extensions).toContain('pi-ext')
-      expect(extensions).toContain('orca-agent-status.ts')
+      expect(extensions).toContain('dolphin-agent-status.ts')
       expect(extensions).not.toContain('omp-ext')
     })
 
@@ -314,7 +323,7 @@ describe('PluginOverlayManager', () => {
       expect(readFileSync(join(dir!, 'auth.json'), 'utf8')).toBe('omp token')
       const extensions = readdirSync(join(dir!, 'extensions')).sort()
       expect(extensions).toContain('omp-ext')
-      expect(extensions).toContain('orca-agent-status.ts')
+      expect(extensions).toContain('dolphin-agent-status.ts')
       expect(extensions).not.toContain('pi-ext')
     })
 
@@ -333,7 +342,7 @@ describe('PluginOverlayManager', () => {
       // Pi-only home must NOT leak into the OMP home.
       expect(existsSync(join(dir!, 'auth.json'))).toBe(false)
       const extensions = readdirSync(join(dir!, 'extensions')).sort()
-      expect(extensions).toEqual(['orca-agent-status.ts'])
+      expect(extensions).toEqual(['dolphin-agent-status.ts'])
     })
 
     it('bare-shell prep does not create missing remote agent homes (#10196)', () => {
@@ -353,10 +362,10 @@ describe('PluginOverlayManager', () => {
       const bareOmp = manager.materializePi('tab-bare-omp:0', undefined, 'omp', {
         materializeDefaultHome: false
       })
-      // Why: bare OMP keeps status via ~/.orca-relay/… without SOURCE_AGENT_DIR or ~/.omp.
+      // Why: bare OMP keeps status via ~/.dolphin-relay/… without SOURCE_AGENT_DIR or ~/.omp.
       expect(bareOmp?.sourceAgentDir).toBeUndefined()
       expect(bareOmp?.statusExtensionPath).toEqual(
-        expect.stringContaining(join('.orca-relay', 'omp-managed-status-extension'))
+        expect.stringContaining(join('.dolphin-relay', 'omp-managed-status-extension'))
       )
       expect(existsSync(bareOmp!.statusExtensionPath!)).toBe(true)
       expect(readFileSync(bareOmp!.statusExtensionPath!, 'utf8')).toContain('// omp extension')
@@ -412,7 +421,7 @@ describe('PluginOverlayManager', () => {
       writeFileSync(join(linkedTarget, 'keep.js'), 'do not delete')
       symlinkSync(linkedTarget, join(userConfigDir, 'plugins', 'linked-plugin'), 'dir')
 
-      manager.setSources({ opencodePluginSource: 'orca plugin' })
+      manager.setSources({ opencodePluginSource: 'dolphin plugin' })
       const dir = manager.materializeOpenCode('tab-opencode-symlink:0', userConfigDir)!
       expect(existsSync(join(dir, 'plugins', 'linked-plugin'))).toBe(true)
 
@@ -429,7 +438,7 @@ describe('PluginOverlayManager', () => {
     manager.setSources({ opencodePluginSource: 'second' })
     const dirB = manager.materializeOpenCode('tab-stable:0')!
     expect(dirA).toBe(dirB)
-    expect(readFileSync(join(dirA, 'plugins', 'orca-opencode-status.js'), 'utf8')).toBe('second')
+    expect(readFileSync(join(dirA, 'plugins', 'dolphin-opencode-status.js'), 'utf8')).toBe('second')
   })
 
   it('hashes unsafe pane ids into portable overlay directory names', () => {
@@ -439,7 +448,7 @@ describe('PluginOverlayManager', () => {
     expect(dir).not.toBeNull()
     expect(basename(dir!)).toMatch(/^[a-f0-9]{32}$/)
     expect(dir).not.toContain('tab/with')
-    expect(existsSync(join(dir!, 'plugins', 'orca-opencode-status.js'))).toBe(true)
+    expect(existsSync(join(dir!, 'plugins', 'dolphin-opencode-status.js'))).toBe(true)
   })
 })
 
@@ -447,9 +456,9 @@ describe('resolvePiSourceAgentDir', () => {
   it('uses only the selected kind source shadow when resolving inherited overlays', () => {
     const env = {
       HOME: mkdtempSync(join(tmpdir(), 'plugin-overlay-env-')),
-      PI_CODING_AGENT_DIR: '/tmp/parent-orca-pi-overlay',
-      ORCA_PI_CODING_AGENT_DIR: '/tmp/parent-orca-pi-overlay',
-      ORCA_PI_SOURCE_AGENT_DIR: '/user/.pi/agent'
+      PI_CODING_AGENT_DIR: '/tmp/parent-dolphin-pi-overlay',
+      DOLPHIN_PI_CODING_AGENT_DIR: '/tmp/parent-dolphin-pi-overlay',
+      DOLPHIN_PI_SOURCE_AGENT_DIR: '/user/.pi/agent'
     }
     try {
       expect(resolvePiSourceAgentDir(env, undefined, 'pi')).toBe('/user/.pi/agent')
@@ -459,11 +468,11 @@ describe('resolvePiSourceAgentDir', () => {
     }
   })
 
-  it('keeps explicit PI_CODING_AGENT_DIR values when they are not Orca overlays', () => {
+  it('keeps explicit PI_CODING_AGENT_DIR values when they are not Dolphin overlays', () => {
     const env = {
       HOME: mkdtempSync(join(tmpdir(), 'plugin-overlay-env-')),
       PI_CODING_AGENT_DIR: '/user/custom-omp-agent',
-      ORCA_PI_SOURCE_AGENT_DIR: '/user/.pi/agent'
+      DOLPHIN_PI_SOURCE_AGENT_DIR: '/user/.pi/agent'
     }
     try {
       expect(resolvePiSourceAgentDir(env, undefined, 'omp')).toBe('/user/custom-omp-agent')

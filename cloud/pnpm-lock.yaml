@@ -57,10 +57,10 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.17
         version: 1.19.17(hono@4.13.7)
-      '@orca-cloud/postgres-schema':
+      '@dolphin-cloud/postgres-schema':
         specifier: workspace:*
         version: link:../../packages/postgres-schema
-      '@orca-cloud/push-contract':
+      '@dolphin-cloud/push-contract':
         specifier: workspace:*
         version: link:../../packages/push-contract
       google-auth-library:
@@ -103,10 +103,10 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.17
         version: 1.19.17(hono@4.13.7)
-      '@orca-cloud/postgres-schema':
+      '@dolphin-cloud/postgres-schema':
         specifier: workspace:*
         version: link:../../packages/postgres-schema
-      '@orca-cloud/relay-contract':
+      '@dolphin-cloud/relay-contract':
         specifier: workspace:*
         version: link:../../packages/relay-contract
       hono:

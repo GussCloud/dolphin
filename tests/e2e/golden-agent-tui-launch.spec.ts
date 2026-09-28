@@ -1,4 +1,4 @@
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   configureGoldenStubAgent,
   getGoldenStubAgentLaunchEnv,
@@ -9,23 +9,23 @@ import { focusActiveTerminalInput, getTerminalContent } from './helpers/terminal
 
 test.use({ launchEnv: getGoldenStubAgentLaunchEnv() })
 
-test('launches an agent TUI with a live multiline composer', async ({ orcaPage }) => {
-  await waitForSessionReady(orcaPage)
-  await waitForActiveWorktree(orcaPage)
-  await ensureTerminalVisible(orcaPage)
-  await configureGoldenStubAgent(orcaPage)
-  await launchGoldenStubAgentFromNewTab(orcaPage)
+test('launches an agent TUI with a live multiline composer', async ({ dolphinPage }) => {
+  await waitForSessionReady(dolphinPage)
+  await waitForActiveWorktree(dolphinPage)
+  await ensureTerminalVisible(dolphinPage)
+  await configureGoldenStubAgent(dolphinPage)
+  await launchGoldenStubAgentFromNewTab(dolphinPage)
 
-  const activeTab = orcaPage.locator('[data-testid="sortable-tab"][data-active="true"]')
+  const activeTab = dolphinPage.locator('[data-testid="sortable-tab"][data-active="true"]')
   await expect(activeTab).toHaveAttribute('data-tab-title', /Codex|Golden Stub Agent/i)
 
-  await focusActiveTerminalInput(orcaPage)
-  await orcaPage.keyboard.type('hello from e2e')
-  await orcaPage.keyboard.press('Shift+Enter')
-  await orcaPage.keyboard.type('second line')
+  await focusActiveTerminalInput(dolphinPage)
+  await dolphinPage.keyboard.type('hello from e2e')
+  await dolphinPage.keyboard.press('Shift+Enter')
+  await dolphinPage.keyboard.type('second line')
 
   await expect
-    .poll(() => getTerminalContent(orcaPage), { timeout: 10_000 })
+    .poll(() => getTerminalContent(dolphinPage), { timeout: 10_000 })
     .toContain('> hello from e2e\r\n  second line')
-  expect(await getTerminalContent(orcaPage)).not.toContain('GOLDEN_STUB_AGENT_SUBMITTED')
+  expect(await getTerminalContent(dolphinPage)).not.toContain('GOLDEN_STUB_AGENT_SUBMITTED')
 })

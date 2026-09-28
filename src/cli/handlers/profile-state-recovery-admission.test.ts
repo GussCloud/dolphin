@@ -76,16 +76,16 @@ afterEach(() => {
 })
 
 async function fixture() {
-  const root = mkdtempSync(join(tmpdir(), 'orca-recovery-admission-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-recovery-admission-'))
   roots.push(root)
   const directory = join(root, 'profiles', profileId)
   mkdirSync(directory, { recursive: true })
   writeFileSync(
-    join(root, 'orca-profile-index.json'),
+    join(root, 'dolphin-profile-index.json'),
     JSON.stringify({ activeProfileId: profileId, profiles: [{ id: profileId }] })
   )
   const databasePath = join(directory, 'profile-state.db')
-  const dataFile = join(directory, 'orca-data.json')
+  const dataFile = join(directory, 'dolphin-data.json')
   const backupId = createProfileStateDatabaseBackupId()
   const backupPath = profileStateDatabaseBackupPath(databasePath, backupId)
   const source = openProfileStateDatabase(databasePath, profileId)

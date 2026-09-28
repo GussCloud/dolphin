@@ -74,7 +74,7 @@ export function CursorAccountsSection(): React.JSX.Element {
   }, [loadStatus, cursorUsage?.updatedAt])
 
   // Why: the effect below already reloads status when the refresh lands a new
-  // snapshot, and each load is a keychain read for an item Orca does not own.
+  // snapshot, and each load is a keychain read for an item Dolphin does not own.
   const handleRefreshUsage = async (): Promise<void> => {
     setRefreshing(true)
     try {

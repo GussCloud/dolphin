@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AgentSessionRecordStore } from '../../agent-session-record-store'
 import { setStructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-registry'
 import type { StructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-host'
-import type { OrcaRuntimeService } from '../../orca-runtime'
+import type { DolphinRuntimeService } from '../../dolphin-runtime'
 import type { RpcContext } from '../core'
 import { RpcDispatcher } from '../dispatcher'
 import {
@@ -219,7 +219,7 @@ describe('a live-pane refusal under a named operation', () => {
   let store: AgentSessionRecordStore
 
   beforeEach(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'orca-agent-launch-pane-'))
+    directory = await mkdtemp(join(tmpdir(), 'dolphin-agent-launch-pane-'))
     store = await AgentSessionRecordStore.open({ directory, hostId: 'local' })
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: `deps.store` is the only member `agent.launch` reads, and a member it omits throws on call.
     setStructuredAgentSessionHost({ deps: { store } } as unknown as StructuredAgentSessionHost)
@@ -237,7 +237,7 @@ describe('a live-pane refusal under a named operation', () => {
   async function dispatch(runtime: RuntimeStub, method: string, params: unknown) {
     const dispatcher = new RpcDispatcher({
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the fixture implements every runtime method reached by agent.launch and dispatcher metadata.
-      runtime: { ...runtime, getRuntimeId: () => 'runtime-1' } as unknown as OrcaRuntimeService,
+      runtime: { ...runtime, getRuntimeId: () => 'runtime-1' } as unknown as DolphinRuntimeService,
       methods: AGENT_LAUNCH_METHODS
     })
     return dispatcher.dispatch({ id: 'request-1', authToken: 'token', method, params })

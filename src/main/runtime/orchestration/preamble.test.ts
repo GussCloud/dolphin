@@ -247,31 +247,31 @@ describe('buildDispatchPreamble', () => {
     expect(result).toContain('refactor the auth module')
   })
 
-  it('uses orca CLI by default when devMode is not set', () => {
+  it('uses dolphin CLI by default when devMode is not set', () => {
     const result = buildDispatchPreamble(baseParams())
     expect(result).toContain('dolphin orchestration send')
     expect(result).toContain('dolphin orchestration check')
     expect(result).toContain('dolphin orchestration ask')
   })
 
-  it('uses orca-dev CLI when devMode is true', () => {
+  it('uses dolphin-dev CLI when devMode is true', () => {
     const result = buildDispatchPreamble(baseParams({ devMode: true, cliCommand: 'dolphin-ide' }))
-    expect(result).toContain('orca-dev orchestration send')
-    expect(result).toContain('orca-dev orchestration check')
-    expect(result).toContain('orca-dev orchestration ask')
-    const fragments = result.split('orca-dev')
+    expect(result).toContain('dolphin-dev orchestration send')
+    expect(result).toContain('dolphin-dev orchestration check')
+    expect(result).toContain('dolphin-dev orchestration ask')
+    const fragments = result.split('dolphin-dev')
     for (const fragment of fragments) {
-      expect(fragment).not.toMatch(/orca orchestration/)
+      expect(fragment).not.toMatch(/dolphin orchestration/)
     }
   })
 
-  it('uses orca CLI when devMode is false', () => {
+  it('uses dolphin CLI when devMode is false', () => {
     const result = buildDispatchPreamble(baseParams({ devMode: false }))
     expect(result).toContain('dolphin orchestration send')
     expect(result).toContain('dolphin orchestration check')
   })
 
-  it('uses the exact orca-ide command for packaged WSL workers', () => {
+  it('uses the exact dolphin-ide command for packaged WSL workers', () => {
     const result = buildDispatchPreamble(baseParams({ cliCommand: 'dolphin-ide' }))
 
     expect(result).toContain('dolphin-ide orchestration send')

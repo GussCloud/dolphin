@@ -19,11 +19,11 @@ afterEach(() => {
 })
 
 function createLocation() {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-offline-settings-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-offline-settings-'))
   directories.push(directory)
   return {
-    dataFile: join(directory, 'orca-data.json'),
-    databaseFile: join(directory, 'orca-state.db'),
+    dataFile: join(directory, 'dolphin-data.json'),
+    databaseFile: join(directory, 'dolphin-state.db'),
     profileId: 'profile-offline'
   }
 }

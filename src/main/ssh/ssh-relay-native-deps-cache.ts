@@ -7,7 +7,7 @@
  * where node-pty ships no prebuild, recompiled from source — on every new bundle (#18009). The
  * directory key was coupled to the wrong quantity.
  *
- * The tree now lives at `~/.orca-remote/native/<relayPlatform>-<depsHash>/node_modules` and each
+ * The tree now lives at `~/.dolphin-remote/native/<relayPlatform>-<depsHash>/node_modules` and each
  * relay directory holds a symlink to it. Three rules make one tree safe to share:
  *
  * 1. **A published entry is immutable.** `.deps-complete` is written last, only after a probe on
@@ -35,7 +35,7 @@ import { RELAY_REMOTE_DIR } from './relay-protocol'
 import { RELAY_BUILD_PLATFORMS } from '../../shared/relay-artifacts'
 import { isWindowsRemoteHost, joinRemotePath, type RemoteHostPlatform } from './ssh-remote-platform'
 
-/** Sibling of `relay-<version>` and `orcad-<version>`; owned by neither model's version GC. */
+/** Sibling of `relay-<version>` and `dolphind-<version>`; owned by neither model's version GC. */
 export const RELAY_NATIVE_DEPS_CACHE_DIR_NAME = 'native'
 
 /** Written last. Its presence is the only thing that makes an entry linkable. */
@@ -73,7 +73,7 @@ export type RelayNativeDepsCachePatchSource = {
 /**
  * `<relayPlatform>-<sha256 prefix>` over the dependency set, the epoch, and every patch the
  * remote install applies. Platform and arch stay in the name rather than the hash so an operator
- * reading `~/.orca-remote/native/` can tell what an entry is for.
+ * reading `~/.dolphin-remote/native/` can tell what an entry is for.
  */
 export function computeRelayNativeDepsCacheKey(input: {
   platform: string
@@ -108,12 +108,12 @@ export function isRelayNativeDepsCacheEntryName(name: string): boolean {
   return CACHE_ENTRY_NAME_REGEX.test(name)
 }
 
-/** `~/.orca-remote` — the parent both relay dirs and the cache sit under. */
+/** `~/.dolphin-remote` — the parent both relay dirs and the cache sit under. */
 export function remoteInstallRootDir(host: RemoteHostPlatform, remoteHome: string): string {
   return joinRemotePath(host, remoteHome, RELAY_REMOTE_DIR)
 }
 
-/** `~/.orca-remote/native` */
+/** `~/.dolphin-remote/native` */
 export function relayNativeDepsCacheBaseDir(host: RemoteHostPlatform, remoteHome: string): string {
   return joinRemotePath(
     host,
@@ -122,7 +122,7 @@ export function relayNativeDepsCacheBaseDir(host: RemoteHostPlatform, remoteHome
   )
 }
 
-/** `~/.orca-remote/native/<key>` */
+/** `~/.dolphin-remote/native/<key>` */
 export function relayNativeDepsCacheEntryDir(
   host: RemoteHostPlatform,
   remoteHome: string,
@@ -134,7 +134,7 @@ export function relayNativeDepsCacheEntryDir(
   return joinRemotePath(host, relayNativeDepsCacheBaseDir(host, remoteHome), key)
 }
 
-/** `~/.orca-remote/native/<key>/node_modules` — the symlink target, and the reference identity. */
+/** `~/.dolphin-remote/native/<key>/node_modules` — the symlink target, and the reference identity. */
 export function relayNativeDepsCacheNodeModulesPath(
   host: RemoteHostPlatform,
   remoteHome: string,

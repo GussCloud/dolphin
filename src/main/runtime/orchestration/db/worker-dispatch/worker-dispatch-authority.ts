@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { OrchestrationError } from '../../orchestration-error'
 import { hashDispatchCapability } from '../dispatch-capability-hash'
 import type { OrchestrationDb } from '../orchestration-db'
-import { structuredWorkerOrcaSessionIdForIncarnation } from '../../../structured-worker-identity'
+import { structuredWorkerDolphinSessionIdForIncarnation } from '../../../structured-worker-identity'
 
 export function prepareStartingWorkerAuthority(
   this: OrchestrationDb,
@@ -54,7 +54,7 @@ export function prepareStartingWorkerAuthority(
     const contextUpdate = this.db
       .prepare(
         `UPDATE dispatch_contexts
-         SET assignee_handle = ?, assignee_pane_key = ?, assignee_orca_session_id = ?,
+         SET assignee_handle = ?, assignee_pane_key = ?, assignee_dolphin_session_id = ?,
              process_incarnation = ?, host_scope = ?,
              capability_hash = ?, launch_token_hash = COALESCE(launch_token_hash, ?),
              capability_revoked_at = NULL,
@@ -64,7 +64,7 @@ export function prepareStartingWorkerAuthority(
       .run(
         params.handle,
         params.paneKey,
-        structuredWorkerOrcaSessionIdForIncarnation(params.processIncarnation),
+        structuredWorkerDolphinSessionIdForIncarnation(params.processIncarnation),
         params.processIncarnation,
         params.hostScope ?? null,
         hashDispatchCapability(capability),

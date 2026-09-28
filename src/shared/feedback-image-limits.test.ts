@@ -6,8 +6,8 @@ import {
 } from './feedback-image-limits'
 
 // Why: the exact value is a judgement call, staying under the host's limit is
-// not. https://www.onorca.dev/v1/feedback is a Vercel Function and rejects
-// request bodies over 4.5 MB with 413 FUNCTION_PAYLOAD_TOO_LARGE (orca#22466),
+// not. https://dolphin.guss.dev.br/v1/feedback is a Vercel Function and rejects
+// request bodies over 4.5 MB with 413 FUNCTION_PAYLOAD_TOO_LARGE (dolphin#22466),
 // so a budget at or above that ships the original bug back.
 const VERCEL_FUNCTION_PAYLOAD_LIMIT_BYTES = 4_500_000
 

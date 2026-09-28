@@ -81,7 +81,7 @@ describe('browser notice formatting', () => {
       formatPopupNotice({
         browserPageId: 'browser-1',
         origin: 'https://example.com',
-        action: 'opened-in-orca'
+        action: 'opened-in-dolphin'
       })
     ).toBeNull()
 

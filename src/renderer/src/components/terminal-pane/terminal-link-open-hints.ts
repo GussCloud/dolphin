@@ -1,4 +1,4 @@
-import { canSourceOwnerOpenInOrca } from '@/lib/http-link-destinations'
+import { canSourceOwnerOpenInDolphin } from '@/lib/http-link-destinations'
 import type { HttpLinkSourceOwner } from '@/lib/http-link-routing'
 
 export function isMacPlatform(): boolean {
@@ -16,7 +16,7 @@ export function getTerminalFileOpenHint(showActions = true): string {
     : `${prefix}Ctrl+click to open, or Shift+Ctrl+click for default app`
 }
 
-export function getTerminalOrcaFileOpenHint(showActions = true): string {
+export function getTerminalDolphinFileOpenHint(showActions = true): string {
   const prefix = showActions ? 'Click for actions or ' : ''
   return isMacPlatform()
     ? `${prefix}⌘+click to open in Dolphin`
@@ -37,7 +37,7 @@ export type TerminalUrlOpenHintOptions = {
   showActions?: boolean
 }
 
-// Why: remote owners advertise Orca only when their existing browser route is eligible.
+// Why: remote owners advertise Dolphin only when their existing browser route is eligible.
 export function terminalUrlOpenHintOptionsFor(
   settings:
     | {
@@ -50,21 +50,21 @@ export function terminalUrlOpenHintOptionsFor(
   sourceOwner?: HttpLinkSourceOwner,
   canOpenOwnedBrowser = false
 ): TerminalUrlOpenHintOptions {
-  const sourceCanOpenInOrca = sourceOwner
-    ? canSourceOwnerOpenInOrca(sourceOwner, canOpenOwnedBrowser)
+  const sourceCanOpenInDolphin = sourceOwner
+    ? canSourceOwnerOpenInDolphin(sourceOwner, canOpenOwnedBrowser)
     : !settings?.activeRuntimeEnvironmentId?.trim()
   return {
     openLinksInApp: settings?.openLinksInApp === true,
-    modifierInverts: settings?.openLinksInAppModifierInverts === true && sourceCanOpenInOrca
+    modifierInverts: settings?.openLinksInAppModifierInverts === true && sourceCanOpenInDolphin
   }
 }
 
 // Why: with modifierInverts on, Shift no longer always means "system browser" —
 // it means "the other one" — so the hint has to name the actual destination.
 export function getTerminalUrlOpenHint(options: TerminalUrlOpenHintOptions = {}): string {
-  const invertsToOrca = options.modifierInverts === true && options.openLinksInApp !== true
+  const invertsToDolphin = options.modifierInverts === true && options.openLinksInApp !== true
   const prefix = terminalLinkActionHintPrefix(options.showActions !== false)
-  if (invertsToOrca) {
+  if (invertsToDolphin) {
     return isMacPlatform()
       ? `${prefix}⌘+click to open, or ⇧⌘+click to open in Dolphin`
       : `${prefix}Ctrl+click to open, or Shift+Ctrl+click to open in Dolphin`
@@ -80,7 +80,7 @@ export function getTerminalUrlSystemBrowserHint(): string {
 
 // Why: the mirror of the system-browser hint for surfaces where inverting sends the
 // modifier the other way; a plain click there already opens the system browser.
-export function getTerminalUrlOrcaBrowserHint(): string {
+export function getTerminalUrlDolphinBrowserHint(): string {
   return isMacPlatform() ? '⇧⌘+click to open in Dolphin' : 'Shift+Ctrl+click to open in Dolphin'
 }
 

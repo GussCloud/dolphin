@@ -16,7 +16,7 @@ function readPreviewFlag(): boolean {
     if (new URLSearchParams(window.location.search).get('showSignoutCard') === '1') {
       return true
     }
-    return window.localStorage.getItem('orca-debug-show-signout-card') === '1'
+    return window.localStorage.getItem('dolphin-debug-show-signout-card') === '1'
   } catch {
     return false
   }
@@ -43,12 +43,12 @@ function FeatureRow({
 }
 
 export function UnexpectedSignoutCard(): React.JSX.Element | null {
-  const authStatus = useAppStore((s) => s.orcaProfileAuthStatus)
+  const authStatus = useAppStore((s) => s.dolphinProfileAuthStatus)
   const persistedUIReady = useAppStore((s) => s.persistedUIReady)
   const persistedDismissedVersion = useAppStore((s) => s.dismissedUnexpectedSignoutVersion)
   const dismissedVersions = useAppStore((s) => s.unexpectedSignoutDismissedVersions)
   const dismissForVersion = useAppStore((s) => s.dismissUnexpectedSignoutCard)
-  const connect = useAppStore((s) => s.connectCurrentOrcaProfile)
+  const connect = useAppStore((s) => s.connectCurrentDolphinProfile)
   const [appVersion, setAppVersion] = useState<string | null>(null)
   const [authRefreshReady, setAuthRefreshReady] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -64,7 +64,7 @@ export function UnexpectedSignoutCard(): React.JSX.Element | null {
       attempts += 1
       void useAppStore
         .getState()
-        .fetchOrcaProfileAuthStatus()
+        .fetchDolphinProfileAuthStatus()
         .then((status) => {
           if (cancelled) {
             return

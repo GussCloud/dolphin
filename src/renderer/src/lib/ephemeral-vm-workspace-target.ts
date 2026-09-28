@@ -30,7 +30,7 @@ export type PrepareEphemeralVmWorkspaceTargetResult =
       ok: true
       setup: ProjectHostSetupResult
       runtimeId: string
-      checkoutMode: 'orca-worktree' | 'provisioned-root'
+      checkoutMode: 'dolphin-worktree' | 'provisioned-root'
       environmentId?: string
       expectedRefHead?: string
       stderr: string
@@ -76,7 +76,7 @@ export async function prepareEphemeralVmWorkspaceTarget(
       ? toSshExecutionHostId(provisioned.sshTargetId)
       : toRuntimeExecutionHostId(provisioned.environment.id)
 
-  if (provisioned.connectionType === 'orca-server') {
+  if (provisioned.connectionType === 'dolphin-server') {
     try {
       await assertRuntimeEnvironmentCapability(
         provisioned.environment.id,
@@ -144,7 +144,7 @@ export async function prepareEphemeralVmWorkspaceTarget(
     warnings: provisioned.warnings
   } satisfies PrepareEphemeralVmWorkspaceTargetResult
 
-  return provisioned.connectionType === 'orca-server'
+  return provisioned.connectionType === 'dolphin-server'
     ? { ...success, environmentId: provisioned.environment.id }
     : success
 }

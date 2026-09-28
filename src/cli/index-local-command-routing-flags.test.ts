@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 const {
   callMock,
   runtimeClientConstructorMock,
-  serveOrcaAppMock,
+  serveDolphinAppMock,
   getDefaultUserDataPathMock,
   addEnvironmentFromPairingCodeMock,
   listEnvironmentsMock,
@@ -13,8 +13,8 @@ const {
 } = vi.hoisted(() => ({
   callMock: vi.fn(),
   runtimeClientConstructorMock: vi.fn(),
-  serveOrcaAppMock: vi.fn(),
-  getDefaultUserDataPathMock: vi.fn(() => '/tmp/orca-user-data'),
+  serveDolphinAppMock: vi.fn(),
+  getDefaultUserDataPathMock: vi.fn(() => '/tmp/dolphin-user-data'),
   addEnvironmentFromPairingCodeMock: vi.fn(),
   listEnvironmentsMock: vi.fn(),
   removeEnvironmentMock: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('./runtime-client', async () => {
   return createRuntimeClientModuleMock({
     callMock,
     runtimeClientConstructorMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock
   })
 })
@@ -90,7 +90,7 @@ function fakeMachineNameRuntime(detectedName: string): { updates: unknown[] } {
 describe('runtime-selector flags on locally pinned CLI commands', () => {
   useWorktreeAwarenessEnvironment({
     callMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock,
     addEnvironmentFromPairingCodeMock,
     listEnvironmentsMock,
@@ -156,10 +156,10 @@ describe('runtime-selector flags on locally pinned CLI commands', () => {
     expect(runtimeClientConstructorMock).toHaveBeenCalledWith(undefined, 'm4air')
   })
 
-  it('routes `host name` through an ambient ORCA_ENVIRONMENT, unlike the pinned `host list`', async () => {
+  it('routes `host name` through an ambient DOLPHIN_ENVIRONMENT, unlike the pinned `host list`', async () => {
     // Why: the pin used to cover the whole `host` family, which silently answered for this machine
     // when the shell was pointed at another one. `host name` describes one runtime, so it routes.
-    process.env.ORCA_ENVIRONMENT = 'm4air'
+    process.env.DOLPHIN_ENVIRONMENT = 'm4air'
     pairRuntimeEnvironment(listEnvironmentsMock, 'env-m4air', 'm4air')
     fakeMachineNameRuntime('M4 Air')
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
@@ -257,9 +257,9 @@ describe('runtime-selector flags on locally pinned CLI commands', () => {
     pairRuntimeEnvironment(listEnvironmentsMock, 'env-m4air', 'm4air')
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    await main(['host', 'list', '--pairing-code', 'orca://pair?code=x', '--json'], '/tmp/repo')
+    await main(['host', 'list', '--pairing-code', 'dolphin://pair?code=x', '--json'], '/tmp/repo')
     await main(
-      ['environment', 'list', '--pairing-code', 'orca://pair?code=x', '--json'],
+      ['environment', 'list', '--pairing-code', 'dolphin://pair?code=x', '--json'],
       '/tmp/repo'
     )
 
@@ -272,10 +272,10 @@ describe('runtime-selector flags on locally pinned CLI commands', () => {
     process.exitCode = 0
   })
 
-  it('keeps `host list` local when ORCA_ENVIRONMENT is set ambiently', async () => {
+  it('keeps `host list` local when DOLPHIN_ENVIRONMENT is set ambiently', async () => {
     // Why: the ambient variable produced the same two-machine listing as the explicit flag, with
     // no flag to reject. Pinning the family is what makes `runtimeId: local` true in both cases.
-    process.env.ORCA_ENVIRONMENT = 'm4air'
+    process.env.DOLPHIN_ENVIRONMENT = 'm4air'
     pairRuntimeEnvironment(listEnvironmentsMock, 'env-m4air', 'm4air')
     queueSshTargetLookups(1)
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})

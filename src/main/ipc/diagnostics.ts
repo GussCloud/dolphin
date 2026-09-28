@@ -32,7 +32,7 @@ import {
 import type { CollectedBundle } from '../observability/bundle'
 import type { UploadBundleResult } from '../observability/diagnostic-bundle-upload'
 import {
-  resolveDiagnosticOrcaChannel,
+  resolveDiagnosticDolphinChannel,
   resolveDiagnosticTokenEndpoint
 } from '../observability/diagnostic-upload-endpoint'
 
@@ -164,7 +164,7 @@ function getPreviewDirectory(): string {
   } catch {
     base = tmpdir()
   }
-  return join(base, 'orca-diagnostic-bundle-previews')
+  return join(base, 'dolphin-diagnostic-bundle-previews')
 }
 
 function writeBundlePreviewFile(bundle: CollectedBundle): string {
@@ -232,7 +232,7 @@ export function registerDiagnosticsHandlers(): void {
         platform: osPlatform(),
         arch: osArch(),
         osRelease: osRelease(),
-        orcaChannel: resolveDiagnosticOrcaChannel(),
+        dolphinChannel: resolveDiagnosticDolphinChannel(),
         ...(lookbackMinutes !== undefined ? { lookbackMinutes } : {})
       })
       rememberBundle(bundle)

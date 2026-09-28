@@ -7,12 +7,12 @@ export async function makeFixture(): Promise<{
   userDataPath: string
   appPath: string
 }> {
-  const root = await mkdtemp(join(tmpdir(), 'orca-cli-installer-'))
+  const root = await mkdtemp(join(tmpdir(), 'dolphin-cli-installer-'))
   const userDataPath = join(root, 'userData')
   const appPath = join(root, 'app')
   const cliEntryPath = join(appPath, 'out', 'cli', 'index.js')
   await mkdir(join(appPath, 'out', 'cli'), { recursive: true })
-  await writeFile(cliEntryPath, 'console.log("orca")\n', 'utf8')
+  await writeFile(cliEntryPath, 'console.log("dolphin")\n', 'utf8')
   return { root, userDataPath, appPath }
 }
 

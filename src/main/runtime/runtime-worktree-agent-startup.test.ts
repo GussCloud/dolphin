@@ -48,7 +48,7 @@ const settings = {
   terminalWindowsShell: null
 } as never
 
-/** The launched CLI name is the whole decision: `orca` is the relay shim, `orca-ide` is local. */
+/** The launched CLI name is the whole decision: `dolphin` is the relay shim, `dolphin-ide` is local. */
 function launchCliNameFor(repo: Repo): string {
   return buildWorktreeStartupForAgent({
     repo,
@@ -163,7 +163,7 @@ describe('markLocalWorktreeTrusted', () => {
   })
 
   /**
-   * Why this test exists: Orca has two trust dispatch chains — the renderer's
+   * Why this test exists: Dolphin has two trust dispatch chains — the renderer's
    * preflightAgentTrust (via the agentTrust:markTrusted IPC) and this main-process
    * one, which is the only path `orchestration worker-start` takes. Adding
    * `preflightTrust: 'antigravity'` to TUI_AGENT_CONFIG clears the `!preset` guard

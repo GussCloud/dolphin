@@ -89,7 +89,7 @@ async function send(text: string) {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-legacy-handoff-record-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-legacy-handoff-record-'))
   resetHostTestOperationIds()
   probe = vi.fn(async () => ({ outcome: 'pid-absent' as const }))
   stopOwnerProcess = vi.fn()

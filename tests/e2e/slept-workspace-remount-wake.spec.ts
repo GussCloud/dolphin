@@ -5,7 +5,7 @@
  * unmounts the slept panes and hides the behavior.
  */
 import type { Page } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import { getAllWorktreeIds, waitForSessionReady } from './helpers/store'
 import {
   activateWorkspaceByClick,
@@ -39,25 +39,25 @@ async function assertStaysCold(page: Page, worktreeId: string): Promise<void> {
   expect(diag.at(-1), 'remounted pane did not wait for the wake').toContain('WAIT FOR WAKE')
 }
 
-test('remounting a slept hidden pane does not respawn its PTY', async ({ orcaPage }) => {
-  await waitForSessionReady(orcaPage)
-  const [slept, other] = await getAllWorktreeIds(orcaPage)
+test('remounting a slept hidden pane does not respawn its PTY', async ({ dolphinPage }) => {
+  await waitForSessionReady(dolphinPage)
+  const [slept, other] = await getAllWorktreeIds(dolphinPage)
   expect(other, 'seeded repo must expose two worktrees').toBeTruthy()
-  await giveWorkspaceALivePty(orcaPage, slept)
-  await giveWorkspaceALivePty(orcaPage, other)
-  await activateWorkspaceByClick(orcaPage, slept)
-  expect((await readWorkspaceSample(orcaPage, slept)).livePtyCount).toBeGreaterThan(0)
+  await giveWorkspaceALivePty(dolphinPage, slept)
+  await giveWorkspaceALivePty(dolphinPage, other)
+  await activateWorkspaceByClick(dolphinPage, slept)
+  expect((await readWorkspaceSample(dolphinPage, slept)).livePtyCount).toBeGreaterThan(0)
 
-  await sleepWorkspaceViaSidebar(orcaPage, slept)
+  await sleepWorkspaceViaSidebar(dolphinPage, slept)
   await expect
-    .poll(async () => (await readWorkspaceSample(orcaPage, slept)).livePtyCount, {
+    .poll(async () => (await readWorkspaceSample(dolphinPage, slept)).livePtyCount, {
       timeout: 20_000,
       message: 'sleep did not release the workspace PTYs'
     })
     .toBe(0)
-  await activateWorkspaceByClick(orcaPage, other)
+  await activateWorkspaceByClick(dolphinPage, other)
 
-  const sample = await readWorkspaceSample(orcaPage, slept)
+  const sample = await readWorkspaceSample(dolphinPage, slept)
   const sleptTabId = sample.tabIds[0]
   expect(sleptTabId, 'slept workspace must retain a tab').toBeTruthy()
   // Presence preconditions: the pane is still mounted and still carries its wake hint,
@@ -65,23 +65,23 @@ test('remounting a slept hidden pane does not respawn its PTY', async ({ orcaPag
   expect(sample.mountedTabIds, 'slept pane was parked before the remount').toContain(sleptTabId)
   expect(sample.tabPtyHints[0], 'sleep must keep the session id as a wake hint').toBeTruthy()
 
-  const remounted = await orcaPage.evaluate(
+  const remounted = await dolphinPage.evaluate(
     (tabId) => window.__store?.getState().remountTerminalTabForRecovery(tabId).remounted ?? false,
     sleptTabId
   )
   expect(remounted, 'remountTerminalTabForRecovery did not find the slept tab').toBe(true)
-  await assertStaysCold(orcaPage, slept)
+  await assertStaysCold(dolphinPage, slept)
 
   // Non-vacuity: a deliberate click must still wake it, and exactly once — the
   // waiting pane and its remounted successor must not both reattach.
-  await activateWorkspaceByClick(orcaPage, slept)
+  await activateWorkspaceByClick(dolphinPage, slept)
   await expect
-    .poll(async () => (await readWorkspaceSample(orcaPage, slept)).livePtyCount, {
+    .poll(async () => (await readWorkspaceSample(dolphinPage, slept)).livePtyCount, {
       timeout: 40_000,
       message: 'the slept workspace never wakes even on deliberate activation'
     })
     .toBeGreaterThan(0)
-  await orcaPage.waitForTimeout(3_000)
-  expect((await readWorkspaceSample(orcaPage, slept)).livePtyCount).toBe(1)
-  expect(await readHostLiveTerminalCount(orcaPage, slept)).toBe(1)
+  await dolphinPage.waitForTimeout(3_000)
+  expect((await readWorkspaceSample(dolphinPage, slept)).livePtyCount).toBe(1)
+  expect(await readHostLiveTerminalCount(dolphinPage, slept)).toBe(1)
 })

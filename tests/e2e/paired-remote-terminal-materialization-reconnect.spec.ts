@@ -9,7 +9,7 @@ import type {
   RuntimeTerminalShow
 } from '../../src/shared/runtime-types'
 import { toWebTerminalSurfaceTabId } from '../../src/shared/terminal-surface-id'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import { launchHeadlessPairedRuntimeHost } from './helpers/headless-paired-runtime-host'
 import {
   createRuntimeDesktopPairingOffer,
@@ -18,7 +18,7 @@ import {
 import { getTerminalContent, waitForActivePanePtyId } from './helpers/terminal'
 import { readFreshTerminalInventory } from './helpers/terminal-inventory-observation'
 
-const scratch = mkdtempSync(path.join(os.tmpdir(), 'orca-paired-materialize-'))
+const scratch = mkdtempSync(path.join(os.tmpdir(), 'dolphin-paired-materialize-'))
 const fixturePath = path.join(scratch, 'materialize-terminal.mjs')
 const processedInputPath = path.join(scratch, 'processed-input.txt')
 
@@ -332,14 +332,14 @@ async function runMaterializationJourney(
 }
 
 test('materializes a stopped terminal on reconnect from a headed paired host', async ({
-  orcaPage
+  dolphinPage
 }, testInfo) => {
   test.setTimeout(120_000)
-  const worktreeId = await orcaPage.evaluate(() => window.__store?.getState().activeWorktreeId)
+  const worktreeId = await dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId)
   if (!worktreeId) {
     throw new Error('Headed host has no active seeded workspace')
   }
-  const offer = await createRuntimeDesktopPairingOffer(orcaPage)
+  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
   const client = await launchPairedElectronClient(offer, testInfo, 'headed-materialization-client')
   try {
     await showClient(client.app, client.page)

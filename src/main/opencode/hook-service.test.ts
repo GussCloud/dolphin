@@ -75,7 +75,7 @@ describe('OpenCode hook plugin source', () => {
     expect(primarySource).toContain('post("SessionStart", { sessionID: info.id })')
     expect(familySource).toContain('http://127.0.0.1:${coords.port}/hook/mimo-code')
     expect(familySource).not.toContain('post("SessionStart", { sessionID: info.id })')
-    expect(familySource).toContain('export const OrcaOpenCodeStatusPlugin')
+    expect(familySource).toContain('export const DolphinOpenCodeStatusPlugin')
   })
 
   it('generates the OpenCode 2 plugin with its dedicated hook and event family', () => {
@@ -126,30 +126,30 @@ describe('OpenCode hook plugin source', () => {
   it('still accepts an optional opaque plugin context instead of destructuring', () => {
     const source = _internals.getOpenCodePluginSource()
 
-    expect(source).toContain('export const OrcaOpenCodeStatusPlugin = async (_ctx) => {')
+    expect(source).toContain('export const DolphinOpenCodeStatusPlugin = async (_ctx) => {')
     expect(source).toContain('const client = _ctx?.client;')
   })
 
   it('resolves hook coords from the endpoint file before falling back to process.env', () => {
-    // Why: a forked session freezes the prior Orca's PORT/TOKEN in env; prefer the on-disk endpoint file or it posts to a dead port after restart.
+    // Why: a forked session freezes the prior Dolphin's PORT/TOKEN in env; prefer the on-disk endpoint file or it posts to a dead port after restart.
     const source = _internals.getOpenCodePluginSource()
 
     expect(source).toContain('function readEndpointFile()')
-    expect(source).toContain('process.env.ORCA_AGENT_HOOK_ENDPOINT')
+    expect(source).toContain('process.env.DOLPHIN_AGENT_HOOK_ENDPOINT')
     // Parser accepts both `KEY=VALUE` (Unix) and `set KEY=VALUE` (Windows):
     expect(source).toContain('/^(?:set\\s+)?([A-Z0-9_]+)=(.*)$/')
     expect(source).toContain('function resolveHookCoords()')
     // File takes precedence over env — the whole point of v2:
     expect(source).toContain(
-      'port: fileEnv.ORCA_AGENT_HOOK_PORT || process.env.ORCA_AGENT_HOOK_PORT'
+      'port: fileEnv.DOLPHIN_AGENT_HOOK_PORT || process.env.DOLPHIN_AGENT_HOOK_PORT'
     )
     expect(source).toContain(
-      'token: fileEnv.ORCA_AGENT_HOOK_TOKEN || process.env.ORCA_AGENT_HOOK_TOKEN'
+      'token: fileEnv.DOLPHIN_AGENT_HOOK_TOKEN || process.env.DOLPHIN_AGENT_HOOK_TOKEN'
     )
     // post() uses the resolved coords, not a cached-at-startup url:
     expect(source).toContain('const coords = resolveHookCoords();')
     expect(source).toContain('`http://127.0.0.1:${coords.port}/hook/opencode`')
-    expect(source).toContain('"X-Orca-Agent-Hook-Token": coords.token')
+    expect(source).toContain('"X-Dolphin-Agent-Hook-Token": coords.token')
   })
 
   it('caches the parsed endpoint file on mtime+size+inode to skip re-reads per post', () => {
@@ -253,7 +253,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
   const originalXdgConfigHome = process.env.XDG_CONFIG_HOME
 
   beforeAll(() => {
-    userDataDir = mkdtempSync(join(tmpdir(), 'orca-opencode-hooks-'))
+    userDataDir = mkdtempSync(join(tmpdir(), 'dolphin-opencode-hooks-'))
     process.env.XDG_CONFIG_HOME = userDataDir
     getPathMock.mockImplementation((name: string) => {
       if (name === 'userData') {
@@ -282,11 +282,15 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
     const env = service.buildPtyEnv(daemonSessionId)
 
     expect(env).toEqual({})
-    const pluginPath = join(resolveOpenCodeConfigDirectory(), 'plugins', 'orca-opencode-status.js')
+    const pluginPath = join(
+      resolveOpenCodeConfigDirectory(),
+      'plugins',
+      'dolphin-opencode-status.js'
+    )
     expect(existsSync(pluginPath)).toBe(true)
     // Sanity-check the file has plugin source, not a stray write.
     const pluginSource = readFileSync(pluginPath, 'utf8')
-    expect(pluginSource).toContain('OrcaOpenCodeStatusPlugin')
+    expect(pluginSource).toContain('DolphinOpenCodeStatusPlugin')
     expect(pluginSource).toContain('messageID: part.messageID')
   })
 
@@ -297,7 +301,11 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
     const service = new OpenCodeHookService()
     service.buildPtyEnv(daemonSessionId)
 
-    const pluginPath = join(resolveOpenCodeConfigDirectory(), 'plugins', 'orca-opencode-status.js')
+    const pluginPath = join(
+      resolveOpenCodeConfigDirectory(),
+      'plugins',
+      'dolphin-opencode-status.js'
+    )
     // Why: a .mjs copy so Node parses the installed file as ESM without a package.json.
     const modulePath = join(userDataDir, `installed-opencode-plugin-${Date.now()}.mjs`)
     writeFileSync(modulePath, readFileSync(pluginPath, 'utf8'))
@@ -306,7 +314,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
       default?: { id?: unknown; server?: unknown; setup?: unknown }
     }
 
-    expect(module.default?.id).toBe('orca-opencode-status')
+    expect(module.default?.id).toBe('dolphin-opencode-status')
     // v1 loader: "must default export an object with server()".
     expect(module.default?.server).toBeTypeOf('function')
     // v2 loader: "Plugin must export a default definition with an id and an effect or setup function."
@@ -315,7 +323,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
 
   // Why: #22506 — both variants install side by side in one global plugins dir, and
   // OpenCode 2 kills every plugin after the first that reuses an id ("Duplicate plugin
-  // ID"). Discovery sorts by path, so orca-opencode-status.js always wins and the
+  // ID"). Discovery sorts by path, so dolphin-opencode-status.js always wins and the
   // opencode2 plugin never loads. Assert the installed files, not just the sources.
   it('installs both family plugins into one config dir under distinct ids', async () => {
     expect(new OpenCodeHookService().buildPtyEnv(daemonSessionId)).toEqual({})
@@ -324,7 +332,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
 
     const pluginsDir = join(resolveOpenCodeConfigDirectory(), 'plugins')
     const ids: string[] = []
-    for (const fileName of ['orca-opencode-status.js', 'orca-opencode2-status.js']) {
+    for (const fileName of ['dolphin-opencode-status.js', 'dolphin-opencode2-status.js']) {
       // Why: a .mjs copy so Node parses the installed file as ESM without a package.json.
       const modulePath = join(userDataDir, `installed-${fileName}-${Date.now()}.mjs`)
       writeFileSync(modulePath, readFileSync(join(pluginsDir, fileName), 'utf8'))
@@ -335,7 +343,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
       ids.push(String(module.default?.id))
     }
 
-    expect(ids).toEqual(['orca-opencode-status', 'orca-opencode2-status'])
+    expect(ids).toEqual(['dolphin-opencode-status', 'dolphin-opencode2-status'])
   })
 
   it('clearPty leaves the shared OpenCode config dir off the teardown hot path', () => {
@@ -364,7 +372,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
   it('buildPtyEnv preserves a user-set OPENCODE_CONFIG_DIR when the id is unusable', () => {
     // Why: even when the id is rejected, don't blow away the user's own OPENCODE_CONFIG_DIR.
     const service = new OpenCodeHookService()
-    const userDir = mkdtempSync(join(tmpdir(), 'orca-opencode-userdir-'))
+    const userDir = mkdtempSync(join(tmpdir(), 'dolphin-opencode-userdir-'))
     try {
       expect(service.buildPtyEnv('', userDir)).toEqual({ OPENCODE_CONFIG_DIR: userDir })
     } finally {
@@ -377,7 +385,7 @@ describe('OpenCodeHookService buildPtyEnv / clearPty round-trip', () => {
     service.buildPtyEnv(plainUuidId)
 
     const configDir = resolveOpenCodeConfigDirectory()
-    expect(existsSync(join(configDir, 'plugins', 'orca-opencode-status.js'))).toBe(true)
+    expect(existsSync(join(configDir, 'plugins', 'dolphin-opencode-status.js'))).toBe(true)
 
     service.clearPty(plainUuidId)
     expect(existsSync(configDir)).toBe(true)
@@ -391,7 +399,7 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
   let userConfigDir: string
 
   beforeAll(() => {
-    userDataDir = mkdtempSync(join(tmpdir(), 'orca-opencode-overlay-userdata-'))
+    userDataDir = mkdtempSync(join(tmpdir(), 'dolphin-opencode-overlay-userdata-'))
     getPathMock.mockImplementation((name: string) => {
       if (name === 'userData') {
         return userDataDir
@@ -405,7 +413,7 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
   })
 
   beforeEach(() => {
-    userConfigDir = mkdtempSync(join(tmpdir(), 'orca-opencode-overlay-userconfig-'))
+    userConfigDir = mkdtempSync(join(tmpdir(), 'dolphin-opencode-overlay-userconfig-'))
     // Realistic user config: top-level files plus a plugins/ dir with a user plugin.
     writeFileSync(join(userConfigDir, 'opencode.json'), '{"userTheme":"solarized"}')
     writeFileSync(join(userConfigDir, 'auth.json'), 'user-auth-token')
@@ -429,7 +437,7 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
     )
   }
 
-  it('builds an overlay under userData and exposes user config + Orca plugin together', () => {
+  it('builds an overlay under userData and exposes user config + Dolphin plugin together', () => {
     const service = new OpenCodeHookService()
     const env = service.buildPtyEnv(ptyId, userConfigDir)
 
@@ -449,10 +457,14 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
       'export default () => {}'
     )
 
-    // Orca's status plugin is a sibling, not a replacement.
-    const orcaPluginPath = join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'orca-opencode-status.js')
-    expect(existsSync(orcaPluginPath)).toBe(true)
-    expect(readFileSync(orcaPluginPath, 'utf8')).toContain('OrcaOpenCodeStatusPlugin')
+    // Dolphin's status plugin is a sibling, not a replacement.
+    const dolphinPluginPath = join(
+      env.OPENCODE_CONFIG_DIR!,
+      'plugins',
+      'dolphin-opencode-status.js'
+    )
+    expect(existsSync(dolphinPluginPath)).toBe(true)
+    expect(readFileSync(dolphinPluginPath, 'utf8')).toContain('DolphinOpenCodeStatusPlugin')
 
     expectUserConfigIntact()
   })
@@ -460,14 +472,14 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
   it.skipIf(process.platform === 'win32')(
     'mirrors top-level entries via symlinks so plugins/ is a real directory',
     () => {
-      // Why: only plugins/ needs per-entry mirroring (Orca drops a sibling); other entries are single symlinks so user edits propagate live.
+      // Why: only plugins/ needs per-entry mirroring (Dolphin drops a sibling); other entries are single symlinks so user edits propagate live.
       const service = new OpenCodeHookService()
       const env = service.buildPtyEnv(ptyId, userConfigDir)
 
       const overlay = env.OPENCODE_CONFIG_DIR!
       expect(lstatSync(join(overlay, 'opencode.json')).isSymbolicLink()).toBe(true)
       expect(lstatSync(join(overlay, 'auth.json')).isSymbolicLink()).toBe(true)
-      // plugins/ must be a real dir in the overlay so Orca can drop its sibling plugin.
+      // plugins/ must be a real dir in the overlay so Dolphin can drop its sibling plugin.
       expect(lstatSync(join(overlay, 'plugins')).isDirectory()).toBe(true)
       expect(lstatSync(join(overlay, 'plugins')).isSymbolicLink()).toBe(false)
       // user-plugin.js inside plugins/ is mirrored entry-by-entry.
@@ -475,34 +487,34 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
     }
   )
 
-  it("does not overwrite a user plugin file with the same filename as Orca's plugin", () => {
-    // Why: a user plugin named orca-opencode-status.js must not be symlinked into the overlay, or writeFileSync would clobber it.
-    const userOrcaSentinel = 'USER OWNED ORCA-NAMED PLUGIN — DO NOT CLOBBER'
-    writeFileSync(join(userConfigDir, 'plugins', 'orca-opencode-status.js'), userOrcaSentinel)
+  it("does not overwrite a user plugin file with the same filename as Dolphin's plugin", () => {
+    // Why: a user plugin named dolphin-opencode-status.js must not be symlinked into the overlay, or writeFileSync would clobber it.
+    const userDolphinSentinel = 'USER OWNED DOLPHIN-NAMED PLUGIN — DO NOT CLOBBER'
+    writeFileSync(join(userConfigDir, 'plugins', 'dolphin-opencode-status.js'), userDolphinSentinel)
 
     const service = new OpenCodeHookService()
     const env = service.buildPtyEnv(ptyId, userConfigDir)
 
     // User's source file must be untouched.
-    expect(readFileSync(join(userConfigDir, 'plugins', 'orca-opencode-status.js'), 'utf8')).toBe(
-      userOrcaSentinel
+    expect(readFileSync(join(userConfigDir, 'plugins', 'dolphin-opencode-status.js'), 'utf8')).toBe(
+      userDolphinSentinel
     )
 
-    // Overlay copy is Orca's real plugin source, not the user's file.
+    // Overlay copy is Dolphin's real plugin source, not the user's file.
     const overlayPlugin = readFileSync(
-      join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'orca-opencode-status.js'),
+      join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'dolphin-opencode-status.js'),
       'utf8'
     )
-    expect(overlayPlugin).toContain('OrcaOpenCodeStatusPlugin')
-    expect(overlayPlugin).not.toBe(userOrcaSentinel)
+    expect(overlayPlugin).toContain('DolphinOpenCodeStatusPlugin')
+    expect(overlayPlugin).not.toBe(userDolphinSentinel)
     expectUserConfigIntact()
   })
 
   it.skipIf(process.platform === 'win32')(
     'does not write through a symlinked plugins/ directory into the user filesystem',
     () => {
-      // Why: writing Orca's plugin through a symlinked plugins/ would leak into the user's fs (docs/opencode-config-dir-collision.md).
-      const realPluginsDir = mkdtempSync(join(tmpdir(), 'orca-real-plugins-'))
+      // Why: writing Dolphin's plugin through a symlinked plugins/ would leak into the user's fs (docs/opencode-config-dir-collision.md).
+      const realPluginsDir = mkdtempSync(join(tmpdir(), 'dolphin-real-plugins-'))
       try {
         writeFileSync(join(realPluginsDir, 'real-plugin.js'), 'REAL USER PLUGIN')
 
@@ -513,13 +525,13 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
         const service = new OpenCodeHookService()
         const env = service.buildPtyEnv(ptyId, userConfigDir)
 
-        // The user's real filesystem must NOT receive Orca's status plugin.
-        expect(existsSync(join(realPluginsDir, 'orca-opencode-status.js'))).toBe(false)
+        // The user's real filesystem must NOT receive Dolphin's status plugin.
+        expect(existsSync(join(realPluginsDir, 'dolphin-opencode-status.js'))).toBe(false)
         // Overlay's plugins/ must be a real dir, else writes leak into the user's filesystem.
         expect(lstatSync(join(env.OPENCODE_CONFIG_DIR!, 'plugins')).isSymbolicLink()).toBe(false)
-        // Orca's status plugin lands in the overlay only.
+        // Dolphin's status plugin lands in the overlay only.
         expect(
-          existsSync(join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'orca-opencode-status.js'))
+          existsSync(join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'dolphin-opencode-status.js'))
         ).toBe(true)
         // User's real plugin is reachable via the overlay (plugins mirrored entry-by-entry after resolving the symlink target).
         expect(
@@ -532,9 +544,9 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
   )
 
   it("preserves the user's OPENCODE_CONFIG_DIR when the path does not exist", () => {
-    // Why: leave a nonexistent user path alone so OpenCode surfaces the typo instead of Orca silently hiding it.
+    // Why: leave a nonexistent user path alone so OpenCode surfaces the typo instead of Dolphin silently hiding it.
     const service = new OpenCodeHookService()
-    const missingPath = join(tmpdir(), `orca-opencode-nope-${Date.now()}`)
+    const missingPath = join(tmpdir(), `dolphin-opencode-nope-${Date.now()}`)
     expect(existsSync(missingPath)).toBe(false)
 
     const env = service.buildPtyEnv(ptyId, missingPath)
@@ -604,8 +616,8 @@ describe('OpenCodeHookService overlay mode (user OPENCODE_CONFIG_DIR set)', () =
     const env = service.buildPtyEnv(ptyId, userConfigDir)
 
     expect(
-      readFileSync(join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'orca-opencode-status.js'), 'utf8')
-    ).toContain('OrcaOpenCodeStatusPlugin')
+      readFileSync(join(env.OPENCODE_CONFIG_DIR!, 'plugins', 'dolphin-opencode-status.js'), 'utf8')
+    ).toContain('DolphinOpenCodeStatusPlugin')
     expectUserConfigIntact()
   })
 

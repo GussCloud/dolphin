@@ -6,9 +6,9 @@ import {
 
 describe('orchestration recovery command identity', () => {
   it.each([
-    ['configured dev', { ORCA_CLI_COMMAND: 'orca-dev' }, 'darwin', 'orca-dev'],
-    ['configured WSL', { ORCA_CLI_COMMAND: 'dolphin-ide' }, 'linux', 'dolphin-ide'],
-    ['dev checkout', { ORCA_DEV_REPO_ROOT: '/repo' }, 'darwin', 'orca-dev'],
+    ['configured dev', { DOLPHIN_CLI_COMMAND: 'dolphin-dev' }, 'darwin', 'dolphin-dev'],
+    ['configured WSL', { DOLPHIN_CLI_COMMAND: 'dolphin-ide' }, 'linux', 'dolphin-ide'],
+    ['dev checkout', { DOLPHIN_DEV_REPO_ROOT: '/repo' }, 'darwin', 'dolphin-dev'],
     ['packaged Linux', {}, 'linux', 'dolphin-ide'],
     ['local macOS', {}, 'darwin', 'dolphin'],
     ['local Windows', {}, 'win32', 'dolphin']
@@ -27,10 +27,10 @@ describe('orchestration recovery command identity', () => {
           timeoutMs: 90_000,
           devMode: false
         },
-        'orca'
+        'dolphin'
       )
     ).toEqual([
-      'orca',
+      'dolphin',
       'orchestration',
       'worker-start',
       '--task',
@@ -49,7 +49,7 @@ describe('orchestration recovery command identity', () => {
       buildOrchestrationRecoveryCommand(
         'orchestration.workerStart',
         { task: 'task_1' },
-        'orca-dev',
+        'dolphin-dev',
         [
           'orchestration',
           'worker-start',
@@ -61,7 +61,7 @@ describe('orchestration recovery command identity', () => {
         ]
       )
     ).toEqual([
-      'orca-dev',
+      'dolphin-dev',
       'orchestration',
       'worker-start',
       '--task',
@@ -84,7 +84,10 @@ describe('orchestration recovery command identity', () => {
       ['orchestration', 'worker-retain', '--dispatch', 'dispatch_1', '--json']
     ]
   ] as const)('preserves exact raw argv for %s recovery', (_name, method, args) => {
-    expect(buildOrchestrationRecoveryCommand(method, {}, 'orca', args)).toEqual(['orca', ...args])
+    expect(buildOrchestrationRecoveryCommand(method, {}, 'dolphin', args)).toEqual([
+      'dolphin',
+      ...args
+    ])
   })
 
   it.each([
@@ -100,7 +103,7 @@ describe('orchestration recovery command identity', () => {
     ]
   ])('blocks %s credential argv instead of exposing it', (_name, args) => {
     expect(
-      buildOrchestrationRecoveryCommand('orchestration.send', {}, 'orca', args)
+      buildOrchestrationRecoveryCommand('orchestration.send', {}, 'dolphin', args)
     ).toBeUndefined()
   })
 

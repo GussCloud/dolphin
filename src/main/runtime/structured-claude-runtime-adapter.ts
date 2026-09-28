@@ -23,7 +23,7 @@ export type StructuredClaudeRuntimeAdapterDeps = {
   resolveWorkspacePath: (workspaceId: string) => Promise<string>
   resolveClaudeCommand?: () => string
   resolveClaudeLaunchEnv?: () => Promise<Record<string, string>> | Record<string, string>
-  /** The env a Claude child inherits before auth stripping; absent inherits Orca's own. */
+  /** The env a Claude child inherits before auth stripping; absent inherits Dolphin's own. */
   resolveClaudeInheritedEnv?: () => Promise<Record<string, string>>
   /** Managed-account auth state for a Claude launch, mirroring the terminal preflight.
    *  Required: an absent policy is what silently under-strips. */

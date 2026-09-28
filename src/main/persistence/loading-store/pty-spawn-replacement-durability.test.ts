@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { deferred, fixture } from './profile-state-delayed-authority-fixture'
-import { OrcaRuntimeService } from '../../runtime/orca-runtime'
+import { DolphinRuntimeService } from '../../runtime/dolphin-runtime'
 import { commitPtyIpcSpawn } from '../../ipc/pty/ipc/spawn-commit'
 import { createPtyIpcSpawnState } from '../../ipc/pty/ipc/spawn-state'
 import type { PtySpawnIpcDeps } from '../../ipc/pty/ipc/spawn-types'
@@ -42,7 +42,7 @@ it.each(
   'preserves a successor during $replacementDuring when the predecessor $controller save fails',
   async ({ controller, replacementDuring }) => {
     const { store, authority } = await fixture()
-    const runtime = new OrcaRuntimeService(store)
+    const runtime = new DolphinRuntimeService(store)
     runtime.onPtySpawned(binding.ptyId, binding.incarnationId)
     ptyIncarnationById.set(binding.ptyId, binding.incarnationId)
     const deps = createPtySpawnCommitDependencies(runtime, store)
@@ -70,7 +70,7 @@ it.each(
       commit = () => commitRuntimePtySpawn(ctx)
     }
     const gate = authority.pause()
-    const pending = expect(commit()).rejects.toThrow('ORCA_TERMINAL_SESSION_STATE_SAVE_FAILED')
+    const pending = expect(commit()).rejects.toThrow('DOLPHIN_TERMINAL_SESSION_STATE_SAVE_FAILED')
     await gate.started.promise
     if (replacementDuring === 'shutdown') {
       gate.finish.reject(new Error('disk full'))
@@ -105,7 +105,7 @@ it.each(['ipc', 'runtime'])(
   'keeps replacement provider identity when an exited %s spawn finishes saving',
   async (controller) => {
     const { store, authority } = await fixture()
-    const runtime = new OrcaRuntimeService(store)
+    const runtime = new DolphinRuntimeService(store)
     runtime.onPtySpawned(binding.ptyId, binding.incarnationId)
     let commit: () => Promise<unknown>
     if (controller === 'ipc') {

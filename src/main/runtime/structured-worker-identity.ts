@@ -25,7 +25,7 @@ import {
   structuredAgentSessionTabId
 } from '../../shared/structured-agent-session-projection'
 import { isTerminalLeafId, makePaneKey, parsePaneKey } from '../../shared/stable-pane-id'
-import { isOrcaSessionId, type OrcaSessionId } from '../../shared/orca-session-address'
+import { isDolphinSessionId, type DolphinSessionId } from '../../shared/dolphin-session-address'
 import {
   parseWorkerTerminalHostScope,
   type WorkerTerminalHostScope
@@ -124,12 +124,12 @@ export function sessionIdFromStructuredWorkerIncarnation(
   return sessionId.length > 0 ? sessionId : null
 }
 
-/** The Orca session id a `structured:<sessionId>` incarnation names; null for any other. */
-export function structuredWorkerOrcaSessionIdForIncarnation(
+/** The Dolphin session id a `structured:<sessionId>` incarnation names; null for any other. */
+export function structuredWorkerDolphinSessionIdForIncarnation(
   processIncarnation: string | null | undefined
-): OrcaSessionId | null {
+): DolphinSessionId | null {
   const sessionId = sessionIdFromStructuredWorkerIncarnation(processIncarnation)
-  return sessionId !== null && isOrcaSessionId(sessionId) ? sessionId : null
+  return sessionId !== null && isDolphinSessionId(sessionId) ? sessionId : null
 }
 
 /** Structured sessions can only exist local and outside WSL; anything else is not our authority. */

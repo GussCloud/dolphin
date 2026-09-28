@@ -3,7 +3,7 @@ import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { translate } from '../../i18n/i18n'
 import { useAppStore } from '../../store'
-import { useOrcaProfileAuthStatusRefresh } from '@/hooks/use-orca-profile-auth-status-refresh'
+import { useDolphinProfileAuthStatusRefresh } from '@/hooks/use-dolphin-profile-auth-status-refresh'
 import { cn } from '@/lib/utils'
 import type {
   MobileRelayStatus,
@@ -64,8 +64,8 @@ export function MobilePairingConnectionOptions({
   relayMintFailed?: boolean
   relayMintRetrying?: boolean
 }): React.JSX.Element {
-  const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
+  const authStatus = useAppStore((state) => state.dolphinProfileAuthStatus)
+  const connect = useAppStore((state) => state.connectCurrentDolphinProfile)
   const [relayStatus, setRelayStatus] = useState<MobileRelayStatus>('offline')
   const [relayCellUrl, setRelayCellUrl] = useState<string | undefined>(undefined)
   const signedIn = authStatus?.state === 'connected'
@@ -107,7 +107,7 @@ export function MobilePairingConnectionOptions({
 
   const relayCell = relayCellUrl ? relayCellLabel(relayCellUrl) : null
 
-  useOrcaProfileAuthStatusRefresh()
+  useDolphinProfileAuthStatusRefresh()
 
   useEffect(() => {
     let receivedEvent = false

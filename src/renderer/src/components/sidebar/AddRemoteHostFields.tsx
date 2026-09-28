@@ -205,7 +205,7 @@ export function RemoteServerFields({
           onChange={(event) => onPairingCodeChange(event.target.value)}
           placeholder={translate(
             'auto.components.sidebar.AddRemoteHostDialog.pairingCodePlaceholder',
-            'orca://pair?code=...'
+            'dolphin://pair?code=...'
           )}
           className="font-mono"
         />

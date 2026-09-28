@@ -6,7 +6,7 @@ import type {
   RuntimeMobileSessionTabsSnapshot
 } from '../../shared/runtime-types'
 import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
-import { OrcaRuntimeService } from './orca-runtime'
+import { DolphinRuntimeService } from './dolphin-runtime'
 
 /**
  * A paired client may only drop a mirrored terminal on host evidence: a `retiredTerminalSurfaces`
@@ -83,13 +83,13 @@ function makePersistedSession(): WorkspaceSessionState {
 }
 
 function createHost(): {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   handle: string
   retirePersistedSurface: () => void
 } {
   let session = makePersistedSession()
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the store stub carries the four members this publication-order suite drives; the rest of Store is unreached.
-  const runtime = new OrcaRuntimeService(
+  const runtime = new DolphinRuntimeService(
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: This runtime fixture supplies the persistence and graph methods exercised by the test.
     withDurableRuntimeStore({
       getRepos: () => [LIVE_REPO],
@@ -141,7 +141,7 @@ function createHost(): {
 }
 
 /** What the host renderer publishes once it has retired the tab it was told to close. */
-function republishWithoutTheSurface(runtime: OrcaRuntimeService): void {
+function republishWithoutTheSurface(runtime: DolphinRuntimeService): void {
   runtime.syncWindowGraph(1, {
     tabs: [],
     leaves: [],

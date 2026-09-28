@@ -125,9 +125,9 @@ describe('pluginMarketplaceSchema', () => {
 
 describe('marketplace provenance contracts', () => {
   it.each([
-    ['stablyai.orca-skills', true, true],
+    ['stablyai.dolphin-skills', true, true],
     ['stablyai.skills', true, false],
-    ['community.orca-skills', true, false],
+    ['community.dolphin-skills', true, false],
     ['community.skills', false, false],
     ['invalid', false, false]
   ])('classifies %s', (pluginKey, reserved, official) => {
@@ -136,18 +136,20 @@ describe('marketplace provenance contracts', () => {
   })
 
   it.each([
-    'https://github.com/stablyai/orca-skills.git',
-    'ssh://git@github.com/stablyai/orca-skills.git',
-    'git@github.com:stablyai/orca-skills.git'
+    'https://github.com/stablyai/dolphin-skills.git',
+    'ssh://git@github.com/stablyai/dolphin-skills.git',
+    'git@github.com:stablyai/dolphin-skills.git'
   ])('accepts official organization source %s', (source) => {
     expect(isOfficialOrganizationGitSource(source)).toBe(true)
   })
 
   it('does not trust lookalike organizations or hosts', () => {
-    expect(isOfficialOrganizationGitSource('https://github.com/stablyai-fakes/orca-skills')).toBe(
+    expect(
+      isOfficialOrganizationGitSource('https://github.com/stablyai-fakes/dolphin-skills')
+    ).toBe(false)
+    expect(isOfficialOrganizationGitSource('https://gitlab.com/stablyai/dolphin-skills')).toBe(
       false
     )
-    expect(isOfficialOrganizationGitSource('https://gitlab.com/stablyai/orca-skills')).toBe(false)
   })
 
   it('recognizes only the canonical official marketplace repository', () => {

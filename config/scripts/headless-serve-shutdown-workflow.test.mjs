@@ -36,19 +36,25 @@ function readSystemdUnitBlocks(doc, unitName) {
 describe('headless serve shutdown PR gate', () => {
   it('reads only exact, closed systemd unit blocks', () => {
     expect(
-      readSystemdUnitBlocks('# /etc/systemd/system/orca-serveXservice\n```', 'orca-serve.service')
+      readSystemdUnitBlocks(
+        '# /etc/systemd/system/dolphin-serveXservice\n```',
+        'dolphin-serve.service'
+      )
     ).toEqual([])
     expect(() =>
-      readSystemdUnitBlocks('# /etc/systemd/system/orca-serve.service\n', 'orca-serve.service')
-    ).toThrow('Missing closing code fence for orca-serve.service')
+      readSystemdUnitBlocks(
+        '# /etc/systemd/system/dolphin-serve.service\n',
+        'dolphin-serve.service'
+      )
+    ).toThrow('Missing closing code fence for dolphin-serve.service')
     expect(() =>
       readSystemdUnitBlocks(
-        '# /etc/systemd/system/orca-serve.service\n' +
+        '# /etc/systemd/system/dolphin-serve.service\n' +
           'KillMode=mixed\n' +
           '# /etc/systemd/system/other.service\n```',
-        'orca-serve.service'
+        'dolphin-serve.service'
       )
-    ).toThrow('Missing closing code fence for orca-serve.service')
+    ).toThrow('Missing closing code fence for dolphin-serve.service')
   })
 
   it('packages Linux artifacts before running the Docker signal oracle', () => {
@@ -64,7 +70,7 @@ describe('headless serve shutdown PR gate', () => {
     expect(markerStep.run).toContain('rpm2cpio')
     expect(steps.indexOf(markerStep)).toBeGreaterThan(steps.indexOf(packageStep))
     expect(shutdownStep.run).toBe(
-      'node config/scripts/run-headless-serve-shutdown-docker.mjs --appimage dist/orca-linux.AppImage --all-entrypoints'
+      'node config/scripts/run-headless-serve-shutdown-docker.mjs --appimage dist/dolphin-linux.AppImage --all-entrypoints'
     )
     expect(steps.indexOf(shutdownStep)).toBeGreaterThan(steps.indexOf(packageStep))
     expect(steps.indexOf(shutdownStep)).toBeGreaterThan(steps.indexOf(markerStep))
@@ -76,7 +82,7 @@ describe('headless serve shutdown PR gate', () => {
   it('keeps readiness polling finite and leak-free', () => {
     expect(signalCase).toContain('read_ready_line()')
     expect(signalCase).toContain("sed -u -n 's/^[^{]*//p'")
-    expect(signalCase).toContain('startup_timeout_seconds=${ORCA_STARTUP_TIMEOUT_SECONDS:-180}')
+    expect(signalCase).toContain('startup_timeout_seconds=${DOLPHIN_STARTUP_TIMEOUT_SECONDS:-180}')
     expect(signalCase).toContain('startup_deadline=$((SECONDS + startup_timeout_seconds))')
     expect(signalCase).toContain('while (( SECONDS < startup_deadline )); do')
     expect(signalCase).toContain('kill -0 "$app_pid" 2>/dev/null || break')
@@ -95,7 +101,7 @@ describe('headless serve shutdown PR gate', () => {
 
   it('checks that a serving-electron signal target owns the ready socket', () => {
     const ssRecord =
-      'LISTEN 0 128 127.0.0.1:41235 0.0.0.0:* users:(("orca-ide",pid=23,fd=7),("orca-ide",pid=25,fd=8))'
+      'LISTEN 0 128 127.0.0.1:41235 0.0.0.0:* users:(("dolphin-ide",pid=23,fd=7),("dolphin-ide",pid=25,fd=8))'
     expect([...ssRecord.matchAll(/pid=([0-9]+)/g)].map((match) => match[1])).toEqual(['23', '25'])
     expect(signalCase).toContain(
       'listener_before_pids=$(grep -oE \'pid=[0-9]+\' <<<"$listener_before" | cut -d= -f2 || true)'
@@ -112,7 +118,7 @@ describe('headless serve shutdown PR gate', () => {
       'runDesktopStartupOracle({ image, appImage, platform })'
     )
     const extractionCall = shutdownDockerRunner.indexOf(
-      "'timeout --kill-after=10s 120s /input/orca.AppImage --appimage-extract"
+      "'timeout --kill-after=10s 120s /input/dolphin.AppImage --appimage-extract"
     )
     const signalLoop = shutdownDockerRunner.indexOf("for (const signal of ['INT', 'TERM'])")
     expect(startupCall).toBeGreaterThan(-1)
@@ -129,9 +135,9 @@ describe('headless serve shutdown PR gate', () => {
     expect(desktopStartupOracle).toContain(
       'FAIL: desktop launcher exited before ${reason} (status=${observed_status})'
     )
-    expect(desktopStartupOracle).toContain('ORCA_STARTUP_STATE_DIR_CLEANUP=1')
+    expect(desktopStartupOracle).toContain('DOLPHIN_STARTUP_STATE_DIR_CLEANUP=1')
     expect(desktopStartupOracle).toContain(
-      '[[ "$state_dir" =~ ^/tmp/orca-appimage-startup\\.[^/]+$ ]] || return 0'
+      '[[ "$state_dir" =~ ^/tmp/dolphin-appimage-startup\\.[^/]+$ ]] || return 0'
     )
   })
 
@@ -140,7 +146,7 @@ describe('headless serve shutdown PR gate', () => {
       '[[ -x "$appimage" ]] || { echo "FAIL: AppImage is not executable: $appimage" >&2; exit 1; }'
     )
     expect(shutdownDockerRunner).toContain(
-      '\'test -r /input/orca.AppImage && test -x /input/orca.AppImage || { echo "FAIL: AppImage bind must be readable and executable" >&2; exit 1; }\''
+      '\'test -r /input/dolphin.AppImage && test -x /input/dolphin.AppImage || { echo "FAIL: AppImage bind must be readable and executable" >&2; exit 1; }\''
     )
   })
 
@@ -149,12 +155,12 @@ describe('headless serve shutdown PR gate', () => {
   })
 
   it('keeps owned Xvfb alive during the documented systemd graceful stop', () => {
-    const serveUnits = readSystemdUnitBlocks(headlessLinuxGuide, 'orca-serve.service')
+    const serveUnits = readSystemdUnitBlocks(headlessLinuxGuide, 'dolphin-serve.service')
     const ownedXvfbUnits = serveUnits.filter((unit) => !/^Environment=DISPLAY=/m.test(unit))
     const managedXvfbUnits = serveUnits.filter((unit) => /^Environment=DISPLAY=/m.test(unit))
 
     expect(ownedXvfbUnits).toHaveLength(1)
-    expect(ownedXvfbUnits[0]).toMatch(/^ExecStart=.*orca-linux\.AppImage serve.*$/m)
+    expect(ownedXvfbUnits[0]).toMatch(/^ExecStart=.*dolphin-linux\.AppImage serve.*$/m)
     expect(ownedXvfbUnits[0]).toMatch(/^KillMode=mixed$/m)
     expect(managedXvfbUnits).toHaveLength(1)
     expect(managedXvfbUnits[0]).toMatch(/^KillMode=mixed$/m)
@@ -171,29 +177,30 @@ describe('headless serve shutdown PR gate', () => {
       'The unscoped fallback remains destructive: a service restart kills every terminal'
     )
     expect(headlessLinuxProse).toContain(
-      'Treat a stop as destructive unless `health.terminalDaemon.cgroupUnit` names an `orca-daemon-*.scope` on that host'
+      'Treat a stop as destructive unless `health.terminalDaemon.cgroupUnit` names an `dolphin-daemon-*.scope` on that host'
     )
     expect(headlessLinuxProse).toContain(
       'A separately paired runtime is outside that boundary; local execution and SSH hosts reached through this runtime are not. An affected or unknown omission, missing scope, failed request or lost connection is `unverifiable`'
     )
     expect(headlessLinuxGuide).toContain(
-      'sudo -Hu orca /home/orca/.local/bin/orca-ide terminal list --json'
+      'sudo -Hu dolphin /home/dolphin/.local/bin/dolphin-ide terminal list --json'
     )
-    expect(headlessLinuxGuide).not.toContain('sudo -Hu orca orca-ide terminal list --json')
+    expect(headlessLinuxGuide).not.toContain('sudo -Hu dolphin dolphin-ide terminal list --json')
     expect(headlessLinuxGuide).not.toContain('Two facts make this safe and predictable')
   })
 
   it('uses the registered CLI name from ordinary Linux shells', () => {
     const commandRule =
-      'The registered Linux CLI command is `orca-ide`, not `orca`, to avoid shadowing the GNOME Orca screen reader.'
+      'The registered Linux CLI command is `dolphin-ide`, not `dolphin`, to avoid shadowing the KDE Dolphin file manager.'
     const substitutionRule =
-      "From an ordinary shell outside that service user's managed environment, substitute `orca-ide` for `orca` in commands below."
-    const censusCommand = '`sudo -Hu orca /home/orca/.local/bin/orca-ide terminal list --json`'
+      "From an ordinary shell outside that service user's managed environment, substitute `dolphin-ide` for `dolphin` in commands below."
+    const censusCommand =
+      '`sudo -Hu dolphin /home/dolphin/.local/bin/dolphin-ide terminal list --json`'
 
     expect(headlessLinuxProse).toContain(commandRule)
     expect(headlessLinuxProse).toContain(substitutionRule)
     expect(headlessLinuxProse).toContain(censusCommand)
-    expect(headlessLinuxGuide).toContain('best-effort dispatcher at `$HOME/.local/bin/orca`')
+    expect(headlessLinuxGuide).toContain('best-effort dispatcher at `$HOME/.local/bin/dolphin`')
     expect(headlessLinuxProse.indexOf(substitutionRule)).toBeLessThan(
       headlessLinuxProse.indexOf(censusCommand)
     )

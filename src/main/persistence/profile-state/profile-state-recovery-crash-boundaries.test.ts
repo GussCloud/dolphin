@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setSecretStore } from '../../../shared/secret-store'
-import { profileStateStorage } from '../../orca-profiles/profile-project-state-file'
+import { profileStateStorage } from '../../dolphin-profiles/profile-project-state-file'
 import {
   acquireProfileStateMaintenance,
   acquireProfileStateRuntimeAdmission
@@ -53,7 +53,7 @@ vi.mock('../../ssh/ssh-config-parser', () => ({
   sshConfigHostsToTargets: () => []
 }))
 
-const suiteRoot = mkdtempSync(join(tmpdir(), 'orca-recovery-crash-boundaries-'))
+const suiteRoot = mkdtempSync(join(tmpdir(), 'dolphin-recovery-crash-boundaries-'))
 const fixtureRoots: string[] = []
 let bundle: string
 const profileId = 'crash-recovery'
@@ -113,10 +113,10 @@ async function fixture(kind: 'json' | 'sqlite', accepted: boolean): Promise<Fixt
   const directory = join(root, 'profiles', profileId)
   mkdirSync(directory, { recursive: true })
   writeFileSync(
-    join(root, 'orca-profile-index.json'),
+    join(root, 'dolphin-profile-index.json'),
     JSON.stringify({ activeProfileId: profileId, profiles: [{ id: profileId }] })
   )
-  const dataFile = join(directory, 'orca-data.json')
+  const dataFile = join(directory, 'dolphin-data.json')
   const databasePath = join(directory, 'profile-state.db')
   const exportPath = profileStateJsonExportPath(dataFile, 3)
   const backupPath = profileStateDatabaseBackupPath(

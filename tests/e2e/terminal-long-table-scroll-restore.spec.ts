@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import type { Page, TestInfo } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,
   getAllWorktreeIds,
@@ -272,7 +272,12 @@ async function closeFeatureTips(page: Page): Promise<void> {
     const store = window.__store
     store
       ?.getState()
-      .markFeatureTipsSeen(['orca-cli', 'cmd-j-palette', 'voice-dictation', 'agent-session-search'])
+      .markFeatureTipsSeen([
+        'dolphin-cli',
+        'cmd-j-palette',
+        'voice-dictation',
+        'agent-session-search'
+      ])
     if (store?.getState().activeModal === 'feature-tips') {
       store.getState().closeModal()
     }
@@ -342,22 +347,22 @@ async function readTerminalRenderDiagnostics(page: Page): Promise<TerminalRender
 
 test.describe('Terminal long table scroll restore repro', () => {
   test('reproduces long markdown table artifacts after workspace switch and scroll', async ({
-    orcaPage,
+    dolphinPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(orcaPage)
-    await orcaPage.evaluate(() => {
+    await waitForSessionReady(dolphinPage)
+    await dolphinPage.evaluate(() => {
       window.__store
         ?.getState()
         .markFeatureTipsSeen([
-          'orca-cli',
+          'dolphin-cli',
           'cmd-j-palette',
           'voice-dictation',
           'agent-session-search'
         ])
     })
-    const firstWorktreeId = await waitForActiveWorktree(orcaPage)
-    const secondWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
+    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
+    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
       (id) => id !== firstWorktreeId
     )
     test.skip(!secondWorktreeId, 'long table restore repro needs the seeded secondary worktree')
@@ -365,40 +370,40 @@ test.describe('Terminal long table scroll restore repro', () => {
       return
     }
 
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+    await ensureTerminalVisible(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
     const runId = randomUUID()
     const marker = `LONG_TABLE_SCROLL_RESTORE_${runId}`
-    const scriptPath = path.join(testRepoPath, `.orca-long-table-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-long-table-${runId}.mjs`)
     writeFileSync(scriptPath, longMarkdownTableScript(runId))
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
-      await orcaPage.waitForTimeout(80)
-      await switchToWorktree(orcaPage, secondWorktreeId)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
-      await orcaPage.waitForTimeout(1_500)
-      await switchToWorktree(orcaPage, firstWorktreeId)
-      await ensureTerminalVisible(orcaPage)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
+      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await dolphinPage.waitForTimeout(80)
+      await switchToWorktree(dolphinPage, secondWorktreeId)
+      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await dolphinPage.waitForTimeout(1_500)
+      await switchToWorktree(dolphinPage, firstWorktreeId)
+      await ensureTerminalVisible(dolphinPage)
+      await waitForActiveTerminalManager(dolphinPage, 30_000)
       await expect
-        .poll(() => getTerminalContent(orcaPage, 30_000), {
+        .poll(() => getTerminalContent(dolphinPage, 30_000), {
           timeout: 10_000,
           message: 'long table marker did not survive workspace switch'
         })
         .toContain(marker)
 
-      await scrollActiveTerminalLikeUser(orcaPage)
-      await closeFeatureTips(orcaPage)
-      const diagnostics = await readTerminalRenderDiagnostics(orcaPage)
+      await scrollActiveTerminalLikeUser(dolphinPage)
+      await closeFeatureTips(dolphinPage)
+      const diagnostics = await readTerminalRenderDiagnostics(dolphinPage)
       const restoredPane = diagnostics.allPaneStates.find((paneState) => paneState.hasMarker)
       expect(restoredPane).toBeDefined()
       expect(diagnostics.cursorHidden).toBe(false)
-      await orcaPage.waitForTimeout(100)
+      await dolphinPage.waitForTimeout(100)
       const screenshotPath = testInfo.outputPath('long-table-after-switch-scroll.png')
-      await orcaPage.screenshot({ path: screenshotPath, fullPage: true })
+      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('long-table-after-switch-scroll.png', {
         path: screenshotPath,
         contentType: 'image/png'
@@ -409,22 +414,22 @@ test.describe('Terminal long table scroll restore repro', () => {
   })
 
   test('keeps narrow wrapped signer markdown table coherent after restore and scroll', async ({
-    orcaPage,
+    dolphinPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(orcaPage)
-    await orcaPage.evaluate(() => {
+    await waitForSessionReady(dolphinPage)
+    await dolphinPage.evaluate(() => {
       window.__store
         ?.getState()
         .markFeatureTipsSeen([
-          'orca-cli',
+          'dolphin-cli',
           'cmd-j-palette',
           'voice-dictation',
           'agent-session-search'
         ])
     })
-    const firstWorktreeId = await waitForActiveWorktree(orcaPage)
-    const secondWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
+    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
+    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
       (id) => id !== firstWorktreeId
     )
     test.skip(!secondWorktreeId, 'narrow signer table repro needs the seeded secondary worktree')
@@ -432,48 +437,48 @@ test.describe('Terminal long table scroll restore repro', () => {
       return
     }
 
-    await setRenderedTableViewport(orcaPage)
-    await forceDarkTerminalRendererPath(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+    await setRenderedTableViewport(dolphinPage)
+    await forceDarkTerminalRendererPath(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
     const runId = randomUUID()
     const marker = `NARROW_SIGNER_TABLE_RESTORE_${runId}`
-    const scriptPath = path.join(testRepoPath, `.orca-narrow-signer-table-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-narrow-signer-table-${runId}.mjs`)
     writeFileSync(scriptPath, narrowSignerMarkdownTableScript(runId))
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
-      await orcaPage.waitForTimeout(80)
-      await switchToWorktree(orcaPage, secondWorktreeId)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
-      await orcaPage.waitForTimeout(1_000)
-      await switchToWorktree(orcaPage, firstWorktreeId)
-      await ensureTerminalVisible(orcaPage)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
+      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await dolphinPage.waitForTimeout(80)
+      await switchToWorktree(dolphinPage, secondWorktreeId)
+      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await dolphinPage.waitForTimeout(1_000)
+      await switchToWorktree(dolphinPage, firstWorktreeId)
+      await ensureTerminalVisible(dolphinPage)
+      await waitForActiveTerminalManager(dolphinPage, 30_000)
       await expect
-        .poll(() => getTerminalContent(orcaPage, 30_000), {
+        .poll(() => getTerminalContent(dolphinPage, 30_000), {
           timeout: 10_000,
           message: 'narrow signer table marker did not survive workspace switch'
         })
         .toContain(marker)
 
-      await scrollActiveTerminalLikeUser(orcaPage)
-      await closeFeatureTips(orcaPage)
-      const diagnostics = await readTerminalRenderDiagnostics(orcaPage)
+      await scrollActiveTerminalLikeUser(dolphinPage)
+      await closeFeatureTips(dolphinPage)
+      const diagnostics = await readTerminalRenderDiagnostics(dolphinPage)
       // Why: renderer cell metrics can land one column wider in headless runs;
       // the content and screenshot assertions below cover the actual regression.
       expect(diagnostics.cols).toBeLessThanOrEqual(112)
       expect(diagnostics.cursorHidden).toBe(false)
 
-      const content = await getTerminalContent(orcaPage, 30_000)
+      const content = await getTerminalContent(dolphinPage, 30_000)
       expect(content).toContain('Signer')
       expect(content).toContain('did:key:z6Mkuw5kQqz1QvZ9f3d2aB7f19f0cAC7B4F3c9E725')
       expect(content).toContain(marker)
 
       const screenshotPath = testInfo.outputPath('narrow-signer-table-after-switch-scroll.png')
-      await orcaPage.screenshot({ path: screenshotPath, fullPage: true })
+      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('narrow-signer-table-after-switch-scroll.png', {
         path: screenshotPath,
         contentType: 'image/png'
@@ -486,23 +491,23 @@ test.describe('Terminal long table scroll restore repro', () => {
   // Why: keeps the user-shaped markdown path covered in the broader e2e suite;
   // the faster raw-table spec is the release-blocking golden for this bug.
   test('keeps real emoji markdown table right edge clean after restore and scroll', async ({
-    orcaPage,
+    dolphinPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(orcaPage)
-    await closeFeatureTips(orcaPage)
-    await orcaPage.evaluate(() => {
+    await waitForSessionReady(dolphinPage)
+    await closeFeatureTips(dolphinPage)
+    await dolphinPage.evaluate(() => {
       window.__store
         ?.getState()
         .markFeatureTipsSeen([
-          'orca-cli',
+          'dolphin-cli',
           'cmd-j-palette',
           'voice-dictation',
           'agent-session-search'
         ])
     })
-    const firstWorktreeId = await waitForActiveWorktree(orcaPage)
-    const secondWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
+    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
+    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
       (id) => id !== firstWorktreeId
     )
     test.skip(!secondWorktreeId, 'real emoji table repro needs the seeded secondary worktree')
@@ -510,40 +515,40 @@ test.describe('Terminal long table scroll restore repro', () => {
       return
     }
 
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    await setNarrowTerminalViewport(orcaPage)
+    await ensureTerminalVisible(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await setNarrowTerminalViewport(dolphinPage)
     const renderedTableTerminalCols = await waitForRenderedTerminalColumnsAtMost(
-      orcaPage,
+      dolphinPage,
       NARROW_TERMINAL_MAX_COLS
     )
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await waitForPtyColumnsAtMost(orcaPage, ptyId, renderedTableTerminalCols)
+    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForPtyColumnsAtMost(dolphinPage, ptyId, renderedTableTerminalCols)
     const runId = randomUUID()
     const marker = `EMOJI_FIXTURE_TABLE_RESTORE_${runId}`
-    const scriptPath = path.join(testRepoPath, `.orca-emoji-fixture-table-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-emoji-fixture-table-${runId}.mjs`)
     writeFileSync(scriptPath, emojiFixtureMarkdownTableScript(EMOJI_TABLE_FIXTURE, runId))
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
-      await orcaPage.waitForTimeout(80)
-      await switchToWorktree(orcaPage, secondWorktreeId)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
-      await orcaPage.waitForTimeout(1_000)
-      await switchToWorktree(orcaPage, firstWorktreeId)
+      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await dolphinPage.waitForTimeout(80)
+      await switchToWorktree(dolphinPage, secondWorktreeId)
+      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await dolphinPage.waitForTimeout(1_000)
+      await switchToWorktree(dolphinPage, firstWorktreeId)
       // Why: worktree activation can restore the right sidebar. This repro is
       // intentionally narrow, but it must stay wide enough for its generated table.
-      await ensureTerminalVisible(orcaPage)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
-      await setNarrowTerminalViewport(orcaPage)
-      await waitForRenderedTerminalColumnsAtMost(orcaPage, NARROW_TERMINAL_MAX_COLS)
+      await ensureTerminalVisible(dolphinPage)
+      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await setNarrowTerminalViewport(dolphinPage)
+      await waitForRenderedTerminalColumnsAtMost(dolphinPage, NARROW_TERMINAL_MAX_COLS)
       await expect
-        .poll(() => getTerminalContent(orcaPage, 30_000), {
+        .poll(() => getTerminalContent(dolphinPage, 30_000), {
           timeout: 10_000,
           message: 'real emoji table marker did not survive workspace switch'
         })
         .toContain(marker)
-      const generatedWidthContent = await getTerminalContent(orcaPage, 30_000)
+      const generatedWidthContent = await getTerminalContent(dolphinPage, 30_000)
       const generatedWidthMatch = generatedWidthContent.match(
         new RegExp(`${emojiFixtureTableWidthMarker(runId)}(\\d+)`)
       )
@@ -555,17 +560,17 @@ test.describe('Terminal long table scroll restore repro', () => {
       // across terminal lines. A lower cell fragment still exercises the
       // restored markdown-table viewport without depending on early output.
       const retainedEmojiCell = 'Peac'
-      await scrollActiveTerminalToText(orcaPage, retainedEmojiCell)
-      await closeFeatureTips(orcaPage)
+      await scrollActiveTerminalToText(dolphinPage, retainedEmojiCell)
+      await closeFeatureTips(dolphinPage)
       await expect
-        .poll(() => readActiveTerminalVisibleText(orcaPage), {
+        .poll(() => readActiveTerminalVisibleText(dolphinPage), {
           timeout: 5_000,
           message: `${retainedEmojiCell} row fragment should be visible before screenshot`
         })
         .toContain(retainedEmojiCell)
-      const diagnostics = await readTerminalRenderDiagnostics(orcaPage)
-      const overpaint = await readTerminalRightEdgeOverpaint(orcaPage)
-      const wrapDiagnostics = await readTerminalBoxTableWrapDiagnostics(orcaPage)
+      const diagnostics = await readTerminalRenderDiagnostics(dolphinPage)
+      const overpaint = await readTerminalRightEdgeOverpaint(dolphinPage)
+      const wrapDiagnostics = await readTerminalBoxTableWrapDiagnostics(dolphinPage)
       expect(diagnostics.cols).toBeLessThanOrEqual(NARROW_TERMINAL_MAX_COLS)
       expect(wrapDiagnostics.cols).toBeGreaterThanOrEqual(generatedTableWidth)
       expect(diagnostics.cursorHidden).toBe(false)
@@ -579,7 +584,7 @@ test.describe('Terminal long table scroll restore repro', () => {
       })
 
       const screenshotPath = testInfo.outputPath('real-emoji-table-after-switch-scroll.png')
-      await orcaPage.screenshot({ path: screenshotPath, fullPage: true })
+      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('real-emoji-table-after-switch-scroll.png', {
         path: screenshotPath,
         contentType: 'image/png'

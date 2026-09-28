@@ -61,7 +61,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
 
   const repoRoot = resolve(import.meta.dirname, '../..')
-  const sourcePath = join(repoRoot, 'native', 'windows-cli-launcher', 'OrcaCliLauncher.cs')
+  const sourcePath = join(repoRoot, 'native', 'windows-cli-launcher', 'DolphinCliLauncher.cs')
   const outputPath = readArg('--output') ?? defaultOutputPath(repoRoot)
   const compilerPath = findFrameworkCompiler(process.env)
 
@@ -72,7 +72,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   mkdirSync(dirname(outputPath), { recursive: true })
   if (
     shouldReuseCompiledWindowsCliLauncher(outputPath, sourcePath, {
-      reuseCached: process.env.ORCA_REUSE_WINDOWS_CLI_LAUNCHER === '1'
+      reuseCached: process.env.DOLPHIN_REUSE_WINDOWS_CLI_LAUNCHER === '1'
     })
   ) {
     console.log(`[native-build] reusing Windows CLI launcher at ${outputPath}`)

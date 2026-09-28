@@ -75,7 +75,7 @@ fs.rmSync = (target, ...rest) => {
 let clone = 0
 const link = fs.linkSync
 fs.linkSync = (from, to) => {
-  const isClone = from.includes('.orca-recovery-clone-')
+  const isClone = from.includes('.dolphin-recovery-clone-')
   if (isClone) barrier('clone:' + (++clone) + ':before')
   link(from, to)
   if (isClone) barrier('clone:' + clone + ':after')
@@ -113,7 +113,7 @@ export async function killRecoveryAt(
   writeFileSync(childScript, CHILD_SOURCE, 'utf8')
   writeFileSync(payloadPath, payload, 'utf8')
   const childEnv = {
-    ORCA_BACKGROUND_LAUNCH: '1',
+    DOLPHIN_BACKGROUND_LAUNCH: '1',
     ...(process.env.PATH ? { PATH: process.env.PATH } : {}),
     ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
     ...(process.env.TEMP ? { TEMP: process.env.TEMP } : {}),

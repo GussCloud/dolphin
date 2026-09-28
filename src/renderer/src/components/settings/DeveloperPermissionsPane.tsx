@@ -273,7 +273,7 @@ export function DeveloperPermissionsPane({
   }, [refresh])
 
   // Why: after the user flips a permission in System Settings and switches
-  // back to Orca, the chip should reflect the new status without a manual
+  // back to Dolphin, the chip should reflect the new status without a manual
   // Refresh click. Tied to window focus rather than a polling interval so
   // we don't keep hammering `systemPreferences` while the pane is idle.
   useEffect(() => {

@@ -1,8 +1,8 @@
 import { CLI_COMMAND_NAME } from '../../../../../../shared/cli-command-names'
 import { vi } from 'vitest'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 
-export function configureFederationWorkerRuntime(runtime: OrcaRuntimeService): void {
+export function configureFederationWorkerRuntime(runtime: DolphinRuntimeService): void {
   vi.spyOn(runtime, 'validateOrchestrationAgentLauncher').mockImplementation(() => {})
   vi.spyOn(runtime, 'showRepo').mockResolvedValue({ id: 'windows-repo', kind: 'git' } as never)
   vi.spyOn(runtime, 'createManagedWorktree').mockResolvedValue({

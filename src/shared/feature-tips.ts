@@ -4,7 +4,11 @@ import {
   type FeatureInteractionState
 } from './feature-interactions'
 
-export type FeatureTipId = 'voice-dictation' | 'orca-cli' | 'cmd-j-palette' | 'agent-session-search'
+export type FeatureTipId =
+  | 'voice-dictation'
+  | 'dolphin-cli'
+  | 'cmd-j-palette'
+  | 'agent-session-search'
 
 export type FeatureTipPriority = 'new' | 'unseen'
 
@@ -47,10 +51,10 @@ export const FEATURE_TIPS = [
     completedByFeatureInteractions: []
   },
   {
-    id: 'orca-cli',
+    id: 'dolphin-cli',
     priority: 'new',
     eyebrow: 'Tip',
-    title: 'Let agents drive Orca with the Orca CLI',
+    title: 'Let agents drive Dolphin with the Dolphin CLI',
     description: 'Enable agents to coordinate child worktrees and communicate between worktrees.',
     action: 'setup-cli',
     ctaLabel: 'Install CLI & Skills',
@@ -104,7 +108,7 @@ export function normalizeFeatureTipIds(value: unknown): FeatureTipId[] {
 export function getCompletedFeatureTipIds(state: CompletedFeatureTipState): Set<FeatureTipId> {
   const completedIds = new Set<FeatureTipId>()
   if (state.cliInstalled) {
-    completedIds.add('orca-cli')
+    completedIds.add('dolphin-cli')
   }
   if (state.voiceDictationEnabled) {
     completedIds.add('voice-dictation')

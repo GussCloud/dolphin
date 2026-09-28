@@ -93,30 +93,30 @@ export const RELAY_OPS_ENVIRONMENTS: Record<RelayOpsEnvironmentId, RelayOpsEnvir
   production: {
     id: 'production',
     label: 'Production',
-    project: 'onorca-cloud',
+    project: 'dolphin-cloud',
     region: 'us-central1',
-    directorOrigin: 'https://relay.onorca.dev',
-    authOrigin: 'https://login.onorca.dev',
-    directorService: 'orca-cloud-relay',
-    authService: 'orca-cloud-auth',
-    sqlInstance: 'orca-cloud-auth-db',
-    migPrefix: 'orca-cloud-relay-gce-',
-    certificateName: 'orca-cloud-relay-gce',
-    cells: durableCells('production', 'relay.onorca.dev')
+    directorOrigin: 'https://relay.dolphin.guss.dev.br',
+    authOrigin: 'https://login.dolphin.guss.dev.br',
+    directorService: 'dolphin-cloud-relay',
+    authService: 'dolphin-cloud-auth',
+    sqlInstance: 'dolphin-cloud-auth-db',
+    migPrefix: 'dolphin-cloud-relay-gce-',
+    certificateName: 'dolphin-cloud-relay-gce',
+    cells: durableCells('production', 'relay.dolphin.guss.dev.br')
   },
   staging: {
     id: 'staging',
     label: 'Staging',
-    project: 'onorca-cloud-staging',
+    project: 'dolphin-cloud-staging',
     region: 'us-central1',
-    directorOrigin: 'https://relay-staging.onorca.dev',
-    authOrigin: 'https://auth-staging.onorca.dev',
-    directorService: 'orca-cloud-relay-staging',
-    authService: 'orca-cloud-auth-staging',
-    sqlInstance: 'orca-cloud-staging-auth-db',
-    migPrefix: 'orca-cloud-staging-relay-gce-',
-    certificateName: 'orca-cloud-staging-relay-gce',
-    cells: durableCells('staging', 'relay-staging.onorca.dev')
+    directorOrigin: 'https://relay-staging.dolphin.guss.dev.br',
+    authOrigin: 'https://auth-staging.dolphin.guss.dev.br',
+    directorService: 'dolphin-cloud-relay-staging',
+    authService: 'dolphin-cloud-auth-staging',
+    sqlInstance: 'dolphin-cloud-staging-auth-db',
+    migPrefix: 'dolphin-cloud-staging-relay-gce-',
+    certificateName: 'dolphin-cloud-staging-relay-gce',
+    cells: durableCells('staging', 'relay-staging.dolphin.guss.dev.br')
   }
 }
 

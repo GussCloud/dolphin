@@ -1,11 +1,11 @@
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store'
-import { ORCA_CLI_SKILL_INSTALL_COMMAND } from '@/lib/agent-feature-install-commands'
+import { DOLPHIN_CLI_SKILL_INSTALL_COMMAND } from '@/lib/agent-feature-install-commands'
 import { useActiveProjectSkillRuntime } from '@/hooks/useActiveProjectSkillRuntime'
 import {
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE,
-  ensureOrcaCliAvailableForAgentSkillTerminal
+  ensureDolphinCliAvailableForAgentSkillTerminal
 } from '@/lib/agent-skill-cli-prerequisite'
 import { AgentSkillSetupPanel } from '../settings/AgentSkillSetupPanel'
 import { buildSkillCommandForRuntime } from '../settings/CliSkillRuntimeSetup'
@@ -32,8 +32,8 @@ export function MobileEmulatorAgentSetupGuideSteps({
   const activeSkillRuntime = useActiveProjectSkillRuntime()
   // Why: skill detection here scans the local host only, so keep building host
   // commands; routing them to a WSL runtime would install where we never look.
-  const skillInstallCommand = buildSkillCommandForRuntime(ORCA_CLI_SKILL_INSTALL_COMMAND)
-  const terminalWorktreeId = `mobile-emulator-${worktreeId}-orca-cli-skill-terminal`
+  const skillInstallCommand = buildSkillCommandForRuntime(DOLPHIN_CLI_SKILL_INSTALL_COMMAND)
+  const terminalWorktreeId = `mobile-emulator-${worktreeId}-dolphin-cli-skill-terminal`
   const showSkillPreInstallNotice = shouldShowMobileEmulatorSkillPreInstallNotice({
     cliEnabled: setup.cliEnabled,
     cliSkillInstalled: setup.cliSkillInstalled
@@ -60,7 +60,7 @@ export function MobileEmulatorAgentSetupGuideSteps({
           <p className="text-xs text-muted-foreground">
             {translate(
               'auto.components.emulator.pane.MobileEmulatorAgentSetupGuideSteps.3d8dc52c93',
-              'Registers the orca command for emulator control in agent shells.'
+              'Registers the dolphin command for emulator control in agent shells.'
             )}
           </p>
           {setup.cliInstallStatus?.commandPath && setup.cliEnabled ? (
@@ -181,7 +181,7 @@ export function MobileEmulatorAgentSetupGuideSteps({
             )}
             onBeforeOpenTerminal={async () => {
               recordFeatureInteraction('mobile-emulator-agent-setup')
-              await ensureOrcaCliAvailableForAgentSkillTerminal()
+              await ensureDolphinCliAvailableForAgentSkillTerminal()
             }}
             onRecheck={() => {
               recordFeatureInteraction('mobile-emulator-agent-setup')

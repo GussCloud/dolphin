@@ -67,7 +67,7 @@ type AclFacts = {
 }
 
 function readSavedDacl(spawnFn: typeof spawn, target: string, deadlineMs: number): Promise<string> {
-  const saveFile = join(tmpdir(), `orca-install-acl-${randomUUID()}.txt`)
+  const saveFile = join(tmpdir(), `dolphin-install-acl-${randomUUID()}.txt`)
   return new Promise<string>((resolve) => {
     // /save only reads the target (it writes the temp file). Never /T — a recursive
     // walk on a real profile measured 62s and timed out (see windows-user-data-acl.ts).

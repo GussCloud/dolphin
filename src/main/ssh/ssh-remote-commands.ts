@@ -128,7 +128,7 @@ export function probeRelayInstalledCommand(
  * The model-agnostic form: any install is complete when its directory exists and every
  * named artifact is a regular file inside it.
  *
- * Why the caller passes the list: orcad and the relay ship different artifacts, and a probe
+ * Why the caller passes the list: dolphind and the relay ship different artifacts, and a probe
  * that checked a shared subset would call a torn install complete.
  */
 export function probeRemoteInstallCompleteCommand(
@@ -162,10 +162,10 @@ export function listRelayBaseDirsCommand(host: RemoteHostPlatform, baseDir: stri
 }
 
 /**
- * List one model's version dirs (and its own tombstones) under `~/.orca-remote/`.
+ * List one model's version dirs (and its own tombstones) under `~/.dolphin-remote/`.
  *
  * The model scopes BOTH the `find`/`Get-ChildItem` glob and the validating regex. That
- * double filter is the on-the-wire half of the GC ownership rule: an orcad GC pass never
+ * double filter is the on-the-wire half of the GC ownership rule: a dolphind GC pass never
  * even receives a relay directory name, so it cannot delete one through a later bug.
  */
 export function listRemoteInstallBaseDirsCommand(
@@ -175,7 +175,7 @@ export function listRemoteInstallBaseDirsCommand(
 ): string {
   const namePattern = remoteInstallListingRegexSource(model)
   if (!isWindowsRemoteHost(host)) {
-    const statusPrefix = '__ORCA_RELAY_GC_FIND_STATUS__'
+    const statusPrefix = '__DOLPHIN_RELAY_GC_FIND_STATUS__'
     return [
       `base=${shellEscape(baseDir)}; [ -d "$base" ] || exit 0;`,
       `{ find "$base" -mindepth 1 -maxdepth 1 -type d -name '${model.dirPrefix}-*' -print; status=$?; printf '\n${statusPrefix}%s\n' "$status"; } |`,
@@ -237,7 +237,7 @@ export function relayLivenessProbeCommand(
   const js = [
     'const fs=require("fs"),path=require("path"),net=require("net");',
     'const [dir,...seed]=process.argv.slice(1);',
-    'const valid=/^\\\\\\\\[.?]\\\\pipe\\\\orca-relay-[0-9a-f]{20}$/i;',
+    'const valid=/^\\\\\\\\[.?]\\\\pipe\\\\dolphin-relay-[0-9a-f]{20}$/i;',
     'const pipes=[];',
     'let markerCount=0;',
     'for(const p of seed){if(valid.test(p)&&!pipes.includes(p))pipes.push(p)}',

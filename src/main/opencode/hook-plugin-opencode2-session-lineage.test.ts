@@ -27,11 +27,11 @@ const LIVE_SESSIONS: Record<string, LiveSession> = {
 type Post = { hook_event_name: string; sessionID?: string }
 
 const ENV_KEYS = [
-  'ORCA_PANE_KEY',
-  'ORCA_OPENCODE_AGENT',
-  'ORCA_AGENT_HOOK_ENDPOINT',
-  'ORCA_AGENT_HOOK_PORT',
-  'ORCA_AGENT_HOOK_TOKEN'
+  'DOLPHIN_PANE_KEY',
+  'DOLPHIN_OPENCODE_AGENT',
+  'DOLPHIN_AGENT_HOOK_ENDPOINT',
+  'DOLPHIN_AGENT_HOOK_PORT',
+  'DOLPHIN_AGENT_HOOK_TOKEN'
 ] as const
 
 describe.each(['opencode', 'opencode2'] as const)('%s plugin OpenCode 2 lineage', (agent) => {
@@ -40,17 +40,17 @@ describe.each(['opencode', 'opencode2'] as const)('%s plugin OpenCode 2 lineage'
   let savedEnv: Record<string, string | undefined>
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'orca-opencode2-lineage-'))
+    tempDir = mkdtempSync(join(tmpdir(), 'dolphin-opencode2-lineage-'))
     savedFetch = globalThis.fetch
     savedEnv = {}
     for (const key of ENV_KEYS) {
       savedEnv[key] = process.env[key]
     }
-    process.env.ORCA_PANE_KEY = 'tab-1:leaf-1'
-    process.env.ORCA_OPENCODE_AGENT = agent
-    delete process.env.ORCA_AGENT_HOOK_ENDPOINT
-    process.env.ORCA_AGENT_HOOK_PORT = '59999'
-    process.env.ORCA_AGENT_HOOK_TOKEN = 'test-token'
+    process.env.DOLPHIN_PANE_KEY = 'tab-1:leaf-1'
+    process.env.DOLPHIN_OPENCODE_AGENT = agent
+    delete process.env.DOLPHIN_AGENT_HOOK_ENDPOINT
+    process.env.DOLPHIN_AGENT_HOOK_PORT = '59999'
+    process.env.DOLPHIN_AGENT_HOOK_TOKEN = 'test-token'
   })
 
   afterEach(() => {

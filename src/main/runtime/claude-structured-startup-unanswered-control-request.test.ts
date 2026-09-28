@@ -9,7 +9,7 @@
 import { createHash } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { computeAgentSessionPayloadFingerprint } from '../../shared/agent-session-mutation-envelope'
-import { claudeSessionIdForOrcaSession } from '../claude/claude-structured-launch-resolution'
+import { claudeSessionIdForDolphinSession } from '../claude/claude-structured-launch-resolution'
 import { hostTestMessage } from '../native-chat/agent-session-wire/structured-agent-session-host-test-data'
 import type { StructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-host'
 import { createScriptedClaudeRuntime } from './structured-claude-scripted-runtime-test-support'
@@ -67,7 +67,7 @@ function turnReportsModel(model: string): void {
   claude.child(SESSION).handlers.onMessage?.({
     type: 'system',
     subtype: 'init',
-    session_id: claudeSessionIdForOrcaSession(SESSION),
+    session_id: claudeSessionIdForDolphinSession(SESSION),
     model
   })
 }

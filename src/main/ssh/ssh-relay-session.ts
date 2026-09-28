@@ -88,7 +88,7 @@ import {
 } from '../../shared/ssh-types'
 import { normalizeRemoteArtifactInput } from '../../shared/artifact-cli-bridge'
 import type { Store } from '../persistence'
-import type { OrcaRuntimeService } from '../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import {
   findTerminalTabIdForLeaf,
   hasHostAuthoritativeTerminalMembership
@@ -103,10 +103,10 @@ import {
   isSshOwnerAdmissionBlockedError,
   SshOwnerAdmissionBlockedError
 } from './ssh-owner-admission-blocked-error'
-import { runRemoteOrcaCli } from './ssh-remote-orca-cli'
+import { runRemoteDolphinCli } from './ssh-remote-dolphin-cli'
 import {
-  acknowledgeRemoteOrcaCliPostOutput,
-  parseRemoteOrcaCliPostOutput
+  acknowledgeRemoteDolphinCliPostOutput,
+  parseRemoteDolphinCliPostOutput
 } from './ssh-remote-orchestration-post-output'
 import { toSshExecutionHostId, type ExecutionHostId } from '../../shared/execution-host'
 import {
@@ -384,7 +384,7 @@ export class SshRelaySession {
     private getMainWindow: () => BrowserWindow | null,
     private store: Store,
     private portForwardManager: SshPortForwardManager,
-    private runtime?: OrcaRuntimeService,
+    private runtime?: DolphinRuntimeService,
     private onDetectedPortsChanged?: (
       targetId: string,
       ports: DetectedPort[],
@@ -398,7 +398,7 @@ export class SshRelaySession {
     getMainWindow: () => BrowserWindow | null,
     store: Store,
     portForwardManager: SshPortForwardManager,
-    runtime?: OrcaRuntimeService,
+    runtime?: DolphinRuntimeService,
     onDetectedPortsChanged?: (targetId: string, ports: DetectedPort[], platform: string) => void
   ): void {
     this.getMainWindow = getMainWindow
@@ -566,7 +566,7 @@ export class SshRelaySession {
         remoteHome && remoteRelayDir && nodePath && sockPath && hostPlatform
           ? {
               remoteHome,
-              binDir: joinRemotePath(hostPlatform, remoteHome, '.orca-relay', 'bin'),
+              binDir: joinRemotePath(hostPlatform, remoteHome, '.dolphin-relay', 'bin'),
               relayDir: remoteRelayDir,
               nodePath,
               sockPath,
@@ -725,7 +725,7 @@ export class SshRelaySession {
         remoteHome && remoteRelayDir && nodePath && sockPath && hostPlatform
           ? {
               remoteHome,
-              binDir: joinRemotePath(hostPlatform, remoteHome, '.orca-relay', 'bin'),
+              binDir: joinRemotePath(hostPlatform, remoteHome, '.dolphin-relay', 'bin'),
               relayDir: remoteRelayDir,
               nodePath,
               sockPath,
@@ -1102,11 +1102,11 @@ export class SshRelaySession {
     }
 
     try {
-      await this.installRemoteOrcaCliLauncher()
+      await this.installRemoteDolphinCliLauncher()
     } catch (error) {
       // Why: on MaxSessions=1 remotes the relay holds the only slot, so this raw-connection install can fail — don't fail the whole connection.
       console.warn(
-        `[ssh-relay-session] remote orca CLI launcher install failed for ${this.targetId}: ${
+        `[ssh-relay-session] remote dolphin CLI launcher install failed for ${this.targetId}: ${
           error instanceof Error ? error.message : String(error)
         }`
       )
@@ -1115,7 +1115,7 @@ export class SshRelaySession {
       return false
     }
 
-    this.wireUpRemoteOrcaCli(mux, connectionIncarnation)
+    this.wireUpRemoteDolphinCli(mux, connectionIncarnation)
 
     const providerGeneration = allocateSshPtyProviderGeneration()
     const ptyProvider = new SshPtyProvider(
@@ -1451,7 +1451,7 @@ export class SshRelaySession {
     }
   }
 
-  private async installRemoteOrcaCliLauncher(): Promise<void> {
+  private async installRemoteDolphinCliLauncher(): Promise<void> {
     if (!this.remoteCliBridgeEnv) {
       return
     }
@@ -1473,10 +1473,10 @@ export class SshRelaySession {
     }
   }
 
-  private wireUpRemoteOrcaCli(mux: SshChannelMultiplexer, connectionIncarnation: string): void {
-    mux.onRequest('orca.cli', async (params) => {
+  private wireUpRemoteDolphinCli(mux: SshChannelMultiplexer, connectionIncarnation: string): void {
+    mux.onRequest('dolphin.cli', async (params) => {
       if (!this.runtime) {
-        throw new Error('Orca runtime is unavailable')
+        throw new Error('Dolphin runtime is unavailable')
       }
       const argv = Array.isArray(params.argv)
         ? params.argv.filter((item): item is string => typeof item === 'string')
@@ -1500,7 +1500,7 @@ export class SshRelaySession {
       )
       this.activeCompatibilityAttachmentIds.add(runtimeAuthority.attachmentId)
       try {
-        return await runRemoteOrcaCli(this.runtime, {
+        return await runRemoteDolphinCli(this.runtime, {
           argv,
           cwd,
           env,
@@ -1513,9 +1513,9 @@ export class SshRelaySession {
         this.runtime.releaseOrchestrationCompatibilitySshAttachment(runtimeAuthority.attachmentId)
       }
     })
-    mux.onRequest('orca.cli.postOutput', async (params) => {
+    mux.onRequest('dolphin.cli.postOutput', async (params) => {
       if (!this.runtime) {
-        throw new Error('Orca runtime is unavailable')
+        throw new Error('Dolphin runtime is unavailable')
       }
       const rawEnv = params.env
       const env =
@@ -1533,8 +1533,8 @@ export class SshRelaySession {
       )
       this.activeCompatibilityAttachmentIds.add(runtimeAuthority.attachmentId)
       try {
-        await acknowledgeRemoteOrcaCliPostOutput(this.runtime, {
-          postOutput: parseRemoteOrcaCliPostOutput(params.postOutput),
+        await acknowledgeRemoteDolphinCliPostOutput(this.runtime, {
+          postOutput: parseRemoteDolphinCliPostOutput(params.postOutput),
           env,
           runtimeAuthority
         })
@@ -1546,7 +1546,7 @@ export class SshRelaySession {
     })
   }
 
-  // Why: ship plugin/extension source from Orca so agent-event changes don't force a relay redeploy — the relay is versioned independently. Best-effort: failure only costs agent status on this host.
+  // Why: ship plugin/extension source from Dolphin so agent-event changes don't force a relay redeploy — the relay is versioned independently. Best-effort: failure only costs agent status on this host.
   private async installPluginsOnRelay(mux: SshChannelMultiplexer): Promise<void> {
     if (!isRemoteAgentHooksEnabled()) {
       return

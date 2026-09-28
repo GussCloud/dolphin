@@ -22,7 +22,7 @@ const MATCHED: AgentSessionOwnerProbe = { outcome: 'identity-matched', matchedOn
 let directory: string
 
 beforeEach(async () => {
-  directory = await mkdtemp(join(tmpdir(), 'orca-agent-session-legacy-lease-'))
+  directory = await mkdtemp(join(tmpdir(), 'dolphin-agent-session-legacy-lease-'))
 })
 
 afterEach(async () => {

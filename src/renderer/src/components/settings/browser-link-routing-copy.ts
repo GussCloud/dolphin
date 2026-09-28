@@ -46,13 +46,13 @@ export function getLinkRoutingModifierTitle(openLinksInApp: boolean): string {
         'Hold Shift to open in your web browser'
       )
     : translate(
-        'auto.components.settings.BrowserLinkRoutingModifierSetting.titleOrca',
+        'auto.components.settings.BrowserLinkRoutingModifierSetting.titleDolphin',
         'Hold Shift to open in Dolphin'
       )
 }
 
-// Why: the Orca branch is enabled-state copy — with the toggle off the chord
-// still lands on the system browser, so it must not promise Orca in present tense.
+// Why: the Dolphin branch is enabled-state copy — with the toggle off the chord
+// still lands on the system browser, so it must not promise Dolphin in present tense.
 export function getLinkRoutingModifierDescription({
   openLinksInApp,
   isMac
@@ -68,7 +68,7 @@ export function getLinkRoutingModifierDescription({
         { chord }
       )
     : translate(
-        'auto.components.settings.BrowserLinkRoutingModifierSetting.descriptionOrca',
+        'auto.components.settings.BrowserLinkRoutingModifierSetting.descriptionDolphin',
         "Links open in your system browser. When enabled, {{chord}}+click opens one in Dolphin's built-in browser instead.",
         { chord }
       )

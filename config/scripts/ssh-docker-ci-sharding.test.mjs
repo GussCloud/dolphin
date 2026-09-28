@@ -61,11 +61,11 @@ it('native Playwright shards preserve every SSH test and project exactly once', 
   const cli = join(dirname(require.resolve('playwright/package.json')), 'cli.js')
   const env = {
     ...process.env,
-    ORCA_BACKGROUND_LAUNCH: '1',
-    ORCA_E2E_SSH_DOCKER: '1',
-    ORCA_E2E_LOCAL_SSH_BROWSER: '1',
-    ORCA_E2E_SSH_CLIENT_HOSTED_BROWSER: '1',
-    ORCA_E2E_WEB_CLIENT: '1'
+    DOLPHIN_BACKGROUND_LAUNCH: '1',
+    DOLPHIN_E2E_SSH_DOCKER: '1',
+    DOLPHIN_E2E_LOCAL_SSH_BROWSER: '1',
+    DOLPHIN_E2E_SSH_CLIENT_HOSTED_BROWSER: '1',
+    DOLPHIN_E2E_WEB_CLIENT: '1'
   }
   async function discover(extra = []) {
     const result = await runProcess({

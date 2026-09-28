@@ -1,12 +1,12 @@
 import { Import, Loader2 } from 'lucide-react'
 import {
-  ORCA_CLI_SKILL_INSTALL_COMMAND,
-  ORCA_CLI_SKILL_NAME,
-  ORCA_CLI_SKILL_UPDATE_COMMAND
+  DOLPHIN_CLI_SKILL_INSTALL_COMMAND,
+  DOLPHIN_CLI_SKILL_NAME,
+  DOLPHIN_CLI_SKILL_UPDATE_COMMAND
 } from '@/lib/agent-feature-install-commands'
 import {
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE,
-  ensureOrcaCliAvailableForAgentSkillTerminal
+  ensureDolphinCliAvailableForAgentSkillTerminal
 } from '@/lib/agent-skill-cli-prerequisite'
 import { cn } from '@/lib/utils'
 import { useActiveProjectSkillRuntime } from '@/hooks/useActiveProjectSkillRuntime'
@@ -31,8 +31,8 @@ export function MobileEmulatorAgentControlRow(): React.JSX.Element {
   const activeSkillRuntime = useActiveProjectSkillRuntime()
   // Why: skill detection here scans the local host only, so keep building host
   // commands; routing them to a WSL runtime would install where we never look.
-  const cliSkillInstallCommand = buildSkillCommandForRuntime(ORCA_CLI_SKILL_INSTALL_COMMAND)
-  const cliSkillUpdateCommand = buildSkillCommandForRuntime(ORCA_CLI_SKILL_UPDATE_COMMAND)
+  const cliSkillInstallCommand = buildSkillCommandForRuntime(DOLPHIN_CLI_SKILL_INSTALL_COMMAND)
+  const cliSkillUpdateCommand = buildSkillCommandForRuntime(DOLPHIN_CLI_SKILL_UPDATE_COMMAND)
 
   const handleEnableCli = async (): Promise<void> => {
     await setup.handleEnableCli()
@@ -161,7 +161,7 @@ export function MobileEmulatorAgentControlRow(): React.JSX.Element {
             installedCommand={cliSkillUpdateCommand}
             terminalTitle="Dolphin CLI skill setup"
             terminalAriaLabel="Dolphin CLI skill install terminal"
-            terminalWorktreeId="settings-mobile-emulator-orca-cli-skill-terminal"
+            terminalWorktreeId="settings-mobile-emulator-dolphin-cli-skill-terminal"
             terminalShellOverride={activeSkillRuntime.terminalShellOverride}
             installed={setup.cliSkillInstalled}
             loading={setup.cliSkillLoading}
@@ -174,11 +174,11 @@ export function MobileEmulatorAgentControlRow(): React.JSX.Element {
               'Checking Dolphin CLI before opening skill setup.'
             )}
             onBeforeOpenTerminal={async () => {
-              await ensureOrcaCliAvailableForAgentSkillTerminal()
+              await ensureDolphinCliAvailableForAgentSkillTerminal()
             }}
             onRecheck={setup.refreshCliSkill}
             freshnessSkillName={
-              activeSkillRuntime.canUseLocalSkillFreshness ? ORCA_CLI_SKILL_NAME : undefined
+              activeSkillRuntime.canUseLocalSkillFreshness ? DOLPHIN_CLI_SKILL_NAME : undefined
             }
           />
         </div>

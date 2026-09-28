@@ -5,7 +5,7 @@
  * - terminal panes retain state when switching tabs and when you make / close a pane / switch worktrees
  */
 
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import {
   discoverActivePtyId,
   execInTerminal,
@@ -39,63 +39,69 @@ test.describe('Terminal Panes', () => {
    * User Prompt:
    * - terminal panes retain state when switching tabs and when you make / close a pane / switch worktrees
    */
-  test('terminal pane retains content when switching tabs and back', async ({ orcaPage }) => {
+  test('terminal pane retains content when switching tabs and back', async ({ dolphinPage }) => {
     // Write a unique marker to the current terminal
-    const ptyId = await discoverActivePtyId(orcaPage)
+    const ptyId = await discoverActivePtyId(dolphinPage)
     const marker = `RETAIN_TEST_${Date.now()}`
-    await execInTerminal(orcaPage, ptyId, `echo ${marker}`)
-    await waitForTerminalOutput(orcaPage, marker)
+    await execInTerminal(dolphinPage, ptyId, `echo ${marker}`)
+    await waitForTerminalOutput(dolphinPage, marker)
 
     // Create a new terminal tab (Cmd/Ctrl+T) to switch away
-    const worktreeId = (await getActiveWorktreeId(orcaPage))!
-    await pressShortcut(orcaPage, 't')
+    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+    await pressShortcut(dolphinPage, 't')
 
     // Wait for the new tab to appear
     await expect
-      .poll(async () => (await getWorktreeTabs(orcaPage, worktreeId)).length, { timeout: 5_000 })
+      .poll(async () => (await getWorktreeTabs(dolphinPage, worktreeId)).length, { timeout: 5_000 })
       .toBeGreaterThanOrEqual(2)
 
     // Verify we're still on a terminal tab
-    const activeType = await getActiveTabType(orcaPage)
+    const activeType = await getActiveTabType(dolphinPage)
     expect(activeType).toBe('terminal')
 
     // Switch back to the previous tab with Cmd/Ctrl+Shift+[
-    await pressShortcut(orcaPage, 'BracketLeft', { shift: true })
+    await pressShortcut(dolphinPage, 'BracketLeft', { shift: true })
 
     // Verify the marker is still present
     await expect
-      .poll(async () => (await getTerminalContent(orcaPage)).includes(marker), { timeout: 5_000 })
+      .poll(async () => (await getTerminalContent(dolphinPage)).includes(marker), {
+        timeout: 5_000
+      })
       .toBe(true)
 
     // Clean up the extra tab
-    await pressShortcut(orcaPage, 'BracketRight', { shift: true })
-    await pressShortcut(orcaPage, 'w')
+    await pressShortcut(dolphinPage, 'BracketRight', { shift: true })
+    await pressShortcut(dolphinPage, 'w')
   })
 
   /**
    * User Prompt:
    * - terminal panes retain state when switching tabs and when you make / close a pane / switch worktrees
    */
-  test('terminal pane retains content when splitting and closing a pane', async ({ orcaPage }) => {
+  test('terminal pane retains content when splitting and closing a pane', async ({
+    dolphinPage
+  }) => {
     // Write a unique marker to the current terminal
-    const ptyId = await discoverActivePtyId(orcaPage)
+    const ptyId = await discoverActivePtyId(dolphinPage)
     const marker = `SPLIT_RETAIN_${Date.now()}`
-    await execInTerminal(orcaPage, ptyId, `echo ${marker}`)
-    await waitForTerminalOutput(orcaPage, marker)
+    await execInTerminal(dolphinPage, ptyId, `echo ${marker}`)
+    await waitForTerminalOutput(dolphinPage, marker)
 
-    const panesBefore = await countVisibleTerminalPanes(orcaPage)
+    const panesBefore = await countVisibleTerminalPanes(dolphinPage)
 
     // Split the terminal right
-    await splitActiveTerminalPane(orcaPage, 'vertical')
-    await waitForPaneCount(orcaPage, panesBefore + 1)
+    await splitActiveTerminalPane(dolphinPage, 'vertical')
+    await waitForPaneCount(dolphinPage, panesBefore + 1)
 
-    await focusLastTerminalPane(orcaPage)
-    await closeActiveTerminalPane(orcaPage)
-    await waitForPaneCount(orcaPage, panesBefore)
+    await focusLastTerminalPane(dolphinPage)
+    await closeActiveTerminalPane(dolphinPage)
+    await waitForPaneCount(dolphinPage, panesBefore)
 
     // The original pane should still have our marker
     await expect
-      .poll(async () => (await getTerminalContent(orcaPage)).includes(marker), { timeout: 5_000 })
+      .poll(async () => (await getTerminalContent(dolphinPage)).includes(marker), {
+        timeout: 5_000
+      })
       .toBe(true)
   })
 
@@ -103,30 +109,34 @@ test.describe('Terminal Panes', () => {
    * User Prompt:
    * - terminal panes retain state when switching tabs and when you make / close a pane / switch worktrees
    */
-  test('terminal pane retains content when switching worktrees and back', async ({ orcaPage }) => {
-    const allWorktreeIds = await getAllWorktreeIds(orcaPage)
+  test('terminal pane retains content when switching worktrees and back', async ({
+    dolphinPage
+  }) => {
+    const allWorktreeIds = await getAllWorktreeIds(dolphinPage)
     if (allWorktreeIds.length < 2) {
       test.skip(true, 'Need at least 2 worktrees to test worktree switching')
       return
     }
 
-    const worktreeId = (await getActiveWorktreeId(orcaPage))!
+    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
 
     // Write a unique marker to the current terminal
-    const ptyId = await discoverActivePtyId(orcaPage)
+    const ptyId = await discoverActivePtyId(dolphinPage)
     const marker = `WT_RETAIN_${Date.now()}`
-    await execInTerminal(orcaPage, ptyId, `echo ${marker}`)
-    await waitForTerminalOutput(orcaPage, marker)
+    await execInTerminal(dolphinPage, ptyId, `echo ${marker}`)
+    await waitForTerminalOutput(dolphinPage, marker)
 
     // Switch to a different worktree via the store
-    const otherId = await switchToOtherWorktree(orcaPage, worktreeId)
+    const otherId = await switchToOtherWorktree(dolphinPage, worktreeId)
     expect(otherId).not.toBeNull()
-    await expect.poll(async () => getActiveWorktreeId(orcaPage), { timeout: 5_000 }).toBe(otherId)
+    await expect
+      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 5_000 })
+      .toBe(otherId)
 
     // Switch back to the original worktree
-    await switchToWorktree(orcaPage, worktreeId)
+    await switchToWorktree(dolphinPage, worktreeId)
     await expect
-      .poll(async () => getActiveWorktreeId(orcaPage), { timeout: 5_000 })
+      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 5_000 })
       .toBe(worktreeId)
 
     // Why: after a worktree round-trip, the split-group container transitions
@@ -135,11 +145,13 @@ test.describe('Terminal Panes', () => {
     // after the worktree activation cascade. Waiting directly for the retained
     // marker proves the user-visible behavior without failing early on the
     // intermediate manager-remount timing.
-    await ensureTerminalVisible(orcaPage)
+    await ensureTerminalVisible(dolphinPage)
 
     // The terminal should still contain our marker
     await expect
-      .poll(async () => (await getTerminalContent(orcaPage)).includes(marker), { timeout: 20_000 })
+      .poll(async () => (await getTerminalContent(dolphinPage)).includes(marker), {
+        timeout: 20_000
+      })
       .toBe(true)
   })
 })

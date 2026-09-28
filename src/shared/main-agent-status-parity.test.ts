@@ -35,8 +35,8 @@ type Published = {
 }
 
 const RUNNING_SHELL = { id: 'shell-1', type: 'shell', status: 'running' }
-/** Not a hook: current Claude sends none on a cancel, so Orca infers it from the keystroke. */
-const ORCA_INFERRED_INTERRUPT = { orca_inferred_interrupt: true }
+/** Not a hook: current Claude sends none on a cancel, so Dolphin infers it from the keystroke. */
+const DOLPHIN_INFERRED_INTERRUPT = { dolphin_inferred_interrupt: true }
 const RUNNING_AGENT = { id: 'agent-1', type: 'subagent', status: 'running' }
 const AGENT_TASK: AgentSessionBackgroundTask = { id: 'agent-1', kind: 'agent', state: 'working' }
 const SHELL_TASK: AgentSessionBackgroundTask = { id: 'shell-1', kind: 'command', state: 'working' }
@@ -273,13 +273,13 @@ const STORIES: Story[] = [
   {
     // A cancel never hides live work: the shell the cancelled turn left running reads monitoring
     // in every lane, and the cancellation survives only as the main agent's verdict. The Claude
-    // row is the primary path: Orca's inferred cancel, carried by the main agent record into the
+    // row is the primary path: Dolphin's inferred cancel, carried by the main agent record into the
     // next Stop, which lists the shell.
     name: 'interrupted with a watch loop',
     claude: {
       events: [
         { hook_event_name: 'UserPromptSubmit', prompt: 'go' },
-        ORCA_INFERRED_INTERRUPT,
+        DOLPHIN_INFERRED_INTERRUPT,
         { hook_event_name: 'Stop', background_tasks: [RUNNING_SHELL] }
       ],
       expect: {
@@ -312,12 +312,12 @@ const STORIES: Story[] = [
   },
   {
     // Neither CLI reports a cancel on its own Stop, so the late turn boundary must keep the
-    // verdict Orca inferred rather than downgrade it to "unknown".
+    // verdict Dolphin inferred rather than downgrade it to "unknown".
     name: 'interrupted, then the late turn boundary',
     claude: {
       events: [
         { hook_event_name: 'UserPromptSubmit', prompt: 'go' },
-        ORCA_INFERRED_INTERRUPT,
+        DOLPHIN_INFERRED_INTERRUPT,
         { hook_event_name: 'Stop' }
       ],
       expect: { state: 'done', mainAgent: { state: 'done', outcome: 'cancellation' } }
@@ -325,7 +325,7 @@ const STORIES: Story[] = [
     codex: {
       events: [
         { hook_event_name: 'UserPromptSubmit', prompt: 'go' },
-        ORCA_INFERRED_INTERRUPT,
+        DOLPHIN_INFERRED_INTERRUPT,
         { hook_event_name: 'Stop' }
       ],
       expect: { state: 'done', mainAgent: { state: 'done', outcome: 'cancellation' } }
@@ -347,14 +347,14 @@ const STORIES: Story[] = [
     }
   },
   {
-    // The cancel itself, before any Stop: the row Orca synthesizes must fold the same way.
+    // The cancel itself, before any Stop: the row Dolphin synthesizes must fold the same way.
     name: 'interrupted while a watch loop is already registered',
     claude: {
       events: [
         { hook_event_name: 'UserPromptSubmit', prompt: 'start it' },
         { hook_event_name: 'Stop', background_tasks: [RUNNING_SHELL] },
         { hook_event_name: 'UserPromptSubmit', prompt: 'now this' },
-        ORCA_INFERRED_INTERRUPT
+        DOLPHIN_INFERRED_INTERRUPT
       ],
       expect: {
         state: 'working',
@@ -371,7 +371,7 @@ const STORIES: Story[] = [
         { hook_event_name: 'SubagentStart', agent_id: 'agent-1' },
         { hook_event_name: 'Stop', background_tasks: [RUNNING_AGENT] },
         { hook_event_name: 'UserPromptSubmit', prompt: 'and this' },
-        ORCA_INFERRED_INTERRUPT
+        DOLPHIN_INFERRED_INTERRUPT
       ],
       expect: { state: 'working', mainAgent: { state: 'done', outcome: 'cancellation' } }
     },
@@ -411,7 +411,7 @@ describe('mainAgent status parity across lanes', () => {
   ): ParsedAgentStatusPayload {
     let last: ParsedAgentStatusPayload | null = null
     for (const payload of events) {
-      if (payload === ORCA_INFERRED_INTERRUPT) {
+      if (payload === DOLPHIN_INFERRED_INTERRUPT) {
         if (source === 'codex') {
           markCodexLeadTurnInterrupted(state, PANE_KEY)
           continue

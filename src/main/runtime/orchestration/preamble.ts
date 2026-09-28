@@ -1,7 +1,7 @@
 import { CLI_COMMAND_NAME, DEV_CLI_COMMAND_NAME } from '../../../shared/cli-command-names'
 import type { OrchestrationCliCommand } from './cli-command'
 import type { RuntimeAgentPromptWriteOptions } from '../runtime-terminal-contracts'
-import { ORCA_DISPATCH_PROMPT_LEAD_LINE } from '../../../shared/orca-dispatch-status-prompt'
+import { DOLPHIN_DISPATCH_PROMPT_LEAD_LINE } from '../../../shared/dolphin-dispatch-status-prompt'
 
 export type PreambleParams = {
   taskId: string
@@ -16,8 +16,8 @@ export type PreambleParams = {
   coordinatorHandle: string
   workerHandle: string
   devMode?: boolean
-  // Why: packaged WSL panes install the scoped launcher as `orca-ide`;
-  // other execution hosts keep their existing bare `orca` bridge.
+  // Why: packaged WSL panes install the scoped launcher as `dolphin-ide`;
+  // other execution hosts keep their existing bare `dolphin` bridge.
   cliCommand?: OrchestrationCliCommand
   // Why: populated by the coordinator's dispatch pre-flight (§3.1) only
   // when the target worktree is behind its tracking remote. When absent
@@ -32,7 +32,7 @@ export type PreambleParams = {
     recentSubjects: string[]
   }
   // Why: prompt-returning agents should idle after worker_done, while bare
-  // shells have no agent prompt for Orca to reuse.
+  // shells have no agent prompt for Dolphin to reuse.
   workerKind?: 'prompt-returning-agent' | 'bare-shell'
   // Why gated: advertising a verb the depth cap will reject just burns a turn.
   canDispatchSubWorkers?: boolean
@@ -44,15 +44,15 @@ export type PreambleParams = {
 // cadence tuning is a single-line change (Q1 in DESIGN_DOC_PREAMBLE_FIX.md).
 const HEARTBEAT_INTERVAL_MIN = 5
 
-// Why: the dispatch preamble teaches agents about Orca's CLI commands for
+// Why: the dispatch preamble teaches agents about Dolphin's CLI commands for
 // structured communication. Behavioral rules (body summary, heartbeat cadence,
 // no-AskUserQuestion) live as inline comments above the relevant CLI example,
 // not as a separate prose block — LLM readers anchor on examples and skim
 // trailing prose, so rules must land at the point of use.
 export function buildDispatchPreamble(params: PreambleParams): string {
-  // Why: in dev mode, agents must use orca-dev to connect to the dev runtime's
+  // Why: in dev mode, agents must use dolphin-dev to connect to the dev runtime's
   // socket. Without this, agents inside the dev Electron app would call the
-  // production CLI and talk to the wrong Orca instance (Section 6.4).
+  // production CLI and talk to the wrong Dolphin instance (Section 6.4).
   const cli = params.devMode ? DEV_CLI_COMMAND_NAME : (params.cliCommand ?? CLI_COMMAND_NAME)
   const postDoneInstructions = buildPostWorkerDoneInstructions({
     cli,
@@ -66,7 +66,7 @@ export function buildDispatchPreamble(params: PreambleParams): string {
   // Why fenced: keeps the shell comments executable without rendering them as Chat UI headings.
   // Why plain-reason wording: Claude Code tells the model pasted text may carry instructions
   // the user did not write, and shouted rules read as prompt injection (STA-8200).
-  const header = `You are working inside Orca, a multi-agent IDE. You are a dispatched worker.
+  const header = `You are working inside Dolphin, a multi-agent IDE. You are a dispatched worker.
 Your coordinator's terminal handle is: ${params.coordinatorHandle}
 Your task ID is: ${params.taskId}
 
@@ -154,7 +154,7 @@ export type DispatchPreambleSendOptions = Pick<
 export function dispatchPreambleSendOptions(requestId: string): DispatchPreambleSendOptions {
   // Why: a delayed provider hook must not revoke an accepted Dispatch.
   return {
-    leadLine: ORCA_DISPATCH_PROMPT_LEAD_LINE,
+    leadLine: DOLPHIN_DISPATCH_PROMPT_LEAD_LINE,
     acceptQueued: true,
     observationTimeoutMs: 0,
     requestId
@@ -180,7 +180,7 @@ do NOT run a sleep/poll loop, and do NOT keep calling
 completion and expects no further output.
 
 Exit the shell after completion. Bare-shell workers have no idle agent
-prompt for Orca to reuse; if the coordinator has more for you it will
+prompt for Dolphin to reuse; if the coordinator has more for you it will
 dispatch or prompt another worker with a fresh TASK block.`
   }
 

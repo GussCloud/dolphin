@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RuntimeMetadata } from '../../shared/runtime-bootstrap'
 import { formatCliError, reportCliError } from '../cli-error'
 import { RuntimeClient } from './client'
-import { launchOrcaApp } from './launch'
+import { launchDolphinApp } from './launch'
 import { getCliStatus } from './status'
 import { sendRequest } from './transport'
 
@@ -13,7 +13,7 @@ const { connect, tryReadMetadata } = vi.hoisted(() => ({
 }))
 vi.mock('node:net', () => ({ createConnection: connect }))
 vi.mock('./metadata', () => ({ tryReadMetadata, readMetadata: tryReadMetadata }))
-vi.mock('./launch', () => ({ launchOrcaApp: vi.fn() }))
+vi.mock('./launch', () => ({ launchDolphinApp: vi.fn() }))
 vi.mock('./runtime-remote-pairing', () => ({ resolveRemotePairing: () => null }))
 
 const metadata: RuntimeMetadata = {
@@ -109,7 +109,7 @@ describe('runtime access denied', () => {
     }
   )
 
-  // Why: a dead Orca leaves its socket behind, and the sandbox denies it before ECONNREFUSED.
+  // Why: a dead Dolphin leaves its socket behind, and the sandbox denies it before ECONNREFUSED.
   it('gives not-running advice when the denied endpoint belongs to a dead pid', async () => {
     mockKill('ESRCH')
     const human = formatCliError(await deniedRequest('EPERM'))
@@ -124,11 +124,11 @@ describe('runtime access denied', () => {
   })
 
   it('does not launch or poll Dolphin when the initial status is denied', async () => {
-    const pending = new RuntimeClient('/test', 1000, null, null).openOrca()
+    const pending = new RuntimeClient('/test', 1000, null, null).openDolphin()
     failConnect('EPERM')
 
     await expect(pending).rejects.toMatchObject({ code: 'runtime_access_denied' })
-    expect(launchOrcaApp).not.toHaveBeenCalled()
+    expect(launchDolphinApp).not.toHaveBeenCalled()
     expect(connect).toHaveBeenCalledTimes(1)
   })
 

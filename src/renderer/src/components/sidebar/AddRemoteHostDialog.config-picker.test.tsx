@@ -55,7 +55,7 @@ function configHost(
     hostname: `${alias}.internal`,
     port: 22,
     username: 'deploy',
-    alreadyInOrca: false,
+    alreadyInDolphin: false,
     ...overrides
   }
 }
@@ -159,7 +159,7 @@ describe('SSH config picker tombstoned hosts', () => {
     await openPickerWith({
       hosts: [
         configHost('removed', { previouslyRemoved: true }),
-        configHost('kept', { alreadyInOrca: true })
+        configHost('kept', { alreadyInDolphin: true })
       ],
       totalHostCount: 2,
       newHostCount: 0,

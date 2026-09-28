@@ -8,12 +8,12 @@ export function resolveOrchestrationCliExecutable(
   env: NodeJS.ProcessEnv = process.env,
   platform: NodeJS.Platform = process.platform
 ): string {
-  const configured = env.ORCA_CLI_COMMAND?.trim()
+  const configured = env.DOLPHIN_CLI_COMMAND?.trim()
   if (configured) {
     // Why: an older launcher may still export a legacy name; recovery must name the installed command.
     return parseCliCommandName(configured) ?? configured
   }
-  if (env.ORCA_DEV_REPO_ROOT) {
+  if (env.DOLPHIN_DEV_REPO_ROOT) {
     return DEV_CLI_COMMAND_NAME
   }
   return getCliCommandNameForPlatform(platform)

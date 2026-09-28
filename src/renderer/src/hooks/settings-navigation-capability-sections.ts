@@ -6,8 +6,8 @@ import { getGeneralPaneSearchEntries } from '@/components/settings/general-searc
 import { getIntegrationsPaneSearchEntries } from '@/components/settings/integrations-search'
 import { getLinearAgentSkillPaneSearchEntries } from '@/components/settings/linear-agent-skill-search'
 import { getMobileSettingsPaneSearchEntries } from '@/components/settings/mobile-settings-search'
-import { getOrcaAccountSettingsSearchEntries } from '@/components/settings/orca-account-settings-search'
-import { OrcaLogoSettingsIcon } from '@/components/settings/orca-logo-settings-icon'
+import { getDolphinAccountSettingsSearchEntries } from '@/components/settings/dolphin-account-settings-search'
+import { DolphinLogoSettingsIcon } from '@/components/settings/dolphin-logo-settings-icon'
 import { getOrchestrationPaneSearchEntries } from '@/components/settings/orchestration-search'
 import { getVoicePaneSearchEntries } from '@/components/settings/voice-pane-search'
 import { translate } from '@/i18n/i18n'
@@ -129,14 +129,14 @@ export function buildSetupSettingsSections({
     ...(showDesktopOnlySettings
       ? [
           {
-            id: 'orca-account',
-            title: translate('auto.components.settings.orcaAccount.title', 'Dolphin Account'),
+            id: 'dolphin-account',
+            title: translate('auto.components.settings.dolphinAccount.title', 'Dolphin Account'),
             description: translate(
-              'auto.components.settings.orcaAccount.description',
+              'auto.components.settings.dolphinAccount.description',
               'Share work instantly and reach your desktop from Dolphin Mobile wherever you are.'
             ),
             icon: CircleUserRound,
-            searchEntries: getOrcaAccountSettingsSearchEntries(),
+            searchEntries: getDolphinAccountSettingsSearchEntries(),
             group: 'setup'
           }
         ]
@@ -151,7 +151,7 @@ export function buildSetupSettingsSections({
         'auto.hooks.useSettingsNavigationMetadata.5f32ac08f3',
         'Finish the onboarding checklist for core Dolphin workflows.'
       ),
-      icon: OrcaLogoSettingsIcon,
+      icon: DolphinLogoSettingsIcon,
       searchEntries: [
         {
           title: translate(

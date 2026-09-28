@@ -7,7 +7,7 @@ export function runtimeAccessDeniedError(
   pid: number
 ): RuntimeClientError | null {
   const systemCode = 'code' in socketError ? socketError.code : undefined
-  // Why: a sandbox still sees ESRCH, so a dead Orca's leftover socket gets not-running advice.
+  // Why: a sandbox still sees ESRCH, so a dead Dolphin's leftover socket gets not-running advice.
   if ((systemCode !== 'EPERM' && systemCode !== 'EACCES') || !isProcessRunning(pid)) {
     return null
   }

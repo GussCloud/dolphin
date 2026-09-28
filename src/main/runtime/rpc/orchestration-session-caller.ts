@@ -1,5 +1,5 @@
 /**
- * Resolves an orchestration caller that names itself by the Orca agent session id in its injected
+ * Resolves an orchestration caller that names itself by the Dolphin agent session id in its injected
  * environment. Both dispatchers call this once, before params parse and the unary/streaming split,
  * so it runs ahead of legacy compatibility, receipt lookup and every method. Before parsing, so a
  * session caller need not name itself in a param that requires a caller.
@@ -8,7 +8,7 @@
  * user, so the checks are about getting the identity right, not about keeping anyone out:
  * - Same host only. A paired client, an SSH environment or a WSL shell is another host, where
  *   "same machine, same user" does not hold, so a session claim from one is refused.
- * - The Orca id, never the provider's: that one rotates on `/clear`.
+ * - The Dolphin id, never the provider's: that one rotates on `/clear`.
  * - A live lease: released, mid owner change or unreconciled sessions cannot act.
  * - The session wins over any declared caller: a declared handle must name this same session, and
  *   a structured worker's session id maps to the handle and pane it was minted.
@@ -17,17 +17,20 @@
  */
 import { agentSessionLeaseAdmitsWriter } from '../../../shared/agent-session-lease-adjudication'
 import type { AgentSessionRecord } from '../../../shared/agent-session-record'
-import { isOrcaSessionId, parseOrcaSessionAddress } from '../../../shared/orca-session-address'
+import {
+  isDolphinSessionId,
+  parseDolphinSessionAddress
+} from '../../../shared/dolphin-session-address'
 import { ORCHESTRATION_SESSION_CALLER_ERROR_CODES as CODES } from '../../../shared/orchestration-session-caller-codes'
 import { getStructuredAgentSessionHost } from '../../native-chat/agent-session-wire/structured-agent-session-registry'
-import type { OrcaRuntimeService } from '../orca-runtime'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import type { OrchestrationSessionCaller } from '../orchestration/orchestration-caller-identity'
 import { OrchestrationError } from '../orchestration/orchestration-error'
-import { canonicalOrcaSessionId } from '../orchestration/canonical-orca-session-id'
+import { canonicalDolphinSessionId } from '../orchestration/canonical-dolphin-session-id'
 import type { OrchestrationDb } from '../orchestration/db'
 import {
   resolveDeclaredCallerParty,
-  resolveOrcaSessionParty,
+  resolveDolphinSessionParty,
   resolveOrchestrationParty
 } from '../orchestration/orchestration-party'
 import { structuredWorkerHostScope } from '../structured-worker-identity'
@@ -94,12 +97,12 @@ function declaredSessionAddress(request: RpcRequest): string | undefined {
   }
   const values: Record<string, unknown> = { ...params }
   const declared = values[name]
-  return typeof declared === 'string' && parseOrcaSessionAddress(declared) ? declared : undefined
+  return typeof declared === 'string' && parseDolphinSessionAddress(declared) ? declared : undefined
 }
 
 /** Only for a request `needsOrchestrationCallerResolution` accepts. Throws the refusal, if any. */
 export async function resolveOrchestrationSessionCaller(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   request: RpcRequest,
   route: OrchestrationRequestRoute | undefined
 ): Promise<ResolvedOrchestrationRequest> {
@@ -110,7 +113,7 @@ export async function resolveOrchestrationSessionCaller(
   const claimed: unknown = evidence?.agentSessionId
   if (route?.pairedDeviceId !== undefined) {
     throw hostBoundary(
-      'This request reached Orca from a paired client, and an agent session id identifies a caller only on the host that runs that session.'
+      'This request reached Dolphin from a paired client, and an agent session id identifies a caller only on the host that runs that session.'
     )
   }
   if (evidence?.host) {
@@ -118,10 +121,10 @@ export async function resolveOrchestrationSessionCaller(
       `This command ran in ${evidence.host.kind === 'ssh' ? 'an SSH' : 'a WSL'} environment, and an agent session id identifies a caller only on the host that runs that session.`
     )
   }
-  if (typeof claimed !== 'string' || !isOrcaSessionId(claimed)) {
+  if (typeof claimed !== 'string' || !isDolphinSessionId(claimed)) {
     throw new OrchestrationError(
       CODES.unknown,
-      'The caller named an agent session id that is not an Orca session id. No effects were applied.',
+      'The caller named an agent session id that is not a Dolphin session id. No effects were applied.',
       NO_EFFECTS
     )
   }
@@ -130,7 +133,7 @@ export async function resolveOrchestrationSessionCaller(
   assertSessionCanAct(sessionId, record)
   const db = runtime.getOrchestrationDb()
   const caller: OrchestrationSessionCaller = Object.freeze({
-    ...resolveOrcaSessionParty(sessionId, db),
+    ...resolveDolphinSessionParty(sessionId, db),
     sessionId,
     workspaceId: record.location.workspaceId
   })
@@ -146,7 +149,7 @@ export async function resolveOrchestrationSessionCaller(
 }
 
 async function readSessionRecord(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   sessionId: string
 ): Promise<AgentSessionRecord> {
   let store: ReturnType<typeof sessionRecordStore>
@@ -159,7 +162,7 @@ async function readSessionRecord(
   if (!store) {
     throw new OrchestrationError(
       CODES.notLive,
-      `Agent session ${sessionId} cannot be verified: this Orca is not running its agent-session host. No effects were applied.`,
+      `Agent session ${sessionId} cannot be verified: this Dolphin is not running its agent-session host. No effects were applied.`,
       NO_EFFECTS
     )
   }
@@ -171,13 +174,13 @@ async function readSessionRecord(
   if (owner) {
     throw new OrchestrationError(
       CODES.providerId,
-      `${sessionId} is the provider's own session id, which changes on /clear. This session's Orca id is ${owner.sessionId}; use that instead. No effects were applied.`,
-      { ...NO_EFFECTS, orcaSessionId: owner.sessionId }
+      `${sessionId} is the provider's own session id, which changes on /clear. This session's Dolphin id is ${owner.sessionId}; use that instead. No effects were applied.`,
+      { ...NO_EFFECTS, dolphinSessionId: owner.sessionId }
     )
   }
   throw new OrchestrationError(
     CODES.unknown,
-    `No Orca agent session ${sessionId} exists on this host. No effects were applied.`,
+    `No Dolphin agent session ${sessionId} exists on this host. No effects were applied.`,
     NO_EFFECTS
   )
 }
@@ -240,8 +243,8 @@ function declaredNamesCaller(
   if (typeof declared !== 'string') {
     return false
   }
-  if (isOrcaSessionId(declared)) {
-    return canonicalOrcaSessionId(declared) === caller.orcaSessionId
+  if (isDolphinSessionId(declared)) {
+    return canonicalDolphinSessionId(declared) === caller.dolphinSessionId
   }
   try {
     return resolveOrchestrationParty(declared, db).address === caller.address

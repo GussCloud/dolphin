@@ -11,7 +11,7 @@ describe('profile state startup recovery dialog', () => {
 
     await presentProfileStateStartupRecoveryDialog({
       message: 'SQLite state is unreadable.\nSQLite path: /tmp/profile-state.db',
-      recoveryCommand: 'orca profile state exports',
+      recoveryCommand: 'dolphin profile state exports',
       showMessageBox,
       copyToClipboard
     })
@@ -26,7 +26,7 @@ describe('profile state startup recovery dialog', () => {
       detail:
         'SQLite state is unreadable.\nSQLite path: /tmp/profile-state.db\n\nCopy the recovery command, then run it after Dolphin closes.'
     })
-    expect(copyToClipboard).toHaveBeenCalledWith('orca profile state exports')
+    expect(copyToClipboard).toHaveBeenCalledWith('dolphin profile state exports')
   })
 
   it('leaves the clipboard untouched when the user quits', async () => {
@@ -35,7 +35,7 @@ describe('profile state startup recovery dialog', () => {
 
     await presentProfileStateStartupRecoveryDialog({
       message: 'ambiguous profile state',
-      recoveryCommand: 'orca profile state exports',
+      recoveryCommand: 'dolphin profile state exports',
       showMessageBox,
       copyToClipboard
     })

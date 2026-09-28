@@ -15,9 +15,9 @@ vi.mock('fs', () => ({
 
 vi.mock('./relay-protocol', () => ({
   RELAY_VERSION: '0.1.0',
-  RELAY_REMOTE_DIR: '.orca-remote',
+  RELAY_REMOTE_DIR: '.dolphin-remote',
   parseUnameToRelayPlatform: vi.fn().mockReturnValue('linux-x64'),
-  RELAY_SENTINEL: 'ORCA-RELAY v0.1.0 READY\n',
+  RELAY_SENTINEL: 'DOLPHIN-RELAY v0.1.0 READY\n',
   RELAY_SENTINEL_TIMEOUT_MS: 10_000
 }))
 
@@ -57,7 +57,7 @@ vi.mock('./ssh-relay-ripgrep-install', async (importOriginal) => ({
 
 vi.mock('./ssh-relay-versioned-install', () => ({
   readLocalFullVersion: vi.fn().mockReturnValue('0.1.0+testhash'),
-  computeRemoteRelayDir: (home: string, v: string) => `${home}/.orca-remote/relay-${v}`,
+  computeRemoteRelayDir: (home: string, v: string) => `${home}/.dolphin-remote/relay-${v}`,
   isRelayAlreadyInstalled: vi.fn().mockResolvedValue(false),
   finalizeInstall: vi.fn().mockResolvedValue(undefined),
   abandonInstall: vi.fn().mockResolvedValue(undefined),
@@ -300,7 +300,7 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
       makeExecResponses({
         npmInstall: {
           reject:
-            'Command "export PATH=/usr/bin:$PATH && cd /home/u/.orca-remote/relay && npm install node-pty@1.1.0 2>&1" failed (exit 1): npm ERR! network ETIMEDOUT'
+            'Command "export PATH=/usr/bin:$PATH && cd /home/u/.dolphin-remote/relay && npm install node-pty@1.1.0 2>&1" failed (exit 1): npm ERR! network ETIMEDOUT'
         },
         probe: 'ok',
         toolchainProbe: 'PKG apt-get'
@@ -415,7 +415,7 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     const conn = makeMockConnection(sftpCapture)
     vi.mocked(isRelayAlreadyInstalled).mockResolvedValue(true)
     feed([
-      '__ORCA_REMOTE_PLATFORM__ Linux x86_64',
+      '__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64',
       '/home/u',
       { reject: 'Command "node -e ..." timed out after 30s' } // health probe never answered
     ])
@@ -528,7 +528,7 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
       makeExecResponses({
         npmInstall: 'ok',
         probe: 'ok',
-        probeStdoutOverride: 'Welcome to Acme Corp\nLast login: ...\nORCA-NPTY-PROBE-OK\n'
+        probeStdoutOverride: 'Welcome to Acme Corp\nLast login: ...\nDOLPHIN-NPTY-PROBE-OK\n'
       })
     )
 
@@ -563,11 +563,11 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     vi.mocked(resolveRemoteNodePath).mockResolvedValueOnce('C:/Program Files/nodejs/node.exe')
     const conn = makeMockConnection(sftpCapture)
     feed([
-      '__ORCA_REMOTE_PLATFORM__ Windows AMD64',
+      '__DOLPHIN_REMOTE_PLATFORM__ Windows AMD64',
       'C:\\Users\\u',
       '', // bounded stale-stage recovery
-      '__ORCA_UPLOAD_STAGE_SLOT__.sftp-namespace-00000000000000000000000000000000:slot-0',
-      '__ORCA_UPLOAD_STAGE_PROMOTION__.sftp-namespace-00000000000000000000000000000000:PROMOTED',
+      '__DOLPHIN_UPLOAD_STAGE_SLOT__.sftp-namespace-00000000000000000000000000000000:slot-0',
+      '__DOLPHIN_UPLOAD_STAGE_PROMOTION__.sftp-namespace-00000000000000000000000000000000:PROMOTED',
       '', // npm install native deps
       'MISSING\n', // native process exit normalized by PowerShell command
       '', // npm rebuild native deps
@@ -660,16 +660,16 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     vi.mocked(isRelayAlreadyInstalled).mockResolvedValue(true)
     const conn = makeMockConnection(sftpCapture)
     feed([
-      '__ORCA_REMOTE_PLATFORM__ Linux x86_64',
+      '__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64',
       '/home/u',
-      'ORCA-NATIVE-DEPS-MISSING:@parcel/watcher\nMISSING', // first probe before lock
-      'ORCA-NATIVE-DEPS-MISSING:@parcel/watcher\nMISSING', // re-probe after lock
+      'DOLPHIN-NATIVE-DEPS-MISSING:@parcel/watcher\nMISSING', // first probe before lock
+      'DOLPHIN-NATIVE-DEPS-MISSING:@parcel/watcher\nMISSING', // re-probe after lock
       '', // SFTP-namespace install-owner marker (repair)
       '', // npm install native deps
       '', // chmod prebuilds
-      'ORCA-NPTY-PROBE-OK\n',
+      'DOLPHIN-NPTY-PROBE-OK\n',
       '', // rm probe stderr
-      'ORCA-NPTY-CLOEXEC:patched\n', // pty-master cloexec patch on the loadable node-pty
+      'DOLPHIN-NPTY-CLOEXEC:patched\n', // pty-master cloexec patch on the loadable node-pty
       'DEAD',
       'READY'
     ])
@@ -715,7 +715,7 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     vi.mocked(isRelayAlreadyInstalled).mockResolvedValue(true)
     const conn = makeMockConnection(sftpCapture)
     feed([
-      '__ORCA_REMOTE_PLATFORM__ Linux x86_64',
+      '__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64',
       '/home/u',
       BOTH_NATIVE_DEPS_MISSING_PROBE, // health probe: require() names both deps
       BOTH_NATIVE_DEPS_MISSING_PROBE, // re-probe after lock
@@ -739,7 +739,7 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     vi.mocked(isRelayAlreadyInstalled).mockResolvedValue(true)
     const conn = makeMockConnection(sftpCapture)
     vi.mocked(execCommand)
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
       .mockResolvedValueOnce('/home/u')
       .mockResolvedValueOnce(BOTH_NATIVE_DEPS_MISSING_PROBE)
       .mockResolvedValueOnce(BOTH_NATIVE_DEPS_MISSING_PROBE)
@@ -881,7 +881,7 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     vi.mocked(tryAcquireRelayRepairLock).mockResolvedValueOnce(lockResult)
     const conn = makeMockConnection(sftpCapture)
     feed([
-      '__ORCA_REMOTE_PLATFORM__ Linux x86_64',
+      '__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64',
       '/home/u',
       BOTH_NATIVE_DEPS_MISSING_PROBE,
       'DEAD',
@@ -903,9 +903,9 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     vi.mocked(isRelayAlreadyInstalled).mockResolvedValue(true)
     const conn = makeMockConnection(sftpCapture)
     feed([
-      '__ORCA_REMOTE_PLATFORM__ Linux x86_64',
+      '__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64',
       '/home/u',
-      'ORCA-NATIVE-DEPS-OK',
+      'DOLPHIN-NATIVE-DEPS-OK',
       '', // launch namespace marker
       'DEAD',
       'READY'
@@ -916,7 +916,7 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     const healthProbe = vi
       .mocked(execCommand)
       .mock.calls.map(([, c]) => c)
-      .find((c) => c.includes('ORCA-NATIVE-DEPS-OK'))
+      .find((c) => c.includes('DOLPHIN-NATIVE-DEPS-OK'))
     expect(healthProbe).toContain('require("node-pty")')
     expect(healthProbe).toContain('loadNativeModule')
     expect(healthProbe).toContain('require("@parcel/watcher")')
@@ -927,9 +927,9 @@ describe('installNativeDeps (via deployAndLaunchRelay)', () => {
     vi.mocked(isRelayAlreadyInstalled).mockResolvedValue(true)
     const conn = makeMockConnection(sftpCapture)
     feed([
-      '__ORCA_REMOTE_PLATFORM__ Linux x86_64',
+      '__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64',
       '/home/u',
-      'ORCA-NATIVE-DEPS-OK',
+      'DOLPHIN-NATIVE-DEPS-OK',
       '', // launch namespace marker
       'DEAD',
       'READY'

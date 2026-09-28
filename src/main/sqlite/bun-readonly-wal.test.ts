@@ -23,7 +23,7 @@ afterEach(async () => {
 })
 
 function fixture(wal = true): string {
-  const directory = fs.mkdtempSync(join(tmpdir(), 'orca-readonly-wal-'))
+  const directory = fs.mkdtempSync(join(tmpdir(), 'dolphin-readonly-wal-'))
   directories.push(directory)
   const file = join(directory, 'state.db')
   const db = new Database(file)

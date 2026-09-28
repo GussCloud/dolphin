@@ -190,7 +190,7 @@ describe('relay host tokens', () => {
     const jwks = (await (await app.request('/.well-known/jwks.json')).json()) as JSONWebKeySet
     const { payload } = await jwtVerify(body.relayToken, createLocalJWKSet(jwks), {
       issuer: ISSUER,
-      audience: 'orca-relay',
+      audience: 'dolphin-relay',
       algorithms: ['ES256']
     })
     const claims = RelayClaims.parse(payload)

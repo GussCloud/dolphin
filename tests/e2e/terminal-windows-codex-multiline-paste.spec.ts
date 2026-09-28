@@ -1,8 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import { test, expect } from './helpers/orca-app'
-import { attachRepoAndOpenTerminal } from './helpers/orca-restart'
+import { test, expect } from './helpers/dolphin-app'
+import { attachRepoAndOpenTerminal } from './helpers/dolphin-restart'
 import {
   focusActiveTerminalInput,
   getTerminalContent,
@@ -13,12 +13,12 @@ import {
 } from './helpers/terminal'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 
-const DRAFT = 'ORCA_CODEX_PASTE_DRAFT_SHOULD_STAY_UNSENT'
+const DRAFT = 'DOLPHIN_CODEX_PASTE_DRAFT_SHOULD_STAY_UNSENT'
 const CODEX_TRUST_PROMPT_RE = /Do[\s\S]*you[\s\S]*trust[\s\S]*contents/i
 
 function pastePayload(repeats = 4): string {
   const lines = [
-    'Repository: stablyai/orca',
+    'Repository: GussCloud/dolphin',
     '',
     'Required exact revision:',
     '',
@@ -130,63 +130,63 @@ test.describe('Windows Codex multiline paste', () => {
   test.use({ seedTestRepo: false })
 
   test('multiline Ctrl+V keeps the existing Codex draft unsent @local-real-codex', async ({
-    orcaPage,
+    dolphinPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'Windows ConPTY coverage is Windows-only')
     test.skip(
-      process.env.ORCA_E2E_REAL_CODEX !== '1',
-      'Set ORCA_E2E_REAL_CODEX=1 to exercise the locally installed Codex TUI'
+      process.env.DOLPHIN_E2E_REAL_CODEX !== '1',
+      'Set DOLPHIN_E2E_REAL_CODEX=1 to exercise the locally installed Codex TUI'
     )
     test.slow()
 
-    await waitForSessionReady(orcaPage)
-    await activateTestRepository(orcaPage, testRepoPath)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForSessionReady(dolphinPage)
+    await activateTestRepository(dolphinPage, testRepoPath)
+    await waitForActiveWorktree(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await sendToTerminal(orcaPage, ptyId, 'codex -m orca-e2e-invalid-model\r')
+    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await sendToTerminal(dolphinPage, ptyId, 'codex -m dolphin-e2e-invalid-model\r')
     await expect
-      .poll(() => getTerminalContent(orcaPage, 12_000), { timeout: 20_000 })
+      .poll(() => getTerminalContent(dolphinPage, 12_000), { timeout: 20_000 })
       .toMatch(/Do[\s\S]*you[\s\S]*trust[\s\S]*contents|OpenAI Codex/i)
-    if (CODEX_TRUST_PROMPT_RE.test(await getTerminalContent(orcaPage, 12_000))) {
-      await sendToTerminal(orcaPage, ptyId, '\r')
+    if (CODEX_TRUST_PROMPT_RE.test(await getTerminalContent(dolphinPage, 12_000))) {
+      await sendToTerminal(dolphinPage, ptyId, '\r')
     }
-    await waitForTerminalOutput(orcaPage, 'OpenAI Codex', 20_000, 30_000)
-    await waitForCodexComposerReady(orcaPage)
-    await enableTerminalAccessibilityDom(orcaPage, ptyId)
-    await focusActiveTerminalInput(orcaPage)
-    await orcaPage.keyboard.type(DRAFT)
-    const terminalDom = orcaPage.locator(
+    await waitForTerminalOutput(dolphinPage, 'OpenAI Codex', 20_000, 30_000)
+    await waitForCodexComposerReady(dolphinPage)
+    await enableTerminalAccessibilityDom(dolphinPage, ptyId)
+    await focusActiveTerminalInput(dolphinPage)
+    await dolphinPage.keyboard.type(DRAFT)
+    const terminalDom = dolphinPage.locator(
       `[data-pty-id=${JSON.stringify(ptyId)}] .xterm-accessibility-tree`
     )
     await expect(terminalDom).toContainText(DRAFT, { timeout: 10_000 })
-    await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), pastePayload())
+    await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), pastePayload())
 
-    await orcaPage.keyboard.press('Control+V')
+    await dolphinPage.keyboard.press('Control+V')
     await expect(terminalDom).toContainText('[Pasted Content', { timeout: 10_000 })
     await expect(terminalDom).toContainText(DRAFT)
-    await orcaPage.waitForTimeout(2_000)
+    await dolphinPage.waitForTimeout(2_000)
     await expect(terminalDom).not.toContainText('Working')
     await expect(terminalDom).not.toContainText('unexpected status 404')
   })
 
   test('delivers a normalized large paste through native ConPTY', async ({
-    orcaPage,
+    dolphinPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'Windows ConPTY coverage is Windows-only')
     test.slow()
 
-    await waitForSessionReady(orcaPage)
-    await activateTestRepository(orcaPage, testRepoPath)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForSessionReady(dolphinPage)
+    await activateTestRepository(dolphinPage, testRepoPath)
+    await waitForActiveWorktree(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(dolphinPage)
     const payload = pastePayload(110)
     const expectedText = payload.replace(/\r?\n/g, '\r')
     // Why: assert on the normalized size so the payload keeps exercising the
@@ -194,19 +194,19 @@ test.describe('Windows Codex multiline paste', () => {
     // post-normalization bytes.
     expect(Buffer.byteLength(expectedText, 'utf8')).toBeGreaterThan(64 * 1024)
     const expectedHash = createHash('sha256').update(expectedText).digest('hex')
-    const marker = `ORCA_LARGE_PASTE_${randomUUID().replaceAll('-', '')}`
+    const marker = `DOLPHIN_LARGE_PASTE_${randomUUID().replaceAll('-', '')}`
     const scriptPath = path.join(testRepoPath, `.${marker}.mjs`)
     writeFileSync(scriptPath, pasteCollectorScript(expectedText.length, expectedHash, marker))
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
-      await waitForTerminalOutput(orcaPage, `${marker}_READY`, 10_000, 12_000)
-      await enableTerminalAccessibilityDom(orcaPage, ptyId)
-      await focusActiveTerminalInput(orcaPage)
-      await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await waitForTerminalOutput(dolphinPage, `${marker}_READY`, 10_000, 12_000)
+      await enableTerminalAccessibilityDom(dolphinPage, ptyId)
+      await focusActiveTerminalInput(dolphinPage)
+      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
 
-      await orcaPage.keyboard.press('Control+V')
-      const terminalDom = orcaPage.locator(
+      await dolphinPage.keyboard.press('Control+V')
+      const terminalDom = dolphinPage.locator(
         `[data-pty-id=${JSON.stringify(ptyId)}] .xterm-accessibility-tree`
       )
       await expect(terminalDom).toContainText(`${marker}_RESULT:MATCH`, { timeout: 30_000 })

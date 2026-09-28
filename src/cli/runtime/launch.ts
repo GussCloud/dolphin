@@ -23,14 +23,14 @@ import { RuntimeClientError } from './types'
 const IGNORED_NON_RECIPE_STDOUT = '[serve] ignored non-recipe stdout'
 const USER_NAMESPACE_PROBE_TIMEOUT_MS = 2_000
 
-export function launchOrcaApp(): void {
-  const overrideCommand = process.env.ORCA_OPEN_COMMAND
+export function launchDolphinApp(): void {
+  const overrideCommand = process.env.DOLPHIN_OPEN_COMMAND
   if (typeof overrideCommand === 'string' && overrideCommand.trim().length > 0) {
     spawnDetached(overrideCommand, [], { shell: true })
     return
   }
 
-  const overrideExecutable = process.env.ORCA_APP_EXECUTABLE
+  const overrideExecutable = process.env.DOLPHIN_APP_EXECUTABLE
   if (typeof overrideExecutable === 'string' && overrideExecutable.trim().length > 0) {
     spawnDetached(overrideExecutable, getExecutableAppArgs(overrideExecutable), {
       ...getExecutableSpawnOptions(overrideExecutable),
@@ -72,12 +72,12 @@ function spawnDetached(command: string, args: string[], options: SpawnOptions): 
     ...options
   })
   // Why: detached launch errors are reported asynchronously after this function
-  // returns; openOrca already reports the user-facing timeout if startup fails.
+  // returns; openDolphin already reports the user-facing timeout if startup fails.
   child.once('error', () => {})
   child.unref()
 }
 
-export function serveOrcaApp(
+export function serveDolphinApp(
   args: {
     json?: boolean
     port?: string | null
@@ -88,7 +88,7 @@ export function serveOrcaApp(
     projectRoot?: string | null
   } = {}
 ): Promise<number> {
-  const executable = resolveForegroundOrcaExecutable()
+  const executable = resolveForegroundDolphinExecutable()
   const childArgs = [...getExecutableAppArgs(executable)]
   childArgs.push('--serve')
   if (args.json) {
@@ -204,7 +204,7 @@ function waitForRecipeJson(child: ReturnType<typeof spawnProcess>): Promise<numb
         writeIgnoredRecipeStdout()
         return
       }
-      if (getEphemeralVmRecipeResultConnection(parsed.result).type !== 'orca-server') {
+      if (getEphemeralVmRecipeResultConnection(parsed.result).type !== 'dolphin-server') {
         writeIgnoredRecipeStdout()
         return
       }
@@ -256,7 +256,7 @@ function waitForRecipeJson(child: ReturnType<typeof spawnProcess>): Promise<numb
 }
 
 export function getExecutableAppArgs(executable: string): string[] {
-  const args = process.env.ORCA_APP_EXECUTABLE_NEEDS_APP_ROOT === '1' ? [resolveAppRoot()] : []
+  const args = process.env.DOLPHIN_APP_EXECUTABLE_NEEDS_APP_ROOT === '1' ? [resolveAppRoot()] : []
   if (shouldDisableExtractedAppImageSandbox(executable)) {
     args.push('--no-sandbox')
   }
@@ -291,13 +291,13 @@ function getExecutableSpawnOptions(executable: string): Pick<SpawnOptions, 'shel
 
 export function resolveAppRoot(): string {
   // Why: dev-mode resource resolution in the Electron child may consult
-  // process.cwd(). Pin it to the app root so `orca serve` behaves the same
+  // process.cwd(). Pin it to the app root so `dolphin serve` behaves the same
   // regardless of the shell directory it was launched from.
   return resolve(__dirname, '../../..')
 }
 
-export function resolveForegroundOrcaExecutable(): string {
-  const overrideExecutable = process.env.ORCA_APP_EXECUTABLE
+export function resolveForegroundDolphinExecutable(): string {
+  const overrideExecutable = process.env.DOLPHIN_APP_EXECUTABLE
   if (typeof overrideExecutable === 'string' && overrideExecutable.trim().length > 0) {
     return overrideExecutable
   }
@@ -306,7 +306,7 @@ export function resolveForegroundOrcaExecutable(): string {
   }
   throw new RuntimeClientError(
     'runtime_serve_failed',
-    'Could not determine how to start Dolphin server. Set ORCA_APP_EXECUTABLE to the Dolphin executable.'
+    'Could not determine how to start Dolphin server. Set DOLPHIN_APP_EXECUTABLE to the Dolphin executable.'
   )
 }
 

@@ -129,7 +129,7 @@ function readFilters(
   return Object.keys(filters).length > 0 ? filters : undefined
 }
 
-/** Maps `orca search` flags onto the session-search contract; nothing it does not have. */
+/** Maps `dolphin search` flags onto the session-search contract; nothing it does not have. */
 export function parseSearchCommand(flags: Map<string, string | boolean>): SearchCommand {
   if (flags.has('index-status')) {
     const conflicting = QUERY_ONLY_FLAGS.filter((flag) => flags.has(flag))

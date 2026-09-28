@@ -12,7 +12,7 @@ afterEach(() => {
   }
 })
 function fixture() {
-  const root = mkdtempSync(join(tmpdir(), 'orca-managed-wsl-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-managed-wsl-'))
   roots.push(root)
   const resourcesPath = join(root, 'resources with spaces')
   mkdirSync(join(resourcesPath, 'bin'), { recursive: true })
@@ -57,12 +57,12 @@ describe('managed WSL CLI provisioning', () => {
     writeFileSync(cliEntryPath, 'fixture')
     installFakeAppEnvironment({ getPath: () => host.userDataPath, getAppPath: () => appPath })
     const directory = getManagedWslCliDir({ ...host, isPackaged: false }) ?? ''
-    expect(readFileSync(join(directory, 'orca-dev'), 'utf8')).toContain(process.execPath)
+    expect(readFileSync(join(directory, 'dolphin-dev'), 'utf8')).toContain(process.execPath)
     const bridge = readFileSync(join(directory, 'dolphin-wsl-bridge.ps1'), 'utf8')
     expect(bridge.startsWith('\uFEFF')).toBe(true)
     expect(bridge).toContain(host.userDataPath)
     expect(bridge).toContain(cliEntryPath)
-    expect(bridge).toContain('$env:ORCA_APP_EXECUTABLE_NEEDS_APP_ROOT')
+    expect(bridge).toContain('$env:DOLPHIN_APP_EXECUTABLE_NEEDS_APP_ROOT')
     expect(bridge).toContain('Remove-Item Env:NODE_OPTIONS')
   })
 })

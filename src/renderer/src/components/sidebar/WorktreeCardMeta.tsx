@@ -72,10 +72,10 @@ export function WorktreeCardDetailsHover({
   onWorkspaceTitleEditingChange,
   onEditIssue,
   onEditComment,
-  onOpenGitHubIssueInOrca,
+  onOpenGitHubIssueInDolphin,
   onOpenIssueInBrowser,
-  onOpenLinearIssueInOrca,
-  onOpenReviewInOrca,
+  onOpenLinearIssueInDolphin,
+  onOpenReviewInDolphin,
   onOpenReviewInBrowser,
   onUnlinkReview,
   onOpenAutomation,
@@ -219,8 +219,8 @@ export function WorktreeCardDetailsHover({
             onIssueMenuOpenChange={handleIssueMenuOpenChange}
             onCopyIssueLink={issue?.url ? handleCopyIssueLink : undefined}
             onEditIssue={onEditIssue}
-            onOpenGitHubIssueInOrca={
-              onOpenGitHubIssueInOrca ? dismissAndRun(onOpenGitHubIssueInOrca) : undefined
+            onOpenGitHubIssueInDolphin={
+              onOpenGitHubIssueInDolphin ? dismissAndRun(onOpenGitHubIssueInDolphin) : undefined
             }
             onOpenIssueInBrowser={
               onOpenIssueInBrowser && issue?.url
@@ -243,13 +243,13 @@ export function WorktreeCardDetailsHover({
                 )}
                 actions={
                   <>
-                    {linearIssue.url && onOpenLinearIssueInOrca && (
+                    {linearIssue.url && onOpenLinearIssueInDolphin && (
                       <MetadataActionIcon
                         label={translate(
                           'auto.components.sidebar.WorktreeCardMeta.2c67730e07',
                           'Open in Dolphin'
                         )}
-                        onClick={dismissAndRun(onOpenLinearIssueInOrca)}
+                        onClick={dismissAndRun(onOpenLinearIssueInDolphin)}
                       >
                         <MonitorUp className="size-3" />
                       </MetadataActionIcon>
@@ -322,7 +322,7 @@ export function WorktreeCardDetailsHover({
             review={review}
             reviewMenuOpen={reviewMenuOpen}
             onReviewMenuOpenChange={handleReviewMenuOpenChange}
-            onOpenReviewInOrca={onOpenReviewInOrca}
+            onOpenReviewInDolphin={onOpenReviewInDolphin}
             onOpenReviewInBrowser={
               onOpenReviewInBrowser && review?.url ? onOpenReviewInBrowser : undefined
             }

@@ -40,7 +40,7 @@ function reserveRequest(): AgentSessionReserveRequest {
 }
 
 beforeEach(async () => {
-  directory = await mkdtemp(join(tmpdir(), 'orca-agent-session-unsupported-'))
+  directory = await mkdtemp(join(tmpdir(), 'dolphin-agent-session-unsupported-'))
 })
 
 afterEach(async () => {

@@ -1,9 +1,9 @@
 import { isFolderRepo } from '../../../../../../shared/repo-kind'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 
 export async function assertOrchestrationWorktreeCreationSupported(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   repoSelector: string
   existingPlacement: string
 }): Promise<void> {

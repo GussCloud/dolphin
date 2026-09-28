@@ -14,7 +14,7 @@ export type OpenHttpLinkOptions = {
   allowRemoteInApp?: boolean
   /** Unconditional: always use the system browser regardless of settings. */
   forceSystemBrowser?: boolean
-  /** Unconditional for local sources: open inside Orca regardless of settings. */
+  /** Unconditional for local sources: open inside Dolphin regardless of settings. */
   forceInApp?: boolean
   /** The Shift escape-hatch modifier was held; resolveModifierRouting decides what it means. */
   modifierHeld?: boolean
@@ -103,14 +103,14 @@ export function resolveModifierRouting(
   modifierHeld: boolean,
   openLinksInApp: boolean,
   modifierInverts: boolean
-): { wantsOrca: boolean; wantsSystemBrowser: boolean } {
+): { wantsDolphin: boolean; wantsSystemBrowser: boolean } {
   if (!modifierHeld) {
-    return { wantsOrca: false, wantsSystemBrowser: false }
+    return { wantsDolphin: false, wantsSystemBrowser: false }
   }
   if (!modifierInverts) {
-    return { wantsOrca: false, wantsSystemBrowser: true }
+    return { wantsDolphin: false, wantsSystemBrowser: true }
   }
-  return { wantsOrca: !openLinksInApp, wantsSystemBrowser: openLinksInApp }
+  return { wantsDolphin: !openLinksInApp, wantsSystemBrowser: openLinksInApp }
 }
 
 export function openHttpLink(url: string, opts: OpenHttpLinkOptions = {}): void {
@@ -137,14 +137,14 @@ export function openHttpLink(url: string, opts: OpenHttpLinkOptions = {}): void 
     openLinksInApp,
     state?.settings?.openLinksInAppModifierInverts === true
   )
-  const wantsOrca =
+  const wantsDolphin =
     !forceSystemBrowser &&
     !modifier.wantsSystemBrowser &&
     Boolean(worktreeId) &&
-    (forceInApp || openLinksInApp || modifier.wantsOrca)
+    (forceInApp || openLinksInApp || modifier.wantsDolphin)
 
   if (
-    wantsOrca &&
+    wantsDolphin &&
     allowRemoteInApp &&
     worktreeId &&
     (effectiveSourceOwner?.kind === 'runtime' ||
@@ -172,7 +172,7 @@ export function openHttpLink(url: string, opts: OpenHttpLinkOptions = {}): void 
     return
   }
 
-  if (wantsOrca && sourceIsLocal && worktreeId && state) {
+  if (wantsDolphin && sourceIsLocal && worktreeId && state) {
     // Why: http clicks from inside a worktree should not push a worktree-switch
     // history entry — the user isn't changing worktrees, they're opening a tab
     // in the one they're already in. activateAndRevealWorktree is reserved for

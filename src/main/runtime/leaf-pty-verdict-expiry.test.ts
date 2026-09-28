@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { OrcaRuntimeService } from './orca-runtime'
-import { PROVEN_ABSENT_LEAF_PTY_TTL_MS as TTL_MS } from './orca-runtime-core'
+import { DolphinRuntimeService } from './dolphin-runtime'
+import { PROVEN_ABSENT_LEAF_PTY_TTL_MS as TTL_MS } from './dolphin-runtime-core'
 
 type VerdictInternals = {
   provenAbsentLeafPtyVerdicts: Map<string, number>
@@ -10,7 +10,7 @@ type VerdictInternals = {
 function createRuntime(
   probePtyLiveness = vi.fn<(ptyId: string) => Promise<boolean | null>>(async () => false)
 ) {
-  const runtime = new OrcaRuntimeService()
+  const runtime = new DolphinRuntimeService()
   runtime.setPtyController({
     write: () => true,
     kill: () => true,

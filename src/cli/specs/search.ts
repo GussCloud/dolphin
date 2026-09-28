@@ -1,7 +1,7 @@
 import { GLOBAL_FLAGS, type CommandSpec } from '../args'
 
 // Why one command and not a `search status` subcommand: the query is a bare
-// positional, so `orca search status` would be indistinguishable from searching
+// positional, so `dolphin search status` would be indistinguishable from searching
 // for the word "status". The index report is a flag on the same command instead.
 export const SEARCH_COMMAND_SPECS: CommandSpec[] = [
   {
@@ -27,7 +27,7 @@ export const SEARCH_COMMAND_SPECS: CommandSpec[] = [
     positionalArgs: ['query'],
     notes: [
       'Searches one host: this machine, or the paired Dolphin server named by --environment / --pairing-code. There is no all-computers search.',
-      'In an Dolphin SSH terminal, the forwarded CLI searches the controlling Dolphin runtime by default. Use --environment / --pairing-code to select a paired server; --path only filters results on the selected runtime.',
+      'In a Dolphin SSH terminal, the forwarded CLI searches the controlling Dolphin runtime by default. Use --environment / --pairing-code to select a paired server; --path only filters results on the selected runtime.',
       'Quote a multi-word query, or pass it as --query "<text>"; unquoted words are read as command names.',
       '--scope conversation searches user and assistant turns only; --scope all (the default) also searches commands and tool output.',
       '--fresh waits up to five seconds for the host to reconcile its index before searching, then searches anyway.',
@@ -41,7 +41,7 @@ export const SEARCH_COMMAND_SPECS: CommandSpec[] = [
     examples: [
       'dolphin search "strict mode violation getByRole"',
       'dolphin search resolveTerminalPath --agent claude --sort newest',
-      'dolphin search "kernel panic" --path /Users/me/orca --since 2026-08-01T00:00:00Z --json',
+      'dolphin search "kernel panic" --path /Users/me/dolphin --since 2026-08-01T00:00:00Z --json',
       'dolphin search "kernel panic" --limit 50 --cursor eyJ2IjoxfQ',
       'dolphin search --index-status',
       'dolphin search "flaky test" --environment build-server'

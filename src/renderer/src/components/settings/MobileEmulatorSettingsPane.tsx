@@ -38,7 +38,7 @@ type MobileEmulatorSettingsPaneProps = {
   updateSettings: (updates: Partial<GlobalSettings>) => Promise<void>
 }
 
-const AUTOMATIC_DEVICE_VALUE = '__orca_automatic_emulator_device__'
+const AUTOMATIC_DEVICE_VALUE = '__dolphin_automatic_emulator_device__'
 const AUTOMATIC_DEVICE_LABEL = 'Auto-select device'
 const SIMULATOR_STATE_SUFFIX_RE =
   /\s+\((Booted|Booting|Creating|Shutdown|Shutting Down|Unavailable|Unknown)\)\s*$/i

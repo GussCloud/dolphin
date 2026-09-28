@@ -243,7 +243,7 @@ function FixFooter({
 
 /**
  * The remedy for a daemon macOS refuses a folder to (STA-7948), raised from the folder-access
- * toast. Two steps, because a restart alone only works once Orca itself is allowed again — which
+ * toast. Two steps, because a restart alone only works once Dolphin itself is allowed again — which
  * step 1 does, and the focus-time poll behind `freshDaemonAccess` is what notices it landed.
  */
 function FolderAccessFix({

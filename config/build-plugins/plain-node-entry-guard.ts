@@ -19,7 +19,7 @@ type OutputChunk = Rollup.OutputChunk
 // The CLI loads these paths after electron-vite replaces out/main.
 export const CLI_MAIN_ENTRY_NAMES = [
   'agent-hooks/managed-agent-hook-controls',
-  'orca-profiles/profile-index-store',
+  'dolphin-profiles/profile-index-store',
   'codex/managed-home-shell-preflight',
   'claude-accounts/keychain',
   ...[
@@ -252,7 +252,7 @@ export function createPlainNodeEntryGuardPlugin(
   let daemonOutputDir: string | undefined
 
   return {
-    name: 'orca-plain-node-entry-guard',
+    name: 'dolphin-plain-node-entry-guard',
     buildStart(options: NormalizedInputOptions) {
       assertEntryNamesAreRollupInputs(options.input)
     },

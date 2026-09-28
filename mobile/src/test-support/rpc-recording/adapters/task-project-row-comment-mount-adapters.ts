@@ -224,7 +224,7 @@ export function taskProjectRowCommentMountAdapters(
           projectEditingCommentId: '501',
           tasksSupported: true,
           error: '',
-          projectRepoNotInOrca: null
+          projectRepoNotInDolphin: null
         },
         actions: ({ actions }) => ({
           'update-item': () =>

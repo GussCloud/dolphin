@@ -1,4 +1,4 @@
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import type { OrchestrationDb } from '../../../../orchestration/db'
 import type { RunRow, TaskRow } from '../../../../orchestration/types'
 import type { WorkerStartModeReceipt } from '../../orchestration-worker-start-mode'
@@ -22,7 +22,7 @@ import {
  * prove one), `start_unknown` when observation is supported and nothing started.
  */
 export async function deliverAndSettleWorkerStartReadiness(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   db: OrchestrationDb
   run: RunRow
   task: TaskRow

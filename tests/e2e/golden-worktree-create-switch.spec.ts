@@ -1,6 +1,6 @@
 import { openSidebarWorkspaceComposer } from './helpers/sidebar-project-dialog'
 import type { Page } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,
   getActiveWorktreeId,
@@ -33,60 +33,60 @@ async function removeCreatedWorktree(page: Page, worktreeId: string): Promise<vo
 }
 
 test('creates a worktree, keeps its terminal isolated, and switches back @golden', async ({
-  orcaPage
+  dolphinPage
 }) => {
   test.setTimeout(180_000)
-  await waitForSessionReady(orcaPage)
-  const originalWorktreeId = await waitForActiveWorktree(orcaPage)
-  await waitForActiveTerminalManager(orcaPage, 30_000)
-  const parentPtyId = await waitForActivePanePtyId(orcaPage)
+  await waitForSessionReady(dolphinPage)
+  const originalWorktreeId = await waitForActiveWorktree(dolphinPage)
+  await waitForActiveTerminalManager(dolphinPage, 30_000)
+  const parentPtyId = await waitForActivePanePtyId(dolphinPage)
   const workspaceName = `golden-switch-${Date.now()}`
   let childWorktreeId: string | null = null
 
   try {
-    await createWorkspace(orcaPage, workspaceName)
+    await createWorkspace(dolphinPage, workspaceName)
     await expect(
-      orcaPage.locator('[role="option"][aria-current="page"]').filter({ hasText: workspaceName })
+      dolphinPage.locator('[role="option"][aria-current="page"]').filter({ hasText: workspaceName })
     ).toBeVisible({ timeout: 30_000 })
-    childWorktreeId = await waitForActiveWorktree(orcaPage)
+    childWorktreeId = await waitForActiveWorktree(dolphinPage)
     // Why: the cleanup force-removes childWorktreeId, so it must never resolve to the original.
     expect(childWorktreeId).not.toBe(originalWorktreeId)
     await expect(
-      orcaPage.locator(`[role="option"][data-worktree-id="${childWorktreeId}"]`)
+      dolphinPage.locator(`[role="option"][data-worktree-id="${childWorktreeId}"]`)
     ).toHaveAttribute('aria-current', 'page')
 
-    await createTerminalTabFromMenu(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const childPtyId = await waitForActivePanePtyId(orcaPage)
+    await createTerminalTabFromMenu(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    const childPtyId = await waitForActivePanePtyId(dolphinPage)
     expect(childPtyId).not.toBe(parentPtyId)
-    await waitForPtyShellEcho(orcaPage, childPtyId, 15_000)
-    await execInTerminal(orcaPage, childPtyId, splitMarkerEchoCommand('worktree', '-b'))
-    await waitForTerminalOutput(orcaPage, 'worktree-b')
+    await waitForPtyShellEcho(dolphinPage, childPtyId, 15_000)
+    await execInTerminal(dolphinPage, childPtyId, splitMarkerEchoCommand('worktree', '-b'))
+    await waitForTerminalOutput(dolphinPage, 'worktree-b')
 
-    await orcaPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`).click()
+    await dolphinPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`).click()
     await expect(
-      orcaPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`)
+      dolphinPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`)
     ).toHaveAttribute('aria-current', 'page', { timeout: 20_000 })
     // Why: sidebar aria-current can land before the store/terminal remount.
     // Mac release goldens then wait 30s on a child tab whose PaneManager is gone.
     await expect
-      .poll(() => getActiveWorktreeId(orcaPage), {
+      .poll(() => getActiveWorktreeId(dolphinPage), {
         timeout: 20_000,
         message: 'store did not activate the original worktree after sidebar click'
       })
       .toBe(originalWorktreeId)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    expect(await waitForActivePanePtyId(orcaPage, 30_000)).toBe(parentPtyId)
+    await ensureTerminalVisible(dolphinPage)
+    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    expect(await waitForActivePanePtyId(dolphinPage, 30_000)).toBe(parentPtyId)
   } finally {
     if (childWorktreeId) {
-      if ((await getActiveWorktreeId(orcaPage).catch(() => null)) !== originalWorktreeId) {
-        await orcaPage
+      if ((await getActiveWorktreeId(dolphinPage).catch(() => null)) !== originalWorktreeId) {
+        await dolphinPage
           .locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`)
           .click()
           .catch(() => undefined)
       }
-      await removeCreatedWorktree(orcaPage, childWorktreeId).catch(() => undefined)
+      await removeCreatedWorktree(dolphinPage, childWorktreeId).catch(() => undefined)
     }
   }
 })

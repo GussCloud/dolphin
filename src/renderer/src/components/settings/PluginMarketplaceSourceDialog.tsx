@@ -152,7 +152,7 @@ export function PluginMarketplaceSourceDialog({
             <p className="text-xs text-muted-foreground">
               {translate(
                 'auto.components.settings.PluginMarketplaceSourceDialog.urlDescription',
-                'Use an HTTPS or SSH repository URL containing orca-marketplace.json.'
+                'Use an HTTPS or SSH repository URL containing dolphin-marketplace.json.'
               )}
             </p>
           </div>

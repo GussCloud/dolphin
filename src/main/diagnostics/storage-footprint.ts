@@ -72,7 +72,7 @@ async function measureRoot(
     if (current === root.path) {
       result.exists = true
     }
-    // Why lstat and no follow: a symlink into ~/.codex must not bill the user's own sessions to Orca.
+    // Why lstat and no follow: a symlink into ~/.codex must not bill the user's own sessions to Dolphin.
     if (stats.isDirectory()) {
       let names: string[]
       try {

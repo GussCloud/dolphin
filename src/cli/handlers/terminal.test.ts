@@ -313,7 +313,7 @@ describe('terminal send CLI', () => {
         enter: true,
         interrupt: false,
         agentPrompt: true,
-        client: { id: 'orca-cli', type: 'desktop' }
+        client: { id: 'dolphin-cli', type: 'desktop' }
       },
       { terminalPromptPreflight: { runtimeId: 'runtime-current' } }
     )
@@ -424,14 +424,14 @@ describe('terminal send CLI', () => {
       text: 'x',
       enter: false,
       interrupt: false,
-      client: { id: 'orca-cli', type: 'desktop' }
+      client: { id: 'dolphin-cli', type: 'desktop' }
     })
     expect(call).toHaveBeenNthCalledWith(2, 'terminal.send', {
       terminal: 'term-1',
       text: undefined,
       enter: true,
       interrupt: false,
-      client: { id: 'orca-cli', type: 'desktop' }
+      client: { id: 'dolphin-cli', type: 'desktop' }
     })
   })
 

@@ -15,7 +15,7 @@ The fix subscribes from the app shell and lazily receives the model registry fro
 
 All four controls pass with their stated before/fixed expectations on both graphs and both runtimes: **32 comparative cases**, Node 24.20.0 and Electron 43.7.0 / Node 24.21.0. Reports are `worktree-*-results.json` and `main-*-results.json`. Contents use eight distinct fixture paths and 256 KiB of logical characters per model; this is a controlled amplification, not a field file-size measurement or heap-byte estimate.
 
-This explains a concrete renderer retention mechanism relevant to [#12845](https://github.com/stablyai/orca/issues/12845). The same conditional panel, hook placement, and `keepCurrentModel` chain exists in reported v1.4.170; `source-versions.json` records four historical source hashes and matching line numbers. That comparison is static, not an execution of the historical application. It does not establish which allocations caused #12845's reported heap, or the process and cause of [#19831](https://github.com/stablyai/orca/issues/19831).
+This explains a concrete renderer retention mechanism relevant to [#12845](https://github.com/GussCloud/dolphin/issues/12845). The same conditional panel, hook placement, and `keepCurrentModel` chain exists in reported v1.4.170; `source-versions.json` records four historical source hashes and matching line numbers. That comparison is static, not an execution of the historical application. It does not establish which allocations caused #12845's reported heap, or the process and cause of [#19831](https://github.com/GussCloud/dolphin/issues/19831).
 
 ## Ownership and regression coverage
 
@@ -51,10 +51,10 @@ The registry-transition regression is covered by four new cases. The uninformati
 From the repository root with its installed dependencies:
 
 ```sh
-ORCA_BACKGROUND_LAUNCH=1 pnpm exec vitest run --config docs/audits/closed-editor-model-lifetime/vitest.config.mjs
+DOLPHIN_BACKGROUND_LAUNCH=1 pnpm exec vitest run --config docs/audits/closed-editor-model-lifetime/vitest.config.mjs
 node docs/audits/closed-editor-model-lifetime/loader-controls.cjs
 ```
 
-The default is `ORCA_CLOSED_MODEL_GRAPH=worktree` and `ORCA_CLOSED_MODEL_VARIANT=fixed`. Repeat with each graph (`worktree`, `main`) and variant (`before`, `fixed`). Set these environment variables using the syntax of your shell; the runner and path handling are platform-neutral. Set `ORCA_CLOSED_MODEL_OUTPUT` or `ORCA_CLOSED_MODEL_LOADER_OUTPUT` to an output path to avoid replacing checked-in reports.
+The default is `DOLPHIN_CLOSED_MODEL_GRAPH=worktree` and `DOLPHIN_CLOSED_MODEL_VARIANT=fixed`. Repeat with each graph (`worktree`, `main`) and variant (`before`, `fixed`). Set these environment variables using the syntax of your shell; the runner and path handling are platform-neutral. Set `DOLPHIN_CLOSED_MODEL_OUTPUT` or `DOLPHIN_CLOSED_MODEL_LOADER_OUTPUT` to an output path to avoid replacing checked-in reports.
 
-For Electron, run the installed Electron binary with `ELECTRON_RUN_AS_NODE=1`, `ORCA_BACKGROUND_LAUNCH=1`, `--no-experimental-webstorage --expose-gc`, followed by `node_modules/vitest/vitest.mjs run --config docs/audits/closed-editor-model-lifetime/vitest.config.mjs` and the same graph/variant environment. This uses Electron's Node runtime without creating a window.
+For Electron, run the installed Electron binary with `ELECTRON_RUN_AS_NODE=1`, `DOLPHIN_BACKGROUND_LAUNCH=1`, `--no-experimental-webstorage --expose-gc`, followed by `node_modules/vitest/vitest.mjs run --config docs/audits/closed-editor-model-lifetime/vitest.config.mjs` and the same graph/variant environment. This uses Electron's Node runtime without creating a window.

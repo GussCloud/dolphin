@@ -6,9 +6,9 @@ import {
 } from './fence-operation-runner.js'
 
 const config = {
-  project: 'onorca-cloud',
-  directorOrigin: 'https://relay.onorca.dev',
-  adminAudience: 'https://relay.onorca.dev/v1/admin/drain',
+  project: 'dolphin-cloud',
+  directorOrigin: 'https://relay.dolphin.guss.dev.br',
+  adminAudience: 'https://relay.dolphin.guss.dev.br/v1/admin/drain',
   sourceCellId: 'production-gce-c3',
   runtimeServiceAccount: 'runtime@example.com',
   imageCommit: 'a'.repeat(40),
@@ -29,9 +29,9 @@ describe('fence operation runner', () => {
     ).toMatchObject({
       PRESERVED: 'yes',
       IAC_TOOL: 'terraform',
-      ORCA_RELAY_ADMIN_ID_TOKEN: 'read.token.value',
-      ORCA_RELAY_FENCE_MUTATION_ID_TOKEN: 'mutation.token.value',
-      ORCA_RELAY_FENCE_IMAGE_COMMIT: 'a'.repeat(40)
+      DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'read.token.value',
+      DOLPHIN_RELAY_FENCE_MUTATION_ID_TOKEN: 'mutation.token.value',
+      DOLPHIN_RELAY_FENCE_IMAGE_COMMIT: 'a'.repeat(40)
     })
   })
 

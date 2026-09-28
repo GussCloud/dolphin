@@ -150,7 +150,7 @@ function openHost(overrides: Partial<StructuredAgentSessionHostDeps> = {}): void
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-wedged-profile-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-wedged-profile-'))
   resetHostTestOperationIds()
   acquire = vi.fn(async ({ fence }) => ({
     process: {

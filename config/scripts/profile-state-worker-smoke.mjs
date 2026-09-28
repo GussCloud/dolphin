@@ -8,10 +8,10 @@ import { join, resolve } from 'node:path'
 import { Worker } from 'node:worker_threads'
 import { runProcessSync } from './script-child-process.mjs'
 import {
-  ORCAD_PROFILE_PREFLIGHT_FLAG,
-  parseOrcadProfilePreflight
-} from '../../src/shared/orcad-profile-preflight.ts'
-import { ORCAD_BUN_VERSION } from '../../src/shared/orcad-bun-runtime.ts'
+  DOLPHIND_PROFILE_PREFLIGHT_FLAG,
+  parseDolphindProfilePreflight
+} from '../../src/shared/dolphind-profile-preflight.ts'
+import { DOLPHIND_BUN_VERSION } from '../../src/shared/dolphind-bun-runtime.ts'
 
 async function initializeFixture(directory, databasePath, profileId) {
   const fixture = join(directory, 'initialize.cjs')
@@ -88,18 +88,18 @@ export async function smokeProfileStateWorkers(outDir, { timeoutMs = 30_000, run
     const nonce = randomUUID()
     const result = runProcessSync({
       program: runtimePath,
-      args: [join(outDir, 'orcad.js'), ORCAD_PROFILE_PREFLIGHT_FLAG, nonce],
-      env: { ...process.env, ORCA_BACKGROUND_LAUNCH: '1' },
+      args: [join(outDir, 'dolphind.js'), DOLPHIND_PROFILE_PREFLIGHT_FLAG, nonce],
+      env: { ...process.env, DOLPHIN_BACKGROUND_LAUNCH: '1' },
       timeoutMs,
       maxOutputBytes: 64 * 1024
     })
     if (result.code !== 0 || result.timedOut || result.outputTruncated) {
       throw new Error(`Packaged profile runtime preflight failed: ${result.stderr}`)
     }
-    parseOrcadProfilePreflight(result.stdout, nonce, ORCAD_BUN_VERSION)
+    parseDolphindProfilePreflight(result.stdout, nonce, DOLPHIND_BUN_VERSION)
     return
   }
-  const directory = mkdtempSync(join(tmpdir(), 'orca-profile-worker-smoke-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-profile-worker-smoke-'))
   const databasePath = join(directory, 'profile.db')
   const targetPath = join(directory, 'backup.db')
   const profileId = 'build-smoke'

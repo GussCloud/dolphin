@@ -1,5 +1,5 @@
 import type { BrowserWindow, WebContents } from 'electron'
-import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../../runtime/dolphin-runtime'
 import type { Store } from '../../persistence'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import type { IPtyProvider } from '../../providers/types'
@@ -67,7 +67,7 @@ export type PtyRendererDelivery = Pick<
 
 export type PtyIpcSession = {
   mainWindow?: PtyRendererDelivery
-  runtime?: OrcaRuntimeService
+  runtime?: DolphinRuntimeService
   store?: Store
   getSettings?: () => GlobalSettings
   options?: PtyIpcSessionOptions
@@ -190,7 +190,7 @@ const unsetSessionFn = (): never => {
 
 export function createPtyIpcSession(args: {
   mainWindow?: PtyRendererDelivery
-  runtime?: OrcaRuntimeService
+  runtime?: DolphinRuntimeService
   store?: Store
   getSettings?: () => GlobalSettings
   options?: PtyIpcSessionOptions

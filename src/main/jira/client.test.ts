@@ -38,10 +38,10 @@ function tokenPathForSite(siteId: string): string {
 }
 
 function writeJiraFiles(siteId: string, token: string | Buffer): void {
-  const orcaDir = join(tempHome, '.dolphin')
-  mkdirSync(join(orcaDir, 'jira-tokens'), { recursive: true })
+  const dolphinDir = join(tempHome, '.dolphin')
+  mkdirSync(join(dolphinDir, 'jira-tokens'), { recursive: true })
   writeFileSync(
-    join(orcaDir, 'jira-sites.json'),
+    join(dolphinDir, 'jira-sites.json'),
     JSON.stringify(
       {
         version: 1,
@@ -69,10 +69,10 @@ function writeMultiSiteFiles(
   sites: { id: string; token: string | Buffer }[],
   selectedSiteId: string
 ): void {
-  const orcaDir = join(tempHome, '.dolphin')
-  mkdirSync(join(orcaDir, 'jira-tokens'), { recursive: true })
+  const dolphinDir = join(tempHome, '.dolphin')
+  mkdirSync(join(dolphinDir, 'jira-tokens'), { recursive: true })
   writeFileSync(
-    join(orcaDir, 'jira-sites.json'),
+    join(dolphinDir, 'jira-sites.json'),
     JSON.stringify(
       {
         version: 1,
@@ -139,7 +139,7 @@ async function loadClientModule(options: SafeStorageMockOptions = {}) {
 }
 
 beforeEach(() => {
-  tempHome = mkdtempLike('orca-jira-client-')
+  tempHome = mkdtempLike('dolphin-jira-client-')
   fetchMock = vi.fn(async () => {
     throw new Error('fetch should not be called')
   })
@@ -221,7 +221,7 @@ describe('Jira client credential storage', () => {
     const headers = netFetchMock.mock.calls[0]?.[1]?.headers as Headers
     const userAgent = headers.get('User-Agent') ?? ''
     expect(netFetchMock.mock.calls[0]?.[1]?.method).toBe('POST')
-    expect(userAgent).toBe('Orca')
+    expect(userAgent).toBe('Dolphin')
     expect(userAgent).not.toMatch(/Mozilla|Chrome|Safari|AppleWebKit/i)
   })
 
@@ -547,10 +547,10 @@ describe('Jira client credential storage', () => {
 
   it('uses Basic auth for stored self-hosted sites that carry a username', async () => {
     const siteId = 'site-server-basic'
-    const orcaDir = join(tempHome, '.dolphin')
-    mkdirSync(join(orcaDir, 'jira-tokens'), { recursive: true })
+    const dolphinDir = join(tempHome, '.dolphin')
+    mkdirSync(join(dolphinDir, 'jira-tokens'), { recursive: true })
     writeFileSync(
-      join(orcaDir, 'jira-sites.json'),
+      join(dolphinDir, 'jira-sites.json'),
       JSON.stringify({
         version: 1,
         activeSiteId: siteId,
@@ -654,10 +654,10 @@ describe('Jira client credential storage', () => {
 
   it('uses Bearer auth and REST v2 for stored self-hosted sites', async () => {
     const siteId = 'site-server'
-    const orcaDir = join(tempHome, '.dolphin')
-    mkdirSync(join(orcaDir, 'jira-tokens'), { recursive: true })
+    const dolphinDir = join(tempHome, '.dolphin')
+    mkdirSync(join(dolphinDir, 'jira-tokens'), { recursive: true })
     writeFileSync(
-      join(orcaDir, 'jira-sites.json'),
+      join(dolphinDir, 'jira-sites.json'),
       JSON.stringify({
         version: 1,
         activeSiteId: siteId,
@@ -721,7 +721,7 @@ describe('Jira client credential storage', () => {
     expect(resolveProxyMock).toHaveBeenCalledWith('https://example.atlassian.net/rest/api/3/myself')
     expect(netFetchMock).toHaveBeenCalledTimes(1)
     const headers = netFetchMock.mock.calls[0]?.[1]?.headers as Headers
-    expect(headers.get('User-Agent')).toBe('Orca')
+    expect(headers.get('User-Agent')).toBe('Dolphin')
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

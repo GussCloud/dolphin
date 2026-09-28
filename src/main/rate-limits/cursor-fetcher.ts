@@ -160,7 +160,7 @@ function credentialFailure(readResult: CursorAuthReadResult): ProviderRateLimits
       usageMetadata: { failureKind: 'missing-credentials' }
     })
   }
-  // Why: cursor-agent refreshes its own token on use; Orca only reads, so a
+  // Why: cursor-agent refreshes its own token on use; Dolphin only reads, so a
   // lapsed session is reported instead of spending a request that must 401.
   if (isCursorSessionTokenExpired(readResult.session.token)) {
     return result('error', EXPIRED_MESSAGE, {
@@ -177,7 +177,7 @@ function credentialFailure(readResult: CursorAuthReadResult): ProviderRateLimits
 
 /**
  * Reads the Cursor plan allowance for the account this machine is signed into.
- * Orca never runs `cursor-agent login` and never writes Cursor's credentials.
+ * Dolphin never runs `cursor-agent login` and never writes Cursor's credentials.
  */
 export async function fetchCursorRateLimits(
   options: { signal?: AbortSignal; authReadResult?: CursorAuthReadResult } = {}

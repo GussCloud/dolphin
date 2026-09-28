@@ -194,7 +194,7 @@ export function openDetectedFilePath(
     }
 
     if (openWithSystemDefault && canOpenWithSystemDefault) {
-      // Why: Shift+Cmd/Ctrl mirrors URL links by escaping Orca and honoring the
+      // Why: Shift+Cmd/Ctrl mirrors URL links by escaping Dolphin and honoring the
       // user's OS file associations without adding editor-specific settings.
       const openedWithSystemDefault = await window.api.shell.openFilePath(mappedFilePath)
       if (openedWithSystemDefault || statResult.isDirectory) {
@@ -216,7 +216,7 @@ export function openDetectedFilePath(
       return
     }
 
-    // Why: local HTML files render in Orca's browser for ordinary Cmd/Ctrl-click,
+    // Why: local HTML files render in Dolphin's browser for ordinary Cmd/Ctrl-click,
     // and remain the fallback if Shift+Cmd/Ctrl cannot launch the OS default.
     if (isHtmlFilePath(mappedFilePath)) {
       if (shouldOpenTerminalFileWithSystemDefault(fileContext, mappedFilePath)) {

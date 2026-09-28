@@ -1,6 +1,6 @@
 import type { ElectronApplication, Page } from '@stablyai/playwright-test'
 import type { SkillDiscoveryResult } from '../../src/shared/skills'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { getStoreState, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 
 const CHECKLIST_TEXT = 'Onboarding checklist'
@@ -11,56 +11,56 @@ type SetupGuideFlashMonitor = {
 }
 
 test.describe('Setup guide sidebar entry', () => {
-  test.beforeEach(async ({ orcaPage }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
+  test.beforeEach(async ({ dolphinPage }) => {
+    await waitForSessionReady(dolphinPage)
+    await waitForActiveWorktree(dolphinPage)
   })
 
   test('does not flash while completed setup waits for capability readiness', async ({
     electronApp,
-    orcaPage
+    dolphinPage
   }) => {
     await installBlockedCompletedCapabilityFakes(electronApp)
-    await orcaPage.reload()
-    await orcaPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
-    await waitForSessionReady(orcaPage)
-    await seedCompletedSetupExceptCapabilityReadiness(orcaPage)
+    await dolphinPage.reload()
+    await dolphinPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
+    await waitForSessionReady(dolphinPage)
+    await seedCompletedSetupExceptCapabilityReadiness(dolphinPage)
 
     await expect
-      .poll(async () => getStoreState<boolean>(orcaPage, 'setupGuideSidebarDismissed'), {
+      .poll(async () => getStoreState<boolean>(dolphinPage, 'setupGuideSidebarDismissed'), {
         timeout: 5_000
       })
       .toBe(false)
-    await expect(orcaPage.getByText(CHECKLIST_TEXT)).toHaveCount(0)
+    await expect(dolphinPage.getByText(CHECKLIST_TEXT)).toHaveCount(0)
 
-    await startSetupGuideFlashMonitor(orcaPage)
+    await startSetupGuideFlashMonitor(dolphinPage)
 
-    await setActiveViewForFlashProbe(orcaPage, 'tasks')
+    await setActiveViewForFlashProbe(dolphinPage, 'tasks')
     await expect
-      .poll(async () => getStoreState<string>(orcaPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
       .toBe('tasks')
-    await orcaPage.waitForTimeout(500)
+    await dolphinPage.waitForTimeout(500)
 
-    await setActiveViewForFlashProbe(orcaPage, 'automations')
+    await setActiveViewForFlashProbe(dolphinPage, 'automations')
     await expect
-      .poll(async () => getStoreState<string>(orcaPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
       .toBe('automations')
-    await orcaPage.waitForTimeout(500)
+    await dolphinPage.waitForTimeout(500)
 
-    await setActiveViewForFlashProbe(orcaPage, 'mobile')
+    await setActiveViewForFlashProbe(dolphinPage, 'mobile')
     await expect
-      .poll(async () => getStoreState<string>(orcaPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
       .toBe('mobile')
-    await orcaPage.waitForTimeout(500)
+    await dolphinPage.waitForTimeout(500)
 
-    const flashSamples = await stopSetupGuideFlashMonitor(orcaPage)
+    const flashSamples = await stopSetupGuideFlashMonitor(dolphinPage)
     expect(flashSamples, `setup guide sidebar flashed at ${flashSamples.join(', ')}`).toEqual([])
 
     // Unblock pending skill discovery IPC calls before teardown. Completion
     // after release is covered by the focused progress unit tests.
     await releaseBlockedSkillDiscovery(electronApp)
-    await orcaPage.evaluate(() => {
-      window.dispatchEvent(new CustomEvent('orca:installed-agent-skills-changed'))
+    await dolphinPage.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('dolphin:installed-agent-skills-changed'))
     })
   })
 })
@@ -107,9 +107,9 @@ async function installBlockedCompletedCapabilityFakes(
       providers: ['agent-skills'],
       sourceKind: 'home',
       sourceLabel: 'E2E skill home',
-      rootPath: '/tmp/orca-e2e-skills',
-      directoryPath: `/tmp/orca-e2e-skills/${name}`,
-      skillFilePath: `/tmp/orca-e2e-skills/${name}/SKILL.md`,
+      rootPath: '/tmp/dolphin-e2e-skills',
+      directoryPath: `/tmp/dolphin-e2e-skills/${name}`,
+      skillFilePath: `/tmp/dolphin-e2e-skills/${name}/SKILL.md`,
       installed: true,
       updatedAt: 1
     })
@@ -119,7 +119,7 @@ async function installBlockedCompletedCapabilityFakes(
       await waitForSkillDiscoveryRelease()
       return {
         skills: [
-          makeSkill('orca-cli', 'e2e-orca-cli'),
+          makeSkill('dolphin-cli', 'e2e-dolphin-cli'),
           makeSkill('computer-use', 'e2e-computer-use'),
           makeSkill('orchestration', 'e2e-orchestration')
         ],

@@ -21,7 +21,7 @@ let root: string
 const journals = createTrackedJournalOpener()
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-status-feed-clock-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-status-feed-clock-'))
 })
 
 afterEach(async () => {
@@ -77,7 +77,7 @@ async function openFeed() {
     feed.publish(SESSION, journal)
   }
   await write(
-    { provider: 'orca', clientMessageId: 'prompt-1' },
+    { provider: 'dolphin', clientMessageId: 'prompt-1' },
     { kind: 'message', role: 'user', blocks: [{ type: 'text', text: 'go' }] }
   )
   return { published, write }

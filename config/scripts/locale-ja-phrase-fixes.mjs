@@ -3,8 +3,8 @@
 
 const JA_SENTENCE_CHAR = '[぀-ヿ一-龯、。・「」（）]'
 
-// Two-word commands (`git commit`, `orca terminal`) must keep their second word in Latin.
-const COMMAND_HEAD = '(?<!\\b(?:git|gh|glab|orca|npm|pnpm|npx|yarn|docker|kubectl) )'
+// Two-word commands (`git commit`, `dolphin terminal`) must keep their second word in Latin.
+const COMMAND_HEAD = '(?<!\\b(?:git|gh|glab|dolphin|npm|pnpm|npx|yarn|docker|kubectl) )'
 
 // #12113 stopped new damage; ~700 values still read "terminal を閉じる" and are healed here.
 // Anchored on adjacent Japanese, so `--agent`, agents.md and "Agent SDK" keep their spelling.
@@ -52,7 +52,7 @@ export const JA_PHRASE_FIXES = [
   { pattern: /会議/g, replacement: 'セッション', whenEnIncludes: 'session' },
   { pattern: /広報/g, replacement: 'PR', whenEnIncludes: 'PR' },
   { pattern: /端末/g, replacement: 'ターミナル', whenEnIncludes: 'erminal' },
-  { pattern: /シャチ:\/\//g, replacement: 'orca://', whenEnIncludes: 'orca://' },
+  { pattern: /シャチ:\/\//g, replacement: 'dolphin://', whenEnIncludes: 'dolphin://' },
   { pattern: /線形/g, replacement: 'Linear', whenEnIncludes: 'Linear' },
   { pattern: /グラフQL/g, replacement: 'GraphQL', whenEnIncludes: 'GraphQL' },
   { pattern: /不和/g, replacement: 'Discord', whenEnIncludes: 'Discord' },

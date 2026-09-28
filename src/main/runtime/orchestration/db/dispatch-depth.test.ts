@@ -6,10 +6,10 @@ import {
 } from '../../structured-worker-identity'
 import { OrchestrationDb } from '../db'
 import { AmbiguousDispatchParentError } from './dispatch-depth'
-import { backfillStructuredWorkerOrcaSessionIds } from './schema/structured-worker-orca-session-backfill'
+import { backfillStructuredWorkerDolphinSessionIds } from './schema/structured-worker-dolphin-session-backfill'
 
 /**
- * These pin the fence Orca documented but never enforced: before this feature a
+ * These pin the fence Dolphin documented but never enforced: before this feature a
  * dispatched worker could create its own Run and dispatch sub-workers freely.
  * Every rejection case here passes on the pre-change tree.
  */
@@ -290,9 +290,9 @@ describe('nested worker depth', () => {
     expect(db.resolveCreatorDepth({ kind: 'terminal', handle: 'term_ctx' })).toBe(1)
   })
 
-  // Pinned for the reader that switches self-dispatch detection to Orca session id equality: equal
+  // Pinned for the reader that switches self-dispatch detection to Dolphin session id equality: equal
   // creator and assignee ids must keep meaning bookkeeping, and different ones delegation.
-  it('records equal Orca session ids exactly when a structured session dispatches to itself', () => {
+  it('records equal Dolphin session ids exactly when a structured session dispatches to itself', () => {
     db = new OrchestrationDb(':memory:')
     const sessionId = '5c7e9a1d-3f6b-4c8e-8d2a-4b6c8e0a2d36'
     const self = {
@@ -315,15 +315,15 @@ describe('nested worker depth', () => {
       creator: self,
       maxDepth: UNCAPPED
     })
-    backfillStructuredWorkerOrcaSessionIds(db.db)
+    backfillStructuredWorkerDolphinSessionIds(db.db)
 
     const ownRow = db.getDispatchContextById(own.id)
-    expect(ownRow?.creator_orca_session_id).toBe(sessionId)
-    expect(ownRow?.assignee_orca_session_id).toBe(ownRow?.creator_orca_session_id)
+    expect(ownRow?.creator_dolphin_session_id).toBe(sessionId)
+    expect(ownRow?.assignee_dolphin_session_id).toBe(ownRow?.creator_dolphin_session_id)
     expect(db.resolveCreatorDepth(self)).toBe(0)
     const delegatedRow = db.getDispatchContextById(delegated.id)
-    expect(delegatedRow?.creator_orca_session_id).toBe(sessionId)
-    expect(delegatedRow?.assignee_orca_session_id).toBeNull()
+    expect(delegatedRow?.creator_dolphin_session_id).toBe(sessionId)
+    expect(delegatedRow?.assignee_dolphin_session_id).toBeNull()
     expect(
       db.resolveCreatorDepth({
         kind: 'terminal',

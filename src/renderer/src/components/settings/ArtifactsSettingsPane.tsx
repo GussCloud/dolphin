@@ -2,7 +2,7 @@ import { ArrowRight, Files } from 'lucide-react'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { Button } from '@/components/ui/button'
 import { SettingsSwitchRow } from './SettingsFormControls'
-import { useOrcaProfileAuthStatusRefresh } from '@/hooks/use-orca-profile-auth-status-refresh'
+import { useDolphinProfileAuthStatusRefresh } from '@/hooks/use-dolphin-profile-auth-status-refresh'
 import { useAppStore } from '@/store'
 import { isWebClientLocation } from '@/lib/web-client-location'
 import { translate } from '@/i18n/i18n'
@@ -17,15 +17,15 @@ export function ArtifactsSettingsPane({
   updateSettings: (updates: Partial<GlobalSettings>) => Promise<void>
 }): React.JSX.Element {
   const openArtifactsPage = useAppStore((state) => state.openArtifactsPage)
-  const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
+  const authStatus = useAppStore((state) => state.dolphinProfileAuthStatus)
+  const connect = useAppStore((state) => state.connectCurrentDolphinProfile)
   const signedIn = authStatus?.state === 'connected'
   // Why: the capability lives in the desktop host's store and is deliberately absent from the
   // settings.update allowlist, so a web client can only mirror it — never grant it.
   const isWebClient = isWebClientLocation()
   const sharingEnabled = settings.artifactSharingEnabled === true
 
-  useOrcaProfileAuthStatusRefresh()
+  useDolphinProfileAuthStatusRefresh()
 
   const howToSteps: HowToStep[] = [
     ...(sharingEnabled

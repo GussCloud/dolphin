@@ -24,24 +24,24 @@ const cachedTokens = new Map<string, string>()
 // failing reads without re-touching the keychain on every status poll.
 export const credentialErrors = new Map<string, string>()
 
-function getOrcaDir(): string {
+function getDolphinDir(): string {
   return join(homedir(), FORK_HOME_STATE_DIR_NAME)
 }
 
 function getSiteFilePath(): string {
-  return join(getOrcaDir(), 'jira-sites.json')
+  return join(getDolphinDir(), 'jira-sites.json')
 }
 
 function getTokenDir(): string {
-  return join(getOrcaDir(), 'jira-tokens')
+  return join(getDolphinDir(), 'jira-tokens')
 }
 
 function getTokenPath(siteId: string): string {
   return join(getTokenDir(), `${Buffer.from(siteId).toString('base64url')}.enc`)
 }
 
-function ensureOrcaDir(): void {
-  const dir = getOrcaDir()
+function ensureDolphinDir(): void {
+  const dir = getDolphinDir()
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true })
   }
@@ -131,7 +131,7 @@ export function getSiteFile(): JiraSiteFile {
 }
 
 export function writeSiteFile(file: JiraSiteFile): void {
-  ensureOrcaDir()
+  ensureDolphinDir()
   const sites = file.sites.filter((site) => hasStoredToken(site.id))
   const activeSiteId =
     file.activeSiteId && sites.some((site) => site.id === file.activeSiteId)
@@ -193,7 +193,7 @@ export function readToken(siteId: string): string | null {
 }
 
 export function saveToken(siteId: string, apiToken: string): void {
-  ensureOrcaDir()
+  ensureDolphinDir()
   ensureTokenDir()
   writeEncryptedToken(getTokenPath(siteId), apiToken)
   cachedTokens.set(siteId, apiToken)

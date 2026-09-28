@@ -23,7 +23,7 @@ async function verify(results) {
     args: ['-c', gate.run],
     env: {
       ...process.env,
-      ORCA_BACKGROUND_LAUNCH: '1',
+      DOLPHIN_BACKGROUND_LAUNCH: '1',
       CODE_PATHS: 'success',
       SHOULD_RUN: 'true',
       ...results

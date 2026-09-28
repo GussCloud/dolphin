@@ -28,7 +28,7 @@ const cases = allEntrypoints
     ]
   : [{ entrypoint, signalTarget, intDelivery }]
 if (!appImageArg) {
-  fail('Usage: run-headless-serve-shutdown-docker.mjs --appimage /path/to/orca.AppImage')
+  fail('Usage: run-headless-serve-shutdown-docker.mjs --appimage /path/to/dolphin.AppImage')
 }
 if (!['app', 'serving-electron'].includes(signalTarget)) {
   fail(`Unsupported --signal-target: ${signalTarget}`)
@@ -54,8 +54,8 @@ if (!existsSync(appImage)) {
 }
 
 const suffix = `${process.pid}-${Date.now()}`
-const image = `orca-headless-serve-shutdown:${suffix}`
-const artifactVolume = `orca-headless-serve-shutdown-${suffix}`
+const image = `dolphin-headless-serve-shutdown:${suffix}`
+const artifactVolume = `dolphin-headless-serve-shutdown-${suffix}`
 const sha256 = createHash('sha256').update(readFileSync(appImage)).digest('hex')
 
 try {
@@ -63,8 +63,8 @@ try {
     'build',
     '--platform',
     platform,
-    ...(process.env.ORCA_SHUTDOWN_FIXTURE_CACHE_IMAGE
-      ? ['--cache-from', process.env.ORCA_SHUTDOWN_FIXTURE_CACHE_IMAGE]
+    ...(process.env.DOLPHIN_SHUTDOWN_FIXTURE_CACHE_IMAGE
+      ? ['--cache-from', process.env.DOLPHIN_SHUTDOWN_FIXTURE_CACHE_IMAGE]
       : []),
     '-f',
     shutdownDockerfile,
@@ -97,20 +97,20 @@ try {
     '--entrypoint',
     'bash',
     '-v',
-    `${appImage}:/input/orca.AppImage:ro`,
+    `${appImage}:/input/dolphin.AppImage:ro`,
     '-v',
     `${artifactVolume}:/artifacts`,
     image,
     '-lc',
     [
       'trap \'status=$?; if [ "$status" -ne 0 ]; then cat /artifacts/appimage-help.log /artifacts/appimage-extract.log 2>/dev/null || true; fi; exit "$status"\' EXIT',
-      'test -r /input/orca.AppImage && test -x /input/orca.AppImage || { echo "FAIL: AppImage bind must be readable and executable" >&2; exit 1; }',
-      'timeout --kill-after=5s 15s /input/orca.AppImage --appimage-help > /artifacts/appimage-help.log 2>&1',
+      'test -r /input/dolphin.AppImage && test -x /input/dolphin.AppImage || { echo "FAIL: AppImage bind must be readable and executable" >&2; exit 1; }',
+      'timeout --kill-after=5s 15s /input/dolphin.AppImage --appimage-help > /artifacts/appimage-help.log 2>&1',
       'cd /artifacts',
-      'timeout --kill-after=10s 120s /input/orca.AppImage --appimage-extract > /artifacts/appimage-extract.log 2>&1',
+      'timeout --kill-after=10s 120s /input/dolphin.AppImage --appimage-extract > /artifacts/appimage-extract.log 2>&1',
       'mv squashfs-root root',
       launcherExecOverlay
-        ? "sed -i 's/^ELECTRON_RUN_AS_NODE=1 /export ELECTRON_RUN_AS_NODE=1\\nexec /' /artifacts/root/resources/bin/orca-ide"
+        ? "sed -i 's/^ELECTRON_RUN_AS_NODE=1 /export ELECTRON_RUN_AS_NODE=1\\nexec /' /artifacts/root/resources/bin/dolphin-ide"
         : ':',
       'chmod -R a+rX /artifacts/root',
       'rm /artifacts/appimage-help.log /artifacts/appimage-extract.log'
@@ -142,15 +142,15 @@ try {
           '--shm-size',
           '256m',
           '--name',
-          `orca-headless-serve-shutdown-${entrypoint}-${signal.toLowerCase()}-${suffix}`,
+          `dolphin-headless-serve-shutdown-${entrypoint}-${signal.toLowerCase()}-${suffix}`,
           '-e',
-          `ORCA_SIGNAL_TARGET=${signalTarget}`,
+          `DOLPHIN_SIGNAL_TARGET=${signalTarget}`,
           '-e',
-          `ORCA_TEST_ENTRYPOINT=${entrypoint}`,
+          `DOLPHIN_TEST_ENTRYPOINT=${entrypoint}`,
           '-e',
-          `ORCA_INT_DELIVERY=${intDelivery}`,
+          `DOLPHIN_INT_DELIVERY=${intDelivery}`,
           '-v',
-          `${appImage}:/input/orca.AppImage:ro`,
+          `${appImage}:/input/dolphin.AppImage:ro`,
           '-v',
           `${artifactVolume}:/artifacts:ro`,
           image,
@@ -194,15 +194,15 @@ function runDesktopStartupOracle({ image, appImage, platform }) {
     '--security-opt',
     'no-new-privileges',
     '--user',
-    'orca',
+    'dolphin',
     '--entrypoint',
     '/usr/local/bin/run-appimage-desktop-startup-case',
     '-e',
-    'ORCA_STARTUP_DIAGNOSTICS=1',
+    'DOLPHIN_STARTUP_DIAGNOSTICS=1',
     '-v',
-    `${appImage}:/input/orca.AppImage:ro`,
+    `${appImage}:/input/dolphin.AppImage:ro`,
     image,
-    '/input/orca.AppImage'
+    '/input/dolphin.AppImage'
   ])
 }
 

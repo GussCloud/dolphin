@@ -1,0 +1,9 @@
+{
+  "platforms": ["ios", "android"],
+  "ios": {
+    "modules": ["DolphinMobileWebShellModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.dolphinmobilewebshell.DolphinMobileWebShellModule"]
+  }
+}

@@ -135,7 +135,7 @@ export const LOCALE_PHRASE_FIXES = {
     { pattern: /会议/g, replacement: '会话', whenEnIncludes: 'session' },
     { pattern: /港口/g, replacement: '端口', whenEnIncludes: 'ort' },
     { pattern: /公关/g, replacement: 'PR', whenEnIncludes: 'PR' },
-    { pattern: /虎鲸:\/\//g, replacement: 'orca://', whenEnIncludes: 'orca://' },
+    { pattern: /虎鲸:\/\//g, replacement: 'dolphin://', whenEnIncludes: 'dolphin://' },
     { pattern: /代理商/g, replacement: '代理', whenEnIncludes: 'agent' },
     { pattern: /智能体/g, replacement: '代理', whenEnIncludes: 'agent' },
     { pattern: /分支机构/g, replacement: '分支', whenEnIncludes: 'ranch' },

@@ -854,8 +854,8 @@
           "ok": true,
           "result": {
             "host": "github.com",
-            "owner": "orca",
-            "repo": "orca"
+            "owner": "dolphin",
+            "repo": "dolphin"
           }
         }
       }
@@ -1668,8 +1668,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       }
     },
@@ -2146,8 +2146,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       },
       "work-item": {
@@ -2250,8 +2250,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       }
     },
@@ -4048,8 +4048,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       }
     },
@@ -4790,8 +4790,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       },
       "work-item": {
@@ -5799,8 +5799,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       }
     },
@@ -6282,8 +6282,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       },
       "work-item": {
@@ -6889,8 +6889,8 @@
         "ok": true,
         "result": {
           "host": "github.com",
-          "owner": "orca",
-          "repo": "orca"
+          "owner": "dolphin",
+          "repo": "dolphin"
         }
       },
       "work-item": {

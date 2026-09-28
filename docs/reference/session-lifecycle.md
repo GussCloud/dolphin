@@ -14,15 +14,15 @@ Auxiliary states: `restoring`, `disconnected`, `orphaned`, `failed`.
 
 - `terminated` never returns to `running`. A restore goes through `restoring`, which starts a new runtime under the same id.
 - A repeated transition to the same state is a no-op. This keeps repeated stop calls idempotent.
-- A forbidden transition is refused and counted. It never throws. A nonzero `rejectedLifecycleTransitions` in `orca diagnostics runtime` means two layers disagree about a session.
+- A forbidden transition is refused and counted. It never throws. A nonzero `rejectedLifecycleTransitions` in `dolphin diagnostics runtime` means two layers disagree about a session.
 
 ## Who records what
 
-| Layer | Source | States |
-|---|---|---|
-| Main (local PTYs) | `SessionLifecycleLedger` fed by `memory/pty-registry.ts` | `running` on register, `stopping` in `shutdownProviderAndDetectExit`, `terminated` then `reaped` on unregister |
-| Daemon | `SessionInfo.state` via `projectDaemonSessionLifecycle` | `running`, `exiting` (projected to `stopping`) while a kill is in flight, `exited` |
-| Daemon log (`daemon.log`) | `daemon-file-log.ts` | `session-created`, `session-stop-requested`, `session-killed`, `session-exited`, `session-reaped`, and `process-orphan-{suspected,reaped,confirmed,unverifiable}` |
+| Layer                     | Source                                                   | States                                                                                                                                                            |
+| ------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Main (local PTYs)         | `SessionLifecycleLedger` fed by `memory/pty-registry.ts` | `running` on register, `stopping` in `shutdownProviderAndDetectExit`, `terminated` then `reaped` on unregister                                                    |
+| Daemon                    | `SessionInfo.state` via `projectDaemonSessionLifecycle`  | `running`, `exiting` (projected to `stopping`) while a kill is in flight, `exited`                                                                                |
+| Daemon log (`daemon.log`) | `daemon-file-log.ts`                                     | `session-created`, `session-stop-requested`, `session-killed`, `session-exited`, `session-reaped`, and `process-orphan-{suspected,reaped,confirmed,unverifiable}` |
 
 The ledger keeps the 200 most recently reaped sessions, so diagnostics can show recent teardowns. Anything older is dropped.
 

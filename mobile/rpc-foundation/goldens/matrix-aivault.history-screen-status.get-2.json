@@ -88,9 +88,9 @@
       "labels": ["Back", "Refresh agent sessions"],
       "text": [
         "Agent Session History",
-        "orca-history",
+        "dolphin-history",
         "Agent Session History Unavailable",
-        "Update Orca on this host to browse agent session history."
+        "Update Dolphin on this host to browse agent session history."
       ]
     },
     "14cef45e16d2": {
@@ -138,7 +138,7 @@
         "View": 4
       },
       "labels": ["Back", "Refresh agent sessions"],
-      "text": ["Agent Session History", "orca-history", "Unable to Load", "Retry"]
+      "text": ["Agent Session History", "dolphin-history", "Unable to Load", "Retry"]
     },
     "22141179786a": {
       "crash": {
@@ -153,7 +153,13 @@
         "View": 4
       },
       "labels": ["Back", "Refresh agent sessions"],
-      "text": ["Agent Session History", "orca-history", "Unable to Load", "Unknown method", "Retry"]
+      "text": [
+        "Agent Session History",
+        "dolphin-history",
+        "Unable to Load",
+        "Unknown method",
+        "Retry"
+      ]
     },
     "2813efdd7233": {
       "name": "status.get#2",
@@ -273,7 +279,13 @@
         "View": 4
       },
       "labels": ["Back", "Refresh agent sessions"],
-      "text": ["Agent Session History", "orca-history", "Unable to Load", "outer refused", "Retry"]
+      "text": [
+        "Agent Session History",
+        "dolphin-history",
+        "Unable to Load",
+        "outer refused",
+        "Retry"
+      ]
     },
     "4cebf6258ec1": {
       "name": "worktree.ps#1",
@@ -456,7 +468,7 @@
       "labels": ["Back", "Refresh agent sessions"],
       "text": [
         "Agent Session History",
-        "orca-history",
+        "dolphin-history",
         "Unable to Load",
         "transport failure",
         "Retry"
@@ -512,7 +524,7 @@
       "labels": ["Back", "Refresh agent sessions"],
       "text": [
         "Agent Session History",
-        "orca-history",
+        "dolphin-history",
         "Unable to Load",
         "The host sent a reply this app could not read (status.get)",
         "Retry"
@@ -646,7 +658,7 @@
       "labels": ["Back", "Refresh agent sessions"],
       "text": [
         "Agent Session History",
-        "orca-history",
+        "dolphin-history",
         "Unable to Load",
         "Unable to reach host",
         "Retry"
@@ -671,7 +683,7 @@
         "View": 4
       },
       "labels": ["Back", "Refresh agent sessions"],
-      "text": ["Agent Session History", "orca-history"]
+      "text": ["Agent Session History", "dolphin-history"]
     },
     "d3c3ce66625d": {
       "name": "aiVault.listSessions#1",

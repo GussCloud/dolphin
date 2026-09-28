@@ -74,7 +74,7 @@ describe('codex structured launch resolution', () => {
     await withPlatform('win32', async () => {
       const resolveLaunch = createCodexStructuredLaunchResolver({
         store: { getRecord: () => record() } as unknown as AgentSessionRecordStore,
-        resolveWorkspacePath: async () => String.raw`C:\workspaces\orca`,
+        resolveWorkspacePath: async () => String.raw`C:\workspaces\dolphin`,
         resolveCommand: () => command,
         isWindowsProcessStartTimeAvailable: () => true
       })
@@ -88,7 +88,7 @@ describe('codex structured launch resolution', () => {
 
   it('fails closed before resolving a Windows launch without creation-time proof', async () => {
     await withPlatform('win32', async () => {
-      const resolveWorkspacePath = vi.fn(async () => String.raw`C:\workspaces\orca`)
+      const resolveWorkspacePath = vi.fn(async () => String.raw`C:\workspaces\dolphin`)
       const resolveLaunch = createCodexStructuredLaunchResolver({
         store: { getRecord: () => record() } as unknown as AgentSessionRecordStore,
         resolveWorkspacePath,

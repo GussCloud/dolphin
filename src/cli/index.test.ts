@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   callMock,
   runtimeClientConstructorMock,
-  serveOrcaAppMock,
+  serveDolphinAppMock,
   getDefaultUserDataPathMock,
   addEnvironmentFromPairingCodeMock,
   listEnvironmentsMock,
@@ -11,8 +11,8 @@ const {
 } = vi.hoisted(() => ({
   callMock: vi.fn(),
   runtimeClientConstructorMock: vi.fn(),
-  serveOrcaAppMock: vi.fn(),
-  getDefaultUserDataPathMock: vi.fn(() => '/tmp/orca-user-data'),
+  serveDolphinAppMock: vi.fn(),
+  getDefaultUserDataPathMock: vi.fn(() => '/tmp/dolphin-user-data'),
   addEnvironmentFromPairingCodeMock: vi.fn(),
   listEnvironmentsMock: vi.fn(),
   spawnMock: vi.fn()
@@ -23,7 +23,7 @@ vi.mock('./runtime-client', async () => {
   return createRuntimeClientModuleMock({
     callMock,
     runtimeClientConstructorMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock
   })
 })
@@ -239,8 +239,8 @@ describe('command aliases dispatch to the canonical handler', () => {
   })
 
   it('keeps `agent-context` local when remote environment variables are set', async () => {
-    vi.stubEnv('ORCA_PAIRING_CODE', 'pairing-code')
-    vi.stubEnv('ORCA_ENVIRONMENT', 'stale-environment')
+    vi.stubEnv('DOLPHIN_PAIRING_CODE', 'pairing-code')
+    vi.stubEnv('DOLPHIN_ENVIRONMENT', 'stale-environment')
     try {
       await main(['agent-context', '--json'], '/tmp/repo')
 
@@ -260,8 +260,8 @@ describe('artifact runtime routing', () => {
   })
 
   it('uses the desktop runtime despite remote-selection environment fallbacks', async () => {
-    vi.stubEnv('ORCA_ENVIRONMENT', 'remote-environment')
-    vi.stubEnv('ORCA_PAIRING_CODE', 'remote-pairing-code')
+    vi.stubEnv('DOLPHIN_ENVIRONMENT', 'remote-environment')
+    vi.stubEnv('DOLPHIN_PAIRING_CODE', 'remote-pairing-code')
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     callMock.mockResolvedValue(okFixture('artifact-list', { status: 'ok', value: [] }))
     runtimeClientConstructorMock.mockClear()
@@ -413,7 +413,7 @@ describe('nested command group help', () => {
   )
 })
 
-describe('orca root help', () => {
+describe('dolphin root help', () => {
   it('advertises machine-readable agent discovery', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 

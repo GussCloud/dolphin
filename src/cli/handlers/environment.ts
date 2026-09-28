@@ -61,7 +61,7 @@ export const ENVIRONMENT_HANDLERS: Record<string, CommandHandler> = {
         `Saved environment ${result.environment.name} (${result.environment.id}).`
     )
   },
-  // Why: an agent told "run it on <name>" had nowhere to look. `orca environment list` showed
+  // Why: an agent told "run it on <name>" had nowhere to look. `dolphin environment list` showed
   // paired servers only, and nothing in the CLI listed SSH targets at all, so the wrong-axis
   // guess was the only move available. This is the one place that answers both.
   'host list': async ({ client, flags, json }) => {
@@ -80,7 +80,7 @@ export const ENVIRONMENT_HANDLERS: Record<string, CommandHandler> = {
       ...(target.remotePlatform ? { platform: target.remotePlatform } : {})
     }))
     // Why: this listing answers from the local pairing store; dialing each paired server would make
-    // it slow and offline-fragile. `orca host name --environment <name>` asks one server directly.
+    // it slow and offline-fragile. `dolphin host name --environment <name>` asks one server directly.
     const localStatus = await readLocalHostDescriptor(client)
     const environments = listEnvironments(getDefaultUserDataPath()).map((environment) => ({
       kind: 'environment' as const,

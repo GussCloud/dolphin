@@ -260,16 +260,16 @@ describe('fs:importExternalPaths — SSH routing & connection', () => {
 
     await invoke({
       sourcePaths: ['/tmp/dropped/file.txt'],
-      destDir: '/home/user/project/.orca/drops',
+      destDir: '/home/user/project/.dolphin/drops',
       connectionId: connId,
       ensureDir: true
     })
 
-    expect(provider.createDir).toHaveBeenCalledWith('/home/user/project/.orca')
+    expect(provider.createDir).toHaveBeenCalledWith('/home/user/project/.dolphin')
     expect(provider.writeFile).toHaveBeenCalledWith(
-      '/home/user/project/.orca/.gitignore',
+      '/home/user/project/.dolphin/.gitignore',
       '*\n!.gitignore\n'
     )
-    expect(provider.createDir).toHaveBeenCalledWith('/home/user/project/.orca/drops')
+    expect(provider.createDir).toHaveBeenCalledWith('/home/user/project/.dolphin/drops')
   })
 })

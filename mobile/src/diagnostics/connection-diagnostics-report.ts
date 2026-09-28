@@ -40,11 +40,11 @@ export function buildConnectionDiagnosticsReport(args: {
     entries
   })
   const lines: string[] = []
-  lines.push('Orca Mobile connection diagnostics')
+  lines.push('Dolphin Mobile connection diagnostics')
   lines.push(`Generated: ${new Date(now).toISOString()}`)
-  lines.push(`App: Orca Mobile ${args.appVersion} · ${args.platform}`)
+  lines.push(`App: Dolphin Mobile ${args.appVersion} · ${args.platform}`)
   const desktopAppVersion = normalizeHostAppVersion(args.desktopAppVersion)
-  lines.push(`Host Orca version: ${desktopAppVersion ?? 'unknown'}`)
+  lines.push(`Host Dolphin version: ${desktopAppVersion ?? 'unknown'}`)
   lines.push(`Host: ${redactConnectionLogText(args.hostName)}`)
   lines.push(
     `Endpoint: ${formatEndpoint(args.endpoint)}${isTailscaleEndpoint(args.endpoint) ? ' (Tailscale)' : ''}`

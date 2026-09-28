@@ -154,7 +154,7 @@ export type RateLimitState = {
    */
   minimaxApiKeyConfigured: boolean
   /**
-   * True when main resolved an OpenCode Go API key (Orca settings,
+   * True when main resolved an OpenCode Go API key (Dolphin settings,
    * OPENCODE_API_KEY, or what OpenCode stored on /connect). The key itself
    * never leaves main; the status bar ORs this with the session cookie to
    * decide whether the OpenCode Go bar stays visible.

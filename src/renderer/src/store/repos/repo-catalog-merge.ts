@@ -127,11 +127,11 @@ export function projectCompatibilityForReconciledRepos(
   return mergeProjectHostSetupCompatibility(projectCompatibilityFromRepos(repos), fetched)
 }
 
-export function filterTrustedOrcaHooksToValidRepos(
-  trust: AppState['trustedOrcaHooks'],
+export function filterTrustedDolphinHooksToValidRepos(
+  trust: AppState['trustedDolphinHooks'],
   validRepoIds: Set<string>
-): AppState['trustedOrcaHooks'] {
-  const next: AppState['trustedOrcaHooks'] = {}
+): AppState['trustedDolphinHooks'] {
+  const next: AppState['trustedDolphinHooks'] = {}
   for (const [repoId, entry] of Object.entries(trust)) {
     if (validRepoIds.has(repoId)) {
       next[repoId] = entry

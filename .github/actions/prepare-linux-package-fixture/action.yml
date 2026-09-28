@@ -19,7 +19,7 @@ runs:
       uses: actions/cache/restore@v5
       continue-on-error: true
       with:
-        path: ${{ runner.temp }}/orca-package-fixtures/${{ inputs.fixture }}.tar
+        path: ${{ runner.temp }}/dolphin-package-fixtures/${{ inputs.fixture }}.tar
         key: linux-package-fixture-v1-${{ runner.os }}-${{ runner.arch }}-linux-amd64-${{ inputs.fixture }}-${{ hashFiles(format('config/docker/{0}/**', inputs.fixture), '.github/actions/prepare-linux-package-fixture/action.yml') }}
 
     - name: Load or seed fixture build cache
@@ -35,8 +35,8 @@ runs:
           headless-serve-shutdown|cli-launch-contract) ;;
           *) echo "Unsupported package fixture: $FIXTURE" >&2; exit 1 ;;
         esac
-        archive="$RUNNER_TEMP/orca-package-fixtures/$FIXTURE.tar"
-        image="orca-package-fixture-$FIXTURE:cache"
+        archive="$RUNNER_TEMP/dolphin-package-fixtures/$FIXTURE.tar"
+        image="dolphin-package-fixture-$FIXTURE:cache"
         if [[ "$CACHE_HIT" == true ]] && docker load --input "$archive"; then
           if docker image inspect "$image" > /dev/null; then
             echo "image=$image" >> "$GITHUB_OUTPUT"
@@ -59,5 +59,5 @@ runs:
       uses: actions/cache/save@v5
       continue-on-error: true
       with:
-        path: ${{ runner.temp }}/orca-package-fixtures/${{ inputs.fixture }}.tar
+        path: ${{ runner.temp }}/dolphin-package-fixtures/${{ inputs.fixture }}.tar
         key: ${{ steps.cache.outputs.cache-primary-key }}

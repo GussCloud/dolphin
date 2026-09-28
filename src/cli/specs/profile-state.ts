@@ -19,7 +19,7 @@ export const PROFILE_STATE_COMMAND_SPECS: CommandSpec[] = [
     notes: [
       'Dolphin must be stopped. Recovery validates the selected artifact and archives the current database family, JSON, and retained recovery artifacts before replacing state.',
       '--backup restores SQLite authority; --revision restores a JSON export for an older compatible runtime.',
-      '--current-json keeps the current orca-data.json, including edits from an older build. It replaces SQLite state without merging; both copies are archived. The next SQLite-capable start imports the selected JSON.',
+      '--current-json keeps the current dolphin-data.json, including edits from an older build. It replaces SQLite state without merging; both copies are archived. The next SQLite-capable start imports the selected JSON.',
       '--current-sqlite keeps the current SQLite state and discards JSON edits from an older build. The JSON is archived, then rewritten from SQLite.'
     ],
     examples: [

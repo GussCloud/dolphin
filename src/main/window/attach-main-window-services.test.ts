@@ -172,7 +172,7 @@ function createMainWindow(
     once: vi.fn(),
     webContents: {
       id: 1,
-      getURL: vi.fn(() => 'file:///opt/orca/renderer/index.html'),
+      getURL: vi.fn(() => 'file:///opt/dolphin/renderer/index.html'),
       isDestroyed: vi.fn(() => false),
       isLoadingMainFrame: vi.fn(() => true),
       on: vi.fn(),
@@ -772,10 +772,10 @@ describe('attachMainWindowServices', () => {
     notifier.worktreesChanged('repo-1')
     notifier.reposChanged()
     notifier.activateWorktree('repo-1', 'wt-1', {
-      runnerScriptPath: '/tmp/repo/.git/orca/setup-runner.sh',
+      runnerScriptPath: '/tmp/repo/.git/dolphin/setup-runner.sh',
       envVars: {
-        ORCA_ROOT_PATH: '/tmp/repo',
-        ORCA_WORKTREE_PATH: '/tmp/worktrees/wt-1'
+        DOLPHIN_ROOT_PATH: '/tmp/repo',
+        DOLPHIN_WORKTREE_PATH: '/tmp/worktrees/wt-1'
       }
     })
 
@@ -788,10 +788,10 @@ describe('attachMainWindowServices', () => {
           repoId: 'repo-1',
           worktreeId: 'wt-1',
           setup: {
-            runnerScriptPath: '/tmp/repo/.git/orca/setup-runner.sh',
+            runnerScriptPath: '/tmp/repo/.git/dolphin/setup-runner.sh',
             envVars: {
-              ORCA_ROOT_PATH: '/tmp/repo',
-              ORCA_WORKTREE_PATH: '/tmp/worktrees/wt-1'
+              DOLPHIN_ROOT_PATH: '/tmp/repo',
+              DOLPHIN_WORKTREE_PATH: '/tmp/worktrees/wt-1'
             }
           }
         }

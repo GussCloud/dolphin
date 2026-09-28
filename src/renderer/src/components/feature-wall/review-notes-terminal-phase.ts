@@ -7,7 +7,7 @@ import { NOTE_TARGETS } from './review-animated-visual-shared'
 //
 // Mirrors docs/feature-wall-review-tile-mock.html: the panel auto-starts a
 // Claude Code session (no `$ claude` command, no typed prompt), shows
-// "Loaded N review notes from Orca", lists each ack with its line number,
+// "Loaded N review notes from Dolphin", lists each ack with its line number,
 // and ends on "Fixing both issues..." with a spinner.
 export type TerminalPhaseContext = {
   term: HTMLDivElement

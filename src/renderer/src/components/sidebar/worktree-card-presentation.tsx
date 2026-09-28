@@ -56,10 +56,10 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     linearIssue,
     handleEditIssue,
     handleEditComment,
-    handleOpenGitHubIssueInOrca,
+    handleOpenGitHubIssueInDolphin,
     handleOpenIssueInBrowser,
-    handleOpenLinearIssueInOrca,
-    handleOpenReviewInOrca,
+    handleOpenLinearIssueInDolphin,
+    handleOpenReviewInDolphin,
     handleOpenReviewInBrowser,
     handleOpenAutomation,
     handleOpenAutomationRun,
@@ -164,9 +164,9 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
             // plug force-open the wider title card and race it closed (#9304), so let this title hover own its state.
             onEditIssue={affiliateListMode ? undefined : handleEditIssue}
             onEditComment={affiliateListMode ? undefined : handleEditComment}
-            onOpenGitHubIssueInOrca={
+            onOpenGitHubIssueInDolphin={
               metaIssue && 'url' in metaIssue && metaIssue.url
-                ? handleOpenGitHubIssueInOrca
+                ? handleOpenGitHubIssueInDolphin
                 : undefined
             }
             onOpenIssueInBrowser={
@@ -174,10 +174,12 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
                 ? handleOpenIssueInBrowser
                 : undefined
             }
-            onOpenLinearIssueInOrca={linearIssue?.url ? handleOpenLinearIssueInOrca : undefined}
-            onOpenReviewInOrca={
+            onOpenLinearIssueInDolphin={
+              linearIssue?.url ? handleOpenLinearIssueInDolphin : undefined
+            }
+            onOpenReviewInDolphin={
               metaReview?.url && metaReview.provider === 'github'
-                ? handleOpenReviewInOrca
+                ? handleOpenReviewInDolphin
                 : undefined
             }
             onOpenReviewInBrowser={metaReview?.url ? handleOpenReviewInBrowser : undefined}
@@ -234,15 +236,19 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
         hoverControl={detailsHoverControl}
         onEditIssue={affiliateListMode ? undefined : handleEditIssue}
         onEditComment={affiliateListMode ? undefined : handleEditComment}
-        onOpenGitHubIssueInOrca={
-          metaIssue && 'url' in metaIssue && metaIssue.url ? handleOpenGitHubIssueInOrca : undefined
+        onOpenGitHubIssueInDolphin={
+          metaIssue && 'url' in metaIssue && metaIssue.url
+            ? handleOpenGitHubIssueInDolphin
+            : undefined
         }
         onOpenIssueInBrowser={
           metaIssue && 'url' in metaIssue && metaIssue.url ? handleOpenIssueInBrowser : undefined
         }
-        onOpenLinearIssueInOrca={linearIssue?.url ? handleOpenLinearIssueInOrca : undefined}
-        onOpenReviewInOrca={
-          metaReview?.url && metaReview.provider === 'github' ? handleOpenReviewInOrca : undefined
+        onOpenLinearIssueInDolphin={linearIssue?.url ? handleOpenLinearIssueInDolphin : undefined}
+        onOpenReviewInDolphin={
+          metaReview?.url && metaReview.provider === 'github'
+            ? handleOpenReviewInDolphin
+            : undefined
         }
         onOpenReviewInBrowser={metaReview?.url ? handleOpenReviewInBrowser : undefined}
         onOpenAutomation={affiliateListMode ? undefined : handleOpenAutomation}

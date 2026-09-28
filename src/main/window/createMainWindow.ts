@@ -105,7 +105,7 @@ export function createMainWindow(
     minHeight: MIN_HEIGHT,
     title: opts?.title ?? FORK_IDENTITY.productName,
     show: false,
-    // Why: macOS swallows the app-activating click by default, so clicking back into Orca needed a second click (Windows/Linux already deliver it).
+    // Why: macOS swallows the app-activating click by default, so clicking back into Dolphin needed a second click (Windows/Linux already deliver it).
     acceptFirstMouse: true,
     // Why: auto-hide the Windows/Linux menu bar to save a row (Alt reveals it); macOS uses the system menu bar anyway.
     autoHideMenuBar: true,

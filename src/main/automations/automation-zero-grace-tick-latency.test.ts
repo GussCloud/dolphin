@@ -25,7 +25,7 @@ async function createStore() {
   installFakeAppEnvironment({ getPath: () => testState.dir })
   const { Store, initDataPath } = await import('../persistence')
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 const makeRepo = (overrides: Partial<Repo> = {}): Repo => ({
@@ -39,7 +39,7 @@ const makeRepo = (overrides: Partial<Repo> = {}): Repo => ({
 
 describe('AutomationService zero-grace tick latency', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-automations-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-automations-test-'))
     vi.useFakeTimers()
   })
 

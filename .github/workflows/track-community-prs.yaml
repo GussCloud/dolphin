@@ -16,7 +16,7 @@ permissions:
 jobs:
   track-community-pr:
     # Why gated: it files PRs into Stably's project board with their bot key, which this repo lacks.
-    if: github.repository == 'stablyai/orca'
+    if: github.repository == 'GussCloud/dolphin'
     # API-only bookkeeping fits the free single-CPU container runner.
     runs-on: ubuntu-slim
     timeout-minutes: 5

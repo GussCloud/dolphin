@@ -75,9 +75,9 @@ beforeEach(() => {
   mocks.requestSingleInstanceLock.mockReturnValue(true)
   mocks.whenReady.mockResolvedValue(undefined)
   mocks.showMessageBox.mockResolvedValue({ response: 0 })
-  vi.stubEnv('ORCA_USER_DATA_PATH', '/stale/inherited/root')
-  vi.stubEnv('ORCA_BYPASS_SINGLE_INSTANCE_LOCK', '1')
-  vi.stubEnv('ORCA_E2E_ENFORCE_SINGLE_INSTANCE_LOCK', '0')
+  vi.stubEnv('DOLPHIN_USER_DATA_PATH', '/stale/inherited/root')
+  vi.stubEnv('DOLPHIN_BYPASS_SINGLE_INSTANCE_LOCK', '1')
+  vi.stubEnv('DOLPHIN_E2E_ENFORCE_SINGLE_INSTANCE_LOCK', '0')
 })
 afterEach(() => {
   vi.restoreAllMocks()
@@ -88,16 +88,16 @@ afterEach(() => {
 })
 
 function fixture() {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'orca-recovery-bridge-')))
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'dolphin-recovery-bridge-')))
   roots.push(root)
   const profileId = 'bridge-profile'
   const directory = join(root, 'profiles', profileId)
   mkdirSync(directory, { recursive: true })
   writeFileSync(
-    join(root, 'orca-profile-index.json'),
+    join(root, 'dolphin-profile-index.json'),
     JSON.stringify({ activeProfileId: profileId, profiles: [{ id: profileId }] })
   )
-  const dataFile = join(directory, 'orca-data.json')
+  const dataFile = join(directory, 'dolphin-data.json')
   const databaseFile = join(directory, 'profile-state.db')
   const exportFile = profileStateJsonExportPath(dataFile, 1)
   const restored = {
@@ -164,8 +164,8 @@ describe('Electron recovery preflight', () => {
         return true
       })
       expect(runProfileStateRecoveryPreflight(item.argv)).toBe(true)
-      expect(process.env.ORCA_USER_DATA_PATH).toBe(item.root)
-      expect(process.env.ORCA_BACKGROUND_LAUNCH).toBe('1')
+      expect(process.env.DOLPHIN_USER_DATA_PATH).toBe(item.root)
+      expect(process.env.DOLPHIN_BACKGROUND_LAUNCH).toBe('1')
       expect(mocks.background).toHaveBeenCalledOnce()
       expect(mocks.requestSingleInstanceLock).toHaveBeenCalledOnce()
       expect(response()).toMatchObject({
@@ -295,7 +295,7 @@ describe('Electron recovery preflight', () => {
       writeFileSync(item.dataFile, JSON.stringify(item.restored))
       return [
         'Dolphin',
-        ...profileStateDesktopRecoveryArgs(['Dolphin', '--inspect', 'orca://share/1'], {
+        ...profileStateDesktopRecoveryArgs(['Dolphin', '--inspect', 'dolphin://share/1'], {
           userDataPath: item.root,
           selector: { kind: 'current-json' }
         })
@@ -309,7 +309,7 @@ describe('Electron recovery preflight', () => {
       expect(existsSync(item.databaseFile)).toBe(false)
       expect(mocks.output).not.toHaveBeenCalled()
       expect(mocks.background).not.toHaveBeenCalled()
-      expect(mocks.relaunch).toHaveBeenCalledWith({ args: ['--inspect', 'orca://share/1'] })
+      expect(mocks.relaunch).toHaveBeenCalledWith({ args: ['--inspect', 'dolphin://share/1'] })
       expect(mocks.exit).toHaveBeenCalledWith(0)
       acquireProfileStateRuntimeAdmission(item.root).release()
     })

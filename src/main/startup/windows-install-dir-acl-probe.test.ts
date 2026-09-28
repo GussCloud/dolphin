@@ -17,7 +17,7 @@ import {
   RESTRICTED_PACKAGES_ACE
 } from './windows-install-dir-acl.test-fixture'
 
-const INSTALL_DIR = 'C:\\Users\\neil\\AppData\\Local\\Programs\\orca'
+const INSTALL_DIR = 'C:\\Users\\neil\\AppData\\Local\\Programs\\dolphin'
 const ORPHAN = ORPHAN_PACKAGE_ACE
 const RESTRICTED_GRANT = RESTRICTED_PACKAGES_ACE
 
@@ -193,7 +193,7 @@ describe('probeWindowsInstallDirAcl', () => {
 
   it('keeps a conditional DACL unreadable instead of hiding a later package grant', async () => {
     const saved =
-      'orca\r\nD:AI(A;OICI;0x1200a9;;;S-1-15-2-999-999-999)' +
+      'dolphin\r\nD:AI(A;OICI;0x1200a9;;;S-1-15-2-999-999-999)' +
       '(XA;OICI;FA;;;WD;(@User.Department == "Finance"))' +
       '(A;OICIID;0x1200a9;;;S-1-15-2-2)\r\n'
     let verdict: CrashReportBreadcrumbData = {}
@@ -223,7 +223,7 @@ describe('probeWindowsInstallDirAcl', () => {
   it('does not report malformed saved output as a clean DACL', async () => {
     const data = await probe({
       fileExists: () => false,
-      spawnFn: fakeSpawn(() => Buffer.from('orca\r\n', 'utf16le')).spawnFn
+      spawnFn: fakeSpawn(() => Buffer.from('dolphin\r\n', 'utf16le')).spawnFn
     })
     expect(data).toMatchObject({ status: 'failed', reason: 'all-targets-unreadable' })
     expect(data.matchesPoisonSignature).toBeUndefined()

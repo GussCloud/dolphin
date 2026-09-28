@@ -39,7 +39,7 @@ describe('settings navigation metadata', () => {
       'orchestration',
       'computer-use',
       'voice',
-      'orca-account',
+      'dolphin-account',
       'setup-guide',
       'general',
       'integrations',
@@ -128,11 +128,11 @@ describe('settings navigation metadata', () => {
       isWebClient: false,
       repos: [repo]
     })
-    const account = desktopSections.find((section) => section.id === 'orca-account')
+    const account = desktopSections.find((section) => section.id === 'dolphin-account')
 
     expect(account?.group).toBe('setup')
     expect(account?.searchEntries[0]?.title).toBe('Dolphin account')
-    expect(ids({ isWebClient: true })).not.toContain('orca-account')
+    expect(ids({ isWebClient: true })).not.toContain('dolphin-account')
   })
 
   it('puts web-safe AI capability panes at the top while hiding desktop-only panes', () => {

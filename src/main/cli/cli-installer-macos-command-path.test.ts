@@ -34,7 +34,7 @@ describe('CliInstaller', () => {
   // must fall back to ~/.local/bin (user-writable, no sudo) rather than failing
   // silently when the parent directory is absent.
   it.skipIf(process.platform === 'win32')(
-    'falls back to ~/.local/bin/orca on macOS when /usr/local/bin does not exist',
+    'falls back to ~/.local/bin/dolphin on macOS when /usr/local/bin does not exist',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -47,7 +47,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: absentUsrLocalBin,
@@ -82,7 +82,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         defaultMacCommandPath: installPath,
         processPathEnv: usrLocalBin
@@ -95,10 +95,10 @@ describe('CliInstaller', () => {
     }
   )
 
-  // Why: users can have a managed Orca command in ~/.local/bin even when
+  // Why: users can have a managed Dolphin command in ~/.local/bin even when
   // /usr/local/bin exists; Settings must follow the shell-visible command.
   it.skipIf(process.platform === 'win32')(
-    'uses an existing managed macOS orca command from the shell PATH before /usr/local/bin',
+    'uses an existing managed macOS dolphin command from the shell PATH before /usr/local/bin',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -117,7 +117,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -139,7 +139,7 @@ describe('CliInstaller', () => {
   // Why: POSIX command lookup skips broken symlinks and keeps searching PATH,
   // so a stale earlier artifact must not steal status from the install path.
   it.skipIf(process.platform === 'win32')(
-    'skips a broken managed macOS orca symlink before /usr/local/bin',
+    'skips a broken managed macOS dolphin symlink before /usr/local/bin',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -166,7 +166,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -189,9 +189,9 @@ describe('CliInstaller', () => {
   )
 
   // Why: PATH lookup stops at the first existing command; a later managed
-  // ~/.local/bin/orca must not steal status from /usr/local/bin/dolphin.
+  // ~/.local/bin/dolphin must not steal status from /usr/local/bin/dolphin.
   it.skipIf(process.platform === 'win32')(
-    'keeps the default macOS command when a managed orca appears later on PATH',
+    'keeps the default macOS command when a managed dolphin appears later on PATH',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -211,7 +211,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -225,9 +225,9 @@ describe('CliInstaller', () => {
   )
 
   // Why: shells skip missing PATH entries, so a managed command later in PATH
-  // is still the shell-visible Orca command until the default path is installed.
+  // is still the shell-visible Dolphin command until the default path is installed.
   it.skipIf(process.platform === 'win32')(
-    'uses a later managed macOS orca command when the default command is missing',
+    'uses a later managed macOS dolphin command when the default command is missing',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -246,7 +246,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -263,10 +263,10 @@ describe('CliInstaller', () => {
     }
   )
 
-  // Why: bash/zsh skip non-executable PATH entries even at Orca's configured
+  // Why: bash/zsh skip non-executable PATH entries even at Dolphin's configured
   // install slot, then keep looking for a runnable command later in PATH.
   it.skipIf(process.platform === 'win32')(
-    'uses a later managed macOS orca command when the default command is not executable',
+    'uses a later managed macOS dolphin command when the default command is not executable',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -278,7 +278,7 @@ describe('CliInstaller', () => {
       const launcherPath = join(resourcesPath, 'bin', 'dolphin')
       await mkdir(usrLocalBin, { recursive: true })
       await mkdir(userLocalBin, { recursive: true })
-      await writeFile(defaultInstallPath, '#!/usr/bin/env bash\necho other-orca\n', 'utf8')
+      await writeFile(defaultInstallPath, '#!/usr/bin/env bash\necho other-dolphin\n', 'utf8')
       await symlink(launcherPath, userInstallPath)
 
       const installer = new CliInstaller({
@@ -286,7 +286,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -299,11 +299,11 @@ describe('CliInstaller', () => {
 
       const installed = await installer.install()
       expect(installed.commandPath).toBe(userInstallPath)
-      await expect(readFile(defaultInstallPath, 'utf8')).resolves.toContain('other-orca')
+      await expect(readFile(defaultInstallPath, 'utf8')).resolves.toContain('other-dolphin')
     }
   )
 
-  // Why: a non-Orca command after an empty default install slot can be shadowed
+  // Why: a non-Dolphin command after an empty default install slot can be shadowed
   // by installing the default path without replacing the user's command.
   it.skipIf(process.platform === 'win32')(
     'installs the default macOS command instead of replacing an unmanaged later command',
@@ -318,7 +318,7 @@ describe('CliInstaller', () => {
       const launcherPath = join(resourcesPath, 'bin', 'dolphin')
       await mkdir(usrLocalBin, { recursive: true })
       await mkdir(userLocalBin, { recursive: true })
-      await writeFile(userInstallPath, '#!/usr/bin/env bash\necho other-orca\n', {
+      await writeFile(userInstallPath, '#!/usr/bin/env bash\necho other-dolphin\n', {
         encoding: 'utf8',
         mode: 0o755
       })
@@ -328,7 +328,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -343,14 +343,14 @@ describe('CliInstaller', () => {
       expect(installed.commandPath).toBe(defaultInstallPath)
       expect(installed.state).toBe('installed')
       await expect(readlink(defaultInstallPath)).resolves.toBe(launcherPath)
-      await expect(readFile(userInstallPath, 'utf8')).resolves.toContain('other-orca')
+      await expect(readFile(userInstallPath, 'utf8')).resolves.toContain('other-dolphin')
     }
   )
 
-  // Why: an off-PATH ~/.local/bin/orca must not hijack CLI registration and
+  // Why: an off-PATH ~/.local/bin/dolphin must not hijack CLI registration and
   // leave the shell-visible /usr/local/bin command missing.
   it.skipIf(process.platform === 'win32')(
-    'ignores managed macOS orca commands that are not visible on the shell PATH',
+    'ignores managed macOS dolphin commands that are not visible on the shell PATH',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -369,7 +369,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -390,7 +390,7 @@ describe('CliInstaller', () => {
   )
 
   it.skipIf(process.platform === 'win32')(
-    'reports a conflict for an unmanaged macOS orca that shadows the install path',
+    'reports a conflict for an unmanaged macOS dolphin that shadows the install path',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -401,7 +401,7 @@ describe('CliInstaller', () => {
       const userInstallPath = join(userLocalBin, 'dolphin')
       await mkdir(usrLocalBin, { recursive: true })
       await mkdir(userLocalBin, { recursive: true })
-      await writeFile(userInstallPath, '#!/usr/bin/env bash\necho other-orca\n', {
+      await writeFile(userInstallPath, '#!/usr/bin/env bash\necho other-dolphin\n', {
         encoding: 'utf8',
         mode: 0o755
       })
@@ -411,7 +411,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -421,16 +421,16 @@ describe('CliInstaller', () => {
       const status = await installer.getStatus()
       expect(status.commandPath).toBe(userInstallPath)
       expect(status.state).toBe('conflict')
-      await expect(installer.install()).rejects.toThrow('Refusing to replace non-Orca command')
+      await expect(installer.install()).rejects.toThrow('Refusing to replace non-Dolphin command')
       await expect(lstat(defaultInstallPath)).rejects.toMatchObject({ code: 'ENOENT' })
-      await expect(readFile(userInstallPath, 'utf8')).resolves.toContain('other-orca')
+      await expect(readFile(userInstallPath, 'utf8')).resolves.toContain('other-dolphin')
     }
   )
 
   // Why: bash/zsh skip non-executable PATH entries, so reporting them as a
   // conflict would block a valid later install path the shell would use.
   it.skipIf(process.platform === 'win32')(
-    'skips a non-executable unmanaged macOS orca before the install path',
+    'skips a non-executable unmanaged macOS dolphin before the install path',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -442,14 +442,14 @@ describe('CliInstaller', () => {
       const launcherPath = join(resourcesPath, 'bin', 'dolphin')
       await mkdir(usrLocalBin, { recursive: true })
       await mkdir(userLocalBin, { recursive: true })
-      await writeFile(userInstallPath, '#!/usr/bin/env bash\necho other-orca\n', 'utf8')
+      await writeFile(userInstallPath, '#!/usr/bin/env bash\necho other-dolphin\n', 'utf8')
 
       const installer = new CliInstaller({
         platform: 'darwin',
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: defaultInstallPath,
@@ -464,14 +464,14 @@ describe('CliInstaller', () => {
       expect(installed.commandPath).toBe(defaultInstallPath)
       expect(installed.state).toBe('installed')
       await expect(readlink(defaultInstallPath)).resolves.toBe(launcherPath)
-      await expect(readFile(userInstallPath, 'utf8')).resolves.toContain('other-orca')
+      await expect(readFile(userInstallPath, 'utf8')).resolves.toContain('other-dolphin')
     }
   )
 
-  // Why: when macCommandPath falls back to ~/.local/bin/orca on arm64, commandName
-  // must still be 'orca' (not 'dolphin-ide' which is Linux-only).
+  // Why: when macCommandPath falls back to ~/.local/bin/dolphin on arm64, commandName
+  // must still be 'dolphin' (not 'dolphin-ide' which is Linux-only).
   it.skipIf(process.platform === 'win32')(
-    'reports commandName as orca (not orca-ide) when falling back to ~/.local/bin on macOS',
+    'reports commandName as dolphin (not dolphin-ide) when falling back to ~/.local/bin on macOS',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -482,7 +482,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: absentUsrLocalBin,
@@ -508,7 +508,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: absentUsrLocalBin,
@@ -528,7 +528,7 @@ describe('CliInstaller', () => {
 
   // Why: the arm64 fallback must apply for packaged builds, not just dev launchers.
   it.skipIf(process.platform === 'win32')(
-    'resolves to ~/.local/bin/orca on arm64 even when isPackaged is true',
+    'resolves to ~/.local/bin/dolphin on arm64 even when isPackaged is true',
     async () => {
       const fixture = await makeFixture()
       const homePath = join(fixture.root, 'home')
@@ -536,7 +536,7 @@ describe('CliInstaller', () => {
       const resourcesPath = join(fixture.root, 'resources')
       const bundledLauncher = join(resourcesPath, 'bin', 'dolphin')
       await mkdir(join(resourcesPath, 'bin'), { recursive: true })
-      await writeFile(bundledLauncher, '#!/usr/bin/env bash\necho orca\n', {
+      await writeFile(bundledLauncher, '#!/usr/bin/env bash\necho dolphin\n', {
         encoding: 'utf8',
         mode: 0o755
       })
@@ -546,7 +546,7 @@ describe('CliInstaller', () => {
         isPackaged: true,
         resourcesPath,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         homePath,
         defaultMacCommandPath: absentUsrLocalBin,

@@ -49,7 +49,7 @@ beforeEach(async () => {
     ]
   })
   acquires = []
-  directory = await mkdtemp(join(tmpdir(), 'orca-rewind-'))
+  directory = await mkdtemp(join(tmpdir(), 'dolphin-rewind-'))
   store = await AgentSessionRecordStore.open({
     directory: join(directory, 'store'),
     hostId: 'local'
@@ -172,7 +172,7 @@ function params(
 describe('host rewind', () => {
   it('resolves accepted codex user submissions to provider targets', async () => {
     const target = await seed(true)
-    expect(target.startsWith('orca:')).toBe(true)
+    expect(target.startsWith('dolphin:')).toBe(true)
     expect(await host.rewind(caller, params(target))).toMatchObject({ ok: true })
     expect(host.journalSnapshot(HOST_TEST_SESSION).items).toHaveLength(1)
     expect(rewind).toHaveBeenCalledWith(expect.objectContaining({ beforeTurnId: 'drop' }))
@@ -259,7 +259,7 @@ describe('host rewind', () => {
   it('refuses a rewind racing an active turn before provider execution', async () => {
     const target = await seed()
     sink.appendItem(
-      { provider: 'orca', clientMessageId: 'active' },
+      { provider: 'dolphin', clientMessageId: 'active' },
       { kind: 'status', text: 'working', turnLifecycle: { turnId: 'active', state: 'running' } }
     )
     expect(await host.rewind(caller, params(target))).toMatchObject({
@@ -348,7 +348,7 @@ describe('host rewind', () => {
       recordId: `turn-lifecycle:${turnId}`
     })
     const goalRow = {
-      provider: 'orca' as const,
+      provider: 'dolphin' as const,
       clientMessageId: `codex-goal:${'a'.repeat(64)}:${'b'.repeat(64)}:${'c'.repeat(64)}`
     }
     const goalBody = {
@@ -407,7 +407,7 @@ describe('host rewind', () => {
       ordinal: 0
     })
     const goalRow = {
-      provider: 'orca' as const,
+      provider: 'dolphin' as const,
       clientMessageId: `codex-goal:${'1'.repeat(64)}:${'2'.repeat(64)}:${'3'.repeat(64)}`
     }
     const goalBody = {

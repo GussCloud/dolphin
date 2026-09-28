@@ -5,14 +5,14 @@ import type {
 } from '../../../../shared/computer-use-permissions-types'
 import {
   COMPUTER_USE_SKILL_NAME,
-  ORCA_LINEAR_SKILL_NAME,
-  ORCA_CLI_SKILL_NAME,
+  DOLPHIN_LINEAR_SKILL_NAME,
+  DOLPHIN_CLI_SKILL_NAME,
   ORCHESTRATION_SKILL_NAME,
   buildAgentFeatureSkillInstallCommand
 } from '@/lib/agent-feature-install-commands'
 import { BROWSER_USE_ENABLED_STORAGE_KEY } from '@/lib/browser-use-setup-state'
 import { e2eConfig } from '@/lib/e2e-config'
-import { showOrcaCliRegistrationPromptToast } from '@/lib/agent-skill-cli-prerequisite'
+import { showDolphinCliRegistrationPromptToast } from '@/lib/agent-skill-cli-prerequisite'
 import type { ProjectAgentSkillRuntime } from '@/lib/project-skill-runtime'
 import type { OnboardingFeatureSetupRuntimeContext } from './onboarding-feature-setup-runtime'
 import {
@@ -55,10 +55,10 @@ const ONBOARDING_PROGRESS_FEATURE_SETUP_IDS: readonly OnboardingFeatureSetupId[]
 ]
 
 const FEATURE_SKILL_NAMES: Record<OnboardingFeatureSetupId, string> = {
-  browserUse: ORCA_CLI_SKILL_NAME,
+  browserUse: DOLPHIN_CLI_SKILL_NAME,
   computerUse: COMPUTER_USE_SKILL_NAME,
   orchestration: ORCHESTRATION_SKILL_NAME,
-  linearTickets: ORCA_LINEAR_SKILL_NAME
+  linearTickets: DOLPHIN_LINEAR_SKILL_NAME
 }
 
 const FEATURE_TELEMETRY_IDS: Record<
@@ -177,7 +177,7 @@ export function createOnboardingFeatureSetupDeps(
     return e2eDeps
   }
 
-  // Register `orca` on the same PATH used by the skill install (#12103).
+  // Register `dolphin` on the same PATH used by the skill install (#12103).
   const wslDistroRequest =
     agentRuntime?.runtime === 'wsl' ? getWslCliDistroRequest(agentRuntime) : undefined
   const isWsl = agentRuntime?.runtime === 'wsl'
@@ -186,7 +186,7 @@ export function createOnboardingFeatureSetupDeps(
       isWsl
         ? window.api.cli.getWslInstallStatus(wslDistroRequest)
         : window.api.cli.getInstallStatus(),
-    showCliRegistrationPrompt: showOrcaCliRegistrationPromptToast,
+    showCliRegistrationPrompt: showDolphinCliRegistrationPromptToast,
     installCli: () =>
       isWsl ? window.api.cli.installWsl(wslDistroRequest) : window.api.cli.install(),
     writeClipboardText: (text) => window.api.ui.writeClipboardText(text),

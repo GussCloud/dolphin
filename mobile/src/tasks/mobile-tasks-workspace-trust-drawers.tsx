@@ -182,69 +182,69 @@ export function renderMobileTasksSetupTrustDrawer(model: ConnectionPresentationM
   )
 }
 
-export function renderMobileTasksOrcaYamlTrustDrawer(model: ConnectionPresentationModel) {
+export function renderMobileTasksDolphinYamlTrustDrawer(model: ConnectionPresentationModel) {
   const {
     createWorkspace,
     creatingKey,
-    orcaYamlTrustPrompt,
+    dolphinYamlTrustPrompt,
     persistSetupHookTrust,
     setError,
-    setOrcaYamlTrustPrompt,
+    setDolphinYamlTrustPrompt,
     taskUiReady
   } = model
   return (
     <BottomDrawer
-      visible={taskUiReady && orcaYamlTrustPrompt != null}
-      onClose={() => setOrcaYamlTrustPrompt(null)}
+      visible={taskUiReady && dolphinYamlTrustPrompt != null}
+      onClose={() => setDolphinYamlTrustPrompt(null)}
       zIndex={TASK_SECONDARY_DRAWER_Z_INDEX + 1}
     >
-      {orcaYamlTrustPrompt ? (
+      {dolphinYamlTrustPrompt ? (
         <View>
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>
-              {orcaYamlTrustPrompt.previouslyApproved
-                ? `${orcaYamlTrustPrompt.repoName}'s setup script changed`
-                : `Run setup from ${orcaYamlTrustPrompt.repoName}?`}
+              {dolphinYamlTrustPrompt.previouslyApproved
+                ? `${dolphinYamlTrustPrompt.repoName}'s setup script changed`
+                : `Run setup from ${dolphinYamlTrustPrompt.repoName}?`}
             </Text>
             <Text style={styles.sheetSubtitle}>
-              This repository's orca.yaml runs on your machine before the workspace starts. Only run
-              it if you trust this repository.
+              This repository's dolphin.yaml runs on your machine before the workspace starts. Only
+              run it if you trust this repository.
             </Text>
           </View>
 
           <View style={styles.setupPromptBox}>
             <View style={styles.detailSectionHeader}>
               <Text style={styles.detailSectionTitle}>
-                {orcaYamlTrustPrompt.previouslyApproved ? 'New setup script' : 'Setup script'}
+                {dolphinYamlTrustPrompt.previouslyApproved ? 'New setup script' : 'Setup script'}
               </Text>
             </View>
-            <Text style={styles.setupPromptCommand}>{orcaYamlTrustPrompt.scriptContent}</Text>
+            <Text style={styles.setupPromptCommand}>{dolphinYamlTrustPrompt.scriptContent}</Text>
           </View>
 
           <View style={styles.actionGroup}>
             <Pressable
               style={styles.actionRow}
-              disabled={creatingKey === orcaYamlTrustPrompt.item.key}
+              disabled={creatingKey === dolphinYamlTrustPrompt.item.key}
               onPress={() =>
                 void (async () => {
                   try {
                     await persistSetupHookTrust(
-                      orcaYamlTrustPrompt.repoId,
-                      orcaYamlTrustPrompt.contentHash,
+                      dolphinYamlTrustPrompt.repoId,
+                      dolphinYamlTrustPrompt.contentHash,
                       false
                     )
-                    setOrcaYamlTrustPrompt(null)
+                    setDolphinYamlTrustPrompt(null)
                     await createWorkspace(
-                      orcaYamlTrustPrompt.item,
-                      orcaYamlTrustPrompt.repoIdOverride,
+                      dolphinYamlTrustPrompt.item,
+                      dolphinYamlTrustPrompt.repoIdOverride,
                       'run',
-                      orcaYamlTrustPrompt.agentOverride,
-                      orcaYamlTrustPrompt.workspaceNameOverride,
-                      orcaYamlTrustPrompt.noteOverride,
-                      orcaYamlTrustPrompt.baseBranchOverride,
-                      orcaYamlTrustPrompt.branchNameOverride,
-                      orcaYamlTrustPrompt.sparseCheckoutOverride,
-                      orcaYamlTrustPrompt.contentHash
+                      dolphinYamlTrustPrompt.agentOverride,
+                      dolphinYamlTrustPrompt.workspaceNameOverride,
+                      dolphinYamlTrustPrompt.noteOverride,
+                      dolphinYamlTrustPrompt.baseBranchOverride,
+                      dolphinYamlTrustPrompt.branchNameOverride,
+                      dolphinYamlTrustPrompt.sparseCheckoutOverride,
+                      dolphinYamlTrustPrompt.contentHash
                     )
                   } catch (err) {
                     setError(err instanceof Error ? err.message : 'Failed to trust setup script.')
@@ -258,27 +258,27 @@ export function renderMobileTasksOrcaYamlTrustDrawer(model: ConnectionPresentati
             <View style={styles.actionSeparator} />
             <Pressable
               style={styles.actionRow}
-              disabled={creatingKey === orcaYamlTrustPrompt.item.key}
+              disabled={creatingKey === dolphinYamlTrustPrompt.item.key}
               onPress={() =>
                 void (async () => {
                   try {
                     await persistSetupHookTrust(
-                      orcaYamlTrustPrompt.repoId,
-                      orcaYamlTrustPrompt.contentHash,
+                      dolphinYamlTrustPrompt.repoId,
+                      dolphinYamlTrustPrompt.contentHash,
                       true
                     )
-                    setOrcaYamlTrustPrompt(null)
+                    setDolphinYamlTrustPrompt(null)
                     await createWorkspace(
-                      orcaYamlTrustPrompt.item,
-                      orcaYamlTrustPrompt.repoIdOverride,
+                      dolphinYamlTrustPrompt.item,
+                      dolphinYamlTrustPrompt.repoIdOverride,
                       'run',
-                      orcaYamlTrustPrompt.agentOverride,
-                      orcaYamlTrustPrompt.workspaceNameOverride,
-                      orcaYamlTrustPrompt.noteOverride,
-                      orcaYamlTrustPrompt.baseBranchOverride,
-                      orcaYamlTrustPrompt.branchNameOverride,
-                      orcaYamlTrustPrompt.sparseCheckoutOverride,
-                      orcaYamlTrustPrompt.contentHash
+                      dolphinYamlTrustPrompt.agentOverride,
+                      dolphinYamlTrustPrompt.workspaceNameOverride,
+                      dolphinYamlTrustPrompt.noteOverride,
+                      dolphinYamlTrustPrompt.baseBranchOverride,
+                      dolphinYamlTrustPrompt.branchNameOverride,
+                      dolphinYamlTrustPrompt.sparseCheckoutOverride,
+                      dolphinYamlTrustPrompt.contentHash
                     )
                   } catch (err) {
                     setError(err instanceof Error ? err.message : 'Failed to trust setup script.')
@@ -292,10 +292,10 @@ export function renderMobileTasksOrcaYamlTrustDrawer(model: ConnectionPresentati
             <View style={styles.actionSeparator} />
             <Pressable
               style={styles.actionRow}
-              disabled={creatingKey === orcaYamlTrustPrompt.item.key}
+              disabled={creatingKey === dolphinYamlTrustPrompt.item.key}
               onPress={() => {
-                const prompt = orcaYamlTrustPrompt
-                setOrcaYamlTrustPrompt(null)
+                const prompt = dolphinYamlTrustPrompt
+                setDolphinYamlTrustPrompt(null)
                 void createWorkspace(
                   prompt.item,
                   prompt.repoIdOverride,

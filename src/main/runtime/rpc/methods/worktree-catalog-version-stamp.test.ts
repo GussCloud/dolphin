@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { RpcDispatcher } from '../dispatcher'
 import type { RpcRequest } from '../core'
-import type { OrcaRuntimeService } from '../../orca-runtime'
+import type { DolphinRuntimeService } from '../../dolphin-runtime'
 import { WORKTREE_METHODS } from './worktree'
 import {
   bumpLocalWorktreeScanGeneration,
@@ -24,12 +24,12 @@ function makeRequest(method: string, params?: unknown): RpcRequest {
 const passthroughDedupe = <T>(_repo: string, _id: string | undefined, run: () => Promise<T>) =>
   run()
 
-function stubRuntime(stub: Record<string, unknown>): OrcaRuntimeService {
+function stubRuntime(stub: Record<string, unknown>): DolphinRuntimeService {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the methods under test read only the members each stub provides.
-  return stub as unknown as OrcaRuntimeService
+  return stub as unknown as DolphinRuntimeService
 }
 
-async function dispatch(runtime: OrcaRuntimeService, method: string, params: unknown) {
+async function dispatch(runtime: DolphinRuntimeService, method: string, params: unknown) {
   const dispatcher = new RpcDispatcher({ runtime, methods: WORKTREE_METHODS })
   let response: unknown
   await dispatcher.dispatchStreaming(makeRequest(method, params), (r: unknown) => {

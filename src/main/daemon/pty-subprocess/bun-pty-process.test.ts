@@ -394,7 +394,7 @@ describe('Bun.Terminal PTY adapter', () => {
     const createWindowsLaunch = vi.fn(() => ({
       command: ['cmd.exe', '/d /c launch.cmd'],
       clearCommand: ['cmd.exe', '/d /c clear.cmd'],
-      env: { TERM: 'xterm-256color', ORCA_BUN_PTY_JOB_GATE: 'gate' },
+      env: { TERM: 'xterm-256color', DOLPHIN_BUN_PTY_JOB_GATE: 'gate' },
       windowsVerbatimArguments: true as const,
       release,
       dispose,
@@ -411,7 +411,7 @@ describe('Bun.Terminal PTY adapter', () => {
     expect(harness.spawn.mock.calls[0]?.[0]).toEqual(['cmd.exe', '/d /c launch.cmd'])
     expect(harness.spawn.mock.calls[0]?.[1]).toMatchObject({
       windowsVerbatimArguments: true,
-      env: { ORCA_BUN_PTY_JOB_GATE: 'gate' },
+      env: { DOLPHIN_BUN_PTY_JOB_GATE: 'gate' },
       terminal: harness.terminal
     })
     expect(assignHostJob.mock.invocationCallOrder[0]).toBeLessThan(

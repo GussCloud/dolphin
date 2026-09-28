@@ -23,7 +23,7 @@ const chromeSource = {
 
 describe('clientRouteCookieImportSources', () => {
   beforeEach(() => {
-    mocks.userDataDir = mkdtempSync(join(tmpdir(), 'orca-client-route-sources-'))
+    mocks.userDataDir = mkdtempSync(join(tmpdir(), 'dolphin-client-route-sources-'))
     resetClientRouteCookieImportSourcesForTests()
   })
   afterEach(() => {

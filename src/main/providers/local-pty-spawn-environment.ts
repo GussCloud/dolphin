@@ -1,7 +1,7 @@
 import { mergeGitConfigEnvProtocol } from '../../shared/git-credential-prompt-env'
 import {
-  ORCA_IMAGE_PROTOCOL_ENV,
-  ORCA_IMAGE_PROTOCOL_VALUE
+  DOLPHIN_IMAGE_PROTOCOL_ENV,
+  DOLPHIN_IMAGE_PROTOCOL_VALUE
 } from '../../shared/terminal-image-protocol'
 import { removeAppImageRuntimeEnv } from '../pty/appimage-terminal-env'
 import { stripInheritedBuildModeEnv } from '../pty/build-mode-env'
@@ -13,7 +13,7 @@ import type { LocalPtyLaunchPlan } from './local-pty-launch-plan'
 import type { LocalPtyProviderOptions } from './local-pty-provider-types'
 import type { PtySpawnOptions } from './types'
 
-/** Pane ownership must be fresh even when Orca itself was launched inside an agent. */
+/** Pane ownership must be fresh even when Dolphin itself was launched inside an agent. */
 export function buildLocalPtySpawnEnvironment(args: {
   id: string
   spawn: PtySpawnOptions
@@ -25,12 +25,12 @@ export function buildLocalPtySpawnEnvironment(args: {
     ...mergeGitConfigEnvProtocol(stripInheritedBuildModeEnv(process.env), spawn.env),
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
-    TERM_PROGRAM: 'Orca',
+    TERM_PROGRAM: 'Dolphin',
     // Why: TUIs feature-gate on TERM_PROGRAM_VERSION; the fallback keeps tests and non-Electron runs working.
-    TERM_PROGRAM_VERSION: process.env.ORCA_APP_VERSION ?? '0.0.0-dev',
-    // Why: supports-hyperlinks rejects TERM_PROGRAM=Orca, so tools drop OSC 8 links; force it since xterm.js parses them.
+    TERM_PROGRAM_VERSION: process.env.DOLPHIN_APP_VERSION ?? '0.0.0-dev',
+    // Why: supports-hyperlinks rejects TERM_PROGRAM=Dolphin, so tools drop OSC 8 links; force it since xterm.js parses them.
     FORCE_HYPERLINK: '1',
-    [ORCA_IMAGE_PROTOCOL_ENV]: ORCA_IMAGE_PROTOCOL_VALUE
+    [DOLPHIN_IMAGE_PROTOCOL_ENV]: DOLPHIN_IMAGE_PROTOCOL_VALUE
   } satisfies Record<string, string>
   removeUnspecifiedPaneIdentityEnv(spawnEnv, spawn.env)
   stripPiProcessOwnerEnv(spawnEnv)

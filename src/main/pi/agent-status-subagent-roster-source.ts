@@ -5,8 +5,8 @@
 export function getPiSubagentRosterSetupSourceLines(): string[] {
   return [
     '  const piEventBus = (pi as { events?: { on?: (name: string, handler: (event: unknown) => void) => void } }).events',
-    '  const lifecycleState = (piEventBus as { __orcaPiSubagents?: { active: Set<string>; exited?: Set<string>; waiting: boolean; onEvent?: (event: unknown, forcedStatus?: string) => void; listener?: (event: unknown) => void; onRunnerExit?: (event: unknown) => void; runnerExitListener?: (event: unknown) => void } } | undefined)?.__orcaPiSubagents ?? { active: new Set<string>(), waiting: false }',
-    '  if (piEventBus) (piEventBus as { __orcaPiSubagents?: unknown }).__orcaPiSubagents = lifecycleState',
+    '  const lifecycleState = (piEventBus as { __dolphinPiSubagents?: { active: Set<string>; exited?: Set<string>; waiting: boolean; onEvent?: (event: unknown, forcedStatus?: string) => void; listener?: (event: unknown) => void; onRunnerExit?: (event: unknown) => void; runnerExitListener?: (event: unknown) => void } } | undefined)?.__dolphinPiSubagents ?? { active: new Set<string>(), waiting: false }',
+    '  if (piEventBus) (piEventBus as { __dolphinPiSubagents?: unknown }).__dolphinPiSubagents = lifecycleState',
     '  if (piEventBus?.on && !(lifecycleState as { listener?: unknown }).listener) {',
     '    const listener = (event: unknown) => lifecycleState.onEvent?.(event)',
     '    lifecycleState.listener = listener',

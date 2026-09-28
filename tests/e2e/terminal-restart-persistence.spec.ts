@@ -25,7 +25,7 @@
  */
 
 import type { ElectronApplication } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import {
   execInTerminal,
   waitForTerminalOutput,
@@ -34,7 +34,7 @@ import {
   splitActiveTerminalPane
 } from './helpers/terminal'
 import { getActiveTabId, getWorktreeTabs } from './helpers/store'
-import { createRestartSession } from './helpers/orca-restart'
+import { createRestartSession } from './helpers/dolphin-restart'
 import { PTY_SESSION_ID_SEPARATOR } from '../../src/shared/pty-session-id-format'
 import {
   seededRepoPathOrSkip,
@@ -122,8 +122,8 @@ test.describe('Terminal restart persistence', () => {
       const { worktreeId, ptyId } = await bootstrapFirstLaunch(firstLaunch.page, repoPath)
       expect(ptyId).toContain(PTY_SESSION_ID_SEPARATOR)
 
-      const prompt = `ORCA_RESTART_PROMPT_${Date.now()}_GT `
-      const marker = `ORCA_CURSOR_RESTART_${Date.now()}`
+      const prompt = `DOLPHIN_RESTART_PROMPT_${Date.now()}_GT `
+      const marker = `DOLPHIN_CURSOR_RESTART_${Date.now()}`
       const promptCommand =
         process.platform === 'win32'
           ? `function global:prompt { '${prompt}' }`

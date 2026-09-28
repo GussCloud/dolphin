@@ -11,7 +11,7 @@ import type { Store } from '../persistence'
 import type { GitAdmissionTier } from '../../shared/rpc-contract/git-admission-tier-params'
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { Repo } from '../../shared/repo-types'
-import type { SetupAgentStartupPolicy } from '../../shared/orca-yaml-hook-types'
+import type { SetupAgentStartupPolicy } from '../../shared/dolphin-yaml-hook-types'
 import type {
   LocalBaseRefRefreshResult,
   LocalBaseRefUpdateSuggestion
@@ -57,12 +57,12 @@ import { validateGitPushTarget } from '../git/push-target-validation'
 import { assertValidGitPushTarget } from '../../shared/git-push-target-validation'
 import { gitExecFileAsync } from '../git/runner'
 import type {
-  OrcaRuntimeService,
+  DolphinRuntimeService,
   RemoteFetchResult,
   RemoteTrackingBase
-} from '../runtime/orca-runtime'
+} from '../runtime/dolphin-runtime'
 import { getProjectHostSetupWorktreeMeta } from '../../shared/project-host-setup-lookup'
-import { getEffectiveHooks, loadHooks, parseOrcaYaml } from '../hooks'
+import { getEffectiveHooks, loadHooks, parseDolphinYaml } from '../hooks'
 import { buildPosixRunnerScript, buildWindowsRunnerScript } from '../setup-runner-script-text'
 import { createSetupRunnerScript, resolveSetupRunnerShell } from '../worktree-runner-script'
 import { getSetupRunnerEnvVars } from '../setup-hook-env-vars'
@@ -396,7 +396,7 @@ function countNonEmptyGitOutputLines(output: string): number {
 }
 
 async function spawnLocalStartupAndSetupTerminals(args: {
-  runtime: OrcaRuntimeService | undefined
+  runtime: DolphinRuntimeService | undefined
   worktree: Pick<Worktree, 'id' | 'path'>
   startup: CreateWorktreeArgs['startup']
   setup: CreateWorktreeResult['setup']
@@ -628,7 +628,7 @@ async function getOrStartSshWorktreeCreateFetch(
       return
     }
     await fetch()
-    // Why: SSH creation has no OrcaRuntimeService to share; still reuse recent fetches for repeated creates on the same target.
+    // Why: SSH creation has no DolphinRuntimeService to share; still reuse recent fetches for repeated creates on the same target.
     rememberSshWorktreeCreateFetchCompletedAt(key)
   }).finally(() => {
     if (sshWorktreeCreateFetchInflight.get(key) === promise) {
@@ -1156,7 +1156,7 @@ async function adoptExistingForkRemoteForBranch(
     )
   }
   const restored = await restoreUpstreamAfterMaterialize(execGit, repoPath, target)
-  // Why: a remote another worktree minted is still Orca-owned. Without stamping ownership on
+  // Why: a remote another worktree minted is still Dolphin-owned. Without stamping ownership on
   // the adopting worktree too, removing the minter leaves the survivor's metadata unowned and
   // #17842's sweep -- which gates solely on `remoteCreated` -- can never reclaim the remote.
   // Why derive: no caller supplies both -- IPC handlers pass a store with no repo id, runtime
@@ -1202,7 +1202,7 @@ function runForkRemoteAdoption<T>(
 // `setWorktreeMeta` write, so the store's `pushTarget.remoteCreated` flag stayed stale
 // forever for a lazily-minted remote -- invisible to #17842's orphan sweep
 // (`shouldReclaimPrRemote` gates solely on that flag) and to any SSH host whose relay
-// predates `markRemoteOrcaCreated` (no git-config marker either). `setWorktreeMeta` is
+// predates `markRemoteDolphinCreated` (no git-config marker either). `setWorktreeMeta` is
 // optional on `WorktreePushTargetStore` so narrow test/reconciliation stores keep compiling.
 function persistMaterializedPushTargetIfCreated(
   store: WorktreePushTargetStore | undefined,
@@ -1257,7 +1257,7 @@ export async function cleanupUnusedWorktreePushTargetRemote(
     console.warn(`[worktrees] Failed to clean up fork PR remote for ${removedWorktreeId}`, error)
   }
   // Why: also catches remotes this specific removal couldn't reclaim (legacy metadata,
-  // a preserved branch since deleted, a worktree removed outside Orca) -- see
+  // a preserved branch since deleted, a worktree removed outside Dolphin) -- see
   // worktree-push-target-reconciliation.ts. Rate-limited internally; safe to call every removal.
   // Not awaited: a repo with a large backlog (the scenario this exists for) can have dozens of
   // candidate remotes, each probed with a couple of git subprocesses -- that must never add
@@ -1304,7 +1304,7 @@ export async function prepareWorktreePushTargetSsh(
     const existingRemote = await findRemoteForUrl(execGit, repoPath, target.remoteUrl)
     if (existingRemote) {
       remoteName = existingRemote
-      // Why: a reused Orca-created fork remote must inherit ownership so deleting the final user can remove it.
+      // Why: a reused Dolphin-created fork remote must inherit ownership so deleting the final user can remove it.
       remoteCreated = store
         ? isPushTargetRemoteCreatedByKnownWorktree(
             store,
@@ -1323,7 +1323,7 @@ export async function prepareWorktreePushTargetSsh(
         // Why: relays predating fork-remote support reject this exec by policy; name the fix instead of surfacing their rule.
         if (error instanceof Error && error.message.includes('Destructive git remote operations')) {
           throw new Error(
-            'This SSH host is running an older Orca relay that cannot add a fork remote for a PR workspace. Reconnect to deploy the latest relay, then try again.'
+            'This SSH host is running an older Dolphin relay that cannot add a fork remote for a PR workspace. Reconnect to deploy the latest relay, then try again.'
           )
         }
         throw error
@@ -1332,7 +1332,7 @@ export async function prepareWorktreePushTargetSsh(
       try {
         // Why: repo-local provenance mirroring the local path (worktree-push-target-setup.ts).
         // A narrow RPC, not provider.exec: the relay's generic git.exec blocks all config writes.
-        await provider.markRemoteOrcaCreated(repoPath, remoteName)
+        await provider.markRemoteDolphinCreated(repoPath, remoteName)
       } catch (error) {
         // Why: a remote with no provenance marker is unreclaimable -- cleanup only
         // runs off that marker, so a failure here must undo the add.
@@ -1487,16 +1487,18 @@ async function readRemoteEffectiveHooks(
   fsProvider: IFilesystemProvider,
   hooksRootPath: string
 ): Promise<ReturnType<typeof getEffectiveHooksFromConfig>> {
-  return getEffectiveHooksFromConfig(repo, await readRemoteOrcaYaml(fsProvider, hooksRootPath))
+  return getEffectiveHooksFromConfig(repo, await readRemoteDolphinYaml(fsProvider, hooksRootPath))
 }
 
-async function readRemoteOrcaYaml(
+async function readRemoteDolphinYaml(
   fsProvider: IFilesystemProvider,
   hooksRootPath: string
-): Promise<ReturnType<typeof parseOrcaYaml>> {
+): Promise<ReturnType<typeof parseDolphinYaml>> {
   try {
-    const result = await fsProvider.readFile(joinWorktreeRelativePath(hooksRootPath, 'orca.yaml'))
-    return result.isBinary ? null : parseOrcaYaml(result.content)
+    const result = await fsProvider.readFile(
+      joinWorktreeRelativePath(hooksRootPath, 'dolphin.yaml')
+    )
+    return result.isBinary ? null : parseDolphinYaml(result.content)
   } catch {
     return null
   }
@@ -1513,7 +1515,9 @@ async function createRemoteSetupRunnerScript(
   const useWindowsFormat = isWindowsAbsolutePathLike(worktreePath)
   // Why: SSH terminals choose their shell on the remote host; local Windows
   // preferences cannot safely select a remote runner format or launch command.
-  const runnerRelativePath = useWindowsFormat ? 'orca/setup-runner.cmd' : 'orca/setup-runner.sh'
+  const runnerRelativePath = useWindowsFormat
+    ? 'dolphin/setup-runner.cmd'
+    : 'dolphin/setup-runner.sh'
   const { stdout } = await gitProvider.exec(
     ['rev-parse', '--git-path', runnerRelativePath],
     worktreePath
@@ -2190,10 +2194,10 @@ export async function createRemoteWorktree(
     lastActivityAt: now,
     // Why: grace window atop Recent so ambient PTY bumps on others during create don't bury the new worktree. See smart-sort.ts `CREATE_GRACE_MS`.
     createdAt: now,
-    orcaCreatedAt: now,
-    orcaCreationSource: 'ssh',
+    dolphinCreatedAt: now,
+    dolphinCreationSource: 'ssh',
     creatorProvenance: { kind: 'host' },
-    orcaCreationWorkspaceLayout: getWorktreeCreationLayout(repo, settings),
+    dolphinCreationWorkspaceLayout: getWorktreeCreationLayout(repo, settings),
     ...(args.automationProvenance ? { automationProvenance: args.automationProvenance } : {}),
     ...(args.cliProvenance ? { cliProvenance: args.cliProvenance } : {}),
     baseRef: metadataBaseRef,
@@ -2250,13 +2254,13 @@ export async function createRemoteWorktree(
     now
   )
 
-  // Why: shared/symlink paths, `orca.yaml` shared directories, and `.worktreeinclude` copies are local-only; remote (SSH) support needs a new relay method + auth surface, so all are skipped here.
+  // Why: shared/symlink paths, `dolphin.yaml` shared directories, and `.worktreeinclude` copies are local-only; remote (SSH) support needs a new relay method + auth surface, so all are skipped here.
 
   let setup: CreateWorktreeResult['setup']
   let defaultTabs: CreateWorktreeResult['defaultTabs']
   if (fsProvider) {
     await timing.time('prepare_setup', async () => {
-      const yamlHooks = await readRemoteOrcaYaml(fsProvider, created.path)
+      const yamlHooks = await readRemoteDolphinYaml(fsProvider, created.path)
       const hooks = getEffectiveHooksFromConfig(repo, yamlHooks)
       try {
         defaultTabs = getDefaultTabsLaunch(yamlHooks, repo, args.setupDecision)
@@ -2319,7 +2323,7 @@ export function createLocalWorktree(
   repo: Repo,
   store: Store,
   mainWindow: BrowserWindow,
-  runtime?: OrcaRuntimeService
+  runtime?: DolphinRuntimeService
 ): Promise<CreateWorktreeResult> {
   // Why a holder fired in `finally`: consuming a prepared checkout leaves the pool one short, so a
   // create that fails after that point — include copy, push target, terminal startup — must still
@@ -2338,7 +2342,7 @@ async function performLocalWorktreeCreate(
   store: Store,
   mainWindow: BrowserWindow,
   rearm: PreparationRearmHolder,
-  runtime?: OrcaRuntimeService
+  runtime?: DolphinRuntimeService
 ): Promise<CreateWorktreeResult> {
   const timing = createWorktreeCreateTimingRecorder()
   const settings = store.getSettings()
@@ -2889,10 +2893,10 @@ async function performLocalWorktreeCreate(
     lastActivityAt: now,
     // createdAt protects the new worktree from ambient PTY bumps for CREATE_GRACE_MS (see createRemoteWorktree above).
     createdAt: now,
-    orcaCreatedAt: now,
-    orcaCreationSource: 'desktop',
+    dolphinCreatedAt: now,
+    dolphinCreationSource: 'desktop',
     creatorProvenance: { kind: 'host' },
-    orcaCreationWorkspaceLayout: getWorktreeCreationLayout(repo, settings),
+    dolphinCreationWorkspaceLayout: getWorktreeCreationLayout(repo, settings),
     ...(args.automationProvenance ? { automationProvenance: args.automationProvenance } : {}),
     ...(args.cliProvenance ? { cliProvenance: args.cliProvenance } : {}),
     baseRef: metadataBaseRef,
@@ -2970,7 +2974,7 @@ async function performLocalWorktreeCreate(
     })
   }
 
-  // Why: project-level `orca.yaml` shared directories add to (never replace) the per-user
+  // Why: project-level `dolphin.yaml` shared directories add to (never replace) the per-user
   // setting, so a repo's shared dirs reach every teammate (issue #10451).
   const [sharedDirectories, includePaths] = await Promise.all([
     timing.time('resolve_shared_directories', () =>
@@ -3003,7 +3007,7 @@ async function performLocalWorktreeCreate(
     })
   }
 
-  // Why: the worktree's base-branch `orca.yaml` is authoritative; we don't re-gate on content parity with the primary checkout since benign divergence silently disabled setup (#1280).
+  // Why: the worktree's base-branch `dolphin.yaml` is authoritative; we don't re-gate on content parity with the primary checkout since benign divergence silently disabled setup (#1280).
   let setup: CreateWorktreeResult['setup']
   let defaultTabs: CreateWorktreeResult['defaultTabs']
   await timing.time('prepare_setup', async () => {

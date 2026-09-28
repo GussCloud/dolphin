@@ -42,7 +42,7 @@ async function createStore(): Promise<Store> {
   installFakeAppEnvironment({ getPath: () => testState.dir })
   const { Store: StoreClass, initDataPath } = await import('../persistence')
   initDataPath()
-  return createSqliteTestStore(StoreClass, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(StoreClass, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 /** The reachable shape: a runtime-owned id is derived, not minted per lifecycle. */
@@ -60,7 +60,7 @@ function sshTarget(generation: number | undefined): SshTarget {
     label: 'devbox',
     host: 'devbox.internal',
     port: 22,
-    username: 'orca',
+    username: 'dolphin',
     ...(generation === undefined ? {} : { generation })
   }
 }
@@ -181,7 +181,7 @@ async function evaluateAt(
 
 describe('scheduled dispatch fenced on the host the record captured', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-dispatch-fence-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-dispatch-fence-test-'))
     vi.useFakeTimers()
   })
 

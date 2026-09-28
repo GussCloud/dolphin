@@ -1,17 +1,17 @@
 // The one place an orchestration address becomes a party, so no two sites can disagree on who it names.
 import {
-  formatOrcaSessionAddress,
-  isOrcaSessionId,
-  parseOrcaSessionAddress,
-  type OrcaSessionId
-} from '../../../shared/orca-session-address'
+  formatDolphinSessionAddress,
+  isDolphinSessionId,
+  parseDolphinSessionAddress,
+  type DolphinSessionId
+} from '../../../shared/dolphin-session-address'
 import { ORCHESTRATION_SESSION_CALLER_ERROR_CODES as CODES } from '../../../shared/orchestration-session-caller-codes'
 import {
   isRecordedStructuredWorkerSession,
   resolveStructuredWorkerIdentity,
   resolveStructuredWorkerIdentityForSession
 } from '../structured-worker-authority'
-import { canonicalOrcaSessionId } from './canonical-orca-session-id'
+import { canonicalDolphinSessionId } from './canonical-dolphin-session-id'
 import type { OrchestrationDb } from './db'
 import { mailboxAddressOf, type OrchestrationCallerIdentity } from './orchestration-caller-identity'
 import { OrchestrationError } from './orchestration-error'
@@ -19,9 +19,9 @@ import { OrchestrationError } from './orchestration-error'
 /** A party as Run binding and mail routing match it; `address` is its one mailbox address. */
 export type OrchestrationParty = OrchestrationCallerIdentity
 
-/** A party named by an Orca session id: a structured worker, or a chat. */
+/** A party named by a Dolphin session id: a structured worker, or a chat. */
 export type OrchestrationSessionParty = OrchestrationParty &
-  Readonly<{ orcaSessionId: OrcaSessionId }>
+  Readonly<{ dolphinSessionId: DolphinSessionId }>
 
 const NO_EFFECTS = { effectsApplied: false } as const
 
@@ -33,12 +33,12 @@ export const ORCHESTRATION_TARGET_PARAM: Readonly<Record<string, 'to' | 'termina
   'orchestration.inbox': 'terminal'
 }
 
-/** The party an Orca session id names. Throws when it is a worker this host lost the identity of. */
-export function resolveOrcaSessionParty(
-  orcaSessionId: OrcaSessionId,
+/** The party a Dolphin session id names. Throws when it is a worker this host lost the identity of. */
+export function resolveDolphinSessionParty(
+  dolphinSessionId: DolphinSessionId,
   db: OrchestrationDb | null | undefined
 ): OrchestrationSessionParty {
-  const id = canonicalOrcaSessionId(orcaSessionId)
+  const id = canonicalDolphinSessionId(dolphinSessionId)
   const worker = resolveStructuredWorkerIdentityForSession(id, db)
   if (!worker && db && isRecordedStructuredWorkerSession(id, db)) {
     // Why: handle-less, it would split one worker into two parties and bind like a chat.
@@ -48,10 +48,10 @@ export function resolveOrcaSessionParty(
       NO_EFFECTS
     )
   }
-  const key = { terminalHandle: worker?.handle ?? null, orcaSessionId: id }
+  const key = { terminalHandle: worker?.handle ?? null, dolphinSessionId: id }
   return {
     ...key,
-    address: mailboxAddressOf(key) ?? formatOrcaSessionAddress(id),
+    address: mailboxAddressOf(key) ?? formatDolphinSessionAddress(id),
     paneKey: worker?.paneKey ?? null
   }
 }
@@ -61,17 +61,19 @@ export function resolveOrchestrationParty(
   address: string,
   db: OrchestrationDb | null | undefined
 ): OrchestrationParty {
-  const orcaSessionId = parseOrcaSessionAddress(address)
-  if (orcaSessionId) {
-    return resolveOrcaSessionParty(orcaSessionId, db)
+  const dolphinSessionId = parseDolphinSessionAddress(address)
+  if (dolphinSessionId) {
+    return resolveDolphinSessionParty(dolphinSessionId, db)
   }
   const worker = resolveStructuredWorkerIdentity(address, db)
   return {
     address,
     terminalHandle: address,
     paneKey: worker?.paneKey ?? null,
-    orcaSessionId:
-      worker && isOrcaSessionId(worker.sessionId) ? canonicalOrcaSessionId(worker.sessionId) : null
+    dolphinSessionId:
+      worker && isDolphinSessionId(worker.sessionId)
+        ? canonicalDolphinSessionId(worker.sessionId)
+        : null
   }
 }
 
@@ -84,7 +86,7 @@ export function resolveDeclaredCallerParty(
   if (party.terminalHandle === null) {
     throw new OrchestrationError(
       CODES.chatNotDeclarable,
-      `Agent session ${party.orcaSessionId} is a chat, and a chat is identified only by the session id its own environment sends, never by naming its address. No effects were applied.`,
+      `Agent session ${party.dolphinSessionId} is a chat, and a chat is identified only by the session id its own environment sends, never by naming its address. No effects were applied.`,
       NO_EFFECTS
     )
   }
@@ -100,7 +102,7 @@ export function resolveDispatchAssigneeParty(
   if (party.terminalHandle === null) {
     throw new OrchestrationError(
       CODES.chatNotDispatchable,
-      `Agent session ${party.orcaSessionId} is a chat, and a chat can't receive a dispatch yet. Start a worker with worker-start instead. No effects were applied.`,
+      `Agent session ${party.dolphinSessionId} is a chat, and a chat can't receive a dispatch yet. Start a worker with worker-start instead. No effects were applied.`,
       NO_EFFECTS
     )
   }

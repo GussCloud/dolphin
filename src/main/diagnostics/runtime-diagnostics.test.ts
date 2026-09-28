@@ -45,7 +45,7 @@ describe('collectRuntimeDiagnostics', () => {
   let userData: string
 
   beforeEach(async () => {
-    userData = await mkdtemp(join(tmpdir(), 'orca-runtime-diag-'))
+    userData = await mkdtemp(join(tmpdir(), 'dolphin-runtime-diag-'))
     setAppEnvironment({
       getPath: () => userData,
       getAppPath: () => userData,

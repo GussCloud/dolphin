@@ -70,19 +70,22 @@ describe('acquireSingleInstanceLock', () => {
 
     const [registered] = fake.listeners['second-instance'] ?? []
     expect(registered).toBeDefined()
-    registered?.({}, ['/opt/orca/orca-linux.AppImage', '--serve'], '/home/orca')
+    registered?.({}, ['/opt/dolphin/dolphin-linux.AppImage', '--serve'], '/home/dolphin')
 
     expect(onSecondInstance).toHaveBeenCalledTimes(1)
-    expect(onSecondInstance).toHaveBeenCalledWith(['/opt/orca/orca-linux.AppImage', '--serve'])
+    expect(onSecondInstance).toHaveBeenCalledWith([
+      '/opt/dolphin/dolphin-linux.AppImage',
+      '--serve'
+    ])
   })
 })
 
 describe('shouldActivateDesktopForSecondInstance', () => {
   it('ignores a duplicate serve launch but still activates for a desktop launch', () => {
-    // Why: a supervisor respawning `orca serve` must not open a window on a display-less host (#11935).
-    const serveArgv = ['/opt/orca/orca-linux.AppImage', '--serve']
+    // Why: a supervisor respawning `dolphin serve` must not open a window on a display-less host (#11935).
+    const serveArgv = ['/opt/dolphin/dolphin-linux.AppImage', '--serve']
     expect(shouldActivateDesktopForSecondInstance(serveArgv)).toBe(false)
-    expect(shouldActivateDesktopForSecondInstance(['/Applications/Orca.app/orca'])).toBe(true)
+    expect(shouldActivateDesktopForSecondInstance(['/Applications/Dolphin.app/dolphin'])).toBe(true)
   })
 
   it('ignores a duplicate CLI-form serve launch the CLI redirect never rewrote', () => {
@@ -90,7 +93,7 @@ describe('shouldActivateDesktopForSecondInstance', () => {
     // start reaches Electron in that shape, so a flag-only check would open a window on the live server.
     expect(
       shouldActivateDesktopForSecondInstance([
-        '/opt/orca/squashfs-root/orca-ide',
+        '/opt/dolphin/squashfs-root/dolphin-ide',
         'serve',
         '--port',
         '6768',
@@ -100,7 +103,7 @@ describe('shouldActivateDesktopForSecondInstance', () => {
     ).toBe(false)
     // A path argument that merely contains `serve` is still a desktop launch.
     expect(
-      shouldActivateDesktopForSecondInstance(['/opt/orca/orca-ide', '/home/u/serve-repo'])
+      shouldActivateDesktopForSecondInstance(['/opt/dolphin/dolphin-ide', '/home/u/serve-repo'])
     ).toBe(true)
   })
 
@@ -128,7 +131,7 @@ describe('shouldSkipSingleInstanceLock', () => {
       shouldSkipSingleInstanceLock({
         isDev: true,
         isServeMode: false,
-        env: { ORCA_E2E_ENFORCE_SINGLE_INSTANCE_LOCK: '1' }
+        env: { DOLPHIN_E2E_ENFORCE_SINGLE_INSTANCE_LOCK: '1' }
       })
     ).toBe(false)
   })
@@ -149,7 +152,7 @@ describe('shouldBypassSingleInstanceLock', () => {
   it('allows the hidden diagnostic bypass only for packaged macOS app launches', () => {
     expect(
       shouldBypassSingleInstanceLock({
-        env: { ORCA_BYPASS_SINGLE_INSTANCE_LOCK: '1' },
+        env: { DOLPHIN_BYPASS_SINGLE_INSTANCE_LOCK: '1' },
         isDev: false,
         isServeMode: false,
         platform: 'darwin'
@@ -157,7 +160,7 @@ describe('shouldBypassSingleInstanceLock', () => {
     ).toBe(true)
     expect(
       shouldBypassSingleInstanceLock({
-        env: { ORCA_BYPASS_SINGLE_INSTANCE_LOCK: '1' },
+        env: { DOLPHIN_BYPASS_SINGLE_INSTANCE_LOCK: '1' },
         isDev: true,
         isServeMode: false,
         platform: 'darwin'
@@ -165,7 +168,7 @@ describe('shouldBypassSingleInstanceLock', () => {
     ).toBe(false)
     expect(
       shouldBypassSingleInstanceLock({
-        env: { ORCA_BYPASS_SINGLE_INSTANCE_LOCK: '1' },
+        env: { DOLPHIN_BYPASS_SINGLE_INSTANCE_LOCK: '1' },
         isDev: false,
         isServeMode: false,
         platform: 'linux'

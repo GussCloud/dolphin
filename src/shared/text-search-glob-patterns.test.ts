@@ -46,7 +46,7 @@ describe('file search with real search engines', () => {
   let root: string
 
   beforeAll(async () => {
-    root = await mkdtemp(join(tmpdir(), 'orca-search-globs-'))
+    root = await mkdtemp(join(tmpdir(), 'dolphin-search-globs-'))
     for (const file of ['a.ts', 'b.tsx', 'c.md', ',.ts']) {
       await writeFile(join(root, file), 'needle\n')
     }
@@ -147,7 +147,7 @@ describe('engine-specific character classes', () => {
   const files = [',.ts', '[.ts', '].ts', 'a.ts', 'a,b].ts', 'b.tsx', 'c.md']
 
   beforeAll(async () => {
-    root = await mkdtemp(join(tmpdir(), 'orca-search-class-syntax-'))
+    root = await mkdtemp(join(tmpdir(), 'dolphin-search-class-syntax-'))
     for (const file of files) {
       await writeFile(join(root, file), 'needle\n')
     }

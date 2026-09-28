@@ -166,7 +166,7 @@ export async function readOpenCodeCredentialDatabaseGoKey(): Promise<string | nu
  * legacy import has no `auth.json` at all.
  * The stored key outranks the env var because OpenCode applies it after env,
  * and the env var is shared with the Zen provider.
- * @param input.settingsOverride - The key a user pasted into Orca's settings.
+ * @param input.settingsOverride - The key a user pasted into Dolphin's settings.
  * @param input.environment - Process environment to read; injectable for tests.
  * @returns The first key found and the tier it came from, or `missing`.
  */

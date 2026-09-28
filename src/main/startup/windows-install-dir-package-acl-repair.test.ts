@@ -15,7 +15,7 @@ import {
   type WindowsInstallDirAclRepairResult
 } from './windows-install-dir-package-acl-repair'
 
-const INSTALL_DIR = 'C:\\Users\\neil\\AppData\\Local\\Programs\\orca'
+const INSTALL_DIR = 'C:\\Users\\neil\\AppData\\Local\\Programs\\dolphin'
 const APP_VERSION = '1.4.184'
 
 /** icacls' real success summary; the /T pass prints one per tree. */
@@ -45,7 +45,7 @@ function fakeRunner(reply: (spec: ProcessSpec) => Partial<ProcessResult> = () =>
 }
 
 function userDataDir(): string {
-  return mkdtempSync(join(tmpdir(), 'orca-acl-repair-'))
+  return mkdtempSync(join(tmpdir(), 'dolphin-acl-repair-'))
 }
 
 function repair(
@@ -156,7 +156,7 @@ describe('repairWindowsInstallDirPackageAcl', () => {
       (
         await repair({
           userDataPath,
-          installDir: 'D:\\Program Files\\Orca',
+          installDir: 'D:\\Program Files\\Dolphin',
           run: moved.run
         })
       ).result

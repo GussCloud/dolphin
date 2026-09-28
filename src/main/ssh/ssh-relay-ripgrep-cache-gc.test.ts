@@ -35,14 +35,14 @@ function reply(entries: readonly string[], refs: readonly string[] | 'unreadable
     const text = String(command)
     if (text.includes('ENTRY %s')) {
       return Promise.resolve(
-        `${entries.map((e) => `ENTRY ${e}`).join('\n')}\n__ORCA_RG_CACHE__LIST_OK`
+        `${entries.map((e) => `ENTRY ${e}`).join('\n')}\n__DOLPHIN_RG_CACHE__LIST_OK`
       )
     }
     if (text.includes('REF %s')) {
       return Promise.resolve(
         refs === 'unreadable'
-          ? '__ORCA_RG_CACHE__REFS_ERR'
-          : `${refs.map((r) => `REF ${r}`).join('\n')}\n__ORCA_RG_CACHE__REFS_OK`
+          ? '__DOLPHIN_RG_CACHE__REFS_ERR'
+          : `${refs.map((r) => `REF ${r}`).join('\n')}\n__DOLPHIN_RG_CACHE__REFS_OK`
       )
     }
     if (text.includes('MOVED')) {
@@ -67,8 +67,8 @@ describe('remote ripgrep cache GC', () => {
     async (host) => {
       execCommandMock.mockReset()
       execCommandMock
-        .mockResolvedValueOnce(`ENTRY ${SUPERSEDED}\r\n__ORCA_RG_CACHE__LIST_OK`)
-        .mockResolvedValueOnce('REF \t\r\n__ORCA_RG_CACHE__REFS_OK')
+        .mockResolvedValueOnce(`ENTRY ${SUPERSEDED}\r\n__DOLPHIN_RG_CACHE__LIST_OK`)
+        .mockResolvedValueOnce('REF \t\r\n__DOLPHIN_RG_CACHE__REFS_OK')
       await gcRemoteRipgrepCache(conn, host, '/home/me')
       expect(execCommandMock).toHaveBeenCalledTimes(2)
     }
@@ -101,16 +101,16 @@ describe('remote ripgrep cache GC', () => {
   // single fixed filename would silently see only one of the two references above.
   it('scans every marker in a relay directory, not one fixed name', async () => {
     execCommandMock.mockReset()
-    execCommandMock.mockResolvedValue('__ORCA_RG_CACHE__LIST_OK')
+    execCommandMock.mockResolvedValue('__DOLPHIN_RG_CACHE__LIST_OK')
 
     await gcRemoteRipgrepCache(conn, LINUX, '/home/me', {})
     execCommandMock.mockReset()
     execCommandMock.mockImplementation((_c: unknown, command: string) => {
       const text = String(command)
       if (text.includes('ENTRY %s')) {
-        return Promise.resolve(`ENTRY ${SUPERSEDED}\n__ORCA_RG_CACHE__LIST_OK`)
+        return Promise.resolve(`ENTRY ${SUPERSEDED}\n__DOLPHIN_RG_CACHE__LIST_OK`)
       }
-      return Promise.resolve('__ORCA_RG_CACHE__REFS_OK')
+      return Promise.resolve('__DOLPHIN_RG_CACHE__REFS_OK')
     })
     await gcRemoteRipgrepCache(conn, LINUX, '/home/me', {})
 
@@ -119,7 +119,7 @@ describe('remote ripgrep cache GC', () => {
     expect(refScan).toContain('${f##*/.ripgrep-ref-}')
   })
 
-  // Why the whole pass and not just that directory: a relay deployed by an older Orca records no
+  // Why the whole pass and not just that directory: a relay deployed by an older Dolphin records no
   // reference, so its binary cannot be identified -- and guessing is what breaks a live search.
   it('collects nothing when any relay directory cannot be accounted for', async () => {
     reply([CURRENT, SUPERSEDED], 'unreadable')
@@ -138,12 +138,12 @@ describe('remote ripgrep cache GC', () => {
     execCommandMock.mockImplementation((_conn: unknown, command: string) => {
       const text = String(command)
       if (text.includes('ENTRY %s')) {
-        return Promise.resolve(`ENTRY ${SUPERSEDED}\n__ORCA_RG_CACHE__LIST_OK`)
+        return Promise.resolve(`ENTRY ${SUPERSEDED}\n__DOLPHIN_RG_CACHE__LIST_OK`)
       }
       if (text.includes('REF %s')) {
         refCalls += 1
         return Promise.resolve(
-          refCalls === 1 ? '__ORCA_RG_CACHE__REFS_ERR' : '__ORCA_RG_CACHE__REFS_OK'
+          refCalls === 1 ? '__DOLPHIN_RG_CACHE__REFS_ERR' : '__DOLPHIN_RG_CACHE__REFS_OK'
         )
       }
       if (text.includes('MOVED')) {
@@ -174,14 +174,14 @@ describe('remote ripgrep cache GC', () => {
     execCommandMock.mockImplementation((_conn: unknown, command: string) => {
       const text = String(command)
       if (text.includes('ENTRY %s')) {
-        return Promise.resolve(`ENTRY ${SUPERSEDED}\n__ORCA_RG_CACHE__LIST_OK`)
+        return Promise.resolve(`ENTRY ${SUPERSEDED}\n__DOLPHIN_RG_CACHE__LIST_OK`)
       }
       if (text.includes('REF %s')) {
         refCalls += 1
         return Promise.resolve(
           refCalls === 1
-            ? '__ORCA_RG_CACHE__REFS_OK'
-            : `REF ${SUPERSEDED}\n__ORCA_RG_CACHE__REFS_OK`
+            ? '__DOLPHIN_RG_CACHE__REFS_OK'
+            : `REF ${SUPERSEDED}\n__DOLPHIN_RG_CACHE__REFS_OK`
         )
       }
       if (text.includes('MOVED')) {
@@ -230,10 +230,12 @@ describe('remote ripgrep cache GC', () => {
     execCommandMock.mockImplementation((_conn: unknown, command: string) => {
       const text = decodeRemotePowerShellScript(String(command)) ?? String(command)
       if (text.includes("'ENTRY '")) {
-        return Promise.resolve(`ENTRY ${WIN_CURRENT}\nENTRY ${WIN_OLD}\n__ORCA_RG_CACHE__LIST_OK`)
+        return Promise.resolve(
+          `ENTRY ${WIN_CURRENT}\nENTRY ${WIN_OLD}\n__DOLPHIN_RG_CACHE__LIST_OK`
+        )
       }
       if (text.includes("'REF '")) {
-        return Promise.resolve(`REF ${WIN_CURRENT}\n__ORCA_RG_CACHE__REFS_OK`)
+        return Promise.resolve(`REF ${WIN_CURRENT}\n__DOLPHIN_RG_CACHE__REFS_OK`)
       }
       if (text.includes('MOVED')) {
         return Promise.resolve('MOVED')
@@ -256,12 +258,12 @@ describe('remote ripgrep cache GC', () => {
   // prefix would mix cmdlet output into the entry list and feed `Remove-Item` a foreign name.
   it('prefixes every Windows listing line with its token', async () => {
     execCommandMock.mockReset()
-    execCommandMock.mockResolvedValue('__ORCA_RG_CACHE__LIST_OK')
+    execCommandMock.mockResolvedValue('__DOLPHIN_RG_CACHE__LIST_OK')
 
     await gcRemoteRipgrepCache(conn, WINDOWS, 'C:/Users/me', {})
 
     const listing = decodeRemotePowerShellScript(scripts()[0]) ?? ''
     expect(listing).toContain("'ENTRY ' + $_.Name")
-    expect(listing).toContain('__ORCA_RG_CACHE__LIST_OK')
+    expect(listing).toContain('__DOLPHIN_RG_CACHE__LIST_OK')
   })
 })

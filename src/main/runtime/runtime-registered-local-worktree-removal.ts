@@ -76,7 +76,7 @@ export async function removeRuntimeRegisteredLocalWorktree(args: {
       allowFailure: args.allowFailedArchiveHook
     })
   } else if (hooks?.scripts.archive) {
-    warning = `orca.yaml archive hook skipped for ${canonicalPath}; pass --run-hooks to run it.`
+    warning = `dolphin.yaml archive hook skipped for ${canonicalPath}; pass --run-hooks to run it.`
     console.warn(`[hooks] ${warning}`)
   }
 

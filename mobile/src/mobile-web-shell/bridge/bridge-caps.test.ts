@@ -238,7 +238,7 @@ describe('parseBridgeMessage direction', () => {
 describe('the URLs a page may hand to the shell', () => {
   it('takes the three schemes a task source produces, on any host and any path', () => {
     for (const url of [
-      'https://github.com/stablyai/orca/pull/1',
+      'https://github.com/GussCloud/dolphin/pull/1',
       'http://localhost:3000/x?y=1#z',
       'mailto:someone@example.com?subject=hi',
       'https://user:pass@example.com/a%20b'
@@ -253,7 +253,7 @@ describe('the URLs a page may hand to the shell', () => {
       'file:///etc/passwd',
       'data:text/html,<script>1</script>',
       'intent://scan/#Intent;scheme=zxing;end',
-      'orca-mobile-web://session/x',
+      'dolphin-mobile-web://session/x',
       'ftp://example.com/f'
     ]) {
       expect(isBridgeExternalLinkUrl(url), url).toBe(false)

@@ -45,7 +45,7 @@ describe('ZCode readiness from captured terminal bytes', () => {
       launchAgent: 'zcode',
       data
     })
-    // Why this asserts a NEGATIVE: Orca's wait text is a line-folded tail, and ZCode paints
+    // Why this asserts a NEGATIVE: Dolphin's wait text is a line-folded tail, and ZCode paints
     // its composer once and then repaints only the banner — so the composer scrolls out and
     // no screen rule can settle the wait. This is the evidence for driving ZCode readiness
     // from its synthetic hook title instead (see synthetic-agent-title.ts).
@@ -54,7 +54,7 @@ describe('ZCode readiness from captured terminal bytes', () => {
     ).rejects.toThrow(/timeout/)
   }, 15_000)
 
-  it('settles a tui-idle wait from the synthetic hook title Orca owns for ZCode', () => {
+  it('settles a tui-idle wait from the synthetic hook title Dolphin owns for ZCode', () => {
     expect(getSyntheticAgentTerminalTitle('zcode', 'done')).toBe('ZCode ready')
     expect(getSyntheticAgentTerminalTitle('zcode', 'waiting')).toBe('ZCode - action required')
     expect(shouldDriveSyntheticAgentTitleFromHook('zcode', 'working')).toBe(true)

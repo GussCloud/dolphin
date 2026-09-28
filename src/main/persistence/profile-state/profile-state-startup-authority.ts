@@ -7,7 +7,7 @@ import type {
 import { createLiveProfileStateStore } from './profile-state-live-store-factory'
 
 /** Runtime roots sharing the profile-state selection boundary. */
-export type ProfileStateStartupRuntime = 'desktop' | 'orcad'
+export type ProfileStateStartupRuntime = 'desktop' | 'dolphind'
 
 export type ProfileStateStartupAuthorityOptions = Omit<
   ProfileStateStoreFactoryOptions,
@@ -19,11 +19,11 @@ export type ProfileStateStartupAuthorityOptions = Omit<
 }
 
 export class ProfileStateStartupAuthorityError extends Error {
-  readonly code = 'orcad-sqlite-authority-unsupported' as const
+  readonly code = 'dolphind-sqlite-authority-unsupported' as const
 
   constructor() {
     super(
-      'orcad requires SQLite database and backup support. Launch through its bundled Bun runtime.'
+      'dolphind requires SQLite database and backup support. Launch through its bundled Bun runtime.'
     )
     this.name = 'ProfileStateStartupAuthorityError'
   }
@@ -33,13 +33,16 @@ export class ProfileStateStartupAuthorityError extends Error {
 export async function createProfileStateStoreForStartup(
   options: ProfileStateStartupAuthorityOptions
 ): Promise<ProfileStateStoreFactoryResult> {
-  if (options.runtime === 'orcad' && !isProfileStateSqliteAvailable()) {
+  if (options.runtime === 'dolphind' && !isProfileStateSqliteAvailable()) {
     throw new ProfileStateStartupAuthorityError()
   }
   return createLiveProfileStateStore(options, {
     onFailure:
       options.onPersistenceFailure ??
       ((error) =>
-        console.error('[persistence] Saving has stopped. Restart Orca before continuing.', error))
+        console.error(
+          '[persistence] Saving has stopped. Restart Dolphin before continuing.',
+          error
+        ))
   })
 }

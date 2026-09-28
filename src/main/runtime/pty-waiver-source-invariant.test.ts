@@ -20,9 +20,9 @@ const FILE_GROUPS = [
   {
     label: 'runtime removal',
     files: [
-      join(__dirname, 'orca-runtime-pty-foreground-process-reads.ts'),
-      join(__dirname, 'orca-runtime-resolve-worktree-removal-target.ts'),
-      join(__dirname, 'orca-runtime-remove-managed-worktree.ts')
+      join(__dirname, 'dolphin-runtime-pty-foreground-process-reads.ts'),
+      join(__dirname, 'dolphin-runtime-resolve-worktree-removal-target.ts'),
+      join(__dirname, 'dolphin-runtime-remove-managed-worktree.ts')
     ]
   }
 ] as const

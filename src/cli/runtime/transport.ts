@@ -134,7 +134,7 @@ export async function sendRequest<TResult>(
         }
 
         // Fast-path: ignore keepalives without running the full schema.
-        // setTimeout().refresh() is stable since Node 10 (Orca ships on
+        // setTimeout().refresh() is stable since Node 10 (Dolphin ships on
         // Node 20+ via Electron and the standalone CLI targets the same
         // major). See §7 risk #9.
         if (isKeepaliveFrame(raw)) {
@@ -143,7 +143,7 @@ export async function sendRequest<TResult>(
         }
 
         // Why: validate the envelope shape (id, ok, result/error, _meta) at
-        // the decode boundary so version skew between the CLI and the Orca
+        // the decode boundary so version skew between the CLI and the Dolphin
         // main runtime surfaces as a single invalid_runtime_response instead
         // of a downstream mis-typed field access. `result` is left as
         // unknown — the TResult generic is the caller's responsibility.

@@ -15,7 +15,7 @@ link="/usr/bin/dolphin-ide"
 if [ -L "$link" ]; then
   target="$(readlink "$link" || true)"
   case "$target" in
-    /opt/Dolphin/*|/opt/dolphin-ide/*|/opt/orca-ide/*)
+    /opt/Dolphin/*|/opt/dolphin-ide/*)
       rm -f "$link"
       ;;
   esac

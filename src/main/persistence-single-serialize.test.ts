@@ -68,11 +68,11 @@ async function createStore() {
   // file's temp dir rather than the global fake's shared one, after resetModules.
   installFakeAppEnvironment({ getPath: () => testState.dir })
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 function dataFile(): string {
-  return join(testState.dir, 'orca-data.json')
+  return join(testState.dir, 'dolphin-data.json')
 }
 
 const SECRETS = {
@@ -83,7 +83,7 @@ const KAGI_LINK = 'https://kagi.com/session?token=abc123'
 
 describe('persistence single-serialize save guard', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-test-'))
     cipherState.encryptionAvailable = true
     cipherState.deterministic = false
     vi.useFakeTimers()
@@ -233,7 +233,7 @@ describe('persistence single-serialize save guard', () => {
 
     const P = 'cookie-plaintext-value'
     // Persist cookie=P, then read its on-disk ciphertext C (what a user could
-    // copy out of orca-data.json).
+    // copy out of dolphin-data.json).
     store.updateSettings({ opencodeSessionCookie: P })
     vi.advanceTimersByTime(1000)
     await store.waitForPendingWrite()

@@ -34,7 +34,7 @@ export const ENVIRONMENT_COMMAND_SPECS: CommandSpec[] = [
     summary: 'Save a remote Dolphin runtime environment from a pairing code',
     usage: 'dolphin environment add --name <name> --pairing-code <code> [--json]',
     allowedFlags: [...GLOBAL_FLAGS, 'name'],
-    examples: ['dolphin environment add --name work-laptop --pairing-code orca://pair?code=...']
+    examples: ['dolphin environment add --name work-laptop --pairing-code dolphin://pair?code=...']
   },
   {
     path: ['environment', 'list'],

@@ -252,7 +252,7 @@ describe('provider-exit recovery tickets', () => {
         {
           kind: 'item',
           identity: {
-            provider: 'orca',
+            provider: 'dolphin',
             clientMessageId: `provider-exit:${SESSION}:7:${GENERATION}`
           },
           body: { kind: 'status', text: unexpectedProviderExitOutcome('provider exited') }

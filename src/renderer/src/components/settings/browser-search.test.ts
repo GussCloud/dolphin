@@ -82,7 +82,7 @@ describe('browser settings search copy', () => {
     )
   })
 
-  // Why: "always" would be a lie once the chord can land in Orca, so the nested row
+  // Why: "always" would be a lie once the chord can land in Dolphin, so the nested row
   // takes over the claim.
   it('drops the modifier claim once inverting is on', () => {
     const description = getBrowserLinkRoutingDescription({ isMac: true }, true)
@@ -133,7 +133,7 @@ describe('browser link routing modifier copy', () => {
     )
   })
 
-  // Why: the toggle is off by default, so present-tense "opens one in Orca" would
+  // Why: the toggle is off by default, so present-tense "opens one in Dolphin" would
   // describe behavior the user does not have yet.
   it('phrases the Dolphin branch as enabled-state copy', () => {
     expect(getLinkRoutingModifierDescription({ openLinksInApp: false, isMac: true })).toContain(

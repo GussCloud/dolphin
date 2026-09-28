@@ -17,7 +17,7 @@ import { Store } from './store'
 vi.mock('electron', () => ({
   app: {
     getPath: () => tmpdir(),
-    getName: () => 'orca-test',
+    getName: () => 'dolphin-test',
     getVersion: () => '0.0.0-test',
     isPackaged: false,
     on: () => {},
@@ -55,9 +55,9 @@ afterEach(async () => {
 })
 
 async function fixture() {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-profile-state-update-quit-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-profile-state-update-quit-'))
   const databasePath = join(directory, 'profile-state.db')
-  const dataFile = join(directory, 'orca-data.json')
+  const dataFile = join(directory, 'dolphin-data.json')
   const authority = new ProfileStateSqliteAuthority(databasePath, PROFILE_ID)
   const store = new Store({ dataFile, profileStateAuthority: authority })
   fixtures.push({ directory, store, authority })

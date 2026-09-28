@@ -27,7 +27,7 @@ const { ensureRetiredWorktreeNamesBackfilled } = await import('./worktree-name-r
 const { WslTranscriptFsError } = await import('./native-chat/wsl-transcript-fs-gate')
 
 const FIRST = MARINE_CREATURES[0].toLowerCase()
-const DISTRO_ROOT = '\\\\wsl.localhost\\Ubuntu\\home\\ada\\orca\\workspaces'
+const DISTRO_ROOT = '\\\\wsl.localhost\\Ubuntu\\home\\ada\\dolphin\\workspaces'
 
 describe('retirement discovery on WSL', () => {
   beforeEach(() => {
@@ -68,7 +68,7 @@ describe('retirement discovery on WSL', () => {
 
   it('leaves no listing ungated when the workspace root is on the Windows side', async () => {
     await discoverRetiredWorktreeNames({
-      workspaceRoots: ['C:\\Users\\ada\\orca\\workspaces'],
+      workspaceRoots: ['C:\\Users\\ada\\dolphin\\workspaces'],
       home: '/nonexistent-home',
       env: {}
     })
@@ -85,14 +85,14 @@ describe('retirement discovery on WSL', () => {
     runWslTranscriptFsTaskMock.mockRejectedValue(
       new WslTranscriptFsError('timeout', 'filesystem access is taking too long')
     )
-    const hostHome = await mkdtemp(join(tmpdir(), 'orca-wsl-host-home-'))
+    const hostHome = await mkdtemp(join(tmpdir(), 'dolphin-wsl-host-home-'))
     try {
       await mkdir(
         join(
           hostHome,
           '.claude',
           'projects',
-          `--wsl-localhost-ubuntu-home-ada-orca-workspaces-${FIRST}`
+          `--wsl-localhost-ubuntu-home-ada-dolphin-workspaces-${FIRST}`
         ),
         { recursive: true }
       )
@@ -122,7 +122,7 @@ describe('retirement discovery on WSL', () => {
     // Only the home itself lists, which is what proves the route is up.
     const missing = new Set([
       DISTRO_ROOT,
-      '\\\\wsl.localhost\\Ubuntu\\home\\ada\\orca',
+      '\\\\wsl.localhost\\Ubuntu\\home\\ada\\dolphin',
       join(distroHome, '.claude', 'projects'),
       join(distroHome, '.claude')
     ])
@@ -174,12 +174,15 @@ describe('retirement discovery on WSL', () => {
   it('keeps a deleted WSL workspace name spent, so the next create cannot reuse its cwd', async () => {
     // Delete/recreate: the workspace directory is gone, but the agent ran inside the distro and its
     // bucket survives there. That bucket is the only remaining evidence the cwd is unsafe.
-    const distroHome = await mkdtemp(join(tmpdir(), 'orca-wsl-distro-home-'))
-    const workspaceRoot = await mkdtemp(join(tmpdir(), 'orca-wsl-workspaces-'))
+    const distroHome = await mkdtemp(join(tmpdir(), 'dolphin-wsl-distro-home-'))
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'dolphin-wsl-workspaces-'))
     try {
-      await mkdir(join(distroHome, '.claude', 'projects', `-home-ada-orca-workspaces-${FIRST}`), {
-        recursive: true
-      })
+      await mkdir(
+        join(distroHome, '.claude', 'projects', `-home-ada-dolphin-workspaces-${FIRST}`),
+        {
+          recursive: true
+        }
+      )
 
       const retired = await discoverRetiredWorktreeNames({
         // The root is listed under its real (empty) path; the UNC spelling supplies the distro.
@@ -203,11 +206,14 @@ describe('retirement discovery on WSL', () => {
     // Wiring, not discovery: every test above calls the module directly, so all of them stay green
     // if `ensureRetiredWorktreeNamesBackfilled` keeps scanning the Windows home alone. That is the
     // shape STA-4472 shipped in, so the only caller production has is asserted here.
-    const distroHome = await mkdtemp(join(tmpdir(), 'orca-wsl-backfill-home-'))
+    const distroHome = await mkdtemp(join(tmpdir(), 'dolphin-wsl-backfill-home-'))
     try {
-      await mkdir(join(distroHome, '.claude', 'projects', `-home-ada-orca-workspaces-${FIRST}`), {
-        recursive: true
-      })
+      await mkdir(
+        join(distroHome, '.claude', 'projects', `-home-ada-dolphin-workspaces-${FIRST}`),
+        {
+          recursive: true
+        }
+      )
       // Serves both the workspace-root mirror and the distro bucket lookup.
       getWslHomeAsyncMock.mockResolvedValue('\\\\wsl.localhost\\Ubuntu\\home\\ada')
       runWslTranscriptFsTaskMock.mockImplementation(

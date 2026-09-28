@@ -26,7 +26,7 @@ import {
 import { setStructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-registry'
 import { AgentSessionRecordStore } from '../../agent-session-record-store'
 import { agentSessionStorePath } from '../../agent-session-record-store-file'
-import { OrcaRuntimeService } from '../../orca-runtime'
+import { DolphinRuntimeService } from '../../dolphin-runtime'
 import { RpcDispatcher } from '../dispatcher'
 import type { RpcDispatchStreamingOptions } from '../dispatcher-stream-options'
 import { SESSION_TAB_METHODS } from './session-tabs'
@@ -41,7 +41,7 @@ const caller = { callerKey: 'trusted-local:runtime' }
 let directory: string
 let store: AgentSessionRecordStore
 let host: StructuredAgentSessionHost
-let runtime: OrcaRuntimeService
+let runtime: DolphinRuntimeService
 let dispatcher: RpcDispatcher
 let acquisitions = 0
 let acquireFails = false
@@ -176,12 +176,12 @@ beforeEach(async () => {
   acquisitions = 0
   acquireFails = false
   closeSession = vi.fn(async () => true)
-  directory = await mkdtemp(join(tmpdir(), 'orca-chat-tab-table-'))
-  runtime = new OrcaRuntimeService()
+  directory = await mkdtemp(join(tmpdir(), 'dolphin-chat-tab-table-'))
+  runtime = new DolphinRuntimeService()
   vi.spyOn(runtime, 'getClientSettings').mockReturnValue(
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the structured-chat policy reads only this one setting on these paths.
     { experimentalStructuredNativeChat: true } as ReturnType<
-      OrcaRuntimeService['getClientSettings']
+      DolphinRuntimeService['getClientSettings']
     >
   )
   dispatcher = new RpcDispatcher({

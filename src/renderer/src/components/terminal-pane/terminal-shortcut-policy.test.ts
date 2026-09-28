@@ -297,7 +297,7 @@ describe('resolveTerminalShortcutAction', () => {
         undefined,
         getWindowsShiftEnterEncoding,
         () => true,
-        'orca-first',
+        'dolphin-first',
         hasCtrlEnterCsiUAuthority
       )
     }

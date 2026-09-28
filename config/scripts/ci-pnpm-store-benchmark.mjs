@@ -22,7 +22,7 @@ const { values } = parseArgs({
 const samples = Number(values.samples)
 assert(Number.isInteger(samples) && samples > 0 && samples <= 10, '--samples must be 1–10')
 const repository = resolve(import.meta.dirname, '../..')
-const temporary = mkdtempSync(join(tmpdir(), 'orca-ci-pnpm-store-'))
+const temporary = mkdtempSync(join(tmpdir(), 'dolphin-ci-pnpm-store-'))
 const checkout = join(temporary, 'checkout')
 const store = join(temporary, 'store')
 const archive = join(temporary, 'store.tar.zst')
@@ -37,7 +37,7 @@ function command(program, args, cwd = checkout) {
     program,
     args,
     cwd,
-    env: { ...process.env, CI: 'true', ORCA_BACKGROUND_LAUNCH: '1' },
+    env: { ...process.env, CI: 'true', DOLPHIN_BACKGROUND_LAUNCH: '1' },
     timeoutMs: 300_000
   })
   assert.equal(result.code, 0, `${program}: ${result.stdout}\n${result.stderr}`)

@@ -1,7 +1,7 @@
 import type { LegacyAdoptedMailboxOwner, OrchestrationDb } from '../../../../orchestration/db'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import type { DispatchContextRow, DispatchStatus } from '../../../../orchestration/types'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { readStructuredAgentSessionRecord } from '../../../../structured-worker-authority'
 import { structuredWorkerHostScope } from '../../../../structured-worker-identity'
 import { resolveOrchestrationParty } from '../../../../orchestration/orchestration-party'
@@ -18,7 +18,7 @@ const ACTIVE_DISPATCH_STATUSES: readonly DispatchStatus[] = ['pending', 'dispatc
  * happen. Federated targets keep their own liveness check.
  */
 export function assertDispatchMailboxDeliverable(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   db: OrchestrationDb,
   dispatchId: string
 ): void {
@@ -35,7 +35,7 @@ export function assertDispatchMailboxDeliverable(
 
 // A saved pane alone cannot identify its occupant after reuse.
 export function currentDispatchAssigneeRun(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   db: OrchestrationDb,
   dispatch: DispatchContextRow
 ) {
@@ -45,11 +45,11 @@ export function currentDispatchAssigneeRun(
   ) {
     return undefined
   }
-  if (dispatch.assignee_orca_session_id !== null) {
+  if (dispatch.assignee_dolphin_session_id !== null) {
     return db.getCurrentRunForCoordinator({
       terminalHandle: dispatch.assignee_handle,
       paneKey: null,
-      orcaSessionId: dispatch.assignee_orca_session_id
+      dolphinSessionId: dispatch.assignee_dolphin_session_id
     })
   }
   if (dispatch.assignee_handle === null) {
@@ -70,7 +70,7 @@ export function currentDispatchAssigneeRun(
 
 // Nested coordinators receive new mail where their current Run check waits.
 export function resolveRunBoundDispatchRecipient(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   db: OrchestrationDb,
   dispatchId: string,
   explicitRunId?: string
@@ -101,7 +101,7 @@ export function resolveRunBoundDispatchRecipient(
 
 // Replies share send routing; unresolved historical senders keep their original address.
 export function resolveReplyRecipient(params: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   db: OrchestrationDb
   originalFrom: string
   originalRunId: string | undefined
@@ -156,7 +156,7 @@ export type BareRecipientResolution =
     }
 
 export function resolveBareOrchestrationRecipient(params: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   db: OrchestrationDb
   handle: string
   senderRunId?: string
@@ -172,7 +172,7 @@ export function resolveBareOrchestrationRecipient(params: {
       : (runtime.getLiveTerminalPaneKey(party.terminalHandle) ?? undefined)
   // Why: a session-backed party's Run binding is durable, so it outranks whether its pane is live.
   const boundRun =
-    party.orcaSessionId !== null
+    party.dolphinSessionId !== null
       ? db.getCurrentRunForCoordinator(party)
       : paneKey
         ? db.getCurrentRunForPane(paneKey)
@@ -221,7 +221,7 @@ export function resolveBareOrchestrationRecipient(params: {
     }
   }
 
-  const chatSessionId = party.terminalHandle === null ? party.orcaSessionId : null
+  const chatSessionId = party.terminalHandle === null ? party.dolphinSessionId : null
   if (chatSessionId !== null) {
     const record = readStructuredAgentSessionRecord(chatSessionId)
     // Unlike a terminal handle, a session address outlives its process, so its direct mail is durable.

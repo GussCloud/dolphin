@@ -3,19 +3,19 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { runProcess, runProcessSync } from '../../../shared/child-process/run-process'
-import { orcadBunRuntimeFilename } from '../../../shared/orcad-artifacts'
-import { ORCAD_BUN_VERSION } from '../../../shared/orcad-bun-runtime'
+import { dolphindBunRuntimeFilename } from '../../../shared/dolphind-artifacts'
+import { DOLPHIND_BUN_VERSION } from '../../../shared/dolphind-bun-runtime'
 import { removeTreeSync } from '../../../shared/windows-transient-lock-removal'
 
 const runtimePath =
   process.env.BUN_EXECUTABLE ??
-  resolve(__dirname, '../../../../out/orcad', orcadBunRuntimeFilename(process.platform))
+  resolve(__dirname, '../../../../out/dolphind', dolphindBunRuntimeFilename(process.platform))
 
 async function runTerminalScript(script: string): Promise<unknown> {
   expect(runProcessSync({ program: runtimePath, args: ['--version'] }).stdout.trim()).toBe(
-    ORCAD_BUN_VERSION
+    DOLPHIND_BUN_VERSION
   )
-  const directory = mkdtempSync(join(tmpdir(), 'orca-bun-terminal-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-bun-terminal-'))
   try {
     const entry = join(directory, 'terminal.cjs')
     writeFileSync(
@@ -84,7 +84,7 @@ describe.skipIf(!existsSync(runtimePath) || process.platform === 'win32')(
       const result = await runTerminalScript(`
       const expected = 'ready' + 'x'.repeat(1024 * 1024)
       const continueOutput = require('node:path').join(args.cwd, 'continue-output')
-      const proc = spawnBunPty({...args,env:{...args.env,ORCA_TEST_CONTINUE:continueOutput},args:['-e','process.stdout.write("ready");const timer=setInterval(()=>{if(!require("node:fs").existsSync(process.env.ORCA_TEST_CONTINUE))return;clearInterval(timer);process.stdout.write("x".repeat(1024*1024))},1)']},{readProcessTable:()=>''})
+      const proc = spawnBunPty({...args,env:{...args.env,DOLPHIN_TEST_CONTINUE:continueOutput},args:['-e','process.stdout.write("ready");const timer=setInterval(()=>{if(!require("node:fs").existsSync(process.env.DOLPHIN_TEST_CONTINUE))return;clearInterval(timer);process.stdout.write("x".repeat(1024*1024))},1)']},{readProcessTable:()=>''})
       let output = '', paused = false, stable = false
       proc.onData(data => {
         output += data
@@ -132,8 +132,8 @@ describe.skipIf(!existsSync(runtimePath) || process.platform === 'win32')(
       let bytes = 0, paused = false, settledBytes = 0, stable = false, verifying = false, rejectedResume = false
       const proc = spawnBunPty({
         ...args, file:'/bin/bash',
-        args:['--noprofile','--norc','-i','-c','exec 2>/dev/null; "$ORCA_TEST_RUNTIME" "$ORCA_TEST_PRODUCER" "$ORCA_TEST_BACKGROUND_READY" "$ORCA_TEST_GO" "$ORCA_TEST_CONTINUE" & "$ORCA_TEST_RUNTIME" "$ORCA_TEST_PRODUCER" "$ORCA_TEST_FOREGROUND_READY" "$ORCA_TEST_GO" "$ORCA_TEST_CONTINUE"; wait'],
-        env:{...args.env,ORCA_TEST_RUNTIME:process.execPath,ORCA_TEST_PRODUCER:producer,ORCA_TEST_BACKGROUND_READY:backgroundReady,ORCA_TEST_FOREGROUND_READY:foregroundReady,ORCA_TEST_GO:go,ORCA_TEST_CONTINUE:continueOutput}
+        args:['--noprofile','--norc','-i','-c','exec 2>/dev/null; "$DOLPHIN_TEST_RUNTIME" "$DOLPHIN_TEST_PRODUCER" "$DOLPHIN_TEST_BACKGROUND_READY" "$DOLPHIN_TEST_GO" "$DOLPHIN_TEST_CONTINUE" & "$DOLPHIN_TEST_RUNTIME" "$DOLPHIN_TEST_PRODUCER" "$DOLPHIN_TEST_FOREGROUND_READY" "$DOLPHIN_TEST_GO" "$DOLPHIN_TEST_CONTINUE"; wait'],
+        env:{...args.env,DOLPHIN_TEST_RUNTIME:process.execPath,DOLPHIN_TEST_PRODUCER:producer,DOLPHIN_TEST_BACKGROUND_READY:backgroundReady,DOLPHIN_TEST_FOREGROUND_READY:foregroundReady,DOLPHIN_TEST_GO:go,DOLPHIN_TEST_CONTINUE:continueOutput}
       },{signalProcessGroup:(pgid,signal)=>{
         if (signal === 'SIGCONT' && ${rejectFirstResume} && !rejectedResume) {
           rejectedResume = true

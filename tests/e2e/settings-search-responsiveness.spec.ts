@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 import type { Repo } from '../../src/shared/repo-types'
 
@@ -13,11 +13,11 @@ function buildProjectPaths(): string[] {
 
 test.describe('Settings search responsiveness', () => {
   test('renders only the active settings pane when many projects match search', async ({
-    orcaPage
+    dolphinPage
   }) => {
-    await waitForSessionReady(orcaPage)
+    await waitForSessionReady(dolphinPage)
 
-    await orcaPage.evaluate(
+    await dolphinPage.evaluate(
       ({ projectPaths, projectCount }) => {
         const store = window.__store
         if (!store) {
@@ -44,26 +44,29 @@ test.describe('Settings search responsiveness', () => {
       { projectPaths: buildProjectPaths(), projectCount: MATCHING_PROJECT_COUNT }
     )
 
-    const searchInput = orcaPage.getByPlaceholder('Search settings')
+    const searchInput = dolphinPage.getByPlaceholder('Search settings')
     await expect(searchInput).toBeVisible()
     await searchInput.fill('Project Long Search')
 
     await expect
-      .poll(() => orcaPage.evaluate(() => window.__store?.getState().settingsSearchQuery ?? ''), {
-        timeout: 5_000,
-        message: 'settings search query did not apply'
-      })
+      .poll(
+        () => dolphinPage.evaluate(() => window.__store?.getState().settingsSearchQuery ?? ''),
+        {
+          timeout: 5_000,
+          message: 'settings search query did not apply'
+        }
+      )
       .toBe('Project Long Search')
 
-    await expect(orcaPage.getByRole('button', { name: 'Project Long Search 000' })).toBeVisible()
+    await expect(dolphinPage.getByRole('button', { name: 'Project Long Search 000' })).toBeVisible()
     await expect
-      .poll(() => orcaPage.locator('section.scroll-mt-8[data-settings-section]').count(), {
+      .poll(() => dolphinPage.locator('section.scroll-mt-8[data-settings-section]').count(), {
         timeout: 5_000,
         message: 'settings search rendered more than the active pane'
       })
       .toBe(1)
 
-    const renderedSectionId = await orcaPage
+    const renderedSectionId = await dolphinPage
       .locator('section.scroll-mt-8[data-settings-section]')
       .first()
       .getAttribute('data-settings-section')

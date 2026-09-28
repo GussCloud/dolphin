@@ -41,7 +41,7 @@ vi.mock('../../shared/secure-file', () => ({
 
 const storePath = '/home/test/.dolphin/minimax-session-cookie.enc'
 const envelope = (kind: 'encrypted' | 'plaintext', value: string): string =>
-  `orca-minimax-cookie:v1:${kind}:${Buffer.from(value, 'utf8').toString('base64')}`
+  `dolphin-minimax-cookie:v1:${kind}:${Buffer.from(value, 'utf8').toString('base64')}`
 
 async function loadStore(): Promise<typeof MiniMaxCookieStore> {
   return await import('./minimax-cookie-store')

@@ -13,12 +13,12 @@
  * caller of a public terminal verb something that looks writable and is not.
  */
 
-import type { OrcaRuntimeService } from '../../orca-runtime'
+import type { DolphinRuntimeService } from '../../dolphin-runtime'
 import type { OrchestrationSessionCaller } from '../../orchestration/orchestration-caller-identity'
 import { isStructuredWorkerHandle } from '../../structured-worker-identity'
 
 export async function resolveDispatchCallerWorktreeId(
-  runtime: Pick<OrcaRuntimeService, 'showTerminal' | 'getOrchestrationDispatchAuthority'>,
+  runtime: Pick<DolphinRuntimeService, 'showTerminal' | 'getOrchestrationDispatchAuthority'>,
   callerHandle: string,
   callerSession: OrchestrationSessionCaller | undefined
 ): Promise<string> {

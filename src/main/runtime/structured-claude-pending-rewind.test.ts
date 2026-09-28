@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { agentJournalItemKey } from '../../shared/agent-session-journal-item-key'
 import { computeAgentSessionPayloadFingerprint } from '../../shared/agent-session-mutation-envelope'
 import type { AgentSessionRecord } from '../../shared/agent-session-record'
-import { claudeSessionIdForOrcaSession } from '../claude/claude-structured-launch-resolution'
+import { claudeSessionIdForDolphinSession } from '../claude/claude-structured-launch-resolution'
 import { fakeClaude } from '../claude/claude-structured-session-test-support'
 import { StructuredAgentSessionAdapterRouter } from '../native-chat/agent-session-wire/structured-agent-session-adapter-router'
 import { StructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-host'
@@ -24,7 +24,7 @@ import { AgentSessionRecordStore } from './agent-session-record-store'
 import { createStructuredClaudeRuntimeAdapter } from './structured-claude-runtime-adapter'
 
 const caller = { callerKey: 'desktop' }
-const PROVIDER_SESSION_ID = claudeSessionIdForOrcaSession(HOST_TEST_SESSION)
+const PROVIDER_SESSION_ID = claudeSessionIdForDolphinSession(HOST_TEST_SESSION)
 const TARGET = agentJournalItemKey({
   provider: 'claude',
   sessionId: PROVIDER_SESSION_ID,
@@ -104,7 +104,7 @@ async function reattach() {
 
 beforeEach(async () => {
   resetHostTestOperationIds()
-  directory = await mkdtemp(join(tmpdir(), 'orca-claude-pending-rewind-'))
+  directory = await mkdtemp(join(tmpdir(), 'dolphin-claude-pending-rewind-'))
   store = await AgentSessionRecordStore.open({
     directory: join(directory, 'store'),
     hostId: 'local'

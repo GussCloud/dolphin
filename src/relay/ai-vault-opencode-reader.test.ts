@@ -29,7 +29,7 @@ afterEach(async () => {
 })
 
 async function temporaryDirectory(): Promise<string> {
-  const path = await mkdtemp(join(tmpdir(), 'orca-relay-opencode-'))
+  const path = await mkdtemp(join(tmpdir(), 'dolphin-relay-opencode-'))
   directories.push(path)
   return path
 }

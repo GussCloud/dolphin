@@ -3,23 +3,23 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ORCHESTRATION_CONTRACT_VERSION } from '../../../../../../shared/protocol-version'
-import { OrcaRuntimeService } from '../../../../orca-runtime'
+import { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { OrchestrationDb } from '../../../../orchestration/db'
 import { RpcDispatcher } from '../../../dispatcher'
 import type { RpcRequest } from '../../../core'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
 
 describe('orchestration new-worktree workers', () => {
-  type CreateWorktreeResult = Awaited<ReturnType<OrcaRuntimeService['createManagedWorktree']>>
+  type CreateWorktreeResult = Awaited<ReturnType<DolphinRuntimeService['createManagedWorktree']>>
   const coordinatorPaneKey = 'tab_coord:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
   let db: OrchestrationDb
-  let runtime: OrcaRuntimeService
+  let runtime: DolphinRuntimeService
   let runId: string
   const paths: string[] = []
 
   beforeEach(() => {
     db = new OrchestrationDb(':memory:')
-    runtime = new OrcaRuntimeService()
+    runtime = new DolphinRuntimeService()
     runtime.setOrchestrationDb(db)
     runId = db.createRun({
       objective: 'Test new-worktree workers',
@@ -584,7 +584,7 @@ describe('orchestration new-worktree workers', () => {
   })
 
   it('replays a dispatch-input failure after restart without creating another worker', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'orca-worker-start-replay-'))
+    const dir = mkdtempSync(join(tmpdir(), 'dolphin-worker-start-replay-'))
     paths.push(dir)
     db.close()
     db = new OrchestrationDb(join(dir, 'orchestration.db'))
@@ -626,7 +626,7 @@ describe('orchestration new-worktree workers', () => {
     db.close()
 
     db = new OrchestrationDb(join(dir, 'orchestration.db'))
-    const restartedRuntime = new OrcaRuntimeService()
+    const restartedRuntime = new DolphinRuntimeService()
     restartedRuntime.setOrchestrationDb(db)
     vi.spyOn(restartedRuntime, 'getTerminalPaneKey').mockImplementation((handle) =>
       handle === 'term_coord_reminted'
@@ -681,10 +681,10 @@ describe('orchestration new-worktree workers', () => {
   it('persists pre-effect, post-effect, and post-input stages in order', async () => {
     mockCreatedWorktree({ hookFound: false })
     let finishWait:
-      | ((value: Awaited<ReturnType<OrcaRuntimeService['waitForTerminal']>>) => void)
+      | ((value: Awaited<ReturnType<DolphinRuntimeService['waitForTerminal']>>) => void)
       | undefined
     let finishPrompt:
-      | ((value: Awaited<ReturnType<OrcaRuntimeService['sendTerminalAgentPrompt']>>) => void)
+      | ((value: Awaited<ReturnType<DolphinRuntimeService['sendTerminalAgentPrompt']>>) => void)
       | undefined
     vi.mocked(runtime.waitForTerminal).mockImplementationOnce(
       async () =>

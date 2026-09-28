@@ -1,9 +1,9 @@
 import type { PtySpawnResult } from '../../../providers/types'
-import type { OrcaRuntimeService } from '../../../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../../../runtime/dolphin-runtime'
 import { pendingByPaneKey, rendererSerializerReadiness } from './serializer-state'
 
 export function seedHeadlessTerminalFromSpawnResult(
-  runtime: OrcaRuntimeService | undefined,
+  runtime: DolphinRuntimeService | undefined,
   result: PtySpawnResult,
   paneKey: string | null
 ): void {

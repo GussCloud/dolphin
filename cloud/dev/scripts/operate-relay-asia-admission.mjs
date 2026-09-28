@@ -10,15 +10,15 @@ import {
 
 const SHAPES = {
   staging: {
-    directorOrigin: 'https://relay-staging.onorca.dev',
-    domain: 'relay-staging.onorca.dev',
+    directorOrigin: 'https://relay-staging.dolphin.guss.dev.br',
+    domain: 'relay-staging.dolphin.guss.dev.br',
     allCells: ['staging-gce-c4'],
     registrationWaves: [['staging-gce-c4']],
     promotionWaves: [['staging-gce-c4']]
   },
   production: {
-    directorOrigin: 'https://relay.onorca.dev',
-    domain: 'relay.onorca.dev',
+    directorOrigin: 'https://relay.dolphin.guss.dev.br',
+    domain: 'relay.dolphin.guss.dev.br',
     allCells: ['production-gce-c27', 'production-gce-c28', 'production-gce-c29', 'production-gce-c30'],
     // The launch set was registered together; each later cell registers alone beside it.
     registrationWaves: [
@@ -97,7 +97,7 @@ export function parseRelayAsiaAdmissionArguments(argv) {
     expectedMembershipSha256: values['expected-membership-sha256'],
     imageDigest: values['image-digest'],
     attemptId,
-    token: process.env.ORCA_RELAY_ADMIN_ID_TOKEN ?? ''
+    token: process.env.DOLPHIN_RELAY_ADMIN_ID_TOKEN ?? ''
   }
 }
 
@@ -461,6 +461,6 @@ export async function operateRelayAsiaAdmission(config, dependencies = {}) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const config = parseRelayAsiaAdmissionArguments(process.argv.slice(2))
-  if (!config.token) throw new Error('ORCA_RELAY_ADMIN_ID_TOKEN is required')
+  if (!config.token) throw new Error('DOLPHIN_RELAY_ADMIN_ID_TOKEN is required')
   console.log(JSON.stringify(await operateRelayAsiaAdmission(config)))
 }

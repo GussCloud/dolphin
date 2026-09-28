@@ -61,9 +61,9 @@ import { resetMobileRelayHostOverlayStoreForTests } from './mobile-relay-host-ov
 import { createMobileRelayDirectUpgradeJournal } from './mobile-relay-direct-upgrade-journal'
 import { upgradeDirectMobileRelay } from './mobile-relay-direct-upgrade'
 
-const OVERLAY_KEY = 'orca:mobile-relay:host-overlays:v2'
+const OVERLAY_KEY = 'dolphin:mobile-relay:host-overlays:v2'
 const EDITED_ENDPOINT = 'ws://192.168.1.20:6768'
-const resolved = { ...relay, cellUrl: 'https://relay-c2.onorca.dev', assignmentEpoch: 8 }
+const resolved = { ...relay, cellUrl: 'https://relay-c2.dolphin.guss.dev.br', assignmentEpoch: 8 }
 
 // Starts a relay host whose first dial hits the wrong cell, leaving director resolution pending.
 async function startWithPendingResolution(): Promise<{
@@ -108,7 +108,10 @@ describe('mobile endpoint lifecycle host edits', () => {
     resetHostStoreForTests()
     resetMobileRelayHostOverlayStoreForTests()
     const { id, name, endpoint, publicKeyB64, lastConnected } = host
-    storage.set('orca:hosts', JSON.stringify([{ id, name, endpoint, publicKeyB64, lastConnected }]))
+    storage.set(
+      'dolphin:hosts',
+      JSON.stringify([{ id, name, endpoint, publicKeyB64, lastConnected }])
+    )
     storage.set(
       OVERLAY_KEY,
       JSON.stringify([
@@ -117,7 +120,11 @@ describe('mobile endpoint lifecycle host edits', () => {
           hostId: id,
           endpoints: [
             { id: 'direct-primary', kind: 'lan', url: endpoint },
-            { id: 'relay-primary', kind: 'relay', url: 'wss://relay-c1.onorca.dev/v1/connect/id' }
+            {
+              id: 'relay-primary',
+              kind: 'relay',
+              url: 'wss://relay-c1.dolphin.guss.dev.br/v1/connect/id'
+            }
           ],
           relayHostId: relay.relayHostId,
           relay

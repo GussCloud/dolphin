@@ -41,7 +41,7 @@ let landInit: () => void
 let lifecycle: Promise<void>[]
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-owed-work-release-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-owed-work-release-'))
   resetHostTestOperationIds()
   claude = fakeClaude()
   lifecycle = []

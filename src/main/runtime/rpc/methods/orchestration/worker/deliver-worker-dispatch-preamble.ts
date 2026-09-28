@@ -1,5 +1,5 @@
 import type { RuntimeTerminalSend } from '../../../../../../shared/runtime-terminal-contracts'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import {
   buildDispatchPreamble,
   dispatchPreambleSendOptions
@@ -17,7 +17,7 @@ type StructuredSession = Awaited<ReturnType<typeof createStructuredWorkerSession
  * structured turn either is acknowledged or throws.
  */
 export async function deliverWorkerDispatchPreamble(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   structuredSession: StructuredSession
   terminalHandle: string
   dispatchId: string

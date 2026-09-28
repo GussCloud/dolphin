@@ -252,14 +252,14 @@ describe('AgentsPane', () => {
   })
 
   it('hides desktop-only awake modes in paired web clients', () => {
-    ;(globalThis as { __ORCA_WEB_CLIENT__?: boolean }).__ORCA_WEB_CLIENT__ = true
+    ;(globalThis as { __DOLPHIN_WEB_CLIENT__?: boolean }).__DOLPHIN_WEB_CLIENT__ = true
     try {
       expect(renderPane(getDefaultSettings('/tmp'))).not.toContain('Keep computer awake')
       expect(
         matchesSettingsSearch('awake', getAgentsPaneSearchEntries({ includeAgentAwake: false }))
       ).toBe(false)
     } finally {
-      delete (globalThis as { __ORCA_WEB_CLIENT__?: boolean }).__ORCA_WEB_CLIENT__
+      delete (globalThis as { __DOLPHIN_WEB_CLIENT__?: boolean }).__DOLPHIN_WEB_CLIENT__
     }
   })
 

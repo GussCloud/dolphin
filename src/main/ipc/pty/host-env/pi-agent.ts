@@ -36,13 +36,14 @@ export function resolvePiAgentSourceDir(
     )
   }
 
-  const overlayKey = kind === 'omp' ? 'ORCA_OMP_CODING_AGENT_DIR' : 'ORCA_PI_CODING_AGENT_DIR'
-  const otherOverlayKey = kind === 'omp' ? 'ORCA_PI_CODING_AGENT_DIR' : 'ORCA_OMP_CODING_AGENT_DIR'
+  const overlayKey = kind === 'omp' ? 'DOLPHIN_OMP_CODING_AGENT_DIR' : 'DOLPHIN_PI_CODING_AGENT_DIR'
+  const otherOverlayKey =
+    kind === 'omp' ? 'DOLPHIN_PI_CODING_AGENT_DIR' : 'DOLPHIN_OMP_CODING_AGENT_DIR'
 
   const publicDir = readEnvWithProcessFallback(baseEnv, primaryKey)
   const ownOverlayDir = readEnvWithProcessFallback(baseEnv, overlayKey)
   const otherOverlayDir = readEnvWithProcessFallback(baseEnv, otherOverlayKey)
-  // Why: if PI_CODING_AGENT_DIR is a restored Orca overlay with no source shadow, remirroring leaks another agent's overlay tree; fall through to defaults.
+  // Why: if PI_CODING_AGENT_DIR is a restored Dolphin overlay with no source shadow, remirroring leaks another agent's overlay tree; fall through to defaults.
   if (publicDir && publicDir !== ownOverlayDir && publicDir !== otherOverlayDir) {
     return publicDir
   }
@@ -59,18 +60,18 @@ export function resolveScopedPiAgentSourceDir(
 
 export function clearPiAgentShadowEnv(baseEnv: Record<string, string>, kind: PiAgentKind): void {
   if (kind === 'omp') {
-    delete baseEnv.ORCA_OMP_CODING_AGENT_DIR
-    delete baseEnv.ORCA_OMP_SOURCE_AGENT_DIR
-    delete baseEnv.ORCA_OMP_STATUS_EXTENSION
+    delete baseEnv.DOLPHIN_OMP_CODING_AGENT_DIR
+    delete baseEnv.DOLPHIN_OMP_SOURCE_AGENT_DIR
+    delete baseEnv.DOLPHIN_OMP_STATUS_EXTENSION
     return
   }
   if (kind === 'prime-agent') {
-    delete baseEnv.ORCA_PRIME_AGENT_SOURCE_AGENT_DIR
-    delete baseEnv.ORCA_PRIME_AGENT_STATUS_EXTENSION
+    delete baseEnv.DOLPHIN_PRIME_AGENT_SOURCE_AGENT_DIR
+    delete baseEnv.DOLPHIN_PRIME_AGENT_STATUS_EXTENSION
     return
   }
-  delete baseEnv.ORCA_PI_CODING_AGENT_DIR
-  delete baseEnv.ORCA_PI_SOURCE_AGENT_DIR
+  delete baseEnv.DOLPHIN_PI_CODING_AGENT_DIR
+  delete baseEnv.DOLPHIN_PI_SOURCE_AGENT_DIR
 }
 
 export function exposePiManagedExtensionEnv(
@@ -79,32 +80,32 @@ export function exposePiManagedExtensionEnv(
   managedEnv: Record<string, string>
 ): void {
   if (kind === 'omp') {
-    delete baseEnv.ORCA_OMP_CODING_AGENT_DIR
-    if (managedEnv.ORCA_OMP_SOURCE_AGENT_DIR) {
-      baseEnv.ORCA_OMP_SOURCE_AGENT_DIR = managedEnv.ORCA_OMP_SOURCE_AGENT_DIR
+    delete baseEnv.DOLPHIN_OMP_CODING_AGENT_DIR
+    if (managedEnv.DOLPHIN_OMP_SOURCE_AGENT_DIR) {
+      baseEnv.DOLPHIN_OMP_SOURCE_AGENT_DIR = managedEnv.DOLPHIN_OMP_SOURCE_AGENT_DIR
     } else {
-      delete baseEnv.ORCA_OMP_SOURCE_AGENT_DIR
+      delete baseEnv.DOLPHIN_OMP_SOURCE_AGENT_DIR
     }
-    if (managedEnv.ORCA_OMP_STATUS_EXTENSION) {
-      baseEnv.ORCA_OMP_STATUS_EXTENSION = managedEnv.ORCA_OMP_STATUS_EXTENSION
+    if (managedEnv.DOLPHIN_OMP_STATUS_EXTENSION) {
+      baseEnv.DOLPHIN_OMP_STATUS_EXTENSION = managedEnv.DOLPHIN_OMP_STATUS_EXTENSION
     } else {
-      delete baseEnv.ORCA_OMP_STATUS_EXTENSION
+      delete baseEnv.DOLPHIN_OMP_STATUS_EXTENSION
     }
     return
   }
   if (kind === 'prime-agent') {
-    if (managedEnv.ORCA_PRIME_AGENT_SOURCE_AGENT_DIR) {
-      baseEnv.ORCA_PRIME_AGENT_SOURCE_AGENT_DIR = managedEnv.ORCA_PRIME_AGENT_SOURCE_AGENT_DIR
+    if (managedEnv.DOLPHIN_PRIME_AGENT_SOURCE_AGENT_DIR) {
+      baseEnv.DOLPHIN_PRIME_AGENT_SOURCE_AGENT_DIR = managedEnv.DOLPHIN_PRIME_AGENT_SOURCE_AGENT_DIR
     } else {
-      delete baseEnv.ORCA_PRIME_AGENT_SOURCE_AGENT_DIR
+      delete baseEnv.DOLPHIN_PRIME_AGENT_SOURCE_AGENT_DIR
     }
     return
   }
-  delete baseEnv.ORCA_PI_CODING_AGENT_DIR
-  if (managedEnv.ORCA_PI_SOURCE_AGENT_DIR) {
-    baseEnv.ORCA_PI_SOURCE_AGENT_DIR = managedEnv.ORCA_PI_SOURCE_AGENT_DIR
+  delete baseEnv.DOLPHIN_PI_CODING_AGENT_DIR
+  if (managedEnv.DOLPHIN_PI_SOURCE_AGENT_DIR) {
+    baseEnv.DOLPHIN_PI_SOURCE_AGENT_DIR = managedEnv.DOLPHIN_PI_SOURCE_AGENT_DIR
   } else {
-    delete baseEnv.ORCA_PI_SOURCE_AGENT_DIR
+    delete baseEnv.DOLPHIN_PI_SOURCE_AGENT_DIR
   }
 }
 
@@ -121,7 +122,7 @@ export function mergePtyEnvDeletions(
 
 export function removeCodexHomeDeletionRequests(keys: string[] | undefined): string[] | undefined {
   // Why: resume provenance is launch-authoritative; late deletions must not fall back to the current account.
-  const filtered = keys?.filter((key) => key !== 'CODEX_HOME' && key !== 'ORCA_CODEX_HOME')
+  const filtered = keys?.filter((key) => key !== 'CODEX_HOME' && key !== 'DOLPHIN_CODEX_HOME')
   return filtered?.length ? filtered : undefined
 }
 
@@ -132,9 +133,9 @@ export function getInheritedAgentHookEnvKeysToDelete(
   // Why: providers merge process.env after cleanup; delete stale hook keys without dropping fresh coordinates buildPtyHostEnv set.
   return [
     ...AGENT_HOOK_RUNTIME_ENV_KEYS,
-    'ORCA_OPENCODE_AGENT',
-    'ORCA_OPENCODE_CONFIG_DIR',
-    'ORCA_OPENCODE_SOURCE_CONFIG_DIR'
+    'DOLPHIN_OPENCODE_AGENT',
+    'DOLPHIN_OPENCODE_CONFIG_DIR',
+    'DOLPHIN_OPENCODE_SOURCE_CONFIG_DIR'
   ].filter((key) => env[key] === undefined)
 }
 
@@ -157,13 +158,14 @@ export function isMimoLaunchCommand(launchCommand: string | undefined): boolean 
 }
 
 export function resolveMimocodeSourceHome(baseEnv: Record<string, string>): string | undefined {
-  const sourceHome = baseEnv.ORCA_MIMOCODE_SOURCE_HOME ?? process.env.ORCA_MIMOCODE_SOURCE_HOME
+  const sourceHome =
+    baseEnv.DOLPHIN_MIMOCODE_SOURCE_HOME ?? process.env.DOLPHIN_MIMOCODE_SOURCE_HOME
   if (sourceHome) {
     return sourceHome
   }
   const configHome = baseEnv.MIMOCODE_HOME ?? process.env.MIMOCODE_HOME
-  const orcaHome = baseEnv.ORCA_MIMOCODE_HOME ?? process.env.ORCA_MIMOCODE_HOME
-  if (configHome && orcaHome && configHome === orcaHome) {
+  const dolphinHome = baseEnv.DOLPHIN_MIMOCODE_HOME ?? process.env.DOLPHIN_MIMOCODE_HOME
+  if (configHome && dolphinHome && configHome === dolphinHome) {
     return undefined
   }
   return configHome
@@ -173,18 +175,19 @@ export function resolveOpenCodeSourceConfigDir(
   baseEnv: Record<string, string>
 ): string | undefined {
   const configDir = baseEnv.OPENCODE_CONFIG_DIR ?? process.env.OPENCODE_CONFIG_DIR
-  const orcaConfigDir = baseEnv.ORCA_OPENCODE_CONFIG_DIR ?? process.env.ORCA_OPENCODE_CONFIG_DIR
-  if (configDir && orcaConfigDir && configDir !== orcaConfigDir) {
+  const dolphinConfigDir =
+    baseEnv.DOLPHIN_OPENCODE_CONFIG_DIR ?? process.env.DOLPHIN_OPENCODE_CONFIG_DIR
+  if (configDir && dolphinConfigDir && configDir !== dolphinConfigDir) {
     return configDir
   }
   const sourceDir =
-    baseEnv.ORCA_OPENCODE_SOURCE_CONFIG_DIR ?? process.env.ORCA_OPENCODE_SOURCE_CONFIG_DIR
+    baseEnv.DOLPHIN_OPENCODE_SOURCE_CONFIG_DIR ?? process.env.DOLPHIN_OPENCODE_SOURCE_CONFIG_DIR
   if (sourceDir) {
     return sourceDir
   }
 
-  // Why: with no recorded source dir, an inherited OPENCODE_CONFIG_DIR is Orca-owned, not user config; treating it as user config makes child Orcas mirror the hook dir.
-  if (configDir && orcaConfigDir && configDir === orcaConfigDir) {
+  // Why: with no recorded source dir, an inherited OPENCODE_CONFIG_DIR is Dolphin-owned, not user config; treating it as user config makes child Dolphins mirror the hook dir.
+  if (configDir && dolphinConfigDir && configDir === dolphinConfigDir) {
     return undefined
   }
 

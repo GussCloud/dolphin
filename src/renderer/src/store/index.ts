@@ -41,7 +41,7 @@ import { createPullRequestGenerationSlice } from './slices/pull-request-generati
 import { createCommitMessageGenerationSlice } from './slices/commit-message-generation'
 import { createPinnedTabCloseConfirmSlice } from './slices/pinned-tab-close-confirm'
 import { createRecentlyClosedTabsSlice } from './slices/recently-closed-tabs'
-import { createOrcaProfilesSlice } from './slices/orca-profiles'
+import { createDolphinProfilesSlice } from './slices/dolphin-profiles'
 import { createNewIssueDraftSlice } from './slices/new-issue-draft'
 import { createFeedbackDraftSlice } from './slices/feedback-draft'
 import { createTaskCreationDraftsSlice } from './slices/task-creation-drafts'
@@ -115,7 +115,7 @@ export const useAppStore = create<AppState>()(
         ...createCommitMessageGenerationSlice(...a),
         ...createPinnedTabCloseConfirmSlice(...a),
         ...createRecentlyClosedTabsSlice(...a),
-        ...createOrcaProfilesSlice(...a),
+        ...createDolphinProfilesSlice(...a),
         ...createNewIssueDraftSlice(...a),
         ...createFeedbackDraftSlice(...a),
         ...createTaskCreationDraftsSlice(...a),

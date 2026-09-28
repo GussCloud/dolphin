@@ -1,4 +1,4 @@
-// Drive the installed, packaged Orca app with Playwright's Electron driver.
+// Drive the installed, packaged Dolphin app with Playwright's Electron driver.
 //
 // This targets a PRODUCTION build, so it must NOT depend on the e2e-only store
 // exposure (window.__store / window.__paneManagers) — those exist only under a
@@ -35,16 +35,16 @@ const RESTRICTED_E2E_ENV_KEYS = new Set([
   'HOME',
   'USERPROFILE',
   'CODEX_HOME',
-  'ORCA_CODEX_HOME',
-  'ORCA_E2E_HOME_DIR',
-  'ORCA_E2E_USER_DATA_DIR'
+  'DOLPHIN_CODEX_HOME',
+  'DOLPHIN_E2E_HOME_DIR',
+  'DOLPHIN_E2E_USER_DATA_DIR'
 ])
 
 /**
- * Launch the installed Orca.exe. Pointing userDataDir at a harness-owned temp
+ * Launch the installed Dolphin.exe. Pointing userDataDir at a harness-owned temp
  * dir isolates this run's daemon (its socket/token path becomes unique), so
- * daemon lookups never collide with other Orca installs/daemons on the box.
- * Pass `seedProfile` (a buildFreshProfile object) to write orca-data.json
+ * daemon lookups never collide with other Dolphin installs/daemons on the box.
+ * Pass `seedProfile` (a buildFreshProfile object) to write dolphin-data.json
  * BEFORE this launch — do so only on the FIRST launch, never before the
  * post-update relaunch, or the persisted session under test is destroyed.
  */
@@ -57,12 +57,12 @@ export async function launchInstalledApp({
   const {
     ELECTRON_RUN_AS_NODE: _drop,
     CODEX_HOME: _codexHome,
-    ORCA_CODEX_HOME: _orcaCodexHome,
+    DOLPHIN_CODEX_HOME: _dolphinCodexHome,
     ...cleanEnv
   } = process.env
   void _drop
   void _codexHome
-  void _orcaCodexHome
+  void _dolphinCodexHome
   const restrictedExtraEnvKey = Object.keys(extraEnv).find((key) =>
     RESTRICTED_E2E_ENV_KEYS.has(key.toUpperCase())
   )
@@ -86,15 +86,15 @@ export async function launchInstalledApp({
     args: [],
     env: {
       ...cleanEnv,
-      // Packaged main honors ORCA_E2E_USER_DATA_DIR to relocate userData
+      // Packaged main honors DOLPHIN_E2E_USER_DATA_DIR to relocate userData
       // (logs/daemon/terminal-history) under a controlled dir.
       ...extraEnv,
-      ORCA_E2E_USER_DATA_DIR: userDataDir,
+      DOLPHIN_E2E_USER_DATA_DIR: userDataDir,
       // Why: the driven app stays off the foreground so a local run doesn't steal focus.
-      ORCA_BACKGROUND_LAUNCH: '1',
+      DOLPHIN_BACKGROUND_LAUNCH: '1',
       HOME: isolatedHome,
       USERPROFILE: isolatedHome,
-      ORCA_E2E_HOME_DIR: isolatedHome
+      DOLPHIN_E2E_HOME_DIR: isolatedHome
     }
   })
   // If firstWindow times out (the launched main never shows a window), the
@@ -297,7 +297,7 @@ async function createWorkspaceFromSeededRepo(page, timeoutMs) {
 
 const OVERLAY_DISMISS_LABELS = ['Got it', 'Dismiss setup scripts', 'Dismiss tip', 'Dismiss update']
 const FEATURE_TIP_DIALOG_TITLES = [
-  'Let agents drive Orca with the Orca CLI',
+  'Let agents drive Dolphin with the Dolphin CLI',
   'Search every agent session'
 ]
 

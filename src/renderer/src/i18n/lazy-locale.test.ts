@@ -53,20 +53,20 @@ describe('renderer i18n lazy locale loading', () => {
   })
 
   it('loads an isolated catalog contributed by an enabled plugin', async () => {
-    const id = 'plugin:orca-samples.portuguese/pt-BR' as const
+    const id = 'plugin:dolphin-samples.portuguese/pt-BR' as const
     setRendererPluginLanguagePacks([
       {
         id,
         resourceLanguage: pluginLanguageResourceId(id),
-        pluginKey: 'orca-samples.portuguese',
+        pluginKey: 'dolphin-samples.portuguese',
         locale: 'pt-BR',
-        catalog: { menu: { file: 'Arquivo Orca' } }
+        catalog: { menu: { file: 'Arquivo Dolphin' } }
       }
     ])
 
     await setRendererUiLanguage(id)
     expect(i18n.language).toBe(pluginLanguageResourceId(id))
-    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('Arquivo Orca')
+    expect(i18n.t('menu.file', { defaultValue: 'File' })).toBe('Arquivo Dolphin')
 
     setRendererPluginLanguagePacks([])
     await setRendererUiLanguage(id)

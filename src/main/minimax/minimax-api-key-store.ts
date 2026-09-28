@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { hardenExistingSecureFile, writeSecureFile } from '../../shared/secure-file'
 
 const MINIMAX_API_KEY_FILE = 'minimax-api-key.enc'
-const API_KEY_ENVELOPE_PREFIX = 'orca-minimax-api-key:v1:'
+const API_KEY_ENVELOPE_PREFIX = 'dolphin-minimax-api-key:v1:'
 let cachedMiniMaxApiKey: string | null = null
 let warnedMiniMaxApiKeyStatusHardenFailure = false
 
@@ -15,12 +15,12 @@ type MiniMaxApiKeyEnvelope = {
   payload: Buffer
 }
 
-function getOrcaDir(): string {
+function getDolphinDir(): string {
   return join(homedir(), FORK_HOME_STATE_DIR_NAME)
 }
 
 function getMiniMaxApiKeyPath(): string {
-  return join(getOrcaDir(), MINIMAX_API_KEY_FILE)
+  return join(getDolphinDir(), MINIMAX_API_KEY_FILE)
 }
 
 function encodeApiKeyEnvelope(kind: MiniMaxApiKeyEnvelope['kind'], payload: Buffer): string {

@@ -5,8 +5,8 @@ import { join, resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import * as processRunner from '../../shared/child-process/run-process'
 import { runProcess, spawnProcess } from '../../shared/child-process/run-process'
-import { ORCAD_BUN_VERSION } from '../../shared/orcad-bun-runtime'
-import { orcadBunRuntimeFilename } from '../../shared/orcad-artifacts'
+import { DOLPHIND_BUN_VERSION } from '../../shared/dolphind-bun-runtime'
+import { dolphindBunRuntimeFilename } from '../../shared/dolphind-artifacts'
 import SyncDatabase from '../sqlite/sync-database'
 import { appendTurns, writeOpenCodeSqliteDatabase } from './session-scanner-opencode-sqlite-fixture'
 import { createOpenCodeSqliteProcessClient } from './session-scanner-opencode-sqlite-process-client'
@@ -17,8 +17,9 @@ import {
 import type { AiVaultScanIssue } from '../../shared/ai-vault-types'
 
 const bun =
-  process.env.BUN_EXECUTABLE ?? resolve('out/orcad', orcadBunRuntimeFilename(process.platform))
-const directory = mkdtempSync(join(tmpdir(), 'orca-opencode-process-'))
+  process.env.BUN_EXECUTABLE ??
+  resolve('out/dolphind', dolphindBunRuntimeFilename(process.platform))
+const directory = mkdtempSync(join(tmpdir(), 'dolphin-opencode-process-'))
 const entry = join(directory, 'reader.cjs')
 const dbPath = join(directory, 'opencode.db')
 const oversizedPath = join(directory, 'oversized.db')
@@ -65,7 +66,7 @@ for (const [runtime, executable] of [
     it('uses the deployed runtime and reads live WAL, full prompts and captures in one persistent child', async () => {
       if (runtime === 'Bun') {
         expect((await runProcess({ program: executable, args: ['--version'] })).stdout.trim()).toBe(
-          ORCAD_BUN_VERSION
+          DOLPHIND_BUN_VERSION
         )
       }
       expect(existsSync(`${dbPath}-wal`)).toBe(true)

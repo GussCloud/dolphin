@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChevronLeft, Globe } from 'lucide-react-native'
 import Svg, { Path } from 'react-native-svg'
-import { OrcaLogo } from '../components/OrcaLogo'
+import { DolphinLogo } from '../components/DolphinLogo'
 import { colors, spacing, typography } from '../theme/mobile-theme'
 
 function GithubIcon({ size = 16, color = colors.textSecondary }) {
@@ -53,8 +53,8 @@ export default function AboutScreen({
       </View>
 
       <View style={styles.brand}>
-        <OrcaLogo size={28} />
-        <Text style={styles.brandName}>Orca</Text>
+        <DolphinLogo size={28} />
+        <Text style={styles.brandName}>Dolphin</Text>
         <Text style={styles.brandSub}>Open-source agent IDE for 100x builders</Text>
       </View>
 
@@ -62,31 +62,31 @@ export default function AboutScreen({
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Orca website"
-          onPress={() => openLink('https://onOrca.dev')}
+          accessibilityLabel="Dolphin website"
+          onPress={() => openLink('https://dolphin.guss.dev.br')}
         >
           <Globe size={16} color={colors.textSecondary} />
-          <Text style={styles.rowValue}>onOrca.dev</Text>
+          <Text style={styles.rowValue}>dolphin.guss.dev.br</Text>
         </Pressable>
         <View style={styles.separator} />
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Orca source code"
-          onPress={() => openLink('https://github.com/stablyai/orca')}
+          accessibilityLabel="Dolphin source code"
+          onPress={() => openLink('https://github.com/GussCloud/dolphin')}
         >
           <GithubIcon />
-          <Text style={styles.rowValue}>stablyai/orca</Text>
+          <Text style={styles.rowValue}>GussCloud/dolphin</Text>
         </Pressable>
         <View style={styles.separator} />
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Orca on X"
-          onPress={() => openLink('https://x.com/orca_build')}
+          accessibilityLabel="Dolphin on X"
+          onPress={() => openLink('https://x.com/dolphin_build')}
         >
           <XIcon />
-          <Text style={styles.rowValue}>@orca_build</Text>
+          <Text style={styles.rowValue}>@dolphin_build</Text>
         </Pressable>
       </View>
 

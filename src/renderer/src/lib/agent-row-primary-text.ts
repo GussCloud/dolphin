@@ -1,24 +1,24 @@
 import type { AgentStatusEntry } from '../../../shared/agent-status-types'
 import {
-  findOrcaDispatchPreambleStart,
-  findOrcaDispatchTaskMarkerIndex,
-  ORCA_DISPATCH_STATUS_TASK_MARKER
-} from '../../../shared/orca-dispatch-status-prompt'
+  findDolphinDispatchPreambleStart,
+  findDolphinDispatchTaskMarkerIndex,
+  DOLPHIN_DISPATCH_STATUS_TASK_MARKER
+} from '../../../shared/dolphin-dispatch-status-prompt'
 
-const ORCA_DISPATCH_TASK_MARKER = ORCA_DISPATCH_STATUS_TASK_MARKER
-const ORCA_DISPATCH_TASK_ID_MARKER = 'Your task ID is:'
+const DOLPHIN_DISPATCH_TASK_MARKER = DOLPHIN_DISPATCH_STATUS_TASK_MARKER
+const DOLPHIN_DISPATCH_TASK_ID_MARKER = 'Your task ID is:'
 // Why: match deriveGeneratedTabTitle's scan budget — previews only need the
 // first non-empty task line, not the rest of a paste-sized worker prompt.
-const ORCA_DISPATCH_TASK_PREVIEW_SCAN_LIMIT = 512
+const DOLPHIN_DISPATCH_TASK_PREVIEW_SCAN_LIMIT = 512
 // Why: task id lives near the top of the preamble; keep that scan tight.
-const ORCA_DISPATCH_TASK_ID_SCAN_LIMIT = 1024
+const DOLPHIN_DISPATCH_TASK_ID_SCAN_LIMIT = 1024
 // Why: === TASK === sits after CLI instructions (a few KB). Cap the search so a
 // malformed multi-MB prompt without a marker never full-scans the task body.
-const ORCA_DISPATCH_TASK_MARKER_SCAN_LIMIT = 32_768
+const DOLPHIN_DISPATCH_TASK_MARKER_SCAN_LIMIT = 32_768
 
-/** True when the live prompt is still an Orca dispatch turn (not sticky metadata alone). */
-export function isOrcaDispatchPrompt(prompt: string): boolean {
-  return findOrcaDispatchPreambleStart(prompt) !== -1
+/** True when the live prompt is still a Dolphin dispatch turn (not sticky metadata alone). */
+export function isDolphinDispatchPrompt(prompt: string): boolean {
+  return findDolphinDispatchPreambleStart(prompt) !== -1
 }
 
 /**
@@ -30,14 +30,14 @@ export function isOrcaDispatchPrompt(prompt: string): boolean {
 export function orchestrationLabelsMatchLiveDispatch(
   entry: Pick<AgentStatusEntry, 'orchestration' | 'prompt'>
 ): boolean {
-  if (!isOrcaDispatchPrompt(entry.prompt)) {
+  if (!isDolphinDispatchPrompt(entry.prompt)) {
     return false
   }
   const orchestrationTaskId = entry.orchestration?.taskId?.trim()
   if (!orchestrationTaskId) {
     return false
   }
-  const liveTaskId = getOrcaDispatchTaskId(entry.prompt)
+  const liveTaskId = getDolphinDispatchTaskId(entry.prompt)
   if (!liveTaskId) {
     return true
   }
@@ -50,16 +50,16 @@ export function getAgentRowPrimaryText(
   // Why: prefer richer orchestration labels when they match the live dispatch,
   // then fall back to the TASK-body preview. Never surface the lifecycle
   // preamble itself — status prompts are single-line ~200-char folds, and the
-  // first characters are boilerplate ("You are working inside Orca…").
+  // first characters are boilerplate ("You are working inside Dolphin…").
   if (orchestrationLabelsMatchLiveDispatch(entry)) {
     return (
       entry.orchestration?.displayName?.trim() ||
       entry.orchestration?.taskTitle?.trim() ||
-      getOrcaDispatchTaskPreview(entry.prompt)
+      getDolphinDispatchTaskPreview(entry.prompt)
     )
   }
-  if (isOrcaDispatchPrompt(entry.prompt)) {
-    return getOrcaDispatchTaskPreview(entry.prompt)
+  if (isDolphinDispatchPrompt(entry.prompt)) {
+    return getDolphinDispatchTaskPreview(entry.prompt)
   }
   return entry.prompt.trim()
 }
@@ -69,19 +69,19 @@ export function getAgentRowGeneratedTitleText(
 ): string {
   // Why: only prefer orchestration/task labels while the live prompt is still
   // the same dispatch turn — sticky orchestration must not rename new work.
-  if (isOrcaDispatchPrompt(entry.prompt)) {
+  if (isDolphinDispatchPrompt(entry.prompt)) {
     return getAgentRowPrimaryText(entry)
   }
   return entry.prompt
 }
 
-export function getOrcaDispatchTaskId(prompt: string): string | null {
-  const start = findOrcaDispatchPreambleStart(prompt)
+export function getDolphinDispatchTaskId(prompt: string): string | null {
+  const start = findDolphinDispatchPreambleStart(prompt)
   if (start === -1) {
     return null
   }
-  const scan = prompt.slice(start, start + ORCA_DISPATCH_TASK_ID_SCAN_LIMIT)
-  const markerIndex = scan.indexOf(ORCA_DISPATCH_TASK_ID_MARKER)
+  const scan = prompt.slice(start, start + DOLPHIN_DISPATCH_TASK_ID_SCAN_LIMIT)
+  const markerIndex = scan.indexOf(DOLPHIN_DISPATCH_TASK_ID_MARKER)
   if (markerIndex === -1) {
     return null
   }
@@ -89,36 +89,39 @@ export function getOrcaDispatchTaskId(prompt: string): string | null {
   // whitespace-free token, and by the time this parses a live status prompt the
   // trailing newline has been folded to a space by normalizeSingleLinePreview —
   // splitting on \n alone would return the id plus the rest of the preamble.
-  const afterMarker = scan.slice(markerIndex + ORCA_DISPATCH_TASK_ID_MARKER.length).trimStart()
+  const afterMarker = scan.slice(markerIndex + DOLPHIN_DISPATCH_TASK_ID_MARKER.length).trimStart()
   const idEnd = afterMarker.search(/\s/)
   const idLine = idEnd === -1 ? afterMarker : afterMarker.slice(0, idEnd)
   return idLine || null
 }
 
-function getOrcaDispatchTaskPreview(prompt: string): string {
+function getDolphinDispatchTaskPreview(prompt: string): string {
   // Why: sidebar rows call this during render; never full-trim/split paste-sized
   // dispatch prompts — only scan bounded windows for the marker and first line.
   // Production status prompts are already folded to a single line (newlines →
   // spaces) and capped ~200 chars by normalizePromptField, which preserves
   // `=== TASK ===` + body. Prefer the first non-empty line so multi-line raw
   // preambles still work; a single-line fold is one "line" after the marker.
-  const start = findOrcaDispatchPreambleStart(prompt)
+  const start = findDolphinDispatchPreambleStart(prompt)
   if (start === -1) {
     return ''
   }
   const scan = prompt.slice(
     start,
-    start + ORCA_DISPATCH_TASK_MARKER_SCAN_LIMIT + ORCA_DISPATCH_TASK_PREVIEW_SCAN_LIMIT
+    start + DOLPHIN_DISPATCH_TASK_MARKER_SCAN_LIMIT + DOLPHIN_DISPATCH_TASK_PREVIEW_SCAN_LIMIT
   )
   // Why: share the normalizer's standalone-line marker rule. A naive indexOf
   // would treat base-drift commit subjects that mention `=== TASK ===` as the
   // real separator when helpers are called with raw multi-line preambles.
-  const taskMarkerIndex = findOrcaDispatchTaskMarkerIndex(scan)
+  const taskMarkerIndex = findDolphinDispatchTaskMarkerIndex(scan)
   if (taskMarkerIndex === -1) {
     return ''
   }
-  const taskBodyStart = taskMarkerIndex + ORCA_DISPATCH_TASK_MARKER.length
-  const taskBody = scan.slice(taskBodyStart, taskBodyStart + ORCA_DISPATCH_TASK_PREVIEW_SCAN_LIMIT)
+  const taskBodyStart = taskMarkerIndex + DOLPHIN_DISPATCH_TASK_MARKER.length
+  const taskBody = scan.slice(
+    taskBodyStart,
+    taskBodyStart + DOLPHIN_DISPATCH_TASK_PREVIEW_SCAN_LIMIT
+  )
   for (const line of taskBody.split(/\r?\n/)) {
     const preview = line.trim().replace(/\s+/g, ' ')
     if (preview) {

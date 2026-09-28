@@ -5,14 +5,14 @@ import { toast } from 'sonner'
 import type { CliInstallStatus } from '../../../../shared/cli-install-types'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import {
-  ORCA_CLI_SKILL_INSTALL_COMMAND,
-  ORCA_CLI_SKILL_NAME,
-  ORCA_CLI_SKILL_UPDATE_COMMAND
+  DOLPHIN_CLI_SKILL_INSTALL_COMMAND,
+  DOLPHIN_CLI_SKILL_NAME,
+  DOLPHIN_CLI_SKILL_UPDATE_COMMAND
 } from '@/lib/agent-feature-install-commands'
 import {
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE,
-  ensureOrcaCliAvailableForAgentSkillTerminal,
-  isOrcaCliAvailableOnPath
+  ensureDolphinCliAvailableForAgentSkillTerminal,
+  isDolphinCliAvailableOnPath
 } from '@/lib/agent-skill-cli-prerequisite'
 import {
   GLOBAL_AGENT_SKILL_SOURCE_KINDS,
@@ -99,16 +99,16 @@ export function CliSection({
     loading: cliSkillLoading,
     error: cliSkillError,
     refresh: refreshCliSkill
-  } = useInstalledAgentSkill(ORCA_CLI_SKILL_NAME, {
+  } = useInstalledAgentSkill(DOLPHIN_CLI_SKILL_NAME, {
     discoveryTarget: cliSkillDiscoveryTarget,
     sourceKinds: GLOBAL_AGENT_SKILL_SOURCE_KINDS
   })
   const cliSkillInstallCommand = buildSkillCommandForRuntime(
-    ORCA_CLI_SKILL_INSTALL_COMMAND,
+    DOLPHIN_CLI_SKILL_INSTALL_COMMAND,
     agentRuntime
   )
   const cliSkillUpdateCommand = buildSkillCommandForRuntime(
-    ORCA_CLI_SKILL_UPDATE_COMMAND,
+    DOLPHIN_CLI_SKILL_UPDATE_COMMAND,
     agentRuntime
   )
   const cliSkillTerminalShellOverride = getAgentSkillTerminalShellOverride(
@@ -353,11 +353,11 @@ export function CliSection({
               error={cliSkillError}
               preInstallNotice={AGENT_SKILL_CLI_PREREQUISITE_NOTICE}
               getPrerequisiteStatus={getCliSkillPrerequisiteStatus}
-              isPrerequisiteAvailable={isOrcaCliAvailableOnPath}
+              isPrerequisiteAvailable={isDolphinCliAvailableOnPath}
               onBeforeOpenTerminal={async () => {
                 await (agentRuntime.runtime === 'wsl'
                   ? ensureWslCliAvailableForAgentSkillTerminal(agentRuntime)
-                  : ensureOrcaCliAvailableForAgentSkillTerminal({
+                  : ensureDolphinCliAvailableForAgentSkillTerminal({
                       onStatusChange: handleStatusChange
                     }))
               }}

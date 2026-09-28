@@ -12,13 +12,13 @@ sharing unsafe.
 
 ```text
 # Current workspace; setup is not rerun.
-ORCA orchestration worker-start --task <task_id> --worktree current --agent codex --json
+DOLPHIN orchestration worker-start --task <task_id> --worktree current --agent codex --json
 
 # Stacked child worktree.
-ORCA orchestration worker-start --task <task_id> --worktree new-child --name <name> --agent codex --setup run --json
+DOLPHIN orchestration worker-start --task <task_id> --worktree new-child --name <name> --agent codex --setup run --json
 
 # Independent top-level worktree.
-ORCA orchestration worker-start --task <task_id> --worktree new-top-level --name <name> --agent codex --setup run --json
+DOLPHIN orchestration worker-start --task <task_id> --worktree new-top-level --name <name> --agent codex --setup run --json
 ```
 
 Current and exact existing workspaces create a fresh terminal unless
@@ -29,7 +29,7 @@ Register a folder workspace through project setup. `repo add --path <dir>`
 requires a valid Git repository and rejects a plain directory:
 
 ```text
-ORCA project setup-existing-folder --project <project_id> --host <host_id> --path <abs_path> --kind folder --json
+DOLPHIN project setup-existing-folder --project <project_id> --host <host_id> --path <abs_path> --kind folder --json
 ```
 
 Then place work on the returned workspace with an exact selector. A worktree
@@ -49,7 +49,7 @@ The Run and Tasks remain authoritative on the current server. `--on` selects
 only the worker's execution server and appears only on `worker-start`:
 
 ```text
-ORCA orchestration worker-start --task <task_id> --on <environment> --worktree new-top-level --repo <exact_remote_repo_selector> --name <name> --agent codex --setup run --json
+DOLPHIN orchestration worker-start --task <task_id> --on <environment> --worktree new-top-level --repo <exact_remote_repo_selector> --name <name> --agent codex --setup run --json
 ```
 
 Remote `current` and `new-child` are invalid because they are ambiguous across
@@ -59,10 +59,10 @@ stop, and cleanup by Dispatch ID; never repeat `--on` or substitute a remote
 terminal handle.
 
 ```text
-ORCA orchestration worker-show --dispatch <dispatch_id> --json
-ORCA orchestration worker-read --dispatch <dispatch_id> --limit 50 --json
-ORCA orchestration send --to dispatch:<dispatch_id> --subject "Follow-up" --body "<guidance>" --json
-ORCA orchestration worker-list --run <run_id> --include-remote --json
+DOLPHIN orchestration worker-show --dispatch <dispatch_id> --json
+DOLPHIN orchestration worker-read --dispatch <dispatch_id> --limit 50 --json
+DOLPHIN orchestration send --to dispatch:<dispatch_id> --subject "Follow-up" --body "<guidance>" --json
+DOLPHIN orchestration worker-list --run <run_id> --include-remote --json
 ```
 
 `worker-list` reads local fleet state only; enumerate remote workers with

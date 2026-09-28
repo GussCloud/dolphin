@@ -75,7 +75,7 @@ function adapter(): StructuredAgentSessionAdapter {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-claude-options-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-claude-options-'))
   resetHostTestOperationIds()
   activeModel = DEFAULT_MODEL
   optionWritable = Promise.resolve()

@@ -4,7 +4,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { OrcaRuntimeService } from '../../orca-runtime'
+import { DolphinRuntimeService } from '../../dolphin-runtime'
 import { OrchestrationDb } from '../../orchestration/db'
 import { ORCHESTRATION_METHODS } from './orchestration'
 
@@ -47,14 +47,14 @@ const STRUCTURED_DEFAULT = {
 describe('worker-start honours the settings default', () => {
   const coordinatorPaneKey = 'tab_coord:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
   let db: OrchestrationDb
-  let runtime: OrcaRuntimeService
+  let runtime: DolphinRuntimeService
   let runId: string
 
   beforeEach(() => {
     createStructuredWorkerSessionForWorktree.mockClear()
     createExistingWorktreeWorkerTerminal.mockClear()
     db = new OrchestrationDb(':memory:')
-    runtime = new OrcaRuntimeService()
+    runtime = new DolphinRuntimeService()
     runtime.setOrchestrationDb(db)
     runId = db.createRun({
       objective: 'Settings-driven worker mode',

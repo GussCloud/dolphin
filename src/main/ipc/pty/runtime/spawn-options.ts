@@ -69,7 +69,7 @@ export async function buildRuntimePtySpawnOptions(
     args.envToDelete ?? [],
     // Persistent daemons and older SSH hosts must not resurrect a parent Pi's ownership.
     PI_PROCESS_OWNER_ENV_KEYS,
-    // Why: disable old hosts without removing ORCA_REAL_* while their Windows shim remains on PATH.
+    // Why: disable old hosts without removing DOLPHIN_REAL_* while their Windows shim remains on PATH.
     ctx.isDaemonHostSpawn || args.connectionId ? LEGACY_TERMINAL_SHIM_REMOTE_ENV_KEYS : [],
     ctx.isDaemonHostSpawn ? getInheritedAgentHookEnvKeysToDelete(ctx.env) : [],
     // Why: ungated, unlike the agent-hook keys — the local provider and the relay host also spread their own process.env into every spawn.
@@ -80,11 +80,11 @@ export async function buildRuntimePtySpawnOptions(
       ctx.spawnOptions.envToDelete,
       CODEX_HOME_ENV_KEYS
     )
-  } else if (ctx.stripInheritedOrcaCodexHome) {
+  } else if (ctx.stripInheritedDolphinCodexHome) {
     // Why: the daemon owns a persistent inherited environment that may
-    // differ from main. ORCA_CODEX_HOME asks it to compare/delete the pair.
+    // differ from main. DOLPHIN_CODEX_HOME asks it to compare/delete the pair.
     ctx.spawnOptions.envToDelete = mergePtyEnvDeletions(ctx.spawnOptions.envToDelete, [
-      'ORCA_CODEX_HOME'
+      'DOLPHIN_CODEX_HOME'
     ])
   }
   if (ctx.codexResumeHomeSelected) {

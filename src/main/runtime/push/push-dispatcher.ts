@@ -2,7 +2,7 @@ import { FORK_IDENTITY } from '../../../shared/fork-identity'
 import { reserveNotificationCooldown } from '../../../shared/notification-burst-cooldown'
 // Why: the out-of-band leg of the mobile notification fan-out. Every event that
 // already went to connected sockets is offered to the push gateway so a phone
-// with Orca closed still hears about it. Fire-and-forget by construction: the
+// with Dolphin closed still hears about it. Fire-and-forget by construction: the
 // socket fan-out must never wait on, or fail because of, a push.
 import {
   MOBILE_PUSH_SOURCES,

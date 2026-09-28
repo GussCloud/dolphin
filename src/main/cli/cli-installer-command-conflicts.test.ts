@@ -30,13 +30,13 @@ describe('CliInstaller', () => {
     vi.restoreAllMocks()
   })
 
-  // Why: this test creates a Unix symlink to /tmp/not-orca, which only applies on macOS/Linux.
+  // Why: this test creates a Unix symlink to /tmp/not-dolphin, which only applies on macOS/Linux.
   it.skipIf(process.platform === 'win32')(
     'refuses to replace an unknown symlink at the command path',
     async () => {
       const fixture = await makeFixture()
       const installPath = join(fixture.root, 'bin', 'dolphin')
-      const existingTarget = '/tmp/not-orca'
+      const existingTarget = '/tmp/not-dolphin'
       await mkdir(join(fixture.root, 'bin'), { recursive: true })
       await symlink(existingTarget, installPath)
 
@@ -44,7 +44,7 @@ describe('CliInstaller', () => {
         platform: 'darwin',
         isPackaged: false,
         userDataPath: fixture.userDataPath,
-        execPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+        execPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
         appPath: fixture.appPath,
         commandPathOverride: installPath
       })
@@ -53,19 +53,19 @@ describe('CliInstaller', () => {
         state: 'conflict',
         supported: true
       })
-      await expect(installer.install()).rejects.toThrow('Refusing to replace non-Orca command')
+      await expect(installer.install()).rejects.toThrow('Refusing to replace non-Dolphin command')
       await expect(readlink(installPath)).resolves.toBe(existingTarget)
     }
   )
 
-  // Why: packaged app moves can leave a symlink to an older Orca-owned launcher;
+  // Why: packaged app moves can leave a symlink to an older Dolphin-owned launcher;
   // those are safe to refresh, unlike arbitrary user symlinks.
   it.skipIf(process.platform === 'win32')(
-    'replaces stale packaged Orca launcher symlinks',
+    'replaces stale packaged Dolphin launcher symlinks',
     async () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, 'bin')
-      const installPath = join(commandDir, 'orca')
+      const installPath = join(commandDir, 'dolphin')
       const resourcesPath = join(fixture.root, 'Current.app', 'Contents', 'Resources')
       const launcherPath = join(resourcesPath, 'bin', 'dolphin')
       const oldLauncherPath = join(
@@ -98,7 +98,7 @@ describe('CliInstaller', () => {
     }
   )
 
-  // Why: old dev/package experiments wrote a generated Orca launcher file
+  // Why: old dev/package experiments wrote a generated Dolphin launcher file
   // directly into /usr/local/bin/dolphin. That broke profiling because Settings
   // treated the regular file as a hard conflict and would not self-heal it.
   it.skipIf(process.platform === 'win32')(
@@ -106,7 +106,7 @@ describe('CliInstaller', () => {
     async () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, 'bin')
-      const installPath = join(commandDir, 'orca')
+      const installPath = join(commandDir, 'dolphin')
       const resourcesPath = join(fixture.root, 'Current.app', 'Contents', 'Resources')
       const launcherPath = join(resourcesPath, 'bin', 'dolphin')
       const oldCliPath = join(fixture.root, 'OldWorktree', 'out', 'cli', 'index.js')
@@ -120,8 +120,8 @@ describe('CliInstaller', () => {
           'set -euo pipefail',
           "ELECTRON='/tmp/Old.app/Contents/MacOS/Electron'",
           `CLI='${oldCliPath}'`,
-          'export ORCA_NODE_OPTIONS="${NODE_OPTIONS-}"',
-          'export ORCA_NODE_REPL_EXTERNAL_MODULE="${NODE_REPL_EXTERNAL_MODULE-}"',
+          'export DOLPHIN_NODE_OPTIONS="${NODE_OPTIONS-}"',
+          'export DOLPHIN_NODE_REPL_EXTERNAL_MODULE="${NODE_REPL_EXTERNAL_MODULE-}"',
           'unset NODE_OPTIONS',
           'unset NODE_REPL_EXTERNAL_MODULE',
           'ELECTRON_RUN_AS_NODE=1 "$ELECTRON" "$CLI" "$@"',
@@ -152,12 +152,12 @@ describe('CliInstaller', () => {
     async () => {
       const fixture = await makeFixture()
       const commandDir = join(fixture.root, 'bin')
-      const installPath = join(commandDir, 'orca')
+      const installPath = join(commandDir, 'dolphin')
       const resourcesPath = await createPackagedMacLauncher(fixture.root)
       await mkdir(commandDir, { recursive: true })
       await writeFile(
         installPath,
-        '#!/usr/bin/env bash\nELECTRON_RUN_AS_NODE=1 /tmp/not-orca "$@"\n',
+        '#!/usr/bin/env bash\nELECTRON_RUN_AS_NODE=1 /tmp/not-dolphin "$@"\n',
         'utf8'
       )
 
@@ -173,22 +173,22 @@ describe('CliInstaller', () => {
         state: 'conflict',
         currentTarget: null
       })
-      await expect(installer.install()).rejects.toThrow('Refusing to replace non-Orca command')
-      await expect(readFile(installPath, 'utf8')).resolves.toContain('/tmp/not-orca')
+      await expect(installer.install()).rejects.toThrow('Refusing to replace non-Dolphin command')
+      await expect(readFile(installPath, 'utf8')).resolves.toContain('/tmp/not-dolphin')
     }
   )
 
   // Why: a dev build can temporarily own the public command on developer
-  // machines; packaged Orca should treat that as stale, not a hard conflict.
+  // machines; packaged Dolphin should treat that as stale, not a hard conflict.
   it.skipIf(process.platform === 'win32')(
     'replaces stale sibling dev launcher symlinks from packaged installs',
     async () => {
       const fixture = await makeFixture()
-      for (const devLauncherName of ['orca', 'orca-dev']) {
+      for (const devLauncherName of ['dolphin', 'dolphin-dev']) {
         const caseRoot = join(fixture.root, devLauncherName)
         const commandDir = join(caseRoot, 'bin')
-        const installPath = join(commandDir, 'orca')
-        const userDataPath = join(caseRoot, 'orca')
+        const installPath = join(commandDir, 'dolphin')
+        const userDataPath = join(caseRoot, 'dolphin')
         const resourcesPath = join(caseRoot, 'Current.app', 'Contents', 'Resources')
         const launcherPath = join(resourcesPath, 'bin', 'dolphin')
         const devLauncherPath = join(`${userDataPath}-dev`, 'cli', 'bin', devLauncherName)

@@ -1,4 +1,4 @@
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 
 type RightSidebarHeaderGeometry = {
@@ -12,15 +12,17 @@ type RightSidebarHeaderGeometry = {
 }
 
 test.describe('Right sidebar native titlebar spacing', () => {
-  test('top activity buttons follow the native desktop chrome layout', async ({ orcaPage }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
+  test('top activity buttons follow the native desktop chrome layout', async ({ dolphinPage }) => {
+    await waitForSessionReady(dolphinPage)
+    await waitForActiveWorktree(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
 
     const hasDesktopWindowChrome = process.platform !== 'darwin'
-    expect(await orcaPage.evaluate(() => window.api.platform.get().platform)).toBe(process.platform)
+    expect(await dolphinPage.evaluate(() => window.api.platform.get().platform)).toBe(
+      process.platform
+    )
 
-    await orcaPage.evaluate(() => {
+    await dolphinPage.evaluate(() => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available - is the app in dev mode?')
@@ -34,7 +36,7 @@ test.describe('Right sidebar native titlebar spacing', () => {
     })
 
     const measureHeader = async (): Promise<RightSidebarHeaderGeometry | null> =>
-      orcaPage.evaluate(() => {
+      dolphinPage.evaluate(() => {
         const header = document.querySelector<HTMLElement>('.right-sidebar-header-inset')
         const strip = document.querySelector<HTMLElement>('.right-sidebar-activity-strip')
         const closeButton = header?.querySelector<HTMLButtonElement>(

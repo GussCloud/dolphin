@@ -5,21 +5,21 @@ import { join } from 'node:path'
 import { runInNewContext } from 'node:vm'
 import { transform } from 'esbuild'
 import { getPiAgentStatusExtensionSource } from '../../src/main/pi/agent-status-extension-source'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { readHookEndpoint } from './helpers/agent-hook-endpoint'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { waitForActivePaneHookDescriptor, waitForActiveTerminalManager } from './helpers/terminal'
 
 test('OMP completion retry clears the rendered working indicator', async ({
-  orcaPage,
+  dolphinPage,
   electronApp
 }, testInfo) => {
-  await waitForSessionReady(orcaPage)
-  await waitForActiveWorktree(orcaPage)
-  await ensureTerminalVisible(orcaPage)
-  await waitForActiveTerminalManager(orcaPage, 30_000)
+  await waitForSessionReady(dolphinPage)
+  await waitForActiveWorktree(dolphinPage)
+  await ensureTerminalVisible(dolphinPage)
+  await waitForActiveTerminalManager(dolphinPage, 30_000)
   const endpoint = await readHookEndpoint(electronApp)
-  const { paneKey, worktreeId } = await waitForActivePaneHookDescriptor(orcaPage)
+  const { paneKey, worktreeId } = await waitForActivePaneHookDescriptor(dolphinPage)
   let completions = 0
   const proxy = createServer(async (request, response) => {
     let body = ''
@@ -32,7 +32,7 @@ test('OMP completion retry clears the rendered working indicator', async ({
     }
     const forwarded = await fetch(`http://127.0.0.1:${endpoint.port}/hook/omp`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Orca-Agent-Hook-Token': endpoint.token },
+      headers: { 'Content-Type': 'application/json', 'X-Dolphin-Agent-Hook-Token': endpoint.token },
       body
     })
     response.writeHead(forwarded.status).end()
@@ -62,13 +62,13 @@ test('OMP completion retry clears the rendered working indicator', async ({
         argv: [],
         title: 'omp',
         env: {
-          ORCA_PANE_KEY: paneKey,
-          ORCA_TAB_ID: paneKey.split(':')[0],
-          ORCA_WORKTREE_ID: worktreeId,
-          ORCA_AGENT_HOOK_PORT: String(address.port),
-          ORCA_AGENT_HOOK_TOKEN: endpoint.token,
-          ORCA_AGENT_HOOK_ENV: endpoint.env,
-          ORCA_AGENT_HOOK_VERSION: endpoint.version
+          DOLPHIN_PANE_KEY: paneKey,
+          DOLPHIN_TAB_ID: paneKey.split(':')[0],
+          DOLPHIN_WORKTREE_ID: worktreeId,
+          DOLPHIN_AGENT_HOOK_PORT: String(address.port),
+          DOLPHIN_AGENT_HOOK_TOKEN: endpoint.token,
+          DOLPHIN_AGENT_HOOK_ENV: endpoint.env,
+          DOLPHIN_AGENT_HOOK_VERSION: endpoint.version
         }
       },
       fetch,
@@ -80,26 +80,26 @@ test('OMP completion retry clears the rendered working indicator', async ({
     })
     expect(module.exports.default).toBeDefined()
     module.exports.default?.({ on: (name, fn) => handlers.set(name, fn) })
-    const working = orcaPage.locator('[aria-label="Working"]')
+    const working = dolphinPage.locator('[aria-label="Working"]')
     handlers.get('before_agent_start')?.(
       { prompt: 'OMP completion recovery' },
       { isIdle: () => false }
     )
     handlers.get('agent_start')?.({}, { isIdle: () => false })
     await expect(working.first()).toBeVisible()
-    await orcaPage.screenshot({ path: testInfo.outputPath('before-working.png') })
+    await dolphinPage.screenshot({ path: testInfo.outputPath('before-working.png') })
     handlers.get('agent_end')?.({ willContinue: false }, { isIdle: () => false })
     await expect.poll(() => completions).toBe(2)
     await expect(working).toHaveCount(0)
     await expect
       .poll(() =>
-        orcaPage.evaluate(
+        dolphinPage.evaluate(
           (key) => window.__store?.getState().agentStatusByPaneKey[key]?.state,
           paneKey
         )
       )
       .toBe('done')
-    await orcaPage.screenshot({ path: testInfo.outputPath('after-completed.png') })
+    await dolphinPage.screenshot({ path: testInfo.outputPath('after-completed.png') })
   } finally {
     proxy.closeAllConnections()
     proxy.close()

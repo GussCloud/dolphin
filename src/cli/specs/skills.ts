@@ -58,7 +58,7 @@ export const SKILL_COMMAND_SPECS: CommandSpec[] = [
       'Use --json for a deterministic object containing canonical topic metadata and content.'
     ],
     examples: [
-      'dolphin skills get orca-cli',
+      'dolphin skills get dolphin-cli',
       'dolphin skills get orchestration --full',
       'dolphin skills get orchestration --references',
       'dolphin skills get orchestration --reference recovery-and-cleanup'
@@ -92,9 +92,9 @@ export const SKILL_COMMAND_SPECS: CommandSpec[] = [
     ],
     examples: [
       'dolphin skills install',
-      'dolphin skills install --skill orca-cli --skill orchestration',
-      'dolphin skills install --skill orca-cli --local',
-      'dolphin skills install --skill orca-cli --agent claude-code,codex',
+      'dolphin skills install --skill dolphin-cli --skill orchestration',
+      'dolphin skills install --skill dolphin-cli --local',
+      'dolphin skills install --skill dolphin-cli --agent claude-code,codex',
       'dolphin skills install --all --dry-run'
     ]
   },
@@ -119,8 +119,8 @@ export const SKILL_COMMAND_SPECS: CommandSpec[] = [
     ],
     examples: [
       'dolphin skills update',
-      'dolphin skills update --skill orca-cli --skill orchestration',
-      'dolphin skills update --skill orca-cli --local',
+      'dolphin skills update --skill dolphin-cli --skill orchestration',
+      'dolphin skills update --skill dolphin-cli --local',
       'dolphin skills update --all --dry-run'
     ]
   }

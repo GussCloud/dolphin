@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { getOrchestrationPeerCapabilityCache } from '../../../../orchestration/orchestration-peer-capability-cache'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import type { FederatedDispatchRow } from '../../../../orchestration/types'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import {
   releaseUnknownRecovery,
   type WorkerReleaseReceipt
@@ -39,7 +39,7 @@ const RemoteReleaseReceiptSchema = z
   .passthrough()
 
 export async function releaseFederatedWorker(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   server: ReturnType<typeof resolvePinnedFederatedServer>
   federated: FederatedDispatchRow
   dispatchId: string
@@ -122,7 +122,7 @@ export async function releaseFederatedWorker(args: {
     const detail = error instanceof Error ? error.message : String(error)
     return {
       ...receipt,
-      lastError: `The execution host acknowledged ${remote.state}, but Orca could not apply the confirmed release to the home projection: ${detail}`,
+      lastError: `The execution host acknowledged ${remote.state}, but Dolphin could not apply the confirmed release to the home projection: ${detail}`,
       recovery: confirmedReleaseProjectionRecovery(args.dispatchId)
     }
   }
@@ -147,7 +147,7 @@ function confirmedReleaseProjectionRecovery(dispatchId: string): string {
 }
 
 function applyConfirmedFederatedReleaseHomeProjection(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   dispatchId: string
 ): void {
   const db = runtime.getOrchestrationDb()

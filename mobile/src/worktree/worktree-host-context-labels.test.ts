@@ -11,12 +11,12 @@ import {
 function worktree(overrides: Partial<Worktree> = {}): Worktree {
   return {
     workspaceKind: 'git',
-    worktreeId: 'repo-1::/home/me/orca',
+    worktreeId: 'repo-1::/home/me/dolphin',
     repoId: 'repo-1',
-    repo: 'orca',
+    repo: 'dolphin',
     branch: 'main',
     displayName: 'main',
-    path: '/home/me/orca',
+    path: '/home/me/dolphin',
     liveTerminalCount: 0,
     hasAttachedPty: false,
     preview: '',

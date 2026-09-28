@@ -81,16 +81,16 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
     detectCmd: 'claude',
     promptInjectionMode: 'argv',
     pasteNeedsTypedRequest: true,
-    // Why: `claude --prefill <text>` seeds the input without submitting, avoiding the paste-after-ready race (PR https://github.com/stablyai/orca/pull/926).
+    // Why: `claude --prefill <text>` seeds the input without submitting, avoiding the paste-after-ready race (PR https://github.com/GussCloud/dolphin/pull/926).
     draftPromptFlag: '--prefill'
   },
   'claude-agent-teams': {
-    // Why: an Orca-provided launch mode, not a separate binary; detection follows the Orca CLI.
+    // Why: a Dolphin-provided launch mode, not a separate binary; detection follows the Dolphin CLI.
     detectCmd: CLI_COMMAND_NAME,
     detectCmdAliases: [DEV_CLI_COMMAND_NAME, LINUX_CLI_COMMAND_NAME],
-    // Why: require Claude too so fresh installs (Orca shim always present) don't report Agent Teams without an agent CLI.
+    // Why: require Claude too so fresh installs (Dolphin shim always present) don't report Agent Teams without an agent CLI.
     detectRequiredCommands: ['claude'],
-    // Why: Windows/WSL use Claude's in-process Agent Teams fallback, not this Orca native-pane/tmux-shim wrapper.
+    // Why: Windows/WSL use Claude's in-process Agent Teams fallback, not this Dolphin native-pane/tmux-shim wrapper.
     detectUnsupportedRuntimes: ['win32', 'wsl'],
     launchCmd: `${CLI_COMMAND_NAME} claude-teams`,
     launchCmdByPlatform: {
@@ -166,15 +166,15 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
   pi: {
     detectCmd: 'pi',
     promptInjectionMode: 'argv',
-    // Why: pi has no `--prefill` and paste-after-ready races its long startup; the orca-prefill extension seeds this env var instead.
-    draftPromptEnvVar: 'ORCA_PI_PREFILL',
+    // Why: pi has no `--prefill` and paste-after-ready races its long startup; the dolphin-prefill extension seeds this env var instead.
+    draftPromptEnvVar: 'DOLPHIN_PI_PREFILL',
     // Why: Pi decodes CSI-u; Esc+CR submits after tool subprocesses reset live KKP state (#9703).
     windowsShiftEnterEncoding: 'csi-u'
   },
   omp: {
     detectCmd: 'omp',
     promptInjectionMode: 'argv',
-    draftPromptEnvVar: 'ORCA_OMP_PREFILL',
+    draftPromptEnvVar: 'DOLPHIN_OMP_PREFILL',
     // Why: OMP wraps Pi's TUI, so the bytes land in a Pi reader that decodes CSI-u (see pi above).
     windowsShiftEnterEncoding: 'csi-u'
   },
@@ -293,7 +293,7 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
   },
   hermes: {
     detectCmd: 'hermes',
-    // Why: bare `hermes` opens the classic REPL; `--tui` starts the full-screen agent UI Orca hosts.
+    // Why: bare `hermes` opens the classic REPL; `--tui` starts the full-screen agent UI Dolphin hosts.
     launchCmd: 'hermes --tui',
     // Why: Hermes delivers the prompt via its startup-query contract, submitting only after the composer is ready.
     promptInjectionMode: 'hermes-query'

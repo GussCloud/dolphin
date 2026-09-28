@@ -11,9 +11,9 @@ import {
 import { useNavigation, useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
-  OrcaMobileWebShellView,
+  DolphinMobileWebShellView,
   parseMobileWebShellLoadState
-} from '../../modules/orca-mobile-web-shell/src'
+} from '../../modules/dolphin-mobile-web-shell/src'
 import { HostRouteNoticeBanner } from '../components/HostRouteNoticeBanner'
 import { ProtocolBlockScreen } from '../components/ProtocolBlockScreen'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
@@ -390,7 +390,7 @@ export function MobileWebShellScreen({
           onDismiss={() => setNoticeDismissedFor(state.sessionId)}
         />
       )}
-      <OrcaMobileWebShellView
+      <DolphinMobileWebShellView
         key={state.sessionId}
         ref={bridge.viewRef}
         style={styles.shellView}

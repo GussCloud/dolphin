@@ -16,10 +16,10 @@ decision, stop/abandon request, retention request, or uncertain release.
 ## Inspect before acting
 
 ```text
-ORCA orchestration worker-list --run <run_id> --json
-ORCA orchestration worker-list --run <run_id> --include-remote --json
-ORCA orchestration worker-show --dispatch <dispatch_id> --json
-ORCA orchestration worker-read --dispatch <dispatch_id> --limit 50 --json
+DOLPHIN orchestration worker-list --run <run_id> --json
+DOLPHIN orchestration worker-list --run <run_id> --include-remote --json
+DOLPHIN orchestration worker-show --dispatch <dispatch_id> --json
+DOLPHIN orchestration worker-read --dispatch <dispatch_id> --limit 50 --json
 ```
 
 `worker-list` is the enumerating command and the authority on agent liveness:
@@ -79,7 +79,7 @@ operation identity so Dolphin can replay, join, or recover it instead of startin
 duplicate. Ask what happened first:
 
 ```text
-ORCA orchestration request-show --request <request_id> --json
+DOLPHIN orchestration request-show --request <request_id> --json
 ```
 
 `completed` means the mutation already took effect; read its recorded receipt
@@ -114,7 +114,7 @@ with `--task`, since `--spec` creates a new one. Placement is never silently
 inherited:
 
 ```text
-ORCA orchestration worker-start --task <task_id> --retry-of <dispatch_id> --worktree <explicit_placement> --agent <agent> --json
+DOLPHIN orchestration worker-start --task <task_id> --retry-of <dispatch_id> --worktree <explicit_placement> --agent <agent> --json
 ```
 
 After three consecutive failures for one Task, its dispatch context
@@ -124,8 +124,8 @@ new Run or an unrelated Dispatch.
 For `outcome_unknown`, inspect first, then make an explicit choice:
 
 ```text
-ORCA orchestration worker-stop --dispatch <dispatch_id> --json
-ORCA orchestration worker-abandon --dispatch <dispatch_id> --json
+DOLPHIN orchestration worker-stop --dispatch <dispatch_id> --json
+DOLPHIN orchestration worker-abandon --dispatch <dispatch_id> --json
 ```
 
 `worker-stop` closes only the exact proven supervised agent terminal. It never
@@ -136,8 +136,8 @@ live; it performs no remote, process, or filesystem action.
 ## Retain and release
 
 ```text
-ORCA orchestration worker-retain --dispatch <dispatch_id> --json
-ORCA orchestration worker-release --dispatch <dispatch_id> --json
+DOLPHIN orchestration worker-retain --dispatch <dispatch_id> --json
+DOLPHIN orchestration worker-release --dispatch <dispatch_id> --json
 ```
 
 Retain only when the user explicitly wants the settled terminal kept live.

@@ -10,7 +10,10 @@ function hiddenButton() {
   }
 }
 
-const FEATURE_TIP_TITLES = ['Let agents drive Orca with the Orca CLI', 'Search every agent session']
+const FEATURE_TIP_TITLES = [
+  'Let agents drive Dolphin with the Dolphin CLI',
+  'Search every agent session'
+]
 
 describe('dismissOverlays', () => {
   it.each(FEATURE_TIP_TITLES)(

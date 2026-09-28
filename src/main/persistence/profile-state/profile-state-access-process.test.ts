@@ -11,7 +11,7 @@ import {
 } from './profile-state-access'
 import { profileStateAccessPaths } from './profile-state-access-owner'
 
-const fixture = mkdtempSync(join(tmpdir(), 'orca-state-access-process-'))
+const fixture = mkdtempSync(join(tmpdir(), 'dolphin-state-access-process-'))
 const bundle = join(fixture, 'access.cjs')
 const children = new Set<ReturnType<typeof spawnProcess>>()
 
@@ -71,7 +71,7 @@ async function startChild(root: string, mode: string): Promise<ReturnType<typeof
   const child = spawnProcess({
     program: process.execPath,
     args: ['-e', CHILD_SOURCE, root, bundle, mode],
-    env: { ...process.env, ORCA_BACKGROUND_LAUNCH: '1' }
+    env: { ...process.env, DOLPHIN_BACKGROUND_LAUNCH: '1' }
   })
   children.add(child)
   let stderr = ''

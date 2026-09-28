@@ -4,7 +4,7 @@ import { GLOBAL_FLAGS } from '../args'
 export const SERVE_COMMAND_SPECS: CommandSpec[] = [
   {
     path: ['serve'],
-    summary: 'Start an Dolphin runtime server without opening a desktop window',
+    summary: 'Start a Dolphin runtime server without opening a desktop window',
     usage:
       'dolphin serve [--port <port>] [--pairing-address <host>] [--mobile-pairing] [--no-pairing] [--project-root <path>] [--recipe-json] [--json]',
     allowedFlags: [

@@ -1,16 +1,16 @@
 import { getEphemeralVmRecipeResultCheckoutMode } from './ephemeral-vm-recipes'
 import type { EphemeralVmRecipeResult } from './ephemeral-vm-recipes'
-import type { OrcaVmRecipe } from './orca-yaml-hook-types'
+import type { DolphinVmRecipe } from './dolphin-yaml-hook-types'
 
-export function getEphemeralVmRecipeResultSchemaVersion(recipe: OrcaVmRecipe): 1 | 2 {
+export function getEphemeralVmRecipeResultSchemaVersion(recipe: DolphinVmRecipe): 1 | 2 {
   return recipe.checkoutMode === 'provisioned-root' ? 2 : 1
 }
 
 export function getEphemeralVmRecipeCheckoutModeError(
-  recipe: OrcaVmRecipe,
+  recipe: DolphinVmRecipe,
   result: EphemeralVmRecipeResult
 ): string | null {
-  const configuredMode = recipe.checkoutMode ?? 'orca-worktree'
+  const configuredMode = recipe.checkoutMode ?? 'dolphin-worktree'
   const resultMode = getEphemeralVmRecipeResultCheckoutMode(result)
   if (configuredMode === resultMode) {
     return null

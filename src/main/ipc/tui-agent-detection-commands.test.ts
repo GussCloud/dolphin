@@ -20,7 +20,7 @@ describe('tui agent detection commands', () => {
       },
       {
         id: 'claude-agent-teams',
-        cmd: 'orca-dev',
+        cmd: 'dolphin-dev',
         requiredCommands: ['claude'],
         unsupportedRuntimes: ['win32', 'wsl']
       },
@@ -34,7 +34,7 @@ describe('tui agent detection commands', () => {
     expect(getTuiAgentDetectionProbeCommands(commands, 'linux')).toEqual([
       'dolphin',
       'claude',
-      'orca-dev',
+      'dolphin-dev',
       'dolphin-ide'
     ])
     expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin']), 'linux')).toEqual([])

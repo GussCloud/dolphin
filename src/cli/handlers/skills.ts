@@ -116,7 +116,7 @@ function runNpxSkills(args: string[]): Promise<number> {
 
 type SkillMutationVerb = 'install' | 'update'
 
-/** Agents Orca can see on this host, as `skills --agent` keys. */
+/** Agents Dolphin can see on this host, as `skills --agent` keys. */
 function detectSkillsCliAgentKeys(): string[] {
   const runtime = process.platform
   const probes = getTuiAgentDetectionProbeCommands(KNOWN_TUI_AGENT_DETECTION_COMMANDS, runtime)
@@ -225,11 +225,11 @@ function createSkillMutationHandler(verb: SkillMutationVerb): CommandHandler {
     // Why: this runs before target resolution because the answer belongs to the
     // other machine — agents detected here would be the wrong host's, and a host
     // that detects none would hide the forwarding problem behind that error.
-    if (process.env.ORCA_CLI_CWD) {
+    if (process.env.DOLPHIN_CLI_CWD) {
       throw new RuntimeClientError(
         'invalid_environment',
         `dolphin skills ${verb} writes to the machine that runs it, but this shell forwards ` +
-          `orca to the Dolphin host. Run the same dolphin skills ${verb} command on the machine ` +
+          `dolphin to the Dolphin host. Run the same dolphin skills ${verb} command on the machine ` +
           "you want it on, where it can detect that host's agents."
       )
     }

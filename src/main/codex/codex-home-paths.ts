@@ -38,23 +38,23 @@ export function getSystemCodexHomePath(): string {
 }
 
 /** Path only; use when a read-only caller must not materialize the mirror. */
-export function resolveOrcaManagedCodexHomePath(): string {
-  return join(getOrcaUserDataPath(), 'codex-runtime-home', 'home')
+export function resolveDolphinManagedCodexHomePath(): string {
+  return join(getDolphinUserDataPath(), 'codex-runtime-home', 'home')
 }
 
-export function getOrcaManagedCodexHomePath(): string {
-  const managedHomePath = resolveOrcaManagedCodexHomePath()
+export function getDolphinManagedCodexHomePath(): string {
+  const managedHomePath = resolveDolphinManagedCodexHomePath()
   mkdirSync(managedHomePath, { recursive: true })
   return managedHomePath
 }
 
 export function getCodexSessionBackfillStateDirPath(): string {
-  return join(getOrcaUserDataPath(), 'codex-session-backfill')
+  return join(getDolphinUserDataPath(), 'codex-session-backfill')
 }
 
-export function getOrcaUserDataPath(): string {
-  if (process.env.ORCA_USER_DATA_PATH) {
-    return process.env.ORCA_USER_DATA_PATH
+export function getDolphinUserDataPath(): string {
+  if (process.env.DOLPHIN_USER_DATA_PATH) {
+    return process.env.DOLPHIN_USER_DATA_PATH
   }
   // Why: CLI hook commands import this module outside Electron. Mirror the CLI
   // runtime metadata path so offline hook status/on/off uses the same userData.
@@ -78,7 +78,7 @@ export function getOrcaUserDataPath(): string {
 // system resources with its own ownership markers, so a per-account launch home
 // is complete without ever symlinking into or mutating the user's real ~/.codex.
 export function syncSystemCodexResourcesIntoManagedHome(managedHomePath?: string): void {
-  const targetHome = managedHomePath ?? getOrcaManagedCodexHomePath()
+  const targetHome = managedHomePath ?? getDolphinManagedCodexHomePath()
   const systemHomePath = getSystemCodexHomePath()
   for (const entryName of CODEX_SYSTEM_RESOURCE_ENTRIES) {
     linkSystemCodexResource(systemHomePath, targetHome, entryName)
@@ -110,7 +110,7 @@ function linkSystemCodexResource(
 ): void {
   const sourcePath = join(systemHomePath, entryName)
   const targetPath = join(managedHomePath, entryName)
-  // Why: both branches below DELETE Orca's mirrored copy because the system
+  // Why: both branches below DELETE Dolphin's mirrored copy because the system
   // resource "is not there". `existsSync` and the old `catch { return false }`
   // both reported that for a source we merely could not read, so one denied
   // read on ~/.codex/AGENTS.md removed the managed copy on the next launch.

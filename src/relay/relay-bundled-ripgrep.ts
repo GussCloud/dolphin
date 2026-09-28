@@ -1,5 +1,5 @@
 /**
- * Which `rg` the relay spawns. The SSH deploy uploads Orca's own ripgrep to a version-keyed cache
+ * Which `rg` the relay spawns. The SSH deploy uploads Dolphin's own ripgrep to a version-keyed cache
  * and passes its path via `--ripgrep-path`; PATH `rg` (and then the git/readdir fallbacks) stays
  * the answer whenever that binary is absent or cannot launch on this host.
  */

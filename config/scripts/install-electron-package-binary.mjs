@@ -147,9 +147,9 @@ async function installElectronPackageBinary(sharedEntry) {
   if (sharedEntry !== null && adoptSharedElectronDist(sharedEntry, electronDistDir)) {
     return
   }
-  const tempDir = mkdtempSync(resolve(tmpdir(), 'orca-electron-'))
+  const tempDir = mkdtempSync(resolve(tmpdir(), 'dolphin-electron-'))
   const persistentCacheRoot =
-    process.env.ORCA_ELECTRON_PACKAGE_CACHE_ROOT || process.env.ELECTRON_CACHE || null
+    process.env.DOLPHIN_ELECTRON_PACKAGE_CACHE_ROOT || process.env.ELECTRON_CACHE || null
   const cacheRoot = persistentCacheRoot ?? join(tempDir, 'cache')
   const extractDir = join(tempDir, 'extract')
 
@@ -273,7 +273,7 @@ async function downloadElectronArtifactWithRetry(downloadOptions, { cacheRootIsP
 }
 
 function getDownloadRetryDelays() {
-  const configured = process.env.ORCA_ELECTRON_PACKAGE_RETRY_DELAYS_MS
+  const configured = process.env.DOLPHIN_ELECTRON_PACKAGE_RETRY_DELAYS_MS
   if (!configured) {
     // Why: GitHub release CDN returns intermittent 503 / HTTP2 stream refusals
     // under CI fan-out; a few short attempts still exhaust during outages.
@@ -282,7 +282,7 @@ function getDownloadRetryDelays() {
 
   const delays = configured.split(',').map(Number)
   if (delays.some((delay) => !Number.isSafeInteger(delay) || delay < 0)) {
-    throw new Error('ORCA_ELECTRON_PACKAGE_RETRY_DELAYS_MS must contain non-negative integers')
+    throw new Error('DOLPHIN_ELECTRON_PACKAGE_RETRY_DELAYS_MS must contain non-negative integers')
   }
   return delays
 }
@@ -441,11 +441,11 @@ function stageExtractedElectronDist(extractDir, nextDistDir) {
 }
 
 function getExtractorCommand(zipPath, extractDir) {
-  if (process.env.ORCA_ELECTRON_PACKAGE_EXTRACTOR) {
+  if (process.env.DOLPHIN_ELECTRON_PACKAGE_EXTRACTOR) {
     return {
       file: process.execPath,
-      args: [process.env.ORCA_ELECTRON_PACKAGE_EXTRACTOR, zipPath, extractDir],
-      label: `node ${process.env.ORCA_ELECTRON_PACKAGE_EXTRACTOR}`
+      args: [process.env.DOLPHIN_ELECTRON_PACKAGE_EXTRACTOR, zipPath, extractDir],
+      label: `node ${process.env.DOLPHIN_ELECTRON_PACKAGE_EXTRACTOR}`
     }
   }
 

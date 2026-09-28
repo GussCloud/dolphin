@@ -1,4 +1,4 @@
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import { isStructuredWorkerHandle } from '../../../../structured-worker-identity'
 import type { OrchestrationCallerIdentity } from '../../../../orchestration/orchestration-caller-identity'
@@ -11,7 +11,7 @@ import type { OrchestrationCallerIdentity } from '../../../../orchestration/orch
  * dispatch's to take, and a pane with no agent cannot read a preamble at all.
  */
 export async function assertExplicitWorkerTerminalUsable(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   terminal: string
   from: string
   coordinator: OrchestrationCallerIdentity | null

@@ -1,4 +1,4 @@
-import { CLI_COMMAND_NAME, LEGACY_CLI_COMMAND_NAME } from '../shared/cli-command-names'
+import { CLI_COMMAND_NAME } from '../shared/cli-command-names'
 import { RuntimeClientError, RuntimeRpcFailureError } from './runtime-client'
 import {
   recoverableOrchestrationArgs,
@@ -176,7 +176,7 @@ export function renderResolvedOrchestrationCommand(
 ): string {
   const parts = parseCommandLine(command)
   // Why both: current hosts emit the fork's command, older hosts the legacy one.
-  if (parts?.[0] !== CLI_COMMAND_NAME && parts?.[0] !== LEGACY_CLI_COMMAND_NAME) {
+  if (parts?.[0] !== CLI_COMMAND_NAME) {
     return command
   }
   return renderCommand([executable, ...parts.slice(1)], platform, env)
@@ -190,7 +190,7 @@ function resolveRecoveryShell(
     return 'posix'
   }
   return resolveWindowsShellStartupFamily(
-    env.ORCA_TERMINAL_WINDOWS_SHELL ?? env.ORCA_WINDOWS_SHELL ?? env.ComSpec ?? env.COMSPEC
+    env.DOLPHIN_TERMINAL_WINDOWS_SHELL ?? env.DOLPHIN_WINDOWS_SHELL ?? env.ComSpec ?? env.COMSPEC
   )
 }
 

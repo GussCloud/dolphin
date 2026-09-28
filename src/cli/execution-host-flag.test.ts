@@ -4,7 +4,7 @@ const { listEnvironmentsMock, resolveEnvironmentMock, getDefaultUserDataPathMock
   () => ({
     listEnvironmentsMock: vi.fn(),
     resolveEnvironmentMock: vi.fn(),
-    getDefaultUserDataPathMock: vi.fn(() => '/tmp/orca-user-data')
+    getDefaultUserDataPathMock: vi.fn(() => '/tmp/dolphin-user-data')
   })
 )
 
@@ -117,7 +117,7 @@ describe('resolveHostFlagEnvironmentId', () => {
     await expect(
       resolveHostFlagEnvironmentId(flags({ host: 'runtime:env-1' }), {
         listSshTargets: listSshTargetsMock,
-        pairingCode: 'orca://pair?x',
+        pairingCode: 'dolphin://pair?x',
         environmentSelector: null
       })
     ).rejects.toThrow('not both')
@@ -136,7 +136,7 @@ describe('resolveHostFlagEnvironmentId', () => {
     ).rejects.toThrow('name different Dolphin servers')
   })
 
-  it('names the ambient variable when ORCA_ENVIRONMENT is the conflicting selector', async () => {
+  it('names the ambient variable when DOLPHIN_ENVIRONMENT is the conflicting selector', async () => {
     listEnvironmentsMock.mockReturnValue([environment('env-1')])
     resolveEnvironmentMock.mockReturnValue(environment('env-2'))
 
@@ -144,9 +144,9 @@ describe('resolveHostFlagEnvironmentId', () => {
       resolveHostFlagEnvironmentId(flags({ host: 'runtime:env-1' }), {
         listSshTargets: listSshTargetsMock,
         pairingCode: null,
-        environmentSelector: { value: 'staging', label: 'ORCA_ENVIRONMENT' }
+        environmentSelector: { value: 'staging', label: 'DOLPHIN_ENVIRONMENT' }
       })
-    ).rejects.toThrow('ORCA_ENVIRONMENT staging name different Dolphin servers')
+    ).rejects.toThrow('DOLPHIN_ENVIRONMENT staging name different Dolphin servers')
   })
 
   it('hands an agent the known environment ids to retry with', async () => {

@@ -41,7 +41,7 @@ describe('feature tip modal state', () => {
       webClient: false
     })
 
-    expect(tip?.id).toBe('orca-cli')
+    expect(tip?.id).toBe('dolphin-cli')
   })
 
   it('falls back to the CLI tip when voice was already seen and the CLI is not installed', () => {
@@ -54,14 +54,14 @@ describe('feature tip modal state', () => {
       webClient: false
     })
 
-    expect(tip?.id).toBe('orca-cli')
+    expect(tip?.id).toBe('dolphin-cli')
   })
 
   it('falls back to the command palette tip after the CLI tip is handled', () => {
     const tip = getFeatureTipForModal({
       cliInstalled: true,
       modalData: {},
-      seenTipIds: ['orca-cli'],
+      seenTipIds: ['dolphin-cli'],
       featureInteractions: {},
       settings: makeSettings(),
       webClient: false
@@ -74,7 +74,7 @@ describe('feature tip modal state', () => {
     const tip = getFeatureTipForModal({
       cliInstalled: false,
       modalData: {},
-      seenTipIds: ['voice-dictation', 'orca-cli', 'cmd-j-palette'],
+      seenTipIds: ['voice-dictation', 'dolphin-cli', 'cmd-j-palette'],
       featureInteractions: {},
       settings: makeSettings(),
       webClient: false

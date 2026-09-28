@@ -12,7 +12,7 @@ import { SkillFreshnessStatusPill } from '@/components/skills/SkillFreshnessStat
 import { ORCHESTRATION_SKILL_NAME } from '@/lib/agent-feature-install-commands'
 import {
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE,
-  ensureOrcaCliAvailableForAgentSkillTerminal
+  ensureDolphinCliAvailableForAgentSkillTerminal
 } from '@/lib/agent-skill-cli-prerequisite'
 import {
   ORCHESTRATION_SKILL_INSTALL_COMMAND,
@@ -166,7 +166,7 @@ export function FloatingTerminalOrchestrationDialog({
             useAppStore.getState().recordFeatureInteraction('agent-orchestration-setup')
             await (activeSkillRuntime.agentRuntime?.runtime === 'wsl'
               ? ensureWslCliAvailableForAgentSkillTerminal(activeSkillRuntime.agentRuntime)
-              : ensureOrcaCliAvailableForAgentSkillTerminal())
+              : ensureDolphinCliAvailableForAgentSkillTerminal())
           }}
           onRecheck={recheckOrchestrationSkill}
         />

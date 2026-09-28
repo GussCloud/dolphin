@@ -29,7 +29,7 @@ import { useSidebarFeedbackImages } from './use-sidebar-feedback-images'
 
 const GITHUB_ISSUES_URL = `${FORK_ISSUES_URL}/`
 const DISCORD_URL = 'https://discord.gg/fzjDKHxv8Q'
-const X_URL = 'https://x.com/orca_build'
+const X_URL = 'https://x.com/dolphin_build'
 
 type SubmitIdentity = {
   githubLogin: string | null
@@ -66,7 +66,7 @@ export function SidebarFeedbackDialog({
   // Why: the draft lives in the app store, not component state. This dialog
   // renders inside the sidebar subtree, so collapsing the sidebar unmounts it
   // and would otherwise discard a report the user has not managed to send yet
-  // (orca#22466).
+  // (dolphin#22466).
   const feedback = useAppStore((s) => s.feedbackDraft.feedback)
   const submitAnonymously = useAppStore((s) => s.feedbackDraft.submitAnonymously)
   const setFeedbackDraft = useAppStore((s) => s.setFeedbackDraft)

@@ -22,7 +22,7 @@ describe('packaged browser compatibility lane', () => {
     expect(download).toContain('gh release download v1.4.188')
     expect(download).toContain('hashlib.sha512()')
     expect(download).not.toContain('package.read_bytes()')
-    expect(download).toContain("extracted/'opt'/'Orca'/'orca-ide'")
+    expect(download).toContain("extracted/'opt'/'Dolphin'/'dolphin-ide'")
     expect(download).toContain('assert base64.')
     expect(download).toContain('decode()==expected')
     expect(download).toContain("['dpkg-deb'")

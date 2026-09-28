@@ -12,8 +12,8 @@ import { quotePowerShellLiteral } from './powershell-native-argument'
 const DEFAULT_WAIT_TIMEOUT_SECONDS = 2 * 60 * 60
 // Exported so the gate and its tests share one definition.
 export const SETUP_COMPLETE_MESSAGE = 'Setup finished; starting agent.'
-export const SETUP_AGENT_SEQUENCE_STARTUP_COMMAND_ENV = 'ORCA_SEQUENCED_STARTUP_COMMAND'
-export const SETUP_AGENT_SEQUENCE_STARTUP_SCRIPT_ENV = 'ORCA_SEQUENCED_STARTUP_SCRIPT'
+export const SETUP_AGENT_SEQUENCE_STARTUP_COMMAND_ENV = 'DOLPHIN_SEQUENCED_STARTUP_COMMAND'
+export const SETUP_AGENT_SEQUENCE_STARTUP_SCRIPT_ENV = 'DOLPHIN_SEQUENCED_STARTUP_SCRIPT'
 
 export type SequencedSetupAgentCommands = {
   setupCommand: string
@@ -201,9 +201,9 @@ function buildWindowsSetupCommand(
     'Remove-Item -LiteralPath $marker, $tmp -Force -ErrorAction SilentlyContinue',
     '$processInfo = [System.Diagnostics.ProcessStartInfo]::new()',
     '$processInfo.FileName = $env:ComSpec',
-    '$processInfo.Arguments = \'/d /s /v:on /c ""!ORCA_SETUP_RUNNER!""\'',
+    '$processInfo.Arguments = \'/d /s /v:on /c ""!DOLPHIN_SETUP_RUNNER!""\'',
     '$processInfo.UseShellExecute = $false',
-    '$processInfo.EnvironmentVariables["ORCA_SETUP_RUNNER"] = $runner',
+    '$processInfo.EnvironmentVariables["DOLPHIN_SETUP_RUNNER"] = $runner',
     '$process = [System.Diagnostics.Process]::Start($processInfo)',
     '$process.WaitForExit()',
     '$setupStatus = $process.ExitCode',
@@ -240,12 +240,12 @@ function buildWindowsStartupCommand(
     // relief had been attempted. `-ErrorAction Stop` is what routes a non-terminating
     // failure into the catch at all. Still never throws: a diagnostic is worth a line of
     // stderr, but not the startup this gate exists to run.
-    "$orcaProgress = $ProgressPreference; $ProgressPreference = 'SilentlyContinue'",
+    "$dolphinProgress = $ProgressPreference; $ProgressPreference = 'SilentlyContinue'",
     'try { Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction Stop } ' +
-      'catch { [Console]::Error.WriteLine("Orca: could not relax the execution policy for this " + ' +
+      'catch { [Console]::Error.WriteLine("Dolphin: could not relax the execution policy for this " + ' +
       '"session (" + $_.FullyQualifiedErrorId + "). A startup command that runs a .ps1 " + ' +
       '"may be blocked.") }',
-    '$ProgressPreference = $orcaProgress',
+    '$ProgressPreference = $dolphinProgress',
     `$marker = ${quotePowerShellLiteral(markerPath)}`,
     'if ([string]::IsNullOrWhiteSpace($marker)) {',
     '  [Console]::Error.WriteLine("Missing setup marker path.")',

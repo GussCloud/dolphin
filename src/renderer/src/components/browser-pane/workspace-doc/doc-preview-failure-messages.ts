@@ -59,7 +59,7 @@ export function docPreviewAssetNotice(failures: DocPreviewFileFailure[]): string
 
 /**
  * Why the sentence names no file and does not count attempts: the document chooses both, and this
- * row is Orca's chrome. Constant text is also what makes repeated attempts unspammable — the
+ * row is Dolphin's chrome. Constant text is also what makes repeated attempts unspammable — the
  * hundredth refusal renders exactly what the first one did.
  */
 export function docPreviewDownloadBlockedNotice(): string {

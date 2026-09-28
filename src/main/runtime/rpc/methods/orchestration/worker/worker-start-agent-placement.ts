@@ -15,7 +15,7 @@
 
 import type { AgentLaunchPreferences } from '../../../../../../shared/agent-session-host-authority'
 import type { TuiAgent } from '../../../../../../shared/tui-agent'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import type { OrchestrationDb } from '../../../../orchestration/db'
 import {
   resolveWorkerStartModeOnHost,
@@ -46,7 +46,7 @@ export type WorkerAgentPlacement = {
 }
 
 type WorkerAgentPlacementArgs = {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   db: OrchestrationDb
   dispatchId: string
   taskId: string

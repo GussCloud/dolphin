@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
   const events: string[] = []
-  // Why a two-word app token: this file sets the dev app name to "Orca Development", and Electron
+  // Why a two-word app token: this file sets the dev app name to "Dolphin Development", and Electron
   // builds the app token from that name. A single-token fixture could not exhibit the multi-word
   // leak the cleaner exists to handle, so it disagreed with the scenario it set up.
   // Why the engine comment: a real app.userAgentFallback always carries it, and the cleaner only
@@ -67,7 +67,7 @@ vi.mock('./serve-mode-argv', () => ({
 vi.mock('./configure-process', () => ({
   configureDevUserDataPath: vi.fn(),
   configureElectronNetworkCompatibility: vi.fn(),
-  configureOrcaUserDataPathEnv: vi.fn(),
+  configureDolphinUserDataPathEnv: vi.fn(),
   disableUnsupportedChromiumFeatures: vi.fn(),
   enableMainProcessGpuFeatures: vi.fn(),
   installDevParentDisconnectQuit: vi.fn(),
@@ -94,7 +94,7 @@ vi.mock('./dev-instance-identity', () => ({
   getDevInstanceIdentity: () => ({
     isDev: true,
     appName: 'Dolphin Development',
-    appUserModelId: 'com.orca.development'
+    appUserModelId: 'com.dolphin.development'
   }),
   shouldApplyPreReadyAppName: () => true
 }))
@@ -157,11 +157,11 @@ vi.mock('../persistence/profile-state/profile-state-access', () => ({
 }))
 vi.mock('../macos-press-and-hold-default')
 vi.mock('../ai-vault/session-parse-cache-persistence')
-vi.mock('../orca-profiles/profile-index-store', () => ({ initOrcaProfilePaths: vi.fn() }))
-vi.mock('../orca-profiles/profile-storage-paths', () => ({
+vi.mock('../dolphin-profiles/profile-index-store', () => ({ initDolphinProfilePaths: vi.fn() }))
+vi.mock('../dolphin-profiles/profile-storage-paths', () => ({
   getProfileUserDataPath: () => '/canonical-user-data'
 }))
-vi.mock('../orca-profiles/profile-project-move-intent', () => ({
+vi.mock('../dolphin-profiles/profile-project-move-intent', () => ({
   recoverPendingProfileProjectMoves: mocks.recoverMoves
 }))
 vi.mock('../persistence/profile-state/profile-state-active-location', () => ({
@@ -205,7 +205,7 @@ describe('browser process user-agent startup ordering', () => {
     const platform = vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
     mocks.backgroundLaunch.mockReturnValueOnce(false)
     mocks.admission.mockImplementationOnce(() => {
-      throw new Error('Stop Dolphin and orcad before retrying profile recovery')
+      throw new Error('Stop Dolphin and dolphind before retrying profile recovery')
     })
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
@@ -214,7 +214,7 @@ describe('browser process user-agent startup ordering', () => {
       ).toBe(false)
       expect(mocks.showErrorBox).toHaveBeenCalledWith(
         'Dolphin could not start',
-        expect.stringContaining('Stop Dolphin and orcad before retrying profile recovery')
+        expect.stringContaining('Stop Dolphin and dolphind before retrying profile recovery')
       )
       expect(mocks.app.isReady).not.toHaveBeenCalled()
     } finally {
@@ -266,9 +266,9 @@ describe('browser process user-agent startup ordering', () => {
       mode: 'clean',
       userAgent: mocks.userAgent()
     })
-    // Both app-name words must be gone, not just the last: a single \S+ would have left "Orca".
+    // Both app-name words must be gone, not just the last: a single \S+ would have left "Dolphin".
     expect(mocks.userAgent()).not.toMatch(/Electron/)
-    expect(mocks.userAgent()).not.toMatch(/Orca|Development/)
+    expect(mocks.userAgent()).not.toMatch(/Dolphin|Development/)
   })
 
   it('exits without reading profile state or revealing a window when recovery holds admission', async () => {

@@ -1,7 +1,7 @@
 /**
  * JOURNEY: quit the desktop app while remote terminals are live on the host, then reopen it.
  *
- * TOPOLOGY: the `orcaPage` app is the host (orca server); a separate real Orca desktop client
+ * TOPOLOGY: the `dolphinPage` app is the host (dolphin server); a separate real Dolphin desktop client
  * pairs to it, opens a host terminal, works in it, is force-quit, and relaunched on the same
  * profile — the pairing credential and the persisted session survive, as they do for a real
  * force-quit reopen.
@@ -32,7 +32,7 @@ import {
   toWebTerminalSurfaceTabId
 } from '../../src/shared/terminal-surface-id'
 import { closeElectronAppForE2E } from './helpers/electron-process-shutdown'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   createRuntimeDesktopPairingOffer,
   launchPairedElectronClient,
@@ -43,7 +43,7 @@ import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 /** What a user would accept for "my terminal is back" after reopening the app. */
 const RESTORE_BUDGET_MS = 60_000
 
-const scratch = mkdtempSync(path.join(os.tmpdir(), 'orca-client-restart-survival-'))
+const scratch = mkdtempSync(path.join(os.tmpdir(), 'dolphin-client-restart-survival-'))
 const fixturePath = path.join(scratch, 'restart-survival-terminal.mjs')
 writeFileSync(
   fixturePath,
@@ -230,12 +230,12 @@ async function readTabPtyIds(client: PairedElectronClient, webTabId: string): Pr
 }
 
 test('a relaunched client gets its live remote terminal back, still attached to the same process', async ({
-  orcaPage
+  dolphinPage
 }, testInfo) => {
   test.setTimeout(900_000)
-  await waitForSessionReady(orcaPage)
-  await waitForActiveWorktree(orcaPage)
-  const worktreeId = await orcaPage.evaluate(() => {
+  await waitForSessionReady(dolphinPage)
+  await waitForActiveWorktree(dolphinPage)
+  const worktreeId = await dolphinPage.evaluate(() => {
     const id = window.__store?.getState().activeWorktreeId
     if (!id) {
       throw new Error('host has no active worktree')
@@ -246,7 +246,7 @@ test('a relaunched client gets its live remote terminal back, still attached to 
   const sinkPath = path.join(scratch, `sink-${randomUUID()}.log`)
   const failures: string[] = []
   let client: PairedElectronClient | null = null
-  const offer = await createRuntimeDesktopPairingOffer(orcaPage)
+  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
   try {
     client = await launchPairedElectronClient(offer, testInfo, 'remote-terminal-restart-survival')
     const userDataDir = client.userDataDir

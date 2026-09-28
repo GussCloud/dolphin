@@ -75,7 +75,7 @@ export function ambiguousEnvironments(
   return byName.length > 1 ? byName : []
 }
 
-// Why: a paired Orca server and an SSH target are different machines reached different ways, but
+// Why: a paired Dolphin server and an SSH target are different machines reached different ways, but
 // a caller only knows "the machine called X". When X misses on one axis, the useful answer is
 // almost always that it exists on the other — so say which, and give the exact flag.
 export function crossKindNextSteps(

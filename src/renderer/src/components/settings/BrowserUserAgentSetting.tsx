@@ -88,7 +88,7 @@ export function BrowserUserAgentSetting({
     )
   } else if (status.identity.configuredMode === null) {
     // Why the command is named here: this state deliberately exposes no reset control, because the
-    // reset overwrites data that may belong to a newer Orca. Without naming the escape the message
+    // reset overwrites data that may belong to a newer Dolphin. Without naming the escape the message
     // tells the user their data must be reset and then offers no way to do it.
     control = (
       <div className="space-y-1 text-right">

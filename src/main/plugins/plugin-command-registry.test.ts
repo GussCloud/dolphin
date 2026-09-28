@@ -14,10 +14,10 @@ function commandPlugin(
   const manifest = pluginManifestSchema.parse({
     manifestVersion: 1,
     id,
-    publisher: 'orca-samples',
+    publisher: 'dolphin-samples',
     name: id,
     version: '1.0.0',
-    engines: { orca: '>=1.0.0' },
+    engines: { dolphin: '>=1.0.0' },
     pluginApi: 1,
     ...(contributes.commands.some((command) => command.action === undefined)
       ? { main: 'worker.js' }
@@ -26,7 +26,7 @@ function commandPlugin(
     capabilities: []
   })
   return {
-    pluginKey: `orca-samples.${id}`,
+    pluginKey: `dolphin-samples.${id}`,
     rootDir: `/plugins/${id}`,
     manifest,
     consentFingerprint: fingerprintPluginConsent(manifest, `content-${id}`),
@@ -111,8 +111,8 @@ describe('PluginCommandRegistry', () => {
       [plugin],
       () => true,
       {
-        'plugin:orca-samples.repeat/one': ['Mod+Alt+T', 'Mod+Alt+Y'],
-        'plugin:orca-samples.repeat/two': ['Ctrl+Alt+T', 'Ctrl+Alt+Y']
+        'plugin:dolphin-samples.repeat/one': ['Mod+Alt+T', 'Mod+Alt+Y'],
+        'plugin:dolphin-samples.repeat/two': ['Ctrl+Alt+T', 'Ctrl+Alt+Y']
       },
       'linux'
     )
@@ -196,7 +196,7 @@ describe('PluginCommandRegistry', () => {
     registry.reconcile(
       [first, second],
       () => true,
-      { 'plugin:orca-samples.first/tasks': ['Mod+Shift+T'] },
+      { 'plugin:dolphin-samples.first/tasks': ['Mod+Shift+T'] },
       'linux'
     )
 
@@ -218,8 +218,8 @@ describe('PluginCommandRegistry', () => {
       [plugin],
       () => true,
       {
-        'plugin:orca-samples.aliases/tasks': ['Mod+Alt+T'],
-        'plugin:orca-samples.aliases/sidebar': ['Mod+Alt+T']
+        'plugin:dolphin-samples.aliases/tasks': ['Mod+Alt+T'],
+        'plugin:dolphin-samples.aliases/sidebar': ['Mod+Alt+T']
       },
       'linux'
     )

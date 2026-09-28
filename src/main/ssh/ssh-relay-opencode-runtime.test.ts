@@ -25,21 +25,21 @@ vi.mock('./ssh-relay-install-transfers', () => ({
   uploadRelayDirectory: mocks.upload,
   writeRelayFile: mocks.write
 }))
-vi.mock('./orcad-bun-runtime-materializer', () => ({
-  materializeCachedOrcadBunRuntime: mocks.materialize
+vi.mock('./dolphind-bun-runtime-materializer', () => ({
+  materializeCachedDolphindBunRuntime: mocks.materialize
 }))
-vi.mock('./orcad-deployment-target', () => ({ resolveOrcadDeploymentTarget: mocks.target }))
+vi.mock('./dolphind-deployment-target', () => ({ resolveDolphindDeploymentTarget: mocks.target }))
 
 import type { SshConnection } from './ssh-connection'
 import { getRemoteHostPlatform } from './ssh-remote-platform'
-import { ORCAD_BUN_RELEASE_ASSETS } from '../../shared/orcad-bun-runtime'
+import { DOLPHIND_BUN_RELEASE_ASSETS } from '../../shared/dolphind-bun-runtime'
 import { ensureRemoteOpenCodeRuntime } from './ssh-relay-opencode-runtime'
 import { OPENCODE_RUNTIME_RESULT } from './ssh-relay-opencode-runtime-commands'
 
 const host = getRemoteHostPlatform('linux-x64')
 const remoteHome = '/home/ada'
-const relayDir = `${remoteHome}/.orca-remote/relay-build`
-const binary = `${remoteHome}/.orca-remote/vault-sqlite/${ORCAD_BUN_RELEASE_ASSETS['linux-x64-glibc'].executableSha256}/bun`
+const relayDir = `${remoteHome}/.dolphin-remote/relay-build`
+const binary = `${remoteHome}/.dolphin-remote/vault-sqlite/${DOLPHIND_BUN_RELEASE_ASSETS['linux-x64-glibc'].executableSha256}/bun`
 let cacheRoot: string
 let runtime: string
 const frame = (status: string, executable?: string) =>
@@ -51,7 +51,7 @@ function hostCommandResult(command: string): string {
     if (mocks.reservationError) {
       throw new Error('staging quota is full')
     }
-    return `__ORCA_UPLOAD_STAGE_SLOT__${command.match(/\.sftp-namespace-[0-9a-f]{32}/)?.[0]}:slot-0`
+    return `__DOLPHIN_UPLOAD_STAGE_SLOT__${command.match(/\.sftp-namespace-[0-9a-f]{32}/)?.[0]}:slot-0`
   }
   if (command.includes('SELECT 1 AS ready')) {
     return frame('unsupported')
@@ -87,8 +87,8 @@ function connection(system = false): SshConnection {
 beforeEach(async () => {
   vi.resetAllMocks()
   vi.spyOn(console, 'warn').mockImplementation(() => {})
-  cacheRoot = await mkdtemp(join(tmpdir(), 'orca-vault-runtime-'))
-  runtime = join(cacheRoot, 'repair-1-orcad-bun')
+  cacheRoot = await mkdtemp(join(tmpdir(), 'dolphin-vault-runtime-'))
+  runtime = join(cacheRoot, 'repair-1-dolphind-bun')
   await writeFile(runtime, 'verified runtime')
   mocks.materialize.mockResolvedValue(runtime)
   mocks.target.mockResolvedValue('linux-x64-glibc')
@@ -134,7 +134,7 @@ describe('SSH OpenCode runtime setup', () => {
     expect(mocks.materialize).toHaveBeenCalledWith('linux-x64-glibc', cacheRoot, {
       signal: expect.any(AbortSignal)
     })
-    expect(await readdir(cacheRoot)).toEqual(['repair-1-orcad-bun'])
+    expect(await readdir(cacheRoot)).toEqual(['repair-1-dolphind-bun'])
     expect(JSON.parse(mocks.write.mock.calls[0][3])).toEqual({ protocol: 1, executable: binary })
   })
 
@@ -152,7 +152,7 @@ describe('SSH OpenCode runtime setup', () => {
     const uploadOptions = mocks.upload.mock.calls[0][4]
     const writeOptions = mocks.write.mock.calls[0][4]
     expect(uploadOptions.sftpNamespace.homeRelativeNamespaceRoot).toMatch(
-      /^\.orca-remote\/\.upload-stages\/slot-0$/
+      /^\.dolphin-remote\/\.upload-stages\/slot-0$/
     )
     expect(uploadOptions.sftpNamespace.shellProbePath).toBe(
       writeOptions.sftpNamespace.shellProbePath

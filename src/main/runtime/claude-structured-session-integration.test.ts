@@ -10,12 +10,12 @@ import {
   STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY
 } from '../../shared/protocol-version'
 import { fakeClaude } from './claude-structured-fake-connection-test-fixture'
-import { claudeSessionIdForOrcaSession } from '../claude/claude-structured-launch-resolution'
+import { claudeSessionIdForDolphinSession } from '../claude/claude-structured-launch-resolution'
 import { CLAUDE_SPAWN_TOKEN_ENV } from '../claude/claude-structured-owner-identity'
 import { attachFingerprintFields } from '../native-chat/agent-session-wire/structured-agent-session-attach'
 import { getStructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-registry'
 import type { StructuredAgentSessionStatusSink } from '../native-chat/agent-session-wire/structured-agent-session-status-feed'
-import type { OrcaRuntimeService } from './orca-runtime'
+import type { DolphinRuntimeService } from './dolphin-runtime'
 import type { RpcRequest, RpcResponse } from './rpc/core'
 import type { ClaudeStructuredAuthPolicy } from '../claude-accounts/claude-structured-auth-policy'
 import { RpcDispatcher } from './rpc/dispatcher'
@@ -28,7 +28,7 @@ import {
 } from './structured-agent-session-runtime'
 
 const SESSION = 'claude-integration-1'
-const PROVIDER_SESSION = claudeSessionIdForOrcaSession(SESSION)
+const PROVIDER_SESSION = claudeSessionIdForDolphinSession(SESSION)
 const WORKSPACE = 'workspace-claude'
 // Why 'runtime': this file exercises the Claude structured integration over agentSession.*, not the
 // mobile surface — nothing here asserts anything mobile-specific, and its sibling integration
@@ -210,7 +210,7 @@ beforeEach(async () => {
     ANTHROPIC_AUTH_TOKEN: 'configured-token',
     ANTHROPIC_BASE_URL: 'https://gateway.example.test'
   }
-  root = await mkdtemp(join(tmpdir(), 'orca-claude-structured-integration-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-claude-structured-integration-'))
   recordAccountHomePath = join(root, 'claude-home')
   transcriptPath = join(root, 'claude-home', 'projects', 'workspace', `${PROVIDER_SESSION}.jsonl`)
   await mkdir(join(root, 'claude-home', 'projects', 'workspace'), { recursive: true })
@@ -254,7 +254,7 @@ beforeEach(async () => {
     cleanupSubscriptionsByPrefix: () => {}
   }
   dispatcher = new RpcDispatcher({
-    runtime: runtime as unknown as OrcaRuntimeService,
+    runtime: runtime as unknown as DolphinRuntimeService,
     methods: STRUCTURED_AGENT_SESSION_METHODS
   })
 })
@@ -622,7 +622,7 @@ describe('a structured Claude session over agentSession.*', () => {
     )
 
     // A background task can wake Claude after the preceding dispatch settled.
-    // This assistant frame opens the provider-owned turn without an Orca send
+    // This assistant frame opens the provider-owned turn without a Dolphin send
     // echo; Stop must target that frame's id rather than the settled user row.
     claude.live().handlers.onMessage?.({
       type: 'assistant',

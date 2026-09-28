@@ -31,8 +31,8 @@ import { getOptionalStringFlag, getRequiredStringFlag } from '../flags'
 import { resolveRepoPathArgument } from '../repo-path-arguments'
 import { RuntimeClientError, type RuntimeRpcSuccess } from '../runtime-client'
 
-// Why: an Orca server that predates project host setup answers `method_not_found`, which reads
-// as an Orca bug rather than a version gap — and since --host runtime:<id> now routes these
+// Why: a Dolphin server that predates project host setup answers `method_not_found`, which reads
+// as a Dolphin bug rather than a version gap — and since --host runtime:<id> now routes these
 // commands to that server, a client can reach an older host without meaning to. The desktop
 // already names this case; match it instead of surfacing the raw dispatcher error.
 async function callProjectHostSetup<TResult>(

@@ -19,7 +19,7 @@ function refused(message: string): TurnOutcome<AgentSessionThreadGoalResult> {
 
 /** Keyed by the operation, so a replayed set upserts its one objective row. */
 function objectiveIdentity(clientOperationId: string): AgentJournalItemIdentity {
-  return { provider: 'orca', clientMessageId: `thread-goal:${clientOperationId}` }
+  return { provider: 'dolphin', clientMessageId: `thread-goal:${clientOperationId}` }
 }
 
 /** Whether the journal's latest goal already shows this change applied. The

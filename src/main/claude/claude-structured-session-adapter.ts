@@ -70,7 +70,7 @@ export class ClaudeStructuredSessionAdapter implements StructuredAgentSessionAda
 
   supportsLocation = supportsClaudeStructuredLocation
 
-  // Orca's marker-based rewind proof can never pass on the real binary; rewind returns via a fork.
+  // Dolphin's marker-based rewind proof can never pass on the real binary; rewind returns via a fork.
   rewindSupport: NonNullable<StructuredAgentSessionAdapter['rewindSupport']> = () => ({
     supported: false,
     reason: 'unsupported'

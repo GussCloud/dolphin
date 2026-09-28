@@ -204,11 +204,11 @@ describe('paneOwnsQueuedStartup', () => {
     observeConnect()
     // connectPanePty took it; the lifecycle nulls the outer slot so splits cannot replay it.
     deps.startup = null
-    splitPaneWithOneShotStartup(deps, { command: 'orca setup' }, () => {
+    splitPaneWithOneShotStartup(deps, { command: 'dolphin setup' }, () => {
       observeConnect()
       return { id: 2 }
     })
-    splitPaneWithOneShotStartup(deps, { command: 'orca issue' }, () => {
+    splitPaneWithOneShotStartup(deps, { command: 'dolphin issue' }, () => {
       observeConnect()
       return { id: 3 }
     })
@@ -219,16 +219,16 @@ describe('paneOwnsQueuedStartup', () => {
   // Why this case matters: a truthiness regression ("has a startup") passes the test above, because
   // the split payload is non-null there too. Only a structurally-identical payload separates them.
   it('denies ownership to a split payload structurally identical to the queued command', () => {
-    const queuedStartup = { command: 'orca setup' }
+    const queuedStartup = { command: 'dolphin setup' }
 
-    expect(paneOwnsQueuedStartup({ command: 'orca setup' }, queuedStartup)).toBe(false)
+    expect(paneOwnsQueuedStartup({ command: 'dolphin setup' }, queuedStartup)).toBe(false)
     expect(paneOwnsQueuedStartup(queuedStartup, queuedStartup)).toBe(true)
   })
 
   it('denies ownership when the tab queued nothing, so an unrelated pane cannot spend a slot', () => {
     expect(paneOwnsQueuedStartup(null, null)).toBe(false)
     expect(paneOwnsQueuedStartup(undefined, undefined)).toBe(false)
-    expect(paneOwnsQueuedStartup({ command: 'orca setup' }, null)).toBe(false)
+    expect(paneOwnsQueuedStartup({ command: 'dolphin setup' }, null)).toBe(false)
   })
 })
 
@@ -316,7 +316,7 @@ describe('splitPaneWithOneShotStartup', () => {
 
     const createdPane = splitPaneWithOneShotStartup(
       deps,
-      { command: 'orca setup', env: { ORCA_ROLE: 'setup' } },
+      { command: 'dolphin setup', env: { DOLPHIN_ROLE: 'setup' } },
       () => {
         seenStartupValues.push(deps.startup ?? null)
         return { id: 2 }
@@ -324,7 +324,9 @@ describe('splitPaneWithOneShotStartup', () => {
     )
 
     expect(createdPane).toEqual({ id: 2 })
-    expect(seenStartupValues).toEqual([{ command: 'orca setup', env: { ORCA_ROLE: 'setup' } }])
+    expect(seenStartupValues).toEqual([
+      { command: 'dolphin setup', env: { DOLPHIN_ROLE: 'setup' } }
+    ])
     expect(deps.startup).toBeNull()
   })
 
@@ -336,7 +338,7 @@ describe('splitPaneWithOneShotStartup', () => {
 
     splitPaneWithOneShotStartup(
       deps,
-      { command: 'orca setup', env: { ORCA_ROLE: 'setup' } },
+      { command: 'dolphin setup', env: { DOLPHIN_ROLE: 'setup' } },
       () => {
         seenStartupValues.push(deps.startup ?? null)
         return { id: 2 }
@@ -345,14 +347,14 @@ describe('splitPaneWithOneShotStartup', () => {
 
     expect(deps.startup).toBeNull()
 
-    splitPaneWithOneShotStartup(deps, { command: 'orca issue' }, () => {
+    splitPaneWithOneShotStartup(deps, { command: 'dolphin issue' }, () => {
       seenStartupValues.push(deps.startup ?? null)
       return { id: 3 }
     })
 
     expect(seenStartupValues).toEqual([
-      { command: 'orca setup', env: { ORCA_ROLE: 'setup' } },
-      { command: 'orca issue' }
+      { command: 'dolphin setup', env: { DOLPHIN_ROLE: 'setup' } },
+      { command: 'dolphin issue' }
     ])
     expect(deps.startup).toBeNull()
 
@@ -371,9 +373,9 @@ describe('splitPaneWithOneShotStartup', () => {
       throw new Error('split failed')
     })
 
-    expect(() => splitPaneWithOneShotStartup(deps, { command: 'orca setup' }, splitPane)).toThrow(
-      'split failed'
-    )
+    expect(() =>
+      splitPaneWithOneShotStartup(deps, { command: 'dolphin setup' }, splitPane)
+    ).toThrow('split failed')
 
     expect(splitPane).toHaveBeenCalledTimes(1)
     expect(deps.startup).toBeNull()

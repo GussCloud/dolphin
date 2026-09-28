@@ -10,7 +10,7 @@ const CONFIG_PATH = resolve(import.meta.dirname, '../electron-builder.config.cjs
 function loadConfigWithEnv(env) {
   const saved = { ...process.env }
   for (const key of Object.keys(process.env)) {
-    if (key.startsWith('ORCA_')) {
+    if (key.startsWith('DOLPHIN_')) {
       delete process.env[key]
     }
   }
@@ -24,11 +24,11 @@ function loadConfigWithEnv(env) {
   }
 }
 
-const WIN_SIGNED_ENV = { ORCA_WIN_SIGNPATH_SIGNED: '1' }
+const WIN_SIGNED_ENV = { DOLPHIN_WIN_SIGNPATH_SIGNED: '1' }
 
 const WIN_ADHOC_ENV = {
-  ORCA_WIN_ADHOC: '1',
-  ORCA_ADHOC_BUILD_VERSION: '1.4.178-adhoc.20260819010203'
+  DOLPHIN_WIN_ADHOC: '1',
+  DOLPHIN_ADHOC_BUILD_VERSION: '1.4.178-adhoc.20260819010203'
 }
 
 afterEach(() => {
@@ -78,9 +78,9 @@ describe('electron-builder dev-channel identity', () => {
   })
 
   it.each([
-    ['hourly', { ORCA_WIN_HOURLY: '1' }, 'dolphin-hourly'],
-    ['daily', { ORCA_WIN_DAILY: '1' }, 'dolphin-daily'],
-    ['adhoc', { ORCA_WIN_ADHOC: '1' }, 'dolphin-adhoc']
+    ['hourly', { DOLPHIN_WIN_HOURLY: '1' }, 'dolphin-hourly'],
+    ['daily', { DOLPHIN_WIN_DAILY: '1' }, 'dolphin-daily'],
+    ['adhoc', { DOLPHIN_WIN_ADHOC: '1' }, 'dolphin-adhoc']
   ])('publishes %s Windows builds to its own repo as a prerelease', (_channel, env, repo) => {
     const config = loadConfigWithEnv(env)
 
@@ -88,7 +88,7 @@ describe('electron-builder dev-channel identity', () => {
     expect(config.publish.releaseType).toBe('prerelease')
   })
 
-  // Why: ORCA_MAC_* gates hardened runtime, notarization, and root-level
+  // Why: DOLPHIN_MAC_* gates hardened runtime, notarization, and root-level
   // forceCodeSigning. If the Windows variables leaked into that, the Windows job
   // would fail packaging for want of a cert it deliberately does not use.
   it('leaves mac release signing off for Windows dev builds', () => {
@@ -101,8 +101,8 @@ describe('electron-builder dev-channel identity', () => {
 
   it('still notarizes mac dev builds', () => {
     const config = loadConfigWithEnv({
-      ORCA_MAC_ADHOC: '1',
-      ORCA_ADHOC_BUILD_VERSION: '1.4.178-adhoc.20260819010203'
+      DOLPHIN_MAC_ADHOC: '1',
+      DOLPHIN_ADHOC_BUILD_VERSION: '1.4.178-adhoc.20260819010203'
     })
 
     expect(config.mac.notarize).toBe(true)
@@ -116,7 +116,7 @@ describe('collectDevChannelPackagingProblems', () => {
     extraMetadata: { version: '1.4.178-adhoc.20260819010203' },
     win: { verifyUpdateCodeSignature: false }
   }
-  const env = { ORCA_ADHOC_BUILD_VERSION: '1.4.178-adhoc.20260819010203' }
+  const env = { DOLPHIN_ADHOC_BUILD_VERSION: '1.4.178-adhoc.20260819010203' }
 
   it('accepts a correctly configured Windows dev build', () => {
     expect(

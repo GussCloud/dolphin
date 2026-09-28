@@ -1,6 +1,6 @@
 import path from 'node:path'
 import type { ElectronApplication, TestInfo } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { openSidebarProjectDialog } from './helpers/sidebar-project-dialog'
 import {
   createRuntimeDesktopPairingOffer,
@@ -10,15 +10,15 @@ import {
 test.use({
   seedTestRepo: false,
   testRepoPath: '',
-  orcaAppExtraEnv: { ORCA_BACKGROUND_LAUNCH: '1' }
+  dolphinAppExtraEnv: { DOLPHIN_BACKGROUND_LAUNCH: '1' }
 })
 
 async function assertHiddenIsolation(app: ElectronApplication, testInfo: TestInfo, name: string) {
   const isolation = await app.evaluate(({ app, BrowserWindow }) => ({
     home: app.getPath('home'),
-    expectedHome: process.env.ORCA_E2E_HOME_DIR,
+    expectedHome: process.env.DOLPHIN_E2E_HOME_DIR,
     appPath: app.getAppPath(),
-    background: process.env.ORCA_BACKGROUND_LAUNCH,
+    background: process.env.DOLPHIN_BACKGROUND_LAUNCH,
     windows: BrowserWindow.getAllWindows().map((window) => ({
       visible: window.isVisible(),
       focused: window.isFocused()
@@ -35,12 +35,12 @@ async function assertHiddenIsolation(app: ElectronApplication, testInfo: TestInf
 for (const theme of ['dark', 'light'] as const) {
   test(`invalid host project path stays readable over its dialog (${theme})`, async ({
     electronApp,
-    orcaPage
+    dolphinPage
   }, testInfo) => {
     const hostHome = await assertHiddenIsolation(electronApp, testInfo, 'host-isolation')
-    const offer = await createRuntimeDesktopPairingOffer(orcaPage)
+    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
     const client = await launchPairedElectronClient(offer, testInfo, 'Disposable host', {
-      extraEnv: { ORCA_BACKGROUND_LAUNCH: '1' }
+      extraEnv: { DOLPHIN_BACKGROUND_LAUNCH: '1' }
     })
     try {
       await assertHiddenIsolation(client.app, testInfo, 'client-isolation')
@@ -172,7 +172,7 @@ for (const theme of ['dark', 'light'] as const) {
       await assertHiddenIsolation(client.app, testInfo, 'client-final-isolation')
       await assertHiddenIsolation(electronApp, testInfo, 'host-final-isolation')
       expect(await client.getDirectSshAttemptTargetIds()).toEqual([])
-      expect(await orcaPage.evaluate(() => window.api.repos.list())).toEqual([])
+      expect(await dolphinPage.evaluate(() => window.api.repos.list())).toEqual([])
     } finally {
       await client.dispose()
     }

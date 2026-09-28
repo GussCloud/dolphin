@@ -7,7 +7,7 @@ This discovery stub loads the version-matched guide from the Dolphin executable 
 ## Load the version-matched guide before running Dolphin commands
 
 ```text
-ORCA skills get computer-use
+DOLPHIN skills get computer-use
 ```
 
 <!-- shared: no-guessing -->

@@ -13,7 +13,7 @@ import { computeAgentLaunchFingerprint } from '../../../../shared/agent-launch-o
 import { AgentSessionRecordStore } from '../../agent-session-record-store'
 import { setStructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-registry'
 import type { StructuredAgentSessionHost } from '../../../native-chat/agent-session-wire/structured-agent-session-host'
-import type { OrcaRuntimeService } from '../../orca-runtime'
+import type { DolphinRuntimeService } from '../../dolphin-runtime'
 import type { RpcContext } from '../core'
 import { RpcDispatcher } from '../dispatcher'
 import {
@@ -207,7 +207,7 @@ describe('a taken session id under a named operation', () => {
   let store: AgentSessionRecordStore
 
   beforeEach(async () => {
-    directory = await mkdtemp(join(tmpdir(), 'orca-agent-launch-session-'))
+    directory = await mkdtemp(join(tmpdir(), 'dolphin-agent-launch-session-'))
     store = await AgentSessionRecordStore.open({ directory, hostId: 'local' })
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: `deps.store` is the only member `agent.launch` reads, and a member it omits throws on call.
     setStructuredAgentSessionHost({ deps: { store } } as unknown as StructuredAgentSessionHost)
@@ -244,7 +244,7 @@ describe('a taken session id under a named operation', () => {
     const runtime = runtimeStub({ settings: STRUCTURED_PREFERENCE })
     const dispatcher = new RpcDispatcher({
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the fixture implements every runtime method reached by agent.launch and dispatcher metadata.
-      runtime: { ...runtime, getRuntimeId: () => 'runtime-1' } as unknown as OrcaRuntimeService,
+      runtime: { ...runtime, getRuntimeId: () => 'runtime-1' } as unknown as DolphinRuntimeService,
       methods: AGENT_LAUNCH_METHODS
     })
     const params = AGENT_LAUNCH_REPLAY.params.parse({

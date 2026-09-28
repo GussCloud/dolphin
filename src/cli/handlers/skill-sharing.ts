@@ -41,12 +41,12 @@ function stringFlag(ctx: HandlerContext, name: string): string | undefined {
 }
 
 function rejectForwardedSkillFilesystem(ctx: HandlerContext, command: string): void {
-  if (!process.env.ORCA_CLI_CWD && !ctx.client.isRemote) {
+  if (!process.env.DOLPHIN_CLI_CWD && !ctx.client.isRemote) {
     return
   }
   throw new RuntimeClientError(
     'invalid_environment',
-    `dolphin skills ${command} must run on the machine whose installed skills you want to use. Run the command from an Dolphin terminal on that machine.`
+    `dolphin skills ${command} must run on the machine whose installed skills you want to use. Run the command from a Dolphin terminal on that machine.`
   )
 }
 

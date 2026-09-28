@@ -20,14 +20,14 @@ let root: Root
 const repo: Repo = {
   id: 'remote-repo',
   displayName: 'Dolphin',
-  path: '/srv/orca',
+  path: '/srv/dolphin',
   badgeColor: '#737373',
   addedAt: 100,
   kind: 'git',
   executionHostId: 'runtime:hub'
 }
 const project: Project = {
-  id: 'github:stablyai/orca',
+  id: 'github:GussCloud/dolphin',
   displayName: 'Dolphin',
   badgeColor: '#737373',
   sourceRepoIds: [repo.id],
@@ -120,7 +120,7 @@ describe('RepositoryHostSetupsSection workspace window availability', () => {
   })
 
   it('keeps a graph-ready runtime owner Ready when it reports no desktop window', () => {
-    // Why: headless `orca serve` (#6844) owns a ready graph with an openable
+    // Why: headless `dolphin serve` (#6844) owns a ready graph with an openable
     // desktop window — the degraded check must not widen into a renderer requirement.
     renderWithOwnerStatus(makeStatus({ graphStatus: 'ready', desktopWindowStatus: 'openable' }))
 

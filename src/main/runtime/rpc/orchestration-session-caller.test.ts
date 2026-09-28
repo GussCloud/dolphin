@@ -6,7 +6,7 @@ import { ZodObject } from 'zod'
 import type { OrchestrationCompatibilityEvidence } from '../../../shared/orchestration-compatibility-evidence'
 import { ORCHESTRATION_SESSION_CALLER_ERROR_CODES as CODES } from '../../../shared/orchestration-session-caller-codes'
 import { DeviceRegistry } from '../device-registry'
-import { OrcaRuntimeRpcServer } from '../runtime-rpc'
+import { DolphinRuntimeRpcServer } from '../runtime-rpc'
 import { buildRegistry } from './core'
 import { ORCHESTRATION_METHODS } from './methods/orchestration'
 import {
@@ -160,8 +160,8 @@ describe('orchestration session callers at the dispatch entry', () => {
   )
 
   it('admits the session on the real Unix-socket route and refuses it on the real paired route', async () => {
-    const userDataPath = mkdtempSync(join(tmpdir(), 'orca-session-caller-'))
-    const server = new OrcaRuntimeRpcServer({
+    const userDataPath = mkdtempSync(join(tmpdir(), 'dolphin-session-caller-'))
+    const server = new DolphinRuntimeRpcServer({
       runtime: h.runtime,
       userDataPath,
       enableWebSocket: false
@@ -198,9 +198,9 @@ describe('orchestration session callers at the dispatch entry', () => {
       h.db.getCurrentRunForCoordinator({
         terminalHandle: null,
         paneKey: null,
-        orcaSessionId: SESSION_X
+        dolphinSessionId: SESSION_X
       })
-    ).toMatchObject({ objective: 'o', coordinator_orca_session_id: SESSION_X })
+    ).toMatchObject({ objective: 'o', coordinator_dolphin_session_id: SESSION_X })
   })
 
   describe('refuses a session that cannot act, before any destructive or consuming lookup', () => {
@@ -209,7 +209,7 @@ describe('orchestration session callers at the dispatch entry', () => {
         objective: 'x',
         coordinatorHandle: null,
         coordinatorPaneKey: null,
-        coordinatorOrcaSessionId: SESSION_X
+        coordinatorDolphinSessionId: SESSION_X
       })
       const message = h.db.insertMessage({
         from: 'term_worker',
@@ -243,19 +243,19 @@ describe('orchestration session callers at the dispatch entry', () => {
       expect(h.db.getMessageById(messageId)).toMatchObject({ read: 0 })
     }
 
-    it('an id that names no Orca session', async () => {
+    it('an id that names no Dolphin session', async () => {
       await expectRefusedWithNoEffects(
         'ffffffff-0000-4000-8000-000000000000',
         CODES.unknown,
-        /No Orca agent session .* exists on this host/
+        /No Dolphin agent session .* exists on this host/
       )
     })
 
     it('a terminal handle presented as a session id', async () => {
-      await expectRefusedWithNoEffects('term_4f2c9a0b', CODES.unknown, /not an Orca session id/)
+      await expectRefusedWithNoEffects('term_4f2c9a0b', CODES.unknown, /not a Dolphin session id/)
     })
 
-    it("a provider's session id, with a hint naming the Orca id", async () => {
+    it("a provider's session id, with a hint naming the Dolphin id", async () => {
       const response = await h.dispatch(
         orchestrationRequest('orchestration.runCurrent', {}, { sessionId: PROVIDER_ID_X })
       )
@@ -263,8 +263,8 @@ describe('orchestration session callers at the dispatch entry', () => {
         ok: false,
         error: {
           code: CODES.providerId,
-          message: expect.stringContaining(`This session's Orca id is ${SESSION_X}`),
-          data: { orcaSessionId: SESSION_X, effectsApplied: false }
+          message: expect.stringContaining(`This session's Dolphin id is ${SESSION_X}`),
+          data: { dolphinSessionId: SESSION_X, effectsApplied: false }
         }
       })
       await expectRefusedWithNoEffects(PROVIDER_ID_X, CODES.providerId, /changes on \/clear/)
@@ -336,7 +336,7 @@ describe('orchestration session callers at the dispatch entry', () => {
         error: { code: CODES.notLive, message: expect.stringContaining('no longer has') }
       })
       expect(
-        h.db.listRuns().runs.filter((row) => row.coordinator_orca_session_id !== null)
+        h.db.listRuns().runs.filter((row) => row.coordinator_dolphin_session_id !== null)
       ).toEqual([])
     })
 
@@ -399,6 +399,6 @@ describe('orchestration session callers at the dispatch entry', () => {
 
     const run = resultOf(await h.dispatch(request)).run
     expect(run).toMatchObject({ coordinator_handle: 'term_worker' })
-    expect(h.db.getRunRaw(idOf(run))?.coordinator_orca_session_id).toBeNull()
+    expect(h.db.getRunRaw(idOf(run))?.coordinator_dolphin_session_id).toBeNull()
   })
 })

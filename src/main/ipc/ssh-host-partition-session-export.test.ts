@@ -33,7 +33,7 @@ const ipcHandlers = new Map<string, (event: unknown, ...args: unknown[]) => unkn
 vi.mock('electron', () => ({
   app: {
     getPath: () => tmpdir(),
-    getName: () => 'orca-test',
+    getName: () => 'dolphin-test',
     getVersion: () => '0.0.0-test',
     isPackaged: false,
     on: () => {},
@@ -163,9 +163,9 @@ beforeEach(() => {
 /** The observed shape from #12721: the runtime owns the tab list in `ssh:<targetId>` while the
  *  local blob still carries the worktree key with an empty list. */
 function createStrandedStore(): InstanceType<typeof Store> {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'orca-ssh-partition-export-')))
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'dolphin-ssh-partition-export-')))
   directories.push(dir)
-  const store = createSqliteTestStore(Store, { dataFile: join(dir, 'orca-data.json') })
+  const store = createSqliteTestStore(Store, { dataFile: join(dir, 'dolphin-data.json') })
   store.addRepo(remoteRepo(REPO_ID, '/remote/checkout', TARGET_ID))
   // A second populated SSH partition: the fallback has to reach the publishing target's own
   // partition, not merely "some" partition that happens to hold tabs.

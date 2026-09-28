@@ -13,12 +13,12 @@ not create a second automatic-resume identity.
 
 `tests/tools/omp-resume-transcript-locator-smoke.mjs` creates an actual OMP session
 outside its default session store. UUID lookup fails there; the absolute path and
-Orca's generated argv resume the original session. Run it with Bun and a read-only
-OMP checkout as argv[2], under `ORCA_BACKGROUND_LAUNCH=1`. It uses a disposable home
+Dolphin's generated argv resume the original session. Run it with Bun and a read-only
+OMP checkout as argv[2], under `DOLPHIN_BACKGROUND_LAUNCH=1`. It uses a disposable home
 and makes no model requests.
 
 This bounded correction follows the resume-locator portion of
-[PR #16276](https://github.com/stablyai/orca/pull/16276) by @CodeHourra. It does not
+[PR #16276](https://github.com/GussCloud/dolphin/pull/16276) by @CodeHourra. It does not
 adopt that PR's reattach injection or title changes. The reattach proposal treats
 missing snapshot/replay as permission to type a resume command, but
 `daemon-pty-spawn-result.ts` explicitly permits `isReattach: true` without a

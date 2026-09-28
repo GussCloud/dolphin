@@ -23,15 +23,15 @@ const targets = ['AppImage', 'deb', 'rpm']
 const valueAfter = (args, flag) => args[args.indexOf(flag) + 1]
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'orca formats with spaces-'))
+  root = mkdtempSync(join(tmpdir(), 'dolphin formats with spaces-'))
   preparedDirectory = join(root, 'prepared app')
   outputDirectory = join(root, 'output packages')
   mkdirSync(join(preparedDirectory, 'resources'), { recursive: true })
   mkdirSync(outputDirectory)
   writeFileSync(join(preparedDirectory, 'resources/package-type'), 'AppImage')
   writeFileSync(join(preparedDirectory, 'resources/app.asar'), 'verified application')
-  writeFileSync(join(preparedDirectory, 'orca-ide'), 'executable')
-  chmodSync(join(preparedDirectory, 'orca-ide'), 0o755)
+  writeFileSync(join(preparedDirectory, 'dolphin-ide'), 'executable')
+  chmodSync(join(preparedDirectory, 'dolphin-ide'), 0o755)
 })
 
 afterEach(() => rmSync(root, { recursive: true, force: true }))
@@ -42,7 +42,7 @@ function emitPackage(args) {
   const output = valueAfter(args, '--config.directories.output')
   writeFileSync(join(app, 'resources/package-type'), format)
   mkdirSync(output, { recursive: true })
-  writeFileSync(join(output, `orca.${format}`), format)
+  writeFileSync(join(output, `dolphin.${format}`), format)
   writeFileSync(join(output, 'latest-linux.yml'), format)
   return { format, app, output }
 }
@@ -91,7 +91,7 @@ describe('independent Linux package formats', () => {
         expect(readFileSync(join(app, 'resources/app.asar'), 'utf8')).toBe('verified application')
         if (process.platform !== 'win32') {
           expect(readlinkSync(join(app, 'marker-link'))).toBe('resources/package-type')
-          expect(statSync(join(app, 'orca-ide')).mode & 0o777).toBe(0o755)
+          expect(statSync(join(app, 'dolphin-ide')).mode & 0o777).toBe(0o755)
           expect(statSync(join(app, 'resources/package-type')).ino).not.toBe(
             statSync(join(preparedDirectory, 'resources/package-type')).ino
           )
@@ -113,7 +113,7 @@ describe('independent Linux package formats', () => {
       'verified application'
     )
     for (const format of targets) {
-      expect(readFileSync(join(outputDirectory, `orca.${format}`), 'utf8')).toBe(format)
+      expect(readFileSync(join(outputDirectory, `dolphin.${format}`), 'utf8')).toBe(format)
       expect(
         readFileSync(
           join(outputDirectory, 'linux-package-formats', format, 'latest-linux.yml'),
@@ -172,7 +172,7 @@ describe('independent Linux package formats', () => {
         runBuilder: async (args) => {
           const result = emitPackage(args)
           if (result.format === 'rpm') {
-            writeFileSync(join(result.output, 'orca.rpm'), '')
+            writeFileSync(join(result.output, 'dolphin.rpm'), '')
           }
         }
       })
@@ -181,7 +181,7 @@ describe('independent Linux package formats', () => {
   })
 
   it('does not replace existing output packages', async () => {
-    writeFileSync(join(outputDirectory, 'orca.deb'), 'previous package')
+    writeFileSync(join(outputDirectory, 'dolphin.deb'), 'previous package')
     await expect(
       packageLinuxFormats({
         preparedDirectory,
@@ -191,8 +191,8 @@ describe('independent Linux package formats', () => {
         }
       })
     ).rejects.toThrow('Refusing to replace existing package output')
-    expect(readdirSync(outputDirectory)).toEqual(['orca.deb'])
-    expect(readFileSync(join(outputDirectory, 'orca.deb'), 'utf8')).toBe('previous package')
+    expect(readdirSync(outputDirectory)).toEqual(['dolphin.deb'])
+    expect(readFileSync(join(outputDirectory, 'dolphin.deb'), 'utf8')).toBe('previous package')
   })
 
   it('rejects a tree already mutated by a previous root-package build', async () => {

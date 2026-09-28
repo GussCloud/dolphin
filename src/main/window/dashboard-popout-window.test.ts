@@ -173,9 +173,9 @@ const RENDERER_URL = 'http://localhost:5173'
 
 // These cases exercise foreground behavior against Electron mocks.
 beforeEach(() => {
-  vi.stubEnv('ORCA_BACKGROUND_LAUNCH', undefined)
-  vi.stubEnv('ORCA_E2E_HEADLESS', undefined)
-  vi.stubEnv('ORCA_E2E_HEADFUL', undefined)
+  vi.stubEnv('DOLPHIN_BACKGROUND_LAUNCH', undefined)
+  vi.stubEnv('DOLPHIN_E2E_HEADLESS', undefined)
+  vi.stubEnv('DOLPHIN_E2E_HEADFUL', undefined)
 })
 afterEach(() => vi.unstubAllEnvs())
 
@@ -207,7 +207,7 @@ describe('createOrFocusDashboardPopout', () => {
     expect(opts.frame).toBeUndefined()
     expect(opts.backgroundColor).toBe('#0a0a0a') // dark theme mock
     expect(opts.webPreferences?.sandbox).toBe(true)
-    expect(opts.webPreferences?.partition).toBe('orca-dashboard-popout')
+    expect(opts.webPreferences?.partition).toBe('dolphin-dashboard-popout')
     expect(opts.webPreferences?.webviewTag).toBe(false)
     expect(opts.webPreferences?.preload).toMatch(/preload[\\/]index\.js$/)
     // Why unstamped: no guest of ours can run here, so this renderer hosts no client-placed page

@@ -2,18 +2,21 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { getAppEnvironment } from '../../shared/app-environment'
 import { waitForPromiseWithSignal } from '../../shared/abort-signal-reason'
-import { ORCAD_BUN_RELEASE_ASSETS, type OrcadBunTarget } from '../../shared/orcad-bun-runtime'
+import {
+  DOLPHIND_BUN_RELEASE_ASSETS,
+  type DolphindBunTarget
+} from '../../shared/dolphind-bun-runtime'
 import { RELAY_OPENCODE_SQLITE_READER_FILENAME } from '../../shared/relay-artifacts'
 import { parseWslUncPath, toWindowsWslUncPath } from '../../shared/wsl-paths'
 import { relayBundleCandidates } from '../ssh/relay-bundle-paths'
-import { materializeCachedOrcadBunRuntime } from '../ssh/orcad-bun-runtime-materializer'
-import { parseOrcadLinuxLibc } from '../ssh/orcad-deployment-target'
+import { materializeCachedDolphindBunRuntime } from '../ssh/dolphind-bun-runtime-materializer'
+import { parseDolphindLinuxLibc } from '../ssh/dolphind-deployment-target'
 import { runWslProcess, type WslSpec } from '../wsl/wsl-runner'
 import { filterPathsToRunningWslDistrosAsync } from '../wsl-running-path-filter'
 import type { OpenCodeWslRuntime } from './session-scanner-opencode-wsl-runtime'
 
 const preparation = new Map<string, { value: OpenCodeWslRuntime; expires: number }>()
-const downloads = new Map<OrcadBunTarget, Promise<string>>()
+const downloads = new Map<DolphindBunTarget, Promise<string>>()
 const PREPARATION_TIMEOUT_MS = 180_000
 const SQLITE_PROBE = `const db=new (require('node:sqlite').DatabaseSync)(':memory:');db.prepare('SELECT 1').get();db.close();process.stdout.write(process.execPath)`
 
@@ -98,7 +101,7 @@ async function prepare(distro: string): Promise<OpenCodeWslRuntime> {
     .map((directory) => join(directory, RELAY_OPENCODE_SQLITE_READER_FILENAME))
     .find(existsSync)
   if (!reader) {
-    throw new Error('The bundled WSL SQLite reader is missing. Reinstall Orca to repair it.')
+    throw new Error('The bundled WSL SQLite reader is missing. Reinstall Dolphin to repair it.')
   }
   const hasDatabase = await run({
     script: [
@@ -133,7 +136,7 @@ async function prepare(distro: string): Promise<OpenCodeWslRuntime> {
     if (arch !== 'x86_64' && arch !== 'aarch64' && arch !== 'arm64') {
       throw new Error(`Unsupported WSL SQLite reader architecture: ${arch}`)
     }
-    const libc = parseOrcadLinuxLibc(
+    const libc = parseDolphindLinuxLibc(
       await run({
         script:
           'getconf GNU_LIBC_VERSION 2>/dev/null || ldd --version 2>&1 || ' +
@@ -142,12 +145,12 @@ async function prepare(distro: string): Promise<OpenCodeWslRuntime> {
       })
     )
     const target = `linux-${arch === 'x86_64' ? 'x64' : 'arm64'}-${libc}` as const
-    const expected = ORCAD_BUN_RELEASE_ASSETS[target].executableSha256
+    const expected = DOLPHIND_BUN_RELEASE_ASSETS[target].executableSha256
     const home = await run({ script: 'printf %s "$HOME"', loginPath: 'none' })
     if (!home.startsWith('/')) {
       throw new Error('WSL did not provide an absolute home directory.')
     }
-    executable = `${home}/.cache/orca/vault-sqlite/${expected}/bun`
+    executable = `${home}/.cache/dolphin/vault-sqlite/${expected}/bun`
     const present = await run({
       script: 'if [ -x "$1" ]; then sha256sum -- "$1"; fi',
       args: [executable],
@@ -156,9 +159,9 @@ async function prepare(distro: string): Promise<OpenCodeWslRuntime> {
     if (!present.startsWith(`${expected} `)) {
       let download = downloads.get(target)
       if (!download) {
-        download = materializeCachedOrcadBunRuntime(
+        download = materializeCachedDolphindBunRuntime(
           target,
-          join(app.getPath('userData'), 'orcad-artifacts'),
+          join(app.getPath('userData'), 'dolphind-artifacts'),
           {
             signal: AbortSignal.timeout(PREPARATION_TIMEOUT_MS)
           }

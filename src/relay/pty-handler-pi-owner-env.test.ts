@@ -34,16 +34,16 @@ vi.mock('../main/pty/posix-pty-process-groups', () => ({
 }))
 
 const ownerEnv = {
-  ORCA_PI_STATUS_OWNED: '1234',
-  ORCA_PRIME_AGENT_STATUS_OWNED: '1234',
-  ORCA_PI_TITLE_MARKER_OWNED: '1234'
+  DOLPHIN_PI_STATUS_OWNED: '1234',
+  DOLPHIN_PRIME_AGENT_STATUS_OWNED: '1234',
+  DOLPHIN_PI_TITLE_MARKER_OWNED: '1234'
 }
 const terminalEnv = {
-  ORCA_PANE_KEY: 'tab:11111111-1111-4111-8111-111111111111',
-  ORCA_TAB_ID: 'tab',
-  ORCA_WORKTREE_ID: 'folder:workspace',
-  ORCA_AGENT_LAUNCH_TOKEN: 'new-launch',
-  ORCA_AGENT_HOOK_TOKEN: 'receiver-token',
+  DOLPHIN_PANE_KEY: 'tab:11111111-1111-4111-8111-111111111111',
+  DOLPHIN_TAB_ID: 'tab',
+  DOLPHIN_WORKTREE_ID: 'folder:workspace',
+  DOLPHIN_AGENT_LAUNCH_TOKEN: 'new-launch',
+  DOLPHIN_AGENT_HOOK_TOKEN: 'receiver-token',
   KEEP_ME: 'terminal-value'
 }
 
@@ -101,6 +101,6 @@ describe('independent SSH terminal Pi ownership', () => {
     for (const key of Object.keys(ownerEnv)) {
       expect(env).not.toHaveProperty(key)
     }
-    expect(env.ORCA_PANE_KEY).toBe(terminalEnv.ORCA_PANE_KEY)
+    expect(env.DOLPHIN_PANE_KEY).toBe(terminalEnv.DOLPHIN_PANE_KEY)
   })
 })

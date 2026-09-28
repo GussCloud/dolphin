@@ -10,19 +10,19 @@ import {
 import {
   getExecutableAppArgs,
   resolveAppRoot,
-  resolveForegroundOrcaExecutable,
+  resolveForegroundDolphinExecutable,
   stripElectronRunAsNode
 } from './launch'
 import { RuntimeClientError } from './types'
 
 export function canLaunchProfileStateRecovery(): boolean {
-  return process.env.ELECTRON_RUN_AS_NODE === '1' || !!process.env.ORCA_APP_EXECUTABLE?.trim()
+  return process.env.ELECTRON_RUN_AS_NODE === '1' || !!process.env.DOLPHIN_APP_EXECUTABLE?.trim()
 }
 
 export async function launchProfileStateRecovery(
   request: ProfileStateRecoveryRequest
 ): Promise<ProfileStateRollbackResult> {
-  const executable = resolveForegroundOrcaExecutable()
+  const executable = resolveForegroundDolphinExecutable()
   const userDataPath = realpathSync(request.userDataPath)
   const response = await runProcess({
     program: executable,
@@ -35,8 +35,8 @@ export async function launchProfileStateRecovery(
     cwd: resolveAppRoot(),
     env: {
       ...stripElectronRunAsNode(process.env),
-      ORCA_BACKGROUND_LAUNCH: '1',
-      ORCA_USER_DATA_PATH: userDataPath
+      DOLPHIN_BACKGROUND_LAUNCH: '1',
+      DOLPHIN_USER_DATA_PATH: userDataPath
     },
     // Recovery may copy large backups; the lock owner must finish or be explicitly terminated.
     timeoutMs: null

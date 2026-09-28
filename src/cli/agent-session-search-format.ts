@@ -92,7 +92,7 @@ function formatUnavailable(
   }
   return [
     'This host runs no session search service.',
-    'An Dolphin host older than session search answers the same way; update it and try again.'
+    'A Dolphin host older than session search answers the same way; update it and try again.'
   ].join('\n')
 }
 

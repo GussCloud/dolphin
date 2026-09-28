@@ -28,8 +28,8 @@ vi.mock('../../hooks', () => ({
   hasHooksFile: mocks.hasHooks,
   loadHooks: mocks.loadHooks,
   getEffectiveHooks: mocks.effectiveHooks,
-  hasUnrecognizedOrcaYamlKeys: () => false,
-  parseOrcaYaml: () => ({ issueCommand: 'shared' })
+  hasUnrecognizedDolphinYamlKeys: () => false,
+  parseDolphinYaml: () => ({ issueCommand: 'shared' })
 }))
 vi.mock('../../issue-command-file', () => ({
   readIssueCommand: mocks.localRead,
@@ -181,7 +181,7 @@ describe.each(owners)('desktop hooks: $label', ({ fields, target }) => {
     if (channel === 'hooks:writeIssueCommand' && target) {
       expect(mocks.ignored).toHaveBeenCalledWith(repo.path, target)
       expect(mocks.remoteWrite).toHaveBeenCalledWith(
-        '/remote/fixture/.orca/issue-command',
+        '/remote/fixture/.dolphin/issue-command',
         'save\n'
       )
     }
@@ -213,7 +213,7 @@ describe.each(owners)('runtime hooks: $label', ({ fields, target }) => {
       if (method === 'write' && target) {
         expect(mocks.ignored).toHaveBeenCalledWith(repo.path, target)
         expect(mocks.remoteWrite).toHaveBeenCalledWith(
-          '/remote/fixture/.orca/issue-command',
+          '/remote/fixture/.dolphin/issue-command',
           'save\n'
         )
       }

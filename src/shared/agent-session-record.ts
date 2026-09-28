@@ -132,7 +132,7 @@ export type AgentSessionRecord = {
   options?: Record<string, string>
   rewind?: AgentSessionRewindRecord
   conversationCommand?: AgentSessionConversationCommandRecord
-  /** The name Orca gave this conversation, so a later acquisition need not name it again. */
+  /** The name Dolphin gave this conversation, so a later acquisition need not name it again. */
   conversationName?: string
   launchArgs?: AgentSessionLaunchArgs
   lease: AgentSessionLease

@@ -19,7 +19,7 @@ import { durableWriteTempPath, writeFileDurableSync } from '../../durable-file-w
 import type { ProfileStateMaintenance } from './profile-state-access'
 import { readProfileStateDomain } from './profile-state-domain-reader'
 import { isRecord } from './profile-state-document-validation'
-import { profileHasPendingProjectMove } from '../../orca-profiles/profile-project-move-record'
+import { profileHasPendingProjectMove } from '../../dolphin-profiles/profile-project-move-record'
 import {
   invalidateHttp1CompatibilityMarker,
   writeHttp1CompatibilityMarker

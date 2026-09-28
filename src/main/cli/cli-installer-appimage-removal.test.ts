@@ -27,9 +27,9 @@ describe.skipIf(process.platform === 'win32')('AppImage CLI removal', () => {
   it.each([false, true])(
     'removes installed payloads and the legacy live endpoint (command missing: %s)',
     async (removeCommandFirst) => {
-      const root = await mkdtemp(join(tmpdir(), 'orca-appimage-cli-remove-'))
+      const root = await mkdtemp(join(tmpdir(), 'dolphin-appimage-cli-remove-'))
       created.push(root)
-      const appImagePath = join(root, 'Orca.AppImage')
+      const appImagePath = join(root, 'Dolphin.AppImage')
       const cacheRootPath = join(root, 'cache')
       const commandPath = join(root, 'home', '.local', 'bin', 'dolphin-ide')
       const resourcesPath = join(root, 'mount', 'resources')
@@ -88,13 +88,13 @@ describe.skipIf(process.platform === 'win32')('AppImage CLI removal', () => {
   )
 
   it('does not remove a sibling AppImage registration or payload', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'orca-appimage-cli-siblings-'))
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-appimage-cli-siblings-'))
     created.push(root)
     const cacheRootPath = join(root, 'cache')
     const commandPath = join(root, 'home', '.local', 'bin', 'dolphin-ide')
     const resourcesPath = join(root, 'mount', 'resources')
-    const firstAppImagePath = join(root, 'Orca-stable.AppImage')
-    const secondAppImagePath = join(root, 'Orca-nightly.AppImage')
+    const firstAppImagePath = join(root, 'Dolphin-stable.AppImage')
+    const secondAppImagePath = join(root, 'Dolphin-nightly.AppImage')
     await mkdir(join(resourcesPath, 'bin'), { recursive: true })
     await Promise.all([
       writeFile(firstAppImagePath, '#!/usr/bin/env bash\n', { mode: 0o755 }),

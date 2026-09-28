@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import type { CliInstallStatus } from '../../../../shared/cli-install-types'
 import {
-  ORCA_CLI_SKILL_INSTALL_COMMAND,
-  ORCA_CLI_SKILL_NAME,
-  ORCA_CLI_SKILL_UPDATE_COMMAND
+  DOLPHIN_CLI_SKILL_INSTALL_COMMAND,
+  DOLPHIN_CLI_SKILL_NAME,
+  DOLPHIN_CLI_SKILL_UPDATE_COMMAND
 } from '@/lib/agent-feature-install-commands'
 import {
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE,
-  ensureOrcaCliAvailableForAgentSkillTerminal,
-  isOrcaCliAvailableOnPath
+  ensureDolphinCliAvailableForAgentSkillTerminal,
+  isDolphinCliAvailableOnPath
 } from '@/lib/agent-skill-cli-prerequisite'
 import { BROWSER_USE_ENABLED_STORAGE_KEY } from '@/lib/browser-use-setup-state'
 import {
@@ -57,11 +57,14 @@ export function BrowserUseSetup({
   const mountedRef = useMountedRef()
   const activeSkillRuntime = useActiveProjectSkillRuntime()
   const browserUseInstallCommand = !activeSkillRuntime.installDisabledReason
-    ? buildSkillCommandForRuntime(ORCA_CLI_SKILL_INSTALL_COMMAND, activeSkillRuntime.agentRuntime)
-    : ORCA_CLI_SKILL_INSTALL_COMMAND
+    ? buildSkillCommandForRuntime(
+        DOLPHIN_CLI_SKILL_INSTALL_COMMAND,
+        activeSkillRuntime.agentRuntime
+      )
+    : DOLPHIN_CLI_SKILL_INSTALL_COMMAND
   const browserUseUpdateCommand = !activeSkillRuntime.installDisabledReason
-    ? buildSkillCommandForRuntime(ORCA_CLI_SKILL_UPDATE_COMMAND, activeSkillRuntime.agentRuntime)
-    : ORCA_CLI_SKILL_UPDATE_COMMAND
+    ? buildSkillCommandForRuntime(DOLPHIN_CLI_SKILL_UPDATE_COMMAND, activeSkillRuntime.agentRuntime)
+    : DOLPHIN_CLI_SKILL_UPDATE_COMMAND
 
   const handleCliStatusChange = useCallback(
     (nextStatus: CliInstallStatus | null): void => {
@@ -127,7 +130,7 @@ export function BrowserUseSetup({
   const defaultProfile = browserSessionProfiles.find((p) => p.id === 'default')
   const cookiesImported = !!defaultProfile?.source
 
-  const cliEnabled = isOrcaCliAvailableOnPath(cliStatus)
+  const cliEnabled = isDolphinCliAvailableOnPath(cliStatus)
   const cliPathNeedsAttention =
     cliStatus?.state === 'installed' && cliStatus.pathConfigured === false
   const cliSupported = cliStatus?.supported ?? false
@@ -137,7 +140,7 @@ export function BrowserUseSetup({
     loading: skillLoading,
     error: skillError,
     refresh: refreshSkill
-  } = useInstalledAgentSkill(ORCA_CLI_SKILL_NAME, {
+  } = useInstalledAgentSkill(DOLPHIN_CLI_SKILL_NAME, {
     enabled: browserUseEnabled,
     discoveryTarget: activeSkillRuntime.discoveryTarget,
     sourceKinds: GLOBAL_AGENT_SKILL_SOURCE_KINDS
@@ -152,13 +155,13 @@ export function BrowserUseSetup({
       const next =
         activeSkillRuntime.agentRuntime?.runtime === 'wsl'
           ? await ensureWslCliAvailableForAgentSkillTerminal(activeSkillRuntime.agentRuntime)
-          : await ensureOrcaCliAvailableForAgentSkillTerminal({
+          : await ensureDolphinCliAvailableForAgentSkillTerminal({
               onStatusChange: handleCliStatusChange
             })
       if (activeSkillRuntime.agentRuntime?.runtime === 'wsl') {
         handleCliStatusChange(next)
       }
-      if (mountedRef.current && isOrcaCliAvailableOnPath(next)) {
+      if (mountedRef.current && isDolphinCliAvailableOnPath(next)) {
         toast.success(
           translate(
             'auto.components.settings.BrowserUsePane.721aee31b4',
@@ -295,7 +298,7 @@ export function BrowserUseSetup({
               useAppStore.getState().recordFeatureInteraction('agent-browser-setup')
               await (activeSkillRuntime.agentRuntime?.runtime === 'wsl'
                 ? ensureWslCliAvailableForAgentSkillTerminal(activeSkillRuntime.agentRuntime)
-                : ensureOrcaCliAvailableForAgentSkillTerminal({
+                : ensureDolphinCliAvailableForAgentSkillTerminal({
                     onStatusChange: handleCliStatusChange
                   }))
             }}

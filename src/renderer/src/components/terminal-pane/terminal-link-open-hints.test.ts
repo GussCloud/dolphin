@@ -24,8 +24,8 @@ describe('getTerminalUrlOpenHint', () => {
     )
   })
 
-  // Why: with links already opening in Orca, inverting still lands on the system
-  // browser, so the hint must not promise Orca.
+  // Why: with links already opening in Dolphin, inverting still lands on the system
+  // browser, so the hint must not promise Dolphin.
   it('keeps the system-browser wording when inverting but links open in Dolphin', () => {
     stubPlatform(true)
     expect(getTerminalUrlOpenHint({ openLinksInApp: true, modifierInverts: true })).toContain(
@@ -69,8 +69,8 @@ describe('terminalUrlOpenHintOptionsFor', () => {
     ).toEqual({ openLinksInApp: false, modifierInverts: true })
   })
 
-  // Why: openHttpLink refuses to route a remote-owned URL into Orca, so promising
-  // "open in Orca" there would advertise a click that lands somewhere else.
+  // Why: openHttpLink refuses to route a remote-owned URL into Dolphin, so promising
+  // "open in Dolphin" there would advertise a click that lands somewhere else.
   it('drops inversion while a remote runtime is active', () => {
     stubPlatform(true)
     const options = terminalUrlOpenHintOptionsFor({
@@ -102,7 +102,7 @@ describe('terminalUrlOpenHintOptionsFor', () => {
 
   // Why: a workspace-bound remote pane routes externally even with no globally
   // active runtime, so the global setting alone would advertise an impossible
-  // "open in Orca" destination.
+  // "open in Dolphin" destination.
   it.each([
     ['runtime', { kind: 'runtime', runtimeEnvironmentId: 'env-1' }] as const,
     ['ssh', { kind: 'ssh', connectionId: 'conn-1' }] as const,
@@ -123,7 +123,7 @@ describe('terminalUrlOpenHintOptionsFor', () => {
   })
 
   // Why: the clicked pane's owner wins over the global runtime — a local pane
-  // can still reach Orca while some other pane's runtime is active.
+  // can still reach Dolphin while some other pane's runtime is active.
   it('keeps inversion for a local pane while a remote runtime is active', () => {
     stubPlatform(true)
     const options = terminalUrlOpenHintOptionsFor(

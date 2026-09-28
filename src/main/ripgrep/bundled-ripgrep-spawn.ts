@@ -18,7 +18,7 @@ export type BundledRipgrepSpawnOptions = Omit<
 }
 
 /**
- * The single way Orca spawns ripgrep: its own binary, routed into WSL when the workspace lives
+ * The single way Dolphin spawns ripgrep: its own binary, routed into WSL when the workspace lives
  * there. Why one entry point: a bare `rg` must never reach spawn, because Windows resolves a bare
  * name in the spawn cwd — the repo — before PATH.
  */

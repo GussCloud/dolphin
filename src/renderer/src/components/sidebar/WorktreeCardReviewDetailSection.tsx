@@ -23,7 +23,7 @@ type WorktreeCardReviewDetailSectionProps = {
   review: WorktreeCardPrDisplay | null
   reviewMenuOpen: boolean
   onReviewMenuOpenChange: (open: boolean) => void
-  onOpenReviewInOrca?: (event: React.MouseEvent) => void
+  onOpenReviewInDolphin?: (event: React.MouseEvent) => void
   onCopyReviewLink?: () => void
   onOpenReviewInBrowser?: (url: string) => void
   onUnlinkReview?: () => void
@@ -34,7 +34,7 @@ export function WorktreeCardReviewDetailSection({
   review,
   reviewMenuOpen,
   onReviewMenuOpenChange,
-  onOpenReviewInOrca,
+  onOpenReviewInDolphin,
   onCopyReviewLink,
   onOpenReviewInBrowser,
   onUnlinkReview,
@@ -67,7 +67,7 @@ export function WorktreeCardReviewDetailSection({
   )
   const dismissAndOpenReview = (event: React.MouseEvent): void => {
     closeHover()
-    onOpenReviewInOrca?.(event)
+    onOpenReviewInDolphin?.(event)
   }
 
   return (
@@ -107,7 +107,7 @@ export function WorktreeCardReviewDetailSection({
                     >
                       <Globe className="size-3.5" />
                       {translate(
-                        'auto.components.sidebar.WorktreeCardMeta.openInOrcaBrowser',
+                        'auto.components.sidebar.WorktreeCardMeta.openInDolphinBrowser',
                         'Open in Dolphin browser'
                       )}
                     </DropdownMenuItem>
@@ -140,7 +140,7 @@ export function WorktreeCardReviewDetailSection({
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            {review.url && onOpenReviewInOrca && (
+            {review.url && onOpenReviewInDolphin && (
               <MetadataActionIcon
                 label={translate(
                   'auto.components.sidebar.WorktreeCardMeta.2c67730e07',

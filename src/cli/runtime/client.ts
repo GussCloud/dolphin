@@ -9,7 +9,7 @@ import {
   orchestrationMigrationData
 } from '../../shared/orchestration-rpc-contract'
 import type { PairingOffer } from '../../shared/pairing'
-import { launchOrcaApp } from './launch'
+import { launchDolphinApp } from './launch'
 import { getDefaultUserDataPath, readMetadata } from './metadata'
 import { getCliStatus, projectRemoteAppStatus } from './status'
 import { sendRequest } from './transport'
@@ -63,8 +63,10 @@ export class RuntimeClient {
   constructor(
     userDataPath = getDefaultUserDataPath(),
     requestTimeoutMs = 60_000,
-    remotePairingCode = process.env.ORCA_PAIRING_CODE ?? process.env.ORCA_REMOTE_PAIRING ?? null,
-    environmentSelector = process.env.ORCA_ENVIRONMENT ?? null,
+    remotePairingCode = process.env.DOLPHIN_PAIRING_CODE ??
+      process.env.DOLPHIN_REMOTE_PAIRING ??
+      null,
+    environmentSelector = process.env.DOLPHIN_ENVIRONMENT ?? null,
     cliExecutable = resolveOrchestrationCliExecutable(),
     originalArgs?: readonly string[]
   ) {
@@ -264,7 +266,7 @@ export class RuntimeClient {
     }
   }
 
-  async openOrca(timeoutMs = 15_000): Promise<RuntimeRpcSuccess<CliStatusResult>> {
+  async openDolphin(timeoutMs = 15_000): Promise<RuntimeRpcSuccess<CliStatusResult>> {
     const initial = await this.getCliStatus()
     if (this.remotePairing) {
       return initial
@@ -275,7 +277,7 @@ export class RuntimeClient {
     if (initial.result.app.desktopWindowStatus === 'blocked') {
       throwDesktopActivationBlocked()
     }
-    launchOrcaApp()
+    launchDolphinApp()
     if (initial.result.app.desktopWindowStatus === 'available') {
       return initial
     }
@@ -294,7 +296,7 @@ export class RuntimeClient {
 
     throw new RuntimeClientError(
       'runtime_open_timeout',
-      'Timed out waiting for an Dolphin desktop window. The runtime may still be running headlessly.'
+      'Timed out waiting for a Dolphin desktop window. The runtime may still be running headlessly.'
     )
   }
 }

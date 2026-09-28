@@ -13,7 +13,7 @@ const steps = workflow.jobs.security.steps
 const history = steps.find((step) => step.name === 'Fetch complete scan history')
 
 it('fetches both merge parents and deleted content without unrelated branches or tags', () => {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-cloud-history-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-cloud-history-'))
   const source = join(directory, 'source')
   const checkout = join(directory, 'checkout')
   const run = (program, args, cwd, env = process.env) => {

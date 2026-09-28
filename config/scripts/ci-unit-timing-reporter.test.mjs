@@ -32,9 +32,9 @@ describe('unit worker timing evidence', () => {
   })
 
   it('writes a real reporter result with source and shard provenance', () => {
-    const directory = mkdtempSync(join(tmpdir(), 'orca-unit-timing-'))
-    const previous = process.env.ORCA_UNIT_TIMING_REPORT
-    process.env.ORCA_UNIT_TIMING_REPORT = join(directory, 'unit-timings.json')
+    const directory = mkdtempSync(join(tmpdir(), 'dolphin-unit-timing-'))
+    const previous = process.env.DOLPHIN_UNIT_TIMING_REPORT
+    process.env.DOLPHIN_UNIT_TIMING_REPORT = join(directory, 'unit-timings.json')
     try {
       const reporter = new UnitTimingReporter()
       reporter.onInit({ config: { root: process.cwd(), shard: { index: 1, count: 8 } } })
@@ -54,7 +54,9 @@ describe('unit worker timing evidence', () => {
         [],
         'passed'
       )
-      expect(JSON.parse(readFileSync(process.env.ORCA_UNIT_TIMING_REPORT, 'utf8'))).toMatchObject({
+      expect(
+        JSON.parse(readFileSync(process.env.DOLPHIN_UNIT_TIMING_REPORT, 'utf8'))
+      ).toMatchObject({
         metric: 'module-duration-v1',
         shard: { index: 1, count: 8 },
         status: 'passed',
@@ -63,9 +65,9 @@ describe('unit worker timing evidence', () => {
       })
     } finally {
       if (previous === undefined) {
-        delete process.env.ORCA_UNIT_TIMING_REPORT
+        delete process.env.DOLPHIN_UNIT_TIMING_REPORT
       } else {
-        process.env.ORCA_UNIT_TIMING_REPORT = previous
+        process.env.DOLPHIN_UNIT_TIMING_REPORT = previous
       }
       rmSync(directory, { recursive: true, force: true })
     }

@@ -157,8 +157,8 @@ export function buildDefaultSettings(args: {
     showMobileButton: true,
     showPinnedWorktreesInGroups: false,
     ctrlTabOrderMode: 'mru',
-    // Why: Orca-first keeps core shortcuts working from a focused terminal; TUI-ownership users opt in.
-    terminalShortcutPolicy: 'orca-first',
+    // Why: Dolphin-first keeps core shortcuts working from a focused terminal; TUI-ownership users opt in.
+    terminalShortcutPolicy: 'dolphin-first',
     floatingTerminalEnabled: true,
     browserClientHostedRemoteEnabled: true,
     floatingTerminalDefaultedForAllUsers: true,

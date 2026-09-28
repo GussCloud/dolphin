@@ -11,7 +11,7 @@ import {
 import { errorResponse, successResponse } from './errors'
 import { ALL_RPC_METHODS } from './methods'
 import { emulatorProbe, emulatorProbeError } from '../../emulator/emulator-probe'
-import type { OrcaRuntimeService } from '../orca-runtime'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import {
   getOrchestrationMutationExecutor,
   type OrchestrationMutationExecutor
@@ -30,14 +30,14 @@ import {
 } from './orchestration-session-caller'
 
 export type DispatcherOptions = {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   methods?: readonly RpcAnyMethodDeclaration[]
 }
 
 type DispatchCallOptions = RpcDispatchStreamingOptions
 
 export class RpcDispatcher {
-  private readonly runtime: OrcaRuntimeService
+  private readonly runtime: DolphinRuntimeService
   private readonly registry: RpcRegistry
   private readonly orchestrationMutations: OrchestrationMutationExecutor
   private readonly legacyOrchestration: OrchestrationLegacyCompatibility

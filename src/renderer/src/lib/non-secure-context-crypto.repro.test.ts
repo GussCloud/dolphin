@@ -27,9 +27,9 @@ describe('non-secure context (plain HTTP LAN web client)', () => {
     expect(() => (globalThis.crypto as Crypto).randomUUID()).toThrow()
   })
 
-  it('hashOrcaHookScript does not throw when crypto.subtle is missing', async () => {
-    const { hashOrcaHookScript } = await import('./orca-hook-trust')
-    const hash = await hashOrcaHookScript('echo hi')
+  it('hashDolphinHookScript does not throw when crypto.subtle is missing', async () => {
+    const { hashDolphinHookScript } = await import('./dolphin-hook-trust')
+    const hash = await hashDolphinHookScript('echo hi')
     expect(hash).toMatch(/^[0-9a-f]+$/)
   })
 
@@ -37,16 +37,16 @@ describe('non-secure context (plain HTTP LAN web client)', () => {
   // mismatches and the user is re-prompted to approve a hook they already
   // trusted on the desktop app.
   it('produces the same hash as crypto.subtle did in a secure context', async () => {
-    const { hashOrcaHookScript } = await import('./orca-hook-trust')
+    const { hashDolphinHookScript } = await import('./dolphin-hook-trust')
     const secureHash = await (async () => {
       Object.defineProperty(globalThis, 'crypto', { configurable: true, value: realCrypto })
-      return hashOrcaHookScript('echo hi')
+      return hashDolphinHookScript('echo hi')
     })()
     Object.defineProperty(globalThis, 'crypto', {
       configurable: true,
       value: createNonSecureContextCrypto(realCrypto)
     })
-    expect(await hashOrcaHookScript('echo hi')).toBe(secureHash)
+    expect(await hashDolphinHookScript('echo hi')).toBe(secureHash)
   })
 
   // Regression for #19667: the store builds this sequencer at module load, so a throw here

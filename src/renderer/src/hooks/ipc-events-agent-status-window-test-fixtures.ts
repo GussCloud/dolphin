@@ -98,7 +98,7 @@ export function buildWindowApi(args: {
       browser: {
         onGuestLoadFailed: () => () => {},
         onPaneFocus: () => () => {},
-        onOpenLinkInOrcaTab: () => () => {},
+        onOpenLinkInDolphinTab: () => () => {},
         onNavigationUpdate: () => () => {},
         onActivateView: () => () => {}
       },

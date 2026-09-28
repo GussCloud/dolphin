@@ -62,7 +62,6 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   'OpenClaw',
   'OpenCode',
   'OpenCode Go',
-  'Orca',
   'Dolphin',
   'Pi',
   'PostHog',
@@ -158,7 +157,7 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   '/home/user',
   '/home/user/project',
   '/path/to/destination',
-  '.orca/issue-command',
+  '.dolphin/issue-command',
   'PLAN.md',
   'feat/mobile-page',
   'sk-...',
@@ -210,11 +209,11 @@ export const NEVER_TRANSLATE_VALUES = new Set([
   '/signup',
   'npm run dev',
   'nbformat',
-  'orca.yaml',
+  'dolphin.yaml',
   'upstream',
   'LIN-329',
   'GH #1799',
-  'orca · zsh'
+  'dolphin · zsh'
 ])
 
 export const NATIVE_PICKER_LABELS = {
@@ -265,7 +264,7 @@ export function shouldPreserveEnglishValue(enValue, key = '') {
   if (!enValue?.trim()) {
     return true
   }
-  if (/^https?:\/\//.test(enValue) || enValue.startsWith('orca://')) {
+  if (/^https?:\/\//.test(enValue) || enValue.startsWith('dolphin://')) {
     return true
   }
   if (isEnglishOnlyKey(key)) {
@@ -441,8 +440,8 @@ export function repairTranslatedValue({ key, enValue, localeValue, locale }) {
     result = applyCjkLatinTermSpacing(result, locale)
   }
 
-  if (enValue.includes('orca://')) {
-    result = result.replace(/虎鲸:\/\//g, 'orca://')
+  if (enValue.includes('dolphin://')) {
+    result = result.replace(/虎鲸:\/\//g, 'dolphin://')
   }
 
   if (enValue === 'Dolphin' || enValue.startsWith('Dolphin ')) {
@@ -455,8 +454,8 @@ export function repairTranslatedValue({ key, enValue, localeValue, locale }) {
       .replaceAll('돌고래', 'Dolphin')
   }
 
-  if (enValue.includes('orca://')) {
-    result = result.replace(/シャチ:\/\//g, 'orca://')
+  if (enValue.includes('dolphin://')) {
+    result = result.replace(/シャチ:\/\//g, 'dolphin://')
   }
 
   return result
@@ -519,8 +518,8 @@ export function repairCatalog(enCatalog, localeCatalog, locale) {
 
   if (localeCatalog.menu) {
     if (locale === 'zh') {
-      if (localeCatalog.menu.exploreOrca !== '探索 Dolphin') {
-        localeCatalog.menu.exploreOrca = '探索 Dolphin'
+      if (localeCatalog.menu.exploreDolphin !== '探索 Dolphin') {
+        localeCatalog.menu.exploreDolphin = '探索 Dolphin'
         repaired += 1
       }
       if (localeCatalog.menu.gettingStarted !== 'Dolphin 入门') {
@@ -529,8 +528,8 @@ export function repairCatalog(enCatalog, localeCatalog, locale) {
       }
     }
     if (locale === 'ko') {
-      if (localeCatalog.menu.exploreOrca !== 'Dolphin 둘러보기') {
-        localeCatalog.menu.exploreOrca = 'Dolphin 둘러보기'
+      if (localeCatalog.menu.exploreDolphin !== 'Dolphin 둘러보기') {
+        localeCatalog.menu.exploreDolphin = 'Dolphin 둘러보기'
         repaired += 1
       }
       if (localeCatalog.menu.gettingStarted !== 'Dolphin 시작하기') {

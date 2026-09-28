@@ -13,11 +13,11 @@ import { deployAndLaunchRelay } from './ssh-relay-deploy'
 import { bundledRipgrepContentKey } from '../ripgrep/bundled-ripgrep-path'
 import type { SshTarget } from '../../shared/ssh-types'
 
-// Why opt-in: needs Docker plus an sshd+node+git image WITHOUT rg (ORCA_REVIEW_SSH_NORG_IMAGE).
-const RUN = process.env.ORCA_REVIEW_SSH_BUNDLED_RG === '1'
-const REMOTE_REPO = '/tmp/orca-bundled-rg-repo'
+// Why opt-in: needs Docker plus an sshd+node+git image WITHOUT rg (DOLPHIN_REVIEW_SSH_NORG_IMAGE).
+const RUN = process.env.DOLPHIN_REVIEW_SSH_BUNDLED_RG === '1'
+const REMOTE_REPO = '/tmp/dolphin-bundled-rg-repo'
 const TARGET = 'ios/Notion Web Clipper/AppDelegate.swift'
-const REPORT = process.env.ORCA_REVIEW_REPORT_FILE
+const REPORT = process.env.DOLPHIN_REVIEW_REPORT_FILE
 
 type Fixture = { containerName: string; identityFile: string; port: number; tempDir: string }
 
@@ -42,12 +42,12 @@ function report(line: string): void {
 }
 
 function startTarget(): Fixture {
-  const image = process.env.ORCA_REVIEW_SSH_NORG_IMAGE ?? 'orca-ssh-norg:latest'
-  const tempDir = mkdtempSync(join(tmpdir(), 'orca-bundled-rg-ssh-'))
+  const image = process.env.DOLPHIN_REVIEW_SSH_NORG_IMAGE ?? 'dolphin-ssh-norg:latest'
+  const tempDir = mkdtempSync(join(tmpdir(), 'dolphin-bundled-rg-ssh-'))
   const identityFile = join(tempDir, 'id_ed25519')
   run('ssh-keygen', ['-t', 'ed25519', '-N', '', '-f', identityFile, '-q'])
   const publicKey = readFileSync(`${identityFile}.pub`, 'utf8').trim()
-  const containerName = `orca-bundled-rg-${randomUUID().slice(0, 12)}`
+  const containerName = `dolphin-bundled-rg-${randomUUID().slice(0, 12)}`
   run('docker', [
     'run',
     '-d',
@@ -121,14 +121,14 @@ describe.skipIf(!RUN)('SSH relay bundled ripgrep', () => {
     stopTarget(fixture)
   })
 
-  it('installs Orca ripgrep on a host without rg and serves Quick Open search with it', async () => {
+  it('installs Dolphin ripgrep on a host without rg and serves Quick Open search with it', async () => {
     const active = fixture!
     expect(dockerExec(active, 'command -v rg || echo NO_RG')).toBe('NO_RG')
     const platform = /^(aarch64|arm64)$/.test(dockerExec(active, 'uname -m'))
       ? 'linux-arm64'
       : 'linux-x64'
     const entry = `${bundledRipgrepContentKey(platform)}-${platform}`
-    const remoteBinary = `/root/.orca-remote/ripgrep/${entry}/rg`
+    const remoteBinary = `/root/.dolphin-remote/ripgrep/${entry}/rg`
     const connection = createConnection(active)
     await connection.connect()
     try {
@@ -146,7 +146,7 @@ describe.skipIf(!RUN)('SSH relay bundled ripgrep', () => {
       expect(dockerExec(active, "ps -eo args | grep '[r]elay.js --detached'")).toContain(
         `--ripgrep-path ${remoteBinary}`
       )
-      expect(dockerExec(active, `ls /root/.orca-remote/ripgrep/${entry}`)).toBe('rg')
+      expect(dockerExec(active, `ls /root/.dolphin-remote/ripgrep/${entry}`)).toBe('rg')
 
       const mux = new SshChannelMultiplexer(deployed.transport)
       try {
@@ -180,16 +180,16 @@ describe.skipIf(!RUN)('SSH relay bundled ripgrep', () => {
 
   it('reuses the installed binary on the next deploy without re-uploading', async () => {
     const active = fixture!
-    const before = dockerExec(active, 'stat -c %Y /root/.orca-remote/ripgrep/*/rg')
+    const before = dockerExec(active, 'stat -c %Y /root/.dolphin-remote/ripgrep/*/rg')
     const connection = createConnection(active)
     await connection.connect()
     try {
       await deployAndLaunchRelay(connection, undefined, 60)
       await new Promise((resolve) => setTimeout(resolve, 3_000))
-      expect(dockerExec(active, 'stat -c %Y /root/.orca-remote/ripgrep/*/rg')).toBe(before)
-      expect(dockerExec(active, 'ls -A /root/.orca-remote/ripgrep | grep -c upload || true')).toBe(
-        '0'
-      )
+      expect(dockerExec(active, 'stat -c %Y /root/.dolphin-remote/ripgrep/*/rg')).toBe(before)
+      expect(
+        dockerExec(active, 'ls -A /root/.dolphin-remote/ripgrep | grep -c upload || true')
+      ).toBe('0')
     } finally {
       await connection.disconnect()
     }

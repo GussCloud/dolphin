@@ -9,7 +9,7 @@ import {
 } from './database.js'
 import { readRegionCorrectionOutcomes } from './region-correction-outcomes.js'
 
-const databaseUrl = process.env.ORCA_RELAY_TEST_POSTGRES_URL
+const databaseUrl = process.env.DOLPHIN_RELAY_TEST_POSTGRES_URL
 const describePostgres = databaseUrl ? describe : describe.skip
 
 // Roughly the round trip from an Asia cell to the us-central1 database.

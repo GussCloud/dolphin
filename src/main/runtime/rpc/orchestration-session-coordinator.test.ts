@@ -53,7 +53,7 @@ describe('a structured chat coordinates through the same verbs as a terminal', (
     expect(h.db.getRunRaw(runId)).toMatchObject({
       coordinator_handle: null,
       coordinator_pane_key: null,
-      coordinator_orca_session_id: SESSION_X
+      coordinator_dolphin_session_id: SESSION_X
     })
     expect(await as(SESSION_X, 'orchestration.runCurrent', {})).toMatchObject({
       run: { id: runId }
@@ -72,7 +72,7 @@ describe('a structured chat coordinates through the same verbs as a terminal', (
       assignee_handle: WORKER_HANDLE,
       creator_handle: null,
       creator_pane_key: null,
-      creator_orca_session_id: SESSION_X,
+      creator_dolphin_session_id: SESSION_X,
       depth: 1
     })
 
@@ -226,7 +226,7 @@ describe('a structured chat coordinates through the same verbs as a terminal', (
     expect(await as(SESSION_X, 'orchestration.runCurrent', {})).toMatchObject({
       run: { id: xSecond }
     })
-    expect(h.db.getRunRaw(xFirst)?.coordinator_orca_session_id).toBeNull()
+    expect(h.db.getRunRaw(xFirst)?.coordinator_dolphin_session_id).toBeNull()
   })
 
   it('takes over a bound Run like a terminal does, and fences the previous coordinator', async () => {
@@ -323,9 +323,9 @@ describe('a structured chat coordinates through the same verbs as a terminal', (
     expect(h.db.getDeliveryRaw(ack)?.status).toBe('acknowledged')
   })
 
-  it('stops counting a coordinator Orca session id once an older binary rebinds the Run to a terminal', async () => {
+  it('stops counting a coordinator Dolphin session id once an older binary rebinds the Run to a terminal', async () => {
     const runId = await runCreate(SESSION_X)
-    // An older binary's bindRun rewrites handle and pane and bumps the generation, never the Orca session id.
+    // An older binary's bindRun rewrites handle and pane and bumps the generation, never the Dolphin session id.
     h.db.db
       .prepare(
         `UPDATE runs SET coordinator_handle = ?, coordinator_pane_key = ?,
@@ -476,7 +476,7 @@ describe('a structured worker that names itself by session id', () => {
 
   it("reads its own Dispatch mailbox: the session id wins and maps to the worker's handle", async () => {
     const { dispatchId } = dispatchToWorker()
-    expect(h.db.getDispatchContextById(dispatchId)?.assignee_orca_session_id).toBe(SESSION_Y)
+    expect(h.db.getDispatchContextById(dispatchId)?.assignee_dolphin_session_id).toBe(SESSION_Y)
 
     const bySession = resultOf(
       await h.dispatch(
@@ -515,7 +515,7 @@ describe('a structured worker that names itself by session id', () => {
     )
     expect(h.db.getRunRaw(idOf(run))).toMatchObject({
       coordinator_handle: handle,
-      coordinator_orca_session_id: SESSION_Y
+      coordinator_dolphin_session_id: SESSION_Y
     })
   })
 
@@ -542,7 +542,7 @@ describe('a structured worker that names itself by session id', () => {
       assigneeHandle: handle,
       assigneePaneKey: paneKey,
       processIncarnation: structuredWorkerProcessIncarnation(workerSession),
-      creator: { kind: 'session', orcaSessionId: SESSION_X },
+      creator: { kind: 'session', dolphinSessionId: SESSION_X },
       maxDepth: Number.MAX_SAFE_INTEGER
     })
 
@@ -569,7 +569,7 @@ describe('a structured worker that names itself by session id', () => {
     })
   })
 
-  it('coordinates with its handle, pane and Orca session id, one mailbox at both spellings', async () => {
+  it('coordinates with its handle, pane and Dolphin session id, one mailbox at both spellings', async () => {
     const { run } = resultOf(
       await h.dispatch(
         orchestrationRequest(
@@ -586,7 +586,7 @@ describe('a structured worker that names itself by session id', () => {
     expect(h.db.getRunRaw(runId)).toMatchObject({
       coordinator_handle: handle,
       coordinator_pane_key: paneKey,
-      coordinator_orca_session_id: SESSION_Y
+      coordinator_dolphin_session_id: SESSION_Y
     })
     expect(h.db.getRunMailboxOwnerIdsForHandle(handle)).toEqual([runId])
     for (const to of [handle, ADDRESS_Y]) {
@@ -617,7 +617,7 @@ describe('a structured worker that names itself by session id', () => {
       taskId: h.db.createTask({ runId, spec: 'sub' }).id,
       assigneeHandle: WORKER_HANDLE,
       assigneePaneKey: WORKER_PANE,
-      creator: { kind: 'terminal', handle, paneKey, orcaSessionId: workerSession },
+      creator: { kind: 'terminal', handle, paneKey, dolphinSessionId: workerSession },
       maxDepth: Number.MAX_SAFE_INTEGER
     })
 

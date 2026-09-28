@@ -1,20 +1,20 @@
 import { createRoot, type Root } from 'react-dom/client'
 
 type RendererRootHotData = {
-  orcaRendererRoot?: Root
+  dolphinRendererRoot?: Root
 }
 
 export function getOrCreateRendererRoot(
   container: HTMLElement,
   hotData?: RendererRootHotData
 ): Root {
-  const existingRoot = hotData?.orcaRendererRoot
+  const existingRoot = hotData?.dolphinRendererRoot
   if (existingRoot) {
     return existingRoot
   }
   const root = createRoot(container)
   if (hotData) {
-    hotData.orcaRendererRoot = root
+    hotData.dolphinRendererRoot = root
   }
   return root
 }

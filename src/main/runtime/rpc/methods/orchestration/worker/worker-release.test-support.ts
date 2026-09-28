@@ -3,7 +3,7 @@ import { expect, vi } from 'vitest'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
 import { eraseRpcMethods, type RpcContext } from '../../../core'
 import { OrchestrationDb } from '../../../../orchestration/db'
-import { OrcaRuntimeService } from '../../../../orca-runtime'
+import { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import type { TuiAgent } from '../../../../../../shared/tui-agent'
 
 type WorkerStartOptions = { terminal?: string; agent?: TuiAgent }
@@ -41,7 +41,7 @@ export type OrchestrationWorkerReleaseHarness = {
   coordinatorPaneKey: string
   workerPaneKey: string
   readonly db: OrchestrationDb
-  readonly runtime: OrcaRuntimeService
+  readonly runtime: DolphinRuntimeService
   readonly activeRunId: string
   readonly inspectProcessLiveness: ReturnType<typeof vi.fn>
 }
@@ -49,7 +49,7 @@ export type OrchestrationWorkerReleaseHarness = {
 export function createOrchestrationWorkerReleaseHarness(): OrchestrationWorkerReleaseHarness {
   let db: OrchestrationDb
   let dbOpen = false
-  let runtime: OrcaRuntimeService
+  let runtime: DolphinRuntimeService
   let ctx: RpcContext
   let activeRunId: string
   let inspectProcessLiveness: ReturnType<typeof vi.fn>
@@ -60,7 +60,7 @@ export function createOrchestrationWorkerReleaseHarness(): OrchestrationWorkerRe
   function setup(): void {
     db = new OrchestrationDb(':memory:')
     dbOpen = true
-    runtime = new OrcaRuntimeService()
+    runtime = new DolphinRuntimeService()
     runtime.setOrchestrationDb(db)
     inspectProcessLiveness = vi.fn().mockResolvedValue('live')
     ;(

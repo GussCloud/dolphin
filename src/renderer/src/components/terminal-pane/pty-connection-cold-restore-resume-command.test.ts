@@ -209,7 +209,7 @@ describe('connectPanePty', () => {
       capturedDataCallback.current?.('user@remote $ ')
       expect(transport.sendInput).not.toHaveBeenCalled()
 
-      capturedDataCallback.current?.('\x1b]777;orca-shell-ready\x07user@remote $ ')
+      capturedDataCallback.current?.('\x1b]777;dolphin-shell-ready\x07user@remote $ ')
       for (const fn of pendingTimeouts.splice(0)) {
         fn()
       }
@@ -222,11 +222,11 @@ describe('connectPanePty', () => {
           commandDelivery: 'provider',
           startupCommandDelivery: 'shell-ready',
           env: expect.objectContaining({
-            ORCA_PANE_KEY: paneKey,
-            ORCA_TAB_ID: 'tab-1',
-            ORCA_WORKTREE_ID: 'wt-1',
-            ORCA_WORKSPACE_ID: 'wt-1',
-            ORCA_AGENT_LAUNCH_TOKEN: expect.stringMatching(new RegExp(`^${UUID_RE}$`))
+            DOLPHIN_PANE_KEY: paneKey,
+            DOLPHIN_TAB_ID: 'tab-1',
+            DOLPHIN_WORKTREE_ID: 'wt-1',
+            DOLPHIN_WORKSPACE_ID: 'wt-1',
+            DOLPHIN_AGENT_LAUNCH_TOKEN: expect.stringMatching(new RegExp(`^${UUID_RE}$`))
           })
         })
       )
@@ -322,8 +322,8 @@ describe('connectPanePty', () => {
         expect.objectContaining({
           command: "codex '--dangerously-bypass-approvals-and-sandbox' 'resume' 'codex-session-1'",
           env: expect.objectContaining({
-            ORCA_PANE_KEY: paneKey,
-            ORCA_AGENT_LAUNCH_TOKEN: expect.stringMatching(new RegExp(`^${UUID_RE}$`))
+            DOLPHIN_PANE_KEY: paneKey,
+            DOLPHIN_AGENT_LAUNCH_TOKEN: expect.stringMatching(new RegExp(`^${UUID_RE}$`))
           })
         })
       )

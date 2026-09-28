@@ -265,7 +265,7 @@ describe('stale session state on a cold acquire', () => {
 
   it("cancels a subagent's lost prompt as the subagent's, and the session's own as its own", async () => {
     // The sweep names no producer, so each cancelled row keeps the one it had.
-    const root = await mkdtemp(join(tmpdir(), 'orca-stale-session-'))
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-stale-session-'))
     const journals = createTrackedJournalOpener()
     try {
       const journal = await journals.open({

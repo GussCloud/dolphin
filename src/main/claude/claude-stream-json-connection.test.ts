@@ -62,8 +62,8 @@ function scriptScenario(
     cwd: dir,
     env: {
       PATH: process.env.PATH ?? '',
-      ORCA_SDK_CONTRACT_SCENARIO_PATH: scenarioPath,
-      ORCA_SDK_CONTRACT_REPORT_PATH: reportPath
+      DOLPHIN_SDK_CONTRACT_SCENARIO_PATH: scenarioPath,
+      DOLPHIN_SDK_CONTRACT_REPORT_PATH: reportPath
     },
     readReport: () => JSON.parse(readFileSync(reportPath, 'utf8')) as ScriptedCliReport
   }
@@ -81,7 +81,7 @@ function launchFor(
   }
 }
 
-/** The derived child environment, captured where Orca actually hands it to the OS. */
+/** The derived child environment, captured where Dolphin actually hands it to the OS. */
 const spawned: ProcessSpec[] = []
 /** The retained child, so a test can end it the way a crashing CLI would. */
 const spawnedChildren: SpawnedProcess[] = []
@@ -162,13 +162,13 @@ describe('Claude stream-json connection', () => {
     vi.stubEnv('NODE_OPTIONS', '--require=/tmp/inject.js')
     // An inherited value wins over the SDK's default, so clear it to pin the default.
     vi.stubEnv('CLAUDE_CODE_ENTRYPOINT', undefined)
-    vi.stubEnv('ORCA_CONNECTION_MARKER', 'inherited')
+    vi.stubEnv('DOLPHIN_CONNECTION_MARKER', 'inherited')
     const scenario = scriptScenario([HOLD_OPEN])
     const connection = await open(
       launchFor(scenario, {
         CLAUDE_CONFIG_DIR: '/accounts/managed/home',
         ANTHROPIC_AUTH_TOKEN: 'configured-token',
-        ORCA_AGENT_SESSION_SPAWN_TOKEN: 'spawn-9',
+        DOLPHIN_AGENT_SESSION_SPAWN_TOKEN: 'spawn-9',
         CLAUDE_CODE_CHILD_SESSION: 'configured-child-session',
         CLAUDE_CODE_SESSION_ID: 'configured-session',
         CLAUDE_CODE_BRIDGE_SESSION_ID: 'configured-bridge-session'
@@ -182,8 +182,8 @@ describe('Claude stream-json connection', () => {
     // The managed home is pinned verbatim: the CLI keys credential lookup on the literal string.
     expect(env.CLAUDE_CONFIG_DIR).toBe('/accounts/managed/home')
     expect(env.ANTHROPIC_AUTH_TOKEN).toBe('configured-token')
-    expect(env.ORCA_AGENT_SESSION_SPAWN_TOKEN).toBe('spawn-9')
-    expect(env.ORCA_CONNECTION_MARKER).toBe('inherited')
+    expect(env.DOLPHIN_AGENT_SESSION_SPAWN_TOKEN).toBe('spawn-9')
+    expect(env.DOLPHIN_CONNECTION_MARKER).toBe('inherited')
     expect(env.ANTHROPIC_API_KEY).toBeUndefined()
     expect(env.CLAUDE_CODE_CHILD_SESSION).toBeUndefined()
     expect(env.CLAUDE_CODE_SESSION_ID).toBeUndefined()
@@ -195,7 +195,7 @@ describe('Claude stream-json connection', () => {
     const report = await until(() => readReportSafely(scenario), 'the scripted CLI report')
     expect(report.argv[0]).toBe(FAKE_CLI)
     // The .mjs fixture makes the SDK run it under node; a real CLI path is the program
-    // itself. Either way the resolved path is what Orca's spawner is asked to execute.
+    // itself. Either way the resolved path is what Dolphin's spawner is asked to execute.
     expect([spawned.at(-1)?.program, ...(spawned.at(-1)?.args ?? [])]).toContain(FAKE_CLI)
     expect(report.argv).toContain('--replay-user-messages')
     expect(report.argv).toContain(`--session-id=${SESSION_ID}`)
@@ -209,15 +209,15 @@ describe('Claude stream-json connection', () => {
     expect(childEnv().CLAUDE_CONFIG_DIR).toBeUndefined()
   })
 
-  it("drops a CLAUDE_CONFIG_DIR from Orca's own process env: only the launch may name a home", async () => {
-    vi.stubEnv('CLAUDE_CONFIG_DIR', '/orca/process/claude')
-    vi.stubEnv('ORCA_CONNECTION_MARKER', 'inherited')
+  it("drops a CLAUDE_CONFIG_DIR from Dolphin's own process env: only the launch may name a home", async () => {
+    vi.stubEnv('CLAUDE_CONFIG_DIR', '/dolphin/process/claude')
+    vi.stubEnv('DOLPHIN_CONNECTION_MARKER', 'inherited')
     const scenario = scriptScenario([HOLD_OPEN])
     await open(launchFor(scenario))
 
     await until(() => readReportSafely(scenario), 'the scripted CLI report')
     expect(childEnv().CLAUDE_CONFIG_DIR).toBeUndefined()
-    expect(childEnv().ORCA_CONNECTION_MARKER).toBe('inherited')
+    expect(childEnv().DOLPHIN_CONNECTION_MARKER).toBe('inherited')
 
     await open(launchFor(scenario, { CLAUDE_CONFIG_DIR: '/accounts/managed/home' }))
     expect(childEnv().CLAUDE_CONFIG_DIR).toBe('/accounts/managed/home')
@@ -450,7 +450,7 @@ describe('Claude stream-json connection', () => {
     expect(written.response.response).toMatchObject({ behavior: 'deny', message: 'No' })
   })
 
-  it('drives Orca control methods onto the SDK and times out with the init proof message', async () => {
+  it('drives Dolphin control methods onto the SDK and times out with the init proof message', async () => {
     const scenario = scriptScenario([HOLD_OPEN], {
       initialize: { models: [{ value: 'sonnet' }], account: { tokenSource: 'oauth' } },
       get_settings: { env: { ANTHROPIC_BASE_URL: 'https://settings.example.test' } }
@@ -574,7 +574,7 @@ describe('Claude stream-json connection', () => {
     const scenario = scriptScenario([{ stderr: 'claude: not signed in\n' }, { exit: 1 }])
     const connection = await open({
       ...launchFor(scenario),
-      env: { ...launchFor(scenario).env, ORCA_SDK_CONTRACT_IGNORE_CONTROL_REQUESTS: '1' }
+      env: { ...launchFor(scenario).env, DOLPHIN_SDK_CONTRACT_IGNORE_CONTROL_REQUESTS: '1' }
     })
 
     await expect(connection.initializationResult()).rejects.toThrow()
@@ -612,7 +612,7 @@ describe('Claude stream-json connection', () => {
       const connection = await open(
         {
           ...launchFor(scenario),
-          env: { ...launchFor(scenario).env, ORCA_SDK_CONTRACT_DESCENDANT: '1' }
+          env: { ...launchFor(scenario).env, DOLPHIN_SDK_CONTRACT_DESCENDANT: '1' }
         },
         { onExit: (error) => (exit = error) }
       )
@@ -691,7 +691,7 @@ describe('Claude stream-json connection', () => {
     const scenario = scriptScenario([HOLD_OPEN])
     const connection = await open({
       ...launchFor(scenario),
-      env: { ...launchFor(scenario).env, ORCA_SDK_CONTRACT_IGNORE_SIGTERM: '1' }
+      env: { ...launchFor(scenario).env, DOLPHIN_SDK_CONTRACT_IGNORE_SIGTERM: '1' }
     })
 
     // Keep the lstart capture boundary outside the child's displayed start second.

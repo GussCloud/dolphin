@@ -25,8 +25,8 @@ const RICH_CHANGELOG: ChangelogData = {
   release: {
     title: 'Inline Diffs',
     description: 'Review diffs without leaving the terminal.',
-    mediaUrl: 'https://onorca.dev/media/inline-diffs.png',
-    releaseNotesUrl: 'https://onorca.dev/changelog/1.2.0'
+    mediaUrl: 'https://dolphin.guss.dev.br/media/inline-diffs.png',
+    releaseNotesUrl: 'https://dolphin.guss.dev.br/changelog/1.2.0'
   },
   releasesBehind: 3
 }
@@ -498,7 +498,7 @@ describe('UpdateCard visibility gates', () => {
       computeVisibility({
         status: {
           state: 'error',
-          message: 'Quit Orca before running the system package install command.',
+          message: 'Quit Dolphin before running the system package install command.',
           recovery: {
             kind: 'linux-package-install',
             packageType: 'deb',

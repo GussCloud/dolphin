@@ -10,7 +10,7 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
     0
   )
   const lines = [
-    'ORCA DIAGNOSTICS',
+    'DOLPHIN DIAGNOSTICS',
     '',
     'Runtime',
     `  Version:        ${runtime.appVersion}`,

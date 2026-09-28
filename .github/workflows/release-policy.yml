@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   enforce:
-    if: github.repository == 'stablyai/orca'
+    if: github.repository == 'GussCloud/dolphin'
     runs-on: ubuntu-slim
     timeout-minutes: 5
     steps:

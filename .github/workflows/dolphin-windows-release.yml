@@ -1,6 +1,6 @@
 name: Dolphin Windows Release
 
-# Why its own workflow: upstream's release-cut and dev-channel legs are gated to stablyai/orca and
+# Why its own workflow: upstream's release-cut and dev-channel legs are gated to GussCloud/dolphin and
 # need SignPath and App tokens this fork does not have. This builds an unsigned NSIS installer
 # under the Dolphin identity (docs/reference/fork-identity.md) and publishes it with the repo's
 # own GITHUB_TOKEN, so the in-app updater (pointed at this repo) finds latest.yml beside it.
@@ -140,8 +140,8 @@ jobs:
         shell: bash
         run: pnpm build:release
         env:
-          ORCA_REQUIRE_RELAY_NATIVE_ADDONS: 'x64,arm64'
-          # Why ORCA_BUILD_IDENTITY and PostHog stay unset: telemetry only transmits for upstream's
+          DOLPHIN_REQUIRE_RELAY_NATIVE_ADDONS: 'x64,arm64'
+          # Why DOLPHIN_BUILD_IDENTITY and PostHog stay unset: telemetry only transmits for upstream's
           # stable/rc identities, so the fork build stays silent.
 
       - name: Package Windows installer
@@ -153,7 +153,7 @@ jobs:
           pnpm exec electron-builder --config config/electron-builder.config.cjs --win --publish never
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         env:
-          ORCA_BUILD_COMMIT: ${{ github.sha }}
+          DOLPHIN_BUILD_COMMIT: ${{ github.sha }}
 
       # Why assert before publishing: the updater resolves a tag, then fetches latest.yml from it;
       # a release with the installer but no manifest is one updates 404 on.

@@ -7,7 +7,7 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../../shared/repo-types'
-import { OrcaRuntimeService } from './orca-runtime'
+import { DolphinRuntimeService } from './dolphin-runtime'
 
 function makeRepos(): Repo[] {
   return [
@@ -49,7 +49,7 @@ function createRuntime() {
       }
     }
   })
-  const runtime = new OrcaRuntimeService({
+  const runtime = new DolphinRuntimeService({
     getRepos: () => [...repos],
     getRepo: (id: string) => repos.find((repo) => repo.id === id) ?? null,
     getAllWorktreeMeta: () => ({}),

@@ -28,7 +28,7 @@ import { listLocalAiVaultSubagentSessions } from './session-subagent-reader'
 import { isWslUncPath } from '../../shared/wsl-paths'
 
 export function shouldUseAiVaultServiceProcess(): boolean {
-  const configured = process.env.ORCA_AI_VAULT_SERVICE_PROCESS
+  const configured = process.env.DOLPHIN_AI_VAULT_SERVICE_PROCESS
   if (configured === '1') {
     return true
   }

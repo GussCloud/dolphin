@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import type { Page } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {
   execInTerminal,
@@ -154,21 +154,21 @@ function summarizeArrivals(
 
 test.describe('terminal TUI wheel report drain', () => {
   test('dense trackpad-like wheel stream reaches the PTY while the gesture happens', async ({
-    orcaPage
+    dolphinPage
   }) => {
     // Why: the dense CDP wheel stream is throughput-bound on loaded CI runners.
     test.slow()
     const logPath = path.join(os.tmpdir(), `tui-wheel-drain-${Date.now()}.log`)
-    await startHeavyTuiFixture(orcaPage, logPath)
+    await startHeavyTuiFixture(dolphinPage, logPath)
 
-    const target = await terminalWheelTarget(orcaPage)
-    const input = await dispatchTrackpadWheelStream(orcaPage, {
+    const target = await terminalWheelTarget(dolphinPage)
+    const input = await dispatchTrackpadWheelStream(dolphinPage, {
       alternate: false,
       events: WHEEL_EVENTS,
       deltaY: Math.min(49, target.cellHeight)
     })
     // Give a laggy drain ample time to expose itself before reading the log.
-    await orcaPage.waitForTimeout(8000)
+    await dolphinPage.waitForTimeout(8000)
 
     const summary = summarizeArrivals(readReportArrivalLog(logPath), input)
     fs.rmSync(logPath, { force: true })
@@ -181,20 +181,20 @@ test.describe('terminal TUI wheel report drain', () => {
   })
 
   test('aggressive alternating trackpad-like gesture does not replay after input ends', async ({
-    orcaPage
+    dolphinPage
   }) => {
     // Why: the dense CDP wheel stream is throughput-bound on loaded CI runners.
     test.slow()
     const logPath = path.join(os.tmpdir(), `tui-wheel-drain-alt-${Date.now()}.log`)
-    await startHeavyTuiFixture(orcaPage, logPath)
+    await startHeavyTuiFixture(dolphinPage, logPath)
 
-    const target = await terminalWheelTarget(orcaPage)
-    const input = await dispatchTrackpadWheelStream(orcaPage, {
+    const target = await terminalWheelTarget(dolphinPage)
+    const input = await dispatchTrackpadWheelStream(dolphinPage, {
       alternate: true,
       events: WHEEL_EVENTS,
       deltaY: Math.min(49, target.cellHeight)
     })
-    await orcaPage.waitForTimeout(8000)
+    await dolphinPage.waitForTimeout(8000)
 
     const summary = summarizeArrivals(readReportArrivalLog(logPath), input)
     fs.rmSync(logPath, { force: true })

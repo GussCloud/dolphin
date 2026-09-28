@@ -15,13 +15,13 @@ import { WslCliInstaller, _internals } from './wsl-cli-installer'
 import { reconcileManagedWslCliRegistrations } from './wsl-cli-registration-reconciliation'
 
 function makeHostStatus(
-  launcherPath = 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\resources\\bin\\dolphin.exe'
+  launcherPath = 'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\resources\\bin\\dolphin.exe'
 ) {
   return {
     platform: 'win32',
-    commandName: 'orca',
+    commandName: 'dolphin',
     commandPath: launcherPath,
-    pathDirectory: 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\resources\\bin',
+    pathDirectory: 'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\resources\\bin',
     pathConfigured: true,
     launcherPath,
     installMethod: 'wrapper',
@@ -37,20 +37,20 @@ function makeHostStatus(
 // persisted managed script still names the pre-native Windows batch launcher.
 const PRE_RC4_MANAGED_WSL_LAUNCHER = `#!/usr/bin/env bash
 set -euo pipefail
-# Orca managed WSL CLI launcher
-# ORCA_WIN_LAUNCHER_B64=QzpcUHJvZ3JhbSBGaWxlc1xPcmNhXHJlc291cmNlc1xiaW5cb3JjYS5jbWQ=
-ORCA_WIN_LAUNCHER='C:\\Program Files\\Orca\\resources\\bin\\dolphin.cmd'
-ORCA_BRIDGE_PS1='/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
+# Dolphin managed WSL CLI launcher
+# DOLPHIN_WIN_LAUNCHER_B64=QzpcUHJvZ3JhbSBGaWxlc1xPcmNhXHJlc291cmNlc1xiaW5cb3JjYS5jbWQ=
+DOLPHIN_WIN_LAUNCHER='C:\\Program Files\\Dolphin\\resources\\bin\\dolphin.cmd'
+DOLPHIN_BRIDGE_PS1='/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
 if command -v powershell.exe >/dev/null 2>&1; then
-  ORCA_POWERSHELL=powershell.exe
+  DOLPHIN_POWERSHELL=powershell.exe
 elif [ -x /mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe ]; then
-  ORCA_POWERSHELL=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+  DOLPHIN_POWERSHELL=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
 else
-  echo "Orca WSL CLI requires Windows interop and could not find powershell.exe." >&2
+  echo "Dolphin WSL CLI requires Windows interop and could not find powershell.exe." >&2
   exit 1
 fi
-ORCA_BRIDGE_PS1_WIN=$(wslpath -w "$ORCA_BRIDGE_PS1")
-exec "$ORCA_POWERSHELL" -NoProfile -ExecutionPolicy Bypass -File "$ORCA_BRIDGE_PS1_WIN" "$ORCA_WIN_LAUNCHER" "$@"
+DOLPHIN_BRIDGE_PS1_WIN=$(wslpath -w "$DOLPHIN_BRIDGE_PS1")
+exec "$DOLPHIN_POWERSHELL" -NoProfile -ExecutionPolicy Bypass -File "$DOLPHIN_BRIDGE_PS1_WIN" "$DOLPHIN_WIN_LAUNCHER" "$@"
 `
 
 function createWslRunner(
@@ -64,7 +64,7 @@ function createWslRunner(
   } = {}
 ) {
   const commandPath = '/home/alice/.local/bin/dolphin-ide'
-  const legacyCommandPath = '/home/alice/.local/bin/orca'
+  const legacyCommandPath = '/home/alice/.local/bin/dolphin'
   const bridgePath = '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
   const files = new Map<string, string>()
   if (initialFile !== null) {
@@ -94,19 +94,21 @@ function createWslRunner(
       }
       if (
         files.has(bridgePath) &&
-        !files.get(bridgePath)?.includes('# Orca managed WSL CLI PowerShell bridge')
+        !files.get(bridgePath)?.includes('# Dolphin managed WSL CLI PowerShell bridge')
       ) {
-        throw new Error('__ORCA_CONFLICT__')
+        throw new Error('__DOLPHIN_CONFLICT__')
       }
       const launcher =
-        command.match(/cat > "\$command_tmp" <<'ORCA_WSL_CLI'\n([\s\S]*)\nORCA_WSL_CLI/)?.[1] ?? ''
+        command.match(
+          /cat > "\$command_tmp" <<'DOLPHIN_WSL_CLI'\n([\s\S]*)\nDOLPHIN_WSL_CLI/
+        )?.[1] ?? ''
       const bridge =
         command.match(
-          /cat > "\$bridge_tmp" <<'ORCA_WSL_BRIDGE'\n([\s\S]*)\nORCA_WSL_BRIDGE/
+          /cat > "\$bridge_tmp" <<'DOLPHIN_WSL_BRIDGE'\n([\s\S]*)\nDOLPHIN_WSL_BRIDGE/
         )?.[1] ?? ''
       files.set(commandPath, launcher)
       files.set(bridgePath, bridge)
-      if (files.get(legacyCommandPath)?.includes('# Orca managed WSL CLI launcher')) {
+      if (files.get(legacyCommandPath)?.includes('# Dolphin managed WSL CLI launcher')) {
         files.delete(legacyCommandPath)
       }
       return ''
@@ -118,16 +120,16 @@ function createWslRunner(
       if (command.includes(`rm -f '${commandPath}'`)) {
         if (
           files.has(bridgePath) &&
-          !files.get(bridgePath)?.includes('# Orca managed WSL CLI PowerShell bridge')
+          !files.get(bridgePath)?.includes('# Dolphin managed WSL CLI PowerShell bridge')
         ) {
-          throw new Error('__ORCA_CONFLICT__')
+          throw new Error('__DOLPHIN_CONFLICT__')
         }
         files.delete(commandPath)
         files.delete(bridgePath)
       }
       if (
         command.includes(legacyCommandPath) &&
-        files.get(legacyCommandPath)?.includes('# Orca managed WSL CLI launcher')
+        files.get(legacyCommandPath)?.includes('# Dolphin managed WSL CLI launcher')
       ) {
         files.delete(legacyCommandPath)
       }
@@ -135,13 +137,13 @@ function createWslRunner(
     }
     if (command.includes('cat ')) {
       if (command.includes(commandPath)) {
-        return files.get(commandPath) ?? '__ORCA_MISSING__'
+        return files.get(commandPath) ?? '__DOLPHIN_MISSING__'
       }
       if (command.includes(bridgePath)) {
-        return files.get(bridgePath) ?? '__ORCA_MISSING__'
+        return files.get(bridgePath) ?? '__DOLPHIN_MISSING__'
       }
       if (command.includes(legacyCommandPath)) {
-        return files.get(legacyCommandPath) ?? '__ORCA_MISSING__'
+        return files.get(legacyCommandPath) ?? '__DOLPHIN_MISSING__'
       }
     }
     throw new Error(`Unexpected WSL command: ${command}`)
@@ -164,7 +166,7 @@ describe('WslCliInstaller', () => {
     vi.useRealTimers()
   })
 
-  it('installs a WSL launcher that forwards to the Windows Orca launcher', async () => {
+  it('installs a WSL launcher that forwards to the Windows Dolphin launcher', async () => {
     const wsl = createWslRunner()
     const installer = new WslCliInstaller({
       platform: 'win32',
@@ -183,18 +185,18 @@ describe('WslCliInstaller', () => {
     expect(installed).toMatchObject({
       state: 'installed',
       pathConfigured: true,
-      launcherPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\resources\\bin\\dolphin.exe'
+      launcherPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\resources\\bin\\dolphin.exe'
     })
     expect(wsl.getFile()).toBe(
       _internals.buildWslLauncher(
-        'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\resources\\bin\\dolphin.exe',
+        'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\resources\\bin\\dolphin.exe',
         '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
       )
     )
     expect(wsl.getBridge()).toBe(_internals.buildWslBridgeScript())
     const installCommand = wsl.calls.find((command) => command.includes('cat > "$command_tmp"'))
     expect(installCommand).toBeDefined()
-    expect(installCommand).toContain("legacy_command_path='/home/alice/.local/bin/orca'")
+    expect(installCommand).toContain("legacy_command_path='/home/alice/.local/bin/dolphin'")
     expect(installCommand).toContain('rm -f "$legacy_command_path"')
     // Why: the new bridge accepts the old launcher's positional arguments, so
     // publishing it first keeps interrupted upgrades usable.
@@ -210,7 +212,7 @@ describe('WslCliInstaller', () => {
     const hostStatus = {
       ...makeHostStatus(),
       pathConfigured: null,
-      detail: 'Orca could not read the Windows user PATH registry value.'
+      detail: 'Dolphin could not read the Windows user PATH registry value.'
     } satisfies CliInstallStatus
     const installer = new WslCliInstaller({
       platform: 'win32',
@@ -230,21 +232,21 @@ describe('WslCliInstaller', () => {
     expect(_internals.getBridgePathFromCommandPath('/home/alice/.local/bin/dolphin-ide')).toBe(
       '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
     )
-    expect(_internals.getBridgePathFromCommandPath('/home/alice/.local/bin/orca')).toBe(
+    expect(_internals.getBridgePathFromCommandPath('/home/alice/.local/bin/dolphin')).toBe(
       '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
     )
   })
 
   it('reports installed WSL launchers whose bin directory is missing from PATH', async () => {
     const launcher = _internals.buildWslLauncher(
-      'C:\\Orca\\dolphin.cmd',
+      'C:\\Dolphin\\dolphin.cmd',
       '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
     )
     const wsl = createWslRunner(launcher, false)
     const installer = new WslCliInstaller({
       platform: 'win32',
       distro: 'Ubuntu',
-      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Orca\\dolphin.cmd') },
+      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Dolphin\\dolphin.cmd') },
       wslRunner: wsl.runner
     })
 
@@ -257,14 +259,14 @@ describe('WslCliInstaller', () => {
 
   it('accepts current managed WSL scripts with an extra heredoc trailing newline', async () => {
     const launcher = `${_internals.buildWslLauncher(
-      'C:\\Orca\\dolphin.cmd',
+      'C:\\Dolphin\\dolphin.cmd',
       '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
     )}\n`
     const wsl = createWslRunner(launcher)
     const installer = new WslCliInstaller({
       platform: 'win32',
       distro: 'Ubuntu',
-      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Orca\\dolphin.cmd') },
+      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Dolphin\\dolphin.cmd') },
       wslRunner: async (distro, command) => {
         if (command.includes('cat /home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1')) {
           return `${_internals.buildWslBridgeScript()}\n`
@@ -275,7 +277,7 @@ describe('WslCliInstaller', () => {
 
     await expect(installer.getStatus()).resolves.toMatchObject({
       state: 'installed',
-      currentTarget: 'C:\\Orca\\dolphin.cmd'
+      currentTarget: 'C:\\Dolphin\\dolphin.cmd'
     })
   })
 
@@ -295,14 +297,14 @@ describe('WslCliInstaller', () => {
   it('removes a managed WSL launcher', async () => {
     const wsl = createWslRunner(
       _internals.buildWslLauncher(
-        'C:\\Orca\\dolphin.cmd',
+        'C:\\Dolphin\\dolphin.cmd',
         '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
       )
     )
     const installer = new WslCliInstaller({
       platform: 'win32',
       distro: 'Ubuntu',
-      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Orca\\dolphin.cmd') },
+      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Dolphin\\dolphin.cmd') },
       wslRunner: wsl.runner
     })
 
@@ -312,7 +314,7 @@ describe('WslCliInstaller', () => {
 
   it('generates a launcher that forwards arguments through a PowerShell file bridge', () => {
     const launcher = _internals.buildWslLauncher(
-      'C:\\Program Files\\Orca\\resources\\bin\\dolphin.exe',
+      'C:\\Program Files\\Dolphin\\resources\\bin\\dolphin.exe',
       '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
     )
     const bridge = _internals.buildWslBridgeScript()
@@ -320,27 +322,27 @@ describe('WslCliInstaller', () => {
     expect(launcher).toContain('command -v powershell.exe')
     expect(launcher).toContain('/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe')
     expect(launcher).toContain(
-      'Orca WSL CLI requires Windows interop and could not find powershell.exe.'
+      'Dolphin WSL CLI requires Windows interop and could not find powershell.exe.'
     )
-    expect(launcher).toContain('"$ORCA_POWERSHELL" -NoProfile -ExecutionPolicy Bypass -File')
-    expect(launcher).toContain('ORCA_WSL_CWD=$(pwd -P 2>/dev/null) || {')
-    expect(launcher).toContain('ORCA_WSL_CWD=/')
+    expect(launcher).toContain('"$DOLPHIN_POWERSHELL" -NoProfile -ExecutionPolicy Bypass -File')
+    expect(launcher).toContain('DOLPHIN_WSL_CWD=$(pwd -P 2>/dev/null) || {')
+    expect(launcher).toContain('DOLPHIN_WSL_CWD=/')
     expect(launcher).toContain('cd /')
-    expect(launcher).toContain('ORCA_WSL_CWD_WIN=$(wslpath -w "$ORCA_WSL_CWD")')
-    expect(launcher.indexOf('ORCA_WSL_CWD=$(pwd -P')).toBeLessThan(
-      launcher.indexOf('ORCA_BRIDGE_PS1_WIN=$(wslpath')
+    expect(launcher).toContain('DOLPHIN_WSL_CWD_WIN=$(wslpath -w "$DOLPHIN_WSL_CWD")')
+    expect(launcher.indexOf('DOLPHIN_WSL_CWD=$(pwd -P')).toBeLessThan(
+      launcher.indexOf('DOLPHIN_BRIDGE_PS1_WIN=$(wslpath')
     )
-    expect(launcher).toContain('"$ORCA_WIN_LAUNCHER" -WslCwd "$ORCA_WSL_CWD_WIN" "$@"')
+    expect(launcher).toContain('"$DOLPHIN_WIN_LAUNCHER" -WslCwd "$DOLPHIN_WSL_CWD_WIN" "$@"')
     expect(launcher).not.toContain('-Command')
     expect(bridge).not.toContain('[CmdletBinding')
     expect(bridge).not.toMatch(/^param\(/m)
     expect(bridge).toContain("$args[1] -eq '-WslCwd'")
-    expect(bridge).toContain('[string]$OrcaLauncher = $args[0]')
+    expect(bridge).toContain('[string]$DolphinLauncher = $args[0]')
     expect(bridge).toContain('$WslCwd = $args[2]')
     expect(bridge).toContain('$ForwardArgs = @($args[$ForwardArgStart..($args.Count - 1)])')
     expect(bridge).toContain('if ([string]::IsNullOrEmpty($WslCwd))')
-    expect(bridge).toContain('$env:ORCA_CLI_CWD = $WslCwd')
-    expect(bridge).toContain('$LauncherDirectory = Split-Path -Parent $OrcaLauncher')
+    expect(bridge).toContain('$env:DOLPHIN_CLI_CWD = $WslCwd')
+    expect(bridge).toContain('$LauncherDirectory = Split-Path -Parent $DolphinLauncher')
     expect(bridge).toContain('Push-Location -LiteralPath $LauncherDirectory')
     // Why (#16463): Push-Location moves only the PowerShell provider location.
     // Without an explicit WorkingDirectory the started app inherits the caller's
@@ -353,8 +355,8 @@ describe('WslCliInstaller', () => {
     expect(bridge).toContain('[System.Diagnostics.Process]::Start($StartInfo)')
     expect(bridge).toContain('$Process.WaitForExit()')
     expect(bridge).toContain('$exitCode = $Process.ExitCode')
-    expect(bridge).not.toContain('& $OrcaLauncher @ForwardArgs')
-    expect(bridge).toContain('Remove-Item Env:ORCA_CLI_CWD -ErrorAction SilentlyContinue')
+    expect(bridge).not.toContain('& $DolphinLauncher @ForwardArgs')
+    expect(bridge).toContain('Remove-Item Env:DOLPHIN_CLI_CWD -ErrorAction SilentlyContinue')
     expect(bridge).toContain('catch')
     expect(bridge).toContain('$exitCode = 1')
     expect(bridge).toContain('exit $exitCode')
@@ -383,7 +385,7 @@ describe('WslCliInstaller', () => {
 
   it('marks stale managed launchers that point at the old app bin instead of packaged resources', async () => {
     const oldLauncher = _internals.buildWslLauncher(
-      'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\bin\\dolphin.cmd',
+      'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\bin\\dolphin.cmd',
       '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
     )
     const wsl = createWslRunner(oldLauncher)
@@ -396,18 +398,18 @@ describe('WslCliInstaller', () => {
 
     await expect(installer.getStatus()).resolves.toMatchObject({
       state: 'stale',
-      currentTarget: 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\bin\\dolphin.cmd',
-      launcherPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\resources\\bin\\dolphin.exe'
+      currentTarget: 'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\bin\\dolphin.cmd',
+      launcherPath: 'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\resources\\bin\\dolphin.exe'
     })
 
     await expect(installer.install()).resolves.toMatchObject({
       state: 'installed',
-      currentTarget: 'C:\\Users\\me\\AppData\\Local\\Programs\\Orca\\resources\\bin\\dolphin.exe'
+      currentTarget: 'C:\\Users\\me\\AppData\\Local\\Programs\\Dolphin\\resources\\bin\\dolphin.exe'
     })
   })
 
   it('repairs the frozen pre-rc4 registration so orchestration send/reply reach native rc4', async () => {
-    const nativeLauncher = 'C:\\Program Files\\Orca\\resources\\bin\\dolphin.exe'
+    const nativeLauncher = 'C:\\Program Files\\Dolphin\\resources\\bin\\dolphin.exe'
     const wsl = createWslRunner(PRE_RC4_MANAGED_WSL_LAUNCHER)
     const installer = new WslCliInstaller({
       platform: 'win32',
@@ -422,7 +424,7 @@ describe('WslCliInstaller', () => {
     ]
     const simulateRc4Launch = (args: string[]): number => {
       const target = _internals.parseManagedLauncherTarget(wsl.getFile() ?? '')
-      return target?.toLowerCase().endsWith('orca.cmd') &&
+      return target?.toLowerCase().endsWith('dolphin.cmd') &&
         args[0] === 'orchestration' &&
         (args[1] === 'send' || args[1] === 'reply')
         ? 2
@@ -472,7 +474,7 @@ describe('WslCliInstaller', () => {
   })
 
   it('repairs a managed launcher whose bridge is missing, but preserves a conflicting bridge', async () => {
-    const nativeLauncher = 'C:\\Orca\\resources\\bin\\dolphin.exe'
+    const nativeLauncher = 'C:\\Dolphin\\resources\\bin\\dolphin.exe'
     const missingBridge = createWslRunner(PRE_RC4_MANAGED_WSL_LAUNCHER, true, {
       initialBridge: null
     })
@@ -490,7 +492,7 @@ describe('WslCliInstaller', () => {
     expect(missingBridge.getBridge()).toBe(_internals.buildWslBridgeScript())
 
     const staleBridge = createWslRunner(PRE_RC4_MANAGED_WSL_LAUNCHER, true, {
-      initialBridge: '# Orca managed WSL CLI PowerShell bridge\nWrite-Output "stale"\n'
+      initialBridge: '# Dolphin managed WSL CLI PowerShell bridge\nWrite-Output "stale"\n'
     })
     const staleBridgeInstaller = new WslCliInstaller({
       platform: 'win32',
@@ -529,7 +531,7 @@ describe('WslCliInstaller', () => {
   })
 
   it('retains command ownership when only the bridge conflicts', async () => {
-    const nativeLauncher = 'C:\\Orca\\resources\\bin\\dolphin.exe'
+    const nativeLauncher = 'C:\\Dolphin\\resources\\bin\\dolphin.exe'
     const currentLauncher = _internals.buildWslLauncher(
       nativeLauncher,
       '/home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1'
@@ -553,8 +555,8 @@ describe('WslCliInstaller', () => {
     expect(wsl.getFile()).toBe(currentLauncher)
   })
 
-  it('moves a legacy-only managed registration to orca-ide without touching unmanaged names', async () => {
-    const nativeLauncher = 'C:\\Orca\\resources\\bin\\dolphin.exe'
+  it('moves a legacy-only managed registration to dolphin-ide without touching unmanaged names', async () => {
+    const nativeLauncher = 'C:\\Dolphin\\resources\\bin\\dolphin.exe'
     const managedLegacy = createWslRunner(null, true, {
       initialBridge: _internals.buildWslBridgeScript(),
       initialLegacyFile: PRE_RC4_MANAGED_WSL_LAUNCHER
@@ -612,7 +614,7 @@ describe('WslCliInstaller', () => {
   })
 
   it('removes the managed legacy launcher on removal so reconciliation cannot re-adopt it', async () => {
-    const nativeLauncher = 'C:\\Orca\\resources\\bin\\dolphin.exe'
+    const nativeLauncher = 'C:\\Dolphin\\resources\\bin\\dolphin.exe'
     const managedLegacy = createWslRunner(null, true, {
       initialBridge: _internals.buildWslBridgeScript(),
       initialLegacyFile: PRE_RC4_MANAGED_WSL_LAUNCHER
@@ -672,7 +674,7 @@ describe('WslCliInstaller', () => {
       distro: 'Ubuntu',
       hostInstaller: {
         getStatus: async () =>
-          makeHostStatus('C:\\Program Files\\Orca\\resources\\bin\\dolphin.exe')
+          makeHostStatus('C:\\Program Files\\Dolphin\\resources\\bin\\dolphin.exe')
       },
       wslRunner: wsl.runner
     })
@@ -691,7 +693,7 @@ describe('WslCliInstaller', () => {
     expect(installCommand).toContain('committed=1')
     expect(installCommand).toContain('flock -x -w 30 9')
     // Why: the command replace must stay one atomic rename; a mv-based backup
-    // would leave a window where a concurrent shell finds no orca-ide at all.
+    // would leave a window where a concurrent shell finds no dolphin-ide at all.
     expect(installCommand).not.toContain('command_backup')
     expect(installCommand).not.toContain(`mv -f '/home/alice/.local/bin/dolphin-ide'`)
   })
@@ -699,13 +701,13 @@ describe('WslCliInstaller', () => {
   it.skipIf(process.platform === 'win32')(
     'rolls both files back when the command replacement fails after the bridge move',
     async () => {
-      const root = await mkdtemp(join(tmpdir(), 'orca-wsl-cli-rollback-'))
+      const root = await mkdtemp(join(tmpdir(), 'dolphin-wsl-cli-rollback-'))
       const home = join(root, 'home with spaces')
       const commandPath = join(home, '.local', 'bin', 'dolphin-ide')
-      const bridgePath = join(home, '.local', 'share', 'orca', 'dolphin-wsl-bridge.ps1')
+      const bridgePath = join(home, '.local', 'share', 'dolphin', 'dolphin-wsl-bridge.ps1')
       const bridge = _internals.buildWslBridgeScript()
       await mkdir(join(home, '.local', 'bin'), { recursive: true })
-      await mkdir(join(home, '.local', 'share', 'orca'), { recursive: true })
+      await mkdir(join(home, '.local', 'share', 'dolphin'), { recursive: true })
       await writeFile(commandPath, PRE_RC4_MANAGED_WSL_LAUNCHER, 'utf8')
       await writeFile(bridgePath, bridge, 'utf8')
 
@@ -733,7 +735,7 @@ describe('WslCliInstaller', () => {
         distro: 'Ubuntu',
         hostInstaller: {
           getStatus: async () =>
-            makeHostStatus('C:\\Program Files\\Orca\\resources\\bin\\dolphin.exe')
+            makeHostStatus('C:\\Program Files\\Dolphin\\resources\\bin\\dolphin.exe')
         },
         wslRunner: runner
       })
@@ -765,7 +767,7 @@ describe('WslCliInstaller', () => {
   })
 
   it('is idempotent after repairing an old managed registration', async () => {
-    const nativeLauncher = 'D:\\Custom Orca\\resources\\bin\\dolphin.exe'
+    const nativeLauncher = 'D:\\Custom Dolphin\\resources\\bin\\dolphin.exe'
     const wsl = createWslRunner(PRE_RC4_MANAGED_WSL_LAUNCHER)
     const installer = new WslCliInstaller({
       platform: 'win32',
@@ -778,7 +780,7 @@ describe('WslCliInstaller', () => {
     await expect(installer.repairManagedRegistration()).resolves.toMatchObject({ changed: false })
     expect(wsl.calls.filter((command) => command.includes('cat > "$command_tmp"'))).toHaveLength(1)
     expect(wsl.getFile()).toContain(
-      "ORCA_WIN_LAUNCHER='D:\\Custom Orca\\resources\\bin\\dolphin.exe'"
+      "DOLPHIN_WIN_LAUNCHER='D:\\Custom Dolphin\\resources\\bin\\dolphin.exe'"
     )
   })
 
@@ -825,18 +827,18 @@ describe('WslCliInstaller', () => {
     const installer = new WslCliInstaller({
       platform: 'win32',
       distro: 'Ubuntu',
-      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Orca\\dolphin.cmd') },
+      hostInstaller: { getStatus: async () => makeHostStatus('C:\\Dolphin\\dolphin.cmd') },
       wslRunner: async (distro, command) => {
         if (command.includes('cat /home/alice/.local/share/dolphin/dolphin-wsl-bridge.ps1')) {
           return 'user bridge'
         }
         if (command.includes('rm -f')) {
-          throw new Error('__ORCA_CONFLICT__')
+          throw new Error('__DOLPHIN_CONFLICT__')
         }
         return wsl.runner(distro, command)
       }
     })
 
-    await expect(installer.remove()).rejects.toThrow('__ORCA_CONFLICT__')
+    await expect(installer.remove()).rejects.toThrow('__DOLPHIN_CONFLICT__')
   })
 })

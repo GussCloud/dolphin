@@ -83,7 +83,7 @@ describe('CLI imports of main-process modules', () => {
     })
     expect(findMainImports()).toContainEqual({
       file: join('src', 'cli', 'handlers', 'agent-hooks.ts'),
-      module: 'orca-profiles/profile-index-store'
+      module: 'dolphin-profiles/profile-index-store'
     })
     expect(findMainImports().length).toBeGreaterThanOrEqual(2)
     expect(Object.keys(findElectronViteMainEntries()).length).toBeGreaterThanOrEqual(2)

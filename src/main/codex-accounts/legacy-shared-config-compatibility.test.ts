@@ -39,7 +39,7 @@ let sharedRuntimeHome: string
 let systemCodexHome: string
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'orca-legacy-codex-home-'))
+  root = mkdtempSync(join(tmpdir(), 'dolphin-legacy-codex-home-'))
   sharedRuntimeHome = join(root, 'codex-runtime-home', 'home')
   systemCodexHome = join(root, 'system-home', '.codex')
   mkdirSync(sharedRuntimeHome, { recursive: true })
@@ -71,7 +71,7 @@ describe('legacy shared Codex config compatibility', () => {
       [
         'model_provider = "stale-provider"',
         '',
-        '[hooks.state."orca:stop:0:0"]',
+        '[hooks.state."dolphin:stop:0:0"]',
         'enabled = true',
         ''
       ].join('\n')
@@ -83,7 +83,7 @@ describe('legacy shared Codex config compatibility', () => {
     expect(sharedConfig).toContain('model_provider = "codex-lb"')
     expect(sharedConfig).toContain('requires_openai_auth = true')
     expect(sharedConfig).not.toContain('stale-provider')
-    expect(sharedConfig).toContain('[hooks.state."orca:stop:0:0"]')
+    expect(sharedConfig).toContain('[hooks.state."dolphin:stop:0:0"]')
     expect(readFileSync(join(systemCodexHome, 'config.toml'), 'utf-8')).toBe(systemConfig)
     expect(readFileSync(join(sharedRuntimeHome, 'auth.json'), 'utf-8')).toBe(staleSharedAuth)
   })

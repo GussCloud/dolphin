@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as DurableFileWrite from '../durable-file-write'
 
-const ORCA_PROFILE_ID = 'local-default'
+const DOLPHIN_PROFILE_ID = 'local-default'
 const RETIRED_PROFILE_ID = '11111111-1111-4111-8111-111111111111'
 
 const mocks = vi.hoisted(() => ({
@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   userDataPath: '',
   profileDirectory: '',
   state: {
-    devInstanceIdentity: { appUserModelId: 'app.id', appName: 'Orca' },
+    devInstanceIdentity: { appUserModelId: 'app.id', appName: 'Dolphin' },
     isServeMode: false,
     mainProcessI18nReady: Promise.resolve(),
     managedWslCliReconciliationStatus: 'settled',
@@ -123,9 +123,9 @@ vi.mock('../browser/browser-manager', () => ({
     handleGuestWillDownload: vi.fn()
   }
 }))
-vi.mock('../orca-profiles/profile-index-store', () => ({
-  ensureActiveOrcaProfile: () => ({
-    profile: { id: ORCA_PROFILE_ID },
+vi.mock('../dolphin-profiles/profile-index-store', () => ({
+  ensureActiveDolphinProfile: () => ({
+    profile: { id: DOLPHIN_PROFILE_ID },
     profileDirectory: mocks.profileDirectory,
     dataFile: join(mocks.profileDirectory, 'data.json')
   })
@@ -170,10 +170,10 @@ vi.mock('../ipc/doc-preview-grant-ipc', () => ({ registerDocPreviewGrantHandlers
 // route sessions, cookie staging — are stubbed, so the meta load, the retired-choice inspection
 // and the identity write are all real.
 vi.mock('../browser/browser-route-session-runtime', () => ({
-  configureRouteSessionsForOrcaProfile: vi.fn()
+  configureRouteSessionsForDolphinProfile: vi.fn()
 }))
 vi.mock('../browser/paired-runtime-browser-client-host-runtime', () => ({
-  configurePairedRuntimeBrowserClientHostsForOrcaProfile: vi.fn()
+  configurePairedRuntimeBrowserClientHostsForDolphinProfile: vi.fn()
 }))
 vi.mock('../browser/browser-route-partition-storage-runtime', () => ({
   collectOrphanedBrowserRoutePartitionStorage: vi.fn(async () => {})
@@ -237,7 +237,7 @@ import {
   readBrowserIdentityModeRecord
 } from '../browser/browser-identity-mode-record'
 import { BROWSER_SESSION_META_FILE_NAME } from '../browser/browser-session-meta-store'
-import { getOrcaProfileBrowserSessionPartition } from '../../shared/orca-profiles'
+import { getDolphinProfileBrowserSessionPartition } from '../../shared/dolphin-profiles'
 
 function seedIdentityRecord(mode: string, explicitSelection: boolean): void {
   writeFileSync(
@@ -264,7 +264,10 @@ function seedRetiredProfile(): void {
         {
           id: RETIRED_PROFILE_ID,
           scope: 'isolated',
-          partition: getOrcaProfileBrowserSessionPartition(ORCA_PROFILE_ID, RETIRED_PROFILE_ID),
+          partition: getDolphinProfileBrowserSessionPartition(
+            DOLPHIN_PROFILE_ID,
+            RETIRED_PROFILE_ID
+          ),
           label: 'Existing',
           source: null,
           userAgentMode: 'native'
@@ -298,8 +301,8 @@ function identityRecordWrites(): unknown[] {
 
 describe('ready-phase browser identity authority', () => {
   beforeAll(() => {
-    mocks.userDataPath = mkdtempSync(join(tmpdir(), 'orca-ready-identity-'))
-    mocks.profileDirectory = mkdtempSync(join(tmpdir(), 'orca-ready-identity-profile-'))
+    mocks.userDataPath = mkdtempSync(join(tmpdir(), 'dolphin-ready-identity-'))
+    mocks.profileDirectory = mkdtempSync(join(tmpdir(), 'dolphin-ready-identity-profile-'))
   })
 
   beforeEach(() => {

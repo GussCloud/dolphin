@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { testOrcaSessionId } from '../../../../../../shared/orca-session-address-test-fixture'
+import { testDolphinSessionId } from '../../../../../../shared/dolphin-session-address-test-fixture'
 import { createRootDispatch } from '../../../../orchestration/db/root-dispatch-test-fixture'
 import { createOrchestrationRpcHarness } from '../rpc-test-harness'
 
 const PANE = 'tab_lead:22222222-2222-4222-9222-222222222222'
 const OTHER = 'tab_other:33333333-3333-4333-8333-333333333333'
-const SESSION = testOrcaSessionId('4bd46b4a-035b-41dd-a122-a9c29122ff11')
+const SESSION = testDolphinSessionId('4bd46b4a-035b-41dd-a122-a9c29122ff11')
 
 describe.each([false, true])('Dispatch recipient identity (settled=%s)', (settled) => {
   const h = createOrchestrationRpcHarness()
@@ -34,13 +34,13 @@ describe.each([false, true])('Dispatch recipient identity (settled=%s)', (settle
   }
   function sessionRun() {
     state.db.db
-      .prepare('UPDATE dispatch_contexts SET assignee_orca_session_id = ? WHERE id = ?')
+      .prepare('UPDATE dispatch_contexts SET assignee_dolphin_session_id = ? WHERE id = ?')
       .run(SESSION, dispatch.id)
     return state.db.createRun({
       objective: 'session lead',
       coordinatorHandle: 'term_lead',
       coordinatorPaneKey: null,
-      coordinatorOrcaSessionId: SESSION
+      coordinatorDolphinSessionId: SESSION
     })
   }
   async function expectRun(runId: string) {

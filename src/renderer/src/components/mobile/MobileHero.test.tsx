@@ -252,7 +252,7 @@ describe('HeroFlow height', () => {
   it('shows an encoder error while keeping the copy fallback enabled', () => {
     renderFlow(1, {
       pairingQrError: true,
-      pairingUrl: 'orca://pair?code=copy-fallback'
+      pairingUrl: 'dolphin://pair?code=copy-fallback'
     })
 
     expect(screen.getByRole('alert')).toHaveTextContent('couldn’t be rendered as a QR code')
@@ -296,7 +296,7 @@ describe('HeroFlow height', () => {
       <MobileHeroPairingStep
         {...props}
         pairQrDataUrl="data:image/png;base64,qr"
-        pairingUrl="orca://pair#ready"
+        pairingUrl="dolphin://pair#ready"
         relayMintFailure={null}
       />
     )
@@ -338,7 +338,7 @@ describe('HeroFlow height', () => {
       <MobileHeroPairingStep
         {...props}
         pairQrDataUrl="data:image/png;base64,qr"
-        pairingUrl="orca://pair#ready"
+        pairingUrl="dolphin://pair#ready"
         pairLoading={false}
       />
     )
@@ -349,7 +349,7 @@ describe('HeroFlow height', () => {
   it('lets the user name this computer in the pairing step, ahead of the code', () => {
     const props: React.ComponentProps<typeof MobileHeroPairingStep> = {
       pairQrDataUrl: 'data:image/png;base64,AAAA',
-      pairingUrl: 'orca://pair?code=abc',
+      pairingUrl: 'dolphin://pair?code=abc',
       pairingQrError: false,
       relayMintFailure: null,
       onUseLan: vi.fn(),

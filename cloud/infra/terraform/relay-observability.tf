@@ -6,7 +6,7 @@ locals {
   relay_service_log_filter = join(" OR ", [
     for name in local.relay_service_names : "resource.labels.service_name=\"${name}\""
   ])
-  relay_runtime_log_filter = "((resource.type=\"cloud_run_revision\" AND (${local.relay_service_log_filter})) OR (resource.type=\"gce_instance\" AND jsonPayload.role=\"cell\")) AND jsonPayload.event=\"orca_relay_runtime_metrics\""
+  relay_runtime_log_filter = "((resource.type=\"cloud_run_revision\" AND (${local.relay_service_log_filter})) OR (resource.type=\"gce_instance\" AND jsonPayload.role=\"cell\")) AND jsonPayload.event=\"dolphin_relay_runtime_metrics\""
   relay_gce_connection_warning_thresholds = {
     for cell_id, cell in var.relay_gce_cells :
     cell_id => cell.connection_hard_cap == null ? 550 : floor(
@@ -31,27 +31,27 @@ locals {
     }
     postgres_retries = {
       description = "Relay PostgreSQL transactions recovered after a retryable abort."
-      filter      = "((resource.type=\"cloud_run_revision\" AND (${local.relay_service_log_filter})) OR resource.type=\"gce_instance\") AND jsonPayload.event=\"orca_relay_postgres_transaction_retry\""
+      filter      = "((resource.type=\"cloud_run_revision\" AND (${local.relay_service_log_filter})) OR resource.type=\"gce_instance\") AND jsonPayload.event=\"dolphin_relay_postgres_transaction_retry\""
     }
     postgres_retry_exhausted = {
       description = "Relay PostgreSQL transactions that exhausted bounded retry."
-      filter      = "((resource.type=\"cloud_run_revision\" AND (${local.relay_service_log_filter})) OR resource.type=\"gce_instance\") AND jsonPayload.event=\"orca_relay_postgres_transaction_exhausted\""
+      filter      = "((resource.type=\"cloud_run_revision\" AND (${local.relay_service_log_filter})) OR resource.type=\"gce_instance\") AND jsonPayload.event=\"dolphin_relay_postgres_transaction_exhausted\""
     }
     cell_process_exit = {
       # The docker event stream is the only per-exit line: the relay's own crash footer only
       # appears for unhandled rejections, and `container start` also counts healthy first boots.
       description = "Relay cell container exits, one Docker `container die` event per process exit."
-      filter      = "resource.type=\"gce_instance\" AND logName=\"projects/${var.project_id}/logs/cos_system\" AND jsonPayload.SYSLOG_IDENTIFIER=\"docker\" AND jsonPayload.MESSAGE:\"container die\" AND jsonPayload.MESSAGE:\"name=orca-relay)\""
+      filter      = "resource.type=\"gce_instance\" AND logName=\"projects/${var.project_id}/logs/cos_system\" AND jsonPayload.SYSLOG_IDENTIFIER=\"docker\" AND jsonPayload.MESSAGE:\"container die\" AND jsonPayload.MESSAGE:\"name=dolphin-relay)\""
     }
     cloud_sql_wal_checkpoint = {
       description = "Cloud SQL checkpoints triggered by WAL volume instead of the timed schedule; a sustained run is the fsync loop that stalled every relay process at once on 2026-09-04."
       filter      = "resource.type=\"cloudsql_database\" AND resource.labels.database_id=\"${var.project_id}:${local.relay_database_instance_name}\" AND textPayload:\"checkpoint starting: wal\""
     }
-    # Why: `db=orca_relay,` keeps auth on the shared instance out. NOWAIT refusals ("could not
+    # Why: `db=dolphin_relay,` keeps auth on the shared instance out. NOWAIT refusals ("could not
     # obtain lock") are excluded: sweeps step aside by design at ~160/min even with rehome paused.
     cloud_sql_lock_timeouts = {
       description = "Relay statements Postgres cancelled after waiting out their lock timeout; a burst means one transaction is holding rows every other relay process needs."
-      filter      = "resource.type=\"cloudsql_database\" AND resource.labels.database_id=\"${var.project_id}:${local.relay_database_instance_name}\" AND textPayload:\"db=orca_relay,\" AND textPayload:\"canceling statement due to lock timeout\""
+      filter      = "resource.type=\"cloudsql_database\" AND resource.labels.database_id=\"${var.project_id}:${local.relay_database_instance_name}\" AND textPayload:\"db=dolphin_relay,\" AND textPayload:\"canceling statement due to lock timeout\""
     }
   }
 
@@ -152,17 +152,17 @@ locals {
         for key in local.relay_region_keys : { metric = "requested_regions_${local.relay_region_columns[key]}", column = "req_${local.relay_region_columns[key]}" }
         ] : [
         index == 0 ? "" : ";",
-        "  fetch cloud_run_revision::logging.googleapis.com/user/orca_relay_${entry.metric}",
+        "  fetch cloud_run_revision::logging.googleapis.com/user/dolphin_relay_${entry.metric}",
         "  | align delta(1h) | every 1h",
-        "  | group_by [], [${entry.column}: sum(value.orca_relay_${entry.metric})]"
+        "  | group_by [], [${entry.column}: sum(value.dolphin_relay_${entry.metric})]"
       ]
     ]),
     flatten([
       for key in local.relay_region_keys : [
         ";",
-        "  fetch cloud_run_revision::logging.googleapis.com/user/orca_relay_selected_regions_${local.relay_region_columns[key]}",
+        "  fetch cloud_run_revision::logging.googleapis.com/user/dolphin_relay_selected_regions_${local.relay_region_columns[key]}",
         "  | align delta(1h) | every 1h",
-        "  | group_by [], [sel_${local.relay_region_columns[key]}: sum(value.orca_relay_selected_regions_${local.relay_region_columns[key]})]"
+        "  | group_by [], [sel_${local.relay_region_columns[key]}: sum(value.dolphin_relay_selected_regions_${local.relay_region_columns[key]})]"
       ]
     ]),
     [
@@ -309,7 +309,7 @@ resource "google_logging_metric" "relay_snapshot" {
   for_each = merge(local.relay_runtime_metrics, local.relay_region_share_metrics)
 
   project         = var.project_id
-  name            = "orca_relay_${each.key}"
+  name            = "dolphin_relay_${each.key}"
   description     = each.value.description
   filter          = local.relay_runtime_log_filter
   value_extractor = "EXTRACT(jsonPayload.${each.value.field})"
@@ -351,7 +351,7 @@ resource "google_logging_metric" "relay_incident" {
   for_each = local.relay_incident_metrics
 
   project     = var.project_id
-  name        = "orca_relay_${each.key}"
+  name        = "dolphin_relay_${each.key}"
   description = each.value.description
   filter      = each.value.filter
 
@@ -367,7 +367,7 @@ resource "google_logging_metric" "relay_incident" {
 # percentile interpolation of a wide exponential bucket.
 resource "google_logging_metric" "relay_long_cell_inventory_hold" {
   project         = var.project_id
-  name            = "orca_relay_long_cell_inventory_hold_ms"
+  name            = "dolphin_relay_long_cell_inventory_hold_ms"
   description     = "Cell-inventory lock holds of at least 1,000 ms, one value per 30-second runtime sample."
   filter          = "${local.relay_runtime_log_filter} AND jsonPayload.cellInventoryHoldMsMax>=1000"
   value_extractor = "EXTRACT(jsonPayload.cellInventoryHoldMsMax)"
@@ -405,7 +405,7 @@ resource "google_monitoring_alert_policy" "relay_custom" {
   for_each = local.relay_custom_alerts
 
   project      = var.project_id
-  display_name = "Orca Relay: ${replace(each.key, "_", " ")}"
+  display_name = "Dolphin Relay: ${replace(each.key, "_", " ")}"
   combiner     = "OR"
   enabled      = true
   # Why: only the reviewed critical alerts page; the rest stay in the console. Applying one
@@ -416,7 +416,7 @@ resource "google_monitoring_alert_policy" "relay_custom" {
     display_name = each.key
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/orca_relay_${each.value.metric}\""
+      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_${each.value.metric}\""
       comparison      = "COMPARISON_GT"
       threshold_value = each.value.threshold_run
       duration        = each.value.duration
@@ -440,7 +440,7 @@ resource "google_monitoring_alert_policy" "relay_custom" {
       display_name = "${each.key} (GCE cell)"
 
       condition_threshold {
-        filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/orca_relay_${conditions.value.metric}\""
+        filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_${conditions.value.metric}\""
         comparison      = "COMPARISON_GT"
         threshold_value = conditions.value.threshold_gce
         duration        = conditions.value.duration
@@ -469,7 +469,7 @@ resource "google_monitoring_alert_policy" "relay_custom" {
 
 resource "google_monitoring_alert_policy" "relay_assignment_5xx" {
   project               = var.project_id
-  display_name          = "Orca Relay: assignment 5xx"
+  display_name          = "Dolphin Relay: assignment 5xx"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -478,7 +478,7 @@ resource "google_monitoring_alert_policy" "relay_assignment_5xx" {
     display_name = "assignment 5xx"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/orca_relay_assignment_5xx\""
+      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_assignment_5xx\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "0s"
@@ -508,7 +508,7 @@ resource "google_monitoring_alert_policy" "relay_gce_connection_headroom" {
   for_each = local.relay_gce_connection_warning_groups
 
   project               = var.project_id
-  display_name          = "Orca Relay: connection headroom (GCE ${each.key})"
+  display_name          = "Dolphin Relay: connection headroom (GCE ${each.key})"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -517,7 +517,7 @@ resource "google_monitoring_alert_policy" "relay_gce_connection_headroom" {
     display_name = "connection headroom (GCE ${each.key})"
 
     condition_threshold {
-      filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/orca_relay_total_connections\" AND (${join(" OR ", [for cell_id in each.value : "metric.label.\"cell_id\"=\"${cell_id}\""])})"
+      filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_total_connections\" AND (${join(" OR ", [for cell_id in each.value : "metric.label.\"cell_id\"=\"${cell_id}\""])})"
       comparison      = "COMPARISON_GT"
       threshold_value = tonumber(each.key)
       duration        = "120s"
@@ -545,7 +545,7 @@ resource "google_monitoring_alert_policy" "relay_gce_connection_headroom" {
 
 resource "google_monitoring_alert_policy" "relay_assignment_edge_429" {
   project               = var.project_id
-  display_name          = "Orca Relay: assignment edge 429"
+  display_name          = "Dolphin Relay: assignment edge 429"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -554,7 +554,7 @@ resource "google_monitoring_alert_policy" "relay_assignment_edge_429" {
     display_name = "assignment edge 429"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/orca_relay_assignment_edge_429\""
+      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_assignment_edge_429\""
       comparison      = "COMPARISON_GT"
       threshold_value = 100
       duration        = "0s"
@@ -582,7 +582,7 @@ resource "google_monitoring_alert_policy" "relay_assignment_edge_429" {
 
 resource "google_monitoring_alert_policy" "relay_postgres_retry_exhausted" {
   project               = var.project_id
-  display_name          = "Orca Relay: PostgreSQL retry exhausted"
+  display_name          = "Dolphin Relay: PostgreSQL retry exhausted"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -591,7 +591,7 @@ resource "google_monitoring_alert_policy" "relay_postgres_retry_exhausted" {
     display_name = "PostgreSQL retry exhausted (Cloud Run)"
 
     condition_threshold {
-      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/orca_relay_postgres_retry_exhausted\""
+      filter          = "resource.type=\"cloud_run_revision\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_postgres_retry_exhausted\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "180s"
@@ -613,7 +613,7 @@ resource "google_monitoring_alert_policy" "relay_postgres_retry_exhausted" {
     display_name = "PostgreSQL retry exhausted (GCE cell)"
 
     condition_threshold {
-      filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/orca_relay_postgres_retry_exhausted\""
+      filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_postgres_retry_exhausted\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "180s"
@@ -641,7 +641,7 @@ resource "google_monitoring_alert_policy" "relay_postgres_retry_exhausted" {
 
 resource "google_monitoring_alert_policy" "relay_cloud_sql_backends" {
   project      = var.project_id
-  display_name = "Orca Relay: Cloud SQL connection headroom"
+  display_name = "Dolphin Relay: Cloud SQL connection headroom"
   combiner     = "OR"
   enabled      = true
 
@@ -675,7 +675,7 @@ resource "google_monitoring_alert_policy" "relay_cloud_sql_backends" {
 
 resource "google_monitoring_alert_policy" "relay_cloud_sql_checkpoint_loop" {
   project               = var.project_id
-  display_name          = "Orca Relay: Cloud SQL checkpoint loop"
+  display_name          = "Dolphin Relay: Cloud SQL checkpoint loop"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -684,7 +684,7 @@ resource "google_monitoring_alert_policy" "relay_cloud_sql_checkpoint_loop" {
     display_name = "WAL-triggered checkpoints above 3 in 5 minutes"
 
     condition_threshold {
-      filter          = "resource.type=\"cloudsql_database\" AND metric.type=\"logging.googleapis.com/user/orca_relay_cloud_sql_wal_checkpoint\""
+      filter          = "resource.type=\"cloudsql_database\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_cloud_sql_wal_checkpoint\""
       comparison      = "COMPARISON_GT"
       threshold_value = 3
       duration        = "300s"
@@ -702,7 +702,7 @@ resource "google_monitoring_alert_policy" "relay_cloud_sql_checkpoint_loop" {
   }
 
   documentation {
-    content   = "Healthy operation is one timed checkpoint every 5 minutes. Repeated `checkpoint starting: wal` lines mean WAL is outrunning `max_wal_size` and every checkpoint fsync stalls all relay SQL for seconds. Check `checkpoint complete` sync= times and disk write throughput against the PD-SSD ceiling; the fix is disk size and `max_wal_size` in the Terraform root that owns the instance (orca-cloud `infra/terraform-foundation`)."
+    content   = "Healthy operation is one timed checkpoint every 5 minutes. Repeated `checkpoint starting: wal` lines mean WAL is outrunning `max_wal_size` and every checkpoint fsync stalls all relay SQL for seconds. Check `checkpoint complete` sync= times and disk write throughput against the PD-SSD ceiling; the fix is disk size and `max_wal_size` in the Terraform root that owns the instance (dolphin-cloud `infra/terraform-foundation`)."
     mime_type = "text/markdown"
   }
 
@@ -711,7 +711,7 @@ resource "google_monitoring_alert_policy" "relay_cloud_sql_checkpoint_loop" {
 
 resource "google_monitoring_alert_policy" "relay_cloud_sql_disk" {
   project               = var.project_id
-  display_name          = "Orca Relay: Cloud SQL disk utilization"
+  display_name          = "Dolphin Relay: Cloud SQL disk utilization"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -746,7 +746,7 @@ resource "google_monitoring_alert_policy" "relay_cloud_nat_port_drops" {
   count = local.relay_gce_configured ? 1 : 0
 
   project               = var.project_id
-  display_name          = "Orca Relay: Cloud NAT port exhaustion"
+  display_name          = "Dolphin Relay: Cloud NAT port exhaustion"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -781,7 +781,7 @@ resource "google_monitoring_alert_policy" "relay_cloud_nat_port_drops" {
 
 resource "google_monitoring_alert_policy" "relay_cell_process_exit" {
   project               = var.project_id
-  display_name          = "Orca Relay: cell process exits"
+  display_name          = "Dolphin Relay: cell process exits"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -790,7 +790,7 @@ resource "google_monitoring_alert_policy" "relay_cell_process_exit" {
     display_name = "Cell container exits above 3 in 15 minutes"
 
     condition_threshold {
-      filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/orca_relay_cell_process_exit\""
+      filter          = "resource.type=\"gce_instance\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_cell_process_exit\""
       comparison      = "COMPARISON_GT"
       threshold_value = 3
       duration        = "0s"
@@ -820,7 +820,7 @@ resource "google_monitoring_alert_policy" "relay_cell_process_exit" {
 # and pausing rehome does not stop them, so paging on them would ask on-call to do nothing.
 resource "google_monitoring_alert_policy" "relay_long_cell_inventory_hold" {
   project               = var.project_id
-  display_name          = "Orca Relay: cell table lock held over 1 second"
+  display_name          = "Dolphin Relay: cell table lock held over 1 second"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -879,7 +879,7 @@ resource "google_monitoring_alert_policy" "relay_long_cell_inventory_hold" {
 # Visibility only, no notification channel, like the non-paging relay_custom policies.
 resource "google_monitoring_alert_policy" "relay_director_cell_inventory_hold" {
   project               = var.project_id
-  display_name          = "Orca Relay: director cell table lock held over 1 second"
+  display_name          = "Dolphin Relay: director cell table lock held over 1 second"
   combiner              = "OR"
   enabled               = true
   notification_channels = []
@@ -907,14 +907,14 @@ resource "google_monitoring_alert_policy" "relay_director_cell_inventory_hold" {
   }
 
   documentation {
-    content   = "The director held the lock on every row of the relay cell table for at least one second. These holds happen a few times a day even with regional rehoming paused, and pausing rehome does not stop them, so this policy does not page. Use it to explain a `Orca Relay: lock timeout burst` alert that has no cell hold in the same minute. Do not drain or restart cells for it."
+    content   = "The director held the lock on every row of the relay cell table for at least one second. These holds happen a few times a day even with regional rehoming paused, and pausing rehome does not stop them, so this policy does not page. Use it to explain a `Dolphin Relay: lock timeout burst` alert that has no cell hold in the same minute. Do not drain or restart cells for it."
     mime_type = "text/markdown"
   }
 }
 
 resource "google_monitoring_alert_policy" "relay_lock_timeout_burst" {
   project               = var.project_id
-  display_name          = "Orca Relay: lock timeout burst"
+  display_name          = "Dolphin Relay: lock timeout burst"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -923,7 +923,7 @@ resource "google_monitoring_alert_policy" "relay_lock_timeout_burst" {
     display_name = "Relay lock timeouts at least 20 in a minute"
 
     condition_threshold {
-      filter          = "resource.type=\"cloudsql_database\" AND metric.type=\"logging.googleapis.com/user/orca_relay_cloud_sql_lock_timeouts\""
+      filter          = "resource.type=\"cloudsql_database\" AND metric.type=\"logging.googleapis.com/user/dolphin_relay_cloud_sql_lock_timeouts\""
       comparison      = "COMPARISON_GT"
       threshold_value = 19
       duration        = "0s"
@@ -941,7 +941,7 @@ resource "google_monitoring_alert_policy" "relay_lock_timeout_burst" {
   }
 
   documentation {
-    content   = "Postgres cancelled at least 20 relay statements in one minute because they waited too long for a lock. Each cancel is a host connect, reservation or placement that failed and retried. Only the relay database is counted; auth traffic on the same instance and fail-fast lock refusals from background sweeps are excluded. Between 2026-09-20 and 2026-09-22 all 88 such minutes overlapped a lock hold from a regional rehome on an asia-east2 cell. A burst can also come from a director hold while rehoming is paused, as on 2026-09-23 at 04:23 UTC. First response: check the `Orca Relay: cell table lock held over 1 second` policy for the same minute. If an asia-east2 cell held the lock, pause regional rehoming with the `Operate Relay Production Rehome` workflow, action `pause`. If no cell hold appears in that minute, check `Orca Relay: director cell table lock held over 1 second` instead of pausing rehome, and do not drain or restart cells for it. See `cloud/docs/relay-incident-monitor.md`, section \"Relay lock contention alert policies\"."
+    content   = "Postgres cancelled at least 20 relay statements in one minute because they waited too long for a lock. Each cancel is a host connect, reservation or placement that failed and retried. Only the relay database is counted; auth traffic on the same instance and fail-fast lock refusals from background sweeps are excluded. Between 2026-09-20 and 2026-09-22 all 88 such minutes overlapped a lock hold from a regional rehome on an asia-east2 cell. A burst can also come from a director hold while rehoming is paused, as on 2026-09-23 at 04:23 UTC. First response: check the `Dolphin Relay: cell table lock held over 1 second` policy for the same minute. If an asia-east2 cell held the lock, pause regional rehoming with the `Operate Relay Production Rehome` workflow, action `pause`. If no cell hold appears in that minute, check `Dolphin Relay: director cell table lock held over 1 second` instead of pausing rehome, and do not drain or restart cells for it. See `cloud/docs/relay-incident-monitor.md`, section \"Relay lock contention alert policies\"."
     mime_type = "text/markdown"
   }
 
@@ -960,7 +960,7 @@ resource "google_monitoring_alert_policy" "relay_lock_timeout_burst" {
 # confirmed the distribution sum, the join arity, the unit literals, and the condition clause.
 resource "google_monitoring_alert_policy" "relay_far_cell_accept_latency" {
   project               = var.project_id
-  display_name          = "Orca Relay: far-cell phone accept latency"
+  display_name          = "Dolphin Relay: far-cell phone accept latency"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -973,13 +973,13 @@ resource "google_monitoring_alert_policy" "relay_far_cell_accept_latency" {
       # median of the interval p95s reads as sustained slowness instead of one bad 30-second flush.
       query    = <<-EOT
         {
-          fetch gce_instance::logging.googleapis.com/user/orca_relay_client_accept_total_ms_p95
+          fetch gce_instance::logging.googleapis.com/user/dolphin_relay_client_accept_total_ms_p95
           | align delta(15m) | every 15m
-          | group_by [metric.cell_id], [accept_p95_ms: percentile(value.orca_relay_client_accept_total_ms_p95, 50)]
+          | group_by [metric.cell_id], [accept_p95_ms: percentile(value.dolphin_relay_client_accept_total_ms_p95, 50)]
         ;
-          fetch gce_instance::logging.googleapis.com/user/orca_relay_client_accepts_completed
+          fetch gce_instance::logging.googleapis.com/user/dolphin_relay_client_accepts_completed
           | align delta(15m) | every 15m
-          | group_by [metric.cell_id], [accepts: sum(value.orca_relay_client_accepts_completed)]
+          | group_by [metric.cell_id], [accepts: sum(value.dolphin_relay_client_accepts_completed)]
         }
         | join
         | condition accept_p95_ms > 2000 'ms' && accepts >= 20 '1'
@@ -993,7 +993,7 @@ resource "google_monitoring_alert_policy" "relay_far_cell_accept_latency" {
   }
 
   documentation {
-    content   = "Phones on this cell are taking over two seconds to reach relay-hello. Measured separation: an in-region accept completes in 0.3-0.6 s and a cross-Pacific one in 5-10 s, so 2 s sits well outside in-region noise and well below the far-cell floor. The 20-accept floor over 15 minutes keeps a single slow accept on a quiet cell from paging. Check which regions the cell's hosts are actually in before touching capacity: the 2026-08 cause was desktops requesting the wrong region, not a slow cell. Read the per-stage `orca_relay_client_accept_*_ms_p95` metrics to separate distance from assignment, credential, or attach work."
+    content   = "Phones on this cell are taking over two seconds to reach relay-hello. Measured separation: an in-region accept completes in 0.3-0.6 s and a cross-Pacific one in 5-10 s, so 2 s sits well outside in-region noise and well below the far-cell floor. The 20-accept floor over 15 minutes keeps a single slow accept on a quiet cell from paging. Check which regions the cell's hosts are actually in before touching capacity: the 2026-08 cause was desktops requesting the wrong region, not a slow cell. Read the per-stage `dolphin_relay_client_accept_*_ms_p95` metrics to separate distance from assignment, credential, or attach work."
     mime_type = "text/markdown"
   }
 
@@ -1002,7 +1002,7 @@ resource "google_monitoring_alert_policy" "relay_far_cell_accept_latency" {
 
 resource "google_monitoring_alert_policy" "relay_cell_control_rtt" {
   project               = var.project_id
-  display_name          = "Orca Relay: cell control round trip"
+  display_name          = "Dolphin Relay: cell control round trip"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -1015,13 +1015,13 @@ resource "google_monitoring_alert_policy" "relay_cell_control_rtt" {
       # track renderer stalls, not distance; the median is the only column that reads as distance.
       query    = <<-EOT
         {
-          fetch gce_instance::logging.googleapis.com/user/orca_relay_control_rtt_ms_p50
+          fetch gce_instance::logging.googleapis.com/user/dolphin_relay_control_rtt_ms_p50
           | align delta(1h) | every 1h
-          | group_by [metric.cell_id], [control_rtt_p50_ms: percentile(value.orca_relay_control_rtt_ms_p50, 50)]
+          | group_by [metric.cell_id], [control_rtt_p50_ms: percentile(value.dolphin_relay_control_rtt_ms_p50, 50)]
         ;
-          fetch gce_instance::logging.googleapis.com/user/orca_relay_control_rtt_samples
+          fetch gce_instance::logging.googleapis.com/user/dolphin_relay_control_rtt_samples
           | align delta(1h) | every 1h
-          | group_by [metric.cell_id], [samples: sum(value.orca_relay_control_rtt_samples)]
+          | group_by [metric.cell_id], [samples: sum(value.dolphin_relay_control_rtt_samples)]
         }
         | join
         | condition control_rtt_p50_ms > 150 'ms' && samples >= 500 '1'
@@ -1044,7 +1044,7 @@ resource "google_monitoring_alert_policy" "relay_cell_control_rtt" {
 
 resource "google_monitoring_alert_policy" "relay_region_hint_skew" {
   project               = var.project_id
-  display_name          = "Orca Relay: region hint skew"
+  display_name          = "Dolphin Relay: region hint skew"
   combiner              = "OR"
   enabled               = true
   notification_channels = var.relay_alert_notification_channels
@@ -1075,7 +1075,7 @@ resource "google_monitoring_dashboard" "relay_incident" {
   project = var.project_id
 
   dashboard_json = jsonencode({
-    displayName = "Orca Relay: incident overview"
+    displayName = "Dolphin Relay: incident overview"
     mosaicLayout = {
       columns = 12
       tiles = [
@@ -1092,7 +1092,7 @@ resource "google_monitoring_dashboard" "relay_incident" {
                 targetAxis = "Y1"
                 timeSeriesQuery = {
                   timeSeriesFilter = {
-                    filter = "metric.type=\"logging.googleapis.com/user/orca_relay_cloud_sql_wal_checkpoint\" AND resource.type=\"cloudsql_database\""
+                    filter = "metric.type=\"logging.googleapis.com/user/dolphin_relay_cloud_sql_wal_checkpoint\" AND resource.type=\"cloudsql_database\""
                     aggregation = {
                       alignmentPeriod    = "300s"
                       perSeriesAligner   = "ALIGN_SUM"
@@ -1151,7 +1151,7 @@ resource "google_monitoring_dashboard" "relay_incident" {
                 targetAxis = "Y1"
                 timeSeriesQuery = {
                   timeSeriesFilter = {
-                    filter = "metric.type=\"logging.googleapis.com/user/orca_auth_refresh_401\""
+                    filter = "metric.type=\"logging.googleapis.com/user/dolphin_auth_refresh_401\""
                     aggregation = {
                       alignmentPeriod    = "300s"
                       perSeriesAligner   = "ALIGN_SUM"
@@ -1181,7 +1181,7 @@ resource "google_monitoring_dashboard" "relay_incident" {
                 timeSeriesQuery = {
                   timeSeriesFilter = {
                     # ALIGN_MEAN, not ALIGN_SUM: each process reports its standing control count once per interval.
-                    filter = "metric.type=\"logging.googleapis.com/user/orca_relay_controls\""
+                    filter = "metric.type=\"logging.googleapis.com/user/dolphin_relay_controls\""
                     aggregation = {
                       alignmentPeriod    = "300s"
                       perSeriesAligner   = "ALIGN_MEAN"

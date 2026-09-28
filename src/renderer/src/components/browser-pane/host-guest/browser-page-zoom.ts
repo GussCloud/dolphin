@@ -16,7 +16,7 @@ export {
   type BrowserPageZoomDirection
 } from '../../../../../shared/browser-page-zoom'
 
-export const ORCA_BROWSER_PAGE_ZOOM_EVENT = 'orca:browser-page-zoom'
+export const DOLPHIN_BROWSER_PAGE_ZOOM_EVENT = 'dolphin:browser-page-zoom'
 
 export type BrowserPageZoomIndicatorState = {
   ariaHidden: boolean
@@ -112,6 +112,6 @@ export function addBrowserPageZoomEventListener(
       callback(event.detail)
     }
   }
-  window.addEventListener(ORCA_BROWSER_PAGE_ZOOM_EVENT, listener)
-  return () => window.removeEventListener(ORCA_BROWSER_PAGE_ZOOM_EVENT, listener)
+  window.addEventListener(DOLPHIN_BROWSER_PAGE_ZOOM_EVENT, listener)
+  return () => window.removeEventListener(DOLPHIN_BROWSER_PAGE_ZOOM_EVENT, listener)
 }

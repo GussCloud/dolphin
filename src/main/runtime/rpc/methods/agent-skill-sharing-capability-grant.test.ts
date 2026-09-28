@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getDefaultSettings } from '../../../../shared/constants'
-import { OrcaRuntimeService } from '../../orca-runtime'
+import { DolphinRuntimeService } from '../../dolphin-runtime'
 import { SettingsUpdate } from './client-settings-schemas'
 
 vi.mock('electron', () => ({
-  app: { getPath: () => '/orca-state', isPackaged: true }
+  app: { getPath: () => '/dolphin-state', isPackaged: true }
 }))
 
-function runtimeWithSharing(agentSkillSharingEnabled: unknown): OrcaRuntimeService {
-  return new OrcaRuntimeService({
+function runtimeWithSharing(agentSkillSharingEnabled: unknown): DolphinRuntimeService {
+  return new DolphinRuntimeService({
     getSettings: () => ({ ...getDefaultSettings('/tmp'), agentSkillSharingEnabled })
   } as never)
 }

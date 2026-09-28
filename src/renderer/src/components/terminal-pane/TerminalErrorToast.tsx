@@ -30,7 +30,7 @@ const TERMINAL_HOST_GONE_SOURCE = '(^|[^a-z0-9_])terminal_host_gone(?=$|[^a-z0-9
 const TERMINAL_HOST_GONE_PATTERN = new RegExp(TERMINAL_HOST_GONE_SOURCE)
 const TERMINAL_HOST_GONE_REPLACE_PATTERN = new RegExp(TERMINAL_HOST_GONE_SOURCE, 'g')
 const LEGACY_TERMINAL_HOST_GONE_PATTERN =
-  /(^|[^a-z])connect (?:ENOENT|ECONNREFUSED) [^\r\n]*orca-terminal-host-v[^\r\n]*/i
+  /(^|[^a-z])connect (?:ENOENT|ECONNREFUSED) [^\r\n]*dolphin-terminal-host-v[^\r\n]*/i
 // A reattach the host answered "no such session" for: the SSH provider's expiry token, the relay's
 // raw not-found string when nothing mapped it, or a daemon generation old enough to still refuse a
 // pane respawning onto an id it is tearing down (#18046). None proves the shell died — the copy

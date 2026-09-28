@@ -129,7 +129,7 @@ describe('native chat session option enrichment', () => {
       resolveNativeChatModelDiscoveryHostKey(
         {} as never,
         null,
-        '\\\\wsl.localhost\\Ubuntu\\home\\orca',
+        '\\\\wsl.localhost\\Ubuntu\\home\\dolphin',
         null
       )
     ).toBe('wsl:Ubuntu')
@@ -137,7 +137,7 @@ describe('native chat session option enrichment', () => {
       resolveNativeChatModelDiscoveryHostKey(
         {} as never,
         null,
-        '\\\\wsl.localhost\\Debian\\home\\orca',
+        '\\\\wsl.localhost\\Debian\\home\\dolphin',
         null
       )
     ).toBe('wsl:Debian')
@@ -245,7 +245,7 @@ describe('native chat session option enrichment', () => {
   })
 
   it('publishes no default when an older host omits the flag entirely', async () => {
-    // A remote Orca predating `isDefault` sends rows without it; the picker must
+    // A remote Dolphin predating `isDefault` sends rows without it; the picker must
     // name no model rather than fall back to a seed row the account may have retired.
     mocks.discoverRuntimeCommitMessageModels.mockResolvedValue({
       success: true,

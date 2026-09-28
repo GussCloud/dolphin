@@ -15,7 +15,7 @@ export type StoredWebRuntimeEnvironment = Omit<PublicKnownRuntimeEnvironment, 'e
   }[]
 }
 
-const ENVIRONMENT_STORAGE_KEY = 'orca.web.runtimeEnvironment.v1'
+const ENVIRONMENT_STORAGE_KEY = 'dolphin.web.runtimeEnvironment.v1'
 
 export function readStoredWebRuntimeEnvironment(): StoredWebRuntimeEnvironment | null {
   const raw = window.localStorage.getItem(ENVIRONMENT_STORAGE_KEY)

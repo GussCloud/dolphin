@@ -286,10 +286,10 @@ describe('externalLink', () => {
   it('hands an allowed URL to the caller and asks the client for nothing', () => {
     const bridge = harness()
     bridge.host.receive(clientFrame({ type: 'ready' }))
-    bridge.host.receive(open('https://github.com/stablyai/orca/pull/1'))
+    bridge.host.receive(open('https://github.com/GussCloud/dolphin/pull/1'))
     bridge.host.receive(open('mailto:someone@example.com'))
     expect(bridge.externalLinks).toEqual([
-      'https://github.com/stablyai/orca/pull/1',
+      'https://github.com/GussCloud/dolphin/pull/1',
       'mailto:someone@example.com'
     ])
     expect(bridge.client.requests).toHaveLength(0)
@@ -317,7 +317,7 @@ describe('externalLink', () => {
   it('refuses a scheme the grant does not cover, as a frame the reader never accepts', () => {
     const bridge = harness()
     bridge.host.receive(clientFrame({ type: 'ready' }))
-    for (const url of ['javascript:alert(1)', 'file:///etc/passwd', 'orca-mobile-web://s/x']) {
+    for (const url of ['javascript:alert(1)', 'file:///etc/passwd', 'dolphin-mobile-web://s/x']) {
       bridge.host.receive(open(url))
     }
     expect(bridge.externalLinks).toEqual([])

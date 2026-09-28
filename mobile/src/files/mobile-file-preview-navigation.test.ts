@@ -16,7 +16,7 @@ describe('mobile-file-preview-navigation', () => {
         worktreeId: 'wt-1',
         relativePath,
         name: 'logo.png',
-        worktreeName: 'Orca'
+        worktreeName: 'Dolphin'
       }
     )
 
@@ -27,7 +27,7 @@ describe('mobile-file-preview-navigation', () => {
         worktreeId: 'wt-1',
         relativePath,
         name: 'logo.png',
-        worktreeName: 'Orca'
+        worktreeName: 'Dolphin'
       }
     })
     expect(push).toHaveBeenCalledTimes(1)

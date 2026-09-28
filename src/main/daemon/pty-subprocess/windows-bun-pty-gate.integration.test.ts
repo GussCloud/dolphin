@@ -4,21 +4,21 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { runProcess, runProcessSync } from '../../../shared/child-process/run-process'
-import { orcadBunRuntimeFilename } from '../../../shared/orcad-artifacts'
-import { ORCAD_BUN_VERSION } from '../../../shared/orcad-bun-runtime'
+import { dolphindBunRuntimeFilename } from '../../../shared/dolphind-artifacts'
+import { DOLPHIND_BUN_VERSION } from '../../../shared/dolphind-bun-runtime'
 import { createWindowsBunPtyLaunch } from './windows-bun-pty-launch'
 
 const runtimePath =
   process.env.BUN_EXECUTABLE ??
-  resolve(__dirname, '../../../../out/orcad', orcadBunRuntimeFilename(process.platform))
+  resolve(__dirname, '../../../../out/dolphind', dolphindBunRuntimeFilename(process.platform))
 const available = existsSync(runtimePath)
 
 describe.skipIf(!available)('bundled Windows job gate under Bun', () => {
   it('executes the worker with real Bun flags and preserves long executable argv', async () => {
     expect(runProcessSync({ program: runtimePath, args: ['--version'] }).stdout.trim()).toBe(
-      ORCAD_BUN_VERSION
+      DOLPHIND_BUN_VERSION
     )
-    const directory = mkdtempSync(join(tmpdir(), 'orca-gate-contract-'))
+    const directory = mkdtempSync(join(tmpdir(), 'dolphin-gate-contract-'))
     const workerPath = join(directory, 'windows-bun-pty-gate-entry.js')
     try {
       await build({

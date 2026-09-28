@@ -1,4 +1,4 @@
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import type { Page } from '@stablyai/playwright-test'
 import { focusActiveTerminalInput } from './helpers/terminal'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
@@ -41,68 +41,72 @@ function terminalFindInput(page: Page) {
 }
 
 test.describe('browser split shortcuts', () => {
-  test.beforeEach(async ({ orcaPage }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
+  test.beforeEach(async ({ dolphinPage }) => {
+    await waitForSessionReady(dolphinPage)
+    await waitForActiveWorktree(dolphinPage)
+    await ensureTerminalVisible(dolphinPage)
   })
 
   test('routes repeated Find shortcuts to the focused terminal or browser split', async ({
-    orcaPage
+    dolphinPage
   }) => {
-    const fixture = await createTerminalBrowserSplit(orcaPage)
+    const fixture = await createTerminalBrowserSplit(dolphinPage)
 
-    await orcaPage.evaluate(({ terminalGroupId }) => {
+    await dolphinPage.evaluate(({ terminalGroupId }) => {
       const state = window.__store?.getState()
       const worktreeId = state?.activeWorktreeId
       if (state && worktreeId) {
         state.focusGroup(worktreeId, terminalGroupId)
       }
     }, fixture)
-    await focusActiveTerminalInput(orcaPage)
-    await waitForFocusedGroup(orcaPage, fixture.terminalGroupId)
-    await orcaPage.keyboard.press(`${modifier}+f`)
-    await expect(terminalFindInput(orcaPage)).toBeFocused()
-    await expect(browserFindInput(orcaPage)).toBeHidden()
-    await orcaPage.keyboard.press('Escape')
+    await focusActiveTerminalInput(dolphinPage)
+    await waitForFocusedGroup(dolphinPage, fixture.terminalGroupId)
+    await dolphinPage.keyboard.press(`${modifier}+f`)
+    await expect(terminalFindInput(dolphinPage)).toBeFocused()
+    await expect(browserFindInput(dolphinPage)).toBeHidden()
+    await dolphinPage.keyboard.press('Escape')
 
-    await focusBrowserGroup(orcaPage, fixture.browserGroupId)
-    await focusBrowserAddressBar(orcaPage, fixture.browserTabId)
-    await orcaPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(orcaPage)).toBeFocused()
-    await expect(terminalFindInput(orcaPage)).toBeHidden()
-    await browserFindCloseButton(orcaPage).click()
-    await expect(browserFindInput(orcaPage)).toBeHidden()
+    await focusBrowserGroup(dolphinPage, fixture.browserGroupId)
+    await focusBrowserAddressBar(dolphinPage, fixture.browserTabId)
+    await dolphinPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(dolphinPage)).toBeFocused()
+    await expect(terminalFindInput(dolphinPage)).toBeHidden()
+    await browserFindCloseButton(dolphinPage).click()
+    await expect(browserFindInput(dolphinPage)).toBeHidden()
 
-    await orcaPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(orcaPage)).toBeFocused()
-    await browserFindCloseButton(orcaPage).click()
+    await dolphinPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(dolphinPage)).toBeFocused()
+    await browserFindCloseButton(dolphinPage).click()
 
-    await orcaPage.evaluate(({ browserTabId }) => {
+    await dolphinPage.evaluate(({ browserTabId }) => {
       window.__store?.getState().closeBrowserTab(browserTabId)
     }, fixture)
     await expect(
-      orcaPage.locator(`[data-browser-overlay-tab-id="${fixture.browserTabId}"]`)
+      dolphinPage.locator(`[data-browser-overlay-tab-id="${fixture.browserTabId}"]`)
     ).toHaveCount(0)
 
-    await focusActiveTerminalInput(orcaPage)
-    await orcaPage.keyboard.press(`${modifier}+f`)
-    await expect(terminalFindInput(orcaPage)).toBeFocused()
-    await expect(browserFindInput(orcaPage)).toBeHidden()
+    await focusActiveTerminalInput(dolphinPage)
+    await dolphinPage.keyboard.press(`${modifier}+f`)
+    await expect(terminalFindInput(dolphinPage)).toBeFocused()
+    await expect(browserFindInput(dolphinPage)).toBeHidden()
   })
 
   test('opens Find only in the browser split whose guest owns the shortcut', async ({
-    orcaPage
+    dolphinPage
   }) => {
-    const fixture = await createBrowserSplit(orcaPage)
+    const fixture = await createBrowserSplit(dolphinPage)
 
-    await pressFindInBrowserGuest(orcaPage, fixture.firstBrowserTabId, fixture.firstBrowserPageId)
+    await pressFindInBrowserGuest(
+      dolphinPage,
+      fixture.firstBrowserTabId,
+      fixture.firstBrowserPageId
+    )
 
-    await expect(browserSplitFindInput(orcaPage, fixture.firstBrowserTabId)).toBeVisible()
-    await expect(browserSplitFindInput(orcaPage, fixture.secondBrowserTabId)).toBeHidden()
+    await expect(browserSplitFindInput(dolphinPage, fixture.firstBrowserTabId)).toBeVisible()
+    await expect(browserSplitFindInput(dolphinPage, fixture.secondBrowserTabId)).toBeHidden()
     await expect
       .poll(() =>
-        orcaPage.evaluate(
+        dolphinPage.evaluate(
           ({ browserPageId, browserTabId }) =>
             window.__store
               ?.getState()
@@ -118,14 +122,14 @@ test.describe('browser split shortcuts', () => {
   })
 
   test('keeps browser Find available when split focus state is temporarily missing', async ({
-    orcaPage
+    dolphinPage
   }) => {
-    const fixture = await createTerminalBrowserSplit(orcaPage)
-    await focusBrowserGroup(orcaPage, fixture.browserGroupId)
-    const addressBar = browserAddressBar(orcaPage, fixture.browserTabId)
-    await focusBrowserAddressBar(orcaPage, fixture.browserTabId)
+    const fixture = await createTerminalBrowserSplit(dolphinPage)
+    await focusBrowserGroup(dolphinPage, fixture.browserGroupId)
+    const addressBar = browserAddressBar(dolphinPage, fixture.browserTabId)
+    await focusBrowserAddressBar(dolphinPage, fixture.browserTabId)
 
-    await orcaPage.evaluate(() => {
+    await dolphinPage.evaluate(() => {
       const store = window.__store
       const worktreeId = store?.getState().activeWorktreeId
       if (!store || !worktreeId) {
@@ -139,18 +143,20 @@ test.describe('browser split shortcuts', () => {
     })
     await expect(addressBar).toBeFocused()
 
-    await orcaPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(orcaPage)).toBeFocused()
-    await expect(terminalFindInput(orcaPage)).toBeHidden()
+    await dolphinPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(dolphinPage)).toBeFocused()
+    await expect(terminalFindInput(dolphinPage)).toBeHidden()
   })
 
-  test('keeps browser Find available when the focused split ID is stale', async ({ orcaPage }) => {
-    const fixture = await createTerminalBrowserSplit(orcaPage)
-    await focusBrowserGroup(orcaPage, fixture.browserGroupId)
-    const addressBar = browserAddressBar(orcaPage, fixture.browserTabId)
-    await focusBrowserAddressBar(orcaPage, fixture.browserTabId)
+  test('keeps browser Find available when the focused split ID is stale', async ({
+    dolphinPage
+  }) => {
+    const fixture = await createTerminalBrowserSplit(dolphinPage)
+    await focusBrowserGroup(dolphinPage, fixture.browserGroupId)
+    const addressBar = browserAddressBar(dolphinPage, fixture.browserTabId)
+    await focusBrowserAddressBar(dolphinPage, fixture.browserTabId)
 
-    await orcaPage.evaluate(() => {
+    await dolphinPage.evaluate(() => {
       const store = window.__store
       const worktreeId = store?.getState().activeWorktreeId
       if (!store || !worktreeId) {
@@ -165,8 +171,8 @@ test.describe('browser split shortcuts', () => {
     })
     await expect(addressBar).toBeFocused()
 
-    await orcaPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(orcaPage)).toBeFocused()
-    await expect(terminalFindInput(orcaPage)).toBeHidden()
+    await dolphinPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(dolphinPage)).toBeFocused()
+    await expect(terminalFindInput(dolphinPage)).toBeHidden()
   })
 })

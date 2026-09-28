@@ -11,7 +11,7 @@ import { SettingsSubsectionHeader } from './SettingsFormControls'
 import { translate } from '@/i18n/i18n'
 
 // Do not deep-link to /stargazers: GitHub 404s that page for users without repo write access.
-const ORCA_GITHUB_URL = FORK_REPOSITORY_URL
+const DOLPHIN_GITHUB_URL = FORK_REPOSITORY_URL
 
 type SupportState =
   | 'loading'
@@ -42,7 +42,7 @@ export function GeneralSupportSection({
 
   useEffect(() => {
     let cancelled = false
-    void window.api.gh.checkOrcaStarred().then((result) => {
+    void window.api.gh.checkDolphinStarred().then((result) => {
       if (cancelled) {
         return
       }
@@ -60,7 +60,7 @@ export function GeneralSupportSection({
   const handleStarClick = async (): Promise<void> => {
     if (starState === 'web-fallback') {
       setStarState('opening-github')
-      await window.api.shell.openUrl(ORCA_GITHUB_URL)
+      await window.api.shell.openUrl(DOLPHIN_GITHUB_URL)
       if (mountedRef.current) {
         setStarState('web-fallback')
       }
@@ -70,7 +70,7 @@ export function GeneralSupportSection({
       return
     }
     setStarState('starring')
-    const ok = await window.api.gh.starOrca('settings')
+    const ok = await window.api.gh.starDolphin('settings')
     if (!ok) {
       if (mountedRef.current) {
         setStarState('web-fallback')

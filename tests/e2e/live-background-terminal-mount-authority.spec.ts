@@ -4,7 +4,7 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import os from 'node:os'
 import path from 'node:path'
 import type { Page } from '@stablyai/playwright-test'
-import { test as base, expect } from './helpers/orca-app'
+import { test as base, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForSessionReady } from './helpers/store'
 import { waitForActivePanePtyId, waitForActiveTerminalManager } from './helpers/terminal'
 import {
@@ -36,7 +36,7 @@ type TerminalIdentity = Pick<
 
 const PROVIDER_SESSION_ID = '019fc155-00e1-7102-99a9-e7c72e532a8e'
 
-const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'orca-live-mount-cli-'))
+const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-live-mount-cli-'))
 const spawnLedgerPath = path.join(fakeCliDir, 'codex-spawn.jsonl')
 const setupLedgerPath = path.join(fakeCliDir, 'setup-spawn.jsonl')
 const canaryLedgerPath = path.join(fakeCliDir, 'canary-spawn.jsonl')
@@ -48,7 +48,7 @@ if (args.includes('app-server')) {
   process.stderr.write("error: unrecognized subcommand 'app-server'\\n")
   process.exit(2)
 }
-appendFileSync(process.env.ORCA_E2E_CODEX_SPAWN_LEDGER, JSON.stringify({ args, pid: process.pid }) + '\\n')
+appendFileSync(process.env.DOLPHIN_E2E_CODEX_SPAWN_LEDGER, JSON.stringify({ args, pid: process.pid }) + '\\n')
 process.stdout.write('LIVE_AGENT_READY:' + process.pid + '\\n')
 let inputBuffer = ''
 process.stdin.on('data', (chunk) => {
@@ -57,7 +57,7 @@ process.stdin.on('data', (chunk) => {
   inputBuffer = lines.pop() || ''
   for (const line of lines) if (line) process.stdout.write('AGENT_INPUT:' + process.pid + ':' + line + '\\n')
 })
-for (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) process.on(signal, () => appendFileSync(process.env.ORCA_E2E_SIGNAL_LEDGER, JSON.stringify({ kind: 'agent', pid: process.pid, signal }) + '\\n'))
+for (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) process.on(signal, () => appendFileSync(process.env.DOLPHIN_E2E_SIGNAL_LEDGER, JSON.stringify({ kind: 'agent', pid: process.pid, signal }) + '\\n'))
 process.stdin.resume()
 setInterval(() => {}, 60_000)
 `
@@ -82,10 +82,10 @@ const test = base.extend({
   launchEnv: [
     {
       PATH: `${fakeCliDir}${path.delimiter}${process.env.PATH ?? ''}`,
-      ORCA_E2E_CODEX_SPAWN_LEDGER: spawnLedgerPath,
-      ORCA_E2E_SETUP_LEDGER: setupLedgerPath,
-      ORCA_E2E_CANARY_LEDGER: canaryLedgerPath,
-      ORCA_E2E_SIGNAL_LEDGER: signalLedgerPath
+      DOLPHIN_E2E_CODEX_SPAWN_LEDGER: spawnLedgerPath,
+      DOLPHIN_E2E_SETUP_LEDGER: setupLedgerPath,
+      DOLPHIN_E2E_CANARY_LEDGER: canaryLedgerPath,
+      DOLPHIN_E2E_SIGNAL_LEDGER: signalLedgerPath
     },
     { option: true }
   ]
@@ -112,22 +112,30 @@ function readJsonLines<T>(filePath: string): T[] {
 }
 
 function createSourceRepo(): string {
-  const repoPath = mkdtempSync(path.join(os.tmpdir(), 'orca-live-mount-repo-'))
+  const repoPath = mkdtempSync(path.join(os.tmpdir(), 'dolphin-live-mount-repo-'))
   writeFileSync(
     path.join(repoPath, 'setup-live.js'),
-    `const { appendFileSync } = require('node:fs')\nappendFileSync(process.env.ORCA_E2E_SETUP_LEDGER, JSON.stringify({ pid: process.pid }) + '\\n')\nconsole.log('SETUP_READY:' + process.pid)\nlet inputBuffer = ''\nprocess.stdin.on('data', chunk => {\n  inputBuffer += chunk.toString()\n  const lines = inputBuffer.split(/[\\r\\n]+/)\n  inputBuffer = lines.pop() || ''\n  for (const line of lines) if (line) console.log('SETUP_INPUT:' + process.pid + ':' + line)\n})\nfor (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) process.on(signal, () => appendFileSync(process.env.ORCA_E2E_SIGNAL_LEDGER, JSON.stringify({ kind: 'setup', pid: process.pid, signal }) + '\\n'))\nprocess.stdin.resume()\nsetInterval(() => {}, 60000)\n`
+    `const { appendFileSync } = require('node:fs')\nappendFileSync(process.env.DOLPHIN_E2E_SETUP_LEDGER, JSON.stringify({ pid: process.pid }) + '\\n')\nconsole.log('SETUP_READY:' + process.pid)\nlet inputBuffer = ''\nprocess.stdin.on('data', chunk => {\n  inputBuffer += chunk.toString()\n  const lines = inputBuffer.split(/[\\r\\n]+/)\n  inputBuffer = lines.pop() || ''\n  for (const line of lines) if (line) console.log('SETUP_INPUT:' + process.pid + ':' + line)\n})\nfor (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) process.on(signal, () => appendFileSync(process.env.DOLPHIN_E2E_SIGNAL_LEDGER, JSON.stringify({ kind: 'setup', pid: process.pid, signal }) + '\\n'))\nprocess.stdin.resume()\nsetInterval(() => {}, 60000)\n`
   )
   writeFileSync(
     path.join(repoPath, 'canary-live.js'),
-    `const { appendFileSync } = require('node:fs')\nappendFileSync(process.env.ORCA_E2E_CANARY_LEDGER, JSON.stringify({ pid: process.pid }) + '\\n')\nconsole.log('CANARY_READY:' + process.pid)\nlet inputBuffer = ''\nprocess.stdin.on('data', chunk => {\n  inputBuffer += chunk.toString()\n  const lines = inputBuffer.split(/[\\r\\n]+/)\n  inputBuffer = lines.pop() || ''\n  for (const line of lines) if (line) console.log('CANARY_INPUT:' + process.pid + ':' + line)\n})\nfor (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) process.on(signal, () => appendFileSync(process.env.ORCA_E2E_SIGNAL_LEDGER, JSON.stringify({ kind: 'canary', pid: process.pid, signal }) + '\\n'))\nprocess.stdin.resume()\nsetInterval(() => {}, 60000)\n`
+    `const { appendFileSync } = require('node:fs')\nappendFileSync(process.env.DOLPHIN_E2E_CANARY_LEDGER, JSON.stringify({ pid: process.pid }) + '\\n')\nconsole.log('CANARY_READY:' + process.pid)\nlet inputBuffer = ''\nprocess.stdin.on('data', chunk => {\n  inputBuffer += chunk.toString()\n  const lines = inputBuffer.split(/[\\r\\n]+/)\n  inputBuffer = lines.pop() || ''\n  for (const line of lines) if (line) console.log('CANARY_INPUT:' + process.pid + ':' + line)\n})\nfor (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) process.on(signal, () => appendFileSync(process.env.DOLPHIN_E2E_SIGNAL_LEDGER, JSON.stringify({ kind: 'canary', pid: process.pid, signal }) + '\\n'))\nprocess.stdin.resume()\nsetInterval(() => {}, 60000)\n`
   )
-  writeFileSync(path.join(repoPath, 'orca.yaml'), 'scripts:\n  setup: node setup-live.js\n')
+  writeFileSync(path.join(repoPath, 'dolphin.yaml'), 'scripts:\n  setup: node setup-live.js\n')
   execFileSync('git', ['init'], { cwd: repoPath })
   execFileSync('git', ['checkout', '-b', 'main'], { cwd: repoPath })
   execFileSync('git', ['add', '.'], { cwd: repoPath })
   execFileSync(
     'git',
-    ['-c', 'user.name=Orca E2E', '-c', 'user.email=orca-e2e@example.com', 'commit', '-m', 'seed'],
+    [
+      '-c',
+      'user.name=Dolphin E2E',
+      '-c',
+      'user.email=dolphin-e2e@example.com',
+      'commit',
+      '-m',
+      'seed'
+    ],
     { cwd: repoPath }
   )
   return repoPath
@@ -521,7 +529,7 @@ test.afterAll(() => rmSync(fakeCliDir, { recursive: true, force: true }))
 
 test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   electronApp,
-  orcaPage,
+  dolphinPage,
   registerPostElectronShutdownCleanup
 }) => {
   const sourceRepo = createSourceRepo()
@@ -532,7 +540,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     }
     rmSync(sourceRepo, { recursive: true, force: true })
   })
-  await waitForSessionReady(orcaPage)
+  await waitForSessionReady(dolphinPage)
   await installTerminalPtyWriteSpy(electronApp)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const client = new RuntimeClient(userDataDir, 30_000, null, null)
@@ -543,7 +551,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   const repoId = added.result.repo.id
   await expect
     .poll(() =>
-      orcaPage.evaluate(
+      dolphinPage.evaluate(
         async ({ repoId, command, windowsShell }) => {
           const state = window.__store?.getState()
           await state?.fetchRepos()
@@ -634,19 +642,19 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   expect(beforeStatus.result.graphStatus).toBe('ready')
   const daemonPid = readDaemonPid(userDataDir)
   const allIdentities = originals.map(terminalIdentity)
-  await assertTargetBindings(orcaPage, worktreeId, allIdentities)
-  await seedAgentRecoveryMetadata(orcaPage, worktreeId, terminalIdentity(agent!))
+  await assertTargetBindings(dolphinPage, worktreeId, allIdentities)
+  await seedAgentRecoveryMetadata(dolphinPage, worktreeId, terminalIdentity(agent!))
 
-  await faultProjectionAndActivate(orcaPage, worktreeId, [agent!, setup!], agent!.tabId)
-  const mountedAgentPtyId = await waitForActivePanePtyId(orcaPage)
-  await enableTerminalAccessibility(orcaPage, agent!.tabId)
+  await faultProjectionAndActivate(dolphinPage, worktreeId, [agent!, setup!], agent!.tabId)
+  const mountedAgentPtyId = await waitForActivePanePtyId(dolphinPage)
+  await enableTerminalAccessibility(dolphinPage, agent!.tabId)
   await expect
     .poll(
       async () => ({
         mountedPtyId: mountedAgentPtyId,
         liveInventory: (await readWorktreeTerminals(client, worktreeId)).map(liveTerminalIdentity),
         visibleOriginalReady: (
-          await terminalAccessibility(orcaPage, agent!.tabId).innerText()
+          await terminalAccessibility(dolphinPage, agent!.tabId).innerText()
         ).includes(`LIVE_AGENT_READY:${agentPid}`),
         processPids: {
           agent: readSpawnLedger().map(({ pid }) => pid),
@@ -664,30 +672,30 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     })
   const agentMarker = `AGENT_KB_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(orcaPage, agent!.tabId, agentMarker)
+  await typeIntoTerminal(dolphinPage, agent!.tabId, agentMarker)
   await assertExactPtyReceivedMarker(electronApp, agent!.ptyId, agentMarker)
-  await expect(terminalAccessibility(orcaPage, agent!.tabId)).toContainText(
+  await expect(terminalAccessibility(dolphinPage, agent!.tabId)).toContainText(
     `AGENT_INPUT:${agentPid}:${agentMarker}`
   )
-  await expect(terminalAccessibility(orcaPage, agent!.tabId)).not.toContainText(
+  await expect(terminalAccessibility(dolphinPage, agent!.tabId)).not.toContainText(
     'Conversation interrupted'
   )
 
-  await activateTerminal(orcaPage, worktreeId, setup!.tabId)
-  const mountedSetupPtyId = await waitForActivePanePtyId(orcaPage)
-  await enableTerminalAccessibility(orcaPage, setup!.tabId)
+  await activateTerminal(dolphinPage, worktreeId, setup!.tabId)
+  const mountedSetupPtyId = await waitForActivePanePtyId(dolphinPage)
+  await enableTerminalAccessibility(dolphinPage, setup!.tabId)
   expect(mountedSetupPtyId).toBe(setup!.ptyId)
-  await expect(terminalAccessibility(orcaPage, setup!.tabId)).toContainText(
+  await expect(terminalAccessibility(dolphinPage, setup!.tabId)).toContainText(
     `SETUP_READY:${setupPid}`
   )
   const setupMarker = `SETUP_KB_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(orcaPage, setup!.tabId, setupMarker)
+  await typeIntoTerminal(dolphinPage, setup!.tabId, setupMarker)
   await assertExactPtyReceivedMarker(electronApp, setup!.ptyId, setupMarker)
-  await expect(terminalAccessibility(orcaPage, setup!.tabId)).toContainText(
+  await expect(terminalAccessibility(dolphinPage, setup!.tabId)).toContainText(
     `SETUP_INPUT:${setupPid}:${setupMarker}`
   )
-  await expect(terminalAccessibility(orcaPage, setup!.tabId)).not.toContainText(
+  await expect(terminalAccessibility(dolphinPage, setup!.tabId)).not.toContainText(
     'Conversation interrupted'
   )
 
@@ -702,7 +710,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     .toContain(`CANARY_INPUT:${canaryPid}:${canaryMarker}`)
 
   await assertLiveInventory(client, worktreeId, originals)
-  await assertTargetBindings(orcaPage, worktreeId, allIdentities)
+  await assertTargetBindings(dolphinPage, worktreeId, allIdentities)
   await assertLaunchLedgersUnchanged()
   await assertNoInterruption(client, [agent!, setup!])
   expect(readJsonLines(signalLedgerPath)).toHaveLength(0)
@@ -714,12 +722,12 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     authoritativeWindowId: beforeStatus.result.authoritativeWindowId
   })
   expect(readDaemonPid(userDataDir)).toBe(daemonPid)
-  const beforeReloadDelivery = await orcaPage.evaluate(() =>
+  const beforeReloadDelivery = await dolphinPage.evaluate(() =>
     window.api.pty.getRendererDeliveryDebugSnapshot()
   )
 
-  await orcaPage.reload()
-  await waitForSessionReady(orcaPage)
+  await dolphinPage.reload()
+  await waitForSessionReady(dolphinPage)
   await expect
     .poll(
       async () => {
@@ -747,14 +755,14 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     rendererDispatcherReadyForcedCount: beforeReloadDelivery.rendererDispatcherReadyForcedCount
   }
   await expect
-    .poll(() => orcaPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
+    .poll(() => dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
     .toMatchObject(postReloadDelivery)
-  await activateTerminal(orcaPage, worktreeId, agent!.tabId)
-  const remountedAgentPtyId = await waitForActivePanePtyId(orcaPage)
+  await activateTerminal(dolphinPage, worktreeId, agent!.tabId)
+  const remountedAgentPtyId = await waitForActivePanePtyId(dolphinPage)
   expect(remountedAgentPtyId).toBe(agent!.ptyId)
-  await enableTerminalAccessibility(orcaPage, agent!.tabId)
+  await enableTerminalAccessibility(dolphinPage, agent!.tabId)
   await expect
-    .poll(() => orcaPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
+    .poll(() => dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
     .toMatchObject(postReloadDelivery)
   const remountAgentLiveMarker = `AGENT_LIVE_${randomUUID()}`
   await client.call('terminal.send', {
@@ -765,14 +773,14 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   const remountAgentLiveOutput = `AGENT_INPUT:${agentPid}:${remountAgentLiveMarker}`
   await expect.poll(() => terminalOutput(client, agent!.handle)).toContain(remountAgentLiveOutput)
   await expect
-    .poll(() => terminalViewportText(orcaPage, agent!.tabId))
+    .poll(() => terminalViewportText(dolphinPage, agent!.tabId))
     .toContain(remountAgentLiveOutput)
   expect(
-    await orcaPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
+    await dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
   ).toMatchObject(postReloadDelivery)
   const remountAgentAcceptedMarker = `AGENT_ACCEPTED_${randomUUID()}`
   expect(
-    await orcaPage.evaluate(
+    await dolphinPage.evaluate(
       ({ marker, ptyId }) => window.api.pty.writeAccepted(ptyId, `${marker}\r`),
       { marker: remountAgentAcceptedMarker, ptyId: agent!.ptyId }
     )
@@ -782,21 +790,21 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     .poll(() => terminalOutput(client, agent!.handle))
     .toContain(remountAgentAcceptedOutput)
   await expect
-    .poll(() => terminalViewportText(orcaPage, agent!.tabId))
+    .poll(() => terminalViewportText(dolphinPage, agent!.tabId))
     .toContain(remountAgentAcceptedOutput)
   const remountAgentMarker = `AGENT_REMOUNT_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(orcaPage, agent!.tabId, remountAgentMarker)
+  await typeIntoTerminal(dolphinPage, agent!.tabId, remountAgentMarker)
   await assertExactPtyReceivedMarker(electronApp, agent!.ptyId, remountAgentMarker)
   const remountAgentOutput = `AGENT_INPUT:${agentPid}:${remountAgentMarker}`
   await expect.poll(() => terminalOutput(client, agent!.handle)).toContain(remountAgentOutput)
   await expect
-    .poll(() => terminalViewportText(orcaPage, agent!.tabId))
+    .poll(() => terminalViewportText(dolphinPage, agent!.tabId))
     .toContain(remountAgentOutput)
-  await activateTerminal(orcaPage, worktreeId, setup!.tabId)
-  const remountedSetupPtyId = await waitForActivePanePtyId(orcaPage)
+  await activateTerminal(dolphinPage, worktreeId, setup!.tabId)
+  const remountedSetupPtyId = await waitForActivePanePtyId(dolphinPage)
   expect(remountedSetupPtyId).toBe(setup!.ptyId)
-  await enableTerminalAccessibility(orcaPage, setup!.tabId)
+  await enableTerminalAccessibility(dolphinPage, setup!.tabId)
   const remountSetupLiveMarker = `SETUP_LIVE_${randomUUID()}`
   await client.call('terminal.send', {
     terminal: setup!.handle,
@@ -806,19 +814,19 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   const remountSetupLiveOutput = `SETUP_INPUT:${setupPid}:${remountSetupLiveMarker}`
   await expect.poll(() => terminalOutput(client, setup!.handle)).toContain(remountSetupLiveOutput)
   await expect
-    .poll(() => terminalViewportText(orcaPage, setup!.tabId))
+    .poll(() => terminalViewportText(dolphinPage, setup!.tabId))
     .toContain(remountSetupLiveOutput)
   expect(
-    await orcaPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
+    await dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
   ).toMatchObject(postReloadDelivery)
   const remountSetupMarker = `SETUP_REMOUNT_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(orcaPage, setup!.tabId, remountSetupMarker)
+  await typeIntoTerminal(dolphinPage, setup!.tabId, remountSetupMarker)
   await assertExactPtyReceivedMarker(electronApp, setup!.ptyId, remountSetupMarker)
   const remountSetupOutput = `SETUP_INPUT:${setupPid}:${remountSetupMarker}`
   await expect.poll(() => terminalOutput(client, setup!.handle)).toContain(remountSetupOutput)
   await expect
-    .poll(() => terminalViewportText(orcaPage, setup!.tabId))
+    .poll(() => terminalViewportText(dolphinPage, setup!.tabId))
     .toContain(remountSetupOutput)
 
   const remountCanaryMarker = `CANARY_REMOUNT_${randomUUID()}`
@@ -831,7 +839,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     .poll(() => terminalOutput(client, canary!.handle))
     .toContain(`CANARY_INPUT:${canaryPid}:${remountCanaryMarker}`)
   await assertLiveInventory(client, worktreeId, originals)
-  await assertTargetBindings(orcaPage, worktreeId, allIdentities)
+  await assertTargetBindings(dolphinPage, worktreeId, allIdentities)
   await assertLaunchLedgersUnchanged()
   await assertNoInterruption(client, [agent!, setup!])
   expect(readJsonLines(signalLedgerPath)).toHaveLength(0)

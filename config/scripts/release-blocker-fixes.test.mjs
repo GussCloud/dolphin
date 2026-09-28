@@ -6,8 +6,7 @@ import { parse } from 'yaml'
 const projectDir = resolve(import.meta.dirname, '../..')
 
 describe('release blocker safeguards', () => {
-  // Why the fork's own line: Dolphin updates only from its own releases, so it is not held to
-  // upstream Orca's stable version floor.
+  // Why its own line: Dolphin updates only from its own releases.
   it('keeps the root package version on the fork release line', () => {
     const packageJson = JSON.parse(readFileSync(resolve(projectDir, 'package.json'), 'utf8'))
     const match = /^(\d+)\.(\d+)\.(\d+)(?:-[0-9A-Za-z.-]+)?$/.exec(packageJson.version)

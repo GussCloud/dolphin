@@ -44,7 +44,7 @@ import {
 import type { AgentSessionJournal } from '../agent-session-journal/journal-store'
 import { structuredAgentSessionShownStatus } from './structured-agent-session-shown-work'
 
-/** A send Orca journaled that the provider has neither opened a turn for nor refused. Mirrors the
+/** A send Dolphin journaled that the provider has neither opened a turn for nor refused. Mirrors the
  *  projection's own unanswered-dispatch rule, which is what makes that window read as `working`. */
 function pendingSubmissionInFlight(
   submissions: readonly AgentJournalSubmission[]

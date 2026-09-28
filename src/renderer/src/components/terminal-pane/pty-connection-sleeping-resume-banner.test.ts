@@ -203,11 +203,11 @@ describe('connectPanePty', () => {
         command: "codex '--dangerously-bypass-approvals-and-sandbox' 'resume' 'codex-session-1'",
         launchAgent: 'codex',
         env: expect.objectContaining({
-          ORCA_PANE_KEY: paneKey,
-          ORCA_TAB_ID: 'tab-1',
-          ORCA_WORKTREE_ID: 'wt-1',
-          ORCA_WORKSPACE_ID: 'wt-1',
-          ORCA_AGENT_LAUNCH_TOKEN: expect.stringMatching(new RegExp(`^${UUID_RE}$`))
+          DOLPHIN_PANE_KEY: paneKey,
+          DOLPHIN_TAB_ID: 'tab-1',
+          DOLPHIN_WORKTREE_ID: 'wt-1',
+          DOLPHIN_WORKSPACE_ID: 'wt-1',
+          DOLPHIN_AGENT_LAUNCH_TOKEN: expect.stringMatching(new RegExp(`^${UUID_RE}$`))
         })
       })
     )

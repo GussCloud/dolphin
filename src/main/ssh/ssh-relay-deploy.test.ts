@@ -16,7 +16,7 @@ vi.mock('fs', () => ({
 
 vi.mock('./relay-protocol', () => ({
   RELAY_VERSION: '0.1.0',
-  RELAY_REMOTE_DIR: '.orca-remote',
+  RELAY_REMOTE_DIR: '.dolphin-remote',
   parseUnameToRelayPlatform: vi.fn((os: string, arch: string) => {
     const normalizedOs = os.toLowerCase()
     const normalizedArch = arch.toLowerCase()
@@ -32,7 +32,7 @@ vi.mock('./relay-protocol', () => ({
     }
     return null
   }),
-  RELAY_SENTINEL: 'ORCA-RELAY v0.1.0 READY\n',
+  RELAY_SENTINEL: 'DOLPHIN-RELAY v0.1.0 READY\n',
   RELAY_SENTINEL_TIMEOUT_MS: 10_000
 }))
 
@@ -46,7 +46,7 @@ vi.mock('./ssh-relay-deploy-helpers', () => ({
   isUnconfirmedSshCommandTermination: (error: unknown) =>
     error instanceof Error &&
     (error as Error & { sshChannelCloseConfirmed?: boolean }).sshChannelCloseConfirmed === false,
-  execCommand: vi.fn().mockResolvedValue('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+  execCommand: vi.fn().mockResolvedValue('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
 }))
 
 vi.mock('./ssh-remote-node-resolution', () => ({
@@ -75,7 +75,7 @@ vi.mock('./ssh-relay-ripgrep-install', async (importOriginal) => ({
 // and GC. Stub them so deploy tests need no real SSH connection.
 vi.mock('./ssh-relay-versioned-install', () => ({
   readLocalFullVersion: vi.fn().mockReturnValue('0.1.0+abcdef012345'),
-  computeRemoteRelayDir: (home: string, v: string) => `${home}/.orca-remote/relay-${v}`,
+  computeRemoteRelayDir: (home: string, v: string) => `${home}/.dolphin-remote/relay-${v}`,
   isRelayAlreadyInstalled: vi.fn().mockResolvedValue(true),
   finalizeInstall: vi.fn().mockResolvedValue(undefined),
   abandonInstall: vi.fn().mockResolvedValue(undefined),
@@ -150,9 +150,9 @@ function queueLaunchNamespaceAndDeadSocketProbe(): void {
 
 function queueFreshLinuxDeploy(): void {
   vi.mocked(execCommand)
-    .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+    .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
     .mockResolvedValueOnce('/home/user')
-    .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK')
+    .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK')
   queueLaunchNamespaceAndDeadSocketProbe()
   vi.mocked(execCommand).mockResolvedValueOnce('READY')
 }
@@ -168,7 +168,7 @@ describe('deployAndLaunchRelay', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(ensureRemoteOpenCodeRuntime).mockReset().mockResolvedValue('ready')
-    vi.mocked(execCommand).mockReset().mockResolvedValue('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+    vi.mocked(execCommand).mockReset().mockResolvedValue('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
     vi.mocked(waitForSentinel).mockReset().mockResolvedValue({
       write: vi.fn(),
       onData: vi.fn(),
@@ -182,9 +182,9 @@ describe('deployAndLaunchRelay', () => {
   it('calls exec to detect remote platform', async () => {
     const conn = makeMockConnection()
     const mockExecCommand = vi.mocked(execCommand)
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
     mockExecCommand.mockResolvedValueOnce('/home/user') // echo $HOME
-    mockExecCommand.mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+    mockExecCommand.mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
     queueLaunchNamespaceAndDeadSocketProbe()
     mockExecCommand.mockResolvedValueOnce('READY') // socket poll
 
@@ -192,7 +192,7 @@ describe('deployAndLaunchRelay', () => {
 
     expect(mockExecCommand).toHaveBeenCalledWith(
       conn,
-      "printf '\\n%s ' '__ORCA_REMOTE_PLATFORM__'; uname -sm",
+      "printf '\\n%s ' '__DOLPHIN_REMOTE_PLATFORM__'; uname -sm",
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
   })
@@ -200,9 +200,9 @@ describe('deployAndLaunchRelay', () => {
   it('reports progress via callback', async () => {
     const conn = makeMockConnection()
     const mockExecCommand = vi.mocked(execCommand)
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
     mockExecCommand.mockResolvedValueOnce('/home/user')
-    mockExecCommand.mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+    mockExecCommand.mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
     queueLaunchNamespaceAndDeadSocketProbe()
     mockExecCommand.mockResolvedValueOnce('READY') // socket poll
 
@@ -220,9 +220,9 @@ describe('deployAndLaunchRelay', () => {
     })
     vi.mocked(waitForSentinel).mockRejectedValueOnce(new Error('stale relay reconnect failed'))
     vi.mocked(execCommand)
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
       .mockResolvedValueOnce('/home/user')
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK')
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK')
       .mockResolvedValueOnce('') // launch namespace marker
       .mockResolvedValueOnce('ALIVE')
       .mockRejectedValueOnce(unconfirmedCleanup)
@@ -248,7 +248,7 @@ describe('deployAndLaunchRelay', () => {
   it('resolves node concurrently with remote home, not after the install-state chain', async () => {
     const conn = makeMockConnection()
     const mockExecCommand = vi.mocked(execCommand)
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
 
     let markNodeResolutionStarted: () => void = () => {}
     const nodeResolutionStarted = new Promise<void>((resolve) => {
@@ -281,7 +281,7 @@ describe('deployAndLaunchRelay', () => {
     } finally {
       // Drain the rest of the happy path so a failed assertion does not leave
       // the deploy promise pending until the overall deploy timeout.
-      mockExecCommand.mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+      mockExecCommand.mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
       queueLaunchNamespaceAndDeadSocketProbe()
       mockExecCommand.mockResolvedValueOnce('READY') // socket poll
       releaseRemoteHome('/home/user')
@@ -302,7 +302,7 @@ describe('deployAndLaunchRelay', () => {
     const conn = makeMockConnection()
     vi.mocked(conn.canRunConcurrentExecCommands).mockReturnValue(false)
     const mockExecCommand = vi.mocked(execCommand)
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
     let releaseRemoteHome: (home: string) => void = () => {}
     let remoteHomeProbeStarted: () => void = () => {}
     const remoteHomeProbeStartedPromise = new Promise<void>((resolve) => {
@@ -319,7 +319,7 @@ describe('deployAndLaunchRelay', () => {
     await remoteHomeProbeStartedPromise
     expect(resolveRemoteNodePath).not.toHaveBeenCalled()
 
-    mockExecCommand.mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+    mockExecCommand.mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
     queueLaunchNamespaceAndDeadSocketProbe()
     mockExecCommand.mockResolvedValueOnce('READY') // socket poll
     releaseRemoteHome('/home/user')
@@ -355,11 +355,11 @@ describe('deployAndLaunchRelay', () => {
         fallbackInstallStateCompleted = true
         return true
       })
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
     mockExecCommand.mockResolvedValueOnce('/home/user') // concurrent install-state $HOME
     mockExecCommand.mockRejectedValueOnce(sessionLimitError) // concurrent node path probe
     mockExecCommand.mockResolvedValueOnce('/home/user') // sequential fallback $HOME
-    mockExecCommand.mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+    mockExecCommand.mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
     queueLaunchNamespaceAndDeadSocketProbe()
     mockExecCommand.mockResolvedValueOnce('READY') // socket poll
 
@@ -386,10 +386,10 @@ describe('deployAndLaunchRelay', () => {
         throw sessionLimitError
       })
       .mockResolvedValueOnce(true)
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
     mockExecCommand.mockResolvedValueOnce('/home/user') // concurrent install-state $HOME
     mockExecCommand.mockResolvedValueOnce('/home/user') // sequential fallback $HOME
-    mockExecCommand.mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+    mockExecCommand.mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
     queueLaunchNamespaceAndDeadSocketProbe()
     mockExecCommand.mockResolvedValueOnce('READY') // socket poll
 
@@ -414,7 +414,7 @@ describe('deployAndLaunchRelay', () => {
     const mockExecCommand = vi.mocked(execCommand)
     const nodeError = new Error('Node.js not found on remote host')
     vi.mocked(resolveRemoteNodePath).mockRejectedValueOnce(nodeError)
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
     mockExecCommand.mockResolvedValueOnce('/home/user') // concurrent install-state $HOME
 
     await expect(deployAndLaunchRelay(conn)).rejects.toBe(nodeError)
@@ -436,7 +436,7 @@ describe('deployAndLaunchRelay', () => {
         })
       })
     })
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
     mockExecCommand.mockResolvedValueOnce('relative-home') // invalid install-state $HOME
 
     const timedDeploy = Promise.race([
@@ -470,7 +470,7 @@ describe('deployAndLaunchRelay', () => {
         : new Error('permission denied while checking relay install')
       vi.mocked(resolveRemoteNodePath).mockRejectedValueOnce(sessionLimitError)
       vi.mocked(isRelayAlreadyInstalled).mockRejectedValueOnce(installError)
-      mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+      mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
       mockExecCommand.mockResolvedValueOnce('/home/user') // concurrent install-state $HOME
 
       await expect(deployAndLaunchRelay(conn)).rejects.toBe(installError)
@@ -485,7 +485,7 @@ describe('deployAndLaunchRelay', () => {
     const sessionLimitError = Object.assign(new Error('(SSH) Channel open failure: open failed'), {
       reason: 4
     })
-    mockExecCommand.mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
+    mockExecCommand.mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64') // tagged POSIX platform probe
     let releaseRemoteHome: (home: string) => void = () => {}
     let remoteHomeSettled = false
     const cancelledProbe = Object.assign(new Error('system SSH probe cancellation unconfirmed'), {
@@ -516,7 +516,7 @@ describe('deployAndLaunchRelay', () => {
     expect(resolveRemoteNodePath).toHaveBeenCalledTimes(1)
 
     mockExecCommand.mockResolvedValueOnce('/home/user') // sequential fallback $HOME
-    mockExecCommand.mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+    mockExecCommand.mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
     queueLaunchNamespaceAndDeadSocketProbe()
     mockExecCommand.mockResolvedValueOnce('READY') // socket poll
     releaseRemoteHome('/home/user')
@@ -534,7 +534,7 @@ describe('deployAndLaunchRelay', () => {
 
     expect(launchCommand).toContain(`--grace-time ${DEFAULT_SSH_RELAY_GRACE_PERIOD_SECONDS}`)
     expect(launchCommand).toContain(
-      "--ripgrep-path '/home/user/.orca-remote/ripgrep/c0ffee0123456789-linux-x64/rg'"
+      "--ripgrep-path '/home/user/.dolphin-remote/ripgrep/c0ffee0123456789-linux-x64/rg'"
     )
     await vi.waitFor(() =>
       expect(ensureRemoteBundledRipgrep).toHaveBeenCalledWith(
@@ -724,7 +724,7 @@ describe('deployAndLaunchRelay', () => {
     const execArgs = vi.mocked(conn.exec).mock.calls.map(([cmd]) => cmd as string)
     const allCmds = [...execArgs, ...mockExecCommand.mock.calls.map(([, cmd]) => cmd)]
     const sawVersionedDir = allCmds.some((cmd) =>
-      cmd.includes('/.orca-remote/relay-0.1.0+abcdef012345')
+      cmd.includes('/.dolphin-remote/relay-0.1.0+abcdef012345')
     )
     expect(sawVersionedDir).toBe(true)
     const sawLegacyDir = allCmds.some((cmd) => cmd.includes('relay-v0.1.0'))
@@ -771,14 +771,14 @@ describe('deployAndLaunchRelay', () => {
       conn.writeFile = vi.fn().mockResolvedValue(undefined)
       vi.mocked(execCommand).mockImplementation((_conn, command) => {
         if (command.includes('uname')) {
-          return Promise.resolve('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+          return Promise.resolve('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
         }
         if (command === 'echo $HOME') {
           return Promise.resolve('/home/user')
         }
         const marker = command.match(/\.sftp-namespace-[0-9a-f]{32}/u)?.[0]
-        if (command.includes('__ORCA_UPLOAD_STAGE_SLOT__') && marker) {
-          return Promise.resolve(`__ORCA_UPLOAD_STAGE_SLOT__${marker}:slot-0`)
+        if (command.includes('__DOLPHIN_UPLOAD_STAGE_SLOT__') && marker) {
+          return Promise.resolve(`__DOLPHIN_UPLOAD_STAGE_SLOT__${marker}:slot-0`)
         }
         return Promise.resolve('')
       })
@@ -821,12 +821,12 @@ describe('deployAndLaunchRelay', () => {
       vi.mocked(conn.exec).mockResolvedValue(launchChannel as never)
       const mockExecCommand = vi.mocked(execCommand)
       mockExecCommand
-        .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+        .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
         .mockResolvedValueOnce('/home/user')
         .mockImplementationOnce(
           () =>
             new Promise<string>((resolve) =>
-              setTimeout(() => resolve('ORCA-NATIVE-DEPS-OK'), 899_900)
+              setTimeout(() => resolve('DOLPHIN-NATIVE-DEPS-OK'), 899_900)
             )
         )
         .mockResolvedValueOnce('') // launch namespace marker
@@ -869,14 +869,14 @@ describe('deployAndLaunchRelay', () => {
     const connB = makeMockConnection()
     const mockExecCommand = vi.mocked(execCommand)
     mockExecCommand.mockImplementation((_conn, command) => {
-      if (command.includes('__ORCA_REMOTE_PLATFORM__')) {
-        return Promise.resolve('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+      if (command.includes('__DOLPHIN_REMOTE_PLATFORM__')) {
+        return Promise.resolve('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
       }
       if (command === 'echo $HOME') {
         return Promise.resolve('/home/user')
       }
-      if (command.includes('ORCA-NATIVE')) {
-        return Promise.resolve('ORCA-NATIVE-DEPS-OK')
+      if (command.includes('DOLPHIN-NATIVE')) {
+        return Promise.resolve('DOLPHIN-NATIVE-DEPS-OK')
       }
       if (command.includes('process.stdout.write("READY")')) {
         return Promise.resolve('READY')

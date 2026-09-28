@@ -9,7 +9,7 @@ describe('profile export snapshot revision', () => {
   it.each(['json', 'compatibility-sync', 'compatibility-async'] as const)(
     'refuses a competing revision before publishing %s',
     async (kind) => {
-      const root = mkdtempSync(join(tmpdir(), 'orca-export-fence-'))
+      const root = mkdtempSync(join(tmpdir(), 'dolphin-export-fence-'))
       const database = join(root, 'profile-state.db')
       const target = join(root, 'retained.json')
       const owner = new ProfileStateSqliteAuthority(database, 'export-fence')
