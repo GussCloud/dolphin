@@ -81,8 +81,8 @@ describe('browser route partition identity', () => {
   it('pins the derived partition and fingerprint against silent relocation', () => {
     expect(deriveBrowserRoutePartition(pinnedIdentity)).toEqual({
       partition:
-        'persist:dolphin-browser-v1-955a5db671b210d053d64d1e557d8cdf1e60e1e6cb710a033f1b5cd1b61e6586',
-      bindingFingerprint: 'fe69d9d83ab889b68eeb185f12821e4e0e77dcc91fc4cb7672c88e7818a4ded7'
+        'persist:dolphin-browser-v1-656ebc05256c42c1b2e2186c1597da0f68600735cc8a7eed2a222927185e1ad7',
+      bindingFingerprint: 'bf6af11f52386f880dd4a197bd7accba6f4f9420f1f81d85abbac7ba54520d7c'
     })
   })
 
@@ -100,7 +100,7 @@ describe('browser route partition identity', () => {
       environmentId: 'environment-a'
     })
 
-    expect(scope).toBe('2821c92c85c9724ddb6136aeeec266a84fc5a9ea00f61faacef8db89bea79fb4')
+    expect(scope).toBe('68af526bc4e4d6ccfc9161700f45097ab1b626dcd0de9eb597d5b7205291c657')
     expect(
       deriveBrowserRoutePartitionStorageScope({
         dolphinProfileId: 'dolphin/profile:alpha',

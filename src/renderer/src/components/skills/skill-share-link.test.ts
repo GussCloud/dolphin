@@ -10,7 +10,7 @@ describe('parseSkillShareId', () => {
     expect(parseSkillShareId('https://share.dolphin.guss.dev.br/skills/share/share_123/')).toBe(
       'share_123'
     )
-    expect(parseSkillShareId('https://share.dolphin.guss.dev.br/skills/share/share_123')).toBeNull()
+    expect(parseSkillShareId('https://share.example.com/skills/share/share_123')).toBeNull()
     expect(parseSkillShareId('dolphin://skills/share/share_123')).toBe('share_123')
   })
 

@@ -641,7 +641,7 @@ describe('renderer startup runtime routing', () => {
       'DOLPHIN_RENDERER_SHUTDOWN_CHECKPOINT_ABORTED_EVENT,\n      shutdownCheckpoint.abortAfterCheckpointFailure'
     )
     expect(source).toContain(
-      'window.addEventListener(DOLPHIN_RENDERER_UNLOAD_PREVENTED_EVENT, shutdownCheckpoint.abandonAttempt)'
+      'DOLPHIN_RENDERER_UNLOAD_PREVENTED_EVENT,\n      shutdownCheckpoint.abandonAttempt'
     )
     expect(source).toContain("window.addEventListener('beforeunload', persistBeforeUnload)")
     expect(source.match(/window\.addEventListener\('beforeunload'/g) ?? []).toHaveLength(1)
