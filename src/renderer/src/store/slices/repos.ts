@@ -10,6 +10,7 @@ import { createFolderPathStatusActions } from '../folder-workspaces/folder-path-
 import { createNestedRepositoryActions } from '../project-groups/nested-repository-operations'
 import { createProjectGroupMutationActions } from '../project-groups/project-group-mutations'
 import { createFolderWorkspaceMutationActions } from '../folder-workspaces/folder-workspace-mutations'
+import { createMultiProjectWorkspaceAction } from '../folder-workspaces/multi-project-workspace-creation'
 import { createRepoAddActions } from '../repos/repo-add-actions'
 import { createProjectHostSetupActions } from '../projects/project-host-setup-actions'
 import { createRepoRemovalActions } from '../repos/repo-removal'
@@ -62,6 +63,7 @@ export const createRepoSlice: StateCreator<AppState, [], [], RepoSlice> = (set, 
     importNestedRepos: nestedRepositoryOperations.importNestedRepos,
     createProjectGroup: projectGroupMutations.createProjectGroup,
     createFolderWorkspace: folderWorkspaceMutations.createFolderWorkspace,
+    createMultiProjectWorkspace: createMultiProjectWorkspaceAction(set, get),
     updateFolderWorkspace: folderWorkspaceMutations.updateFolderWorkspace,
     deleteFolderWorkspace: folderWorkspaceMutations.deleteFolderWorkspace,
     updateProjectGroup: projectGroupMutations.updateProjectGroup,

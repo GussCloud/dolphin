@@ -16831,6 +16831,20 @@
           "actionsUnavailable": "Plugin actions are not available in this client.",
           "messageTooLarge": "Message exceeds the size limit.",
           "tooManyRequests": "Too many requests."
+        },
+        "FolderWorkspaceBatchBar": {
+          "failed": "{{value0}} of {{value1}} projects failed",
+          "nothingToDo": "Nothing to do in any project",
+          "done": "Done in {{value0}} of {{value1}} projects",
+          "messagePlaceholder": "Commit message for all projects",
+          "commitAll": "Commit all",
+          "pullAll": "Pull all",
+          "pushAll": "Push all"
+        },
+        "FolderWorkspaceSourceControl": {
+          "emptyTitle": "No Git projects in this workspace",
+          "emptyCopy": "Create a workspace with several projects, or attach worktrees to this one, to see their changes here.",
+          "membersLabel": "Projects"
         }
       },
       "link": {
@@ -17353,6 +17367,12 @@
           "cursorAccounts": {
             "hostOnly": "Cursor sign-in details are only readable on the computer running Dolphin."
           }
+        }
+      },
+      "newWorkspace": {
+        "MultiProjectWorktreesField": {
+          "toggle": "Create a worktree in each project",
+          "hint": "Each project gets a worktree on the same branch, inside one folder for this workspace."
         }
       }
     },

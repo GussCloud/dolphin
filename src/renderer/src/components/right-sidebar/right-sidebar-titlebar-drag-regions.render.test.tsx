@@ -313,7 +313,7 @@ describe('rendered right sidebar titlebar drag regions', () => {
     expect(buttonOpeningTag(markup, 'Toggle right sidebar')).toContain('sidebar-toggle')
   })
 
-  it('hides git-only activity buttons for folder workspace ids without a backing repo', () => {
+  it('keeps member Source Control but hides other git-only buttons for folder workspaces', () => {
     mockAppState.activeWorktreeId = 'folder:folder-1'
     mockAppState.activeRepo = null
 
@@ -324,7 +324,7 @@ describe('rendered right sidebar titlebar drag regions', () => {
     expect(markup).not.toContain('aria-label="Search')
     expect(markup).toContain('aria-label="Attached worktrees')
     expect(markup).toContain('aria-label="PR Checks')
-    expect(markup).not.toContain('aria-label="Source Control')
+    expect(markup).toContain('aria-label="Source Control')
     expect(markup).not.toContain('aria-label="Checks')
   })
 

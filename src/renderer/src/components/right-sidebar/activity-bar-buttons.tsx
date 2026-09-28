@@ -21,6 +21,8 @@ export type ActivityBarItem = {
   shortcut: string
   /** When true, hidden for non-git (folder-mode) repos. */
   gitOnly?: boolean
+  /** When true, a gitOnly item stays visible in folder workspaces, which aggregate member repos. */
+  folderWorkspaceGit?: boolean
   /** When true, shown only for folder workspaces. */
   folderOnly?: boolean
   /** When true, shown only for worktrees that belong to an SSH repo. */
