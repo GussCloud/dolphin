@@ -18,9 +18,9 @@ export function WorkspacesVisual() {
     </>
   )
   const worktrees = [
-    { name: 'speed up CI pipeline', rows: [toolRow('Bash', 'pnpm test auth'), <PendingBar key="bar" width="75%" />] },
-    { name: 'set up dolphin.yaml', rows: [<span key="text" className="text-muted">Looking at the session middleware now…</span>], active: true },
-    { name: 'fix login race condition', rows: [toolRow('Read', 'routes/login.ts'), <PendingBar key="bar-1" width="72%" />, <PendingBar key="bar-2" width="80%" />] }
+    { name: 'speed up CI pipeline', rows: [{ id: 'tool', content: toolRow('Bash', 'pnpm test auth') }, { id: 'bar', content: <PendingBar width="75%" /> }] },
+    { name: 'set up dolphin.yaml', rows: [{ id: 'text', content: <span className="text-muted">Looking at the session middleware now…</span> }], active: true },
+    { name: 'fix login race condition', rows: [{ id: 'tool', content: toolRow('Read', 'routes/login.ts') }, { id: 'bar-1', content: <PendingBar width="72%" /> }, { id: 'bar-2', content: <PendingBar width="80%" /> }] }
   ]
   return (
     <div className="space-y-2 rounded-xl border border-line bg-background/60 p-3">
@@ -31,10 +31,10 @@ export function WorkspacesVisual() {
             {worktree.name}
           </p>
           <div className="mt-2 space-y-2.5 pl-5">
-            {worktree.rows.map((row, index) => (
-              <div key={index} className="flex items-center gap-3 text-[13px]">
+            {worktree.rows.map((row) => (
+              <div key={row.id} className="flex items-center gap-3 text-[13px]">
                 <Spinner />
-                <div className="flex-1">{row}</div>
+                <div className="flex-1">{row.content}</div>
               </div>
             ))}
           </div>

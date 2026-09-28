@@ -165,9 +165,9 @@ function ReviewDiff() {
   return (
     <div className="font-mono text-[11.5px] leading-[1.7]">
       <p className="mb-2 text-muted">src/checkout/validators.ts <span className="text-success">+8</span> <span className="text-danger">-3</span></p>
-      {lines.map((line, index) => (
+      {lines.map((line) => (
         <p
-          key={index}
+          key={`${line.n}${line.kind}`}
           className={
             line.kind === '+'
               ? 'bg-success/10 text-[#86efac]'
