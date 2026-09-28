@@ -148,47 +148,47 @@ async function settledSidebarAgentRowIdentities(
 }
 
 test('sidebar keeps a Cursor pane visible and an OpenCode pane out of Claude Code hands', async ({
-  dolphinPage
+  appPage
 }) => {
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await useFullAgentActivityRows(dolphinPage)
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await useFullAgentActivityRows(appPage)
 
-  const openCode = await openAgentTab(dolphinPage, worktreeId, 'opencode')
+  const openCode = await openAgentTab(appPage, worktreeId, 'opencode')
   const openCodeScript = await runNodeScriptInTerminal(
-    dolphinPage,
+    appPage,
     openCode.ptyId,
     // ⠋ is the braille spinner frame OpenCode paints ahead of its task text.
     oscTitleHolderScript('\\u280b use Claude Sonnet')
   )
-  await waitForTerminalOutput(dolphinPage, PANE_HOLD_MARKER, 15_000)
+  await waitForTerminalOutput(appPage, PANE_HOLD_MARKER, 15_000)
   // Precondition, not the claim under test: this title is filtered on neither
   // branch, so a failure here means the PTY never emitted it.
   await expect
-    .poll(() => paneTitles(dolphinPage, openCode.tabId), {
+    .poll(() => paneTitles(appPage, openCode.tabId), {
       timeout: 15_000,
       message: 'the OpenCode task title never reached the renderer'
     })
     .toContain(OPENCODE_TASK_OSC_TITLE)
 
-  const cursor = await openAgentTab(dolphinPage, worktreeId, 'cursor')
+  const cursor = await openAgentTab(appPage, worktreeId, 'cursor')
   const cursorScript = await runNodeScriptInTerminal(
-    dolphinPage,
+    appPage,
     cursor.ptyId,
     oscTitleHolderScript(CURSOR_NATIVE_OSC_TITLE)
   )
   // Settle gate: the emitter has run, so the literal has been offered to the title
   // pipeline — kept as Cursor identity on the fix, dropped on main.
-  await waitForTerminalOutput(dolphinPage, PANE_HOLD_MARKER, 15_000)
+  await waitForTerminalOutput(appPage, PANE_HOLD_MARKER, 15_000)
 
   // Only the active worktree's card has agents, so this resolves to one list.
   const agentListSelector = `[data-worktree-sidebar] [aria-label="Agents"]`
-  const agentList = worktreeRow(dolphinPage, worktreeId).locator('[aria-label="Agents"]')
+  const agentList = worktreeRow(appPage, worktreeId).locator('[aria-label="Agents"]')
   await expect(agentList.locator('> div').first()).toBeVisible()
 
   // #10258: the Cursor pane gets a row at all. #8940: the OpenCode pane stays OpenCode.
-  expect(await settledSidebarAgentRowIdentities(dolphinPage, agentListSelector)).toEqual([
+  expect(await settledSidebarAgentRowIdentities(appPage, agentListSelector)).toEqual([
     'Cursor',
     'OpenCode'
   ])

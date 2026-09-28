@@ -11,15 +11,15 @@ import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } fro
 import { waitForActivePaneHookDescriptor, waitForActiveTerminalManager } from './helpers/terminal'
 
 test('OMP completion retry clears the rendered working indicator', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
   const endpoint = await readHookEndpoint(electronApp)
-  const { paneKey, worktreeId } = await waitForActivePaneHookDescriptor(dolphinPage)
+  const { paneKey, worktreeId } = await waitForActivePaneHookDescriptor(appPage)
   let completions = 0
   const proxy = createServer(async (request, response) => {
     let body = ''
@@ -80,26 +80,26 @@ test('OMP completion retry clears the rendered working indicator', async ({
     })
     expect(module.exports.default).toBeDefined()
     module.exports.default?.({ on: (name, fn) => handlers.set(name, fn) })
-    const working = dolphinPage.locator('[aria-label="Working"]')
+    const working = appPage.locator('[aria-label="Working"]')
     handlers.get('before_agent_start')?.(
       { prompt: 'OMP completion recovery' },
       { isIdle: () => false }
     )
     handlers.get('agent_start')?.({}, { isIdle: () => false })
     await expect(working.first()).toBeVisible()
-    await dolphinPage.screenshot({ path: testInfo.outputPath('before-working.png') })
+    await appPage.screenshot({ path: testInfo.outputPath('before-working.png') })
     handlers.get('agent_end')?.({ willContinue: false }, { isIdle: () => false })
     await expect.poll(() => completions).toBe(2)
     await expect(working).toHaveCount(0)
     await expect
       .poll(() =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           (key) => window.__store?.getState().agentStatusByPaneKey[key]?.state,
           paneKey
         )
       )
       .toBe('done')
-    await dolphinPage.screenshot({ path: testInfo.outputPath('after-completed.png') })
+    await appPage.screenshot({ path: testInfo.outputPath('after-completed.png') })
   } finally {
     proxy.closeAllConnections()
     proxy.close()

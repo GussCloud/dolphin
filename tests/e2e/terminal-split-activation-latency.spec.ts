@@ -581,7 +581,7 @@ test.describe('Terminal split activation latency benchmark @headful', () => {
 
   test('records attributed CWD, spawn, bind, fixture-ready, input, and echo phases', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     const headfulRun =
@@ -612,7 +612,7 @@ test.describe('Terminal split activation latency benchmark @headful', () => {
       await expect
         .poll(
           async () => {
-            documentVisibility = await dolphinPage.evaluate(() => document.visibilityState)
+            documentVisibility = await appPage.evaluate(() => document.visibilityState)
             return documentVisibility
           },
           {
@@ -621,20 +621,20 @@ test.describe('Terminal split activation latency benchmark @headful', () => {
           }
         )
         .toBe('visible')
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await ensureTerminalVisible(dolphinPage)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await ensureTerminalVisible(appPage)
 
       fixture = createEchoShellFixture()
-      const source = await createSourceTab(dolphinPage, fixture.shellPath)
+      const source = await createSourceTab(appPage, fixture.shellPath)
       const { tabId, ptyId: sourcePtyId } = source
-      const sourcePaneId = await readActivePaneId(dolphinPage, tabId)
-      await installPtyExitProbe(dolphinPage)
+      const sourcePaneId = await readActivePaneId(appPage, tabId)
+      await installPtyExitProbe(appPage)
       await installSplitLatencyMainProbe(electronApp)
       let priorCloseCompletedAt = Date.now()
 
       for (let iteration = 0; iteration < WARMUP_CYCLES; iteration += 1) {
-        const result = await runSplitCycle(electronApp, dolphinPage, {
+        const result = await runSplitCycle(electronApp, appPage, {
           tabId,
           sourcePaneId,
           sourcePtyId,
@@ -651,8 +651,8 @@ test.describe('Terminal split activation latency benchmark @headful', () => {
       }
 
       for (let iteration = 0; iteration < MEASURED_CYCLES && abortError === null; iteration += 1) {
-        await waitForColdProcessCwdLookup(dolphinPage, priorCloseCompletedAt)
-        const result = await runSplitCycle(electronApp, dolphinPage, {
+        await waitForColdProcessCwdLookup(appPage, priorCloseCompletedAt)
+        const result = await runSplitCycle(electronApp, appPage, {
           tabId,
           sourcePaneId,
           sourcePtyId,
@@ -667,7 +667,7 @@ test.describe('Terminal split activation latency benchmark @headful', () => {
         }
       }
 
-      documentVisibility = await dolphinPage
+      documentVisibility = await appPage
         .evaluate(() => document.visibilityState)
         .catch(() => 'unavailable' as const)
       const reportResult = buildBenchmarkReport({
@@ -722,7 +722,7 @@ test.describe('Terminal split activation latency benchmark @headful', () => {
       throw error
     } finally {
       await disposeSplitLatencyMainProbe(electronApp).catch(() => undefined)
-      await disposePtyExitProbe(dolphinPage).catch(() => undefined)
+      await disposePtyExitProbe(appPage).catch(() => undefined)
       if (fixture) {
         rmSync(fixture.root, { recursive: true, force: true })
       }

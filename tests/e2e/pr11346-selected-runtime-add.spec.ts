@@ -80,20 +80,20 @@ async function setActiveRuntimePreference(page: Page, environmentId: string | nu
 
 async function runSelectedRuntimeAddJourney(
   electronApp: ElectronApplication,
-  dolphinPage: Page,
+  appPage: Page,
   testInfo: TestInfo,
   visible: boolean
 ): Promise<void> {
   const runtimeName = `PR 11346 ${visible ? 'headed' : 'hidden-window'} runtime`
   const fixture = await createProjectFixtures()
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
   const serverVisible = await electronApp.evaluate(({ BrowserWindow }) =>
     BrowserWindow.getAllWindows().some((window) => window.isVisible())
   )
   expect(serverVisible).toBe(visible)
   configureIsolatedGitIdentity(await electronApp.evaluate(({ app }) => app.getPath('home')))
 
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedElectronClient(offer, testInfo, runtimeName)
   // Why: the client renders the workbench under test, and a contained render
   // crash only names its component stack on the renderer console.
@@ -750,16 +750,16 @@ async function runSelectedRuntimeAddJourney(
 
 test('routes every Add Project path to a selected non-default headed runtime @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(300_000)
-  await runSelectedRuntimeAddJourney(electronApp, dolphinPage, testInfo, true)
+  await runSelectedRuntimeAddJourney(electronApp, appPage, testInfo, true)
 })
 
 test('keeps every selected-runtime Add Project path in hidden-window desktop parity', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(300_000)
-  await runSelectedRuntimeAddJourney(electronApp, dolphinPage, testInfo, false)
+  await runSelectedRuntimeAddJourney(electronApp, appPage, testInfo, false)
 })

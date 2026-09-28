@@ -456,60 +456,57 @@ async function closeActivePaneAndSettle(page: Page, expectedCount: number): Prom
 // effects and corrupt assertions.
 test.describe.configure({ mode: 'serial' })
 test.describe('Terminal Shortcuts', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const hasPaneManager = await waitForActiveTerminalManager(dolphinPage, 30_000)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    const hasPaneManager = await waitForActiveTerminalManager(appPage, 30_000)
       .then(() => true)
       .catch(() => false)
     test.skip(
       !hasPaneManager,
       'Electron automation in this environment never mounts the live TerminalPane manager.'
     )
-    await waitForPaneCount(dolphinPage, 1, 30_000)
+    await waitForPaneCount(appPage, 1, 30_000)
   })
 
-  test('Shift+Enter follows the pane Kitty keyboard state', async ({
-    dolphinPage,
-    electronApp
-  }) => {
+  test('Shift+Enter follows the pane Kitty keyboard state', async ({ appPage, electronApp }) => {
     await installMainProcessPtyWriteSpy(electronApp)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
 
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Shift+Enter', '\x1b\r')
+    await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b\r')
     if (process.platform === 'win32') {
       return
     }
 
     // Why: exercise the production PTY-output tracker, not xterm's renderer-
     // local flag state, so the test covers the bytes the shortcut policy sees.
-    await execInTerminal(dolphinPage, ptyId, "printf '\\033[>1u'")
-    await expect.poll(() => getKittyKeyboardFlags(dolphinPage)).toBe(1)
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Shift+Enter', '\x1b[13;2u')
+    await execInTerminal(appPage, ptyId, "printf '\\033[>1u'")
+    await expect.poll(() => getKittyKeyboardFlags(appPage)).toBe(1)
+    await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b[13;2u')
 
     // Clear the shell's unconsumed CSI-u line before resetting flags in a settled
     // command; otherwise its line editor can swallow the reset bytes.
-    await sendToTerminal(dolphinPage, ptyId, '\x15\x03')
-    await execInTerminal(dolphinPage, ptyId, "printf '\\033[=0u'")
-    await expect.poll(() => getKittyKeyboardFlags(dolphinPage)).toBe(0)
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Shift+Enter', '\x1b\r')
+    await sendToTerminal(appPage, ptyId, '\x15\x03')
+    await execInTerminal(appPage, ptyId, "printf '\\033[=0u'")
+    await expect.poll(() => getKittyKeyboardFlags(appPage)).toBe(0)
+    await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b\r')
   })
 
   test('Droid gets CSI-u Shift+Enter on Windows without changing Antigravity', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     test.skip(process.platform !== 'win32', 'Windows ConPTY encoding contract')
     await installMainProcessPtyWriteSpy(electronApp)
-    await waitForActivePanePtyId(dolphinPage)
-    const paneKey = await setActivePaneForegroundAgent(dolphinPage, 'droid')
+    await waitForActivePanePtyId(appPage)
+    const paneKey = await setActivePaneForegroundAgent(appPage, 'droid')
     try {
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Shift+Enter', '\x1b[13;2u', 2)
-      await setActivePaneForegroundAgent(dolphinPage, 'antigravity')
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Shift+Enter', '\x1b\r')
+      await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b[13;2u', 2)
+      await setActivePaneForegroundAgent(appPage, 'antigravity')
+      await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b\r')
     } finally {
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         (key) => window.__store?.getState().clearPaneForegroundAgent(key),
         paneKey
       )
@@ -517,33 +514,33 @@ test.describe('Terminal Shortcuts', () => {
   })
 
   test('Windows forwards genuine Ctrl+Alt text chords to the PTY', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     test.skip(process.platform !== 'win32', 'Windows xterm AltGr classification regression')
     await installMainProcessPtyWriteSpy(electronApp)
-    await waitForActivePanePtyId(dolphinPage)
+    await waitForActivePanePtyId(appPage)
 
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Control+Alt+u', '\x1b\x15')
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Control+Alt+2', '\x1b2')
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Control+Alt+;', '\x1b;')
+    await pressAndExpectWrite(appPage, electronApp, 'Control+Alt+u', '\x1b\x15')
+    await pressAndExpectWrite(appPage, electronApp, 'Control+Alt+2', '\x1b2')
+    await pressAndExpectWrite(appPage, electronApp, 'Control+Alt+;', '\x1b;')
   })
 
   test('Ctrl+Enter protects local ConPTY shells without breaking trusted TUI chords', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     await installMainProcessPtyWriteSpy(electronApp)
-    await waitForActivePanePtyId(dolphinPage)
+    await waitForActivePanePtyId(appPage)
 
     if (process.platform === 'win32') {
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Control+Enter', '\r')
-      const paneKey = await setActivePaneForegroundAgent(dolphinPage, 'droid')
+      await pressAndExpectWrite(appPage, electronApp, 'Control+Enter', '\r')
+      const paneKey = await setActivePaneForegroundAgent(appPage, 'droid')
       try {
         // Droid queries CSI-u without activating live flags; trusted process evidence preserves cue/queue.
-        await pressAndExpectWrite(dolphinPage, electronApp, 'Control+Enter', '\x1b[13;5u')
+        await pressAndExpectWrite(appPage, electronApp, 'Control+Enter', '\x1b[13;5u')
       } finally {
-        await dolphinPage.evaluate(
+        await appPage.evaluate(
           (key) => window.__store?.getState().clearPaneForegroundAgent(key),
           paneKey
         )
@@ -552,26 +549,24 @@ test.describe('Terminal Shortcuts', () => {
     }
 
     // Preserve the established query-only Droid/Grok contract outside local ConPTY.
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Control+Enter', '\x1b[13;5u')
+    await pressAndExpectWrite(appPage, electronApp, 'Control+Enter', '\x1b[13;5u')
   })
 
   test('plain Ctrl+C sends ETX under kitty keyboard reporting', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     await installMainProcessPtyWriteSpy(electronApp)
-    await waitForActivePanePtyId(dolphinPage)
-    await enableKittyKeyboardReporting(dolphinPage, 31)
+    await waitForActivePanePtyId(appPage)
+    await enableKittyKeyboardReporting(appPage, 31)
     await clearPtyWriteLog(electronApp)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.down('Control')
-    await dolphinPage.keyboard.up('Control')
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.down('Control')
+    await appPage.keyboard.up('Control')
     expect((await getPtyWrites(electronApp)).join('')).toBe('')
     await clearPtyWriteLog(electronApp)
 
-    expect(
-      await dispatchCtrlCToActiveTerminalTextarea(dolphinPage, { keyupCtrlKey: false })
-    ).toEqual({
+    expect(await dispatchCtrlCToActiveTerminalTextarea(appPage, { keyupCtrlKey: false })).toEqual({
       keydownDefaultPrevented: false,
       keyupDefaultPrevented: false
     })
@@ -587,15 +582,15 @@ test.describe('Terminal Shortcuts', () => {
     expect(writes).not.toContain('\x1b[99')
 
     await expect
-      .poll(async () => await getKittyKeyboardFlags(dolphinPage), {
+      .poll(async () => await getKittyKeyboardFlags(appPage), {
         timeout: 5_000,
         message: 'Ctrl+C did not clear stale Kitty keyboard flags'
       })
       .toBe(0)
 
     await clearPtyWriteLog(electronApp)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.type('x')
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.type('x')
     await expect
       .poll(async () => (await getPtyWrites(electronApp)).some((write) => write === 'x'), {
         timeout: 5_000,
@@ -604,13 +599,13 @@ test.describe('Terminal Shortcuts', () => {
       .toBe(true)
     const postInterruptWrites = (await getPtyWrites(electronApp)).join('')
     expect(postInterruptWrites).not.toContain('\x1b[')
-    await dolphinPage.keyboard.press('Backspace')
+    await appPage.keyboard.press('Backspace')
   })
 
   test('@headful Codex-like background output stays visible without disabling WebGL in auto mode', async ({
-    dolphinPage
+    appPage
   }) => {
-    const hasPane = await dolphinPage.evaluate(() => {
+    const hasPane = await appPage.evaluate(() => {
       const state = window.__store?.getState()
       const worktreeId = state?.activeWorktreeId
       const tabId =
@@ -625,7 +620,7 @@ test.describe('Terminal Shortcuts', () => {
       return Boolean(pane)
     })
     test.skip(!hasPane, 'No active terminal pane for renderer validation')
-    const webglActive = await dolphinPage
+    const webglActive = await appPage
       .waitForFunction(
         () => {
           const state = window.__store?.getState()
@@ -647,19 +642,15 @@ test.describe('Terminal Shortcuts', () => {
       .catch(() => false)
     test.skip(!webglActive, 'WebGL was not active in this headful environment')
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const marker = `CODEX_BG_${Date.now()}`
-    await execInTerminal(
-      dolphinPage,
-      ptyId,
-      `printf '\\033[48;2;52;52;52m  ${marker}  \\033[0m\\n'`
-    )
-    await waitForTerminalOutput(dolphinPage, marker)
+    await execInTerminal(appPage, ptyId, `printf '\\033[48;2;52;52;52m  ${marker}  \\033[0m\\n'`)
+    await waitForTerminalOutput(appPage, marker)
 
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate((expectedMarker) => {
+          appPage.evaluate((expectedMarker) => {
             const state = window.__store?.getState()
             const worktreeId = state?.activeWorktreeId
             const tabId =
@@ -693,9 +684,9 @@ test.describe('Terminal Shortcuts', () => {
       })
   })
 
-  test('floating terminal owns tab switch shortcuts while focused', async ({ dolphinPage }) => {
-    const scenario = await seedFloatingTerminalTabSwitchScenario(dolphinPage)
-    await dolphinPage.evaluate(async () => {
+  test('floating terminal owns tab switch shortcuts while focused', async ({ appPage }) => {
+    const scenario = await seedFloatingTerminalTabSwitchScenario(appPage)
+    await appPage.evaluate(async () => {
       const state = window.__store?.getState()
       if (state?.settings?.floatingTerminalEnabled !== true) {
         await state?.updateSettings({ floatingTerminalEnabled: true })
@@ -705,115 +696,115 @@ test.describe('Terminal Shortcuts', () => {
       }
     })
     await expect(
-      dolphinPage.locator('[data-floating-terminal-panel][aria-hidden="false"]')
+      appPage.locator('[data-floating-terminal-panel][aria-hidden="false"]')
     ).toBeVisible()
-    await focusFloatingTerminal(dolphinPage)
+    await focusFloatingTerminal(appPage)
 
-    await dolphinPage.keyboard.press(`${mod}+Shift+BracketRight`)
+    await appPage.keyboard.press(`${mod}+Shift+BracketRight`)
     await expect
-      .poll(() => getActiveFloatingTerminalTabId(dolphinPage), {
+      .poll(() => getActiveFloatingTerminalTabId(appPage), {
         timeout: 5_000,
         message: 'floating terminal did not switch to the next tab'
       })
       .toBe(scenario.floatingSecondTabId)
     await expect
-      .poll(() => getActiveBackgroundTerminalTabId(dolphinPage), {
+      .poll(() => getActiveBackgroundTerminalTabId(appPage), {
         timeout: 1_000,
         message: 'background terminal tab changed while floating terminal was focused'
       })
       .toBe(scenario.backgroundFirstTabId)
 
-    await focusFloatingTerminal(dolphinPage)
-    await dolphinPage.keyboard.press(`${mod}+Shift+BracketLeft`)
+    await focusFloatingTerminal(appPage)
+    await appPage.keyboard.press(`${mod}+Shift+BracketLeft`)
     await expect
-      .poll(() => getActiveFloatingTerminalTabId(dolphinPage), {
+      .poll(() => getActiveFloatingTerminalTabId(appPage), {
         timeout: 5_000,
         message: 'floating terminal did not switch back to the previous tab'
       })
       .toBe(scenario.floatingFirstTabId)
-    await expect(getActiveBackgroundTerminalTabId(dolphinPage)).resolves.toBe(
+    await expect(getActiveBackgroundTerminalTabId(appPage)).resolves.toBe(
       scenario.backgroundFirstTabId
     )
   })
 
   test('all terminal chords reach the PTY or fire their action', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     await installMainProcessPtyWriteSpy(electronApp)
 
     // Seed the buffer so Cmd+K has something to clear.
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const marker = `SHORTCUT_TEST_${Date.now()}`
-    await execInTerminal(dolphinPage, ptyId, `echo ${marker}`)
-    await waitForTerminalOutput(dolphinPage, marker)
+    await execInTerminal(appPage, ptyId, `echo ${marker}`)
+    await waitForTerminalOutput(appPage, marker)
 
     // --- send-input chords (platform-agnostic) ---
 
     // Alt+←/→ → readline backward-word / forward-word (\eb / \ef).
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Alt+ArrowLeft', '\x1bb')
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Alt+ArrowRight', '\x1bf')
+    await pressAndExpectWrite(appPage, electronApp, 'Alt+ArrowLeft', '\x1bb')
+    await pressAndExpectWrite(appPage, electronApp, 'Alt+ArrowRight', '\x1bf')
 
     // Ctrl+←/→ on non-mac → readline backward-word / forward-word (\eb / \ef).
     // macOS reserves Ctrl+Arrow; Windows ConPTY leaves it to PSReadLine.
     if (!isMac && process.platform !== 'win32') {
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Control+ArrowLeft', '\x1bb')
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Control+ArrowRight', '\x1bf')
+      await pressAndExpectWrite(appPage, electronApp, 'Control+ArrowLeft', '\x1bb')
+      await pressAndExpectWrite(appPage, electronApp, 'Control+ArrowRight', '\x1bf')
     }
 
     // Alt+Backspace → Esc+DEL (readline backward-kill-word).
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Alt+Backspace', '\x1b\x7f')
+    await pressAndExpectWrite(appPage, electronApp, 'Alt+Backspace', '\x1b\x7f')
 
     // Ctrl+Backspace → \x17 (unix-word-rubout).
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Control+Backspace', '\x17')
+    await pressAndExpectWrite(appPage, electronApp, 'Control+Backspace', '\x17')
 
     // The shell has not enabled KKP, so Shift+Enter must not leak CSI-u text.
-    await pressAndExpectWrite(dolphinPage, electronApp, 'Shift+Enter', '\x1b\r')
+    await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b\r')
 
     // --- send-input chords (macOS-only) ---
 
     if (isMac) {
       // Cmd+←/→ → Ctrl+A / Ctrl+E (beginning/end of line).
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Meta+ArrowLeft', '\x01')
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Meta+ArrowRight', '\x05')
+      await pressAndExpectWrite(appPage, electronApp, 'Meta+ArrowLeft', '\x01')
+      await pressAndExpectWrite(appPage, electronApp, 'Meta+ArrowRight', '\x05')
 
       // Cmd+Backspace → Ctrl+U (kill line). Cmd+Delete → Ctrl+K (kill to EOL).
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Meta+Backspace', '\x15')
-      await pressAndExpectWrite(dolphinPage, electronApp, 'Meta+Delete', '\x0b')
+      await pressAndExpectWrite(appPage, electronApp, 'Meta+Backspace', '\x15')
+      await pressAndExpectWrite(appPage, electronApp, 'Meta+Delete', '\x0b')
     }
 
     // --- action chords (no PTY byte; assert via visible effect) ---
 
     // Cmd/Ctrl+K clears the pane.
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(`${mod}+k`)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(`${mod}+k`)
     await expect
-      .poll(async () => (await getTerminalContent(dolphinPage)).includes(marker), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(marker), {
         timeout: 5_000,
         message: 'Cmd+K did not clear the terminal buffer'
       })
       .toBe(false)
 
     // Split vertically (chord varies by platform — see splitVerticalChord).
-    const panesBeforeSplit = await countVisibleTerminalPanes(dolphinPage)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(splitVerticalChord)
-    await waitForPaneCount(dolphinPage, panesBeforeSplit + 1)
+    const panesBeforeSplit = await countVisibleTerminalPanes(appPage)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(splitVerticalChord)
+    await waitForPaneCount(appPage, panesBeforeSplit + 1)
     // Why: ensure the new split pane's PTY is actually bound before we later
     // close it, so the close cycle can't race an in-progress split.
-    await waitForActivePanePtyId(dolphinPage)
+    await waitForActivePanePtyId(appPage)
 
     // Cmd/Ctrl+] and Cmd/Ctrl+[ cycle focus (no pane-count change).
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(`${mod}+BracketRight`)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(`${mod}+BracketLeft`)
-    expect(await countVisibleTerminalPanes(dolphinPage)).toBe(panesBeforeSplit + 1)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(`${mod}+BracketRight`)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(`${mod}+BracketLeft`)
+    expect(await countVisibleTerminalPanes(appPage)).toBe(panesBeforeSplit + 1)
 
     // Cmd/Ctrl+Shift+Enter toggles expand on the active pane. Requires >1 pane,
     // so it runs while the vertical split from above is still open.
     const readExpanded = async (): Promise<boolean> =>
-      dolphinPage.evaluate(() => {
+      appPage.evaluate(() => {
         const state = window.__store?.getState()
         const tabId = state?.activeTabId
         if (!state || !tabId) {
@@ -822,61 +813,61 @@ test.describe('Terminal Shortcuts', () => {
         return state.expandedPaneByTabId[tabId] === true
       })
     expect(await readExpanded()).toBe(false)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(`${mod}+Shift+Enter`)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(`${mod}+Shift+Enter`)
     await expect
       .poll(readExpanded, { timeout: 3_000, message: 'Cmd+Shift+Enter did not expand pane' })
       .toBe(true)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(`${mod}+Shift+Enter`)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(`${mod}+Shift+Enter`)
     await expect
       .poll(readExpanded, { timeout: 3_000, message: 'Cmd+Shift+Enter did not collapse pane' })
       .toBe(false)
 
     // Cmd/Ctrl+W closes the active split pane (not the whole tab: >1 pane).
-    await closeActivePaneAndSettle(dolphinPage, panesBeforeSplit)
+    await closeActivePaneAndSettle(appPage, panesBeforeSplit)
 
     // Split horizontally (chord varies by platform — see splitHorizontalChord).
-    const panesBeforeHSplit = await countVisibleTerminalPanes(dolphinPage)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(splitHorizontalChord)
-    await waitForPaneCount(dolphinPage, panesBeforeHSplit + 1)
-    await waitForActivePanePtyId(dolphinPage)
-    await closeActivePaneAndSettle(dolphinPage, panesBeforeHSplit)
+    const panesBeforeHSplit = await countVisibleTerminalPanes(appPage)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(splitHorizontalChord)
+    await waitForPaneCount(appPage, panesBeforeHSplit + 1)
+    await waitForActivePanePtyId(appPage)
+    await closeActivePaneAndSettle(appPage, panesBeforeHSplit)
 
     // Cmd/Ctrl+F toggles the search overlay.
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(`${mod}+f`)
-    const searchInput = dolphinPage.locator('[data-terminal-search-root] input').first()
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(`${mod}+f`)
+    const searchInput = appPage.locator('[data-terminal-search-root] input').first()
     // Why: Escape is handled by TerminalSearch's React onKeyDown, which only
     // fires when focus is inside the overlay. The overlay auto-focuses its
     // input via a useEffect, but Playwright can press Escape before that
     // effect runs and the keystroke goes to the xterm textarea instead.
     // Wait for the input to actually be focused before pressing Escape.
     await expect(searchInput).toBeFocused({ timeout: 3_000 })
-    await dolphinPage.keyboard.press('Escape')
-    await expect(dolphinPage.locator('[data-terminal-search-root]').first()).toBeHidden({
+    await appPage.keyboard.press('Escape')
+    await expect(appPage.locator('[data-terminal-search-root]').first()).toBeHidden({
       timeout: 3_000
     })
   })
 
   test('Cmd+Up/Down scrolls terminal viewport without writing to the PTY on macOS', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     test.skip(!isMac, 'Cmd+Up/Down terminal scroll navigation is macOS-only')
 
     await installMainProcessPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const marker = `CMD_ARROW_SCROLL_${Date.now()}`
-    await execInTerminal(dolphinPage, ptyId, `for i in {1..120}; do echo ${marker}_$i; done`)
-    await waitForTerminalOutput(dolphinPage, `${marker}_120`)
+    await execInTerminal(appPage, ptyId, `for i in {1..120}; do echo ${marker}_$i; done`)
+    await waitForTerminalOutput(appPage, `${marker}_120`)
 
     await expect
       .poll(
         async () => {
-          const viewport = await getActiveTerminalViewport(dolphinPage)
+          const viewport = await getActiveTerminalViewport(appPage)
           return viewport.baseY > 0 && viewport.viewportY === viewport.baseY
         },
         {
@@ -887,22 +878,22 @@ test.describe('Terminal Shortcuts', () => {
       .toBe(true)
 
     await clearPtyWriteLog(electronApp)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press('Meta+ArrowUp')
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press('Meta+ArrowUp')
     await expect
-      .poll(async () => getActiveTerminalViewport(dolphinPage), {
+      .poll(async () => getActiveTerminalViewport(appPage), {
         timeout: 5_000,
         message: 'Cmd+Up did not scroll the terminal viewport to the top'
       })
       .toMatchObject({ viewportY: 0 })
     expect(await getPtyWrites(electronApp)).toEqual([])
 
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press('Meta+ArrowDown')
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press('Meta+ArrowDown')
     await expect
       .poll(
         async () => {
-          const viewport = await getActiveTerminalViewport(dolphinPage)
+          const viewport = await getActiveTerminalViewport(appPage)
           return viewport.viewportY === viewport.baseY
         },
         {
@@ -915,18 +906,18 @@ test.describe('Terminal Shortcuts', () => {
   })
 
   test('Shift with Russian layout text reaches the PTY as Cyrillic under kitty keyboard reporting', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     await installMainProcessPtyWriteSpy(electronApp)
     // Why: CI can mount the xterm surface before the pane transport has a
     // live PTY. Probe first so xterm onData cannot race a disconnected
     // sendInput path, then clear the probe writes before the layout assertion.
-    await waitForActivePanePtyId(dolphinPage)
-    await enableKittyKeyboardReporting(dolphinPage, 31)
+    await waitForActivePanePtyId(appPage)
+    await enableKittyKeyboardReporting(appPage, 31)
     await clearPtyWriteLog(electronApp)
 
-    const dispatch = await pressShiftedRussianLayoutKey(dolphinPage)
+    const dispatch = await pressShiftedRussianLayoutKey(appPage)
 
     expect(dispatch).toEqual({
       keydownDefaultPrevented: false,

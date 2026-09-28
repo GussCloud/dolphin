@@ -211,20 +211,20 @@ async function getSmartSortScenarioReadiness(
 }
 
 test.describe('Worktree Smart Sort', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   test('renders attention-needed worktrees above finished agents in Smart mode', async ({
-    dolphinPage
+    appPage
   }) => {
-    const scenario = await seedSmartSortScenario(dolphinPage)
+    const scenario = await seedSmartSortScenario(appPage)
     const { blockedId, doneId } = scenario
 
     await expect
-      .poll(() => getSmartSortScenarioReadiness(dolphinPage, scenario), {
+      .poll(() => getSmartSortScenarioReadiness(appPage, scenario), {
         timeout: 8_000,
         message: 'Smart sort scenario did not seed live PTYs and fresh agent statuses'
       })
@@ -237,13 +237,13 @@ test.describe('Worktree Smart Sort', () => {
       })
 
     await expect
-      .poll(async () => (await getVisibleWorktreeIdsByTop(dolphinPage)).slice(0, 2), {
+      .poll(async () => (await getVisibleWorktreeIdsByTop(appPage)).slice(0, 2), {
         timeout: 12_000,
         message: 'Smart sort did not promote the blocked worktree in the visible sidebar'
       })
       .toEqual([blockedId, doneId])
 
-    await expect(worktreeRow(dolphinPage, blockedId)).toBeVisible()
-    await expect(worktreeRow(dolphinPage, doneId)).toBeVisible()
+    await expect(worktreeRow(appPage, blockedId)).toBeVisible()
+    await expect(worktreeRow(appPage, doneId)).toBeVisible()
   })
 })

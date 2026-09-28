@@ -432,11 +432,11 @@ test.describe('terminal WebGL atlas budget', () => {
   test.describe.configure({ timeout: 120_000 })
 
   test('@headful keeps shared glyph pages bindable through overflow and recovery @terminal-rendering-golden', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForActiveTerminalManager(dolphinPage)
-    test.skip(!(await forceActivePaneWebgl(dolphinPage)), 'WebGL unavailable in this environment')
-    const result = await runAtlasBudgetScenario(dolphinPage)
+    await waitForActiveTerminalManager(appPage)
+    test.skip(!(await forceActivePaneWebgl(appPage)), 'WebGL unavailable in this environment')
+    const result = await runAtlasBudgetScenario(appPage)
 
     expect(result.realBudget).toBeGreaterThanOrEqual(result.budget)
     expect(result.shared).toBe(true)
@@ -452,11 +452,11 @@ test.describe('terminal WebGL atlas budget', () => {
   })
 
   test('@headful rebuilds cached vertices after attaching a different shared atlas @terminal-rendering-golden', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForActiveTerminalManager(dolphinPage)
-    test.skip(!(await forceActivePaneWebgl(dolphinPage)), 'WebGL unavailable in this environment')
-    const result = await runAtlasReplacementScenario(dolphinPage)
+    await waitForActiveTerminalManager(appPage)
+    test.skip(!(await forceActivePaneWebgl(appPage)), 'WebGL unavailable in this environment')
+    const result = await runAtlasReplacementScenario(appPage)
 
     expect(result.distinctAtlases).toBe(true)
     expect(result.baselineInkPixels).toBeGreaterThan(1000)

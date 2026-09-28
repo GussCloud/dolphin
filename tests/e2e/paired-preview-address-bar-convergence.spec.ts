@@ -113,7 +113,7 @@ async function openPreviewFromExplorer(page: Page, fixtureName: string): Promise
  * session snapshot stays empty throughout: a converted page is client-local like the preview was.
  */
 test('converts a preview to a web tab and back from the address bar', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
@@ -122,10 +122,10 @@ test('converts a preview to a web tab and back from the address bar', async ({
     `<!doctype html><html><head><title>${FIXTURE_TITLE}</title></head>` +
       `<body><h1>${FIXTURE_HEADING}</h1></body></html>\n`
   )
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
 
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const marker = await startClientHostedMarkerFixture()
   let prepared: PreparedPairedClient | null = null
   try {

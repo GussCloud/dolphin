@@ -342,10 +342,10 @@ async function captureFirstRevealedFrame(page: Page, tabId: string): Promise<Buf
 }
 
 test.describe('terminal reveal paused-render recovery', () => {
-  test("reveal repaint forces a render through xterm's paused gate", async ({ dolphinPage }) => {
+  test("reveal repaint forces a render through xterm's paused gate", async ({ appPage }) => {
     // Why: __store / __paneManagers live on the main Dolphin renderer window
-    // (dolphinPage), not Playwright's default first page.
-    const page = dolphinPage
+    // (appPage), not Playwright's default first page.
+    const page = appPage
     await waitForSessionReady(page)
     await waitForActiveTerminalManager(page)
     const tabId = (await getActiveTabId(page))!
@@ -426,13 +426,13 @@ test.describe('terminal reveal paused-render recovery', () => {
   })
 
   test('@headful atlas recovery presents a synchronized-output WebGL frame', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage)
-    const tabId = (await getActiveTabId(dolphinPage))!
-    await forceWebglOn(dolphinPage, tabId)
-    const webglAttached = await dolphinPage
+    await waitForSessionReady(appPage)
+    await waitForActiveTerminalManager(appPage)
+    const tabId = (await getActiveTabId(appPage))!
+    await forceWebglOn(appPage, tabId)
+    const webglAttached = await appPage
       .waitForFunction(
         (tabId) =>
           (window.__paneManagers?.get(tabId)?.getRenderingDiagnostics?.() ?? []).some(
@@ -447,33 +447,33 @@ test.describe('terminal reveal paused-render recovery', () => {
     if (!webglAttached) {
       return
     }
-    const installed = await installSynchronizedRevealProbe(dolphinPage, tabId)
+    const installed = await installSynchronizedRevealProbe(appPage, tabId)
     expect(installed, 'WebGL renderer internals are available').toBe(true)
 
-    await callSynchronizedRevealProbe(dolphinPage, 'paintFrame', {
+    await callSynchronizedRevealProbe(appPage, 'paintFrame', {
       marker: 'BASELINE_FRAME',
       background: 17,
       release: true
     })
-    await callSynchronizedRevealProbe(dolphinPage, 'paintFrame', {
+    await callSynchronizedRevealProbe(appPage, 'paintFrame', {
       marker: 'REVEALED_FRAME',
       background: 52,
       release: false
     })
-    const held = await readSynchronizedRevealProbe(dolphinPage)
+    const held = await readSynchronizedRevealProbe(appPage)
     expect(held.synchronizedOutput).toBe(true)
     expect(held.screen).toContain('REVEALED_FRAME')
 
-    await dolphinPage.evaluate((tabId) => {
+    await appPage.evaluate((tabId) => {
       window.__paneManagers?.get(tabId)?.scheduleRevealRepaint?.()
     }, tabId)
     await expect
-      .poll(async () => (await readSynchronizedRevealProbe(dolphinPage)).atlasClears)
+      .poll(async () => (await readSynchronizedRevealProbe(appPage)).atlasClears)
       .toBeGreaterThan(0)
-    const afterReveal = await captureStableTabScreenshot(dolphinPage, tabId)
+    const afterReveal = await captureStableTabScreenshot(appPage, tabId)
 
-    await callSynchronizedRevealProbe(dolphinPage, 'forceRendererPresent')
-    const afterForcedPresent = await captureStableTabScreenshot(dolphinPage, tabId)
+    await callSynchronizedRevealProbe(appPage, 'forceRendererPresent')
+    const afterForcedPresent = await captureStableTabScreenshot(appPage, tabId)
     const diff = compareTerminalScreenshots(afterReveal, afterForcedPresent)
     const afterRevealPath = testInfo.outputPath('synchronized-frame-after-reveal.png')
     const afterForcedPresentPath = testInfo.outputPath(
@@ -504,14 +504,14 @@ test.describe('terminal reveal paused-render recovery', () => {
   })
 
   test('@headful reveal preserves the coherent frame until synchronized output releases', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage)
-    const tabId = (await getActiveTabId(dolphinPage))!
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    await forceWebglOn(dolphinPage, tabId)
-    const webglAttached = await dolphinPage
+    await waitForSessionReady(appPage)
+    await waitForActiveTerminalManager(appPage)
+    const tabId = (await getActiveTabId(appPage))!
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    await forceWebglOn(appPage, tabId)
+    const webglAttached = await appPage
       .waitForFunction(
         (tabId) =>
           (window.__paneManagers?.get(tabId)?.getRenderingDiagnostics?.() ?? []).some(
@@ -526,37 +526,37 @@ test.describe('terminal reveal paused-render recovery', () => {
     if (!webglAttached) {
       return
     }
-    expect(await installSynchronizedRevealProbe(dolphinPage, tabId)).toBe(true)
+    expect(await installSynchronizedRevealProbe(appPage, tabId)).toBe(true)
 
-    await callSynchronizedRevealProbe(dolphinPage, 'paintFrame', {
+    await callSynchronizedRevealProbe(appPage, 'paintFrame', {
       marker: 'COHERENT_FRAME',
       background: 17,
       release: true
     })
-    const coherent = await captureStableTabScreenshot(dolphinPage, tabId)
-    const beforeHide = await readSynchronizedRevealProbe(dolphinPage)
-    const siblingTabId = await dolphinPage.evaluate((worktreeId) => {
+    const coherent = await captureStableTabScreenshot(appPage, tabId)
+    const beforeHide = await readSynchronizedRevealProbe(appPage)
+    const siblingTabId = await appPage.evaluate((worktreeId) => {
       const state = window.__store?.getState()
       if (!state) {
         throw new Error('Renderer store unavailable')
       }
       return state.createTab(worktreeId, undefined, undefined, { activate: false }).id
     }, worktreeId)
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       (siblingTabId) => window.__store?.getState().setActiveTab(siblingTabId),
       siblingTabId
     )
-    await expect(dolphinPage.locator(`[data-terminal-tab-id="${tabId}"]`)).toBeHidden()
+    await expect(appPage.locator(`[data-terminal-tab-id="${tabId}"]`)).toBeHidden()
 
-    await callSynchronizedRevealProbe(dolphinPage, 'paintFrame', {
+    await callSynchronizedRevealProbe(appPage, 'paintFrame', {
       marker: 'PENDING_FRAME',
       background: 52,
       release: false
     })
-    await dolphinPage.evaluate((tabId) => window.__store?.getState().setActiveTab(tabId), tabId)
-    await expect.poll(() => getActiveTabId(dolphinPage)).toBe(tabId)
-    const held = await captureFirstRevealedFrame(dolphinPage, tabId)
-    const heldState = await readSynchronizedRevealProbe(dolphinPage)
+    await appPage.evaluate((tabId) => window.__store?.getState().setActiveTab(tabId), tabId)
+    await expect.poll(() => getActiveTabId(appPage)).toBe(tabId)
+    const held = await captureFirstRevealedFrame(appPage, tabId)
+    const heldState = await readSynchronizedRevealProbe(appPage)
     const heldDiff = compareTerminalScreenshots(coherent, held)
 
     expect(heldState.synchronizedOutput).toBe(true)
@@ -567,35 +567,35 @@ test.describe('terminal reveal paused-render recovery', () => {
       `held reveal preserves the coherent frame (diffRatio=${heldDiff.diffRatio})`
     ).toBe(true)
 
-    await callSynchronizedRevealProbe(dolphinPage, 'paintFrame', {
+    await callSynchronizedRevealProbe(appPage, 'paintFrame', {
       marker: 'PENDING_FRAME',
       background: 52,
       release: true
     })
-    const released = await captureStableTabScreenshot(dolphinPage, tabId)
-    const releaseState = await readSynchronizedRevealProbe(dolphinPage)
-    await callSynchronizedRevealProbe(dolphinPage, 'forceRendererPresent')
-    const direct = await captureStableTabScreenshot(dolphinPage, tabId)
+    const released = await captureStableTabScreenshot(appPage, tabId)
+    const releaseState = await readSynchronizedRevealProbe(appPage)
+    await callSynchronizedRevealProbe(appPage, 'forceRendererPresent')
+    const direct = await captureStableTabScreenshot(appPage, tabId)
     const releasedDiff = compareTerminalScreenshots(released, direct)
 
-    await callSynchronizedRevealProbe(dolphinPage, 'paintFrame', {
+    await callSynchronizedRevealProbe(appPage, 'paintFrame', {
       marker: 'WATCHDOG_FRAME',
       background: 88,
       release: false
     })
-    const beforeWatchdog = await readSynchronizedRevealProbe(dolphinPage)
-    await dolphinPage.evaluate((tabId) => {
+    const beforeWatchdog = await readSynchronizedRevealProbe(appPage)
+    await appPage.evaluate((tabId) => {
       window.__paneManagers?.get(tabId)?.scheduleRevealPresent?.()
     }, tabId)
     await expect
-      .poll(async () => (await readSynchronizedRevealProbe(dolphinPage)).synchronizedOutput, {
+      .poll(async () => (await readSynchronizedRevealProbe(appPage)).synchronizedOutput, {
         timeout: 2_500
       })
       .toBe(false)
-    const watchdog = await captureStableTabScreenshot(dolphinPage, tabId)
-    const watchdogState = await readSynchronizedRevealProbe(dolphinPage)
-    await callSynchronizedRevealProbe(dolphinPage, 'forceRendererPresent')
-    const watchdogDirect = await captureStableTabScreenshot(dolphinPage, tabId)
+    const watchdog = await captureStableTabScreenshot(appPage, tabId)
+    const watchdogState = await readSynchronizedRevealProbe(appPage)
+    await callSynchronizedRevealProbe(appPage, 'forceRendererPresent')
+    const watchdogDirect = await captureStableTabScreenshot(appPage, tabId)
     const watchdogDiff = compareTerminalScreenshots(watchdog, watchdogDirect)
     const coherentPath = testInfo.outputPath('synchronized-coherent-before-hide.png')
     const heldPath = testInfo.outputPath('synchronized-coherent-while-held.png')

@@ -14,11 +14,11 @@ declare global {
 
 for (const delayCreateResponse of [false, true]) {
   test(`created groups survive sidebar expansion (${delayCreateResponse ? 'refresh first' : 'ordinary timing'})`, async ({
-    dolphinPage,
+    appPage,
     electronApp,
     registerPostElectronShutdownCleanup
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'dolphin-group-visibility-')))
     registerPostElectronShutdownCleanup(async () => {
       rmSync(root, { recursive: true, force: true })
@@ -48,7 +48,7 @@ for (const delayCreateResponse of [false, true]) {
         expect(result.code, result.stderr).toBe(0)
       }
     }
-    const repoIds = await dolphinPage.evaluate(async (paths) => {
+    const repoIds = await appPage.evaluate(async (paths) => {
       const store = window.__store!
       for (const repoPath of paths) {
         await window.api.repos.add({ path: repoPath })
@@ -86,14 +86,14 @@ for (const delayCreateResponse of [false, true]) {
         })
       })
     }
-    const creation = dolphinPage.evaluate(() =>
+    const creation = appPage.evaluate(() =>
       window.__store!.getState().createProjectGroup('Crowded group')
     )
     if (delayCreateResponse) {
       try {
         await expect
           .poll(() =>
-            dolphinPage.evaluate(() =>
+            appPage.evaluate(() =>
               window
                 .__store!.getState()
                 .projectGroups.some((group) => group.name === 'Crowded group')
@@ -115,7 +115,7 @@ for (const delayCreateResponse of [false, true]) {
     if (!createdGroup) {
       throw new Error('Group creation failed')
     }
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       async ({ repoIds, groupId }) => {
         const store = window.__store!
         for (const repoId of repoIds.slice(0, 2)) {
@@ -130,7 +130,7 @@ for (const delayCreateResponse of [false, true]) {
       { repoIds, groupId: createdGroup.id }
     )
 
-    const scroller = dolphinPage.locator('[data-worktree-sidebar]')
+    const scroller = appPage.locator('[data-worktree-sidebar]')
     const group = scroller.locator(`[data-project-group-header-id="${createdGroup.id}"]`)
     const groupedRepos = repoIds
       .slice(0, 2)
@@ -138,7 +138,7 @@ for (const delayCreateResponse of [false, true]) {
     for (const repo of groupedRepos) {
       await expect(repo).toBeVisible()
     }
-    await dolphinPage.screenshot({ path: testInfo.outputPath('before-expansion.png') })
+    await appPage.screenshot({ path: testInfo.outputPath('before-expansion.png') })
     for (const repoId of repoIds.slice(2, 12)) {
       const repo = scroller.locator(`[data-repo-header-id="${repoId}"]`)
       await expect
@@ -163,7 +163,7 @@ for (const delayCreateResponse of [false, true]) {
       }
     }
     await expect(group).toHaveCount(1)
-    await dolphinPage.evaluate(() => window.__store!.getState().fetchProjectGroups())
+    await appPage.evaluate(() => window.__store!.getState().fetchProjectGroups())
     await expect(group).toHaveCount(1)
     await group.click()
     for (const repo of groupedRepos) {
@@ -173,6 +173,6 @@ for (const delayCreateResponse of [false, true]) {
     for (const repo of groupedRepos) {
       await expect(repo).toBeVisible()
     }
-    await dolphinPage.screenshot({ path: testInfo.outputPath('after-expansion.png') })
+    await appPage.screenshot({ path: testInfo.outputPath('after-expansion.png') })
   })
 }

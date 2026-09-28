@@ -17,7 +17,7 @@ test.describe('SSH Agent Session History', () => {
   test.skip(process.platform === 'win32', 'Docker SSH tests use POSIX ssh tooling.')
 
   test('shows remote session history only for the SSH host and resumes Codex on that worktree', async ({
-    dolphinPage
+    appPage
   }, testInfo: TestInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
@@ -40,12 +40,12 @@ test.describe('SSH Agent Session History', () => {
         claudeTitle
       })
 
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerRemote(dolphinPage, target)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerRemote(appPage, target)
       const sshScope = `ssh:${encodeURIComponent(remote.targetId)}`
 
-      const scan = await dolphinPage.evaluate(
+      const scan = await appPage.evaluate(
         async ({ sshScope, defaultTitle, runtimeTitle, claudeTitle }) => {
           const local = await window.api.aiVault.listSessions({
             executionHostScope: 'local',
@@ -88,36 +88,36 @@ test.describe('SSH Agent Session History', () => {
         "CODEX_HOME='/root/.local/share/dolphin/codex-runtime-home/home'"
       )
 
-      const defaultSessionTitle = dolphinPage.getByText(defaultTitle, { exact: true })
-      const runtimeSessionTitle = dolphinPage.getByText(runtimeTitle, { exact: true })
+      const defaultSessionTitle = appPage.getByText(defaultTitle, { exact: true })
+      const runtimeSessionTitle = appPage.getByText(runtimeTitle, { exact: true })
 
-      await openAiVaultSidebar(dolphinPage)
+      await openAiVaultSidebar(appPage)
       await expect(defaultSessionTitle.first()).toBeVisible({ timeout: 30_000 })
 
-      const hostButton = dolphinPage.getByRole('button', { name: /Session History host:/ })
+      const hostButton = appPage.getByRole('button', { name: /Session History host:/ })
       await hostButton.click()
-      await dolphinPage.getByRole('menuitemradio', { name: /Local/ }).click()
+      await appPage.getByRole('menuitemradio', { name: /Local/ }).click()
       await expect(defaultSessionTitle).toHaveCount(0, { timeout: 30_000 })
 
       await hostButton.click()
-      await dolphinPage.getByRole('menuitemradio', { name: 'All hosts' }).click()
+      await appPage.getByRole('menuitemradio', { name: 'All hosts' }).click()
       await expect(runtimeSessionTitle.first()).toBeVisible({ timeout: 30_000 })
 
       await hostButton.click()
-      await dolphinPage
+      await appPage
         .getByRole('menuitemradio')
         .filter({ hasNotText: /Local|All hosts/ })
         .click()
       await expect(defaultSessionTitle.first()).toBeVisible({ timeout: 30_000 })
 
-      await installStartupQueueProbe(dolphinPage)
+      await installStartupQueueProbe(appPage)
       await defaultSessionTitle.first().click()
-      await dolphinPage.getByText('Resume in Worktree', { exact: true }).click()
+      await appPage.getByText('Resume in Worktree', { exact: true }).click()
 
       await expect
-        .poll(() => readLastQueuedStartupCommand(dolphinPage), { timeout: 30_000 })
+        .poll(() => readLastQueuedStartupCommand(appPage), { timeout: 30_000 })
         .toContain(`CODEX_HOME='/root/.codex' codex resume '${defaultSessionId}'`)
-      const queuedWorktreeId = await readLastQueuedStartupWorktreeId(dolphinPage)
+      const queuedWorktreeId = await readLastQueuedStartupWorktreeId(appPage)
       expect(queuedWorktreeId).toBe(remote.worktreeId)
     } finally {
       cleanupDockerSshRelayTarget(target)

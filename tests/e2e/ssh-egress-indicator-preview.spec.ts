@@ -25,13 +25,13 @@ const HOLD_MINUTES = 20
 
 test('shows the egress indicator on a live routed SSH page and holds', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout((HOLD_MINUTES + 15) * 60_000)
   let target: DockerSshRelayTarget | null = null
   try {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
 
     await electronApp.evaluate(({ BrowserWindow }) => {
       const window = BrowserWindow.getAllWindows()[0]
@@ -43,9 +43,9 @@ test('shows the egress indicator on a live routed SSH page and holds', async ({
 
     target = startDockerSshRelayTarget(testInfo)
     startSshRemoteOnlyBrowserFixture(target)
-    const remote = await connectDockerSshRelayTarget(dolphinPage, target)
+    const remote = await connectDockerSshRelayTarget(appPage, target)
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ worktreeId, url }) => {
         const state = window.__store?.getState()
         if (!state) {
@@ -57,7 +57,7 @@ test('shows the egress indicator on a live routed SSH page and holds', async ({
       { worktreeId: remote.worktreeId, url: `${SSH_REMOTE_ONLY_ORIGIN}/login` }
     )
 
-    const chip = dolphinPage.getByTestId('ssh-egress-indicator')
+    const chip = appPage.getByTestId('ssh-egress-indicator')
     await expect(chip).toBeVisible({ timeout: 60_000 })
     await expect(chip).toHaveAttribute('data-egress', 'ssh')
 

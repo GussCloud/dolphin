@@ -25,8 +25,8 @@ test.describe.configure({ mode: 'serial' })
 test.describe('Terminal Panes', () => {
   registerTerminalPaneMountReadiness()
 
-  test('Always-on pane header split button hover stays transparent', async ({ dolphinPage }) => {
-    const splitButton = dolphinPage.getByRole('button', { name: 'Split Terminal Right' })
+  test('Always-on pane header split button hover stays transparent', async ({ appPage }) => {
+    const splitButton = appPage.getByRole('button', { name: 'Split Terminal Right' })
     await expect(splitButton).toBeVisible()
     await splitButton.hover()
 
@@ -46,15 +46,15 @@ test.describe('Terminal Panes', () => {
    * User Prompt:
    * - resizing terminal panes works
    */
-  test('shows a pane divider after splitting', async ({ dolphinPage }) => {
+  test('shows a pane divider after splitting', async ({ appPage }) => {
     // Why: headless Playwright cannot exercise the real pointer-capture resize
     // path reliably, so the default suite only verifies the precondition for
     // resizing: splitting creates a visible divider for the active layout.
-    const panesBefore = await countVisibleTerminalPanes(dolphinPage)
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, panesBefore + 1)
+    const panesBefore = await countVisibleTerminalPanes(appPage)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, panesBefore + 1)
 
-    await expect(dolphinPage.locator('.pane-divider.is-vertical').first()).toBeVisible({
+    await expect(appPage.locator('.pane-divider.is-vertical').first()).toBeVisible({
       timeout: 3_000
     })
   })
@@ -71,14 +71,14 @@ test.describe('Terminal Panes', () => {
    * divider, and the resize has no effect. Run with:
    *   DOLPHIN_E2E_HEADFUL=1 pnpm run test:e2e
    */
-  test('@headful can resize terminal panes by real mouse drag', async ({ dolphinPage }) => {
+  test('@headful can resize terminal panes by real mouse drag', async ({ appPage }) => {
     // Split the terminal to create a resizable divider
-    const panesBefore = await countVisibleTerminalPanes(dolphinPage)
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, panesBefore + 1)
+    const panesBefore = await countVisibleTerminalPanes(appPage)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, panesBefore + 1)
 
     // Get the pane widths before resize
-    const paneWidthsBefore = await dolphinPage.evaluate(() => {
+    const paneWidthsBefore = await appPage.evaluate(() => {
       const xterms = document.querySelectorAll('.xterm')
       return Array.from(xterms)
         .filter((x) => (x as HTMLElement).offsetParent !== null)
@@ -87,7 +87,7 @@ test.describe('Terminal Panes', () => {
     expect(paneWidthsBefore.length).toBeGreaterThanOrEqual(2)
 
     // Find the vertical pane divider and drag it
-    const divider = dolphinPage.locator('.pane-divider.is-vertical').first()
+    const divider = appPage.locator('.pane-divider.is-vertical').first()
     await expect(divider).toBeVisible({ timeout: 3_000 })
     const box = await divider.boundingBox()
     expect(box).not.toBeNull()
@@ -95,16 +95,16 @@ test.describe('Terminal Panes', () => {
     // Drag the divider 150px to the right to resize panes
     const startX = box!.x + box!.width / 2
     const startY = box!.y + box!.height / 2
-    await dolphinPage.mouse.move(startX, startY)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(startX + 150, startY, { steps: 20 })
-    await dolphinPage.mouse.up()
+    await appPage.mouse.move(startX, startY)
+    await appPage.mouse.down()
+    await appPage.mouse.move(startX + 150, startY, { steps: 20 })
+    await appPage.mouse.up()
 
     // Verify pane widths changed
     await expect
       .poll(
         async () => {
-          const widthsAfter = await dolphinPage.evaluate(() => {
+          const widthsAfter = await appPage.evaluate(() => {
             const xterms = document.querySelectorAll('.xterm')
             return Array.from(xterms)
               .filter((x) => (x as HTMLElement).offsetParent !== null)
@@ -121,18 +121,16 @@ test.describe('Terminal Panes', () => {
       .toBe(true)
   })
 
-  test('@headful resizing split panes forwards only the settled PTY size', async ({
-    dolphinPage
-  }) => {
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+  test('@headful resizing split panes forwards only the settled PTY size', async ({ appPage }) => {
+    await splitActiveTerminalPane(appPage, 'vertical')
+    const snapshot = await waitForPaneIdentitySnapshot(appPage, 2)
     const ptyIds = snapshot.panes
       .map((pane) => pane.ptyId)
       .filter((ptyId): ptyId is string => Boolean(ptyId))
 
     for (const ptyId of ptyIds) {
       await sendToTerminal(
-        dolphinPage,
+        appPage,
         ptyId,
         "export PS1='ISSUE2910_PROMPT$ '; export PROMPT=\"$PS1\"; trap 'printf \"\\nISSUE2910_WINCH\\n\"' WINCH; clear; printf 'ISSUE2910_READY\\n'\r"
       )
@@ -141,28 +139,28 @@ test.describe('Terminal Panes', () => {
     await expect
       .poll(
         async () =>
-          (await readVisiblePaneContents(dolphinPage)).every((content) =>
+          (await readVisiblePaneContents(appPage)).every((content) =>
             content.includes('ISSUE2910_READY')
           ),
         { timeout: 10_000, message: 'Split panes did not receive resize-regression prompt setup' }
       )
       .toBe(true)
 
-    const divider = dolphinPage.locator('.pane-divider.is-vertical').first()
+    const divider = appPage.locator('.pane-divider.is-vertical').first()
     await expect(divider).toBeVisible({ timeout: 3_000 })
     const box = await divider.boundingBox()
     expect(box).not.toBeNull()
 
     const startX = box!.x + box!.width / 2
     const startY = box!.y + box!.height / 2
-    await dolphinPage.mouse.move(startX, startY)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(startX - 350, startY, { steps: 40 })
-    await dolphinPage.mouse.move(startX + 250, startY, { steps: 40 })
-    await dolphinPage.mouse.up()
-    await dolphinPage.waitForTimeout(500)
+    await appPage.mouse.move(startX, startY)
+    await appPage.mouse.down()
+    await appPage.mouse.move(startX - 350, startY, { steps: 40 })
+    await appPage.mouse.move(startX + 250, startY, { steps: 40 })
+    await appPage.mouse.up()
+    await appPage.waitForTimeout(500)
 
-    const paneContents = await readVisiblePaneContents(dolphinPage)
+    const paneContents = await readVisiblePaneContents(appPage)
     for (const content of paneContents) {
       const promptRedraws = content.match(/ISSUE2910_PROMPT/g)?.length ?? 0
       const winchNotifications = content.match(/ISSUE2910_WINCH/g)?.length ?? 0
@@ -175,23 +173,21 @@ test.describe('Terminal Panes', () => {
    * User Prompt:
    * - closing panes works
    */
-  test('closing a split pane removes it and remaining pane fills space', async ({
-    dolphinPage
-  }) => {
-    const panesBefore = await countVisibleTerminalPanes(dolphinPage)
+  test('closing a split pane removes it and remaining pane fills space', async ({ appPage }) => {
+    const panesBefore = await countVisibleTerminalPanes(appPage)
 
     // Split the terminal
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, panesBefore + 1)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, panesBefore + 1)
 
-    const panesAfterSplit = await countVisibleTerminalPanes(dolphinPage)
+    const panesAfterSplit = await countVisibleTerminalPanes(appPage)
     expect(panesAfterSplit).toBeGreaterThanOrEqual(2)
 
-    await closeActiveTerminalPane(dolphinPage)
-    await waitForPaneCount(dolphinPage, panesAfterSplit - 1)
+    await closeActiveTerminalPane(appPage)
+    await waitForPaneCount(appPage, panesAfterSplit - 1)
 
     // The remaining pane should fill the available space
-    const paneWidth = await dolphinPage.evaluate(() => {
+    const paneWidth = await appPage.evaluate(() => {
       const xterms = document.querySelectorAll('.xterm')
       const visible = Array.from(xterms).find(
         (x) => (x as HTMLElement).offsetParent !== null

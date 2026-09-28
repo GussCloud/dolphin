@@ -13,12 +13,12 @@ import {
 } from './helpers/store'
 
 test('routes same-id browser and simulator Cmd-J rows to their owning paired host', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(240_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  const hostBrowser = await dolphinPage.evaluate(() => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  const hostBrowser = await appPage.evaluate(() => {
     const state = window.__store!.getState()
     const worktreeId = state.activeWorktreeId
     if (!worktreeId) {
@@ -32,7 +32,7 @@ test('routes same-id browser and simulator Cmd-J rows to their owning paired hos
     return { worktreeId, workspaceId: workspace.id }
   })
 
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   let client: PairedElectronClient | null = null
   try {
     client = await launchPairedElectronClient(offer, testInfo, 'Cmd-J host-qualified tabs')

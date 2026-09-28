@@ -332,14 +332,14 @@ async function runMaterializationJourney(
 }
 
 test('materializes a stopped terminal on reconnect from a headed paired host', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(120_000)
-  const worktreeId = await dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId)
+  const worktreeId = await appPage.evaluate(() => window.__store?.getState().activeWorktreeId)
   if (!worktreeId) {
     throw new Error('Headed host has no active seeded workspace')
   }
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedElectronClient(offer, testInfo, 'headed-materialization-client')
   try {
     await showClient(client.app, client.page)

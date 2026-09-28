@@ -129,42 +129,42 @@ async function expectDeleteDialogLayout(page: Page, fileName: string): Promise<v
 }
 
 test.describe('Source Control discard confirmation', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('keeps long untracked-file confirmation usable and deletes on confirm', async ({
-    dolphinPage
+    appPage
   }) => {
     const seededFile = await seedUntrackedFile(
-      dolphinPage,
+      appPage,
       `dolphin-discard-confirm-${'x'.repeat(96)}.txt`
     )
-    await openSourceControl(dolphinPage)
+    await openSourceControl(appPage)
 
-    const row = dolphinPage
+    const row = appPage
       .locator('[data-testid="source-control-entry"]')
       .filter({ hasText: seededFile.fileName })
     await expect(row).toBeVisible()
 
     await deleteUntrackedFileFromRow(row)
-    await expectDeleteDialogLayout(dolphinPage, seededFile.fileName)
+    await expectDeleteDialogLayout(appPage, seededFile.fileName)
 
-    await dolphinPage.getByRole('button', { name: 'Cancel' }).click()
+    await appPage.getByRole('button', { name: 'Cancel' }).click()
     await expect(row).toBeVisible()
 
     await deleteUntrackedFileFromRow(row)
-    await confirmPendingDelete(dolphinPage)
+    await confirmPendingDelete(appPage)
 
     await expect(
-      dolphinPage.getByRole('dialog', { name: `Delete "${seededFile.fileName}"?` })
+      appPage.getByRole('dialog', { name: `Delete "${seededFile.fileName}"?` })
     ).toHaveCount(0)
     await expect(row).toHaveCount(0, { timeout: 10_000 })
 
-    await refreshGitStatus(dolphinPage)
+    await refreshGitStatus(appPage)
     await expect(
-      dolphinPage.locator('[data-testid="source-control-entry"]').filter({
+      appPage.locator('[data-testid="source-control-entry"]').filter({
         hasText: seededFile.fileName
       })
     ).toHaveCount(0)

@@ -108,21 +108,21 @@ test.describe('Terminal macOS system key remap', () => {
       const forbidden = committed === BACKQUOTE ? layout.character : BACKQUOTE
 
       test(`sends ${committed} for the ${layout.label} backquote key when ${arm.name}`, async ({
-        dolphinPage,
+        appPage,
         testRepoPath
       }, testInfo) => {
-        await applyImePlatformPolicy(dolphinPage, 'mac')
-        await expectImePlatformPolicy(dolphinPage, 'mac')
-        const arena = await openTerminalImePaneArena(dolphinPage)
+        await applyImePlatformPolicy(appPage, 'mac')
+        await expectImePlatformPolicy(appPage, 'mac')
+        const arena = await openTerminalImePaneArena(appPage)
         const reader = createTerminalImeByteReader(testRepoPath, 1)
         let completed = false
         try {
-          await startTerminalImeByteReader(dolphinPage, arena.ptyId, reader)
+          await startTerminalImeByteReader(appPage, arena.ptyId, reader)
           await arm.dispatch(arena.session, layoutKey, committed)
-          await dolphinPage.waitForTimeout(60)
+          await appPage.waitForTimeout(60)
           await dispatchPlainEnter(arena.session)
 
-          const trace = await readTerminalImeBoundaryTrace(dolphinPage)
+          const trace = await readTerminalImeBoundaryTrace(appPage)
 
           // A remap is not an IME. Nothing here may open a composition session, and a spec that
           // accidentally replayed one would be testing a path the suite already covers.
@@ -145,7 +145,7 @@ test.describe('Terminal macOS system key remap', () => {
           )
           expect(sent).toBe(`${committed}\r`)
 
-          const received = await waitForTerminalImeBytes(dolphinPage, reader)
+          const received = await waitForTerminalImeBytes(appPage, reader)
           expect(received).toEqual([Buffer.from(`${committed}\n`).toString('hex')])
           completed = true
         } finally {

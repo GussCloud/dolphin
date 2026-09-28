@@ -47,7 +47,7 @@ test.describe('Docker SSH half-open link', () => {
   test.skip(process.platform === 'win32', 'Uses docker pause against a Linux container.')
 
   test('declares a frozen host lost instead of wedging, and recovers @half-open', async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }, testInfo) => {
     test.setTimeout(420_000)
@@ -60,17 +60,17 @@ test.describe('Docker SSH half-open link', () => {
         cleanupDockerSshRelayTarget(captured)
       })
 
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
       const runId = String(Date.now())
-      await execInTerminal(dolphinPage, ptyId, `printf 'LIVE_%s\\n' ${runId}`)
-      await waitForTerminalOutput(dolphinPage, `LIVE_${runId}`, 60_000)
-      expect(await readSshStatus(dolphinPage, remote.targetId)).toBe('connected')
+      await execInTerminal(appPage, ptyId, `printf 'LIVE_%s\\n' ${runId}`)
+      await waitForTerminalOutput(appPage, `LIVE_${runId}`, 60_000)
+      expect(await readSshStatus(appPage, remote.targetId)).toBe('connected')
 
       // Freeze the host: TCP keeps ACKing, the application stops answering.
       docker(['pause', target.containerName])
@@ -81,7 +81,7 @@ test.describe('Docker SSH half-open link', () => {
       await expect
         .poll(
           async () => {
-            verdict = await readSshStatus(dolphinPage, remote.targetId)
+            verdict = await readSshStatus(appPage, remote.targetId)
             return verdict
           },
           { timeout: LOST_VERDICT_BUDGET_MS, message: 'frozen host remained connected' }
@@ -104,11 +104,11 @@ test.describe('Docker SSH half-open link', () => {
 
       // The link must be usable again once the host thaws.
       await expect
-        .poll(() => readSshStatus(dolphinPage, remote.targetId), { timeout: 120_000 })
+        .poll(() => readSshStatus(appPage, remote.targetId), { timeout: 120_000 })
         .toBe('connected')
-      const recoveredPtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      await execInTerminal(dolphinPage, recoveredPtyId, `printf 'RECOVERED_%s\\n' ${runId}`)
-      await waitForTerminalOutput(dolphinPage, `RECOVERED_${runId}`, 90_000)
+      const recoveredPtyId = await waitForActivePanePtyId(appPage, 60_000)
+      await execInTerminal(appPage, recoveredPtyId, `printf 'RECOVERED_%s\\n' ${runId}`)
+      await waitForTerminalOutput(appPage, `RECOVERED_${runId}`, 90_000)
     } finally {
       if (target && paused) {
         try {

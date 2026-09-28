@@ -9,28 +9,28 @@ import {
 } from './helpers/terminal'
 
 test('terminal search counts real matches and repeat find selects the query', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const ptyId = await waitForActivePanePtyId(appPage)
   for (let line = 0; line < 3; line++) {
-    await execInTerminal(dolphinPage, ptyId, 'echo dolphin-search-proof')
+    await execInTerminal(appPage, ptyId, 'echo dolphin-search-proof')
   }
   await expect
     .poll(
       async () =>
-        (await getTerminalContent(dolphinPage))
+        (await getTerminalContent(appPage))
           .split(/\r?\n/)
           .filter((line) => line.trim() === 'dolphin-search-proof').length
     )
     .toBe(3)
-  await focusActiveTerminalInput(dolphinPage)
+  await focusActiveTerminalInput(appPage)
   const modifier = process.platform === 'darwin' ? 'Meta' : 'Control'
-  await dolphinPage.keyboard.press(`${modifier}+f`)
-  const search = dolphinPage.locator('[data-terminal-search-root]')
+  await appPage.keyboard.press(`${modifier}+f`)
+  const search = appPage.locator('[data-terminal-search-root]')
   const input = search.locator('input')
   await expect(input).toBeFocused()
   await search.getByTitle('Regex', { exact: true }).click()
@@ -40,16 +40,16 @@ test('terminal search counts real matches and repeat find selects the query', as
   const initialCount = await search.innerText()
   await input.press('Enter')
   await expect.poll(() => search.innerText()).not.toBe(initialCount)
-  await dolphinPage.screenshot({ path: testInfo.outputPath('search-results.png') })
+  await appPage.screenshot({ path: testInfo.outputPath('search-results.png') })
   await input.press('ArrowLeft')
-  await dolphinPage.keyboard.press(`${modifier}+f`)
+  await appPage.keyboard.press(`${modifier}+f`)
   await expect(input).toBeFocused()
   await expect
     .poll(() =>
       input.evaluate((element) => ({ start: element.selectionStart, end: element.selectionEnd }))
     )
     .toEqual({ start: 0, end: query.length })
-  await dolphinPage.screenshot({ path: testInfo.outputPath('search-query-selected.png') })
+  await appPage.screenshot({ path: testInfo.outputPath('search-query-selected.png') })
   await input.fill('no-such-search-result-314159')
   await expect(search).toContainText('No results')
   await input.press('Escape')

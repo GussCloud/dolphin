@@ -161,18 +161,18 @@ test.afterEach(() => {
 
 test('prioritizes shallow sibling repositories in a bounded nested scan', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
   const fixture = await createShallowPriorityTruncationFixture()
   await chooseFolderInNativeDialog(electronApp, fixture.parentPath)
 
-  await openSidebarProjectDialog(dolphinPage)
-  const dialog = dolphinPage.getByRole('dialog', { name: /Add a project/i })
+  await openSidebarProjectDialog(appPage)
+  const dialog = appPage.getByRole('dialog', { name: /Add a project/i })
   await expect(dialog).toBeVisible()
   await dialog.getByRole('button', { name: /Browse folder/i }).click()
 
-  const importDialog = dolphinPage.getByRole('dialog', {
+  const importDialog = appPage.getByRole('dialog', {
     name: /Import repositories from folder/i
   })
   await expect(importDialog.getByText(/Found 100 repositories in/)).toBeVisible()
@@ -190,7 +190,7 @@ test('prioritizes shallow sibling repositories in a bounded nested scan', async 
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           (args) => {
             const state = window.__store?.getState()
             if (!state) {
@@ -225,20 +225,20 @@ test('prioritizes shallow sibling repositories in a bounded nested scan', async 
       importedArchiveCount: 0
     })
 
-  await dolphinPage.evaluate(() => {
+  await appPage.evaluate(() => {
     const state = window.__store?.getState()
     state?.closeModal()
     state?.setGroupBy('repo')
   })
-  await expect(dolphinPage.getByText(fixture.groupName)).toBeVisible()
-  await expect(dolphinPage.getByText('z-web-client').first()).toBeVisible()
+  await expect(appPage.getByText(fixture.groupName)).toBeVisible()
+  await expect(appPage.getByText('z-web-client').first()).toBeVisible()
 })
 
 test('can stop a nested repo scan and import repositories found so far', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
   const fixture = await createCancellableScanFixture()
   await installCancellableNestedScanMock(electronApp, {
     selectedPath: fixture.parentPath,
@@ -254,11 +254,11 @@ test('can stop a nested repo scan and import repositories found so far', async (
   })
   await chooseFolderInNativeDialog(electronApp, fixture.parentPath)
 
-  await openSidebarProjectDialog(dolphinPage)
-  const dialog = dolphinPage.getByRole('dialog', { name: /Add a project/i })
+  await openSidebarProjectDialog(appPage)
+  const dialog = appPage.getByRole('dialog', { name: /Add a project/i })
   await dialog.getByRole('button', { name: /Browse folder/i }).click()
 
-  const importDialog = dolphinPage.getByRole('dialog', {
+  const importDialog = appPage.getByRole('dialog', {
     name: /Import repositories from folder/i
   })
   await expect(importDialog.getByText(/Scanning\.\.\.\s*Found 1 repository in/)).toBeVisible()
@@ -273,7 +273,7 @@ test('can stop a nested repo scan and import repositories found so far', async (
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate((args) => {
+        appPage.evaluate((args) => {
           const state = window.__store?.getState()
           if (!state) {
             return null

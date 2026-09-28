@@ -32,15 +32,15 @@ async function clickBackdrop(page: Page): Promise<void> {
 }
 
 test.describe('Settings integrations connect dialogs', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await openIntegrationsSettings(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await openIntegrationsSettings(appPage)
   })
 
   test('Linear API key draft survives a backdrop click but clears on cancel', async ({
-    dolphinPage
+    appPage
   }) => {
-    const card = dolphinPage.locator('[data-settings-section="integrations-linear"]')
+    const card = appPage.locator('[data-settings-section="integrations-linear"]')
     // Why: the button label depends on connection state; a fresh profile is disconnected.
     const openButton = card.getByRole('button', {
       name: /^(Add Linear access|Add workspace access)$/
@@ -48,12 +48,12 @@ test.describe('Settings integrations connect dialogs', () => {
     await expect(openButton).toBeVisible({ timeout: 15_000 })
     await openButton.click()
 
-    const dialog = dolphinPage.getByRole('dialog', { name: 'Add Linear access' })
+    const dialog = appPage.getByRole('dialog', { name: 'Add Linear access' })
     await expect(dialog).toBeVisible()
     const keyInput = dialog.locator('input[type="password"]')
     await keyInput.fill('lin_api_e2e_secret')
 
-    await clickBackdrop(dolphinPage)
+    await clickBackdrop(appPage)
     // Why: assert the settled open state, not the exit-animation frame a broken guard would leave.
     await expect(dialog).toHaveAttribute('data-state', 'open')
     await expect(keyInput).toHaveValue('lin_api_e2e_secret')
@@ -68,19 +68,19 @@ test.describe('Settings integrations connect dialogs', () => {
     await expect(dialog).toBeHidden()
   })
 
-  test('Jira site URL draft survives a backdrop click', async ({ dolphinPage }) => {
-    const card = dolphinPage.locator('[data-settings-section="integrations-jira"]')
+  test('Jira site URL draft survives a backdrop click', async ({ appPage }) => {
+    const card = appPage.locator('[data-settings-section="integrations-jira"]')
     // Why: the button label depends on connection state; a fresh profile is disconnected.
     const openButton = card.getByRole('button', { name: /^(Connect Jira|Add Jira site)$/ })
     await expect(openButton).toBeVisible({ timeout: 15_000 })
     await openButton.click()
 
-    const dialog = dolphinPage.getByRole('dialog', { name: 'Connect Jira site' })
+    const dialog = appPage.getByRole('dialog', { name: 'Connect Jira site' })
     await expect(dialog).toBeVisible()
     const siteUrlInput = dialog.locator('input[placeholder="https://example.atlassian.net"]')
     await siteUrlInput.fill('https://acme.atlassian.net')
 
-    await clickBackdrop(dolphinPage)
+    await clickBackdrop(appPage)
     // Why: assert the settled open state, not the exit-animation frame a broken guard would leave.
     await expect(dialog).toHaveAttribute('data-state', 'open')
     await expect(siteUrlInput).toHaveValue('https://acme.atlassian.net')

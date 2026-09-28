@@ -44,14 +44,14 @@ const REPORT_DIR = path.join(process.cwd(), 'test-results', 'freeze-repro')
 const USE_DESKTOP_PAIR = process.env.DOLPHIN_E2E_FREEZE_DESKTOP_PAIR === '1'
 
 test('paired client host-focus storm keeps the latest terminal @freeze-repro', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(180_000)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedElectronClient(offer, testInfo, 'focus-storm')
   let disposeSessions: (() => Promise<void>) | null = null
   try {
-    const worktreeId = await dolphinPage.evaluate(() => {
+    const worktreeId = await appPage.evaluate(() => {
       const id = window.__store?.getState().activeWorktreeId
       if (!id) {
         throw new Error('headed host has no active worktree')
@@ -93,7 +93,7 @@ test('paired client host-focus storm keeps the latest terminal @freeze-repro', a
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate((id) => {
+          appPage.evaluate((id) => {
             const state = window.__store?.getState()
             return {
               worktreeId: state?.activeWorktreeId ?? null,

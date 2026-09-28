@@ -117,13 +117,13 @@ function claudeTranscript(rowCount: number, sessionId: string): string {
 }
 
 test.describe('Native chat transcript anchoring', () => {
-  test('keeps the visible transcript row at the same viewport offset', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+  test('keeps the visible transcript row at the same viewport offset', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const descriptor = await waitForActivePaneHookDescriptor(dolphinPage)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
     const [tabId] = descriptor.paneKey.split(':')
     const sessionId = `e2e-prepend-anchor-${randomUUID()}`
     const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-native-chat-anchor-'))
@@ -131,24 +131,24 @@ test.describe('Native chat transcript anchoring', () => {
     writeFileSync(transcriptPath, claudeTranscript(TRANSCRIPT_ROWS, sessionId))
 
     try {
-      await enableNativeChatSetting(dolphinPage)
-      await seedClaudeProviderSession(dolphinPage, {
+      await enableNativeChatSetting(appPage)
+      await seedClaudeProviderSession(appPage, {
         paneKey: descriptor.paneKey,
         worktreeId: descriptor.worktreeId,
         sessionId,
         transcriptPath
       })
-      await toggleTerminalTabToChatView(dolphinPage, {
+      await toggleTerminalTabToChatView(appPage, {
         tabId,
         worktreeId: descriptor.worktreeId
       })
 
-      await expect(dolphinPage.locator('[data-native-chat-root="true"]')).toBeVisible({
+      await expect(appPage.locator('[data-native-chat-root="true"]')).toBeVisible({
         timeout: 15_000
       })
-      const scroll = dolphinPage.locator('[data-native-chat-scroll]')
-      const transcriptWindow = dolphinPage.locator('[data-native-chat-window]')
-      const loadEarlier = dolphinPage.getByRole('button', { name: 'Load earlier messages' })
+      const scroll = appPage.locator('[data-native-chat-scroll]')
+      const transcriptWindow = appPage.locator('[data-native-chat-window]')
+      const loadEarlier = appPage.getByRole('button', { name: 'Load earlier messages' })
       await expect(transcriptWindow).toBeVisible({ timeout: 30_000 })
       await expect(loadEarlier).toBeAttached({ timeout: 30_000 })
       await expect
@@ -204,7 +204,7 @@ test.describe('Native chat transcript anchoring', () => {
         .toBeGreaterThan(initialTotalSize)
       await expect(loadEarlier).toBeAttached({ timeout: 30_000 })
 
-      const anchoredMarker = dolphinPage.getByText(anchor.marker, { exact: true })
+      const anchoredMarker = appPage.getByText(anchor.marker, { exact: true })
       await expect(anchoredMarker).toBeAttached({ timeout: 15_000 })
       const after = await anchoredMarker.evaluate(async (marker) => {
         const row = marker.closest<HTMLElement>('[data-index]')
@@ -241,13 +241,13 @@ test.describe('Native chat transcript anchoring', () => {
     }
   })
 
-  test('keeps a detached transcript in place across a hidden update', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+  test('keeps a detached transcript in place across a hidden update', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const descriptor = await waitForActivePaneHookDescriptor(dolphinPage)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
     const [tabId] = descriptor.paneKey.split(':')
     const sessionId = `e2e-hidden-scroll-${randomUUID()}`
     const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-native-chat-hidden-'))
@@ -255,27 +255,27 @@ test.describe('Native chat transcript anchoring', () => {
     writeFileSync(transcriptPath, claudeTranscript(TRANSCRIPT_ROWS, sessionId))
 
     try {
-      await enableNativeChatSetting(dolphinPage)
-      await seedClaudeProviderSession(dolphinPage, {
+      await enableNativeChatSetting(appPage)
+      await seedClaudeProviderSession(appPage, {
         paneKey: descriptor.paneKey,
         worktreeId: descriptor.worktreeId,
         sessionId,
         transcriptPath
       })
-      await toggleTerminalTabToChatView(dolphinPage, {
+      await toggleTerminalTabToChatView(appPage, {
         tabId,
         worktreeId: descriptor.worktreeId
       })
 
-      const root = dolphinPage.locator('[data-native-chat-root="true"]')
-      const scroll = dolphinPage.locator('[data-native-chat-scroll]')
-      const jump = dolphinPage.getByRole('button', { name: 'Jump to latest' })
+      const root = appPage.locator('[data-native-chat-root="true"]')
+      const scroll = appPage.locator('[data-native-chat-scroll]')
+      const jump = appPage.getByRole('button', { name: 'Jump to latest' })
       await expect(root).toBeVisible({ timeout: 15_000 })
-      await expect(dolphinPage.getByText('E2E transcript row 0649', { exact: true })).toBeAttached({
+      await expect(appPage.getByText('E2E transcript row 0649', { exact: true })).toBeAttached({
         timeout: 30_000
       })
       await scroll.hover()
-      await dolphinPage.mouse.wheel(0, -2_000)
+      await appPage.mouse.wheel(0, -2_000)
       await expect
         .poll(async () =>
           scroll.evaluate(
@@ -286,24 +286,24 @@ test.describe('Native chat transcript anchoring', () => {
       const readingAt = await scroll.evaluate((element) => element.scrollTop)
       await expect(jump).toBeVisible()
 
-      await activateNewTerminalTab(dolphinPage, descriptor.worktreeId)
+      await activateNewTerminalTab(appPage, descriptor.worktreeId)
       await expect(root).toBeHidden()
-      await publishHiddenLaunchMessage(dolphinPage, {
+      await publishHiddenLaunchMessage(appPage, {
         tabId,
         text: 'E2E update received while the transcript is hidden'
       })
-      await activateTerminalTab(dolphinPage, tabId)
+      await activateTerminalTab(appPage, tabId)
 
       await expect(root).toBeVisible({ timeout: 15_000 })
       await expect(
-        dolphinPage.getByText('E2E update received while the transcript is hidden', { exact: true })
+        appPage.getByText('E2E update received while the transcript is hidden', { exact: true })
       ).toBeAttached()
       await expect
         .poll(async () =>
           Math.abs((await scroll.evaluate((element) => element.scrollTop)) - readingAt)
         )
         .toBeLessThanOrEqual(2)
-      await dolphinPage.waitForTimeout(500)
+      await appPage.waitForTimeout(500)
       expect(
         Math.abs((await scroll.evaluate((element) => element.scrollTop)) - readingAt)
       ).toBeLessThanOrEqual(2)

@@ -180,10 +180,10 @@ async function runRuntimePreflightJourney(
 
 test('routes landing preflight across runtime switch and reconnect', async ({
   electronApp,
-  dolphinPage
-}, testInfo) => runRuntimePreflightJourney(electronApp, dolphinPage, testInfo, false))
+  appPage
+}, testInfo) => runRuntimePreflightJourney(electronApp, appPage, testInfo, false))
 
 test('routes landing preflight across runtime switch and reconnect @headful', async ({
   electronApp,
-  dolphinPage
-}, testInfo) => runRuntimePreflightJourney(electronApp, dolphinPage, testInfo, true))
+  appPage
+}, testInfo) => runRuntimePreflightJourney(electronApp, appPage, testInfo, true))

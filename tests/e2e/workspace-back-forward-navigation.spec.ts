@@ -85,60 +85,58 @@ const isMac = process.platform === 'darwin'
 const mod = isMac ? 'Meta' : 'Control'
 
 test.describe('Workspace Back/Forward Navigation', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
-  test('buttons are hidden outside the terminal view', async ({ dolphinPage }) => {
-    await expect(await getBackButton(dolphinPage)).toBeVisible()
-    await expect(await getForwardButton(dolphinPage)).toBeVisible()
+  test('buttons are hidden outside the terminal view', async ({ appPage }) => {
+    await expect(await getBackButton(appPage)).toBeVisible()
+    await expect(await getForwardButton(appPage)).toBeVisible()
 
     // Why: Settings and other views outside the navigation history stack must
     // not render the buttons at all, rather than merely disabling them.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       window.__store!.getState().openSettingsPage()
     })
 
-    await expect(await getBackButton(dolphinPage)).toHaveCount(0)
-    await expect(await getForwardButton(dolphinPage)).toHaveCount(0)
+    await expect(await getBackButton(appPage)).toHaveCount(0)
+    await expect(await getForwardButton(appPage)).toHaveCount(0)
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       window.__store!.getState().setActiveView('terminal')
     })
-    await expect(await getBackButton(dolphinPage)).toBeVisible()
+    await expect(await getBackButton(appPage)).toBeVisible()
   })
 
-  test('both buttons disabled at cold start with a single history entry', async ({
-    dolphinPage
-  }) => {
+  test('both buttons disabled at cold start with a single history entry', async ({ appPage }) => {
     // The test fixture already activated a worktree during setup, so one entry
     // may or may not exist. Reset the slice to a known empty baseline, then
     // record the current worktree as the single entry.
-    const activeId = await getActiveWorktreeId(dolphinPage)
+    const activeId = await getActiveWorktreeId(appPage)
     expect(activeId).not.toBeNull()
 
-    await resetNavHistory(dolphinPage)
-    await seedVisit(dolphinPage, activeId!)
+    await resetNavHistory(appPage)
+    await seedVisit(appPage, activeId!)
 
-    const back = await getBackButton(dolphinPage)
-    const forward = await getForwardButton(dolphinPage)
+    const back = await getBackButton(appPage)
+    const forward = await getForwardButton(appPage)
     await expect(back).toBeDisabled()
     await expect(forward).toBeDisabled()
   })
 
-  test('clicking Back and Forward walks the history stack', async ({ dolphinPage }) => {
-    const worktreeIds = await getAllWorktreeIds(dolphinPage)
+  test('clicking Back and Forward walks the history stack', async ({ appPage }) => {
+    const worktreeIds = await getAllWorktreeIds(appPage)
     test.skip(worktreeIds.length < 2, 'Need at least two worktrees to exercise back/forward')
     const [primaryId, secondaryId] = worktreeIds
 
-    await resetNavHistory(dolphinPage)
-    await seedVisit(dolphinPage, primaryId)
-    await seedVisit(dolphinPage, secondaryId)
+    await resetNavHistory(appPage)
+    await seedVisit(appPage, primaryId)
+    await seedVisit(appPage, secondaryId)
 
-    const back = await getBackButton(dolphinPage)
-    const forward = await getForwardButton(dolphinPage)
+    const back = await getBackButton(appPage)
+    const forward = await getForwardButton(appPage)
     await expect(back).toBeEnabled()
     await expect(forward).toBeDisabled()
 
@@ -146,12 +144,12 @@ test.describe('Workspace Back/Forward Navigation', () => {
     // worktree is currently active". `aria-selected` is reserved for batch
     // multi-select state, so a store-only `activeWorktreeId` check would miss
     // render-layer regressions in the active row.
-    const primaryRow = worktreeRow(dolphinPage, primaryId)
-    const secondaryRow = worktreeRow(dolphinPage, secondaryId)
+    const primaryRow = worktreeRow(appPage, primaryId)
+    const secondaryRow = worktreeRow(appPage, secondaryId)
 
     await back.click()
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), {
+      .poll(async () => getActiveWorktreeId(appPage), {
         message: 'Back click did not activate the previous worktree'
       })
       .toBe(primaryId)
@@ -162,7 +160,7 @@ test.describe('Workspace Back/Forward Navigation', () => {
 
     await forward.click()
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), {
+      .poll(async () => getActiveWorktreeId(appPage), {
         message: 'Forward click did not re-activate the next worktree'
       })
       .toBe(secondaryId)
@@ -171,23 +169,23 @@ test.describe('Workspace Back/Forward Navigation', () => {
     await expect(forward).toBeDisabled()
   })
 
-  test('re-activating the current worktree is a no-op (dedupe)', async ({ dolphinPage }) => {
-    const activeId = await getActiveWorktreeId(dolphinPage)
+  test('re-activating the current worktree is a no-op (dedupe)', async ({ appPage }) => {
+    const activeId = await getActiveWorktreeId(appPage)
     expect(activeId).not.toBeNull()
 
-    await resetNavHistory(dolphinPage)
-    await seedVisit(dolphinPage, activeId!)
-    await seedVisit(dolphinPage, activeId!)
-    await seedVisit(dolphinPage, activeId!)
+    await resetNavHistory(appPage)
+    await seedVisit(appPage, activeId!)
+    await seedVisit(appPage, activeId!)
+    await seedVisit(appPage, activeId!)
 
-    const snapshot = await getNavHistorySnapshot(dolphinPage)
+    const snapshot = await getNavHistorySnapshot(appPage)
     expect(snapshot.history).toEqual([activeId])
     expect(snapshot.index).toBe(0)
-    await expect(await getBackButton(dolphinPage)).toBeDisabled()
+    await expect(await getBackButton(appPage)).toBeDisabled()
   })
 
-  test('new navigation after going back truncates the forward stack', async ({ dolphinPage }) => {
-    const worktreeIds = await getAllWorktreeIds(dolphinPage)
+  test('new navigation after going back truncates the forward stack', async ({ appPage }) => {
+    const worktreeIds = await getAllWorktreeIds(appPage)
     test.skip(worktreeIds.length < 2, 'Need at least two worktrees to exercise forward truncation')
     const [primaryId, secondaryId] = worktreeIds
 
@@ -196,85 +194,83 @@ test.describe('Workspace Back/Forward Navigation', () => {
     // from mid-history). The current-entry dedupe should kick in, but if we
     // instead activate secondary while sitting on primary mid-history, the
     // forward entry pointing at secondary must be truncated.
-    await resetNavHistory(dolphinPage)
-    await seedVisit(dolphinPage, primaryId)
-    await seedVisit(dolphinPage, secondaryId)
-    await (await getBackButton(dolphinPage)).click()
-    await expect.poll(() => getActiveWorktreeId(dolphinPage)).toBe(primaryId)
+    await resetNavHistory(appPage)
+    await seedVisit(appPage, primaryId)
+    await seedVisit(appPage, secondaryId)
+    await (await getBackButton(appPage)).click()
+    await expect.poll(() => getActiveWorktreeId(appPage)).toBe(primaryId)
 
     // Forward button is live — a forward entry exists.
-    await expect(await getForwardButton(dolphinPage)).toBeEnabled()
+    await expect(await getForwardButton(appPage)).toBeEnabled()
 
     // Fresh activation from mid-history. Using secondary again is the simplest
     // way to prove truncation happened: after this call, the stack must be
     // [primary, secondary] with index=1, so Forward is disabled even though
     // there *was* a forward entry moments ago.
-    await seedVisit(dolphinPage, secondaryId)
-    const snapshot = await getNavHistorySnapshot(dolphinPage)
+    await seedVisit(appPage, secondaryId)
+    const snapshot = await getNavHistorySnapshot(appPage)
     expect(snapshot.history).toEqual([primaryId, secondaryId])
     expect(snapshot.index).toBe(1)
-    await expect(await getForwardButton(dolphinPage)).toBeDisabled()
+    await expect(await getForwardButton(appPage)).toBeDisabled()
   })
 
-  test(`${isMac ? 'Cmd' : 'Ctrl'}+Alt+Left/Right shortcuts walk history`, async ({
-    dolphinPage
-  }) => {
-    const worktreeIds = await getAllWorktreeIds(dolphinPage)
+  test(`${isMac ? 'Cmd' : 'Ctrl'}+Alt+Left/Right shortcuts walk history`, async ({ appPage }) => {
+    const worktreeIds = await getAllWorktreeIds(appPage)
     test.skip(worktreeIds.length < 2, 'Need at least two worktrees to exercise shortcuts')
     const [primaryId, secondaryId] = worktreeIds
 
-    await resetNavHistory(dolphinPage)
-    await seedVisit(dolphinPage, primaryId)
-    await seedVisit(dolphinPage, secondaryId)
+    await resetNavHistory(appPage)
+    await seedVisit(appPage, primaryId)
+    await seedVisit(appPage, secondaryId)
 
     // Why: focus body so the window-level keydown capture handler runs without
     // an `isEditableTarget` bail-out. The xterm helper textarea is explicitly
     // treated as non-editable, but body is the simplest stable target in a
     // hidden-window Electron run.
-    await dolphinPage.evaluate(() => document.body.focus())
+    await appPage.evaluate(() => document.body.focus())
 
-    await dolphinPage.keyboard.press(`${mod}+Alt+ArrowLeft`)
+    await appPage.keyboard.press(`${mod}+Alt+ArrowLeft`)
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), {
+      .poll(async () => getActiveWorktreeId(appPage), {
         message: `${mod}+Alt+Left did not navigate back`
       })
       .toBe(primaryId)
 
-    await dolphinPage.keyboard.press(`${mod}+Alt+ArrowRight`)
+    await appPage.keyboard.press(`${mod}+Alt+ArrowRight`)
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), {
+      .poll(async () => getActiveWorktreeId(appPage), {
         message: `${mod}+Alt+Right did not navigate forward`
       })
       .toBe(secondaryId)
   })
 
-  test('shortcut is a no-op in settings view', async ({ dolphinPage }) => {
-    const worktreeIds = await getAllWorktreeIds(dolphinPage)
+  test('shortcut is a no-op in settings view', async ({ appPage }) => {
+    const worktreeIds = await getAllWorktreeIds(appPage)
     test.skip(worktreeIds.length < 2, 'Need at least two worktrees to exercise settings gating')
     const [primaryId, secondaryId] = worktreeIds
 
-    await resetNavHistory(dolphinPage)
-    await seedVisit(dolphinPage, primaryId)
-    await seedVisit(dolphinPage, secondaryId)
+    await resetNavHistory(appPage)
+    await seedVisit(appPage, primaryId)
+    await seedVisit(appPage, secondaryId)
 
     // Enter settings. The back shortcut must not change the active worktree,
     // matching the view-guard in App.tsx and useIpcEvents.ts.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       window.__store!.getState().openSettingsPage()
     })
     await expect
-      .poll(async () => dolphinPage.evaluate(() => window.__store!.getState().activeView))
+      .poll(async () => appPage.evaluate(() => window.__store!.getState().activeView))
       .toBe('settings')
 
-    const idBefore = await getActiveWorktreeId(dolphinPage)
-    await dolphinPage.evaluate(() => document.body.focus())
-    await dolphinPage.keyboard.press(`${mod}+Alt+ArrowLeft`)
+    const idBefore = await getActiveWorktreeId(appPage)
+    await appPage.evaluate(() => document.body.focus())
+    await appPage.keyboard.press(`${mod}+Alt+ArrowLeft`)
 
     // Give any erroneous nav a beat to land, then assert the active worktree
     // and the slice index both stayed put.
-    await dolphinPage.waitForTimeout(150)
-    expect(await getActiveWorktreeId(dolphinPage)).toBe(idBefore)
-    const snapshot = await getNavHistorySnapshot(dolphinPage)
+    await appPage.waitForTimeout(150)
+    expect(await getActiveWorktreeId(appPage)).toBe(idBefore)
+    const snapshot = await getNavHistorySnapshot(appPage)
     expect(snapshot.index).toBe(1)
   })
 })

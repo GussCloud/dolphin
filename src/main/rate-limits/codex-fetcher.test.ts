@@ -128,6 +128,8 @@ function makePtyTerm() {
   }
 }
 
+const WSL_CODEX_HOME = String.raw`\\wsl.localhost\Ubuntu\home\alice\.local\share\dolphin\account\home`
+
 describe('fetchCodexRateLimits', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -703,8 +705,7 @@ describe('fetchCodexRateLimits', () => {
 
     try {
       const resultPromise = fetchCodexRateLimits({
-        codexHomePath:
-          '\\\\wsl.localhost\\Ubuntu\\home\\alice\\.local\\share\\dolphin\\account\\home'
+        codexHomePath: WSL_CODEX_HOME
       })
       await vi.advanceTimersByTimeAsync(1)
       await vi.advanceTimersByTimeAsync(1)
@@ -832,8 +833,7 @@ describe('fetchCodexRateLimits', () => {
 
     try {
       const resultPromise = fetchCodexRateLimits({
-        codexHomePath:
-          '\\\\wsl.localhost\\Ubuntu\\home\\alice\\.local\\share\\dolphin\\account\\home'
+        codexHomePath: WSL_CODEX_HOME
       })
       await vi.advanceTimersByTimeAsync(0)
       rpcChild.emit('close')

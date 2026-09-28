@@ -28,12 +28,12 @@ const STRESS_ITERATIONS = 5
 test.describe('Dead Terminal Stress @headful', () => {
   const createdWorktreeIds: string[] = []
 
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
 
-    await dolphinPage.evaluate(async () => {
+    await appPage.evaluate(async () => {
       const state = window.__store?.getState()
       if (!state) {
         return
@@ -42,9 +42,9 @@ test.describe('Dead Terminal Stress @headful', () => {
     })
   })
 
-  test.afterEach(async ({ dolphinPage }) => {
+  test.afterEach(async ({ appPage }) => {
     for (const id of createdWorktreeIds) {
-      await removeWorktreeViaStore(dolphinPage, id)
+      await removeWorktreeViaStore(appPage, id)
     }
     createdWorktreeIds.length = 0
   })
@@ -55,27 +55,21 @@ test.describe('Dead Terminal Stress @headful', () => {
    * pressure — especially with many worktrees open. The recovery path is:
    * onContextLoss → dispose WebGL → DOM fallback → rAF → fit + refresh.
    */
-  test('@headful setup-split with forced WebGL context loss recovers', async ({ dolphinPage }) => {
+  test('@headful setup-split with forced WebGL context loss recovers', async ({ appPage }) => {
     test.setTimeout(120_000)
-    const homeWorktreeId = await waitForActiveWorktree(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    const homeWorktreeId = await waitForActiveWorktree(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
     for (let i = 0; i < STRESS_ITERATIONS; i++) {
-      const newId = await createAndActivateWorktreeWithSetup(
-        dolphinPage,
-        `ctxloss-${i}`,
-        'vertical'
-      )
+      const newId = await createAndActivateWorktreeWithSetup(appPage, `ctxloss-${i}`, 'vertical')
       createdWorktreeIds.push(newId)
 
-      await expect
-        .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
-        .toBe(newId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await waitForPaneCount(dolphinPage, 2, 15_000)
+      await expect.poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 }).toBe(newId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await waitForPaneCount(appPage, 2, 15_000)
 
-      const lostCount = await dolphinPage.evaluate(() => {
+      const lostCount = await appPage.evaluate(() => {
         const canvases = document.querySelectorAll('.pane canvas:not(.xterm-link-layer)')
         let lost = 0
         for (const canvas of canvases) {
@@ -96,14 +90,14 @@ test.describe('Dead Terminal Stress @headful', () => {
         console.log(`[ctxloss-${i}] Forced context loss on ${lostCount} canvases`)
       }
 
-      await dolphinPage.waitForTimeout(500)
-      await waitForAllPanesToHaveContent(dolphinPage, `ctxloss-${i} after context loss`)
+      await appPage.waitForTimeout(500)
+      await waitForAllPanesToHaveContent(appPage, `ctxloss-${i} after context loss`)
 
-      await switchToWorktree(dolphinPage, homeWorktreeId)
+      await switchToWorktree(appPage, homeWorktreeId)
       await expect
-        .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
+        .poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 })
         .toBe(homeWorktreeId)
-      await removeWorktreeViaStore(dolphinPage, newId)
+      await removeWorktreeViaStore(appPage, newId)
       createdWorktreeIds.pop()
     }
   })
@@ -113,37 +107,33 @@ test.describe('Dead Terminal Stress @headful', () => {
    * race between wrapInSplit() reparenting, WebGL context creation during
    * resumeRendering(), and the scheduleSplitScrollRestore 200ms timer.
    */
-  test('@headful rapid worktree switching during setup-split lifecycle', async ({
-    dolphinPage
-  }) => {
+  test('@headful rapid worktree switching during setup-split lifecycle', async ({ appPage }) => {
     test.setTimeout(120_000)
-    const homeWorktreeId = await waitForActiveWorktree(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    const homeWorktreeId = await waitForActiveWorktree(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
     for (let i = 0; i < 3; i++) {
-      const newId = await createAndActivateWorktreeWithSetup(dolphinPage, `rapid-${i}`, 'vertical')
+      const newId = await createAndActivateWorktreeWithSetup(appPage, `rapid-${i}`, 'vertical')
       createdWorktreeIds.push(newId)
 
       // Switch away during the ~200ms scheduleSplitScrollRestore window
-      await dolphinPage.waitForTimeout(50)
-      await switchToWorktree(dolphinPage, homeWorktreeId)
-      await dolphinPage.waitForTimeout(50)
+      await appPage.waitForTimeout(50)
+      await switchToWorktree(appPage, homeWorktreeId)
+      await appPage.waitForTimeout(50)
 
       // Switch back — triggers resumeRendering on partially-initialized panes
-      await switchToWorktree(dolphinPage, newId)
-      await expect
-        .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
-        .toBe(newId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await waitForPaneCount(dolphinPage, 2, 15_000)
-      await waitForAllPanesToHaveContent(dolphinPage, `rapid-${i} after return`)
+      await switchToWorktree(appPage, newId)
+      await expect.poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 }).toBe(newId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await waitForPaneCount(appPage, 2, 15_000)
+      await waitForAllPanesToHaveContent(appPage, `rapid-${i} after return`)
 
-      await switchToWorktree(dolphinPage, homeWorktreeId)
+      await switchToWorktree(appPage, homeWorktreeId)
       await expect
-        .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
+        .poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 })
         .toBe(homeWorktreeId)
-      await removeWorktreeViaStore(dolphinPage, newId)
+      await removeWorktreeViaStore(appPage, newId)
       createdWorktreeIds.pop()
     }
   })

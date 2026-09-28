@@ -41,44 +41,44 @@ async function createActiveTerminalTab(page: Page, worktreeId: string): Promise<
   expect((await waitForPaneIdentitySnapshot(page, 1)).tabId).toBe(tabId)
 }
 
-test('closing a parked terminal tab retires its exact PTY session', async ({ dolphinPage }) => {
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
+test('closing a parked terminal tab retires its exact PTY session', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
 
-  const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+  const snapshot = await waitForPaneIdentitySnapshot(appPage, 1)
   const tabId = snapshot.tabId
   const ptyId = snapshot.panes[0]?.ptyId
   if (!ptyId) {
     throw new Error('active terminal pane did not bind a PTY')
   }
 
-  const tab = dolphinPage.locator(`[data-testid="sortable-tab"][data-tab-id="${tabId}"]`)
+  const tab = appPage.locator(`[data-testid="sortable-tab"][data-tab-id="${tabId}"]`)
   await expect(tab).toBeVisible()
 
   const marker = `PARKED_CLOSE_READY_${randomUUID()}`
   const keepAliveScript = `process.stdout.write(${JSON.stringify(`${marker}\n`)}); setInterval(() => {}, 1000)`
-  await execInTerminal(dolphinPage, ptyId, nodeTerminalCommand(['-e', keepAliveScript]))
+  await execInTerminal(appPage, ptyId, nodeTerminalCommand(['-e', keepAliveScript]))
   await expect
-    .poll(() => getTerminalContent(dolphinPage), {
+    .poll(() => getTerminalContent(appPage), {
       timeout: 10_000,
       message: 'long-lived terminal child did not print its ready marker'
     })
     .toContain(marker)
-  await expect.poll(() => hasPtySession(dolphinPage, ptyId), { timeout: 10_000 }).toBe(true)
+  await expect.poll(() => hasPtySession(appPage, ptyId), { timeout: 10_000 }).toBe(true)
 
   // Why: the most recently hidden tab stays warm, so tab B must take that
   // exemption before the helper opens decoy tab C and makes tab A parkable.
-  await createActiveTerminalTab(dolphinPage, worktreeId)
-  await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabId, {
+  await createActiveTerminalTab(appPage, worktreeId)
+  await parkHiddenTabBehindDecoy(appPage, worktreeId, tabId, {
     parkDelayMs: PARKING_DELAY_MS
   })
   // Why: parking must remove only the renderer view; otherwise the retirement
   // assertion could pass because the PTY died before the close action ran.
-  await expect.poll(() => hasPtySession(dolphinPage, ptyId), { timeout: 10_000 }).toBe(true)
+  await expect.poll(() => hasPtySession(appPage, ptyId), { timeout: 10_000 }).toBe(true)
 
-  await dolphinPage.evaluate((id) => {
+  await appPage.evaluate((id) => {
     const store = window.__store
     if (!store) {
       throw new Error('window.__store is unavailable')
@@ -87,7 +87,7 @@ test('closing a parked terminal tab retires its exact PTY session', async ({ dol
   }, tabId)
 
   await expect
-    .poll(() => hasPtySession(dolphinPage, ptyId), {
+    .poll(() => hasPtySession(appPage, ptyId), {
       timeout: 15_000,
       message: `parked tab close did not retire PTY ${ptyId}`
     })

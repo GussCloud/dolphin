@@ -33,60 +33,60 @@ async function removeCreatedWorktree(page: Page, worktreeId: string): Promise<vo
 }
 
 test('creates a worktree, keeps its terminal isolated, and switches back @golden', async ({
-  dolphinPage
+  appPage
 }) => {
   test.setTimeout(180_000)
-  await waitForSessionReady(dolphinPage)
-  const originalWorktreeId = await waitForActiveWorktree(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const parentPtyId = await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  const originalWorktreeId = await waitForActiveWorktree(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const parentPtyId = await waitForActivePanePtyId(appPage)
   const workspaceName = `golden-switch-${Date.now()}`
   let childWorktreeId: string | null = null
 
   try {
-    await createWorkspace(dolphinPage, workspaceName)
+    await createWorkspace(appPage, workspaceName)
     await expect(
-      dolphinPage.locator('[role="option"][aria-current="page"]').filter({ hasText: workspaceName })
+      appPage.locator('[role="option"][aria-current="page"]').filter({ hasText: workspaceName })
     ).toBeVisible({ timeout: 30_000 })
-    childWorktreeId = await waitForActiveWorktree(dolphinPage)
+    childWorktreeId = await waitForActiveWorktree(appPage)
     // Why: the cleanup force-removes childWorktreeId, so it must never resolve to the original.
     expect(childWorktreeId).not.toBe(originalWorktreeId)
     await expect(
-      dolphinPage.locator(`[role="option"][data-worktree-id="${childWorktreeId}"]`)
+      appPage.locator(`[role="option"][data-worktree-id="${childWorktreeId}"]`)
     ).toHaveAttribute('aria-current', 'page')
 
-    await createTerminalTabFromMenu(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const childPtyId = await waitForActivePanePtyId(dolphinPage)
+    await createTerminalTabFromMenu(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const childPtyId = await waitForActivePanePtyId(appPage)
     expect(childPtyId).not.toBe(parentPtyId)
-    await waitForPtyShellEcho(dolphinPage, childPtyId, 15_000)
-    await execInTerminal(dolphinPage, childPtyId, splitMarkerEchoCommand('worktree', '-b'))
-    await waitForTerminalOutput(dolphinPage, 'worktree-b')
+    await waitForPtyShellEcho(appPage, childPtyId, 15_000)
+    await execInTerminal(appPage, childPtyId, splitMarkerEchoCommand('worktree', '-b'))
+    await waitForTerminalOutput(appPage, 'worktree-b')
 
-    await dolphinPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`).click()
+    await appPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`).click()
     await expect(
-      dolphinPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`)
+      appPage.locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`)
     ).toHaveAttribute('aria-current', 'page', { timeout: 20_000 })
     // Why: sidebar aria-current can land before the store/terminal remount.
     // Mac release goldens then wait 30s on a child tab whose PaneManager is gone.
     await expect
-      .poll(() => getActiveWorktreeId(dolphinPage), {
+      .poll(() => getActiveWorktreeId(appPage), {
         timeout: 20_000,
         message: 'store did not activate the original worktree after sidebar click'
       })
       .toBe(originalWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    expect(await waitForActivePanePtyId(dolphinPage, 30_000)).toBe(parentPtyId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    expect(await waitForActivePanePtyId(appPage, 30_000)).toBe(parentPtyId)
   } finally {
     if (childWorktreeId) {
-      if ((await getActiveWorktreeId(dolphinPage).catch(() => null)) !== originalWorktreeId) {
-        await dolphinPage
+      if ((await getActiveWorktreeId(appPage).catch(() => null)) !== originalWorktreeId) {
+        await appPage
           .locator(`[role="option"][data-worktree-id="${originalWorktreeId}"]`)
           .click()
           .catch(() => undefined)
       }
-      await removeCreatedWorktree(dolphinPage, childWorktreeId).catch(() => undefined)
+      await removeCreatedWorktree(appPage, childWorktreeId).catch(() => undefined)
     }
   }
 })

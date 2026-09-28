@@ -379,28 +379,28 @@ test.describe('Worktree switch first paint @headful', () => {
     'First-paint measurement requires a mapped window'
   )
   test('repaints an unmounted worktree within the switch budget', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     test.setTimeout(900_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
 
-    const worktreeIds = await getAllWorktreeIds(dolphinPage)
+    const worktreeIds = await getAllWorktreeIds(appPage)
     expect(worktreeIds.length).toBeGreaterThanOrEqual(2)
     const [primaryId, targetId] = worktreeIds
-    const filler = await addFillerWorktrees(dolphinPage, testRepoPath)
+    const filler = await addFillerWorktrees(appPage, testRepoPath)
 
     const samples: SwitchSample[] = []
     const lines: string[] = []
     try {
-      const targetTabIds = await ensureTabs(dolphinPage, targetId, 'WTB')
+      const targetTabIds = await ensureTabs(appPage, targetId, 'WTB')
 
       // Give the filler worktrees persisted tabs without mounting them, so the
       // store carries a field-scale tab population (the profile that motivated
       // this budget has 846 tabs across 449 worktrees).
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         ({ ids, perWorktree }) => {
           const state = window.__store!.getState()
           for (const id of ids) {
@@ -419,25 +419,25 @@ test.describe('Worktree switch first paint @headful', () => {
         // the target come back with tabs in the session and no pane ever mounted
         // — the state every switch lands in once the worktree count exceeds the
         // hot-retain working set.
-        await switchToWorktree(dolphinPage, primaryId)
-        await ensureTerminalVisible(dolphinPage)
-        await dolphinPage.waitForTimeout(2_500)
-        await dolphinPage.reload()
-        await waitForSessionReady(dolphinPage)
-        await waitForActiveWorktree(dolphinPage)
-        await ensureTerminalVisible(dolphinPage)
-        await dolphinPage.waitForTimeout(2_500)
-        const unmounted = await waitForUnmountedTabs(dolphinPage, targetTabIds)
+        await switchToWorktree(appPage, primaryId)
+        await ensureTerminalVisible(appPage)
+        await appPage.waitForTimeout(2_500)
+        await appPage.reload()
+        await waitForSessionReady(appPage)
+        await waitForActiveWorktree(appPage)
+        await ensureTerminalVisible(appPage)
+        await appPage.waitForTimeout(2_500)
+        const unmounted = await waitForUnmountedTabs(appPage, targetTabIds)
         expect(unmounted, 'target worktree was already mounted before the switch').toBe(true)
 
-        const sample = await measureSwitch(dolphinPage, targetId, targetTabIds)
+        const sample = await measureSwitch(appPage, targetId, targetTabIds)
         samples.push(sample)
         lines.push(report(`round ${round + 1} (target unmounted=${unmounted})`, sample))
 
         // The half of the contract that keeps the speed-up free: the hidden tabs
         // the switch skipped still end up mounted, so the next tab switch is as
         // warm as it was before the reveal stopped mounting them up front.
-        const warmedTabIds = await waitForMountedTabs(dolphinPage, targetTabIds)
+        const warmedTabIds = await waitForMountedTabs(appPage, targetTabIds)
         expect(warmedTabIds, 'deferred tabs never joined the warm working set').toEqual(
           [...targetTabIds].sort()
         )

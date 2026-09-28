@@ -51,7 +51,7 @@ test.describe('Docker SSH port-forward lifecycle', () => {
 
   test('keeps a user-forwarded listener live across scan refresh @headful', async ({
     electronApp,
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
@@ -65,21 +65,21 @@ test.describe('Docker SSH port-forward lifecycle', () => {
       target = startDockerSshRelayTarget(testInfo)
       const systemSshInvocationLogPath = await trustDockerSshHost(electronApp, target)
       await installLifecycleWarningCapture(electronApp)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
       const remotePid = startRemoteHttpListener(target, REMOTE_PORT, marker)
       const unrelatedRemotePid = startRemoteHttpListener(
         target,
         REFRESH_BARRIER_PORT,
         unrelatedMarker
       )
-      await openPortsPanel(dolphinPage)
+      await openPortsPanel(appPage)
 
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               ({ targetId, port }) =>
                 window.api.ssh
                   .listDetectedPorts({ targetId })
@@ -89,11 +89,11 @@ test.describe('Docker SSH port-forward lifecycle', () => {
           { timeout: 45_000, message: 'remote HTTP listener was not detected' }
         )
         .toBe(remotePid)
-      await expect(dolphinPage.getByText(`:${REMOTE_PORT}`, { exact: true })).toBeVisible()
+      await expect(appPage.getByText(`:${REMOTE_PORT}`, { exact: true })).toBeVisible()
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               ({ targetId, port }) =>
                 window.api.ssh
                   .listDetectedPorts({ targetId })
@@ -103,19 +103,19 @@ test.describe('Docker SSH port-forward lifecycle', () => {
           { timeout: 45_000, message: 'scan-refresh barrier listener was not detected' }
         )
         .toBe(true)
-      await expect(dolphinPage.getByText(`:${REFRESH_BARRIER_PORT}`, { exact: true })).toBeVisible()
+      await expect(appPage.getByText(`:${REFRESH_BARRIER_PORT}`, { exact: true })).toBeVisible()
 
       await installSshPortForwardSnapshotBarrier(electronApp, remote.targetId)
-      await dolphinPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
-      await dolphinPage.reload()
-      await waitForSessionReady(dolphinPage, 60_000)
+      await appPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+      await appPage.reload()
+      await waitForSessionReady(appPage, 60_000)
       await expect
-        .poll(() => waitForActiveWorktree(dolphinPage), { timeout: 60_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 60_000 })
         .toBe(remote.worktreeId)
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               (targetId) => window.__store?.getState().sshConnectionStates.get(targetId)?.status,
               remote.targetId
             ),
@@ -129,16 +129,16 @@ test.describe('Docker SSH port-forward lifecycle', () => {
         })
         .toEqual({ captured: true, released: false })
 
-      await installRendererForwardCapture(dolphinPage)
-      await openPortsPanel(dolphinPage)
+      await installRendererForwardCapture(appPage)
+      await openPortsPanel(appPage)
       await localPortReservation.release()
-      await forwardPortFromPanel(dolphinPage, localPort, REMOTE_PORT)
-      await expect(dolphinPage.getByText('Forwarded', { exact: true })).toBeVisible()
+      await forwardPortFromPanel(appPage, localPort, REMOTE_PORT)
+      await expect(appPage.getByText('Forwarded', { exact: true })).toBeVisible()
       await expect(
-        dolphinPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
+        appPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
       ).toBeVisible()
       await expect.poll(() => requestForward(localPort)).toContain(marker)
-      await expectForwardEvidence(dolphinPage, remote.targetId, [
+      await expectForwardEvidence(appPage, remote.targetId, [
         { localPort, remotePort: REMOTE_PORT }
       ])
       if (FORCE_SYSTEM_SSH) {
@@ -150,15 +150,15 @@ test.describe('Docker SSH port-forward lifecycle', () => {
       }
 
       await releaseSshPortForwardSnapshotBarrier(electronApp)
-      const postHydrationRoundTripForwards = await dolphinPage.evaluate(
+      const postHydrationRoundTripForwards = await appPage.evaluate(
         (targetId) => window.api.ssh.listPortForwards({ targetId }),
         remote.targetId
       )
       expect(postHydrationRoundTripForwards).toContainEqual(
         expect.objectContaining({ localPort, remotePort: REMOTE_PORT })
       )
-      await expect(dolphinPage.getByText(`:${REFRESH_BARRIER_PORT}`, { exact: true })).toBeVisible()
-      const staleSnapshotEvidence = await readPortForwardEvidence(dolphinPage, remote.targetId)
+      await expect(appPage.getByText(`:${REFRESH_BARRIER_PORT}`, { exact: true })).toBeVisible()
+      const staleSnapshotEvidence = await readPortForwardEvidence(appPage, remote.targetId)
       const staleSnapshotIdentity = readRemoteListenerIdentity(target, REMOTE_PORT)
       const staleSnapshotWarnings = await readLifecycleWarnings(electronApp)
       expect(staleSnapshotEvidence.managerForwards).toContainEqual(
@@ -177,9 +177,9 @@ test.describe('Docker SSH port-forward lifecycle', () => {
         []
       )
       await expect(
-        dolphinPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
+        appPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
       ).toBeVisible()
-      await expectForwardEvidence(dolphinPage, remote.targetId, [
+      await expectForwardEvidence(appPage, remote.targetId, [
         { localPort, remotePort: REMOTE_PORT }
       ])
       await restoreSshPortForwardSnapshotHandler(electronApp)
@@ -188,7 +188,7 @@ test.describe('Docker SSH port-forward lifecycle', () => {
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               ({ targetId, port }) =>
                 window.api.ssh
                   .listDetectedPorts({ targetId })
@@ -198,38 +198,38 @@ test.describe('Docker SSH port-forward lifecycle', () => {
           { timeout: 45_000, message: 'scan-refresh listener was not detected in main' }
         )
         .toBe(true)
-      await expect(dolphinPage.getByText(`:${SCAN_REFRESH_PORT}`, { exact: true })).toBeVisible()
+      await expect(appPage.getByText(`:${SCAN_REFRESH_PORT}`, { exact: true })).toBeVisible()
 
       await unrelatedLocalPortReservation.release()
-      const unrelatedForward = await addPortForward(dolphinPage, {
+      const unrelatedForward = await addPortForward(appPage, {
         targetId: remote.targetId,
         localPort: unrelatedLocalPort,
         remotePort: REFRESH_BARRIER_PORT,
         label: 'unrelated-listener'
       })
-      await expectForwardEvidence(dolphinPage, remote.targetId, [
+      await expectForwardEvidence(appPage, remote.targetId, [
         { localPort, remotePort: REMOTE_PORT },
         { localPort: unrelatedLocalPort, remotePort: REFRESH_BARRIER_PORT }
       ])
       await expect.poll(() => requestForward(unrelatedLocalPort)).toContain(unrelatedMarker)
 
-      await forceDockerSshRelayChannelReconnect(dolphinPage, target, remote.targetId)
-      await expectForwardEvidence(dolphinPage, remote.targetId, [
+      await forceDockerSshRelayChannelReconnect(appPage, target, remote.targetId)
+      await expectForwardEvidence(appPage, remote.targetId, [
         { localPort, remotePort: REMOTE_PORT },
         { localPort: unrelatedLocalPort, remotePort: REFRESH_BARRIER_PORT }
       ])
       await expect.poll(() => requestForward(localPort)).toContain(marker)
       await expect.poll(() => requestForward(unrelatedLocalPort)).toContain(unrelatedMarker)
 
-      const authorityBeforeTransportReconnect = await dolphinPage.evaluate(
+      const authorityBeforeTransportReconnect = await appPage.evaluate(
         (targetId) => window.__store?.getState().sshConnectionStates.get(targetId),
         remote.targetId
       )
-      await reconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
+      await reconnectDockerSshRelayTarget(appPage, remote.targetId)
       await expect
         .poll(
           async () => {
-            const state = await dolphinPage.evaluate(
+            const state = await appPage.evaluate(
               (targetId) => window.__store?.getState().sshConnectionStates.get(targetId),
               remote.targetId
             )
@@ -243,17 +243,17 @@ test.describe('Docker SSH port-forward lifecycle', () => {
           { timeout: 30_000, message: 'renderer did not observe the reconnected SSH authority' }
         )
         .toBe(true)
-      await expectForwardEvidence(dolphinPage, remote.targetId, [
+      await expectForwardEvidence(appPage, remote.targetId, [
         { localPort, remotePort: REMOTE_PORT },
         { localPort: unrelatedLocalPort, remotePort: REFRESH_BARRIER_PORT }
       ])
       await expect.poll(() => requestForward(localPort)).toContain(marker)
       await expect.poll(() => requestForward(unrelatedLocalPort)).toContain(unrelatedMarker)
       await expect(
-        dolphinPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
+        appPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
       ).toBeVisible()
       await expect(
-        dolphinPage.getByText(`:${unrelatedLocalPort} → :${REFRESH_BARRIER_PORT}`, { exact: true })
+        appPage.getByText(`:${unrelatedLocalPort} → :${REFRESH_BARRIER_PORT}`, { exact: true })
       ).toBeVisible()
 
       const collisionServer = createServer()
@@ -266,7 +266,7 @@ test.describe('Docker SSH port-forward lifecycle', () => {
         throw new Error('Unable to reserve a collision port')
       }
       try {
-        const collisionResult = await dolphinPage.evaluate(
+        const collisionResult = await appPage.evaluate(
           async ({ targetId, localPort, remotePort }) => {
             try {
               await window.api.ssh.addPortForward({
@@ -294,29 +294,29 @@ test.describe('Docker SSH port-forward lifecycle', () => {
           collisionServer.close((error) => (error ? reject(error) : resolve()))
         )
       }
-      await expectForwardEvidence(dolphinPage, remote.targetId, [
+      await expectForwardEvidence(appPage, remote.targetId, [
         { localPort, remotePort: REMOTE_PORT },
         { localPort: unrelatedLocalPort, remotePort: REFRESH_BARRIER_PORT }
       ])
 
-      const primaryRow = dolphinPage
+      const primaryRow = appPage
         .getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
         .locator('../../..')
       await primaryRow.getByTitle('Remove').click()
       await expect(
-        dolphinPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
+        appPage.getByText(`:${localPort} → :${REMOTE_PORT}`, { exact: true })
       ).not.toBeVisible()
-      await expectForwardEvidence(dolphinPage, remote.targetId, [
+      await expectForwardEvidence(appPage, remote.targetId, [
         { localPort: unrelatedLocalPort, remotePort: REFRESH_BARRIER_PORT }
       ])
       await expect(requestForward(localPort)).rejects.toThrow()
       await expect.poll(() => requestForward(unrelatedLocalPort)).toContain(unrelatedMarker)
 
-      const evidence = await readPortForwardEvidence(dolphinPage, remote.targetId)
+      const evidence = await readPortForwardEvidence(appPage, remote.targetId)
       const identity = readRemoteListenerIdentity(target, REMOTE_PORT)
       const unrelatedIdentity = readRemoteListenerIdentity(target, REFRESH_BARRIER_PORT)
       const warnings = await readLifecycleWarnings(electronApp)
-      const relayReconnectStates = await readSshStateCapture(dolphinPage)
+      const relayReconnectStates = await readSshStateCapture(appPage)
       testInfo.annotations.push({
         type: 'ssh-port-forward-evidence',
         description: JSON.stringify({

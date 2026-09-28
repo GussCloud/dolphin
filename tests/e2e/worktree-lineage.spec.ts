@@ -36,15 +36,15 @@ async function captureSidebarEvidence(page: Page, name: string): Promise<void> {
 test.describe('Worktree Lineage', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test('renders existing child lineage in the sidebar', async ({ dolphinPage }) => {
-    const { parentId, childId } = await seedLineageScenario(dolphinPage)
-    const parentRow = worktreeOption(dolphinPage, parentId)
-    const childRow = worktreeOption(dolphinPage, childId)
+  test('renders existing child lineage in the sidebar', async ({ appPage }) => {
+    const { parentId, childId } = await seedLineageScenario(appPage)
+    const parentRow = worktreeOption(appPage, parentId)
+    const childRow = worktreeOption(appPage, childId)
 
     await expect(parentRow).toBeVisible()
     await parentRow.click()
@@ -55,7 +55,7 @@ test.describe('Worktree Lineage', () => {
     await expect(childToggle).toBeVisible({ timeout: 10_000 })
     await expect(childRow).toBeVisible()
 
-    const positions = await dolphinPage.evaluate(
+    const positions = await appPage.evaluate(
       ({ parentId, childId }) => {
         const rowFor = (worktreeId: string) =>
           [...document.querySelectorAll<HTMLElement>('[data-worktree-id]')].find(
@@ -81,7 +81,7 @@ test.describe('Worktree Lineage', () => {
     await expect(childRow).toBeHidden()
 
     await parentRow.getByRole('button', { name: 'Show 1 child workspace' }).click()
-    await dolphinPage.evaluate(async (childId) => {
+    await appPage.evaluate(async (childId) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available')
@@ -94,7 +94,7 @@ test.describe('Worktree Lineage', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate((childId) => {
+          appPage.evaluate((childId) => {
             const store = window.__store
             return Boolean(store?.getState().worktreeLineageById[childId])
           }, childId),
@@ -108,11 +108,11 @@ test.describe('Worktree Lineage', () => {
   })
 
   test('renders legacy-only inline lineage when side-map hydration is absent', async ({
-    dolphinPage
+    appPage
   }) => {
-    const { parentId, childId } = await seedLineageScenario(dolphinPage, { inlineOnly: true })
-    const parentRow = worktreeOption(dolphinPage, parentId)
-    const childRow = worktreeOption(dolphinPage, childId)
+    const { parentId, childId } = await seedLineageScenario(appPage, { inlineOnly: true })
+    const parentRow = worktreeOption(appPage, parentId)
+    const childRow = worktreeOption(appPage, childId)
 
     await expect(parentRow.getByRole('button', { name: 'Hide 1 child workspace' })).toBeVisible()
     await expect(childRow).toBeVisible()
@@ -125,15 +125,15 @@ test.describe('Worktree Lineage', () => {
         return parentBox && childBox ? childBox.y > parentBox.y : false
       })
       .toBe(true)
-    await captureSidebarEvidence(dolphinPage, 'legacy-inline-lineage-nested.png')
+    await captureSidebarEvidence(appPage, 'legacy-inline-lineage-nested.png')
   })
 
   test('injects filtered parents structurally without showing a parent badge', async ({
-    dolphinPage
+    appPage
   }) => {
-    const { parentId, childId } = await seedLineageScenario(dolphinPage)
+    const { parentId, childId } = await seedLineageScenario(appPage)
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ parentId, childId }) => {
         const store = window.__store
         if (!store) {
@@ -163,14 +163,14 @@ test.describe('Worktree Lineage', () => {
       { parentId, childId }
     )
 
-    const parentRow = worktreeOption(dolphinPage, parentId)
-    const childRow = worktreeOption(dolphinPage, childId)
+    const parentRow = worktreeOption(appPage, parentId)
+    const childRow = worktreeOption(appPage, childId)
 
     await expect(parentRow).toBeVisible()
     await expect(childRow).toBeVisible()
     await expect(childRow).not.toContainText(/\bfrom\b/)
 
-    const positions = await dolphinPage.evaluate(
+    const positions = await appPage.evaluate(
       ({ parentId, childId }) => {
         const rowFor = (worktreeId: string) =>
           [...document.querySelectorAll<HTMLElement>('[data-worktree-id]')].find(
@@ -193,27 +193,27 @@ test.describe('Worktree Lineage', () => {
   })
 
   test('updates nested child preview status when the child terminal sleeps', async ({
-    dolphinPage
+    appPage
   }) => {
-    const { parentId, childId } = await seedLineageScenario(dolphinPage)
-    const parentRow = worktreeOption(dolphinPage, parentId)
-    const childRow = worktreeOption(dolphinPage, childId)
+    const { parentId, childId } = await seedLineageScenario(appPage)
+    const parentRow = worktreeOption(appPage, parentId)
+    const childRow = worktreeOption(appPage, childId)
 
     await expect(parentRow).toBeVisible()
     await expect(childRow).toBeVisible()
 
-    const childTabId = await seedWorkspaceLiveTerminal(dolphinPage, childId)
+    const childTabId = await seedWorkspaceLiveTerminal(appPage, childId)
     await expect(childRow).toContainText('Active')
 
-    await markWorkspaceTerminalSlept(dolphinPage, { worktreeId: childId, tabId: childTabId })
+    await markWorkspaceTerminalSlept(appPage, { worktreeId: childId, tabId: childTabId })
     await expect(childRow).toContainText('Inactive')
   })
 
   test('sleeps a workspace and every descendant from the parent context menu', async ({
-    dolphinPage
+    appPage
   }) => {
-    const { parentId, childId } = await seedLineageScenario(dolphinPage)
-    await dolphinPage.evaluate((parentId) => {
+    const { parentId, childId } = await seedLineageScenario(appPage)
+    await appPage.evaluate((parentId) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available')
@@ -229,10 +229,10 @@ test.describe('Worktree Lineage', () => {
         )
       }))
     }, parentId)
-    const parentTabId = await seedWorkspaceLiveTerminal(dolphinPage, parentId)
-    const childTabId = await seedWorkspaceLiveTerminal(dolphinPage, childId)
+    const parentTabId = await seedWorkspaceLiveTerminal(appPage, parentId)
+    const childTabId = await seedWorkspaceLiveTerminal(appPage, childId)
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available')
@@ -256,21 +256,19 @@ test.describe('Worktree Lineage', () => {
       window.api.ephemeralVm.suspendWorkspace = async () => null
     })
 
-    await worktreeOption(dolphinPage, parentId).click({ button: 'right' })
-    const sleepSubtree = dolphinPage.getByRole('menuitem', {
+    await worktreeOption(appPage, parentId).click({ button: 'right' })
+    const sleepSubtree = appPage.getByRole('menuitem', {
       name: 'Sleep with Descendants (1)'
     })
     await expect(sleepSubtree).toBeVisible()
     await expect(sleepSubtree).toBeEnabled()
-    await expect(
-      dolphinPage.getByRole('menuitem', { name: 'Delete with Descendants…' })
-    ).toBeVisible()
-    await captureEvidence(dolphinPage, 'workspace-descendant-actions.png')
+    await expect(appPage.getByRole('menuitem', { name: 'Delete with Descendants…' })).toBeVisible()
+    await captureEvidence(appPage, 'workspace-descendant-actions.png')
     await sleepSubtree.click()
 
     await expect
       .poll(() =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           ({ parentTabId, childTabId }) => {
             const state = window.__store?.getState()
             return {
@@ -285,18 +283,18 @@ test.describe('Worktree Lineage', () => {
   })
 
   test('shows parent and child agent rows while the parent workspace is active', async ({
-    dolphinPage
+    appPage
   }) => {
-    const { parentId, childId } = await seedLineageScenario(dolphinPage)
-    const parentRow = worktreeOption(dolphinPage, parentId)
-    const childRow = worktreeOption(dolphinPage, childId)
+    const { parentId, childId } = await seedLineageScenario(appPage)
+    const parentRow = worktreeOption(appPage, parentId)
+    const childRow = worktreeOption(appPage, childId)
 
     await parentRow.click()
     await expect(parentRow).toHaveAttribute('aria-current', 'page')
     await expect(childRow).toBeVisible()
 
-    const parentAgentPrompt = await seedWorkspaceAgentStatus(dolphinPage, parentId, 'PARENT')
-    const childAgentPrompt = await seedWorkspaceAgentStatus(dolphinPage, childId, 'CHILD')
+    const parentAgentPrompt = await seedWorkspaceAgentStatus(appPage, parentId, 'PARENT')
+    const childAgentPrompt = await seedWorkspaceAgentStatus(appPage, childId, 'CHILD')
 
     await expect(
       parentRow.getByRole('treeitem').filter({ hasText: parentAgentPrompt })

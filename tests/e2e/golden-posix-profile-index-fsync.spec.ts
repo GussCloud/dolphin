@@ -7,7 +7,7 @@ test.skip(process.platform === 'win32', 'Restrictive-umask fsync regression is P
 
 test('recreates a fresh profile index on disk with a restrictive umask @posix-profile-index-golden', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const indexPath = path.join(userDataDir, 'dolphin-profile-index.json')
@@ -20,7 +20,7 @@ test('recreates a fresh profile index on disk with a restrictive umask @posix-pr
     rmSync(`${indexPath}.bak`, { force: true })
     // Why: dolphinProfiles:list reads the index from disk on every call and rebuilds
     // it when missing, so this drives the real create + fsync + rename path.
-    const listed = await dolphinPage.evaluate(async () => {
+    const listed = await appPage.evaluate(async () => {
       const result = await window.api.dolphinProfiles.list()
       window.__store!.getState().openSettingsPage()
       return result
@@ -41,5 +41,5 @@ test('recreates a fresh profile index on disk with a restrictive umask @posix-pr
     await electronApp.evaluate((_electron, umask) => process.umask(umask), originalUmask)
   }
 
-  await expect(dolphinPage.getByPlaceholder('Search settings')).toBeVisible()
+  await expect(appPage.getByPlaceholder('Search settings')).toBeVisible()
 })

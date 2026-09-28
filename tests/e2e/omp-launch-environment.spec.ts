@@ -62,14 +62,14 @@ test.skip(
 )
 
 test('OMP launched by Dolphin uses login-profile data and config roots', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
   const home = await electronApp.evaluate(({ app }) => app.getPath('home'))
   expect(await electronApp.evaluate(() => process.env.XDG_DATA_HOME)).toBeUndefined()
   const result = testInfo.outputPath('omp-paths.json')
@@ -89,7 +89,7 @@ export default function (api) {
 }`
   )
   await execInTerminal(
-    dolphinPage,
+    appPage,
     ptyId,
     buildShellCommandFromArgv(['omp', '--no-extensions', '--extension', probe], 'posix')
   )
@@ -113,15 +113,15 @@ export default function (api) {
         session: expect.stringContaining(join('xdg-data', 'omp', 'sessions'))
       })
     )
-  await expect(dolphinPage.locator('.xterm-screen').first()).toBeVisible()
-  await dolphinPage.screenshot({ path: testInfo.outputPath('omp-profile-root.png') })
+  await expect(appPage.locator('.xterm-screen').first()).toBeVisible()
+  await appPage.screenshot({ path: testInfo.outputPath('omp-profile-root.png') })
   await expect(async () => {
     expect(await readdir(join(home, 'xdg-data', 'omp'))).toContain('agent.db')
   }).toPass({ timeout: 30_000 })
   const overrideData = join(home, 'pane-data')
   await mkdir(join(overrideData, 'omp'), { recursive: true })
   const overrideResult = testInfo.outputPath('omp-pane-paths.json')
-  const overridePty = await dolphinPage.evaluate(
+  const overridePty = await appPage.evaluate(
     async ({ command, worktreeId, home, overrideData, overrideResult }) => {
       const pane = await window.api.pty.spawn({
         cols: 100,
@@ -171,7 +171,7 @@ export default function (api) {
       expect(await readdir(join(overrideData, 'omp'))).toContain('agent.db')
     }).toPass({ timeout: 30_000 })
   } finally {
-    await dolphinPage.evaluate((id) => window.api.pty.kill(id), overridePty)
+    await appPage.evaluate((id) => window.api.pty.kill(id), overridePty)
   }
   const baselineResult = testInfo.outputPath('omp-login-baseline.json')
   const baselineCommand = buildShellCommandFromArgv(
@@ -200,7 +200,7 @@ export default function (api) {
     ],
     'posix'
   )
-  const baselinePty = await dolphinPage.evaluate(
+  const baselinePty = await appPage.evaluate(
     async ({ command, worktreeId, home }) => {
       return (
         await window.api.pty.spawn({
@@ -235,6 +235,6 @@ export default function (api) {
         })
       )
   } finally {
-    await dolphinPage.evaluate((id) => window.api.pty.kill(id), baselinePty)
+    await appPage.evaluate((id) => window.api.pty.kill(id), baselinePty)
   }
 })

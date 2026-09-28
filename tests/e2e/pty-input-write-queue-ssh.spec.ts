@@ -78,30 +78,30 @@ test.describe('PTY input write queue over SSH', () => {
   test.skip(process.platform === 'win32', 'Docker SSH E2E uses POSIX ssh tooling.')
 
   test('returns an xterm OSC query reply through the live SSH PTY', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
       const runId = String(Date.now())
 
-      await execInTerminal(dolphinPage, ptyId, `node -e ${shellQuote(remoteOscQueryScript(runId))}`)
-      await waitForTerminalOutput(dolphinPage, `REMOTE_OSC_READY_${runId}`, 30_000, 80_000)
-      await waitForTerminalOutput(dolphinPage, `REMOTE_OSC_REPLY_${runId}`, 30_000, 80_000)
+      await execInTerminal(appPage, ptyId, `node -e ${shellQuote(remoteOscQueryScript(runId))}`)
+      await waitForTerminalOutput(appPage, `REMOTE_OSC_READY_${runId}`, 30_000, 80_000)
+      await waitForTerminalOutput(appPage, `REMOTE_OSC_REPLY_${runId}`, 30_000, 80_000)
     } finally {
       cleanupDockerSshRelayTarget(target)
     }
   })
 
   test('keeps fish query replies out of the next child stdin on an upstream relay pty', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
@@ -144,9 +144,9 @@ test.describe('PTY input write queue over SSH', () => {
         ].join('\n')
       )
 
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await connectDockerSshRelayTarget(dolphinPage, target)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await connectDockerSshRelayTarget(appPage, target)
       const relayExports = execDockerSshRelayTargetCommand(
         target,
         'module=$(find /root/.dolphin-remote -type d -path \'*/node_modules/node-pty\' | head -n 1); node -e "const p=require(process.argv[1]); console.log(Object.keys(p.native || {}).join(\',\'))" "$module"'
@@ -154,27 +154,27 @@ test.describe('PTY input write queue over SSH', () => {
       testInfo.annotations.push({ type: 'relay-node-pty-exports', description: relayExports })
       expect(relayExports).not.toContain('echoState')
 
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
       await execInTerminal(
-        dolphinPage,
+        appPage,
         ptyId,
         `env HOME=${shellQuote(home)} XDG_CONFIG_HOME=${shellQuote(`${home}/.config`)} XDG_DATA_HOME=${shellQuote(`${home}/.local/share`)} TERM=xterm-256color /usr/local/bin/fish -l -i`
       )
-      await waitForTerminalOutput(dolphinPage, prompt, 30_000, 80_000)
+      await waitForTerminalOutput(appPage, prompt, 30_000, 80_000)
 
       const blocker = `node -e ${shellQuote(`console.log('BLOCKER_STARTED_${runId}'); setTimeout(() => process.exit(0), 5000)`)}`
-      await execInTerminal(dolphinPage, ptyId, blocker)
-      await waitForTerminalOutput(dolphinPage, `BLOCKER_STARTED_${runId}`, 30_000, 80_000)
-      await execInTerminal(dolphinPage, ptyId, `node ${shellQuote(childScript)}`)
-      await waitForTerminalOutput(dolphinPage, childReady, 30_000, 80_000)
-      await sendToTerminal(dolphinPage, ptyId, 'hello\r')
-      await waitForTerminalOutput(dolphinPage, `${childRead}:"hello\\n"`, 30_000, 80_000)
+      await execInTerminal(appPage, ptyId, blocker)
+      await waitForTerminalOutput(appPage, `BLOCKER_STARTED_${runId}`, 30_000, 80_000)
+      await execInTerminal(appPage, ptyId, `node ${shellQuote(childScript)}`)
+      await waitForTerminalOutput(appPage, childReady, 30_000, 80_000)
+      await sendToTerminal(appPage, ptyId, 'hello\r')
+      await waitForTerminalOutput(appPage, `${childRead}:"hello\\n"`, 30_000, 80_000)
       const screenshotDir = path.join(process.cwd(), 'validation-screenshots', 'sta-3948')
       const screenshotPath = path.join(screenshotDir, 'linux-ssh-fish-child-stdin-pass.png')
       mkdirSync(screenshotDir, { recursive: true })
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('linux-ssh-fish-child-stdin-pass', {
         path: screenshotPath,
         contentType: 'image/png'

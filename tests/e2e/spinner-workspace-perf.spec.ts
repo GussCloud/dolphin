@@ -70,7 +70,7 @@ test.skip(!enabled, 'Opt-in performance benchmark')
 for (const scenario of scenarios) {
   test(`spinner performance ${scenario.name}`, async ({
     electronApp,
-    dolphinPage: page,
+    appPage: page,
     registerPostElectronShutdownCleanup
   }, testInfo) => {
     test.setTimeout(900_000)

@@ -55,20 +55,20 @@ function countOccurrences(value: string, needle: string): number {
 test.describe('split terminal pane paste ownership', () => {
   test('keyboard paste writes only to the active split pane PTY', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    await focusLastTerminalPane(dolphinPage)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    await focusLastTerminalPane(appPage)
 
-    const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    const snapshot = await waitForPaneIdentitySnapshot(appPage, 2)
     const activePane = snapshot.panes.find((pane) => pane.leafId === snapshot.activeLeafId)
     const inactivePane = snapshot.panes.find((pane) => pane.leafId !== snapshot.activeLeafId)
     if (!activePane?.ptyId || !inactivePane?.ptyId) {
@@ -81,18 +81,18 @@ test.describe('split terminal pane paste ownership', () => {
     let scriptStarted = false
 
     try {
-      await sendToTerminal(dolphinPage, activePane.ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, activePane.ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(dolphinPage, `SPLIT_PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `SPLIT_PASTE_READY_${runId}`, 10_000)
 
       const payload = `DOLPHIN_E2E_SPLIT_PASTE_${runId}`
       const encodedPayload = Buffer.from(payload, 'utf8').toString('base64')
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
       await clearTerminalPtyWriteLog(electronApp)
-      await focusActiveTerminalInput(dolphinPage)
+      await focusActiveTerminalInput(appPage)
 
-      await dolphinPage.keyboard.press(keyboardPasteChord())
-      await waitForTerminalOutput(dolphinPage, encodedPayload, 10_000, 12_000)
+      await appPage.keyboard.press(keyboardPasteChord())
+      await waitForTerminalOutput(appPage, encodedPayload, 10_000, 12_000)
 
       const writes = await readTerminalPtyWriteEntries(electronApp)
       const activeWrites = writes
@@ -107,7 +107,7 @@ test.describe('split terminal pane paste ownership', () => {
       expect(inactiveWrites).not.toContain(payload)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(dolphinPage, activePane.ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, activePane.ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -115,20 +115,20 @@ test.describe('split terminal pane paste ownership', () => {
 
   test('internal file drop writes only to the pane under the drop target', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    await focusLastTerminalPane(dolphinPage)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    await focusLastTerminalPane(appPage)
 
-    const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    const snapshot = await waitForPaneIdentitySnapshot(appPage, 2)
     const activePane = snapshot.panes.find((pane) => pane.leafId === snapshot.activeLeafId)
     const dropPane = snapshot.panes.find((pane) => pane.leafId !== snapshot.activeLeafId)
     if (!activePane?.ptyId || !dropPane?.ptyId) {
@@ -140,7 +140,7 @@ test.describe('split terminal pane paste ownership', () => {
     const dropMarker = path.basename(dropPath)
 
     await clearTerminalPtyWriteLog(electronApp)
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ leafId, pathValue }) => {
         const state = window.__store?.getState()
         const tabId =

@@ -7,19 +7,17 @@ test.use({ seedTestRepo: false })
 
 for (const theme of ['dark', 'light'] as const) {
   test(`automatic update failure opens details from the status bar (${theme})`, async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await dolphinPage.setViewportSize({ width: 1200, height: 800 })
-    await dolphinPage.evaluate(async (theme) => {
+    await waitForSessionReady(appPage)
+    await appPage.setViewportSize({ width: 1200, height: 800 })
+    await appPage.evaluate(async (theme) => {
       const state = window.__store!.getState()
       await state.updateSettingsOrThrow({ theme })
       state.setUpdateStatus({ state: 'checking', userInitiated: false })
     }, theme)
-    await expect(dolphinPage.locator('html')).toHaveClass(
-      theme === 'dark' ? /\bdark\b/ : /\blight\b/
-    )
-    await dolphinPage.evaluate((message) => {
+    await expect(appPage.locator('html')).toHaveClass(theme === 'dark' ? /\bdark\b/ : /\blight\b/)
+    await appPage.evaluate((message) => {
       window.__store!.getState().setUpdateStatus({
         state: 'error',
         message,
@@ -27,11 +25,11 @@ for (const theme of ['dark', 'light'] as const) {
       })
     }, CHECK_ERROR)
 
-    const statusButton = dolphinPage.getByRole('button', {
+    const statusButton = appPage.getByRole('button', {
       name: 'Update failed. Click to expand.',
       exact: true
     })
-    const card = dolphinPage.getByRole('complementary', { name: 'Update error', exact: true })
+    const card = appPage.getByRole('complementary', { name: 'Update error', exact: true })
     await expect(statusButton).toBeVisible()
     await expect(card).toBeHidden()
 
@@ -40,7 +38,7 @@ for (const theme of ['dark', 'light'] as const) {
     const statusClickScreenshot = testInfo.outputPath(
       `update-error-after-status-click-${theme}.png`
     )
-    await dolphinPage.screenshot({ path: statusClickScreenshot, animations: 'disabled' })
+    await appPage.screenshot({ path: statusClickScreenshot, animations: 'disabled' })
     await testInfo.attach(`update-error-after-status-click-${theme}`, {
       path: statusClickScreenshot,
       contentType: 'image/png'
@@ -53,7 +51,7 @@ for (const theme of ['dark', 'light'] as const) {
     await card.getByRole('button', { name: 'Show details', exact: true }).click()
     await expect(card.getByText(CHECK_ERROR, { exact: true })).toBeVisible()
     const detailsScreenshot = testInfo.outputPath(`update-error-expanded-details-${theme}.png`)
-    await dolphinPage.screenshot({ path: detailsScreenshot, animations: 'disabled' })
+    await appPage.screenshot({ path: detailsScreenshot, animations: 'disabled' })
     await testInfo.attach(`update-error-expanded-details-${theme}`, {
       path: detailsScreenshot,
       contentType: 'image/png'

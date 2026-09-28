@@ -243,11 +243,11 @@ async function findHostPaneWithMarker(
 
 test('restarts one ACK-starved paired terminal stream without replacing its PTY @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(150_000)
   const liveMarker = `PAIRED_STALL_RECOVERED_${Date.now()}`
-  const worktree = await dolphinPage.evaluate(() => {
+  const worktree = await appPage.evaluate(() => {
     const state = window.__store?.getState()
     const id = state?.activeWorktreeId
     const active = state?.allWorktrees().find((candidate) => candidate.id === id)
@@ -257,7 +257,7 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
     return { id: active.id }
   })
   const noClientResources = await getAppResourceProxies(electronApp)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedWebClient(electronApp, offer, {
     disableRemoteTerminalStallRecovery:
       process.env.DOLPHIN_E2E_DISABLE_REMOTE_TERMINAL_STALL_RECOVERY === '1'
@@ -279,7 +279,7 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
         { timeout: 30_000 }
       )
       .toBe(true)
-    const observerOffer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const observerOffer = await createRuntimeDesktopPairingOffer(appPage)
     observer = await launchPairedWebClient(electronApp, observerOffer)
     await showHeadedClient(electronApp, client.page)
     await showHeadedClient(electronApp, observer.page)
@@ -298,7 +298,7 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
       )
       .toBe(true)
     const connectedIdleResources = await getAppResourceProxies(electronApp)
-    await minimizeHeadedHost(electronApp, dolphinPage)
+    await minimizeHeadedHost(electronApp, appPage)
     const createStartedAt = performance.now()
     const created = await callRuntime<{
       tab: { id: string; parentTabId: string; terminal: string | null }
@@ -345,7 +345,7 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             ({ tabId, worktreeId }) =>
               (window.__store?.getState().tabsByWorktree[worktreeId] ?? []).some(
                 (tab) => tab.id === tabId
@@ -499,26 +499,26 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
       'authoritative inventory dropped the terminal during ACK recovery'
     ).toBe(true)
 
-    await restoreHeadedHost(electronApp, dolphinPage)
-    await dolphinPage.evaluate(
+    await restoreHeadedHost(electronApp, appPage)
+    await appPage.evaluate(
       (worktreeId) => window.__store?.getState().setActiveWorktree(worktreeId),
       worktree.id
     )
-    const hostTab = dolphinPage.locator(
+    const hostTab = appPage.locator(
       `[data-testid="sortable-tab"][data-tab-id="${created.tab.parentTabId}"]`
     )
     await expect(hostTab).toBeVisible({ timeout: 30_000 })
     await hostTab.click()
-    const hostPane = await findHostPaneWithMarker(dolphinPage, `LIVE:${liveMarker}`)
+    const hostPane = await findHostPaneWithMarker(appPage, `LIVE:${liveMarker}`)
     expect(hostPane.tabId).toBe(created.tab.parentTabId)
-    await dolphinPage.evaluate(({ paneId, tabId }) => {
+    await appPage.evaluate(({ paneId, tabId }) => {
       const manager = window.__paneManagers?.get(tabId)
       manager?.setActivePane?.(paneId, { focus: true })
     }, hostPane)
     await expect
-      .poll(() => getTerminalContent(dolphinPage), { timeout: 30_000 })
+      .poll(() => getTerminalContent(appPage), { timeout: 30_000 })
       .toContain(`LIVE:${liveMarker}`)
-    const restoredTerminalScreenshot = await dolphinPage
+    const restoredTerminalScreenshot = await appPage
       .locator(
         `[data-terminal-tab-id="${hostPane.tabId}"] .pane[data-pane-id="${hostPane.paneId}"] .xterm-screen`
       )
@@ -542,7 +542,7 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
       'authoritative inventory dropped the terminal while restoring the host'
     ).toBe(true)
 
-    await minimizeHeadedHost(electronApp, dolphinPage)
+    await minimizeHeadedHost(electronApp, appPage)
     await showHeadedClient(electronApp, observer.page)
 
     const authoritativeInventory = await callRuntime<{
@@ -575,7 +575,7 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
       .poll(
         () =>
           Promise.all([
-            dolphinPage.evaluate(
+            appPage.evaluate(
               ({ tabId, worktreeId }) =>
                 (window.__store?.getState().tabsByWorktree[worktreeId] ?? []).some(
                   (candidate) => candidate.id === tabId
@@ -602,8 +602,8 @@ test('restarts one ACK-starved paired terminal stream without replacing its PTY 
       .toEqual([false, false, false])
     terminal = null
 
-    await restoreHeadedHost(electronApp, dolphinPage)
-    const restoredHostScreenshot = await dolphinPage.screenshot({ fullPage: true })
+    await restoreHeadedHost(electronApp, appPage)
+    const restoredHostScreenshot = await appPage.screenshot({ fullPage: true })
     expect(
       countForegroundPixels(restoredHostScreenshot),
       'host compositor remained blank after the background close toggle'

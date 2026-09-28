@@ -326,13 +326,13 @@ async function run(args: {
 }
 
 test('holds the guest title through host republishes of a client-hosted page', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   await run({ offer, repoPath: testRepoPath, testInfo })
 })

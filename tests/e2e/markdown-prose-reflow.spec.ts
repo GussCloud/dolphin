@@ -152,20 +152,18 @@ async function placeCaretAtHeadingStart(
 }
 
 test.describe('Markdown prose reflow', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await dolphinPage.setViewportSize({ width: 1440, height: 900 })
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await appPage.setViewportSize({ width: 1440, height: 900 })
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test('hard-wrapped prose reflows as one document paragraph', async ({
-    dolphinPage
-  }, testInfo) => {
+  test('hard-wrapped prose reflows as one document paragraph', async ({ appPage }, testInfo) => {
     let filePath: string | null = null
 
     try {
-      filePath = await openHardWrappedFixture(dolphinPage, testInfo)
-      const metrics = await getGoalParagraphMetrics(dolphinPage)
+      filePath = await openHardWrappedFixture(appPage, testInfo)
+      const metrics = await getGoalParagraphMetrics(appPage)
 
       expect(metrics.paragraphCount).toBe(1)
       expect(metrics.sourceLineCount).toBe(4)
@@ -177,17 +175,17 @@ test.describe('Markdown prose reflow', () => {
   })
 
   test('deleting an inserted empty paragraph keeps hard-wrapped prose reflowing', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     let filePath: string | null = null
 
     try {
-      filePath = await openHardWrappedFixture(dolphinPage, testInfo)
-      await placeCaretAtGoalParagraphEnd(dolphinPage)
-      await dolphinPage.keyboard.press('Enter')
-      await dolphinPage.keyboard.press('Backspace')
+      filePath = await openHardWrappedFixture(appPage, testInfo)
+      await placeCaretAtGoalParagraphEnd(appPage)
+      await appPage.keyboard.press('Enter')
+      await appPage.keyboard.press('Backspace')
 
-      const metrics = await getGoalParagraphMetrics(dolphinPage)
+      const metrics = await getGoalParagraphMetrics(appPage)
 
       expect(metrics.hardBreakCount).toBe(0)
       expect(metrics.paragraphCount).toBe(1)
@@ -200,19 +198,19 @@ test.describe('Markdown prose reflow', () => {
   })
 
   test('deleting slash text then the empty paragraph keeps hard-wrapped prose reflowing', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     let filePath: string | null = null
 
     try {
-      filePath = await openHardWrappedFixture(dolphinPage, testInfo)
-      await placeCaretAtGoalParagraphEnd(dolphinPage)
-      await dolphinPage.keyboard.press('Enter')
-      await dolphinPage.keyboard.type('/')
-      await dolphinPage.keyboard.press('Backspace')
-      await dolphinPage.keyboard.press('Backspace')
+      filePath = await openHardWrappedFixture(appPage, testInfo)
+      await placeCaretAtGoalParagraphEnd(appPage)
+      await appPage.keyboard.press('Enter')
+      await appPage.keyboard.type('/')
+      await appPage.keyboard.press('Backspace')
+      await appPage.keyboard.press('Backspace')
 
-      const metrics = await getGoalParagraphMetrics(dolphinPage)
+      const metrics = await getGoalParagraphMetrics(appPage)
 
       expect(metrics.hardBreakCount).toBe(0)
       expect(metrics.paragraphCount).toBe(1)
@@ -225,16 +223,16 @@ test.describe('Markdown prose reflow', () => {
   })
 
   test('deleting the block boundary before a heading keeps hard-wrapped prose reflowing', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     let filePath: string | null = null
 
     try {
-      filePath = await openHardWrappedFixture(dolphinPage, testInfo)
-      await placeCaretAtHeadingStart(dolphinPage)
-      await dolphinPage.keyboard.press('Backspace')
+      filePath = await openHardWrappedFixture(appPage, testInfo)
+      await placeCaretAtHeadingStart(appPage)
+      await appPage.keyboard.press('Backspace')
 
-      const metrics = await getGoalParagraphMetrics(dolphinPage)
+      const metrics = await getGoalParagraphMetrics(appPage)
 
       expect(metrics.hardBreakCount).toBe(0)
       expect(metrics.paragraphCount).toBe(1)

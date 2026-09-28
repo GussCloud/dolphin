@@ -35,10 +35,10 @@ async function assertHiddenIsolation(app: ElectronApplication, testInfo: TestInf
 for (const theme of ['dark', 'light'] as const) {
   test(`invalid host project path stays readable over its dialog (${theme})`, async ({
     electronApp,
-    dolphinPage
+    appPage
   }, testInfo) => {
     const hostHome = await assertHiddenIsolation(electronApp, testInfo, 'host-isolation')
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     const client = await launchPairedElectronClient(offer, testInfo, 'Disposable host', {
       extraEnv: { DOLPHIN_BACKGROUND_LAUNCH: '1' }
     })
@@ -172,7 +172,7 @@ for (const theme of ['dark', 'light'] as const) {
       await assertHiddenIsolation(client.app, testInfo, 'client-final-isolation')
       await assertHiddenIsolation(electronApp, testInfo, 'host-final-isolation')
       expect(await client.getDirectSshAttemptTargetIds()).toEqual([])
-      expect(await dolphinPage.evaluate(() => window.api.repos.list())).toEqual([])
+      expect(await appPage.evaluate(() => window.api.repos.list())).toEqual([])
     } finally {
       await client.dispose()
     }

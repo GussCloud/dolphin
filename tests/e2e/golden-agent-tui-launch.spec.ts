@@ -9,23 +9,23 @@ import { focusActiveTerminalInput, getTerminalContent } from './helpers/terminal
 
 test.use({ launchEnv: getGoldenStubAgentLaunchEnv() })
 
-test('launches an agent TUI with a live multiline composer', async ({ dolphinPage }) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await configureGoldenStubAgent(dolphinPage)
-  await launchGoldenStubAgentFromNewTab(dolphinPage)
+test('launches an agent TUI with a live multiline composer', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await configureGoldenStubAgent(appPage)
+  await launchGoldenStubAgentFromNewTab(appPage)
 
-  const activeTab = dolphinPage.locator('[data-testid="sortable-tab"][data-active="true"]')
+  const activeTab = appPage.locator('[data-testid="sortable-tab"][data-active="true"]')
   await expect(activeTab).toHaveAttribute('data-tab-title', /Codex|Golden Stub Agent/i)
 
-  await focusActiveTerminalInput(dolphinPage)
-  await dolphinPage.keyboard.type('hello from e2e')
-  await dolphinPage.keyboard.press('Shift+Enter')
-  await dolphinPage.keyboard.type('second line')
+  await focusActiveTerminalInput(appPage)
+  await appPage.keyboard.type('hello from e2e')
+  await appPage.keyboard.press('Shift+Enter')
+  await appPage.keyboard.type('second line')
 
   await expect
-    .poll(() => getTerminalContent(dolphinPage), { timeout: 10_000 })
+    .poll(() => getTerminalContent(appPage), { timeout: 10_000 })
     .toContain('> hello from e2e\r\n  second line')
-  expect(await getTerminalContent(dolphinPage)).not.toContain('GOLDEN_STUB_AGENT_SUBMITTED')
+  expect(await getTerminalContent(appPage)).not.toContain('GOLDEN_STUB_AGENT_SUBMITTED')
 })

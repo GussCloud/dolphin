@@ -72,12 +72,12 @@ async function callRuntime<TResult>(page: Page, method: string, params: unknown)
 
 test('paints a paired remote terminal when only its retained text tail overflowed @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   test.setTimeout(120_000)
   const firstPaintMarker = `REMOTE_TRUNCATED_TAIL_FIRST_PAINT_${Date.now()}`
   const liveMarker = `REMOTE_TRUNCATED_TAIL_LIVE_${Date.now()}`
-  const worktree = await dolphinPage.evaluate(() => {
+  const worktree = await appPage.evaluate(() => {
     const state = window.__store?.getState()
     const activeWorktreeId = state?.activeWorktreeId
     if (!activeWorktreeId) {
@@ -91,7 +91,7 @@ test('paints a paired remote terminal when only its retained text tail overflowe
     }
     return { id: activeWorktree.id, path: activeWorktree.path }
   })
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedWebClient(electronApp, offer)
   let terminal: string | null = null
   try {
@@ -226,14 +226,14 @@ test('paints a paired remote terminal when only its retained text tail overflowe
 
 test('legacy paired hosts retain the lossy hidden-manager budget fallback @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   test.skip(
     process.env.DOLPHIN_E2E_DISABLE_PAIRED_TERMINAL_PARKING !== '1',
     'The legacy fallback requires a host without terminal.paired-parking.v1.'
   )
   test.setTimeout(120_000)
-  const worktreeIds = await dolphinPage.evaluate(() =>
+  const worktreeIds = await appPage.evaluate(() =>
     window.__store
       ?.getState()
       .allWorktrees()
@@ -243,7 +243,7 @@ test('legacy paired hosts retain the lossy hidden-manager budget fallback @headf
   if (!worktreeIds || worktreeIds.length < 2) {
     throw new Error('Paired retention fixture requires two seeded worktrees')
   }
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedWebClient(electronApp, offer, {
     terminalParkingDelayMs: RETENTION_PARK_DELAY_MS,
     terminalRetentionLimit: 1

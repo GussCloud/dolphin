@@ -85,13 +85,13 @@ async function openOrchestrationSettings(page: Page): Promise<void> {
 }
 
 test.describe('Settings skill detection', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
   })
 
   test('shows installed only for global orchestration skill installs', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     await installMockSkillDiscovery(
       electronApp,
@@ -101,8 +101,8 @@ test.describe('Settings skill detection', () => {
       ])
     )
 
-    await openOrchestrationSettings(dolphinPage)
-    const section = dolphinPage.locator('[data-settings-section="orchestration"]')
+    await openOrchestrationSettings(appPage)
+    const section = appPage.locator('[data-settings-section="orchestration"]')
     await section.getByRole('button', { name: 'Re-check' }).click()
 
     await expect(section.getByText('Not installed', { exact: true })).toBeVisible()

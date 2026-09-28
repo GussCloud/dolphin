@@ -212,17 +212,17 @@ async function openLinkFromRemotePane(page: Page, testInfo: TestInfo): Promise<v
 
 test('returns a headed host page identity before owner-pinned navigation can time out @headful', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo: TestInfo) => {
   test.setTimeout(300_000)
   const fixture = await startHeldNavigationServer()
   let client: PairedElectronClient | null = null
   try {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
     const hostClient = new RuntimeClient(userDataDir, 5_000)
     client = await launchPairedElectronClient(offer, testInfo, 'STA-4231 navigation deadline')
@@ -303,17 +303,17 @@ test('returns a headed host page identity before owner-pinned navigation can tim
 
 test('opens the held URL through the owner-pinned remote-pane link route @headful', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo: TestInfo) => {
   test.setTimeout(300_000)
   const fixture = await startHeldNavigationServer()
   let client: PairedElectronClient | null = null
   try {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
     const hostClient = new RuntimeClient(userDataDir, 5_000)
     client = await launchPairedElectronClient(offer, testInfo, 'STA-4231 owner-pinned link route')

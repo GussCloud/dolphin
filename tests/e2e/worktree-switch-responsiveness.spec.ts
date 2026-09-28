@@ -41,27 +41,27 @@ async function prepareSidebarForSwitchTest(page: Page): Promise<[string, string]
 }
 
 test.describe('Worktree switch responsiveness', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('updates the selected workspace in the same click task when changing back', async ({
-    dolphinPage
+    appPage
   }) => {
-    const [firstWorktreeId, secondWorktreeId] = await prepareSidebarForSwitchTest(dolphinPage)
-    const firstRow = worktreeRow(dolphinPage, firstWorktreeId)
-    const secondRow = worktreeRow(dolphinPage, secondWorktreeId)
+    const [firstWorktreeId, secondWorktreeId] = await prepareSidebarForSwitchTest(appPage)
+    const firstRow = worktreeRow(appPage, firstWorktreeId)
+    const secondRow = worktreeRow(appPage, secondWorktreeId)
 
     await expect(firstRow).toBeVisible()
     await expect(secondRow).toBeVisible()
     await expect(firstRow).toHaveAttribute('aria-current', 'page')
-    await expect(dolphinPage.locator('[data-rendered-active-worktree-id]')).toHaveAttribute(
+    await expect(appPage.locator('[data-rendered-active-worktree-id]')).toHaveAttribute(
       'data-rendered-active-worktree-id',
       firstWorktreeId
     )
 
-    const result = await dolphinPage.evaluate(
+    const result = await appPage.evaluate(
       async ({ firstId, secondId, timerDelayMs }) => {
         const option = (id: string): HTMLElement => {
           const element = [...document.querySelectorAll<HTMLElement>('[data-worktree-id]')].find(

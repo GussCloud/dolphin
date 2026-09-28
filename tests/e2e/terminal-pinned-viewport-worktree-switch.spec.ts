@@ -127,48 +127,46 @@ async function sampleTerminalViewportDuringReturn(
 
 test.describe('Terminal pinned viewport worktree switch', () => {
   test('does not jump or flash when returning to a viewport pinned just above bottom', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await closeFeatureTips(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    await closeFeatureTips(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'pinned viewport repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-pinned-viewport-${runId}.mjs`)
     writeFileSync(scriptPath, scrollbackFixtureScript(runId))
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 10_000,
           message: 'pinned viewport fixture did not reach terminal scrollback'
         })
         .toContain(`PINNED_VIEWPORT_SWITCH_${runId}_DONE`)
 
-      const pinned = await pinActiveTerminalNearBottom(dolphinPage)
+      const pinned = await pinActiveTerminalNearBottom(appPage)
       expect(pinned.baseY).toBeGreaterThan(20)
-      await dolphinPage.waitForTimeout(50)
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await dolphinPage.waitForTimeout(250)
+      await appPage.waitForTimeout(50)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.waitForTimeout(250)
 
-      const samplesPromise = sampleTerminalViewportDuringReturn(dolphinPage, pinned.tabId, 450)
-      await switchToWorktree(dolphinPage, firstWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      const samplesPromise = sampleTerminalViewportDuringReturn(appPage, pinned.tabId, 450)
+      await switchToWorktree(appPage, firstWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
       const samples = await samplesPromise
       expect(samples.length).toBeGreaterThan(0)
       expect(samples.filter((sample) => sample.viewportY <= 1)).toEqual([])

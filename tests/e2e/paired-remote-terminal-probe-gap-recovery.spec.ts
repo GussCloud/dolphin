@@ -70,10 +70,10 @@ async function callRuntime<TResult>(page: Page, method: string, params: unknown)
 
 test('replaces a stale paired stream when the PTY snapshot advanced @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   test.setTimeout(90_000)
-  const worktreeId = await dolphinPage.evaluate(() => {
+  const worktreeId = await appPage.evaluate(() => {
     const state = window.__store?.getState()
     const id = state?.activeWorktreeId
     if (!id || !state?.allWorktrees().some((candidate) => candidate.id === id)) {
@@ -81,7 +81,7 @@ test('replaces a stale paired stream when the PTY snapshot advanced @headful', a
     }
     return id
   })
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedWebClient(electronApp, offer)
   let terminal: string | null = null
   try {
@@ -120,7 +120,7 @@ test('replaces a stale paired stream when the PTY snapshot advanced @headful', a
     await expect(tab).toHaveAttribute('data-active', 'true')
     const originalPtyId = await waitForActivePanePtyId(client.page, 30_000)
     const originalHostTerminal = await callRuntime<{ terminal: RuntimeTerminalShow }>(
-      dolphinPage,
+      appPage,
       'terminal.show',
       { terminal }
     )
@@ -173,7 +173,7 @@ test('replaces a stale paired stream when the PTY snapshot advanced @headful', a
       .poll(
         async () => {
           const result = await callRuntime<{ terminal: RuntimeTerminalRead }>(
-            dolphinPage,
+            appPage,
             'terminal.read',
             { terminal }
           )
@@ -190,19 +190,15 @@ test('replaces a stale paired stream when the PTY snapshot advanced @headful', a
     await expect(tab).toHaveAttribute('data-active', 'true')
     expect(await waitForActivePanePtyId(client.page, 30_000)).toBe(originalPtyId)
     const recoveredHostTerminal = await callRuntime<{ terminal: RuntimeTerminalShow }>(
-      dolphinPage,
+      appPage,
       'terminal.show',
       { terminal }
     )
     expect(recoveredHostTerminal.terminal.ptyId).toBe(originalHostTerminal.terminal.ptyId)
-    const hostTerminals = await callRuntime<RuntimeTerminalListResult>(
-      dolphinPage,
-      'terminal.list',
-      {
-        worktree: `id:${worktreeId}`,
-        requireFreshPtyLiveness: true
-      }
-    )
+    const hostTerminals = await callRuntime<RuntimeTerminalListResult>(appPage, 'terminal.list', {
+      worktree: `id:${worktreeId}`,
+      requireFreshPtyLiveness: true
+    })
     expect(
       hostTerminals.terminals
         .filter((candidate) => candidate.tabId === created.tab.parentTabId)
@@ -231,7 +227,7 @@ test('replaces a stale paired stream when the PTY snapshot advanced @headful', a
       })
       .catch(() => undefined)
     if (terminal) {
-      await callRuntime(dolphinPage, 'terminal.closeTab', { terminal }).catch(() => undefined)
+      await callRuntime(appPage, 'terminal.closeTab', { terminal }).catch(() => undefined)
     }
     await client.dispose()
   }

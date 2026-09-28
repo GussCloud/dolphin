@@ -62,14 +62,14 @@ async function startFedCmFallbackServer(): Promise<{
 
 test('embedded browser omits unusable FedCM and reaches the popup fallback', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   const server = await startFedCmFallbackServer()
   try {
-    await ensureTerminalVisible(dolphinPage)
-    const worktreeId = await getActiveWorktreeId(dolphinPage)
+    await ensureTerminalVisible(appPage)
+    const worktreeId = await getActiveWorktreeId(appPage)
     expect(worktreeId).not.toBeNull()
-    const browserTabId = await dolphinPage.evaluate(
+    const browserTabId = await appPage.evaluate(
       ({ targetWorktreeId, url }) => {
         const tab = window.__store!.getState().createBrowserTab(targetWorktreeId!, url, {
           title: 'FedCM fallback oracle',
@@ -80,7 +80,7 @@ test('embedded browser omits unusable FedCM and reaches the popup fallback', asy
       { targetWorktreeId: worktreeId, url: server.url }
     )
     const readGuest = async <T>(expression: string): Promise<T> =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         async ({ targetBrowserTabId, script }) => {
           const slot = document.querySelector(
             `[data-browser-overlay-tab-id="${targetBrowserTabId}"]`

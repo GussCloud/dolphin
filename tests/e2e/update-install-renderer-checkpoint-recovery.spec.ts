@@ -11,17 +11,17 @@ const CHECKPOINT_ERROR_PREFIX = 'Renderer shutdown checkpoint was not completed:
 const CORRUPT_HISTORY_ENTRY = { url: null, title: 'corrupt persisted history', lastVisitedAt: 0 }
 
 test('recovers update install from a corrupt clean session but preserves dirty drafts', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }) => {
   const fallbackLogs: string[] = []
-  dolphinPage.on('console', (message) => {
+  appPage.on('console', (message) => {
     if (message.text().includes('Full renderer session snapshot failed; using durable session')) {
       fallbackLogs.push(message.text())
     }
   })
 
-  const dirtyResult = await dolphinPage.evaluate(
+  const dirtyResult = await appPage.evaluate(
     async ({ filePath, worktreeId, corruptEntry }) => {
       const store = window.__store
       if (!store) {
@@ -53,9 +53,7 @@ test('recovers update install from a corrupt clean session but preserves dirty d
     },
     {
       filePath: path.join(testRepoPath, 'checkpoint-draft.txt'),
-      worktreeId: await dolphinPage.evaluate(
-        () => window.__store?.getState().activeWorktreeId ?? ''
-      ),
+      worktreeId: await appPage.evaluate(() => window.__store?.getState().activeWorktreeId ?? ''),
       corruptEntry: CORRUPT_HISTORY_ENTRY
     }
   )
@@ -65,7 +63,7 @@ test('recovers update install from a corrupt clean session but preserves dirty d
   // survives V8 rewording of "Cannot read properties of null".
   expect(dirtyResult).toContain('toLowerCase')
 
-  const cleanResult = await dolphinPage.evaluate(async (corruptEntry) => {
+  const cleanResult = await appPage.evaluate(async (corruptEntry) => {
     const store = window.__store
     if (!store) {
       throw new Error('window.__store is not available')

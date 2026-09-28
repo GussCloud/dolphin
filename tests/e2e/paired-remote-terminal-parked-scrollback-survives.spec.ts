@@ -313,12 +313,12 @@ async function runParkRevealScenario(args: {
 }
 
 async function runScenario(
-  dolphinPage: Page,
+  appPage: Page,
   testInfo: Parameters<Parameters<typeof test>[1]>[1],
   clientName: string,
   parkKind: ParkKind
 ): Promise<ParkRevealOutcome> {
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedElectronClient(offer, testInfo, clientName, {
     extraEnv: {
       DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS: String(PARK_DELAY_MS),
@@ -329,7 +329,7 @@ async function runScenario(
   })
   const createdTerminals: string[] = []
   try {
-    const worktreeIds = await readHostWorktreeIds(dolphinPage)
+    const worktreeIds = await readHostWorktreeIds(appPage)
     await expect
       .poll(
         () =>
@@ -396,10 +396,10 @@ const FORCE_PARKED_SHARED: Omit<ParkRevealOutcome, 'tokenAfterReveal'> = {
 
 test.describe('host retains the buffer', () => {
   test('a cold-parked remote terminal restores its scrollback on reveal', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(600_000)
-    expect(await runScenario(dolphinPage, testInfo, 'host-retains', 'ordinary')).toEqual(
+    expect(await runScenario(appPage, testInfo, 'host-retains', 'ordinary')).toEqual(
       RESTORED_LOCAL_ONLY
     )
   })
@@ -411,10 +411,10 @@ test.describe('host retains nothing', () => {
   })
 
   test('a cold-parked remote terminal keeps its scrollback when the host cannot answer', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(600_000)
-    expect(await runScenario(dolphinPage, testInfo, 'host-empty', 'ordinary')).toEqual(
+    expect(await runScenario(appPage, testInfo, 'host-empty', 'ordinary')).toEqual(
       RESTORED_LOCAL_ONLY
     )
   })
@@ -431,10 +431,10 @@ test.describe('force-park with a host that cannot answer', () => {
   })
 
   test('a force-parked remote terminal keeps its shared-layout capture across an inventory frame', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(600_000)
-    const outcome = await runScenario(dolphinPage, testInfo, 'force-park', 'force')
+    const outcome = await runScenario(appPage, testInfo, 'force-park', 'force')
     expect({
       tokenBeforePark: outcome.tokenBeforePark,
       parked: outcome.parked,

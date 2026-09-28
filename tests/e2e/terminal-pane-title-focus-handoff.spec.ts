@@ -37,16 +37,16 @@ test.describe.configure({ mode: 'serial' })
 test.describe('Terminal Panes', () => {
   registerTerminalPaneMountReadiness()
 
-  test('Set Title input stays open when clicked in a split terminal', async ({ dolphinPage }) => {
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    await splitActiveTerminalPane(dolphinPage, 'horizontal')
-    await waitForPaneCount(dolphinPage, 3)
+  test('Set Title input stays open when clicked in a split terminal', async ({ appPage }) => {
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    await splitActiveTerminalPane(appPage, 'horizontal')
+    await waitForPaneCount(appPage, 3)
 
-    await openTerminalContextMenu(dolphinPage)
-    await dolphinPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = dolphinPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
 
@@ -76,9 +76,9 @@ test.describe('Terminal Panes', () => {
     await expect(titleInput).toBeFocused()
   })
 
-  test('Set Title survives an early blur during first focus handoff', async ({ dolphinPage }) => {
-    await openTerminalContextMenu(dolphinPage)
-    await dolphinPage.evaluate(() => {
+  test('Set Title survives an early blur during first focus handoff', async ({ appPage }) => {
+    await openTerminalContextMenu(appPage)
+    await appPage.evaluate(() => {
       const blurOnFirstTitleFocus = (event: FocusEvent): void => {
         const target = event.target
         if (
@@ -92,59 +92,59 @@ test.describe('Terminal Panes', () => {
       }
       document.addEventListener('focusin', blurOnFirstTitleFocus, true)
     })
-    await dolphinPage.getByText('Set Title…', { exact: true }).click()
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = dolphinPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await dolphinPage.waitForTimeout(250)
+    await appPage.waitForTimeout(250)
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
   })
 
-  test('Set Title survives delayed terminal focus handoffs', async ({ dolphinPage }) => {
-    await openTerminalContextMenu(dolphinPage)
-    await installDelayedTerminalFocusSteals(dolphinPage, [50, 150, 300])
-    await dolphinPage.getByText('Set Title…', { exact: true }).click()
+  test('Set Title survives delayed terminal focus handoffs', async ({ appPage }) => {
+    await openTerminalContextMenu(appPage)
+    await installDelayedTerminalFocusSteals(appPage, [50, 150, 300])
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = dolphinPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await dolphinPage.waitForTimeout(600)
+    await appPage.waitForTimeout(600)
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
   })
 
   test('Set Title survives delayed terminal focus handoffs in a split pane', async ({
-    dolphinPage
+    appPage
   }) => {
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
 
-    await openTerminalContextMenu(dolphinPage)
-    await installDelayedTerminalFocusSteals(dolphinPage, [50, 150, 300])
-    await dolphinPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await installDelayedTerminalFocusSteals(appPage, [50, 150, 300])
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = dolphinPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await dolphinPage.waitForTimeout(600)
+    await appPage.waitForTimeout(600)
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
   })
 
-  test('Set Title preserves draft text across terminal focus steals', async ({ dolphinPage }) => {
+  test('Set Title preserves draft text across terminal focus steals', async ({ appPage }) => {
     const draftTitle = `Draft title ${Date.now()}`
 
-    await openTerminalContextMenu(dolphinPage)
-    await dolphinPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = dolphinPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
     await titleInput.fill(draftTitle)
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const textarea = document.querySelector<HTMLTextAreaElement>('.xterm-helper-textarea')
       textarea?.focus()
     })
@@ -154,13 +154,13 @@ test.describe('Terminal Panes', () => {
     await expect(titleInput).toHaveValue(draftTitle)
   })
 
-  test('Set Title does not submit when synthetic focus restore fails', async ({ dolphinPage }) => {
+  test('Set Title does not submit when synthetic focus restore fails', async ({ appPage }) => {
     const draftTitle = `Blocked focus title ${Date.now()}`
 
-    await openTerminalContextMenu(dolphinPage)
-    await dolphinPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = dolphinPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
     await titleInput.fill(draftTitle)
@@ -168,36 +168,36 @@ test.describe('Terminal Panes', () => {
       input.focus = () => {}
     })
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const textarea = document.querySelector<HTMLTextAreaElement>('.xterm-helper-textarea')
       textarea?.focus()
     })
 
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toHaveValue(draftTitle)
-    await expect(dolphinPage.locator('.pane-title-text', { hasText: draftTitle })).toHaveCount(0)
+    await expect(appPage.locator('.pane-title-text', { hasText: draftTitle })).toHaveCount(0)
   })
 
   test('Set Title still commits by blur after synthetic terminal focus steals', async ({
-    dolphinPage
+    appPage
   }) => {
     const title = `Post steal blur title ${Date.now()}`
 
-    await openTerminalContextMenu(dolphinPage)
-    await installDelayedTerminalFocusSteals(dolphinPage, [50, 150])
-    await dolphinPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await installDelayedTerminalFocusSteals(appPage, [50, 150])
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = dolphinPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await dolphinPage.waitForTimeout(300)
+    await appPage.waitForTimeout(300)
     await titleInput.fill(title)
-    await dolphinPage
+    await appPage
       .locator('.xterm:visible')
       .first()
       .click({ position: { x: 40, y: 60 } })
 
     await expect(titleInput).toHaveCount(0)
-    await expect(dolphinPage.locator('.pane-title-text', { hasText: title })).toHaveCount(1)
+    await expect(appPage.locator('.pane-title-text', { hasText: title })).toHaveCount(1)
   })
 })

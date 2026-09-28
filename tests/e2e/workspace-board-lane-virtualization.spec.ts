@@ -13,15 +13,13 @@ const CARDS_PER_LANE = 100
  * still carries its true lane index so drop targeting stays correct.
  */
 test.describe('Workspace board lane virtualization', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test('mounts a window of cards for a large lane and keeps lane indexes', async ({
-    dolphinPage
-  }) => {
-    await dolphinPage.evaluate((count) => {
+  test('mounts a window of cards for a large lane and keeps lane indexes', async ({ appPage }) => {
+    await appPage.evaluate((count) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available')
@@ -69,9 +67,9 @@ test.describe('Workspace board lane virtualization', () => {
       })
     }, SEEDED_WORKSPACE_COUNT)
 
-    await dolphinPage.getByRole('button', { name: 'Workspace board' }).click()
+    await appPage.getByRole('button', { name: 'Workspace board' }).click()
 
-    const cards = dolphinPage.locator('[data-workspace-board-card-id]')
+    const cards = appPage.locator('[data-workspace-board-card-id]')
     // Why: an empty window would also satisfy "fewer than seeded"; the point of
     // the change is a filled window, not a blank board.
     await expect.poll(() => cards.count(), { timeout: 15_000 }).toBeGreaterThan(3)
@@ -86,8 +84,8 @@ test.describe('Workspace board lane virtualization', () => {
     expect(new Set(indexes).size).toBe(indexes.length)
   })
 
-  test('renders later lane indexes after the lane scrolls', async ({ dolphinPage }) => {
-    await dolphinPage.evaluate((count) => {
+  test('renders later lane indexes after the lane scrolls', async ({ appPage }) => {
+    await appPage.evaluate((count) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available')
@@ -129,9 +127,9 @@ test.describe('Workspace board lane virtualization', () => {
       })
     }, SEEDED_WORKSPACE_COUNT)
 
-    await dolphinPage.getByRole('button', { name: 'Workspace board' }).click()
+    await appPage.getByRole('button', { name: 'Workspace board' }).click()
 
-    const cards = dolphinPage.locator('[data-workspace-board-card-id]')
+    const cards = appPage.locator('[data-workspace-board-card-id]')
     await expect.poll(() => cards.count(), { timeout: 15_000 }).toBeGreaterThan(3)
 
     const readMaxIndex = (): Promise<number> =>
@@ -144,7 +142,7 @@ test.describe('Workspace board lane virtualization', () => {
       )
     const before = await readMaxIndex()
 
-    await dolphinPage
+    await appPage
       .locator('[data-workspace-status="in-progress"] [data-workspace-board-lane-scroll]')
       .first()
       .evaluate((element) => {
@@ -156,13 +154,13 @@ test.describe('Workspace board lane virtualization', () => {
   })
 
   test('bounds mounted lanes and cards while preserving a 21-status workflow', async ({
-    dolphinPage
+    appPage
   }) => {
     const statusIds = Array.from(
       { length: MANY_LANE_COUNT },
       (_, index) => `state-${String(index + 1).padStart(2, '0')}`
     )
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ cardsPerLane, ids }) => {
         const store = window.__store
         if (!store) {
@@ -223,9 +221,9 @@ test.describe('Workspace board lane virtualization', () => {
       { cardsPerLane: CARDS_PER_LANE, ids: statusIds }
     )
 
-    await dolphinPage.getByRole('button', { name: 'Workspace board' }).click()
+    await appPage.getByRole('button', { name: 'Workspace board' }).click()
 
-    const board = dolphinPage.locator('[data-workspace-board-selection-surface]')
+    const board = appPage.locator('[data-workspace-board-selection-surface]')
     const scroller = board.locator('[data-workspace-board-lane-grid]').locator('..')
     const lanes = board.locator('[data-workspace-status]')
     const cards = board.locator('[data-workspace-board-card-id]')
@@ -256,7 +254,7 @@ test.describe('Workspace board lane virtualization', () => {
     expect(await lanes.count()).toBeLessThanOrEqual(laneBudget)
     expect(await cards.count()).toBeLessThan((await lanes.count()) * 40)
     expect(
-      await dolphinPage.evaluate(() =>
+      await appPage.evaluate(() =>
         window.__store?.getState().workspaceStatuses.map((status) => status.id)
       )
     ).toEqual(statusIds)
@@ -268,7 +266,7 @@ test.describe('Workspace board lane virtualization', () => {
     await resizeHandle.focus()
     await resizeHandle.press('ArrowRight')
     await expect
-      .poll(() => dolphinPage.evaluate(() => window.__store?.getState().workspaceBoardColumnWidth))
+      .poll(() => appPage.evaluate(() => window.__store?.getState().workspaceBoardColumnWidth))
       .toBe(328)
     await expect(resizeHandle).toHaveAttribute('aria-valuenow', '328')
     await scroller.evaluate((element) => {
@@ -289,20 +287,17 @@ test.describe('Workspace board lane virtualization', () => {
     if (!sourceId || !sourceBox || !targetBox) {
       throw new Error('Expected visible source card and final lane drop target')
     }
-    await dolphinPage.mouse.move(
-      sourceBox.x + sourceBox.width / 2,
-      sourceBox.y + sourceBox.height / 2
-    )
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(
+    await appPage.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+    await appPage.mouse.down()
+    await appPage.mouse.move(
       targetBox.x + targetBox.width / 2,
       targetBox.y + Math.min(80, targetBox.height / 2),
       { steps: 8 }
     )
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
     await expect
       .poll(() =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           (worktreeId) =>
             window.__store?.getState().getKnownWorktreeById(worktreeId)?.workspaceStatus,
           sourceId
@@ -311,12 +306,10 @@ test.describe('Workspace board lane virtualization', () => {
       .toBe('state-21')
   })
 
-  test('selects the full lane across a single large marquee scroll jump', async ({
-    dolphinPage
-  }) => {
+  test('selects the full lane across a single large marquee scroll jump', async ({ appPage }) => {
     const statusId = 'virtual-marquee'
     const emptyStatusId = 'virtual-marquee-start'
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ count, emptyStatus, status }) => {
         const store = window.__store
         if (!store) {
@@ -370,14 +363,14 @@ test.describe('Workspace board lane virtualization', () => {
       { count: MARQUEE_WORKSPACE_COUNT, emptyStatus: emptyStatusId, status: statusId }
     )
 
-    await dolphinPage.getByRole('button', { name: 'Workspace board' }).click()
+    await appPage.getByRole('button', { name: 'Workspace board' }).click()
 
-    const lane = dolphinPage.locator(`[data-workspace-status="${statusId}"]`)
+    const lane = appPage.locator(`[data-workspace-status="${statusId}"]`)
     await expect(lane.getByText(String(MARQUEE_WORKSPACE_COUNT), { exact: true })).toBeVisible()
     const laneCards = lane.locator('[data-workspace-board-card-id]')
     await expect.poll(() => laneCards.count(), { timeout: 15_000 }).toBeGreaterThan(3)
     const laneScroll = lane.locator('[data-workspace-board-lane-scroll]')
-    const emptyLaneScroll = dolphinPage.locator(
+    const emptyLaneScroll = appPage.locator(
       `[data-workspace-status="${emptyStatusId}"] [data-workspace-board-lane-scroll]`
     )
     const box = await laneScroll.boundingBox()
@@ -421,14 +414,14 @@ test.describe('Workspace board lane virtualization', () => {
       throw new Error('Expected empty board space for the marquee start')
     }
 
-    await dolphinPage.mouse.move(startPoint.x, startPoint.y)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(box.x + box.width - 18, box.y + 80, { steps: 4 })
+    await appPage.mouse.move(startPoint.x, startPoint.y)
+    await appPage.mouse.down()
+    await appPage.mouse.move(box.x + box.width - 18, box.y + 80, { steps: 4 })
 
     // Why: proves the board accepted the gesture. Without it a rejected
     // pointerdown only shows up 15s later as "0 cards previewed", which reads as
     // a virtualization bug rather than a marquee that never started.
-    await expect(dolphinPage.locator('[data-workspace-board-selection-rect]')).toBeVisible()
+    await expect(appPage.locator('[data-workspace-board-selection-rect]')).toBeVisible()
     await expect
       .poll(() => lane.locator('[data-workspace-board-card-area-selected="true"]').count(), {
         timeout: 15_000
@@ -463,12 +456,12 @@ test.describe('Workspace board lane virtualization', () => {
       `lane scroll never settled at its bottom: ${JSON.stringify(laneScrollSettle)}`
     ).toBeGreaterThanOrEqual(laneScrollSettle.maxScrollTop - 1)
 
-    await dolphinPage.mouse.move(box.x + box.width - 18, box.y + box.height - 12)
-    await dolphinPage.mouse.up()
+    await appPage.mouse.move(box.x + box.width - 18, box.y + box.height - 12)
+    await appPage.mouse.up()
 
     // Why: assert the badge's text, not its presence — a marquee that stopped
     // short reports the count it did commit instead of a bare locator timeout.
-    await expect(dolphinPage.getByText(/^\d+ selected$/)).toHaveText(
+    await expect(appPage.getByText(/^\d+ selected$/)).toHaveText(
       `${MARQUEE_WORKSPACE_COUNT} selected`
     )
   })

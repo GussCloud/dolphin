@@ -8,11 +8,11 @@ test.use({ dolphinAppExtraEnv: { DOLPHIN_BACKGROUND_LAUNCH: '1' } })
 
 test('Create more clears the GitHub PR source before the next worktree', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
   const sha = execFileSync('git', ['rev-parse', 'HEAD'], {
     cwd: testRepoPath,
     encoding: 'utf8'
@@ -21,13 +21,13 @@ test('Create more clears the GitHub PR source before the next worktree', async (
     ipcMain.removeHandler('worktrees:resolvePrBase')
     ipcMain.handle('worktrees:resolvePrBase', () => ({ baseBranch }))
   }, sha)
-  await dolphinPage.evaluate(() => {
+  await appPage.evaluate(() => {
     const store = window.__store!
     const state = store.getState()
     store.setState({ settings: { ...state.settings!, defaultTuiAgent: 'blank' } })
   })
-  await openSidebarWorkspaceComposer(dolphinPage)
-  await dolphinPage.evaluate(() => {
+  await openSidebarWorkspaceComposer(appPage)
+  await appPage.evaluate(() => {
     const store = window.__store!
     const repoId = store.getState().repos[0].id
     const item = {
@@ -53,12 +53,10 @@ test('Create more clears the GitHub PR source before the next worktree', async (
       })
     })
   })
-  const dialog = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+  const dialog = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
   const input = dialog.locator('[data-workspace-name-input="true"]')
   await input.click()
-  await dolphinPage
-    .getByRole('option', { name: '#4242 Fix workspace task reset', exact: true })
-    .click()
+  await appPage.getByRole('option', { name: '#4242 Fix workspace task reset', exact: true }).click()
   const pill = dialog.locator('[data-workspace-source-pill="true"]')
   await expect(pill).toContainText('Fix workspace task reset')
   await dialog.getByRole('switch', { name: 'Create more' }).click()
@@ -67,7 +65,7 @@ test('Create more clears the GitHub PR source before the next worktree', async (
   await expect(input).toHaveValue('')
   await expect
     .poll(() =>
-      dolphinPage.evaluate(() =>
+      appPage.evaluate(() =>
         window
           .__store!.getState()
           .allWorktrees()
@@ -75,7 +73,7 @@ test('Create more clears the GitHub PR source before the next worktree', async (
       )
     )
     .toBe(true)
-  const cdp = await dolphinPage.context().newCDPSession(dolphinPage)
+  const cdp = await appPage.context().newCDPSession(appPage)
   const screenshot = await cdp.send('Page.captureScreenshot')
   const proofPath = testInfo.outputPath('create-more-result.png')
   writeFileSync(proofPath, Buffer.from(screenshot.data, 'base64'))
@@ -93,7 +91,7 @@ test('Create more clears the GitHub PR source before the next worktree', async (
   await dialog.getByRole('button', { name: /^Create/ }).click()
   await expect
     .poll(() =>
-      dolphinPage.evaluate(() => {
+      appPage.evaluate(() => {
         const worktree = window
           .__store!.getState()
           .allWorktrees()

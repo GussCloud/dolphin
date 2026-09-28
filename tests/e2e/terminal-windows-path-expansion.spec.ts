@@ -27,12 +27,12 @@ test.afterAll(() => {
 
 test.skip(process.platform !== 'win32', 'Windows PATH expansion requires a native Windows shell')
 
-test('expands variables in PATH before spawning a Windows shell', async ({ dolphinPage }) => {
-  await waitForSessionReady(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+test('expands variables in PATH before spawning a Windows shell', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  await ensureTerminalVisible(appPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
 
-  await execInTerminal(dolphinPage, ptyId, 'dolphin-path-expansion-probe')
+  await execInTerminal(appPage, ptyId, 'dolphin-path-expansion-probe')
 
-  await waitForTerminalOutput(dolphinPage, 'DOLPHIN_PATH_EXPANSION_OK')
+  await waitForTerminalOutput(appPage, 'DOLPHIN_PATH_EXPANSION_OK')
 })

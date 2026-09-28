@@ -32,7 +32,7 @@ test.describe('Agent Session History live log', () => {
 
   test('keeps a long View Log viewport stable while the transcript grows', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     test.setTimeout(10 * 60_000)
@@ -42,24 +42,24 @@ test.describe('Agent Session History live log', () => {
       BrowserWindow.getAllWindows()[0]?.webContents.setZoomFactor(1)
     })
 
-    await dolphinPage.setViewportSize({ width: 520, height: 720 })
-    await openSessionHistory(dolphinPage)
-    const title = dolphinPage.getByText(fixture.title, { exact: true }).first()
+    await appPage.setViewportSize({ width: 520, height: 720 })
+    await openSessionHistory(appPage)
+    const title = appPage.getByText(fixture.title, { exact: true }).first()
     await expect(title).toBeVisible({ timeout: 30_000 })
     await title.click()
-    await dolphinPage.getByText('View Log', { exact: true }).click()
+    await appPage.getByText('View Log', { exact: true }).click()
     await expect
-      .poll(() => readProbeOrNull(dolphinPage), { timeout: 120_000 })
+      .poll(() => readProbeOrNull(appPage), { timeout: 120_000 })
       .toMatchObject({ filePath: fixture.filePath, valueLength: fixture.initialLength })
-    await dolphinPage.setViewportSize({ width: 900, height: 720 })
-    await dolphinPage.evaluate(async () => {
+    await appPage.setViewportSize({ width: 900, height: 720 })
+    await appPage.evaluate(async () => {
       const state = window.__store?.getState()
       state?.setRightSidebarOpen(false)
       state?.setEditorFontZoomLevel(0)
       await state?.updateSettings({ terminalFontSize: 13 })
     })
 
-    let baseline = await restoreAnchorState(dolphinPage, true)
+    let baseline = await restoreAnchorState(appPage, true)
     console.log(`[live-log-stability] geometry ${JSON.stringify(baseline)}`)
     // Why: containment is proven by the full 9 MiB model length, which is
     // font-independent. Word-wrap pixel geometry varies ~10% across runner font
@@ -81,12 +81,8 @@ test.describe('Agent Session History live log', () => {
 
     for (let batch = 0; batch < 3; batch++) {
       const equivalentState = baseline
-      replacementMemory.push(await measureLegacyControl(electronApp, dolphinPage, baseline, batch))
-      baseline = await restoreAnchorState(
-        dolphinPage,
-        baseline.find.open,
-        equivalentState.scrollTop
-      )
+      replacementMemory.push(await measureLegacyControl(electronApp, appPage, baseline, batch))
+      baseline = await restoreAnchorState(appPage, baseline.find.open, equivalentState.scrollTop)
       expect(baseline.contentHeight).toBe(equivalentState.contentHeight)
       expect(baseline.valueLength).toBe(equivalentState.valueLength)
       expect(baseline.valueTail).toBe(equivalentState.valueTail)
@@ -95,19 +91,19 @@ test.describe('Agent Session History live log', () => {
       expect(baseline.find).toEqual(equivalentState.find)
       expect(Math.abs(baseline.scrollTop - equivalentState.scrollTop)).toBeLessThanOrEqual(2)
       const suffix = `${JSON.stringify({ type: 'e2e_append', batch, text: 'tail-only' })}\n`
-      await forceGcAndSettle(dolphinPage)
-      const before = await readMemory(electronApp, dolphinPage)
+      await forceGcAndSettle(appPage)
+      const before = await readMemory(electronApp, appPage)
       appendFileSync(fixture.filePath, suffix)
       fixture.initialLength += suffix.length
-      await dolphinPage.waitForTimeout(APPEND_CADENCE_MS)
+      await appPage.waitForTimeout(APPEND_CADENCE_MS)
       await expect
-        .poll(() => readProbe(dolphinPage), { timeout: 30_000 })
+        .poll(() => readProbe(appPage), { timeout: 30_000 })
         .toMatchObject({ valueLength: fixture.initialLength })
-      const after = await readMemory(electronApp, dolphinPage)
-      await forceGcAndSettle(dolphinPage)
-      const settled = await readMemory(electronApp, dolphinPage)
+      const after = await readMemory(electronApp, appPage)
+      await forceGcAndSettle(appPage)
+      const settled = await readMemory(electronApp, appPage)
       suffixMemory.push({ before, after, settled })
-      const current = await readProbe(dolphinPage)
+      const current = await readProbe(appPage)
       console.log(`[live-log-stability] anchor ${JSON.stringify({ batch, baseline, current })}`)
       expect(current.visibleRanges).toEqual(baseline.visibleRanges)
       expect(current.canUndo).toBe(false)
@@ -115,16 +111,16 @@ test.describe('Agent Session History live log', () => {
       expect(current.selection).toEqual(baseline.selection)
       expect(current.find).toEqual(baseline.find)
       expect(Math.abs(current.scrollTop - baseline.scrollTop)).toBeLessThanOrEqual(2)
-      expect(await dolphinPage.evaluate(() => 2 + 2)).toBe(4)
+      expect(await appPage.evaluate(() => 2 + 2)).toBe(4)
       expect((await readMainProcessCrashProbe(electronApp)).processGone).toBeNull()
       baseline = current
       if (batch === 0) {
-        await dolphinPage.keyboard.press('Escape')
-        await expect(dolphinPage.locator('.monaco-editor .find-widget')).toHaveAttribute(
+        await appPage.keyboard.press('Escape')
+        await expect(appPage.locator('.monaco-editor .find-widget')).toHaveAttribute(
           'aria-hidden',
           'true'
         )
-        baseline = await readProbe(dolphinPage)
+        baseline = await readProbe(appPage)
         expect(baseline.find.open).toBe(false)
       }
     }
@@ -134,7 +130,7 @@ test.describe('Agent Session History live log', () => {
     )
     assertMemoryBudget(suffixMemory, replacementMemory)
     await testInfo.attach('synthetic-live-log-stable', {
-      body: await dolphinPage.screenshot(),
+      body: await appPage.screenshot(),
       contentType: 'image/png'
     })
   })

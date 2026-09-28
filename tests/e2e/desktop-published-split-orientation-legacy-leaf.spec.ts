@@ -101,26 +101,26 @@ async function readPublishedTerminalSurfaces(
 }
 
 test('publishes an unmounted split with its real orientation when a legacy leaf lingers in the saved tree', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(360_000)
-  const worktreeId = await dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId)
+  const worktreeId = await appPage.evaluate(() => window.__store?.getState().activeWorktreeId)
   if (!worktreeId) {
     throw new Error('Headed host has no active seeded workspace')
   }
   let client: PairedElectronClient | null = null
 
   try {
-    await waitForActiveTerminalManager(dolphinPage, 60_000)
-    const hostTabId = await resolveActiveTabId(dolphinPage)
+    await waitForActiveTerminalManager(appPage, 60_000)
+    const hostTabId = await resolveActiveTabId(appPage)
     if (!hostTabId) {
       throw new Error('Headed host has no active terminal tab')
     }
 
     // Split right: two panes side by side, the orientation the report is about.
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2, 60_000)
-    const panes = await readPaneIdentitySnapshot(dolphinPage)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2, 60_000)
+    const panes = await readPaneIdentitySnapshot(appPage)
     const leafIds = (panes?.panes ?? []).map((pane) => pane.leafId)
     const [firstLeafId, secondLeafId] = leafIds
     if (leafIds.length !== 2 || !firstLeafId || !secondLeafId) {
@@ -131,7 +131,7 @@ test('publishes an unmounted split with its real orientation when a legacy leaf 
       .poll(
         async () =>
           splitDirectionSeparating(
-            (await readSavedLayout(dolphinPage, hostTabId))?.root,
+            (await readSavedLayout(appPage, hostTabId))?.root,
             firstLeafId,
             secondLeafId
           ),
@@ -140,12 +140,12 @@ test('publishes an unmounted split with its real orientation when a legacy leaf 
       .toBe('vertical')
 
     // Park the tab: a parked tab is republished from the saved tree, not the live DOM.
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, hostTabId, {
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, hostTabId, {
       parkDelayMs: PARK_DELAY_MS
     })
 
     // The drift under test: the saved tree keeps a leaf the stable-id leaf set cannot carry.
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ tabId, firstLeafId, secondLeafId, legacyLeafId }) => {
         const state = window.__store?.getState()
         const saved = state?.terminalLayoutsByTabId[tabId]
@@ -171,11 +171,11 @@ test('publishes an unmounted split with its real orientation when a legacy leaf 
     )
     // Control: with no lingering leaf the saved tree covers the leaf set and the publisher
     // never reaches the fallback at all, so the assertions below pass for free.
-    expect(collectLeafIds((await readSavedLayout(dolphinPage, hostTabId))?.root)).toContain(
+    expect(collectLeafIds((await readSavedLayout(appPage, hostTabId))?.root)).toContain(
       LEGACY_LEAF_ID
     )
 
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     // The observer inherited the same override back when it came from `process.env`; keep it so
     // scoping the write to this file does not also change what the client does.
     client = await launchPairedElectronClient(offer, testInfo, 'legacy-leaf-orientation-observer', {

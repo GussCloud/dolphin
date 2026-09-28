@@ -4,16 +4,16 @@ import { test, expect } from './helpers/dolphin-app'
 import { openFileExplorer } from './helpers/file-explorer'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 
-test('refreshes the visible tree after external Windows file changes', async ({ dolphinPage }) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await dolphinPage.evaluate(() => window.__store?.getState().setRightSidebarOpen(false))
+test('refreshes the visible tree after external Windows file changes', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await appPage.evaluate(() => window.__store?.getState().setRightSidebarOpen(false))
   await expect
-    .poll(() => dolphinPage.evaluate(() => window.__store?.getState().rightSidebarOpen))
+    .poll(() => appPage.evaluate(() => window.__store?.getState().rightSidebarOpen))
     .toBe(false)
-  await openFileExplorer(dolphinPage)
+  await openFileExplorer(appPage)
 
-  const worktreePath = await dolphinPage.evaluate(() => {
+  const worktreePath = await appPage.evaluate(() => {
     const state = window.__store?.getState()
     const worktreeId = state?.activeWorktreeId
     if (!state || !worktreeId) {
@@ -33,15 +33,15 @@ test('refreshes the visible tree after external Windows file changes', async ({ 
   const originalPath = path.join(worktreePath, originalName)
   const renamedPath = path.join(worktreePath, renamedName)
   const row = (name: string) =>
-    dolphinPage
+    appPage
       .locator('[data-file-explorer-row]')
-      .filter({ has: dolphinPage.getByText(name, { exact: true }) })
+      .filter({ has: appPage.getByText(name, { exact: true }) })
 
   rmSync(originalPath, { force: true })
   rmSync(renamedPath, { force: true })
   try {
     await expect(row('README.md')).toBeVisible({ timeout: 10_000 })
-    await dolphinPage.waitForTimeout(2_000)
+    await appPage.waitForTimeout(2_000)
 
     writeFileSync(originalPath, 'created outside Dolphin\n')
     await expect(row(originalName)).toBeVisible({ timeout: 10_000 })

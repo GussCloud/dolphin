@@ -11,12 +11,12 @@ import {
 } from './helpers/markdown-editor-fixture'
 
 test('restores the Markdown viewport when an image gains height after a tab switch', async ({
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  const context = await getActiveWorktreeContext(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  const context = await getActiveWorktreeContext(appPage)
   const directory = '.dolphin-e2e-markdown-scroll'
   let filePath: string | null = null
   let otherPath: string | null = null
@@ -53,32 +53,32 @@ test('restores the Markdown viewport when an image gains height after a tab swit
     testInfo.workerIndex,
     '# Other tab'
   )
-  await openMarkdownFixture(dolphinPage, context, otherPath)
-  await waitForRichMarkdownEditor(dolphinPage)
-  await openMarkdownFixture(dolphinPage, context, filePath)
-  const editor = await waitForRichMarkdownEditor(dolphinPage)
+  await openMarkdownFixture(appPage, context, otherPath)
+  await waitForRichMarkdownEditor(appPage)
+  await openMarkdownFixture(appPage, context, filePath)
+  const editor = await waitForRichMarkdownEditor(appPage)
   const image = editor.getByRole('img', { name: 'Scroll restoration image' })
   await expect
     .poll(() =>
       image.evaluate((element) => (element instanceof HTMLImageElement ? element.naturalHeight : 0))
     )
     .toBe(1500)
-  const viewport = dolphinPage.locator('.rich-markdown-editor-shell .overflow-auto')
+  const viewport = appPage.locator('.rich-markdown-editor-shell .overflow-auto')
   await viewport.evaluate((element) => {
     element.scrollTop = 4000
   })
   const heading = editor.getByRole('heading', { name: 'Section 45', exact: true })
   const originalTop = await heading.evaluate((element) => element.getBoundingClientRect().top)
 
-  await dolphinPage
+  await appPage
     .locator('[data-tab-id]')
     .filter({ hasText: path.basename(otherPath) })
     .click()
   // Model image dimensions arriving after restoration, independent of the host's decode speed.
-  const pendingImage = await dolphinPage.addStyleTag({
+  const pendingImage = await appPage.addStyleTag({
     content: '.rich-markdown-editor img[alt="Scroll restoration image"] { height: 1px !important; }'
   })
-  await dolphinPage
+  await appPage
     .locator('[data-tab-id]')
     .filter({ hasText: path.basename(filePath) })
     .click()

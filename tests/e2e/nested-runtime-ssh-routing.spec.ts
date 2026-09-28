@@ -501,7 +501,7 @@ async function activatePairedTerminalTab(
 test.describe.configure({ mode: 'serial' })
 
 test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', async ({
-  dolphinPage,
+  appPage,
   electronApp,
   proxyJumpFixture
 }, testInfo) => {
@@ -519,12 +519,12 @@ test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', a
     sshTarget = startDockerSshRelayTarget(testInfo)
     proxyJumpHost = startDockerSshRelayTarget(testInfo)
     proxyJumpDestination = startDockerSshRelayTarget(testInfo)
-    const remote = await connectDockerSshRelayTarget(dolphinPage, sshTarget)
+    const remote = await connectDockerSshRelayTarget(appPage, sshTarget)
     await installProxyJumpFixture(proxyJumpFixture, proxyJumpDestination, proxyJumpHost)
-    const proxyJumpRemote = await connectDockerSshRelayTarget(dolphinPage, proxyJumpDestination, {
+    const proxyJumpRemote = await connectDockerSshRelayTarget(appPage, proxyJumpDestination, {
       viaProxyJump: true
     })
-    const localRepoId = await dolphinPage.evaluate(() => {
+    const localRepoId = await appPage.evaluate(() => {
       const repo = window.__store?.getState().repos.find((candidate) => !candidate.connectionId)
       if (!repo) {
         throw new Error('HUB local repo is unavailable')
@@ -533,22 +533,22 @@ test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', a
     })
 
     const hubLocalWorktreeId = await assertHubTerminal(
-      dolphinPage,
+      appPage,
       localRepoId,
       `HUB_DESKTOP_LOCAL_${Date.now()}`
     )
     const hubSshWorktreeId = await assertHubTerminal(
-      dolphinPage,
+      appPage,
       remote.repoId,
       `HUB_DESKTOP_SSH_${Date.now()}`
     )
     const hubProxyJumpWorktreeId = await assertHubTerminal(
-      dolphinPage,
+      appPage,
       proxyJumpRemote.repoId,
       `HUB_DESKTOP_PROXY_JUMP_${Date.now()}`
     )
 
-    const webOffer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const webOffer = await createRuntimeDesktopPairingOffer(appPage)
     webClient = await launchPairedWebClient(electronApp, webOffer)
     await assertWebTerminal(webClient.page, hubLocalWorktreeId, `HUB_WEB_LOCAL_${Date.now()}`)
     await assertPairedWebLocalFilesystemMutations(webClient.page, hubLocalWorktreeId)
@@ -565,7 +565,7 @@ test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', a
       proxyJumpDestination
     )
 
-    const offerA = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offerA = await createRuntimeDesktopPairingOffer(appPage)
     clientA = await launchPairedElectronClient(offerA, testInfo, 'Nested SSH HUB A')
 
     const localRoute = await assertInteractiveTerminal(
@@ -640,7 +640,7 @@ test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', a
       }
     })
 
-    const offerB = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offerB = await createRuntimeDesktopPairingOffer(appPage)
     clientB = await launchPairedElectronClient(offerB, testInfo, 'Nested SSH HUB B')
     const secondLocalRoute = await assertInteractiveTerminal(
       clientB,
@@ -700,9 +700,9 @@ test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', a
     expect(reloadedSshRoute.localSshTargetIds).toEqual([])
     expect(reloadedSshRoute.runtimeOwnerEnvironmentId).toBe(clientA.environmentId)
 
-    await disconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
+    await disconnectDockerSshRelayTarget(appPage, remote.targetId)
     await assertRuntimeSshStatus(clientA, remote.targetId, 'disconnected')
-    await reconnectDisconnectedDockerSshRelayTarget(dolphinPage, remote.targetId)
+    await reconnectDisconnectedDockerSshRelayTarget(appPage, remote.targetId)
     await assertRuntimeSshStatus(clientA, remote.targetId, 'connected')
     const reconnectedSshRoute = await assertInteractiveTerminal(
       clientA,
@@ -713,7 +713,7 @@ test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', a
     expect(reconnectedSshRoute.localSshTargetIds).toEqual([])
 
     await restartProxyJumpDetachedRelay(
-      dolphinPage,
+      appPage,
       { label: 'direct', target: sshTarget, targetId: remote.targetId },
       {
         label: 'ProxyJump',
@@ -760,7 +760,7 @@ test('routes HUB desktop, web, and two paired desktops through HUB-owned SSH', a
     await assertRuntimeTerminalClose(clientA, convergedRelayRouteOnA.ptyId)
     await assertPairedPtyAbsent(clientB, restartedRelayRouteOnB.ptyId)
 
-    const rePairOffer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const rePairOffer = await createRuntimeDesktopPairingOffer(appPage)
     await rePairPairedElectronClient(clientA, rePairOffer, 'Nested SSH HUB A re-paired')
     await assertRuntimeSshStatus(clientA, remote.targetId, 'connected')
     const rePairedSshRoute = await assertInteractiveTerminal(

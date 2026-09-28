@@ -73,7 +73,7 @@ async function waitForStableSessionIds(page: Page, expected: number): Promise<vo
 
 test.describe('Status bar CLI session count', () => {
   test('drops after Manage Sessions kills a foreign daemon session, popover never opened', async ({
-    dolphinPage: page,
+    appPage: page,
     electronApp
   }) => {
     test.skip(

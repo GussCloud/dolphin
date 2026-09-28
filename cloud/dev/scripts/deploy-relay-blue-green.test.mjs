@@ -367,7 +367,8 @@ test('pins a director startup probe above the bounded reconciliation window', ()
 })
 
 test('bounds traffic tags by the Cloud Run service-plus-tag contract', () => {
-  const service = 'dolphin-cloud-relay-staging-c1'
+  // Why 27 characters: the longest service name that still leaves room for a candidate tag.
+  const service = 'dolphin-relay-staging-c1-ab'
   const candidate = cloudRunTrafficTag(service, 'candidate', '29247170608-1-19cc312a')
   assert.match(candidate, /^candidate-[a-f0-9]{9}$/)
   assert.equal(service.length + candidate.length, 46)

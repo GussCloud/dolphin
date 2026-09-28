@@ -394,22 +394,22 @@ function seededRepoPathOrSkip(): string {
 test.describe('Linear issue view persistence', () => {
   test('preserves view mode, grouping, ordering, and filters across a tasks remount', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
     await installLinearPersistenceBackend(electronApp)
-    await openLinearTasks(dolphinPage)
-    await waitForLinearIssuesChrome(dolphinPage, ISSUE_A.title)
+    await openLinearTasks(appPage)
+    await waitForLinearIssuesChrome(appPage, ISSUE_A.title)
 
-    await setLinearViewPreferences(dolphinPage, {
+    await setLinearViewPreferences(appPage, {
       viewMode: 'Board',
       groupBy: 'Status',
       orderBy: 'Updated'
     })
-    await applyStatusFilter(dolphinPage, STATE_A.name)
+    await applyStatusFilter(appPage, STATE_A.name)
 
-    await waitForLinearIssueViewPersisted(dolphinPage, (view) => {
+    await waitForLinearIssueViewPersisted(appPage, (view) => {
       if (
         !view ||
         view.viewMode !== 'board' ||
@@ -423,73 +423,68 @@ test.describe('Linear issue view persistence', () => {
     })
 
     // User-visible before remount.
-    await expectRestoredLinearView(dolphinPage)
-    const statusChip = dolphinPage
-      .getByRole('button', { name: 'Remove Status filter' })
-      .locator('..')
+    await expectRestoredLinearView(appPage)
+    const statusChip = appPage.getByRole('button', { name: 'Remove Status filter' }).locator('..')
     await expect(statusChip).toContainText(STATE_A.name)
 
-    await closeTasksPage(dolphinPage)
-    await openLinearTasks(dolphinPage)
-    await waitForLinearIssuesChrome(dolphinPage, ISSUE_A.title)
+    await closeTasksPage(appPage)
+    await openLinearTasks(appPage)
+    await waitForLinearIssuesChrome(appPage, ISSUE_A.title)
 
-    await expectRestoredLinearView(dolphinPage)
+    await expectRestoredLinearView(appPage)
     await expect(
-      dolphinPage.getByRole('button', { name: 'Remove Status filter' }).locator('..')
+      appPage.getByRole('button', { name: 'Remove Status filter' }).locator('..')
     ).toContainText(STATE_A.name)
     // Board surface, not the flat list column header.
-    await expect(dolphinPage.getByText(STATE_A.name, { exact: true }).first()).toBeVisible()
+    await expect(appPage.getByText(STATE_A.name, { exact: true }).first()).toBeVisible()
   })
 
-  test('keeps attribute filters scoped per Linear workspace', async ({
-    electronApp,
-    dolphinPage
-  }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test('keeps attribute filters scoped per Linear workspace', async ({ electronApp, appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
     await installLinearPersistenceBackend(electronApp, { multiWorkspace: true })
-    await openLinearTasks(dolphinPage)
-    await waitForLinearIssuesChrome(dolphinPage, ISSUE_A.title)
+    await openLinearTasks(appPage)
+    await waitForLinearIssuesChrome(appPage, ISSUE_A.title)
 
-    await applyPriorityFilter(dolphinPage, 'High')
+    await applyPriorityFilter(appPage, 'High')
     await expect(
-      dolphinPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
+      appPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
     ).toContainText('High')
 
-    await waitForLinearIssueViewPersisted(dolphinPage, (view) => {
+    await waitForLinearIssueViewPersisted(appPage, (view) => {
       const filter = view?.filtersByWorkspaceId?.[WORKSPACE_A.id]
       return Boolean(filter?.priorities?.includes(2))
     })
 
-    await switchLinearWorkspace(dolphinPage, WORKSPACE_B.organizationName)
-    await waitForLinearIssuesChrome(dolphinPage, ISSUE_B.title)
+    await switchLinearWorkspace(appPage, WORKSPACE_B.organizationName)
+    await waitForLinearIssuesChrome(appPage, ISSUE_B.title)
     // Workspace B starts unfiltered — Alpha's High must not leak.
-    await expect(dolphinPage.getByRole('button', { name: 'Remove Priority filter' })).toHaveCount(0)
+    await expect(appPage.getByRole('button', { name: 'Remove Priority filter' })).toHaveCount(0)
 
-    await applyPriorityFilter(dolphinPage, 'Low')
+    await applyPriorityFilter(appPage, 'Low')
     await expect(
-      dolphinPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
+      appPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
     ).toContainText('Low')
 
-    await waitForLinearIssueViewPersisted(dolphinPage, (view) => {
+    await waitForLinearIssueViewPersisted(appPage, (view) => {
       const a = view?.filtersByWorkspaceId?.[WORKSPACE_A.id]
       const b = view?.filtersByWorkspaceId?.[WORKSPACE_B.id]
       return Boolean(a?.priorities?.includes(2) && b?.priorities?.includes(4))
     })
 
-    await switchLinearWorkspace(dolphinPage, WORKSPACE_A.organizationName)
-    await waitForLinearIssuesChrome(dolphinPage, ISSUE_A.title)
+    await switchLinearWorkspace(appPage, WORKSPACE_A.organizationName)
+    await waitForLinearIssuesChrome(appPage, ISSUE_A.title)
     await expect(
-      dolphinPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
+      appPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
     ).toContainText('High')
     await expect(
-      dolphinPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
+      appPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
     ).not.toContainText('Low')
 
-    await switchLinearWorkspace(dolphinPage, WORKSPACE_B.organizationName)
-    await waitForLinearIssuesChrome(dolphinPage, ISSUE_B.title)
+    await switchLinearWorkspace(appPage, WORKSPACE_B.organizationName)
+    await waitForLinearIssuesChrome(appPage, ISSUE_B.title)
     await expect(
-      dolphinPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
+      appPage.getByRole('button', { name: 'Remove Priority filter' }).locator('..')
     ).toContainText('Low')
   })
 })

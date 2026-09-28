@@ -183,23 +183,21 @@ function writeSleepWakePayloadScript(scriptPath: string, payload: string): void 
 
 test.describe('Terminal sleep wake restore', () => {
   test('restores slept terminal output and accepts fresh input after wake', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'sleep wake restore needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await switchToWorktree(appPage, secondWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const restoreMarker = `SLEEP_WAKE_RESTORE_${runId}`
     const freshMarker = `SLEEP_WAKE_FRESH_${runId}`
@@ -207,24 +205,24 @@ test.describe('Terminal sleep wake restore', () => {
     const scriptPath = path.join(testRepoPath, `.dolphin-sleep-wake-restore-${runId}.mjs`)
     writeSleepWakePayloadScript(scriptPath, richSleepWakePayload(runId))
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
-      await waitForTerminalOutput(dolphinPage, restoreMarker, 10_000, 20_000)
-      const beforeSleepDebug = await readSleepWakeTerminalDebug(dolphinPage, secondWorktreeId)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await waitForTerminalOutput(appPage, restoreMarker, 10_000, 20_000)
+      const beforeSleepDebug = await readSleepWakeTerminalDebug(appPage, secondWorktreeId)
       for (const marker of expectedMarkers) {
-        expect(await mainSnapshotContains(dolphinPage, ptyId, marker)).toBe(true)
+        expect(await mainSnapshotContains(appPage, ptyId, marker)).toBe(true)
       }
 
-      await switchToWorktree(dolphinPage, firstWorktreeId)
-      await sleepWorktreeTerminals(dolphinPage, secondWorktreeId)
-      const afterSleepDebug = await readSleepWakeTerminalDebug(dolphinPage, secondWorktreeId)
+      await switchToWorktree(appPage, firstWorktreeId)
+      await sleepWorktreeTerminals(appPage, secondWorktreeId)
+      const afterSleepDebug = await readSleepWakeTerminalDebug(appPage, secondWorktreeId)
       await expect
-        .poll(() => readLivePtyCountForWorktree(dolphinPage, secondWorktreeId), {
+        .poll(() => readLivePtyCountForWorktree(appPage, secondWorktreeId), {
           timeout: 10_000,
           message: 'sleep did not release live PTYs for the background worktree'
         })
         .toBe(0)
       await expect
-        .poll(() => readRemoteSleepOracle(dolphinPage, secondWorktreeId), {
+        .poll(() => readRemoteSleepOracle(appPage, secondWorktreeId), {
           timeout: 10_000,
           message: 'first sleep did not converge host terminal liveness and worktree projection'
         })
@@ -234,12 +232,12 @@ test.describe('Terminal sleep wake restore', () => {
           worktreePsHasAttachedPty: false
         })
 
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      const awakePtyId = await waitForActivePanePtyId(dolphinPage)
-      const afterWakeDebug = await readSleepWakeTerminalDebug(dolphinPage, secondWorktreeId)
-      const awakeTerminalContent = await getTerminalContent(dolphinPage, 20_000)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      const awakePtyId = await waitForActivePanePtyId(appPage)
+      const afterWakeDebug = await readSleepWakeTerminalDebug(appPage, secondWorktreeId)
+      const awakeTerminalContent = await getTerminalContent(appPage, 20_000)
       for (const marker of expectedMarkers) {
         expect
           .soft(awakeTerminalContent.includes(marker), {
@@ -259,9 +257,9 @@ test.describe('Terminal sleep wake restore', () => {
           })
           .toBe(true)
       }
-      await waitForTerminalOutput(dolphinPage, restoreMarker, 15_000, 20_000)
-      await sendToTerminal(dolphinPage, awakePtyId, `printf '\\n${freshMarker}\\n'\r`)
-      await waitForTerminalOutput(dolphinPage, freshMarker, 10_000, 20_000)
+      await waitForTerminalOutput(appPage, restoreMarker, 15_000, 20_000)
+      await sendToTerminal(appPage, awakePtyId, `printf '\\n${freshMarker}\\n'\r`)
+      await waitForTerminalOutput(appPage, freshMarker, 10_000, 20_000)
     } finally {
       rmSync(scriptPath, { force: true })
     }

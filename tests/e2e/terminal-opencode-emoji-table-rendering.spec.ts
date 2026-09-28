@@ -255,30 +255,30 @@ async function enableRiskyTerminalRendererPath(page: Page): Promise<void> {
 
 test.describe('OpenCode emoji table terminal rendering', () => {
   test('keeps emoji table output visually sane and restores the cursor', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await enableRiskyTerminalRendererPath(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await enableRiskyTerminalRendererPath(appPage)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 20_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 20_000)
     const runId = randomUUID()
     const marker = `${EMOJI_TABLE_MARKER}_${runId}`
     const scriptPath = path.join(testRepoPath, `.dolphin-opencode-emoji-table-${runId}.mjs`)
     writeFileSync(scriptPath, emojiTableScript(marker))
     try {
-      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
-      await waitForTerminalOutput(dolphinPage, marker, 10_000)
-      await dolphinPage.waitForTimeout(250)
-      await forceCursorProbeTheme(dolphinPage)
-      await dolphinPage.waitForTimeout(50)
+      await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await waitForTerminalOutput(appPage, marker, 10_000)
+      await appPage.waitForTimeout(250)
+      await forceCursorProbeTheme(appPage)
+      await appPage.waitForTimeout(50)
 
-      const renderState = await readActiveTerminalRenderState(dolphinPage)
-      const blinkSamples = await sampleCursorBlink(dolphinPage)
+      const renderState = await readActiveTerminalRenderState(appPage)
+      const blinkSamples = await sampleCursorBlink(appPage)
 
       testInfo.annotations.push({
         type: 'opencode-emoji-table-rendering',
@@ -301,37 +301,37 @@ test.describe('OpenCode emoji table terminal rendering', () => {
   })
 
   test('local real OpenCode demo keeps table rendering and cursor visible', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.skip(
       process.env.DOLPHIN_E2E_REAL_OPENCODE !== '1',
       'Set DOLPHIN_E2E_REAL_OPENCODE=1 to exercise the locally installed OpenCode TUI'
     )
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await enableRiskyTerminalRendererPath(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await enableRiskyTerminalRendererPath(appPage)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     await sendToTerminal(
-      dolphinPage,
+      appPage,
       ptyId,
       'opencode run --demo --interactive "Give me markdown table dummy data a long table with emojis in it"\r'
     )
     try {
-      await waitForTerminalOutput(dolphinPage, 'Give me markdown table', 15_000)
-      await waitForTerminalOutput(dolphinPage, 'Emoji', 60_000)
-      await waitForTerminalOutput(dolphinPage, 'Alice', 60_000)
-      await dolphinPage.waitForTimeout(1_500)
+      await waitForTerminalOutput(appPage, 'Give me markdown table', 15_000)
+      await waitForTerminalOutput(appPage, 'Emoji', 60_000)
+      await waitForTerminalOutput(appPage, 'Alice', 60_000)
+      await appPage.waitForTimeout(1_500)
 
       await testInfo.attach('real-opencode-demo-table', {
-        body: await dolphinPage.screenshot({ fullPage: true }),
+        body: await appPage.screenshot({ fullPage: true }),
         contentType: 'image/png'
       })
 
-      const renderState = await readActiveTerminalRenderState(dolphinPage)
+      const renderState = await readActiveTerminalRenderState(appPage)
       testInfo.annotations.push({
         type: 'real-opencode-demo-rendering',
         description: JSON.stringify(renderState)
@@ -339,7 +339,7 @@ test.describe('OpenCode emoji table terminal rendering', () => {
       expect(renderState.coreCursorHidden).toBe(false)
       expect(renderState.cursorVisibleElementCount).toBeGreaterThan(0)
     } finally {
-      await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
     }
   })
 })

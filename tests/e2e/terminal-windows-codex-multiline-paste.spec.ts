@@ -130,7 +130,7 @@ test.describe('Windows Codex multiline paste', () => {
   test.use({ seedTestRepo: false })
 
   test('multiline Ctrl+V keeps the existing Codex draft unsent @local-real-codex', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'Windows ConPTY coverage is Windows-only')
@@ -140,53 +140,53 @@ test.describe('Windows Codex multiline paste', () => {
     )
     test.slow()
 
-    await waitForSessionReady(dolphinPage)
-    await activateTestRepository(dolphinPage, testRepoPath)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await activateTestRepository(appPage, testRepoPath)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await sendToTerminal(dolphinPage, ptyId, 'codex -m dolphin-e2e-invalid-model\r')
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await sendToTerminal(appPage, ptyId, 'codex -m dolphin-e2e-invalid-model\r')
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 12_000), { timeout: 20_000 })
+      .poll(() => getTerminalContent(appPage, 12_000), { timeout: 20_000 })
       .toMatch(/Do[\s\S]*you[\s\S]*trust[\s\S]*contents|OpenAI Codex/i)
-    if (CODEX_TRUST_PROMPT_RE.test(await getTerminalContent(dolphinPage, 12_000))) {
-      await sendToTerminal(dolphinPage, ptyId, '\r')
+    if (CODEX_TRUST_PROMPT_RE.test(await getTerminalContent(appPage, 12_000))) {
+      await sendToTerminal(appPage, ptyId, '\r')
     }
-    await waitForTerminalOutput(dolphinPage, 'OpenAI Codex', 20_000, 30_000)
-    await waitForCodexComposerReady(dolphinPage)
-    await enableTerminalAccessibilityDom(dolphinPage, ptyId)
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.type(DRAFT)
-    const terminalDom = dolphinPage.locator(
+    await waitForTerminalOutput(appPage, 'OpenAI Codex', 20_000, 30_000)
+    await waitForCodexComposerReady(appPage)
+    await enableTerminalAccessibilityDom(appPage, ptyId)
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.type(DRAFT)
+    const terminalDom = appPage.locator(
       `[data-pty-id=${JSON.stringify(ptyId)}] .xterm-accessibility-tree`
     )
     await expect(terminalDom).toContainText(DRAFT, { timeout: 10_000 })
-    await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), pastePayload())
+    await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), pastePayload())
 
-    await dolphinPage.keyboard.press('Control+V')
+    await appPage.keyboard.press('Control+V')
     await expect(terminalDom).toContainText('[Pasted Content', { timeout: 10_000 })
     await expect(terminalDom).toContainText(DRAFT)
-    await dolphinPage.waitForTimeout(2_000)
+    await appPage.waitForTimeout(2_000)
     await expect(terminalDom).not.toContainText('Working')
     await expect(terminalDom).not.toContainText('unexpected status 404')
   })
 
   test('delivers a normalized large paste through native ConPTY', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'Windows ConPTY coverage is Windows-only')
     test.slow()
 
-    await waitForSessionReady(dolphinPage)
-    await activateTestRepository(dolphinPage, testRepoPath)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await activateTestRepository(appPage, testRepoPath)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const payload = pastePayload(110)
     const expectedText = payload.replace(/\r?\n/g, '\r')
     // Why: assert on the normalized size so the payload keeps exercising the
@@ -199,14 +199,14 @@ test.describe('Windows Codex multiline paste', () => {
     writeFileSync(scriptPath, pasteCollectorScript(expectedText.length, expectedHash, marker))
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
-      await waitForTerminalOutput(dolphinPage, `${marker}_READY`, 10_000, 12_000)
-      await enableTerminalAccessibilityDom(dolphinPage, ptyId)
-      await focusActiveTerminalInput(dolphinPage)
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await waitForTerminalOutput(appPage, `${marker}_READY`, 10_000, 12_000)
+      await enableTerminalAccessibilityDom(appPage, ptyId)
+      await focusActiveTerminalInput(appPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
 
-      await dolphinPage.keyboard.press('Control+V')
-      const terminalDom = dolphinPage.locator(
+      await appPage.keyboard.press('Control+V')
+      const terminalDom = appPage.locator(
         `[data-pty-id=${JSON.stringify(ptyId)}] .xterm-accessibility-tree`
       )
       await expect(terminalDom).toContainText(`${marker}_RESULT:MATCH`, { timeout: 30_000 })

@@ -10,17 +10,17 @@ import {
 } from './helpers/terminal'
 
 test('installed OMP renders the task draft without starting a turn', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.skip(
     !process.env.DOLPHIN_OMP_PROOF_BINARY || process.platform === 'win32',
     'Opt-in POSIX OMP runtime proof'
   )
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
   const sourcePath = testInfo.outputPath('status.ts')
   const probePath = testInfo.outputPath('probe.ts')
   const resultPath = testInfo.outputPath('result.json')
@@ -41,7 +41,7 @@ export default function (api) {
 }`
   )
   await execInTerminal(
-    dolphinPage,
+    appPage,
     ptyId,
     buildShellCommandFromArgv(
       [
@@ -71,6 +71,6 @@ export default function (api) {
       { timeout: 45_000 }
     )
     .toEqual({ text: draft, hasUI: true, consumed: true, turns: 0 })
-  await expect(dolphinPage.locator('.xterm-screen').first()).toBeVisible()
-  await dolphinPage.screenshot({ path: testInfo.outputPath('omp-prefilled.png') })
+  await expect(appPage.locator('.xterm-screen').first()).toBeVisible()
+  await appPage.screenshot({ path: testInfo.outputPath('omp-prefilled.png') })
 })

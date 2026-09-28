@@ -60,14 +60,14 @@ const rows: MatrixRow[] = [
 ]
 
 test.describe('Markdown ordered-list exit regression', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   for (const row of rows) {
-    test(row.name, async ({ dolphinPage }, testInfo) => {
-      const context = await getActiveWorktreeContext(dolphinPage)
+    test(row.name, async ({ appPage }, testInfo) => {
+      const context = await getActiveWorktreeContext(appPage)
       let filePath: string | null = null
 
       try {
@@ -77,13 +77,13 @@ test.describe('Markdown ordered-list exit regression', () => {
           testInfo.workerIndex,
           row.initialMarkdown
         )
-        const activeFile = await openMarkdownFixture(dolphinPage, context, filePath)
+        const activeFile = await openMarkdownFixture(appPage, context, filePath)
         const draftKey = activeFile.filePath
 
-        await row.run(dolphinPage, row.sentinel)
+        await row.run(appPage, row.sentinel)
 
-        await expectSentinelParagraphOutsideOrderedList(dolphinPage, row.sentinel)
-        await expectSerializedDraftOutsideOrderedList(dolphinPage, draftKey, row.sentinel)
+        await expectSentinelParagraphOutsideOrderedList(appPage, row.sentinel)
+        await expectSerializedDraftOutsideOrderedList(appPage, draftKey, row.sentinel)
       } finally {
         await cleanupMarkdownFixture(filePath)
       }

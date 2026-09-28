@@ -153,19 +153,19 @@ test.describe('Localhost SSH', () => {
   test.skip(process.platform === 'win32', 'Localhost SSH hook E2E uses POSIX hook scripts.')
 
   test('routes a terminal and agent-hook status over localhost SSH', async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }) => {
     test.slow()
     // The relay persists workspace sessions by path across fresh client profiles.
     const testRepoPath = createSeededTestRepo({ publishPath: false })
     registerPostElectronShutdownCleanup(async () => cleanupTestRepository(testRepoPath))
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
 
     const target = readLocalhostSshTarget()
     const remote = await connectSshTestTarget(
-      dolphinPage,
+      appPage,
       // Limit orphan relay lifetime if the test app exits before cleanup.
       { ...target, relayGracePeriodSeconds: 1 },
       { remotePath: testRepoPath, displayName: 'Localhost SSH E2E' }
@@ -178,10 +178,10 @@ test.describe('Localhost SSH', () => {
     })
 
     await expect(remote.targetId).toBeTruthy()
-    await ensureTerminalVisible(dolphinPage, 30_000)
-    await waitForActiveTerminalManager(dolphinPage, 45_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage, 45_000)
-    const paneKey = await dolphinPage.evaluate(() => {
+    await ensureTerminalVisible(appPage, 30_000)
+    await waitForActiveTerminalManager(appPage, 45_000)
+    const ptyId = await waitForActivePanePtyId(appPage, 45_000)
+    const paneKey = await appPage.evaluate(() => {
       const store = window.__store
       if (!store) {
         throw new Error('Store unavailable')
@@ -208,7 +208,7 @@ test.describe('Localhost SSH', () => {
     })
     const paneKeyLeafId = paneKey.slice(paneKey.indexOf(':') + 1)
     expect(paneKeyLeafId).toMatch(UUID_RE)
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const state = window as unknown as {
         __sshAgentStatusEvents?: unknown[]
         __sshAgentStatusUnsubscribe?: () => void
@@ -221,13 +221,13 @@ test.describe('Localhost SSH', () => {
     })
 
     const terminalMarker = marker('LOCALHOST_SSH')
-    await execInTerminal(dolphinPage, ptyId, emitMarkerCommand(terminalMarker))
-    await waitForTerminalOutput(dolphinPage, terminalMarker, 20_000)
+    await execInTerminal(appPage, ptyId, emitMarkerCommand(terminalMarker))
+    await waitForTerminalOutput(appPage, terminalMarker, 20_000)
 
     const envMarker = marker('AGENT_HOOK_ENV_OK')
     const envFailedMarker = marker('AGENT_HOOK_ENV_BAD')
     await execInTerminal(
-      dolphinPage,
+      appPage,
       ptyId,
       [
         `if [ "$DOLPHIN_PANE_KEY" = ${shellQuote(paneKey)} ] && [ -n "$DOLPHIN_AGENT_HOOK_PORT" ] && [ -n "$DOLPHIN_AGENT_HOOK_TOKEN" ] && /bin/sh -c 'test -n "$DOLPHIN_PANE_KEY" && test -n "$DOLPHIN_AGENT_HOOK_PORT" && test -n "$DOLPHIN_AGENT_HOOK_TOKEN"'; then`,
@@ -238,12 +238,12 @@ test.describe('Localhost SSH', () => {
         'fi'
       ].join('\n')
     )
-    await waitForTerminalOutput(dolphinPage, envMarker, 20_000)
+    await waitForTerminalOutput(appPage, envMarker, 20_000)
 
     const pluginOverlayMarker = marker('AGENT_PLUGIN_OVERLAYS_OK')
     const pluginOverlayFailedMarker = marker('AGENT_PLUGIN_OVERLAYS_BAD')
     await execInTerminal(
-      dolphinPage,
+      appPage,
       ptyId,
       [
         'opencode_config_root="${OPENCODE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode}"',
@@ -256,11 +256,11 @@ test.describe('Localhost SSH', () => {
         'fi'
       ].join('\n')
     )
-    await waitForTerminalOutput(dolphinPage, pluginOverlayMarker, 20_000)
+    await waitForTerminalOutput(appPage, pluginOverlayMarker, 20_000)
 
     const prompt = `dolphin ssh e2e prompt ${Date.now()}`
     await postCodexHook(
-      dolphinPage,
+      appPage,
       ptyId,
       { hook_event_name: 'UserPromptSubmit', prompt },
       'AGENT_HOOK_POSTED'
@@ -269,7 +269,7 @@ test.describe('Localhost SSH', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             ({ paneKey, prompt, targetId, worktreeId }) => {
               const state = window.__store?.getState()
               const entries = Object.values(state?.agentStatusByPaneKey ?? {})
@@ -296,16 +296,16 @@ test.describe('Localhost SSH', () => {
 
     const ctrlPrompt = `dolphin ssh ctrl-c interrupt ${Date.now()}`
     await postCodexHook(
-      dolphinPage,
+      appPage,
       ptyId,
       { hook_event_name: 'UserPromptSubmit', prompt: ctrlPrompt },
       'AGENT_HOOK_CTRL_WORKING'
     )
-    await focusTerminal(dolphinPage)
-    await dolphinPage.keyboard.press('Control+C')
-    await dolphinPage.waitForTimeout(750)
+    await focusTerminal(appPage)
+    await appPage.keyboard.press('Control+C')
+    await appPage.waitForTimeout(750)
     expect(
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         ({ paneKey, prompt, targetId, worktreeId }) => {
           const state = window.__store?.getState()
           const entry = state?.agentStatusByPaneKey[paneKey]
@@ -341,7 +341,7 @@ test.describe('Localhost SSH', () => {
     })
 
     await postCodexHook(
-      dolphinPage,
+      appPage,
       ptyId,
       {
         hook_event_name: 'PreToolUse',
@@ -353,7 +353,7 @@ test.describe('Localhost SSH', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             ({ paneKey }) => {
               const entry = window.__store?.getState().agentStatusByPaneKey[paneKey]
               return {
@@ -370,16 +370,16 @@ test.describe('Localhost SSH', () => {
 
     const escapePrompt = `dolphin ssh escape interrupt ${Date.now()}`
     await postCodexHook(
-      dolphinPage,
+      appPage,
       ptyId,
       { hook_event_name: 'UserPromptSubmit', prompt: escapePrompt },
       'AGENT_HOOK_ESCAPE_WORKING'
     )
-    await focusTerminal(dolphinPage)
-    await dolphinPage.keyboard.press('Escape')
-    await dolphinPage.waitForTimeout(750)
+    await focusTerminal(appPage)
+    await appPage.keyboard.press('Escape')
+    await appPage.waitForTimeout(750)
     expect(
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         ({ paneKey }) => {
           const entry = window.__store?.getState().agentStatusByPaneKey[paneKey]
           return {

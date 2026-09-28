@@ -9,17 +9,17 @@ import {
 } from './helpers/terminal'
 
 test('low-level Dispatches can be abandoned and stopped without closing their pane', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }) => {
-  await waitForSessionReady(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage)
-  await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  await waitForActivePanePtyId(appPage)
 
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const client = new RuntimeClient(userDataDir, 30_000, null, null)
-  const pane = await waitForActivePaneHookDescriptor(dolphinPage)
+  const pane = await waitForActivePaneHookDescriptor(appPage)
   const resolved = await client.call<{ terminal: { handle: string } }>('terminal.resolvePane', {
     paneKey: pane.paneKey
   })

@@ -78,8 +78,7 @@ export function resolveStablePaneOwner(
     return null
   }
   let resolved: ReturnType<DolphinRuntimeService['resolveTerminalPane']> | null = null
-  let resolvedHandleCandidate: ReturnType<DolphinRuntimeService['resolveTerminalPane']> | null =
-    null
+  let resolvedHandleCandidate: typeof resolved = null
   if (runtime && typeof runtime.resolveTerminalPane === 'function') {
     try {
       const candidate = runtime.resolveTerminalPane(paneKey, worktreeId)

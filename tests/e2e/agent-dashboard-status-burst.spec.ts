@@ -20,11 +20,11 @@ type BurstEvidence = {
 
 test('keeps the visible Agent Dashboard interactive during a 100-pane status replay', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  const panes = await dolphinPage.evaluate(
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  const panes = await appPage.evaluate(
     ({ baseTime, paneCount, worktreeId }): BurstPane[] => {
       const store = window.__store
       if (!store) {
@@ -77,7 +77,7 @@ test('keeps the visible Agent Dashboard interactive during a 100-pane status rep
     { baseTime: BASE_TIME, paneCount: PANE_COUNT, worktreeId }
   )
 
-  const dashboardButton = dolphinPage.getByRole('button', { name: /Agent Dashboard/ })
+  const dashboardButton = appPage.getByRole('button', { name: /Agent Dashboard/ })
   await expect(dashboardButton).toBeVisible()
 
   await electronApp.evaluate(
@@ -104,9 +104,9 @@ test('keeps the visible Agent Dashboard interactive during a 100-pane status rep
 
   const interactionStartedAt = performance.now()
   await dashboardButton.click()
-  await dolphinPage.locator('[data-agent-dashboard-sheet]').waitFor({ state: 'visible' })
+  await appPage.locator('[data-agent-dashboard-sheet]').waitFor({ state: 'visible' })
   const interactionElapsedMs = performance.now() - interactionStartedAt
-  const statusPublicationsAtVisible = await dolphinPage.evaluate(() => {
+  const statusPublicationsAtVisible = await appPage.evaluate(() => {
     const probe = (
       window as typeof window & { __agentDashboardBurstProbe?: { statusPublications: number } }
     ).__agentDashboardBurstProbe
@@ -119,7 +119,7 @@ test('keeps the visible Agent Dashboard interactive during a 100-pane status rep
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           (paneKeys) => {
             const statuses = window.__store?.getState().agentStatusByPaneKey ?? {}
             return paneKeys.every((paneKey) => statuses[paneKey]?.state === 'done')
@@ -130,7 +130,7 @@ test('keeps the visible Agent Dashboard interactive during a 100-pane status rep
     )
     .toBe(true)
 
-  const evidence = await dolphinPage.evaluate(
+  const evidence = await appPage.evaluate(
     ({ paneKeys, statusPublicationsAtVisible }): BurstEvidence => {
       const state = window.__store?.getState()
       const probe = (

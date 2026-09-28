@@ -2,19 +2,19 @@ import { test, expect } from './helpers/dolphin-app'
 import { waitForSessionReady, waitForActiveWorktree } from './helpers/store'
 
 test.describe('Diff note edit', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test('editing a saved inline note updates the open diff card', async ({ dolphinPage }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
+  test('editing a saved inline note updates the open diff card', async ({ appPage }) => {
+    const worktreeId = await waitForActiveWorktree(appPage)
     const seededBody = 'edit-me note'
     const editedBody = 'edited note from the inline card'
 
     // Why: create a real modified-file diff so Monaco mounts the saved-note
     // view zone on the same local surface that wires updateDiffComment.
-    const { relativePath } = await dolphinPage.evaluate(async (wId) => {
+    const { relativePath } = await appPage.evaluate(async (wId) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available - is the app in dev mode?')
@@ -36,7 +36,7 @@ test.describe('Diff note edit', () => {
       return { relativePath: rel }
     }, worktreeId)
 
-    const addResult = await dolphinPage.evaluate(
+    const addResult = await appPage.evaluate(
       async ({ wId, rel, body }) => {
         const store = window.__store
         if (!store) {
@@ -56,7 +56,7 @@ test.describe('Diff note edit', () => {
     expect(addResult, 'addDiffComment returned null').not.toBeNull()
     const commentId = addResult!.id
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ wId, rel }) => {
         const store = window.__store
         if (!store) {
@@ -75,7 +75,7 @@ test.describe('Diff note edit', () => {
       { wId: worktreeId, rel: relativePath }
     )
 
-    const card = dolphinPage.locator('.dolphin-diff-comment-card').first()
+    const card = appPage.locator('.dolphin-diff-comment-card').first()
     await expect(card, 'seeded inline note did not render').toBeVisible({ timeout: 15_000 })
     await expect(card.locator('.dolphin-diff-comment-body')).toHaveText(seededBody)
 
@@ -101,7 +101,7 @@ test.describe('Diff note edit', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate((id: string) => {
+          appPage.evaluate((id: string) => {
             const store = window.__store
             if (!store) {
               return null
@@ -119,9 +119,9 @@ test.describe('Diff note edit', () => {
       )
       .toBe(editedBody)
 
-    const updatedCard = dolphinPage
+    const updatedCard = appPage
       .locator('.dolphin-diff-comment-card')
-      .filter({ has: dolphinPage.locator('.dolphin-diff-comment-body', { hasText: editedBody }) })
+      .filter({ has: appPage.locator('.dolphin-diff-comment-body', { hasText: editedBody }) })
       .first()
     await expect(updatedCard, 'inline card did not update in the open diff').toBeVisible()
     await expect(updatedCard.locator('.dolphin-diff-comment-body')).toHaveText(editedBody)

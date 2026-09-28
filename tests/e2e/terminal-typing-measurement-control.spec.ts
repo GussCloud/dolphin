@@ -19,15 +19,15 @@ import {
 test.skip(process.env.DOLPHIN_TYPING_BENCH !== '1', 'Opt-in benchmark calibration')
 
 test('typing measurement charges known renderer stalls to the planned schedule', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(120_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const ptyId = await waitForActivePanePtyId(appPage)
   const reports: {
     injectStall: boolean
     counts: { keys: number; stalls: number }
@@ -38,9 +38,9 @@ test('typing measurement charges known renderer stalls to the planned schedule',
     const script = path.join(testRepoPath, `typing-control-${runId}.mjs`)
     const sidecar = path.join(testRepoPath, `typing-control-${runId}.jsonl`)
     writeTypingEchoProbeScript(script, runId, sidecar)
-    await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(script)}\r`)
-    await waitForTerminalOutputForPtyId(dolphinPage, ptyId, typingProbeReadyMarker(runId), 15_000)
-    const control = await dolphinPage.evaluateHandle((enabled) => {
+    await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(script)}\r`)
+    await waitForTerminalOutputForPtyId(appPage, ptyId, typingProbeReadyMarker(runId), 15_000)
+    const control = await appPage.evaluateHandle((enabled) => {
       let keys = 0
       let stalls = 0
       const handler = (event: KeyboardEvent): void => {
@@ -66,7 +66,7 @@ test('typing measurement charges known renderer stalls to the planned schedule',
       }
     }, injectStall)
     try {
-      const measurement = await measurePacedTyping(dolphinPage, runId, sidecar, {
+      const measurement = await measurePacedTyping(appPage, runId, sidecar, {
         keyCount: 32,
         keyCadenceMs: 25
       })
@@ -82,7 +82,7 @@ test('typing measurement charges known renderer stalls to the planned schedule',
     } finally {
       await control.evaluate((value) => value.stop())
       await control.dispose()
-      await sendToTerminal(dolphinPage, ptyId, '\x03')
+      await sendToTerminal(appPage, ptyId, '\x03')
       rmSync(script, { force: true })
       rmSync(sidecar, { force: true })
     }

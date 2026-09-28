@@ -77,7 +77,7 @@ test('production capacity mutation is restricted to the exact serving rollout se
   for (const cellId of capacityCells) {
     assert.match(dispatchWorkflow, new RegExp(`^\\s+- ${cellId}$`, 'm'))
   }
-  assert.match(workflow, /CELL_ORIGIN="https:\/\/\$\{TARGET_HOSTNAME\}\.relay\.ondolphin\.dev"/)
+  assert.match(workflow, /CELL_ORIGIN="https:\/\/\$\{TARGET_HOSTNAME\}\.relay\.dolphin\.guss\.dev\.br"/)
   assert.match(workflow, /echo "TARGET_HOSTNAME=\$\{TARGET_HOSTNAME\}"/)
   assert.match(workflow, /\} >> "\$\{GITHUB_ENV\}"/)
   assert.match(workflow, /RAISE_SELECTED_CELL_TO_1000/)

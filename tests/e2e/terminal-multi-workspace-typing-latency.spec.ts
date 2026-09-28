@@ -370,37 +370,34 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
   // Group scope, not the test bodies: a body-level skip still builds the Electron fixtures.
   test.skip(!BENCH_ENABLED, 'Bench-only: run via pnpm bench:multi-workspace-typing')
 
-  test('baseline: paced typing with no agent load', async ({
-    dolphinPage,
-    testRepoPath
-  }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const typingPtyId = await waitForActivePanePtyId(dolphinPage)
+  test('baseline: paced typing with no agent load', async ({ appPage, testRepoPath }, testInfo) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const typingPtyId = await waitForActivePanePtyId(appPage)
 
     const runId = randomUUID()
     const probePath = path.join(testRepoPath, `.dolphin-mwt-probe-${runId}.mjs`)
     const sidecarPath = path.join(testRepoPath, `.dolphin-mwt-arrivals-${runId}.jsonl`)
     writeTypingEchoProbeScript(probePath, runId, sidecarPath)
     try {
-      await resetDeliveryDebug(dolphinPage)
-      await startTypingProbe(dolphinPage, typingPtyId, probePath, runId)
-      const measured = await measureTypingWindow(dolphinPage, runId, sidecarPath)
+      await resetDeliveryDebug(appPage)
+      await startTypingProbe(appPage, typingPtyId, probePath, runId)
+      const measured = await measureTypingWindow(appPage, runId, sidecarPath)
       const { measurement } = measured
       writeBenchReport(
         testInfo,
         'baseline',
         measured,
-        await readSchedulerDebug(dolphinPage),
-        await readMainDeliveryDebug(dolphinPage)
+        await readSchedulerDebug(appPage),
+        await readMainDeliveryDebug(appPage)
       )
       expect(measurement.inputHalfMs?.count).toBe(KEY_COUNT)
       expect(measurement.totalMs?.count).toBe(KEY_COUNT)
       expect(measurement.totalMs?.p50 ?? Number.POSITIVE_INFINITY).toBeLessThan(250)
     } finally {
-      await stopPtysQuietly(dolphinPage, [typingPtyId])
+      await stopPtysQuietly(appPage, [typingPtyId])
       rmSync(probePath, { force: true })
       rmSync(sidecarPath, { force: true })
     }
@@ -408,13 +405,11 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
 
   test('typing under sustained hidden multi-workspace agent load', async ({
     electronApp,
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    const typingWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const loadWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== typingWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const typingWorktreeId = await waitForActiveWorktree(appPage)
+    const loadWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== typingWorktreeId)
     expect(Boolean(loadWorktreeId), 'bench needs the seeded secondary worktree').toBe(true)
     if (!loadWorktreeId) {
       return
@@ -438,26 +433,26 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
     let graphProbeSelfTest: RendererLongTaskSelfTestWindow | null = null
     let statusIngressValidation: AccumulatedStatusIngressValidation | null = null
     try {
-      await switchToWorktree(dolphinPage, loadWorktreeId)
+      await switchToWorktree(appPage, loadWorktreeId)
       loadPanes = await createTypingLoadWorkspaces(
-        dolphinPage,
+        appPage,
         loadWorktreeId,
         LOAD_PANES,
         LOAD_WORKSPACES,
         readPositiveInt('DOLPHIN_TYPING_BENCH_VISITED_WORKSPACES', LOAD_WORKSPACES),
         createdWorktreeIds
       )
-      await startSustainedLoadInPanes(dolphinPage, loadPanes, loadPath, runId, scratch)
+      await startSustainedLoadInPanes(appPage, loadPanes, loadPath, runId, scratch)
 
-      await switchToWorktree(dolphinPage, typingWorktreeId)
+      await switchToWorktree(appPage, typingWorktreeId)
       await expect
-        .poll(() => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
+        .poll(() => getActiveWorktreeId(appPage), { timeout: 10_000 })
         .toBe(typingWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      const typingPtyId = await waitForActivePanePtyId(dolphinPage)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      const typingPtyId = await waitForActivePanePtyId(appPage)
 
-      const fixtureSummary = await seedAccumulatedWorkspaceFixture(dolphinPage, {
+      const fixtureSummary = await seedAccumulatedWorkspaceFixture(appPage, {
         worktrees: readPositiveInt('DOLPHIN_TYPING_BENCH_METADATA_WORKTREES', 870),
         repositories: readPositiveInt('DOLPHIN_TYPING_BENCH_METADATA_REPOSITORIES', 27),
         terminalTabs: readPositiveInt('DOLPHIN_TYPING_BENCH_METADATA_TERMINAL_TABS', 1410),
@@ -468,7 +463,7 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
         statusHistoryEntries: readPositiveInt('DOLPHIN_TYPING_BENCH_METADATA_STATUS_HISTORY', 3)
       })
       if (process.env.DOLPHIN_TYPING_BENCH_AGENT_ROWS === 'full') {
-        await dolphinPage.evaluate(() =>
+        await appPage.evaluate(() =>
           window.__store?.setState({
             worktreeCardProperties: ['status', 'inline-agents'],
             agentActivityDisplayMode: 'full'
@@ -479,10 +474,7 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
       const statusTrafficEnabled =
         !PTY_METADATA && process.env.DOLPHIN_TYPING_BENCH_METADATA_STATUS !== '0'
       if (statusTrafficEnabled) {
-        statusIngressValidation = await validateAccumulatedStatusIpcIngress(
-          electronApp,
-          dolphinPage
-        )
+        statusIngressValidation = await validateAccumulatedStatusIpcIngress(electronApp, appPage)
         const validationPaneCount = Math.min(3, fixtureSummary.liveStatuses)
         expect(statusIngressValidation).toEqual({
           burstEvents: validationPaneCount,
@@ -490,13 +482,13 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
         })
       }
       if (BENCH_INSTRUMENTATION_REQUESTED) {
-        instrumentationAvailable = await startAccumulatedBenchmarkInstrumentation(dolphinPage)
+        instrumentationAvailable = await startAccumulatedBenchmarkInstrumentation(appPage)
       }
       if (GRAPH_PROBE_REQUESTED) {
-        graphProbeStart = await startRuntimeGraphPublicationProbe(electronApp, dolphinPage)
+        graphProbeStart = await startRuntimeGraphPublicationProbe(electronApp, appPage)
         if (GRAPH_PROBE_SELF_TEST_MS > 0) {
           graphProbeSelfTest = await injectRendererLongTaskSelfTest(
-            dolphinPage,
+            appPage,
             GRAPH_PROBE_SELF_TEST_MS
           )
         }
@@ -505,34 +497,34 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
       if (statusTrafficEnabled) {
         const statusTraffic = await startAccumulatedStatusTraffic(
           electronApp,
-          dolphinPage,
+          appPage,
           readPositiveInt('DOLPHIN_TYPING_BENCH_METADATA_STATUS_INTERVAL_MS', 100)
         )
         expect(statusTraffic.trackedStatuses).toBe(fixtureSummary.liveStatuses)
         statusTrafficStarted = true
       }
       if (!PTY_METADATA && process.env.DOLPHIN_TYPING_BENCH_METADATA_TITLES === '1') {
-        titleWorkload = await startAccumulatedTitleTraffic(dolphinPage, 100)
+        titleWorkload = await startAccumulatedTitleTraffic(appPage, 100)
         console.log(
           `[multi-workspace-typing] registered title workload: ${JSON.stringify(titleWorkload)}`
         )
       }
 
-      await resetDeliveryDebug(dolphinPage)
+      await resetDeliveryDebug(appPage)
       // Load is flowing when the hidden-delivery gate starts dropping the
       // background worktree's bytes — the topology the complaint describes.
       await expect
-        .poll(
-          async () => (await readMainDeliveryDebug(dolphinPage))?.hiddenDeliveryDroppedChars ?? 0,
-          { timeout: 30_000, message: 'hidden load never started flowing' }
-        )
+        .poll(async () => (await readMainDeliveryDebug(appPage))?.hiddenDeliveryDroppedChars ?? 0, {
+          timeout: 30_000,
+          message: 'hidden load never started flowing'
+        })
         .toBeGreaterThan(0)
 
       if (PTY_METADATA) {
         await expect
           .poll(
             () =>
-              dolphinPage.evaluate(
+              appPage.evaluate(
                 () =>
                   Object.values(window.__store?.getState().agentStatusByPaneKey ?? {}).filter(
                     (row) => row.prompt === 'Synthetic production-path typing workload'
@@ -542,11 +534,11 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
           )
           .toBe(LOAD_PANES)
       }
-      await startTypingProbe(dolphinPage, typingPtyId, probePath, runId)
-      const measured = await measureTypingWindow(dolphinPage, runId, sidecarPath)
+      await startTypingProbe(appPage, typingPtyId, probePath, runId)
+      const measured = await measureTypingWindow(appPage, runId, sidecarPath)
       const { measurement } = measured
       const statusWorkload = statusTrafficStarted
-        ? await stopAccumulatedStatusTraffic(electronApp, dolphinPage)
+        ? await stopAccumulatedStatusTraffic(electronApp, appPage)
         : null
       statusTrafficStarted = false
       if (statusWorkload) {
@@ -558,13 +550,13 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
         expect(statusWorkload.latestReceipts).toBe(statusWorkload.trackedStatuses)
       }
       const instrumentation = BENCH_INSTRUMENTATION_REQUESTED
-        ? await stopAccumulatedBenchmarkInstrumentation(dolphinPage)
+        ? await stopAccumulatedBenchmarkInstrumentation(appPage)
         : { available: false as const, reason: 'disabled' as const, snapshot: null }
       instrumentationAvailable = false
       const graphProbe = graphProbeStart
         ? await stopRuntimeGraphPublicationProbe(
             electronApp,
-            dolphinPage,
+            appPage,
             graphProbeStart,
             graphProbeSelfTest
           )
@@ -574,13 +566,13 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
         testInfo,
         `hidden-load-${LOAD_PANES}x${LOAD_RATE_KBPS}kbps-cpu${CPU_WORKERS}`,
         measured,
-        await readSchedulerDebug(dolphinPage),
-        await readMainDeliveryDebug(dolphinPage),
+        await readSchedulerDebug(appPage),
+        await readMainDeliveryDebug(appPage),
         instrumentation,
         titleWorkload,
         statusWorkload,
         statusIngressValidation,
-        await readTypingScaleCensus(dolphinPage),
+        await readTypingScaleCensus(appPage),
         fixtureSummary,
         {
           producers: loadPanes.map((_, index) =>
@@ -588,7 +580,7 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
               readFileSync(path.join(scratch, `.dolphin-mwt-load-stats-${runId}-${index}`), 'utf8')
             )
           ),
-          receipts: await dolphinPage.evaluate(() => {
+          receipts: await appPage.evaluate(() => {
             const state = window.__store?.getState()
             return {
               statuses: Object.values(state?.agentStatusByPaneKey ?? {})
@@ -611,7 +603,7 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
       )
       const screenDirectory = path.resolve('.tmp', 'typing-reproduction')
       mkdirSync(screenDirectory, { recursive: true })
-      await dolphinPage.screenshot({
+      await appPage.screenshot({
         path: path.join(screenDirectory, `${BENCH_LABEL}-screen.png`)
       })
       // Hang detector only — the JSON report is the benchmark output. A
@@ -619,50 +611,50 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
       expect(measurement.inputHalfMs?.count).toBe(KEY_COUNT)
       expect(measurement.totalMs?.count).toBe(KEY_COUNT)
 
-      await stopPtysQuietly(dolphinPage, [typingPtyId])
+      await stopPtysQuietly(appPage, [typingPtyId])
     } finally {
       if (instrumentationAvailable) {
-        await stopAccumulatedBenchmarkInstrumentation(dolphinPage).catch(() => undefined)
+        await stopAccumulatedBenchmarkInstrumentation(appPage).catch(() => undefined)
       }
       if (graphProbeStart) {
         await stopRuntimeGraphPublicationProbe(
           electronApp,
-          dolphinPage,
+          appPage,
           graphProbeStart,
           graphProbeSelfTest
         ).catch(() => undefined)
       }
       if (statusTrafficStarted) {
-        await stopAccumulatedStatusTraffic(electronApp, dolphinPage)
+        await stopAccumulatedStatusTraffic(electronApp, appPage)
       }
-      await stopAccumulatedTitleTraffic(dolphinPage)
-      await cleanupAccumulatedWorkspaceFixture(dolphinPage)
+      await stopAccumulatedTitleTraffic(appPage)
+      await cleanupAccumulatedWorkspaceFixture(appPage)
       for (const worker of cpuWorkers) {
         worker.kill('SIGKILL')
       }
-      await switchToWorktree(dolphinPage, loadWorktreeId).catch(() => undefined)
+      await switchToWorktree(appPage, loadWorktreeId).catch(() => undefined)
       await stopPtysQuietly(
-        dolphinPage,
+        appPage,
         loadPanes.map((pane) => pane.ptyId)
       )
-      await switchToWorktree(dolphinPage, typingWorktreeId).catch(() => undefined)
+      await switchToWorktree(appPage, typingWorktreeId).catch(() => undefined)
       rmSync(loadPath, { force: true })
       rmSync(probePath, { force: true })
       rmSync(sidecarPath, { force: true })
       removeLoadReadyFiles(scratch, runId, LOAD_PANES)
-      await removeTypingLoadWorkspaces(dolphinPage, createdWorktreeIds)
+      await removeTypingLoadWorkspaces(appPage, createdWorktreeIds)
       rmSync(scratch, { recursive: true, force: true })
     }
   })
 
   test('typing under sustained visible split agent load', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
     const runId = randomUUID()
     const loadPath = path.join(testRepoPath, `.dolphin-mwt-load-${runId}.mjs`)
@@ -676,21 +668,21 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
     try {
       // Pane 0 types; the rest replay the agent stream side by side — the
       // "Claude Code running in a visible split" shape.
-      panes = await ensureActiveWorktreePaneLoad(dolphinPage, 2)
+      panes = await ensureActiveWorktreePaneLoad(appPage, 2)
       const [typingPane, ...loadPanes] = panes
-      await startSustainedLoadInPanes(dolphinPage, loadPanes, loadPath, runId, testRepoPath)
-      await focusPane(dolphinPage, typingPane.paneKey)
+      await startSustainedLoadInPanes(appPage, loadPanes, loadPath, runId, testRepoPath)
+      await focusPane(appPage, typingPane.paneKey)
 
-      await resetDeliveryDebug(dolphinPage)
-      await startTypingProbe(dolphinPage, typingPane.ptyId, probePath, runId)
-      const measured = await measureTypingWindow(dolphinPage, runId, sidecarPath)
+      await resetDeliveryDebug(appPage)
+      await startTypingProbe(appPage, typingPane.ptyId, probePath, runId)
+      const measured = await measureTypingWindow(appPage, runId, sidecarPath)
       const { measurement } = measured
       writeBenchReport(
         testInfo,
         `visible-split-${LOAD_RATE_KBPS}kbps-cpu${CPU_WORKERS}`,
         measured,
-        await readSchedulerDebug(dolphinPage),
-        await readMainDeliveryDebug(dolphinPage)
+        await readSchedulerDebug(appPage),
+        await readMainDeliveryDebug(appPage)
       )
       expect(measurement.inputHalfMs?.count).toBe(KEY_COUNT)
       expect(measurement.totalMs?.count).toBe(KEY_COUNT)
@@ -699,7 +691,7 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
         worker.kill('SIGKILL')
       }
       await stopPtysQuietly(
-        dolphinPage,
+        appPage,
         panes.map((pane) => pane.ptyId)
       )
       rmSync(loadPath, { force: true })

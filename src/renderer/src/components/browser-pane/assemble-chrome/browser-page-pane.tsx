@@ -294,8 +294,7 @@ export function BrowserPagePane({
   })
 
   // Why: a blank tab reads as 'about:blank' or the resolved data: URL, so match both to keep the "New Browser Tab" overlay visible.
-  const isBlankTab =
-    browserTab.url === 'about:blank' || browserTab.url === DOLPHIN_BROWSER_BLANK_URL
+  const isBlankTab = ['about:blank', DOLPHIN_BROWSER_BLANK_URL].includes(browserTab.url)
   // Why: synchronous webview URL access blocks render; navigation handlers update this cache before their store writes can re-render the pane.
   const liveBrowserUrl = getLiveBrowserUrl(browserTab.id) ?? browserTab.url
   const externalUrl = getOpenableExternalUrl(liveBrowserUrl)

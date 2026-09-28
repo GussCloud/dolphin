@@ -161,12 +161,12 @@ async function openComposerFromTypedName(page: Page): Promise<Locator> {
 }
 
 test.describe('Worktree jump-palette filters', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
-  test.afterEach(async ({ dolphinPage }) => {
-    await dolphinPage.evaluate(() => {
+  test.afterEach(async ({ appPage }) => {
+    await appPage.evaluate(() => {
       const store = window.__store?.getState()
       store?.setFilterRepoIds([])
       store?.closeModal()
@@ -174,96 +174,92 @@ test.describe('Worktree jump-palette filters', () => {
   })
 
   test('filters results, intersects fields, and reseeds from the sidebar on reopen', async ({
-    dolphinPage
+    appPage
   }) => {
-    const fixture = await seedPaletteFilterFixture(dolphinPage)
-    await openPalette(dolphinPage)
-    await searchFixtureWorkspaces(dolphinPage, fixture)
+    const fixture = await seedPaletteFilterFixture(appPage)
+    await openPalette(appPage)
+    await searchFixtureWorkspaces(appPage, fixture)
 
     // P1: keyboard focus reaches the control; its rendered selection narrows rows.
-    await selectRemoteHost(dolphinPage, true)
-    await expect(filterTrigger(dolphinPage)).toContainText('1')
-    await expect(palette(dolphinPage).getByLabel(`Remove filter ${REMOTE_HOST}`)).toBeVisible()
-    await expect(
-      worktreeRow(dolphinPage, fixture.remoteWorktreeId, fixture.remoteHostId)
-    ).toBeVisible()
-    await expect(worktreeRow(dolphinPage, fixture.localWorktreeId)).toHaveCount(0)
+    await selectRemoteHost(appPage, true)
+    await expect(filterTrigger(appPage)).toContainText('1')
+    await expect(palette(appPage).getByLabel(`Remove filter ${REMOTE_HOST}`)).toBeVisible()
+    await expect(worktreeRow(appPage, fixture.remoteWorktreeId, fixture.remoteHostId)).toBeVisible()
+    await expect(worktreeRow(appPage, fixture.localWorktreeId)).toHaveCount(0)
 
     // P2: host and repository fields intersect, with the filter-specific empty state.
-    await palette(dolphinPage).getByPlaceholder(SEARCH_PLACEHOLDER).fill('')
-    await filterTrigger(dolphinPage).click()
-    await palette(dolphinPage).getByText('Projects', { exact: true }).click()
-    const projects = palette(dolphinPage).getByRole('listbox', { name: 'Projects' })
+    await palette(appPage).getByPlaceholder(SEARCH_PLACEHOLDER).fill('')
+    await filterTrigger(appPage).click()
+    await palette(appPage).getByText('Projects', { exact: true }).click()
+    const projects = palette(appPage).getByRole('listbox', { name: 'Projects' })
     const localProject = projects.getByRole('option', { name: LOCAL_PROJECT })
     await expect(localProject).toBeVisible()
     await localProject.click()
-    await filterTrigger(dolphinPage).click()
-    await expect(palette(dolphinPage).getByText('No results match the active filter')).toBeVisible()
+    await filterTrigger(appPage).click()
+    await expect(palette(appPage).getByText('No results match the active filter')).toBeVisible()
     await expect(
-      palette(dolphinPage).getByText(
-        'Clear the filter above, or widen it to more hosts and projects.'
-      )
+      palette(appPage).getByText('Clear the filter above, or widen it to more hosts and projects.')
     ).toBeVisible()
 
     // P3: clear restores both rows; reopening replaces ephemeral state with the sidebar scope.
-    await filterTrigger(dolphinPage).click()
-    await palette(dolphinPage).getByRole('button', { name: 'Clear all' }).last().click()
-    await filterTrigger(dolphinPage).click()
-    await expect(filterTrigger(dolphinPage)).not.toContainText('1')
-    await searchFixtureWorkspaces(dolphinPage, fixture)
+    await filterTrigger(appPage).click()
+    await palette(appPage).getByRole('button', { name: 'Clear all' }).last().click()
+    await filterTrigger(appPage).click()
+    await expect(filterTrigger(appPage)).not.toContainText('1')
+    await searchFixtureWorkspaces(appPage, fixture)
 
-    await selectRemoteHost(dolphinPage)
-    await dolphinPage.evaluate((repoId) => {
+    await selectRemoteHost(appPage)
+    await appPage.evaluate((repoId) => {
       const store = window.__store?.getState()
       store?.closeModal()
       store?.setFilterRepoIds([repoId])
     }, fixture.localRepoId)
-    await expect(palette(dolphinPage)).toBeHidden()
-    await openPalette(dolphinPage)
-    await palette(dolphinPage).getByPlaceholder(SEARCH_PLACEHOLDER).fill('E2E Palette')
-    await expect(filterTrigger(dolphinPage)).toContainText('1')
-    await expect(worktreeRow(dolphinPage, fixture.localWorktreeId)).toBeVisible()
-    await expect(
-      worktreeRow(dolphinPage, fixture.remoteWorktreeId, fixture.remoteHostId)
-    ).toHaveCount(0)
+    await expect(palette(appPage)).toBeHidden()
+    await openPalette(appPage)
+    await palette(appPage).getByPlaceholder(SEARCH_PLACEHOLDER).fill('E2E Palette')
+    await expect(filterTrigger(appPage)).toContainText('1')
+    await expect(worktreeRow(appPage, fixture.localWorktreeId)).toBeVisible()
+    await expect(worktreeRow(appPage, fixture.remoteWorktreeId, fixture.remoteHostId)).toHaveCount(
+      0
+    )
   })
 
-  test('opens with the sidebar repository scope without widening it', async ({ dolphinPage }) => {
-    const fixture = await seedPaletteFilterFixture(dolphinPage)
-    await dolphinPage.evaluate((repoId) => {
+  test('opens with the sidebar repository scope without widening it', async ({ appPage }) => {
+    const fixture = await seedPaletteFilterFixture(appPage)
+    await appPage.evaluate((repoId) => {
       window.__store?.getState().setFilterRepoIds([repoId])
     }, fixture.localRepoId)
 
-    await openPalette(dolphinPage)
-    await palette(dolphinPage).getByPlaceholder(SEARCH_PLACEHOLDER).fill('E2E Palette')
+    await openPalette(appPage)
+    await palette(appPage).getByPlaceholder(SEARCH_PLACEHOLDER).fill('E2E Palette')
 
-    await expect(filterTrigger(dolphinPage)).toContainText('1')
-    await expect(palette(dolphinPage).getByLabel(`Remove filter ${LOCAL_PROJECT}`)).toBeVisible()
-    await expect(worktreeRow(dolphinPage, fixture.localWorktreeId)).toBeVisible()
-    await expect(
-      worktreeRow(dolphinPage, fixture.remoteWorktreeId, fixture.remoteHostId)
-    ).toHaveCount(0)
+    await expect(filterTrigger(appPage)).toContainText('1')
+    await expect(palette(appPage).getByLabel(`Remove filter ${LOCAL_PROJECT}`)).toBeVisible()
+    await expect(worktreeRow(appPage, fixture.localWorktreeId)).toBeVisible()
+    await expect(worktreeRow(appPage, fixture.remoteWorktreeId, fixture.remoteHostId)).toHaveCount(
+      0
+    )
   })
 
-  test('pressing Enter creates a worktree from a typed name', async ({ dolphinPage }) => {
-    const createDialog = await openComposerFromTypedName(dolphinPage)
+  test('pressing Enter creates a worktree from a typed name', async ({ appPage }) => {
+    const createDialog = await openComposerFromTypedName(appPage)
 
-    await dolphinPage.keyboard.press('Escape')
+    await appPage.keyboard.press('Escape')
 
     await expect(createDialog).toBeHidden()
   })
 
-  test('Escape closes the composer opened over the Automations page', async ({ dolphinPage }) => {
+  test('Escape closes the composer opened over the Automations page', async ({ appPage }) => {
     // Why this view: Cmd+J has no view guard, and a page mounted under the palette
     // keeps its own capture-phase Escape listener registered. Window capture runs
     // before Radix's document capture, so a preventDefault there vetoes dismissal.
-    await dolphinPage.evaluate(() => window.__store?.getState().openAutomationsPage())
-    const automationsHeading = dolphinPage.getByRole('heading', { name: 'Automations', level: 1 })
+    await appPage.evaluate(() => window.__store?.getState().openAutomationsPage())
+    const automationsHeading = appPage.getByRole('heading', { name: 'Automations', level: 1 })
     await expect(automationsHeading).toBeVisible()
 
-    const createDialog = await openComposerFromTypedName(dolphinPage)
+    const createDialog = await openComposerFromTypedName(appPage)
 
-    await dolphinPage.keyboard.press('Escape')
+    await appPage.keyboard.press('Escape')
 
     await expect(createDialog).toBeHidden()
     // The page declined the press rather than consuming it, so it is still open.

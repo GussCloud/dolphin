@@ -288,9 +288,7 @@ describe('PR E2E gate contract', () => {
       expect(existsSync(join(projectDir, spec)), spec).toBe(true)
       // Why: a spec that stops reading the flag would silently run without Docker.
       if (spec !== 'tests/e2e/ssh-startup-exec-readiness.spec.ts') {
-        expect(readFileSync(join(projectDir, spec), 'utf8'), spec).toContain(
-          'DOLPHIN_E2E_SSH_DOCKER'
-        )
+        expect(readFileSync(join(projectDir, spec), 'utf8'), spec).toMatch(/DOLPHIN_E2E_SSH_DOCKER/)
       }
     }
 
@@ -455,15 +453,13 @@ describe('PR E2E gate contract', () => {
   })
 
   it('routes P0 sentinels from their causal sources', () => {
+    const quickOpenSpec = 'tests/e2e/paired-quick-open-large-tree.spec.ts'
     const cases = [
       [
         'src/renderer/src/components/tab-bar/TabBarQuickCommandsMenu.tsx',
         'tests/e2e/terminal-quick-command-pre-bind-recovery.spec.ts'
       ],
-      [
-        'src/main/runtime/dolphin-runtime-files.ts',
-        'tests/e2e/paired-quick-open-large-tree.spec.ts'
-      ],
+      ['src/main/runtime/dolphin-runtime-files.ts', quickOpenSpec],
       [
         'src/renderer/src/runtime/sync-runtime-graph.ts',
         'tests/e2e/host-parked-pane-remote-viewer.spec.ts'
@@ -641,12 +637,11 @@ describe('PR E2E gate contract', () => {
     // Why this shape: a spec gated on a native-IME env var that no runner sets is a skip that
     // reports as a pass. This repo already carries such specs; the point is that they are named
     // as gaps rather than counted as coverage.
-    const nativeGateExpression =
-      /DOLPHIN_E2E_NATIVE_(?:IBUS_HANGUL|MACOS_KOREAN)\s*[!=]==\s*['"]1['"]/
+    const nativeGate = /DOLPHIN_E2E_NATIVE_(?:IBUS_HANGUL|MACOS_KOREAN)\s*[!=]==\s*['"]1['"]/
     const nativeGatedSpecs = readdirSync(join(projectDir, 'tests/e2e'))
       .filter((file) => file.endsWith('.spec.ts'))
       .map((file) => `tests/e2e/${file}`)
-      .filter((spec) => nativeGateExpression.test(readFileSync(join(projectDir, spec), 'utf8')))
+      .filter((spec) => nativeGate.test(readFileSync(join(projectDir, spec), 'utf8')))
     expect(nativeGatedSpecs.length).toBeGreaterThan(0)
 
     // The macOS spec needs a native input source; PR and scheduled IME lanes use Linux.

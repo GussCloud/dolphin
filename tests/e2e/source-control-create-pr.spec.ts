@@ -205,29 +205,27 @@ async function seedCreatePREligibleBranch(
 }
 
 test.describe('Source Control create pull request', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test('creates the pull request from the Source Control primary action', async ({
-    dolphinPage
-  }) => {
-    const { branch, worktreeId } = await seedCreatePREligibleBranch(dolphinPage)
-    await openSourceControl(dolphinPage, worktreeId)
-    await forceCreatePREligibleStatus(dolphinPage, worktreeId, branch)
+  test('creates the pull request from the Source Control primary action', async ({ appPage }) => {
+    const { branch, worktreeId } = await seedCreatePREligibleBranch(appPage)
+    await openSourceControl(appPage, worktreeId)
+    await forceCreatePREligibleStatus(appPage, worktreeId, branch)
 
-    const titleInput = dolphinPage.getByRole('textbox', { name: 'Pull request title' })
-    const descriptionInput = dolphinPage.getByRole('textbox', {
+    const titleInput = appPage.getByRole('textbox', { name: 'Pull request title' })
+    const descriptionInput = appPage.getByRole('textbox', {
       name: 'Pull request description'
     })
-    const createButton = getCreatePRComposerSubmitButton(dolphinPage)
+    const createButton = getCreatePRComposerSubmitButton(appPage)
     await expect(createButton).toBeVisible({ timeout: 10_000 })
     await expect(createButton).toBeEnabled()
     await expect(titleInput).toHaveValue('E2e secondary')
-    await expect(
-      dolphinPage.getByRole('combobox', { name: 'Pull request base branch' })
-    ).toHaveValue('main')
+    await expect(appPage.getByRole('combobox', { name: 'Pull request base branch' })).toHaveValue(
+      'main'
+    )
     await expect(descriptionInput).toHaveValue('')
     await descriptionInput.fill('- Initial commit for E2E')
     await expect(createButton).toBeEnabled()
@@ -236,7 +234,7 @@ test.describe('Source Control create pull request', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             () =>
               (window as unknown as { __createPRPayloads: CreatePRPayload[] }).__createPRPayloads
                 .length
@@ -245,7 +243,7 @@ test.describe('Source Control create pull request', () => {
       )
       .toBe(1)
 
-    const payloads = await dolphinPage.evaluate(
+    const payloads = await appPage.evaluate(
       () => (window as unknown as { __createPRPayloads: CreatePRPayload[] }).__createPRPayloads
     )
     expect(payloads).toHaveLength(1)
@@ -260,36 +258,36 @@ test.describe('Source Control create pull request', () => {
   })
 
   test('surfaces create failures without clearing the pull request composer', async ({
-    dolphinPage
+    appPage
   }) => {
     const failureMessage = 'Create PR failed: GitHub API rate limit exceeded'
-    const { branch, worktreeId } = await seedCreatePREligibleBranch(dolphinPage, {
+    const { branch, worktreeId } = await seedCreatePREligibleBranch(appPage, {
       createResult: {
         ok: false,
         code: 'unknown',
         error: failureMessage
       }
     })
-    await openSourceControl(dolphinPage, worktreeId)
-    await forceCreatePREligibleStatus(dolphinPage, worktreeId, branch)
+    await openSourceControl(appPage, worktreeId)
+    await forceCreatePREligibleStatus(appPage, worktreeId, branch)
 
-    const titleInput = dolphinPage.getByRole('textbox', { name: 'Pull request title' })
-    const descriptionInput = dolphinPage.getByRole('textbox', {
+    const titleInput = appPage.getByRole('textbox', { name: 'Pull request title' })
+    const descriptionInput = appPage.getByRole('textbox', {
       name: 'Pull request description'
     })
-    const createButton = getCreatePRComposerSubmitButton(dolphinPage)
+    const createButton = getCreatePRComposerSubmitButton(appPage)
     await expect(createButton).toBeVisible({ timeout: 10_000 })
     await titleInput.fill('Failing PR from E2E')
     await descriptionInput.fill('This draft should survive a failed create attempt.')
     await expect(createButton).toBeEnabled()
     await createButton.click()
 
-    await expect(dolphinPage.getByText(failureMessage)).toBeVisible()
+    await expect(appPage.getByText(failureMessage)).toBeVisible()
     await expect(titleInput).toHaveValue('Failing PR from E2E')
     await expect(descriptionInput).toHaveValue('This draft should survive a failed create attempt.')
-    await expect(
-      dolphinPage.getByRole('combobox', { name: 'Pull request base branch' })
-    ).toHaveValue('main')
+    await expect(appPage.getByRole('combobox', { name: 'Pull request base branch' })).toHaveValue(
+      'main'
+    )
     await expect(createButton).toBeEnabled()
   })
 })

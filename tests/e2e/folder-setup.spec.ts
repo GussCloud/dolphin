@@ -119,18 +119,18 @@ function getImportAsGroupButton(importDialog: Locator): Locator {
 test.describe('Folder setup', () => {
   test('imports nested repositories from the add-project dialog as a project group', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     const fixture = await createNestedRepoFixture()
     await chooseFolderInNativeDialog(electronApp, fixture.parentPath)
 
-    await openSidebarProjectDialog(dolphinPage)
-    const dialog = dolphinPage.getByRole('dialog', { name: /Add a project/i })
+    await openSidebarProjectDialog(appPage)
+    const dialog = appPage.getByRole('dialog', { name: /Add a project/i })
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: /Browse folder/i }).click()
 
-    const importDialog = dolphinPage.getByRole('dialog', {
+    const importDialog = appPage.getByRole('dialog', {
       name: /Import repositories from folder/i
     })
     await expect(
@@ -144,7 +144,7 @@ test.describe('Folder setup', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(async (args) => {
+          appPage.evaluate(async (args) => {
             const state = window.__store?.getState()
             if (!state) {
               return null
@@ -174,28 +174,28 @@ test.describe('Folder setup', () => {
         projectGroupOrders: [0, 1]
       })
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const state = window.__store?.getState()
       state?.closeModal()
       state?.setGroupBy('repo')
     })
-    await expect(dolphinPage.getByText(fixture.groupName)).toBeVisible()
+    await expect(appPage.getByText(fixture.groupName)).toBeVisible()
   })
 
   test('imports a small selection from a large nested folder without modal overflow', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     const fixture = await createLargeNestedRepoFixture()
     await chooseFolderInNativeDialog(electronApp, fixture.parentPath)
 
-    await openSidebarProjectDialog(dolphinPage)
-    const dialog = dolphinPage.getByRole('dialog', { name: /Add a project/i })
+    await openSidebarProjectDialog(appPage)
+    const dialog = appPage.getByRole('dialog', { name: /Add a project/i })
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: /Browse folder/i }).click()
 
-    const importDialog = dolphinPage.getByRole('dialog', {
+    const importDialog = appPage.getByRole('dialog', {
       name: /Import repositories from folder/i
     })
     await expect(importDialog.getByText(/Found 87 repositories in/)).toBeVisible()
@@ -228,7 +228,7 @@ test.describe('Folder setup', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(async (args) => {
+          appPage.evaluate(async (args) => {
             const state = window.__store?.getState()
             if (!state) {
               return null

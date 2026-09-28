@@ -83,7 +83,7 @@ function seedRemoteTree(target: DockerSshRelayTarget, paths: string[]): void {
 test.skip(!RUN_DOCKER_SSH, 'Set DOLPHIN_E2E_SSH_DOCKER=1 to run the Docker SSH relay lane')
 
 test('lists a monorepo-sized remote workspace, with and without a client page size (#12547)', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(420_000)
   let target: DockerSshRelayTarget | null = null
@@ -104,13 +104,13 @@ test('lists a monorepo-sized remote workspace, with and without a client page si
     target = startDockerSshRelayTarget(testInfo)
     seedRemoteTree(target, trackedPaths)
 
-    await waitForSessionReady(dolphinPage)
-    const connected = await connectDockerSshRelayTarget(dolphinPage, target, {
+    await waitForSessionReady(appPage)
+    const connected = await connectDockerSshRelayTarget(appPage, target, {
       remotePath: REMOTE_REPO_PATH
     })
 
     const listFiles = async (maxResults?: number): Promise<string[]> =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         ({ connectionId, rootPath, maxResults }) =>
           window.api.fs.listFiles({
             rootPath,

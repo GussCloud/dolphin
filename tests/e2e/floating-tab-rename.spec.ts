@@ -92,16 +92,14 @@ async function openFloatingPanel(page: Page): Promise<void> {
   await expect(page.locator(OPEN_PANEL_SELECTOR)).toBeVisible()
 }
 
-test('concurrent floating Markdown renames do not clobber the destination', async ({
-  dolphinPage
-}) => {
-  const directory = await dolphinPage.evaluate(() => window.api.app.getFloatingMarkdownDirectory())
+test('concurrent floating Markdown renames do not clobber the destination', async ({ appPage }) => {
+  const directory = await appPage.evaluate(() => window.api.app.getFloatingMarkdownDirectory())
   const suffix = Date.now().toString(36)
   const firstPath = path.join(directory, `floating-first-${suffix}.md`)
   const secondPath = path.join(directory, `floating-second-${suffix}.md`)
   const destinationPath = path.join(directory, `floating-destination-${suffix}.md`)
 
-  const result = await dolphinPage.evaluate(
+  const result = await appPage.evaluate(
     async ({ firstPath, secondPath, destinationPath }) => {
       await window.api.fs.createFile({ filePath: firstPath })
       await window.api.fs.createFile({ filePath: secondPath })
@@ -141,14 +139,14 @@ test('concurrent floating Markdown renames do not clobber the destination', asyn
   ).toEqual(['first\n', 'second\n'])
 })
 
-test('Enter commits a floating Markdown rename only once', async ({ dolphinPage }) => {
-  const seeded = await seedFloatingMarkdownFile(dolphinPage)
-  await openFloatingPanel(dolphinPage)
+test('Enter commits a floating Markdown rename only once', async ({ appPage }) => {
+  const seeded = await seedFloatingMarkdownFile(appPage)
+  await openFloatingPanel(appPage)
 
-  const panel = dolphinPage.locator(OPEN_PANEL_SELECTOR)
+  const panel = appPage.locator(OPEN_PANEL_SELECTOR)
   const tab = panel.locator(`[data-tab-id="${seeded.tabId}"]`)
   await tab.click({ button: 'right' })
-  await dolphinPage.getByRole('menuitem').filter({ hasText: 'Rename' }).first().click()
+  await appPage.getByRole('menuitem').filter({ hasText: 'Rename' }).first().click()
 
   const input = panel.getByRole('textbox', {
     name: `Rename file ${seeded.originalName}`,
@@ -160,7 +158,7 @@ test('Enter commits a floating Markdown rename only once', async ({ dolphinPage 
   await expect(tab).toContainText(seeded.renamedName)
   await expect
     .poll(() =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         async ({ originalPath, renamedPath }) => ({
           originalExists: await window.api.fs.pathExists({ filePath: originalPath }),
           renamedExists: await window.api.fs.pathExists({ filePath: renamedPath })
@@ -169,19 +167,19 @@ test('Enter commits a floating Markdown rename only once', async ({ dolphinPage 
       )
     )
     .toEqual({ originalExists: false, renamedExists: true })
-  await expect(dolphinPage.getByText(/Failed to rename/)).toHaveCount(0)
+  await expect(appPage.getByText(/Failed to rename/)).toHaveCount(0)
 })
 
-test('Electron serializes native Unicode rename aliases', async ({ dolphinPage }) => {
+test('Electron serializes native Unicode rename aliases', async ({ appPage }) => {
   test.skip(process.platform !== 'darwin', 'Requires native Unicode aliasing')
-  const directory = await dolphinPage.evaluate(() => window.api.app.getFloatingMarkdownDirectory())
+  const directory = await appPage.evaluate(() => window.api.app.getFloatingMarkdownDirectory())
   const suffix = Date.now().toString(36)
   const firstPath = path.join(directory, `floating-unicode-first-${suffix}.md`)
   const secondPath = path.join(directory, `floating-unicode-second-${suffix}.md`)
   const sharpSDestination = path.join(directory, `floating-destination-${suffix}-straße.md`)
   const expandedDestination = path.join(directory, `floating-destination-${suffix}-STRASSE.MD`)
 
-  const result = await dolphinPage.evaluate(
+  const result = await appPage.evaluate(
     async ({ firstPath, secondPath, sharpSDestination, expandedDestination }) => {
       await window.api.fs.createFile({ filePath: firstPath })
       await window.api.fs.createFile({ filePath: secondPath })

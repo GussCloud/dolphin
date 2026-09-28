@@ -304,14 +304,14 @@ async function runCapabilityFailureJourney(args: {
 
 test('rolls back a headed-host browser when client reconciliation times out @headful', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   await runReconciliationFailureJourney({
     // Why 30s: browser.tabList on a headed host with no live browser tab first activates the
@@ -327,14 +327,14 @@ test('rolls back a headed-host browser when client reconciliation times out @hea
 
 test('cleans up a headed-host browser when capability rejects before create @headful', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   await runCapabilityFailureJourney({
     // Why 30s: browser.tabList on a headed host with no live browser tab first activates the

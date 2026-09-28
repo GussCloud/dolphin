@@ -346,11 +346,9 @@ async function seedScenario(
   return { target, decoys }
 }
 
-test('paired client keeps revealed remote terminals interactive', async ({
-  dolphinPage
-}, testInfo) => {
+test('paired client keeps revealed remote terminals interactive', async ({ appPage }, testInfo) => {
   test.setTimeout(600_000)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   // Why: the paired client inherits this from the launching process; a reused
   // Playwright worker would otherwise leak the shortened delay into later specs.
   const previousParkDelay = process.env.DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS
@@ -359,7 +357,7 @@ test('paired client keeps revealed remote terminals interactive', async ({
   const createdTerminals: string[] = []
   const results: ScenarioResult[] = []
   try {
-    const worktreeId = await dolphinPage.evaluate(() => {
+    const worktreeId = await appPage.evaluate(() => {
       const id = window.__store?.getState().activeWorktreeId
       if (!id) {
         throw new Error('headed host has no active worktree')

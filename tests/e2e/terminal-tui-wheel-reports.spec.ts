@@ -286,17 +286,17 @@ async function dispatchTuiWheel(
 
 test.describe('terminal TUI wheel reports', () => {
   test('notched mouse wheel ticks produce immediate mouse-reporting TUI scroll reports', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await dolphinPage.evaluate(() =>
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await appPage.evaluate(() =>
       window.__store?.getState().updateSettings({ terminalTuiScrollSensitivity: 1 })
     )
 
-    const samples = await probeSmallMouseWheelReports(dolphinPage, 4)
+    const samples = await probeSmallMouseWheelReports(appPage, 4)
 
     expect(
       samples.map((sample) => sample.reportDelta),
@@ -307,7 +307,7 @@ test.describe('terminal TUI wheel reports', () => {
 
   test('fullscreen mouse-reporting TUI scroll distance follows wheel magnitude @headful', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     await electronApp.evaluate(({ BrowserWindow }) => {
       const win = BrowserWindow.getAllWindows()[0]
@@ -328,38 +328,38 @@ test.describe('terminal TUI wheel reports', () => {
         )
       )
       .toBe(true)
-    await dolphinPage.waitForTimeout(1200)
+    await appPage.waitForTimeout(1200)
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await dolphinPage.evaluate(() =>
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await appPage.evaluate(() =>
       window.__store?.getState().updateSettings({ terminalTuiScrollSensitivity: 1 })
     )
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await execInTerminal(dolphinPage, ptyId, `node ${JSON.stringify(VISIBLE_TUI_FIXTURE_PATH)}`)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await execInTerminal(appPage, ptyId, `node ${JSON.stringify(VISIBLE_TUI_FIXTURE_PATH)}`)
 
     await expect
-      .poll(() => readVisibleTuiOffset(dolphinPage), {
+      .poll(() => readVisibleTuiOffset(appPage), {
         timeout: 10_000,
         message: 'visible fullscreen TUI did not render numbered rows'
       })
       .toBe(0)
 
-    await dispatchTuiWheel(dolphinPage, {
+    await dispatchTuiWheel(appPage, {
       deltaY: 10,
       wheelDeltaY: PHYSICAL_MOUSE_WHEEL_DELTA
     })
     await expect
-      .poll(() => readVisibleTuiOffset(dolphinPage), {
+      .poll(() => readVisibleTuiOffset(appPage), {
         timeout: 5_000,
         message: 'single notched wheel tick did not visibly scroll the TUI'
       })
       .toBe(1)
 
-    const cellHeight = await dolphinPage.evaluate(() => {
+    const cellHeight = await appPage.evaluate(() => {
       const state = window.__store?.getState()
       const worktreeId = state?.activeWorktreeId
       const tabId =
@@ -377,35 +377,35 @@ test.describe('terminal TUI wheel reports', () => {
       return screen.getBoundingClientRect().height / pane.terminal.rows
     })
 
-    await dispatchTuiWheel(dolphinPage, {
+    await dispatchTuiWheel(appPage, {
       deltaY: cellHeight * 12,
       wheelDeltaY: PHYSICAL_MOUSE_WHEEL_DELTA * 12
     })
 
     await expect
-      .poll(() => readVisibleTuiOffset(dolphinPage), {
+      .poll(() => readVisibleTuiOffset(appPage), {
         timeout: 5_000,
         message: 'larger wheel movement did not visibly move the TUI farther'
       })
       .toBe(7)
   })
 
-  test('TUI scroll setting scales notched mouse wheel reports', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await dolphinPage.evaluate(() =>
+  test('TUI scroll setting scales notched mouse wheel reports', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await appPage.evaluate(() =>
       window.__store?.getState().updateSettings({ terminalTuiScrollSensitivity: 5 })
     )
 
-    const slow = await probeTimedSmallMouseWheelReports(dolphinPage, {
+    const slow = await probeTimedSmallMouseWheelReports(appPage, {
       drainWaitMs: 120,
       intervalMs: 220,
       ticks: 5
     })
-    await dolphinPage.waitForTimeout(220)
-    const paced = await probeTimedSmallMouseWheelReports(dolphinPage, {
+    await appPage.waitForTimeout(220)
+    const paced = await probeTimedSmallMouseWheelReports(appPage, {
       drainWaitMs: 220,
       intervalMs: 80,
       ticks: 5

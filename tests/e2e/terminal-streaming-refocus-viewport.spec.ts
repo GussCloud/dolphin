@@ -199,22 +199,22 @@ async function sampleRevealFrames(page: Page, targetTabId: string): Promise<Reve
 
 test.describe('terminal streaming refocus viewport', () => {
   test('keeps follow-output at the bottom through a queued-write refocus wobble', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await closeFeatureTips(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    const { paneKey } = await waitForActivePaneHookDescriptor(dolphinPage)
+    await waitForSessionReady(appPage)
+    await closeFeatureTips(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    const { paneKey } = await waitForActivePaneHookDescriptor(appPage)
     const tabId = paneKey.slice(0, paneKey.indexOf(':'))
-    await waitForTerminalPtyDataInjector(dolphinPage, paneKey)
-    await execInTerminal(dolphinPage, ptyId, nodeTerminalCommand([STREAMING_FIXTURE_PATH]))
-    await waitForPhaseOneAtBottom(dolphinPage, tabId)
+    await waitForTerminalPtyDataInjector(appPage, paneKey)
+    await execInTerminal(appPage, ptyId, nodeTerminalCommand([STREAMING_FIXTURE_PATH]))
+    await waitForPhaseOneAtBottom(appPage, tabId)
 
-    const framesPromise = sampleRevealFrames(dolphinPage, tabId)
-    await injectQueuedWriteAndRefocus(dolphinPage, tabId, paneKey)
+    const framesPromise = sampleRevealFrames(appPage, tabId)
+    await injectQueuedWriteAndRefocus(appPage, tabId, paneKey)
     const frames = await framesPromise
 
     expect(frames.filter((frame) => !frame.targetPresented)).toEqual([])
@@ -231,9 +231,9 @@ test.describe('terminal streaming refocus viewport', () => {
       frames.filter((frame) => (frame.maxThumbTop ?? 0) > 1 && (frame.thumbTop ?? 0) <= 1)
     ).toEqual([])
     await expect
-      .poll(() => getTerminalContent(dolphinPage), { timeout: 15_000 })
+      .poll(() => getTerminalContent(appPage), { timeout: 15_000 })
       .toContain('REFOCUS_STREAM_DONE')
-    const visibleScrollbar = dolphinPage.locator('.xterm-scrollbar.xterm-vertical:visible').first()
+    const visibleScrollbar = appPage.locator('.xterm-scrollbar.xterm-vertical:visible').first()
     await expect(visibleScrollbar).toBeVisible()
     expect(
       await visibleScrollbar.evaluate((scrollbar) => {

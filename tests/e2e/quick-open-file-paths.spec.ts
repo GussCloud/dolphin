@@ -8,22 +8,22 @@ const relativeFilePath =
 
 test('cmd+p quick open prioritizes the filename and reveals the full path on hover', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }) => {
   const filePath = path.join(testRepoPath, ...relativeFilePath.split('/'))
   mkdirSync(path.dirname(filePath), { recursive: true })
   writeFileSync(filePath, 'export const QuickOpenTarget = true\n')
 
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
 
   // Headless Playwright keyboard events bypass Electron’s before-input-event shortcut path.
   await electronApp.evaluate(({ BrowserWindow }) => {
     BrowserWindow.getAllWindows()[0]?.webContents.send('ui:openQuickOpen')
   })
-  const dialog = dolphinPage.getByRole('dialog', { name: 'Go to file' })
+  const dialog = appPage.getByRole('dialog', { name: 'Go to file' })
   await expect(dialog).toBeVisible()
   const inputBox = await dialog.locator('[data-cmdk-input-wrapper]').boundingBox()
   expect(inputBox).not.toBeNull()
@@ -42,21 +42,21 @@ test('cmd+p quick open prioritizes the filename and reveals the full path on hov
     rowText?.indexOf('packages/dolphin/src/renderer/src/components/navigation/') ?? -1
   )
 
-  const tooltip = dolphinPage
+  const tooltip = appPage
     .locator('[data-slot="tooltip-content"]')
     .filter({ hasText: relativeFilePath })
   // Streaming results can remount the row under a stationary pointer, and a
   // tooltip left open from a prior attempt can swallow the next hover.
   await expect(async () => {
-    await dolphinPage.mouse.move(8, 8)
+    await appPage.mouse.move(8, 8)
     const currentRow = dialog.getByRole('option').filter({ hasText: 'QuickOpenTarget.tsx' }).first()
     await expect(currentRow).toBeVisible()
     const currentBox = await currentRow.boundingBox()
     if (!currentBox) {
       throw new Error('Quick Open result remounted before hover')
     }
-    await dolphinPage.mouse.move(currentBox.x + 20, currentBox.y + 12)
-    await dolphinPage.mouse.move(currentBox.x + 40, currentBox.y + 12)
+    await appPage.mouse.move(currentBox.x + 20, currentBox.y + 12)
+    await appPage.mouse.move(currentBox.x + 40, currentBox.y + 12)
     await expect(tooltip).toBeVisible({ timeout: 2_000 })
   }).toPass({ timeout: 15_000, intervals: [100, 250, 500] })
 
@@ -67,6 +67,6 @@ test('cmd+p quick open prioritizes the filename and reveals the full path on hov
 
   const proofPath = process.env.DOLPHIN_QUICK_OPEN_PROOF_PATH
   if (proofPath) {
-    await dolphinPage.screenshot({ path: proofPath })
+    await appPage.screenshot({ path: proofPath })
   }
 })

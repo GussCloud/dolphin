@@ -138,13 +138,13 @@ test.afterAll(() => {
 })
 
 test('compiled CLI rejects false completion then reconciles the dead retained worker', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }) => {
   test.setTimeout(180_000)
   rmSync(cliLedgerPath, { force: true })
-  await waitForSessionReady(dolphinPage)
-  await dolphinPage.evaluate(
+  await waitForSessionReady(appPage)
+  await appPage.evaluate(
     async ({ agentCommand, terminalWindowsShell }) => {
       await window.__store?.getState().updateSettings({
         agentCmdOverrides: { codex: agentCommand },
@@ -153,10 +153,10 @@ test('compiled CLI rejects false completion then reconciles the dead retained wo
     },
     { agentCommand: fakeCodexCommand, terminalWindowsShell: FAKE_AGENT_WINDOWS_SHELL }
   )
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActivePanePtyId(dolphinPage)
-  const coordinatorPane = await waitForActivePaneHookDescriptor(dolphinPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActivePanePtyId(appPage)
+  const coordinatorPane = await waitForActivePaneHookDescriptor(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const client = new RuntimeClient(userDataDir, 30_000, null, null)
   const coordinator = await client.call<{ terminal: { handle: string } }>('terminal.resolvePane', {

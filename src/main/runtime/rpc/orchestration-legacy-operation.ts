@@ -1,4 +1,4 @@
-import { type CliCommandName } from '../../../shared/cli-command-names'
+import type { CliCommandName } from '../../../shared/cli-command-names'
 import { createHash, randomUUID } from 'node:crypto'
 import type { RpcRequest } from './core'
 import type { MessageType } from '../orchestration/db'

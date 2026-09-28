@@ -214,67 +214,67 @@ async function setHiddenSnapshotOverride(
 
 test.describe('Terminal tab switch SIGWINCH restore', () => {
   test('keeps an alternate-screen Codex viewport after hidden snapshot replay', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const shellTabId = (await getActiveTabId(dolphinPage))!
+    const shellTabId = (await getActiveTabId(appPage))!
     const agentTabId = await createAgentMarkedTerminalTab(
-      dolphinPage,
+      appPage,
       'codex',
       buildSigwinchResetProbeCommand()
     )
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await waitForPanePtyIdOnTab(dolphinPage, agentTabId)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await waitForPanePtyIdOnTab(appPage, agentTabId)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 8_000), {
+      .poll(() => getTerminalContent(appPage, 8_000), {
         timeout: 10_000,
         message: 'SIGWINCH probe TUI did not paint its initial scrolled page'
       })
       .toContain(`VISIBLE_BEFORE_SWITCH page=${SIGWINCH_PROBE_PAGE}`)
-    const paneIdentity = await readPaneIdentityOnTab(dolphinPage, agentTabId)
-    await sendToTerminal(dolphinPage, paneIdentity.ptyId, 'ARM_SIGWINCH_PROBE\n')
+    const paneIdentity = await readPaneIdentityOnTab(appPage, agentTabId)
+    await sendToTerminal(appPage, paneIdentity.ptyId, 'ARM_SIGWINCH_PROBE\n')
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 8_000), {
+      .poll(() => getTerminalContent(appPage, 8_000), {
         timeout: 10_000,
         message: 'SIGWINCH probe TUI did not arm after startup settled'
       })
       .toContain(`ARMED_BEFORE_SWITCH page=${SIGWINCH_PROBE_PAGE}`)
-    await dolphinPage.waitForTimeout(1_200)
-    const armedContentAfterSettle = await getTerminalContent(dolphinPage, 8_000)
+    await appPage.waitForTimeout(1_200)
+    const armedContentAfterSettle = await getTerminalContent(appPage, 8_000)
     expect(armedContentAfterSettle).not.toContain('TOP_AFTER_SIGWINCH page=0')
     const paneKey = `${agentTabId}:${paneIdentity.leafId}`
 
-    await activateTerminalTab(dolphinPage, shellTabId)
+    await activateTerminalTab(appPage, shellTabId)
     const hiddenFrame = ['\x1b[?2026h', 'hidden probe frame', '\x1b[?2026l'].join('\r\n')
-    await resetHiddenOutputDebug(dolphinPage)
-    await injectPaneData(dolphinPage, paneKey, hiddenFrame, {
+    await resetHiddenOutputDebug(appPage)
+    await injectPaneData(appPage, paneKey, hiddenFrame, {
       seq: hiddenFrame.length,
       rawLength: hiddenFrame.length
     })
 
     await expect
-      .poll(async () => (await readHiddenOutputDebug(dolphinPage))?.hiddenRendererSkipCount ?? 0, {
+      .poll(async () => (await readHiddenOutputDebug(appPage))?.hiddenRendererSkipCount ?? 0, {
         timeout: 5_000,
         message: 'Codex probe hidden output did not take the skipped renderer path'
       })
       .toBeGreaterThan(0)
-    await setHiddenSnapshotOverride(dolphinPage, paneIdentity.ptyId, {
+    await setHiddenSnapshotOverride(appPage, paneIdentity.ptyId, {
       data: buildSigwinchResetProbeSnapshot('RESTORED_SNAPSHOT'),
       cols: paneIdentity.cols,
       rows: paneIdentity.rows,
       seq: hiddenFrame.length
     })
 
-    await activateTerminalTab(dolphinPage, agentTabId)
+    await activateTerminalTab(appPage, agentTabId)
 
     await expect
       .poll(
         async () => {
-          const content = await getTerminalContent(dolphinPage, 8_000)
+          const content = await getTerminalContent(appPage, 8_000)
           if (content.includes('TOP_AFTER_SIGWINCH page=0')) {
             return 'top'
           }
@@ -288,8 +288,8 @@ test.describe('Terminal tab switch SIGWINCH restore', () => {
         }
       )
       .toBe('snapshot')
-    await dolphinPage.waitForTimeout(1_200)
-    const contentAfterSettle = await getTerminalContent(dolphinPage, 8_000)
+    await appPage.waitForTimeout(1_200)
+    const contentAfterSettle = await getTerminalContent(appPage, 8_000)
     expect(contentAfterSettle).toContain(`RESTORED_SNAPSHOT page=${SIGWINCH_PROBE_PAGE}`)
     expect(contentAfterSettle).not.toContain('TOP_AFTER_SIGWINCH page=0')
   })

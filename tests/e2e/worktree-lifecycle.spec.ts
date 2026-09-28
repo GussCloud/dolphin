@@ -90,19 +90,19 @@ test.describe('Worktree Lifecycle', () => {
   // clean even when a test aborts before its own cleanup runs.
   let createdWorktreeId: string | null = null
 
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
-  test.afterEach(async ({ dolphinPage }) => {
+  test.afterEach(async ({ appPage }) => {
     if (!createdWorktreeId) {
       return
     }
     const idToClean = createdWorktreeId
     createdWorktreeId = null
-    await dolphinPage
+    await appPage
       .evaluate(async (id) => {
         try {
           const state = window.__store?.getState()
@@ -121,22 +121,20 @@ test.describe('Worktree Lifecycle', () => {
    * Covers PR #532: removing a worktree must drop its tab/editor/browser state
    * from the store, not leak IDs into the next render.
    */
-  test('removing a worktree clears its tabs, open files, and browser tabs', async ({
-    dolphinPage
-  }) => {
-    const originalWorktreeId = await waitForActiveWorktree(dolphinPage)
+  test('removing a worktree clears its tabs, open files, and browser tabs', async ({ appPage }) => {
+    const originalWorktreeId = await waitForActiveWorktree(appPage)
 
-    createdWorktreeId = await createIsolatedWorktree(dolphinPage)
+    createdWorktreeId = await createIsolatedWorktree(appPage)
     const newWorktreeId = createdWorktreeId
-    await switchToWorktree(dolphinPage, newWorktreeId)
+    await switchToWorktree(appPage, newWorktreeId)
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
+      .poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 })
       .toBe(newWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
+    await ensureTerminalVisible(appPage)
 
     // Seed one of each surface on the new worktree so removeWorktree has to
     // clean up all three in a single atomic set().
-    await dolphinPage.evaluate((worktreeId) => {
+    await appPage.evaluate((worktreeId) => {
       const store = window.__store
       if (!store) {
         return
@@ -150,23 +148,23 @@ test.describe('Worktree Lifecycle', () => {
       })
     }, newWorktreeId)
 
-    await openFileExplorer(dolphinPage)
-    await clickFileInExplorer(dolphinPage, ['README.md', 'package.json'])
+    await openFileExplorer(appPage)
+    await clickFileInExplorer(appPage, ['README.md', 'package.json'])
 
     // Baseline: the new worktree now has tabs/browser tabs/open files.
-    expect((await getWorktreeTabs(dolphinPage, newWorktreeId)).length).toBeGreaterThan(0)
-    expect((await getBrowserTabs(dolphinPage, newWorktreeId)).length).toBeGreaterThan(0)
-    expect((await getOpenFiles(dolphinPage, newWorktreeId)).length).toBeGreaterThan(0)
+    expect((await getWorktreeTabs(appPage, newWorktreeId)).length).toBeGreaterThan(0)
+    expect((await getBrowserTabs(appPage, newWorktreeId)).length).toBeGreaterThan(0)
+    expect((await getOpenFiles(appPage, newWorktreeId)).length).toBeGreaterThan(0)
 
     // Switch away before removing so we're not deleting the active worktree —
     // that's an easier code path and hides the cleanup regression this spec
     // is protecting.
-    await switchToWorktree(dolphinPage, originalWorktreeId)
+    await switchToWorktree(appPage, originalWorktreeId)
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
+      .poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 })
       .toBe(originalWorktreeId)
 
-    const result = await removeWorktreeViaStore(dolphinPage, newWorktreeId)
+    const result = await removeWorktreeViaStore(appPage, newWorktreeId)
     expect(result.ok).toBe(true)
     // Successful removal — afterEach hook no longer needs to clean this up.
     createdWorktreeId = null
@@ -175,21 +173,21 @@ test.describe('Worktree Lifecycle', () => {
     // be dropped. A regression that leaves any of these behind will show up
     // in the sidebar as a worktree-less tab strip.
     await expect
-      .poll(async () => (await getWorktreeTabs(dolphinPage, newWorktreeId)).length, {
+      .poll(async () => (await getWorktreeTabs(appPage, newWorktreeId)).length, {
         timeout: 10_000,
         message: 'tabsByWorktree still holds entries for the removed worktree'
       })
       .toBe(0)
     await expect
-      .poll(async () => (await getBrowserTabs(dolphinPage, newWorktreeId)).length, {
+      .poll(async () => (await getBrowserTabs(appPage, newWorktreeId)).length, {
         timeout: 5_000
       })
       .toBe(0)
     await expect
-      .poll(async () => (await getOpenFiles(dolphinPage, newWorktreeId)).length, { timeout: 5_000 })
+      .poll(async () => (await getOpenFiles(appPage, newWorktreeId)).length, { timeout: 5_000 })
       .toBe(0)
 
-    const allIds = await getAllWorktreeIds(dolphinPage)
+    const allIds = await getAllWorktreeIds(appPage)
     expect(allIds).not.toContain(newWorktreeId)
   })
 
@@ -214,23 +212,23 @@ test.describe('Worktree Lifecycle', () => {
    * verify.
    */
   test('switching worktrees preserves per-worktree state across a round-trip', async ({
-    dolphinPage
+    appPage
   }) => {
-    const allIds = await getAllWorktreeIds(dolphinPage)
+    const allIds = await getAllWorktreeIds(appPage)
     expect(
       allIds.length,
       'fixture should provide primary + e2e-secondary worktrees'
     ).toBeGreaterThanOrEqual(2)
 
-    const originalWorktreeId = await waitForActiveWorktree(dolphinPage)
+    const originalWorktreeId = await waitForActiveWorktree(appPage)
 
-    await openFileExplorer(dolphinPage)
-    await clickFileInExplorer(dolphinPage, ['README.md', 'package.json'])
+    await openFileExplorer(appPage)
+    await clickFileInExplorer(appPage, ['README.md', 'package.json'])
 
     // Snapshot the original worktree's state so we can assert preservation
     // after the round-trip. An empty `openFiles` here would make the second
     // assertion tautological, so guard that expectation up-front.
-    const originalState = await dolphinPage.evaluate((wId) => {
+    const originalState = await appPage.evaluate((wId) => {
       const store = window.__store
       if (!store) {
         // Surface a store-unavailable failure via a clear empty baseline
@@ -249,9 +247,9 @@ test.describe('Worktree Lifecycle', () => {
     ).toBeGreaterThan(0)
 
     const otherWorktreeId = allIds.find((id) => id !== originalWorktreeId)!
-    await switchToWorktree(dolphinPage, otherWorktreeId)
+    await switchToWorktree(appPage, otherWorktreeId)
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
+      .poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 })
       .toBe(otherWorktreeId)
 
     // Sidebar UI state must survive the switch — user shouldn't have to
@@ -259,7 +257,7 @@ test.describe('Worktree Lifecycle', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(() => {
+          appPage.evaluate(() => {
             const state = window.__store?.getState()
             return Boolean(state?.rightSidebarOpen && state?.rightSidebarTab === 'explorer')
           }),
@@ -267,16 +265,16 @@ test.describe('Worktree Lifecycle', () => {
       )
       .toBe(true)
 
-    await switchToWorktree(dolphinPage, originalWorktreeId)
+    await switchToWorktree(appPage, originalWorktreeId)
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
+      .poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 })
       .toBe(originalWorktreeId)
 
     // Original worktree's state must be intact: the openFiles it had before
     // the switch are all still present, and its layout entry (if any) was
     // not torn down. A regression that clears these on setActiveWorktree
     // would fail here even though `activeWorktreeId` round-tripped cleanly.
-    const afterRoundTrip = await dolphinPage.evaluate((wId) => {
+    const afterRoundTrip = await appPage.evaluate((wId) => {
       const store = window.__store
       if (!store) {
         // Match the originalState guard so assertion failures point at
@@ -299,18 +297,18 @@ test.describe('Worktree Lifecycle', () => {
    * Guard the underlying invariant — tabsByWorktree[A] and tabsByWorktree[B]
    * do not share IDs — at the model layer where the bug actually lived.
    */
-  test('terminal tabs stay scoped to the worktree that created them', async ({ dolphinPage }) => {
-    const allIds = await getAllWorktreeIds(dolphinPage)
+  test('terminal tabs stay scoped to the worktree that created them', async ({ appPage }) => {
+    const allIds = await getAllWorktreeIds(appPage)
     expect(
       allIds.length,
       'fixture should provide primary + e2e-secondary worktrees'
     ).toBeGreaterThanOrEqual(2)
 
-    const worktreeA = await waitForActiveWorktree(dolphinPage)
+    const worktreeA = await waitForActiveWorktree(appPage)
     const worktreeB = allIds.find((id) => id !== worktreeA)!
 
     // Create an extra tab on A so it has a distinctive tab ID set.
-    await dolphinPage.evaluate((worktreeId) => {
+    await appPage.evaluate((worktreeId) => {
       const store = window.__store
       if (!store) {
         return
@@ -319,16 +317,14 @@ test.describe('Worktree Lifecycle', () => {
       store.getState().createTab(worktreeId)
     }, worktreeA)
     await expect
-      .poll(async () => (await getWorktreeTabs(dolphinPage, worktreeA)).length, { timeout: 5_000 })
+      .poll(async () => (await getWorktreeTabs(appPage, worktreeA)).length, { timeout: 5_000 })
       .toBeGreaterThanOrEqual(2)
 
     // Switch to B and create a tab there too.
-    await switchToWorktree(dolphinPage, worktreeB)
-    await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
-      .toBe(worktreeB)
-    await ensureTerminalVisible(dolphinPage)
-    await dolphinPage.evaluate((worktreeId) => {
+    await switchToWorktree(appPage, worktreeB)
+    await expect.poll(async () => getActiveWorktreeId(appPage), { timeout: 10_000 }).toBe(worktreeB)
+    await ensureTerminalVisible(appPage)
+    await appPage.evaluate((worktreeId) => {
       const store = window.__store
       if (!store) {
         return
@@ -337,11 +333,11 @@ test.describe('Worktree Lifecycle', () => {
       store.getState().createTab(worktreeId)
     }, worktreeB)
     await expect
-      .poll(async () => (await getWorktreeTabs(dolphinPage, worktreeB)).length, { timeout: 5_000 })
+      .poll(async () => (await getWorktreeTabs(appPage, worktreeB)).length, { timeout: 5_000 })
       .toBeGreaterThanOrEqual(2)
 
-    const tabsA = await getWorktreeTabs(dolphinPage, worktreeA)
-    const tabsB = await getWorktreeTabs(dolphinPage, worktreeB)
+    const tabsA = await getWorktreeTabs(appPage, worktreeA)
+    const tabsB = await getWorktreeTabs(appPage, worktreeB)
     const idsA = new Set(tabsA.map((tab) => tab.id))
     const idsB = new Set(tabsB.map((tab) => tab.id))
 

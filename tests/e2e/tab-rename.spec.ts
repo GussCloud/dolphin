@@ -16,14 +16,14 @@ import {
 } from './helpers/store'
 
 test.describe('Tab Rename (Inline)', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
     // Why: clear any custom titles left by a previous test (the Electron app
     // persists across tests in the worker) so tab locators key off the default
     // title, not a stale rename like "My Custom Title".
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const store = window.__store
       if (!store) {
         return
@@ -93,16 +93,16 @@ test.describe('Tab Rename (Inline)', () => {
   }
 
   test('double-clicking a tab opens an inline rename input and Enter commits', async ({
-    dolphinPage
+    appPage
   }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const originalTitle = await getActiveTabTitle(dolphinPage, worktreeId)
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const originalTitle = await getActiveTabTitle(appPage, worktreeId)
     expect(originalTitle.length).toBeGreaterThan(0)
 
-    const tabLocator = tabLocatorByTitle(dolphinPage, originalTitle)
+    const tabLocator = tabLocatorByTitle(appPage, originalTitle)
     await tabLocator.dblclick()
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${originalTitle}`,
       exact: true
     })
@@ -112,23 +112,21 @@ test.describe('Tab Rename (Inline)', () => {
     await renameInput.press('Enter')
 
     await expect
-      .poll(async () => getActiveCustomTitle(dolphinPage, worktreeId), { timeout: 3_000 })
+      .poll(async () => getActiveCustomTitle(appPage, worktreeId), { timeout: 3_000 })
       .toBe('My Custom Title')
     await expect(renameInput).toBeHidden()
-    await expect(tabLocatorByTitle(dolphinPage, 'My Custom Title')).toBeVisible()
+    await expect(tabLocatorByTitle(appPage, 'My Custom Title')).toBeVisible()
   })
 
-  test('context-menu Change Title opens a focused select-all rename input', async ({
-    dolphinPage
-  }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const originalTitle = await getActiveTabTitle(dolphinPage, worktreeId)
+  test('context-menu Change Title opens a focused select-all rename input', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const originalTitle = await getActiveTabTitle(appPage, worktreeId)
     expect(originalTitle.length).toBeGreaterThan(0)
 
-    await tabLocatorByTitle(dolphinPage, originalTitle).click({ button: 'right' })
-    await dolphinPage.getByRole('menuitem', { name: /^Change Title(?:\s|$)/ }).click()
+    await tabLocatorByTitle(appPage, originalTitle).click({ button: 'right' })
+    await appPage.getByRole('menuitem', { name: /^Change Title(?:\s|$)/ }).click()
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${originalTitle}`,
       exact: true
     })
@@ -141,19 +139,19 @@ test.describe('Tab Rename (Inline)', () => {
     await renameInput.press('Enter')
 
     await expect
-      .poll(async () => getActiveCustomTitle(dolphinPage, worktreeId), { timeout: 3_000 })
+      .poll(async () => getActiveCustomTitle(appPage, worktreeId), { timeout: 3_000 })
       .toBe('Context Menu Title')
-    await expect(tabLocatorByTitle(dolphinPage, 'Context Menu Title')).toBeVisible()
+    await expect(tabLocatorByTitle(appPage, 'Context Menu Title')).toBeVisible()
   })
 
-  test('Escape during inline rename discards the edit', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const originalTitle = await getActiveTabTitle(dolphinPage, worktreeId)
+  test('Escape during inline rename discards the edit', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const originalTitle = await getActiveTabTitle(appPage, worktreeId)
 
-    const tabLocator = tabLocatorByTitle(dolphinPage, originalTitle)
+    const tabLocator = tabLocatorByTitle(appPage, originalTitle)
     await tabLocator.dblclick()
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${originalTitle}`,
       exact: true
     })
@@ -168,27 +166,25 @@ test.describe('Tab Rename (Inline)', () => {
     // in-progress "Should Be Discarded" text would leave customTitle null
     // (Escape cleared it) yet flash the discarded label to the user — the
     // original title must still be the one rendered on the tab.
-    await expect(tabLocatorByTitle(dolphinPage, originalTitle)).toBeVisible()
+    await expect(tabLocatorByTitle(appPage, originalTitle)).toBeVisible()
     await expect
-      .poll(async () => getActiveCustomTitle(dolphinPage, worktreeId), { timeout: 3_000 })
+      .poll(async () => getActiveCustomTitle(appPage, worktreeId), { timeout: 3_000 })
       .toBe(null)
   })
 
-  test('renaming to an empty string resets the tab to its default title', async ({
-    dolphinPage
-  }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+  test('renaming to an empty string resets the tab to its default title', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
 
     // Snapshot the default (non-custom) title first so the DOM assertion later
     // can verify the tab reverts to *this exact* rendered text — a store-only
     // `customTitle === null` check would pass even if the rendered label was
     // stuck on "Seeded Custom".
-    const defaultTitle = await getActiveTabTitle(dolphinPage, worktreeId)
+    const defaultTitle = await getActiveTabTitle(appPage, worktreeId)
     expect(defaultTitle.length).toBeGreaterThan(0)
 
     // Why: seed a custom title directly via the store so this test asserts the
     // "empty string → reset" behavior independently from the double-click flow.
-    await dolphinPage.evaluate((targetWorktreeId) => {
+    await appPage.evaluate((targetWorktreeId) => {
       const store = window.__store
       if (!store) {
         return
@@ -202,13 +198,13 @@ test.describe('Tab Rename (Inline)', () => {
     }, worktreeId)
 
     await expect
-      .poll(async () => getActiveCustomTitle(dolphinPage, worktreeId), { timeout: 3_000 })
+      .poll(async () => getActiveCustomTitle(appPage, worktreeId), { timeout: 3_000 })
       .toBe('Seeded Custom')
 
-    const tabLocator = tabLocatorByTitle(dolphinPage, 'Seeded Custom')
+    const tabLocator = tabLocatorByTitle(appPage, 'Seeded Custom')
     await tabLocator.dblclick()
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: 'Rename tab Seeded Custom',
       exact: true
     })
@@ -219,18 +215,18 @@ test.describe('Tab Rename (Inline)', () => {
 
     // User-observable DOM assertion: the tab element must re-render with the
     // original default title, not the "Seeded Custom" override.
-    await expect(tabLocatorByTitle(dolphinPage, defaultTitle)).toBeVisible()
+    await expect(tabLocatorByTitle(appPage, defaultTitle)).toBeVisible()
     await expect
-      .poll(async () => getActiveCustomTitle(dolphinPage, worktreeId), { timeout: 3_000 })
+      .poll(async () => getActiveCustomTitle(appPage, worktreeId), { timeout: 3_000 })
       .toBe(null)
   })
 
-  test('clicking away (blur) commits the rename', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+  test('clicking away (blur) commits the rename', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
 
     // Why: need a second tab so we have something to click that isn't the
     // rename input itself. Seed both with known titles so we can locate them.
-    await dolphinPage.evaluate((targetWorktreeId) => {
+    await appPage.evaluate((targetWorktreeId) => {
       const store = window.__store
       if (!store) {
         return
@@ -243,18 +239,18 @@ test.describe('Tab Rename (Inline)', () => {
     }, worktreeId)
 
     await expect
-      .poll(async () => (await getWorktreeTabs(dolphinPage, worktreeId)).length, { timeout: 3_000 })
+      .poll(async () => (await getWorktreeTabs(appPage, worktreeId)).length, { timeout: 3_000 })
       .toBeGreaterThanOrEqual(2)
 
-    const tabs = await getWorktreeTabs(dolphinPage, worktreeId)
-    const activeId = await getActiveTabId(dolphinPage)
+    const tabs = await getWorktreeTabs(appPage, worktreeId)
+    const activeId = await getActiveTabId(appPage)
     const activeTab = tabs.find((t) => t.id === activeId)!
     const otherTab = tabs.find((t) => t.id !== activeId)!
 
-    const tabLocator = tabLocatorByTitle(dolphinPage, activeTab.title!)
+    const tabLocator = tabLocatorByTitle(appPage, activeTab.title!)
     await tabLocator.dblclick()
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${activeTab.title}`,
       exact: true
     })
@@ -263,12 +259,12 @@ test.describe('Tab Rename (Inline)', () => {
     await renameInput.fill('Committed By Blur')
     // Why: clicking the other tab triggers blur on the input, which should
     // run commitRename and save the typed title before the focus shifts.
-    await tabLocatorByTitle(dolphinPage, otherTab.title!).click()
+    await tabLocatorByTitle(appPage, otherTab.title!).click()
 
     await expect(renameInput).toBeHidden()
-    await expect(tabLocatorByTitle(dolphinPage, 'Committed By Blur')).toBeVisible()
+    await expect(tabLocatorByTitle(appPage, 'Committed By Blur')).toBeVisible()
     expect(
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         ({ targetWorktreeId, targetTabId }) => {
           const store = window.__store
           const state = store!.getState()
@@ -283,15 +279,15 @@ test.describe('Tab Rename (Inline)', () => {
   })
 
   test('right-clicking during inline rename commits and opens context menu', async ({
-    dolphinPage
+    appPage
   }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const originalTitle = await getActiveTabTitle(dolphinPage, worktreeId)
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const originalTitle = await getActiveTabTitle(appPage, worktreeId)
 
-    const tabLocator = tabLocatorByTitle(dolphinPage, originalTitle)
+    const tabLocator = tabLocatorByTitle(appPage, originalTitle)
     await tabLocator.dblclick()
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${originalTitle}`,
       exact: true
     })
@@ -305,14 +301,14 @@ test.describe('Tab Rename (Inline)', () => {
     await tabLocator.click({ button: 'right' })
 
     await expect
-      .poll(async () => getActiveCustomTitle(dolphinPage, worktreeId), { timeout: 3_000 })
+      .poll(async () => getActiveCustomTitle(appPage, worktreeId), { timeout: 3_000 })
       .toBe('Committed By Right Click')
     await expect(renameInput).toBeHidden()
   })
 
-  test('terminal title updates do not resize neighboring tabs', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const tabIds = await dolphinPage.evaluate((targetWorktreeId) => {
+  test('terminal title updates do not resize neighboring tabs', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const tabIds = await appPage.evaluate((targetWorktreeId) => {
       const state = window.__store!.getState()
       const existing = state.tabsByWorktree[targetWorktreeId] ?? []
       for (let index = existing.length; index < 3; index += 1) {
@@ -326,7 +322,7 @@ test.describe('Tab Rename (Inline)', () => {
     }, worktreeId)
 
     const tabs = tabIds.map((id) =>
-      dolphinPage.locator(`[data-testid="sortable-tab"][data-tab-id="${id}"]`)
+      appPage.locator(`[data-testid="sortable-tab"][data-tab-id="${id}"]`)
     )
     await expect(tabs[2]!).toBeVisible()
     const before = await Promise.all(
@@ -339,7 +335,7 @@ test.describe('Tab Rename (Inline)', () => {
       'tabs must be above the 88px shrink floor for the stability check to mean anything'
     ).toBeGreaterThan(88)
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ tabId }) => {
         window
           .__store!.getState()
@@ -360,9 +356,9 @@ test.describe('Tab Rename (Inline)', () => {
     await expect(tabs[2]!).toHaveAttribute('data-active', 'true')
   })
 
-  test('rename input stays at a usable width when many tabs are open', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const targetTabId = await getActiveTabId(dolphinPage)
+  test('rename input stays at a usable width when many tabs are open', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const targetTabId = await getActiveTabId(appPage)
     expect(targetTabId).not.toBeNull()
     const targetTitle = 'Width Target Tab'
 
@@ -373,7 +369,7 @@ test.describe('Tab Rename (Inline)', () => {
     // size — we assert ≥60px to allow a bit of slack for fonts/padding/
     // containers differing between environments. The meaningful guarantee is
     // that the input does not collapse to ~0 when flex space is saturated.
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ targetWorktreeId, targetTabId, targetTitle }) => {
         const store = window.__store
         if (!store) {
@@ -398,13 +394,13 @@ test.describe('Tab Rename (Inline)', () => {
     )
 
     await expect
-      .poll(async () => (await getWorktreeTabs(dolphinPage, worktreeId)).length, { timeout: 5_000 })
+      .poll(async () => (await getWorktreeTabs(appPage, worktreeId)).length, { timeout: 5_000 })
       .toBeGreaterThanOrEqual(15)
     await expect
-      .poll(async () => getActiveCustomTitle(dolphinPage, worktreeId), { timeout: 3_000 })
+      .poll(async () => getActiveCustomTitle(appPage, worktreeId), { timeout: 3_000 })
       .toBe(targetTitle)
 
-    const tabLocator = tabLocatorByTitle(dolphinPage, targetTitle)
+    const tabLocator = tabLocatorByTitle(appPage, targetTitle)
     await tabLocator.scrollIntoViewIfNeeded()
     await expect(tabLocator).toBeVisible()
     // Why: once 15 tabs are packed into the strip, the tab center can overlap
@@ -425,7 +421,7 @@ test.describe('Tab Rename (Inline)', () => {
       )
     })
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${targetTitle}`,
       exact: true
     })
@@ -435,17 +431,15 @@ test.describe('Tab Rename (Inline)', () => {
     expect(width).toBeGreaterThanOrEqual(60)
   })
 
-  test('middle-clicking inside the rename input does not close the tab', async ({
-    dolphinPage
-  }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const tabsBefore = (await getWorktreeTabs(dolphinPage, worktreeId)).length
-    const originalTitle = await getActiveTabTitle(dolphinPage, worktreeId)
+  test('middle-clicking inside the rename input does not close the tab', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const tabsBefore = (await getWorktreeTabs(appPage, worktreeId)).length
+    const originalTitle = await getActiveTabTitle(appPage, worktreeId)
 
-    const tabLocator = tabLocatorByTitle(dolphinPage, originalTitle)
+    const tabLocator = tabLocatorByTitle(appPage, originalTitle)
     await tabLocator.dblclick()
 
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${originalTitle}`,
       exact: true
     })
@@ -459,7 +453,7 @@ test.describe('Tab Rename (Inline)', () => {
     // The tab must still exist — no regression where editing-then-middle-click
     // accidentally closes the tab out from under the input.
     await expect(renameInput).toBeVisible()
-    await expect(tabLocatorByTitle(dolphinPage, originalTitle)).toBeVisible()
-    expect((await getWorktreeTabs(dolphinPage, worktreeId)).length).toBe(tabsBefore)
+    await expect(tabLocatorByTitle(appPage, originalTitle)).toBeVisible()
+    expect((await getWorktreeTabs(appPage, worktreeId)).length).toBe(tabsBefore)
   })
 })

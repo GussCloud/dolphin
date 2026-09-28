@@ -10,16 +10,16 @@ import {
 } from './helpers/terminal'
 
 test('OMP model picker dispatches its advertised command and adopts the host report', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }, testInfo) => {
   test.skip(process.platform === 'win32', 'POSIX PTY capture fixture')
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage)
-  const descriptor = await waitForActivePaneHookDescriptor(dolphinPage)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  const descriptor = await waitForActivePaneHookDescriptor(appPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
   const output = testInfo.outputPath('model-command.txt')
   const script = testInfo.outputPath('capture.cjs')
   await writeFile(
@@ -27,7 +27,7 @@ test('OMP model picker dispatches its advertised command and adopts the host rep
     `const fs = require('node:fs'); let data = ''; process.stdin.setRawMode(true); process.stdin.on('data', chunk => { data += chunk; fs.writeFileSync(${JSON.stringify(output)}, data); });`
   )
   await execInTerminal(
-    dolphinPage,
+    appPage,
     ptyId,
     buildShellCommandFromArgv([process.execPath, script], 'posix')
   )
@@ -42,7 +42,7 @@ test('OMP model picker dispatches its advertised command and adopts the host rep
       ]
     }))
   })
-  await dolphinPage.evaluate(async ({ paneKey, worktreeId }) => {
+  await appPage.evaluate(async ({ paneKey, worktreeId }) => {
     const settings = await window.api.settings.set({ experimentalNativeChat: true })
     const store = window.__store
     if (!store) {
@@ -72,21 +72,21 @@ test('OMP model picker dispatches its advertised command and adopts the host rep
     }
     state.toggleTabViewMode(tab.id)
   }, descriptor)
-  const picker = dolphinPage.getByRole('button', { name: 'Model Sonnet 4.5', exact: true })
+  const picker = appPage.getByRole('button', { name: 'Model Sonnet 4.5', exact: true })
   await expect(picker).toBeVisible()
   await picker.click()
   await expect(
-    dolphinPage.getByRole('menuitemradio', { name: 'Sonnet 4.6', exact: true })
+    appPage.getByRole('menuitemradio', { name: 'Sonnet 4.6', exact: true })
   ).toBeVisible()
-  await dolphinPage.screenshot({
+  await appPage.screenshot({
     animations: 'disabled',
     path: testInfo.outputPath('omp-model-choices.png')
   })
-  await dolphinPage.getByRole('menuitemradio', { name: 'Sonnet 4.6', exact: true }).click()
+  await appPage.getByRole('menuitemradio', { name: 'Sonnet 4.6', exact: true }).click()
   await expect
     .poll(async () => readFile(output, 'utf8').catch(() => ''))
     .toContain('/dolphin-model anthropic/claude-sonnet-4-6')
-  await dolphinPage.evaluate(({ paneKey, worktreeId }) => {
+  await appPage.evaluate(({ paneKey, worktreeId }) => {
     window.__store?.getState().setAgentStatus(
       paneKey,
       {
@@ -101,10 +101,8 @@ test('OMP model picker dispatches its advertised command and adopts the host rep
       { worktreeId }
     )
   }, descriptor)
-  await expect(
-    dolphinPage.getByRole('button', { name: 'Model Sonnet 4.6', exact: true })
-  ).toBeVisible()
-  await dolphinPage.screenshot({
+  await expect(appPage.getByRole('button', { name: 'Model Sonnet 4.6', exact: true })).toBeVisible()
+  await appPage.screenshot({
     animations: 'disabled',
     path: testInfo.outputPath('omp-model-reported.png')
   })

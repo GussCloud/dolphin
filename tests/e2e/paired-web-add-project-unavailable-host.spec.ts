@@ -149,11 +149,11 @@ async function runUnavailableHostJourney(args: {
 
 test('disables paired-web Add Project for a blocked or unavailable headed host @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(240_000)
-  await waitForSessionReady(dolphinPage)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  await waitForSessionReady(appPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   await runUnavailableHostJourney({
     app: electronApp,
     offer,

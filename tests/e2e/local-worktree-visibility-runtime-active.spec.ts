@@ -18,13 +18,13 @@ import { RuntimeClient } from '../../src/cli/runtime-client'
 
 test.describe('worktree visibility with a remote runtime active', () => {
   test('a CLI-created worktree appears in the sidebar while a remote runtime is active', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
 
-    const repoId = await dolphinPage.evaluate(() => {
+    const repoId = await appPage.evaluate(() => {
       const repos = window.__store?.getState().repos ?? []
       // This case reproduces only for a local-host repo — one whose execution
       // host resolves to local (executionHostId unset or 'local') and which has
@@ -54,7 +54,7 @@ test.describe('worktree visibility with a remote runtime active', () => {
       return response.result.worktree.id
     }
     const worktreeRow = (worktreeId: string) =>
-      dolphinPage.locator(`[data-worktree-id=${JSON.stringify(worktreeId)}]`).first()
+      appPage.locator(`[data-worktree-id=${JSON.stringify(worktreeId)}]`).first()
 
     // Guard: with no runtime active, a CLI-created worktree appears. This proves
     // the create+notify path works, so the assertion below isolates the bug
@@ -63,7 +63,7 @@ test.describe('worktree visibility with a remote runtime active', () => {
     await expect(worktreeRow(controlId)).toBeVisible({ timeout: 15_000 })
 
     // Stage a remote runtime as active — the condition that triggered the drop.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       window.__store?.setState((current) => ({
         settings: { ...current.settings, activeRuntimeEnvironmentId: 'e2e-fake-runtime' }
       }))

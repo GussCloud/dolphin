@@ -41,35 +41,35 @@ async function getDeliverySnapshot(page: Page): Promise<DeliverySnapshot> {
 }
 
 test.describe('terminal stuck-occlusion recovery', () => {
-  test.afterEach(async ({ dolphinPage }) => {
+  test.afterEach(async ({ appPage }) => {
     // Drop the instance shadow so the prototype getter (real state) rules
     // again, and fire one genuine visibilitychange to restore tracker trust.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       delete (document as { visibilityState?: string }).visibilityState
       document.dispatchEvent(new Event('visibilitychange'))
     })
   })
 
   test('a keystroke unlatches the hidden-delivery gate wedged by stale visibilityState', async ({
-    dolphinPage
+    appPage
   }) => {
     test.setTimeout(120_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
 
     // Live baseline: foreground delivery works. The $((…)) arithmetic keeps
     // the asserted string out of the typed command's local echo.
-    await execInTerminal(dolphinPage, ptyId, 'echo live-before-$((41+1))')
+    await execInTerminal(appPage, ptyId, 'echo live-before-$((41+1))')
     await expect
-      .poll(async () => getTerminalContent(dolphinPage), { timeout: 15_000 })
+      .poll(async () => getTerminalContent(appPage), { timeout: 15_000 })
       .toContain('live-before-42')
 
     // Emulate the Chromium occlusion wedge: visibilityState pins at 'hidden',
     // one last visibilitychange fires, then the tracker goes silent forever.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', {
         get: () => 'hidden',
         configurable: true
@@ -80,52 +80,49 @@ test.describe('terminal stuck-occlusion recovery', () => {
     // The visible pane's pty gets marked hidden in main — the field state:
     // gate holding a pty that main's own visibility set says is visible.
     await expect
-      .poll(async () => (await getDeliverySnapshot(dolphinPage)).hiddenDeliveryGatedPtyCount, {
+      .poll(async () => (await getDeliverySnapshot(appPage)).hiddenDeliveryGatedPtyCount, {
         timeout: 15_000
       })
       .toBeGreaterThan(0)
-    expect(
-      (await getDeliverySnapshot(dolphinPage)).hiddenDeliveryGatedVisiblePtyCount
-    ).toBeGreaterThan(0)
+    expect((await getDeliverySnapshot(appPage)).hiddenDeliveryGatedVisiblePtyCount).toBeGreaterThan(
+      0
+    )
 
     // The freeze repro: output produced now is dropped by main, not painted.
-    const droppedBefore = (await getDeliverySnapshot(dolphinPage)).hiddenDeliveryDroppedChars
-    await execInTerminal(dolphinPage, ptyId, 'echo occluded-$((70+8))')
+    const droppedBefore = (await getDeliverySnapshot(appPage)).hiddenDeliveryDroppedChars
+    await execInTerminal(appPage, ptyId, 'echo occluded-$((70+8))')
     await expect
-      .poll(async () => (await getDeliverySnapshot(dolphinPage)).hiddenDeliveryDroppedChars, {
+      .poll(async () => (await getDeliverySnapshot(appPage)).hiddenDeliveryDroppedChars, {
         timeout: 15_000
       })
       .toBeGreaterThan(droppedBefore)
-    expect(await getTerminalContent(dolphinPage)).not.toContain('occluded-78')
+    expect(await getTerminalContent(appPage)).not.toContain('occluded-78')
 
     // The staleness proof: one real keystroke while the document claims
     // hidden. No visibilitychange fires — recovery must ride the proof alone.
-    await dolphinPage.keyboard.press('Shift')
+    await appPage.keyboard.press('Shift')
 
     // Gate unlatches and the missed output repaints from the main-owned
     // snapshot — no reload, visibilityState still reads 'hidden'.
     await expect
-      .poll(async () => getTerminalContent(dolphinPage), { timeout: 30_000 })
+      .poll(async () => getTerminalContent(appPage), { timeout: 30_000 })
       .toContain('occluded-78')
     await expect
-      .poll(
-        async () => (await getDeliverySnapshot(dolphinPage)).hiddenDeliveryGatedVisiblePtyCount,
-        {
-          timeout: 15_000
-        }
-      )
+      .poll(async () => (await getDeliverySnapshot(appPage)).hiddenDeliveryGatedVisiblePtyCount, {
+        timeout: 15_000
+      })
       .toBe(0)
 
     // Live delivery continues under the override.
-    await execInTerminal(dolphinPage, ptyId, 'echo live-after-$((200+56))')
+    await execInTerminal(appPage, ptyId, 'echo live-after-$((200+56))')
     await expect
-      .poll(async () => getTerminalContent(dolphinPage), { timeout: 15_000 })
+      .poll(async () => getTerminalContent(appPage), { timeout: 15_000 })
       .toContain('live-after-256')
 
     // The one-paste freeze report is prod-reachable and carries the episode's
     // history: the stale-visibility latch and gate transitions must be in the
     // renderer breadcrumbs, and main's per-pty table must be populated.
-    const report = await dolphinPage.evaluate(() =>
+    const report = await appPage.evaluate(() =>
       (
         window as Window & {
           __dolphinTerminalFreezeReport?: () => Promise<{

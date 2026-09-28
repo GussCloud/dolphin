@@ -347,11 +347,11 @@ async function readTerminalRenderDiagnostics(page: Page): Promise<TerminalRender
 
 test.describe('Terminal long table scroll restore repro', () => {
   test('reproduces long markdown table artifacts after workspace switch and scroll', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await dolphinPage.evaluate(() => {
+    await waitForSessionReady(appPage)
+    await appPage.evaluate(() => {
       window.__store
         ?.getState()
         .markFeatureTipsSeen([
@@ -361,49 +361,47 @@ test.describe('Terminal long table scroll restore repro', () => {
           'agent-session-search'
         ])
     })
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'long table restore repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
     const runId = randomUUID()
     const marker = `LONG_TABLE_SCROLL_RESTORE_${runId}`
     const scriptPath = path.join(testRepoPath, `.dolphin-long-table-${runId}.mjs`)
     writeFileSync(scriptPath, longMarkdownTableScript(runId))
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
-      await dolphinPage.waitForTimeout(80)
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await dolphinPage.waitForTimeout(1_500)
-      await switchToWorktree(dolphinPage, firstWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await appPage.waitForTimeout(80)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.waitForTimeout(1_500)
+      await switchToWorktree(appPage, firstWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 10_000,
           message: 'long table marker did not survive workspace switch'
         })
         .toContain(marker)
 
-      await scrollActiveTerminalLikeUser(dolphinPage)
-      await closeFeatureTips(dolphinPage)
-      const diagnostics = await readTerminalRenderDiagnostics(dolphinPage)
+      await scrollActiveTerminalLikeUser(appPage)
+      await closeFeatureTips(appPage)
+      const diagnostics = await readTerminalRenderDiagnostics(appPage)
       const restoredPane = diagnostics.allPaneStates.find((paneState) => paneState.hasMarker)
       expect(restoredPane).toBeDefined()
       expect(diagnostics.cursorHidden).toBe(false)
-      await dolphinPage.waitForTimeout(100)
+      await appPage.waitForTimeout(100)
       const screenshotPath = testInfo.outputPath('long-table-after-switch-scroll.png')
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('long-table-after-switch-scroll.png', {
         path: screenshotPath,
         contentType: 'image/png'
@@ -414,11 +412,11 @@ test.describe('Terminal long table scroll restore repro', () => {
   })
 
   test('keeps narrow wrapped signer markdown table coherent after restore and scroll', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await dolphinPage.evaluate(() => {
+    await waitForSessionReady(appPage)
+    await appPage.evaluate(() => {
       window.__store
         ?.getState()
         .markFeatureTipsSeen([
@@ -428,57 +426,55 @@ test.describe('Terminal long table scroll restore repro', () => {
           'agent-session-search'
         ])
     })
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'narrow signer table repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await setRenderedTableViewport(dolphinPage)
-    await forceDarkTerminalRendererPath(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await setRenderedTableViewport(appPage)
+    await forceDarkTerminalRendererPath(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
     const runId = randomUUID()
     const marker = `NARROW_SIGNER_TABLE_RESTORE_${runId}`
     const scriptPath = path.join(testRepoPath, `.dolphin-narrow-signer-table-${runId}.mjs`)
     writeFileSync(scriptPath, narrowSignerMarkdownTableScript(runId))
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
-      await dolphinPage.waitForTimeout(80)
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await dolphinPage.waitForTimeout(1_000)
-      await switchToWorktree(dolphinPage, firstWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await appPage.waitForTimeout(80)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.waitForTimeout(1_000)
+      await switchToWorktree(appPage, firstWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 10_000,
           message: 'narrow signer table marker did not survive workspace switch'
         })
         .toContain(marker)
 
-      await scrollActiveTerminalLikeUser(dolphinPage)
-      await closeFeatureTips(dolphinPage)
-      const diagnostics = await readTerminalRenderDiagnostics(dolphinPage)
+      await scrollActiveTerminalLikeUser(appPage)
+      await closeFeatureTips(appPage)
+      const diagnostics = await readTerminalRenderDiagnostics(appPage)
       // Why: renderer cell metrics can land one column wider in headless runs;
       // the content and screenshot assertions below cover the actual regression.
       expect(diagnostics.cols).toBeLessThanOrEqual(112)
       expect(diagnostics.cursorHidden).toBe(false)
 
-      const content = await getTerminalContent(dolphinPage, 30_000)
+      const content = await getTerminalContent(appPage, 30_000)
       expect(content).toContain('Signer')
       expect(content).toContain('did:key:z6Mkuw5kQqz1QvZ9f3d2aB7f19f0cAC7B4F3c9E725')
       expect(content).toContain(marker)
 
       const screenshotPath = testInfo.outputPath('narrow-signer-table-after-switch-scroll.png')
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('narrow-signer-table-after-switch-scroll.png', {
         path: screenshotPath,
         contentType: 'image/png'
@@ -491,12 +487,12 @@ test.describe('Terminal long table scroll restore repro', () => {
   // Why: keeps the user-shaped markdown path covered in the broader e2e suite;
   // the faster raw-table spec is the release-blocking golden for this bug.
   test('keeps real emoji markdown table right edge clean after restore and scroll', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await closeFeatureTips(dolphinPage)
-    await dolphinPage.evaluate(() => {
+    await waitForSessionReady(appPage)
+    await closeFeatureTips(appPage)
+    await appPage.evaluate(() => {
       window.__store
         ?.getState()
         .markFeatureTipsSeen([
@@ -506,49 +502,47 @@ test.describe('Terminal long table scroll restore repro', () => {
           'agent-session-search'
         ])
     })
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'real emoji table repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await setNarrowTerminalViewport(dolphinPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await setNarrowTerminalViewport(appPage)
     const renderedTableTerminalCols = await waitForRenderedTerminalColumnsAtMost(
-      dolphinPage,
+      appPage,
       NARROW_TERMINAL_MAX_COLS
     )
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyColumnsAtMost(dolphinPage, ptyId, renderedTableTerminalCols)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyColumnsAtMost(appPage, ptyId, renderedTableTerminalCols)
     const runId = randomUUID()
     const marker = `EMOJI_FIXTURE_TABLE_RESTORE_${runId}`
     const scriptPath = path.join(testRepoPath, `.dolphin-emoji-fixture-table-${runId}.mjs`)
     writeFileSync(scriptPath, emojiFixtureMarkdownTableScript(EMOJI_TABLE_FIXTURE, runId))
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
-      await dolphinPage.waitForTimeout(80)
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await dolphinPage.waitForTimeout(1_000)
-      await switchToWorktree(dolphinPage, firstWorktreeId)
+      await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await appPage.waitForTimeout(80)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.waitForTimeout(1_000)
+      await switchToWorktree(appPage, firstWorktreeId)
       // Why: worktree activation can restore the right sidebar. This repro is
       // intentionally narrow, but it must stay wide enough for its generated table.
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await setNarrowTerminalViewport(dolphinPage)
-      await waitForRenderedTerminalColumnsAtMost(dolphinPage, NARROW_TERMINAL_MAX_COLS)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await setNarrowTerminalViewport(appPage)
+      await waitForRenderedTerminalColumnsAtMost(appPage, NARROW_TERMINAL_MAX_COLS)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 10_000,
           message: 'real emoji table marker did not survive workspace switch'
         })
         .toContain(marker)
-      const generatedWidthContent = await getTerminalContent(dolphinPage, 30_000)
+      const generatedWidthContent = await getTerminalContent(appPage, 30_000)
       const generatedWidthMatch = generatedWidthContent.match(
         new RegExp(`${emojiFixtureTableWidthMarker(runId)}(\\d+)`)
       )
@@ -560,17 +554,17 @@ test.describe('Terminal long table scroll restore repro', () => {
       // across terminal lines. A lower cell fragment still exercises the
       // restored markdown-table viewport without depending on early output.
       const retainedEmojiCell = 'Peac'
-      await scrollActiveTerminalToText(dolphinPage, retainedEmojiCell)
-      await closeFeatureTips(dolphinPage)
+      await scrollActiveTerminalToText(appPage, retainedEmojiCell)
+      await closeFeatureTips(appPage)
       await expect
-        .poll(() => readActiveTerminalVisibleText(dolphinPage), {
+        .poll(() => readActiveTerminalVisibleText(appPage), {
           timeout: 5_000,
           message: `${retainedEmojiCell} row fragment should be visible before screenshot`
         })
         .toContain(retainedEmojiCell)
-      const diagnostics = await readTerminalRenderDiagnostics(dolphinPage)
-      const overpaint = await readTerminalRightEdgeOverpaint(dolphinPage)
-      const wrapDiagnostics = await readTerminalBoxTableWrapDiagnostics(dolphinPage)
+      const diagnostics = await readTerminalRenderDiagnostics(appPage)
+      const overpaint = await readTerminalRightEdgeOverpaint(appPage)
+      const wrapDiagnostics = await readTerminalBoxTableWrapDiagnostics(appPage)
       expect(diagnostics.cols).toBeLessThanOrEqual(NARROW_TERMINAL_MAX_COLS)
       expect(wrapDiagnostics.cols).toBeGreaterThanOrEqual(generatedTableWidth)
       expect(diagnostics.cursorHidden).toBe(false)
@@ -584,7 +578,7 @@ test.describe('Terminal long table scroll restore repro', () => {
       })
 
       const screenshotPath = testInfo.outputPath('real-emoji-table-after-switch-scroll.png')
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('real-emoji-table-after-switch-scroll.png', {
         path: screenshotPath,
         contentType: 'image/png'

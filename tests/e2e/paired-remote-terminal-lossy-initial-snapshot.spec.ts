@@ -80,28 +80,28 @@ async function callLocalRuntime<TResult>(
 }
 
 test('paints a nonempty lossy initial snapshot on a paired Electron client @headful', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(180_000)
   const marker = `REMOTE_LOSSY_INITIAL_${Date.now()}`
   const liveMarker = `REMOTE_LOSSY_LIVE_${Date.now()}`
   const markerPath = path.join(scratch, 'marker-value.txt')
   writeFileSync(markerPath, marker)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedElectronClient(offer, testInfo, 'lossy-initial-snapshot')
   let terminal: string | null = null
   try {
-    const worktreeId = await dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId)
+    const worktreeId = await appPage.evaluate(() => window.__store?.getState().activeWorktreeId)
     if (!worktreeId) {
       throw new Error('Headed host has no active worktree')
     }
-    await dolphinPage.evaluate((id) => {
+    await appPage.evaluate((id) => {
       const state = window.__store?.getState()
       state?.setActiveView('terminal')
       state?.setActiveWorktree(id)
     }, worktreeId)
     await expect
-      .poll(() => dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId))
+      .poll(() => appPage.evaluate(() => window.__store?.getState().activeWorktreeId))
       .toBe(worktreeId)
     await expect
       .poll(
@@ -119,7 +119,7 @@ test('paints a nonempty lossy initial snapshot on a paired Electron client @head
       .toBe(true)
     const created = await callLocalRuntime<{
       tab: { parentTabId: string; terminal: string | null }
-    }>(dolphinPage, 'session.tabs.createTerminal', {
+    }>(appPage, 'session.tabs.createTerminal', {
       worktree: `id:${worktreeId}`,
       command: fixtureCommand(markerPath),
       activate: true,
@@ -135,7 +135,7 @@ test('paints a nonempty lossy initial snapshot on a paired Electron client @head
       .poll(
         async () => {
           const result = await callLocalRuntime<{ terminal: RuntimeTerminalRead }>(
-            dolphinPage,
+            appPage,
             'terminal.read',
             { terminal, screen: true }
           )
@@ -145,7 +145,7 @@ test('paints a nonempty lossy initial snapshot on a paired Electron client @head
       )
       .toBe(true)
     const { terminal: hostEvidence } = await callLocalRuntime<{ terminal: RuntimeTerminalRead }>(
-      dolphinPage,
+      appPage,
       'terminal.read',
       { terminal, screen: true }
     )
@@ -258,7 +258,7 @@ test('paints a nonempty lossy initial snapshot on a paired Electron client @head
       .poll(
         async () => {
           const result = await callLocalRuntime<{ terminal: RuntimeTerminalRead }>(
-            dolphinPage,
+            appPage,
             'terminal.read',
             { terminal, screen: true }
           )

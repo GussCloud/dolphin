@@ -38,54 +38,54 @@ async function pauseForRecordedProof(page: Page): Promise<void> {
   }
 }
 
-test('dictation grapes react across the visible recording lifecycle', async ({ dolphinPage }) => {
+test('dictation grapes react across the visible recording lifecycle', async ({ appPage }) => {
   const quiet = { level: 0, isSpeaking: false, isClipping: false }
-  await setDictationVisualState(dolphinPage, 'listening', quiet)
+  await setDictationVisualState(appPage, 'listening', quiet)
 
-  const indicator = dolphinPage.getByTestId('dictation-indicator')
+  const indicator = appPage.getByTestId('dictation-indicator')
   const status = indicator.getByRole('status')
   await expect(indicator).toBeVisible()
   await expect(status).toHaveText('Listening')
   await expect(indicator.getByTestId('dictation-grapes').locator('span')).toHaveCount(9)
   await expect(indicator.getByRole('button', { name: 'Stop dictation' })).toBeVisible()
-  await dolphinPage.emulateMedia({ reducedMotion: 'reduce' })
+  await appPage.emulateMedia({ reducedMotion: 'reduce' })
   await expect(indicator.getByTestId('dictation-grapes').locator('span').first()).toHaveCSS(
     'transition-property',
     'none'
   )
-  await dolphinPage.emulateMedia({ reducedMotion: 'no-preference' })
-  await pauseForRecordedProof(dolphinPage)
+  await appPage.emulateMedia({ reducedMotion: 'no-preference' })
+  await pauseForRecordedProof(appPage)
 
   const speaking = {
     level: 0.76,
     isSpeaking: true,
     isClipping: false
   }
-  await setDictationVisualState(dolphinPage, 'listening', speaking)
+  await setDictationVisualState(appPage, 'listening', speaking)
   await expect(indicator.getByText('Speaking')).toBeVisible()
   await expect(status).toHaveText('Listening')
-  await pauseForRecordedProof(dolphinPage)
+  await pauseForRecordedProof(appPage)
 
   const clipping = { ...speaking, level: 1, isClipping: true }
-  await setDictationVisualState(dolphinPage, 'listening', clipping)
+  await setDictationVisualState(appPage, 'listening', clipping)
   await expect(status).toHaveText('Too loud')
   await expect(indicator).toHaveClass(/text-destructive/)
-  await pauseForRecordedProof(dolphinPage)
+  await pauseForRecordedProof(appPage)
 
   await setDictationVisualState(
-    dolphinPage,
+    appPage,
     'listening',
     speaking,
     'The visualizer follows every word without covering the workspace.'
   )
   await expect(
-    dolphinPage.getByText('The visualizer follows every word without covering the workspace.')
+    appPage.getByText('The visualizer follows every word without covering the workspace.')
   ).toBeVisible()
   await expect(status).toHaveText('Listening')
-  await pauseForRecordedProof(dolphinPage)
+  await pauseForRecordedProof(appPage)
 
-  await setDictationVisualState(dolphinPage, 'stopping', quiet)
+  await setDictationVisualState(appPage, 'stopping', quiet)
   await expect(status).toHaveText('Processing…')
   await expect(indicator.getByRole('button', { name: 'Stop dictation' })).toHaveCount(0)
-  await pauseForRecordedProof(dolphinPage)
+  await pauseForRecordedProof(appPage)
 })

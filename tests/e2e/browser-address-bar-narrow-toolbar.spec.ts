@@ -129,40 +129,38 @@ async function settleToSqueezedRestingState(
 }
 
 test.describe('Browser address bar in a narrow toolbar', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   test('focusing the squeezed address bar expands a typable field that navigates', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     const destination = await startDestinationServer()
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-      await createBlankBrowserTab(dolphinPage, worktreeId)
-      await settleToSqueezedRestingState(dolphinPage, electronApp)
+      const worktreeId = (await getActiveWorktreeId(appPage))!
+      await createBlankBrowserTab(appPage, worktreeId)
+      await settleToSqueezedRestingState(appPage, electronApp)
 
-      const overlay = addressBarOverlay(dolphinPage)
+      const overlay = addressBarOverlay(appPage)
       // The bug: the inline field is squeezed away entirely.
-      await expect
-        .poll(() => addressBarInputWidth(dolphinPage), { timeout: 10_000 })
-        .toBeLessThan(40)
+      await expect.poll(() => addressBarInputWidth(appPage), { timeout: 10_000 }).toBeLessThan(40)
 
-      await dolphinPage.locator('form:has(> [data-dolphin-browser-address-bar="true"])').click()
+      await appPage.locator('form:has(> [data-dolphin-browser-address-bar="true"])').click()
 
       await expect(overlay).toBeVisible()
       await expect
-        .poll(() => addressBarInputWidth(dolphinPage), { timeout: 5_000 })
+        .poll(() => addressBarInputWidth(appPage), { timeout: 5_000 })
         .toBeGreaterThan(BROWSER_ADDRESS_BAR_MIN_INLINE_WIDTH / 2)
 
-      await addressBarInput(dolphinPage).fill(destination.url)
-      await addressBarInput(dolphinPage).press('Enter')
+      await addressBarInput(appPage).fill(destination.url)
+      await addressBarInput(appPage).press('Enter')
 
       await expect
-        .poll(async () => (await getBrowserTabs(dolphinPage, worktreeId)).at(-1)?.url ?? null, {
+        .poll(async () => (await getBrowserTabs(appPage, worktreeId)).at(-1)?.url ?? null, {
           timeout: 15_000
         })
         .toContain('/typed')

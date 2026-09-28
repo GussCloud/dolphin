@@ -8,8 +8,8 @@ import {
   createIsolatedStagedLocaleDiffRepo
 } from './large-diff-repro-fixtures'
 
-async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<string> {
-  const repoId = await dolphinPage.evaluate(async (pathToRepo: string) => {
+async function addAndActivateRepo(appPage: Page, repoPath: string): Promise<string> {
+  const repoId = await appPage.evaluate(async (pathToRepo: string) => {
     const store = window.__store
     if (!store) {
       throw new Error('window.__store is not available')
@@ -24,7 +24,7 @@ async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(async (targetRepoId: string) => {
+        appPage.evaluate(async (targetRepoId: string) => {
           const store = window.__store
           if (!store) {
             return 0
@@ -36,7 +36,7 @@ async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<
     )
     .toBeGreaterThan(0)
 
-  return dolphinPage.evaluate(
+  return appPage.evaluate(
     ({ targetRepoId, pathToRepo }) => {
       const store = window.__store
       if (!store) {
@@ -61,15 +61,15 @@ test.describe('Combined diff invalidation freeze repro (STA-3420)', () => {
   test.use({ seedTestRepo: false })
 
   test('committing under an open Staged Changes diff keeps the renderer responsive', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     const fixture = createIsolatedStagedLocaleDiffRepo()
 
     try {
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
 
-      const opened = await dolphinPage.evaluate(
+      const opened = await appPage.evaluate(
         async ({ wId, repoPath }) => {
           const store = window.__store
           if (!store) {
@@ -109,7 +109,7 @@ test.describe('Combined diff invalidation freeze repro (STA-3420)', () => {
         stdio: 'pipe'
       })
 
-      const measurement = await dolphinPage.evaluate(
+      const measurement = await appPage.evaluate(
         async ({ wId, repoPath }) => {
           const store = window.__store
           if (!store) {
@@ -170,18 +170,18 @@ test.describe('Combined diff invalidation freeze repro (STA-3420)', () => {
   })
 
   test('a rebase-style burst of external file changes keeps the diff responsive and loaded', async ({
-    dolphinPage
+    appPage
   }) => {
     test.setTimeout(240_000)
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     // Why: few but very large sections — the reported freeze is a *large* diff view,
     // where every remount re-runs Monaco's diff over thousands of changed lines.
     const fixture = createIsolatedManyFileStagedDiffRepo(8, 15_000)
 
     try {
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
 
-      const opened = await dolphinPage.evaluate(
+      const opened = await appPage.evaluate(
         async ({ wId, repoPath }) => {
           const store = window.__store
           if (!store) {
@@ -210,7 +210,7 @@ test.describe('Combined diff invalidation freeze repro (STA-3420)', () => {
       console.log(`staged diff opened for burst ${JSON.stringify(opened)}`)
       expect(opened.editorCount).toBeGreaterThan(0)
 
-      const measurement = await dolphinPage.evaluate(
+      const measurement = await appPage.evaluate(
         async ({ wId, repoPath, relativePaths, burstDurationMs }) => {
           const intervalMs = 50
           type LagWindow = { maxLagMs: number; p95LagMs: number; sampleCount: number }

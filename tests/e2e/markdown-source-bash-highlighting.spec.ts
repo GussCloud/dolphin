@@ -41,11 +41,11 @@ async function distinctLeafTokenColors(line: Locator): Promise<number> {
   })
 }
 
-test('highlights bash and sh fences in Markdown Source mode', async ({ dolphinPage }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
+test('highlights bash and sh fences in Markdown Source mode', async ({ appPage }, testInfo) => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
 
-  const context = await getActiveWorktreeContext(dolphinPage)
+  const context = await getActiveWorktreeContext(appPage)
   let filePath: string | null = null
 
   try {
@@ -56,11 +56,11 @@ test('highlights bash and sh fences in Markdown Source mode', async ({ dolphinPa
       testInfo.workerIndex,
       MARKDOWN
     )
-    await openMarkdownFixture(dolphinPage, context, filePath)
-    await waitForRichMarkdownEditor(dolphinPage)
-    await switchToSourceMode(dolphinPage)
+    await openMarkdownFixture(appPage, context, filePath)
+    await waitForRichMarkdownEditor(appPage)
+    await switchToSourceMode(appPage)
 
-    const monaco = dolphinPage.locator('.monaco-editor').first()
+    const monaco = appPage.locator('.monaco-editor').first()
     await expect(monaco).toBeVisible({ timeout: 25_000 })
 
     for (const marker of ['bash-highlight-marker', 'shell-control-marker']) {

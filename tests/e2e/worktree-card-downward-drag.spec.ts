@@ -159,12 +159,12 @@ async function sampleMountedPreviewOffsets(
   }, sourceId)
 }
 
-test('dragging a virtualized worktree downward keeps rows stable', async ({ dolphinPage }) => {
-  await waitForSessionReady(dolphinPage)
-  await dolphinPage.setViewportSize({ width: 1_000, height: 620 })
-  const { sourceId, nextId, idPrefix } = await seedVirtualizedManualWorktrees(dolphinPage)
-  const scroller = dolphinPage.locator('[data-worktree-sidebar]')
-  const source = dolphinPage.locator(
+test('dragging a virtualized worktree downward keeps rows stable', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  await appPage.setViewportSize({ width: 1_000, height: 620 })
+  const { sourceId, nextId, idPrefix } = await seedVirtualizedManualWorktrees(appPage)
+  const scroller = appPage.locator('[data-worktree-sidebar]')
+  const source = appPage.locator(
     `[data-worktree-sidebar] [data-worktree-id=${JSON.stringify(sourceId)}]`
   )
   await scroller.evaluate((element) => {
@@ -177,7 +177,7 @@ test('dragging a virtualized worktree downward keeps rows stable', async ({ dolp
     const rect = element.getBoundingClientRect()
     return { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
   })
-  const nextSource = dolphinPage.locator(
+  const nextSource = appPage.locator(
     `[data-worktree-sidebar] [data-worktree-id=${JSON.stringify(nextId)}]`
   )
   const sourceStride = await nextSource.evaluate(
@@ -191,21 +191,18 @@ test('dragging a virtualized worktree downward keeps rows stable', async ({ dolp
     return { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
   })
 
-  await dolphinPage.mouse.move(
-    sourceBox.x + sourceBox.width / 2,
-    sourceBox.y + sourceBox.height / 2
-  )
-  await dolphinPage.mouse.down()
+  await appPage.mouse.move(sourceBox.x + sourceBox.width / 2, sourceBox.y + sourceBox.height / 2)
+  await appPage.mouse.down()
   try {
     const edgeX = scrollerBox.x + 2
     const edgeY = scrollerBox.y + scrollerBox.height - 8
     // Keep the pointer in the edge zone while the renderer advances autoscroll.
     for (let step = 0; step < 12; step++) {
-      await dolphinPage.mouse.move(edgeX, edgeY, { steps: 2 })
+      await appPage.mouse.move(edgeX, edgeY, { steps: 2 })
       if ((await source.count()) === 0) {
         break
       }
-      await dolphinPage.waitForTimeout(100)
+      await appPage.waitForTimeout(100)
     }
     if ((await source.count()) > 0) {
       for (let step = 0; step < 8 && (await source.count()) > 0; step++) {
@@ -216,7 +213,7 @@ test('dragging a virtualized worktree downward keeps rows stable', async ({ dolp
           )
           element.dispatchEvent(new Event('scroll', { bubbles: true }))
         })
-        await dolphinPage.waitForTimeout(100)
+        await appPage.waitForTimeout(100)
       }
     }
     await expect
@@ -226,7 +223,7 @@ test('dragging a virtualized worktree downward keeps rows stable', async ({ dolp
       })
       .toBe(0)
 
-    const samples = await sampleMountedPreviewOffsets(dolphinPage, sourceId)
+    const samples = await sampleMountedPreviewOffsets(appPage, sourceId)
     expect(samples.length).toBeGreaterThan(0)
     const observationsById = new Map<string, PreviewOffsetSample[]>()
     for (const sample of samples.flat()) {
@@ -262,11 +259,11 @@ test('dragging a virtualized worktree downward keeps rows stable', async ({ dolp
       expect(renderedReversal).toBeLessThanOrEqual(sourceStride)
     }
   } finally {
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
   }
 
-  await expect(dolphinPage.locator('[data-worktree-sidebar-drag-preview="true"]')).toHaveCount(0)
-  await expect(dolphinPage.locator('html')).not.toHaveAttribute(
+  await expect(appPage.locator('[data-worktree-sidebar-drag-preview="true"]')).toHaveCount(0)
+  await expect(appPage.locator('html')).not.toHaveAttribute(
     'data-worktree-sidebar-pointer-dragging'
   )
   await scroller.evaluate((element) => {

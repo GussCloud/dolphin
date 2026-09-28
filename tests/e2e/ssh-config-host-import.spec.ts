@@ -76,28 +76,28 @@ async function importPairThenDeleteAlias(
 }
 
 test.describe('SSH config host import (bulk + settings re-adopt)', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
   })
 
-  test.afterEach(async ({ dolphinPage }) => {
-    await removeSshTargetsByPrefix(dolphinPage, HOST_PREFIX).catch(() => undefined)
+  test.afterEach(async ({ appPage }) => {
+    await removeSshTargetsByPrefix(appPage, HOST_PREFIX).catch(() => undefined)
   })
 
   // ── P5 ─────────────────────────────────────────────────────────────
   test('P5: already-in-Dolphin badge, disabled row, and Add all counts only new hosts', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const hosts = await seedPairConfig(electronApp, HOST_PREFIX)
-    await seedDolphinSshTargetMatchingAlias(dolphinPage, {
+    await seedDolphinSshTargetMatchingAlias(appPage, {
       alias: hosts.alpha.alias,
       hostname: hosts.alpha.hostname,
       username: hosts.alpha.user,
       port: hosts.alpha.port
     })
 
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
     const alphaRow = configHostRow(picker, hosts.alpha)
     const bravoRow = configHostRow(picker, hosts.bravo)
 
@@ -116,34 +116,32 @@ test.describe('SSH config host import (bulk + settings re-adopt)', () => {
   // ── P6 ─────────────────────────────────────────────────────────────
   test('P6: Add all N to Dolphin imports new hosts; re-open shows all in Dolphin', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const hosts = await seedPairConfig(electronApp, HOST_PREFIX)
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
 
     await expect(configHostRow(picker, hosts.alpha)).toBeVisible()
     await expect(configHostRow(picker, hosts.bravo)).toBeVisible()
     await expect(picker.getByRole('button', { name: 'Add all 2 to Dolphin' })).toBeEnabled()
 
     await picker.getByRole('button', { name: 'Add all 2 to Dolphin' }).click()
-    await expect(dolphinPage.getByText('Added 2 hosts to Dolphin.')).toBeVisible({
+    await expect(appPage.getByText('Added 2 hosts to Dolphin.')).toBeVisible({
       timeout: 15_000
     })
-    await expect(dolphinPage.getByRole('dialog', { name: 'Choose from ~/.ssh/config' })).toBeHidden(
-      {
-        timeout: 10_000
-      }
-    )
-    await expect(dolphinPage.getByRole('dialog', { name: 'Add SSH host' })).toBeHidden({
+    await expect(appPage.getByRole('dialog', { name: 'Choose from ~/.ssh/config' })).toBeHidden({
+      timeout: 10_000
+    })
+    await expect(appPage.getByRole('dialog', { name: 'Add SSH host' })).toBeHidden({
       timeout: 10_000
     })
 
-    const sshSection = await openSshHostSettings(dolphinPage)
+    const sshSection = await openSshHostSettings(appPage)
     await expectSshHostListedInSettings(sshSection, hosts.alpha)
     await expectSshHostListedInSettings(sshSection, hosts.bravo)
 
-    await returnToAppShell(dolphinPage)
-    const reopened = await openSshConfigHostPicker(dolphinPage)
+    await returnToAppShell(appPage)
+    const reopened = await openSshConfigHostPicker(appPage)
     await expect(configHostRow(reopened, hosts.alpha)).toBeDisabled()
     await expect(
       configHostRow(reopened, hosts.alpha).getByText('In Dolphin', { exact: true })
@@ -158,16 +156,16 @@ test.describe('SSH config host import (bulk + settings re-adopt)', () => {
   // ── P7 ─────────────────────────────────────────────────────────────
   test('P7: Add all does not re-adopt deleted config hosts (suppress tombstones)', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const hosts = await importPairThenDeleteAlias(
-      dolphinPage,
+      appPage,
       electronApp,
       HOST_PREFIX,
       `${HOST_PREFIX}-alpha`
     )
 
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
     // Suppressed aliases stay listed (re-pickable) but never count as new.
     const alphaRow = configHostRow(picker, hosts.alpha)
     await expect(alphaRow).toBeVisible()
@@ -181,31 +179,28 @@ test.describe('SSH config host import (bulk + settings re-adopt)', () => {
     await expect(picker.getByRole('button', { name: 'No new hosts to add' })).toBeDisabled()
     await expect(picker.getByRole('button', { name: /Add all \d+ to Dolphin/ })).toHaveCount(0)
 
-    await returnToAppShell(dolphinPage)
-    const sshSection = await openSshHostSettings(dolphinPage)
+    await returnToAppShell(appPage)
+    const sshSection = await openSshHostSettings(appPage)
     // Pane auto-syncs without reAdopt — deleted alpha must stay gone.
     await expectSshHostListedInSettings(sshSection, hosts.bravo)
     await expectSshHostAbsentFromSettings(sshSection, hosts.alpha)
   })
 
   // ── P9 ─────────────────────────────────────────────────────────────
-  test('P9: Settings Import re-adopts deleted config hosts', async ({
-    electronApp,
-    dolphinPage
-  }) => {
+  test('P9: Settings Import re-adopts deleted config hosts', async ({ electronApp, appPage }) => {
     const hosts = await importPairThenDeleteAlias(
-      dolphinPage,
+      appPage,
       electronApp,
       HOST_PREFIX,
       `${HOST_PREFIX}-alpha`
     )
 
-    const sshSection = await openSshHostSettings(dolphinPage)
+    const sshSection = await openSshHostSettings(appPage)
     await expectSshHostListedInSettings(sshSection, hosts.bravo)
     await expectSshHostAbsentFromSettings(sshSection, hosts.alpha)
 
     await sshSection.getByRole('button', { name: 'Import' }).click()
-    await expect(dolphinPage.getByText(/Synced \d+ servers?/i)).toBeVisible({ timeout: 15_000 })
+    await expect(appPage.getByText(/Synced \d+ servers?/i)).toBeVisible({ timeout: 15_000 })
 
     await expectSshHostListedInSettings(sshSection, hosts.alpha)
     await expectSshHostListedInSettings(sshSection, hosts.bravo)

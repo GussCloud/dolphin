@@ -46,40 +46,38 @@ async function wedgeActivePaneWritePipeline(
 }
 
 test.describe('Wedged terminal write pipeline recovery', () => {
-  test('pane recovers rendering and input after its write pipeline wedges', async ({
-    dolphinPage
-  }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await waitForActivePanePtyId(dolphinPage)
-    await focusActiveTerminalInput(dolphinPage)
+  test('pane recovers rendering and input after its write pipeline wedges', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await waitForActivePanePtyId(appPage)
+    await focusActiveTerminalInput(appPage)
 
     // Prove the pane is healthy first.
     const runId = Date.now()
     const beforeMarker = `WEDGE_BASELINE_${runId}`
-    await dolphinPage.keyboard.type(`echo ${beforeMarker}`, { delay: 20 })
-    await dolphinPage.keyboard.press('Enter')
+    await appPage.keyboard.type(`echo ${beforeMarker}`, { delay: 20 })
+    await appPage.keyboard.press('Enter')
     await expect
-      .poll(async () => (await getTerminalContent(dolphinPage)).includes(beforeMarker), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(beforeMarker), {
         timeout: 15_000,
         message: 'Baseline echo did not render — pane unhealthy before wedge'
       })
       .toBe(true)
 
-    await wedgeActivePaneWritePipeline(dolphinPage)
+    await wedgeActivePaneWritePipeline(appPage)
 
     // Type through the wedge. The PTY is alive: bytes reach the shell and the
     // shell echoes them — but a wedged pipeline never parses the echo, so
     // without recovery the marker never renders.
     const afterMarker = `WEDGE_RECOVERED_${runId}`
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.type(`echo ${afterMarker}`, { delay: 20 })
-    await dolphinPage.keyboard.press('Enter')
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.type(`echo ${afterMarker}`, { delay: 20 })
+    await appPage.keyboard.press('Enter')
 
     await expect
-      .poll(async () => (await getTerminalContent(dolphinPage)).includes(afterMarker), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(afterMarker), {
         // Generous: recovery is certified by a probe write with a 10s stall
         // check, so the rebuild can legitimately take >20s to kick in.
         timeout: 45_000,
@@ -90,21 +88,21 @@ test.describe('Wedged terminal write pipeline recovery', () => {
   })
 
   test('pane recovers after its xterm is disposed under live bindings (zombie pane)', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await focusActiveTerminalInput(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await focusActiveTerminalInput(appPage)
 
     const runId = Date.now()
     const beforeMarker = `ZOMBIE_BASELINE_${runId}`
-    await dolphinPage.keyboard.type(`echo ${beforeMarker}`, { delay: 20 })
-    await dolphinPage.keyboard.press('Enter')
+    await appPage.keyboard.type(`echo ${beforeMarker}`, { delay: 20 })
+    await appPage.keyboard.press('Enter')
     await expect
-      .poll(async () => (await getTerminalContent(dolphinPage)).includes(beforeMarker), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(beforeMarker), {
         timeout: 15_000,
         message: 'Baseline echo did not render — pane unhealthy before dispose'
       })
@@ -115,7 +113,7 @@ test.describe('Wedged terminal write pipeline recovery', () => {
     // terminal silently drops its completion callback (verified against
     // 6.1.0-beta.287), so delivery acks leak and keyboard onData never fires —
     // the pane looks painted but is a fossil: input dead, output dead, PTY alive.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const state = window.__store?.getState()
       const worktreeId = state?.activeWorktreeId
       const tabId =
@@ -136,10 +134,10 @@ test.describe('Wedged terminal write pipeline recovery', () => {
     // health signal recovery must catch (typing can't be one here — a disposed
     // xterm emits no onData at all).
     const outputMarker = `ZOMBIE_OUTPUT_${runId}`
-    await sendToTerminal(dolphinPage, ptyId, `echo ${outputMarker}\r`)
+    await sendToTerminal(appPage, ptyId, `echo ${outputMarker}\r`)
 
     await expect
-      .poll(async () => (await getTerminalContent(dolphinPage)).includes(outputMarker), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(outputMarker), {
         timeout: 45_000,
         message:
           'Output written after the pane xterm was disposed never rendered — zombie pane was not recovered'
@@ -147,12 +145,12 @@ test.describe('Wedged terminal write pipeline recovery', () => {
       .toBe(true)
 
     // Input must be live again end-to-end after recovery.
-    await focusActiveTerminalInput(dolphinPage)
+    await focusActiveTerminalInput(appPage)
     const typedMarker = `ZOMBIE_INPUT_${runId}`
-    await dolphinPage.keyboard.type(`echo ${typedMarker}`, { delay: 20 })
-    await dolphinPage.keyboard.press('Enter')
+    await appPage.keyboard.type(`echo ${typedMarker}`, { delay: 20 })
+    await appPage.keyboard.press('Enter')
     await expect
-      .poll(async () => (await getTerminalContent(dolphinPage)).includes(typedMarker), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(typedMarker), {
         timeout: 15_000,
         message: 'Typed input never reached the PTY after zombie-pane recovery'
       })

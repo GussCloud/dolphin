@@ -39,29 +39,29 @@ test.describe('terminal hidden-worktree retention budget', () => {
   test.skip(process.platform === 'win32', 'Docker SSH parking uses POSIX SSH tooling.')
 
   test('force-parks the older hidden un-parkable worktree and spares the newest', async ({
-    dolphinPage
+    appPage
   }, testInfo: TestInfo) => {
     test.setTimeout(240_000)
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
+      await waitForSessionReady(appPage)
 
-      const older = await connectDockerSshRelayTarget(dolphinPage, target)
+      const older = await connectDockerSshRelayTarget(appPage, target)
       await expect
-        .poll(() => waitForActiveWorktree(dolphinPage), { timeout: 30_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 30_000 })
         .toBe(older.worktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const olderPtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      const olderTabId = await getActiveTabId(dolphinPage)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const olderPtyId = await waitForActivePanePtyId(appPage, 60_000)
+      const olderTabId = await getActiveTabId(appPage)
       if (!olderTabId) {
         throw new Error('older SSH terminal tab did not become active')
       }
       // Why the ':' terminator: match the exact echoed line, not the typed command.
       const olderMarker = `RETENTION_OLD_${Date.now()}`
-      await sendToTerminal(dolphinPage, olderPtyId, `echo "${olderMarker}:"\r`)
+      await sendToTerminal(appPage, olderPtyId, `echo "${olderMarker}:"\r`)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 20_000), {
+        .poll(() => getTerminalContent(appPage, 20_000), {
           timeout: 30_000,
           message: 'older worktree marker did not render before hiding'
         })
@@ -71,7 +71,7 @@ test.describe('terminal hidden-worktree retention budget', () => {
       // hidden remote worktrees join the un-parkable class the budget governs.
       // Written after the first terminal is live so it cannot race target setup;
       // parking eligibility reads it at verdict time, not spawn time.
-      await dolphinPage.evaluate(async () => {
+      await appPage.evaluate(async () => {
         await window.__store?.getState().updateSettings({ terminalSshViewParking: false })
       })
 
@@ -81,16 +81,16 @@ test.describe('terminal hidden-worktree retention budget', () => {
       // Activating the second worktree hides the older one, making the older the
       // least-recently-hidden candidate.
       const newer = await createAndActivateDockerSshRelayWorktree(
-        dolphinPage,
+        appPage,
         older.repoId,
         'retention-newer'
       )
       await expect
-        .poll(() => waitForActiveWorktree(dolphinPage), { timeout: 30_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 30_000 })
         .toBe(newer.worktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      await waitForActivePanePtyId(dolphinPage, 60_000)
-      const newerTabId = await getActiveTabId(dolphinPage)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      await waitForActivePanePtyId(appPage, 60_000)
+      const newerTabId = await getActiveTabId(appPage)
       if (!newerTabId) {
         throw new Error('newer SSH terminal tab did not become active')
       }
@@ -99,19 +99,19 @@ test.describe('terminal hidden-worktree retention budget', () => {
       // un-parkable worktrees against a budget of one. It stays visible, so it
       // is never a retention candidate itself.
       const third = await createAndActivateDockerSshRelayWorktree(
-        dolphinPage,
+        appPage,
         older.repoId,
         'retention-third'
       )
       await expect
-        .poll(() => waitForActiveWorktree(dolphinPage), { timeout: 30_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 30_000 })
         .toBe(third.worktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
 
       // The older worktree must force-park (its pane managers unmount)…
-      await waitForTabParked(dolphinPage, olderTabId, { parkDelayMs: PARKING_DELAY_MS })
+      await waitForTabParked(appPage, olderTabId, { parkDelayMs: PARKING_DELAY_MS })
       // …while the newest hidden worktree keeps its mounted panes (last-active exemption).
-      const newerStillMounted = await dolphinPage.evaluate(
+      const newerStillMounted = await appPage.evaluate(
         (tabId) => window.__paneManagers?.get(tabId) !== undefined,
         newerTabId
       )
@@ -119,7 +119,7 @@ test.describe('terminal hidden-worktree retention budget', () => {
 
       // Reveal the evicted worktree: with SSH parking disabled the model paint is
       // off, so the relay replay must restore the marker tail — never a blank pane.
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         ({ worktreeId, tabId }) => {
           const state = window.__store?.getState()
           state?.setActiveWorktree(worktreeId)
@@ -128,9 +128,9 @@ test.describe('terminal hidden-worktree retention budget', () => {
         },
         { worktreeId: older.worktreeId, tabId: olderTabId }
       )
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 20_000), {
+        .poll(() => getTerminalContent(appPage, 20_000), {
           timeout: 60_000,
           message: 'revealed evicted worktree did not restore the marker via relay replay'
         })

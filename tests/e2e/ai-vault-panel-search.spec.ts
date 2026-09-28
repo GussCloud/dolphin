@@ -4,7 +4,7 @@ import { expect, test } from './helpers/dolphin-app'
 
 test('panel consent enables real local transcript search; clearing restores history', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   seededRepoPath
 }, testInfo) => {
   const home = await electronApp.evaluate(({ app }) => app.getPath('home'))
@@ -34,18 +34,18 @@ test('panel consent enables real local transcript search; clearing restores hist
       .map((record) => JSON.stringify(record))
       .join('\n')}\n`
   )
-  await dolphinPage.evaluate(() => {
+  await appPage.evaluate(() => {
     const state = window.__store?.getState()
     state?.setRightSidebarOpen(true)
     state?.setRightSidebarTab('vault')
     state?.setRightSidebarWidth(400)
   })
-  await dolphinPage.getByRole('button', { name: 'Agents', exact: true }).click()
-  await dolphinPage.getByRole('radio', { name: 'All', exact: true }).click()
-  const input = dolphinPage.getByRole('textbox', { name: 'Search sessions', exact: true })
+  await appPage.getByRole('button', { name: 'Agents', exact: true }).click()
+  await appPage.getByRole('radio', { name: 'All', exact: true }).click()
+  const input = appPage.getByRole('textbox', { name: 'Search sessions', exact: true })
   await input.fill('nebulariver')
-  await expect(dolphinPage.getByText('Enable full-text search?', { exact: false })).toBeVisible()
-  const cdp = await dolphinPage.context().newCDPSession(dolphinPage)
+  await expect(appPage.getByText('Enable full-text search?', { exact: false })).toBeVisible()
+  const cdp = await appPage.context().newCDPSession(appPage)
   async function screenshot(name: string) {
     const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' })
     const screenshotPath = testInfo.outputPath(name)
@@ -53,25 +53,23 @@ test('panel consent enables real local transcript search; clearing restores hist
     await testInfo.attach(name, { path: screenshotPath, contentType: 'image/png' })
   }
   await screenshot('consent.png')
-  await dolphinPage.getByRole('button', { name: 'Enable', exact: true }).click()
+  await appPage.getByRole('button', { name: 'Enable', exact: true }).click()
   // Indexed searches are snapshots; enabling starts indexing independently of the panel.
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(
-          async () => (await window.api.aiVault.searchStatus('local')).filesIndexed
-        ),
+        appPage.evaluate(async () => (await window.api.aiVault.searchStatus('local')).filesIndexed),
       { timeout: 30_000 }
     )
     .toBeGreaterThan(0)
-  await dolphinPage.getByRole('button', { name: 'Refresh Session History', exact: true }).click()
-  await expect(dolphinPage.locator('mark').filter({ hasText: 'nebulariver' })).toBeVisible()
-  await expect(dolphinPage.getByText('Synthetic panel transcript', { exact: true })).toBeVisible()
+  await appPage.getByRole('button', { name: 'Refresh Session History', exact: true }).click()
+  await expect(appPage.locator('mark').filter({ hasText: 'nebulariver' })).toBeVisible()
+  await expect(appPage.getByText('Synthetic panel transcript', { exact: true })).toBeVisible()
   await screenshot('results.png')
-  await dolphinPage.getByTitle('Drag to resume in a new tab', { exact: true }).click()
-  await expect(dolphinPage.locator('mark').filter({ hasText: 'nebulariver' })).toBeVisible()
-  await dolphinPage.getByTitle('Drag to resume in a new tab', { exact: true }).click()
-  const title = dolphinPage.getByText('Synthetic panel transcript', { exact: true })
+  await appPage.getByTitle('Drag to resume in a new tab', { exact: true }).click()
+  await expect(appPage.locator('mark').filter({ hasText: 'nebulariver' })).toBeVisible()
+  await appPage.getByTitle('Drag to resume in a new tab', { exact: true }).click()
+  const title = appPage.getByText('Synthetic panel transcript', { exact: true })
   await expect(title).toHaveAttribute('draggable', 'true')
   const drag = await title.evaluate((element) => {
     const dataTransfer = new DataTransfer()
@@ -83,39 +81,37 @@ test('panel consent enables real local transcript search; clearing restores hist
   expect(JSON.parse(drag)).toMatchObject({ sessionId, sessionExecutionHostId: 'local' })
   await title.click({ button: 'right' })
   await expect(
-    dolphinPage.getByRole('menuitem', { name: 'Copy Session ID', exact: true })
+    appPage.getByRole('menuitem', { name: 'Copy Session ID', exact: true })
   ).toBeVisible()
-  await dolphinPage.keyboard.press('Escape')
-  await expect(dolphinPage.locator('[role="menu"]')).toHaveCount(0)
-  await dolphinPage.evaluate(async () => {
+  await appPage.keyboard.press('Escape')
+  await expect(appPage.locator('[role="menu"]')).toHaveCount(0)
+  await appPage.evaluate(async () => {
     await window.__store?.getState().updateSettingsOrThrow({ theme: 'dark' })
     window.__store?.getState().setRightSidebarWidth(280)
   })
-  await expect(dolphinPage.locator('html')).toHaveClass(/dark/)
+  await expect(appPage.locator('html')).toHaveClass(/dark/)
   await screenshot('results-dark-narrow.png')
   await title.click({ button: 'right' })
-  await dolphinPage.getByRole('menuitem', { name: 'Delete', exact: true }).click()
-  await dolphinPage.getByRole('button', { name: 'Delete', exact: true }).click()
+  await appPage.getByRole('menuitem', { name: 'Delete', exact: true }).click()
+  await appPage.getByRole('button', { name: 'Delete', exact: true }).click()
   await expect(title).toHaveCount(0)
-  await expect(dolphinPage.locator('mark')).toHaveCount(0)
+  await expect(appPage.locator('mark')).toHaveCount(0)
   await input.fill('nothingmatchesprseven')
   await expect(
-    dolphinPage.getByText('No matching sessions in the indexed history.', { exact: false })
+    appPage.getByText('No matching sessions in the indexed history.', { exact: false })
   ).toBeVisible()
   await screenshot('empty.png')
   await input.press('Escape')
   await expect(input).toHaveValue('')
-  await expect(
-    dolphinPage.getByText('Indexed history · best matches', { exact: false })
-  ).toHaveCount(0)
+  await expect(appPage.getByText('Indexed history · best matches', { exact: false })).toHaveCount(0)
   await cdp.detach()
 })
 
 test('panel renders transport failure and unavailable reasons without a local fallback', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
-  await dolphinPage.evaluate(async () => {
+  await appPage.evaluate(async () => {
     await window.__store
       ?.getState()
       .updateSettingsOrThrow({ aiVaultSearch: { enabled: true, historyDays: null } })
@@ -128,24 +124,22 @@ test('panel renders transport failure and unavailable reasons without a local fa
       throw new Error('Synthetic transport failure')
     })
   })
-  const input = dolphinPage.getByRole('textbox', { name: 'Search sessions', exact: true })
+  const input = appPage.getByRole('textbox', { name: 'Search sessions', exact: true })
   await input.fill('needle')
-  await expect(
-    dolphinPage.getByText('Could not search this computer.', { exact: false })
-  ).toBeVisible()
-  await dolphinPage.screenshot({ path: testInfo.outputPath('failure.png') })
+  await expect(appPage.getByText('Could not search this computer.', { exact: false })).toBeVisible()
+  await appPage.screenshot({ path: testInfo.outputPath('failure.png') })
   for (const reason of ['disabled', 'not-ready', 'no-service'] as const) {
     await electronApp.evaluate(({ ipcMain }, value) => {
       ipcMain.removeHandler('aiVault:searchSessions')
       ipcMain.handle('aiVault:searchSessions', () => ({ kind: 'unavailable', reason: value }))
     }, reason)
-    await dolphinPage.getByRole('button', { name: 'Try again', exact: true }).click()
+    await appPage.getByRole('button', { name: 'Try again', exact: true }).click()
     const copy =
       reason === 'disabled'
         ? 'Search is disabled on this computer.'
         : reason === 'not-ready'
           ? 'The search index is not ready yet.'
           : 'Search is unavailable on this computer.'
-    await expect(dolphinPage.getByText(copy, { exact: false })).toBeVisible()
+    await expect(appPage.getByText(copy, { exact: false })).toBeVisible()
   }
 })

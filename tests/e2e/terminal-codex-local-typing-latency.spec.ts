@@ -194,9 +194,7 @@ async function waitForCodexComposer(page: Page): Promise<string> {
 }
 
 test.describe('local Codex terminal typing latency', () => {
-  test('keeps Codex prompt typing responsive @local-real-codex', async ({
-    dolphinPage
-  }, testInfo) => {
+  test('keeps Codex prompt typing responsive @local-real-codex', async ({ appPage }, testInfo) => {
     test.skip(
       process.env.DOLPHIN_E2E_REAL_CODEX !== '1',
       'Set DOLPHIN_E2E_REAL_CODEX=1 to exercise the locally installed Codex TUI'
@@ -214,43 +212,43 @@ test.describe('local Codex terminal typing latency', () => {
     )
     test.skip(!existsSync(codexSource), 'local Codex checkout is missing')
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const launchCommand =
       `cd ${JSON.stringify(codexSource)} && CODEX_HOME=${JSON.stringify(realCodexHome)} ` +
       'codex --dangerously-bypass-approvals-and-sandbox --dangerously-bypass-hook-trust\r'
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, launchCommand)
-      await dismissCodexPromptsIfPresent(dolphinPage)
-      const composerMarker = await waitForCodexComposer(dolphinPage)
+      await sendToTerminal(appPage, ptyId, launchCommand)
+      await dismissCodexPromptsIfPresent(appPage)
+      const composerMarker = await waitForCodexComposer(appPage)
       testInfo.annotations.push({
         type: 'codex-composer-ready-marker',
         description: composerMarker
       })
-      await focusActiveTerminalInput(dolphinPage)
-      await forceCursorProbeTheme(dolphinPage)
-      const blinkSamples = await sampleCursorBlink(dolphinPage)
-      await focusActiveTerminalInput(dolphinPage)
+      await focusActiveTerminalInput(appPage)
+      await forceCursorProbeTheme(appPage)
+      const blinkSamples = await sampleCursorBlink(appPage)
+      await focusActiveTerminalInput(appPage)
 
       const typed = Array.from(
         { length: TOTAL_KEYSTROKES },
         (_value, index) => TYPING_ALPHABET[index % TYPING_ALPHABET.length]
       ).join('')
-      await installCodexEchoLatencyProbe(dolphinPage, typed)
+      await installCodexEchoLatencyProbe(appPage, typed)
       for (const char of typed) {
-        await dolphinPage.keyboard.type(char)
+        await appPage.keyboard.type(char)
         // Why: spacing keys past one frame keeps each sample an isolated echo
         // instead of measuring a burst the scheduler coalesced into one write.
-        await dolphinPage.waitForTimeout(KEYSTROKE_INTERVAL_MS)
+        await appPage.waitForTimeout(KEYSTROKE_INTERVAL_MS)
       }
       // Why: the last keystroke's echo can still be in flight when typing ends.
-      await dolphinPage.waitForTimeout(1_000)
-      const report = await collectCodexEchoLatencyReport(dolphinPage)
+      await appPage.waitForTimeout(1_000)
+      const report = await collectCodexEchoLatencyReport(appPage)
 
       const measured = report.samples.filter((sample) => sample.index >= WARMUP_KEYSTROKES)
       const parseLatencies = measured.map((sample) => sample.keyToParseMs)
@@ -284,7 +282,7 @@ test.describe('local Codex terminal typing latency', () => {
       expect(echo.p95).toBeLessThan(MAX_P95_ECHO_LATENCY_MS)
       expect(echo.max).toBeLessThan(MAX_WORST_ECHO_LATENCY_MS)
     } finally {
-      await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
     }
   })
 })

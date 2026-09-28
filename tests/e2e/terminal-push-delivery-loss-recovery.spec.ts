@@ -45,31 +45,31 @@ type DeliveryWatchdogWindow = Window & {
 }
 
 test.describe('terminal push-delivery loss recovery', () => {
-  test.afterEach(async ({ dolphinPage }) => {
-    await dolphinPage.evaluate(() => {
+  test.afterEach(async ({ appPage }) => {
+    await appPage.evaluate(() => {
       ;(window as DeliveryWatchdogWindow).__terminalDeliveryWatchdog?.blackhole(false)
     })
   })
 
   test('watchdog repaints wedged terminals from the main buffer without push delivery or reload', async ({
-    dolphinPage
+    appPage
   }) => {
     test.setTimeout(120_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
 
     // Live baseline: push delivery works. The $((…)) arithmetic keeps the
     // asserted string out of the typed command's local echo.
-    await execInTerminal(dolphinPage, ptyId, 'echo live-before-$((41+1))')
+    await execInTerminal(appPage, ptyId, 'echo live-before-$((41+1))')
     await expect
-      .poll(async () => getTerminalContent(dolphinPage), { timeout: 15_000 })
+      .poll(async () => getTerminalContent(appPage), { timeout: 15_000 })
       .toContain('live-before-42')
 
     // Engage the field wedge and speed the watchdog up for CI.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const watchdog = (window as DeliveryWatchdogWindow).__terminalDeliveryWatchdog
       if (!watchdog) {
         throw new Error('delivery watchdog e2e hook missing — exposeStore build?')
@@ -78,11 +78,11 @@ test.describe('terminal push-delivery loss recovery', () => {
       watchdog.blackhole(true)
     })
 
-    await execInTerminal(dolphinPage, ptyId, 'echo wedged-$((100+23))')
+    await execInTerminal(appPage, ptyId, 'echo wedged-$((100+23))')
 
     // The wedge repro itself: output is swallowed, pane stays stale.
-    await dolphinPage.waitForTimeout(1_500)
-    expect(await getTerminalContent(dolphinPage)).not.toContain('wedged-123')
+    await appPage.waitForTimeout(1_500)
+    expect(await getTerminalContent(appPage)).not.toContain('wedged-123')
 
     // Recovery proof: the watchdog confirms the wedge over invoke and heals
     // (write-off + snapshot-restore request) without push or reload. We assert
@@ -93,7 +93,7 @@ test.describe('terminal push-delivery loss recovery', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             () =>
               (window as DeliveryWatchdogWindow).__terminalDeliveryWatchdog?.snapshot()
                 ?.healCount ?? 0
@@ -103,12 +103,12 @@ test.describe('terminal push-delivery loss recovery', () => {
       .toBeGreaterThan(0)
 
     // Channel restored: live output flows again with no reload in between.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       ;(window as DeliveryWatchdogWindow).__terminalDeliveryWatchdog?.blackhole(false)
     })
-    await execInTerminal(dolphinPage, ptyId, 'echo live-after-$((200+56))')
+    await execInTerminal(appPage, ptyId, 'echo live-after-$((200+56))')
     await expect
-      .poll(async () => getTerminalContent(dolphinPage), { timeout: 15_000 })
+      .poll(async () => getTerminalContent(appPage), { timeout: 15_000 })
       .toContain('live-after-256')
   })
 })

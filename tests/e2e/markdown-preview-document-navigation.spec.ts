@@ -12,11 +12,11 @@ const FIXTURE_DIRECTORY = 'dolphin-e2e-preview-document-navigation'
 for (const kind of ['relative', 'wiki'] as const) {
   for (const anchored of [false, true]) {
     test(`${kind} ${anchored ? 'anchored' : 'plain'} links stay in Markdown preview`, async ({
-      dolphinPage
+      appPage
     }, testInfo) => {
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const context = await getActiveWorktreeContext(dolphinPage)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const context = await getActiveWorktreeContext(appPage)
       let sourcePath: string | null = null
       let targetPath: string | null = null
 
@@ -41,7 +41,7 @@ for (const kind of ['relative', 'wiki'] as const) {
           testInfo.workerIndex,
           `# Source\n\n${link}\n`
         )
-        await dolphinPage.evaluate(
+        await appPage.evaluate(
           ({ filePath, relativePath, worktreeId }) => {
             window.__store!.getState().openMarkdownPreview({
               filePath,
@@ -56,7 +56,7 @@ for (const kind of ['relative', 'wiki'] as const) {
             worktreeId: context.worktreeId
           }
         )
-        const linkElement = dolphinPage.getByRole('link', { name: 'Open target', exact: true })
+        const linkElement = appPage.getByRole('link', { name: 'Open target', exact: true })
         await expect(linkElement).toBeVisible()
         if (kind === 'wiki') {
           await expect(linkElement).not.toHaveClass(/markdown-doc-link-broken/)
@@ -65,7 +65,7 @@ for (const kind of ['relative', 'wiki'] as const) {
 
         await expect
           .poll(() =>
-            dolphinPage.evaluate(() => {
+            appPage.evaluate(() => {
               const state = window.__store!.getState()
               const file = state.openFiles.find((entry) => entry.id === state.activeFileId)
               return file
@@ -82,11 +82,9 @@ for (const kind of ['relative', 'wiki'] as const) {
             mode: 'markdown-preview',
             anchor: anchored ? 'target' : null
           })
-        await expect(
-          dolphinPage.getByRole('heading', { name: 'Target', exact: true })
-        ).toBeVisible()
+        await expect(appPage.getByRole('heading', { name: 'Target', exact: true })).toBeVisible()
         const screenshotPath = testInfo.outputPath('destination-preview.png')
-        await dolphinPage.screenshot({ path: screenshotPath })
+        await appPage.screenshot({ path: screenshotPath })
         await testInfo.attach('destination-preview', {
           path: screenshotPath,
           contentType: 'image/png'

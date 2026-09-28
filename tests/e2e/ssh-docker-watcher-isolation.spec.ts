@@ -101,24 +101,24 @@ test.describe('Docker SSH relay watcher isolation', () => {
   test.skip(process.platform === 'win32', 'Docker SSH watcher isolation uses POSIX tooling.')
 
   test('keeps the relay, terminal, and explorer alive when only relay-watcher.js crashes', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      await enableTerminalAccessibilityDom(dolphinPage, ptyId)
-      await openRemoteFileExplorer(dolphinPage, target)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
+      await enableTerminalAccessibilityDom(appPage, ptyId)
+      await openRemoteFileExplorer(appPage, target)
 
       const beforeFile = 'before-crash.txt'
       writeDockerSshRelayTargetFile(target, remoteRepoFile(beforeFile), 'before watcher crash\n')
-      await expect(fileExplorerRow(dolphinPage, beforeFile)).toBeVisible({ timeout: 30_000 })
+      await expect(fileExplorerRow(appPage, beforeFile)).toBeVisible({ timeout: 30_000 })
 
       const beforeCrash = await waitForRelayWatcherProcessGroup(target)
       // Why: the relay shards roots across bounded watcher children. Crashing
@@ -144,12 +144,12 @@ test.describe('Docker SSH relay watcher isolation', () => {
       const terminalMarkerBase64 = Buffer.from(terminalMarker).toString('base64')
       const afterFile = 'after-crash.txt'
       await execInTerminal(
-        dolphinPage,
+        appPage,
         ptyId,
         `printf '%s' ${shellQuote(terminalMarkerBase64)} | base64 -d && printf '\\n' && ` +
           `printf '%s\\n' 'after watcher crash' > ${shellQuote(remoteRepoFile(afterFile))}`
       )
-      const terminalDom = dolphinPage.locator(
+      const terminalDom = appPage.locator(
         `[data-pty-id=${JSON.stringify(ptyId)}] .xterm-accessibility-tree`
       )
       await expect(terminalDom).toContainText(terminalMarker, { timeout: 30_000 })
@@ -168,23 +168,23 @@ test.describe('Docker SSH relay watcher isolation', () => {
           `watcherPids=${beforeCrash.watcherPids.join(',')}->${finalProcesses.watcherPids.join(',')} ` +
           `pty=${ptyId}`
       })
-      await expect(fileExplorerRow(dolphinPage, afterFile)).toBeVisible({ timeout: 30_000 })
+      await expect(fileExplorerRow(appPage, afterFile)).toBeVisible({ timeout: 30_000 })
     } finally {
       cleanupDockerSshRelayTarget(target)
     }
   })
 
   test('repairs a missing deployed relay-watcher.js on reconnect', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await openRemoteFileExplorer(dolphinPage, target)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await openRemoteFileExplorer(appPage, target)
 
       const beforeRepair = await waitForRelayWatcherProcessGroup(target)
       expect(readDockerSshRelayArtifactState(target, beforeRepair.relayDir)).toEqual({
@@ -197,8 +197,8 @@ test.describe('Docker SSH relay watcher isolation', () => {
         relayWatcher: false
       })
 
-      await closeRemoteFileExplorer(dolphinPage)
-      await disconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
+      await closeRemoteFileExplorer(appPage)
+      await disconnectDockerSshRelayTarget(appPage, remote.targetId)
       // Why: normal relays deliberately retain PTYs for the reconnect grace
       // window. Stop this disconnected instance so reconnect must deploy anew.
       terminateDockerSshRelay(target, beforeRepair)
@@ -208,9 +208,9 @@ test.describe('Docker SSH relay watcher isolation', () => {
           message: 'disconnected relay did not exit after explicit termination'
         })
         .toBe(false)
-      await reconnectDisconnectedDockerSshRelayTarget(dolphinPage, remote.targetId)
+      await reconnectDisconnectedDockerSshRelayTarget(appPage, remote.targetId)
 
-      await openRemoteFileExplorer(dolphinPage, target)
+      await openRemoteFileExplorer(appPage, target)
       const afterRepair = await waitForRelayWatcherProcessGroup(target)
       expect(afterRepair.relayPid).not.toBe(beforeRepair.relayPid)
       expect(readDockerSshRelayArtifactState(target, afterRepair.relayDir)).toEqual({
@@ -219,7 +219,7 @@ test.describe('Docker SSH relay watcher isolation', () => {
       })
       const repairedFile = 'after-artifact-repair.txt'
       writeDockerSshRelayTargetFile(target, remoteRepoFile(repairedFile), 'artifact repaired\n')
-      await expect(fileExplorerRow(dolphinPage, repairedFile)).toBeVisible({ timeout: 30_000 })
+      await expect(fileExplorerRow(appPage, repairedFile)).toBeVisible({ timeout: 30_000 })
     } finally {
       cleanupDockerSshRelayTarget(target)
     }

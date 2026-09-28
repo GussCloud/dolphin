@@ -216,11 +216,11 @@ type ParkedRemoteTerminal = {
  *  Every host terminal it creates is pushed into `createdTerminals` as it is created, so the
  *  caller's `finally` can close them even if this throws partway. */
 async function parkRemoteTerminalWithToken(
-  dolphinPage: Page,
+  appPage: Page,
   client: PairedElectronClient,
   createdTerminals: string[]
 ): Promise<ParkedRemoteTerminal> {
-  const worktreeId = await dolphinPage.evaluate(() => {
+  const worktreeId = await appPage.evaluate(() => {
     const id = window.__store?.getState().activeWorktreeId
     if (!id) {
       throw new Error('headed host has no active worktree')
@@ -326,17 +326,17 @@ test.describe('host retains nothing', () => {
   })
 
   test('the debounced write alone lands the parked scrollback in the remote host’s partition, so a hard kill loses nothing', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(600_000)
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     const extraEnv = { DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS: String(PARK_DELAY_MS) }
     const first = await launchPairedElectronClient(offer, testInfo, 'parked-kill', { extraEnv })
     const userDataDir = first.userDataDir
     const createdTerminals: string[] = []
     let relaunched: PairedElectronClient | null = null
     try {
-      const parked = await parkRemoteTerminalWithToken(dolphinPage, first, createdTerminals)
+      const parked = await parkRemoteTerminalWithToken(appPage, first, createdTerminals)
 
       // Why no beforeunload and no ordinary close: both run the shutdown checkpoint, whose full
       // snapshot routes the layout correctly and would mask a misrouted debounced patch. Only the
@@ -384,17 +384,17 @@ test.describe('host retains nothing', () => {
   })
 
   test('a clean quit also lands the parked scrollback in the remote host’s partition (control)', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(600_000)
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     const extraEnv = { DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS: String(PARK_DELAY_MS) }
     const first = await launchPairedElectronClient(offer, testInfo, 'parked-restart', { extraEnv })
     const userDataDir = first.userDataDir
     const createdTerminals: string[] = []
     let relaunched: PairedElectronClient | null = null
     try {
-      const parked = await parkRemoteTerminalWithToken(dolphinPage, first, createdTerminals)
+      const parked = await parkRemoteTerminalWithToken(appPage, first, createdTerminals)
 
       await first.page.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
       await first.quitPreservingProfile()

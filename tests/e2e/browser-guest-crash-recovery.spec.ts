@@ -82,28 +82,28 @@ async function readBrowserPageRecoveryState(
 
 test('browser chrome recovers a live registered file guest after renderer loss', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
   const { browserTab, fixtureUrl, worktreeId } = await createBrowserFixture(
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   )
 
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id), { timeout: 10_000 })
+    .poll(() => readBrowserGuestState(appPage, browserTab.id), { timeout: 10_000 })
     .toMatchObject({
       chromePresent: true,
       marker: 'painted-file-guest',
       url: fixtureUrl
     })
-  const before = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const before = await readBrowserGuestState(appPage, browserTab.id)
   expect(before.webContentsId).not.toBeNull()
   const beforeProcessId = await readGuestProcessId(electronApp, before.webContentsId!)
   await expect
     .poll(
       async () =>
-        (await listRegisteredBrowserPages(dolphinPage, worktreeId)).result?.tabs?.find(
+        (await listRegisteredBrowserPages(appPage, worktreeId)).result?.tabs?.find(
           (tab) => tab.browserPageId === browserTab.activePageId
         ),
       { timeout: 10_000 }
@@ -114,25 +114,25 @@ test('browser chrome recovers a live registered file guest after renderer loss',
   expect(['crashed', 'killed']).toContain(crashDetails.reason)
 
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id), { timeout: 10_000 })
+    .poll(() => readBrowserGuestState(appPage, browserTab.id), { timeout: 10_000 })
     .toMatchObject({
       chromePresent: true,
       marker: 'painted-file-guest',
       url: fixtureUrl
     })
-  const recovered = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const recovered = await readBrowserGuestState(appPage, browserTab.id)
   expect(recovered.webContentsId).toBe(before.webContentsId)
   await expect
     .poll(() => readGuestProcessId(electronApp, recovered.webContentsId!), { timeout: 10_000 })
     .not.toBe(beforeProcessId)
   await expect
-    .poll(() => listRegisteredBrowserPages(dolphinPage, worktreeId), { timeout: 10_000 })
+    .poll(() => listRegisteredBrowserPages(appPage, worktreeId), { timeout: 10_000 })
     .toMatchObject({
       ok: true,
       result: { tabs: [{ browserPageId: browserTab.activePageId, url: fixtureUrl }] }
     })
 
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     async ({ targetBrowserTabId, targetValue }) => {
       const overlay = document.querySelector(
         `[data-browser-overlay-tab-id="${targetBrowserTabId}"]`
@@ -144,13 +144,13 @@ test('browser chrome recovers a live registered file guest after renderer loss',
     },
     { targetBrowserTabId: browserTab.id, targetValue: 'unsaved-form-state' }
   )
-  await dolphinPage.evaluate((browserPageId) => {
+  await appPage.evaluate((browserPageId) => {
     return window.api.browser.unregisterGuest({ browserPageId })
   }, browserTab.activePageId)
   await expect
     .poll(
       async () =>
-        (await listRegisteredBrowserPages(dolphinPage, worktreeId)).result?.tabs?.some(
+        (await listRegisteredBrowserPages(appPage, worktreeId)).result?.tabs?.some(
           (tab) => tab.browserPageId === browserTab.activePageId
         ) ?? false
     )
@@ -160,19 +160,19 @@ test('browser chrome recovers a live registered file guest after renderer loss',
   })
   await expect
     .poll(async () =>
-      (await listRegisteredBrowserPages(dolphinPage, worktreeId)).result?.tabs?.find(
+      (await listRegisteredBrowserPages(appPage, worktreeId)).result?.tabs?.find(
         (tab) => tab.browserPageId === browserTab.activePageId
       )
     )
     .toMatchObject({ browserPageId: browserTab.activePageId, url: fixtureUrl })
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id), { timeout: 10_000 })
+    .poll(() => readBrowserGuestState(appPage, browserTab.id), { timeout: 10_000 })
     .toMatchObject({ chromePresent: true, marker: 'painted-file-guest', url: fixtureUrl })
-  const resumeRecovered = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const resumeRecovered = await readBrowserGuestState(appPage, browserTab.id)
   expect(resumeRecovered.webContentsId).toBe(recovered.webContentsId)
   expect(resumeRecovered.formValue).toBe('unsaved-form-state')
 
-  const backgroundTab = await dolphinPage.evaluate(
+  const backgroundTab = await appPage.evaluate(
     ({ targetWorktreeId }) =>
       window.__store?.getState().createBrowserTab(targetWorktreeId, 'about:blank', {
         title: 'Background control',
@@ -182,22 +182,22 @@ test('browser chrome recovers a live registered file guest after renderer loss',
   )
   expect(backgroundTab?.id).toBeTruthy()
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, backgroundTab!.id), { timeout: 10_000 })
+    .poll(() => readBrowserGuestState(appPage, backgroundTab!.id), { timeout: 10_000 })
     .toMatchObject({ chromePresent: true })
 
   const beforeRendererReloadId = resumeRecovered.webContentsId
-  await dolphinPage.reload()
-  await waitForActiveWorktree(dolphinPage)
+  await appPage.reload()
+  await waitForActiveWorktree(appPage)
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id), { timeout: 10_000 })
+    .poll(() => readBrowserGuestState(appPage, browserTab.id), { timeout: 10_000 })
     .toMatchObject({ chromePresent: true, marker: 'painted-file-guest', url: fixtureUrl })
-  const rendererReloaded = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const rendererReloaded = await readBrowserGuestState(appPage, browserTab.id)
   expect(rendererReloaded.webContentsId).not.toBe(beforeRendererReloadId)
 
-  await dolphinPage.evaluate((targetBrowserTabId) => {
+  await appPage.evaluate((targetBrowserTabId) => {
     window.__store?.getState().setActiveBrowserTab(targetBrowserTabId)
   }, backgroundTab!.id)
-  const hiddenBefore = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const hiddenBefore = await readBrowserGuestState(appPage, browserTab.id)
   const hiddenProcessId = await readGuestProcessId(electronApp, hiddenBefore.webContentsId!)
   await crashGuestRenderer(electronApp, hiddenBefore.webContentsId!)
   await expect
@@ -205,36 +205,36 @@ test('browser chrome recovers a live registered file guest after renderer loss',
       timeout: 10_000
     })
     .not.toBe(hiddenProcessId)
-  await dolphinPage.evaluate((targetBrowserTabId) => {
+  await appPage.evaluate((targetBrowserTabId) => {
     window.__store?.getState().setActiveBrowserTab(targetBrowserTabId)
   }, browserTab.id)
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id), { timeout: 10_000 })
+    .poll(() => readBrowserGuestState(appPage, browserTab.id), { timeout: 10_000 })
     .toMatchObject({ chromePresent: true, marker: 'painted-file-guest', url: fixtureUrl })
 
   await verifyBrowserWorktreeRetentionAndRecovery({
     browserTab,
     electronApp,
     fixtureUrl,
-    page: dolphinPage,
+    page: appPage,
     worktreeId
   })
 })
 
 test('dom-ready ID loss waits for validation without reloading the guest', async ({
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
   const { browserTab, fixtureUrl, worktreeId } = await createBrowserFixture(
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   )
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({ marker: 'painted-file-guest', url: fixtureUrl })
-  const before = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const before = await readBrowserGuestState(appPage, browserTab.id)
 
-  await dolphinPage.evaluate((targetBrowserTabId) => {
+  await appPage.evaluate((targetBrowserTabId) => {
     const overlay = document.querySelector(`[data-browser-overlay-tab-id="${targetBrowserTabId}"]`)
     const webview = overlay?.querySelector('webview') as Electron.WebviewTag
     const getWebContentsId = webview.getWebContentsId.bind(webview)
@@ -263,7 +263,7 @@ test('dom-ready ID loss waits for validation without reloading the guest', async
 
   await expect
     .poll(() =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         (targetBrowserTabId) =>
           document
             .querySelector(`[data-browser-overlay-tab-id="${targetBrowserTabId}"] webview`)
@@ -273,12 +273,12 @@ test('dom-ready ID loss waits for validation without reloading the guest', async
     )
     .toBe('true')
   await expect(
-    dolphinPage.locator(
+    appPage.locator(
       `[data-browser-overlay-tab-id="${browserTab.id}"] webview[data-recovery-reload-attempted]`
     )
   ).toHaveCount(0)
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id), { timeout: 10_000 })
+    .poll(() => readBrowserGuestState(appPage, browserTab.id), { timeout: 10_000 })
     .toMatchObject({
       chromePresent: true,
       marker: 'painted-file-guest',
@@ -286,7 +286,7 @@ test('dom-ready ID loss waits for validation without reloading the guest', async
       webContentsId: before.webContentsId
     })
   await expect
-    .poll(() => listRegisteredBrowserPages(dolphinPage, worktreeId))
+    .poll(() => listRegisteredBrowserPages(appPage, worktreeId))
     .toMatchObject({
       ok: true,
       result: { tabs: [{ browserPageId: browserTab.activePageId, url: fixtureUrl }] }
@@ -295,22 +295,22 @@ test('dom-ready ID loss waits for validation without reloading the guest', async
 
 test('explicit navigation repairs a recovery error without dom-ready churn', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
   const { browserTab, fixtureUrl, worktreeId } = await createBrowserFixture(
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   )
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({ marker: 'painted-file-guest', url: fixtureUrl })
 
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     (browserPageId) => window.api.browser.unregisterGuest({ browserPageId }),
     browserTab.activePageId
   )
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     ({ browserPageId, validatedUrl, recoveryErrorCode }) => {
       window.__store?.getState().updateBrowserPageState(browserPageId, {
         loading: false,
@@ -328,7 +328,7 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
     }
   )
   await expect
-    .poll(() => readBrowserPageRecoveryState(dolphinPage, browserTab.id, browserTab.activePageId))
+    .poll(() => readBrowserPageRecoveryState(appPage, browserTab.id, browserTab.activePageId))
     .toMatchObject({ loadErrorCode: BROWSER_GUEST_RECOVERY_ERROR_CODE })
 
   await electronApp.evaluate(({ ipcMain }) => {
@@ -342,19 +342,19 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
       return false
     })
   })
-  await dolphinPage.evaluate((targetBrowserTabId) => {
+  await appPage.evaluate((targetBrowserTabId) => {
     const overlay = document.querySelector(`[data-browser-overlay-tab-id="${targetBrowserTabId}"]`)
     overlay?.querySelector('webview')?.dispatchEvent(new Event('dom-ready'))
   }, browserTab.id)
   await expect
     .poll(async () =>
-      (await listRegisteredBrowserPages(dolphinPage, worktreeId)).result?.tabs?.some(
+      (await listRegisteredBrowserPages(appPage, worktreeId)).result?.tabs?.some(
         (tab) => tab.browserPageId === browserTab.activePageId
       )
     )
     .toBe(false)
 
-  const addressBar = dolphinPage.locator(
+  const addressBar = appPage.locator(
     `[data-browser-overlay-tab-id="${browserTab.id}"] [data-dolphin-browser-address-bar="true"]`
   )
   let resolvePrecommitRequest: (() => void) | null = null
@@ -409,7 +409,7 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
   await addressBar.fill(`${stalledOrigin}/precommit`)
   await addressBar.press('Enter')
   await precommitRequest
-  await dolphinPage.evaluate((targetBrowserTabId) => {
+  await appPage.evaluate((targetBrowserTabId) => {
     const overlay = document.querySelector(`[data-browser-overlay-tab-id="${targetBrowserTabId}"]`)
     const webview = overlay?.querySelector('webview')
     const inPageNavigation = Object.assign(new Event('did-navigate-in-page'), {
@@ -419,7 +419,7 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
     webview?.dispatchEvent(inPageNavigation)
     webview?.dispatchEvent(new Event('dom-ready'))
   }, browserTab.id)
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     () =>
       new Promise<void>((resolve) => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
@@ -435,13 +435,13 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
   ).toBe(0)
   await expect
     .poll(async () =>
-      (await listRegisteredBrowserPages(dolphinPage, worktreeId)).result?.tabs?.some(
+      (await listRegisteredBrowserPages(appPage, worktreeId)).result?.tabs?.some(
         (tab) => tab.browserPageId === browserTab.activePageId
       )
     )
     .toBe(false)
   await expect
-    .poll(() => readBrowserPageRecoveryState(dolphinPage, browserTab.id, browserTab.activePageId))
+    .poll(() => readBrowserPageRecoveryState(appPage, browserTab.id, browserTab.activePageId))
     .toMatchObject({ loadErrorCode: BROWSER_GUEST_RECOVERY_ERROR_CODE })
 
   const committedStallUrl = `${stalledOrigin}/committed`
@@ -449,9 +449,9 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
   await addressBar.press('Enter')
   await committedRequest
   await expect
-    .poll(() => readBrowserPageRecoveryState(dolphinPage, browserTab.id, browserTab.activePageId))
+    .poll(() => readBrowserPageRecoveryState(appPage, browserTab.id, browserTab.activePageId))
     .toEqual({ loadErrorCode: BROWSER_GUEST_RECOVERY_ERROR_CODE, url: committedStallUrl })
-  await expect(dolphinPage.getByText('Recovery fixture error', { exact: true })).toBeVisible()
+  await expect(appPage.getByText('Recovery fixture error', { exact: true })).toBeVisible()
   expect(
     await electronApp.evaluate(() => {
       const testState = globalThis as typeof globalThis & {
@@ -462,7 +462,7 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
   ).toBe(0)
   await expect
     .poll(async () =>
-      (await listRegisteredBrowserPages(dolphinPage, worktreeId)).result?.tabs?.some(
+      (await listRegisteredBrowserPages(appPage, worktreeId)).result?.tabs?.some(
         (tab) => tab.browserPageId === browserTab.activePageId
       )
     )
@@ -471,10 +471,10 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
   await addressBar.press('Enter')
 
   await expect
-    .poll(() => readBrowserPageRecoveryState(dolphinPage, browserTab.id, browserTab.activePageId))
+    .poll(() => readBrowserPageRecoveryState(appPage, browserTab.id, browserTab.activePageId))
     .toMatchObject({ loadErrorCode: null, url: fixtureUrl })
   await expect
-    .poll(() => listRegisteredBrowserPages(dolphinPage, worktreeId))
+    .poll(() => listRegisteredBrowserPages(appPage, worktreeId))
     .toMatchObject({
       ok: true,
       result: { tabs: [{ browserPageId: browserTab.activePageId, url: fixtureUrl }] }
@@ -488,11 +488,11 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
     })
   ).toBe(1)
 
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     (browserPageId) => window.api.browser.unregisterGuest({ browserPageId }),
     browserTab.activePageId
   )
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     ({ browserPageId, validatedUrl, recoveryErrorCode }) => {
       window.__store?.getState().updateBrowserPageState(browserPageId, {
         loading: false,
@@ -510,7 +510,7 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
     }
   )
   await expect
-    .poll(() => readBrowserPageRecoveryState(dolphinPage, browserTab.id, browserTab.activePageId))
+    .poll(() => readBrowserPageRecoveryState(appPage, browserTab.id, browserTab.activePageId))
     .toMatchObject({ loadErrorCode: BROWSER_GUEST_RECOVERY_ERROR_CODE })
   await electronApp.evaluate(() => {
     const testState = globalThis as typeof globalThis & {
@@ -525,16 +525,16 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
   await redirectedRequest
 
   await expect
-    .poll(() => readBrowserPageRecoveryState(dolphinPage, browserTab.id, browserTab.activePageId))
+    .poll(() => readBrowserPageRecoveryState(appPage, browserTab.id, browserTab.activePageId))
     .toMatchObject({ loadErrorCode: null, url: redirectedUrl })
   await expect
-    .poll(() => listRegisteredBrowserPages(dolphinPage, worktreeId))
+    .poll(() => listRegisteredBrowserPages(appPage, worktreeId))
     .toMatchObject({
       ok: true,
       result: { tabs: [{ browserPageId: browserTab.activePageId, url: redirectedUrl }] }
     })
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({
       chromePresent: true,
       marker: 'painted-redirected-guest',
@@ -552,18 +552,18 @@ test('explicit navigation repairs a recovery error without dom-ready churn', asy
 
 test('recovery error stays visible until toolbar retry repairs registration', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
   const { browserTab, fixtureUrl, worktreeId } = await createBrowserFixture(
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   )
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({ marker: 'painted-file-guest', url: fixtureUrl })
 
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     (browserPageId) => window.api.browser.unregisterGuest({ browserPageId }),
     browserTab.activePageId
   )
@@ -575,7 +575,7 @@ test('recovery error stays visible until toolbar retry repairs registration', as
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           ({ workspaceId, browserPageId }) =>
             window.__store
               ?.getState()
@@ -590,7 +590,7 @@ test('recovery error stays visible until toolbar retry repairs registration', as
   await electronApp.evaluate(({ ipcMain }) => {
     ipcMain.handle('browser:isGuestRegistered', () => false)
   })
-  await dolphinPage
+  await appPage
     .locator('[data-contextual-tour-target="browser-toolbar"]')
     .locator('button')
     .nth(2)
@@ -599,7 +599,7 @@ test('recovery error stays visible until toolbar retry repairs registration', as
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           ({ workspaceId, browserPageId }) =>
             window.__store
               ?.getState()
@@ -611,10 +611,10 @@ test('recovery error stays visible until toolbar retry repairs registration', as
     )
     .toBeNull()
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({ chromePresent: true, marker: 'painted-file-guest', url: fixtureUrl })
   await expect
-    .poll(() => listRegisteredBrowserPages(dolphinPage, worktreeId))
+    .poll(() => listRegisteredBrowserPages(appPage, worktreeId))
     .toMatchObject({
       ok: true,
       result: { tabs: [{ browserPageId: browserTab.activePageId, url: fixtureUrl }] }
@@ -622,18 +622,18 @@ test('recovery error stays visible until toolbar retry repairs registration', as
 })
 
 test('attachment keeps recovery error until document readiness', async ({
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
   const { browserTab, fixtureUrl } = await createBrowserFixture(
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   )
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({ marker: 'painted-file-guest', url: fixtureUrl })
 
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     ({ workspaceId, browserPageId, validatedUrl, recoveryErrorCode }) => {
       window.__store?.getState().updateBrowserPageState(browserPageId, {
         loading: false,
@@ -657,12 +657,12 @@ test('attachment keeps recovery error until document readiness', async ({
       recoveryErrorCode: BROWSER_GUEST_RECOVERY_ERROR_CODE
     }
   )
-  await dolphinPage
+  await appPage
     .locator('[data-contextual-tour-target="browser-toolbar"]')
     .locator('button')
     .nth(2)
     .click()
-  const recoveryErrorCode = await dolphinPage.evaluate(
+  const recoveryErrorCode = await appPage.evaluate(
     ({ workspaceId, browserPageId }) =>
       new Promise<number | null>((resolve) => {
         requestAnimationFrame(() => {
@@ -712,34 +712,34 @@ async function revealHeadedWindow(electronApp: ElectronApplication, page: Page):
 
 test('minimized browser guest stays painted and registered after restore @headful', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }, testInfo) => {
   const { browserTab, fixtureUrl, worktreeId } = await createBrowserFixture(
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   )
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({ marker: 'painted-file-guest', url: fixtureUrl })
-  const before = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const before = await readBrowserGuestState(appPage, browserTab.id)
 
-  await occludeHeadedWindow(electronApp, dolphinPage)
-  await revealHeadedWindow(electronApp, dolphinPage)
+  await occludeHeadedWindow(electronApp, appPage)
+  await revealHeadedWindow(electronApp, appPage)
 
   await expect
-    .poll(() => readBrowserGuestState(dolphinPage, browserTab.id))
+    .poll(() => readBrowserGuestState(appPage, browserTab.id))
     .toMatchObject({ chromePresent: true, marker: 'painted-file-guest', url: fixtureUrl })
-  const restored = await readBrowserGuestState(dolphinPage, browserTab.id)
+  const restored = await readBrowserGuestState(appPage, browserTab.id)
   expect(restored.webContentsId).toBe(before.webContentsId)
   await expect
-    .poll(() => listRegisteredBrowserPages(dolphinPage, worktreeId))
+    .poll(() => listRegisteredBrowserPages(appPage, worktreeId))
     .toMatchObject({
       ok: true,
       result: { tabs: [{ browserPageId: browserTab.activePageId, url: fixtureUrl }] }
     })
   const screenshotPath = testInfo.outputPath('browser-minimize-restore.png')
-  await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+  await appPage.screenshot({ path: screenshotPath, fullPage: true })
   await testInfo.attach('browser-minimize-restore', {
     path: screenshotPath,
     contentType: 'image/png'

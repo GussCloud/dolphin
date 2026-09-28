@@ -125,22 +125,22 @@ async function reloadBrowserGuest(page: Page, browserTabId: string): Promise<voi
 }
 
 test.describe('local HTTPS certificate trust', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   test('approves one exact local certificate endpoint without trusting sibling tabs or ports', async ({
-    dolphinPage
+    appPage
   }) => {
     const firstServer = await startLocalHttpsServer()
     const secondPortServer = await startLocalHttpsServer()
     const siblingProbeServer = await startLocalHttpProbeServer(firstServer)
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-      const firstTab = await createBrowserTab(dolphinPage, worktreeId, firstServer.schemeLessUrl)
-      const firstSlot = browserSlot(dolphinPage, firstTab.id)
+      const worktreeId = (await getActiveWorktreeId(appPage))!
+      const firstTab = await createBrowserTab(appPage, worktreeId, firstServer.schemeLessUrl)
+      const firstSlot = browserSlot(appPage, firstTab.id)
 
       await expect(firstSlot.getByRole('button', { name: 'Try HTTPS' })).toBeVisible()
       await firstSlot.getByRole('button', { name: 'Try HTTPS' }).click()
@@ -155,16 +155,16 @@ test.describe('local HTTPS certificate trust', () => {
       await expect(firstSlot.getByText(/make sure the server is running/i)).toHaveCount(0)
       await firstSlot.getByRole('button', { name: 'Proceed Anyway (Unsafe)' }).click()
       await expect
-        .poll(() => readBrowserHeading(dolphinPage, firstTab.id), { timeout: 10_000 })
+        .poll(() => readBrowserHeading(appPage, firstTab.id), { timeout: 10_000 })
         .toBe('Local HTTPS request 1')
       await expect
-        .poll(() => readBrowserState(dolphinPage, firstTab.id, '__localTlsState'))
+        .poll(() => readBrowserState(appPage, firstTab.id, '__localTlsState'))
         .toEqual({ asset: true, webSocket: true })
       expect(firstServer.assetRequestCount()).toBe(1)
       expect(firstServer.webSocketConnectionCount()).toBe(1)
 
-      const secondTab = await createBrowserTab(dolphinPage, worktreeId, firstServer.secureUrl)
-      const secondSlot = browserSlot(dolphinPage, secondTab.id)
+      const secondTab = await createBrowserTab(appPage, worktreeId, firstServer.secureUrl)
+      const secondSlot = browserSlot(appPage, secondTab.id)
       await expect(
         secondSlot.getByRole('heading', { name: "Connection isn't secure" })
       ).toBeVisible()
@@ -174,18 +174,18 @@ test.describe('local HTTPS certificate trust', () => {
         secondSlot.getByRole('button', { name: 'Proceed Anyway (Unsafe)' })
       ).toBeVisible()
 
-      const probeTab = await createBrowserTab(dolphinPage, worktreeId, siblingProbeServer.url)
+      const probeTab = await createBrowserTab(appPage, worktreeId, siblingProbeServer.url)
       await expect
-        .poll(() => readBrowserState(dolphinPage, probeTab.id, '__siblingTlsProbe'))
+        .poll(() => readBrowserState(appPage, probeTab.id, '__siblingTlsProbe'))
         .toEqual({ asset: 'blocked', webSocket: 'blocked' })
       expect(firstServer.assetRequestCount()).toBe(1)
       expect(firstServer.webSocketConnectionCount()).toBe(1)
 
-      await switchToBrowserTab(dolphinPage, worktreeId, firstTab.id)
-      await reloadBrowserGuest(dolphinPage, firstTab.id)
+      await switchToBrowserTab(appPage, worktreeId, firstTab.id)
+      await reloadBrowserGuest(appPage, firstTab.id)
       await expect.poll(firstServer.documentRequestCount, { timeout: 10_000 }).toBe(2)
       await expect
-        .poll(() => readBrowserHeading(dolphinPage, firstTab.id), { timeout: 10_000 })
+        .poll(() => readBrowserHeading(appPage, firstTab.id), { timeout: 10_000 })
         .toBe('Local HTTPS request 2')
       await expect.poll(firstServer.assetRequestCount).toBe(2)
       await expect.poll(firstServer.webSocketConnectionCount).toBe(2)

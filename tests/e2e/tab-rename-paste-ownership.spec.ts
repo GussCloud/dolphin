@@ -47,37 +47,37 @@ function tabLocatorByTitle(page: Page, title: string): ReturnType<Page['locator'
 test.describe('tab rename paste ownership', () => {
   test('keyboard paste into rename textbox does not also write to the active terminal', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const originalTitle = await getActiveTabTitle(dolphinPage, worktreeId)
-    const renameInput = dolphinPage.getByRole('textbox', {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const originalTitle = await getActiveTabTitle(appPage, worktreeId)
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${originalTitle}`,
       exact: true
     })
 
-    await tabLocatorByTitle(dolphinPage, originalTitle).dblclick()
+    await tabLocatorByTitle(appPage, originalTitle).dblclick()
     await expect(renameInput).toBeVisible()
     await renameInput.fill('')
 
     const payload = `DOLPHIN_E2E_TEXTBOX_PASTE_${randomUUID()}`
-    await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+    await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
     await clearTerminalPtyWriteLog(electronApp)
     await expect(renameInput).toBeFocused()
 
-    await dolphinPage.keyboard.press(editablePasteChord())
+    await appPage.keyboard.press(editablePasteChord())
 
     await expect(renameInput).toHaveValue(payload)
     expect(countOccurrences(await renameInput.inputValue(), payload)).toBe(1)
     expect((await readTerminalPtyWrites(electronApp)).join('')).not.toContain(payload)
 
     await renameInput.press('Escape')
-    await expect(tabLocatorByTitle(dolphinPage, originalTitle)).toBeVisible()
+    await expect(tabLocatorByTitle(appPage, originalTitle)).toBeVisible()
   })
 })

@@ -37,17 +37,17 @@ test.afterAll(() => {
 
 for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
   test(`completed background worker ${closeMode} retires resume authority before first activation`, async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     test.setTimeout(180_000)
     clearCompletedWorkerLedger()
-    await waitForSessionReady(dolphinPage)
-    const coordinatorWorktreeId = await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage)
-    await waitForActivePanePtyId(dolphinPage)
-    await dolphinPage.evaluate(
+    await waitForSessionReady(appPage)
+    const coordinatorWorktreeId = await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage)
+    await waitForActivePanePtyId(appPage)
+    await appPage.evaluate(
       async ({ agentCommand, terminalWindowsShell }) => {
         await window.__store?.getState().updateSettings({
           agentCmdOverrides: { codex: agentCommand },
@@ -65,7 +65,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
     const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
     const isolatedHome = await electronApp.evaluate(({ app }) => app.getPath('home'))
     const client = new RuntimeClient(userDataDir, 30_000, null, null)
-    const coordinatorPane = await waitForActivePaneHookDescriptor(dolphinPage)
+    const coordinatorPane = await waitForActivePaneHookDescriptor(appPage)
     const coordinatorResolved = await client.call<{ terminal: { handle: string } }>(
       'terminal.resolvePane',
       { paneKey: coordinatorPane.paneKey }
@@ -84,7 +84,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
       .poll(
         async () => {
           const listed = await client.call<{ worktrees: { id: string }[] }>('worktree.list', {})
-          const rendererWorktreeIds = await dolphinPage.evaluate(() =>
+          const rendererWorktreeIds = await appPage.evaluate(() =>
             Object.values(window.__store?.getState().worktreesByRepo ?? {})
               .flat()
               .map((worktree) => worktree.id)
@@ -108,7 +108,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
     }
 
     expect(
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         (worktreeId) => window.__store?.getState().everActivatedWorktreeIds.has(worktreeId),
         targetWorktreeId
       )
@@ -160,7 +160,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
     const workerBefore = terminalIdentity(worker)
     const workerPaneKey = `${worker.tabId}:${worker.leafId}`
     expect(worker.worktreeId).toBe(targetWorktreeId)
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ tabId, worktreeId }) => {
         window.dispatchEvent(
           new CustomEvent('dolphin-background-mount-terminal-worktree', {
@@ -172,14 +172,11 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
     )
     await expect
       .poll(() =>
-        dolphinPage.evaluate(
-          (tabId) => Boolean(window.__paneManagers?.get(tabId)),
-          workerBefore.tabId
-        )
+        appPage.evaluate((tabId) => Boolean(window.__paneManagers?.get(tabId)), workerBefore.tabId)
       )
       .toBe(true)
     expect(
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         (worktreeId) => window.__store?.getState().everActivatedWorktreeIds.has(worktreeId),
         targetWorktreeId
       )
@@ -211,7 +208,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
       targetWorktreePath
     )
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({
         agentCommand,
         paneKey,
@@ -277,7 +274,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
     }
     await expect
       .poll(() =>
-        dolphinPage.evaluate((paneKey) => {
+        appPage.evaluate((paneKey) => {
           const record = window.__store?.getState().sleepingAgentSessionsByPaneKey[paneKey]
           return record
             ? {
@@ -352,7 +349,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
       .poll(() => readCompletedWorkerLedger().filter((event) => event.event === 'normal-exit'))
       .toHaveLength(1)
     expect(
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         ({ paneKey, tabId, worktreeId }) => {
           const state = window.__store?.getState()
           return {
@@ -364,7 +361,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
       )
     ).toEqual({ tabPresent: true, recoveryPresent: true })
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ paneKey, tabId, worktreeId }) => {
         const store = window.__store
         if (!store) {
@@ -434,7 +431,7 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
     }
     await expect
       .poll(() =>
-        dolphinPage.evaluate(() => {
+        appPage.evaluate(() => {
           type Transition = { tabPresent: boolean; recoveryPresent: boolean }
           return (window as typeof window & { __dolphinRetiredWorkerTransitions?: Transition[] })
             .__dolphinRetiredWorkerTransitions
@@ -446,36 +443,36 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
           { tabPresent: false, recoveryPresent: false }
         ])
       )
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const e2eWindow = window as typeof window & { __dolphinRetiredWorkerUnsubscribe?: () => void }
       e2eWindow.__dolphinRetiredWorkerUnsubscribe?.()
       delete e2eWindow.__dolphinRetiredWorkerUnsubscribe
     })
     await expect
       .poll(() =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           (paneKey) => window.__store?.getState().sleepingAgentSessionsByPaneKey[paneKey] ?? null,
           workerPaneKey
         )
       )
       .toBeNull()
 
-    await dolphinPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+    await appPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
     await expect
       .poll(() =>
-        dolphinPage.evaluate(async (paneKey) => {
+        appPage.evaluate(async (paneKey) => {
           const session = await window.api.session.get()
           return session.sleepingAgentSessionsByPaneKey?.[paneKey] ?? null
         }, workerPaneKey)
       )
       .toBeNull()
-    await dolphinPage.evaluate(() => window.api.session.flush())
+    await appPage.evaluate(() => window.api.session.flush())
     expect(readPersistedWorkerRecoveryRecord(userDataDir, workerPaneKey)).toBeNull()
 
-    await dolphinPage.reload()
-    await waitForSessionReady(dolphinPage)
+    await appPage.reload()
+    await waitForSessionReady(appPage)
 
-    const beforeActivation = await dolphinPage.evaluate((worktreeId) => {
+    const beforeActivation = await appPage.evaluate((worktreeId) => {
       const state = window.__store?.getState()
       return {
         everActivated: state?.everActivatedWorktreeIds.has(worktreeId) ?? false,
@@ -485,17 +482,17 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
     }, targetWorktreeId)
     expect(beforeActivation).toEqual({ everActivated: false, tabCount: 0, pendingStartupCount: 0 })
 
-    const targetCard = dolphinPage
+    const targetCard = appPage
       .locator(`[data-worktree-id="${String(targetWorktreeId)}"]`)
       .first()
       .locator('[data-worktree-card-surface]')
     await targetCard.evaluate((element: HTMLElement) => element.click())
     await expect
-      .poll(() => dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId))
+      .poll(() => appPage.evaluate(() => window.__store?.getState().activeWorktreeId))
       .toBe(targetWorktreeId)
-    await waitForActiveTerminalManager(dolphinPage)
-    await waitForActivePanePtyId(dolphinPage)
-    const activatedPane = await waitForActivePaneHookDescriptor(dolphinPage)
+    await waitForActiveTerminalManager(appPage)
+    await waitForActivePanePtyId(appPage)
+    const activatedPane = await waitForActivePaneHookDescriptor(appPage)
     expect(activatedPane.worktreeId).toBe(targetWorktreeId)
     const activatedResolved = await client.call<{ terminal: { handle: string } }>(
       'terminal.resolvePane',
@@ -521,9 +518,9 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
         (event) => event.args?.includes('resume') && event.args?.includes(PROVIDER_SESSION_ID)
       )
     ).toEqual([])
-    await expect(dolphinPage.locator('.session-restored-banner')).toHaveCount(0)
+    await expect(appPage.locator('.session-restored-banner')).toHaveCount(0)
 
-    const afterActivation = await dolphinPage.evaluate(
+    const afterActivation = await appPage.evaluate(
       ({ originalTabId, worktreeId }) => {
         const state = window.__store?.getState()
         const tabs = state?.tabsByWorktree[worktreeId] ?? []

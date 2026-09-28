@@ -436,11 +436,7 @@ describe('configureElectronNetworkCompatibility', () => {
       JSON.stringify({ activeProfileId: profileId, profiles: [{ id: profileId }] }),
       'utf-8'
     )
-    writeFileSync(
-      join(profileDirectory, 'dolphin-data.json'),
-      JSON.stringify({ settings }),
-      'utf-8'
-    )
+    writeFileSync(join(profileDirectory, 'dolphin-data.json'), JSON.stringify({ settings }), 'utf8')
     return profileDirectory
   }
 

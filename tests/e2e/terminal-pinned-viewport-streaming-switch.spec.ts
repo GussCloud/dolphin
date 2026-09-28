@@ -149,52 +149,50 @@ async function readSettledViewport(
 
 test.describe('Terminal pinned viewport with streaming agent across worktree switch', () => {
   test('returning to a pinned pane with an active stream does not land at the top', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await closeFeatureTips(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    await closeFeatureTips(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'streaming pinned repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-streaming-switch-${runId}.mjs`)
     writeFileSync(scriptPath, streamingAgentFixtureScript(runId))
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 15_000,
           message: 'streaming fixture did not reach terminal scrollback'
         })
         .toContain(`STREAMING_SWITCH_${runId}_PRESTREAM_DONE`)
 
-      const pinned = await pinActiveTerminalNearBottom(dolphinPage)
+      const pinned = await pinActiveTerminalNearBottom(appPage)
       expect(pinned.baseY).toBeGreaterThan(100)
-      await dolphinPage.waitForTimeout(150)
+      await appPage.waitForTimeout(150)
 
       // Stream continues while hidden; hidden byte drops mark the pane for a
       // snapshot restore on return.
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await dolphinPage.waitForTimeout(3_000)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.waitForTimeout(3_000)
 
-      await switchToWorktree(dolphinPage, firstWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await switchToWorktree(appPage, firstWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
 
-      const settled = await readSettledViewport(dolphinPage, pinned.tabId)
+      const settled = await readSettledViewport(appPage, pinned.tabId)
       const bottomDistance = settled.baseY - settled.viewportY
       // The user pinned six rows above the bottom. A faithful restore keeps
       // them near the pin; the bug clamps to the very top of the scrollback.

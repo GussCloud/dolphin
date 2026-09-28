@@ -113,28 +113,28 @@ async function captureProof(page: Page, testInfo: TestInfo, name: string): Promi
 
 test.describe('Issue #12656 terminal link tooltip', () => {
   test('clears hover state without permanently shrinking the terminal', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage)
+    await waitForSessionReady(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
     const url = `https://example.com/dolphin-issue-12656-${randomUUID().slice(0, 8)}`
     await sendToTerminal(
-      dolphinPage,
+      appPage,
       ptyId,
       `printf 'issue-12656-output-%02d\\n' $(seq 1 64); printf '${url}\\n'\r`
     )
-    await waitForTerminalOutput(dolphinPage, url)
+    await waitForTerminalOutput(appPage, url)
 
     let probe: LinkProbe | null = null
     await expect
       .poll(
         async () => {
-          probe = await locateUrl(dolphinPage, url)
+          probe = await locateUrl(appPage, url)
           return probe
         },
         { timeout: 5_000, message: 'URL did not become visible in the terminal viewport' }
@@ -143,36 +143,36 @@ test.describe('Issue #12656 terminal link tooltip', () => {
     if (!probe) {
       throw new Error('URL probe disappeared before hover')
     }
-    const idle = await readTooltipState(dolphinPage, probe.tabId)
+    const idle = await readTooltipState(appPage, probe.tabId)
     expect(Math.abs(idle.paneBottom - idle.terminalBottom)).toBeLessThanOrEqual(1)
     await expect
       .poll(async () => {
-        const currentProbe = await locateUrl(dolphinPage, url)
+        const currentProbe = await locateUrl(appPage, url)
         if (!currentProbe) {
           return { display: 'none', text: '' }
         }
         probe = currentProbe
-        await moveToLink(dolphinPage, currentProbe)
-        return readTooltipState(dolphinPage, currentProbe.tabId)
+        await moveToLink(appPage, currentProbe)
+        return readTooltipState(appPage, currentProbe.tabId)
       })
       .toMatchObject({ display: '', text: expect.stringContaining(url) })
 
-    const hovered = await readTooltipState(dolphinPage, probe.tabId)
+    const hovered = await readTooltipState(appPage, probe.tabId)
     expect(hovered.text).toContain(url)
     expect(hovered.tooltipHeight).toBeGreaterThan(0)
     expect(Math.abs(hovered.paneBottom - hovered.terminalBottom)).toBeLessThanOrEqual(1)
     expect(Math.abs(hovered.paneBottom - hovered.tooltipBottom)).toBeLessThanOrEqual(1)
     expect(hovered.tooltipTop).toBeLessThan(hovered.terminalBottom)
-    await captureProof(dolphinPage, testInfo, 'issue-12656-fixed-hover.png')
+    await captureProof(appPage, testInfo, 'issue-12656-fixed-hover.png')
 
-    await dolphinPage.evaluate(() => window.dispatchEvent(new Event('blur')))
+    await appPage.evaluate(() => window.dispatchEvent(new Event('blur')))
     await expect
-      .poll(() => readTooltipState(dolphinPage, probe.tabId))
+      .poll(() => readTooltipState(appPage, probe.tabId))
       .toMatchObject({ display: 'none', cursor: 'text' })
-    const cleared = await readTooltipState(dolphinPage, probe.tabId)
+    const cleared = await readTooltipState(appPage, probe.tabId)
     expect(Math.abs(cleared.paneBottom - cleared.terminalBottom)).toBeLessThanOrEqual(1)
-    await captureProof(dolphinPage, testInfo, 'issue-12656-fixed-after-blur.png')
+    await captureProof(appPage, testInfo, 'issue-12656-fixed-after-blur.png')
 
-    await expect.poll(() => getTerminalContent(dolphinPage)).toContain(url)
+    await expect.poll(() => getTerminalContent(appPage)).toContain(url)
   })
 })

@@ -1,7 +1,7 @@
 /**
  * JOURNEY: quit the desktop app while remote terminals are live on the host, then reopen it.
  *
- * TOPOLOGY: the `dolphinPage` app is the host (dolphin server); a separate real Dolphin desktop client
+ * TOPOLOGY: the `appPage` app is the host (dolphin server); a separate real Dolphin desktop client
  * pairs to it, opens a host terminal, works in it, is force-quit, and relaunched on the same
  * profile — the pairing credential and the persisted session survive, as they do for a real
  * force-quit reopen.
@@ -230,12 +230,12 @@ async function readTabPtyIds(client: PairedElectronClient, webTabId: string): Pr
 }
 
 test('a relaunched client gets its live remote terminal back, still attached to the same process', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(900_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  const worktreeId = await dolphinPage.evaluate(() => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  const worktreeId = await appPage.evaluate(() => {
     const id = window.__store?.getState().activeWorktreeId
     if (!id) {
       throw new Error('host has no active worktree')
@@ -246,7 +246,7 @@ test('a relaunched client gets its live remote terminal back, still attached to 
   const sinkPath = path.join(scratch, `sink-${randomUUID()}.log`)
   const failures: string[] = []
   let client: PairedElectronClient | null = null
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   try {
     client = await launchPairedElectronClient(offer, testInfo, 'remote-terminal-restart-survival')
     const userDataDir = client.userDataDir

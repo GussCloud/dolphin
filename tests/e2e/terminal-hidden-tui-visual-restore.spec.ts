@@ -213,30 +213,28 @@ async function writeHiddenSideEffectBurst(
 
 test.describe('Hidden terminal TUI visual restore', () => {
   test('restores hidden full-screen TUI output without visible corruption', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'hidden TUI restore needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const hiddenSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await switchToWorktree(appPage, secondWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const hiddenSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const hiddenPane = hiddenSnapshot.panes[0]
     if (!hiddenPane?.ptyId) {
       throw new Error('hidden visual restore pane did not bind a PTY')
     }
-    await switchToWorktree(dolphinPage, firstWorktreeId)
+    await switchToWorktree(appPage, firstWorktreeId)
     await expect
-      .poll(() => getActiveWorktreeId(dolphinPage), {
+      .poll(() => getActiveWorktreeId(appPage), {
         timeout: 10_000,
         message: 'first worktree did not become active before hidden TUI injection'
       })
@@ -246,46 +244,46 @@ test.describe('Hidden terminal TUI visual restore', () => {
     const finalMarker = `VISUAL_RESTORE_FINAL_${runId}_24`
     const scriptPath = path.join(testRepoPath, `.dolphin-hidden-tui-visual-${runId}.mjs`)
     writeHiddenFrameScript(scriptPath, runId)
-    await resetHiddenDebug(dolphinPage)
+    await resetHiddenDebug(appPage)
     try {
-      await writeHiddenFrames(dolphinPage, hiddenPane.ptyId, scriptPath)
-      await resetHiddenDebug(dolphinPage)
+      await writeHiddenFrames(appPage, hiddenPane.ptyId, scriptPath)
+      await resetHiddenDebug(appPage)
 
       // Why: hidden-delivery gate contract — the bulk TUI frames must be
       // withheld in main (dropped after model ingestion), not delivered and
       // skipped renderer-side.
       await expect
-        .poll(() => readMainHiddenDeliveryDroppedChars(dolphinPage), {
+        .poll(() => readMainHiddenDeliveryDroppedChars(appPage), {
           timeout: 10_000,
           message: 'visually rich hidden TUI output was not withheld from the renderer'
         })
         .toBeGreaterThan(1024)
       await expect
-        .poll(() => readMainSnapshotSource(dolphinPage, hiddenPane.ptyId!), {
+        .poll(() => readMainSnapshotSource(appPage, hiddenPane.ptyId!), {
           timeout: 10_000,
           message: 'visually rich hidden TUI source did not come from headless model'
         })
         .toBe('headless')
 
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
 
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 12_000), {
+        .poll(() => getTerminalContent(appPage, 12_000), {
           timeout: 10_000,
           message: 'hidden TUI final frame did not restore when the workspace became visible'
         })
         .toContain(finalMarker)
 
-      const content = await getTerminalContent(dolphinPage, 12_000)
+      const content = await getTerminalContent(appPage, 12_000)
       expect(content).toContain(`Frame 024`)
       expect(content).toContain('╭')
       expect(content).toContain('├')
       expect(content).toContain('█')
       expect(content).not.toContain('Dolphin skipped hidden terminal output')
       await expect
-        .poll(() => readTuiCursorState(dolphinPage), {
+        .poll(() => readTuiCursorState(appPage), {
           timeout: 5_000,
           message: 'restored TUI cursor stayed hidden after final frame'
         })
@@ -295,44 +293,42 @@ test.describe('Hidden terminal TUI visual restore', () => {
         })
 
       const screenshotPath = testInfo.outputPath('hidden-tui-restore-final.png')
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('hidden-tui-restore-final.png', {
         path: screenshotPath,
         contentType: 'image/png'
       })
     } finally {
-      await sendToTerminal(dolphinPage, hiddenPane.ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, hiddenPane.ptyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
     }
   })
 
   test('keeps newer live output correct after plain hidden output restores', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'hidden TUI restore needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const hiddenSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await switchToWorktree(appPage, secondWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const hiddenSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const hiddenPane = hiddenSnapshot.panes[0]
     if (!hiddenPane?.ptyId) {
       throw new Error('hidden visual restore pane did not bind a PTY')
     }
     const paneKey = `${hiddenSnapshot.tabId}:${hiddenPane.leafId}`
 
-    await switchToWorktree(dolphinPage, firstWorktreeId)
+    await switchToWorktree(appPage, firstWorktreeId)
     await expect
-      .poll(() => getActiveWorktreeId(dolphinPage), {
+      .poll(() => getActiveWorktreeId(appPage), {
         timeout: 10_000,
         message: 'first worktree did not become active before hidden TUI injection'
       })
@@ -344,35 +340,35 @@ test.describe('Hidden terminal TUI visual restore', () => {
     const finalMarker = `VISUAL_RESTORE_FINAL_${runId}_41`
     const scriptPath = path.join(testRepoPath, `.dolphin-low-risk-hidden-${runId}.mjs`)
     writeLowRiskFrameScript(scriptPath, hiddenFrame)
-    await resetHiddenDebug(dolphinPage)
-    await sendToTerminal(dolphinPage, hiddenPane.ptyId, `node ${JSON.stringify(scriptPath)}\r`)
-    await resetHiddenDebug(dolphinPage)
+    await resetHiddenDebug(appPage)
+    await sendToTerminal(appPage, hiddenPane.ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+    await resetHiddenDebug(appPage)
 
     // Why: hidden-delivery gate contract — even plain hidden output is
     // dropped in main, so the withheld signal is main's dropped counter.
     await expect
-      .poll(() => readMainHiddenDeliveryDroppedChars(dolphinPage), {
+      .poll(() => readMainHiddenDeliveryDroppedChars(appPage), {
         timeout: 10_000,
         message: 'plain hidden injected output was not withheld from the renderer'
       })
       .toBeGreaterThan(0)
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await injectPaneData(dolphinPage, paneKey, liveFrame, {
+    await switchToWorktree(appPage, secondWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await injectPaneData(appPage, paneKey, liveFrame, {
       seq: hiddenFrame.length + liveFrame.length,
       rawLength: liveFrame.length
     })
 
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 12_000), {
+      .poll(() => getTerminalContent(appPage, 12_000), {
         timeout: 10_000,
         message: 'newer live TUI frame did not render after hidden output restored'
       })
       .toContain(finalMarker)
 
-    const content = await getTerminalContent(dolphinPage, 12_000)
+    const content = await getTerminalContent(appPage, 12_000)
     expect(content).toContain(`LOW_RISK_RESTORE_FRAME_${runId}_41`)
     expect(content).toContain('progress=041')
     expect(content.indexOf(`LOW_RISK_RESTORE_FRAME_${runId}_41`)).toBeGreaterThan(
@@ -380,7 +376,7 @@ test.describe('Hidden terminal TUI visual restore', () => {
     )
     expect(content).not.toContain('Dolphin skipped hidden terminal output')
     await expect
-      .poll(() => readTuiCursorState(dolphinPage), {
+      .poll(() => readTuiCursorState(appPage), {
         timeout: 5_000,
         message: 'live TUI cursor stayed hidden after hidden output restored'
       })
@@ -389,7 +385,7 @@ test.describe('Hidden terminal TUI visual restore', () => {
         initialized: true
       })
     const screenshotPath = testInfo.outputPath('hidden-tui-live-output-final.png')
-    await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+    await appPage.screenshot({ path: screenshotPath, fullPage: true })
     await testInfo.attach('hidden-tui-live-output-final.png', {
       path: screenshotPath,
       contentType: 'image/png'
@@ -398,30 +394,28 @@ test.describe('Hidden terminal TUI visual restore', () => {
   })
 
   test('restores rich synchronized TUI output from the headless model', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'hidden TUI restore needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const hiddenSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await switchToWorktree(appPage, secondWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const hiddenSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const hiddenPane = hiddenSnapshot.panes[0]
     if (!hiddenPane?.ptyId) {
       throw new Error('hidden rich model pane did not bind a PTY')
     }
-    await switchToWorktree(dolphinPage, firstWorktreeId)
+    await switchToWorktree(appPage, firstWorktreeId)
     await expect
-      .poll(() => getActiveWorktreeId(dolphinPage), {
+      .poll(() => getActiveWorktreeId(appPage), {
         timeout: 10_000,
         message: 'first worktree did not become active before hidden rich model restore'
       })
@@ -431,45 +425,45 @@ test.describe('Hidden terminal TUI visual restore', () => {
     const finalMarker = `VISUAL_RESTORE_FINAL_${runId}_24`
     const scriptPath = path.join(testRepoPath, `.dolphin-hidden-rich-model-${runId}.mjs`)
     writeHiddenFrameScript(scriptPath, runId)
-    await resetHiddenDebug(dolphinPage)
+    await resetHiddenDebug(appPage)
     try {
-      await writeHiddenFrames(dolphinPage, hiddenPane.ptyId, scriptPath)
-      await resetHiddenDebug(dolphinPage)
+      await writeHiddenFrames(appPage, hiddenPane.ptyId, scriptPath)
+      await resetHiddenDebug(appPage)
 
       // Why: hidden-delivery gate contract — synchronized rich frames are
       // withheld in main; the headless model snapshot is the restore source.
       await expect
-        .poll(() => readMainHiddenDeliveryDroppedChars(dolphinPage), {
+        .poll(() => readMainHiddenDeliveryDroppedChars(appPage), {
           timeout: 10_000,
           message: 'rich hidden TUI output was not withheld from the renderer'
         })
         .toBeGreaterThan(0)
       await expect
-        .poll(() => readMainSnapshotSource(dolphinPage, hiddenPane.ptyId!), {
+        .poll(() => readMainSnapshotSource(appPage, hiddenPane.ptyId!), {
           timeout: 10_000,
           message: 'rich hidden TUI source did not come from headless model'
         })
         .toBe('headless')
 
-      await switchToWorktree(dolphinPage, secondWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
 
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 12_000), {
+        .poll(() => getTerminalContent(appPage, 12_000), {
           timeout: 10_000,
           message: 'rich headless TUI frame did not restore when visible'
         })
         .toContain(finalMarker)
 
-      const content = await getTerminalContent(dolphinPage, 12_000)
+      const content = await getTerminalContent(appPage, 12_000)
       expect(content).toContain(`Frame 024`)
       expect(content).toContain('╭')
       expect(content).toContain('├')
       expect(content).toContain('█')
       expect(content).not.toContain('Dolphin skipped hidden terminal output')
       await expect
-        .poll(() => readTuiCursorState(dolphinPage), {
+        .poll(() => readTuiCursorState(appPage), {
           timeout: 5_000,
           message: 'rich headless TUI cursor stayed hidden after restore'
         })
@@ -479,42 +473,40 @@ test.describe('Hidden terminal TUI visual restore', () => {
         })
 
       const screenshotPath = testInfo.outputPath('hidden-rich-model-restore-final.png')
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('hidden-rich-model-restore-final.png', {
         path: screenshotPath,
         contentType: 'image/png'
       })
     } finally {
-      await sendToTerminal(dolphinPage, hiddenPane.ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, hiddenPane.ptyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
     }
   })
 
   test('keeps hidden terminal side effects live while hidden output may restore', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'hidden side-effect guard needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const hiddenSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await switchToWorktree(appPage, secondWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const hiddenSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const hiddenPane = hiddenSnapshot.panes[0]
     if (!hiddenPane?.ptyId) {
       throw new Error('hidden side-effect pane did not bind a PTY')
     }
 
-    await switchToWorktree(dolphinPage, firstWorktreeId)
+    await switchToWorktree(appPage, firstWorktreeId)
     await expect
-      .poll(() => getActiveWorktreeId(dolphinPage), {
+      .poll(() => getActiveWorktreeId(appPage), {
         timeout: 10_000,
         message: 'first worktree did not become active before hidden side-effect burst'
       })
@@ -523,39 +515,33 @@ test.describe('Hidden terminal TUI visual restore', () => {
     const runId = randomUUID()
     const hiddenTitle = `Hidden model side effects ${runId}`
     const marker = `HIDDEN_SIDE_EFFECT_MARKER_${runId}`
-    await resetHiddenDebug(dolphinPage)
-    await writeHiddenSideEffectBurst(dolphinPage, hiddenPane.ptyId, hiddenTitle, marker)
+    await resetHiddenDebug(appPage)
+    await writeHiddenSideEffectBurst(appPage, hiddenPane.ptyId, hiddenTitle, marker)
 
     await expect
-      .poll(
-        () => getRuntimePaneTitle(dolphinPage, hiddenSnapshot.tabId, hiddenPane.numericPaneId),
-        {
-          timeout: 10_000,
-          message: 'hidden OSC title did not update renderer-visible model state'
-        }
-      )
+      .poll(() => getRuntimePaneTitle(appPage, hiddenSnapshot.tabId, hiddenPane.numericPaneId), {
+        timeout: 10_000,
+        message: 'hidden OSC title did not update renderer-visible model state'
+      })
       .toBe(hiddenTitle)
     await expect
-      .poll(
-        async () => (await getUnreadTerminalTabIds(dolphinPage)).includes(hiddenSnapshot.tabId),
-        {
-          timeout: 10_000,
-          message: 'hidden BEL did not mark the hidden terminal tab unread'
-        }
-      )
+      .poll(async () => (await getUnreadTerminalTabIds(appPage)).includes(hiddenSnapshot.tabId), {
+        timeout: 10_000,
+        message: 'hidden BEL did not mark the hidden terminal tab unread'
+      })
       .toBe(true)
     await expect
-      .poll(() => readMainSnapshotSource(dolphinPage, hiddenPane.ptyId!), {
+      .poll(() => readMainSnapshotSource(appPage, hiddenPane.ptyId!), {
         timeout: 10_000,
         message: 'hidden side-effect restore did not use the runtime headless snapshot'
       })
       .toBe('headless')
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await switchToWorktree(appPage, secondWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 12_000), {
+      .poll(() => getTerminalContent(appPage, 12_000), {
         timeout: 10_000,
         message: 'hidden side-effect marker did not restore when the workspace became visible'
       })

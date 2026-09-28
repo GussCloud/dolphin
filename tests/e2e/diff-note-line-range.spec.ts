@@ -195,115 +195,113 @@ async function submitNote(page: Page, body: string): Promise<void> {
 }
 
 test.describe('Diff note line range', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('dragging the gutter selects a range, keeps it lit, and saves one ranged note', async ({
-    dolphinPage
+    appPage
   }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
-    await seedDiffFile(dolphinPage, worktreeId, 'src/diff-note-range-drag.ts')
+    const worktreeId = await waitForActiveWorktree(appPage)
+    await seedDiffFile(appPage, worktreeId, 'src/diff-note-range-drag.ts')
 
-    const from = await gutterPoint(dolphinPage, 4)
-    const to = await gutterPoint(dolphinPage, 9)
+    const from = await gutterPoint(appPage, 4)
+    const to = await gutterPoint(appPage, 9)
 
-    await dolphinPage.mouse.move(from.x, from.y)
-    await dolphinPage.mouse.down()
+    await appPage.mouse.move(from.x, from.y)
+    await appPage.mouse.down()
     // Anchor alone is lit before the pointer travels.
-    await expect(dolphinPage.locator(BAND)).toHaveCount(1)
+    await expect(appPage.locator(BAND)).toHaveCount(1)
 
-    await dolphinPage.mouse.move(to.x, (from.y + to.y) / 2)
-    await dolphinPage.mouse.move(to.x, to.y)
+    await appPage.mouse.move(to.x, (from.y + to.y) / 2)
+    await appPage.mouse.move(to.x, to.y)
     await expect(
-      dolphinPage.locator(BAND),
+      appPage.locator(BAND),
       'the band did not follow the pointer while the button was held'
     ).toHaveCount(6)
 
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
 
-    await expect(dolphinPage.locator(COMPOSER_LABEL)).toHaveText('Lines 4-9')
+    await expect(appPage.locator(COMPOSER_LABEL)).toHaveText('Lines 4-9')
     await expect(
-      dolphinPage.locator(BAND),
+      appPage.locator(BAND),
       'the band should stay lit while the note is being written'
     ).toHaveCount(6)
     // The gutter press belongs to us, so Monaco never started a text selection under it.
-    expect(await dolphinPage.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
+    expect(await appPage.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
 
-    await submitNote(dolphinPage, 'Collapse these six lines into a loop.')
+    await submitNote(appPage, 'Collapse these six lines into a loop.')
 
-    expect(await readNotes(dolphinPage, worktreeId)).toEqual([
+    expect(await readNotes(appPage, worktreeId)).toEqual([
       { startLine: 4, lineNumber: 9, body: 'Collapse these six lines into a loop.' }
     ])
-    const card = dolphinPage.locator('.dolphin-diff-comment-card').first()
+    const card = appPage.locator('.dolphin-diff-comment-card').first()
     await expect(card, 'saved note card did not render').toBeVisible({ timeout: 15_000 })
     await expect(card).toContainText('lines 4-9')
     // The draft band belongs to the composer, so it clears with it.
-    await expect(dolphinPage.locator(BAND)).toHaveCount(0)
+    await expect(appPage.locator(BAND)).toHaveCount(0)
   })
 
   // Bottom-to-top: the anchor is the lower line, so the committed range only reads in document
   // order if the drag keeps anchor and focus apart instead of sorting them as it goes.
   test('dragging the gutter upward commits the same range as dragging down', async ({
-    dolphinPage
+    appPage
   }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
-    await seedDiffFile(dolphinPage, worktreeId, 'src/diff-note-range-drag-up.ts')
+    const worktreeId = await waitForActiveWorktree(appPage)
+    await seedDiffFile(appPage, worktreeId, 'src/diff-note-range-drag-up.ts')
 
-    const from = await gutterPoint(dolphinPage, 9)
-    const to = await gutterPoint(dolphinPage, 4)
+    const from = await gutterPoint(appPage, 9)
+    const to = await gutterPoint(appPage, 4)
 
-    await dolphinPage.mouse.move(from.x, from.y)
-    await dolphinPage.mouse.down()
-    await expect(dolphinPage.locator(BAND)).toHaveCount(1)
+    await appPage.mouse.move(from.x, from.y)
+    await appPage.mouse.down()
+    await expect(appPage.locator(BAND)).toHaveCount(1)
 
-    await dolphinPage.mouse.move(to.x, (from.y + to.y) / 2)
-    await dolphinPage.mouse.move(to.x, to.y)
+    await appPage.mouse.move(to.x, (from.y + to.y) / 2)
+    await appPage.mouse.move(to.x, to.y)
     await expect(
-      dolphinPage.locator(BAND),
+      appPage.locator(BAND),
       'the band did not grow upward while the button was held'
     ).toHaveCount(6)
 
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
 
-    await expect(dolphinPage.locator(COMPOSER_LABEL)).toHaveText('Lines 4-9')
-    expect(await dolphinPage.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
+    await expect(appPage.locator(COMPOSER_LABEL)).toHaveText('Lines 4-9')
+    expect(await appPage.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
 
-    await submitNote(dolphinPage, 'Dragged bottom to top.')
+    await submitNote(appPage, 'Dragged bottom to top.')
 
-    expect(await readNotes(dolphinPage, worktreeId)).toEqual([
+    expect(await readNotes(appPage, worktreeId)).toEqual([
       { startLine: 4, lineNumber: 9, body: 'Dragged bottom to top.' }
     ])
-    await expect(dolphinPage.locator('.dolphin-diff-comment-card').first()).toContainText(
-      'lines 4-9'
-    )
+    await expect(appPage.locator('.dolphin-diff-comment-card').first()).toContainText('lines 4-9')
   })
 
   // The gesture that used to collapse to a single line: the press starts on the "+", a node
   // Monaco does not own, so hit-testing under the pointer resolved nothing for the whole drag.
   test('dragging from the "+" itself selects a range and the button rides the selection', async ({
-    dolphinPage
+    appPage
   }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
-    await seedDiffFile(dolphinPage, worktreeId, 'src/diff-note-range-button-drag.ts')
+    const worktreeId = await waitForActiveWorktree(appPage)
+    await seedDiffFile(appPage, worktreeId, 'src/diff-note-range-button-drag.ts')
 
-    const button = await revealAddButton(dolphinPage, 4)
-    const to = await gutterPoint(dolphinPage, 9)
+    const button = await revealAddButton(appPage, 4)
+    const to = await gutterPoint(appPage, 9)
 
-    await dolphinPage.mouse.move(button.x, button.y)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(button.x, (button.y + to.y) / 2)
-    await dolphinPage.mouse.move(button.x, to.y)
+    await appPage.mouse.move(button.x, button.y)
+    await appPage.mouse.down()
+    await appPage.mouse.move(button.x, (button.y + to.y) / 2)
+    await appPage.mouse.move(button.x, to.y)
 
     await expect(
-      dolphinPage.locator(BAND),
+      appPage.locator(BAND),
       'the drag stalled because the pointer stayed over the "+"'
     ).toHaveCount(6)
     await expect
       .poll(
         async () =>
-          dolphinPage.locator('.dolphin-diff-comment-add-btn').evaluate((node) => {
+          appPage.locator('.dolphin-diff-comment-add-btn').evaluate((node) => {
             if (!(node instanceof HTMLElement)) {
               throw new Error('the add button is not an HTMLElement')
             }
@@ -313,78 +311,78 @@ test.describe('Diff note line range', () => {
       )
       .not.toBe(button.top)
 
-    await dolphinPage.mouse.up()
-    await expect(dolphinPage.locator(COMPOSER_LABEL)).toHaveText('Lines 4-9')
-    await submitNote(dolphinPage, 'Dragged straight off the plus button.')
+    await appPage.mouse.up()
+    await expect(appPage.locator(COMPOSER_LABEL)).toHaveText('Lines 4-9')
+    await submitNote(appPage, 'Dragged straight off the plus button.')
 
-    expect(await readNotes(dolphinPage, worktreeId)).toEqual([
+    expect(await readNotes(appPage, worktreeId)).toEqual([
       { startLine: 4, lineNumber: 9, body: 'Dragged straight off the plus button.' }
     ])
   })
 
   test('a press with no drag still saves the single-line note it always did', async ({
-    dolphinPage
+    appPage
   }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
-    await seedDiffFile(dolphinPage, worktreeId, 'src/diff-note-range-click.ts')
+    const worktreeId = await waitForActiveWorktree(appPage)
+    await seedDiffFile(appPage, worktreeId, 'src/diff-note-range-click.ts')
 
-    const point = await gutterPoint(dolphinPage, 6)
-    await dolphinPage.mouse.move(point.x, point.y)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.up()
+    const point = await gutterPoint(appPage, 6)
+    await appPage.mouse.move(point.x, point.y)
+    await appPage.mouse.down()
+    await appPage.mouse.up()
 
-    await expect(dolphinPage.locator(COMPOSER_LABEL)).toHaveText('Line 6')
-    await expect(dolphinPage.locator(BAND)).toHaveCount(1)
+    await expect(appPage.locator(COMPOSER_LABEL)).toHaveText('Line 6')
+    await expect(appPage.locator(BAND)).toHaveCount(1)
 
-    await submitNote(dolphinPage, 'Single line still works.')
+    await submitNote(appPage, 'Single line still works.')
 
     // startLine stays undefined: the stored shape is byte-identical to the pre-range one.
-    expect(await readNotes(dolphinPage, worktreeId)).toEqual([
+    expect(await readNotes(appPage, worktreeId)).toEqual([
       { startLine: undefined, lineNumber: 6, body: 'Single line still works.' }
     ])
-    await expect(dolphinPage.locator('.dolphin-diff-comment-card').first()).toContainText('line 6')
+    await expect(appPage.locator('.dolphin-diff-comment-card').first()).toContainText('line 6')
   })
 
-  test('Escape abandons a drag without opening a composer', async ({ dolphinPage }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
-    await seedDiffFile(dolphinPage, worktreeId, 'src/diff-note-range-escape.ts')
+  test('Escape abandons a drag without opening a composer', async ({ appPage }) => {
+    const worktreeId = await waitForActiveWorktree(appPage)
+    await seedDiffFile(appPage, worktreeId, 'src/diff-note-range-escape.ts')
 
-    const from = await gutterPoint(dolphinPage, 3)
-    const to = await gutterPoint(dolphinPage, 8)
-    await dolphinPage.mouse.move(from.x, from.y)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(to.x, to.y)
-    await expect(dolphinPage.locator(BAND)).toHaveCount(6)
+    const from = await gutterPoint(appPage, 3)
+    const to = await gutterPoint(appPage, 8)
+    await appPage.mouse.move(from.x, from.y)
+    await appPage.mouse.down()
+    await appPage.mouse.move(to.x, to.y)
+    await expect(appPage.locator(BAND)).toHaveCount(6)
 
-    await dolphinPage.keyboard.press('Escape')
-    await expect(dolphinPage.locator(BAND), 'Escape left the band behind').toHaveCount(0)
+    await appPage.keyboard.press('Escape')
+    await expect(appPage.locator(BAND), 'Escape left the band behind').toHaveCount(0)
 
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
     await expect(
-      dolphinPage.locator(COMPOSER),
+      appPage.locator(COMPOSER),
       'a cancelled drag must not open a composer on release'
     ).toHaveCount(0)
-    expect(await readNotes(dolphinPage, worktreeId)).toEqual([])
+    expect(await readNotes(appPage, worktreeId)).toEqual([])
   })
 
   test('the Add Review Note chord turns an editor selection into a ranged note', async ({
-    dolphinPage
+    appPage
   }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
-    await seedDiffFile(dolphinPage, worktreeId, 'src/diff-note-range-chord.ts')
+    const worktreeId = await waitForActiveWorktree(appPage)
+    await seedDiffFile(appPage, worktreeId, 'src/diff-note-range-chord.ts')
 
     // Click the code column, not the gutter: Monaco still owns that side.
-    const line = await gutterPoint(dolphinPage, 5)
-    await dolphinPage.mouse.click(line.x + 220, line.y)
-    await dolphinPage.keyboard.press('Shift+ArrowDown')
-    await dolphinPage.keyboard.press('Shift+ArrowDown')
+    const line = await gutterPoint(appPage, 5)
+    await appPage.mouse.click(line.x + 220, line.y)
+    await appPage.keyboard.press('Shift+ArrowDown')
+    await appPage.keyboard.press('Shift+ArrowDown')
 
-    await pressShortcut(dolphinPage, 'KeyA', { shift: true })
+    await pressShortcut(appPage, 'KeyA', { shift: true })
 
-    await expect(dolphinPage.locator(COMPOSER_LABEL)).toHaveText('Lines 5-7')
-    await submitNote(dolphinPage, 'Range from the keyboard.')
+    await expect(appPage.locator(COMPOSER_LABEL)).toHaveText('Lines 5-7')
+    await submitNote(appPage, 'Range from the keyboard.')
 
-    expect(await readNotes(dolphinPage, worktreeId)).toEqual([
+    expect(await readNotes(appPage, worktreeId)).toEqual([
       { startLine: 5, lineNumber: 7, body: 'Range from the keyboard.' }
     ])
   })

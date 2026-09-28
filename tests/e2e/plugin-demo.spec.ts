@@ -68,9 +68,7 @@ async function createWorktree(page: Page, name: string): Promise<string> {
   }, name)
 }
 
-test('runs hello-dolphin panel, command, and event behind visible consent', async ({
-  dolphinPage
-}) => {
+test('runs hello-dolphin panel, command, and event behind visible consent', async ({ appPage }) => {
   const tempRoot = await mkdtemp(join(tmpdir(), 'dolphin-hello-plugin-e2e-'))
   const pluginRoot = join(tempRoot, 'hello-dolphin')
   let createdWorktreeId: string | null = null
@@ -79,7 +77,7 @@ test('runs hello-dolphin panel, command, and event behind visible consent', asyn
   })
 
   try {
-    const installed = await dolphinPage.evaluate(async (sourcePath) => {
+    const installed = await appPage.evaluate(async (sourcePath) => {
       const settings = await window.api.settings.set({ pluginSystemEnabled: true })
       window.__store?.setState({ settings })
       const result = await window.api.plugins.install({ kind: 'local-path', path: sourcePath })
@@ -108,12 +106,12 @@ test('runs hello-dolphin panel, command, and event behind visible consent', asyn
     expect(installed.status).toBe('pending')
     expect(installed.blocked).toBe(true)
 
-    await openPluginSettings(dolphinPage)
-    await dolphinPage.getByRole('tab', { name: /^Installed/ }).click()
-    const row = dolphinPage.locator(`[data-plugin-key="${installed.pluginKey}"]`)
+    await openPluginSettings(appPage)
+    await appPage.getByRole('tab', { name: /^Installed/ }).click()
+    const row = appPage.locator(`[data-plugin-key="${installed.pluginKey}"]`)
     await expect(row).toContainText('Needs review')
     await row.getByRole('button', { name: 'Review & enable' }).click()
-    const consent = dolphinPage.getByRole('dialog', { name: 'Review permissions' })
+    const consent = appPage.getByRole('dialog', { name: 'Review permissions' })
     await expect(consent).toBeVisible()
     await expect(consent).toContainText('Local folder')
     await expect(consent).toContainText('full access to your files, network, and other processes')
@@ -122,7 +120,7 @@ test('runs hello-dolphin panel, command, and event behind visible consent', asyn
     await expect(consent).toBeHidden()
     await expect(row).toContainText('Enabled')
 
-    const commandResults = await dolphinPage.evaluate(async (pluginKey) => {
+    const commandResults = await appPage.evaluate(async (pluginKey) => {
       const first = await window.api.plugins.invokeCommand({
         pluginKey,
         commandId: 'hello-ping',
@@ -138,28 +136,28 @@ test('runs hello-dolphin panel, command, and event behind visible consent', asyn
     expect(commandResults.first).toEqual({ pong: true, count: 1, args: { source: 'e2e' } })
     expect(commandResults.second).toEqual({ pong: true, count: 2, args: { source: 'e2e' } })
 
-    await dolphinPage.evaluate(async (sourcePath) => {
+    await appPage.evaluate(async (sourcePath) => {
       const settings = await window.api.settings.set({ devPluginPaths: [sourcePath] })
       window.__store?.setState({ settings })
       await window.api.plugins.refresh()
     }, pluginRoot)
 
-    await openDemoPanel(dolphinPage)
+    await openDemoPanel(appPage)
 
     const panelPath = join(pluginRoot, 'panel.html')
     const panelHtml = await readFile(panelPath, 'utf8')
     await writeFile(panelPath, panelHtml.replace('Hello Dolphin 👋', 'Hello Dolphin reloaded'))
     await expect(
-      dolphinPage.frameLocator('iframe[title="Hello Dolphin"]').getByRole('heading', {
+      appPage.frameLocator('iframe[title="Hello Dolphin"]').getByRole('heading', {
         name: 'Hello Dolphin reloaded'
       })
     ).toBeVisible({ timeout: 15_000 })
 
-    createdWorktreeId = await createWorktree(dolphinPage, `plugin-event-${Date.now()}`)
+    createdWorktreeId = await createWorktree(appPage, `plugin-event-${Date.now()}`)
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             async ({ pluginKey, worktreeId }) =>
               (await window.api.plugins.getLogs({ pluginKey })).some(
                 (entry) =>
@@ -172,7 +170,7 @@ test('runs hello-dolphin panel, command, and event behind visible consent', asyn
       .toBe(true)
   } finally {
     if (createdWorktreeId) {
-      await dolphinPage
+      await appPage
         .evaluate(async (worktreeId) => {
           await window.__store?.getState().removeWorktree(worktreeId, true)
         }, createdWorktreeId)

@@ -70,30 +70,30 @@ const RECORDED_TRACE = JSON.parse(
 
 test.describe('Terminal 2-Set Korean preedit visibility', () => {
   test('shows every assembling jamo at non-zero size and commits the syllable ahead of the newline', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    const arena = await openTerminalImePaneArena(dolphinPage)
+    const arena = await openTerminalImePaneArena(appPage)
     const reader = createTerminalImeByteReader(testRepoPath, 1)
     let completed = false
     try {
-      await startTerminalImeByteReader(dolphinPage, arena.ptyId, reader)
-      await expectPreeditHidden(dolphinPage, 'before composing')
+      await startTerminalImeByteReader(appPage, arena.ptyId, reader)
+      await expectPreeditHidden(appPage, 'before composing')
 
       for (const frame of HAN_FRAMES) {
-        await composeHangulSyllable(arena.session, dolphinPage, [frame])
-        await expectPreeditRendered(dolphinPage, frame.preedit, `composing ${frame.preedit}`)
+        await composeHangulSyllable(arena.session, appPage, [frame])
+        await expectPreeditRendered(appPage, frame.preedit, `composing ${frame.preedit}`)
       }
 
       await commitImeText(arena.session, '한')
-      await expectPreeditHidden(dolphinPage, 'after committing 한')
+      await expectPreeditHidden(appPage, 'after committing 한')
 
       await dispatchPlainEnter(arena.session)
 
-      const received = await waitForTerminalImeBytes(dolphinPage, reader)
+      const received = await waitForTerminalImeBytes(appPage, reader)
       expect(received).toEqual([Buffer.from('한\n').toString('hex')])
 
-      const trace = await readTerminalImeBoundaryTrace(dolphinPage)
+      const trace = await readTerminalImeBoundaryTrace(appPage)
       // The ordering the user reported as broken: the syllable must precede the newline.
       expect(trace.onData.join('')).toBe('한\r')
       completed = true
@@ -104,21 +104,21 @@ test.describe('Terminal 2-Set Korean preedit visibility', () => {
   })
 
   test('keeps a preedit the IME resumes without a compositionstart visible', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     // Red on `main`, by design. xterm adds `.active` to the overlay only in its `compositionstart`
     // handler, so a preedit resumed by a bare `compositionupdate` is written into a hidden element
     // and the user composes blind while the committed bytes still land correctly — which is why no
     // byte-level assertion ever saw it. Pre-existing and broken in every shipped build; closed by
     // the visibility fix in xterm's own composition helper one layer below this one.
-    const arena = await openTerminalImePaneArena(dolphinPage)
+    const arena = await openTerminalImePaneArena(appPage)
     let completed = false
     try {
       // Synthesised, not replayed — see dispatchResumedCompositionUpdate for why the recorded
       // corpus cannot supply this ordering and why it is still reachable in production.
-      await dispatchResumedCompositionUpdate(dolphinPage, '한')
+      await dispatchResumedCompositionUpdate(appPage, '한')
 
-      const sample = await samplePreeditOverlay(dolphinPage)
+      const sample = await samplePreeditOverlay(appPage)
       expect(sample.found, 'no composition overlay exists').toBe(true)
       expect(sample.text, 'the resumed preedit text never reached the overlay').toBe('한')
       expect(
@@ -133,16 +133,16 @@ test.describe('Terminal 2-Set Korean preedit visibility', () => {
   })
 
   test('renders the preedit at every update of a recorded Windows/WSL Hangul session', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     // Pinned to the Windows policy because the trace is a Windows recording. Without the pin it
     // ran under whatever the runner reported — macOS locally, Linux on the CI shards — so the one
     // platform it was named for was the one platform it never exercised.
-    await applyImePlatformPolicy(dolphinPage, 'windows')
-    const arena = await openTerminalImePaneArena(dolphinPage)
+    await applyImePlatformPolicy(appPage, 'windows')
+    const arena = await openTerminalImePaneArena(appPage)
     let completed = false
     try {
-      const replay = await replayRecordedImeDomTrace(dolphinPage, RECORDED_TRACE)
+      const replay = await replayRecordedImeDomTrace(appPage, RECORDED_TRACE)
       const updates = replay.samples.filter(
         (sample) => sample.type === 'compositionupdate' && sample.data.length > 0
       )
@@ -175,28 +175,28 @@ test.describe('Terminal 2-Set Korean preedit visibility', () => {
   })
 
   test('loses and duplicates nothing when back-to-back syllables commit at full speed', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    const arena = await openTerminalImePaneArena(dolphinPage)
+    const arena = await openTerminalImePaneArena(appPage)
     const reader = createTerminalImeByteReader(testRepoPath, 1)
     let completed = false
     try {
-      await startTerminalImeByteReader(dolphinPage, arena.ptyId, reader)
+      await startTerminalImeByteReader(appPage, arena.ptyId, reader)
       // No settle time between frames or between syllables: the cadence a fast typist produces,
       // and the one that used to drop or double a syllable at the boundary.
       for (let repetition = 0; repetition < 4; repetition += 1) {
-        await composeHangulSyllable(arena.session, dolphinPage, HAN_FRAMES, 0)
+        await composeHangulSyllable(arena.session, appPage, HAN_FRAMES, 0)
         await commitImeText(arena.session, '한')
-        await composeHangulSyllable(arena.session, dolphinPage, GEUL_FRAMES, 0)
+        await composeHangulSyllable(arena.session, appPage, GEUL_FRAMES, 0)
         await commitImeText(arena.session, '글')
       }
       await dispatchPlainEnter(arena.session)
 
-      const received = await waitForTerminalImeBytes(dolphinPage, reader)
+      const received = await waitForTerminalImeBytes(appPage, reader)
       expect(received).toEqual([Buffer.from(`${'한글'.repeat(4)}\n`).toString('hex')])
 
-      const trace = await readTerminalImeBoundaryTrace(dolphinPage)
+      const trace = await readTerminalImeBoundaryTrace(appPage)
       expect(trace.onData.join('')).toBe(`${'한글'.repeat(4)}\r`)
       completed = true
     } finally {

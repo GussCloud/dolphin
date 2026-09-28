@@ -30,13 +30,13 @@ test.describe('Terminal Panes', () => {
    * User Prompt:
    * - terminal panes can be split
    */
-  test('can split terminal pane right', async ({ dolphinPage }) => {
-    const paneCountBefore = await countVisibleTerminalPanes(dolphinPage)
+  test('can split terminal pane right', async ({ appPage }) => {
+    const paneCountBefore = await countVisibleTerminalPanes(appPage)
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, paneCountBefore + 1)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, paneCountBefore + 1)
 
-    const paneCountAfter = await countVisibleTerminalPanes(dolphinPage)
+    const paneCountAfter = await countVisibleTerminalPanes(appPage)
     expect(paneCountAfter).toBe(paneCountBefore + 1)
   })
 
@@ -44,23 +44,23 @@ test.describe('Terminal Panes', () => {
    * User Prompt:
    * - terminal panes can be split
    */
-  test('can split terminal pane down', async ({ dolphinPage }) => {
-    const paneCountBefore = await countVisibleTerminalPanes(dolphinPage)
+  test('can split terminal pane down', async ({ appPage }) => {
+    const paneCountBefore = await countVisibleTerminalPanes(appPage)
 
-    await splitActiveTerminalPane(dolphinPage, 'horizontal')
-    await waitForPaneCount(dolphinPage, paneCountBefore + 1)
+    await splitActiveTerminalPane(appPage, 'horizontal')
+    await waitForPaneCount(appPage, paneCountBefore + 1)
 
-    const paneCountAfter = await countVisibleTerminalPanes(dolphinPage)
+    const paneCountAfter = await countVisibleTerminalPanes(appPage)
     expect(paneCountAfter).toBe(paneCountBefore + 1)
   })
 
-  test('split panes persist PTY bindings by stable UUID leaf id', async ({ dolphinPage }) => {
-    const paneCountBefore = await countVisibleTerminalPanes(dolphinPage)
+  test('split panes persist PTY bindings by stable UUID leaf id', async ({ appPage }) => {
+    const paneCountBefore = await countVisibleTerminalPanes(appPage)
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, paneCountBefore + 1)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, paneCountBefore + 1)
 
-    const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, paneCountBefore + 1)
+    const snapshot = await waitForPaneIdentitySnapshot(appPage, paneCountBefore + 1)
     const leafIds = snapshot.panes.map((pane) => pane.leafId)
     const ptyIds = snapshot.panes.map((pane) => pane.ptyId)
 
@@ -77,39 +77,39 @@ test.describe('Terminal Panes', () => {
   })
 
   test('terminal process receives DOLPHIN_PANE_KEY with the active UUID leaf id', async ({
-    dolphinPage
+    appPage
   }) => {
-    const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    const snapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const activeLeafId = snapshot.activeLeafId ?? snapshot.panes[0]?.leafId
     if (!activeLeafId) {
       throw new Error('No active pane leaf id found')
     }
 
     const expectedPaneKey = `${snapshot.tabId}:${activeLeafId}`
-    const ptyId = await discoverActivePtyId(dolphinPage)
+    const ptyId = await discoverActivePtyId(appPage)
     const marker = `DOLPHIN_PANE_KEY_E2E_${Date.now()}`
 
-    await execInTerminal(dolphinPage, ptyId, `printf '${marker}=%s\\n' "$DOLPHIN_PANE_KEY"`)
-    await waitForTerminalOutput(dolphinPage, `${marker}=${expectedPaneKey}`)
+    await execInTerminal(appPage, ptyId, `printf '${marker}=%s\\n' "$DOLPHIN_PANE_KEY"`)
+    await waitForTerminalOutput(appPage, `${marker}=${expectedPaneKey}`)
 
     expect(activeLeafId).toMatch(UUID_RE)
   })
 
-  test('terminal context menu copies the stable pane ID', async ({ dolphinPage }) => {
-    const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+  test('terminal context menu copies the stable pane ID', async ({ appPage }) => {
+    const snapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const leafId = snapshot.panes[0]?.leafId
     if (!leafId) {
       throw new Error('No terminal pane leaf id found')
     }
     const expectedPaneKey = `${snapshot.tabId}:${leafId}`
 
-    await openTerminalContextMenu(dolphinPage)
-    await dolphinPage.getByText('Copy Pane ID', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await appPage.getByText('Copy Pane ID', { exact: true }).click()
 
     await expect
-      .poll(() => dolphinPage.evaluate(() => window.api.ui.readClipboardText()), { timeout: 3_000 })
+      .poll(() => appPage.evaluate(() => window.api.ui.readClipboardText()), { timeout: 3_000 })
       .toBe(expectedPaneKey)
-    await expect(dolphinPage.getByText('Pane ID copied', { exact: true })).toBeVisible()
+    await expect(appPage.getByText('Pane ID copied', { exact: true })).toBeVisible()
     expect(leafId).toMatch(UUID_RE)
   })
 })

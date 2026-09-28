@@ -269,31 +269,31 @@ async function releaseGitLabLookup(electronApp: ElectronApplication): Promise<vo
 
 test('a pasted GitHub URL never selects a stale cached issue', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await installHeldGitHubLookup(electronApp, dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await installHeldGitHubLookup(electronApp, appPage)
 
-  await openSidebarWorkspaceComposer(dolphinPage)
-  const dialog = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+  await openSidebarWorkspaceComposer(appPage)
+  const dialog = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
   const input = dialog.locator('[data-workspace-name-input="true"]')
   await expect(input).toBeVisible()
   await input.click()
 
-  const wrongOption = dolphinPage.getByRole('option', { name: `#17 ${WRONG_TITLE}`, exact: true })
-  const targetOption = dolphinPage.getByRole('option', {
+  const wrongOption = appPage.getByRole('option', { name: `#17 ${WRONG_TITLE}`, exact: true })
+  const targetOption = appPage.getByRole('option', {
     name: `#4242 ${TARGET_TITLE}`,
     exact: true
   })
   await expect(wrongOption).toBeVisible()
 
   const frameKey: TransitionFrameKey = '__githubUrlTransitionFrames'
-  await startTransitionCapture(dolphinPage, frameKey, WRONG_TITLE, TARGET_TITLE)
+  await startTransitionCapture(appPage, frameKey, WRONG_TITLE, TARGET_TITLE)
 
-  await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), TARGET_URL)
+  await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), TARGET_URL)
   await input.focus()
-  await dolphinPage.keyboard.press(pasteChord())
+  await appPage.keyboard.press(pasteChord())
   await expect
     .poll(() =>
       electronApp.evaluate(() => {
@@ -302,53 +302,47 @@ test('a pasted GitHub URL never selects a stale cached issue', async ({
       })
     )
     .toBe(true)
-  await expectLookupHeldWithoutStaleRow(
-    dolphinPage,
-    frameKey,
-    TARGET_URL,
-    wrongOption,
-    targetOption
-  )
+  await expectLookupHeldWithoutStaleRow(appPage, frameKey, TARGET_URL, wrongOption, targetOption)
 
   await releaseGitHubLookup(electronApp)
-  await expectExactTargetAfterLookup(dolphinPage, frameKey, TARGET_URL, targetOption)
+  await expectExactTargetAfterLookup(appPage, frameKey, TARGET_URL, targetOption)
 
   await testInfo.attach('github-url-smart-input-fixed.png', {
-    body: await dolphinPage.screenshot(),
+    body: await appPage.screenshot(),
     contentType: 'image/png'
   })
 })
 
 test('a pasted GitLab URL never selects a stale cached merge request', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await installHeldGitLabLookup(electronApp, dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await installHeldGitLabLookup(electronApp, appPage)
 
-  await openSidebarWorkspaceComposer(dolphinPage)
-  const dialog = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+  await openSidebarWorkspaceComposer(appPage)
+  const dialog = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
   const input = dialog.locator('[data-workspace-name-input="true"]')
   await expect(input).toBeVisible()
   await input.click()
 
-  const wrongOption = dolphinPage.getByRole('option', {
+  const wrongOption = appPage.getByRole('option', {
     name: `!17 ${GITLAB_WRONG_TITLE}`,
     exact: true
   })
-  const targetOption = dolphinPage.getByRole('option', {
+  const targetOption = appPage.getByRole('option', {
     name: `!4242 ${GITLAB_TARGET_TITLE}`,
     exact: true
   })
   await expect(wrongOption).toBeVisible()
 
   const frameKey: TransitionFrameKey = '__gitlabUrlTransitionFrames'
-  await startTransitionCapture(dolphinPage, frameKey, GITLAB_WRONG_TITLE, GITLAB_TARGET_TITLE)
+  await startTransitionCapture(appPage, frameKey, GITLAB_WRONG_TITLE, GITLAB_TARGET_TITLE)
 
-  await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), GITLAB_TARGET_URL)
+  await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), GITLAB_TARGET_URL)
   await input.focus()
-  await dolphinPage.keyboard.press(pasteChord())
+  await appPage.keyboard.press(pasteChord())
   await expect
     .poll(() =>
       electronApp.evaluate(() => {
@@ -358,7 +352,7 @@ test('a pasted GitLab URL never selects a stale cached merge request', async ({
     )
     .toBe(true)
   await expectLookupHeldWithoutStaleRow(
-    dolphinPage,
+    appPage,
     frameKey,
     GITLAB_TARGET_URL,
     wrongOption,
@@ -366,10 +360,10 @@ test('a pasted GitLab URL never selects a stale cached merge request', async ({
   )
 
   await releaseGitLabLookup(electronApp)
-  await expectExactTargetAfterLookup(dolphinPage, frameKey, GITLAB_TARGET_URL, targetOption)
+  await expectExactTargetAfterLookup(appPage, frameKey, GITLAB_TARGET_URL, targetOption)
 
   await testInfo.attach('gitlab-url-smart-input-fixed.png', {
-    body: await dolphinPage.screenshot(),
+    body: await appPage.screenshot(),
     contentType: 'image/png'
   })
 })

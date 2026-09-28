@@ -149,18 +149,18 @@ async function postCodexHookEvent(
 }
 
 test.describe('Agent awake setting', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
   })
 
-  test('can be changed from Agents settings and persists through IPC', async ({ dolphinPage }) => {
-    await openSettings(dolphinPage)
-    await dismissTransientAnnouncement(dolphinPage)
-    await dolphinPage.getByPlaceholder('Search settings').fill('awake')
+  test('can be changed from Agents settings and persists through IPC', async ({ appPage }) => {
+    await openSettings(appPage)
+    await dismissTransientAnnouncement(appPage)
+    await appPage.getByPlaceholder('Search settings').fill('awake')
 
-    await expect(dolphinPage.getByText('Keep computer awake').first()).toBeVisible()
+    await expect(appPage.getByText('Keep computer awake').first()).toBeVisible()
 
-    const keepAwakeModes = dolphinPage.getByRole('radiogroup', {
+    const keepAwakeModes = appPage.getByRole('radiogroup', {
       name: 'Keep computer awake'
     })
     const offMode = keepAwakeModes.getByRole('radio', { name: 'Off' })
@@ -170,7 +170,7 @@ test.describe('Agent awake setting', () => {
     await agentMode.click()
     await expect(agentMode).toHaveAttribute('aria-checked', 'true')
     await expect
-      .poll(async () => (await getSettings(dolphinPage)).computerAwakeMode, {
+      .poll(async () => (await getSettings(appPage)).computerAwakeMode, {
         timeout: 5_000,
         message: 'keep-awake mode did not persist after selecting Agent'
       })
@@ -179,7 +179,7 @@ test.describe('Agent awake setting', () => {
     await offMode.click()
     await expect(offMode).toHaveAttribute('aria-checked', 'true')
     await expect
-      .poll(async () => (await getSettings(dolphinPage)).computerAwakeMode, {
+      .poll(async () => (await getSettings(appPage)).computerAwakeMode, {
         timeout: 5_000,
         message: 'keep-awake mode did not persist after selecting Off'
       })
@@ -188,12 +188,12 @@ test.describe('Agent awake setting', () => {
 
   test('keeps the OS awake only while a hook-reported agent is working', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     if (process.platform !== 'darwin') {
       await installPowerSaveBlockerProbe(electronApp)
     }
-    await setKeepAwake(dolphinPage, true)
+    await setKeepAwake(appPage, true)
 
     const tabId = 'e2e-awake-tab'
     const paneKey = `${tabId}:${randomUUID()}`
@@ -204,7 +204,7 @@ test.describe('Agent awake setting', () => {
     })
 
     await expect(
-      dolphinPage.getByRole('button', { name: 'Keep computer awake, Agent · Active' })
+      appPage.getByRole('button', { name: 'Keep computer awake, Agent · Active' })
     ).toBeVisible()
     let startedIds: number[] = []
     if (process.platform === 'darwin') {
@@ -238,7 +238,7 @@ test.describe('Agent awake setting', () => {
     })
 
     await expect(
-      dolphinPage.getByRole('button', { name: 'Keep computer awake, Agent · Inactive' })
+      appPage.getByRole('button', { name: 'Keep computer awake, Agent · Inactive' })
     ).toBeVisible()
     if (process.platform === 'darwin') {
       await expect

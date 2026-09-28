@@ -196,34 +196,34 @@ async function inspectElectronFrameProcesses(
 
 test('contains hostile panel network and navigation probes', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   testInfo.annotations.push({ type: 'maturity', description: 'experimental' })
   const server = await startPermissiveProbeServer()
   const pluginRoot = await materializeHostilePlugin(server.origin)
   const tempRoot = join(pluginRoot, '..')
-  const appUrl = dolphinPage.url()
+  const appUrl = appPage.url()
   const browserEvents: string[] = []
   const panelDocuments: PanelDocumentSnapshot[] = []
   const replacedNavigations: { destinations: string[]; probe: string }[] = []
   let navigationObservation: PanelNavigationObservation | null = null
   let navigationProbeStarted = false
-  dolphinPage.on('console', (message) => {
+  appPage.on('console', (message) => {
     browserEvents.push(`console:${message.type()}:${message.text()}`)
   })
-  dolphinPage.on('pageerror', (error) => {
+  appPage.on('pageerror', (error) => {
     browserEvents.push(`pageerror:${error.message}`)
   })
-  dolphinPage.on('framenavigated', (frame) => {
+  appPage.on('framenavigated', (frame) => {
     browserEvents.push(`framenavigated:${frame.url()}`)
   })
   try {
-    const panel = await installApprovedPanel(dolphinPage, pluginRoot)
-    await openPanel(dolphinPage, panel)
+    const panel = await installApprovedPanel(appPage, pluginRoot)
+    await openPanel(appPage, panel)
 
-    const iframe = dolphinPage.locator(`iframe[title="${panel.title}"]`)
+    const iframe = appPage.locator(`iframe[title="${panel.title}"]`)
     await expect(iframe).toHaveAttribute('sandbox', 'allow-scripts')
-    const frame = dolphinPage.frameLocator(`iframe[title="${panel.title}"]`)
+    const frame = appPage.frameLocator(`iframe[title="${panel.title}"]`)
     await expect(frame.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveAttribute(
       'content',
       /connect-src 'none'.*img-src data:/
@@ -282,7 +282,7 @@ test('contains hostile panel network and navigation probes', async ({
     expect(bridgeErrorCode).toBe('invalid_request')
 
     expect(server.requests).toEqual([])
-    expect(dolphinPage.url()).toBe(appUrl)
+    expect(appPage.url()).toBe(appUrl)
     await expect(iframe).toBeVisible()
 
     await startPanelNavigationObserver(electronApp, appUrl)
@@ -355,7 +355,7 @@ test('contains hostile panel network and navigation probes', async ({
         )
       }
       expect(server.requests).toEqual([])
-      expect(dolphinPage.url()).toBe(appUrl)
+      expect(appPage.url()).toBe(appUrl)
     }
     const guardDestination = `${server.origin}/frame-guard-navigation`
     await iframe.evaluate((element, destination) => {
@@ -383,7 +383,7 @@ test('contains hostile panel network and navigation probes', async ({
       'source:meta-refresh-navigation'
     )
     expect(server.requests).toEqual([])
-    expect(dolphinPage.url()).toBe(appUrl)
+    expect(appPage.url()).toBe(appUrl)
 
     navigationObservation = await readPanelNavigationObserver(electronApp)
     const attemptedProbeNavigations = navigationObservation.willFrameNavigations.filter(({ url }) =>
@@ -432,17 +432,17 @@ test('contains hostile panel network and navigation probes', async ({
 
 test('detects and suspends a busy-looping panel in an isolated renderer', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   testInfo.annotations.push({ type: 'maturity', description: 'experimental' })
   const server = await startPermissiveProbeServer()
   const pluginRoot = await materializeHostilePlugin(server.origin)
   const tempRoot = join(pluginRoot, '..')
-  const appUrl = dolphinPage.url()
+  const appUrl = appPage.url()
   let frameProcesses: ElectronFrameProcess[] = []
   try {
-    const panel = await installApprovedPanel(dolphinPage, pluginRoot)
-    await openPanel(dolphinPage, panel)
+    const panel = await installApprovedPanel(appPage, pluginRoot)
+    await openPanel(appPage, panel)
 
     await expect
       .poll(
@@ -461,19 +461,19 @@ test('detects and suspends a busy-looping panel in an isolated renderer', async 
     expect(panelFrame?.processId).not.toBe(mainFrame?.processId)
     expect(panelFrame?.osProcessId).not.toBe(mainFrame?.osProcessId)
 
-    const iframe = dolphinPage.locator(`iframe[title="${panel.title}"]`)
+    const iframe = appPage.locator(`iframe[title="${panel.title}"]`)
     await iframe.evaluate((element) => {
       const panelWindow = (element as HTMLIFrameElement).contentWindow
       panelWindow?.postMessage({ type: 'dolphin-hostile-busy-probe' }, '*')
     })
 
     await expect(
-      dolphinPage.getByText('This plugin panel stopped responding and was suspended.')
+      appPage.getByText('This plugin panel stopped responding and was suspended.')
     ).toBeVisible({ timeout: 20_000 })
     await expect(
-      dolphinPage.getByRole('button', { name: new RegExp(`${panel.title}.*Error`) })
+      appPage.getByRole('button', { name: new RegExp(`${panel.title}.*Error`) })
     ).toBeVisible()
-    expect(dolphinPage.url()).toBe(appUrl)
+    expect(appPage.url()).toBe(appUrl)
     expect(server.requests).toEqual([])
   } finally {
     await testInfo.attach('hostile-panel-frame-processes', {

@@ -36,15 +36,15 @@ async function activateTerminalTab(page: Page, tabId: string): Promise<void> {
 for (const exitMode of ['normal', 'sigkill'] as const) {
   test(`clears modes when a child TUI exits via ${exitMode} while its shell survives hidden`, async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     await installTerminalPtyWriteSpy(electronApp)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const shellTabId = (await getActiveTabId(dolphinPage))!
+    const shellTabId = (await getActiveTabId(appPage))!
     const child = [
       "process.stdin.setRawMode?.(true); process.stdin.resume(); process.stdout.write('\\x1b[?1049h\\x1b[?1003h\\x1b[?1006h\\x1b[?25lCHILD_TUI_STARTED\\r\\n')",
       ...(exitMode === 'normal'
@@ -60,7 +60,7 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
       "child.on('exit', () => process.stdout.write('\\r\\nCHILD_TUI_KILLED\\r\\n'))"
     ].join(' ')
     const command = stageNodeScriptForTerminal(parent, { prefix: 'dolphin-child-tui-kill' }).command
-    const tuiTabId = await dolphinPage.evaluate(
+    const tuiTabId = await appPage.evaluate(
       ({ command }) => {
         const state = window.__store?.getState()
         const worktreeId = state?.activeWorktreeId
@@ -76,41 +76,39 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
       { command }
     )
 
-    await expect.poll(() => getActiveTabId(dolphinPage), { timeout: 5_000 }).toBe(tuiTabId)
-    const tuiPtyId = await waitForActivePanePtyId(dolphinPage, 30_000)
-    const tuiIdentity = await readPaneIdentitySnapshot(dolphinPage)
+    await expect.poll(() => getActiveTabId(appPage), { timeout: 5_000 }).toBe(tuiTabId)
+    const tuiPtyId = await waitForActivePanePtyId(appPage, 30_000)
+    const tuiIdentity = await readPaneIdentitySnapshot(appPage)
     expect(tuiIdentity?.activeLeafId).not.toBeNull()
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 6_000), { timeout: 20_000 })
+      .poll(() => getTerminalContent(appPage, 6_000), { timeout: 20_000 })
       .toContain('CHILD_TUI_FRAME')
     await expect
       .poll(async () => {
-        const match = (await getTerminalContent(dolphinPage, 6_000)).match(/CHILD_TUI_PID_(\d+)/)
+        const match = (await getTerminalContent(appPage, 6_000)).match(/CHILD_TUI_PID_(\d+)/)
         return match?.[1] ?? null
       })
       .not.toBeNull()
-    const childPid = (await getTerminalContent(dolphinPage, 6_000)).match(
-      /CHILD_TUI_PID_(\d+)/
-    )?.[1]
+    const childPid = (await getTerminalContent(appPage, 6_000)).match(/CHILD_TUI_PID_(\d+)/)?.[1]
     expect(childPid).toBeDefined()
-    await activateTerminalTab(dolphinPage, shellTabId)
-    const shellPtyId = await waitForActivePanePtyId(dolphinPage, 30_000)
+    await activateTerminalTab(appPage, shellTabId)
+    const shellPtyId = await waitForActivePanePtyId(appPage, 30_000)
     const exitSignal = exitMode === 'normal' ? 'SIGTERM' : 'SIGKILL'
     const killCommand = stageNodeScriptForTerminal(`process.kill(${childPid!}, '${exitSignal}')`, {
       prefix: 'dolphin-child-tui-external-kill'
     }).command
-    await execInTerminal(dolphinPage, shellPtyId, killCommand)
+    await execInTerminal(appPage, shellPtyId, killCommand)
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(async (ptyId) => {
+          appPage.evaluate(async (ptyId) => {
             const processName = await window.api.pty.getForegroundProcess(ptyId)
             return processName?.toLowerCase() ?? null
           }, tuiPtyId),
         { timeout: 8_000 }
       )
       .toMatch(/^(bash|zsh|sh|fish)(\.exe)?$/)
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ paneKey, tabId }) => {
         const state = window.__store?.getState()
         const worktreeId = state?.activeWorktreeId
@@ -128,16 +126,16 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
       { paneKey: `${tuiTabId}:${tuiIdentity!.activeLeafId!}`, tabId: tuiTabId }
     )
     await clearTerminalPtyWriteLog(electronApp)
-    await activateTerminalTab(dolphinPage, tuiTabId)
+    await activateTerminalTab(appPage, tuiTabId)
 
-    const revealedPtyId = await dolphinPage.evaluate((tabId) => {
+    const revealedPtyId = await appPage.evaluate((tabId) => {
       const manager = window.__paneManagers?.get(tabId)
       return manager?.getActivePane?.()?.container?.dataset?.ptyId ?? null
     }, tuiTabId)
     expect(revealedPtyId).not.toBeNull()
     await expect
       .poll(async () => {
-        const snapshot = await dolphinPage.evaluate(
+        const snapshot = await appPage.evaluate(
           (ptyId) => window.api.pty.getMainBufferSnapshot(ptyId, { scrollbackRows: 5000 }),
           revealedPtyId!
         )
@@ -146,7 +144,7 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
       .toBe(true)
     await expect
       .poll(() =>
-        dolphinPage.evaluate((tabId) => {
+        appPage.evaluate((tabId) => {
           const manager = window.__paneManagers?.get(tabId)
           const pane = manager?.getActivePane?.() ?? manager?.getPanes?.()[0]
           return {
@@ -165,12 +163,12 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
     // it and it survives on the normal buffer.
     if (exitMode === 'normal') {
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 6_000), { timeout: 8_000 })
+        .poll(() => getTerminalContent(appPage, 6_000), { timeout: 8_000 })
         .toContain('CHILD_TUI_KILLED')
     }
 
     const shellInputMarker = 'SHELL_INPUT_AFTER_TUI_KILL'
-    await execInTerminal(dolphinPage, revealedPtyId!, `printf ${shellInputMarker}`)
+    await execInTerminal(appPage, revealedPtyId!, `printf ${shellInputMarker}`)
     await expect
       .poll(async () => {
         const writes = await readTerminalPtyWriteEntries(electronApp)
@@ -180,13 +178,13 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
       })
       .toBe(true)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 6_000), { timeout: 8_000 })
+      .poll(() => getTerminalContent(appPage, 6_000), { timeout: 8_000 })
       .toContain(shellInputMarker)
 
-    const terminalScreen = dolphinPage.locator(`[data-pty-id="${revealedPtyId}"] .xterm-screen`)
+    const terminalScreen = appPage.locator(`[data-pty-id="${revealedPtyId}"] .xterm-screen`)
     await terminalScreen.hover({ position: { x: 20, y: 20 } })
-    await dolphinPage.mouse.wheel(0, 120)
-    await dolphinPage.evaluate(
+    await appPage.mouse.wheel(0, 120)
+    await appPage.evaluate(
       () =>
         new Promise<void>((resolve) =>
           requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
@@ -200,7 +198,7 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
     expect(ptyWrites.some((data) => data.includes(`${escape}[<`))).toBe(false)
     expect(ptyWrites.some((data) => data.includes(`${escape}[M`))).toBe(false)
 
-    const terminalState = await dolphinPage.evaluate((tabId) => {
+    const terminalState = await appPage.evaluate((tabId) => {
       const manager = window.__paneManagers?.get(tabId)
       const pane = manager?.getActivePane?.() ?? manager?.getPanes?.()[0]
       return {
@@ -209,14 +207,14 @@ for (const exitMode of ['normal', 'sigkill'] as const) {
       }
     }, tuiTabId)
     expect(terminalState).toEqual({ buffer: 'normal', mouse: 'none' })
-    expect(await getTerminalContent(dolphinPage, 6_000)).not.toMatch(/\[<\d+;\d+;\d+[Mm]/)
+    expect(await getTerminalContent(appPage, 6_000)).not.toMatch(/\[<\d+;\d+;\d+[Mm]/)
 
-    await activateTerminalTab(dolphinPage, shellTabId)
-    expect(await waitForActivePanePtyId(dolphinPage, 30_000)).toBe(shellPtyId)
+    await activateTerminalTab(appPage, shellTabId)
+    expect(await waitForActivePanePtyId(appPage, 30_000)).toBe(shellPtyId)
     const unrelatedMarker = 'UNRELATED_SHELL_STILL_LIVE'
-    await execInTerminal(dolphinPage, shellPtyId, `printf ${unrelatedMarker}`)
+    await execInTerminal(appPage, shellPtyId, `printf ${unrelatedMarker}`)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 6_000), { timeout: 8_000 })
+      .poll(() => getTerminalContent(appPage, 6_000), { timeout: 8_000 })
       .toContain(unrelatedMarker)
   })
 }

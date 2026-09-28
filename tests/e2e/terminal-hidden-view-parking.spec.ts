@@ -273,11 +273,11 @@ async function setUpParkableTabA(page: Page): Promise<ParkableTabSetup> {
 
 test.describe('Terminal hidden view parking', () => {
   test('parks a hidden terminal tab and restores rich TUI output on reveal', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
-    await waitForSessionReady(dolphinPage)
-    const setup = await setUpParkableTabA(dolphinPage)
+    await waitForSessionReady(appPage)
+    const setup = await setUpParkableTabA(appPage)
     const { worktreeId, tabAId, tabAPtyId } = setup
 
     const runId = randomUUID()
@@ -285,19 +285,19 @@ test.describe('Terminal hidden view parking', () => {
     const scriptPath = path.join(testRepoPath, `.dolphin-parked-rich-tui-${runId}.mjs`)
     writeParkedFrameScript(scriptPath, runId)
     try {
-      await sendToTerminal(dolphinPage, tabAPtyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, tabAPtyId, `node ${JSON.stringify(scriptPath)}\r`)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 12_000), {
+        .poll(() => getTerminalContent(appPage, 12_000), {
           timeout: 15_000,
           message: 'rich TUI final frame did not render while tab A was visible'
         })
         .toContain(finalMarker)
 
-      const tabBId = await createActiveTerminalTab(dolphinPage, worktreeId)
-      const parkDetectedAfterMs = await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabAId, {
+      const tabBId = await createActiveTerminalTab(appPage, worktreeId)
+      const parkDetectedAfterMs = await parkHiddenTabBehindDecoy(appPage, worktreeId, tabAId, {
         parkDelayMs: PARKING_DELAY_MS
       })
-      const wiring = await readParkingWiring(dolphinPage)
+      const wiring = await readParkingWiring(appPage)
       testInfo.annotations.push({
         type: 'terminal-parking',
         description: `parkDelayMs=${wiring.parkDelayMs ?? PARKING_DELAY_MS} parkDetectedAfterMs=${parkDetectedAfterMs}`
@@ -306,26 +306,26 @@ test.describe('Terminal hidden view parking', () => {
       // Why: parking must be scoped to the parked tab — tab B (hidden more
       // recently, so #8262 keeps it warm) still holds a live pane manager and
       // xterm while tab A tore down.
-      const tabBState = await readTerminalTabViewState(dolphinPage, tabBId)
+      const tabBState = await readTerminalTabViewState(appPage, tabBId)
       expect(tabBState.hasManager).toBe(true)
       expect(tabBState.paneCount).toBeGreaterThan(0)
 
-      await activateTerminalTab(dolphinPage, tabAId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      const revealedSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+      await activateTerminalTab(appPage, tabAId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      const revealedSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
       expect(revealedSnapshot.tabId).toBe(tabAId)
       // Why: parking only tears down the renderer view; the PTY session must
       // survive so reveal reattaches to the same shell.
       expect(revealedSnapshot.panes[0]?.ptyId).toBe(tabAPtyId)
 
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 12_000), {
+        .poll(() => getTerminalContent(appPage, 12_000), {
           timeout: 15_000,
           message: 'parked rich TUI frame did not restore when the tab was revealed'
         })
         .toContain(finalMarker)
 
-      const content = await getTerminalContent(dolphinPage, 12_000)
+      const content = await getTerminalContent(appPage, 12_000)
       expect(content).toContain(`Frame ${String(PARKED_FRAME_COUNT - 1).padStart(3, '0')}`)
       expect(content).toContain('╭')
       expect(content).toContain('├')
@@ -334,10 +334,10 @@ test.describe('Terminal hidden view parking', () => {
 
       // Why: the fixture TUI still owns the PTY foreground after the reveal, so
       // interrupt it and wait for the shell to take input back before probing.
-      await sendToTerminal(dolphinPage, tabAPtyId, '\x03')
+      await sendToTerminal(appPage, tabAPtyId, '\x03')
       // Why rethrow: the readiness failure reads as a dead shell, but the only new
       // dependency here is Ctrl-C reaching the foreground TUI (ConPTY translates it).
-      await waitForPtyShellEcho(dolphinPage, tabAPtyId, 15_000).catch((error: unknown) => {
+      await waitForPtyShellEcho(appPage, tabAPtyId, 15_000).catch((error: unknown) => {
         throw new Error(
           `Ctrl-C did not hand the PTY back from the fixture TUI: ${error instanceof Error ? error.message : String(error)}`
         )
@@ -348,18 +348,18 @@ test.describe('Terminal hidden view parking', () => {
       const typedMarker = `PARKED_TYPED_OK_${runId}`
       const typedProbeScript = `console.log('PARKED_TYPED_OK_' + '${runId}')`
       // Why: delivered via a temp file — `node -e` quoting is not PowerShell-safe (#8521).
-      await runNodeScriptInTerminal(dolphinPage, tabAPtyId, typedProbeScript, {
+      await runNodeScriptInTerminal(appPage, tabAPtyId, typedProbeScript, {
         prefix: 'dolphin-parked-typed-probe'
       })
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 12_000), {
+        .poll(() => getTerminalContent(appPage, 12_000), {
           timeout: 10_000,
           message: 'revealed terminal did not execute and display typed input'
         })
         .toContain(typedMarker)
 
       const screenshotPath = testInfo.outputPath('parked-tab-restore-final.png')
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('parked-tab-restore-final.png', {
         path: screenshotPath,
         contentType: 'image/png'
@@ -369,13 +369,13 @@ test.describe('Terminal hidden view parking', () => {
     }
   })
 
-  test('keeps bell and title side effects live while parked', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    const setup = await setUpParkableTabA(dolphinPage)
+  test('keeps bell and title side effects live while parked', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    const setup = await setUpParkableTabA(appPage)
     const { worktreeId, tabAId, tabAPtyId } = setup
 
-    await createActiveTerminalTab(dolphinPage, worktreeId)
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabAId, {
+    await createActiveTerminalTab(appPage, worktreeId)
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, tabAId, {
       parkDelayMs: PARKING_DELAY_MS
     })
 
@@ -389,24 +389,24 @@ test.describe('Terminal hidden view parking', () => {
     const payload = `\x1b]0;${parkedTitle}\x07\x07${marker}\n`
     const sideEffectScript = `process.stdout.write(${JSON.stringify(payload)}); setTimeout(() => process.exit(0), 30000)`
     // Why: delivered via a temp file — `node -e` quoting is not PowerShell-safe (#8521).
-    await runNodeScriptInTerminal(dolphinPage, tabAPtyId, sideEffectScript, {
+    await runNodeScriptInTerminal(appPage, tabAPtyId, sideEffectScript, {
       prefix: 'dolphin-parked-side-effect'
     })
 
     await expect
-      .poll(() => getTerminalTabTitle(dolphinPage, worktreeId, tabAId), {
+      .poll(() => getTerminalTabTitle(appPage, worktreeId, tabAId), {
         timeout: 10_000,
         message: 'parked OSC 0 title did not update the tab title in the store'
       })
       .toBe(parkedTitle)
     await expect
-      .poll(async () => (await getUnreadTerminalTabIds(dolphinPage)).includes(tabAId), {
+      .poll(async () => (await getUnreadTerminalTabIds(appPage)).includes(tabAId), {
         timeout: 10_000,
         message: 'parked BEL did not mark the terminal tab unread'
       })
       .toBe(true)
     await expect
-      .poll(() => isWorktreeUnread(dolphinPage, worktreeId), {
+      .poll(() => isWorktreeUnread(appPage, worktreeId), {
         timeout: 10_000,
         message: 'parked BEL did not mark the worktree unread'
       })
@@ -414,39 +414,39 @@ test.describe('Terminal hidden view parking', () => {
 
     // Why: side effects must come from the pane-less watcher — the burst must
     // not have woken the parked view back up.
-    expect((await readTerminalTabViewState(dolphinPage, tabAId)).hasManager).toBe(false)
+    expect((await readTerminalTabViewState(appPage, tabAId)).hasManager).toBe(false)
 
-    await activateTerminalTab(dolphinPage, tabAId)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await activateTerminalTab(appPage, tabAId)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 12_000), {
+      .poll(() => getTerminalContent(appPage, 12_000), {
         timeout: 15_000,
         message: 'parked side-effect marker did not restore when the tab was revealed'
       })
       .toContain(marker)
   })
 
-  test('does not park excluded tabs', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    const setup = await setUpParkableTabA(dolphinPage)
+  test('does not park excluded tabs', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    const setup = await setUpParkableTabA(appPage)
     const { worktreeId, tabAId } = setup
 
     // Tab C: parking-excluded because it has a pending startup command. Queue
     // it after the pane mounted so the mount-time consume cannot drain it.
-    const tabCId = await createActiveTerminalTab(dolphinPage, worktreeId)
-    await dolphinPage.evaluate((tabId) => {
+    const tabCId = await createActiveTerminalTab(appPage, worktreeId)
+    await appPage.evaluate((tabId) => {
       const store = window.__store
       if (!store) {
         throw new Error('parking exclusion spec: window.__store is unavailable')
       }
       store.getState().queueTabStartupCommand(tabId, { command: 'echo parked-exclusion-probe' })
     }, tabCId)
-    expect(await hasPendingStartupCommand(dolphinPage, tabCId)).toBe(true)
+    expect(await hasPendingStartupCommand(appPage, tabCId)).toBe(true)
 
     // Tab B on top hides both A and C.
-    const tabBId = await createActiveTerminalTab(dolphinPage, worktreeId)
+    const tabBId = await createActiveTerminalTab(appPage, worktreeId)
     await expect
-      .poll(() => getActiveTabId(dolphinPage), {
+      .poll(() => getActiveTabId(appPage), {
         timeout: 5_000,
         message: 'tab B did not stay active while waiting on the parking window'
       })
@@ -456,14 +456,14 @@ test.describe('Terminal hidden view parking', () => {
     // instance, so the tab C assertion below is not vacuously green. A decoy
     // takes the #8262 last-active exemption (tab C is excluded, not a candidate)
     // so tab A is the one that cold-parks.
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabAId, {
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, tabAId, {
       parkDelayMs: PARKING_DELAY_MS
     })
-    await dolphinPage.waitForTimeout(PARKING_DELAY_MS * 3)
+    await appPage.waitForTimeout(PARKING_DELAY_MS * 3)
 
     // Premise guard: nothing consumed the pending startup while hidden.
-    expect(await hasPendingStartupCommand(dolphinPage, tabCId)).toBe(true)
-    const tabCState = await readTerminalTabViewState(dolphinPage, tabCId)
+    expect(await hasPendingStartupCommand(appPage, tabCId)).toBe(true)
+    const tabCState = await readTerminalTabViewState(appPage, tabCId)
     expect(tabCState.hasManager).toBe(true)
     expect(tabCState.paneCount).toBeGreaterThan(0)
   })
@@ -475,12 +475,12 @@ test.describe('Terminal hidden view parking', () => {
   // snapshot restore + PTY reattach path the fuzz suites model in isolation, and
   // fails if any single cycle — or accumulated drift across 25 — garbles a cell.
   test('reproduces a static frame byte-for-byte across 25 park/reveal cycles', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
     test.setTimeout(180_000)
-    await waitForSessionReady(dolphinPage)
-    const setup = await setUpParkableTabA(dolphinPage)
+    await waitForSessionReady(appPage)
+    const setup = await setUpParkableTabA(appPage)
     const { worktreeId, tabAId, tabAPtyId } = setup
 
     const runId = randomUUID()
@@ -488,9 +488,9 @@ test.describe('Terminal hidden view parking', () => {
     const scriptPath = path.join(testRepoPath, `.dolphin-cycle-reference-${runId}.mjs`)
     writeCycleReferenceScript(scriptPath, runId)
     try {
-      await sendToTerminal(dolphinPage, tabAPtyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, tabAPtyId, `node ${JSON.stringify(scriptPath)}\r`)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 12_000), {
+        .poll(() => getTerminalContent(appPage, 12_000), {
           timeout: 15_000,
           message: 'cycle reference frame did not render while tab A was visible'
         })
@@ -500,8 +500,8 @@ test.describe('Terminal hidden view parking', () => {
       // between them is the deterministic hide/reveal driver. The decoy tab
       // absorbs the #8262 last-active exemption each cycle (hidden after B) so
       // tab A — not the just-hidden view — is the one that cold-parks.
-      const tabBId = await createActiveTerminalTab(dolphinPage, worktreeId)
-      const decoyTabId = await createActiveTerminalTab(dolphinPage, worktreeId)
+      const tabBId = await createActiveTerminalTab(appPage, worktreeId)
+      const decoyTabId = await createActiveTerminalTab(appPage, worktreeId)
 
       // One park/reveal cycle to run the frame through the snapshot restore for a
       // baseline. Why not compare against the visible-before-park content: an
@@ -511,21 +511,21 @@ test.describe('Terminal hidden view parking', () => {
       // omits — that is contract, not garble. Baselining after one reveal makes
       // both sides pass through identical machinery, so any later diff is drift.
       const runOneParkRevealCycle = async (cycle: number): Promise<string[]> => {
-        await activateTerminalTab(dolphinPage, tabBId)
+        await activateTerminalTab(appPage, tabBId)
         // Hide tab B behind the decoy so B (not A) holds the #8262 exemption.
-        await activateTerminalTab(dolphinPage, decoyTabId)
-        await waitForTabParked(dolphinPage, tabAId, { parkDelayMs: PARKING_DELAY_MS })
-        await activateTerminalTab(dolphinPage, tabAId)
-        await waitForActiveTerminalManager(dolphinPage, 30_000)
-        const revealed = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+        await activateTerminalTab(appPage, decoyTabId)
+        await waitForTabParked(appPage, tabAId, { parkDelayMs: PARKING_DELAY_MS })
+        await activateTerminalTab(appPage, tabAId)
+        await waitForActiveTerminalManager(appPage, 30_000)
+        const revealed = await waitForPaneIdentitySnapshot(appPage, 1)
         expect(revealed.panes[0]?.ptyId).toBe(tabAPtyId)
         await expect
-          .poll(() => getTerminalContent(dolphinPage, 12_000), {
+          .poll(() => getTerminalContent(appPage, 12_000), {
             timeout: 15_000,
             message: `cycle ${cycle}: reference frame did not restore on reveal`
           })
           .toContain(marker)
-        const rows = terminalContentRows(await getTerminalContent(dolphinPage, 12_000))
+        const rows = terminalContentRows(await getTerminalContent(appPage, 12_000))
         // Garble sentinel: the hidden-skip banner must never appear.
         expect(rows.join('\n')).not.toContain('Dolphin skipped hidden terminal output')
         return rows
@@ -543,7 +543,7 @@ test.describe('Terminal hidden view parking', () => {
       for (let cycle = 1; cycle < CYCLES; cycle++) {
         // Why: each cycle intentionally flips this tab's rendered verdict twice.
         // Let the production anti-churn burst window lapse before the next one.
-        await dolphinPage.waitForTimeout(PARK_VERDICT_BURST_SETTLE_MS)
+        await appPage.waitForTimeout(PARK_VERDICT_BURST_SETTLE_MS)
         const rows = await runOneParkRevealCycle(cycle)
         if (JSON.stringify(rows) !== JSON.stringify(referenceRows)) {
           mismatches.push(
@@ -562,7 +562,7 @@ test.describe('Terminal hidden view parking', () => {
       ).toEqual([])
 
       const screenshotPath = testInfo.outputPath('park-reveal-25-cycles-final.png')
-      await dolphinPage.screenshot({ path: screenshotPath, fullPage: true })
+      await appPage.screenshot({ path: screenshotPath, fullPage: true })
       await testInfo.attach('park-reveal-25-cycles-final.png', {
         path: screenshotPath,
         contentType: 'image/png'

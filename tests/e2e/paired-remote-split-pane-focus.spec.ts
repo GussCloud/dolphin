@@ -28,16 +28,14 @@ type HostTerminalSurface = {
 const splitRightChord = process.platform === 'darwin' ? 'Meta+d' : 'Control+Shift+d'
 
 test('focuses the pane a client split creates on a paired remote workspace @headful', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(150_000)
-  const hostWorktreeId = await dolphinPage.evaluate(
-    () => window.__store?.getState().activeWorktreeId
-  )
+  const hostWorktreeId = await appPage.evaluate(() => window.__store?.getState().activeWorktreeId)
   if (!hostWorktreeId) {
     throw new Error('Headed host has no active seeded workspace')
   }
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedElectronClient(offer, testInfo, 'paired-split-focus-client')
   try {
     await revealPairedClientWindow(client)

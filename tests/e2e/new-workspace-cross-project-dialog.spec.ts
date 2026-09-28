@@ -26,17 +26,17 @@ function createGitRepository(repositoryPath: string): void {
 
 test('keeps long repository names inside the cross-project confirmation dialog', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
 
   const tempRoot = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-cross-project-dialog-'))
   const secondRepositoryPath = path.join(tempRoot, LONG_REPOSITORY_NAME)
   createGitRepository(secondRepositoryPath)
 
   try {
-    const secondRepositoryId = await dolphinPage.evaluate(async (repositoryPath) => {
+    const secondRepositoryId = await appPage.evaluate(async (repositoryPath) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available')
@@ -48,7 +48,7 @@ test('keeps long repository names inside the cross-project confirmation dialog',
       return repository.id
     }, secondRepositoryPath)
 
-    const currentRepositoryId = await dolphinPage.evaluate(() => {
+    const currentRepositoryId = await appPage.evaluate(() => {
       const store = window.__store
       const activeWorktreeId = store?.getState().activeWorktreeId
       if (!store || !activeWorktreeId) {
@@ -62,7 +62,7 @@ test('keeps long repository names inside the cross-project confirmation dialog',
       }
       return entry[0]
     })
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       async ({ repositoryId, displayName }) => {
         const store = window.__store
         if (!store || !(await store.getState().updateRepo(repositoryId, { displayName }))) {
@@ -85,16 +85,16 @@ test('keeps long repository names inside the cross-project confirmation dialog',
     )
 
     // Why: 640px is the narrowest desktop layout, where the footer switches to a row.
-    await dolphinPage.setViewportSize({ width: 640, height: 720 })
-    await openSidebarWorkspaceComposer(dolphinPage)
+    await appPage.setViewportSize({ width: 640, height: 720 })
+    await openSidebarWorkspaceComposer(appPage)
 
-    const composer = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+    const composer = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
     await expect(composer).toBeVisible()
     const nameInput = composer.locator('[data-workspace-name-input="true"]')
     await expect(nameInput).toBeVisible()
     await nameInput.fill(`https://github.com/e2e/${LONG_REPOSITORY_SLUG}/issues/42`)
 
-    const confirmation = dolphinPage.getByRole('dialog', { name: 'Switch project?' })
+    const confirmation = appPage.getByRole('dialog', { name: 'Switch project?' })
     await expect(confirmation).toBeVisible()
     await expect(confirmation).toContainText(LONG_REPOSITORY_NAME)
 
@@ -133,7 +133,7 @@ test('keeps long repository names inside the cross-project confirmation dialog',
 
     expect(layout).toEqual({ dialogFits: true, footerFits: true, buttonsFit: true })
   } finally {
-    await dolphinPage
+    await appPage
       .evaluate(() => {
         window.__store?.getState().closeModal()
       })

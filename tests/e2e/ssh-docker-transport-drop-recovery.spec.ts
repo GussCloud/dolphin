@@ -106,50 +106,48 @@ function readUserDataDir(electronApp: ElectronApplication): Promise<string> {
 test.describe('SSH transport drop recovery', () => {
   test.skip(!RUN_DOCKER_SSH, 'Set DOLPHIN_E2E_SSH_DOCKER=1 to run the dockerized SSH relay tests')
 
-  test('recovers a live pane after the transport dies under it', async ({
-    dolphinPage
-  }, testInfo) => {
+  test('recovers a live pane after the transport dies under it', async ({ appPage }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
       enableDockerSshRelayTargetShellTitle(target)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target, {
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target, {
         relayGracePeriodSeconds: 0
       })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
       // A marker, not a prompt: a prompt reappears on its own, so it cannot tell restored
       // scrollback from a shell that simply started again.
       const markerSuffix = Date.now()
       const marker = `DROP_MARKER_${markerSuffix}`
-      await execInTerminal(dolphinPage, ptyId, `printf 'DROP_MARKER_%s\\n' ${markerSuffix}`)
-      await waitForTerminalOutput(dolphinPage, marker, 30_000)
+      await execInTerminal(appPage, ptyId, `printf 'DROP_MARKER_%s\\n' ${markerSuffix}`)
+      await waitForTerminalOutput(appPage, marker, 30_000)
 
-      await recoverDockerSshRelayAfterFault(dolphinPage, remote.targetId, () => {
+      await recoverDockerSshRelayAfterFault(appPage, remote.targetId, () => {
         expect(dropDockerSshRelayTransport(target!)).toBeGreaterThan(0)
       })
 
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      expect(await waitForActivePanePtyId(dolphinPage, 60_000)).toBe(ptyId)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      expect(await waitForActivePanePtyId(appPage, 60_000)).toBe(ptyId)
 
       // The pane must still show what it had. A blank pane here is the reported bug.
-      await waitForTerminalOutput(dolphinPage, marker, 60_000)
+      await waitForTerminalOutput(appPage, marker, 60_000)
 
       // And it must still be wired to a shell that answers — a pane can repaint and still be dead,
       // which is the failure mode a content-only assertion misses.
       const afterMarkerSuffix = Date.now()
       const afterMarker = `DROP_AFTER_${afterMarkerSuffix}`
       await execInTerminal(
-        dolphinPage,
-        await waitForActivePanePtyId(dolphinPage, 60_000),
+        appPage,
+        await waitForActivePanePtyId(appPage, 60_000),
         `printf 'DROP_AFTER_%s\\n' ${afterMarkerSuffix}`
       )
-      await waitForTerminalOutput(dolphinPage, afterMarker, 60_000)
+      await waitForTerminalOutput(appPage, afterMarker, 60_000)
     } finally {
       if (target) {
         clearDockerSshRelayFaults(target)
@@ -158,9 +156,7 @@ test.describe('SSH transport drop recovery', () => {
     }
   })
 
-  test('stays bounded when a disconnected shell floods its pty', async ({
-    dolphinPage
-  }, testInfo) => {
+  test('stays bounded when a disconnected shell floods its pty', async ({ appPage }, testInfo) => {
     test.slow()
     // Timeouts here are deliberately generous: this guards memory, not latency. A 48MB flood plus a
     // reconnect lands near 60s wall-clock end to end, so a 60s bind timeout was marginal and made
@@ -177,14 +173,14 @@ test.describe('SSH transport drop recovery', () => {
     try {
       target = startDockerSshRelayTarget(testInfo)
       enableDockerSshRelayTargetShellTitle(target)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target, {
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target, {
         relayGracePeriodSeconds: 0
       })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 240_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 240_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 240_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 240_000)
 
       const readRelayRssKb = (): number => {
         const out = execDockerSshRelayTargetCommand(
@@ -198,15 +194,15 @@ test.describe('SSH transport drop recovery', () => {
 
       // ~48 MB of output with nobody attached: far past any sane replay window.
       await execInTerminal(
-        dolphinPage,
+        appPage,
         ptyId,
         `yes "$(printf 'DOLPHIN_%s' FLOOD_LINE)" | head -c 48000000; printf 'FLOO%s\\n' DED`
       )
-      await waitForTerminalOutput(dolphinPage, 'DOLPHIN_FLOOD_LINE', 30_000, 20_000)
-      await recoverDockerSshRelayAfterFault(dolphinPage, remote.targetId, () => {
+      await waitForTerminalOutput(appPage, 'DOLPHIN_FLOOD_LINE', 30_000, 20_000)
+      await recoverDockerSshRelayAfterFault(appPage, remote.targetId, () => {
         expect(dropDockerSshRelayTransport(target!)).toBeGreaterThan(0)
       })
-      await waitForActiveTerminalManager(dolphinPage, 240_000)
+      await waitForActiveTerminalManager(appPage, 240_000)
 
       // Why a generous ceiling: this is an OOM guard, not a memory budget. Unbounded retention of
       // 48 MB of pty output would blow past it; ordinary V8 churn will not.
@@ -217,17 +213,17 @@ test.describe('SSH transport drop recovery', () => {
       ).toBeLessThan(200_000)
 
       // Wait for the finite producer to finish before sending a shell command behind it.
-      await waitForTerminalOutput(dolphinPage, 'FLOODED', 120_000, 20_000)
+      await waitForTerminalOutput(appPage, 'FLOODED', 120_000, 20_000)
 
       // And the session must still be usable, not merely alive.
       const markerSuffix = Date.now()
       const marker = `FLOOD_AFTER_${markerSuffix}`
       await execInTerminal(
-        dolphinPage,
-        await waitForActivePanePtyId(dolphinPage, 240_000),
+        appPage,
+        await waitForActivePanePtyId(appPage, 240_000),
         `printf 'FLOOD_AFTER_%s\\n' ${markerSuffix}`
       )
-      await waitForTerminalOutput(dolphinPage, marker, 60_000, 20_000)
+      await waitForTerminalOutput(appPage, marker, 60_000, 20_000)
     } finally {
       if (target) {
         clearDockerSshRelayFaults(target)
@@ -247,36 +243,36 @@ test.describe('SSH transport drop recovery', () => {
    * host evidence of absence, so replacing the pane is correct here and nowhere else in this file.
    */
   test('replaces the pane only when the host proves the session is gone', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
       enableDockerSshRelayTargetShellTitle(target)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target, {
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target, {
         relayGracePeriodSeconds: 0
       })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
       const markerSuffix = Date.now()
       const marker = `KILL_MARKER_${markerSuffix}`
-      await execInTerminal(dolphinPage, ptyId, `printf 'KILL_MARKER_%s\\n' ${markerSuffix}`)
-      await waitForTerminalOutput(dolphinPage, marker, 30_000)
+      await execInTerminal(appPage, ptyId, `printf 'KILL_MARKER_%s\\n' ${markerSuffix}`)
+      await waitForTerminalOutput(appPage, marker, 30_000)
 
-      await recoverDockerSshRelayAfterFault(dolphinPage, remote.targetId, () => {
+      await recoverDockerSshRelayAfterFault(appPage, remote.targetId, () => {
         expect(killDockerSshRelayDaemon(target!)).toBeGreaterThan(0)
       })
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
 
       // The verdict, expressed as the only thing a user can observe: the pane is now backed by a
       // DIFFERENT pty. On the transport-drop cases above this id must not change; here it must.
       await expect
-        .poll(() => waitForActivePanePtyId(dolphinPage, 60_000).catch(() => ptyId), {
+        .poll(() => waitForActivePanePtyId(appPage, 60_000).catch(() => ptyId), {
           timeout: 120_000,
           message: 'pane kept its old PTY binding after the host proved the session was gone'
         })
@@ -286,11 +282,11 @@ test.describe('SSH transport drop recovery', () => {
       const afterSuffix = Date.now()
       const afterMarker = `KILL_AFTER_${afterSuffix}`
       await execInTerminal(
-        dolphinPage,
-        await waitForActivePanePtyId(dolphinPage, 60_000),
+        appPage,
+        await waitForActivePanePtyId(appPage, 60_000),
         `printf 'KILL_AFTER_%s\\n' ${afterSuffix}`
       )
-      await waitForTerminalOutput(dolphinPage, afterMarker, 60_000)
+      await waitForTerminalOutput(appPage, afterMarker, 60_000)
     } finally {
       if (target) {
         clearDockerSshRelayFaults(target)
@@ -314,7 +310,7 @@ test.describe('SSH transport drop recovery', () => {
    * failure (docs/reference/ssh-execution-boundary.md).
    */
   test('keeps one reattachable lease per pane across repeated relay restarts', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }, testInfo) => {
     test.slow()
@@ -322,39 +318,39 @@ test.describe('SSH transport drop recovery', () => {
     try {
       target = startDockerSshRelayTarget(testInfo)
       enableDockerSshRelayTargetShellTitle(target)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target, {
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target, {
         relayGracePeriodSeconds: 0
       })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      await waitForActivePanePtyId(dolphinPage, 60_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      await waitForActivePanePtyId(appPage, 60_000)
 
       const userDataDir = await readUserDataDir(electronApp)
       const generations: string[][] = []
 
       for (let generation = 1; generation <= 5; generation++) {
-        const previousPtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-        await recoverDockerSshRelayAfterFault(dolphinPage, remote.targetId, () => {
+        const previousPtyId = await waitForActivePanePtyId(appPage, 60_000)
+        await recoverDockerSshRelayAfterFault(appPage, remote.targetId, () => {
           expect(
             killDockerSshRelayDaemon(target!),
             'no relay process was found to kill'
           ).toBeGreaterThan(0)
         })
-        await waitForActiveTerminalManager(dolphinPage, 120_000)
+        await waitForActiveTerminalManager(appPage, 120_000)
         // Transport status can still be connected while the pane retains its old binding.
         await expect
-          .poll(() => waitForActivePanePtyId(dolphinPage, 60_000).catch(() => previousPtyId), {
+          .poll(() => waitForActivePanePtyId(appPage, 60_000).catch(() => previousPtyId), {
             timeout: 120_000,
             message: `pane kept its old PTY binding after relay kill ${generation}`
           })
           .not.toBe(previousPtyId)
-        const ptyId = await waitForActivePanePtyId(dolphinPage, 120_000)
+        const ptyId = await waitForActivePanePtyId(appPage, 120_000)
         const markerSuffix = `${generation}_${Date.now()}`
         const marker = `LEASE_GEN_${markerSuffix}`
-        await execInTerminal(dolphinPage, ptyId, `printf 'LEASE_GEN_%s\\n' ${markerSuffix}`)
-        await waitForTerminalOutput(dolphinPage, marker, 60_000)
+        await execInTerminal(appPage, ptyId, `printf 'LEASE_GEN_%s\\n' ${markerSuffix}`)
+        await waitForTerminalOutput(appPage, marker, 60_000)
 
         try {
           await expect
@@ -393,34 +389,34 @@ test.describe('SSH transport drop recovery', () => {
    * during the silence must be `unverifiable`, so the pane must keep its PTY and come back with its
    * scrollback rather than concluding the session died and starting over.
    */
-  test('keeps the session while a frozen host goes silent', async ({ dolphinPage }, testInfo) => {
+  test('keeps the session while a frozen host goes silent', async ({ appPage }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
       enableDockerSshRelayTargetShellTitle(target)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await connectDockerSshRelayTarget(dolphinPage, target, { relayGracePeriodSeconds: 0 })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await connectDockerSshRelayTarget(appPage, target, { relayGracePeriodSeconds: 0 })
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
       const markerSuffix = Date.now()
       const marker = `STALL_MARKER_${markerSuffix}`
-      await execInTerminal(dolphinPage, ptyId, `printf 'STALL_MARKER_%s\\n' ${markerSuffix}`)
-      await waitForTerminalOutput(dolphinPage, marker, 30_000)
+      await execInTerminal(appPage, ptyId, `printf 'STALL_MARKER_%s\\n' ${markerSuffix}`)
+      await waitForTerminalOutput(appPage, marker, 30_000)
 
       // Long enough to outlast a liveness probe, which is the point: a timeout firing here would be
       // the client asserting death it never observed.
       await withStalledDockerSshRelayTarget(target, async () => {
-        await dolphinPage.waitForTimeout(30_000)
+        await appPage.waitForTimeout(30_000)
       })
 
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
       // Same PTY, not a replacement: nothing here is host evidence of absence.
-      expect(await waitForActivePanePtyId(dolphinPage, 60_000)).toBe(ptyId)
-      await waitForTerminalOutput(dolphinPage, marker, 60_000)
+      expect(await waitForActivePanePtyId(appPage, 60_000)).toBe(ptyId)
+      await waitForTerminalOutput(appPage, marker, 60_000)
     } finally {
       if (target) {
         clearDockerSshRelayFaults(target)
@@ -430,56 +426,56 @@ test.describe('SSH transport drop recovery', () => {
   })
 
   // #18018: wait for the recovered authority before input; a retained manager can still be disconnected.
-  test('accepts input again after a frozen host resumes', async ({ dolphinPage }, testInfo) => {
+  test('accepts input again after a frozen host resumes', async ({ appPage }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     let observationTarget: { targetId: string; ptyId: string } | undefined
     try {
       target = startDockerSshRelayTarget(testInfo)
       enableDockerSshRelayTargetShellTitle(target)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target, {
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target, {
         relayGracePeriodSeconds: 0
       })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
       observationTarget = { targetId: remote.targetId, ptyId }
       const beforeSuffix = Date.now()
-      await execInTerminal(dolphinPage, ptyId, `printf 'STALL_BEFORE_%s\\n' ${beforeSuffix}`)
-      await waitForTerminalOutput(dolphinPage, `STALL_BEFORE_${beforeSuffix}`, 60_000)
+      await execInTerminal(appPage, ptyId, `printf 'STALL_BEFORE_%s\\n' ${beforeSuffix}`)
+      await waitForTerminalOutput(appPage, `STALL_BEFORE_${beforeSuffix}`, 60_000)
       await attachSshRecoveryInputObservation(
-        dolphinPage,
+        appPage,
         testInfo,
         remote.targetId,
         ptyId,
         'before-freeze'
       )
 
-      await recoverDockerSshRelayAfterFault(dolphinPage, remote.targetId, async () => {
+      await recoverDockerSshRelayAfterFault(appPage, remote.targetId, async () => {
         await withStalledDockerSshRelayTarget(target!, async () => {
-          await dolphinPage.waitForTimeout(30_000)
+          await appPage.waitForTimeout(30_000)
         })
       })
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
 
       const afterSuffix = Date.now()
       const afterMarker = `STALL_AFTER_${afterSuffix}`
-      await execInTerminal(dolphinPage, ptyId, `printf 'STALL_AFTER_%s\\n' ${afterSuffix}`)
+      await execInTerminal(appPage, ptyId, `printf 'STALL_AFTER_%s\\n' ${afterSuffix}`)
       await attachSshRecoveryInputObservation(
-        dolphinPage,
+        appPage,
         testInfo,
         remote.targetId,
         ptyId,
         'after-write'
       )
-      await waitForTerminalOutput(dolphinPage, afterMarker, 60_000)
+      await waitForTerminalOutput(appPage, afterMarker, 60_000)
     } catch (error) {
       if (observationTarget) {
         await attachSshRecoveryInputObservation(
-          dolphinPage,
+          appPage,
           testInfo,
           observationTarget.targetId,
           observationTarget.ptyId,

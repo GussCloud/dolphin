@@ -364,47 +364,47 @@ async function writeBrowserInputValue(
 }
 
 test.describe('Browser Tab', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   /**
    * User Prompt:
    * - Browser works and also retains state when switching tabs etc.
    */
-  test('creating a browser tab adds it and activates browser view', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    const browserTabsBefore = await getBrowserTabs(dolphinPage, worktreeId)
+  test('creating a browser tab adds it and activates browser view', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const browserTabsBefore = await getBrowserTabs(appPage, worktreeId)
 
-    await createBrowserTab(dolphinPage, worktreeId)
+    await createBrowserTab(appPage, worktreeId)
 
     // Wait for the browser tab to appear in the store
     await expect
-      .poll(async () => (await getBrowserTabs(dolphinPage, worktreeId)).length, { timeout: 5_000 })
+      .poll(async () => (await getBrowserTabs(appPage, worktreeId)).length, { timeout: 5_000 })
       .toBe(browserTabsBefore.length + 1)
 
     // The active tab type should switch to 'browser'
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 3_000 }).toBe('browser')
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 3_000 }).toBe('browser')
   })
 
   /**
    * User Prompt:
    * - Browser works and also retains state when switching tabs etc.
    */
-  test('browser tab is created and active in the store', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+  test('browser tab is created and active in the store', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
 
-    await createBrowserTab(dolphinPage, worktreeId)
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 5_000 }).toBe('browser')
+    await createBrowserTab(appPage, worktreeId)
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 5_000 }).toBe('browser')
 
     // Verify the browser tab exists in the store
-    const browserTabs = await getBrowserTabs(dolphinPage, worktreeId)
+    const browserTabs = await getBrowserTabs(appPage, worktreeId)
     expect(browserTabs.length).toBeGreaterThan(0)
 
     // The active browser tab should have a URL (even if it's about:blank or the default)
-    const activeBrowserTabId = await dolphinPage.evaluate(() => {
+    const activeBrowserTabId = await appPage.evaluate(() => {
       const store = window.__store
       return store?.getState().activeBrowserTabId ?? null
     })
@@ -415,90 +415,88 @@ test.describe('Browser Tab', () => {
    * User Prompt:
    * - Browser works and also retains state when switching tabs etc.
    */
-  test('browser tab retains state when switching to terminal and back', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+  test('browser tab retains state when switching to terminal and back', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
 
-    await createBrowserTab(dolphinPage, worktreeId)
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 5_000 }).toBe('browser')
+    await createBrowserTab(appPage, worktreeId)
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 5_000 }).toBe('browser')
 
     // Record the browser tab info
-    const browserTabsBefore = await getBrowserTabs(dolphinPage, worktreeId)
+    const browserTabsBefore = await getBrowserTabs(appPage, worktreeId)
     expect(browserTabsBefore.length).toBeGreaterThan(0)
     const browserTabId = browserTabsBefore.at(-1)?.id
     expect(browserTabId).toBeTruthy()
 
     // Switch to the terminal view
-    await switchToTerminalTab(dolphinPage, worktreeId)
-    await expect
-      .poll(async () => getActiveTabType(dolphinPage), { timeout: 3_000 })
-      .toBe('terminal')
+    await switchToTerminalTab(appPage, worktreeId)
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 3_000 }).toBe('terminal')
 
     // Switch back to browser tab
-    await switchToBrowserTab(dolphinPage, worktreeId, browserTabId!)
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 3_000 }).toBe('browser')
+    await switchToBrowserTab(appPage, worktreeId, browserTabId!)
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 3_000 }).toBe('browser')
 
     // The browser tab should still exist with the same ID
-    const browserTabsAfter = await getBrowserTabs(dolphinPage, worktreeId)
+    const browserTabsAfter = await getBrowserTabs(appPage, worktreeId)
     const tabStillExists = browserTabsAfter.some((tab) => tab.id === browserTabId)
     expect(tabStillExists).toBe(true)
   })
 
   test('browser webview form state survives switching between browser tabs', async ({
-    dolphinPage
+    appPage
   }) => {
     const formServer = await startBrowserFormServer()
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+      const worktreeId = (await getActiveWorktreeId(appPage))!
       const firstTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         formServer.url('First search'),
         'First Form'
       )
       expect(firstTab?.id).toBeTruthy()
-      await writeBrowserInputValue(dolphinPage, firstTab!.id, 'first typed value')
+      await writeBrowserInputValue(appPage, firstTab!.id, 'first typed value')
 
       const secondTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         formServer.url('Second search'),
         'Second Form'
       )
       expect(secondTab?.id).toBeTruthy()
-      await writeBrowserInputValue(dolphinPage, secondTab!.id, 'second typed value')
+      await writeBrowserInputValue(appPage, secondTab!.id, 'second typed value')
 
       // Why: switching browser tabs used to unmount and reparent the inactive
       // Electron webview, which recreated the guest document and erased form DOM.
-      await switchToBrowserTab(dolphinPage, worktreeId, firstTab!.id)
+      await switchToBrowserTab(appPage, worktreeId, firstTab!.id)
       await expect
-        .poll(async () => readBrowserInputValue(dolphinPage, firstTab!.id), { timeout: 5_000 })
+        .poll(async () => readBrowserInputValue(appPage, firstTab!.id), { timeout: 5_000 })
         .toBe('first typed value')
 
-      await switchToBrowserTab(dolphinPage, worktreeId, secondTab!.id)
+      await switchToBrowserTab(appPage, worktreeId, secondTab!.id)
       await expect
-        .poll(async () => readBrowserInputValue(dolphinPage, secondTab!.id), { timeout: 5_000 })
+        .poll(async () => readBrowserInputValue(appPage, secondTab!.id), { timeout: 5_000 })
         .toBe('second typed value')
     } finally {
       await formServer.close()
     }
   })
 
-  test('browser page reload restores the configured 100% zoom', async ({ dolphinPage }) => {
+  test('browser page reload restores the configured 100% zoom', async ({ appPage }) => {
     const formServer = await startBrowserFormServer()
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+      const worktreeId = (await getActiveWorktreeId(appPage))!
       const browserTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         formServer.url('Zoom reload'),
         'Zoom Reload'
       )
       expect(browserTab?.id).toBeTruthy()
       await expect
-        .poll(async () => readBrowserInputValue(dolphinPage, browserTab!.id), { timeout: 5_000 })
+        .poll(async () => readBrowserInputValue(appPage, browserTab!.id), { timeout: 5_000 })
         .not.toBeNull()
 
-      const zoomLevels = await dolphinPage.evaluate(async (browserTabId) => {
+      const zoomLevels = await appPage.evaluate(async (browserTabId) => {
         const slot = document.querySelector(`[data-browser-overlay-tab-id="${browserTabId}"]`)
         const webview = slot?.querySelector('webview') as Electron.WebviewTag | null
         if (!webview) {
@@ -527,22 +525,22 @@ test.describe('Browser Tab', () => {
     }
   })
 
-  test('Cmd/Ctrl+0 resets a zoomed browser page to 100%', async ({ dolphinPage }) => {
+  test('Cmd/Ctrl+0 resets a zoomed browser page to 100%', async ({ appPage }) => {
     const formServer = await startBrowserFormServer()
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+      const worktreeId = (await getActiveWorktreeId(appPage))!
       const browserTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         formServer.url('Zoom reset'),
         'Zoom Reset'
       )
       expect(browserTab?.id).toBeTruthy()
       await expect
-        .poll(async () => readBrowserInputValue(dolphinPage, browserTab!.id), { timeout: 5_000 })
+        .poll(async () => readBrowserInputValue(appPage, browserTab!.id), { timeout: 5_000 })
         .not.toBeNull()
 
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         async ({ browserTabId, browserPageId, modifier }) => {
           const slot = document.querySelector(`[data-browser-overlay-tab-id="${browserTabId}"]`)
           const webview = slot?.querySelector('webview') as Electron.WebviewTag | null
@@ -565,7 +563,7 @@ test.describe('Browser Tab', () => {
       )
       await expect
         .poll(() =>
-          dolphinPage.evaluate((browserTabId) => {
+          appPage.evaluate((browserTabId) => {
             const slot = document.querySelector(`[data-browser-overlay-tab-id="${browserTabId}"]`)
             return (slot?.querySelector('webview') as Electron.WebviewTag | null)?.getZoomLevel()
           }, browserTab!.id)
@@ -576,34 +574,24 @@ test.describe('Browser Tab', () => {
     }
   })
 
-  test('reloading one browser tab does not adopt another tab zoom', async ({ dolphinPage }) => {
+  test('reloading one browser tab does not adopt another tab zoom', async ({ appPage }) => {
     const [formServerA, formServerB] = await Promise.all([
       startBrowserFormServer(),
       startBrowserFormServer('localhost')
     ])
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-      const tabA = await createBrowserTab(
-        dolphinPage,
-        worktreeId,
-        formServerA.url('Zoom A'),
-        'Zoom A'
-      )
-      const tabB = await createBrowserTab(
-        dolphinPage,
-        worktreeId,
-        formServerB.url('Zoom B'),
-        'Zoom B'
-      )
+      const worktreeId = (await getActiveWorktreeId(appPage))!
+      const tabA = await createBrowserTab(appPage, worktreeId, formServerA.url('Zoom A'), 'Zoom A')
+      const tabB = await createBrowserTab(appPage, worktreeId, formServerB.url('Zoom B'), 'Zoom B')
       expect(tabA?.id).toBeTruthy()
       expect(tabB?.id).toBeTruthy()
       for (const tab of [tabA, tabB]) {
         await expect
-          .poll(async () => readBrowserInputValue(dolphinPage, tab!.id), { timeout: 5_000 })
+          .poll(async () => readBrowserInputValue(appPage, tab!.id), { timeout: 5_000 })
           .not.toBeNull()
       }
 
-      const levels = await dolphinPage.evaluate(
+      const levels = await appPage.evaluate(
         async ({ tabAId, tabBId, pageBId }) => {
           const webviewFor = (id: string): Electron.WebviewTag => {
             const slot = document.querySelector(`[data-browser-overlay-tab-id="${id}"]`)
@@ -649,13 +637,13 @@ test.describe('Browser Tab', () => {
 
   test('new-tab link gestures follow Chrome foreground and background behavior', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const linkServer = await startBrowserLinkServer()
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+      const worktreeId = (await getActiveWorktreeId(appPage))!
       const sourceTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         linkServer.sourceUrl,
         'Source page'
@@ -666,69 +654,57 @@ test.describe('Browser Tab', () => {
         ({ BaseWindow }) => BaseWindow.getAllWindows().length
       )
       // A plain main-frame target=_blank click must not navigate the source tab away.
-      const sourceTabLocator = dolphinPage.locator(`[data-tab-id="${sourceTab!.id}"]`)
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#blank-link')
-      await expectBrowserTabActive(dolphinPage, 'Blank target destination')
+      const sourceTabLocator = appPage.locator(`[data-tab-id="${sourceTab!.id}"]`)
+      await clickBrowserLink(appPage, sourceTab!.id, '#blank-link')
+      await expectBrowserTabActive(appPage, 'Blank target destination')
       await expect(sourceTabLocator).toContainText('Source page')
-      await switchToBrowserTab(dolphinPage, worktreeId, sourceTab!.id)
+      await switchToBrowserTab(appPage, worktreeId, sourceTab!.id)
 
       // Context-menu links keep the source visible until the new tab is selected.
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#external-link', { button: 'right' })
-      await dolphinPage
+      await clickBrowserLink(appPage, sourceTab!.id, '#external-link', { button: 'right' })
+      await appPage
         .getByRole('menuitem', { name: 'Open Link In Dolphin Browser', exact: true })
         .click()
-      await expectBrowserTabOpenedInBackground(dolphinPage, sourceTab!.id, 'Linked destination')
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#frame-link', {
+      await expectBrowserTabOpenedInBackground(appPage, sourceTab!.id, 'Linked destination')
+      await clickBrowserLink(appPage, sourceTab!.id, '#frame-link', {
         frameSelector: '#link-frame'
       })
-      await expectBrowserTabActive(dolphinPage, 'Frame destination')
-      await switchToBrowserTab(dolphinPage, worktreeId, sourceTab!.id)
+      await expectBrowserTabActive(appPage, 'Frame destination')
+      await switchToBrowserTab(appPage, worktreeId, sourceTab!.id)
 
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#frame-modifier-link', {
+      await clickBrowserLink(appPage, sourceTab!.id, '#frame-modifier-link', {
         frameSelector: '#link-frame',
         modifiers: process.platform === 'darwin' ? ['meta'] : ['control']
       })
-      await expectBrowserTabOpenedInBackground(
-        dolphinPage,
-        sourceTab!.id,
-        'Frame modifier destination'
-      )
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#frame-middle-link', {
+      await expectBrowserTabOpenedInBackground(appPage, sourceTab!.id, 'Frame modifier destination')
+      await clickBrowserLink(appPage, sourceTab!.id, '#frame-middle-link', {
         button: 'middle',
         frameSelector: '#link-frame'
       })
-      await expectBrowserTabOpenedInBackground(
-        dolphinPage,
-        sourceTab!.id,
-        'Frame middle destination'
-      )
+      await expectBrowserTabOpenedInBackground(appPage, sourceTab!.id, 'Frame middle destination')
 
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#modifier-link', {
+      await clickBrowserLink(appPage, sourceTab!.id, '#modifier-link', {
         modifiers: process.platform === 'darwin' ? ['meta'] : ['control']
       })
-      await expectBrowserTabOpenedInBackground(dolphinPage, sourceTab!.id, 'Modifier destination')
+      await expectBrowserTabOpenedInBackground(appPage, sourceTab!.id, 'Modifier destination')
 
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#frame-shift-middle-link', {
+      await clickBrowserLink(appPage, sourceTab!.id, '#frame-shift-middle-link', {
         button: 'middle',
         modifiers: ['shift'],
         frameSelector: '#link-frame'
       })
-      await expectBrowserTabActive(dolphinPage, 'Frame shift middle destination')
-      await switchToBrowserTab(dolphinPage, worktreeId, sourceTab!.id)
+      await expectBrowserTabActive(appPage, 'Frame shift middle destination')
+      await switchToBrowserTab(appPage, worktreeId, sourceTab!.id)
 
-      const tabCountBeforeCancelledClick = await dolphinPage.locator('[data-tab-id]').count()
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#cancelled-link')
+      const tabCountBeforeCancelledClick = await appPage.locator('[data-tab-id]').count()
+      await clickBrowserLink(appPage, sourceTab!.id, '#cancelled-link')
       await expect(
-        dolphinPage.locator('[data-tab-id]').filter({ hasText: 'Click handled in page' })
+        appPage.locator('[data-tab-id]').filter({ hasText: 'Click handled in page' })
       ).toBeVisible({ timeout: 10_000 })
-      await expect(dolphinPage.locator('[data-tab-id]')).toHaveCount(tabCountBeforeCancelledClick)
+      await expect(appPage.locator('[data-tab-id]')).toHaveCount(tabCountBeforeCancelledClick)
 
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#middle-link', { button: 'middle' })
-      await expectBrowserTabOpenedInBackground(
-        dolphinPage,
-        sourceTab!.id,
-        'Middle-click destination'
-      )
+      await clickBrowserLink(appPage, sourceTab!.id, '#middle-link', { button: 'middle' })
+      await expectBrowserTabOpenedInBackground(appPage, sourceTab!.id, 'Middle-click destination')
       await expect
         .poll(() => electronApp.evaluate(({ BaseWindow }) => BaseWindow.getAllWindows().length), {
           timeout: 5_000
@@ -740,19 +716,19 @@ test.describe('Browser Tab', () => {
   })
 
   test('blocked window.close in a link-created tab does not break tab switching', async ({
-    dolphinPage
+    appPage
   }) => {
     const closeServer = await startBrowserWindowCloseServer()
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+      const worktreeId = (await getActiveWorktreeId(appPage))!
       const neighboringTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         'about:blank',
         'Neighboring tab'
       )
       const sourceTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         closeServer.sourceUrl,
         'Close link source'
@@ -760,22 +736,20 @@ test.describe('Browser Tab', () => {
       expect(neighboringTab?.id).toBeTruthy()
       expect(sourceTab?.id).toBeTruthy()
 
-      await clickBrowserLink(dolphinPage, sourceTab!.id, '#window-close-link')
+      await clickBrowserLink(appPage, sourceTab!.id, '#window-close-link')
       let closeTabId: string | null = null
       await expect
         .poll(async () => {
-          const tabs = await getBrowserTabs(dolphinPage, worktreeId)
+          const tabs = await getBrowserTabs(appPage, worktreeId)
           closeTabId = tabs.find((tab) => tab.url === closeServer.url)?.id ?? null
           return closeTabId
         })
         .not.toBeNull()
 
-      await dolphinPage.locator(`[data-tab-id="${neighboringTab!.id}"]`).click()
+      await appPage.locator(`[data-tab-id="${neighboringTab!.id}"]`).click()
+      await expect.poll(async () => getActiveTabType(appPage), { timeout: 5_000 }).toBe('browser')
       await expect
-        .poll(async () => getActiveTabType(dolphinPage), { timeout: 5_000 })
-        .toBe('browser')
-      await expect
-        .poll(() => readBrowserWindowCloseStatus(dolphinPage, closeTabId!), { timeout: 5_000 })
+        .poll(() => readBrowserWindowCloseStatus(appPage, closeTabId!), { timeout: 5_000 })
         .toContain('window.close() was blocked')
     } finally {
       await closeServer.close()
@@ -783,13 +757,13 @@ test.describe('Browser Tab', () => {
   })
 
   test('directly created browser tabs block window.close and remain usable', async ({
-    dolphinPage
+    appPage
   }) => {
     const closeServer = await startBrowserWindowCloseServer()
     try {
-      const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+      const worktreeId = (await getActiveWorktreeId(appPage))!
       const directTab = await createBrowserTab(
-        dolphinPage,
+        appPage,
         worktreeId,
         closeServer.url,
         'Direct close tab'
@@ -797,13 +771,13 @@ test.describe('Browser Tab', () => {
       expect(directTab?.id).toBeTruthy()
 
       await expect
-        .poll(() => readBrowserWindowCloseStatus(dolphinPage, directTab!.id), { timeout: 5_000 })
+        .poll(() => readBrowserWindowCloseStatus(appPage, directTab!.id), { timeout: 5_000 })
         .toContain('window.close() was blocked')
 
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(async (targetBrowserTabId) => {
+            appPage.evaluate(async (targetBrowserTabId) => {
               const slot = document.querySelector(
                 `[data-browser-overlay-tab-id="${targetBrowserTabId}"]`
               )
@@ -832,35 +806,31 @@ test.describe('Browser Tab', () => {
    * User Prompt:
    * - Browser works and also retains state when switching tabs etc.
    */
-  test('browser tab retains state when switching worktrees and back', async ({ dolphinPage }) => {
-    const allWorktreeIds = await getAllWorktreeIds(dolphinPage)
+  test('browser tab retains state when switching worktrees and back', async ({ appPage }) => {
+    const allWorktreeIds = await getAllWorktreeIds(appPage)
     if (allWorktreeIds.length < 2) {
       test.skip(true, 'Need at least 2 worktrees to test worktree switching')
     }
 
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
+    const worktreeId = (await getActiveWorktreeId(appPage))!
 
-    await createBrowserTab(dolphinPage, worktreeId)
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 5_000 }).toBe('browser')
+    await createBrowserTab(appPage, worktreeId)
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 5_000 }).toBe('browser')
 
-    const browserTabsBefore = await getBrowserTabs(dolphinPage, worktreeId)
+    const browserTabsBefore = await getBrowserTabs(appPage, worktreeId)
     expect(browserTabsBefore.length).toBeGreaterThan(0)
 
     // Switch to a different worktree via the store
-    const otherId = await switchToOtherWorktree(dolphinPage, worktreeId)
+    const otherId = await switchToOtherWorktree(appPage, worktreeId)
     expect(otherId).not.toBeNull()
-    await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 5_000 })
-      .toBe(otherId)
+    await expect.poll(async () => getActiveWorktreeId(appPage), { timeout: 5_000 }).toBe(otherId)
 
     // Switch back to the original worktree
-    await switchToWorktree(dolphinPage, worktreeId)
-    await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), { timeout: 5_000 })
-      .toBe(worktreeId)
+    await switchToWorktree(appPage, worktreeId)
+    await expect.poll(async () => getActiveWorktreeId(appPage), { timeout: 5_000 }).toBe(worktreeId)
 
     // Browser tabs should still be preserved
-    const browserTabsAfter = await getBrowserTabs(dolphinPage, worktreeId)
+    const browserTabsAfter = await getBrowserTabs(appPage, worktreeId)
     expect(browserTabsAfter.length).toBe(browserTabsBefore.length)
   })
 })

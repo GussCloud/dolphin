@@ -248,7 +248,7 @@ async function openClientHostedSshPage(
 }
 
 test('recovers client-hosted SSH-routed browser pages across a real SSH drop', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(900_000)
   let target: DockerSshRelayTarget | null = null
@@ -256,9 +256,9 @@ test('recovers client-hosted SSH-routed browser pages across a real SSH drop', a
   try {
     target = startDockerSshRelayTarget(testInfo)
     startSshRemoteOnlyBrowserFixture(target)
-    const remote = await connectDockerSshRelayTarget(dolphinPage, target)
+    const remote = await connectDockerSshRelayTarget(appPage, target)
 
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     client = await launchPairedElectronClient(
       offer,
       testInfo,
@@ -300,7 +300,7 @@ test('recovers client-hosted SSH-routed browser pages across a real SSH drop', a
       })
       .toEqual(expect.arrayContaining([LOGIN_URL, ECHO_BEFORE_URL]))
 
-    const beforeDrop = await readHubSshState(dolphinPage, remote.targetId)
+    const beforeDrop = await readHubSshState(appPage, remote.targetId)
     expect(beforeDrop.status).toBe('connected')
     expect(beforeDrop.connectionGeneration).not.toBeNull()
 
@@ -309,7 +309,7 @@ test('recovers client-hosted SSH-routed browser pages across a real SSH drop', a
       killSshRelayTargetTransport(target),
       'the container had no established SSH session to kill'
     ).toBeGreaterThan(0)
-    const afterDrop = await reconnectHubSshTarget(dolphinPage, remote.targetId)
+    const afterDrop = await reconnectHubSshTarget(appPage, remote.targetId)
     expect(
       afterDrop.connectionGeneration,
       'a reconnect must mint a new SSH connection generation'

@@ -409,19 +409,19 @@ test.describe('Combined diff scroll restore', () => {
   test.describe.configure({ mode: 'serial' })
   test.use({ seedTestRepo: false })
 
-  test('keeps the visible section anchored after switching tabs', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test('keeps the visible section anchored after switching tabs', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
     const fixture = createCombinedDiffScrollRepo()
 
     try {
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
-      const diffTabId = await openCombinedDiff(dolphinPage, worktreeId, fixture.repoPath)
-      await expect(dolphinPage.locator('.combined-diff-scroll-container')).toBeVisible()
-      await expect(dolphinPage.getByText(`${FILE_COUNT} changed files`)).toBeVisible()
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
+      const diffTabId = await openCombinedDiff(appPage, worktreeId, fixture.repoPath)
+      await expect(appPage.locator('.combined-diff-scroll-container')).toBeVisible()
+      await expect(appPage.getByText(`${FILE_COUNT} changed files`)).toBeVisible()
 
-      await scrollCombinedDiffDeep(dolphinPage)
-      await waitForStableViewportAnchor(dolphinPage)
-      const activeScrollSamples = await wheelCombinedDiffDown(dolphinPage)
+      await scrollCombinedDiffDeep(appPage)
+      await waitForStableViewportAnchor(appPage)
+      const activeScrollSamples = await wheelCombinedDiffDown(appPage)
       expect(activeScrollSamples.length).toBeGreaterThan(2)
       expect(
         getLargestBackwardScrollJump(activeScrollSamples),
@@ -430,27 +430,27 @@ test.describe('Combined diff scroll restore', () => {
         )}`
       ).toBeLessThan(120)
 
-      const beforeSwitch = await waitForStableViewportAnchor(dolphinPage)
+      const beforeSwitch = await waitForStableViewportAnchor(appPage)
       expect(beforeSwitch.index).toBeGreaterThan(0)
 
-      await dolphinPage.evaluate((wId) => {
+      await appPage.evaluate((wId) => {
         const store = window.__store
         if (!store) {
           throw new Error('window.__store is not available')
         }
         store.getState().createTab(wId)
       }, worktreeId)
-      await expect(dolphinPage.locator('.combined-diff-scroll-container')).toHaveCount(0)
+      await expect(appPage.locator('.combined-diff-scroll-container')).toHaveCount(0)
 
-      await dolphinPage.locator(`[data-tab-id="${diffTabId}"]`).click({ force: true })
-      await expect(dolphinPage.locator('.combined-diff-scroll-container')).toBeVisible()
-      const afterSwitch = await waitForRestoredViewportAnchor(dolphinPage, beforeSwitch)
+      await appPage.locator(`[data-tab-id="${diffTabId}"]`).click({ force: true })
+      await expect(appPage.locator('.combined-diff-scroll-container')).toBeVisible()
+      const afterSwitch = await waitForRestoredViewportAnchor(appPage, beforeSwitch)
 
       expect(afterSwitch.key).toBe(beforeSwitch.key)
       expect(Math.abs(afterSwitch.top - beforeSwitch.top)).toBeLessThan(80)
 
-      await clickVisibleDiffLine(dolphinPage)
-      const afterLineClick = await waitForStableViewportAnchor(dolphinPage)
+      await clickVisibleDiffLine(appPage)
+      const afterLineClick = await waitForStableViewportAnchor(appPage)
 
       // Assert the viewport barely moved rather than an exact anchor key: sections
       // are ~viewport-sized, so a sub-pixel focus scroll from the click can flip the

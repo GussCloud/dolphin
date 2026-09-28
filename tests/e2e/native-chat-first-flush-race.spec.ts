@@ -94,14 +94,14 @@ function claudeTranscriptLines(args: {
 
 test.describe('Native chat first-flush transcript race (#8401)', () => {
   test('stays in loading (never errors) until a not-yet-flushed transcript appears, then hydrates live', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const descriptor = await waitForActivePaneHookDescriptor(dolphinPage)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
     const [tabId] = descriptor.paneKey.split(':')
     const sessionId = `e2e-first-flush-${randomUUID()}`
 
@@ -123,21 +123,21 @@ test.describe('Native chat first-flush transcript race (#8401)', () => {
     })
 
     try {
-      await enableNativeChatSetting(dolphinPage)
-      await seedClaudeProviderSession(dolphinPage, {
+      await enableNativeChatSetting(appPage)
+      await seedClaudeProviderSession(appPage, {
         paneKey: descriptor.paneKey,
         worktreeId: descriptor.worktreeId,
         sessionId,
         transcriptPath
       })
-      await toggleTerminalTabToChatView(dolphinPage, { tabId, worktreeId: descriptor.worktreeId })
+      await toggleTerminalTabToChatView(appPage, { tabId, worktreeId: descriptor.worktreeId })
 
-      await expect(dolphinPage.locator('[data-native-chat-root="true"]')).toBeVisible({
+      await expect(appPage.locator('[data-native-chat-root="true"]')).toBeVisible({
         timeout: 15_000
       })
-      await expect(dolphinPage.getByText(LOADING_TITLE)).toBeVisible({ timeout: 10_000 })
-      await expect(dolphinPage.getByText(ERROR_TITLE)).toHaveCount(0)
-      await dolphinPage.screenshot({
+      await expect(appPage.getByText(LOADING_TITLE)).toBeVisible({ timeout: 10_000 })
+      await expect(appPage.getByText(ERROR_TITLE)).toHaveCount(0)
+      await appPage.screenshot({
         path: path.join(screenshotDir, '01-loading-no-error.png')
       })
 
@@ -149,7 +149,7 @@ test.describe('Native chat first-flush transcript race (#8401)', () => {
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               ({ id, file }) =>
                 window.api.nativeChat
                   .readSession('claude', id, 50, file)
@@ -159,7 +159,7 @@ test.describe('Native chat first-flush transcript race (#8401)', () => {
           { timeout: 10_000, message: 'transcript resolved before the first flush' }
         )
         .toBe(true)
-      await expect(dolphinPage.getByText(ERROR_TITLE)).toHaveCount(0)
+      await expect(appPage.getByText(ERROR_TITLE)).toHaveCount(0)
 
       const userText = 'Explain the native chat first-flush race fix for #8401'
       const assistantText =
@@ -168,11 +168,11 @@ test.describe('Native chat first-flush transcript race (#8401)', () => {
 
       // Why: the user text also surfaces as chrome (worktree row, tab
       // title), so scope hydration assertions to the transcript subtree.
-      const transcript = dolphinPage.locator('[data-native-chat-root="true"]')
+      const transcript = appPage.locator('[data-native-chat-root="true"]')
       await expect(transcript.getByText(userText)).toBeVisible({ timeout: 30_000 })
       await expect(transcript.getByText(assistantText)).toBeVisible({ timeout: 30_000 })
-      await expect(dolphinPage.getByText(ERROR_TITLE)).toHaveCount(0)
-      await dolphinPage.screenshot({
+      await expect(appPage.getByText(ERROR_TITLE)).toHaveCount(0)
+      await appPage.screenshot({
         path: path.join(screenshotDir, '02-hydrated.png')
       })
     } finally {

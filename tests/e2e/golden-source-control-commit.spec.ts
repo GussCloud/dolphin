@@ -15,7 +15,7 @@ import {
 import { waitForSessionReady } from './helpers/store'
 
 test('@golden stages and commits a file through Source Control', async ({
-  dolphinPage,
+  appPage,
   testRepoPath,
   registerPostElectronShutdownCleanup
 }) => {
@@ -24,10 +24,10 @@ test('@golden stages and commits a file through Source Control', async ({
   seedGoldenSourceEdit(fixture.worktreePath)
   const hookMarkerPath = installPassingNodePreCommitHook(fixture)
 
-  await waitForSessionReady(dolphinPage)
-  await openGoldenSourceControl(dolphinPage, testRepoPath, fixture)
+  await waitForSessionReady(appPage)
+  await openGoldenSourceControl(appPage, testRepoPath, fixture)
 
-  const unstagedRow = dolphinPage
+  const unstagedRow = appPage
     .locator('[data-testid="source-control-entry"][data-source-control-area="unstaged"]')
     .filter({ hasText: path.basename(GOLDEN_CHANGED_PATH) })
   await expect(unstagedRow).toBeVisible()
@@ -36,12 +36,12 @@ test('@golden stages and commits a file through Source Control', async ({
   await stageButton.press('Enter')
   await expect(unstagedRow).toHaveCount(0, { timeout: 10_000 })
 
-  const stagedRow = dolphinPage
+  const stagedRow = appPage
     .locator('[data-testid="source-control-entry"][data-source-control-area="staged"]')
     .filter({ hasText: path.basename(GOLDEN_CHANGED_PATH) })
   await expect(stagedRow).toBeVisible({ timeout: 10_000 })
-  await dolphinPage.getByRole('textbox', { name: 'Commit message' }).fill('test: golden daily loop')
-  await dolphinPage.getByRole('button', { name: 'Commit', exact: true }).click()
+  await appPage.getByRole('textbox', { name: 'Commit message' }).fill('test: golden daily loop')
+  await appPage.getByRole('button', { name: 'Commit', exact: true }).click()
 
   await expect(stagedRow).toHaveCount(0, { timeout: 20_000 })
   await expect
@@ -62,8 +62,6 @@ test('@golden stages and commits a file through Source Control', async ({
   ).toBe(`${GOLDEN_GIT_AUTHOR_NAME}\n${GOLDEN_GIT_AUTHOR_EMAIL}\ntest: golden daily loop`)
   await expect.poll(() => existsSync(hookMarkerPath), { timeout: 20_000 }).toBe(true)
   await expect(
-    dolphinPage
-      .locator('[data-sonner-toast]')
-      .filter({ hasText: /node|command not found|cmd\.exe/i })
+    appPage.locator('[data-sonner-toast]').filter({ hasText: /node|command not found|cmd\.exe/i })
   ).toHaveCount(0)
 })

@@ -114,41 +114,41 @@ async function linkGitLabMRToWorktree(page: Page, worktreeId: string): Promise<v
 
 test.describe('#7732 GitLab Checks panel job details', () => {
   test('expanding a failed pipeline job shows its log, not "No inline details"', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
     await installGitLabChecksBackend(electronApp)
 
-    const worktreeId = await dolphinPage.evaluate(
+    const worktreeId = await appPage.evaluate(
       () => window.__store?.getState().activeWorktreeId ?? null
     )
     if (!worktreeId) {
       throw new Error('E2E fixture did not expose an active worktree')
     }
     // Late startup UI hydration resets the active workspace + sidebar route; let it settle first.
-    await dolphinPage.waitForTimeout(8_000)
+    await appPage.waitForTimeout(8_000)
 
-    const jobRow = dolphinPage.getByText(`${FIXTURE.stage}: ${FIXTURE.jobName}`, { exact: true })
+    const jobRow = appPage.getByText(`${FIXTURE.stage}: ${FIXTURE.jobName}`, { exact: true })
     for (let attempt = 0; attempt < 40 && (await jobRow.count()) === 0; attempt++) {
-      await linkGitLabMRToWorktree(dolphinPage, worktreeId)
-      await openChecks(dolphinPage, worktreeId)
-      await dolphinPage.waitForTimeout(500)
+      await linkGitLabMRToWorktree(appPage, worktreeId)
+      await openChecks(appPage, worktreeId)
+      await appPage.waitForTimeout(500)
     }
     await expect(jobRow).toBeVisible({ timeout: 15_000 })
 
     mkdirSync(SCREENSHOT_DIR, { recursive: true })
     await jobRow.click()
-    const noDetails = dolphinPage.getByText('No inline details are available for this check.')
-    const viewFullLogs = dolphinPage.getByRole('button', { name: 'View full logs' })
+    const noDetails = appPage.getByText('No inline details are available for this check.')
+    const viewFullLogs = appPage.getByRole('button', { name: 'View full logs' })
     for (let attempt = 0; attempt < 20; attempt++) {
       if ((await noDetails.count()) > 0 || (await viewFullLogs.count()) > 0) {
         break
       }
-      await dolphinPage.waitForTimeout(500)
+      await appPage.waitForTimeout(500)
     }
-    await dolphinPage.screenshot({
+    await appPage.screenshot({
       path: path.join(SCREENSHOT_DIR, 'gitlab-checks-job-expanded.png')
     })
 

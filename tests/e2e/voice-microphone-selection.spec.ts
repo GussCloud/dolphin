@@ -104,57 +104,53 @@ async function readMicrophoneSettings(
 }
 
 test.describe('Voice microphone selection', () => {
-  test('lists devices, persists a selected microphone, and restores it', async ({
-    dolphinPage
-  }) => {
-    await waitForSessionReady(dolphinPage)
-    await installFakeMicrophoneDevices(dolphinPage, [
+  test('lists devices, persists a selected microphone, and restores it', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await installFakeMicrophoneDevices(appPage, [
       { deviceId: 'built-in', label: 'Built-in Microphone' },
       { deviceId: 'usb-mic', label: 'USB Microphone' }
     ])
-    await dolphinPage.reload({ waitUntil: 'domcontentloaded' })
-    await waitForSessionReady(dolphinPage)
-    await prepareVoiceSettings(dolphinPage, null, null)
+    await appPage.reload({ waitUntil: 'domcontentloaded' })
+    await waitForSessionReady(appPage)
+    await prepareVoiceSettings(appPage, null, null)
 
-    const microphone = dolphinPage.getByRole('combobox', { name: 'Microphone' })
+    const microphone = appPage.getByRole('combobox', { name: 'Microphone' })
     await expect(microphone).toHaveText('System default')
     // Settings can still be animating; keyboard activation does not depend on its position.
     await microphone.press('Space')
-    await expect(dolphinPage.getByRole('option', { name: 'USB Microphone' })).toBeVisible()
+    await expect(appPage.getByRole('option', { name: 'USB Microphone' })).toBeVisible()
     // Keyboard selection bypasses the transient pointer stability gate in CI.
-    await dolphinPage.getByRole('option', { name: 'USB Microphone' }).press('Enter')
+    await appPage.getByRole('option', { name: 'USB Microphone' }).press('Enter')
 
     await expect
-      .poll(() => readMicrophoneSettings(dolphinPage), {
+      .poll(() => readMicrophoneSettings(appPage), {
         message: 'selected microphone did not persist'
       })
       .toEqual({ deviceId: 'usb-mic', label: 'USB Microphone' })
 
-    await dolphinPage.reload({ waitUntil: 'domcontentloaded' })
-    await waitForSessionReady(dolphinPage)
-    await prepareVoiceSettings(dolphinPage, 'usb-mic', 'USB Microphone')
-    await expect(dolphinPage.getByRole('combobox', { name: 'Microphone' })).toHaveText(
-      'USB Microphone'
-    )
+    await appPage.reload({ waitUntil: 'domcontentloaded' })
+    await waitForSessionReady(appPage)
+    await prepareVoiceSettings(appPage, 'usb-mic', 'USB Microphone')
+    await expect(appPage.getByRole('combobox', { name: 'Microphone' })).toHaveText('USB Microphone')
   })
 
   test('marks an unplugged device unavailable and follows a relabeled device', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await installFakeMicrophoneDevices(dolphinPage, [
+    await waitForSessionReady(appPage)
+    await installFakeMicrophoneDevices(appPage, [
       { deviceId: 'built-in', label: 'Built-in Microphone' }
     ])
-    await dolphinPage.reload({ waitUntil: 'domcontentloaded' })
-    await waitForSessionReady(dolphinPage)
-    await prepareVoiceSettings(dolphinPage, 'stale-airpods-id', 'AirPods')
+    await appPage.reload({ waitUntil: 'domcontentloaded' })
+    await waitForSessionReady(appPage)
+    await prepareVoiceSettings(appPage, 'stale-airpods-id', 'AirPods')
 
-    const microphone = dolphinPage.getByRole('combobox', { name: 'Microphone' })
+    const microphone = appPage.getByRole('combobox', { name: 'Microphone' })
     await microphone.press('Space')
-    await expect(dolphinPage.getByRole('option', { name: 'AirPods (unavailable)' })).toBeVisible()
-    await dolphinPage.keyboard.press('Escape')
+    await expect(appPage.getByRole('option', { name: 'AirPods (unavailable)' })).toBeVisible()
+    await appPage.keyboard.press('Escape')
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const state = (window as Window & { __dolphinE2EFakeMicrophone?: FakeMicrophoneState })
         .__dolphinE2EFakeMicrophone
       if (!state) {
@@ -170,18 +166,18 @@ test.describe('Voice microphone selection', () => {
     // Why: devicechange can leave Radix's listbox open and aria-hide the
     // trigger, so getByRole('combobox') finds nothing. The live option is
     // the stable handle; open the named trigger only if the list is closed.
-    const airpodsOption = dolphinPage.getByRole('option', { name: 'AirPods', exact: true })
+    const airpodsOption = appPage.getByRole('option', { name: 'AirPods', exact: true })
     await expect(async () => {
       if (!(await airpodsOption.isVisible().catch(() => false))) {
-        const trigger = dolphinPage.getByRole('combobox', { name: 'Microphone' })
+        const trigger = appPage.getByRole('combobox', { name: 'Microphone' })
         await expect(trigger).toHaveText('AirPods', { timeout: 1_000 })
         await trigger.press('Space')
       }
       await expect(airpodsOption).toBeVisible({ timeout: 1_000 })
     }).toPass({ timeout: 10_000 })
-    await expect(dolphinPage.getByRole('option', { name: 'AirPods (unavailable)' })).toHaveCount(0)
-    await dolphinPage.keyboard.press('Escape')
-    await expect(readMicrophoneSettings(dolphinPage)).resolves.toEqual({
+    await expect(appPage.getByRole('option', { name: 'AirPods (unavailable)' })).toHaveCount(0)
+    await appPage.keyboard.press('Escape')
+    await expect(readMicrophoneSettings(appPage)).resolves.toEqual({
       deviceId: 'stale-airpods-id',
       label: 'AirPods'
     })

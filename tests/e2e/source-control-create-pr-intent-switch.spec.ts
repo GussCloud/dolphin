@@ -44,12 +44,12 @@ test.describe('Source Control Create PR intent worktree switching', () => {
   test.describe.configure({ mode: 'serial' })
 
   test('keeps Create PR intent running after switching worktrees', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
     const { primaryWorktreeId, prWorktreeId, prWorktreePath, primaryBranch } =
-      await seedCreatePrComposer(dolphinPage)
+      await seedCreatePrComposer(appPage)
 
     const screenshotDir = path.join(
       process.cwd(),
@@ -62,7 +62,7 @@ test.describe('Source Control Create PR intent worktree switching', () => {
       contentType: 'text/plain'
     })
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ prWorktreeId, primaryBranch }) => {
         const store =
           window.__store ??
@@ -161,8 +161,8 @@ test.describe('Source Control Create PR intent worktree switching', () => {
       { prWorktreeId, primaryBranch }
     )
 
-    await openSourceControl(dolphinPage, prWorktreeId)
-    const createPr = dolphinPage.getByRole('button', { name: 'Create PR' }).first()
+    await openSourceControl(appPage, prWorktreeId)
+    const createPr = appPage.getByRole('button', { name: 'Create PR' }).first()
     await expect(createPr).toBeVisible({ timeout: 10_000 })
     await expect(createPr).toBeEnabled()
     await createPr.click()
@@ -170,7 +170,7 @@ test.describe('Source Control Create PR intent worktree switching', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             () =>
               (window as unknown as { __createPRIntentPushStarted: boolean })
                 .__createPRIntentPushStarted
@@ -178,12 +178,12 @@ test.describe('Source Control Create PR intent worktree switching', () => {
         { timeout: 10_000 }
       )
       .toBe(true)
-    await openSourceControl(dolphinPage, primaryWorktreeId)
+    await openSourceControl(appPage, primaryWorktreeId)
 
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             () =>
               (window as unknown as { __createPRIntentPayloads: unknown[] })
                 .__createPRIntentPayloads.length
@@ -192,7 +192,7 @@ test.describe('Source Control Create PR intent worktree switching', () => {
       )
       .toBe(1)
 
-    const completedWhileSwitchedEvidence = await dolphinPage.evaluate(() => {
+    const completedWhileSwitchedEvidence = await appPage.evaluate(() => {
       const state = window.__store?.getState()
       return {
         activeWorktreeId: state?.activeWorktreeId,
@@ -202,8 +202,8 @@ test.describe('Source Control Create PR intent worktree switching', () => {
     expect(completedWhileSwitchedEvidence.activeWorktreeId).toBe(primaryWorktreeId)
     expect(completedWhileSwitchedEvidence.rightSidebarTab).toBe('source-control')
 
-    await openSourceControl(dolphinPage, prWorktreeId)
-    const payloads = await dolphinPage.evaluate(
+    await openSourceControl(appPage, prWorktreeId)
+    const payloads = await appPage.evaluate(
       () =>
         (
           window as unknown as {
@@ -222,7 +222,7 @@ test.describe('Source Control Create PR intent worktree switching', () => {
         worktreePath: prWorktreePath
       }
     })
-    await dolphinPage.screenshot({
+    await appPage.screenshot({
       path: path.join(screenshotDir, '01-create-pr-intent-completed-after-switch.png')
     })
     await writeEvidence(testInfo, screenshotDir, 'create-pr-intent-switch-evidence.json', {
@@ -234,12 +234,12 @@ test.describe('Source Control Create PR intent worktree switching', () => {
   })
 
   test('carries unavailable dirty intent through push to the final create preflight', async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    const { prWorktreeId, prWorktreePath } = await seedCreatePrComposer(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    const { prWorktreeId, prWorktreePath } = await seedCreatePrComposer(appPage)
     const remoteRoot = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-create-pr-remote-'))
     const remotePath = path.join(remoteRoot, 'origin.git')
     execFileSync('git', ['init', '--bare', remotePath])
@@ -253,7 +253,7 @@ test.describe('Source Control Create PR intent worktree switching', () => {
     createStagedCommitMessageChange(prWorktreePath)
 
     const finalCreateError = 'Unavailable lookup intent reached final create preflight'
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ prWorktreeId, finalCreateError }) => {
         const store =
           window.__store ??
@@ -317,21 +317,21 @@ test.describe('Source Control Create PR intent worktree switching', () => {
       { prWorktreeId, finalCreateError }
     )
 
-    await openSourceControl(dolphinPage, prWorktreeId)
-    await expect(dolphinPage.getByText('e2e-commit-message-generation.txt')).toBeVisible({
+    await openSourceControl(appPage, prWorktreeId)
+    await expect(appPage.getByText('e2e-commit-message-generation.txt')).toBeVisible({
       timeout: 10_000
     })
-    await dolphinPage
+    await appPage
       .getByRole('textbox', { name: 'Commit message' })
       .fill('Exercise unavailable Create PR intent')
-    const createPr = dolphinPage.getByRole('button', { name: 'Create PR' }).first()
+    const createPr = appPage.getByRole('button', { name: 'Create PR' }).first()
     await expect(createPr).toBeEnabled()
     await createPr.click()
 
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             () =>
               (window as unknown as { __unavailableIntentPushFinished: boolean })
                 .__unavailableIntentPushFinished
@@ -339,6 +339,6 @@ test.describe('Source Control Create PR intent worktree switching', () => {
         { timeout: 10_000 }
       )
       .toBe(true)
-    await expect(dolphinPage.getByText(finalCreateError)).toBeVisible({ timeout: 10_000 })
+    await expect(appPage.getByText(finalCreateError)).toBeVisible({ timeout: 10_000 })
   })
 })

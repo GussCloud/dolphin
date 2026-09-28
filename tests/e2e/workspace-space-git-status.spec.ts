@@ -7,7 +7,7 @@ import { loadWorktreesUntilPathsPresent } from './helpers/worktree-registration'
 
 test.describe('Workspace Space git status checks', () => {
   test('checks every scanned deletable row, including rows after the first 50', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     // Why: on symlinked tmpdirs (/var→/private/var on macOS, /tmp→… on CI) Dolphin
@@ -31,7 +31,7 @@ test.describe('Workspace Space git status checks', () => {
         realpathSync(worktreePath)
       )
 
-      const repoId = await dolphinPage.evaluate((testRepoPath) => {
+      const repoId = await appPage.evaluate((testRepoPath) => {
         const store = window.__store
         if (!store) {
           throw new Error('Expected e2e store to be exposed')
@@ -45,9 +45,9 @@ test.describe('Workspace Space git status checks', () => {
 
       // Why: the 60 worktrees were added via raw git, so poll past the 5s scan
       // cache TTL until every path registers before deriving the space rows.
-      await loadWorktreesUntilPathsPresent(dolphinPage, repoId, registeredWorktreePaths)
+      await loadWorktreesUntilPathsPresent(appPage, repoId, registeredWorktreePaths)
 
-      const rowDisplayNames = await dolphinPage.evaluate(
+      const rowDisplayNames = await appPage.evaluate(
         async ({ testRepoPath, worktreePaths }) => {
           const store = window.__store
           if (!store) {
@@ -137,7 +137,7 @@ test.describe('Workspace Space git status checks', () => {
       // Why: `toHaveCount(0)` passes trivially while the list is still empty, so
       // every row has to be on screen before the absent-status assertion means
       // anything.
-      const rowCheckboxes = dolphinPage.getByRole('checkbox', {
+      const rowCheckboxes = appPage.getByRole('checkbox', {
         name: new RegExp(
           `^Select (?:${rowDisplayNames
             .map((displayName) => displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
@@ -146,7 +146,7 @@ test.describe('Workspace Space git status checks', () => {
       })
       await expect(rowCheckboxes).toHaveCount(rowDisplayNames.length, { timeout: 30_000 })
 
-      await expect(dolphinPage.getByText('Keep: git not checked')).toHaveCount(0, {
+      await expect(appPage.getByText('Keep: git not checked')).toHaveCount(0, {
         timeout: 30_000
       })
     } finally {

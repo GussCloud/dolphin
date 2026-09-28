@@ -2,10 +2,10 @@ import { expect, test } from './helpers/dolphin-app'
 
 for (const theme of ['dark', 'light'] as const) {
   test(`tab drag stays cancelled after blur and a later drag still splits (${theme})`, async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await dolphinPage.setViewportSize({ width: 1200, height: 900 })
-    await dolphinPage.evaluate(async (theme) => {
+    await appPage.setViewportSize({ width: 1200, height: 900 })
+    await appPage.evaluate(async (theme) => {
       const state = window.__store!.getState()
       await state.updateSettingsOrThrow({ theme })
       const worktreeId = state.activeWorktreeId!
@@ -15,42 +15,42 @@ for (const theme of ['dark', 'light'] as const) {
       }
     }, theme)
 
-    const tabs = dolphinPage.locator('[data-testid="sortable-tab"]:visible')
-    const panels = dolphinPage.locator('[data-tab-group-body-id]:visible')
-    const preview = dolphinPage.getByText('New split', { exact: true })
+    const tabs = appPage.locator('[data-testid="sortable-tab"]:visible')
+    const panels = appPage.locator('[data-tab-group-body-id]:visible')
+    const preview = appPage.getByText('New split', { exact: true })
     await expect(tabs).toHaveCount(2)
     await expect(panels).toHaveCount(1)
     const panel = (await panels.boundingBox())!
     const target = { x: panel.x + panel.width - 30, y: panel.y + panel.height / 2 }
     const startDrag = async (): Promise<void> => {
       const tab = (await tabs.first().boundingBox())!
-      await dolphinPage.mouse.move(tab.x + tab.width / 2, tab.y + tab.height / 2)
-      await dolphinPage.mouse.down()
-      await dolphinPage.mouse.move(target.x, target.y, { steps: 12 })
+      await appPage.mouse.move(tab.x + tab.width / 2, tab.y + tab.height / 2)
+      await appPage.mouse.down()
+      await appPage.mouse.move(target.x, target.y, { steps: 12 })
       await expect(preview).toBeVisible()
     }
 
     await startDrag()
     // Exercise the window event without changing native focus on the developer's desktop.
-    await dolphinPage.evaluate(async () => {
+    await appPage.evaluate(async () => {
       window.dispatchEvent(new Event('blur'))
       await new Promise((resolve) => window.setTimeout(resolve, 0))
     })
     await expect(preview).toHaveCount(0)
-    await dolphinPage.mouse.move(target.x - 10, target.y + 10, { steps: 3 })
+    await appPage.mouse.move(target.x - 10, target.y + 10, { steps: 3 })
 
     const screenshot = testInfo.outputPath(`tab-drag-after-blur-${theme}.png`)
-    await dolphinPage.screenshot({ path: screenshot, animations: 'disabled' })
+    await appPage.screenshot({ path: screenshot, animations: 'disabled' })
     await testInfo.attach(`tab-drag-after-blur-${theme}`, {
       path: screenshot,
       contentType: 'image/png'
     })
     await expect(preview).toHaveCount(0)
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
     await expect(panels).toHaveCount(1)
 
     await startDrag()
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
     await expect(preview).toHaveCount(0)
     await expect(panels).toHaveCount(2)
   })

@@ -100,28 +100,26 @@ async function renderInactiveCursor(
 }
 
 test.describe('Terminal inactive cursor rendering', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await waitForPaneCount(dolphinPage, 1, 30_000)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await waitForPaneCount(appPage, 1, 30_000)
   })
 
-  test('keeps an unfocused prompt cursor rendered as one block outline', async ({
-    dolphinPage
-  }) => {
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    await placeInactiveCursorAtPrompt(dolphinPage)
+  test('keeps an unfocused prompt cursor rendered as one block outline', async ({ appPage }) => {
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    await placeInactiveCursorAtPrompt(appPage)
 
-    const fixedBehavior = await renderInactiveCursor(dolphinPage)
+    const fixedBehavior = await renderInactiveCursor(appPage)
     expect(fixedBehavior.terminalFocused).toBe(false)
     expect(fixedBehavior.cursorStyle).toBe('block')
     expect(fixedBehavior.cursorInactiveStyle).toBe('outline')
     expect(fixedBehavior.cursorClassName).toMatch(/xterm-cursor-outline|canvas renderer: outline/)
 
-    const oldBehavior = await renderInactiveCursor(dolphinPage, 'outline')
+    const oldBehavior = await renderInactiveCursor(appPage, 'outline')
     expect(oldBehavior.terminalFocused).toBe(false)
     expect(oldBehavior.cursorStyle).toBe('block')
     expect(oldBehavior.cursorInactiveStyle).toBe('outline')

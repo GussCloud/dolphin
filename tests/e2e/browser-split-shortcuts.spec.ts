@@ -41,72 +41,68 @@ function terminalFindInput(page: Page) {
 }
 
 test.describe('browser split shortcuts', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   test('routes repeated Find shortcuts to the focused terminal or browser split', async ({
-    dolphinPage
+    appPage
   }) => {
-    const fixture = await createTerminalBrowserSplit(dolphinPage)
+    const fixture = await createTerminalBrowserSplit(appPage)
 
-    await dolphinPage.evaluate(({ terminalGroupId }) => {
+    await appPage.evaluate(({ terminalGroupId }) => {
       const state = window.__store?.getState()
       const worktreeId = state?.activeWorktreeId
       if (state && worktreeId) {
         state.focusGroup(worktreeId, terminalGroupId)
       }
     }, fixture)
-    await focusActiveTerminalInput(dolphinPage)
-    await waitForFocusedGroup(dolphinPage, fixture.terminalGroupId)
-    await dolphinPage.keyboard.press(`${modifier}+f`)
-    await expect(terminalFindInput(dolphinPage)).toBeFocused()
-    await expect(browserFindInput(dolphinPage)).toBeHidden()
-    await dolphinPage.keyboard.press('Escape')
+    await focusActiveTerminalInput(appPage)
+    await waitForFocusedGroup(appPage, fixture.terminalGroupId)
+    await appPage.keyboard.press(`${modifier}+f`)
+    await expect(terminalFindInput(appPage)).toBeFocused()
+    await expect(browserFindInput(appPage)).toBeHidden()
+    await appPage.keyboard.press('Escape')
 
-    await focusBrowserGroup(dolphinPage, fixture.browserGroupId)
-    await focusBrowserAddressBar(dolphinPage, fixture.browserTabId)
-    await dolphinPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(dolphinPage)).toBeFocused()
-    await expect(terminalFindInput(dolphinPage)).toBeHidden()
-    await browserFindCloseButton(dolphinPage).click()
-    await expect(browserFindInput(dolphinPage)).toBeHidden()
+    await focusBrowserGroup(appPage, fixture.browserGroupId)
+    await focusBrowserAddressBar(appPage, fixture.browserTabId)
+    await appPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(appPage)).toBeFocused()
+    await expect(terminalFindInput(appPage)).toBeHidden()
+    await browserFindCloseButton(appPage).click()
+    await expect(browserFindInput(appPage)).toBeHidden()
 
-    await dolphinPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(dolphinPage)).toBeFocused()
-    await browserFindCloseButton(dolphinPage).click()
+    await appPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(appPage)).toBeFocused()
+    await browserFindCloseButton(appPage).click()
 
-    await dolphinPage.evaluate(({ browserTabId }) => {
+    await appPage.evaluate(({ browserTabId }) => {
       window.__store?.getState().closeBrowserTab(browserTabId)
     }, fixture)
     await expect(
-      dolphinPage.locator(`[data-browser-overlay-tab-id="${fixture.browserTabId}"]`)
+      appPage.locator(`[data-browser-overlay-tab-id="${fixture.browserTabId}"]`)
     ).toHaveCount(0)
 
-    await focusActiveTerminalInput(dolphinPage)
-    await dolphinPage.keyboard.press(`${modifier}+f`)
-    await expect(terminalFindInput(dolphinPage)).toBeFocused()
-    await expect(browserFindInput(dolphinPage)).toBeHidden()
+    await focusActiveTerminalInput(appPage)
+    await appPage.keyboard.press(`${modifier}+f`)
+    await expect(terminalFindInput(appPage)).toBeFocused()
+    await expect(browserFindInput(appPage)).toBeHidden()
   })
 
   test('opens Find only in the browser split whose guest owns the shortcut', async ({
-    dolphinPage
+    appPage
   }) => {
-    const fixture = await createBrowserSplit(dolphinPage)
+    const fixture = await createBrowserSplit(appPage)
 
-    await pressFindInBrowserGuest(
-      dolphinPage,
-      fixture.firstBrowserTabId,
-      fixture.firstBrowserPageId
-    )
+    await pressFindInBrowserGuest(appPage, fixture.firstBrowserTabId, fixture.firstBrowserPageId)
 
-    await expect(browserSplitFindInput(dolphinPage, fixture.firstBrowserTabId)).toBeVisible()
-    await expect(browserSplitFindInput(dolphinPage, fixture.secondBrowserTabId)).toBeHidden()
+    await expect(browserSplitFindInput(appPage, fixture.firstBrowserTabId)).toBeVisible()
+    await expect(browserSplitFindInput(appPage, fixture.secondBrowserTabId)).toBeHidden()
     await expect
       .poll(() =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           ({ browserPageId, browserTabId }) =>
             window.__store
               ?.getState()
@@ -122,14 +118,14 @@ test.describe('browser split shortcuts', () => {
   })
 
   test('keeps browser Find available when split focus state is temporarily missing', async ({
-    dolphinPage
+    appPage
   }) => {
-    const fixture = await createTerminalBrowserSplit(dolphinPage)
-    await focusBrowserGroup(dolphinPage, fixture.browserGroupId)
-    const addressBar = browserAddressBar(dolphinPage, fixture.browserTabId)
-    await focusBrowserAddressBar(dolphinPage, fixture.browserTabId)
+    const fixture = await createTerminalBrowserSplit(appPage)
+    await focusBrowserGroup(appPage, fixture.browserGroupId)
+    const addressBar = browserAddressBar(appPage, fixture.browserTabId)
+    await focusBrowserAddressBar(appPage, fixture.browserTabId)
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const store = window.__store
       const worktreeId = store?.getState().activeWorktreeId
       if (!store || !worktreeId) {
@@ -143,20 +139,18 @@ test.describe('browser split shortcuts', () => {
     })
     await expect(addressBar).toBeFocused()
 
-    await dolphinPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(dolphinPage)).toBeFocused()
-    await expect(terminalFindInput(dolphinPage)).toBeHidden()
+    await appPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(appPage)).toBeFocused()
+    await expect(terminalFindInput(appPage)).toBeHidden()
   })
 
-  test('keeps browser Find available when the focused split ID is stale', async ({
-    dolphinPage
-  }) => {
-    const fixture = await createTerminalBrowserSplit(dolphinPage)
-    await focusBrowserGroup(dolphinPage, fixture.browserGroupId)
-    const addressBar = browserAddressBar(dolphinPage, fixture.browserTabId)
-    await focusBrowserAddressBar(dolphinPage, fixture.browserTabId)
+  test('keeps browser Find available when the focused split ID is stale', async ({ appPage }) => {
+    const fixture = await createTerminalBrowserSplit(appPage)
+    await focusBrowserGroup(appPage, fixture.browserGroupId)
+    const addressBar = browserAddressBar(appPage, fixture.browserTabId)
+    await focusBrowserAddressBar(appPage, fixture.browserTabId)
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const store = window.__store
       const worktreeId = store?.getState().activeWorktreeId
       if (!store || !worktreeId) {
@@ -171,8 +165,8 @@ test.describe('browser split shortcuts', () => {
     })
     await expect(addressBar).toBeFocused()
 
-    await dolphinPage.keyboard.press(`${modifier}+f`)
-    await expect(browserFindInput(dolphinPage)).toBeFocused()
-    await expect(terminalFindInput(dolphinPage)).toBeHidden()
+    await appPage.keyboard.press(`${modifier}+f`)
+    await expect(browserFindInput(appPage)).toBeFocused()
+    await expect(terminalFindInput(appPage)).toBeHidden()
   })
 })

@@ -35,10 +35,9 @@ test.describe('Source Control AI pull request linkedIssue', () => {
       expected: 'empty'
     }
   ]) {
-    test(`${label} the pull-request recipe`, async ({ dolphinPage }) => {
-      await waitForSessionReady(dolphinPage)
-      const { prWorktreeId, prWorktreePath, primaryBranch } =
-        await seedCreatePrComposer(dolphinPage)
+    test(`${label} the pull-request recipe`, async ({ appPage }) => {
+      await waitForSessionReady(appPage)
+      const { prWorktreeId, prWorktreePath, primaryBranch } = await seedCreatePrComposer(appPage)
       createBranchCommit(prWorktreePath)
 
       const generatorPath = path.join(
@@ -48,7 +47,7 @@ test.describe('Source Control AI pull request linkedIssue', () => {
       writeLinkedIssuePrEchoGenerator(generatorPath, primaryBranch)
 
       try {
-        await dolphinPage.evaluate(
+        await appPage.evaluate(
           async ({ generatorPath, linkedIssue, worktreeId }) => {
             const store = window.__store
             if (!store) {
@@ -77,12 +76,12 @@ test.describe('Source Control AI pull request linkedIssue', () => {
           { generatorPath, linkedIssue, worktreeId: prWorktreeId }
         )
 
-        await openSourceControl(dolphinPage, prWorktreeId)
+        await openSourceControl(appPage, prWorktreeId)
 
-        const title = dolphinPage.getByRole('textbox', { name: 'Pull request title' })
+        const title = appPage.getByRole('textbox', { name: 'Pull request title' })
         await expect(title).toBeVisible({ timeout: 10_000 })
 
-        const generate = dolphinPage.getByRole('button', {
+        const generate = appPage.getByRole('button', {
           name: 'Generate pull request details with AI'
         })
         await expect(generate).toBeEnabled()

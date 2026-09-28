@@ -244,22 +244,22 @@ async function assertLinkRecoversAfterReturn(
 }
 
 test.describe('Terminal link hover after worktree return', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
   })
 
   test('re-establishes a URL link on hover after the pointer leaves the terminal', async ({
-    dolphinPage
+    appPage
   }) => {
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
     const url = `https://example.com/dolphin-link-${randomUUID()}`
-    await sendToTerminal(dolphinPage, ptyId, `echo ${url}\r`)
+    await sendToTerminal(appPage, ptyId, `echo ${url}\r`)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 4000), {
+      .poll(() => getTerminalContent(appPage, 4000), {
         timeout: 10_000,
         message: 'URL fixture did not reach the terminal buffer'
       })
@@ -267,74 +267,72 @@ test.describe('Terminal link hover after worktree return', () => {
 
     // Let the streamed-output reset finish before creating the hover cache
     // state this mouseleave regression targets.
-    await dolphinPage.waitForTimeout(300)
-    const probe = await locateHoverProbe(dolphinPage, url)
+    await appPage.waitForTimeout(300)
+    const probe = await locateHoverProbe(appPage, url)
     await expect
-      .poll(() => hoverAndReadActiveLinkText(dolphinPage, probe), {
+      .poll(() => hoverAndReadActiveLinkText(appPage, probe), {
         timeout: 5_000,
         message: 'baseline hover never established the URL link'
       })
       .toContain(url)
 
-    await dispatchScreenMouseLeave(dolphinPage, probe.tabId)
-    await expect.poll(() => readActiveLinkText(dolphinPage, probe.tabId)).toBeNull()
-    await expect.poll(() => readTerminalCursor(dolphinPage, probe.tabId)).not.toBe('pointer')
+    await dispatchScreenMouseLeave(appPage, probe.tabId)
+    await expect.poll(() => readActiveLinkText(appPage, probe.tabId)).toBeNull()
+    await expect.poll(() => readTerminalCursor(appPage, probe.tabId)).not.toBe('pointer')
 
     await expect
-      .poll(() => hoverAndReadActiveLinkText(dolphinPage, probe), {
+      .poll(() => hoverAndReadActiveLinkText(appPage, probe), {
         timeout: 5_000,
         message: 'URL link did not re-establish after terminal mouseleave'
       })
       .toContain(url)
-    await expect.poll(() => readTerminalCursor(dolphinPage, probe.tabId)).toBe('pointer')
+    await expect.poll(() => readTerminalCursor(appPage, probe.tabId)).toBe('pointer')
   })
 
   test('re-establishes a file-path link on hover after switching worktrees and back', async ({
-    dolphinPage
+    appPage
   }) => {
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'link-hover repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
-    const worktreePath = await activeWorktreePath(dolphinPage)
+    const worktreePath = await activeWorktreePath(appPage)
     const fileName = `dolphin-linkfile-${randomUUID().slice(0, 8)}.txt`
     const filePath = path.join(worktreePath, fileName)
     writeFileSync(filePath, 'dolphin file link target\n')
     const needle = `./${fileName}`
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `echo ${needle}\r`)
+      await sendToTerminal(appPage, ptyId, `echo ${needle}\r`)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 4000), {
+        .poll(() => getTerminalContent(appPage, 4000), {
           timeout: 10_000,
           message: 'file-link fixture did not reach the terminal buffer'
         })
         .toContain(fileName)
 
-      const probe = await assertLinkRecoversAfterReturn(dolphinPage, {
+      const probe = await assertLinkRecoversAfterReturn(appPage, {
         firstWorktreeId,
         secondWorktreeId,
         needle,
         expectContains: fileName
       })
-      await activateHoveredLink(dolphinPage, probe)
+      await activateHoveredLink(appPage, probe)
       // The editor header is the user-visible result of a successful terminal
       // link activation; store state alone could pass with a blank editor.
-      await expect(dolphinPage.locator('.editor-header-path').first()).toContainText(fileName, {
+      await expect(appPage.locator('.editor-header-path').first()).toContainText(fileName, {
         timeout: 20_000
       })
     } finally {
-      await dolphinPage.evaluate((filePath) => {
+      await appPage.evaluate((filePath) => {
         const state = window.__store?.getState()
         if (state?.openFiles.some((file) => file.filePath === filePath)) {
           state.closeFile(filePath)
@@ -345,32 +343,30 @@ test.describe('Terminal link hover after worktree return', () => {
   })
 
   test('re-establishes a URL link on hover after switching worktrees and back', async ({
-    dolphinPage
+    appPage
   }) => {
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'link-hover repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
     const url = `https://example.com/dolphin-link-${randomUUID()}`
-    await sendToTerminal(dolphinPage, ptyId, `echo ${url}\r`)
+    await sendToTerminal(appPage, ptyId, `echo ${url}\r`)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 4000), {
+      .poll(() => getTerminalContent(appPage, 4000), {
         timeout: 10_000,
         message: 'URL fixture did not reach the terminal buffer'
       })
       .toContain(url)
 
-    await assertLinkRecoversAfterReturn(dolphinPage, {
+    await assertLinkRecoversAfterReturn(appPage, {
       firstWorktreeId,
       secondWorktreeId,
       needle: url,

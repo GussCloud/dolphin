@@ -11,55 +11,55 @@ type SetupGuideFlashMonitor = {
 }
 
 test.describe('Setup guide sidebar entry', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('does not flash while completed setup waits for capability readiness', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     await installBlockedCompletedCapabilityFakes(electronApp)
-    await dolphinPage.reload()
-    await dolphinPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
-    await waitForSessionReady(dolphinPage)
-    await seedCompletedSetupExceptCapabilityReadiness(dolphinPage)
+    await appPage.reload()
+    await appPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
+    await waitForSessionReady(appPage)
+    await seedCompletedSetupExceptCapabilityReadiness(appPage)
 
     await expect
-      .poll(async () => getStoreState<boolean>(dolphinPage, 'setupGuideSidebarDismissed'), {
+      .poll(async () => getStoreState<boolean>(appPage, 'setupGuideSidebarDismissed'), {
         timeout: 5_000
       })
       .toBe(false)
-    await expect(dolphinPage.getByText(CHECKLIST_TEXT)).toHaveCount(0)
+    await expect(appPage.getByText(CHECKLIST_TEXT)).toHaveCount(0)
 
-    await startSetupGuideFlashMonitor(dolphinPage)
+    await startSetupGuideFlashMonitor(appPage)
 
-    await setActiveViewForFlashProbe(dolphinPage, 'tasks')
+    await setActiveViewForFlashProbe(appPage, 'tasks')
     await expect
-      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(appPage, 'activeView'), { timeout: 5_000 })
       .toBe('tasks')
-    await dolphinPage.waitForTimeout(500)
+    await appPage.waitForTimeout(500)
 
-    await setActiveViewForFlashProbe(dolphinPage, 'automations')
+    await setActiveViewForFlashProbe(appPage, 'automations')
     await expect
-      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(appPage, 'activeView'), { timeout: 5_000 })
       .toBe('automations')
-    await dolphinPage.waitForTimeout(500)
+    await appPage.waitForTimeout(500)
 
-    await setActiveViewForFlashProbe(dolphinPage, 'mobile')
+    await setActiveViewForFlashProbe(appPage, 'mobile')
     await expect
-      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(appPage, 'activeView'), { timeout: 5_000 })
       .toBe('mobile')
-    await dolphinPage.waitForTimeout(500)
+    await appPage.waitForTimeout(500)
 
-    const flashSamples = await stopSetupGuideFlashMonitor(dolphinPage)
+    const flashSamples = await stopSetupGuideFlashMonitor(appPage)
     expect(flashSamples, `setup guide sidebar flashed at ${flashSamples.join(', ')}`).toEqual([])
 
     // Unblock pending skill discovery IPC calls before teardown. Completion
     // after release is covered by the focused progress unit tests.
     await releaseBlockedSkillDiscovery(electronApp)
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       window.dispatchEvent(new CustomEvent('dolphin:installed-agent-skills-changed'))
     })
   })

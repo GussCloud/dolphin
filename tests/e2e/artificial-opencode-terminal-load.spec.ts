@@ -30,8 +30,8 @@ import { runMainPressureScenario } from './artificial-opencode-main-pressure-sce
 import { runRendererBackpressureRevisitScenario } from './artificial-opencode-revisit-pressure-scenario'
 import { startSyntheticOpenCodeInjection } from './artificial-opencode-synthetic-injection'
 
-test.beforeEach(async ({ electronApp, dolphinPage }, testInfo) => {
-  await dolphinPage.waitForLoadState('domcontentloaded')
+test.beforeEach(async ({ electronApp, appPage }, testInfo) => {
+  await appPage.waitForLoadState('domcontentloaded')
   await presentTerminalPerfWindow(electronApp, testInfo)
 })
 
@@ -399,37 +399,35 @@ function annotateTypingMeasurement(
 }
 
 async function measureCrossWorkspaceTypingDuringHiddenLoad({
-  dolphinPage,
+  appPage,
   testRepoPath,
   hiddenPaneCount,
   annotationType,
   testInfo
 }: {
-  dolphinPage: Page
+  appPage: Page
   testRepoPath: string
   hiddenPaneCount: number
   annotationType: string
   testInfo: TestInfo
 }): Promise<void> {
-  await waitForSessionReady(dolphinPage)
-  const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-  const allWorktreeIds = await getAllWorktreeIds(dolphinPage)
+  await waitForSessionReady(appPage)
+  const firstWorktreeId = await waitForActiveWorktree(appPage)
+  const allWorktreeIds = await getAllWorktreeIds(appPage)
   const secondWorktreeId = allWorktreeIds.find((id) => id !== firstWorktreeId)
   test.skip(!secondWorktreeId, 'OpenCode cross-workspace load needs the seeded secondary worktree')
   if (!secondWorktreeId) {
     return
   }
 
-  await switchToWorktree(dolphinPage, secondWorktreeId)
-  const hiddenPanes = await ensureActiveWorktreePaneLoad(dolphinPage, hiddenPaneCount)
+  await switchToWorktree(appPage, secondWorktreeId)
+  const hiddenPanes = await ensureActiveWorktreePaneLoad(appPage, hiddenPaneCount)
 
-  await switchToWorktree(dolphinPage, firstWorktreeId)
-  await expect
-    .poll(() => getActiveWorktreeId(dolphinPage), { timeout: 10_000 })
-    .toBe(firstWorktreeId)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const typingPtyId = await waitForActivePanePtyId(dolphinPage)
+  await switchToWorktree(appPage, firstWorktreeId)
+  await expect.poll(() => getActiveWorktreeId(appPage), { timeout: 10_000 }).toBe(firstWorktreeId)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const typingPtyId = await waitForActivePanePtyId(appPage)
 
   const runId = randomUUID()
   const scriptPath = path.join(
@@ -437,18 +435,18 @@ async function measureCrossWorkspaceTypingDuringHiddenLoad({
     `.dolphin-opencode-cross-${hiddenPaneCount}-${runId}.mjs`
   )
   writeInteractivePromptScript(scriptPath, runId)
-  await resetTerminalPtyOutputDebug(dolphinPage)
+  await resetTerminalPtyOutputDebug(appPage)
   const load = await startSyntheticOpenCodeInjection({
     frameCount: FRAME_COUNT,
     intervalMs: FRAME_INTERVAL_MS,
-    page: dolphinPage,
+    page: appPage,
     paneKeys: hiddenPanes.map((pane) => pane.paneKey)
   })
   try {
-    const measurement = await measureTypingDuringLoad(dolphinPage, scriptPath, typingPtyId, runId)
-    const debug = await readTerminalPtyOutputDebug(dolphinPage)
-    const scheduler = await readTerminalOutputSchedulerDebug(dolphinPage)
-    const mainPressure = await readMainPtyPressureDebug(dolphinPage)
+    const measurement = await measureTypingDuringLoad(appPage, scriptPath, typingPtyId, runId)
+    const debug = await readTerminalPtyOutputDebug(appPage)
+    const scheduler = await readTerminalOutputSchedulerDebug(appPage)
+    const mainPressure = await readMainPtyPressureDebug(appPage)
     annotateTypingMeasurement(
       testInfo,
       annotationType,
@@ -464,7 +462,7 @@ async function measureCrossWorkspaceTypingDuringHiddenLoad({
     expect(measurement.maxTimerDriftMs).toBeLessThan(MAX_TIMER_DRIFT_UNDER_LOAD_MS)
   } finally {
     await load.stop()
-    await sendToTerminal(dolphinPage, typingPtyId, '\x03').catch(() => undefined)
+    await sendToTerminal(appPage, typingPtyId, '\x03').catch(() => undefined)
     rmSync(scriptPath, { force: true })
   }
 }
@@ -472,20 +470,20 @@ async function measureCrossWorkspaceTypingDuringHiddenLoad({
 async function runConfiguredMainPressureScenario({
   annotationSuffix,
   backgroundPaneCount,
-  dolphinPage,
+  appPage,
   testInfo,
   testRepoPath
 }: {
   annotationSuffix: string
   backgroundPaneCount: number
-  dolphinPage: Page
+  appPage: Page
   testInfo: TestInfo
   testRepoPath: string
 }): Promise<void> {
   await runMainPressureScenario({
     annotationSuffix,
     backgroundPaneCount,
-    dolphinPage,
+    appPage,
     pressureOutputChars: PRESSURE_OUTPUT_CHARS,
     testInfo,
     testRepoPath,
@@ -519,24 +517,24 @@ test.describe('Artificial OpenCode terminal load', () => {
   test.describe.configure({ mode: 'serial' })
 
   test('measures baseline typing responsiveness with one active terminal', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const typingPtyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const typingPtyId = await waitForActivePanePtyId(appPage)
 
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-opencode-baseline-typing-${runId}.mjs`)
     writeInteractivePromptScript(scriptPath, runId)
-    await resetTerminalPtyOutputDebug(dolphinPage)
+    await resetTerminalPtyOutputDebug(appPage)
     try {
-      const measurement = await measureTypingDuringLoad(dolphinPage, scriptPath, typingPtyId, runId)
-      const debug = await readTerminalPtyOutputDebug(dolphinPage)
-      const scheduler = await readTerminalOutputSchedulerDebug(dolphinPage)
-      const mainPressure = await readMainPtyPressureDebug(dolphinPage)
+      const measurement = await measureTypingDuringLoad(appPage, scriptPath, typingPtyId, runId)
+      const debug = await readTerminalPtyOutputDebug(appPage)
+      const scheduler = await readTerminalOutputSchedulerDebug(appPage)
+      const mainPressure = await readMainPtyPressureDebug(appPage)
       annotateTypingMeasurement(
         testInfo,
         'opencode-baseline-typing',
@@ -550,34 +548,34 @@ test.describe('Artificial OpenCode terminal load', () => {
       expect(measurement.worstLatencyMs).toBeLessThan(MAX_WORST_KEY_LATENCY_MS)
       expect(measurement.maxTimerDriftMs).toBeLessThan(MAX_TIMER_DRIFT_MS)
     } finally {
-      await sendToTerminal(dolphinPage, typingPtyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, typingPtyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
     }
   })
 
   test('keeps typing responsive while same-workspace panes redraw simultaneously', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    const panes = await ensureActiveWorktreePaneLoad(dolphinPage, SAME_WORKSPACE_PANES)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    const panes = await ensureActiveWorktreePaneLoad(appPage, SAME_WORKSPACE_PANES)
     const [typingPane, ...loadPanes] = panes
-    await focusPane(dolphinPage, typingPane.paneKey)
+    await focusPane(appPage, typingPane.paneKey)
 
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-opencode-typing-${runId}.mjs`)
     writeInteractivePromptScript(scriptPath, runId)
-    await resetTerminalPtyOutputDebug(dolphinPage)
+    await resetTerminalPtyOutputDebug(appPage)
     const load = await startSyntheticOpenCodeInjection({
       frameCount: FRAME_COUNT,
       intervalMs: FRAME_INTERVAL_MS,
-      page: dolphinPage,
+      page: appPage,
       paneKeys: loadPanes.map((pane) => pane.paneKey)
     })
     try {
       const measurement = await measureTypingDuringLoad(
-        dolphinPage,
+        appPage,
         scriptPath,
         typingPane.ptyId,
         runId
@@ -587,26 +585,26 @@ test.describe('Artificial OpenCode terminal load', () => {
         'opencode-same-workspace-typing',
         panes.length,
         measurement,
-        await readTerminalPtyOutputDebug(dolphinPage),
-        await readTerminalOutputSchedulerDebug(dolphinPage),
-        await readMainPtyPressureDebug(dolphinPage)
+        await readTerminalPtyOutputDebug(appPage),
+        await readTerminalOutputSchedulerDebug(appPage),
+        await readMainPtyPressureDebug(appPage)
       )
       expect(measurement.medianLatencyMs).toBeLessThan(MAX_MEDIAN_KEY_LATENCY_MS)
       expect(measurement.worstLatencyMs).toBeLessThan(MAX_WORST_KEY_LATENCY_UNDER_LOAD_MS)
       expect(measurement.maxTimerDriftMs).toBeLessThan(MAX_TIMER_DRIFT_UNDER_LOAD_MS)
     } finally {
       await load.stop()
-      await sendToTerminal(dolphinPage, typingPane.ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, typingPane.ptyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
     }
   })
 
   test('keeps active typing responsive while background PTYs are ACK-backpressured', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     await runConfiguredMainPressureScenario({
-      dolphinPage,
+      appPage,
       testRepoPath,
       backgroundPaneCount: PRESSURE_BACKGROUND_PANES,
       annotationSuffix: '',
@@ -615,7 +613,7 @@ test.describe('Artificial OpenCode terminal load', () => {
   })
 
   test('keeps renderer backpressure bounded across worktree revisit', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     await runRendererBackpressureRevisitScenario({
@@ -631,7 +629,7 @@ test.describe('Artificial OpenCode terminal load', () => {
       // unloaded baseline test only.
       maxTimerDriftMs: MAX_TIMER_DRIFT_UNDER_LOAD_MS,
       maxWorstKeyLatencyMs: MAX_WORST_KEY_LATENCY_UNDER_LOAD_MS,
-      dolphinPage,
+      appPage,
       pressureOutputChars: PRESSURE_OUTPUT_CHARS,
       testInfo,
       testRepoPath
@@ -640,11 +638,11 @@ test.describe('Artificial OpenCode terminal load', () => {
 
   for (const paneCount of SCALE_PRESSURE_PANES) {
     test(`keeps active interactions responsive at ${paneCount} ACK-backpressured OpenCode PTYs`, async ({
-      dolphinPage,
+      appPage,
       testRepoPath
     }, testInfo) => {
       await runConfiguredMainPressureScenario({
-        dolphinPage,
+        appPage,
         testRepoPath,
         backgroundPaneCount: paneCount,
         annotationSuffix: `-${paneCount}`,
@@ -655,14 +653,14 @@ test.describe('Artificial OpenCode terminal load', () => {
 
   for (const paneCount of SCALE_SAME_WORKSPACE_PANES) {
     test(`keeps typing responsive at ${paneCount} same-workspace OpenCode panes`, async ({
-      dolphinPage,
+      appPage,
       testRepoPath
     }, testInfo) => {
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const panes = await ensureActiveWorktreePaneLoad(dolphinPage, paneCount)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const panes = await ensureActiveWorktreePaneLoad(appPage, paneCount)
       const [typingPane, ...loadPanes] = panes
-      await focusPane(dolphinPage, typingPane.paneKey)
+      await focusPane(appPage, typingPane.paneKey)
 
       const runId = randomUUID()
       const scriptPath = path.join(
@@ -670,16 +668,16 @@ test.describe('Artificial OpenCode terminal load', () => {
         `.dolphin-opencode-scale-${paneCount}-${runId}.mjs`
       )
       writeInteractivePromptScript(scriptPath, runId)
-      await resetTerminalPtyOutputDebug(dolphinPage)
+      await resetTerminalPtyOutputDebug(appPage)
       const load = await startSyntheticOpenCodeInjection({
         frameCount: FRAME_COUNT,
         intervalMs: FRAME_INTERVAL_MS,
-        page: dolphinPage,
+        page: appPage,
         paneKeys: loadPanes.map((pane) => pane.paneKey)
       })
       try {
         const measurement = await measureTypingDuringLoad(
-          dolphinPage,
+          appPage,
           scriptPath,
           typingPane.ptyId,
           runId
@@ -689,27 +687,27 @@ test.describe('Artificial OpenCode terminal load', () => {
           `opencode-scale-same-workspace-${paneCount}`,
           panes.length,
           measurement,
-          await readTerminalPtyOutputDebug(dolphinPage),
-          await readTerminalOutputSchedulerDebug(dolphinPage),
-          await readMainPtyPressureDebug(dolphinPage)
+          await readTerminalPtyOutputDebug(appPage),
+          await readTerminalOutputSchedulerDebug(appPage),
+          await readMainPtyPressureDebug(appPage)
         )
         expect(measurement.medianLatencyMs).toBeLessThan(MAX_MEDIAN_KEY_LATENCY_MS)
         expect(measurement.worstLatencyMs).toBeLessThan(MAX_WORST_KEY_LATENCY_UNDER_LOAD_MS)
         expect(measurement.maxTimerDriftMs).toBeLessThan(MAX_TIMER_DRIFT_UNDER_LOAD_MS)
       } finally {
         await load.stop()
-        await sendToTerminal(dolphinPage, typingPane.ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, typingPane.ptyId, '\x03').catch(() => undefined)
         rmSync(scriptPath, { force: true })
       }
     })
   }
 
   test('keeps typing responsive while another workspace streams OpenCode-style output', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     await measureCrossWorkspaceTypingDuringHiddenLoad({
-      dolphinPage,
+      appPage,
       testRepoPath,
       hiddenPaneCount: CROSS_WORKSPACE_PANES_PER_WORKTREE,
       annotationType: 'opencode-cross-workspace-typing',
@@ -717,7 +715,7 @@ test.describe('Artificial OpenCode terminal load', () => {
     })
   })
   async function runConfiguredHiddenRealPtyPressureScenario(
-    dolphinPage: Page,
+    appPage: Page,
     testRepoPath: string,
     testInfo: TestInfo,
     hiddenPaneCount: number,
@@ -725,7 +723,7 @@ test.describe('Artificial OpenCode terminal load', () => {
     pressureOutputMode?: HiddenPressureOutputMode
   ): Promise<void> {
     await runHiddenRealPtyPressureScenario({
-      dolphinPage,
+      appPage,
       testRepoPath,
       annotationSuffix,
       hiddenPaneCount,
@@ -769,9 +767,9 @@ test.describe('Artificial OpenCode terminal load', () => {
     }
   ]
   for (const hiddenPressureCase of hiddenPressureCases) {
-    test(hiddenPressureCase.title, async ({ dolphinPage, testRepoPath }, testInfo) => {
+    test(hiddenPressureCase.title, async ({ appPage, testRepoPath }, testInfo) => {
       await runConfiguredHiddenRealPtyPressureScenario(
-        dolphinPage,
+        appPage,
         testRepoPath,
         testInfo,
         HIDDEN_PRESSURE_PANES,
@@ -782,11 +780,11 @@ test.describe('Artificial OpenCode terminal load', () => {
   }
   for (const paneCount of SCALE_HIDDEN_PRESSURE_PANES) {
     test(`keeps hidden restore responsive with ${paneCount} ACK-backpressured real PTYs`, async ({
-      dolphinPage,
+      appPage,
       testRepoPath
     }, testInfo) => {
       await runConfiguredHiddenRealPtyPressureScenario(
-        dolphinPage,
+        appPage,
         testRepoPath,
         testInfo,
         paneCount,
@@ -797,11 +795,11 @@ test.describe('Artificial OpenCode terminal load', () => {
 
   for (const paneCount of SCALE_CROSS_WORKSPACE_PANES) {
     test(`keeps typing responsive with ${paneCount} hidden cross-workspace OpenCode panes`, async ({
-      dolphinPage,
+      appPage,
       testRepoPath
     }, testInfo) => {
       await measureCrossWorkspaceTypingDuringHiddenLoad({
-        dolphinPage,
+        appPage,
         testRepoPath,
         hiddenPaneCount: paneCount,
         annotationType: `opencode-scale-cross-workspace-${paneCount}`,

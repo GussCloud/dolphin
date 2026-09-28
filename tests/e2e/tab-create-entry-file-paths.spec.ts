@@ -7,23 +7,23 @@ const relativeFilePath =
   'packages/dolphin/src/renderer/src/components/navigation/worktree/secondary-nav/SecondaryNav.tsx'
 
 test('new-tab file results prioritize the filename and reveal the full path on hover', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }) => {
   const filePath = path.join(testRepoPath, ...relativeFilePath.split('/'))
   mkdirSync(path.dirname(filePath), { recursive: true })
   writeFileSync(filePath, 'export const SecondaryNav = true\n')
 
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
 
-  const newTab = dolphinPage.getByRole('button', { name: 'New tab' })
+  const newTab = appPage.getByRole('button', { name: 'New tab' })
   // Why: aria-controls is only set after results exist, so it cannot be the
   // open-state locator. aria-autocomplete is always on this input and is not
   // translated copy.
-  const input = dolphinPage.locator('input[role="combobox"][aria-autocomplete="list"]')
-  const row = dolphinPage.locator('[role="option"]').filter({ hasText: 'Open file' }).first()
+  const input = appPage.locator('input[role="combobox"][aria-autocomplete="list"]')
+  const row = appPage.locator('[role="option"]').filter({ hasText: 'Open file' }).first()
   // Keyboard activation avoids the animated tab bar's pointer stability gate.
   // Re-open and re-type until the file scan has produced an Open file row —
   // the scan starts when the menu opens and can outlast a single fill.
@@ -59,18 +59,18 @@ test('new-tab file results prioritize the filename and reveal the full path on h
   // opens on a pointermove it actually receives. A single hover can land before
   // the remount and leave the cursor sitting still over a row that never saw it.
   await row.hover({ position: { x: 20, y: 12 } })
-  await dolphinPage.waitForTimeout(250)
+  await appPage.waitForTimeout(250)
   await row.hover({ position: { x: 40, y: 12 } })
 
   // Exact cursor placement is arithmetic, unit-tested via cursorTooltipOffsets.
   // Asserting it here measured the app mid-reflow and was flaky; what E2E is
   // uniquely good for is that the tooltip really opens with the whole path.
   await expect(
-    dolphinPage.locator('[data-slot="tooltip-content"]').filter({ hasText: relativeFilePath })
+    appPage.locator('[data-slot="tooltip-content"]').filter({ hasText: relativeFilePath })
   ).toBeVisible()
 
   const proofPath = process.env.DOLPHIN_STA3424_PROOF_PATH
   if (proofPath) {
-    await dolphinPage.screenshot({ path: proofPath })
+    await appPage.screenshot({ path: proofPath })
   }
 })

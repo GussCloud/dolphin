@@ -23,15 +23,15 @@ function readCodexHomeProbe(pageContent: string, marker: string): CodexHomeProbe
 }
 
 test.describe('Terminal Codex runtime home', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   test('terminal process receives the selected account Codex home', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const userData = await electronApp.evaluate(({ app }) => app.getPath('userData'))
     const accountId = 'e2e-terminal-home'
@@ -42,7 +42,7 @@ test.describe('Terminal Codex runtime home', () => {
       path.join(managedHomePath, 'auth.json'),
       JSON.stringify({ OPENAI_API_KEY: 'e2e-placeholder' })
     )
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       async ({ accountId, managedHomePath }) => {
         const state = window.__store!.getState()
         await state.updateSettings({
@@ -65,21 +65,21 @@ test.describe('Terminal Codex runtime home', () => {
       },
       { accountId, managedHomePath }
     )
-    await waitForActiveTerminalManager(dolphinPage)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForActiveTerminalManager(appPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const marker = `__DOLPHIN_CODEX_HOME_E2E_${Date.now()}__`
     const command = [
       'node -e',
       `"console.log('${marker}:' + JSON.stringify({codexHome: process.env.CODEX_HOME || null, dolphinCodexHome: process.env.DOLPHIN_CODEX_HOME || null}))"`
     ].join(' ')
 
-    await execInTerminal(dolphinPage, ptyId, command)
+    await execInTerminal(appPage, ptyId, command)
 
     let probe: CodexHomeProbe | null = null
     await expect
       .poll(
         async () => {
-          probe = readCodexHomeProbe(await getTerminalContent(dolphinPage), marker)
+          probe = readCodexHomeProbe(await getTerminalContent(appPage), marker)
           return probe
         },
         { timeout: 15_000, message: 'Terminal did not expose the selected Codex account home' }

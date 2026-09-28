@@ -102,7 +102,7 @@ async function expectWorkspaceHostAppearance(
 for (const topology of ['desktop', 'headless'] as const) {
   test(`connection-owned status recovers with a ${topology} host and independent viewers`, async ({
     electronApp,
-    dolphinPage: page,
+    appPage: page,
     testRepoPath
   }, testInfo) => {
     test.setTimeout(180_000)

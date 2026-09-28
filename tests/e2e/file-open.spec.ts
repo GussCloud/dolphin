@@ -55,25 +55,25 @@ async function switchToEditor(
 }
 
 test.describe('File Open & Markdown Preview', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   /**
    * User Prompt:
    * - you can open files (from the right sidebar)
    */
-  test('opening the right sidebar shows file explorer', async ({ dolphinPage }) => {
-    await openFileExplorer(dolphinPage)
+  test('opening the right sidebar shows file explorer', async ({ appPage }) => {
+    await openFileExplorer(appPage)
 
     // Why: the load-bearing check is that `FileExplorer` actually mounted.
     // `data-dolphin-explorer-shell` is the stable marker the component renders
     // on its root shell div — a store-only `rightSidebarTab === 'explorer'`
     // check would pass even if the explorer crashed on mount and the panel
     // painted empty.
-    await expect(dolphinPage.locator('[data-dolphin-explorer-shell]')).toBeVisible({
+    await expect(appPage.locator('[data-dolphin-explorer-shell]')).toBeVisible({
       timeout: 5_000
     })
   })
@@ -82,16 +82,14 @@ test.describe('File Open & Markdown Preview', () => {
    * User Prompt:
    * - you can open files (from the right sidebar)
    */
-  test('clicking a file in the file explorer opens it in an editor tab', async ({
-    dolphinPage
-  }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    await openFileExplorer(dolphinPage)
+  test('clicking a file in the file explorer opens it in an editor tab', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    await openFileExplorer(appPage)
 
-    const filesBefore = await getOpenFiles(dolphinPage, worktreeId)
+    const filesBefore = await getOpenFiles(appPage, worktreeId)
 
     // Click a known non-directory file
-    const clickedFile = await clickFileInExplorer(dolphinPage, [
+    const clickedFile = await clickFileInExplorer(appPage, [
       'package.json',
       'tsconfig.json',
       '.gitignore',
@@ -100,11 +98,11 @@ test.describe('File Open & Markdown Preview', () => {
     expect(clickedFile).not.toBeNull()
 
     // Wait for the file to be opened in the editor
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 5_000 }).toBe('editor')
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 5_000 }).toBe('editor')
 
     // There should be a new open file
     await expect
-      .poll(async () => (await getOpenFiles(dolphinPage, worktreeId)).length, { timeout: 5_000 })
+      .poll(async () => (await getOpenFiles(appPage, worktreeId)).length, { timeout: 5_000 })
       .toBeGreaterThan(filesBefore.length)
 
     // Why: the load-bearing check is that the editor panel actually rendered
@@ -117,7 +115,7 @@ test.describe('File Open & Markdown Preview', () => {
     // routinely take 10s+ to hydrate that chunk plus the inner Monaco/Rich
     // Markdown chunks, during which the outer Suspense shows "Loading
     // editor…" and `.editor-header-path` is not yet in the DOM.
-    await expect(dolphinPage.locator('.editor-header-path').first()).toContainText(clickedFile!, {
+    await expect(appPage.locator('.editor-header-path').first()).toContainText(clickedFile!, {
       timeout: 20_000
     })
   })
@@ -126,13 +124,13 @@ test.describe('File Open & Markdown Preview', () => {
    * User Prompt:
    * - you can open .md files and they show up as preview (from the right sidebar)
    */
-  test('opening a .md file shows markdown content', async ({ dolphinPage }) => {
-    await openFileExplorer(dolphinPage)
-    const clickedFile = await clickFileInExplorer(dolphinPage, ['README.md', 'CLAUDE.md'])
+  test('opening a .md file shows markdown content', async ({ appPage }) => {
+    await openFileExplorer(appPage)
+    const clickedFile = await clickFileInExplorer(appPage, ['README.md', 'CLAUDE.md'])
     expect(clickedFile).not.toBeNull()
 
     // Wait for the editor tab to become active
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 5_000 }).toBe('editor')
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 5_000 }).toBe('editor')
 
     // The seeded README.md starts with `# Dolphin E2E Test Repo`, so the rich
     // markdown editor should render a real <h1> with that text. Asserting on
@@ -151,11 +149,9 @@ test.describe('File Open & Markdown Preview', () => {
     // user-facing guarantee is just "the rich markdown surface eventually
     // paints the file's first heading" — giving it 25s keeps the assertion
     // meaningful without turning every run into a flake risk.
-    await expect(dolphinPage.getByRole('heading', { name: expectedHeading, level: 1 })).toBeVisible(
-      {
-        timeout: 25_000
-      }
-    )
+    await expect(appPage.getByRole('heading', { name: expectedHeading, level: 1 })).toBeVisible({
+      timeout: 25_000
+    })
   })
 
   /**
@@ -163,12 +159,12 @@ test.describe('File Open & Markdown Preview', () => {
    * - you can open files (from the right sidebar)
    * - files retain state when switching tabs
    */
-  test('editor tab retains state when switching to terminal and back', async ({ dolphinPage }) => {
-    const worktreeId = (await getActiveWorktreeId(dolphinPage))!
-    await openFileExplorer(dolphinPage)
+  test('editor tab retains state when switching to terminal and back', async ({ appPage }) => {
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    await openFileExplorer(appPage)
 
     // Click a file to open it
-    const clickedFile = await clickFileInExplorer(dolphinPage, [
+    const clickedFile = await clickFileInExplorer(appPage, [
       'package.json',
       'tsconfig.json',
       '.gitignore'
@@ -176,26 +172,24 @@ test.describe('File Open & Markdown Preview', () => {
     expect(clickedFile).not.toBeNull()
 
     // Wait for editor to become active
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 5_000 }).toBe('editor')
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 5_000 }).toBe('editor')
 
     // Record what files are open
-    const openFilesBefore = await getOpenFiles(dolphinPage, worktreeId)
+    const openFilesBefore = await getOpenFiles(appPage, worktreeId)
     expect(openFilesBefore.length).toBeGreaterThan(0)
 
     const editorFileId = openFilesBefore[0].id
 
     // Switch to a terminal tab
-    await switchToTerminal(dolphinPage, worktreeId)
-    await expect
-      .poll(async () => getActiveTabType(dolphinPage), { timeout: 3_000 })
-      .not.toBe('editor')
+    await switchToTerminal(appPage, worktreeId)
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 3_000 }).not.toBe('editor')
 
     // Switch back to the same editor tab
-    await switchToEditor(dolphinPage, editorFileId)
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 3_000 }).toBe('editor')
+    await switchToEditor(appPage, editorFileId)
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 3_000 }).toBe('editor')
 
     // The same files should still be open
-    const openFilesAfter = await getOpenFiles(dolphinPage, worktreeId)
+    const openFilesAfter = await getOpenFiles(appPage, worktreeId)
     expect(openFilesAfter.length).toBe(openFilesBefore.length)
     expect(openFilesAfter[0].filePath).toBe(openFilesBefore[0].filePath)
   })

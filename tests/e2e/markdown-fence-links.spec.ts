@@ -7,10 +7,10 @@ import {
   openMarkdownFixture
 } from './helpers/markdown-editor-fixture'
 
-test('source links stay outside mixed code fences', async ({ dolphinPage }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  const context = await getActiveWorktreeContext(dolphinPage)
+test('source links stay outside mixed code fences', async ({ appPage }, testInfo) => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  const context = await getActiveWorktreeContext(appPage)
   const file = await createMarkdownFixture(
     context,
     'markdown-fences',
@@ -19,21 +19,21 @@ test('source links stay outside mixed code fences', async ({ dolphinPage }, test
     '# Fence boundaries\n\n~~~text\n```\n[[inside-code]]\n~~~\n\n[[outside-code]]\n'
   )
   try {
-    await openMarkdownFixture(dolphinPage, context, file)
-    await dolphinPage.evaluate(() => {
+    await openMarkdownFixture(appPage, context, file)
+    await appPage.evaluate(() => {
       const state = window.__store!.getState()
       if (!state.activeFileId) {
         throw new Error('missing active file')
       }
       state.setMarkdownViewMode(state.activeFileId, 'source')
     })
-    const links = dolphinPage.locator('.monaco-editor .view-line').filter({
-      has: dolphinPage.locator('.monaco-markdown-doc-link')
+    const links = appPage.locator('.monaco-editor .view-line').filter({
+      has: appPage.locator('.monaco-markdown-doc-link')
     })
     await expect(links).toHaveCount(1)
     await expect(links).toHaveText('[[outside-code]]')
     await testInfo.attach('fence-links', {
-      body: await dolphinPage.screenshot({ path: testInfo.outputPath('fence-links.png') }),
+      body: await appPage.screenshot({ path: testInfo.outputPath('fence-links.png') }),
       contentType: 'image/png'
     })
   } finally {

@@ -120,22 +120,20 @@ async function activateTerminalTab(page: Page, tabId: string): Promise<void> {
   await waitForActiveTerminalManager(page, 30_000)
 }
 
-test('restores and opens an OSC 8 link after its terminal is cold-parked', async ({
-  dolphinPage
-}) => {
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await dolphinPage.evaluate(async () => {
+test('restores and opens an OSC 8 link after its terminal is cold-parked', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await appPage.evaluate(async () => {
     await window.__store?.getState().updateSettings({
       openLinksInApp: true,
       openLinksInAppPreferencePrompted: true
     })
   })
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const tabId = await getActiveTabId(dolphinPage)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
-  await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const tabId = await getActiveTabId(appPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
+  await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
   const label = `#${randomUUID().slice(0, 6)}`
   const url = `https://example.com/dolphin-osc8-${randomUUID()}`
@@ -148,13 +146,13 @@ test('restores and opens an OSC 8 link after its terminal is cold-parked', async
     prefix: 'dolphin-osc8-cold-park'
   })
   try {
-    await sendToTerminal(dolphinPage, ptyId, `${nodeTerminalCommand([staged.scriptPath])}\r`)
-    await expect.poll(() => getTerminalContent(dolphinPage, 4_000)).toContain(label)
+    await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([staged.scriptPath])}\r`)
+    await expect.poll(() => getTerminalContent(appPage, 4_000)).toContain(label)
 
-    const baselineProbe = await locateLink(dolphinPage, label)
-    await dolphinPage.mouse.move(baselineProbe.clientX, baselineProbe.clientY)
+    const baselineProbe = await locateLink(appPage, label)
+    await appPage.mouse.move(baselineProbe.clientX, baselineProbe.clientY)
     await expect
-      .poll(() => readLinkState(dolphinPage, tabId, label))
+      .poll(() => readLinkState(appPage, tabId, label))
       .toMatchObject({
         bufferType: 'alternate',
         serializedUri: true,
@@ -162,16 +160,16 @@ test('restores and opens an OSC 8 link after its terminal is cold-parked', async
         uri: url
       })
 
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabId, {
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, tabId, {
       parkDelayMs: PARKING_DELAY_MS
     })
-    await activateTerminalTab(dolphinPage, tabId)
-    await expect.poll(() => getTerminalContent(dolphinPage, 4_000)).toContain(label)
+    await activateTerminalTab(appPage, tabId)
+    await expect.poll(() => getTerminalContent(appPage, 4_000)).toContain(label)
 
-    const restoredProbe = await locateLink(dolphinPage, label)
-    await dolphinPage.mouse.move(restoredProbe.clientX, restoredProbe.clientY)
+    const restoredProbe = await locateLink(appPage, label)
+    await appPage.mouse.move(restoredProbe.clientX, restoredProbe.clientY)
     await expect
-      .poll(() => readLinkState(dolphinPage, tabId, label))
+      .poll(() => readLinkState(appPage, tabId, label))
       .toMatchObject({
         bufferType: 'alternate',
         serializedUri: true,
@@ -179,19 +177,17 @@ test('restores and opens an OSC 8 link after its terminal is cold-parked', async
         uri: url
       })
 
-    const isMac = await dolphinPage.evaluate(() => navigator.userAgent.includes('Mac'))
+    const isMac = await appPage.evaluate(() => navigator.userAgent.includes('Mac'))
     const modifier = isMac ? 'Meta' : 'Control'
-    await dolphinPage.keyboard.down(modifier)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.up()
-    await dolphinPage.keyboard.up(modifier)
+    await appPage.keyboard.down(modifier)
+    await appPage.mouse.down()
+    await appPage.mouse.up()
+    await appPage.keyboard.up(modifier)
     await expect
-      .poll(async () =>
-        (await getBrowserTabs(dolphinPage, worktreeId)).some((tab) => tab.url === url)
-      )
+      .poll(async () => (await getBrowserTabs(appPage, worktreeId)).some((tab) => tab.url === url))
       .toBe(true)
   } finally {
-    await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+    await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
     staged.cleanup()
   }
 })

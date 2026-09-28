@@ -7,7 +7,7 @@ import { test, expect } from './helpers/dolphin-app'
 
 test.use({ seedTestRepo: false })
 
-test('shows interrupted hidden SSH cleanup as retryable', async ({ electronApp, dolphinPage }) => {
+test('shows interrupted hidden SSH cleanup as retryable', async ({ electronApp, appPage }) => {
   const userDataPath = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   writeFileSync(
     path.join(userDataPath, 'dolphin-ephemeral-vm-runtimes.json'),
@@ -43,24 +43,24 @@ test('shows interrupted hidden SSH cleanup as retryable', async ({ electronApp, 
     })
   )
 
-  await dolphinPage.evaluate(() => {
+  await appPage.evaluate(() => {
     const state = window.__store!.getState()
     state.openSettingsTarget({ pane: 'servers', repoId: null })
     state.openSettingsPage()
   })
-  await expect(dolphinPage.getByPlaceholder('Search settings')).toBeVisible()
-  await dolphinPage
+  await expect(appPage.getByPlaceholder('Search settings')).toBeVisible()
+  await appPage
     .getByRole('group', { name: 'Remote server workflow' })
     .getByRole('button', { name: /^Cloud VM/ })
     .click()
 
-  const runtimes = dolphinPage.locator('[data-settings-section="temporary-vm-runtimes"]')
+  const runtimes = appPage.locator('[data-settings-section="temporary-vm-runtimes"]')
   await expect(runtimes.getByText('Interrupted cleanup')).toBeVisible()
   await expect(runtimes.getByText('Cleanup failed')).toBeVisible()
   await expect(runtimes.getByRole('button', { name: 'Retry cleanup' })).toBeVisible()
 })
 
-test('stops long-running cleanup and keeps it retryable', async ({ electronApp, dolphinPage }) => {
+test('stops long-running cleanup and keeps it retryable', async ({ electronApp, appPage }) => {
   const repoPath = mkdtempSync(path.join(tmpdir(), 'dolphin-cleanup-stop-'))
   const destroyPath = path.join(repoPath, 'destroy.js')
   const destroyStartedPath = path.join(repoPath, 'destroy-started.txt')
@@ -76,7 +76,7 @@ test('stops long-running cleanup and keeps it retryable', async ({ electronApp, 
     execFileSync('git', ['add', '.'], { cwd: repoPath })
     execFileSync('git', ['commit', '-m', 'seed'], { cwd: repoPath })
 
-    const repoId = await dolphinPage.evaluate(async (repo) => {
+    const repoId = await appPage.evaluate(async (repo) => {
       const result = await window.api.repos.add({ path: repo })
       if ('error' in result) {
         throw new Error(result.error)
@@ -122,29 +122,29 @@ test('stops long-running cleanup and keeps it retryable', async ({ electronApp, 
       })
     )
 
-    await openCloudVmRuntimes(dolphinPage)
-    const runtimes = dolphinPage.locator('[data-settings-section="temporary-vm-runtimes"]')
+    await openCloudVmRuntimes(appPage)
+    const runtimes = appPage.locator('[data-settings-section="temporary-vm-runtimes"]')
     await expect(runtimes.getByText('Long cleanup')).toBeVisible()
     await runtimes.getByRole('button', { name: 'Cleanup', exact: true }).click()
     await expect(runtimes.getByRole('button', { name: 'Stop cleanup' })).toBeVisible()
     await expect.poll(() => existsSync(destroyStartedPath)).toBe(true)
 
     await runtimes.getByRole('button', { name: 'Stop cleanup' }).click()
-    const dialog = dolphinPage.getByRole('dialog', { name: 'Stop cleanup?' })
+    const dialog = appPage.getByRole('dialog', { name: 'Stop cleanup?' })
     await expect(dialog).toContainText('The VM may remain running and incur charges.')
     await dialog.getByRole('button', { name: 'Stop cleanup' }).click()
 
     await expect(dialog).toBeHidden()
     await expect(runtimes.getByText('Cleanup stopped', { exact: true })).toBeVisible()
     await expect(runtimes.getByRole('button', { name: 'Retry cleanup' })).toBeVisible()
-    await expect(dolphinPage.getByText('Cleanup stopped by user.')).toBeVisible()
+    await expect(appPage.getByText('Cleanup stopped by user.')).toBeVisible()
 
     writeFileSync(destroyPath, "process.stdin.resume(); process.stdin.on('end', () => {})")
     await runtimes.getByRole('button', { name: 'Retry cleanup' }).click()
     await expect(runtimes.getByText('Long cleanup')).toBeHidden()
     await expect
       .poll(() =>
-        dolphinPage.evaluate(async () => {
+        appPage.evaluate(async () => {
           const runtime = (await window.api.ephemeralVm.listRuntimes()).find(
             (entry) => entry.id === 'runtime-cleanup-stop'
           )

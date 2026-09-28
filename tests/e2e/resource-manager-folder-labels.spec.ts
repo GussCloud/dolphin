@@ -9,7 +9,7 @@ test.use({ seedTestRepo: false })
 
 for (const theme of ['dark', 'light'] as const) {
   test(`Resource Manager names folder workspaces and their groups (${theme})`, async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }, testInfo) => {
     const root = mkdtempSync(join(tmpdir(), 'dolphin-resource-folders-'))
@@ -19,9 +19,9 @@ for (const theme of ['dark', 'light'] as const) {
       mkdirSync(folderPath)
       return { name, folderPath }
     })
-    await waitForSessionReady(dolphinPage)
-    await dolphinPage.setViewportSize({ width: 1200, height: 900 })
-    await dolphinPage.evaluate(
+    await waitForSessionReady(appPage)
+    await appPage.setViewportSize({ width: 1200, height: 900 })
+    await appPage.evaluate(
       async ({ theme, folders }) => {
         const state = window.__store!.getState()
         await state.updateSettingsOrThrow({ theme })
@@ -55,12 +55,12 @@ for (const theme of ['dark', 'light'] as const) {
       { theme, folders }
     )
 
-    await dolphinPage.getByRole('button', { name: /^Resource Manager,/ }).click()
-    const popover = dolphinPage.getByRole('dialog')
+    await appPage.getByRole('button', { name: /^Resource Manager,/ }).click()
+    const popover = appPage.getByRole('dialog')
     await expect(popover.getByText('Resource Manager', { exact: true })).toBeVisible()
     await expect(popover.getByRole('button', { name: /^Resume workspace/ })).toHaveCount(2)
     const screenshot = testInfo.outputPath(`resource-manager-folders-${theme}.png`)
-    await dolphinPage.screenshot({ path: screenshot, animations: 'disabled' })
+    await appPage.screenshot({ path: screenshot, animations: 'disabled' })
     await testInfo.attach(`resource-manager-folders-${theme}`, {
       path: screenshot,
       contentType: 'image/png'

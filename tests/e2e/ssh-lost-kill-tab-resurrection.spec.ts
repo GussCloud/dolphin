@@ -176,10 +176,10 @@ test.describe('SSH lost kill tab resurrection', () => {
   // instead of minting a fresh one. The next reattach then re-mints the tab through
   // pty-binding-persistence.ts:145-160, and the resurrected tab never retires.
   test('does not resurrect tabs whose kill was lost to a killed relay daemon', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(600_000)
-    await runResurrectionCycles(dolphinPage, testInfo, (target) => {
+    await runResurrectionCycles(appPage, testInfo, (target) => {
       dropRelayTransport(target)
     })
   })
@@ -188,11 +188,11 @@ test.describe('SSH lost kill tab resurrection', () => {
   // back. No daemon is killed. If this resurrects too, the bug needs no process death at all — a
   // laptop lid and a dropped link are enough.
   test('does not resurrect tabs closed while the host is disconnected', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(600_000)
-    await runResurrectionCycles(dolphinPage, testInfo, async (_target, targetId) => {
-      await disconnectDockerSshRelayTarget(dolphinPage, targetId)
+    await runResurrectionCycles(appPage, testInfo, async (_target, targetId) => {
+      await disconnectDockerSshRelayTarget(appPage, targetId)
     })
   })
 })

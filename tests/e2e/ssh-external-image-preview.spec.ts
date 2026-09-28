@@ -107,7 +107,7 @@ test.describe('SSH external image preview', () => {
   test.skip(process.platform === 'win32', 'The disposable SSH host uses POSIX tooling.')
 
   test('opens an image outside the worktree from a terminal link', async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }, testInfo) => {
     test.slow()
@@ -122,48 +122,48 @@ test.describe('SSH external image preview', () => {
         `printf '%s' ${shellQuote(IMAGE_BASE64)} | base64 -d > ${shellQuote(REMOTE_IMAGE_PATH)}`
       )
 
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target, {
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target, {
         remotePath: DOCKER_SSH_RELAY_REMOTE_REPO_PATH
       })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
       const readyMarker = `SSH_PREVIEW_READY_${Date.now()}`
       const encodedReadyMarker = Buffer.from(readyMarker).toString('base64')
       await sendToTerminal(
-        dolphinPage,
+        appPage,
         ptyId,
         `printf '%s' ${shellQuote(encodedReadyMarker)} | base64 -d; printf '\\n'\r`
       )
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 15_000,
           message: 'SSH terminal did not execute the readiness marker'
         })
         .toContain(readyMarker)
 
-      await sendToTerminal(dolphinPage, ptyId, `printf '%s\\n' ${shellQuote(REMOTE_IMAGE_PATH)}\r`)
+      await sendToTerminal(appPage, ptyId, `printf '%s\\n' ${shellQuote(REMOTE_IMAGE_PATH)}\r`)
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 15_000,
           message: 'External image path did not reach the SSH terminal'
         })
         .toContain(REMOTE_IMAGE_PATH)
 
-      const probe = await findTerminalLink(dolphinPage, REMOTE_IMAGE_PATH)
-      await activateTerminalLink(dolphinPage, probe, REMOTE_IMAGE_PATH)
+      const probe = await findTerminalLink(appPage, REMOTE_IMAGE_PATH)
+      await activateTerminalLink(appPage, probe, REMOTE_IMAGE_PATH)
 
-      const preview = dolphinPage.locator(`img[alt="${REMOTE_IMAGE_PATH.split('/').at(-1)}"]`)
+      const preview = appPage.locator(`img[alt="${REMOTE_IMAGE_PATH.split('/').at(-1)}"]`)
       await expect(preview).toBeVisible({ timeout: 30_000 })
       expect(await preview.evaluate((element) => (element as HTMLImageElement).naturalWidth)).toBe(
         2
       )
       expect(await preview.getAttribute('src')).toBe(`data:image/png;base64,${IMAGE_BASE64}`)
-      await expect(dolphinPage.getByText('Unable to load file', { exact: true })).toHaveCount(0)
+      await expect(appPage.getByText('Unable to load file', { exact: true })).toHaveCount(0)
 
-      const state = await dolphinPage.evaluate((filePath) => {
+      const state = await appPage.evaluate((filePath) => {
         const file = window.__store?.getState().openFiles.find((item) => item.filePath === filePath)
         return file
           ? {
@@ -185,7 +185,7 @@ test.describe('SSH external image preview', () => {
         createHash('sha256').update(Buffer.from(IMAGE_BASE64, 'base64')).digest('hex')
       )
       await testInfo.attach('ssh-external-image-preview', {
-        body: await dolphinPage.screenshot(),
+        body: await appPage.screenshot(),
         contentType: 'image/png'
       })
     } finally {

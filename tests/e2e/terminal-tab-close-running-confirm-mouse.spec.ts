@@ -54,50 +54,48 @@ async function startBusyTerminal(page: Page): Promise<string> {
 
 test.describe.configure({ mode: 'serial' })
 
-test('middle-clicking a busy tab prompts, and cancelling keeps the tab', async ({
-  dolphinPage
-}) => {
+test('middle-clicking a busy tab prompts, and cancelling keeps the tab', async ({ appPage }) => {
   test.setTimeout(120_000)
-  const busyTabId = await startBusyTerminal(dolphinPage)
-  const busyTab = dolphinPage.locator(`${SORTABLE_TAB}[data-tab-id="${busyTabId}"]`).first()
-  const tabsBefore = await dolphinPage.locator(SORTABLE_TAB).count()
+  const busyTabId = await startBusyTerminal(appPage)
+  const busyTab = appPage.locator(`${SORTABLE_TAB}[data-tab-id="${busyTabId}"]`).first()
+  const tabsBefore = await appPage.locator(SORTABLE_TAB).count()
 
   await busyTab.click({ button: 'middle' })
 
-  await expect(closeDialogTitle(dolphinPage)).toBeVisible({ timeout: 15_000 })
-  await dolphinPage.getByRole('button', { name: /^Cancel$/ }).click()
-  await expect(closeDialogTitle(dolphinPage)).toBeHidden()
+  await expect(closeDialogTitle(appPage)).toBeVisible({ timeout: 15_000 })
+  await appPage.getByRole('button', { name: /^Cancel$/ }).click()
+  await expect(closeDialogTitle(appPage)).toBeHidden()
   await expect(busyTab).toBeVisible()
-  expect(await dolphinPage.locator(SORTABLE_TAB).count()).toBe(tabsBefore)
+  expect(await appPage.locator(SORTABLE_TAB).count()).toBe(tabsBefore)
 })
 
-test('confirming the X-button prompt closes the busy tab', async ({ dolphinPage }) => {
+test('confirming the X-button prompt closes the busy tab', async ({ appPage }) => {
   test.setTimeout(120_000)
-  const busyTabId = await startBusyTerminal(dolphinPage)
-  const busyTab = dolphinPage.locator(`${SORTABLE_TAB}[data-tab-id="${busyTabId}"]`).first()
+  const busyTabId = await startBusyTerminal(appPage)
+  const busyTab = appPage.locator(`${SORTABLE_TAB}[data-tab-id="${busyTabId}"]`).first()
 
   await busyTab.hover()
   await busyTab.getByRole('button', { name: /^Close tab /i }).click()
-  await expect(closeDialogTitle(dolphinPage)).toBeVisible({ timeout: 15_000 })
-  await dolphinPage.getByRole('button', { name: /^Stop and Close$/ }).click()
+  await expect(closeDialogTitle(appPage)).toBeVisible({ timeout: 15_000 })
+  await appPage.getByRole('button', { name: /^Stop and Close$/ }).click()
 
   await expect(busyTab).toHaveCount(0, { timeout: 15_000 })
-  await expect(closeDialogTitle(dolphinPage)).toBeHidden()
+  await expect(closeDialogTitle(appPage)).toBeHidden()
 })
 
-test('Cmd+W on a busy single-pane tab raises exactly one dialog', async ({ dolphinPage }) => {
+test('Cmd+W on a busy single-pane tab raises exactly one dialog', async ({ appPage }) => {
   test.setTimeout(120_000)
-  const busyTabId = await startBusyTerminal(dolphinPage)
-  const busyTab = dolphinPage.locator(`${SORTABLE_TAB}[data-tab-id="${busyTabId}"]`).first()
+  const busyTabId = await startBusyTerminal(appPage)
+  const busyTab = appPage.locator(`${SORTABLE_TAB}[data-tab-id="${busyTabId}"]`).first()
 
-  await focusActiveTerminalInput(dolphinPage)
-  await dolphinPage.keyboard.press(process.platform === 'darwin' ? 'Meta+w' : 'Control+w')
-  await expect(closeDialogTitle(dolphinPage)).toBeVisible({ timeout: 15_000 })
-  await dolphinPage.getByRole('button', { name: /^Stop and Close$/ }).click()
+  await focusActiveTerminalInput(appPage)
+  await appPage.keyboard.press(process.platform === 'darwin' ? 'Meta+w' : 'Control+w')
+  await expect(closeDialogTitle(appPage)).toBeVisible({ timeout: 15_000 })
+  await appPage.getByRole('button', { name: /^Stop and Close$/ }).click()
 
   await expect(busyTab).toHaveCount(0, { timeout: 15_000 })
   // Why: the pane used to probe and prompt on its own before delegating to
   // closeTerminalTab, which now prompts too — a second dialog would mean a double prompt.
-  await dolphinPage.waitForTimeout(1_500)
-  await expect(closeDialogTitle(dolphinPage)).toBeHidden()
+  await appPage.waitForTimeout(1_500)
+  await expect(closeDialogTitle(appPage)).toBeHidden()
 })

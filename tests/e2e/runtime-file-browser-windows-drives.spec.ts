@@ -11,11 +11,11 @@ test.describe('paired runtime Windows file browser', () => {
   test.skip(process.platform !== 'win32', 'Windows drive roots require a Windows runtime host')
 
   test('reports the runtime path flavor with Windows drive roots', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(120_000)
-    await waitForSessionReady(dolphinPage)
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    await waitForSessionReady(appPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     const client = await launchPairedElectronClient(offer, testInfo, 'Windows drive browser')
 
     try {

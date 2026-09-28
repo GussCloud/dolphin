@@ -182,16 +182,16 @@ test.describe('Terminal typing during AI Vault refresh bench', () => {
 
   test('alternates control typing and forced Vault refresh typing', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     test.skip(!BENCH_ENABLED, 'Bench-only: run via pnpm bench:ai-vault-typing')
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await openAiVaultSidebar(dolphinPage)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await openAiVaultSidebar(appPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const homePath = await electronApp.evaluate(({ app }) => app.getPath('home'))
     const scriptPath = path.join(testRepoPath, `.dolphin-vault-typing-${randomUUID()}.mjs`)
     const arms: ArmResult[] = []
@@ -210,22 +210,20 @@ test.describe('Terminal typing during AI Vault refresh bench', () => {
         const scenarios: ArmResult['scenario'][] =
           iteration % 2 === 0 ? ['control', 'vault-refresh'] : ['vault-refresh', 'control']
         for (const [order, scenario] of scenarios.entries()) {
-          arms.push(
-            await runArm({ page: dolphinPage, ptyId, scriptPath, iteration, scenario, order })
-          )
+          arms.push(await runArm({ page: appPage, ptyId, scriptPath, iteration, scenario, order }))
           if (scenario === 'vault-refresh') {
-            await expect(
-              dolphinPage.getByText(batch.newestTitle, { exact: true }).first()
-            ).toBeVisible({
-              timeout: 30_000
-            })
+            await expect(appPage.getByText(batch.newestTitle, { exact: true }).first()).toBeVisible(
+              {
+                timeout: 30_000
+              }
+            )
           }
         }
       }
       writeReport(testInfo, arms, seededBytes)
       expect(arms.every((arm) => arm.missingEchoCount === 0)).toBe(true)
     } finally {
-      await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
     }
   })

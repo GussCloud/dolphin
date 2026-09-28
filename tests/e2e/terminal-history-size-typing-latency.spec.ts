@@ -207,50 +207,50 @@ async function measureTypingLatency(
 
 test.describe('Terminal typing latency vs scrollback history size', () => {
   test('typing stays responsive as terminal history grows', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     test.setTimeout(900_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-history-benchmark-${runId}.mjs`)
     writeFileSync(scriptPath, historyEchoScript(runId))
     let commandSent = false
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       commandSent = true
-      await waitForRecentTerminalMarker(dolphinPage, `HIST_READY_${runId}`, 10_000)
-      await focusActiveTerminalInput(dolphinPage)
+      await waitForRecentTerminalMarker(appPage, `HIST_READY_${runId}`, 10_000)
+      await focusActiveTerminalInput(appPage)
 
       const phases: PhaseLatency[] = []
       let seq = 0
 
-      const baseline = await measureTypingLatency(dolphinPage, runId, 'empty history', seq)
+      const baseline = await measureTypingLatency(appPage, runId, 'empty history', seq)
       phases.push(baseline.phase)
       seq = baseline.nextSeq
 
       for (const [phaseIndex] of FILL_PHASES.entries()) {
-        await dolphinPage.keyboard.type('!')
+        await appPage.keyboard.type('!')
         await waitForRecentTerminalMarker(
-          dolphinPage,
+          appPage,
           `HIST_FILL_DONE_${runId}_${phaseIndex + 1}`,
           FILL_DONE_TIMEOUT_MS
         )
         // Let the renderer drain queued output and let one daemon checkpoint
         // tick land before sampling, mirroring steady-state agent sessions.
-        await dolphinPage.waitForTimeout(2_000)
-        await focusActiveTerminalInput(dolphinPage)
+        await appPage.waitForTimeout(2_000)
+        await focusActiveTerminalInput(appPage)
         const cumulativeRows = FILL_PHASES.slice(0, phaseIndex + 1).reduce(
           (total, rows) => total + rows,
           0
         )
         const measured = await measureTypingLatency(
-          dolphinPage,
+          appPage,
           runId,
           `after ${cumulativeRows} history rows`,
           seq
@@ -297,7 +297,7 @@ test.describe('Terminal typing latency vs scrollback history size', () => {
       }
     } finally {
       if (commandSent) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }

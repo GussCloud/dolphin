@@ -48,53 +48,53 @@ async function getKittyKeyboardFlags(page: Page): Promise<number | null> {
 
 test('resets standard keyboard bytes after a protocol-mode agent exits on ConPTY', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   await installTerminalPtyWriteSpy(electronApp)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
   // Grok is the supported native ConPTY exception to Kitty protocol withholding.
-  await configureGoldenStubAgent(dolphinPage, {
+  await configureGoldenStubAgent(appPage, {
     agent: 'grok',
     agentArgs: '--keyboard-protocol --grok'
   })
-  await launchGoldenStubAgentFromNewTab(dolphinPage, /^Grok(?:\s|$)/i)
+  await launchGoldenStubAgentFromNewTab(appPage, /^Grok(?:\s|$)/i)
 
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
-  await expect.poll(() => getKittyKeyboardFlags(dolphinPage), { timeout: 10_000 }).toBe(1)
+  const ptyId = await waitForActivePanePtyId(appPage)
+  await expect.poll(() => getKittyKeyboardFlags(appPage), { timeout: 10_000 }).toBe(1)
 
   await clearTerminalPtyWriteLog(electronApp)
   // Kitty flag 1 preserves plain Enter; modified Enter proves CSI-u input.
-  await dolphinPage.keyboard.press('Shift+Enter')
-  await dolphinPage.keyboard.type('exit')
-  await dolphinPage.keyboard.press('Enter')
-  await waitForTerminalOutput(dolphinPage, GOLDEN_STUB_EXIT_MARKER, 15_000)
+  await appPage.keyboard.press('Shift+Enter')
+  await appPage.keyboard.type('exit')
+  await appPage.keyboard.press('Enter')
+  await waitForTerminalOutput(appPage, GOLDEN_STUB_EXIT_MARKER, 15_000)
   const protocolWrites = (await readTerminalPtyWriteEntries(electronApp))
     .filter((entry) => entry.id === ptyId)
     .map((entry) => entry.data)
     .join('')
   expect(protocolWrites).toContain('\x1b[13;2u')
   expect(protocolWrites).toContain('\r')
-  await expect.poll(() => getKittyKeyboardFlags(dolphinPage), { timeout: 10_000 }).toBe(0)
+  await expect.poll(() => getKittyKeyboardFlags(appPage), { timeout: 10_000 }).toBe(0)
 
   await clearTerminalPtyWriteLog(electronApp)
-  await focusActiveTerminalInput(dolphinPage)
-  await dolphinPage.keyboard.type("Write-Output ('CONPTY_KEYBOARD_' + '")
-  await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), 'REET_')
-  await dolphinPage.keyboard.press('Control+V')
-  await dolphinPage.keyboard.press('ArrowLeft')
-  await dolphinPage.keyboard.press('ArrowLeft')
-  await dolphinPage.keyboard.press('ArrowLeft')
-  await dolphinPage.keyboard.type('S')
-  await dolphinPage.keyboard.press('ArrowRight')
-  await dolphinPage.keyboard.press('ArrowRight')
-  await dolphinPage.keyboard.press('ArrowRight')
-  await dolphinPage.keyboard.type('EXECUTEX')
-  await dolphinPage.keyboard.press('Backspace')
-  await dolphinPage.keyboard.type("D')")
-  await dolphinPage.keyboard.press('Enter')
-  await waitForTerminalOutput(dolphinPage, 'CONPTY_KEYBOARD_RESET_EXECUTED', 15_000)
+  await focusActiveTerminalInput(appPage)
+  await appPage.keyboard.type("Write-Output ('CONPTY_KEYBOARD_' + '")
+  await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), 'REET_')
+  await appPage.keyboard.press('Control+V')
+  await appPage.keyboard.press('ArrowLeft')
+  await appPage.keyboard.press('ArrowLeft')
+  await appPage.keyboard.press('ArrowLeft')
+  await appPage.keyboard.type('S')
+  await appPage.keyboard.press('ArrowRight')
+  await appPage.keyboard.press('ArrowRight')
+  await appPage.keyboard.press('ArrowRight')
+  await appPage.keyboard.type('EXECUTEX')
+  await appPage.keyboard.press('Backspace')
+  await appPage.keyboard.type("D')")
+  await appPage.keyboard.press('Enter')
+  await waitForTerminalOutput(appPage, 'CONPTY_KEYBOARD_RESET_EXECUTED', 15_000)
 
   const shellWrites = (await readTerminalPtyWriteEntries(electronApp))
     .filter((entry) => entry.id === ptyId)

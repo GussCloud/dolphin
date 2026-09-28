@@ -113,11 +113,11 @@ function isProcessAlive(pid: number): boolean {
 }
 
 test('worker-start preserves one live inactive worker across workspace re-entry', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }) => {
-  await waitForSessionReady(dolphinPage)
-  await dolphinPage.evaluate(
+  await waitForSessionReady(appPage)
+  await appPage.evaluate(
     async ({ agentCommand, terminalWindowsShell }) => {
       await window.__store?.getState().updateSettings({
         agentCmdOverrides: { codex: agentCommand },
@@ -126,12 +126,12 @@ test('worker-start preserves one live inactive worker across workspace re-entry'
     },
     { agentCommand: fakeCodexCommand, terminalWindowsShell: FAKE_AGENT_WINDOWS_SHELL }
   )
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  const coordinatorTabId = await getActiveTabId(dolphinPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  const coordinatorTabId = await getActiveTabId(appPage)
   expect(coordinatorTabId).toBeTruthy()
-  await waitForActivePanePtyId(dolphinPage)
-  const coordinatorPane = await waitForActivePaneHookDescriptor(dolphinPage)
+  await waitForActivePanePtyId(appPage)
+  const coordinatorPane = await waitForActivePaneHookDescriptor(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const client = new RuntimeClient(userDataDir, 30_000, null, null)
   const coordinator = await client.call<{ terminal: { handle: string } }>('terminal.resolvePane', {
@@ -215,13 +215,13 @@ test('worker-start preserves one live inactive worker across workspace re-entry'
   )
   expect(isProcessAlive(spawn.pid)).toBe(true)
   expect(readLedger(interruptionLedgerPath)).toEqual([])
-  const workerTab = dolphinPage.locator(
+  const workerTab = appPage.locator(
     `[data-testid="sortable-tab"][data-tab-id="${workerTerminal!.tabId}"]`
   )
   await expect(workerTab).toBeVisible()
   await expect(workerTab).toHaveAttribute('data-active', 'false')
   await expect(
-    dolphinPage.locator(`[data-testid="sortable-tab"][data-tab-id="${coordinatorTabId}"]`)
+    appPage.locator(`[data-testid="sortable-tab"][data-tab-id="${coordinatorTabId}"]`)
   ).toHaveAttribute('data-active', 'true')
 
   await client.call('orchestration.send', {
@@ -235,17 +235,17 @@ test('worker-start preserves one live inactive worker across workspace re-entry'
   })
   expect(checked.result.messages).toEqual([expect.objectContaining({ subject: 'ACK' })])
 
-  const otherWorktreeId = await switchToOtherWorktree(dolphinPage, worktreeId)
+  const otherWorktreeId = await switchToOtherWorktree(appPage, worktreeId)
   expect(otherWorktreeId).toBeTruthy()
   await expect(workerTab).not.toBeVisible()
-  await switchToWorktree(dolphinPage, worktreeId)
+  await switchToWorktree(appPage, worktreeId)
 
   await expect(workerTab).toBeVisible()
   await expect(
-    dolphinPage.locator(`[data-testid="sortable-tab"][data-tab-id="${workerTerminal!.tabId}"]`)
+    appPage.locator(`[data-testid="sortable-tab"][data-tab-id="${workerTerminal!.tabId}"]`)
   ).toHaveCount(1)
   await expect(
-    dolphinPage.locator(`[data-testid="sortable-tab"][data-tab-title="${workerTabTitle}"]`)
+    appPage.locator(`[data-testid="sortable-tab"][data-tab-title="${workerTabTitle}"]`)
   ).toHaveCount(1)
   const terminalsAfterReturn = await client.call<RuntimeTerminalListResult>('terminal.list')
   const workerAfterReturn = terminalsAfterReturn.result.terminals.find(
@@ -269,5 +269,5 @@ test('worker-start preserves one live inactive worker across workspace re-entry'
   expect(workerOutputAfterReturn.result.terminal.tail.join('\n')).not.toContain(
     'Conversation interrupted'
   )
-  await expect(dolphinPage.locator('body')).not.toContainText('Conversation interrupted')
+  await expect(appPage.locator('body')).not.toContainText('Conversation interrupted')
 })

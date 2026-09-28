@@ -218,7 +218,7 @@ test('the traffic shift is all-or-nothing and is verified after the fact', () =>
   assert.match(workflow, /--to-revisions "\$\{CANDIDATE_REVISION\}=100"/)
   assert.match(workflow, /test "\$\{serving\}" = "\$\{CANDIDATE_REVISION\}"/)
   assert.ok(shift < indexOfStep('Verify the public origin after the shift'))
-  assert.match(workflow, /PUSH_ORIGIN: https:\/\/push\.ondolphin\.dev/)
+  assert.match(workflow, /PUSH_ORIGIN: https:\/\/push\.dolphin\.guss\.dev\.br/)
   assert.match(workflow, /"\$\{PUSH_ORIGIN\}\/ready"/)
 })
 

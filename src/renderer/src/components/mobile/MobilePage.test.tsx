@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MobilePairingConnectionMode } from '../../../../shared/mobile-pairing-connection-mode'
 import type { MobileRelayMintFailure } from '../../../../shared/mobile-relay-mint-failure'
 
+const ANDROID_APK_DOCS_URL = 'https://dolphin.guss.dev.br/docs/android-apk'
+
 type StoreState = {
   closeMobilePage: () => void
   dolphinProfileAuthStatus: { state: 'connected' | 'local' }
@@ -33,9 +35,7 @@ vi.mock('@/i18n/i18n', () => ({
   translate: (_key: string, fallback: string) => fallback
 }))
 
-vi.mock('sonner', () => ({
-  toast: { error: vi.fn(), message: vi.fn(), success: vi.fn() }
-}))
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), message: vi.fn(), success: vi.fn() } }))
 
 vi.mock('./use-mobile-install-qr', () => ({ useMobileInstallQr: () => null }))
 vi.mock('./use-mobile-page-escape', () => ({ useMobilePageEscape: vi.fn() }))
@@ -194,9 +194,7 @@ describe('MobilePage pairing connection mode', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open Android install guide' }))
 
-    expect(window.api.shell.openUrl).toHaveBeenCalledWith(
-      'https://dolphin.guss.dev.br/docs/android-apk'
-    )
+    expect(window.api.shell.openUrl).toHaveBeenCalledWith(ANDROID_APK_DOCS_URL)
   })
 
   it('defaults signed-in pairing to Anywhere and remints when same-network is selected', async () => {

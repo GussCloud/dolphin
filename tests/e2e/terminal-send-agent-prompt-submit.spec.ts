@@ -86,11 +86,11 @@ async function createFakeCodexTerminal(
 
 test('CLI text plus Enter waits for a slow agent composer before submitting', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }) => {
   test.setTimeout(110_000)
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const terminal = await createFakeCodexTerminal(userDataDir, testRepoPath)
   const repoRoot = process.cwd()
@@ -137,11 +137,11 @@ test('CLI text plus Enter waits for a slow agent composer before submitting', as
 
 test('CLI reports a swallowed Enter as accepted without submitting a second Enter', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }) => {
   test.setTimeout(110_000)
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const terminal = await createFakeCodexTerminal(userDataDir, testRepoPath, [
     '--swallow-first-enter',
@@ -198,11 +198,11 @@ test('CLI reports a swallowed Enter as accepted without submitting a second Ente
 
 test('CLI does not write prompt bytes into an active permission dialog', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }) => {
   test.setTimeout(110_000)
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const terminal = await createFakeCodexTerminal(userDataDir, testRepoPath, [
     '--permission-before-send'

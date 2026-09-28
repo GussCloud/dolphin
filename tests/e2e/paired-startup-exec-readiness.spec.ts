@@ -80,7 +80,7 @@ function cleanupExecBarrier(startedPath: string, releasePath: string): void {
 
 test('recovers startup exec through a headed paired desktop owner @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   test.setTimeout(90_000)
   const runId = `headed_${Date.now()}`
@@ -89,11 +89,11 @@ test('recovers startup exec through a headed paired desktop owner @headful', asy
   const startedPath = path.join(homePath, `.sta4067-${runId}.started`)
   const releasePath = path.join(homePath, `.sta4067-${runId}.release`)
   const removeProfile = installZshExecProfile(homePath, runId, { releasePath, startedPath })
-  const worktreeId = await dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId)
+  const worktreeId = await appPage.evaluate(() => window.__store?.getState().activeWorktreeId)
   if (!worktreeId) {
     throw new Error('Headed owner has no active worktree')
   }
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedWebClient(electronApp, offer)
   let terminal: string | null = null
   try {
@@ -112,7 +112,7 @@ test('recovers startup exec through a headed paired desktop owner @headful', asy
     await expectStartupExecRecovery(client.page, created, runId)
     expectLedger(ledgerPath)
   } finally {
-    await closeStartupExecTerminal(dolphinPage, terminal)
+    await closeStartupExecTerminal(appPage, terminal)
     await client.dispose()
     removeProfile()
     cleanupExecBarrier(startedPath, releasePath)

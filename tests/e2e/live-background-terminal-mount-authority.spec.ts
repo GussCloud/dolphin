@@ -125,19 +125,8 @@ function createSourceRepo(): string {
   execFileSync('git', ['init'], { cwd: repoPath })
   execFileSync('git', ['checkout', '-b', 'main'], { cwd: repoPath })
   execFileSync('git', ['add', '.'], { cwd: repoPath })
-  execFileSync(
-    'git',
-    [
-      '-c',
-      'user.name=Dolphin E2E',
-      '-c',
-      'user.email=dolphin-e2e@example.com',
-      'commit',
-      '-m',
-      'seed'
-    ],
-    { cwd: repoPath }
-  )
+  const identity = ['-c', 'user.name=Dolphin E2E', '-c', 'user.email=dolphin-e2e@example.com']
+  execFileSync('git', [...identity, 'commit', '-m', 'seed'], { cwd: repoPath })
   return repoPath
 }
 
@@ -529,7 +518,7 @@ test.afterAll(() => rmSync(fakeCliDir, { recursive: true, force: true }))
 
 test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
   const sourceRepo = createSourceRepo()
@@ -540,7 +529,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     }
     rmSync(sourceRepo, { recursive: true, force: true })
   })
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
   await installTerminalPtyWriteSpy(electronApp)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const client = new RuntimeClient(userDataDir, 30_000, null, null)
@@ -551,7 +540,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   const repoId = added.result.repo.id
   await expect
     .poll(() =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         async ({ repoId, command, windowsShell }) => {
           const state = window.__store?.getState()
           await state?.fetchRepos()
@@ -642,19 +631,19 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   expect(beforeStatus.result.graphStatus).toBe('ready')
   const daemonPid = readDaemonPid(userDataDir)
   const allIdentities = originals.map(terminalIdentity)
-  await assertTargetBindings(dolphinPage, worktreeId, allIdentities)
-  await seedAgentRecoveryMetadata(dolphinPage, worktreeId, terminalIdentity(agent!))
+  await assertTargetBindings(appPage, worktreeId, allIdentities)
+  await seedAgentRecoveryMetadata(appPage, worktreeId, terminalIdentity(agent!))
 
-  await faultProjectionAndActivate(dolphinPage, worktreeId, [agent!, setup!], agent!.tabId)
-  const mountedAgentPtyId = await waitForActivePanePtyId(dolphinPage)
-  await enableTerminalAccessibility(dolphinPage, agent!.tabId)
+  await faultProjectionAndActivate(appPage, worktreeId, [agent!, setup!], agent!.tabId)
+  const mountedAgentPtyId = await waitForActivePanePtyId(appPage)
+  await enableTerminalAccessibility(appPage, agent!.tabId)
   await expect
     .poll(
       async () => ({
         mountedPtyId: mountedAgentPtyId,
         liveInventory: (await readWorktreeTerminals(client, worktreeId)).map(liveTerminalIdentity),
         visibleOriginalReady: (
-          await terminalAccessibility(dolphinPage, agent!.tabId).innerText()
+          await terminalAccessibility(appPage, agent!.tabId).innerText()
         ).includes(`LIVE_AGENT_READY:${agentPid}`),
         processPids: {
           agent: readSpawnLedger().map(({ pid }) => pid),
@@ -672,30 +661,30 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     })
   const agentMarker = `AGENT_KB_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(dolphinPage, agent!.tabId, agentMarker)
+  await typeIntoTerminal(appPage, agent!.tabId, agentMarker)
   await assertExactPtyReceivedMarker(electronApp, agent!.ptyId, agentMarker)
-  await expect(terminalAccessibility(dolphinPage, agent!.tabId)).toContainText(
+  await expect(terminalAccessibility(appPage, agent!.tabId)).toContainText(
     `AGENT_INPUT:${agentPid}:${agentMarker}`
   )
-  await expect(terminalAccessibility(dolphinPage, agent!.tabId)).not.toContainText(
+  await expect(terminalAccessibility(appPage, agent!.tabId)).not.toContainText(
     'Conversation interrupted'
   )
 
-  await activateTerminal(dolphinPage, worktreeId, setup!.tabId)
-  const mountedSetupPtyId = await waitForActivePanePtyId(dolphinPage)
-  await enableTerminalAccessibility(dolphinPage, setup!.tabId)
+  await activateTerminal(appPage, worktreeId, setup!.tabId)
+  const mountedSetupPtyId = await waitForActivePanePtyId(appPage)
+  await enableTerminalAccessibility(appPage, setup!.tabId)
   expect(mountedSetupPtyId).toBe(setup!.ptyId)
-  await expect(terminalAccessibility(dolphinPage, setup!.tabId)).toContainText(
+  await expect(terminalAccessibility(appPage, setup!.tabId)).toContainText(
     `SETUP_READY:${setupPid}`
   )
   const setupMarker = `SETUP_KB_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(dolphinPage, setup!.tabId, setupMarker)
+  await typeIntoTerminal(appPage, setup!.tabId, setupMarker)
   await assertExactPtyReceivedMarker(electronApp, setup!.ptyId, setupMarker)
-  await expect(terminalAccessibility(dolphinPage, setup!.tabId)).toContainText(
+  await expect(terminalAccessibility(appPage, setup!.tabId)).toContainText(
     `SETUP_INPUT:${setupPid}:${setupMarker}`
   )
-  await expect(terminalAccessibility(dolphinPage, setup!.tabId)).not.toContainText(
+  await expect(terminalAccessibility(appPage, setup!.tabId)).not.toContainText(
     'Conversation interrupted'
   )
 
@@ -710,7 +699,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     .toContain(`CANARY_INPUT:${canaryPid}:${canaryMarker}`)
 
   await assertLiveInventory(client, worktreeId, originals)
-  await assertTargetBindings(dolphinPage, worktreeId, allIdentities)
+  await assertTargetBindings(appPage, worktreeId, allIdentities)
   await assertLaunchLedgersUnchanged()
   await assertNoInterruption(client, [agent!, setup!])
   expect(readJsonLines(signalLedgerPath)).toHaveLength(0)
@@ -722,12 +711,12 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     authoritativeWindowId: beforeStatus.result.authoritativeWindowId
   })
   expect(readDaemonPid(userDataDir)).toBe(daemonPid)
-  const beforeReloadDelivery = await dolphinPage.evaluate(() =>
+  const beforeReloadDelivery = await appPage.evaluate(() =>
     window.api.pty.getRendererDeliveryDebugSnapshot()
   )
 
-  await dolphinPage.reload()
-  await waitForSessionReady(dolphinPage)
+  await appPage.reload()
+  await waitForSessionReady(appPage)
   await expect
     .poll(
       async () => {
@@ -755,14 +744,14 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     rendererDispatcherReadyForcedCount: beforeReloadDelivery.rendererDispatcherReadyForcedCount
   }
   await expect
-    .poll(() => dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
+    .poll(() => appPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
     .toMatchObject(postReloadDelivery)
-  await activateTerminal(dolphinPage, worktreeId, agent!.tabId)
-  const remountedAgentPtyId = await waitForActivePanePtyId(dolphinPage)
+  await activateTerminal(appPage, worktreeId, agent!.tabId)
+  const remountedAgentPtyId = await waitForActivePanePtyId(appPage)
   expect(remountedAgentPtyId).toBe(agent!.ptyId)
-  await enableTerminalAccessibility(dolphinPage, agent!.tabId)
+  await enableTerminalAccessibility(appPage, agent!.tabId)
   await expect
-    .poll(() => dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
+    .poll(() => appPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot()))
     .toMatchObject(postReloadDelivery)
   const remountAgentLiveMarker = `AGENT_LIVE_${randomUUID()}`
   await client.call('terminal.send', {
@@ -773,14 +762,14 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   const remountAgentLiveOutput = `AGENT_INPUT:${agentPid}:${remountAgentLiveMarker}`
   await expect.poll(() => terminalOutput(client, agent!.handle)).toContain(remountAgentLiveOutput)
   await expect
-    .poll(() => terminalViewportText(dolphinPage, agent!.tabId))
+    .poll(() => terminalViewportText(appPage, agent!.tabId))
     .toContain(remountAgentLiveOutput)
   expect(
-    await dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
+    await appPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
   ).toMatchObject(postReloadDelivery)
   const remountAgentAcceptedMarker = `AGENT_ACCEPTED_${randomUUID()}`
   expect(
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ marker, ptyId }) => window.api.pty.writeAccepted(ptyId, `${marker}\r`),
       { marker: remountAgentAcceptedMarker, ptyId: agent!.ptyId }
     )
@@ -790,21 +779,19 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     .poll(() => terminalOutput(client, agent!.handle))
     .toContain(remountAgentAcceptedOutput)
   await expect
-    .poll(() => terminalViewportText(dolphinPage, agent!.tabId))
+    .poll(() => terminalViewportText(appPage, agent!.tabId))
     .toContain(remountAgentAcceptedOutput)
   const remountAgentMarker = `AGENT_REMOUNT_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(dolphinPage, agent!.tabId, remountAgentMarker)
+  await typeIntoTerminal(appPage, agent!.tabId, remountAgentMarker)
   await assertExactPtyReceivedMarker(electronApp, agent!.ptyId, remountAgentMarker)
   const remountAgentOutput = `AGENT_INPUT:${agentPid}:${remountAgentMarker}`
   await expect.poll(() => terminalOutput(client, agent!.handle)).toContain(remountAgentOutput)
-  await expect
-    .poll(() => terminalViewportText(dolphinPage, agent!.tabId))
-    .toContain(remountAgentOutput)
-  await activateTerminal(dolphinPage, worktreeId, setup!.tabId)
-  const remountedSetupPtyId = await waitForActivePanePtyId(dolphinPage)
+  await expect.poll(() => terminalViewportText(appPage, agent!.tabId)).toContain(remountAgentOutput)
+  await activateTerminal(appPage, worktreeId, setup!.tabId)
+  const remountedSetupPtyId = await waitForActivePanePtyId(appPage)
   expect(remountedSetupPtyId).toBe(setup!.ptyId)
-  await enableTerminalAccessibility(dolphinPage, setup!.tabId)
+  await enableTerminalAccessibility(appPage, setup!.tabId)
   const remountSetupLiveMarker = `SETUP_LIVE_${randomUUID()}`
   await client.call('terminal.send', {
     terminal: setup!.handle,
@@ -814,20 +801,18 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
   const remountSetupLiveOutput = `SETUP_INPUT:${setupPid}:${remountSetupLiveMarker}`
   await expect.poll(() => terminalOutput(client, setup!.handle)).toContain(remountSetupLiveOutput)
   await expect
-    .poll(() => terminalViewportText(dolphinPage, setup!.tabId))
+    .poll(() => terminalViewportText(appPage, setup!.tabId))
     .toContain(remountSetupLiveOutput)
   expect(
-    await dolphinPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
+    await appPage.evaluate(() => window.api.pty.getRendererDeliveryDebugSnapshot())
   ).toMatchObject(postReloadDelivery)
   const remountSetupMarker = `SETUP_REMOUNT_${randomUUID().slice(0, 8)}`
   await clearTerminalPtyWriteLog(electronApp)
-  await typeIntoTerminal(dolphinPage, setup!.tabId, remountSetupMarker)
+  await typeIntoTerminal(appPage, setup!.tabId, remountSetupMarker)
   await assertExactPtyReceivedMarker(electronApp, setup!.ptyId, remountSetupMarker)
   const remountSetupOutput = `SETUP_INPUT:${setupPid}:${remountSetupMarker}`
   await expect.poll(() => terminalOutput(client, setup!.handle)).toContain(remountSetupOutput)
-  await expect
-    .poll(() => terminalViewportText(dolphinPage, setup!.tabId))
-    .toContain(remountSetupOutput)
+  await expect.poll(() => terminalViewportText(appPage, setup!.tabId)).toContain(remountSetupOutput)
 
   const remountCanaryMarker = `CANARY_REMOUNT_${randomUUID()}`
   await client.call('terminal.send', {
@@ -839,7 +824,7 @@ test('adopts runtime-owned agent and Setup PTYs on first mount', async ({
     .poll(() => terminalOutput(client, canary!.handle))
     .toContain(`CANARY_INPUT:${canaryPid}:${remountCanaryMarker}`)
   await assertLiveInventory(client, worktreeId, originals)
-  await assertTargetBindings(dolphinPage, worktreeId, allIdentities)
+  await assertTargetBindings(appPage, worktreeId, allIdentities)
   await assertLaunchLedgersUnchanged()
   await assertNoInterruption(client, [agent!, setup!])
   expect(readJsonLines(signalLedgerPath)).toHaveLength(0)

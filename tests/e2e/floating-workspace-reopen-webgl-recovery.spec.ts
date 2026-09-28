@@ -366,24 +366,24 @@ async function setUpCorruptedFloatingTerminal(
 
 test.describe('floating workspace reopen WebGL recovery @headful', () => {
   test('reopening the floating workspace recovers a corrupted glyph atlas', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     // Why: the floating panel hides via CSS visibility only. Gating the
     // terminal's isVisible on `open` suspends its WebGL renderer while
     // hidden, so a glyph atlas corrupted with no context-loss event is
     // discarded with the context and the resume on reopen repaints clean.
-    const shots = await setUpCorruptedFloatingTerminal(dolphinPage, 'REOPEN')
+    const shots = await setUpCorruptedFloatingTerminal(appPage, 'REOPEN')
     test.skip(!shots, 'WebGL was not active or atlas corruption could not be injected')
     const { baseline, corrupted } = shots!
     expect(corrupted.equals(baseline)).toBe(false)
 
-    expect(await instrumentRecoveryCounters(dolphinPage)).toBe(true)
+    expect(await instrumentRecoveryCounters(appPage)).toBe(true)
 
-    await toggleFloatingPanel(dolphinPage, false)
+    await toggleFloatingPanel(appPage, false)
     // Why: the prevention invariant — closing the panel suspends rendering,
     // so no live WebGL context (or corruptible glyph atlas) exists while the
     // floating terminal is hidden.
-    const webglAttachedWhileClosed = await dolphinPage.evaluate((worktreeId) => {
+    const webglAttachedWhileClosed = await appPage.evaluate((worktreeId) => {
       const state = window.__store?.getState()
       const tab = (state?.tabsByWorktree?.[worktreeId] ?? [])[0]
       const manager = tab ? window.__paneManagers?.get(tab.id) : null
@@ -392,11 +392,11 @@ test.describe('floating workspace reopen WebGL recovery @headful', () => {
     }, FLOATING_WORKTREE_ID)
     expect(webglAttachedWhileClosed, 'closing the panel should suspend WebGL rendering').toBe(false)
 
-    await toggleFloatingPanel(dolphinPage, true)
-    await settleRecoveryWindows(dolphinPage)
+    await toggleFloatingPanel(appPage, true)
+    await settleRecoveryWindows(appPage)
 
-    const counters = await readRecoveryCounters(dolphinPage)
-    const afterReopen = await screenshotFloatingTerminal(dolphinPage)
+    const counters = await readRecoveryCounters(appPage)
+    const afterReopen = await screenshotFloatingTerminal(appPage)
     await testInfo.attach('baseline', {
       body: baseline,
       contentType: 'image/png'
@@ -421,13 +421,13 @@ test.describe('floating workspace reopen WebGL recovery @headful', () => {
   })
 
   test('system resume recovers the corrupted atlas (harness control)', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
     // Why: control proving the injected corruption is exactly the class the
     // existing recovery machinery heals — isolating the reopen gap above as a
     // missing trigger rather than a broken harness or unrecoverable state.
-    const shots = await setUpCorruptedFloatingTerminal(dolphinPage, 'CONTROL')
+    const shots = await setUpCorruptedFloatingTerminal(appPage, 'CONTROL')
     test.skip(!shots, 'WebGL was not active or atlas corruption could not be injected')
     const { baseline, corrupted } = shots!
     expect(corrupted.equals(baseline)).toBe(false)
@@ -439,9 +439,9 @@ test.describe('floating workspace reopen WebGL recovery @headful', () => {
       }
       mainWindow.webContents.send('system:resumed')
     })
-    await settleRecoveryWindows(dolphinPage)
+    await settleRecoveryWindows(appPage)
 
-    const afterResume = await screenshotFloatingTerminal(dolphinPage)
+    const afterResume = await screenshotFloatingTerminal(appPage)
     console.log(`[floating-control] healedByResume=${afterResume.equals(baseline)}`)
     expect(afterResume.equals(baseline), 'system resume should heal the atlas').toBe(true)
   })

@@ -211,13 +211,13 @@ async function listWorker(client: RuntimeClient, handle: string): Promise<Runtim
 }
 
 test('worker-read uses provider transcripts across supported orchestration agents', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }) => {
   test.setTimeout(240_000)
   rmSync(capabilityLedgerPath, { force: true })
-  await waitForSessionReady(dolphinPage)
-  await dolphinPage.evaluate(
+  await waitForSessionReady(appPage)
+  await appPage.evaluate(
     async ({ commands, terminalWindowsShell }) => {
       await window.__store?.getState().updateSettings({
         agentCmdOverrides: commands,
@@ -228,10 +228,10 @@ test('worker-read uses provider transcripts across supported orchestration agent
     },
     { commands: agentCommands, terminalWindowsShell: FAKE_AGENT_WINDOWS_SHELL }
   )
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActivePanePtyId(dolphinPage)
-  const coordinatorPane = await waitForActivePaneHookDescriptor(dolphinPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActivePanePtyId(appPage)
+  const coordinatorPane = await waitForActivePaneHookDescriptor(appPage)
   const userDataDir = await electronApp.evaluate(({ app }) => app.getPath('userData'))
   const client = new RuntimeClient(userDataDir, 30_000, null, null)
   const coordinator = await client.call<{ terminal: { handle: string } }>('terminal.resolvePane', {

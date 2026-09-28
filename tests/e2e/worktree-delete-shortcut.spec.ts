@@ -28,18 +28,18 @@ async function createIsolatedWorktree(
 test.describe('Worktree Delete Shortcut', () => {
   let createdWorktreeId: string | null = null
 
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test.afterEach(async ({ dolphinPage }) => {
+  test.afterEach(async ({ appPage }) => {
     if (!createdWorktreeId) {
       return
     }
     const worktreeId = createdWorktreeId
     createdWorktreeId = null
-    await dolphinPage
+    await appPage
       .evaluate(async (id) => {
         const state = window.__store?.getState()
         await state?.removeWorktree(
@@ -51,22 +51,22 @@ test.describe('Worktree Delete Shortcut', () => {
   })
 
   test('deletes the hovered worktree after Mod+Shift+Backspace confirmation', async ({
-    dolphinPage
+    appPage
   }) => {
-    createdWorktreeId = await createIsolatedWorktree(dolphinPage)
+    createdWorktreeId = await createIsolatedWorktree(appPage)
     const worktreeId = createdWorktreeId
-    const row = worktreeRow(dolphinPage, worktreeId)
+    const row = worktreeRow(appPage, worktreeId)
     await expect(row).toBeVisible()
 
     await row.hover()
-    await pressShortcut(dolphinPage, 'Backspace', { shift: true })
+    await pressShortcut(appPage, 'Backspace', { shift: true })
 
-    const dialog = dolphinPage.getByRole('dialog')
+    const dialog = appPage.getByRole('dialog')
     await expect(dialog).toBeVisible()
     await dialog.getByRole('button', { name: 'Delete Workspace', exact: true }).click()
 
     await expect
-      .poll(async () => getAllWorktreeIds(dolphinPage), {
+      .poll(async () => getAllWorktreeIds(appPage), {
         timeout: 15_000,
         message: 'hovered worktree was not removed by the delete shortcut'
       })

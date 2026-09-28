@@ -113,23 +113,23 @@ test.describe('New workspace composer linked item across project switches', () =
   let tempRoot: string
   let secondRepoPath: string
 
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
     tempRoot = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-linked-item-'))
     secondRepoPath = path.join(tempRoot, SECOND_PROJECT_NAME)
     createGitRepo(secondRepoPath)
-    await addSecondProject(dolphinPage, secondRepoPath)
+    await addSecondProject(appPage, secondRepoPath)
   })
 
   test.afterEach(() => {
     rmSync(tempRoot, { recursive: true, force: true })
   })
 
-  test('keeps a Jira issue linked when the project changes', async ({ dolphinPage }) => {
-    const jiraSourceContext = await getJiraSourceContext(dolphinPage)
+  test('keeps a Jira issue linked when the project changes', async ({ appPage }) => {
+    const jiraSourceContext = await getJiraSourceContext(appPage)
     await openComposerWithLinkedWorkItem(
-      dolphinPage,
+      appPage,
       {
         type: 'issue',
         provider: 'jira',
@@ -142,19 +142,19 @@ test.describe('New workspace composer linked item across project switches', () =
       jiraSourceContext
     )
 
-    const composer = dolphinPage.getByRole('dialog')
+    const composer = appPage.getByRole('dialog')
     await expect(composer).toBeVisible()
     const sourcePill = composer.locator('[data-workspace-source-pill="true"]')
     await expect(sourcePill).toContainText('RDG-344 Migrate homepage from NuxtJS to NextJS')
 
-    await switchComposerProject(dolphinPage, SECOND_PROJECT_NAME)
+    await switchComposerProject(appPage, SECOND_PROJECT_NAME)
 
     await expect(sourcePill).toContainText('RDG-344 Migrate homepage from NuxtJS to NextJS')
   })
 
-  test('clears a repo-scoped GitHub issue when the project changes', async ({ dolphinPage }) => {
+  test('clears a repo-scoped GitHub issue when the project changes', async ({ appPage }) => {
     await openComposerWithLinkedWorkItem(
-      dolphinPage,
+      appPage,
       {
         type: 'issue',
         provider: 'github',
@@ -165,12 +165,12 @@ test.describe('New workspace composer linked item across project switches', () =
       'fix-crash-on-launch'
     )
 
-    const composer = dolphinPage.getByRole('dialog')
+    const composer = appPage.getByRole('dialog')
     await expect(composer).toBeVisible()
     const sourcePill = composer.locator('[data-workspace-source-pill="true"]')
     await expect(sourcePill).toContainText('#41 Fix crash on launch')
 
-    await switchComposerProject(dolphinPage, SECOND_PROJECT_NAME)
+    await switchComposerProject(appPage, SECOND_PROJECT_NAME)
 
     await expect(sourcePill).toHaveCount(0)
   })

@@ -165,21 +165,21 @@ async function expectQuickOpenAndRuntimeHealthy(
 }
 
 test('finds paths beyond the old prefix on a headed paired runtime @headful', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(240_000)
   const fixture = createPairedQuickOpenLargeTreeFixture()
   let client: PairedElectronClient | null = null
   try {
-    await waitForSessionReady(dolphinPage)
-    await dolphinPage.evaluate(async (repoPath) => {
+    await waitForSessionReady(appPage)
+    await appPage.evaluate(async (repoPath) => {
       const store = window.__store
       if (!store || !(await store.getState().addRepoPath(repoPath))) {
         throw new Error('headed host could not add the large-tree repo')
       }
     }, fixture.root)
     client = await launchPairedElectronClient(
-      await createRuntimeDesktopPairingOffer(dolphinPage),
+      await createRuntimeDesktopPairingOffer(appPage),
       testInfo,
       'STA-4354 headed host'
     )

@@ -56,18 +56,16 @@ function describeSpan(sample: MidlinePreeditOcclusionSample): string {
 }
 
 test.describe('Terminal end-of-row Korean preedit cell span', () => {
-  test('keeps the preedit caret inside the final terminal cell', async ({
-    dolphinPage
-  }, testInfo) => {
-    const arena = await openTerminalImePaneArena(dolphinPage)
+  test('keeps the preedit caret inside the final terminal cell', async ({ appPage }, testInfo) => {
+    const arena = await openTerminalImePaneArena(appPage)
     let completed = false
     try {
       // CHA clamps to the last column; xterm's wrap-pending cursor is the final-cell shape the
       // composition helper itself clamps onto.
-      await writeToActiveTerminal(dolphinPage, '\x1b[2J\x1b[H\x1b[999Gx')
+      await writeToActiveTerminal(appPage, '\x1b[2J\x1b[H\x1b[999Gx')
       await setImeComposition(arena.session, '가')
 
-      const sample = await sampleOpenComposition(dolphinPage)
+      const sample = await sampleOpenComposition(appPage)
       const caret = sample.caretRect
       const preedit = sample.preeditRect
       const textarea = sample.textareaRect
@@ -126,17 +124,17 @@ test.describe('Terminal end-of-row Korean preedit cell span', () => {
   })
 
   test('renders a composing syllable wider than the one cell #12729 measured', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    const arena = await openTerminalImePaneArena(dolphinPage)
+    const arena = await openTerminalImePaneArena(appPage)
     let completed = false
     try {
       // 안녕하세요 is ten cells, so the cursor lands at the end of the row with nothing after it —
       // the shape #12729 hits, and the one where the overlay carries the preedit alone.
-      await writeToActiveTerminal(dolphinPage, '\x1b[2J\x1b[H안녕하세요')
+      await writeToActiveTerminal(appPage, '\x1b[2J\x1b[H안녕하세요')
       await setImeComposition(arena.session, '가')
 
-      const sample = await sampleOpenComposition(dolphinPage)
+      const sample = await sampleOpenComposition(appPage)
       expect(sample.rowTailFromCursor, 'text still sits after the cursor').toBe('')
       expect(sample.cursorColumn, 'the cursor is not at the end of the committed run').toBe(10)
       expect(

@@ -133,13 +133,13 @@ async function settleTerminal(page: Page): Promise<string> {
 }
 
 test.describe('Terminal column desync repro', () => {
-  test('PTY columns stay in sync with xterm across a visible resize', async ({ dolphinPage }) => {
+  test('PTY columns stay in sync with xterm across a visible resize', async ({ appPage }) => {
     test.setTimeout(120_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await closeRightSidebarAndFeatureTips(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const ptyId = await settleTerminal(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await closeRightSidebarAndFeatureTips(appPage)
+    await ensureTerminalVisible(appPage)
+    const ptyId = await settleTerminal(appPage)
 
     // Why: the resize chain (ResizeObserver → rAF fit → PTY resize IPC) needs
     // longer than a fixed wait under loaded CI, and the two columns are sampled
@@ -149,7 +149,7 @@ test.describe('Terminal column desync repro', () => {
       await expect
         .poll(
           async () => {
-            const snap = await readColumnSnapshot(dolphinPage, ptyId)
+            const snap = await readColumnSnapshot(appPage, ptyId)
             return snap.ptyCols === snap.xtermCols
               ? 'synced'
               : `pty=${snap.ptyCols} xterm=${snap.xtermCols}`
@@ -164,10 +164,10 @@ test.describe('Terminal column desync repro', () => {
 
     // Shrink the window while the terminal is visible, then widen it. xterm
     // reflows via the ResizeObserver; the PTY must follow.
-    await dolphinPage.setViewportSize({ width: 760, height: 800 })
+    await appPage.setViewportSize({ width: 760, height: 800 })
     await expectColumnsInSync('after shrink')
 
-    await dolphinPage.setViewportSize({ width: 1280, height: 800 })
+    await appPage.setViewportSize({ width: 1280, height: 800 })
     await expectColumnsInSync('after widen')
   })
 
@@ -177,15 +177,15 @@ test.describe('Terminal column desync repro', () => {
   // behavior) instead of the size the PTY actually APPLIED, a dropped resize is
   // invisible and the TUI stays garbled. So pty:getSize must equal the real
   // in-PTY process.stdout.columns, not just xterm.
-  test('pty:getSize reports the size the PTY actually applied', async ({ dolphinPage }) => {
+  test('pty:getSize reports the size the PTY actually applied', async ({ appPage }) => {
     test.setTimeout(120_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await closeRightSidebarAndFeatureTips(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const ptyId = await settleTerminal(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await closeRightSidebarAndFeatureTips(appPage)
+    await ensureTerminalVisible(appPage)
+    const ptyId = await settleTerminal(appPage)
 
-    await dolphinPage.setViewportSize({ width: 900, height: 800 })
+    await appPage.setViewportSize({ width: 900, height: 800 })
 
     // Why: poll until pty:getSize converges to the real applied columns instead
     // of sampling once after a fixed wait — the resize can still be settling on
@@ -194,8 +194,8 @@ test.describe('Terminal column desync repro', () => {
     await expect
       .poll(
         async () => {
-          const ptyCols = await readPtyCols(dolphinPage, ptyId)
-          const reportedCols = await readReportedPtyCols(dolphinPage, ptyId)
+          const ptyCols = await readPtyCols(appPage, ptyId)
+          const reportedCols = await readReportedPtyCols(appPage, ptyId)
           return reportedCols === ptyCols ? 'match' : `reported=${reportedCols} pty=${ptyCols}`
         },
         {
@@ -208,42 +208,38 @@ test.describe('Terminal column desync repro', () => {
       .toBe('match')
   })
 
-  test('PTY columns re-sync after the terminal is resized while hidden', async ({
-    dolphinPage
-  }) => {
+  test('PTY columns re-sync after the terminal is resized while hidden', async ({ appPage }) => {
     test.setTimeout(120_000)
-    await waitForSessionReady(dolphinPage)
-    const homeWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const otherWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== homeWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const homeWorktreeId = await waitForActiveWorktree(appPage)
+    const otherWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== homeWorktreeId)
     test.skip(!otherWorktreeId, 'hidden-resize repro needs the seeded secondary worktree')
     if (!otherWorktreeId) {
       return
     }
 
-    await closeRightSidebarAndFeatureTips(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const ptyId = await settleTerminal(dolphinPage)
-    await dolphinPage.setViewportSize({ width: 1280, height: 800 })
-    await dolphinPage.waitForTimeout(400)
+    await closeRightSidebarAndFeatureTips(appPage)
+    await ensureTerminalVisible(appPage)
+    const ptyId = await settleTerminal(appPage)
+    await appPage.setViewportSize({ width: 1280, height: 800 })
+    await appPage.waitForTimeout(400)
 
-    const baseline = await readColumnSnapshot(dolphinPage, ptyId)
+    const baseline = await readColumnSnapshot(appPage, ptyId)
     expect(baseline.ptyCols).toBe(baseline.xtermCols)
 
     // Hide the terminal by switching worktrees, resize the window narrow while
     // it is in the background (so isRendererPtyResizeAuthoritative() is false
     // and the off-screen reflow's pty:resize is dropped), then return.
-    await switchToWorktree(dolphinPage, otherWorktreeId)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await dolphinPage.setViewportSize({ width: 720, height: 800 })
-    await dolphinPage.waitForTimeout(500)
-    await switchToWorktree(dolphinPage, homeWorktreeId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await dolphinPage.waitForTimeout(600)
+    await switchToWorktree(appPage, otherWorktreeId)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await appPage.setViewportSize({ width: 720, height: 800 })
+    await appPage.waitForTimeout(500)
+    await switchToWorktree(appPage, homeWorktreeId)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await appPage.waitForTimeout(600)
 
-    const afterReturn = await readColumnSnapshot(dolphinPage, ptyId)
+    const afterReturn = await readColumnSnapshot(appPage, ptyId)
     expect(
       afterReturn.ptyCols,
       `after hidden resize + return, PTY cols (${afterReturn.ptyCols}) should equal xterm cols ` +
@@ -251,13 +247,11 @@ test.describe('Terminal column desync repro', () => {
     ).toBe(afterReturn.xtermCols)
   })
 
-  test('PTY columns re-sync after repeated background resizes', async ({ dolphinPage }) => {
+  test('PTY columns re-sync after repeated background resizes', async ({ appPage }) => {
     test.setTimeout(180_000)
-    await waitForSessionReady(dolphinPage)
-    const homeWorktreeId = await waitForActiveWorktree(dolphinPage)
-    const otherWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== homeWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    const homeWorktreeId = await waitForActiveWorktree(appPage)
+    const otherWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== homeWorktreeId)
     test.skip(
       !otherWorktreeId,
       'repeated background-resize repro needs the seeded secondary worktree'
@@ -266,25 +260,25 @@ test.describe('Terminal column desync repro', () => {
       return
     }
 
-    await closeRightSidebarAndFeatureTips(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const ptyId = await settleTerminal(dolphinPage)
+    await closeRightSidebarAndFeatureTips(appPage)
+    await ensureTerminalVisible(appPage)
+    const ptyId = await settleTerminal(appPage)
 
     // Several hide/resize/show cycles at different widths. Terminal timing bugs
     // need repetition: each cycle is a fresh chance for the resume-time
     // correction to miss and leave the PTY pinned at a stale column count.
     const widths = [700, 1320, 640, 1180, 600]
     for (const [index, width] of widths.entries()) {
-      await switchToWorktree(dolphinPage, otherWorktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await dolphinPage.setViewportSize({ width, height: 800 })
-      await dolphinPage.waitForTimeout(350)
-      await switchToWorktree(dolphinPage, homeWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await dolphinPage.waitForTimeout(500)
+      await switchToWorktree(appPage, otherWorktreeId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.setViewportSize({ width, height: 800 })
+      await appPage.waitForTimeout(350)
+      await switchToWorktree(appPage, homeWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.waitForTimeout(500)
 
-      const snapshot = await readColumnSnapshot(dolphinPage, ptyId)
+      const snapshot = await readColumnSnapshot(appPage, ptyId)
       expect(
         snapshot.ptyCols,
         `cycle ${index} (width ${width}): PTY cols (${snapshot.ptyCols}) should equal xterm cols ` +
@@ -294,28 +288,28 @@ test.describe('Terminal column desync repro', () => {
   })
 
   test('both panes keep PTY columns synced after a vertical split reparent', async ({
-    dolphinPage
+    appPage
   }) => {
     test.setTimeout(180_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await closeRightSidebarAndFeatureTips(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await dolphinPage.setViewportSize({ width: 1280, height: 800 })
-    await dolphinPage.waitForTimeout(300)
-    const firstPtyId = await settleTerminal(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await closeRightSidebarAndFeatureTips(appPage)
+    await ensureTerminalVisible(appPage)
+    await appPage.setViewportSize({ width: 1280, height: 800 })
+    await appPage.waitForTimeout(300)
+    const firstPtyId = await settleTerminal(appPage)
 
-    const baseline = await readColumnSnapshot(dolphinPage, firstPtyId)
+    const baseline = await readColumnSnapshot(appPage, firstPtyId)
     expect(baseline.ptyCols).toBe(baseline.xtermCols)
 
     // Splitting halves the width of the original pane: xterm reflows to ~half
     // the columns. The PTY must follow, otherwise the existing shell keeps
     // emitting full-width output into a half-width pane.
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
+    await splitActiveTerminalPane(appPage, 'vertical')
     await expect
       .poll(
         async () => {
-          const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+          const snapshot = await waitForPaneIdentitySnapshot(appPage, 2)
           return snapshot.panes
             .map((pane) => pane.ptyId)
             .filter((ptyId): ptyId is string => Boolean(ptyId))
@@ -323,7 +317,7 @@ test.describe('Terminal column desync repro', () => {
         { timeout: 30_000, message: 'vertical split should produce two PTY-backed panes' }
       )
       .toHaveLength(2)
-    const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    const snapshot = await waitForPaneIdentitySnapshot(appPage, 2)
 
     for (const pane of snapshot.panes) {
       const ptyId = pane.ptyId
@@ -331,8 +325,8 @@ test.describe('Terminal column desync repro', () => {
       if (!ptyId) {
         continue
       }
-      const ptyCols = await readPtyCols(dolphinPage, ptyId)
-      const xtermCols = await readRenderedColsForPty(dolphinPage, ptyId)
+      const ptyCols = await readPtyCols(appPage, ptyId)
+      const xtermCols = await readRenderedColsForPty(appPage, ptyId)
       expect(
         ptyCols,
         `after split, pane ${ptyId} PTY cols (${ptyCols}) should equal its xterm cols (${xtermCols})`
@@ -351,7 +345,7 @@ test.describe('Terminal column desync repro', () => {
   // layout persists across reload, so the tab remounts with two panes already
   // present, re-running the first-mount spawn for each.
   test('both panes stay PTY-synced when a tab MOUNTS with a split layout present', async ({
-    dolphinPage
+    appPage
   }) => {
     test.setTimeout(240_000)
 
@@ -360,37 +354,37 @@ test.describe('Terminal column desync repro', () => {
     const MOUNT_ATTEMPTS = 6
     const desyncs: { attempt: number; ptyId: string; ptyCols: number; xtermCols: number }[] = []
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await closeRightSidebarAndFeatureTips(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await dolphinPage.setViewportSize({ width: 1440, height: 900 })
-    await dolphinPage.waitForTimeout(300)
-    await settleTerminal(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await closeRightSidebarAndFeatureTips(appPage)
+    await ensureTerminalVisible(appPage)
+    await appPage.setViewportSize({ width: 1440, height: 900 })
+    await appPage.waitForTimeout(300)
+    await settleTerminal(appPage)
 
     // Establish the persisted split layout once; reloads below rebuild it.
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneIdentitySnapshot(appPage, 2)
 
     for (let attempt = 0; attempt < MOUNT_ATTEMPTS; attempt += 1) {
       // Re-run the split first-mount path: a wide window, reload so the tab
       // remounts and re-spawns both PTYs at the wide width from the restored
       // split layout, then resize down while the panes are still mounting.
-      await dolphinPage.setViewportSize({ width: 1440, height: 900 })
-      await dolphinPage.reload()
-      await dolphinPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await closeRightSidebarAndFeatureTips(dolphinPage)
-      await ensureTerminalVisible(dolphinPage)
+      await appPage.setViewportSize({ width: 1440, height: 900 })
+      await appPage.reload()
+      await appPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await closeRightSidebarAndFeatureTips(appPage)
+      await ensureTerminalVisible(appPage)
 
       // Resize narrower while the split panes are mounting / their PTYs spawn.
-      await dolphinPage.setViewportSize({ width: 1180, height: 800 })
-      await dolphinPage.waitForTimeout(300)
+      await appPage.setViewportSize({ width: 1180, height: 800 })
+      await appPage.waitForTimeout(300)
 
-      const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+      const snapshot = await waitForPaneIdentitySnapshot(appPage, 2)
       // Let layout equalize and the (current) reconcile window run to completion.
-      await dolphinPage.waitForTimeout(900)
+      await appPage.waitForTimeout(900)
 
       for (const pane of snapshot.panes) {
         const ptyId = pane.ptyId
@@ -398,8 +392,8 @@ test.describe('Terminal column desync repro', () => {
         if (!ptyId) {
           continue
         }
-        const ptyCols = await readPtyCols(dolphinPage, ptyId)
-        const xtermCols = await readRenderedColsForPty(dolphinPage, ptyId)
+        const ptyCols = await readPtyCols(appPage, ptyId)
+        const xtermCols = await readRenderedColsForPty(appPage, ptyId)
         if (ptyCols !== xtermCols) {
           desyncs.push({ attempt, ptyId, ptyCols, xtermCols })
         }
@@ -424,7 +418,7 @@ test.describe('Terminal column desync repro', () => {
   // nothing re-syncs. A long-output program then prints sized for the stale
   // PTY width into the narrower pane → the garbled "1 char per line" render.
   test('PTY columns stay synced when the window is resized during initial mount', async ({
-    dolphinPage
+    appPage
   }) => {
     test.setTimeout(240_000)
 
@@ -441,23 +435,23 @@ test.describe('Terminal column desync repro', () => {
       if (attempt > 0) {
         // Re-run the first-mount path: a wide window, then reload so the
         // terminal remounts and spawns its PTY at the wide width.
-        await dolphinPage.setViewportSize({ width: 1440, height: 900 })
-        await dolphinPage.reload()
-        await dolphinPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
+        await appPage.setViewportSize({ width: 1440, height: 900 })
+        await appPage.reload()
+        await appPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
       }
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await closeRightSidebarAndFeatureTips(dolphinPage)
-      await ensureTerminalVisible(dolphinPage)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await closeRightSidebarAndFeatureTips(appPage)
+      await ensureTerminalVisible(appPage)
 
       // Resize down while the terminal is mounting / the PTY is spawning.
-      await dolphinPage.setViewportSize({ width: 1280, height: 800 })
-      await dolphinPage.waitForTimeout(300)
+      await appPage.setViewportSize({ width: 1280, height: 800 })
+      await appPage.waitForTimeout(300)
 
-      const ptyId = await settleTerminal(dolphinPage)
-      await dolphinPage.waitForTimeout(700)
+      const ptyId = await settleTerminal(appPage)
+      await appPage.waitForTimeout(700)
 
-      const snapshot = await readColumnSnapshot(dolphinPage, ptyId)
+      const snapshot = await readColumnSnapshot(appPage, ptyId)
       if (snapshot.ptyCols !== snapshot.xtermCols) {
         desyncs.push({ attempt, ptyCols: snapshot.ptyCols, xtermCols: snapshot.xtermCols })
       }

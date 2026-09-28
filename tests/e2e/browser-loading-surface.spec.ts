@@ -4,14 +4,14 @@ import { crashGuestRenderer } from './browser-guest-runtime-oracle'
 import { observeBrowserLoadingSurface } from './browser-loading-surface-oracle'
 
 test('browser host follows the theme before content and preserves the webpage canvas', async ({
-  dolphinPage,
+  appPage,
   electronApp
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
+  await waitForSessionReady(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveWorktree(appPage)
   const observations = await observeBrowserLoadingSurface(
-    dolphinPage,
+    appPage,
     (name) => testInfo.outputPath(name),
     async (id) => {
       await crashGuestRenderer(electronApp, id)

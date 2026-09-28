@@ -30,38 +30,38 @@ function chooseStaleGrid(current: Grid): Grid {
 
 test.describe('terminal window-wake stale grid repro', () => {
   test('window focus heals a local PTY whose applied grid drifted from xterm', async ({
-    dolphinPage
+    appPage
   }) => {
     test.setTimeout(120_000)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    await waitForPtyShellEcho(dolphinPage, ptyId, 15_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
-    const baseline = await readGridSnapshot(dolphinPage, ptyId)
+    const baseline = await readGridSnapshot(appPage, ptyId)
     expect(baseline.xterm).not.toBeNull()
     expect(baseline.applied).toEqual(baseline.xterm)
     const staleGrid = chooseStaleGrid(baseline.xterm!)
 
     // Why: model the field state directly—xterm is fitted, but the idle PTY
     // still has an older grid and produces no output that could self-heal it.
-    await dolphinPage.evaluate(({ id, grid }) => window.api.pty.resize(id, grid.cols, grid.rows), {
+    await appPage.evaluate(({ id, grid }) => window.api.pty.resize(id, grid.cols, grid.rows), {
       id: ptyId,
       grid: staleGrid
     })
     await expect
-      .poll(async () => (await readGridSnapshot(dolphinPage, ptyId)).applied, { timeout: 10_000 })
+      .poll(async () => (await readGridSnapshot(appPage, ptyId)).applied, { timeout: 10_000 })
       .toEqual(staleGrid)
-    expect((await readGridSnapshot(dolphinPage, ptyId)).xterm).toEqual(baseline.xterm)
+    expect((await readGridSnapshot(appPage, ptyId)).xterm).toEqual(baseline.xterm)
 
-    await dolphinPage.evaluate(() => window.dispatchEvent(new Event('focus')))
+    await appPage.evaluate(() => window.dispatchEvent(new Event('focus')))
 
     await expect
       .poll(
         async () => {
-          const snapshot = await readGridSnapshot(dolphinPage, ptyId)
+          const snapshot = await readGridSnapshot(appPage, ptyId)
           return snapshot.applied && snapshot.xterm ? snapshot : null
         },
         { timeout: 10_000, message: 'Window focus should converge the local PTY to xterm' }

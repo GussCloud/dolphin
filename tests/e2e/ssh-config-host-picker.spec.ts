@@ -52,21 +52,19 @@ async function seedPairConfig(
 }
 
 test.describe('SSH config host picker', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
   })
 
-  test.afterEach(async ({ dolphinPage }) => {
-    await closeOpenDialogs(dolphinPage).catch(() => undefined)
-    await removeSshTargetsByPrefix(dolphinPage, HOST_PREFIX).catch(() => undefined)
+  test.afterEach(async ({ appPage }) => {
+    await closeOpenDialogs(appPage).catch(() => undefined)
+    await removeSshTargetsByPrefix(appPage, HOST_PREFIX).catch(() => undefined)
   })
 
   // ── P1 ─────────────────────────────────────────────────────────────
-  test('P1: empty config shows empty state; Back returns to blank form', async ({
-    dolphinPage
-  }) => {
+  test('P1: empty config shows empty state; Back returns to blank form', async ({ appPage }) => {
     // Isolated HOME has no ~/.ssh/config by default.
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
     await expect(picker.getByRole('heading', { name: 'Choose from ~/.ssh/config' })).toBeVisible()
     await expect(picker.getByText('No hosts in ~/.ssh/config')).toBeVisible()
     await expect(
@@ -75,7 +73,7 @@ test.describe('SSH config host picker', () => {
     await expect(picker.getByRole('button', { name: 'Add all to Dolphin' })).toBeDisabled()
 
     await picker.getByRole('button', { name: 'Back' }).click()
-    const form = dolphinPage.getByRole('dialog', { name: 'Add SSH host' })
+    const form = appPage.getByRole('dialog', { name: 'Add SSH host' })
     await expect(form.getByRole('heading', { name: 'Add SSH host' })).toBeVisible()
     const fields = addSshHostFormFields(form)
     await expect(fields.host).toHaveValue('')
@@ -86,10 +84,10 @@ test.describe('SSH config host picker', () => {
   // ── P2 ─────────────────────────────────────────────────────────────
   test('P2: seeded hosts list with summary lines and Add all enabled', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const hosts = await seedPairConfig(electronApp, HOST_PREFIX)
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
 
     const hostList = picker.getByRole('list', { name: 'SSH config hosts' })
     await expect(hostList).toBeVisible()
@@ -107,7 +105,7 @@ test.describe('SSH config host picker', () => {
   // ── P3 + N3 ────────────────────────────────────────────────────────
   test('P3: select host prefills form; Save persists; N3 identity hint', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const prod: SeededSshConfigHost = {
       alias: `${HOST_PREFIX}-prod`,
@@ -117,10 +115,10 @@ test.describe('SSH config host picker', () => {
     }
     await seedIsolatedSshConfig(electronApp, buildSshConfigBody([prod]))
 
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
     await configHostRow(picker, prod).click()
 
-    const form = dolphinPage.getByRole('dialog', { name: 'Add SSH host' })
+    const form = appPage.getByRole('dialog', { name: 'Add SSH host' })
     await expect(form.getByRole('heading', { name: 'Add SSH host' })).toBeVisible({
       timeout: 10_000
     })
@@ -135,21 +133,21 @@ test.describe('SSH config host picker', () => {
       form.getByText(new RegExp(`Left empty on purpose:.*${escapeRegExp(prod.alias)}`, 'i'))
     ).toBeVisible()
     await expect(
-      dolphinPage.getByText(new RegExp(`Filled from ${escapeRegExp(prod.alias)}`, 'i'))
+      appPage.getByText(new RegExp(`Filled from ${escapeRegExp(prod.alias)}`, 'i'))
     ).toBeVisible({ timeout: 5_000 })
 
     await form.getByRole('button', { name: 'Save' }).click()
     await expect(form).toBeHidden({ timeout: 10_000 })
 
     // The saved settings card is durable; the success toast is not.
-    const sshSection = await openSshHostSettings(dolphinPage)
+    const sshSection = await openSshHostSettings(appPage)
     await expectSshHostListedInSettings(sshSection, prod)
   })
 
   // ── P4 ─────────────────────────────────────────────────────────────
-  test('P4: filter narrows host list', async ({ electronApp, dolphinPage }) => {
+  test('P4: filter narrows host list', async ({ electronApp, appPage }) => {
     const hosts = await seedPairConfig(electronApp, HOST_PREFIX)
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
 
     await expect(configHostRow(picker, hosts.alpha)).toBeVisible()
     await expect(configHostRow(picker, hosts.bravo)).toBeVisible()
@@ -168,19 +166,19 @@ test.describe('SSH config host picker', () => {
   })
 
   // ── P8 ─────────────────────────────────────────────────────────────
-  test('P8: Back without select leaves form empty', async ({ electronApp, dolphinPage }) => {
+  test('P8: Back without select leaves form empty', async ({ electronApp, appPage }) => {
     const hosts = await seedPairConfig(electronApp, HOST_PREFIX)
-    const picker = await openSshConfigHostPicker(dolphinPage)
+    const picker = await openSshConfigHostPicker(appPage)
     await expect(configHostRow(picker, hosts.alpha)).toBeVisible()
 
     await picker.getByRole('button', { name: 'Back' }).click()
-    const form = dolphinPage.getByRole('dialog', { name: 'Add SSH host' })
+    const form = appPage.getByRole('dialog', { name: 'Add SSH host' })
     await expect(form.getByRole('heading', { name: 'Add SSH host' })).toBeVisible()
     const fields = addSshHostFormFields(form)
     await expect(fields.host).toHaveValue('')
     await expect(fields.username).toHaveValue('')
     await expect(fields.label).toHaveValue('')
-    await expect(dolphinPage.getByText(/Filled from /i)).toHaveCount(0)
+    await expect(appPage.getByText(/Filled from /i)).toHaveCount(0)
   })
 })
 

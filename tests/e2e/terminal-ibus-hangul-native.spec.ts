@@ -169,24 +169,18 @@ test.describe('Native IBus Hangul terminal input @headful', () => {
   )
 
   test('forwards the issue exact-byte sequence without loss or duplication', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await runNativeIbusScenario(
-      dolphinPage,
-      testInfo,
-      testRepoPath,
-      '한abc글',
-      typeExactByteSequence
-    )
+    await runNativeIbusScenario(appPage, testInfo, testRepoPath, '한abc글', typeExactByteSequence)
   })
 
   test('forwards the issue sentence stress sequence without leaked ASCII', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     await runNativeIbusScenario(
-      dolphinPage,
+      appPage,
       testInfo,
       testRepoPath,
       '테스트를 하고 있는데 여전히 그러네',

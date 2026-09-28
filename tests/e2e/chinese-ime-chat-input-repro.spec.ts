@@ -514,67 +514,67 @@ async function launchCodexTui(page: Page, ptyId: string): Promise<void> {
 
 test.describe('Chinese IME terminal chat input repro', () => {
   test('keeps composed Chinese text, cursor movement, and Backspace stable in the agent input surface', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-chinese-ime-harness-${runId}.cjs`)
     writeFileSync(scriptPath, terminalImeHarnessScript(runId))
-    const session = await dolphinPage.context().newCDPSession(dolphinPage)
+    const session = await appPage.context().newCDPSession(appPage)
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
-      await waitForTerminalOutput(dolphinPage, `IME_HARNESS_READY_${runId}`, 10_000, 20_000)
-      await focusActiveTerminalInput(dolphinPage)
-      await installImeEventProbe(dolphinPage)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await waitForTerminalOutput(appPage, `IME_HARNESS_READY_${runId}`, 10_000, 20_000)
+      await focusActiveTerminalInput(appPage)
+      await installImeEventProbe(appPage)
 
       await dispatchImeProcessKey(session, 'KeyN')
-      await composeAndCommitChineseText(session, dolphinPage, ['n', 'ni', '你', '你好'], '你好')
-      await waitForLivePrompt(dolphinPage, '你好')
-      await attachImeEvidence(dolphinPage, testInfo, 'after-compose-hello')
-      await dolphinPage.keyboard.press('Enter')
+      await composeAndCommitChineseText(session, appPage, ['n', 'ni', '你', '你好'], '你好')
+      await waitForLivePrompt(appPage, '你好')
+      await attachImeEvidence(appPage, testInfo, 'after-compose-hello')
+      await appPage.keyboard.press('Enter')
       await expect
-        .poll(async () => (await readPromptState(dolphinPage))?.submitted.at(-1) ?? null, {
+        .poll(async () => (await readPromptState(appPage))?.submitted.at(-1) ?? null, {
           timeout: 5_000,
           message: 'first submitted prompt did not match the composed Chinese text'
         })
         .toBe('你好')
 
       await commitImeText(session, '一二三四五六七八九十')
-      await waitForLivePrompt(dolphinPage, '一二三四五六七八九十')
+      await waitForLivePrompt(appPage, '一二三四五六七八九十')
       for (let index = 0; index < 5; index += 1) {
-        await dolphinPage.keyboard.press('ArrowLeft')
+        await appPage.keyboard.press('ArrowLeft')
       }
       await dispatchImeProcessKey(session, 'KeyZ')
-      await composeAndCommitChineseText(session, dolphinPage, ['z', 'zh', '中'], '中')
-      await waitForLivePrompt(dolphinPage, '一二三四五中六七八九十')
-      await attachImeEvidence(dolphinPage, testInfo, 'after-middle-insert')
+      await composeAndCommitChineseText(session, appPage, ['z', 'zh', '中'], '中')
+      await waitForLivePrompt(appPage, '一二三四五中六七八九十')
+      await attachImeEvidence(appPage, testInfo, 'after-middle-insert')
 
       await setImeComposition(session, 'x')
-      await dolphinPage.keyboard.press('Backspace')
-      await waitForLivePrompt(dolphinPage, '一二三四五中六七八九十')
+      await appPage.keyboard.press('Backspace')
+      await waitForLivePrompt(appPage, '一二三四五中六七八九十')
       await setImeComposition(session, '')
       await commitImeText(session, '')
 
-      await dolphinPage.keyboard.press('Backspace')
-      await waitForLivePrompt(dolphinPage, '一二三四五六七八九十')
-      await attachImeEvidence(dolphinPage, testInfo, 'after-single-backspace')
+      await appPage.keyboard.press('Backspace')
+      await waitForLivePrompt(appPage, '一二三四五六七八九十')
+      await attachImeEvidence(appPage, testInfo, 'after-single-backspace')
 
-      await dolphinPage.keyboard.press('Enter')
+      await appPage.keyboard.press('Enter')
       await expect
-        .poll(async () => (await readPromptState(dolphinPage))?.submitted.at(-1) ?? null, {
+        .poll(async () => (await readPromptState(appPage))?.submitted.at(-1) ?? null, {
           timeout: 5_000,
           message: 'second submitted prompt did not match the visible Chinese text'
         })
         .toBe('一二三四五六七八九十')
 
-      const log = await readImeEventLog(dolphinPage)
+      const log = await readImeEventLog(appPage)
       expect(
         log.some((entry) => entry.type === 'compositionstart'),
         'CDP IME path should exercise Chromium/xterm composition events'
@@ -588,69 +588,69 @@ test.describe('Chinese IME terminal chat input repro', () => {
         'Backspace should be observable for both the composition and single-delete assertions'
       ).toBe(2)
     } finally {
-      await attachImeEvidence(dolphinPage, testInfo, 'final-ime-evidence').catch(() => undefined)
+      await attachImeEvidence(appPage, testInfo, 'final-ime-evidence').catch(() => undefined)
       await session.detach().catch(() => undefined)
-      await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
     }
   })
 
   test('commits the active Pinyin preedit when Shift toggles the Windows IME', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await reloadWithWindowsImePolicy(dolphinPage)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await reloadWithWindowsImePolicy(appPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-windows-shift-ime-${runId}.cjs`)
     const inputLogPath = path.join(testRepoPath, `.dolphin-windows-shift-ime-${runId}.jsonl`)
     writeFileSync(scriptPath, terminalImeHarnessScript(runId, inputLogPath))
     writeFileSync(inputLogPath, '')
-    const session = await dolphinPage.context().newCDPSession(dolphinPage)
+    const session = await appPage.context().newCDPSession(appPage)
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
-      await waitForTerminalOutput(dolphinPage, `IME_HARNESS_READY_${runId}`, 10_000, 20_000)
-      await focusActiveTerminalInput(dolphinPage)
-      await installImeEventProbe(dolphinPage)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await waitForTerminalOutput(appPage, `IME_HARNESS_READY_${runId}`, 10_000, 20_000)
+      await focusActiveTerminalInput(appPage)
+      await installImeEventProbe(appPage)
 
       await setImeComposition(session, 's')
       const inputCountBeforeShift = readPtyInputCount(inputLogPath)
       await dispatchWindowsImeShiftToggle(session)
 
-      await waitForLivePrompt(dolphinPage, 's')
-      await expect.poll(() => readActiveCompositionText(dolphinPage)).toBe('')
-      await expect.poll(async () => (await readPromptState(dolphinPage))?.submitted).toEqual([])
+      await waitForLivePrompt(appPage, 's')
+      await expect.poll(() => readActiveCompositionText(appPage)).toBe('')
+      await expect.poll(async () => (await readPromptState(appPage))?.submitted).toEqual([])
       await expect
         .poll(() => readPtyInputs(inputLogPath).slice(inputCountBeforeShift))
         .toEqual(['s'])
     } finally {
-      await attachImeEvidence(dolphinPage, testInfo, 'windows-shift-ime-evidence').catch(
+      await attachImeEvidence(appPage, testInfo, 'windows-shift-ime-evidence').catch(
         () => undefined
       )
       await session.detach().catch(() => undefined)
-      await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
       rmSync(inputLogPath, { force: true })
     }
   })
 
   test('keeps Sogou-style candidate selection keys out of the PTY while committing Chinese text', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await reloadWithLinuxImePolicy(dolphinPage)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await reloadWithLinuxImePolicy(appPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-sogou-ime-harness-${runId}.cjs`)
     let session: CDPSession | null = null
@@ -660,29 +660,29 @@ test.describe('Chinese IME terminal chat input repro', () => {
       // Why: create the session/harness inside the try so a mid-setup throw
       // still hits finally and removes the harness script.
       writeFileSync(scriptPath, terminalImeHarnessScript(runId))
-      session = await dolphinPage.context().newCDPSession(dolphinPage)
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      session = await appPage.context().newCDPSession(appPage)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       harnessStarted = true
-      await waitForTerminalOutput(dolphinPage, `IME_HARNESS_READY_${runId}`, 10_000, 20_000)
-      await focusActiveTerminalInput(dolphinPage)
-      await installImeEventProbe(dolphinPage)
+      await waitForTerminalOutput(appPage, `IME_HARNESS_READY_${runId}`, 10_000, 20_000)
+      await focusActiveTerminalInput(appPage)
+      await installImeEventProbe(appPage)
 
       // Space selects the first candidate. Sogou keeps emitting empty
       // compositionupdate frames while the popup is open, and the plain Space
       // press arrives around the commit rather than as a Process/229 key.
       await setImeComposition(session, 'n')
-      await dolphinPage.waitForTimeout(80)
+      await appPage.waitForTimeout(80)
       await setImeComposition(session, 'ni')
-      await dolphinPage.waitForTimeout(80)
-      await dispatchSogouEmptyCompositionUpdate(dolphinPage)
+      await appPage.waitForTimeout(80)
+      await dispatchSogouEmptyCompositionUpdate(appPage)
       await dispatchCandidateSelectionKey(session, { key: ' ', code: 'Space', keyCode: 32 }, () =>
         commitImeText(session, '你')
       )
-      await waitForLivePrompt(dolphinPage, '你')
-      await attachImeEvidence(dolphinPage, testInfo, 'sogou-after-space-commit')
-      await dolphinPage.keyboard.press('Enter')
+      await waitForLivePrompt(appPage, '你')
+      await attachImeEvidence(appPage, testInfo, 'sogou-after-space-commit')
+      await appPage.keyboard.press('Enter')
       await expect
-        .poll(async () => (await readPromptState(dolphinPage))?.submitted.at(-1) ?? null, {
+        .poll(async () => (await readPromptState(appPage))?.submitted.at(-1) ?? null, {
           timeout: 5_000,
           message: 'space-selected candidate did not submit the committed Chinese character'
         })
@@ -691,16 +691,16 @@ test.describe('Chinese IME terminal chat input repro', () => {
       // Digit selects a non-first candidate for a word/phrase commit — the
       // #7543 shape where only the number used to reach the TUI.
       await setImeComposition(session, 'nihao')
-      await dolphinPage.waitForTimeout(80)
-      await dispatchSogouEmptyCompositionUpdate(dolphinPage)
+      await appPage.waitForTimeout(80)
+      await dispatchSogouEmptyCompositionUpdate(appPage)
       await dispatchCandidateSelectionKey(session, { key: '2', code: 'Digit2', keyCode: 50 }, () =>
         commitImeText(session, '你好')
       )
-      await waitForLivePrompt(dolphinPage, '你好')
-      await attachImeEvidence(dolphinPage, testInfo, 'sogou-after-digit-commit')
-      await dolphinPage.keyboard.press('Enter')
+      await waitForLivePrompt(appPage, '你好')
+      await attachImeEvidence(appPage, testInfo, 'sogou-after-digit-commit')
+      await appPage.keyboard.press('Enter')
       await expect
-        .poll(async () => (await readPromptState(dolphinPage))?.submitted.at(-1) ?? null, {
+        .poll(async () => (await readPromptState(appPage))?.submitted.at(-1) ?? null, {
           timeout: 5_000,
           message: 'digit-selected candidate did not submit the committed Chinese phrase'
         })
@@ -708,16 +708,16 @@ test.describe('Chinese IME terminal chat input repro', () => {
 
       // Post-composition traces can deliver the selector after compositionend;
       // the short post-end guard must still keep that plain digit out of the PTY.
-      const postCompositionLogStart = (await readImeEventLog(dolphinPage)).length
+      const postCompositionLogStart = (await readImeEventLog(appPage)).length
       await setImeComposition(session, 'zaijian')
-      await dolphinPage.waitForTimeout(80)
-      await dispatchSogouEmptyCompositionUpdate(dolphinPage)
-      await dispatchSogouPostCompositionEnd(dolphinPage, '再见')
+      await appPage.waitForTimeout(80)
+      await dispatchSogouEmptyCompositionUpdate(appPage)
+      await dispatchSogouPostCompositionEnd(appPage, '再见')
       await dispatchCandidateSelectionKey(session, { key: '3', code: 'Digit3', keyCode: 51 }, () =>
         commitImeText(session, '再见')
       )
-      await waitForLivePrompt(dolphinPage, '再见')
-      const postCompositionLog = await readImeEventLog(dolphinPage)
+      await waitForLivePrompt(appPage, '再见')
+      const postCompositionLog = await readImeEventLog(appPage)
       const postCompositionEndIndex = postCompositionLog.findIndex(
         (entry, index) =>
           index >= postCompositionLogStart &&
@@ -736,10 +736,10 @@ test.describe('Chinese IME terminal chat input repro', () => {
         postCompositionSelectorIndex,
         'plain digit selector must arrive after compositionend in the post-composition repro'
       ).toBeGreaterThan(postCompositionEndIndex)
-      await attachImeEvidence(dolphinPage, testInfo, 'sogou-after-post-composition-digit-commit')
-      await dolphinPage.keyboard.press('Enter')
+      await attachImeEvidence(appPage, testInfo, 'sogou-after-post-composition-digit-commit')
+      await appPage.keyboard.press('Enter')
       await expect
-        .poll(async () => (await readPromptState(dolphinPage))?.submitted.at(-1) ?? null, {
+        .poll(async () => (await readPromptState(appPage))?.submitted.at(-1) ?? null, {
           timeout: 5_000,
           message: 'post-composition digit-selected candidate did not submit cleanly'
         })
@@ -749,87 +749,81 @@ test.describe('Chinese IME terminal chat input repro', () => {
       // expose only an orphaned Latin release before the candidate digit.
       await dispatchOrphanLetterKeyup(session)
       await dispatchCandidateSelectionKey(session, { key: '4', code: 'Digit4', keyCode: 52 })
-      await dolphinPage.keyboard.press('Enter')
+      await appPage.keyboard.press('Enter')
       await expect
-        .poll(async () => (await readPromptState(dolphinPage))?.submitted.at(-1) ?? null, {
+        .poll(async () => (await readPromptState(appPage))?.submitted.at(-1) ?? null, {
           timeout: 5_000,
           message: 'orphan-keyup candidate digit leaked into the submitted terminal input'
         })
         .toBe('')
-      await attachImeEvidence(dolphinPage, testInfo, 'sogou-after-orphan-keyup-digit-suppression')
+      await attachImeEvidence(appPage, testInfo, 'sogou-after-orphan-keyup-digit-suppression')
 
-      const promptState = await readPromptState(dolphinPage)
+      const promptState = await readPromptState(appPage)
       expect(
         promptState?.submitted,
         'candidate Space/digit selectors and pinyin preedit must not leak into the PTY'
       ).toEqual(['你', '你好', '再见', ''])
     } finally {
-      await attachImeEvidence(dolphinPage, testInfo, 'sogou-final-ime-evidence').catch(
-        () => undefined
-      )
+      await attachImeEvidence(appPage, testInfo, 'sogou-final-ime-evidence').catch(() => undefined)
       await session?.detach().catch(() => undefined)
       if (harnessStarted) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
   })
 
   test('keeps composed Chinese text stable in the real Codex TUI input @real-codex-ime', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.skip(
       process.env.DOLPHIN_E2E_REAL_CODEX_IME !== '1',
       'Set DOLPHIN_E2E_REAL_CODEX_IME=1 to exercise the locally installed Codex TUI'
     )
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
-    const session = await dolphinPage.context().newCDPSession(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    const session = await appPage.context().newCDPSession(appPage)
 
     try {
-      await launchCodexTui(dolphinPage, ptyId)
-      await installImeEventProbe(dolphinPage)
+      await launchCodexTui(appPage, ptyId)
+      await installImeEventProbe(appPage)
 
       await dispatchImeProcessKey(session, 'KeyN')
-      await composeAndCommitChineseText(session, dolphinPage, ['n', 'ni', '你', '你好'], '你好')
-      await waitForCleanTerminalText(
-        dolphinPage,
-        /你好/,
-        'Codex input did not show composed Chinese'
-      )
-      await attachImeEvidence(dolphinPage, testInfo, 'codex-after-compose-hello', {
-        cleanTerminal: stripTerminalControls(await getTerminalContent(dolphinPage, 20_000))
+      await composeAndCommitChineseText(session, appPage, ['n', 'ni', '你', '你好'], '你好')
+      await waitForCleanTerminalText(appPage, /你好/, 'Codex input did not show composed Chinese')
+      await attachImeEvidence(appPage, testInfo, 'codex-after-compose-hello', {
+        cleanTerminal: stripTerminalControls(await getTerminalContent(appPage, 20_000))
       })
 
       await dispatchImeProcessKey(session, 'KeyZ')
-      await composeAndCommitChineseText(session, dolphinPage, ['z', 'zh', '中'], '中')
+      await composeAndCommitChineseText(session, appPage, ['z', 'zh', '中'], '中')
       await waitForCleanTerminalText(
-        dolphinPage,
+        appPage,
         /你好中/,
         'Codex input did not keep previously composed text before middle-edit checks'
       )
 
-      await dolphinPage.keyboard.press('ArrowLeft')
+      await appPage.keyboard.press('ArrowLeft')
       await setImeComposition(session, 'x')
-      await dolphinPage.keyboard.press('Backspace')
+      await appPage.keyboard.press('Backspace')
       await waitForCleanTerminalText(
-        dolphinPage,
+        appPage,
         /你好中/,
         'Backspace during Codex composition removed committed Chinese text'
       )
       await setImeComposition(session, '')
       await commitImeText(session, '')
 
-      await attachImeEvidence(dolphinPage, testInfo, 'codex-after-composition-backspace', {
-        cleanTerminal: stripTerminalControls(await getTerminalContent(dolphinPage, 20_000))
+      await attachImeEvidence(appPage, testInfo, 'codex-after-composition-backspace', {
+        cleanTerminal: stripTerminalControls(await getTerminalContent(appPage, 20_000))
       })
 
-      const cleanTerminal = stripTerminalControls(await getTerminalContent(dolphinPage, 20_000))
+      const cleanTerminal = stripTerminalControls(await getTerminalContent(appPage, 20_000))
       expect(
         cleanTerminal,
         'Codex should keep committed Chinese text when Backspace cancels an IME preedit'
@@ -837,11 +831,11 @@ test.describe('Chinese IME terminal chat input repro', () => {
       expect(cleanTerminal).not.toMatch(/\bn(?:i)?你好/)
       expect(cleanTerminal).not.toMatch(/\bz(?:h)?中/)
     } finally {
-      await attachImeEvidence(dolphinPage, testInfo, 'codex-final-ime-evidence', {
-        cleanTerminal: stripTerminalControls(await getTerminalContent(dolphinPage, 20_000))
+      await attachImeEvidence(appPage, testInfo, 'codex-final-ime-evidence', {
+        cleanTerminal: stripTerminalControls(await getTerminalContent(appPage, 20_000))
       }).catch(() => undefined)
       await session.detach().catch(() => undefined)
-      await sendToTerminal(dolphinPage, ptyId, '\x03/quit\r').catch(() => undefined)
+      await sendToTerminal(appPage, ptyId, '\x03/quit\r').catch(() => undefined)
     }
   })
 })

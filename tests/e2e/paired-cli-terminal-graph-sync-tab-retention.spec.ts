@@ -124,11 +124,11 @@ type RetentionFixture = {
 
 /** Everything both journeys need in place BEFORE the dispatch under test. */
 async function prepareRetentionFixture(
-  dolphinPage: Page,
+  appPage: Page,
   client: PairedElectronClient
 ): Promise<RetentionFixture> {
   const call = createPairedRuntimeCall(client.page, client.environmentId)
-  const { worktreeId, unrelatedWorktreeId } = await dolphinPage.evaluate(() => {
+  const { worktreeId, unrelatedWorktreeId } = await appPage.evaluate(() => {
     const state = window.__store?.getState()
     const active = state?.activeWorktreeId
     if (!state || !active) {
@@ -157,7 +157,7 @@ async function prepareRetentionFixture(
 
   // PRECONDITION: the RENDERER owns this workspace's publication, so the CLI tab
   // created later inherits the renderer epoch instead of a headless one.
-  const rendererTabId = await createHostRendererTerminalTab(dolphinPage, worktreeId)
+  const rendererTabId = await createHostRendererTerminalTab(appPage, worktreeId)
   const rendererOwned = await readHostInventoryWhenTabAppears(
     call,
     worktreeId,
@@ -187,24 +187,24 @@ async function prepareRetentionFixture(
  * the incident shape, and the one the topology fence used to miss.
  */
 async function runCliTerminalRetentionJourney(
-  dolphinPage: Page,
+  appPage: Page,
   testInfo: TestInfo,
   clientName: string,
   precedingHostTerminal: boolean
 ): Promise<void> {
   const client = await launchPairedElectronClient(
-    await createRuntimeDesktopPairingOffer(dolphinPage),
+    await createRuntimeDesktopPairingOffer(appPage),
     testInfo,
     clientName
   )
   const hostPageErrors: string[] = []
   const clientPageErrors: string[] = []
-  dolphinPage.on('pageerror', (error) => hostPageErrors.push(String(error)))
+  appPage.on('pageerror', (error) => hostPageErrors.push(String(error)))
   client.page.on('pageerror', (error) => clientPageErrors.push(String(error)))
   const createdHandles: string[] = []
   let call: RuntimeRpcCall | null = null
   try {
-    const fixture = await prepareRetentionFixture(dolphinPage, client)
+    const fixture = await prepareRetentionFixture(appPage, client)
     call = fixture.call
     const { unrelatedWorktreeId, worktreeId } = fixture
     const baselineStrip = await readClientTerminalStrip(client.page, worktreeId)
@@ -231,7 +231,7 @@ async function runCliTerminalRetentionJourney(
     const unrelated = preceding ?? (await createUnrelated())
 
     // The graph sync a following CLI dispatch drives.
-    const secondRendererTabId = await createHostRendererTerminalTab(dolphinPage, worktreeId)
+    const secondRendererTabId = await createHostRendererTerminalTab(appPage, worktreeId)
 
     // SIGNAL 1 — the frame carrying the new renderer tab is the same merge that
     // would drop the CLI tab, so judge on that one inventory.
@@ -295,10 +295,10 @@ async function runCliTerminalRetentionJourney(
 }
 
 test('keeps a host-created CLI terminal when an earlier host-created terminal exists', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(600_000)
-  await runCliTerminalRetentionJourney(dolphinPage, testInfo, 'cli-terminal-graph-sync', true)
+  await runCliTerminalRetentionJourney(appPage, testInfo, 'cli-terminal-graph-sync', true)
 })
 
 // The reported incident, and the shape the real CLI takes: `dolphin terminal
@@ -308,13 +308,8 @@ test('keeps a host-created CLI terminal when an earlier host-created terminal ex
 // Reverting store.ts/pty.ts alone turns this red with SIGNAL 1: the target is
 // absent from the host inventory.
 test('keeps a host-created CLI terminal that is the first one on the host', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(600_000)
-  await runCliTerminalRetentionJourney(
-    dolphinPage,
-    testInfo,
-    'cli-terminal-graph-sync-first',
-    false
-  )
+  await runCliTerminalRetentionJourney(appPage, testInfo, 'cli-terminal-graph-sync-first', false)
 })

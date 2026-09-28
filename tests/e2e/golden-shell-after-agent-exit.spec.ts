@@ -26,39 +26,39 @@ function buildSplitMarkerEcho(prefix: string, suffix: string): { command: string
   return { command, marker: `${prefix}${suffix}` }
 }
 
-test('opens a clean live shell after an agent exits', async ({ dolphinPage }) => {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await configureGoldenStubAgent(dolphinPage)
-  await launchGoldenStubAgentFromNewTab(dolphinPage)
+test('opens a clean live shell after an agent exits', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await configureGoldenStubAgent(appPage)
+  await launchGoldenStubAgentFromNewTab(appPage)
 
-  await dolphinPage.keyboard.type('exit')
-  await dolphinPage.keyboard.press('Enter')
-  await waitForTerminalOutput(dolphinPage, GOLDEN_STUB_EXIT_MARKER, 15_000)
+  await appPage.keyboard.type('exit')
+  await appPage.keyboard.press('Enter')
+  await waitForTerminalOutput(appPage, GOLDEN_STUB_EXIT_MARKER, 15_000)
 
-  const tabsBeforeShell = await dolphinPage.locator('[data-testid="sortable-tab"]').count()
-  await dolphinPage.getByRole('button', { name: 'New tab' }).click({ force: true })
-  await dolphinPage
+  const tabsBeforeShell = await appPage.locator('[data-testid="sortable-tab"]').count()
+  await appPage.getByRole('button', { name: 'New tab' }).click({ force: true })
+  await appPage
     .getByRole('menuitem', { name: /New Terminal/i })
     .first()
     .click({ force: true })
-  await expect(dolphinPage.locator('[data-testid="sortable-tab"]')).toHaveCount(tabsBeforeShell + 1)
-  const shellPtyId = await waitForActivePanePtyId(dolphinPage)
+  await expect(appPage.locator('[data-testid="sortable-tab"]')).toHaveCount(tabsBeforeShell + 1)
+  const shellPtyId = await waitForActivePanePtyId(appPage)
   // Why: a bound ptyId only means the pane exists; the renderer transport can
   // still drop keystrokes until it connects, which would strand the markers.
-  expect(await waitForRestoredTerminalInputReady(dolphinPage, shellPtyId)).toBe(true)
+  expect(await waitForRestoredTerminalInputReady(appPage, shellPtyId)).toBe(true)
 
   const afterAgent = buildSplitMarkerEcho('after-', 'agent')
-  await focusActiveTerminalInput(dolphinPage)
-  await dolphinPage.keyboard.type(afterAgent.command)
-  await dolphinPage.keyboard.press('Enter')
-  await waitForTerminalOutput(dolphinPage, afterAgent.marker, 15_000)
+  await focusActiveTerminalInput(appPage)
+  await appPage.keyboard.type(afterAgent.command)
+  await appPage.keyboard.press('Enter')
+  await waitForTerminalOutput(appPage, afterAgent.marker, 15_000)
 
   const afterShiftEnter = buildSplitMarkerEcho('after-shift-', 'enter')
-  await dolphinPage.keyboard.press('Shift+Enter')
-  await dolphinPage.keyboard.type(afterShiftEnter.command)
-  await dolphinPage.keyboard.press('Enter')
-  await waitForTerminalOutput(dolphinPage, afterShiftEnter.marker, 15_000)
-  await expect(dolphinPage.locator('[data-testid="sortable-tab"]')).toHaveCount(tabsBeforeShell + 1)
+  await appPage.keyboard.press('Shift+Enter')
+  await appPage.keyboard.type(afterShiftEnter.command)
+  await appPage.keyboard.press('Enter')
+  await waitForTerminalOutput(appPage, afterShiftEnter.marker, 15_000)
+  await expect(appPage.locator('[data-testid="sortable-tab"]')).toHaveCount(tabsBeforeShell + 1)
 })

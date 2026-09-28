@@ -529,69 +529,67 @@ async function captureTabScreenshot(
 test.describe('Terminal tab switch visual restore', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test('keeps full-width geometry after switching away and back', async ({
-    dolphinPage
-  }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+  test('keeps full-width geometry after switching away and back', async ({ appPage }, testInfo) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const { firstTabId, secondTabId } = await ensureTwoTerminalTabs(dolphinPage)
-    await forceWebglOnActiveTab(dolphinPage)
+    const { firstTabId, secondTabId } = await ensureTwoTerminalTabs(appPage)
+    await forceWebglOnActiveTab(appPage)
 
     const runId = `${Date.now()}`
     const marker = `${TAB_SWITCH_MARKER_PREFIX}_${runId}`
-    const firstPtyId = await waitForPanePtyIdOnTab(dolphinPage, firstTabId)
-    await writeStaticTabContent(dolphinPage, firstTabId, marker, TAB_A_GLYPH_ROW)
+    const firstPtyId = await waitForPanePtyIdOnTab(appPage, firstTabId)
+    await writeStaticTabContent(appPage, firstTabId, marker, TAB_A_GLYPH_ROW)
 
-    const baseline = await readTabTerminalGeometry(dolphinPage, firstTabId, runId)
+    const baseline = await readTabTerminalGeometry(appPage, firstTabId, runId)
     expect(baseline.markerPresent).toBe(true)
     expect(baseline.overlayWidth).toBeGreaterThan(300)
     expect(geometryLooksCorrupted(baseline)).toBeNull()
 
     const corruptionReports: string[] = []
-    await resetTerminalOutputSchedulerDebug(dolphinPage)
-    await startHiddenPtyOutputBurst(dolphinPage, firstPtyId, runId)
+    await resetTerminalOutputSchedulerDebug(appPage)
+    await startHiddenPtyOutputBurst(appPage, firstPtyId, runId)
 
     for (let cycle = 0; cycle < 12; cycle += 1) {
-      await activateTerminalTab(dolphinPage, secondTabId)
-      await injectHiddenStreamingBurst(dolphinPage, firstTabId, runId)
+      await activateTerminalTab(appPage, secondTabId)
+      await injectHiddenStreamingBurst(appPage, firstTabId, runId)
       // Why: rapid back-to-back switches mirror the user's leave/return pattern
       // and race the overlay's rAF/50ms refit retries.
-      await activateTerminalTab(dolphinPage, firstTabId)
+      await activateTerminalTab(appPage, firstTabId)
       if (cycle % 3 === 0) {
-        await activateTerminalTab(dolphinPage, secondTabId)
-        await activateTerminalTab(dolphinPage, firstTabId)
+        await activateTerminalTab(appPage, secondTabId)
+        await activateTerminalTab(appPage, firstTabId)
       }
 
       // Sample immediately — bug often shows before the 50ms overlay refit retry.
-      const immediate = await readTabTerminalGeometry(dolphinPage, firstTabId, runId)
+      const immediate = await readTabTerminalGeometry(appPage, firstTabId, runId)
       const immediateIssue = geometryLooksCorrupted(immediate)
       if (immediateIssue) {
         corruptionReports.push(`cycle ${cycle} immediate: ${immediateIssue}`)
         await captureTabScreenshot(
-          dolphinPage,
+          appPage,
           firstTabId,
           testInfo,
           `tab-switch-corrupt-immediate-cycle-${cycle}`
         )
       }
 
-      await dolphinPage.waitForTimeout(60)
-      const settled = await readTabTerminalGeometry(dolphinPage, firstTabId, runId)
+      await appPage.waitForTimeout(60)
+      const settled = await readTabTerminalGeometry(appPage, firstTabId, runId)
       const settledIssue = geometryLooksCorrupted(settled)
       if (settledIssue) {
         corruptionReports.push(`cycle ${cycle} settled: ${settledIssue}`)
         await captureTabScreenshot(
-          dolphinPage,
+          appPage,
           firstTabId,
           testInfo,
           `tab-switch-corrupt-settled-cycle-${cycle}`
         )
       }
     }
-    const schedulerActivity = await waitForHiddenOutputSchedulerActivity(dolphinPage)
+    const schedulerActivity = await waitForHiddenOutputSchedulerActivity(appPage)
     expect(schedulerActivity.scheduledDrainCount).toBeGreaterThan(0)
 
     if (corruptionReports.length > 0) {
@@ -607,22 +605,22 @@ test.describe('Terminal tab switch visual restore', () => {
   })
 
   test('keeps geometry after hidden alt-screen TUI redraws during tab switches', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const { firstTabId, secondTabId } = await ensureTwoTerminalTabs(dolphinPage)
-    await forceWebglOnActiveTab(dolphinPage)
-    await waitForPanePtyIdOnTab(dolphinPage, firstTabId)
+    const { firstTabId, secondTabId } = await ensureTwoTerminalTabs(appPage)
+    await forceWebglOnActiveTab(appPage)
+    await waitForPanePtyIdOnTab(appPage, firstTabId)
 
     const runId = `${Date.now()}`
     const finalMarker = `${TAB_SWITCH_MARKER_PREFIX}_${runId}_ALT_24`
 
     await writeToPaneTerminal(
-      dolphinPage,
+      appPage,
       firstTabId,
       Array.from({ length: 25 }, (_, frame) => buildAltScreenFrame(finalMarker, frame)).join('')
     )
@@ -638,18 +636,18 @@ test.describe('Terminal tab switch visual restore', () => {
       // snapshot so either path leaves a valid screen — numbered one higher so
       // the readback still reports which one painted. Identity is re-read per
       // cycle because a reattach would re-key the override.
-      const { ptyId, cols, rows } = await readPaneIdentityOnTab(dolphinPage, firstTabId)
-      await setHiddenSnapshotOverride(dolphinPage, ptyId, {
+      const { ptyId, cols, rows } = await readPaneIdentityOnTab(appPage, firstTabId)
+      await setHiddenSnapshotOverride(appPage, ptyId, {
         data: buildAltScreenFrame(finalMarker, restoreFrame),
         cols,
         rows
       })
-      await activateTerminalTab(dolphinPage, secondTabId)
-      await writeToPaneTerminal(dolphinPage, firstTabId, redraw)
-      await activateTerminalTab(dolphinPage, firstTabId)
+      await activateTerminalTab(appPage, secondTabId)
+      await writeToPaneTerminal(appPage, firstTabId, redraw)
+      await activateTerminalTab(appPage, firstTabId)
 
-      const geometry = await readTabTerminalGeometry(dolphinPage, firstTabId, `${runId}_ALT`)
-      const renderedFrame = await readRenderedAltScreenFrame(dolphinPage, firstTabId, finalMarker)
+      const geometry = await readTabTerminalGeometry(appPage, firstTabId, `${runId}_ALT`)
+      const renderedFrame = await readRenderedAltScreenFrame(appPage, firstTabId, finalMarker)
       renderPaths.push(
         `cycle ${cycle}: ${describeAltScreenRenderPath(renderedFrame, liveFrame, restoreFrame)}`
       )
@@ -665,7 +663,7 @@ test.describe('Terminal tab switch visual restore', () => {
           `cycle ${cycle}: ${issue ?? 'marker missing after alt-screen redraw'}`
         )
         await captureTabScreenshot(
-          dolphinPage,
+          appPage,
           firstTabId,
           testInfo,
           `alt-screen-corrupt-cycle-${cycle}`
@@ -690,20 +688,20 @@ test.describe('Terminal tab switch visual restore', () => {
     ).toEqual([])
   })
 
-  test('restores skipped hidden agent output on light tab resume', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+  test('restores skipped hidden agent output on light tab resume', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const shellTabId = (await getActiveTabId(dolphinPage))!
-    const agentTabId = await createCodexMarkedTerminalTab(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await waitForPanePtyIdOnTab(dolphinPage, agentTabId)
-    const paneIdentity = await readPaneIdentityOnTab(dolphinPage, agentTabId)
+    const shellTabId = (await getActiveTabId(appPage))!
+    const agentTabId = await createCodexMarkedTerminalTab(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await waitForPanePtyIdOnTab(appPage, agentTabId)
+    const paneIdentity = await readPaneIdentityOnTab(appPage, agentTabId)
     const paneKey = `${agentTabId}:${paneIdentity.leafId}`
 
-    await activateTerminalTab(dolphinPage, shellTabId)
+    await activateTerminalTab(appPage, shellTabId)
     const runId = `${Date.now()}`
     const marker = `${TAB_SWITCH_MARKER_PREFIX}_SKIPPED_AGENT_${runId}`
     const hiddenFrame = [
@@ -712,49 +710,49 @@ test.describe('Terminal tab switch visual restore', () => {
       'status=streaming while tab-hidden',
       '\x1b[?2026l'
     ].join('\r\n')
-    await resetHiddenOutputDebug(dolphinPage)
-    await injectPaneData(dolphinPage, paneKey, hiddenFrame, {
+    await resetHiddenOutputDebug(appPage)
+    await injectPaneData(appPage, paneKey, hiddenFrame, {
       seq: hiddenFrame.length,
       rawLength: hiddenFrame.length
     })
 
     await expect
-      .poll(async () => (await readHiddenOutputDebug(dolphinPage))?.hiddenRendererSkipCount ?? 0, {
+      .poll(async () => (await readHiddenOutputDebug(appPage))?.hiddenRendererSkipCount ?? 0, {
         timeout: 5_000,
         message: 'Codex-marked hidden output did not take the skipped renderer path'
       })
       .toBeGreaterThan(0)
-    await setHiddenSnapshotOverride(dolphinPage, paneIdentity.ptyId, {
+    await setHiddenSnapshotOverride(appPage, paneIdentity.ptyId, {
       data: `${marker} restored from main snapshot\r\n`,
       cols: paneIdentity.cols,
       rows: paneIdentity.rows,
       seq: hiddenFrame.length
     })
 
-    await activateTerminalTab(dolphinPage, agentTabId)
+    await activateTerminalTab(appPage, agentTabId)
 
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 8_000), {
+      .poll(() => getTerminalContent(appPage, 8_000), {
         timeout: 10_000,
         message: 'light tab resume did not request skipped hidden-output recovery'
       })
       .toContain(marker)
   })
 
-  test('restores skipped hidden Grok output on light tab resume', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+  test('restores skipped hidden Grok output on light tab resume', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const shellTabId = (await getActiveTabId(dolphinPage))!
-    const grokTabId = await createGrokMarkedTerminalTab(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await waitForPanePtyIdOnTab(dolphinPage, grokTabId)
-    const paneIdentity = await readPaneIdentityOnTab(dolphinPage, grokTabId)
+    const shellTabId = (await getActiveTabId(appPage))!
+    const grokTabId = await createGrokMarkedTerminalTab(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await waitForPanePtyIdOnTab(appPage, grokTabId)
+    const paneIdentity = await readPaneIdentityOnTab(appPage, grokTabId)
     const paneKey = `${grokTabId}:${paneIdentity.leafId}`
 
-    await activateTerminalTab(dolphinPage, shellTabId)
+    await activateTerminalTab(appPage, shellTabId)
     const runId = `${Date.now()}`
     const marker = `${TAB_SWITCH_MARKER_PREFIX}_SKIPPED_GROK_${runId}`
     // Why: synchronized-output mode exercises the hidden renderer skip path
@@ -765,29 +763,29 @@ test.describe('Terminal tab switch visual restore', () => {
       'status=streaming while tab-hidden',
       '\x1b[?2026l'
     ].join('\r\n')
-    await resetHiddenOutputDebug(dolphinPage)
-    await injectPaneData(dolphinPage, paneKey, hiddenFrame, {
+    await resetHiddenOutputDebug(appPage)
+    await injectPaneData(appPage, paneKey, hiddenFrame, {
       seq: hiddenFrame.length,
       rawLength: hiddenFrame.length
     })
 
     await expect
-      .poll(async () => (await readHiddenOutputDebug(dolphinPage))?.hiddenRendererSkipCount ?? 0, {
+      .poll(async () => (await readHiddenOutputDebug(appPage))?.hiddenRendererSkipCount ?? 0, {
         timeout: 5_000,
         message: 'Grok-marked hidden output did not take the skipped renderer path'
       })
       .toBeGreaterThan(0)
-    await setHiddenSnapshotOverride(dolphinPage, paneIdentity.ptyId, {
+    await setHiddenSnapshotOverride(appPage, paneIdentity.ptyId, {
       data: `${marker} restored from main snapshot\r\n`,
       cols: paneIdentity.cols,
       rows: paneIdentity.rows,
       seq: hiddenFrame.length
     })
 
-    await activateTerminalTab(dolphinPage, grokTabId)
+    await activateTerminalTab(appPage, grokTabId)
 
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 8_000), {
+      .poll(() => getTerminalContent(appPage, 8_000), {
         timeout: 10_000,
         message: 'light tab resume did not request skipped Grok hidden-output recovery'
       })
@@ -795,56 +793,56 @@ test.describe('Terminal tab switch visual restore', () => {
   })
 
   test('@headful keeps returned tab glyphs intact across tab switches', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     // Why: screenshot equality catches WebGL atlas corruption on the tab being
     // resumed, not just stale cols/rows geometry checks.
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const { firstTabId, secondTabId } = await ensureTwoTerminalTabs(dolphinPage)
-    await forceWebglOnActiveTab(dolphinPage)
-    await activateTerminalTab(dolphinPage, firstTabId)
-    const firstWebgl = await waitForWebglOnTab(dolphinPage, firstTabId)
-    await activateTerminalTab(dolphinPage, secondTabId)
-    await dolphinPage.evaluate((id) => {
+    const { firstTabId, secondTabId } = await ensureTwoTerminalTabs(appPage)
+    await forceWebglOnActiveTab(appPage)
+    await activateTerminalTab(appPage, firstTabId)
+    const firstWebgl = await waitForWebglOnTab(appPage, firstTabId)
+    await activateTerminalTab(appPage, secondTabId)
+    await appPage.evaluate((id) => {
       window.__paneManagers?.get(id)?.setTerminalGpuAcceleration?.('on')
     }, secondTabId)
-    const secondWebgl = await waitForWebglOnTab(dolphinPage, secondTabId)
+    const secondWebgl = await waitForWebglOnTab(appPage, secondTabId)
     if (!firstWebgl || !secondWebgl) {
       test.skip(true, 'WebGL never attached on both tabs')
       return
     }
 
-    const firstPtyId = await waitForPanePtyIdOnTab(dolphinPage, firstTabId)
-    const secondPtyId = await waitForPanePtyIdOnTab(dolphinPage, secondTabId)
-    await sendToTerminal(dolphinPage, firstPtyId, SILENT_FOREGROUND_COMMAND)
-    await sendToTerminal(dolphinPage, secondPtyId, SILENT_FOREGROUND_COMMAND)
-    await dolphinPage.waitForTimeout(1_000)
+    const firstPtyId = await waitForPanePtyIdOnTab(appPage, firstTabId)
+    const secondPtyId = await waitForPanePtyIdOnTab(appPage, secondTabId)
+    await sendToTerminal(appPage, firstPtyId, SILENT_FOREGROUND_COMMAND)
+    await sendToTerminal(appPage, secondPtyId, SILENT_FOREGROUND_COMMAND)
+    await appPage.waitForTimeout(1_000)
 
     const runId = `${Date.now()}`
     const markerA = `${TAB_SWITCH_MARKER_PREFIX}_A_${runId}`
     const markerB = `${TAB_SWITCH_MARKER_PREFIX}_B_${runId}`
-    await writeStaticTabContent(dolphinPage, firstTabId, markerA, TAB_A_GLYPH_ROW)
-    await activateTerminalTab(dolphinPage, secondTabId)
-    await writeStaticTabContent(dolphinPage, secondTabId, markerB, TAB_B_GLYPH_ROW)
+    await writeStaticTabContent(appPage, firstTabId, markerA, TAB_A_GLYPH_ROW)
+    await activateTerminalTab(appPage, secondTabId)
+    await writeStaticTabContent(appPage, secondTabId, markerB, TAB_B_GLYPH_ROW)
 
-    await activateTerminalTab(dolphinPage, firstTabId)
-    await resetAtlasOnTab(dolphinPage, firstTabId)
-    await dolphinPage.waitForTimeout(800)
-    const baseline = await captureStableTabScreenshot(dolphinPage, firstTabId)
+    await activateTerminalTab(appPage, firstTabId)
+    await resetAtlasOnTab(appPage, firstTabId)
+    await appPage.waitForTimeout(800)
+    const baseline = await captureStableTabScreenshot(appPage, firstTabId)
 
     const screenshotMismatches: string[] = []
     for (let cycle = 0; cycle < 8; cycle += 1) {
-      await activateTerminalTab(dolphinPage, secondTabId)
+      await activateTerminalTab(appPage, secondTabId)
       // Why: do not write into the hidden tab here — new bytes would change the
       // screenshot even when rendering is healthy. This cycle only exercises the
       // suspend/resume + atlas reset path on unchanged content.
-      await activateTerminalTab(dolphinPage, firstTabId)
-      await dolphinPage.waitForTimeout(100)
-      const afterReturn = await captureStableTabScreenshot(dolphinPage, firstTabId)
+      await activateTerminalTab(appPage, firstTabId)
+      await appPage.waitForTimeout(100)
+      const afterReturn = await captureStableTabScreenshot(appPage, firstTabId)
       const diff = compareTerminalScreenshots(baseline, afterReturn)
       if (!diff.matches) {
         screenshotMismatches.push(

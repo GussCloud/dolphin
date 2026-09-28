@@ -246,22 +246,22 @@ async function launchAgent(
 
 test('headed paired host keeps structured agent focus viewer-local @headful', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   test.setTimeout(180_000)
   const override = fixtureCommand(fixtureScript)
-  await dolphinPage.evaluate(async (agentCommand) => {
+  await appPage.evaluate(async (agentCommand) => {
     const settings = await window.api.settings.set({
       agentCmdOverrides: { codex: agentCommand }
     })
     window.__store?.setState({ settings })
   }, override)
 
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const client = await launchPairedWebClient(electronApp, offer)
   let cleanupWorktreeId: string | null = null
   try {
-    const worktreeId = await dolphinPage.evaluate(() => {
+    const worktreeId = await appPage.evaluate(() => {
       const state = window.__store?.getState()
       if (!state?.activeWorktreeId) {
         throw new Error('Headed host did not select its seeded worktree')
@@ -368,7 +368,7 @@ test('headed paired host keeps structured agent focus viewer-local @headful', as
       .not.toBeNull()
     const legacy = await launchAgent(client.page, {
       ...session,
-      hostPage: dolphinPage,
+      hostPage: appPage,
       kind: 'fresh',
       activate: false,
       afterTabId: toWebTerminalSurfaceTabId(`${predecessorHostTabId}::${predecessorHostLeafId}`)
@@ -404,26 +404,26 @@ test('headed paired host keeps structured agent focus viewer-local @headful', as
     expectImmediatelyAfter(authoritativeTabOrder, legacy.terminal.tabId, successorHostTabId)
     const freshFocused = await launchAgent(client.page, {
       ...session,
-      hostPage: dolphinPage,
+      hostPage: appPage,
       kind: 'fresh',
       activate: true
     })
     const freshBackground = await launchAgent(client.page, {
       ...session,
-      hostPage: dolphinPage,
+      hostPage: appPage,
       kind: 'fresh',
       activate: false
     })
     const resumeFocused = await launchAgent(client.page, {
       ...session,
-      hostPage: dolphinPage,
+      hostPage: appPage,
       kind: 'resume',
       activate: true,
       providerSessionId: 'headed-focus-resume'
     })
     const resumeBackground = await launchAgent(client.page, {
       ...session,
-      hostPage: dolphinPage,
+      hostPage: appPage,
       kind: 'resume',
       activate: false,
       providerSessionId: 'headed-background-resume'
@@ -442,7 +442,7 @@ test('headed paired host keeps structured agent focus viewer-local @headful', as
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(async () =>
+          appPage.evaluate(async () =>
             (await window.api.pty.listSessions()).map((session) => session.id)
           ),
         { timeout: 15_000 }
@@ -515,7 +515,7 @@ test('headed paired host keeps structured agent focus viewer-local @headful', as
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             async (ptyIds) =>
               (await window.api.pty.listSessions())
                 .map((session) => session.id)

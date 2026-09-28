@@ -72,41 +72,41 @@ function childWorkspacesChip(page: Page, parentId: string) {
 test.describe('Worktree lineage agent-list expansion independence', () => {
   test.describe.configure({ mode: 'serial' })
 
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('toggling child worktrees does not collapse the expanded agent summary', async ({
-    dolphinPage
+    appPage
   }) => {
-    const { parentId, childId } = await seedLineageScenario(dolphinPage)
-    const parentRow = worktreeRow(dolphinPage, parentId)
-    const childRow = worktreeRow(dolphinPage, childId)
+    const { parentId, childId } = await seedLineageScenario(appPage)
+    const parentRow = worktreeRow(appPage, parentId)
+    const childRow = worktreeRow(appPage, childId)
 
     await parentRow.click()
     await expect(parentRow).toHaveAttribute('aria-current', 'page')
 
-    await seedTwoParentAgents(dolphinPage, parentId)
+    await seedTwoParentAgents(appPage, parentId)
 
     // Both sections present: the "2 agents" summary and the child-workspaces chip.
-    await expect(compactSummary(dolphinPage, parentId)).toBeVisible({ timeout: 10_000 })
-    await expect(childWorkspacesChip(dolphinPage, parentId)).toBeVisible()
+    await expect(compactSummary(appPage, parentId)).toBeVisible({ timeout: 10_000 })
+    await expect(childWorkspacesChip(appPage, parentId)).toBeVisible()
     await expect(childRow).toBeVisible()
-    await expect(compactSummary(dolphinPage, parentId)).toHaveAttribute('aria-expanded', 'false')
-    await captureSidebar(dolphinPage, '1-before-both-collapsed.png')
+    await expect(compactSummary(appPage, parentId)).toHaveAttribute('aria-expanded', 'false')
+    await captureSidebar(appPage, '1-before-both-collapsed.png')
 
     // Expand the agent summary.
-    await compactSummary(dolphinPage, parentId).click()
-    await expect(compactSummary(dolphinPage, parentId)).toHaveAttribute('aria-expanded', 'true')
-    await captureSidebar(dolphinPage, '2-agents-expanded.png')
+    await compactSummary(appPage, parentId).click()
+    await expect(compactSummary(appPage, parentId)).toHaveAttribute('aria-expanded', 'true')
+    await captureSidebar(appPage, '2-agents-expanded.png')
 
     // Collapse the child worktrees via the chip. This remounts the parent card.
-    await childWorkspacesChip(dolphinPage, parentId).click()
+    await childWorkspacesChip(appPage, parentId).click()
     await expect(childRow).toBeHidden()
 
     // FIXED: the agent summary stays expanded despite the card remount.
-    await expect(compactSummary(dolphinPage, parentId)).toHaveAttribute('aria-expanded', 'true')
-    await captureSidebar(dolphinPage, '3-after-children-toggle-agents-still-expanded.png')
+    await expect(compactSummary(appPage, parentId)).toHaveAttribute('aria-expanded', 'true')
+    await captureSidebar(appPage, '3-after-children-toggle-agents-still-expanded.png')
   })
 })

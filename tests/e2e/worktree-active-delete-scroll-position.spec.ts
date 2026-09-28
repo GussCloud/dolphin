@@ -232,36 +232,36 @@ async function finishRowRemovalSampling(page: Page): Promise<RowRemovalFrame[]> 
 }
 
 test('deleting the active scrolled worktree preserves position and closes the row gap', async ({
-  dolphinPage
+  appPage
 }) => {
-  await waitForSessionReady(dolphinPage)
-  await dolphinPage.setViewportSize({ width: 1_200, height: 800 })
-  const { belowId, successorId, targetId } = await seedActiveDeletionRows(dolphinPage)
-  await prepareScrolledActiveRow(dolphinPage, targetId)
-  const target = dolphinPage.locator(
+  await waitForSessionReady(appPage)
+  await appPage.setViewportSize({ width: 1_200, height: 800 })
+  const { belowId, successorId, targetId } = await seedActiveDeletionRows(appPage)
+  await prepareScrolledActiveRow(appPage, targetId)
+  const target = appPage.locator(
     `[data-worktree-sidebar] [data-worktree-id=${JSON.stringify(targetId)}]`
   )
-  const below = dolphinPage.locator(
+  const below = appPage.locator(
     `[data-worktree-sidebar] [data-worktree-id=${JSON.stringify(belowId)}]`
   )
-  await pauseForVisualProof(dolphinPage)
+  await pauseForVisualProof(appPage)
   const contextMenuScope = target.locator('[data-worktree-context-menu-scope="worktree"]')
   await expect(contextMenuScope).toBeVisible()
   await contextMenuScope.click({ button: 'right' })
-  const deleteItem = dolphinPage.getByRole('menuitem', { name: /^Delete(?:\s|$)/ })
+  const deleteItem = appPage.getByRole('menuitem', { name: /^Delete(?:\s|$)/ })
   await expect(deleteItem).toBeVisible()
   await expect(deleteItem).toBeInViewport()
-  await pauseForVisualProof(dolphinPage)
-  await startRowRemovalSampling(dolphinPage, targetId, belowId)
+  await pauseForVisualProof(appPage)
+  await startRowRemovalSampling(appPage, targetId, belowId)
   await deleteItem.click()
 
   await expect(target).toHaveCount(0)
   await expect(below).toBeVisible()
   await expect
-    .poll(() => dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId ?? null))
+    .poll(() => appPage.evaluate(() => window.__store?.getState().activeWorktreeId ?? null))
     .toBe(successorId)
-  const frames = await finishRowRemovalSampling(dolphinPage)
-  await pauseForVisualProof(dolphinPage)
+  const frames = await finishRowRemovalSampling(appPage)
+  await pauseForVisualProof(appPage)
   const mountedTops = frames.flatMap((frame) => (frame.belowTop === null ? [] : [frame.belowTop]))
   const firstRemovedFrame = frames.findIndex((frame) => !frame.targetExists)
   const scrollTopBeforeDelete = frames[0]?.scrollTop
@@ -280,19 +280,19 @@ test('deleting the active scrolled worktree preserves position and closes the ro
     scrollTopBeforeDelete - 1
   )
   await expect(
-    dolphinPage.locator(`[data-worktree-sidebar] [data-worktree-id=${JSON.stringify(successorId)}]`)
+    appPage.locator(`[data-worktree-sidebar] [data-worktree-id=${JSON.stringify(successorId)}]`)
   ).toHaveCount(0)
 })
 
 test('reduced motion removes the active row without animating its neighbor', async ({
-  dolphinPage
+  appPage
 }) => {
-  await dolphinPage.emulateMedia({ reducedMotion: 'reduce' })
-  await waitForSessionReady(dolphinPage)
-  const { belowId, targetId } = await seedActiveDeletionRows(dolphinPage)
-  await prepareScrolledActiveRow(dolphinPage, targetId)
+  await appPage.emulateMedia({ reducedMotion: 'reduce' })
+  await waitForSessionReady(appPage)
+  const { belowId, targetId } = await seedActiveDeletionRows(appPage)
+  await prepareScrolledActiveRow(appPage, targetId)
 
-  const animationCount = await dolphinPage.evaluate(
+  const animationCount = await appPage.evaluate(
     async ({ belowId, targetId }) => {
       const store = window.__store
       if (!store) {

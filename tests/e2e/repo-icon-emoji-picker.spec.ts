@@ -35,17 +35,17 @@ async function attachScreenshot(page: Page, testInfo: TestInfo, name: string): P
 
 test.describe('Repository icon emoji picker', () => {
   test('search selects a native emoji and persists it as the repo icon', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
 
-    const repos = await getStoreState<Repo[]>(dolphinPage, 'repos')
+    const repos = await getStoreState<Repo[]>(appPage, 'repos')
     expect(repos.length).toBeGreaterThan(0)
     const repo = repos[0]
 
-    await openRepoSettings(dolphinPage, repo.id)
+    await openRepoSettings(appPage, repo.id)
 
-    const repoSection = dolphinPage.locator(`[data-settings-section="repo-${repo.id}"]`)
+    const repoSection = appPage.locator(`[data-settings-section="repo-${repo.id}"]`)
     await repoSection.getByRole('tab', { name: 'Emoji' }).click()
 
     const picker = repoSection.locator('.repo-icon-emoji-picker')
@@ -56,7 +56,7 @@ test.describe('Repository icon emoji picker', () => {
     await expect(searchInput).toBeVisible()
     await searchInput.fill('rocket')
 
-    await attachScreenshot(dolphinPage, testInfo, 'repo-icon-emoji-picker-search')
+    await attachScreenshot(appPage, testInfo, 'repo-icon-emoji-picker-search')
 
     const rocketResult = picker.getByRole('button', { name: /rocket/i }).first()
     await expect(rocketResult).toBeVisible({ timeout: 10_000 })
@@ -65,7 +65,7 @@ test.describe('Repository icon emoji picker', () => {
     await expect
       .poll(
         async () => {
-          const current = await getStoreState<Repo[]>(dolphinPage, 'repos')
+          const current = await getStoreState<Repo[]>(appPage, 'repos')
           return current.find((entry) => entry.id === repo.id)?.repoIcon
         },
         { timeout: 5_000, message: 'repo icon did not persist the picked emoji' }
@@ -75,6 +75,6 @@ test.describe('Repository icon emoji picker', () => {
     // The store round-trip alone would pass even if the panel rendered nothing.
     await expect(repoSection.getByText('Current: 🚀')).toBeVisible()
 
-    await attachScreenshot(dolphinPage, testInfo, 'repo-icon-emoji-picker-selected')
+    await attachScreenshot(appPage, testInfo, 'repo-icon-emoji-picker-selected')
   })
 })

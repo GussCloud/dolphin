@@ -51,7 +51,7 @@ test.describe.configure({ mode: 'serial' })
 
 test('publishes, updates, revokes, and deletes without losing local state', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   test.setTimeout(12 * 60_000)
   const sourceRoot = mkdtempSync(join(tmpdir(), 'dolphin-staging-skill-source-'))
@@ -65,17 +65,17 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
   try {
     if (RUN_HEADLESS_PAIRED) {
       pairedHost = await launchHeadlessPairedRuntimeHost()
-      physicalEnvironmentId = await addPhysicalHost(dolphinPage, pairedHost.offer.pairingUrl)
+      physicalEnvironmentId = await addPhysicalHost(appPage, pairedHost.offer.pairingUrl)
     } else if (PHYSICAL_HOST_PAIRING_URL) {
-      physicalEnvironmentId = await addPhysicalHost(dolphinPage, PHYSICAL_HOST_PAIRING_URL)
+      physicalEnvironmentId = await addPhysicalHost(appPage, PHYSICAL_HOST_PAIRING_URL)
     }
     if (SSH_TARGET) {
-      sshTargetId = await connectStagingSkillSshTarget(dolphinPage, SSH_TARGET)
+      sshTargetId = await connectStagingSkillSshTarget(appPage, SSH_TARGET)
     }
     mkdirSync(source, { recursive: true })
     writeSkill(source, 'v1')
     const first = await publish(
-      dolphinPage,
+      appPage,
       sourceRoot,
       'Initial staging journey',
       undefined,
@@ -85,7 +85,7 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     )
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
       const remoteFirst = await installVersion(
-        dolphinPage,
+        appPage,
         first.published,
         target.destination,
         undefined,
@@ -94,35 +94,35 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
       expectPhysicalInstall(remoteFirst, first.published, target.kind)
       expect(existsSync(globalSkill)).toBe(false)
     }
-    const firstInstall = await installVersion(dolphinPage, first.published, { scope: 'global' })
+    const firstInstall = await installVersion(appPage, first.published, { scope: 'global' })
     expectBundleOutcome(firstInstall, 'complete', 'installed')
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: v1')
 
     writeSkill(globalSkill, 'local')
     writeSkill(source, 'v2')
     const second = await publish(
-      dolphinPage,
+      appPage,
       sourceRoot,
       'Second immutable version',
       first.preview.packageId
     )
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
       const remoteUpdate = await installVersion(
-        dolphinPage,
+        appPage,
         second.published,
         target.destination,
         'replace-unmodified',
         target.installEnvironmentId
       )
       expectBundleOutcome(remoteUpdate, 'complete', 'updated')
-      await expectManagedRemoteVersion(dolphinPage, target, second.published.version.versionId)
+      await expectManagedRemoteVersion(appPage, target, second.published.version.versionId)
     }
-    const conflict = await installVersion(dolphinPage, second.published, { scope: 'global' })
+    const conflict = await installVersion(appPage, second.published, { scope: 'global' })
     expectBundleOutcome(conflict, 'partial', 'kept-local', 'modified')
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: local')
 
     const update = await installVersion(
-      dolphinPage,
+      appPage,
       second.published,
       { scope: 'global' },
       'replace-and-discard-local'
@@ -131,7 +131,7 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: v2')
 
     const rollback = await installVersion(
-      dolphinPage,
+      appPage,
       first.published,
       { scope: 'global' },
       'replace-unmodified'
@@ -141,23 +141,23 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
 
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
       const remoteRollback = await installVersion(
-        dolphinPage,
+        appPage,
         first.published,
         target.destination,
         'replace-unmodified',
         target.installEnvironmentId
       )
       expectBundleOutcome(remoteRollback, 'complete', 'updated')
-      await expectManagedRemoteVersion(dolphinPage, target, first.published.version.versionId)
+      await expectManagedRemoteVersion(appPage, target, first.published.version.versionId)
     }
 
     expect(
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         (shareId) => window.api.skills.revokeShare(shareId),
         first.published.share.id
       )
     ).toMatchObject({ status: 'ok' })
-    const revokedInstall = await dolphinPage.evaluate(
+    const revokedInstall = await appPage.evaluate(
       async ({ shareId, skillId, versionId }) => {
         try {
           return await window.api.skills.installBundleShare({
@@ -180,9 +180,9 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: v1')
 
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
-      await expectManagedRemoteVersion(dolphinPage, target, first.published.version.versionId)
+      await expectManagedRemoteVersion(appPage, target, first.published.version.versionId)
       expect(
-        await dolphinPage.evaluate(
+        await appPage.evaluate(
           ({ environmentId, name, destination }) =>
             window.api.skills.removeInstall({
               ...(environmentId ? { environmentId } : {}),
@@ -198,22 +198,22 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
       ).toMatchObject({ status: 'ok', value: { status: 'removed' } })
     }
 
-    const removed = await dolphinPage.evaluate(
+    const removed = await appPage.evaluate(
       (name) => window.api.skills.removeInstall({ name, destination: { scope: 'global' } }),
       SKILL_NAME
     )
     expect(removed).toMatchObject({ status: 'ok', value: { status: 'removed' } })
     expect(existsSync(globalSkill)).toBe(false)
     expect(
-      await dolphinPage.evaluate((id) => window.api.skills.getPackage(id), packageId)
+      await appPage.evaluate((id) => window.api.skills.getPackage(id), packageId)
     ).toMatchObject({ status: 'ok' })
     expect(
-      await dolphinPage.evaluate((id) => window.api.skills.deletePackage(id), packageId)
+      await appPage.evaluate((id) => window.api.skills.deletePackage(id), packageId)
     ).toMatchObject({ status: 'ok' })
     packageId = null
   } finally {
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
-      await dolphinPage
+      await appPage
         .evaluate(
           ({ environmentId, name, destination }) =>
             window.api.skills.removeInstall({
@@ -231,10 +231,10 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
         .catch(() => undefined)
     }
     if (sshTargetId) {
-      await removeStagingSkillSshTarget(dolphinPage, sshTargetId).catch(() => undefined)
+      await removeStagingSkillSshTarget(appPage, sshTargetId).catch(() => undefined)
     }
     if (physicalEnvironmentId) {
-      await dolphinPage
+      await appPage
         .evaluate(
           (selector) => window.api.runtimeEnvironments.remove({ selector }),
           physicalEnvironmentId
@@ -243,7 +243,7 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     }
     await pairedHost?.dispose().catch(() => undefined)
     if (packageId) {
-      await dolphinPage
+      await appPage
         .evaluate((id) => window.api.skills.deletePackage(id), packageId)
         .catch(() => undefined)
     }

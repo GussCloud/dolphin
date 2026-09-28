@@ -139,13 +139,13 @@ test.describe('browser split grab shortcut', () => {
   let server: BrowserSplitPageServer
   let savedClipboard: string | null = null
 
-  test.beforeEach(async ({ electronApp, dolphinPage }) => {
+  test.beforeEach(async ({ electronApp, appPage }) => {
     server = await startBrowserSplitPageServer()
     // Why: the copy assertions read the real system clipboard; put the user's text back after.
     savedClipboard = await readClipboard(electronApp)
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   test.afterEach(async ({ electronApp }) => {
@@ -155,63 +155,57 @@ test.describe('browser split grab shortcut', () => {
     await server.close()
   })
 
-  test('copy chord from one split toolbar arms grab only in that split', async ({
-    dolphinPage
-  }) => {
-    const fixture = await createBrowserSplit(dolphinPage, {
+  test('copy chord from one split toolbar arms grab only in that split', async ({ appPage }) => {
+    const fixture = await createBrowserSplit(appPage, {
       first: server.pageUrl('a', 1),
       second: server.pageUrl('b', 1, 'localhost')
     })
-    await waitForGuestUrl(dolphinPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
-    await waitForGuestUrl(
-      dolphinPage,
-      fixture.secondBrowserTabId,
-      server.pageUrl('b', 1, 'localhost')
-    )
+    await waitForGuestUrl(appPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
+    await waitForGuestUrl(appPage, fixture.secondBrowserTabId, server.pageUrl('b', 1, 'localhost'))
 
-    await reloadButton(dolphinPage, fixture.firstBrowserTabId).focus()
-    await waitForFocusedGroup(dolphinPage, fixture.firstBrowserGroupId)
-    await dolphinPage.keyboard.press(copyChord)
+    await reloadButton(appPage, fixture.firstBrowserTabId).focus()
+    await waitForFocusedGroup(appPage, fixture.firstBrowserGroupId)
+    await appPage.keyboard.press(copyChord)
 
-    await expect(grabBanner(dolphinPage, fixture.firstBrowserTabId)).toBeVisible()
-    await expect(grabBanner(dolphinPage, fixture.secondBrowserTabId)).toBeHidden()
+    await expect(grabBanner(appPage, fixture.firstBrowserTabId)).toBeVisible()
+    await expect(grabBanner(appPage, fixture.secondBrowserTabId)).toBeHidden()
   })
 
   test('copy chord with native chat text selected copies instead of arming grab', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    const descriptor = await waitForActivePaneHookDescriptor(dolphinPage)
-    const fixture = await createTerminalBrowserSplit(dolphinPage, server.pageUrl('a', 1))
-    await waitForGuestUrl(dolphinPage, fixture.browserTabId, server.pageUrl('a', 1))
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
+    const fixture = await createTerminalBrowserSplit(appPage, server.pageUrl('a', 1))
+    await waitForGuestUrl(appPage, fixture.browserTabId, server.pageUrl('a', 1))
     const reply = `Selectable transcript reply ${randomUUID()}`
-    await openNativeChatTranscript(dolphinPage, {
+    await openNativeChatTranscript(appPage, {
       paneKey: descriptor.paneKey,
       worktreeId: descriptor.worktreeId,
       reply
     })
     await writeClipboard(electronApp, 'clipboard before copy')
 
-    const replyText = dolphinPage.locator('[data-native-chat-window]').getByText(reply)
+    const replyText = appPage.locator('[data-native-chat-window]').getByText(reply)
     await replyText.click({ clickCount: 3 })
     await expect
-      .poll(() => dolphinPage.evaluate(() => window.getSelection()?.toString()))
+      .poll(() => appPage.evaluate(() => window.getSelection()?.toString()))
       .toContain(reply)
-    await dolphinPage.keyboard.press(copyChord)
+    await appPage.keyboard.press(copyChord)
 
     await expect.poll(() => readClipboard(electronApp)).toContain(reply)
-    await expect(grabBanner(dolphinPage, fixture.browserTabId)).toBeHidden()
+    await expect(grabBanner(appPage, fixture.browserTabId)).toBeHidden()
 
     // Why: with the browser split focused, only the live-selection check can tell this is a copy.
     await writeClipboard(electronApp, 'clipboard before copy')
-    await reloadButton(dolphinPage, fixture.browserTabId).focus()
-    await waitForFocusedGroup(dolphinPage, fixture.browserGroupId)
-    expect(await dolphinPage.evaluate(() => window.getSelection()?.toString())).toContain(reply)
-    await dolphinPage.keyboard.press(copyChord)
+    await reloadButton(appPage, fixture.browserTabId).focus()
+    await waitForFocusedGroup(appPage, fixture.browserGroupId)
+    expect(await appPage.evaluate(() => window.getSelection()?.toString())).toContain(reply)
+    await appPage.keyboard.press(copyChord)
     await expect.poll(() => readClipboard(electronApp)).toContain(reply)
-    await expect(grabBanner(dolphinPage, fixture.browserTabId)).toBeHidden()
+    await expect(grabBanner(appPage, fixture.browserTabId)).toBeHidden()
 
-    await expectToolbarCopyChordArmsGrab(dolphinPage, fixture.browserTabId)
+    await expectToolbarCopyChordArmsGrab(appPage, fixture.browserTabId)
   })
 })

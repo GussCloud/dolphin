@@ -30,33 +30,33 @@ async function postCodexHookEvent(
 
 test('shows keep-awake mode and Agent activity in the status bar', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
-  await waitForSessionReady(dolphinPage)
+  await waitForSessionReady(appPage)
 
-  const offStatus = dolphinPage.getByRole('button', {
+  const offStatus = appPage.getByRole('button', {
     name: 'Keep computer awake, Off · Inactive'
   })
   await expect(offStatus).toBeVisible()
   await expect(offStatus).toHaveText('Off')
   await offStatus.click()
-  await expect(dolphinPage.getByRole('menuitemradio', { name: /^On/ })).toBeVisible()
-  await expect(dolphinPage.getByRole('menuitemradio', { name: /^Agent/ })).toBeVisible()
-  await expect(dolphinPage.getByRole('menuitemradio', { name: /^Off/ })).toBeVisible()
+  await expect(appPage.getByRole('menuitemradio', { name: /^On/ })).toBeVisible()
+  await expect(appPage.getByRole('menuitemradio', { name: /^Agent/ })).toBeVisible()
+  await expect(appPage.getByRole('menuitemradio', { name: /^Off/ })).toBeVisible()
   const menuProofPath = process.env.DOLPHIN_CAFFEINATE_MENU_PROOF_PATH
   if (menuProofPath) {
-    await dolphinPage.screenshot({ path: menuProofPath })
+    await appPage.screenshot({ path: menuProofPath })
   }
-  await dolphinPage.getByRole('menuitemradio', { name: /^Agent/ }).click()
+  await appPage.getByRole('menuitemradio', { name: /^Agent/ }).click()
 
-  const agentInactiveStatus = dolphinPage.getByRole('button', {
+  const agentInactiveStatus = appPage.getByRole('button', {
     name: 'Keep computer awake, Agent · Inactive'
   })
   await expect(agentInactiveStatus).toBeVisible()
 
   const paneKey = `e2e-caffeinate-tab:${randomUUID()}`
   await postCodexHookEvent(electronApp, paneKey, 'UserPromptSubmit')
-  const agentActiveStatus = dolphinPage.getByRole('button', {
+  const agentActiveStatus = appPage.getByRole('button', {
     name: 'Keep computer awake, Agent · Active'
   })
   await expect(agentActiveStatus).toBeVisible()
@@ -64,7 +64,7 @@ test('shows keep-awake mode and Agent activity in the status bar', async ({
 
   const proofPath = process.env.DOLPHIN_CAFFEINATE_PROOF_PATH
   if (proofPath) {
-    await dolphinPage.screenshot({ path: proofPath })
+    await appPage.screenshot({ path: proofPath })
   }
 
   await postCodexHookEvent(electronApp, paneKey, 'Stop')

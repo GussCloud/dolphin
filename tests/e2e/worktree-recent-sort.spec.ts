@@ -67,9 +67,9 @@ test.describe('Worktree Recent Sort', () => {
     return dir
   }
 
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test.afterEach(() => {
@@ -85,12 +85,12 @@ test.describe('Worktree Recent Sort', () => {
   })
 
   test('stamps lastActivityAt on a newly-added folder repo so it sorts to the top of Recent', async ({
-    dolphinPage
+    appPage
   }) => {
     const folderPath = createFolderFixture()
 
-    const repoId = await addFolderRepo(dolphinPage, folderPath)
-    const lastActivityAt = await readFolderWorktreeLastActivity(dolphinPage, repoId)
+    const repoId = await addFolderRepo(appPage, folderPath)
+    const lastActivityAt = await readFolderWorktreeLastActivity(appPage, repoId)
 
     // Why: the exact failure mode before the fix was `lastActivityAt === 0`
     // (the fallback in mergeWorktree when meta is undefined). Asserting
@@ -100,20 +100,20 @@ test.describe('Worktree Recent Sort', () => {
     expect(lastActivityAt).toBeGreaterThan(0)
   })
 
-  test('leaves lastActivityAt stable across repeated list refreshes', async ({ dolphinPage }) => {
+  test('leaves lastActivityAt stable across repeated list refreshes', async ({ appPage }) => {
     // Why: the stamp fires only on *first* discovery. Re-fetching must not
     // overwrite it, or every sidebar refresh would reshuffle Recent order.
     const folderPath = createFolderFixture()
-    const repoId = await addFolderRepo(dolphinPage, folderPath)
+    const repoId = await addFolderRepo(appPage, folderPath)
 
-    const first = await readFolderWorktreeLastActivity(dolphinPage, repoId)
+    const first = await readFolderWorktreeLastActivity(appPage, repoId)
 
-    await dolphinPage.evaluate(async (id) => {
+    await appPage.evaluate(async (id) => {
       await window.__store?.getState().fetchWorktrees(id)
       await window.__store?.getState().fetchWorktrees(id)
     }, repoId)
 
-    const second = await readFolderWorktreeLastActivity(dolphinPage, repoId)
+    const second = await readFolderWorktreeLastActivity(appPage, repoId)
     expect(second).toBe(first)
   })
 })

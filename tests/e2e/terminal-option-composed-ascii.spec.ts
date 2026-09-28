@@ -150,15 +150,15 @@ test.describe('Option-composed text in a kitty-keyboard pane', () => {
   test.skip(process.platform !== 'darwin', 'Option composition is a macOS-only input path (#14024)')
 
   test('types the composed character instead of reporting the physical Alt chord', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
-    const { joinedWrites } = await setUpPane(dolphinPage, electronApp)
-    await setMacOptionAsAlt(dolphinPage, 'false')
+    const { joinedWrites } = await setUpPane(appPage, electronApp)
+    await setMacOptionAsAlt(appPage, 'false')
     await clearPtyWriteLog(electronApp)
 
     // Turkish Q: the physical `q` key composes `@`.
-    const dispatch = await pressOptionComposedKey(dolphinPage, { key: '@', code: 'KeyQ' })
+    const dispatch = await pressOptionComposedKey(appPage, { key: '@', code: 'KeyQ' })
     expect(dispatch.keydownDefaultPrevented).toBe(true)
 
     await expect
@@ -171,14 +171,14 @@ test.describe('Option-composed text in a kitty-keyboard pane', () => {
     expect(await joinedWrites()).not.toContain('\x1b[113;3u')
   })
 
-  test('types a composed character that also needs Shift', async ({ dolphinPage, electronApp }) => {
-    const { joinedWrites } = await setUpPane(dolphinPage, electronApp)
-    await setMacOptionAsAlt(dolphinPage, 'false')
+  test('types a composed character that also needs Shift', async ({ appPage, electronApp }) => {
+    const { joinedWrites } = await setUpPane(appPage, electronApp)
+    await setMacOptionAsAlt(appPage, 'false')
     await clearPtyWriteLog(electronApp)
 
     // QWERTZ-class layouts put `\` on the shifted Option layer (Option+Shift+7),
     // where no other chord can reach it.
-    const dispatch = await pressOptionComposedKey(dolphinPage, {
+    const dispatch = await pressOptionComposedKey(appPage, {
       key: '\\',
       code: 'Digit7',
       shiftKey: true
@@ -195,14 +195,14 @@ test.describe('Option-composed text in a kitty-keyboard pane', () => {
   })
 
   test('still reports the Alt chord when Option is configured as Alt', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
-    const { joinedWrites } = await setUpPane(dolphinPage, electronApp)
-    await setMacOptionAsAlt(dolphinPage, 'true')
+    const { joinedWrites } = await setUpPane(appPage, electronApp)
+    await setMacOptionAsAlt(appPage, 'true')
     await clearPtyWriteLog(electronApp)
 
-    const dispatch = await pressOptionComposedKey(dolphinPage, { key: '@', code: 'KeyQ' })
+    const dispatch = await pressOptionComposedKey(appPage, { key: '@', code: 'KeyQ' })
     expect(dispatch.keydownDefaultPrevented).toBe(true)
 
     await expect
@@ -215,15 +215,15 @@ test.describe('Option-composed text in a kitty-keyboard pane', () => {
   })
 
   test('keeps non-ASCII Option glyphs as TUI hotkeys when configured as Alt', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
-    const { joinedWrites } = await setUpPane(dolphinPage, electronApp)
-    await setMacOptionAsAlt(dolphinPage, 'true')
+    const { joinedWrites } = await setUpPane(appPage, electronApp)
+    await setMacOptionAsAlt(appPage, 'true')
     await clearPtyWriteLog(electronApp)
 
     // #8031: OMP-class TUIs bind Option+P, which composes the non-ASCII `π`.
-    const dispatch = await pressOptionComposedKey(dolphinPage, { key: 'π', code: 'KeyP' })
+    const dispatch = await pressOptionComposedKey(appPage, { key: 'π', code: 'KeyP' })
     expect(dispatch.keydownDefaultPrevented).toBe(true)
 
     await expect
@@ -236,13 +236,13 @@ test.describe('Option-composed text in a kitty-keyboard pane', () => {
   })
 
   test('types all Polish letters once under Claude flags and updates the mounted pane setting', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
-    const { ptyId, joinedWrites } = await setUpPane(dolphinPage, electronApp)
-    await execInTerminal(dolphinPage, ptyId, `printf '\\033[<u\\033[>5u'`)
-    await expect.poll(() => getPaneKittyKeyboardFlags(dolphinPage)).toBe(5)
-    await setMacOptionAsAlt(dolphinPage, 'false')
+    const { ptyId, joinedWrites } = await setUpPane(appPage, electronApp)
+    await execInTerminal(appPage, ptyId, `printf '\\033[<u\\033[>5u'`)
+    await expect.poll(() => getPaneKittyKeyboardFlags(appPage)).toBe(5)
+    await setMacOptionAsAlt(appPage, 'false')
     await clearPtyWriteLog(electronApp)
     const letters = [
       ['a', 'ą'],
@@ -256,47 +256,47 @@ test.describe('Option-composed text in a kitty-keyboard pane', () => {
       ['z', 'ż']
     ]
     for (const [base, key] of letters) {
-      await pressOptionComposedKey(dolphinPage, { key, code: `Key${base.toUpperCase()}` })
-      await pressOptionComposedKey(dolphinPage, {
+      await pressOptionComposedKey(appPage, { key, code: `Key${base.toUpperCase()}` })
+      await pressOptionComposedKey(appPage, {
         key: key.toUpperCase(),
         code: `Key${base.toUpperCase()}`,
         shiftKey: true
       })
     }
     await expect.poll(joinedWrites).toBe('ąĄćĆęĘłŁńŃóÓśŚźŹżŻ')
-    await setMacOptionAsAlt(dolphinPage, 'true')
+    await setMacOptionAsAlt(appPage, 'true')
     await clearPtyWriteLog(electronApp)
-    await pressOptionComposedKey(dolphinPage, { key: 'ą', code: 'KeyA' })
+    await pressOptionComposedKey(appPage, { key: 'ą', code: 'KeyA' })
     await expect.poll(joinedWrites).toBe('\x1b[97;3u')
-    await setMacOptionAsAlt(dolphinPage, 'false')
+    await setMacOptionAsAlt(appPage, 'false')
     await clearPtyWriteLog(electronApp)
-    await pressOptionComposedKey(dolphinPage, { key: 'ą', code: 'KeyA' })
+    await pressOptionComposedKey(appPage, { key: 'ą', code: 'KeyA' })
     await expect.poll(joinedWrites).toBe('ą')
   })
 
   test('reports Polish associated text once under report-all flags', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }) => {
-    const { ptyId, joinedWrites } = await setUpPane(dolphinPage, electronApp)
-    await execInTerminal(dolphinPage, ptyId, `printf '\\033[<u\\033[>29u'`)
-    await expect.poll(() => getPaneKittyKeyboardFlags(dolphinPage)).toBe(29)
-    await setMacOptionAsAlt(dolphinPage, 'false')
+    const { ptyId, joinedWrites } = await setUpPane(appPage, electronApp)
+    await execInTerminal(appPage, ptyId, `printf '\\033[<u\\033[>29u'`)
+    await expect.poll(() => getPaneKittyKeyboardFlags(appPage)).toBe(29)
+    await setMacOptionAsAlt(appPage, 'false')
     await clearPtyWriteLog(electronApp)
-    await pressOptionComposedKey(dolphinPage, { key: 'ą', code: 'KeyA' })
+    await pressOptionComposedKey(appPage, { key: 'ą', code: 'KeyA' })
     await expect.poll(joinedWrites).toBe('\x1b[97;3;261u')
   })
 
   test('renders Polish words entered through Chromium keyboard events', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }, testInfo) => {
-    const { ptyId, joinedWrites } = await setUpPane(dolphinPage, electronApp)
-    await execInTerminal(dolphinPage, ptyId, `printf '\\033[<u\\033[>5u'; cat`)
-    await expect.poll(() => getPaneKittyKeyboardFlags(dolphinPage)).toBe(5)
-    await setMacOptionAsAlt(dolphinPage, 'false')
+    const { ptyId, joinedWrites } = await setUpPane(appPage, electronApp)
+    await execInTerminal(appPage, ptyId, `printf '\\033[<u\\033[>5u'; cat`)
+    await expect.poll(() => getPaneKittyKeyboardFlags(appPage)).toBe(5)
+    await setMacOptionAsAlt(appPage, 'false')
     await clearPtyWriteLog(electronApp)
-    const cdp = await dolphinPage.context().newCDPSession(dolphinPage)
+    const cdp = await appPage.context().newCDPSession(appPage)
     const bases: Record<string, string> = {
       ą: 'a',
       ć: 'c',
@@ -325,8 +325,8 @@ test.describe('Option-composed text in a kitty-keyboard pane', () => {
         await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, modifiers })
       }
       await expect.poll(joinedWrites).toBe(phrase)
-      await waitForTerminalOutput(dolphinPage, phrase)
-      await dolphinPage.screenshot({ path: testInfo.outputPath('polish-words.png') })
+      await waitForTerminalOutput(appPage, phrase)
+      await appPage.screenshot({ path: testInfo.outputPath('polish-words.png') })
     } finally {
       await cdp.detach()
     }

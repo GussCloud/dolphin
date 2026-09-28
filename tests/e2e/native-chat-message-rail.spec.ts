@@ -84,13 +84,13 @@ function claudeTranscript(rowCount: number, sessionId: string): string {
 }
 
 test.describe('Native chat message rail', () => {
-  test('previews prompts and jumps without following later output', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+  test('previews prompts and jumps without following later output', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const descriptor = await waitForActivePaneHookDescriptor(dolphinPage)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
     const [tabId] = descriptor.paneKey.split(':')
     const sessionId = `e2e-message-rail-${randomUUID()}`
     const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-native-chat-rail-'))
@@ -98,22 +98,22 @@ test.describe('Native chat message rail', () => {
     writeFileSync(transcriptPath, claudeTranscript(TRANSCRIPT_ROWS, sessionId))
     mkdirSync(SHOT_DIR, { recursive: true })
 
-    await enableNativeChatSetting(dolphinPage)
-    await seedClaudeProviderSession(dolphinPage, {
+    await enableNativeChatSetting(appPage)
+    await seedClaudeProviderSession(appPage, {
       paneKey: descriptor.paneKey,
       worktreeId: descriptor.worktreeId,
       sessionId,
       transcriptPath
     })
-    await toggleTerminalTabToChatView(dolphinPage, { tabId, worktreeId: descriptor.worktreeId })
+    await toggleTerminalTabToChatView(appPage, { tabId, worktreeId: descriptor.worktreeId })
 
-    await expect(dolphinPage.locator('[data-native-chat-root="true"]')).toBeVisible({
+    await expect(appPage.locator('[data-native-chat-root="true"]')).toBeVisible({
       timeout: 15_000
     })
-    const transcriptWindow = dolphinPage.locator('[data-native-chat-window]')
+    const transcriptWindow = appPage.locator('[data-native-chat-window]')
     await expect(transcriptWindow).toBeVisible({ timeout: 30_000 })
 
-    const rail = dolphinPage.locator('[data-native-chat-rail]')
+    const rail = appPage.locator('[data-native-chat-rail]')
     await expect(rail).toBeVisible({ timeout: 30_000 })
 
     // Sampling cap: 30 user turns must not render 30 bars.
@@ -121,17 +121,17 @@ test.describe('Native chat message rail', () => {
     expect(tickCount).toBeGreaterThan(2)
     expect(tickCount).toBeLessThanOrEqual(20)
 
-    await dolphinPage.screenshot({
+    await appPage.screenshot({
       path: path.join(SHOT_DIR, 'rail-01-app.png'),
       animations: 'disabled'
     })
 
     await rail.hover()
-    const panel = dolphinPage.getByRole('dialog', { name: 'Your messages' })
+    const panel = appPage.getByRole('dialog', { name: 'Your messages' })
     await expect(panel).toBeVisible({ timeout: 10_000 })
     // The panel lists every user message, not the sampled ticks.
     await expect(panel.getByRole('button').first()).toBeVisible()
-    await dolphinPage.screenshot({
+    await appPage.screenshot({
       path: path.join(SHOT_DIR, 'rail-02-panel.png'),
       animations: 'disabled'
     })
@@ -147,7 +147,7 @@ test.describe('Native chat message rail', () => {
     await panel.getByRole('button', { name: 'Question 5:', exact: false }).click()
     await expect(panel).not.toBeVisible()
     const target = transcriptWindow.locator('[data-index="10"]')
-    const scroller = dolphinPage.locator('[data-native-chat-scroll]')
+    const scroller = appPage.locator('[data-native-chat-scroll]')
     const targetOffset = async (): Promise<number> => {
       const [row, viewport] = await Promise.all([target.boundingBox(), scroller.boundingBox()])
       return row && viewport ? Math.abs(row.y - viewport.y) : Number.POSITIVE_INFINITY

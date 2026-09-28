@@ -159,7 +159,7 @@ function remoteTerminalHandle(ptyId: string): string {
 
 test('opens a paired-runtime terminal link on its owning host', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(240_000)
@@ -167,15 +167,15 @@ test('opens a paired-runtime terminal link on its owning host', async ({
   let client: PairedElectronClient | null = null
   let observerActive = false
   try {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage)
-    const hostPtyId = await waitForActivePanePtyId(dolphinPage)
-    await execInTerminal(dolphinPage, hostPtyId, `printf '%s\\n' ${JSON.stringify(fixture.url)}`)
-    await waitForTerminalOutput(dolphinPage, fixture.url)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage)
+    const hostPtyId = await waitForActivePanePtyId(appPage)
+    await execInTerminal(appPage, hostPtyId, `printf '%s\\n' ${JSON.stringify(fixture.url)}`)
+    await waitForTerminalOutput(appPage, fixture.url)
 
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     client = await launchPairedElectronClient(offer, testInfo, 'Remote terminal browser link')
     const page = client.page
     const worktreeId = await expect

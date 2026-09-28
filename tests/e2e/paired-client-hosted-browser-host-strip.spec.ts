@@ -134,18 +134,18 @@ async function readOwnedPageUrls(app: ElectronApplication, url: string): Promise
 
 test('shows a client-hosted page in the host tab strip and closes it from there', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
 
   const fixture = await startPageFixture()
   let client: PairedElectronClient | null = null
   try {
-    const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     client = await launchPairedElectronClient(offer, testInfo, 'STA-4150 host strip')
 
     const clientWorktreeId = await findWorktreeIdByPath(client.page, testRepoPath)
@@ -171,7 +171,7 @@ test('shows a client-hosted page in the host tab strip and closes it from there'
     expect(await readOwnedPageUrls(client.app, fixture.url)).toHaveLength(1)
     expect(await readOwnedPageUrls(electronApp, fixture.url)).toHaveLength(0)
 
-    const hostRow = dolphinPage.locator(
+    const hostRow = appPage.locator(
       `.terminal-tab-strip [data-client-hosted-browser-row-id="${hostPageId}"]`
     )
     await expect(hostRow).toBeVisible({ timeout: 60_000 })

@@ -173,7 +173,7 @@ test.describe('Hangul terminating digit @headful', () => {
 
   test('a digit typed right after a Hangul syllable reaches the pty', async ({
     electronApp,
-    dolphinPage: page,
+    appPage: page,
     testRepoPath
   }, testInfo) => {
     const launchDiagnostics = await electronApp.evaluate(({ app: electron, BrowserWindow }) => ({

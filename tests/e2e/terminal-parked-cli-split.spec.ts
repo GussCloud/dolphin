@@ -198,17 +198,17 @@ async function expectPaneKeyboardRoundTrip(
 
 test('CLI splits an exact cold-parked tab without stealing the active tab or focus', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(180_000)
   const pageErrors: string[] = []
-  dolphinPage.on('pageerror', (error) => pageErrors.push(String(error)))
+  appPage.on('pageerror', (error) => pageErrors.push(String(error)))
 
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const initial = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const initial = await waitForPaneIdentitySnapshot(appPage, 1)
   const targetTabId = initial.tabId
   const sourcePane = initial.panes[0]
   if (!sourcePane?.ptyId) {
@@ -219,17 +219,17 @@ test('CLI splits an exact cold-parked tab without stealing the active tab or foc
   const client = new RuntimeClient(userDataDir, 30_000)
   const sourceTerminal = await resolveTerminal(client, worktreeId, targetTabId, sourcePane.leafId)
 
-  await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, targetTabId, {
+  await parkHiddenTabBehindDecoy(appPage, worktreeId, targetTabId, {
     parkDelayMs: PARKING_DELAY_MS
   })
-  const decoyTabId = await getActiveTabId(dolphinPage)
+  const decoyTabId = await getActiveTabId(appPage)
   if (!decoyTabId || decoyTabId === targetTabId) {
     throw new Error('Parking did not leave a distinct decoy tab active')
   }
-  await dolphinPage
+  await appPage
     .locator(`[data-terminal-tab-id=${JSON.stringify(decoyTabId)}] .xterm:visible`)
     .click({ force: true })
-  const contextBefore = await readActiveUiContext(dolphinPage)
+  const contextBefore = await readActiveUiContext(appPage)
   expect(contextBefore).toMatchObject({
     activeTabForWorktree: decoyTabId,
     activeTabId: decoyTabId,
@@ -238,7 +238,7 @@ test('CLI splits an exact cold-parked tab without stealing the active tab or foc
     domActiveTabId: decoyTabId,
     focusedTerminalTabId: decoyTabId
   })
-  const mountedBefore = await dolphinPage.evaluate(() =>
+  const mountedBefore = await appPage.evaluate(() =>
     Array.from(window.__paneManagers?.keys() ?? []).sort()
   )
   expect(mountedBefore).not.toContain(targetTabId)
@@ -248,7 +248,7 @@ test('CLI splits an exact cold-parked tab without stealing the active tab or foc
   await expect
     .poll(
       async () => {
-        mountedDuringSplit = await dolphinPage.evaluate(() =>
+        mountedDuringSplit = await appPage.evaluate(() =>
           Array.from(window.__paneManagers?.keys() ?? []).sort()
         )
         return mountedDuringSplit.includes(targetTabId)
@@ -273,14 +273,14 @@ test('CLI splits an exact cold-parked tab without stealing the active tab or foc
     }
   })
   expect(splitRun.response.result.split.handle).toMatch(/^term_/)
-  expect(await readActiveUiContext(dolphinPage)).toEqual(contextBefore)
+  expect(await readActiveUiContext(appPage)).toEqual(contextBefore)
 
-  await waitForTabParked(dolphinPage, targetTabId, { parkDelayMs: PARKING_DELAY_MS })
-  expect(await readActiveUiContext(dolphinPage)).toEqual(contextBefore)
+  await waitForTabParked(appPage, targetTabId, { parkDelayMs: PARKING_DELAY_MS })
+  expect(await readActiveUiContext(appPage)).toEqual(contextBefore)
 
-  await activateTerminalTab(dolphinPage, worktreeId, targetTabId)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const revealed = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+  await activateTerminalTab(appPage, worktreeId, targetTabId)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const revealed = await waitForPaneIdentitySnapshot(appPage, 2)
   const restoredSource = revealed.panes.find((pane) => pane.leafId === sourcePane.leafId)
   const createdPane = revealed.panes.find((pane) => pane.leafId !== sourcePane.leafId)
   expect(restoredSource).toMatchObject({ ptyId: sourcePane.ptyId })
@@ -312,7 +312,7 @@ test('CLI splits an exact cold-parked tab without stealing the active tab or foc
     listedAfterReveal.find((terminal) => terminal.handle === splitRun.response.result.split.handle)
   ).toMatchObject({ leafId: createdPane.leafId, ptyId: createdPane.ptyId })
 
-  const targetSurface = dolphinPage.locator(
+  const targetSurface = appPage.locator(
     `[data-terminal-tab-id=${JSON.stringify(targetTabId)}][data-terminal-layout-leaf-ids]`
   )
   await expect(targetSurface).toBeVisible()
@@ -325,17 +325,17 @@ test('CLI splits an exact cold-parked tab without stealing the active tab or foc
     targetSurface.locator(`.pane[data-leaf-id=${JSON.stringify(createdPane.leafId)}]`)
   ).toBeVisible()
 
-  await enablePaneAccessibility(dolphinPage, targetTabId)
+  await enablePaneAccessibility(appPage, targetTabId)
   await expect(targetSurface.locator('.xterm-accessibility-tree')).toHaveCount(2)
-  await expectPaneKeyboardRoundTrip(dolphinPage, targetTabId, sourcePane.leafId, 'SOURCE')
-  await expectPaneKeyboardRoundTrip(dolphinPage, targetTabId, createdPane.leafId, 'CREATED')
+  await expectPaneKeyboardRoundTrip(appPage, targetTabId, sourcePane.leafId, 'SOURCE')
+  await expectPaneKeyboardRoundTrip(appPage, targetTabId, createdPane.leafId, 'CREATED')
 
   await testInfo.attach('parked-cli-split-final.png', {
-    body: await dolphinPage.screenshot(),
+    body: await appPage.screenshot(),
     contentType: 'image/png'
   })
   expect(pageErrors).toEqual([])
-  expect(await readPaneIdentitySnapshot(dolphinPage)).toMatchObject({
+  expect(await readPaneIdentitySnapshot(appPage)).toMatchObject({
     panes: revealed.panes,
     ptyIdsByLeafId: revealed.ptyIdsByLeafId,
     tabId: revealed.tabId

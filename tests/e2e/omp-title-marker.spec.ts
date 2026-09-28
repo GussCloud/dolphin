@@ -9,18 +9,16 @@ import {
   waitForActiveTerminalManager
 } from './helpers/terminal'
 
-test('OMP spaced-colon title renders working and clears on idle', async ({
-  dolphinPage
-}, testInfo) => {
+test('OMP spaced-colon title renders working and clears on idle', async ({ appPage }, testInfo) => {
   test.skip(
     process.platform === 'win32',
     'POSIX title replay; Windows formatter bytes have separate coverage'
   )
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage)
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
   const script = testInfo.outputPath('title-replay.cjs')
   await writeFile(
     script,
@@ -30,14 +28,14 @@ process.stdin.on('data', () => process.stdout.write('\\x1b]0;OMP > Image review\
 `
   )
   await execInTerminal(
-    dolphinPage,
+    appPage,
     ptyId,
     buildShellCommandFromArgv([process.execPath, script], 'posix')
   )
-  const working = dolphinPage.locator('[aria-label="Working"]')
+  const working = appPage.locator('[aria-label="Working"]')
   await expect(working.first()).toBeVisible({ timeout: 15000 })
-  await dolphinPage.screenshot({ path: testInfo.outputPath('omp-title-working.png') })
-  await sendToTerminal(dolphinPage, ptyId, '\r')
+  await appPage.screenshot({ path: testInfo.outputPath('omp-title-working.png') })
+  await sendToTerminal(appPage, ptyId, '\r')
   await expect(working).toHaveCount(0)
-  await dolphinPage.screenshot({ path: testInfo.outputPath('omp-title-idle.png') })
+  await appPage.screenshot({ path: testInfo.outputPath('omp-title-idle.png') })
 })

@@ -196,19 +196,19 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('PowerShell default terminal keyboard paste preserves exact content with one PTY owner', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'PowerShell paste coverage is Windows-only')
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await createWindowsDefaultShellTerminalTab(dolphinPage, 'powershell.exe')
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await createWindowsDefaultShellTerminalTab(appPage, 'powershell.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const sentinel = `DOLPHIN_E2E_POWERSHELL_DONE_${runId}`
     const powershellEscape = '`'
@@ -226,22 +226,22 @@ test.describe('Windows terminal shell paste ownership', () => {
     let scriptStarted = false
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(dolphinPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(dolphinPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await dolphinPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(dolphinPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'PowerShell payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -249,19 +249,19 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('cmd.exe default terminal keyboard paste preserves exact content with one PTY owner', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'cmd.exe paste coverage is Windows-only')
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await createWindowsDefaultShellTerminalTab(dolphinPage, 'cmd.exe')
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await createWindowsDefaultShellTerminalTab(appPage, 'cmd.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const sentinel = `DOLPHIN_E2E_CMD_DONE_${runId}`
     const payload = [
@@ -277,22 +277,22 @@ test.describe('Windows terminal shell paste ownership', () => {
     let scriptStarted = false
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(dolphinPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(dolphinPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await dolphinPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(dolphinPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'cmd.exe payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -300,20 +300,20 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('Git Bash default terminal keyboard paste preserves POSIX-shaped content with one PTY owner', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'Git Bash paste coverage is Windows-only')
-    await skipWhenGitBashUnavailable(dolphinPage)
+    await skipWhenGitBashUnavailable(appPage)
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await createWindowsDefaultShellTerminalTab(dolphinPage, WINDOWS_GIT_BASH_SHELL)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await createWindowsDefaultShellTerminalTab(appPage, WINDOWS_GIT_BASH_SHELL)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const sentinel = `DOLPHIN_E2E_GIT_BASH_DONE_${runId}`
     const payload = [
@@ -329,22 +329,22 @@ test.describe('Windows terminal shell paste ownership', () => {
     let scriptStarted = false
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(dolphinPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(dolphinPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await dolphinPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(dolphinPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'Git Bash payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -352,22 +352,22 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('WSL terminal keyboard paste preserves Linux shell content with one PTY owner', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'WSL paste coverage is Windows-only')
     test.skip(!hasWslNodeRuntime(), 'WSL with node is not available on this Windows host')
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const wslDistro = await configureActiveProjectWslRuntime(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    const wslDistro = await configureActiveProjectWslRuntime(appPage)
     test.skip(!wslDistro, 'No WSL distro is available on this Windows host')
-    await createWindowsProjectRuntimeTerminalTab(dolphinPage, 'wsl.exe')
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await createWindowsProjectRuntimeTerminalTab(appPage, 'wsl.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const sentinel = `DOLPHIN_E2E_WSL_DONE_${runId}`
     const payload = [
@@ -384,26 +384,22 @@ test.describe('Windows terminal shell paste ownership', () => {
     let scriptStarted = false
 
     try {
-      await sendToTerminal(
-        dolphinPage,
-        ptyId,
-        `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`
-      )
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(dolphinPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(dolphinPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await dolphinPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(dolphinPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'WSL payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -411,22 +407,22 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('existing WSL terminal keeps paste runtime after default shell changes', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'WSL paste runtime retention is Windows-only')
     test.skip(!hasWslNodeRuntime(), 'WSL with node is not available on this Windows host')
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    const wslDistro = await configureActiveProjectWslRuntime(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    const wslDistro = await configureActiveProjectWslRuntime(appPage)
     test.skip(!wslDistro, 'No WSL distro is available on this Windows host')
-    const tabId = await createWindowsProjectRuntimeTerminalTab(dolphinPage, 'wsl.exe')
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    const tabId = await createWindowsProjectRuntimeTerminalTab(appPage, 'wsl.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const sentinel = `DOLPHIN_E2E_WSL_RETENTION_DONE_${runId}`
     const payload = [
@@ -442,35 +438,29 @@ test.describe('Windows terminal shell paste ownership', () => {
     let scriptStarted = false
 
     try {
-      await sendToTerminal(
-        dolphinPage,
-        ptyId,
-        `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`
-      )
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(dolphinPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       // Exercise a live WSL process across the settings change.
-      await updateWindowsDefaultShellSetting(dolphinPage, 'cmd.exe')
+      await updateWindowsDefaultShellSetting(appPage, 'cmd.exe')
       await expect(
-        dolphinPage.locator(
-          `[data-testid="sortable-tab"][data-tab-id="${tabId}"] [data-shell-icon]`
-        )
+        appPage.locator(`[data-testid="sortable-tab"][data-tab-id="${tabId}"] [data-shell-icon]`)
       ).toHaveAttribute('data-shell-icon', 'wsl.exe')
-      expect(await waitForActivePanePtyId(dolphinPage)).toBe(ptyId)
+      expect(await waitForActivePanePtyId(appPage)).toBe(ptyId)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(dolphinPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await dolphinPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(dolphinPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'retained WSL payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }

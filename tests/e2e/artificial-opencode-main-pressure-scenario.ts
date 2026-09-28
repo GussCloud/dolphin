@@ -99,7 +99,7 @@ export async function runMainPressureScenario<
   pressureOutputChars,
   testInfo,
   testRepoPath,
-  dolphinPage
+  appPage
 }: {
   annotationSuffix: string
   backgroundPaneCount: number
@@ -111,58 +111,58 @@ export async function runMainPressureScenario<
   pressureOutputChars: number
   testInfo: TestInfo
   testRepoPath: string
-  dolphinPage: Page
+  appPage: Page
 }): Promise<void> {
-  await deps.waitForSessionReady(dolphinPage)
-  await deps.waitForActiveWorktree(dolphinPage)
-  const panes = await deps.ensureActiveWorktreePaneLoad(dolphinPage, backgroundPaneCount + 1)
+  await deps.waitForSessionReady(appPage)
+  await deps.waitForActiveWorktree(appPage)
+  const panes = await deps.ensureActiveWorktreePaneLoad(appPage, backgroundPaneCount + 1)
   const [typingPane, ...loadPanes] = panes
-  await deps.focusPane(dolphinPage, typingPane.paneKey)
+  await deps.focusPane(appPage, typingPane.paneKey)
 
   const runId = randomUUID()
   const scrollRunId = randomUUID()
   const typingScriptPath = path.join(testRepoPath, `.dolphin-opencode-pressure-typing-${runId}.mjs`)
   const pressureScriptPath = path.join(testRepoPath, `.dolphin-opencode-pressure-load-${runId}.mjs`)
-  await seedActiveTerminalScrollback(dolphinPage, typingPane.ptyId, scrollRunId)
+  await seedActiveTerminalScrollback(appPage, typingPane.ptyId, scrollRunId)
   deps.writeInteractivePromptScript(typingScriptPath, runId)
   writePressureOutputScript(pressureScriptPath, runId, 'tui')
-  await deps.resetTerminalPtyOutputDebug(dolphinPage)
+  await deps.resetTerminalPtyOutputDebug(appPage)
   await deps.holdTerminalAckGate(
-    dolphinPage,
+    appPage,
     loadPanes.map((pane) => pane.ptyId)
   )
   try {
     await startPressureCommands({
       loadPanes,
-      dolphinPage,
+      appPage,
       pressureOutputChars,
       pressureScriptPath
     })
-    const pressureBeforeTyping = await deps.waitForMainPtyPressureBacklog(dolphinPage)
+    const pressureBeforeTyping = await deps.waitForMainPtyPressureBacklog(appPage)
     await measureAndAnnotateScroll({
       annotationSuffix,
       deps,
       maxScrollLatencyMs,
       maxTimerDriftMs,
-      dolphinPage,
+      appPage,
       panes,
       testInfo
     })
     const measurement = await deps.measureTypingDuringLoad(
-      dolphinPage,
+      appPage,
       typingScriptPath,
       typingPane.ptyId,
       runId
     )
-    const mainPressure = await deps.readMainPtyPressureDebug(dolphinPage)
-    const ackGate = await deps.readTerminalAckGateDebug(dolphinPage)
-    const scheduler = await deps.readTerminalOutputSchedulerDebug(dolphinPage)
+    const mainPressure = await deps.readMainPtyPressureDebug(appPage)
+    const ackGate = await deps.readTerminalAckGateDebug(appPage)
+    const scheduler = await deps.readTerminalOutputSchedulerDebug(appPage)
     deps.annotateTypingMeasurement(
       testInfo,
       `opencode-main-pressure-active-typing${annotationSuffix}`,
       panes.length,
       measurement,
-      await deps.readTerminalPtyOutputDebug(dolphinPage),
+      await deps.readTerminalPtyOutputDebug(appPage),
       scheduler,
       mainPressure,
       ackGate
@@ -178,12 +178,10 @@ export async function runMainPressureScenario<
       scheduler
     })
   } finally {
-    await deps.releaseTerminalAckGate(dolphinPage)
-    await sendToTerminal(dolphinPage, typingPane.ptyId, '\x03').catch(() => undefined)
+    await deps.releaseTerminalAckGate(appPage)
+    await sendToTerminal(appPage, typingPane.ptyId, '\x03').catch(() => undefined)
     await Promise.all(
-      loadPanes.map((pane) =>
-        sendToTerminal(dolphinPage, pane.ptyId, '\x03').catch(() => undefined)
-      )
+      loadPanes.map((pane) => sendToTerminal(appPage, pane.ptyId, '\x03').catch(() => undefined))
     )
     rmSync(typingScriptPath, { force: true })
     rmSync(pressureScriptPath, { force: true })
@@ -192,19 +190,19 @@ export async function runMainPressureScenario<
 
 async function startPressureCommands({
   loadPanes,
-  dolphinPage,
+  appPage,
   pressureOutputChars,
   pressureScriptPath
 }: {
   loadPanes: MainPressurePane[]
-  dolphinPage: Page
+  appPage: Page
   pressureOutputChars: number
   pressureScriptPath: string
 }): Promise<void> {
   await Promise.all(
     loadPanes.map((pane, paneIndex) =>
       sendToTerminal(
-        dolphinPage,
+        appPage,
         pane.ptyId,
         `node ${JSON.stringify(pressureScriptPath)} ${paneIndex} ${pressureOutputChars}\r`
       )
@@ -223,7 +221,7 @@ async function measureAndAnnotateScroll<
   deps,
   maxScrollLatencyMs,
   maxTimerDriftMs,
-  dolphinPage,
+  appPage,
   panes,
   testInfo
 }: {
@@ -231,13 +229,13 @@ async function measureAndAnnotateScroll<
   deps: MainPressureDeps<TMeasurement, TDebug, TScheduler, TMainPressure, TAckGate>
   maxScrollLatencyMs: number
   maxTimerDriftMs: number
-  dolphinPage: Page
+  appPage: Page
   panes: MainPressurePane[]
   testInfo: TestInfo
 }): Promise<void> {
-  const scrollMeasurement = await measureActiveTerminalWheelScroll(dolphinPage)
-  const mainPressureAfterScroll = await deps.readMainPtyPressureDebug(dolphinPage)
-  const ackGateAfterScroll = await deps.readTerminalAckGateDebug(dolphinPage)
+  const scrollMeasurement = await measureActiveTerminalWheelScroll(appPage)
+  const mainPressureAfterScroll = await deps.readMainPtyPressureDebug(appPage)
+  const ackGateAfterScroll = await deps.readTerminalAckGateDebug(appPage)
   annotateScrollMeasurement(
     testInfo,
     `opencode-main-pressure-active-scroll${annotationSuffix}`,
@@ -251,7 +249,7 @@ async function measureAndAnnotateScroll<
     expect(responsivePath.latencyMs).toBeLessThan(maxScrollLatencyMs)
   }
   expect(scrollMeasurement.maxTimerDriftMs).toBeLessThan(maxTimerDriftMs)
-  await scrollActiveTerminalToBottom(dolphinPage)
+  await scrollActiveTerminalToBottom(appPage)
 }
 
 function expectMainPressureAndTyping<TMeasurement extends MainPressureMeasurement>({

@@ -8,16 +8,16 @@ import { waitForSessionReady, waitForActiveWorktree, ensureTerminalVisible } fro
 import { waitForActiveTerminalManager, waitForPaneCount } from './terminal'
 
 export function registerTerminalPaneMountReadiness(): void {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
     // Why: each test launches a fresh Electron instance. The React tree needs
     // to render Terminal → TabGroupPanel → TerminalPane → useTerminalPaneLifecycle
     // before the PaneManager registers on window.__paneManagers. On cold starts
     // this easily exceeds 5s, so allow up to 30s (well within the 120s test budget)
     // to distinguish "slow cold start" from "environment can't mount panes at all."
-    const hasPaneManager = await waitForActiveTerminalManager(dolphinPage, 30_000)
+    const hasPaneManager = await waitForActiveTerminalManager(appPage, 30_000)
       .then(() => true)
       .catch(() => false)
     test.skip(
@@ -28,6 +28,6 @@ export function registerTerminalPaneMountReadiness(): void {
     // PaneManager finishes mounting the first xterm/PTY pair. Wait for that
     // initial pane so split and content-retention assertions start from a real
     // terminal surface instead of racing the bootstrapped mount.
-    await waitForPaneCount(dolphinPage, 1, 30_000)
+    await waitForPaneCount(appPage, 1, 30_000)
   })
 }

@@ -14,16 +14,16 @@ import { RIGHT_SIDEBAR_MIN_WIDTH } from '../../src/renderer/src/components/right
 
 test.describe('Source Control Create PR intent notice layout', () => {
   test('keeps the settings link off the message row at the minimum sidebar width', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    const { prWorktreeId, prWorktreePath, primaryBranch } = await seedCreatePrComposer(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    const { prWorktreeId, prWorktreePath, primaryBranch } = await seedCreatePrComposer(appPage)
     // A real staged change with no commit draft is what routes the intent run
     // into the "configure Source Control AI" notice, which carries the link.
     createStagedCommitMessageChange(prWorktreePath)
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ prWorktreeId, primaryBranch }) => {
         const store = window.__store
         if (!store) {
@@ -60,22 +60,22 @@ test.describe('Source Control Create PR intent notice layout', () => {
       { prWorktreeId, primaryBranch }
     )
 
-    await openSourceControl(dolphinPage, prWorktreeId)
-    await dolphinPage.evaluate((minWidth) => {
+    await openSourceControl(appPage, prWorktreeId)
+    await appPage.evaluate((minWidth) => {
       window.__store?.getState().setRightSidebarWidth(minWidth)
     }, RIGHT_SIDEBAR_MIN_WIDTH)
 
-    const createPr = dolphinPage.getByRole('button', { name: 'Create PR' }).first()
+    const createPr = appPage.getByRole('button', { name: 'Create PR' }).first()
     await expect(createPr).toBeVisible({ timeout: 10_000 })
     await expect(createPr).toBeEnabled()
     await createPr.click()
 
-    const notice = dolphinPage.locator('#commit-area-create-pr-intent')
+    const notice = appPage.locator('#commit-area-create-pr-intent')
     const settingsLink = notice.getByRole('button', { name: 'Source Control AI settings' })
     await expect(settingsLink).toBeVisible({ timeout: 20_000 })
 
     if (process.env.DOLPHIN_PR_INTENT_NOTICE_SCREENSHOT_PATH) {
-      await dolphinPage.evaluate(() => document.documentElement.classList.add('dark'))
+      await appPage.evaluate(() => document.documentElement.classList.add('dark'))
       await notice.screenshot({ path: process.env.DOLPHIN_PR_INTENT_NOTICE_SCREENSHOT_PATH })
     }
 

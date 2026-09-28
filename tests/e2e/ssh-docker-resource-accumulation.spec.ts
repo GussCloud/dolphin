@@ -110,7 +110,7 @@ test.describe('Docker SSH relay resource accumulation', () => {
   test.skip(process.platform === 'win32', 'Uses POSIX /proc and /dev/pts probes.')
 
   test('does not accumulate pts devices, relay fds, or relay processes @resource-accumulation', async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }, testInfo) => {
     test.setTimeout(420_000)
@@ -122,27 +122,27 @@ test.describe('Docker SSH relay resource accumulation', () => {
         cleanupDockerSshRelayTarget(captured)
       })
 
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
 
       const runId = String(Date.now())
-      const firstPtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      await execInTerminal(dolphinPage, firstPtyId, `echo PANE_READY_${runId}_0`)
-      await waitForTerminalOutput(dolphinPage, `PANE_READY_${runId}_0`, 60_000)
+      const firstPtyId = await waitForActivePanePtyId(appPage, 60_000)
+      await execInTerminal(appPage, firstPtyId, `echo PANE_READY_${runId}_0`)
+      await waitForTerminalOutput(appPage, `PANE_READY_${runId}_0`, 60_000)
 
       const baseline = sampleRemoteResources(target)
       const samples: RemoteResourceSample[] = []
 
       // Open N more terminals; each must cost a bounded, roughly constant amount.
       for (let index = 1; index < TERMINAL_COUNT; index += 1) {
-        await splitActiveTerminalPane(dolphinPage, 'vertical')
-        await focusLastTerminalPane(dolphinPage)
-        const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-        await execInTerminal(dolphinPage, ptyId, `echo PANE_READY_${runId}_${index}`)
-        await waitForTerminalOutput(dolphinPage, `PANE_READY_${runId}_${index}`, 60_000)
+        await splitActiveTerminalPane(appPage, 'vertical')
+        await focusLastTerminalPane(appPage)
+        const ptyId = await waitForActivePanePtyId(appPage, 60_000)
+        await execInTerminal(appPage, ptyId, `echo PANE_READY_${runId}_${index}`)
+        await waitForTerminalOutput(appPage, `PANE_READY_${runId}_${index}`, 60_000)
         samples.push(sampleRemoteResources(target))
       }
 
@@ -186,7 +186,7 @@ test.describe('Docker SSH relay resource accumulation', () => {
       // Repeated reconnects must not accumulate anything on the host.
       const reconnectSamples: RemoteResourceSample[] = []
       for (let cycle = 0; cycle < RECONNECT_CYCLES; cycle += 1) {
-        await reconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
+        await reconnectDockerSshRelayTarget(appPage, remote.targetId)
         reconnectSamples.push(sampleRemoteResources(target))
       }
       console.log(`[resource-accumulation] reconnects ${JSON.stringify(reconnectSamples)}`)

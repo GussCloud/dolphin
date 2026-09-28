@@ -49,7 +49,7 @@ function cleanupWorktree(repoPath: string, worktreePath: string, branchName: str
 
 test.describe('Source Control commit draft persistence', () => {
   test('preserves a typed draft when the sidebar tab remounts', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     let firstWorktree: E2eWorktree | null = null
@@ -58,37 +58,35 @@ test.describe('Source Control commit draft persistence', () => {
     try {
       firstWorktree = createWorktreeWithStagedChange(testRepoPath)
       secondWorktree = createWorktreeWithStagedChange(testRepoPath)
-      await waitForSessionReady(dolphinPage)
-      await openSourceControlForWorktree(dolphinPage, testRepoPath, firstWorktree.worktreePath)
+      await waitForSessionReady(appPage)
+      await openSourceControlForWorktree(appPage, testRepoPath, firstWorktree.worktreePath)
 
-      const textarea = dolphinPage.getByRole('textbox', { name: 'Commit message' })
+      const textarea = appPage.getByRole('textbox', { name: 'Commit message' })
       await expect(textarea).toBeVisible({ timeout: 10_000 })
 
       const draft = 'fix: keep draft after leaving Source Control'
       await textarea.fill(draft)
       await expect(textarea).toHaveValue(draft)
 
-      await dolphinPage.evaluate(() => {
+      await appPage.evaluate(() => {
         const state = window.__store?.getState()
         state?.setRightSidebarTab('explorer')
       })
       await expect
         .poll(
-          async () =>
-            dolphinPage.evaluate(() => window.__store?.getState().rightSidebarTab ?? null),
+          async () => appPage.evaluate(() => window.__store?.getState().rightSidebarTab ?? null),
           { timeout: 5_000 }
         )
         .toBe('explorer')
       await expect(textarea).toBeHidden()
 
-      await dolphinPage.evaluate(() => {
+      await appPage.evaluate(() => {
         const state = window.__store?.getState()
         state?.setRightSidebarTab('source-control')
       })
       await expect
         .poll(
-          async () =>
-            dolphinPage.evaluate(() => window.__store?.getState().rightSidebarTab ?? null),
+          async () => appPage.evaluate(() => window.__store?.getState().rightSidebarTab ?? null),
           { timeout: 5_000 }
         )
         .toBe('source-control')
@@ -96,11 +94,11 @@ test.describe('Source Control commit draft persistence', () => {
       await expect(textarea).toBeVisible({ timeout: 10_000 })
       await expect(textarea).toHaveValue(draft)
 
-      await openSourceControlForWorktree(dolphinPage, testRepoPath, secondWorktree.worktreePath)
+      await openSourceControlForWorktree(appPage, testRepoPath, secondWorktree.worktreePath)
       await expect(textarea).toBeVisible({ timeout: 10_000 })
       await expect(textarea).toHaveValue('')
 
-      await openSourceControlForWorktree(dolphinPage, testRepoPath, firstWorktree.worktreePath)
+      await openSourceControlForWorktree(appPage, testRepoPath, firstWorktree.worktreePath)
       await expect(textarea).toBeVisible({ timeout: 10_000 })
       await expect(textarea).toHaveValue(draft)
     } finally {

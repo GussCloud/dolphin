@@ -4,18 +4,18 @@ import { setImeComposition } from './terminal-ime-cdp-composition'
 import { writeToActiveTerminal } from './terminal-ime-midline-occlusion-probe'
 
 test('keeps the CJK prefix in place across mixed text and the layout budget', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
-  const arena = await openTerminalImePaneArena(dolphinPage)
+  const arena = await openTerminalImePaneArena(appPage)
   let completed = false
   try {
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const state = window.__store!.getState()
       const terminal = window.__paneManagers!.get(state.activeTabId!)!.getActivePane()!.terminal
       terminal.options.fontSize = 13
       terminal.options.fontFamily = 'monospace'
     })
-    await writeToActiveTerminal(dolphinPage, '\x1b[2J\x1b[H')
+    await writeToActiveTerminal(appPage, '\x1b[2J\x1b[H')
     const prefix = 'あ'.repeat(32)
     let initial: number[] | undefined
     for (const suffix of [
@@ -32,7 +32,7 @@ test('keeps the CJK prefix in place across mixed text and the layout budget', as
       'a'
     ]) {
       await setImeComposition(arena.session, prefix + suffix)
-      const preedit = dolphinPage.locator('.composition-view.active .xterm-composition-preedit')
+      const preedit = appPage.locator('.composition-view.active .xterm-composition-preedit')
       await expect(preedit).toHaveText(`‎${prefix + suffix}‎`)
       const sample = await preedit.evaluate((element) => {
         const bounds = element.getBoundingClientRect()

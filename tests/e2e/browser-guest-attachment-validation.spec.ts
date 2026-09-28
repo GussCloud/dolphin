@@ -72,20 +72,20 @@ async function readGuestState(page: Page, browserTabId: string) {
 
 test('resume validation waits for an attaching guest without replacing it', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
   const { browserTab, fixtureUrl } = await createBrowserFixture(
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   )
   await expect
-    .poll(() => readGuestState(dolphinPage, browserTab.id))
+    .poll(() => readGuestState(appPage, browserTab.id))
     .toMatchObject({ marker: 'painted-attachment-guest', url: fixtureUrl })
-  const before = await readGuestState(dolphinPage, browserTab.id)
+  const before = await readGuestState(appPage, browserTab.id)
   expect(before.webContentsId).not.toBeNull()
 
-  await dolphinPage.evaluate((targetBrowserTabId) => {
+  await appPage.evaluate((targetBrowserTabId) => {
     const webview = document.querySelector(
       `[data-browser-overlay-tab-id="${targetBrowserTabId}"] webview`
     ) as Electron.WebviewTag
@@ -106,7 +106,7 @@ test('resume validation waits for an attaching guest without replacing it', asyn
     })
   }, browserTab.id)
 
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     (browserPageId) => window.api.browser.unregisterGuest({ browserPageId }),
     browserTab.activePageId
   )
@@ -116,7 +116,7 @@ test('resume validation waits for an attaching guest without replacing it', asyn
   })
   await expect
     .poll(() =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         (targetBrowserTabId) =>
           document
             .querySelector(`[data-browser-overlay-tab-id="${targetBrowserTabId}"] webview`)
@@ -125,14 +125,14 @@ test('resume validation waits for an attaching guest without replacing it', asyn
       )
     )
     .toBe('true')
-  await dolphinPage.evaluate((targetBrowserTabId) => {
+  await appPage.evaluate((targetBrowserTabId) => {
     document
       .querySelector(`[data-browser-overlay-tab-id="${targetBrowserTabId}"] webview`)
       ?.dispatchEvent(new Event('dom-ready'))
   }, browserTab.id)
   await expect
     .poll(() =>
-      dolphinPage.evaluate((targetBrowserTabId) => {
+      appPage.evaluate((targetBrowserTabId) => {
         const webview = document.querySelector(
           `[data-browser-overlay-tab-id="${targetBrowserTabId}"] webview`
         ) as Electron.WebviewTag | null
@@ -146,7 +146,7 @@ test('resume validation waits for an attaching guest without replacing it', asyn
     .toEqual({ forcedRead: 'true', identity: 'original', successfulRead: 'true' })
 
   await expect
-    .poll(() => readGuestState(dolphinPage, browserTab.id))
+    .poll(() => readGuestState(appPage, browserTab.id))
     .toMatchObject({
       chromePresent: true,
       marker: 'painted-attachment-guest',
@@ -155,7 +155,7 @@ test('resume validation waits for an attaching guest without replacing it', asyn
     })
   await expect
     .poll(() =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         ({ browserPageId, webContentsId }) =>
           window.api.browser.isGuestRegistered({ browserPageId, webContentsId }),
         { browserPageId: browserTab.activePageId, webContentsId: before.webContentsId! }
@@ -164,7 +164,7 @@ test('resume validation waits for an attaching guest without replacing it', asyn
     .toBe(true)
   await expect
     .poll(() =>
-      dolphinPage.evaluate(
+      appPage.evaluate(
         ({ workspaceId, browserPageId }) =>
           window.__store
             ?.getState()

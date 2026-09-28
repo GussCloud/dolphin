@@ -149,14 +149,14 @@ async function addRepoAndActivateMainWorktree(
 }
 
 test.describe('Setup script prompt', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('recovers from an unreadable dolphin.yaml instead of pinning the failed verdict', async ({
     electronApp,
-    dolphinPage
+    appPage
   }, testInfo) => {
     const repoPath = testInfo.outputPath('unreadable-dolphin-yaml-repo')
     const featureWorktreePath = testInfo.outputPath('unreadable-dolphin-yaml-feature')
@@ -164,18 +164,18 @@ test.describe('Setup script prompt', () => {
 
     await installUnreadableDolphinYamlFault(electronApp)
     const { repoId, featureWorktreeId } = await addRepoAndActivateMainWorktree(
-      dolphinPage,
+      appPage,
       repoPath,
       featureWorktreePath
     )
 
-    const promptCard = dolphinPage.locator('[data-setup-script-prompt-layer]')
+    const promptCard = appPage.locator('[data-setup-script-prompt-layer]')
     const inspectionError = promptCard.getByText(INSPECTION_ERROR_TEXT)
     await expect(inspectionError).toBeVisible({ timeout: 20_000 })
 
     // dolphin.yaml is readable again; the card is still pinned to the failed verdict.
     await healDolphinYamlRead(electronApp)
-    const healthyCheck = await dolphinPage.evaluate(
+    const healthyCheck = await appPage.evaluate(
       (targetRepoId) => window.api.hooks.check({ repoId: targetRepoId }),
       repoId
     )
@@ -186,17 +186,17 @@ test.describe('Setup script prompt', () => {
     await expect(inspectionError).toBeVisible()
     await expect(promptCard.getByRole('button', { name: 'Retry' })).toBeVisible()
     // Not a wait for state: holds the pinned card on screen for the proof recording.
-    await dolphinPage.waitForTimeout(RECORDING_DWELL_MS)
+    await appPage.waitForTimeout(RECORDING_DWELL_MS)
 
     // Activating another worktree in the same repo must re-inspect.
-    const featureRow = worktreeRow(dolphinPage, featureWorktreeId)
+    const featureRow = worktreeRow(appPage, featureWorktreeId)
     await expect(featureRow).toBeVisible()
-    await worktreeRowSurface(dolphinPage, featureWorktreeId).click()
+    await worktreeRowSurface(appPage, featureWorktreeId).click()
     await expect(featureRow).toHaveAttribute('aria-current', 'page')
 
     // The repo has a valid dolphin.yaml scripts.setup, so no prompt may remain.
     await expect(inspectionError).toBeHidden({ timeout: 20_000 })
     await expect(promptCard).toHaveCount(0)
-    await dolphinPage.waitForTimeout(RECORDING_DWELL_MS)
+    await appPage.waitForTimeout(RECORDING_DWELL_MS)
   })
 })

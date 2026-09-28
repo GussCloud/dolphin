@@ -33,12 +33,12 @@ type OverlapHitTest = {
 }
 
 test.describe('Rich markdown link bubble stacking', () => {
-  test('link actions stay above the right Explorer', async ({ dolphinPage }, testInfo) => {
-    await dolphinPage.setViewportSize({ width: 1920, height: 1080 })
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test('link actions stay above the right Explorer', async ({ appPage }, testInfo) => {
+    await appPage.setViewportSize({ width: 1920, height: 1080 })
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
 
-    const context = await getActiveWorktreeContext(dolphinPage)
+    const context = await getActiveWorktreeContext(appPage)
     let filePath: string | null = null
 
     try {
@@ -48,10 +48,10 @@ test.describe('Rich markdown link bubble stacking', () => {
         testInfo.workerIndex,
         MARKDOWN
       )
-      await openMarkdownFixture(dolphinPage, context, filePath)
-      await waitForRichMarkdownEditor(dolphinPage)
+      await openMarkdownFixture(appPage, context, filePath)
+      await waitForRichMarkdownEditor(appPage)
 
-      await dolphinPage.evaluate(() => {
+      await appPage.evaluate(() => {
         const store = window.__store
         if (!store) {
           throw new Error('window.__store is not available — is the app in dev mode?')
@@ -63,18 +63,18 @@ test.describe('Rich markdown link bubble stacking', () => {
         })
       })
 
-      const explorer = dolphinPage.locator('[data-dolphin-explorer-shell]')
-      const link = dolphinPage.locator(`.rich-markdown-editor a[href="${LINK_HREF}"]`)
+      const explorer = appPage.locator('[data-dolphin-explorer-shell]')
+      const link = appPage.locator(`.rich-markdown-editor a[href="${LINK_HREF}"]`)
       await expect(explorer).toBeVisible()
       await expect(link).toBeVisible()
 
       await link.click()
 
-      const bubble = dolphinPage.locator('.rich-markdown-link-bubble')
+      const bubble = appPage.locator('.rich-markdown-link-bubble')
       await expect(bubble).toBeVisible()
       await expect(bubble.locator('.rich-markdown-link-url')).toContainText('https://example.com')
 
-      const overlap = await dolphinPage.evaluate((): OverlapHitTest => {
+      const overlap = await appPage.evaluate((): OverlapHitTest => {
         const bubble = document.querySelector<HTMLElement>('.rich-markdown-link-bubble')
         const explorer = document.querySelector<HTMLElement>('[data-dolphin-explorer-shell]')
         if (!bubble || !explorer) {
@@ -118,16 +118,16 @@ test.describe('Rich markdown link bubble stacking', () => {
       expect(await input.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0)
       await expect(input).toBeFocused()
       await expect(bubble).toBeVisible()
-      await dolphinPage.keyboard.press('Escape')
+      await appPage.keyboard.press('Escape')
       await expect(bubble.locator('.rich-markdown-link-url')).toBeVisible()
 
       await explorer.getByPlaceholder('Find files').click()
       await expect(bubble).toHaveCount(0)
 
-      await dolphinPage.getByRole('heading', { name: 'Rich markdown link overlay repro' }).click()
+      await appPage.getByRole('heading', { name: 'Rich markdown link overlay repro' }).click()
       await link.click()
       await expect(bubble).toBeVisible()
-      const originalEditorZoom = await dolphinPage.evaluate(() => {
+      const originalEditorZoom = await appPage.evaluate(() => {
         const store = window.__store
         if (!store) {
           throw new Error('window.__store is not available — is the app in dev mode?')
@@ -137,14 +137,14 @@ test.describe('Rich markdown link bubble stacking', () => {
         return zoom
       })
       await expect(bubble).toHaveCount(0)
-      await dolphinPage.evaluate((zoom) => {
+      await appPage.evaluate((zoom) => {
         window.__store?.getState().setEditorFontZoomLevel(zoom)
       }, originalEditorZoom)
 
-      await dolphinPage.getByRole('heading', { name: 'Rich markdown link overlay repro' }).click()
+      await appPage.getByRole('heading', { name: 'Rich markdown link overlay repro' }).click()
       await link.click()
       await expect(bubble).toBeVisible()
-      await dolphinPage.evaluate(() => {
+      await appPage.evaluate(() => {
         const store = window.__store
         if (!store) {
           throw new Error('window.__store is not available — is the app in dev mode?')

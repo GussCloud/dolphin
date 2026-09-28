@@ -212,20 +212,20 @@ function annotatePolling(
 
 test.describe('Git no-upstream polling churn repro', () => {
   test('active worktree polling does not repeatedly retry stable no-upstream probes', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     const repoPath = realpathSync(testRepoPath)
     prepareNoUpstreamBranch(repoPath)
-    await selectRepoForActivePolling(dolphinPage, testRepoPath, repoPath)
+    await selectRepoForActivePolling(appPage, testRepoPath, repoPath)
 
-    const diagnostics = await readDiagnosticsStatus(dolphinPage)
+    const diagnostics = await readDiagnosticsStatus(appPage)
     expect(diagnostics.localFileEnabled).toBe(true)
     expect(diagnostics.bundleEnabled).toBe(false)
 
     clearTraceFile(diagnostics)
-    const measurement = await measureRendererDuringPolling(dolphinPage)
-    await flushTraceFile(dolphinPage, diagnostics)
+    const measurement = await measureRendererDuringPolling(appPage)
+    await flushTraceFile(appPage, diagnostics)
     const counts = readGitProbeFailureCounts(diagnostics.traceFilePath, repoPath)
     annotatePolling(testInfo, measurement, counts)
 

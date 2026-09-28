@@ -121,37 +121,37 @@ async function openJumpPalette(electronApp: ElectronApplication): Promise<void> 
 }
 
 test.describe('Linear URL workspace entry', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await installLinearFixture(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await installLinearFixture(appPage)
   })
 
   test('pasting into the composer selects the Linear issue without ArrowDown', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await installLinearFixture(dolphinPage, LINEAR_ISSUE, null)
-    await openSidebarWorkspaceComposer(dolphinPage)
-    const dialog = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+    await installLinearFixture(appPage, LINEAR_ISSUE, null)
+    await openSidebarWorkspaceComposer(appPage)
+    const dialog = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
     const input = dialog.locator('[data-workspace-name-input="true"]')
     await expect(input).toBeVisible()
 
-    await pasteLinearUrl(dolphinPage, input)
+    await pasteLinearUrl(appPage, input)
     await expect
       .poll(() =>
-        dolphinPage.evaluate(() => typeof window.__dolphinTestReleaseLinearLookup === 'function')
+        appPage.evaluate(() => typeof window.__dolphinTestReleaseLinearLookup === 'function')
       )
       .toBe(true)
     await input.press('Enter')
     await expect(input).toHaveValue(LINEAR_URL)
     await expect(dialog.locator('[data-workspace-source-pill="true"]')).toHaveCount(0)
-    await releaseHeldLinearLookup(dolphinPage)
+    await releaseHeldLinearLookup(appPage)
 
-    const issueRow = dolphinPage.getByRole('option', {
+    const issueRow = appPage.getByRole('option', {
       name: `${LINEAR_ISSUE.identifier} ${LINEAR_ISSUE.title}`,
       exact: true
     })
-    const useNameRow = dolphinPage.getByRole('option', {
+    const useNameRow = appPage.getByRole('option', {
       name: `Use "${LINEAR_URL}" as workspace name`,
       exact: true
     })
@@ -176,15 +176,15 @@ test.describe('Linear URL workspace entry', () => {
   })
 
   test('a Linear URL lookup miss falls back to an arbitrary workspace name', async ({
-    dolphinPage
+    appPage
   }) => {
-    await installLinearFixture(dolphinPage, null)
-    await openSidebarWorkspaceComposer(dolphinPage)
-    const dialog = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+    await installLinearFixture(appPage, null)
+    await openSidebarWorkspaceComposer(appPage)
+    const dialog = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
     const input = dialog.locator('[data-workspace-name-input="true"]')
 
-    await pasteLinearUrl(dolphinPage, input)
-    const useNameRow = dolphinPage.getByRole('option', {
+    await pasteLinearUrl(appPage, input)
+    const useNameRow = appPage.getByRole('option', {
       name: `Use "${LINEAR_URL}" as workspace name`,
       exact: true
     })
@@ -205,16 +205,16 @@ test.describe('Linear URL workspace entry', () => {
 
   test('pasting into Cmd+J previews the Linear issue and opens the linked composer', async ({
     electronApp,
-    dolphinPage
+    appPage
   }, testInfo) => {
     await openJumpPalette(electronApp)
-    const palette = dolphinPage.getByRole('dialog', { name: 'Jump to...' })
+    const palette = appPage.getByRole('dialog', { name: 'Jump to...' })
     const input = palette.getByPlaceholder(
       'Search chats, terminals, worktrees, settings, and actions...'
     )
     await expect(input).toBeVisible()
 
-    await pasteLinearUrl(dolphinPage, input)
+    await pasteLinearUrl(appPage, input)
 
     const preview = palette.locator(
       '[data-cmd-j-linear-issue-preview="true"][data-cmd-j-linear-issue-state="resolved"]'
@@ -228,7 +228,7 @@ test.describe('Linear URL workspace entry', () => {
     })
 
     await input.press('Enter')
-    const dialog = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+    const dialog = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
     const sourcePill = dialog.locator('[data-workspace-source-pill="true"]')
     await expect(sourcePill).toContainText(LINEAR_ISSUE.title)
     await expect(dialog.getByPlaceholder('Workspace name')).toHaveValue(EXPECTED_WORKSPACE_NAME)

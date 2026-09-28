@@ -42,17 +42,17 @@ async function attachDiffScreenshot(page: Page, testInfo: TestInfo, name: string
 }
 
 test.describe('Diff note layout', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('saved notes reserve their rendered height in both diff layouts', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await dolphinPage.setViewportSize({ width: 1200, height: 800 })
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
-    const relativePath = await dolphinPage.evaluate(async (wId) => {
+    await appPage.setViewportSize({ width: 1200, height: 800 })
+    const worktreeId = await waitForActiveWorktree(appPage)
+    const relativePath = await appPage.evaluate(async (wId) => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available')
@@ -79,7 +79,7 @@ test.describe('Diff note layout', () => {
       return relative
     }, worktreeId)
 
-    const added = await dolphinPage.evaluate(
+    const added = await appPage.evaluate(
       ({ wId, filePath, lineNumber, body }) =>
         window.__store?.getState().addDiffComment({
           worktreeId: wId,
@@ -93,7 +93,7 @@ test.describe('Diff note layout', () => {
     )
     expect(added, 'addDiffComment returned null').not.toBeNull()
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ wId, filePath }) => {
         const state = window.__store?.getState()
         const worktree = Object.values(state?.worktreesByRepo ?? {})
@@ -114,15 +114,15 @@ test.describe('Diff note layout', () => {
       { wId: worktreeId, filePath: relativePath }
     )
 
-    await expect(dolphinPage.locator('button:has(svg.lucide-rows-2)')).toBeVisible()
-    await assertCardClearsFollowingLine(dolphinPage)
-    await attachDiffScreenshot(dolphinPage, testInfo, 'side-by-side-diff-note-layout')
+    await expect(appPage.locator('button:has(svg.lucide-rows-2)')).toBeVisible()
+    await assertCardClearsFollowingLine(appPage)
+    await attachDiffScreenshot(appPage, testInfo, 'side-by-side-diff-note-layout')
 
-    await dolphinPage.evaluate(() =>
+    await appPage.evaluate(() =>
       window.__store?.getState().updateSettings({ diffDefaultView: 'inline' })
     )
-    await expect(dolphinPage.locator('button:has(svg.lucide-columns-2)')).toBeVisible()
-    await assertCardClearsFollowingLine(dolphinPage)
-    await attachDiffScreenshot(dolphinPage, testInfo, 'inline-diff-note-layout')
+    await expect(appPage.locator('button:has(svg.lucide-columns-2)')).toBeVisible()
+    await assertCardClearsFollowingLine(appPage)
+    await attachDiffScreenshot(appPage, testInfo, 'inline-diff-note-layout')
   })
 })

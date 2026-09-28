@@ -51,35 +51,35 @@ test.describe('SSH terminal hidden view parking', () => {
   test.skip(process.platform === 'win32', 'Docker SSH parking uses POSIX SSH tooling.')
 
   test('parks a hidden SSH tab and restores its scrollback on reveal', async ({
-    dolphinPage
+    appPage
   }, testInfo: TestInfo) => {
     test.setTimeout(240_000)
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
+      await waitForSessionReady(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
       await expect
-        .poll(() => waitForActiveWorktree(dolphinPage), { timeout: 30_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 30_000 })
         .toBe(remote.worktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const sshPtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      const sshTabId = await getActiveTabId(dolphinPage)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const sshPtyId = await waitForActivePanePtyId(appPage, 60_000)
+      const sshTabId = await getActiveTabId(appPage)
       if (!sshTabId) {
         throw new Error('SSH terminal tab did not become active')
       }
-      const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+      const snapshot = await waitForPaneIdentitySnapshot(appPage, 1)
       expect(snapshot.panes[0]?.ptyId).toBe(sshPtyId)
 
       // Why the ':' terminator: `${marker}_1:` must not substring-match _10/_100.
       const marker = `SSH_PARK_MARKER_${Date.now()}`
       await sendToTerminal(
-        dolphinPage,
+        appPage,
         sshPtyId,
         `for i in $(seq 1 200); do echo "${marker}_$i:"; done\r`
       )
       await expect
-        .poll(() => terminalTailContains(dolphinPage, `${marker}_200:`), {
+        .poll(() => terminalTailContains(appPage, `${marker}_200:`), {
           timeout: 30_000,
           message: 'SSH marker output did not render before parking'
         })
@@ -89,12 +89,12 @@ test.describe('SSH terminal hidden view parking', () => {
       // ~5k-row headless model — so a revealed `${marker}_1:` can only have
       // come from the model paint, never the relay fallback.
       await sendToTerminal(
-        dolphinPage,
+        appPage,
         sshPtyId,
         `for i in $(seq 1 3000); do echo "PAD_$i:0123456789012345678901234567890123456789"; done; printf '%s%s\\n' "${marker}" "_PAD_DONE:"\r`
       )
       await expect
-        .poll(() => terminalTailContains(dolphinPage, `${marker}_PAD_DONE:`), {
+        .poll(() => terminalTailContains(appPage, `${marker}_PAD_DONE:`), {
           timeout: 60_000,
           message: 'SSH pad output did not finish before parking'
         })
@@ -104,7 +104,7 @@ test.describe('SSH terminal hidden view parking', () => {
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(async (ptyId) => {
+            appPage.evaluate(async (ptyId) => {
               const snapshot = await window.api.pty.getMainBufferSnapshot(ptyId, {
                 scrollbackRows: 5_000
               })
@@ -117,20 +117,20 @@ test.describe('SSH terminal hidden view parking', () => {
         )
         .toContain(`${marker}_PAD_DONE:`)
 
-      await parkHiddenTabBehindDecoy(dolphinPage, remote.worktreeId, sshTabId, {
+      await parkHiddenTabBehindDecoy(appPage, remote.worktreeId, sshTabId, {
         parkDelayMs: PARKING_DELAY_MS
       })
 
       // Reveal: reattach must paint from main's headless model (or relay
       // replay when the model is unavailable) — never a blank pane.
-      await dolphinPage.evaluate((tabId) => {
+      await appPage.evaluate((tabId) => {
         const state = window.__store?.getState()
         state?.setActiveTab(tabId)
         state?.setActiveTabType('terminal', window.__store?.getState().activeWorktreeId ?? null)
       }, sshTabId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
       await expect
-        .poll(() => terminalTailContains(dolphinPage, `${marker}_PAD_DONE:`), {
+        .poll(() => terminalTailContains(appPage, `${marker}_PAD_DONE:`), {
           timeout: 60_000,
           message: 'revealed SSH tab did not restore the final pad line'
         })
@@ -139,7 +139,7 @@ test.describe('SSH terminal hidden view parking', () => {
       // presence after reveal proves the headless-model paint restored
       // scrollback the relay replay cannot hold.
       await expect
-        .poll(() => getTerminalContent(dolphinPage, 2_000_000), {
+        .poll(() => getTerminalContent(appPage, 2_000_000), {
           timeout: 15_000,
           message: 'revealed SSH tab lost the pre-pad scrollback only the model paint restores'
         })

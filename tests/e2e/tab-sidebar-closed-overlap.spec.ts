@@ -27,13 +27,13 @@ import { waitForSessionReady, waitForActiveWorktree, ensureTerminalVisible } fro
 import { pressShortcut } from './helpers/shortcuts'
 
 test.describe('Tab visibility with closed sidebar', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
-  test('first tab stays visible after Cmd+B collapses the sidebar', async ({ dolphinPage }) => {
+  test('first tab stays visible after Cmd+B collapses the sidebar', async ({ appPage }) => {
     // Why: the bug title is literally "Cmd+B collapse occludes first tab",
     // so exercise the real keyboard path that App.tsx routes to
     // `actions.toggleSidebar()` at line ~620. Driving
@@ -50,7 +50,7 @@ test.describe('Tab visibility with closed sidebar', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(() => {
+          appPage.evaluate(() => {
             const store = window.__store
             if (!store) {
               // Why: match helpers/store.ts — a missing store in dev means
@@ -76,14 +76,14 @@ test.describe('Tab visibility with closed sidebar', () => {
     // fixture change leaves focus on a rich input the keypress would
     // silently no-op. Blur any non-xterm focused element defensively so
     // the chord reaches the toggleSidebar branch.
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const active = document.activeElement
       if (active instanceof HTMLElement && !active.classList.contains('xterm-helper-textarea')) {
         active.blur()
       }
     })
 
-    await pressShortcut(dolphinPage, 'b')
+    await pressShortcut(appPage, 'b')
 
     // Why: Cmd+B flips `sidebarOpen` synchronously, but the React
     // re-render and the ResizeObserver that sizes
@@ -95,7 +95,7 @@ test.describe('Tab visibility with closed sidebar', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(() => {
+          appPage.evaluate(() => {
             const store = window.__store
             if (!store) {
               throw new Error('window.__store is not available — is the app in dev mode?')
@@ -116,7 +116,7 @@ test.describe('Tab visibility with closed sidebar', () => {
       firstTabWidth: number
       centerIsTabOrDescendant: boolean
     } | null> =>
-      dolphinPage.evaluate(() => {
+      appPage.evaluate(() => {
         const titlebarLeft = document.querySelector<HTMLElement>('.titlebar-left')
         // Why: split tab groups render multiple sortable-tab elements, and
         // DOM order is not guaranteed to match visual order. The tab the
@@ -207,9 +207,9 @@ test.describe('Tab visibility with closed sidebar', () => {
   })
 
   test('sidebar toggle and Back button stay separated after sidebar collapse', async ({
-    dolphinPage
+    appPage
   }) => {
-    await dolphinPage.addInitScript(() => {
+    await appPage.addInitScript(() => {
       // Why: #2082 was reported against Windows-only titlebar chrome. Reloading
       // with a Windows UA makes App.tsx take that renderer branch on any CI host.
       const userAgent =
@@ -219,16 +219,16 @@ test.describe('Tab visibility with closed sidebar', () => {
         configurable: true
       })
     })
-    await dolphinPage.reload({ waitUntil: 'domcontentloaded' })
-    await dolphinPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+    await appPage.reload({ waitUntil: 'domcontentloaded' })
+    await appPage.waitForFunction(() => Boolean(window.__store), null, { timeout: 30_000 })
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
 
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(() => ({
+          appPage.evaluate(() => ({
             hasWindowsUserAgent: navigator.userAgent.includes('Windows'),
             hasWindowsTitlebarChrome:
               Boolean(document.querySelector('button[aria-label="Application menu"]')) &&
@@ -241,7 +241,7 @@ test.describe('Tab visibility with closed sidebar', () => {
       )
       .toEqual({ hasWindowsUserAgent: true, hasWindowsTitlebarChrome: true })
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available — is the app in dev mode?')
@@ -252,7 +252,7 @@ test.describe('Tab visibility with closed sidebar', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(() => {
+          appPage.evaluate(() => {
             const store = window.__store
             if (!store) {
               throw new Error('window.__store is not available — is the app in dev mode?')
@@ -267,7 +267,7 @@ test.describe('Tab visibility with closed sidebar', () => {
       )
       .toEqual({ activeView: 'terminal', sidebarOpen: true })
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available — is the app in dev mode?')
@@ -281,7 +281,7 @@ test.describe('Tab visibility with closed sidebar', () => {
     await expect
       .poll(
         async () =>
-          dolphinPage.evaluate(() => {
+          appPage.evaluate(() => {
             const store = window.__store
             if (!store) {
               throw new Error('window.__store is not available — is the app in dev mode?')
@@ -301,7 +301,7 @@ test.describe('Tab visibility with closed sidebar', () => {
       backLeft: number
       backCenterHitsBack: boolean
     } | null> =>
-      dolphinPage.evaluate(() => {
+      appPage.evaluate(() => {
         const titlebarLeft = document.querySelector<HTMLElement>('.titlebar-left')
         const sidebarToggle = titlebarLeft?.querySelector<HTMLButtonElement>(
           'button[aria-label="Toggle sidebar"]'

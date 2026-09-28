@@ -534,53 +534,53 @@ async function streamWhileParked(setup: StreamingTabSetup, minFrames: number): P
 
 test.describe('Inline TUI reveal convergence', () => {
   test('hidden-but-mounted tab reveal converges while the inline TUI streams', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(120_000)
-    const setup = await startStreamingInlineTui(dolphinPage, testInfo)
+    const setup = await startStreamingInlineTui(appPage, testInfo)
     try {
       // Tab B hides tab A. Reveal quickly — inside the cold-park delay — so
       // the reveal exercises the hidden-delivery-gate restore, not parking.
-      const tabBId = await createActiveTerminalTab(dolphinPage, setup.worktreeId)
+      const tabBId = await createActiveTerminalTab(appPage, setup.worktreeId)
       expect(tabBId).not.toBe(setup.tabId)
-      await dolphinPage.waitForTimeout(Math.max(50, Math.min(PARKING_DELAY_MS / 2, 200)))
+      await appPage.waitForTimeout(Math.max(50, Math.min(PARKING_DELAY_MS / 2, 200)))
       expect(
-        await isTerminalPaneMounted(dolphinPage, setup.tabId),
+        await isTerminalPaneMounted(appPage, setup.tabId),
         'hidden-mounted scenario cold-parked before reveal'
       ).toBe(true)
 
-      await activateTerminalTab(dolphinPage, setup.tabId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await assertRevealConvergence(dolphinPage, testInfo, setup, 'hidden-mounted-reveal')
+      await activateTerminalTab(appPage, setup.tabId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await assertRevealConvergence(appPage, testInfo, setup, 'hidden-mounted-reveal')
     } finally {
       await setup.stop()
     }
   })
 
   test('worktree switch reveal converges after a hidden-time window resize', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }, testInfo) => {
     test.setTimeout(120_000)
-    const setup = await startStreamingInlineTui(dolphinPage, testInfo, {
+    const setup = await startStreamingInlineTui(appPage, testInfo, {
       historyLinesPerSecond: 20
     })
     try {
       // Surface hide: switch to ANOTHER WORKTREE (the field action), which
       // suspends rendering and takes the heavy resume path on return.
-      const otherWorktreeId = await switchToOtherWorktree(dolphinPage, setup.worktreeId)
+      const otherWorktreeId = await switchToOtherWorktree(appPage, setup.worktreeId)
       test.skip(!otherWorktreeId, 'test session has a single worktree; cannot surface-hide')
 
       // Change the window size while the pane is display:none (0x0 container,
       // no fit runs). This is what Cmd+L's sidebar toggle does to every hidden
       // workspace: at reveal the pane grid differs from the daemon snapshot's.
       await resizeAppWindow(electronApp, -180, -120)
-      await dolphinPage.waitForTimeout(2_500)
+      await appPage.waitForTimeout(2_500)
 
-      await switchToWorktree(dolphinPage, setup.worktreeId)
-      await activateTerminalTab(dolphinPage, setup.tabId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await assertRevealConvergence(dolphinPage, testInfo, setup, 'worktree-resize-reveal')
+      await switchToWorktree(appPage, setup.worktreeId)
+      await activateTerminalTab(appPage, setup.tabId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await assertRevealConvergence(appPage, testInfo, setup, 'worktree-resize-reveal')
     } finally {
       await resizeAppWindow(electronApp, 180, 120).catch(() => {})
       await setup.stop()
@@ -588,28 +588,28 @@ test.describe('Inline TUI reveal convergence', () => {
   })
 
   test('parked tab reveal converges across repeated cycles while the inline TUI streams heavily', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(480_000)
-    const setup = await startStreamingInlineTui(dolphinPage, testInfo, {
+    const setup = await startStreamingInlineTui(appPage, testInfo, {
       historyLinesPerSecond: 30,
       seedLines: 8_000
     })
     try {
       // Tab B hides tab A; the decoy then hides tab B so B (most recently
       // hidden) takes the #8262 last-active exemption and tab A cold-parks.
-      const tabBId = await createActiveTerminalTab(dolphinPage, setup.worktreeId)
-      const decoyTabId = await createActiveTerminalTab(dolphinPage, setup.worktreeId)
+      const tabBId = await createActiveTerminalTab(appPage, setup.worktreeId)
+      const decoyTabId = await createActiveTerminalTab(appPage, setup.worktreeId)
 
       // The field failure is periodic, not every reveal — cycle the park →
       // stream → reveal boundary and require convergence every time.
       const CYCLES = 6
       for (let cycle = 0; cycle < CYCLES; cycle += 1) {
         if (cycle > 0) {
-          await activateTerminalTab(dolphinPage, tabBId)
-          await activateTerminalTab(dolphinPage, decoyTabId)
+          await activateTerminalTab(appPage, tabBId)
+          await activateTerminalTab(appPage, decoyTabId)
         }
-        await waitForTabParked(dolphinPage, setup.tabId, { parkDelayMs: PARKING_DELAY_MS })
+        await waitForTabParked(appPage, setup.tabId, { parkDelayMs: PARKING_DELAY_MS })
 
         // Accumulate a field-sized backlog against the parked (unmounted)
         // view so the reveal replay races the live stream, like a real Codex.
@@ -618,14 +618,14 @@ test.describe('Inline TUI reveal convergence', () => {
         // Reveal under CPU throttle: a long replay parse + throttled frames is
         // the loaded-machine window where the corrective fit and follow-anchor
         // lose their races in the field.
-        await withCpuThrottle(dolphinPage, 6, async () => {
-          await activateTerminalTab(dolphinPage, setup.tabId)
-          await waitForActiveTerminalManager(dolphinPage, 30_000)
-          await dolphinPage.waitForTimeout(3_000)
+        await withCpuThrottle(appPage, 6, async () => {
+          await activateTerminalTab(appPage, setup.tabId)
+          await waitForActiveTerminalManager(appPage, 30_000)
+          await appPage.waitForTimeout(3_000)
         })
-        const revealed = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+        const revealed = await waitForPaneIdentitySnapshot(appPage, 1)
         expect(revealed.panes[0]?.ptyId).toBe(setup.ptyId)
-        await assertRevealConvergence(dolphinPage, testInfo, setup, `parked-heavy-reveal-c${cycle}`)
+        await assertRevealConvergence(appPage, testInfo, setup, `parked-heavy-reveal-c${cycle}`)
       }
     } finally {
       await setup.stop()
@@ -633,83 +633,83 @@ test.describe('Inline TUI reveal convergence', () => {
   })
 
   test('rapid tab hide/reveal flapping never wedges delivery for the streaming inline TUI', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(150_000)
-    const setup = await startStreamingInlineTui(dolphinPage, testInfo, {
+    const setup = await startStreamingInlineTui(appPage, testInfo, {
       historyLinesPerSecond: 10
     })
     try {
-      const tabBId = await createActiveTerminalTab(dolphinPage, setup.worktreeId)
+      const tabBId = await createActiveTerminalTab(appPage, setup.worktreeId)
       // Rapid flapping drives the hidden-delivery gate claim/release IPC and
       // the hidden-output restore against each other at varied phases — the
       // desync class behind "bytes dropped on a visible pane" field freezes.
       for (let flap = 0; flap < 12; flap += 1) {
-        await activateTerminalTab(dolphinPage, tabBId)
-        await dolphinPage.waitForTimeout(50 + (flap % 3) * 120)
-        await activateTerminalTab(dolphinPage, setup.tabId)
-        await dolphinPage.waitForTimeout(50 + ((flap * 7) % 5) * 90)
+        await activateTerminalTab(appPage, tabBId)
+        await appPage.waitForTimeout(50 + (flap % 3) * 120)
+        await activateTerminalTab(appPage, setup.tabId)
+        await appPage.waitForTimeout(50 + ((flap * 7) % 5) * 90)
       }
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await assertRevealConvergence(dolphinPage, testInfo, setup, 'tab-flapping-reveal')
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await assertRevealConvergence(appPage, testInfo, setup, 'tab-flapping-reveal')
     } finally {
       await setup.stop()
     }
   })
 
   test('rapid worktree switch flapping never wedges delivery for the streaming inline TUI', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(150_000)
-    const setup = await startStreamingInlineTui(dolphinPage, testInfo, {
+    const setup = await startStreamingInlineTui(appPage, testInfo, {
       historyLinesPerSecond: 10,
       seedLines: 4_000
     })
     try {
-      const otherWorktreeId = await switchToOtherWorktree(dolphinPage, setup.worktreeId)
+      const otherWorktreeId = await switchToOtherWorktree(appPage, setup.worktreeId)
       test.skip(!otherWorktreeId, 'test session has a single worktree; cannot surface-flap')
       // Surface-level flapping (the field action): suspend/resume rendering +
       // heavy resume path race the gate resync and reveal repaint each cycle,
       // under CPU throttle to widen the race windows like a loaded machine.
-      await withCpuThrottle(dolphinPage, 6, async () => {
+      await withCpuThrottle(appPage, 6, async () => {
         for (let flap = 0; flap < 10; flap += 1) {
-          await switchToWorktree(dolphinPage, otherWorktreeId!)
-          await dolphinPage.waitForTimeout(60 + (flap % 4) * 110)
-          await switchToWorktree(dolphinPage, setup.worktreeId)
-          await dolphinPage.waitForTimeout(60 + ((flap * 5) % 4) * 130)
+          await switchToWorktree(appPage, otherWorktreeId!)
+          await appPage.waitForTimeout(60 + (flap % 4) * 110)
+          await switchToWorktree(appPage, setup.worktreeId)
+          await appPage.waitForTimeout(60 + ((flap * 5) % 4) * 130)
         }
       })
-      await activateTerminalTab(dolphinPage, setup.tabId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      await assertRevealConvergence(dolphinPage, testInfo, setup, 'worktree-flapping-reveal')
+      await activateTerminalTab(appPage, setup.tabId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await assertRevealConvergence(appPage, testInfo, setup, 'worktree-flapping-reveal')
     } finally {
       await setup.stop()
     }
   })
 
   test('parked tab reveal converges after a parked-time window resize', async ({
-    dolphinPage,
+    appPage,
     electronApp
   }, testInfo) => {
     test.setTimeout(180_000)
-    const setup = await startStreamingInlineTui(dolphinPage, testInfo, {
+    const setup = await startStreamingInlineTui(appPage, testInfo, {
       historyLinesPerSecond: 20
     })
     try {
-      await createActiveTerminalTab(dolphinPage, setup.worktreeId)
-      await createActiveTerminalTab(dolphinPage, setup.worktreeId)
-      await waitForTabParked(dolphinPage, setup.tabId, { parkDelayMs: PARKING_DELAY_MS })
+      await createActiveTerminalTab(appPage, setup.worktreeId)
+      await createActiveTerminalTab(appPage, setup.worktreeId)
+      await waitForTabParked(appPage, setup.tabId, { parkDelayMs: PARKING_DELAY_MS })
 
       // Resize while parked: the remount measures a grid that matches neither
       // the pre-park xterm nor the daemon snapshot — maximum dimension churn.
       await resizeAppWindow(electronApp, -180, -120)
       await streamWhileParked(setup, 100)
 
-      await activateTerminalTab(dolphinPage, setup.tabId)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      const revealed = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+      await activateTerminalTab(appPage, setup.tabId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      const revealed = await waitForPaneIdentitySnapshot(appPage, 1)
       expect(revealed.panes[0]?.ptyId).toBe(setup.ptyId)
-      await assertRevealConvergence(dolphinPage, testInfo, setup, 'parked-resize-reveal')
+      await assertRevealConvergence(appPage, testInfo, setup, 'parked-resize-reveal')
     } finally {
       await resizeAppWindow(electronApp, 180, 120).catch(() => {})
       await setup.stop()

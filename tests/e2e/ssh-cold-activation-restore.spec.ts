@@ -39,24 +39,24 @@ test.describe('SSH cold activation restore', () => {
   test.skip(process.platform === 'win32', 'Docker SSH restore uses POSIX SSH tooling.')
 
   test('eagerly remounts every restored remote terminal after renderer reload', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(240_000)
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
+      await waitForSessionReady(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
       await expect
-        .poll(() => waitForActiveWorktree(dolphinPage), { timeout: 30_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 30_000 })
         .toBe(remote.worktreeId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      await waitForActivePanePtyId(appPage, 60_000)
 
-      while ((await readRemoteTerminalTabs(dolphinPage, remote.worktreeId)).length < TAB_COUNT) {
-        await createRemoteTerminalTab(dolphinPage, remote.worktreeId)
+      while ((await readRemoteTerminalTabs(appPage, remote.worktreeId)).length < TAB_COUNT) {
+        await createRemoteTerminalTab(appPage, remote.worktreeId)
       }
-      const beforeReload = await readRemoteTerminalTabs(dolphinPage, remote.worktreeId)
+      const beforeReload = await readRemoteTerminalTabs(appPage, remote.worktreeId)
       expect(beforeReload).toHaveLength(TAB_COUNT)
       expect(new Set(beforeReload.map((tab) => tab.ptyId)).size).toBe(TAB_COUNT)
       expect(beforeReload.every((tab) => tab.ptyId !== null)).toBe(true)
@@ -64,7 +64,7 @@ test.describe('SSH cold activation restore', () => {
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               async ({ targetId, worktreePath }) => {
                 const snapshot = await window.api.remoteWorkspace.get({ targetId })
                 return (
@@ -80,11 +80,11 @@ test.describe('SSH cold activation restore', () => {
         )
         .toEqual(beforeReload.map((tab) => tab.id))
 
-      await dolphinPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+      await appPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               async ({ targetId, worktreeId, expectedTabIds }) => {
                 // Why both partitions: an SSH worktree's session lives in `ssh:<targetId>`, and
                 // only globals like `activeConnectionIdsAtShutdown` stay in `local`. Reading
@@ -115,15 +115,15 @@ test.describe('SSH cold activation restore', () => {
         )
         .toBe(true)
 
-      await dolphinPage.reload()
-      await waitForSessionReady(dolphinPage, 60_000)
+      await appPage.reload()
+      await waitForSessionReady(appPage, 60_000)
       await expect
-        .poll(() => waitForActiveWorktree(dolphinPage), { timeout: 60_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 60_000 })
         .toBe(remote.worktreeId)
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               (targetId) => window.__store?.getState().sshConnectionStates.get(targetId)?.status,
               remote.targetId
             ),
@@ -135,7 +135,7 @@ test.describe('SSH cold activation restore', () => {
       await expect
         .poll(
           () =>
-            dolphinPage.evaluate(
+            appPage.evaluate(
               (ids) => ids.filter((tabId) => window.__paneManagers?.has(tabId)).sort(),
               expectedTabIds
             ),
@@ -143,13 +143,13 @@ test.describe('SSH cold activation restore', () => {
         )
         .toEqual(expectedTabIds)
       expect(
-        await dolphinPage.evaluate(
+        await appPage.evaluate(
           (ids) =>
             ids.filter((tabId) => window.__terminalParkingDebug?.parkedTabIds().includes(tabId)),
           expectedTabIds
         )
       ).toEqual([])
-      const afterReload = await readRemoteTerminalTabs(dolphinPage, remote.worktreeId)
+      const afterReload = await readRemoteTerminalTabs(appPage, remote.worktreeId)
       expect(afterReload.map((tab) => tab.id).sort()).toEqual(expectedTabIds)
       expect(afterReload.map((tab) => tab.ptyId).sort()).toEqual(
         beforeReload.map((tab) => tab.ptyId).sort()
@@ -171,8 +171,8 @@ test.describe('SSH cold activation restore', () => {
       // pointerup and suppressed past a drag threshold (tab-strip-pointer-activation.ts), so this
       // has to be a real down/up pair at one position; a synthetic click event would not select.
       // The retry asserts on the store, so a press that lands wrong is retried rather than believed.
-      const tabStrip = dolphinPage.locator('.terminal-tab-strip').first()
-      const firstTab = dolphinPage.getByRole('button', { name: /^Terminal 1 Close tab Terminal 1/ })
+      const tabStrip = appPage.locator('.terminal-tab-strip').first()
+      const firstTab = appPage.getByRole('button', { name: /^Terminal 1 Close tab Terminal 1/ })
       await expect
         .poll(
           async () => {
@@ -183,10 +183,10 @@ test.describe('SSH cold activation restore', () => {
             if (!box) {
               return null
             }
-            await dolphinPage.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-            await dolphinPage.mouse.down()
-            await dolphinPage.mouse.up()
-            return dolphinPage.evaluate(() => window.__store?.getState().activeTabId ?? null)
+            await appPage.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+            await appPage.mouse.down()
+            await appPage.mouse.up()
+            return appPage.evaluate(() => window.__store?.getState().activeTabId ?? null)
           },
           {
             timeout: 30_000,
@@ -196,10 +196,10 @@ test.describe('SSH cold activation restore', () => {
         .toBe(firstTabId)
       const marker = `SSH_RESTORE_OK_${Date.now()}`
       const proofFile = '/tmp/dolphin-ssh-restore-proof'
-      await focusActiveTerminalInput(dolphinPage)
-      await dolphinPage.keyboard.type(`printf '${marker}' > ${proofFile} && printf '${marker}\\n'`)
-      await dolphinPage.keyboard.press('Enter')
-      await expectTerminalAccessibilityText(dolphinPage, firstTabId, marker)
+      await focusActiveTerminalInput(appPage)
+      await appPage.keyboard.type(`printf '${marker}' > ${proofFile} && printf '${marker}\\n'`)
+      await appPage.keyboard.press('Enter')
+      await expectTerminalAccessibilityText(appPage, firstTabId, marker)
       expect(execDockerSshRelayTargetCommand(target, `cat ${proofFile}`)).toBe(marker)
     } finally {
       cleanupDockerSshRelayTarget(target)

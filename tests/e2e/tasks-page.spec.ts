@@ -217,19 +217,19 @@ async function resetTaskSearchRequestProbe(
 }
 
 test.describe('Tasks page', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test('opening the tasks view renders the tasks UI', async ({ dolphinPage }) => {
-    await openTasksPage(dolphinPage)
+  test('opening the tasks view renders the tasks UI', async ({ appPage }) => {
+    await openTasksPage(appPage)
 
     await expect
-      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(appPage, 'activeView'), { timeout: 5_000 })
       .toBe('tasks')
 
-    await expect(dolphinPage.getByRole('button', { name: 'Close tasks' })).toBeVisible({
+    await expect(appPage.getByRole('button', { name: 'Close tasks' })).toBeVisible({
       timeout: 10_000
     })
 
@@ -239,7 +239,7 @@ test.describe('Tasks page', () => {
     await expect
       .poll(
         async () => {
-          renderedSources = await getRenderedTaskSources(dolphinPage)
+          renderedSources = await getRenderedTaskSources(appPage)
           return renderedSources.length
         },
         {
@@ -252,7 +252,7 @@ test.describe('Tasks page', () => {
     await expect
       .poll(
         async () => {
-          renderedSources = await getRenderedTaskSources(dolphinPage)
+          renderedSources = await getRenderedTaskSources(appPage)
           return renderedSources.some((source) => source.active)
         },
         {
@@ -262,27 +262,27 @@ test.describe('Tasks page', () => {
       )
       .toBe(true)
     if (renderedSources.some((source) => source.source === 'github' && source.active)) {
-      await expect(dolphinPage.getByRole('button', { name: 'Issues', exact: true })).toBeVisible()
-      await expect(dolphinPage.getByRole('button', { name: 'PRs', exact: true })).toBeVisible()
-      await expect(dolphinPage.getByRole('button', { name: 'Projects', exact: true })).toBeVisible()
-      await expect(dolphinPage.getByPlaceholder(/Search GitHub (issues|PRs)/i)).toBeVisible()
+      await expect(appPage.getByRole('button', { name: 'Issues', exact: true })).toBeVisible()
+      await expect(appPage.getByRole('button', { name: 'PRs', exact: true })).toBeVisible()
+      await expect(appPage.getByRole('button', { name: 'Projects', exact: true })).toBeVisible()
+      await expect(appPage.getByPlaceholder(/Search GitHub (issues|PRs)/i)).toBeVisible()
     }
   })
 
-  test('closing the tasks page returns to the previous view', async ({ dolphinPage }) => {
-    const previousView = await getStoreState<string>(dolphinPage, 'activeView')
+  test('closing the tasks page returns to the previous view', async ({ appPage }) => {
+    const previousView = await getStoreState<string>(appPage, 'activeView')
 
-    await openTasksPage(dolphinPage)
+    await openTasksPage(appPage)
     await expect
-      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(appPage, 'activeView'), { timeout: 5_000 })
       .toBe('tasks')
     // Sanity: the tasks UI actually painted before we close it.
-    await expect(dolphinPage.getByRole('button', { name: 'Close tasks' })).toBeVisible()
+    await expect(appPage.getByRole('button', { name: 'Close tasks' })).toBeVisible()
 
-    await dolphinPage.getByRole('button', { name: 'Close tasks' }).click()
+    await appPage.getByRole('button', { name: 'Close tasks' }).click()
 
     await expect
-      .poll(async () => getStoreState<string>(dolphinPage, 'activeView'), { timeout: 5_000 })
+      .poll(async () => getStoreState<string>(appPage, 'activeView'), { timeout: 5_000 })
       .toBe(previousView)
     // Why: the load-bearing check is that the previous view's DOM actually
     // re-rendered — a store-only `activeView` assertion would pass even if the
@@ -291,85 +291,83 @@ test.describe('Tasks page', () => {
     // previous view was terminal (by far the common case in E2E setup), that
     // element must be visible. Tasks-close also hides the "Close tasks"
     // button regardless of previous view, so we assert that too.
-    await expect(dolphinPage.getByRole('button', { name: 'Close tasks' })).toHaveCount(0)
+    await expect(appPage.getByRole('button', { name: 'Close tasks' })).toHaveCount(0)
     if (previousView === 'terminal') {
-      await expect(dolphinPage.locator('.xterm').first()).toBeVisible({ timeout: 5_000 })
+      await expect(appPage.locator('.xterm').first()).toBeVisible({ timeout: 5_000 })
     }
   })
 
-  test('reopening restores the GitHub page and scroll position', async ({ dolphinPage }) => {
-    await openMockedPaginatedGitHubTasks(dolphinPage)
+  test('reopening restores the GitHub page and scroll position', async ({ appPage }) => {
+    await openMockedPaginatedGitHubTasks(appPage)
 
-    await dolphinPage.getByRole('button', { name: 'Page 28', exact: true }).click()
-    await expect(dolphinPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
+    await appPage.getByRole('button', { name: 'Page 28', exact: true }).click()
+    await expect(appPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
 
-    const list = dolphinPage.locator('[data-task-list-scroll="github"]')
+    const list = appPage.locator('[data-task-list-scroll="github"]')
     await list.evaluate((element) => {
       element.scrollTop = 360
       element.dispatchEvent(new Event('scroll'))
     })
     await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(300)
 
-    await dolphinPage.getByRole('button', { name: 'Close tasks' }).click()
+    await appPage.getByRole('button', { name: 'Close tasks' }).click()
     await expect(list).toHaveCount(0)
-    const clampedRowsStyle = await dolphinPage.addStyleTag({
+    const clampedRowsStyle = await appPage.addStyleTag({
       content:
         '[data-task-list-scroll="github"] > .divide-y { max-height: 0 !important; overflow: hidden !important; }'
     })
-    await openTasksPage(dolphinPage)
+    await openTasksPage(appPage)
 
-    await expect(dolphinPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
+    await expect(appPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
       'aria-current',
       'page'
     )
-    const restoredList = dolphinPage.locator('[data-task-list-scroll="github"]')
+    const restoredList = appPage.locator('[data-task-list-scroll="github"]')
     await expect.poll(() => restoredList.evaluate((element) => element.scrollTop)).toBe(0)
     await clampedRowsStyle.evaluate((element) => element.remove())
-    await expect(dolphinPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
+    await expect(appPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
     await expect
       .poll(() => restoredList.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(300)
 
-    await dolphinPage.getByText('Issue page 28 item 12', { exact: true }).click()
+    await appPage.getByText('Issue page 28 item 12', { exact: true }).click()
     await expect(restoredList).toHaveCount(0)
     await expect
       .poll(async () => {
-        const position = await getStoreState<{ scrollTop: number }>(dolphinPage, 'taskListPosition')
+        const position = await getStoreState<{ scrollTop: number }>(appPage, 'taskListPosition')
         return position.scrollTop
       })
       .toBeGreaterThan(300)
-    await dolphinPage.getByRole('button', { name: 'GitHub list', exact: true }).click()
-    await expect(dolphinPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
+    await appPage.getByRole('button', { name: 'GitHub list', exact: true }).click()
+    await expect(appPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
     await expect
       .poll(() => restoredList.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(300)
 
-    await dolphinPage.getByRole('button', { name: 'Close tasks' }).click()
-    const pendingRestoreStyle = await dolphinPage.addStyleTag({
+    await appPage.getByRole('button', { name: 'Close tasks' }).click()
+    const pendingRestoreStyle = await appPage.addStyleTag({
       content:
         '[data-task-list-scroll="github"] > .divide-y { max-height: 0 !important; overflow: hidden !important; }'
     })
-    await openTasksPage(dolphinPage)
-    await expect(dolphinPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
+    await openTasksPage(appPage)
+    await expect(appPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
       'aria-current',
       'page'
     )
-    await dolphinPage.getByRole('button', { name: 'Page 1', exact: true }).click()
+    await appPage.getByRole('button', { name: 'Page 1', exact: true }).click()
     await pendingRestoreStyle.evaluate((element) => element.remove())
-    await expect(dolphinPage.getByRole('button', { name: 'Page 1', exact: true })).toHaveAttribute(
+    await expect(appPage.getByRole('button', { name: 'Page 1', exact: true })).toHaveAttribute(
       'aria-current',
       'page'
     )
     await expect
       .poll(() =>
-        dolphinPage
-          .locator('[data-task-list-scroll="github"]')
-          .evaluate((element) => element.scrollTop)
+        appPage.locator('[data-task-list-scroll="github"]').evaluate((element) => element.scrollTop)
       )
       .toBe(0)
 
-    await dolphinPage.getByRole('button', { name: 'Page 28', exact: true }).click()
-    await expect(dolphinPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
+    await appPage.getByRole('button', { name: 'Page 28', exact: true }).click()
+    await expect(appPage.getByText('Issue page 28 item 1', { exact: true })).toBeVisible()
     await restoredList.evaluate((element) => {
       element.scrollTop = 360
       element.dispatchEvent(new Event('scroll'))
@@ -377,25 +375,25 @@ test.describe('Tasks page', () => {
     await expect
       .poll(() => restoredList.evaluate((element) => element.scrollTop))
       .toBeGreaterThan(300)
-    await dolphinPage.getByRole('button', { name: 'Close tasks' }).click()
+    await appPage.getByRole('button', { name: 'Close tasks' }).click()
 
-    const permanentlyClampedRowsStyle = await dolphinPage.addStyleTag({
+    const permanentlyClampedRowsStyle = await appPage.addStyleTag({
       content:
         '[data-task-list-scroll="github"] > .divide-y { max-height: 0 !important; overflow: hidden !important; }'
     })
-    await openTasksPage(dolphinPage)
-    await expect(dolphinPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
+    await openTasksPage(appPage)
+    await expect(appPage.getByRole('button', { name: 'Page 28', exact: true })).toHaveAttribute(
       'aria-current',
       'page'
     )
     // Why the wait: outlives the 5s give-up that used to abandon the restore and
     // overwrite the remembered offset with the committed 0. A list that never paints
     // must defer the restore, never destroy the position.
-    await dolphinPage.waitForTimeout(5_500)
-    await dolphinPage.getByRole('button', { name: 'Close tasks' }).click()
+    await appPage.waitForTimeout(5_500)
+    await appPage.getByRole('button', { name: 'Close tasks' }).click()
     await expect
       .poll(async () => {
-        const position = await getStoreState<{ scrollTop: number }>(dolphinPage, 'taskListPosition')
+        const position = await getStoreState<{ scrollTop: number }>(appPage, 'taskListPosition')
         return position.scrollTop
       })
       .toBeGreaterThan(300)
@@ -403,22 +401,22 @@ test.describe('Tasks page', () => {
   })
 
   test('GitHub search waits for idle, keeps rows visible, and Enter does not double-fetch', async ({
-    dolphinPage
+    appPage
   }) => {
-    await openInstrumentedGitHubTasksPage(dolphinPage)
+    await openInstrumentedGitHubTasksPage(appPage)
 
-    const input = dolphinPage.getByPlaceholder('Search GitHub issues...')
-    const existingIssue = dolphinPage.getByText('Existing GitHub issue', { exact: true })
+    const input = appPage.getByPlaceholder('Search GitHub issues...')
+    const existingIssue = appPage.getByText('Existing GitHub issue', { exact: true })
     await expect(input).toBeVisible()
     await expect(existingIssue).toBeVisible()
 
     await input.fill('')
     await expect
-      .poll(async () => readTaskSearchRequestProbe(dolphinPage), {
+      .poll(async () => readTaskSearchRequestProbe(appPage), {
         timeout: TASK_SEARCH_PROBE_TIMEOUT_MS
       })
       .toEqual({ countQueries: ['is:issue is:open'], fetchQueries: ['is:issue is:open'] })
-    await resetTaskSearchRequestProbe(dolphinPage)
+    await resetTaskSearchRequestProbe(appPage)
 
     await input.pressSequentially('rate', { delay: TASK_SEARCH_TYPING_DELAY_MS })
 
@@ -427,22 +425,22 @@ test.describe('Tasks page', () => {
     // The contract is that no prefix of the typed query is ever queried, not that the
     // probe is empty at one instant: exactly one request per surface, for the final value.
     await expect
-      .poll(async () => readTaskSearchRequestProbe(dolphinPage), {
+      .poll(async () => readTaskSearchRequestProbe(appPage), {
         timeout: TASK_SEARCH_PROBE_TIMEOUT_MS
       })
       .toEqual({ countQueries: ['is:issue rate'], fetchQueries: ['is:issue rate'] })
 
-    await resetTaskSearchRequestProbe(dolphinPage)
+    await resetTaskSearchRequestProbe(appPage)
     await input.pressSequentially('x')
     await input.press('Enter')
 
     await expect
-      .poll(async () => readTaskSearchRequestProbe(dolphinPage), {
+      .poll(async () => readTaskSearchRequestProbe(appPage), {
         timeout: TASK_SEARCH_PROBE_TIMEOUT_MS
       })
       .toEqual({ countQueries: ['is:issue ratex'], fetchQueries: ['is:issue ratex'] })
-    await dolphinPage.waitForTimeout(TASK_SEARCH_SETTLE_MS)
-    expect(await readTaskSearchRequestProbe(dolphinPage)).toEqual({
+    await appPage.waitForTimeout(TASK_SEARCH_SETTLE_MS)
+    expect(await readTaskSearchRequestProbe(appPage)).toEqual({
       countQueries: ['is:issue ratex'],
       fetchQueries: ['is:issue ratex']
     })

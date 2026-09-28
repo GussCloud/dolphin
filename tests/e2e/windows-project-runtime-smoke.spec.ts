@@ -79,13 +79,13 @@ test.afterAll(async () => {
 
 test.describe('Windows project runtime smoke', () => {
   test('keeps a Windows-host project and WSL project available side by side', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'Windows project runtime smoke requires Windows')
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
 
-    const wsl = await dolphinPage.evaluate(async () => ({
+    const wsl = await appPage.evaluate(async () => ({
       available: await window.api.wsl.isAvailable(),
       distros: await window.api.wsl.listDistros()
     }))
@@ -93,7 +93,7 @@ test.describe('Windows project runtime smoke', () => {
     const wslDistro = wsl.distros[0]!
     const wslRepoPath = await createGitRepo('dolphin-e2e-project-runtime-', 'wsl-runtime-project')
 
-    const smoke = await dolphinPage.evaluate(
+    const smoke = await appPage.evaluate(
       async ({ hostRepoPath, wslRepoPath, wslDistro }) => {
         const store = window.__store
         if (!store) {
@@ -142,15 +142,15 @@ test.describe('Windows project runtime smoke', () => {
     expect(smoke.hostWorktreeCount).toBeGreaterThan(0)
     expect(smoke.wslWorktreeCount).toBeGreaterThan(0)
 
-    await openRepoSettings(dolphinPage, smoke.hostRepoId)
-    const hostSection = dolphinPage.locator(`[data-settings-section="repo-${smoke.hostRepoId}"]`)
+    await openRepoSettings(appPage, smoke.hostRepoId)
+    const hostSection = appPage.locator(`[data-settings-section="repo-${smoke.hostRepoId}"]`)
     await expect(hostSection.getByText('Project Runtime')).toBeVisible()
     await expect(hostSection.getByText('This project runs on Windows.')).toBeVisible()
-    await chooseProjectRuntime(dolphinPage, smoke.hostRepoId, 'WSL')
+    await chooseProjectRuntime(appPage, smoke.hostRepoId, 'WSL')
     await expect(
       hostSection.getByText(`This project runs in ${smoke.wslDistro} via WSL.`)
     ).toBeVisible()
-    const hostAfterWslUiSwitch = await dolphinPage.evaluate((hostRepoId) => {
+    const hostAfterWslUiSwitch = await appPage.evaluate((hostRepoId) => {
       const state = window.__store!.getState()
       const hostProject = state.projects.find((project) =>
         project.sourceRepoIds.includes(hostRepoId)
@@ -159,9 +159,9 @@ test.describe('Windows project runtime smoke', () => {
     }, smoke.hostRepoId)
     expect(hostAfterWslUiSwitch).toEqual({ kind: 'wsl', distro: smoke.wslDistro })
 
-    await chooseProjectRuntime(dolphinPage, smoke.hostRepoId, 'Windows')
+    await chooseProjectRuntime(appPage, smoke.hostRepoId, 'Windows')
     await expect(hostSection.getByText('This project runs on Windows.')).toBeVisible()
-    const hostAfterWindowsUiSwitch = await dolphinPage.evaluate((hostRepoId) => {
+    const hostAfterWindowsUiSwitch = await appPage.evaluate((hostRepoId) => {
       const state = window.__store!.getState()
       const hostProject = state.projects.find((project) =>
         project.sourceRepoIds.includes(hostRepoId)
@@ -170,14 +170,14 @@ test.describe('Windows project runtime smoke', () => {
     }, smoke.hostRepoId)
     expect(hostAfterWindowsUiSwitch).toEqual({ kind: 'windows-host' })
 
-    await openRepoSettings(dolphinPage, smoke.wslRepoId)
-    const wslSection = dolphinPage.locator(`[data-settings-section="repo-${smoke.wslRepoId}"]`)
+    await openRepoSettings(appPage, smoke.wslRepoId)
+    const wslSection = appPage.locator(`[data-settings-section="repo-${smoke.wslRepoId}"]`)
     await expect(wslSection.getByText('Project Runtime')).toBeVisible()
     await expect(
       wslSection.getByText(`This project runs in ${smoke.wslDistro} via WSL.`)
     ).toBeVisible()
 
-    await dolphinPage.evaluate(async (repoId) => {
+    await appPage.evaluate(async (repoId) => {
       await window.api.repos.remove({ repoId })
     }, smoke.wslRepoId)
   })

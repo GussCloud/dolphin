@@ -41,11 +41,11 @@ const ARTICLE = [
 
 for (const large of [false, true]) {
   test(`keeps callout source byte-for-byte across edits, save and reopen (${large ? 'large' : 'article'})`, async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    const context = await getActiveWorktreeContext(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    const context = await getActiveWorktreeContext(appPage)
     const source = ARTICLE + (large ? `\n${'Unchanged user_name prose. '.repeat(2_100)}\n` : '')
     const filePath = await createMarkdownFixture(
       context,
@@ -55,8 +55,8 @@ for (const large of [false, true]) {
       source
     )
     try {
-      await openMarkdownFixture(dolphinPage, context, filePath)
-      const editor = await waitForRichMarkdownEditor(dolphinPage)
+      await openMarkdownFixture(appPage, context, filePath)
+      const editor = await waitForRichMarkdownEditor(appPage)
       await expect(editor).toContainText('[!wissenswert]')
       let expected = source
       for (const prefix of ['First paragraph', 'Second paragraph', 'Third paragraph']) {
@@ -70,21 +70,21 @@ for (const large of [false, true]) {
           selection.removeAllRanges()
           selection.addRange(range)
         })
-        await dolphinPage.keyboard.insertText('Edited ')
+        await appPage.keyboard.insertText('Edited ')
         expected = expected.replace(prefix, `Edited ${prefix}`)
-        await dolphinPage.keyboard.press('ControlOrMeta+S')
+        await appPage.keyboard.press('ControlOrMeta+S')
         await expect.poll(() => readFileSync(filePath, 'utf8')).toBe(expected)
       }
       await testInfo.attach('saved-source', { body: expected, contentType: 'text/markdown' })
-      await closeActiveEditorTab(dolphinPage, filePath)
-      await openMarkdownFixture(dolphinPage, context, filePath)
-      const reopened = await waitForRichMarkdownEditor(dolphinPage)
+      await closeActiveEditorTab(appPage, filePath)
+      await openMarkdownFixture(appPage, context, filePath)
+      const reopened = await waitForRichMarkdownEditor(appPage)
       await expect(reopened).toContainText('Edited First paragraph')
       await expect(reopened).toContainText('Edited Third paragraph')
       await expect(reopened.locator('blockquote')).toHaveCount(4)
       await expect(reopened).toContainText('[!zeitstrahl]')
       await testInfo.attach('reopened-article', {
-        body: await dolphinPage.screenshot({ path: testInfo.outputPath('reopened-article.png') }),
+        body: await appPage.screenshot({ path: testInfo.outputPath('reopened-article.png') }),
         contentType: 'image/png'
       })
       expect(readFileSync(filePath, 'utf8')).toBe(expected)

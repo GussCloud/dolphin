@@ -154,21 +154,21 @@ function summarizeArrivals(
 
 test.describe('terminal TUI wheel report drain', () => {
   test('dense trackpad-like wheel stream reaches the PTY while the gesture happens', async ({
-    dolphinPage
+    appPage
   }) => {
     // Why: the dense CDP wheel stream is throughput-bound on loaded CI runners.
     test.slow()
     const logPath = path.join(os.tmpdir(), `tui-wheel-drain-${Date.now()}.log`)
-    await startHeavyTuiFixture(dolphinPage, logPath)
+    await startHeavyTuiFixture(appPage, logPath)
 
-    const target = await terminalWheelTarget(dolphinPage)
-    const input = await dispatchTrackpadWheelStream(dolphinPage, {
+    const target = await terminalWheelTarget(appPage)
+    const input = await dispatchTrackpadWheelStream(appPage, {
       alternate: false,
       events: WHEEL_EVENTS,
       deltaY: Math.min(49, target.cellHeight)
     })
     // Give a laggy drain ample time to expose itself before reading the log.
-    await dolphinPage.waitForTimeout(8000)
+    await appPage.waitForTimeout(8000)
 
     const summary = summarizeArrivals(readReportArrivalLog(logPath), input)
     fs.rmSync(logPath, { force: true })
@@ -181,20 +181,20 @@ test.describe('terminal TUI wheel report drain', () => {
   })
 
   test('aggressive alternating trackpad-like gesture does not replay after input ends', async ({
-    dolphinPage
+    appPage
   }) => {
     // Why: the dense CDP wheel stream is throughput-bound on loaded CI runners.
     test.slow()
     const logPath = path.join(os.tmpdir(), `tui-wheel-drain-alt-${Date.now()}.log`)
-    await startHeavyTuiFixture(dolphinPage, logPath)
+    await startHeavyTuiFixture(appPage, logPath)
 
-    const target = await terminalWheelTarget(dolphinPage)
-    const input = await dispatchTrackpadWheelStream(dolphinPage, {
+    const target = await terminalWheelTarget(appPage)
+    const input = await dispatchTrackpadWheelStream(appPage, {
       alternate: true,
       events: WHEEL_EVENTS,
       deltaY: Math.min(49, target.cellHeight)
     })
-    await dolphinPage.waitForTimeout(8000)
+    await appPage.waitForTimeout(8000)
 
     const summary = summarizeArrivals(readReportArrivalLog(logPath), input)
     fs.rmSync(logPath, { force: true })

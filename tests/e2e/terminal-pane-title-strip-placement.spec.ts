@@ -58,38 +58,36 @@ test.describe.configure({ mode: 'serial' })
 test.describe('Terminal Panes', () => {
   registerTerminalPaneMountReadiness()
 
-  test('Set Title strip activates its pane and accepts file-path drops', async ({
-    dolphinPage
-  }) => {
+  test('Set Title strip activates its pane and accepts file-path drops', async ({ appPage }) => {
     const title = `Drop target title ${Date.now()}`
     const droppedPath = `/tmp/title-drop-${Date.now()}.txt`
 
-    await setPaneTitleFromTerminalMenu(dolphinPage, title)
-    const initialSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await setPaneTitleFromTerminalMenu(appPage, title)
+    const initialSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const titledLeafId = initialSnapshot.activeLeafId ?? initialSnapshot.panes[0]?.leafId
     if (!titledLeafId) {
       throw new Error('No titled pane leaf id found before split')
     }
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    const splitSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    const splitSnapshot = await waitForPaneIdentitySnapshot(appPage, 2)
     const otherPane = splitSnapshot.panes.find((pane) => pane.leafId !== titledLeafId)
     if (!otherPane) {
       throw new Error('No inactive pane found for title-strip drop test')
     }
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ tabId, paneId }) => {
         window.__paneManagers?.get(tabId)?.setActivePane(paneId, { focus: false })
       },
       { tabId: splitSnapshot.tabId, paneId: otherPane.numericPaneId }
     )
     await expect
-      .poll(async () => (await readPaneIdentitySnapshot(dolphinPage))?.activeLeafId ?? null)
+      .poll(async () => (await readPaneIdentitySnapshot(appPage))?.activeLeafId ?? null)
       .toBe(otherPane.leafId)
 
-    const titleBar = dolphinPage.locator('.pane-title-bar', { hasText: title }).first()
+    const titleBar = appPage.locator('.pane-title-bar', { hasText: title }).first()
     await expect(titleBar).toHaveAttribute('data-native-file-drop-target', 'terminal')
     await expect(titleBar).toHaveAttribute('data-terminal-tab-id', splitSnapshot.tabId)
 
@@ -105,67 +103,67 @@ test.describe('Terminal Panes', () => {
     }, droppedPath)
 
     await expect
-      .poll(async () => (await readPaneIdentitySnapshot(dolphinPage))?.activeLeafId ?? null, {
+      .poll(async () => (await readPaneIdentitySnapshot(appPage))?.activeLeafId ?? null, {
         timeout: 5_000,
         message: 'Title-strip drop did not activate the titled pane'
       })
       .toBe(titledLeafId)
     await expect
-      .poll(async () => (await getTerminalContent(dolphinPage)).includes(droppedPath), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(droppedPath), {
         timeout: 5_000,
         message: 'Title-strip drop did not paste into the titled pane terminal'
       })
       .toBe(true)
   })
 
-  test('Set Title overlay follows its pane after same-count pane move', async ({ dolphinPage }) => {
+  test('Set Title overlay follows its pane after same-count pane move', async ({ appPage }) => {
     const title = `Moved overlay title ${Date.now()}`
 
-    await setPaneTitleFromTerminalMenu(dolphinPage, title)
-    const initialSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await setPaneTitleFromTerminalMenu(appPage, title)
+    const initialSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const titledLeafId = initialSnapshot.activeLeafId ?? initialSnapshot.panes[0]?.leafId
     if (!titledLeafId) {
       throw new Error('No titled pane leaf id found before move')
     }
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    const beforeMove = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    const beforeMove = await waitForPaneIdentitySnapshot(appPage, 2)
     const target = beforeMove.panes.find((pane) => pane.leafId !== titledLeafId)
     if (!target) {
       throw new Error('No target pane found for titled pane move')
     }
-    const beforeOrder = await readTerminalPaneDomLeafOrder(dolphinPage)
+    const beforeOrder = await readTerminalPaneDomLeafOrder(appPage)
 
-    await expectPaneTitleAttachedToLeaf(dolphinPage, title, titledLeafId)
-    await moveTerminalPaneByLeafId(dolphinPage, titledLeafId, target.leafId, 'right')
+    await expectPaneTitleAttachedToLeaf(appPage, title, titledLeafId)
+    await moveTerminalPaneByLeafId(appPage, titledLeafId, target.leafId, 'right')
 
     await expect
-      .poll(async () => readTerminalPaneDomLeafOrder(dolphinPage), {
+      .poll(async () => readTerminalPaneDomLeafOrder(appPage), {
         timeout: 10_000,
         message: 'Pane move did not update DOM order'
       })
       .not.toEqual(beforeOrder)
-    await expectPaneTitleAttachedToLeaf(dolphinPage, title, titledLeafId)
+    await expectPaneTitleAttachedToLeaf(appPage, title, titledLeafId)
   })
 
   test('Set Title keeps the pane drag handle available over the title strip', async ({
-    dolphinPage
+    appPage
   }) => {
     const title = `Draggable title ${Date.now()}`
 
-    await setPaneTitleFromTerminalMenu(dolphinPage, title)
-    const initialSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await setPaneTitleFromTerminalMenu(appPage, title)
+    const initialSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const titledLeafId = initialSnapshot.activeLeafId ?? initialSnapshot.panes[0]?.leafId
     if (!titledLeafId) {
       throw new Error('No titled pane leaf id found before split')
     }
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    await expectPaneTitleAttachedToLeaf(dolphinPage, title, titledLeafId)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    await expectPaneTitleAttachedToLeaf(appPage, title, titledLeafId)
 
-    const titleTopHit = await dolphinPage.evaluate(
+    const titleTopHit = await appPage.evaluate(
       ({ title, titledLeafId }) => {
         const titleBar = Array.from(document.querySelectorAll<HTMLElement>('.pane-title-bar')).find(
           (element) => element.textContent?.includes(title)
@@ -198,39 +196,37 @@ test.describe('Terminal Panes', () => {
     expect(titleTopHit?.pointerEvents).toBe('auto')
     expect(Math.abs((titleTopHit?.handleTop ?? 0) - (titleTopHit?.titleTop ?? 0))).toBeLessThan(1)
 
-    await dolphinPage.locator('.pane-title-bar', { hasText: title }).click({
+    await appPage.locator('.pane-title-bar', { hasText: title }).click({
       position: { x: 20, y: 18 }
     })
-    await expect(dolphinPage.locator('.pane-title-input')).toBeVisible()
+    await expect(appPage.locator('.pane-title-input')).toBeVisible()
   })
 
-  test('@headful Set Title pane can be dragged from the title strip', async ({ dolphinPage }) => {
+  test('@headful Set Title pane can be dragged from the title strip', async ({ appPage }) => {
     const title = `Dragged title ${Date.now()}`
 
-    await setPaneTitleFromTerminalMenu(dolphinPage, title)
-    const initialSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+    await setPaneTitleFromTerminalMenu(appPage, title)
+    const initialSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
     const titledLeafId = initialSnapshot.activeLeafId ?? initialSnapshot.panes[0]?.leafId
     if (!titledLeafId) {
       throw new Error('No titled pane leaf id found before drag')
     }
 
-    await splitActiveTerminalPane(dolphinPage, 'vertical')
-    await waitForPaneCount(dolphinPage, 2)
-    const beforeDrag = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    const beforeDrag = await waitForPaneIdentitySnapshot(appPage, 2)
     const target = beforeDrag.panes.find((pane) => pane.leafId !== titledLeafId)
     if (!target) {
       throw new Error('No target pane found for titled pane drag')
     }
-    const beforeOrder = await readTerminalPaneDomLeafOrder(dolphinPage)
+    const beforeOrder = await readTerminalPaneDomLeafOrder(appPage)
 
-    const titleDragHandle = dolphinPage
+    const titleDragHandle = appPage
       .locator('.pane-title-bar', { hasText: title })
       .locator('.pane-title-drag-handle')
     await expect(titleDragHandle).toBeVisible({ timeout: 3_000 })
     const sourceBox = await titleDragHandle.boundingBox()
-    const targetBox = await dolphinPage
-      .locator(`.pane[data-leaf-id="${target.leafId}"]`)
-      .boundingBox()
+    const targetBox = await appPage.locator(`.pane[data-leaf-id="${target.leafId}"]`).boundingBox()
     expect(sourceBox).not.toBeNull()
     expect(targetBox).not.toBeNull()
     const sourceIndex = beforeOrder.indexOf(titledLeafId)
@@ -238,23 +234,23 @@ test.describe('Terminal Panes', () => {
     const targetDropX =
       sourceIndex < targetIndex ? targetBox!.x + targetBox!.width - 8 : targetBox!.x + 8
 
-    await dolphinPage.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + 4)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(targetDropX, targetBox!.y + targetBox!.height / 2, {
+    await appPage.mouse.move(sourceBox!.x + sourceBox!.width / 2, sourceBox!.y + 4)
+    await appPage.mouse.down()
+    await appPage.mouse.move(targetDropX, targetBox!.y + targetBox!.height / 2, {
       steps: 20
     })
-    await dolphinPage.mouse.up()
+    await appPage.mouse.up()
 
     await expect
-      .poll(async () => readTerminalPaneDomLeafOrder(dolphinPage), {
+      .poll(async () => readTerminalPaneDomLeafOrder(appPage), {
         timeout: 10_000,
         message: 'Title-strip pane drag did not update DOM order'
       })
       .not.toEqual(beforeOrder)
-    const afterDrag = await waitForPaneIdentitySnapshot(dolphinPage, 2)
+    const afterDrag = await waitForPaneIdentitySnapshot(appPage, 2)
     expect(afterDrag.panes.map((pane) => pane.leafId).sort()).toEqual(
       beforeDrag.panes.map((pane) => pane.leafId).sort()
     )
-    await expectPaneTitleAttachedToLeaf(dolphinPage, title, titledLeafId)
+    await expectPaneTitleAttachedToLeaf(appPage, title, titledLeafId)
   })
 })

@@ -122,16 +122,16 @@ async function typeHangulGanadaSlowly(
 }
 
 test.describe('Repository Display Name IME composition', () => {
-  test('keeps Hangul syllables composed while typing slowly', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test('keeps Hangul syllables composed while typing slowly', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
 
-    const repos = await getStoreState<Repo[]>(dolphinPage, 'repos')
+    const repos = await getStoreState<Repo[]>(appPage, 'repos')
     expect(repos.length).toBeGreaterThan(0)
     const repo = repos[0]
 
-    await openRepoSettings(dolphinPage, repo.id)
+    await openRepoSettings(appPage, repo.id)
 
-    const repoSection = dolphinPage.locator(`[data-settings-section="repo-${repo.id}"]`)
+    const repoSection = appPage.locator(`[data-settings-section="repo-${repo.id}"]`)
     const displayNameInput = repoSection.getByLabel('Display Name')
     await expect(displayNameInput).toHaveValue(repo.displayName)
 
@@ -140,8 +140,8 @@ test.describe('Repository Display Name IME composition', () => {
     await displayNameInput.fill('')
     await expect(displayNameInput).toHaveValue('')
 
-    const session = await dolphinPage.context().newCDPSession(dolphinPage)
-    await typeHangulGanadaSlowly(session, dolphinPage, displayNameInput)
+    const session = await appPage.context().newCDPSession(appPage)
+    await typeHangulGanadaSlowly(session, appPage, displayNameInput)
 
     // Why: with the store-bound controlled input, the async updateRepo echo
     // reset the field mid-composition, aborting the IME session per keystroke
@@ -152,7 +152,7 @@ test.describe('Repository Display Name IME composition', () => {
     await expect
       .poll(
         async () => {
-          const current = await getStoreState<Repo[]>(dolphinPage, 'repos')
+          const current = await getStoreState<Repo[]>(appPage, 'repos')
           return current.find((entry) => entry.id === repo.id)?.displayName
         },
         { timeout: 5_000, message: 'display name did not persist to the store' }

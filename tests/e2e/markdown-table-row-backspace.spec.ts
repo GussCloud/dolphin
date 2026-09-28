@@ -53,15 +53,15 @@ async function tableRowCount(page: {
 }
 
 test.describe('Markdown table keyboard', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('Tab/Shift-Tab move between cells and empty-row Backspace deletes the row', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    const context = await getActiveWorktreeContext(dolphinPage)
+    const context = await getActiveWorktreeContext(appPage)
     let filePath: string | null = null
 
     try {
@@ -71,8 +71,8 @@ test.describe('Markdown table keyboard', () => {
         testInfo.workerIndex,
         TABLE_MARKDOWN
       )
-      await openMarkdownFixture(dolphinPage, context, filePath)
-      const editor = await waitForRichMarkdownEditor(dolphinPage)
+      await openMarkdownFixture(appPage, context, filePath)
+      const editor = await waitForRichMarkdownEditor(appPage)
 
       await expect(editor.locator('tr')).toHaveCount(4, { timeout: 10_000 })
       await expect(editor.getByText('keep')).toBeVisible()
@@ -81,35 +81,35 @@ test.describe('Markdown table keyboard', () => {
       // ── Tab / Shift-Tab cell navigation ────────────────────────────
       await editor.getByText('keep').click()
 
-      await dolphinPage.keyboard.press('Tab')
+      await appPage.keyboard.press('Tab')
       await expect
-        .poll(async () => selectionCellText(dolphinPage), {
+        .poll(async () => selectionCellText(appPage), {
           timeout: 5_000,
           message: 'Tab should move from keep → a'
         })
         .toBe('a')
 
       // Next Tab lands in the empty body row (no text).
-      await dolphinPage.keyboard.press('Tab')
+      await appPage.keyboard.press('Tab')
       await expect
-        .poll(async () => selectionCellText(dolphinPage), {
+        .poll(async () => selectionCellText(appPage), {
           timeout: 5_000,
           message: 'Tab should wrap into the empty body row'
         })
         .toBe('')
 
-      await dolphinPage.keyboard.press('Shift+Tab')
+      await appPage.keyboard.press('Shift+Tab')
       await expect
-        .poll(async () => selectionCellText(dolphinPage), {
+        .poll(async () => selectionCellText(appPage), {
           timeout: 5_000,
           message: 'Shift-Tab should return to previous cell (a)'
         })
         .toBe('a')
 
       // Enter moves down a column, landing in the empty body row.
-      await dolphinPage.keyboard.press('Enter')
+      await appPage.keyboard.press('Enter')
       await expect
-        .poll(async () => selectionCellText(dolphinPage), {
+        .poll(async () => selectionCellText(appPage), {
           timeout: 5_000,
           message: 'Enter should move down into the empty body row'
         })
@@ -120,14 +120,14 @@ test.describe('Markdown table keyboard', () => {
       await editor.screenshot({
         path: path.join(SCRATCH_DIR, 'electron-table-row-backspace-before.png')
       })
-      await dolphinPage.screenshot({
+      await appPage.screenshot({
         path: path.join(SCRATCH_DIR, 'electron-table-row-backspace-before-window.png')
       })
 
-      await dolphinPage.keyboard.press('Backspace')
+      await appPage.keyboard.press('Backspace')
 
       await expect
-        .poll(async () => tableRowCount(dolphinPage), {
+        .poll(async () => tableRowCount(appPage), {
           timeout: 5_000,
           message: 'Empty body row should be removed after Backspace'
         })
@@ -139,12 +139,12 @@ test.describe('Markdown table keyboard', () => {
       await editor.screenshot({
         path: path.join(SCRATCH_DIR, 'electron-table-row-backspace-after.png')
       })
-      await dolphinPage.screenshot({
+      await appPage.screenshot({
         path: path.join(SCRATCH_DIR, 'electron-table-row-backspace-after-window.png')
       })
 
       // Hold a beat so the video recording captures the final table state.
-      await dolphinPage.waitForTimeout(800)
+      await appPage.waitForTimeout(800)
     } finally {
       await cleanupMarkdownFixture(filePath)
     }

@@ -695,53 +695,53 @@ async function captureQueuedMessageFrames(
 
 test.describe('Codex terminal cursor jitter repro', () => {
   test('keeps queued-message cursor out of the Working status row in native Windows Codex @headful', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.skip(process.platform !== 'win32', 'native Windows cursor repro only runs on Windows')
 
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await installPtyWriteDiagnostics(dolphinPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await installPtyWriteDiagnostics(appPage)
     rmSync(ARTIFACT_DIR, { recursive: true, force: true })
     mkdirSync(ARTIFACT_DIR, { recursive: true })
 
     const shellCase = SHELL_CASES[0]!
-    const { tabId, ptyId } = await prepareCodexTerminal(dolphinPage, shellCase)
-    await installPtyOutputDiagnostics(dolphinPage)
-    await dolphinPage.keyboard.type(CODEX_REPO_PROMPT)
-    await dolphinPage.waitForTimeout(250)
-    await dolphinPage.keyboard.press('Enter')
-    await dolphinPage.waitForTimeout(1_000)
-    if (!CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(dolphinPage, tabId, 8_000))) {
-      await dolphinPage.keyboard.press('Enter')
+    const { tabId, ptyId } = await prepareCodexTerminal(appPage, shellCase)
+    await installPtyOutputDiagnostics(appPage)
+    await appPage.keyboard.type(CODEX_REPO_PROMPT)
+    await appPage.waitForTimeout(250)
+    await appPage.keyboard.press('Enter')
+    await appPage.waitForTimeout(1_000)
+    if (!CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(appPage, tabId, 8_000))) {
+      await appPage.keyboard.press('Enter')
     }
-    await dolphinPage.waitForTimeout(3_000)
-    const submittedContent = await getTerminalContentForTab(dolphinPage, tabId, 8_000)
+    await appPage.waitForTimeout(3_000)
+    const submittedContent = await getTerminalContentForTab(appPage, tabId, 8_000)
     writeFileSync(path.join(ARTIFACT_DIR, 'queued-message-after-submit.txt'), submittedContent)
     await expect
       .poll(
         async () =>
-          CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(dolphinPage, tabId, 8_000)),
+          CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(appPage, tabId, 8_000)),
         {
           timeout: 30_000,
           message: 'Codex did not enter Working state'
         }
       )
       .toBe(true)
-    await applyCursorProbeTheme(dolphinPage, tabId)
+    await applyCursorProbeTheme(appPage, tabId)
     const workingOnlyFrames = await captureQueuedMessageFrames(
-      dolphinPage,
+      appPage,
       `${shellCase.label}-no-input`,
       tabId,
       ptyId,
       testInfo
     )
-    await dolphinPage.keyboard.insertText('s')
+    await appPage.keyboard.insertText('s')
     await expect
       .poll(
         async () =>
-          (await readScreenLines(dolphinPage, tabId)).some((line) => isQueuedInputLine(line.text)),
+          (await readScreenLines(appPage, tabId)).some((line) => isQueuedInputLine(line.text)),
         {
           timeout: 5_000,
           message: 'queued input did not appear before cursor capture'
@@ -749,15 +749,15 @@ test.describe('Codex terminal cursor jitter repro', () => {
       )
       .toBe(true)
     const frames = await captureQueuedMessageFrames(
-      dolphinPage,
+      appPage,
       shellCase.label,
       tabId,
       ptyId,
       testInfo
     )
 
-    const snapshot = await readScreenSnapshot(dolphinPage, shellCase.label, tabId, ptyId)
-    const rawChunks = await readPtyOutputDiagnostics(dolphinPage)
+    const snapshot = await readScreenSnapshot(appPage, shellCase.label, tabId, ptyId)
+    const rawChunks = await readPtyOutputDiagnostics(appPage)
     const visibleWorkingOnlyCursorFrames = workingOnlyFrames.filter(isPromptCursorFrame)
     const unexpectedWorkingOnlyCursorFrames = workingOnlyFrames.filter(
       isUnexpectedVisibleCursorFrame

@@ -103,14 +103,14 @@ function pendingAskTranscript(args: { sessionId: string; userText: string }): st
 
 test.describe('Desktop chat AskUserQuestion card (#11761)', () => {
   test('renders the answerable question card from the transcript when live status carries no ask', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const descriptor = await waitForActivePaneHookDescriptor(dolphinPage)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
     const [tabId] = descriptor.paneKey.split(':')
     const sessionId = `e2e-ask-card-${randomUUID()}`
 
@@ -123,45 +123,45 @@ test.describe('Desktop chat AskUserQuestion card (#11761)', () => {
       const userText = 'Reformat the config file for me'
       writeFileSync(transcriptPath, pendingAskTranscript({ sessionId, userText }))
 
-      await enableNativeChatSetting(dolphinPage)
-      await seedStatusWithoutAskPayload(dolphinPage, {
+      await enableNativeChatSetting(appPage)
+      await seedStatusWithoutAskPayload(appPage, {
         paneKey: descriptor.paneKey,
         worktreeId: descriptor.worktreeId,
         sessionId,
         transcriptPath
       })
-      await toggleTerminalTabToChatView(dolphinPage, { tabId, worktreeId: descriptor.worktreeId })
+      await toggleTerminalTabToChatView(appPage, { tabId, worktreeId: descriptor.worktreeId })
 
-      await expect(dolphinPage.locator('[data-native-chat-root="true"]')).toBeVisible({
+      await expect(appPage.locator('[data-native-chat-root="true"]')).toBeVisible({
         timeout: 15_000
       })
-      await expect(dolphinPage.getByText(userText)).toBeVisible({ timeout: 30_000 })
+      await expect(appPage.getByText(userText)).toBeVisible({ timeout: 30_000 })
 
       // The pre-fix build leaves the composer mounted here and never renders a
       // card, so this assertion is what actually gates the regression.
       // Why (#20724): the transcript row renders the pending question in an
       // awaiting-input row as well as the card, so gate on the card's own
       // title node instead of any text match.
-      const cardQuestion = dolphinPage
+      const cardQuestion = appPage
         .getByTestId('native-chat-question-card-title')
         .filter({ hasText: QUESTION })
       await expect(cardQuestion).toBeVisible({ timeout: 10_000 })
-      await expect(dolphinPage.getByRole('button', { name: /Spaces/ })).toBeVisible()
-      await dolphinPage.screenshot({ path: path.join(screenshotDir, '01-question-card.png') })
+      await expect(appPage.getByRole('button', { name: /Spaces/ })).toBeVisible()
+      await appPage.screenshot({ path: path.join(screenshotDir, '01-question-card.png') })
 
       // The submit button reads "Skip" until an option is chosen; picking one is
       // what proves the card is answerable rather than merely rendered.
-      await dolphinPage.getByRole('button', { name: /Spaces/ }).click()
-      await expect(dolphinPage.getByRole('button', { name: 'Submit' })).toBeVisible()
-      await dolphinPage.screenshot({ path: path.join(screenshotDir, '02-option-selected.png') })
+      await appPage.getByRole('button', { name: /Spaces/ }).click()
+      await expect(appPage.getByRole('button', { name: 'Submit' })).toBeVisible()
+      await appPage.screenshot({ path: path.join(screenshotDir, '02-option-selected.png') })
 
-      await dolphinPage.getByRole('button', { name: 'Submit' }).click()
+      await appPage.getByRole('button', { name: 'Submit' }).click()
       // The card owns the composer slot, so its disappearance is the visible
       // signal that the answer was accepted and chat input came back. The
       // resolution receipt keeps the question in the transcript row, so only
       // the card paragraph is expected to leave.
       await expect(cardQuestion).toHaveCount(0, { timeout: 20_000 })
-      await dolphinPage.screenshot({ path: path.join(screenshotDir, '03-answered.png') })
+      await appPage.screenshot({ path: path.join(screenshotDir, '03-answered.png') })
     } finally {
       rmSync(scratchDir, { recursive: true, force: true })
     }

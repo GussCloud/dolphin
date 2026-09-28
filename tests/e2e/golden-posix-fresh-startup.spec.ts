@@ -6,11 +6,9 @@ test.describe('POSIX fresh startup golden', () => {
   test.use({ dismissOnboarding: false, seedTestRepo: false })
 
   test('fresh profile reaches onboarding normally @posix-profile-index-golden', async ({
-    dolphinPage
+    appPage
   }) => {
-    await expect(
-      dolphinPage.getByRole('heading', { name: /Pick your default agent/i })
-    ).toBeVisible({
+    await expect(appPage.getByRole('heading', { name: /Pick your default agent/i })).toBeVisible({
       timeout: 30_000
     })
   })

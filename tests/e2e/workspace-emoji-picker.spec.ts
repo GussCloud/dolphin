@@ -12,34 +12,34 @@ async function captureProof(page: Page, testInfo: TestInfo, name: string): Promi
 }
 
 test.describe('Workspace emoji picker', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await dolphinPage.waitForTimeout(750)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await appPage.waitForTimeout(750)
   })
 
   test('inserts emoji in sidebar rename, worktree details, and Cmd+J', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    const title = dolphinPage.locator('[data-worktree-title-inline-rename=""]').first()
+    const title = appPage.locator('[data-worktree-title-inline-rename=""]').first()
     await expect(title).toBeVisible()
     await title.dblclick()
 
-    const inlineInput = dolphinPage.locator('[data-worktree-title-rename-input="true"]')
+    const inlineInput = appPage.locator('[data-worktree-title-rename-input="true"]')
     await expect(inlineInput).toBeVisible()
     await inlineInput.fill('Sidebar proof')
-    await captureProof(dolphinPage, testInfo, 'sidebar-rename-before.png')
+    await captureProof(appPage, testInfo, 'sidebar-rename-before.png')
     await inlineInput.pressSequentially(' :wink', { delay: 60 })
-    const inlineSuggestions = dolphinPage.locator('[data-workspace-emoji-suggestions="true"]')
+    const inlineSuggestions = appPage.locator('[data-workspace-emoji-suggestions="true"]')
     await expect(inlineSuggestions.getByRole('option', { name: ':wink:' })).toBeVisible()
-    await captureProof(dolphinPage, testInfo, 'sidebar-rename-picker.png')
+    await captureProof(appPage, testInfo, 'sidebar-rename-picker.png')
     await inlineInput.press('Enter')
     await expect(inlineInput).toHaveValue('Sidebar proof 😉 ')
     await inlineInput.press('Enter')
-    await expect(dolphinPage.getByText('Sidebar proof 😉', { exact: true }).first()).toBeVisible()
+    await expect(appPage.getByText('Sidebar proof 😉', { exact: true }).first()).toBeVisible()
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const state = window.__store!.getState()
       const worktree = Object.values(state.worktreesByRepo)
         .flat()
@@ -56,33 +56,33 @@ test.describe('Workspace emoji picker', () => {
       })
     })
 
-    const detailsDialog = dolphinPage.getByRole('dialog', { name: 'Edit Worktree Details' })
+    const detailsDialog = appPage.getByRole('dialog', { name: 'Edit Worktree Details' })
     const displayNameInput = detailsDialog.getByPlaceholder('Custom display name...')
     await expect(displayNameInput).toBeFocused()
     await displayNameInput.fill('Details proof')
-    await captureProof(dolphinPage, testInfo, 'worktree-details-before.png')
+    await captureProof(appPage, testInfo, 'worktree-details-before.png')
     await displayNameInput.pressSequentially(' :wink', { delay: 60 })
     const detailsSuggestions = detailsDialog.locator('[data-workspace-emoji-suggestions="true"]')
     await expect(detailsSuggestions.getByRole('option', { name: ':wink:' })).toBeVisible()
-    await captureProof(dolphinPage, testInfo, 'worktree-details-picker.png')
+    await captureProof(appPage, testInfo, 'worktree-details-picker.png')
     await displayNameInput.press('Enter')
     await expect(displayNameInput).toHaveValue('Details proof 😉 ')
     await detailsDialog.getByRole('button', { name: 'Cancel' }).click()
 
-    await dolphinPage.evaluate(() => window.__store!.getState().openModal('worktree-palette'))
-    const palette = dolphinPage.getByRole('dialog', { name: 'Jump to...' })
+    await appPage.evaluate(() => window.__store!.getState().openModal('worktree-palette'))
+    const palette = appPage.getByRole('dialog', { name: 'Jump to...' })
     const paletteInput = palette.getByPlaceholder(
       'Search chats, terminals, worktrees, settings, and actions...'
     )
     await expect(paletteInput).toBeFocused()
-    await captureProof(dolphinPage, testInfo, 'cmd-j-before.png')
+    await captureProof(appPage, testInfo, 'cmd-j-before.png')
     await paletteInput.pressSequentially(':wink', { delay: 60 })
     const paletteSuggestions = palette.locator('[data-workspace-emoji-suggestions="true"]')
     await expect(paletteSuggestions.getByRole('option', { name: ':wink:' })).toBeVisible()
-    await captureProof(dolphinPage, testInfo, 'cmd-j-picker.png')
+    await captureProof(appPage, testInfo, 'cmd-j-picker.png')
     await paletteInput.press('Enter')
     await expect(paletteInput).toHaveValue('😉 ')
     await expect(palette.getByText('Sidebar proof 😉', { exact: true }).first()).toBeVisible()
-    await dolphinPage.waitForTimeout(750)
+    await appPage.waitForTimeout(750)
   })
 })

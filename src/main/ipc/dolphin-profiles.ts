@@ -4,10 +4,10 @@ import { relaunchApp, type AppRelaunchReason } from '../app-relaunch'
 import type {
   CreateLocalDolphinProfileArgs,
   CreateLocalDolphinProfileResult,
-  CreateCloudLinkedDolphinProfileArgs,
+  CreateCloudLinkedDolphinProfileArgs as CreateCloudLinkedArgs,
   CreateCloudLinkedDolphinProfileResult,
-  FindDolphinProfileProjectsByPathArgs,
-  FindDolphinProfileProjectsByPathResult,
+  FindDolphinProfileProjectsByPathArgs as FindProjectsArgs,
+  FindDolphinProfileProjectsByPathResult as FindProjectsResult,
   DolphinProfileListResult,
   RefreshCurrentDolphinProfileAuthResult,
   SwitchDolphinProfileArgs,
@@ -16,8 +16,8 @@ import type {
   TransferDolphinProfileProjectResult,
   ConnectCurrentDolphinProfileResult,
   DolphinProfileAuthStatus,
-  SelectDolphinProfileOrgArgs,
-  SelectDolphinProfileOrgResult,
+  SelectDolphinProfileOrgArgs as SelectOrgArgs,
+  SelectDolphinProfileOrgResult as SelectOrgResult,
   SignOutCurrentDolphinProfileResult
 } from '../../shared/dolphin-profiles'
 import {
@@ -70,16 +70,16 @@ function profileIdFromArgs(args: unknown): string {
   return profileId
 }
 
-function findProjectsByPathArgsFromUnknown(args: unknown): FindDolphinProfileProjectsByPathArgs {
+function findProjectsByPathArgsFromUnknown(args: unknown): FindProjectsArgs {
   if (!args || typeof args !== 'object') {
     throw new Error('invalid_dolphin_profile_project_path')
   }
-  const candidate = args as FindDolphinProfileProjectsByPathArgs
+  const candidate = args as FindProjectsArgs
   const path = typeof candidate.path === 'string' ? candidate.path.trim() : ''
   if (!path) {
     throw new Error('invalid_dolphin_profile_project_path')
   }
-  let executionHostId: FindDolphinProfileProjectsByPathArgs['executionHostId'] = null
+  let executionHostId: FindProjectsArgs['executionHostId'] = null
   if (candidate.executionHostId !== null && candidate.executionHostId !== undefined) {
     if (typeof candidate.executionHostId !== 'string') {
       throw new Error('invalid_dolphin_profile_project_path')
@@ -105,20 +105,18 @@ function orgIdFromUnknown(args: unknown): string {
   if (!args || typeof args !== 'object') {
     throw new Error('invalid_dolphin_profile_org_selection')
   }
-  const orgId = (args as SelectDolphinProfileOrgArgs).orgId?.trim()
+  const orgId = (args as SelectOrgArgs).orgId?.trim()
   if (!orgId) {
     throw new Error('invalid_dolphin_profile_org_selection')
   }
   return orgId
 }
 
-function createCloudLinkedProfileArgsFromUnknown(
-  args: unknown
-): CreateCloudLinkedDolphinProfileArgs {
+function createCloudLinkedProfileArgsFromUnknown(args: unknown): CreateCloudLinkedArgs {
   if (!args || typeof args !== 'object') {
     return {}
   }
-  const candidate = args as CreateCloudLinkedDolphinProfileArgs
+  const candidate = args as CreateCloudLinkedArgs
   const orgId = typeof candidate.orgId === 'string' ? candidate.orgId.trim() : undefined
   const name = typeof candidate.name === 'string' ? candidate.name.trim() : undefined
   return {
@@ -266,10 +264,7 @@ export function registerDolphinProfileHandlers(
 
   ipcMain.handle(
     'dolphinProfiles:findProjectProfiles',
-    (
-      _event,
-      rawArgs: FindDolphinProfileProjectsByPathArgs
-    ): FindDolphinProfileProjectsByPathResult =>
+    (_event, rawArgs: FindProjectsArgs): FindProjectsResult =>
       findDolphinProfileProjectsByPath(
         findProjectsByPathArgsFromUnknown(rawArgs),
         getProfileUserDataPath()
@@ -291,7 +286,7 @@ export function registerDolphinProfileHandlers(
     'dolphinProfiles:createCloudLinked',
     async (
       _event,
-      rawArgs?: CreateCloudLinkedDolphinProfileArgs
+      rawArgs?: CreateCloudLinkedArgs
     ): Promise<CreateCloudLinkedDolphinProfileResult> => {
       const result = await createCloudLinkedDolphinProfile(
         getProfileUserDataPath(),
@@ -326,10 +321,7 @@ export function registerDolphinProfileHandlers(
 
   ipcMain.handle(
     'dolphinProfiles:selectOrg',
-    async (
-      _event,
-      rawArgs: SelectDolphinProfileOrgArgs
-    ): Promise<SelectDolphinProfileOrgResult> => {
+    async (_event, rawArgs: SelectOrgArgs): Promise<SelectOrgResult> => {
       const result = await selectCurrentDolphinProfileOrg(
         getProfileUserDataPath(),
         orgIdFromUnknown(rawArgs)

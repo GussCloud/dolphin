@@ -249,20 +249,20 @@ test.describe('Terminal Hangul wrap-boundary byte exactness', () => {
   for (const scenario of SCENARIOS) {
     for (const policy of scenario.policies) {
       test(`sends ${scenario.name} unaltered to the pty (${policy})`, async ({
-        dolphinPage,
+        appPage,
         testRepoPath
       }, testInfo) => {
-        await applyImePlatformPolicy(dolphinPage, policy)
-        await expectImePlatformPolicy(dolphinPage, policy)
-        await narrowPaneBySplitting(dolphinPage, 2)
+        await applyImePlatformPolicy(appPage, policy)
+        await expectImePlatformPolicy(appPage, policy)
+        await narrowPaneBySplitting(appPage, 2)
 
-        const arena = await openTerminalImePaneArena(dolphinPage)
+        const arena = await openTerminalImePaneArena(appPage)
         const reader = createTerminalImeByteReader(testRepoPath, 1)
         let completed = false
         try {
-          await startTerminalImeByteReader(dolphinPage, arena.ptyId, reader)
+          await startTerminalImeByteReader(appPage, arena.ptyId, reader)
 
-          const observedCols = await waitForSettledCols(dolphinPage, arena.ptyId)
+          const observedCols = await waitForSettledCols(appPage, arena.ptyId)
           const run = buildHangulRun(scenario.syllableCount(observedCols))
           const prefix = scenario.offsetByOneCell ? OFFSET_KEY.key : ''
           const expectedText = prefix + run.map((syllable) => syllable.text).join('')
@@ -271,15 +271,15 @@ test.describe('Terminal Hangul wrap-boundary byte exactness', () => {
             description: `${observedCols} cols, ${run.length} syllables, offset ${prefix.length}`
           })
 
-          const startRow = (await readPaneGrid(dolphinPage, arena.ptyId)).cursorRow
+          const startRow = (await readPaneGrid(appPage, arena.ptyId)).cursorRow
           if (scenario.offsetByOneCell) {
             await dispatchImeRewrittenPrintableKey(arena.session, OFFSET_KEY)
           }
-          await scenario.drive(arena.session, dolphinPage, run)
+          await scenario.drive(arena.session, appPage, run)
           // The guard that stops this passing by measuring nothing: the echoed run has to have
           // pushed the cursor onto a later row, which is the wrap the whole spec is about.
           await expect
-            .poll(async () => (await readPaneGrid(dolphinPage, arena.ptyId)).cursorRow, {
+            .poll(async () => (await readPaneGrid(appPage, arena.ptyId)).cursorRow, {
               timeout: 10_000,
               message: `run of ${run.length} syllables never wrapped at ${observedCols} cols`
             })
@@ -287,7 +287,7 @@ test.describe('Terminal Hangul wrap-boundary byte exactness', () => {
 
           await dispatchPlainEnter(arena.session)
 
-          const received = await waitForTerminalImeBytes(dolphinPage, reader, 20_000)
+          const received = await waitForTerminalImeBytes(appPage, reader, 20_000)
           expectExactPtyInput(received, expectedText)
           completed = true
         } finally {

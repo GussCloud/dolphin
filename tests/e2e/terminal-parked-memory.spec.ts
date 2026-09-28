@@ -263,37 +263,33 @@ function formatParkedMemoryAnnotation(metrics: ParkedMemoryMetrics, parkedTabs: 
 
 test.describe('Terminal parked memory', () => {
   test('releases renderer terminal memory when hidden tabs park', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
     test.setTimeout(PARKED_MEMORY_TEST_TIMEOUT_MS)
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
 
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-parked-memory-${runId}.mjs`)
     writeScrollbackFillScript(scriptPath, runId)
     try {
-      const { worktreeId, scrollbackTabs } = await setUpScrollbackTabs(
-        dolphinPage,
-        scriptPath,
-        runId
-      )
+      const { worktreeId, scrollbackTabs } = await setUpScrollbackTabs(appPage, scriptPath, runId)
 
       // A fresh 9th tab hides all 8 scrollback tabs. The last one filled is the
       // most-recently-hidden, so it stays warm under the last-active exemption;
       // the other 7 park.
-      const visibleTab = await createActiveTerminalTab(dolphinPage, worktreeId)
+      const visibleTab = await createActiveTerminalTab(appPage, worktreeId)
       const lastActiveTab = scrollbackTabs.at(-1)
       if (!lastActiveTab) {
         throw new Error('parked memory spec: no scrollback tabs were created')
       }
       const parkableTabs = scrollbackTabs.slice(0, -1)
       await waitForTabsParkedExceptLastActive(
-        dolphinPage,
+        appPage,
         scrollbackTabs.map((tab) => tab.tabId)
       )
 
-      const metrics = await sampleParkedMemoryMetrics(dolphinPage)
+      const metrics = await sampleParkedMemoryMetrics(appPage)
       testInfo.annotations.push({
         type: 'opencode-parked-memory',
         description: formatParkedMemoryAnnotation(metrics, parkableTabs.length)
@@ -302,12 +298,10 @@ test.describe('Terminal parked memory', () => {
       // Structural assertions: the 7 non-last-active tabs parked (managers
       // gone); the visible tab and the exempt last-active tab keep theirs.
       for (const tab of parkableTabs) {
-        expect((await readTerminalTabViewState(dolphinPage, tab.tabId)).hasManager).toBe(false)
+        expect((await readTerminalTabViewState(appPage, tab.tabId)).hasManager).toBe(false)
       }
-      expect((await readTerminalTabViewState(dolphinPage, lastActiveTab.tabId)).hasManager).toBe(
-        true
-      )
-      const visibleState = await readTerminalTabViewState(dolphinPage, visibleTab.tabId)
+      expect((await readTerminalTabViewState(appPage, lastActiveTab.tabId)).hasManager).toBe(true)
+      const visibleState = await readTerminalTabViewState(appPage, visibleTab.tabId)
       expect(visibleState.hasManager).toBe(true)
       expect(visibleState.paneCount).toBeGreaterThan(0)
       // Why: design invariant 5 — renderer terminal views scale with mounted
@@ -320,18 +314,18 @@ test.describe('Terminal parked memory', () => {
   })
 
   test('retains terminal views when parking is disabled', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
     test.setTimeout(PARKED_MEMORY_TEST_TIMEOUT_MS)
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
 
     // Why: settings.terminalHiddenViewParking === false is the design-doc
     // kill switch. updateSettings persists it through window.api.settings.set
     // and updates the store slice the cold-park hook subscribes to — the same
     // mutation path dead-terminal-repro.spec.ts uses, so no extra launch-env
     // wiring is needed.
-    await dolphinPage.evaluate(async () => {
+    await appPage.evaluate(async () => {
       const store = window.__store
       if (!store) {
         throw new Error('parked memory spec: window.__store is unavailable')
@@ -341,9 +335,7 @@ test.describe('Terminal parked memory', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
-            () => window.__store?.getState().settings?.terminalHiddenViewParking
-          ),
+          appPage.evaluate(() => window.__store?.getState().settings?.terminalHiddenViewParking),
         { timeout: 5_000, message: 'terminalHiddenViewParking kill switch did not persist' }
       )
       .toBe(false)
@@ -352,23 +344,17 @@ test.describe('Terminal parked memory', () => {
     const scriptPath = path.join(testRepoPath, `.dolphin-parked-memory-${runId}.mjs`)
     writeScrollbackFillScript(scriptPath, runId)
     try {
-      const { worktreeId, scrollbackTabs } = await setUpScrollbackTabs(
-        dolphinPage,
-        scriptPath,
-        runId
-      )
+      const { worktreeId, scrollbackTabs } = await setUpScrollbackTabs(appPage, scriptPath, runId)
       const scrollbackTabIds = scrollbackTabs.map((tab) => tab.tabId)
 
-      const visibleTab = await createActiveTerminalTab(dolphinPage, worktreeId)
+      const visibleTab = await createActiveTerminalTab(appPage, worktreeId)
       // Why: with parking enabled these tabs park within ~1x the collapsed
       // delay (the first test proves the machinery in this app build), so
       // surviving 3x the delay shows the kill switch held.
-      await dolphinPage.waitForTimeout(PARKING_DELAY_MS * 3)
-      expect(await countMountedPaneManagers(dolphinPage, scrollbackTabIds)).toBe(
-        SCROLLBACK_TAB_COUNT
-      )
+      await appPage.waitForTimeout(PARKING_DELAY_MS * 3)
+      expect(await countMountedPaneManagers(appPage, scrollbackTabIds)).toBe(SCROLLBACK_TAB_COUNT)
 
-      const metrics = await sampleParkedMemoryMetrics(dolphinPage)
+      const metrics = await sampleParkedMemoryMetrics(appPage)
       testInfo.annotations.push({
         type: 'opencode-parked-memory-disabled',
         description: formatParkedMemoryAnnotation(metrics, 0)
@@ -377,11 +363,11 @@ test.describe('Terminal parked memory', () => {
       // Structural assertions: every hidden tab keeps its pane manager and
       // xterm; nothing parked even after the settle + sampling window.
       for (const tab of scrollbackTabs) {
-        const state = await readTerminalTabViewState(dolphinPage, tab.tabId)
+        const state = await readTerminalTabViewState(appPage, tab.tabId)
         expect(state.hasManager).toBe(true)
         expect(state.paneCount).toBeGreaterThan(0)
       }
-      expect((await readTerminalTabViewState(dolphinPage, visibleTab.tabId)).hasManager).toBe(true)
+      expect((await readTerminalTabViewState(appPage, visibleTab.tabId)).hasManager).toBe(true)
       expect(metrics.livePaneManagers).toBe(SCROLLBACK_TAB_COUNT + 1)
       expect(metrics.liveTerminals).toBe(SCROLLBACK_TAB_COUNT + 1)
     } finally {
@@ -622,15 +608,15 @@ test.describe('Terminal hidden worktree retention budget', () => {
   })
 
   test('releases un-parkable hidden worktree buffers only once the retention budget engages', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
     test.setTimeout(RETENTION_TEST_TIMEOUT_MS)
-    await waitForSessionReady(dolphinPage)
-    const victimWorktreeId = await waitForActiveWorktree(dolphinPage)
-    await skipUnlessParkingWired(dolphinPage)
+    await waitForSessionReady(appPage)
+    const victimWorktreeId = await waitForActiveWorktree(appPage)
+    await skipUnlessParkingWired(appPage)
 
-    const decoyWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
+    const decoyWorktreeId = (await getAllWorktreeIds(appPage)).find(
       (worktreeId) => worktreeId !== victimWorktreeId
     )
     if (!decoyWorktreeId) {
@@ -640,19 +626,19 @@ test.describe('Terminal hidden worktree retention budget', () => {
     // Budget OFF for the whole staging phase: that is the control arm proving
     // ordinary parking can never evict this class, and it makes the release
     // below attributable to the flip alone.
-    await updateTerminalSettings(dolphinPage, {
+    await updateTerminalSettings(appPage, {
       terminalHiddenWorktreeRetentionBudget: false,
       terminalScrollbackRows: RETENTION_SCROLLBACK_ROWS
     })
-    await waitForRetentionBudgetSetting(dolphinPage, false)
+    await waitForRetentionBudgetSetting(appPage, false)
 
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-retention-memory-${runId}.mjs`)
     writeScrollbackFillScript(scriptPath, runId, RETENTION_FILL_LINE_COUNT)
     try {
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
-      const baselineSnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      const baselineSnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
       const baselinePtyId = baselineSnapshot.panes[0]?.ptyId
       if (!baselinePtyId) {
         throw new Error('retention budget spec: baseline terminal tab did not bind a PTY')
@@ -661,56 +647,52 @@ test.describe('Terminal hidden worktree retention budget', () => {
       const victimTabs: ScrollbackTab[] = [{ tabId: baselineSnapshot.tabId, ptyId: baselinePtyId }]
       for (let tabIndex = 0; tabIndex < RETENTION_TAB_COUNT; tabIndex += 1) {
         if (tabIndex > 0) {
-          victimTabs.push(await createActiveTerminalTab(dolphinPage, victimWorktreeId))
+          victimTabs.push(await createActiveTerminalTab(appPage, victimWorktreeId))
         }
         const tab = victimTabs[tabIndex]
-        await sendToTerminal(
-          dolphinPage,
-          tab.ptyId,
-          `node ${JSON.stringify(scriptPath)} ${tabIndex}\r`
-        )
+        await sendToTerminal(appPage, tab.ptyId, `node ${JSON.stringify(scriptPath)} ${tabIndex}\r`)
         await waitForFillMarkerInTab(
-          dolphinPage,
+          appPage,
           tab.tabId,
           `PARKED_MEMORY_FILL_DONE_${runId}_${tabIndex}`
         )
         // Why stage after every fill rather than once at the end: each later
         // fill takes seconds, and ordinary TAB-level parking would evict the
         // already-hidden earlier tabs inside that window.
-        await stageUnparkableWorktreeTabs(dolphinPage, victimWorktreeId)
+        await stageUnparkableWorktreeTabs(appPage, victimWorktreeId)
       }
 
       // Hiding the victim first makes the decoy the more-recently-hidden
       // candidate, so the cap's last-active exemption lands on the decoy.
-      await switchToWorktree(dolphinPage, decoyWorktreeId)
+      await switchToWorktree(appPage, decoyWorktreeId)
       await expect
-        .poll(() => dolphinPage.evaluate(() => window.__store?.getState().activeWorktreeId), {
+        .poll(() => appPage.evaluate(() => window.__store?.getState().activeWorktreeId), {
           timeout: 5_000,
           message: 'decoy worktree did not become active before staging'
         })
         .toBe(decoyWorktreeId)
-      await ensureTerminalVisible(dolphinPage)
-      await waitForActiveTerminalManager(dolphinPage, 30_000)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
       // Why the active snapshot (not getWorktreeTabs alone): only tabs that
       // actually bound a PaneManager can prove retention; empty/deferred ids
       // would make the control arm look like a budget failure.
-      const decoySnapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+      const decoySnapshot = await waitForPaneIdentitySnapshot(appPage, 1)
       const decoyTabIds = [decoySnapshot.tabId]
-      expect(await countMountedPaneManagers(dolphinPage, decoyTabIds)).toBe(1)
+      expect(await countMountedPaneManagers(appPage, decoyTabIds)).toBe(1)
 
       // Leaving the terminal view hides BOTH worktrees while keeping them
       // mounted (App.tsx hides the workbench, it does not unmount it).
-      await dolphinPage.evaluate(() => {
+      await appPage.evaluate(() => {
         window.__store?.getState().setActiveView('tasks')
       })
       // Why stage AFTER hide: while a pane is visible/active, bind can rewrite
       // our remote: fake ids back onto tab/layout state, so the decoy looks
       // park-restorable and ordinary parking unmounts it during the control
       // arm. Staging only once both are hidden keeps classification stable.
-      await stageUnparkableWorktreeTabs(dolphinPage, victimWorktreeId)
-      await stageUnparkableWorktreeTabs(dolphinPage, decoyWorktreeId)
-      await waitForUnparkableWorktreeTabs(dolphinPage, victimWorktreeId)
-      await waitForUnparkableWorktreeTabs(dolphinPage, decoyWorktreeId)
+      await stageUnparkableWorktreeTabs(appPage, victimWorktreeId)
+      await stageUnparkableWorktreeTabs(appPage, decoyWorktreeId)
+      await waitForUnparkableWorktreeTabs(appPage, victimWorktreeId)
+      await waitForUnparkableWorktreeTabs(appPage, decoyWorktreeId)
 
       const victimTabIds = victimTabs.map((tab) => tab.tabId)
       expect(victimTabIds).toHaveLength(RETENTION_TAB_COUNT)
@@ -721,10 +703,10 @@ test.describe('Terminal hidden worktree retention budget', () => {
       await expect
         .poll(
           async () => {
-            await stageUnparkableWorktreeTabs(dolphinPage, victimWorktreeId)
-            await stageUnparkableWorktreeTabs(dolphinPage, decoyWorktreeId)
-            const victimMounted = await countMountedPaneManagers(dolphinPage, victimTabIds)
-            const decoyMounted = await countMountedPaneManagers(dolphinPage, decoyTabIds)
+            await stageUnparkableWorktreeTabs(appPage, victimWorktreeId)
+            await stageUnparkableWorktreeTabs(appPage, decoyWorktreeId)
+            const victimMounted = await countMountedPaneManagers(appPage, victimTabIds)
+            const decoyMounted = await countMountedPaneManagers(appPage, decoyTabIds)
             const heldLongEnough = Date.now() - controlArmStartedAt >= PARKING_DELAY_MS * 4
             return {
               victimMounted,
@@ -743,24 +725,24 @@ test.describe('Terminal hidden worktree retention budget', () => {
           decoyMounted: 1,
           heldLongEnough: true
         })
-      await waitForUnparkableWorktreeTabs(dolphinPage, victimWorktreeId)
-      await waitForUnparkableWorktreeTabs(dolphinPage, decoyWorktreeId)
+      await waitForUnparkableWorktreeTabs(appPage, victimWorktreeId)
+      await waitForUnparkableWorktreeTabs(appPage, decoyWorktreeId)
 
-      const before = await readRetentionMemorySample(dolphinPage)
+      const before = await readRetentionMemorySample(appPage)
       expect(before.bufferMb).toBeGreaterThan(MIN_STAGED_BUFFER_MB)
 
       const flipStartedAt = Date.now()
-      await updateTerminalSettings(dolphinPage, { terminalHiddenWorktreeRetentionBudget: true })
-      await waitForRetentionBudgetSetting(dolphinPage, true)
+      await updateTerminalSettings(appPage, { terminalHiddenWorktreeRetentionBudget: true })
+      await waitForRetentionBudgetSetting(appPage, true)
       await expect
-        .poll(() => countMountedPaneManagers(dolphinPage, victimTabIds), {
+        .poll(() => countMountedPaneManagers(appPage, victimTabIds), {
           timeout: 30_000,
           message: 'retention budget did not force-park the older hidden un-parkable worktree'
         })
         .toBe(0)
       const evictionMs = Date.now() - flipStartedAt
 
-      const after = await readRetentionMemorySample(dolphinPage)
+      const after = await readRetentionMemorySample(appPage)
       testInfo.annotations.push({
         type: 'terminal-retention-budget-memory',
         description: [
@@ -777,7 +759,7 @@ test.describe('Terminal hidden worktree retention budget', () => {
       expect(after.buffers.cells).toBeLessThan(before.buffers.cells * MAX_RETAINED_CELL_FRACTION)
       // The decoy holds the cap's last-active exemption, so it stays mounted —
       // this is the same run proving the cap did not simply evict everything.
-      expect(await countMountedPaneManagers(dolphinPage, decoyTabIds)).toBe(decoyTabIds.length)
+      expect(await countMountedPaneManagers(appPage, decoyTabIds)).toBe(decoyTabIds.length)
       // Secondary only: freed typed arrays return to the allocator's free lists,
       // not the OS, so RSS fell just 0.7-3.0 MB locally while 87 MB of buffer was
       // released — a strict non-growth assertion would be reading sampling noise.

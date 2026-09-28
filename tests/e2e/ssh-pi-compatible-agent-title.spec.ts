@@ -72,43 +72,43 @@ test.describe('Docker SSH Pi-compatible agent titles', () => {
   test.skip(process.platform === 'win32', 'Docker SSH relay tests use POSIX ssh tooling.')
 
   test('classifies OMP and Pi title transitions from a remote terminal', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      const terminalHandle = await findTerminalByPtyId(dolphinPage, ptyId)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
+      const terminalHandle = await findTerminalByPtyId(appPage, ptyId)
 
       const marker = `PI_COMPATIBLE_TITLE_READY_${Date.now()}`
-      await sendToTerminal(dolphinPage, ptyId, `printf '${marker}\\n'\r`)
-      await waitForTerminalOutput(dolphinPage, marker, 20_000, 60_000)
+      await sendToTerminal(appPage, ptyId, `printf '${marker}\\n'\r`)
+      await waitForTerminalOutput(appPage, marker, 20_000, 60_000)
 
-      await emitOscTitle(dolphinPage, ptyId, '\u280b OMP')
+      await emitOscTitle(appPage, ptyId, '\u280b OMP')
       await expect
-        .poll(async () => readTerminalAgentStatus(dolphinPage, terminalHandle), {
+        .poll(async () => readTerminalAgentStatus(appPage, terminalHandle), {
           timeout: 10_000,
           message: 'Remote OMP working title did not classify as an agent status'
         })
         .toMatchObject({ isRunningAgent: true, status: 'working' })
 
-      await emitOscTitle(dolphinPage, ptyId, 'OMP ready')
+      await emitOscTitle(appPage, ptyId, 'OMP ready')
       await expect
-        .poll(async () => readTerminalAgentStatus(dolphinPage, terminalHandle), {
+        .poll(async () => readTerminalAgentStatus(appPage, terminalHandle), {
           timeout: 10_000,
           message: 'Remote OMP ready title did not classify as idle'
         })
         .toMatchObject({ isRunningAgent: true, status: 'idle' })
 
-      await emitOscTitle(dolphinPage, ptyId, '\u280b Pi')
+      await emitOscTitle(appPage, ptyId, '\u280b Pi')
       await expect
-        .poll(async () => readTerminalAgentStatus(dolphinPage, terminalHandle), {
+        .poll(async () => readTerminalAgentStatus(appPage, terminalHandle), {
           timeout: 10_000,
           message: 'Remote Pi working title did not classify as an agent status'
         })

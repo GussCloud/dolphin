@@ -60,32 +60,32 @@ test.describe('SSH reconnect tab destruction', () => {
   test.skip(!RUN_DOCKER_SSH, 'Set DOLPHIN_E2E_SSH_DOCKER=1 to run the dockerized SSH relay tests')
 
   test('keeps a tab created right after a reconnect alive across the next one', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
       // Awaited, not captured: the pane must be bound before the first reconnect, but the id itself
       // is not what this spec asserts on — tab survival is.
-      await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForActivePanePtyId(appPage, 60_000)
 
-      await reconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      await waitForActivePanePtyId(dolphinPage, 60_000)
+      await reconnectDockerSshRelayTarget(appPage, remote.targetId)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      await waitForActivePanePtyId(appPage, 60_000)
 
       // Immediately after the apply, i.e. inside the 1s suppression window, so the tab's creation
       // is dropped from the session write rather than deferred. This is the ordinary thing a user
       // does; the timing is not contrived.
-      await openTerminalTabInActiveGroup(dolphinPage)
+      await openTerminalTabInActiveGroup(appPage)
       // Only that the tab exists in the store — no waiting for its manager or PTY. Every wait here
       // is time the debounced upload can use to land, which is what made this spec miss the bug.
-      const tabIdsBefore = await dolphinPage.evaluate(() => {
+      const tabIdsBefore = await appPage.evaluate(() => {
         const state = window.__store?.getState()
         const worktreeId = state?.activeWorktreeId
         return worktreeId ? (state?.tabsByWorktree?.[worktreeId] ?? []).map((tab) => tab.id) : []
@@ -96,12 +96,12 @@ test.describe('SSH reconnect tab destruction', () => {
       // while the tab's creation is still unuploaded, so idling here — as waiting for a TUI to draw
       // did — lets the debounced write land and the bug evaporate. That is exactly why an earlier
       // version of this spec passed with the bug still present, and why it was worthless as a guard.
-      await reconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await reconnectDockerSshRelayTarget(appPage, remote.targetId)
+      await waitForActiveTerminalManager(appPage, 60_000)
 
       // Checked BEFORE any paint assertion: survival and repaint are different failures, and this
       // order names which one broke instead of collapsing both into "no output".
-      const tabState = await dolphinPage.evaluate(() => {
+      const tabState = await appPage.evaluate(() => {
         const state = window.__store?.getState()
         const worktreeId = state?.activeWorktreeId
         return {

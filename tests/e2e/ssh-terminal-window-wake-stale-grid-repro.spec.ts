@@ -50,27 +50,27 @@ test.describe('SSH terminal window-wake stale PTY grid repro', () => {
   test.skip(process.platform === 'win32', 'Docker SSH repro uses POSIX SSH tooling.')
 
   test('window focus heals a remote PTY whose applied grid drifted from xterm', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(240_000)
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
       const pageErrors: string[] = []
-      dolphinPage.on('pageerror', (error) => pageErrors.push(error.message))
+      appPage.on('pageerror', (error) => pageErrors.push(error.message))
       installIdleGridMonitor(target)
-      await dolphinPage.setViewportSize(BASE_VIEWPORT)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const identity = await dolphinPage.evaluate(() => window.api.app.getIdentity())
+      await appPage.setViewportSize(BASE_VIEWPORT)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const identity = await appPage.evaluate(() => window.api.app.getIdentity())
       expect(identity.isDev).toBe(true)
       expect(identity.devWorktreeName).toBe(path.basename(process.cwd()))
 
-      await connectDockerSshRelayTarget(dolphinPage, target, { relayGracePeriodSeconds: 300 })
-      await ensureTerminalVisible(dolphinPage, 60_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      await startRemoteMonitor(dolphinPage, ptyId)
+      await connectDockerSshRelayTarget(appPage, target, { relayGracePeriodSeconds: 300 })
+      await ensureTerminalVisible(appPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
+      await startRemoteMonitor(appPage, ptyId)
       await expect
         .poll(
           () => {
@@ -87,37 +87,31 @@ test.describe('SSH terminal window-wake stale PTY grid repro', () => {
       await expect
         .poll(
           async () =>
-            actualGridMatchesXterm(
-              readRemoteGrid(target!),
-              await readRendererGrid(dolphinPage, ptyId)
-            ),
+            actualGridMatchesXterm(readRemoteGrid(target!), await readRendererGrid(appPage, ptyId)),
           { timeout: 15_000, message: 'Remote PTY and xterm did not establish a matching baseline' }
         )
         .toBe(true)
 
-      const baseline = await readRendererGrid(dolphinPage, ptyId)
+      const baseline = await readRendererGrid(appPage, ptyId)
       if (!baseline.xterm) {
         throw new Error('Active xterm grid unavailable')
       }
       const staleGrid = chooseStaleGrid(baseline.xterm)
-      await dolphinPage.evaluate(
-        ({ id, grid }) => window.api.pty.resize(id, grid.cols, grid.rows),
-        {
-          id: ptyId,
-          grid: staleGrid
-        }
-      )
+      await appPage.evaluate(({ id, grid }) => window.api.pty.resize(id, grid.cols, grid.rows), {
+        id: ptyId,
+        grid: staleGrid
+      })
       await expect.poll(() => readRemoteGrid(target!).cols, { timeout: 5_000 }).toBe(staleGrid.cols)
       await expect.poll(() => readRemoteGrid(target!).rows, { timeout: 5_000 }).toBe(staleGrid.rows)
 
-      const drifted = await readRendererGrid(dolphinPage, ptyId)
+      const drifted = await readRendererGrid(appPage, ptyId)
       expect(drifted.xterm).toEqual(baseline.xterm)
       expect(drifted.applied).toEqual(staleGrid)
 
-      await dolphinPage.evaluate(() => window.dispatchEvent(new Event('focus')))
+      await appPage.evaluate(() => window.dispatchEvent(new Event('focus')))
       const wakeResult = await sampleRemoteConvergence({
         cycle: 0,
-        page: dolphinPage,
+        page: appPage,
         ptyId,
         target,
         timeoutMs: 3_000
@@ -125,20 +119,20 @@ test.describe('SSH terminal window-wake stale PTY grid repro', () => {
 
       if (!actualGridMatchesXterm(wakeResult.last.remote, wakeResult.last.renderer)) {
         await attachStaleGridEvidence(
-          dolphinPage,
+          appPage,
           testInfo,
           'ssh-window-focus-stale-grid',
           wakeResult.stale
         )
         // Manual resize is the field workaround and proves the remote channel
         // can still deliver the corrective SIGWINCH.
-        await dolphinPage.setViewportSize({
+        await appPage.setViewportSize({
           width: BASE_VIEWPORT.width + 24,
           height: BASE_VIEWPORT.height + 24
         })
         const manualResize = await sampleRemoteConvergence({
           cycle: 1,
-          page: dolphinPage,
+          page: appPage,
           ptyId,
           target,
           timeoutMs: 6_000
@@ -186,7 +180,7 @@ test.describe('SSH terminal window-wake stale PTY grid repro', () => {
         description: JSON.stringify(evidence)
       })
       const healedScreenshot = testInfo.outputPath('ssh-window-focus-healed.png')
-      await dolphinPage.screenshot({ path: healedScreenshot, fullPage: true })
+      await appPage.screenshot({ path: healedScreenshot, fullPage: true })
       await testInfo.attach('ssh-window-focus-healed.png', {
         path: healedScreenshot,
         contentType: 'image/png'

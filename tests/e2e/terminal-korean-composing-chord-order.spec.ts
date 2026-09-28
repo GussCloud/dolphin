@@ -40,23 +40,23 @@ const CMD_LEFT_BYTE = '\x01'
 
 test.describe('Terminal 2-Set Korean composing-chord order', () => {
   test('sends the composing syllable before a Cmd+Left pressed during it', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     // Cmd+Left resolves to \x01 only under the macOS branch of the shortcut policy, so a Linux
     // runner produces no chord byte at all and the spec would pass by measuring nothing. Pinning
     // the renderer's platform is what lets the reported chord run on any shard; the assertion
     // below fails loudly if the override did not take.
-    await applyImePlatformPolicy(dolphinPage, 'mac')
-    await expectImePlatformPolicy(dolphinPage, 'mac')
+    await applyImePlatformPolicy(appPage, 'mac')
+    await expectImePlatformPolicy(appPage, 'mac')
 
-    const arena = await openTerminalImePaneArena(dolphinPage)
+    const arena = await openTerminalImePaneArena(appPage)
     const reader = createTerminalImeByteReader(testRepoPath, 1)
     let completed = false
     try {
-      await startTerminalImeByteReader(dolphinPage, arena.ptyId, reader)
+      await startTerminalImeByteReader(appPage, arena.ptyId, reader)
 
-      await composeHangulSyllable(arena.session, dolphinPage, DA_FRAMES)
+      await composeHangulSyllable(arena.session, appPage, DA_FRAMES)
 
       // Pressed while the syllable is still in preedit. Before the fix this reached the pty
       // immediately, ahead of the 다 that had been typed first.
@@ -73,10 +73,10 @@ test.describe('Terminal 2-Set Korean composing-chord order', () => {
       // The held chord flushes a macrotask after the composition session ends. Enter is only here
       // to terminate the line for the reader, so let the chord land before adding it — otherwise
       // the newline overtakes it and the assertion measures the wrong pair.
-      await dolphinPage.waitForTimeout(250)
+      await appPage.waitForTimeout(250)
       await dispatchPlainEnter(arena.session)
 
-      const received = await waitForTerminalImeBytes(dolphinPage, reader)
+      const received = await waitForTerminalImeBytes(appPage, reader)
       expect(received).toEqual([Buffer.from(`다${CMD_LEFT_BYTE}\n`).toString('hex')])
       completed = true
     } finally {

@@ -61,8 +61,8 @@ type LoadMeasurement = {
   cycleMaxLagMs: number[]
 }
 
-async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<string> {
-  const repoId = await dolphinPage.evaluate(async (pathToRepo: string) => {
+async function addAndActivateRepo(appPage: Page, repoPath: string): Promise<string> {
+  const repoId = await appPage.evaluate(async (pathToRepo: string) => {
     const store = window.__store
     if (!store) {
       throw new Error('window.__store is not available')
@@ -79,7 +79,7 @@ async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(async (targetRepoId: string) => {
+        appPage.evaluate(async (targetRepoId: string) => {
           const store = window.__store
           if (!store) {
             return 0
@@ -91,7 +91,7 @@ async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<
     )
     .toBeGreaterThan(0)
 
-  const worktreeId = await dolphinPage.evaluate(
+  const worktreeId = await appPage.evaluate(
     ({ targetRepoId, pathToRepo }) => {
       const store = window.__store
       if (!store) {
@@ -116,24 +116,24 @@ async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<
   // assert the user-visible panel before timing its render. Clicking the
   // already-active activity button races the first cold status scan and tests
   // Playwright's two-frame actionability window instead of panel readiness.
-  const sourceControlButton = dolphinPage.getByRole('button', { name: /^Source Control/ })
+  const sourceControlButton = appPage.getByRole('button', { name: /^Source Control/ })
   await expect(sourceControlButton).toBeVisible()
   await expect
-    .poll(() => dolphinPage.evaluate(() => window.__store?.getState().rightSidebarTab))
+    .poll(() => appPage.evaluate(() => window.__store?.getState().rightSidebarTab))
     .toBe('source-control')
-  await expect(dolphinPage.getByRole('button', { name: 'Filter files by name' })).toBeVisible()
+  await expect(appPage.getByRole('button', { name: 'Filter files by name' })).toBeVisible()
 
   return worktreeId
 }
 
 async function unregisterLargeFileCountRepos(
-  dolphinPage: Page,
+  appPage: Page,
   repoPaths: readonly string[]
 ): Promise<void> {
   // Why: remove disposable projects through the product so their terminals
   // and watcher subscriptions begin shutting down before Electron teardown.
   for (const repoPath of repoPaths) {
-    await dolphinPage.evaluate(async (pathToRepo) => {
+    await appPage.evaluate(async (pathToRepo) => {
       const store = window.__store
       const repo = store?.getState().repos.find((entry) => entry.path === pathToRepo)
       if (repo) {
@@ -150,10 +150,10 @@ async function unregisterLargeFileCountRepos(
  * dedupes.
  */
 async function measureSourceControlLoad(
-  dolphinPage: Page,
+  appPage: Page,
   args: { worktreeId: string; repoPath: string; expectedRows: number; pollCycles: number }
 ): Promise<LoadMeasurement> {
-  return await dolphinPage.evaluate(async ({ worktreeId, repoPath, expectedRows, pollCycles }) => {
+  return await appPage.evaluate(async ({ worktreeId, repoPath, expectedRows, pollCycles }) => {
     const store = window.__store
     if (!store) {
       throw new Error('window.__store is not available')
@@ -271,7 +271,7 @@ test.describe('Source Control large file count (#8013)', () => {
   test.use({ seedTestRepo: false })
 
   test('a large untracked set under the status cap stays responsive', async ({
-    dolphinPage,
+    appPage,
     electronApp,
     registerPostElectronShutdownCleanup
   }) => {
@@ -288,10 +288,10 @@ test.describe('Source Control large file count (#8013)', () => {
     })
     registerPostElectronShutdownCleanup(() => removeLargeFileCountRepo(fixture.repoPath))
     try {
-      await waitForSessionReady(dolphinPage)
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+      await waitForSessionReady(appPage)
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
       const workingSetBeforeMb = await readRendererWorkingSetMb(electronApp)
-      const measurement = await measureSourceControlLoad(dolphinPage, {
+      const measurement = await measureSourceControlLoad(appPage, {
         worktreeId,
         repoPath: fixture.repoPath,
         expectedRows: untrackedFiles,
@@ -318,12 +318,12 @@ test.describe('Source Control large file count (#8013)', () => {
         )
       }
     } finally {
-      await unregisterLargeFileCountRepos(dolphinPage, [fixture.repoPath])
+      await unregisterLargeFileCountRepos(appPage, [fixture.repoPath])
     }
   })
 
   test('a large modified set under the status cap stays responsive', async ({
-    dolphinPage,
+    appPage,
     electronApp,
     registerPostElectronShutdownCleanup
   }) => {
@@ -332,10 +332,10 @@ test.describe('Source Control large file count (#8013)', () => {
     const fixture = createLargeFileCountRepo({ trackedFiles: modifiedFiles, modifiedFiles })
     registerPostElectronShutdownCleanup(() => removeLargeFileCountRepo(fixture.repoPath))
     try {
-      await waitForSessionReady(dolphinPage)
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+      await waitForSessionReady(appPage)
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
       const workingSetBeforeMb = await readRendererWorkingSetMb(electronApp)
-      const measurement = await measureSourceControlLoad(dolphinPage, {
+      const measurement = await measureSourceControlLoad(appPage, {
         worktreeId,
         repoPath: fixture.repoPath,
         expectedRows: modifiedFiles,
@@ -353,12 +353,12 @@ test.describe('Source Control large file count (#8013)', () => {
       expect(measurement.renderedRows).toBeLessThan(MAX_MOUNTED_ROWS)
       expect(measurement.maxLagMs).toBeLessThan(MAX_EVENT_LOOP_LAG_MS)
     } finally {
-      await unregisterLargeFileCountRepos(dolphinPage, [fixture.repoPath])
+      await unregisterLargeFileCountRepos(appPage, [fixture.repoPath])
     }
   })
 
   test('a change set over the status cap degrades to the too-many-changes state', async ({
-    dolphinPage,
+    appPage,
     electronApp,
     registerPostElectronShutdownCleanup
   }) => {
@@ -367,8 +367,8 @@ test.describe('Source Control large file count (#8013)', () => {
     const fixture = createLargeFileCountRepo({ untrackedFiles })
     registerPostElectronShutdownCleanup(() => removeLargeFileCountRepo(fixture.repoPath))
     try {
-      await waitForSessionReady(dolphinPage)
-      await dolphinPage.evaluate(() => {
+      await waitForSessionReady(appPage)
+      await appPage.evaluate(() => {
         const probe = { lastTick: performance.now(), maxLagMs: 0, timer: 0 }
         probe.timer = window.setInterval(() => {
           const now = performance.now()
@@ -382,9 +382,9 @@ test.describe('Source Control large file count (#8013)', () => {
         ).__sourceControlActivationLagProbe = probe
       })
       const activationStart = performance.now()
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
       const activationMs = performance.now() - activationStart
-      const activationMaxLagMs = await dolphinPage.evaluate(() => {
+      const activationMaxLagMs = await appPage.evaluate(() => {
         const target = window as unknown as {
           __sourceControlActivationLagProbe?: {
             maxLagMs: number
@@ -403,7 +403,7 @@ test.describe('Source Control large file count (#8013)', () => {
         `[large-file-count] initial-activation ${JSON.stringify({ activationMs, activationMaxLagMs })}`
       )
       const workingSetBeforeMb = await readRendererWorkingSetMb(electronApp)
-      const measurement = await measureSourceControlLoad(dolphinPage, {
+      const measurement = await measureSourceControlLoad(appPage, {
         worktreeId,
         repoPath: fixture.repoPath,
         // The capped payload still carries DEFAULT_GIT_STATUS_LIMIT entries;
@@ -417,11 +417,11 @@ test.describe('Source Control large file count (#8013)', () => {
         rendererWorkingSetMb: { before: workingSetBeforeMb, after: workingSetAfterMb }
       })
 
-      const tooManyChangesBanner = dolphinPage.getByTestId('too-many-changes-banner')
+      const tooManyChangesBanner = appPage.getByTestId('too-many-changes-banner')
       await expect(tooManyChangesBanner).toBeVisible()
       if (process.env.DOLPHIN_LARGE_FILE_SCREENSHOT_PATH) {
         // Narrowest supported sidebar is where the banner layout is worst.
-        await dolphinPage.evaluate((minWidth) => {
+        await appPage.evaluate((minWidth) => {
           window.__store?.getState().setRightSidebarWidth(minWidth)
           document.documentElement.classList.add('dark')
         }, RIGHT_SIDEBAR_MIN_WIDTH)
@@ -439,7 +439,7 @@ test.describe('Source Control large file count (#8013)', () => {
 
       // Why: didHitLimit must park the worktree in the huge-status state so
       // background polling stops re-running tens-of-seconds git scans.
-      const hugeState = await dolphinPage.evaluate(
+      const hugeState = await appPage.evaluate(
         (wId) => window.__store?.getState().gitStatusHugeByWorktree?.[wId] ?? null,
         worktreeId
       )
@@ -459,19 +459,19 @@ test.describe('Source Control large file count (#8013)', () => {
       await expect(tooManyChangesBanner).not.toBeVisible()
       await expect
         .poll(() =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             (wId) => window.__store?.getState().gitStatusHugeByWorktree?.[wId] ?? null,
             worktreeId
           )
         )
         .toBeNull()
     } finally {
-      await unregisterLargeFileCountRepos(dolphinPage, [fixture.repoPath])
+      await unregisterLargeFileCountRepos(appPage, [fixture.repoPath])
     }
   })
 
   test('untracked line-stat cache stays effective up to the status cap', async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }) => {
     test.setTimeout(600_000)
@@ -493,11 +493,11 @@ test.describe('Source Control large file count (#8013)', () => {
       })
       const largeRepoPath = largeRepo.repoPath
       registerPostElectronShutdownCleanup(() => removeLargeFileCountRepo(largeRepoPath))
-      await waitForSessionReady(dolphinPage)
+      await waitForSessionReady(appPage)
 
       const warmRescanPerFileMs = async (repoPath: string, files: number): Promise<number> => {
-        const worktreeId = await addAndActivateRepo(dolphinPage, repoPath)
-        const measurement = await measureSourceControlLoad(dolphinPage, {
+        const worktreeId = await addAndActivateRepo(appPage, repoPath)
+        const measurement = await measureSourceControlLoad(appPage, {
           worktreeId,
           repoPath,
           expectedRows: files,
@@ -513,7 +513,7 @@ test.describe('Source Control large file count (#8013)', () => {
       )
       expect(largePerFileMs).toBeLessThan(smallPerFileMs * 2)
     } finally {
-      await unregisterLargeFileCountRepos(dolphinPage, [
+      await unregisterLargeFileCountRepos(appPage, [
         smallRepo.repoPath,
         ...(largeRepo ? [largeRepo.repoPath] : [])
       ])
@@ -521,7 +521,7 @@ test.describe('Source Control large file count (#8013)', () => {
   })
 
   test('a large clean repo (tracked files only) loads instantly', async ({
-    dolphinPage,
+    appPage,
     electronApp,
     registerPostElectronShutdownCleanup
   }) => {
@@ -530,10 +530,10 @@ test.describe('Source Control large file count (#8013)', () => {
     const fixture = createLargeFileCountRepo({ trackedFiles })
     registerPostElectronShutdownCleanup(() => removeLargeFileCountRepo(fixture.repoPath))
     try {
-      await waitForSessionReady(dolphinPage)
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+      await waitForSessionReady(appPage)
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
       const workingSetBeforeMb = await readRendererWorkingSetMb(electronApp)
-      const measurement = await measureSourceControlLoad(dolphinPage, {
+      const measurement = await measureSourceControlLoad(appPage, {
         worktreeId,
         repoPath: fixture.repoPath,
         expectedRows: 0,
@@ -548,7 +548,7 @@ test.describe('Source Control large file count (#8013)', () => {
       expect(measurement.entryCount).toBe(0)
       expect(measurement.maxLagMs).toBeLessThan(MAX_EVENT_LOOP_LAG_MS)
     } finally {
-      await unregisterLargeFileCountRepos(dolphinPage, [fixture.repoPath])
+      await unregisterLargeFileCountRepos(appPage, [fixture.repoPath])
     }
   })
 })

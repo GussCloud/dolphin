@@ -68,11 +68,11 @@ async function settledGeometry(page: Page, fixture: SidebarFixture) {
 }
 
 test('keeps a collapsed group visible when an idle card below it grows', async ({
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }, testInfo) => {
-  await waitForSessionReady(dolphinPage)
-  await dolphinPage.setViewportSize({ width: 1200, height: 900 })
+  await waitForSessionReady(appPage)
+  await appPage.setViewportSize({ width: 1200, height: 900 })
   const root = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'dolphin-sidebar-measured-row-')))
   registerPostElectronShutdownCleanup(async () => {
     rmSync(root, { recursive: true, force: true })
@@ -101,7 +101,7 @@ test('keeps a collapsed group visible when an idle card below it grows', async (
     }
   }
 
-  const fixture = await dolphinPage.evaluate(async (repoPaths): Promise<SidebarFixture> => {
+  const fixture = await appPage.evaluate(async (repoPaths): Promise<SidebarFixture> => {
     const store = window.__store!
     for (const repoPath of repoPaths) {
       await window.api.repos.add({ path: repoPath })
@@ -145,7 +145,7 @@ test('keeps a collapsed group visible when an idle card below it grows', async (
     }
   }, paths)
 
-  const sidebar = dolphinPage.locator('[data-worktree-sidebar]')
+  const sidebar = appPage.locator('[data-worktree-sidebar]')
   const group = sidebar.locator(`[data-project-group-header-id="${fixture.groupId}"]`)
   const collapsedRepo = sidebar.locator(`[data-repo-header-id="${fixture.collapsedRepoId}"]`)
   const card = sidebar.locator(`[data-worktree-id=${JSON.stringify(fixture.worktreeId)}]`)
@@ -153,7 +153,7 @@ test('keeps a collapsed group visible when an idle card below it grows', async (
   await expect(group).toHaveAttribute('aria-expanded', 'false')
   await expect(collapsedRepo).toHaveAttribute('aria-expanded', 'false')
   await expect(card).toHaveCount(1)
-  const before = await settledGeometry(dolphinPage, fixture)
+  const before = await settledGeometry(appPage, fixture)
   expect(before.groupUnobscured).toBe(true)
   expect(before.scrollTop).toBe(0)
   expect(before.scrollHeight).toBeLessThanOrEqual(before.clientHeight)
@@ -171,9 +171,9 @@ test('keeps a collapsed group visible when an idle card below it grows', async (
     element.appendChild(content)
   })
   await expect
-    .poll(async () => (await readGeometry(dolphinPage, fixture)).cardHeight)
+    .poll(async () => (await readGeometry(appPage, fixture)).cardHeight)
     .toBeCloseTo(before.cardHeight + 50, 0)
-  const after = await settledGeometry(dolphinPage, fixture)
+  const after = await settledGeometry(appPage, fixture)
   const afterPath = testInfo.outputPath('after-card-growth.png')
   await sidebar.screenshot({ path: afterPath })
   await testInfo.attach('after-card-growth', { path: afterPath, contentType: 'image/png' })

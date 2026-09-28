@@ -1,7 +1,7 @@
 /**
  * JOURNEY: two desktop clients paired to one Dolphin server, working in the same workspace.
  *
- * TOPOLOGY: the `dolphinPage` app is the host (dolphin server). Two separate real Dolphin desktop
+ * TOPOLOGY: the `appPage` app is the host (dolphin server). Two separate real Dolphin desktop
  * clients pair to it, exactly as two of the user's machines would. Nothing is faulted — this
  * is the ordinary shape of using Dolphin from a laptop and a desktop at the same time.
  *
@@ -159,12 +159,12 @@ async function waitForClientWorkspace(page: Page, worktreeId: string): Promise<v
 }
 
 test('two paired clients stay in step with the host across an emptied workspace', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(600_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  const worktreeId = await dolphinPage.evaluate(() => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  const worktreeId = await appPage.evaluate(() => {
     const id = window.__store?.getState().activeWorktreeId
     if (!id) {
       throw new Error('host has no active worktree')
@@ -177,12 +177,12 @@ test('two paired clients stay in step with the host across an emptied workspace'
   const failures: string[] = []
   try {
     clientA = await launchPairedElectronClient(
-      await createRuntimeDesktopPairingOffer(dolphinPage),
+      await createRuntimeDesktopPairingOffer(appPage),
       testInfo,
       'emptied-workspace-client-a'
     )
     clientB = await launchPairedElectronClient(
-      await createRuntimeDesktopPairingOffer(dolphinPage),
+      await createRuntimeDesktopPairingOffer(appPage),
       testInfo,
       'emptied-workspace-client-b'
     )
@@ -276,7 +276,7 @@ test('two paired clients stay in step with the host across an emptied workspace'
     // user will click.
     const emptyA = await waitForClientToMatchHost(clientA, 0, worktreeId, RETRACTION_BUDGET_MS)
     const emptyB = await waitForClientToMatchHost(clientB, 0, worktreeId, RETRACTION_BUDGET_MS)
-    const hostOwnView = await readMirroredTabCount(dolphinPage, worktreeId)
+    const hostOwnView = await readMirroredTabCount(appPage, worktreeId)
     console.error(
       `[two-client] phase1b host=0 hostOwnView=${hostOwnView}` +
         ` A=${emptyA}ms(${await readWorkspaceRowState(clientA.page, worktreeId)})` +
@@ -290,7 +290,7 @@ test('two paired clients stay in step with the host across an emptied workspace'
 
     // Neither client may seed a replacement into a workspace the user deliberately emptied:
     // both hold a row for it, so both know it was emptied rather than never initialized.
-    await dolphinPage.waitForTimeout(10_000)
+    await appPage.waitForTimeout(10_000)
     const hostAfterSettle = (await readHostTerminalTabIds(clientA, worktreeId)).length
     console.error(`[two-client] phase1b-settled host=${hostAfterSettle}`)
     if (hostAfterSettle !== 0) {
@@ -343,12 +343,12 @@ test('two paired clients stay in step with the host across an emptied workspace'
  * the host had closed, sometimes stuck empty afterwards — with the link demonstrably alive.
  */
 test('a client that works immediately after pairing stays in step with the host', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(600_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  const worktreeId = await dolphinPage.evaluate(() => {
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  const worktreeId = await appPage.evaluate(() => {
     const id = window.__store?.getState().activeWorktreeId
     if (!id) {
       throw new Error('host has no active worktree')
@@ -360,7 +360,7 @@ test('a client that works immediately after pairing stays in step with the host'
   const failures: string[] = []
   try {
     client = await launchPairedElectronClient(
-      await createRuntimeDesktopPairingOffer(dolphinPage),
+      await createRuntimeDesktopPairingOffer(appPage),
       testInfo,
       'fresh-pairing-immediate-work'
     )

@@ -37,7 +37,7 @@ test.afterAll(async () => {
 
 test('installs on a headed desktop runtime without a local fallback', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(240_000)
@@ -47,10 +47,10 @@ test('installs on a headed desktop runtime without a local fallback', async ({
   let client: PairedElectronClient | null = null
   try {
     const hostHome = await electronApp.evaluate(({ app }) => app.getPath('home'))
-    const worktreeId = await activeWorktreeId(dolphinPage)
-    const folderWorkspaceId = await createHostFolderWorkspace(dolphinPage, folderRoot)
+    const worktreeId = await activeWorktreeId(appPage)
+    const folderWorkspaceId = await createHostFolderWorkspace(appPage, folderRoot)
     client = await launchPairedElectronClient(
-      await createRuntimeDesktopPairingOffer(dolphinPage),
+      await createRuntimeDesktopPairingOffer(appPage),
       testInfo,
       'Skill installation client',
       { extraEnv: cloudClientEnvironment() }

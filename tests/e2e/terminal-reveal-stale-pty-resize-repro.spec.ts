@@ -264,12 +264,12 @@ async function driveHiddenResizeRevealCycles(args: CycleDriverArgs): Promise<Cyc
 
 test.describe('Terminal reveal stale PTY resize repro', () => {
   test('applied PTY size converges across hidden-resize/reveal cycles (natural read ordering)', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
     test.setTimeout(300_000)
     const failures = await driveHiddenResizeRevealCycles({
-      page: dolphinPage,
+      page: appPage,
       testInfo,
       testRepoPath,
       cycles: 8,
@@ -282,13 +282,13 @@ test.describe('Terminal reveal stale PTY resize repro', () => {
   })
 
   test('the PTY is never resized back to its stale pre-reveal grid under slow applied-size reads', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo: TestInfo) => {
     test.setTimeout(300_000)
     const staleSamples: { cycle: number; snapshot: GridSnapshot }[] = []
     const failures = await driveHiddenResizeRevealCycles({
-      page: dolphinPage,
+      page: appPage,
       testInfo,
       testRepoPath,
       cycles: 12,

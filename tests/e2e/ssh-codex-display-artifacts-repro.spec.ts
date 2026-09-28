@@ -64,7 +64,7 @@ test.describe('Remote SSH Codex display artifacts repro', () => {
 
   for (const forceReconnect of reconnectModes) {
     test(`does not leave duplicated Codex status output after SSH replay (${forceReconnect ? 'forced reconnect' : 'normal restore'})`, async ({
-      dolphinPage,
+      appPage,
       electronApp
     }, testInfo: TestInfo) => {
       test.slow()
@@ -77,17 +77,17 @@ test.describe('Remote SSH Codex display artifacts repro', () => {
         } else {
           installRemoteCodexFixture(target)
         }
-        await waitForSessionReady(dolphinPage)
-        await waitForActiveWorktree(dolphinPage)
-        const remote = await connectDockerRemote(dolphinPage, target)
+        await waitForSessionReady(appPage)
+        await waitForActiveWorktree(appPage)
+        const remote = await connectDockerRemote(appPage, target)
         expect(remote.targetId).toBeTruthy()
         expect(remote.worktreeId).toBeTruthy()
-        await ensureTerminalVisible(dolphinPage, 45_000)
-        await waitForActiveTerminalManager(dolphinPage, 60_000)
-        await enableRiskyTerminalRendererPath(dolphinPage)
+        await ensureTerminalVisible(appPage, 45_000)
+        await waitForActiveTerminalManager(appPage, 60_000)
+        await enableRiskyTerminalRendererPath(appPage)
 
-        const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-        await installPtyReplayProbe(dolphinPage, electronApp, ptyId)
+        const ptyId = await waitForActivePanePtyId(appPage, 60_000)
+        await installPtyReplayProbe(appPage, electronApp, ptyId)
         const doneMarker = RUN_REAL_REMOTE_CODEX
           ? `DOLPHIN_REAL_REMOTE_CODEX_DONE_${Date.now()}`
           : REMOTE_TUI_DONE
@@ -95,7 +95,7 @@ test.describe('Remote SSH Codex display artifacts repro', () => {
           ? `DOLPHIN_REAL_REMOTE_CODEX_CLEAN_${Date.now()}`
           : doneMarker
         await execInTerminal(
-          dolphinPage,
+          appPage,
           ptyId,
           RUN_REAL_REMOTE_CODEX
             ? realRemoteCodexCommand(doneMarker)
@@ -103,55 +103,55 @@ test.describe('Remote SSH Codex display artifacts repro', () => {
                 doneMarker
               )}`
         )
-        await dolphinPage.waitForTimeout(1_200)
+        await appPage.waitForTimeout(1_200)
         if (forceReconnect) {
           dropDockerSshClientSessions(target)
-          await waitForDockerRemoteReconnected(dolphinPage, remote.targetId)
-          await dolphinPage.waitForTimeout(2_000)
+          await waitForDockerRemoteReconnected(appPage, remote.targetId)
+          await appPage.waitForTimeout(2_000)
         }
         await (RUN_REAL_REMOTE_CODEX
           ? (async () => {
-              await stressRestoreRemoteTerminalDuringCodex(dolphinPage, remote.worktreeId)
-              await waitForRealRemoteCodexCompletion(dolphinPage, doneMarker)
+              await stressRestoreRemoteTerminalDuringCodex(appPage, remote.worktreeId)
+              await waitForRealRemoteCodexCompletion(appPage, doneMarker)
             })()
           : (async () => {
               if (CAPTURE_WHILE_REMOTE_TUI_RUNNING) {
-                await dolphinPage.waitForTimeout(10_000)
+                await appPage.waitForTimeout(10_000)
               } else {
-                await switchToNonRemoteWorktree(dolphinPage, remote.worktreeId)
+                await switchToNonRemoteWorktree(appPage, remote.worktreeId)
                 await (HIDE_UNTIL_REMOTE_TUI_DONE
-                  ? waitForRemoteFixtureCleanFinalInHiddenPane(dolphinPage, remote.worktreeId)
-                  : dolphinPage.waitForTimeout(10_000))
+                  ? waitForRemoteFixtureCleanFinalInHiddenPane(appPage, remote.worktreeId)
+                  : appPage.waitForTimeout(10_000))
               }
               if (CAPTURE_WHILE_REMOTE_TUI_RUNNING) {
-                await dolphinPage.waitForTimeout(900)
+                await appPage.waitForTimeout(900)
                 return
               }
-              await switchToWorktree(dolphinPage, remote.worktreeId)
-              await ensureTerminalVisible(dolphinPage, 45_000)
-              await waitForActiveTerminalManager(dolphinPage, 60_000)
+              await switchToWorktree(appPage, remote.worktreeId)
+              await ensureTerminalVisible(appPage, 45_000)
+              await waitForActiveTerminalManager(appPage, 60_000)
               await waitForTerminalOutput(
-                dolphinPage,
+                appPage,
                 REMOTE_CODEX_FIXTURE_CLEAN_FINAL_TEXT,
                 60_000,
                 120_000
               )
             })())
-        await dolphinPage.waitForTimeout(600)
+        await appPage.waitForTimeout(600)
         if (CAPTURE_SCROLLBACK_ARTIFACT_REGION) {
-          await scrollActiveTerminalToArtifactHistory(dolphinPage)
+          await scrollActiveTerminalToArtifactHistory(appPage)
         }
 
-        const { analysis, screenshot } = await captureGraySlabAnalysis(dolphinPage)
-        analysis.replayDebug = await readReplayProbeSnapshot(dolphinPage, electronApp)
-        analysis.duplicateStatusRows = await readDuplicateStatusRows(dolphinPage)
+        const { analysis, screenshot } = await captureGraySlabAnalysis(appPage)
+        analysis.replayDebug = await readReplayProbeSnapshot(appPage, electronApp)
+        analysis.duplicateStatusRows = await readDuplicateStatusRows(appPage)
         const evidenceLabel = RUN_REAL_REMOTE_CODEX
           ? 'real-remote-codex-reconnect-replay'
           : 'fixture-codex-reconnect-replay'
         persistReproEvidence(evidenceLabel, analysis, screenshot)
-        const resetEvidence = await resetWebglAndCaptureGraySlabAnalysis(dolphinPage)
-        resetEvidence.analysis.replayDebug = await readReplayProbeSnapshot(dolphinPage, electronApp)
-        resetEvidence.analysis.duplicateStatusRows = await readDuplicateStatusRows(dolphinPage)
+        const resetEvidence = await resetWebglAndCaptureGraySlabAnalysis(appPage)
+        resetEvidence.analysis.replayDebug = await readReplayProbeSnapshot(appPage, electronApp)
+        resetEvidence.analysis.duplicateStatusRows = await readDuplicateStatusRows(appPage)
         persistReproEvidence(
           `${evidenceLabel}-after-webgl-reset`,
           resetEvidence.analysis,
@@ -184,11 +184,11 @@ test.describe('Remote SSH Codex display artifacts repro', () => {
           expect(analysis.rawSlabCount + analysis.staleStatusGlyphRowCount).toBeGreaterThan(0)
         }
         if (forceReconnect) {
-          expect(await waitForActivePanePtyId(dolphinPage, 60_000)).toBe(ptyId)
+          expect(await waitForActivePanePtyId(appPage, 60_000)).toBe(ptyId)
           expect(Number(analysis.replayDebug?.replayCount ?? 0)).toBeGreaterThan(0)
         }
         if (RUN_REAL_REMOTE_CODEX) {
-          await clearRemoteTerminalAfterCodex(dolphinPage, ptyId, cleanMarker)
+          await clearRemoteTerminalAfterCodex(appPage, ptyId, cleanMarker)
         }
       } finally {
         if (KEEP_SSH_REPRO_TARGET && target) {

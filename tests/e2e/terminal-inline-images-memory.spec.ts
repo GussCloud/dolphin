@@ -29,18 +29,18 @@ async function activateTab(page: Page, tabId: string): Promise<void> {
 }
 
 test('twelve image terminals release decoder and image storage across reset and close cycles', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(360_000)
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  await dolphinPage.evaluate(async () => {
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  await appPage.evaluate(async () => {
     await window.__store!.getState().updateSettings({ terminalHiddenViewParking: false })
   })
-  await enableInlineImages(dolphinPage)
-  const baselineTabId = (await waitForPaneIdentitySnapshot(dolphinPage, 1)).tabId
+  await enableInlineImages(appPage)
+  const baselineTabId = (await waitForPaneIdentitySnapshot(appPage, 1)).tabId
   const producerPath = testInfo.outputPath('image-retention-producer.cjs')
   writeFileSync(
     producerPath,
@@ -52,7 +52,7 @@ test('twelve image terminals release decoder and image storage across reset and 
       "console.log('RETENTION_DONE_' + process.argv[2])"
     ].join('\n')
   )
-  const cdp = await dolphinPage.context().newCDPSession(dolphinPage)
+  const cdp = await appPage.context().newCDPSession(appPage)
   const samples: unknown[] = []
   const sampleHeap = async () => {
     await cdp.send('HeapProfiler.collectGarbage')
@@ -65,7 +65,7 @@ test('twelve image terminals release decoder and image storage across reset and 
     for (let cycle = 0; cycle < CYCLES; cycle++) {
       const tabs: { id: string; ptyId: string }[] = []
       for (let index = 0; index < TAB_COUNT; index++) {
-        const id = await dolphinPage.evaluate((worktree) => {
+        const id = await appPage.evaluate((worktree) => {
           const state = window.__store!.getState()
           const tab = state.createTab(worktree, undefined, undefined, { activate: true })
           state.setActiveTab(tab.id)
@@ -73,30 +73,25 @@ test('twelve image terminals release decoder and image storage across reset and 
           return tab.id
         }, worktreeId)
         outstandingTabs.add(id)
-        await activateTab(dolphinPage, id)
-        const identity = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+        await activateTab(appPage, id)
+        const identity = await waitForPaneIdentitySnapshot(appPage, 1)
         expect(identity.tabId).toBe(id)
         const ptyId = identity.panes[0]?.ptyId
         if (!ptyId) {
           throw new Error('Image stress terminal did not bind its PTY')
         }
         tabs.push({ id, ptyId })
-        await expect
-          .poll(() => readInlineImageState(dolphinPage), { timeout: 30_000 })
-          .not.toBeNull()
+        await expect.poll(() => readInlineImageState(appPage), { timeout: 30_000 }).not.toBeNull()
         const marker = `${cycle}_${index}`
-        await execInTerminal(dolphinPage, ptyId, nodeTerminalCommand([producerPath, marker]))
-        await waitForTerminalOutput(dolphinPage, `RETENTION_DONE_${marker}`, 30_000)
-        await expect.poll(async () => (await readInlineImageState(dolphinPage))?.pending).toBe(2)
+        await execInTerminal(appPage, ptyId, nodeTerminalCommand([producerPath, marker]))
+        await waitForTerminalOutput(appPage, `RETENTION_DONE_${marker}`, 30_000)
+        await expect.poll(async () => (await readInlineImageState(appPage))?.pending).toBe(2)
         if (index === TAB_COUNT - 1) {
-          await assertInlineImagePixels(
-            dolphinPage,
-            testInfo.outputPath(`cycle-${cycle}-images.png`)
-          )
+          await assertInlineImagePixels(appPage, testInfo.outputPath(`cycle-${cycle}-images.png`))
         }
       }
       const loaded = await readInlineImageResources(
-        dolphinPage,
+        appPage,
         tabs.map((tab) => tab.id)
       )
       expect(loaded).toHaveLength(TAB_COUNT)
@@ -112,19 +107,19 @@ test('twelve image terminals release decoder and image storage across reset and 
       }
       samples.push({ stage: `cycle-${cycle}-loaded`, resources: loaded, heap: await sampleHeap() })
       for (const tab of tabs) {
-        await activateTab(dolphinPage, tab.id)
+        await activateTab(appPage, tab.id)
         await execInTerminal(
-          dolphinPage,
+          appPage,
           tab.ptyId,
           nodeTerminalCommand([
             '-e',
             "process.stdout.write('\\x1bc'); console.log('RESET_' + 'DONE')"
           ])
         )
-        await waitForTerminalOutput(dolphinPage, 'RESET_DONE', 30_000)
+        await waitForTerminalOutput(appPage, 'RESET_DONE', 30_000)
         await expect
           .poll(async () => {
-            const [resource] = await readInlineImageResources(dolphinPage, [tab.id])
+            const [resource] = await readInlineImageResources(appPage, [tab.id])
             return {
               images: resource.images,
               pending: resource.pending,
@@ -137,21 +132,21 @@ test('twelve image terminals release decoder and image storage across reset and 
       samples.push({
         stage: `cycle-${cycle}-reset`,
         resources: await readInlineImageResources(
-          dolphinPage,
+          appPage,
           tabs.map((tab) => tab.id)
         ),
         heap: await sampleHeap()
       })
-      await activateTab(dolphinPage, baselineTabId)
+      await activateTab(appPage, baselineTabId)
       for (const tab of tabs) {
-        await dolphinPage.evaluate((id) => window.__store!.getState().closeTab(id), tab.id)
+        await appPage.evaluate((id) => window.__store!.getState().closeTab(id), tab.id)
       }
       await expect
         .poll(
           async () =>
             (
               await readInlineImageResources(
-                dolphinPage,
+                appPage,
                 tabs.map((tab) => tab.id)
               )
             ).filter((resource) => resource.mounted).length,
@@ -175,7 +170,7 @@ test('twelve image terminals release decoder and image storage across reset and 
     }
   } finally {
     for (const id of outstandingTabs) {
-      await dolphinPage
+      await appPage
         .evaluate((tab) => window.__store!.getState().closeTab(tab), id)
         .catch(() => undefined)
     }

@@ -49,7 +49,7 @@ async function cleanupCommitWorktree(
 }
 
 test('keeps conventional commit-message lines intact in the history tooltip', async ({
-  dolphinPage,
+  appPage,
   testRepoPath,
   registerPostElectronShutdownCleanup
 }) => {
@@ -63,15 +63,15 @@ test('keeps conventional commit-message lines intact in the history tooltip', as
     stdio: ['pipe', 'pipe', 'pipe']
   })
 
-  await dolphinPage.setViewportSize({ width: 1440, height: 900 })
-  await waitForSessionReady(dolphinPage)
-  await openSourceControlForWorktree(dolphinPage, testRepoPath, fixture.worktreePath)
+  await appPage.setViewportSize({ width: 1440, height: 900 })
+  await waitForSessionReady(appPage)
+  await openSourceControlForWorktree(appPage, testRepoPath, fixture.worktreePath)
 
-  const commitsToggle = dolphinPage.getByRole('button', { name: /Commits/ })
+  const commitsToggle = appPage.getByRole('button', { name: /Commits/ })
   await expect(commitsToggle).toBeVisible()
   await commitsToggle.click()
 
-  const row = dolphinPage.getByTestId('git-history-row').filter({ hasText: subject })
+  const row = appPage.getByTestId('git-history-row').filter({ hasText: subject })
   await expect(row).toBeVisible({ timeout: 10_000 })
   await expect(row).not.toHaveAttribute('title')
   const trigger = row.locator('[data-slot="tooltip-trigger"]').filter({ hasText: subject })
@@ -79,12 +79,10 @@ test('keeps conventional commit-message lines intact in the history tooltip', as
   await trigger.hover({ position: { x: 20, y: 10 } })
   await trigger.hover({ position: { x: 40, y: 10 } })
 
-  const tooltip = dolphinPage
-    .locator('[data-slot="tooltip-content"]')
-    .filter({ hasText: reportedLine })
+  const tooltip = appPage.locator('[data-slot="tooltip-content"]').filter({ hasText: reportedLine })
   await expect(tooltip).toBeVisible()
   await expect(tooltip).toContainText(commitMessage)
-  await dolphinPage.evaluate(async () => {
+  await appPage.evaluate(async () => {
     await document.fonts.ready
   })
 

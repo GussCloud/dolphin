@@ -13,7 +13,7 @@ const HOLD_MINUTES = 20
 
 test('shows the remote browsing settings section and holds for review', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   test.setTimeout((HOLD_MINUTES + 10) * 60_000)
 
@@ -26,7 +26,7 @@ test('shows the remote browsing settings section and holds for review', async ({
   })
 
   // Seed one opted-out SSH host so the "Route again" list renders too.
-  await dolphinPage.evaluate(() => {
+  await appPage.evaluate(() => {
     const state = window.__store?.getState()
     state?.updateSettings({ browserSshWorkspaceRoutingDisabledTargetIds: ['preview-target'] })
     window.__store?.setState({
@@ -40,10 +40,10 @@ test('shows the remote browsing settings section and holds for review', async ({
     state?.openSettingsPage()
   })
 
-  await expect(dolphinPage.getByText('Remote browsing', { exact: true })).toBeVisible({
+  await expect(appPage.getByText('Remote browsing', { exact: true })).toBeVisible({
     timeout: 30_000
   })
 
   console.log(`\n=== SETTINGS PREVIEW READY — window stays up ${HOLD_MINUTES} minutes ===\n`)
-  await dolphinPage.waitForTimeout(HOLD_MINUTES * 60_000)
+  await appPage.waitForTimeout(HOLD_MINUTES * 60_000)
 })

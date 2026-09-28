@@ -152,14 +152,10 @@ export async function prepareGitHubStackedPullRequest(
       )
     }
     if (parentPullRequests.length !== 1) {
-      return creationError(
-        `Dolphin found multiple open pull requests for the parent branch ${base}.`
-      )
+      return creationError(`Found multiple open pull requests for the parent branch ${base}.`)
     }
     if (currentPullRequests.length > 1) {
-      return creationError(
-        `Dolphin found multiple open pull requests for the current branch ${head}.`
-      )
+      return creationError(`Found multiple open pull requests for the current branch ${head}.`)
     }
     const parentReview = parentPullRequests[0]
     const currentReview = currentPullRequests[0] ?? null

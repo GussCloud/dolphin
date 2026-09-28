@@ -82,30 +82,30 @@ test.afterEach(() => {
 
 test.describe('Add project default checkout', () => {
   test('clones a repo and opens the default checkout without the setup-choice modal', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     const fixture = await createCloneFixture()
 
-    await openSidebarProjectDialog(dolphinPage)
-    const addDialog = dolphinPage.getByRole('dialog', { name: /Add a project/i })
+    await openSidebarProjectDialog(appPage)
+    const addDialog = appPage.getByRole('dialog', { name: /Add a project/i })
     await expect(addDialog).toBeVisible()
     await addDialog.getByRole('button', { name: /Clone from URL/i }).click()
 
-    const cloneDialog = dolphinPage.getByRole('dialog', { name: /Clone from URL/i })
+    const cloneDialog = appPage.getByRole('dialog', { name: /Clone from URL/i })
     await expect(cloneDialog).toBeVisible()
     await cloneDialog.getByPlaceholder('https://github.com/user/repo.git').fill(fixture.sourcePath)
     await cloneDialog.getByPlaceholder('/path/to/destination').fill(fixture.destinationParent)
     await cloneDialog.getByRole('button', { name: /^Clone$/ }).click()
 
-    await expect(dolphinPage.getByRole('dialog', { name: /Repo added/i })).toBeHidden()
-    await expect(dolphinPage.getByText('Use existing worktrees')).toBeHidden()
-    await expect(dolphinPage.getByText('Create a new worktree')).toBeHidden()
+    await expect(appPage.getByRole('dialog', { name: /Repo added/i })).toBeHidden()
+    await expect(appPage.getByText('Use existing worktrees')).toBeHidden()
+    await expect(appPage.getByText('Create a new worktree')).toBeHidden()
 
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate((cloneName) => {
+          appPage.evaluate((cloneName) => {
             const state = window.__store?.getState()
             if (!state) {
               return null
@@ -136,27 +136,25 @@ test.describe('Add project default checkout', () => {
       })
   })
 
-  test('reveals sibling git worktrees before opening the default checkout', async ({
-    dolphinPage
-  }) => {
-    await waitForSessionReady(dolphinPage)
+  test('reveals sibling git worktrees before opening the default checkout', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
     const fixture = await createLinkedWorktreeFixture()
 
-    await dolphinPage.evaluate((folderPath) => {
+    await appPage.evaluate((folderPath) => {
       window.__store?.getState().openModal('confirm-add-project-from-folder', { folderPath })
     }, fixture.mainPath)
-    const addProjectDialog = dolphinPage.getByRole('dialog', { name: /^Add Project$/i })
+    const addProjectDialog = appPage.getByRole('dialog', { name: /^Add Project$/i })
     await expect(addProjectDialog).toBeVisible()
     await addProjectDialog.getByRole('button', { name: /^Add Project$/ }).click()
 
     await expect(addProjectDialog).toBeHidden()
-    await expect(dolphinPage.getByRole('dialog', { name: /Repo added/i })).toBeHidden()
-    await expect(dolphinPage.getByText('Use existing worktrees')).toBeHidden()
+    await expect(appPage.getByRole('dialog', { name: /Repo added/i })).toBeHidden()
+    await expect(appPage.getByText('Use existing worktrees')).toBeHidden()
 
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate((mainPath) => {
+          appPage.evaluate((mainPath) => {
             const state = window.__store?.getState()
             if (!state) {
               return null

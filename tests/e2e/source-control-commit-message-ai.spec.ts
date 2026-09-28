@@ -53,16 +53,16 @@ test.describe('Source Control AI commit messages', () => {
       expected: 'empty'
     }
   ]) {
-    test(`${label} the commit-message recipe`, async ({ dolphinPage, testRepoPath }) => {
+    test(`${label} the commit-message recipe`, async ({ appPage, testRepoPath }) => {
       const { branchName, worktreePath } = createWorktreeWithStagedChange(testRepoPath)
       const generatorPath = path.join(os.tmpdir(), `${branchName}-linked-issue-generator.cjs`)
       writeLinkedIssueEchoGenerator(generatorPath, ['  process.stdout.write(`saw-issue:${issue}`)'])
 
       try {
-        await waitForSessionReady(dolphinPage)
-        await openSourceControlForWorktree(dolphinPage, testRepoPath, worktreePath)
+        await waitForSessionReady(appPage)
+        await openSourceControlForWorktree(appPage, testRepoPath, worktreePath)
 
-        await dolphinPage.evaluate(
+        await appPage.evaluate(
           async ({ generatorPath, linkedIssue }) => {
             const store = window.__store
             if (!store) {
@@ -95,10 +95,10 @@ test.describe('Source Control AI commit messages', () => {
           { generatorPath, linkedIssue }
         )
 
-        const textarea = dolphinPage.getByRole('textbox', { name: 'Commit message' })
+        const textarea = appPage.getByRole('textbox', { name: 'Commit message' })
         await expect(textarea).toBeVisible({ timeout: 10_000 })
 
-        const generate = dolphinPage.getByRole('button', {
+        const generate = appPage.getByRole('button', {
           name: 'Generate commit message with AI'
         })
         await expect(generate).toBeEnabled()
@@ -113,7 +113,7 @@ test.describe('Source Control AI commit messages', () => {
   }
 
   test('generates a commit message from staged changes through the Source Control UI', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
     const { branchName, worktreePath } = createWorktreeWithStagedChange(testRepoPath)
@@ -121,8 +121,8 @@ test.describe('Source Control AI commit messages', () => {
       'node -e "setTimeout(() => process.stdout.write(\'Add generated E2E message\'), 250)"'
 
     try {
-      await waitForSessionReady(dolphinPage)
-      await openSourceControlForWorktree(dolphinPage, testRepoPath, worktreePath, {
+      await waitForSessionReady(appPage)
+      await openSourceControlForWorktree(appPage, testRepoPath, worktreePath, {
         commitMessageAi: {
           enabled: true,
           agentId: 'custom',
@@ -133,17 +133,17 @@ test.describe('Source Control AI commit messages', () => {
         }
       })
 
-      const textarea = dolphinPage.getByRole('textbox', { name: 'Commit message' })
+      const textarea = appPage.getByRole('textbox', { name: 'Commit message' })
       await expect(textarea).toBeVisible({ timeout: 10_000 })
       await expect(textarea).toHaveValue('')
 
-      const generate = dolphinPage.getByRole('button', { name: 'Generate commit message with AI' })
+      const generate = appPage.getByRole('button', { name: 'Generate commit message with AI' })
       await expect(generate).toBeVisible()
       await expect(generate).toBeEnabled()
       await generate.click()
 
       await expect(
-        dolphinPage.getByRole('button', { name: 'Stop generating commit message' })
+        appPage.getByRole('button', { name: 'Stop generating commit message' })
       ).toBeVisible()
       await expect(textarea).toHaveValue('Add generated E2E message', { timeout: 10_000 })
     } finally {

@@ -569,81 +569,81 @@ test.describe('Codex skill preview terminal artifact repro @headful', () => {
 
   test.skip(!RUN_REPRO, 'Set DOLPHIN_E2E_CODEX_SKILL_PREVIEW_REPRO=1 to run this repro.')
 
-  test.afterEach(async ({ dolphinPage }) => {
+  test.afterEach(async ({ appPage }) => {
     for (const id of createdWorktreeIds) {
-      await removeWorktreeViaStore(dolphinPage, id)
+      await removeWorktreeViaStore(appPage, id)
     }
     createdWorktreeIds.length = 0
   })
 
   test('captures the real Dolphin repo setup-split Codex skill preview overpaint before any click', async ({
     electronApp,
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(240_000)
     test.skip(process.platform === 'win32', 'Codex skill preview repro uses POSIX shell commands')
 
-    await setStableFullscreenWindow(electronApp, dolphinPage)
-    await waitForSessionReady(dolphinPage)
-    await addRealDolphinRepo(dolphinPage, DOLPHIN_REPO_PATH)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await setStableFullscreenWindow(electronApp, appPage)
+    await waitForSessionReady(appPage)
+    await addRealDolphinRepo(appPage, DOLPHIN_REPO_PATH)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
     const workspaceName = `codex-skill-preview-${Date.now()}`
-    const worktreeId = await createWorkspaceThroughComposer(dolphinPage, workspaceName)
+    const worktreeId = await createWorkspaceThroughComposer(appPage, workspaceName)
     createdWorktreeIds.push(worktreeId)
 
-    await ensureTerminalVisible(dolphinPage, 30_000)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
-    await waitForPaneCount(dolphinPage, 2, 60_000)
-    await waitForPaneIdentitySnapshot(dolphinPage, 2)
-    const webglActive = await forceTerminalWebgl(dolphinPage)
+    await ensureTerminalVisible(appPage, 30_000)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    await waitForPaneCount(appPage, 2, 60_000)
+    await waitForPaneIdentitySnapshot(appPage, 2)
+    const webglActive = await forceTerminalWebgl(appPage)
     test.skip(!webglActive, 'Codex skill preview artifact repro needs WebGL rendering')
 
-    const leftPane = await focusLeftTerminalPane(dolphinPage)
-    const rightPane = await getRightTerminalPane(dolphinPage)
+    const leftPane = await focusLeftTerminalPane(appPage)
+    const rightPane = await getRightTerminalPane(appPage)
     expect(leftPane.hasWebgl).toBe(true)
     expect(rightPane.hasWebgl).toBe(true)
     expect(leftPane.proposed).toEqual({ cols: leftPane.cols, rows: leftPane.rows })
     expect(leftPane.appliedPtySize).toEqual({ cols: leftPane.cols, rows: leftPane.rows })
     expect(leftPane.isUserScrolling).toBe(false)
     await waitForPaneContent(
-      dolphinPage,
+      appPage,
       rightPane.tabId,
       rightPane.ptyId,
       SETUP_PANE_ACTIVITY_RE,
       60_000
     )
-    await dismissCodexPromptsIfPresent(dolphinPage, leftPane)
-    await waitForPaneContent(dolphinPage, leftPane.tabId, leftPane.ptyId, CODEX_READY_RE, 60_000)
+    await dismissCodexPromptsIfPresent(appPage, leftPane)
+    await waitForPaneContent(appPage, leftPane.tabId, leftPane.ptyId, CODEX_READY_RE, 60_000)
     await waitForPaneContent(
-      dolphinPage,
+      appPage,
       leftPane.tabId,
       leftPane.ptyId,
       /usage limit reset|YOLO mode|permissions/i,
       15_000
     )
-    await dolphinPage.waitForTimeout(CODEX_READY_SETTLE_MS)
-    await waitForPaneVisibleContentChanges(dolphinPage, rightPane, 1, 8_000)
+    await appPage.waitForTimeout(CODEX_READY_SETTLE_MS)
+    await waitForPaneVisibleContentChanges(appPage, rightPane, 1, 8_000)
 
-    await focusLeftTerminalPane(dolphinPage)
-    await dolphinPage.keyboard.type('test $e', { delay: 70 })
+    await focusLeftTerminalPane(appPage)
+    await appPage.keyboard.type('test $e', { delay: 70 })
     await waitForPaneContent(
-      dolphinPage,
+      appPage,
       leftPane.tabId,
       leftPane.ptyId,
       CODEX_SKILL_PREVIEW_RE,
       30_000
     )
     const setupChangesAfterPreview = await waitForPaneVisibleContentChanges(
-      dolphinPage,
+      appPage,
       rightPane,
       SETUP_CHANGES_AFTER_PREVIEW,
       12_000
     )
 
-    const evidence = await captureClickEvidence(dolphinPage, leftPane, testInfo)
+    const evidence = await captureClickEvidence(appPage, leftPane, testInfo)
     const overpaintedSkillRows = getOverpaintedSkillRows(evidence.beforeContent)
     const detectedArtifact =
       overpaintedSkillRows.length >= 2 || evidence.diffRatio >= MIN_REPRO_DIFF_RATIO

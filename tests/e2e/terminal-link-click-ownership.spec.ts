@@ -23,27 +23,27 @@ type LinkTarget = { x: number; y: number; mouseTrackingMode: string }
 type LinkMode = 'http' | 'osc'
 
 async function startMouseAwareLinkFixture(
-  dolphinPage: Page,
+  appPage: Page,
   testInfo: TestInfo,
   linkMode: LinkMode = 'http'
 ): Promise<{ mouseLogPath: string; ptyId: string; target: LinkTarget }> {
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage)
-  await waitForPaneCount(dolphinPage, 1)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  await waitForPaneCount(appPage, 1)
 
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
   const mouseLogPath = testInfo.outputPath('child-mouse-reports.log')
   await execInTerminal(
-    dolphinPage,
+    appPage,
     ptyId,
     `node ${JSON.stringify(FIXTURE_PATH)} ${JSON.stringify(mouseLogPath)} ${linkMode}`
   )
   const renderedLinkText = linkMode === 'osc' ? OSC_LINK_TEXT : LINK
-  await waitForTerminalOutput(dolphinPage, 'LINK_MOUSE_READY')
+  await waitForTerminalOutput(appPage, 'LINK_MOUSE_READY')
 
-  const target = await dolphinPage.evaluate((linkText) => {
+  const target = await appPage.evaluate((linkText) => {
     const state = window.__store?.getState()
     const worktreeId = state?.activeWorktreeId
     const tabId = worktreeId ? state?.activeTabIdByWorktree?.[worktreeId] : null
@@ -99,63 +99,63 @@ async function expectDolphinOwnedMouseOutcome(mouseLogPath: string): Promise<voi
 
 test.describe('terminal link click ownership', () => {
   test('a Dolphin-owned plain link click emits no child PTY mouse frames', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    const { mouseLogPath, ptyId, target } = await startMouseAwareLinkFixture(dolphinPage, testInfo)
-    await dolphinPage.mouse.click(target.x, target.y)
+    const { mouseLogPath, ptyId, target } = await startMouseAwareLinkFixture(appPage, testInfo)
+    await appPage.mouse.click(target.x, target.y)
 
-    await expect(dolphinPage.locator('[data-terminal-link-action-popover]')).toBeVisible()
-    await expect(dolphinPage.locator('[data-terminal-link-destination]')).toHaveText(LINK)
+    await expect(appPage.locator('[data-terminal-link-action-popover]')).toBeVisible()
+    await expect(appPage.locator('[data-terminal-link-destination]')).toHaveText(LINK)
 
     await expectDolphinOwnedMouseOutcome(mouseLogPath)
 
-    await sendToTerminal(dolphinPage, ptyId, 'q')
+    await sendToTerminal(appPage, ptyId, 'q')
   })
 
   test('a Dolphin-owned OSC link click emits no child PTY mouse frames', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     const { mouseLogPath, ptyId, target } = await startMouseAwareLinkFixture(
-      dolphinPage,
+      appPage,
       testInfo,
       'osc'
     )
-    await dolphinPage.mouse.move(target.x, target.y)
-    await expect(dolphinPage.locator('.xterm-hover')).toHaveCount(1)
-    await dolphinPage.mouse.click(target.x, target.y)
+    await appPage.mouse.move(target.x, target.y)
+    await expect(appPage.locator('.xterm-hover')).toHaveCount(1)
+    await appPage.mouse.click(target.x, target.y)
 
-    await expect(dolphinPage.locator('[data-terminal-link-action-popover]')).toBeVisible()
-    await expect(dolphinPage.locator('[data-terminal-link-destination]')).toHaveText(LINK)
+    await expect(appPage.locator('[data-terminal-link-action-popover]')).toBeVisible()
+    await expect(appPage.locator('[data-terminal-link-destination]')).toHaveText(LINK)
     await expectDolphinOwnedMouseOutcome(mouseLogPath)
 
-    await sendToTerminal(dolphinPage, ptyId, 'q')
+    await sendToTerminal(appPage, ptyId, 'q')
   })
 
   test('a plain click stays child-owned when link actions are disabled', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
-    const { mouseLogPath, ptyId, target } = await startMouseAwareLinkFixture(dolphinPage, testInfo)
-    await dolphinPage.evaluate(async () => {
+    const { mouseLogPath, ptyId, target } = await startMouseAwareLinkFixture(appPage, testInfo)
+    await appPage.evaluate(async () => {
       await window.__store?.getState().updateSettings({ terminalLinkActionPopoverEnabled: false })
     })
 
-    await dolphinPage.mouse.click(target.x, target.y)
+    await appPage.mouse.click(target.x, target.y)
 
-    await expect(dolphinPage.locator('[data-terminal-link-action-popover]')).toHaveCount(0)
+    await expect(appPage.locator('[data-terminal-link-action-popover]')).toHaveCount(0)
     await expectChildMouseReports(mouseLogPath)
-    await sendToTerminal(dolphinPage, ptyId, 'q')
+    await sendToTerminal(appPage, ptyId, 'q')
   })
 
-  test('a drag across a link stays child-owned', async ({ dolphinPage }, testInfo) => {
-    const { mouseLogPath, ptyId, target } = await startMouseAwareLinkFixture(dolphinPage, testInfo)
+  test('a drag across a link stays child-owned', async ({ appPage }, testInfo) => {
+    const { mouseLogPath, ptyId, target } = await startMouseAwareLinkFixture(appPage, testInfo)
 
-    await dolphinPage.mouse.move(target.x, target.y)
-    await dolphinPage.mouse.down()
-    await dolphinPage.mouse.move(target.x + 12, target.y + 12, { steps: 3 })
-    await dolphinPage.mouse.up()
+    await appPage.mouse.move(target.x, target.y)
+    await appPage.mouse.down()
+    await appPage.mouse.move(target.x + 12, target.y + 12, { steps: 3 })
+    await appPage.mouse.up()
 
-    await expect(dolphinPage.locator('[data-terminal-link-action-popover]')).toHaveCount(0)
+    await expect(appPage.locator('[data-terminal-link-action-popover]')).toHaveCount(0)
     await expectChildMouseReports(mouseLogPath)
-    await sendToTerminal(dolphinPage, ptyId, 'q')
+    await sendToTerminal(appPage, ptyId, 'q')
   })
 })

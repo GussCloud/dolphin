@@ -147,30 +147,28 @@ async function expectSettingsCommandValue(
 }
 
 test.describe('Setup script import prompt', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
-  test('imports Superset local overlays through the prompt UI', async ({
-    dolphinPage
-  }, testInfo) => {
+  test('imports Superset local overlays through the prompt UI', async ({ appPage }, testInfo) => {
     const repoPath = createSupersetSetupRepo(testInfo.outputPath('superset-setup-repo'))
-    const repoId = await addAndActivateRepo(dolphinPage, repoPath)
+    const repoId = await addAndActivateRepo(appPage, repoPath)
 
     await expect(
-      dolphinPage.getByText(
+      appPage.getByText(
         /Found a setup command in\s*Superset \(\.superset\/config\.json \+1\)\. Save it to run for new worktrees\./
       )
     ).toBeVisible({ timeout: 15_000 })
 
-    await dolphinPage.getByRole('button', { name: 'Save local setup' }).click()
+    await appPage.getByRole('button', { name: 'Save local setup' }).click()
 
     await expect(
-      dolphinPage.getByText('2 unsupported fields skipped. Saved the setup command.')
+      appPage.getByText('2 unsupported fields skipped. Saved the setup command.')
     ).toBeVisible()
 
-    const localCommands = await openImportedSetupSettingsFromToast(dolphinPage, repoId)
+    const localCommands = await openImportedSetupSettingsFromToast(appPage, repoId)
     await expectSettingsCommandValue(
       localCommands,
       'Setup Script',
@@ -183,23 +181,23 @@ test.describe('Setup script import prompt', () => {
     )
   })
 
-  test('imports cmux setup commands through the prompt UI', async ({ dolphinPage }, testInfo) => {
+  test('imports cmux setup commands through the prompt UI', async ({ appPage }, testInfo) => {
     const repoPath = createCmuxSetupRepo(testInfo.outputPath('cmux-setup-repo'))
-    const repoId = await addAndActivateRepo(dolphinPage, repoPath)
+    const repoId = await addAndActivateRepo(appPage, repoPath)
 
     await expect(
-      dolphinPage.getByText(
+      appPage.getByText(
         /Found a setup command in\s*cmux \(\.cmux\/cmux\.json\)\. Save it to run for new worktrees\./
       )
     ).toBeVisible({ timeout: 15_000 })
 
-    await dolphinPage.getByRole('button', { name: 'Save local setup' }).click()
+    await appPage.getByRole('button', { name: 'Save local setup' }).click()
 
     await expect(
-      dolphinPage.getByRole('button', { name: "project's settings", exact: true })
+      appPage.getByRole('button', { name: "project's settings", exact: true })
     ).toBeVisible()
 
-    const repoSettings = await openRepoSettings(dolphinPage, repoId)
+    const repoSettings = await openRepoSettings(appPage, repoId)
     await expectSettingsCommandValue(repoSettings, 'Setup Script', './scripts/setup.sh')
     await expectSettingsCommandValue(repoSettings, 'Archive Script', '')
   })

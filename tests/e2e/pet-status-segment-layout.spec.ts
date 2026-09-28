@@ -70,14 +70,14 @@ async function attachTriggerScreenshot(
 }
 
 test.describe('Pet status segment layout', () => {
-  test('does not reserve empty space after its label', async ({ dolphinPage }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await enableExperimentalPet(dolphinPage)
+  test('does not reserve empty space after its label', async ({ appPage }, testInfo) => {
+    await waitForSessionReady(appPage)
+    await enableExperimentalPet(appPage)
 
     for (const { name, size } of VIEWPORTS) {
-      await dolphinPage.setViewportSize(size)
-      await assertPetTriggerFitsLabel(dolphinPage)
-      await attachTriggerScreenshot(dolphinPage, testInfo, name)
+      await appPage.setViewportSize(size)
+      await assertPetTriggerFitsLabel(appPage)
+      await attachTriggerScreenshot(appPage, testInfo, name)
     }
   })
 })

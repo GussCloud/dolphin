@@ -149,27 +149,23 @@ test.describe('Docker SSH relay perf', () => {
   test.skip(process.platform === 'win32', 'Docker SSH relay perf uses POSIX ssh tooling.')
 
   test('keeps remote typing responsive while the Linux relay streams TUI output', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
       const runId = String(Date.now())
-      await execInTerminal(
-        dolphinPage,
-        ptyId,
-        `node -e ${shellQuote(remoteTypingLoadScript(runId))}`
-      )
-      await waitForTerminalOutput(dolphinPage, `REMOTE_TUI_READY_${runId}`, 30_000, 80_000)
-      const measurement = await measureRemoteTyping(dolphinPage, ptyId, runId)
+      await execInTerminal(appPage, ptyId, `node -e ${shellQuote(remoteTypingLoadScript(runId))}`)
+      await waitForTerminalOutput(appPage, `REMOTE_TUI_READY_${runId}`, 30_000, 80_000)
+      const measurement = await measureRemoteTyping(appPage, ptyId, runId)
       const summary = `median=${measurement.medianLatencyMs.toFixed(
         1
       )}ms worst=${measurement.worstLatencyMs.toFixed(1)}ms samples=${measurement.latencies
@@ -182,14 +178,14 @@ test.describe('Docker SSH relay perf', () => {
       })
       expect(measurement.medianLatencyMs).toBeLessThan(MAX_MEDIAN_KEY_LATENCY_MS)
       expect(measurement.worstLatencyMs).toBeLessThan(MAX_WORST_KEY_LATENCY_MS)
-      await stopRemoteLoad(dolphinPage, ptyId)
+      await stopRemoteLoad(appPage, ptyId)
     } finally {
       cleanupDockerSshRelayTarget(target)
     }
   })
 
   test('keeps active remote typing responsive while a background SSH PTY stream is ACK-stalled', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
@@ -197,37 +193,37 @@ test.describe('Docker SSH relay perf', () => {
     let activePtyId: string | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      backgroundPtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      backgroundPtyId = await waitForActivePanePtyId(appPage, 60_000)
 
       const runId = String(Date.now())
       await execInTerminal(
-        dolphinPage,
+        appPage,
         backgroundPtyId,
         `node -e ${shellQuote(remoteBackgroundFloodScript(runId))}`
       )
-      await waitForTerminalOutput(dolphinPage, `REMOTE_ACK_FLOOD_READY_${runId}`, 30_000, 80_000)
-      await holdSshPtyAckGate(dolphinPage, [backgroundPtyId])
-      await dolphinPage.evaluate((ptyId) => window.api.pty.write(ptyId, 'g'), backgroundPtyId)
+      await waitForTerminalOutput(appPage, `REMOTE_ACK_FLOOD_READY_${runId}`, 30_000, 80_000)
+      await holdSshPtyAckGate(appPage, [backgroundPtyId])
+      await appPage.evaluate((ptyId) => window.api.pty.write(ptyId, 'g'), backgroundPtyId)
 
-      await splitActiveTerminalPane(dolphinPage, 'vertical')
-      await focusLastTerminalPane(dolphinPage)
-      activePtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await splitActiveTerminalPane(appPage, 'vertical')
+      await focusLastTerminalPane(appPage)
+      activePtyId = await waitForActivePanePtyId(appPage, 60_000)
       expect(activePtyId).not.toBe(backgroundPtyId)
 
       const activeRunId = `${runId}_active`
       await execInTerminal(
-        dolphinPage,
+        appPage,
         activePtyId,
         `node -e ${shellQuote(remoteTypingLoadScript(activeRunId))}`
       )
-      await waitForTerminalOutput(dolphinPage, `REMOTE_TUI_READY_${activeRunId}`, 30_000, 80_000)
+      await waitForTerminalOutput(appPage, `REMOTE_TUI_READY_${activeRunId}`, 30_000, 80_000)
       const heldAckPressure = expect.poll(
-        async () => (await readSshPtyAckGate(dolphinPage))?.heldAckChars ?? 0,
+        async () => (await readSshPtyAckGate(appPage))?.heldAckChars ?? 0,
         {
           timeout: 30_000,
           message: 'remote background SSH PTY stream did not build held ACK pressure'
@@ -235,8 +231,8 @@ test.describe('Docker SSH relay perf', () => {
       )
       await heldAckPressure.toBe(MIN_HELD_SSH_ACK_CHARS)
 
-      const measurement = await measureRemoteTyping(dolphinPage, activePtyId, activeRunId)
-      const ackGate = await readSshPtyAckGate(dolphinPage)
+      const measurement = await measureRemoteTyping(appPage, activePtyId, activeRunId)
+      const ackGate = await readSshPtyAckGate(appPage)
       const summary = `median=${measurement.medianLatencyMs.toFixed(
         1
       )}ms worst=${measurement.worstLatencyMs.toFixed(1)}ms heldAckChars=${
@@ -253,34 +249,34 @@ test.describe('Docker SSH relay perf', () => {
       expect(measurement.medianLatencyMs).toBeLessThan(MAX_MEDIAN_KEY_LATENCY_MS)
       expect(measurement.worstLatencyMs).toBeLessThan(MAX_WORST_KEY_LATENCY_MS)
 
-      await releaseSshPtyAckGate(dolphinPage)
-      const releasedAckGate = await readSshPtyAckGate(dolphinPage)
+      await releaseSshPtyAckGate(appPage)
+      const releasedAckGate = await readSshPtyAckGate(appPage)
       expect(releasedAckGate?.heldAckChars ?? 0).toBe(0)
     } finally {
-      await releaseSshPtyAckGate(dolphinPage).catch(() => undefined)
+      await releaseSshPtyAckGate(appPage).catch(() => undefined)
       if (activePtyId) {
-        await stopRemoteLoad(dolphinPage, activePtyId).catch(() => undefined)
+        await stopRemoteLoad(appPage, activePtyId).catch(() => undefined)
       }
       if (backgroundPtyId) {
-        await stopRemoteLoad(dolphinPage, backgroundPtyId).catch(() => undefined)
+        await stopRemoteLoad(appPage, backgroundPtyId).catch(() => undefined)
       }
       cleanupDockerSshRelayTarget(target)
     }
   })
 
   test('keeps remote typing responsive while relay file streams and git churn are active', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
       const runId = String(Date.now())
       // Large remote binaries: each read streams ~8MB of fs.streamChunk frames
@@ -288,23 +284,19 @@ test.describe('Docker SSH relay perf', () => {
       const loadFile = `/tmp/dolphin-relay-load-${runId}.png`
       const loadFiles = [loadFile, loadFile]
       await execInTerminal(
-        dolphinPage,
+        appPage,
         ptyId,
         `dd if=/dev/urandom of=${shellQuote(loadFile)} bs=1M count=8 status=none && ` +
           `echo LOAD_FILES_READY_${runId}`
       )
-      await waitForTerminalOutput(dolphinPage, `LOAD_FILES_READY_${runId}`, 60_000, 80_000)
+      await waitForTerminalOutput(appPage, `LOAD_FILES_READY_${runId}`, 60_000, 80_000)
 
-      await execInTerminal(
-        dolphinPage,
-        ptyId,
-        `node -e ${shellQuote(remoteTypingLoadScript(runId))}`
-      )
-      await waitForTerminalOutput(dolphinPage, `REMOTE_TUI_READY_${runId}`, 30_000, 80_000)
+      await execInTerminal(appPage, ptyId, `node -e ${shellQuote(remoteTypingLoadScript(runId))}`)
+      await waitForTerminalOutput(appPage, `REMOTE_TUI_READY_${runId}`, 30_000, 80_000)
 
       // Background relay pressure: continuous large file reads plus git status
       // refreshes, mirroring file preview + source-control churn while typing.
-      await dolphinPage.evaluate(
+      await appPage.evaluate(
         ({ targetId, files, repoPath }) => {
           const state = { stopped: false, reads: 0, errors: [] as string[] }
           ;(window as unknown as { __sshRelayLoad: typeof state }).__sshRelayLoad = state
@@ -331,10 +323,10 @@ test.describe('Docker SSH relay perf', () => {
         }
       )
       // Let the bulk load ramp before measuring.
-      await dolphinPage.waitForTimeout(1_000)
+      await appPage.waitForTimeout(1_000)
 
-      const measurement = await measureRemoteTyping(dolphinPage, ptyId, runId)
-      const load = await dolphinPage.evaluate(() => {
+      const measurement = await measureRemoteTyping(appPage, ptyId, runId)
+      const load = await appPage.evaluate(() => {
         const state = (
           window as unknown as {
             __sshRelayLoad: { stopped: boolean; reads: number; errors: string[] }
@@ -361,30 +353,30 @@ test.describe('Docker SSH relay perf', () => {
       expect(load.reads).toBeGreaterThan(0)
       expect(measurement.medianLatencyMs).toBeLessThan(MAX_MEDIAN_KEY_LATENCY_MS)
       expect(measurement.worstLatencyMs).toBeLessThan(MAX_WORST_KEY_LATENCY_MS)
-      await stopRemoteLoad(dolphinPage, ptyId)
+      await stopRemoteLoad(appPage, ptyId)
     } finally {
       cleanupDockerSshRelayTarget(target)
     }
   })
 
   test('keeps an SSH workspace terminal usable after disconnect and reconnect', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.slow()
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const beforePtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const beforePtyId = await waitForActivePanePtyId(appPage, 60_000)
       const beforeMarker = `SSH_RECONNECT_BEFORE_${Date.now()}`
       const beforeCommand = encodedRemoteNodeCommand(`process.stdout.write('${beforeMarker}\\n')`)
       expect(beforeCommand).not.toContain(beforeMarker)
-      await execInTerminal(dolphinPage, beforePtyId, beforeCommand)
-      await waitForTerminalOutput(dolphinPage, beforeMarker, 20_000, 60_000)
+      await execInTerminal(appPage, beforePtyId, beforeCommand)
+      await waitForTerminalOutput(appPage, beforeMarker, 20_000, 60_000)
       const recoveryStartedMarker = `SSH_RECONNECT_RECOVERY_STARTED_${Date.now()}`
       const recoveryMarker = `SSH_RECONNECT_RECOVERY_${Date.now()}`
       const recoveryScript = [
@@ -400,14 +392,14 @@ test.describe('Docker SSH relay perf', () => {
       const recoveryCommand = encodedRemoteNodeCommand(recoveryScript)
       expect(recoveryCommand).not.toContain(recoveryStartedMarker)
       expect(recoveryCommand).not.toContain(recoveryMarker)
-      await execInTerminal(dolphinPage, beforePtyId, recoveryCommand)
-      await waitForTerminalOutput(dolphinPage, recoveryStartedMarker, 30_000, 80_000)
+      await execInTerminal(appPage, beforePtyId, recoveryCommand)
+      await waitForTerminalOutput(appPage, recoveryStartedMarker, 30_000, 80_000)
 
-      await reconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
-      const afterPtyId = await waitForActivePanePtyId(dolphinPage, 60_000)
-      await waitForTerminalOutput(dolphinPage, recoveryMarker, 30_000, 80_000)
+      await reconnectDockerSshRelayTarget(appPage, remote.targetId)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      const afterPtyId = await waitForActivePanePtyId(appPage, 60_000)
+      await waitForTerminalOutput(appPage, recoveryMarker, 30_000, 80_000)
       const afterMarker = `SSH_RECONNECT_AFTER_${Date.now()}`
       const remoteProofPath = `/tmp/${afterMarker}`
       const afterCommand = encodedRemoteNodeCommand(
@@ -419,8 +411,8 @@ test.describe('Docker SSH relay perf', () => {
         ].join(';')
       )
       expect(afterCommand).not.toContain(afterMarker)
-      await execInTerminal(dolphinPage, afterPtyId, afterCommand)
-      await waitForTerminalOutput(dolphinPage, afterMarker, 20_000, 60_000)
+      await execInTerminal(appPage, afterPtyId, afterCommand)
+      await waitForTerminalOutput(appPage, afterMarker, 20_000, 60_000)
       expect(execDockerSshRelayTargetCommand(target, `cat ${shellQuote(remoteProofPath)}`)).toBe(
         afterMarker
       )

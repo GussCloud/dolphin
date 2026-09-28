@@ -57,7 +57,7 @@ test.describe('SSH skill installation', () => {
   test.skip(process.platform === 'win32', 'Docker SSH tests use POSIX ssh tooling.')
 
   test('installs and removes global, Git-worktree, and folder copies through the real relay', async ({
-    dolphinPage
+    appPage
   }, testInfo: TestInfo) => {
     test.slow()
     const fixture = requireCloudFixture()
@@ -65,10 +65,10 @@ test.describe('SSH skill installation', () => {
     try {
       target = startDockerSshRelayTarget(testInfo)
       execDockerSshRelayTargetCommand(target, `mkdir -p ${REMOTE_FOLDER}`)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-      const auth = await dolphinPage.evaluate(() => window.api.dolphinProfiles.connectCurrent())
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
+      const auth = await appPage.evaluate(() => window.api.dolphinProfiles.connectCurrent())
       expect(auth.status).toBe('connected')
 
       const globalDestination: SkillInstallDestination = {
@@ -76,12 +76,12 @@ test.describe('SSH skill installation', () => {
         executionTarget: { kind: 'ssh', connectionId: remote.targetId }
       }
       await installAndVerify(
-        dolphinPage,
+        appPage,
         target,
         globalDestination,
         '/root/.agents/skills/remote-e2e-skill'
       )
-      const globalInstalls = await dolphinPage.evaluate(
+      const globalInstalls = await appPage.evaluate(
         (environmentId) => window.api.skills.listManagedInstalls(environmentId),
         `ssh:${remote.targetId}`
       )
@@ -97,9 +97,9 @@ test.describe('SSH skill installation', () => {
           }
         ]
       })
-      await previewUnchanged(dolphinPage, globalDestination)
+      await previewUnchanged(appPage, globalDestination)
       await removeAndVerify(
-        dolphinPage,
+        appPage,
         target,
         globalDestination,
         '/root/.agents/skills/remote-e2e-skill'
@@ -110,17 +110,17 @@ test.describe('SSH skill installation', () => {
         worktreeId: remote.worktreeId
       }
       const worktreePath = '/tmp/dolphin-docker-relay-perf-repo/.agents/skills/remote-e2e-skill'
-      await installAndVerify(dolphinPage, target, worktreeDestination, worktreePath)
-      await removeAndVerify(dolphinPage, target, worktreeDestination, worktreePath)
+      await installAndVerify(appPage, target, worktreeDestination, worktreePath)
+      await removeAndVerify(appPage, target, worktreeDestination, worktreePath)
 
-      const folderWorkspaceId = await createRemoteFolderWorkspace(dolphinPage, remote.targetId)
+      const folderWorkspaceId = await createRemoteFolderWorkspace(appPage, remote.targetId)
       const folderDestination: SkillInstallDestination = {
         scope: 'workspace',
         folderWorkspaceId
       }
       const folderPath = `${REMOTE_FOLDER}/.agents/skills/remote-e2e-skill`
-      await installAndVerify(dolphinPage, target, folderDestination, folderPath)
-      await removeAndVerify(dolphinPage, target, folderDestination, folderPath)
+      await installAndVerify(appPage, target, folderDestination, folderPath)
+      await removeAndVerify(appPage, target, folderDestination, folderPath)
 
       expect(fixture.requests.filter((request) => request.method === 'POST')).toHaveLength(3)
       expect(fixture.requests.filter((request) => request.path === '/package.tar.gz')).toHaveLength(

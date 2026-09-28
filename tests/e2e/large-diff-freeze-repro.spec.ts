@@ -10,8 +10,8 @@ import {
   createIsolatedStagedLocaleDiffRepo
 } from './large-diff-repro-fixtures'
 
-async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<string> {
-  const repoId = await dolphinPage.evaluate(async (pathToRepo: string) => {
+async function addAndActivateRepo(appPage: Page, repoPath: string): Promise<string> {
+  const repoId = await appPage.evaluate(async (pathToRepo: string) => {
     const store = window.__store
     if (!store) {
       throw new Error('window.__store is not available')
@@ -30,7 +30,7 @@ async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(async (targetRepoId: string) => {
+        appPage.evaluate(async (targetRepoId: string) => {
           const store = window.__store
           if (!store) {
             return 0
@@ -45,7 +45,7 @@ async function addAndActivateRepo(dolphinPage: Page, repoPath: string): Promise<
     )
     .toBeGreaterThan(0)
 
-  const worktreeId = await dolphinPage.evaluate(
+  const worktreeId = await appPage.evaluate(
     ({ targetRepoId, pathToRepo }) => {
       const store = window.__store
       if (!store) {
@@ -72,22 +72,22 @@ test.describe('Large diff freeze repro', () => {
   test.describe.configure({ mode: 'serial' })
   test.use({ seedTestRepo: false })
   test('defers a large combined diff until the user loads it', async ({
-    dolphinPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     const fixture = createIsolatedLargeDiffRepo()
     // Why: Windows keeps the watched fixture repo locked until Electron exits.
     registerPostElectronShutdownCleanup(async () => {
       rmSync(fixture.repoPath, { recursive: true, force: true })
     })
 
-    const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+    const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
     writeFileSync(
       fixture.absolutePath,
       buildLargeTypeScriptFile(MAX_AUTOMATIC_DIFF_CHANGED_LINES + 1)
     )
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       async ({ wId, repoPath, relativePath }) => {
         const store = window.__store
         if (!store) {
@@ -115,21 +115,19 @@ test.describe('Large diff freeze repro', () => {
       { wId: worktreeId, repoPath: fixture.repoPath, relativePath: fixture.relativePath }
     )
 
-    const prompt = dolphinPage.getByTestId('large-diff-load-prompt')
+    const prompt = appPage.getByTestId('large-diff-load-prompt')
     await expect(prompt).toBeVisible()
     await expect(prompt).toContainText('Large diffs are not rendered by default.')
-    await expect(dolphinPage.locator('.monaco-diff-editor')).toHaveCount(0)
+    await expect(appPage.locator('.monaco-diff-editor')).toHaveCount(0)
 
     await prompt.getByRole('button', { name: 'Load diff' }).click()
 
     await expect(prompt).toHaveCount(0)
-    await expect(dolphinPage.locator('.monaco-diff-editor')).toHaveCount(1, { timeout: 30_000 })
+    await expect(appPage.locator('.monaco-diff-editor')).toHaveCount(1, { timeout: 30_000 })
   })
 
-  test('opening a large single-file diff keeps the renderer responsive', async ({
-    dolphinPage
-  }) => {
-    await waitForSessionReady(dolphinPage)
+  test('opening a large single-file diff keeps the renderer responsive', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
     const fixture = createIsolatedLargeDiffRepo()
     const lineCount = Number(process.env.DOLPHIN_LARGE_DIFF_REPRO_LINES ?? '60000')
     if (!Number.isFinite(lineCount) || lineCount < 0) {
@@ -144,9 +142,9 @@ test.describe('Large diff freeze repro', () => {
     }).limited
 
     try {
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
       writeFileSync(fixture.absolutePath, modifiedContent)
-      const measurement = await dolphinPage.evaluate(
+      const measurement = await appPage.evaluate(
         async ({ wId, absolutePath, relativePath, expectFallback }) => {
           const store = window.__store
           if (!store) {
@@ -219,14 +217,14 @@ test.describe('Large diff freeze repro', () => {
   })
 
   test('opening stale unstaged combined diffs after staging keeps the renderer responsive', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
     const fixture = createIsolatedStagedLocaleDiffRepo()
 
     try {
-      const worktreeId = await addAndActivateRepo(dolphinPage, fixture.repoPath)
-      const measurement = await dolphinPage.evaluate(
+      const worktreeId = await addAndActivateRepo(appPage, fixture.repoPath)
+      const measurement = await appPage.evaluate(
         async ({ wId, repoPath, expectedPaths }) => {
           const store = window.__store
           if (!store) {

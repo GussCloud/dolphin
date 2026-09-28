@@ -71,7 +71,7 @@ async function enableTerminalAccessibilityDom(page: Page, tabId: string): Promis
 
 test.describe('cold worktree activation deferral', () => {
   test('mounts only the visible tab cold and reveals deferred tabs on demand', async ({
-    dolphinPage: page
+    appPage: page
   }) => {
     test.setTimeout(180_000)
     await waitForSessionReady(page)

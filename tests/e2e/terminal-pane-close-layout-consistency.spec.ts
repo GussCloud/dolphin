@@ -250,15 +250,15 @@ async function setUpSplitTab(page: Page): Promise<SplitTabSetup> {
 }
 
 test.describe('terminal pane close vs hidden/park lifecycle keeps layout consistent', () => {
-  test('control: close while visible', async ({ dolphinPage }) => {
-    const { tabId } = await setUpSplitTab(dolphinPage)
-    await closeLastPaneOnTab(dolphinPage, tabId)
-    await expectLayoutConsistent(dolphinPage, tabId, 1, 'close-visible')
+  test('control: close while visible', async ({ appPage }) => {
+    const { tabId } = await setUpSplitTab(appPage)
+    await closeLastPaneOnTab(appPage, tabId)
+    await expectLayoutConsistent(appPage, tabId, 1, 'close-visible')
   })
 
-  test('close and hide the tab in the same tick', async ({ dolphinPage }) => {
-    const { worktreeId, tabId } = await setUpSplitTab(dolphinPage)
-    await dolphinPage.evaluate(
+  test('close and hide the tab in the same tick', async ({ appPage }) => {
+    const { worktreeId, tabId } = await setUpSplitTab(appPage)
+    await appPage.evaluate(
       ({ tabId, worktreeId }) => {
         const store = window.__store
         const manager = window.__paneManagers?.get(tabId)
@@ -278,87 +278,81 @@ test.describe('terminal pane close vs hidden/park lifecycle keeps layout consist
       },
       { tabId, worktreeId }
     )
-    await dolphinPage.waitForTimeout(PARKING_DELAY_MS * 3)
-    await activateTerminalTab(dolphinPage, tabId)
-    await waitForTabRemounted(dolphinPage, tabId)
-    await expectLayoutConsistent(dolphinPage, tabId, 1, 'close-then-hide-same-tick')
+    await appPage.waitForTimeout(PARKING_DELAY_MS * 3)
+    await activateTerminalTab(appPage, tabId)
+    await waitForTabRemounted(appPage, tabId)
+    await expectLayoutConsistent(appPage, tabId, 1, 'close-then-hide-same-tick')
   })
 
-  test('close while hidden but still mounted (hot-retain window)', async ({ dolphinPage }) => {
-    const { worktreeId, tabId } = await setUpSplitTab(dolphinPage)
-    await createActiveTerminalTab(dolphinPage, worktreeId)
-    await closeLastPaneOnTab(dolphinPage, tabId)
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabId, {
+  test('close while hidden but still mounted (hot-retain window)', async ({ appPage }) => {
+    const { worktreeId, tabId } = await setUpSplitTab(appPage)
+    await createActiveTerminalTab(appPage, worktreeId)
+    await closeLastPaneOnTab(appPage, tabId)
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, tabId, {
       parkDelayMs: PARKING_DELAY_MS
     })
-    await activateTerminalTab(dolphinPage, tabId)
-    await waitForTabRemounted(dolphinPage, tabId)
-    await expectLayoutConsistent(dolphinPage, tabId, 1, 'close-while-hidden-mounted')
+    await activateTerminalTab(appPage, tabId)
+    await waitForTabRemounted(appPage, tabId)
+    await expectLayoutConsistent(appPage, tabId, 1, 'close-while-hidden-mounted')
   })
 
-  test('close immediately after reveal remount, before panes settle', async ({ dolphinPage }) => {
-    const { worktreeId, tabId } = await setUpSplitTab(dolphinPage)
-    await createActiveTerminalTab(dolphinPage, worktreeId)
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabId, {
+  test('close immediately after reveal remount, before panes settle', async ({ appPage }) => {
+    const { worktreeId, tabId } = await setUpSplitTab(appPage)
+    await createActiveTerminalTab(appPage, worktreeId)
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, tabId, {
       parkDelayMs: PARKING_DELAY_MS
     })
-    await activateTerminalTab(dolphinPage, tabId)
-    await waitForTabRemounted(dolphinPage, tabId)
+    await activateTerminalTab(appPage, tabId)
+    await waitForTabRemounted(appPage, tabId)
     // Close as soon as the manager exists — panes may still be attaching.
-    await dolphinPage.evaluate((tabId) => {
+    await appPage.evaluate((tabId) => {
       const manager = window.__paneManagers?.get(tabId)
       const target = manager?.getPanes().at(-1)
       if (manager && target) {
         manager.closePane(target.id)
       }
     }, tabId)
-    await expectLayoutConsistent(dolphinPage, tabId, 1, 'close-mid-reveal')
+    await expectLayoutConsistent(appPage, tabId, 1, 'close-mid-reveal')
   })
 
-  test('clean visible close survives a later park/reveal cycle', async ({ dolphinPage }) => {
-    const { worktreeId, tabId } = await setUpSplitTab(dolphinPage)
-    await closeLastPaneOnTab(dolphinPage, tabId)
-    await expectLayoutConsistent(dolphinPage, tabId, 1, 'pre-park close')
-    await createActiveTerminalTab(dolphinPage, worktreeId)
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabId, {
+  test('clean visible close survives a later park/reveal cycle', async ({ appPage }) => {
+    const { worktreeId, tabId } = await setUpSplitTab(appPage)
+    await closeLastPaneOnTab(appPage, tabId)
+    await expectLayoutConsistent(appPage, tabId, 1, 'pre-park close')
+    await createActiveTerminalTab(appPage, worktreeId)
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, tabId, {
       parkDelayMs: PARKING_DELAY_MS
     })
-    await activateTerminalTab(dolphinPage, tabId)
-    await waitForTabRemounted(dolphinPage, tabId)
-    await expectLayoutConsistent(dolphinPage, tabId, 1, 'post-park-reveal')
+    await activateTerminalTab(appPage, tabId)
+    await waitForTabRemounted(appPage, tabId)
+    await expectLayoutConsistent(appPage, tabId, 1, 'post-park-reveal')
   })
 
-  test('split pane shell exits while hidden but still mounted', async ({ dolphinPage }) => {
-    const { worktreeId, tabId, splitPtyId } = await setUpSplitTab(dolphinPage)
-    await createActiveTerminalTab(dolphinPage, worktreeId)
+  test('split pane shell exits while hidden but still mounted', async ({ appPage }) => {
+    const { worktreeId, tabId, splitPtyId } = await setUpSplitTab(appPage)
+    await createActiveTerminalTab(appPage, worktreeId)
     // The setup-script analog: the split's shell ends on its own while the
     // tab is hidden-but-mounted.
-    await sendToTerminal(dolphinPage, splitPtyId, 'exit\r')
-    await dolphinPage.waitForTimeout(PARKING_DELAY_MS / 2)
-    await activateTerminalTab(dolphinPage, tabId)
-    await waitForTabRemounted(dolphinPage, tabId)
-    await expectLayoutConsistent(
-      dolphinPage,
-      tabId,
-      1,
-      'shell-exit-while-hidden-mounted',
-      splitPtyId
-    )
+    await sendToTerminal(appPage, splitPtyId, 'exit\r')
+    await appPage.waitForTimeout(PARKING_DELAY_MS / 2)
+    await activateTerminalTab(appPage, tabId)
+    await waitForTabRemounted(appPage, tabId)
+    await expectLayoutConsistent(appPage, tabId, 1, 'shell-exit-while-hidden-mounted', splitPtyId)
   })
 
-  test('split pane shell exits while the tab is parked', async ({ dolphinPage }) => {
-    const { worktreeId, tabId, splitPtyId } = await setUpSplitTab(dolphinPage)
-    await createActiveTerminalTab(dolphinPage, worktreeId)
-    await parkHiddenTabBehindDecoy(dolphinPage, worktreeId, tabId, {
+  test('split pane shell exits while the tab is parked', async ({ appPage }) => {
+    const { worktreeId, tabId, splitPtyId } = await setUpSplitTab(appPage)
+    await createActiveTerminalTab(appPage, worktreeId)
+    await parkHiddenTabBehindDecoy(appPage, worktreeId, tabId, {
       parkDelayMs: PARKING_DELAY_MS
     })
-    await sendToTerminal(dolphinPage, splitPtyId, 'exit\r')
-    await dolphinPage.waitForTimeout(PARKING_DELAY_MS)
-    await activateTerminalTab(dolphinPage, tabId)
-    await waitForTabRemounted(dolphinPage, tabId)
+    await sendToTerminal(appPage, splitPtyId, 'exit\r')
+    await appPage.waitForTimeout(PARKING_DELAY_MS)
+    await activateTerminalTab(appPage, tabId)
+    await waitForTabRemounted(appPage, tabId)
     // Why: the parked exit is deliberately deferred (no PaneManager to promote
     // siblings) — the reveal remount owns the per-leaf teardown. This asserts
     // that ownership actually resolves instead of leaving a ghost pane.
-    await expectLayoutConsistent(dolphinPage, tabId, 1, 'shell-exit-while-parked', splitPtyId)
+    await expectLayoutConsistent(appPage, tabId, 1, 'shell-exit-while-parked', splitPtyId)
   })
 })

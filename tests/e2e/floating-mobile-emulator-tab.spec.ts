@@ -91,16 +91,16 @@ async function attachPanelScreenshot(page: Page, testInfo: TestInfo): Promise<vo
 }
 
 test('floating Mobile Emulator tab renders content and closes from the tab strip', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
-  const tab = await seedFloatingSimulatorTab(dolphinPage)
-  await openFloatingPanelIfNeeded(dolphinPage)
+  const tab = await seedFloatingSimulatorTab(appPage)
+  await openFloatingPanelIfNeeded(appPage)
 
-  const openPanel = dolphinPage.locator(OPEN_PANEL_SELECTOR).first()
+  const openPanel = appPage.locator(OPEN_PANEL_SELECTOR).first()
   const tabLocator = openPanel.locator(`[data-tab-id="${tab.id}"]`)
   await expect(tabLocator).toBeVisible()
   await expect(openPanel.locator('[data-emulator-pane]')).toBeVisible()
-  await attachPanelScreenshot(dolphinPage, testInfo)
+  await attachPanelScreenshot(appPage, testInfo)
 
   await tabLocator.hover()
   await tabLocator.locator('[data-tab-close-button="true"]').click()
@@ -108,7 +108,7 @@ test('floating Mobile Emulator tab renders content and closes from the tab strip
   await expect
     .poll(
       async () =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           ({ worktreeId, tabId }) => {
             const tabs =
               (window as E2EWindow).__store?.getState().unifiedTabsByWorktree[worktreeId] ?? []

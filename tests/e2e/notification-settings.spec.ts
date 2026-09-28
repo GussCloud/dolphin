@@ -29,14 +29,14 @@ async function openNotificationSettings(
 }
 
 test.describe('Notification settings', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
   })
 
-  test('can be toggled from settings and disables child controls', async ({ dolphinPage }) => {
-    await openNotificationSettings(dolphinPage)
+  test('can be toggled from settings and disables child controls', async ({ appPage }) => {
+    await openNotificationSettings(appPage)
 
-    const notificationsSection = dolphinPage.locator('[data-settings-section="notifications"]')
+    const notificationsSection = appPage.locator('[data-settings-section="notifications"]')
     const enableNotificationsSwitch = notificationsSection.getByRole('switch', {
       name: 'Enable Notifications'
     })
@@ -60,7 +60,7 @@ test.describe('Notification settings', () => {
     await agentTaskCompleteSwitch.click()
     await expect(agentTaskCompleteSwitch).toHaveAttribute('aria-checked', 'false')
     await expect
-      .poll(async () => (await getSettings(dolphinPage)).notifications.agentTaskComplete, {
+      .poll(async () => (await getSettings(appPage)).notifications.agentTaskComplete, {
         timeout: 5_000,
         message: 'agent task-complete notification setting did not persist after disabling'
       })
@@ -73,7 +73,7 @@ test.describe('Notification settings', () => {
     await expect(suppressWhileFocusedSwitch).toBeDisabled()
     await expect(sendTestButton).toBeDisabled()
     await expect
-      .poll(async () => (await getSettings(dolphinPage)).notifications.enabled, {
+      .poll(async () => (await getSettings(appPage)).notifications.enabled, {
         timeout: 5_000,
         message: 'master notification setting did not persist after disabling'
       })
@@ -83,7 +83,7 @@ test.describe('Notification settings', () => {
     await agentTaskCompleteSwitch.click()
     await expect
       .poll(async () => {
-        const settings = await getSettings(dolphinPage)
+        const settings = await getSettings(appPage)
         return {
           enabled: settings.notifications.enabled,
           agentTaskComplete: settings.notifications.agentTaskComplete

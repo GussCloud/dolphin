@@ -19,7 +19,7 @@ function isProcessAlive(pid: number): boolean {
 // token is literally `claude` so PTY spawn recognition marks the session as an
 // agent; tab close → pty.kill routing is already covered by
 // terminal-parked-close-retirement.spec.ts, so this spec drives pty.kill.
-test('killing an agent PTY terminates its detached-pgid descendants', async ({ dolphinPage }) => {
+test('killing an agent PTY terminates its detached-pgid descendants', async ({ appPage }) => {
   test.skip(process.platform === 'win32', 'descendant tree-kill is POSIX-only for now')
 
   const stage = mkdtempSync(join(tmpdir(), 'dolphin-agent-descendant-'))
@@ -47,10 +47,10 @@ test('killing an agent PTY terminates its detached-pgid descendants', async ({ d
 
   let detachedChildPid = 0
   try {
-    await waitForSessionReady(dolphinPage)
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
+    await waitForSessionReady(appPage)
+    const worktreeId = await waitForActiveWorktree(appPage)
 
-    const ptyId = await dolphinPage.evaluate(
+    const ptyId = await appPage.evaluate(
       async ({ command, cwd, worktreeId: wt }) => {
         const result = await window.api.pty.spawn({
           cols: 120,
@@ -76,7 +76,7 @@ test('killing an agent PTY terminates its detached-pgid descendants', async ({ d
     expect(detachedChildPid).toBeGreaterThan(0)
     expect(isProcessAlive(detachedChildPid)).toBe(true)
 
-    await dolphinPage.evaluate((id) => window.api.pty.kill(id), ptyId)
+    await appPage.evaluate((id) => window.api.pty.kill(id), ptyId)
 
     await expect
       .poll(() => isProcessAlive(detachedChildPid), {

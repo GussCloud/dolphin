@@ -97,16 +97,16 @@ async function stopRendererHeartbeat(page: Page): Promise<void> {
 test.describe('large terminal paste responsiveness', () => {
   test('chunked keyboard paste keeps the renderer responsive while PTY writes are pending', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const payload = largePastePayload(runId)
     const expectedBytes = Buffer.byteLength(payload, 'utf8')
@@ -117,17 +117,17 @@ test.describe('large terminal paste responsiveness', () => {
     let scriptStarted = false
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(dolphinPage, `LARGE_PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `LARGE_PASTE_READY_${runId}`, 10_000)
 
-      await dolphinPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
       await clearTerminalPtyWriteLog(electronApp)
       await setTerminalPtyWriteDelay(electronApp, 35)
-      await installRendererHeartbeat(dolphinPage)
-      await focusActiveTerminalInput(dolphinPage)
+      await installRendererHeartbeat(appPage)
+      await focusActiveTerminalInput(appPage)
 
-      const pasteKey = dolphinPage.keyboard.press(keyboardPasteChord())
+      const pasteKey = appPage.keyboard.press(keyboardPasteChord())
       await expect
         .poll(
           async () =>
@@ -140,13 +140,13 @@ test.describe('large terminal paste responsiveness', () => {
         )
         .toBeGreaterThan(1)
 
-      const heartbeatBefore = await readRendererHeartbeat(dolphinPage)
-      await dolphinPage.waitForTimeout(150)
-      const heartbeatAfter = await readRendererHeartbeat(dolphinPage)
+      const heartbeatBefore = await readRendererHeartbeat(appPage)
+      await appPage.waitForTimeout(150)
+      const heartbeatAfter = await readRendererHeartbeat(appPage)
       expect(heartbeatAfter).toBeGreaterThan(heartbeatBefore)
 
       await pasteKey
-      await waitForTerminalOutput(dolphinPage, doneLine, 20_000, 12_000)
+      await waitForTerminalOutput(appPage, doneLine, 20_000, 12_000)
 
       const writes = (await readTerminalPtyWriteEntries(electronApp)).filter(
         (entry) => entry.id === ptyId
@@ -154,9 +154,9 @@ test.describe('large terminal paste responsiveness', () => {
       expect(writes.length).toBeGreaterThan(1)
     } finally {
       await setTerminalPtyWriteDelay(electronApp, 0).catch(() => undefined)
-      await stopRendererHeartbeat(dolphinPage).catch(() => undefined)
+      await stopRendererHeartbeat(appPage).catch(() => undefined)
       if (scriptStarted) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }

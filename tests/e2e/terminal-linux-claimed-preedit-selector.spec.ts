@@ -68,15 +68,15 @@ async function dispatchPlainKey(
 
 // CDP exercises Linux renderer policy and PTY bytes; it does not simulate native fcitx5/Sogou.
 test('Linux candidate selectors reach the IME, not the PTY, for a preedit with no composition session', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
-  await applyImePlatformPolicy(dolphinPage, 'linux')
-  const arena = await openTerminalImePaneArena(dolphinPage)
+  await applyImePlatformPolicy(appPage, 'linux')
+  const arena = await openTerminalImePaneArena(appPage)
   const reader = createTerminalImeByteReader(testRepoPath, 1)
   let completed = false
   try {
-    await startTerminalImeByteReader(dolphinPage, arena.ptyId, reader)
+    await startTerminalImeByteReader(appPage, arena.ptyId, reader)
 
     // Space picks the first candidate.
     await dispatchClaimedLetter(arena.session, 'KeyN', 'n', 78)
@@ -102,7 +102,7 @@ test('Linux candidate selectors reach the IME, not the PTY, for a preedit with n
     await dispatchPlainKey(arena.session, '7', 'Digit7', 55)
 
     await dispatchPlainEnter(arena.session)
-    expect(await waitForTerminalImeBytes(dolphinPage, reader)).toEqual([
+    expect(await waitForTerminalImeBytes(appPage, reader)).toEqual([
       Buffer.from('你好 ls7\n').toString('hex')
     ])
     completed = true

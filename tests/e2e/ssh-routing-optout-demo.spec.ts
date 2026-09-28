@@ -23,13 +23,13 @@ const HOLD_MINUTES = 25
 
 test('stages the per-host routing opt-out loop against a real forwarding-blocked sshd', async ({
   electronApp,
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout((HOLD_MINUTES + 15) * 60_000)
   let target: DockerSshRelayTarget | null = null
   try {
-    await waitForSessionReady(dolphinPage)
-    await dolphinPage.evaluate(async () => {
+    await waitForSessionReady(appPage)
+    await appPage.evaluate(async () => {
       await window.__store?.getState().updateSettings({ uiLanguage: 'en' })
     })
 
@@ -44,9 +44,9 @@ test('stages the per-host routing opt-out loop against a real forwarding-blocked
     target = startDockerSshRelayTarget(testInfo)
     // Real sshd policy: terminal healthy, browser forwarding refused with reason 1.
     blockDockerSshRelayTargetTcpForwarding(target)
-    const remote = await connectDockerSshRelayTarget(dolphinPage, target)
+    const remote = await connectDockerSshRelayTarget(appPage, target)
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ worktreeId }) => {
         const state = window.__store?.getState()
         if (!state) {
@@ -60,7 +60,7 @@ test('stages the per-host routing opt-out loop against a real forwarding-blocked
       { worktreeId: remote.worktreeId }
     )
 
-    await expect(dolphinPage.getByText('The SSH server blocks browser traffic')).toBeVisible({
+    await expect(appPage.getByText('The SSH server blocks browser traffic')).toBeVisible({
       timeout: 180_000
     })
 
@@ -73,7 +73,7 @@ test('stages the per-host routing opt-out loop against a real forwarding-blocked
         `3. Settings -> Browser -> SSH workspaces lists the host with "Route again".\n` +
         `4. Press "Route again" -> routing resumes -> the card returns (host still blocks).\n`
     )
-    await dolphinPage.waitForTimeout(HOLD_MINUTES * 60_000)
+    await appPage.waitForTimeout(HOLD_MINUTES * 60_000)
   } finally {
     cleanupDockerSshRelayTarget(target)
   }

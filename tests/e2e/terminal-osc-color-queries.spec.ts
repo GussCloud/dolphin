@@ -56,24 +56,24 @@ async function injectPtyOutput(page: Page, paneKey: string, data: string): Promi
 
 test('answers OSC foreground and background color queries from the active terminal theme', async ({
   electronApp,
-  dolphinPage
+  appPage
 }) => {
   await installTerminalPtyWriteSpy(electronApp)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
 
-  const ptyId = await waitForActivePanePtyId(dolphinPage)
-  const { paneKey } = await waitForActivePaneHookDescriptor(dolphinPage)
-  await waitForTerminalPtyDataInjector(dolphinPage, paneKey)
-  await setActiveTerminalTheme(dolphinPage, {
+  const ptyId = await waitForActivePanePtyId(appPage)
+  const { paneKey } = await waitForActivePaneHookDescriptor(appPage)
+  await waitForTerminalPtyDataInjector(appPage, paneKey)
+  await setActiveTerminalTheme(appPage, {
     foreground: '#2e3434',
     background: 'rgba(255, 255, 255, 1)'
   })
   await clearTerminalPtyWriteLog(electronApp)
 
-  const injected = await injectPtyOutput(dolphinPage, paneKey, '\x1b]10;?\x1b\\\x1b]11;?\x1b\\')
+  const injected = await injectPtyOutput(appPage, paneKey, '\x1b]10;?\x1b\\\x1b]11;?\x1b\\')
 
   expect(injected).toBe(true)
   await expect

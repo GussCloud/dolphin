@@ -61,32 +61,32 @@ function median(values: number[]): number {
 
 test.describe('Terminal typing latency', () => {
   test('interactive prompt echoes typed keys without visible lag', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-typing-benchmark-${runId}.mjs`)
     writeFileSync(scriptPath, interactivePromptScript(runId))
     let commandSent = false
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       commandSent = true
-      await waitForTerminalOutput(dolphinPage, `TYPING_READY_${runId}`, 10_000)
-      await focusActiveTerminalInput(dolphinPage)
+      await waitForTerminalOutput(appPage, `TYPING_READY_${runId}`, 10_000)
+      await focusActiveTerminalInput(appPage)
 
       const latencies: number[] = []
       for (const [index, char] of [...KEY_LATENCY_SAMPLES].entries()) {
         const seq = index + 1
         const marker = `TYPING_KEY_${runId}_${seq}`
         const start = performance.now()
-        await dolphinPage.keyboard.type(char)
-        await waitForMarkerLatency(dolphinPage, marker, MAX_WORST_KEY_LATENCY_MS)
+        await appPage.keyboard.type(char)
+        await waitForMarkerLatency(appPage, marker, MAX_WORST_KEY_LATENCY_MS)
         latencies.push(performance.now() - start)
       }
 
@@ -103,7 +103,7 @@ test.describe('Terminal typing latency', () => {
       expect(worstLatency).toBeLessThan(MAX_WORST_KEY_LATENCY_MS)
     } finally {
       if (commandSent) {
-        await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }

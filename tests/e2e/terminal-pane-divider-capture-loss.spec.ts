@@ -96,22 +96,22 @@ function gridsMatch(geometry: DividerGeometry): boolean {
 }
 
 test('@headful keeps resizing after the divider loses pointer capture', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   // Keep the 260px drag above the fit floor regardless of the CI display resolution.
-  await dolphinPage.setViewportSize({ width: 1600, height: 1000 })
-  await addTestRepo(dolphinPage, testRepoPath)
-  await ensureTerminalVisible(dolphinPage, 30_000)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  await splitActiveTerminalPane(dolphinPage, 'vertical')
-  await waitForPaneCount(dolphinPage, 2, 30_000)
+  await appPage.setViewportSize({ width: 1600, height: 1000 })
+  await addTestRepo(appPage, testRepoPath)
+  await ensureTerminalVisible(appPage, 30_000)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  await splitActiveTerminalPane(appPage, 'vertical')
+  await waitForPaneCount(appPage, 2, 30_000)
 
   await expect
-    .poll(async () => (await readDividerGeometry(dolphinPage)).second.width)
+    .poll(async () => (await readDividerGeometry(appPage)).second.width)
     .toBeGreaterThan(400)
 
-  const divider = dolphinPage.locator('.pane-divider.is-vertical').first()
+  const divider = appPage.locator('.pane-divider.is-vertical').first()
   await expect(divider).toBeVisible()
   const box = await divider.boundingBox()
   if (!box) {
@@ -127,15 +127,15 @@ test('@headful keeps resizing after the divider loses pointer capture', async ({
     })
   })
 
-  const before = await readDividerGeometry(dolphinPage)
+  const before = await readDividerGeometry(appPage)
   const startX = box.x + box.width / 2
   const startY = box.y + box.height / 2
-  await dolphinPage.mouse.move(startX, startY)
-  await dolphinPage.mouse.down()
-  await dolphinPage.mouse.move(startX + 140, startY, { steps: 10 })
+  await appPage.mouse.move(startX, startY)
+  await appPage.mouse.down()
+  await appPage.mouse.move(startX + 140, startY, { steps: 10 })
   await expect
     .poll(async () =>
-      Math.abs((await readDividerGeometry(dolphinPage)).first.width - before.first.width)
+      Math.abs((await readDividerGeometry(appPage)).first.width - before.first.width)
     )
     .toBeGreaterThan(80)
 
@@ -149,13 +149,13 @@ test('@headful keeps resizing after the divider loses pointer capture', async ({
     element.releasePointerCapture(pointerId)
   })
   // Pending capture changes are dispatched with the next pointer event.
-  await dolphinPage.mouse.move(startX + 260, startY, { steps: 10 })
+  await appPage.mouse.move(startX + 260, startY, { steps: 10 })
   await expect
     .poll(() => divider.evaluate((element) => Number(element.dataset.captureLossCount ?? '0')))
     .toBe(1)
-  await dolphinPage.mouse.up()
-  await expect.poll(async () => gridsMatch(await readDividerGeometry(dolphinPage))).toBe(true)
-  const after = await readDividerGeometry(dolphinPage)
+  await appPage.mouse.up()
+  await expect.poll(async () => gridsMatch(await readDividerGeometry(appPage))).toBe(true)
+  const after = await readDividerGeometry(appPage)
   await testInfo.attach('divider-capture-loss-geometry', {
     body: Buffer.from(JSON.stringify({ before, after }, null, 2)),
     contentType: 'application/json'

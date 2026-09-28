@@ -316,14 +316,14 @@ async function runClientHostedBrowserJourney(args: {
 
 test('hosts a paired browser on the viewing desktop and keeps the kill switch new-page-only', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   await runClientHostedBrowserJourney({
     hostApp: electronApp,
     offer,

@@ -13,11 +13,11 @@ function buildProjectPaths(): string[] {
 
 test.describe('Settings search responsiveness', () => {
   test('renders only the active settings pane when many projects match search', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
+    await waitForSessionReady(appPage)
 
-    await dolphinPage.evaluate(
+    await appPage.evaluate(
       ({ projectPaths, projectCount }) => {
         const store = window.__store
         if (!store) {
@@ -44,29 +44,26 @@ test.describe('Settings search responsiveness', () => {
       { projectPaths: buildProjectPaths(), projectCount: MATCHING_PROJECT_COUNT }
     )
 
-    const searchInput = dolphinPage.getByPlaceholder('Search settings')
+    const searchInput = appPage.getByPlaceholder('Search settings')
     await expect(searchInput).toBeVisible()
     await searchInput.fill('Project Long Search')
 
     await expect
-      .poll(
-        () => dolphinPage.evaluate(() => window.__store?.getState().settingsSearchQuery ?? ''),
-        {
-          timeout: 5_000,
-          message: 'settings search query did not apply'
-        }
-      )
+      .poll(() => appPage.evaluate(() => window.__store?.getState().settingsSearchQuery ?? ''), {
+        timeout: 5_000,
+        message: 'settings search query did not apply'
+      })
       .toBe('Project Long Search')
 
-    await expect(dolphinPage.getByRole('button', { name: 'Project Long Search 000' })).toBeVisible()
+    await expect(appPage.getByRole('button', { name: 'Project Long Search 000' })).toBeVisible()
     await expect
-      .poll(() => dolphinPage.locator('section.scroll-mt-8[data-settings-section]').count(), {
+      .poll(() => appPage.locator('section.scroll-mt-8[data-settings-section]').count(), {
         timeout: 5_000,
         message: 'settings search rendered more than the active pane'
       })
       .toBe(1)
 
-    const renderedSectionId = await dolphinPage
+    const renderedSectionId = await appPage
       .locator('section.scroll-mt-8[data-settings-section]')
       .first()
       .getAttribute('data-settings-section')

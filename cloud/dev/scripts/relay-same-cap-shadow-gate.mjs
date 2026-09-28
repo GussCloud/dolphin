@@ -32,7 +32,7 @@ import {
 const execFileAsync = promisify(execFile)
 
 const CELL_ID = /^production-gce-c[1-9][0-9]*$/
-const CELL_HOST = /^c[1-9][0-9]*\.relay\.ondolphin\.dev$/
+const CELL_HOST = /^c[1-9][0-9]*\.relay\.dolphin\.guss\.dev\.br$/
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/
 const SERVICE_NAME = /^[a-z][a-z0-9-]{0,62}$/
 

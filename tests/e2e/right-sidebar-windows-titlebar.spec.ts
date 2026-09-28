@@ -12,17 +12,15 @@ type RightSidebarHeaderGeometry = {
 }
 
 test.describe('Right sidebar native titlebar spacing', () => {
-  test('top activity buttons follow the native desktop chrome layout', async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test('top activity buttons follow the native desktop chrome layout', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
 
     const hasDesktopWindowChrome = process.platform !== 'darwin'
-    expect(await dolphinPage.evaluate(() => window.api.platform.get().platform)).toBe(
-      process.platform
-    )
+    expect(await appPage.evaluate(() => window.api.platform.get().platform)).toBe(process.platform)
 
-    await dolphinPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const store = window.__store
       if (!store) {
         throw new Error('window.__store is not available - is the app in dev mode?')
@@ -36,7 +34,7 @@ test.describe('Right sidebar native titlebar spacing', () => {
     })
 
     const measureHeader = async (): Promise<RightSidebarHeaderGeometry | null> =>
-      dolphinPage.evaluate(() => {
+      appPage.evaluate(() => {
         const header = document.querySelector<HTMLElement>('.right-sidebar-header-inset')
         const strip = document.querySelector<HTMLElement>('.right-sidebar-activity-strip')
         const closeButton = header?.querySelector<HTMLButtonElement>(

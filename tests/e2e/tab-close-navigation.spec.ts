@@ -118,20 +118,20 @@ async function getActiveFileId(
 }
 
 test.describe('Tab Close Navigation', () => {
-  test.beforeEach(async ({ dolphinPage }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   /**
    * Covers PR #693: closing the active editor tab should activate the visual
    * neighbor in the same worktree, not the first file in the list.
    */
-  test('closing the active editor tab activates its visual neighbor', async ({ dolphinPage }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
+  test('closing the active editor tab activates its visual neighbor', async ({ appPage }) => {
+    const worktreeId = await waitForActiveWorktree(appPage)
 
-    const fileIds = await openSeededEditorTabs(dolphinPage, worktreeId, [
+    const fileIds = await openSeededEditorTabs(appPage, worktreeId, [
       'package.json',
       'README.md',
       'tsconfig.json'
@@ -141,12 +141,12 @@ test.describe('Tab Close Navigation', () => {
     // Activate the middle tab and close it. The neighbor-picking logic in
     // closeFile should pick the file that sat immediately after the closed
     // one in the worktree's openFiles slice.
-    await setActiveFile(dolphinPage, fileIds[1])
-    await expect.poll(async () => getActiveFileId(dolphinPage), { timeout: 3_000 }).toBe(fileIds[1])
+    await setActiveFile(appPage, fileIds[1])
+    await expect.poll(async () => getActiveFileId(appPage), { timeout: 3_000 }).toBe(fileIds[1])
 
-    await closeFile(dolphinPage, fileIds[1])
+    await closeFile(appPage, fileIds[1])
 
-    const openFilesAfter = await getOpenFiles(dolphinPage, worktreeId)
+    const openFilesAfter = await getOpenFiles(appPage, worktreeId)
     const remainingIds = new Set(openFilesAfter.map((f) => f.id))
     expect(remainingIds.has(fileIds[1])).toBe(false)
 
@@ -158,7 +158,7 @@ test.describe('Tab Close Navigation', () => {
     // laxer assertion like "some open file is active" would have missed that
     // specific regression, since any order-agnostic fallback would still pass.
     await expect
-      .poll(async () => getActiveFileId(dolphinPage), {
+      .poll(async () => getActiveFileId(appPage), {
         timeout: 5_000,
         message: 'expected the visual neighbor (tsconfig.json) to become active after close'
       })
@@ -166,7 +166,7 @@ test.describe('Tab Close Navigation', () => {
 
     // And the workspace must still be showing an editor, not silently flipping
     // back to terminal while editors remain open.
-    await expect.poll(async () => getActiveTabType(dolphinPage), { timeout: 3_000 }).toBe('editor')
+    await expect.poll(async () => getActiveTabType(appPage), { timeout: 3_000 }).toBe('editor')
   })
 
   /**
@@ -174,17 +174,14 @@ test.describe('Tab Close Navigation', () => {
    * openFiles list with editor tabs (contentType='diff') and route through
    * the same closeFile path, which is where #693 regressed.
    */
-  test('closing the active diff tab activates a still-open neighbor', async ({ dolphinPage }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
+  test('closing the active diff tab activates a still-open neighbor', async ({ appPage }) => {
+    const worktreeId = await waitForActiveWorktree(appPage)
 
     // Seed two editor tabs + one diff tab in the same worktree.
-    const editorIds = await openSeededEditorTabs(dolphinPage, worktreeId, [
-      'package.json',
-      'README.md'
-    ])
+    const editorIds = await openSeededEditorTabs(appPage, worktreeId, ['package.json', 'README.md'])
     expect(editorIds.length).toBe(2)
 
-    const diffId = await dolphinPage.evaluate((wId) => {
+    const diffId = await appPage.evaluate((wId) => {
       const store = window.__store
       if (!store) {
         return null
@@ -210,11 +207,11 @@ test.describe('Tab Close Navigation', () => {
     }, worktreeId)
 
     expect(diffId).not.toBeNull()
-    await expect.poll(async () => getActiveFileId(dolphinPage), { timeout: 3_000 }).toBe(diffId)
+    await expect.poll(async () => getActiveFileId(appPage), { timeout: 3_000 }).toBe(diffId)
 
-    await closeFile(dolphinPage, diffId!)
+    await closeFile(appPage, diffId!)
 
-    const openFilesAfter = await getOpenFiles(dolphinPage, worktreeId)
+    const openFilesAfter = await getOpenFiles(appPage, worktreeId)
     const remainingIds = new Set(openFilesAfter.map((f) => f.id))
     expect(remainingIds.has(diffId!)).toBe(false)
     expect(remainingIds.size).toBe(2)
@@ -226,7 +223,7 @@ test.describe('Tab Close Navigation', () => {
     // remaining file, README.md (editorIds[1]). Asserting the exact ID makes
     // this a real guard against #693 instead of a tautology.
     await expect
-      .poll(async () => getActiveFileId(dolphinPage), {
+      .poll(async () => getActiveFileId(appPage), {
         timeout: 5_000,
         message: 'expected README.md (last remaining) to become active after closing the diff tab'
       })
@@ -238,8 +235,8 @@ test.describe('Tab Close Navigation', () => {
    * when the last editor closes and no terminal/browser surface remains for
    * the worktree, the app must return to Landing (activeWorktreeId === null).
    */
-  test('closing the last visible surface returns the app to Landing', async ({ dolphinPage }) => {
-    const worktreeId = await waitForActiveWorktree(dolphinPage)
+  test('closing the last visible surface returns the app to Landing', async ({ appPage }) => {
+    const worktreeId = await waitForActiveWorktree(appPage)
 
     // Prepare the worktree so only a single editor tab is present as a
     // visible surface: no browser tabs and no terminal tabs.
@@ -252,7 +249,7 @@ test.describe('Tab Close Navigation', () => {
     // it here keeps the helpers below self-contained and the test's setup
     // order-independent instead of depending on whichever surface-close
     // happens to leave activeWorktreeId untouched.
-    await dolphinPage.evaluate((wId) => {
+    await appPage.evaluate((wId) => {
       const store = window.__store
       if (!store) {
         return
@@ -277,13 +274,11 @@ test.describe('Tab Close Navigation', () => {
       }
     }, worktreeId)
 
-    const editorIds = await openSeededEditorTabs(dolphinPage, worktreeId, ['package.json'])
+    const editorIds = await openSeededEditorTabs(appPage, worktreeId, ['package.json'])
     expect(editorIds.length).toBe(1)
 
-    await setActiveFile(dolphinPage, editorIds[0])
-    await expect
-      .poll(async () => getActiveFileId(dolphinPage), { timeout: 3_000 })
-      .toBe(editorIds[0])
+    await setActiveFile(appPage, editorIds[0])
+    await expect.poll(async () => getActiveFileId(appPage), { timeout: 3_000 }).toBe(editorIds[0])
 
     // Sanity: confirm the worktree has no backing terminal/browser surfaces
     // before we close the last editor. Otherwise the deactivate branch would
@@ -296,7 +291,7 @@ test.describe('Tab Close Navigation', () => {
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate((wId) => {
+          appPage.evaluate((wId) => {
             const store = window.__store
             if (!store) {
               throw new Error('window.__store is not available')
@@ -321,12 +316,12 @@ test.describe('Tab Close Navigation', () => {
       )
       .toEqual({ terminals: 0, browserTabs: 0 })
 
-    await closeFile(dolphinPage, editorIds[0])
+    await closeFile(appPage, editorIds[0])
 
     // The worktree should be deselected. Landing renders when
     // activeWorktreeId === null.
     await expect
-      .poll(async () => getActiveWorktreeId(dolphinPage), {
+      .poll(async () => getActiveWorktreeId(appPage), {
         timeout: 5_000,
         message: 'activeWorktreeId was not cleared after closing the last visible surface'
       })

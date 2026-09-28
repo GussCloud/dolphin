@@ -18,7 +18,7 @@ import { ensureTerminalVisible, waitForSessionReady } from './helpers/store'
 test.use({ seedTestRepo: false })
 
 test('adopts a recipe-provisioned SSH root without creating a linked worktree', async ({
-  dolphinPage
+  appPage
 }, testInfo) => {
   test.setTimeout(240_000)
   let target: DockerSshRelayTarget | null = null
@@ -27,15 +27,15 @@ test('adopts a recipe-provisioned SSH root without creating a linked worktree', 
     ensureDockerSshRelayImage(process.cwd())
     target = startDockerSshRelayTarget(testInfo)
     const expectedRefHead = seedRecipeRepo(sourceRepo, target)
-    await waitForSessionReady(dolphinPage)
-    const sourceRepoId = await addRecipeRepo(dolphinPage, sourceRepo)
+    await waitForSessionReady(appPage)
+    const sourceRepoId = await addRecipeRepo(appPage, sourceRepo)
 
-    await openSidebarWorkspaceComposer(dolphinPage)
-    const dialog = dolphinPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
+    await openSidebarWorkspaceComposer(appPage)
+    const dialog = appPage.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
     await expect(dialog).toBeVisible()
     await dialog.getByRole('combobox', { name: 'Run on' }).click()
-    await dolphinPage.getByRole('option', { name: /Per-Workspace Environment/ }).click()
-    await dolphinPage
+    await appPage.getByRole('option', { name: /Per-Workspace Environment/ }).click()
+    await appPage
       .getByRole('listbox', { name: 'Per-Workspace Environment' })
       .getByText('Docker provisioned root', { exact: true })
       .click()
@@ -43,17 +43,17 @@ test('adopts a recipe-provisioned SSH root without creating a linked worktree', 
     const workspaceName = `provisioned-root-${Date.now()}`
     await dialog.getByPlaceholder(/Type a name/i).fill(workspaceName)
     await dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i }).click()
-    const trustDialog = dolphinPage.getByRole('dialog', { name: /Run VM recipe/ })
+    const trustDialog = appPage.getByRole('dialog', { name: /Run VM recipe/ })
     await expect(trustDialog).toBeVisible()
     await trustDialog.getByRole('button', { name: 'Run hooks' }).click()
 
     await expect(dialog).toBeHidden({ timeout: 60_000 })
-    await expect(dolphinPage.getByRole('option', { name: new RegExp(workspaceName) })).toBeVisible({
+    await expect(appPage.getByRole('option', { name: new RegExp(workspaceName) })).toBeVisible({
       timeout: 60_000
     })
-    await ensureTerminalVisible(dolphinPage)
+    await ensureTerminalVisible(appPage)
 
-    const adopted = await dolphinPage.evaluate(
+    const adopted = await appPage.evaluate(
       ({ sourceRepoId, workspaceName }) => {
         const state = window.__store!.getState()
         return Object.values(state.worktreesByRepo)
@@ -89,12 +89,12 @@ test('adopts a recipe-provisioned SSH root without creating a linked worktree', 
       )
     ).toBe(expectedRefHead)
 
-    const removeDialog = dolphinPage.getByRole('dialog', { name: 'Remove Project' })
-    const removeMenuItem = dolphinPage.getByRole('menuitem', {
+    const removeDialog = appPage.getByRole('dialog', { name: 'Remove Project' })
+    const removeMenuItem = appPage.getByRole('menuitem', {
       name: 'Remove Project from Dolphin'
     })
     await expect(async () => {
-      await dolphinPage
+      await appPage
         .getByRole('option', { name: new RegExp(workspaceName) })
         .click({ button: 'right' })
       await expect(removeMenuItem).toBeVisible({ timeout: 1_000 })
@@ -108,7 +108,7 @@ test('adopts a recipe-provisioned SSH root without creating a linked worktree', 
     await expect
       .poll(
         () =>
-          dolphinPage.evaluate(
+          appPage.evaluate(
             (repoId) => window.__store!.getState().repos.some((repo) => repo.id === repoId),
             adopted!.repoId
           ),

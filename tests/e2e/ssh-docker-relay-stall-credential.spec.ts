@@ -44,8 +44,8 @@ type RelayEndpointSnapshot = {
   logLines: number
 }
 
-async function readSshStatus(dolphinPage: Page, targetId: string): Promise<string | null> {
-  return dolphinPage.evaluate(
+async function readSshStatus(appPage: Page, targetId: string): Promise<string | null> {
+  return appPage.evaluate(
     (targetId) => window.__store?.getState().sshConnectionStates.get(targetId)?.status ?? null,
     targetId
   )
@@ -129,22 +129,22 @@ test.describe('SSH relay stall does not rotate the endpoint credential', () => {
   test.skip(!RUN_DOCKER_SSH, 'Set DOLPHIN_E2E_SSH_DOCKER=1 to run the dockerized SSH relay tests')
 
   for (const { stallMs, title } of STALL_CASES) {
-    test(title, async ({ dolphinPage }, testInfo) => {
+    test(title, async ({ appPage }, testInfo) => {
       test.slow()
       let target: DockerSshRelayTarget | null = null
       try {
         target = startDockerSshRelayTarget(testInfo)
         enableDockerSshRelayTargetShellTitle(target)
-        await waitForSessionReady(dolphinPage)
-        await waitForActiveWorktree(dolphinPage)
-        const remote = await connectDockerSshRelayTarget(dolphinPage, target)
-        await ensureTerminalVisible(dolphinPage, 45_000)
-        await waitForActiveTerminalManager(dolphinPage, 60_000)
-        const ptyId = await waitForActivePanePtyId(dolphinPage, 60_000)
+        await waitForSessionReady(appPage)
+        await waitForActiveWorktree(appPage)
+        const remote = await connectDockerSshRelayTarget(appPage, target)
+        await ensureTerminalVisible(appPage, 45_000)
+        await waitForActiveTerminalManager(appPage, 60_000)
+        const ptyId = await waitForActivePanePtyId(appPage, 60_000)
 
         const runId = Date.now()
-        await execInTerminal(dolphinPage, ptyId, `printf 'STALL_BEFORE_%s\\n' ${runId}`)
-        await waitForTerminalOutput(dolphinPage, `STALL_BEFORE_${runId}`, 30_000)
+        await execInTerminal(appPage, ptyId, `printf 'STALL_BEFORE_%s\\n' ${runId}`)
+        await waitForTerminalOutput(appPage, `STALL_BEFORE_${runId}`, 30_000)
         const before = snapshotRelayEndpoint(target)
 
         const stopped = stopDockerSshRelayProcesses(target)
@@ -156,8 +156,8 @@ test.describe('SSH relay stall does not rotate the endpoint credential', () => {
         // The oracle below is that it is delivered at most once; whether it is delivered at all
         // depends on which side of the liveness timeout the mux disposes, which this spec does not
         // pin — the brief's exactly-once guarantee lives at the mailbox, not the PTY byte stream.
-        await execInTerminal(dolphinPage, ptyId, `printf 'STALL_DURING_%s\\n' ${runId}`)
-        await dolphinPage.waitForTimeout(stallMs)
+        await execInTerminal(appPage, ptyId, `printf 'STALL_DURING_%s\\n' ${runId}`)
+        await appPage.waitForTimeout(stallMs)
         // More than `stopped` is legitimate: a client that timed out during the freeze may have
         // launched a bridge and a would-be daemon that are now parked behind the frozen listener.
         const continued = continueDockerSshRelayProcesses(target)
@@ -168,19 +168,19 @@ test.describe('SSH relay stall does not rotate the endpoint credential', () => {
         expect(continued).toBeGreaterThanOrEqual(stopped)
 
         await expect
-          .poll(() => readSshStatus(dolphinPage, remote.targetId), {
+          .poll(() => readSshStatus(appPage, remote.targetId), {
             timeout: 120_000,
             message: 'SSH target never returned to connected after the relay was continued'
           })
           .toBe('connected')
-        await waitForActiveTerminalManager(dolphinPage, 60_000)
+        await waitForActiveTerminalManager(appPage, 60_000)
 
         // Same pty: the session was live the whole time, so nothing may have replaced it.
         await expect
-          .poll(() => waitForActivePanePtyId(dolphinPage, 60_000), { timeout: 60_000 })
+          .poll(() => waitForActivePanePtyId(appPage, 60_000), { timeout: 60_000 })
           .toBe(ptyId)
-        await execInTerminal(dolphinPage, ptyId, `printf 'STALL_AFTER_%s\\n' ${runId}`)
-        await waitForTerminalOutput(dolphinPage, `STALL_AFTER_${runId}`, 60_000)
+        await execInTerminal(appPage, ptyId, `printf 'STALL_AFTER_%s\\n' ${runId}`)
+        await waitForTerminalOutput(appPage, `STALL_AFTER_${runId}`, 60_000)
 
         const after = snapshotRelayEndpoint(target)
         // Whether the client went through the redeploy path (new bridge) or the frozen bridge simply
@@ -223,7 +223,7 @@ test.describe('SSH relay stall does not rotate the endpoint credential', () => {
           description: `${acceptsBefore} -> ${acceptsAfter}`
         })
 
-        const content = await getTerminalContent(dolphinPage, 20_000)
+        const content = await getTerminalContent(appPage, 20_000)
         const duringCount = content.split(`STALL_DURING_${runId}`).length - 1
         testInfo.annotations.push({
           type: 'in-stall-input-delivered',

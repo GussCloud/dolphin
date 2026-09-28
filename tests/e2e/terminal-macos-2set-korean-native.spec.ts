@@ -127,11 +127,11 @@ test.describe('Native macOS 2-Set Korean terminal input @headful', () => {
 
   test('forwards physical Hangul input as exact PTY bytes', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     await runNativeScenario(
-      dolphinPage,
+      appPage,
       testInfo,
       testRepoPath,
       electronApp.process().pid!,
@@ -142,11 +142,11 @@ test.describe('Native macOS 2-Set Korean terminal input @headful', () => {
 
   test('preserves leading vowels and composes the following syllable', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     await runNativeScenario(
-      dolphinPage,
+      appPage,
       testInfo,
       testRepoPath,
       electronApp.process().pid!,
@@ -157,11 +157,11 @@ test.describe('Native macOS 2-Set Korean terminal input @headful', () => {
 
   test('flushes each syllable while the next remains in preedit', async ({
     electronApp,
-    dolphinPage,
+    appPage,
     testRepoPath
   }, testInfo) => {
     await runNativeScenario(
-      dolphinPage,
+      appPage,
       testInfo,
       testRepoPath,
       electronApp.process().pid!,

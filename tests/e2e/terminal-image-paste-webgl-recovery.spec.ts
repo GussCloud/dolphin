@@ -108,25 +108,25 @@ async function readAtlasResetCount(page: Page): Promise<number> {
 
 test.describe('terminal image paste WebGL recovery @headful', () => {
   test('clears the WebGL atlas after a real image clipboard paste', async ({
-    dolphinPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(dolphinPage)
-    await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const ptyId = await waitForActivePanePtyId(dolphinPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const marker = randomUUID()
     const scriptPath = path.join(testRepoPath, `.dolphin-image-paste-redraw-${marker}.mjs`)
     writeFileSync(scriptPath, imagePasteRedrawScript(marker))
 
     try {
-      await sendToTerminal(dolphinPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
-      await waitForTerminalOutput(dolphinPage, `READY_${marker}`, 10_000)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await waitForTerminalOutput(appPage, `READY_${marker}`, 10_000)
 
-      await forceWebgl(dolphinPage)
-      const webglActive = await dolphinPage
+      await forceWebgl(appPage)
+      const webglActive = await appPage
         .waitForFunction(
           () => {
             const state = window.__store?.getState()
@@ -147,21 +147,19 @@ test.describe('terminal image paste WebGL recovery @headful', () => {
         .then(() => true)
         .catch(() => false)
       test.skip(!webglActive, 'WebGL was not active in this headful environment')
-      expect(await patchAtlasCounter(dolphinPage)).toBe(true)
+      expect(await patchAtlasCounter(appPage)).toBe(true)
 
-      await dolphinPage.locator('.xterm-helper-textarea').first().focus()
-      await dolphinPage.evaluate(
+      await appPage.locator('.xterm-helper-textarea').first().focus()
+      await appPage.evaluate(
         (dataUrl) => window.api.ui.writeClipboardImage(dataUrl),
         CLIPBOARD_IMAGE_DATA_URL
       )
-      await dolphinPage.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V')
-      await waitForTerminalOutput(dolphinPage, `DONE_${marker}`, 10_000)
+      await appPage.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V')
+      await waitForTerminalOutput(appPage, `DONE_${marker}`, 10_000)
 
-      await expect
-        .poll(() => readAtlasResetCount(dolphinPage), { timeout: 2_000 })
-        .toBeGreaterThan(0)
+      await expect.poll(() => readAtlasResetCount(appPage), { timeout: 2_000 }).toBeGreaterThan(0)
     } finally {
-      await sendToTerminal(dolphinPage, ptyId, '\x03').catch(() => undefined)
+      await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       rmSync(scriptPath, { force: true })
     }
   })

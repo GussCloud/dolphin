@@ -131,7 +131,7 @@ async function focusBrowserWorkspace(
  * by the document — while the host's own page registry gains nothing at all.
  */
 test('renders a paired HTML doc as a document browser tab while the host gains no browser page', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
@@ -181,11 +181,11 @@ test('renders a paired HTML doc as a document browser tab while the host gains n
       `location.href='${SCRIPTED_EGRESS_URL}'</script>` +
       `</body></html>\n`
   )
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
 
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   const marker = await startClientHostedMarkerFixture()
   let prepared: PreparedPairedClient | null = null
   try {
@@ -664,7 +664,7 @@ test('renders a paired HTML doc as a document browser tab while the host gains n
 })
 
 test('asks before a paired preview reads a sibling directory', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
@@ -682,11 +682,11 @@ test('asks before a paired preview reads a sibling directory', async ({
     path.join(assetsDirectory, 'scoped-preview.js'),
     `document.getElementById('asset-result').textContent=${JSON.stringify(SCOPED_ASSET_TEXT)}\n`
   )
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
 
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   let prepared: PreparedPairedClient | null = null
   try {
     prepared = await preparePairedClient(offer, testInfo, 'Scoped HTML preview', testRepoPath)
@@ -763,7 +763,7 @@ test('asks before a paired preview reads a sibling directory', async ({
  * restores it, which is why the restored guest's URL must differ from the one that was quit.
  */
 test('restores the document tab, on a fresh grant, after the client quits and relaunches', async ({
-  dolphinPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
@@ -772,11 +772,11 @@ test('restores the document tab, on a fresh grant, after the client quits and re
     `<!doctype html><html><head><title>${RESTORE_FIXTURE_TITLE}</title></head>` +
       `<body><h1>${RESTORE_FIXTURE_HEADING}</h1></body></html>\n`
   )
-  await waitForSessionReady(dolphinPage)
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
 
-  const offer = await createRuntimeDesktopPairingOffer(dolphinPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   let prepared: PreparedPairedClient | null = null
   let abandonedProfile: string | null = null
   try {

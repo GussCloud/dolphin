@@ -1,7 +1,7 @@
 /**
  * Two-launch Electron helper for restart-persistence tests.
  *
- * Why: the default `dolphinPage` fixture creates a fresh `userDataDir` per test
+ * Why: the default `appPage` fixture creates a fresh `userDataDir` per test
  * and deletes it on close, which is incompatible with a test that needs to
  * quit the app and relaunch against the *same* on-disk state. This helper
  * owns the shared userDataDir and gives each caller an `app`+`page` pair

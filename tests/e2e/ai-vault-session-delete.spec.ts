@@ -50,7 +50,7 @@ function deleteSession(page: Page, session: AiVaultSession): Promise<AiVaultDele
 test.describe('AI Vault session delete', () => {
   test('trashes a single-file session and removes it from the list', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const homeDir = await isolatedHome(electronApp)
     const title = `E2E gemini ${Date.now()}`
@@ -67,19 +67,19 @@ test.describe('AI Vault session delete', () => {
       })
     )
 
-    const session = await findSession(dolphinPage, 'gemini', title)
+    const session = await findSession(appPage, 'gemini', title)
     expect(session, 'seeded gemini session should be listed').toBeTruthy()
 
-    const result = await deleteSession(dolphinPage, session as AiVaultSession)
+    const result = await deleteSession(appPage, session as AiVaultSession)
 
     expect(result.outcome).toBe('deleted')
     expect(existsSync(filePath), 'transcript should be gone from disk').toBe(false)
-    expect(await findSession(dolphinPage, 'gemini', title)).toBeFalsy()
+    expect(await findSession(appPage, 'gemini', title)).toBeFalsy()
   })
 
   test('trashes a claude directory session and its companions but keeps file-history', async ({
     electronApp,
-    dolphinPage
+    appPage
   }) => {
     const homeDir = await isolatedHome(electronApp)
     const title = `E2E claude ${Date.now()}`
@@ -110,10 +110,10 @@ test.describe('AI Vault session delete', () => {
     const rewindFile = path.join(fileHistoryDir, 'deadbeef@v1')
     writeFileSync(rewindFile, 'earlier version of a user file\n')
 
-    const session = await findSession(dolphinPage, 'claude', title)
+    const session = await findSession(appPage, 'claude', title)
     expect(session, 'seeded claude session should be listed').toBeTruthy()
 
-    const result = await deleteSession(dolphinPage, session as AiVaultSession)
+    const result = await deleteSession(appPage, session as AiVaultSession)
 
     expect(result.outcome).toBe('deleted')
     expect(existsSync(transcript), 'transcript gone').toBe(false)
@@ -123,6 +123,6 @@ test.describe('AI Vault session delete', () => {
     ).toBe(false)
     expect(existsSync(sessionEnvDir), 'session-env companion gone').toBe(false)
     expect(existsSync(rewindFile), 'file-history rewind buffer preserved').toBe(true)
-    expect(await findSession(dolphinPage, 'claude', title)).toBeFalsy()
+    expect(await findSession(appPage, 'claude', title)).toBeFalsy()
   })
 })

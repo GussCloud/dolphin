@@ -344,29 +344,29 @@ async function captureWorkspaceAfterTrigger(
 
 test.describe('floating workspace shared glyph atlas @headful', () => {
   test('switching floating workspace tabs keeps workspace terminal glyphs intact', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     // Why: xterm WebGL terminals with identical font configs share one glyph
     // texture atlas. The floating tab switch resumes a hidden renderer, whose
     // atlas reset clears those shared pages; unless every sharing terminal
     // rebuilds its render model too, the visible workspace terminal keeps
     // stale glyph coordinates and paints garbage (the bug this guards).
-    const scenario = await setUpSharedAtlasScenario(dolphinPage)
+    const scenario = await setUpSharedAtlasScenario(appPage)
     test.skip(!scenario, 'WebGL inactive or terminals do not share a glyph atlas')
     const { baseline, floatingTabIds } = scenario!
 
-    await toggleFloatingPanel(dolphinPage, true)
-    await activateFloatingTab(dolphinPage, floatingTabIds[1])
+    await toggleFloatingPanel(appPage, true)
+    await activateFloatingTab(appPage, floatingTabIds[1])
     // Why: the switched-to tab attaching WebGL proves the suspend/resume
     // (and with it the atlas reset trigger) actually ran.
     expect(
-      await waitForWebglOnTab(dolphinPage, floatingTabIds[1]),
+      await waitForWebglOnTab(appPage, floatingTabIds[1]),
       'switched-to floating tab should resume WebGL'
     ).toBe(true)
-    await settleAtlasActivity(dolphinPage)
-    await toggleFloatingPanel(dolphinPage, false)
+    await settleAtlasActivity(appPage)
+    await toggleFloatingPanel(appPage, false)
 
-    const afterSwitch = await captureWorkspaceAfterTrigger(dolphinPage, scenario!)
+    const afterSwitch = await captureWorkspaceAfterTrigger(appPage, scenario!)
     await testInfo.attach('baseline', { body: baseline, contentType: 'image/png' })
     await testInfo.attach('after-tab-switch', { body: afterSwitch, contentType: 'image/png' })
     // Why: byte equality trips on sub-pixel antialiasing noise that leaves every
@@ -384,7 +384,7 @@ test.describe('floating workspace shared glyph atlas @headful', () => {
   })
 
   test('a sibling terminal clearing the shared atlas leaves workspace glyphs intact', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     // Why this trigger and not a panel reveal: Dolphin's reveal paths escalate to a
     // registry-wide atlas reset, which repaints every pane and would heal the
@@ -393,17 +393,17 @@ test.describe('floating workspace shared glyph atlas @headful', () => {
     // manager reproduces the same shared-atlas wipe with none of that recovery in the
     // way, which is what makes this the assertion with teeth: it fails if
     // ITextureAtlas.pageLayoutVersion stops reaching sibling renderers.
-    const scenario = await setUpSharedAtlasScenario(dolphinPage)
+    const scenario = await setUpSharedAtlasScenario(appPage)
     test.skip(!scenario, 'WebGL inactive or terminals do not share a glyph atlas')
     const { baseline, workspacePtyId, floatingTabIds } = scenario!
 
     // The panel stays closed: the workspace terminal must be the only thing repainting.
-    await resetAtlasOnTab(dolphinPage, floatingTabIds[0])
+    await resetAtlasOnTab(appPage, floatingTabIds[0])
 
     // Why refresh and not a full rebuild: xterm skips cells whose content is unchanged,
     // so this is the repaint that reuses vertices baked against the wiped atlas pages.
-    await refreshTerminalOnTab(dolphinPage, scenario!.workspaceTabId)
-    const afterSiblingClear = await captureStableWorkspaceShot(dolphinPage, workspacePtyId)
+    await refreshTerminalOnTab(appPage, scenario!.workspaceTabId)
+    const afterSiblingClear = await captureStableWorkspaceShot(appPage, workspacePtyId)
 
     await testInfo.attach('baseline', { body: baseline, contentType: 'image/png' })
     await testInfo.attach('after-sibling-clear', {
@@ -422,20 +422,20 @@ test.describe('floating workspace shared glyph atlas @headful', () => {
   })
 
   test('reopening the floating workspace keeps workspace terminal glyphs intact', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     // Why: reopening the panel resumes its terminal, whose atlas reset clears
     // the shared pages just like a tab switch — the other user flow that
     // garbled visible workspace terminals before resets went global.
-    const scenario = await setUpSharedAtlasScenario(dolphinPage)
+    const scenario = await setUpSharedAtlasScenario(appPage)
     test.skip(!scenario, 'WebGL inactive or terminals do not share a glyph atlas')
     const { baseline } = scenario!
 
-    await toggleFloatingPanel(dolphinPage, true)
-    await settleAtlasActivity(dolphinPage)
-    await toggleFloatingPanel(dolphinPage, false)
+    await toggleFloatingPanel(appPage, true)
+    await settleAtlasActivity(appPage)
+    await toggleFloatingPanel(appPage, false)
 
-    const afterReopen = await captureWorkspaceAfterTrigger(dolphinPage, scenario!)
+    const afterReopen = await captureWorkspaceAfterTrigger(appPage, scenario!)
     await testInfo.attach('baseline', { body: baseline, contentType: 'image/png' })
     await testInfo.attach('after-reopen', { body: afterReopen, contentType: 'image/png' })
     const afterReopenDiff = compareTerminalScreenshots(baseline, afterReopen)

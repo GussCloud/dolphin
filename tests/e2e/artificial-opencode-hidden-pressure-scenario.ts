@@ -111,7 +111,7 @@ export async function runHiddenRealPtyPressureScenario<
   pressureStartDelayMs,
   testInfo,
   testRepoPath,
-  dolphinPage
+  appPage
 }: {
   deps: HiddenPressureDeps<TMeasurement, TDebug, TScheduler, TMainPressure, TAckGate>
   annotationSuffix?: string
@@ -121,11 +121,11 @@ export async function runHiddenRealPtyPressureScenario<
   pressureStartDelayMs: number
   testInfo: TestInfo
   testRepoPath: string
-  dolphinPage: Page
+  appPage: Page
 }): Promise<void> {
-  await waitForSessionReady(dolphinPage)
-  const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-  const allWorktreeIds = await getAllWorktreeIds(dolphinPage)
+  await waitForSessionReady(appPage)
+  const firstWorktreeId = await waitForActiveWorktree(appPage)
+  const allWorktreeIds = await getAllWorktreeIds(appPage)
   const secondWorktreeId = allWorktreeIds.find((id) => id !== firstWorktreeId)
   expect(Boolean(secondWorktreeId), 'OpenCode hidden PTY pressure needs a second worktree').toBe(
     true
@@ -134,8 +134,8 @@ export async function runHiddenRealPtyPressureScenario<
     return
   }
 
-  await switchToWorktree(dolphinPage, secondWorktreeId)
-  const hiddenPanes = await deps.ensureActiveWorktreePaneLoad(dolphinPage, hiddenPaneCount)
+  await switchToWorktree(appPage, secondWorktreeId)
+  const hiddenPanes = await deps.ensureActiveWorktreePaneLoad(appPage, hiddenPaneCount)
 
   const runId = randomUUID()
   const typingScriptPath = path.join(
@@ -149,37 +149,37 @@ export async function runHiddenRealPtyPressureScenario<
   deps.writeInteractivePromptScript(typingScriptPath, runId)
   writePressureOutputScript(pressureScriptPath, runId, pressureOutputMode)
 
-  await deps.resetTerminalPtyOutputDebug(dolphinPage)
+  await deps.resetTerminalPtyOutputDebug(appPage)
   await deps.holdTerminalAckGate(
-    dolphinPage,
+    appPage,
     hiddenPanes.map((pane) => pane.ptyId)
   )
   try {
     await startHiddenPressureCommands({
       hiddenPanes,
-      dolphinPage,
+      appPage,
       pressureOutputChars,
       pressureScriptPath,
       pressureStartDelayMs
     })
-    await switchToTypingWorkspace(dolphinPage, firstWorktreeId)
-    const typingPtyId = await waitForActivePanePtyId(dolphinPage)
+    await switchToTypingWorkspace(appPage, firstWorktreeId)
+    const typingPtyId = await waitForActivePanePtyId(appPage)
 
     // Why: under the Phase-4 hidden-delivery gate the hidden panes' bytes are
     // dropped in main after model ingestion, so renderer-delivery pressure
     // never builds. Wait for the gate to drop at least one pane's worth of
     // output instead of the old 2 MB ACK-backpressure target.
-    await waitForMainHiddenDeliveryDrops(dolphinPage, deps, pressureOutputChars)
+    await waitForMainHiddenDeliveryDrops(appPage, deps, pressureOutputChars)
     const measurement = await deps.measureTypingDuringLoad(
-      dolphinPage,
+      appPage,
       typingScriptPath,
       typingPtyId,
       runId
     )
-    const debug = await deps.readTerminalPtyOutputDebug(dolphinPage)
-    const scheduler = await deps.readTerminalOutputSchedulerDebug(dolphinPage)
-    const mainPressure = await deps.readMainPtyPressureDebug(dolphinPage)
-    const ackGate = await deps.readTerminalAckGateDebug(dolphinPage)
+    const debug = await deps.readTerminalPtyOutputDebug(appPage)
+    const scheduler = await deps.readTerminalOutputSchedulerDebug(appPage)
+    const mainPressure = await deps.readMainPtyPressureDebug(appPage)
+    const ackGate = await deps.readTerminalAckGateDebug(appPage)
     deps.annotateTypingMeasurement(
       testInfo,
       `opencode-hidden-real-pty-pressure-typing${annotationSuffix ?? ''}`,
@@ -215,9 +215,9 @@ export async function runHiddenRealPtyPressureScenario<
     expect(measurement.worstLatencyMs).toBeLessThan(3_000)
     expect(measurement.maxTimerDriftMs).toBeLessThan(MAX_HIDDEN_PRESSURE_TIMER_DRIFT_MS)
 
-    await deps.releaseTerminalAckGate(dolphinPage)
+    await deps.releaseTerminalAckGate(appPage)
     const restoreLatencyMs = await measureHiddenOutputRestoreLatency(
-      dolphinPage,
+      appPage,
       secondWorktreeId,
       runId
     )
@@ -237,7 +237,7 @@ export async function runHiddenRealPtyPressureScenario<
       deps,
       firstWorktreeId,
       hiddenPanes,
-      dolphinPage,
+      appPage,
       pressureScriptPath,
       secondWorktreeId,
       typingScriptPath
@@ -249,31 +249,30 @@ export async function runHiddenRealPtyPressureScenario<
 // gate drops hidden bytes in main, so renderer-delivery pressure never builds;
 // readiness is the gate reporting one pane's worth of dropped output.
 async function waitForMainHiddenDeliveryDrops<TMainPressure extends HiddenPressureMainSnapshot>(
-  dolphinPage: Page,
+  appPage: Page,
   deps: { readMainPtyPressureDebug: (page: Page) => Promise<TMainPressure | null> },
   pressureOutputChars: number
 ): Promise<void> {
   await expect
     .poll(
-      async () =>
-        (await deps.readMainPtyPressureDebug(dolphinPage))?.hiddenDeliveryDroppedChars ?? 0,
+      async () => (await deps.readMainPtyPressureDebug(appPage))?.hiddenDeliveryDroppedChars ?? 0,
       { timeout: 30_000, message: 'Main hidden-delivery gate did not drop hidden PTY output' }
     )
     .toBeGreaterThanOrEqual(pressureOutputChars)
 }
 
 async function measureHiddenOutputRestoreLatency(
-  dolphinPage: Page,
+  appPage: Page,
   worktreeId: string,
   runId: string
 ): Promise<number> {
   const restoreStart = performance.now()
-  await switchToWorktree(dolphinPage, worktreeId)
+  await switchToWorktree(appPage, worktreeId)
   // Why resolve rather than read activeTabId: after a worktree switch the active tab can
   // still be the previous worktree's, or a non-terminal one; this picks the worktree's own.
-  const tabId = (await resolveActiveTabId(dolphinPage)) ?? ''
+  const tabId = (await resolveActiveTabId(appPage)) ?? ''
   await expect
-    .poll(async () => (await readActiveScreen(dolphinPage, tabId))?.rows.join('\n') ?? '', {
+    .poll(async () => (await readActiveScreen(appPage, tabId))?.rows.join('\n') ?? '', {
       timeout: 20_000,
       // One-second backoff can dominate the measured restore latency.
       intervals: [50],
@@ -285,13 +284,13 @@ async function measureHiddenOutputRestoreLatency(
 
 async function startHiddenPressureCommands({
   hiddenPanes,
-  dolphinPage,
+  appPage,
   pressureOutputChars,
   pressureScriptPath,
   pressureStartDelayMs
 }: {
   hiddenPanes: HiddenPressurePane[]
-  dolphinPage: Page
+  appPage: Page
   pressureOutputChars: number
   pressureScriptPath: string
   pressureStartDelayMs: number
@@ -299,7 +298,7 @@ async function startHiddenPressureCommands({
   await Promise.all(
     hiddenPanes.map((pane, paneIndex) =>
       sendToTerminal(
-        dolphinPage,
+        appPage,
         pane.ptyId,
         `node ${JSON.stringify(pressureScriptPath)} ${paneIndex} ${pressureOutputChars} ${pressureStartDelayMs}\r`
       )
@@ -307,11 +306,11 @@ async function startHiddenPressureCommands({
   )
 }
 
-async function switchToTypingWorkspace(dolphinPage: Page, worktreeId: string): Promise<void> {
-  await switchToWorktree(dolphinPage, worktreeId)
-  await expect.poll(() => getActiveWorktreeId(dolphinPage), { timeout: 10_000 }).toBe(worktreeId)
-  await ensureTerminalVisible(dolphinPage)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
+async function switchToTypingWorkspace(appPage: Page, worktreeId: string): Promise<void> {
+  await switchToWorktree(appPage, worktreeId)
+  await expect.poll(() => getActiveWorktreeId(appPage), { timeout: 10_000 }).toBe(worktreeId)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
 }
 
 async function cleanupHiddenPressureScenario<
@@ -324,7 +323,7 @@ async function cleanupHiddenPressureScenario<
   deps,
   firstWorktreeId,
   hiddenPanes,
-  dolphinPage,
+  appPage,
   pressureScriptPath,
   secondWorktreeId,
   typingScriptPath
@@ -332,21 +331,19 @@ async function cleanupHiddenPressureScenario<
   deps: HiddenPressureDeps<TMeasurement, TDebug, TScheduler, TMainPressure, TAckGate>
   firstWorktreeId: string
   hiddenPanes: HiddenPressurePane[]
-  dolphinPage: Page
+  appPage: Page
   pressureScriptPath: string
   secondWorktreeId: string
   typingScriptPath: string
 }): Promise<void> {
-  await deps.releaseTerminalAckGate(dolphinPage)
-  await switchToWorktree(dolphinPage, firstWorktreeId).catch(() => undefined)
-  await waitForActivePanePtyId(dolphinPage)
-    .then((ptyId) => sendToTerminal(dolphinPage, ptyId, '\x03'))
+  await deps.releaseTerminalAckGate(appPage)
+  await switchToWorktree(appPage, firstWorktreeId).catch(() => undefined)
+  await waitForActivePanePtyId(appPage)
+    .then((ptyId) => sendToTerminal(appPage, ptyId, '\x03'))
     .catch(() => undefined)
-  await switchToWorktree(dolphinPage, secondWorktreeId).catch(() => undefined)
+  await switchToWorktree(appPage, secondWorktreeId).catch(() => undefined)
   await Promise.all(
-    hiddenPanes.map((pane) =>
-      sendToTerminal(dolphinPage, pane.ptyId, '\x03').catch(() => undefined)
-    )
+    hiddenPanes.map((pane) => sendToTerminal(appPage, pane.ptyId, '\x03').catch(() => undefined))
   )
   rmSync(typingScriptPath, { force: true })
   rmSync(pressureScriptPath, { force: true })

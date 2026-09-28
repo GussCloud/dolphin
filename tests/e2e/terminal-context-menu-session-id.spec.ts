@@ -12,16 +12,16 @@ import { openTerminalContextMenu } from './helpers/terminal-pane-title-actions'
 
 const SESSION_ID = 'e2e-terminal-pane-session'
 
-test('terminal pane context menu copies its agent session ID', async ({ dolphinPage }) => {
-  await waitForSessionReady(dolphinPage)
-  const worktreeId = await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage)
+test('terminal pane context menu copies its agent session ID', async ({ appPage }) => {
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
 
-  const tabId = await getActiveTabId(dolphinPage)
+  const tabId = await getActiveTabId(appPage)
   if (!tabId) {
     throw new Error('No active terminal tab')
   }
-  const snapshot = await waitForPaneIdentitySnapshot(dolphinPage, 1)
+  const snapshot = await waitForPaneIdentitySnapshot(appPage, 1)
   const leafId = snapshot.panes[0]?.leafId
   if (!leafId) {
     throw new Error('No active terminal pane')
@@ -30,7 +30,7 @@ test('terminal pane context menu copies its agent session ID', async ({ dolphinP
 
   // Keep this independent of an installed provider CLI while exercising the
   // durable pane identity used when transient live status has been cleared.
-  await dolphinPage.evaluate(
+  await appPage.evaluate(
     ({ paneKey, tabId, worktreeId, sessionId }) => {
       const state = window.__store?.getState()
       if (!state) {
@@ -50,7 +50,7 @@ test('terminal pane context menu copies its agent session ID', async ({ dolphinP
   await expect
     .poll(
       () =>
-        dolphinPage.evaluate(
+        appPage.evaluate(
           ({ paneKey }) =>
             window.__store?.getState().sleepingAgentSessionsByPaneKey[paneKey]?.providerSession.id,
           { paneKey }
@@ -59,9 +59,9 @@ test('terminal pane context menu copies its agent session ID', async ({ dolphinP
     )
     .toBe(SESSION_ID)
 
-  await openTerminalContextMenu(dolphinPage)
+  await openTerminalContextMenu(appPage)
 
-  const identityItems = await dolphinPage.getByRole('menuitem').allInnerTexts()
+  const identityItems = await appPage.getByRole('menuitem').allInnerTexts()
   const sessionIdIndex = identityItems.indexOf('Copy Session ID')
   expect(identityItems.slice(sessionIdIndex, sessionIdIndex + 3)).toEqual([
     'Copy Session ID',
@@ -69,11 +69,11 @@ test('terminal pane context menu copies its agent session ID', async ({ dolphinP
     'Copy Pane ID'
   ])
 
-  const copyItem = dolphinPage.getByRole('menuitem', { name: 'Copy Session ID', exact: true })
+  const copyItem = appPage.getByRole('menuitem', { name: 'Copy Session ID', exact: true })
   await expect(copyItem).toBeVisible()
   await copyItem.click()
 
   await expect
-    .poll(() => dolphinPage.evaluate(() => window.api.ui.readClipboardText()), { timeout: 3_000 })
+    .poll(() => appPage.evaluate(() => window.api.ui.readClipboardText()), { timeout: 3_000 })
     .toBe(SESSION_ID)
 })

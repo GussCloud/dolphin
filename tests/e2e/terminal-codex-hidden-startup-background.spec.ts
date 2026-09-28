@@ -227,16 +227,14 @@ async function countVisibleBackgroundPixels(
 
 test.describe('Codex hidden startup composer background', () => {
   test('restores the input background when a Codex worktree first becomes visible', async ({
-    dolphinPage
+    appPage
   }) => {
-    await waitForSessionReady(dolphinPage)
-    const firstWorktreeId = await waitForActiveWorktree(dolphinPage)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await waitForSessionReady(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const secondWorktreeId = (await getAllWorktreeIds(dolphinPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'Codex hidden startup background repro needs a second worktree')
     if (!secondWorktreeId) {
       return
@@ -244,7 +242,7 @@ test.describe('Codex hidden startup composer background', () => {
 
     const marker = `CODEX_STARTUP_BG_${Date.now()}`
     const command = codexLikeStartupCommand(marker)
-    const hiddenTabId = await dolphinPage.evaluate(
+    const hiddenTabId = await appPage.evaluate(
       ({ worktreeId, command, eventName }) => {
         const store = window.__store
         if (!store) {
@@ -282,9 +280,9 @@ test.describe('Codex hidden startup composer background', () => {
       }
     )
 
-    const hiddenPtyId = await waitForHiddenTabPtyId(dolphinPage, hiddenTabId)
+    const hiddenPtyId = await waitForHiddenTabPtyId(appPage, hiddenTabId)
     await expect
-      .poll(() => mainSnapshotContains(dolphinPage, hiddenPtyId, marker), {
+      .poll(() => mainSnapshotContains(appPage, hiddenPtyId, marker), {
         timeout: 20_000,
         message: 'Hidden Codex startup background never reached the main buffer snapshot'
       })
@@ -294,14 +292,14 @@ test.describe('Codex hidden startup composer background', () => {
     // The main-buffer snapshot above proves the hidden output was handled; the
     // reveal restore below proves it repaints when the worktree first shows.
 
-    await switchToWorktree(dolphinPage, secondWorktreeId)
+    await switchToWorktree(appPage, secondWorktreeId)
     await expect
-      .poll(() => getActiveWorktreeId(dolphinPage), {
+      .poll(() => getActiveWorktreeId(appPage), {
         timeout: 10_000,
         message: 'Hidden Codex worktree did not become active'
       })
       .toBe(secondWorktreeId)
-    await dolphinPage.evaluate((tabId) => {
+    await appPage.evaluate((tabId) => {
       const store = window.__store
       if (!store) {
         throw new Error('Store unavailable')
@@ -310,10 +308,10 @@ test.describe('Codex hidden startup composer background', () => {
       state.setActiveTab(tabId)
       state.setActiveTabType('terminal', store.getState().activeWorktreeId)
     }, hiddenTabId)
-    await ensureTerminalVisible(dolphinPage)
-    await waitForActiveTerminalManager(dolphinPage, 30_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await expect
-      .poll(() => getTerminalContent(dolphinPage, 8_000), {
+      .poll(() => getTerminalContent(appPage, 8_000), {
         timeout: 10_000,
         message: 'First visible mount did not restore hidden Codex startup content'
       })
@@ -324,7 +322,7 @@ test.describe('Codex hidden startup composer background', () => {
       .poll(
         async () => {
           try {
-            const nextTarget = await readCodexStartupBackgroundTarget(dolphinPage, marker)
+            const nextTarget = await readCodexStartupBackgroundTarget(appPage, marker)
             target = nextTarget
             return nextTarget.modelBackgroundCells >= Math.min(40, nextTarget.cols)
           } catch {
@@ -341,7 +339,7 @@ test.describe('Codex hidden startup composer background', () => {
     if (!target) {
       throw new Error('Codex startup background target was not captured')
     }
-    const visibleBackgroundPixels = await countVisibleBackgroundPixels(dolphinPage, target)
+    const visibleBackgroundPixels = await countVisibleBackgroundPixels(appPage, target)
     const minimumVisiblePixels = Math.round(
       target.modelBackgroundCells * target.cellWidth * target.cellHeight * 0.2
     )

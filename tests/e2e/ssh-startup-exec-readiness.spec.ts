@@ -27,7 +27,7 @@ test.describe('startup exec readiness over live SSH', () => {
   test.skip(process.platform === 'win32', 'Docker SSH E2E uses POSIX ssh tooling.')
 
   test('survives an SSH reconnect while the replacement shell is not ready @headful', async ({
-    dolphinPage
+    appPage
   }, testInfo) => {
     test.setTimeout(150_000)
     const runId = `ssh_${Date.now()}`
@@ -38,20 +38,20 @@ test.describe('startup exec readiness over live SSH', () => {
     let terminal: string | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(dolphinPage)
-      await waitForActiveWorktree(dolphinPage)
-      const remote = await connectDockerSshRelayTarget(dolphinPage, target, {
+      await waitForSessionReady(appPage)
+      await waitForActiveWorktree(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target, {
         relayGracePeriodSeconds: 15
       })
-      await ensureTerminalVisible(dolphinPage, 45_000)
-      await waitForActiveTerminalManager(dolphinPage, 60_000)
+      await ensureTerminalVisible(appPage, 45_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
       writeDockerSshRelayTargetFile(
         target,
         '/root/.bash_profile',
         bashExecProfileContents(runId, { releasePath, startedPath })
       )
       const created = await createStartupExecTerminal(
-        dolphinPage,
+        appPage,
         remote.worktreeId,
         runId,
         ledgerPath,
@@ -68,7 +68,7 @@ test.describe('startup exec readiness over live SSH', () => {
           { timeout: 30_000 }
         )
         .toBe('ready')
-      await expectStartupCommandQueuedByCompatibilityFallback(dolphinPage, created)
+      await expectStartupCommandQueuedByCompatibilityFallback(appPage, created)
       expect(
         execDockerSshRelayTargetControlCommand(
           target,
@@ -76,7 +76,7 @@ test.describe('startup exec readiness over live SSH', () => {
         )
       ).toBe('pending')
 
-      await reconnectDockerSshRelayTarget(dolphinPage, remote.targetId)
+      await reconnectDockerSshRelayTarget(appPage, remote.targetId)
       execDockerSshRelayTargetControlCommand(target, `: > '${releasePath}'`)
       await expect
         .poll(
@@ -88,7 +88,7 @@ test.describe('startup exec readiness over live SSH', () => {
           { timeout: 8_000 }
         )
         .toMatch(/^[0-9]+\|\/dev\/pts\/[0-9]+$/)
-      await expectStartupExecRecovery(dolphinPage, created, runId)
+      await expectStartupExecRecovery(appPage, created, runId)
 
       const [pidText, tty] = execDockerSshRelayTargetControlCommand(
         target,
@@ -104,7 +104,7 @@ test.describe('startup exec readiness over live SSH', () => {
         execDockerSshRelayTargetControlCommand(target, `ps -o tpgid= -p '${pid}' | tr -d ' '`)
       ).toBe(String(pid))
     } finally {
-      await closeStartupExecTerminal(dolphinPage, terminal)
+      await closeStartupExecTerminal(appPage, terminal)
       cleanupDockerSshRelayTarget(target)
     }
   })

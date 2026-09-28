@@ -56,49 +56,47 @@ async function selectCodexAndSkipToProject(page: Page): Promise<void> {
 
 test('fresh profile opens a live project terminal @golden', async ({
   electronApp,
-  dolphinPage,
+  appPage,
   registerPostElectronShutdownCleanup
 }) => {
-  await waitForSessionReady(dolphinPage)
-  await expect(dolphinPage.locator('#root')).toBeVisible()
-  await expect(dolphinPage.getByRole('heading', { name: /Pick your default agent/i })).toBeVisible()
+  await waitForSessionReady(appPage)
+  await expect(appPage.locator('#root')).toBeVisible()
+  await expect(appPage.getByRole('heading', { name: /Pick your default agent/i })).toBeVisible()
 
-  await selectCodexAndSkipToProject(dolphinPage)
+  await selectCodexAndSkipToProject(appPage)
   const repoPath = await createGitRepo()
   registerPostElectronShutdownCleanup(async () =>
     rmSync(path.dirname(repoPath), { recursive: true, force: true })
   )
   await stubFolderPicker(electronApp, repoPath)
-  await dolphinPage
+  await appPage
     .getByRole('button', { name: /Browse for a folder|Open a folder|Browse folder/i })
     .click()
 
-  await expect(dolphinPage.getByText(path.basename(repoPath), { exact: true }).first()).toBeVisible(
-    {
-      timeout: 30_000
-    }
-  )
-  await waitForActiveWorktree(dolphinPage)
-  await ensureTerminalVisible(dolphinPage, 30_000)
-  await waitForActiveTerminalManager(dolphinPage, 30_000)
-  const ptyId = await waitForActivePanePtyId(dolphinPage, 30_000)
-  await expect.poll(() => dolphinPage.evaluate((id) => window.api.pty.hasPty(id), ptyId)).toBe(true)
+  await expect(appPage.getByText(path.basename(repoPath), { exact: true }).first()).toBeVisible({
+    timeout: 30_000
+  })
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage, 30_000)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const ptyId = await waitForActivePanePtyId(appPage, 30_000)
+  await expect.poll(() => appPage.evaluate((id) => window.api.pty.hasPty(id), ptyId)).toBe(true)
 
   const marker = `dolphin-e2e-fresh-${Date.now()}`
-  await focusActiveTerminalInput(dolphinPage)
-  await dolphinPage.keyboard.type(`echo ${marker}`)
-  await dolphinPage.keyboard.press('Enter')
+  await focusActiveTerminalInput(appPage)
+  await appPage.keyboard.type(`echo ${marker}`)
+  await appPage.keyboard.press('Enter')
   await expect
-    .poll(async () => (await getTerminalContent(dolphinPage)).split(marker).length - 1, {
+    .poll(async () => (await getTerminalContent(appPage)).split(marker).length - 1, {
       message: 'marker should appear in both the echoed command and command output'
     })
     .toBeGreaterThanOrEqual(2)
 
-  await focusActiveTerminalInput(dolphinPage)
-  await dolphinPage.keyboard.type('git rev-parse --show-toplevel')
-  await dolphinPage.keyboard.press('Enter')
+  await focusActiveTerminalInput(appPage)
+  await appPage.keyboard.type('git rev-parse --show-toplevel')
+  await appPage.keyboard.press('Enter')
   await expect
-    .poll(async () => (await getTerminalContent(dolphinPage)).replaceAll('\\', '/'), {
+    .poll(async () => (await getTerminalContent(appPage)).replaceAll('\\', '/'), {
       message: 'fresh project terminal should start in the selected repository'
     })
     .toContain(repoPath.replaceAll('\\', '/'))

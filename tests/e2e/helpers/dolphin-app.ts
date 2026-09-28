@@ -39,7 +39,7 @@ type DolphinTestFixtures = {
   electronApp: ElectronApplication
   registerPostElectronShutdownCleanup: (cleanup: () => Promise<void>) => void
   sharedPage: Page
-  dolphinPage: Page
+  appPage: Page
   // Why: every fresh userData dir paints the first-launch onboarding overlay
   // (closedAt=null), which is `fixed inset-0 z-[100]` and intercepts pointer
   // events for every other test. Dismiss it by default; onboarding.spec.ts
@@ -136,7 +136,7 @@ export function forwardElectronProcessLogs(app: ElectronApplication, testInfo: T
 /**
  * Extended Playwright test with Dolphin-specific fixtures.
  *
- * `dolphinPage` — the main Dolphin renderer window.
+ * `appPage` — the main Dolphin renderer window.
  *
  * Test-scoped: each test gets a fresh Electron instance and isolated
  * userData directory so state cannot leak across specs through persistence.
@@ -450,7 +450,7 @@ export const test = base.extend<DolphinTestFixtures, DolphinWorkerFixtures>({
   },
 
   // Test-scoped: each test gets the shared page
-  dolphinPage: async ({ sharedPage }, provideFixture) => {
+  appPage: async ({ sharedPage }, provideFixture) => {
     await provideFixture(sharedPage)
   }
 })
