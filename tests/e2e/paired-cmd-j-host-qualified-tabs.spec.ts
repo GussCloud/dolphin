@@ -1,4 +1,4 @@
-import { errors } from '@stablyai/playwright-test'
+import { errors } from '@playwright/test'
 import { encodePaletteIdentity } from '../../src/renderer/src/lib/palette-match/palette-ranking'
 import { expect, test } from './helpers/dolphin-app'
 import {

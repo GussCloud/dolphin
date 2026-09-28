@@ -135,12 +135,12 @@ describe('buildAiVaultProjectContext', () => {
       worktrees: [worktree],
       projectHostSetupProjection: makeProjection({
         projects: [
-          makeProject({ id: 'github:stablyai/dolphin', displayName: 'Canonical Dolphin' })
+          makeProject({ id: 'github:gusscloud/dolphin', displayName: 'Canonical Dolphin' })
         ],
         setups: [
           makeSetup({
             repoId: repo.id,
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             path: repo.path
           })
         ]
@@ -150,10 +150,10 @@ describe('buildAiVaultProjectContext', () => {
       sessions: [session]
     })
 
-    expect(context.activeProjectKey).toBe('project:github:stablyai/dolphin')
+    expect(context.activeProjectKey).toBe('project:github:gusscloud/dolphin')
     expect(context.sessionProjectById.get(session.id)).toMatchObject({
       kind: 'repo',
-      key: 'project:github:stablyai/dolphin',
+      key: 'project:github:gusscloud/dolphin',
       label: 'Canonical Dolphin'
     })
   })
@@ -172,12 +172,12 @@ describe('buildAiVaultProjectContext', () => {
       worktrees: [worktree],
       projectHostSetupProjection: makeProjection({
         projects: [
-          makeProject({ id: 'github:stablyai/dolphin', displayName: 'Canonical Dolphin' })
+          makeProject({ id: 'github:gusscloud/dolphin', displayName: 'Canonical Dolphin' })
         ],
         setups: [
           makeSetup({
             repoId: repo.id,
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             path: repo.path
           })
         ]
@@ -187,8 +187,8 @@ describe('buildAiVaultProjectContext', () => {
       sessions: [session]
     })
 
-    expect(context.activeProjectKey).toBe('project:github:stablyai/dolphin')
-    expect(context.sessionProjectById.get(session.id)?.key).toBe('project:github:stablyai/dolphin')
+    expect(context.activeProjectKey).toBe('project:github:gusscloud/dolphin')
+    expect(context.sessionProjectById.get(session.id)?.key).toBe('project:github:gusscloud/dolphin')
   })
 
   it('inherits setup host ids for legacy worktrees without host metadata', () => {

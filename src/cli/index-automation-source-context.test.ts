@@ -58,11 +58,11 @@ describe('dolphin cli worktree awareness', () => {
     const sourceContext = {
       kind: 'task-source',
       provider: 'github',
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'runtime:gpu',
       projectHostSetupId: 'setup-gpu',
       repoId: 'repo-gpu',
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' },
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' },
       accountLabel: 'gpu-bot'
     }
     queueFixtures(

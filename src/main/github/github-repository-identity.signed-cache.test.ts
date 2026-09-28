@@ -29,7 +29,7 @@ const REPO = '/tmp/signed-cache-repo'
 const THIRTY_SECONDS = 30_000
 const FOUR_MINUTES = 4 * 60_000
 
-let remoteUrl = 'https://github.com/stablyai/dolphin.git'
+let remoteUrl = 'https://github.com/gusscloud/dolphin.git'
 
 const remoteGetUrlCalls = (): number =>
   gitExecFileAsyncMock.mock.calls.filter(([args]) => (args as string[])[1] === 'get-url').length
@@ -38,7 +38,7 @@ beforeEach(() => {
   _resetOwnerRepoCache()
   vi.useRealTimers()
   gitExecFileAsyncMock.mockReset()
-  remoteUrl = 'https://github.com/stablyai/dolphin.git'
+  remoteUrl = 'https://github.com/gusscloud/dolphin.git'
   readLocalGitConfigSignatureMock.mockReset()
   readLocalGitConfigSignatureMock.mockImplementation(async () => 'sig-1')
   gitExecFileAsyncMock.mockImplementation(async () => ({ stdout: remoteUrl }))
@@ -48,7 +48,7 @@ describe('owner/repo identity cache', () => {
   it('holds a signed identity past the unsigned TTL instead of re-spawning git', async () => {
     vi.useFakeTimers()
     await expect(getOwnerRepoForRemote(REPO, 'origin')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
     expect(remoteGetUrlCalls()).toBe(1)
@@ -56,7 +56,7 @@ describe('owner/repo identity cache', () => {
     // Past the unsigned TTL, inside the signed TTL.
     vi.setSystemTime(Date.now() + FOUR_MINUTES)
     await expect(getOwnerRepoForRemote(REPO, 'origin')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
     expect(remoteGetUrlCalls()).toBe(1)
@@ -99,7 +99,7 @@ describe('owner/repo identity cache', () => {
       getOwnerRepoForRemote(REPO, 'origin'),
       getOwnerRepoForRemote(REPO, 'origin')
     ])
-    expect(first).toEqual({ owner: 'stablyai', repo: 'dolphin' })
+    expect(first).toEqual({ owner: 'gusscloud', repo: 'dolphin' })
     expect(second).toEqual(first)
     expect(remoteGetUrlCalls()).toBe(1)
   })

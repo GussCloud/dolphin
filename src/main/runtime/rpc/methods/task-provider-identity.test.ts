@@ -119,13 +119,13 @@ describe('github identity blank fields', () => {
 
   it.each(['', '  '])('rejects a blank repo %j', (repo) => {
     expect(
-      TaskProviderIdentity.safeParse({ provider: 'github', owner: 'stablyai', repo }).success
+      TaskProviderIdentity.safeParse({ provider: 'github', owner: 'gusscloud', repo }).success
     ).toBe(false)
   })
 
   it('still accepts a populated identity', () => {
     expect(
-      TaskProviderIdentity.safeParse({ provider: 'github', owner: 'stablyai', repo: 'dolphin' })
+      TaskProviderIdentity.safeParse({ provider: 'github', owner: 'gusscloud', repo: 'dolphin' })
         .success
     ).toBe(true)
   })
@@ -133,9 +133,9 @@ describe('github identity blank fields', () => {
   it('leaves the parsed value untrimmed, so no wire bytes change', () => {
     const parsed = TaskProviderIdentity.safeParse({
       provider: 'github',
-      owner: ' stablyai ',
+      owner: ' gusscloud ',
       repo: 'dolphin'
     })
-    expect(parsed.success && parsed.data?.owner).toBe(' stablyai ')
+    expect(parsed.success && parsed.data?.owner).toBe(' gusscloud ')
   })
 })

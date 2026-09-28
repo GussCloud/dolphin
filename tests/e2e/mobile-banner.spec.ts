@@ -1,4 +1,4 @@
-import type { ElectronApplication, Page, TestInfo } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page, TestInfo } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,

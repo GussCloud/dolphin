@@ -82,9 +82,9 @@ describe('landing preflight issues', () => {
           displayName: 'dolphin',
           repoIcon: {
             type: 'image',
-            src: 'https://github.com/stablyai.png?size=64',
+            src: 'https://github.com/gusscloud.png?size=64',
             source: 'github',
-            label: 'stablyai/dolphin'
+            label: 'gusscloud/dolphin'
           }
         })
       ])
@@ -98,7 +98,7 @@ describe('landing preflight issues', () => {
           id: 'github-repo',
           path: '/Users/alice/dolphin',
           displayName: 'dolphin',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         })
       ])
     ).toBe(true)

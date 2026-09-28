@@ -1,6 +1,6 @@
 // STA-8147: history, reload, zoom, and address-bar chords act on the split that sent them.
 
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { focusActiveTerminalInput } from './helpers/terminal'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'

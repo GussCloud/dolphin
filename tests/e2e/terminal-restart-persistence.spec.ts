@@ -24,7 +24,7 @@
  *   - Crash/SIGKILL recovery — that is covered by daemon history checkpoints.
  */
 
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import {
   execInTerminal,

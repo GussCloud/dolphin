@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs'
 import { runProcess } from '../../src/shared/child-process/run-process'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 

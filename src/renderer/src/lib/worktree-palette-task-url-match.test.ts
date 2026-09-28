@@ -34,7 +34,7 @@ function makeWorktree(overrides: Partial<Worktree> = {}): Worktree {
 const dolphinRepo: Repo = {
   id: 'repo-1',
   path: '/repo/dolphin',
-  displayName: 'stablyai/dolphin',
+  displayName: 'gusscloud/dolphin',
   badgeColor: '#22c55e',
   addedAt: 0
 }
@@ -66,18 +66,18 @@ function gitHubRepo(canonicalKey: string): Repo {
 
 describe('parseCmdJTaskSourceUrl', () => {
   it('parses GitHub issue and pull URLs', () => {
-    expect(parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/issues/14198')).toEqual({
+    expect(parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/issues/14198')).toEqual({
       provider: 'github',
       link: {
-        slug: { owner: 'stablyai', repo: 'dolphin', host: 'github.com' },
+        slug: { owner: 'gusscloud', repo: 'dolphin', host: 'github.com' },
         type: 'issue',
         number: 14198
       }
     })
-    expect(parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')).toEqual({
+    expect(parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')).toEqual({
       provider: 'github',
       link: {
-        slug: { owner: 'stablyai', repo: 'dolphin', host: 'github.com' },
+        slug: { owner: 'gusscloud', repo: 'dolphin', host: 'github.com' },
         type: 'pr',
         number: 12789
       }
@@ -87,11 +87,11 @@ describe('parseCmdJTaskSourceUrl', () => {
   it('parses Linear, GitLab, and Jira URLs', () => {
     expect(
       parseCmdJTaskSourceUrl(
-        'https://linear.app/stably/issue/STA-4052/agent-terminals-disappearing-randomly'
+        'https://linear.app/gusscloud/issue/STA-4052/agent-terminals-disappearing-randomly'
       )
     ).toEqual({
       provider: 'linear',
-      intent: { identifier: 'STA-4052', organizationUrlKey: 'stably' }
+      intent: { identifier: 'STA-4052', organizationUrlKey: 'gusscloud' }
     })
     expect(
       parseCmdJTaskSourceUrl('https://gitlab.com/acme/dolphin/-/merge_requests/17')
@@ -111,14 +111,14 @@ describe('parseCmdJTaskSourceUrl', () => {
 
   it('does not treat names or repo homepages as task URLs', () => {
     expect(parseCmdJTaskSourceUrl('sta-4052-agent-terminals')).toBeNull()
-    expect(parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin')).toBeNull()
+    expect(parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin')).toBeNull()
     expect(parseCmdJTaskSourceUrl('#14198')).toBeNull()
   })
 })
 
 describe('matchWorktreePaletteTaskUrl', () => {
   it('retains the matched workspace host for host-qualified consumers', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/issues/123')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/issues/123')
     expect(intent).not.toBeNull()
 
     expect(
@@ -130,7 +130,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
             type: 'issue',
             number: 123,
             title: 'Host-qualified match',
-            url: 'https://github.com/stablyai/dolphin/issues/123'
+            url: 'https://github.com/gusscloud/dolphin/issues/123'
           }
         }),
         intent: intent!
@@ -139,7 +139,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
   })
 
   it('matches a GitHub issue URL to the linked worktree in the same repo', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/issues/14198')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/issues/14198')
     expect(intent).not.toBeNull()
 
     expect(
@@ -163,7 +163,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
   })
 
   it('matches a GitHub work-item number when the stored URL is missing', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({
@@ -182,7 +182,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
   })
 
   it('matches a GitHub pull URL via the stored work-item URL', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({
@@ -191,7 +191,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
             type: 'pr',
             number: 12789,
             title: 'Perf',
-            url: 'https://github.com/stablyai/dolphin/pull/12789'
+            url: 'https://github.com/gusscloud/dolphin/pull/12789'
           }
         }),
         intent: intent!,
@@ -201,7 +201,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
   })
 
   it('gates a stored GitHub number on the repo remote identity', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
@@ -213,13 +213,13 @@ describe('matchWorktreePaletteTaskUrl', () => {
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
         intent: intent!,
-        repo: gitHubRepo('github.com/stablyai/dolphin')
+        repo: gitHubRepo('github.com/gusscloud/dolphin')
       })
     ).toMatchObject({ matchedFields: ['pr'], supportingText: { text: 'PR #12789' } })
   })
 
   it('gates a stored GitHub work item with no URL on the repo remote identity', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/issues/14198')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/issues/14198')
     const worktree = makeWorktree({
       linkedWorkItem: { provider: 'github', type: 'issue', number: 14198, title: 'Bug', url: '' }
     })
@@ -234,37 +234,37 @@ describe('matchWorktreePaletteTaskUrl', () => {
       matchWorktreePaletteTaskUrl({
         worktree,
         intent: intent!,
-        repo: gitHubRepo('github.com/stablyai/dolphin')
+        repo: gitHubRepo('github.com/gusscloud/dolphin')
       })
     ).toMatchObject({ matchedFields: ['issue'] })
   })
 
   it('does not match a GitHub URL on a different host for the same owner/repo', () => {
-    const intent = parseCmdJTaskSourceUrl('https://ghe.example.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://ghe.example.com/gusscloud/dolphin/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
         intent: intent!,
-        repo: gitHubRepo('github.com/stablyai/dolphin')
+        repo: gitHubRepo('github.com/gusscloud/dolphin')
       })
     ).toBeNull()
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
         intent: intent!,
-        repo: gitHubRepo('ghe.example.com/stablyai/dolphin')
+        repo: gitHubRepo('ghe.example.com/gusscloud/dolphin')
       })
     ).toMatchObject({ matchedFields: ['pr'] })
   })
 
   it('matches GitHub remotes whose host is an SSH alias or www form of github.com', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
     for (const canonicalKey of [
       // ssh://git@ssh.github.com:443/... — GitHub's port-443 workaround.
-      'ssh.github.com/stablyai/dolphin',
+      'ssh.github.com/gusscloud/dolphin',
       // git@github-work:... — an OpenSSH `Host` alias `git remote -v` cannot expand.
-      'github-work/stablyai/dolphin',
-      'www.github.com/stablyai/dolphin'
+      'github-work/gusscloud/dolphin',
+      'www.github.com/gusscloud/dolphin'
     ]) {
       expect(
         matchWorktreePaletteTaskUrl({
@@ -279,26 +279,26 @@ describe('matchWorktreePaletteTaskUrl', () => {
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
         intent: intent!,
-        repo: gitHubRepo('ghe.example.com/stablyai/dolphin')
+        repo: gitHubRepo('ghe.example.com/gusscloud/dolphin')
       })
     ).toBeNull()
   })
 
   it('normalizes host case, port, and owner case before comparing GitHub identities', () => {
     const intent = parseCmdJTaskSourceUrl(
-      'https://GHE.Example.com:8443/StablyAI/Dolphin/pull/12789'
+      'https://GHE.Example.com:8443/GussCloud/Dolphin/pull/12789'
     )
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
         intent: intent!,
-        repo: gitHubRepo('ghe.example.com/stablyai/dolphin')
+        repo: gitHubRepo('ghe.example.com/gusscloud/dolphin')
       })
     ).toMatchObject({ matchedFields: ['pr'] })
   })
 
   it('stays permissive for GitHub numbers when the repo remote identity is unknown', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
@@ -314,11 +314,11 @@ describe('matchWorktreePaletteTaskUrl', () => {
   it('stays permissive for a GitHub fork whose identity resolved to the upstream remote', () => {
     // `deriveGitRemoteIdentity` prefers `upstream`, so the fork's own `origin` is not visible here.
     const forkRepo: Repo = {
-      ...gitHubRepo('github.com/stablyai/dolphin'),
+      ...gitHubRepo('github.com/gusscloud/dolphin'),
       gitRemoteIdentity: {
-        canonicalKey: 'github.com/stablyai/dolphin',
+        canonicalKey: 'github.com/gusscloud/dolphin',
         remoteName: 'upstream',
-        remoteUrl: 'git@github.com:stablyai/dolphin.git'
+        remoteUrl: 'git@github.com:gusscloud/dolphin.git'
       }
     }
     const intent = parseCmdJTaskSourceUrl('https://github.com/me/dolphin/pull/12789')
@@ -334,19 +334,19 @@ describe('matchWorktreePaletteTaskUrl', () => {
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
         intent: intent!,
-        repo: gitHubRepo('github.com/stablyai/dolphin')
+        repo: gitHubRepo('github.com/gusscloud/dolphin')
       })
     ).toBeNull()
   })
 
   it('keeps the GitHub number gate type-aware across repos', () => {
-    const prIntent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
-    const issueIntent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/issues/12789')
+    const prIntent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
+    const issueIntent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/issues/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedIssue: 12789 }),
         intent: prIntent!,
-        repo: gitHubRepo('github.com/stablyai/dolphin')
+        repo: gitHubRepo('github.com/gusscloud/dolphin')
       })
     ).toBeNull()
     expect(
@@ -360,13 +360,13 @@ describe('matchWorktreePaletteTaskUrl', () => {
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedIssue: 12789 }),
         intent: issueIntent!,
-        repo: gitHubRepo('github.com/stablyai/dolphin')
+        repo: gitHubRepo('github.com/gusscloud/dolphin')
       })
     ).toMatchObject({ matchedFields: ['issue'], supportingText: { text: 'Issue #12789' } })
   })
 
   it('keeps an owner/repo displayName authoritative over a host-alias remote', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({ linkedPR: 12789 }),
@@ -374,9 +374,9 @@ describe('matchWorktreePaletteTaskUrl', () => {
         repo: {
           ...dolphinRepo,
           gitRemoteIdentity: {
-            canonicalKey: 'git-mirror.example.com/stablyai/dolphin',
+            canonicalKey: 'git-mirror.example.com/gusscloud/dolphin',
             remoteName: 'origin',
-            remoteUrl: 'git@git-mirror.example.com:stablyai/dolphin.git'
+            remoteUrl: 'git@git-mirror.example.com:gusscloud/dolphin.git'
           }
         }
       })
@@ -384,7 +384,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
   })
 
   it('matches a GitHub PR URL via the linked review URL regardless of remote identity', () => {
-    const intent = parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')
+    const intent = parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree(),
@@ -395,7 +395,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
           number: 12789,
           title: 'Fork PR',
           state: 'open',
-          url: 'https://github.com/stablyai/dolphin/pull/12789',
+          url: 'https://github.com/gusscloud/dolphin/pull/12789',
           status: 'pending',
           updatedAt: '2026-01-01T00:00:00Z',
           mergeable: 'UNKNOWN'
@@ -633,14 +633,14 @@ describe('matchWorktreePaletteTaskUrl', () => {
 
   it('matches a Linear issue URL and rejects a different organization', () => {
     const intent = parseCmdJTaskSourceUrl(
-      'https://linear.app/stably/issue/STA-4052/agent-terminals-disappearing-randomly'
+      'https://linear.app/gusscloud/issue/STA-4052/agent-terminals-disappearing-randomly'
     )
 
     expect(
       matchWorktreePaletteTaskUrl({
         worktree: makeWorktree({
           linkedLinearIssue: 'STA-4052',
-          linkedLinearIssueOrganizationUrlKey: 'stably'
+          linkedLinearIssueOrganizationUrlKey: 'gusscloud'
         }),
         intent: intent!
       })
@@ -757,7 +757,7 @@ describe('matchWorktreePaletteTaskUrl', () => {
             number: 0,
             title: 'Linked elsewhere',
             jiraIdentifier: 'PROJ-123',
-            url: 'https://github.com/stablyai/dolphin/issues/14198'
+            url: 'https://github.com/gusscloud/dolphin/issues/14198'
           }
         }),
         intent: intent!
@@ -793,18 +793,18 @@ describe('getCmdJTaskUrlCreatePreview', () => {
   it('describes GitHub issue and pull URLs without fetching', () => {
     expect(
       getCmdJTaskUrlCreatePreview(
-        parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/issues/14198')!
+        parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/issues/14198')!
       )
     ).toEqual({
       provider: 'github',
       identifier: '#14198',
-      subtitle: 'stablyai/dolphin',
+      subtitle: 'gusscloud/dolphin',
       kindLabel: 'GitHub issue',
-      createLabel: 'Create worktree from GitHub issue stablyai/dolphin#14198'
+      createLabel: 'Create worktree from GitHub issue gusscloud/dolphin#14198'
     })
     expect(
       getCmdJTaskUrlCreatePreview(
-        parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/pull/12789')!
+        parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/pull/12789')!
       )?.kindLabel
     ).toBe('GitHub pull request')
     expect(
@@ -829,7 +829,7 @@ describe('getCmdJTaskUrlCreatePreview', () => {
 
   it('replaces the GitHub subtitle with the resolved issue title', () => {
     const preview = getCmdJTaskUrlCreatePreview(
-      parseCmdJTaskSourceUrl('https://github.com/stablyai/dolphin/issues/14198')!
+      parseCmdJTaskSourceUrl('https://github.com/gusscloud/dolphin/issues/14198')!
     )!
     expect(
       withResolvedCmdJGitHubPreview(preview, 'Agent terminals disappearing randomly', false)
@@ -837,7 +837,7 @@ describe('getCmdJTaskUrlCreatePreview', () => {
       expect.objectContaining({
         subtitle: 'Agent terminals disappearing randomly',
         createLabel:
-          'Create worktree from GitHub issue stablyai/dolphin#14198: Agent terminals disappearing randomly',
+          'Create worktree from GitHub issue gusscloud/dolphin#14198: Agent terminals disappearing randomly',
         loading: false
       })
     )

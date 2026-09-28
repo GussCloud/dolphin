@@ -89,7 +89,7 @@ describe('buildRows with pinned worktrees', () => {
 
     expect(rows.filter((row) => row.type === 'header')).toMatchObject([
       {
-        key: 'project:github:stablyai/dolphin',
+        key: 'project:github:gusscloud/dolphin',
         label: 'Dolphin',
         count: 2
       }
@@ -149,7 +149,7 @@ describe('buildRows with pinned worktrees', () => {
     )
 
     expect(rows).toMatchObject([
-      { type: 'header', key: 'project:github:stablyai/dolphin', label: 'Dolphin', count: 2 },
+      { type: 'header', key: 'project:github:gusscloud/dolphin', label: 'Dolphin', count: 2 },
       { type: 'item', worktree: { id: worktree.id }, hostContextLabel: LOCAL_HOST_LABEL },
       { type: 'item', worktree: { id: runtimeWorktree.id }, hostContextLabel: 'dev box' }
     ])
@@ -295,7 +295,7 @@ describe('buildRows with pinned worktrees', () => {
     )
 
     expect(rows).toMatchObject([
-      { type: 'header', key: 'project:github:stablyai/dolphin', label: 'Dolphin', count: 2 },
+      { type: 'header', key: 'project:github:gusscloud/dolphin', label: 'Dolphin', count: 2 },
       { type: 'item', worktree: { id: worktree.id } },
       { type: 'item', worktree: { id: secondLocalWorktree.id } }
     ])
@@ -338,6 +338,6 @@ describe('buildRows with pinned worktrees', () => {
           projectHostSetups
         }
       )
-    ).toBe('project:github:stablyai/dolphin')
+    ).toBe('project:github:gusscloud/dolphin')
   })
 })

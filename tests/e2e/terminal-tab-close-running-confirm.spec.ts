@@ -5,7 +5,7 @@
  *   2. X click    -> the same dialog, and the tab is still there behind it.
  */
 import { test, expect } from './helpers/dolphin-app'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import {
   waitForSessionReady,
   waitForActiveWorktree,

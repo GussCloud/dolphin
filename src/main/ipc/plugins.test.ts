@@ -113,15 +113,15 @@ describe('plugin removal authority', () => {
 
   it('refuses bundled installs because startup would restore them', () => {
     const service = {
-      getDiscovered: () => [{ pluginKey: 'stablyai.dolphin-theme', isDev: false }]
+      getDiscovered: () => [{ pluginKey: 'gusscloud.dolphin-theme', isDev: false }]
     } as unknown as PluginService
     const lock = {
       version: 1,
       plugins: {
-        'stablyai.dolphin-theme': {
-          pluginKey: 'stablyai.dolphin-theme',
+        'gusscloud.dolphin-theme': {
+          pluginKey: 'gusscloud.dolphin-theme',
           version: '1.0.0',
-          source: { kind: 'bundled', bundleId: 'stablyai.dolphin-theme' },
+          source: { kind: 'bundled', bundleId: 'gusscloud.dolphin-theme' },
           resolvedCommit: null,
           contentHash: 'a'.repeat(64),
           consentFingerprint: 'reviewed',
@@ -130,7 +130,7 @@ describe('plugin removal authority', () => {
       }
     } satisfies PluginLockfile
 
-    expect(canRemoveInstalledPlugin(service, 'stablyai.dolphin-theme', lock)).toBe(false)
+    expect(canRemoveInstalledPlugin(service, 'gusscloud.dolphin-theme', lock)).toBe(false)
   })
 })
 

@@ -790,15 +790,15 @@ describe('listWorkItems', () => {
   })
 
   it('marks fork PRs as cross-repository when REST payload only includes head.label', async () => {
-    getIssueOwnerRepoMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
-    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
+    getIssueOwnerRepoMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
+    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
     ghExecFileAsyncMock.mockResolvedValueOnce({ stdout: '[]' }).mockResolvedValueOnce({
       stdout: JSON.stringify([
         {
           number: 1849,
           title: 'Fork PR with missing head repo',
           state: 'open',
-          html_url: 'https://github.com/stablyai/dolphin/pull/1849',
+          html_url: 'https://github.com/gusscloud/dolphin/pull/1849',
           updated_at: '2026-04-01T00:00:00Z',
           user: { login: 'contributor' },
           head: {
@@ -820,14 +820,14 @@ describe('listWorkItems', () => {
         number: 1849,
         title: 'Fork PR with missing head repo',
         state: 'open',
-        url: 'https://github.com/stablyai/dolphin/pull/1849',
+        url: 'https://github.com/gusscloud/dolphin/pull/1849',
         labels: [],
         updatedAt: '2026-04-01T00:00:00Z',
         author: 'contributor',
         branchName: 'feat/onboarding-model-choice-782',
         baseRefName: 'main',
         headSha: 'head-1849',
-        prRepo: { owner: 'stablyai', repo: 'dolphin' },
+        prRepo: { owner: 'gusscloud', repo: 'dolphin' },
         isCrossRepository: true
       }
     ])

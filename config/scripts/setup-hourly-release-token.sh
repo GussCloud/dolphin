@@ -53,7 +53,7 @@ cat <<EOF
 
 Create a GitHub App (one time — the key never expires)
 ──────────────────────────────────────────────────────
-  1. Open:  https://github.com/organizations/stablyai/settings/apps/new
+  1. Open:  https://github.com/organizations/gusscloud/settings/apps/new
   2. Name ..................  dolphin-hourly-release
      Homepage URL ..........  https://github.com/$HOURLY_REPO
      Webhook ...............  UNCHECK "Active"

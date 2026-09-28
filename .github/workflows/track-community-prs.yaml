@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   track-community-pr:
-    # Why gated: it files PRs into Stably's project board with their bot key, which this repo lacks.
+    # Why gated: it files PRs into GussCloud's project board with their bot key, which this repo lacks.
     if: github.repository == 'GussCloud/dolphin'
     # API-only bookkeeping fits the free single-CPU container runner.
     runs-on: ubuntu-slim
@@ -32,9 +32,9 @@ jobs:
       - name: Add PR to project
         uses: actions/github-script@v8
         env:
-          PROJECT_OWNER: stablyai
+          PROJECT_OWNER: gusscloud
           PROJECT_NUMBER: '13'
-          INTERNAL_TEAM_SLUG: stably-eng
+          INTERNAL_TEAM_SLUG: gusscloud-eng
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |

@@ -96,7 +96,7 @@ describe('dolphin cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-local',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-local',
             path: '/tmp/dolphin',
@@ -108,7 +108,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: 'repo-gpu',
             path: '/srv/dolphin',
@@ -133,7 +133,7 @@ describe('dolphin cli worktree awareness', () => {
         'worktree',
         'create',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:gpu',
         '--name',
@@ -170,7 +170,7 @@ describe('dolphin cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: 'repo-gpu',
             path: '/srv/dolphin',
@@ -223,7 +223,7 @@ describe('dolphin cli worktree awareness', () => {
         '--repo',
         'id:repo-local',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--name',
         'feature',
         '--json'

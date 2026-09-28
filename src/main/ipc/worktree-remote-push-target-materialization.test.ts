@@ -556,8 +556,8 @@ describe('materializeWorktreePushTargetRemoteSsh', () => {
       if (args[0] === 'remote' && args[1] === '-v') {
         return {
           stdout: [
-            'origin\thttps://github.com/stablyai/dolphin.git (fetch)',
-            'origin\thttps://github.com/stablyai/dolphin.git (push)',
+            'origin\thttps://github.com/gusscloud/dolphin.git (fetch)',
+            'origin\thttps://github.com/gusscloud/dolphin.git (push)',
             `${SIBLING_REMOTE}\t${FORK_URL} (fetch)`,
             `${SIBLING_REMOTE}\t${FORK_URL} (push)`
           ].join('\n'),

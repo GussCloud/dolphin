@@ -94,23 +94,23 @@ describe('github owner/repo resolution', () => {
       owner: 'acme',
       repo: 'widgets'
     })
-    expect(parseGitHubOwnerRepo('git@github.com:stablyai/dolphin.git')).toEqual({
-      owner: 'stablyai',
+    expect(parseGitHubOwnerRepo('git@github.com:gusscloud/dolphin.git')).toEqual({
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
     expect(parseGitHubOwnerRepo('git@github.com:TheBoredTeam/boring.notch.git')).toEqual({
       owner: 'TheBoredTeam',
       repo: 'boring.notch'
     })
-    expect(parseGitHubOwnerRepo('ssh://git@github.com/stablyai/dolphin.git')).toEqual({
-      owner: 'stablyai',
+    expect(parseGitHubOwnerRepo('ssh://git@github.com/gusscloud/dolphin.git')).toEqual({
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
-    expect(parseGitHubOwnerRepo('ssh://git@ssh.github.com:443/stablyai/dolphin.git')).toEqual({
-      owner: 'stablyai',
+    expect(parseGitHubOwnerRepo('ssh://git@ssh.github.com:443/gusscloud/dolphin.git')).toEqual({
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
-    expect(parseGitHubOwnerRepo('git@example.com:stablyai/dolphin.git')).toBeNull()
+    expect(parseGitHubOwnerRepo('git@example.com:gusscloud/dolphin.git')).toBeNull()
   })
 
   it('parses GitHub Enterprise host identity', () => {
@@ -130,10 +130,10 @@ describe('github owner/repo resolution', () => {
   it('prefers upstream for PR owner/repo resolution (#7331)', async () => {
     mockGitRemoteCommands({
       origin: 'git@github.com:fork/dolphin.git\n',
-      upstream: 'git@github.com:stablyai/dolphin.git\n'
+      upstream: 'git@github.com:gusscloud/dolphin.git\n'
     })
 
-    await expect(getOwnerRepo('/repo')).resolves.toEqual({ owner: 'stablyai', repo: 'dolphin' })
+    await expect(getOwnerRepo('/repo')).resolves.toEqual({ owner: 'gusscloud', repo: 'dolphin' })
     expect(gitRemoteGetUrlCalls('upstream')).toHaveLength(1)
   })
 
@@ -152,11 +152,11 @@ describe('github owner/repo resolution', () => {
   it('prefers upstream for issue owner/repo resolution', async () => {
     mockGitRemoteCommands({
       origin: 'git@github.com:fork/dolphin.git\n',
-      upstream: 'git@github.com:stablyai/dolphin.git\n'
+      upstream: 'git@github.com:gusscloud/dolphin.git\n'
     })
 
     await expect(getIssueOwnerRepo('/repo')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
     expect(gitRemoteGetUrlCalls('upstream')).toHaveLength(1)
@@ -165,7 +165,7 @@ describe('github owner/repo resolution', () => {
   it('falls back to origin when upstream is present but non-GitHub', async () => {
     mockGitRemoteCommands({
       origin: 'git@github.com:fork/dolphin.git\n',
-      upstream: 'git@example.com:stablyai/dolphin.git\n'
+      upstream: 'git@example.com:gusscloud/dolphin.git\n'
     })
 
     await expect(getIssueOwnerRepo('/repo')).resolves.toEqual({ owner: 'fork', repo: 'dolphin' })
@@ -176,14 +176,14 @@ describe('github owner/repo resolution', () => {
   it('does not mix origin and upstream cache entries for the same repo path', async () => {
     gitExecFileAsyncMock
       .mockResolvedValueOnce({ stdout: 'git@github.com:fork/dolphin.git\n' })
-      .mockResolvedValueOnce({ stdout: 'git@github.com:stablyai/dolphin.git\n' })
+      .mockResolvedValueOnce({ stdout: 'git@github.com:gusscloud/dolphin.git\n' })
 
     await expect(getOwnerRepoForRemote('/repo', 'origin')).resolves.toEqual({
       owner: 'fork',
       repo: 'dolphin'
     })
     await expect(getOwnerRepoForRemote('/repo', 'upstream')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
   })
@@ -222,13 +222,13 @@ describe('github owner/repo resolution', () => {
         if (args[2] === 'upstream') {
           throw new Error("fatal: No such remote 'upstream'")
         }
-        return { stdout: 'git@github.com:stablyai/dolphin.git\n', stderr: '' }
+        return { stdout: 'git@github.com:gusscloud/dolphin.git\n', stderr: '' }
       })
     }
     getSshGitProviderMock.mockReturnValue(sshProvider)
 
     await expect(getOwnerRepo('/home/user/dolphin', 'openclaw-2')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
 
@@ -308,10 +308,10 @@ describe('github owner/repo resolution', () => {
     try {
       nowSpy.mockReturnValue(1_000)
       gitExecFileAsyncMock.mockResolvedValueOnce({
-        stdout: 'git@github.com:stablyai/dolphin.git\n'
+        stdout: 'git@github.com:gusscloud/dolphin.git\n'
       })
       await expect(getOwnerRepoForRemote('/repo-a', 'origin')).resolves.toEqual({
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin'
       })
       expect(_getOwnerRepoCacheSize()).toBe(1)
@@ -771,11 +771,11 @@ describe('resolveIssueSource', () => {
   it("'auto' + upstream exists → upstream, fellBack=false", async () => {
     mockGitRemoteCommands({
       origin: 'git@github.com:fork/dolphin.git\n',
-      upstream: 'git@github.com:stablyai/dolphin.git\n'
+      upstream: 'git@github.com:gusscloud/dolphin.git\n'
     })
 
     await expect(resolveIssueSource('/repo', 'auto')).resolves.toEqual({
-      source: { owner: 'stablyai', repo: 'dolphin' },
+      source: { owner: 'gusscloud', repo: 'dolphin' },
       fellBack: false
     })
     expect(gitRemoteGetUrlCalls('upstream')).toHaveLength(1)
@@ -784,7 +784,7 @@ describe('resolveIssueSource', () => {
   it("'auto' + no github upstream → origin, fellBack=false", async () => {
     mockGitRemoteCommands({
       origin: 'git@github.com:solo/dolphin.git\n',
-      upstream: 'git@example.com:stablyai/dolphin.git\n'
+      upstream: 'git@example.com:gusscloud/dolphin.git\n'
     })
 
     await expect(resolveIssueSource('/repo', 'auto')).resolves.toEqual({
@@ -795,11 +795,11 @@ describe('resolveIssueSource', () => {
 
   it("'upstream' + upstream exists → upstream, fellBack=false", async () => {
     gitExecFileAsyncMock.mockResolvedValueOnce({
-      stdout: 'git@github.com:stablyai/dolphin.git\n'
+      stdout: 'git@github.com:gusscloud/dolphin.git\n'
     })
 
     await expect(resolveIssueSource('/repo', 'upstream')).resolves.toEqual({
-      source: { owner: 'stablyai', repo: 'dolphin' },
+      source: { owner: 'gusscloud', repo: 'dolphin' },
       fellBack: false
     })
   })
@@ -847,11 +847,11 @@ describe('resolveIssueSource', () => {
   it('undefined preference is treated identically to auto', async () => {
     mockGitRemoteCommands({
       origin: 'git@github.com:fork/dolphin.git\n',
-      upstream: 'git@github.com:stablyai/dolphin.git\n'
+      upstream: 'git@github.com:gusscloud/dolphin.git\n'
     })
 
     await expect(resolveIssueSource('/repo', undefined)).resolves.toEqual({
-      source: { owner: 'stablyai', repo: 'dolphin' },
+      source: { owner: 'gusscloud', repo: 'dolphin' },
       fellBack: false
     })
   })

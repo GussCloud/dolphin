@@ -22,7 +22,7 @@ describe('packaged Windows CLI launcher asset', () => {
     const source = readFileSync(sourcePath, 'utf8')
 
     // Why: the marker and command name must ride the launcher's own environment, never
-    // ProcessStartInfo's case-insensitive copy of a PATH/Path block (stablyai/dolphin#12046).
+    // ProcessStartInfo's case-insensitive copy of a PATH/Path block (gusscloud/dolphin#12046).
     expect(source).toContain(
       'Environment.SetEnvironmentVariable("DOLPHIN_WINDOWS_PACKAGED_CLI_LAUNCHER", "1");'
     )

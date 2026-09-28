@@ -8,7 +8,7 @@ import {
   type ElectronApplication,
   type Page,
   type TestInfo
-} from '@stablyai/playwright-test'
+} from '@playwright/test'
 
 import { expect, forwardElectronProcessLogs, test } from './helpers/dolphin-app'
 import { getE2ECompletedOnboardingProfile } from './helpers/e2e-completed-onboarding-profile'

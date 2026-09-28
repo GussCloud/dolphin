@@ -20,11 +20,11 @@ vi.mock('../ui/dropdown-menu', () => ({
 }))
 
 const plugin: PluginHostListEntry = {
-  pluginKey: 'stablyai.dolphin-skills',
+  pluginKey: 'gusscloud.dolphin-skills',
   consentFingerprint: 'sha256-consent',
   name: 'Dolphin Skills',
   version: '1.0.0',
-  publisher: 'stablyai',
+  publisher: 'gusscloud',
   status: 'disabled',
   needsReconsent: false,
   isDev: false,
@@ -41,7 +41,7 @@ const plugin: PluginHostListEntry = {
   },
   source: {
     kind: 'bundled',
-    reference: 'bundled:stablyai.dolphin-skills',
+    reference: 'bundled:gusscloud.dolphin-skills',
     resolvedCommit: null,
     contentHash: 'sha256-content'
   }

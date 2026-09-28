@@ -25,7 +25,7 @@ vi.mock('@/runtime/runtime-rpc-client', () => ({
   assertRuntimeEnvironmentCapability: runtimeRpcMocks.assertRuntimeEnvironmentCapability
 }))
 
-const prRepo = { host: 'github.com', owner: 'stablyai', repo: 'dolphin-sta1015-sandbox' }
+const prRepo = { host: 'github.com', owner: 'gusscloud', repo: 'dolphin-sta1015-sandbox' }
 const review: HostedReviewActionInfo = {
   provider: 'github',
   number: 1015,
@@ -248,7 +248,7 @@ describe('useHostedReviewActions', () => {
             position: 1,
             number: 1014,
             title: 'Models',
-            url: 'https://github.com/stablyai/dolphin/pull/1014',
+            url: 'https://github.com/gusscloud/dolphin/pull/1014',
             state: 'open',
             checksStatus: 'success',
             mergeable: 'MERGEABLE'
@@ -257,7 +257,7 @@ describe('useHostedReviewActions', () => {
             position: 2,
             number: 1015,
             title: 'API',
-            url: 'https://github.com/stablyai/dolphin/pull/1015',
+            url: 'https://github.com/gusscloud/dolphin/pull/1015',
             state: 'open',
             checksStatus: 'success',
             mergeable: 'MERGEABLE'
@@ -266,7 +266,7 @@ describe('useHostedReviewActions', () => {
             position: 3,
             number: 1016,
             title: 'UI',
-            url: 'https://github.com/stablyai/dolphin/pull/1016',
+            url: 'https://github.com/gusscloud/dolphin/pull/1016',
             state: 'open',
             checksStatus: 'success',
             mergeable: 'MERGEABLE'
@@ -303,7 +303,7 @@ describe('useHostedReviewActions', () => {
             position: 1,
             number: 1014,
             title: 'Models',
-            url: 'https://github.com/stablyai/dolphin/pull/1014',
+            url: 'https://github.com/gusscloud/dolphin/pull/1014',
             state: 'open',
             checksStatus: 'success',
             mergeable: 'MERGEABLE'
@@ -312,7 +312,7 @@ describe('useHostedReviewActions', () => {
             position: 2,
             number: 1015,
             title: 'API',
-            url: 'https://github.com/stablyai/dolphin/pull/1015',
+            url: 'https://github.com/gusscloud/dolphin/pull/1015',
             state: 'open',
             checksStatus: 'success',
             mergeable: 'MERGEABLE'

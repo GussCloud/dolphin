@@ -391,7 +391,7 @@ describe('DolphinRuntimeService', () => {
       }
     ])
 
-    const draftUrl = 'https://github.com/stablyai/dolphin/issues/123'
+    const draftUrl = 'https://github.com/gusscloud/dolphin/issues/123'
     const result = await runtime.createManagedWorktree({
       repoSelector: 'id:repo-1',
       name: 'runtime-startup-draft',
@@ -474,7 +474,7 @@ describe('DolphinRuntimeService', () => {
     await runtime.createManagedWorktree({
       repoSelector: 'id:repo-1',
       name: 'runtime-claude-draft-timeout',
-      startupDraft: 'https://github.com/stablyai/dolphin/issues/456'
+      startupDraft: 'https://github.com/gusscloud/dolphin/issues/456'
     })
 
     await vi.advanceTimersByTimeAsync(7999)
@@ -541,7 +541,7 @@ describe('DolphinRuntimeService', () => {
       }
     ])
 
-    const draftUrl = 'https://github.com/stablyai/dolphin/issues/789'
+    const draftUrl = 'https://github.com/gusscloud/dolphin/issues/789'
     await runtime.createManagedWorktree({
       repoSelector: 'id:repo-1',
       name: 'runtime-opencode-draft-budget',

@@ -66,13 +66,13 @@ describe('Linear issue workspace attachment', () => {
 
   it('matches identifiers case-insensitively and from Linear URLs', () => {
     const attached = worktree({
-      linkedLinearIssue: 'https://linear.app/stably/issue/sta-2716/title'
+      linkedLinearIssue: 'https://linear.app/gusscloud/issue/sta-2716/title'
     })
 
     expect(
       findLinearIssueWorkspaceAttachment([attached], {
         identifier: 'sta-2716',
-        url: 'https://linear.app/stably/issue/STA-2716/title'
+        url: 'https://linear.app/gusscloud/issue/STA-2716/title'
       })
     ).toBe(attached)
   })
@@ -152,7 +152,7 @@ describe('Linear issue workspace attachment', () => {
     expect(
       findLinearIssueWorkspaceAttachment([otherOrg], {
         identifier: 'STA-2716',
-        url: 'https://linear.app/stably/issue/STA-2716/title'
+        url: 'https://linear.app/gusscloud/issue/STA-2716/title'
       })
     ).toBeNull()
   })
@@ -171,7 +171,7 @@ describe('Linear issue workspace attachment', () => {
     const index = buildLinearIssueWorkspaceAttachmentIndex(worktrees)
     const issue = {
       identifier: 'STA-2716',
-      url: 'https://linear.app/stably/issue/STA-2716/title'
+      url: 'https://linear.app/gusscloud/issue/STA-2716/title'
     }
 
     expect(findLinearIssueWorkspaceAttachmentInIndex(index, issue)).toBe(

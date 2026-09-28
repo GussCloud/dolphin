@@ -701,7 +701,7 @@ describe('legacy terminal shim neutralization', () => {
         ...process.env,
         PATH: `${shimDir}//::${realBin}:${process.env.PATH ?? ''}`,
         DOLPHIN_ENABLE_GIT_ATTRIBUTION: '1',
-        DOLPHIN_GIT_COMMIT_TRAILER: 'Co-authored-by: Dolphin <help@stably.ai>',
+        DOLPHIN_GIT_COMMIT_TRAILER: 'Co-authored-by: Dolphin <help@guss.dev.br>',
         DOLPHIN_ATTRIBUTION_SHIM_DIR: ''
       },
       stdio: ['pipe', 'pipe', 'pipe']
@@ -743,7 +743,7 @@ describe('legacy terminal shim neutralization', () => {
     const env: Record<string, string> = {
       PATH: `/home/u/.dolphin/dolphin-terminal-attribution/posix:/usr/local/bin:/usr/bin`,
       DOLPHIN_ENABLE_GIT_ATTRIBUTION: '1',
-      DOLPHIN_GIT_COMMIT_TRAILER: 'Co-authored-by: Dolphin <help@stably.ai>',
+      DOLPHIN_GIT_COMMIT_TRAILER: 'Co-authored-by: Dolphin <help@guss.dev.br>',
       DOLPHIN_GH_PR_FOOTER: 'footer',
       DOLPHIN_GH_ISSUE_FOOTER: 'footer',
       DOLPHIN_ATTRIBUTION_SHIM_DIR: '/home/u/.dolphin/dolphin-terminal-attribution/posix',

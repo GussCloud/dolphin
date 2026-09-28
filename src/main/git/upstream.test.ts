@@ -358,7 +358,7 @@ describe('getUpstreamStatus', () => {
         return Promise.reject(new Error('missing branch base'))
       }
       if (args[0] === 'remote' && args[1] === 'get-url' && args[2] === 'origin') {
-        return Promise.resolve({ stdout: 'https://github.com/stablyai/dolphin.git\n' })
+        return Promise.resolve({ stdout: 'https://github.com/gusscloud/dolphin.git\n' })
       }
       if (args[0] === 'remote' && args[1] === 'get-url' && args[2] === 'pr-pynickle-dolphin') {
         return Promise.resolve({ stdout: 'https://github.com/pynickle/dolphin.git\n' })
@@ -366,8 +366,8 @@ describe('getUpstreamStatus', () => {
       if (args[0] === 'remote' && args[1] === '-v') {
         return Promise.resolve({
           stdout: [
-            'origin\thttps://github.com/stablyai/dolphin.git (fetch)',
-            'origin\thttps://github.com/stablyai/dolphin.git (push)',
+            'origin\thttps://github.com/gusscloud/dolphin.git (fetch)',
+            'origin\thttps://github.com/gusscloud/dolphin.git (push)',
             'pr-pynickle-dolphin\thttps://github.com/pynickle/dolphin.git (fetch)',
             'pr-pynickle-dolphin\thttps://github.com/pynickle/dolphin.git (push)'
           ].join('\n')
@@ -458,7 +458,7 @@ describe('getUpstreamStatus', () => {
         return Promise.reject(new Error('missing branch base'))
       }
       if (args[0] === 'remote' && args[1] === 'get-url') {
-        return Promise.resolve({ stdout: 'https://github.com/stablyai/dolphin.git\n' })
+        return Promise.resolve({ stdout: 'https://github.com/gusscloud/dolphin.git\n' })
       }
       if (args[0] === 'remote') {
         return Promise.resolve({ stdout: 'origin\n' })

@@ -509,12 +509,12 @@ describe('source query byte limits', () => {
 })
 
 describe('Linear issue source input', () => {
-  const issueUrl = 'https://linear.app/stably/issue/STA-4084/restore-osc-133-shell-integration'
+  const issueUrl = 'https://linear.app/gusscloud/issue/STA-4084/restore-osc-133-shell-integration'
 
   it('normalizes a Linear issue URL to its identifier for search', () => {
     expect(parseBoundedSmartWorkspaceLinearIssueInput(issueUrl)).toEqual({
       identifier: 'STA-4084',
-      organizationUrlKey: 'stably'
+      organizationUrlKey: 'gusscloud'
     })
     expect(getSmartWorkspaceLinearSearchQuery(issueUrl)).toBe('STA-4084')
   })
@@ -536,30 +536,30 @@ describe('Linear issue source input', () => {
     expect(isBlockingLinearUrlIntent('smart', 'STA-4084')).toBe(false)
     expect(isBlockingLinearUrlIntent('smart', 'restore-4084')).toBe(false)
     expect(
-      isBlockingLinearUrlIntent('smart', 'https://linear.app.evil.test/stably/issue/STA-4084')
+      isBlockingLinearUrlIntent('smart', 'https://linear.app.evil.test/gusscloud/issue/STA-4084')
     ).toBe(false)
     expect(
-      isBlockingLinearUrlIntent('smart', 'https://linear.app/stably/not-an-issue/issue/STA-4084')
+      isBlockingLinearUrlIntent('smart', 'https://linear.app/gusscloud/not-an-issue/issue/STA-4084')
     ).toBe(false)
     expect(
-      isBlockingLinearUrlIntent('smart', 'https://linear.app/stably/issue/STA-4084/title/more')
+      isBlockingLinearUrlIntent('smart', 'https://linear.app/gusscloud/issue/STA-4084/title/more')
     ).toBe(false)
     expect(
       isBlockingLinearUrlIntent(
         'smart',
-        'https://linear.app/stably/issue/STA-4084%2Fnot-the-identifier'
+        'https://linear.app/gusscloud/issue/STA-4084%2Fnot-the-identifier'
       )
     ).toBe(false)
     expect(
       parseBoundedSmartWorkspaceLinearIssueUrlIntent(
-        'https://linear.app/stably/issue/STA-4084/title'
+        'https://linear.app/gusscloud/issue/STA-4084/title'
       )
-    ).toEqual({ identifier: 'STA-4084', organizationUrlKey: 'stably' })
+    ).toEqual({ identifier: 'STA-4084', organizationUrlKey: 'gusscloud' })
   })
 
   it('keeps the exact Linear URL result ahead of provider result caps', () => {
     const exactIssue = {
-      id: 'stably-issue',
+      id: 'gusscloud-issue',
       identifier: 'STA-4084',
       url: issueUrl
     } as never
@@ -585,7 +585,7 @@ describe('Linear issue source input', () => {
 
     expect(rows.map((row) => row.kind)).toEqual(['use-name', 'linear'])
     expect(rows[0]).toMatchObject({ kind: 'use-name', value: 'use-name', name: issueUrl })
-    expect(rows[1]).toMatchObject({ value: 'linear-stably-issue', issue: exactIssue })
+    expect(rows[1]).toMatchObject({ value: 'linear-gusscloud-issue', issue: exactIssue })
   })
 
   it('keeps typed-text available while a Linear URL has not resolved yet', () => {
@@ -628,14 +628,14 @@ describe('Linear issue source input', () => {
       url: 'https://linear.app/other/issue/STA-4084'
     } as never
     const exactIssue = {
-      id: 'stably-issue',
+      id: 'gusscloud-issue',
       identifier: 'STA-4084',
       url: issueUrl
     } as never
     const unrelatedIssue = {
       id: 'unrelated-issue',
       identifier: 'STA-9999',
-      url: 'https://linear.app/stably/issue/STA-9999'
+      url: 'https://linear.app/gusscloud/issue/STA-9999'
     } as never
 
     expect(
@@ -644,7 +644,7 @@ describe('Linear issue source input', () => {
         unrelatedIssue,
         exactIssue
       ]).map((issue) => issue.id)
-    ).toEqual(['stably-issue', 'other-issue', 'unrelated-issue'])
+    ).toEqual(['gusscloud-issue', 'other-issue', 'unrelated-issue'])
     expect(
       isSmartWorkspaceLinearIssueIntentMatch(
         parseBoundedSmartWorkspaceLinearIssueInput(issueUrl)!,
@@ -655,14 +655,14 @@ describe('Linear issue source input', () => {
 
   it('matches bare Linear keys by identifier without changing provider order for names', () => {
     const issue = {
-      id: 'stably-issue',
+      id: 'gusscloud-issue',
       identifier: 'STA-4084',
       url: issueUrl
     } as never
     const other = {
       id: 'other-issue',
       identifier: 'STA-9999',
-      url: 'https://linear.app/stably/issue/STA-9999'
+      url: 'https://linear.app/gusscloud/issue/STA-9999'
     } as never
 
     expect(

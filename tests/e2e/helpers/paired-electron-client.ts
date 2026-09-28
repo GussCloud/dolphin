@@ -7,7 +7,7 @@ import {
   type ElectronApplication,
   type Page,
   type TestInfo
-} from '@stablyai/playwright-test'
+} from '@playwright/test'
 
 import { getE2ECompletedOnboardingProfile } from './e2e-completed-onboarding-profile'
 import { getDolphinElectronLaunchArgs } from './electron-launch-args'

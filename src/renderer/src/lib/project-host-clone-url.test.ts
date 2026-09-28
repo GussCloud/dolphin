@@ -21,12 +21,12 @@ describe('getProjectHostCloneUrl', () => {
         createProject({
           providerIdentity: {
             provider: 'github',
-            owner: ' stablyai ',
+            owner: ' gusscloud ',
             repo: ' dolphin '
           }
         })
       )
-    ).toBe('https://github.com/stablyai/dolphin.git')
+    ).toBe('https://github.com/gusscloud/dolphin.git')
   })
 
   it('preserves an authenticated Enterprise host and port', () => {

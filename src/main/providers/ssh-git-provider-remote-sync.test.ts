@@ -141,7 +141,7 @@ describe('SshGitProvider', () => {
     }
     mux.request.mockResolvedValue(syncResult)
 
-    const expectedUpstream = { owner: 'stablyai', repo: 'dolphin' }
+    const expectedUpstream = { owner: 'gusscloud', repo: 'dolphin' }
     const result = await provider.syncForkDefaultBranch('/home/user/repo', expectedUpstream)
 
     expect(mux.request).toHaveBeenCalledWith('git.forkSync', {

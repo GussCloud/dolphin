@@ -42,7 +42,7 @@ describe('push gateway config', () => {
       DOLPHIN_PUSH_APNS_KEY: keyPem,
       DOLPHIN_PUSH_APNS_KEY_ID: 'ABCDE12345',
       DOLPHIN_PUSH_APPLE_TEAM_ID: 'TEAM123456',
-      DOLPHIN_PUSH_APNS_TOPIC: 'com.stably.dolphin.mobile.dev',
+      DOLPHIN_PUSH_APNS_TOPIC: 'com.gusscloud.dolphin.mobile.dev',
       DOLPHIN_PUSH_FCM_PROJECT_ID: 'dolphin-staging',
       DOLPHIN_PUSH_TRUSTED_PROXY_HOPS: '1'
     })
@@ -51,7 +51,7 @@ describe('push gateway config', () => {
       databaseUrl: 'postgres://localhost/dolphin_push',
       dataDir: '/var/lib/push',
       apns: { keyPem, keyId: 'ABCDE12345', teamId: 'TEAM123456' },
-      apnsTopic: 'com.stably.dolphin.mobile.dev',
+      apnsTopic: 'com.gusscloud.dolphin.mobile.dev',
       trustedProxyHops: 1,
       fcmProjectId: 'dolphin-staging'
     })

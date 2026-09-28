@@ -153,7 +153,7 @@ describe('createGitHubPullRequest', () => {
     getOwnerRepoForRemoteMock.mockImplementation(async (_repoPath: string, remoteName: string) =>
       remoteName === 'origin'
         ? { owner: 'fsdwen', repo: 'dolphin' }
-        : { owner: 'stablyai', repo: 'dolphin' }
+        : { owner: 'gusscloud', repo: 'dolphin' }
     )
     ghExecFileAsyncMock.mockResolvedValueOnce({
       stdout: JSON.stringify({

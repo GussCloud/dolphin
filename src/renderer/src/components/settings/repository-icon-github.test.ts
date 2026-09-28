@@ -37,18 +37,18 @@ describe('repository GitHub avatar resolution', () => {
   })
 
   it('uses stored upstream by default and keeps the parent avatar for same-name forks', async () => {
-    const repo = makeRepo({ upstream: { owner: 'stablyai', repo: 'dolphin' } })
+    const repo = makeRepo({ upstream: { owner: 'gusscloud', repo: 'dolphin' } })
     // The fork's own origin owner — same repo name, so the parent avatar wins.
     apiMocks.repoSlug.mockResolvedValueOnce({ owner: 'tmchow', repo: 'dolphin' })
 
     await expect(resolveRepositoryGitHubAvatar({ kind: 'local' }, repo)).resolves.toEqual({
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       },
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     })
 
     expect(apiMocks.repoUpstream).not.toHaveBeenCalled()
@@ -89,15 +89,15 @@ describe('repository GitHub avatar resolution', () => {
   })
 
   it('force-resolves the live origin owner when a non-fork repo was transferred', async () => {
-    // Non-fork repo (upstream resolved to null) transferred stablyai -> parkerrex.
+    // Non-fork repo (upstream resolved to null) transferred gusscloud -> parkerrex.
     // The cached avatar is stale; forceLive must consult the live origin slug.
     const repo = makeRepo({
       upstream: null,
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       }
     })
     apiMocks.repoUpstream.mockResolvedValueOnce(null)
@@ -139,9 +139,9 @@ describe('repository GitHub avatar resolution', () => {
     const repo = makeRepo({
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       }
     })
 
@@ -166,12 +166,12 @@ describe('repository GitHub avatar resolution', () => {
     // A fork whose avatar tracks its parent org. The live upstream probe fails
     // (offline/unauthed → null), which must NOT downgrade to the origin slug.
     const repo = makeRepo({
-      upstream: { owner: 'stablyai', repo: 'dolphin' },
+      upstream: { owner: 'gusscloud', repo: 'dolphin' },
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       }
     })
     apiMocks.repoUpstream.mockResolvedValueOnce(null)
@@ -185,11 +185,11 @@ describe('repository GitHub avatar resolution', () => {
     expect(resolution).toEqual({
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       },
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     })
     // Nothing changed, so no repo write is produced (no sticky null clobber).
     expect(buildRepositoryGitHubAvatarUpdate(repo, resolution)).toBeNull()

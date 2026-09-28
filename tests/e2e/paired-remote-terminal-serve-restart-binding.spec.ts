@@ -10,7 +10,7 @@
  */
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { getHistorySessionDirName } from '../../src/main/daemon/history-paths'
 import { LOG_HEADER_BYTES } from '../../src/main/daemon/terminal-history-log'
 import { profileStateDatabaseFile } from '../../src/main/persistence/profile-state/profile-state-database'

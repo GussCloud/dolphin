@@ -275,7 +275,7 @@ describe('SmartWorkspaceNameField IME Enter guard', () => {
 describe('SmartWorkspaceNameField Linear URL loading', () => {
   it('blocks Enter and delays visible loading feedback while preserving its layout', async () => {
     vi.useFakeTimers()
-    const url = 'https://linear.app/stably/issue/STA-4084/restore-shell-integration'
+    const url = 'https://linear.app/gusscloud/issue/STA-4084/restore-shell-integration'
     const onPlainEnter = vi.fn()
     const onValueChange = vi.fn()
     const onLinearIssueSelect = vi.fn()
@@ -288,11 +288,11 @@ describe('SmartWorkspaceNameField Linear URL loading', () => {
         workspaces: [
           {
             id: 'workspace-1',
-            displayName: 'Stably User',
+            displayName: 'GussCloud User',
             email: null,
-            organizationId: 'organization-stably',
-            organizationName: 'Stably',
-            organizationUrlKey: 'stably'
+            organizationId: 'organization-gusscloud',
+            organizationName: 'GussCloud',
+            organizationUrlKey: 'gusscloud'
           }
         ]
       },

@@ -10,7 +10,7 @@ const LOCAL_HOST_LABEL = getLocalExecutionHostLabel('darwin')
 
 describe('new workspace project targets', () => {
   it('groups local and SSH checkouts of the same project', () => {
-    const upstream = { owner: 'stablyai', repo: 'dolphin' }
+    const upstream = { owner: 'gusscloud', repo: 'dolphin' }
     const options = buildNewWorkspaceProjectOptions([
       { id: 'local', displayName: 'dolphin', path: '/src/dolphin', upstream },
       {
@@ -23,7 +23,7 @@ describe('new workspace project targets', () => {
     ])
 
     expect(options).toHaveLength(1)
-    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'stablyai/dolphin' })
+    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'gusscloud/dolphin' })
   })
 
   it('shows the provider slug recovered from canonical git identity', () => {
@@ -35,12 +35,12 @@ describe('new workspace project targets', () => {
         gitRemoteIdentity: {
           canonicalKey: 'github.com/GussCloud/dolphin',
           remoteName: 'origin',
-          remoteUrl: 'git@github.com:stablyai/dolphin.git'
+          remoteUrl: 'git@github.com:gusscloud/dolphin.git'
         }
       }
     ])
 
-    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'stablyai/dolphin' })
+    expect(options[0]).toMatchObject({ label: 'dolphin', detail: 'gusscloud/dolphin' })
   })
 
   it('labels local, SSH, and paired runtime targets', () => {
@@ -78,7 +78,7 @@ describe('new workspace project targets', () => {
   })
 
   it('shows one target per host when the project has multiple local worktrees', () => {
-    const upstream = { owner: 'stablyai', repo: 'dolphin' }
+    const upstream = { owner: 'gusscloud', repo: 'dolphin' }
     const repos = [
       { id: 'local-a', displayName: 'dolphin-a', path: '/src/dolphin-a', upstream },
       { id: 'local-b', displayName: 'dolphin-b', path: '/src/dolphin-b', upstream },

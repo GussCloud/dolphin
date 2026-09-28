@@ -15,7 +15,7 @@
  * main saw did-finish-load while every window handle stayed dead).
  */
 
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {

@@ -1,4 +1,4 @@
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 
 /**
  * Every `<webview>` a browser pane ever attached, in order, with the partition it was born with.

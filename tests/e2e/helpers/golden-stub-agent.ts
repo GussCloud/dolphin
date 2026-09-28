@@ -1,6 +1,6 @@
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { focusActiveTerminalInput, waitForTerminalOutput } from './terminal'
 import type { BuiltInWindowsTerminalShell } from '../../../src/shared/windows-terminal-shell'
 

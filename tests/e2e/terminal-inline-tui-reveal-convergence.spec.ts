@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { PNG } from 'pngjs'
-import type { ElectronApplication, Page, TestInfo } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page, TestInfo } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,

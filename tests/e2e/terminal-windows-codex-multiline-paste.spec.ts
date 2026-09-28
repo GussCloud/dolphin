@@ -18,7 +18,7 @@ const CODEX_TRUST_PROMPT_RE = /Do[\s\S]*you[\s\S]*trust[\s\S]*contents/i
 
 function pastePayload(repeats = 4): string {
   const lines = [
-    'Repository: stablyai/dolphin',
+    'Repository: gusscloud/dolphin',
     '',
     'Required exact revision:',
     '',

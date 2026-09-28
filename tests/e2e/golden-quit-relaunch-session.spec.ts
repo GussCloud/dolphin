@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { openFileExplorer } from './helpers/file-explorer'
 import { attachRepoAndOpenTerminal, createRestartSession } from './helpers/dolphin-restart'

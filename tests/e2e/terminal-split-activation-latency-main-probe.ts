@@ -1,4 +1,4 @@
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import type { SplitLatencyMainProbeEvent } from './terminal-split-activation-latency-phases'
 
 type MainProbeInvokeHandler = (event: unknown, args: Record<string, unknown>) => unknown

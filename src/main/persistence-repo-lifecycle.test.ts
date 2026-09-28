@@ -897,10 +897,10 @@ describe('Store', () => {
     const store = await createStore()
     store.addRepo({
       ...makeRepo({ id: 'r1', displayName: 'Cloud Project' }),
-      upstream: { owner: 'stablyai', repo: 'cloud-project' }
+      upstream: { owner: 'gusscloud', repo: 'cloud-project' }
     })
     store.createProjectHostSetup({
-      projectId: 'github:stablyai/cloud-project',
+      projectId: 'github:gusscloud/cloud-project',
       hostId: 'ssh:ssh-old',
       setupId: 'cloud-project::ssh-old',
       setupMethod: 'provisioned'
@@ -918,16 +918,16 @@ describe('Store', () => {
     const store = await createStore()
     store.addRepo({
       ...makeRepo({ id: 'r1', displayName: 'Cloud Project' }),
-      upstream: { owner: 'stablyai', repo: 'cloud-project' }
+      upstream: { owner: 'gusscloud', repo: 'cloud-project' }
     })
     store.createProjectHostSetup({
-      projectId: 'github:stablyai/cloud-project',
+      projectId: 'github:gusscloud/cloud-project',
       hostId: 'ssh:ssh-old',
       setupId: 'setup-old',
       setupMethod: 'provisioned'
     })
     store.createProjectHostSetup({
-      projectId: 'github:stablyai/cloud-project',
+      projectId: 'github:gusscloud/cloud-project',
       hostId: 'ssh:ssh-new',
       setupId: 'setup-new',
       setupMethod: 'provisioned'

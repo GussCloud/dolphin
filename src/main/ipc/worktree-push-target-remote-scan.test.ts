@@ -11,7 +11,7 @@ import type { GitRemoteExec } from './worktree-push-target-cleanup'
 const SSH_FORK = 'git@github.com:contributor/dolphin.git'
 const HTTPS_FORK = 'https://github.com/contributor/dolphin.git'
 const GITLAB_FORK = 'https://gitlab.com/contributor/dolphin.git'
-const UPSTREAM = 'https://github.com/stablyai/dolphin.git'
+const UPSTREAM = 'https://github.com/gusscloud/dolphin.git'
 
 type RemoteRow = { name: string; fetchUrl: string; pushUrl?: string }
 

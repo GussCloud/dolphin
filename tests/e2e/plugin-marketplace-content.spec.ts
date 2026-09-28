@@ -10,8 +10,8 @@ import { tmpdir } from 'node:os'
 import { join, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { promisify } from 'node:util'
-import type { Page, TestInfo } from '@stablyai/playwright-test'
-import { expect, test } from '@stablyai/playwright-test'
+import type { Page, TestInfo } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { createRestartSession } from './helpers/dolphin-restart'
 
 const execFileAsync = promisify(execFile)
@@ -85,7 +85,7 @@ async function configureFixtureGit(home: string, repositories: string): Promise<
   }
   const repositoryBaseUrl = pathToFileURL(`${repositories}${sep}`).href
   const entries = [
-    [`url.${repositoryBaseUrl}.insteadOf`, 'https://github.com/stablyai/'],
+    [`url.${repositoryBaseUrl}.insteadOf`, 'https://github.com/gusscloud/'],
     ['protocol.file.allow', 'always'],
     ['commit.gpgSign', 'false'],
     ['tag.gpgSign', 'false'],
@@ -107,19 +107,19 @@ async function createMarketplaceFixture(): Promise<MarketplaceFixture> {
   await copyLaunchPlugin(
     repositories,
     'dolphin-portuguese',
-    'stablyai.dolphin-portuguese',
+    'gusscloud.dolphin-portuguese',
     gitEnvironment
   )
   await copyLaunchPlugin(
     repositories,
     'dolphin-multipass-recipes',
-    'stablyai.dolphin-multipass-recipes',
+    'gusscloud.dolphin-multipass-recipes',
     gitEnvironment
   )
   await copyLaunchPlugin(
     repositories,
     'dolphin-navigation-shortcuts',
-    'stablyai.dolphin-navigation-shortcuts',
+    'gusscloud.dolphin-navigation-shortcuts',
     gitEnvironment
   )
 
@@ -130,16 +130,16 @@ async function createMarketplaceFixture(): Promise<MarketplaceFixture> {
     `${JSON.stringify(
       {
         name: 'Dolphin Plugins',
-        owner: 'stablyai',
+        owner: 'gusscloud',
         plugins: [
-          ['stablyai.dolphin-portuguese', 'dolphin-portuguese', 'languages'],
-          ['stablyai.dolphin-multipass-recipes', 'dolphin-multipass-recipes', 'vm-recipes'],
-          ['stablyai.dolphin-navigation-shortcuts', 'dolphin-navigation-shortcuts', 'keybindings']
+          ['gusscloud.dolphin-portuguese', 'dolphin-portuguese', 'languages'],
+          ['gusscloud.dolphin-multipass-recipes', 'dolphin-multipass-recipes', 'vm-recipes'],
+          ['gusscloud.dolphin-navigation-shortcuts', 'dolphin-navigation-shortcuts', 'keybindings']
         ].map(([id, repository, category]) => ({
           id,
           source: {
             kind: 'git',
-            url: `https://github.com/stablyai/${repository}.git`,
+            url: `https://github.com/gusscloud/${repository}.git`,
             ref: 'v1.0.0'
           },
           categories: [category]
@@ -180,7 +180,7 @@ async function installMarketplacePluginThroughUi(
   await expect(listing).toBeVisible()
   await listing.getByRole('button', { name: 'Install' }).click()
   const preview = page.getByRole('dialog', { name: pluginName })
-  await expect(preview).toContainText('Official · stablyai')
+  await expect(preview).toContainText('Official · gusscloud')
   await preview.getByRole('button', { name: 'Install plugin' }).click()
   const consent = page.getByRole('dialog', { name: consentDialogName })
   await expect(consent).toBeVisible()
@@ -204,7 +204,7 @@ async function enableInstalledPluginThroughUi(
 }
 
 async function applyInstalledLanguage(page: Page): Promise<void> {
-  const languageId = 'plugin:stablyai.dolphin-portuguese/pt-BR'
+  const languageId = 'plugin:gusscloud.dolphin-portuguese/pt-BR'
   await page.evaluate(() => {
     const state = window.__store?.getState()
     if (!state) {
@@ -216,7 +216,7 @@ async function applyInstalledLanguage(page: Page): Promise<void> {
   await page.evaluate(() => window.__store?.setState({ settingsSearchQuery: 'Language' }))
   await page.getByRole('combobox', { name: 'Language' }).click()
   await page
-    .getByRole('option', { name: 'pt-BR — stablyai.dolphin-portuguese', exact: true })
+    .getByRole('option', { name: 'pt-BR — gusscloud.dolphin-portuguese', exact: true })
     .click()
   await expect
     .poll(() => page.evaluate(() => window.__store?.getState().settings?.uiLanguage))
@@ -241,13 +241,13 @@ async function runMarketplaceJourney(page: Page): Promise<void> {
     .toMatchObject({
       sources: [expect.objectContaining({ official: true, stale: false })],
       listings: expect.arrayContaining([
-        expect.objectContaining({ pluginKey: 'stablyai.dolphin-portuguese', official: true }),
+        expect.objectContaining({ pluginKey: 'gusscloud.dolphin-portuguese', official: true }),
         expect.objectContaining({
-          pluginKey: 'stablyai.dolphin-multipass-recipes',
+          pluginKey: 'gusscloud.dolphin-multipass-recipes',
           official: true
         }),
         expect.objectContaining({
-          pluginKey: 'stablyai.dolphin-navigation-shortcuts',
+          pluginKey: 'gusscloud.dolphin-navigation-shortcuts',
           official: true
         })
       ])
@@ -255,19 +255,19 @@ async function runMarketplaceJourney(page: Page): Promise<void> {
 
   await installMarketplacePluginThroughUi(
     page,
-    'stablyai.dolphin-portuguese',
+    'gusscloud.dolphin-portuguese',
     'Português do Brasil',
     'Review plugin'
   )
   await installMarketplacePluginThroughUi(
     page,
-    'stablyai.dolphin-multipass-recipes',
+    'gusscloud.dolphin-multipass-recipes',
     'Multipass VM Recipes',
     'Review plugin content'
   )
   await enableInstalledPluginThroughUi(
     page,
-    'stablyai.dolphin-navigation-shortcuts',
+    'gusscloud.dolphin-navigation-shortcuts',
     'Review plugin content'
   )
 

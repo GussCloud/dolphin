@@ -155,20 +155,20 @@ describe('task page cache selectors', () => {
     const localRepo = {
       id: 'repo-1',
       path: '/same/path',
-      sourceCacheScope: 'source:local:github:stablyai/dolphin'
+      sourceCacheScope: 'source:local:github:gusscloud/dolphin'
     }
     const sshRepo = {
       id: 'repo-1',
       path: '/same/path',
-      sourceCacheScope: 'source:ssh:devbox:github:stablyai/dolphin'
+      sourceCacheScope: 'source:ssh:devbox:github:gusscloud/dolphin'
     }
 
     expect(buildTaskPageRepoSourceState([localRepo, sshRepo], [])).toMatchObject([
       {
-        sourceKey: 'repo-1::source:local:github:stablyai/dolphin'
+        sourceKey: 'repo-1::source:local:github:gusscloud/dolphin'
       },
       {
-        sourceKey: 'repo-1::source:ssh:devbox:github:stablyai/dolphin'
+        sourceKey: 'repo-1::source:ssh:devbox:github:gusscloud/dolphin'
       }
     ])
   })

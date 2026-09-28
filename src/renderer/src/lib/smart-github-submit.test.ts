@@ -9,18 +9,18 @@ import {
 
 describe('getSmartGitHubSubmitIntent', () => {
   it('treats GitHub issue and pull URLs as submit-time source intent', () => {
-    expect(getSmartGitHubSubmitIntent('https://github.com/stablyai/dolphin/pull/2049')).toEqual({
+    expect(getSmartGitHubSubmitIntent('https://github.com/gusscloud/dolphin/pull/2049')).toEqual({
       kind: 'link',
       host: 'github.com',
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 2049,
       type: 'pr'
     })
-    expect(getSmartGitHubSubmitIntent('https://github.com/stablyai/dolphin/issues/2050')).toEqual({
+    expect(getSmartGitHubSubmitIntent('https://github.com/gusscloud/dolphin/issues/2050')).toEqual({
       kind: 'link',
       host: 'github.com',
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 2050,
       type: 'issue'
@@ -59,22 +59,22 @@ describe('getSmartGitHubSubmitIntent', () => {
 
   it('finds an embedded GitHub item URL when prose punctuation touches the URL', () => {
     expect(
-      getSmartGitHubSubmitIntent('review (https://github.com/stablyai/dolphin/pull/2049), please')
+      getSmartGitHubSubmitIntent('review (https://github.com/gusscloud/dolphin/pull/2049), please')
     ).toEqual({
       kind: 'link',
       host: 'github.com',
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 2049,
       type: 'pr'
     })
 
     expect(
-      getSmartGitHubSubmitIntent('fix https://github.com/stablyai/dolphin/issues/2050.')
+      getSmartGitHubSubmitIntent('fix https://github.com/gusscloud/dolphin/issues/2050.')
     ).toEqual({
       kind: 'link',
       host: 'github.com',
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 2050,
       type: 'issue'
@@ -102,7 +102,7 @@ describe('lookupSmartGitHubSubmitItem', () => {
       number: 2049,
       title: 'Fix smart resolution delay',
       state: 'open' as const,
-      url: 'https://github.com/stablyai/dolphin/pull/2049',
+      url: 'https://github.com/gusscloud/dolphin/pull/2049',
       labels: [],
       updatedAt: '2026-05-26T00:00:00.000Z',
       author: 'octocat',
@@ -112,7 +112,7 @@ describe('lookupSmartGitHubSubmitItem', () => {
     const workItem = vi.fn()
     const intent = {
       kind: 'link' as const,
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 2049,
       type: 'pr' as const
@@ -142,7 +142,7 @@ describe('lookupSmartGitHubSubmitItem', () => {
   it('scopes direct URL cache entries by repo path', async () => {
     const intent = {
       kind: 'link' as const,
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 2049,
       type: 'pr' as const
@@ -153,7 +153,7 @@ describe('lookupSmartGitHubSubmitItem', () => {
       number: 2049,
       title: 'First repo path',
       state: 'open' as const,
-      url: 'https://github.com/stablyai/dolphin/pull/2049',
+      url: 'https://github.com/gusscloud/dolphin/pull/2049',
       labels: [],
       updatedAt: '2026-05-26T00:00:00.000Z',
       author: 'octocat',
@@ -204,7 +204,7 @@ describe('lookupSmartGitHubSubmitItem', () => {
       number: 2049,
       title: 'Recovered lookup',
       state: 'open' as const,
-      url: 'https://github.com/stablyai/dolphin/pull/2049',
+      url: 'https://github.com/gusscloud/dolphin/pull/2049',
       labels: [],
       updatedAt: '2026-05-26T00:00:00.000Z',
       author: 'octocat',
@@ -217,7 +217,7 @@ describe('lookupSmartGitHubSubmitItem', () => {
     const workItem = vi.fn()
     const intent = {
       kind: 'link' as const,
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 2049,
       type: 'pr' as const
@@ -247,7 +247,7 @@ describe('lookupSmartGitHubSubmitItem', () => {
         number,
         title: `Issue ${number}`,
         state: 'open' as const,
-        url: `https://github.com/stablyai/dolphin/issues/${number}`,
+        url: `https://github.com/gusscloud/dolphin/issues/${number}`,
         labels: [],
         updatedAt: '2026-05-26T00:00:00.000Z',
         author: 'octocat',
@@ -290,7 +290,7 @@ describe('getSmartGitHubSubmitResolution', () => {
         type: 'pr',
         number: 2049,
         title: 'Fix smart resolution delay',
-        url: 'https://github.com/stablyai/dolphin/pull/2049'
+        url: 'https://github.com/gusscloud/dolphin/pull/2049'
       })
     ).toEqual({
       workspaceName: 'fix-smart-resolution-delay',
@@ -299,7 +299,7 @@ describe('getSmartGitHubSubmitResolution', () => {
         type: 'pr',
         number: 2049,
         title: 'Fix smart resolution delay',
-        url: 'https://github.com/stablyai/dolphin/pull/2049'
+        url: 'https://github.com/gusscloud/dolphin/pull/2049'
       },
       linkedIssueNumber: null,
       linkedPR: 2049
@@ -311,7 +311,7 @@ describe('getSmartGitHubSubmitResolution', () => {
       type: 'issue',
       number: 2050,
       title: 'Issue #2050: Make create feel instant',
-      url: 'https://github.com/stablyai/dolphin/issues/2050'
+      url: 'https://github.com/gusscloud/dolphin/issues/2050'
     })
 
     expect(resolution.workspaceName).toBe('make-create-feel-instant')
@@ -326,7 +326,7 @@ describe('getSmartGitHubSubmitResolution', () => {
         type: 'pr',
         number: 6933,
         title: 'The board columns are displayed backwards',
-        url: 'https://github.com/stablyai/dolphin/issues/6933'
+        url: 'https://github.com/gusscloud/dolphin/issues/6933'
       })
     ).toEqual({
       workspaceName: 'the-board-columns-are-displayed-backwards',
@@ -335,7 +335,7 @@ describe('getSmartGitHubSubmitResolution', () => {
         type: 'issue',
         number: 6933,
         title: 'The board columns are displayed backwards',
-        url: 'https://github.com/stablyai/dolphin/issues/6933'
+        url: 'https://github.com/gusscloud/dolphin/issues/6933'
       },
       linkedIssueNumber: 6933,
       linkedPR: null

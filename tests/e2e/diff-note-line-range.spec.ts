@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { pressShortcut } from './helpers/shortcuts'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'

@@ -4,7 +4,7 @@ import { PluginBundledBootstrapCoordinator } from './plugin-bundled-bootstrap-co
 
 const unchanged: PluginBundledBootstrapResult = {
   installed: [],
-  unchanged: ['stablyai.dolphin-theme'],
+  unchanged: ['gusscloud.dolphin-theme'],
   errors: []
 }
 
@@ -15,7 +15,7 @@ describe('PluginBundledBootstrapCoordinator', () => {
       .fn()
       .mockResolvedValueOnce(unchanged)
       .mockResolvedValueOnce({
-        installed: ['stablyai.dolphin-theme'],
+        installed: ['gusscloud.dolphin-theme'],
         unchanged: [],
         errors: []
       })

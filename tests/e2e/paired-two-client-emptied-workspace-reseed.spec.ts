@@ -40,7 +40,7 @@
  *     tests/e2e/paired-two-client-emptied-workspace-reseed.spec.ts \
  *     --config tests/playwright.config.ts --project electron-headless --workers=1
  */
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import {
   createRuntimeDesktopPairingOffer,

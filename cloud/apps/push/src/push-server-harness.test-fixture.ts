@@ -42,7 +42,7 @@ export function testPushConfig(): PushConfig {
     dataDir: './data/push-test',
     databasePoolMax: 10,
     apns: { keyPem: privateKey, keyId: 'ABCDE12345', teamId: 'TEAM123456' },
-    apnsTopic: 'com.stably.dolphin.mobile',
+    apnsTopic: 'com.gusscloud.dolphin.mobile',
     fcmProjectId: 'dolphin-cloud',
     trustedProxyHops: 0
   }

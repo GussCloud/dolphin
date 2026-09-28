@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { rmSync } from 'node:fs'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 import {

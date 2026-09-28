@@ -33,7 +33,7 @@ describe('DolphinRuntimeService', () => {
     const clonePath = join(destination, 'dolphin')
     const spawnSpy = vi.spyOn(gitRunner, 'gitSpawnAfterWindowsEnvironmentReady')
     const repos: Record<string, unknown>[] = []
-    getRepoUpstreamMock.mockResolvedValue({ owner: 'stablyai', repo: 'dolphin' })
+    getRepoUpstreamMock.mockResolvedValue({ owner: 'gusscloud', repo: 'dolphin' })
     const runtimeStore = {
       ...store,
       getRepos: () => [...repos] as never,
@@ -73,7 +73,7 @@ describe('DolphinRuntimeService', () => {
       expect(cloned).not.toHaveProperty('executionHostId')
 
       const result = await runtime.setupProjectExistingFolder({
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'runtime:env-1',
         path: clonePath,
         kind: 'git',
@@ -113,7 +113,7 @@ describe('DolphinRuntimeService', () => {
         executionHostId: 'runtime:env-1'
       }
     ]
-    getRepoUpstreamMock.mockResolvedValue({ owner: 'stablyai', repo: 'dolphin' })
+    getRepoUpstreamMock.mockResolvedValue({ owner: 'gusscloud', repo: 'dolphin' })
     const runtimeStore = {
       ...store,
       getRepos: () => [...repos] as never,
@@ -147,7 +147,7 @@ describe('DolphinRuntimeService', () => {
 
     try {
       const result = await runtime.setupProjectClone({
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'runtime:env-2',
         url: 'https://example.com/dolphin.git',
         destination

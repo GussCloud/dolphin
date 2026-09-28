@@ -2,7 +2,7 @@
  * Geometry and serialized-content readers for visible terminal panes.
  */
 
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect } from './dolphin-app'
 import { waitForPaneIdentitySnapshot } from './terminal'
 

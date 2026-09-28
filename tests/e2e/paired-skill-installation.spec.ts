@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import type { SkillInstallDestination } from '../../src/shared/skill-install-contract'
 import { expect, test } from './helpers/dolphin-app'
 import {

@@ -195,17 +195,17 @@ function configureSharedProjectCompatibilityMocks(
   sharedProjectId: string
   sharedRemoteProject: Project
 } {
-  const sharedProjectId = 'github:stablyai/dolphin'
+  const sharedProjectId = 'github:gusscloud/dolphin'
   const localRepoForSharedProject: Repo =
     options.localRepoHasProviderIdentity === false
       ? localRepo
       : {
           ...localRepo,
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }
   const remoteRepoWithIdentity: Repo = {
     ...remoteRepo,
-    upstream: { owner: 'stablyai', repo: 'dolphin' }
+    upstream: { owner: 'gusscloud', repo: 'dolphin' }
   }
   const sharedLocalProject: Project = {
     id: sharedProjectId,
@@ -681,7 +681,7 @@ describe('fetchReposForAllHosts', () => {
         .getState()
         .projects.map((project) => project.id)
         .sort()
-    ).toEqual(['github:stablyai/dolphin', 'repo:remote-repo'])
+    ).toEqual(['github:gusscloud/dolphin', 'repo:remote-repo'])
     expect(store.getState().projectHostSetups).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

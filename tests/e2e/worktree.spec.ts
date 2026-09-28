@@ -20,7 +20,7 @@ import { openSidebarWorkspaceComposer } from './helpers/sidebar-project-dialog'
  * crash in whatever replaces it.
  */
 
-import type { ConsoleMessage } from '@stablyai/playwright-test'
+import type { ConsoleMessage } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import {
   waitForSessionReady,
@@ -295,7 +295,7 @@ test.describe('Create Workspace', () => {
     appPage
   }) => {
     const title = `E2E smart URL resolution ${Date.now()}`
-    const url = 'https://github.com/stablyai/dolphin/pull/2049'
+    const url = 'https://github.com/gusscloud/dolphin/pull/2049'
     const linkedWorkspacePattern = new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
 
     try {
@@ -412,7 +412,7 @@ test.describe('Create Workspace', () => {
     appPage
   }) => {
     const title = `E2E selected URL resolution ${Date.now()}`
-    const url = 'https://github.com/stablyai/dolphin/pull/2050'
+    const url = 'https://github.com/gusscloud/dolphin/pull/2050'
     const linkedWorkspacePattern = new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
 
     try {

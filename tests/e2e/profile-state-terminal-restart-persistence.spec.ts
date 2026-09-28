@@ -2,7 +2,7 @@
 
 import { readFileSync, existsSync, rmSync } from 'node:fs'
 import path from 'node:path'
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { getRepoIdFromWorktreeId } from '../../src/shared/worktree/id'
 import { test, expect } from './helpers/dolphin-app'
 import { forceQuitElectronAppForE2E } from './helpers/electron-process-shutdown'

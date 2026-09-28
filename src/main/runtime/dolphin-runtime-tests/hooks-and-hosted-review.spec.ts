@@ -216,14 +216,14 @@ describe('DolphinRuntimeService', () => {
     }
     const runtime = new DolphinRuntimeService(runtimeStore as never)
     getRepoSlugMock.mockResolvedValueOnce({ owner: 'acme', repo: 'dolphin' })
-    getRepoUpstreamMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
+    getRepoUpstreamMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
 
     await expect(runtime.getRepoSlug('id:repo-1')).resolves.toEqual({
       owner: 'acme',
       repo: 'dolphin'
     })
     await expect(runtime.getRepoUpstream('id:repo-1')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
 

@@ -20,7 +20,7 @@
  * place, so pinning its absence stays true under a forwarder rewrite as well as under a
  * structural one.
  */
-import type { CDPSession } from '@stablyai/playwright-test'
+import type { CDPSession } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { closeTerminalImePaneArena, openTerminalImePaneArena } from './terminal-ime-pane-arena'
 import { readTerminalImeBoundaryTrace } from './terminal-ime-boundary-probe'

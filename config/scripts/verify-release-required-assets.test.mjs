@@ -104,7 +104,7 @@ describe('verifyRequiredReleaseAssets', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
-      verifyRequiredReleaseAssets({ repo: 'stablyai/dolphin', tag, token: 'token' })
+      verifyRequiredReleaseAssets({ repo: 'gusscloud/dolphin', tag, token: 'token' })
     ).rejects.toThrow('Missing: Dolphin-1.4.27-arm64-mac.zip')
     expect(latestMacAsset).toBeTruthy()
   })
@@ -132,7 +132,7 @@ describe('verifyRequiredReleaseAssets', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
-      verifyRequiredReleaseAssets({ repo: 'stablyai/dolphin', tag, token: 'token' })
+      verifyRequiredReleaseAssets({ repo: 'gusscloud/dolphin', tag, token: 'token' })
     ).rejects.toThrow('Missing: dolphin-linux-arm64.AppImage.blockmap')
     expect(arm64Manifest).toBeTruthy()
   })

@@ -15,9 +15,9 @@ describe('generationDirectoryPath', () => {
     expect(
       generationDirectoryPath('file:///var/mobile/Caches/mobile-web/abc/generations/def')
     ).toBe('/var/mobile/Caches/mobile-web/abc/generations/def')
-    expect(generationDirectoryPath('file:///data/user/0/com.stably.dolphin.mobile/cache/mw')).toBe(
-      '/data/user/0/com.stably.dolphin.mobile/cache/mw'
-    )
+    expect(
+      generationDirectoryPath('file:///data/user/0/com.gusscloud.dolphin.mobile/cache/mw')
+    ).toBe('/data/user/0/com.gusscloud.dolphin.mobile/cache/mw')
   })
 
   it('decodes what a uri escaped and a path spells literally', () => {

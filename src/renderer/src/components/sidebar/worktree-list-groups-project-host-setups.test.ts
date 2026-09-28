@@ -46,7 +46,7 @@ describe('buildRows with pinned worktrees', () => {
     )
 
     expect(rows).toMatchObject([
-      { type: 'header', key: 'project:github:stablyai/dolphin', label: 'Dolphin', count: 2 },
+      { type: 'header', key: 'project:github:gusscloud/dolphin', label: 'Dolphin', count: 2 },
       { type: 'item', worktree: { id: worktree.id }, hostContextLabel: LOCAL_HOST_LABEL },
       { type: 'item', worktree: { id: remoteWorktree.id }, hostContextLabel: 'gpu-vm' }
     ])
@@ -99,10 +99,10 @@ describe('buildRows with pinned worktrees', () => {
     }
 
     expect(buildHeaders([], [])).toMatchObject([
-      { key: 'project:github:stablyai/dolphin', label: 'Dolphin' }
+      { key: 'project:github:gusscloud/dolphin', label: 'Dolphin' }
     ])
     expect(buildHeaders([otherWorktree], [otherRepo])).toMatchObject([
-      { key: 'project:github:stablyai/dolphin', label: 'Dolphin' },
+      { key: 'project:github:gusscloud/dolphin', label: 'Dolphin' },
       { key: 'repo:repo-other', label: 'design-assets' }
     ])
   })
@@ -299,7 +299,7 @@ describe('buildRows with pinned worktrees', () => {
   it('orders project identity headers by the manual repo order anchor', () => {
     const analyticsProject: Project = {
       ...project,
-      id: 'github:stablyai/analytics',
+      id: 'github:gusscloud/analytics',
       displayName: 'Analytics',
       sourceRepoIds: ['repo-analytics']
     }
@@ -308,7 +308,7 @@ describe('buildRows with pinned worktrees', () => {
       id: 'repo-analytics',
       path: '/tmp/analytics',
       displayName: 'analytics',
-      upstream: { owner: 'stablyai', repo: 'analytics' }
+      upstream: { owner: 'gusscloud', repo: 'analytics' }
     }
     const analyticsWorktree: Worktree = {
       ...worktree,
@@ -364,11 +364,11 @@ describe('buildRows with pinned worktrees', () => {
 
     const headers = rows.filter((row) => row.type === 'header')
     expect(headers.map((row) => row.key)).toEqual([
-      'project:github:stablyai/dolphin',
-      'project:github:stablyai/analytics'
+      'project:github:gusscloud/dolphin',
+      'project:github:gusscloud/analytics'
     ])
     expect(headers[0]).toMatchObject({
-      key: 'project:github:stablyai/dolphin',
+      key: 'project:github:gusscloud/dolphin',
       repo: { id: repo.id, badgeColor: repo.badgeColor }
     })
   })
@@ -424,11 +424,11 @@ describe('buildRows with pinned worktrees', () => {
     expect(headers).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          key: 'project:github:stablyai/dolphin::setup:repo-1',
+          key: 'project:github:gusscloud/dolphin::setup:repo-1',
           label: 'dolphin'
         }),
         expect.objectContaining({
-          key: 'project:github:stablyai/dolphin::setup:repo-2',
+          key: 'project:github:gusscloud/dolphin::setup:repo-2',
           label: 'dolphin-2'
         })
       ])
@@ -490,9 +490,9 @@ describe('buildRows with pinned worktrees', () => {
 
     const headers = rows.filter((row) => row.type === 'header')
     expect(headers.map((row) => row.key)).toEqual([
-      'project:github:stablyai/dolphin::setup:repo-1',
-      'project:github:stablyai/dolphin::setup:repo-local-b',
-      'project:github:stablyai/dolphin'
+      'project:github:gusscloud/dolphin::setup:repo-1',
+      'project:github:gusscloud/dolphin::setup:repo-local-b',
+      'project:github:gusscloud/dolphin'
     ])
   })
 
@@ -556,7 +556,7 @@ describe('buildRows with pinned worktrees', () => {
         undefined,
         grouping
       )
-    ]).toEqual(['project:github:stablyai/dolphin', 'project:github:stablyai/dolphin'])
+    ]).toEqual(['project:github:gusscloud/dolphin', 'project:github:gusscloud/dolphin'])
   })
 
   it('keeps Git hosts grouped when folder setups share the project identity', () => {
@@ -626,7 +626,7 @@ describe('buildRows with pinned worktrees', () => {
         grouping
       )
     )
-    expect(new Set(groupKeys)).toEqual(new Set(['project:github:stablyai/dolphin']))
+    expect(new Set(groupKeys)).toEqual(new Set(['project:github:gusscloud/dolphin']))
   })
 
   it('keeps a provisioned runtime copy under the project header alongside a same-host checkout', () => {
@@ -687,7 +687,7 @@ describe('buildRows with pinned worktrees', () => {
     const headers = rows.filter((row) => row.type === 'header')
     expect(headers).toHaveLength(1)
     expect(headers[0]).toMatchObject({
-      key: 'project:github:stablyai/dolphin',
+      key: 'project:github:gusscloud/dolphin',
       label: 'Dolphin',
       count: 2
     })
@@ -773,17 +773,17 @@ describe('buildRows with pinned worktrees', () => {
 
     const headers = rows.filter((row) => row.type === 'header')
     expect(headers.map((row) => row.key).sort()).toEqual([
-      'project:github:stablyai/dolphin',
-      'project:github:stablyai/dolphin::setup:repo-1',
-      'project:github:stablyai/dolphin::setup:repo-local-b'
+      'project:github:gusscloud/dolphin',
+      'project:github:gusscloud/dolphin::setup:repo-1',
+      'project:github:gusscloud/dolphin::setup:repo-local-b'
     ])
     // The provisioned copy nests under the plain project key with only its own
     // worktree; it never gets a path-scoped `::setup:` header like the real
     // checkouts do, and that header keeps the project's own display name.
     expect(
-      headers.some((row) => row.key === 'project:github:stablyai/dolphin::setup:repo-runtime-b')
+      headers.some((row) => row.key === 'project:github:gusscloud/dolphin::setup:repo-runtime-b')
     ).toBe(false)
-    expect(headers.find((row) => row.key === 'project:github:stablyai/dolphin')).toMatchObject({
+    expect(headers.find((row) => row.key === 'project:github:gusscloud/dolphin')).toMatchObject({
       label: 'Dolphin',
       count: 1
     })

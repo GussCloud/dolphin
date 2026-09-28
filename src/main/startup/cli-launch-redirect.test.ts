@@ -225,8 +225,8 @@ describe('CLI launch redirect: command form', () => {
   })
 
   it.each([
-    ['--project', 'github:stablyai/dolphin', 'project', 'setups'],
-    ['--project=github:stablyai/dolphin', 'project', 'setups'],
+    ['--project', 'github:gusscloud/dolphin', 'project', 'setups'],
+    ['--project=github:gusscloud/dolphin', 'project', 'setups'],
     ['--project', 'project', 'project', 'setups'],
     ['--project=project', 'project', 'setups']
   ])('preserves a project selector in %j', (...args) => {

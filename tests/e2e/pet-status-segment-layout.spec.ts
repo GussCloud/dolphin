@@ -1,4 +1,4 @@
-import type { Page, TestInfo } from '@stablyai/playwright-test'
+import type { Page, TestInfo } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 

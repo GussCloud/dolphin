@@ -1,7 +1,7 @@
 // STA-8147 follow-up: the floating browser and a focused split browser each answer only the
 // chrome chords pressed inside them.
 
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {

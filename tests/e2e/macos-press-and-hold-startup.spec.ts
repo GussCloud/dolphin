@@ -15,7 +15,7 @@
  * real home regardless of the harness's HOME isolation, so a run that wrote anything would be
  * writing into a domain shared with every other unpackaged Electron app on the machine.
  */
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 
 test.use({ seedTestRepo: false })
@@ -74,7 +74,8 @@ test.describe('macOS press-and-hold default', () => {
     expect(record.domain).toBe(state.bundleIdentifier)
 
     const ownsDomain =
-      record.domain === 'com.gusscloud.dolphin' || record.domain!.startsWith('com.gusscloud.dolphin.')
+      record.domain === 'com.gusscloud.dolphin' ||
+      record.domain!.startsWith('com.gusscloud.dolphin.')
     if (ownsDomain) {
       // A packaged or dev-identity bundle: the write path is live and must have settled.
       expect(['applied', 'kept-user-preference']).toContain(record.decision)

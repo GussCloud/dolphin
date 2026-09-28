@@ -1,4 +1,4 @@
-import type { CDPSession, Page, TestInfo } from '@stablyai/playwright-test'
+import type { CDPSession, Page, TestInfo } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {

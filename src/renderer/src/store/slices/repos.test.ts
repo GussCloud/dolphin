@@ -252,10 +252,10 @@ describe('repo slice runtime routing', () => {
 
   it('sets up a project on a local host through the project setup API', async () => {
     const project: Project = {
-      id: 'github:stablyai/dolphin',
+      id: 'github:gusscloud/dolphin',
       displayName: 'Project',
       badgeColor: '#000',
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' },
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' },
       sourceRepoIds: ['local-repo'],
       createdAt: 1,
       updatedAt: 1
@@ -294,7 +294,7 @@ describe('repo slice runtime routing', () => {
     expect(store.getState().projectHostSetups).toEqual([setup])
     expect(projectsSetupExistingFolder).toHaveBeenCalledWith({
       projectId: project.id,
-      projectProviderIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' },
+      projectProviderIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' },
       hostId: 'local',
       path: '/local',
       kind: 'git'
@@ -445,7 +445,7 @@ describe('repo slice runtime routing', () => {
       store.getState().setupProjectClone({
         projectId: project.id,
         hostId: 'local',
-        url: 'https://github.com/stablyai/dolphin.git',
+        url: 'https://github.com/gusscloud/dolphin.git',
         destination: '/workspace',
         displayName: 'Project'
       })
@@ -456,7 +456,7 @@ describe('repo slice runtime routing', () => {
     })
 
     expect(reposClone).toHaveBeenCalledWith({
-      url: 'https://github.com/stablyai/dolphin.git',
+      url: 'https://github.com/gusscloud/dolphin.git',
       destination: '/workspace'
     })
     expect(projectsSetupExistingFolder).toHaveBeenCalledWith({
@@ -510,7 +510,7 @@ describe('repo slice runtime routing', () => {
       store.getState().setupProjectClone({
         projectId: project.id,
         hostId: 'runtime:env-1',
-        url: 'https://github.com/stablyai/dolphin.git',
+        url: 'https://github.com/gusscloud/dolphin.git',
         destination: '/srv',
         displayName: 'Project'
       })
@@ -530,7 +530,7 @@ describe('repo slice runtime routing', () => {
       selector: 'env-1',
       method: 'repo.clone',
       params: {
-        url: 'https://github.com/stablyai/dolphin.git',
+        url: 'https://github.com/gusscloud/dolphin.git',
         destination: '/srv'
       },
       timeoutMs: 10 * 60_000
@@ -580,7 +580,7 @@ describe('repo slice runtime routing', () => {
       store.getState().setupProjectClone({
         projectId: project.id,
         hostId: 'ssh:ssh-1',
-        url: 'https://github.com/stablyai/dolphin.git',
+        url: 'https://github.com/gusscloud/dolphin.git',
         destination: '/srv',
         displayName: 'Project'
       })
@@ -592,7 +592,7 @@ describe('repo slice runtime routing', () => {
 
     expect(reposCloneRemote).toHaveBeenCalledWith({
       connectionId: 'ssh-1',
-      url: 'https://github.com/stablyai/dolphin.git',
+      url: 'https://github.com/gusscloud/dolphin.git',
       destination: '/srv'
     })
     expect(projectsSetupExistingFolder).toHaveBeenCalledWith({

@@ -1,23 +1,23 @@
 import { openSidebarWorkspaceComposer } from './helpers/sidebar-project-dialog'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import type { LinearIssue } from '../../src/shared/linear/issue-types'
 
 const LINEAR_URL =
-  'https://linear.app/stably/issue/STA-4084/restore-osc-133-shell-integration-when-an-exec-in-user-rc-files-strips'
+  'https://linear.app/gusscloud/issue/STA-4084/restore-osc-133-shell-integration-when-an-exec-in-user-rc-files-strips'
 const EXPECTED_WORKSPACE_NAME = 'sta-4084-restore-osc-133-shell-integration-when'
 
 const LINEAR_ISSUE: LinearIssue = {
   id: 'linear-sta-4084',
   workspaceId: 'workspace-1',
-  workspaceName: 'Stably',
+  workspaceName: 'GussCloud',
   identifier: 'STA-4084',
   title: 'Restore OSC 133 shell integration when an exec in user rc files strips',
   branchName: 'sta-4084-restore-osc-133-shell-integration',
   url: LINEAR_URL,
   state: { name: 'Todo', type: 'unstarted', color: '#999999' },
-  team: { id: 'team-sta', name: 'Stably', key: 'STA' },
+  team: { id: 'team-sta', name: 'GussCloud', key: 'STA' },
   labels: [],
   labelIds: [],
   priority: 2,
@@ -66,11 +66,11 @@ async function installLinearFixture(
             },
             {
               id: 'workspace-1',
-              displayName: 'Stably User',
+              displayName: 'GussCloud User',
               email: null,
-              organizationId: 'organization-stably',
-              organizationName: 'Stably',
-              organizationUrlKey: 'stably'
+              organizationId: 'organization-gusscloud',
+              organizationName: 'GussCloud',
+              organizationUrlKey: 'gusscloud'
             }
           ]
         },

@@ -36,8 +36,8 @@ describe('resolveRepoBackedProjectDialogState', () => {
 
 describe('resolveMissingRepoProjectDialogState', () => {
   it('clears fallback dialogs while the slug index is rebuilding', () => {
-    const slugDialog = { origin: { owner: 'stablyai', repo: 'dolphin' } }
-    const repoNotInDolphin = { owner: 'stablyai', repo: 'dolphin', url: null }
+    const slugDialog = { origin: { owner: 'gusscloud', repo: 'dolphin' } }
+    const repoNotInDolphin = { owner: 'gusscloud', repo: 'dolphin', url: null }
 
     expect(
       resolveMissingRepoProjectDialogState({
@@ -51,13 +51,13 @@ describe('resolveMissingRepoProjectDialogState', () => {
   })
 
   it('clears slug fallback dialogs once the repo slug resolves', () => {
-    const slugDialog = { origin: { owner: 'stablyai', repo: 'dolphin' } }
+    const slugDialog = { origin: { owner: 'gusscloud', repo: 'dolphin' } }
     const repoNotInDolphin = { owner: 'other', repo: 'tool', url: null }
     const result = resolveMissingRepoProjectDialogState({
       slugIndexReady: true,
       slugDialog,
       repoNotInDolphin,
-      lookupSlug: (slug) => (slug === 'stablyai/dolphin' ? [{ id: 'repo-1' }] : []),
+      lookupSlug: (slug) => (slug === 'gusscloud/dolphin' ? [{ id: 'repo-1' }] : []),
       selectedRepoIds: new Set(['repo-1'])
     })
 
@@ -67,12 +67,12 @@ describe('resolveMissingRepoProjectDialogState', () => {
 
   it('clears repo-not-in-dolphin dialogs once the repo slug resolves', () => {
     const slugDialog = { origin: { owner: 'other', repo: 'tool' } }
-    const repoNotInDolphin = { owner: 'stablyai', repo: 'dolphin', url: null }
+    const repoNotInDolphin = { owner: 'gusscloud', repo: 'dolphin', url: null }
     const result = resolveMissingRepoProjectDialogState({
       slugIndexReady: true,
       slugDialog,
       repoNotInDolphin,
-      lookupSlug: (slug) => (slug === 'stablyai/dolphin' ? [{ id: 'repo-1' }] : []),
+      lookupSlug: (slug) => (slug === 'gusscloud/dolphin' ? [{ id: 'repo-1' }] : []),
       selectedRepoIds: new Set(['repo-1'])
     })
 
@@ -81,8 +81,8 @@ describe('resolveMissingRepoProjectDialogState', () => {
   })
 
   it('clears fallback dialogs when the repo is globally known but not selected', () => {
-    const slugDialog = { origin: { owner: 'stablyai', repo: 'dolphin' } }
-    const repoNotInDolphin = { owner: 'stablyai', repo: 'dolphin', url: null }
+    const slugDialog = { origin: { owner: 'gusscloud', repo: 'dolphin' } }
+    const repoNotInDolphin = { owner: 'gusscloud', repo: 'dolphin', url: null }
     const result = resolveMissingRepoProjectDialogState({
       slugIndexReady: true,
       slugDialog,
@@ -95,8 +95,8 @@ describe('resolveMissingRepoProjectDialogState', () => {
   })
 
   it('keeps missing-repo fallback dialogs when there are no global matches', () => {
-    const slugDialog = { origin: { owner: 'stablyai', repo: 'dolphin' } }
-    const repoNotInDolphin = { owner: 'stablyai', repo: 'dolphin', url: null }
+    const slugDialog = { origin: { owner: 'gusscloud', repo: 'dolphin' } }
+    const repoNotInDolphin = { owner: 'gusscloud', repo: 'dolphin', url: null }
     const result = resolveMissingRepoProjectDialogState({
       slugIndexReady: true,
       slugDialog,

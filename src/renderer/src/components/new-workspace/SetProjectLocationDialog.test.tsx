@@ -59,7 +59,7 @@ function renderDialog(
       option={option}
       projectName="dolphin"
       projectKind="git"
-      defaultCloneUrl="git@github.com:stablyai/dolphin.git"
+      defaultCloneUrl="git@github.com:gusscloud/dolphin.git"
       onClose={vi.fn()}
       onReady={vi.fn()}
       {...overrides}
@@ -121,7 +121,7 @@ describe('SetProjectLocationDialog', () => {
     expect(storeMocks.setupProjectClone).toHaveBeenCalledWith({
       projectId: 'project-dolphin',
       hostId: 'ssh:openclaw',
-      url: 'git@github.com:stablyai/dolphin.git',
+      url: 'git@github.com:gusscloud/dolphin.git',
       destination: '/remote/dolphin',
       displayName: 'dolphin'
     })
@@ -181,7 +181,7 @@ describe('SetProjectLocationDialog', () => {
         option={option}
         projectName="dolphin"
         projectKind="git"
-        defaultCloneUrl="https://github.com/stablyai/dolphin.git"
+        defaultCloneUrl="https://github.com/gusscloud/dolphin.git"
         onClose={onClose}
         onReady={onReady}
       />
@@ -198,7 +198,7 @@ describe('SetProjectLocationDialog', () => {
         option={null}
         projectName="dolphin"
         projectKind="git"
-        defaultCloneUrl="https://github.com/stablyai/dolphin.git"
+        defaultCloneUrl="https://github.com/gusscloud/dolphin.git"
         onClose={onClose}
         onReady={onReady}
       />
@@ -218,7 +218,7 @@ describe('SetProjectLocationDialog', () => {
           option={option}
           projectName="dolphin"
           projectKind="git"
-          defaultCloneUrl="git@github.com:stablyai/dolphin.git"
+          defaultCloneUrl="git@github.com:gusscloud/dolphin.git"
           onClose={vi.fn()}
           onReady={onReady}
         />

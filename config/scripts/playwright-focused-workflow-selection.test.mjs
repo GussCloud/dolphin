@@ -62,7 +62,7 @@ it('focused IME and golden commands discover only their requested files with the
   expect(commands).toHaveLength(4)
   const directory = realpathSync(mkdtempSync(join(tmpdir(), 'dolphin-playwright-focused-')))
   const config = join(directory, 'playwright.config.cjs')
-  const testPackage = JSON.stringify(require.resolve('@stablyai/playwright-test'))
+  const testPackage = JSON.stringify(require.resolve('@playwright/test'))
   try {
     mkdirSync(join(directory, 'tests/e2e'), { recursive: true })
     writeFileSync(config, "module.exports = { testDir: '.', testMatch: '**/*.spec.ts' }")

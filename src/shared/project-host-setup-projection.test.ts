@@ -45,7 +45,7 @@ describe('project host setup projection', () => {
     path: '/Users/alice/dolphin',
     displayName: 'Dolphin',
     addedAt: 100,
-    upstream: { owner: 'StablyAI', repo: 'Dolphin' }
+    upstream: { owner: 'GussCloud', repo: 'Dolphin' }
   })
   const unknownSibling = repo({
     id: 'remote-repo',
@@ -53,7 +53,7 @@ describe('project host setup projection', () => {
     displayName: 'dolphin',
     addedAt: 0,
     connectionId: 'gpu-vm',
-    upstream: { owner: 'stablyai', repo: 'dolphin' }
+    upstream: { owner: 'gusscloud', repo: 'dolphin' }
   })
 
   it('does not wipe a persisted createdAt when a sibling repo has addedAt 0', () => {
@@ -162,25 +162,25 @@ describe('project host setup projection', () => {
         id: 'local-repo',
         path: '/Users/alice/dolphin',
         displayName: 'Dolphin',
-        upstream: { owner: 'StablyAI', repo: 'Dolphin' }
+        upstream: { owner: 'GussCloud', repo: 'Dolphin' }
       }),
       repo({
         id: 'remote-repo',
         path: '/home/alice/dolphin',
         displayName: 'dolphin',
         connectionId: 'gpu-vm',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       })
     ])
 
     expect(projection.projects).toHaveLength(1)
     expect(projection.projects[0]).toMatchObject({
-      id: 'github:stablyai/dolphin',
+      id: 'github:gusscloud/dolphin',
       sourceRepoIds: ['local-repo', 'remote-repo'],
-      providerIdentity: { provider: 'github', owner: 'StablyAI', repo: 'Dolphin' }
+      providerIdentity: { provider: 'github', owner: 'GussCloud', repo: 'Dolphin' }
     })
     expect(
-      getProjectHostSetupsForProject(projection.setups, 'github:stablyai/dolphin')
+      getProjectHostSetupsForProject(projection.setups, 'github:gusscloud/dolphin')
     ).toHaveLength(2)
   })
 
@@ -258,9 +258,9 @@ describe('project host setup projection', () => {
         displayName: 'Dolphin',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'stablyai/dolphin'
+          label: 'gusscloud/dolphin'
         }
       }),
       repo({
@@ -270,21 +270,21 @@ describe('project host setup projection', () => {
         connectionId: 'gpu-vm',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'StablyAI/Dolphin'
+          label: 'GussCloud/Dolphin'
         }
       })
     ])
 
     expect(projection.projects).toHaveLength(1)
     expect(projection.projects[0]).toMatchObject({
-      id: 'github:stablyai/dolphin',
+      id: 'github:gusscloud/dolphin',
       sourceRepoIds: ['local-repo', 'remote-repo'],
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
     })
     expect(
-      getProjectHostSetupsForProject(projection.setups, 'github:stablyai/dolphin')
+      getProjectHostSetupsForProject(projection.setups, 'github:gusscloud/dolphin')
     ).toHaveLength(2)
   })
 
@@ -292,12 +292,12 @@ describe('project host setup projection', () => {
     const projection = projectHostSetupProjectionFromRepos([
       repo({
         id: 'canonical-local-repo',
-        path: '/Users/alice/stably/dolphin',
+        path: '/Users/alice/gusscloud/dolphin',
         displayName: 'dolphin',
         gitRemoteIdentity: {
-          canonicalKey: 'github.com/stablyai/dolphin',
+          canonicalKey: 'github.com/gusscloud/dolphin',
           remoteName: 'origin',
-          remoteUrl: 'git@github.com:stablyai/dolphin.git'
+          remoteUrl: 'git@github.com:gusscloud/dolphin.git'
         }
       }),
       repo({
@@ -306,19 +306,19 @@ describe('project host setup projection', () => {
         displayName: 're-enable-webgl-for-remote-runtime-terminals',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'stablyai/dolphin'
+          label: 'gusscloud/dolphin'
         }
       })
     ])
 
     expect(projection.projects).toHaveLength(1)
     expect(projection.projects[0]).toMatchObject({
-      id: 'github:stablyai/dolphin',
+      id: 'github:gusscloud/dolphin',
       displayName: 'dolphin',
       sourceRepoIds: ['canonical-local-repo', 'old-branch-checkout'],
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
     })
   })
 
@@ -513,7 +513,7 @@ describe('project host setup projection', () => {
         id: 'repo-1',
         path: '/Users/alice/dolphin',
         displayName: 'dolphin',
-        upstream: { owner: 'stablyai', repo: 42 } as never
+        upstream: { owner: 'gusscloud', repo: 42 } as never
       })
     ])
 
@@ -527,12 +527,12 @@ describe('project host setup projection', () => {
       path: '/home/alice/dolphin',
       displayName: 'dolphin',
       connectionId: 'openclaw 2',
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     })
     const projection = projectHostSetupProjectionFromRepos([targetRepo])
 
     expect(getProjectHostSetupWorktreeMeta(projection.setups, targetRepo)).toEqual({
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'ssh:openclaw%202',
       projectHostSetupId: 'remote-repo'
     })
@@ -545,7 +545,7 @@ describe('isGitHubBackedRepo', () => {
       id: 'r',
       path: '/r',
       displayName: 'r',
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     })
     expect(isGitHubBackedRepo(target)).toBe(true)
   })
@@ -557,9 +557,9 @@ describe('isGitHubBackedRepo', () => {
       displayName: 'r',
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       }
     })
     expect(isGitHubBackedRepo(target)).toBe(true)
@@ -623,7 +623,7 @@ describe('isProjectRemoteIdentityPending', () => {
     ).toBe(false)
     expect(
       isProjectRemoteIdentityPending(
-        repo({ ...base, upstream: { owner: 'stablyai', repo: 'dolphin' } })
+        repo({ ...base, upstream: { owner: 'gusscloud', repo: 'dolphin' } })
       )
     ).toBe(false)
   })

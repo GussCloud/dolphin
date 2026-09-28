@@ -3,7 +3,7 @@
  * committing it, and keeping it pane-local while tab titles churn.
  */
 
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { splitActiveTerminalPane, waitForPaneCount } from './helpers/terminal'
 import { getActiveWorktreeId, getActiveTabId, getWorktreeTabs } from './helpers/store'

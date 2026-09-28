@@ -95,7 +95,7 @@ describe('DolphinRuntimeService', () => {
       getForegroundProcess: async () => null
     })
 
-    const draftUrl = 'https://github.com/stablyai/dolphin/pull/456'
+    const draftUrl = 'https://github.com/gusscloud/dolphin/pull/456'
     const result = await runtime.createManagedWorktree({
       repoSelector: TEST_REPO_ID,
       name: 'nautilus',
@@ -208,7 +208,7 @@ describe('DolphinRuntimeService', () => {
       const result = await runtime.createManagedWorktree({
         repoSelector: TEST_REPO_ID,
         name: 'mobile-codex-draft',
-        startupDraft: 'https://github.com/stablyai/dolphin/issues/789'
+        startupDraft: 'https://github.com/gusscloud/dolphin/issues/789'
       })
 
       expect(detectRemoteAgentsMock).not.toHaveBeenCalled()

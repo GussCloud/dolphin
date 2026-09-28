@@ -66,14 +66,14 @@ describe('RepositoryIconPicker GitHub avatar refresh', () => {
 
   it('refreshes stale GitHub avatar metadata lazily when repo settings opens', async () => {
     const updateRepo = vi.fn()
-    // Non-fork repo (upstream resolved to null) transferred stablyai -> parkerrex.
+    // Non-fork repo (upstream resolved to null) transferred gusscloud -> parkerrex.
     const repo = makeRepo({
       upstream: null,
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       }
     })
     apiMocks.repoUpstream.mockResolvedValueOnce(null)
@@ -98,12 +98,12 @@ describe('RepositoryIconPicker GitHub avatar refresh', () => {
     const updateRepo = vi.fn()
     // A fork whose avatar tracks its parent org, resolved earlier while online.
     const repo = makeRepo({
-      upstream: { owner: 'stablyai', repo: 'dolphin' },
+      upstream: { owner: 'gusscloud', repo: 'dolphin' },
       repoIcon: {
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/dolphin'
+        label: 'gusscloud/dolphin'
       }
     })
     // Offline/unauthed: the parent lookup returns null. The same-name origin

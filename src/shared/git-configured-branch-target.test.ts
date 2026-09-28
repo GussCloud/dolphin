@@ -11,7 +11,7 @@ import {
 
 const BRANCH = 'imp/translation'
 const FORK_URL = 'https://github.com/contributor/dolphin.git'
-const UPSTREAM_URL = 'https://github.com/stablyai/dolphin.git'
+const UPSTREAM_URL = 'https://github.com/gusscloud/dolphin.git'
 
 type RemoteRow = { name: string; fetchUrl: string; pushUrl?: string }
 

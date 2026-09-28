@@ -122,7 +122,7 @@ describe('DolphinRuntimeService', () => {
   it('sets up an existing folder on a fresh runtime after importing the repo project', async () => {
     const tempRoot = await mkdtemp(join(tmpdir(), 'dolphin-runtime-project-setup-'))
     const repos: Record<string, unknown>[] = []
-    getRepoUpstreamMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
+    getRepoUpstreamMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
     const runtimeStore = {
       ...store,
       getRepos: () => [...repos] as never,
@@ -179,17 +179,17 @@ describe('DolphinRuntimeService', () => {
     try {
       execFileSync('git', ['init'], { cwd: tempRoot, stdio: 'ignore' })
       const result = await runtime.setupProjectExistingFolder({
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'runtime:env-1',
         path: tempRoot,
         kind: 'git',
         setupMethod: 'imported-existing-folder'
       })
 
-      expect(result.project.id).toBe('github:stablyai/dolphin')
+      expect(result.project.id).toBe('github:gusscloud/dolphin')
       expect(result.repo.path).toBe(tempRoot)
       expect(result.setup).toMatchObject({
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         path: tempRoot,
         setupMethod: 'imported-existing-folder'
       })
@@ -340,7 +340,7 @@ describe('DolphinRuntimeService', () => {
   it('keeps existing-folder imports split by runtime host on the same normalized path', async () => {
     const tempRoot = await mkdtemp(join(tmpdir(), 'dolphin-runtime-project-host-'))
     const repos: Record<string, unknown>[] = []
-    getRepoUpstreamMock.mockResolvedValue({ owner: 'stablyai', repo: 'dolphin' })
+    getRepoUpstreamMock.mockResolvedValue({ owner: 'gusscloud', repo: 'dolphin' })
     const runtimeStore = {
       ...store,
       getRepos: () => [...repos] as never,
@@ -365,14 +365,14 @@ describe('DolphinRuntimeService', () => {
     try {
       execFileSync('git', ['init'], { cwd: tempRoot, stdio: 'ignore' })
       const first = await runtime.setupProjectExistingFolder({
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'runtime:env-1',
         path: tempRoot,
         kind: 'git',
         setupMethod: 'imported-existing-folder'
       })
       const second = await runtime.setupProjectExistingFolder({
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'runtime:env-2',
         path: tempRoot,
         kind: 'git',
@@ -531,7 +531,7 @@ describe('DolphinRuntimeService', () => {
     const clonePath = join(destination, 'dolphin')
     const spawnSpy = vi.spyOn(gitRunner, 'gitSpawnAfterWindowsEnvironmentReady')
     const repos: Record<string, unknown>[] = []
-    getRepoUpstreamMock.mockResolvedValue({ owner: 'stablyai', repo: 'dolphin' })
+    getRepoUpstreamMock.mockResolvedValue({ owner: 'gusscloud', repo: 'dolphin' })
     const runtimeStore = {
       ...store,
       getRepos: () => [...repos] as never,
@@ -565,7 +565,7 @@ describe('DolphinRuntimeService', () => {
 
     try {
       const result = await runtime.setupProjectClone({
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'runtime:env-1',
         url: 'https://example.com/dolphin.git',
         destination
@@ -619,7 +619,7 @@ describe('DolphinRuntimeService', () => {
     try {
       const cloneError = await runtime
         .setupProjectClone({
-          projectId: 'github:stablyai/dolphin',
+          projectId: 'github:gusscloud/dolphin',
           hostId: 'ssh:openclaw',
           url: 'https://example.com/dolphin.git',
           destination
@@ -627,7 +627,7 @@ describe('DolphinRuntimeService', () => {
         .catch((error: unknown) => error)
       const existingFolderError = await runtime
         .setupProjectExistingFolder({
-          projectId: 'github:stablyai/dolphin',
+          projectId: 'github:gusscloud/dolphin',
           hostId: 'ssh:openclaw',
           path: existingFolder,
           kind: 'git'

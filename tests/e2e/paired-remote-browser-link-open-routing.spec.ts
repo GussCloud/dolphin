@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { LOCAL_EXECUTION_HOST_ID } from '../../src/shared/execution-host'
 import { readOwnedPageUrls } from './helpers/client-hosted-browser-observer'
 import {

@@ -1,5 +1,5 @@
 import { createConnection, createServer, type Socket, type AddressInfo } from 'node:net'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { decodePairingOffer, encodePairingOffer } from '../../src/shared/pairing'
 import { expect, test } from './helpers/dolphin-app'
 import {

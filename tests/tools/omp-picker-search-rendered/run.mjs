@@ -1,4 +1,4 @@
-import { _electron as electron, expect } from '@stablyai/playwright-test'
+import { _electron as electron, expect } from '@playwright/test'
 import { build as buildMain } from 'esbuild'
 import { build as buildRenderer } from 'vite'
 import react from '@vitejs/plugin-react'

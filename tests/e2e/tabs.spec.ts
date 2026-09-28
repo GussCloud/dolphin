@@ -19,7 +19,7 @@
  */
 
 import { rm } from 'node:fs/promises'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import {
   waitForSessionReady,

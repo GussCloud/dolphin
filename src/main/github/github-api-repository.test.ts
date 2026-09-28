@@ -373,7 +373,7 @@ describe('skip missing upstream remote probes', () => {
         originStarted = true
         return { owner: 'fork', repo: 'dolphin' }
       }
-      return { owner: 'stablyai', repo: 'dolphin' }
+      return { owner: 'gusscloud', repo: 'dolphin' }
     })
 
     const resultPromise = getIssueGitHubApiRepository('/repo')
@@ -381,7 +381,7 @@ describe('skip missing upstream remote probes', () => {
 
     releaseRemoteProbe(true)
     await expect(resultPromise).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       host: 'github.com'
     })
@@ -404,12 +404,12 @@ describe('skip missing upstream remote probes', () => {
   it('still probes upstream for issue identity when that remote is present', async () => {
     getOwnerRepoForRemoteMock.mockImplementation(async (_path, remote) =>
       remote === 'upstream'
-        ? { owner: 'stablyai', repo: 'dolphin' }
+        ? { owner: 'gusscloud', repo: 'dolphin' }
         : { owner: 'fork', repo: 'dolphin' }
     )
 
     await expect(getIssueGitHubApiRepository('/repo')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       host: 'github.com'
     })
@@ -422,11 +422,11 @@ describe('skip missing upstream remote probes', () => {
       if (remote === 'origin') {
         throw originError
       }
-      return { owner: 'stablyai', repo: 'dolphin' }
+      return { owner: 'gusscloud', repo: 'dolphin' }
     })
 
     await expect(getIssueGitHubApiRepository('/repo')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       host: 'github.com'
     })
@@ -467,7 +467,7 @@ describe('skip missing upstream remote probes', () => {
       if (remote === 'origin') {
         throw originError
       }
-      return { owner: 'stablyai', repo: 'dolphin' }
+      return { owner: 'gusscloud', repo: 'dolphin' }
     })
 
     const resultPromise = resolveGitHubApiRepositoryCandidates('/repo')

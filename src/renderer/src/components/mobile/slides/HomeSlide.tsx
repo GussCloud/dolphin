@@ -180,13 +180,13 @@ export function HomeSlide({ tapping }: { tapping: boolean }): React.JSX.Element 
         <div className="mp-accounts-card">
           <AccountRow
             icon={<ClaudeIcon size={18} />}
-            email="claude@stably.ai"
+            email="claude@guss.dev.br"
             sessionPct={42}
             weekPct={18}
           />
           <AccountRow
             icon={<OpenAIIcon size={18} />}
-            email="codex@stably.ai"
+            email="codex@guss.dev.br"
             sessionPct={67}
             weekPct={31}
           />

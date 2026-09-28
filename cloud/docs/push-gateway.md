@@ -62,7 +62,7 @@ Set on the container by Terraform:
 | `DOLPHIN_PUSH_APNS_KEY_ID`       | Secret `dolphin-cloud-push-apns-key-id`, version `latest`   |
 | `DOLPHIN_PUSH_APPLE_TEAM_ID`     | Secret `dolphin-cloud-push-apple-team-id`, version `latest` |
 
-`DOLPHIN_PUSH_APNS_TOPIC` is left to its application default (`com.stably.dolphin.mobile`). Add it here
+`DOLPHIN_PUSH_APNS_TOPIC` is left to its application default (`com.gusscloud.dolphin.mobile`). Add it here
 only when it has to differ from the code default, so that a code-side change stays visible rather
 than silently overridden.
 

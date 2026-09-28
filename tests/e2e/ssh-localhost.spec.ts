@@ -3,7 +3,7 @@ import os from 'node:os'
 import { createSeededTestRepo } from './helpers/seeded-test-repo'
 import { cleanupTestRepository } from './global-teardown'
 
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {

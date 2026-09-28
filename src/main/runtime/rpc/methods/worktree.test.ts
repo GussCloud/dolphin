@@ -595,7 +595,7 @@ describe('worktree RPC methods', () => {
       makeRequest('worktree.create', {
         repo: 'repo-1',
         name: 'issue-123',
-        startupDraft: 'https://github.com/stablyai/dolphin/issues/123',
+        startupDraft: 'https://github.com/gusscloud/dolphin/issues/123',
         createdWithAgent: 'codex',
         activate: true
       })
@@ -608,7 +608,7 @@ describe('worktree RPC methods', () => {
         activate: true,
         createdWithAgent: 'codex',
         startup: undefined,
-        startupDraft: 'https://github.com/stablyai/dolphin/issues/123'
+        startupDraft: 'https://github.com/gusscloud/dolphin/issues/123'
       })
     )
   })
@@ -762,7 +762,7 @@ describe('worktree RPC methods', () => {
         worktree: 'id:wt-1',
         linkedLinearIssue: 'STA-335',
         linkedLinearIssueWorkspaceId: null,
-        linkedLinearIssueOrganizationUrlKey: 'stably'
+        linkedLinearIssueOrganizationUrlKey: 'gusscloud'
       })
     )
 
@@ -772,7 +772,7 @@ describe('worktree RPC methods', () => {
       expect.objectContaining({
         linkedLinearIssue: 'STA-335',
         linkedLinearIssueWorkspaceId: null,
-        linkedLinearIssueOrganizationUrlKey: 'stably'
+        linkedLinearIssueOrganizationUrlKey: 'gusscloud'
       })
     )
   })

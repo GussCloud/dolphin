@@ -18,7 +18,7 @@
 
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { DaemonClient } from '../../src/main/daemon/client'
 import { PROTOCOL_VERSION } from '../../src/main/daemon/types'

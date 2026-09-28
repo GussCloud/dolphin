@@ -142,7 +142,7 @@ test('published docs do not retain private source provenance', async () => {
     const content = await readFile(file, 'utf8')
     assert.doesNotMatch(
       content,
-      /dolphin-(?:internal|marketing-website)|147cdfd|jinwoo@stably\.ai|demo-generation/i,
+      /dolphin-(?:internal|marketing-website)|147cdfd|jinwoo@gusscloud\.ai|demo-generation/i,
       path.relative(siteRoot, file)
     )
   }

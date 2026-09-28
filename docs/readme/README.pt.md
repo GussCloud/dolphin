@@ -223,8 +223,8 @@ _Ou por um gerenciador de pacotes:_
 # macOS (Homebrew)
 brew install --cask GussCloud/dolphin/dolphin
 
-# Arch Linux (AUR) — ou stably-dolphin-git para compilar a partir do código-fonte
-yay -S stably-dolphin-bin
+# Arch Linux (AUR) — ou gusscloud-dolphin-git para compilar a partir do código-fonte
+yay -S gusscloud-dolphin-bin
 ```
 
 ### Companion móvel — iOS, Android

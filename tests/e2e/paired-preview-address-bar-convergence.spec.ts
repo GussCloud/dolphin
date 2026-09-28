@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Page, TestInfo } from '@stablyai/playwright-test'
+import type { Page, TestInfo } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { openFileExplorer } from './helpers/file-explorer'
 import {

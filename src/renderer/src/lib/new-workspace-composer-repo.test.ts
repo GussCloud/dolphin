@@ -100,13 +100,13 @@ describe('new-workspace-composer-repo', () => {
 
   describe('resolveComposerActiveRepoId', () => {
     const localDolphin = makeRepo('local-dolphin', {
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     })
     const runtimeDolphin = makeRepo('runtime-dolphin', {
       connectionId: 'runtime-ssh-dolphin-1',
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     })
-    const otherProject = makeRepo('noqa', { upstream: { owner: 'stablyai', repo: 'noqa' } })
+    const otherProject = makeRepo('noqa', { upstream: { owner: 'gusscloud', repo: 'noqa' } })
     const repos = [otherProject, localDolphin, runtimeDolphin]
     const eligibleRepos = getComposerEligibleRepos(repos)
 

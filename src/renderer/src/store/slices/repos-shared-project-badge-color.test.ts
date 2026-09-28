@@ -10,7 +10,7 @@ import { clearRuntimeCompatibilityCacheForTests } from '../../runtime/runtime-rp
 
 // Mirrors the real report: one project name ("dolphin") set up on the local Mac and on a
 // remote Dolphin server, where only the local repo row carries the user's chosen color.
-const SHARED_PROJECT_ID = 'github:stablyai/dolphin'
+const SHARED_PROJECT_ID = 'github:gusscloud/dolphin'
 const LOCAL_GREEN = '#22c55e'
 const REMOTE_NEUTRAL = '#737373'
 
@@ -19,7 +19,7 @@ const localRepo: Repo = {
   path: '/local/dolphin',
   displayName: 'dolphin',
   badgeColor: LOCAL_GREEN,
-  upstream: { owner: 'stablyai', repo: 'dolphin' },
+  upstream: { owner: 'gusscloud', repo: 'dolphin' },
   addedAt: 1
 }
 
@@ -28,7 +28,7 @@ const remoteRepo: Repo = {
   path: '/srv/dolphin',
   displayName: 'dolphin',
   badgeColor: REMOTE_NEUTRAL,
-  upstream: { owner: 'stablyai', repo: 'dolphin' },
+  upstream: { owner: 'gusscloud', repo: 'dolphin' },
   addedAt: 1
 }
 

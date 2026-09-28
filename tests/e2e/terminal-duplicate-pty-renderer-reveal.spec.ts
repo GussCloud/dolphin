@@ -1,7 +1,7 @@
 import { mutateStoppedProfileState } from './helpers/persisted-profile-state'
 import { randomUUID } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import type { TerminalLayoutSnapshot } from '../../src/shared/terminal-tab-types'
 import { test, expect } from './helpers/dolphin-app'
 import {

@@ -74,8 +74,8 @@ describe('ghExecFileAsync WSL fallback', () => {
     )
 
     await expect(
-      ghExecFileAsync(['issue', 'list', '--repo', 'stablyhq/noqa', '--json', 'number,title'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\stably\noqa`
+      ghExecFileAsync(['issue', 'list', '--repo', 'gusscloudhq/noqa', '--json', 'number,title'], {
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
       })
     ).resolves.toEqual({ stdout: '[]', stderr: '' })
 
@@ -88,7 +88,7 @@ describe('ghExecFileAsync WSL fallback', () => {
         '--exec',
         'bash',
         '-c',
-        "cd '/home/jinwoo/stably/noqa' && 'gh' 'issue' 'list' '--repo' 'stablyhq/noqa' '--json' 'number,title'"
+        "cd '/home/jinwoo/gusscloud/noqa' && 'gh' 'issue' 'list' '--repo' 'gusscloudhq/noqa' '--json' 'number,title'"
       ],
       // Why a concrete directory (#16463): `undefined` makes CreateProcessW inherit
       // Dolphin's own cwd, a deletable WSL UNC path when it was launched from a
@@ -98,7 +98,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     expect(spawnMock).toHaveBeenNthCalledWith(
       2,
       'gh',
-      ['issue', 'list', '--repo', 'stablyhq/noqa', '--json', 'number,title'],
+      ['issue', 'list', '--repo', 'gusscloudhq/noqa', '--json', 'number,title'],
       expect.objectContaining({ cwd: undefined })
     )
   })
@@ -108,7 +108,7 @@ describe('ghExecFileAsync WSL fallback', () => {
 
     await expect(
       ghExecFileAsync(['issue', 'list'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\stably\noqa`
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
       })
     ).rejects.toThrow('gh: command not found')
 
@@ -123,15 +123,15 @@ describe('ghExecFileAsync WSL fallback', () => {
     )
 
     await expect(
-      ghExecFileAsync(['issue', 'list', '-R', 'stablyhq/noqa'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\stably\noqa`
+      ghExecFileAsync(['issue', 'list', '-R', 'gusscloudhq/noqa'], {
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
       })
     ).resolves.toEqual({ stdout: '[]', stderr: '' })
 
     expect(spawnMock).toHaveBeenNthCalledWith(
       2,
       'gh',
-      ['issue', 'list', '-R', 'stablyhq/noqa'],
+      ['issue', 'list', '-R', 'gusscloudhq/noqa'],
       expect.objectContaining({ cwd: undefined })
     )
   })
@@ -144,15 +144,15 @@ describe('ghExecFileAsync WSL fallback', () => {
     )
 
     await expect(
-      ghExecFileAsync(['issue', 'list', '-Rstablyhq/noqa'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\stably\noqa`
+      ghExecFileAsync(['issue', 'list', '-Rgusscloudhq/noqa'], {
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
       })
     ).resolves.toEqual({ stdout: '[]', stderr: '' })
 
     expect(spawnMock).toHaveBeenNthCalledWith(
       2,
       'gh',
-      ['issue', 'list', '-Rstablyhq/noqa'],
+      ['issue', 'list', '-Rgusscloudhq/noqa'],
       expect.objectContaining({ cwd: undefined })
     )
   })
@@ -166,9 +166,9 @@ describe('ghExecFileAsync WSL fallback', () => {
 
     await expect(
       ghExecFileAsync(
-        ['repo', 'view', 'github.acme-corp.com/stablyhq/noqa', '--json', 'isFork,parent'],
+        ['repo', 'view', 'github.acme-corp.com/gusscloudhq/noqa', '--json', 'isFork,parent'],
         {
-          cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\stably\noqa`,
+          cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`,
           host: 'github.acme-corp.com'
         }
       )
@@ -177,7 +177,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     expect(spawnMock).toHaveBeenNthCalledWith(
       2,
       'gh',
-      ['repo', 'view', 'github.acme-corp.com/stablyhq/noqa', '--json', 'isFork,parent'],
+      ['repo', 'view', 'github.acme-corp.com/gusscloudhq/noqa', '--json', 'isFork,parent'],
       expect.objectContaining({ cwd: undefined })
     )
   })
@@ -186,8 +186,8 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: WSL_GH_MISSING, code: 1 }))
 
     await expect(
-      ghExecFileAsync(['api', 'repos/stablyhq/noqa/branches/{branch}'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\stably\noqa`
+      ghExecFileAsync(['api', 'repos/gusscloudhq/noqa/branches/{branch}'], {
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
       })
     ).rejects.toThrow('gh: command not found')
 
@@ -237,7 +237,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: TRANSIENT_502, code: 1 }))
 
     await expect(
-      ghExecFileAsync(['api', '-X', 'POST', 'repos/stablyai/dolphin/issues'])
+      ghExecFileAsync(['api', '-X', 'POST', 'repos/gusscloud/dolphin/issues'])
     ).rejects.toThrow('HTTP 502 Bad Gateway')
 
     expect(spawnMock).toHaveBeenCalledTimes(1)
@@ -262,7 +262,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: TRANSIENT_502, code: 1 }))
 
     await expect(
-      ghExecFileAsync(['issue', 'edit', '5', '--repo', 'stablyai/dolphin'])
+      ghExecFileAsync(['issue', 'edit', '5', '--repo', 'gusscloud/dolphin'])
     ).rejects.toThrow('HTTP 502 Bad Gateway')
 
     expect(spawnMock).toHaveBeenCalledTimes(1)
@@ -351,7 +351,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     )
 
     const options = {
-      cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\stably\noqa`
+      cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
     }
     await expect(ghExecFileAsync(['api', 'repos/acme/widgets/pulls'], options)).rejects.toThrow(
       'rate limit'
@@ -368,7 +368,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: TRANSIENT_502, code: 1 }))
 
     await expect(
-      glabExecFileAsync(['api', '-X', 'POST', 'projects/stablyai%2Fdolphin/issues/5/notes'], {
+      glabExecFileAsync(['api', '-X', 'POST', 'projects/gusscloud%2Fdolphin/issues/5/notes'], {
         cwd: String.raw`C:\repo`
       })
     ).rejects.toThrow('HTTP 502 Bad Gateway')
@@ -380,7 +380,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     spawnMock.mockImplementation(fakeSpawnReturning({ stderr: TRANSIENT_502, code: 1 }))
 
     await expect(
-      glabExecFileAsync(['issue', 'update', '5', '-R', 'stablyai/dolphin'], {
+      glabExecFileAsync(['issue', 'update', '5', '-R', 'gusscloud/dolphin'], {
         cwd: String.raw`C:\repo`
       })
     ).rejects.toThrow('HTTP 502 Bad Gateway')
@@ -502,7 +502,7 @@ describe('ghExecFileAsync WSL fallback', () => {
       .mockImplementationOnce(fakeSpawnReturning({ stdout: '[]' }))
 
     await expect(
-      glabExecFileAsync(['api', 'projects/stablyai%2Fdolphin/issues'], {
+      glabExecFileAsync(['api', 'projects/gusscloud%2Fdolphin/issues'], {
         cwd: String.raw`C:\repo`
       })
     ).resolves.toEqual({ stdout: '[]', stderr: '' })

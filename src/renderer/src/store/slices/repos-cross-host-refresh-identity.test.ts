@@ -11,14 +11,14 @@ import { clearRuntimeCompatibilityCacheForTests } from '../../runtime/runtime-rp
 // One project cloned on the local Mac and on a remote Dolphin server under distinct repo ids —
 // the shape the compat merge exists to serve, and the only shape whose sourceRepoIds are
 // assembled from two hosts.
-const SHARED_PROJECT_ID = 'github:stablyai/dolphin'
+const SHARED_PROJECT_ID = 'github:gusscloud/dolphin'
 
 const localRepo: Repo = {
   id: 'local-repo',
   path: '/local/dolphin',
   displayName: 'dolphin',
   badgeColor: '#22c55e',
-  upstream: { owner: 'stablyai', repo: 'dolphin' },
+  upstream: { owner: 'gusscloud', repo: 'dolphin' },
   addedAt: 1_700_000_000_000
 }
 
@@ -27,7 +27,7 @@ const remoteRepo: Repo = {
   path: '/srv/dolphin',
   displayName: 'dolphin',
   badgeColor: '#737373',
-  upstream: { owner: 'stablyai', repo: 'dolphin' },
+  upstream: { owner: 'gusscloud', repo: 'dolphin' },
   addedAt: 1_700_000_001_000
 }
 

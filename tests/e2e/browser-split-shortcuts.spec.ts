@@ -1,5 +1,5 @@
 import { expect, test } from './helpers/dolphin-app'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { focusActiveTerminalInput } from './helpers/terminal'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {

@@ -246,14 +246,14 @@ describe('Store', () => {
           id: 'local-repo',
           path: '/Users/alice/dolphin',
           displayName: 'Dolphin',
-          upstream: { owner: 'StablyAI', repo: 'Dolphin' }
+          upstream: { owner: 'GussCloud', repo: 'Dolphin' }
         }),
         makeRepo({
           id: 'remote-repo',
           path: '/home/alice/dolphin',
           displayName: 'dolphin',
           connectionId: 'gpu-vm',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         })
       ]
     })
@@ -262,20 +262,20 @@ describe('Store', () => {
 
     expect(store.getProjects()).toEqual([
       expect.objectContaining({
-        id: 'github:stablyai/dolphin',
+        id: 'github:gusscloud/dolphin',
         sourceRepoIds: ['local-repo', 'remote-repo']
       })
     ])
     expect(store.getProjectHostSetups()).toEqual([
       expect.objectContaining({
         id: 'local-repo',
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'local',
         path: '/Users/alice/dolphin'
       }),
       expect.objectContaining({
         id: 'remote-repo',
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'ssh:gpu-vm',
         path: '/home/alice/dolphin'
       })

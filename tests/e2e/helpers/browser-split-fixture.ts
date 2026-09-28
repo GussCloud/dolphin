@@ -3,8 +3,8 @@
  * browsers side by side, plus helpers that press real chords inside a registered guest.
  */
 
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 export const shortcutModifier = process.platform === 'darwin' ? 'Meta' : 'Control'
 export const guestModifier: 'meta' | 'control' = process.platform === 'darwin' ? 'meta' : 'control'

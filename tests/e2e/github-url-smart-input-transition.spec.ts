@@ -1,14 +1,14 @@
 import { openSidebarWorkspaceComposer } from './helpers/sidebar-project-dialog'
-import type { ElectronApplication, Locator, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Locator, Page } from '@playwright/test'
 import type { GitHubWorkItem } from '../../src/shared/github/work-item-types'
 import type { GitLabWorkItem } from '../../src/shared/gitlab-types'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 
-const TARGET_URL = 'https://github.com/stablyai/dolphin/issues/4242'
+const TARGET_URL = 'https://github.com/gusscloud/dolphin/issues/4242'
 const WRONG_TITLE = 'Wrong cached issue'
 const TARGET_TITLE = 'Exact pasted issue'
-const GITLAB_TARGET_URL = 'https://gitlab.example.test/stablyai/dolphin/-/merge_requests/4242'
+const GITLAB_TARGET_URL = 'https://gitlab.example.test/gusscloud/dolphin/-/merge_requests/4242'
 const GITLAB_WRONG_TITLE = 'Wrong cached merge request'
 const GITLAB_TARGET_TITLE = 'Exact pasted merge request'
 const MIN_PASTED_FRAMES = 2
@@ -20,7 +20,7 @@ const WRONG_ITEM: GitHubWorkItem = {
   number: 17,
   title: WRONG_TITLE,
   state: 'open',
-  url: 'https://github.com/stablyai/dolphin/issues/17',
+  url: 'https://github.com/gusscloud/dolphin/issues/17',
   labels: [],
   updatedAt: '2026-08-01T00:00:00.000Z',
   author: 'e2e',
@@ -42,7 +42,7 @@ const GITLAB_WRONG_ITEM: GitLabWorkItem = {
   number: 17,
   title: GITLAB_WRONG_TITLE,
   state: 'opened',
-  url: 'https://gitlab.example.test/stablyai/dolphin/-/merge_requests/17',
+  url: 'https://gitlab.example.test/gusscloud/dolphin/-/merge_requests/17',
   labels: [],
   updatedAt: '2026-08-01T00:00:00.000Z',
   author: 'e2e',
@@ -177,7 +177,7 @@ async function installHeldGitHubLookup(
     }
     fixture.__githubUrlLookupStarted = false
     ipcMain.removeHandler('gh:repoSlug')
-    ipcMain.handle('gh:repoSlug', () => ({ owner: 'stablyai', repo: 'dolphin' }))
+    ipcMain.handle('gh:repoSlug', () => ({ owner: 'gusscloud', repo: 'dolphin' }))
     ipcMain.removeHandler('gh:workItemByOwnerRepo')
     ipcMain.handle('gh:workItemByOwnerRepo', () => {
       fixture.__githubUrlLookupStarted = true

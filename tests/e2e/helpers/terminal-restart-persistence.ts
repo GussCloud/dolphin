@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { test, expect } from './dolphin-app'
 import { TEST_REPO_PATH_FILE } from '../global-setup'
 import { attachRepoAndOpenTerminal } from './dolphin-restart'

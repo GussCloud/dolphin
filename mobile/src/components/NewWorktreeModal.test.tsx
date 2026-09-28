@@ -55,7 +55,7 @@ const repos = [
     displayName: 'dolphin',
     path: '/src/dolphin',
     kind: 'git',
-    upstream: { owner: 'stablyai', repo: 'dolphin' }
+    upstream: { owner: 'gusscloud', repo: 'dolphin' }
   }
 ]
 
@@ -124,7 +124,7 @@ describe('NewWorktreeModal project targets', () => {
 
     expect(sendRequest).toHaveBeenCalledWith('repo.list')
     expect(pickerItems(renderer, 'Project')).toEqual([
-      expect.objectContaining({ label: 'dolphin', detail: 'stablyai/dolphin' })
+      expect.objectContaining({ label: 'dolphin', detail: 'gusscloud/dolphin' })
     ])
     expect(pickerItems(renderer, 'Run on')).toEqual([
       expect.objectContaining({ label: LOCAL_HOST_LABEL, detail: '/src/dolphin' })
@@ -140,7 +140,7 @@ describe('NewWorktreeModal project targets', () => {
         path: '/home/dev/dolphin',
         connectionId: 'build-server',
         kind: 'git',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       }
     ]
     const client = {
@@ -169,7 +169,7 @@ describe('NewWorktreeModal project targets', () => {
     })
 
     expect(pickerItems(renderer, 'Project')).toEqual([
-      expect.objectContaining({ label: 'dolphin', detail: 'stablyai/dolphin' })
+      expect.objectContaining({ label: 'dolphin', detail: 'gusscloud/dolphin' })
     ])
     expect(pickerItems(renderer, 'Run on')).toEqual([
       expect.objectContaining({ label: LOCAL_HOST_LABEL, detail: '/src/dolphin' }),
@@ -187,7 +187,7 @@ describe('NewWorktreeModal project targets', () => {
       path: '/home/dev/dolphin',
       connectionId: 'build-server',
       kind: 'git',
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     }
     setCachedRepos('host-ssh', [remoteRepo])
     const sendRequest = vi.fn().mockImplementation((method: string) => {

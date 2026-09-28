@@ -1,7 +1,7 @@
 // Option composition must survive kitty negotiation (#14024, #20171, #20850).
 
 import { test, expect } from './helpers/dolphin-app'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import {
   execInTerminal,
   waitForTerminalOutput,

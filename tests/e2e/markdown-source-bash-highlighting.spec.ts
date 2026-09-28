@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@stablyai/playwright-test'
+import type { Locator, Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {

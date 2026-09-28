@@ -45,7 +45,7 @@ describe('restorePublishedDesktopReleasesToDraft', () => {
 
     await expect(
       restorePublishedDesktopReleasesToDraft({
-        repo: 'stablyai/dolphin',
+        repo: 'gusscloud/dolphin',
         tag: 'v1.4.206',
         token: 'token',
         fetchImpl,
@@ -66,7 +66,7 @@ describe('restorePublishedDesktopReleasesToDraft', () => {
     const log = vi.fn()
     await expect(
       restorePublishedDesktopReleasesToDraft({
-        repo: 'stablyai/dolphin',
+        repo: 'gusscloud/dolphin',
         tag: 'v1.4.206',
         token: 'token',
         fetchImpl,
@@ -76,7 +76,7 @@ describe('restorePublishedDesktopReleasesToDraft', () => {
 
     expect(fetchImpl).toHaveBeenNthCalledWith(
       2,
-      'https://api.github.com/repos/stablyai/dolphin/releases/9',
+      'https://api.github.com/repos/gusscloud/dolphin/releases/9',
       expect.objectContaining({
         method: 'PATCH',
         body: JSON.stringify({ draft: true, make_latest: 'false' })
@@ -90,7 +90,7 @@ describe('restorePublishedDesktopReleasesToDraft', () => {
 
     await expect(
       restorePublishedDesktopReleasesToDraft({
-        repo: 'stablyai/dolphin',
+        repo: 'gusscloud/dolphin',
         tag: 'v1.4.206',
         token: 'token',
         fetchImpl

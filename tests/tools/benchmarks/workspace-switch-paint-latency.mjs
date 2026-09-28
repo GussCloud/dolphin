@@ -20,7 +20,7 @@
 
 import { writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { chromium } from '@stablyai/playwright-test'
+import { chromium } from '@playwright/test'
 
 function parseArgs(argv) {
   const args = {

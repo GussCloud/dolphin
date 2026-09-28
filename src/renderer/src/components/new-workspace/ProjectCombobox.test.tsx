@@ -34,19 +34,19 @@ let root: Root
 const projects: NewWorkspaceProjectOption[] = [
   {
     kind: 'project',
-    id: 'github:stablyai/dolphin',
-    projectId: 'github:stablyai/dolphin',
+    id: 'github:gusscloud/dolphin',
+    projectId: 'github:gusscloud/dolphin',
     displayName: 'dolphin',
     badgeColor: '#111111',
-    detail: 'stablyai/dolphin'
+    detail: 'gusscloud/dolphin'
   },
   {
     kind: 'project',
-    id: 'github:stablyai/noqa',
-    projectId: 'github:stablyai/noqa',
+    id: 'github:gusscloud/noqa',
+    projectId: 'github:gusscloud/noqa',
     displayName: 'noqa',
     badgeColor: '#222222',
-    detail: 'stablyai/noqa'
+    detail: 'gusscloud/noqa'
   },
   {
     kind: 'project-group',
@@ -114,7 +114,7 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:stablyai/dolphin"
+          value="github:gusscloud/dolphin"
           onValueChange={vi.fn()}
         />
       )
@@ -147,17 +147,17 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:stablyai/dolphin"
+          value="github:gusscloud/dolphin"
           onValueChange={onValueChange}
         />
       )
     })
     openList()
     act(() => {
-      rowFor('stablyai/noqa').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+      rowFor('gusscloud/noqa').dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
 
-    expect(onValueChange).toHaveBeenCalledWith('github:stablyai/noqa')
+    expect(onValueChange).toHaveBeenCalledWith('github:gusscloud/noqa')
   })
 
   it('renders and selects project-group options', () => {
@@ -289,8 +289,8 @@ describe('ProjectCombobox', () => {
     expect(container.querySelectorAll('input')).toHaveLength(1)
 
     type('noq')
-    expect(container.textContent).toContain('stablyai/noqa')
-    expect(container.textContent).not.toContain('stablyai/dolphin')
+    expect(container.textContent).toContain('gusscloud/noqa')
+    expect(container.textContent).not.toContain('gusscloud/dolphin')
   })
 
   it('commits the armed row on Enter', () => {
@@ -313,8 +313,8 @@ describe('ProjectCombobox', () => {
       field().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     })
 
-    expect(onValueChange).toHaveBeenCalledWith('github:stablyai/noqa')
-    expect(onValueSelected).toHaveBeenCalledWith('github:stablyai/noqa')
+    expect(onValueChange).toHaveBeenCalledWith('github:gusscloud/noqa')
+    expect(onValueSelected).toHaveBeenCalledWith('github:gusscloud/noqa')
   })
 
   it('arms "Add project" when a query matches nothing, so Enter is never a wrong guess', () => {
@@ -346,7 +346,7 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:stablyai/dolphin"
+          value="github:gusscloud/dolphin"
           onValueChange={vi.fn()}
         />
       )
@@ -377,7 +377,7 @@ describe('ProjectCombobox', () => {
       root.render(
         <ProjectCombobox
           options={projects}
-          value="github:stablyai/dolphin"
+          value="github:gusscloud/dolphin"
           onValueChange={vi.fn()}
         />
       )
@@ -425,7 +425,7 @@ describe('ProjectCombobox', () => {
       projectId: `project-${index}`,
       displayName: `svc-${index}`,
       badgeColor: '#111111',
-      detail: `stablyai/svc-${index}`
+      detail: `gusscloud/svc-${index}`
     })),
     {
       kind: 'project-group',

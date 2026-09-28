@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stably.dolphin.mobile",
+      "bundleIdentifier": "com.gusscloud.dolphin.mobile",
       "buildNumber": "1",
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "Dolphin connects to the desktop app on your LAN.",
@@ -74,7 +74,7 @@
       "usesCleartextTraffic": true,
       "allowBackup": false,
       "permissions": ["RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS"],
-      "package": "com.stably.dolphin.mobile",
+      "package": "com.gusscloud.dolphin.mobile",
       "versionCode": 18,
       "googleServicesFile": "./google-services.json"
     },

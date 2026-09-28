@@ -10,7 +10,7 @@ const DEFAULT_MARKETING_REPO = path.join(
   homedir(),
   'source',
   'repos',
-  'Stably',
+  'GussCloud',
   'dolphin-marketing-website'
 )
 const MARKETING_REPO = process.env.DOLPHIN_MARKETING_REPO || DEFAULT_MARKETING_REPO

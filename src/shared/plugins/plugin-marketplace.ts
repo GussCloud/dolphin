@@ -6,9 +6,9 @@ export const PLUGIN_MARKETPLACE_FILENAME = 'dolphin-marketplace.json'
 export const PLUGIN_MARKETPLACE_ENTRY_LIMIT = 2_048
 export const PLUGIN_MARKETPLACE_CATEGORY_LIMIT = 16
 
-export const OFFICIAL_PLUGIN_PUBLISHER = 'stablyai'
+export const OFFICIAL_PLUGIN_PUBLISHER = 'gusscloud'
 export const OFFICIAL_PLUGIN_ID_PREFIX = 'dolphin-'
-export const OFFICIAL_MARKETPLACE_OWNER = 'stablyai'
+export const OFFICIAL_MARKETPLACE_OWNER = 'gusscloud'
 export const OFFICIAL_MARKETPLACE_REPOSITORY = 'dolphin-plugins'
 
 // Why: theme/icon/skill contributions were deferred, so `contributes` now
@@ -116,7 +116,7 @@ export type PluginMarketplaceTrustMetadata = z.infer<typeof pluginMarketplaceTru
 
 export const OFFICIAL_MARKETPLACE_GIT_SOURCE: PluginMarketplaceGitSource = {
   kind: 'git',
-  url: 'https://github.com/stablyai/dolphin-plugins.git',
+  url: 'https://github.com/gusscloud/dolphin-plugins.git',
   ref: 'main'
 }
 

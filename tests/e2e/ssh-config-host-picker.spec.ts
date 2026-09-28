@@ -3,7 +3,7 @@
  * Plan cases: P1, P2, P3, P4, P8 (+ N3 with P3). Bulk/import: ssh-config-host-import.spec.ts.
  */
 
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 import {

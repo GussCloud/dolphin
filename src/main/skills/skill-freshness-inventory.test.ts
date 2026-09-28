@@ -89,7 +89,7 @@ async function fixture() {
             'dolphin-cli': {
               skillFolderHash: 'tracked-old-hash',
               skillPath: 'skills/dolphin-cli/SKILL.md',
-              source: 'stablyai/dolphin'
+              source: 'gusscloud/dolphin'
             }
           }
         })}\n`
@@ -146,7 +146,7 @@ async function writeSkillLockHash(homeDir: string, skillFolderHash: string): Pro
         'dolphin-cli': {
           skillFolderHash,
           skillPath: 'skills/dolphin-cli/SKILL.md',
-          source: 'stablyai/dolphin'
+          source: 'gusscloud/dolphin'
         }
       }
     })}\n`

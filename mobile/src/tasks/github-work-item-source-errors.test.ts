@@ -39,7 +39,7 @@ describe('extractGitHubIssueSourceError', () => {
       extractGitHubIssueSourceError(
         { id: 'repo-1', path: '/work/dolphin' },
         {
-          sources: { issues: { owner: 'stablyai', repo: 'dolphin' } }
+          sources: { issues: { owner: 'gusscloud', repo: 'dolphin' } }
         }
       )
     ).toBeNull()
@@ -54,15 +54,15 @@ describe('extractGitHubIssueSourceFallback', () => {
         {
           issueSourceFellBack: true,
           sources: {
-            issues: { owner: 'stablyai', repo: 'dolphin-fork' },
-            prs: { owner: 'stablyai', repo: 'dolphin' }
+            issues: { owner: 'gusscloud', repo: 'dolphin-fork' },
+            prs: { owner: 'gusscloud', repo: 'dolphin' }
           }
         }
       )
     ).toEqual({
       repoId: 'repo-1',
       repoPath: '/work/dolphin',
-      repoLabel: 'stablyai/dolphin'
+      repoLabel: 'gusscloud/dolphin'
     })
   })
 
@@ -87,7 +87,7 @@ describe('extractGitHubIssueSourceFallback', () => {
       extractGitHubIssueSourceFallback(
         { id: 'repo-1', path: '/work/dolphin', displayName: 'dolphin' },
         {
-          sources: { issues: { owner: 'stablyai', repo: 'dolphin' } }
+          sources: { issues: { owner: 'gusscloud', repo: 'dolphin' } }
         }
       )
     ).toBeNull()

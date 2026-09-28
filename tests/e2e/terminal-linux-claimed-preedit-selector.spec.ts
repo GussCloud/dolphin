@@ -1,4 +1,4 @@
-import type { CDPSession } from '@stablyai/playwright-test'
+import type { CDPSession } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import {
   createTerminalImeByteReader,

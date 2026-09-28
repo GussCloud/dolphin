@@ -304,7 +304,7 @@ describe('runner execFile timeout handling', () => {
     mockWedgedCliSpawn(child)
     const processKill = mockProcessGroupSignals()
     try {
-      const promise = ghExecFileAsync(['api', 'repos/stablyai/dolphin/issues/5388'], {
+      const promise = ghExecFileAsync(['api', 'repos/gusscloud/dolphin/issues/5388'], {
         cwd: '/repo'
       })
       const rejection = expect(promise).rejects.toThrow('gh timed out.')
@@ -324,7 +324,7 @@ describe('runner execFile timeout handling', () => {
     mockWedgedCliSpawn(child)
     const processKill = mockProcessGroupSignals()
     try {
-      const promise = glabExecFileAsync(['api', 'projects/stablyai%2Fdolphin/issues'], {
+      const promise = glabExecFileAsync(['api', 'projects/gusscloud%2Fdolphin/issues'], {
         cwd: '/repo'
       })
       const rejection = expect(promise).rejects.toThrow('glab timed out.')
@@ -371,7 +371,7 @@ describe('runner execFile timeout handling', () => {
     const processKill = mockProcessGroupSignals()
     try {
       const controller = new AbortController()
-      const promise = ghExecFileAsync(['api', 'repos/stablyai/dolphin/issues/5388'], {
+      const promise = ghExecFileAsync(['api', 'repos/gusscloud/dolphin/issues/5388'], {
         cwd: '/repo',
         signal: controller.signal
       })
@@ -393,7 +393,7 @@ describe('runner execFile timeout handling', () => {
     mockWedgedCliSpawn(child)
     const processKill = mockProcessGroupSignals()
     try {
-      const promise = ghExecFileAsync(['api', 'repos/stablyai/dolphin/issues/5388'], {
+      const promise = ghExecFileAsync(['api', 'repos/gusscloud/dolphin/issues/5388'], {
         cwd: '/repo',
         timeout: 1234
       })

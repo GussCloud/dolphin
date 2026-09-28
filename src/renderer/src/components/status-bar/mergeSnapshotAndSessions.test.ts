@@ -544,14 +544,14 @@ describe('mergeSnapshotAndSessions', () => {
   it('uses repoDisplayNameById to humanize new project groups when available', () => {
     const ds: DaemonSession[] = [
       {
-        id: 'stably-ai/dolphin::/remote/Wt@@1',
+        id: 'guss-cloud/dolphin::/remote/Wt@@1',
         cwd: '',
         title: '',
         agentOwnership: 'absent' as const
       }
     ]
     const ctx = baseCtx({
-      repoDisplayNameById: new Map([['stably-ai/dolphin', 'DOLPHIN']])
+      repoDisplayNameById: new Map([['guss-cloud/dolphin', 'DOLPHIN']])
     })
     const out = mergeSnapshotAndSessions(null, ds, ctx)
     expect(out[0].repoName).toBe('DOLPHIN')

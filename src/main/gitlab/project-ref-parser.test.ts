@@ -7,9 +7,9 @@ describe('gitlab project ref parsing', () => {
       host: 'gitlab.com',
       path: 'acme/widgets'
     })
-    expect(parseGitLabProjectRef('git@gitlab.com:stablyai/dolphin.git')).toEqual({
+    expect(parseGitLabProjectRef('git@gitlab.com:gusscloud/dolphin.git')).toEqual({
       host: 'gitlab.com',
-      path: 'stablyai/dolphin'
+      path: 'gusscloud/dolphin'
     })
   })
 
@@ -25,7 +25,7 @@ describe('gitlab project ref parsing', () => {
   })
 
   it('returns null for non-GitLab hosts when host not in knownHosts', () => {
-    expect(parseGitLabProjectRef('git@github.com:stablyai/dolphin.git')).toBeNull()
+    expect(parseGitLabProjectRef('git@github.com:gusscloud/dolphin.git')).toBeNull()
     expect(parseGitLabProjectRef('git@example.com:foo/bar.git')).toBeNull()
   })
 

@@ -392,7 +392,7 @@ describe('createUISlice page navigation history', () => {
       hostId: 'ssh:devbox',
       projectHostSetupId: 'setup-1',
       repoId: 'repo-remote',
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
     }
 
     store.getState().openTaskPage({

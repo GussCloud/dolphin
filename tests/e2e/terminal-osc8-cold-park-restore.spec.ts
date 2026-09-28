@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { alternateScreenFixtureScript } from './alternate-screen-fixture-script'
 import { expect, test } from './helpers/dolphin-app'
 import { stageNodeScriptForTerminal } from './helpers/run-node-script-in-terminal'

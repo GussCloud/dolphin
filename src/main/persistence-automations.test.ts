@@ -200,7 +200,7 @@ describe('Store', () => {
     // The renderer forwards a Partial verbatim, so an untouched field arrives as explicit undefined
     // and must not take the `null` clear branch reserved for a real user clear.
     const store = await createStore()
-    store.addRepo(makeRepo({ upstream: { owner: 'stablyai', repo: 'dolphin' } }))
+    store.addRepo(makeRepo({ upstream: { owner: 'gusscloud', repo: 'dolphin' } }))
     const automation = store.createAutomation({
       name: 'Nightly',
       prompt: 'Run checks',
@@ -242,7 +242,7 @@ describe('Store', () => {
     const store = await createStore()
     store.addRepo(
       makeRepo({
-        upstream: { owner: 'stablyai', repo: 'dolphin' },
+        upstream: { owner: 'gusscloud', repo: 'dolphin' },
         connectionId: 'builder'
       })
     )
@@ -260,7 +260,7 @@ describe('Store', () => {
 
     expect(automation.runContext).toMatchObject({
       kind: 'workspace-run',
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: toSshExecutionHostId('builder'),
       projectHostSetupId: 'r1',
       repoId: 'r1',
@@ -269,17 +269,17 @@ describe('Store', () => {
     expect(automation.sourceContext).toMatchObject({
       kind: 'task-source',
       provider: 'github',
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: toSshExecutionHostId('builder'),
       projectHostSetupId: 'r1',
       repoId: 'r1',
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
     })
   })
 
   it('stores its own contexts over a client-perspective create runContext', async () => {
     const store = await createStore()
-    store.addRepo(makeRepo({ upstream: { owner: 'stablyai', repo: 'dolphin' } }))
+    store.addRepo(makeRepo({ upstream: { owner: 'gusscloud', repo: 'dolphin' } }))
 
     const automation = store.createAutomation({
       name: 'Nightly',
@@ -294,7 +294,7 @@ describe('Store', () => {
       // which this store cannot interpret and must not persist.
       runContext: {
         kind: 'workspace-run',
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: toRuntimeExecutionHostId('client-env'),
         projectHostSetupId: 'client-setup',
         repoId: 'client-repo',
@@ -308,7 +308,7 @@ describe('Store', () => {
 
   it('re-derives a stored client-perspective context on an explicit move, not on a toggle', async () => {
     const store = await createStore()
-    store.addRepo(makeRepo({ upstream: { owner: 'stablyai', repo: 'dolphin' } }))
+    store.addRepo(makeRepo({ upstream: { owner: 'gusscloud', repo: 'dolphin' } }))
     const automation = store.createAutomation({
       name: 'Nightly',
       prompt: 'Run checks',
@@ -323,7 +323,7 @@ describe('Store', () => {
     // A record a pre-fix host stored from a paired client's create input.
     persisted.automations[0].runContext = {
       kind: 'workspace-run',
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: toRuntimeExecutionHostId('client-env'),
       projectHostSetupId: 'client-setup',
       repoId: 'client-repo',
@@ -348,7 +348,7 @@ describe('Store', () => {
     store.addRepo(
       makeRepo({
         executionHostId: toRuntimeExecutionHostId('gpu-server'),
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       })
     )
 
@@ -371,7 +371,7 @@ describe('Store', () => {
 
   it('snapshots automation contexts onto runs', async () => {
     const store = await createStore()
-    store.addRepo(makeRepo({ upstream: { owner: 'stablyai', repo: 'dolphin' } }))
+    store.addRepo(makeRepo({ upstream: { owner: 'gusscloud', repo: 'dolphin' } }))
     const automation = store.createAutomation({
       name: 'Nightly',
       prompt: 'Run checks',
@@ -399,7 +399,7 @@ describe('Store', () => {
     const store = await createStore()
     store.addRepo(
       makeRepo({
-        upstream: { owner: 'stablyai', repo: 'dolphin' },
+        upstream: { owner: 'gusscloud', repo: 'dolphin' },
         connectionId: 'builder'
       })
     )
@@ -434,7 +434,7 @@ describe('Store', () => {
 
     expect(migratedAutomation?.runContext).toMatchObject({
       kind: 'workspace-run',
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: toSshExecutionHostId('builder'),
       projectHostSetupId: 'r1',
       repoId: 'r1',
@@ -443,11 +443,11 @@ describe('Store', () => {
     expect(migratedAutomation?.sourceContext).toMatchObject({
       kind: 'task-source',
       provider: 'github',
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: toSshExecutionHostId('builder'),
       projectHostSetupId: 'r1',
       repoId: 'r1',
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
     })
     expect(migratedRun?.runContext).toEqual(migratedAutomation?.runContext)
     expect(migratedRun?.sourceContext).toEqual(migratedAutomation?.sourceContext)
@@ -457,7 +457,7 @@ describe('Store', () => {
     const seed = await createStore()
     seed.addRepo(
       makeRepo({
-        upstream: { owner: 'stablyai', repo: 'dolphin' },
+        upstream: { owner: 'gusscloud', repo: 'dolphin' },
         connectionId: 'builder'
       })
     )
@@ -519,7 +519,7 @@ describe('Store', () => {
     const store = await createStore()
     store.addRepo(
       makeRepo({
-        upstream: { owner: 'stablyai', repo: 'dolphin' },
+        upstream: { owner: 'gusscloud', repo: 'dolphin' },
         connectionId: 'builder'
       })
     )

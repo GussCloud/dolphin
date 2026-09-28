@@ -134,7 +134,7 @@ describe('resolveRelayPushTarget', () => {
       branchRemote: forkUrl,
       remotes: ['origin', 'pr-contributor-dolphin'],
       remoteUrls: {
-        origin: 'https://github.com/stablyai/dolphin.git',
+        origin: 'https://github.com/gusscloud/dolphin.git',
         'pr-contributor-dolphin': forkUrl
       }
     })
@@ -152,7 +152,7 @@ describe('resolveRelayPushTarget', () => {
       branchRemote: forkUrl,
       remotes: ['origin'],
       remoteUrls: {
-        origin: 'git@github.com:stablyai/dolphin.git'
+        origin: 'git@github.com:gusscloud/dolphin.git'
       }
     })
 

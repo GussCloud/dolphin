@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { DEFAULT_LOCAL_DOLPHIN_PROFILE_ID } from '../../src/shared/dolphin-profiles'
 import { runProcess } from '../../src/shared/child-process/run-process'
 import { openProfileStateDatabaseReadOnly } from '../../src/main/persistence/profile-state/profile-state-database'

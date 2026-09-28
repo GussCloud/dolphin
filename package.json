@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "description": "Next-gen IDE for parallel agentic development",
   "homepage": "https://github.com/GussCloud/dolphin",
-  "author": "stablyai",
+  "author": "gusscloud",
   "bin": {
     "dolphin": "./out/cli/index.js",
     "dolphin-dev": "./config/scripts/dolphin-dev.mjs"
@@ -210,7 +210,6 @@
     "@playwright/test": "^1.63.0",
     "@sanity/diff-match-patch": "^3.2.1",
     "@shadcn/lint": "^0.1.0",
-    "@stablyai/playwright-test": "^2.1.16",
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/react-virtual": "^3.14.13",
     "@testing-library/jest-dom": "^6.9.1",

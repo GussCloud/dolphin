@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { getActiveTabId, getActiveWorktreeId, waitForSessionReady } from './helpers/store'
 import {

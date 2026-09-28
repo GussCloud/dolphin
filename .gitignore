@@ -155,13 +155,9 @@ docs/**
 !docs/releases/
 !docs/releases/**
 
-# Stably CLI (only docs/ are tracked)
-.stably/*
-!.stably/docs/
 .playwright-cli
 .validate-ui-screenshots/
 validation-screenshots/
-.stably-browser
 
 # Local scratch notes and PR evidence screenshots (not part of the product).
 /notes/

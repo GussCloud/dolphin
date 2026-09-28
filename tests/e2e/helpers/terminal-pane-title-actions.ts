@@ -3,7 +3,7 @@
  * menu and committing a Set Title value through it.
  */
 
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect } from './dolphin-app'
 
 export async function setPaneTitleFromTerminalMenu(page: Page, title: string): Promise<void> {

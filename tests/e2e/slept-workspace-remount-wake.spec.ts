@@ -4,7 +4,7 @@
  * a fresh shell. Production parking timings are deliberate: a shrunk park delay
  * unmounts the slept panes and hides the behavior.
  */
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { getAllWorktreeIds, waitForSessionReady } from './helpers/store'
 import {

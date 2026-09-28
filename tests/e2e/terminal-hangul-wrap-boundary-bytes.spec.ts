@@ -18,7 +18,7 @@
  * only have been manufactured by the renderer's input path — which is the half of this that is
  * Dolphin's to guarantee, and the half that had no coverage.
  */
-import type { CDPSession, Page } from '@stablyai/playwright-test'
+import type { CDPSession, Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {

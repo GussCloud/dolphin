@@ -1,4 +1,4 @@
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import type { RuntimeDesktopPairingOffer } from './paired-electron-client'
 
 type ServeReady = {

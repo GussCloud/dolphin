@@ -23,7 +23,7 @@ describe('task source context', () => {
       normalizeTaskSourceContext({
         provider: 'github',
         projectId: ' project-1 ',
-        providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+        providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
       })
     ).toEqual({
       kind: 'task-source',
@@ -32,7 +32,7 @@ describe('task source context', () => {
       hostId: 'local',
       projectHostSetupId: null,
       repoId: null,
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' },
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' },
       accountLabel: null
     })
   })
@@ -83,14 +83,14 @@ describe('task source context', () => {
       projectId: 'project-1',
       hostId: 'local',
       repoId: 'repo-1',
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
     })
     const ssh = getTaskSourceCacheScope({
       provider: 'github',
       projectId: 'project-1',
       hostId: toSshExecutionHostId('builder'),
       repoId: 'repo-1',
-      providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
     })
     const differentRepo = getTaskSourceCacheScope({
       provider: 'github',
@@ -106,7 +106,7 @@ describe('task source context', () => {
       repoId: 'repo-1',
       providerIdentity: {
         provider: 'github',
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin',
         host: 'github.acme.test'
       }
@@ -128,9 +128,9 @@ describe('task source context', () => {
       getTaskSourceCacheScope({
         ...base,
         provider: 'gitlab',
-        providerIdentity: { provider: 'gitlab', namespace: 'stably', project: 'dolphin' }
+        providerIdentity: { provider: 'gitlab', namespace: 'gusscloud', project: 'dolphin' }
       })
-    ).toContain(encodeURIComponent('stably/dolphin'))
+    ).toContain(encodeURIComponent('gusscloud/dolphin'))
     expect(
       getTaskSourceCacheScope({
         ...base,
@@ -156,7 +156,7 @@ describe('task source context', () => {
       normalizeTaskSourceContext({
         provider: 'gitlab',
         projectId: 'project-1',
-        providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+        providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
       })?.providerIdentity
     ).toBeNull()
   })

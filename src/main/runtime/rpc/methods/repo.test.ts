@@ -510,7 +510,7 @@ describe('repo RPC methods', () => {
       updateRepo: vi.fn().mockResolvedValue({
         id: 'repo-1',
         path: '/srv/repo',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       })
     } as unknown as DolphinRuntimeService
     const dispatcher = new RpcDispatcher({ runtime, methods: REPO_METHODS })
@@ -518,16 +518,16 @@ describe('repo RPC methods', () => {
     const response = await dispatcher.dispatch(
       makeRequest('repo.update', {
         repo: 'repo-1',
-        updates: { upstream: { owner: 'stablyai', repo: 'dolphin' } }
+        updates: { upstream: { owner: 'gusscloud', repo: 'dolphin' } }
       })
     )
 
     expect(runtime.updateRepo).toHaveBeenCalledWith('repo-1', {
-      upstream: { owner: 'stablyai', repo: 'dolphin' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     })
     expect(response).toMatchObject({
       ok: true,
-      result: { repo: { id: 'repo-1', upstream: { owner: 'stablyai', repo: 'dolphin' } } }
+      result: { repo: { id: 'repo-1', upstream: { owner: 'gusscloud', repo: 'dolphin' } } }
     })
   })
 

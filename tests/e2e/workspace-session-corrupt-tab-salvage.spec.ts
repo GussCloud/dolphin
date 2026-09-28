@@ -3,7 +3,7 @@ import {
   mutateStoppedProfileState
 } from './helpers/persisted-profile-state'
 import { existsSync, readFileSync } from 'node:fs'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { attachRepoAndOpenTerminal, createRestartSession } from './helpers/dolphin-restart'
 import { ensureTerminalVisible, getActiveWorktreeId, waitForSessionReady } from './helpers/store'

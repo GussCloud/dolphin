@@ -17,17 +17,17 @@ describe('task source context summary', () => {
         {
           kind: 'task-source',
           provider: 'github',
-          projectId: 'github:stablyai/dolphin',
+          projectId: 'github:gusscloud/dolphin',
           hostId: 'ssh:devbox',
           projectHostSetupId: 'setup-1',
           repoId: 'repo-1',
-          providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+          providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
         }
       ]
     })
 
-    expect(summary.label).toBe('GitHub · devbox · stablyai/dolphin')
-    expect(summary.title).toBe('GitHub · Host: devbox · Source: stablyai/dolphin')
+    expect(summary.label).toBe('GitHub · devbox · gusscloud/dolphin')
+    expect(summary.title).toBe('GitHub · Host: devbox · Source: gusscloud/dolphin')
   })
 
   it('shows repo-backed provider account labels when accounts can differ by host', () => {
@@ -39,21 +39,21 @@ describe('task source context summary', () => {
         {
           kind: 'task-source',
           provider: 'github',
-          projectId: 'github:stablyai/dolphin',
+          projectId: 'github:gusscloud/dolphin',
           hostId: 'local',
           projectHostSetupId: 'setup-local',
           repoId: 'repo-local',
-          providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' },
+          providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' },
           accountLabel: 'personal-gh'
         },
         {
           kind: 'task-source',
           provider: 'github',
-          projectId: 'github:stablyai/dolphin',
+          projectId: 'github:gusscloud/dolphin',
           hostId: 'ssh:builder',
           projectHostSetupId: 'setup-builder',
           repoId: 'repo-builder',
-          providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' },
+          providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' },
           accountLabel: 'work-gh'
         }
       ]
@@ -61,7 +61,7 @@ describe('task source context summary', () => {
 
     expect(summary.label).toBe(`GitHub · ${LOCAL_HOST_LABEL}, builder · personal-gh, work-gh`)
     expect(summary.title).toBe(
-      `GitHub · Host: ${LOCAL_HOST_LABEL}, builder · Account: personal-gh, work-gh · Source: stablyai/dolphin · 2 selected projects`
+      `GitHub · Host: ${LOCAL_HOST_LABEL}, builder · Account: personal-gh, work-gh · Source: gusscloud/dolphin · 2 selected projects`
     )
   })
 
@@ -74,18 +74,18 @@ describe('task source context summary', () => {
         {
           kind: 'task-source',
           provider: 'github',
-          projectId: 'github:stablyai/dolphin',
+          projectId: 'github:gusscloud/dolphin',
           hostId: 'ssh:devbox',
           repoId: 'repo-1',
-          providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+          providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
         }
       ],
       hostAvailability: [{ hostId: 'ssh:devbox', status: 'disconnected' }]
     })
 
-    expect(summary.label).toBe('GitHub · devbox · disconnected · stablyai/dolphin')
+    expect(summary.label).toBe('GitHub · devbox · disconnected · gusscloud/dolphin')
     expect(summary.title).toBe(
-      'GitHub · Host: devbox · Availability: devbox disconnected · Source: stablyai/dolphin'
+      'GitHub · Host: devbox · Availability: devbox disconnected · Source: gusscloud/dolphin'
     )
   })
 
@@ -170,15 +170,15 @@ describe('task source context summary', () => {
           projectId: 'project-a',
           hostId: 'runtime:old-server',
           repoId: 'repo-a',
-          providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+          providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
         }
       ],
       hostAvailability: [{ hostId: 'runtime:old-server', health: 'blocked' }]
     })
 
-    expect(summary.label).toBe('GitHub · old-server · server update needed · stablyai/dolphin')
+    expect(summary.label).toBe('GitHub · old-server · server update needed · gusscloud/dolphin')
     expect(summary.title).toBe(
-      'GitHub · Host: old-server · Availability: old-server server update needed · Source: stablyai/dolphin'
+      'GitHub · Host: old-server · Availability: old-server server update needed · Source: gusscloud/dolphin'
     )
   })
 
@@ -194,7 +194,7 @@ describe('task source context summary', () => {
           projectId: 'project-a',
           hostId: 'runtime:old-server',
           repoId: 'repo-a',
-          providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+          providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
         }
       ],
       hostAvailability: [
@@ -203,10 +203,10 @@ describe('task source context summary', () => {
     })
 
     expect(summary.label).toBe(
-      'GitHub · old-server · checking server capabilities · stablyai/dolphin'
+      'GitHub · old-server · checking server capabilities · gusscloud/dolphin'
     )
     expect(summary.title).toBe(
-      'GitHub · Host: old-server · Availability: old-server checking server capabilities · Source: stablyai/dolphin'
+      'GitHub · Host: old-server · Availability: old-server checking server capabilities · Source: gusscloud/dolphin'
     )
   })
 
@@ -223,10 +223,10 @@ describe('task source context summary', () => {
           {
             kind: 'task-source',
             provider: 'github',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:03ef704c-b180-4b10-998d-e28fbd5de9a3',
             repoId: 'repo-runtime',
-            providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+            providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
           }
         ],
         hostAvailability: [
@@ -237,9 +237,9 @@ describe('task source context summary', () => {
         ]
       })
     ).toEqual({
-      label: 'GitHub · dev box · server update needed · stablyai/dolphin',
+      label: 'GitHub · dev box · server update needed · gusscloud/dolphin',
       title:
-        'GitHub · Host: dev box · Availability: dev box server update needed · Source: stablyai/dolphin'
+        'GitHub · Host: dev box · Availability: dev box server update needed · Source: gusscloud/dolphin'
     })
 
     expect(
@@ -280,18 +280,18 @@ describe('task source context summary', () => {
         provider: 'linear',
         providerLabel: 'Linear',
         accountHostId: 'local',
-        linearWorkspaceName: 'Stably'
+        linearWorkspaceName: 'GussCloud'
       }).label
-    ).toBe(`Linear · ${LOCAL_HOST_LABEL} · Stably`)
+    ).toBe(`Linear · ${LOCAL_HOST_LABEL} · GussCloud`)
 
     expect(
       getTaskSourceContextSummary({
         provider: 'jira',
         providerLabel: 'Jira',
         accountHostId: 'runtime:server',
-        jiraSiteName: 'Stably Jira'
+        jiraSiteName: 'GussCloud Jira'
       }).label
-    ).toBe('Jira · server · Stably Jira')
+    ).toBe('Jira · server · GussCloud Jira')
   })
 
   it('shows account-backed source host availability', () => {
@@ -299,13 +299,13 @@ describe('task source context summary', () => {
       provider: 'linear',
       providerLabel: 'Linear',
       accountHostId: 'runtime:old-server',
-      linearWorkspaceName: 'Stably',
+      linearWorkspaceName: 'GussCloud',
       hostAvailability: [{ hostId: 'runtime:old-server', health: 'blocked' }]
     })
 
-    expect(summary.label).toBe('Linear · old-server · server update needed · Stably')
+    expect(summary.label).toBe('Linear · old-server · server update needed · GussCloud')
     expect(summary.title).toBe(
-      'Linear source · Host: old-server · Availability: old-server server update needed · Account: Stably'
+      'Linear source · Host: old-server · Availability: old-server server update needed · Account: GussCloud'
     )
   })
 
@@ -343,18 +343,18 @@ describe('task source context summary', () => {
           {
             kind: 'task-source',
             provider: 'github',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'ssh:devbox',
             repoId: 'repo-1',
-            providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+            providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
           }
         ],
         hostAvailability: [{ hostId: 'ssh:devbox', reason: 'missing-provider-auth' }]
       })
     ).toEqual({
-      label: 'GitHub · devbox · provider auth needed · stablyai/dolphin',
+      label: 'GitHub · devbox · provider auth needed · gusscloud/dolphin',
       title:
-        'GitHub · Host: devbox · Availability: devbox provider auth needed · Source: stablyai/dolphin'
+        'GitHub · Host: devbox · Availability: devbox provider auth needed · Source: gusscloud/dolphin'
     })
 
     expect(

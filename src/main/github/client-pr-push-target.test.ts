@@ -44,8 +44,8 @@ describe('getPRForBranch', () => {
   })
 
   it('resolves fork PR push target using the origin URL protocol', async () => {
-    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
-    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
+    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
+    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
     ghExecFileAsyncMock.mockResolvedValueOnce({
       stdout: JSON.stringify({
         head: {
@@ -60,13 +60,16 @@ describe('getPRForBranch', () => {
         }
       })
     })
-    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:stablyai/dolphin.git')
+    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:gusscloud/dolphin.git')
 
     const target = await getPullRequestPushTarget('/repo-root', 1738)
 
-    expect(ghExecFileAsyncMock).toHaveBeenCalledWith(['api', 'repos/stablyai/dolphin/pulls/1738'], {
-      cwd: '/repo-root'
-    })
+    expect(ghExecFileAsyncMock).toHaveBeenCalledWith(
+      ['api', 'repos/gusscloud/dolphin/pulls/1738'],
+      {
+        cwd: '/repo-root'
+      }
+    )
     expect(target).toEqual({
       pushTarget: {
         remoteName: 'pr-prateek-dolphin',
@@ -115,8 +118,8 @@ describe('getPRForBranch', () => {
   })
 
   it('surfaces maintainer_can_modify=false alongside a fork PR push target', async () => {
-    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
-    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
+    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
+    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
     ghExecFileAsyncMock.mockResolvedValueOnce({
       stdout: JSON.stringify({
         maintainer_can_modify: false,
@@ -132,7 +135,7 @@ describe('getPRForBranch', () => {
         }
       })
     })
-    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:stablyai/dolphin.git')
+    getRemoteUrlForRepoMock.mockResolvedValueOnce('git@github.com:gusscloud/dolphin.git')
 
     await expect(getPullRequestPushTarget('/repo-root', 1738)).resolves.toEqual({
       pushTarget: {
@@ -145,18 +148,18 @@ describe('getPRForBranch', () => {
   })
 
   it('omits maintainerCanModify when the API does not report the flag', async () => {
-    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
-    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
+    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
+    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
     ghExecFileAsyncMock.mockResolvedValueOnce({
       stdout: JSON.stringify({
         head: {
           ref: 'fix-sidebar',
           repo: {
-            full_name: 'stablyai/dolphin',
+            full_name: 'gusscloud/dolphin',
             name: 'dolphin',
-            clone_url: 'https://github.com/stablyai/dolphin.git',
-            ssh_url: 'git@github.com:stablyai/dolphin.git',
-            owner: { login: 'stablyai' }
+            clone_url: 'https://github.com/gusscloud/dolphin.git',
+            ssh_url: 'git@github.com:gusscloud/dolphin.git',
+            owner: { login: 'gusscloud' }
           }
         }
       })
@@ -171,18 +174,18 @@ describe('getPRForBranch', () => {
   })
 
   it('uses origin for same-repository PR push targets', async () => {
-    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
-    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'stablyai', repo: 'dolphin' })
+    getOwnerRepoMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
+    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'gusscloud', repo: 'dolphin' })
     ghExecFileAsyncMock.mockResolvedValueOnce({
       stdout: JSON.stringify({
         head: {
           ref: 'fix-sidebar',
           repo: {
-            full_name: 'stablyai/dolphin',
+            full_name: 'gusscloud/dolphin',
             name: 'dolphin',
-            clone_url: 'https://github.com/stablyai/dolphin.git',
-            ssh_url: 'git@github.com:stablyai/dolphin.git',
-            owner: { login: 'stablyai' }
+            clone_url: 'https://github.com/gusscloud/dolphin.git',
+            ssh_url: 'git@github.com:gusscloud/dolphin.git',
+            owner: { login: 'gusscloud' }
           }
         }
       })
@@ -203,7 +206,7 @@ describe('getPRForBranch', () => {
     getOwnerRepoForRemoteMock.mockImplementation(async (_repoPath: string, remoteName: string) =>
       remoteName === 'origin'
         ? { owner: 'fsdwen', repo: 'dolphin' }
-        : { owner: 'stablyai', repo: 'dolphin' }
+        : { owner: 'gusscloud', repo: 'dolphin' }
     )
     // Why: getRepoSlug imports getOriginGitHubApiRepository; the suite bridge
     // prefers getOwnerRepoForRemote for origin, so set both seams.
@@ -222,12 +225,12 @@ describe('getPRForBranch', () => {
     getOwnerRepoForRemoteMock.mockImplementation(async (_repoPath: string, remoteName: string) =>
       remoteName === 'origin'
         ? { owner: 'tmchow', repo: 'dolphin' }
-        : { owner: 'stablyai', repo: 'dolphin' }
+        : { owner: 'gusscloud', repo: 'dolphin' }
     )
 
     // Why: the suite bridge returns getOwnerRepoForRemote fixtures as-is (no host pin).
     await expect(getRepoUpstream('/repo-root')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
 
@@ -235,11 +238,11 @@ describe('getPRForBranch', () => {
   })
 
   it('does not treat a same-repository upstream remote as a fork', async () => {
-    getOwnerRepoMock.mockResolvedValue({ owner: 'StablyAI', repo: 'Dolphin' })
+    getOwnerRepoMock.mockResolvedValue({ owner: 'GussCloud', repo: 'Dolphin' })
     getOwnerRepoForRemoteMock.mockImplementation(async (_repoPath: string, remoteName: string) =>
       remoteName === 'origin'
-        ? { owner: 'StablyAI', repo: 'Dolphin' }
-        : { owner: 'stablyai', repo: 'dolphin' }
+        ? { owner: 'GussCloud', repo: 'Dolphin' }
+        : { owner: 'gusscloud', repo: 'dolphin' }
     )
     ghExecFileAsyncMock.mockResolvedValueOnce({
       stdout: JSON.stringify({ isFork: false, parent: null })
@@ -250,7 +253,7 @@ describe('getPRForBranch', () => {
     expect(ghExecFileAsyncMock).toHaveBeenCalledWith(
       // Why: positional slugs are explicit about github.com too, so GH_HOST
       // cannot redirect them.
-      ['repo', 'view', 'github.com/StablyAI/Dolphin', '--json', 'isFork,parent'],
+      ['repo', 'view', 'github.com/GussCloud/Dolphin', '--json', 'isFork,parent'],
       { cwd: '/repo-root', host: 'github.com', timeout: 10_000 }
     )
   })
@@ -273,12 +276,12 @@ describe('getPRForBranch', () => {
     ghExecFileAsyncMock.mockResolvedValueOnce({
       stdout: JSON.stringify({
         isFork: true,
-        parent: { name: 'dolphin', owner: { login: 'stablyai' } }
+        parent: { name: 'dolphin', owner: { login: 'gusscloud' } }
       })
     })
 
     await expect(getRepoUpstream('/repo-root')).resolves.toEqual({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       // Why: fork parents live on the same server as the fork's origin.
       host: 'github.com'
@@ -355,7 +358,7 @@ describe('getPRForBranch', () => {
     resolvePRRepositoryCandidatesMock.mockResolvedValueOnce({
       candidates: [
         { owner: 'fork', repo: 'dolphin' },
-        { owner: 'stablyai', repo: 'dolphin' }
+        { owner: 'gusscloud', repo: 'dolphin' }
       ],
       headRepo: { owner: 'fork', repo: 'dolphin' }
     })
@@ -392,7 +395,7 @@ describe('getPRForBranch', () => {
     )
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       2,
-      ['api', 'repos/stablyai/dolphin/pulls/1849'],
+      ['api', 'repos/gusscloud/dolphin/pulls/1849'],
       { cwd: '/repo-root' }
     )
   })

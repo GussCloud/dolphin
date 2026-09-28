@@ -20,17 +20,17 @@ function repo(id: string, overrides: Partial<Repo> = {}): Repo {
     displayName: id,
     badgeColor: '#111111',
     addedAt: 1,
-    upstream: { owner: 'stablyai', repo: 'dolphin' },
+    upstream: { owner: 'gusscloud', repo: 'dolphin' },
     ...overrides
   }
 }
 
 function project(overrides: Partial<Project> = {}): Project {
   return {
-    id: 'github:stablyai/dolphin',
+    id: 'github:gusscloud/dolphin',
     displayName: 'dolphin',
     badgeColor: '#111111',
-    providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' },
+    providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' },
     sourceRepoIds: ['local-repo', 'ssh-repo'],
     createdAt: 1,
     updatedAt: 1,
@@ -41,7 +41,7 @@ function project(overrides: Partial<Project> = {}): Project {
 function setup(overrides: Partial<ProjectHostSetup>): ProjectHostSetup {
   return {
     id: overrides.id ?? 'local-setup',
-    projectId: overrides.projectId ?? 'github:stablyai/dolphin',
+    projectId: overrides.projectId ?? 'github:gusscloud/dolphin',
     hostId: overrides.hostId ?? 'local',
     repoId: overrides.repoId ?? 'local-repo',
     path: overrides.path ?? '/tmp/dolphin',
@@ -83,12 +83,12 @@ describe('buildNewWorkspaceProjectOptions', () => {
 
     expect(options).toEqual([
       {
-        id: 'github:stablyai/dolphin',
+        id: 'github:gusscloud/dolphin',
         kind: 'project',
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         displayName: 'dolphin',
         badgeColor: '#111111',
-        detail: 'stablyai/dolphin'
+        detail: 'gusscloud/dolphin'
       }
     ])
   })
@@ -108,7 +108,7 @@ describe('buildNewWorkspaceProjectOptions', () => {
       eligibleRepos: [repo('local-repo'), repo('other-repo')]
     })
 
-    expect(options.map((option) => option.id)).toEqual(['github:stablyai/dolphin'])
+    expect(options.map((option) => option.id)).toEqual(['github:gusscloud/dolphin'])
   })
 
   it('excludes projects configured only on removed hosts', () => {
@@ -136,7 +136,7 @@ describe('buildNewWorkspaceProjectOptions', () => {
     })
 
     expect(options).toEqual([
-      expect.objectContaining({ id: 'github:stablyai/dolphin', detail: 'stablyai/dolphin' })
+      expect.objectContaining({ id: 'github:gusscloud/dolphin', detail: 'gusscloud/dolphin' })
     ])
   })
 
@@ -399,7 +399,7 @@ describe('buildNewWorkspaceProjectOptions', () => {
         projectId: 'dolphin',
         displayName: 'Dolphin',
         badgeColor: '#111111',
-        detail: 'stablyai/dolphin'
+        detail: 'gusscloud/dolphin'
       },
       {
         kind: 'project',
@@ -407,12 +407,12 @@ describe('buildNewWorkspaceProjectOptions', () => {
         projectId: 'docs',
         displayName: 'Docs',
         badgeColor: '#222222',
-        detail: 'stablyai/docs'
+        detail: 'gusscloud/docs'
       }
     ]
 
     expect(searchNewWorkspaceProjectOptions(options, 'docs')).toEqual([options[1]])
-    expect(searchNewWorkspaceProjectOptions(options, 'stablyai/dolphin')).toEqual([options[0]])
+    expect(searchNewWorkspaceProjectOptions(options, 'gusscloud/dolphin')).toEqual([options[0]])
   })
 
   it('rejects oversized pasted searches before reading project options', () => {
@@ -478,7 +478,7 @@ describe('buildNewWorkspaceCreateTargetOptions', () => {
     })
 
     expect(options.map((option) => option.id).sort()).toEqual([
-      'github:stablyai/dolphin',
+      'github:gusscloud/dolphin',
       'project-group:folder-group'
     ])
     expect(options.find((option) => option.id === 'project-group:folder-group')).toMatchObject({

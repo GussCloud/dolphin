@@ -57,26 +57,26 @@ describe('DolphinRuntimeRpcServer', () => {
       id: 'req_project_issue_types',
       method: 'github.project.listIssueTypesBySlug',
       deviceToken: mobile.token,
-      params: { owner: 'stablyai', repo: 'dolphin' }
+      params: { owner: 'gusscloud', repo: 'dolphin' }
     })
     await dispatch({
       id: 'req_project_labels',
       method: 'github.project.listLabelsBySlug',
       deviceToken: mobile.token,
-      params: { owner: 'stablyai', repo: 'dolphin' }
+      params: { owner: 'gusscloud', repo: 'dolphin' }
     })
     await dispatch({
       id: 'req_project_assignees',
       method: 'github.project.listAssignableUsersBySlug',
       deviceToken: mobile.token,
-      params: { owner: 'stablyai', repo: 'dolphin', seedLogins: ['alex'] }
+      params: { owner: 'gusscloud', repo: 'dolphin', seedLogins: ['alex'] }
     })
     await dispatch({
       id: 'req_project_update_issue',
       method: 'github.project.updateIssueBySlug',
       deviceToken: mobile.token,
       params: {
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin',
         number: 123,
         updates: { title: 'New title' }
@@ -87,7 +87,7 @@ describe('DolphinRuntimeRpcServer', () => {
       method: 'github.project.updateIssueTypeBySlug',
       deviceToken: mobile.token,
       params: {
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin',
         number: 123,
         issueTypeId: 'type-1'
@@ -119,7 +119,7 @@ describe('DolphinRuntimeRpcServer', () => {
       method: 'github.project.updatePullRequestBySlug',
       deviceToken: mobile.token,
       params: {
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin',
         number: 456,
         updates: { state: 'closed' }
@@ -130,7 +130,7 @@ describe('DolphinRuntimeRpcServer', () => {
       method: 'github.project.addIssueCommentBySlug',
       deviceToken: mobile.token,
       params: {
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin',
         number: 123,
         body: 'done'
@@ -141,7 +141,7 @@ describe('DolphinRuntimeRpcServer', () => {
       method: 'github.project.updateIssueCommentBySlug',
       deviceToken: mobile.token,
       params: {
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin',
         commentId: 101,
         body: 'edited'
@@ -152,7 +152,7 @@ describe('DolphinRuntimeRpcServer', () => {
       method: 'github.project.deleteIssueCommentBySlug',
       deviceToken: mobile.token,
       params: {
-        owner: 'stablyai',
+        owner: 'gusscloud',
         repo: 'dolphin',
         commentId: 101
       }
@@ -664,50 +664,50 @@ describe('DolphinRuntimeRpcServer', () => {
       page: 'page-1'
     })
     expect(mocks.listGitHubIssueTypesBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
     expect(mocks.listGitHubLabelsBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin'
     })
     expect(mocks.listGitHubAssignableUsersBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       seedLogins: ['alex']
     })
     expect(mocks.updateGitHubIssueBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 123,
       updates: { title: 'New title' }
     })
     expect(mocks.updateGitHubIssueTypeBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 123,
       issueTypeId: 'type-1'
     })
     expect(mocks.updateGitHubPullRequestBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 456,
       updates: { state: 'closed' }
     })
     expect(mocks.addGitHubIssueCommentBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       number: 123,
       body: 'done'
     })
     expect(mocks.updateGitHubIssueCommentBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       commentId: 101,
       body: 'edited'
     })
     expect(mocks.deleteGitHubIssueCommentBySlug).toHaveBeenCalledWith({
-      owner: 'stablyai',
+      owner: 'gusscloud',
       repo: 'dolphin',
       commentId: 101
     })

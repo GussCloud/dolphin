@@ -4,7 +4,7 @@
  * ssh-config-host-picker.spec.ts.
  */
 
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 import {

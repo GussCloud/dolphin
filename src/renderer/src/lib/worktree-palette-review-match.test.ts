@@ -42,7 +42,7 @@ const repoMap = new Map<string, Repo>([
     {
       id: 'repo-1',
       path: '/repo/dolphin',
-      displayName: 'stablyai/dolphin',
+      displayName: 'gusscloud/dolphin',
       badgeColor: '#22c55e',
       addedAt: 0
     }

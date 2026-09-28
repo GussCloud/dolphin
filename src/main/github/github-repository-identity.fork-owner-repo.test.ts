@@ -41,14 +41,14 @@ const SSH_FORK_PATH = '/tmp/ssh-fork-checkout'
 const REMOTE_URLS_BY_REPO: Record<string, Record<string, string>> = {
   [FORK_PATH]: {
     origin: 'https://github.com/fsdwen/dolphin.git',
-    upstream: 'https://github.com/stablyai/dolphin.git'
+    upstream: 'https://github.com/gusscloud/dolphin.git'
   },
   [NON_FORK_PATH]: {
-    origin: 'https://github.com/stablyai/dolphin.git'
+    origin: 'https://github.com/gusscloud/dolphin.git'
   },
   [SSH_FORK_PATH]: {
     origin: 'git@github.com:fsdwen/dolphin.git',
-    upstream: 'git@github.com:stablyai/dolphin.git'
+    upstream: 'git@github.com:gusscloud/dolphin.git'
   }
 }
 
@@ -81,7 +81,7 @@ describe('issue #7331: fork PR owner/repo resolution', () => {
 
     // PRs live on the parent, so PR lookups must target it (matches
     // getIssueOwnerRepo).
-    expect(prRepo).toEqual({ owner: 'stablyai', repo: 'dolphin' })
+    expect(prRepo).toEqual({ owner: 'gusscloud', repo: 'dolphin' })
   })
 
   it('getOwnerRepo and getIssueOwnerRepo agree on a fork checkout', async () => {
@@ -94,7 +94,7 @@ describe('issue #7331: fork PR owner/repo resolution', () => {
   it('getOwnerRepo falls back to origin when there is no upstream remote', async () => {
     const prRepo = await getOwnerRepo(NON_FORK_PATH)
 
-    expect(prRepo).toEqual({ owner: 'stablyai', repo: 'dolphin' })
+    expect(prRepo).toEqual({ owner: 'gusscloud', repo: 'dolphin' })
   })
 
   it('skips git remote get-url upstream on origin-only clones and caches the listing', async () => {
@@ -118,7 +118,7 @@ describe('issue #7331: fork PR owner/repo resolution', () => {
   it('resolves the upstream parent for SSH-style remote URLs', async () => {
     const prRepo = await getOwnerRepo(SSH_FORK_PATH)
 
-    expect(prRepo).toEqual({ owner: 'stablyai', repo: 'dolphin' })
+    expect(prRepo).toEqual({ owner: 'gusscloud', repo: 'dolphin' })
   })
 
   it('getOwnerRepoForRemote(origin) still resolves the fork itself', async () => {
@@ -136,7 +136,7 @@ describe('issue #7331: fork PR owner/repo resolution', () => {
     const upstream = await getRepoUpstream(FORK_PATH)
 
     // Why: origin resolution pins github.com so host-scoped execution is explicit.
-    expect(upstream).toEqual({ owner: 'stablyai', repo: 'dolphin', host: 'github.com' })
+    expect(upstream).toEqual({ owner: 'gusscloud', repo: 'dolphin', host: 'github.com' })
     expect(ghExecFileAsyncMock).not.toHaveBeenCalled()
   })
 })

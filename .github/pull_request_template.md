@@ -13,7 +13,7 @@
 ## Linked Issue
 
 <!-- Link the issue this PR addresses, there should ALWAYS be one (for outside contributors) -->
-<!-- SPECIAL CASE: If you are a maintainer (member of stablyai org) AVOID opening needless issues. Only attach pre-existing ones -->
+<!-- SPECIAL CASE: If you are a maintainer (member of gusscloud org) AVOID opening needless issues. Only attach pre-existing ones -->
 
 Fixes #
 
@@ -32,7 +32,7 @@ Fixes #
 
 ## AI Disclosure
 
-<!-- DO NOT FILL IN IF YOU ARE STABLYAI TEAM MEMBER (INTERNAL CONTRIBUTOR), IGNORE SECTION: -->
+<!-- DO NOT FILL IN IF YOU ARE GUSSCLOUD TEAM MEMBER (INTERNAL CONTRIBUTOR), IGNORE SECTION: -->
 <!-- Which AI model if anyone was used, please state the details -->
 
 ## Review

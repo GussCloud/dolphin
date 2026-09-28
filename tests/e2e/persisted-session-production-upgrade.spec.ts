@@ -5,7 +5,7 @@ import {
   type ElectronApplication,
   type Page,
   type TestInfo
-} from '@stablyai/playwright-test'
+} from '@playwright/test'
 import { DEFAULT_LOCAL_DOLPHIN_PROFILE_ID } from '../../src/shared/dolphin-profiles'
 import { PTY_SESSION_ID_SEPARATOR } from '../../src/shared/pty-session-id-format'
 import { forwardElectronProcessLogs, test, expect } from './helpers/dolphin-app'

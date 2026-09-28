@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect } from './dolphin-app'
 import { readRestartRendererState } from './dolphin-restart'
 import type { PairedElectronClient } from './paired-electron-client'

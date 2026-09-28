@@ -9,7 +9,7 @@
 
 import { test, expect } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import type { GlobalSettings } from '../../src/shared/global-settings-types'
 import type { TuiAgent } from '../../src/shared/tui-agent'
 import { ONBOARDING_FINAL_STEP } from '../../src/shared/constants'

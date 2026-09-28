@@ -125,8 +125,8 @@ describe('pluginMarketplaceSchema', () => {
 
 describe('marketplace provenance contracts', () => {
   it.each([
-    ['stablyai.dolphin-skills', true, true],
-    ['stablyai.skills', true, false],
+    ['gusscloud.dolphin-skills', true, true],
+    ['gusscloud.skills', true, false],
     ['community.dolphin-skills', true, false],
     ['community.skills', false, false],
     ['invalid', false, false]
@@ -136,18 +136,18 @@ describe('marketplace provenance contracts', () => {
   })
 
   it.each([
-    'https://github.com/stablyai/dolphin-skills.git',
-    'ssh://git@github.com/stablyai/dolphin-skills.git',
-    'git@github.com:stablyai/dolphin-skills.git'
+    'https://github.com/gusscloud/dolphin-skills.git',
+    'ssh://git@github.com/gusscloud/dolphin-skills.git',
+    'git@github.com:gusscloud/dolphin-skills.git'
   ])('accepts official organization source %s', (source) => {
     expect(isOfficialOrganizationGitSource(source)).toBe(true)
   })
 
   it('does not trust lookalike organizations or hosts', () => {
     expect(
-      isOfficialOrganizationGitSource('https://github.com/stablyai-fakes/dolphin-skills')
+      isOfficialOrganizationGitSource('https://github.com/gusscloud-fakes/dolphin-skills')
     ).toBe(false)
-    expect(isOfficialOrganizationGitSource('https://gitlab.com/stablyai/dolphin-skills')).toBe(
+    expect(isOfficialOrganizationGitSource('https://gitlab.com/gusscloud/dolphin-skills')).toBe(
       false
     )
   })
@@ -155,10 +155,10 @@ describe('marketplace provenance contracts', () => {
   it('recognizes only the canonical official marketplace repository', () => {
     expect(
       isOfficialMarketplaceGitSource(
-        `git@github.com:stablyai/${OFFICIAL_MARKETPLACE_REPOSITORY}.git`
+        `git@github.com:gusscloud/${OFFICIAL_MARKETPLACE_REPOSITORY}.git`
       )
     ).toBe(true)
-    expect(isOfficialMarketplaceGitSource('git@github.com:stablyai/plugins.git')).toBe(false)
+    expect(isOfficialMarketplaceGitSource('git@github.com:gusscloud/plugins.git')).toBe(false)
   })
 
   it('parses nested repository paths without confusing the repository name', () => {

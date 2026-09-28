@@ -21,7 +21,7 @@ export const PUSH_LIMITS = {
 } as const
 
 export const PUSH_DEFAULTS = {
-  apnsTopic: 'com.stably.dolphin.mobile',
+  apnsTopic: 'com.gusscloud.dolphin.mobile',
   androidChannelId: 'dolphin-desktop'
 } as const
 

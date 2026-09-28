@@ -507,7 +507,7 @@ describe('GitHandler', () => {
       await expect(
         dispatcher.callRequest(
           'git.forkSync',
-          { worktreePath: tmpDir, expectedUpstream: { owner: 'stablyai', repo: 'dolphin' } },
+          { worktreePath: tmpDir, expectedUpstream: { owner: 'gusscloud', repo: 'dolphin' } },
           { isStale: () => false, signal: controller.signal }
         )
       ).rejects.toThrow(/abort/i)

@@ -1,5 +1,5 @@
 import { openSidebarWorkspaceComposer } from './helpers/sidebar-project-dialog'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,

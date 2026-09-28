@@ -1,13 +1,13 @@
 name: Homebrew Cask Bump
 
-# Why: keep the stablyai/homebrew-dolphin tap in sync with GitHub Releases.
+# Why: keep the gusscloud/homebrew-dolphin tap in sync with GitHub Releases.
 # Triggers:
 #   - workflow_call → release-cut.yml finished publishing a stable tag
 #   - workflow_dispatch → manual backfill for a specific tag
 #
 # The job computes the sha256 of dolphin-macos-arm64.dmg + dolphin-macos-x64.dmg
 # from the release, templates the channel-specific cask in this repo with the
-# new version and hashes, then PRs the result into stablyai/homebrew-dolphin.
+# new version and hashes, then PRs the result into gusscloud/homebrew-dolphin.
 # Stable tags update Casks/dolphin.rb; RC tags update Casks/dolphin@rc.rb.
 #
 # Why no `release.published` trigger: other products shipped from this repo
@@ -134,7 +134,7 @@ jobs:
 
       # Why: reuse the existing buf0-bot GitHub App (also used by
       # track-community-prs.yaml) instead of minting a new PAT. The app is
-      # installed org-wide, so it has access to stablyai/homebrew-dolphin
+      # installed org-wide, so it has access to gusscloud/homebrew-dolphin
       # automatically. GITHUB_TOKEN cannot push cross-repo; a short-lived
       # installation token can.
       - name: Generate buf0-bot token
@@ -149,7 +149,7 @@ jobs:
       - name: Checkout tap
         uses: actions/checkout@v6
         with:
-          repository: stablyai/homebrew-dolphin
+          repository: gusscloud/homebrew-dolphin
           path: tap
           token: ${{ steps.app-token.outputs.token }}
 

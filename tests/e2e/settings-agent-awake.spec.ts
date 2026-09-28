@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { runProcess } from '../../src/shared/child-process/run-process'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 import type { GlobalSettings } from '../../src/shared/global-settings-types'

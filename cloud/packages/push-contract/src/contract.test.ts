@@ -48,7 +48,7 @@ describe('push contract limits', () => {
       authenticatedRequestsPerMinutePerIp: 6_000,
       authenticatedRequestsPerMinutePerHost: 600
     })
-    expect(PUSH_DEFAULTS.apnsTopic).toBe('com.stably.dolphin.mobile')
+    expect(PUSH_DEFAULTS.apnsTopic).toBe('com.gusscloud.dolphin.mobile')
     expect(PUSH_DEFAULTS.androidChannelId).toBe('dolphin-desktop')
   })
 })

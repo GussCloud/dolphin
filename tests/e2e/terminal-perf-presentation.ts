@@ -1,4 +1,4 @@
-import type { ElectronApplication, TestInfo } from '@stablyai/playwright-test'
+import type { ElectronApplication, TestInfo } from '@playwright/test'
 
 export function shouldPresentTerminalPerfWindow(
   env: Readonly<Record<string, string | undefined>> = process.env,

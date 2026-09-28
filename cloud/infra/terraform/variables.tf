@@ -16,7 +16,7 @@ variable "environment" {
 variable "github_owner" {
   type        = string
   description = "GitHub owner allowed to deploy through Workload Identity Federation."
-  default     = "stablyai"
+  default     = "gusscloud"
 }
 
 variable "github_repo" {

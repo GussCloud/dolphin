@@ -449,21 +449,21 @@ describe('store selectors', () => {
     const repos = [
       makeRepo({
         id: 'local-dolphin',
-        path: '/Users/alice/stably/dolphin',
+        path: '/Users/alice/gusscloud/dolphin',
         displayName: 'dolphin',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       }),
       makeRepo({
         id: 'vm-dolphin',
         path: '/vercel/sandbox/dolphin',
         displayName: 'dolphin',
-        upstream: { owner: 'stablyai', repo: 'dolphin' },
+        upstream: { owner: 'gusscloud', repo: 'dolphin' },
         executionHostId: toRuntimeExecutionHostId('vm-env')
       })
     ]
     const projects = [
       {
-        id: 'github:stablyai/dolphin',
+        id: 'github:gusscloud/dolphin',
         displayName: 'dolphin',
         badgeColor: '#737373',
         sourceRepoIds: ['local-dolphin'],
@@ -482,10 +482,10 @@ describe('store selectors', () => {
     const projectHostSetups = [
       {
         id: 'local-setup',
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         hostId: 'local' as const,
         repoId: 'local-dolphin',
-        path: '/Users/alice/stably/dolphin',
+        path: '/Users/alice/gusscloud/dolphin',
         displayName: 'dolphin',
         setupState: 'ready' as const,
         setupMethod: 'legacy-repo' as const,
@@ -512,11 +512,11 @@ describe('store selectors', () => {
       projectHostSetups
     })
 
-    expect(projection.projects.map((project) => project.id)).toEqual(['github:stablyai/dolphin'])
+    expect(projection.projects.map((project) => project.id)).toEqual(['github:gusscloud/dolphin'])
     expect(projection.setups).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 'local-setup', projectId: 'github:stablyai/dolphin' }),
-        expect.objectContaining({ id: 'vm-setup', projectId: 'github:stablyai/dolphin' })
+        expect.objectContaining({ id: 'local-setup', projectId: 'github:gusscloud/dolphin' }),
+        expect.objectContaining({ id: 'vm-setup', projectId: 'github:gusscloud/dolphin' })
       ])
     )
   })
@@ -527,7 +527,7 @@ describe('store selectors', () => {
         id: 'repo-1',
         path: '/Users/alice/dolphin',
         displayName: 'dolphin',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       })
     ]
 
@@ -539,14 +539,14 @@ describe('store selectors', () => {
 
     expect(projection.projects).toEqual([
       expect.objectContaining({
-        id: 'github:stablyai/dolphin',
+        id: 'github:gusscloud/dolphin',
         sourceRepoIds: ['repo-1']
       })
     ])
     expect(projection.setups).toEqual([
       expect.objectContaining({
         id: 'repo-1',
-        projectId: 'github:stablyai/dolphin',
+        projectId: 'github:gusscloud/dolphin',
         repoId: 'repo-1',
         hostId: 'local',
         path: '/Users/alice/dolphin'

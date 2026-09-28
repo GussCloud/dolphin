@@ -29,9 +29,9 @@ describe('Phase 1 launch plugin content', () => {
       await readJson(join(launchRoot, 'dolphin-marketplace.json'))
     )
     expect(marketplace.plugins.map((plugin) => plugin.id).sort()).toEqual([
-      'stablyai.dolphin-multipass-recipes',
-      'stablyai.dolphin-navigation-shortcuts',
-      'stablyai.dolphin-portuguese'
+      'gusscloud.dolphin-multipass-recipes',
+      'gusscloud.dolphin-navigation-shortcuts',
+      'gusscloud.dolphin-portuguese'
     ])
     expect(
       marketplace.plugins.filter(
@@ -108,6 +108,6 @@ describe('Phase 1 launch plugin content', () => {
     })
 
     expect(result.errors).toEqual([])
-    expect(result.installed).toEqual(['stablyai.dolphin-navigation-shortcuts'])
+    expect(result.installed).toEqual(['gusscloud.dolphin-navigation-shortcuts'])
   })
 })

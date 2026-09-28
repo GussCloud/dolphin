@@ -78,7 +78,7 @@ describe('structuredWorkerChildIdentityEnv', () => {
 
   it('gives a packaged-Linux worker the bare-dolphin shim its DOLPHIN_CLI_COMMAND assumes', () => {
     // Without this the child's first `dolphin orchestration check` execs KDE Dolphin — the CLI
-    // installs as `dolphin-ide` on Linux (stablyai/dolphin#7904) — and the dispatch hangs to timeout.
+    // installs as `dolphin-ide` on Linux (gusscloud/dolphin#7904) — and the dispatch hangs to timeout.
     pinPlatform('linux')
     installFakeAppEnvironment({ isPackaged: () => true, getPath: () => USER_DATA })
     const handle = registerWorker()

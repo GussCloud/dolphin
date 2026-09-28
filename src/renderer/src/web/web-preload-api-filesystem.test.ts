@@ -33,7 +33,7 @@ describe('web file preload API', () => {
     await expect(
       api.repos.cloneRemote({
         connectionId: 'ssh-1',
-        url: 'https://github.com/stablyai/dolphin.git',
+        url: 'https://github.com/gusscloud/dolphin.git',
         destination: '/workspace'
       })
     ).rejects.toThrow('SSH clone is unavailable in paired web clients.')

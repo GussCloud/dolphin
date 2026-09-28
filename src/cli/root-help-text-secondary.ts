@@ -160,7 +160,7 @@ export const ROOT_HELP_TEXT_SECONDARY = [
   '  $ dolphin repo list',
   '  $ dolphin worktree create --name agent-task --agent codex --prompt "hi"',
   '  $ dolphin worktree create --repo name:dolphin --name cli-test-1 --issue 273',
-  '  $ dolphin worktree create --repo name:dolphin --name linear-task --linear-issue https://linear.app/stably/issue/STA-335/test-issue',
+  '  $ dolphin worktree create --repo name:dolphin --name linear-task --linear-issue https://linear.app/gusscloud/issue/STA-335/test-issue',
   '  $ dolphin worktree create --name linear-task --linear-issue STA-335',
   '  $ dolphin worktree show --worktree branch:Jinwoo-H/cli',
   '  $ dolphin worktree current',

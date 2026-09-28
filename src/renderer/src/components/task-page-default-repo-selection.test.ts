@@ -22,14 +22,14 @@ function repo(overrides: Partial<Repo> & Pick<Repo, 'id'>): Repo {
 describe('getTaskEligibleRepos', () => {
   it('keeps only Git repos with a resolvable remote identity', () => {
     const eligible = getTaskEligibleRepos([
-      repo({ id: 'github-upstream', upstream: { owner: 'stablyai', repo: 'dolphin' } }),
+      repo({ id: 'github-upstream', upstream: { owner: 'gusscloud', repo: 'dolphin' } }),
       repo({
         id: 'github-icon',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'stablyai/dolphin'
+          label: 'gusscloud/dolphin'
         }
       }),
       repo({
@@ -52,7 +52,7 @@ describe('getTaskEligibleRepos', () => {
       repo({
         id: 'folder-with-remote',
         kind: 'folder',
-        upstream: { owner: 'stablyai', repo: 'docs' }
+        upstream: { owner: 'gusscloud', repo: 'docs' }
       })
     ])
 
@@ -117,16 +117,16 @@ describe('getDefaultTaskRepoSelection', () => {
     const selection = getDefaultTaskRepoSelection([
       repo({
         id: 'local-dolphin',
-        upstream: { owner: 'StablyAI', repo: 'Dolphin' }
+        upstream: { owner: 'GussCloud', repo: 'Dolphin' }
       }),
       repo({
         id: 'ssh-dolphin',
         connectionId: 'builder',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       }),
       repo({
         id: 'other',
-        upstream: { owner: 'stablyai', repo: 'other' }
+        upstream: { owner: 'gusscloud', repo: 'other' }
       })
     ])
 
@@ -136,11 +136,11 @@ describe('getDefaultTaskRepoSelection', () => {
   it('keeps GitHub grouping intact while a pending-identity repo joins as its own project', () => {
     const selection = getDefaultTaskRepoSelection(
       getTaskEligibleRepos([
-        repo({ id: 'local-dolphin', upstream: { owner: 'StablyAI', repo: 'Dolphin' } }),
+        repo({ id: 'local-dolphin', upstream: { owner: 'GussCloud', repo: 'Dolphin' } }),
         repo({
           id: 'ssh-dolphin',
           connectionId: 'builder',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }),
         repo({ id: 'ssh-gitlab-pending', connectionId: 'builder' })
       ])
@@ -155,12 +155,12 @@ describe('getDefaultTaskRepoSelection', () => {
         id: 'ssh-dolphin',
         addedAt: 1,
         connectionId: 'builder',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       }),
       repo({
         id: 'local-dolphin',
         addedAt: 2,
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       })
     ])
 
@@ -183,9 +183,9 @@ describe('getDefaultTaskRepoSelection', () => {
         displayName: 'claude-swap',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'stablyai/claude-swap'
+          label: 'gusscloud/claude-swap'
         }
       }),
       repo({
@@ -194,9 +194,9 @@ describe('getDefaultTaskRepoSelection', () => {
         connectionId: 'builder',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'StablyAI/claude-swap'
+          label: 'GussCloud/claude-swap'
         }
       })
     ])
@@ -210,16 +210,16 @@ describe('getTaskProjectPickerRepos', () => {
     const pickerRepos = getTaskProjectPickerRepos([
       repo({
         id: 'local-dolphin',
-        upstream: { owner: 'StablyAI', repo: 'Dolphin' }
+        upstream: { owner: 'GussCloud', repo: 'Dolphin' }
       }),
       repo({
         id: 'ssh-dolphin',
         connectionId: 'builder',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       }),
       repo({
         id: 'other',
-        upstream: { owner: 'stablyai', repo: 'other' }
+        upstream: { owner: 'gusscloud', repo: 'other' }
       })
     ])
 
@@ -231,12 +231,12 @@ describe('getTaskProjectPickerRepos', () => {
       [
         repo({
           id: 'local-dolphin',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }),
         repo({
           id: 'ssh-dolphin',
           connectionId: 'builder',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         })
       ],
       new Set(['ssh-dolphin'])
@@ -252,9 +252,9 @@ describe('getTaskProjectPickerRepos', () => {
         displayName: 'claude-swap',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'stablyai/claude-swap'
+          label: 'gusscloud/claude-swap'
         }
       }),
       repo({
@@ -263,9 +263,9 @@ describe('getTaskProjectPickerRepos', () => {
         connectionId: 'builder',
         repoIcon: {
           type: 'image',
-          src: 'https://github.com/stablyai.png?size=64',
+          src: 'https://github.com/gusscloud.png?size=64',
           source: 'github',
-          label: 'StablyAI/claude-swap'
+          label: 'GussCloud/claude-swap'
         }
       })
     ])
@@ -279,27 +279,27 @@ describe('getTaskProjectPickerGroups', () => {
     const groups = getTaskProjectPickerGroups([
       repo({
         id: 'local-dolphin',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       }),
       repo({
         id: 'ssh-dolphin',
         connectionId: 'builder',
-        upstream: { owner: 'stablyai', repo: 'dolphin' }
+        upstream: { owner: 'gusscloud', repo: 'dolphin' }
       }),
       repo({
         id: 'docs',
-        upstream: { owner: 'stablyai', repo: 'docs' }
+        upstream: { owner: 'gusscloud', repo: 'docs' }
       })
     ])
 
     expect(groups).toHaveLength(2)
     expect(groups[0]).toMatchObject({
-      projectKey: 'github:stablyai/dolphin',
+      projectKey: 'github:gusscloud/dolphin',
       repo: { id: 'local-dolphin' }
     })
     expect(groups[0]?.sources.map((source) => source.id)).toEqual(['local-dolphin', 'ssh-dolphin'])
     expect(groups[1]).toMatchObject({
-      projectKey: 'github:stablyai/docs',
+      projectKey: 'github:gusscloud/docs',
       repo: { id: 'docs' }
     })
   })
@@ -309,12 +309,12 @@ describe('getTaskProjectPickerGroups', () => {
       [
         repo({
           id: 'local-dolphin',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }),
         repo({
           id: 'ssh-dolphin',
           connectionId: 'builder',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         })
       ],
       new Set(['ssh-dolphin'])
@@ -331,12 +331,12 @@ describe('normalizeTaskRepoSelection', () => {
       [
         repo({
           id: 'local-dolphin',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }),
         repo({
           id: 'ssh-dolphin',
           connectionId: 'builder',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         })
       ],
       new Set(['local-dolphin', 'ssh-dolphin'])
@@ -350,12 +350,12 @@ describe('normalizeTaskRepoSelection', () => {
       [
         repo({
           id: 'local-dolphin',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }),
         repo({
           id: 'ssh-dolphin',
           connectionId: 'builder',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         })
       ],
       new Set(['ssh-dolphin'])
@@ -369,16 +369,16 @@ describe('normalizeTaskRepoSelection', () => {
       [
         repo({
           id: 'local-dolphin',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }),
         repo({
           id: 'ssh-dolphin',
           connectionId: 'builder',
-          upstream: { owner: 'stablyai', repo: 'dolphin' }
+          upstream: { owner: 'gusscloud', repo: 'dolphin' }
         }),
         repo({
           id: 'docs',
-          upstream: { owner: 'stablyai', repo: 'docs' }
+          upstream: { owner: 'gusscloud', repo: 'docs' }
         })
       ],
       new Set(['local-dolphin', 'ssh-dolphin', 'docs'])

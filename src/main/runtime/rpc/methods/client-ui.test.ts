@@ -39,7 +39,7 @@ describe('client UI RPC methods', () => {
       githubProjects: {
         pinned: [
           {
-            owner: 'stablyai',
+            owner: 'gusscloud',
             ownerType: 'organization' as const,
             number: 1,
             host: 'ghe.example:8443'
@@ -96,10 +96,10 @@ describe('client UI RPC methods', () => {
         pinned: [],
         recent: [],
         lastViewByProject: {
-          'organization:stablyai:1': { viewId: 'view-1' }
+          'organization:gusscloud:1': { viewId: 'view-1' }
         },
         activeProject: {
-          owner: 'stablyai',
+          owner: 'gusscloud',
           ownerType: 'organization' as const,
           number: 1,
           host: 'ghe.example:8443'

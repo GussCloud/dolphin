@@ -1,5 +1,5 @@
 import path from 'node:path'
-import type { ElectronApplication, TestInfo } from '@stablyai/playwright-test'
+import type { ElectronApplication, TestInfo } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { openSidebarProjectDialog } from './helpers/sidebar-project-dialog'
 import {

@@ -159,11 +159,11 @@ describe('createGitHubSlice.fetchWorkItems source/error envelope', () => {
     const sourceContext = {
       kind: 'task-source' as const,
       provider: 'github' as const,
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'runtime:source-runtime' as const,
       projectHostSetupId: 'setup-1',
       repoId: 'source-runtime-repo-id',
-      providerIdentity: { provider: 'github' as const, owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github' as const, owner: 'gusscloud', repo: 'dolphin' }
     }
 
     await store.getState().fetchWorkItems('caller-repo-id', '/server/repo', 24, 'is:open', {
@@ -206,7 +206,7 @@ describe('createGitHubSlice.fetchWorkItems source/error envelope', () => {
     }
     const secondSourceContext = {
       ...firstSourceContext,
-      providerIdentity: { provider: 'github' as const, owner: 'stablyai', repo: 'dolphin' }
+      providerIdentity: { provider: 'github' as const, owner: 'gusscloud', repo: 'dolphin' }
     }
     mockApi.gh.listWorkItems
       .mockResolvedValueOnce({
@@ -217,10 +217,10 @@ describe('createGitHubSlice.fetchWorkItems source/error envelope', () => {
         }
       })
       .mockResolvedValueOnce({
-        items: [{ type: 'issue', number: 2, title: 'Stably', url: 'https://example.test/2' }],
+        items: [{ type: 'issue', number: 2, title: 'GussCloud', url: 'https://example.test/2' }],
         sources: {
-          issues: { owner: 'stablyai', repo: 'dolphin' },
-          prs: { owner: 'stablyai', repo: 'dolphin' }
+          issues: { owner: 'gusscloud', repo: 'dolphin' },
+          prs: { owner: 'gusscloud', repo: 'dolphin' }
         }
       })
 

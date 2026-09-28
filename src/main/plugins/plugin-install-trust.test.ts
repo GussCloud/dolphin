@@ -46,12 +46,12 @@ describe('plugin install trust', () => {
         url: 'https://github.com/attacker/dolphin-secrets.git',
         ref: 'main'
       },
-      'reserved plugin identity community.dolphin-secrets must resolve to the stablyai organization'
+      'reserved plugin identity community.dolphin-secrets must resolve to the gusscloud organization'
     ],
     [
       {
         kind: 'git',
-        url: 'git@github.com:stablyai/dolphin-secrets.git',
+        url: 'git@github.com:gusscloud/dolphin-secrets.git',
         ref: 'main'
       },
       null
@@ -63,14 +63,14 @@ describe('plugin install trust', () => {
   it('rejects locally installed reserved identities before publication', async () => {
     const sourcePath = await tempRoot('dolphin-reserved-plugin-')
     const pluginsDir = await tempRoot('dolphin-plugin-installs-')
-    await writePlugin(sourcePath, 'stablyai', 'dolphin-skills')
+    await writePlugin(sourcePath, 'gusscloud', 'dolphin-skills')
 
     await expect(
       installPluginFromLocalPath({ pluginsDir, sourcePath, hostVersion: '1.4.0' })
     ).resolves.toEqual({
       ok: false,
       error:
-        'reserved plugin identity stablyai.dolphin-skills cannot be installed from a local path'
+        'reserved plugin identity gusscloud.dolphin-skills cannot be installed from a local path'
     })
     await expect(readPluginLockfile(pluginsDir)).resolves.toEqual({ version: 1, plugins: {} })
   })
@@ -78,20 +78,20 @@ describe('plugin install trust', () => {
   it('allows the app-bundled path only for the complete official identity', async () => {
     const sourcePath = await tempRoot('dolphin-bundled-plugin-')
     const pluginsDir = await tempRoot('dolphin-plugin-installs-')
-    await writePlugin(sourcePath, 'stablyai', 'dolphin-skills')
+    await writePlugin(sourcePath, 'gusscloud', 'dolphin-skills')
 
     const result = await installBundledPlugin({
       pluginsDir,
       sourcePath,
       hostVersion: '1.4.0',
-      expectedPluginKey: 'stablyai.dolphin-skills'
+      expectedPluginKey: 'gusscloud.dolphin-skills'
     })
 
-    expect(result).toMatchObject({ ok: true, pluginKey: 'stablyai.dolphin-skills' })
+    expect(result).toMatchObject({ ok: true, pluginKey: 'gusscloud.dolphin-skills' })
     const lock = await readPluginLockfile(pluginsDir)
-    expect(lock.plugins['stablyai.dolphin-skills']?.source).toEqual({
+    expect(lock.plugins['gusscloud.dolphin-skills']?.source).toEqual({
       kind: 'bundled',
-      bundleId: 'stablyai.dolphin-skills'
+      bundleId: 'gusscloud.dolphin-skills'
     })
   })
 

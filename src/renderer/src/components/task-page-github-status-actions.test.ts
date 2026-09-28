@@ -78,7 +78,7 @@ function buildWorkItem(overrides: Partial<GitHubWorkItem>): GitHubWorkItem {
     number: 1,
     title: 'Issue',
     state: 'open',
-    url: 'https://github.com/stablyai/dolphin/issues/1',
+    url: 'https://github.com/gusscloud/dolphin/issues/1',
     labels: [],
     updatedAt: '2026-06-22T00:00:00.000Z',
     author: null,

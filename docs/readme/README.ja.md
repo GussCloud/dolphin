@@ -220,8 +220,8 @@ _パッケージマネージャーからもインストールできます:_
 # macOS (Homebrew)
 brew install --cask GussCloud/dolphin/dolphin
 
-# Arch Linux (AUR) — or stably-dolphin-git to build from source
-yay -S stably-dolphin-bin
+# Arch Linux (AUR) — or gusscloud-dolphin-git to build from source
+yay -S gusscloud-dolphin-bin
 ```
 
 ### モバイル Companion — iOS, Android

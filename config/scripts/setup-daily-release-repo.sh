@@ -17,7 +17,7 @@
 #
 set -euo pipefail
 
-ORG="stablyai"
+ORG="gusscloud"
 DAILY_REPO="$ORG/dolphin-daily"
 MAIN_REPO="$ORG/dolphin"
 APP_SLUG="dolphin-hourly-release"

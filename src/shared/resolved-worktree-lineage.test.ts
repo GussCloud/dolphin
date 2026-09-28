@@ -49,7 +49,7 @@ describe('sharesWorktreeLineageBoundary', () => {
   const boundary = (overrides: Partial<WorktreeLineageBoundary> = {}): WorktreeLineageBoundary => ({
     repoId: 'repo',
     hostId: 'local',
-    projectId: 'github:stablyai/dolphin',
+    projectId: 'github:gusscloud/dolphin',
     ...overrides
   })
 
@@ -111,7 +111,7 @@ describe('projectResolvedWorktreeLineage', () => {
     ['known host', { hostId: 'local' as const }, { hostId: 'ssh:remote' as const }],
     [
       'known project',
-      { projectId: 'github:stablyai/dolphin' },
+      { projectId: 'github:gusscloud/dolphin' },
       { projectId: 'github:other/project' }
     ]
   ])('rejects a %s boundary mismatch', (_label, childOverrides, parentOverrides) => {
@@ -131,7 +131,7 @@ describe('projectResolvedWorktreeLineage', () => {
   it('accepts legacy records when only one side has host or project identity', () => {
     const legacyChild = worktree('child', 'child-instance', {
       hostId: 'local',
-      projectId: 'github:stablyai/dolphin'
+      projectId: 'github:gusscloud/dolphin'
     })
 
     const projected = projectResolvedWorktreeLineage([legacyChild, parent], {

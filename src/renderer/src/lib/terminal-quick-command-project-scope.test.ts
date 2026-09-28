@@ -25,7 +25,7 @@ function command(repoId: string): TerminalQuickCommand {
 function setup(
   hostId: ExecutionHostId,
   repoId: string,
-  projectId = 'github:stablyai/dolphin'
+  projectId = 'github:gusscloud/dolphin'
 ): ScopeSetup {
   return { hostId, projectId, repoId }
 }
@@ -59,9 +59,9 @@ describe('terminalQuickCommandMatchesWorkspaceProject', () => {
       addedAt: 100,
       kind: 'git',
       gitRemoteIdentity: {
-        canonicalKey: 'github.com/stablyai/dolphin',
+        canonicalKey: 'github.com/gusscloud/dolphin',
         remoteName: 'origin',
-        remoteUrl: 'git@github.com:stablyai/dolphin.git'
+        remoteUrl: 'git@github.com:gusscloud/dolphin.git'
       },
       ...(executionHostId ? { executionHostId } : {})
     })
@@ -83,7 +83,7 @@ describe('terminalQuickCommandMatchesWorkspaceProject', () => {
   it('does not show a repo command for a different known project', () => {
     const projectHostSetups = [
       setup('local', LOCAL_REPO_ID),
-      setup('runtime:windows-2', WINDOWS_REPO_ID, 'github:stablyai/other')
+      setup('runtime:windows-2', WINDOWS_REPO_ID, 'github:gusscloud/other')
     ]
 
     expect(
@@ -99,7 +99,7 @@ describe('terminalQuickCommandMatchesWorkspaceProject', () => {
   it('does not trust colliding cross-host repo ids when both projects are known', () => {
     const projectHostSetups = [
       setup('local', LOCAL_REPO_ID),
-      setup('runtime:windows-2', LOCAL_REPO_ID, 'github:stablyai/other')
+      setup('runtime:windows-2', LOCAL_REPO_ID, 'github:gusscloud/other')
     ]
 
     expect(

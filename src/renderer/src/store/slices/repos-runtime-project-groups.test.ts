@@ -27,13 +27,13 @@ beforeEach(() => {
 describe('repo slice runtime project groups', () => {
   it('keeps runtime copies of a grouped canonical project in the same project group', async () => {
     const gitRemoteIdentity = {
-      canonicalKey: 'github.com/stablyai/dolphin',
+      canonicalKey: 'github.com/gusscloud/dolphin',
       remoteName: 'origin',
-      remoteUrl: 'https://github.com/stablyai/dolphin.git'
+      remoteUrl: 'https://github.com/gusscloud/dolphin.git'
     }
     const localDolphin: Repo = {
       id: 'local-dolphin',
-      path: '/Users/alice/stably/dolphin',
+      path: '/Users/alice/gusscloud/dolphin',
       displayName: 'dolphin',
       badgeColor: '#000',
       addedAt: 1,

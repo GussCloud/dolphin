@@ -391,10 +391,10 @@ describe('automation target availability', () => {
           sourceContext: {
             kind: 'task-source',
             provider: 'github',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-1',
-            providerIdentity: { provider: 'github', owner: 'stablyai', repo: 'dolphin' }
+            providerIdentity: { provider: 'github', owner: 'gusscloud', repo: 'dolphin' }
           }
         }),
         repo: makeRepo(),
@@ -417,15 +417,15 @@ describe('automation target availability', () => {
           sourceContext: {
             kind: 'task-source',
             provider: 'gitlab',
-            projectId: 'gitlab:stablyai/dolphin',
+            projectId: 'gitlab:gusscloud/dolphin',
             hostId: 'runtime:old-server',
             repoId: 'repo-1',
             providerIdentity: {
               provider: 'gitlab',
-              projectId: 'stablyai/dolphin',
-              namespace: 'stablyai',
+              projectId: 'gusscloud/dolphin',
+              namespace: 'gusscloud',
               project: 'dolphin',
-              webUrl: 'https://gitlab.com/stablyai/dolphin'
+              webUrl: 'https://gitlab.com/gusscloud/dolphin'
             }
           }
         }),

@@ -1,4 +1,4 @@
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import { realpathSync } from 'node:fs'
 import path from 'node:path'
 import { expect, test } from './helpers/dolphin-app'

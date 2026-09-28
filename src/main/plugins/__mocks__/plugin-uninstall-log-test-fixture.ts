@@ -106,7 +106,7 @@ export async function createUninstallFixture() {
     const manifest = {
       manifestVersion: 1,
       id,
-      publisher: official ? 'stablyai' : 'memory-audit',
+      publisher: official ? 'gusscloud' : 'memory-audit',
       name: id,
       version: '1.0.0',
       engines: { dolphin: '>=1.0.0' },
@@ -127,7 +127,7 @@ export async function createUninstallFixture() {
           hostVersion: '1.4.0',
           source: {
             kind: 'git',
-            url: 'https://github.com/stablyai/dolphin-plugins.git',
+            url: 'https://github.com/gusscloud/dolphin-plugins.git',
             ref: 'main'
           },
           resolvedCommit: '1'.repeat(40)

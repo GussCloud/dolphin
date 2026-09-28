@@ -9,7 +9,7 @@
  */
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import {
   createRuntimeDesktopPairingOffer,

@@ -1,32 +1,32 @@
 {
   "name": "Dolphin Official Plugins",
-  "owner": "stablyai",
+  "owner": "gusscloud",
   "plugins": [
     {
-      "id": "stablyai.dolphin-portuguese",
+      "id": "gusscloud.dolphin-portuguese",
       "source": {
         "kind": "git",
-        "url": "https://github.com/stablyai/dolphin-portuguese.git",
+        "url": "https://github.com/gusscloud/dolphin-portuguese.git",
         "ref": "v1.0.0"
       },
       "description": "Brazilian Portuguese translations for common Dolphin navigation.",
       "categories": ["languages", "official"]
     },
     {
-      "id": "stablyai.dolphin-multipass-recipes",
+      "id": "gusscloud.dolphin-multipass-recipes",
       "source": {
         "kind": "git",
-        "url": "https://github.com/stablyai/dolphin-multipass-recipes.git",
+        "url": "https://github.com/gusscloud/dolphin-multipass-recipes.git",
         "ref": "v1.0.0"
       },
       "description": "A reviewed starter lifecycle for disposable Multipass workspaces.",
       "categories": ["vm-recipes", "official"]
     },
     {
-      "id": "stablyai.dolphin-navigation-shortcuts",
+      "id": "gusscloud.dolphin-navigation-shortcuts",
       "source": {
         "kind": "git",
-        "url": "https://github.com/stablyai/dolphin-navigation-shortcuts.git",
+        "url": "https://github.com/gusscloud/dolphin-navigation-shortcuts.git",
         "ref": "v1.0.0"
       },
       "description": "Command aliases and optional shortcuts for frequent Dolphin views.",

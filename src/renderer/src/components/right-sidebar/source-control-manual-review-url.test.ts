@@ -84,11 +84,11 @@ describe('buildSourceControlManualReviewUrl', () => {
         baseRef: 'refs/remotes/origin/main',
         branchName: 'native-chat-does-not-auto-open',
         repoRemoteName: 'origin',
-        repoRemoteUrl: 'git@github.com:stablyai/dolphin.git',
+        repoRemoteUrl: 'git@github.com:gusscloud/dolphin.git',
         upstreamName: 'origin/native-chat-does-not-auto-open'
       })
     ).toBe(
-      'https://github.com/stablyai/dolphin/compare/main...native-chat-does-not-auto-open?expand=1'
+      'https://github.com/gusscloud/dolphin/compare/main...native-chat-does-not-auto-open?expand=1'
     )
   })
 
@@ -98,7 +98,7 @@ describe('buildSourceControlManualReviewUrl', () => {
         baseRef: 'refs/remotes/upstream/main',
         branchName: 'feature/fork-head',
         repoRemoteName: 'upstream',
-        repoRemoteUrl: 'https://github.com/stablyai/dolphin.git',
+        repoRemoteUrl: 'https://github.com/gusscloud/dolphin.git',
         pushTarget: {
           remoteName: 'fork',
           branchName: 'feature/fork-head',
@@ -106,7 +106,7 @@ describe('buildSourceControlManualReviewUrl', () => {
         }
       })
     ).toBe(
-      'https://github.com/stablyai/dolphin/compare/main...contributor:feature/fork-head?expand=1'
+      'https://github.com/gusscloud/dolphin/compare/main...contributor:feature/fork-head?expand=1'
     )
   })
 
@@ -116,11 +116,11 @@ describe('buildSourceControlManualReviewUrl', () => {
         baseRef: 'refs/remotes/origin/main',
         branchName: 'slashdevcorpse/identifying-pwsh.exe-error',
         repoRemoteName: 'origin',
-        repoRemoteUrl: 'git@github.com:stablyai/dolphin.git',
+        repoRemoteUrl: 'git@github.com:gusscloud/dolphin.git',
         upstreamName: 'origin/slashdevcorpse/identifying-pwsh.exe-error'
       })
     ).toBe(
-      'https://github.com/stablyai/dolphin/compare/main...slashdevcorpse/identifying-pwsh.exe-error?expand=1'
+      'https://github.com/gusscloud/dolphin/compare/main...slashdevcorpse/identifying-pwsh.exe-error?expand=1'
     )
   })
 
@@ -208,7 +208,7 @@ describe('buildSourceControlManualReviewUrl', () => {
         baseRef: 'refs/remotes/origin/main',
         branchName: 'quick-commands',
         repoRemoteName: 'origin',
-        repoRemoteUrl: 'https://github.com/stablyai/dolphin.git',
+        repoRemoteUrl: 'https://github.com/gusscloud/dolphin.git',
         upstreamName: 'pr-devajmeireles-dolphin/quick-commands'
       })
     ).toBeNull()
@@ -220,10 +220,10 @@ describe('buildSourceControlManualReviewUrl', () => {
         baseRef: 'refs/remotes/origin/main',
         branchName: 'local-wip-name',
         repoRemoteName: 'origin',
-        repoRemoteUrl: 'git@github.com:stablyai/dolphin.git',
+        repoRemoteUrl: 'git@github.com:gusscloud/dolphin.git',
         upstreamName: 'origin/feature/pushed-name'
       })
-    ).toBe('https://github.com/stablyai/dolphin/compare/main...feature/pushed-name?expand=1')
+    ).toBe('https://github.com/gusscloud/dolphin/compare/main...feature/pushed-name?expand=1')
   })
 
   it('still qualifies the fork head when Dolphin resolved the fork push URL', () => {
@@ -232,7 +232,7 @@ describe('buildSourceControlManualReviewUrl', () => {
         baseRef: 'refs/remotes/origin/main',
         branchName: 'quick-commands',
         repoRemoteName: 'origin',
-        repoRemoteUrl: 'https://github.com/stablyai/dolphin.git',
+        repoRemoteUrl: 'https://github.com/gusscloud/dolphin.git',
         upstreamName: 'pr-devajmeireles-dolphin/quick-commands',
         pushTarget: {
           remoteName: 'pr-devajmeireles-dolphin',
@@ -241,7 +241,7 @@ describe('buildSourceControlManualReviewUrl', () => {
         }
       })
     ).toBe(
-      'https://github.com/stablyai/dolphin/compare/main...devajmeireles:quick-commands?expand=1'
+      'https://github.com/gusscloud/dolphin/compare/main...devajmeireles:quick-commands?expand=1'
     )
   })
 
@@ -265,7 +265,7 @@ describe('buildSourceControlManualReviewUrl', () => {
         baseRef: 'refs/remotes/origin/main',
         branchName: 'codex-runtime-home-refactor-design',
         repoRemoteName: 'origin',
-        repoRemoteUrl: 'git@github.com:stablyai/dolphin.git',
+        repoRemoteUrl: 'git@github.com:gusscloud/dolphin.git',
         upstreamName: null
       })
     ).toBeNull()

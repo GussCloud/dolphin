@@ -41,7 +41,7 @@ const repoMap = new Map<string, Repo>([
     {
       id: 'repo-1',
       path: '/repo/dolphin',
-      displayName: 'stablyai/dolphin',
+      displayName: 'gusscloud/dolphin',
       badgeColor: '#22c55e',
       addedAt: 0
     }
@@ -412,7 +412,7 @@ describe('worktree-palette-search', () => {
     expect(results).toHaveLength(1)
     expect(results[0].worktreeId).toBe('wt-main')
     expect(results[0].matchedFields).toEqual(['repo', 'branch'])
-    expect(results[0].repoRanges).toEqual([{ start: 9, end: 13 }])
+    expect(results[0].repoRanges).toEqual([{ start: 10, end: 17 }])
     expect(results[0].branchRanges).toEqual([{ start: 0, end: 4 }])
   })
 
@@ -464,7 +464,7 @@ describe('worktree-palette-search', () => {
         makeWorktree({ id: 'wt-issue', linkedIssue: 14198 }),
         makeWorktree({ id: 'wt-other', linkedIssue: 7, displayName: 'github.com' })
       ],
-      'https://github.com/stablyai/dolphin/issues/14198',
+      'https://github.com/gusscloud/dolphin/issues/14198',
       repoMap
     )
 
@@ -494,12 +494,12 @@ describe('worktree-palette-search', () => {
             type: 'pr',
             number: 12789,
             title: 'Perf',
-            url: 'https://github.com/stablyai/dolphin/pull/12789'
+            url: 'https://github.com/gusscloud/dolphin/pull/12789'
           }
         }),
         makeWorktree({ id: 'wt-issue', linkedIssue: 12789 })
       ],
-      'https://github.com/stablyai/dolphin/pull/12789',
+      'https://github.com/gusscloud/dolphin/pull/12789',
       repoMap
     )
 
@@ -512,11 +512,11 @@ describe('worktree-palette-search', () => {
         makeWorktree({
           id: 'wt-linear',
           linkedLinearIssue: 'STA-4052',
-          linkedLinearIssueOrganizationUrlKey: 'stably'
+          linkedLinearIssueOrganizationUrlKey: 'gusscloud'
         }),
         makeWorktree({ id: 'wt-name', displayName: 'linear.app' })
       ],
-      'https://linear.app/stably/issue/STA-4052/agent-terminals-disappearing-randomly',
+      'https://linear.app/gusscloud/issue/STA-4052/agent-terminals-disappearing-randomly',
       repoMap
     )
 

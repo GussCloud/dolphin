@@ -150,13 +150,13 @@ describe('PluginMarketplaceService', () => {
   it('derives the Official badge only from the canonical marketplace and source organization', async () => {
     const officialMarketplace: PluginMarketplace = {
       name: 'Dolphin Plugins',
-      owner: 'stablyai',
+      owner: 'gusscloud',
       plugins: [
         {
-          id: 'stablyai.dolphin-shortcuts',
+          id: 'gusscloud.dolphin-shortcuts',
           source: {
             kind: 'git',
-            url: 'git@github.com:stablyai/dolphin-shortcuts.git',
+            url: 'git@github.com:gusscloud/dolphin-shortcuts.git',
             ref: 'main'
           },
           categories: ['keybindings']
@@ -168,10 +168,10 @@ describe('PluginMarketplaceService', () => {
       fetcher: async () => fetched(officialMarketplace)
     })
 
-    await service.addSource(source('https://github.com/stablyai/dolphin-plugins.git'))
+    await service.addSource(source('https://github.com/gusscloud/dolphin-plugins.git'))
 
     await expect(service.listPlugins()).resolves.toEqual([
-      expect.objectContaining({ pluginKey: 'stablyai.dolphin-shortcuts', official: true })
+      expect.objectContaining({ pluginKey: 'gusscloud.dolphin-shortcuts', official: true })
     ])
   })
 
@@ -216,10 +216,10 @@ describe('PluginMarketplaceService', () => {
     const root = await tempRoot()
     const officialMarketplace = marketplace(
       'Dolphin Plugins',
-      'stablyai.dolphin-notes',
-      'https://github.com/stablyai/dolphin-notes.git'
+      'gusscloud.dolphin-notes',
+      'https://github.com/gusscloud/dolphin-notes.git'
     )
-    officialMarketplace.owner = 'stablyai'
+    officialMarketplace.owner = 'gusscloud'
     const fetcher = vi.fn(async () => fetched(officialMarketplace))
     const first = new PluginMarketplaceService({ pluginsDataDir: root, fetcher })
 
@@ -259,10 +259,10 @@ describe('PluginMarketplaceService', () => {
     }
     const officialMarketplace = marketplace(
       'Dolphin Plugins',
-      'stablyai.dolphin-notes',
-      'https://github.com/stablyai/dolphin-notes.git'
+      'gusscloud.dolphin-notes',
+      'https://github.com/gusscloud/dolphin-notes.git'
     )
-    officialMarketplace.owner = 'stablyai'
+    officialMarketplace.owner = 'gusscloud'
     const listSources = vi
       .fn<() => Promise<readonly PluginMarketplaceRegisteredSource[]>>()
       .mockRejectedValueOnce(new Error('source store temporarily unavailable'))
@@ -304,10 +304,10 @@ describe('PluginMarketplaceService', () => {
     )
     const officialMarketplace = marketplace(
       'Dolphin Plugins',
-      'stablyai.dolphin-notes',
-      'https://github.com/stablyai/dolphin-notes.git'
+      'gusscloud.dolphin-notes',
+      'https://github.com/gusscloud/dolphin-notes.git'
     )
-    officialMarketplace.owner = 'stablyai'
+    officialMarketplace.owner = 'gusscloud'
     const service = new PluginMarketplaceService({
       pluginsDataDir: root,
       store,

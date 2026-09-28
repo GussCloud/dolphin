@@ -1,4 +1,4 @@
-import type { ElectronApplication, TestInfo } from '@stablyai/playwright-test'
+import type { ElectronApplication, TestInfo } from '@playwright/test'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   presentTerminalPerfWindow,

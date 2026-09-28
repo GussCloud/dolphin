@@ -1,5 +1,5 @@
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 // Why: the retention-budget spec needs several worktrees of ONE connected remote
 // repo (adding a second repo mid-session misroutes its pty spawn to the local

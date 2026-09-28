@@ -14,9 +14,11 @@ describe('parseGitLabIssueOrMRNumber', () => {
   })
 
   it('parses gitlab.com issue and MR URLs', () => {
-    expect(parseGitLabIssueOrMRNumber('https://gitlab.com/stablyai/dolphin/-/issues/923')).toBe(923)
+    expect(parseGitLabIssueOrMRNumber('https://gitlab.com/gusscloud/dolphin/-/issues/923')).toBe(
+      923
+    )
     expect(
-      parseGitLabIssueOrMRNumber('https://gitlab.com/stablyai/dolphin/-/merge_requests/123')
+      parseGitLabIssueOrMRNumber('https://gitlab.com/gusscloud/dolphin/-/merge_requests/123')
     ).toBe(123)
   })
 
@@ -25,9 +27,9 @@ describe('parseGitLabIssueOrMRNumber', () => {
   })
 
   it('parses modern /-/work_items/<iid> issue URLs', () => {
-    expect(parseGitLabIssueOrMRNumber('https://gitlab.com/stablyai/dolphin/-/work_items/923')).toBe(
-      923
-    )
+    expect(
+      parseGitLabIssueOrMRNumber('https://gitlab.com/gusscloud/dolphin/-/work_items/923')
+    ).toBe(923)
     expect(
       parseGitLabIssueOrMRNumber('https://gitlab.example.com:8443/team/api/-/work_items/7')
     ).toBe(7)
@@ -49,8 +51,8 @@ describe('parseGitLabIssueOrMRNumber', () => {
   })
 
   it('rejects GitHub URLs (no /-/ separator)', () => {
-    expect(parseGitLabIssueOrMRNumber('https://github.com/stablyai/dolphin/issues/923')).toBeNull()
-    expect(parseGitLabIssueOrMRNumber('https://github.com/stablyai/dolphin/pull/123')).toBeNull()
+    expect(parseGitLabIssueOrMRNumber('https://github.com/gusscloud/dolphin/issues/923')).toBeNull()
+    expect(parseGitLabIssueOrMRNumber('https://github.com/gusscloud/dolphin/pull/123')).toBeNull()
   })
 
   it('rejects unparseable input', () => {
@@ -62,14 +64,14 @@ describe('parseGitLabIssueOrMRNumber', () => {
 
 describe('parseGitLabIssueOrMRLink', () => {
   it('extracts slug + number + type for issues and MRs', () => {
-    expect(parseGitLabIssueOrMRLink('https://gitlab.com/stablyai/dolphin/-/issues/923')).toEqual({
-      slug: { host: 'gitlab.com', path: 'stablyai/dolphin' },
+    expect(parseGitLabIssueOrMRLink('https://gitlab.com/gusscloud/dolphin/-/issues/923')).toEqual({
+      slug: { host: 'gitlab.com', path: 'gusscloud/dolphin' },
       number: 923,
       type: 'issue'
     })
     expect(
-      parseGitLabIssueOrMRLink('https://gitlab.com/stablyai/dolphin/-/merge_requests/77')
-    ).toEqual({ slug: { host: 'gitlab.com', path: 'stablyai/dolphin' }, number: 77, type: 'mr' })
+      parseGitLabIssueOrMRLink('https://gitlab.com/gusscloud/dolphin/-/merge_requests/77')
+    ).toEqual({ slug: { host: 'gitlab.com', path: 'gusscloud/dolphin' }, number: 77, type: 'mr' })
   })
 
   it('preserves self-hosted GitLab hosts in the slug', () => {
@@ -102,9 +104,9 @@ describe('parseGitLabIssueOrMRLink', () => {
 
   it('treats /-/work_items/<iid> as an issue work item', () => {
     expect(
-      parseGitLabIssueOrMRLink('https://gitlab.com/stablyai/dolphin/-/work_items/923')
+      parseGitLabIssueOrMRLink('https://gitlab.com/gusscloud/dolphin/-/work_items/923')
     ).toEqual({
-      slug: { host: 'gitlab.com', path: 'stablyai/dolphin' },
+      slug: { host: 'gitlab.com', path: 'gusscloud/dolphin' },
       number: 923,
       type: 'issue'
     })
@@ -142,9 +144,9 @@ describe('parseGitLabIssueOrMRLink', () => {
   })
 
   it('returns null for non-GitLab URL shapes', () => {
-    expect(parseGitLabIssueOrMRLink('https://gitlab.com/stablyai/dolphin/issues/123')).toBeNull()
+    expect(parseGitLabIssueOrMRLink('https://gitlab.com/gusscloud/dolphin/issues/123')).toBeNull()
     expect(
-      parseGitLabIssueOrMRLink('https://gitlab.com/stablyai/dolphin/-/issues/123abc')
+      parseGitLabIssueOrMRLink('https://gitlab.com/gusscloud/dolphin/-/issues/123abc')
     ).toBeNull()
   })
 })
@@ -155,17 +157,17 @@ describe('normalizeGitLabLinkQuery', () => {
   })
 
   it('routes a full URL to query + directNumber', () => {
-    expect(normalizeGitLabLinkQuery('https://gitlab.com/stablyai/dolphin/-/issues/923')).toEqual({
-      query: 'https://gitlab.com/stablyai/dolphin/-/issues/923',
+    expect(normalizeGitLabLinkQuery('https://gitlab.com/gusscloud/dolphin/-/issues/923')).toEqual({
+      query: 'https://gitlab.com/gusscloud/dolphin/-/issues/923',
       directNumber: 923
     })
   })
 
   it('routes full URLs with trailing page segments to directNumber', () => {
     expect(
-      normalizeGitLabLinkQuery('https://gitlab.com/stablyai/dolphin/-/merge_requests/77/diffs')
+      normalizeGitLabLinkQuery('https://gitlab.com/gusscloud/dolphin/-/merge_requests/77/diffs')
     ).toEqual({
-      query: 'https://gitlab.com/stablyai/dolphin/-/merge_requests/77/diffs',
+      query: 'https://gitlab.com/gusscloud/dolphin/-/merge_requests/77/diffs',
       directNumber: 77
     })
   })

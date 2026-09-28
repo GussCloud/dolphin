@@ -81,12 +81,12 @@ describe('dolphin cli worktree awareness', () => {
       okFixture('req_project_list', {
         projects: [
           {
-            id: 'github:stablyai/dolphin',
+            id: 'github:gusscloud/dolphin',
             displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             providerIdentity: {
               provider: 'github',
-              owner: 'stablyai',
+              owner: 'gusscloud',
               repo: 'dolphin'
             },
             sourceRepoIds: ['repo-1'],
@@ -111,7 +111,7 @@ describe('dolphin cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-local',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-local',
             path: '/tmp/dolphin',
@@ -123,7 +123,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           {
             id: 'setup-remote',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: 'repo-remote',
             path: '/srv/dolphin',
@@ -139,7 +139,7 @@ describe('dolphin cli worktree awareness', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await main(
-      ['project', 'setups', '--project', 'github:stablyai/dolphin', '--host', 'runtime:gpu'],
+      ['project', 'setups', '--project', 'github:gusscloud/dolphin', '--host', 'runtime:gpu'],
       '/tmp/repo'
     )
 
@@ -157,7 +157,7 @@ describe('dolphin cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-on-box',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-on-box',
             path: '/srv/dolphin',
@@ -169,7 +169,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           {
             id: 'setup-by-client',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:prod',
             repoId: 'repo-by-client',
             path: '/srv/dolphin-2',
@@ -276,7 +276,7 @@ describe('dolphin cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-openclaw',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'ssh:ssh-123-abc',
             repoId: 'repo-openclaw',
             path: '/home/me/dolphin',
@@ -306,7 +306,7 @@ describe('dolphin cli worktree awareness', () => {
       okFixture('req_project_setup_create', {
         result: {
           project: {
-            id: 'github:stablyai/dolphin',
+            id: 'github:gusscloud/dolphin',
             displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
@@ -315,7 +315,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-awin',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: '',
             path: '',
@@ -335,7 +335,7 @@ describe('dolphin cli worktree awareness', () => {
         'project',
         'setup-create',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:awin',
         '--json'
@@ -392,7 +392,7 @@ describe('dolphin cli worktree awareness', () => {
       okFixture('req_project_setup', {
         result: {
           project: {
-            id: 'github:stablyai/dolphin',
+            id: 'github:gusscloud/dolphin',
             displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: ['repo-1'],
@@ -401,7 +401,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-local',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-1',
             path: path.resolve('/tmp/dolphin'),
@@ -428,7 +428,7 @@ describe('dolphin cli worktree awareness', () => {
         'project',
         'setup-existing-folder',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--host',
         'local',
         '--path',
@@ -443,7 +443,7 @@ describe('dolphin cli worktree awareness', () => {
     )
 
     expect(callMock).toHaveBeenCalledWith('projectHostSetup.setupExistingFolder', {
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'local',
       path: path.resolve('/tmp/dolphin/worktrees'),
       kind: 'git',
@@ -462,7 +462,7 @@ describe('dolphin cli worktree awareness', () => {
         'project',
         'setup-existing-folder',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:gpu',
         '--path',
@@ -493,7 +493,7 @@ describe('dolphin cli worktree awareness', () => {
         'project',
         'setup-existing-folder',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--host',
         'ssh:openclaw',
         '--path',
@@ -590,7 +590,7 @@ describe('dolphin cli worktree awareness', () => {
       okFixture('req_project_setup_clone', {
         result: {
           project: {
-            id: 'github:stablyai/dolphin',
+            id: 'github:gusscloud/dolphin',
             displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
@@ -599,7 +599,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-awin',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-awin',
             path: 'C:\\dolphin-probe\\dolphin',
@@ -626,11 +626,11 @@ describe('dolphin cli worktree awareness', () => {
         'project',
         'setup-clone',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:awin',
         '--url',
-        'https://github.com/stablyai/dolphin.git',
+        'https://github.com/gusscloud/dolphin.git',
         '--destination',
         'C:\\dolphin-probe',
         '--json'
@@ -651,7 +651,7 @@ describe('dolphin cli worktree awareness', () => {
       okFixture('req_project_setup_update', {
         result: {
           project: {
-            id: 'github:stablyai/dolphin',
+            id: 'github:gusscloud/dolphin',
             displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
@@ -660,7 +660,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: '',
             path: '/srv/dolphin',
@@ -717,7 +717,7 @@ describe('dolphin cli worktree awareness', () => {
       okFixture('req_project_setup_create', {
         result: {
           project: {
-            id: 'github:stablyai/dolphin',
+            id: 'github:gusscloud/dolphin',
             displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
@@ -726,7 +726,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: '',
             path: '',
@@ -746,7 +746,7 @@ describe('dolphin cli worktree awareness', () => {
         'project',
         'setup-create',
         '--project',
-        'github:stablyai/dolphin',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:gpu',
         '--setup-id',
@@ -763,7 +763,7 @@ describe('dolphin cli worktree awareness', () => {
     )
 
     expect(callMock).toHaveBeenCalledWith('projectHostSetup.create', {
-      projectId: 'github:stablyai/dolphin',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'runtime:gpu',
       setupId: 'setup-gpu',
       path: undefined,
@@ -782,7 +782,7 @@ describe('dolphin cli worktree awareness', () => {
       okFixture('req_project_setup_delete', {
         result: {
           project: {
-            id: 'github:stablyai/dolphin',
+            id: 'github:gusscloud/dolphin',
             displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
@@ -791,7 +791,7 @@ describe('dolphin cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/dolphin',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: '',
             path: '/srv/dolphin',

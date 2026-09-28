@@ -1,4 +1,4 @@
-import type { Page, TestInfo } from '@stablyai/playwright-test'
+import type { Page, TestInfo } from '@playwright/test'
 import { RuntimeClient } from '../../src/cli/runtime/client'
 import { expect, test } from './helpers/dolphin-app'
 import { readHostBrowserPageIds, readHostTabs } from './helpers/host-session-tabs'

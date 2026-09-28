@@ -36,7 +36,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import os from 'node:os'
 import path from 'node:path'
-import type { Page, TestInfo } from '@stablyai/playwright-test'
+import type { Page, TestInfo } from '@playwright/test'
 import { expect, test } from './helpers/dolphin-app'
 import { resolveLeafScrollbackBuffers } from '../../src/renderer/src/components/terminal-pane/leaf-scrollback-resolution'
 import {
