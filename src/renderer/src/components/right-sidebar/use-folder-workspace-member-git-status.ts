@@ -18,7 +18,9 @@ export function useFolderWorkspaceMemberGitStatus(
 ): () => void {
   const refreshNowRef = useRef<() => void>(() => {})
   const membersRef = useRef(members)
-  membersRef.current = members
+  useEffect(() => {
+    membersRef.current = members
+  }, [members])
   // Why: keyed on identity + path so store churn that rebuilds the array doesn't restart the lane.
   const memberKey = members
     .map((member) => `${member.worktree.id}\0${member.worktree.path}`)

@@ -1,5 +1,6 @@
 import { useId, useMemo } from 'react'
 import { getFolderSourceRepos } from '@/components/sidebar/folder-workspace-composer-helpers'
+import { EMPTY_PROJECT_GROUPS } from '@/components/sidebar/worktree-list/viewport/viewport-props'
 import { Checkbox } from '@/components/ui/checkbox'
 import RepoMultiCombobox from '@/components/ui/repo-multi-combobox'
 import { translate } from '@/i18n/i18n'
@@ -22,7 +23,7 @@ export function MultiProjectWorktreesField({
   const projectGroupId = selectedProjectId
     ? getProjectGroupIdFromNewWorkspaceOptionId(selectedProjectId)
     : null
-  const projectGroups = useAppStore((s) => s.projectGroups)
+  const projectGroups = useAppStore((s) => s.projectGroups ?? EMPTY_PROJECT_GROUPS)
   const repos = useAppStore((s) => s.repos)
   const selection = useMultiProjectWorktreeSelectionStore((s) =>
     projectGroupId ? getMultiProjectWorktreeSelection(s.byProjectGroupId, projectGroupId) : null
@@ -36,7 +37,7 @@ export function MultiProjectWorktreesField({
   }, [projectGroupId, projectGroups, repos])
 
   // Why: web clients reach a remote host, which can't place worktrees on this machine's disk.
-  const hostCanCreate = typeof window.api.worktrees.createMultiProject === 'function'
+  const hostCanCreate = typeof window.api?.worktrees?.createMultiProject === 'function'
   if (!hostCanCreate || !projectGroupId || !selection || eligibleRepos.length === 0) {
     return null
   }
