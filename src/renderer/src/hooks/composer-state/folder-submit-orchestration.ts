@@ -47,6 +47,15 @@ import {
   getWorkspaceCreateErrorToastMessage
 } from '@/lib/workspace-create-error-format'
 import { toast } from 'sonner'
+import { getMultiProjectEligibleRepos } from '@/components/new-workspace/multi-project-workspace-eligibility'
+import { ensureWorktreeHasInitialTerminal } from '@/lib/worktree-initial-terminal-seeding'
+import { useAppStore } from '@/store'
+import {
+  getMultiProjectWorktreeSelection,
+  resolveMultiProjectWorktreeRepoIds,
+  useMultiProjectWorktreeSelectionStore
+} from '@/store/multi-project-worktree-selection'
+import type { MultiProjectWorkspaceCreateResult } from '../../../../shared/multi-project-workspace-types'
 
 export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInput) {
   const {
@@ -107,6 +116,16 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
         if (isSubmissionCancelled()) {
           return
         }
+        const multiProjectRepoIds = resolveMultiProjectWorktreeRepoIds(
+          getMultiProjectWorktreeSelection(
+            useMultiProjectWorktreeSelectionStore.getState().byProjectGroupId,
+            selectedProjectGroup.id
+          ),
+          getMultiProjectEligibleRepos(selectedProjectGroup, folderSourceRepos).map(
+            (repo) => repo.id
+          )
+        )
+        let multiProjectResult: MultiProjectWorkspaceCreateResult | null = null
         const folderLaunchDraftText =
           agent && submitLinkedWorkItem
             ? resolveFolderWorkspaceLaunchDraft(submitLinkedWorkItem, note)
@@ -146,10 +165,27 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
           isRemote: folderTargetIsRemote,
           launchSource: telemetrySource === 'onboarding' ? 'onboarding' : 'new_workspace_composer',
           runtimeEnvironmentId: folderTargetRuntimeEnvironmentId,
-          createFolderWorkspace: (input) =>
-            createFolderWorkspace(input, {
-              runtimeEnvironmentId: folderTargetRuntimeEnvironmentId
-            }),
+          createFolderWorkspace: async (input) => {
+            if (!multiProjectRepoIds) {
+              return createFolderWorkspace(input, {
+                runtimeEnvironmentId: folderTargetRuntimeEnvironmentId
+              })
+            }
+            multiProjectResult = await useAppStore.getState().createMultiProjectWorkspace({
+              projectGroupId: input.projectGroupId,
+              name: input.name,
+              repoIds: multiProjectRepoIds,
+              linkedTask: input.linkedTask,
+              ...(input.linkedTaskSourceContext
+                ? { linkedTaskSourceContext: input.linkedTaskSourceContext }
+                : {}),
+              ...(input.createdWithAgent ? { createdWithAgent: input.createdWithAgent } : {}),
+              ...(input.pendingFirstAgentMessageRename
+                ? { pendingFirstAgentMessageRename: true }
+                : {})
+            })
+            return multiProjectResult.folderWorkspace
+          },
           onOpenChange: (open) => {
             if (!open) {
               if (persistDraft) {
@@ -159,6 +195,9 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
             }
           }
         })
+        if (folderWorkspaceCreated && multiProjectResult) {
+          seedMultiProjectMemberSetup(multiProjectResult)
+        }
         if (!folderWorkspaceCreated) {
           setCreateError({
             title: translate(
@@ -191,7 +230,7 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
       folderTargetConnectionId,
       folderTargetIsRemote,
       folderTargetRuntimeEnvironmentId,
-      folderSourceRepos.length,
+      folderSourceRepos,
       isSubmissionCancelled,
       linkedWorkItem,
       name,
@@ -211,5 +250,22 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
 
   return {
     submitFolderTarget
+  }
+}
+
+/** Members aren't activated on create, so queue their setup/default tabs for when they open. */
+function seedMultiProjectMemberSetup(result: MultiProjectWorkspaceCreateResult): void {
+  for (const member of result.members) {
+    if (!member.setup && !member.defaultTabs) {
+      continue
+    }
+    ensureWorktreeHasInitialTerminal(
+      useAppStore.getState(),
+      member.worktree.id,
+      undefined,
+      member.setup,
+      undefined,
+      member.defaultTabs
+    )
   }
 }

@@ -14,6 +14,7 @@ import {
   shouldOpenSourceControlRowAsPreview,
   type SourceControlRowOpenEvent
 } from './split-open'
+import { useRevealScopedWorktree } from './source-control-scope'
 
 export function useSourceControlRowOpening({
   isMac,
@@ -37,6 +38,7 @@ export function useSourceControlRowOpening({
   const openFile = useAppStore((s) => s.openFile)
   const setEditorViewMode = useAppStore((s) => s.setEditorViewMode)
   const openBranchDiff = useAppStore((s) => s.openBranchDiff)
+  const revealScopedWorktree = useRevealScopedWorktree()
 
   // Why: modifier-click keeps the current pane intact by opening the file in a fresh split to the right.
   const resolveSplitTargetGroupId = useCallback(
@@ -87,6 +89,7 @@ export function useSourceControlRowOpening({
       if (!activeWorktreeId || !worktreePath) {
         return
       }
+      revealScopedWorktree()
       const targetGroupId = resolveSplitTargetGroupId(event)
       const openAsPreview = shouldOpenSourceControlRowAsPreview(event, targetGroupId)
       if (entry.conflictKind && entry.conflictStatus) {
@@ -129,6 +132,7 @@ export function useSourceControlRowOpening({
       openConflictFile,
       openDiff,
       openFile,
+      revealScopedWorktree,
       setEditorViewMode
     ]
   )
@@ -143,6 +147,7 @@ export function useSourceControlRowOpening({
       ) {
         return
       }
+      revealScopedWorktree()
       const targetGroupId = resolveSplitTargetGroupId(event)
       openBranchDiff(
         activeWorktreeId,
@@ -153,7 +158,14 @@ export function useSourceControlRowOpening({
         { targetGroupId, preview: shouldOpenSourceControlRowAsPreview(event, targetGroupId) }
       )
     },
-    [activeWorktreeId, branchSummary, openBranchDiff, resolveSplitTargetGroupId, worktreePath]
+    [
+      activeWorktreeId,
+      branchSummary,
+      openBranchDiff,
+      resolveSplitTargetGroupId,
+      revealScopedWorktree,
+      worktreePath
+    ]
   )
 
   return { resolveSplitTargetGroupId, activeOpenRowKeys, handleOpenDiff, openCommittedDiff }

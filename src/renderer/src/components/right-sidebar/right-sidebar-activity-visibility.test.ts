@@ -24,8 +24,10 @@ const items: ActivityBarItem[] = [
     icon: Files,
     title: 'Source Control',
     shortcut: '',
-    gitOnly: true
+    gitOnly: true,
+    folderWorkspaceGit: true
   },
+  { id: 'checks', icon: Files, title: 'Checks', shortcut: '', gitOnly: true },
   { id: 'ports', icon: Files, title: 'Ports', shortcut: '', sshOnly: true },
   // Plugin panels carry no visibility flags, so they show in every context.
   {
@@ -44,7 +46,12 @@ describe('getVisibleRightSidebarActivityItems', () => {
         isFolderWorkspace: false,
         isSshRepo: false
       }).map((item) => item.id)
-    ).toEqual(['explorer', 'source-control', 'plugin:dolphin-samples.my-plugin/dashboard'])
+    ).toEqual([
+      'explorer',
+      'source-control',
+      'checks',
+      'plugin:dolphin-samples.my-plugin/dashboard'
+    ])
 
     expect(
       getVisibleRightSidebarActivityItems(items, {
@@ -52,10 +59,16 @@ describe('getVisibleRightSidebarActivityItems', () => {
         isFolderWorkspace: false,
         isSshRepo: true
       }).map((item) => item.id)
-    ).toEqual(['explorer', 'source-control', 'ports', 'plugin:dolphin-samples.my-plugin/dashboard'])
+    ).toEqual([
+      'explorer',
+      'source-control',
+      'checks',
+      'ports',
+      'plugin:dolphin-samples.my-plugin/dashboard'
+    ])
   })
 
-  it('shows Workspaces only for folder workspaces and hides git tabs for all folder scopes', () => {
+  it('shows Workspaces and member Source Control for folder workspaces, no git tabs for folder repos', () => {
     expect(
       getVisibleRightSidebarActivityItems(items, {
         isFolder: true,
@@ -66,6 +79,7 @@ describe('getVisibleRightSidebarActivityItems', () => {
       'explorer',
       'workspaces',
       'pr-checks',
+      'source-control',
       'ports',
       'plugin:dolphin-samples.my-plugin/dashboard'
     ])

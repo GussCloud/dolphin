@@ -2318,19 +2318,25 @@ export async function createRemoteWorktree(
   }
 }
 
+/** Main-only placement for creates that must land at a caller-chosen path (multi-project workspaces). */
+export type LocalWorktreePlacement = {
+  worktreePath: string
+}
+
 export function createLocalWorktree(
   args: CreateWorktreeArgsWithSystemProvenance,
   repo: Repo,
   store: Store,
   mainWindow: BrowserWindow,
-  runtime?: DolphinRuntimeService
+  runtime?: DolphinRuntimeService,
+  placement?: LocalWorktreePlacement
 ): Promise<CreateWorktreeResult> {
   // Why a holder fired in `finally`: consuming a prepared checkout leaves the pool one short, so a
   // create that fails after that point — include copy, push target, terminal startup — must still
   // arm the replacement. Fires exactly once, after startup on the success path.
   const rearm: PreparationRearmHolder = { fire: () => {} }
   return worktreeCreateGit
-    .run(() => performLocalWorktreeCreate(args, repo, store, mainWindow, rearm, runtime))
+    .run(() => performLocalWorktreeCreate(args, repo, store, mainWindow, rearm, runtime, placement))
     .finally(() => {
       rearm.fire()
     })
@@ -2342,7 +2348,8 @@ async function performLocalWorktreeCreate(
   store: Store,
   mainWindow: BrowserWindow,
   rearm: PreparationRearmHolder,
-  runtime?: DolphinRuntimeService
+  runtime?: DolphinRuntimeService,
+  placement?: LocalWorktreePlacement
 ): Promise<CreateWorktreeResult> {
   const timing = createWorktreeCreateTimingRecorder()
   const settings = store.getSettings()
@@ -2655,10 +2662,20 @@ async function performLocalWorktreeCreate(
       }
 
       worktreePath = ensurePathWithinWorkspace(
-        computeWorktreePath(effectiveSanitizedName, repo.path, worktreePathSettings, workspaceRoot),
+        placement?.worktreePath ??
+          computeWorktreePath(
+            effectiveSanitizedName,
+            repo.path,
+            worktreePathSettings,
+            workspaceRoot
+          ),
         workspaceRoot
       )
       if (existsSync(worktreePath)) {
+        if (placement) {
+          // Why: a fixed placement can't be suffixed, so retrying would only repeat the same path.
+          throw new WorktreeCreateCollisionError(`"${worktreePath}" already exists.`)
+        }
         continue
       }
 

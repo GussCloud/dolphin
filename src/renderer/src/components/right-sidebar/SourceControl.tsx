@@ -1,4 +1,7 @@
 import React from 'react'
+import { useAppStore } from '@/store'
+import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
+import { FolderWorkspaceSourceControl } from './FolderWorkspaceSourceControl'
 import { SourceControlPanel } from './source-control/panel/panel'
 
 export { HostedReviewHeaderLink } from './source-control/review/hosted-review-header-chrome'
@@ -55,7 +58,10 @@ export {
 } from './source-control/ai/text-generation-defaults'
 
 function SourceControlInner(): React.JSX.Element {
-  return <SourceControlPanel />
+  const isFolderWorkspace = useAppStore(
+    (s) => parseWorkspaceKey(s.activeWorktreeId ?? '')?.type === 'folder'
+  )
+  return isFolderWorkspace ? <FolderWorkspaceSourceControl /> : <SourceControlPanel />
 }
 const SourceControl = React.memo(SourceControlInner)
 export default SourceControl

@@ -20,6 +20,10 @@ import type {
 } from '../../shared/host-lineage-contract'
 import type { FolderWorkspace } from '../../shared/folder-workspace-types'
 import type {
+  MultiProjectWorkspaceCreateArgs,
+  MultiProjectWorkspaceCreateResult
+} from '../../shared/multi-project-workspace-types'
+import type {
   WorktreeBaseStatusEvent,
   WorktreeRemoteBranchConflictEvent
 } from '../../shared/worktree/base-ref-drift-types'
@@ -64,6 +68,10 @@ export type WorktreeApi = {
   listAll: () => Promise<Worktree[]>
   create: (args: CreateWorktreeArgs) => Promise<CreateWorktreeResult>
   adoptProvisionedRoot: (args: AdoptProvisionedRootArgs) => Promise<CreateWorktreeResult>
+  /** Local desktop only; absent on clients that can't place worktrees on the host filesystem. */
+  createMultiProject?: (
+    args: MultiProjectWorkspaceCreateArgs
+  ) => Promise<MultiProjectWorkspaceCreateResult>
   /** Two-phase progress for a background `create`, correlated by `creationId`. The remote/runtime
    *  create path emits nothing, so the surface falls back to an indeterminate spinner. */
   onCreateProgress: (

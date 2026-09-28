@@ -12,6 +12,7 @@ import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-com
 import type { GitStatusEntry } from '../../../../../../shared/git-status-types'
 import { isFolderRepo } from '../../../../../../shared/repo-kind'
 import { selectReviewCacheData, selectReviewCacheEntry } from '../../review-cache-entry-selection'
+import { useSourceControlScopeWorktreeId } from './source-control-scope'
 
 const EMPTY_GIT_STATUS_ENTRIES: GitStatusEntry[] = []
 const EMPTY_BRANCH_CHANGE_ENTRIES: GitBranchChangeEntry[] = []
@@ -22,8 +23,15 @@ const EMPTY_BRANCH_CHANGE_ENTRIES: GitBranchChangeEntry[] = []
  * the repo-owner-routed settings that every git call must be pinned to.
  */
 export function useSourceControlWorktreeContext() {
-  const activeWorktree = useActiveWorktree()
-  const activeWorktreeId = useAppStore((s) => s.activeWorktreeId)
+  // Why: inside a folder workspace the panel is pinned to one member repo, not the active workspace.
+  const scopedWorktreeId = useSourceControlScopeWorktreeId()
+  const scopedWorktree = useAppStore((s) =>
+    scopedWorktreeId ? (s.getKnownWorktreeById(scopedWorktreeId) ?? null) : null
+  )
+  const followedWorktree = useActiveWorktree()
+  const followedWorktreeId = useAppStore((s) => s.activeWorktreeId)
+  const activeWorktree = scopedWorktreeId ? scopedWorktree : followedWorktree
+  const activeWorktreeId = scopedWorktreeId ?? followedWorktreeId
   const activeWorktreeInstanceId = activeWorktree?.instanceId
   const activeGroupId = useAppStore((s) =>
     activeWorktreeId ? s.activeGroupIdByWorktree[activeWorktreeId] : undefined
