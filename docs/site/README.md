@@ -113,16 +113,8 @@ deployment needs `basePath`, first move the route tree to an unprefixed
    checks out the tag's exact commit. Remove the old marketing docs routes in a
    follow-up after the proxy is stable.
 
-`.github/workflows/docs.yml` runs credential-free checks for every pull request.
-It intentionally does not deploy PR previews: a PR-controlled build must not
-receive Vercel credentials. A maintainer can add a separate trusted preview
-workflow later. Production deploys only from an authorized stable desktop release: an exact
-`vX.Y.Z` tag, a published non-prerelease release, and the
-`github-actions[bot]` release author. Manual dispatch must run from the default
-branch and name an existing release that meets the same checks. Mobile,
-prerelease, draft, and human-authored releases are skipped. Fork pull requests
-remain build-only because GitHub does not expose deployment secrets to fork
-jobs.
+No CI workflow builds or deploys the docs site right now. Build it locally with
+`pnpm --ignore-workspace build` from this directory.
 
 ## Versioning
 

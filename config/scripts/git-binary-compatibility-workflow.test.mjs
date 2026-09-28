@@ -67,13 +67,6 @@ describe('Git binary compatibility PR gate', () => {
     )
   })
 
-  it('warms the same baseline on main so newly opened PRs can restore it', () => {
-    const warmer = parse(readFileSync('.github/workflows/ci-cache-warmup.yml', 'utf8'))
-    expect(warmer.jobs.warm.steps.some((step) => step.uses === BASELINE_ACTION)).toBe(true)
-    expect(warmer.on.push.paths).toContain('.github/actions/prepare-git-compatibility/**')
-    expect(warmer.on.pull_request.paths).toContain('.github/actions/prepare-git-compatibility/**')
-  })
-
   it('pulls every matrix image before any lane runs', () => {
     const run = stepNamed('Verify Git binary compatibility matrix')?.run
     // A lazy pull inside one lane stalls whatever test the sibling lane is timing.

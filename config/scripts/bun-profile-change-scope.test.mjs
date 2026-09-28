@@ -2,7 +2,6 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { parse } from 'yaml'
 import {
   classifyBunProfileChanges,
   collectBunProfileInputs,
@@ -81,7 +80,6 @@ it.each([
   'config/patches/node-pty@1.1.0.patch',
   'native/windows-registry/src/addon.cc',
   '.github/actions/install-node-dependencies/action.yml',
-  '.github/workflows/bun-profile-tests.yml',
   'src/main/persistence/profile-state/new-worker.ts'
 ])('always selects build, native and dynamically opened inputs: %s', async (file) => {
   expect((await classifyBunProfileChanges([file], async () => new Set())).shouldRun).toBe(true)
@@ -128,24 +126,4 @@ describe('the actual Bun build and profile-test dependency graph', () => {
     const runner = readFileSync(new URL('./run-bun-profile-tests.mjs', import.meta.url), 'utf8')
     expect(runner).toContain('testArgs.length > 0 ? testArgs : bunProfileTestPaths({ artifact })')
   })
-})
-
-it('keeps all ten platform jobs and runs them when detection is skipped or fails', () => {
-  const workflow = parse(
-    readFileSync(new URL('../../.github/workflows/bun-profile-tests.yml', import.meta.url), 'utf8')
-  )
-  expect(workflow.on).toHaveProperty('workflow_dispatch')
-  expect(workflow.jobs.changes.if).toBe("github.event_name == 'pull_request'")
-  expect(workflow.jobs.changes.steps[0].with['fetch-depth']).toBe(2)
-  expect(workflow.jobs.changes.steps[0].with['persist-credentials']).toBe(false)
-  const detect = workflow.jobs.changes.steps.find((step) => step.id === 'scope')
-  expect(detect.run).toContain('git diff --name-only --no-renames -z HEAD^1 HEAD')
-  let count = 0
-  for (const jobName of ['persistence', 'linux_glibc_floor', 'linux_musl']) {
-    const job = workflow.jobs[jobName]
-    expect(job.needs).toBe('changes')
-    expect(job.if).toBe("${{ !cancelled() && needs.changes.outputs.should_run != 'false' }}")
-    count += job.strategy.matrix.os.length
-  }
-  expect(count).toBe(10)
 })

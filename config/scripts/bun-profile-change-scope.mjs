@@ -27,7 +27,6 @@ const ALWAYS_FILES = new Set([
   '.npmrc',
   '.pnpmfile.cjs',
   'tsconfig.json',
-  '.github/workflows/bun-profile-tests.yml',
   'config/scripts/bun-profile-change-scope.mjs',
   'config/scripts/bun-profile-change-scope.test.mjs'
 ])

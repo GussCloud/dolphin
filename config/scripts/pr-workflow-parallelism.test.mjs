@@ -5,10 +5,7 @@ import { mobileWebCheckArgs } from './run-mobile-web-app-checks.mjs'
 import { MOBILE_WEB_APP_DEPENDENCIES_REQUIRED_ENV } from './mobile-web-app-bundle-dependencies.mjs'
 
 const workflow = parse(readFileSync('.github/workflows/pr.yml', 'utf8'))
-const prTestLocWorkflow = parse(readFileSync('.github/workflows/pr-test-loc.yml', 'utf8'))
-const issueLabelWorkflow = parse(readFileSync('.github/workflows/issue-os-labeler.yaml', 'utf8'))
 const unitTestWorkflow = parse(readFileSync('.github/workflows/unit-tests.yml', 'utf8'))
-const nodeNextWorkflow = parse(readFileSync('.github/workflows/node-next-compat.yml', 'utf8'))
 const dependencyAction = parse(
   readFileSync('.github/actions/install-node-dependencies/action.yml', 'utf8')
 )
@@ -50,8 +47,6 @@ describe('PR workflow parallelism', () => {
     expect(workflow.jobs.code_paths['runs-on']).toBe('ubuntu-slim')
     expect(workflow.jobs.typecheck['runs-on']).toBe('ubuntu-24.04-arm')
     expect(workflow.jobs.verify['runs-on']).toBe('ubuntu-slim')
-    expect(prTestLocWorkflow.jobs.loc['runs-on']).toBe('ubuntu-slim')
-    expect(issueLabelWorkflow.jobs['apply-os-label']['runs-on']).toBe('ubuntu-slim')
   })
 
   it('cancels superseded runs for the same pull request', () => {
@@ -75,21 +70,13 @@ describe('PR workflow parallelism', () => {
     const primerInstall = workflow.jobs.test_native_cache.steps.find(
       (step) => step.uses === './.github/actions/install-node-dependencies'
     )
-    const nodeNextPrimerInstall = nodeNextWorkflow.jobs.test_native_cache.steps.find(
-      (step) => step.uses === './.github/actions/install-node-dependencies'
-    )
 
     expect(workflow.jobs.test.uses).toBe('./.github/workflows/unit-tests.yml')
     expect(JSON.parse(workflow.jobs.test.with.node_versions)).toEqual(['24'])
-    expect(nodeNextWorkflow.jobs.test.uses).toBe('./.github/workflows/unit-tests.yml')
-    expect(JSON.parse(nodeNextWorkflow.jobs.test.with.node_versions)).toEqual(['24', '26'])
     expect(workflow.jobs.test.with.runner).toBe('ubuntu-24.04-arm')
     expect(workflow.jobs.test_native_cache['runs-on']).toBe('ubuntu-24.04-arm')
     expect(sharedTest['runs-on']).toBe('${{ inputs.runner }}')
     expect(unitTestWorkflow.on.workflow_call.inputs.runner.default).toBe('ubuntu-latest')
-    expect(nodeNextWorkflow.jobs.test.with.runner).toBeUndefined()
-    expect(nodeNextWorkflow.jobs.test_native_cache['runs-on']).toBe('ubuntu-latest')
-    expect(nodeNextWorkflow.jobs.test_native_cache.strategy.matrix.node).toEqual(['24', '26'])
     const relay = unitTestWorkflow.jobs.relay_integration
     expect(relay.strategy.matrix.node).toBe('${{ fromJSON(inputs.node_versions) }}')
     expect(relay['runs-on']).toBe('ubuntu-latest')
@@ -98,8 +85,6 @@ describe('PR workflow parallelism', () => {
         'node-version'
       ]
     ).toBe('${{ matrix.node }}')
-    expect(nodeNextWorkflow.on.schedule).toHaveLength(1)
-    expect(nodeNextWorkflow.on.workflow_dispatch).toBeNull()
     expect(sharedTest.strategy.matrix.node).toBe('${{ fromJSON(inputs.node_versions) }}')
     expect(sharedTest.strategy.matrix.shard).toEqual(
       Array.from({ length: 8 }, (_, index) => index + 1)
@@ -114,9 +99,6 @@ describe('PR workflow parallelism', () => {
     expect(primerInstall.with['native-runtime']).toBe('node')
     expect(primerInstall.with['node-version']).toBe('24')
     expect(workflow.jobs.test.needs).toContain('test_native_cache')
-    expect(nodeNextPrimerInstall.with['native-runtime']).toBe('node')
-    expect(nodeNextPrimerInstall.with['node-version']).toBe('${{ matrix.node }}')
-    expect(nodeNextWorkflow.jobs.test.needs).toEqual(['test_native_cache'])
   })
 
   it('runs real-shell coverage once outside the general shards', () => {
