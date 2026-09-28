@@ -35,7 +35,7 @@ describe('CliInstaller', () => {
     'refuses to replace an unknown symlink at the command path',
     async () => {
       const fixture = await makeFixture()
-      const installPath = join(fixture.root, 'bin', 'orca')
+      const installPath = join(fixture.root, 'bin', 'dolphin')
       const existingTarget = '/tmp/not-orca'
       await mkdir(join(fixture.root, 'bin'), { recursive: true })
       await symlink(existingTarget, installPath)
@@ -67,8 +67,15 @@ describe('CliInstaller', () => {
       const commandDir = join(fixture.root, 'bin')
       const installPath = join(commandDir, 'orca')
       const resourcesPath = join(fixture.root, 'Current.app', 'Contents', 'Resources')
-      const launcherPath = join(resourcesPath, 'bin', 'orca')
-      const oldLauncherPath = join(fixture.root, 'Old.app', 'Contents', 'Resources', 'bin', 'orca')
+      const launcherPath = join(resourcesPath, 'bin', 'dolphin')
+      const oldLauncherPath = join(
+        fixture.root,
+        'Old.app',
+        'Contents',
+        'Resources',
+        'bin',
+        'dolphin'
+      )
       await mkdir(commandDir, { recursive: true })
       await mkdir(join(resourcesPath, 'bin'), { recursive: true })
       await writeFile(launcherPath, '#!/usr/bin/env bash\n', 'utf8')
@@ -92,7 +99,7 @@ describe('CliInstaller', () => {
   )
 
   // Why: old dev/package experiments wrote a generated Orca launcher file
-  // directly into /usr/local/bin/orca. That broke profiling because Settings
+  // directly into /usr/local/bin/dolphin. That broke profiling because Settings
   // treated the regular file as a hard conflict and would not self-heal it.
   it.skipIf(process.platform === 'win32')(
     'replaces stale generated Unix launcher files',
@@ -101,7 +108,7 @@ describe('CliInstaller', () => {
       const commandDir = join(fixture.root, 'bin')
       const installPath = join(commandDir, 'orca')
       const resourcesPath = join(fixture.root, 'Current.app', 'Contents', 'Resources')
-      const launcherPath = join(resourcesPath, 'bin', 'orca')
+      const launcherPath = join(resourcesPath, 'bin', 'dolphin')
       const oldCliPath = join(fixture.root, 'OldWorktree', 'out', 'cli', 'index.js')
       await mkdir(commandDir, { recursive: true })
       await mkdir(join(resourcesPath, 'bin'), { recursive: true })
@@ -183,7 +190,7 @@ describe('CliInstaller', () => {
         const installPath = join(commandDir, 'orca')
         const userDataPath = join(caseRoot, 'orca')
         const resourcesPath = join(caseRoot, 'Current.app', 'Contents', 'Resources')
-        const launcherPath = join(resourcesPath, 'bin', 'orca')
+        const launcherPath = join(resourcesPath, 'bin', 'dolphin')
         const devLauncherPath = join(`${userDataPath}-dev`, 'cli', 'bin', devLauncherName)
         await mkdir(commandDir, { recursive: true })
         await mkdir(join(resourcesPath, 'bin'), { recursive: true })

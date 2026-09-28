@@ -94,7 +94,7 @@ describe('structured worker session hold', () => {
       onJournalActivity: () => {}
     })
     expect(envAtSpawn?.ORCA_TERMINAL_HANDLE).toBe(created.identity.handle)
-    expect(envAtSpawn?.ORCA_CLI_COMMAND).toBe('orca')
+    expect(envAtSpawn?.ORCA_CLI_COMMAND).toBe('dolphin')
     expect(envAtSpawn?.ORCA_PANE_KEY).toBeUndefined()
     releaseStructuredWorkerSession('d_spawn')
   })

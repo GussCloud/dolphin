@@ -1,5 +1,12 @@
 import { z } from 'zod'
 import {
+  CLI_COMMAND_NAME,
+  LEGACY_CLI_COMMAND_NAME,
+  LEGACY_LINUX_CLI_COMMAND_NAME,
+  LINUX_CLI_COMMAND_NAME,
+  WIRE_CLI_COMMAND_VALUES
+} from '../cli-command-names'
+import {
   OptionalBoolean,
   OptionalFiniteNumber,
   OptionalString,
@@ -42,7 +49,7 @@ export const CheckParams = z
     ack: OptionalString,
     compatibilityAck: OptionalString,
     compatibilityQuestionAck: OptionalString,
-    compatibilityCliCommand: z.enum(['orca', 'orca-ide', 'orca-dev']).optional(),
+    compatibilityCliCommand: z.enum(WIRE_CLI_COMMAND_VALUES).optional(),
     run: OptionalString,
     wait: OptionalBoolean,
     timeoutMs: OptionalFiniteNumber
@@ -122,8 +129,15 @@ export const AskParams = z
     timeoutMs: OptionalFiniteNumber,
     from: OptionalString,
     run: OptionalString,
-    compatibilityCliCommand: z.enum(['orca', 'orca-ide', 'orca-dev']).optional(),
-    compatibilityWindowsCommand: z.enum(['orca', 'orca-ide']).optional()
+    compatibilityCliCommand: z.enum(WIRE_CLI_COMMAND_VALUES).optional(),
+    compatibilityWindowsCommand: z
+      .enum([
+        LEGACY_CLI_COMMAND_NAME,
+        LEGACY_LINUX_CLI_COMMAND_NAME,
+        CLI_COMMAND_NAME,
+        LINUX_CLI_COMMAND_NAME
+      ])
+      .optional()
   })
   .superRefine((params, ctx) => {
     if ((params.question ? 1 : 0) + (params.resume ? 1 : 0) !== 1) {

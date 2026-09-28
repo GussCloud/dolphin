@@ -27,7 +27,7 @@ const CASES = [
   {
     name: 'nofuse-userns-bundled-help',
     expectStatus: 0,
-    expectOutput: 'Usage: orca <command>',
+    expectOutput: 'Usage: dolphin <command>',
     why: 'The bundled launcher must run with no FUSE, no display, and userns restricted (#11609, #12530).'
   },
   {
@@ -47,19 +47,19 @@ const CASES = [
     name: 'nofuse-userns-bundled-skills',
     expectStatus: 0,
     // Why: the rendered help header, not a bare 'skills' — the case name contains that word.
-    expectOutput: 'Usage: orca skills',
+    expectOutput: 'Usage: dolphin skills',
     why: 'skills is a pure-text command that must never need Chromium (#14229).'
   },
   {
     name: 'nofuse-userns-bundled-worktree',
     expectStatus: 1,
-    expectOutput: "Orca is not running. Run 'orca open' first.",
+    expectOutput: "Dolphin is not running. Run 'dolphin open' first.",
     why: 'A runtime-dependent command must report the missing runtime, not abort.'
   },
   {
     name: 'nofuse-nosandbox-direct-binary-skills',
     expectStatus: 0,
-    expectOutput: 'Usage: orca skills',
+    expectOutput: 'Usage: dolphin skills',
     why: 'A direct binary launch that reaches JavaScript must run the command, not boot a GUI (#14229).'
   },
   {
@@ -222,7 +222,7 @@ function stageArtifacts() {
         'chown -R orca:orca /artifacts',
         // Use the AppImage runtime's no-FUSE extraction path.
         'cd /artifacts && runuser --user orca -- ./orca-linux.AppImage --appimage-extract >/dev/null',
-        'test -x /artifacts/squashfs-root/resources/bin/orca-ide'
+        'test -x /artifacts/squashfs-root/resources/bin/dolphin-ide'
       ].join(' && ')
     ],
     { timeoutMs: STAGING_TIMEOUT_MS }

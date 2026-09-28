@@ -426,7 +426,7 @@ describe('paired runtime navigation isolation', () => {
     expect(harness.activateWorktree).toHaveBeenCalled()
   })
 
-  it('keeps create activation caller-scoped on a headless orca serve host', async () => {
+  it('keeps create activation caller-scoped on a headless dolphin serve host', async () => {
     const harness = await startHarness({ headless: true })
     await subscribeBothClientEventStreams(harness)
 

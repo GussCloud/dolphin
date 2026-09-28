@@ -122,7 +122,7 @@ describe('bundled skill guide generator', () => {
   })
 
   it.skipIf(process.platform === 'win32')(
-    'resolves snapshot cleanup through Orca user-data precedence',
+    'resolves snapshot cleanup through Dolphin user-data precedence',
     async () => {
       const source = await readFile(
         path.join(projectDir, 'skill-guides', 'orca-per-workspace-env.md'),
@@ -384,10 +384,10 @@ describe('bundled skill guide generator', () => {
     const blocks = await readSharedStubBlocks(projectDir)
 
     expect([...blocks.keys()]).toEqual(['resolver', 'no-guessing'])
-    // Why: the guide copies of this warning had each dropped one half. #7904 is the incident
-    // where bare `orca` started the screen reader talking on a user's Ubuntu box.
-    expect(blocks.get('resolver').text).toContain('(`/usr/bin/orca`)')
-    expect(blocks.get('resolver').text).toContain("starts speech on the user's machine")
+    // Why: the guide copies of this warning had each dropped one half; upstream #7904 is the
+    // incident where a bare command resolved to another desktop program on a user's box.
+    expect(blocks.get('resolver').text).toContain('(`/usr/bin/dolphin`)')
+    expect(blocks.get('resolver').text).toContain("opens a window on the user's machine")
     for (const name of STUB_TOPICS) {
       const projection = await readFile(path.join(projectDir, 'skills', name, 'SKILL.md'), 'utf8')
       for (const [id, block] of blocks) {
@@ -401,7 +401,7 @@ describe('bundled skill guide generator', () => {
   // G2, second half: the ladder is pre-resolution guidance and belongs only to the stub —
   // every path that delivers a guide body has already resolved an executable. Guides keep
   // the `ORCA` placeholder rule. Red until the guide bodies drop their ladders; retiring
-  // those also retires the ORCA_CLI_COMMAND/orca-dev/orca-ide assertions in
+  // those also retires the ORCA_CLI_COMMAND/orca-dev/dolphin-ide assertions in
   // 'keeps CLI guide examples safe across shells and Linux command names' above, which
   // pin the opposite contract.
   it('keeps the CLI resolver ladder out of every guide body', async () => {

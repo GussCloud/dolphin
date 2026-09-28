@@ -4,29 +4,29 @@ import { GLOBAL_FLAGS } from '../args'
 export const AGENT_HOOK_COMMAND_SPECS: CommandSpec[] = [
   {
     path: ['agent', 'hooks', 'prepare-codex'],
-    summary: 'Repair Orca-managed Codex hook trust before a shell launch',
-    usage: 'orca agent hooks prepare-codex',
+    summary: 'Repair Dolphin-managed Codex hook trust before a shell launch',
+    usage: 'dolphin agent hooks prepare-codex',
     allowedFlags: [...GLOBAL_FLAGS]
   },
   {
     path: ['agent', 'hooks', 'status'],
-    summary: 'Show whether Orca-managed agent status hooks are enabled',
-    usage: 'orca agent hooks status [--json]',
+    summary: 'Show whether Dolphin-managed agent status hooks are enabled',
+    usage: 'dolphin agent hooks status [--json]',
     allowedFlags: [...GLOBAL_FLAGS],
-    examples: ['orca agent hooks status', 'orca agent hooks status --json']
+    examples: ['dolphin agent hooks status', 'dolphin agent hooks status --json']
   },
   {
     path: ['agent', 'hooks', 'off'],
-    summary: 'Disable Orca-managed agent status hooks and remove local hook entries',
-    usage: 'orca agent hooks off [--json]',
+    summary: 'Disable Dolphin-managed agent status hooks and remove local hook entries',
+    usage: 'dolphin agent hooks off [--json]',
     allowedFlags: [...GLOBAL_FLAGS],
-    examples: ['orca agent hooks off']
+    examples: ['dolphin agent hooks off']
   },
   {
     path: ['agent', 'hooks', 'on'],
-    summary: 'Enable Orca-managed agent status hooks',
-    usage: 'orca agent hooks on [--json]',
+    summary: 'Enable Dolphin-managed agent status hooks',
+    usage: 'dolphin agent hooks on [--json]',
     allowedFlags: [...GLOBAL_FLAGS],
-    examples: ['orca agent hooks on']
+    examples: ['dolphin agent hooks on']
   }
 ]

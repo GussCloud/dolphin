@@ -1,4 +1,10 @@
+import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
+import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { quotePowerShellLiteral } from '../../shared/powershell-native-argument'
+
+// Why a separate bridge dir: upstream Orca in the same distro keeps its own under share/orca.
+export const WSL_BRIDGE_FILE_NAME = `${CLI_COMMAND_NAME}-wsl-bridge.ps1`
+const WSL_SHARE_DIR_NAME = FORK_IDENTITY.userDataDirName
 
 const MANAGED_MARKER = '# Orca managed WSL CLI launcher'
 const BRIDGE_MANAGED_MARKER = '# Orca managed WSL CLI PowerShell bridge'
@@ -14,7 +20,7 @@ fi`
 
 export function buildWslLauncher(
   windowsLauncherPath: string,
-  bridgePath = '${XDG_DATA_HOME:-$HOME/.local/share}/orca/orca-wsl-bridge.ps1'
+  bridgePath = `\${XDG_DATA_HOME:-$HOME/.local/share}/${WSL_SHARE_DIR_NAME}/${WSL_BRIDGE_FILE_NAME}`
 ): string {
   return buildLauncher(windowsLauncherPath, quoteShell(bridgePath), FIND_INTEROP_POWERSHELL)
 }
@@ -26,7 +32,7 @@ export function buildColocatedWslLauncher(
 ): string {
   return buildLauncher(
     windowsLauncherPath,
-    '"$(dirname -- "$0")/orca-wsl-bridge.ps1"',
+    `"$(dirname -- "$0")/${WSL_BRIDGE_FILE_NAME}"`,
     `ORCA_POWERSHELL=$(wslpath -u ${quoteShell(windowsPowerShellPath)})
 if [ ! -x "$ORCA_POWERSHELL" ]; then
   echo "Orca WSL CLI requires Windows interop and access to $ORCA_POWERSHELL." >&2
@@ -194,9 +200,8 @@ function bridgeLines(lines: readonly string[]): string {
 }
 
 export function getBridgePathFromCommandPath(commandPath: string): string {
-  // Why: both the current Linux command and the legacy pre-rename command
-  // share one WSL bridge under ~/.local/share/orca.
-  return `${commandPath.replace(/\/\.local\/bin\/(?:orca|orca-ide)$/, '/.local/share/orca')}/orca-wsl-bridge.ps1`
+  // Why: the current Linux command and the legacy names share one WSL bridge under the fork's share dir.
+  return `${commandPath.replace(/\/\.local\/bin\/(?:orca|orca-ide|dolphin-ide)$/, `/.local/share/${WSL_SHARE_DIR_NAME}`)}/${WSL_BRIDGE_FILE_NAME}`
 }
 
 export function buildSafeReplaceGuard(path: string, managedMarker: string): string {

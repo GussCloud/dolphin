@@ -1,3 +1,4 @@
+import { CLI_COMMAND_NAME } from '../../../../../../shared/cli-command-names'
 import { expect, vi } from 'vitest'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
 import { eraseRpcMethods, type RpcContext } from '../../../core'
@@ -106,7 +107,7 @@ export function createOrchestrationWorkerReleaseHarness(): OrchestrationWorkerRe
       status: 'running',
       exitCode: null
     })
-    vi.spyOn(runtime, 'getTerminalOrchestrationCliCommand').mockReturnValue('orca')
+    vi.spyOn(runtime, 'getTerminalOrchestrationCliCommand').mockReturnValue(CLI_COMMAND_NAME)
     vi.spyOn(runtime, 'sendTerminalAgentPrompt').mockResolvedValue({
       handle: 'term_worker',
       accepted: true,

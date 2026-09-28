@@ -1,5 +1,10 @@
 import type { TuiAgent } from './tui-agent'
-import { getOrcaCliCommandNameForPlatform } from './orca-cli-command-name'
+import {
+  CLI_COMMAND_NAME,
+  DEV_CLI_COMMAND_NAME,
+  getCliCommandFileNameForPlatform,
+  LINUX_CLI_COMMAND_NAME
+} from './cli-command-names'
 
 export type AgentPromptInjectionMode =
   | 'argv'
@@ -81,16 +86,16 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
   },
   'claude-agent-teams': {
     // Why: an Orca-provided launch mode, not a separate binary; detection follows the Orca CLI.
-    detectCmd: 'orca',
-    detectCmdAliases: ['orca-dev', 'orca-ide'],
+    detectCmd: CLI_COMMAND_NAME,
+    detectCmdAliases: [DEV_CLI_COMMAND_NAME, LINUX_CLI_COMMAND_NAME],
     // Why: require Claude too so fresh installs (Orca shim always present) don't report Agent Teams without an agent CLI.
     detectRequiredCommands: ['claude'],
     // Why: Windows/WSL use Claude's in-process Agent Teams fallback, not this Orca native-pane/tmux-shim wrapper.
     detectUnsupportedRuntimes: ['win32', 'wsl'],
-    launchCmd: 'orca claude-teams',
+    launchCmd: `${CLI_COMMAND_NAME} claude-teams`,
     launchCmdByPlatform: {
-      linux: `${getOrcaCliCommandNameForPlatform('linux')} claude-teams`,
-      win32: `${getOrcaCliCommandNameForPlatform('win32')} claude-teams`
+      linux: `${getCliCommandFileNameForPlatform('linux')} claude-teams`,
+      win32: `${getCliCommandFileNameForPlatform('win32')} claude-teams`
     },
     expectedProcess: 'claude',
     promptInjectionMode: 'stdin-after-start',
@@ -362,7 +367,7 @@ export function getTuiAgentLaunchCommand(
   platform: NodeJS.Platform,
   opts?: { isRemote?: boolean }
 ): string {
-  // Why: local-only orca-ide rename (avoids GNOME Orca clash) must not leak to Linux remotes, whose relay shim is always `orca`.
+  // Why: the local-only Linux -ide name must not leak to Linux remotes, whose relay shim uses the bare name.
   if (opts?.isRemote && platform === 'linux') {
     return config.launchCmd
   }

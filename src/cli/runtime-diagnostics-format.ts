@@ -48,12 +48,12 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
     `  Untracked under daemon: ${memory.daemon ? memory.daemon.untrackedDescendantCount : 'unknown'}`,
     '',
     'Memory',
-    `  Orca main:            ${formatByteCount(memory.app.main.memory)}`,
-    `  Orca renderer:        ${formatByteCount(memory.app.renderer.memory)}`,
-    `  Orca other:           ${formatByteCount(memory.app.other.memory)}`,
+    `  Dolphin main:            ${formatByteCount(memory.app.main.memory)}`,
+    `  Dolphin renderer:        ${formatByteCount(memory.app.renderer.memory)}`,
+    `  Dolphin other:           ${formatByteCount(memory.app.other.memory)}`,
     `  Terminal daemon:      ${memory.daemon ? formatByteCount(memory.daemon.memory) : 'unknown'}`,
     `  Session trees:        ${formatByteCount(memory.totalMemory - memory.app.memory)}`,
-    `  Total Orca tree:      ${formatByteCount(memory.totalMemory + (memory.daemon?.memory ?? 0))}`,
+    `  Total Dolphin tree:      ${formatByteCount(memory.totalMemory + (memory.daemon?.memory ?? 0))}`,
     ...(typeof memory.totalPrivateMemory === 'number'
       ? [`  Committed (private):  ${formatByteCount(memory.totalPrivateMemory)}`]
       : []),

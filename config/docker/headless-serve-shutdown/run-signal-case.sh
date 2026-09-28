@@ -45,7 +45,7 @@ case "$entrypoint_kind" in
   app) entrypoint=("$app_root/AppRun" --no-sandbox) ;;
   appimage) entrypoint=(/input/orca.AppImage --appimage-extract-and-run --no-sandbox) ;;
   launcher)
-    entrypoint=("$app_root/resources/bin/orca-ide")
+    entrypoint=("$app_root/resources/bin/dolphin-ide")
     ;;
   *) echo "unsupported entrypoint: $entrypoint_kind" >&2; exit 64 ;;
 esac
@@ -83,15 +83,15 @@ fi
 
 registered_cli_verified=false
 if [[ "$entrypoint_kind" == appimage ]]; then
-  registered_cli="$HOME/.local/bin/orca-ide"
-  expected_target="$XDG_CACHE_HOME/orca/appimage/launcher/orca-ide"
+  registered_cli="$HOME/.local/bin/dolphin-ide"
+  expected_target="$XDG_CACHE_HOME/orca/appimage/launcher/dolphin-ide"
   actual_target=$(readlink "$registered_cli" 2>/dev/null || true)
   if [[ "$actual_target" != "$expected_target" ]]; then
     echo "FAIL: registered CLI target is ${actual_target:-missing}; expected $expected_target" >&2
     exit 1
   fi
   if ! registered_help=$("$registered_cli" --help 2>&1) \
-    || [[ "$registered_help" != *'Usage: orca <command>'* ]]; then
+    || [[ "$registered_help" != *'Usage: dolphin <command>'* ]]; then
     echo "FAIL: registered CLI did not execute the packaged help command" >&2
     printf '%s\n' "$registered_help" >&2
     exit 1

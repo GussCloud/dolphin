@@ -90,7 +90,7 @@ describe('formatRuntimeDiagnostics', () => {
     expect(text).toContain('Untracked under daemon: 1')
     expect(text).toContain('Terminal daemon:      50 MB')
     expect(text).toContain('Session trees:        200 MB')
-    expect(text).toContain('Total Orca tree:      550 MB')
+    expect(text).toContain('Total Dolphin tree:      550 MB')
     expect(text).toContain('terminal-history:     2.0 MB  (4 files, 2 entries)')
     expect(text).toContain('logs:                 absent')
   })

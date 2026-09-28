@@ -92,7 +92,7 @@ vi.mock('./runtime-client', async () => {
 import { dispatch } from './dispatch'
 import { main } from './index'
 
-describe('orca skills CLI', () => {
+describe('dolphin skills CLI', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     runtimeClientConstructorMock.mockClear()
@@ -213,7 +213,7 @@ describe('orca skills CLI', () => {
     await main(['--help'], '/tmp/repo')
 
     expect(String(logSpy.mock.calls[0]?.[0])).toContain(
-      'Usage: orca skills get <topic> [--full | --reference <name>] [--json]'
+      'Usage: dolphin skills get <topic> [--full | --reference <name>] [--json]'
     )
     expect(String(logSpy.mock.calls[1]?.[0])).toContain(
       'Commands:\n  installed          List installed skill selectors'
@@ -222,10 +222,10 @@ describe('orca skills CLI', () => {
       'get                Print a version-matched skill guide'
     )
     expect(String(logSpy.mock.calls[1]?.[0])).toContain(
-      'install            Install bundled Orca skills'
+      'install            Install bundled Dolphin skills'
     )
     expect(String(logSpy.mock.calls[1]?.[0])).toContain(
-      'update             Update already-installed Orca skills'
+      'update             Update already-installed Dolphin skills'
     )
     expect(String(logSpy.mock.calls[2]?.[0])).toContain('Skills:\n  skills installed')
     expect(String(logSpy.mock.calls[2]?.[0])).toContain('skills update')
@@ -256,8 +256,8 @@ describe('orca skills CLI', () => {
         '  gamma',
         '  zeta',
         '',
-        'Usage: orca skills install --skill <name> [--skill <name> ...]',
-        '   or: orca skills install --all',
+        'Usage: dolphin skills install --skill <name> [--skill <name> ...]',
+        '   or: dolphin skills install --all',
         ''
       ].join('\n')
     )
@@ -321,7 +321,7 @@ describe('orca skills CLI', () => {
           error: {
             code: 'invalid_argument',
             message:
-              "orca skills install --json only supports --dry-run. Real installs stream npx's " +
+              "dolphin skills install --json only supports --dry-run. Real installs stream npx's " +
               "own output, which isn't JSON."
           },
           _meta: { runtimeId: null }
@@ -573,8 +573,8 @@ describe('orca skills CLI', () => {
         '  gamma',
         '  zeta',
         '',
-        'Usage: orca skills update --skill <name> [--skill <name> ...]',
-        '   or: orca skills update --all',
+        'Usage: dolphin skills update --skill <name> [--skill <name> ...]',
+        '   or: dolphin skills update --all',
         ''
       ].join('\n')
     )
@@ -631,7 +631,7 @@ describe('orca skills CLI', () => {
     )
   })
 
-  it('refuses a real run when the shell forwards orca to the Orca host', async () => {
+  it('refuses a real run when the shell forwards orca to the Dolphin host', async () => {
     vi.stubEnv('ORCA_CLI_CWD', '/home/alice/wt')
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -758,7 +758,7 @@ describe('orca skills CLI', () => {
     expect(spawnMock.mock.calls[0]?.[2]?.env?.PATH).toBe(`/usr/bin${delimiter}/bin`)
   })
 
-  it('refuses to install when Orca detects no agent, instead of targeting them all', async () => {
+  it('refuses to install when Dolphin detects no agent, instead of targeting them all', async () => {
     detectCommandsMock.mockReturnValue(new Set<string>())
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
@@ -792,7 +792,7 @@ describe('orca skills CLI', () => {
     expect(detectCommandsMock).not.toHaveBeenCalled()
   })
 
-  it('maps detected agents onto the skills CLI namespace, not Orca ids', async () => {
+  it('maps detected agents onto the skills CLI namespace, not Dolphin ids', async () => {
     const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     detectCommandsMock.mockReturnValue(new Set<string>(['claude', 'cursor-agent', 'rovo']))
 
@@ -976,7 +976,7 @@ describe('orca skills CLI', () => {
           error: {
             code: 'invalid_argument',
             message:
-              "orca skills update --json only supports --dry-run. Real updates stream npx's " +
+              "dolphin skills update --json only supports --dry-run. Real updates stream npx's " +
               "own output, which isn't JSON."
           },
           _meta: { runtimeId: null }

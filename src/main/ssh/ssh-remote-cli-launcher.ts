@@ -1,3 +1,4 @@
+import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import type { RemoteHostPlatform } from './ssh-remote-platform'
 import { isWindowsRemoteHost, joinRemotePath } from './ssh-remote-platform'
 import { powerShellCommand, powerShellLiteral, powerShellNativeArg } from './ssh-remote-powershell'
@@ -195,11 +196,11 @@ function createWindowsLauncherCompileCommand(
 
 export function createRemoteCliInstallPlan(env: RemoteCliInstallEnv): RemoteCliInstallPlan {
   if (isWindowsRemoteHost(env.hostPlatform)) {
-    const launcherFileName = 'orca.exe'
-    const sourceFileName = 'orca-launcher.cs'
+    const launcherFileName = `${CLI_COMMAND_NAME}.exe`
+    const sourceFileName = `${CLI_COMMAND_NAME}-launcher.cs`
     const launcherPath = joinRemotePath(env.hostPlatform, env.binDir, launcherFileName)
     const sourcePath = joinRemotePath(env.hostPlatform, env.binDir, sourceFileName)
-    const legacyShimPath = joinRemotePath(env.hostPlatform, env.binDir, 'orca.cmd')
+    const legacyShimPath = joinRemotePath(env.hostPlatform, env.binDir, `${CLI_COMMAND_NAME}.cmd`)
     const binDir = joinRemotePath(env.hostPlatform, env.binDir)
     return {
       launcherPath,
@@ -219,7 +220,7 @@ export function createRemoteCliInstallPlan(env: RemoteCliInstallEnv): RemoteCliI
     }
   }
 
-  const launcherPath = joinRemotePath(env.hostPlatform, env.binDir, 'orca')
+  const launcherPath = joinRemotePath(env.hostPlatform, env.binDir, CLI_COMMAND_NAME)
   return {
     launcherPath,
     files: [

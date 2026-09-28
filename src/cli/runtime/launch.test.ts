@@ -108,7 +108,7 @@ describe('serveOrcaApp', () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-'))
       temporaryDirectories.push(root)
       const appPath = join(root, 'Orca.app')
-      const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
+      const executable = join(appPath, 'Contents', 'MacOS', 'Dolphin')
       const infoPlistPath = join(appPath, 'Contents', 'Info.plist')
       const userDataPath = join(root, 'user-data')
       await mkdir(join(appPath, 'Contents', 'MacOS'), { recursive: true })
@@ -177,7 +177,7 @@ describe('serveOrcaApp', () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-mismatch-'))
       temporaryDirectories.push(root)
       const appPath = join(root, 'Orca.app')
-      const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
+      const executable = join(appPath, 'Contents', 'MacOS', 'Dolphin')
       const userDataPath = join(root, 'user-data')
       await mkdir(join(appPath, 'Contents', 'MacOS'), { recursive: true })
       await mkdir(userDataPath, { recursive: true })
@@ -231,7 +231,7 @@ describe('serveOrcaApp', () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-spawn-failure-'))
       temporaryDirectories.push(root)
       const appPath = join(root, 'Orca.app')
-      const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
+      const executable = join(appPath, 'Contents', 'MacOS', 'Dolphin')
       const userDataPath = join(root, 'user-data')
       await mkdir(join(appPath, 'Contents', 'MacOS'), { recursive: true })
       await mkdir(userDataPath, { recursive: true })
@@ -279,7 +279,7 @@ describe('serveOrcaApp', () => {
       const root = await mkdtemp(join(tmpdir(), 'orca-serve-update-no-readiness-'))
       temporaryDirectories.push(root)
       const appPath = join(root, 'Orca.app')
-      const executable = join(appPath, 'Contents', 'MacOS', 'Orca')
+      const executable = join(appPath, 'Contents', 'MacOS', 'Dolphin')
       const userDataPath = join(root, 'user-data')
       await mkdir(join(appPath, 'Contents', 'MacOS'), { recursive: true })
       await mkdir(userDataPath, { recursive: true })
@@ -573,7 +573,7 @@ describe('serveOrcaApp', () => {
 
     await expect(result).rejects.toMatchObject({
       code: 'runtime_serve_failed',
-      message: 'Orca serve exited before printing valid recipe JSON with code 0.'
+      message: 'Dolphin serve exited before printing valid recipe JSON with code 0.'
     })
     expect(stdoutSpy).not.toHaveBeenCalled()
     expect(stderrSpy).toHaveBeenCalledTimes(5)

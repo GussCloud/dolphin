@@ -21,7 +21,7 @@ function skillBody(skill) {
 function normalizeLegacyBody(skill) {
   return skillBody(skill).replace(
     `# Linear Tickets (Legacy Name)\n\n${legacyIntro}\n\n`,
-    '# Orca Linear\n\n'
+    '# Dolphin Linear\n\n'
   )
 }
 
@@ -63,7 +63,7 @@ describe('orca-linear skill guidance', () => {
     }
   })
 
-  // Why: a bare `orca` at line start resolves to the GNOME Orca screen reader on Linux and
+  // Why: a bare `dolphin` at line start resolves to the GNOME Orca screen reader on Linux and
   // starts speech on the user's machine, so guide examples use the resolved-executable
   // placeholder instead.
   it('keeps Linear guide examples off a bare orca command name', () => {
@@ -102,11 +102,11 @@ describe('orca-linear install stubs', () => {
 
       expect(stub).toContain('discovery stub')
       expect(stub).toContain(`ORCA skills get ${name}`)
-      // The safe CLI-resolution contract must survive in the stub, never a bare `orca`.
+      // The safe CLI-resolution contract must survive in the stub, never a bare `dolphin`.
       expect(stub).toContain('ORCA_CLI_COMMAND')
       expect(stub).toContain('orca-dev')
-      expect(stub).toContain('orca-ide')
-      expect(stub).toContain('GNOME Orca screen reader')
+      expect(stub).toContain('dolphin-ide')
+      expect(stub).toContain('KDE Dolphin file manager')
       expect(stub).not.toMatch(/^orca /mu)
     })
 

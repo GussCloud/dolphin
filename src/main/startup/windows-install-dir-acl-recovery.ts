@@ -320,7 +320,7 @@ export function describeInstallDirAclPoison(): InstallDirAclPoisonDiagnosis | nu
   }
   const commands = buildInstallDirAclRepairCommands(poison.installDir)
   if (poison.stage === 'repaired') {
-    return { detail: `${CAUSE}\n\nOrca repaired the permissions. Reload to use them.`, commands }
+    return { detail: `${CAUSE}\n\nDolphin repaired the permissions. Reload to use them.`, commands }
   }
   const status =
     poison.stage === 'pending'

@@ -156,7 +156,7 @@ describe('runtime RPC startup failure reporting', () => {
         title: 'Dolphin CLI unavailable',
         message: "Dolphin couldn't start its local command transport.",
         detail: expect.stringMatching(
-          /orca status.*orca terminal.*orchestration.*Cause: metadata write failed/s
+          /dolphin status.*dolphin terminal.*orchestration.*Cause: metadata write failed/s
         )
       })
     )

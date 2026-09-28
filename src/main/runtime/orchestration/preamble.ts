@@ -1,3 +1,4 @@
+import { CLI_COMMAND_NAME, DEV_CLI_COMMAND_NAME } from '../../../shared/cli-command-names'
 import type { OrchestrationCliCommand } from './cli-command'
 import type { RuntimeAgentPromptWriteOptions } from '../runtime-terminal-contracts'
 import { ORCA_DISPATCH_PROMPT_LEAD_LINE } from '../../../shared/orca-dispatch-status-prompt'
@@ -52,7 +53,7 @@ export function buildDispatchPreamble(params: PreambleParams): string {
   // Why: in dev mode, agents must use orca-dev to connect to the dev runtime's
   // socket. Without this, agents inside the dev Electron app would call the
   // production CLI and talk to the wrong Orca instance (Section 6.4).
-  const cli = params.devMode ? 'orca-dev' : (params.cliCommand ?? 'orca')
+  const cli = params.devMode ? DEV_CLI_COMMAND_NAME : (params.cliCommand ?? CLI_COMMAND_NAME)
   const postDoneInstructions = buildPostWorkerDoneInstructions({
     cli,
     workerKind: params.workerKind ?? 'prompt-returning-agent'

@@ -121,9 +121,9 @@ export async function deliverAndSettleWorkerStartReadiness(args: {
       ...(deliveredPrompt ? { prompt: deliveredPrompt } : {}),
       residualResources: JSON.parse(worker.residual_resources) as unknown[],
       nextCommands: [
-        `orca orchestration worker-show --dispatch ${args.dispatchId} --json`,
-        `orca terminal read --terminal ${terminalHandle} --screen`,
-        `orca orchestration worker-abandon --dispatch ${args.dispatchId} --json`
+        `dolphin orchestration worker-show --dispatch ${args.dispatchId} --json`,
+        `dolphin terminal read --terminal ${terminalHandle} --screen`,
+        `dolphin orchestration worker-abandon --dispatch ${args.dispatchId} --json`
       ],
       ...(args.terminalRevealWarning ? { warning: args.terminalRevealWarning } : {})
     }

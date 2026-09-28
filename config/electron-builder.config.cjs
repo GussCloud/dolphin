@@ -251,8 +251,8 @@ module.exports = {
     // extraResources entry below; keeping them in app.asar would ship every
     // native variant (and duplicate the selected one).
     '!node_modules/sherpa-onnx*{,/**/*}',
-    // Why: the Windows CLI shim ships via extraResources to resources/bin/orca.cmd
-    // (beside the native resources/bin/orca.exe). Packing the source tree into
+    // Why: the Windows CLI shim ships via extraResources to resources/bin/<cli>.cmd
+    // (beside the native resources/bin/<cli>.exe). Packing the source tree into
     // app.asar too lets asarUnpack:['resources/**'] extract a second copy at
     // app.asar.unpacked/resources/win32/bin/orca.cmd with no adjacent orca.exe,
     // which fails to launch the CLI (#7351).
@@ -464,18 +464,12 @@ module.exports = {
       ...windowsRuntimeResources,
       winSpeechNativeResource,
       {
-        from: 'resources/win32/bin/orca.cmd',
-        to: 'bin/orca.cmd'
-      },
-      // Why an alias: `orca` stays for agents inside this app's terminals; outside them, a
-      // second install of the official Orca may own `orca` on PATH.
-      {
-        from: 'resources/win32/bin/orca.cmd',
-        to: `bin/${forkIdentity.cliAliasName}.cmd`
+        from: `resources/win32/bin/${forkIdentity.cliCommandName}.cmd`,
+        to: `bin/${forkIdentity.cliCommandName}.cmd`
       },
       {
-        from: 'native/windows-cli-launcher/.build/orca.exe',
-        to: 'bin/orca.exe'
+        from: `native/windows-cli-launcher/.build/${forkIdentity.cliCommandName}.exe`,
+        to: `bin/${forkIdentity.cliCommandName}.exe`
       },
       {
         from: 'node_modules/agent-browser/bin/agent-browser-win32-x64.exe',
@@ -554,8 +548,8 @@ module.exports = {
       ...createPackagedRuntimeNodeModuleResources('darwin'),
       macSpeechNativeResource,
       {
-        from: 'resources/darwin/bin/orca',
-        to: 'bin/orca'
+        from: `resources/darwin/bin/${forkIdentity.cliCommandName}`,
+        to: `bin/${forkIdentity.cliCommandName}`
       },
       {
         from: 'node_modules/agent-browser/bin/agent-browser-darwin-${arch}',
@@ -622,8 +616,8 @@ module.exports = {
       ...createPackagedRuntimeNodeModuleResources('linux'),
       linuxSpeechNativeResource,
       {
-        from: 'resources/linux/bin/orca-ide',
-        to: 'bin/orca-ide'
+        from: `resources/linux/bin/${forkIdentity.linuxCliCommandName}`,
+        to: `bin/${forkIdentity.linuxCliCommandName}`
       },
       {
         from: 'node_modules/agent-browser/bin/agent-browser-linux-${arch}',
@@ -717,7 +711,7 @@ function chmodUnixCliLaunchers(resourcesDir, electronPlatformName) {
   if (electronPlatformName === 'win32') {
     return
   }
-  for (const launcherName of ['orca', 'orca-ide']) {
+  for (const launcherName of [forkIdentity.cliCommandName, forkIdentity.linuxCliCommandName]) {
     const launcherPath = join(resourcesDir, 'bin', launcherName)
     if (!existsSync(launcherPath)) {
       continue

@@ -1,3 +1,5 @@
+import { LINUX_CLI_COMMAND_NAME } from '../../shared/cli-command-names'
+import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { access, mkdir } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { homedir } from 'node:os'
@@ -63,25 +65,27 @@ export function installedElectronCandidates(
   environment: NodeJS.ProcessEnv
 ): string[] {
   const joinPath = platform === 'win32' ? win32.join : posix.join
+  const product = FORK_IDENTITY.productName
   if (platform === 'darwin') {
     return [
-      '/Applications/Orca.app/Contents/MacOS/Orca',
-      joinPath(homePath, 'Applications', 'Orca.app', 'Contents', 'MacOS', 'Orca')
+      `/Applications/${product}.app/Contents/MacOS/${product}`,
+      joinPath(homePath, 'Applications', `${product}.app`, 'Contents', 'MacOS', product)
     ]
   }
   if (platform === 'win32') {
+    const exe = `${FORK_IDENTITY.executableName}.exe`
     return [
       ...(environment.LOCALAPPDATA
-        ? [joinPath(environment.LOCALAPPDATA, 'Programs', 'Orca', 'Orca.exe')]
+        ? [joinPath(environment.LOCALAPPDATA, 'Programs', product, exe)]
         : []),
-      ...(environment.ProgramFiles ? [joinPath(environment.ProgramFiles, 'Orca', 'Orca.exe')] : [])
+      ...(environment.ProgramFiles ? [joinPath(environment.ProgramFiles, product, exe)] : [])
     ]
   }
   return [
-    joinPath(homePath, '.local', 'bin', 'orca-ide'),
-    '/usr/local/bin/orca-ide',
-    '/usr/bin/orca-ide',
-    '/opt/Orca/orca-ide'
+    joinPath(homePath, '.local', 'bin', LINUX_CLI_COMMAND_NAME),
+    `/usr/local/bin/${LINUX_CLI_COMMAND_NAME}`,
+    `/usr/bin/${LINUX_CLI_COMMAND_NAME}`,
+    `/opt/${product}/orca-ide`
   ]
 }
 

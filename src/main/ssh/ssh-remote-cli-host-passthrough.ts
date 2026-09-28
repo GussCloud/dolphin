@@ -1,4 +1,5 @@
 // The SSH shim runs the bundled CLI so remote shells get the full command surface.
+import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import { app } from 'electron'
 import { spawn as nodeSpawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -119,7 +120,7 @@ export function buildHostCliEnv(args: {
   // cwd-based selectors like `--worktree active`.
   env.ORCA_CLI_CWD = args.remoteCwd
   // Why: recovery commands run on the SSH execution host through its relay shim.
-  env.ORCA_CLI_COMMAND = 'orca'
+  env.ORCA_CLI_COMMAND = CLI_COMMAND_NAME
   // Why: same node-mode hygiene as the shipped CLI launchers — stash and clear
   // NODE_OPTIONS so Electron's node bootstrap does not inherit them.
   env.ORCA_NODE_OPTIONS = args.hostEnv.NODE_OPTIONS ?? ''

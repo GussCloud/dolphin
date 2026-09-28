@@ -8,7 +8,11 @@ export const FORK_IDENTITY = {
   appId: 'com.gusscloud.dolphin',
   executableName: 'Dolphin',
   userDataDirName: 'dolphin',
-  cliAliasName: 'dolphin',
+  cliCommandName: 'dolphin',
+  // Why -ide on Linux: KDE Dolphin owns /usr/bin/dolphin, as GNOME Orca owns /usr/bin/orca.
+  linuxCliCommandName: 'dolphin-ide',
+  // Why still orca-dev: contributor tooling (package.json bin, dev profile dir) owns this name.
+  devCliCommandName: 'orca-dev',
   installerArtifactBaseName: 'dolphin-windows-setup',
   releaseOwner: 'GussCloud',
   releaseRepo: 'dolphin'

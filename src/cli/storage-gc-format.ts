@@ -29,7 +29,7 @@ export function formatStorageGcResult(result: StorageGcResult, now = Date.now())
     lines.push(
       '',
       'Nothing was removed: a terminal daemon did not report its live sessions, so no',
-      'history can be proven unowned. Retry once `orca diagnostics runtime` shows a complete inventory.'
+      'history can be proven unowned. Retry once `dolphin diagnostics runtime` shows a complete inventory.'
     )
   }
   return lines.join('\n')

@@ -84,7 +84,7 @@ describe('structuredWorkerChildIdentityEnv', () => {
     const handle = registerWorker()
     const env = structuredWorkerChildIdentityEnv(SESSION_ID, { PATH: '/usr/bin:/bin' })
     expect(env.ORCA_TERMINAL_HANDLE).toBe(handle)
-    expect(env.ORCA_CLI_COMMAND).toBe('orca')
+    expect(env.ORCA_CLI_COMMAND).toBe('dolphin')
     expect(env.PATH).toBe(`${SHIM_DIR}:/usr/bin:/bin`)
   })
 
@@ -141,6 +141,6 @@ describe('structuredWorkerChildIdentityEnv', () => {
     registerWorker()
     expect(
       structuredWorkerChildIdentityEnv(SESSION_ID, { PATH: '/usr/bin' }).ORCA_CLI_COMMAND
-    ).not.toBe('orca-ide')
+    ).not.toBe('dolphin-ide')
   })
 })

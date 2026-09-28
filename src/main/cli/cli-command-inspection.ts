@@ -1,3 +1,4 @@
+import { LEGACY_CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import { existsSync } from 'node:fs'
 import { lstat, readFile, readlink } from 'node:fs/promises'
 import { basename, dirname, resolve } from 'node:path'
@@ -13,7 +14,7 @@ import { extractLegacyAppImageCliWrapperTarget } from './legacy-appimage-cli-wra
 // Why: electron-builder's /opt directory name varies with productName sanitization, which is why
 // resources/linux/packaging/after-install.sh enumerates all three of these. A symlink into one is a
 // previous packaged Orca and is ours to reclaim; anything else stays a conflict.
-const PACKAGED_LINUX_LAUNCHER_DIRECTORIES = ['/opt/Orca', '/opt/orca-ide', '/opt/orca']
+const PACKAGED_LINUX_LAUNCHER_DIRECTORIES = ['/opt/Dolphin', '/opt/dolphin-ide', '/opt/orca-ide']
 
 export class CliCommandInspection extends CliInstallLocation {
   protected async inspectSymlink(
@@ -135,7 +136,9 @@ export class CliCommandInspection extends CliInstallLocation {
     resolvedTarget: string,
     packagedLauncherName: string
   ): boolean {
-    if (![packagedLauncherName, DEV_COMMAND_NAME].includes(basename(resolvedTarget))) {
+    // Why the legacy name: dev launcher dirs from before the rename still hold a bare `orca` alias.
+    const names = [packagedLauncherName, DEV_COMMAND_NAME, LEGACY_CLI_COMMAND_NAME]
+    if (!names.includes(basename(resolvedTarget))) {
       return false
     }
 

@@ -44,7 +44,7 @@ describe('orchestration skill routing', () => {
       '"another worktree"',
       'lightweight terminal prompts',
       'shell commands',
-      'Orca worktree management',
+      'Dolphin worktree management',
       'reading or waiting on terminals'
     ]) {
       expect(description).toContain(trigger)
@@ -94,7 +94,7 @@ describe('orchestration kernel', () => {
     expect(kernel).toContain('Compatibility operator')
     expect(kernel).toContain('Ordinary terminal agent')
     expect(kernel).toContain('Model or effort selection does not make a handoff supervised')
-    expect(squash(kernel)).toContain('Never substitute a non-Orca subagent tool')
+    expect(squash(kernel)).toContain('Never substitute a non-Dolphin subagent tool')
   })
 
   it('makes Dispatch identity, remote uncertainty, folders, and mixed versions a safety floor', () => {
@@ -340,7 +340,7 @@ describe('owned orchestration references', () => {
 
     expect(reference).toContain('--worktree current --agent codex')
     expect(squash(reference)).toContain(
-      'A worktree selector needs the full `<repo-id>::<path>` value Orca returned, passed as `id:<newFullWorktreeId>`; a bare repo id is not a worktree id'
+      'A worktree selector needs the full `<repo-id>::<path>` value Dolphin returned, passed as `id:<newFullWorktreeId>`; a bare repo id is not a worktree id'
     )
     expect(reference).toContain('--worktree new-child')
     expect(reference).toContain('--worktree new-top-level')
@@ -352,7 +352,7 @@ describe('owned orchestration references', () => {
     )
     expect(reference).toContain('`live`, `unverifiable`, or `exited`')
     expect(squash(reference)).toContain('unknown stream opcodes can be silently dropped')
-    expect(reference).toContain('printed `orca-ide`')
+    expect(reference).toContain('printed `dolphin-ide`')
     expect(squash(reference)).toContain(
       'ORCA project setup-existing-folder --project <project_id> --host <host_id> --path <abs_path> --kind folder --json'
     )
@@ -486,8 +486,8 @@ describe('orchestration install stub', () => {
     expect(stub).toContain('ORCA skills get orchestration')
     expect(stub).toContain('ORCA_CLI_COMMAND')
     expect(stub).toContain('orca-dev')
-    expect(stub).toContain('orca-ide')
-    expect(stub).toContain('GNOME Orca screen reader')
+    expect(stub).toContain('dolphin-ide')
+    expect(stub).toContain('KDE Dolphin file manager')
     expect(stub).not.toMatch(/^orca /mu)
   })
 

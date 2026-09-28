@@ -32,7 +32,7 @@ class TestSocket extends EventEmitter {
 }
 
 const RESTART_OR_ABSENT_ADVICE =
-  /Restart Orca and try again|Orca is not running|Run 'orca open' first/
+  /Restart Dolphin and try again|Dolphin is not running|Run 'dolphin open' first/
 
 let socket: TestSocket
 
@@ -78,9 +78,9 @@ describe('runtime access denied', () => {
     expect(socket.write).not.toHaveBeenCalled()
     const human = formatCliError(error)
     expect(human).toContain(
-      `Permission denied connecting to Orca (${code}). Orca may be running normally`
+      `Permission denied connecting to Dolphin (${code}). Dolphin may be running normally`
     )
-    expect(human).toContain("Next step: Do not restart Orca or run 'orca open'")
+    expect(human).toContain("Next step: Do not restart Dolphin or run 'dolphin open'")
     expect(human).not.toMatch(RESTART_OR_ABSENT_ADVICE)
     expect(human).not.toContain('private-runtime')
   })
@@ -89,7 +89,7 @@ describe('runtime access denied', () => {
     vi.stubEnv('CODEX_SANDBOX', 'seatbelt')
     const human = formatCliError(await deniedRequest('EPERM'))
 
-    expect(human).toContain('The Codex sandbox blocked this command from connecting to Orca')
+    expect(human).toContain('The Codex sandbox blocked this command from connecting to Dolphin')
     expect(human).toContain('escalated permissions, outside the Codex sandbox')
     expect(human).not.toMatch(RESTART_OR_ABSENT_ADVICE)
   })
@@ -114,7 +114,7 @@ describe('runtime access denied', () => {
     mockKill('ESRCH')
     const human = formatCliError(await deniedRequest('EPERM'))
 
-    expect(human).toContain("Orca is not running. Run 'orca open' first.")
+    expect(human).toContain("Dolphin is not running. Run 'dolphin open' first.")
     expect(human).not.toContain('Do not restart')
     const pending = getCliStatus('/test')
     failConnect('EPERM')
@@ -123,7 +123,7 @@ describe('runtime access denied', () => {
     })
   })
 
-  it('does not launch or poll Orca when the initial status is denied', async () => {
+  it('does not launch or poll Dolphin when the initial status is denied', async () => {
     const pending = new RuntimeClient('/test', 1000, null, null).openOrca()
     failConnect('EPERM')
 

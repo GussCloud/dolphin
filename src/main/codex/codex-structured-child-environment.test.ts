@@ -61,7 +61,7 @@ describe('buildCodexStructuredChildEnvironment', () => {
     try {
       const env = buildCodexStructuredChildEnvironment(launch, 'spawn-token', sessionId)
       expect(env.ORCA_TERMINAL_HANDLE).toBe(handle)
-      expect(env.ORCA_CLI_COMMAND).toBe('orca')
+      expect(env.ORCA_CLI_COMMAND).toBe('dolphin')
       // A pane key here would leak into hook-emitted agent statuses, which assume a PTY leaf.
       expect(env.ORCA_PANE_KEY).toBeUndefined()
     } finally {

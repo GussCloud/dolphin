@@ -77,7 +77,7 @@ describe('applyTerminalGitCredentialPromptGuard', () => {
 
     expect(
       applyTerminalGitCredentialPromptGuard(env, {
-        launchCommand: 'orca status',
+        launchCommand: 'dolphin status',
         platform: 'linux'
       })
     ).toBe(false)
