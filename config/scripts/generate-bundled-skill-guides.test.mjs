@@ -115,7 +115,7 @@ describe('bundled skill guide generator', () => {
     expect(corpus).toContain('DOLPHIN_RECIPE_ID')
     expect(corpus).not.toContain('DOLPHIN_VM_RECIPE_ID')
     expect(vercelReference).toContain('recipe_id="${recipe_id//./-}"')
-    expect(vercelReference).toContain('max_recipe_id_length=$((128 - ${#instance_id} - 6))')
+    expect(vercelReference).toContain('max_recipe_id_length=$((128 - ${#instance_id} - 9))')
     expect(vercelReference).toContain(
       'name="dolphin-${recipe_id:0:max_recipe_id_length}-${instance_id}"'
     )
