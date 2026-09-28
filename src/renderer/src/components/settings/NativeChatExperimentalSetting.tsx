@@ -136,7 +136,7 @@ export function NativeChatExperimentalSetting({
                 <p className="text-xs text-muted-foreground">
                   {translate(
                     'auto.components.settings.ExperimentalPane.nativeChat.structuredScope',
-                    'Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Orca can read process start times.'
+                    'Local sessions only for now. WSL and remote execution hosts (including SSH) continue to use terminal chat, and Windows falls back to it unless Dolphin can read process start times.'
                   )}
                 </p>
               </div>
@@ -168,7 +168,7 @@ export function NativeChatExperimentalSetting({
                 <p className="text-xs text-muted-foreground">
                   {translate(
                     'auto.components.settings.ExperimentalPane.nativeChat.resumeCopy',
-                    'When Orca quits or installs an update, chats that were working are automatically resumed when Orca is reopened.'
+                    'When Dolphin quits or installs an update, chats that were working are automatically resumed when Dolphin is reopened.'
                   )}
                 </p>
               </div>

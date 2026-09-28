@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => {
   // Why the engine comment: a real app.userAgentFallback always carries it, and the cleaner only
   // touches identities that do — a fixture without it models a string Electron cannot produce.
   let userAgent =
-    'Mozilla/5.0 (Test) AppleWebKit/537.36 (KHTML, like Gecko) Orca Development/0.0.0 Chrome/150.0.0.0 Electron/43.0.0 Safari/537.36'
+    'Mozilla/5.0 (Test) AppleWebKit/537.36 (KHTML, like Gecko) Dolphin Development/0.0.0 Chrome/150.0.0.0 Electron/43.0.0 Safari/537.36'
   const app = {
     isPackaged: false,
     exit: vi.fn(),
@@ -93,7 +93,7 @@ vi.mock('../updater', () => ({
 vi.mock('./dev-instance-identity', () => ({
   getDevInstanceIdentity: () => ({
     isDev: true,
-    appName: 'Orca Development',
+    appName: 'Dolphin Development',
     appUserModelId: 'com.orca.development'
   }),
   shouldApplyPreReadyAppName: () => true
@@ -205,7 +205,7 @@ describe('browser process user-agent startup ordering', () => {
     const platform = vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
     mocks.backgroundLaunch.mockReturnValueOnce(false)
     mocks.admission.mockImplementationOnce(() => {
-      throw new Error('Stop Orca and orcad before retrying profile recovery')
+      throw new Error('Stop Dolphin and orcad before retrying profile recovery')
     })
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
@@ -213,8 +213,8 @@ describe('browser process user-agent startup ordering', () => {
         runMainProcessPreflight({ focusExistingWindow: vi.fn(), requestDesktopActivation: vi.fn() })
       ).toBe(false)
       expect(mocks.showErrorBox).toHaveBeenCalledWith(
-        'Orca could not start',
-        expect.stringContaining('Stop Orca and orcad before retrying profile recovery')
+        'Dolphin could not start',
+        expect.stringContaining('Stop Dolphin and orcad before retrying profile recovery')
       )
       expect(mocks.app.isReady).not.toHaveBeenCalled()
     } finally {
@@ -250,7 +250,7 @@ describe('browser process user-agent startup ordering', () => {
       })
     ).toBe(false)
 
-    const nameIndex = mocks.events.indexOf('set-name:Orca Development')
+    const nameIndex = mocks.events.indexOf('set-name:Dolphin Development')
     const modeIndex = mocks.events.indexOf('read-mode:/canonical-user-data')
     const writeIndex = mocks.events.indexOf('write-user-agent')
     const continuationIndex = mocks.events.indexOf('continued-after-browser-identity')
@@ -285,7 +285,7 @@ describe('browser process user-agent startup ordering', () => {
       expect(mocks.app.exit).toHaveBeenCalledWith(1)
       expect(mocks.events).toEqual([
         'init-data-path',
-        'set-name:Orca Development',
+        'set-name:Dolphin Development',
         'single-instance-lock',
         'admission:/canonical-user-data'
       ])
@@ -350,7 +350,7 @@ it('defers a Linux desktop startup failure until Electron is ready', async () =>
     await ready
     await Promise.resolve()
     expect(mocks.showErrorBox).toHaveBeenCalledWith(
-      'Orca could not start',
+      'Dolphin could not start',
       expect.stringContaining('Linux pre-ready failure')
     )
     expect(mocks.app.exit).toHaveBeenCalledWith(1)
