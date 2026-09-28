@@ -110,13 +110,4 @@ it('uses exact context/platform keys and the same restore-only action in package
     { fixture: 'headless-serve-shutdown' },
     { fixture: 'cli-launch-contract' }
   ])
-  const warm = workflow('ci-cache-warmup').jobs['warm-linux-package-fixtures']
-  expect(warm.steps.slice(1).map((step) => step.with.fixture)).toEqual(
-    prepared.map((step) => step.with.fixture)
-  )
-  expect(
-    warm.steps
-      .slice(1)
-      .every((step) => step.with['save-cache'] === "${{ github.event_name != 'pull_request' }}")
-  ).toBe(true)
 })

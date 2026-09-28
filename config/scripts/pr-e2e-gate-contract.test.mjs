@@ -6,7 +6,6 @@ import { parse as parseYaml } from 'yaml'
 import {
   hasNativeImeSourceChange,
   hasSshSourceChange,
-  NATIVE_IME_SOURCE_ROUTE_IDS,
   PR_E2E_SOURCE_ROUTES,
   selectPrE2eSpecs,
   SSH_SOURCE_ROUTE_IDS
@@ -26,9 +25,6 @@ const playwrightConfig = readFileSync(join(projectDir, 'tests/playwright.config.
 const sshDockerRunner = readFileSync(
   join(projectDir, 'config/scripts/run-ssh-docker-terminal-parking-e2e.mjs'),
   'utf8'
-)
-const nativeImeWorkflow = parseYaml(
-  readFileSync(join(projectDir, '.github/workflows/terminal-ime-e2e.yml'), 'utf8')
 )
 const nativeImeRunner = readFileSync(
   join(projectDir, 'config/scripts/run-terminal-ibus-hangul-e2e.mjs'),
@@ -220,16 +216,7 @@ describe('PR E2E gate contract', () => {
   })
 
   it('keeps dedicated E2E workflows from self-triggering on pull requests', () => {
-    // Why this still holds for terminal-ime-e2e.yml now that pr.yml runs it: pr.yml reaches it
-    // through workflow_call, behind the path filter. A pull_request trigger here would run a
-    // real ibus session on every PR, which is the cost the filter exists to avoid.
-    const dedicatedWorkflows = [
-      'golden-e2e-experiment.yml',
-      'linux-wayland-gpu-sandbox.yml',
-      'terminal-ime-e2e.yml',
-      'win-crash-survival-e2e.yml',
-      'windows-terminal-restart-e2e.yml'
-    ]
+    const dedicatedWorkflows = ['win-crash-survival-e2e.yml', 'windows-terminal-restart-e2e.yml']
 
     for (const file of dedicatedWorkflows) {
       const workflow = parseYaml(readFileSync(join(projectDir, '.github/workflows', file), 'utf8'))
@@ -566,37 +553,6 @@ describe('PR E2E gate contract', () => {
     )
   })
 
-  it('puts the real-IME lane on the PR gate behind the IME source filter', () => {
-    // Why a whole lane and not a spec in changed-e2e: the harness is an ibus-daemon, an xfwm4
-    // session, and an X11 display; the generic lane has none of them and the spec would skip.
-    expect(nativeImeWorkflow.on.workflow_call).toBeDefined()
-    expect(prWorkflow.jobs.terminal_ime_native.uses).toBe(
-      './.github/workflows/terminal-ime-e2e.yml'
-    )
-    expect(prWorkflow.jobs.terminal_ime_native.needs).toBe('code_paths')
-    expect(prWorkflow.jobs.terminal_ime_native.if).toBe(
-      "needs.code_paths.outputs.native_ime_source_changed == 'true'"
-    )
-    expect(prWorkflow.jobs.code_paths.outputs.native_ime_source_changed).toBe(
-      '${{ steps.e2e_filter.outputs.native_ime_source_changed }}'
-    )
-    expect(filterStep.run).toContain('pr-e2e-source-routing.mjs --native-ime-source')
-    expect(filterStep.run).toContain('native_ime_source_changed=$NATIVE_IME_SOURCE_CHANGED')
-
-    // Why: continue-on-error would report the lane green and hide every failure it exists to
-    // surface. Advisory here means "absent from verify.needs", not "always passes".
-    expect(prWorkflow.jobs.terminal_ime_native['continue-on-error']).toBeUndefined()
-    expect(prWorkflow.jobs.verify.needs).not.toContain('terminal_ime_native')
-    expect(verifyStep.env.TERMINAL_IME_NATIVE).toBeUndefined()
-
-    for (const id of NATIVE_IME_SOURCE_ROUTE_IDS) {
-      expect(
-        PR_E2E_SOURCE_ROUTES.map((route) => route.id),
-        id
-      ).toContain(id)
-    }
-  })
-
   it('triggers the real-IME lane from every surface an input method can judge', () => {
     for (const file of [
       'src/renderer/src/components/terminal-pane/terminal-ime-composition-route.ts',
@@ -666,14 +622,6 @@ describe('PR E2E gate contract', () => {
     expect(nativeImeRunner).toContain('verifyImeEngagementReceipts')
     expect(nativeImeRunner).toContain(`[IME_ENGAGEMENT_RECEIPT_ENV]: receiptPath`)
     expect(nativeImeSpec).toContain('appendImeEngagementReceipt(testInfo.title, trace)')
-
-    // Why: the synthetic CDP step runs first in the same job. Under the default success()
-    // condition its failure skipped the real-IME step, so the half that needs an input method
-    // reported nothing on exactly the changes that broke IME code.
-    const nativeStep = nativeImeWorkflow.jobs['linux-x11'].steps.find(
-      (step) => step.name === 'Run native IBus Hangul exact-byte tests'
-    )
-    expect(nativeStep.if).toBe('!cancelled()')
 
     // Why a literal comparison: the spec cannot import the .mjs module, so the env var name is
     // written twice and would otherwise drift into a receipt nobody reads.

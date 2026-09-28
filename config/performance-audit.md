@@ -23,10 +23,7 @@ and inherit the full suite's setup and forced-GC support. This makes existing
 regression coverage easy to run and attribute; it does not create new workload
 coverage by itself.
 
-`.github/workflows/performance-contracts.yml` runs daily and manually on Linux,
-macOS and Windows, and on PRs changing this tooling or any listed contract file.
-It uploads per-OS JSON test results, plus the source inventory once from Linux
-because that scan is OS-independent. Its schedule starts after merge. Run the existing
+No CI workflow runs these contracts; run `pnpm run test:perf:contracts` locally. Run the existing
 `test:e2e:terminal-perf:scale:report` for rendered typing/frame budgets and
 `test:e2e:ssh-docker-perf` for real transport behavior. Relay unit tests do not
 measure SSH RTT, WSL scheduling or a packaged Electron renderer.
