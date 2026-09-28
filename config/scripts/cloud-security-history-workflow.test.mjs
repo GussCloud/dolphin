@@ -86,7 +86,7 @@ it('completes history before scanning the same HEAD and Cloud paths', () => {
   )
   expect(steps.indexOf(history)).toBeLessThan(scanIndex)
   expect(steps[scanIndex].run).toContain(
-    '--log-opts="HEAD -- cloud :(glob).github/workflows/cloud-*.yml .github/actions/cloud-sql-rollout-lease"'
+    '--log-opts="HEAD -- cloud :(glob).github/workflows/cloud-*.yml"'
   )
   expect(steps.some((step) => step.run?.includes('trufflehog@'))).toBe(true)
 })
