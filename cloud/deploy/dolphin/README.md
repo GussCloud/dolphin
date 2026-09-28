@@ -4,7 +4,7 @@ One VPS runs everything the Dolphin desktop app reaches:
 
 | Host | Service | What uses it |
 |---|---|---|
-| `dolphin.guss.dev.br` | Static site (Caddy) | Docs links, update changelog/nudge feeds, plugin kill-list |
+| `dolphin.guss.dev.br` | Static site (Caddy) | Marketing site (built from `docs/landing-site` into the Caddy image), docs links, update changelog/nudge feeds, plugin kill-list |
 | `auth.dolphin.guss.dev.br` | `apps/auth` | Cloud sign-in, relay host tokens, JWKS the relay trusts |
 | `api.dolphin.guss.dev.br` | `apps/auth` (`/v1/feedback`) | Feedback and crash reports |
 | `relay.dolphin.guss.dev.br` | `apps/relay` (combined director + cell) | Pairing the mobile app with the desktop over the internet |

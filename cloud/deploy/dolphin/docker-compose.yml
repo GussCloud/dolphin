@@ -2,7 +2,9 @@
 #   cp .env.example .env && edit it, then: docker compose up -d --build
 services:
   caddy:
-    image: caddy:2
+    build:
+      context: ../../../docs/landing-site
+      dockerfile: ../../cloud/deploy/dolphin/landing/Dockerfile
     restart: unless-stopped
     ports:
       - "80:80"
@@ -13,7 +15,10 @@ services:
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./site:/srv/site:ro
+      # The marketing site is baked into the image; these app feeds are served beside it.
+      - ./site/docs:/srv/site/docs:ro
+      - ./site/whats-new:/srv/site/whats-new:ro
+      - ./site/plugins:/srv/site/plugins:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
