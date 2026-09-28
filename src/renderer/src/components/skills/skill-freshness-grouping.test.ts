@@ -31,13 +31,13 @@ function placement(
 
 describe('groupSkillFreshness', () => {
   it('marks an eligible outdated skill as update-available with one location', () => {
-    const groups = groupSkillFreshness([placement('orca-cli')], ['orca-cli'])
+    const groups = groupSkillFreshness([placement('dolphin-cli')], ['dolphin-cli'])
     expect(groups).toHaveLength(1)
-    expect(groups[0]).toMatchObject({ name: 'orca-cli', status: 'update-available' })
+    expect(groups[0]).toMatchObject({ name: 'dolphin-cli', status: 'update-available' })
     expect(groups[0]?.locations).toEqual([
       {
         id: expect.any(String),
-        path: '/home/.agents/skills/orca-cli',
+        path: '/home/.agents/skills/dolphin-cli',
         chip: null,
         participatesInGlobalFreshness: true
       }
@@ -47,8 +47,8 @@ describe('groupSkillFreshness', () => {
   it('hides skills whose every copy is current', () => {
     const groups = groupSkillFreshness(
       [
-        placement('orca-cli', { status: 'current' }),
-        placement('orca-cli', { status: 'current', topology: 'provider-alias' })
+        placement('dolphin-cli', { status: 'current' }),
+        placement('dolphin-cli', { status: 'current', topology: 'provider-alias' })
       ],
       []
     )
@@ -219,8 +219,8 @@ describe('groupSkillFreshness', () => {
   })
 
   it('raises no group when every finding is project-owned', () => {
-    // Orca's updater only passes --global, so a project copy has no remedy; a row here
-    // would claim Orca considered an update it could never perform.
+    // Dolphin's updater only passes --global, so a project copy has no remedy; a row here
+    // would claim Dolphin considered an update it could never perform.
     expect(
       groupSkillFreshness(
         [placement('computer-use', { status: 'unrecognized', topology: 'repo-scope' })],

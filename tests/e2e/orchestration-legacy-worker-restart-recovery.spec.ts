@@ -5,10 +5,10 @@ import {
 import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import type { ElectronApplication, Page } from '@playwright/test'
+import { test, expect } from './helpers/dolphin-app'
 import { TEST_REPO_PATH_FILE } from './global-setup'
-import { attachRepoAndOpenTerminal, createRestartSession } from './helpers/orca-restart'
+import { attachRepoAndOpenTerminal, createRestartSession } from './helpers/dolphin-restart'
 import {
   ensureTerminalVisible,
   getActiveTabId,
@@ -34,7 +34,7 @@ import {
 import { FAKE_AGENT_PASTE_END_SCANNER_SOURCE } from './helpers/fake-agent-paste-end-scanner'
 
 const PROVIDER_SESSION_ID = 'e2e-legacy-orchestration-worker'
-const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-legacy-worker-'))
+const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-legacy-worker-'))
 const spawnLedgerPath = path.join(fakeCliDir, 'spawn.jsonl')
 const interruptionLedgerPath = path.join(fakeCliDir, 'interruption.jsonl')
 const authorityLedgerPath = path.join(fakeCliDir, 'authority.jsonl')
@@ -53,23 +53,23 @@ function appendLedger(envName, event) {
   } catch {}
 }
 async function emitAuthorityHook(hookEventName) {
-  const port = process.env.ORCA_AGENT_HOOK_PORT
-  const token = process.env.ORCA_AGENT_HOOK_TOKEN
-  const launchToken = process.env.ORCA_AGENT_LAUNCH_TOKEN
-  if (!port || !token || !launchToken || !process.env.ORCA_PANE_KEY) return
+  const port = process.env.DOLPHIN_AGENT_HOOK_PORT
+  const token = process.env.DOLPHIN_AGENT_HOOK_TOKEN
+  const launchToken = process.env.DOLPHIN_AGENT_LAUNCH_TOKEN
+  if (!port || !token || !launchToken || !process.env.DOLPHIN_PANE_KEY) return
   try {
     const response = await fetch('http://127.0.0.1:' + port + '/hook/codex', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Orca-Agent-Hook-Token': token
+        'X-Dolphin-Agent-Hook-Token': token
       },
       body: JSON.stringify({
-        paneKey: process.env.ORCA_PANE_KEY,
-        tabId: process.env.ORCA_TAB_ID,
-        worktreeId: process.env.ORCA_WORKTREE_ID,
-        env: process.env.ORCA_AGENT_HOOK_ENV,
-        version: process.env.ORCA_AGENT_HOOK_VERSION,
+        paneKey: process.env.DOLPHIN_PANE_KEY,
+        tabId: process.env.DOLPHIN_TAB_ID,
+        worktreeId: process.env.DOLPHIN_WORKTREE_ID,
+        env: process.env.DOLPHIN_AGENT_HOOK_ENV,
+        version: process.env.DOLPHIN_AGENT_HOOK_VERSION,
         launchToken,
         payload: {
           hook_event_name: hookEventName,
@@ -77,13 +77,13 @@ async function emitAuthorityHook(hookEventName) {
         }
       })
     })
-    appendLedger('ORCA_E2E_AUTHORITY_LEDGER', {
+    appendLedger('DOLPHIN_E2E_AUTHORITY_LEDGER', {
       event: 'authority-hook',
       hookEventName,
       status: response.status
     })
   } catch (error) {
-    appendLedger('ORCA_E2E_AUTHORITY_LEDGER', {
+    appendLedger('DOLPHIN_E2E_AUTHORITY_LEDGER', {
       event: 'authority-hook-error',
       error: error instanceof Error ? error.message : String(error)
     })
@@ -93,7 +93,7 @@ if (process.argv.slice(2).includes('app-server')) {
   process.stderr.write("error: unrecognized subcommand 'app-server'\\n")
   process.exit(2)
 }
-appendLedger('ORCA_E2E_SPAWN_LEDGER', { event: 'spawn', argv: process.argv.slice(2) })
+appendLedger('DOLPHIN_E2E_SPAWN_LEDGER', { event: 'spawn', argv: process.argv.slice(2) })
 process.stdout.write('\\u001b]0;Codex Ready\\u0007OpenAI Codex\\nmodel: e2e\\ndirectory: e2e\\n')
 const sessionStartHook = emitAuthorityHook('SessionStart')
 let acknowledged = false
@@ -107,7 +107,7 @@ process.stdin.on('data', (chunk) => {
     process.stdout.write('\\x1b[?25h')
   }
   if (input.includes('\\x03')) {
-    appendLedger('ORCA_E2E_INTERRUPTION_LEDGER', { event: 'stdin-ctrl-c' })
+    appendLedger('DOLPHIN_E2E_INTERRUPTION_LEDGER', { event: 'stdin-ctrl-c' })
   }
   if (!acknowledged) {
     fakeAgentMaybeAck(pasteEndScan, input, (mode) => {
@@ -118,11 +118,11 @@ process.stdin.on('data', (chunk) => {
       setTimeout(() => process.stdout.write('\\u001b]0;Codex Ready\\u0007'), 10)
     })
   }
-  const legacyCompletion = input.match(/ORCA_E2E_RUN_LEGACY_DONE:([A-Za-z0-9+/=]+)/)
+  const legacyCompletion = input.match(/DOLPHIN_E2E_RUN_LEGACY_DONE:([A-Za-z0-9+/=]+)/)
   if (!lifecycleSent && legacyCompletion) {
     lifecycleSent = true
     const identity = JSON.parse(Buffer.from(legacyCompletion[1], 'base64').toString('utf8'))
-    const cliEntry = process.env.ORCA_E2E_CLI_ENTRY
+    const cliEntry = process.env.DOLPHIN_E2E_CLI_ENTRY
     const args = [
       'orchestration',
       'send',
@@ -147,8 +147,8 @@ process.stdin.on('data', (chunk) => {
           env: process.env,
           encoding: 'utf8'
         })
-      : { status: 127, stdout: '', stderr: 'ORCA_E2E_CLI_ENTRY missing' }
-    appendLedger('ORCA_E2E_LIFECYCLE_LEDGER', {
+      : { status: 127, stdout: '', stderr: 'DOLPHIN_E2E_CLI_ENTRY missing' }
+    appendLedger('DOLPHIN_E2E_LIFECYCLE_LEDGER', {
       event: 'legacy-command',
       argv: args,
       status: result.status,
@@ -161,7 +161,7 @@ process.stdin.on('data', (chunk) => {
 process.stdin.setRawMode?.(true)
 for (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) {
   process.on(signal, () => {
-    appendLedger('ORCA_E2E_INTERRUPTION_LEDGER', { event: 'signal', signal })
+    appendLedger('DOLPHIN_E2E_INTERRUPTION_LEDGER', { event: 'signal', signal })
     process.exit(0)
   })
 }
@@ -427,11 +427,11 @@ for (const contractVersion of [LEGACY_CONTRACT_VERSION, CURRENT_CONTRACT_VERSION
 
     const session = createRestartSession(testInfo, {
       PATH: `${fakeCliDir}${path.delimiter}${process.env.PATH ?? ''}`,
-      ORCA_E2E_SPAWN_LEDGER: spawnLedgerPath,
-      ORCA_E2E_INTERRUPTION_LEDGER: interruptionLedgerPath,
-      ORCA_E2E_AUTHORITY_LEDGER: authorityLedgerPath,
-      ORCA_E2E_LIFECYCLE_LEDGER: lifecycleLedgerPath,
-      ORCA_E2E_CLI_ENTRY: path.join(process.cwd(), 'out', 'cli', 'index.js')
+      DOLPHIN_E2E_SPAWN_LEDGER: spawnLedgerPath,
+      DOLPHIN_E2E_INTERRUPTION_LEDGER: interruptionLedgerPath,
+      DOLPHIN_E2E_AUTHORITY_LEDGER: authorityLedgerPath,
+      DOLPHIN_E2E_LIFECYCLE_LEDGER: lifecycleLedgerPath,
+      DOLPHIN_E2E_CLI_ENTRY: path.join(process.cwd(), 'out', 'cli', 'index.js')
     })
     let firstApp: ElectronApplication | null = null
     let secondApp: ElectronApplication | null = null
@@ -745,7 +745,7 @@ for (const contractVersion of [LEGACY_CONTRACT_VERSION, CURRENT_CONTRACT_VERSION
         ).toString('base64')
         await secondClient.call('terminal.send', {
           terminal: recovered!.handle,
-          text: `ORCA_E2E_RUN_LEGACY_DONE:${legacyCompletion}`,
+          text: `DOLPHIN_E2E_RUN_LEGACY_DONE:${legacyCompletion}`,
           enter: true
         })
         await expect

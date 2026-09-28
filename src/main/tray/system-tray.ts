@@ -1,6 +1,6 @@
 import { Menu, Tray, nativeImage, nativeTheme, type NativeImage } from 'electron'
-import menuBarIconPath from '../../../resources/tray/orca-menu-barTemplate.png?asset&asarUnpack'
-import menuBarIconRetinaPath from '../../../resources/tray/orca-menu-barTemplate@2x.png?asset&asarUnpack'
+import menuBarIconPath from '../../../resources/tray/dolphin-menu-barTemplate.png?asset&asarUnpack'
+import menuBarIconRetinaPath from '../../../resources/tray/dolphin-menu-barTemplate@2x.png?asset&asarUnpack'
 import { deferAppKitSceneMutation } from '../appkit-scene-mutation'
 import { createAppIconImage } from '../app-icon'
 import { translateMain } from '../i18n/main-i18n'
@@ -20,7 +20,7 @@ export type SystemTrayOptions = {
   onOpenSettings: () => void
   /** Run the existing user-initiated update check. */
   onCheckForUpdates: () => void
-  /** Quit Orca for real (caller must set the quitting latch before quitting). */
+  /** Quit Dolphin for real (caller must set the quitting latch before quitting). */
   onQuit: () => void
 }
 
@@ -261,7 +261,7 @@ export function createSystemTray(opts: SystemTrayOptions): Tray | null {
         ] as Electron.MenuItemConstructorOptions[])
       : []),
     {
-      label: translateMain('tray.openOrca', 'Open Dolphin'),
+      label: translateMain('tray.openDolphin', 'Open Dolphin'),
       click: safeMenuAction(() => opts.onOpen())
     },
     { type: 'separator' },

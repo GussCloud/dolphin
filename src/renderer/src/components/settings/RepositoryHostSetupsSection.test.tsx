@@ -122,31 +122,31 @@ describe('RepositoryHostSetupsSection', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     const remoteRepo = makeRepo({
       id: 'remote-repo',
       displayName: 'Dolphin',
-      path: '/home/alice/orca',
+      path: '/home/alice/dolphin',
       connectionId: 'openclaw 2'
     })
     useAppStore.setState({
       repos: [localRepo, remoteRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         }),
         makeSetup({
           id: 'remote-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'remote-repo',
           hostId: toSshExecutionHostId('openclaw 2'),
-          path: '/home/alice/orca'
+          path: '/home/alice/dolphin'
         })
       ],
       sshTargetLabels: new Map([['openclaw 2', 'openclaw 2']])
@@ -165,31 +165,31 @@ describe('RepositoryHostSetupsSection', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     const remoteRepo = makeRepo({
       id: 'remote-repo',
       displayName: 'Dolphin',
-      path: '/home/alice/orca',
+      path: '/home/alice/dolphin',
       connectionId: 'openclaw 2'
     })
     useAppStore.setState({
       repos: [localRepo, remoteRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         }),
         makeSetup({
           id: 'remote-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'remote-repo',
           hostId: toSshExecutionHostId('openclaw 2'),
-          path: '/home/alice/orca'
+          path: '/home/alice/dolphin'
         })
       ],
       openSettingsPage,
@@ -211,7 +211,7 @@ describe('RepositoryHostSetupsSection', () => {
 
     // The single project pane switches host in place — no navigation.
     expect(setSettingsProjectHostSelection).toHaveBeenCalledWith(
-      'github:stablyai/orca',
+      'github:gusscloud/dolphin',
       toSshExecutionHostId('openclaw 2'),
       'remote-repo'
     )
@@ -223,30 +223,30 @@ describe('RepositoryHostSetupsSection', () => {
     const remoteRepo = makeRepo({
       id: 'remote-repo',
       displayName: 'Dolphin',
-      path: '/srv/orca',
+      path: '/srv/dolphin',
       executionHostId: 'runtime:hub'
     })
     useAppStore.setState({
       repos: [remoteRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca', sourceRepoIds: ['remote-repo'] })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin', sourceRepoIds: ['remote-repo'] })],
       projectHostSetups: [
         makeSetup({
           id: 'direct-setup',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'remote-repo',
           hostId: 'runtime:hub',
           executionHostId: 'ssh:direct',
           runtimeOwnerEnvironmentId: 'hub',
-          path: '/srv/orca'
+          path: '/srv/dolphin'
         }),
         makeSetup({
           id: 'jump-setup',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'remote-repo',
           hostId: 'runtime:hub',
           executionHostId: 'ssh:jump',
           runtimeOwnerEnvironmentId: 'hub',
-          path: '/srv/orca'
+          path: '/srv/dolphin'
         })
       ],
       runtimeStatusByEnvironmentId: new Map([
@@ -323,21 +323,21 @@ describe('RepositoryHostSetupsSection', () => {
     const remoteRepo = makeRepo({
       id: 'remote-repo',
       displayName: 'Dolphin',
-      path: '/srv/orca',
+      path: '/srv/dolphin',
       executionHostId: 'runtime:hub'
     })
     useAppStore.setState({
       repos: [remoteRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca', sourceRepoIds: ['remote-repo'] })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin', sourceRepoIds: ['remote-repo'] })],
       projectHostSetups: [
         makeSetup({
           id: 'hub-local-setup',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'remote-repo',
           hostId: 'runtime:hub',
           executionHostId: 'local',
           runtimeOwnerEnvironmentId: 'hub',
-          path: '/srv/orca'
+          path: '/srv/dolphin'
         })
       ],
       runtimeStatusByEnvironmentId: new Map([['hub', { checkedAt: 1, status: null }]])
@@ -351,10 +351,10 @@ describe('RepositoryHostSetupsSection', () => {
 
   it('removes independent setup metadata instead of opening an empty repo target', async () => {
     const deleteProjectHostSetup = vi.fn().mockResolvedValue({
-      project: makeProject({ id: 'github:stablyai/orca' }),
+      project: makeProject({ id: 'github:gusscloud/dolphin' }),
       setup: makeSetup({
         id: 'gpu-setup',
-        projectId: 'github:stablyai/orca',
+        projectId: 'github:gusscloud/dolphin',
         repoId: '',
         hostId: 'runtime:gpu',
         path: ''
@@ -365,22 +365,22 @@ describe('RepositoryHostSetupsSection', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     useAppStore.setState({
       repos: [localRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         }),
         makeSetup({
           id: 'gpu-setup',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: '',
           hostId: 'runtime:gpu',
           path: '',
@@ -415,36 +415,36 @@ describe('RepositoryHostSetupsSection', () => {
     const openSettingsTarget = vi.fn()
     const setSettingsProjectHostSelection = vi.fn()
     const setupProjectExistingFolder = vi.fn().mockResolvedValue({
-      project: makeProject({ id: 'github:stablyai/orca' }),
+      project: makeProject({ id: 'github:gusscloud/dolphin' }),
       setup: makeSetup({
         id: 'remote-repo',
-        projectId: 'github:stablyai/orca',
+        projectId: 'github:gusscloud/dolphin',
         repoId: 'remote-repo',
         hostId: toSshExecutionHostId('openclaw 2'),
-        path: '/home/alice/orca'
+        path: '/home/alice/dolphin'
       }),
       repo: makeRepo({
         id: 'remote-repo',
         displayName: 'Dolphin',
-        path: '/home/alice/orca',
+        path: '/home/alice/dolphin',
         connectionId: 'openclaw 2'
       })
     })
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     useAppStore.setState({
       repos: [localRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         })
       ],
       sshTargetLabels: new Map([['openclaw 2', 'openclaw 2']]),
@@ -463,7 +463,7 @@ describe('RepositoryHostSetupsSection', () => {
       'input[placeholder="/path/to/project/on/host"]'
     )
     expect(pathInput).toBeTruthy()
-    typeIntoInput(pathInput!, '/home/alice/orca')
+    typeIntoInput(pathInput!, '/home/alice/dolphin')
 
     const importButton = findButton('Import')
     expect(importButton).toBeTruthy()
@@ -473,14 +473,14 @@ describe('RepositoryHostSetupsSection', () => {
     })
 
     expect(setupProjectExistingFolder).toHaveBeenCalledWith({
-      projectId: 'github:stablyai/orca',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'ssh:openclaw%202',
-      path: '/home/alice/orca',
+      path: '/home/alice/dolphin',
       kind: 'git',
       displayName: 'Dolphin'
     })
     expect(setSettingsProjectHostSelection).toHaveBeenCalledWith(
-      'github:stablyai/orca',
+      'github:gusscloud/dolphin',
       'ssh:openclaw%202'
     )
     expect(openSettingsPage).not.toHaveBeenCalled()
@@ -492,36 +492,36 @@ describe('RepositoryHostSetupsSection', () => {
     const openSettingsTarget = vi.fn()
     const setSettingsProjectHostSelection = vi.fn()
     const setupProjectClone = vi.fn().mockResolvedValue({
-      project: makeProject({ id: 'github:stablyai/orca' }),
+      project: makeProject({ id: 'github:gusscloud/dolphin' }),
       setup: makeSetup({
         id: 'remote-repo',
-        projectId: 'github:stablyai/orca',
+        projectId: 'github:gusscloud/dolphin',
         repoId: 'remote-repo',
         hostId: toSshExecutionHostId('openclaw 2'),
-        path: '/home/alice/orca'
+        path: '/home/alice/dolphin'
       }),
       repo: makeRepo({
         id: 'remote-repo',
         displayName: 'Dolphin',
-        path: '/home/alice/orca',
+        path: '/home/alice/dolphin',
         connectionId: 'openclaw 2'
       })
     })
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     useAppStore.setState({
       repos: [localRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         })
       ],
       sshTargetLabels: new Map([['openclaw 2', 'openclaw 2']]),
@@ -544,7 +544,7 @@ describe('RepositoryHostSetupsSection', () => {
     )
     expect(urlInput).toBeTruthy()
     expect(destinationInput).toBeTruthy()
-    typeIntoInput(urlInput!, 'https://github.com/stablyai/orca.git')
+    typeIntoInput(urlInput!, 'https://github.com/gusscloud/dolphin.git')
     typeIntoInput(destinationInput!, '/home/alice')
 
     const cloneButton = findButton('Clone')
@@ -555,14 +555,14 @@ describe('RepositoryHostSetupsSection', () => {
     })
 
     expect(setupProjectClone).toHaveBeenCalledWith({
-      projectId: 'github:stablyai/orca',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'ssh:openclaw%202',
-      url: 'https://github.com/stablyai/orca.git',
+      url: 'https://github.com/gusscloud/dolphin.git',
       destination: '/home/alice',
       displayName: 'Dolphin'
     })
     expect(setSettingsProjectHostSelection).toHaveBeenCalledWith(
-      'github:stablyai/orca',
+      'github:gusscloud/dolphin',
       'ssh:openclaw%202'
     )
     expect(openSettingsPage).not.toHaveBeenCalled()
@@ -573,18 +573,18 @@ describe('RepositoryHostSetupsSection', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     useAppStore.setState({
       repos: [localRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         })
       ],
       sshTargetLabels: new Map([['openclaw 2', 'openclaw 2']])
@@ -610,10 +610,10 @@ describe('RepositoryHostSetupsSection', () => {
 
   it('creates pending setup metadata for a known host without requiring a path', async () => {
     const createProjectHostSetup = vi.fn().mockResolvedValue({
-      project: makeProject({ id: 'github:stablyai/orca' }),
+      project: makeProject({ id: 'github:gusscloud/dolphin' }),
       setup: makeSetup({
         id: 'gpu-setup',
-        projectId: 'github:stablyai/orca',
+        projectId: 'github:gusscloud/dolphin',
         repoId: '',
         hostId: 'runtime:gpu',
         path: '',
@@ -624,18 +624,18 @@ describe('RepositoryHostSetupsSection', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     useAppStore.setState({
       repos: [localRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         })
       ],
       settings: { activeRuntimeEnvironmentId: 'gpu' } as never,
@@ -678,7 +678,7 @@ describe('RepositoryHostSetupsSection', () => {
     })
 
     expect(createProjectHostSetup).toHaveBeenCalledWith({
-      projectId: 'github:stablyai/orca',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'runtime:gpu',
       displayName: 'Dolphin',
       setupState: 'not-set-up',
@@ -693,18 +693,18 @@ describe('RepositoryHostSetupsSection', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     useAppStore.setState({
       repos: [localRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         })
       ],
       settings: { activeRuntimeEnvironmentId: null } as never,
@@ -753,10 +753,10 @@ describe('RepositoryHostSetupsSection', () => {
 
   it('offers inactive runtime hosts discovered from hydrated runtime status', async () => {
     const createProjectHostSetup = vi.fn().mockResolvedValue({
-      project: makeProject({ id: 'github:stablyai/orca' }),
+      project: makeProject({ id: 'github:gusscloud/dolphin' }),
       setup: makeSetup({
         id: 'gpu-setup',
-        projectId: 'github:stablyai/orca',
+        projectId: 'github:gusscloud/dolphin',
         repoId: '',
         hostId: 'runtime:gpu',
         path: '',
@@ -767,18 +767,18 @@ describe('RepositoryHostSetupsSection', () => {
     const localRepo = makeRepo({
       id: 'local-repo',
       displayName: 'Dolphin',
-      path: '/Users/alice/orca'
+      path: '/Users/alice/dolphin'
     })
     useAppStore.setState({
       repos: [localRepo],
-      projects: [makeProject({ id: 'github:stablyai/orca' })],
+      projects: [makeProject({ id: 'github:gusscloud/dolphin' })],
       projectHostSetups: [
         makeSetup({
           id: 'local-repo',
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-repo',
           hostId: 'local',
-          path: '/Users/alice/orca'
+          path: '/Users/alice/dolphin'
         })
       ],
       settings: { activeRuntimeEnvironmentId: null } as never,
@@ -820,7 +820,7 @@ describe('RepositoryHostSetupsSection', () => {
     })
 
     expect(createProjectHostSetup).toHaveBeenCalledWith({
-      projectId: 'github:stablyai/orca',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'runtime:gpu',
       displayName: 'Dolphin',
       setupState: 'not-set-up',

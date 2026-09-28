@@ -26,10 +26,10 @@ function writeLegacyLinearFiles(token: string, viewer: Record<string, unknown>):
 }
 
 function writeLegacyLinearToken(token: string | Buffer, viewer: Record<string, unknown>): void {
-  const orcaDir = join(tempHome, '.dolphin')
-  mkdirSync(orcaDir, { recursive: true })
-  writeFileSync(join(orcaDir, 'linear-token.enc'), token)
-  writeFileSync(join(orcaDir, 'linear-viewer.json'), JSON.stringify(viewer), {
+  const dolphinDir = join(tempHome, '.dolphin')
+  mkdirSync(dolphinDir, { recursive: true })
+  writeFileSync(join(dolphinDir, 'linear-token.enc'), token)
+  writeFileSync(join(dolphinDir, 'linear-viewer.json'), JSON.stringify(viewer), {
     encoding: 'utf-8'
   })
 }
@@ -47,10 +47,10 @@ function writeMultiWorkspaceFiles(
   workspaces: { id: string; token: string | Buffer }[],
   selectedWorkspaceId: string
 ): void {
-  const orcaDir = join(tempHome, '.dolphin')
-  mkdirSync(join(orcaDir, 'linear-tokens'), { recursive: true })
+  const dolphinDir = join(tempHome, '.dolphin')
+  mkdirSync(join(dolphinDir, 'linear-tokens'), { recursive: true })
   writeFileSync(
-    join(orcaDir, 'linear-workspaces.json'),
+    join(dolphinDir, 'linear-workspaces.json'),
     JSON.stringify({
       version: 1,
       activeWorkspaceId: workspaces[0]?.id ?? null,
@@ -115,7 +115,7 @@ async function loadClientModule(options: SafeStorageMockOptions = {}) {
 }
 
 beforeEach(() => {
-  tempHome = mkdtempLike('orca-linear-client-')
+  tempHome = mkdtempLike('dolphin-linear-client-')
   fixtures = new Map([
     [
       'token-alpha',

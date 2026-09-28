@@ -15,7 +15,9 @@ function getCssRuleBody(selector: string): string {
 
 describe('diff comment draft card shadow', () => {
   it('uses the documented shadow-xs tier instead of a hand-rolled fourth tier', () => {
-    const draftCard = getCssRuleBody('.orca-diff-comment-inline > .orca-diff-comment-draft-card')
+    const draftCard = getCssRuleBody(
+      '.dolphin-diff-comment-inline > .dolphin-diff-comment-draft-card'
+    )
 
     // STYLEGUIDE.md caps elevation at border / shadow-xs / shadow-floating —
     // no invented per-component shadow values.
@@ -26,10 +28,10 @@ describe('diff comment draft card shadow', () => {
 
   it('keeps the dark override at shadow-xs, not a hand-rolled or missing shadow', () => {
     const darkDraftCard = getCssRuleBody(
-      '.dark .orca-diff-comment-inline > .orca-diff-comment-draft-card'
+      '.dark .dolphin-diff-comment-inline > .dolphin-diff-comment-draft-card'
     )
 
-    // Same selector specificity as `.dark .orca-diff-comment-popover` (its
+    // Same selector specificity as `.dark .dolphin-diff-comment-popover` (its
     // ancestor via the shared draft-card component), which sits later in the
     // file — dropping this rule lets that popover's much larger floating
     // shadow win the cascade in dark mode instead of shadow-xs.

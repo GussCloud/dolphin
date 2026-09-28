@@ -296,7 +296,7 @@ function launchAgentInNewTabInternal(args: LaunchAgentInNewTabArgs): LaunchAgent
     }).then((delivered) => {
       if (delivered) {
         if (agent === 'command-code' && submitPastedPrompt) {
-          // Why: Command Code has no prompt-submit hook; when Orca submits a
+          // Why: Command Code has no prompt-submit hook; when Dolphin submits a
           // generated prompt after readiness, seed working at delivery time.
           seedCommandCodeSubmittedPromptStatus(worktreeId, tab.id, trimmedPrompt)
         }

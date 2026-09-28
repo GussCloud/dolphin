@@ -9,7 +9,7 @@ const MSYS_BASH_IMAGE = 'bash.exe'
  * processes below it.
  *
  * The launcher hands off to `usr\bin\bash.exe` and waits, and every MSYS `exec`
- * (Orca's `chcp.com ...; exec "$BASH" ... -i` startup) leaves the pre-exec
+ * (Dolphin's `chcp.com ...; exec "$BASH" ... -i` startup) leaves the pre-exec
  * process alive as a stub waiting on its successor. So an idle prompt is
  * `launcher -> bash -> ... -> bash`, the leaf being the interactive shell. A
  * command at the prompt adds a non-bash leaf, and a background job branches.

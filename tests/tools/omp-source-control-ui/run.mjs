@@ -1,4 +1,4 @@
-import { _electron as electron, expect } from '@stablyai/playwright-test'
+import { _electron as electron, expect } from '@playwright/test'
 import { build as buildMain } from 'esbuild'
 import { build as buildRenderer } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
@@ -33,7 +33,7 @@ await buildRenderer({
 const { ELECTRON_RUN_AS_NODE: _node, ...env } = process.env
 const app = await electron.launch({
   args: [main],
-  env: { ...env, HOME: home, ZDOTDIR: home, ORCA_BACKGROUND_LAUNCH: '1' }
+  env: { ...env, HOME: home, ZDOTDIR: home, DOLPHIN_BACKGROUND_LAUNCH: '1' }
 })
 const report = {
   scope:

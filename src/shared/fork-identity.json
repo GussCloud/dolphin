@@ -3,7 +3,9 @@
   "appId": "com.gusscloud.dolphin",
   "executableName": "Dolphin",
   "userDataDirName": "dolphin",
-  "cliAliasName": "dolphin",
+  "cliCommandName": "dolphin",
+  "linuxCliCommandName": "dolphin-ide",
+  "devCliCommandName": "dolphin-dev",
   "installerArtifactBaseName": "dolphin-windows-setup",
   "releaseOwner": "GussCloud",
   "releaseRepo": "dolphin"

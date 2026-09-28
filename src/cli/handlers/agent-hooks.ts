@@ -9,7 +9,7 @@ import {
   getDefaultUserDataPath
 } from '../runtime-client'
 import type { AgentHookInstallStatus } from '../../shared/agent-hook-types'
-import { DEFAULT_LOCAL_ORCA_PROFILE_ID } from '../../shared/orca-profiles'
+import { DEFAULT_LOCAL_DOLPHIN_PROFILE_ID } from '../../shared/dolphin-profiles'
 import { normalizeDisabledTuiAgents } from '../../shared/tui-agent-selection'
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import { prepareManagedCodexHomeBeforeShellLaunch } from '../../main/codex/managed-home-shell-preflight'
@@ -27,7 +27,8 @@ const WSL_CODEX_PREPARE_TIMEOUT_MS = 50_000
 
 async function getDataPath(): Promise<string> {
   return (
-    (await getProfileStateLocation())?.dataFile ?? join(getDefaultUserDataPath(), 'orca-data.json')
+    (await getProfileStateLocation())?.dataFile ??
+    join(getDefaultUserDataPath(), 'dolphin-data.json')
   )
 }
 
@@ -39,9 +40,9 @@ async function getProfileStateLocation(): Promise<ProfileStateOfflineLocation | 
 function legacyProfileStateLocation(): ProfileStateOfflineLocation {
   const userDataPath = getDefaultUserDataPath()
   return {
-    dataFile: join(userDataPath, 'orca-data.json'),
+    dataFile: join(userDataPath, 'dolphin-data.json'),
     databaseFile: join(userDataPath, 'profile-state.db'),
-    profileId: DEFAULT_LOCAL_ORCA_PROFILE_ID
+    profileId: DEFAULT_LOCAL_DOLPHIN_PROFILE_ID
   }
 }
 
@@ -123,9 +124,9 @@ async function updateAdmittedEnabledOnDisk(enabled: boolean): Promise<{
     }
     // Validate retained recovery evidence and source bytes before creating the index.
     readAgentHookSettingsFromProfileState(legacy)
-    const { ensureActiveOrcaProfile } =
-      await import('../../main/orca-profiles/profile-index-store.js')
-    const profile = ensureActiveOrcaProfile(getDefaultUserDataPath())
+    const { ensureActiveDolphinProfile } =
+      await import('../../main/dolphin-profiles/profile-index-store.js')
+    const profile = ensureActiveDolphinProfile(getDefaultUserDataPath())
     location = {
       dataFile: profile.dataFile,
       databaseFile: profile.stateDatabaseFile,
@@ -141,7 +142,7 @@ async function updateRunningRuntime(client: RuntimeClient, enabled: boolean): Pr
     if (status.result.app.running) {
       throw new RuntimeClientError(
         'runtime_error',
-        'Orca is running but unavailable. Retry when it responds, or stop Orca before changing agent hooks offline.'
+        'Dolphin is running but unavailable. Retry when it responds, or stop Dolphin before changing agent hooks offline.'
       )
     }
     return false
@@ -204,7 +205,7 @@ export const AGENT_HOOK_HANDLERS: Record<string, CommandHandler> = {
           'agentHooks.prepareCodexForWslPane',
           {
             codexHome: process.env.CODEX_HOME ?? '',
-            orcaCodexHome: process.env.ORCA_CODEX_HOME ?? '',
+            dolphinCodexHome: process.env.DOLPHIN_CODEX_HOME ?? '',
             wslDistro: process.env.WSL_DISTRO_NAME
           },
           { timeoutMs: WSL_CODEX_PREPARE_TIMEOUT_MS }

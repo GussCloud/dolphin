@@ -5,8 +5,8 @@ import { app as electronApp, type BrowserWindow } from 'electron'
  * validation). These runs may use the machine, but must never take the OS
  * foreground away from whatever the developer is doing.
  *
- * ORCA_BACKGROUND_LAUNCH=1 keeps automation off screen. Native-focus specs
- * can use ORCA_E2E_FOREGROUND=1 only without an explicit background request.
+ * DOLPHIN_BACKGROUND_LAUNCH=1 keeps automation off screen. Native-focus specs
+ * can use DOLPHIN_E2E_FOREGROUND=1 only without an explicit background request.
  * The hosted-Xvfb terminal benchmark explicitly presents after startup; see tests/AGENTS.md.
  * This policy still suppresses its automatic reveals and foreground activation.
  */
@@ -16,25 +16,25 @@ type ActivationPolicyApp = {
   setActivationPolicy: (policy: 'accessory' | 'prohibited' | 'regular') => void
 }
 
-/** Reads ORCA_BACKGROUND_LAUNCH, ORCA_E2E_FOREGROUND, ORCA_E2E_HEADLESS, ORCA_E2E_HEADFUL. */
+/** Reads DOLPHIN_BACKGROUND_LAUNCH, DOLPHIN_E2E_FOREGROUND, DOLPHIN_E2E_HEADLESS, DOLPHIN_E2E_HEADFUL. */
 type PolicyEnv = Readonly<Record<string, string | undefined>>
 
 /** True when this process must not steal focus, raise windows, or activate the app. */
 export function isBackgroundLaunch(env: PolicyEnv = process.env): boolean {
-  if (env.ORCA_BACKGROUND_LAUNCH === '1') {
+  if (env.DOLPHIN_BACKGROUND_LAUNCH === '1') {
     return true
   }
-  if (env.ORCA_E2E_FOREGROUND === '1') {
+  if (env.DOLPHIN_E2E_FOREGROUND === '1') {
     return false
   }
-  return env.ORCA_E2E_HEADLESS === '1' || env.ORCA_E2E_HEADFUL === '1'
+  return env.DOLPHIN_E2E_HEADLESS === '1' || env.DOLPHIN_E2E_HEADFUL === '1'
 }
 
 /** Suppresses automatic presentation on launch; this is not a query of current window visibility. */
 export function isWindowlessLaunch(env: PolicyEnv = process.env): boolean {
   return (
-    env.ORCA_BACKGROUND_LAUNCH === '1' ||
-    (isBackgroundLaunch(env) && env.ORCA_E2E_HEADLESS === '1' && env.ORCA_E2E_HEADFUL !== '1')
+    env.DOLPHIN_BACKGROUND_LAUNCH === '1' ||
+    (isBackgroundLaunch(env) && env.DOLPHIN_E2E_HEADLESS === '1' && env.DOLPHIN_E2E_HEADFUL !== '1')
   )
 }
 

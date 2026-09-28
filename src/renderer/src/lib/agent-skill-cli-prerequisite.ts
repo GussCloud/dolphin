@@ -2,7 +2,7 @@ import { toast } from 'sonner'
 import type { CliInstallStatus } from '../../../shared/cli-install-types'
 import { translate } from '@/i18n/i18n'
 
-type EnsureOrcaCliAvailableOptions = {
+type EnsureDolphinCliAvailableOptions = {
   onStatusChange?: (status: CliInstallStatus) => void
   registrationPromptDelayMs?: number
 }
@@ -14,14 +14,14 @@ export const CLI_PREREQUISITE_REGISTRATION_TOAST = 'Dolphin needs to register it
 export const CLI_PREREQUISITE_REGISTRATION_TOAST_DESCRIPTION =
   'Approve the system prompt so skill setup can use the Dolphin CLI command.'
 
-export function isOrcaCliAvailableOnPath(status: CliInstallStatus | null | undefined): boolean {
+export function isDolphinCliAvailableOnPath(status: CliInstallStatus | null | undefined): boolean {
   return status?.state === 'installed' && status.pathConfigured === true
 }
 
-export async function ensureOrcaCliAvailableForAgentSkillTerminal({
+export async function ensureDolphinCliAvailableForAgentSkillTerminal({
   onStatusChange,
   registrationPromptDelayMs = 700
-}: EnsureOrcaCliAvailableOptions = {}): Promise<CliInstallStatus | null> {
+}: EnsureDolphinCliAvailableOptions = {}): Promise<CliInstallStatus | null> {
   try {
     const status = await window.api.cli.getInstallStatus()
     onStatusChange?.(status)
@@ -39,7 +39,7 @@ export async function ensureOrcaCliAvailableForAgentSkillTerminal({
     if (status.state !== 'installed' || status.pathConfigured === false) {
       // Why: macOS may immediately show a native authorization prompt, so the
       // user needs app-level context before that OS dialog appears.
-      await showOrcaCliRegistrationPromptToast(registrationPromptDelayMs)
+      await showDolphinCliRegistrationPromptToast(registrationPromptDelayMs)
       const next = await window.api.cli.install()
       onStatusChange?.(next)
       showCliPrerequisiteWarning(next)
@@ -60,7 +60,7 @@ export async function ensureOrcaCliAvailableForAgentSkillTerminal({
   }
 }
 
-export async function showOrcaCliRegistrationPromptToast(delayMs = 700): Promise<void> {
+export async function showDolphinCliRegistrationPromptToast(delayMs = 700): Promise<void> {
   toast.message(CLI_PREREQUISITE_REGISTRATION_TOAST, {
     description: CLI_PREREQUISITE_REGISTRATION_TOAST_DESCRIPTION
   })
@@ -131,7 +131,7 @@ function showCliPrerequisiteWarning(status: CliInstallStatus): void {
 
   if (status.pathConfigured === false) {
     // Why: the skill installer opens a real shell; agents only get the expected
-    // Orca affordances when that shell can resolve the Orca CLI command.
+    // Dolphin affordances when that shell can resolve the Dolphin CLI command.
     toast.warning(
       translate(
         'auto.lib.agent.skill.cli.prerequisite.79371593b0',

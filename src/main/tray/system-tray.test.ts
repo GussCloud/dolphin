@@ -89,12 +89,12 @@ vi.mock('electron', () => ({
   nativeTheme: nativeThemeMock
 }))
 
-vi.mock('../../../resources/tray/orca-menu-barTemplate.png?asset&asarUnpack', () => ({
-  default: '/assets/orca-menu-barTemplate.png'
+vi.mock('../../../resources/tray/dolphin-menu-barTemplate.png?asset&asarUnpack', () => ({
+  default: '/assets/dolphin-menu-barTemplate.png'
 }))
 
-vi.mock('../../../resources/tray/orca-menu-barTemplate@2x.png?asset&asarUnpack', () => ({
-  default: '/assets/orca-menu-barTemplate@2x.png'
+vi.mock('../../../resources/tray/dolphin-menu-barTemplate@2x.png?asset&asarUnpack', () => ({
+  default: '/assets/dolphin-menu-barTemplate@2x.png'
 }))
 
 vi.mock('../app-icon', () => ({

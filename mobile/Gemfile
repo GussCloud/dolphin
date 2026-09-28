@@ -1,6 +1,5 @@
-# Pins fastlane for reproducible iOS releases in CI (see fastlane/Fastfile,
-# .github/workflows/mobile-ios-release.yml, and the Fastfile smoke check in
-# .github/workflows/mobile.yml). macOS runners ship a fastlane, but pinning here
+# Pins fastlane for reproducible iOS releases (see fastlane/Fastfile and the
+# Fastfile smoke check in .github/workflows/mobile.yml). macOS runners ship a fastlane, but pinning here
 # keeps the release toolchain stable across runner image bumps.
 #
 # Why an exact version plus a committed Gemfile.lock: ios-build (macos) and

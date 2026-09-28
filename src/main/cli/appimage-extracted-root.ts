@@ -20,7 +20,7 @@ import {
   resolveAppImageStableLauncherPath
 } from './appimage-stable-launcher'
 
-const CACHE_DIR_SEGMENTS = ['orca', 'appimage'] as const
+const CACHE_DIR_SEGMENTS = ['dolphin', 'appimage'] as const
 const EXTRACT_OUTPUT_DIR = 'squashfs-root'
 const MAX_GENERATION_ATTEMPTS = 2
 const EXTRACTION_STAGING_PREFIX = '.extract-'
@@ -77,7 +77,7 @@ export function resolveAppImageExtractedRoot(
 export function isAppImageExtractedLauncherPath(
   options: AppImageExtractionOptions,
   candidatePath: string,
-  launcherName = LINUX_CLI_COMMAND_NAME
+  launcherName: string = LINUX_CLI_COMMAND_NAME
 ): boolean {
   if (!isAbsolute(candidatePath)) {
     return false

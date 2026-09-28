@@ -58,7 +58,7 @@ async function fixtureWithNested(name, markup, style, nestedStyle) {
 }
 
 beforeAll(async () => {
-  fixtureDir = await mkdtemp(join(tmpdir(), 'orca-editable-host-'))
+  fixtureDir = await mkdtemp(join(tmpdir(), 'dolphin-editable-host-'))
 })
 
 afterAll(async () => {

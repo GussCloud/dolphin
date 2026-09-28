@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import type { Page } from '@playwright/test'
+import { expect, test } from './helpers/dolphin-app'
 import { openFileExplorer } from './helpers/file-explorer'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {
@@ -102,16 +102,16 @@ async function clickLink(page: Page, probe: LinkProbe): Promise<void> {
   await page.mouse.click(target.x, target.y)
 }
 
-test('opens a terminal file link and observes an external edit @golden', async ({ orcaPage }) => {
+test('opens a terminal file link and observes an external edit @golden', async ({ appPage }) => {
   test.setTimeout(180_000)
-  await waitForSessionReady(orcaPage)
-  const worktreeId = await waitForActiveWorktree(orcaPage)
-  await ensureTerminalVisible(orcaPage)
-  await waitForActiveTerminalManager(orcaPage, 30_000)
-  const ptyId = await waitForActivePanePtyId(orcaPage)
-  await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+  await waitForSessionReady(appPage)
+  const worktreeId = await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  const ptyId = await waitForActivePanePtyId(appPage)
+  await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
-  const worktreePath = await orcaPage.evaluate((id) => {
+  const worktreePath = await appPage.evaluate((id) => {
     return (
       Object.values(window.__store?.getState().worktreesByRepo ?? {})
         .flat()
@@ -128,25 +128,25 @@ test('opens a terminal file link and observes an external edit @golden', async (
   const changedMarker = `golden-external-edit-${Date.now()}`
 
   try {
-    await openFileExplorer(orcaPage)
-    const explorerRow = orcaPage
+    await openFileExplorer(appPage)
+    const explorerRow = appPage
       .locator('[data-file-explorer-row]')
       .filter({ hasText: 'package.json' })
       .first()
     await expect(explorerRow).toBeVisible({ timeout: 15_000 })
 
     const command = nodeTerminalCommand(['-e', `console.log(${JSON.stringify(printedPath)})`])
-    await sendToTerminal(orcaPage, ptyId, `${command}\r`)
+    await sendToTerminal(appPage, ptyId, `${command}\r`)
     await expect
-      .poll(() => getTerminalContent(orcaPage, LINK_SCAN_CHAR_LIMIT), { timeout: 15_000 })
+      .poll(() => getTerminalContent(appPage, LINK_SCAN_CHAR_LIMIT), { timeout: 15_000 })
       .toContain(printedPath)
 
     let probe: LinkProbe | null = null
     await expect
       .poll(
         async () => {
-          probe = await locateLink(orcaPage, printedPath)
-          return probe ? hoverLink(orcaPage, probe) : null
+          probe = await locateLink(appPage, printedPath)
+          return probe ? hoverLink(appPage, probe) : null
         },
         { timeout: 10_000, message: 'cwd-relative file path did not become clickable' }
       )
@@ -154,9 +154,9 @@ test('opens a terminal file link and observes an external edit @golden', async (
     if (!probe) {
       throw new Error('terminal file link disappeared before activation')
     }
-    await clickLink(orcaPage, probe)
+    await clickLink(appPage, probe)
 
-    const actionPopover = orcaPage.locator('[data-terminal-link-action-popover]')
+    const actionPopover = appPage.locator('[data-terminal-link-action-popover]')
     await expect(actionPopover).toBeVisible()
     // Why: destination is the resolved absolute path; Windows may use `\`.
     await expect
@@ -170,14 +170,14 @@ test('opens a terminal file link and observes an external edit @golden', async (
       .toContain(resolvedDestination)
     await actionPopover.getByRole('button', { name: /Open file/i }).click()
 
-    const editorHeader = orcaPage.locator('.editor-header-path').first()
+    const editorHeader = appPage.locator('.editor-header-path').first()
     await expect(editorHeader).toContainText('package.json', { timeout: 20_000 })
     await expect(explorerRow).toHaveAttribute('data-selected', 'true', { timeout: 10_000 })
     await expect
       .poll(
         async () =>
           canonicalFileIdentity(
-            (await orcaPage.evaluate(() => window.__monacoEditorE2E?.filePath)) ?? ''
+            (await appPage.evaluate(() => window.__monacoEditorE2E?.filePath)) ?? ''
           ),
         { timeout: 20_000, message: 'Monaco opened a different file identity' }
       )
@@ -187,8 +187,8 @@ test('opens a terminal file link and observes an external edit @golden', async (
     await expect
       .poll(
         async () => {
-          const snapshot = await orcaPage.evaluate(() => window.__monacoEditorE2E?.snapshot())
-          const reloadVisible = await orcaPage
+          const snapshot = await appPage.evaluate(() => window.__monacoEditorE2E?.snapshot())
+          const reloadVisible = await appPage
             .getByRole('button', { name: 'Reload from Disk' })
             .isVisible()
             .catch(() => false)
@@ -203,12 +203,12 @@ test('opens a terminal file link and observes an external edit @golden', async (
 })
 
 test('reuses a terminal file link already open in a sibling workspace @golden', async ({
-  orcaPage
+  appPage
 }) => {
   test.setTimeout(180_000)
-  await waitForSessionReady(orcaPage)
-  const sourceWorktreeId = await waitForActiveWorktree(orcaPage)
-  const worktrees = await orcaPage.evaluate((sourceId) => {
+  await waitForSessionReady(appPage)
+  const sourceWorktreeId = await waitForActiveWorktree(appPage)
+  const worktrees = await appPage.evaluate((sourceId) => {
     const state = window.__store?.getState()
     const entries = Object.values(state?.worktreesByRepo ?? {}).flat()
     return {
@@ -225,7 +225,7 @@ test('reuses a terminal file link already open in a sibling workspace @golden', 
   }
 
   const filePath = path.join(sibling.path, 'package.json')
-  await orcaPage.evaluate(
+  await appPage.evaluate(
     ({ filePath, sourceWorktreeId, siblingWorktreeId }) => {
       const state = window.__store?.getState()
       if (!state) {
@@ -244,9 +244,9 @@ test('reuses a terminal file link already open in a sibling workspace @golden', 
     { filePath, sourceWorktreeId, siblingWorktreeId: sibling.id }
   )
 
-  await ensureTerminalVisible(orcaPage)
-  await waitForActiveTerminalManager(orcaPage, 30_000)
-  await orcaPage.evaluate((sourceWorktreeId) => {
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage, 30_000)
+  await appPage.evaluate((sourceWorktreeId) => {
     const state = window.__store?.getState()
     state?.setSidebarOpen(false)
     state?.setRightSidebarOpen(false)
@@ -256,11 +256,11 @@ test('reuses a terminal file link already open in a sibling workspace @golden', 
       state.setActiveWorktree(sourceWorktreeId)
     }
   }, sourceWorktreeId)
-  await ensureTerminalVisible(orcaPage)
+  await ensureTerminalVisible(appPage)
   await expect
     .poll(
       () =>
-        orcaPage.evaluate(() => {
+        appPage.evaluate(() => {
           const state = window.__store?.getState()
           const tabId = state?.activeTabId
           const manager = tabId ? window.__paneManagers?.get(tabId) : null
@@ -269,21 +269,21 @@ test('reuses a terminal file link already open in a sibling workspace @golden', 
       { message: 'terminal did not expand after closing the sidebars' }
     )
     .toBeGreaterThan(120)
-  const ptyId = await waitForActivePanePtyId(orcaPage, 30_000)
-  await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+  const ptyId = await waitForActivePanePtyId(appPage, 30_000)
+  await waitForPtyShellEcho(appPage, ptyId, 15_000)
   const printedPath = process.platform === 'win32' ? filePath.replaceAll('\\', '/') : filePath
   const command = nodeTerminalCommand(['-e', `console.log(${JSON.stringify(printedPath)})`])
-  await sendToTerminal(orcaPage, ptyId, `${command}\r`)
+  await sendToTerminal(appPage, ptyId, `${command}\r`)
   await expect
-    .poll(() => getTerminalContent(orcaPage, LINK_SCAN_CHAR_LIMIT), { timeout: 15_000 })
+    .poll(() => getTerminalContent(appPage, LINK_SCAN_CHAR_LIMIT), { timeout: 15_000 })
     .toContain(printedPath)
 
   let probe: LinkProbe | null = null
   await expect
     .poll(
       async () => {
-        probe = await locateLink(orcaPage, printedPath)
-        return probe ? hoverLink(orcaPage, probe) : null
+        probe = await locateLink(appPage, printedPath)
+        return probe ? hoverLink(appPage, probe) : null
       },
       { timeout: 10_000, message: 'sibling file path did not become clickable' }
     )
@@ -291,17 +291,17 @@ test('reuses a terminal file link already open in a sibling workspace @golden', 
   if (!probe) {
     throw new Error('sibling file link disappeared before activation')
   }
-  await clickLink(orcaPage, probe)
-  const actionPopover = orcaPage.locator('[data-terminal-link-action-popover]')
+  await clickLink(appPage, probe)
+  const actionPopover = appPage.locator('[data-terminal-link-action-popover]')
   await expect(actionPopover).toBeVisible()
   await actionPopover.getByRole('button', { name: /Open file/i }).click()
 
-  const editorHeader = orcaPage.locator('.editor-header-path').first()
+  const editorHeader = appPage.locator('.editor-header-path').first()
   await expect(editorHeader).toContainText('package.json', { timeout: 20_000 })
   await expect
     .poll(
       async () => {
-        const rendered = await orcaPage.evaluate(() => ({
+        const rendered = await appPage.evaluate(() => ({
           filePath: window.__monacoEditorE2E?.filePath ?? '',
           activeWorktreeId: window.__store?.getState()?.activeWorktreeId ?? null
         }))
@@ -313,5 +313,5 @@ test('reuses a terminal file link already open in a sibling workspace @golden', 
       { timeout: 20_000, message: 'sibling workspace never rendered the linked file' }
     )
     .toEqual({ filePath: canonicalFileIdentity(filePath), activeWorktreeId: sibling.id })
-  await expect(orcaPage.getByText('Loading...', { exact: true })).toHaveCount(0)
+  await expect(appPage.getByText('Loading...', { exact: true })).toHaveCount(0)
 })

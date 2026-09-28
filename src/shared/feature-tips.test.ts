@@ -13,7 +13,7 @@ describe('feature tips', () => {
 
     expect(tips.map((tip) => tip.id)).toEqual([
       'agent-session-search',
-      'orca-cli',
+      'dolphin-cli',
       'cmd-j-palette',
       'voice-dictation'
     ])
@@ -23,7 +23,7 @@ describe('feature tips', () => {
     const tips = getOrderedUnseenFeatureTips({
       seenTipIds: new Set<FeatureTipId>([
         'voice-dictation',
-        'orca-cli',
+        'dolphin-cli',
         'cmd-j-palette',
         'agent-session-search'
       ])
@@ -72,19 +72,19 @@ describe('feature tips', () => {
       })
     })
 
-    expect(tips.map((tip) => tip.id)).toEqual(['orca-cli', 'cmd-j-palette'])
+    expect(tips.map((tip) => tip.id)).toEqual(['dolphin-cli', 'cmd-j-palette'])
   })
 
   it('normalizes persisted tip ids', () => {
     expect(
       normalizeFeatureTipIds([
         'feature-tour',
-        'orca-cli',
+        'dolphin-cli',
         'bogus',
         'cmd-j-palette',
         'voice-dictation'
       ])
-    ).toEqual(['orca-cli', 'cmd-j-palette', 'voice-dictation'])
+    ).toEqual(['dolphin-cli', 'cmd-j-palette', 'voice-dictation'])
   })
 
   it('describes the command palette tip as a passive acknowledgement', () => {
@@ -101,11 +101,11 @@ describe('feature tips', () => {
   })
 
   it('describes the CLI tip as an install action with concrete workflows', () => {
-    const cliTip = FEATURE_TIPS.find((tip) => tip.id === 'orca-cli')
+    const cliTip = FEATURE_TIPS.find((tip) => tip.id === 'dolphin-cli')
 
     expect(cliTip).toMatchObject({
       action: 'setup-cli',
-      title: 'Let agents drive Orca with the Orca CLI',
+      title: 'Let agents drive Dolphin with the Dolphin CLI',
       ctaLabel: 'Install CLI & Skills'
     })
     expect(cliTip?.description).toContain('coordinate child worktrees')

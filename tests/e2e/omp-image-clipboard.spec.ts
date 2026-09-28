@@ -1,5 +1,5 @@
 import { writeFile } from 'node:fs/promises'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { waitForActivePaneHookDescriptor, waitForActiveTerminalManager } from './helpers/terminal'
 
@@ -7,17 +7,17 @@ const PNG =
   'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAAYUlEQVR4nO3PIREAIBAAMFqhMWgyUYMun4QQaBQZEO92twIrZ/RUde1URUBAQEBAQEBAQEBAQEBAQEBAQEBAQEDgO9BiprrRUgkICAgICAgICAgICAgICAgICAgICAgIfHuebLmH1pKnMwAAAABJRU5ErkJggg=='
 
 test('OMP composer accepts an image clipboard event', async ({
-  orcaPage,
+  appPage,
   electronApp
 }, testInfo) => {
-  await waitForSessionReady(orcaPage)
-  await waitForActiveWorktree(orcaPage)
-  await ensureTerminalVisible(orcaPage)
-  await waitForActiveTerminalManager(orcaPage)
-  const descriptor = await waitForActivePaneHookDescriptor(orcaPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  const descriptor = await waitForActivePaneHookDescriptor(appPage)
   const imagePath = testInfo.outputPath('omp-image-proof.png')
   await writeFile(imagePath, Buffer.from(PNG, 'base64'))
-  await orcaPage.evaluate(async ({ paneKey, worktreeId }) => {
+  await appPage.evaluate(async ({ paneKey, worktreeId }) => {
     const settings = await window.api.settings.set({ experimentalNativeChat: true })
     const store = window.__store
     if (!store) {
@@ -41,7 +41,7 @@ test('OMP composer accepts an image clipboard event', async ({
     }
     state.toggleTabViewMode(tab.id)
   }, descriptor)
-  const composer = orcaPage.getByRole('textbox', { name: 'Send a message…', exact: true })
+  const composer = appPage.getByRole('textbox', { name: 'Send a message…', exact: true })
   await expect(composer).toBeVisible()
   // Substitute only clipboard persistence; never overwrite the user's system clipboard.
   await electronApp.evaluate(
@@ -59,8 +59,6 @@ test('OMP composer accepts an image clipboard event', async ({
       new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data })
     )
   }, PNG)
-  await expect(
-    orcaPage.getByRole('img', { name: 'omp-image-proof.png', exact: true })
-  ).toBeVisible()
-  await orcaPage.screenshot({ path: testInfo.outputPath('omp-image-attached.png') })
+  await expect(appPage.getByRole('img', { name: 'omp-image-proof.png', exact: true })).toBeVisible()
+  await appPage.screenshot({ path: testInfo.outputPath('omp-image-attached.png') })
 })

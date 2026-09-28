@@ -4,15 +4,15 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  createDefaultLocalOrcaProfile,
-  DEFAULT_LOCAL_ORCA_PROFILE_ID
-} from '../../shared/orca-profiles'
+  createDefaultLocalDolphinProfile,
+  DEFAULT_LOCAL_DOLPHIN_PROFILE_ID
+} from '../../shared/dolphin-profiles'
 import { getDefaultPersistedState } from '../../shared/constants'
 import type { PersistedState } from '../../shared/persisted-state-types'
 import {
-  getOrcaProfileDataFile,
-  getOrcaProfileStateDatabaseFile
-} from '../../main/orca-profiles/profile-storage-paths'
+  getDolphinProfileDataFile,
+  getDolphinProfileStateDatabaseFile
+} from '../../main/dolphin-profiles/profile-storage-paths'
 import { openProfileStateDatabase } from '../../main/persistence/profile-state/profile-state-database'
 import * as profileStateDatabase from '../../main/persistence/profile-state/profile-state-database'
 import {
@@ -91,8 +91,8 @@ import { main } from '../index'
 
 function readDefaultProfileState(userDataPath: string) {
   const opened = openProfileStateDatabase(
-    getOrcaProfileStateDatabaseFile(DEFAULT_LOCAL_ORCA_PROFILE_ID, userDataPath),
-    DEFAULT_LOCAL_ORCA_PROFILE_ID
+    getDolphinProfileStateDatabaseFile(DEFAULT_LOCAL_DOLPHIN_PROFILE_ID, userDataPath),
+    DEFAULT_LOCAL_DOLPHIN_PROFILE_ID
   )
   try {
     return JSON.parse(exportProfileStateJson(opened.db))
@@ -103,15 +103,15 @@ function readDefaultProfileState(userDataPath: string) {
 
 function writeDataFile(userDataPath: string, state: PersistedState): void {
   mkdirSync(userDataPath, { recursive: true })
-  writeFileSync(join(userDataPath, 'orca-data.json'), JSON.stringify(state, null, 2), 'utf-8')
+  writeFileSync(join(userDataPath, 'dolphin-data.json'), JSON.stringify(state, null, 2), 'utf-8')
 }
 
 function writeActiveProfileIndex(userDataPath: string, profileId: string): void {
   writeFileSync(
-    join(userDataPath, 'orca-profile-index.json'),
+    join(userDataPath, 'dolphin-profile-index.json'),
     JSON.stringify({
       activeProfileId: profileId,
-      profiles: [{ ...createDefaultLocalOrcaProfile(1), id: profileId }]
+      profiles: [{ ...createDefaultLocalDolphinProfile(1), id: profileId }]
     }),
     'utf-8'
   )
@@ -126,7 +126,7 @@ describe('agent hooks CLI handler', () => {
   let userDataPath: string
 
   beforeEach(() => {
-    userDataPath = mkdtempSync(join(tmpdir(), 'orca-agent-hooks-cli-'))
+    userDataPath = mkdtempSync(join(tmpdir(), 'dolphin-agent-hooks-cli-'))
     applyAgentStatusHooksEnabledMock.mockReset().mockReturnValue([])
     callMock.mockReset()
     getCliStatusMock.mockClear()
@@ -150,10 +150,10 @@ describe('agent hooks CLI handler', () => {
 
     expect(persisted.settings.experimentalNewWorktreeCardStyle).toBe(false)
     expect(persisted.settings.agentStatusHooksEnabled).toBe(false)
-    expect(existsSync(join(userDataPath, 'orca-data.json'))).toBe(false)
-    expect(existsSync(getOrcaProfileDataFile(DEFAULT_LOCAL_ORCA_PROFILE_ID, userDataPath))).toBe(
-      false
-    )
+    expect(existsSync(join(userDataPath, 'dolphin-data.json'))).toBe(false)
+    expect(
+      existsSync(getDolphinProfileDataFile(DEFAULT_LOCAL_DOLPHIN_PROFILE_ID, userDataPath))
+    ).toBe(false)
   })
 
   it.each(['fresh', 'root-json', 'profile-json'] as const)(
@@ -176,17 +176,21 @@ describe('agent hooks CLI handler', () => {
       expect(process.exitCode).toBe(1)
       expect(applyAgentStatusHooksEnabledMock).not.toHaveBeenCalled()
       expect(existsSync(join(userDataPath, '.profile-state-access'))).toBe(false)
-      expect(existsSync(getOrcaProfileStateDatabaseFile(profileId, userDataPath))).toBe(false)
+      expect(existsSync(getDolphinProfileStateDatabaseFile(profileId, userDataPath))).toBe(false)
       expect(
-        existsSync(getOrcaProfileStateDatabaseFile(DEFAULT_LOCAL_ORCA_PROFILE_ID, userDataPath))
+        existsSync(
+          getDolphinProfileStateDatabaseFile(DEFAULT_LOCAL_DOLPHIN_PROFILE_ID, userDataPath)
+        )
       ).toBe(false)
       if (source !== 'fresh') {
-        expect(JSON.parse(readFileSync(join(directory, 'orca-data.json'), 'utf8'))).toEqual(state)
+        expect(JSON.parse(readFileSync(join(directory, 'dolphin-data.json'), 'utf8'))).toEqual(
+          state
+        )
       }
       if (source !== 'profile-json') {
-        expect(existsSync(join(userDataPath, 'orca-profile-index.json'))).toBe(false)
+        expect(existsSync(join(userDataPath, 'dolphin-profile-index.json'))).toBe(false)
       }
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('bundled Orca CLI'))
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('bundled Dolphin CLI'))
     }
   )
 
@@ -214,7 +218,7 @@ describe('agent hooks CLI handler', () => {
     )
     expect(applyAgentStatusHooksEnabledMock).not.toHaveBeenCalled()
     expect(existsSync(join(userDataPath, '.profile-state-access'))).toBe(false)
-    expect(existsSync(join(userDataPath, 'orca-profile-index.json'))).toBe(false)
+    expect(existsSync(join(userDataPath, 'dolphin-profile-index.json'))).toBe(false)
   })
 
   it.each(['root', 'indexed'] as const)(
@@ -229,12 +233,12 @@ describe('agent hooks CLI handler', () => {
       }
       getDefaultUserDataPathMock.mockReturnValue(userDataPath)
       vi.spyOn(profileStateDatabase, 'isProfileStateSqliteAvailable').mockReturnValue(false)
-      const original = readFileSync(join(directory, 'orca-data.json'), 'utf8')
+      const original = readFileSync(join(directory, 'dolphin-data.json'), 'utf8')
 
       await main(['agent', 'hooks', 'status', '--json'], userDataPath)
 
       expect(process.exitCode).not.toBe(1)
-      expect(readFileSync(join(directory, 'orca-data.json'), 'utf8')).toBe(original)
+      expect(readFileSync(join(directory, 'dolphin-data.json'), 'utf8')).toBe(original)
       expect(existsSync(join(directory, 'profile-state.db'))).toBe(false)
       expect(applyAgentStatusHooksEnabledMock).not.toHaveBeenCalled()
     }
@@ -244,7 +248,7 @@ describe('agent hooks CLI handler', () => {
     'uses the backup index when the primary is %s',
     async (primary) => {
       const profileId = 'backup-selected'
-      const indexPath = join(userDataPath, 'orca-profile-index.json')
+      const indexPath = join(userDataPath, 'dolphin-profile-index.json')
       writeActiveProfileIndex(userDataPath, profileId)
       fs.renameSync(indexPath, `${indexPath}.bak`)
       if (primary === 'corrupt') {
@@ -258,18 +262,20 @@ describe('agent hooks CLI handler', () => {
       await runAgentHooksOff(userDataPath)
 
       expect(process.exitCode).not.toBe(1)
-      expect(existsSync(getOrcaProfileStateDatabaseFile(profileId, userDataPath))).toBe(true)
+      expect(existsSync(getDolphinProfileStateDatabaseFile(profileId, userDataPath))).toBe(true)
       expect(
-        existsSync(getOrcaProfileStateDatabaseFile(DEFAULT_LOCAL_ORCA_PROFILE_ID, userDataPath))
+        existsSync(
+          getDolphinProfileStateDatabaseFile(DEFAULT_LOCAL_DOLPHIN_PROFILE_ID, userDataPath)
+        )
       ).toBe(false)
-      const { ensureActiveOrcaProfile } =
-        await import('../../main/orca-profiles/profile-index-store.js')
-      expect(ensureActiveOrcaProfile(userDataPath).profile.id).toBe(profileId)
+      const { ensureActiveDolphinProfile } =
+        await import('../../main/dolphin-profiles/profile-index-store.js')
+      expect(ensureActiveDolphinProfile(userDataPath).profile.id).toBe(profileId)
     }
   )
 
   it.each([0, 1, 2, 3, 4])('refuses a pre-index root with only legacy backup %s', async (slot) => {
-    const backup = join(userDataPath, `orca-data.json.bak.${slot}`)
+    const backup = join(userDataPath, `dolphin-data.json.bak.${slot}`)
     const source = '{"settings":{"agentStatusHooksEnabled":true}}'
     writeFileSync(backup, source)
 
@@ -277,7 +283,7 @@ describe('agent hooks CLI handler', () => {
 
     expect(process.exitCode).toBe(1)
     expect(readFileSync(backup, 'utf8')).toBe(source)
-    expect(existsSync(join(userDataPath, 'orca-profile-index.json'))).toBe(false)
+    expect(existsSync(join(userDataPath, 'dolphin-profile-index.json'))).toBe(false)
     expect(existsSync(join(userDataPath, 'profiles'))).toBe(false)
     expect(applyAgentStatusHooksEnabledMock).not.toHaveBeenCalled()
   })
@@ -289,7 +295,7 @@ describe('agent hooks CLI handler', () => {
       const directory =
         backend === 'root-json' ? userDataPath : join(userDataPath, 'profiles', profileId)
       mkdirSync(directory, { recursive: true })
-      const dataFile = join(directory, 'orca-data.json')
+      const dataFile = join(directory, 'dolphin-data.json')
       const raw = JSON.stringify({
         settings: { agentStatusHooksEnabled: true },
         unknown: { retained: null }
@@ -348,10 +354,10 @@ describe('agent hooks CLI handler', () => {
       if (backend === 'profile-json') {
         writeActiveProfileIndex(userDataPath, profileId)
       }
-      const dataFile = join(directory, 'orca-data.json')
+      const dataFile = join(directory, 'dolphin-data.json')
       writeFileSync(dataFile, JSON.stringify({ settings: { agentStatusHooksEnabled: true } }))
-      const databaseFile = getOrcaProfileStateDatabaseFile(
-        backend === 'root-json' ? DEFAULT_LOCAL_ORCA_PROFILE_ID : profileId,
+      const databaseFile = getDolphinProfileStateDatabaseFile(
+        backend === 'root-json' ? DEFAULT_LOCAL_DOLPHIN_PROFILE_ID : profileId,
         userDataPath
       )
       const link = fs.linkSync
@@ -371,7 +377,7 @@ describe('agent hooks CLI handler', () => {
       try {
         const opened = openProfileStateDatabase(
           databaseFile,
-          backend === 'root-json' ? DEFAULT_LOCAL_ORCA_PROFILE_ID : profileId
+          backend === 'root-json' ? DEFAULT_LOCAL_DOLPHIN_PROFILE_ID : profileId
         )
         try {
           expect(
@@ -418,7 +424,7 @@ describe('agent hooks CLI handler', () => {
     async (command) => {
       const state = getDefaultPersistedState(userDataPath)
       writeDataFile(userDataPath, state)
-      const before = readFileSync(join(userDataPath, 'orca-data.json'), 'utf8')
+      const before = readFileSync(join(userDataPath, 'dolphin-data.json'), 'utf8')
       getDefaultUserDataPathMock.mockReturnValue(userDataPath)
 
       for (const selector of ['environment', 'pairing-code']) {
@@ -433,7 +439,7 @@ describe('agent hooks CLI handler', () => {
         expect(callMock).not.toHaveBeenCalled()
         expect(applyAgentStatusHooksEnabledMock).not.toHaveBeenCalled()
         expect(prepareManagedCodexHomeBeforeShellLaunchMock).not.toHaveBeenCalled()
-        expect(readFileSync(join(userDataPath, 'orca-data.json'), 'utf8')).toBe(before)
+        expect(readFileSync(join(userDataPath, 'dolphin-data.json'), 'utf8')).toBe(before)
       }
     }
   )
@@ -453,9 +459,9 @@ describe('agent hooks CLI handler', () => {
   })
 
   it('forwards WSL pane routing to the runtime exactly once without using the host installer', async () => {
-    const home = '/home/jin/.local/share/orca/codex-runtime-home/home'
+    const home = '/home/jin/.local/share/dolphin/codex-runtime-home/home'
     vi.stubEnv('CODEX_HOME', home)
-    vi.stubEnv('ORCA_CODEX_HOME', home)
+    vi.stubEnv('DOLPHIN_CODEX_HOME', home)
     vi.stubEnv('WSL_DISTRO_NAME', 'Ubuntu-24.04')
     callMock.mockResolvedValue({ result: { state: 'installed' } })
 
@@ -463,15 +469,15 @@ describe('agent hooks CLI handler', () => {
 
     expect(callMock).toHaveBeenCalledExactlyOnceWith(
       'agentHooks.prepareCodexForWslPane',
-      { codexHome: home, orcaCodexHome: home, wslDistro: 'Ubuntu-24.04' },
+      { codexHome: home, dolphinCodexHome: home, wslDistro: 'Ubuntu-24.04' },
       { timeoutMs: 50_000 }
     )
     expect(prepareManagedCodexHomeBeforeShellLaunchMock).not.toHaveBeenCalled()
   })
 
   it('fails open when WSL runtime preparation is unavailable', async () => {
-    vi.stubEnv('CODEX_HOME', '/home/jin/.local/share/orca/codex-runtime-home/home')
-    vi.stubEnv('ORCA_CODEX_HOME', '/home/jin/.local/share/orca/codex-runtime-home/home')
+    vi.stubEnv('CODEX_HOME', '/home/jin/.local/share/dolphin/codex-runtime-home/home')
+    vi.stubEnv('DOLPHIN_CODEX_HOME', '/home/jin/.local/share/dolphin/codex-runtime-home/home')
     vi.stubEnv('WSL_DISTRO_NAME', 'Ubuntu')
     callMock.mockRejectedValue(new Error('method_not_found'))
 
@@ -502,7 +508,7 @@ describe('agent hooks CLI handler', () => {
     profile.settings.agentStatusHooksEnabled = false
     writeDataFile(join(userDataPath, 'profiles', profileId), profile)
     writeFileSync(
-      join(userDataPath, 'orca-profile-index.json'),
+      join(userDataPath, 'dolphin-profile-index.json'),
       JSON.stringify({
         activeProfileId: profileId,
         profiles: [{ id: profileId }]
@@ -544,8 +550,8 @@ describe('agent hooks CLI handler', () => {
   it('updates an established SQLite profile without rewriting its JSON export', async () => {
     const profileId = 'work-profile'
     const profileDirectory = join(userDataPath, 'profiles', profileId)
-    const dataFile = getOrcaProfileDataFile(profileId, userDataPath)
-    const databaseFile = getOrcaProfileStateDatabaseFile(profileId, userDataPath)
+    const dataFile = getDolphinProfileDataFile(profileId, userDataPath)
+    const databaseFile = getDolphinProfileStateDatabaseFile(profileId, userDataPath)
     const raw = JSON.stringify({
       settings: {
         agentStatusHooksEnabled: true,
@@ -592,7 +598,7 @@ describe('agent hooks CLI handler', () => {
       mkdirSync(profileDirectory, { recursive: true })
       writeActiveProfileIndex(userDataPath, profileId)
       const authority = new ProfileStateSqliteAuthority(
-        getOrcaProfileStateDatabaseFile(profileId, userDataPath),
+        getDolphinProfileStateDatabaseFile(profileId, userDataPath),
         profileId
       )
       authority.writeSerializedState(
@@ -647,13 +653,13 @@ describe('agent hooks CLI handler', () => {
 
     await runAgentHooksOff(userDataPath)
 
-    expect(existsSync(getOrcaProfileStateDatabaseFile(profileId, userDataPath))).toBe(true)
+    expect(existsSync(getDolphinProfileStateDatabaseFile(profileId, userDataPath))).toBe(true)
     expect(
-      JSON.parse(readFileSync(getOrcaProfileDataFile(profileId, userDataPath), 'utf-8')).settings
+      JSON.parse(readFileSync(getDolphinProfileDataFile(profileId, userDataPath), 'utf-8')).settings
         .agentStatusHooksEnabled
     ).toBe(true)
     const opened = openProfileStateDatabase(
-      getOrcaProfileStateDatabaseFile(profileId, userDataPath),
+      getDolphinProfileStateDatabaseFile(profileId, userDataPath),
       profileId
     )
     try {
@@ -672,25 +678,25 @@ describe('agent hooks CLI handler', () => {
     const state = getDefaultPersistedState(userDataPath)
     writeDataFile(profileDirectory, state)
     writeActiveProfileIndex(userDataPath, profileId)
-    const databaseFile = getOrcaProfileStateDatabaseFile(profileId, userDataPath)
+    const databaseFile = getDolphinProfileStateDatabaseFile(profileId, userDataPath)
     writeFileSync(databaseFile, 'not sqlite', 'utf-8')
-    const before = readFileSync(getOrcaProfileDataFile(profileId, userDataPath), 'utf-8')
+    const before = readFileSync(getDolphinProfileDataFile(profileId, userDataPath), 'utf-8')
 
     await runAgentHooksOff(userDataPath)
 
     expect(process.exitCode).toBe(1)
-    expect(readFileSync(getOrcaProfileDataFile(profileId, userDataPath), 'utf-8')).toBe(before)
+    expect(readFileSync(getDolphinProfileDataFile(profileId, userDataPath), 'utf-8')).toBe(before)
   })
 
   it('fails closed when a profile index is present but unreadable', async () => {
     const legacy = getDefaultPersistedState(userDataPath)
     writeDataFile(userDataPath, legacy)
-    writeFileSync(join(userDataPath, 'orca-profile-index.json'), '{ torn', 'utf-8')
-    const before = readFileSync(join(userDataPath, 'orca-data.json'), 'utf-8')
+    writeFileSync(join(userDataPath, 'dolphin-profile-index.json'), '{ torn', 'utf-8')
+    const before = readFileSync(join(userDataPath, 'dolphin-data.json'), 'utf-8')
 
     await runAgentHooksOff(userDataPath)
 
     expect(process.exitCode).toBe(1)
-    expect(readFileSync(join(userDataPath, 'orca-data.json'), 'utf-8')).toBe(before)
+    expect(readFileSync(join(userDataPath, 'dolphin-data.json'), 'utf-8')).toBe(before)
   })
 })

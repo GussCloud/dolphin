@@ -125,7 +125,7 @@ function emitGoogleCookieImportWarning(
     return
   }
   // Why: the sign-in must happen in the jar the import populated — the named workspace for a
-  // remote environment, any Orca browser locally. Client-hosted pages render on this desktop, so
+  // remote environment, any Dolphin browser locally. Client-hosted pages render on this desktop, so
   // say that or the instruction reads as "go to the other machine".
   const message = !execution.executionRemoteEnvironment
     ? translate(

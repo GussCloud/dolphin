@@ -1,9 +1,9 @@
 // Chinese phrase fixes from high-visibility UI audit round 5.
 export const ZH_PHRASE_FIXES_ROUND5 = [
-  { pattern: /Orca集成开发环境/g, replacement: 'Dolphin IDE', whenEnIncludes: 'Dolphin IDE' },
-  { pattern: /Orca第一/g, replacement: 'Dolphin 优先', whenEnIncludes: 'Dolphin first' },
-  { pattern: /Orca移动/g, replacement: 'Dolphin Mobile', whenEnIncludes: 'Dolphin Mobile' },
-  { pattern: /Orca标志/g, replacement: 'Dolphin 标志', whenEnIncludes: 'Dolphin logo' },
+  { pattern: /Dolphin集成开发环境/g, replacement: 'Dolphin IDE', whenEnIncludes: 'Dolphin IDE' },
+  { pattern: /Dolphin第一/g, replacement: 'Dolphin 优先', whenEnIncludes: 'Dolphin first' },
+  { pattern: /Dolphin移动/g, replacement: 'Dolphin Mobile', whenEnIncludes: 'Dolphin Mobile' },
+  { pattern: /Dolphin标志/g, replacement: 'Dolphin 标志', whenEnIncludes: 'Dolphin logo' },
   { pattern: /喜欢Dolphin/g, replacement: '喜欢 Dolphin', whenEnIncludes: 'Enjoying Dolphin' },
   { pattern: /认识Dolphin/g, replacement: '了解 Dolphin', whenEnIncludes: 'Get to know Dolphin' },
   { pattern: /支持Dolphin/g, replacement: '支持 Dolphin', whenEnIncludes: 'Support Dolphin' },
@@ -14,7 +14,7 @@ export const ZH_PHRASE_FIXES_ROUND5 = [
     replacement: '正在重启 Dolphin',
     whenEnIncludes: 'Restarting Dolphin'
   },
-  { pattern: /Orca([\u4e00-\u9fff])/g, replacement: 'Dolphin $1', whenEnIncludes: 'Dolphin' },
+  { pattern: /Dolphin([\u4e00-\u9fff])/g, replacement: 'Dolphin $1', whenEnIncludes: 'Dolphin' },
   { pattern: /Linear([\u4e00-\u9fff])/g, replacement: 'Linear $1', whenEnIncludes: 'Linear' },
   { pattern: /Codex([\u4e00-\u9fff])/g, replacement: 'Codex $1', whenEnIncludes: 'Codex' },
   { pattern: /Claude([\u4e00-\u9fff])/g, replacement: 'Claude $1', whenEnIncludes: 'Claude' },

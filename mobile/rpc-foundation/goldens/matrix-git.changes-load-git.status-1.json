@@ -3,12 +3,12 @@
   "family": "git.changes-load",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "48ccada93f208a24160483e98ee94a771ab6d63222f29ac4bbd6979157f98333",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "f5809fffe0569ed4e8ed42da37f070957d35f93fe9d08b50f847f0f8fee6edbf",
   "scenarioSha256": "a428557212fd35e84506b671c2b254d7ce5cab486dada61fc9b5e5357f76df2c",
-  "platform": "darwin",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -190,15 +190,6 @@
             }
           }
         }
-      }
-    },
-    "25657dcfb625": {
-      "branchCompareState": {
-        "kind": "idle"
-      },
-      "screenState": {
-        "kind": "unavailable",
-        "message": "Update Orca desktop to use Source Control on mobile."
       }
     },
     "2673423361c6": {
@@ -624,6 +615,15 @@
         "kind": "loading"
       }
     },
+    "ae956da2c3cd": {
+      "branchCompareState": {
+        "kind": "idle"
+      },
+      "screenState": {
+        "kind": "unavailable",
+        "message": "Update Dolphin desktop to use Source Control on mobile."
+      }
+    },
     "b50556c964ed": {
       "name": "git.status#1",
       "ordinal": 1,
@@ -1013,7 +1013,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "25657dcfb625",
+          "state": "ae956da2c3cd",
           "effects": []
         }
       },
@@ -1025,7 +1025,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "25657dcfb625",
+          "state": "ae956da2c3cd",
           "effects": []
         }
       },

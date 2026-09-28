@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { setAppEnvironment, type AppEnvironment } from '../../shared/app-environment'
 
 // Mutable host stub. Relocation now reads the AppEnvironment port rather than electron's
-// `app`, so orcad's daemon launch path can resolve without Electron in the graph.
+// `app`, so dolphind's daemon launch path can resolve without Electron in the graph.
 const hostApp = {
   isPackaged: true,
   userDataPath: '',
@@ -67,7 +67,7 @@ function setProcessProp(key: string, value: unknown): void {
 // node-pty under resources, mirroring the packaged layout the copy expects.
 function buildInstallFixture(root: string): void {
   mkdirSync(root, { recursive: true })
-  writeFileSync(join(root, 'Orca.exe'), 'exe-bytes')
+  writeFileSync(join(root, 'Dolphin.exe'), 'exe-bytes')
   for (const name of ['icudtl.dat', 'snapshot_blob.bin', 'v8_context_snapshot.bin']) {
     writeFileSync(join(root, name), name)
   }
@@ -139,7 +139,7 @@ beforeEach(() => {
   hostApp.version = '9.9.9'
   installHostApp()
   setProcessProp('platform', 'win32')
-  setProcessProp('execPath', join(installDir, 'Orca.exe'))
+  setProcessProp('execPath', join(installDir, 'Dolphin.exe'))
   setProcessProp('resourcesPath', join(installDir, 'resources'))
 })
 
@@ -166,7 +166,7 @@ describe('buildDaemonHostManifest', () => {
     const appDir = 'C:\\app'
     const ops = buildDaemonHostManifest({
       appDir,
-      execPath: 'C:\\app\\Orca.exe',
+      execPath: 'C:\\app\\Dolphin.exe',
       resourcesPath: 'C:\\app\\resources',
       entrySourcePath: 'C:\\app\\resources\\app.asar.unpacked\\out\\main\\daemon-entry.js',
       entryRelPath: 'resources/app.asar.unpacked/out/main/daemon-entry.js',
@@ -175,9 +175,9 @@ describe('buildDaemonHostManifest', () => {
     const byDest = new Map(ops.map((op) => [op.destRel, op]))
     // The host exe keeps the source basename: a verbatim, signature-preserving copy with no
     // image-name mismatch. What escapes the updater's sweep is the path, not the name.
-    expect(byDest.get('Orca.exe')?.kind).toBe('file')
-    const exeOp = ops.find((op) => op.sourcePath === 'C:\\app\\Orca.exe')
-    expect(exeOp?.destRel).toBe('Orca.exe')
+    expect(byDest.get('Dolphin.exe')?.kind).toBe('file')
+    const exeOp = ops.find((op) => op.sourcePath === 'C:\\app\\Dolphin.exe')
+    expect(exeOp?.destRel).toBe('Dolphin.exe')
     // Without this op the relocated daemon cannot resolve the native process
     // table and falls back to a powershell.exe scan per snapshot (#16905).
     expect(byDest.get('resources/node_modules/@vscode/windows-process-tree')?.kind).toBe('dir')
@@ -204,7 +204,7 @@ describe('materializeRelocatedDaemonHost', () => {
     const result = materializeRelocatedDaemonHost()
     expect(result).not.toBeNull()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
-    expect(result?.execPath).toBe(join(dest, 'Orca.exe'))
+    expect(result?.execPath).toBe(join(dest, 'Dolphin.exe'))
     expect(result?.entryPath).toBe(
       join(dest, 'resources', 'app.asar.unpacked', 'out', 'main', 'daemon-entry.js')
     )
@@ -267,7 +267,7 @@ describe('materializeRelocatedDaemonHost', () => {
 
   it('copies the exe verbatim: same file name and same bytes as the install-dir exe', () => {
     const result = materializeRelocatedDaemonHost()
-    const sourceExe = join(installDir, 'Orca.exe')
+    const sourceExe = join(installDir, 'Dolphin.exe')
     // Byte-for-byte under the same name is what preserves the Authenticode signature and leaves
     // no renamed-image signal for endpoint detection to read as masquerading.
     expect(basename(result!.execPath)).toBe(basename(sourceExe))
@@ -277,14 +277,14 @@ describe('materializeRelocatedDaemonHost', () => {
   it('tracks a differently-named app exe rather than pinning an image name of its own', () => {
     // A dev-channel or rebranded build ships a different executableName; the host copy must follow
     // it, which is what keeps the copy verbatim instead of reintroducing a name mismatch.
-    renameSync(join(installDir, 'Orca.exe'), join(installDir, 'Orca Nightly.exe'))
-    setProcessProp('execPath', join(installDir, 'Orca Nightly.exe'))
+    renameSync(join(installDir, 'Dolphin.exe'), join(installDir, 'Dolphin Nightly.exe'))
+    setProcessProp('execPath', join(installDir, 'Dolphin Nightly.exe'))
     const result = materializeRelocatedDaemonHost()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
-    expect(result?.execPath).toBe(join(dest, 'Orca Nightly.exe'))
-    expect(existsSync(join(dest, 'orca-terminal-daemon.exe'))).toBe(false)
+    expect(result?.execPath).toBe(join(dest, 'Dolphin Nightly.exe'))
+    expect(existsSync(join(dest, 'dolphin-terminal-daemon.exe'))).toBe(false)
     // Re-resolution must agree with materialization or the fork would target a missing exe.
-    expect(getRelocatedDaemonHost()?.execPath).toBe(join(dest, 'Orca Nightly.exe'))
+    expect(getRelocatedDaemonHost()?.execPath).toBe(join(dest, 'Dolphin Nightly.exe'))
   })
 
   it.each([
@@ -359,7 +359,7 @@ describe('materializeRelocatedDaemonHost', () => {
     const sentinel = join(dest, 'sentinel.txt')
     writeFileSync(sentinel, 'keep')
     const result = materializeRelocatedDaemonHost()
-    expect(result?.execPath).toBe(join(dest, 'Orca.exe'))
+    expect(result?.execPath).toBe(join(dest, 'Dolphin.exe'))
     expect(existsSync(sentinel)).toBe(true)
   })
 
@@ -382,8 +382,8 @@ describe('materializeRelocatedDaemonHost', () => {
     expect(existsSync(join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host'))).toBe(false)
   })
 
-  it('does nothing for a packaged host with no asar root (orcad on win32)', () => {
-    // orcad answers isPackaged() true — it is a shipped build — but it is plain Node: no
+  it('does nothing for a packaged host with no asar root (dolphind on win32)', () => {
+    // dolphind answers isPackaged() true — it is a shipped build — but it is plain Node: no
     // asar, no resourcesPath, and no NSIS updater to escape. Relocation staging a copy of
     // an Electron tree that is not there is the isPackaged-honesty defect, and it would
     // silently produce a null host on a path whose failures are meant to be visible.
@@ -399,7 +399,7 @@ describe('getRelocatedDaemonHost', () => {
   it('returns null when the marker version does not match the current version', () => {
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     mkdirSync(dirname(join(dest, 'x')), { recursive: true })
-    writeFileSync(join(dest, 'Orca.exe'), 'exe')
+    writeFileSync(join(dest, 'Dolphin.exe'), 'exe')
     mkdirSync(join(dest, 'resources', 'app.asar.unpacked', 'out', 'main'), { recursive: true })
     writeFileSync(
       join(dest, 'resources', 'app.asar.unpacked', 'out', 'main', 'daemon-entry.js'),
@@ -792,7 +792,7 @@ describe('pruneOldDaemonHosts', () => {
     expect(existsSync(join(root, '1.0.0'))).toBe(true)
   })
 
-  it('reclaims nothing for a packaged host with no asar root (orcad on win32)', () => {
+  it('reclaims nothing for a packaged host with no asar root (dolphind on win32)', () => {
     const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
     mkdirSync(join(root, '1.0.0'), { recursive: true })
     hostApp.appPath = join(installDir, 'resources', 'app')

@@ -1,4 +1,4 @@
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import type { SshTargetCreateInput } from '../../../src/shared/ssh-types'
 
 export type ConnectedSshTestTarget = {

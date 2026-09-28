@@ -14,7 +14,7 @@ Method (reproducible):
   base commit, keep keys absent from each target locale.
 - Translate the delta per `config/i18n-translation-source.md` policy and the overrides in
   `config/scripts/locale-*-overrides.mjs` / `locale-*-fixes.mjs` / `locale-generic-ui-terms.mjs`
-  (brands such as Orca/OpenCode/Git/Python stay Latin; `{{placeholders}}`, markdown links,
+  (brands such as Dolphin/OpenCode/Git/Python stay Latin; `{{placeholders}}`, markdown links,
   backtick code spans, and `[python.org](...)` links are preserved verbatim).
 - Apply with `node config/scripts/apply-translation-delta.mjs /tmp/translations.json`
   (validates placeholder parity and runs every value through `repairTranslatedValue`

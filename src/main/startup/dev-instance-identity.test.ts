@@ -14,8 +14,8 @@ describe('dev-instance-identity', () => {
   })
 
   it('pins a stable dev appName across branches so the safeStorage key does not churn', () => {
-    const a = getDevInstanceIdentity(true, { ORCA_DEV_BRANCH: 'feature/a' })
-    const b = getDevInstanceIdentity(true, { ORCA_DEV_BRANCH: 'feature/b' })
+    const a = getDevInstanceIdentity(true, { DOLPHIN_DEV_BRANCH: 'feature/a' })
+    const b = getDevInstanceIdentity(true, { DOLPHIN_DEV_BRANCH: 'feature/b' })
 
     // Per-branch label differs (window title / app menu)...
     expect(a.name).not.toBe(b.name)
@@ -27,7 +27,7 @@ describe('dev-instance-identity', () => {
 
   it('never renames a packaged build before ready', () => {
     // Packaged builds must keep deriving the safeStorage key from their own CFBundleName;
-    // a pre-ready rename would repoint forks ("Orca ALab Edition") at Orca's key.
+    // a pre-ready rename would repoint forks ("Dolphin ALab Edition") at Dolphin's key.
     expect(shouldApplyPreReadyAppName(getDevInstanceIdentity(false, {}))).toBe(false)
     expect(shouldApplyPreReadyAppName({ isDev: false })).toBe(false)
   })
@@ -38,9 +38,9 @@ describe('dev-instance-identity', () => {
 
   it('derives a readable dev label from worktree and branch env', () => {
     const identity = getDevInstanceIdentity(true, {
-      ORCA_DEV_REPO_ROOT: '/repo/worktrees/dev-indicator',
-      ORCA_DEV_WORKTREE_NAME: 'dev-indicator',
-      ORCA_DEV_BRANCH: 'nwparker/dev-indicator'
+      DOLPHIN_DEV_REPO_ROOT: '/repo/worktrees/dev-indicator',
+      DOLPHIN_DEV_WORKTREE_NAME: 'dev-indicator',
+      DOLPHIN_DEV_BRANCH: 'nwparker/dev-indicator'
     })
 
     expect(identity).toMatchObject({
@@ -57,9 +57,9 @@ describe('dev-instance-identity', () => {
 
   it('includes the branch when it differs from the worktree basename', () => {
     const identity = getDevInstanceIdentity(true, {
-      ORCA_DEV_REPO_ROOT: '/repo/worktrees/payment-ui',
-      ORCA_DEV_WORKTREE_NAME: 'payment-ui',
-      ORCA_DEV_BRANCH: 'feature/billing-shell'
+      DOLPHIN_DEV_REPO_ROOT: '/repo/worktrees/payment-ui',
+      DOLPHIN_DEV_WORKTREE_NAME: 'payment-ui',
+      DOLPHIN_DEV_BRANCH: 'feature/billing-shell'
     })
 
     expect(identity.devLabel).toBe('payment-ui @ feature/billing-shell')
@@ -69,9 +69,9 @@ describe('dev-instance-identity', () => {
 
   it('allows an explicit label override', () => {
     const identity = getDevInstanceIdentity(true, {
-      ORCA_DEV_INSTANCE_LABEL: 'manual label',
-      ORCA_DEV_WORKTREE_NAME: 'dev-indicator',
-      ORCA_DEV_BRANCH: 'feature/other'
+      DOLPHIN_DEV_INSTANCE_LABEL: 'manual label',
+      DOLPHIN_DEV_WORKTREE_NAME: 'dev-indicator',
+      DOLPHIN_DEV_BRANCH: 'feature/other'
     })
 
     expect(identity.devLabel).toBe('manual label')

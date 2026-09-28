@@ -138,7 +138,7 @@ function removedHostState(overrides: Record<string, unknown> = {}) {
 async function createStoreFromState(state: Record<string, unknown>) {
   mkdirSync(testState.dir, { recursive: true })
   writeFileSync(
-    join(testState.dir, 'orca-data.json'),
+    join(testState.dir, 'dolphin-data.json'),
     JSON.stringify({ ...getDefaultPersistedState(testState.dir), ...state }),
     'utf-8'
   )
@@ -146,7 +146,7 @@ async function createStoreFromState(state: Record<string, unknown>) {
   installFakeAppEnvironment({ getPath: () => testState.dir })
   const { Store, initDataPath } = await import('./persistence')
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 /** Re-read whatever is on disk now — no fixture rewrite. */
@@ -155,7 +155,7 @@ async function reloadStore() {
   installFakeAppEnvironment({ getPath: () => testState.dir })
   const { Store, initDataPath } = await import('./persistence')
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 async function createSshStore(state: Record<string, unknown>) {
@@ -170,7 +170,7 @@ function readdDevBox(ssh: SshConnectionStore) {
 }
 
 beforeEach(() => {
-  testState.dir = mkdtempSync(join(tmpdir(), 'orca-readopt-'))
+  testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-readopt-'))
 })
 
 afterEach(async () => {

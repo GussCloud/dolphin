@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import type { GlobalSettings } from '../../src/shared/global-settings-types'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { waitForActivePaneHookDescriptor, waitForActiveTerminalManager } from './helpers/terminal'
 
@@ -117,38 +117,38 @@ function claudeTranscript(rowCount: number, sessionId: string): string {
 }
 
 test.describe('Native chat transcript anchoring', () => {
-  test('keeps the visible transcript row at the same viewport offset', async ({ orcaPage }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+  test('keeps the visible transcript row at the same viewport offset', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const descriptor = await waitForActivePaneHookDescriptor(orcaPage)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
     const [tabId] = descriptor.paneKey.split(':')
     const sessionId = `e2e-prepend-anchor-${randomUUID()}`
-    const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-native-chat-anchor-'))
+    const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-native-chat-anchor-'))
     const transcriptPath = path.join(scratchDir, `${sessionId}.jsonl`)
     writeFileSync(transcriptPath, claudeTranscript(TRANSCRIPT_ROWS, sessionId))
 
     try {
-      await enableNativeChatSetting(orcaPage)
-      await seedClaudeProviderSession(orcaPage, {
+      await enableNativeChatSetting(appPage)
+      await seedClaudeProviderSession(appPage, {
         paneKey: descriptor.paneKey,
         worktreeId: descriptor.worktreeId,
         sessionId,
         transcriptPath
       })
-      await toggleTerminalTabToChatView(orcaPage, {
+      await toggleTerminalTabToChatView(appPage, {
         tabId,
         worktreeId: descriptor.worktreeId
       })
 
-      await expect(orcaPage.locator('[data-native-chat-root="true"]')).toBeVisible({
+      await expect(appPage.locator('[data-native-chat-root="true"]')).toBeVisible({
         timeout: 15_000
       })
-      const scroll = orcaPage.locator('[data-native-chat-scroll]')
-      const transcriptWindow = orcaPage.locator('[data-native-chat-window]')
-      const loadEarlier = orcaPage.getByRole('button', { name: 'Load earlier messages' })
+      const scroll = appPage.locator('[data-native-chat-scroll]')
+      const transcriptWindow = appPage.locator('[data-native-chat-window]')
+      const loadEarlier = appPage.getByRole('button', { name: 'Load earlier messages' })
       await expect(transcriptWindow).toBeVisible({ timeout: 30_000 })
       await expect(loadEarlier).toBeAttached({ timeout: 30_000 })
       await expect
@@ -204,7 +204,7 @@ test.describe('Native chat transcript anchoring', () => {
         .toBeGreaterThan(initialTotalSize)
       await expect(loadEarlier).toBeAttached({ timeout: 30_000 })
 
-      const anchoredMarker = orcaPage.getByText(anchor.marker, { exact: true })
+      const anchoredMarker = appPage.getByText(anchor.marker, { exact: true })
       await expect(anchoredMarker).toBeAttached({ timeout: 15_000 })
       const after = await anchoredMarker.evaluate(async (marker) => {
         const row = marker.closest<HTMLElement>('[data-index]')
@@ -241,41 +241,41 @@ test.describe('Native chat transcript anchoring', () => {
     }
   })
 
-  test('keeps a detached transcript in place across a hidden update', async ({ orcaPage }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+  test('keeps a detached transcript in place across a hidden update', async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const descriptor = await waitForActivePaneHookDescriptor(orcaPage)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
     const [tabId] = descriptor.paneKey.split(':')
     const sessionId = `e2e-hidden-scroll-${randomUUID()}`
-    const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-native-chat-hidden-'))
+    const scratchDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-native-chat-hidden-'))
     const transcriptPath = path.join(scratchDir, `${sessionId}.jsonl`)
     writeFileSync(transcriptPath, claudeTranscript(TRANSCRIPT_ROWS, sessionId))
 
     try {
-      await enableNativeChatSetting(orcaPage)
-      await seedClaudeProviderSession(orcaPage, {
+      await enableNativeChatSetting(appPage)
+      await seedClaudeProviderSession(appPage, {
         paneKey: descriptor.paneKey,
         worktreeId: descriptor.worktreeId,
         sessionId,
         transcriptPath
       })
-      await toggleTerminalTabToChatView(orcaPage, {
+      await toggleTerminalTabToChatView(appPage, {
         tabId,
         worktreeId: descriptor.worktreeId
       })
 
-      const root = orcaPage.locator('[data-native-chat-root="true"]')
-      const scroll = orcaPage.locator('[data-native-chat-scroll]')
-      const jump = orcaPage.getByRole('button', { name: 'Jump to latest' })
+      const root = appPage.locator('[data-native-chat-root="true"]')
+      const scroll = appPage.locator('[data-native-chat-scroll]')
+      const jump = appPage.getByRole('button', { name: 'Jump to latest' })
       await expect(root).toBeVisible({ timeout: 15_000 })
-      await expect(orcaPage.getByText('E2E transcript row 0649', { exact: true })).toBeAttached({
+      await expect(appPage.getByText('E2E transcript row 0649', { exact: true })).toBeAttached({
         timeout: 30_000
       })
       await scroll.hover()
-      await orcaPage.mouse.wheel(0, -2_000)
+      await appPage.mouse.wheel(0, -2_000)
       await expect
         .poll(async () =>
           scroll.evaluate(
@@ -286,24 +286,24 @@ test.describe('Native chat transcript anchoring', () => {
       const readingAt = await scroll.evaluate((element) => element.scrollTop)
       await expect(jump).toBeVisible()
 
-      await activateNewTerminalTab(orcaPage, descriptor.worktreeId)
+      await activateNewTerminalTab(appPage, descriptor.worktreeId)
       await expect(root).toBeHidden()
-      await publishHiddenLaunchMessage(orcaPage, {
+      await publishHiddenLaunchMessage(appPage, {
         tabId,
         text: 'E2E update received while the transcript is hidden'
       })
-      await activateTerminalTab(orcaPage, tabId)
+      await activateTerminalTab(appPage, tabId)
 
       await expect(root).toBeVisible({ timeout: 15_000 })
       await expect(
-        orcaPage.getByText('E2E update received while the transcript is hidden', { exact: true })
+        appPage.getByText('E2E update received while the transcript is hidden', { exact: true })
       ).toBeAttached()
       await expect
         .poll(async () =>
           Math.abs((await scroll.evaluate((element) => element.scrollTop)) - readingAt)
         )
         .toBeLessThanOrEqual(2)
-      await orcaPage.waitForTimeout(500)
+      await appPage.waitForTimeout(500)
       expect(
         Math.abs((await scroll.evaluate((element) => element.scrollTop)) - readingAt)
       ).toBeLessThanOrEqual(2)

@@ -7,13 +7,13 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MobileRelayStatusDetail } from '../../../../shared/mobile-relay-status'
-import type { OrcaProfileAuthStatus } from '../../../../shared/orca-profiles'
+import type { DolphinProfileAuthStatus } from '../../../../shared/dolphin-profiles'
 import { MobilePairingConnectionOptions } from './MobilePairingConnectionOptions'
 
 type MobileRelayStoreState = {
-  orcaProfileAuthStatus: OrcaProfileAuthStatus | null
-  connectCurrentOrcaProfile: () => Promise<null>
-  fetchOrcaProfileAuthStatus: () => Promise<OrcaProfileAuthStatus | null>
+  dolphinProfileAuthStatus: DolphinProfileAuthStatus | null
+  connectCurrentDolphinProfile: () => Promise<null>
+  fetchDolphinProfileAuthStatus: () => Promise<DolphinProfileAuthStatus | null>
 }
 
 const mocks = vi.hoisted(() => ({
@@ -66,14 +66,14 @@ describe('MobilePairingConnectionOptions', () => {
       }
     })
     mocks.state = {
-      orcaProfileAuthStatus: {
+      dolphinProfileAuthStatus: {
         activeProfileId: 'profile-1',
         configured: true,
         state: 'local',
         persistence: 'none'
       },
-      connectCurrentOrcaProfile: connect,
-      fetchOrcaProfileAuthStatus: fetchAuthStatus
+      connectCurrentDolphinProfile: connect,
+      fetchDolphinProfileAuthStatus: fetchAuthStatus
     }
   })
 
@@ -119,7 +119,7 @@ describe('MobilePairingConnectionOptions', () => {
   it('shows Unavailable instead of a dead Sign in on unconfigured builds', () => {
     mocks.state = {
       ...mocks.state,
-      orcaProfileAuthStatus: {
+      dolphinProfileAuthStatus: {
         activeProfileId: 'profile-1',
         configured: false,
         state: 'unconfigured',
@@ -139,7 +139,7 @@ describe('MobilePairingConnectionOptions', () => {
   it('keeps Relay unavailable and unselectable while LAN is selected', async () => {
     mocks.state = {
       ...mocks.state,
-      orcaProfileAuthStatus: {
+      dolphinProfileAuthStatus: {
         activeProfileId: 'profile-1',
         configured: false,
         state: 'unconfigured',
@@ -205,7 +205,7 @@ describe('MobilePairingConnectionOptions', () => {
   it('refreshes auth status when it is missing on mount', () => {
     mocks.state = {
       ...mocks.state,
-      orcaProfileAuthStatus: null
+      dolphinProfileAuthStatus: null
     }
     render(<MobilePairingConnectionOptions value="automatic" onChange={vi.fn()} />)
     expect(fetchAuthStatus).toHaveBeenCalledOnce()
@@ -214,14 +214,14 @@ describe('MobilePairingConnectionOptions', () => {
 
   it('shows relay status when signed in on Dolphin Relay', async () => {
     mocks.state = {
-      orcaProfileAuthStatus: {
+      dolphinProfileAuthStatus: {
         activeProfileId: 'profile-1',
         configured: true,
         state: 'connected',
         persistence: 'encrypted'
       },
-      connectCurrentOrcaProfile: connect,
-      fetchOrcaProfileAuthStatus: fetchAuthStatus
+      connectCurrentDolphinProfile: connect,
+      fetchDolphinProfileAuthStatus: fetchAuthStatus
     }
     const onChange = vi.fn()
     const user = userEvent.setup()
@@ -238,7 +238,7 @@ describe('MobilePairingConnectionOptions', () => {
   it('names the assigned relay cell by host once the status carries one', async () => {
     mocks.state = {
       ...mocks.state,
-      orcaProfileAuthStatus: {
+      dolphinProfileAuthStatus: {
         activeProfileId: 'profile-1',
         configured: true,
         state: 'connected',
@@ -266,7 +266,7 @@ describe('MobilePairingConnectionOptions', () => {
   it('keeps LAN available while Relay is retrying', async () => {
     mocks.state = {
       ...mocks.state,
-      orcaProfileAuthStatus: {
+      dolphinProfileAuthStatus: {
         activeProfileId: 'profile-1',
         configured: true,
         state: 'connected',
@@ -298,7 +298,7 @@ describe('MobilePairingConnectionOptions', () => {
     // fetched when it was empty, so a revoked session stayed invisible.
     const connectedState: MobileRelayStoreState = {
       ...mocks.state,
-      orcaProfileAuthStatus: {
+      dolphinProfileAuthStatus: {
         activeProfileId: 'profile-1',
         configured: true,
         state: 'connected',
@@ -307,13 +307,13 @@ describe('MobilePairingConnectionOptions', () => {
     }
     mocks.state = connectedState
     fetchAuthStatus.mockImplementation(async () => {
-      const revoked: OrcaProfileAuthStatus = {
+      const revoked: DolphinProfileAuthStatus = {
         activeProfileId: 'profile-1',
         configured: true,
         state: 'reconnect-required',
         persistence: 'encrypted'
       }
-      publishStoreState({ ...connectedState, orcaProfileAuthStatus: revoked })
+      publishStoreState({ ...connectedState, dolphinProfileAuthStatus: revoked })
       return revoked
     })
 

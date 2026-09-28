@@ -43,14 +43,14 @@ async function loadModules() {
 beforeEach(() => {
   process.env = { ...OLD_ENV }
   for (const key of [
-    'ORCA_BITBUCKET_ACCESS_TOKEN',
-    'ORCA_BITBUCKET_EMAIL',
-    'ORCA_BITBUCKET_API_TOKEN',
-    'ORCA_BITBUCKET_API_BASE_URL'
+    'DOLPHIN_BITBUCKET_ACCESS_TOKEN',
+    'DOLPHIN_BITBUCKET_EMAIL',
+    'DOLPHIN_BITBUCKET_API_TOKEN',
+    'DOLPHIN_BITBUCKET_API_BASE_URL'
   ]) {
     delete process.env[key]
   }
-  tempHome = mkdtempSync(join(tmpdir(), 'orca-bb-nodecrypt-'))
+  tempHome = mkdtempSync(join(tmpdir(), 'dolphin-bb-nodecrypt-'))
   decryptSpy.mockClear()
 })
 

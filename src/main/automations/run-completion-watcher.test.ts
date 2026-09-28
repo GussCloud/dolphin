@@ -37,7 +37,7 @@ async function createStore() {
   installFakeAppEnvironment({ getPath: () => testState.dir })
   const { Store, initDataPath } = await import('../persistence')
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 const makeRepo = (overrides: Partial<Repo> = {}): Repo => ({
@@ -94,7 +94,7 @@ function createObserver(
 
 describe('authority-owned automation run completion', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-automation-completion-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-automation-completion-'))
     ipcHandlers.clear()
   })
 
@@ -159,7 +159,7 @@ describe('authority-owned automation run completion', () => {
     })
 
     expect(readRun(store, automation.id, run.id).error).toBe(
-      'Orca stopped watching this run before it reported completion.'
+      'Dolphin stopped watching this run before it reported completion.'
     )
     // The token is still recoverable where it is actually useful.
     expect(logged.mock.calls.flat().map(String).join(' ')).toContain('terminal_handle_stale')
@@ -206,7 +206,7 @@ describe('authority-owned automation run completion', () => {
     expect(readRun(store, automation.id, dispatching.id).error).toContain('agent started')
     expect(readRun(store, automation.id, pendingManual.id)).toMatchObject({
       status: 'dispatch_failed',
-      error: 'Orca stopped before this manual run could launch.'
+      error: 'Dolphin stopped before this manual run could launch.'
     })
     expect(readRun(store, automation.id, pendingScheduled.id).status).toBe('pending')
     service.stop()
@@ -328,7 +328,7 @@ describe('authority-owned automation run completion', () => {
 
 describe('automationsChanged publication', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-automation-events-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-automation-events-'))
     ipcHandlers.clear()
   })
 

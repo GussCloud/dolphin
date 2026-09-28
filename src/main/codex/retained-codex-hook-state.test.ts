@@ -13,33 +13,33 @@ function status(state: 'installed' | 'not_installed' | 'error'): AgentHookInstal
 }
 
 describe('retained Codex hook state', () => {
-  it('repairs Orca hooks before a retained shell can launch Codex', async () => {
+  it('repairs Dolphin hooks before a retained shell can launch Codex', async () => {
     const install = vi.fn(() => status('installed'))
     const refreshRuntimeUserHooks = vi.fn(() => status('not_installed'))
 
     await reconcileRetainedCodexHookHomes({
       hookService: { install, refreshRuntimeUserHooks },
       hooksEnabled: true,
-      runtimeHomePaths: ['/orca/shared-home', '/orca/account-home']
+      runtimeHomePaths: ['/dolphin/shared-home', '/dolphin/account-home']
     })
 
     expect(install).toHaveBeenCalledTimes(2)
-    expect(install).toHaveBeenNthCalledWith(1, '/orca/shared-home')
-    expect(install).toHaveBeenNthCalledWith(2, '/orca/account-home')
+    expect(install).toHaveBeenNthCalledWith(1, '/dolphin/shared-home')
+    expect(install).toHaveBeenNthCalledWith(2, '/dolphin/account-home')
     expect(refreshRuntimeUserHooks).not.toHaveBeenCalled()
   })
 
-  it('removes only Orca hooks from retained homes when hooks are disabled', async () => {
+  it('removes only Dolphin hooks from retained homes when hooks are disabled', async () => {
     const install = vi.fn(() => status('installed'))
     const refreshRuntimeUserHooks = vi.fn(() => status('not_installed'))
 
     await reconcileRetainedCodexHookHomes({
       hookService: { install, refreshRuntimeUserHooks },
       hooksEnabled: false,
-      runtimeHomePaths: ['/orca/shared-home']
+      runtimeHomePaths: ['/dolphin/shared-home']
     })
 
-    expect(refreshRuntimeUserHooks).toHaveBeenCalledWith('/orca/shared-home')
+    expect(refreshRuntimeUserHooks).toHaveBeenCalledWith('/dolphin/shared-home')
     expect(install).not.toHaveBeenCalled()
   })
 })

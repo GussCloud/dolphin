@@ -99,7 +99,7 @@ export class CodexJournalGenericFrames {
     }
     this.fallbackSequence += 1
     const identity = {
-      provider: 'orca' as const,
+      provider: 'dolphin' as const,
       clientMessageId: `provider-frame:codex:${this.fallbackSequence}`
     }
     const linkage = this.deps.linkageFor(threadId, frameTurnId)
@@ -136,7 +136,7 @@ export class CodexJournalGenericFrames {
           ? `${summary.count} more provider notification${summary.count === 1 ? '' : 's'} not shown across evicted turns`
           : `${summary.count} more provider notification${summary.count === 1 ? '' : 's'} not shown for this turn`
       const identity = {
-        provider: 'orca' as const,
+        provider: 'dolphin' as const,
         clientMessageId: `provider-frame-suppressed:codex:${bucket}`
       }
       const options = {

@@ -7,7 +7,7 @@ import {
   publishWindowsBunPtySpawnError
 } from './windows-bun-pty-spawn-receipt'
 
-export const WINDOWS_BUN_PTY_GATE_ENV = 'ORCA_BUN_PTY_JOB_GATE'
+export const WINDOWS_BUN_PTY_GATE_ENV = 'DOLPHIN_BUN_PTY_JOB_GATE'
 export const WINDOWS_BUN_PTY_RUNTIME_OPTION_KEYS = ['NODE_OPTIONS', 'BUN_OPTIONS'] as const
 
 export type WindowsBunPtyGateRequest = {
@@ -101,7 +101,7 @@ export function windowsBunPtyChildSpec(
 ): ProcessSpec {
   const env: NodeJS.ProcessEnv = { ...inheritedEnv, ...request.runtimeOptions }
   delete env[WINDOWS_BUN_PTY_GATE_ENV]
-  delete env.ORCA_BUN_PTY_CHILD_COMMAND
+  delete env.DOLPHIN_BUN_PTY_CHILD_COMMAND
   return {
     program: request.file,
     args: request.args,

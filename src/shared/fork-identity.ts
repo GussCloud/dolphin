@@ -1,6 +1,5 @@
 /**
- * The identity this fork ships under, so it installs and runs beside the official Orca without
- * sharing its install dir, data, daemon, taskbar identity, or update feed.
+ * The identity Dolphin ships under: install dir, data, daemon, taskbar identity, and update feed.
  * Mirrored in fork-identity.json for the CommonJS electron-builder config; a test keeps them equal.
  */
 export const FORK_IDENTITY = {
@@ -8,7 +7,10 @@ export const FORK_IDENTITY = {
   appId: 'com.gusscloud.dolphin',
   executableName: 'Dolphin',
   userDataDirName: 'dolphin',
-  cliAliasName: 'dolphin',
+  cliCommandName: 'dolphin',
+  // Why -ide on Linux: the KDE Dolphin file manager owns /usr/bin/dolphin.
+  linuxCliCommandName: 'dolphin-ide',
+  devCliCommandName: 'dolphin-dev',
   installerArtifactBaseName: 'dolphin-windows-setup',
   releaseOwner: 'GussCloud',
   releaseRepo: 'dolphin'
@@ -30,7 +32,7 @@ export const FORK_WEB_URLS = {
   telemetryPrivacy: `${FORK_WEB_ORIGIN}/docs/telemetry`
 } as const
 
-/** Per-user home state dir (hooks, credentials). Never Orca's `~/.orca`, which a side-by-side Orca owns. */
+/** Per-user home state dir (hooks, credentials). */
 export const FORK_HOME_STATE_DIR_NAME = `.${FORK_IDENTITY.userDataDirName}`
 
 /** Cloud services the fork hosts itself; every host sits under this domain. */

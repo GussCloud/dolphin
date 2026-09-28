@@ -170,7 +170,7 @@ describe('producer inheritance across a reopen', () => {
     })
 
   beforeEach(async () => {
-    root = await mkdtemp(join(tmpdir(), 'orca-producer-inheritance-'))
+    root = await mkdtemp(join(tmpdir(), 'dolphin-producer-inheritance-'))
   })
 
   afterEach(async () => {

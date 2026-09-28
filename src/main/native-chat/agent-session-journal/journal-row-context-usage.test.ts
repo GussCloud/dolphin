@@ -67,7 +67,7 @@ const open = () =>
   })
 
 function row(ordinal: number): AgentJournalItemIdentity {
-  return { provider: 'orca', clientMessageId: `row-${ordinal}` }
+  return { provider: 'dolphin', clientMessageId: `row-${ordinal}` }
 }
 
 const turn = (turnId: string, contextUsage?: AgentSessionContextUsage): AgentJournalItemBody => ({
@@ -78,7 +78,7 @@ const turn = (turnId: string, contextUsage?: AgentSessionContextUsage): AgentJou
 })
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-journal-context-usage-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-journal-context-usage-'))
   clock = 1_000
 })
 
@@ -148,7 +148,7 @@ describe('context facts on replayed turn rows', () => {
         mutations: [
           {
             kind: 'item',
-            itemId: 'orca:row-0',
+            itemId: 'dolphin:row-0',
             revision: 2,
             body: { ...turn('turn-0'), contextUsage: { window: { tokens: -1 } } }
           }
@@ -156,7 +156,7 @@ describe('context facts on replayed turn rows', () => {
       })
     )
     expect(parsed.ok && parsed.row.kind === 'lifecycle-batch' && parsed.row.mutations).toEqual([
-      { kind: 'item', itemId: 'orca:row-0', revision: 2, body: turn('turn-0') }
+      { kind: 'item', itemId: 'dolphin:row-0', revision: 2, body: turn('turn-0') }
     ])
   })
 })

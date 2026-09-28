@@ -1,4 +1,4 @@
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 
 /**
  * Pins the renderer's IME ownership policy to one platform, from any runner.

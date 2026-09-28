@@ -1,6 +1,6 @@
 import { ArrowRight, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useOrcaProfileAuthStatusRefresh } from '@/hooks/use-orca-profile-auth-status-refresh'
+import { useDolphinProfileAuthStatusRefresh } from '@/hooks/use-dolphin-profile-auth-status-refresh'
 import { translate } from '@/i18n/i18n'
 import { isWebClientLocation } from '@/lib/web-client-location'
 import { useAppStore } from '@/store'
@@ -13,13 +13,13 @@ export function ShareSkillsSettingsPane(): React.JSX.Element {
   const openSkillsSharedLinks = useAppStore((state) => state.openSkillsSharedLinks)
   const settings = useAppStore((state) => state.settings)
   const updateSettings = useAppStore((state) => state.updateSettings)
-  const authStatus = useAppStore((state) => state.orcaProfileAuthStatus)
-  const connect = useAppStore((state) => state.connectCurrentOrcaProfile)
+  const authStatus = useAppStore((state) => state.dolphinProfileAuthStatus)
+  const connect = useAppStore((state) => state.connectCurrentDolphinProfile)
   const signedIn = authStatus?.state === 'connected'
   const isWebClient = isWebClientLocation()
   const agentSharingEnabled = settings?.agentSkillSharingEnabled === true
 
-  useOrcaProfileAuthStatusRefresh()
+  useDolphinProfileAuthStatusRefresh()
 
   const steps: HowToStep[] = [
     {

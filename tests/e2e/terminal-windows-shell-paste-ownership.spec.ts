@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import { WINDOWS_GIT_BASH_SHELL } from '../../src/shared/windows-terminal-shell'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import {
   focusActiveTerminalInput,
   sendToTerminal,
@@ -196,52 +196,52 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('PowerShell default terminal keyboard paste preserves exact content with one PTY owner', async ({
     electronApp,
-    orcaPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'PowerShell paste coverage is Windows-only')
 
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await createWindowsDefaultShellTerminalTab(orcaPage, 'powershell.exe')
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await createWindowsDefaultShellTerminalTab(appPage, 'powershell.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
-    const sentinel = `ORCA_E2E_POWERSHELL_DONE_${runId}`
+    const sentinel = `DOLPHIN_E2E_POWERSHELL_DONE_${runId}`
     const powershellEscape = '`'
     const payload = [
-      `ORCA_E2E_POWERSHELL_PASTE_${runId}`,
+      `DOLPHIN_E2E_POWERSHELL_PASTE_${runId}`,
       `PowerShell metacharacters: ${powershellEscape} $ " ' ; | & < > @ { } ( )`,
-      'quoted Windows path: C:\\Program Files\\Orca Test\\file name.txt',
+      'quoted Windows path: C:\\Program Files\\Dolphin Test\\file name.txt',
       'cmd metacharacters preserved as text: %PATH% !PROMPT! ^ & | < >',
       'Unicode: café 你好 مرحبا 😀',
       `mixed-newline-before\r\nlf-line\ncrlf-line\r\n${sentinel}`
     ].join('\n')
-    const scriptPath = path.join(testRepoPath, `.orca-paste-powershell-shell-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-paste-powershell-shell-${runId}.mjs`)
     const expectedText = payload.replace(/\r?\n/g, '\r')
     writeFileSync(scriptPath, pasteCollectScript(runId, sentinel, expectedText))
     let scriptStarted = false
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(orcaPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(orcaPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await orcaPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(orcaPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'PowerShell payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(orcaPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -249,50 +249,50 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('cmd.exe default terminal keyboard paste preserves exact content with one PTY owner', async ({
     electronApp,
-    orcaPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'cmd.exe paste coverage is Windows-only')
 
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await createWindowsDefaultShellTerminalTab(orcaPage, 'cmd.exe')
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await createWindowsDefaultShellTerminalTab(appPage, 'cmd.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
-    const sentinel = `ORCA_E2E_CMD_DONE_${runId}`
+    const sentinel = `DOLPHIN_E2E_CMD_DONE_${runId}`
     const payload = [
-      `ORCA_E2E_CMD_PASTE_${runId}`,
+      `DOLPHIN_E2E_CMD_PASTE_${runId}`,
       'cmd metacharacters: %PATH% !PROMPT! ^ & | < >',
-      'quoted Windows path: C:\\Program Files\\Orca Test\\file name.txt',
+      'quoted Windows path: C:\\Program Files\\Dolphin Test\\file name.txt',
       'PowerShell metacharacters: ` $ " \' ; @ { } ( )',
       `mixed-newline-before\r\nlf-line\ncrlf-line\r\n${sentinel}`
     ].join('\n')
-    const scriptPath = path.join(testRepoPath, `.orca-paste-cmd-shell-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-paste-cmd-shell-${runId}.mjs`)
     const expectedText = payload.replace(/\r?\n/g, '\r')
     writeFileSync(scriptPath, pasteCollectScript(runId, sentinel, expectedText))
     let scriptStarted = false
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(orcaPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(orcaPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await orcaPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(orcaPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'cmd.exe payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(orcaPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -300,51 +300,51 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('Git Bash default terminal keyboard paste preserves POSIX-shaped content with one PTY owner', async ({
     electronApp,
-    orcaPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'Git Bash paste coverage is Windows-only')
-    await skipWhenGitBashUnavailable(orcaPage)
+    await skipWhenGitBashUnavailable(appPage)
 
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await createWindowsDefaultShellTerminalTab(orcaPage, WINDOWS_GIT_BASH_SHELL)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await createWindowsDefaultShellTerminalTab(appPage, WINDOWS_GIT_BASH_SHELL)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
-    const sentinel = `ORCA_E2E_GIT_BASH_DONE_${runId}`
+    const sentinel = `DOLPHIN_E2E_GIT_BASH_DONE_${runId}`
     const payload = [
-      `ORCA_E2E_GIT_BASH_PASTE_${runId}`,
+      `DOLPHIN_E2E_GIT_BASH_PASTE_${runId}`,
       'POSIX shell metacharacters: $ ` " \' ; | & < > * ? [ ] ( )',
       'Windows path with spaces: C:\\Users\\Name\\My Project\\file.txt',
       'POSIX path with spaces: /home/user/my project/file.txt',
       `mixed-newline-before\r\nlf-line\ncrlf-line\r\n${sentinel}`
     ].join('\n')
-    const scriptPath = path.join(testRepoPath, `.orca-paste-git-bash-shell-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-paste-git-bash-shell-${runId}.mjs`)
     const expectedText = payload.replace(/\r?\n/g, '\r')
     writeFileSync(scriptPath, pasteCollectScript(runId, sentinel, expectedText))
     let scriptStarted = false
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(orcaPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(orcaPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await orcaPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(orcaPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'Git Bash payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(orcaPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -352,58 +352,54 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('WSL terminal keyboard paste preserves Linux shell content with one PTY owner', async ({
     electronApp,
-    orcaPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'WSL paste coverage is Windows-only')
     test.skip(!hasWslNodeRuntime(), 'WSL with node is not available on this Windows host')
 
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    const wslDistro = await configureActiveProjectWslRuntime(orcaPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    const wslDistro = await configureActiveProjectWslRuntime(appPage)
     test.skip(!wslDistro, 'No WSL distro is available on this Windows host')
-    await createWindowsProjectRuntimeTerminalTab(orcaPage, 'wsl.exe')
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await createWindowsProjectRuntimeTerminalTab(appPage, 'wsl.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
-    const sentinel = `ORCA_E2E_WSL_DONE_${runId}`
+    const sentinel = `DOLPHIN_E2E_WSL_DONE_${runId}`
     const payload = [
-      `ORCA_E2E_WSL_PASTE_${runId}`,
+      `DOLPHIN_E2E_WSL_PASTE_${runId}`,
       'POSIX shell metacharacters: $ ` " \' ; | & < > * ? [ ] ( )',
       'Linux path with spaces: /home/user/my project/file.txt',
       'Windows path preserved as text: C:\\Users\\Name\\My Project\\file.txt',
       'Unicode: café 你好 مرحبا 😀',
       `mixed-newline-before\r\nlf-line\ncrlf-line\r\n${sentinel}`
     ].join('\n')
-    const scriptPath = path.join(testRepoPath, `.orca-paste-wsl-shell-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-paste-wsl-shell-${runId}.mjs`)
     const expectedText = payload.replace(/\r?\n/g, '\r')
     writeFileSync(scriptPath, pasteCollectScript(runId, sentinel, expectedText))
     let scriptStarted = false
 
     try {
-      await sendToTerminal(
-        orcaPage,
-        ptyId,
-        `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`
-      )
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(orcaPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(orcaPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await orcaPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(orcaPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'WSL payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(orcaPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -411,64 +407,60 @@ test.describe('Windows terminal shell paste ownership', () => {
 
   test('existing WSL terminal keeps paste runtime after default shell changes', async ({
     electronApp,
-    orcaPage,
+    appPage,
     testRepoPath
   }) => {
     test.skip(process.platform !== 'win32', 'WSL paste runtime retention is Windows-only')
     test.skip(!hasWslNodeRuntime(), 'WSL with node is not available on this Windows host')
 
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    const wslDistro = await configureActiveProjectWslRuntime(orcaPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    const wslDistro = await configureActiveProjectWslRuntime(appPage)
     test.skip(!wslDistro, 'No WSL distro is available on this Windows host')
-    const tabId = await createWindowsProjectRuntimeTerminalTab(orcaPage, 'wsl.exe')
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    const tabId = await createWindowsProjectRuntimeTerminalTab(appPage, 'wsl.exe')
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
 
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
-    const sentinel = `ORCA_E2E_WSL_RETENTION_DONE_${runId}`
+    const sentinel = `DOLPHIN_E2E_WSL_RETENTION_DONE_${runId}`
     const payload = [
-      `ORCA_E2E_WSL_RETENTION_PASTE_${runId}`,
+      `DOLPHIN_E2E_WSL_RETENTION_PASTE_${runId}`,
       'Default shell changed to cmd.exe after this WSL PTY was created.',
       'POSIX path remains valid for the existing terminal: /home/user/my project/file.txt',
       'Windows path remains literal text: C:\\Users\\Name\\My Project\\file.txt',
       `mixed-newline-before\r\nlf-line\ncrlf-line\r\n${sentinel}`
     ].join('\n')
-    const scriptPath = path.join(testRepoPath, `.orca-paste-wsl-retention-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-paste-wsl-retention-${runId}.mjs`)
     const expectedText = payload.replace(/\r?\n/g, '\r')
     writeFileSync(scriptPath, pasteCollectScript(runId, sentinel, expectedText))
     let scriptStarted = false
 
     try {
-      await sendToTerminal(
-        orcaPage,
-        ptyId,
-        `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`
-      )
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(toDefaultWslPath(scriptPath))}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(orcaPage, `PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `PASTE_READY_${runId}`, 10_000)
 
       // Exercise a live WSL process across the settings change.
-      await updateWindowsDefaultShellSetting(orcaPage, 'cmd.exe')
+      await updateWindowsDefaultShellSetting(appPage, 'cmd.exe')
       await expect(
-        orcaPage.locator(`[data-testid="sortable-tab"][data-tab-id="${tabId}"] [data-shell-icon]`)
+        appPage.locator(`[data-testid="sortable-tab"][data-tab-id="${tabId}"] [data-shell-icon]`)
       ).toHaveAttribute('data-shell-icon', 'wsl.exe')
-      expect(await waitForActivePanePtyId(orcaPage)).toBe(ptyId)
+      expect(await waitForActivePanePtyId(appPage)).toBe(ptyId)
 
       await clearTerminalPtyWriteLog(electronApp)
-      await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
-      await focusActiveTerminalInput(orcaPage)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await focusActiveTerminalInput(appPage)
 
-      await orcaPage.keyboard.press('Control+V')
-      await waitForTerminalOutput(orcaPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
+      await appPage.keyboard.press('Control+V')
+      await waitForTerminalOutput(appPage, `PASTE_COMPLETE_${runId}:MATCH`, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, expectedText), 'retained WSL payload PTY write count').toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(orcaPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }

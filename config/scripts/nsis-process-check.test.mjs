@@ -4,9 +4,9 @@ import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { runProcessSync } from '../../src/shared/child-process/run-process'
 
-const hooks = readFileSync(new URL('../nsis/orca-installer-hooks.nsh', import.meta.url), 'utf8')
+const hooks = readFileSync(new URL('../nsis/dolphin-installer-hooks.nsh', import.meta.url), 'utf8')
 const processCheck = readFileSync(
-  new URL('../nsis/orca-process-check.nsh', import.meta.url),
+  new URL('../nsis/dolphin-process-check.nsh', import.meta.url),
   'utf8'
 )
 const require = createRequire(import.meta.url)
@@ -29,7 +29,7 @@ function readPowerShellProbe(source = processCheck) {
 
 describe('NSIS process-check integration', () => {
   it('loads the capability hook through the installer and uninstaller include', () => {
-    expect(hooks).toContain('!include "${__FILEDIR__}\\orca-process-check.nsh"')
+    expect(hooks).toContain('!include "${__FILEDIR__}\\dolphin-process-check.nsh"')
     expect(processCheck).toMatch(/!macro customCheckAppRunning\b/)
     expect(processCheck).toContain('!include "getProcessInfo.nsh"')
     expect(processCheck).toMatch(/^Var pid$/m)
@@ -51,18 +51,18 @@ describe('NSIS process-check integration', () => {
 describe.runIf(process.platform === 'win32')(
   'NSIS capability probe under Restricted policy',
   () => {
-    const policyReceipt = 'orca-nsis: restricted policy verified'
-    const queryFailureReceipt = 'orca-nsis: injected query failure'
+    const policyReceipt = 'dolphin-nsis: restricted policy verified'
+    const queryFailureReceipt = 'dolphin-nsis: injected query failure'
     const policyCheck = [
-      'function Test-OrcaRestrictedPolicy { param([string]$Scope)',
+      'function Test-DolphinRestrictedPolicy { param([string]$Scope)',
       "try { $parameters = @{ ErrorAction = 'Stop' };",
       'if ($Scope) { $parameters.Scope = $Scope };',
       "return ((Get-ExecutionPolicy @parameters) -eq 'Restricted')",
       '} catch { return $false } };',
       // A failed getter must not fall through to the query's successful exit.
-      "if ((Test-OrcaRestrictedPolicy '__orca_invalid_scope__') -ne $false) { exit 11 };",
-      "if ((Test-OrcaRestrictedPolicy 'Process') -ne $true) { exit 10 };",
-      'if ((Test-OrcaRestrictedPolicy) -ne $true) { exit 10 };',
+      "if ((Test-DolphinRestrictedPolicy '__dolphin_invalid_scope__') -ne $false) { exit 11 };",
+      "if ((Test-DolphinRestrictedPolicy 'Process') -ne $true) { exit 10 };",
+      'if ((Test-DolphinRestrictedPolicy) -ne $true) { exit 10 };',
       `[Console]::Out.WriteLine('${policyReceipt}');`
     ].join(' ')
 
@@ -80,7 +80,7 @@ describe.runIf(process.platform === 'win32')(
         args: [...args, '-Command', `${policyCheck} ${prefix}${command}`],
         env: {
           ...env,
-          ORCA_BACKGROUND_LAUNCH: '1',
+          DOLPHIN_BACKGROUND_LAUNCH: '1',
           PSExecutionPolicyPreference: 'Restricted'
         },
         timeoutMs: 20_000

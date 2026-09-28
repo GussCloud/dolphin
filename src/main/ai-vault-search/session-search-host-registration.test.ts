@@ -149,7 +149,11 @@ it.each([
     'src/main/startup/main-process-runtime-service.ts',
     'installChildSessionSearchService'
   ],
-  ['orcad', 'src/main/orcad/orcad-session-search.ts', 'installInProcessSessionSearchService'],
+  [
+    'dolphind',
+    'src/main/dolphind/dolphind-session-search.ts',
+    'installInProcessSessionSearchService'
+  ],
   [
     'the relay daemon',
     'src/relay/relay-runtime-services.ts',
@@ -179,15 +183,16 @@ it('disables immediately without root discovery', async () => {
   expect(localAiVaultScanRoots).not.toHaveBeenCalled()
 })
 
-it('orcad resolves no roots while disabled and discovers late roots when enabled', async () => {
-  const { installOrcadSessionSearchService } = await import('../orcad/orcad-session-search')
-  installed = await installOrcadSessionSearchService({
+it('dolphind resolves no roots while disabled and discovers late roots when enabled', async () => {
+  const { installDolphindSessionSearchService } =
+    await import('../dolphind/dolphind-session-search')
+  installed = await installDolphindSessionSearchService({
     userDataPath: harness.root,
     getSettings: () => ({ aiVaultSearch: { enabled: false, historyDays: null } })
   })
   expect(localAiVaultScanRoots).not.toHaveBeenCalled()
   installed?.dispose()
-  installed = await installOrcadSessionSearchService({
+  installed = await installDolphindSessionSearchService({
     userDataPath: harness.root,
     getSettings: () => ({ aiVaultSearch: { enabled: true, historyDays: null } })
   })
@@ -232,10 +237,10 @@ it('re-applies consent on an in-process host without reinstalling the service', 
   })
 })
 
-// orcad reaches the index through the deps hook the runtime RPC calls; the wiring is
+// dolphind reaches the index through the deps hook the runtime RPC calls; the wiring is
 // what no unit of either module can show.
-it('wires orcad consent from the runtime hook to the installed service', () => {
-  const source = readFileSync(join(ROOT, 'src/main/orcad/orcad-entry.ts'), 'utf8')
+it('wires dolphind consent from the runtime hook to the installed service', () => {
+  const source = readFileSync(join(ROOT, 'src/main/dolphind/dolphind-entry.ts'), 'utf8')
   expect(source).toContain('applySessionSearchSettings:')
   expect(source).toContain('sessionSearch?.apply(next)')
 })

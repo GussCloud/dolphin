@@ -259,7 +259,7 @@ export const MARINE_CREATURE_NAMES_PRIMARY = [
   'Wolffish',
   'Wreckfish',
   'Horseshoe',
-  'Orca',
+  'Blackfish',
   'Cachalot',
   'Rorqual',
   'Grampus',

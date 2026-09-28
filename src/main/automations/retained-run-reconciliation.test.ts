@@ -33,7 +33,7 @@ async function createStore() {
   installFakeAppEnvironment({ getPath: () => testState.dir })
   const { Store, initDataPath } = await import('../persistence')
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 type TestStore = Awaited<ReturnType<typeof createStore>>
@@ -120,7 +120,7 @@ function createPaneSurface(): {
 
 describe('reconciling retained runs against a graph that has not published yet', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-retained-run-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-retained-run-'))
     vi.useFakeTimers()
     // Away from the automation's 09:00 UTC occurrence so timer advances stay inert.
     vi.setSystemTime(new Date('2026-06-01T12:00:00Z'))
@@ -247,7 +247,7 @@ describe('reconciling retained runs against a graph that has not published yet',
 
     expect(readRun(store, automation.id, retained.id).status).toBe('dispatch_failed')
     expect(readRun(store, automation.id, retained.id).error).toBe(
-      'Orca lost the terminal for this run before it reported completion.'
+      'Dolphin lost the terminal for this run before it reported completion.'
     )
     service.stop()
   })

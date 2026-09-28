@@ -135,7 +135,7 @@ export const LOCALE_PHRASE_FIXES = {
     { pattern: /会议/g, replacement: '会话', whenEnIncludes: 'session' },
     { pattern: /港口/g, replacement: '端口', whenEnIncludes: 'ort' },
     { pattern: /公关/g, replacement: 'PR', whenEnIncludes: 'PR' },
-    { pattern: /虎鲸:\/\//g, replacement: 'orca://', whenEnIncludes: 'orca://' },
+    { pattern: /虎鲸:\/\//g, replacement: 'dolphin://', whenEnIncludes: 'dolphin://' },
     { pattern: /代理商/g, replacement: '代理', whenEnIncludes: 'agent' },
     { pattern: /智能体/g, replacement: '代理', whenEnIncludes: 'agent' },
     { pattern: /分支机构/g, replacement: '分支', whenEnIncludes: 'ranch' },
@@ -169,7 +169,11 @@ export const LOCALE_PHRASE_FIXES = {
       whenEnIncludes: 'Listening for shortcut'
     },
     { pattern: /寻找捷径/g, replacement: '搜索快捷键', whenEnIncludes: 'Find shortcuts' },
-    { pattern: /连接到Dolphin/g, replacement: '连接到 Dolphin', whenEnIncludes: 'Connect to Dolphin' },
+    {
+      pattern: /连接到Dolphin/g,
+      replacement: '连接到 Dolphin',
+      whenEnIncludes: 'Connect to Dolphin'
+    },
     {
       pattern: /开始使用Dolphin/g,
       replacement: '开始使用 Dolphin',

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import type { OrcaRuntimeService } from '../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 
-export type RemoteWorkspaceClientNameSource = Pick<OrcaRuntimeService, 'readMachineName'>
+export type RemoteWorkspaceClientNameSource = Pick<DolphinRuntimeService, 'readMachineName'>
 
 export const CLIENT_ID = randomUUID()
 

@@ -8,7 +8,8 @@ export type GitHubWorkItemDetailsCacheMutation = {
   number: number
 }
 
-const GITHUB_WORK_ITEM_DETAILS_CACHE_MUTATED_EVENT = 'orca:github-work-item-details-cache-mutated'
+const GITHUB_WORK_ITEM_DETAILS_CACHE_MUTATED_EVENT =
+  'dolphin:github-work-item-details-cache-mutated'
 
 export function emitGitHubWorkItemDetailsCacheMutation(
   payload: GitHubWorkItemDetailsCacheMutation

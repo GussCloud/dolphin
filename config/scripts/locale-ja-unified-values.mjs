@@ -241,6 +241,6 @@ export const JA_UNIFIED_VALUES = {
   '{{value0}} workspace{{value1}} connected':
     '{{value0}} ワークスペース{{value1}} が接続されました',
   Plugins: 'プラグイン',
-  'Dolphin will continue to work, but commands such as orca status, orca terminal, and orchestration are unavailable for this session.\n\n{{guidance}}\n\nCause: {{cause}}':
-    'Dolphin は引き続き使用できますが、このセッションでは orca status や orca terminal などのコマンドとオーケストレーションを利用できません。\n\n{{guidance}}\n\n原因: {{cause}}'
+  'Dolphin will continue to work, but commands such as dolphin status, dolphin terminal, and orchestration are unavailable for this session.\n\n{{guidance}}\n\nCause: {{cause}}':
+    'Dolphin は引き続き使用できますが、このセッションでは dolphin status や dolphin terminal などのコマンドとオーケストレーションを利用できません。\n\n{{guidance}}\n\n原因: {{cause}}'
 }

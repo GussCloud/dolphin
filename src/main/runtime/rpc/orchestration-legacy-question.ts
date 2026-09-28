@@ -1,6 +1,7 @@
+import { CLI_COMMAND_NAME } from '../../../shared/cli-command-names'
 import { clampOrchestrationAskTimeoutMs } from '../../../shared/orchestration-ask-timeout'
 import type { RpcRequest } from './core'
-import type { OrcaRuntimeService } from '../orca-runtime'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import { OrchestrationError } from '../orchestration/orchestration-error'
 import { LEGACY_CONTRACT_VERSION } from '../orchestration/db'
 import type { LegacyCompatibilityAuthority } from './orchestration-legacy-authority'
@@ -12,7 +13,7 @@ import {
 } from './orchestration-legacy-operation'
 
 export async function handleLegacyAsk(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   authority: LegacyCompatibilityAuthority
   request: RpcRequest
   params: LegacyAskParams
@@ -72,7 +73,7 @@ export async function handleLegacyAsk(args: {
       )
       if (lostAnswer) {
         const cliCommand =
-          params.compatibilityCliCommand ?? params.compatibilityWindowsCommand ?? 'orca'
+          params.compatibilityCliCommand ?? params.compatibilityWindowsCommand ?? CLI_COMMAND_NAME
         throw new OrchestrationError(
           'operation_unknown',
           `A matching legacy answer may have been accepted before the update. Run ${cliCommand} orchestration check --terminal ${principal.terminal_handle} before asking again.`

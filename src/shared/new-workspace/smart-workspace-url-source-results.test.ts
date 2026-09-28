@@ -191,7 +191,7 @@ describe('smart workspace URL-owned source rows', () => {
   })
 
   it('hides held provider rows when a Linear URL is recognized but disconnected', () => {
-    const issueUrl = 'https://linear.app/stably/issue/STA-4084/restore-shell-integration'
+    const issueUrl = 'https://linear.app/gusscloud/issue/STA-4084/restore-shell-integration'
 
     expect(
       buildSmartWorkspaceUrlSourceRows({

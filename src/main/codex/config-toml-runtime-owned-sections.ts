@@ -173,6 +173,6 @@ export function extractOrdinaryCodexSettings(config: string): string {
       .filter((section) => isRuntimeProjectTomlSection(section.header))
       .map((section) => getTomlSectionHeaderKey(section.header))
   )
-  // Why: the daemon override exists only because Orca's home path is long; ~/.codex is not.
+  // Why: the daemon override exists only because Dolphin's home path is long; ~/.codex is not.
   return stripCodexDaemonOverride(stripRuntimeOwnedTomlSections(config, projectHeaders)).trimEnd()
 }

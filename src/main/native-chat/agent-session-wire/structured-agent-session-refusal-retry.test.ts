@@ -55,7 +55,7 @@ function operationId(timestamp = NOW): string {
 }
 
 async function createHarness(options: { attached?: boolean } = {}) {
-  const root = await mkdtemp(join(tmpdir(), 'orca-refusal-oracle-'))
+  const root = await mkdtemp(join(tmpdir(), 'dolphin-refusal-oracle-'))
   const store = await AgentSessionRecordStore.open({
     directory: join(root, 'store'),
     hostId: 'local'

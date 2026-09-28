@@ -32,7 +32,7 @@ vi.mock('../telemetry/client', () =>
 vi.mock('../telemetry/classify-error', () =>
   import('./pty-ipc-mock-registry').then((m) => m.classifyErrorModuleMock())
 )
-vi.mock('../cli/linux-terminal-orca-cli-shim', () =>
+vi.mock('../cli/linux-terminal-dolphin-cli-shim', () =>
   import('./pty-ipc-mock-registry').then((m) => m.linuxCliShimModuleMock())
 )
 vi.mock('../memory/pty-registry', () =>
@@ -176,7 +176,7 @@ function restartSpawnArgs(extra: { replacesPtyId?: string } = {}) {
     worktreeId,
     tabId,
     leafId,
-    env: { ORCA_PANE_KEY: paneKey, ORCA_TAB_ID: tabId, ORCA_WORKTREE_ID: worktreeId },
+    env: { DOLPHIN_PANE_KEY: paneKey, DOLPHIN_TAB_ID: tabId, DOLPHIN_WORKTREE_ID: worktreeId },
     ...extra
   }
 }

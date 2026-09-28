@@ -33,7 +33,7 @@ let lifecycle: Promise<void>[]
 let statuses: AgentSessionStatusEvent[]
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-provider-started-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-provider-started-'))
   resetHostTestOperationIds()
   lifecycle = []
   statuses = []

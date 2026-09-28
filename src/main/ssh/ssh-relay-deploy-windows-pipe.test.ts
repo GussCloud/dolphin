@@ -18,7 +18,7 @@ vi.mock('fs', () => ({
 
 vi.mock('./relay-protocol', () => ({
   RELAY_VERSION: '0.1.0',
-  RELAY_REMOTE_DIR: '.orca-remote',
+  RELAY_REMOTE_DIR: '.dolphin-remote',
   parseUnameToRelayPlatform: vi.fn((os: string, arch: string) => {
     const normalizedOs = os.toLowerCase()
     const normalizedArch = arch.toLowerCase()
@@ -34,7 +34,7 @@ vi.mock('./relay-protocol', () => ({
     }
     return null
   }),
-  RELAY_SENTINEL: 'ORCA-RELAY v0.1.0 READY\n',
+  RELAY_SENTINEL: 'DOLPHIN-RELAY v0.1.0 READY\n',
   RELAY_SENTINEL_TIMEOUT_MS: 10_000
 }))
 
@@ -48,7 +48,7 @@ vi.mock('./ssh-relay-deploy-helpers', () => ({
   isUnconfirmedSshCommandTermination: (error: unknown) =>
     error instanceof Error &&
     (error as Error & { sshChannelCloseConfirmed?: boolean }).sshChannelCloseConfirmed === false,
-  execCommand: vi.fn().mockResolvedValue('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+  execCommand: vi.fn().mockResolvedValue('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
 }))
 
 vi.mock('./ssh-remote-node-resolution', () => ({
@@ -77,7 +77,7 @@ vi.mock('./ssh-relay-ripgrep-install', async (importOriginal) => ({
 // and GC. Stub them so deploy tests need no real SSH connection.
 vi.mock('./ssh-relay-versioned-install', () => ({
   readLocalFullVersion: vi.fn().mockReturnValue('0.1.0+abcdef012345'),
-  computeRemoteRelayDir: (home: string, v: string) => `${home}/.orca-remote/relay-${v}`,
+  computeRemoteRelayDir: (home: string, v: string) => `${home}/.dolphin-remote/relay-${v}`,
   isRelayAlreadyInstalled: vi.fn().mockResolvedValue(true),
   finalizeInstall: vi.fn().mockResolvedValue(undefined),
   abandonInstall: vi.fn().mockResolvedValue(undefined),
@@ -148,7 +148,7 @@ function makeMockConnection(): SshConnection {
 describe('deployAndLaunchRelay on Windows remotes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(execCommand).mockReset().mockResolvedValue('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+    vi.mocked(execCommand).mockReset().mockResolvedValue('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
     vi.mocked(waitForSentinel).mockReset().mockResolvedValue({
       write: vi.fn(),
       onData: vi.fn(),
@@ -165,9 +165,9 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
     vi.mocked(resolveRemoteNodePath).mockResolvedValue('C:/Program Files/nodejs/node.exe')
     mockExecCommand
       .mockRejectedValueOnce(new Error('uname not found')) // tagged POSIX platform probe
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Windows X64') // tagged PowerShell platform probe
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Windows X64') // tagged PowerShell platform probe
       .mockResolvedValueOnce('C:\\Users\\me user') // remote home
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
       .mockResolvedValueOnce('') // no persisted active pipe
       .mockResolvedValueOnce('WAITING') // named pipe probe
       .mockResolvedValueOnce('') // WMI relay launch
@@ -178,7 +178,7 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
 
     expect(result.platform).toBe('win32-x64')
     expect(result.remoteHome).toBe('C:/Users/me user')
-    expect(result.sockPath).toMatch(/^\\\\\.\\pipe\\orca-relay-[0-9a-f]{20}$/)
+    expect(result.sockPath).toMatch(/^\\\\\.\\pipe\\dolphin-relay-[0-9a-f]{20}$/)
     const execCommands = vi.mocked(conn.exec).mock.calls.map(([cmd]) => cmd as string)
     expect(execCommands).toHaveLength(1)
     expect(execCommands[0]).toContain('powershell.exe')
@@ -187,14 +187,14 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
       .filter((script): script is string => script !== null)
     const launchScript = decodedScripts.find((script) => script.includes('Invoke-CimMethod')) ?? ''
     expect(launchScript).toContain(
-      '"C:/Users/me user/.orca-remote/relay-0.1.0+abcdef012345/relay.js"'
+      '"C:/Users/me user/.dolphin-remote/relay-0.1.0+abcdef012345/relay.js"'
     )
     expect(launchScript).toContain(
-      '"C:/Users/me user/.orca-remote/relay-0.1.0+abcdef012345/agent-hooks/orca-relay-'
+      '"C:/Users/me user/.dolphin-remote/relay-0.1.0+abcdef012345/agent-hooks/dolphin-relay-'
     )
     expect(launchScript).toContain('--endpoint-dir')
     expect(launchScript).toContain(
-      '--ripgrep-path "C:/Users/me user/.orca-remote/ripgrep/c0ffee0123456789-win32-x64/rg.exe"'
+      '--ripgrep-path "C:/Users/me user/.dolphin-remote/ripgrep/c0ffee0123456789-win32-x64/rg.exe"'
     )
     expect(launchScript).not.toContain('--pty-source-credit-v1')
     expect(launchScript).not.toContain('.pty-source-credit-policy')
@@ -230,9 +230,9 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
       })
     mockExecCommand
       .mockRejectedValueOnce(new Error('uname not found')) // tagged POSIX platform probe
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Windows X64') // tagged PowerShell platform probe
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Windows X64') // tagged PowerShell platform probe
       .mockResolvedValueOnce('C:\\Users\\me user') // remote home
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
       .mockResolvedValueOnce('') // no persisted active pipe yet
       .mockResolvedValueOnce('READY') // existing named pipe probe
       .mockResolvedValueOnce('WAITING') // deterministic fallback pipe is not already running
@@ -248,8 +248,8 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
     const secondConnectScript = decodePowerShellCommand(execCommands[1]) ?? ''
     const primaryPipe = extractWindowsSockPath(firstConnectScript)
     const fallbackPipe = extractWindowsSockPath(secondConnectScript)
-    expect(primaryPipe).toMatch(/^\\\\\.\\pipe\\orca-relay-[0-9a-f]{20}$/)
-    expect(fallbackPipe).toMatch(/^\\\\\.\\pipe\\orca-relay-[0-9a-f]{20}$/)
+    expect(primaryPipe).toMatch(/^\\\\\.\\pipe\\dolphin-relay-[0-9a-f]{20}$/)
+    expect(fallbackPipe).toMatch(/^\\\\\.\\pipe\\dolphin-relay-[0-9a-f]{20}$/)
     expect(fallbackPipe).not.toBe(primaryPipe)
     expect(result.sockPath).toBe(fallbackPipe)
 
@@ -273,13 +273,13 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
   it('prefers a persisted Windows fallback pipe on later reconnects', async () => {
     const conn = makeMockConnection()
     const mockExecCommand = vi.mocked(execCommand)
-    const persistedPipe = '\\\\.\\pipe\\orca-relay-1234567890abcdef1234'
+    const persistedPipe = '\\\\.\\pipe\\dolphin-relay-1234567890abcdef1234'
     vi.mocked(resolveRemoteNodePath).mockResolvedValue('C:/Program Files/nodejs/node.exe')
     mockExecCommand
       .mockRejectedValueOnce(new Error('uname not found')) // tagged POSIX platform probe
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Windows X64') // tagged PowerShell platform probe
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Windows X64') // tagged PowerShell platform probe
       .mockResolvedValueOnce('C:\\Users\\me user') // remote home
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK') // native deps probe
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK') // native deps probe
       .mockResolvedValueOnce(`${persistedPipe}\n`) // persisted active pipe marker
       .mockResolvedValueOnce('READY') // persisted named pipe probe
       .mockResolvedValueOnce('') // refresh active pipe marker
@@ -305,9 +305,9 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
     vi.mocked(resolveRemoteNodePath).mockResolvedValue('C:/Program Files/nodejs/node.exe')
     mockExecCommand
       .mockRejectedValueOnce(new Error('uname not found')) // tagged POSIX platform probe A
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Windows X64')
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Windows X64')
       .mockResolvedValueOnce('C:\\Users\\me user')
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK')
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK')
       .mockResolvedValueOnce('') // no persisted active pipe A
       .mockResolvedValueOnce('WAITING')
       .mockResolvedValueOnce('')
@@ -315,9 +315,9 @@ describe('deployAndLaunchRelay on Windows remotes', () => {
       .mockResolvedValueOnce('') // persist active pipe A
       .mockResolvedValueOnce('') // deferred stale-stage cleanup A
       .mockRejectedValueOnce(new Error('uname not found')) // tagged POSIX platform probe B
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Windows X64')
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Windows X64')
       .mockResolvedValueOnce('C:\\Users\\me user')
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK')
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK')
       .mockResolvedValueOnce('') // no persisted active pipe B
       .mockResolvedValueOnce('WAITING')
       .mockResolvedValueOnce('')

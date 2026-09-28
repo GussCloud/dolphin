@@ -19,7 +19,7 @@ const roots: string[] = []
 const clients: ProfileStateWriteWorkerClient[] = []
 
 beforeAll(async () => {
-  bundleRoot = mkdtempSync(join(tmpdir(), 'orca-writer-bundle-'))
+  bundleRoot = mkdtempSync(join(tmpdir(), 'dolphin-writer-bundle-'))
   workerPath = join(bundleRoot, 'profile-state-writer-worker-entry.js')
   await build({
     entryPoints: [
@@ -42,7 +42,7 @@ afterEach(async () => {
 afterAll(() => rmSync(bundleRoot, { recursive: true, force: true }))
 
 function fixture() {
-  const root = mkdtempSync(join(tmpdir(), 'orca-writer-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-writer-'))
   roots.push(root)
   const path = join(root, 'profile-state.db')
   const profileId = 'writer-test'

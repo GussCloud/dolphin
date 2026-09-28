@@ -213,7 +213,7 @@ describe('useIpcEvents browser tab create routing', () => {
         },
         browser: {
           onGuestLoadFailed: () => () => {},
-          onOpenLinkInOrcaTab: () => () => {},
+          onOpenLinkInDolphinTab: () => () => {},
           onNavigationUpdate: () => () => {},
           onActivateView: (listener: NonNullable<typeof activateViewListenerRef.current>) => {
             activateViewListenerRef.current = listener

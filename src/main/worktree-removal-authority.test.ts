@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  canCleanupUnregisteredOrcaWorktreeDirectory,
+  canCleanupUnregisteredDolphinWorktreeDirectory,
   isWorktreePathMissing,
-  stripOrcaProvenanceMetaUpdates
+  stripDolphinProvenanceMetaUpdates
 } from './worktree-removal-safety'
 import type { WorktreeMeta } from '../shared/worktree/meta-types'
 
@@ -30,26 +30,26 @@ describe('isWorktreePathMissing', () => {
   })
 })
 
-describe('canCleanupUnregisteredOrcaWorktreeDirectory', () => {
-  it('does not treat orcaCreatedAt alone as cleanup authority', () => {
+describe('canCleanupUnregisteredDolphinWorktreeDirectory', () => {
+  it('does not treat dolphinCreatedAt alone as cleanup authority', () => {
     expect(
-      canCleanupUnregisteredOrcaWorktreeDirectory({
-        meta: { orcaCreatedAt: Date.now() }
+      canCleanupUnregisteredDolphinWorktreeDirectory({
+        meta: { dolphinCreatedAt: Date.now() }
       })
     ).toBe(false)
     expect(
-      canCleanupUnregisteredOrcaWorktreeDirectory({
+      canCleanupUnregisteredDolphinWorktreeDirectory({
         meta: {
-          orcaCreatedAt: Date.now(),
-          orcaCreationSource: 'runtime'
+          dolphinCreatedAt: Date.now(),
+          dolphinCreationSource: 'runtime'
         }
       })
     ).toBe(true)
   })
 
-  it('accepts legacy Orca-created metadata before explicit provenance existed', () => {
+  it('accepts legacy Dolphin-created metadata before explicit provenance existed', () => {
     expect(
-      canCleanupUnregisteredOrcaWorktreeDirectory({
+      canCleanupUnregisteredDolphinWorktreeDirectory({
         meta: { createdAt: Date.now() }
       })
     ).toBe(true)
@@ -70,11 +70,11 @@ describe('canCleanupUnregisteredOrcaWorktreeDirectory', () => {
       sortOrder: 0,
       lastActivityAt: 0,
       workspaceStatus: 'todo',
-      orcaCreationWorkspaceLayout: { path: '/orca/workspaces', nestWorkspaces: true }
+      dolphinCreationWorkspaceLayout: { path: '/dolphin/workspaces', nestWorkspaces: true }
     }
 
     expect(
-      canCleanupUnregisteredOrcaWorktreeDirectory({
+      canCleanupUnregisteredDolphinWorktreeDirectory({
         meta: layoutOnlyMeta
       })
     ).toBe(false)
@@ -82,21 +82,21 @@ describe('canCleanupUnregisteredOrcaWorktreeDirectory', () => {
 
   it('does not trust paths without provenance or legacy metadata', () => {
     expect(
-      canCleanupUnregisteredOrcaWorktreeDirectory({
+      canCleanupUnregisteredDolphinWorktreeDirectory({
         meta: undefined
       })
     ).toBe(false)
   })
 })
 
-describe('stripOrcaProvenanceMetaUpdates', () => {
-  it('removes Orca-owned provenance fields from user metadata updates', () => {
+describe('stripDolphinProvenanceMetaUpdates', () => {
+  it('removes Dolphin-owned provenance fields from user metadata updates', () => {
     expect(
-      stripOrcaProvenanceMetaUpdates({
+      stripDolphinProvenanceMetaUpdates({
         comment: 'keep me',
-        orcaCreatedAt: 123,
-        orcaCreationSource: 'desktop',
-        orcaCreationWorkspaceLayout: { path: '/workspace', nestWorkspaces: false },
+        dolphinCreatedAt: 123,
+        dolphinCreationSource: 'desktop',
+        dolphinCreationWorkspaceLayout: { path: '/workspace', nestWorkspaces: false },
         automationProvenance: {
           kind: 'created-by-automation',
           automationId: 'automation-1',

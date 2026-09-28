@@ -1,7 +1,7 @@
 # Legacy profile JSON
 
 SQLite is the only ordinary writable profile backend. This folder retains the
-`orca-data.json` compatibility boundary; it does not provide a second live store.
+`dolphin-data.json` compatibility boundary; it does not provide a second live store.
 
 | Code                                                                   | Purpose                                                                                                                                                                                |
 | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -19,7 +19,7 @@ offline settings command must first establish SQLite authority.
 Clean shutdown and maintenance refresh compatibility JSON for older builds. A
 crash or failed export can leave an older snapshot. If an older build edits that
 file, startup refuses to choose silently between it and SQLite. The explicit
-`orca profile state rollback --current-json` command selects those edits and
+`dolphin profile state rollback --current-json` command selects those edits and
 archives both copies; it does not merge divergent histories.
 
 Keep import and recovery while old profiles or backups remain supported. Removing

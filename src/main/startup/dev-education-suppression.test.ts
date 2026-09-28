@@ -83,7 +83,7 @@ describe('shouldSuppressDevEducation', () => {
     expect(
       shouldSuppressDevEducation({
         isDev: true,
-        env: { ORCA_E2E_USER_DATA_DIR: '/tmp/orca-e2e' }
+        env: { DOLPHIN_E2E_USER_DATA_DIR: '/tmp/dolphin-e2e' }
       })
     ).toBe(false)
   })
@@ -136,7 +136,7 @@ describe('suppressDevEducationForStore', () => {
     expect(state.ui.featureTipsSeenIds).toEqual([
       'voice-dictation',
       'agent-session-search',
-      'orca-cli',
+      'dolphin-cli',
       'cmd-j-palette'
     ])
     expect(state.ui.contextualToursSeenIds).toEqual([

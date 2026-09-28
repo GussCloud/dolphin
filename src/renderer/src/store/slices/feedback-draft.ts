@@ -4,7 +4,7 @@ import type { AppState } from '../types'
 /** In-progress "Send Feedback" report. Session-only (never `persist`-wrapped,
  *  no disk surface): the dialog renders inside the sidebar subtree, which
  *  unmounts whenever the sidebar collapses, and a failed submit is precisely
- *  when the user still needs what they typed (orca#22466). Cleared on a
+ *  when the user still needs what they typed (dolphin#22466). Cleared on a
  *  confirmed delivery or app restart.
  *
  *  Image drafts deliberately stay in the dialog: they hold object URLs and

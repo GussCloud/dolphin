@@ -11,8 +11,8 @@ import {
   _linearAgentSkillSetupPromptInternalsForTests
 } from './LinearAgentSkillSetupPrompt'
 
-const HOST_DISMISS_STORAGE_KEY = 'orca.linearTicketsSkill.setupDismissed.host'
-const FEDORA_DISMISS_STORAGE_KEY = 'orca.linearTicketsSkill.setupDismissed.wsl.Fedora'
+const HOST_DISMISS_STORAGE_KEY = 'dolphin.linearTicketsSkill.setupDismissed.host'
+const FEDORA_DISMISS_STORAGE_KEY = 'dolphin.linearTicketsSkill.setupDismissed.wsl.Fedora'
 
 const projectHostRuntime: ProjectExecutionRuntimeResolution = {
   status: 'resolved',
@@ -60,8 +60,8 @@ vi.mock('@/hooks/useInstalledAgentSkills', async (importOriginal) => ({
 
 vi.mock('@/lib/agent-skill-cli-prerequisite', () => ({
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE: 'CLI registration notice',
-  ensureOrcaCliAvailableForAgentSkillTerminal: mocks.ensureCli,
-  isOrcaCliAvailableOnPath: (status: CliInstallStatus | null | undefined) =>
+  ensureDolphinCliAvailableForAgentSkillTerminal: mocks.ensureCli,
+  isDolphinCliAvailableOnPath: (status: CliInstallStatus | null | undefined) =>
     status?.state === 'installed' && status.pathConfigured
 }))
 
@@ -120,15 +120,15 @@ function installLocalStorageShim(): void {
 function cliStatus(overrides: Partial<CliInstallStatus>): CliInstallStatus {
   return {
     platform: 'darwin',
-    commandName: 'orca',
-    commandPath: '/usr/local/bin/orca',
+    commandName: 'dolphin',
+    commandPath: '/usr/local/bin/dolphin',
     pathDirectory: '/usr/local/bin',
     pathConfigured: true,
-    launcherPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+    launcherPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
     installMethod: 'symlink',
     supported: true,
     state: 'installed',
-    currentTarget: '/Applications/Orca.app/Contents/MacOS/Orca',
+    currentTarget: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
     unsupportedReason: null,
     detail: null,
     ...overrides
@@ -344,7 +344,7 @@ describe('LinearAgentSkillSetupPrompt', () => {
     expect(document.body.textContent).toContain('npx skills add')
     expect(mocks.panelProps.at(-1)).toEqual(
       expect.objectContaining({
-        installedCommand: 'npx skills update orca-linear --global',
+        installedCommand: 'npx skills update dolphin-linear --global',
         terminalShellOverride: 'powershell.exe',
         terminalRuntime: expect.objectContaining({ runtime: 'wsl', wslDistro: 'Fedora' }),
         getPrerequisiteStatus: expect.any(Function)
@@ -436,7 +436,7 @@ describe('LinearAgentSkillSetupPrompt', () => {
     await settleRender()
 
     expect(document.body.querySelector('[data-testid="linear-skill-inline-panel"]')).not.toBeNull()
-    expect(document.body.textContent).toContain('orca-linear')
+    expect(document.body.textContent).toContain('dolphin-linear')
 
     const installButton = Array.from(document.body.querySelectorAll('button')).find(
       (button) => button.textContent === 'Mock install'

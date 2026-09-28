@@ -29,7 +29,7 @@ import { inspectProcessLiveness, mergeProcessLivenessVerdict } from './daemon-pr
  * Relocate the terminal daemon's process image out of the app install dir into LOCAL userData so it
  * survives Windows auto-updates: the NSIS installer deletes the old install and force-kills every process
  * imaged under it, which would otherwise kill the daemon and its live terminals. The relocated exe is a
- * run-as-node Orca.exe copy (not node.exe) so there's no console flash and asar still resolves. Fail-open:
+ * run-as-node Dolphin.exe copy (not node.exe) so there's no console flash and asar still resolves. Fail-open:
  * any failure returns null and the caller forks the install-dir host (pre-relocation behavior).
  *
  * What escapes the updater is the PATH, not the file name: electron-builder's kill sweep selects
@@ -47,8 +47,8 @@ export type RelocatedDaemonHost = {
 const HOST_SUBDIR = 'daemon-host'
 const MARKER_NAME = '.materialized.json'
 
-// LOCAL appData (not roaming) so OneDrive/roaming never syncs this ~260MB runtime. Shared with NSIS uninstall (config/nsis/orca-installer-hooks.nsh) — keep in sync.
-// Why productName: matches the NSIS `${PRODUCT_NAME}` dir, and keeps a fork's copies apart from Orca's.
+// LOCAL appData (not roaming) so OneDrive/roaming never syncs this ~260MB runtime. Shared with NSIS uninstall (config/nsis/dolphin-installer-hooks.nsh) — keep in sync.
+// Why productName: matches the NSIS `${PRODUCT_NAME}` dir, and keeps a fork's copies apart from Dolphin's.
 const LOCAL_HOST_ROOT_NAME = FORK_IDENTITY.productName
 
 type MaterializeMarker = {
@@ -71,7 +71,7 @@ function resolveEntrySourcePath(resourcesPath: string): string {
  * Whether this process is a packaged ELECTRON app on win32 — the only shape relocation
  * addresses, because what it escapes is the NSIS updater's kill zone.
  *
- * Why asar and not isPackaged alone: orcad answers isPackaged() true (it is a shipped build,
+ * Why asar and not isPackaged alone: dolphind answers isPackaged() true (it is a shipped build,
  * not a dev checkout) while having no asar, no resourcesPath and no NSIS installer. Asking
  * whether the app root is an asar archive is the same honesty fix the watcher path uses, and
  * it keeps a Node host from staging a copy of an Electron tree it does not have.

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { OrcaRuntimeService } from './orca-runtime'
+import { DolphinRuntimeService } from './dolphin-runtime'
 import { OrchestrationDb } from './orchestration/db'
 
 const TAB = 'worker-tab'
@@ -9,7 +9,7 @@ const WORKSPACE = '/folder-workspace'
 const LOCAL_HOST = JSON.stringify({ kind: 'local', hostId: 'local' })
 const SSH_HOST = JSON.stringify({ kind: 'ssh', targetId: 'remote-host' })
 let db: OrchestrationDb
-let runtime: OrcaRuntimeService
+let runtime: DolphinRuntimeService
 
 afterEach(() => {
   db?.close()
@@ -17,7 +17,7 @@ afterEach(() => {
 
 function seedWorker(hostScope: string, settled = true) {
   db = new OrchestrationDb(':memory:')
-  runtime = new OrcaRuntimeService(null)
+  runtime = new DolphinRuntimeService(null)
   runtime.setOrchestrationDb(db)
   const started = db.createStartingWorkerDispatch({
     creator: { kind: 'system' },

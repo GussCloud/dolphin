@@ -130,7 +130,7 @@ describe('max-lines repository coverage', () => {
   }
 
   beforeEach(() => {
-    scratch = mkdtempSync(join(tmpdir(), 'orca-max-lines-'))
+    scratch = mkdtempSync(join(tmpdir(), 'dolphin-max-lines-'))
     const result = runProcessSync({ program: 'git', args: ['init', '--quiet'], cwd: scratch })
     expect(result.code, result.stderr).toBe(0)
   })

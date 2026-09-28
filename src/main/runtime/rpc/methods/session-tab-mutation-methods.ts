@@ -1,5 +1,5 @@
 import { resolveRuntimeNavigationTarget } from '../../../../shared/runtime-navigation'
-import type { OrcaRuntimeService } from '../../orca-runtime'
+import type { DolphinRuntimeService } from '../../dolphin-runtime'
 import { defineMethod } from '../core'
 import {
   assertProjectedSessionTabVisible,
@@ -129,7 +129,7 @@ export const SESSION_TAB_MUTATION_METHODS = [
 const projectSessionTabsForMutationClient = projectSessionTabsForClient
 
 async function assertVisibleMutationTab(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   worktree: string,
   tabId: string,
   pairedDeviceId: string | undefined,

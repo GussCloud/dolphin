@@ -1,6 +1,6 @@
 import { writeFile } from 'node:fs/promises'
 import { buildShellCommandFromArgv } from '../../src/shared/tui-agent-startup-shell'
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {
   execInTerminal,
@@ -9,18 +9,16 @@ import {
   waitForActiveTerminalManager
 } from './helpers/terminal'
 
-test('OMP spaced-colon title renders working and clears on idle', async ({
-  orcaPage
-}, testInfo) => {
+test('OMP spaced-colon title renders working and clears on idle', async ({ appPage }, testInfo) => {
   test.skip(
     process.platform === 'win32',
     'POSIX title replay; Windows formatter bytes have separate coverage'
   )
-  await waitForSessionReady(orcaPage)
-  await waitForActiveWorktree(orcaPage)
-  await ensureTerminalVisible(orcaPage)
-  await waitForActiveTerminalManager(orcaPage)
-  const ptyId = await waitForActivePanePtyId(orcaPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  await waitForActiveTerminalManager(appPage)
+  const ptyId = await waitForActivePanePtyId(appPage)
   const script = testInfo.outputPath('title-replay.cjs')
   await writeFile(
     script,
@@ -30,14 +28,14 @@ process.stdin.on('data', () => process.stdout.write('\\x1b]0;OMP > Image review\
 `
   )
   await execInTerminal(
-    orcaPage,
+    appPage,
     ptyId,
     buildShellCommandFromArgv([process.execPath, script], 'posix')
   )
-  const working = orcaPage.locator('[aria-label="Working"]')
+  const working = appPage.locator('[aria-label="Working"]')
   await expect(working.first()).toBeVisible({ timeout: 15000 })
-  await orcaPage.screenshot({ path: testInfo.outputPath('omp-title-working.png') })
-  await sendToTerminal(orcaPage, ptyId, '\r')
+  await appPage.screenshot({ path: testInfo.outputPath('omp-title-working.png') })
+  await sendToTerminal(appPage, ptyId, '\r')
   await expect(working).toHaveCount(0)
-  await orcaPage.screenshot({ path: testInfo.outputPath('omp-title-idle.png') })
+  await appPage.screenshot({ path: testInfo.outputPath('omp-title-idle.png') })
 })

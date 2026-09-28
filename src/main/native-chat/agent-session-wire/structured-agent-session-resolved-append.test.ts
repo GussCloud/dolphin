@@ -12,7 +12,7 @@ import {
 } from './structured-agent-session-event-sink'
 import { estimateStructuredAgentSessionItemBytes } from './structured-agent-session-event-sink-estimate'
 
-const ROW: AgentJournalItemIdentity = { provider: 'orca', clientMessageId: 'row' }
+const ROW: AgentJournalItemIdentity = { provider: 'dolphin', clientMessageId: 'row' }
 
 const text = (value: string): AgentJournalItemBody => ({
   kind: 'message',

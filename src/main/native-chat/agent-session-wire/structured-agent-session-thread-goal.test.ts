@@ -36,7 +36,7 @@ afterEach(async () => {
 })
 
 async function openJournal(): Promise<AgentSessionJournal> {
-  root ??= await mkdtemp(join(tmpdir(), 'orca-thread-goal-'))
+  root ??= await mkdtemp(join(tmpdir(), 'dolphin-thread-goal-'))
   return journals.open({ identity: IDENTITY, journalDir: root })
 }
 
@@ -55,7 +55,7 @@ function appendGoalRow(
   overrides: Partial<AgentJournalThreadGoal>
 ): Promise<unknown> {
   return journal.appendItem(
-    { provider: 'orca', clientMessageId: `goal-row:${journal.snapshot().items.length}` },
+    { provider: 'dolphin', clientMessageId: `goal-row:${journal.snapshot().items.length}` },
     { kind: 'status', text: 'Goal', threadGoal: { state: 'set', goal: { ...GOAL, ...overrides } } },
     { fence: 1 }
   )

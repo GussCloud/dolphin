@@ -94,7 +94,7 @@ const AUTOMATIONS = [
 async function makeRuntime() {
   mkdirSync(testState.dir, { recursive: true })
   writeFileSync(
-    join(testState.dir, 'orca-data.json'),
+    join(testState.dir, 'dolphin-data.json'),
     JSON.stringify({
       ...getDefaultPersistedState(testState.dir),
       repos: REPOS,
@@ -107,9 +107,9 @@ async function makeRuntime() {
   vi.resetModules()
   const { Store, initDataPath } = await import('../persistence')
   initDataPath()
-  const store = createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
-  const { OrcaRuntimeService } = await import('./orca-runtime')
-  const runtime = new OrcaRuntimeService(store as never)
+  const store = createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
+  const { DolphinRuntimeService } = await import('./dolphin-runtime')
+  const runtime = new DolphinRuntimeService(store as never)
   const published: AutomationsChangedPayload[] = []
   vi.spyOn(runtime, 'notifyAutomationsChanged').mockImplementation(
     (payload: AutomationsChangedPayload = {}) => {
@@ -121,7 +121,7 @@ async function makeRuntime() {
 
 beforeEach(() => {
   testState.dir = mkdtempSync(join(tmpdir(), 'automation-publish-'))
-  // Why: the store resolves orca-data.json through the app environment, so the
+  // Why: the store resolves dolphin-data.json through the app environment, so the
   // suite's fixture directory must be what `userData` answers with.
   installFakeAppEnvironment({
     getPath: (name) => (name === 'userData' ? testState.dir : tmpdir())

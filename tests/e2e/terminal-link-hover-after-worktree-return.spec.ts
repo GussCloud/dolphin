@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import type { Page } from '@playwright/test'
+import { expect, test } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,
   getAllWorktreeIds,
@@ -81,7 +81,7 @@ async function locateHoverProbe(page: Page, needle: string): Promise<HoverProbe>
 /**
  * Dispatch a hover mousemove at the probe coordinates and return the text of
  * the link the linkifier considers active (or null). Callers poll this because
- * Orca's file-path provider resolves link candidates asynchronously.
+ * Dolphin's file-path provider resolves link candidates asynchronously.
  */
 async function hoverAndReadActiveLinkText(page: Page, probe: HoverProbe): Promise<string | null> {
   await page.evaluate(({ col, row, tabId }) => {
@@ -244,22 +244,22 @@ async function assertLinkRecoversAfterReturn(
 }
 
 test.describe('Terminal link hover after worktree return', () => {
-  test.beforeEach(async ({ orcaPage }) => {
-    await waitForSessionReady(orcaPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
   })
 
   test('re-establishes a URL link on hover after the pointer leaves the terminal', async ({
-    orcaPage
+    appPage
   }) => {
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
-    const url = `https://example.com/orca-link-${randomUUID()}`
-    await sendToTerminal(orcaPage, ptyId, `echo ${url}\r`)
+    const url = `https://example.com/dolphin-link-${randomUUID()}`
+    await sendToTerminal(appPage, ptyId, `echo ${url}\r`)
     await expect
-      .poll(() => getTerminalContent(orcaPage, 4000), {
+      .poll(() => getTerminalContent(appPage, 4000), {
         timeout: 10_000,
         message: 'URL fixture did not reach the terminal buffer'
       })
@@ -267,74 +267,72 @@ test.describe('Terminal link hover after worktree return', () => {
 
     // Let the streamed-output reset finish before creating the hover cache
     // state this mouseleave regression targets.
-    await orcaPage.waitForTimeout(300)
-    const probe = await locateHoverProbe(orcaPage, url)
+    await appPage.waitForTimeout(300)
+    const probe = await locateHoverProbe(appPage, url)
     await expect
-      .poll(() => hoverAndReadActiveLinkText(orcaPage, probe), {
+      .poll(() => hoverAndReadActiveLinkText(appPage, probe), {
         timeout: 5_000,
         message: 'baseline hover never established the URL link'
       })
       .toContain(url)
 
-    await dispatchScreenMouseLeave(orcaPage, probe.tabId)
-    await expect.poll(() => readActiveLinkText(orcaPage, probe.tabId)).toBeNull()
-    await expect.poll(() => readTerminalCursor(orcaPage, probe.tabId)).not.toBe('pointer')
+    await dispatchScreenMouseLeave(appPage, probe.tabId)
+    await expect.poll(() => readActiveLinkText(appPage, probe.tabId)).toBeNull()
+    await expect.poll(() => readTerminalCursor(appPage, probe.tabId)).not.toBe('pointer')
 
     await expect
-      .poll(() => hoverAndReadActiveLinkText(orcaPage, probe), {
+      .poll(() => hoverAndReadActiveLinkText(appPage, probe), {
         timeout: 5_000,
         message: 'URL link did not re-establish after terminal mouseleave'
       })
       .toContain(url)
-    await expect.poll(() => readTerminalCursor(orcaPage, probe.tabId)).toBe('pointer')
+    await expect.poll(() => readTerminalCursor(appPage, probe.tabId)).toBe('pointer')
   })
 
   test('re-establishes a file-path link on hover after switching worktrees and back', async ({
-    orcaPage
+    appPage
   }) => {
-    const firstWorktreeId = await waitForActiveWorktree(orcaPage)
-    const secondWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'link-hover repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
-    const worktreePath = await activeWorktreePath(orcaPage)
-    const fileName = `orca-linkfile-${randomUUID().slice(0, 8)}.txt`
+    const worktreePath = await activeWorktreePath(appPage)
+    const fileName = `dolphin-linkfile-${randomUUID().slice(0, 8)}.txt`
     const filePath = path.join(worktreePath, fileName)
-    writeFileSync(filePath, 'orca file link target\n')
+    writeFileSync(filePath, 'dolphin file link target\n')
     const needle = `./${fileName}`
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `echo ${needle}\r`)
+      await sendToTerminal(appPage, ptyId, `echo ${needle}\r`)
       await expect
-        .poll(() => getTerminalContent(orcaPage, 4000), {
+        .poll(() => getTerminalContent(appPage, 4000), {
           timeout: 10_000,
           message: 'file-link fixture did not reach the terminal buffer'
         })
         .toContain(fileName)
 
-      const probe = await assertLinkRecoversAfterReturn(orcaPage, {
+      const probe = await assertLinkRecoversAfterReturn(appPage, {
         firstWorktreeId,
         secondWorktreeId,
         needle,
         expectContains: fileName
       })
-      await activateHoveredLink(orcaPage, probe)
+      await activateHoveredLink(appPage, probe)
       // The editor header is the user-visible result of a successful terminal
       // link activation; store state alone could pass with a blank editor.
-      await expect(orcaPage.locator('.editor-header-path').first()).toContainText(fileName, {
+      await expect(appPage.locator('.editor-header-path').first()).toContainText(fileName, {
         timeout: 20_000
       })
     } finally {
-      await orcaPage.evaluate((filePath) => {
+      await appPage.evaluate((filePath) => {
         const state = window.__store?.getState()
         if (state?.openFiles.some((file) => file.filePath === filePath)) {
           state.closeFile(filePath)
@@ -345,32 +343,30 @@ test.describe('Terminal link hover after worktree return', () => {
   })
 
   test('re-establishes a URL link on hover after switching worktrees and back', async ({
-    orcaPage
+    appPage
   }) => {
-    const firstWorktreeId = await waitForActiveWorktree(orcaPage)
-    const secondWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'link-hover repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
 
-    const url = `https://example.com/orca-link-${randomUUID()}`
-    await sendToTerminal(orcaPage, ptyId, `echo ${url}\r`)
+    const url = `https://example.com/dolphin-link-${randomUUID()}`
+    await sendToTerminal(appPage, ptyId, `echo ${url}\r`)
     await expect
-      .poll(() => getTerminalContent(orcaPage, 4000), {
+      .poll(() => getTerminalContent(appPage, 4000), {
         timeout: 10_000,
         message: 'URL fixture did not reach the terminal buffer'
       })
       .toContain(url)
 
-    await assertLinkRecoversAfterReturn(orcaPage, {
+    await assertLinkRecoversAfterReturn(appPage, {
       firstWorktreeId,
       secondWorktreeId,
       needle: url,

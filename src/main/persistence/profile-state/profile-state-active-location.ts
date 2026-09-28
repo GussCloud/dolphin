@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  getOrcaProfileDataFile,
-  getOrcaProfileStateDatabaseFile
+  getDolphinProfileDataFile,
+  getDolphinProfileStateDatabaseFile
 } from '../../../shared/profile-state-storage-paths'
 import type { ProfileStateOfflineLocation } from './profile-state-offline-settings'
 import { ProfileStateRecoveryCommandError } from '../../../shared/profile-state-recovery-command'
@@ -11,7 +11,7 @@ import { ProfileStateRecoveryCommandError } from '../../../shared/profile-state-
 export function getActiveProfileStateLocation(
   userDataPath: string
 ): ProfileStateOfflineLocation | undefined {
-  const indexPath = join(userDataPath, 'orca-profile-index.json')
+  const indexPath = join(userDataPath, 'dolphin-profile-index.json')
   const candidates = [indexPath, `${indexPath}.bak`].filter(existsSync)
   if (candidates.length === 0) {
     return undefined
@@ -29,8 +29,8 @@ export function getActiveProfileStateLocation(
         parsed.profiles.some((profile) => isRecord(profile) && profile.id === profileId)
       ) {
         return {
-          dataFile: getOrcaProfileDataFile(profileId, userDataPath),
-          databaseFile: getOrcaProfileStateDatabaseFile(profileId, userDataPath),
+          dataFile: getDolphinProfileDataFile(profileId, userDataPath),
+          databaseFile: getDolphinProfileStateDatabaseFile(profileId, userDataPath),
           profileId
         }
       }

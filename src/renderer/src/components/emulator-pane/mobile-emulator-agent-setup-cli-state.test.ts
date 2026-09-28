@@ -9,11 +9,11 @@ import {
 function cliStatus(overrides: Partial<CliInstallStatus> = {}): CliInstallStatus {
   return {
     platform: 'darwin',
-    commandName: 'orca',
-    commandPath: '/usr/local/bin/orca',
+    commandName: 'dolphin',
+    commandPath: '/usr/local/bin/dolphin',
     pathDirectory: '/usr/local/bin',
     pathConfigured: true,
-    launcherPath: '/Applications/Orca.app/Contents/MacOS/orca',
+    launcherPath: '/Applications/Dolphin.app/Contents/MacOS/dolphin',
     installMethod: 'symlink',
     supported: true,
     state: 'installed',

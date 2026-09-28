@@ -386,13 +386,13 @@ describe('Branch source results', () => {
   it('gives Jira intent exclusive ownership of Smart results', () => {
     const jiraIssue = {
       id: 'jira-1',
-      key: 'ORCA-123',
+      key: 'DOLPHIN-123',
       siteId: 'site-1',
       title: 'Link Jira'
     } as never
     const rows = buildSmartWorkspaceSourceRows({
       mode: 'smart',
-      value: 'https://company.atlassian.net/browse/ORCA-123',
+      value: 'https://company.atlassian.net/browse/DOLPHIN-123',
       branches: [{ refName: 'origin/main', localBranchName: 'main' }],
       githubItems: [{ repoId: 'repo-a', type: 'issue', number: 1, title: 'GitHub' } as never],
       gitlabItems: [{ repoId: 'repo-a', type: 'issue', number: 2, title: 'GitLab' } as never],
@@ -404,14 +404,14 @@ describe('Branch source results', () => {
       resultLimit: 12
     })
 
-    expect(rows).toEqual([{ kind: 'jira', value: 'jira-site-1-ORCA-123', issue: jiraIssue }])
+    expect(rows).toEqual([{ kind: 'jira', value: 'jira-site-1-DOLPHIN-123', issue: jiraIssue }])
   })
 
   it('suppresses typed and provider rows while unresolved Jira intent owns the query', () => {
     expect(
       buildSmartWorkspaceSourceRows({
         mode: 'smart',
-        value: 'https://company.atlassian.net/browse/ORCA-123',
+        value: 'https://company.atlassian.net/browse/DOLPHIN-123',
         branches: [{ refName: 'origin/main', localBranchName: 'main' }],
         githubItems: [{ repoId: 'repo-a', type: 'issue', number: 1, title: 'GitHub' } as never],
         gitlabItems: [],
@@ -427,13 +427,13 @@ describe('Branch source results', () => {
 
   it('keeps a resolved Jira row when ignored URL data exceeds the generic search limit', () => {
     const jiraIssue = {
-      key: 'ORCA-123',
+      key: 'DOLPHIN-123',
       siteId: 'site-1'
     } as never
     expect(
       buildSmartWorkspaceSourceRows({
         mode: 'smart',
-        value: `https://company.atlassian.net/browse/ORCA-123#${'x'.repeat(2100)}`,
+        value: `https://company.atlassian.net/browse/DOLPHIN-123#${'x'.repeat(2100)}`,
         branches: [],
         githubItems: [],
         gitlabItems: [],
@@ -444,7 +444,7 @@ describe('Branch source results', () => {
         linearAvailable: false,
         resultLimit: 12
       })
-    ).toEqual([{ kind: 'jira', value: 'jira-site-1-ORCA-123', issue: jiraIssue }])
+    ).toEqual([{ kind: 'jira', value: 'jira-site-1-DOLPHIN-123', issue: jiraIssue }])
   })
 
   it('ignores malformed Linear collection rows instead of throwing during render', () => {
@@ -509,12 +509,12 @@ describe('source query byte limits', () => {
 })
 
 describe('Linear issue source input', () => {
-  const issueUrl = 'https://linear.app/stably/issue/STA-4084/restore-osc-133-shell-integration'
+  const issueUrl = 'https://linear.app/gusscloud/issue/STA-4084/restore-osc-133-shell-integration'
 
   it('normalizes a Linear issue URL to its identifier for search', () => {
     expect(parseBoundedSmartWorkspaceLinearIssueInput(issueUrl)).toEqual({
       identifier: 'STA-4084',
-      organizationUrlKey: 'stably'
+      organizationUrlKey: 'gusscloud'
     })
     expect(getSmartWorkspaceLinearSearchQuery(issueUrl)).toBe('STA-4084')
   })
@@ -536,30 +536,30 @@ describe('Linear issue source input', () => {
     expect(isBlockingLinearUrlIntent('smart', 'STA-4084')).toBe(false)
     expect(isBlockingLinearUrlIntent('smart', 'restore-4084')).toBe(false)
     expect(
-      isBlockingLinearUrlIntent('smart', 'https://linear.app.evil.test/stably/issue/STA-4084')
+      isBlockingLinearUrlIntent('smart', 'https://linear.app.evil.test/gusscloud/issue/STA-4084')
     ).toBe(false)
     expect(
-      isBlockingLinearUrlIntent('smart', 'https://linear.app/stably/not-an-issue/issue/STA-4084')
+      isBlockingLinearUrlIntent('smart', 'https://linear.app/gusscloud/not-an-issue/issue/STA-4084')
     ).toBe(false)
     expect(
-      isBlockingLinearUrlIntent('smart', 'https://linear.app/stably/issue/STA-4084/title/more')
+      isBlockingLinearUrlIntent('smart', 'https://linear.app/gusscloud/issue/STA-4084/title/more')
     ).toBe(false)
     expect(
       isBlockingLinearUrlIntent(
         'smart',
-        'https://linear.app/stably/issue/STA-4084%2Fnot-the-identifier'
+        'https://linear.app/gusscloud/issue/STA-4084%2Fnot-the-identifier'
       )
     ).toBe(false)
     expect(
       parseBoundedSmartWorkspaceLinearIssueUrlIntent(
-        'https://linear.app/stably/issue/STA-4084/title'
+        'https://linear.app/gusscloud/issue/STA-4084/title'
       )
-    ).toEqual({ identifier: 'STA-4084', organizationUrlKey: 'stably' })
+    ).toEqual({ identifier: 'STA-4084', organizationUrlKey: 'gusscloud' })
   })
 
   it('keeps the exact Linear URL result ahead of provider result caps', () => {
     const exactIssue = {
-      id: 'stably-issue',
+      id: 'gusscloud-issue',
       identifier: 'STA-4084',
       url: issueUrl
     } as never
@@ -585,7 +585,7 @@ describe('Linear issue source input', () => {
 
     expect(rows.map((row) => row.kind)).toEqual(['use-name', 'linear'])
     expect(rows[0]).toMatchObject({ kind: 'use-name', value: 'use-name', name: issueUrl })
-    expect(rows[1]).toMatchObject({ value: 'linear-stably-issue', issue: exactIssue })
+    expect(rows[1]).toMatchObject({ value: 'linear-gusscloud-issue', issue: exactIssue })
   })
 
   it('keeps typed-text available while a Linear URL has not resolved yet', () => {
@@ -628,14 +628,14 @@ describe('Linear issue source input', () => {
       url: 'https://linear.app/other/issue/STA-4084'
     } as never
     const exactIssue = {
-      id: 'stably-issue',
+      id: 'gusscloud-issue',
       identifier: 'STA-4084',
       url: issueUrl
     } as never
     const unrelatedIssue = {
       id: 'unrelated-issue',
       identifier: 'STA-9999',
-      url: 'https://linear.app/stably/issue/STA-9999'
+      url: 'https://linear.app/gusscloud/issue/STA-9999'
     } as never
 
     expect(
@@ -644,7 +644,7 @@ describe('Linear issue source input', () => {
         unrelatedIssue,
         exactIssue
       ]).map((issue) => issue.id)
-    ).toEqual(['stably-issue', 'other-issue', 'unrelated-issue'])
+    ).toEqual(['gusscloud-issue', 'other-issue', 'unrelated-issue'])
     expect(
       isSmartWorkspaceLinearIssueIntentMatch(
         parseBoundedSmartWorkspaceLinearIssueInput(issueUrl)!,
@@ -655,14 +655,14 @@ describe('Linear issue source input', () => {
 
   it('matches bare Linear keys by identifier without changing provider order for names', () => {
     const issue = {
-      id: 'stably-issue',
+      id: 'gusscloud-issue',
       identifier: 'STA-4084',
       url: issueUrl
     } as never
     const other = {
       id: 'other-issue',
       identifier: 'STA-9999',
-      url: 'https://linear.app/stably/issue/STA-9999'
+      url: 'https://linear.app/gusscloud/issue/STA-9999'
     } as never
 
     expect(
@@ -719,8 +719,8 @@ describe('Task URL Enter protection', () => {
 
 describe('Jira issue search', () => {
   it('keeps valid Jira URL intent blocking in both Smart and Jira modes', () => {
-    const firstUrl = 'https://company.atlassian.net/browse/ORCA-1'
-    const secondUrl = 'https://company.atlassian.net/browse/ORCA-2'
+    const firstUrl = 'https://company.atlassian.net/browse/DOLPHIN-1'
+    const secondUrl = 'https://company.atlassian.net/browse/DOLPHIN-2'
 
     expect(isBlockingJiraUrlIntent('smart', firstUrl)).toBe(true)
     expect(isBlockingJiraUrlIntent('jira', firstUrl)).toBe(true)
@@ -731,7 +731,7 @@ describe('Jira issue search', () => {
 
   it('builds text and exact-key JQL without accepting oversized input', () => {
     expect(buildJiraIssueSearchJql('test')).toBe('text ~ "test*"')
-    expect(buildJiraIssueSearchJql('orca-123')).toBe('key = "ORCA-123"')
+    expect(buildJiraIssueSearchJql('dolphin-123')).toBe('key = "DOLPHIN-123"')
     expect(buildJiraIssueSearchJql('say "hello"')).toBe('text ~ "say \\"hello\\"*"')
     expect(
       buildJiraIssueSearchJql('x'.repeat(SMART_WORKSPACE_SOURCE_QUERY_MAX_BYTES + 1))
@@ -740,7 +740,7 @@ describe('Jira issue search', () => {
 
   it('renders connected Jira search results in Jira mode', () => {
     const jiraIssue = {
-      key: 'ORCA-123',
+      key: 'DOLPHIN-123',
       siteId: 'site-1',
       title: 'Search Jira'
     } as never
@@ -757,6 +757,6 @@ describe('Jira issue search', () => {
       resultLimit: 12
     })
 
-    expect(rows).toEqual([{ kind: 'jira', value: 'jira-site-1-ORCA-123', issue: jiraIssue }])
+    expect(rows).toEqual([{ kind: 'jira', value: 'jira-site-1-DOLPHIN-123', issue: jiraIssue }])
   })
 })

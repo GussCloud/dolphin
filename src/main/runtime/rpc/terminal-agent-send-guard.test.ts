@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { OrcaRuntimeService } from '../orca-runtime'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import type { RpcRequest } from './core'
 import { RpcDispatcher } from './dispatcher'
 import { TERMINAL_METHODS } from './methods/terminal'
 
-function stubRuntime(overrides: Partial<OrcaRuntimeService>): OrcaRuntimeService {
+function stubRuntime(overrides: Partial<DolphinRuntimeService>): DolphinRuntimeService {
   return {
     getRuntimeId: () => 'test-runtime',
     ...overrides
-  } as OrcaRuntimeService
+  } as DolphinRuntimeService
 }
 
 function guardedSendRequest(): RpcRequest {

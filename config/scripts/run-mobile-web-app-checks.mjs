@@ -41,7 +41,7 @@ export async function withPreparedRouteSnapshot(file, run) {
 }
 
 export async function withRouteSnapshot(run, collect = mobileWebAppModuleClosure) {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-route-snapshot-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-route-snapshot-'))
   try {
     const file = join(directory, 'routes.json')
     await prepareRouteSnapshot(file, collect)
@@ -60,7 +60,11 @@ function runTests(file) {
         ...mobileWebCheckArgs,
         ...process.argv.slice(2)
       ],
-      env: { ...process.env, ORCA_BACKGROUND_LAUNCH: '1', ORCA_MOBILE_WEB_ROUTE_SNAPSHOT: file },
+      env: {
+        ...process.env,
+        DOLPHIN_BACKGROUND_LAUNCH: '1',
+        DOLPHIN_MOBILE_WEB_ROUTE_SNAPSHOT: file
+      },
       stdio: 'inherit'
     })
     child.once('error', reject)
@@ -80,8 +84,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       throw new Error('Expected --prepare-route-snapshot FILE')
     }
     await prepareRouteSnapshot(process.argv[3])
-  } else if (process.env.ORCA_MOBILE_WEB_PREPARED_ROUTE_SNAPSHOT) {
-    await withPreparedRouteSnapshot(process.env.ORCA_MOBILE_WEB_PREPARED_ROUTE_SNAPSHOT, runTests)
+  } else if (process.env.DOLPHIN_MOBILE_WEB_PREPARED_ROUTE_SNAPSHOT) {
+    await withPreparedRouteSnapshot(
+      process.env.DOLPHIN_MOBILE_WEB_PREPARED_ROUTE_SNAPSHOT,
+      runTests
+    )
   } else {
     await withRouteSnapshot(runTests)
   }

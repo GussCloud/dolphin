@@ -48,7 +48,7 @@ function createMockProcess(): ChildProcess {
 }
 
 async function makeTempRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'orca-relay-git-list-files-'))
+  const root = await mkdtemp(join(tmpdir(), 'dolphin-relay-git-list-files-'))
   tempDirs.push(root)
   return root
 }
@@ -698,9 +698,9 @@ describe('relay quick open ignored file listing', () => {
     await expect(search).rejects.toThrow(`Search root is not reachable: ${missingRoot}`)
   })
 
-  // Why this is the case that matters: it is the NORMAL remote setup. Orca uploads a bundled rg
+  // Why this is the case that matters: it is the NORMAL remote setup. Dolphin uploads a bundled rg
   // precisely because the host has no `rg` of its own, so probing PATH alone would fail and report
-  // a moved workspace as a missing ripgrep -- telling the user to install what Orca already ships.
+  // a moved workspace as a missing ripgrep -- telling the user to install what Dolphin already ships.
   it('names the unreachable root when only the bundled rg exists, not PATH rg', async () => {
     const missingRoot = await makeTempRoot()
     await rm(missingRoot, { recursive: true, force: true })

@@ -2,7 +2,7 @@ import { defineMethod } from '../../../core'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import { assertCallerHandleMatchesEvidence, resolveOrchestrationCaller } from './run-scope'
 import { exposeRun } from './run-receipt'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import type { OrchestrationCallerIdentity } from '../../../../orchestration/orchestration-caller-identity'
 import { currentDispatchAssigneeRun } from '../messaging/recipient-routing'
 import {
@@ -14,7 +14,7 @@ import {
 } from '../../../../../../shared/rpc-contract/orchestration-runs-params'
 
 function cancelBoundDispatchWaiters(
-  runtime: OrcaRuntimeService,
+  runtime: DolphinRuntimeService,
   caller: OrchestrationCallerIdentity,
   runId: string
 ): void {
@@ -42,7 +42,7 @@ export const ORCHESTRATION_RUN_METHODS = [
         objective: params.objective,
         coordinatorHandle: caller.terminalHandle,
         coordinatorPaneKey: caller.paneKey,
-        coordinatorOrcaSessionId: caller.orcaSessionId
+        coordinatorDolphinSessionId: caller.dolphinSessionId
       })
       runtime.cancelMessageWaiters(params.from)
       cancelBoundDispatchWaiters(runtime, caller, run.id)
@@ -91,7 +91,7 @@ export const ORCHESTRATION_RUN_METHODS = [
         runId: params.id,
         coordinatorHandle: caller.terminalHandle,
         coordinatorPaneKey: caller.paneKey,
-        coordinatorOrcaSessionId: caller.orcaSessionId,
+        coordinatorDolphinSessionId: caller.dolphinSessionId,
         takeoverLegacy: params.takeoverLegacy,
         legacyCoordinatorAuthority
       })

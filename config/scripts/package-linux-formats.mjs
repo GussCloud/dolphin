@@ -44,7 +44,7 @@ function runElectronBuilder(args) {
     const child = spawnProcess({
       program: process.execPath,
       args: [require.resolve('electron-builder/cli.js'), ...args],
-      env: { ...process.env, ORCA_BACKGROUND_LAUNCH: '1' },
+      env: { ...process.env, DOLPHIN_BACKGROUND_LAUNCH: '1' },
       stdio: 'inherit'
     })
     child.once('error', reject)

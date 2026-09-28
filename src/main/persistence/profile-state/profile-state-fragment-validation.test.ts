@@ -32,10 +32,10 @@ afterEach(() => {
 })
 
 function fixture(keepJson = false) {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-profile-fragments-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-profile-fragments-'))
   directories.push(directory)
   const paths = {
-    dataFile: join(directory, 'orca-data.json'),
+    dataFile: join(directory, 'dolphin-data.json'),
     databaseFile: join(directory, 'profile-state.db'),
     profileId: 'fragment-validation'
   }

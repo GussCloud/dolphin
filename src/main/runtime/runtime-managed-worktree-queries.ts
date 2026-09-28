@@ -13,7 +13,7 @@ import type { WorktreeMeta } from '../../shared/worktree/meta-types'
 import { isFolderRepo } from '../../shared/repo-kind'
 import {
   applyMetadataFallbackVisibility,
-  buildKnownOrcaWorkspaceLayouts,
+  buildKnownDolphinWorkspaceLayouts,
   isLegacyRepoForExternalWorktreeVisibility,
   toDetectedWorktree
 } from '../../shared/worktree/ownership'
@@ -261,7 +261,7 @@ export class RuntimeManagedWorktreeQueries {
           ? store?.getWorktreeMeta(worktree.id)
           : (providedMeta ?? undefined),
       settings: { ...settings, worktreeVisibilityDefaults: visibilityDefaults },
-      knownOrcaLayouts: buildKnownOrcaWorkspaceLayouts(settings, repo),
+      knownDolphinLayouts: buildKnownDolphinWorkspaceLayouts(settings, repo),
       isLegacyRepoForVisibility: isLegacyRepoForExternalWorktreeVisibility(repo),
       worktreeVisibilitySourceMatcher: matcher
     })

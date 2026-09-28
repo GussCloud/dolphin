@@ -13,7 +13,7 @@ import { translate } from '@/i18n/i18n'
 const RANGE_OPTIONS: CodexUsageRange[] = ['7d', '30d', '90d', 'all']
 const SCOPE_OPTIONS: { value: CodexUsageScope; label: string }[] = [
   {
-    value: 'orca',
+    value: 'dolphin',
     get label() {
       return translate('auto.components.stats.CodexUsagePane.201766b754', 'Dolphin worktrees only')
     }

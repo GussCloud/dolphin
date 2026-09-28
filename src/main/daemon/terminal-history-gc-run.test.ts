@@ -19,7 +19,7 @@ describe('runTerminalHistoryGc', () => {
   }
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'orca-gc-run-'))
+    dir = await mkdtemp(join(tmpdir(), 'dolphin-gc-run-'))
     await seed('stale', 60)
     await seed('live', 60)
     await seed('saved', 60)

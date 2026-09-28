@@ -119,8 +119,8 @@ import { registerGitLabHandlers } from './gitlab'
 function repo(overrides: Partial<Repo> = {}): Repo {
   return {
     id: 'repo-local',
-    path: '/local/orca',
-    displayName: 'Orca',
+    path: '/local/dolphin',
+    displayName: 'Dolphin',
     badgeColor: '#737373',
     addedAt: 1,
     ...overrides
@@ -180,7 +180,7 @@ describe('GitLab IPC handlers', () => {
   it('resolves repoId and source host context before listing work items', async () => {
     const remoteRepo = repo({
       id: 'repo-ssh',
-      path: '/ssh/orca',
+      path: '/ssh/dolphin',
       connectionId: 'builder',
       executionHostId: toSshExecutionHostId('builder')
     })
@@ -195,7 +195,7 @@ describe('GitLab IPC handlers', () => {
         sourceContext: {
           kind: 'task-source',
           provider: 'gitlab',
-          projectId: 'gitlab:stablyai/orca',
+          projectId: 'gitlab:gusscloud/dolphin',
           hostId: toSshExecutionHostId('builder'),
           repoId: 'repo-ssh'
         }
@@ -203,7 +203,7 @@ describe('GitLab IPC handlers', () => {
     ).resolves.toEqual({ items: [] })
 
     expect(listWorkItemsMock).toHaveBeenCalledWith(
-      '/ssh/orca',
+      '/ssh/dolphin',
       'opened',
       1,
       20,
@@ -219,14 +219,14 @@ describe('GitLab IPC handlers', () => {
     registerGitLabHandlers(storeWithRepos([repo()]) as Store)
 
     await ipcHandlers.get('gitlab:listMRs')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       state: 'opened',
       page: 1,
       perPage: 20,
       query: '  fix login  '
     })
     await ipcHandlers.get('gitlab:listWorkItems')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       state: 'opened',
       page: 1,
       perPage: 20,
@@ -236,7 +236,7 @@ describe('GitLab IPC handlers', () => {
     // Why (#6263): the trimmed query must land in the 6th positional arg —
     // previously the slot was hardcoded to `undefined`, so search never worked.
     expect(listMergeRequestsMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       'opened',
       1,
       20,
@@ -245,7 +245,7 @@ describe('GitLab IPC handlers', () => {
       null
     )
     expect(listWorkItemsMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       'opened',
       1,
       20,
@@ -260,12 +260,12 @@ describe('GitLab IPC handlers', () => {
     registerGitLabHandlers(storeWithRepos([repo()]) as Store)
 
     await ipcHandlers.get('gitlab:listMRs')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       query: '   '
     })
 
     expect(listMergeRequestsMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       'opened',
       1,
       20,
@@ -277,18 +277,18 @@ describe('GitLab IPC handlers', () => {
 
   it('rejects source context for a different host', async () => {
     registerGitLabHandlers(
-      storeWithRepos([repo({ id: 'repo-local', path: '/local/orca' })]) as Store
+      storeWithRepos([repo({ id: 'repo-local', path: '/local/dolphin' })]) as Store
     )
 
     const handler = ipcHandlers.get('gitlab:listWorkItems')
     await expect(
       handler?.(null, {
-        repoPath: '/local/orca',
+        repoPath: '/local/dolphin',
         repoId: 'repo-local',
         sourceContext: {
           kind: 'task-source',
           provider: 'gitlab',
-          projectId: 'gitlab:stablyai/orca',
+          projectId: 'gitlab:gusscloud/dolphin',
           hostId: toSshExecutionHostId('builder'),
           repoId: 'repo-local'
         }
@@ -299,7 +299,7 @@ describe('GitLab IPC handlers', () => {
   it('resolves pasted URL lookups by repoId and source host context', async () => {
     const remoteRepo = repo({
       id: 'repo-ssh',
-      path: '/ssh/orca',
+      path: '/ssh/dolphin',
       connectionId: 'builder',
       executionHostId: toSshExecutionHostId('builder')
     })
@@ -313,25 +313,25 @@ describe('GitLab IPC handlers', () => {
     const handler = ipcHandlers.get('gitlab:workItemByPath')
     await expect(
       handler?.(null, {
-        repoPath: '/local/orca',
+        repoPath: '/local/dolphin',
         repoId: 'repo-ssh',
         sourceContext: {
           kind: 'task-source',
           provider: 'gitlab',
-          projectId: 'gitlab:stablyai/orca',
+          projectId: 'gitlab:gusscloud/dolphin',
           hostId: toSshExecutionHostId('builder'),
           repoId: 'repo-ssh'
         },
         host: 'gitlab.com',
-        path: 'stablyai/orca',
+        path: 'gusscloud/dolphin',
         iid: 42,
         type: 'issue'
       })
     ).resolves.toMatchObject({ number: 42 })
 
     expect(getWorkItemByProjectRefMock).toHaveBeenCalledWith(
-      '/ssh/orca',
-      { host: 'gitlab.com', path: 'stablyai/orca' },
+      '/ssh/dolphin',
+      { host: 'gitlab.com', path: 'gusscloud/dolphin' },
       42,
       'issue',
       'builder'
@@ -343,7 +343,7 @@ describe('GitLab IPC handlers', () => {
     const projects: ReturnType<Store['getProjects']> = [
       {
         id: 'project-1',
-        displayName: 'Orca',
+        displayName: 'Dolphin',
         badgeColor: 'blue',
         sourceRepoIds: ['repo-local'],
         localWindowsRuntimePreference: { kind: 'wsl', distro: 'Ubuntu' },
@@ -361,68 +361,68 @@ describe('GitLab IPC handlers', () => {
     listLabelsMock.mockResolvedValue([])
     listAssignableUsersMock.mockResolvedValue([])
     listTodosMock.mockResolvedValue([])
-    getProjectSlugMock.mockResolvedValue({ host: 'gitlab.com', path: 'stablyai/orca' })
+    getProjectSlugMock.mockResolvedValue({ host: 'gitlab.com', path: 'gusscloud/dolphin' })
     getMergeRequestForBranchMock.mockResolvedValue(null)
     getMergeRequestMock.mockResolvedValue(null)
     registerGitLabHandlers(storeWithRepos([repo()], projects) as Store)
     const localGitOptions = { wslDistro: 'Ubuntu' }
 
-    await ipcHandlers.get('gitlab:projectSlug')?.(null, { repoPath: '/local/orca' })
+    await ipcHandlers.get('gitlab:projectSlug')?.(null, { repoPath: '/local/dolphin' })
     await ipcHandlers.get('gitlab:mrForBranch')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       branch: 'feature/wsl'
     })
-    await ipcHandlers.get('gitlab:mr')?.(null, { repoPath: '/local/orca', iid: 8 })
+    await ipcHandlers.get('gitlab:mr')?.(null, { repoPath: '/local/dolphin', iid: 8 })
     await ipcHandlers.get('gitlab:listMRs')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       state: 'opened',
       page: 1,
       perPage: 20
     })
     await ipcHandlers.get('gitlab:listWorkItems')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       state: 'opened',
       page: 1,
       perPage: 20
     })
     const issueListResult = await ipcHandlers.get('gitlab:listIssues')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       state: 'opened',
       limit: 20,
       page: 3
     })
-    await ipcHandlers.get('gitlab:issue')?.(null, { repoPath: '/local/orca', number: 7 })
+    await ipcHandlers.get('gitlab:issue')?.(null, { repoPath: '/local/dolphin', number: 7 })
     await ipcHandlers.get('gitlab:createIssue')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       title: 'Title',
       body: 'Body'
     })
     await ipcHandlers.get('gitlab:updateIssue')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       number: 7,
       updates: { body: 'Updated' }
     })
     await ipcHandlers.get('gitlab:addIssueComment')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       number: 7,
       body: 'Comment'
     })
-    await ipcHandlers.get('gitlab:listLabels')?.(null, { repoPath: '/local/orca' })
-    await ipcHandlers.get('gitlab:listAssignableUsers')?.(null, { repoPath: '/local/orca' })
-    await ipcHandlers.get('gitlab:todos')?.(null, { repoPath: '/local/orca' })
+    await ipcHandlers.get('gitlab:listLabels')?.(null, { repoPath: '/local/dolphin' })
+    await ipcHandlers.get('gitlab:listAssignableUsers')?.(null, { repoPath: '/local/dolphin' })
+    await ipcHandlers.get('gitlab:todos')?.(null, { repoPath: '/local/dolphin' })
 
     const hostedReviewOptions = { localGitExecOptions: localGitOptions }
-    expect(getProjectSlugMock).toHaveBeenCalledWith('/local/orca', null, hostedReviewOptions)
+    expect(getProjectSlugMock).toHaveBeenCalledWith('/local/dolphin', null, hostedReviewOptions)
     expect(getMergeRequestForBranchMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       'feature/wsl',
       null,
       null,
       hostedReviewOptions
     )
-    expect(getMergeRequestMock).toHaveBeenCalledWith('/local/orca', 8, null, hostedReviewOptions)
+    expect(getMergeRequestMock).toHaveBeenCalledWith('/local/dolphin', 8, null, hostedReviewOptions)
     expect(listMergeRequestsMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       'opened',
       1,
       20,
@@ -433,7 +433,7 @@ describe('GitLab IPC handlers', () => {
     )
     expect(issueListResult).toMatchObject({ totalPages: 3 })
     expect(listWorkItemsMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       'opened',
       1,
       20,
@@ -443,7 +443,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(listIssuesMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       20,
       undefined,
       'opened',
@@ -452,9 +452,9 @@ describe('GitLab IPC handlers', () => {
       localGitOptions,
       3
     )
-    expect(getIssueMock).toHaveBeenCalledWith('/local/orca', 7, null, localGitOptions)
+    expect(getIssueMock).toHaveBeenCalledWith('/local/dolphin', 7, null, localGitOptions)
     expect(createIssueMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       'Title',
       'Body',
       undefined,
@@ -462,7 +462,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(updateIssueMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       7,
       { body: 'Updated' },
       undefined,
@@ -471,7 +471,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(addIssueCommentMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       7,
       'Comment',
       undefined,
@@ -479,14 +479,14 @@ describe('GitLab IPC handlers', () => {
       undefined,
       localGitOptions
     )
-    expect(listLabelsMock).toHaveBeenCalledWith('/local/orca', undefined, null, localGitOptions)
+    expect(listLabelsMock).toHaveBeenCalledWith('/local/dolphin', undefined, null, localGitOptions)
     expect(listAssignableUsersMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       undefined,
       null,
       localGitOptions
     )
-    expect(listTodosMock).toHaveBeenCalledWith('/local/orca', null, localGitOptions)
+    expect(listTodosMock).toHaveBeenCalledWith('/local/dolphin', null, localGitOptions)
   })
 
   it('routes local WSL project GitLab MR details, review, job, and pasted URL IPC through project git options', async () => {
@@ -494,7 +494,7 @@ describe('GitLab IPC handlers', () => {
     const projects: ReturnType<Store['getProjects']> = [
       {
         id: 'project-1',
-        displayName: 'Orca',
+        displayName: 'Dolphin',
         badgeColor: 'blue',
         sourceRepoIds: ['repo-local'],
         localWindowsRuntimePreference: { kind: 'wsl', distro: 'Ubuntu' },
@@ -526,47 +526,47 @@ describe('GitLab IPC handlers', () => {
     const localGitOptions = { wslDistro: 'Ubuntu' }
 
     await ipcHandlers.get('gitlab:workItemDetails')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       iid: 8,
       type: 'mr'
     })
-    await ipcHandlers.get('gitlab:closeMR')?.(null, { repoPath: '/local/orca', iid: 8 })
-    await ipcHandlers.get('gitlab:reopenMR')?.(null, { repoPath: '/local/orca', iid: 8 })
+    await ipcHandlers.get('gitlab:closeMR')?.(null, { repoPath: '/local/dolphin', iid: 8 })
+    await ipcHandlers.get('gitlab:reopenMR')?.(null, { repoPath: '/local/dolphin', iid: 8 })
     await ipcHandlers.get('gitlab:mergeMR')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       iid: 8,
       method: 'squash'
     })
     await ipcHandlers.get('gitlab:updateMR')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       iid: 8,
       updates: { title: 'Renamed' }
     })
     await ipcHandlers.get('gitlab:updateMRReviewers')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       iid: 8,
       reviewerIds: [1]
     })
     await ipcHandlers.get('gitlab:addMRComment')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       iid: 8,
       body: 'Comment'
     })
     await ipcHandlers.get('gitlab:addMRInlineComment')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       iid: 8,
       input: inlineInput
     })
     await ipcHandlers.get('gitlab:resolveMRDiscussion')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       iid: 8,
       discussionId: 'discussion-1',
       resolved: true
     })
-    await ipcHandlers.get('gitlab:jobTrace')?.(null, { repoPath: '/local/orca', jobId: 99 })
-    await ipcHandlers.get('gitlab:retryJob')?.(null, { repoPath: '/local/orca', jobId: 99 })
+    await ipcHandlers.get('gitlab:jobTrace')?.(null, { repoPath: '/local/dolphin', jobId: 99 })
+    await ipcHandlers.get('gitlab:retryJob')?.(null, { repoPath: '/local/dolphin', jobId: 99 })
     await ipcHandlers.get('gitlab:workItemByPath')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       host: 'gitlab.com',
       path: 'g/p',
       iid: 8,
@@ -574,7 +574,7 @@ describe('GitLab IPC handlers', () => {
     })
 
     expect(getWorkItemDetailsMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       'mr',
       undefined,
@@ -583,7 +583,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(closeMRMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       undefined,
       null,
@@ -591,7 +591,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(reopenMRMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       undefined,
       null,
@@ -599,7 +599,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(mergeMRMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       'squash',
       undefined,
@@ -608,7 +608,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(updateMRMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       { title: 'Renamed' },
       undefined,
@@ -617,7 +617,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(updateMRReviewersMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       [1],
       undefined,
@@ -626,7 +626,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(addMRCommentMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       'Comment',
       undefined,
@@ -635,7 +635,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(addMRInlineCommentMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       inlineInput,
       undefined,
@@ -644,7 +644,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(resolveMRDiscussionMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       8,
       'discussion-1',
       true,
@@ -654,7 +654,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(getJobTraceMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       99,
       undefined,
       null,
@@ -662,7 +662,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(retryJobMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       99,
       undefined,
       null,
@@ -670,7 +670,7 @@ describe('GitLab IPC handlers', () => {
       localGitOptions
     )
     expect(getWorkItemByProjectRefMock).toHaveBeenCalledWith(
-      '/local/orca',
+      '/local/dolphin',
       { host: 'gitlab.com', path: 'g/p' },
       8,
       'mr',
@@ -691,11 +691,11 @@ describe('GitLab IPC handlers', () => {
     registerGitLabHandlers(storeWithRepos([repo()]) as Store)
 
     const raw = (await ipcHandlers.get('gitlab:jobTrace')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       jobId: 99
     })) as { ok: true; trace: string }
     const excerpt = (await ipcHandlers.get('gitlab:jobTrace')?.(null, {
-      repoPath: '/local/orca',
+      repoPath: '/local/dolphin',
       jobId: 99,
       logExcerpt: true
     })) as { ok: true; trace: string }

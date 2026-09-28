@@ -67,7 +67,7 @@ export function KeybindingsFileActions(): React.JSX.Element {
     return snapshot?.path ?? keybindingSnapshot?.path ?? null
   }
 
-  const editKeybindingsInOrca = async (): Promise<void> => {
+  const editKeybindingsInDolphin = async (): Promise<void> => {
     try {
       const filePath = await prepareKeybindingsPath()
       if (!filePath) {
@@ -158,7 +158,7 @@ export function KeybindingsFileActions(): React.JSX.Element {
         variant="ghost"
         size="xs"
         className="rounded-none border-0 shadow-none"
-        onClick={() => void editKeybindingsInOrca()}
+        onClick={() => void editKeybindingsInDolphin()}
       >
         <FileText className="size-3" />
         {translate(

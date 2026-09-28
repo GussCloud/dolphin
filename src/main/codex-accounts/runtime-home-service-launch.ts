@@ -1,7 +1,7 @@
 import { resolveHostCodexSessionSourceHome } from '../codex/codex-session-source-home'
 import { startSystemCodexSessionBridgeInBackground } from '../codex/codex-session-bridge'
 import {
-  resolveOrcaManagedCodexHomePath,
+  resolveDolphinManagedCodexHomePath,
   syncSystemCodexResourcesIntoManagedHome
 } from '../codex/codex-home-paths'
 import { syncSystemConfigIntoManagedCodexHome } from '../codex/codex-config-mirror'
@@ -25,7 +25,7 @@ export abstract class CodexRuntimeHomeLaunch extends CodexRuntimeHomeRouting {
       settings.codexManagedAccounts,
       normalizeCodexRuntimeSelection(settings).host
     )
-    // Why: WSL-managed homes never touch host ~/.codex; treating one as "last synced" makes cold start mangle host auth Orca never touched.
+    // Why: WSL-managed homes never touch host ~/.codex; treating one as "last synced" makes cold start mangle host auth Dolphin never touched.
     this.lastSyncedAccountId = this.getWslManagedHomePath(activeAccount)
       ? null
       : normalizeCodexRuntimeSelection(settings).host
@@ -59,7 +59,7 @@ export abstract class CodexRuntimeHomeLaunch extends CodexRuntimeHomeRouting {
         return perAccountHome
       }
       // Why: only an untrusted home clears the selection; fall through to the
-      // system default without injecting a path Orca cannot prove it owns.
+      // system default without injecting a path Dolphin cannot prove it owns.
     }
     if (this.isHostSystemDefaultRealHome(launchEnv)) {
       // Why: the system default runs Codex on the user's own ~/.codex.
@@ -104,11 +104,11 @@ export abstract class CodexRuntimeHomeLaunch extends CodexRuntimeHomeRouting {
       // its next check sees no selection; predict that route, clearing nothing.
       return this.wouldSystemDefaultRouteToRealHome(launchEnv)
         ? null
-        : resolveOrcaManagedCodexHomePath()
+        : resolveDolphinManagedCodexHomePath()
     }
     // Why the path-only resolver: getRuntimeHomePath() mkdirs the mirror, and
     // this lookup must not create directories either.
-    return this.isHostSystemDefaultRealHome(launchEnv) ? null : resolveOrcaManagedCodexHomePath()
+    return this.isHostSystemDefaultRealHome(launchEnv) ? null : resolveDolphinManagedCodexHomePath()
   }
 
   async prepareForCodexLaunchAsync(

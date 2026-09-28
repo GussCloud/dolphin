@@ -109,7 +109,7 @@ function submission(clientMessageId: string) {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-send-after-failed-start-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-send-after-failed-start-'))
   resetHostTestOperationIds()
   generation = 0
   acquire = vi.fn(async ({ fence, spawnToken }) => ({

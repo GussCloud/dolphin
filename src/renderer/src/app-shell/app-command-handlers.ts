@@ -124,7 +124,7 @@ export function createAppCommandHandlers(
     if (
       input &&
       keybindingContext === 'terminal' &&
-      (terminalShortcutPolicy ?? 'orca-first') === 'orca-first'
+      (terminalShortcutPolicy ?? 'dolphin-first') === 'dolphin-first'
     ) {
       showTerminalShortcutCaptureNotification({
         actionId,

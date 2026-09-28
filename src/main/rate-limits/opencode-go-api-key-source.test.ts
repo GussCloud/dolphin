@@ -49,7 +49,7 @@ describe('resolveOpenCodeGoApiKey', () => {
 
   beforeEach(() => {
     originalEnvironment = Object.fromEntries(ENVIRONMENT_KEYS.map((key) => [key, process.env[key]]))
-    dataHome = mkdtempSync(join(tmpdir(), 'orca-opencode-go-key-'))
+    dataHome = mkdtempSync(join(tmpdir(), 'dolphin-opencode-go-key-'))
     process.env.XDG_DATA_HOME = dataHome
     delete process.env.OPENCODE_API_KEY
     // Keeps the credential-database tier from touching the developer's own store.

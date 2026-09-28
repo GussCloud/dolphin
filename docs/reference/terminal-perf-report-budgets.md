@@ -17,19 +17,19 @@ Values below are milliseconds except peak queue chars (JavaScript character
 counts, not process memory bytes). Maximum median spans every typing scenario;
 peak queue spans the active/revisit ACK-pressure scenarios.
 
-| Date / run                                                              | Baseline median | Maximum typing median | Latin restore | Hidden 25-pane worst key | Peak queue chars |
-| ----------------------------------------------------------------------- | --------------: | --------------------: | ------------: | -----------------------: | ---------------: |
-| [2026-08-01](https://github.com/stablyai/orca/actions/runs/30693362353) |            11.7 |                  12.7 |        1492.0 |                     61.2 |          1867776 |
-| [2026-08-03](https://github.com/stablyai/orca/actions/runs/30802935899) |             7.1 |                   9.4 |         414.0 |                     12.8 |           294912 |
-| [2026-08-15](https://github.com/stablyai/orca/actions/runs/31875140053) |             8.9 |                  13.8 |        1297.5 |                     15.4 |          2523136 |
-| [2026-08-24](https://github.com/stablyai/orca/actions/runs/32708128219) |            12.2 |                  12.2 |         463.6 |                     16.3 |          3227648 |
-| [2026-09-01](https://github.com/stablyai/orca/actions/runs/33488510218) |             6.6 |                   6.8 |         302.2 |                     11.5 |           360448 |
-| [2026-09-07](https://github.com/stablyai/orca/actions/runs/34102348134) |             7.5 |                  11.3 |         328.2 |                    269.6 |          2818048 |
-| [2026-09-11](https://github.com/stablyai/orca/actions/runs/34580494139) |             9.5 |                  10.4 |         233.5 |                    186.2 |          2441216 |
-| [2026-09-15](https://github.com/stablyai/orca/actions/runs/34948597774) |            10.3 |                  12.6 |         282.2 |                   1178.4 |          2818048 |
-| [2026-09-17](https://github.com/stablyai/orca/actions/runs/35201162712) |            10.3 |                  12.7 |        1182.2 |                     15.7 |          2998272 |
-| [2026-09-19](https://github.com/stablyai/orca/actions/runs/35432611564) |             7.6 |                  10.3 |         236.7 |                   1435.5 |          2588672 |
-| [2026-09-21](https://github.com/stablyai/orca/actions/runs/35579708852) |             7.8 |                  11.6 |        1640.7 |                   2090.6 |          2523136 |
+| Date / run                                                                  | Baseline median | Maximum typing median | Latin restore | Hidden 25-pane worst key | Peak queue chars |
+| --------------------------------------------------------------------------- | --------------: | --------------------: | ------------: | -----------------------: | ---------------: |
+| [2026-08-01](https://github.com/GussCloud/dolphin/actions/runs/30693362353) |            11.7 |                  12.7 |        1492.0 |                     61.2 |          1867776 |
+| [2026-08-03](https://github.com/GussCloud/dolphin/actions/runs/30802935899) |             7.1 |                   9.4 |         414.0 |                     12.8 |           294912 |
+| [2026-08-15](https://github.com/GussCloud/dolphin/actions/runs/31875140053) |             8.9 |                  13.8 |        1297.5 |                     15.4 |          2523136 |
+| [2026-08-24](https://github.com/GussCloud/dolphin/actions/runs/32708128219) |            12.2 |                  12.2 |         463.6 |                     16.3 |          3227648 |
+| [2026-09-01](https://github.com/GussCloud/dolphin/actions/runs/33488510218) |             6.6 |                   6.8 |         302.2 |                     11.5 |           360448 |
+| [2026-09-07](https://github.com/GussCloud/dolphin/actions/runs/34102348134) |             7.5 |                  11.3 |         328.2 |                    269.6 |          2818048 |
+| [2026-09-11](https://github.com/GussCloud/dolphin/actions/runs/34580494139) |             9.5 |                  10.4 |         233.5 |                    186.2 |          2441216 |
+| [2026-09-15](https://github.com/GussCloud/dolphin/actions/runs/34948597774) |            10.3 |                  12.6 |         282.2 |                   1178.4 |          2818048 |
+| [2026-09-17](https://github.com/GussCloud/dolphin/actions/runs/35201162712) |            10.3 |                  12.7 |        1182.2 |                     15.7 |          2998272 |
+| [2026-09-19](https://github.com/GussCloud/dolphin/actions/runs/35432611564) |             7.6 |                  10.3 |         236.7 |                   1435.5 |          2588672 |
+| [2026-09-21](https://github.com/GussCloud/dolphin/actions/runs/35579708852) |             7.8 |                  11.6 |        1640.7 |                   2090.6 |          2523136 |
 
 ## Decisions
 

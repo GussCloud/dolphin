@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { folderWorkspaceKey } from '../../shared/workspace-scope'
 import { importProfileStateJson } from '../persistence/profile-state/profile-state-documents'
 import { openProfileStateDatabase } from '../persistence/profile-state/profile-state-database'
-import { getOrcaProfileStateDatabaseFile } from '../orca-profiles/profile-storage-paths'
+import { getDolphinProfileStateDatabaseFile } from '../dolphin-profiles/profile-storage-paths'
 import { getOtherProfileWorktreeIdsForHistoryGc } from './history-gc-profile-worktree-ids'
 
 const roots: string[] = []
@@ -25,11 +25,11 @@ function userDataWithProfiles(
   activeProfileId: string,
   profiles: { id: string; state?: unknown; raw?: string }[]
 ): string {
-  const root = mkdtempSync(join(tmpdir(), 'orca-gc-profiles-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-gc-profiles-'))
   roots.push(root)
   mkdirSync(join(root, 'profiles'), { recursive: true })
   writeFileSync(
-    join(root, 'orca-profile-index.json'),
+    join(root, 'dolphin-profile-index.json'),
     JSON.stringify({
       activeProfileId,
       profiles: profiles.map(({ id }) => ({
@@ -46,10 +46,10 @@ function userDataWithProfiles(
   for (const profile of profiles) {
     mkdirSync(join(root, 'profiles', profile.id), { recursive: true })
     if (profile.raw !== undefined) {
-      writeFileSync(join(root, 'profiles', profile.id, 'orca-data.json'), profile.raw)
+      writeFileSync(join(root, 'profiles', profile.id, 'dolphin-data.json'), profile.raw)
     } else if (profile.state !== undefined) {
       writeFileSync(
-        join(root, 'profiles', profile.id, 'orca-data.json'),
+        join(root, 'profiles', profile.id, 'dolphin-data.json'),
         JSON.stringify(profile.state)
       )
     }
@@ -115,7 +115,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
       }
     ])
     const database = openProfileStateDatabase(
-      getOrcaProfileStateDatabaseFile('other', root),
+      getDolphinProfileStateDatabaseFile('other', root),
       'other'
     )
     try {
@@ -141,7 +141,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
       { id: 'active', state: {} },
       { id: 'other', state: { worktreeMeta: { 'repo::/json': {} } } }
     ])
-    const databaseFile = getOrcaProfileStateDatabaseFile('other', root)
+    const databaseFile = getDolphinProfileStateDatabaseFile('other', root)
 
     expect(getOtherProfileWorktreeIdsForHistoryGc(root)).toEqual({
       unreadableProfiles: 0,
@@ -158,7 +158,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
         { id: 'active', state: {} },
         { id: 'other', ...(hasJson ? { state } : {}) }
       ])
-      const dataFile = join(root, 'profiles', 'other', 'orca-data.json')
+      const dataFile = join(root, 'profiles', 'other', 'dolphin-data.json')
       const exportPath = `${dataFile}.sqlite-export.1.json`
       const exportJson = JSON.stringify({ worktreeMeta: { 'repo::/export': {} } })
       writeFileSync(exportPath, exportJson)
@@ -167,7 +167,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
         unreadableProfiles: 1,
         ids: new Set()
       })
-      expect(existsSync(getOrcaProfileStateDatabaseFile('other', root))).toBe(false)
+      expect(existsSync(getDolphinProfileStateDatabaseFile('other', root))).toBe(false)
       expect(existsSync(dataFile)).toBe(hasJson)
       if (hasJson) {
         expect(readFileSync(dataFile, 'utf8')).toBe(JSON.stringify(state))
@@ -179,7 +179,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
   it('reads SQLite-only profiles with retained exports without blocking history pruning', () => {
     const root = userDataWithProfiles('active', [{ id: 'active', state: {} }, { id: 'other' }])
     const database = openProfileStateDatabase(
-      getOrcaProfileStateDatabaseFile('other', root),
+      getDolphinProfileStateDatabaseFile('other', root),
       'other'
     )
     try {
@@ -190,7 +190,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
     } finally {
       database.db.close()
     }
-    const dataFile = join(root, 'profiles', 'other', 'orca-data.json')
+    const dataFile = join(root, 'profiles', 'other', 'dolphin-data.json')
     writeFileSync(
       `${dataFile}.sqlite-export.1.json`,
       JSON.stringify({ worktreeMeta: { 'repo::/stale-export': {} } })
@@ -208,7 +208,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
       { id: 'active', state: {} },
       { id: 'other', state: { worktreeMeta: { 'repo::/json': {} } } }
     ])
-    writeFileSync(getOrcaProfileStateDatabaseFile('other', root), 'not a sqlite database')
+    writeFileSync(getDolphinProfileStateDatabaseFile('other', root), 'not a sqlite database')
 
     expect(getOtherProfileWorktreeIdsForHistoryGc(root)).toEqual({
       unreadableProfiles: 1,
@@ -224,7 +224,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
         { id: 'other', state: { worktreeMeta: { 'repo::/json': {} } } }
       ])
       writeFileSync(
-        `${getOrcaProfileStateDatabaseFile('other', root)}${suffix}`,
+        `${getDolphinProfileStateDatabaseFile('other', root)}${suffix}`,
         'orphaned evidence'
       )
 
@@ -241,7 +241,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
       { id: 'other', state: { worktreeMeta: { 'repo::/json': {} } } }
     ])
     const database = openProfileStateDatabase(
-      getOrcaProfileStateDatabaseFile('other', root),
+      getDolphinProfileStateDatabaseFile('other', root),
       'other'
     )
     database.db.pragma('user_version = 99')
@@ -256,7 +256,7 @@ describe('getOtherProfileWorktreeIdsForHistoryGc', () => {
   // A single-profile install must not pay for this, and no index at all is the
   // pre-profiles layout rather than an error.
   it('is empty and complete when there is no profile index', () => {
-    const root = mkdtempSync(join(tmpdir(), 'orca-gc-profiles-'))
+    const root = mkdtempSync(join(tmpdir(), 'dolphin-gc-profiles-'))
     roots.push(root)
 
     expect(getOtherProfileWorktreeIdsForHistoryGc(root)).toEqual({

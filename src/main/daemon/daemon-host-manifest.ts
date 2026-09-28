@@ -15,7 +15,7 @@ import { dirname, join, win32 as winPath } from 'node:path'
  */
 export const daemonHostExeName = (execPath: string): string => winPath.basename(execPath)
 
-// V8 snapshots + ICU data the Electron bootstrap reads even under ELECTRON_RUN_AS_NODE; siblings of Orca.exe.
+// V8 snapshots + ICU data the Electron bootstrap reads even under ELECTRON_RUN_AS_NODE; siblings of Dolphin.exe.
 const RUNTIME_DATA_FILES = ['icudtl.dat', 'snapshot_blob.bin', 'v8_context_snapshot.bin']
 
 /**

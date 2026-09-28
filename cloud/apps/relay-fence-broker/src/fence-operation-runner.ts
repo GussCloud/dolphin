@@ -37,9 +37,9 @@ export function fenceChildEnvironment(
   return {
     ...environment,
     IAC_TOOL: 'terraform',
-    ORCA_RELAY_ADMIN_ID_TOKEN: readToken,
-    ORCA_RELAY_FENCE_MUTATION_ID_TOKEN: mutationToken,
-    ORCA_RELAY_FENCE_IMAGE_COMMIT: config.imageCommit
+    DOLPHIN_RELAY_ADMIN_ID_TOKEN: readToken,
+    DOLPHIN_RELAY_FENCE_MUTATION_ID_TOKEN: mutationToken,
+    DOLPHIN_RELAY_FENCE_IMAGE_COMMIT: config.imageCommit
   }
 }
 
@@ -88,7 +88,7 @@ async function runRelayFenceCommand(
     brokerServiceAccount: string
   ) => string[]
 ): Promise<void> {
-  const directory = await mkdtemp(join(tmpdir(), 'orca-relay-fence-operation-'))
+  const directory = await mkdtemp(join(tmpdir(), 'dolphin-relay-fence-operation-'))
   const topologyFile = join(directory, 'topology.json')
   try {
     await run('terraform', [

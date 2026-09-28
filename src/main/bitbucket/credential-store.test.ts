@@ -72,7 +72,7 @@ async function loadStore(
 }
 
 beforeEach(() => {
-  tempHome = mkdtempSync(join(tmpdir(), 'orca-bitbucket-store-'))
+  tempHome = mkdtempSync(join(tmpdir(), 'dolphin-bitbucket-store-'))
   decryptStringMock.mockClear()
 })
 

@@ -1,5 +1,5 @@
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from './helpers/orca-app'
+import type { Page } from '@playwright/test'
+import { expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, switchToWorktree } from './helpers/store'
 import {
   execInTerminal,

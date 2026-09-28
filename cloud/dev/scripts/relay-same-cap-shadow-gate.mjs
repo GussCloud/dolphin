@@ -32,7 +32,7 @@ import {
 const execFileAsync = promisify(execFile)
 
 const CELL_ID = /^production-gce-c[1-9][0-9]*$/
-const CELL_HOST = /^c[1-9][0-9]*\.relay\.onorca\.dev$/
+const CELL_HOST = /^c[1-9][0-9]*\.relay\.dolphin\.guss\.dev\.br$/
 const PROJECT_ID = /^[a-z][a-z0-9-]{4,28}[a-z0-9]$/
 const SERVICE_NAME = /^[a-z][a-z0-9-]{0,62}$/
 
@@ -214,7 +214,7 @@ async function readRuntimeMetrics(reader, { cellId, window }) {
   for (const subWindow of splitWindow(window)) {
     const read = await readLogEntries(reader, {
       filter: `${CELL_LOG_SCOPE}`
-        + ` AND jsonPayload.event="orca_relay_runtime_metrics"`
+        + ` AND jsonPayload.event="dolphin_relay_runtime_metrics"`
         + ` AND jsonPayload.cellId="${cellId}"`
         + ` AND ${timestampBounds(subWindow)}`,
       projection,

@@ -32,8 +32,8 @@
  * shape macOS produces with no remap at all (the keydown carries the glyph), and once through the
  * remap path with the substitution set to that character itself, which is the config's second line.
  */
-import type { CDPSession } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import type { CDPSession } from '@playwright/test'
+import { expect, test } from './helpers/dolphin-app'
 import { closeTerminalImePaneArena, openTerminalImePaneArena } from './terminal-ime-pane-arena'
 import { readTerminalImeBoundaryTrace } from './terminal-ime-boundary-probe'
 import {
@@ -108,21 +108,21 @@ test.describe('Terminal macOS system key remap', () => {
       const forbidden = committed === BACKQUOTE ? layout.character : BACKQUOTE
 
       test(`sends ${committed} for the ${layout.label} backquote key when ${arm.name}`, async ({
-        orcaPage,
+        appPage,
         testRepoPath
       }, testInfo) => {
-        await applyImePlatformPolicy(orcaPage, 'mac')
-        await expectImePlatformPolicy(orcaPage, 'mac')
-        const arena = await openTerminalImePaneArena(orcaPage)
+        await applyImePlatformPolicy(appPage, 'mac')
+        await expectImePlatformPolicy(appPage, 'mac')
+        const arena = await openTerminalImePaneArena(appPage)
         const reader = createTerminalImeByteReader(testRepoPath, 1)
         let completed = false
         try {
-          await startTerminalImeByteReader(orcaPage, arena.ptyId, reader)
+          await startTerminalImeByteReader(appPage, arena.ptyId, reader)
           await arm.dispatch(arena.session, layoutKey, committed)
-          await orcaPage.waitForTimeout(60)
+          await appPage.waitForTimeout(60)
           await dispatchPlainEnter(arena.session)
 
-          const trace = await readTerminalImeBoundaryTrace(orcaPage)
+          const trace = await readTerminalImeBoundaryTrace(appPage)
 
           // A remap is not an IME. Nothing here may open a composition session, and a spec that
           // accidentally replayed one would be testing a path the suite already covers.
@@ -145,7 +145,7 @@ test.describe('Terminal macOS system key remap', () => {
           )
           expect(sent).toBe(`${committed}\r`)
 
-          const received = await waitForTerminalImeBytes(orcaPage, reader)
+          const received = await waitForTerminalImeBytes(appPage, reader)
           expect(received).toEqual([Buffer.from(`${committed}\n`).toString('hex')])
           completed = true
         } finally {

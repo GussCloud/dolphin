@@ -4,7 +4,7 @@ import {
   AGENT_PROMPT_TEST_WORKTREE_PATH,
   createAgentPromptSubmissionRuntime
 } from './agent-prompt-submission-runtime-test-fixture'
-import { OrcaRuntimeService } from './orca-runtime'
+import { DolphinRuntimeService } from './dolphin-runtime'
 import { makeStore } from './runtime-rpc-worktree-store-fixtures'
 
 const createPromptRuntime = createAgentPromptSubmissionRuntime
@@ -330,7 +330,7 @@ describe('agent prompt submission runtime', () => {
     vi.setSystemTime(1_000)
     let handle = ''
     const writes: string[] = []
-    const runtime = new OrcaRuntimeService(makeStore() as never, undefined, {
+    const runtime = new DolphinRuntimeService(makeStore() as never, undefined, {
       getAgentStatusSnapshot: () => [
         {
           paneKey: 'prompt-pane',
@@ -465,5 +465,5 @@ describe('agent prompt submission runtime', () => {
   })
 
   // Why: hook rows reach the runtime through this provider, which has no window and no OSC title —
-  // the same path a headless `orca serve` host and a minimized desktop window take.
+  // the same path a headless `dolphin serve` host and a minimized desktop window take.
 })

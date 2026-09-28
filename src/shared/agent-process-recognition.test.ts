@@ -47,7 +47,7 @@ describe('agent process recognition', () => {
 
   it('does not classify embedded fresh-launch text as an agent command', () => {
     for (const command of [
-      `echo 'omp --config "$ORCA_OMP_FRESH_CONFIG"'`,
+      `echo 'omp --config "$DOLPHIN_OMP_FRESH_CONFIG"'`,
       `echo '${withFreshOmpLaunch('omp', 'posix')}'`
     ]) {
       expect(recognizeAgentProcessFromCommandLine(command)).toBeNull()
@@ -198,7 +198,7 @@ describe('agent process recognition', () => {
       agent: 'trae',
       processName: 'traecli'
     })
-    // Why: past `--` nothing is a flag, so this is the interactive pane Orca itself launches.
+    // Why: past `--` nothing is a flag, so this is the interactive pane Dolphin itself launches.
     expect(recognizeAgentProcessFromCommandLine('traecli -- "--print the release notes"')).toEqual({
       agent: 'trae',
       processName: 'traecli'
@@ -260,7 +260,7 @@ describe('agent process recognition', () => {
       processName: 'muse'
     })
     // Why: the prompt is one quoted argv, so it never equals the bare `exec`
-    // token — this is the interactive pane Orca itself launches.
+    // token — this is the interactive pane Dolphin itself launches.
     expect(recognizeAgentProcessFromCommandLine('muse -- "exec the release notes"')).toEqual({
       agent: 'muse',
       processName: 'muse'
@@ -384,7 +384,7 @@ describe('agent process recognition', () => {
       agent: 'prime-agent',
       processName: 'prime-agent'
     })
-    // Why: past `--` nothing is a flag, so this is the interactive pane Orca itself launches.
+    // Why: past `--` nothing is a flag, so this is the interactive pane Dolphin itself launches.
     expect(
       recognizeAgentProcessFromCommandLine('prime-agent -- "--print the release notes"')
     ).toEqual({ agent: 'prime-agent', processName: 'prime-agent' })
@@ -394,7 +394,7 @@ describe('agent process recognition', () => {
     for (const mode of ['json', 'rpc', 'acp', 'daemon']) {
       expect(recognizeAgentProcessFromCommandLine(`prime-agent --mode ${mode}`)).toBeNull()
     }
-    // Why: `text` is the interactive TUI mode Orca hosts.
+    // Why: `text` is the interactive TUI mode Dolphin hosts.
     expect(recognizeAgentProcessFromCommandLine('prime-agent --mode text')).toEqual({
       agent: 'prime-agent',
       processName: 'prime-agent'
@@ -411,18 +411,20 @@ describe('agent process recognition', () => {
     })
   })
 
-  it('recognizes only the agent subcommand of the generic Orca CLI', () => {
-    expect(recognizeAgentProcessFromCommandLine('orca claude-teams')).toEqual({
+  it('recognizes only the agent subcommand of the generic Dolphin CLI', () => {
+    expect(recognizeAgentProcessFromCommandLine('dolphin claude-teams')).toEqual({
       agent: 'claude-agent-teams',
-      processName: 'orca'
+      processName: 'dolphin'
     })
-    expect(recognizeAgentProcessFromCommandLine('orca status')).toBeNull()
-    expect(recognizeAgentProcessFromCommandLine('orca-dev terminal list')).toBeNull()
-    expect(recognizeAgentProcessFromCommandLine('node /usr/local/bin/orca claude-teams')).toEqual({
+    expect(recognizeAgentProcessFromCommandLine('dolphin status')).toBeNull()
+    expect(recognizeAgentProcessFromCommandLine('dolphin-dev terminal list')).toBeNull()
+    expect(
+      recognizeAgentProcessFromCommandLine('node /usr/local/bin/dolphin claude-teams')
+    ).toEqual({
       agent: 'claude-agent-teams',
-      processName: 'orca'
+      processName: 'dolphin'
     })
-    expect(recognizeAgentProcessFromCommandLine('node /usr/local/bin/orca status')).toBeNull()
+    expect(recognizeAgentProcessFromCommandLine('node /usr/local/bin/dolphin status')).toBeNull()
   })
 
   it('recognizes the versioned Cursor Node wrapper without accepting generic agent processes', () => {
@@ -446,7 +448,7 @@ describe('agent process recognition', () => {
   it('does not classify prompt text as a wrapped agent command', () => {
     expect(
       recognizeAgentProcessFromCommandLine(
-        'node /tmp/not-an-agent.js "compare opencode vs orca in Gemini CLI"'
+        'node /tmp/not-an-agent.js "compare opencode vs dolphin in Gemini CLI"'
       )
     ).toBeNull()
     expect(recognizeAgentProcessFromCommandLine(String.raw`node C:\tmp\not-an-agent.js`)).toBeNull()

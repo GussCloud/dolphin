@@ -1,4 +1,5 @@
 // The SSH shim runs the bundled CLI so remote shells get the full command surface.
+import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import { app } from 'electron'
 import { spawn as nodeSpawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -26,7 +27,7 @@ export type SshCliRuntimeAuthority = {
   attachmentId: string
 }
 
-export type RemoteOrcaCliRequest = {
+export type RemoteDolphinCliRequest = {
   argv: string[]
   cwd: string
   env: Record<string, string>
@@ -35,14 +36,14 @@ export type RemoteOrcaCliRequest = {
   runtimeAuthority?: SshCliRuntimeAuthority
 }
 
-export type RemoteOrcaCliResult = {
+export type RemoteDolphinCliResult = {
   stdout: string
   stderr: string
   exitCode: number
-  postOutput?: RemoteOrcaCliPostOutput
+  postOutput?: RemoteDolphinCliPostOutput
 }
 
-export type RemoteOrcaCliPostOutput =
+export type RemoteDolphinCliPostOutput =
   | {
       kind: 'legacy_check_ack'
       terminal: string
@@ -73,11 +74,11 @@ export class HostCliUnavailableError extends Error {}
 
 // Only terminal identity may cross hosts; remote paths and Node options cannot.
 const REMOTE_CONTEXT_ENV_VARS = [
-  'ORCA_TERMINAL_HANDLE',
-  'ORCA_WORKTREE_ID',
-  'ORCA_PANE_KEY',
-  'ORCA_AGENT_LAUNCH_TOKEN',
-  'ORCA_WORKSPACE_ID'
+  'DOLPHIN_TERMINAL_HANDLE',
+  'DOLPHIN_WORKTREE_ID',
+  'DOLPHIN_PANE_KEY',
+  'DOLPHIN_AGENT_LAUNCH_TOKEN',
+  'DOLPHIN_WORKSPACE_ID'
 ] as const
 
 // Bound output retained for the relay response.
@@ -113,17 +114,17 @@ export function buildHostCliEnv(args: {
   }
   // Why: bind the subprocess to this app instance's runtime metadata (dev and
   // parallel instances use non-default userData dirs).
-  env.ORCA_USER_DATA_PATH = args.userDataPath
+  env.DOLPHIN_USER_DATA_PATH = args.userDataPath
   // Why: the caller's working directory lives on the remote machine, so the
-  // subprocess cwd cannot be chdir'd there; ORCA_CLI_CWD carries it for
+  // subprocess cwd cannot be chdir'd there; DOLPHIN_CLI_CWD carries it for
   // cwd-based selectors like `--worktree active`.
-  env.ORCA_CLI_CWD = args.remoteCwd
+  env.DOLPHIN_CLI_CWD = args.remoteCwd
   // Why: recovery commands run on the SSH execution host through its relay shim.
-  env.ORCA_CLI_COMMAND = 'orca'
+  env.DOLPHIN_CLI_COMMAND = CLI_COMMAND_NAME
   // Why: same node-mode hygiene as the shipped CLI launchers — stash and clear
   // NODE_OPTIONS so Electron's node bootstrap does not inherit them.
-  env.ORCA_NODE_OPTIONS = args.hostEnv.NODE_OPTIONS ?? ''
-  env.ORCA_NODE_REPL_EXTERNAL_MODULE = args.hostEnv.NODE_REPL_EXTERNAL_MODULE ?? ''
+  env.DOLPHIN_NODE_OPTIONS = args.hostEnv.NODE_OPTIONS ?? ''
+  env.DOLPHIN_NODE_REPL_EXTERNAL_MODULE = args.hostEnv.NODE_REPL_EXTERNAL_MODULE ?? ''
   delete env.NODE_OPTIONS
   delete env.NODE_REPL_EXTERNAL_MODULE
   delete env[ORCHESTRATION_COMPATIBILITY_HOST_KIND_ENV]
@@ -148,10 +149,10 @@ export function buildHostCliEnv(args: {
   return env
 }
 
-export async function runHostOrcaCliPassthrough(
-  request: RemoteOrcaCliRequest,
+export async function runHostDolphinCliPassthrough(
+  request: RemoteDolphinCliRequest,
   options: HostCliPassthroughOptions = {}
-): Promise<RemoteOrcaCliResult> {
+): Promise<RemoteDolphinCliResult> {
   // Why: per-field lazy defaults keep the module testable — tests inject all
   // three, so no Electron API is touched outside the production path.
   const execPath = options.execPath ?? process.execPath
@@ -166,8 +167,8 @@ export async function runHostOrcaCliPassthrough(
         appPath: app.getAppPath()
       })
     // Why: must match the userData dir the runtime RPC server writes metadata
-    // to (see index.ts OrcaRuntimeRpcServer wiring), or the CLI subprocess
-    // reports "Orca is not running" against a healthy app.
+    // to (see index.ts DolphinRuntimeRpcServer wiring), or the CLI subprocess
+    // reports "Dolphin is not running" against a healthy app.
     userDataPath = options.userDataPath ?? getCanonicalUserDataPath()
   } catch (err) {
     // Why: no Electron app context (or broken install paths) — degrade to the
@@ -187,7 +188,7 @@ export async function runHostOrcaCliPassthrough(
   }
 
   if (!entryExists(cliEntryPath)) {
-    throw new HostCliUnavailableError(`Orca CLI entry not found at ${cliEntryPath}`)
+    throw new HostCliUnavailableError(`Dolphin CLI entry not found at ${cliEntryPath}`)
   }
 
   const env = buildHostCliEnv({
@@ -199,7 +200,7 @@ export async function runHostOrcaCliPassthrough(
     artifactInput: request.artifactInput
   })
 
-  return await new Promise<RemoteOrcaCliResult>((resolve, reject) => {
+  return await new Promise<RemoteDolphinCliResult>((resolve, reject) => {
     let settled = false
     const child = spawn(execPath, [cliEntryPath, ...request.argv], {
       env,
@@ -222,7 +223,7 @@ export async function runHostOrcaCliPassthrough(
       }
       resolve({
         stdout: stdout.toString(),
-        stderr: `${stderr.toString()}Orca CLI bridge timed out after ${killTimeoutMs}ms on the host.\n`,
+        stderr: `${stderr.toString()}Dolphin CLI bridge timed out after ${killTimeoutMs}ms on the host.\n`,
         exitCode: 1
       })
     }, killTimeoutMs)
@@ -238,7 +239,7 @@ export async function runHostOrcaCliPassthrough(
       // runnable at all — signal the caller to use the legacy fallback rather
       // than reporting a confusing per-command failure.
       reject(
-        new HostCliUnavailableError(`Failed to launch the Orca CLI on the host: ${err.message}`)
+        new HostCliUnavailableError(`Failed to launch the Dolphin CLI on the host: ${err.message}`)
       )
     })
 
@@ -295,6 +296,6 @@ class CappedOutputCollector {
 
   toString(): string {
     const text = Buffer.concat(this.chunks).toString('utf8')
-    return this.truncated ? `${text}\n[orca ssh cli] output truncated\n` : text
+    return this.truncated ? `${text}\n[dolphin ssh cli] output truncated\n` : text
   }
 }

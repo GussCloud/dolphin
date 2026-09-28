@@ -32,7 +32,7 @@ import {
 } from './terminal-path-exists-cache'
 import {
   getTerminalHtmlFileOpenHint,
-  getTerminalOrcaFileOpenHint,
+  getTerminalDolphinFileOpenHint,
   getTerminalWorktreePathOpenHint,
   getTerminalFileOpenHint,
   getTerminalUrlOpenHint
@@ -223,7 +223,7 @@ export function createFilePathLinkProvider(
                           : showActions
                             ? openLinkHint
                             : getTerminalFileOpenHint(false)
-                        : getTerminalOrcaFileOpenHint(showActions)
+                        : getTerminalDolphinFileOpenHint(showActions)
                     linkTooltip.textContent = `${mappedPath} (${hint})`
                     linkTooltip.style.display = ''
                   },

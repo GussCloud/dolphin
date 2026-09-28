@@ -26,7 +26,7 @@ function readConfig(): ZCodeConfigFile {
 }
 
 beforeEach(() => {
-  hoisted.home = mkdtempSync(join(tmpdir(), 'orca-zcode-'))
+  hoisted.home = mkdtempSync(join(tmpdir(), 'dolphin-zcode-'))
 })
 afterEach(() => {
   rmSync(hoisted.home, { recursive: true, force: true })
@@ -103,7 +103,7 @@ describe('ZCodeHookService', () => {
     expect(() => JSON.parse(readFileSync(getZCodeConfigPath(), 'utf-8'))).not.toThrow()
   })
 
-  it('removes only Orca-managed entries and leaves the user their hooks', () => {
+  it('removes only Dolphin-managed entries and leaves the user their hooks', () => {
     const configPath = getZCodeConfigPath()
     mkdirSync(join(hoisted.home, '.zcode', 'cli'), { recursive: true })
     writeFileSync(
@@ -129,8 +129,8 @@ describe('ZCodeHookService', () => {
   it('leaves an unrelated empty event key alone while removing its own', () => {
     const configPath = getZCodeConfigPath()
     mkdirSync(join(hoisted.home, '.zcode', 'cli'), { recursive: true })
-    // Why: `Notification` is not an event Orca manages, and an empty list is a legitimate
-    // thing for a user to have written. Removing Orca's hooks must not take it with them.
+    // Why: `Notification` is not an event Dolphin manages, and an empty list is a legitimate
+    // thing for a user to have written. Removing Dolphin's hooks must not take it with them.
     writeFileSync(
       configPath,
       JSON.stringify({ hooks: { enabled: true, events: { Notification: [] } } })
@@ -163,7 +163,7 @@ describe('ZCodeHookService', () => {
     zcodeHookService.install()
     const scriptPath = join(
       hoisted.home,
-      '.orca',
+      '.dolphin',
       'agent-hooks',
       process.platform === 'win32' ? 'zcode-hook.cmd' : 'zcode-hook.sh'
     )

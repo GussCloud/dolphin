@@ -14,36 +14,40 @@ describe('tui agent detection commands', () => {
     expect(commands).toEqual([
       {
         id: 'claude-agent-teams',
-        cmd: 'orca',
+        cmd: 'dolphin',
         requiredCommands: ['claude'],
         unsupportedRuntimes: ['win32', 'wsl']
       },
       {
         id: 'claude-agent-teams',
-        cmd: 'orca-dev',
+        cmd: 'dolphin-dev',
         requiredCommands: ['claude'],
         unsupportedRuntimes: ['win32', 'wsl']
       },
       {
         id: 'claude-agent-teams',
-        cmd: 'orca-ide',
+        cmd: 'dolphin-ide',
         requiredCommands: ['claude'],
         unsupportedRuntimes: ['win32', 'wsl']
       }
     ])
     expect(getTuiAgentDetectionProbeCommands(commands, 'linux')).toEqual([
-      'orca',
+      'dolphin',
       'claude',
-      'orca-dev',
-      'orca-ide'
+      'dolphin-dev',
+      'dolphin-ide'
     ])
-    expect(resolveDetectedTuiAgentIds(commands, new Set(['orca']), 'linux')).toEqual([])
-    expect(resolveDetectedTuiAgentIds(commands, new Set(['orca', 'claude']), 'linux')).toEqual([
+    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin']), 'linux')).toEqual([])
+    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin', 'claude']), 'linux')).toEqual([
       'claude-agent-teams'
     ])
     expect(getTuiAgentDetectionProbeCommands(commands, 'win32')).toEqual([])
-    expect(resolveDetectedTuiAgentIds(commands, new Set(['orca', 'claude']), 'win32')).toEqual([])
+    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin', 'claude']), 'win32')).toEqual(
+      []
+    )
     expect(getTuiAgentDetectionProbeCommands(commands, 'wsl')).toEqual([])
-    expect(resolveDetectedTuiAgentIds(commands, new Set(['orca-ide', 'claude']), 'wsl')).toEqual([])
+    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin-ide', 'claude']), 'wsl')).toEqual(
+      []
+    )
   })
 })

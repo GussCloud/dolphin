@@ -30,12 +30,12 @@ import {
   isWindowCloseCheckpointInProgress
 } from '../components/window-close-request-coordinator'
 import {
-  ORCA_APP_RESTART_ABORTED_EVENT,
-  ORCA_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT
+  DOLPHIN_APP_RESTART_ABORTED_EVENT,
+  DOLPHIN_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT
 } from '../../../shared/updater-renderer-events'
 import {
-  ORCA_RENDERER_SHUTDOWN_CHECKPOINT_ABORTED_EVENT,
-  ORCA_RENDERER_UNLOAD_PREVENTED_EVENT
+  DOLPHIN_RENDERER_SHUTDOWN_CHECKPOINT_ABORTED_EVENT,
+  DOLPHIN_RENDERER_UNLOAD_PREVENTED_EVENT
 } from '../../../shared/renderer-shutdown-events'
 import type { AppState } from '../store/types'
 import type { DirectSshLayoutEdit } from '../store/terminals/terminal-state'
@@ -249,28 +249,34 @@ export function useAppSessionPersistence(): void {
     const persistBeforeUnload = createShutdownCheckpointBeforeUnloadHandler(shutdownCheckpoint)
     window.addEventListener('beforeunload', persistBeforeUnload)
     window.addEventListener(
-      ORCA_RENDERER_SHUTDOWN_CHECKPOINT_ABORTED_EVENT,
+      DOLPHIN_RENDERER_SHUTDOWN_CHECKPOINT_ABORTED_EVENT,
       shutdownCheckpoint.abortAfterCheckpointFailure
     )
-    window.addEventListener(ORCA_APP_RESTART_ABORTED_EVENT, shutdownCheckpoint.abandonAttempt)
+    window.addEventListener(DOLPHIN_APP_RESTART_ABORTED_EVENT, shutdownCheckpoint.abandonAttempt)
     window.addEventListener(
-      ORCA_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT,
+      DOLPHIN_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT,
       shutdownCheckpoint.abandonAttempt
     )
-    window.addEventListener(ORCA_RENDERER_UNLOAD_PREVENTED_EVENT, shutdownCheckpoint.abandonAttempt)
+    window.addEventListener(
+      DOLPHIN_RENDERER_UNLOAD_PREVENTED_EVENT,
+      shutdownCheckpoint.abandonAttempt
+    )
     return () => {
       window.removeEventListener('beforeunload', persistBeforeUnload)
       window.removeEventListener(
-        ORCA_RENDERER_SHUTDOWN_CHECKPOINT_ABORTED_EVENT,
+        DOLPHIN_RENDERER_SHUTDOWN_CHECKPOINT_ABORTED_EVENT,
         shutdownCheckpoint.abortAfterCheckpointFailure
       )
-      window.removeEventListener(ORCA_APP_RESTART_ABORTED_EVENT, shutdownCheckpoint.abandonAttempt)
       window.removeEventListener(
-        ORCA_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT,
+        DOLPHIN_APP_RESTART_ABORTED_EVENT,
         shutdownCheckpoint.abandonAttempt
       )
       window.removeEventListener(
-        ORCA_RENDERER_UNLOAD_PREVENTED_EVENT,
+        DOLPHIN_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT,
+        shutdownCheckpoint.abandonAttempt
+      )
+      window.removeEventListener(
+        DOLPHIN_RENDERER_UNLOAD_PREVENTED_EVENT,
         shutdownCheckpoint.abandonAttempt
       )
     }

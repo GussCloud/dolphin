@@ -172,9 +172,9 @@ describe('a send the host rejected', () => {
   // never ran and fold the one row naming the cause behind a "Worked for 0s".
   it('leaves the row naming the cause on screen', () => {
     const messages = [
-      text('orca:first-start', DIAGNOSTIC, 'system'),
-      text('orca:dead', 'Reply with exactly: DEAD', 'user'),
-      text('orca:restart-exit', DIAGNOSTIC, 'system')
+      text('dolphin:first-start', DIAGNOSTIC, 'system'),
+      text('dolphin:dead', 'Reply with exactly: DEAD', 'user'),
+      text('dolphin:restart-exit', DIAGNOSTIC, 'system')
     ]
     const settledByTurn = selectStructuredAgentSettledTurns(
       [],
@@ -192,16 +192,16 @@ describe('a send the host rejected', () => {
       ]
     )
     const turnStatuses = selectNativeChatTurnStatuses(
-      { 'orca:dead': { startedAt: 900, workedSeconds: 0 } },
-      { activeTurnKey: 'orca:dead', isWorking: false, thinking: false, settledByTurn }
+      { 'dolphin:dead': { startedAt: 900, workedSeconds: 0 } },
+      { activeTurnKey: 'dolphin:dead', isWorking: false, thinking: false, settledByTurn }
     )
 
     const slots = build(messages, { turnStatuses })
 
     expect(slots.map((slot) => [slot.message.id, slot.folded, slot.status])).toEqual([
-      ['orca:first-start', false, undefined],
-      ['orca:dead', false, undefined],
-      ['orca:restart-exit', false, undefined]
+      ['dolphin:first-start', false, undefined],
+      ['dolphin:dead', false, undefined],
+      ['dolphin:restart-exit', false, undefined]
     ])
   })
 })

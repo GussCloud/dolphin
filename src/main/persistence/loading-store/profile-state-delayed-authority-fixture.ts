@@ -101,7 +101,7 @@ afterEach(async () => {
 })
 
 export async function fixture() {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-worker-coordination-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-worker-coordination-'))
   const path = join(directory, 'profile-state.db')
   const inner = new ProfileStateSqliteAuthority(path, 'coordination-test')
   inner.writeSerializedState(
@@ -109,7 +109,7 @@ export async function fixture() {
   )
   const authority = new DelayedAuthority(inner)
   const store = new Store({
-    dataFile: join(directory, 'orca-data.json'),
+    dataFile: join(directory, 'dolphin-data.json'),
     profileStateAuthority: authority
   })
   cleanups.push(async () => {

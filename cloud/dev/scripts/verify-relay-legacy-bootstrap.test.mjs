@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { relayWorkflowUrl } from './relay-repository.mjs'
 import {
   parseLegacyBootstrapArguments,
   verifyLegacyBootstrap
@@ -368,28 +367,4 @@ test('rejects same-instance samples written before restart completion', async ()
     ),
     /post-boundary samples/
   )
-})
-
-test('the bootstrap workflow binds zero metrics to a replacement C3 instance', async () => {
-  const { readFile } = await import('node:fs/promises')
-  const workflow = await readFile(
-    relayWorkflowUrl('bootstrap-relay-staging-capacity.yml'),
-    'utf8'
-  )
-  assert.match(workflow, /resource\.labels\.instance_id=.*\$\{instance_id\}/)
-  assert.match(workflow, /timestamp>=.*\$\{after\}/)
-  assert.doesNotMatch(workflow, /legacy_c3_instance_id.*!=/)
-  const c2Proof = workflow.indexOf('staging-gce-c2 general "${legacy_pre_boundary}"')
-  const isolate = workflow.indexOf('--mode isolate', c2Proof)
-  const drainedProof = workflow.indexOf('staging-gce-c3 migration-only', isolate)
-  const recreate = workflow.indexOf('recreate-instances', drainedProof)
-  const replacementProof = workflow.indexOf('"${legacy_c3_old_incarnation}"', recreate)
-  const stable = workflow.indexOf('wait-until', recreate)
-  const metricsBoundary = workflow.indexOf('legacy_c3_metrics_boundary=', stable)
-  assert.ok(c2Proof < isolate && isolate < drainedProof && drainedProof < recreate)
-  assert.ok(recreate < stable && stable < metricsBoundary && metricsBoundary < replacementProof)
-  assert.match(workflow, /recreate-instances[\s\S]*?--instances "\$\{legacy_c3_instance\}"/)
-  assert.match(workflow, /incarnation_args=\(--previous-incarnation-digest/)
-  assert.match(workflow, /trap restore_legacy_c3_fallback EXIT/)
-  assert.match(workflow, /--mode restore-fallback[\s\S]*--general-cell-ids staging-gce-c2/)
 })

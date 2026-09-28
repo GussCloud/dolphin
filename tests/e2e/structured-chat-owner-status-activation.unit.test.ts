@@ -108,7 +108,7 @@ function activate(): ReturnType<typeof runWorktreeAgentActivationGate> {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-owner-status-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-owner-status-'))
   resetHostTestOperationIds()
   closeSession = vi.fn(async () => true)
   store = await AgentSessionRecordStore.open({ directory: join(root, 'store'), hostId: 'local' })

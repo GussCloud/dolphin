@@ -1,6 +1,6 @@
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { focusActiveTerminalInput, waitForTerminalOutput } from './terminal'
 import type { BuiltInWindowsTerminalShell } from '../../../src/shared/windows-terminal-shell'
 
@@ -36,7 +36,7 @@ export async function configureGoldenStubAgent(
     async ({ agent, agentArgs, windowsShell }) => {
       const store = window.__store
       if (!store) {
-        throw new Error('Orca store is unavailable')
+        throw new Error('Dolphin store is unavailable')
       }
       await store.getState().updateSettings({
         defaultTuiAgent: agent,

@@ -4,15 +4,15 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import {
   externalNativeAddons,
-  ORCAD_CHILD_ENTRY_POINTS,
-  ORCAD_ENTRY_POINT
-} from './orcad-entry-build.mjs'
+  DOLPHIND_CHILD_ENTRY_POINTS,
+  DOLPHIND_ENTRY_POINT
+} from './dolphind-entry-build.mjs'
 import { bunProfileTestPaths } from './bun-profile-test-paths.mjs'
 
 const ROOT = resolve(import.meta.dirname, '../..')
 const BUILD_SCRIPTS = [
-  'config/scripts/build-orcad-bun.mjs',
-  'config/scripts/build-orcad.mjs',
+  'config/scripts/build-dolphind-bun.mjs',
+  'config/scripts/build-dolphind.mjs',
   'config/scripts/build-windows-process-tree-relay-addon.mjs',
   'config/scripts/run-bun-profile-tests.mjs',
   'config/vitest.config.ts',
@@ -36,7 +36,7 @@ const ALWAYS_PREFIXES = [
   // These areas also contain worker paths and fixtures opened without an import.
   'src/main/persistence/',
   'src/main/sqlite/',
-  'src/main/orcad/',
+  'src/main/dolphind/',
   'src/main/daemon/pty-subprocess/',
   'src/main/providers/',
   'config/patches/',
@@ -58,8 +58,8 @@ export function discoverBunProfileTests(root = ROOT) {
 
 export async function collectBunProfileInputs({ root = ROOT, entryPoints } = {}) {
   const entries = entryPoints ?? [
-    ORCAD_ENTRY_POINT,
-    ...Object.values(ORCAD_CHILD_ENTRY_POINTS),
+    DOLPHIND_ENTRY_POINT,
+    ...Object.values(DOLPHIND_CHILD_ENTRY_POINTS),
     ...BUILD_SCRIPTS,
     ...discoverBunProfileTests(root)
   ]

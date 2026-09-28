@@ -16,7 +16,7 @@ let bundleRoot: string
 let workerPath: string
 const fixtures: { root: string; client: ProfileStateWriteWorkerClient }[] = []
 beforeAll(async () => {
-  bundleRoot = mkdtempSync(join(tmpdir(), 'orca-export-worker-bundle-'))
+  bundleRoot = mkdtempSync(join(tmpdir(), 'dolphin-export-worker-bundle-'))
   workerPath = join(bundleRoot, 'writer.cjs')
   await build({
     entryPoints: [
@@ -38,9 +38,9 @@ afterEach(async () => {
 afterAll(() => rmSync(bundleRoot, { recursive: true, force: true }))
 
 async function fixture(fault: 'rename' | 'commit' | 'exit' | 'read-rollback' | 'none') {
-  const root = mkdtempSync(join(tmpdir(), 'orca-export-worker-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-export-worker-'))
   const databasePath = join(root, 'profile-state.db')
-  const dataFile = join(root, 'orca-data.json')
+  const dataFile = join(root, 'dolphin-data.json')
   const profileId = 'export-failure'
   const original = '{"settings":{"theme":"light"}}'
   writeFileSync(dataFile, original)

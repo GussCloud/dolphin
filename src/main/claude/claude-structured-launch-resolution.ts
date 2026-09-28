@@ -54,7 +54,7 @@ export type ClaudeStructuredSdkOptions = Pick<
  * `-p`, `--input-format`, `--output-format` and `--verbose` are implied by
  * `query()`; `--permission-prompt-tool stdio` is emitted because a `canUseTool`
  * callback is supplied. `--replay-user-messages` has no option — the SDK never
- * emits it — and Orca's send acknowledgement depends on the replay.
+ * emits it — and Dolphin's send acknowledgement depends on the replay.
  */
 export const CLAUDE_STRUCTURED_BASE_OPTIONS: ClaudeStructuredSdkOptions = {
   includePartialMessages: true,
@@ -88,7 +88,7 @@ export function claudeStructuredPermissionOptions(
 }
 
 export type ClaudeStructuredLaunch = {
-  /** Always Orca's resolved user CLI: the SDK's bundled binaries are excluded from the install. */
+  /** Always Dolphin's resolved user CLI: the SDK's bundled binaries are excluded from the install. */
   pathToClaudeCodeExecutable: string
   options: ClaudeStructuredSdkOptions
   cwd: string
@@ -112,7 +112,7 @@ export type ClaudeStructuredLaunchResolverDeps = {
     | Promise<Record<string, string> | undefined>
     | Record<string, string>
     | undefined
-  /** The env the child inherits before auth stripping; absent inherits Orca's own process env. */
+  /** The env the child inherits before auth stripping; absent inherits Dolphin's own process env. */
   resolveInheritedEnv?: () => Promise<Record<string, string>>
   /**
    * Required, and deliberately not defaulted. `stripAuthEnv` used to be a literal
@@ -213,8 +213,8 @@ export async function assertClaudeAuthSwitchSettled(
   }
 }
 
-export function claudeSessionIdForOrcaSession(sessionId: string): string {
-  const bytes = createHash('sha256').update(`orca-claude:${sessionId}`).digest().subarray(0, 16)
+export function claudeSessionIdForDolphinSession(sessionId: string): string {
+  const bytes = createHash('sha256').update(`dolphin-claude:${sessionId}`).digest().subarray(0, 16)
   bytes[6] = ((bytes[6] ?? 0) & 0x0f) | 0x40
   bytes[8] = ((bytes[8] ?? 0) & 0x3f) | 0x80
   const hex = bytes.toString('hex')
@@ -266,7 +266,7 @@ export function createClaudeStructuredLaunchResolver(
     const providerSessionId =
       head?.handle.provider === 'claude'
         ? head.handle.sessionId
-        : claudeSessionIdForOrcaSession(identity.sessionId)
+        : claudeSessionIdForDolphinSession(identity.sessionId)
     const continuesChain = head?.handle.provider === 'claude'
     // A start that failed before its first turn wrote no transcript, and `--resume` of an absent
     // one exits; launch that id fresh instead. With a transcript, `--session-id` would collide.
@@ -283,7 +283,7 @@ export function createClaudeStructuredLaunchResolver(
       (await deps.resolvePermissionMode?.()) ?? 'default'
     )
     const { command, env } = await resolveClaudeStructuredInvocation(deps, (base) =>
-      // Only a dispatched structured worker gets the orchestration identity and the Orca CLI on
+      // Only a dispatched structured worker gets the orchestration identity and the Dolphin CLI on
       // PATH; an ordinary chat session's env passes through untouched.
       structuredWorkerChildIdentityEnv(record.sessionId, {
         ...base,
@@ -297,7 +297,7 @@ export function createClaudeStructuredLaunchResolver(
         ...CLAUDE_STRUCTURED_BASE_OPTIONS,
         ...permission,
         extraArgs: { ...CLAUDE_STRUCTURED_BASE_OPTIONS.extraArgs, ...permission.extraArgs },
-        // Claude owns where a resumed conversation continues; the stored leaf is Orca's bookkeeping.
+        // Claude owns where a resumed conversation continues; the stored leaf is Dolphin's bookkeeping.
         ...(resumesTranscript ? { resume: providerSessionId } : { sessionId: providerSessionId })
       },
       cwd: await deps.resolveWorkspacePath(record.location.workspaceId),

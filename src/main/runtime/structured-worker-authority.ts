@@ -8,7 +8,7 @@
  */
 
 import type { AgentSessionRecord } from '../../shared/agent-session-record'
-import type { OrcaSessionId } from '../../shared/orca-session-address'
+import type { DolphinSessionId } from '../../shared/dolphin-session-address'
 import type { RuntimeTerminalState } from '../../shared/runtime-types'
 import { getStructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-registry'
 import type { OrchestrationDb } from './orchestration/db'
@@ -69,14 +69,14 @@ export function resolveStructuredWorkerIdentityForSession(
  * worker handle, so one whose handle is gone must not act handle-less, as a chat would.
  */
 export function isRecordedStructuredWorkerSession(
-  sessionId: OrcaSessionId,
+  sessionId: DolphinSessionId,
   db: OrchestrationDb
 ): boolean {
   return Boolean(
     db.db
       .prepare(
         `SELECT 1 FROM dispatch_contexts
-         WHERE assignee_orca_session_id = ? AND process_incarnation = ? LIMIT 1`
+         WHERE assignee_dolphin_session_id = ? AND process_incarnation = ? LIMIT 1`
       )
       .get(sessionId, structuredWorkerProcessIncarnation(sessionId))
   )

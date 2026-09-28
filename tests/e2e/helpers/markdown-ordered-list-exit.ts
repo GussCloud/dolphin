@@ -1,12 +1,12 @@
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 import {
   createMarkdownFixture as createMarkdownFixtureIn,
   type ActiveWorktreeContext
 } from './markdown-editor-fixture'
 
 const DRAFT_SERIALIZATION_TIMEOUT_MS = 10_000
-const FIXTURE_DIRECTORY = '.orca-e2e-markdown-ordered-list'
+const FIXTURE_DIRECTORY = '.dolphin-e2e-markdown-ordered-list'
 
 export {
   cleanupMarkdownFixture,

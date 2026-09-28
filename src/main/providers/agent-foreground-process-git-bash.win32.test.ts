@@ -69,9 +69,9 @@ async function proveIdlePromptCycle(
 
     // Interrupt only after the child is ready, not during a transient shell fork.
     proc.write(
-      "node -e \"console.log(['ORCA','FOREGROUND_READY'].join('_')); setInterval(() => {}, 1000)\"\r"
+      "node -e \"console.log(['DOLPHIN','FOREGROUND_READY'].join('_')); setInterval(() => {}, 1000)\"\r"
     )
-    await vi.waitFor(() => expect(output).toContain('ORCA_FOREGROUND_READY'), {
+    await vi.waitFor(() => expect(output).toContain('DOLPHIN_FOREGROUND_READY'), {
       timeout: 10_000
     })
     await vi.waitFor(async () => expect(await confirm()).toBe(false), { timeout: 10_000 })
@@ -92,29 +92,29 @@ async function proveIdlePromptCycle(
   }
 }
 
-describeOnWindows("Git Bash launcher shell proof with Orca's real launch", () => {
+describeOnWindows("Git Bash launcher shell proof with Dolphin's real launch", () => {
   let userData: string
-  const previousUserData = process.env.ORCA_USER_DATA_PATH
+  const previousUserData = process.env.DOLPHIN_USER_DATA_PATH
 
   beforeAll(() => {
     // The launch plan writes shell-ready wrappers under the user-data root.
-    userData = mkdtempSync(join(tmpdir(), 'orca-git-bash-proof-'))
-    process.env.ORCA_USER_DATA_PATH = userData
+    userData = mkdtempSync(join(tmpdir(), 'dolphin-git-bash-proof-'))
+    process.env.DOLPHIN_USER_DATA_PATH = userData
   })
 
   afterAll(() => {
     if (previousUserData === undefined) {
-      delete process.env.ORCA_USER_DATA_PATH
+      delete process.env.DOLPHIN_USER_DATA_PATH
     } else {
-      process.env.ORCA_USER_DATA_PATH = previousUserData
+      process.env.DOLPHIN_USER_DATA_PATH = previousUserData
     }
     removeTreeSync(userData)
   })
 
   it.each([
     ['login shell', {}],
-    // Why: with the Codex preflight set, the exec'd shell runs Orca's --rcfile wrapper.
-    ['rcfile wrapper', { ORCA_CODEX_LAUNCH_PREFLIGHT: 'C:\\orca-missing-preflight.exe' }]
+    // Why: with the Codex preflight set, the exec'd shell runs Dolphin's --rcfile wrapper.
+    ['rcfile wrapper', { DOLPHIN_CODEX_LAUNCH_PREFLIGHT: 'C:\\dolphin-missing-preflight.exe' }]
   ])(
     'confirms an idle %s prompt, refutes a running command, and confirms again',
     async (_label, extraEnv) => {
@@ -143,7 +143,7 @@ describeOnWindows("Git Bash launcher shell proof with Orca's real launch", () =>
     }
     expect(isGitForWindowsBashLauncherPath(discovered)).toBe(true)
     // A junction, not a copy: the operator's install is neither modified nor duplicated.
-    const stagingRoot = mkdtempSync(join(tmpdir(), 'orca-git-renamed-'))
+    const stagingRoot = mkdtempSync(join(tmpdir(), 'dolphin-git-renamed-'))
     const stagedInstall = join(stagingRoot, 'Git-2.55')
     symlinkSync(dirname(dirname(discovered)), stagedInstall, 'junction')
     const opts: PtySubprocessOptions = {

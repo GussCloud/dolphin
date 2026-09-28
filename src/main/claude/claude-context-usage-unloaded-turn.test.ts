@@ -30,12 +30,12 @@ import {
 } from './claude-context-usage-test-support'
 import { createClaudeJournalTranslator } from './claude-structured-journal-translation'
 
-const SESSION = 'orca-session'
+const SESSION = 'dolphin-session'
 const journals = createTrackedJournalOpener()
 let root: string
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-claude-context-unloaded-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-claude-context-unloaded-'))
 })
 
 afterEach(async () => {

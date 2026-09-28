@@ -75,7 +75,7 @@ function readOsReleaseValue(rawValue: string): string {
     : trimmed
 }
 
-// Why remote-only: the local side always has Orca's bundled rg, so only a remote host an upload
+// Why remote-only: the local side always has Dolphin's bundled rg, so only a remote host an upload
 // never reached can still fall back to the capped git/readdir listing these messages explain.
 export async function buildInstallRgMessage(cause: unknown): Promise<string> {
   const reason = cause instanceof Error ? cause.message : String(cause)

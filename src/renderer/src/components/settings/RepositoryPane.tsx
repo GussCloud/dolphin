@@ -1,6 +1,6 @@
 import type { GhAccountBinding } from '../../../../shared/github/account-binding'
 import { useCallback, useRef, useState } from 'react'
-import type { OrcaHooks, RepoHookSettings } from '../../../../shared/orca-yaml-hook-types'
+import type { DolphinHooks, RepoHookSettings } from '../../../../shared/dolphin-yaml-hook-types'
 import type { Project, ProjectUpdateArgs } from '../../../../shared/project-types'
 import type { Repo } from '../../../../shared/repo-types'
 import { getRepoKindLabel, isFolderRepo } from '../../../../shared/repo-kind'
@@ -48,7 +48,7 @@ const EMPTY_WSL_DISTROS: string[] = []
 
 type RepositoryPaneProps = {
   repo: Repo
-  yamlHooks: OrcaHooks | null
+  yamlHooks: DolphinHooks | null
   hasHooksFile: boolean
   hooksInspectionReady: boolean
   mayNeedUpdate: boolean
@@ -160,7 +160,7 @@ export function RepositoryPane({
   }
 
   const handleCopyTemplate = async () => {
-    // Why: the missing-`orca.yaml` state is a migration aid, so copying the shared-template
+    // Why: the missing-`dolphin.yaml` state is a migration aid, so copying the shared-template
     // snippet should be one click rather than forcing users to reconstruct the expected shape.
     await window.api.ui.writeClipboardText(`scripts:
   setup: |

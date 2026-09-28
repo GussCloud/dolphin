@@ -5,7 +5,7 @@ export function getZipExtractorCommand(
   zipPath: string,
   extractDir: string
 ): { file: string; args: string[]; label: string } {
-  if (process.platform === 'win32' && !process.env.ORCA_UNZIP_BIN) {
+  if (process.platform === 'win32' && !process.env.DOLPHIN_UNZIP_BIN) {
     return {
       file: join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe'),
       args: ['-xf', zipPath, '-C', extractDir],
@@ -13,7 +13,7 @@ export function getZipExtractorCommand(
     }
   }
   return {
-    file: process.env.ORCA_UNZIP_BIN || 'unzip',
+    file: process.env.DOLPHIN_UNZIP_BIN || 'unzip',
     args: ['-q', zipPath, '-d', extractDir],
     label: 'unzip'
   }

@@ -18,7 +18,7 @@ import { restoreProfileStateDatabaseBackup } from './profile-state-database-reco
 vi.mock('electron', () => ({
   app: {
     getPath: () => tmpdir(),
-    getName: () => 'orca-test',
+    getName: () => 'dolphin-test',
     getVersion: () => '0.0.0-test',
     isPackaged: false,
     on: () => {},
@@ -42,11 +42,11 @@ vi.mock('../../ssh/ssh-config-parser', () => ({
 }))
 
 it('can publish an updater JSON export at a reused revision after SQLite rollback', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'orca-database-rollback-export-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-database-rollback-export-'))
   const directory = join(root, 'profiles', 'rollback-export')
   mkdirSync(directory, { recursive: true })
   const databasePath = join(directory, 'profile-state.db')
-  const dataFile = join(directory, 'orca-data.json')
+  const dataFile = join(directory, 'dolphin-data.json')
   const profileId = 'rollback-export'
   const stores: Store[] = []
   try {
@@ -104,10 +104,10 @@ it('can publish an updater JSON export at a reused revision after SQLite rollbac
 })
 
 it('leaves an explicit rollback path if compatibility publication fails before acceptance', async () => {
-  const root = mkdtempSync(join(tmpdir(), 'orca-store-profile-state-compat-failure-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-store-profile-state-compat-failure-'))
   const directory = join(root, 'profiles', 'profile-authority-test')
   mkdirSync(directory, { recursive: true })
-  const dataFile = join(directory, 'orca-data.json')
+  const dataFile = join(directory, 'dolphin-data.json')
   const databasePath = join(directory, 'profile-state.db')
   writeFileSync(dataFile, JSON.stringify({ settings: { theme: 'light' } }), 'utf8')
 

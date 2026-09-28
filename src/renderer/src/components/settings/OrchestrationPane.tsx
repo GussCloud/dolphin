@@ -4,7 +4,7 @@ import { ORCHESTRATION_SKILL_NAME } from '@/lib/agent-feature-install-commands'
 import type { SkillUsageExample } from '@/lib/skill-usage-example'
 import {
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE,
-  ensureOrcaCliAvailableForAgentSkillTerminal
+  ensureDolphinCliAvailableForAgentSkillTerminal
 } from '@/lib/agent-skill-cli-prerequisite'
 import {
   ORCHESTRATION_SKILL_INSTALL_COMMAND,
@@ -144,7 +144,7 @@ export function OrchestrationPane({
           useAppStore.getState().recordFeatureInteraction('agent-orchestration-setup')
           await (activeSkillRuntime.agentRuntime?.runtime === 'wsl'
             ? ensureWslCliAvailableForAgentSkillTerminal(activeSkillRuntime.agentRuntime)
-            : ensureOrcaCliAvailableForAgentSkillTerminal())
+            : ensureDolphinCliAvailableForAgentSkillTerminal())
         }}
         actionHint={
           // Installed updates stay on the primary panel so there is only one update path.

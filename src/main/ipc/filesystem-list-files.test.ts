@@ -41,7 +41,7 @@ import type { ChildProcess } from 'node:child_process'
 import { FileListingCancelledError } from '../../shared/file-listing-cancellation'
 
 const BUNDLED_RG = '/bundled/rg'
-const BUNDLED_ERROR = "Orca's bundled search tool (ripgrep) could not start"
+const BUNDLED_ERROR = "Dolphin's bundled search tool (ripgrep) could not start"
 
 function createMockProcess(): ChildProcess {
   const p = new EventEmitter() as unknown as ChildProcess
@@ -393,7 +393,7 @@ describe('filesystem-list-files', () => {
     expect(p2.kill).toHaveBeenCalledOnce()
   })
 
-  it('filters out .next, .cache, .stably, .vscode, .idea', async () => {
+  it('filters out .next, .cache, .gusscloud, .vscode, .idea', async () => {
     const p1 = createMockProcess()
     const p2 = createMockProcess()
 
@@ -410,7 +410,7 @@ describe('filesystem-list-files', () => {
     setTimeout(() => {
       ;(p1.stdout as unknown as EventEmitter).emit('data', '.next/cache/1.js\n')
       ;(p1.stdout as unknown as EventEmitter).emit('data', '.cache/data.json\n')
-      ;(p1.stdout as unknown as EventEmitter).emit('data', '.stably/config.json\n')
+      ;(p1.stdout as unknown as EventEmitter).emit('data', '.gusscloud/config.json\n')
       ;(p1.stdout as unknown as EventEmitter).emit('data', '.vscode/settings.json\n')
       ;(p1.stdout as unknown as EventEmitter).emit('data', '.idea/workspace.xml\n')
       ;(p1.stdout as unknown as EventEmitter).emit('data', 'valid.ts\n')

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import type { ElectronApplication, Page } from '@playwright/test'
+import { test, expect } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,
   getActiveTabId,
@@ -81,44 +81,44 @@ function tabLocatorByTitle(page: Page, title: string): ReturnType<Page['locator'
 }
 
 test.describe('app menu paste ownership', () => {
-  test.beforeEach(async ({ electronApp, orcaPage }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+  test.beforeEach(async ({ electronApp, appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
     await installTerminalPtyWriteSpy(electronApp)
   })
 
   test('Edit > Paste sends clipboard text to the focused terminal exactly once', async ({
     electronApp,
-    orcaPage,
+    appPage,
     testRepoPath
   }) => {
-    const ptyId = await waitForActivePanePtyId(orcaPage)
+    const ptyId = await waitForActivePanePtyId(appPage)
     const runId = randomUUID()
-    const scriptPath = path.join(testRepoPath, `.orca-app-menu-paste-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-app-menu-paste-${runId}.mjs`)
     writeFileSync(scriptPath, pasteEchoScript(runId))
     let scriptStarted = false
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
+      await sendToTerminal(appPage, ptyId, `node ${JSON.stringify(scriptPath)}\r`)
       scriptStarted = true
-      await waitForTerminalOutput(orcaPage, `APP_MENU_PASTE_READY_${runId}`, 10_000)
+      await waitForTerminalOutput(appPage, `APP_MENU_PASTE_READY_${runId}`, 10_000)
 
-      const payload = `ORCA_E2E_APP_MENU_TERMINAL_${runId}`
+      const payload = `DOLPHIN_E2E_APP_MENU_TERMINAL_${runId}`
       const encodedPayload = Buffer.from(payload, 'utf8').toString('base64')
-      await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+      await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
       await clearTerminalPtyWriteLog(electronApp)
-      await focusActiveTerminalInput(orcaPage)
+      await focusActiveTerminalInput(appPage)
 
       await dispatchAppMenuPasteFromMain(electronApp)
-      await waitForTerminalOutput(orcaPage, encodedPayload, 10_000, 12_000)
+      await waitForTerminalOutput(appPage, encodedPayload, 10_000, 12_000)
 
       const writes = (await readTerminalPtyWrites(electronApp)).join('')
       expect(countOccurrences(writes, payload)).toBe(1)
     } finally {
       if (scriptStarted) {
-        await sendToTerminal(orcaPage, ptyId, '\x03').catch(() => undefined)
+        await sendToTerminal(appPage, ptyId, '\x03').catch(() => undefined)
       }
       rmSync(scriptPath, { force: true })
     }
@@ -126,21 +126,21 @@ test.describe('app menu paste ownership', () => {
 
   test('Edit > Paste into a rename textbox does not also write to the active terminal', async ({
     electronApp,
-    orcaPage
+    appPage
   }) => {
-    const worktreeId = (await getActiveWorktreeId(orcaPage))!
-    const originalTitle = await getActiveTabTitle(orcaPage, worktreeId)
-    await tabLocatorByTitle(orcaPage, originalTitle).dblclick()
+    const worktreeId = (await getActiveWorktreeId(appPage))!
+    const originalTitle = await getActiveTabTitle(appPage, worktreeId)
+    await tabLocatorByTitle(appPage, originalTitle).dblclick()
 
-    const renameInput = orcaPage.getByRole('textbox', {
+    const renameInput = appPage.getByRole('textbox', {
       name: `Rename tab ${originalTitle}`,
       exact: true
     })
     await expect(renameInput).toBeVisible()
     await renameInput.fill('')
 
-    const payload = `ORCA_E2E_APP_MENU_TEXTBOX_${randomUUID()}`
-    await orcaPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
+    const payload = `DOLPHIN_E2E_APP_MENU_TEXTBOX_${randomUUID()}`
+    await appPage.evaluate((text) => window.api.ui.writeClipboardText(text), payload)
     await clearTerminalPtyWriteLog(electronApp)
     await expect(renameInput).toBeFocused()
 
@@ -151,6 +151,6 @@ test.describe('app menu paste ownership', () => {
     expect((await readTerminalPtyWrites(electronApp)).join('')).not.toContain(payload)
 
     await renameInput.press('Escape')
-    await expect(tabLocatorByTitle(orcaPage, originalTitle)).toBeVisible()
+    await expect(tabLocatorByTitle(appPage, originalTitle)).toBeVisible()
   })
 })

@@ -60,7 +60,7 @@ describe('WorktreeCardDetailsHover', () => {
           number: 456,
           title: 'Fix stale GH PR',
           state: 'open',
-          url: 'https://github.com/acme/orca/pull/456',
+          url: 'https://github.com/acme/dolphin/pull/456',
           status: 'success',
           updatedAt: '2026-05-17T00:00:00.000Z',
           mergeable: 'MERGEABLE'
@@ -87,7 +87,7 @@ describe('WorktreeCardDetailsHover', () => {
           number: 5518,
           title: 'Agent monitor lists ephemeral headless subprocesses',
           state: 'open',
-          url: 'https://github.com/acme/orca/issues/5518',
+          url: 'https://github.com/acme/dolphin/issues/5518',
           labels: []
         }}
         linearIssue={null}
@@ -121,7 +121,7 @@ describe('WorktreeCardDetailsHover', () => {
           number: 456,
           title: 'Fix stale GH PR',
           state: 'open',
-          url: 'https://github.com/acme/orca/pull/456',
+          url: 'https://github.com/acme/dolphin/pull/456',
           status: 'success',
           updatedAt: '2026-05-17T00:00:00.000Z',
           mergeable: 'MERGEABLE'
@@ -129,7 +129,7 @@ describe('WorktreeCardDetailsHover', () => {
         comment={null}
         onEditIssue={vi.fn()}
         onEditComment={vi.fn()}
-        onOpenReviewInOrca={vi.fn()}
+        onOpenReviewInDolphin={vi.fn()}
         onOpenReviewInBrowser={vi.fn()}
         onUnlinkReview={vi.fn()}
       >
@@ -138,7 +138,7 @@ describe('WorktreeCardDetailsHover', () => {
     )
 
     const moreActionsIndex = markup.indexOf('aria-label="More PR actions"')
-    const openInOrcaIndex = markup.indexOf('aria-label="Open in Dolphin"')
+    const openInDolphinIndex = markup.indexOf('aria-label="Open in Dolphin"')
     const viewOnGitHubIndex = markup.indexOf('aria-label="View on GitHub"')
 
     expect(moreActionsIndex).toBeGreaterThan(-1)
@@ -149,8 +149,8 @@ describe('WorktreeCardDetailsHover', () => {
       'Dolphin will hide PR #456 details for this workspace. The PR and branch on GitHub won’t be changed.'
     )
     expect(markup).toContain('Open in Dolphin browser')
-    expect(moreActionsIndex).toBeLessThan(openInOrcaIndex)
-    expect(openInOrcaIndex).toBeLessThan(viewOnGitHubIndex)
+    expect(moreActionsIndex).toBeLessThan(openInDolphinIndex)
+    expect(openInDolphinIndex).toBeLessThan(viewOnGitHubIndex)
     expect(markup.indexOf('Open in Dolphin browser')).toBeLessThan(markup.indexOf('Copy link'))
     expect(markup.indexOf('Copy link')).toBeLessThan(markup.indexOf('Unlink PR from workspace'))
     expect(markup).not.toContain('aria-label="Unlink PR from workspace"')
@@ -163,7 +163,7 @@ describe('WorktreeCardDetailsHover', () => {
           number: 5518,
           title: 'Agent monitor lists ephemeral headless subprocesses',
           state: 'closed',
-          url: 'https://github.com/acme/orca/issues/5518',
+          url: 'https://github.com/acme/dolphin/issues/5518',
           labels: []
         }}
         linearIssue={null}
@@ -171,7 +171,7 @@ describe('WorktreeCardDetailsHover', () => {
         comment={null}
         onEditIssue={vi.fn()}
         onEditComment={vi.fn()}
-        onOpenGitHubIssueInOrca={vi.fn()}
+        onOpenGitHubIssueInDolphin={vi.fn()}
         onOpenIssueInBrowser={vi.fn()}
       >
         <span>Linked issue</span>
@@ -181,7 +181,7 @@ describe('WorktreeCardDetailsHover', () => {
     const moreActionsIndex = markup.indexOf('aria-label="More issue actions"')
     const copyLinkIndex = markup.indexOf('Copy link')
     const editIssueIndex = markup.indexOf('aria-label="Edit issue"')
-    const openInOrcaIndex = markup.indexOf('aria-label="Open in Dolphin"')
+    const openInDolphinIndex = markup.indexOf('aria-label="Open in Dolphin"')
     const viewOnGitHubIndex = markup.indexOf('aria-label="View on GitHub"')
 
     expect(moreActionsIndex).toBeGreaterThan(-1)
@@ -191,8 +191,8 @@ describe('WorktreeCardDetailsHover', () => {
     expect(editIssueIndex).toBeGreaterThan(-1)
     expect(moreActionsIndex).toBeLessThan(editIssueIndex)
     expect(copyLinkIndex).toBeLessThan(editIssueIndex)
-    expect(editIssueIndex).toBeLessThan(openInOrcaIndex)
-    expect(openInOrcaIndex).toBeLessThan(viewOnGitHubIndex)
+    expect(editIssueIndex).toBeLessThan(openInDolphinIndex)
+    expect(openInDolphinIndex).toBeLessThan(viewOnGitHubIndex)
   })
 
   it('labels GitLab unlink actions with MR terminology', () => {
@@ -205,7 +205,7 @@ describe('WorktreeCardDetailsHover', () => {
           number: 77,
           title: 'Fix GitLab MR display',
           state: 'open',
-          url: 'https://gitlab.com/acme/orca/-/merge_requests/77',
+          url: 'https://gitlab.com/acme/dolphin/-/merge_requests/77',
           status: 'success'
         }}
         comment={null}
@@ -288,7 +288,7 @@ describe('WorktreeCardDetailsHover', () => {
         comment={null}
         onEditIssue={vi.fn()}
         onEditComment={vi.fn()}
-        onOpenLinearIssueInOrca={vi.fn()}
+        onOpenLinearIssueInDolphin={vi.fn()}
       >
         <span>ENG-123</span>
       </WorktreeCardDetailsHover>

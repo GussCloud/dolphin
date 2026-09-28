@@ -261,7 +261,7 @@ function BitbucketCardNote(props: {
       <p className="text-xs text-muted-foreground">
         {translate(
           'auto.components.settings.bitbucket.integration.card.envManaged',
-          'Configured via environment variables. Unset the ORCA_BITBUCKET_* variables to manage this credential in Dolphin.'
+          'Configured via environment variables. Unset the DOLPHIN_BITBUCKET_* variables to manage this credential in Dolphin.'
         )}
       </p>
     )
@@ -286,7 +286,7 @@ function BitbucketCardNote(props: {
       <p className="text-xs text-muted-foreground">
         {translate(
           'auto.components.settings.bitbucket.integration.card.storedCredential',
-          'Saved in Dolphin on this machine. ORCA_BITBUCKET_* environment variables take precedence when set.'
+          'Saved in Dolphin on this machine. DOLPHIN_BITBUCKET_* environment variables take precedence when set.'
         )}
       </p>
     )
@@ -295,7 +295,7 @@ function BitbucketCardNote(props: {
     <p className="text-xs text-muted-foreground">
       {translate(
         'auto.components.settings.bitbucket.integration.card.notConfigured',
-        'Connect a Bitbucket Cloud account with an Atlassian API token or an access token. ORCA_BITBUCKET_* environment variables work too and take precedence.'
+        'Connect a Bitbucket Cloud account with an Atlassian API token or an access token. DOLPHIN_BITBUCKET_* environment variables work too and take precedence.'
       )}
     </p>
   )

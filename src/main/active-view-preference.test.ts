@@ -9,8 +9,8 @@ describe('ActiveViewPreference', () => {
   let dataFile: string
 
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'orca-active-view-'))
-    dataFile = join(dir, 'orca-data.json')
+    dir = mkdtempSync(join(tmpdir(), 'dolphin-active-view-'))
+    dataFile = join(dir, 'dolphin-data.json')
   })
 
   afterEach(() => {

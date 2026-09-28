@@ -152,7 +152,7 @@ export function resolveJournalItemId(
     body.kind !== 'message' ||
     body.role !== 'user' ||
     !identity ||
-    identity.provider === 'orca'
+    identity.provider === 'dolphin'
   ) {
     return itemId
   }
@@ -215,7 +215,7 @@ function upsertItem(
   const submitted =
     existing.body.kind === 'message' &&
     existing.body.role === 'user' &&
-    parseAgentJournalItemKey(itemId)?.provider === 'orca'
+    parseAgentJournalItemKey(itemId)?.provider === 'dolphin'
   state.items.set(itemId, {
     ...next,
     // Settlements, prompt answers and reopen sweeps revise rows any agent wrote

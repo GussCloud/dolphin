@@ -36,7 +36,7 @@ let dispatch: Mock<StructuredAgentSessionAdapter['dispatch']>
 let hostErrors: unknown[]
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-send-recovery-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-send-recovery-'))
   resetHostTestOperationIds()
   hostErrors = []
   let generation = 0

@@ -191,7 +191,7 @@ describe('agent-session delta coalescer', () => {
     const clock = manualClock()
     const emitted: { text: string; observedBytes: number; truncated: boolean }[] = []
     const instance = createAgentSessionDeltaCoalescer({
-      maxRetainedBytes: 40,
+      maxRetainedBytes: 43,
       schedule: clock.schedule,
       emit: (_key, _text, snapshot) => emitted.push(snapshot)
     })
@@ -204,13 +204,13 @@ describe('agent-session delta coalescer', () => {
 
     expect(emitted).toEqual([
       {
-        text: 'ééé\n[Orca: streamed output truncated]',
+        text: 'ééé\n[Dolphin: streamed output truncated]',
         observedBytes: 48,
         truncated: true
       }
     ])
     expect(instance.snapshot('item-1')).toEqual({
-      text: 'ééé\n[Orca: streamed output truncated]',
+      text: 'ééé\n[Dolphin: streamed output truncated]',
       observedBytes: 55,
       truncated: true
     })

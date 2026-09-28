@@ -11,15 +11,15 @@ const processChecks = path.join(
   'templates/nsis/include/allowOnlyOneInstallerInstance.nsh'
 )
 const hooks = fileURLToPath(
-  new URL('../../../config/nsis/orca-installer-hooks.nsh', import.meta.url)
+  new URL('../../../config/nsis/dolphin-installer-hooks.nsh', import.meta.url)
 )
 const capabilityCheck = fileURLToPath(
-  new URL('../../../config/nsis/orca-process-check.nsh', import.meta.url)
+  new URL('../../../config/nsis/dolphin-process-check.nsh', import.meta.url)
 )
 
 // CI-only patch: the installer and its embedded uninstaller share these macros.
 const traceMacro = `
-!macro ORCA_E2E_TRACE TEXT
+!macro DOLPHIN_E2E_TRACE TEXT
   Push $R8
   Push $R9
   StrCpy $R8 0
@@ -27,7 +27,7 @@ const traceMacro = `
     StrCpy $R8 1
   \${endIf}
   ClearErrors
-  ReadEnvStr $R9 ORCA_E2E_NSIS_TRACE
+  ReadEnvStr $R9 DOLPHIN_E2E_NSIS_TRACE
   \${if} $R9 != ""
     FileOpen $R9 "$R9" a
     \${ifNot} \${Errors}
@@ -61,17 +61,17 @@ checks = traceMacro + checks
 checks = insertAfter(
   checks,
   '!macro FIND_PROCESS _FILE _RETURN',
-  '  !insertmacro ORCA_E2E_TRACE "find image=${_FILE} branch=$IsPowerShellAvailable"'
+  '  !insertmacro DOLPHIN_E2E_TRACE "find image=${_FILE} branch=$IsPowerShellAvailable"'
 )
 checks = insertAfter(
   checks,
   '!macro KILL_PROCESS _FILE _FORCE',
-  '  !insertmacro ORCA_E2E_TRACE "kill image=${_FILE} force=${_FORCE} branch=$IsPowerShellAvailable"'
+  '  !insertmacro DOLPHIN_E2E_TRACE "kill image=${_FILE} force=${_FORCE} branch=$IsPowerShellAvailable"'
 )
 checks = replaceOnce(
   checks,
   '  Pop $0\n!macroend ',
-  '  Pop $0\n  !insertmacro ORCA_E2E_TRACE "kill-result=$0"\n!macroend '
+  '  Pop $0\n  !insertmacro DOLPHIN_E2E_TRACE "kill-result=$0"\n!macroend '
 )
 const findCall = '!insertmacro FIND_PROCESS "${APP_EXECUTABLE_FILENAME}" $R0'
 if (checks.split(findCall).length !== 4) {
@@ -79,29 +79,29 @@ if (checks.split(findCall).length !== 4) {
 }
 checks = checks.replaceAll(
   findCall,
-  () => `${findCall}\n    !insertmacro ORCA_E2E_TRACE "find-result=$R0"`
+  () => `${findCall}\n    !insertmacro DOLPHIN_E2E_TRACE "find-result=$R0"`
 )
 let uninstall = readFileSync(hooks, 'utf8').replaceAll('\r\n', '\n')
 uninstall = insertAfter(
   uninstall,
   '!macro customUnInstall',
-  '  !insertmacro ORCA_E2E_TRACE "custom-uninstall entered"'
+  '  !insertmacro DOLPHIN_E2E_TRACE "custom-uninstall entered"'
 )
 uninstall = insertAfter(
   uninstall,
   '  ${ifNot} ${isUpdated}',
-  '    !insertmacro ORCA_E2E_TRACE "genuine-uninstall daemon sweep"'
+  '    !insertmacro DOLPHIN_E2E_TRACE "genuine-uninstall daemon sweep"'
 )
 let capability = readFileSync(capabilityCheck, 'utf8').replaceAll('\r\n', '\n')
 capability = insertAfter(
   capability,
   '  Pop $0',
-  '  !insertmacro ORCA_E2E_TRACE "capability=$0 powershell=$PowerShellPath"'
+  '  !insertmacro DOLPHIN_E2E_TRACE "capability=$0 powershell=$PowerShellPath"'
 )
 capability = replaceOnce(
   capability,
   '  !insertmacro _CHECK_APP_RUNNING',
-  '  !insertmacro ORCA_E2E_TRACE "selected-branch=$IsPowerShellAvailable (0=path,1=image)"\n  !insertmacro _CHECK_APP_RUNNING'
+  '  !insertmacro DOLPHIN_E2E_TRACE "selected-branch=$IsPowerShellAvailable (0=path,1=image)"\n  !insertmacro _CHECK_APP_RUNNING'
 )
 
 if (!process.argv.includes('--check')) {

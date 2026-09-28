@@ -14,7 +14,7 @@ import { AddRemoteHostSshConfigPicker } from './AddRemoteHostSshConfigPicker'
 import { AddRemoteHostSshFormPanel } from './AddRemoteHostSshFormPanel'
 import { AddRemoteHostServerFormPanel } from './AddRemoteHostServerFormPanel'
 import {
-  addAllSshConfigHostsToOrca,
+  addAllSshConfigHostsToDolphin,
   loadSshConfigHostsForPicker,
   prefillFormFromSshConfigHost,
   saveNewSshHostFromForm
@@ -213,10 +213,10 @@ export function AddRemoteHostDialog({
     )
   }
 
-  const addAllConfigHostsToOrca = async () => {
+  const addAllConfigHostsToDolphin = async () => {
     setIsBulkImporting(true)
     try {
-      const result = await addAllSshConfigHostsToOrca({
+      const result = await addAllSshConfigHostsToDolphin({
         ssh: window.api.ssh,
         recordSshRepoReadoptions,
         setSshTargetsMetadata,
@@ -336,7 +336,7 @@ export function AddRemoteHostDialog({
               onQueryChange={(query) => void loadSshConfigHosts(query)}
               onRetry={() => void loadSshConfigHosts(configSearchQuery.current, { refresh: true })}
               onBack={leaveSshConfigPicker}
-              onAddAllToOrca={() => void addAllConfigHostsToOrca()}
+              onAddAllToDolphin={() => void addAllConfigHostsToDolphin()}
             />
           </div>
         ) : renderMode === 'ssh' ? (

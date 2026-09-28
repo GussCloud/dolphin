@@ -9,7 +9,7 @@ import {
   shouldApplyWebSessionTabsSnapshot,
   type WebSessionTabsSyncState
 } from '../../src/renderer/src/runtime/web-session-tabs-sync'
-import { OrcaRuntimeService } from '../../src/main/runtime/orca-runtime'
+import { DolphinRuntimeService } from '../../src/main/runtime/dolphin-runtime'
 import { withDurableRuntimeStore } from '../../src/main/runtime/runtime-durable-store-fixture'
 
 vi.mock('../../src/renderer/src/store', () => ({
@@ -130,7 +130,7 @@ describe('remote terminal tab retirement publication', () => {
   it('removes a permanent host exit from simultaneous viewers without stale resurrection', async () => {
     let session = makePersistedSession()
     const flushOrThrow = vi.fn()
-    const runtime = new OrcaRuntimeService(
+    const runtime = new DolphinRuntimeService(
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: This retirement fixture implements the Store session and durability operations used by the runtime.
       withDurableRuntimeStore({
         getWorkspaceSession: () => session,

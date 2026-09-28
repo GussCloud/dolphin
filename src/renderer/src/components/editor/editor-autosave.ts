@@ -9,13 +9,13 @@ import {
 } from '../../../../shared/constants'
 import { clampNumber } from '@/lib/terminal-theme'
 
-export const ORCA_EDITOR_QUIESCE_FILE_SAVES_EVENT = 'orca:editor-quiesce-file-saves'
-export const ORCA_EDITOR_EXTERNAL_FILE_CHANGE_EVENT = 'orca:editor-external-file-change'
-export const ORCA_EDITOR_SAVE_FILE_EVENT = 'orca:editor-save-file'
-export const ORCA_EDITOR_SAVE_AND_CLOSE_EVENT = 'orca:save-and-close'
-export const ORCA_EDITOR_FILE_SAVED_EVENT = 'orca:editor-file-saved'
-export const ORCA_EDITOR_REQUEST_CMD_SAVE_EVENT = 'orca:editor-request-cmd-save'
-export const ORCA_EDITOR_REQUEST_FILE_CLOSE_EVENT = 'orca:editor-request-file-close'
+export const DOLPHIN_EDITOR_QUIESCE_FILE_SAVES_EVENT = 'dolphin:editor-quiesce-file-saves'
+export const DOLPHIN_EDITOR_EXTERNAL_FILE_CHANGE_EVENT = 'dolphin:editor-external-file-change'
+export const DOLPHIN_EDITOR_SAVE_FILE_EVENT = 'dolphin:editor-save-file'
+export const DOLPHIN_EDITOR_SAVE_AND_CLOSE_EVENT = 'dolphin:save-and-close'
+export const DOLPHIN_EDITOR_FILE_SAVED_EVENT = 'dolphin:editor-file-saved'
+export const DOLPHIN_EDITOR_REQUEST_CMD_SAVE_EVENT = 'dolphin:editor-request-cmd-save'
+export const DOLPHIN_EDITOR_REQUEST_FILE_CLOSE_EVENT = 'dolphin:editor-request-file-close'
 
 export type EditorPathMutationTarget = {
   worktreeId: string
@@ -168,7 +168,7 @@ export async function requestEditorSaveQuiesce(target: EditorSaveQuiesceTarget):
   await new Promise<void>((resolve) => {
     let claimed = false
     window.dispatchEvent(
-      new CustomEvent<EditorSaveQuiesceDetail>(ORCA_EDITOR_QUIESCE_FILE_SAVES_EVENT, {
+      new CustomEvent<EditorSaveQuiesceDetail>(DOLPHIN_EDITOR_QUIESCE_FILE_SAVES_EVENT, {
         detail: {
           ...target,
           claim: () => {
@@ -191,7 +191,7 @@ export async function requestEditorFileSave(target: EditorSaveFileTarget): Promi
   await new Promise<void>((resolve, reject) => {
     let claimed = false
     window.dispatchEvent(
-      new CustomEvent<EditorSaveFileDetail>(ORCA_EDITOR_SAVE_FILE_EVENT, {
+      new CustomEvent<EditorSaveFileDetail>(DOLPHIN_EDITOR_SAVE_FILE_EVENT, {
         detail: {
           ...target,
           claim: () => {
@@ -214,7 +214,7 @@ export async function requestEditorFileSave(target: EditorSaveFileTarget): Promi
 
 export function requestEditorFileClose(fileId: string): void {
   window.dispatchEvent(
-    new CustomEvent<EditorRequestFileCloseDetail>(ORCA_EDITOR_REQUEST_FILE_CLOSE_EVENT, {
+    new CustomEvent<EditorRequestFileCloseDetail>(DOLPHIN_EDITOR_REQUEST_FILE_CLOSE_EVENT, {
       detail: { fileId }
     })
   )
@@ -225,7 +225,7 @@ export function requestEditorFileClose(fileId: string): void {
 // content destroys its unsaved draft (the data-loss half of issue #7265).
 export function notifyEditorExternalFileChange(target: EditorPathMutationTarget): void {
   window.dispatchEvent(
-    new CustomEvent<EditorPathMutationTarget>(ORCA_EDITOR_EXTERNAL_FILE_CHANGE_EVENT, {
+    new CustomEvent<EditorPathMutationTarget>(DOLPHIN_EDITOR_EXTERNAL_FILE_CHANGE_EVENT, {
       detail: target
     })
   )

@@ -1,7 +1,7 @@
 import type { JSX } from 'react'
 import {
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE,
-  ensureOrcaCliAvailableForAgentSkillTerminal
+  ensureDolphinCliAvailableForAgentSkillTerminal
 } from '@/lib/agent-skill-cli-prerequisite'
 import {
   ORCHESTRATION_SKILL_INSTALL_COMMAND,
@@ -74,7 +74,7 @@ export function OrchestrationSetupCard(props: {
         useAppStore.getState().recordFeatureInteraction('agent-orchestration-setup')
         await (activeSkillRuntime.agentRuntime?.runtime === 'wsl'
           ? ensureWslCliAvailableForAgentSkillTerminal(activeSkillRuntime.agentRuntime)
-          : ensureOrcaCliAvailableForAgentSkillTerminal())
+          : ensureDolphinCliAvailableForAgentSkillTerminal())
       }}
       onRecheck={skill.refresh}
       freshnessSkillName={

@@ -71,7 +71,7 @@ export function journal() {
 export function frame(message: Record<string, unknown>, observedAt: number, startsTurn = false) {
   return {
     type: 'message' as const,
-    sessionId: 'orca-session',
+    sessionId: 'dolphin-session',
     observedAt,
     ...(startsTurn ? { startsTurn: true as const } : {}),
     message: { session_id: 'claude-session', parent_tool_use_id: null, ...message }

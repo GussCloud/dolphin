@@ -10,7 +10,7 @@ import {
   ORCHESTRATION_FEDERATION_RUNTIME_CAPABILITY
 } from '../../../../../../shared/protocol-version'
 import { orchestrationMigrationData } from '../../../../../../shared/orchestration-rpc-contract'
-import type { OrcaRuntimeService } from '../../../../orca-runtime'
+import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import type { OrchestrationDb } from '../../../../orchestration/db'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import type { WorkerStartInput } from '../worker/worker-start-schema'
@@ -36,7 +36,7 @@ import { parseTaskDeps } from '../worker/task-deps-argument'
 
 export async function startFederatedWorker(args: {
   params: WorkerStartInput
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   db: OrchestrationDb
   runId: string
   task?: { id: string; spec: string; status: string }

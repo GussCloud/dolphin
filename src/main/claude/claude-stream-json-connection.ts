@@ -44,7 +44,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export type ClaudeStreamJsonLaunch = {
-  /** Orca's resolved user CLI; the SDK falls back to a bundled binary that is not installed. */
+  /** Dolphin's resolved user CLI; the SDK falls back to a bundled binary that is not installed. */
   pathToClaudeCodeExecutable: string
   options: ClaudeStructuredSdkOptions
   cwd: string
@@ -68,7 +68,7 @@ export type ClaudeStreamJsonConnectionHandlers = {
 }
 
 /**
- * Two questions with their own evidence. The root's verdict is first-hand: Orca's
+ * Two questions with their own evidence. The root's verdict is first-hand: Dolphin's
  * own child handle reported exit, or reported error then close before it ever had
  * a pid. The tree's comes from bounded descendant verification, and `unverifiable`
  * is never collapsed into either neighbour.
@@ -122,7 +122,7 @@ export async function openClaudeStreamJsonConnection(
       cwd: launch.cwd,
       // Why env is never omitted: the SDK inherits process.env when it is, which is
       // exactly the ambient ANTHROPIC_* auth leak this lane already shipped once.
-      // Orca's own CLAUDE_CONFIG_DIR is dropped for the same reason the launch drops the
+      // Dolphin's own CLAUDE_CONFIG_DIR is dropped for the same reason the launch drops the
       // shell's: the record's pin in `launch.env` must be the only home the child sees.
       env: buildClaudeChildProcessEnv(launch.env, {
         inheritedEnv: withoutInheritedClaudeConfigDir(process.env),

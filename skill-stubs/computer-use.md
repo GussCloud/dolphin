@@ -1,13 +1,13 @@
 # Computer Use
 
-This discovery stub loads the version-matched guide from the Orca executable used for this session.
+This discovery stub loads the version-matched guide from the Dolphin executable used for this session.
 
 <!-- shared: resolver -->
 
-## Load the version-matched guide before running Orca commands
+## Load the version-matched guide before running Dolphin commands
 
 ```text
-ORCA skills get computer-use
+DOLPHIN skills get computer-use
 ```
 
 <!-- shared: no-guessing -->

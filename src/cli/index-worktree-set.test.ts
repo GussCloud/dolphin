@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 const {
   callMock,
   runtimeClientConstructorMock,
-  serveOrcaAppMock,
+  serveDolphinAppMock,
   getDefaultUserDataPathMock,
   addEnvironmentFromPairingCodeMock,
   listEnvironmentsMock,
@@ -11,8 +11,8 @@ const {
 } = vi.hoisted(() => ({
   callMock: vi.fn(),
   runtimeClientConstructorMock: vi.fn(),
-  serveOrcaAppMock: vi.fn(),
-  getDefaultUserDataPathMock: vi.fn(() => '/tmp/orca-user-data'),
+  serveDolphinAppMock: vi.fn(),
+  getDefaultUserDataPathMock: vi.fn(() => '/tmp/dolphin-user-data'),
   addEnvironmentFromPairingCodeMock: vi.fn(),
   listEnvironmentsMock: vi.fn(),
   spawnMock: vi.fn()
@@ -23,7 +23,7 @@ vi.mock('./runtime-client', async () => {
   return createRuntimeClientModuleMock({
     callMock,
     runtimeClientConstructorMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock
   })
 })
@@ -44,10 +44,10 @@ import { main } from './index'
 import { buildWorktree, okFixture, queueFixtures, worktreeListFixture } from './test-fixtures'
 import { useWorktreeAwarenessEnvironment } from './index-test-harness'
 
-describe('orca cli worktree awareness', () => {
+describe('dolphin cli worktree awareness', () => {
   useWorktreeAwarenessEnvironment({
     callMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock,
     addEnvironmentFromPairingCodeMock,
     listEnvironmentsMock,
@@ -255,7 +255,7 @@ describe('orca cli worktree awareness', () => {
           ...buildWorktree('/tmp/repo/child', 'feature/child'),
           linkedLinearIssue: 'STA-335',
           linkedLinearIssueWorkspaceId: null,
-          linkedLinearIssueOrganizationUrlKey: 'stably'
+          linkedLinearIssueOrganizationUrlKey: 'gusscloud'
         }
       })
     )
@@ -268,7 +268,7 @@ describe('orca cli worktree awareness', () => {
         '--worktree',
         'id:repo::/tmp/repo/child',
         '--linear-issue',
-        'https://linear.app/stably/issue/STA-335/test-issue',
+        'https://linear.app/gusscloud/issue/STA-335/test-issue',
         '--json'
       ],
       '/tmp/repo'
@@ -280,7 +280,7 @@ describe('orca cli worktree awareness', () => {
       linkedIssue: undefined,
       linkedLinearIssue: 'STA-335',
       linkedLinearIssueWorkspaceId: null,
-      linkedLinearIssueOrganizationUrlKey: 'stably',
+      linkedLinearIssueOrganizationUrlKey: 'gusscloud',
       comment: undefined,
       workspaceStatus: undefined,
       parentWorktree: undefined,

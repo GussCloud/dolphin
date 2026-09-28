@@ -60,7 +60,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
-      ORCA_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -68,8 +68,8 @@ jobs:
       - uses: ./.github/actions/install-node-dependencies
         with:
           native-runtime: ${{ runner.os == 'Windows' && 'node' || 'none' }}
-      # build:orcad reuses the host addon validated by native-runtime preparation.
-      - run: pnpm build:orcad
+      # build:dolphind reuses the host addon validated by native-runtime preparation.
+      - run: pnpm build:dolphind
       - run: pnpm test:bun:profile --artifact
       - uses: actions/setup-node@v6
         if: runner.arch == 'X64'
@@ -78,8 +78,8 @@ jobs:
       - name: Verify Node 18 loads and hands off to bundled Bun
         if: runner.arch == 'X64'
         run: |
-          node out/orcad/orcad.js --orcad-smoke-load-check
-          node out/orcad/orcad.js --orcad-profile-state-preflight 00000000-0000-4000-8000-000000000018
+          node out/dolphind/dolphind.js --dolphind-smoke-load-check
+          node out/dolphind/dolphind.js --dolphind-profile-state-preflight 00000000-0000-4000-8000-000000000018
 
   linux_glibc_floor:
     needs: changes
@@ -93,7 +93,7 @@ jobs:
     container: ubuntu:20.04
     timeout-minutes: 20
     env:
-      ORCA_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
     steps:
       - name: Install Ubuntu 20.04 prerequisites
         run: apt-get update && apt-get install -y build-essential ca-certificates git python3 unzip
@@ -103,7 +103,7 @@ jobs:
       - name: Trust the checked-out workspace
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: ./.github/actions/install-node-dependencies
-      - run: pnpm build:orcad
+      - run: pnpm build:dolphind
       - run: pnpm test:bun:profile --artifact
 
   linux_musl:
@@ -117,7 +117,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
-      ORCA_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -125,7 +125,7 @@ jobs:
       - name: Verify native Alpine artifact and persistence
         run: |
           docker run --rm --init -i \
-            -e ORCA_BACKGROUND_LAUNCH=1 \
+            -e DOLPHIN_BACKGROUND_LAUNCH=1 \
             -v "$GITHUB_WORKSPACE:/work" -w /work \
             node:24-alpine3.23 sh -s <<'BUN_QUALIFICATION'
           set -eu
@@ -133,6 +133,6 @@ jobs:
           git config --global --add safe.directory /work
           npm install -g "$(node -p "require('./package.json').packageManager.split('+')[0]")"
           pnpm install --frozen-lockfile --ignore-scripts
-          pnpm build:orcad
+          pnpm build:dolphind
           pnpm test:bun:profile --artifact
           BUN_QUALIFICATION

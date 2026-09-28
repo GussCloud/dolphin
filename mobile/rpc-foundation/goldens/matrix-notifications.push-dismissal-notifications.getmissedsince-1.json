@@ -3,12 +3,12 @@
   "family": "notifications.push-dismissal",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "595a3eb2994d0596b9fcd0707b175b4e978625053dfbc5c541b0350c0cbfb524",
-  "scenarioSha256": "9ab21cda2ac956c70ddd23fe589778bbb46333314508cf92770d668ba59d5a90",
-  "platform": "darwin",
+  "scenarioSha256": "bda32d3d7166de9bac8379e68633ef7943eabfd62a215e3bda7d7bf6df90b406",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -264,6 +264,14 @@
       "ordinal": 4,
       "value": {
         "identifier": "tray-1"
+      }
+    },
+    "80192b4f7078": {
+      "name": "device-store.setItem",
+      "ordinal": 3,
+      "value": {
+        "key": "dolphin:pushDismissalWatermarks:v1",
+        "value": "[{\"key\":\"[\\\"Yw3NKWbEM2aRElRI\\\",\\\"epoch-1\\\",\\\"note-1\\\"]\",\"seq\":7,\"expiresAt\":1767312000000}]"
       }
     },
     "9270aeb7d9c6": {
@@ -549,14 +557,6 @@
       "value": {
         "$rpc": "undefined"
       }
-    },
-    "fa03fdca3d1d": {
-      "name": "device-store.setItem",
-      "ordinal": 3,
-      "value": {
-        "key": "orca:pushDismissalWatermarks:v1",
-        "value": "[{\"key\":\"[\\\"Yw3NKWbEM2aRElRI\\\",\\\"epoch-1\\\",\\\"note-1\\\"]\",\"seq\":7,\"expiresAt\":1767312000000}]"
-      }
     }
   },
   "recording": {
@@ -583,7 +583,7 @@
             "catchup": "eb79a9b3682a"
           },
           "state": "cf9c28129225",
-          "effects": ["fa03fdca3d1d", "6cfa895b17c4"]
+          "effects": ["80192b4f7078", "6cfa895b17c4"]
         }
       },
       {

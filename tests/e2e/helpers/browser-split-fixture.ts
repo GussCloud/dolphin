@@ -3,8 +3,8 @@
  * browsers side by side, plus helpers that press real chords inside a registered guest.
  */
 
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 export const shortcutModifier = process.platform === 'darwin' ? 'Meta' : 'Control'
 export const guestModifier: 'meta' | 'control' = process.platform === 'darwin' ? 'meta' : 'control'
@@ -129,13 +129,13 @@ export function browserOverlay(page: Page, browserTabId: string) {
 }
 
 export function browserAddressBar(page: Page, browserTabId: string) {
-  return browserOverlay(page, browserTabId).locator('[data-orca-browser-address-bar="true"]')
+  return browserOverlay(page, browserTabId).locator('[data-dolphin-browser-address-bar="true"]')
 }
 
 export async function focusBrowserAddressBar(page: Page, browserTabId: string): Promise<void> {
   const addressBar = browserAddressBar(page, browserTabId)
   const addressBarForm = browserOverlay(page, browserTabId).locator(
-    'form:has(> [data-orca-browser-address-bar="true"])'
+    'form:has(> [data-dolphin-browser-address-bar="true"])'
   )
   await expect(addressBarForm).toBeVisible()
   await addressBar.focus()

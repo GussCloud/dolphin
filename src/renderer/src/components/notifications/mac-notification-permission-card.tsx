@@ -42,7 +42,7 @@ export function useMacNotificationPermissionState(
     useState<MacNotificationPermissionState | null>(null)
 
   useEffect(() => {
-    // Why: while Orca's own notifications setting is off, the OS permission
+    // Why: while Dolphin's own notifications setting is off, the OS permission
     // is irrelevant — a green "notifications are enabled" card next to a
     // disabled toggle reads as a contradiction. Hide the card and skip the
     // readout polling entirely until the setting is back on.

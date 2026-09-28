@@ -25,9 +25,8 @@ export const PR_CHECK_JOBS = [
   'xterm_patch_sync',
   'shell_contracts',
   'test',
-  'orcad_browser',
+  'dolphind_browser',
   'mobile_web_app',
-  'cross-version-wire',
   'managed_hook_node18',
   'package',
   'package_windows'
@@ -101,11 +100,11 @@ const SHELL_PREFIXES = [
   'config/scripts/node-pty-job-ownership'
 ]
 
-const ORCAD_BROWSER_PREFIXES = [
-  'src/main/orcad/external-chromium-',
-  'src/main/orcad/orcad-browser-provider',
-  'src/main/orcad/orcad-agent-browser-binary',
-  'src/main/orcad/electron-serve-browser-process'
+const DOLPHIND_BROWSER_PREFIXES = [
+  'src/main/dolphind/external-chromium-',
+  'src/main/dolphind/dolphind-browser-provider',
+  'src/main/dolphind/dolphind-agent-browser-binary',
+  'src/main/dolphind/electron-serve-browser-process'
 ]
 
 // The page bundle the desktop packages: the builder and verifier, the manifest writer and the
@@ -128,39 +127,12 @@ const MOBILE_WEB_APP_PREFIXES = [
   'mobile/packages/',
   'mobile/package.json',
   'mobile/pnpm-lock.yaml',
-  'mobile/modules/orca-mobile-web-shell/'
+  'mobile/modules/dolphin-mobile-web-shell/'
 ]
 
 function changesMobileWebApp(changedFiles) {
   return changedFiles.some((file) => matchesPrefix(file, MOBILE_WEB_APP_PREFIXES))
 }
-
-const CROSS_VERSION_WIRE_PREFIXES = [
-  'tests/e2e/cross-version-wire/',
-  'src/shared/protocol-version',
-  'src/shared/terminal-stream-protocol',
-  'src/shared/browser-client-host-protocol',
-  'src/shared/browser-network-tunnel-protocol',
-  'src/shared/browser-client-host-placement',
-  'src/shared/agent-launch-intent',
-  'src/shared/rpc-contract/agent-launch-params',
-  'src/shared/agent-session-wire',
-  'src/shared/agent-session-mutation-envelope',
-  'src/shared/agent-session-record',
-  'src/shared/agent-session-journal-',
-  'src/main/ai-vault/structured-session-ownership.ts',
-  'src/main/native-chat/agent-session-journal/',
-  'src/main/native-chat/agent-session-wire/',
-  'src/main/runtime/agent-session-record-store',
-  'src/main/runtime/rpc/dispatcher',
-  'src/main/runtime/rpc/methods/agent-launch',
-  'src/main/runtime/rpc/methods/ai-vault.ts',
-  'src/main/runtime/rpc/methods/browser-tab-create-schema',
-  'src/main/runtime/rpc/methods/session-tabs.ts',
-  'src/main/runtime/rpc/methods/structured-agent-session',
-  'src/main/runtime/rpc/methods/terminal',
-  'src/renderer/src/runtime/remote-runtime-terminal-multiplexer'
-]
 
 const MANAGED_HOOK_PREFIXES = [
   'config/scripts/smoke-managed-hook-runtime-node18',
@@ -292,7 +264,7 @@ const WINDOWS_PACKAGE_TESTS = [
   'src/main/cli/wsl-cli-powershell-boundary.test.ts',
   'src/main/computer/desktop-script-runtime-host.win32.test.ts',
   'src/main/cursor/hook-service.test.ts',
-  'src/main/orca-profiles/profile-index-store.test.ts',
+  'src/main/dolphin-profiles/profile-index-store.test.ts',
   'src/main/startup/windows-install-dir-acl-repair.win32.test.ts',
   'src/main/runtime/repo-worktree-admin-fingerprint.test.ts',
   'src/main/runtime/worktree-scan-admin-fingerprint-gate.test.ts',
@@ -308,9 +280,7 @@ const DESKTOP_IRRELEVANT_PREFIXES = [
   'mobile/',
   'cloud/',
   '.github/workflows/cloud-',
-  '.github/workflows/mobile.yml',
-  '.github/workflows/mobile-ios-release.yml',
-  '.github/workflows/mobile-android-release.yml'
+  '.github/workflows/mobile.yml'
 ]
 
 const STATIC_ANALYSIS_AUDIT_SCRIPTS = [
@@ -421,14 +391,12 @@ function jobDetector(job) {
       return (files) => files.some((file) => matchesPrefix(file, XTERM_PREFIXES))
     case 'shell_contracts':
       return (files) => files.some((file) => matchesPrefix(file, SHELL_PREFIXES))
-    case 'orcad_browser':
-      return (files) => files.some((file) => matchesPrefix(file, ORCAD_BROWSER_PREFIXES))
+    case 'dolphind_browser':
+      return (files) => files.some((file) => matchesPrefix(file, DOLPHIND_BROWSER_PREFIXES))
     // Not redundant with the lift below the jobs map: without a case here the default detector
     // returns true, which would run this job on every desktop-relevant PR.
     case 'mobile_web_app':
       return changesMobileWebApp
-    case 'cross-version-wire':
-      return (files) => files.some((file) => matchesPrefix(file, CROSS_VERSION_WIRE_PREFIXES))
     case 'managed_hook_node18':
       return (files) => files.some((file) => matchesPrefix(file, MANAGED_HOOK_PREFIXES))
     case 'package':

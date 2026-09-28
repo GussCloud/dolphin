@@ -459,15 +459,15 @@ describe('registerWorktreeHandlers', () => {
     const runtimeHostId = toRuntimeExecutionHostId('env-1')
     const runtimeRepo = {
       id: 'repo-1',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'repo',
       badgeColor: '#000',
       addedAt: 0,
       executionHostId: runtimeHostId
     }
     const metaById: Record<string, ReturnType<typeof makeWorktreeMeta>> = {
-      'repo-1::/home/orca/deleted': makeWorktreeMeta({ hostId: runtimeHostId }),
-      'repo-1::/home/orca/other-host': makeWorktreeMeta({
+      'repo-1::/home/dolphin/deleted': makeWorktreeMeta({ hostId: runtimeHostId }),
+      'repo-1::/home/dolphin/other-host': makeWorktreeMeta({
         hostId: toSshExecutionHostId('target-a')
       })
     }
@@ -481,13 +481,13 @@ describe('registerWorktreeHandlers', () => {
     const forgotten = await handlers['worktrees:forgetRemovedForExecutionHost'](null, {
       repoId: runtimeRepo.id,
       executionHostId: runtimeHostId,
-      worktreeIds: ['repo-1::/home/orca/deleted', 'repo-1::/home/orca/other-host']
+      worktreeIds: ['repo-1::/home/dolphin/deleted', 'repo-1::/home/dolphin/other-host']
     })
 
     // The row stamped to another host needs that host's own scan, not this one's.
-    expect(forgotten).toEqual({ forgottenWorktreeIds: ['repo-1::/home/orca/deleted'] })
+    expect(forgotten).toEqual({ forgottenWorktreeIds: ['repo-1::/home/dolphin/deleted'] })
     expect(store.removeWorktreeMeta).toHaveBeenCalledExactlyOnceWith(
-      'repo-1::/home/orca/deleted',
+      'repo-1::/home/dolphin/deleted',
       runtimeHostId
     )
   })
@@ -500,7 +500,7 @@ describe('registerWorktreeHandlers', () => {
     store.getRepos.mockReturnValue([
       {
         id: 'repo-1',
-        path: '/home/orca/repo',
+        path: '/home/dolphin/repo',
         displayName: 'repo',
         badgeColor: '#000',
         addedAt: 0,
@@ -509,14 +509,14 @@ describe('registerWorktreeHandlers', () => {
       }
     ])
     store.getAllWorktreeMeta.mockReturnValue({
-      'repo-1::/home/orca/deleted': makeWorktreeMeta({ hostId: runtimeHostId })
+      'repo-1::/home/dolphin/deleted': makeWorktreeMeta({ hostId: runtimeHostId })
     })
 
     expect(
       await handlers['worktrees:forgetRemovedForExecutionHost'](null, {
         repoId: 'repo-1',
         executionHostId: runtimeHostId,
-        worktreeIds: ['repo-1::/home/orca/deleted']
+        worktreeIds: ['repo-1::/home/dolphin/deleted']
       })
     ).toEqual({ forgottenWorktreeIds: [] })
     expect(store.removeWorktreeMeta).not.toHaveBeenCalled()

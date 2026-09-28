@@ -1,4 +1,4 @@
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 
 const SHORT_NAME = 'synthetic-short-prompt-demo'
@@ -8,12 +8,12 @@ const END_MARKER = 'SYNTHETIC-END-MARKER'
 const RESIZE_PROMPT = `Synthetic resize focus validation. ${'placeholder '.repeat(24)}`
 
 test('automation detail keeps short prompts readable and reveals a very long prompt at narrow width', async ({
-  orcaPage
+  appPage
 }) => {
-  await waitForSessionReady(orcaPage)
-  await orcaPage.setViewportSize({ width: 820, height: 700 })
+  await waitForSessionReady(appPage)
+  await appPage.setViewportSize({ width: 820, height: 700 })
 
-  await orcaPage.evaluate(
+  await appPage.evaluate(
     async ({ shortName, resizeName, resizePrompt, longName, endMarker }) => {
       const store = window.__store
       if (!store) {
@@ -78,26 +78,26 @@ test('automation detail keeps short prompts readable and reveals a very long pro
     }
   )
 
-  await orcaPage.getByRole('button', { name: new RegExp(`^${SHORT_NAME}`) }).click()
-  await expect(orcaPage.getByText('Synthetic short prompt.')).toBeVisible()
-  await expect(orcaPage.getByRole('button', { name: 'Show more' })).toHaveCount(0)
+  await appPage.getByRole('button', { name: new RegExp(`^${SHORT_NAME}`) }).click()
+  await expect(appPage.getByText('Synthetic short prompt.')).toBeVisible()
+  await expect(appPage.getByRole('button', { name: 'Show more' })).toHaveCount(0)
 
-  await orcaPage.getByRole('button', { name: 'All automations' }).click()
-  await orcaPage.getByRole('button', { name: new RegExp(`^${RESIZE_NAME}`) }).click()
-  const resizePrompt = orcaPage.getByText(RESIZE_PROMPT)
-  const resizeToggle = orcaPage.getByRole('button', { name: 'Show more' })
+  await appPage.getByRole('button', { name: 'All automations' }).click()
+  await appPage.getByRole('button', { name: new RegExp(`^${RESIZE_NAME}`) }).click()
+  const resizePrompt = appPage.getByText(RESIZE_PROMPT)
+  const resizeToggle = appPage.getByRole('button', { name: 'Show more' })
   await expect(resizeToggle).toBeVisible()
   await resizeToggle.focus()
-  await orcaPage.setViewportSize({ width: 1400, height: 700 })
+  await appPage.setViewportSize({ width: 1400, height: 700 })
   await expect(resizeToggle).toHaveCount(0)
   await expect(resizePrompt).toBeFocused()
 
-  await orcaPage.setViewportSize({ width: 820, height: 700 })
-  await orcaPage.getByRole('button', { name: 'All automations' }).click()
-  await orcaPage.getByRole('button', { name: new RegExp(`^${LONG_NAME}`) }).click()
+  await appPage.setViewportSize({ width: 820, height: 700 })
+  await appPage.getByRole('button', { name: 'All automations' }).click()
+  await appPage.getByRole('button', { name: new RegExp(`^${LONG_NAME}`) }).click()
 
-  const prompt = orcaPage.getByText(new RegExp(END_MARKER))
-  const showMore = orcaPage.getByRole('button', { name: 'Show more' })
+  const prompt = appPage.getByText(new RegExp(END_MARKER))
+  const showMore = appPage.getByRole('button', { name: 'Show more' })
   await expect(showMore).toBeVisible()
   expect(await showMore.getAttribute('aria-controls')).toBe(await prompt.getAttribute('id'))
   const collapsedMetrics = await prompt.evaluate((element) => ({
@@ -109,8 +109,8 @@ test('automation detail keeps short prompts readable and reveals a very long pro
   expect(collapsedMetrics.lineClamp).toBe('4')
 
   await showMore.focus()
-  await orcaPage.keyboard.press('Enter')
-  await expect(orcaPage.getByRole('button', { name: 'Show less' })).toBeFocused()
+  await appPage.keyboard.press('Enter')
+  await expect(appPage.getByRole('button', { name: 'Show less' })).toBeFocused()
 
   const expandedMetrics = await prompt.evaluate((element) => ({
     clientHeight: element.clientHeight,

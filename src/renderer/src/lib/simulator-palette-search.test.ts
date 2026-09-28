@@ -336,7 +336,7 @@ describe('simulator-palette-search', () => {
       makeEntry({
         tab: makeTab({ label: 'Phone Preview' }),
         worktree: makeWorktree({ displayName: 'Checkout Flow' }),
-        repoName: 'orca/mobile-client',
+        repoName: 'dolphin/mobile-client',
         worktreeSortIndex: 1,
         isCurrentTab: false,
         isCurrentWorktree: false
@@ -346,7 +346,7 @@ describe('simulator-palette-search', () => {
     expect(searchSimulatorTabs(entries, 'checkout')[0]?.worktreeRanges).toEqual([
       { start: 0, end: 8 }
     ])
-    expect(searchSimulatorTabs(entries, 'client')[0]?.repoRanges).toEqual([{ start: 12, end: 18 }])
+    expect(searchSimulatorTabs(entries, 'client')[0]?.repoRanges).toEqual([{ start: 15, end: 21 }])
   })
 
   it('marks the current simulator tab from the active unified group', () => {
@@ -427,7 +427,7 @@ describe('simulator-palette-search', () => {
           displayName: undefined as unknown as string,
           branch: 'refs/heads/feature/mobile-emulator'
         }),
-        repoName: 'orca',
+        repoName: 'dolphin',
         worktreeSortIndex: 0,
         isCurrentTab: false,
         isCurrentWorktree: false
@@ -449,7 +449,7 @@ describe('simulator-palette-search', () => {
           branch: undefined as unknown as string,
           path: '/repos/design-review'
         }),
-        repoName: 'orca',
+        repoName: 'dolphin',
         worktreeSortIndex: 0,
         isCurrentTab: false,
         isCurrentWorktree: false

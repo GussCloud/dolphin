@@ -3,23 +3,23 @@
 For #19333, enable the renderer's opt-in recorder in its DevTools console before opening a new terminal:
 
 ```js
-localStorage.setItem('orca:terminal-startup-timing', '1')
+localStorage.setItem('dolphin:terminal-startup-timing', '1')
 ```
 
-Remove the key to disable it. Existing sessions are unaffected. To capture the existing host spawn phases, start the host with `ORCA_PTY_SPAWN_TIMING=1`. Do not restart a host with active work just to enable diagnostics.
+Remove the key to disable it. Existing sessions are unaffected. To capture the existing host spawn phases, start the host with `DOLPHIN_PTY_SPAWN_TIMING=1`. Do not restart a host with active work just to enable diagnostics.
 
 The renderer emits one `terminal_startup_timing` breadcrumb per transport callback generation through the existing local diagnostic channel. In `main.trace.ndjson`, find the `renderer.breadcrumb` record whose `breadcrumb.name` matches. The host's existing console timing line also becomes a `pty.spawn.timing` trace record. Correlate available PTY IDs; renderer generation distinguishes retries. Compare elapsed durations within each process, not wall clocks across hosts.
 
 Renderer offsets are monotonic milliseconds from callback-generation creation immediately before a transport operation:
 
-| Field | Observation |
-|---|---|
-| connected | Transport connection callback accepted for the current generation |
-| liveData | First nonempty live delivery, including control-only output |
-| submitted | First live batch sent to the renderer output scheduler |
-| writeStarted | Scheduler invokes the batch's pre-write callback |
-| parsed | Xterm invokes that batch's completion callback |
-| renderEvent | First public xterm render event after the batch starts writing |
+| Field        | Observation                                                       |
+| ------------ | ----------------------------------------------------------------- |
+| connected    | Transport connection callback accepted for the current generation |
+| liveData     | First nonempty live delivery, including control-only output       |
+| submitted    | First live batch sent to the renderer output scheduler            |
+| writeStarted | Scheduler invokes the batch's pre-write callback                  |
+| parsed       | Xterm invokes that batch's completion callback                    |
+| renderEvent  | First public xterm render event after the batch starts writing    |
 
 A render event can precede the parse callback. These observations do not establish the first printable glyph, physical screen presentation, React mount time or click-to-paint latency. Replay and synthetic reset writes do not claim the first live batch. A replay or resize can still contribute to a render event after a live write, so the event is temporal evidence rather than attribution to exact content. Hidden or restored panes may never submit a live batch; missing fields remain missing. A queue-cap warning can inherit the pre-write callback while discarding the original batch’s parse callback. In that case writeStarted/renderEvent describe incomplete pre-write activity, not successful delivery of the original batch; outcome cannot be observed without parsed.
 

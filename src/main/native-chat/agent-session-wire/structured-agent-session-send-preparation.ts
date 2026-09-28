@@ -214,7 +214,7 @@ async function recordFailedRestart(
       mutations: [
         {
           kind: 'item',
-          identity: { provider: 'orca', clientMessageId: settlementId },
+          identity: { provider: 'dolphin', clientMessageId: settlementId },
           body: { kind: 'status', text: boundJournalStatusText(text) }
         }
       ]

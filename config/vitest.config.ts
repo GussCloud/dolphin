@@ -6,7 +6,7 @@ const windowsTestWorkerOptions = process.platform === 'win32' ? { maxWorkers: 4 
 
 export default defineConfig({
   define: {
-    ORCA_FEATURE_WALL_ENABLED: 'true'
+    DOLPHIN_FEATURE_WALL_ENABLED: 'true'
   },
   resolve: {
     alias: {
@@ -18,7 +18,7 @@ export default defineConfig({
     environment: 'node',
     // Bun's external-module cache otherwise loses Zod named exports across mocked graphs.
     ...(process.versions.bun ? { server: { deps: { inline: ['zod'] } } } : {}),
-    ...(process.env.ORCA_BALANCE_UNIT_SHARDS === '1'
+    ...(process.env.DOLPHIN_BALANCE_UNIT_SHARDS === '1'
       ? {
           sequence: { sequencer: TimingSequencer },
           reporters: ['default', resolve('config/scripts/ci-unit-timing-reporter.mjs')]

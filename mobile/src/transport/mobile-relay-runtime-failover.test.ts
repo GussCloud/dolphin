@@ -183,8 +183,8 @@ class FakeLogicalClient extends FakeSession implements StableLogicalRpcClient {
 
 const relay = {
   v: 1 as const,
-  directorUrl: 'https://relay.onorca.dev',
-  cellUrl: 'https://relay-c1.onorca.dev',
+  directorUrl: 'https://relay.dolphin.guss.dev.br',
+  cellUrl: 'https://relay-c1.dolphin.guss.dev.br',
   assignmentEpoch: 7,
   relayHostId: 'AbCdEf0123_-xyZ9',
   e2eeFraming: 2 as const

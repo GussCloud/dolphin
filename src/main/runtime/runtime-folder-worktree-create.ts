@@ -76,9 +76,9 @@ export async function createRuntimeFolderWorktree(args: {
       : {}),
     lastActivityAt: now,
     createdAt: now,
-    orcaCreatedAt: now,
-    orcaCreationSource: 'runtime',
-    orcaCreationWorkspaceLayout: {
+    dolphinCreatedAt: now,
+    dolphinCreationSource: 'runtime',
+    dolphinCreationWorkspaceLayout: {
       path: settings.workspaceDir,
       nestWorkspaces: settings.nestWorkspaces
     },

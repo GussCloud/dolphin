@@ -6,14 +6,14 @@ const forkIdentity = require('../../src/shared/fork-identity.json')
 const electronBuilderConfig = require('../electron-builder.config.cjs')
 
 const MUTABLE_BUILD_ENV = [
-  'ORCA_MAC_HOURLY',
-  'ORCA_MAC_DAILY',
-  'ORCA_MAC_ADHOC',
-  'ORCA_MAC_RELEASE',
-  'ORCA_HOURLY_BUILD_VERSION',
-  'ORCA_DAILY_BUILD_VERSION',
-  'ORCA_ADHOC_BUILD_VERSION',
-  'ORCA_LOCAL_BUILD_VERSION'
+  'DOLPHIN_MAC_HOURLY',
+  'DOLPHIN_MAC_DAILY',
+  'DOLPHIN_MAC_ADHOC',
+  'DOLPHIN_MAC_RELEASE',
+  'DOLPHIN_HOURLY_BUILD_VERSION',
+  'DOLPHIN_DAILY_BUILD_VERSION',
+  'DOLPHIN_ADHOC_BUILD_VERSION',
+  'DOLPHIN_LOCAL_BUILD_VERSION'
 ]
 
 /** Re-requires the config under a temporary env, then restores env and module cache. */
@@ -40,15 +40,15 @@ function withEnv(env, assert) {
   }
 }
 
-const withHourlyEnv = (assert) => withEnv({ ORCA_MAC_HOURLY: '1' }, assert)
-const withDailyEnv = (assert) => withEnv({ ORCA_MAC_DAILY: '1' }, assert)
-const withAdhocEnv = (assert) => withEnv({ ORCA_MAC_ADHOC: '1' }, assert)
+const withHourlyEnv = (assert) => withEnv({ DOLPHIN_MAC_HOURLY: '1' }, assert)
+const withDailyEnv = (assert) => withEnv({ DOLPHIN_MAC_DAILY: '1' }, assert)
+const withAdhocEnv = (assert) => withEnv({ DOLPHIN_MAC_ADHOC: '1' }, assert)
 
 describe('electron-builder mac channel config', () => {
   // Why: Squirrel.Mac swaps the .app in place only when the replacement carries the
   // same bundle id and a valid Developer ID signature. A hourly built on the local
-  // (com.stablyai.orca.local, ad-hoc) identity would be un-installable over a real
-  // Orca — the whole point of the channel.
+  // (com.gusscloud.dolphin.local, ad-hoc) identity would be un-installable over a real
+  // Dolphin — the whole point of the channel.
   it('builds hourly artifacts with the release signing identity', () => {
     withHourlyEnv((config) => {
       expect(config.mac.appId).toBeUndefined()
@@ -66,7 +66,7 @@ describe('electron-builder mac channel config', () => {
     withHourlyEnv((config) => {
       expect(config.mac.notarize).toBe(true)
     })
-    withEnv({ ORCA_MAC_RELEASE: '1' }, (config) => {
+    withEnv({ DOLPHIN_MAC_RELEASE: '1' }, (config) => {
       expect(config.mac.notarize).toBe(true)
     })
     expect(electronBuilderConfig.mac.notarize).toBe(false)
@@ -87,7 +87,7 @@ describe('electron-builder mac channel config', () => {
 
   it('stamps hourly packages with the hourly version', () => {
     withEnv(
-      { ORCA_MAC_HOURLY: '1', ORCA_HOURLY_BUILD_VERSION: '1.4.160-hourly.202607281400' },
+      { DOLPHIN_MAC_HOURLY: '1', DOLPHIN_HOURLY_BUILD_VERSION: '1.4.160-hourly.202607281400' },
       (config) => {
         expect(config.extraMetadata).toEqual({
           name: forkIdentity.userDataDirName,
@@ -98,7 +98,7 @@ describe('electron-builder mac channel config', () => {
   })
 
   // Why adhoc carries the identical mac identity to hourly: it installs over a
-  // real Orca through the same updater path, so the same signing and the same TCC
+  // real Dolphin through the same updater path, so the same signing and the same TCC
   // argument apply. Only the destination repo differs.
   it('builds adhoc artifacts with the release identity and its own repo', () => {
     withAdhocEnv((config) => {
@@ -112,7 +112,7 @@ describe('electron-builder mac channel config', () => {
 
   it('stamps adhoc packages with the adhoc version', () => {
     withEnv(
-      { ORCA_MAC_ADHOC: '1', ORCA_ADHOC_BUILD_VERSION: '1.4.160-adhoc.20260728140533' },
+      { DOLPHIN_MAC_ADHOC: '1', DOLPHIN_ADHOC_BUILD_VERSION: '1.4.160-adhoc.20260728140533' },
       (config) => {
         expect(config.extraMetadata).toEqual({
           name: forkIdentity.userDataDirName,
@@ -134,7 +134,7 @@ describe('electron-builder mac channel config', () => {
 
   it('stamps daily packages with the daily version', () => {
     withEnv(
-      { ORCA_MAC_DAILY: '1', ORCA_DAILY_BUILD_VERSION: '1.4.160-daily.202607281300' },
+      { DOLPHIN_MAC_DAILY: '1', DOLPHIN_DAILY_BUILD_VERSION: '1.4.160-daily.202607281300' },
       (config) => {
         expect(config.extraMetadata).toEqual({
           name: forkIdentity.userDataDirName,
@@ -146,7 +146,7 @@ describe('electron-builder mac channel config', () => {
 
   // Why: the dev channels share every packaging decision except where they
   // publish, so a future edit that collapses them must not also collapse the
-  // repos — a branch or daily build landing in orca-hourly would be offered to
+  // repos — a branch or daily build landing in dolphin-hourly would be offered to
   // everyone riding main's hourlies.
   it('keeps the dev channels on separate repos', () => {
     withHourlyEnv((hourly) => {

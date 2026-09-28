@@ -11,12 +11,12 @@ Consumers repair executable permissions and install their own dev launcher with
 the same preparation script used by local CLI builds. Older refs without that
 script retain their original per-consumer compilation.
 
-An [eight-sample comparison](https://github.com/stablyai/orca/actions/runs/36307081200)
+An [eight-sample comparison](https://github.com/GussCloud/dolphin/actions/runs/36307081200)
 measured producer time increasing from 26.3–27.9s to 38.8–41.0s, while consumer
 CLI compilation fell from 20.9–21.2s to 0.06–0.07s of direct preparation. All 5,519
 output files matched byte-for-byte, and every sample passed the CLI help smoke.
 A four-sample
-[final implementation comparison](https://github.com/stablyai/orca/actions/runs/36307382635)
+[final implementation comparison](https://github.com/GussCloud/dolphin/actions/runs/36307382635)
 also passed parity and CLI smoke checks. Consumer compilation took 4.7 / 12.8s
 versus 0.08 / 0.06s of preparation; producer time increased by 0.2 / 7.1s in
 the paired trials. Across both runs this models roughly 1.1–4.7 aggregate runner
@@ -24,22 +24,21 @@ minutes saved across 14 consumers, before artifact transfer overhead. Runner
 variation is substantial; this is not a measured workflow wall-time reduction.
 Test coverage and deadlines stay intact.
 
-
-[PR #23368](https://github.com/stablyai/orca/pull/23368) overlaps shell installation
-with dependency setup, starts localization extraction before the orcad smoke,
+[PR #23368](https://github.com/GussCloud/dolphin/pull/23368) overlaps shell installation
+with dependency setup, starts localization extraction before the dolphind smoke,
 and prepares mobile route snapshots while WebKit and the bundle are being built.
 Its 27 checks passed without retries; seven existing conditional checks skipped.
 
 Same-runner comparisons in both orders measured:
 
-| Work | Before | After | Evidence |
-| --- | --- | --- | --- |
-| Static block | 63.5 / 74.7s | 38.9 / 55.6s | [Full comparisons](https://github.com/stablyai/orca/actions/runs/36302208990) |
-| Shell job, downloads warmed equally | 76.8 / 70.3s | 64.4 / 64.0s | [Controlled shell runs](https://github.com/stablyai/orca/actions/runs/36302612626) |
-| Mobile preparation | 19.8–21.6s | 18.0–18.5s | [Eight measurements](https://github.com/stablyai/orca/actions/runs/36302877583) |
-| Web projection and mobile build | 17.2–17.3s | 11.7–12.1s | [Eight measurements](https://github.com/stablyai/orca/actions/runs/36302974324) |
-| Mobile verifier fixture suite | 25.47 / 25.35s | 20.04 / 19.92s | [Four full-suite runs](https://github.com/stablyai/orca/actions/runs/36302692823) |
-| E2E build outputs | 28.6–30.4s | 25.8–27.8s | [Eight measurements](https://github.com/stablyai/orca/actions/runs/36304001325) |
+| Work                                | Before         | After          | Evidence                                                                               |
+| ----------------------------------- | -------------- | -------------- | -------------------------------------------------------------------------------------- |
+| Static block                        | 63.5 / 74.7s   | 38.9 / 55.6s   | [Full comparisons](https://github.com/GussCloud/dolphin/actions/runs/36302208990)      |
+| Shell job, downloads warmed equally | 76.8 / 70.3s   | 64.4 / 64.0s   | [Controlled shell runs](https://github.com/GussCloud/dolphin/actions/runs/36302612626) |
+| Mobile preparation                  | 19.8–21.6s     | 18.0–18.5s     | [Eight measurements](https://github.com/GussCloud/dolphin/actions/runs/36302877583)    |
+| Web projection and mobile build     | 17.2–17.3s     | 11.7–12.1s     | [Eight measurements](https://github.com/GussCloud/dolphin/actions/runs/36302974324)    |
+| Mobile verifier fixture suite       | 25.47 / 25.35s | 20.04 / 19.92s | [Four full-suite runs](https://github.com/GussCloud/dolphin/actions/runs/36302692823)  |
+| E2E build outputs                   | 28.6–30.4s     | 25.8–27.8s     | [Eight measurements](https://github.com/GussCloud/dolphin/actions/runs/36304001325)    |
 
 Full mobile-job timings were dominated by first-run apt installation and browser
 test variation; the controlled preparation measurement is the scheduling evidence.
@@ -55,10 +54,10 @@ This saves a few build seconds; it does not speed up the E2E tests themselves.
 The existing unit assignment was already balanced at about 919 historical
 worker-seconds per shard; fresh x86 elapsed times still ranged from 254 to 433s.
 Refreshing weights alone would encode runner variation rather than resolve it.
-An [identical-source architecture pilot](https://github.com/stablyai/orca/actions/runs/36302250920)
+An [identical-source architecture pilot](https://github.com/GussCloud/dolphin/actions/runs/36302250920)
 ran shards 1 and 8 on both four-CPU hosted runners. Complete jobs improved from
 449 to 404s and 461 to 384s on ARM, including setup; test and skip counts matched.
-A [full ARM run](https://github.com/stablyai/orca/actions/runs/36302906752) then passed
+A [full ARM run](https://github.com/GussCloud/dolphin/actions/runs/36302906752) then passed
 all eight shards in 329–373 test seconds (365–412 job seconds). Uploaded reports
 matched the same complete x86 assignment: 9,876 files, each exactly once, no
 unhandled errors. These are elapsed samples excluding queue time, not a guarantee
@@ -74,7 +73,7 @@ placement tradeoff rather than a claim of identical per-PR host coverage.
 PR validation exposed a WebRTC probe timeout inside a hidden renderer. Isolated
 and four-concurrent probes passed on both architectures; the original cause is
 unproven. The probe now uses Electron main for the same three-second observation
-interval. A [fault-injection comparison](https://github.com/stablyai/orca/actions/runs/36304349257)
+interval. A [fault-injection comparison](https://github.com/GussCloud/dolphin/actions/runs/36304349257)
 passed with renderer timers unavailable on both architectures, while the original
 probe failed the negative control. Packet assertions and deadlines are unchanged.
 A subsequent Windows run timed out in the installer's real CIM process query
@@ -89,7 +88,7 @@ not retained: that evidence did not justify changing assertion semantics.
 The combined root/mobile pnpm cache is now present on main and was restored in
 the September 27 static comparison, so another warmer for that key is unnecessary.
 
-A [fixture-warmer overlap trial](https://github.com/stablyai/orca/actions/runs/36303613587)
+A [fixture-warmer overlap trial](https://github.com/GussCloud/dolphin/actions/runs/36303613587)
 ran faster after initialization but exposed a first-use action-download race:
 both background composites downloaded `actions/cache@v5` simultaneously, and
 one briefly could not find `restore/action.yml`. The existing cache fallback
@@ -128,7 +127,7 @@ before the composites start; the workflow contract now preserves that ordering.
   unchanged.
 
 The reproducible pnpm-store comparison is
-`ORCA_BACKGROUND_LAUNCH=1 node config/scripts/ci-pnpm-store-benchmark.mjs --samples=3`.
+`DOLPHIN_BACKGROUND_LAUNCH=1 node config/scripts/ci-pnpm-store-benchmark.mjs --samples=3`.
 On macOS arm64 with BSD tar, three alternating fresh-store pairs eliminated a
 median 332,746,995-byte archive per miss. Median install time was 17.33 seconds
 before and 16.94 after; the removed archive step alone took 53.51 seconds.
@@ -137,9 +136,9 @@ Linux or Windows hosted savings. Restore cost is common to both policies.
 
 ## September 26 verification
 
-[PR #23053](https://github.com/stablyai/orca/pull/23053) was merged before its
+[PR #23053](https://github.com/GussCloud/dolphin/pull/23053) was merged before its
 latest full run finished. That run,
-[36221874572](https://github.com/stablyai/orca/actions/runs/36221874572), ultimately
+[36221874572](https://github.com/GussCloud/dolphin/actions/runs/36221874572), ultimately
 failed the mobile pending-frame precondition, just as the previous run had.
 All eight unit shards passed, but the aggregate did not. An unchanged assertion
 was not enough evidence to label the failure an unrelated flake.
@@ -169,10 +168,10 @@ sample, 20.29 seconds, is excluded. Shared-host variance remains; this is a
 focused measurement, not a claim of a 23.6% improvement to the full unit suite.
 
 The default-branch warmer
-[36221917346](https://github.com/stablyai/orca/actions/runs/36221917346) successfully
+[36221917346](https://github.com/GussCloud/dolphin/actions/runs/36221917346) successfully
 published native modules and TypeScript state. Fresh PRs
-[#23101](https://github.com/stablyai/orca/pull/23101) and
-[#23104](https://github.com/stablyai/orca/pull/23104) restored both on their first
+[#23101](https://github.com/GussCloud/dolphin/pull/23101) and
+[#23104](https://github.com/GussCloud/dolphin/pull/23104) restored both on their first
 runs. Scope inventories showed neither PR had a private copy; the TypeScript
 key existed only on main. Native restore took 0.45/0.54 seconds; TypeScript restore
 took 0.38/1.31 seconds, with compiler steps of 8/39 seconds versus the warmer's
@@ -189,7 +188,7 @@ cache duplication is a remaining opportunity; hourly warming alone cannot
 promise retention. Git's checksum-verified cold-build fallback remains required.
 
 The unit scheduling baseline now comes from all eight successful Node 24 shards in
-[run 36294142683](https://github.com/stablyai/orca/actions/runs/36294142683).
+[run 36294142683](https://github.com/GussCloud/dolphin/actions/runs/36294142683).
 All 9,847 measurements match current discovery exactly once; the previous baseline
 had 165 unmeasured files and one deleted path. Applying the same measurements to
 both assignments reduces the largest projected load from 1,043.811 to 919.695
@@ -199,7 +198,7 @@ runner variation remains visible in the source run. See
 
 ## Recording compilation reuse
 
-[Benchmark run 36295773765](https://github.com/stablyai/orca/actions/runs/36295773765)
+[Benchmark run 36295773765](https://github.com/GussCloud/dolphin/actions/runs/36295773765)
 compared the complete mobile suite on two hosted runners in opposite orders.
 Compilation reuse reduced elapsed time from 439.002 to 138.308 seconds and from
 560.926 to 200.751 seconds (64–68%). Each run preserved all 9,629 original test
@@ -211,7 +210,7 @@ Splitting family recordings across four files took 145.165 and 217.226 seconds,
 All 787 goldens were regenerated from the unchanged pinned product tree; only
 the recorder digest changed, with identical recording bodies and value pools.
 
-Desktop validation in [run 36295671576](https://github.com/stablyai/orca/actions/runs/36295671576)
+Desktop validation in [run 36295671576](https://github.com/GussCloud/dolphin/actions/runs/36295671576)
 passed all eight shards. The longest test step was 419 seconds versus 429 in the
 source run; summed test time was 3,028 versus 3,031 seconds. Runner variation
 prevents attributing that small elapsed-time difference solely to the weights.
@@ -219,7 +218,7 @@ prevents attributing that small elapsed-time difference solely to the weights.
 ## September 25 follow-up
 
 The current queue is a bigger part of PR latency than setup. Successful full PR
-[36212793136](https://github.com/stablyai/orca/actions/runs/36212793136) used
+[36212793136](https://github.com/GussCloud/dolphin/actions/runs/36212793136) used
 **74.6 aggregate runner-minutes**, including **55.5** for its eight unit shards.
 Those jobs ran for 315–448 seconds but waited 229–1,076 seconds to start. The
 three-second final `verify` job waited another 264 seconds. These are observed
@@ -230,13 +229,13 @@ coverage, and release behavior:
 
 - Make the reusable unit-test call and final aggregate respect cancellation.
   Their old `always()` conditions kept superseded work alive despite workflow
-  cancellation. In [36215475069](https://github.com/stablyai/orca/actions/runs/36215475069),
+  cancellation. In [36215475069](https://github.com/GussCloud/dolphin/actions/runs/36215475069),
   a newer push cancelled ordinary jobs while all eight unit shards remained
   queued and the replacement workflow remained pending. `!cancelled()` still
   evaluates after failed/skipped dependencies, without resisting cancellation.
   Two other superseded PR runs reproduced this: at 04:27 UTC on September 26,
-  [36216165253](https://github.com/stablyai/orca/actions/runs/36216165253) and
-  [36215543186](https://github.com/stablyai/orca/actions/runs/36215543186) still held
+  [36216165253](https://github.com/GussCloud/dolphin/actions/runs/36216165253) and
+  [36215543186](https://github.com/GussCloud/dolphin/actions/runs/36215543186) still held
   11 runners, with two more obsolete jobs queued. They had consumed another
   71.3 runner-minutes after replacement pushes. After rechecking current PR heads
   and replacement runs, both obsolete runs were force-cancelled; their replacements
@@ -253,7 +252,7 @@ coverage, and release behavior:
   runtime workflows, retaining independent manual runs.
 - Fetch only complete HEAD ancestry for cloud secret scanning. The old checkout
   fetched every branch and tag and took 55 seconds in
-  [36214130174](https://github.com/stablyai/orca/actions/runs/36214130174).
+  [36214130174](https://github.com/GussCloud/dolphin/actions/runs/36214130174).
   Real Git fixtures prove both merge parents and deleted historical contents
   still produce the identical scanned patches.
 - Remove the cloud lockfile from the eight unit shards' download-cache key; the
@@ -271,7 +270,7 @@ coverage, and release behavior:
   Seven PRs held separate copies of the same pnpm key (2.36 GB combined).
   Git preparation now has one shared action with the unchanged cache key,
   checksum, and build command. In
-  [36212101873](https://github.com/stablyai/orca/actions/runs/36212101873), a new PR
+  [36212101873](https://github.com/GussCloud/dolphin/actions/runs/36212101873), a new PR
   spent 40 seconds compiling the same Git 2.25.5 binary; main-branch warming
   makes that cache available to new PRs too.
 
@@ -287,7 +286,7 @@ The first hosted mobile lane used 400 seconds for its 448 tests; the grant
 census alone took 259 seconds. Locally, the same one-worker invocation of the
 three changed files fell from 243.07 seconds (101 passing tests) to 49.49 seconds
 (103 passing tests). Hosted run
-[36217238462](https://github.com/stablyai/orca/actions/runs/36217238462) retained
+[36217238462](https://github.com/GussCloud/dolphin/actions/runs/36217238462) retained
 the same 43 files and passed all 450 tests: the original 448 plus two regressions.
 Its test step fell from 400.26 to 205.17 seconds, and the complete job fell from
 498 to 298 seconds (40% less runner time). Builder, haptics, and grant-census file
@@ -304,7 +303,7 @@ default worker count, isolation, timeouts, retries, and coverage. The first tria
 also found an outdated hook-order snapshot after main added three layout-persistence
 hooks. That snapshot was refreshed only after comparing the exact old and merged
 hook sequences. Final verification is linked from
-[PR #23053](https://github.com/stablyai/orca/pull/23053). Failed timing reports
+[PR #23053](https://github.com/GussCloud/dolphin/pull/23053). Failed timing reports
 never replace the checked-in baseline.
 
 No account settings, paid services, or runner entitlements changed. Standard
@@ -314,7 +313,7 @@ increases. The organization's actual entitlement was not exposed by the API.
 See [runner specifications](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 and [concurrency limits](https://docs.github.com/en/actions/reference/limits).
 
-Hosted observations from [PR run 36215718607](https://github.com/stablyai/orca/actions/runs/36215718607):
+Hosted observations from [PR run 36215718607](https://github.com/GussCloud/dolphin/actions/runs/36215718607):
 
 | Check                                     | Earlier sample |        Trial | Result               |
 | ----------------------------------------- | -------------: | -----------: | -------------------- |
@@ -324,7 +323,7 @@ Hosted observations from [PR run 36215718607](https://github.com/stablyai/orca/a
 | Cloud secret scan (whole job)             |            69s |          55s | Passed               |
 | Cloud checkout/history fetch              |            55s |          40s | Identical scan scope |
 
-The [warmup trial](https://github.com/stablyai/orca/actions/runs/36215718295)
+The [warmup trial](https://github.com/GussCloud/dolphin/actions/runs/36215718295)
 passed in 54 seconds. Its x64 compiler restored the ARM job's incremental state
 and rechecked the same source in eight seconds. Unit shard 3 subsequently
 restored its pnpm/native cache keys successfully. Actual sharing across different
@@ -347,9 +346,9 @@ Audit date: September 5, 2026. No paid capacity or provider configuration change
 ## Measurements and changes
 
 Three recent successful PR runs used 54.6–64.9 aggregate runner minutes:
-[33998366568](https://github.com/stablyai/orca/actions/runs/33998366568),
-[33998220287](https://github.com/stablyai/orca/actions/runs/33998220287), and
-[33998181502](https://github.com/stablyai/orca/actions/runs/33998181502).
+[33998366568](https://github.com/GussCloud/dolphin/actions/runs/33998366568),
+[33998220287](https://github.com/GussCloud/dolphin/actions/runs/33998220287), and
+[33998181502](https://github.com/GussCloud/dolphin/actions/runs/33998181502).
 These are sums of active job durations, excluding skipped jobs; they are not
 billing minutes or queue time. This small sample is not a historical average.
 
@@ -363,7 +362,7 @@ billing minutes or queue time. This small sample is not a historical average.
   default Debian/RPM compression is xz. PR artifacts are inspected on the same
   runner, so their download size offers no benefit. Keep all AppImage, Debian,
   RPM, payload, launcher, and shutdown checks. Release compression is unchanged.
-  Hosted validation in [33999422341](https://github.com/stablyai/orca/actions/runs/33999422341)
+  Hosted validation in [33999422341](https://github.com/GussCloud/dolphin/actions/runs/33999422341)
   reduced the package-build step to 2m13s and the full Linux job to 6m17s, with
   all existing checks passing. This is a small observational sample.
 - Cancel superseded Mobile Checks and Skill update round-trip PR runs. The
@@ -383,7 +382,7 @@ critical-path time and aggregate job time on the same commit.
 
 - Move the hourly main/release freshness lookup to a five-minute Ubuntu
   preflight without a checkout. In unchanged run
-  [33986205749](https://github.com/stablyai/orca/actions/runs/33986205749),
+  [33986205749](https://github.com/GussCloud/dolphin/actions/runs/33986205749),
   Blacksmith macOS was occupied for 40 seconds, including a 30-second checkout,
   before skipping. The new job-level gate avoids that Mac allocation. Actual
   builds gain an Ubuntu scheduling hop; pin the Mac checkout and downstream
@@ -427,7 +426,7 @@ See [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product
 ### A bounded Ubicloud candidate
 
 The Linux leg of `performance-contracts.yml` took 48 seconds in
-[33994756657](https://github.com/stablyai/orca/actions/runs/33994756657).
+[33994756657](https://github.com/GussCloud/dolphin/actions/runs/33994756657).
 Its daily schedule and 20-minute timeout make it a small candidate: 31 ordinary
 scheduled attempts permit at most 620 job-runtime minutes, before runner
 startup/cleanup billing. Actual timings on Ubicloud's 2-vCPU hardware still need
@@ -479,12 +478,12 @@ PR leaves production signing behavior unchanged.
 - Cloud Verify ran 100 times in a sampled 39-hour window (84 PR and 16 push
   runs). Move its four Ubuntu 22.04 jobs from Blacksmith to standard hosted
   Ubuntu 22.04, preserving Postgres, secret scanning, build, tests, and Terraform
-  validation. Baseline [34001538145](https://github.com/stablyai/orca/actions/runs/34001538145)
+  validation. Baseline [34001538145](https://github.com/GussCloud/dolphin/actions/runs/34001538145)
   used 64/72/26/19 seconds for security/test/build/Terraform respectively.
   This conserves the shared provider allowance; hosted latency must be checked.
 - Keep full tag history for the 13-job skill round-trip matrix, but fetch blobs
   lazily. Only two historical SKILL.md files are materialized. Baseline
-  [33999994876](https://github.com/stablyai/orca/actions/runs/33999994876)
+  [33999994876](https://github.com/GussCloud/dolphin/actions/runs/33999994876)
   spent 42–84 seconds per checkout, about 14 aggregate runner minutes. A hosted
   trial must verify historical blob fetches on all three operating systems.
 - Use the existing Electron/native dependency cache for native IME CI. Keep
@@ -506,29 +505,29 @@ coverage or schedule frequency is outside this efficiency pass. Cache complexity
 for a seven-second docs install is unlikely to pay back. Release build reuse
 across modes risks differing telemetry identities and native platform artifacts.
 
-Terminal Perf's baseline [33955846492](https://github.com/stablyai/orca/actions/runs/33955846492)
+Terminal Perf's baseline [33955846492](https://github.com/GussCloud/dolphin/actions/runs/33955846492)
 failed waiting 30 seconds for workspaceSessionReady in its shared-page fixture,
 before measuring terminal performance. Compare hosted trials against that known
 failure rather than attributing it to dependency cache changes.
 
 Hosted trials for the second audit:
 
-- [Cloud Verify 34002295216](https://github.com/stablyai/orca/actions/runs/34002295216)
+- [Cloud Verify 34002295216](https://github.com/GussCloud/dolphin/actions/runs/34002295216)
   passed all four jobs on standard hosted Ubuntu: security 57s, test 102s, build
   35s, Terraform 19s. The test lane is 30s slower than the Blacksmith sample;
   retain this modest latency tradeoff to conserve shared allowance.
-- [Skill matrix 34002295221](https://github.com/stablyai/orca/actions/runs/34002295221)
+- [Skill matrix 34002295221](https://github.com/GussCloud/dolphin/actions/runs/34002295221)
   passed all 13 legs, including historical blob materialization. Checkout took
   18–20s on Linux, 39–45s on macOS, and 49–58s on Windows, versus the earlier
   42–84s range across platforms. These are observational samples.
-- [Native IME 34002299594](https://github.com/stablyai/orca/actions/runs/34002299594)
+- [Native IME 34002299594](https://github.com/GussCloud/dolphin/actions/runs/34002299594)
   passed both deterministic and real IBus checks. Shared dependency setup took
   29s, versus 35s for the old install/toolchain steps in the sampled baseline.
 - Native-IME-only source/spec changes no longer allocate the reusable E2E
   build, cache, and consumer jobs just to filter out the native spec. The
   separate native workflow still runs; SSH-only and mixed spec lists still
   allocate the reusable workflow. Routing contracts exercise these cases.
-- [Hourly 34001816449](https://github.com/stablyai/orca/actions/runs/34001816449)
+- [Hourly 34001816449](https://github.com/GussCloud/dolphin/actions/runs/34001816449)
   exercised the new five-second preflight and successfully published macOS.
   The Windows follow-up failed in its unchanged input-vetting fetch because
   remote refs differ only by case on its case-insensitive filesystem. The

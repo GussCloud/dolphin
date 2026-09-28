@@ -52,8 +52,8 @@ function renderHeader({
         title: isGitLab ? 'Fix GitLab MR creation' : 'fix: pr-bug-scan validated finding',
         state: 'open',
         url: isGitLab
-          ? 'https://gitlab.com/acme/orca/-/merge_requests/31'
-          : 'https://github.com/stablyai/orca/pull/2964',
+          ? 'https://gitlab.com/acme/dolphin/-/merge_requests/31'
+          : 'https://github.com/gusscloud/dolphin/pull/2964',
         status: 'pending',
         updatedAt: '2026-05-31T22:58:01Z',
         mergeable: 'UNKNOWN'
@@ -97,15 +97,15 @@ describe('ChecksPanelReviewHeader', () => {
     expect(markup).not.toContain('⇧⌘+click')
   })
 
-  // Why: with inverting on and Link Routing off the modifier reaches Orca here, so the
-  // hint must name Orca rather than the destination a plain click already uses.
+  // Why: with inverting on and Link Routing off the modifier reaches Dolphin here, so the
+  // hint must name Dolphin rather than the destination a plain click already uses.
   it('names Dolphin when the modifier inverts toward the built-in browser', () => {
-    expect(renderHeader({ modifierHintDestination: 'orca' })).toContain(
+    expect(renderHeader({ modifierHintDestination: 'dolphin' })).toContain(
       '⇧⌘+click to open in Dolphin'
     )
 
     vi.stubGlobal('navigator', { userAgent: 'Windows' })
-    expect(renderHeader({ modifierHintDestination: 'orca' })).toContain(
+    expect(renderHeader({ modifierHintDestination: 'dolphin' })).toContain(
       'Shift+Ctrl+click to open in Dolphin'
     )
   })

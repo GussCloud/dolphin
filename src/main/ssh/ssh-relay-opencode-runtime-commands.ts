@@ -3,7 +3,7 @@ import { posix, win32 } from 'node:path'
 import { powerShellCommand, powerShellLiteral, powerShellNativeArg } from './ssh-remote-powershell'
 import { isWindowsRemoteHost, type RemoteHostPlatform } from './ssh-remote-platform'
 
-export const OPENCODE_RUNTIME_RESULT = 'ORCA_VAULT_SQLITE:'
+export const OPENCODE_RUNTIME_RESULT = 'DOLPHIN_VAULT_SQLITE:'
 
 function nodeCommand(
   host: RemoteHostPlatform,

@@ -57,7 +57,7 @@ vi.mock('./telemetry/cohort-classifier', () => ({
 
 describe('Store', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-test-'))
     trackMock.mockReset()
     getCohortAtEmitMock.mockReset()
     getCohortAtEmitMock.mockReturnValue({ nth_repo_added: 2 })
@@ -95,9 +95,9 @@ describe('Store', () => {
       provider: 'jira' as const,
       type: 'issue' as const,
       number: 0,
-      title: 'ORCA-123 Link Jira',
-      url: 'https://company.atlassian.net/browse/ORCA-123',
-      jiraIdentifier: 'ORCA-123'
+      title: 'DOLPHIN-123 Link Jira',
+      url: 'https://company.atlassian.net/browse/DOLPHIN-123',
+      jiraIdentifier: 'DOLPHIN-123'
     }
     const linkedTaskSourceContext = {
       kind: 'task-source' as const,
@@ -108,7 +108,7 @@ describe('Store', () => {
         provider: 'jira' as const,
         siteId: 'site-1',
         siteUrl: 'https://company.atlassian.net',
-        projectKey: 'ORCA'
+        projectKey: 'DOLPHIN'
       },
       accountLabel: 'ada@example.com'
     }
@@ -149,9 +149,9 @@ describe('Store', () => {
             provider: 'jira',
             type: 'issue',
             number: 0,
-            title: 'ORCA-123 Link Jira',
-            url: 'https://company.atlassian.net/browse/ORCA-123',
-            jiraIdentifier: 'ORCA-123'
+            title: 'DOLPHIN-123 Link Jira',
+            url: 'https://company.atlassian.net/browse/DOLPHIN-123',
+            jiraIdentifier: 'DOLPHIN-123'
           },
           linkedTaskSourceContext: {
             kind: 'task-source',
@@ -163,7 +163,7 @@ describe('Store', () => {
               provider: 'jira',
               siteId: 'site-1',
               siteUrl: 'https://company.atlassian.net',
-              projectKey: 'ORCA'
+              projectKey: 'DOLPHIN'
             }
           }
         }
@@ -172,7 +172,9 @@ describe('Store', () => {
 
     const store = await createStore()
 
-    expect(store.getWorktreeMeta('wt-malformed')?.linkedWorkItem?.jiraIdentifier).toBe('ORCA-123')
+    expect(store.getWorktreeMeta('wt-malformed')?.linkedWorkItem?.jiraIdentifier).toBe(
+      'DOLPHIN-123'
+    )
     expect(store.getWorktreeMeta('wt-malformed')?.linkedTaskSourceContext).toBeNull()
   })
 
@@ -192,9 +194,9 @@ describe('Store', () => {
             provider: 'jira',
             type: 'issue',
             number: 0,
-            title: 'ORCA-123 Link Jira',
-            url: 'https://company.atlassian.net/browse/ORCA-123',
-            jiraIdentifier: 'ORCA-123'
+            title: 'DOLPHIN-123 Link Jira',
+            url: 'https://company.atlassian.net/browse/DOLPHIN-123',
+            jiraIdentifier: 'DOLPHIN-123'
           },
           linkedTaskSourceContext: {
             kind: 'task-source',
@@ -206,7 +208,7 @@ describe('Store', () => {
               provider: 'jira',
               siteId: 'site-1',
               siteUrl: 'https://company.atlassian.net',
-              projectKey: 'ORCA'
+              projectKey: 'DOLPHIN'
             }
           }
         }
@@ -215,7 +217,7 @@ describe('Store', () => {
 
     const store = await createStore()
 
-    expect(store.getWorktreeMeta('wt-sibling')?.linkedWorkItem?.jiraIdentifier).toBe('ORCA-123')
+    expect(store.getWorktreeMeta('wt-sibling')?.linkedWorkItem?.jiraIdentifier).toBe('DOLPHIN-123')
     expect(store.getWorktreeMeta('wt-sibling')?.linkedTaskSourceContext).toBeNull()
     // Corrupt entries must not survive: gcStaleWorktreeMeta keeps timestamp-less keys, and downstream
     // consumers deref worktreeMeta values unguarded (also keeps a rollback to an older build loadable).
@@ -323,9 +325,9 @@ describe('Store', () => {
       provider: 'jira' as const,
       type: 'issue' as const,
       number: 0,
-      title: 'ORCA-123 Link Jira',
-      url: 'https://company.atlassian.net/browse/ORCA-123',
-      jiraIdentifier: 'ORCA-123'
+      title: 'DOLPHIN-123 Link Jira',
+      url: 'https://company.atlassian.net/browse/DOLPHIN-123',
+      jiraIdentifier: 'DOLPHIN-123'
     }
     const linkedTaskSourceContext = {
       kind: 'task-source' as const,
@@ -337,7 +339,7 @@ describe('Store', () => {
         provider: 'jira' as const,
         siteId: 'site-1',
         siteUrl: 'https://company.atlassian.net',
-        projectKey: 'ORCA'
+        projectKey: 'DOLPHIN'
       },
       accountLabel: 'ada@example.com'
     }

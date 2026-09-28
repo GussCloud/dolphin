@@ -197,8 +197,8 @@ describe('explicit user-item attribution', () => {
 
   it('resolves a submission through its provider alias instead of journal order', () => {
     const items = [
-      user('orca:first'),
-      user('orca:second'),
+      user('dolphin:first'),
+      user('dolphin:second'),
       lifecycle('t1', {
         state: 'completed',
         userItemId: 'codex:thread:t1:0',
@@ -210,7 +210,7 @@ describe('explicit user-item attribution', () => {
       submission('first', 'codex:thread:t1:0'),
       submission('second', null)
     ])
-    expect([...timings.keys()]).toEqual(['orca:first'])
+    expect([...timings.keys()]).toEqual(['dolphin:first'])
   })
 
   it('uses the key directly when the user item is journaled under it', () => {
@@ -228,7 +228,7 @@ describe('explicit user-item attribution', () => {
 
   it('attributes nothing when a keyed row names a user item nobody journaled', () => {
     const items = [
-      user('orca:first'),
+      user('dolphin:first'),
       lifecycle('auto', {
         state: 'completed',
         userItemId: 'codex:thread:auto:0',
@@ -241,10 +241,10 @@ describe('explicit user-item attribution', () => {
 
   it('falls back to journal order only for rows without a key (older hosts)', () => {
     const items = [
-      user('orca:first'),
+      user('dolphin:first'),
       lifecycle('t1', { state: 'completed', startedAt: 1_000, completedAt: 2_000 })
     ]
-    expect([...selectStructuredAgentTurnTimings(items).keys()]).toEqual(['orca:first'])
+    expect([...selectStructuredAgentTurnTimings(items).keys()]).toEqual(['dolphin:first'])
   })
 })
 
@@ -287,8 +287,8 @@ describe('coalesced sends and canonical rows', () => {
 
   it('gives a turn shared by two accepted sends to the prompt that opened it', () => {
     const items = [
-      user('orca:first'),
-      user('orca:second'),
+      user('dolphin:first'),
+      user('dolphin:second'),
       lifecycle('t1', {
         state: 'completed',
         userItemId: 'codex:thread:t1:0',
@@ -300,7 +300,7 @@ describe('coalesced sends and canonical rows', () => {
       accepted('first', 'codex:thread:t1:0'),
       accepted('second', 'codex:thread:t1:0')
     ])
-    expect([...timings.keys()]).toEqual(['orca:first'])
+    expect([...timings.keys()]).toEqual(['dolphin:first'])
   })
 
   it('reads a canonical turn item exactly like the legacy carrier', () => {
@@ -314,15 +314,17 @@ describe('coalesced sends and canonical rows', () => {
         kind: 'turn',
         turnId: 't9',
         state: 'completed',
-        userItemId: 'orca:u9',
+        userItemId: 'dolphin:u9',
         startedAt: 1_000,
         completedAt: 9_000,
         durationMs: 7_172
       }
     }
-    const timings = selectStructuredAgentTurnTimings([user('orca:u9'), canonical])
-    expect(timings.get('orca:u9')).toMatchObject({ state: 'completed', durationMs: 7_172 })
-    expect(selectStructuredAgentSettledTurns([user('orca:u9'), canonical]).get('orca:u9')).toEqual({
+    const timings = selectStructuredAgentTurnTimings([user('dolphin:u9'), canonical])
+    expect(timings.get('dolphin:u9')).toMatchObject({ state: 'completed', durationMs: 7_172 })
+    expect(
+      selectStructuredAgentSettledTurns([user('dolphin:u9'), canonical]).get('dolphin:u9')
+    ).toEqual({
       startedAt: 1_000,
       workedSeconds: 7
     })
@@ -354,30 +356,30 @@ describe('a rejected send', () => {
   // The local clock saw the send go pending and stop, which would read as "Worked for 0s"; the
   // host says the provider never got the message, so no turn ran and nothing may fold under it.
   it('opened no turn, whatever the local clock observed', () => {
-    const settled = selectStructuredAgentSettledTurns([user('orca:dead')], [rejected('dead')])
-    expect(settled.get('orca:dead')).toBeNull()
+    const settled = selectStructuredAgentSettledTurns([user('dolphin:dead')], [rejected('dead')])
+    expect(settled.get('dolphin:dead')).toBeNull()
 
     const statuses = selectNativeChatTurnStatuses(
-      { 'orca:dead': { startedAt: 900, workedSeconds: 0 } },
-      { activeTurnKey: 'orca:dead', isWorking: false, thinking: false, settledByTurn: settled }
+      { 'dolphin:dead': { startedAt: 900, workedSeconds: 0 } },
+      { activeTurnKey: 'dolphin:dead', isWorking: false, thinking: false, settledByTurn: settled }
     )
-    expect(statuses.completedByTurn['orca:dead']).toBeUndefined()
+    expect(statuses.completedByTurn['dolphin:dead']).toBeUndefined()
     expect(statuses.active).toBeNull()
   })
 
   it('keeps the duration of a turn the journal does record for it', () => {
     const settled = selectStructuredAgentSettledTurns(
       [
-        user('orca:ran'),
+        user('dolphin:ran'),
         lifecycle('t1', {
           state: 'interrupted',
-          userItemId: 'orca:ran',
+          userItemId: 'dolphin:ran',
           startedAt: 10_000,
           completedAt: 14_000
         })
       ],
       [rejected('ran')]
     )
-    expect(settled.get('orca:ran')).toEqual({ startedAt: 10_000, workedSeconds: 4 })
+    expect(settled.get('dolphin:ran')).toEqual({ startedAt: 10_000, workedSeconds: 4 })
   })
 })

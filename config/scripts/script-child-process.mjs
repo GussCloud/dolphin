@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 const root = resolve(import.meta.dirname, '../..')
-const temporary = mkdtempSync(join(tmpdir(), 'orca-script-child-process-'))
+const temporary = mkdtempSync(join(tmpdir(), 'dolphin-script-child-process-'))
 const output = join(temporary, 'child-process.mjs')
 let implementation
 

@@ -14,7 +14,7 @@ afterEach(async () => {
 })
 
 it('constructs one record map when all ten thousand stored shares remain valid', async () => {
-  const userDataPath = await mkdtemp(join(tmpdir(), 'orca-artifact-record-allocation-'))
+  const userDataPath = await mkdtemp(join(tmpdir(), 'dolphin-artifact-record-allocation-'))
   createdPaths.push(userDataPath)
   const profileId = 'allocation-profile'
   const profileDirectory = join(userDataPath, 'profiles', profileId)
@@ -24,7 +24,7 @@ it('constructs one record map when all ten thousand stored shares remain valid',
     cloudUserId: 'user-a',
     cloudProfileId: 'cloud-a',
     cloudOrganizationId: 'org-a',
-    apiOrigin: 'https://share.onorca.dev'
+    apiOrigin: 'https://share.dolphin.guss.dev.br'
   }
   const sourceKey = 'allocation-source-0'
   const shares = Object.fromEntries(
@@ -34,7 +34,7 @@ it('constructs one record map when all ten thousand stored shares remain valid',
         ...scope,
         slug: `artifact-${index}`,
         editToken: 'synthetic-edit-token',
-        shareUrl: `https://share.onorca.dev/a/artifact-${index}`,
+        shareUrl: `https://share.dolphin.guss.dev.br/a/artifact-${index}`,
         expiresAt: '2099-01-01T00:00:00.000Z',
         savedAt: index
       }

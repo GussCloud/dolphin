@@ -41,7 +41,7 @@ vi.mock('@/lib/doc-preview-grants', () => ({
     grantRuntime.mints += 1
     // Why a fresh id per mint: a re-mint after a reconnect must bind the guest to the new grant.
     const grantId = grantRuntime.mints === 1 ? GRANT_ID : REMINTED_GRANT_ID
-    return Promise.resolve({ grantId, url: `orca-preview://${grantId}/${ENTRY_RELATIVE_PATH}` })
+    return Promise.resolve({ grantId, url: `dolphin-preview://${grantId}/${ENTRY_RELATIVE_PATH}` })
   },
   releaseDocPreviewGrant: (previewId: string) => {
     grantRuntime.released.push(previewId)
@@ -421,7 +421,7 @@ describe('HtmlDocPreview failure messages', () => {
   })
 
   // Why: the document chooses when and how often to ask, so a per-attempt row would let a page
-  // scroll Orca's own chrome off the screen.
+  // scroll Dolphin's own chrome off the screen.
   it('shows one refusal notice however often the document asks', async () => {
     await renderPreview(container, root)
 

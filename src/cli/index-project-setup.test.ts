@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 const {
   callMock,
   runtimeClientConstructorMock,
-  serveOrcaAppMock,
+  serveDolphinAppMock,
   getDefaultUserDataPathMock,
   addEnvironmentFromPairingCodeMock,
   listEnvironmentsMock,
@@ -12,8 +12,8 @@ const {
 } = vi.hoisted(() => ({
   callMock: vi.fn(),
   runtimeClientConstructorMock: vi.fn(),
-  serveOrcaAppMock: vi.fn(),
-  getDefaultUserDataPathMock: vi.fn(() => '/tmp/orca-user-data'),
+  serveDolphinAppMock: vi.fn(),
+  getDefaultUserDataPathMock: vi.fn(() => '/tmp/dolphin-user-data'),
   addEnvironmentFromPairingCodeMock: vi.fn(),
   listEnvironmentsMock: vi.fn(),
   spawnMock: vi.fn()
@@ -24,7 +24,7 @@ vi.mock('./runtime-client', async () => {
   return createRuntimeClientModuleMock({
     callMock,
     runtimeClientConstructorMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock
   })
 })
@@ -45,10 +45,10 @@ import { main } from './index'
 import { okFixture, queueFixtures } from './test-fixtures'
 import { pairRuntimeEnvironment, useWorktreeAwarenessEnvironment } from './index-test-harness'
 
-describe('orca cli worktree awareness', () => {
+describe('dolphin cli worktree awareness', () => {
   useWorktreeAwarenessEnvironment({
     callMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock,
     addEnvironmentFromPairingCodeMock,
     listEnvironmentsMock,
@@ -81,13 +81,13 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_project_list', {
         projects: [
           {
-            id: 'github:stablyai/orca',
-            displayName: 'Orca',
+            id: 'github:gusscloud/dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             providerIdentity: {
               provider: 'github',
-              owner: 'stablyai',
-              repo: 'orca'
+              owner: 'gusscloud',
+              repo: 'dolphin'
             },
             sourceRepoIds: ['repo-1'],
             createdAt: 1,
@@ -111,11 +111,11 @@ describe('orca cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-local',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-local',
-            path: '/tmp/orca',
-            displayName: 'Orca',
+            path: '/tmp/dolphin',
+            displayName: 'Dolphin',
             setupState: 'ready',
             setupMethod: 'legacy-repo',
             createdAt: 1,
@@ -123,11 +123,11 @@ describe('orca cli worktree awareness', () => {
           },
           {
             id: 'setup-remote',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: 'repo-remote',
-            path: '/srv/orca',
-            displayName: 'Orca',
+            path: '/srv/dolphin',
+            displayName: 'Dolphin',
             setupState: 'ready',
             setupMethod: 'legacy-repo',
             createdAt: 1,
@@ -139,7 +139,7 @@ describe('orca cli worktree awareness', () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await main(
-      ['project', 'setups', '--project', 'github:stablyai/orca', '--host', 'runtime:gpu'],
+      ['project', 'setups', '--project', 'github:gusscloud/dolphin', '--host', 'runtime:gpu'],
       '/tmp/repo'
     )
 
@@ -157,11 +157,11 @@ describe('orca cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-on-box',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-on-box',
-            path: '/srv/orca',
-            displayName: 'Orca',
+            path: '/srv/dolphin',
+            displayName: 'Dolphin',
             setupState: 'ready',
             setupMethod: 'legacy-repo',
             createdAt: 1,
@@ -169,11 +169,11 @@ describe('orca cli worktree awareness', () => {
           },
           {
             id: 'setup-by-client',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:prod',
             repoId: 'repo-by-client',
-            path: '/srv/orca-2',
-            displayName: 'Orca',
+            path: '/srv/dolphin-2',
+            displayName: 'Dolphin',
             setupState: 'ready',
             setupMethod: 'legacy-repo',
             createdAt: 1,
@@ -192,7 +192,7 @@ describe('orca cli worktree awareness', () => {
   })
 
   // Why: --host runtime:<id> routes to a paired server, so an older one is reachable without the
-  // caller meaning to. A raw method_not_found reads as an Orca bug rather than a version gap.
+  // caller meaning to. A raw method_not_found reads as a Dolphin bug rather than a version gap.
   it('names the version gap when the server predates project host setup', async () => {
     pairRuntimeEnvironment(listEnvironmentsMock, 'old-server')
     const { RuntimeClientError } = await import('./runtime/types.js')
@@ -223,7 +223,7 @@ describe('orca cli worktree awareness', () => {
     // The command itself never reached a runtime; only the suggestion lookup did.
     expect(callMock).not.toHaveBeenCalledWith('projectHostSetup.list')
     const printed = [...logSpy.mock.calls, ...errSpy.mock.calls].flat().join('\n')
-    expect(printed).toContain('no paired Orca server is named or has id not-a-real-env')
+    expect(printed).toContain('no paired Dolphin server is named or has id not-a-real-env')
     // An agent reads the code and the retry candidates, not the prose.
     expect(JSON.parse(printed).error.code).toBe('invalid_argument')
     expect(JSON.parse(printed).error.data.knownEnvironments).toEqual([])
@@ -276,11 +276,11 @@ describe('orca cli worktree awareness', () => {
         setups: [
           {
             id: 'setup-openclaw',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'ssh:ssh-123-abc',
             repoId: 'repo-openclaw',
-            path: '/home/me/orca',
-            displayName: 'Orca',
+            path: '/home/me/dolphin',
+            displayName: 'Dolphin',
             setupState: 'ready',
             setupMethod: 'legacy-repo',
             createdAt: 1,
@@ -306,8 +306,8 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_project_setup_create', {
         result: {
           project: {
-            id: 'github:stablyai/orca',
-            displayName: 'Orca',
+            id: 'github:gusscloud/dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
             createdAt: 1,
@@ -315,7 +315,7 @@ describe('orca cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-awin',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: '',
             path: '',
@@ -335,7 +335,7 @@ describe('orca cli worktree awareness', () => {
         'project',
         'setup-create',
         '--project',
-        'github:stablyai/orca',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:awin',
         '--json'
@@ -392,8 +392,8 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_project_setup', {
         result: {
           project: {
-            id: 'github:stablyai/orca',
-            displayName: 'Orca',
+            id: 'github:gusscloud/dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: ['repo-1'],
             createdAt: 1,
@@ -401,11 +401,11 @@ describe('orca cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-local',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-1',
-            path: path.resolve('/tmp/orca'),
-            displayName: 'Orca',
+            path: path.resolve('/tmp/dolphin'),
+            displayName: 'Dolphin',
             setupState: 'ready',
             setupMethod: 'imported-existing-folder',
             createdAt: 1,
@@ -413,8 +413,8 @@ describe('orca cli worktree awareness', () => {
           },
           repo: {
             id: 'repo-1',
-            path: path.resolve('/tmp/orca'),
-            displayName: 'Orca',
+            path: path.resolve('/tmp/dolphin'),
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             addedAt: 1
           }
@@ -428,7 +428,7 @@ describe('orca cli worktree awareness', () => {
         'project',
         'setup-existing-folder',
         '--project',
-        'github:stablyai/orca',
+        'github:gusscloud/dolphin',
         '--host',
         'local',
         '--path',
@@ -436,18 +436,18 @@ describe('orca cli worktree awareness', () => {
         '--kind',
         'git',
         '--display-name',
-        'Orca',
+        'Dolphin',
         '--json'
       ],
-      '/tmp/orca/worktrees/feature'
+      '/tmp/dolphin/worktrees/feature'
     )
 
     expect(callMock).toHaveBeenCalledWith('projectHostSetup.setupExistingFolder', {
-      projectId: 'github:stablyai/orca',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'local',
-      path: path.resolve('/tmp/orca/worktrees'),
+      path: path.resolve('/tmp/dolphin/worktrees'),
       kind: 'git',
-      displayName: 'Orca'
+      displayName: 'Dolphin'
     })
   })
 
@@ -462,11 +462,11 @@ describe('orca cli worktree awareness', () => {
         'project',
         'setup-existing-folder',
         '--project',
-        'github:stablyai/orca',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:gpu',
         '--path',
-        './orca',
+        './dolphin',
         '--json'
       ],
       '/tmp/repo'
@@ -482,7 +482,7 @@ describe('orca cli worktree awareness', () => {
   })
 
   it('rejects SSH project setup relative paths, which name the client filesystem', async () => {
-    // A local CLI reaching an `ssh:*` host is still off-client: resolving `./orca` against the
+    // A local CLI reaching an `ssh:*` host is still off-client: resolving `./dolphin` against the
     // CLI cwd would register a path that exists on the wrong machine.
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -493,11 +493,11 @@ describe('orca cli worktree awareness', () => {
         'project',
         'setup-existing-folder',
         '--project',
-        'github:stablyai/orca',
+        'github:gusscloud/dolphin',
         '--host',
         'ssh:openclaw',
         '--path',
-        './orca',
+        './dolphin',
         '--json'
       ],
       '/tmp/repo'
@@ -537,7 +537,7 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_repo_add', {
         repo: {
           id: 'repo-1',
-          path: '/srv/orca/web',
+          path: '/srv/dolphin/web',
           displayName: 'web'
         }
       })
@@ -545,12 +545,12 @@ describe('orca cli worktree awareness', () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await main(
-      ['repo', 'add', '--path', '/srv/orca/web', '--pairing-code', 'remote-runtime', '--json'],
+      ['repo', 'add', '--path', '/srv/dolphin/web', '--pairing-code', 'remote-runtime', '--json'],
       '/tmp/repo'
     )
 
     expect(callMock).toHaveBeenCalledWith('repo.add', {
-      path: '/srv/orca/web'
+      path: '/srv/dolphin/web'
     })
   })
 
@@ -590,8 +590,8 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_project_setup_clone', {
         result: {
           project: {
-            id: 'github:stablyai/orca',
-            displayName: 'Orca',
+            id: 'github:gusscloud/dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
             createdAt: 1,
@@ -599,11 +599,11 @@ describe('orca cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-awin',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'local',
             repoId: 'repo-awin',
-            path: 'C:\\orca-probe\\orca',
-            displayName: 'Orca',
+            path: 'C:\\dolphin-probe\\dolphin',
+            displayName: 'Dolphin',
             setupState: 'ready',
             setupMethod: 'cloned',
             createdAt: 1,
@@ -611,8 +611,8 @@ describe('orca cli worktree awareness', () => {
           },
           repo: {
             id: 'repo-awin',
-            path: 'C:\\orca-probe\\orca',
-            displayName: 'Orca',
+            path: 'C:\\dolphin-probe\\dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             addedAt: 1
           }
@@ -626,22 +626,22 @@ describe('orca cli worktree awareness', () => {
         'project',
         'setup-clone',
         '--project',
-        'github:stablyai/orca',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:awin',
         '--url',
-        'https://github.com/stablyai/orca.git',
+        'https://github.com/gusscloud/dolphin.git',
         '--destination',
-        'C:\\orca-probe',
+        'C:\\dolphin-probe',
         '--json'
       ],
-      '/Users/nwparker/orca/workspaces/orca/IME-koko'
+      '/Users/nwparker/dolphin/workspaces/dolphin/IME-koko'
     )
 
     expect(runtimeClientConstructorMock).toHaveBeenCalledWith(null, 'awin')
     expect(callMock).toHaveBeenCalledWith(
       'projectHostSetup.clone',
-      expect.objectContaining({ destination: 'C:\\orca-probe' })
+      expect.objectContaining({ destination: 'C:\\dolphin-probe' })
     )
   })
 
@@ -651,8 +651,8 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_project_setup_update', {
         result: {
           project: {
-            id: 'github:stablyai/orca',
-            displayName: 'Orca',
+            id: 'github:gusscloud/dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
             createdAt: 1,
@@ -660,10 +660,10 @@ describe('orca cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: '',
-            path: '/srv/orca',
+            path: '/srv/dolphin',
             displayName: 'GPU VM',
             setupState: 'ready',
             setupMethod: 'imported-existing-folder',
@@ -684,7 +684,7 @@ describe('orca cli worktree awareness', () => {
         '--display-name',
         'GPU VM',
         '--path',
-        '/srv/orca',
+        '/srv/dolphin',
         '--worktree-base-path',
         '../worktrees',
         '--state',
@@ -700,7 +700,7 @@ describe('orca cli worktree awareness', () => {
       setupId: 'setup-gpu',
       updates: {
         displayName: 'GPU VM',
-        path: path.resolve('/tmp/repo', '/srv/orca'),
+        path: path.resolve('/tmp/repo', '/srv/dolphin'),
         worktreeBasePath: '../worktrees',
         gitUsername: undefined,
         kind: undefined,
@@ -717,8 +717,8 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_project_setup_create', {
         result: {
           project: {
-            id: 'github:stablyai/orca',
-            displayName: 'Orca',
+            id: 'github:gusscloud/dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
             createdAt: 1,
@@ -726,7 +726,7 @@ describe('orca cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: '',
             path: '',
@@ -746,7 +746,7 @@ describe('orca cli worktree awareness', () => {
         'project',
         'setup-create',
         '--project',
-        'github:stablyai/orca',
+        'github:gusscloud/dolphin',
         '--host',
         'runtime:gpu',
         '--setup-id',
@@ -763,7 +763,7 @@ describe('orca cli worktree awareness', () => {
     )
 
     expect(callMock).toHaveBeenCalledWith('projectHostSetup.create', {
-      projectId: 'github:stablyai/orca',
+      projectId: 'github:gusscloud/dolphin',
       hostId: 'runtime:gpu',
       setupId: 'setup-gpu',
       path: undefined,
@@ -782,8 +782,8 @@ describe('orca cli worktree awareness', () => {
       okFixture('req_project_setup_delete', {
         result: {
           project: {
-            id: 'github:stablyai/orca',
-            displayName: 'Orca',
+            id: 'github:gusscloud/dolphin',
+            displayName: 'Dolphin',
             badgeColor: '#7c3aed',
             sourceRepoIds: [],
             createdAt: 1,
@@ -791,10 +791,10 @@ describe('orca cli worktree awareness', () => {
           },
           setup: {
             id: 'setup-gpu',
-            projectId: 'github:stablyai/orca',
+            projectId: 'github:gusscloud/dolphin',
             hostId: 'runtime:gpu',
             repoId: '',
-            path: '/srv/orca',
+            path: '/srv/dolphin',
             displayName: 'GPU VM',
             setupState: 'ready',
             setupMethod: 'imported-existing-folder',

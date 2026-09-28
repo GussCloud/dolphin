@@ -86,7 +86,7 @@ export function HostRemoveDialog({
   }
 
   // Why: runtime-environment removal needs active-environment switching and
-  // error context owned by the Orca servers settings pane, so we deep-link
+  // error context owned by the Dolphin servers settings pane, so we deep-link
   // there with the host pre-selected instead of duplicating that flow.
   const handleRemoveRuntime = (environmentId: string): void => {
     const state = useAppStore.getState()
@@ -179,7 +179,7 @@ export function HostRemoveDialog({
           )
 
   // The destructive opt-in wording depends on whether we delete remote files or
-  // only forget Orca's records (offline/ghost host).
+  // only forget Dolphin's records (offline/ghost host).
   const deleteOptionLabel = isConnected
     ? translate(
         'auto.components.sidebar.HostRemoveDialog.alsoDeleteRemote',

@@ -1,12 +1,12 @@
 import type { Store } from '../../../persistence'
-import type { OrcaRuntimeService } from '../../../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../../../runtime/dolphin-runtime'
 import type { IPtyProvider, PtySpawnResult } from '../../../providers/types'
 import { isCurrentPtyExit, ptyIncarnationById, ptyOwnership } from '../provider/ownership-state'
 import { clearProviderPtyState } from '../provider/state-cleanup'
 import { retirePersistedStablePaneOwner } from './stable-owner'
 
 export function admitPtyReattachOwnership(
-  runtime: OrcaRuntimeService | undefined,
+  runtime: DolphinRuntimeService | undefined,
   result: PtySpawnResult,
   connectionId: string | null | undefined
 ): void {
@@ -51,9 +51,9 @@ export async function discardUnpersistedPtySpawn(
 
 // Successful registration must not yield before the remaining spawn publication.
 export function registerPersistedPtySpawn(
-  runtime: OrcaRuntimeService | undefined,
+  runtime: DolphinRuntimeService | undefined,
   store: Store | undefined,
-  ...args: Parameters<OrcaRuntimeService['registerPty']>
+  ...args: Parameters<DolphinRuntimeService['registerPty']>
 ): Promise<never> | undefined {
   try {
     runtime?.registerPty(...args)

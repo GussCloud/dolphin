@@ -1,6 +1,6 @@
-import { expect, test } from './helpers/orca-app'
-import type { Page } from '@stablyai/playwright-test'
-import { attachRepoAndOpenTerminal, createRestartSession } from './helpers/orca-restart'
+import { expect, test } from './helpers/dolphin-app'
+import type { Page } from '@playwright/test'
+import { attachRepoAndOpenTerminal, createRestartSession } from './helpers/dolphin-restart'
 import { waitForSessionReady } from './helpers/store'
 
 async function visibleWorktreeIds(page: Page): Promise<string[]> {

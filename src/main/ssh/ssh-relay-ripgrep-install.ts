@@ -1,7 +1,7 @@
 /**
- * Installs Orca's own ripgrep on an SSH host so remote Quick Open and text search do not depend
+ * Installs Dolphin's own ripgrep on an SSH host so remote Quick Open and text search do not depend
  * on the user having `rg`. The binary lives at
- * `~/.orca-remote/ripgrep/<content-hash>-<platform>/rg[.exe]`, a sibling of the
+ * `~/.dolphin-remote/ripgrep/<content-hash>-<platform>/rg[.exe]`, a sibling of the
  * `relay-<version>` dirs keyed on the binary's bytes alone, so a relay upgrade never re-uploads it.
  *
  * Uploads land in a private `.upload-<token>` stage and are renamed into place only after a size
@@ -43,7 +43,7 @@ import {
   type BundledRipgrepPlatform
 } from '../../shared/bundled-ripgrep'
 
-/** Sibling of `relay-<version>`, `orcad-<version>` and `native/`. */
+/** Sibling of `relay-<version>`, `dolphind-<version>` and `native/`. */
 export const REMOTE_RIPGREP_CACHE_DIR_NAME = 'ripgrep'
 
 // Ripgrep-only updates share relay bytes, so one relay directory can reference multiple builds.
@@ -87,9 +87,9 @@ export async function recordRemoteRipgrepReference(
 const UPLOAD_STAGE_PREFIX = '.upload-'
 // Why an hour: long enough that no live upload of ~5 MB is still writing, short enough to drain crashes.
 const STALE_UPLOAD_STAGE_MINUTES = 60
-const PRESENT = 'ORCA-RG-PRESENT'
-const STAGED = 'ORCA-RG-STAGED'
-const INSTALLED = 'ORCA-RG-INSTALLED'
+const PRESENT = 'DOLPHIN-RG-PRESENT'
+const STAGED = 'DOLPHIN-RG-STAGED'
+const INSTALLED = 'DOLPHIN-RG-INSTALLED'
 
 export type RemoteRipgrepLayout = {
   platform: BundledRipgrepPlatform
@@ -121,7 +121,7 @@ export function remoteRipgrepLayout(
   }
 }
 
-/** Ensure the host has Orca's ripgrep; only an unconfirmed remote stop rejects. */
+/** Ensure the host has Dolphin's ripgrep; only an unconfirmed remote stop rejects. */
 export async function ensureRemoteBundledRipgrep(
   conn: SshConnection,
   host: RemoteHostPlatform,
@@ -200,7 +200,7 @@ async function installRemoteRipgrep(
       host,
       {
         signal,
-        sftpNamespace: usesOrcaOwnedSftp(conn, host)
+        sftpNamespace: usesDolphinOwnedSftp(conn, host)
           ? relayUploadStageSftpNamespaceMapping(stageNamespace, host, stageDir)
           : undefined
       }
@@ -230,7 +230,7 @@ async function installRemoteRipgrep(
 }
 
 /** Split shell/SFTP namespaces only arise on POSIX hosts reached over the bundled ssh2 SFTP. */
-function usesOrcaOwnedSftp(conn: SshConnection, host: RemoteHostPlatform): boolean {
+function usesDolphinOwnedSftp(conn: SshConnection, host: RemoteHostPlatform): boolean {
   if (isWindowsRemoteHost(host)) {
     return false
   }
@@ -294,7 +294,7 @@ export function promoteCommand(
     const bytes = String(Math.trunc(expectedBytes))
     return [
       `if [ "$(wc -c < ${src} 2>/dev/null | tr -d ' \\t')" = "${bytes}" ] && chmod 755 ${src} && mkdir -p ${shellEscape(remoteDirname(layout.binaryPath, host))} && mv -f ${src} ${bin}; then r=${INSTALLED};`,
-      `elif ${posixInstalledTest(bin, bytes)}; then r=${INSTALLED}; else r=ORCA-RG-FAILED; fi;`,
+      `elif ${posixInstalledTest(bin, bytes)}; then r=${INSTALLED}; else r=DOLPHIN-RG-FAILED; fi;`,
       `rm -rf ${shellEscape(stageDir)}; echo "$r"`
     ].join(' ')
   }
@@ -302,7 +302,7 @@ export function promoteCommand(
     [
       `$src = ${powerShellLiteral(staged)}`,
       `$bin = ${powerShellLiteral(layout.binaryPath)}`,
-      "$r = 'ORCA-RG-FAILED'",
+      "$r = 'DOLPHIN-RG-FAILED'",
       'try {',
       `if ((Get-Item -LiteralPath $src -ErrorAction Stop).Length -eq ${Math.trunc(expectedBytes)}) {`,
       `$null = New-Item -ItemType Directory -Force -Path ${powerShellLiteral(remoteDirname(layout.binaryPath, host))} -ErrorAction Stop`,

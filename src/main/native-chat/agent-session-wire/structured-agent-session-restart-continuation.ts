@@ -27,7 +27,7 @@ import type { AgentSessionResumeMarker } from '../../../shared/agent-session-res
 /**
  * All four dispatch states are preserved, never collapsed into transport success.
  *
- * The send layer answers `ok: true` as soon as Orca OWNS the message — a rejected or unverifiable
+ * The send layer answers `ok: true` as soon as Dolphin OWNS the message — a rejected or unverifiable
  * provider dispatch is recorded inside the submission, not on the envelope. Reading only the
  * envelope reports a refused `turn/start` as continued and stamps the journal saying so.
  *
@@ -66,7 +66,7 @@ export type StructuredAgentSessionContinuationHost = {
 }
 
 /** Binds one continuation to the host: the superseded check before dispatch, the settlement
- *  waiter for the verdict, and the journal note that attributes the send to Orca. */
+ *  waiter for the verdict, and the journal note that attributes the send to Dolphin. */
 export function restartContinuationDeps(
   host: StructuredAgentSessionContinuationHost,
   marker: AgentSessionResumeMarker
@@ -115,7 +115,7 @@ function restartNoteWriter(
       return
     }
     await session.journal.appendItem(
-      { provider: 'orca', clientMessageId: `restart-continuation:${sessionId}:${host.now()}` },
+      { provider: 'dolphin', clientMessageId: `restart-continuation:${sessionId}:${host.now()}` },
       { kind: 'status', text, ...(tone ? { tone } : {}) },
       { fence: session.fence }
     )
@@ -189,7 +189,7 @@ export type StructuredAgentSessionContinuationDeps = {
   }) => Promise<{
     ok: boolean
     refusal?: { code: string }
-    /** The submission is where the provider's answer lives; the envelope only says Orca took it. */
+    /** The submission is where the provider's answer lives; the envelope only says Dolphin took it. */
     value?: { submission?: { dispatchState?: string; reason?: string | null } }
   }>
   /**
@@ -203,7 +203,7 @@ export type StructuredAgentSessionContinuationDeps = {
     sessionId: string,
     clientMessageId: string
   ) => Promise<{ dispatchState?: string; reason?: string | null } | undefined>
-  /** Records a host-authored journal note: that this send was Orca's, not the user's, or that the
+  /** Records a host-authored journal note: that this send was Dolphin's, not the user's, or that the
    *  chat did not carry on. `tone` is a display hint older clients render as plain text. */
   note: (sessionId: string, text: string, tone?: 'error' | 'warning') => Promise<void>
   /** Reports a note that could not be written. The note is best effort, but its failure is not
@@ -294,7 +294,7 @@ async function sendContinuation(
       reason: sent.refusal?.code ?? 'agent_session_send_failed'
     }
   }
-  // The send result carries the dispatch as it stood when Orca took the message, which for a normal
+  // The send result carries the dispatch as it stood when Dolphin took the message, which for a normal
   // successful send is `pending`. Judging it here would report every delivered continuation as
   // pending and never write the note, so the settled value is what decides.
   const submission =
@@ -317,7 +317,7 @@ async function sendContinuation(
     // neither success nor failure — and writes no note saying the agent was asked to continue.
     return { sessionId, outcome: 'unknown' }
   }
-  // Only an accepted dispatch gets the note: it is a durable claim that Orca asked this agent to
+  // Only an accepted dispatch gets the note: it is a durable claim that Dolphin asked this agent to
   // carry on, and it must not sit beside a message the provider refused or never confirmed. Best
   // effort beyond that — losing the note must not turn a delivered continuation into a failure —
   // but reported, never swallowed.

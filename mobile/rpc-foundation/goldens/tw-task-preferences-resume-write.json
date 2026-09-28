@@ -3,17 +3,22 @@
   "family": "settings-best-effort",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "d3b7f33d810e1fa420ac41a628cde9fe4a9e65fd57f89fbca0a40fc7d74951ab",
-  "scenarioSha256": "31bfa49f888b0eb3f72873bf4a3af26129e78c23126e8fc8fe45b952caa60904",
-  "platform": "darwin",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "10797e5e9e22c8a014db3fce91b2be5fc0f9a2954124288c191507cc547a4e92",
+  "scenarioSha256": "6c52f0bfa6b46615ac235b8edbfe8d06764ac53148b77469d9afcf1c1cd5f538",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "083a573d9009": {
+    "4b4013995a9c": {
+      "name": "ui.set#2",
+      "ordinal": 4,
+      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"ui.set\",\"params\":{\"trustedDolphinHooks\":{\"repo-1\":{\"setup\":{\"contentHash\":\"hash-1\",\"approvedAt\":1767225600000}}}}}"
+    },
+    "4cd8d2f9c94b": {
       "name": "ui.set#2",
       "ordinal": 3,
       "args": [
@@ -24,7 +29,7 @@
         {
           "name": "params",
           "value": {
-            "trustedOrcaHooks": {
+            "trustedDolphinHooks": {
               "repo-1": {
                 "setup": {
                   "approvedAt": 1767225600000,
@@ -95,11 +100,6 @@
     "ae0c8e22f430": {
       "preset": "all"
     },
-    "b10dd246ebf0": {
-      "name": "ui.set#2",
-      "ordinal": 4,
-      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"ui.set\",\"params\":{\"trustedOrcaHooks\":{\"repo-1\":{\"setup\":{\"contentHash\":\"hash-1\",\"approvedAt\":1767225600000}}}}}"
-    },
     "b59e9062cf46": {
       "name": "ui.set#1",
       "ordinal": 2,
@@ -143,8 +143,8 @@
       {
         "id": "awaited-trust-write-refused",
         "observation": {
-          "sender": ["8eac7ca88434", "083a573d9009"],
-          "payloads": ["b59e9062cf46", "b10dd246ebf0"],
+          "sender": ["8eac7ca88434", "4cd8d2f9c94b"],
+          "payloads": ["b59e9062cf46", "4b4013995a9c"],
           "settlements": {
             "mount": "eb79a9b3682a",
             "resume": "eb79a9b3682a",

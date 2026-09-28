@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { OrcaRuntimeService } from './orca-runtime'
+import { DolphinRuntimeService } from './dolphin-runtime'
 import {
   getStructuredAgentSessionHost,
   setStructuredAgentSessionHost
@@ -27,7 +27,7 @@ type InstallEffects = {
 
 /** Stands in for `install()` by performing the two effects it performs, so a probe that
  *  reinstalls the host is caught by what the install *does*, not by a call count alone. */
-function stubStructuredHostInstall(runtime: OrcaRuntimeService): {
+function stubStructuredHostInstall(runtime: DolphinRuntimeService): {
   effects: InstallEffects
   ensure: ReturnType<typeof vi.fn>
 } {
@@ -62,8 +62,8 @@ type SupportResult = {
   reason?: 'agent' | 'remote' | 'wsl'
 }
 
-function createRuntime(location: TestLocation): OrcaRuntimeService {
-  const runtime = new OrcaRuntimeService({ getSettings: () => ({}) } as never)
+function createRuntime(location: TestLocation): DolphinRuntimeService {
+  const runtime = new DolphinRuntimeService({ getSettings: () => ({}) } as never)
   const internal = runtime as unknown as {
     resolveStructuredAgentSessionLocation: () => Promise<unknown>
   }

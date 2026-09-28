@@ -44,28 +44,28 @@ describe('sanitizeRepoIcon', () => {
     expect(
       sanitizeRepoIcon({
         type: 'image',
-        src: 'https://github.com/stablyai.png?size=64',
+        src: 'https://github.com/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/orca'
+        label: 'gusscloud/dolphin'
       })
     ).toEqual({
       type: 'image',
-      src: 'https://github.com/stablyai.png?size=64',
+      src: 'https://github.com/gusscloud.png?size=64',
       source: 'github',
-      label: 'stablyai/orca'
+      label: 'gusscloud/dolphin'
     })
     expect(
       sanitizeRepoIcon({
         type: 'image',
-        src: 'https://github.acme.test/stablyai.png?size=64',
+        src: 'https://github.acme.test/gusscloud.png?size=64',
         source: 'github',
-        label: 'stablyai/orca'
+        label: 'gusscloud/dolphin'
       })
     ).toEqual({
       type: 'image',
-      src: 'https://github.acme.test/stablyai.png?size=64',
+      src: 'https://github.acme.test/gusscloud.png?size=64',
       source: 'github',
-      label: 'stablyai/orca'
+      label: 'gusscloud/dolphin'
     })
     expect(
       sanitizeRepoIcon({

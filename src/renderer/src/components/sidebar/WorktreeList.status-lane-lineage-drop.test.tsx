@@ -81,7 +81,7 @@ vi.mock('@tanstack/react-virtual', () => ({
 }))
 
 vi.mock('@/hooks/useVirtualizedScrollAnchor', () => ({
-  VIRTUALIZED_SCROLL_ANCHOR_RECORD_EVENT: 'orca:test-record-scroll-anchor',
+  VIRTUALIZED_SCROLL_ANCHOR_RECORD_EVENT: 'dolphin:test-record-scroll-anchor',
   useVirtualizedScrollAnchor: vi.fn()
 }))
 
@@ -142,13 +142,13 @@ vi.mock('./WorktreeCardAgents', () => ({
   default: ({ worktreeId }: { worktreeId: string }) => (
     <div data-agent-worktree-id={worktreeId}>Agent row</div>
   ),
-  SUPPRESS_WORKTREE_LIST_SCROLL_ADJUSTMENT_EVENT: 'orca:test-suppress-scroll-adjustment'
+  SUPPRESS_WORKTREE_LIST_SCROLL_ADJUSTMENT_EVENT: 'dolphin:test-suppress-scroll-adjustment'
 }))
 
 vi.mock('./WorktreeContextMenu', () => ({
   default: ({ children }: { children: ReactNode }) => <>{children}</>,
-  CLOSE_ALL_CONTEXT_MENUS_EVENT: 'orca:test-close-context-menus',
-  WORKTREE_CONTEXT_MENU_SCOPE_ATTR: 'data-orca-context-menu-scope',
+  CLOSE_ALL_CONTEXT_MENUS_EVENT: 'dolphin:test-close-context-menus',
+  WORKTREE_CONTEXT_MENU_SCOPE_ATTR: 'data-dolphin-context-menu-scope',
   WORKTREE_NATIVE_CONTEXT_MENU_ATTR: 'data-worktree-native-context-menu'
 }))
 

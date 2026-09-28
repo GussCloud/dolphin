@@ -137,7 +137,7 @@ describe('persistent command retention', () => {
     expect(items.streams.flush()).toBe(true)
     for (const event of events) {
       const key = agentJournalItemKey({
-        provider: 'orca',
+        provider: 'dolphin',
         clientMessageId: `codex-item:${event.threadId}:${event.params.item.id}`
       })
       expect(rows.get(key)).toMatchObject({
@@ -187,7 +187,7 @@ describe('persistent command retention', () => {
       expect(
         retention.retain(item.id, {
           item,
-          identity: { provider: 'orca', clientMessageId: item.id }
+          identity: { provider: 'dolphin', clientMessageId: item.id }
         })
       ).toBe(true)
     }

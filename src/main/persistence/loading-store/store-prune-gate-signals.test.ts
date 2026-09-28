@@ -13,7 +13,7 @@ import type { WorkspaceSessionState } from '../../../shared/workspace-session-st
 vi.mock('electron', () => ({
   app: {
     getPath: () => tmpdir(),
-    getName: () => 'orca-test',
+    getName: () => 'dolphin-test',
     getVersion: () => '0.0.0-test',
     isPackaged: false,
     on: () => {},
@@ -54,8 +54,8 @@ afterEach(async () => {
 })
 
 function createStore(): InstanceType<typeof Store> {
-  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'orca-store-prune-gate-')))
-  const store = createSqliteTestStore(Store, { dataFile: join(dir, 'orca-data.json') })
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'dolphin-store-prune-gate-')))
+  const store = createSqliteTestStore(Store, { dataFile: join(dir, 'dolphin-data.json') })
   stores.push(store)
   return store
 }

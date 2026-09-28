@@ -6,7 +6,7 @@
  * again on the next remount. A pin that silently forgets itself is worse than one that cannot be
  * set, so the page's store is the app's, reached over the `storage` grant.
  *
- * An allowlist and not a passthrough. Everything the app keeps under `orca:` is in one namespace —
+ * An allowlist and not a passthrough. Everything the app keeps under `dolphin:` is in one namespace —
  * push registrations, the hybrid shell flag itself — and a page that could write any of them could
  * turn the feature on for a build that never offered it. A prefix is listed only where the key
  * carries an id the desktop chooses; the rest are exact.
@@ -18,34 +18,34 @@
  */
 export const PAGE_STORAGE_EXACT_KEYS = [
   /** The repo the New Workspace drawer opens on. */
-  'orca:last-visited-worktree',
+  'dolphin:last-visited-worktree',
   /** The worktree-list sidebar's width, which `app/h/_layout.tsx` renders above every page route. */
-  'orca:hostSidebarWidth',
+  'dolphin:hostSidebarWidth',
   /** The session screen's docked panel width, dragged by `use-mobile-dock-resize.ts`. */
-  'orca:hostDockWidth',
+  'dolphin:hostDockWidth',
   /** The terminal accessory bar's order and visibility. */
-  'orca:terminal-accessory-layout',
+  'dolphin:terminal-accessory-layout',
   /** The user's own accessory keys, which `CustomKeyModal` writes. */
-  'orca:custom-accessory-keys',
+  'dolphin:custom-accessory-keys',
   /** Whether a supported agent session opens on the terminal or the native chat. */
-  'orca:defaultSessionView',
+  'dolphin:defaultSessionView',
   /** The durable send journal: which `agentSession.send` operation ids are still unsettled. */
-  'orca:mobileStructuredSendOperations:v1',
+  'dolphin:mobileStructuredSendOperations:v1',
   /** The terminal's text scale, which pinch-to-zoom writes. */
-  'orca:terminalTextScale',
+  'dolphin:terminalTextScale',
   /** Whether the terminal's command inputs offer autocorrect. */
-  'orca:terminalAutocompleteEnabled',
-  /** Whether a terminal link opens in Orca's browser or the phone's. */
-  'orca:terminalLinkOpenMode'
+  'dolphin:terminalAutocompleteEnabled',
+  /** Whether a terminal link opens in Dolphin's browser or the phone's. */
+  'dolphin:terminalLinkOpenMode'
 ] as const
 
 export const PAGE_STORAGE_KEY_PREFIXES = [
-  /** `orca:pins:<hostId>`: the pinned worktrees of the host whose list the page is showing. */
-  'orca:pins:',
-  /** `orca:nativeChatTabs:<hostId>:<worktreeId>`: which tabs of one workspace show the chat. */
-  'orca:nativeChatTabs:',
-  /** `orca:terminalLiveInputDisabled:<hostId>:<worktreeId>`: the handles typing goes around. */
-  'orca:terminalLiveInputDisabled:'
+  /** `dolphin:pins:<hostId>`: the pinned worktrees of the host whose list the page is showing. */
+  'dolphin:pins:',
+  /** `dolphin:nativeChatTabs:<hostId>:<worktreeId>`: which tabs of one workspace show the chat. */
+  'dolphin:nativeChatTabs:',
+  /** `dolphin:terminalLiveInputDisabled:<hostId>:<worktreeId>`: the handles typing goes around. */
+  'dolphin:terminalLiveInputDisabled:'
 ] as const
 
 /** Long enough for a host's pinned ids, and far short of what a quota refuses. */
@@ -116,16 +116,16 @@ export function pageStorageKeysForRoute(hostId: string, routePathname: string): 
     workspace === null || workspace.hostId !== hostId
       ? []
       : [
-          workspaceScopedKey('orca:nativeChatTabs:', hostId, workspace.worktreeId),
-          workspaceScopedKey('orca:terminalLiveInputDisabled:', hostId, workspace.worktreeId)
+          workspaceScopedKey('dolphin:nativeChatTabs:', hostId, workspace.worktreeId),
+          workspaceScopedKey('dolphin:terminalLiveInputDisabled:', hostId, workspace.worktreeId)
         ]
-  return [...PAGE_STORAGE_EXACT_KEYS, `orca:pins:${hostId}`, ...scoped].filter(isPageStorageKey)
+  return [...PAGE_STORAGE_EXACT_KEYS, `dolphin:pins:${hostId}`, ...scoped].filter(isPageStorageKey)
 }
 
 /**
  * The allowlist narrowed to one session, which is the one every write is actually held to.
  *
- * `isPageStorageKey` answers for the shape, so `orca:pins:<any host>` passes it; a page opened for
+ * `isPageStorageKey` answers for the shape, so `dolphin:pins:<any host>` passes it; a page opened for
  * one host could therefore rewrite another's pinned list, which is not a key it was ever handed.
  * The same holds one level further in for the two workspace-scoped keys: a session page opened on
  * one workspace must not rewrite another's chat tabs. What the page may write is exactly what it

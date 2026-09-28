@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 const {
   callMock,
   runtimeClientConstructorMock,
-  serveOrcaAppMock,
+  serveDolphinAppMock,
   getDefaultUserDataPathMock,
   addEnvironmentFromPairingCodeMock,
   listEnvironmentsMock,
@@ -11,8 +11,8 @@ const {
 } = vi.hoisted(() => ({
   callMock: vi.fn(),
   runtimeClientConstructorMock: vi.fn(),
-  serveOrcaAppMock: vi.fn(),
-  getDefaultUserDataPathMock: vi.fn(() => '/tmp/orca-user-data'),
+  serveDolphinAppMock: vi.fn(),
+  getDefaultUserDataPathMock: vi.fn(() => '/tmp/dolphin-user-data'),
   addEnvironmentFromPairingCodeMock: vi.fn(),
   listEnvironmentsMock: vi.fn(),
   spawnMock: vi.fn()
@@ -23,7 +23,7 @@ vi.mock('./runtime-client', async () => {
   return createRuntimeClientModuleMock({
     callMock,
     runtimeClientConstructorMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock
   })
 })
@@ -44,10 +44,10 @@ import { main } from './index'
 import { okFixture, queueFixtures } from './test-fixtures'
 import { useWorktreeAwarenessEnvironment } from './index-test-harness'
 
-describe('orca cli worktree awareness', () => {
+describe('dolphin cli worktree awareness', () => {
   useWorktreeAwarenessEnvironment({
     callMock,
-    serveOrcaAppMock,
+    serveDolphinAppMock,
     getDefaultUserDataPathMock,
     addEnvironmentFromPairingCodeMock,
     listEnvironmentsMock,
@@ -71,7 +71,7 @@ describe('orca cli worktree awareness', () => {
             worktreeId: 'repo::/tmp/repo/feature',
             worktreeName: 'feature',
             repoId: 'repo',
-            repoName: 'Orca',
+            repoName: 'Dolphin',
             cpu: 2.5,
             memory: 1024 * 1024,
             sessions: [
@@ -136,7 +136,7 @@ describe('orca cli worktree awareness', () => {
             worktreeId: 'repo::/tmp/repo/feature',
             worktreeName: 'feature',
             repoId: 'repo',
-            repoName: 'Orca',
+            repoName: 'Dolphin',
             cpu: 2.5,
             memory: 1024 * 1024,
             privateMemory: 14 * 1024 * 1024,

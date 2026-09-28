@@ -51,13 +51,13 @@ async function reloadStore() {
   // file's temp dir rather than the global fake's shared one, after resetModules.
   installFakeAppEnvironment({ getPath: () => testState.dir })
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 async function createStore(persisted: Record<string, unknown> = {}) {
   mkdirSync(testState.dir, { recursive: true })
   writeFileSync(
-    join(testState.dir, 'orca-data.json'),
+    join(testState.dir, 'dolphin-data.json'),
     JSON.stringify({ ...getDefaultPersistedState(testState.dir), ...persisted }),
     'utf-8'
   )
@@ -65,7 +65,7 @@ async function createStore(persisted: Record<string, unknown> = {}) {
 }
 
 beforeEach(() => {
-  testState.dir = mkdtempSync(join(tmpdir(), 'orca-worktree-name-retirement-'))
+  testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-worktree-name-retirement-'))
 })
 
 afterEach(async () => {
@@ -266,7 +266,7 @@ describe('worktree name retirement registry', () => {
     // What the shipped code wrote: a namespace whose host half is the target row id.
     const store = await createStore({
       retiredWorktreeNamesByNamespace: {
-        'ssh:ssh-old:posix:/remote/repos/a-orca-retirement-probe': {
+        'ssh:ssh-old:posix:/remote/repos/a-dolphin-retirement-probe': {
           exhaustedTiers: 0,
           names: ['nautilus']
         }
@@ -581,7 +581,9 @@ describe('worktree name retirement registry', () => {
 
   it('drops names a persisted watermark already covers', async () => {
     const store = await createStore({
-      retiredWorktreeNamesByRepo: { [REPO]: { exhaustedTiers: 2, names: ['nautilus', 'orca-2'] } }
+      retiredWorktreeNamesByRepo: {
+        [REPO]: { exhaustedTiers: 2, names: ['nautilus', 'dolphin-2'] }
+      }
     })
 
     expect(store.getRetiredWorktreeNameRegistry(REPO)).toEqual({ exhaustedTiers: 2, names: [] })

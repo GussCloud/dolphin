@@ -16,7 +16,7 @@ import {
 } from './linear-agent-skill-setup-reminder-toast'
 import { getExistingLinearAgentSkillSetupReminderState } from './linear-agent-skill-setup-reminders'
 
-const HOST_DISMISS_STORAGE_KEY = 'orca.linearTicketsSkill.setupDismissed.host'
+const HOST_DISMISS_STORAGE_KEY = 'dolphin.linearTicketsSkill.setupDismissed.host'
 
 const mocks = vi.hoisted(() => ({
   skillState: {
@@ -50,8 +50,8 @@ vi.mock('@/hooks/useInstalledAgentSkills', async (importOriginal) => ({
 
 vi.mock('@/lib/agent-skill-cli-prerequisite', () => ({
   AGENT_SKILL_CLI_PREREQUISITE_NOTICE: 'CLI registration notice',
-  ensureOrcaCliAvailableForAgentSkillTerminal: mocks.ensureCli,
-  isOrcaCliAvailableOnPath: (status: CliInstallStatus | null | undefined) =>
+  ensureDolphinCliAvailableForAgentSkillTerminal: mocks.ensureCli,
+  isDolphinCliAvailableOnPath: (status: CliInstallStatus | null | undefined) =>
     status?.state === 'installed' && status.pathConfigured
 }))
 
@@ -95,15 +95,15 @@ let container: HTMLDivElement | null = null
 function cliStatus(overrides: Partial<CliInstallStatus>): CliInstallStatus {
   return {
     platform: 'darwin',
-    commandName: 'orca',
-    commandPath: '/usr/local/bin/orca',
+    commandName: 'dolphin',
+    commandPath: '/usr/local/bin/dolphin',
     pathDirectory: '/usr/local/bin',
     pathConfigured: true,
-    launcherPath: '/Applications/Orca.app/Contents/MacOS/Orca',
+    launcherPath: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
     installMethod: 'symlink',
     supported: true,
     state: 'installed',
-    currentTarget: '/Applications/Orca.app/Contents/MacOS/Orca',
+    currentTarget: '/Applications/Dolphin.app/Contents/MacOS/Dolphin',
     unsupportedReason: null,
     detail: null,
     ...overrides
@@ -220,7 +220,7 @@ describe('LinearAgentSkillSetupPrompt reminder toast', () => {
     expect(toast.warning).toHaveBeenCalledWith(
       'Dolphin CLI and Linear skill are missing',
       expect.objectContaining({
-        id: 'linear-agent-skill-setup-orca.linearTicketsSkill.setupDismissed.host',
+        id: 'linear-agent-skill-setup-dolphin.linearTicketsSkill.setupDismissed.host',
         description:
           'Install the Dolphin CLI and the Linear skill to enable your agents to read and edit Linear tasks.',
         action: {
@@ -298,7 +298,7 @@ describe('LinearAgentSkillSetupPrompt reminder toast', () => {
     )
     expect(document.body.textContent).toContain('Mock install')
     expect(toast.dismiss).toHaveBeenCalledWith(
-      'linear-agent-skill-setup-orca.linearTicketsSkill.setupDismissed.host'
+      'linear-agent-skill-setup-dolphin.linearTicketsSkill.setupDismissed.host'
     )
   })
 
@@ -324,7 +324,7 @@ describe('LinearAgentSkillSetupPrompt reminder toast', () => {
 
     expect(getExistingLinearAgentSkillSetupReminderState(HOST_DISMISS_STORAGE_KEY)).toBeUndefined()
     expect(toast.dismiss).toHaveBeenCalledWith(
-      'linear-agent-skill-setup-orca.linearTicketsSkill.setupDismissed.host'
+      'linear-agent-skill-setup-dolphin.linearTicketsSkill.setupDismissed.host'
     )
   })
 
@@ -354,7 +354,7 @@ describe('LinearAgentSkillSetupPrompt reminder toast', () => {
 
     expect(window.localStorage.getItem(HOST_DISMISS_STORAGE_KEY)).toBe('1')
     expect(toast.dismiss).toHaveBeenCalledWith(
-      'linear-agent-skill-setup-orca.linearTicketsSkill.setupDismissed.host'
+      'linear-agent-skill-setup-dolphin.linearTicketsSkill.setupDismissed.host'
     )
   })
 })

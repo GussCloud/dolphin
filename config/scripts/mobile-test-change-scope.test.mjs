@@ -9,7 +9,6 @@ it.each([
   'mobile/README.md',
   'mobile/Gemfile.lock',
   'mobile/fastlane/Fastfile',
-  '.github/workflows/mobile-ios-release.yml',
   'config/scripts/pr-code-change-scope.mjs',
   'config/scripts/mobile-release-check-scope.test.mjs'
 ])('skips only known non-test inputs: %s', (file) => {

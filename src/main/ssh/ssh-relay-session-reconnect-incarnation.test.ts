@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { randomUUID } from 'node:crypto'
 import type * as NodeCrypto from 'node:crypto'
 import { SshRelaySession } from './ssh-relay-session'
-import { runRemoteOrcaCli } from './ssh-remote-orca-cli'
+import { runRemoteDolphinCli } from './ssh-remote-dolphin-cli'
 import {
   createMockDeps,
   mockDeploySuccess,
@@ -57,8 +57,8 @@ vi.mock('node:crypto', async (importOriginal) => {
   const actual = await importOriginal<typeof NodeCrypto>()
   return { ...actual, randomUUID: vi.fn() }
 })
-vi.mock('./ssh-remote-orca-cli', () => ({
-  runRemoteOrcaCli: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' })
+vi.mock('./ssh-remote-dolphin-cli', () => ({
+  runRemoteDolphinCli: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' })
 }))
 vi.mock('./ssh-channel-multiplexer', () => ({
   SshChannelMultiplexer: class MockSshChannelMultiplexer {
@@ -180,7 +180,7 @@ describe('SshRelaySession reconnect incarnation ordering', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     muxInstances.splice(0)
-    delete process.env.ORCA_FEATURE_REMOTE_AGENT_HOOKS
+    delete process.env.DOLPHIN_FEATURE_REMOTE_AGENT_HOOKS
     muxRequestMock.mockReset()
     muxRequestMock.mockResolvedValue([])
     vi.mocked(randomUUID).mockReset()
@@ -383,7 +383,7 @@ describe('SshRelaySession reconnect incarnation ordering', () => {
     resolveStaleHealthCheck('/')
     await staleReconnect
 
-    const winningCliHandler = muxInstances[2]?.requestHandlers.get('orca.cli')
+    const winningCliHandler = muxInstances[2]?.requestHandlers.get('dolphin.cli')
     expect(winningCliHandler).toBeDefined()
     await winningCliHandler?.({
       argv: ['artifacts', 'share', 'report.html'],
@@ -401,7 +401,7 @@ describe('SshRelaySession reconnect incarnation ordering', () => {
       'target-1',
       winningIncarnation
     )
-    expect(vi.mocked(runRemoteOrcaCli)).toHaveBeenCalledWith(
+    expect(vi.mocked(runRemoteDolphinCli)).toHaveBeenCalledWith(
       runtime,
       expect.objectContaining({
         stdin: '<h1>Remote</h1>',

@@ -2,8 +2,8 @@
  * Read-side probes for one split's browser guest: its URL, zoom, and how many loads it started.
  */
 
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 function guestSelector(browserTabId: string): string {
   return `[data-browser-overlay-tab-id="${browserTabId}"] webview`

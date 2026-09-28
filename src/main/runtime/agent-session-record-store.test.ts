@@ -143,7 +143,7 @@ async function markLegacyConflicted(
 }
 
 beforeEach(async () => {
-  directory = await mkdtemp(join(tmpdir(), 'orca-agent-session-store-'))
+  directory = await mkdtemp(join(tmpdir(), 'dolphin-agent-session-store-'))
 })
 
 afterEach(async () => {

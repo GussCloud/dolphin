@@ -3,17 +3,17 @@
   "family": "files.explorer-screen",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "7a42a348f4407b94cf75ac77a4b6b783b7d28103b1ae1d111d2708dab0dd4a0c",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "6bed192ad8742af8173344e428d00fe016725ea8150d7895bf917425b548e0e8",
   "scenarioSha256": "0b87a230cf1c4219e415c840a088502c8bda7cd2fb525bde1a83a5903d6fd96b",
-  "platform": "darwin",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "1fac8f3b8f44": {
+    "14cba1bd8019": {
       "crash": {
         "$rpc": "null"
       },
@@ -27,7 +27,23 @@
       },
       "labels": ["Back to session"],
       "rows": ["dir:src", "file:README.md"],
-      "text": ["Files", "orca-files"]
+      "text": ["Files", "dolphin-files"]
+    },
+    "29386f092d9a": {
+      "crash": {
+        "$rpc": "null"
+      },
+      "elements": {
+        "ActivityIndicator": 1,
+        "ChevronLeft": 1,
+        "Pressable": 1,
+        "SafeAreaView": 1,
+        "Text": 2,
+        "View": 4
+      },
+      "labels": ["Back to session"],
+      "rows": [],
+      "text": ["Files", "dolphin-files"]
     },
     "59851eb4cbf7": {
       "name": "files.readDir#1",
@@ -60,22 +76,6 @@
       "name": "files.readDir#1",
       "ordinal": 2,
       "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"files.readDir\",\"params\":{\"worktree\":\"id:wt-files\",\"relativePath\":\"\"}}"
-    },
-    "e91880eefe86": {
-      "crash": {
-        "$rpc": "null"
-      },
-      "elements": {
-        "ActivityIndicator": 1,
-        "ChevronLeft": 1,
-        "Pressable": 1,
-        "SafeAreaView": 1,
-        "Text": 2,
-        "View": 4
-      },
-      "labels": ["Back to session"],
-      "rows": [],
-      "text": ["Files", "orca-files"]
     },
     "eb79a9b3682a": {
       "status": "fulfilled",
@@ -139,7 +139,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "e91880eefe86",
+          "state": "29386f092d9a",
           "effects": []
         }
       },
@@ -151,7 +151,7 @@
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "1fac8f3b8f44",
+          "state": "14cba1bd8019",
           "effects": []
         }
       }

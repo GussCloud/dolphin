@@ -231,7 +231,7 @@ describe('connectPanePty', () => {
         {
           id: 'repo1',
           connectionId: null,
-          displayName: 'orca',
+          displayName: 'dolphin',
           executionHostId: 'runtime:owner-runtime'
         }
       ],
@@ -279,7 +279,7 @@ describe('connectPanePty', () => {
         {
           id: 'repo1',
           connectionId: null,
-          displayName: 'orca',
+          displayName: 'dolphin',
           executionHostId: 'local'
         }
       ],

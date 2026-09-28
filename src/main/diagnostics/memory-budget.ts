@@ -24,15 +24,19 @@ export function readMemoryBudget(env: NodeJS.ProcessEnv = process.env): MemoryBu
   return {
     rendererBytes: readMegabytes(
       env,
-      'ORCA_WARN_RENDERER_MEMORY_MB',
+      'DOLPHIN_WARN_RENDERER_MEMORY_MB',
       DEFAULT_MEMORY_BUDGET.rendererBytes
     ),
     sessionBytes: readMegabytes(
       env,
-      'ORCA_WARN_SESSION_MEMORY_MB',
+      'DOLPHIN_WARN_SESSION_MEMORY_MB',
       DEFAULT_MEMORY_BUDGET.sessionBytes
     ),
-    daemonBytes: readMegabytes(env, 'ORCA_WARN_DAEMON_MEMORY_MB', DEFAULT_MEMORY_BUDGET.daemonBytes)
+    daemonBytes: readMegabytes(
+      env,
+      'DOLPHIN_WARN_DAEMON_MEMORY_MB',
+      DEFAULT_MEMORY_BUDGET.daemonBytes
+    )
   }
 }
 

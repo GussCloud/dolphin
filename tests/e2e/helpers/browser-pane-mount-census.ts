@@ -1,4 +1,4 @@
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 
 /**
  * Every `<webview>` a browser pane ever attached, in order, with the partition it was born with.
@@ -28,7 +28,7 @@ const GATE_ERROR_TITLES = [
   'The SSH server blocks browser traffic',
   'SSH connection unavailable'
 ]
-const CENSUS_KEY = '__orcaBrowserPaneMountCensus'
+const CENSUS_KEY = '__dolphinBrowserPaneMountCensus'
 
 /** Must run before the first browser tab of interest is created. Idempotent per page. */
 export async function installBrowserPaneMountCensus(page: Page): Promise<void> {

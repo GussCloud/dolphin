@@ -68,7 +68,7 @@ function bulkReattachPtyIds(store: ReturnType<typeof createStore>): string[] {
 
 describe('the IPC spawn commit keeps one reattachable lease per SSH pane', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-test-'))
   })
   afterEach(() => {
     rmSync(testState.dir, { recursive: true, force: true })

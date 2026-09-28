@@ -91,7 +91,7 @@ describe('scanTerminalHistorySessionTrees', () => {
   let dir: string
 
   beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), 'orca-history-gc-'))
+    dir = await mkdtemp(join(tmpdir(), 'dolphin-history-gc-'))
   })
 
   afterEach(async () => {

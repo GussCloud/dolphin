@@ -107,7 +107,7 @@ function feedbackRequestBodyInit(body: FeedbackSubmitBody): Pick<RequestInit, 'b
     formData.append(
       'diagnosticBundleFile',
       new Blob([body.diagnosticBundle.content], { type: DIAGNOSTIC_BUNDLE_CONTENT_TYPE }),
-      `orca-diagnostics-${body.diagnosticBundle.bundleSubmissionId}.ndjson`
+      `dolphin-diagnostics-${body.diagnosticBundle.bundleSubmissionId}.ndjson`
     )
   }
   appendFeedbackImagesToFormData(formData, body.images ?? [])

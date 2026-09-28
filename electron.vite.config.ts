@@ -43,31 +43,31 @@ function isExternalMainModule(source: string): boolean {
 // shell export.
 //
 // CI injects real values via GitHub Actions secrets
-// (ORCA_BUILD_IDENTITY='stable' | 'rc', ORCA_POSTHOG_WRITE_KEY=phc_...);
+// (DOLPHIN_BUILD_IDENTITY='stable' | 'rc', DOLPHIN_POSTHOG_WRITE_KEY=phc_...);
 // every other build path resolves these env vars to undefined, which the
 // JSON.stringify below folds to the literal `null`. Ambient declarations
 // for the two constants live in `src/types/build-constants.d.ts`.
-const orcaBuildIdentity = process.env.ORCA_BUILD_IDENTITY
-const ORCA_BUILD_IDENTITY_LITERAL =
-  orcaBuildIdentity === 'stable' || orcaBuildIdentity === 'rc'
-    ? JSON.stringify(orcaBuildIdentity)
+const dolphinBuildIdentity = process.env.DOLPHIN_BUILD_IDENTITY
+const DOLPHIN_BUILD_IDENTITY_LITERAL =
+  dolphinBuildIdentity === 'stable' || dolphinBuildIdentity === 'rc'
+    ? JSON.stringify(dolphinBuildIdentity)
     : 'null'
-const orcaPostHogWriteKey = process.env.ORCA_POSTHOG_WRITE_KEY
-const ORCA_POSTHOG_WRITE_KEY_LITERAL =
-  typeof orcaPostHogWriteKey === 'string' && orcaPostHogWriteKey.length > 0
-    ? JSON.stringify(orcaPostHogWriteKey)
+const dolphinPostHogWriteKey = process.env.DOLPHIN_POSTHOG_WRITE_KEY
+const DOLPHIN_POSTHOG_WRITE_KEY_LITERAL =
+  typeof dolphinPostHogWriteKey === 'string' && dolphinPostHogWriteKey.length > 0
+    ? JSON.stringify(dolphinPostHogWriteKey)
     : 'null'
-const orcaDiagnosticsTokenUrl = process.env.ORCA_DIAGNOSTICS_TOKEN_URL
-const ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL =
-  typeof orcaDiagnosticsTokenUrl === 'string' && orcaDiagnosticsTokenUrl.length > 0
-    ? JSON.stringify(orcaDiagnosticsTokenUrl)
+const dolphinDiagnosticsTokenUrl = process.env.DOLPHIN_DIAGNOSTICS_TOKEN_URL
+const DOLPHIN_DIAGNOSTICS_TOKEN_URL_LITERAL =
+  typeof dolphinDiagnosticsTokenUrl === 'string' && dolphinDiagnosticsTokenUrl.length > 0
+    ? JSON.stringify(dolphinDiagnosticsTokenUrl)
     : 'null'
 
 function createStartupDiagnosticsBanner(chunkName: string): string {
   return `
 ;(() => {
   const env = typeof process !== 'undefined' ? process.env : undefined
-  const mode = env?.ORCA_STARTUP_DIAGNOSTICS
+  const mode = env?.DOLPHIN_STARTUP_DIAGNOSTICS
   if (mode !== '1' && mode !== 'trace') {
     return
   }
@@ -92,7 +92,7 @@ function createStartupDiagnosticsBanner(chunkName: string): string {
     openSync = undefined
     writeSync = undefined
   }
-  const diagnosticFile = env?.ORCA_STARTUP_DIAGNOSTICS_FILE
+  const diagnosticFile = env?.DOLPHIN_STARTUP_DIAGNOSTICS_FILE
   if (typeof diagnosticFile === 'string' && diagnosticFile.length > 0 && typeof openSync === 'function') {
     try {
       diagnosticFileDescriptor = openSync(diagnosticFile, 'a', 0o600)
@@ -115,8 +115,8 @@ function createStartupDiagnosticsBanner(chunkName: string): string {
   }
   const chunkName = ${JSON.stringify(chunkName)}
   writeLine('[bootstrap] bundle-enter chunk=' + safeJson(chunkName) + ' pid=' + process.pid + ' ppid=' + process.ppid + ' execPath=' + safeJson(process.execPath) + ' argv=' + safeJson(process.argv) + ' electronRunAsNode=' + safeJson(env?.ELECTRON_RUN_AS_NODE ?? null))
-  if (!globalThis.__ORCA_BOOTSTRAP_EXIT_LOG_INSTALLED__) {
-    globalThis.__ORCA_BOOTSTRAP_EXIT_LOG_INSTALLED__ = true
+  if (!globalThis.__DOLPHIN_BOOTSTRAP_EXIT_LOG_INSTALLED__) {
+    globalThis.__DOLPHIN_BOOTSTRAP_EXIT_LOG_INSTALLED__ = true
     process.once('exit', (code) => {
       writeLine('[bootstrap] process-exit code=' + code)
       if (typeof closeSync === 'function' && typeof diagnosticFileDescriptor === 'number') {
@@ -136,12 +136,12 @@ function createStartupDiagnosticsBanner(chunkName: string): string {
       writeLine('[bootstrap] unhandled-rejection error=' + safeJson(String(message)))
     })
   }
-  if (mode === 'trace' && !globalThis.__ORCA_BOOTSTRAP_REQUIRE_TRACE_INSTALLED__) {
-    globalThis.__ORCA_BOOTSTRAP_REQUIRE_TRACE_INSTALLED__ = true
+  if (mode === 'trace' && !globalThis.__DOLPHIN_BOOTSTRAP_REQUIRE_TRACE_INSTALLED__) {
+    globalThis.__DOLPHIN_BOOTSTRAP_REQUIRE_TRACE_INSTALLED__ = true
     try {
       const Module = require('node:module')
       const originalLoad = Module._load
-      const parsedTraceLimit = Number(env?.ORCA_STARTUP_DIAGNOSTICS_TRACE_LIMIT ?? 20000)
+      const parsedTraceLimit = Number(env?.DOLPHIN_STARTUP_DIAGNOSTICS_TRACE_LIMIT ?? 20000)
       const traceLimit = Number.isFinite(parsedTraceLimit) && parsedTraceLimit > 0 ? parsedTraceLimit : 20000
       let traceLineCount = 0
       let traceLimitReported = false
@@ -179,7 +179,7 @@ function createStartupDiagnosticsBanner(chunkName: string): string {
 
 function createMainBootstrapPlugin() {
   return {
-    name: 'orca-main-bootstrap',
+    name: 'dolphin-main-bootstrap',
     generateBundle(_options, bundle) {
       const mainChunk = bundle['index.js']
       if (!mainChunk || mainChunk.type !== 'chunk') {
@@ -280,9 +280,9 @@ export const electronViteConfig: UserConfig = {
     // Why: compile-time substitution for the telemetry gate. See the block
     // above for the full rationale.
     define: {
-      ORCA_BUILD_IDENTITY: ORCA_BUILD_IDENTITY_LITERAL,
-      ORCA_POSTHOG_WRITE_KEY: ORCA_POSTHOG_WRITE_KEY_LITERAL,
-      ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL
+      DOLPHIN_BUILD_IDENTITY: DOLPHIN_BUILD_IDENTITY_LITERAL,
+      DOLPHIN_POSTHOG_WRITE_KEY: DOLPHIN_POSTHOG_WRITE_KEY_LITERAL,
+      DOLPHIN_DIAGNOSTICS_TOKEN_URL: DOLPHIN_DIAGNOSTICS_TOKEN_URL_LITERAL
     },
     // Why: @xterm/headless declares "exports": null in package.json, which
     // prevents Vite's default resolver from finding the CJS entry. Point

@@ -299,9 +299,9 @@ describe('project group store routing', () => {
             provider: 'jira',
             type: 'issue',
             number: 0,
-            title: 'ORCA-123 Link Jira',
-            url: 'https://company.atlassian.net/browse/ORCA-123',
-            jiraIdentifier: 'ORCA-123'
+            title: 'DOLPHIN-123 Link Jira',
+            url: 'https://company.atlassian.net/browse/DOLPHIN-123',
+            jiraIdentifier: 'DOLPHIN-123'
           }
         },
         { runtimeEnvironmentId: 'env-1' }

@@ -56,12 +56,12 @@ export abstract class UpdaterInstallSupport extends UpdaterCheckState {
         { phase, version: version || null },
         {
           level: 'warn',
-          message: 'Update install deferred while hosting orca serve'
+          message: 'Update install deferred while hosting dolphin serve'
         }
       )
     }
     this.sendErrorStatus(
-      'This orca serve process was not started by an update-capable supervisor. Keep it running and update Orca through its service manager.',
+      'This dolphin serve process was not started by an update-capable supervisor. Keep it running and update Dolphin through its service manager.',
       true
     )
     return true
@@ -86,8 +86,8 @@ export abstract class UpdaterInstallSupport extends UpdaterCheckState {
    */
   protected getPreCommitInstallFailureMessage(): string {
     return process.platform === 'darwin'
-      ? 'Could not restart to install the update. Quit and reopen Orca, then try again.'
-      : 'Could not start the update installer. Orca remains open.'
+      ? 'Could not restart to install the update. Quit and reopen Dolphin, then try again.'
+      : 'Could not start the update installer. Dolphin remains open.'
   }
 
   /**

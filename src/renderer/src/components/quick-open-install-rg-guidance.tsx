@@ -22,7 +22,7 @@ export type QuickOpenInstallRgGuidanceParts = {
 export function parseQuickOpenInstallRgGuidance(
   message: string
 ): QuickOpenInstallRgGuidanceParts | null {
-  // Why only the remote wording: the local side always has Orca's bundled rg, so this fallback --
+  // Why only the remote wording: the local side always has Dolphin's bundled rg, so this fallback --
   // and therefore this message -- can only come from a remote host an upload never reached.
   const match = message.match(
     /^Quick Open scan too large \((.+?)\)\. Install ripgrep on the remote to enable fast, gitignore-aware listing: (.+)$/

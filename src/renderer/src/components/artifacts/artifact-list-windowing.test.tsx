@@ -351,7 +351,7 @@ function artifact(slug: string, title: string): ArtifactListItem {
       byteSize: 1200,
       deletedAt: null
     },
-    shareUrl: `https://share.onorca.dev/a/${slug}`
+    shareUrl: `https://share.dolphin.guss.dev.br/a/${slug}`
   }
 }
 

@@ -147,7 +147,7 @@ export class RuntimeFileCommandsWithSearchLocalRuntimeFiles extends RuntimeFileC
         }
         if (child && isRipgrepUnavailableExit(child, null, null)) {
           // Why the cwd check first: spawn reports a missing cwd as ENOENT too, and blaming the
-          // binary for it tells the user to reinstall Orca over a workspace that simply moved.
+          // binary for it tells the user to reinstall Dolphin over a workspace that simply moved.
           // Why detach close first: a failed spawn emits error THEN close(code < 0), and close
           // settles synchronously, so this probe would otherwise race it on a sub-millisecond
           // margin -- two measurements disagreed on which wins. Detaching makes it deterministic.
@@ -175,7 +175,7 @@ export class RuntimeFileCommandsWithSearchLocalRuntimeFiles extends RuntimeFileC
       }
       const onClose = (code: number | null, signal: NodeJS.Signals | null): void => {
         // Why first: this code is above rg's own 0/1/2, so the unavailable check would otherwise
-        // read an unreachable workspace as a broken install and tell the user to reinstall Orca.
+        // read an unreachable workspace as a broken install and tell the user to reinstall Dolphin.
         if (isRipgrepMissingCwdExit(code)) {
           finish(Promise.reject(ripgrepMissingCwdError(authorizedRootPath)))
           return

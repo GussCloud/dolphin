@@ -5,7 +5,7 @@ import type { RuntimeClientEvent } from '../../shared/runtime-client-events'
 import { makePaneKey } from '../../shared/stable-pane-id'
 import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
 import { FOLDER_WORKSPACE_INSTANCE_SEPARATOR } from '../../shared/worktree/id'
-import { OrcaRuntimeService } from './orca-runtime'
+import { DolphinRuntimeService } from './dolphin-runtime'
 
 // Folder projects back several workspaces with ONE directory; only the
 // `::workspace:<uuid>` suffix separates them, so runtime PTY identity must keep it.
@@ -81,7 +81,7 @@ function createRuntimeInternals(
     setWorkspaceSession: () => {},
     flushOrThrow: () => {}
   }) as never
-  const runtime = new OrcaRuntimeService(store)
+  const runtime = new DolphinRuntimeService(store)
   runtime.setPtyController({
     write: () => true,
     kill: () => true,

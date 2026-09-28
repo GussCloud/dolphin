@@ -52,7 +52,7 @@ function reachesBundleBuild(name, seen = new Set()) {
 /**
  * Whether `pnpm run <name>` eventually runs electron-builder without --prepackaged, i.e. runs
  * beforePack. A workflow job that packs through such a script is a packaging job even though the
- * literal electron-builder line lives in package.json (daemon-relocation-spike's build:unpack).
+ * literal electron-builder line lives in package.json (a job running `pnpm run build:unpack`).
  */
 function reachesElectronBuilder(name, seen = new Set()) {
   if (seen.has(name)) {
@@ -86,25 +86,17 @@ function packsWithBeforePack(text) {
 // Every job that packs an app and therefore runs beforePack. Listed so that a new packaging
 // workflow has to be added here deliberately, with its bundle step, rather than slipping in.
 const EXPECTED_PACKAGING_JOBS = [
-  'adhoc-mac-build.yml build-adhoc-mac',
-  'daemon-relocation-spike.yml spike',
-  'daily-mac-build.yml build-daily-mac',
-  'dev-channel-win-build.yml build-win',
   'dolphin-windows-release.yml build-win',
-  'hourly-mac-build.yml build-hourly-mac',
   'pr.yml package',
   'pr.yml package_windows',
-  'release-cut.yml build',
-  'release-mac-build.yml build-mac',
   'win-crash-survival-e2e.yml crash-survival',
-  'win-update-survival-e2e.yml survival',
-  'windows-signing-rehearsal.yml rehearse'
+  'win-update-survival-e2e.yml survival'
 ]
 
 /**
  * Raw source text per job, sliced by the parsed job boundaries. Why not yaml.stringify(job):
- * re-serializing folds long lines, and the fold in dev-channel-win-build's build-win landed
- * between `electron-builder` and `--config`, hiding a whole packaging job from this census.
+ * re-serializing folds long lines, and a fold landing between `electron-builder` and
+ * `--config` once hid a whole packaging job from this census.
  */
 function packagingJobs() {
   const jobs = []

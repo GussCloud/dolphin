@@ -1,5 +1,6 @@
+import { CLI_COMMAND_NAME } from '../../../shared/cli-command-names'
 import type { RpcRequest } from './core'
-import type { OrcaRuntimeService } from '../orca-runtime'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import { OrchestrationError } from '../orchestration/orchestration-error'
 import { formatMessageBanner } from '../orchestration/formatter'
 import { ORCHESTRATION_MESSAGE_WAIT_DEFAULT_TIMEOUT_MS } from '../../../shared/orchestration-message-wait-timeout'
@@ -15,7 +16,7 @@ import {
 } from './orchestration-legacy-operation'
 
 export async function handleLegacyCheck(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   authority: LegacyCompatibilityAuthority
   request: RpcRequest
   params: LegacyCheckParams
@@ -102,17 +103,22 @@ export async function handleLegacyCheck(args: {
               authority: formattingAuthority,
               supportedActionHints: readOnly
                 ? []
-                : supportedLegacyHints(message, principal, params.compatibilityCliCommand ?? 'orca')
+                : supportedLegacyHints(
+                    message,
+                    principal,
+                    params.compatibilityCliCommand ?? CLI_COMMAND_NAME
+                  )
             })
           )
           .join('\n\n')
       : undefined
+  const cliCommand = params.compatibilityCliCommand ?? CLI_COMMAND_NAME
   const currentDelivery =
     principal.role === 'coordinator' && db.hasPendingCurrentDelivery(principal.run_id)
       ? {
           runId: principal.run_id,
-          checkCommand: `${params.compatibilityCliCommand ?? 'orca'} orchestration check --run ${principal.run_id}`,
-          ackCommand: `${params.compatibilityCliCommand ?? 'orca'} orchestration check --run ${principal.run_id} --ack <delivery-id>`
+          checkCommand: `${cliCommand} orchestration check --run ${principal.run_id}`,
+          ackCommand: `${cliCommand} orchestration check --run ${principal.run_id} --ack <delivery-id>`
         }
       : undefined
   return {
@@ -134,7 +140,7 @@ export async function handleLegacyCheck(args: {
 }
 
 export async function handleLegacyReply(args: {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   authority: LegacyCompatibilityAuthority
   request: RpcRequest
   params: LegacyReplyParams

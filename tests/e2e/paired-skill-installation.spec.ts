@@ -1,9 +1,9 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import type { SkillInstallDestination } from '../../src/shared/skill-install-contract'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   createRuntimeDesktopPairingOffer,
   launchPairedElectronClient,
@@ -37,20 +37,20 @@ test.afterAll(async () => {
 
 test('installs on a headed desktop runtime without a local fallback', async ({
   electronApp,
-  orcaPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(240_000)
   const fixture = requireCloudFixture()
   const requestStart = fixture.requests.length
-  const folderRoot = mkdtempSync(join(tmpdir(), 'orca-paired-skill-folder-'))
+  const folderRoot = mkdtempSync(join(tmpdir(), 'dolphin-paired-skill-folder-'))
   let client: PairedElectronClient | null = null
   try {
     const hostHome = await electronApp.evaluate(({ app }) => app.getPath('home'))
-    const worktreeId = await activeWorktreeId(orcaPage)
-    const folderWorkspaceId = await createHostFolderWorkspace(orcaPage, folderRoot)
+    const worktreeId = await activeWorktreeId(appPage)
+    const folderWorkspaceId = await createHostFolderWorkspace(appPage, folderRoot)
     client = await launchPairedElectronClient(
-      await createRuntimeDesktopPairingOffer(orcaPage),
+      await createRuntimeDesktopPairingOffer(appPage),
       testInfo,
       'Skill installation client',
       { extraEnv: cloudClientEnvironment() }
@@ -120,17 +120,17 @@ test('installs on a headless serve runtime through the same contract', async ({
 function cloudClientEnvironment(): Record<string, string> {
   const { origin } = requireCloudFixture()
   return {
-    ORCA_ARTIFACTS_API_URL: origin,
-    ORCA_CLOUD_API_URL: origin,
-    ORCA_CLOUD_CLIENT_ID: 'skills-e2e-client',
-    ORCA_CLOUD_DEV_AUTH: '1',
-    ORCA_CLOUD_ALLOW_PLAINTEXT_SESSION: '1',
-    ORCA_SKILL_PACKAGE_DOWNLOAD_ORIGINS: origin
+    DOLPHIN_ARTIFACTS_API_URL: origin,
+    DOLPHIN_CLOUD_API_URL: origin,
+    DOLPHIN_CLOUD_CLIENT_ID: 'skills-e2e-client',
+    DOLPHIN_CLOUD_DEV_AUTH: '1',
+    DOLPHIN_CLOUD_ALLOW_PLAINTEXT_SESSION: '1',
+    DOLPHIN_SKILL_PACKAGE_DOWNLOAD_ORIGINS: origin
   }
 }
 
 async function connectCloud(page: Page): Promise<void> {
-  const auth = await page.evaluate(() => window.api.orcaProfiles.connectCurrent())
+  const auth = await page.evaluate(() => window.api.dolphinProfiles.connectCurrent())
   expect(auth.status).toBe('connected')
 }
 

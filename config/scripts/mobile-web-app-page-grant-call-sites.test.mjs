@@ -124,7 +124,7 @@ describe('the call-site reader', () => {
   })
 
   it('reuses parsed references across rows while observing source and row changes', async () => {
-    const directory = await mkdtemp(join(tmpdir(), 'orca-grant-reader-'))
+    const directory = await mkdtemp(join(tmpdir(), 'dolphin-grant-reader-'))
     const file = join(directory, 'route.tsx')
     const readModule = createGrantCallSiteReader()
     const closure = { local: ['route.tsx'] }

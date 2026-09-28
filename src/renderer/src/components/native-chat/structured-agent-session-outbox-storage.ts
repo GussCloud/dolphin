@@ -6,7 +6,7 @@ import {
 import { createStructuredAgentSessionOperationId } from '../../../../shared/structured-agent-session-mutation'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 
-const OUTBOX_PREFIX = 'orca:desktopStructuredAgentSessionOutbox:v1:'
+const OUTBOX_PREFIX = 'dolphin:desktopStructuredAgentSessionOutbox:v1:'
 
 function storageKey(sessionId: string): string {
   return `${OUTBOX_PREFIX}${encodeURIComponent(sessionId)}`

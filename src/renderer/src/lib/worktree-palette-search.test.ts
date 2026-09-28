@@ -40,8 +40,8 @@ const repoMap = new Map<string, Repo>([
     'repo-1',
     {
       id: 'repo-1',
-      path: '/repo/orca',
-      displayName: 'stablyai/orca',
+      path: '/repo/dolphin',
+      displayName: 'gusscloud/dolphin',
       badgeColor: '#22c55e',
       addedAt: 0
     }
@@ -54,7 +54,7 @@ function gitLabReview(overrides: Partial<HostedReviewInfo> = {}): HostedReviewIn
     number: 17,
     title: 'Reuse checks tab review metadata',
     state: 'open',
-    url: 'https://gitlab.com/acme/orca/-/merge_requests/17',
+    url: 'https://gitlab.com/acme/dolphin/-/merge_requests/17',
     status: 'success',
     updatedAt: '2026-07-12T00:00:00Z',
     mergeable: 'MERGEABLE',
@@ -183,7 +183,7 @@ describe('worktree-palette-search', () => {
       branch: undefined as unknown as string
     })
 
-    expect(() => searchWorktrees([cleared], 'orca/jump', repoMap)).not.toThrow()
+    expect(() => searchWorktrees([cleared], 'dolphin/jump', repoMap)).not.toThrow()
   })
 
   it('still lists a branch-less row on the empty query, which renders every row', () => {
@@ -224,7 +224,7 @@ describe('worktree-palette-search', () => {
       repoMap,
       {
         prCache: {
-          '/repo/orca::feature/palette-refresh': {
+          '/repo/dolphin::feature/palette-refresh': {
             data: { number: 426, title: 'Refresh the worktree quick jump palette' }
           }
         }
@@ -289,7 +289,9 @@ describe('worktree-palette-search', () => {
       [staleWorktree, gitLabReview({ title: 'Current merge request' })]
     ])
     const prCache = {
-      '/repo/orca::feature/palette-refresh': { data: { number: 99, title: 'Stale GitHub title' } }
+      '/repo/dolphin::feature/palette-refresh': {
+        data: { number: 99, title: 'Stale GitHub title' }
+      }
     }
 
     expect(
@@ -303,7 +305,9 @@ describe('worktree-palette-search', () => {
 
   it('does not search stale GitHub metadata while a linked non-GitHub review is loading', () => {
     const prCache = {
-      '/repo/orca::feature/palette-refresh': { data: { number: 99, title: 'Stale GitHub title' } }
+      '/repo/dolphin::feature/palette-refresh': {
+        data: { number: 99, title: 'Stale GitHub title' }
+      }
     }
     const staleWorktree = makeWorktree({
       branch: 'refs/heads/feature/palette-refresh',
@@ -344,7 +348,7 @@ describe('worktree-palette-search', () => {
       provider: 'github',
       number: 42,
       title: 'GitHub pull request',
-      url: 'https://github.com/acme/orca/pull/42'
+      url: 'https://github.com/acme/dolphin/pull/42'
     })
     const gitLabWorktree = makeWorktree()
 
@@ -388,11 +392,9 @@ describe('worktree-palette-search', () => {
     ]
 
     // All three match on the repo name, order preserved from input.
-    expect(searchWorktrees(worktrees, 'orca', repoMap).map((result) => result.worktreeId)).toEqual([
-      'wt-feature',
-      'wt-bugfix',
-      'wt-main'
-    ])
+    expect(
+      searchWorktrees(worktrees, 'dolphin', repoMap).map((result) => result.worktreeId)
+    ).toEqual(['wt-feature', 'wt-bugfix', 'wt-main'])
   })
 
   it('supports "repo/worktree" composite queries and highlights both segments', () => {
@@ -405,12 +407,12 @@ describe('worktree-palette-search', () => {
       })
     ]
 
-    const results = searchWorktrees(worktrees, 'orca/main', repoMap)
+    const results = searchWorktrees(worktrees, 'dolphin/main', repoMap)
 
     expect(results).toHaveLength(1)
     expect(results[0].worktreeId).toBe('wt-main')
     expect(results[0].matchedFields).toEqual(['repo', 'branch'])
-    expect(results[0].repoRanges).toEqual([{ start: 9, end: 13 }])
+    expect(results[0].repoRanges).toEqual([{ start: 10, end: 17 }])
     expect(results[0].branchRanges).toEqual([{ start: 0, end: 4 }])
   })
 
@@ -462,7 +464,7 @@ describe('worktree-palette-search', () => {
         makeWorktree({ id: 'wt-issue', linkedIssue: 14198 }),
         makeWorktree({ id: 'wt-other', linkedIssue: 7, displayName: 'github.com' })
       ],
-      'https://github.com/stablyai/orca/issues/14198',
+      'https://github.com/gusscloud/dolphin/issues/14198',
       repoMap
     )
 
@@ -492,12 +494,12 @@ describe('worktree-palette-search', () => {
             type: 'pr',
             number: 12789,
             title: 'Perf',
-            url: 'https://github.com/stablyai/orca/pull/12789'
+            url: 'https://github.com/gusscloud/dolphin/pull/12789'
           }
         }),
         makeWorktree({ id: 'wt-issue', linkedIssue: 12789 })
       ],
-      'https://github.com/stablyai/orca/pull/12789',
+      'https://github.com/gusscloud/dolphin/pull/12789',
       repoMap
     )
 
@@ -510,11 +512,11 @@ describe('worktree-palette-search', () => {
         makeWorktree({
           id: 'wt-linear',
           linkedLinearIssue: 'STA-4052',
-          linkedLinearIssueOrganizationUrlKey: 'stably'
+          linkedLinearIssueOrganizationUrlKey: 'gusscloud'
         }),
         makeWorktree({ id: 'wt-name', displayName: 'linear.app' })
       ],
-      'https://linear.app/stably/issue/STA-4052/agent-terminals-disappearing-randomly',
+      'https://linear.app/gusscloud/issue/STA-4052/agent-terminals-disappearing-randomly',
       repoMap
     )
 

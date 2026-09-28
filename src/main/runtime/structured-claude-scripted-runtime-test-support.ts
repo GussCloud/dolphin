@@ -11,7 +11,7 @@ import type {
   openClaudeStreamJsonConnection
 } from '../claude/claude-stream-json-connection'
 import { runClaudeControl } from '../claude/claude-agent-sdk-control-requests'
-import { claudeSessionIdForOrcaSession } from '../claude/claude-structured-launch-resolution'
+import { claudeSessionIdForDolphinSession } from '../claude/claude-structured-launch-resolution'
 import type { AgentSessionAttachParams } from '../native-chat/agent-session-wire/structured-agent-session-attach'
 import { hostTestAttachParams } from '../native-chat/agent-session-wire/structured-agent-session-host-test-data'
 import type { StructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-host'
@@ -67,7 +67,7 @@ export function createScriptedClaudeRuntime(sessionIds: readonly string[]) {
   const openConnection: typeof openClaudeStreamJsonConnection = async (launch, handlers = {}) => {
     const providerSessionId = String(launch.options.sessionId ?? launch.options.resume)
     const sessionId = sessionIds.find(
-      (candidate) => claudeSessionIdForOrcaSession(candidate) === providerSessionId
+      (candidate) => claudeSessionIdForDolphinSession(candidate) === providerSessionId
     )
     if (!sessionId) {
       throw new Error(`no scripted Claude session for ${providerSessionId}`)
@@ -203,7 +203,7 @@ export function createScriptedClaudeRuntime(sessionIds: readonly string[]) {
     children: (sessionId: string): ScriptedClaudeChild[] =>
       children.filter((entry) => entry.sessionId === sessionId),
     install: async (): Promise<StructuredAgentSessionHost> => {
-      root = await mkdtemp(join(tmpdir(), 'orca-scripted-claude-runtime-'))
+      root = await mkdtemp(join(tmpdir(), 'dolphin-scripted-claude-runtime-'))
       await mkdir(join(root, 'claude-home'), { recursive: true })
       const directory = root
       return ensureStructuredAgentSessionHost({
@@ -235,7 +235,7 @@ export function createScriptedClaudeRuntime(sessionIds: readonly string[]) {
         accountHome: { variable: 'CLAUDE_CONFIG_DIR', path: join(root ?? '', 'claude-home') },
         providerHandle: {
           kind: 'claude',
-          sessionId: claudeSessionIdForOrcaSession(sessionId),
+          sessionId: claudeSessionIdForDolphinSession(sessionId),
           leafUuid: null
         },
         ...overrides

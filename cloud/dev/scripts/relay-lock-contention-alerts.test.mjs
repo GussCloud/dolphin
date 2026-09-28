@@ -61,7 +61,7 @@ test('the lock-timeout metric counts relay cancels only, never NOWAIT refusals o
   const filter = /filter\s*=\s*"(.*)"$/m.exec(metric)?.[1]
   assert.ok(filter)
   assert.match(filter, /resource\.type=\\"cloudsql_database\\"/)
-  assert.match(filter, /textPayload:\\"db=orca_relay,\\"/)
+  assert.match(filter, /textPayload:\\"db=dolphin_relay,\\"/)
   assert.match(filter, /textPayload:\\"canceling statement due to lock timeout\\"/)
   // Would match the `SET LOCAL lock_timeout` STATEMENT line Postgres logs after every cancel.
   assert.doesNotMatch(filter, /lock_timeout/)
@@ -71,7 +71,7 @@ test('the lock-timeout metric counts relay cancels only, never NOWAIT refusals o
 
 test('the burst policy fires at 20 relay cancels in a minute and pages the relay channel', () => {
   const policy = block('google_monitoring_alert_policy', 'relay_lock_timeout_burst')
-  assert.match(policy, /logging\.googleapis\.com\/user\/orca_relay_cloud_sql_lock_timeouts/)
+  assert.match(policy, /logging\.googleapis\.com\/user\/dolphin_relay_cloud_sql_lock_timeouts/)
   assert.match(policy, /comparison\s*=\s*"COMPARISON_GT"\s*\n\s*threshold_value\s*=\s*19\n/)
   assert.match(policy, /alignment_period\s*=\s*"60s"\s*\n\s*per_series_aligner\s*=\s*"ALIGN_SUM"/)
   for (const name of ['relay_lock_timeout_burst', 'relay_long_cell_inventory_hold']) {

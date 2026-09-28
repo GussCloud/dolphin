@@ -34,7 +34,7 @@ const journals = createTrackedJournalOpener()
 
 beforeEach(async () => {
   _internals.resetCachesForTests()
-  root = await mkdtemp(join(tmpdir(), 'orca-recovered-turn-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-recovered-turn-'))
 })
 
 afterEach(async () => {
@@ -57,7 +57,7 @@ async function sessionWithRunningTurn() {
     journalDir: join(root, SESSION)
   })
   await journal.appendItem(
-    { provider: 'orca', clientMessageId: 'prompt-1' },
+    { provider: 'dolphin', clientMessageId: 'prompt-1' },
     { kind: 'message', role: 'user', blocks: [{ type: 'text', text: 'long job' }] },
     { fence: 1 }
   )

@@ -3,7 +3,7 @@ import { performance } from 'node:perf_hooks'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import pg from 'pg'
-import { RELAY_REGIONS } from '@orca-cloud/relay-contract'
+import { RELAY_REGIONS } from '@dolphin-cloud/relay-contract'
 import {
   emptyPostgresPoolPressureCounts,
   isPostgresPoolConnectFailure,
@@ -976,7 +976,7 @@ const POSTGRES_IDLE_TRANSACTION_TIMEOUT_MS = 5_000
 export function relayPostgresStatementTimeoutMs(
   env: NodeJS.ProcessEnv = process.env
 ): number {
-  const configured = env.ORCA_RELAY_POSTGRES_STATEMENT_TIMEOUT_MS
+  const configured = env.DOLPHIN_RELAY_POSTGRES_STATEMENT_TIMEOUT_MS
   if (configured === undefined || configured === '') return POSTGRES_STATEMENT_TIMEOUT_MS
   const milliseconds = Number(configured)
   // 0 is PostgreSQL's "no timeout"; refusing it keeps the deadline this exists
@@ -1095,7 +1095,7 @@ export class PostgresDatabase implements RelayDatabase {
           if (retryablePostgresTransactionError(error) && options.reportRetries !== false) {
             console.warn(
               JSON.stringify({
-                event: 'orca_relay_postgres_transaction_exhausted',
+                event: 'dolphin_relay_postgres_transaction_exhausted',
                 code: String((error as { code?: unknown }).code),
                 attempts: attempt,
                 phase: postgresTransactionErrorPhase(error)
@@ -1107,7 +1107,7 @@ export class PostgresDatabase implements RelayDatabase {
         if (options.reportRetries !== false) {
           console.warn(
             JSON.stringify({
-              event: 'orca_relay_postgres_transaction_retry',
+              event: 'dolphin_relay_postgres_transaction_retry',
               code: String((error as { code?: unknown }).code),
               attempt,
               phase: postgresTransactionErrorPhase(error)
@@ -1164,7 +1164,7 @@ export function absorbPostgresIdleClientErrors(pool: Pick<pg.Pool, 'on'>): void 
   pool.on('error', () => {
     // Why: node-postgres removes failed idle clients itself; leaving `error`
     // unhandled would crash the cell and turn a SQL outage into autoheal churn.
-    console.warn('[orca-relay] idle PostgreSQL client failed')
+    console.warn('[dolphin-relay] idle PostgreSQL client failed')
   })
 }
 
@@ -1254,7 +1254,7 @@ export async function openRelayDatabase(input: RelayDatabaseOpenInput): Promise<
     database = new PostgresDatabase(pool)
   } else {
     mkdirSync(input.dataDir, { recursive: true })
-    const sqlite = new DatabaseSync(join(input.dataDir, 'orca-relay.sqlite'))
+    const sqlite = new DatabaseSync(join(input.dataDir, 'dolphin-relay.sqlite'))
     sqlite.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;')
     database = new SqliteDatabase(sqlite)
   }

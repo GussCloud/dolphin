@@ -91,8 +91,8 @@ describe('PrivacyPane — isEnvBlocked', () => {
     expect(isEnvBlocked({ effective: 'disabled', reason: 'do_not_track' })).toBe(true)
   })
 
-  it('returns true for ORCA_TELEMETRY_DISABLED', () => {
-    expect(isEnvBlocked({ effective: 'disabled', reason: 'orca_disabled' })).toBe(true)
+  it('returns true for DOLPHIN_TELEMETRY_DISABLED', () => {
+    expect(isEnvBlocked({ effective: 'disabled', reason: 'dolphin_disabled' })).toBe(true)
   })
 
   it('returns true for CI', () => {
@@ -124,8 +124,8 @@ describe('PrivacyPane — envVarNameForReason', () => {
     expect(envVarNameForReason('do_not_track')).toBe('DO_NOT_TRACK')
   })
 
-  it('maps orca_disabled to ORCA_TELEMETRY_DISABLED', () => {
-    expect(envVarNameForReason('orca_disabled')).toBe('ORCA_TELEMETRY_DISABLED')
+  it('maps dolphin_disabled to DOLPHIN_TELEMETRY_DISABLED', () => {
+    expect(envVarNameForReason('dolphin_disabled')).toBe('DOLPHIN_TELEMETRY_DISABLED')
   })
 
   it('maps ci to CI', () => {
@@ -154,9 +154,9 @@ describe('PrivacyPane — computeBlockedReason', () => {
     expect(result).toEqual({ kind: 'env', reason: 'do_not_track' })
   })
 
-  it('names ORCA_TELEMETRY_DISABLED as the env reason when set', () => {
-    const result = computeBlockedReason({ effective: 'disabled', reason: 'orca_disabled' })
-    expect(result).toEqual({ kind: 'env', reason: 'orca_disabled' })
+  it('names DOLPHIN_TELEMETRY_DISABLED as the env reason when set', () => {
+    const result = computeBlockedReason({ effective: 'disabled', reason: 'dolphin_disabled' })
+    expect(result).toEqual({ kind: 'env', reason: 'dolphin_disabled' })
   })
 
   it('names CI as the env reason when set', () => {

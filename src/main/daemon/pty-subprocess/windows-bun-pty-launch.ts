@@ -75,7 +75,7 @@ export function createWindowsBunPtyLaunch(
   if (!existsSync(workerPath)) {
     throw new Error(`Windows PTY gate entry not found: ${workerPath}`)
   }
-  const directory = mkdtempSync(join(tmpdir(), 'orca-bun-pty-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-bun-pty-'))
   const gatePath = join(directory, 'job-assigned')
   const requestPath = join(directory, 'request.json')
   const shellPidPath = join(directory, 'shell.pid')

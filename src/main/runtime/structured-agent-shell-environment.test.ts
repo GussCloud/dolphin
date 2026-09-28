@@ -16,7 +16,7 @@ const shellEnv = {
   UNSET: undefined
 }
 
-const processEnv = { PATH: '/orca/bin', HOME: '/home/me', ORCA_USER_DATA_PATH: '/orca' }
+const processEnv = { PATH: '/dolphin/bin', HOME: '/home/me', DOLPHIN_USER_DATA_PATH: '/dolphin' }
 
 describe('structuredAgentBaseEnvironment', () => {
   it('is the whole shell snapshot, and nothing else, when inheriting all', () => {
@@ -37,7 +37,7 @@ describe('structuredAgentBaseEnvironment', () => {
     })
   })
 
-  it('passes only the baseline and listed shell names over Orca env when off', () => {
+  it('passes only the baseline and listed shell names over Dolphin env when off', () => {
     expect(
       structuredAgentBaseEnvironment({
         shellEnv,
@@ -48,7 +48,7 @@ describe('structuredAgentBaseEnvironment', () => {
     ).toEqual({
       PATH: '/shell/bin',
       HOME: '/home/me',
-      ORCA_USER_DATA_PATH: '/orca',
+      DOLPHIN_USER_DATA_PATH: '/dolphin',
       LANG: 'en_US.UTF-8',
       SSH_AUTH_SOCK: '/tmp/agent.sock',
       CODEX_LB_API_KEY: 'lb-key'
@@ -60,7 +60,7 @@ describe('structuredAgentBaseEnvironment', () => {
       structuredAgentBaseEnvironment({
         shellEnv: { PATH: 'C:\\shell', codex_lb_api_key: 'lb-key' },
         policy: { inheritAll: false, names: ['CODEX_LB_API_KEY'] },
-        processEnv: { Path: 'C:\\orca', USERPROFILE: 'C:\\Users\\me' },
+        processEnv: { Path: 'C:\\dolphin', USERPROFILE: 'C:\\Users\\me' },
         platform: 'win32'
       })
     ).toEqual({ PATH: 'C:\\shell', USERPROFILE: 'C:\\Users\\me', codex_lb_api_key: 'lb-key' })

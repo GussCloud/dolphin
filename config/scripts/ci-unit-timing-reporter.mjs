@@ -20,7 +20,7 @@ export default class UnitTimingReporter {
   }
 
   onTestRunEnd(modules, errors, reason) {
-    writeAssignment(process.env.ORCA_UNIT_TIMING_REPORT ?? 'ci-shards/unit-timings.json', {
+    writeAssignment(process.env.DOLPHIN_UNIT_TIMING_REPORT ?? 'ci-shards/unit-timings.json', {
       metric: 'module-duration-v1',
       nodeVersion: process.versions.node,
       shard: this.ctx.config.shard ?? { index: 1, count: 1 },

@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import type { Page } from '@playwright/test'
+import { expect, test } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,
   getAllWorktreeIds,
@@ -41,7 +41,12 @@ async function closeFeatureTips(page: Page): Promise<void> {
     const store = window.__store
     store
       ?.getState()
-      .markFeatureTipsSeen(['orca-cli', 'cmd-j-palette', 'voice-dictation', 'agent-session-search'])
+      .markFeatureTipsSeen([
+        'dolphin-cli',
+        'cmd-j-palette',
+        'voice-dictation',
+        'agent-session-search'
+      ])
     if (store?.getState().activeModal === 'feature-tips') {
       store.getState().closeModal()
     }
@@ -122,48 +127,46 @@ async function sampleTerminalViewportDuringReturn(
 
 test.describe('Terminal pinned viewport worktree switch', () => {
   test('does not jump or flash when returning to a viewport pinned just above bottom', async ({
-    orcaPage,
+    appPage,
     testRepoPath
   }) => {
-    await waitForSessionReady(orcaPage)
-    await closeFeatureTips(orcaPage)
-    const firstWorktreeId = await waitForActiveWorktree(orcaPage)
-    const secondWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    await waitForSessionReady(appPage)
+    await closeFeatureTips(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'pinned viewport repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
     }
 
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const ptyId = await waitForActivePanePtyId(orcaPage)
-    await waitForPtyShellEcho(orcaPage, ptyId, 15_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const ptyId = await waitForActivePanePtyId(appPage)
+    await waitForPtyShellEcho(appPage, ptyId, 15_000)
     const runId = randomUUID()
-    const scriptPath = path.join(testRepoPath, `.orca-pinned-viewport-${runId}.mjs`)
+    const scriptPath = path.join(testRepoPath, `.dolphin-pinned-viewport-${runId}.mjs`)
     writeFileSync(scriptPath, scrollbackFixtureScript(runId))
 
     try {
-      await sendToTerminal(orcaPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
+      await sendToTerminal(appPage, ptyId, `${nodeTerminalCommand([scriptPath])}\r`)
       await expect
-        .poll(() => getTerminalContent(orcaPage, 30_000), {
+        .poll(() => getTerminalContent(appPage, 30_000), {
           timeout: 10_000,
           message: 'pinned viewport fixture did not reach terminal scrollback'
         })
         .toContain(`PINNED_VIEWPORT_SWITCH_${runId}_DONE`)
 
-      const pinned = await pinActiveTerminalNearBottom(orcaPage)
+      const pinned = await pinActiveTerminalNearBottom(appPage)
       expect(pinned.baseY).toBeGreaterThan(20)
-      await orcaPage.waitForTimeout(50)
-      await switchToWorktree(orcaPage, secondWorktreeId)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
-      await orcaPage.waitForTimeout(250)
+      await appPage.waitForTimeout(50)
+      await switchToWorktree(appPage, secondWorktreeId)
+      await waitForActiveTerminalManager(appPage, 30_000)
+      await appPage.waitForTimeout(250)
 
-      const samplesPromise = sampleTerminalViewportDuringReturn(orcaPage, pinned.tabId, 450)
-      await switchToWorktree(orcaPage, firstWorktreeId)
-      await ensureTerminalVisible(orcaPage)
-      await waitForActiveTerminalManager(orcaPage, 30_000)
+      const samplesPromise = sampleTerminalViewportDuringReturn(appPage, pinned.tabId, 450)
+      await switchToWorktree(appPage, firstWorktreeId)
+      await ensureTerminalVisible(appPage)
+      await waitForActiveTerminalManager(appPage, 30_000)
       const samples = await samplesPromise
       expect(samples.length).toBeGreaterThan(0)
       expect(samples.filter((sample) => sample.viewportY <= 1)).toEqual([])

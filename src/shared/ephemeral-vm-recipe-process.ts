@@ -236,18 +236,18 @@ function buildRecipeEnv(
   return {
     ...process.env,
     ...env,
-    ORCA_VM_MODE: mode,
-    ORCA_VM_INSTANCE_ID: context.instanceId ?? '',
-    ORCA_RECIPE_ID: context.recipeId,
-    ORCA_PROJECT_ID: context.projectId ?? '',
-    ORCA_WORKSPACE_ID: context.workspaceId ?? '',
-    ORCA_WORKSPACE_NAME: context.workspaceName ?? '',
-    ORCA_REPO_PATH: context.repoPath,
-    ORCA_REPO_URL: context.repoUrl ?? '',
-    ORCA_REPO_BRANCH: context.branch ?? '',
-    ORCA_REPO_REF: context.ref ?? '',
-    ORCA_REPO_REF_HEAD: context.expectedRefHead ?? '',
-    ORCA_RECIPE_RESULT_SCHEMA_VERSION: String(resultSchemaVersion),
-    ORCA_VERSION: context.orcaVersion ?? ''
+    DOLPHIN_VM_MODE: mode,
+    DOLPHIN_VM_INSTANCE_ID: context.instanceId ?? '',
+    DOLPHIN_RECIPE_ID: context.recipeId,
+    DOLPHIN_PROJECT_ID: context.projectId ?? '',
+    DOLPHIN_WORKSPACE_ID: context.workspaceId ?? '',
+    DOLPHIN_WORKSPACE_NAME: context.workspaceName ?? '',
+    DOLPHIN_REPO_PATH: context.repoPath,
+    DOLPHIN_REPO_URL: context.repoUrl ?? '',
+    DOLPHIN_REPO_BRANCH: context.branch ?? '',
+    DOLPHIN_REPO_REF: context.ref ?? '',
+    DOLPHIN_REPO_REF_HEAD: context.expectedRefHead ?? '',
+    DOLPHIN_RECIPE_RESULT_SCHEMA_VERSION: String(resultSchemaVersion),
+    DOLPHIN_VERSION: context.dolphinVersion ?? ''
   }
 }

@@ -21,7 +21,7 @@ import { profileStateDatabaseFile } from './profile-state/profile-state-database
 vi.mock('electron', () => ({
   app: {
     getPath: () => tmpdir(),
-    getName: () => 'orca-test',
+    getName: () => 'dolphin-test',
     getVersion: () => '0.0.0-test',
     isPackaged: false,
     on: () => {},
@@ -63,9 +63,9 @@ type MigratedProfile = {
 }
 
 function createProfile(profileId: string, theme: string): MigratedProfile {
-  const directory = mkdtempSync(join(tmpdir(), `orca-profile-state-cutover-${profileId}-`))
+  const directory = mkdtempSync(join(tmpdir(), `dolphin-profile-state-cutover-${profileId}-`))
   temporaryDirectories.push(directory)
-  const dataFile = join(directory, 'orca-data.json')
+  const dataFile = join(directory, 'dolphin-data.json')
   const databaseFile = profileStateDatabaseFile(directory)
   const fixture = buildProfileStateCutoverFixture(directory)
   writeFileSync(

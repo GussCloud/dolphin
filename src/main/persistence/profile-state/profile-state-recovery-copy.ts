@@ -38,7 +38,7 @@ export function copyProfileStateRecoveryFiles(files: readonly RecoveryCopy[]): v
   if (clones.length === 0) {
     return
   }
-  const directory = mkdtempSync(join(dirname(clones[0].target), '.orca-recovery-clone-'))
+  const directory = mkdtempSync(join(dirname(clones[0].target), '.dolphin-recovery-clone-'))
   const temporary = (source: string) =>
     join(directory, clones.length === 1 ? 'copy' : basename(source))
   let cloned = false

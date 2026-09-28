@@ -28,7 +28,7 @@ const roots: string[] = []
 const stores: Store[] = []
 
 beforeAll(async () => {
-  bundleRoot = mkdtempSync(join(tmpdir(), 'orca-live-writer-bundle-'))
+  bundleRoot = mkdtempSync(join(tmpdir(), 'dolphin-live-writer-bundle-'))
   workerOptions = {
     workerPath: join(bundleRoot, 'profile-state-writer-worker-entry.js'),
     backupWorkerPath: join(bundleRoot, 'profile-state-backup-worker-entry.js')
@@ -56,10 +56,10 @@ afterEach(async () => {
 afterAll(() => rmSync(bundleRoot, { recursive: true, force: true }))
 
 function options() {
-  const root = mkdtempSync(join(tmpdir(), 'orca-live-profile-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-live-profile-'))
   roots.push(root)
   return {
-    dataFile: join(root, 'orca-data.json'),
+    dataFile: join(root, 'dolphin-data.json'),
     databaseFile: join(root, 'profile-state.db'),
     profileId: 'live-profile-test'
   }

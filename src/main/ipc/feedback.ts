@@ -43,7 +43,7 @@ type InternalFeedbackSubmitArgs = FeedbackSubmitArgs & {
 }
 
 // Why: the Slack notification and any follow-up investigation need to know
-// which Orca build and which OS the feedback came from. The main process is
+// which Dolphin build and which OS the feedback came from. The main process is
 // the only place with trusted access to these values (app.getVersion and the
 // node os module), so we enrich the payload here rather than trusting the
 // renderer.
@@ -227,7 +227,7 @@ export async function submitFeedback(
     if (res.ok) {
       return { ok: true }
     }
-    // Why: api.onorca.dev serves a different product, so transient failures
+    // Why: api.dolphin.guss.dev.br serves a different product, so transient failures
     // retry the endpoint that owns feedback and crash delivery.
     if (res.status >= 500) {
       return retryFeedbackOnPrimary(body, new Error(`status ${res.status}`))

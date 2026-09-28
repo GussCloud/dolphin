@@ -6,11 +6,11 @@ import { Button } from './ui/button'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
 
-const ORCA_REPO_URL = FORK_REPOSITORY_URL
+const DOLPHIN_REPO_URL = FORK_REPOSITORY_URL
 type StarNagMode = 'gh' | 'web'
 
 /**
- * Persistent "star Orca on GitHub" notification card.
+ * Persistent "star Dolphin on GitHub" notification card.
  *
  * Rendered at the bottom-right of the app (alongside UpdateCard). It is
  * intentionally non-auto-dismissing: the user must either click Star, defer,
@@ -91,7 +91,7 @@ export function StarNagCard(): React.JSX.Element | null {
     }
     const openGithubFallback = async (): Promise<boolean> => {
       try {
-        await window.api.shell.openUrl(ORCA_REPO_URL)
+        await window.api.shell.openUrl(DOLPHIN_REPO_URL)
         await window.api.starNag.openWeb()
         if (mountedRef.current) {
           setVisible(false)
@@ -117,7 +117,7 @@ export function StarNagCard(): React.JSX.Element | null {
     setBusy(true)
     let ok = false
     try {
-      ok = await window.api.starNag.starOrca()
+      ok = await window.api.starNag.starDolphin()
     } catch {
       ok = false
     }

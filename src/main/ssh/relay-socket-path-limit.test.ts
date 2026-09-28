@@ -20,9 +20,9 @@ vi.mock('fs', () => ({
 
 vi.mock('./relay-protocol', () => ({
   RELAY_VERSION: '0.1.0',
-  RELAY_REMOTE_DIR: '.orca-remote',
+  RELAY_REMOTE_DIR: '.dolphin-remote',
   parseUnameToRelayPlatform: vi.fn(() => 'linux-x64'),
-  RELAY_SENTINEL: 'ORCA-RELAY v0.1.0 READY\n',
+  RELAY_SENTINEL: 'DOLPHIN-RELAY v0.1.0 READY\n',
   RELAY_SENTINEL_TIMEOUT_MS: 10_000
 }))
 
@@ -47,7 +47,7 @@ vi.mock('./ssh-relay-endpoint-credential', () => ({
 
 vi.mock('./ssh-relay-versioned-install', () => ({
   readLocalFullVersion: vi.fn().mockReturnValue('0.1.0+8d4e15ad63eb'),
-  computeRemoteRelayDir: (home: string, v: string) => `${home}/.orca-remote/relay-${v}`,
+  computeRemoteRelayDir: (home: string, v: string) => `${home}/.dolphin-remote/relay-${v}`,
   isRelayAlreadyInstalled: vi.fn().mockResolvedValue(true),
   finalizeInstall: vi.fn().mockResolvedValue(undefined),
   abandonInstall: vi.fn().mockResolvedValue(undefined),
@@ -133,9 +133,9 @@ describe('remote unix socket path limit', () => {
     expect(remoteUnixSocketPathByteLimit(LINUX)).toBe(107)
     expect(remoteUnixSocketPathByteLimit(DARWIN)).toBe(103)
     expect(remoteUnixSocketPathByteLimit(WINDOWS)).toBeNull()
-    expect(remoteSocketPathFitsLimit(WINDOWS, `\\\\.\\pipe\\orca-relay-${'a'.repeat(400)}`)).toBe(
-      true
-    )
+    expect(
+      remoteSocketPathFitsLimit(WINDOWS, `\\\\.\\pipe\\dolphin-relay-${'a'.repeat(400)}`)
+    ).toBe(true)
   })
 
   it('measures bytes, not characters', () => {
@@ -150,18 +150,18 @@ describe('remote unix socket path limit', () => {
     const segment = shortRelayVersionSegment(RELAY_VERSION_DIR_NAME)
     expect(
       parseShortRelaySocketDir(
-        `Welcome to Ubuntu\nORCA-RELAY-SHORT-SOCKET-DIR /tmp/.orca-relay-1000/${segment}\n`,
+        `Welcome to Ubuntu\nDOLPHIN-RELAY-SHORT-SOCKET-DIR /tmp/.dolphin-relay-1000/${segment}\n`,
         segment
       )
-    ).toBe(`/tmp/.orca-relay-1000/${segment}`)
+    ).toBe(`/tmp/.dolphin-relay-1000/${segment}`)
     expect(parseShortRelaySocketDir('mkdir: permission denied\n', segment)).toBeNull()
     expect(
-      parseShortRelaySocketDir(`ORCA-RELAY-SHORT-SOCKET-DIR /etc/${segment}\n`, segment)
+      parseShortRelaySocketDir(`DOLPHIN-RELAY-SHORT-SOCKET-DIR /etc/${segment}\n`, segment)
     ).toBeNull()
     // A directory belonging to another build must not be adopted as this build's.
     expect(
       parseShortRelaySocketDir(
-        `ORCA-RELAY-SHORT-SOCKET-DIR /tmp/.orca-relay-1000/${shortRelayVersionSegment('relay-9.9.9+other')}\n`,
+        `DOLPHIN-RELAY-SHORT-SOCKET-DIR /tmp/.dolphin-relay-1000/${shortRelayVersionSegment('relay-9.9.9+other')}\n`,
         segment
       )
     ).toBeNull()
@@ -177,19 +177,19 @@ describe('relay launch with a long remote $HOME', () => {
     const conn = makeMockConnection()
     vi.mocked(execCommand)
       .mockReset()
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
       .mockResolvedValueOnce(LONG_HOME)
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK')
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK')
       .mockResolvedValueOnce('') // launch namespace marker
       .mockResolvedValueOnce(
-        `ORCA-RELAY-SHORT-SOCKET-DIR ${SHORT_RELAY_SOCKET_DIR_PREFIX}1000/${shortRelayVersionSegment(RELAY_VERSION_DIR_NAME)}`
+        `DOLPHIN-RELAY-SHORT-SOCKET-DIR ${SHORT_RELAY_SOCKET_DIR_PREFIX}1000/${shortRelayVersionSegment(RELAY_VERSION_DIR_NAME)}`
       )
       .mockResolvedValueOnce('DEAD')
       .mockResolvedValueOnce('READY')
       .mockResolvedValue('')
 
     // A per-target relay instance id is what pushes the default path past the limit:
-    // 45-byte $HOME + `/.orca-remote/relay-0.1.0+8d4e15ad63eb` + `/relay-<hash16>.sock` = 110 bytes.
+    // 45-byte $HOME + `/.dolphin-remote/relay-0.1.0+8d4e15ad63eb` + `/relay-<hash16>.sock` = 110 bytes.
     const result = await deployAndLaunchRelay(conn, undefined, undefined, 'ssh-target-1')
 
     const sockPath = launchedSockPath(conn)
@@ -200,7 +200,7 @@ describe('relay launch with a long remote $HOME', () => {
     expect(sockPath.startsWith(`${SHORT_RELAY_SOCKET_DIR_PREFIX}1000/`)).toBe(true)
     expect(result.sockPath).toBe(sockPath)
     // The hashed socket name survives intact, so two targets cannot collide -- and the
-    // build's version segment sits above it, so the next Orca release binds a path of
+    // build's version segment sits above it, so the next Dolphin release binds a path of
     // its own instead of the one this relay is still holding.
     expect(sockPath).toBe(
       `${SHORT_RELAY_SOCKET_DIR_PREFIX}1000/${shortRelayVersionSegment(RELAY_VERSION_DIR_NAME)}/${relaySocketNameForInstanceId('ssh-target-1')}`
@@ -214,7 +214,7 @@ describe('relay launch with a long remote $HOME', () => {
     const currentShortSocketDir = `${SHORT_RELAY_SOCKET_DIR_PREFIX}1000/${shortRelayVersionSegment(RELAY_VERSION_DIR_NAME)}`
     const script = supersededRelayEndpointListCommand({
       remoteHome: LONG_HOME,
-      currentRelayDir: `${LONG_HOME}/.orca-remote/${RELAY_VERSION_DIR_NAME}`,
+      currentRelayDir: `${LONG_HOME}/.dolphin-remote/${RELAY_VERSION_DIR_NAME}`,
       sockName: relaySocketNameForInstanceId('ssh-target-1'),
       currentShortSocketDir
     })
@@ -231,9 +231,9 @@ describe('relay launch with a long remote $HOME', () => {
     const conn = makeMockConnection()
     vi.mocked(execCommand)
       .mockReset()
-      .mockResolvedValueOnce('__ORCA_REMOTE_PLATFORM__ Linux x86_64')
+      .mockResolvedValueOnce('__DOLPHIN_REMOTE_PLATFORM__ Linux x86_64')
       .mockResolvedValueOnce('/home/user')
-      .mockResolvedValueOnce('ORCA-NATIVE-DEPS-OK')
+      .mockResolvedValueOnce('DOLPHIN-NATIVE-DEPS-OK')
       .mockResolvedValueOnce('')
       .mockResolvedValueOnce('DEAD')
       .mockResolvedValueOnce('READY')
@@ -242,7 +242,7 @@ describe('relay launch with a long remote $HOME', () => {
     await deployAndLaunchRelay(conn)
 
     expect(launchedSockPath(conn)).toBe(
-      '/home/user/.orca-remote/relay-0.1.0+8d4e15ad63eb/relay.sock'
+      '/home/user/.dolphin-remote/relay-0.1.0+8d4e15ad63eb/relay.sock'
     )
   })
 

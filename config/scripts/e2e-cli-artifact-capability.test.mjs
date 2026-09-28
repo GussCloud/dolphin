@@ -22,7 +22,7 @@ describe('shared E2E CLI capability', () => {
     [true, 0, 0],
     [true, 7, 7]
   ])('supported=%s build status=%s exits=%s', (supported, buildStatus, exitStatus) => {
-    const directory = mkdtempSync(join(tmpdir(), 'orca-e2e-cli-capability-'))
+    const directory = mkdtempSync(join(tmpdir(), 'dolphin-e2e-cli-capability-'))
     const marker = join(directory, 'build-requested')
     try {
       writeFileSync(

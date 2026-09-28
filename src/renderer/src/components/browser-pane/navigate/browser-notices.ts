@@ -66,7 +66,7 @@ export function formatPermissionNotice(event: BrowserPermissionDeniedEvent): str
 
 export function formatPopupNotice(event: BrowserPopupEvent): string | null {
   const target = event.origin === 'unknown' ? 'A site' : event.origin
-  if (event.action === 'opened-in-orca') {
+  if (event.action === 'opened-in-dolphin') {
     return null
   }
   if (event.action === 'opened-external') {

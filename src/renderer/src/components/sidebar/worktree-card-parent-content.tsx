@@ -43,11 +43,11 @@ export function WorktreeCardParentContent({
     handleRenameTitle,
     handleEditIssue,
     handleEditComment,
-    handleOpenGitHubIssueInOrca,
+    handleOpenGitHubIssueInDolphin,
     handleOpenIssueInBrowser,
     linearIssue,
-    handleOpenLinearIssueInOrca,
-    handleOpenReviewInOrca,
+    handleOpenLinearIssueInDolphin,
+    handleOpenReviewInDolphin,
     handleOpenReviewInBrowser,
     handleOpenAutomation,
     handleOpenAutomationRun,
@@ -95,17 +95,19 @@ export function WorktreeCardParentContent({
         onRenameWorkspaceTitle={affiliateListMode ? undefined : handleRenameTitle}
         onEditIssue={affiliateListMode ? undefined : handleEditIssue}
         onEditComment={affiliateListMode ? undefined : handleEditComment}
-        onOpenGitHubIssueInOrca={
+        onOpenGitHubIssueInDolphin={
           hoverIssue && 'url' in hoverIssue && hoverIssue.url
-            ? handleOpenGitHubIssueInOrca
+            ? handleOpenGitHubIssueInDolphin
             : undefined
         }
         onOpenIssueInBrowser={
           hoverIssue && 'url' in hoverIssue && hoverIssue.url ? handleOpenIssueInBrowser : undefined
         }
-        onOpenLinearIssueInOrca={linearIssue?.url ? handleOpenLinearIssueInOrca : undefined}
-        onOpenReviewInOrca={
-          hoverReview?.url && hoverReview.provider === 'github' ? handleOpenReviewInOrca : undefined
+        onOpenLinearIssueInDolphin={linearIssue?.url ? handleOpenLinearIssueInDolphin : undefined}
+        onOpenReviewInDolphin={
+          hoverReview?.url && hoverReview.provider === 'github'
+            ? handleOpenReviewInDolphin
+            : undefined
         }
         onOpenReviewInBrowser={hoverReview?.url ? handleOpenReviewInBrowser : undefined}
         onOpenAutomation={affiliateListMode ? undefined : handleOpenAutomation}

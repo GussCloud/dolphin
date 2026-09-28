@@ -21,7 +21,7 @@ function item(sourceContentType: string): ArtifactListItem {
       byteSize: 1,
       deletedAt: null
     },
-    shareUrl: 'https://share.onorca.dev/a/doc'
+    shareUrl: 'https://share.dolphin.guss.dev.br/a/doc'
   }
 }
 

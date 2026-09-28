@@ -1,7 +1,7 @@
-import type { OrcaProfileAuthStatus } from '../../../../shared/orca-profiles'
+import type { DolphinProfileAuthStatus } from '../../../../shared/dolphin-profiles'
 
 export type UnexpectedSignoutGate = {
-  authStatus: OrcaProfileAuthStatus | null
+  authStatus: DolphinProfileAuthStatus | null
   persistedUIReady: boolean
   appVersion: string | null
   dismissedVersion: string | null

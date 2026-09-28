@@ -66,11 +66,11 @@ async function createStore() {
   // file's temp dir rather than the global fake's shared one, after resetModules.
   installFakeAppEnvironment({ getPath: () => testState.dir })
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 function dataFile(): string {
-  return join(testState.dir, 'orca-data.json')
+  return join(testState.dir, 'dolphin-data.json')
 }
 
 type ProtectedState = {
@@ -140,7 +140,7 @@ async function settleSave(store: Awaited<ReturnType<typeof createStore>>): Promi
 
 describe('protected persistence when safeStorage fails', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-safe-storage-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-safe-storage-test-'))
     cipherState.availability = 'available'
     cipherState.encryptionThrows = false
     cipherState.decryptionThrows = false

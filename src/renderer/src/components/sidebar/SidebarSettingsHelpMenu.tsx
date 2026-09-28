@@ -56,7 +56,7 @@ const DOCS_URL = FORK_WEB_URLS.docs
 const CHANGELOG_URL = FORK_RELEASES_URL
 const GITHUB_URL = FORK_REPOSITORY_URL
 const DISCORD_URL = 'https://discord.gg/fzjDKHxv8Q'
-const X_URL = 'https://x.com/orca_build'
+const X_URL = 'https://x.com/dolphin_build'
 const NO_UPDATE_CHECK_MODIFIERS = {
   altKey: false,
   ctrlKey: false,
@@ -114,7 +114,7 @@ export function SidebarSettingsHelpMenu(): React.JSX.Element {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   // Why sticky: the dialog animates itself closed off `open`, so unmounting on close cuts that short.
   const [feedbackDialogMounted, setFeedbackDialogMounted] = useState(false)
-  const [isRestartingOrca, setIsRestartingOrca] = useState(false)
+  const [isRestartingDolphin, setIsRestartingDolphin] = useState(false)
   const lastShowOnboardingAtRef = React.useRef(0)
   const updateCheckModifiersRef = React.useRef(NO_UPDATE_CHECK_MODIFIERS)
   const mountedRef = useMountedRef()
@@ -147,17 +147,17 @@ export function SidebarSettingsHelpMenu(): React.JSX.Element {
     void showOnboardingFromRenderer()
   }
 
-  const handleRestartOrca = (): void => {
-    if (isRestartingOrca) {
+  const handleRestartDolphin = (): void => {
+    if (isRestartingDolphin) {
       return
     }
-    setIsRestartingOrca(true)
+    setIsRestartingDolphin(true)
     toast.info(
       translate('auto.components.sidebar.SidebarSettingsHelpMenu.5161eef55d', 'Restarting Dolphin…')
     )
     void window.api.app.restart().catch((error) => {
       if (mountedRef.current) {
-        setIsRestartingOrca(false)
+        setIsRestartingDolphin(false)
         toast.error(
           translate(
             'auto.components.sidebar.SidebarSettingsHelpMenu.4e8f5710d3',
@@ -349,7 +349,7 @@ export function SidebarSettingsHelpMenu(): React.JSX.Element {
               )}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={handleRestartOrca} disabled={isRestartingOrca}>
+            <DropdownMenuItem onSelect={handleRestartDolphin} disabled={isRestartingDolphin}>
               <RotateCw className="size-3.5" />
               {translate(
                 'auto.components.sidebar.SidebarSettingsHelpMenu.ad3d3ed7f1',

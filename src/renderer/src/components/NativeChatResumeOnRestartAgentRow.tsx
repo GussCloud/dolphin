@@ -25,7 +25,7 @@ import { resumeActivityLabel } from './native-chat-resume-activity-label'
  * presuppose a live pane, `interrupted` renders red like an error, `done` green, `working` a
  * spinner. A missing dot beats a dot that says these agents are running.
  *
- * Under the name, what the chat was doing when Orca went away — mid-reply, waiting on the user,
+ * Under the name, what the chat was doing when Dolphin went away — mid-reply, waiting on the user,
  * subagents or monitoring — so rows the sidebar showed as working for different reasons differ.
  *
  * A chat an earlier resume could not carry on is the same row — selectable where a retry can run,

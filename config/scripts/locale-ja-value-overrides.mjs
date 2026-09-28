@@ -371,7 +371,8 @@ const JA_AUDIT_OVERRIDES = {
   'This QR code grants limited (mobile) access. To use the full web app, open the browser access link from Settings → Runtime Environments → Share this Dolphin server → New Link.':
     'この QR コードでは、モバイル向けの制限付きアクセスのみ利用できます。完全版の Web アプリを使用するには、[設定] → [リモート Dolphin サーバー] → [この Dolphin サーバーを共有する] → [新規リンク] から、ブラウザ用アクセスリンクを開いてください。',
   'Loading skills...': 'スキルを読み込み中…',
-  'Start agents on your tasks without leaving Dolphin': 'Dolphin から離れずに、タスクから Agent を開始',
+  'Start agents on your tasks without leaving Dolphin':
+    'Dolphin から離れずに、タスクから Agent を開始',
   'Workspace created from {{value0}}, but Dolphin could not fast-forward local {{value1}} because {{value2}}':
     'ワークスペースは {{value0}} から作成されましたが、{{value2}} のため Dolphin はローカル {{value1}} を fast-forward できませんでした',
   'Terminal, browser, or editor rendering failed in this workspace. Retry to remount it.':
@@ -385,7 +386,8 @@ const JA_AUDIT_OVERRIDES = {
     '[プロジェクトの追加] から、選択したホスト上のパスを入力します。',
   'Use repo-relative paths like packages/web or apps/api.':
     'packages/web や apps/api などのリポジトリ相対パスを使用します。',
-  'orca.yaml first, then your local commands.': 'まず orca.yaml、次にローカルのコマンドの順です。',
+  'dolphin.yaml first, then your local commands.':
+    'まず dolphin.yaml、次にローカルのコマンドの順です。',
   'Rename Dolphin-created branches from the initial agent task.':
     'Dolphin が作成したブランチの名前を、最初の Agent タスクに基づいて変更します。',
   'Dim files matched by .gitignore in the file explorer.':

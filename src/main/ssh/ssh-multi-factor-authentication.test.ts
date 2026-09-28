@@ -149,7 +149,7 @@ function makeResolved(port: number, identityFile: string[]): SshResolvedConfig {
 }
 
 /** Drives ssh2 the way SshConnection does: one credential per keyboard-interactive prompt. */
-function connectWithOrcaConfig(
+function connectWithDolphinConfig(
   target: SshTarget,
   resolved: SshResolvedConfig | null,
   password: string | undefined,
@@ -189,7 +189,7 @@ describe('multi-stage SSH authentication', () => {
   let homeEnv: { HOME?: string; USERPROFILE?: string }
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'orca-mfa-'))
+    tempDir = mkdtempSync(join(tmpdir(), 'dolphin-mfa-'))
     // Why: the cases below pass `resolved: null`, so `resolvePrivateKeys` falls through to
     // `findDefaultKeyFile`, which reads `~/.ssh/id_*` through `homedir()`. On a developer
     // machine that picks up a real key, and an encrypted one makes ssh2 reject with
@@ -221,7 +221,7 @@ describe('multi-stage SSH authentication', () => {
   it('answers a keyboard-interactive stage that follows a password partial success', async () => {
     const server = await startMultiFactorServer(['password', 'keyboard-interactive'])
     try {
-      const { ready, prompts } = connectWithOrcaConfig(makeTarget(server.port), null, PASSWORD, [
+      const { ready, prompts } = connectWithDolphinConfig(makeTarget(server.port), null, PASSWORD, [
         PASSCODE
       ])
 
@@ -235,10 +235,12 @@ describe('multi-stage SSH authentication', () => {
   it('answers a second keyboard-interactive stage after the first partially succeeds', async () => {
     const server = await startMultiFactorServer(['keyboard-interactive', 'keyboard-interactive'])
     try {
-      const { ready, prompts } = connectWithOrcaConfig(makeTarget(server.port), null, undefined, [
-        PASSCODE,
-        PASSCODE
-      ])
+      const { ready, prompts } = connectWithDolphinConfig(
+        makeTarget(server.port),
+        null,
+        undefined,
+        [PASSCODE, PASSCODE]
+      )
 
       await expect(ready).resolves.toBeUndefined()
       expect(prompts).toEqual(['Duo passcode:', 'Duo passcode:'])
@@ -251,7 +253,7 @@ describe('multi-stage SSH authentication', () => {
     const server = await startMultiFactorServer(['password', 'keyboard-interactive'])
     try {
       const target = makeTarget(server.port, { source: 'ssh-config', configHost: 'hpc' })
-      const { ready } = connectWithOrcaConfig(
+      const { ready } = connectWithDolphinConfig(
         target,
         makeResolved(server.port, keyPaths),
         PASSWORD,

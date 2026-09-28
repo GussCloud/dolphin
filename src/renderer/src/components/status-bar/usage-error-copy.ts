@@ -74,7 +74,7 @@ function getDelegatedCliRefreshProvider(
     return null
   }
   // Why: only these providers require a user-run CLI to rotate the read-only
-  // session Orca consumes; Claude handles the same failure kind in-app.
+  // session Dolphin consumes; Claude handles the same failure kind in-app.
   return p.provider === 'grok' || p.provider === 'kimi' ? p.provider : null
 }
 
@@ -121,7 +121,7 @@ export function getProviderUsageStatusLabel(p: ProviderRateLimits): string {
     return translate('auto.components.status.bar.tooltip.minimax.expired.label', 'Sign-in expired')
   }
   // Why: cursor-agent owns its own token rotation, so a lapsed Cursor session is
-  // fixed by signing in to the CLI, not by Orca retrying the fetch.
+  // fixed by signing in to the CLI, not by Dolphin retrying the fetch.
   if (p.provider === 'cursor' && p.usageMetadata?.failureKind === 'stale-token') {
     return translate('auto.components.status.bar.tooltip.cursor.expired.label', 'Sign-in expired')
   }

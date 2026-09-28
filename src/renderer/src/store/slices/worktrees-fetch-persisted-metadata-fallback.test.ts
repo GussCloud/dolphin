@@ -53,16 +53,16 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-ssh',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
       connectionId: 'ssh-1'
     }
     const queued = makeWorktree({
-      id: 'repo-ssh::/home/orca/queued',
+      id: 'repo-ssh::/home/dolphin/queued',
       repoId: 'repo-ssh',
-      path: '/home/orca/queued',
+      path: '/home/dolphin/queued',
       displayName: 'queued'
     })
     const detected = makeDetectedResult('repo-ssh', [queued], {
@@ -107,25 +107,25 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-ssh',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
       connectionId: 'ssh-1'
     }
     const existing = makeWorktree({
-      id: 'repo-ssh::/home/orca/existing',
+      id: 'repo-ssh::/home/dolphin/existing',
       repoId: 'repo-ssh',
-      path: '/home/orca/existing',
+      path: '/home/dolphin/existing',
       hostId: 'ssh:ssh-1',
       head: 'live-head',
       branch: 'refs/heads/live-branch'
     })
     const metadataExisting = { ...existing, head: '', branch: '' }
     const queued = makeWorktree({
-      id: 'repo-ssh::/home/orca/queued',
+      id: 'repo-ssh::/home/dolphin/queued',
       repoId: 'repo-ssh',
-      path: '/home/orca/queued'
+      path: '/home/dolphin/queued'
     })
     listKnownForExecutionHostMock.mockResolvedValueOnce({
       status: 'complete',
@@ -154,7 +154,7 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-shared',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
@@ -162,9 +162,9 @@ describe('fetchWorktrees', () => {
     }
     const localRepo = { ...sshRepo, path: '/local/repo', connectionId: undefined }
     const sshExisting = makeWorktree({
-      id: 'repo-shared::/home/orca/existing',
+      id: 'repo-shared::/home/dolphin/existing',
       repoId: sshRepo.id,
-      path: '/home/orca/existing',
+      path: '/home/dolphin/existing',
       hostId: 'ssh:ssh-1'
     })
     const localExisting = makeWorktree({
@@ -174,9 +174,9 @@ describe('fetchWorktrees', () => {
       hostId: LOCAL_EXECUTION_HOST_ID
     })
     const queued = makeWorktree({
-      id: 'repo-shared::/home/orca/queued',
+      id: 'repo-shared::/home/dolphin/queued',
       repoId: sshRepo.id,
-      path: '/home/orca/queued'
+      path: '/home/dolphin/queued'
     })
     listKnownForExecutionHostMock.mockResolvedValueOnce({
       status: 'complete',
@@ -206,23 +206,23 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-ssh',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
       connectionId: 'ssh-1'
     }
     const live = makeWorktree({
-      id: 'repo-ssh::/home/orca/live',
+      id: 'repo-ssh::/home/dolphin/live',
       repoId: 'repo-ssh',
-      path: '/home/orca/live',
+      path: '/home/dolphin/live',
       hostId: 'ssh:ssh-1'
     })
     // Why: deleted on the host, so an authoritative scan already purged it; the late metadata write must not resurrect it.
     const purged = makeWorktree({
-      id: 'repo-ssh::/home/orca/purged',
+      id: 'repo-ssh::/home/dolphin/purged',
       repoId: 'repo-ssh',
-      path: '/home/orca/purged'
+      path: '/home/dolphin/purged'
     })
     listKnownForExecutionHostMock.mockImplementationOnce(async (args) => {
       store.setState({
@@ -265,22 +265,22 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-ssh',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
       connectionId: 'ssh-1'
     }
     const live = makeWorktree({
-      id: 'repo-ssh::/home/orca/live',
+      id: 'repo-ssh::/home/dolphin/live',
       repoId: 'repo-ssh',
-      path: '/home/orca/live',
+      path: '/home/dolphin/live',
       hostId: 'ssh:ssh-1'
     })
     const stale = makeWorktree({
-      id: 'repo-ssh::/home/orca/stale',
+      id: 'repo-ssh::/home/dolphin/stale',
       repoId: 'repo-ssh',
-      path: '/home/orca/stale'
+      path: '/home/dolphin/stale'
     })
     listKnownForExecutionHostMock.mockResolvedValueOnce({
       status: 'complete',
@@ -310,7 +310,7 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-shared',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
@@ -323,9 +323,9 @@ describe('fetchWorktrees', () => {
       path: '/local/scanned'
     })
     const fromMetadata = makeWorktree({
-      id: 'repo-shared::/home/orca/queued',
+      id: 'repo-shared::/home/dolphin/queued',
       repoId: sshRepo.id,
-      path: '/home/orca/queued'
+      path: '/home/dolphin/queued'
     })
     const authoritative = makeDetectedResult(sshRepo.id, [scanned])
     listKnownForExecutionHostMock.mockResolvedValueOnce({
@@ -359,22 +359,22 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-ssh',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
       connectionId: 'ssh-1'
     }
     const live = makeWorktree({
-      id: 'repo-ssh::/home/orca/live',
+      id: 'repo-ssh::/home/dolphin/live',
       repoId: 'repo-ssh',
-      path: '/home/orca/live',
+      path: '/home/dolphin/live',
       hostId: 'ssh:ssh-1'
     })
     const deletedOnRemote = makeWorktree({
-      id: 'repo-ssh::/home/orca/deleted',
+      id: 'repo-ssh::/home/dolphin/deleted',
       repoId: 'repo-ssh',
-      path: '/home/orca/deleted'
+      path: '/home/dolphin/deleted'
     })
     const metadataResult = () => ({
       status: 'complete' as const,
@@ -412,22 +412,22 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-ssh',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
       connectionId: 'ssh-1'
     }
     const live = makeWorktree({
-      id: 'repo-ssh::/home/orca/live',
+      id: 'repo-ssh::/home/dolphin/live',
       repoId: 'repo-ssh',
-      path: '/home/orca/live',
+      path: '/home/dolphin/live',
       hostId: 'ssh:ssh-1'
     })
     const deletedOnRemote = makeWorktree({
-      id: 'repo-ssh::/home/orca/deleted',
+      id: 'repo-ssh::/home/dolphin/deleted',
       repoId: 'repo-ssh',
-      path: '/home/orca/deleted'
+      path: '/home/dolphin/deleted'
     })
     const connectedStates = createTestStore().getState().sshConnectionStates
     listKnownForExecutionHostMock.mockResolvedValueOnce({
@@ -493,7 +493,7 @@ describe('fetchWorktrees', () => {
     const store = createTestStore()
     const sshRepo = {
       id: 'repo-ssh',
-      path: '/home/orca/repo',
+      path: '/home/dolphin/repo',
       displayName: 'SSH Repo',
       badgeColor: '#000',
       addedAt: 0,
@@ -517,16 +517,16 @@ describe('fetchWorktrees', () => {
   it('keeps worktree maps byte-identical for stale and malformed direct results', async () => {
     const store = createTestStore()
     const existing = makeWorktree({
-      id: 'repo-ssh::/home/orca/existing',
+      id: 'repo-ssh::/home/dolphin/existing',
       repoId: 'repo-ssh',
-      path: '/home/orca/existing',
+      path: '/home/dolphin/existing',
       hostId: 'ssh:ssh-1'
     })
     store.setState({
       repos: [
         {
           id: 'repo-ssh',
-          path: '/home/orca/repo',
+          path: '/home/dolphin/repo',
           displayName: 'SSH Repo',
           badgeColor: '#000',
           addedAt: 0,
@@ -583,9 +583,9 @@ describe('fetchWorktrees', () => {
         request,
         makeDetectedResult('repo-ssh', [
           makeWorktree({
-            id: 'repo-ssh::/home/orca/stale',
+            id: 'repo-ssh::/home/dolphin/stale',
             repoId: 'repo-ssh',
-            path: '/home/orca/stale'
+            path: '/home/dolphin/stale'
           })
         ])
       )

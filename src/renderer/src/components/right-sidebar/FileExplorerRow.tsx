@@ -40,7 +40,7 @@ export type FileExplorerRowProps = {
   resolveDragSourceHostId?: (paths: readonly string[]) => ExecutionHostId | null
   runtimeDownloadContext?: RuntimeFileOperationArgs | null
   supportsFolderDownload?: boolean
-  canOpenInOrcaBrowser: boolean
+  canOpenInDolphinBrowser: boolean
   canCollapseFolderSubtree: boolean
   targetDir: string
   targetDepth: number
@@ -83,7 +83,7 @@ export function FileExplorerRow({
   resolveDragSourceHostId,
   runtimeDownloadContext,
   supportsFolderDownload = false,
-  canOpenInOrcaBrowser,
+  canOpenInDolphinBrowser,
   canCollapseFolderSubtree,
   targetDir,
   targetDepth,
@@ -268,7 +268,7 @@ export function FileExplorerRow({
         connectionId={connectionId}
         runtimeDownloadContext={runtimeDownloadContext}
         supportsFolderDownload={supportsFolderDownload}
-        canOpenInOrcaBrowser={canOpenInOrcaBrowser}
+        canOpenInDolphinBrowser={canOpenInDolphinBrowser}
         canCollapseFolderSubtree={canCollapseFolderSubtree}
         targetDir={targetDir}
         targetDepth={targetDepth}

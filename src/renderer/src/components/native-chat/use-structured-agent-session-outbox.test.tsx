@@ -453,7 +453,7 @@ describe('useStructuredAgentSessionOutbox', () => {
   it('drains a head the host refuses to redeliver so the queue behind it advances', async () => {
     // The guard refuses a retry it cannot prove is a first delivery. That must
     // not leave a Retry that does nothing in front of a wedged queue: the entry
-    // leaves the outbox, the user is told Orca will not send it again, and the
+    // leaves the outbox, the user is told Dolphin will not send it again, and the
     // message queued behind it goes out.
     // The second send never settles, so the refusal's error is still on screen
     // when the queue behind it advances.
@@ -499,7 +499,7 @@ describe('useStructuredAgentSessionOutbox', () => {
     )
     expect(sent).toContain('second')
     expect(result.current.error).toBe(
-      'Message delivery is unconfirmed and Orca will not send it again'
+      'Message delivery is unconfirmed and Dolphin will not send it again'
     )
   })
 

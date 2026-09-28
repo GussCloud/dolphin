@@ -2,14 +2,14 @@
 
 A provider inventory started before a process exit can finish afterward and reconnect the exited runtime record. If a replacement was admitted under the same ID, the old response can also overwrite its incarnation, invalidate its terminal handle, and clear its pane binding.
 
-This is a separate source-level explanation for stale terminal ownership such as [#19018](https://github.com/stablyai/orca/issues/19018). The proof does not establish the cause of [#19768](https://github.com/stablyai/orca/issues/19768) or [#19831](https://github.com/stablyai/orca/issues/19831), or measure their reported memory growth.
+This is a separate source-level explanation for stale terminal ownership such as [#19018](https://github.com/GussCloud/dolphin/issues/19018). The proof does not establish the cause of [#19768](https://github.com/GussCloud/dolphin/issues/19768) or [#19831](https://github.com/GussCloud/dolphin/issues/19831), or measure their reported memory growth.
 
 ## Reproduce
 
 From a checkout with dependencies installed:
 
 ```sh
-ORCA_BACKGROUND_LAUNCH=1 node docs/audits/stale-pty-inventory/reproduce.mjs
+DOLPHIN_BACKGROUND_LAUNCH=1 node docs/audits/stale-pty-inventory/reproduce.mjs
 ```
 
 The script runs the actual runtime inventory, registration, spawn, and exit methods with deferred provider responses. It uses temporary Vitest configuration to reverse only `fix.patch` for the baseline, leaves checkout files untouched, and removes its temporary files. It launches no app, enumerates no real processes, and installs nothing. Node subprocesses use the repository's portable `runProcess` implementation.

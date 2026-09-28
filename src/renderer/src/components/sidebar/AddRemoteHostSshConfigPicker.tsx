@@ -25,7 +25,7 @@ export function AddRemoteHostSshConfigPicker({
   onQueryChange,
   onRetry,
   onBack,
-  onAddAllToOrca
+  onAddAllToDolphin
 }: {
   hosts: SshConfigHostSummary[]
   totalHostCount: number
@@ -40,7 +40,7 @@ export function AddRemoteHostSshConfigPicker({
   onQueryChange: (query: string) => void
   onRetry: () => void
   onBack: () => void
-  onAddAllToOrca: () => void
+  onAddAllToDolphin: () => void
 }): React.JSX.Element {
   const [query, setQuery] = useState('')
   const queryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -164,7 +164,7 @@ export function AddRemoteHostSshConfigPicker({
               <li key={host.alias}>
                 <button
                   type="button"
-                  disabled={picksDisabled || host.alreadyInOrca}
+                  disabled={picksDisabled || host.alreadyInDolphin}
                   className={cn(
                     'flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left',
                     'hover:bg-accent focus-visible:bg-accent focus-visible:outline-none',
@@ -192,13 +192,13 @@ export function AddRemoteHostSshConfigPicker({
                         'Reading…'
                       )}
                     </span>
-                  ) : host.alreadyInOrca ? (
+                  ) : host.alreadyInDolphin ? (
                     <Badge
                       variant="outline"
                       className="mt-0.5 shrink-0 border-emerald-500/40 text-[10.5px] text-emerald-400"
                     >
                       {translate(
-                        'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerInOrca',
+                        'auto.components.sidebar.AddRemoteHostDialog.sshConfigPickerInDolphin',
                         'In Dolphin'
                       )}
                     </Badge>
@@ -235,7 +235,7 @@ export function AddRemoteHostSshConfigPicker({
           type="button"
           variant="secondary"
           disabled={!canAddAll}
-          onClick={onAddAllToOrca}
+          onClick={onAddAllToDolphin}
           className="w-full sm:w-auto"
         >
           {isBulkImporting
@@ -249,7 +249,7 @@ export function AddRemoteHostSshConfigPicker({
                   'Add all {{value0}} to Dolphin',
                   { value0: newHostCount }
                 )
-              : // Why: the remainder can be already-in-Orca or merely tombstoned, so the
+              : // Why: the remainder can be already-in-Dolphin or merely tombstoned, so the
                 // label cannot claim either one specifically.
                 totalHostCount > 0
                 ? translate(

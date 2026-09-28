@@ -40,7 +40,7 @@ function refreshCommandForHost(host: string | null | undefined): string {
 // macOS/Linux vs PowerShell on Windows.
 const IS_WINDOWS = typeof navigator !== 'undefined' && /Win(dows|32|64)/i.test(navigator.userAgent)
 
-export function reloadOrcaRenderer(): void {
+export function reloadDolphinRenderer(): void {
   void window.api.app.reload().catch((error) => {
     console.error(
       '[github-projects] Renderer reload refused:',
@@ -71,7 +71,7 @@ function findEnvVarCommand(varName: string): { label: string; command: string } 
 function unsetEnvVarCommand(varName: string): { label: string; command: string } {
   if (IS_WINDOWS) {
     // Persistent removal at the user scope; the user still needs a fresh
-    // shell/Orca relaunch for the change to take effect.
+    // shell/Dolphin relaunch for the change to take effect.
     return {
       label: translate(
         'auto.components.github.project.GhAuthErrorHelp.fd17b3019f',
@@ -203,7 +203,7 @@ export function buildRemediation(
 
   // gh is not the problem, but the Electron process inherited GITHUB_TOKEN
   // from the parent shell. Even after the user runs `gh auth refresh` in a
-  // separate terminal, Orca's gh subprocess sees the env var and uses it.
+  // separate terminal, Dolphin's gh subprocess sees the env var and uses it.
   if (diag.envTokenInProcess && (!active || diag.missingScopes.length > 0)) {
     const varName = diag.envTokenInProcess
     return {
@@ -335,7 +335,7 @@ export function GhAuthErrorHelp({
               reload the renderer to pick up the new gh token state. */}
           <button
             type="button"
-            onClick={reloadOrcaRenderer}
+            onClick={reloadDolphinRenderer}
             className="inline-flex items-center gap-1 rounded border border-amber-500/30 px-1.5 py-0.5 text-[11px] hover:bg-amber-500/20"
           >
             <RotateCw className="size-3" />{' '}
@@ -370,7 +370,7 @@ export function GhAuthErrorHelp({
         ) : null}
         {/* Why: after running the refresh command in a terminal, users need to
             reload the renderer to pick up the new gh token state. */}
-        <Button size="sm" variant="outline" onClick={reloadOrcaRenderer}>
+        <Button size="sm" variant="outline" onClick={reloadDolphinRenderer}>
           <RotateCw className="mr-1 size-3.5" />{' '}
           {translate('auto.components.github.project.GhAuthErrorHelp.7e800068d8', 'Reload')}
         </Button>

@@ -1,8 +1,8 @@
 /** Shared plumbing for paired-desktop terminal specs: the headed host owns the terminal, the
  *  paired client mirrors it as a web-terminal surface tab. Extracted so more than one spec can
  *  drive the same topology without re-deriving the surface-id mapping. */
-import type { Page } from '@stablyai/playwright-test'
-import { expect } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 import {
   HOST_TERMINAL_SURFACE_SEPARATOR,
   toWebTerminalSurfaceTabId

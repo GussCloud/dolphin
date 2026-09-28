@@ -20,7 +20,7 @@ function prune(label: string, run: () => Promise<PushPruneSweep>, intervalMs: nu
   function tick(): void {
     // Admission waits are untimed, so a lost slot release would otherwise stall retention silently.
     overdue = setTimeout(() => {
-      console.warn(JSON.stringify({ event: 'orca_push_prune_overdue', target: label }))
+      console.warn(JSON.stringify({ event: 'dolphin_push_prune_overdue', target: label }))
     }, intervalMs)
     overdue.unref()
     void run()
@@ -28,7 +28,7 @@ function prune(label: string, run: () => Promise<PushPruneSweep>, intervalMs: nu
       .catch((error: unknown) => {
         console.warn(
           JSON.stringify({
-            event: 'orca_push_prune_failed',
+            event: 'dolphin_push_prune_failed',
             target: label,
             error: error instanceof Error ? error.name : 'unknown'
           })

@@ -29,7 +29,7 @@ afterEach(async () => {
 })
 
 async function openJournal(name: string): Promise<AgentSessionJournal> {
-  root ??= await mkdtemp(join(tmpdir(), 'orca-conversations-'))
+  root ??= await mkdtemp(join(tmpdir(), 'dolphin-conversations-'))
   return journals.open({ identity: IDENTITY, journalDir: join(root, name) })
 }
 
@@ -46,7 +46,7 @@ function session(journal: AgentSessionJournal) {
 
 function appendStatus(journal: AgentSessionJournal, text: string) {
   return journal.appendItem(
-    { provider: 'orca', clientMessageId: text },
+    { provider: 'dolphin', clientMessageId: text },
     { kind: 'status', text },
     { fence: 0 }
   )

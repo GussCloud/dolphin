@@ -36,7 +36,7 @@ const BASE_LOCALE_KEY_OVERRIDES = {
     zh: '打开工作树面板',
     ja: 'ワークツリーパレットを開く'
   },
-  'menu.exploreOrca': { ko: 'Dolphin 둘러보기', zh: '探索 Dolphin', ja: 'Dolphin を探索' },
+  'menu.exploreDolphin': { ko: 'Dolphin 둘러보기', zh: '探索 Dolphin', ja: 'Dolphin を探索' },
   'worktreeJumpPalette.matchLabel.issue': { ko: '이슈', zh: '议题', ja: 'Issue' },
   'worktreeJumpPalette.matchLabel.comment': { ko: '댓글', zh: '评论', ja: 'コメント' },
   // Bare "Run" is an automation run, not jogging; MT renders the sports sense (zh 跑步).

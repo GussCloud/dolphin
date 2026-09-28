@@ -58,7 +58,7 @@ describe('updateHostNameAndEndpoint', () => {
   function writtenHosts(): unknown {
     expect(AsyncStorage.setItem).toHaveBeenCalledTimes(1)
     const [key, value] = vi.mocked(AsyncStorage.setItem).mock.calls[0]!
-    expect(key).toBe('orca:hosts')
+    expect(key).toBe('dolphin:hosts')
     return JSON.parse(value)
   }
 
@@ -114,18 +114,18 @@ describe('updateHostNameAndEndpoint', () => {
 })
 
 describe('relay routing after a host edit', () => {
-  const OVERLAY_KEY = 'orca:mobile-relay:host-overlays:v2'
+  const OVERLAY_KEY = 'dolphin:mobile-relay:host-overlays:v2'
   const OLD_ENDPOINT = 'ws://192.168.1.10:6768'
   const NEW_ENDPOINT = 'ws://192.168.1.20:6768'
   const relay = {
     v: 1 as const,
-    directorUrl: 'https://relay.onorca.dev',
-    cellUrl: 'https://relay-c1.onorca.dev',
+    directorUrl: 'https://relay.dolphin.guss.dev.br',
+    cellUrl: 'https://relay-c1.dolphin.guss.dev.br',
     assignmentEpoch: 7,
     relayHostId: 'AbCdEf0123_-xyZ9',
     e2eeFraming: 2 as const
   }
-  const moved = { ...relay, cellUrl: 'https://relay-c2.onorca.dev', assignmentEpoch: 8 }
+  const moved = { ...relay, cellUrl: 'https://relay-c2.dolphin.guss.dev.br', assignmentEpoch: 8 }
   const storage = new Map<string, string>()
 
   function writesTo(key: string): unknown[] {
@@ -137,7 +137,7 @@ describe('relay routing after a host edit', () => {
     resetMobileRelayHostOverlayStoreForTests()
     storage.clear()
     storage.set(
-      'orca:hosts',
+      'dolphin:hosts',
       JSON.stringify([
         { id: 'host-1', name: 'Desk', endpoint: OLD_ENDPOINT, publicKeyB64: 'pk', lastConnected: 1 }
       ])
@@ -151,7 +151,11 @@ describe('relay routing after a host edit', () => {
           hostId: 'host-1',
           endpoints: [
             { id: 'direct-primary', kind: 'lan', url: OLD_ENDPOINT },
-            { id: 'relay-primary', kind: 'relay', url: 'wss://relay-c1.onorca.dev/v1/connect/id' }
+            {
+              id: 'relay-primary',
+              kind: 'relay',
+              url: 'wss://relay-c1.dolphin.guss.dev.br/v1/connect/id'
+            }
           ],
           relayHostId: relay.relayHostId,
           relay
@@ -186,11 +190,11 @@ describe('relay routing after a host edit', () => {
 
   it('keeps an edited endpoint and the device token when relay routing is learned later', async () => {
     await updateHostNameAndEndpoint('host-1', { personalName: 'Renamed', endpoint: NEW_ENDPOINT })
-    const hostsAfterEdit = storage.get('orca:hosts')
+    const hostsAfterEdit = storage.get('dolphin:hosts')
 
     await setRelayRouting('host-1', moved)
 
-    expect(storage.get('orca:hosts')).toBe(hostsAfterEdit)
+    expect(storage.get('dolphin:hosts')).toBe(hostsAfterEdit)
     expect(SecureStore.setItemAsync).not.toHaveBeenCalled()
     const [host] = await loadHosts()
     expect(host).toMatchObject({ name: 'Renamed', endpoint: NEW_ENDPOINT, relay: moved })
@@ -207,7 +211,7 @@ describe('relay routing after a host edit', () => {
   })
 
   it('refuses to write routing for a removed host and leaves no overlay behind', async () => {
-    storage.set('orca:hosts', '[]')
+    storage.set('dolphin:hosts', '[]')
     storage.set(OVERLAY_KEY, '[]')
 
     await expect(setRelayRouting('host-1', relay)).rejects.toBeInstanceOf(
@@ -215,7 +219,7 @@ describe('relay routing after a host edit', () => {
     )
 
     expect(writesTo(OVERLAY_KEY)).toEqual([])
-    expect(writesTo('orca:hosts')).toEqual([])
+    expect(writesTo('dolphin:hosts')).toEqual([])
     await expect(loadHosts()).resolves.toEqual([])
   })
 })

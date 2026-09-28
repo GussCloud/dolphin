@@ -107,14 +107,14 @@ const hash = (parts: string[] | string): string =>
 // moves. The render-token stream gains the four tokens that one attribute is, 35,203 -> 35,207.
 // Nothing else in the family moves.
 
-const SCREEN_RPC_SCREEN_HOOKS = '0f66df2141117dfec2f8a0adb3f598312e6fda8e80833a365a645796f5ab48c3'
+const SCREEN_RPC_SCREEN_HOOKS = 'ba21beaab61fcbc64120d5d7c473cf43618dc6f4392303ef017bfd3632bbd0fe'
 const PRE_REFACTOR_DIFF_HOOKS = '93c7189b32bed8456cc51814fffa8ce80cf62011ef968a9d53ddec2b9686f58f'
-const SCREEN_RPC_STATEMENTS = 'dd8f33cb3cf96f5c39abac397cb77e35f59079291033a1866ead462b041ab979'
+const SCREEN_RPC_STATEMENTS = '83a1540e483f1e0df5f6049a05099e8316366539c1b56a0377767c64e1eab961'
 // Saved Linear selections now accept unknown persisted values; reconciliation tests cover them.
-const MAIN_REBASED_DECLARATIONS = 'ec77d34712c7c4ab19ac6a4d57878f32d22aba790d2420cc14c2c0f000d120e9'
-const SCREEN_RPC_SEMANTICS = 'e07a63387d57106483ee703ec6c19dea593e0eca5c651758f42bcb36254850b7'
+const MAIN_REBASED_DECLARATIONS = '3ccaca473a103a345dd876869d9ddc11c45e975b7775a3f2e058446352f937ff'
+const SCREEN_RPC_SEMANTICS = '620b00bf52e4bc29367ef7e74261ab243c36346127b3e2619ea6d3b8b14ab055'
 const PRE_REFACTOR_STYLES = '1db6af69c791d9963928541ad5310942fcbda6d984b422c90b6eb92b6816579a'
-const SCREEN_RPC_RENDER_TREE = '086742f95f1e87fb89d8c67ffd9f7a229799ae05115f9f4bcc1a925e56dcc8bb'
+const SCREEN_RPC_RENDER_TREE = '48335b47b43e7f7d930cc08d967af0c019a2ae86d94924c0c65fe2bf4ba50081'
 
 describe('Mobile Tasks refactor parity', () => {
   it('preserves recursively flattened hook and dependency order', () => {

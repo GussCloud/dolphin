@@ -9,7 +9,7 @@ import { isWslUncPath } from '../../shared/wsl-paths'
 import { walkSessionFiles } from '../ai-vault/session-scanner-discovery'
 import { OMP_SESSION_ARTIFACT_DIR_PATTERN } from '../ai-vault/session-scanner-omp-subagent-transcripts'
 import { resolveOmpSessionsDir } from '../ai-vault/omp-session-root'
-import { resolveOrcaManagedCodexHomePath } from '../codex/codex-home-paths'
+import { resolveDolphinManagedCodexHomePath } from '../codex/codex-home-paths'
 import {
   findGrokChatHistoryBySessionId,
   resolveGrokSessionsDir
@@ -43,18 +43,18 @@ function claudeProjectsDirs(): string[] {
   return candidates.filter((dir, index) => candidates.indexOf(dir) === index)
 }
 
-// Why: Orca launches Codex with ORCA_CODEX_HOME pointing at its own managed
-// runtime home, so Orca-started Codex rollout files land under
+// Why: Dolphin launches Codex with DOLPHIN_CODEX_HOME pointing at its own managed
+// runtime home, so Dolphin-started Codex rollout files land under
 // `<managed home>/sessions`, NOT `~/.codex/sessions`. Search the managed home
 // first (that's where this main process's Codex sessions actually live), then
-// fall back to CODEX_HOME/~/.codex so a non-Orca Codex transcript still resolves.
+// fall back to CODEX_HOME/~/.codex so a non-Dolphin Codex transcript still resolves.
 // Duplicates are filtered so a managed-home symlink to ~/.codex isn't scanned twice.
 // WSL roots are a separate lazy tier — see resolveCodexSessionFile.
-// Why: resolveOrcaManagedCodexHomePath avoids the mkdirSync performed by the
+// Why: resolveDolphinManagedCodexHomePath avoids the mkdirSync performed by the
 // getter; creating the runtime home belongs to launch, not this resolve poll.
 function codexSessionsDirs(): string[] {
   const candidates = [
-    join(resolveOrcaManagedCodexHomePath(), 'sessions'),
+    join(resolveDolphinManagedCodexHomePath(), 'sessions'),
     join(process.env.CODEX_HOME?.trim() || join(homedir(), '.codex'), 'sessions')
   ]
   return candidates.filter((dir, index) => candidates.indexOf(dir) === index)
@@ -68,7 +68,7 @@ export type ResolveSessionFileOptions = {
   /** Override the Claude projects root (used by tests / isolated scans). */
   claudeProjectsDir?: string
   /** Override the Codex sessions roots, searched in order (tests / isolated
-   *  scans). Defaults to the orca-managed home then CODEX_HOME/~/.codex. */
+   *  scans). Defaults to the dolphin-managed home then CODEX_HOME/~/.codex. */
   codexSessionsDirs?: string[]
   /** Override the Grok sessions root (`~/.grok/sessions`). */
   grokSessionsDir?: string

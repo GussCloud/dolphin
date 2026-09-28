@@ -1,5 +1,5 @@
-import type { ElectronApplication } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import type { ElectronApplication } from '@playwright/test'
+import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import {
   expectTerminalAccessibilityText,
@@ -19,9 +19,9 @@ import {
   type DockerSshRelayTarget
 } from './helpers/docker-ssh-relay-target'
 import { connectDockerSshRelayTarget } from './helpers/docker-ssh-relay-connection'
-import { createRestartSession } from './helpers/orca-restart'
+import { createRestartSession } from './helpers/dolphin-restart'
 
-const RUN_DOCKER_SSH = process.env.ORCA_E2E_SSH_DOCKER === '1'
+const RUN_DOCKER_SSH = process.env.DOLPHIN_E2E_SSH_DOCKER === '1'
 const TAB_COUNT = 6
 
 test.use({ seedTestRepo: false })
@@ -35,28 +35,28 @@ function readRemoteProof(target: DockerSshRelayTarget, path: string): string | n
 }
 
 test.describe('SSH cold activation restore', () => {
-  test.skip(!RUN_DOCKER_SSH, 'Set ORCA_E2E_SSH_DOCKER=1 to run Docker-backed SSH tests.')
+  test.skip(!RUN_DOCKER_SSH, 'Set DOLPHIN_E2E_SSH_DOCKER=1 to run Docker-backed SSH tests.')
   test.skip(process.platform === 'win32', 'Docker SSH restore uses POSIX SSH tooling.')
 
   test('eagerly remounts every restored remote terminal after renderer reload', async ({
-    orcaPage
+    appPage
   }, testInfo) => {
     test.setTimeout(240_000)
     let target: DockerSshRelayTarget | null = null
     try {
       target = startDockerSshRelayTarget(testInfo)
-      await waitForSessionReady(orcaPage)
-      const remote = await connectDockerSshRelayTarget(orcaPage, target)
+      await waitForSessionReady(appPage)
+      const remote = await connectDockerSshRelayTarget(appPage, target)
       await expect
-        .poll(() => waitForActiveWorktree(orcaPage), { timeout: 30_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 30_000 })
         .toBe(remote.worktreeId)
-      await waitForActiveTerminalManager(orcaPage, 60_000)
-      await waitForActivePanePtyId(orcaPage, 60_000)
+      await waitForActiveTerminalManager(appPage, 60_000)
+      await waitForActivePanePtyId(appPage, 60_000)
 
-      while ((await readRemoteTerminalTabs(orcaPage, remote.worktreeId)).length < TAB_COUNT) {
-        await createRemoteTerminalTab(orcaPage, remote.worktreeId)
+      while ((await readRemoteTerminalTabs(appPage, remote.worktreeId)).length < TAB_COUNT) {
+        await createRemoteTerminalTab(appPage, remote.worktreeId)
       }
-      const beforeReload = await readRemoteTerminalTabs(orcaPage, remote.worktreeId)
+      const beforeReload = await readRemoteTerminalTabs(appPage, remote.worktreeId)
       expect(beforeReload).toHaveLength(TAB_COUNT)
       expect(new Set(beforeReload.map((tab) => tab.ptyId)).size).toBe(TAB_COUNT)
       expect(beforeReload.every((tab) => tab.ptyId !== null)).toBe(true)
@@ -64,7 +64,7 @@ test.describe('SSH cold activation restore', () => {
       await expect
         .poll(
           () =>
-            orcaPage.evaluate(
+            appPage.evaluate(
               async ({ targetId, worktreePath }) => {
                 const snapshot = await window.api.remoteWorkspace.get({ targetId })
                 return (
@@ -80,11 +80,11 @@ test.describe('SSH cold activation restore', () => {
         )
         .toEqual(beforeReload.map((tab) => tab.id))
 
-      await orcaPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
+      await appPage.evaluate(() => window.dispatchEvent(new Event('beforeunload')))
       await expect
         .poll(
           () =>
-            orcaPage.evaluate(
+            appPage.evaluate(
               async ({ targetId, worktreeId, expectedTabIds }) => {
                 // Why both partitions: an SSH worktree's session lives in `ssh:<targetId>`, and
                 // only globals like `activeConnectionIdsAtShutdown` stay in `local`. Reading
@@ -115,15 +115,15 @@ test.describe('SSH cold activation restore', () => {
         )
         .toBe(true)
 
-      await orcaPage.reload()
-      await waitForSessionReady(orcaPage, 60_000)
+      await appPage.reload()
+      await waitForSessionReady(appPage, 60_000)
       await expect
-        .poll(() => waitForActiveWorktree(orcaPage), { timeout: 60_000 })
+        .poll(() => waitForActiveWorktree(appPage), { timeout: 60_000 })
         .toBe(remote.worktreeId)
       await expect
         .poll(
           () =>
-            orcaPage.evaluate(
+            appPage.evaluate(
               (targetId) => window.__store?.getState().sshConnectionStates.get(targetId)?.status,
               remote.targetId
             ),
@@ -135,7 +135,7 @@ test.describe('SSH cold activation restore', () => {
       await expect
         .poll(
           () =>
-            orcaPage.evaluate(
+            appPage.evaluate(
               (ids) => ids.filter((tabId) => window.__paneManagers?.has(tabId)).sort(),
               expectedTabIds
             ),
@@ -143,13 +143,13 @@ test.describe('SSH cold activation restore', () => {
         )
         .toEqual(expectedTabIds)
       expect(
-        await orcaPage.evaluate(
+        await appPage.evaluate(
           (ids) =>
             ids.filter((tabId) => window.__terminalParkingDebug?.parkedTabIds().includes(tabId)),
           expectedTabIds
         )
       ).toEqual([])
-      const afterReload = await readRemoteTerminalTabs(orcaPage, remote.worktreeId)
+      const afterReload = await readRemoteTerminalTabs(appPage, remote.worktreeId)
       expect(afterReload.map((tab) => tab.id).sort()).toEqual(expectedTabIds)
       expect(afterReload.map((tab) => tab.ptyId).sort()).toEqual(
         beforeReload.map((tab) => tab.ptyId).sort()
@@ -171,8 +171,8 @@ test.describe('SSH cold activation restore', () => {
       // pointerup and suppressed past a drag threshold (tab-strip-pointer-activation.ts), so this
       // has to be a real down/up pair at one position; a synthetic click event would not select.
       // The retry asserts on the store, so a press that lands wrong is retried rather than believed.
-      const tabStrip = orcaPage.locator('.terminal-tab-strip').first()
-      const firstTab = orcaPage.getByRole('button', { name: /^Terminal 1 Close tab Terminal 1/ })
+      const tabStrip = appPage.locator('.terminal-tab-strip').first()
+      const firstTab = appPage.getByRole('button', { name: /^Terminal 1 Close tab Terminal 1/ })
       await expect
         .poll(
           async () => {
@@ -183,10 +183,10 @@ test.describe('SSH cold activation restore', () => {
             if (!box) {
               return null
             }
-            await orcaPage.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-            await orcaPage.mouse.down()
-            await orcaPage.mouse.up()
-            return orcaPage.evaluate(() => window.__store?.getState().activeTabId ?? null)
+            await appPage.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+            await appPage.mouse.down()
+            await appPage.mouse.up()
+            return appPage.evaluate(() => window.__store?.getState().activeTabId ?? null)
           },
           {
             timeout: 30_000,
@@ -195,11 +195,11 @@ test.describe('SSH cold activation restore', () => {
         )
         .toBe(firstTabId)
       const marker = `SSH_RESTORE_OK_${Date.now()}`
-      const proofFile = '/tmp/orca-ssh-restore-proof'
-      await focusActiveTerminalInput(orcaPage)
-      await orcaPage.keyboard.type(`printf '${marker}' > ${proofFile} && printf '${marker}\\n'`)
-      await orcaPage.keyboard.press('Enter')
-      await expectTerminalAccessibilityText(orcaPage, firstTabId, marker)
+      const proofFile = '/tmp/dolphin-ssh-restore-proof'
+      await focusActiveTerminalInput(appPage)
+      await appPage.keyboard.type(`printf '${marker}' > ${proofFile} && printf '${marker}\\n'`)
+      await appPage.keyboard.press('Enter')
+      await expectTerminalAccessibilityText(appPage, firstTabId, marker)
       expect(execDockerSshRelayTargetCommand(target, `cat ${proofFile}`)).toBe(marker)
     } finally {
       cleanupDockerSshRelayTarget(target)
@@ -225,12 +225,12 @@ test.describe('SSH cold activation restore', () => {
       await waitForActiveTerminalManager(firstLaunch.page, 60_000)
       const firstPtyId = await waitForActivePanePtyId(firstLaunch.page, 60_000)
       const token = `SSH_PROCESS_RESTART_${Date.now()}`
-      const beforeProofPath = `/tmp/orca-ssh-restart-before-${Date.now()}`
-      const afterProofPath = `/tmp/orca-ssh-restart-after-${Date.now()}`
+      const beforeProofPath = `/tmp/dolphin-ssh-restart-before-${Date.now()}`
+      const afterProofPath = `/tmp/dolphin-ssh-restart-after-${Date.now()}`
 
       await focusActiveTerminalInput(firstLaunch.page)
       await firstLaunch.page.keyboard.type(
-        `export ORCA_RESTART_TOKEN=${token}; cd /tmp; (while :; do sleep 60; done) & export ORCA_BG_PID=$!; printf '%s|%s|%s|%s\\n' "$$" "$ORCA_BG_PID" "$ORCA_RESTART_TOKEN" "$PWD" > ${beforeProofPath}`
+        `export DOLPHIN_RESTART_TOKEN=${token}; cd /tmp; (while :; do sleep 60; done) & export DOLPHIN_BG_PID=$!; printf '%s|%s|%s|%s\\n' "$$" "$DOLPHIN_BG_PID" "$DOLPHIN_RESTART_TOKEN" "$PWD" > ${beforeProofPath}`
       )
       await firstLaunch.page.keyboard.press('Enter')
       await expect.poll(() => readRemoteProof(target!, beforeProofPath)).not.toBeNull()
@@ -282,7 +282,7 @@ test.describe('SSH cold activation restore', () => {
       const restoredMarker = `SSH_OWNER_RESTORED_${Date.now()}`
       await focusActiveTerminalInput(secondLaunch.page)
       await secondLaunch.page.keyboard.type(
-        `printf '%s|%s|%s|%s\\n' "$$" "$ORCA_BG_PID" "$ORCA_RESTART_TOKEN" "$PWD" > ${afterProofPath}; printf '${restoredMarker}\\n'`
+        `printf '%s|%s|%s|%s\\n' "$$" "$DOLPHIN_BG_PID" "$DOLPHIN_RESTART_TOKEN" "$PWD" > ${afterProofPath}; printf '${restoredMarker}\\n'`
       )
       await secondLaunch.page.keyboard.press('Enter')
       await expectTerminalAccessibilityText(secondLaunch.page, restoredTabId, restoredMarker)

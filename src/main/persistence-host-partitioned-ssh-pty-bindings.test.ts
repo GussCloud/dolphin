@@ -42,7 +42,7 @@ vi.mock('./telemetry/cohort-classifier', () => ({
 
 describe('Store SSH remote PTY bindings across host partitions', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-test-'))
   })
 
   afterEach(async () => {

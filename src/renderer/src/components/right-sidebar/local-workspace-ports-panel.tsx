@@ -10,7 +10,7 @@ import {
   openWorkspacePortInBrowser,
   publishWorkspacePortScanForHost,
   refreshWorkspacePortScanAfterStop,
-  resolvePortOpenInOrcaBrowser,
+  resolvePortOpenInDolphinBrowser,
   scanWorkspacePortsForTarget,
   workspacePortRuntimeTargetKey
 } from '@/lib/workspace-port-actions'
@@ -149,7 +149,7 @@ export function LocalWorkspacePortsPanel({ isVisible }: { isVisible: boolean }):
         runtimeTarget,
         createBrowserTab,
         setRemoteBrowserPageHandle,
-        openInOrcaBrowser: resolvePortOpenInOrcaBrowser({
+        openInDolphinBrowser: resolvePortOpenInDolphinBrowser({
           settings,
           event,
           isMac: navigator.userAgent.includes('Mac')

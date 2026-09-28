@@ -10,29 +10,29 @@ import {
   type BrowserRouteElectronSession
 } from './browser-route-session-registry'
 
-const orcaProfileId = 'orca/profile:alpha'
+const dolphinProfileId = 'dolphin/profile:alpha'
 const browserProfileId = 'default'
 const storageScope = 'e'.repeat(64)
 const identity = {
-  orcaProfileId,
+  dolphinProfileId,
   browserProfileId,
   authorityConnectionIdentity: 'paired-runtime:durable-authority',
-  executionHostIdentity: '["orca-browser-execution-host-storage",1,"authority","env-a"]'
+  executionHostIdentity: '["dolphin-browser-execution-host-storage",1,"authority","env-a"]'
 }
 
 /** Identity an older build derived, embedding the remote's per-process runtimeId. */
 function legacyIdentityFor(runtimeId: string): typeof identity {
   return {
-    orcaProfileId,
+    dolphinProfileId,
     browserProfileId,
     authorityConnectionIdentity: `paired-runtime:authority-with-${runtimeId}`,
-    executionHostIdentity: `["orca-browser-execution-host-storage",1,"native","${runtimeId}"]`
+    executionHostIdentity: `["dolphin-browser-execution-host-storage",1,"native","${runtimeId}"]`
   }
 }
 
 function createStorePath(): string {
   return join(
-    realpathSync(mkdtempSync(join(realpathSync(tmpdir()), 'orca-browser-partition-migration-'))),
+    realpathSync(mkdtempSync(join(realpathSync(tmpdir()), 'dolphin-browser-partition-migration-'))),
     'bindings.json'
   )
 }

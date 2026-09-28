@@ -1,27 +1,27 @@
 import { mkdtempSync, mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
-import { createRestartSession } from './helpers/orca-restart'
+import { createRestartSession } from './helpers/dolphin-restart'
 
 test.use({ seedTestRepo: false })
 
 for (const theme of ['dark', 'light'] as const) {
   test(`Resource Manager names folder workspaces and their groups (${theme})`, async ({
-    orcaPage,
+    appPage,
     registerPostElectronShutdownCleanup
   }, testInfo) => {
-    const root = mkdtempSync(join(tmpdir(), 'orca-resource-folders-'))
+    const root = mkdtempSync(join(tmpdir(), 'dolphin-resource-folders-'))
     registerPostElectronShutdownCleanup(async () => rmSync(root, { recursive: true, force: true }))
     const folders = ['Release notes', 'Customer research'].map((name) => {
       const folderPath = join(root, name)
       mkdirSync(folderPath)
       return { name, folderPath }
     })
-    await waitForSessionReady(orcaPage)
-    await orcaPage.setViewportSize({ width: 1200, height: 900 })
-    await orcaPage.evaluate(
+    await waitForSessionReady(appPage)
+    await appPage.setViewportSize({ width: 1200, height: 900 })
+    await appPage.evaluate(
       async ({ theme, folders }) => {
         const state = window.__store!.getState()
         await state.updateSettingsOrThrow({ theme })
@@ -55,12 +55,12 @@ for (const theme of ['dark', 'light'] as const) {
       { theme, folders }
     )
 
-    await orcaPage.getByRole('button', { name: /^Resource Manager,/ }).click()
-    const popover = orcaPage.getByRole('dialog')
+    await appPage.getByRole('button', { name: /^Resource Manager,/ }).click()
+    const popover = appPage.getByRole('dialog')
     await expect(popover.getByText('Resource Manager', { exact: true })).toBeVisible()
     await expect(popover.getByRole('button', { name: /^Resume workspace/ })).toHaveCount(2)
     const screenshot = testInfo.outputPath(`resource-manager-folders-${theme}.png`)
-    await orcaPage.screenshot({ path: screenshot, animations: 'disabled' })
+    await appPage.screenshot({ path: screenshot, animations: 'disabled' })
     await testInfo.attach(`resource-manager-folders-${theme}`, {
       path: screenshot,
       contentType: 'image/png'
@@ -79,7 +79,7 @@ for (const theme of ['dark', 'light'] as const) {
 
 test('names a folder terminal recovered from the daemon after restart without an open tab', async (// oxlint-disable-next-line no-empty-pattern -- Playwright requires destructuring to request no fixtures.
 {}, testInfo) => {
-  const root = mkdtempSync(join(tmpdir(), 'orca-recovered-folder-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-recovered-folder-'))
   const session = createRestartSession(testInfo)
   let launched: Awaited<ReturnType<typeof session.launch>> | undefined
   try {

@@ -1,4 +1,4 @@
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import type { Locator, Page } from '@playwright/test'
 
@@ -36,7 +36,7 @@ async function seedUntrackedFile(
     }
 
     const separator = worktree.path.includes('\\') ? '\\' : '/'
-    const fileName = requestedFileName ?? `orca-discard-confirm-${Date.now()}.txt`
+    const fileName = requestedFileName ?? `dolphin-discard-confirm-${Date.now()}.txt`
     const relativePath = fileName
     await window.api.fs.writeFile({
       filePath: `${worktree.path}${separator}${relativePath}`,
@@ -129,42 +129,42 @@ async function expectDeleteDialogLayout(page: Page, fileName: string): Promise<v
 }
 
 test.describe('Source Control discard confirmation', () => {
-  test.beforeEach(async ({ orcaPage }) => {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
+  test.beforeEach(async ({ appPage }) => {
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
   })
 
   test('keeps long untracked-file confirmation usable and deletes on confirm', async ({
-    orcaPage
+    appPage
   }) => {
     const seededFile = await seedUntrackedFile(
-      orcaPage,
-      `orca-discard-confirm-${'x'.repeat(96)}.txt`
+      appPage,
+      `dolphin-discard-confirm-${'x'.repeat(96)}.txt`
     )
-    await openSourceControl(orcaPage)
+    await openSourceControl(appPage)
 
-    const row = orcaPage
+    const row = appPage
       .locator('[data-testid="source-control-entry"]')
       .filter({ hasText: seededFile.fileName })
     await expect(row).toBeVisible()
 
     await deleteUntrackedFileFromRow(row)
-    await expectDeleteDialogLayout(orcaPage, seededFile.fileName)
+    await expectDeleteDialogLayout(appPage, seededFile.fileName)
 
-    await orcaPage.getByRole('button', { name: 'Cancel' }).click()
+    await appPage.getByRole('button', { name: 'Cancel' }).click()
     await expect(row).toBeVisible()
 
     await deleteUntrackedFileFromRow(row)
-    await confirmPendingDelete(orcaPage)
+    await confirmPendingDelete(appPage)
 
     await expect(
-      orcaPage.getByRole('dialog', { name: `Delete "${seededFile.fileName}"?` })
+      appPage.getByRole('dialog', { name: `Delete "${seededFile.fileName}"?` })
     ).toHaveCount(0)
     await expect(row).toHaveCount(0, { timeout: 10_000 })
 
-    await refreshGitStatus(orcaPage)
+    await refreshGitStatus(appPage)
     await expect(
-      orcaPage.locator('[data-testid="source-control-entry"]').filter({
+      appPage.locator('[data-testid="source-control-entry"]').filter({
         hasText: seededFile.fileName
       })
     ).toHaveCount(0)

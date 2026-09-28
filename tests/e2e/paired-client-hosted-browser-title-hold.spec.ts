@@ -1,7 +1,7 @@
 import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Page, TestInfo } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import type { Page, TestInfo } from '@playwright/test'
+import { expect, test } from './helpers/dolphin-app'
 import {
   createRuntimeDesktopPairingOffer,
   launchPairedElectronClient,
@@ -326,13 +326,13 @@ async function run(args: {
 }
 
 test('holds the guest title through host republishes of a client-hosted page', async ({
-  orcaPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(300_000)
-  await waitForSessionReady(orcaPage)
-  await waitForActiveWorktree(orcaPage)
-  await ensureTerminalVisible(orcaPage)
-  const offer = await createRuntimeDesktopPairingOffer(orcaPage)
+  await waitForSessionReady(appPage)
+  await waitForActiveWorktree(appPage)
+  await ensureTerminalVisible(appPage)
+  const offer = await createRuntimeDesktopPairingOffer(appPage)
   await run({ offer, repoPath: testRepoPath, testInfo })
 })

@@ -128,10 +128,10 @@ describe('registerWorktreeHandlers', () => {
         branch: 'improve-dashboard'
       }),
       setup: {
-        runnerScriptPath: '/workspace/repo/.git/orca/setup-runner.sh',
+        runnerScriptPath: '/workspace/repo/.git/dolphin/setup-runner.sh',
         envVars: {
-          ORCA_ROOT_PATH: '/workspace/repo',
-          ORCA_WORKTREE_PATH: '/workspace/improve-dashboard'
+          DOLPHIN_ROOT_PATH: '/workspace/repo',
+          DOLPHIN_WORKTREE_PATH: '/workspace/improve-dashboard'
         }
       }
     })
@@ -146,8 +146,8 @@ describe('registerWorktreeHandlers', () => {
     )
   })
 
-  it('launches setup even when primary and worktree orca.yaml scripts diverge', async () => {
-    // Why: benign orca.yaml divergence must not disable setup (regression from #1280 content-equality gate); repo trust already gates execution.
+  it('launches setup even when primary and worktree dolphin.yaml scripts diverge', async () => {
+    // Why: benign dolphin.yaml divergence must not disable setup (regression from #1280 content-equality gate); repo trust already gates execution.
     listWorktreesMock.mockResolvedValue(createdWorktreeList)
     getEffectiveHooksMock.mockImplementation((_repo, worktreePath?: string) => ({
       scripts: {
@@ -178,7 +178,7 @@ describe('registerWorktreeHandlers', () => {
     expect(result).toEqual(
       expect.objectContaining({
         setup: expect.objectContaining({
-          runnerScriptPath: '/workspace/repo/.git/orca/setup-runner.sh'
+          runnerScriptPath: '/workspace/repo/.git/dolphin/setup-runner.sh'
         })
       })
     )

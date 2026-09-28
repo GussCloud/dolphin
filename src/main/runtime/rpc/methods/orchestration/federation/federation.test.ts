@@ -4,7 +4,7 @@ import {
   ORCHESTRATION_CONTRACT_VERSION,
   ORCHESTRATION_FEDERATION_CONTROL_MAIL_RUNTIME_CAPABILITY
 } from '../../../../../../shared/protocol-version'
-import { OrcaRuntimeService } from '../../../../orca-runtime'
+import { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { OrchestrationDb } from '../../../../orchestration/db'
 import type { OrchestrationEnvironmentTransport } from '../../../../orchestration/environment-transport'
 import { RpcDispatcher } from '../../../dispatcher'
@@ -18,8 +18,8 @@ describe('orchestration federation', () => {
   const databases: OrchestrationDb[] = []
   let homeDb: OrchestrationDb
   let workerDb: OrchestrationDb
-  let homeRuntime: OrcaRuntimeService
-  let workerRuntime: OrcaRuntimeService
+  let homeRuntime: DolphinRuntimeService
+  let workerRuntime: DolphinRuntimeService
   let homeDispatcher: RpcDispatcher
   let workerDispatcher: RpcDispatcher
   let workerCapabilities: string[]
@@ -30,7 +30,7 @@ describe('orchestration federation', () => {
     homeDb = new OrchestrationDb(':memory:')
     workerDb = new OrchestrationDb(':memory:')
     databases.push(homeDb, workerDb)
-    workerRuntime = new OrcaRuntimeService()
+    workerRuntime = new DolphinRuntimeService()
     workerRuntime.setOrchestrationDb(workerDb)
     workerDispatcher = new RpcDispatcher({
       runtime: workerRuntime,
@@ -71,7 +71,7 @@ describe('orchestration federation', () => {
         return response
       }
     }
-    homeRuntime = new OrcaRuntimeService(null, undefined, {
+    homeRuntime = new DolphinRuntimeService(null, undefined, {
       orchestrationEnvironmentTransport: transport
     })
     homeRuntime.setOrchestrationDb(homeDb)
@@ -102,7 +102,7 @@ describe('orchestration federation', () => {
   }
 
   function restartWorkerRuntime(): void {
-    workerRuntime = new OrcaRuntimeService()
+    workerRuntime = new DolphinRuntimeService()
     workerRuntime.setOrchestrationDb(workerDb)
     configureFederationWorkerRuntime(workerRuntime)
     workerDispatcher = new RpcDispatcher({

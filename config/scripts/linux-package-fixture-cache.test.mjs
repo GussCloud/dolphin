@@ -19,7 +19,7 @@ afterEach(() => {
 })
 
 function exercise({ hit = false, save = false, loadFails = false, inspectFails = false } = {}) {
-  directory = mkdtempSync(join(tmpdir(), 'orca-package-cache-'))
+  directory = mkdtempSync(join(tmpdir(), 'dolphin-package-cache-'))
   const bin = join(directory, 'bin')
   mkdirSync(bin)
   const commandLog = join(directory, 'commands')
@@ -43,7 +43,7 @@ function exercise({ hit = false, save = false, loadFails = false, inspectFails =
     args: ['-c', load.run],
     env: {
       ...process.env,
-      ORCA_BACKGROUND_LAUNCH: '1',
+      DOLPHIN_BACKGROUND_LAUNCH: '1',
       PATH: `${bin}${delimiter}${process.env.PATH ?? ''}`,
       RUNNER_TEMP: directory,
       GITHUB_OUTPUT: output,
@@ -77,7 +77,7 @@ describe.runIf(process.platform !== 'win32')('fixture cache fallbacks', () => {
 
   it('returns the local image tag after a successful load', () => {
     const result = exercise({ hit: true })
-    expect(result.output).toBe('image=orca-package-fixture-cli-launch-contract:cache\n')
+    expect(result.output).toBe('image=dolphin-package-fixture-cli-launch-contract:cache\n')
     expect(result.commands).not.toMatch(/(?:build|save) /)
   })
 
@@ -90,7 +90,9 @@ describe.runIf(process.platform !== 'win32')('fixture cache fallbacks', () => {
       '--file config/docker/cli-launch-contract/Dockerfile config/docker/cli-launch-contract'
     )
     expect(result.commands).toContain('save --output')
-    expect(result.output).toBe('image=orca-package-fixture-cli-launch-contract:cache\nbuilt=true\n')
+    expect(result.output).toBe(
+      'image=dolphin-package-fixture-cli-launch-contract:cache\nbuilt=true\n'
+    )
   })
 })
 

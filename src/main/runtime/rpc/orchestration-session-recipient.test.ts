@@ -70,7 +70,7 @@ describe('mail sent to a session address reaches the mailbox that session reads'
     })
   })
 
-  it('refuses an Orca session this host does not run', async () => {
+  it('refuses a Dolphin session this host does not run', async () => {
     h.records.set(
       SESSION_X,
       sessionRecord(SESSION_X, { location: { executionHostId: 'ssh:devbox' } })
@@ -103,7 +103,7 @@ describe('mail sent to a session address reaches the mailbox that session reads'
       assigneeHandle: handle,
       assigneePaneKey: paneKey,
       processIncarnation: structuredWorkerProcessIncarnation(SESSION_Y),
-      creator: { kind: 'session', orcaSessionId: SESSION_X },
+      creator: { kind: 'session', dolphinSessionId: SESSION_X },
       maxDepth: Number.MAX_SAFE_INTEGER
     })
 

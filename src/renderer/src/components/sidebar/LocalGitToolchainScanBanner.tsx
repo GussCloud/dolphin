@@ -80,7 +80,7 @@ export function LocalGitToolchainScanBanner(): React.JSX.Element | null {
     if (!isBlocked) {
       return
     }
-    // Why: the fix happens in Terminal, so returning to Orca is the moment to check again.
+    // Why: the fix happens in Terminal, so returning to Dolphin is the moment to check again.
     const onFocus = (): void => void rescan()
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)

@@ -32,7 +32,7 @@ const platform = Object.getOwnPropertyDescriptor(process, 'platform')
 let root: string
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'orca-state-access-windows-'))
+  root = mkdtempSync(join(tmpdir(), 'dolphin-state-access-windows-'))
   Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
   identity.boot.mockReset().mockReturnValue(null)
   identity.machine.mockReset().mockReturnValue('win32-machine-guid:this-machine')

@@ -33,7 +33,7 @@ afterEach(async () => {
 })
 
 async function directory(): Promise<string> {
-  const result = await mkdtemp(join(tmpdir(), "orca-runtime spaces ' $-"))
+  const result = await mkdtemp(join(tmpdir(), "dolphin-runtime spaces ' $-"))
   directories.push(result)
   return result
 }
@@ -201,7 +201,7 @@ describe.skipIf(process.platform === 'win32')('host-owned SQLite setup commands'
     const fresh = await reserveStage(root)
     await writeFile(join(fresh.slotDir, 'payload', 'bun'), 'active upload')
     const old = new Date(Date.now() - 3_600_000)
-    await utimes(join(abandoned.slotDir, '.orca-upload-owner'), old, old)
+    await utimes(join(abandoned.slotDir, '.dolphin-upload-owner'), old, old)
     const recovered = await command(recoverOneStaleRelayUploadStageCommand(host, abandoned.poolDir))
     expect(recovered.code, recovered.stderr).toBe(0)
     await expect(stat(abandoned.slotDir)).rejects.toMatchObject({ code: 'ENOENT' })
@@ -260,7 +260,7 @@ it('carries Windows JavaScript and path arguments through the established PowerS
 it('rejects missing or malformed host confirmations', () => {
   expect(() => parseOpenCodeRuntimeResult('login banner')).toThrow('did not confirm')
   expect(() =>
-    parseOpenCodeRuntimeResult('ORCA_VAULT_SQLITE:{"status":"ready","executable":"node"}')
+    parseOpenCodeRuntimeResult('DOLPHIN_VAULT_SQLITE:{"status":"ready","executable":"node"}')
   ).toThrow('invalid executable')
 })
 
@@ -268,7 +268,7 @@ it('accepts an absolute Windows UNC executable path', () => {
   const executable = String.raw`\\server\profile\vault-sqlite\bun.exe`
   expect(
     parseOpenCodeRuntimeResult(
-      `ORCA_VAULT_SQLITE:${JSON.stringify({ status: 'ready', executable })}`
+      `DOLPHIN_VAULT_SQLITE:${JSON.stringify({ status: 'ready', executable })}`
     )
   ).toEqual({ status: 'ready', executable })
 })

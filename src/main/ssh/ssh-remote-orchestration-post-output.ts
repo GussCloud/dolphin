@@ -1,23 +1,23 @@
 import { randomUUID } from 'node:crypto'
 import { readOrchestrationCompatibilityEvidence } from '../../shared/orchestration-compatibility-evidence'
 import { ORCHESTRATION_CONTRACT_VERSION } from '../../shared/protocol-version'
-import type { OrcaRuntimeService } from '../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import type { RpcResponse } from '../runtime/rpc/core'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
 import { ALL_RPC_METHODS } from '../runtime/rpc/methods'
 import type {
-  RemoteOrcaCliPostOutput,
-  RemoteOrcaCliRequest
+  RemoteDolphinCliPostOutput,
+  RemoteDolphinCliRequest
 } from './ssh-remote-cli-host-passthrough'
 import { RemoteCliArgumentError, type ParsedRemoteCli } from './ssh-remote-cli-argument-error'
 import { optionalRemoteCliString, resolveRemoteCliHandle } from './ssh-remote-cli-args'
 
-export async function acknowledgeRemoteOrcaCliPostOutput(
-  runtime: OrcaRuntimeService,
+export async function acknowledgeRemoteDolphinCliPostOutput(
+  runtime: DolphinRuntimeService,
   args: {
-    postOutput: RemoteOrcaCliPostOutput
+    postOutput: RemoteDolphinCliPostOutput
     env: Record<string, string>
-    runtimeAuthority?: RemoteOrcaCliRequest['runtimeAuthority']
+    runtimeAuthority?: RemoteDolphinCliRequest['runtimeAuthority']
   }
 ): Promise<void> {
   const inheritedEvidence = readOrchestrationCompatibilityEvidence(args.env)
@@ -54,7 +54,7 @@ export async function acknowledgeRemoteOrcaCliPostOutput(
   }
 }
 
-export function parseRemoteOrcaCliPostOutput(value: unknown): RemoteOrcaCliPostOutput {
+export function parseRemoteDolphinCliPostOutput(value: unknown): RemoteDolphinCliPostOutput {
   if (!isRecord(value) || typeof value.kind !== 'string' || typeof value.terminal !== 'string') {
     throw invalidPostOutput()
   }
@@ -91,7 +91,7 @@ export function getRemoteCliPostOutput(
   parsed: ParsedRemoteCli,
   env: Record<string, string>,
   response: RpcResponse
-): RemoteOrcaCliPostOutput | undefined {
+): RemoteDolphinCliPostOutput | undefined {
   if (!response.ok || !isRecord(response.result)) {
     return undefined
   }

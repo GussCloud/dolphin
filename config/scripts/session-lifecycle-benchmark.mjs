@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Long-running session benchmark against a running Orca, driven through its own CLI.
+// Long-running session benchmark against a running Dolphin, driven through its own CLI.
 //
 //   churn: create and close N terminals, then check counts return to baseline (roadmap scenario E)
 //   soak:  sample diagnostics every --sample-sec for --minutes (scenarios A-D, G)
 //
 // Run: node config/scripts/session-lifecycle-benchmark.mjs churn --iterations 100 --worktree active
 //      node config/scripts/session-lifecycle-benchmark.mjs soak --minutes 60 --sample-sec 30
-// Set ORCA_BENCHMARK_CLI to the orca executable (absolute path on Windows); defaults to `orca`.
+// Set DOLPHIN_BENCHMARK_CLI to the dolphin executable (absolute path on Windows); defaults to `dolphin`.
 import { writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
 import { runProcessSync } from './script-child-process.mjs'
@@ -29,12 +29,12 @@ const { positionals, values } = parseArgs({
   }
 })
 const scenario = positionals[0]
-const cli = process.env.ORCA_BENCHMARK_CLI ?? 'orca'
+const cli = process.env.DOLPHIN_BENCHMARK_CLI ?? 'dolphin'
 
-function orca(args) {
+function dolphin(args) {
   const result = runProcessSync({ program: cli, args: [...args, '--json'], timeoutMs: 120_000 })
   if (result.code !== 0) {
-    throw new Error(`orca ${args.join(' ')} failed (${result.code}): ${result.stderr.trim()}`)
+    throw new Error(`dolphin ${args.join(' ')} failed (${result.code}): ${result.stderr.trim()}`)
   }
   return JSON.parse(result.stdout)
 }
@@ -44,7 +44,7 @@ function unwrap(payload) {
 }
 
 function sample() {
-  return summarizeSample(unwrap(orca(['diagnostics', 'runtime'])))
+  return summarizeSample(unwrap(dolphin(['diagnostics', 'runtime'])))
 }
 
 function sleep(ms) {
@@ -56,12 +56,12 @@ async function runChurn() {
   const baseline = sample()
   console.log(`baseline: ${JSON.stringify(baseline)}`)
   for (let i = 1; i <= iterations; i++) {
-    const created = unwrap(orca(['terminal', 'create', '--worktree', values.worktree]))
+    const created = unwrap(dolphin(['terminal', 'create', '--worktree', values.worktree]))
     const handle = created?.terminal?.handle
     if (!handle) {
       throw new Error(`terminal create returned no handle: ${JSON.stringify(created)}`)
     }
-    orca(['terminal', 'close', '--terminal', handle, '--tab'])
+    dolphin(['terminal', 'close', '--terminal', handle, '--tab'])
     if (i % 10 === 0) {
       console.log(`cycle ${i}/${iterations}`)
     }

@@ -12,7 +12,7 @@ describe('relay OMP config root', () => {
   let manager: PluginOverlayManager
 
   beforeEach(() => {
-    home = mkdtempSync(join(tmpdir(), 'orca-relay-omp-config-'))
+    home = mkdtempSync(join(tmpdir(), 'dolphin-relay-omp-config-'))
     manager = new PluginOverlayManager({ homeDir: home })
     manager.setSources({ ompExtensionSource: 'export default function() {}' })
     __resetShellStartupEnvCache()
@@ -41,9 +41,9 @@ describe('relay OMP config root', () => {
       )
       const expected = join(home, config || '.omp', 'agent')
       expect(result?.sourceAgentDir).toBe(expected)
-      expect(readFileSync(join(expected, 'extensions', 'orca-agent-status.ts'), 'utf8')).toContain(
-        '@orca-managed-pi-extension'
-      )
+      expect(
+        readFileSync(join(expected, 'extensions', 'dolphin-agent-status.ts'), 'utf8')
+      ).toContain('@dolphin-managed-pi-extension')
       if (config) {
         expect(existsSync(join(home, '.omp'))).toBe(false)
       }

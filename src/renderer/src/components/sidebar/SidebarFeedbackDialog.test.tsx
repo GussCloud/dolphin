@@ -94,12 +94,12 @@ afterEach(() => {
 })
 
 describe('SidebarFeedbackDialog environment prefill', () => {
-  it('pre-inserts Orca version and OS info when the dialog opens', async () => {
+  it('pre-inserts Dolphin version and OS info when the dialog opens', async () => {
     render(<SidebarFeedbackDialog open onOpenChange={vi.fn()} />)
     const textarea = screen.getByPlaceholderText('What could we improve?') as HTMLTextAreaElement
 
     await waitFor(() => {
-      expect(textarea.value).toContain('Orca: 1.4.178-rc.2')
+      expect(textarea.value).toContain('Dolphin: 1.4.178-rc.2')
       expect(textarea.value).toContain('OS: darwin 25.0.0 (arm64)')
       expect(textarea.value).toContain('Shell: /bin/zsh')
     })
@@ -109,7 +109,7 @@ describe('SidebarFeedbackDialog environment prefill', () => {
   it('keeps version info when the user types above the prefilled block', async () => {
     render(<SidebarFeedbackDialog open onOpenChange={vi.fn()} />)
     const textarea = screen.getByPlaceholderText('What could we improve?') as HTMLTextAreaElement
-    await waitFor(() => expect(textarea.value).toContain('Orca: 1.4.178-rc.2'))
+    await waitFor(() => expect(textarea.value).toContain('Dolphin: 1.4.178-rc.2'))
 
     fireEvent.change(textarea, {
       target: { value: `Tabs feel slow\n\n${textarea.value.trim()}` }
@@ -119,7 +119,7 @@ describe('SidebarFeedbackDialog environment prefill', () => {
     await waitFor(() => expect(mocks.submit).toHaveBeenCalledTimes(1))
     const submitted = mocks.submit.mock.calls[0]?.[0].feedback as string
     expect(submitted).toContain('Tabs feel slow')
-    expect(submitted).toContain('Orca: 1.4.178-rc.2')
+    expect(submitted).toContain('Dolphin: 1.4.178-rc.2')
   })
 
   it('preserves early typing and appends the footer after version loading finishes', async () => {
@@ -137,7 +137,7 @@ describe('SidebarFeedbackDialog environment prefill', () => {
     textarea.setSelectionRange(textarea.value.length, textarea.value.length)
     await act(async () => finishVersion?.('1.4.178-rc.2'))
 
-    await waitFor(() => expect(textarea.value).toContain('Orca: 1.4.178-rc.2'))
+    await waitFor(() => expect(textarea.value).toContain('Dolphin: 1.4.178-rc.2'))
     expect(textarea.value).toContain('Typed before loading')
     expect(textarea.selectionStart).toBe('Typed before loading'.length)
   })
@@ -145,7 +145,7 @@ describe('SidebarFeedbackDialog environment prefill', () => {
   it('enables Send when the user types below the prefilled footer', async () => {
     render(<SidebarFeedbackDialog open onOpenChange={vi.fn()} />)
     const textarea = screen.getByPlaceholderText('What could we improve?') as HTMLTextAreaElement
-    await waitFor(() => expect(textarea.value).toContain('Orca: 1.4.178-rc.2'))
+    await waitFor(() => expect(textarea.value).toContain('Dolphin: 1.4.178-rc.2'))
 
     fireEvent.change(textarea, {
       target: { value: `${textarea.value.trim()}\nText below footer` }
@@ -157,10 +157,10 @@ describe('SidebarFeedbackDialog environment prefill', () => {
   it('keeps Send disabled for an edited footer with no user text', async () => {
     render(<SidebarFeedbackDialog open onOpenChange={vi.fn()} />)
     const textarea = screen.getByPlaceholderText('What could we improve?') as HTMLTextAreaElement
-    await waitFor(() => expect(textarea.value).toContain('Orca: 1.4.178-rc.2'))
+    await waitFor(() => expect(textarea.value).toContain('Dolphin: 1.4.178-rc.2'))
 
     fireEvent.change(textarea, {
-      target: { value: '---\nOrca: custom build\nOS: edited' }
+      target: { value: '---\nDolphin: custom build\nOS: edited' }
     })
 
     expect((screen.getByRole('button', { name: 'Send' }) as HTMLButtonElement).disabled).toBe(true)
@@ -169,7 +169,7 @@ describe('SidebarFeedbackDialog environment prefill', () => {
   it('allows a real report after the prefilled footer is deleted', async () => {
     render(<SidebarFeedbackDialog open onOpenChange={vi.fn()} />)
     const textarea = screen.getByPlaceholderText('What could we improve?') as HTMLTextAreaElement
-    await waitFor(() => expect(textarea.value).toContain('Orca: 1.4.178-rc.2'))
+    await waitFor(() => expect(textarea.value).toContain('Dolphin: 1.4.178-rc.2'))
     const send = screen.getByRole('button', { name: 'Send' }) as HTMLButtonElement
 
     fireEvent.change(textarea, { target: { value: '' } })
@@ -188,7 +188,7 @@ describe('SidebarFeedbackDialog environment prefill', () => {
 
     await waitFor(() => {
       const textarea = screen.getByPlaceholderText('What could we improve?') as HTMLTextAreaElement
-      expect(textarea.value).toContain('Orca: unknown')
+      expect(textarea.value).toContain('Dolphin: unknown')
     })
   })
 })
@@ -532,7 +532,7 @@ describe('SidebarFeedbackDialog draft survival', () => {
     return screen.getByPlaceholderText<HTMLTextAreaElement>('What could we improve?')
   }
 
-  // Why: orca#22466's third complaint. The dialog renders inside the sidebar
+  // Why: dolphin#22466's third complaint. The dialog renders inside the sidebar
   // subtree, so collapsing the sidebar unmounts it; with the draft in component
   // state that silently discarded a report the user had not managed to send.
   it('keeps the typed report when the sidebar unmounts and remounts the dialog', () => {

@@ -16,12 +16,12 @@ describe('worktree selector recovery', () => {
   it('names the offending value and the valid forms on a bare repo id', () => {
     const output = formatCliError(selectorNotFound(), {
       commandPath: ['orchestration', 'worker-start'],
-      worktreeSelector: 'id:github:stablyai/orca'
+      worktreeSelector: 'id:github:gusscloud/dolphin'
     })
 
-    expect(output).toContain('No Orca workspace matched the worktree selector')
-    expect(output).toContain('id:github:stablyai/orca')
-    expect(output).toContain('Did you mean: id:github:stablyai/orca::<absolute-path>')
+    expect(output).toContain('No Dolphin workspace matched the worktree selector')
+    expect(output).toContain('id:github:gusscloud/dolphin')
+    expect(output).toContain('Did you mean: id:github:gusscloud/dolphin::<absolute-path>')
     expect(output).toContain('Valid selector forms:')
     expect(output).toContain('a bare repository id is not a worktree id')
   })
@@ -99,13 +99,13 @@ describe('CLI error recovery', () => {
   it('prints did-you-mean next steps for an unknown-command error carrying data', () => {
     const error = new RuntimeClientError('invalid_argument', 'Unknown command: worktree remov', {
       suggestions: ['worktree rm'],
-      nextSteps: ['Did you mean: orca worktree rm']
+      nextSteps: ['Did you mean: dolphin worktree rm']
     })
 
     const output = formatCliError(error)
 
     expect(output).toContain('Unknown command: worktree remov')
-    expect(output).toContain('Next step: Did you mean: orca worktree rm')
+    expect(output).toContain('Next step: Did you mean: dolphin worktree rm')
   })
 
   it('prefers structured recovery over generic computer hints in text output', () => {
@@ -160,6 +160,6 @@ describe('CLI error recovery', () => {
     const output = formatCliError(error)
 
     expect(output).toContain('--retry-request mutation_1')
-    expect(output).not.toContain('orca open')
+    expect(output).not.toContain('dolphin open')
   })
 })

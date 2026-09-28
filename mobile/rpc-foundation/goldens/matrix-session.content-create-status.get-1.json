@@ -3,12 +3,12 @@
   "family": "session.content-create",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "562c2f4ab669e774dd7045ecd9518e483845433fef6034688090f3b056df2815",
   "scenarioSha256": "5100bd674509d1d83b1e2594eee036af21ea14b12226185b44070555d1d43060",
-  "platform": "darwin",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -92,13 +92,6 @@
       "ordinal": 3,
       "value": {
         "message": "Unknown method"
-      }
-    },
-    "32afb7dc375d": {
-      "name": "toast",
-      "ordinal": 3,
-      "value": {
-        "message": "Remote file changes require a newer Orca server. Update the HUB and try again."
       }
     },
     "37185d7089db": {
@@ -200,14 +193,6 @@
         "$rpc": "null"
       }
     },
-    "7799ca596f0c": {
-      "createError": "Remote file changes require a newer Orca server. Update the HUB and try again.",
-      "creatingBrowser": false,
-      "creatingMarkdown": false,
-      "pendingBrowserFocusPageId": {
-        "$rpc": "null"
-      }
-    },
     "7f0419402be8": {
       "name": "status.get#1",
       "ordinal": 1,
@@ -252,10 +237,25 @@
         "message": "transport failure"
       }
     },
+    "a43b33f9a3df": {
+      "createError": "Remote file changes require a newer Dolphin server. Update the HUB and try again.",
+      "creatingBrowser": false,
+      "creatingMarkdown": false,
+      "pendingBrowserFocusPageId": {
+        "$rpc": "null"
+      }
+    },
     "a4f53f7fb1d7": {
       "name": "fetch-session-tabs",
       "ordinal": 9,
       "value": {}
+    },
+    "a9b0268e2996": {
+      "name": "toast",
+      "ordinal": 3,
+      "value": {
+        "message": "Remote file changes require a newer Dolphin server. Update the HUB and try again."
+      }
     },
     "b5476ba1aabe": {
       "name": "status.get#1",
@@ -665,8 +665,8 @@
           "settlements": {
             "markdown": "eb79a9b3682a"
           },
-          "state": "7799ca596f0c",
-          "effects": ["32afb7dc375d"]
+          "state": "a43b33f9a3df",
+          "effects": ["a9b0268e2996"]
         }
       },
       {
@@ -677,8 +677,8 @@
           "settlements": {
             "markdown": "eb79a9b3682a"
           },
-          "state": "7799ca596f0c",
-          "effects": ["32afb7dc375d"]
+          "state": "a43b33f9a3df",
+          "effects": ["a9b0268e2996"]
         }
       },
       {
@@ -689,8 +689,8 @@
           "settlements": {
             "markdown": "eb79a9b3682a"
           },
-          "state": "7799ca596f0c",
-          "effects": ["32afb7dc375d"]
+          "state": "a43b33f9a3df",
+          "effects": ["a9b0268e2996"]
         }
       },
       {

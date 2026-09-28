@@ -17,7 +17,7 @@ export function createMiniMaxCredentialsApi(): NonNullable<
 
 export function createCursorAccountsApi(): NonNullable<Partial<PreloadApi>['cursorAccounts']> {
   // Why an explanation and not a bare `signedIn: false`: Cursor's session lives on
-  // the machine running Orca, and this bridge cannot read it. The host may well be
+  // the machine running Dolphin, and this bridge cannot read it. The host may well be
   // signed in — its usage meter still arrives over the rate-limit snapshot — so
   // asserting "not signed in" here would contradict the meter beside it.
   return {

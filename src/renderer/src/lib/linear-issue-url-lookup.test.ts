@@ -3,9 +3,9 @@ import type { LinearIssue } from '../../../shared/linear/issue-types'
 import type { LinearConnectionStatus } from '../../../shared/linear/workspace-types'
 import { lookupLinearIssueUrl } from './linear-issue-url-lookup'
 
-const intent = { identifier: 'STA-4084', organizationUrlKey: 'stably' }
+const intent = { identifier: 'STA-4084', organizationUrlKey: 'gusscloud' }
 
-function issue(organizationUrlKey = 'stably'): LinearIssue {
+function issue(organizationUrlKey = 'gusscloud'): LinearIssue {
   return {
     id: `${organizationUrlKey}-issue`,
     workspaceId: `${organizationUrlKey}-workspace`,
@@ -14,7 +14,7 @@ function issue(organizationUrlKey = 'stably'): LinearIssue {
     title: 'Restore shell integration',
     url: `https://linear.app/${organizationUrlKey}/issue/STA-4084/restore-shell-integration`,
     state: { name: 'Todo', type: 'unstarted', color: '#999999' },
-    team: { id: 'team-sta', name: 'Stably', key: 'STA' },
+    team: { id: 'team-sta', name: 'GussCloud', key: 'STA' },
     labels: [],
     labelIds: [],
     priority: 2,
@@ -32,14 +32,14 @@ describe('Linear issue URL lookup', () => {
         intent,
         knownStatus: {
           viewer: null,
-          workspaces: [{ id: 'stably-workspace', organizationUrlKey: 'stably' } as never]
+          workspaces: [{ id: 'gusscloud-workspace', organizationUrlKey: 'gusscloud' } as never]
         },
         sourceContext: null,
         fetchLinearIssue,
         readLinearStatus
       })
     ).resolves.toMatchObject({ identifier: 'STA-4084' })
-    expect(fetchLinearIssue).toHaveBeenCalledWith('STA-4084', 'stably-workspace', {
+    expect(fetchLinearIssue).toHaveBeenCalledWith('STA-4084', 'gusscloud-workspace', {
       sourceContext: null
     })
     expect(readLinearStatus).not.toHaveBeenCalled()
@@ -47,7 +47,7 @@ describe('Linear issue URL lookup', () => {
 
   it('refreshes status from the source owner when the known workspace is stale', async () => {
     const fetchLinearIssue = vi.fn(async (_identifier: string, workspaceId?: string | null) =>
-      workspaceId === 'remote-stably-workspace' ? issue() : null
+      workspaceId === 'remote-gusscloud-workspace' ? issue() : null
     )
 
     await expect(
@@ -55,7 +55,7 @@ describe('Linear issue URL lookup', () => {
         intent,
         knownStatus: {
           viewer: null,
-          workspaces: [{ id: 'stale-workspace', organizationUrlKey: 'stably' } as never]
+          workspaces: [{ id: 'stale-workspace', organizationUrlKey: 'gusscloud' } as never]
         },
         sourceContext: null,
         fetchLinearIssue,
@@ -64,13 +64,13 @@ describe('Linear issue URL lookup', () => {
           viewer: null,
           workspaces: [
             {
-              id: 'remote-stably-workspace',
-              organizationUrlKey: 'stably'
+              id: 'remote-gusscloud-workspace',
+              organizationUrlKey: 'gusscloud'
             } as never
           ]
         })
       })
-    ).resolves.toMatchObject({ workspaceId: 'stably-workspace' })
+    ).resolves.toMatchObject({ workspaceId: 'gusscloud-workspace' })
     expect(fetchLinearIssue).toHaveBeenCalledTimes(2)
   })
 
@@ -84,8 +84,8 @@ describe('Linear issue URL lookup', () => {
           viewer: {
             displayName: 'Linear User',
             email: null,
-            organizationName: 'Stably',
-            organizationUrlKey: 'stably'
+            organizationName: 'GussCloud',
+            organizationUrlKey: 'gusscloud'
           },
           activeWorkspaceId: 'legacy-workspace'
         },

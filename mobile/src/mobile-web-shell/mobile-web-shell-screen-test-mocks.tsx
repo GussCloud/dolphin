@@ -2,7 +2,7 @@
 // same world. Each test file registers them with `vi.mock(path, mocks[path])`.
 import * as React from 'react'
 import { vi } from 'vitest'
-import { parseMobileWebShellLoadState } from '../../modules/orca-mobile-web-shell/src/load-state'
+import { parseMobileWebShellLoadState } from '../../modules/dolphin-mobile-web-shell/src/load-state'
 import { SCREEN_SNAPSHOT, type ScreenDependencies } from './mobile-web-shell-screen-test-harness'
 
 export function screenModuleMocks(dependencies: ScreenDependencies) {
@@ -69,7 +69,7 @@ export function screenModuleMocks(dependencies: ScreenDependencies) {
       NotificationFeedbackType: { Error: 'error', Success: 'success' }
     }),
     'expo-document-picker': () => ({ getDocumentAsync: () => Promise.resolve(null) }),
-    '@orca/expo-two-way-audio': () => ({
+    '@dolphin/expo-two-way-audio': () => ({
       addExpoTwoWayAudioEventListener: () => ({ remove: () => {} }),
       initialize: () => Promise.resolve(true),
       requestMicrophonePermissionsAsync: () =>
@@ -110,9 +110,9 @@ export function screenModuleMocks(dependencies: ScreenDependencies) {
     }),
     // A component rather than a host string: the React key is what makes a retry a rebuilt WebView,
     // and a mount/unmount log is the only thing that can tell a remount from a prop update.
-    '../../modules/orca-mobile-web-shell/src': () => {
+    '../../modules/dolphin-mobile-web-shell/src': () => {
       return {
-        OrcaMobileWebShellView: (props: {
+        DolphinMobileWebShellView: (props: {
           sessionId: string
           ref?: (handle: { postBridgeMessage: (json: string) => Promise<void> } | null) => void
         }) => {

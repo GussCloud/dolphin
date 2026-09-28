@@ -49,7 +49,7 @@ function persistedTabIds(session: WorkspaceSessionState, worktreeId: string): st
 
 describe('host-admitted terminal membership survives a stale renderer replay', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-host-membership-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-host-membership-'))
   })
 
   afterEach(async () => {
@@ -61,7 +61,7 @@ describe('host-admitted terminal membership survives a stale renderer replay', (
     const store = await createStore()
     store.setWorkspaceSession(rendererSession())
 
-    // `orca terminal create`: the host mints a tab the renderer has never seen.
+    // `dolphin terminal create`: the host mints a tab the renderer has never seen.
     expect(
       await store.persistPtyBinding({
         worktreeId: WORKTREE,

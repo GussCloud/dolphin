@@ -24,7 +24,7 @@ function createParams(
 ) {
   return structuredAgentSessionCreateParams({
     sessionId: SESSION_ID,
-    worktree: 'id:repo-1::/repo/orca',
+    worktree: 'id:repo-1::/repo/dolphin',
     agent: 'codex',
     ...overrides,
     randomUuid: nextUuid,
@@ -44,7 +44,7 @@ describe('structured agent session create params', () => {
     expect(params.envelope.payloadFingerprint).toBe(
       structuredAgentSessionCreateFingerprint({
         sessionId: SESSION_ID,
-        worktree: 'id:repo-1::/repo/orca',
+        worktree: 'id:repo-1::/repo/dolphin',
         agent: 'codex',
         resumeFrom: RESUME
       })
@@ -78,11 +78,11 @@ describe('structured agent session create params', () => {
       structuredAgentSessionPayloadFingerprint({
         method: 'agentSession.create',
         sessionId: SESSION_ID,
-        fields: { worktree: 'id:repo-1::/repo/orca', agent: 'codex' }
+        fields: { worktree: 'id:repo-1::/repo/dolphin', agent: 'codex' }
       })
     )
     expect(createParams().envelope.payloadFingerprint).toBe(
-      '56cb15e22414c0f62fd89d77d00d2d6a0a422f16e95edee154fb8b5bf53fbbc3'
+      'dc9465e894fa8780f5b1af8ea21fa3ed21df08550be4a43ca8416593e205cf5c'
     )
   })
 })
@@ -95,7 +95,7 @@ describe('the tab id a create reserves', () => {
     expect(params.envelope.payloadFingerprint).toBe(
       structuredAgentSessionCreateFingerprint({
         sessionId: SESSION_ID,
-        worktree: 'id:repo-1::/repo/orca',
+        worktree: 'id:repo-1::/repo/dolphin',
         agent: 'codex',
         tabId: 'tab-1'
       })

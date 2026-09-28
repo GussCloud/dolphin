@@ -2,9 +2,9 @@
   "version": 1,
   "plugins": [
     {
-      "pluginKey": "stablyai.orca-navigation-shortcuts",
-      "path": "stablyai.orca-navigation-shortcuts",
-      "contentHash": "ce3a146bae9e121a18cb86a710973422be749a25da5a1c21a8911e2e98cc3a77"
+      "pluginKey": "gusscloud.dolphin-navigation-shortcuts",
+      "path": "gusscloud.dolphin-navigation-shortcuts",
+      "contentHash": "aa22f6f9de94bee28a983f5adc529ddd211ab157ff7545e411eacb298754bbcc"
     }
   ]
 }

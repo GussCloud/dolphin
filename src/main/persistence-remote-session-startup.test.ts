@@ -63,7 +63,7 @@ function browserSession() {
 
 describe('remote session startup ownership', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-remote-session-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-remote-session-'))
   })
   afterEach(async () => {
     await closeTestStores()

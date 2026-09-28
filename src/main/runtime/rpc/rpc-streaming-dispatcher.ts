@@ -1,7 +1,7 @@
 import { isStreamingMethod, type RpcEnvelopeMeta, type RpcRegistry, type RpcRequest } from './core'
 
 import { errorResponse, successResponse } from './errors'
-import type { OrcaRuntimeService } from '../orca-runtime'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import type {
   OrchestrationMutationExecutor,
   DurableMutationInvocation
@@ -22,7 +22,7 @@ import {
 } from './orchestration-session-caller'
 
 export type RpcStreamingDispatcherDependencies = {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   registry: RpcRegistry
   orchestrationMutations: OrchestrationMutationExecutor
   legacyOrchestration: OrchestrationLegacyCompatibility
@@ -160,7 +160,7 @@ export class RpcStreamingDispatcher {
           effectiveParams,
           invoke,
           legacyCoordinator?.mutationCallerFingerprint ?? authenticatedCallerFingerprint,
-          orchestrationCaller?.orcaSessionId
+          orchestrationCaller?.dolphinSessionId
         )
         recordRuntimeFeatureInteraction(runtime, request.method, result, undefined, request.params)
         reply(JSON.stringify(successResponse(request.id, envelopeMeta, result)))

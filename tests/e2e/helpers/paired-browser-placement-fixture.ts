@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Page, TestInfo } from '@stablyai/playwright-test'
-import { expect } from './orca-app'
+import type { Page, TestInfo } from '@playwright/test'
+import { expect } from './dolphin-app'
 import {
   launchHeadlessPairedRuntimeHost,
   type HeadlessPairedRuntimeHost

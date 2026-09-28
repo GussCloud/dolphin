@@ -35,7 +35,7 @@ describe('getDeleteWorktreeToastCopy', () => {
   })
 
   // Why: Force Delete proceeds on a proven-live PTY too, so the copy must not describe
-  // that as an unconfirmed exit — the user is killing a terminal Orca watched running.
+  // that as an unconfirmed exit — the user is killing a terminal Dolphin watched running.
   it('names the running terminals when verification proved they are still live', () => {
     expect(
       toastCopyForRemovalError(
@@ -51,7 +51,7 @@ describe('getDeleteWorktreeToastCopy', () => {
   })
 
   // Why: the structured sweep now CLOSES an attached session on the ordinary delete, so reaching
-  // this toast means the close was attempted and did not settle — not that Orca declined to try.
+  // this toast means the close was attempted and did not settle — not that Dolphin declined to try.
   it('offers force delete when an agent session could not be confirmed closed', () => {
     expect(
       toastCopyForRemovalError(
@@ -67,7 +67,7 @@ describe('getDeleteWorktreeToastCopy', () => {
   })
 
   // Why: the same split the PTY pair above draws. Force Delete proceeds either way, and telling a
-  // user "could not confirm" about a conversation Orca watched stay attached asks them to waive a
+  // user "could not confirm" about a conversation Dolphin watched stay attached asks them to waive a
   // doubt that does not exist — the work in that conversation goes with the delete.
   it('names the running agent sessions when the close left them attached', () => {
     expect(

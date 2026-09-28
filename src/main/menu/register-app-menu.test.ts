@@ -388,7 +388,7 @@ describe('registerAppMenu', () => {
     registerAppMenu(buildMenuOptions())
 
     const template = getTemplate()
-    // Why: no redundant app-named "Orca" menu should exist on non-mac — the
+    // Why: no redundant app-named "Dolphin" menu should exist on non-mac — the
     // app-menu contents (Settings, Exit, Check for Updates, About) have been
     // redistributed so users see them in File / Help instead.
     expect(template.find((item) => item.label === 'Dolphin')).toBeUndefined()

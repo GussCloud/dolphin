@@ -1,6 +1,6 @@
 /**
  * A paired viewer must not erase a verified mirrored PTY binding while a
- * restarted `orca serve` process republishes the same surface as pending, and
+ * restarted `dolphin serve` process republishes the same surface as pending, and
  * the surviving daemon PTY must keep appending to its durable history log.
  *
  * Run:
@@ -10,16 +10,16 @@
  */
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
+import type { ElectronApplication, Page } from '@playwright/test'
 import { getHistorySessionDirName } from '../../src/main/daemon/history-paths'
 import { LOG_HEADER_BYTES } from '../../src/main/daemon/terminal-history-log'
 import { profileStateDatabaseFile } from '../../src/main/persistence/profile-state/profile-state-database'
 import { ProfileStateSqliteAuthority } from '../../src/main/persistence/profile-state/profile-state-sqlite-authority'
-import { DEFAULT_LOCAL_ORCA_PROFILE_ID } from '../../src/shared/orca-profiles'
+import { DEFAULT_LOCAL_DOLPHIN_PROFILE_ID } from '../../src/shared/dolphin-profiles'
 import type { RuntimeMobileSessionTabsResult } from '../../src/shared/runtime-types'
 import { toRemoteRuntimePtyId } from '../../src/shared/remote-runtime-pty-id'
 import { toWebTerminalSurfaceTabId } from '../../src/shared/terminal-surface-id'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   launchHeadlessPairedRuntimeHost,
   type HeadlessPairedRuntimeHost
@@ -132,9 +132,13 @@ test('SQLite candidate retains a remote automation run across serve restart', as
     })
     expect(beforeRestart.result.runs.some((entry) => entry.id === run.result.run.id)).toBe(true)
 
-    const profileDirectory = path.join(host.userDataDir, 'profiles', DEFAULT_LOCAL_ORCA_PROFILE_ID)
-    const profileJsonPath = path.join(profileDirectory, 'orca-data.json')
-    const rootJsonPath = path.join(host.userDataDir, 'orca-data.json')
+    const profileDirectory = path.join(
+      host.userDataDir,
+      'profiles',
+      DEFAULT_LOCAL_DOLPHIN_PROFILE_ID
+    )
+    const profileJsonPath = path.join(profileDirectory, 'dolphin-data.json')
+    const rootJsonPath = path.join(host.userDataDir, 'dolphin-data.json')
     const databasePath = profileStateDatabaseFile(profileDirectory)
     expect(existsSync(databasePath)).toBe(true)
     await host.restartServeProcess({
@@ -193,7 +197,7 @@ type PersistedData = {
 }
 
 function persistedDataPath(userDataDir: string): string {
-  return path.join(userDataDir, 'profiles', DEFAULT_LOCAL_ORCA_PROFILE_ID, 'orca-data.json')
+  return path.join(userDataDir, 'profiles', DEFAULT_LOCAL_DOLPHIN_PROFILE_ID, 'dolphin-data.json')
 }
 
 function removePersistedTerminalBinding(
@@ -203,7 +207,7 @@ function removePersistedTerminalBinding(
   const dataPath = persistedDataPath(userDataDir)
   const authority = new ProfileStateSqliteAuthority(
     profileStateDatabaseFile(path.dirname(dataPath)),
-    DEFAULT_LOCAL_ORCA_PROFILE_ID
+    DEFAULT_LOCAL_DOLPHIN_PROFILE_ID
   )
   try {
     const serialized = authority.readSerializedState()

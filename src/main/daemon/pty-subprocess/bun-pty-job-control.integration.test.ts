@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { runProcess } from '../../../shared/child-process/run-process'
-import { orcadBunRuntimeFilename } from '../../../shared/orcad-artifacts'
+import { dolphindBunRuntimeFilename } from '../../../shared/dolphind-artifacts'
 import { removeTreeSync } from '../../../shared/windows-transient-lock-removal'
 
 const runtimePath =
   process.env.BUN_EXECUTABLE ??
-  resolve(__dirname, '../../../../out/orcad', orcadBunRuntimeFilename(process.platform))
+  resolve(__dirname, '../../../../out/dolphind', dolphindBunRuntimeFilename(process.platform))
 
 describe.skipIf(
   process.platform === 'win32' || !existsSync(runtimePath) || !existsSync('/bin/bash')
@@ -21,7 +21,7 @@ describe.skipIf(
     it.skipIf(!existsSync(shell))(
       `gracefully closes an interactive ${shell} before the daemon force-kill deadline`,
       async () => {
-        const directory = mkdtempSync(join(tmpdir(), 'orca-bun-shell-hangup-'))
+        const directory = mkdtempSync(join(tmpdir(), 'dolphin-bun-shell-hangup-'))
         try {
           const entry = join(directory, 'shell-hangup.cjs')
           writeFileSync(
@@ -35,7 +35,7 @@ const {join} = require('node:path')
 const cwd = ${JSON.stringify(directory)}
 const ready = join(cwd, 'ready'), cleanup = join(cwd, 'hangup-cleanup')
 const shell = ${JSON.stringify(shell)}
-const env = {...process.env,PS1:'',ORCA_TEST_READY:ready,ORCA_TEST_CLEANUP:cleanup}
+const env = {...process.env,PS1:'',DOLPHIN_TEST_READY:ready,DOLPHIN_TEST_CLEANUP:cleanup}
 const proc = spawnBunPty({file:shell,args:shell.endsWith('/bash')?['--noprofile','--norc','-i']:['-f','-i'],cwd,env,cols:80,rows:24})
 const subprocess = createDaemonPtySubprocessHandle({process:proc,shellPath:shell,spawnCwd:cwd,env,startupCommandDeliveredInShellArgs:false,reportsChildExitStatus:true,sessionId:'shell-hangup',startupAgentRecognition:null})
 let exited = false, forced = false, exitCode, elapsedMs, startedAt
@@ -59,7 +59,7 @@ const waitFor = async predicate => {
 ;(async()=>{
   try {
     // Observe normal hangup cleanup without replacing the shell's SIGHUP handler.
-    proc.write(${JSON.stringify('trap \'printf cleaned > "$ORCA_TEST_CLEANUP"\' EXIT; printf ready > "$ORCA_TEST_READY"\r')})
+    proc.write(${JSON.stringify('trap \'printf cleaned > "$DOLPHIN_TEST_CLEANUP"\' EXIT; printf ready > "$DOLPHIN_TEST_READY"\r')})
     await waitFor(() => existsSync(ready))
     startedAt = Date.now()
     controller.kill()
@@ -102,7 +102,7 @@ const waitFor = async predicate => {
   }
 
   it('keeps a real Ctrl-Z job suspended while pausing and resuming a background producer', async () => {
-    const directory = mkdtempSync(join(tmpdir(), 'orca-bun-job-control-'))
+    const directory = mkdtempSync(join(tmpdir(), 'dolphin-bun-job-control-'))
     try {
       writeFileSync(join(directory, 'producer.cjs'), 'setInterval(()=>console.log("flow-tick"),10)')
       writeFileSync(
@@ -120,7 +120,7 @@ const ready = ${JSON.stringify(join(directory, 'sleeper-ready'))}
 const signals = []
 const proc = spawnBunPty({
   file:'/bin/bash', args:['--noprofile','--norc','-i'], cwd:${JSON.stringify(directory)},
-  env:{...process.env,PS1:'',ORCA_TEST_RUNTIME:process.execPath},cols:80,rows:24
+  env:{...process.env,PS1:'',DOLPHIN_TEST_RUNTIME:process.execPath},cols:80,rows:24
 }, {signalProcessGroup:(pgid,signal)=>{process.kill(-pgid,signal);signals.push([pgid,signal])}})
 let output = '', exited = false
 proc.onData(data => output += data)
@@ -155,7 +155,7 @@ const waitFor = async predicate => {
     const sleeper = await waitFor(async () => (await rows()).find(row => row.pid === sleeperPid))
     proc.write('\\x1a')
     await waitFor(async () => (await rows()).some(row => row.pid === sleeper.pid && row.state.startsWith('T')))
-    proc.write(${JSON.stringify('"$ORCA_TEST_RUNTIME" producer.cjs &\r')})
+    proc.write(${JSON.stringify('"$DOLPHIN_TEST_RUNTIME" producer.cjs &\r')})
     await waitFor(() => output.split('flow-tick').length > 5)
     proc.pause()
     await waitFor(() => signals.filter(([,signal]) => signal === 'SIGSTOP').length >= 2)

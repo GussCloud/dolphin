@@ -1,9 +1,9 @@
 export function getOpenCode2SetupSource(): string[] {
   return String.raw`
-// Why: OpenCode owns a form under a session id, and Orca retires a blocker when
+// Why: OpenCode owns a form under a session id, and Dolphin retires a blocker when
 // that session goes idle. An owner that is not a real session has no idle, so a
 // blocker minted for it can only ever be retired by an exact reply — add an id
-// here to drop forms Orca could otherwise strand. OpenCode's own schema calls
+// here to drop forms Dolphin could otherwise strand. OpenCode's own schema calls
 // "global" a temporary MCP-elicitation sentinel it intends to replace with real
 // session ids; when it does, this set stops matching and those forms block.
 const NON_SESSION_FORM_OWNERS = new Set(["global"]);
@@ -13,7 +13,7 @@ async function setupOpenCode2Status(ctx) {
   let hooks;
   // Why: OpenCode may probe setup() with no context during startup, and the setup
   // API shape can drift between releases. Never throw from setup — a throw surfaces
-  // as an 'orca-opencode-status' plugin failed error in the TUI, which is worse
+  // as an 'dolphin-opencode-status' plugin failed error in the TUI, which is worse
   // than silently running without status reporting.
   try {
     if (!ctx || typeof ctx.session?.hook !== "function" || typeof ctx.event?.subscribe !== "function") return noop;
@@ -24,7 +24,7 @@ async function setupOpenCode2Status(ctx) {
     // Without it, resolveRootSessionID returns null for every session and a
     // subagent's work publishes as if it were the root's.
     const client = { session: { get: async (input, options) => { const result = await ctx.session.get(input, options); return result && typeof result.id === "string" ? { data: result } : result; } } };
-    hooks = await OrcaOpenCodeStatusPlugin({ client });
+    hooks = await DolphinOpenCodeStatusPlugin({ client });
     if (!hooks || typeof hooks.event !== "function") return noop;
     const promptRegistration = await ctx.session.hook("prompt", async (properties) => {
       await hooks.event({ event: { type: "session.next.prompt.admitted", properties } });
@@ -75,7 +75,7 @@ async function setupOpenCode2Status(ctx) {
       }
     };
     const consuming = consume().catch((error) => {
-      if (!controller.signal.aborted) console.warn("[orca-hook] event subscription failed:", error.message);
+      if (!controller.signal.aborted) console.warn("[dolphin-hook] event subscription failed:", error.message);
     });
     return async () => {
       try {

@@ -4,9 +4,9 @@ import type {
   RuntimeMobileSessionTabsSnapshot
 } from '../../shared/runtime-types'
 
-const { OrcaRuntimeService } = await import('./orca-runtime-test-mocks.spec')
-await import('./orca-runtime-test-lifecycle.spec')
-const { store, TEST_WORKTREE_ID } = await import('./orca-runtime-test-fixtures.spec')
+const { DolphinRuntimeService } = await import('./dolphin-runtime-test-mocks.spec')
+await import('./dolphin-runtime-test-lifecycle.spec')
+const { store, TEST_WORKTREE_ID } = await import('./dolphin-runtime-test-fixtures.spec')
 
 const retired = {
   parentTabId: 'tab',
@@ -25,10 +25,10 @@ type RuntimeInternals = {
 }
 
 function seedRuntimeWithStoredProof(): {
-  runtime: InstanceType<typeof OrcaRuntimeService>
+  runtime: InstanceType<typeof DolphinRuntimeService>
   internals: RuntimeInternals
 } {
-  const runtime = new OrcaRuntimeService(store)
+  const runtime = new DolphinRuntimeService(store)
   runtime.setPtyController({
     spawn: vi.fn().mockResolvedValue({ id: 'pty-runtime-fallback' }),
     write: () => true,

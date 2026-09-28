@@ -1,6 +1,6 @@
 import { expect, it, vi } from 'vitest'
 import { fixture } from './profile-state-delayed-authority-fixture'
-import { OrcaRuntimeService } from '../../runtime/orca-runtime'
+import { DolphinRuntimeService } from '../../runtime/dolphin-runtime'
 import { commitRuntimePtySpawn } from '../../ipc/pty/runtime/spawn-commit'
 import { createRuntimePtySpawnState } from '../../ipc/pty/runtime/spawn-state'
 import type { PtyRuntimeControllerDeps } from '../../ipc/pty/runtime/controller-deps'
@@ -43,7 +43,7 @@ it.each(
   'retires an exited $controller binding on $connectionId after disk finishes (stable: $stableOwner)',
   async ({ controller, connectionId, exitCode, stableOwner }) => {
     const { store, authority, readState } = await fixture()
-    const runtime = new OrcaRuntimeService(store)
+    const runtime = new DolphinRuntimeService(store)
     const binding = {
       worktreeId: 'repo-local::/fixture/local',
       tabId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -148,7 +148,7 @@ it.each(['replacement-pty', binding.ptyId])(
   'preserves a replacement binding to %s while retirement waits',
   async (ptyId) => {
     const { store, authority, readState } = await fixture()
-    const runtime = new OrcaRuntimeService(store)
+    const runtime = new DolphinRuntimeService(store)
     runtime.beginPtyRegistration(binding.ptyId, binding.incarnationId)
     await store.persistPtyBinding(binding)
     await runtime.onPtyExit(binding.ptyId, 0, binding.incarnationId, { providerExitObserved: true })
@@ -174,7 +174,7 @@ it.each(['replacement-pty', binding.ptyId])(
 
 it('retains the binding when loss of contact supplies no process-exit proof', async () => {
   const { store, readState } = await fixture()
-  const runtime = new OrcaRuntimeService(store)
+  const runtime = new DolphinRuntimeService(store)
   runtime.beginPtyRegistration(binding.ptyId, binding.incarnationId)
   await store.persistPtyBinding(binding)
   await runtime.onPtyExit(binding.ptyId, -1, binding.incarnationId)
@@ -190,7 +190,7 @@ it('retains the binding when loss of contact supplies no process-exit proof', as
 
 it('does not settle rejected registration until its exit cleanup reaches SQLite', async () => {
   const { store, authority, readState } = await fixture()
-  const runtime = new OrcaRuntimeService(store)
+  const runtime = new DolphinRuntimeService(store)
   runtime.beginPtyRegistration(binding.ptyId, binding.incarnationId)
   await store.persistPtyBinding(binding)
   await runtime.onPtyExit(binding.ptyId, 0, binding.incarnationId, { providerExitObserved: true })
@@ -230,7 +230,7 @@ it('does not settle rejected registration until its exit cleanup reaches SQLite'
 
 it('keeps successful registration synchronous through the remaining spawn publication', async () => {
   const { store } = await fixture()
-  const runtime = new OrcaRuntimeService(store)
+  const runtime = new DolphinRuntimeService(store)
   await store.persistPtyBinding(binding)
   expect(
     registerPersistedPtySpawn(runtime, store, binding.ptyId, binding.worktreeId, null, binding)

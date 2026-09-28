@@ -27,7 +27,7 @@ describe('CommandCodeHookService', () => {
   let homeDir: string
 
   beforeEach(() => {
-    homeDir = mkdtempSync(join(tmpdir(), 'orca-command-code-home-'))
+    homeDir = mkdtempSync(join(tmpdir(), 'dolphin-command-code-home-'))
     homedirMock.mockReturnValue(homeDir)
   })
 
@@ -55,7 +55,7 @@ describe('CommandCodeHookService', () => {
       process.platform === 'win32' ? WINDOWS_POWERSHELL_LAUNCHER : /command-code-hook/
     )
     if (process.platform !== 'win32') {
-      expect(config.hooks.PreToolUse[0].hooks[0].command).toContain(join(homeDir, '.orca'))
+      expect(config.hooks.PreToolUse[0].hooks[0].command).toContain(join(homeDir, '.dolphin'))
     }
     if (process.platform !== 'win32') {
       expect(config.hooks.PreToolUse[0].hooks[0].command).toMatch(/^if \[ -f /)
@@ -69,7 +69,7 @@ describe('CommandCodeHookService', () => {
   it.skipIf(process.platform !== 'win32')(
     'wraps the managed hook command to survive spaces in the profile path (#6078)',
     () => {
-      const spaceHome = join(tmpdir(), 'orca command-code home with spaces')
+      const spaceHome = join(tmpdir(), 'dolphin command-code home with spaces')
       mkdirSync(spaceHome, { recursive: true })
       homedirMock.mockReturnValue(spaceHome)
       try {
@@ -92,21 +92,21 @@ describe('CommandCodeHookService', () => {
 
     const scriptFileName =
       process.platform === 'win32' ? 'command-code-hook.cmd' : 'command-code-hook.sh'
-    const script = readFileSync(join(homeDir, '.orca', 'agent-hooks', scriptFileName), 'utf8')
+    const script = readFileSync(join(homeDir, '.dolphin', 'agent-hooks', scriptFileName), 'utf8')
 
     if (process.platform === 'win32') {
       expect(script).toContain('sourceEndpointByPort')
-      expect(script).toContain('orca-dev\\agent-hooks')
-      expect(script).toContain('set ORCA_AGENT_HOOK_PORT=')
+      expect(script).toContain('dolphin-dev\\agent-hooks')
+      expect(script).toContain('set DOLPHIN_AGENT_HOOK_PORT=')
     } else {
       expect(script).toContain('Command Code strips TOKEN-like env vars')
       expect(script).toContain('Command Code sanitizes hook subprocess env')
-      expect(script).toContain('__orca_read_ancestor_var')
-      expect(script).toContain('__orca_fill_from_endpoint_file')
-      expect(script).toContain('[ "$__orca_endpoint_port" != "$ORCA_AGENT_HOOK_PORT" ]')
-      expect(script).toContain('ORCA_PANE_KEY')
-      expect(script).toContain('ORCA_AGENT_LAUNCH_TOKEN')
-      expect(script).toContain('orca-dev/agent-hooks')
+      expect(script).toContain('__dolphin_read_ancestor_var')
+      expect(script).toContain('__dolphin_fill_from_endpoint_file')
+      expect(script).toContain('[ "$__dolphin_endpoint_port" != "$DOLPHIN_AGENT_HOOK_PORT" ]')
+      expect(script).toContain('DOLPHIN_PANE_KEY')
+      expect(script).toContain('DOLPHIN_AGENT_LAUNCH_TOKEN')
+      expect(script).toContain('dolphin-dev/agent-hooks')
       expect(script).toContain('endpoint_port=')
     }
   })
@@ -120,10 +120,10 @@ describe('CommandCodeHookService', () => {
     writeFileSync(
       staleEndpointPath,
       [
-        'ORCA_AGENT_HOOK_PORT=9',
-        'ORCA_AGENT_HOOK_TOKEN=stale-token',
-        'ORCA_AGENT_HOOK_ENV=development',
-        'ORCA_AGENT_HOOK_VERSION=1',
+        'DOLPHIN_AGENT_HOOK_PORT=9',
+        'DOLPHIN_AGENT_HOOK_TOKEN=stale-token',
+        'DOLPHIN_AGENT_HOOK_ENV=development',
+        'DOLPHIN_AGENT_HOOK_VERSION=1',
         ''
       ].join('\n')
     )
@@ -138,7 +138,7 @@ describe('CommandCodeHookService', () => {
       req.on('end', () => {
         requests.push({
           body,
-          token: req.headers['x-orca-agent-hook-token']
+          token: req.headers['x-dolphin-agent-hook-token']
         })
         res.statusCode = 204
         res.end()
@@ -148,19 +148,19 @@ describe('CommandCodeHookService', () => {
     try {
       await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
       const address = server.address() as AddressInfo
-      const scriptPath = join(homeDir, '.orca', 'agent-hooks', 'command-code-hook.sh')
+      const scriptPath = join(homeDir, '.dolphin', 'agent-hooks', 'command-code-hook.sh')
       const child = spawn('/bin/sh', [scriptPath], {
         env: {
           ...process.env,
           HOME: homeDir,
-          ORCA_AGENT_HOOK_ENDPOINT: staleEndpointPath,
-          ORCA_AGENT_HOOK_PORT: String(address.port),
-          ORCA_AGENT_HOOK_TOKEN: 'current-token',
-          ORCA_PANE_KEY: 'tab:leaf',
-          ORCA_TAB_ID: 'tab',
-          ORCA_WORKTREE_ID: 'worktree',
-          ORCA_AGENT_HOOK_ENV: 'development',
-          ORCA_AGENT_HOOK_VERSION: '1'
+          DOLPHIN_AGENT_HOOK_ENDPOINT: staleEndpointPath,
+          DOLPHIN_AGENT_HOOK_PORT: String(address.port),
+          DOLPHIN_AGENT_HOOK_TOKEN: 'current-token',
+          DOLPHIN_PANE_KEY: 'tab:leaf',
+          DOLPHIN_TAB_ID: 'tab',
+          DOLPHIN_WORKTREE_ID: 'worktree',
+          DOLPHIN_AGENT_HOOK_ENV: 'development',
+          DOLPHIN_AGENT_HOOK_VERSION: '1'
         },
         stdio: ['pipe', 'ignore', 'pipe']
       })

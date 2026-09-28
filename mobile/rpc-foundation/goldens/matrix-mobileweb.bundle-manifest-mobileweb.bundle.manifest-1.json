@@ -3,12 +3,12 @@
   "family": "mobileWeb.bundle-manifest",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "af339fef2c684d5709c6d3f279e5f0d9c33d17b6d4e5c89e501963400901b564",
-  "scenarioSha256": "8f5211fd3de1d77d3ea139f22bd6fc6119c72c08aa016f252a0df14bedf23ab3",
-  "platform": "darwin",
+  "scenarioSha256": "8ae787e01706a3e0dc727b7d6819354b571bc77e2df6c87be4b31968f5b7f0a3",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -46,63 +46,6 @@
           "ok": true,
           "result": {
             "$rpc": "null"
-          }
-        }
-      }
-    },
-    "23871e324a00": {
-      "name": "mobileWeb.bundle.manifest#1",
-      "ordinal": 1,
-      "args": [
-        {
-          "name": "method",
-          "value": "mobileWeb.bundle.manifest"
-        },
-        {
-          "name": "params",
-          "value": {
-            "$rpc": "null"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "undefined"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "id": "frame-1",
-          "ok": true,
-          "result": {
-            "chunkBytes": 16,
-            "manifest": {
-              "assets": [
-                {
-                  "byteLength": 11,
-                  "contentType": "text/javascript; charset=utf-8",
-                  "path": "assets/app.js",
-                  "sha256": "e99170780c392398db81fbb3dcaebc1a2c8264d4d8a9cd5932887e9c7206dc3d"
-                },
-                {
-                  "byteLength": 26,
-                  "contentType": "text/html; charset=utf-8",
-                  "path": "index.html",
-                  "sha256": "483f915496f213c851665840f49b69e05b7a6bf70ec9d6939a831b15d298f31e"
-                }
-              ],
-              "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
-              "desktopVersion": "1.4.201",
-              "entrypoint": "index.html",
-              "minCompatibleRuntimeProtocolVersion": 2,
-              "runtimeProtocolVersion": 2,
-              "schemaVersion": 1,
-              "totalBytes": 37
-            }
           }
         }
       }
@@ -159,6 +102,94 @@
     },
     "533d41ae6475": {
       "outcome": "failed: "
+    },
+    "53e55621956f": {
+      "name": "mobileWeb.bundle.manifest#1",
+      "ordinal": 1,
+      "args": [
+        {
+          "name": "method",
+          "value": "mobileWeb.bundle.manifest"
+        },
+        {
+          "name": "params",
+          "value": {
+            "$rpc": "null"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "undefined"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "id": "frame-1",
+          "ok": true,
+          "result": {
+            "chunkBytes": 16,
+            "manifest": {
+              "assets": [
+                {
+                  "byteLength": 11,
+                  "contentType": "text/javascript; charset=utf-8",
+                  "path": "assets/app.js",
+                  "sha256": "80e7d31737117bbf91a7817504a506d1735593ae6be28201e6927f1c1a4ff17f"
+                },
+                {
+                  "byteLength": 26,
+                  "contentType": "text/html; charset=utf-8",
+                  "path": "index.html",
+                  "sha256": "8d239d1b6e05c0547830f72f3ded2674d134d1f9055b3f29df7563a1533c6d64"
+                }
+              ],
+              "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
+              "desktopVersion": "1.4.201",
+              "entrypoint": "index.html",
+              "minCompatibleRuntimeProtocolVersion": 2,
+              "runtimeProtocolVersion": 2,
+              "schemaVersion": 1,
+              "totalBytes": 37
+            }
+          }
+        }
+      }
+    },
+    "5a3c7ca67dd3": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": {
+        "chunkBytes": 16,
+        "manifest": {
+          "assets": [
+            {
+              "byteLength": 11,
+              "contentType": "text/javascript; charset=utf-8",
+              "path": "assets/app.js",
+              "sha256": "80e7d31737117bbf91a7817504a506d1735593ae6be28201e6927f1c1a4ff17f"
+            },
+            {
+              "byteLength": 26,
+              "contentType": "text/html; charset=utf-8",
+              "path": "index.html",
+              "sha256": "8d239d1b6e05c0547830f72f3ded2674d134d1f9055b3f29df7563a1533c6d64"
+            }
+          ],
+          "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
+          "desktopVersion": "1.4.201",
+          "entrypoint": "index.html",
+          "minCompatibleRuntimeProtocolVersion": 2,
+          "runtimeProtocolVersion": 2,
+          "schemaVersion": 1,
+          "totalBytes": 37
+        }
+      }
     },
     "775bfa42070b": {
       "name": "mobileWeb.bundle.manifest#1",
@@ -275,45 +306,6 @@
           },
           "id": "frame-1",
           "ok": false
-        }
-      }
-    },
-    "9ca9b2d0fc07": {
-      "outcome": {
-        "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
-        "chunkBytes": 16,
-        "entrypoint": "index.html",
-        "paths": ["assets/app.js", "index.html"]
-      }
-    },
-    "9d87b3b6bd74": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": {
-        "chunkBytes": 16,
-        "manifest": {
-          "assets": [
-            {
-              "byteLength": 11,
-              "contentType": "text/javascript; charset=utf-8",
-              "path": "assets/app.js",
-              "sha256": "e99170780c392398db81fbb3dcaebc1a2c8264d4d8a9cd5932887e9c7206dc3d"
-            },
-            {
-              "byteLength": 26,
-              "contentType": "text/html; charset=utf-8",
-              "path": "index.html",
-              "sha256": "483f915496f213c851665840f49b69e05b7a6bf70ec9d6939a831b15d298f31e"
-            }
-          ],
-          "buildId": "973c008f6baf56072d8d3d41f451e005257b59026401473543ce96e81c5aa177",
-          "desktopVersion": "1.4.201",
-          "entrypoint": "index.html",
-          "minCompatibleRuntimeProtocolVersion": 2,
-          "runtimeProtocolVersion": 2,
-          "schemaVersion": 1,
-          "totalBytes": 37
         }
       }
     },
@@ -523,6 +515,14 @@
     "ded62b26901e": {
       "outcome": "failed: transport failure"
     },
+    "ee6333394e5f": {
+      "outcome": {
+        "buildId": "38c2983ac68c25291ace4310c3410762c1556cd7a597c402b61d11a7b1390b6a",
+        "chunkBytes": 16,
+        "entrypoint": "index.html",
+        "paths": ["assets/app.js", "index.html"]
+      }
+    },
     "f624ac81d963": {
       "status": "rejected",
       "startedAt": 0,
@@ -540,12 +540,12 @@
       {
         "id": "mobile-web-bundle-manifest-read.normal:manifest-read",
         "observation": {
-          "sender": ["23871e324a00"],
+          "sender": ["53e55621956f"],
           "payloads": ["775bfa42070b"],
           "settlements": {
-            "read": "9d87b3b6bd74"
+            "read": "5a3c7ca67dd3"
           },
-          "state": "9ca9b2d0fc07",
+          "state": "ee6333394e5f",
           "effects": []
         }
       },

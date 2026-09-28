@@ -23,11 +23,11 @@ All comparisons use the same application build within their run, one worker,
 real PTYs, and the original terminal workload. Diagnostic tracing can perturb
 measurements, so it identifies the mechanism rather than setting new budgets.
 
-| Comparison | Evidence | Finding |
-| --- | --- | --- |
-| Default versus disabled background throttling | [35657300611](https://github.com/stablyai/orca/actions/runs/35657300611) | 14/20 restores exceed 1 second; four typing measurements approach 1 second. `setBackgroundThrottling(false)` does not remove the stalls. |
-| Native browser trace | [35658595456](https://github.com/stablyai/orca/actions/runs/35658595456) | Renderer waits roughly 960–1,010 ms in `LayerTreeHost::WaitForCommitCompletion`. Some typing samples contain consecutive waits. |
-| Current flags versus flags preceding `c64777d1bcd` versus SwiftShader | [35659601151](https://github.com/stablyai/orca/actions/runs/35659601151) | All three configurations still trigger undrawn-frame throttling. Reverting the May 26 flags is not a demonstrated fix. |
+| Comparison                                                            | Evidence                                                                     | Finding                                                                                                                                  |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Default versus disabled background throttling                         | [35657300611](https://github.com/GussCloud/dolphin/actions/runs/35657300611) | 14/20 restores exceed 1 second; four typing measurements approach 1 second. `setBackgroundThrottling(false)` does not remove the stalls. |
+| Native browser trace                                                  | [35658595456](https://github.com/GussCloud/dolphin/actions/runs/35658595456) | Renderer waits roughly 960–1,010 ms in `LayerTreeHost::WaitForCommitCompletion`. Some typing samples contain consecutive waits.          |
+| Current flags versus flags preceding `c64777d1bcd` versus SwiftShader | [35659601151](https://github.com/GussCloud/dolphin/actions/runs/35659601151) | All three configurations still trigger undrawn-frame throttling. Reverting the May 26 flags is not a demonstrated fix.                   |
 
 In the graphics comparison, current flags had one of six restores above 1 second;
 the earlier flags had three and a 1,036 ms worst key. SwiftShader had six measured
@@ -60,18 +60,18 @@ The same throttle is present in Chromium 148.0.7778.218 (Electron 42.3.3) and
 
 ## Visibility control
 
-[Run 35660847455](https://github.com/stablyai/orca/actions/runs/35660847455)
+[Run 35660847455](https://github.com/GussCloud/dolphin/actions/runs/35660847455)
 compared ten hidden-window samples with ten visible-window samples on the same
 isolated Xvfb runner, using SwiftShader in both modes. Actual window visibility
 was recorded. The background terminal panes remained hidden in both modes.
 
-| Measurement | Hidden window | Visible window |
-| --- | ---: | ---: |
-| Undrawn-frame throttle decisions | 1,251 | 0 |
-| Largest worst-key latency | 3,062.8 ms | 30.5 ms |
-| Largest timer drift | 3,111.8 ms | 67.0 ms |
-| Restore range | 213.8–1,862.2 ms (9 completed) | 223.4–734.3 ms (10 completed) |
-| Electron tests passed | 9/10 | 10/10 |
+| Measurement                      |                  Hidden window |                Visible window |
+| -------------------------------- | -----------------------------: | ----------------------------: |
+| Undrawn-frame throttle decisions |                          1,251 |                             0 |
+| Largest worst-key latency        |                     3,062.8 ms |                       30.5 ms |
+| Largest timer drift              |                     3,111.8 ms |                       67.0 ms |
+| Restore range                    | 213.8–1,862.2 ms (9 completed) | 223.4–734.3 ms (10 completed) |
+| Electron tests passed            |                           9/10 |                         10/10 |
 
 All ten visible-window samples satisfy the existing latency limits. This isolates
 the never-presented Linux test window as the trigger for the reproduced native
@@ -80,18 +80,18 @@ prove that every historical outlier had the same cause.
 
 ## Full scale validation
 
-[Run 35662787327](https://github.com/stablyai/orca/actions/runs/35662787327)
+[Run 35662787327](https://github.com/GussCloud/dolphin/actions/runs/35662787327)
 passed all 21 scenarios and all 32 strict report rows, with zero skipped,
 unexpected, or retried tests. All 21 scenarios recorded successful isolated-display
 presentation. This run restored the original graphics flags and removed profiling.
 
-| Metric | Largest measurement | Unchanged report limit |
-| --- | ---: | ---: |
-| Median typing | 15.5 ms | 25 ms |
-| Worst key | 45.7 ms | 300 ms |
-| Hidden-output restore | 395.7 ms | 1,000 ms |
-| Worktree revisit | 50.3 ms | 300 ms |
-| Scroll | 54.7 ms | 150 ms |
+| Metric                | Largest measurement | Unchanged report limit |
+| --------------------- | ------------------: | ---------------------: |
+| Median typing         |             15.5 ms |                  25 ms |
+| Worst key             |             45.7 ms |                 300 ms |
+| Hidden-output restore |            395.7 ms |               1,000 ms |
+| Worktree revisit      |             50.3 ms |                 300 ms |
+| Scroll                |             54.7 ms |                 150 ms |
 
 Timer drift and queue/drop checks also passed. Coverage includes 100-pane
 same-workspace and cross-workspace redraws, 50 real PTYs under held-ACK pressure,

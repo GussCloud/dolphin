@@ -7,9 +7,9 @@ import { RELAY_REMOTE_DIR } from './relay-protocol'
 import { powerShellCommand, powerShellLiteral } from './ssh-remote-powershell'
 import { isWindowsRemoteHost, joinRemotePath, type RemoteHostPlatform } from './ssh-remote-platform'
 
-export const LIST_OK = '__ORCA_RG_CACHE__LIST_OK'
-export const REFS_OK = '__ORCA_RG_CACHE__REFS_OK'
-export const REFS_ERR = '__ORCA_RG_CACHE__REFS_ERR'
+export const LIST_OK = '__DOLPHIN_RG_CACHE__LIST_OK'
+export const REFS_OK = '__DOLPHIN_RG_CACHE__REFS_OK'
+export const REFS_ERR = '__DOLPHIN_RG_CACHE__REFS_ERR'
 export const TOMBSTONE_PREFIX = '.rg-gc-'
 export const MAX_LISTING_ENTRIES = 64
 
@@ -47,7 +47,7 @@ export function listEntriesCommand(host: RemoteHostPlatform, remoteHome: string)
 /**
  * Every relay directory's recorded ripgrep entry.
  *
- * A relay directory with no readable marker answers `REFS_ERR`: it may be an older Orca's relay,
+ * A relay directory with no readable marker answers `REFS_ERR`: it may be an older Dolphin's relay,
  * running right now against a binary it never recorded.
  */
 export function listReferencesCommand(host: RemoteHostPlatform, remoteHome: string): string {

@@ -16,7 +16,7 @@ describe('packaged Windows PTY native capability routing', () => {
 
     expect(job['runs-on']).toBe('windows-2022')
     expect(smokeIndex).toBe(packageIndex + 1)
-    // The packaged exe is named by the fork identity, not hardcoded as Orca.exe.
+    // The packaged exe is named by the fork identity, not hardcoded as Dolphin.exe.
     expect(smoke.run).toContain("require('./src/shared/fork-identity.json').executableName")
     expect(smoke.run).toContain(
       'pnpm run smoke:windows-pty-native-capability -- "--exe=dist/win-unpacked/$exe.exe"'
@@ -60,9 +60,9 @@ describe('packaged Windows PTY native capability routing', () => {
     expect(ensureNativeRuntime).toContain("runPnpm(['exec', 'node-gyp', 'rebuild']")
     expect(ensureNativeRuntime).toContain("resolve(moduleDir, 'scripts', 'post-install.js')")
     expect(build.run).toBe('pnpm run build:release:parallel')
-    expect(build.env.ORCA_REUSE_WINDOWS_CLI_LAUNCHER).toBe('1')
+    expect(build.env.DOLPHIN_REUSE_WINDOWS_CLI_LAUNCHER).toBe('1')
     expect(prepare.run).toBe('node config/scripts/ensure-native-runtime.mjs --runtime=electron')
-    expect(packageStep.env.ORCA_REUSE_PREPARED_NATIVE_RUNTIME).toBe('1')
+    expect(packageStep.env.DOLPHIN_REUSE_PREPARED_NATIVE_RUNTIME).toBe('1')
     expect(workflow.jobs.verify.needs).toContain('package_windows')
     expect(verify.env.PACKAGE_WINDOWS).toBe('${{ needs.package_windows.result }}')
     expect(verify.run).toContain('"$PACKAGE_WINDOWS"')
@@ -83,7 +83,7 @@ describe('packaged Windows PTY native capability routing', () => {
     expect(source).not.toContain("from 'node:child_process'")
     expect(source).not.toContain("require('node:child_process')")
     expect(probe).toContain("'System32', 'wscript.exe'")
-    expect(probe).toContain('real-orca-detached-launcher.vbs')
+    expect(probe).toContain('real-dolphin-detached-launcher.vbs')
     expect(probe).not.toMatch(/cmd\.exe|start "" \/b/i)
     expect(probe).toContain('native.terminateJob(target._pty, target.pid)')
   })

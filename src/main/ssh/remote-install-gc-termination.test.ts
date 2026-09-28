@@ -17,7 +17,7 @@ import { getRemoteHostPlatform } from './ssh-remote-platform'
 const conn = {} as SshConnection
 const host = getRemoteHostPlatform('linux-x64')
 const home = '/home/u'
-const currentDir = `${home}/.orca-remote/relay-0.1.0+bbb`
+const currentDir = `${home}/.dolphin-remote/relay-0.1.0+bbb`
 const nativeKey = 'linux-x64-0123456789abcdef'
 const mockExec = vi.mocked(execCommand)
 
@@ -106,15 +106,15 @@ const caches = [
   {
     name: 'native dependencies',
     collect: () => gcRelayNativeDepsCache(conn, host, home),
-    listing: `ENTRY ${nativeKey}\nENTRY linux-x64-fedcba9876543210\n__ORCA_NATIVE_CACHE__LIST_OK`,
-    references: '__ORCA_NATIVE_CACHE__REFS_OK'
+    listing: `ENTRY ${nativeKey}\nENTRY linux-x64-fedcba9876543210\n__DOLPHIN_NATIVE_CACHE__LIST_OK`,
+    references: '__DOLPHIN_NATIVE_CACHE__REFS_OK'
   },
   {
     name: 'ripgrep',
     collect: () => gcRemoteRipgrepCache(conn, host, home),
     listing:
-      'ENTRY 0123456789abcdef-linux-x64\nENTRY fedcba9876543210-linux-x64\n__ORCA_RG_CACHE__LIST_OK',
-    references: '__ORCA_RG_CACHE__REFS_OK'
+      'ENTRY 0123456789abcdef-linux-x64\nENTRY fedcba9876543210-linux-x64\n__DOLPHIN_RG_CACHE__LIST_OK',
+    references: '__DOLPHIN_RG_CACHE__REFS_OK'
   }
 ]
 

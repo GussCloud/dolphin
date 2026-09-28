@@ -29,7 +29,7 @@ let host: StructuredAgentSessionHost
 let acquire: Mock<StructuredAgentSessionAdapter['acquire']>
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'orca-failed-create-sink-'))
+  root = await mkdtemp(join(tmpdir(), 'dolphin-failed-create-sink-'))
   resetHostTestOperationIds()
   acquire = vi.fn(async ({ fence, spawnToken }) => ({
     process: { hostId: 'local', pid: 4242, processStartTimeMs: 1_700_000_000_000, spawnToken },

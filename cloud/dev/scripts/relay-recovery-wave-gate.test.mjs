@@ -132,14 +132,14 @@ for (const [name, mutate, failedThreshold] of [
 
 test('rejects production provenance and unexpected report fields', () => {
   const productionProject = passingReport()
-  productionProject.environment.projectId = 'onorca-cloud'
+  productionProject.environment.projectId = 'dolphin-cloud'
   assert.throws(
     () => evaluateRecoveryWaveReport(productionProject),
     /isolated non-production project/
   )
 
   const productionOrigin = passingReport()
-  productionOrigin.environment.directorOrigin = 'https://relay.onorca.dev'
+  productionOrigin.environment.directorOrigin = 'https://relay.dolphin.guss.dev.br'
   assert.throws(
     () => evaluateRecoveryWaveReport(productionOrigin),
     /isolated non-production origin/
@@ -154,8 +154,8 @@ function passingReport() {
   return {
     schemaVersion: 1,
     environment: {
-      projectId: 'onorca-cloud-staging',
-      directorOrigin: 'https://relay-staging.onorca.dev',
+      projectId: 'dolphin-cloud-staging',
+      directorOrigin: 'https://relay-staging.dolphin.guss.dev.br',
       databaseVcpu: 2,
       databasePoolMax: 3,
       publicConcurrentMax: 2,

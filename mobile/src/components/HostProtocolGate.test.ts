@@ -105,7 +105,7 @@ describe('HostProtocolGate', () => {
     }
     renderer = await renderGate()
     const output = renderedText(renderer)
-    expect(output).toContain('Update Orca Mobile')
+    expect(output).toContain('Update Dolphin Mobile')
     expect(output).toContain('Open App Store')
     expect(output).not.toContain('HostContent')
   })
@@ -119,14 +119,14 @@ describe('HostProtocolGate', () => {
     }
     renderer = await renderGate()
     const output = renderedText(renderer)
-    expect(output).toContain('Update Orca Mobile')
-    expect(output).toContain('Update Orca Mobile from GitHub Releases')
+    expect(output).toContain('Update Dolphin Mobile')
+    expect(output).toContain('Update Dolphin Mobile from GitHub Releases')
     expect(output).toContain('Open GitHub Releases')
     expect(output).not.toContain('mobile app store')
     expect(output).not.toContain('HostContent')
     act(() => renderer?.root.findAllByType('Pressable')[0]?.props.onPress())
     expect(nativeTestState.openUrl).toHaveBeenCalledWith(
-      'https://github.com/stablyai/orca/releases'
+      'https://github.com/GussCloud/dolphin/releases'
     )
   })
 
@@ -138,7 +138,7 @@ describe('HostProtocolGate', () => {
     }
     renderer = await renderGate()
     const output = renderedText(renderer)
-    expect(output).toContain('Update Orca on your computer')
+    expect(output).toContain('Update Dolphin on your computer')
     expect(output).toContain('Open GitHub Releases')
     expect(output).not.toContain('HostContent')
   })
@@ -157,7 +157,7 @@ describe('HostProtocolGate', () => {
     const output = renderedText(renderer)
     expect(output).toContain('HostContent')
     expect(output).toContain('browser.screencast.v1')
-    expect(output).not.toContain('Update Orca')
+    expect(output).not.toContain('Update Dolphin')
     expect(client.sendRequest).toHaveBeenCalledOnce()
   })
 
@@ -222,7 +222,7 @@ describe('HostProtocolGate', () => {
     })
 
     const output = renderedText(renderer)
-    expect(output).toContain('Update Orca Mobile')
+    expect(output).toContain('Update Dolphin Mobile')
     expect(output).not.toContain('HostContent')
   })
 

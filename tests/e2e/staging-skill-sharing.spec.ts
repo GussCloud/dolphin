@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import type { SkillBundleInstallResult } from '../../src/shared/skill-bundle-install-contract'
 import type { SkillCloudPublishResult } from '../../src/shared/skill-cloud-contract'
 import type { SkillInstallDestination } from '../../src/shared/skill-install-contract'
@@ -10,7 +10,7 @@ import type {
   SkillBundleShareInstallOperation,
   SkillSharePreview
 } from '../../src/shared/skill-sharing-contract'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   launchHeadlessPairedRuntimeHost,
   type HeadlessPairedRuntimeHost
@@ -21,40 +21,40 @@ import {
   stagingSkillSshTargetFromEnvironment
 } from './helpers/staging-skill-ssh-target'
 
-const RUN_STAGING = process.env.ORCA_E2E_SKILL_STAGING === '1'
-const AUTH_TOKEN = process.env.ORCA_CLOUD_AUTH_TOKEN?.trim()
-const PHYSICAL_HOST_PAIRING_URL = process.env.ORCA_E2E_SKILL_PHYSICAL_PAIRING_URL?.trim()
-const RUN_HEADLESS_PAIRED = process.env.ORCA_E2E_SKILL_PAIRED_HEADLESS === '1'
+const RUN_STAGING = process.env.DOLPHIN_E2E_SKILL_STAGING === '1'
+const AUTH_TOKEN = process.env.DOLPHIN_CLOUD_AUTH_TOKEN?.trim()
+const PHYSICAL_HOST_PAIRING_URL = process.env.DOLPHIN_E2E_SKILL_PHYSICAL_PAIRING_URL?.trim()
+const RUN_HEADLESS_PAIRED = process.env.DOLPHIN_E2E_SKILL_PAIRED_HEADLESS === '1'
 const PHYSICAL_WSL_DISTRO = 'Ubuntu-24.04'
-const SKILL_NAME = `orca-staging-${randomUUID().slice(0, 8)}`
+const SKILL_NAME = `dolphin-staging-${randomUUID().slice(0, 8)}`
 const SSH_TARGET = RUN_STAGING ? stagingSkillSshTargetFromEnvironment() : null
 
 if (RUN_STAGING && !AUTH_TOKEN) {
-  throw new Error('ORCA_CLOUD_AUTH_TOKEN is required for the noninteractive staging journey.')
+  throw new Error('DOLPHIN_CLOUD_AUTH_TOKEN is required for the noninteractive staging journey.')
 }
 if (PHYSICAL_HOST_PAIRING_URL && RUN_HEADLESS_PAIRED) {
   throw new Error('staging physical pairing and headless pairing are mutually exclusive')
 }
 
 test.use({
-  orcaAppExtraEnv: {
-    ORCA_ARTIFACTS_API_URL: 'https://cloud-api-staging.onorca.dev',
-    ORCA_CLOUD_API_URL: 'https://auth-staging.onorca.dev',
-    ORCA_CLOUD_AUTH_URL: 'https://auth-staging.onorca.dev',
-    ORCA_CLOUD_CLIENT_ID: 'orca-desktop',
-    ...(AUTH_TOKEN ? { ORCA_CLOUD_AUTH_TOKEN: AUTH_TOKEN } : {})
+  dolphinAppExtraEnv: {
+    DOLPHIN_ARTIFACTS_API_URL: 'https://cloud-api-staging.dolphin.guss.dev.br',
+    DOLPHIN_CLOUD_API_URL: 'https://auth-staging.dolphin.guss.dev.br',
+    DOLPHIN_CLOUD_AUTH_URL: 'https://auth-staging.dolphin.guss.dev.br',
+    DOLPHIN_CLOUD_CLIENT_ID: 'dolphin-desktop',
+    ...(AUTH_TOKEN ? { DOLPHIN_CLOUD_AUTH_TOKEN: AUTH_TOKEN } : {})
   }
 })
 
-test.skip(!RUN_STAGING, 'Set ORCA_E2E_SKILL_STAGING=1 to run the live staging journey.')
+test.skip(!RUN_STAGING, 'Set DOLPHIN_E2E_SKILL_STAGING=1 to run the live staging journey.')
 test.describe.configure({ mode: 'serial' })
 
 test('publishes, updates, revokes, and deletes without losing local state', async ({
   electronApp,
-  orcaPage
+  appPage
 }) => {
   test.setTimeout(12 * 60_000)
-  const sourceRoot = mkdtempSync(join(tmpdir(), 'orca-staging-skill-source-'))
+  const sourceRoot = mkdtempSync(join(tmpdir(), 'dolphin-staging-skill-source-'))
   const source = join(sourceRoot, '.agents', 'skills', SKILL_NAME)
   const home = await electronApp.evaluate(({ app }) => app.getPath('home'))
   const globalSkill = join(home, '.agents', 'skills', SKILL_NAME)
@@ -65,17 +65,17 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
   try {
     if (RUN_HEADLESS_PAIRED) {
       pairedHost = await launchHeadlessPairedRuntimeHost()
-      physicalEnvironmentId = await addPhysicalHost(orcaPage, pairedHost.offer.pairingUrl)
+      physicalEnvironmentId = await addPhysicalHost(appPage, pairedHost.offer.pairingUrl)
     } else if (PHYSICAL_HOST_PAIRING_URL) {
-      physicalEnvironmentId = await addPhysicalHost(orcaPage, PHYSICAL_HOST_PAIRING_URL)
+      physicalEnvironmentId = await addPhysicalHost(appPage, PHYSICAL_HOST_PAIRING_URL)
     }
     if (SSH_TARGET) {
-      sshTargetId = await connectStagingSkillSshTarget(orcaPage, SSH_TARGET)
+      sshTargetId = await connectStagingSkillSshTarget(appPage, SSH_TARGET)
     }
     mkdirSync(source, { recursive: true })
     writeSkill(source, 'v1')
     const first = await publish(
-      orcaPage,
+      appPage,
       sourceRoot,
       'Initial staging journey',
       undefined,
@@ -85,7 +85,7 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     )
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
       const remoteFirst = await installVersion(
-        orcaPage,
+        appPage,
         first.published,
         target.destination,
         undefined,
@@ -94,35 +94,35 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
       expectPhysicalInstall(remoteFirst, first.published, target.kind)
       expect(existsSync(globalSkill)).toBe(false)
     }
-    const firstInstall = await installVersion(orcaPage, first.published, { scope: 'global' })
+    const firstInstall = await installVersion(appPage, first.published, { scope: 'global' })
     expectBundleOutcome(firstInstall, 'complete', 'installed')
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: v1')
 
     writeSkill(globalSkill, 'local')
     writeSkill(source, 'v2')
     const second = await publish(
-      orcaPage,
+      appPage,
       sourceRoot,
       'Second immutable version',
       first.preview.packageId
     )
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
       const remoteUpdate = await installVersion(
-        orcaPage,
+        appPage,
         second.published,
         target.destination,
         'replace-unmodified',
         target.installEnvironmentId
       )
       expectBundleOutcome(remoteUpdate, 'complete', 'updated')
-      await expectManagedRemoteVersion(orcaPage, target, second.published.version.versionId)
+      await expectManagedRemoteVersion(appPage, target, second.published.version.versionId)
     }
-    const conflict = await installVersion(orcaPage, second.published, { scope: 'global' })
+    const conflict = await installVersion(appPage, second.published, { scope: 'global' })
     expectBundleOutcome(conflict, 'partial', 'kept-local', 'modified')
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: local')
 
     const update = await installVersion(
-      orcaPage,
+      appPage,
       second.published,
       { scope: 'global' },
       'replace-and-discard-local'
@@ -131,7 +131,7 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: v2')
 
     const rollback = await installVersion(
-      orcaPage,
+      appPage,
       first.published,
       { scope: 'global' },
       'replace-unmodified'
@@ -141,23 +141,23 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
 
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
       const remoteRollback = await installVersion(
-        orcaPage,
+        appPage,
         first.published,
         target.destination,
         'replace-unmodified',
         target.installEnvironmentId
       )
       expectBundleOutcome(remoteRollback, 'complete', 'updated')
-      await expectManagedRemoteVersion(orcaPage, target, first.published.version.versionId)
+      await expectManagedRemoteVersion(appPage, target, first.published.version.versionId)
     }
 
     expect(
-      await orcaPage.evaluate(
+      await appPage.evaluate(
         (shareId) => window.api.skills.revokeShare(shareId),
         first.published.share.id
       )
     ).toMatchObject({ status: 'ok' })
-    const revokedInstall = await orcaPage.evaluate(
+    const revokedInstall = await appPage.evaluate(
       async ({ shareId, skillId, versionId }) => {
         try {
           return await window.api.skills.installBundleShare({
@@ -180,9 +180,9 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     expect(readFileSync(join(globalSkill, 'SKILL.md'), 'utf8')).toContain('version: v1')
 
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
-      await expectManagedRemoteVersion(orcaPage, target, first.published.version.versionId)
+      await expectManagedRemoteVersion(appPage, target, first.published.version.versionId)
       expect(
-        await orcaPage.evaluate(
+        await appPage.evaluate(
           ({ environmentId, name, destination }) =>
             window.api.skills.removeInstall({
               ...(environmentId ? { environmentId } : {}),
@@ -198,22 +198,22 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
       ).toMatchObject({ status: 'ok', value: { status: 'removed' } })
     }
 
-    const removed = await orcaPage.evaluate(
+    const removed = await appPage.evaluate(
       (name) => window.api.skills.removeInstall({ name, destination: { scope: 'global' } }),
       SKILL_NAME
     )
     expect(removed).toMatchObject({ status: 'ok', value: { status: 'removed' } })
     expect(existsSync(globalSkill)).toBe(false)
     expect(
-      await orcaPage.evaluate((id) => window.api.skills.getPackage(id), packageId)
+      await appPage.evaluate((id) => window.api.skills.getPackage(id), packageId)
     ).toMatchObject({ status: 'ok' })
     expect(
-      await orcaPage.evaluate((id) => window.api.skills.deletePackage(id), packageId)
+      await appPage.evaluate((id) => window.api.skills.deletePackage(id), packageId)
     ).toMatchObject({ status: 'ok' })
     packageId = null
   } finally {
     for (const target of externalTargets(physicalEnvironmentId, sshTargetId)) {
-      await orcaPage
+      await appPage
         .evaluate(
           ({ environmentId, name, destination }) =>
             window.api.skills.removeInstall({
@@ -231,10 +231,10 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
         .catch(() => undefined)
     }
     if (sshTargetId) {
-      await removeStagingSkillSshTarget(orcaPage, sshTargetId).catch(() => undefined)
+      await removeStagingSkillSshTarget(appPage, sshTargetId).catch(() => undefined)
     }
     if (physicalEnvironmentId) {
-      await orcaPage
+      await appPage
         .evaluate(
           (selector) => window.api.runtimeEnvironments.remove({ selector }),
           physicalEnvironmentId
@@ -243,7 +243,7 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
     }
     await pairedHost?.dispose().catch(() => undefined)
     if (packageId) {
-      await orcaPage
+      await appPage
         .evaluate((id) => window.api.skills.deletePackage(id), packageId)
         .catch(() => undefined)
     }
@@ -255,7 +255,7 @@ test('publishes, updates, revokes, and deletes without losing local state', asyn
 function writeSkill(directory: string, version: string): void {
   writeFileSync(
     join(directory, 'SKILL.md'),
-    `---\nname: ${SKILL_NAME}\ndescription: Orca staging installation journey\n---\n\n# Staging journey\n\nversion: ${version}\n`
+    `---\nname: ${SKILL_NAME}\ndescription: Dolphin staging installation journey\n---\n\n# Staging journey\n\nversion: ${version}\n`
   )
 }
 

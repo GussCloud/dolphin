@@ -3,7 +3,7 @@
 // conversation: the new child continues the record's chain rather than creating a second root.
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { claudeSessionIdForOrcaSession } from '../claude/claude-structured-launch-resolution'
+import { claudeSessionIdForDolphinSession } from '../claude/claude-structured-launch-resolution'
 import { waitForStructuredAgentSessionRecovery } from './structured-agent-session-runtime'
 import { createScriptedClaudeRuntime } from './structured-claude-scripted-runtime-test-support'
 
@@ -37,7 +37,7 @@ describe('a Claude chat whose first start died before initialize', () => {
     )
 
     expect(reopened, JSON.stringify(reopened)).toMatchObject({ ok: true })
-    const providerSessionId = claudeSessionIdForOrcaSession(SESSION)
+    const providerSessionId = claudeSessionIdForDolphinSession(SESSION)
     // No transcript exists to `--resume`, so the id is started fresh...
     expect(claude.child(SESSION).launch.options).toMatchObject({ sessionId: providerSessionId })
     expect(claude.child(SESSION).launch.options.resume).toBeUndefined()

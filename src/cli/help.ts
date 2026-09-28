@@ -1,3 +1,4 @@
+import { CLI_COMMAND_NAME } from '../shared/cli-command-names'
 import type { CommandSpec } from './args'
 import { findCommandSpec, isCommandGroup, matches, supportsBrowserPageFlag } from './args'
 import { unknownCommandData } from './command-suggestion'
@@ -30,7 +31,13 @@ export function printHelp(specs: CommandSpec[], commandPath: string[] = []): voi
 }
 
 export function formatCommandHelp(spec: CommandSpec): string {
-  const lines = [`orca ${spec.path.join(' ')}`, '', `Usage: ${spec.usage}`, '', spec.summary]
+  const lines = [
+    `${CLI_COMMAND_NAME} ${spec.path.join(' ')}`,
+    '',
+    `Usage: ${spec.usage}`,
+    '',
+    spec.summary
+  ]
   const displayedFlags =
     spec.argumentMode === 'passthrough'
       ? []
@@ -64,7 +71,13 @@ export function formatCommandHelp(spec: CommandSpec): string {
 
 export function formatGroupHelp(specs: CommandSpec[], groupPath: string[]): string {
   const group = groupPath.join(' ')
-  const lines = [`orca ${group}`, '', `Usage: orca ${group} <command> [options]`, '', 'Commands:']
+  const lines = [
+    `${CLI_COMMAND_NAME} ${group}`,
+    '',
+    `Usage: ${CLI_COMMAND_NAME} ${group} <command> [options]`,
+    '',
+    'Commands:'
+  ]
   for (const spec of specs) {
     if (
       spec.hidden === true ||
@@ -75,7 +88,10 @@ export function formatGroupHelp(specs: CommandSpec[], groupPath: string[]): stri
     }
     lines.push(`  ${spec.path.slice(groupPath.length).join(' ').padEnd(18)} ${spec.summary}`)
   }
-  lines.push('', `Run \`orca ${group} <command> --help\` for command-specific usage.`)
+  lines.push(
+    '',
+    `Run \`${CLI_COMMAND_NAME} ${group} <command> --help\` for command-specific usage.`
+  )
   return lines.join('\n')
 }
 

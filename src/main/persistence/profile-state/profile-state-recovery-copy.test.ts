@@ -44,7 +44,7 @@ afterEach(() => {
 })
 
 function fixture(large = true) {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-recovery-copy-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-recovery-copy-'))
   directories.push(directory)
   const source = join(directory, '- source with spaces')
   const target = join(directory, 'target')
@@ -59,7 +59,7 @@ function fixture(large = true) {
 }
 
 function expectNoTemporary(directory: string): void {
-  expect(readdirSync(directory).some((name) => name.startsWith('.orca-recovery-clone-'))).toBe(
+  expect(readdirSync(directory).some((name) => name.startsWith('.dolphin-recovery-clone-'))).toBe(
     false
   )
 }

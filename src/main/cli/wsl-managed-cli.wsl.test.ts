@@ -6,14 +6,14 @@ import { runProcess } from '../../shared/child-process/run-process'
 import { removeTree } from '../../shared/windows-transient-lock-removal'
 import { buildWslExecArgs } from '../../shared/wsl-login-shell-command'
 import { installFakeAppEnvironment } from '../../../config/scripts/vitest-host-ports-setup'
-import { addOrcaWslInteropEnv } from '../pty/wsl-orca-env'
+import { addDolphinWslInteropEnv } from '../pty/wsl-dolphin-env'
 import { getManagedWslCliDir } from './wsl-managed-cli'
 import { buildLocalShellReadyWrapperFiles } from '../providers/local-pty-shell-ready-wrapper-fileset'
 
 // Explicit opt-in: never require a developer's WSL installation for unit tests.
-const enabled = process.platform === 'win32' && process.env.ORCA_TEST_MANAGED_WSL === '1'
+const enabled = process.platform === 'win32' && process.env.DOLPHIN_TEST_MANAGED_WSL === '1'
 const FIXTURE_CLI =
-  'if(process.argv.includes("--exit"))process.exit(23); console.error("bridge stderr"); console.log(JSON.stringify({argv:process.argv.slice(2),owner:process.env.ORCA_USER_DATA_PATH,handle:process.env.ORCA_TERMINAL_HANDLE}))'
+  'if(process.argv.includes("--exit"))process.exit(23); console.error("bridge stderr"); console.log(JSON.stringify({argv:process.argv.slice(2),owner:process.env.DOLPHIN_USER_DATA_PATH,handle:process.env.DOLPHIN_TERMINAL_HANDLE}))'
 
 async function withManagedCli(
   run: (fixture: {
@@ -24,10 +24,10 @@ async function withManagedCli(
     wsl: (args: string[], input?: string) => ReturnType<typeof runProcess>
   }) => Promise<void>
 ): Promise<void> {
-  const root = mkdtempSync(join(tmpdir(), "orca WSL's managed CLI "))
-  const distro = process.env.ORCA_TEST_WSL_DISTRO || undefined
+  const root = mkdtempSync(join(tmpdir(), "dolphin WSL's managed CLI "))
+  const distro = process.env.DOLPHIN_TEST_WSL_DISTRO || undefined
   const userDataPath = join(root, 'user data 张三 O\u2019Brien')
-  const env: Record<string, string> = { ORCA_BACKGROUND_LAUNCH: '1' }
+  const env: Record<string, string> = { DOLPHIN_BACKGROUND_LAUNCH: '1' }
   for (const [key, value] of Object.entries(process.env)) {
     if (value !== undefined) {
       env[key] = value
@@ -46,7 +46,7 @@ async function withManagedCli(
     wsl([
       'sh',
       '-c',
-      'for file in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.local/bin/orca" "$HOME/.local/bin/orca-ide" "$HOME/.local/bin/orca-dev" "$HOME/.local/share/orca/orca-wsl-bridge.ps1"; do if [ -f "$file" ]; then sha256sum "$file"; fi; done; printf "PATH=%s\\n" "$PATH"'
+      'for file in "$HOME/.profile" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.zshrc" "$HOME/.zprofile" "$HOME/.zshenv" "$HOME/.local/bin/dolphin" "$HOME/.local/bin/dolphin-ide" "$HOME/.local/bin/dolphin-dev" "$HOME/.local/share/dolphin/dolphin-wsl-bridge.ps1"; do if [ -f "$file" ]; then sha256sum "$file"; fi; done; printf "PATH=%s\\n" "$PATH"'
     ])
   try {
     const before = await snapshot()
@@ -63,11 +63,11 @@ async function withManagedCli(
     const directory = getManagedWslCliDir({ isPackaged: false, userDataPath })
     expect(directory).not.toBeNull()
     Object.assign(env, {
-      ORCA_WSL_CLI_DIR: directory ?? '',
-      ORCA_CLI_COMMAND: 'orca-dev',
-      ORCA_TERMINAL_HANDLE: 'term_managed_fixture'
+      DOLPHIN_WSL_CLI_DIR: directory ?? '',
+      DOLPHIN_CLI_COMMAND: 'dolphin-dev',
+      DOLPHIN_TERMINAL_HANDLE: 'term_managed_fixture'
     })
-    addOrcaWslInteropEnv(env)
+    addDolphinWslInteropEnv(env)
     await run({ env, guestRoot: translated.stdout.trim(), root, userDataPath, wsl })
     expect((await snapshot()).stdout).toBe(before.stdout)
   } finally {
@@ -92,15 +92,15 @@ it.skipIf(!enabled)(
           command
         ])
 
-      const result = await shell('orca-dev "two words" "literal $" | cat')
+      const result = await shell('dolphin-dev "two words" "literal $" | cat')
       expect(result.code, result.stderr).toBe(0)
       expect(result.stderr).toContain('bridge stderr')
       expect(result.stdout).toContain('"argv":["two words","literal $"]')
       expect(result.stdout).toContain(JSON.stringify(userDataPath))
       expect(result.stdout).toContain('"handle":"term_managed_fixture"')
-      expect((await shell('orca-dev --exit')).code).toBe(23)
+      expect((await shell('dolphin-dev --exit')).code).toBe(23)
 
-      env.ORCA_WSL_CLI_DIR = join(root, 'missing-cli')
+      env.DOLPHIN_WSL_CLI_DIR = join(root, 'missing-cli')
       // An unusable CLI warns but never blocks the shell.
       const missing = await shell('echo SHELL_CONTINUED')
       expect(missing.code).toBe(0)
@@ -130,7 +130,7 @@ it.skipIf(!enabled)(
           'zsh -l',
           '/dev/null'
         ],
-        `orca-dev "two words" > "$HOME/zsh-out"; print -r -- "path=$PATH" >> "$HOME/zsh-out"; exit\n`
+        `dolphin-dev "two words" > "$HOME/zsh-out"; print -r -- "path=$PATH" >> "$HOME/zsh-out"; exit\n`
       )
       expect(result.code, result.stderr).toBe(0)
       const output = await wsl(['cat', `${guestRoot}/zsh-out`])

@@ -102,7 +102,7 @@ describe('relay protocol contract', () => {
     expect(
       AssignmentResponseSchema.safeParse({
         v: 1,
-        cellUrl: 'https://relay-c1.onorca.dev',
+        cellUrl: 'https://relay-c1.dolphin.guss.dev.br',
         assignmentEpoch: 3,
         lease: 'signed-lease'
       }).success
@@ -161,20 +161,20 @@ describe('relay protocol contract', () => {
   it('accepts moves only from the configured director at a strictly newer epoch', () => {
     const move = RelayMovedSchema.parse({
       v: 1,
-      cellUrl: 'https://relay-c2.onorca.dev',
+      cellUrl: 'https://relay-c2.dolphin.guss.dev.br',
       assignmentEpoch: 4
     })
     const base = {
-      configuredDirectorOrigin: 'https://relay.onorca.dev',
+      configuredDirectorOrigin: 'https://relay.dolphin.guss.dev.br',
       currentAssignmentEpoch: 3,
       move
     }
-    expect(isTrustedNewerMove({ ...base, sourceOrigin: 'https://relay.onorca.dev' })).toBe(true)
+    expect(isTrustedNewerMove({ ...base, sourceOrigin: 'https://relay.dolphin.guss.dev.br' })).toBe(true)
     expect(isTrustedNewerMove({ ...base, sourceOrigin: move.cellUrl })).toBe(false)
     expect(
       isTrustedNewerMove({
         ...base,
-        sourceOrigin: 'https://relay.onorca.dev',
+        sourceOrigin: 'https://relay.dolphin.guss.dev.br',
         currentAssignmentEpoch: 4
       })
     ).toBe(false)
@@ -235,7 +235,7 @@ describe('relay protocol contract', () => {
 
   it('locks the complete host key-possession transcript', () => {
     const transcript = buildHostProofTranscript({
-      relayOrigin: 'https://relay.onorca.dev',
+      relayOrigin: 'https://relay.dolphin.guss.dev.br',
       relayEphemeralPublicKey: new Uint8Array(32).fill(1),
       challengeNonce: new Uint8Array(24).fill(4),
       challengeId: 'challenge-1',
@@ -254,16 +254,16 @@ describe('relay protocol contract', () => {
     const proofInput = buildHostProofMacInput(transcript)
 
     expect(Buffer.from(transcript).toString('base64url')).toBe(
-      'AAAACHByb3RvY29sAAAAGG9yY2EtcmVsYXktaG9zdC1wcm9vZi92MQAAAAd2ZXJzaW9uAAAAAQEAAAALcmVsYXlPcmlnaW4AAAAYaHR0cHM6Ly9yZWxheS5vbm9yY2EuZGV2AAAAF3JlbGF5RXBoZW1lcmFsUHVibGljS2V5AAAAIAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAADmNoYWxsZW5nZU5vbmNlAAAAGAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAtjaGFsbGVuZ2VJZAAAAAtjaGFsbGVuZ2UtMQAAAAhpc3N1ZWRBdAAAAAgAAAGLz-VoAAAAAAlleHBpcmVzQXQAAAAIAAABi8_ljxAAAAAGdXNlcklkAAAABnVzZXItMQAAAAlwcm9maWxlSWQAAAAJcHJvZmlsZS0xAAAADm9yZ2FuaXphdGlvbklkAAAABW9yZy0xAAAAC3JlbGF5SG9zdElkAAAAEGFiY2RlZmdoaWprbG1ub3AAAAANaG9zdFB1YmxpY0tleQAAACACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgAAAA9hc3NpZ25tZW50RXBvY2gAAAAIAAAAAAAAAAcAAAAScHJldmlvdXNHZW5lcmF0aW9uAAAACAAAAAAAAAAGAAAAD3Jlc3VtZVJlcXVlc3RlZAAAAAEB'
+      'AAAACHByb3RvY29sAAAAG2RvbHBoaW4tcmVsYXktaG9zdC1wcm9vZi92MQAAAAd2ZXJzaW9uAAAAAQEAAAALcmVsYXlPcmlnaW4AAAAhaHR0cHM6Ly9yZWxheS5kb2xwaGluLmd1c3MuZGV2LmJyAAAAF3JlbGF5RXBoZW1lcmFsUHVibGljS2V5AAAAIAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAADmNoYWxsZW5nZU5vbmNlAAAAGAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAtjaGFsbGVuZ2VJZAAAAAtjaGFsbGVuZ2UtMQAAAAhpc3N1ZWRBdAAAAAgAAAGLz-VoAAAAAAlleHBpcmVzQXQAAAAIAAABi8_ljxAAAAAGdXNlcklkAAAABnVzZXItMQAAAAlwcm9maWxlSWQAAAAJcHJvZmlsZS0xAAAADm9yZ2FuaXphdGlvbklkAAAABW9yZy0xAAAAC3JlbGF5SG9zdElkAAAAEGFiY2RlZmdoaWprbG1ub3AAAAANaG9zdFB1YmxpY0tleQAAACACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgAAAA9hc3NpZ25tZW50RXBvY2gAAAAIAAAAAAAAAAcAAAAScHJldmlvdXNHZW5lcmF0aW9uAAAACAAAAAAAAAAGAAAAD3Jlc3VtZVJlcXVlc3RlZAAAAAEB'
     )
-    expect(challenge.byteLength).toBe(transcript.byteLength + 65)
-    expect(proofInput.byteLength).toBe(transcript.byteLength + 29)
+    expect(challenge.byteLength).toBe(transcript.byteLength + 68)
+    expect(proofInput.byteLength).toBe(transcript.byteLength + 32)
     expect(() => buildHostChallengePlaintext(transcript, new Uint8Array(31))).toThrow(
       'challengeSecret must be 32 bytes'
     )
     expect(() =>
       buildHostProofTranscript({
-        relayOrigin: 'https://relay.onorca.dev',
+        relayOrigin: 'https://relay.dolphin.guss.dev.br',
         relayEphemeralPublicKey: new Uint8Array(32),
         challengeNonce: new Uint8Array(32),
         challengeId: 'challenge-1',
@@ -378,7 +378,7 @@ describe('pending connection details capability', () => {
   it('pins the header and token the desktop mirrors by hand', () => {
     // The desktop cannot import this package; drift silently disables the
     // feature, so both literals are asserted on each side.
-    expect(RELAY_HOST_CAPABILITIES_HEADER).toBe('x-orca-host-capabilities')
+    expect(RELAY_HOST_CAPABILITIES_HEADER).toBe('x-dolphin-host-capabilities')
     expect(RELAY_HOST_CAPABILITY_PENDING_CONN_DETAILS).toBe('pending-conn-details')
   })
 

@@ -27,7 +27,7 @@ async function loadStoreModule() {
 }
 
 beforeEach(() => {
-  tempHome = mkdtempLike('orca-openai-key-store-')
+  tempHome = mkdtempLike('dolphin-openai-key-store-')
   safeStorageMock.decryptString.mockClear()
   safeStorageMock.encryptString.mockClear()
   safeStorageMock.isEncryptionAvailable.mockClear()
@@ -39,9 +39,9 @@ function mkdtempLike(prefix: string): string {
 }
 
 function writeStoredOpenAiKey(value: string): void {
-  const orcaDir = join(tempHome, '.dolphin')
-  mkdirSync(orcaDir, { recursive: true })
-  writeFileSync(join(orcaDir, 'openai-speech-token.enc'), value)
+  const dolphinDir = join(tempHome, '.dolphin')
+  mkdirSync(dolphinDir, { recursive: true })
+  writeFileSync(join(dolphinDir, 'openai-speech-token.enc'), value)
 }
 
 describe('OpenAI speech API key store', () => {

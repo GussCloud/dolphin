@@ -66,7 +66,7 @@ export function SkillFreshnessNudge(): null {
     const candidates = inventory.installations.flatMap((installation) =>
       // Why: a project copy the global update never touches must not enter the dismissal
       // fingerprint, or re-checking out that repo re-raises a nudge the user already
-      // dismissed — and spends the bounded dismissal budget on copies Orca cannot update.
+      // dismissed — and spends the bounded dismissal budget on copies Dolphin cannot update.
       skillPlacementParticipatesInGlobalFreshness(installation) &&
       installation.status === 'outdated' &&
       eligibleNames.has(installation.name) &&

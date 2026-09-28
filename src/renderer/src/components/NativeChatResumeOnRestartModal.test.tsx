@@ -161,7 +161,7 @@ it('offers exactly Dismiss all and the resume action', async () => {
 })
 
 // Rows the sidebar showed as working for different reasons must read differently.
-it('says under each chat what it was doing when Orca went away', async () => {
+it('says under each chat what it was doing when Dolphin went away', async () => {
   rpc.mockResolvedValue({
     sessions: [
       { ...offered[0], activity: { state: 'working', prompts: [], tasks: [] } },
@@ -210,7 +210,7 @@ it('fully dismisses the offer only through Dismiss all', async () => {
 })
 
 // Bookkeeping must never gate the user's own action: the dismissal lands in the UI either way, and
-// a write Orca could not confirm is reported instead of trapping the dialog open.
+// a write Dolphin could not confirm is reported instead of trapping the dialog open.
 it('reports a dismissal the host never confirmed instead of trapping the dialog', async () => {
   rpc.mockImplementation(async (_target, method) => {
     if (method === 'agentSession.restartResumable') {

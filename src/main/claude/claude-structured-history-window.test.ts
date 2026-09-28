@@ -15,7 +15,7 @@ import {
 } from './claude-structured-history-window'
 
 const PROVIDER_SESSION = 'provider-1'
-const ORCA_SESSION = 'session-1'
+const DOLPHIN_SESSION = 'session-1'
 
 let accountHome: string
 
@@ -42,7 +42,7 @@ function read(contents: string, previousLeafUuid: string | null, turnInFlight = 
     contents,
     providerSessionId: PROVIDER_SESSION,
     previousLeafUuid,
-    sessionId: ORCA_SESSION,
+    sessionId: DOLPHIN_SESSION,
     turnInFlight
   })
 }
@@ -51,7 +51,7 @@ function read(contents: string, previousLeafUuid: string | null, turnInFlight = 
 function sendFingerprint(text: string): string {
   return structuredAgentSessionPayloadFingerprint({
     method: 'agentSession.send',
-    sessionId: ORCA_SESSION,
+    sessionId: DOLPHIN_SESSION,
     fields: { body: structuredAgentSessionSendBody(text, []) }
   })
 }
@@ -59,7 +59,7 @@ function sendFingerprint(text: string): string {
 const ANCHOR = prompt('anchor', null, 'earlier turn')
 
 beforeEach(async () => {
-  accountHome = await mkdtemp(join(tmpdir(), 'orca-claude-history-window-'))
+  accountHome = await mkdtemp(join(tmpdir(), 'dolphin-claude-history-window-'))
 })
 
 afterEach(async () => {
@@ -78,7 +78,7 @@ describe('claudeProviderHistoryWindowFromJsonl', () => {
 
     const window = await resolveClaudeProviderHistoryWindow({
       identity: {
-        sessionId: ORCA_SESSION,
+        sessionId: DOLPHIN_SESSION,
         workspaceId: 'workspace-1',
         hostId: 'host-1',
         agent: 'claude',
@@ -98,7 +98,7 @@ describe('claudeProviderHistoryWindowFromJsonl', () => {
     // would also silently turn every reconciliation into `not_delivered`.
     const input = {
       method: 'agentSession.send',
-      sessionId: ORCA_SESSION,
+      sessionId: DOLPHIN_SESSION,
       fields: { body: structuredAgentSessionSendBody('ship it', []) }
     }
 
@@ -283,7 +283,7 @@ describe('claudeProviderHistoryWindowFromJsonl', () => {
   })
 })
 
-describe('a crash between Claude saving a prompt and Orca recording its echo', () => {
+describe('a crash between Claude saving a prompt and Dolphin recording its echo', () => {
   const row = (type: string, uuid: string, parentUuid: string | null, extra: Row = {}): Row => ({
     type,
     uuid,
@@ -320,7 +320,7 @@ describe('a crash between Claude saving a prompt and Orca recording its echo', (
     .join('\n')
 
   it('reconciles the prompt Claude already holds as accepted, not undelivered', () => {
-    // The durable anchor is Orca's last completed turn: the reply it saw on the live stream.
+    // The durable anchor is Dolphin's last completed turn: the reply it saw on the live stream.
     const window = read(`${CRASHED_MID_TURN}\n`, 'alpha-reply')
     expect(window).toMatchObject({ boundaryConsistent: true })
     expect(window.items.map((item) => item.providerItemId)).toEqual(['bravo'])

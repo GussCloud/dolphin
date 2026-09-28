@@ -14,7 +14,7 @@ import {
 
 /**
  * Shows the Full Disk Access hint after macOS raises a consent dialog naming
- * Orca (#9756). Users who never see one never see this.
+ * Dolphin (#9756). Users who never see one never see this.
  */
 export function useMacosTccPromptNotice(): void {
   const openSettingsPage = useAppStore((s) => s.openSettingsPage)

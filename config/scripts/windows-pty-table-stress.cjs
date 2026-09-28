@@ -11,7 +11,7 @@ function report(phase, details = {}) {
 
 async function exerciseTable() {
   assert.equal(process.platform, 'win32', 'This probe requires real Windows ConPTY')
-  const rounds = Number(process.env.ORCA_PTY_TABLE_STRESS_ROUNDS ?? 8)
+  const rounds = Number(process.env.DOLPHIN_PTY_TABLE_STRESS_ROUNDS ?? 8)
   assert.ok(Number.isInteger(rounds) && rounds > 0 && rounds <= 2000)
   const pty = require('node-pty')
   const nativePath = require.resolve('node-pty/lib/utils')
@@ -39,7 +39,7 @@ async function exerciseTable() {
       useConptyDll: true
     })
     const record = { proc, output: '', exited: false, closed: false }
-    const marker = `ORCA_PTY_READY_${spawned.length}`
+    const marker = `DOLPHIN_PTY_READY_${spawned.length}`
     let resolveReady
     record.ready = new Promise((resolve) => {
       resolveReady = resolve

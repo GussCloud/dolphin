@@ -7,7 +7,7 @@ function isAnimatedGif(url: string | undefined): boolean {
   return typeof url === 'string' && url.toLowerCase().endsWith('.gif')
 }
 
-/** A package manager owns this install: the release is real but Orca can never apply it here. */
+/** A package manager owns this install: the release is real but Dolphin can never apply it here. */
 function ExternallyManagedNote(): React.JSX.Element {
   return (
     <p className="text-xs leading-relaxed text-muted-foreground">

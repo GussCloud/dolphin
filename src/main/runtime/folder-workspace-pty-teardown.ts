@@ -1,9 +1,9 @@
 import { killAllProcessesForWorktree } from './worktree-teardown'
 import type { IPtyProvider } from '../providers/types'
-import type { OrcaRuntimeService } from './orca-runtime'
+import type { DolphinRuntimeService } from './dolphin-runtime'
 
 export type FolderWorkspacePtyTeardownDeps = {
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
   getSshProvider: ((connectionId: string) => IPtyProvider | undefined) | null
   getLocalProvider: () => IPtyProvider | null
   onPtyStopped: ((ptyId: string) => void) | null

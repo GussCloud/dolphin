@@ -47,7 +47,7 @@ function persistedFile(
 }
 
 beforeEach(() => {
-  workDir = mkdtempSync(join(tmpdir(), 'orca-codex-resume-state-'))
+  workDir = mkdtempSync(join(tmpdir(), 'dolphin-codex-resume-state-'))
 })
 
 afterEach(() => {

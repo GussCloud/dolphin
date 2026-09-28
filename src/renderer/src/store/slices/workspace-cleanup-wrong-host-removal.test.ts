@@ -79,7 +79,7 @@ function makeDetectedWorktree(
 ): DetectedWorktree {
   return {
     ...makeWorktree(overrides),
-    ownership: 'orca-managed',
+    ownership: 'dolphin-managed',
     selectedCheckout: false,
     visible: true
   }

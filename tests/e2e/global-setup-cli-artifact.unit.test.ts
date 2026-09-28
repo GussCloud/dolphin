@@ -24,12 +24,12 @@ beforeEach(() => {
   fixture.exists.mockReturnValue(true)
   for (const name of [
     'SKIP_BUILD',
-    'ORCA_E2E_WEB_CLIENT',
-    'ORCA_E2E_SSH_LOCALHOST',
-    'ORCA_E2E_SSH_DOCKER',
-    'ORCA_E2E_NESTED_RUNTIME_SSH',
-    'ORCA_E2E_SKILL_STAGING',
-    'ORCA_E2E_TEST_REPO_PATH_FILE'
+    'DOLPHIN_E2E_WEB_CLIENT',
+    'DOLPHIN_E2E_SSH_LOCALHOST',
+    'DOLPHIN_E2E_SSH_DOCKER',
+    'DOLPHIN_E2E_NESTED_RUNTIME_SSH',
+    'DOLPHIN_E2E_SKILL_STAGING',
+    'DOLPHIN_E2E_TEST_REPO_PATH_FILE'
   ]) {
     vi.stubEnv(name, '')
   }

@@ -204,7 +204,7 @@ export function AppearanceInterfaceSection({
                 'Titlebar App Name'
               )}
               description={titlebarEntry?.description}
-              keywords={titlebarEntry?.keywords ?? ['titlebar', 'orca', 'app', 'name']}
+              keywords={titlebarEntry?.keywords ?? ['titlebar', 'dolphin', 'app', 'name']}
             >
               <SettingsSwitchRow
                 label={translate(
@@ -232,7 +232,7 @@ export function AppearanceInterfaceSection({
                     'auto.components.settings.AppearancePane.2edf606c46',
                     'Minimize to Tray on Close'
                   )}
-                  // Why: platform constraint + "close keeps Orca running" consequence are
+                  // Why: platform constraint + "close keeps Dolphin running" consequence are
                   // both non-obvious from the label alone.
                   description={translate(
                     'auto.components.settings.AppearancePane.b707773a0d',

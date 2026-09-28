@@ -15,8 +15,8 @@ import { KimiHookService } from './hook-service'
 import { KIMI_HOOK_EVENTS } from './kimi-hook-config-toml'
 
 // Why: getSharedManagedScriptPath() writes the managed script under
-// homedir()/.orca, and getKimiHome() honors KIMI_CODE_HOME. Point both at a
-// temp dir so the local install/remove cycle never touches the real ~/.orca or
+// homedir()/.dolphin, and getKimiHome() honors KIMI_CODE_HOME. Point both at a
+// temp dir so the local install/remove cycle never touches the real ~/.dolphin or
 // ~/.kimi-code. os.homedir() resolves HOME on POSIX and USERPROFILE on Windows.
 let home: string
 let originalHome: string | undefined
@@ -24,7 +24,7 @@ let originalKimiHome: string | undefined
 let originalUserProfile: string | undefined
 
 beforeEach(() => {
-  home = mkdtempSync(join(tmpdir(), 'orca-kimi-hook-'))
+  home = mkdtempSync(join(tmpdir(), 'dolphin-kimi-hook-'))
   originalHome = process.env.HOME
   originalKimiHome = process.env.KIMI_CODE_HOME
   originalUserProfile = process.env.USERPROFILE
@@ -53,7 +53,7 @@ afterEach(() => {
 })
 
 const configPath = (): string => join(home, '.kimi-code', 'config.toml')
-const scriptPath = (): string => join(home, '.orca', 'agent-hooks', 'kimi-hook.sh')
+const scriptPath = (): string => join(home, '.dolphin', 'agent-hooks', 'kimi-hook.sh')
 const supportsPosixFileModes = process.platform !== 'win32'
 
 describe('KimiHookService', () => {
@@ -100,7 +100,7 @@ describe('KimiHookService', () => {
     // Reinstall must not duplicate the managed block.
     service.install()
     const reinstalled = readFileSync(configPath(), 'utf-8')
-    expect((reinstalled.match(/orca-managed-kimi-hooks \(/g) ?? []).length).toBe(1)
+    expect((reinstalled.match(/dolphin-managed-kimi-hooks \(/g) ?? []).length).toBe(1)
 
     const removed = service.remove()
     expect(removed.state).toBe('not_installed')

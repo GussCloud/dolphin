@@ -1,6 +1,6 @@
 import { restoreOrStripOverlayEnv } from '../../../shared/agent-overlay-env'
 import { delimiter } from 'node:path'
-import { dropInheritedOrcaFishHistory } from '../../fish-history-session'
+import { dropInheritedDolphinFishHistory } from '../../fish-history-session'
 import { removeAppImageRuntimeEnv } from '../../pty/appimage-terminal-env'
 import { stripInheritedBuildModeEnv } from '../../pty/build-mode-env'
 import { stripPiProcessOwnerEnv } from '../../pty/pi-process-owner-env'
@@ -8,15 +8,15 @@ import { dropIncoherentCondaActivationEnv } from '../../pty/conda-activation-env
 import { stripLegacyTerminalShimEnv } from '../../pty/legacy-terminal-shim-dir'
 import { removeInheritedNoColor } from '../../pty/terminal-color-env'
 import { resolvePathEnvKey } from '../../pty/windows-environment-path'
-import { dropInheritedOrcaHistFile } from '../../worktree-history-file-path'
+import { dropInheritedDolphinHistFile } from '../../worktree-history-file-path'
 import {
   gitCredentialPromptGuardEnv,
   mergeGitConfigEnvProtocol
 } from '../../../shared/git-credential-prompt-env'
 import { TERMINAL_GIT_CREDENTIAL_GUARD_POLICY_ENV } from '../../../shared/terminal-git-credential-guard'
 import {
-  ORCA_IMAGE_PROTOCOL_ENV,
-  ORCA_IMAGE_PROTOCOL_VALUE
+  DOLPHIN_IMAGE_PROTOCOL_ENV,
+  DOLPHIN_IMAGE_PROTOCOL_VALUE
 } from '../../../shared/terminal-image-protocol'
 import {
   expandWindowsEnvironmentVariables,
@@ -26,12 +26,12 @@ import type { TuiAgent } from '../../../shared/tui-agent'
 import type { PtySubprocessOptions } from '../pty-subprocess'
 
 const PANE_IDENTITY_ENV_KEYS = [
-  'ORCA_PANE_KEY',
-  'ORCA_TAB_ID',
-  'ORCA_WORKTREE_ID',
-  'ORCA_AGENT_LAUNCH_TOKEN',
+  'DOLPHIN_PANE_KEY',
+  'DOLPHIN_TAB_ID',
+  'DOLPHIN_WORKTREE_ID',
+  'DOLPHIN_AGENT_LAUNCH_TOKEN',
   // Not identity but equally per-spawn: an inherited copy names another launch's CLI.
-  'ORCA_WSL_CLI_DIR'
+  'DOLPHIN_WSL_CLI_DIR'
 ] as const
 const WINDOWS_PATH_ENV_KEY_RE = /^path$/i
 
@@ -53,23 +53,23 @@ function deleteRequestedDaemonEnvKeys(
   env: Record<string, string>,
   keys: readonly string[] | undefined
 ): void {
-  // Why: persistent daemon state can differ from Electron; delete CODEX_HOME only when its Orca overlay owns it.
-  const deleteOrcaOwnedCodexHome =
-    keys?.includes('ORCA_CODEX_HOME') === true &&
-    env.ORCA_CODEX_HOME !== undefined &&
-    env.CODEX_HOME === env.ORCA_CODEX_HOME
+  // Why: persistent daemon state can differ from Electron; delete CODEX_HOME only when its Dolphin overlay owns it.
+  const deleteDolphinOwnedCodexHome =
+    keys?.includes('DOLPHIN_CODEX_HOME') === true &&
+    env.DOLPHIN_CODEX_HOME !== undefined &&
+    env.CODEX_HOME === env.DOLPHIN_CODEX_HOME
   // A merged caller config can supersede the daemon's recorded overlay source.
   if (
-    keys?.includes('ORCA_OPENCODE_CONFIG_DIR') &&
+    keys?.includes('DOLPHIN_OPENCODE_CONFIG_DIR') &&
     (env.OPENCODE_CONFIG_DIR === undefined ||
-      env.OPENCODE_CONFIG_DIR === env.ORCA_OPENCODE_CONFIG_DIR)
+      env.OPENCODE_CONFIG_DIR === env.DOLPHIN_OPENCODE_CONFIG_DIR)
   ) {
     restoreOrStripOverlayEnv(
       env,
       {
         primary: 'OPENCODE_CONFIG_DIR',
-        overlay: 'ORCA_OPENCODE_CONFIG_DIR',
-        source: 'ORCA_OPENCODE_SOURCE_CONFIG_DIR'
+        overlay: 'DOLPHIN_OPENCODE_CONFIG_DIR',
+        source: 'DOLPHIN_OPENCODE_SOURCE_CONFIG_DIR'
       },
       {}
     )
@@ -77,7 +77,7 @@ function deleteRequestedDaemonEnvKeys(
   for (const key of keys ?? []) {
     delete env[key]
   }
-  if (deleteOrcaOwnedCodexHome) {
+  if (deleteDolphinOwnedCodexHome) {
     delete env.CODEX_HOME
   }
 }
@@ -128,7 +128,7 @@ function promoteAgentTeamsShimPath(
   env: Record<string, string>,
   requestedPath: string | undefined
 ): void {
-  if (!env.ORCA_AGENT_TEAMS_TEAM_ID || !requestedPath) {
+  if (!env.DOLPHIN_AGENT_TEAMS_TEAM_ID || !requestedPath) {
     return
   }
   const normalizedRequestedPath =
@@ -150,9 +150,12 @@ function removeInheritedDevAgentHookEndpoint(
   env: Record<string, string>,
   explicitEnv: Record<string, string> | undefined
 ): void {
-  if (explicitEnv?.ORCA_AGENT_HOOK_ENV === 'development' && !explicitEnv.ORCA_AGENT_HOOK_ENDPOINT) {
+  if (
+    explicitEnv?.DOLPHIN_AGENT_HOOK_ENV === 'development' &&
+    !explicitEnv.DOLPHIN_AGENT_HOOK_ENDPOINT
+  ) {
     // Why: strip only stale inherited endpoints; a fresh explicit one is needed by hooks that scrub token-like env vars before exec.
-    delete env.ORCA_AGENT_HOOK_ENDPOINT
+    delete env.DOLPHIN_AGENT_HOOK_ENDPOINT
   }
 }
 
@@ -162,10 +165,10 @@ export function createDaemonPtyEnvironment(opts: PtySubprocessOptions): Record<s
     ...mergeGitConfigEnvProtocol(stripInheritedBuildModeEnv(process.env), opts.env),
     TERM: 'xterm-256color',
     COLORTERM: 'truecolor',
-    TERM_PROGRAM: 'Orca',
-    TERM_PROGRAM_VERSION: process.env.ORCA_APP_VERSION ?? '0.0.0-dev',
+    TERM_PROGRAM: 'Dolphin',
+    TERM_PROGRAM_VERSION: process.env.DOLPHIN_APP_VERSION ?? '0.0.0-dev',
     FORCE_HYPERLINK: '1',
-    [ORCA_IMAGE_PROTOCOL_ENV]: ORCA_IMAGE_PROTOCOL_VALUE
+    [DOLPHIN_IMAGE_PROTOCOL_ENV]: DOLPHIN_IMAGE_PROTOCOL_VALUE
   } satisfies Record<string, string>
   stripLegacyTerminalShimEnv(env, process.platform)
   composeGuardedDaemonGitConfigEnv(env, opts.env, opts.launchAgent)
@@ -176,13 +179,13 @@ export function createDaemonPtyEnvironment(opts: PtySubprocessOptions): Record<s
   removeUnspecifiedPaneIdentityEnv(env, opts.env)
   stripPiProcessOwnerEnv(env)
   if (opts.env?.fish_history === undefined) {
-    dropInheritedOrcaFishHistory(env)
+    dropInheritedDolphinFishHistory(env)
   }
   if (opts.env?.HISTFILE === undefined) {
-    dropInheritedOrcaHistFile(env)
+    dropInheritedDolphinHistFile(env)
   }
-  if (opts.env?.ORCA_HISTFILE === undefined) {
-    delete env.ORCA_HISTFILE
+  if (opts.env?.DOLPHIN_HISTFILE === undefined) {
+    delete env.DOLPHIN_HISTFILE
   }
   removeInheritedDevAgentHookEndpoint(env, opts.env)
   delete env.ELECTRON_RUN_AS_NODE

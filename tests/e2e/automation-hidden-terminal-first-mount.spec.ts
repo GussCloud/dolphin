@@ -1,4 +1,4 @@
-import { test, expect } from './helpers/orca-app'
+import { test, expect } from './helpers/dolphin-app'
 import {
   ensureTerminalVisible,
   getActiveWorktreeId,
@@ -58,16 +58,14 @@ async function mainSnapshotContains(
 
 test.describe('Automation hidden terminal first mount', () => {
   test('background-mounted hidden worktree replays startup output on the first visible mount', async ({
-    orcaPage
+    appPage
   }) => {
-    await waitForSessionReady(orcaPage)
-    const firstWorktreeId = await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await waitForSessionReady(appPage)
+    const firstWorktreeId = await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
-    const secondWorktreeId = (await getAllWorktreeIds(orcaPage)).find(
-      (id) => id !== firstWorktreeId
-    )
+    const secondWorktreeId = (await getAllWorktreeIds(appPage)).find((id) => id !== firstWorktreeId)
     test.skip(!secondWorktreeId, 'background first-mount repro needs the seeded secondary worktree')
     if (!secondWorktreeId) {
       return
@@ -75,7 +73,7 @@ test.describe('Automation hidden terminal first mount', () => {
 
     const runId = Date.now()
     const marker = `AUTO_FIRST_MOUNT_${runId}`
-    const hiddenTabId = await orcaPage.evaluate(
+    const hiddenTabId = await appPage.evaluate(
       ({ worktreeId, marker, eventName }) => {
         const store = window.__store
         if (!store) {
@@ -112,23 +110,23 @@ test.describe('Automation hidden terminal first mount', () => {
       }
     )
 
-    const hiddenPtyId = await waitForHiddenTabPtyId(orcaPage, hiddenTabId)
+    const hiddenPtyId = await waitForHiddenTabPtyId(appPage, hiddenTabId)
     await expect
-      .poll(() => mainSnapshotContains(orcaPage, hiddenPtyId, marker), {
+      .poll(() => mainSnapshotContains(appPage, hiddenPtyId, marker), {
         timeout: 20_000,
         message: 'Hidden automation terminal did not buffer startup output while off-screen'
       })
       .toBe(true)
 
-    await switchToWorktree(orcaPage, secondWorktreeId)
+    await switchToWorktree(appPage, secondWorktreeId)
     await expect
-      .poll(() => getActiveWorktreeId(orcaPage), {
+      .poll(() => getActiveWorktreeId(appPage), {
         timeout: 10_000,
         message: 'Hidden worktree did not become active for first-mount verification'
       })
       .toBe(secondWorktreeId)
 
-    await orcaPage.evaluate((tabId) => {
+    await appPage.evaluate((tabId) => {
       const store = window.__store
       if (!store) {
         throw new Error('Store unavailable')
@@ -138,11 +136,11 @@ test.describe('Automation hidden terminal first mount', () => {
       state.setActiveTabType('terminal', store.getState().activeWorktreeId)
     }, hiddenTabId)
 
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage, 30_000)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage, 30_000)
 
     await expect
-      .poll(async () => (await getTerminalContent(orcaPage)).includes(marker), {
+      .poll(async () => (await getTerminalContent(appPage)).includes(marker), {
         timeout: 10_000,
         message: 'First visible mount did not replay the hidden automation terminal output'
       })

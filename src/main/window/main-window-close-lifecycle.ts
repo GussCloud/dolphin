@@ -79,7 +79,7 @@ export function installMainWindowCloseLifecycle(args: {
           title: FORK_IDENTITY.productName,
           body: translateMain(
             'tray.minimizeNotice.body',
-            'Orca is still running in the system tray'
+            'Dolphin is still running in the system tray'
           )
         }).show()
       } catch {

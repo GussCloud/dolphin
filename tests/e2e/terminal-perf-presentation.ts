@@ -1,10 +1,10 @@
-import type { ElectronApplication, TestInfo } from '@stablyai/playwright-test'
+import type { ElectronApplication, TestInfo } from '@playwright/test'
 
 export function shouldPresentTerminalPerfWindow(
   env: Readonly<Record<string, string | undefined>> = process.env,
   platform: string = process.platform
 ): boolean {
-  if (env.ORCA_E2E_TERMINAL_PERF_XVFB !== '1') {
+  if (env.DOLPHIN_E2E_TERMINAL_PERF_XVFB !== '1') {
     return false
   }
   if (

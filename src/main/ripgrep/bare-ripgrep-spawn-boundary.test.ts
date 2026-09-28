@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 /**
  * Guard the ripgrep chokepoint at the tree level rather than per call site.
  *
- * Orca ships its own `rg` for every platform, so a spawn must name it by absolute path. A bare
+ * Dolphin ships its own `rg` for every platform, so a spawn must name it by absolute path. A bare
  * `'rg'` is not merely slower: on Windows the spawn cwd is the user's repo, and CreateProcessW
  * looks there before PATH, so a planted `rg.exe` in a cloned repo would run instead.
  *

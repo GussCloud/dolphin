@@ -20,7 +20,7 @@ import type { AgentSessionOwnerVerdict } from './agent-session-wire-refusals'
 export type AgentSessionIdentityMatchField = 'process-start-time' | 'spawn-token'
 
 export type AgentSessionOwnerProbe =
-  /** Orca watched this exact process exit. */
+  /** Dolphin watched this exact process exit. */
   | { outcome: 'exit-observed' }
   /** The recorded pid is not present on the host. */
   | { outcome: 'pid-absent' }
@@ -160,7 +160,7 @@ export function evaluateAgentSessionAcquisition(args: {
   }
   if (lease.ownerProcess !== null) {
     if (!isProvenDeadProbe(probe)) {
-      // Why: a lapsed deadline means Orca stopped hearing from the owner, not that the child
+      // Why: a lapsed deadline means Dolphin stopped hearing from the owner, not that the child
       // stopped editing files and spending tokens.
       return {
         decision: 'refused',
@@ -233,7 +233,7 @@ export function adjudicateAgentSessionRestart(args: {
 }
 
 /**
- * A process carrying an Orca spawn token with no matching lease is an orphan: stop it, never
+ * A process carrying a Dolphin spawn token with no matching lease is an orphan: stop it, never
  * adopt it. Neither age nor CPU is evidence — only a token match justifies acting on a process.
  */
 export function classifyObservedAgentSessionSpawnToken(args: {

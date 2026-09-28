@@ -2,7 +2,7 @@ import { translate } from '@/i18n/i18n'
 import type { ResumeFailure } from './native-chat-resume-on-restart-grouping'
 
 /**
- * What the user can do about a chat Orca could not resume, decided from the host's reason.
+ * What the user can do about a chat Dolphin could not resume, decided from the host's reason.
  *
  * One sentence saying what to do and why, and the button that does it. Retry is the primary action
  * only where a second attempt can actually succeed — an ownership clash or a reconnect that never

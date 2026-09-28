@@ -10,7 +10,7 @@ import {
   hangDetectionMarkerPath
 } from '../hang-watchdog/hang-detection-marker'
 import { browserCertificateTrustController } from '../browser/browser-manager'
-import { ensureActiveOrcaProfile } from '../orca-profiles/profile-index-store'
+import { ensureActiveDolphinProfile } from '../dolphin-profiles/profile-index-store'
 import { getCanonicalUserDataPath } from '../persistence'
 import { createProfileStateStoreForStartup } from '../persistence/profile-state/profile-state-startup-authority'
 import { initializeBrowserClientHostId } from '../browser/browser-client-host-id'
@@ -131,8 +131,8 @@ export async function initializeReadyFoundation(): Promise<void> {
   state.managedWslCliStartupBarrierReady = createWslCliReconciliationStartupBarrier(
     state.managedWslCliReconciliationReady
   )
-  const profile = ensureActiveOrcaProfile()
-  state.activeOrcaProfile = profile
+  const profile = ensureActiveDolphinProfile()
+  state.activeDolphinProfile = profile
   // Why this early: the first window stamps the hosting id into its renderer's argv, so the durable
   // read has to have happened by then or the renderer and the browser-host lease disagree.
   initializeBrowserClientHostId(profile.profileDirectory)
@@ -176,7 +176,7 @@ export async function initializeReadyFoundation(): Promise<void> {
   // and must not gate the first window (STA-5765).
   scheduleSecretProtectionGapReport({
     dataFile: profile.dataFile,
-    force: process.env.ORCA_ALWAYS_REPORT_SECRET_PROTECTION === '1',
+    force: process.env.DOLPHIN_ALWAYS_REPORT_SECRET_PROTECTION === '1',
     deferUntilFirstWindow: !state.isServeMode,
     skipInDevelopment: is.dev
   })
@@ -207,7 +207,7 @@ export async function initializeReadyFoundation(): Promise<void> {
   }
   wslHookRelayManager.setManagedHookSettingsResolver(() => state.store?.getSettings() ?? null)
   logStartupMilestone('store-loaded')
-  // Why: pre-`ready` startup reads this flag from a marker so it never has to parse orca-data.json.
+  // Why: pre-`ready` startup reads this flag from a marker so it never has to parse dolphin-data.json.
   writeHttp1CompatibilityMarker(
     canonicalUserDataPath,
     store.getSettings().electronHttp1CompatibilityMode === true,
@@ -284,7 +284,7 @@ export async function initializeReadyFoundation(): Promise<void> {
   registerDocPreviewGrantHandlers()
   // Why: browser sessions serve desktop webviews and runtime profile commands, so init at app startup rather than via a renderer IPC path.
   initializeBrowserSessionsForApp({
-    orcaProfileId: profile.profile.id,
+    dolphinProfileId: profile.profile.id,
     profileDirectory: profile.profileDirectory,
     // Why: local direct-SSH partitions are scoped to targets, and the orphan
     // sweep must see the live target list or it would clear their cookie jars.

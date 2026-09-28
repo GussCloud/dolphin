@@ -163,8 +163,8 @@ export async function prefillFormFromSshConfigHost(
   }
 }
 
-/** Bulk-load ~/.ssh/config hosts into Orca’s host list (sidebar targets). */
-export async function addAllSshConfigHostsToOrca({
+/** Bulk-load ~/.ssh/config hosts into Dolphin’s host list (sidebar targets). */
+export async function addAllSshConfigHostsToDolphin({
   ssh,
   recordSshRepoReadoptions,
   setSshTargetsMetadata,
@@ -247,7 +247,7 @@ function normalizeSshConfigHostListResult(value: unknown): SshConfigHostListResu
       totalHostCount: value.length,
       newHostCount: value.filter(
         (host): host is SshConfigHostSummary =>
-          typeof host === 'object' && host !== null && host.alreadyInOrca === false
+          typeof host === 'object' && host !== null && host.alreadyInDolphin === false
       ).length,
       matchCount: value.length,
       hasMore: value.length > hosts.length

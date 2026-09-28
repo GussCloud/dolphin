@@ -63,9 +63,9 @@ function evaluateBundle(options: { prompt?: string | null } = {}) {
   }
 
   new Function(RICH_MARKDOWN_EDITOR_DOCUMENT_SCRIPT)()
-  const handle = window.__orcaRichMarkdown!
+  const handle = window.__dolphinRichMarkdown!
   evaluated.push(() => {
-    Reflect.deleteProperty(globalThis, '__orcaRichMarkdown')
+    Reflect.deleteProperty(globalThis, '__dolphinRichMarkdown')
   })
   return { posted, commands, viewportListeners, handle }
 }
@@ -123,7 +123,9 @@ describe('the bundled rich Markdown editor document', () => {
       '---'
     ].join('\n')
     // Through the transport the native component uses, escaping included.
-    inject(`window.__orcaRichMarkdown.setMarkdown(${escapeInjectedJavaScriptString(markdown)}, 7);`)
+    inject(
+      `window.__dolphinRichMarkdown.setMarkdown(${escapeInjectedJavaScriptString(markdown)}, 7);`
+    )
     expect(handle.currentMarkdown()).toBe(markdown)
   })
 

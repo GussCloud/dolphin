@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { ORCAD_BUN_RELEASE_ASSETS } from '../../shared/orcad-bun-runtime'
+import { DOLPHIND_BUN_RELEASE_ASSETS } from '../../shared/dolphind-bun-runtime'
 import { runProcess } from '../../shared/child-process/run-process'
 import type * as preparationModule from './opencode-wsl-runtime-preparation'
 
@@ -24,8 +24,8 @@ vi.mock('../wsl/wsl-runner', () => ({ runWslProcess: mocks.run }))
 vi.mock('../wsl-running-path-filter', () => ({
   filterPathsToRunningWslDistrosAsync: mocks.running
 }))
-vi.mock('../ssh/orcad-bun-runtime-materializer', () => ({
-  materializeCachedOrcadBunRuntime: mocks.download
+vi.mock('../ssh/dolphind-bun-runtime-materializer', () => ({
+  materializeCachedDolphindBunRuntime: mocks.download
 }))
 vi.mock('../ssh/relay-bundle-paths', () => ({ relayBundleCandidates: mocks.bundles }))
 
@@ -132,7 +132,7 @@ describe('WSL SQLite runtime preparation', () => {
   })
 
   it('falls back to the pinned proxy runtime, verifies the guest stage, and preserves literal argv', async () => {
-    const expected = ORCAD_BUN_RELEASE_ASSETS['linux-arm64-musl'].executableSha256
+    const expected = DOLPHIND_BUN_RELEASE_ASSETS['linux-arm64-musl'].executableSha256
     mocks.run.mockImplementation(async (spec) => {
       if (spec.script?.startsWith('data=')) {
         return success('present')
@@ -161,7 +161,7 @@ describe('WSL SQLite runtime preparation', () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
     expect(result[0]?.executable).toBe(
-      `/home/ada $literal/.cache/orca/vault-sqlite/${expected}/bun`
+      `/home/ada $literal/.cache/dolphin/vault-sqlite/${expected}/bun`
     )
     expect(mocks.run).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -236,7 +236,7 @@ describe('WSL SQLite runtime preparation', () => {
     async () => {
       await prepared()
       const script = mocks.run.mock.calls[0]?.[0].script
-      const directory = await mkdtemp(join(tmpdir(), 'orca-wsl-presence-'))
+      const directory = await mkdtemp(join(tmpdir(), 'dolphin-wsl-presence-'))
       try {
         const data = join(directory, '.local', 'share', 'opencode')
         await mkdir(data, { recursive: true })

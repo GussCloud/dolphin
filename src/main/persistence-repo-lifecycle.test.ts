@@ -70,7 +70,7 @@ vi.mock('./telemetry/cohort-classifier', () => ({
 
 describe('Store', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-test-'))
     trackMock.mockReset()
     getCohortAtEmitMock.mockReset()
     getCohortAtEmitMock.mockReturnValue({ nth_repo_added: 2 })
@@ -897,10 +897,10 @@ describe('Store', () => {
     const store = await createStore()
     store.addRepo({
       ...makeRepo({ id: 'r1', displayName: 'Cloud Project' }),
-      upstream: { owner: 'stablyai', repo: 'cloud-project' }
+      upstream: { owner: 'gusscloud', repo: 'cloud-project' }
     })
     store.createProjectHostSetup({
-      projectId: 'github:stablyai/cloud-project',
+      projectId: 'github:gusscloud/cloud-project',
       hostId: 'ssh:ssh-old',
       setupId: 'cloud-project::ssh-old',
       setupMethod: 'provisioned'
@@ -918,16 +918,16 @@ describe('Store', () => {
     const store = await createStore()
     store.addRepo({
       ...makeRepo({ id: 'r1', displayName: 'Cloud Project' }),
-      upstream: { owner: 'stablyai', repo: 'cloud-project' }
+      upstream: { owner: 'gusscloud', repo: 'cloud-project' }
     })
     store.createProjectHostSetup({
-      projectId: 'github:stablyai/cloud-project',
+      projectId: 'github:gusscloud/cloud-project',
       hostId: 'ssh:ssh-old',
       setupId: 'setup-old',
       setupMethod: 'provisioned'
     })
     store.createProjectHostSetup({
-      projectId: 'github:stablyai/cloud-project',
+      projectId: 'github:gusscloud/cloud-project',
       hostId: 'ssh:ssh-new',
       setupId: 'setup-new',
       setupMethod: 'provisioned'

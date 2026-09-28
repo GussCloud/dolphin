@@ -57,7 +57,7 @@ it('warms and probes both Windows images with the persistence job runtime', () =
   expect(job['runs-on']).toBe('${{ matrix.os }}')
   expect(job.strategy['fail-fast']).toBe(false)
   expect(job['timeout-minutes']).toBeLessThanOrEqual(20)
-  expect(job.env.ORCA_BACKGROUND_LAUNCH).toBe('1')
+  expect(job.env.DOLPHIN_BACKGROUND_LAUNCH).toBe('1')
   expect(job.steps[0].with['persist-credentials']).toBe(false)
   const install = job.steps.find(
     (step) => step.uses === './.github/actions/install-node-dependencies'

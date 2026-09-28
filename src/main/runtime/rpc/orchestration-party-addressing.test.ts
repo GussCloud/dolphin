@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { formatOrcaSessionAddress } from '../../../shared/orca-session-address'
-import { testOrcaSessionId } from '../../../shared/orca-session-address-test-fixture'
+import { formatDolphinSessionAddress } from '../../../shared/dolphin-session-address'
+import { testDolphinSessionId } from '../../../shared/dolphin-session-address-test-fixture'
 import { ORCHESTRATION_SESSION_CALLER_ERROR_CODES as CODES } from '../../../shared/orchestration-session-caller-codes'
 import { ORCHESTRATION_TARGET_PARAM } from '../orchestration/orchestration-party'
 import {
@@ -31,8 +31,8 @@ vi.mock('../../native-chat/agent-session-wire/structured-agent-session-registry'
 
 type Row = Record<string, unknown>
 
-const SESSION_Z = testOrcaSessionId('3f9a1c7e-6b2d-4e85-a0c4-9d1e7b3f5a26')
-const ADDRESS_Z = formatOrcaSessionAddress(SESSION_Z)
+const SESSION_Z = testDolphinSessionId('3f9a1c7e-6b2d-4e85-a0c4-9d1e7b3f5a26')
+const ADDRESS_Z = formatDolphinSessionAddress(SESSION_Z)
 
 /** Worker Y's two spellings; a chat has only its session address. */
 const handle = mintStructuredWorkerHandle()
@@ -82,7 +82,7 @@ function assignWorker(runId: string): string {
     assigneeHandle: handle,
     assigneePaneKey: paneKey,
     processIncarnation: structuredWorkerProcessIncarnation(SESSION_Y),
-    creator: { kind: 'session', orcaSessionId: SESSION_X },
+    creator: { kind: 'session', dolphinSessionId: SESSION_X },
     maxDepth: Number.MAX_SAFE_INTEGER
   }).id
 }
@@ -165,7 +165,7 @@ describe('every target param resolves both spellings of a party to one canonical
 
       expect(dispatch).toMatchObject({
         assignee_handle: handle,
-        assignee_orca_session_id: SESSION_Y
+        assignee_dolphin_session_id: SESSION_Y
       })
       expect(await as(SESSION_Y, 'orchestration.check', { peek: true })).toMatchObject({
         dispatchId: idOf(dispatch)
@@ -311,8 +311,8 @@ describe('no writer stores a structured worker under its session address', () =>
     const stored = h.db.db
       .prepare(
         `SELECT m.id FROM messages AS m JOIN dispatch_contexts AS d
-           ON d.assignee_orca_session_id IS NOT NULL
-          AND 'session:' || d.assignee_orca_session_id IN (m.to_handle, m.from_handle)`
+           ON d.assignee_dolphin_session_id IS NOT NULL
+          AND 'session:' || d.assignee_dolphin_session_id IN (m.to_handle, m.from_handle)`
       )
       .all()
     expect(h.db.getInbox(100).length).toBeGreaterThanOrEqual(7)

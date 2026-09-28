@@ -47,11 +47,11 @@ export const getMobileEmulatorSearchEntries = createLocalizedCatalog(() => [
       ),
       ...translateSearchKeyword(
         'auto.components.settings.mobile.emulator.search.d4b7833894',
-        'orca cli'
+        'dolphin cli'
       ),
       ...translateSearchKeyword(
         'auto.components.settings.mobile.emulator.search.9353854ff3',
-        'orca emulator'
+        'dolphin emulator'
       ),
       ...translateSearchKeyword(
         'auto.components.settings.mobile.emulator.search.ac0a985873',

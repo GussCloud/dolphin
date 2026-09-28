@@ -1,4 +1,4 @@
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import type { RuntimeMobileSessionTabsResult } from '../../src/shared/runtime-types'
 import { toWebTerminalSurfaceTabId } from '../../src/shared/terminal-surface-id'
 import type { TerminalLayoutSnapshot } from '../../src/shared/terminal-tab-types'
@@ -6,7 +6,7 @@ import {
   launchHeadlessPairedRuntimeHost,
   type HeadlessPairedRuntimeHost
 } from './helpers/headless-paired-runtime-host'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   launchPairedElectronClient,
   type PairedElectronClient

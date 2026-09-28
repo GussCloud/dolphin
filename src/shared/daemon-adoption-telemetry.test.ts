@@ -13,28 +13,34 @@ describe('classifyDaemonSpawnerPath', () => {
 
   it('classifies the installed app, the ShipIt staging area, and everything else', () => {
     expect(
-      classifyDaemonSpawnerPath('/Applications/Orca.app/Contents/MacOS/Orca', alwaysExists)
-    ).toBe('applications')
-    expect(
-      classifyDaemonSpawnerPath('/private/Applications/Orca.app/Contents/MacOS/Orca', alwaysExists)
+      classifyDaemonSpawnerPath('/Applications/Dolphin.app/Contents/MacOS/Dolphin', alwaysExists)
     ).toBe('applications')
     expect(
       classifyDaemonSpawnerPath(
-        '/Users/a/Library/Caches/com.stablyai.orca.ShipIt/update.abc/Orca.app/Contents/MacOS/Orca',
+        '/private/Applications/Dolphin.app/Contents/MacOS/Dolphin',
+        alwaysExists
+      )
+    ).toBe('applications')
+    expect(
+      classifyDaemonSpawnerPath(
+        '/Users/a/Library/Caches/com.gusscloud.dolphin.ShipIt/update.abc/Dolphin.app/Contents/MacOS/Dolphin',
         alwaysExists
       )
     ).toBe('updater-cache')
     expect(
-      classifyDaemonSpawnerPath('/Users/a/Applications/Orca.app/Contents/MacOS/Orca', alwaysExists)
+      classifyDaemonSpawnerPath(
+        '/Users/a/Applications/Dolphin.app/Contents/MacOS/Dolphin',
+        alwaysExists
+      )
     ).toBe('other')
-    expect(classifyDaemonSpawnerPath('/tmp/OrcaA.app/Contents/MacOS/Orca', alwaysExists)).toBe(
-      'other'
-    )
+    expect(
+      classifyDaemonSpawnerPath('/tmp/DolphinA.app/Contents/MacOS/Dolphin', alwaysExists)
+    ).toBe('other')
   })
 
   it('reports a deleted spawner as missing and an unrecorded one as unknown', () => {
     expect(
-      classifyDaemonSpawnerPath('/Applications/Orca.app/Contents/MacOS/Orca', () => false)
+      classifyDaemonSpawnerPath('/Applications/Dolphin.app/Contents/MacOS/Dolphin', () => false)
     ).toBe('missing')
     expect(classifyDaemonSpawnerPath(null, alwaysExists)).toBe('unknown')
   })
@@ -86,7 +92,7 @@ describe('daemon_adopted / daemon_pty_cwd_denied schemas', () => {
 
   it('rejects leaked paths, versions, counts, and unknown enum values', () => {
     for (const leak of [
-      { spawner_exec_path: '/Users/alice/Library/Caches/ShipIt/Orca.app' },
+      { spawner_exec_path: '/Users/alice/Library/Caches/ShipIt/Dolphin.app' },
       { app_version: '1.4.187' },
       { live_session_count: 3 },
       { cwd: '/Users/alice/Documents' }

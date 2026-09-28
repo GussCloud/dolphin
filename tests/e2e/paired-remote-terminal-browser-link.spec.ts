@@ -1,6 +1,6 @@
 import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type { Page } from '@stablyai/playwright-test'
+import type { Page } from '@playwright/test'
 import {
   readClientGuestState,
   readOwnedPageUrls,
@@ -8,7 +8,7 @@ import {
   sendClientGuestKeyboardInput,
   sendClientGuestPointerInput
 } from './helpers/client-hosted-browser-observer'
-import { expect, test } from './helpers/orca-app'
+import { expect, test } from './helpers/dolphin-app'
 import {
   createRuntimeDesktopPairingOffer,
   launchPairedElectronClient,
@@ -159,7 +159,7 @@ function remoteTerminalHandle(ptyId: string): string {
 
 test('opens a paired-runtime terminal link on its owning host', async ({
   electronApp,
-  orcaPage,
+  appPage,
   testRepoPath
 }, testInfo) => {
   test.setTimeout(240_000)
@@ -167,15 +167,15 @@ test('opens a paired-runtime terminal link on its owning host', async ({
   let client: PairedElectronClient | null = null
   let observerActive = false
   try {
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await waitForActiveTerminalManager(orcaPage)
-    const hostPtyId = await waitForActivePanePtyId(orcaPage)
-    await execInTerminal(orcaPage, hostPtyId, `printf '%s\\n' ${JSON.stringify(fixture.url)}`)
-    await waitForTerminalOutput(orcaPage, fixture.url)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await waitForActiveTerminalManager(appPage)
+    const hostPtyId = await waitForActivePanePtyId(appPage)
+    await execInTerminal(appPage, hostPtyId, `printf '%s\\n' ${JSON.stringify(fixture.url)}`)
+    await waitForTerminalOutput(appPage, fixture.url)
 
-    const offer = await createRuntimeDesktopPairingOffer(orcaPage)
+    const offer = await createRuntimeDesktopPairingOffer(appPage)
     client = await launchPairedElectronClient(offer, testInfo, 'Remote terminal browser link')
     const page = client.page
     const worktreeId = await expect
@@ -236,9 +236,11 @@ test('opens a paired-runtime terminal link on its owning host', async ({
     await expect(
       actionPopover.getByRole('button').filter({ hasText: 'System Browser' })
     ).toBeVisible()
-    const orcaBrowserAction = actionPopover.getByRole('button').filter({ hasText: 'Orca Browser' })
-    await expect(orcaBrowserAction).toBeVisible()
-    await orcaBrowserAction.click()
+    const dolphinBrowserAction = actionPopover
+      .getByRole('button')
+      .filter({ hasText: 'Dolphin Browser' })
+    await expect(dolphinBrowserAction).toBeVisible()
+    await dolphinBrowserAction.click()
 
     const identity = await expect
       .poll(

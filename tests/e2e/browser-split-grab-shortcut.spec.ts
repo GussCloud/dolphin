@@ -5,8 +5,8 @@ import { randomUUID } from 'node:crypto'
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import type { ElectronApplication, Page } from '@stablyai/playwright-test'
-import { expect, test } from './helpers/orca-app'
+import type { ElectronApplication, Page } from '@playwright/test'
+import { expect, test } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { waitForActivePaneHookDescriptor, waitForActiveTerminalManager } from './helpers/terminal'
 import {
@@ -88,7 +88,7 @@ async function openNativeChatTranscript(
 ): Promise<void> {
   const sessionId = `e2e-split-grab-${randomUUID()}`
   const transcriptPath = path.join(
-    mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-split-grab-')),
+    mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-split-grab-')),
     `${sessionId}.jsonl`
   )
   writeFileSync(transcriptPath, claudeTranscript(sessionId, args.reply))
@@ -139,13 +139,13 @@ test.describe('browser split grab shortcut', () => {
   let server: BrowserSplitPageServer
   let savedClipboard: string | null = null
 
-  test.beforeEach(async ({ electronApp, orcaPage }) => {
+  test.beforeEach(async ({ electronApp, appPage }) => {
     server = await startBrowserSplitPageServer()
     // Why: the copy assertions read the real system clipboard; put the user's text back after.
     savedClipboard = await readClipboard(electronApp)
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
   })
 
   test.afterEach(async ({ electronApp }) => {
@@ -155,57 +155,57 @@ test.describe('browser split grab shortcut', () => {
     await server.close()
   })
 
-  test('copy chord from one split toolbar arms grab only in that split', async ({ orcaPage }) => {
-    const fixture = await createBrowserSplit(orcaPage, {
+  test('copy chord from one split toolbar arms grab only in that split', async ({ appPage }) => {
+    const fixture = await createBrowserSplit(appPage, {
       first: server.pageUrl('a', 1),
       second: server.pageUrl('b', 1, 'localhost')
     })
-    await waitForGuestUrl(orcaPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
-    await waitForGuestUrl(orcaPage, fixture.secondBrowserTabId, server.pageUrl('b', 1, 'localhost'))
+    await waitForGuestUrl(appPage, fixture.firstBrowserTabId, server.pageUrl('a', 1))
+    await waitForGuestUrl(appPage, fixture.secondBrowserTabId, server.pageUrl('b', 1, 'localhost'))
 
-    await reloadButton(orcaPage, fixture.firstBrowserTabId).focus()
-    await waitForFocusedGroup(orcaPage, fixture.firstBrowserGroupId)
-    await orcaPage.keyboard.press(copyChord)
+    await reloadButton(appPage, fixture.firstBrowserTabId).focus()
+    await waitForFocusedGroup(appPage, fixture.firstBrowserGroupId)
+    await appPage.keyboard.press(copyChord)
 
-    await expect(grabBanner(orcaPage, fixture.firstBrowserTabId)).toBeVisible()
-    await expect(grabBanner(orcaPage, fixture.secondBrowserTabId)).toBeHidden()
+    await expect(grabBanner(appPage, fixture.firstBrowserTabId)).toBeVisible()
+    await expect(grabBanner(appPage, fixture.secondBrowserTabId)).toBeHidden()
   })
 
   test('copy chord with native chat text selected copies instead of arming grab', async ({
     electronApp,
-    orcaPage
+    appPage
   }) => {
-    await waitForActiveTerminalManager(orcaPage, 30_000)
-    const descriptor = await waitForActivePaneHookDescriptor(orcaPage)
-    const fixture = await createTerminalBrowserSplit(orcaPage, server.pageUrl('a', 1))
-    await waitForGuestUrl(orcaPage, fixture.browserTabId, server.pageUrl('a', 1))
+    await waitForActiveTerminalManager(appPage, 30_000)
+    const descriptor = await waitForActivePaneHookDescriptor(appPage)
+    const fixture = await createTerminalBrowserSplit(appPage, server.pageUrl('a', 1))
+    await waitForGuestUrl(appPage, fixture.browserTabId, server.pageUrl('a', 1))
     const reply = `Selectable transcript reply ${randomUUID()}`
-    await openNativeChatTranscript(orcaPage, {
+    await openNativeChatTranscript(appPage, {
       paneKey: descriptor.paneKey,
       worktreeId: descriptor.worktreeId,
       reply
     })
     await writeClipboard(electronApp, 'clipboard before copy')
 
-    const replyText = orcaPage.locator('[data-native-chat-window]').getByText(reply)
+    const replyText = appPage.locator('[data-native-chat-window]').getByText(reply)
     await replyText.click({ clickCount: 3 })
     await expect
-      .poll(() => orcaPage.evaluate(() => window.getSelection()?.toString()))
+      .poll(() => appPage.evaluate(() => window.getSelection()?.toString()))
       .toContain(reply)
-    await orcaPage.keyboard.press(copyChord)
+    await appPage.keyboard.press(copyChord)
 
     await expect.poll(() => readClipboard(electronApp)).toContain(reply)
-    await expect(grabBanner(orcaPage, fixture.browserTabId)).toBeHidden()
+    await expect(grabBanner(appPage, fixture.browserTabId)).toBeHidden()
 
     // Why: with the browser split focused, only the live-selection check can tell this is a copy.
     await writeClipboard(electronApp, 'clipboard before copy')
-    await reloadButton(orcaPage, fixture.browserTabId).focus()
-    await waitForFocusedGroup(orcaPage, fixture.browserGroupId)
-    expect(await orcaPage.evaluate(() => window.getSelection()?.toString())).toContain(reply)
-    await orcaPage.keyboard.press(copyChord)
+    await reloadButton(appPage, fixture.browserTabId).focus()
+    await waitForFocusedGroup(appPage, fixture.browserGroupId)
+    expect(await appPage.evaluate(() => window.getSelection()?.toString())).toContain(reply)
+    await appPage.keyboard.press(copyChord)
     await expect.poll(() => readClipboard(electronApp)).toContain(reply)
-    await expect(grabBanner(orcaPage, fixture.browserTabId)).toBeHidden()
+    await expect(grabBanner(appPage, fixture.browserTabId)).toBeHidden()
 
-    await expectToolbarCopyChordArmsGrab(orcaPage, fixture.browserTabId)
+    await expectToolbarCopyChordArmsGrab(appPage, fixture.browserTabId)
   })
 })

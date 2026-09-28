@@ -45,11 +45,11 @@ function requestHeaders(call = 0): Record<string, string> {
  *  filtering stays readable and stays green whatever platform is passed. */
 const allPlatformAssets = [
   { name: 'latest-mac.yml' },
-  { name: 'orca-macos-arm64.dmg' },
+  { name: 'dolphin-macos-arm64.dmg' },
   { name: 'latest.yml' },
-  { name: 'orca-windows-setup.exe' },
+  { name: 'dolphin-windows-setup.exe' },
   { name: 'latest-linux.yml' },
-  { name: 'orca-linux.AppImage' }
+  { name: 'dolphin-linux.AppImage' }
 ]
 
 const release = (tag: string, extra: Record<string, unknown> = {}) => ({
@@ -181,7 +181,7 @@ describe('listReleaseBuilds', () => {
       jsonResponse([
         release('v1.4.163-hourly.202607312054'),
         release('v1.4.163-hourly.202607311933', {
-          assets: [{ name: 'latest-mac.yml' }, { name: 'orca-macos-arm64.dmg' }]
+          assets: [{ name: 'latest-mac.yml' }, { name: 'dolphin-macos-arm64.dmg' }]
         })
       ])
     )
@@ -223,7 +223,7 @@ describe('listReleaseBuilds', () => {
     const [build] = await listReleaseBuilds('hourly', 'win32')
 
     expect(build.installerUrl).toBe(
-      'https://github.com/GussCloud/dolphin-hourly/releases/download/v1.4.163-hourly.202607312054/orca-windows-setup.exe'
+      'https://github.com/GussCloud/dolphin-hourly/releases/download/v1.4.163-hourly.202607312054/dolphin-windows-setup.exe'
     )
   })
 
@@ -423,7 +423,7 @@ describe('listReleaseBuilds', () => {
     )
 
     await expect(listReleaseBuilds('hourly', 'darwin')).rejects.toThrow(
-      "GitHub rate limit reached. Try again in about 28 minutes, or run `gh auth login` so Orca can use your account's higher limit."
+      "GitHub rate limit reached. Try again in about 28 minutes, or run `gh auth login` so Dolphin can use your account's higher limit."
     )
   })
 

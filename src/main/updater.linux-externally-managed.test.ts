@@ -28,10 +28,10 @@ vi.mock('./local-builds/local-build-switch', () => moduleFactories.localBuildSwi
 vi.mock('./local-builds/local-build-feed-server', () => moduleFactories.localBuildFeedServer())
 
 const EXTERNALLY_MANAGED_MESSAGE =
-  'This copy of Orca is managed by your system package manager, so Orca cannot install updates itself. Update Orca through your distribution instead.'
+  'This copy of Dolphin is managed by your system package manager, so Dolphin cannot install updates itself. Update Dolphin through your distribution instead.'
 
 /** #17702: a repackaged install (AUR, Nix, container rebuild) inherits the .deb `package-type`
- *  marker but has no package manager that can apply an Orca-downloaded package. */
+ *  marker but has no package manager that can apply a Dolphin-downloaded package. */
 warmUpdaterModule()
 
 describe('updater externally managed Linux installs', () => {

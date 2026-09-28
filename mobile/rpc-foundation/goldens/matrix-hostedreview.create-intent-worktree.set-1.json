@@ -3,12 +3,12 @@
   "family": "hostedReview.create-intent",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "c582ce355b0704b38d7e84cbce352630096c91231bf09aecd1f6dbb409fed17f",
   "scenarioSha256": "beb1161b98ffde8c5f1128e843766a1da3182d195f1f0a9012e12e5318ae01bc",
-  "platform": "darwin",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -247,6 +247,48 @@
         }
       }
     },
+    "1ff7c1580577": {
+      "outcome": {
+        "committed": true,
+        "ok": true,
+        "prefill": {
+          "base": "main",
+          "blockedReason": {
+            "$rpc": "null"
+          },
+          "body": "Host body",
+          "canCreate": true,
+          "nextAction": {
+            "$rpc": "null"
+          },
+          "provider": "github",
+          "reviewLookupOutcome": "not_found",
+          "title": "Host title"
+        },
+        "status": {
+          "branch": "feature",
+          "conflictOperation": "unknown",
+          "entries": [],
+          "head": "def5678",
+          "upstreamStatus": {
+            "ahead": 0,
+            "behind": 0,
+            "behindCommitsArePatchEquivalent": {
+              "$rpc": "undefined"
+            },
+            "hasConfiguredPushTarget": {
+              "$rpc": "undefined"
+            },
+            "hasUpstream": true,
+            "upstreamName": {
+              "$rpc": "undefined"
+            }
+          }
+        },
+        "url": "https://review.test/5",
+        "warning": "Pull Request created, but Dolphin could not refresh it yet."
+      }
+    },
     "201cece6e0bb": {
       "name": "git.status#3",
       "ordinal": 15,
@@ -321,48 +363,6 @@
             "$rpc": "null"
           }
         }
-      }
-    },
-    "2c6dd148501e": {
-      "outcome": {
-        "committed": true,
-        "ok": true,
-        "prefill": {
-          "base": "main",
-          "blockedReason": {
-            "$rpc": "null"
-          },
-          "body": "Host body",
-          "canCreate": true,
-          "nextAction": {
-            "$rpc": "null"
-          },
-          "provider": "github",
-          "reviewLookupOutcome": "not_found",
-          "title": "Host title"
-        },
-        "status": {
-          "branch": "feature",
-          "conflictOperation": "unknown",
-          "entries": [],
-          "head": "def5678",
-          "upstreamStatus": {
-            "ahead": 0,
-            "behind": 0,
-            "behindCommitsArePatchEquivalent": {
-              "$rpc": "undefined"
-            },
-            "hasConfiguredPushTarget": {
-              "$rpc": "undefined"
-            },
-            "hasUpstream": true,
-            "upstreamName": {
-              "$rpc": "undefined"
-            }
-          }
-        },
-        "url": "https://review.test/5",
-        "warning": "Pull Request created, but Orca could not refresh it yet."
       }
     },
     "395c47c3d42e": {
@@ -1105,7 +1105,44 @@
       "ordinal": 8,
       "value": "generating_commit_message"
     },
-    "b661d30b2d73": {
+    "c9569b29c1f2": {
+      "name": "worktree.set#1",
+      "ordinal": 28,
+      "args": [
+        {
+          "name": "method",
+          "value": "worktree.set"
+        },
+        {
+          "name": "params",
+          "value": {
+            "baseRef": "main",
+            "linkedPR": 5,
+            "worktree": "id:repo42::/p"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "absent"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "error": {
+            "code": "refused",
+            "message": "outer refused"
+          },
+          "id": "frame-12",
+          "ok": false
+        }
+      }
+    },
+    "cc517575e2f2": {
       "status": "fulfilled",
       "startedAt": 0,
       "settledAt": 0,
@@ -1147,44 +1184,7 @@
           }
         },
         "url": "https://review.test/5",
-        "warning": "Pull Request created, but Orca could not refresh it yet."
-      }
-    },
-    "c9569b29c1f2": {
-      "name": "worktree.set#1",
-      "ordinal": 28,
-      "args": [
-        {
-          "name": "method",
-          "value": "worktree.set"
-        },
-        {
-          "name": "params",
-          "value": {
-            "baseRef": "main",
-            "linkedPR": 5,
-            "worktree": "id:repo42::/p"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "absent"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "error": {
-            "code": "refused",
-            "message": "outer refused"
-          },
-          "id": "frame-12",
-          "ok": false
-        }
+        "warning": "Pull Request created, but Dolphin could not refresh it yet."
       }
     },
     "d7fed979e629": {
@@ -1826,9 +1826,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "b661d30b2d73"
+            "run": "cc517575e2f2"
           },
-          "state": "2c6dd148501e",
+          "state": "1ff7c1580577",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",
@@ -1870,9 +1870,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "b661d30b2d73"
+            "run": "cc517575e2f2"
           },
-          "state": "2c6dd148501e",
+          "state": "1ff7c1580577",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",
@@ -1914,9 +1914,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "b661d30b2d73"
+            "run": "cc517575e2f2"
           },
-          "state": "2c6dd148501e",
+          "state": "1ff7c1580577",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",
@@ -1958,9 +1958,9 @@
             "ffef2a178ce4"
           ],
           "settlements": {
-            "run": "b661d30b2d73"
+            "run": "cc517575e2f2"
           },
-          "state": "2c6dd148501e",
+          "state": "1ff7c1580577",
           "effects": [
             "e83dca631c9c",
             "b2ae4b8e30b7",

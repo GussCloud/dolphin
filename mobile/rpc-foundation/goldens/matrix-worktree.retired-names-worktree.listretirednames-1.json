@@ -3,12 +3,12 @@
   "family": "worktree.retired-names",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "4e942ddfbaa0ba6bfc2993969276987f6528ac53765d125e99a830e261f93a8e",
-  "scenarioSha256": "d321d6c17e67ae90f6ceefb775495ff765a86a35423ed33a212e71ec5e9e94aa",
-  "platform": "darwin",
+  "scenarioSha256": "7886cd3a08ab463fcc87e6aafef17b28387885e2a00c837e522e5229d19507d0",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -51,6 +51,12 @@
           "id": "frame-1",
           "ok": false
         }
+      }
+    },
+    "584eec7ba273": {
+      "registry": {
+        "exhaustedTiers": 2,
+        "names": ["marlin", "dolphin"]
       }
     },
     "6352d16d59e7": {
@@ -194,6 +200,45 @@
         }
       }
     },
+    "8146705b82f6": {
+      "name": "worktree.listRetiredNames#1",
+      "ordinal": 1,
+      "args": [
+        {
+          "name": "method",
+          "value": "worktree.listRetiredNames"
+        },
+        {
+          "name": "params",
+          "value": {
+            "repo": "id:repo-1"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "absent"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "id": "frame-1",
+          "ok": true,
+          "result": {
+            "retiredNameTiersByRepo": {
+              "repo-1": 2
+            },
+            "retiredNamesByRepo": {
+              "repo-1": ["marlin", "dolphin"]
+            }
+          }
+        }
+      }
+    },
     "840eaac5b440": {
       "name": "worktree.listRetiredNames#1",
       "ordinal": 1,
@@ -251,12 +296,6 @@
         }
       }
     },
-    "85d826c606ff": {
-      "registry": {
-        "exhaustedTiers": 2,
-        "names": ["marlin", "orca"]
-      }
-    },
     "90d43035c093": {
       "name": "worktree.listRetiredNames#1",
       "ordinal": 1,
@@ -289,45 +328,6 @@
           },
           "id": "frame-1",
           "ok": false
-        }
-      }
-    },
-    "97b3650e7890": {
-      "name": "worktree.listRetiredNames#1",
-      "ordinal": 1,
-      "args": [
-        {
-          "name": "method",
-          "value": "worktree.listRetiredNames"
-        },
-        {
-          "name": "params",
-          "value": {
-            "repo": "id:repo-1"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "absent"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "id": "frame-1",
-          "ok": true,
-          "result": {
-            "retiredNameTiersByRepo": {
-              "repo-1": 2
-            },
-            "retiredNamesByRepo": {
-              "repo-1": ["marlin", "orca"]
-            }
-          }
         }
       }
     },
@@ -462,12 +462,12 @@
       {
         "id": "worktree-retired-names.normal:settled",
         "observation": {
-          "sender": ["97b3650e7890"],
+          "sender": ["8146705b82f6"],
           "payloads": ["3a6762b141aa"],
           "settlements": {
             "mount": "eb79a9b3682a"
           },
-          "state": "85d826c606ff",
+          "state": "584eec7ba273",
           "effects": []
         }
       },

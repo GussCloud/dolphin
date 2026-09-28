@@ -1,4 +1,4 @@
-import type { ElectronApplication } from '@stablyai/playwright-test'
+import type { ElectronApplication } from '@playwright/test'
 import type { Event as ElectronEvent, WebContentsWillFrameNavigateEventParams } from 'electron'
 
 export type PanelNavigationObservation = {
@@ -49,9 +49,9 @@ export async function startPanelNavigationObserver(
       observation.didFrameNavigations.push({ isMainFrame, url })
     }
     const probeGlobal = globalThis as typeof globalThis & {
-      __orcaPanelNavigationProbe?: MainPanelNavigationProbe
+      __dolphinPanelNavigationProbe?: MainPanelNavigationProbe
     }
-    probeGlobal.__orcaPanelNavigationProbe?.dispose()
+    probeGlobal.__dolphinPanelNavigationProbe?.dispose()
     const originalOpenExternal = shell.openExternal
     const recordOpenExternal = async (url: string): Promise<void> => {
       observation.externalUrls.push(url)
@@ -60,7 +60,7 @@ export async function startPanelNavigationObserver(
     contents.on('did-frame-navigate', onDidFrameNavigate)
     shell.openExternal = recordOpenExternal
 
-    probeGlobal.__orcaPanelNavigationProbe = {
+    probeGlobal.__dolphinPanelNavigationProbe = {
       observation,
       dispose: () => {
         contents.off('will-frame-navigate', onWillFrameNavigate)
@@ -79,9 +79,9 @@ export async function readPanelNavigationObserver(
   return electronApp.evaluate(() => {
     const probe = (
       globalThis as typeof globalThis & {
-        __orcaPanelNavigationProbe?: MainPanelNavigationProbe
+        __dolphinPanelNavigationProbe?: MainPanelNavigationProbe
       }
-    ).__orcaPanelNavigationProbe
+    ).__dolphinPanelNavigationProbe
     if (!probe) {
       throw new Error('panel navigation observer is not active')
     }
@@ -94,15 +94,15 @@ export async function stopPanelNavigationObserver(
 ): Promise<PanelNavigationObservation> {
   return electronApp.evaluate(() => {
     const probeGlobal = globalThis as typeof globalThis & {
-      __orcaPanelNavigationProbe?: MainPanelNavigationProbe
+      __dolphinPanelNavigationProbe?: MainPanelNavigationProbe
     }
-    const probe = probeGlobal.__orcaPanelNavigationProbe
+    const probe = probeGlobal.__dolphinPanelNavigationProbe
     if (!probe) {
       throw new Error('panel navigation observer is not active')
     }
     const observation = structuredClone(probe.observation)
     probe.dispose()
-    delete probeGlobal.__orcaPanelNavigationProbe
+    delete probeGlobal.__dolphinPanelNavigationProbe
     return observation
   })
 }

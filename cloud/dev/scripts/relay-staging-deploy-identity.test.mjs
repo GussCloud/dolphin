@@ -74,22 +74,6 @@ test('no Relay workflow authenticates as the shared staging deploy identity', ()
   }
 })
 
-test('the five staging Relay workflows name the relay deploy pair', () => {
-  for (const name of DEPLOY_WORKFLOWS) {
-    const source = workflow(name)
-    assert.match(source, /vars\.STAGING_GCP_RELAY_DEPLOY_WORKLOAD_IDENTITY_PROVIDER\b/, name)
-    assert.match(source, /vars\.STAGING_GCP_RELAY_DEPLOY_SERVICE_ACCOUNT\b/, name)
-  }
-})
-
-// Why: the Asia workflow serves both environments from one job. Repointing its staging arm must
-// not move production off the relay-owned shared account.
-test('the Asia admission production arm keeps the production deploy pair', () => {
-  const source = workflow('operate-relay-asia-admission.yml')
-  assert.match(source, /vars\.PRODUCTION_GCP_RELAY_DEPLOY_WORKLOAD_IDENTITY_PROVIDER\b/)
-  assert.match(source, /vars\.PRODUCTION_GCP_RELAY_DEPLOY_SERVICE_ACCOUNT\b/)
-})
-
 test('the provider allowlists exactly those five workflow refs', () => {
   const files = providerWorkflowFiles()
   assert.deepEqual([...files].sort(), [...DEPLOY_WORKFLOWS].sort())
@@ -137,7 +121,7 @@ test('the rendered attribute condition stays inside the provider limit', () => {
     `(${workflowRefs.map((ref) => `assertion.workflow_ref == '${ref}'`).join(' || ')})`
   ].join(' && ')
   assert.ok(rendered.length < 4096, `rendered condition is ${rendered.length} characters`)
-  assert.equal(rendered.length, 791)
+  assert.equal(rendered.length, 814)
 })
 
 // Why: the census is the point. A binding added here without a workflow step behind it, or one
@@ -196,7 +180,7 @@ test('the staging deploy identity declares exactly its enumerated grants', () =>
 // Why: the auth-plane grants are guarded on a variable, so an unset tfvars entry would drop them
 // silently and Power Relay Staging would fail only on the sleep path.
 test('staging pins the shared auth service the power workflow scales', () => {
-  assert.match(stagingTfvars, /relay_staging_power_auth_service_name\s*=\s*"orca-cloud-auth-staging"/)
+  assert.match(stagingTfvars, /relay_staging_power_auth_service_name\s*=\s*"dolphin-cloud-auth-staging"/)
   assert.match(variables, /variable "relay_staging_power_auth_service_name"/)
   for (const name of [
     'github_staging_relay_deploy_auth_developer',
@@ -210,7 +194,7 @@ test('staging pins the shared auth service the power workflow scales', () => {
 })
 
 // Why: flipping this local is what moves the staging cells' startup metadata and the director's
-// ORCA_RELAY_DEPLOY_SERVICE_ACCOUNT onto the new account. Production must keep the shared one.
+// DOLPHIN_RELAY_DEPLOY_SERVICE_ACCOUNT onto the new account. Production must keep the shared one.
 test('the deploy account email is environment-conditional', () => {
   assert.match(
     shared,

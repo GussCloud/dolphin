@@ -157,7 +157,7 @@ run().catch((error) => {
 }
 
 function runProbe(protectedGuest: boolean): ProbeResult {
-  const root = mkdtempSync(join(tmpdir(), 'orca-browser-webrtc-egress-'))
+  const root = mkdtempSync(join(tmpdir(), 'dolphin-browser-webrtc-egress-'))
   fixtureRoots.push(root)
   const mainPath = join(root, 'main.cjs')
   const resultPath = join(root, 'result.json')

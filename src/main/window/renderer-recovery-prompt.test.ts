@@ -12,7 +12,10 @@ vi.mock('electron', () => ({ app: { getLocale: () => 'en-US' } }))
 const POISON: InstallDirAclPoisonDiagnosis = {
   detail:
     "Windows permissions on Dolphin's install folder are blocking its own sandboxed processes.",
-  commands: ['icacls "C:\\Orca" /grant "*S-1-15-2-2:(OI)(CI)(RX)"', 'icacls "C:\\Orca" /grant b']
+  commands: [
+    'icacls "C:\\Dolphin" /grant "*S-1-15-2-2:(OI)(CI)(RX)"',
+    'icacls "C:\\Dolphin" /grant b'
+  ]
 }
 
 function harness(overrides: Partial<RendererRecoveryPromptDeps> & { responses?: number[] } = {}): {

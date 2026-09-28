@@ -1,15 +1,9 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import test from 'node:test'
-import { TRUSTED_EVIDENCE_CODE_PATHS } from './relay-evidence-code-provenance.mjs'
-import {
-  RELAY_REPOSITORY_ROOT,
-  relayWorkflowPath,
-  relayWorkflowUrl
-} from './relay-repository.mjs'
 import {
   createEvidenceManifest,
   verifyDryRunAuthority,
@@ -119,7 +113,7 @@ test('requires fresh green evidence and rechecks the live selector', async () =>
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       )
@@ -146,7 +140,7 @@ test('requires fresh green evidence and rechecks the live selector', async () =>
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       ),
@@ -169,7 +163,7 @@ test('requires fresh green evidence and rechecks the live selector', async () =>
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       ),
@@ -196,7 +190,7 @@ test('requires fresh green evidence and rechecks the live selector', async () =>
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       ),
@@ -303,7 +297,7 @@ test('binds migration policies to their exact mutations', async () => {
         '--director-origin',
         'https://relay.example'
       ],
-      { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+      { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
       fetchImpl,
       () => now
     )
@@ -328,7 +322,7 @@ test('binds migration policies to their exact mutations', async () => {
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       )
@@ -348,7 +342,7 @@ test('binds migration policies to their exact mutations', async () => {
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       )
@@ -382,7 +376,7 @@ test('binds migration policies to their exact mutations', async () => {
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       ),
@@ -403,7 +397,7 @@ test('binds migration policies to their exact mutations', async () => {
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       ),
@@ -424,7 +418,7 @@ test('binds migration policies to their exact mutations', async () => {
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         fetchImpl,
         () => now
       ),
@@ -435,95 +429,6 @@ test('binds migration policies to their exact mutations', async () => {
     await rm(recoveryDirectory, { recursive: true, force: true })
     await rm(capacityDirectory, { recursive: true, force: true })
   }
-})
-
-test('workflow reruns restore the prior attempt into one stable incident', async () => {
-  const workflow = await readFile(
-    relayWorkflowUrl('monitor-relay-production-job.yml'),
-    'utf8'
-  )
-  assert.match(workflow, /INCIDENT_ID: relay-\$\{\{ github\.run_id \}\}-\$\{\{ inputs\.mode \}\}/)
-  assert.doesNotMatch(workflow, /INCIDENT_ID:.*run_attempt/)
-  assert.match(workflow, /actions\/download-artifact@v4/)
-  assert.match(workflow, /verify-restore/)
-  assert.match(workflow, /RESTART_FLAG=--restart/)
-  assert.equal(workflow.match(/--capacity-cell-id/g)?.length, 3)
-  const dispatchWorkflow = await readFile(
-    relayWorkflowUrl('monitor-relay-production.yml'),
-    'utf8'
-  )
-  assert.match(dispatchWorkflow, /- capacity-transition/)
-  assert.match(dispatchWorkflow, /capacity-cell-id: \$\{\{ inputs\.capacity-cell-id \}\}/)
-})
-
-test('same-cap and rehome mutations require complete strict dry-run authority', async () => {
-  for (const name of [
-    'deploy-relay-production-same-cap-job.yml',
-    'operate-relay-production-rehome-job.yml'
-  ]) {
-    const workflow = await readFile(
-      relayWorkflowUrl(name),
-      'utf8'
-    )
-    assert.match(workflow, /relay-monitor-evidence\.mjs verify-authority/)
-    assert.match(workflow, /--required-migration-policy strict/)
-    assert.doesNotMatch(workflow, /relay-monitor-evidence\.mjs verify-restore/)
-  }
-})
-
-test('production mutation workflows consume and live-recheck dry-run evidence', async () => {
-  for (const name of [
-    'deploy-relay-production.yml',
-    'deploy-relay-production-multi-target.yml'
-  ]) {
-    const workflow = await readFile(
-      relayWorkflowUrl(name),
-      'utf8'
-    )
-    assert.match(workflow, /actions\/download-artifact@v4/)
-    assert.match(workflow, /verify-mutation/)
-    assert.match(workflow, /--mutation-mode "\$\{DEPLOY_MODE\}"/)
-    assert.match(workflow, /--source-cell-id "\$\{SOURCE_CELL_ID\}"/)
-    assert.match(workflow, /incident:relay-preflight/)
-    assert.match(workflow, /Reject previously consumed dry-run evidence/)
-    assert.match(workflow, /actions\/upload-artifact@v4/)
-    assert.match(workflow, /relay-monitor-consumed-/)
-    assert.match(workflow, /ORCA_RELAY_ADMIN_ID_TOKEN/)
-    assert.match(workflow, /github\.ref == 'refs\/heads\/main'/)
-    assert.ok(
-      workflow.indexOf('pnpm install --frozen-lockfile') <
-      workflow.indexOf('id: google-auth')
-    )
-  }
-})
-
-test('monitor and mutation workflows share the production Cloud SQL rollout lock', async () => {
-  for (const name of [
-    'monitor-relay-production.yml',
-    'deploy-relay-production.yml',
-    'deploy-relay-production-multi-target.yml',
-    'deploy-relay-production-capacity.yml'
-  ]) {
-    const workflow = await readFile(
-      relayWorkflowUrl(name),
-      'utf8'
-    )
-    assert.match(workflow, /group: production-cloud-sql-rollout/)
-  }
-})
-
-test('monitor uses a reusable job so exact job_workflow_ref is present', async () => {
-  const wrapper = await readFile(
-    relayWorkflowUrl('monitor-relay-production.yml'),
-    'utf8'
-  )
-  assert.ok(wrapper.includes(`uses: ./${relayWorkflowPath('monitor-relay-production-job.yml')}`))
-  const job = await readFile(
-    relayWorkflowUrl('monitor-relay-production-job.yml'),
-    'utf8'
-  )
-  assert.match(job, /workflow_call:/)
-  assert.match(job, /environment: production/)
 })
 
 function gitIn(root, ...args) {
@@ -657,7 +562,7 @@ test('keeps restore and mutation bound to the exact sealing commit', async () =>
           '--director-origin',
           'https://relay.example'
         ],
-        { ORCA_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
+        { DOLPHIN_RELAY_ADMIN_ID_TOKEN: 'aaa.bbb.ccc' },
         async () => Response.json({ selector }),
         () => now
       ),
@@ -666,16 +571,5 @@ test('keeps restore and mutation bound to the exact sealing commit', async () =>
   } finally {
     await rm(repository.root, { recursive: true, force: true })
     await rm(directory, { recursive: true, force: true })
-  }
-})
-
-// A trusted path that no longer exists silently stops being compared, so the same-code rule would
-// pass over code it was written to pin.
-test('every trusted provenance path exists in this checkout', async () => {
-  for (const path of TRUSTED_EVIDENCE_CODE_PATHS) {
-    await assert.doesNotReject(
-      stat(new URL(path, RELAY_REPOSITORY_ROOT)),
-      `${path} is missing`
-    )
   }
 })

@@ -78,7 +78,7 @@ export class LoadedStateParsingOperations {
   }
 
   private loadInternal(serialized?: string, parsedInput?: Record<string, unknown>): PersistedState {
-    // Capture "has run Orca before?" for telemetry cohort; the telemetry field is new, so field inference misclassifies old users as fresh.
+    // Capture "has run Dolphin before?" for telemetry cohort; the telemetry field is new, so field inference misclassifies old users as fresh.
     const fileExistedOnLoad = serialized !== undefined || parsedInput !== undefined
     logStartupMilestone('persistence-load-start', {
       fileExists: fileExistedOnLoad

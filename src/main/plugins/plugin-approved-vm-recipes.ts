@@ -1,9 +1,9 @@
-import type { OrcaVmRecipe } from '../../shared/orca-yaml-hook-types'
+import type { DolphinVmRecipe } from '../../shared/dolphin-yaml-hook-types'
 import type { PluginService } from './plugin-service'
 
 export async function getApprovedPluginVmRecipes(
   pluginService?: PluginService
-): Promise<OrcaVmRecipe[]> {
+): Promise<DolphinVmRecipe[]> {
   if (!pluginService) {
     return []
   }

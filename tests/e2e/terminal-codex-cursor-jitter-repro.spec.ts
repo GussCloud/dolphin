@@ -1,7 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
-import type { Page, TestInfo } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import type { Page, TestInfo } from '@playwright/test'
+import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { waitForActiveTerminalManager } from './helpers/terminal'
 import { analyzeRasterCursorCells, type RasterCursorCell } from './terminal-cursor-raster-probe'
@@ -695,53 +695,53 @@ async function captureQueuedMessageFrames(
 
 test.describe('Codex terminal cursor jitter repro', () => {
   test('keeps queued-message cursor out of the Working status row in native Windows Codex @headful', async ({
-    orcaPage
+    appPage
   }, testInfo) => {
     test.skip(process.platform !== 'win32', 'native Windows cursor repro only runs on Windows')
 
-    await waitForSessionReady(orcaPage)
-    await waitForActiveWorktree(orcaPage)
-    await ensureTerminalVisible(orcaPage)
-    await installPtyWriteDiagnostics(orcaPage)
+    await waitForSessionReady(appPage)
+    await waitForActiveWorktree(appPage)
+    await ensureTerminalVisible(appPage)
+    await installPtyWriteDiagnostics(appPage)
     rmSync(ARTIFACT_DIR, { recursive: true, force: true })
     mkdirSync(ARTIFACT_DIR, { recursive: true })
 
     const shellCase = SHELL_CASES[0]!
-    const { tabId, ptyId } = await prepareCodexTerminal(orcaPage, shellCase)
-    await installPtyOutputDiagnostics(orcaPage)
-    await orcaPage.keyboard.type(CODEX_REPO_PROMPT)
-    await orcaPage.waitForTimeout(250)
-    await orcaPage.keyboard.press('Enter')
-    await orcaPage.waitForTimeout(1_000)
-    if (!CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(orcaPage, tabId, 8_000))) {
-      await orcaPage.keyboard.press('Enter')
+    const { tabId, ptyId } = await prepareCodexTerminal(appPage, shellCase)
+    await installPtyOutputDiagnostics(appPage)
+    await appPage.keyboard.type(CODEX_REPO_PROMPT)
+    await appPage.waitForTimeout(250)
+    await appPage.keyboard.press('Enter')
+    await appPage.waitForTimeout(1_000)
+    if (!CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(appPage, tabId, 8_000))) {
+      await appPage.keyboard.press('Enter')
     }
-    await orcaPage.waitForTimeout(3_000)
-    const submittedContent = await getTerminalContentForTab(orcaPage, tabId, 8_000)
+    await appPage.waitForTimeout(3_000)
+    const submittedContent = await getTerminalContentForTab(appPage, tabId, 8_000)
     writeFileSync(path.join(ARTIFACT_DIR, 'queued-message-after-submit.txt'), submittedContent)
     await expect
       .poll(
         async () =>
-          CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(orcaPage, tabId, 8_000)),
+          CODEX_WORKING_STATUS_RE.test(await getTerminalContentForTab(appPage, tabId, 8_000)),
         {
           timeout: 30_000,
           message: 'Codex did not enter Working state'
         }
       )
       .toBe(true)
-    await applyCursorProbeTheme(orcaPage, tabId)
+    await applyCursorProbeTheme(appPage, tabId)
     const workingOnlyFrames = await captureQueuedMessageFrames(
-      orcaPage,
+      appPage,
       `${shellCase.label}-no-input`,
       tabId,
       ptyId,
       testInfo
     )
-    await orcaPage.keyboard.insertText('s')
+    await appPage.keyboard.insertText('s')
     await expect
       .poll(
         async () =>
-          (await readScreenLines(orcaPage, tabId)).some((line) => isQueuedInputLine(line.text)),
+          (await readScreenLines(appPage, tabId)).some((line) => isQueuedInputLine(line.text)),
         {
           timeout: 5_000,
           message: 'queued input did not appear before cursor capture'
@@ -749,15 +749,15 @@ test.describe('Codex terminal cursor jitter repro', () => {
       )
       .toBe(true)
     const frames = await captureQueuedMessageFrames(
-      orcaPage,
+      appPage,
       shellCase.label,
       tabId,
       ptyId,
       testInfo
     )
 
-    const snapshot = await readScreenSnapshot(orcaPage, shellCase.label, tabId, ptyId)
-    const rawChunks = await readPtyOutputDiagnostics(orcaPage)
+    const snapshot = await readScreenSnapshot(appPage, shellCase.label, tabId, ptyId)
+    const rawChunks = await readPtyOutputDiagnostics(appPage)
     const visibleWorkingOnlyCursorFrames = workingOnlyFrames.filter(isPromptCursorFrame)
     const unexpectedWorkingOnlyCursorFrames = workingOnlyFrames.filter(
       isUnexpectedVisibleCursorFrame

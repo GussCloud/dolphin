@@ -1,4 +1,4 @@
-// Step for AddRepoDialog (orca#763), split out so create-project state stays scoped.
+// Step for AddRepoDialog (dolphin#763), split out so create-project state stays scoped.
 import React, { useMemo, useState } from 'react'
 import { ChevronDown, GitBranch, Loader2 } from 'lucide-react'
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'

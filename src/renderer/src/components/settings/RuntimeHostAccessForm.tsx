@@ -134,7 +134,7 @@ export function RuntimeHostAccessForm({
             }}
             placeholder={translate(
               'auto.components.settings.RuntimeHostAccessForm.accessLinkPlaceholder',
-              'orca://pair?code=...'
+              'dolphin://pair?code=...'
             )}
             className="min-w-0 font-mono"
           />
@@ -316,7 +316,7 @@ export function RuntimeHostAccessForm({
           <p className="mt-2 text-muted-foreground">
             {translate(
               'auto.components.settings.RuntimeHostAccessForm.headlessHelp',
-              'Using headless orca serve? Run orca serve --pairing-address <reachable-host> on the other computer.'
+              'Using headless dolphin serve? Run dolphin serve --pairing-address <reachable-host> on the other computer.'
             )}
           </p>
         )}

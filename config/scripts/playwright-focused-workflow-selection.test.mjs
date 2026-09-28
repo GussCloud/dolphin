@@ -60,9 +60,9 @@ function focusedArguments() {
 it('focused IME and golden commands discover only their requested files with the installed Playwright CLI', async () => {
   const commands = focusedArguments()
   expect(commands).toHaveLength(4)
-  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'orca-playwright-focused-')))
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), 'dolphin-playwright-focused-')))
   const config = join(directory, 'playwright.config.cjs')
-  const testPackage = JSON.stringify(require.resolve('@stablyai/playwright-test'))
+  const testPackage = JSON.stringify(require.resolve('@playwright/test'))
   try {
     mkdirSync(join(directory, 'tests/e2e'), { recursive: true })
     writeFileSync(config, "module.exports = { testDir: '.', testMatch: '**/*.spec.ts' }")
@@ -88,7 +88,7 @@ it('focused IME and golden commands discover only their requested files with the
           '--reporter=json',
           ...args
         ],
-        env: { ...process.env, ORCA_BACKGROUND_LAUNCH: '1' },
+        env: { ...process.env, DOLPHIN_BACKGROUND_LAUNCH: '1' },
         timeoutMs: 20_000
       })
       expect(result.code, result.stderr).toBe(0)

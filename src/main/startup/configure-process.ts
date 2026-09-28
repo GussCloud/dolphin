@@ -14,7 +14,7 @@ import {
 } from './http1-compatibility-profile-state'
 
 const DEV_PARENT_SHUTDOWN_GRACE_MS = 3000
-const HTTP1_COMPATIBILITY_ENV_VAR = 'ORCA_DISABLE_HTTP2'
+const HTTP1_COMPATIBILITY_ENV_VAR = 'DOLPHIN_DISABLE_HTTP2'
 const TRUE_ENV_VALUES = new Set(['1', 'true', 'yes', 'on'])
 const FALSE_ENV_VALUES = new Set(['0', 'false', 'no', 'off'])
 let devParentShutdownRequested = false
@@ -159,7 +159,7 @@ export function patchPackagedProcessPath(): void {
         join(home, 'bin'),
         join(home, '.local/bin'),
         join(home, '.nix-profile/bin'),
-        // Why: some agent CLIs install into ~/.<name>/bin; GUI-launched Electron's minimal PATH misses them (stablyai/orca#829).
+        // Why: some agent CLIs install into ~/.<name>/bin; GUI-launched Electron's minimal PATH misses them (GussCloud/dolphin#829).
         join(home, '.opencode/bin'),
         join(home, '.vite-plus/bin')
       )
@@ -195,7 +195,7 @@ export function configureDevUserDataPath(isDev: boolean): void {
     // dedicated userData path per launch prevents persisted repos, worktrees,
     // and session state from leaking between tests through the shared dev
     // profile while still leaving the user's real packaged profile untouched.
-    const e2eHomeDir = process.env.ORCA_E2E_HOME_DIR ?? join(e2eConfig.userDataDir, 'home')
+    const e2eHomeDir = process.env.DOLPHIN_E2E_HOME_DIR ?? join(e2eConfig.userDataDir, 'home')
     // Why: E2E imports can resolve os.homedir() before Electron is ready. Abort
     // startup if a direct launch skipped the disposable Node-home contract.
     if (!areSameE2EHomePath(homedir(), e2eHomeDir)) {
@@ -210,18 +210,18 @@ export function configureDevUserDataPath(isDev: boolean): void {
   }
 
   if (!isDev) {
-    // Why explicit: never share the official Orca's profile, whatever name Electron derived.
+    // Why explicit: the profile dir is the identity's, whatever name Electron derived.
     app.setPath('userData', join(app.getPath('appData'), FORK_IDENTITY.userDataDirName))
     return
   }
-  const overrideUserDataPath = process.env.ORCA_DEV_USER_DATA_PATH
+  const overrideUserDataPath = process.env.DOLPHIN_DEV_USER_DATA_PATH
   if (overrideUserDataPath) {
     // Why: automated repros need an isolated profile so the dev's persisted tabs/worktrees don't skew startup and hide window bugs.
     app.setPath('userData', overrideUserDataPath)
     return
   }
-  // Why: without a dev-only path, pnpm dev overwrites the packaged app's runtime pointer under userData and breaks the orca CLI.
-  app.setPath('userData', join(app.getPath('appData'), 'orca-dev'))
+  // Why: without a dev-only path, pnpm dev overwrites the packaged app's runtime pointer under userData and breaks the dolphin CLI.
+  app.setPath('userData', join(app.getPath('appData'), 'dolphin-dev'))
 }
 
 function areSameE2EHomePath(left: string, right: string): boolean {
@@ -232,14 +232,14 @@ function areSameE2EHomePath(left: string, right: string): boolean {
     : normalizedLeft === normalizedRight
 }
 
-export function configureOrcaUserDataPathEnv(): void {
-  // Why: relaunches can inherit a stale ORCA_USER_DATA_PATH; canonicalize before CLI-shared modules build runtime-home paths.
-  process.env.ORCA_USER_DATA_PATH = app.getPath('userData')
+export function configureDolphinUserDataPathEnv(): void {
+  // Why: relaunches can inherit a stale DOLPHIN_USER_DATA_PATH; canonicalize before CLI-shared modules build runtime-home paths.
+  process.env.DOLPHIN_USER_DATA_PATH = app.getPath('userData')
 }
 
 export function shouldInstallManagedHooks(isDev: boolean): boolean {
   void isDev
-  // Why: managed hooks now target Orca-owned Codex homes, not ~/.codex, so keep install on for all agents until each gets its own seam.
+  // Why: managed hooks now target Dolphin-owned Codex homes, not ~/.codex, so keep install on for all agents until each gets its own seam.
   return true
 }
 
@@ -285,7 +285,7 @@ export function installDevParentWatchdog(isDev: boolean): void {
 
     if (parentPidChanged || parentMissing) {
       clearInterval(timer)
-      // Why: the dev runner spawns Electron without IPC, so on macOS Ctrl+C leaves Orca open; watch the parent PID to couple shutdown.
+      // Why: the dev runner spawns Electron without IPC, so on macOS Ctrl+C leaves Dolphin open; watch the parent PID to couple shutdown.
       requestDevParentShutdown()
     }
   }, 1000)

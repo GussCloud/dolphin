@@ -45,7 +45,7 @@ import {
   workspaceKindForWorktreeId,
   type WorkspaceLaunchKind
 } from '../../shared/workspace-launch-kind'
-import type { OrcaRuntimeService } from '../runtime/orca-runtime'
+import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { isDefinitiveAgentSessionCreateRefusal } from '../../shared/agent-session-definitive-refusal'
 import {
   decideAgentLaunchMode,
@@ -63,7 +63,10 @@ import {
 } from './agent-launch-surface-factories'
 
 export type AgentLaunchExecution = {
-  runtime: Pick<OrcaRuntimeService, 'getStructuredAgentSessionCreateSupport' | 'getClientSettings'>
+  runtime: Pick<
+    DolphinRuntimeService,
+    'getStructuredAgentSessionCreateSupport' | 'getClientSettings'
+  >
   intent: AgentLaunchIntent
   surfaces: AgentLaunchSurfaceFactory
   workspaces?: AgentLaunchWorkspaceFactory

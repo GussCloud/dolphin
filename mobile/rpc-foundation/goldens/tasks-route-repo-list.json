@@ -3,12 +3,12 @@
   "family": "tasks.route-repo-list",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "23f974df8b57c723069605de1db80c339ead286b18aae38e67fce03ea50c5180",
-  "scenarioSha256": "b62ca571d4defcc2e53960033c5b4eb3f7e406b57664664cbc6a173041a9f803",
-  "platform": "darwin",
+  "scenarioSha256": "5d261eaf67cbffb81128b760935baaa1cc43226a639ac7bbfbe1608f33048608",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
@@ -44,7 +44,7 @@
         "startedAt": 0
       }
     },
-    "7d0fa424be7c": {
+    "732dde9c659e": {
       "name": "repo.list#1",
       "ordinal": 1,
       "args": [
@@ -76,7 +76,7 @@
             "repos": [
               {
                 "id": "repo-1",
-                "name": "orca"
+                "name": "dolphin"
               },
               {
                 "id": "repo-2",
@@ -107,6 +107,21 @@
       "repoListStatus": "loading",
       "repos": []
     },
+    "e3d17ae591ad": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": [
+        {
+          "id": "repo-1",
+          "name": "dolphin"
+        },
+        {
+          "id": "repo-2",
+          "name": "relay"
+        }
+      ]
+    },
     "eb79a9b3682a": {
       "status": "fulfilled",
       "startedAt": 0,
@@ -122,21 +137,6 @@
       "repoListError": "",
       "repoListStatus": "loaded",
       "repos": ["repo-1", "repo-2"]
-    },
-    "fcd8faa86ca8": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": [
-        {
-          "id": "repo-1",
-          "name": "orca"
-        },
-        {
-          "id": "repo-2",
-          "name": "relay"
-        }
-      ]
     }
   },
   "recording": {
@@ -170,11 +170,11 @@
       {
         "id": "repos-loaded",
         "observation": {
-          "sender": ["7d0fa424be7c"],
+          "sender": ["732dde9c659e"],
           "payloads": ["19b2979d7fc2"],
           "settlements": {
             "mount": "eb79a9b3682a",
-            "ensure": "fcd8faa86ca8"
+            "ensure": "e3d17ae591ad"
           },
           "state": "f5484d90b3f7",
           "effects": []

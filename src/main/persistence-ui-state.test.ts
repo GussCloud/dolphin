@@ -58,7 +58,7 @@ async function createStore() {
   // file's temp dir rather than the global fake's shared one, after resetModules.
   installFakeAppEnvironment({ getPath: () => testState.dir })
   initDataPath()
-  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'orca-data.json') })
+  return createSqliteTestStore(Store, { dataFile: join(testState.dir, 'dolphin-data.json') })
 }
 
 vi.mock('./telemetry/client', () => ({
@@ -71,7 +71,7 @@ vi.mock('./telemetry/cohort-classifier', () => ({
 
 describe('Store', () => {
   beforeEach(() => {
-    testState.dir = mkdtempSync(join(tmpdir(), 'orca-test-'))
+    testState.dir = mkdtempSync(join(tmpdir(), 'dolphin-test-'))
     trackMock.mockReset()
     getCohortAtEmitMock.mockReset()
     getCohortAtEmitMock.mockReturnValue({ nth_repo_added: 2 })
@@ -713,7 +713,7 @@ describe('Store', () => {
       sshPtyConsumerRecoveries: { ownerLease: string }[]
     }
     expect(persisted.sshPtyConsumerRecoveries[0]?.ownerLease).not.toBe('secret-owner-lease')
-    expect(existsSync(join(testState.dir, 'orca-github-cache.json'))).toBe(false)
+    expect(existsSync(join(testState.dir, 'dolphin-github-cache.json'))).toBe(false)
 
     const reloaded = await createStore()
     expect(reloaded.getSshPtyConsumerRecovery('ssh-1')).toEqual({
@@ -755,7 +755,7 @@ describe('Store', () => {
       label: 'SSH 1',
       host: 'example.test',
       port: 22,
-      username: 'orca'
+      username: 'dolphin'
     })
     await store.upsertSshPtyConsumerRecovery({
       targetId: 'ssh-1',

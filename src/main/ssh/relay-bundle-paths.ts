@@ -4,7 +4,7 @@ import type { RelayPlatform } from './relay-protocol'
 export function relayBundleCandidates(platform: RelayPlatform, appPath: string): string[] {
   return [
     ...new Set([
-      ...(process.env.ORCA_RELAY_PATH ? [join(process.env.ORCA_RELAY_PATH, platform)] : []),
+      ...(process.env.DOLPHIN_RELAY_PATH ? [join(process.env.DOLPHIN_RELAY_PATH, platform)] : []),
       ...(process.resourcesPath
         ? [
             join(process.resourcesPath, 'relay', platform),

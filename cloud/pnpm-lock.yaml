@@ -54,15 +54,15 @@ importers:
 
   apps/push:
     dependencies:
+      '@dolphin-cloud/postgres-schema':
+        specifier: workspace:*
+        version: link:../../packages/postgres-schema
+      '@dolphin-cloud/push-contract':
+        specifier: workspace:*
+        version: link:../../packages/push-contract
       '@hono/node-server':
         specifier: ^1.19.17
         version: 1.19.17(hono@4.13.7)
-      '@orca-cloud/postgres-schema':
-        specifier: workspace:*
-        version: link:../../packages/postgres-schema
-      '@orca-cloud/push-contract':
-        specifier: workspace:*
-        version: link:../../packages/push-contract
       google-auth-library:
         specifier: ^10.5.0
         version: 10.9.1
@@ -100,15 +100,15 @@ importers:
 
   apps/relay:
     dependencies:
+      '@dolphin-cloud/postgres-schema':
+        specifier: workspace:*
+        version: link:../../packages/postgres-schema
+      '@dolphin-cloud/relay-contract':
+        specifier: workspace:*
+        version: link:../../packages/relay-contract
       '@hono/node-server':
         specifier: ^1.19.17
         version: 1.19.17(hono@4.13.7)
-      '@orca-cloud/postgres-schema':
-        specifier: workspace:*
-        version: link:../../packages/postgres-schema
-      '@orca-cloud/relay-contract':
-        specifier: workspace:*
-        version: link:../../packages/relay-contract
       hono:
         specifier: ^4.13.7
         version: 4.13.7

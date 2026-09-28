@@ -40,7 +40,7 @@ function reserveRequest(expectedFence: number | null, spawnToken: string, operat
 }
 
 test('an older build loads, and starts over, a lease released with no death evidence', async () => {
-  const directory = mkdtempSync(join(tmpdir(), 'orca-unproven-release-downgrade-'))
+  const directory = mkdtempSync(join(tmpdir(), 'dolphin-unproven-release-downgrade-'))
   try {
     // This build: an owner whose identity can never be verified is released, with no evidence.
     const store = await AgentSessionRecordStore.open({ directory, hostId: 'local' })

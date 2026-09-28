@@ -3,8 +3,8 @@
  * focus back, early blurs, and blur-commit behavior.
  */
 
-import type { Page } from '@stablyai/playwright-test'
-import { test, expect } from './helpers/orca-app'
+import type { Page } from '@playwright/test'
+import { test, expect } from './helpers/dolphin-app'
 import { splitActiveTerminalPane, waitForPaneCount } from './helpers/terminal'
 import { openTerminalContextMenu } from './helpers/terminal-pane-title-actions'
 import { registerTerminalPaneMountReadiness } from './helpers/terminal-pane-mount-readiness'
@@ -37,16 +37,16 @@ test.describe.configure({ mode: 'serial' })
 test.describe('Terminal Panes', () => {
   registerTerminalPaneMountReadiness()
 
-  test('Set Title input stays open when clicked in a split terminal', async ({ orcaPage }) => {
-    await splitActiveTerminalPane(orcaPage, 'vertical')
-    await waitForPaneCount(orcaPage, 2)
-    await splitActiveTerminalPane(orcaPage, 'horizontal')
-    await waitForPaneCount(orcaPage, 3)
+  test('Set Title input stays open when clicked in a split terminal', async ({ appPage }) => {
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
+    await splitActiveTerminalPane(appPage, 'horizontal')
+    await waitForPaneCount(appPage, 3)
 
-    await openTerminalContextMenu(orcaPage)
-    await orcaPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = orcaPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
 
@@ -76,9 +76,9 @@ test.describe('Terminal Panes', () => {
     await expect(titleInput).toBeFocused()
   })
 
-  test('Set Title survives an early blur during first focus handoff', async ({ orcaPage }) => {
-    await openTerminalContextMenu(orcaPage)
-    await orcaPage.evaluate(() => {
+  test('Set Title survives an early blur during first focus handoff', async ({ appPage }) => {
+    await openTerminalContextMenu(appPage)
+    await appPage.evaluate(() => {
       const blurOnFirstTitleFocus = (event: FocusEvent): void => {
         const target = event.target
         if (
@@ -92,59 +92,59 @@ test.describe('Terminal Panes', () => {
       }
       document.addEventListener('focusin', blurOnFirstTitleFocus, true)
     })
-    await orcaPage.getByText('Set Title…', { exact: true }).click()
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = orcaPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await orcaPage.waitForTimeout(250)
+    await appPage.waitForTimeout(250)
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
   })
 
-  test('Set Title survives delayed terminal focus handoffs', async ({ orcaPage }) => {
-    await openTerminalContextMenu(orcaPage)
-    await installDelayedTerminalFocusSteals(orcaPage, [50, 150, 300])
-    await orcaPage.getByText('Set Title…', { exact: true }).click()
+  test('Set Title survives delayed terminal focus handoffs', async ({ appPage }) => {
+    await openTerminalContextMenu(appPage)
+    await installDelayedTerminalFocusSteals(appPage, [50, 150, 300])
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = orcaPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await orcaPage.waitForTimeout(600)
+    await appPage.waitForTimeout(600)
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
   })
 
   test('Set Title survives delayed terminal focus handoffs in a split pane', async ({
-    orcaPage
+    appPage
   }) => {
-    await splitActiveTerminalPane(orcaPage, 'vertical')
-    await waitForPaneCount(orcaPage, 2)
+    await splitActiveTerminalPane(appPage, 'vertical')
+    await waitForPaneCount(appPage, 2)
 
-    await openTerminalContextMenu(orcaPage)
-    await installDelayedTerminalFocusSteals(orcaPage, [50, 150, 300])
-    await orcaPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await installDelayedTerminalFocusSteals(appPage, [50, 150, 300])
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = orcaPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await orcaPage.waitForTimeout(600)
+    await appPage.waitForTimeout(600)
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
   })
 
-  test('Set Title preserves draft text across terminal focus steals', async ({ orcaPage }) => {
+  test('Set Title preserves draft text across terminal focus steals', async ({ appPage }) => {
     const draftTitle = `Draft title ${Date.now()}`
 
-    await openTerminalContextMenu(orcaPage)
-    await orcaPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = orcaPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
     await titleInput.fill(draftTitle)
 
-    await orcaPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const textarea = document.querySelector<HTMLTextAreaElement>('.xterm-helper-textarea')
       textarea?.focus()
     })
@@ -154,13 +154,13 @@ test.describe('Terminal Panes', () => {
     await expect(titleInput).toHaveValue(draftTitle)
   })
 
-  test('Set Title does not submit when synthetic focus restore fails', async ({ orcaPage }) => {
+  test('Set Title does not submit when synthetic focus restore fails', async ({ appPage }) => {
     const draftTitle = `Blocked focus title ${Date.now()}`
 
-    await openTerminalContextMenu(orcaPage)
-    await orcaPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = orcaPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
     await titleInput.fill(draftTitle)
@@ -168,36 +168,36 @@ test.describe('Terminal Panes', () => {
       input.focus = () => {}
     })
 
-    await orcaPage.evaluate(() => {
+    await appPage.evaluate(() => {
       const textarea = document.querySelector<HTMLTextAreaElement>('.xterm-helper-textarea')
       textarea?.focus()
     })
 
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toHaveValue(draftTitle)
-    await expect(orcaPage.locator('.pane-title-text', { hasText: draftTitle })).toHaveCount(0)
+    await expect(appPage.locator('.pane-title-text', { hasText: draftTitle })).toHaveCount(0)
   })
 
   test('Set Title still commits by blur after synthetic terminal focus steals', async ({
-    orcaPage
+    appPage
   }) => {
     const title = `Post steal blur title ${Date.now()}`
 
-    await openTerminalContextMenu(orcaPage)
-    await installDelayedTerminalFocusSteals(orcaPage, [50, 150])
-    await orcaPage.getByText('Set Title…', { exact: true }).click()
+    await openTerminalContextMenu(appPage)
+    await installDelayedTerminalFocusSteals(appPage, [50, 150])
+    await appPage.getByText('Set Title…', { exact: true }).click()
 
-    const titleInput = orcaPage.locator('.pane-title-input').first()
+    const titleInput = appPage.locator('.pane-title-input').first()
     await expect(titleInput).toBeVisible()
     await expect(titleInput).toBeFocused()
-    await orcaPage.waitForTimeout(300)
+    await appPage.waitForTimeout(300)
     await titleInput.fill(title)
-    await orcaPage
+    await appPage
       .locator('.xterm:visible')
       .first()
       .click({ position: { x: 40, y: 60 } })
 
     await expect(titleInput).toHaveCount(0)
-    await expect(orcaPage.locator('.pane-title-text', { hasText: title })).toHaveCount(1)
+    await expect(appPage.locator('.pane-title-text', { hasText: title })).toHaveCount(1)
   })
 })

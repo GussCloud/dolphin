@@ -1,16 +1,19 @@
 import { lstatSync, readFileSync } from 'node:fs'
 import { folderWorkspaceKey } from '../../shared/workspace-scope'
 import {
-  getOrcaProfileDataFile,
-  getOrcaProfileStateDatabaseFile,
+  getDolphinProfileDataFile,
+  getDolphinProfileStateDatabaseFile,
   getProfileUserDataPath
-} from '../orca-profiles/profile-storage-paths'
-import { getOrcaProfileIndexPath, readProfileIndex } from '../orca-profiles/profile-index-store'
+} from '../dolphin-profiles/profile-storage-paths'
+import {
+  getDolphinProfileIndexPath,
+  readProfileIndex
+} from '../dolphin-profiles/profile-index-store'
 import { readProfileStateDomains } from '../persistence/profile-state/profile-state-domain-reader'
 import { assertNoRetainedProfileStateExports } from '../persistence/profile-state/profile-state-recovery-required'
 
 /**
- * Worktree ids owned by Orca profiles OTHER than the running one.
+ * Worktree ids owned by Dolphin profiles OTHER than the running one.
  *
  * Why the history GC needs these: terminal history is keyed by worktree id
  * under `userData/terminal-history`, which has no profile segment, and fish
@@ -31,7 +34,7 @@ export function getOtherProfileWorktreeIdsForHistoryGc(userDataPath = getProfile
   unreadableProfiles: number
 } {
   const ids = new Set<string>()
-  const index = readProfileIndex(getOrcaProfileIndexPath(userDataPath))
+  const index = readProfileIndex(getDolphinProfileIndexPath(userDataPath))
   if (!index) {
     return { ids, unreadableProfiles: 0 }
   }
@@ -53,7 +56,7 @@ export function getOtherProfileWorktreeIdsForHistoryGc(userDataPath = getProfile
 }
 
 function readProfileWorktreeIds(profileId: string, userDataPath: string): Set<string> | null {
-  const databaseFile = getOrcaProfileStateDatabaseFile(profileId, userDataPath)
+  const databaseFile = getDolphinProfileStateDatabaseFile(profileId, userDataPath)
   // A present database is authoritative. In particular, do not fall back to a
   // stale JSON export after corruption or a future schema, because that could
   // make live history look orphaned and delete it.
@@ -64,7 +67,7 @@ function readProfileWorktreeIds(profileId: string, userDataPath: string): Set<st
   if (databasePresence === 'unreadable') {
     return null
   }
-  const dataFile = getOrcaProfileDataFile(profileId, userDataPath)
+  const dataFile = getDolphinProfileDataFile(profileId, userDataPath)
   try {
     assertNoRetainedProfileStateExports({ dataFile, databaseFile, profileId })
   } catch {

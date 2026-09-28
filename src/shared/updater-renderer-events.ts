@@ -1,4 +1,6 @@
-export const ORCA_UPDATER_QUIT_AND_INSTALL_STARTED_EVENT = 'orca:updater-quit-and-install-started'
-export const ORCA_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT = 'orca:updater-quit-and-install-aborted'
-export const ORCA_APP_RESTART_STARTED_EVENT = 'orca:app-restart-started'
-export const ORCA_APP_RESTART_ABORTED_EVENT = 'orca:app-restart-aborted'
+export const DOLPHIN_UPDATER_QUIT_AND_INSTALL_STARTED_EVENT =
+  'dolphin:updater-quit-and-install-started'
+export const DOLPHIN_UPDATER_QUIT_AND_INSTALL_ABORTED_EVENT =
+  'dolphin:updater-quit-and-install-aborted'
+export const DOLPHIN_APP_RESTART_STARTED_EVENT = 'dolphin:app-restart-started'
+export const DOLPHIN_APP_RESTART_ABORTED_EVENT = 'dolphin:app-restart-aborted'

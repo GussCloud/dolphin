@@ -6,7 +6,7 @@ import {
   deriveLocalSshBrowserRoutePartitionStorageScope
 } from './browser-route-identity'
 import {
-  activeBrowserRoutePartitionOrcaProfileId,
+  activeBrowserRoutePartitionDolphinProfileId,
   currentBrowserRoutePartitionBindingStore
 } from './browser-route-partition-binding-runtime'
 import {
@@ -26,7 +26,7 @@ import {
   retainLocalSshBrowserRoute
 } from './local-ssh-browser-route'
 
-const AUTHORITY_CONNECTION_IDENTITY_TAG = 'orca-local-ssh-browser'
+const AUTHORITY_CONNECTION_IDENTITY_TAG = 'dolphin-local-ssh-browser'
 const AUTHORITY_CONNECTION_IDENTITY_VERSION = 1
 
 type PreparedLocalSshPartition = {
@@ -42,14 +42,14 @@ const partitionBySession = new WeakMap<Session, string>()
 
 /**
  * Connection identity of the app's own SSH provider. Deliberately free of any
- * per-boot value: the same Orca profile reaching the same SSH target must keep
+ * per-boot value: the same Dolphin profile reaching the same SSH target must keep
  * reusing one partition, or cookies die on every restart.
  */
-export function localSshBrowserAuthorityConnectionIdentity(orcaProfileId: string): string {
+export function localSshBrowserAuthorityConnectionIdentity(dolphinProfileId: string): string {
   return JSON.stringify([
     AUTHORITY_CONNECTION_IDENTITY_TAG,
     AUTHORITY_CONNECTION_IDENTITY_VERSION,
-    orcaProfileId
+    dolphinProfileId
   ])
 }
 
@@ -104,8 +104,8 @@ async function prepareFresh(input: {
   browserProfileId: string
   skipProbe?: boolean
 }): Promise<PreparedLocalSshPartition> {
-  const orcaProfileId = activeBrowserRoutePartitionOrcaProfileId()
-  if (!orcaProfileId) {
+  const dolphinProfileId = activeBrowserRoutePartitionDolphinProfileId()
+  if (!dolphinProfileId) {
     throw new Error('browser_local_route_profile_unavailable')
   }
   browserSessionRegistry.requireRouteBrowserProfile(input.browserProfileId)
@@ -123,9 +123,9 @@ async function prepareFresh(input: {
     }
   }
   const derived = deriveBrowserRoutePartition({
-    orcaProfileId,
+    dolphinProfileId,
     browserProfileId: input.browserProfileId,
-    authorityConnectionIdentity: localSshBrowserAuthorityConnectionIdentity(orcaProfileId),
+    authorityConnectionIdentity: localSshBrowserAuthorityConnectionIdentity(dolphinProfileId),
     executionHostIdentity: sshExecutionHostStorageIdentity(input.targetId)
   })
   const bindings = currentBrowserRoutePartitionBindingStore({
@@ -136,7 +136,10 @@ async function prepareFresh(input: {
     const evicted = bindings.set(
       derived.partition,
       derived.bindingFingerprint,
-      deriveLocalSshBrowserRoutePartitionStorageScope({ orcaProfileId, targetId: input.targetId })
+      deriveLocalSshBrowserRoutePartitionStorageScope({
+        dolphinProfileId,
+        targetId: input.targetId
+      })
     )
     if (evicted.length > 0) {
       void releaseEvictedBrowserRoutePartitionStorage(

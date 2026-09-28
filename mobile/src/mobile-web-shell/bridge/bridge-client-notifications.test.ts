@@ -87,7 +87,7 @@ describe('the notify guard before init', () => {
     expect(page.client.notifyNavigate('/h/host-1')).toBe(false)
     expect(page.client.notifyNavigateBack()).toBe(false)
     expect(page.client.notifyExternalLink('https://example.com')).toBe(false)
-    expect(page.client.notifyStorageWrite('orca:last-visited-worktree', 'value')).toBe(false)
+    expect(page.client.notifyStorageWrite('dolphin:last-visited-worktree', 'value')).toBe(false)
     expect(page.sent).toHaveLength(beforeNotifies)
   })
 
@@ -170,12 +170,12 @@ describe('externalLink', () => {
 
   it('posts an allowed URL under its own grant', () => {
     const page = granted()
-    expect(page.client.notifyExternalLink('https://github.com/stablyai/orca')).toBe(true)
+    expect(page.client.notifyExternalLink('https://github.com/GussCloud/dolphin')).toBe(true)
     expect(page.frames().at(-1)).toEqual({
       v: BRIDGE_PROTOCOL_VERSION,
       type: 'notify',
       name: BRIDGE_EXTERNAL_LINK_GRANT,
-      url: 'https://github.com/stablyai/orca'
+      url: 'https://github.com/GussCloud/dolphin'
     })
   })
 

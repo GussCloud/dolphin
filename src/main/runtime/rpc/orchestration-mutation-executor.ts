@@ -3,8 +3,8 @@ import {
   isDurableMutation,
   isTerminalPromptMutation
 } from '../../../shared/orchestration-rpc-contract'
-import type { OrcaRuntimeService } from '../orca-runtime'
-import type { OrcaSessionId } from '../../../shared/orca-session-address'
+import type { DolphinRuntimeService } from '../dolphin-runtime'
+import type { DolphinSessionId } from '../../../shared/dolphin-session-address'
 import { OrchestrationError } from '../orchestration/orchestration-error'
 import type { RpcRequest } from './core'
 import {
@@ -48,15 +48,15 @@ type InFlightMutation = {
 export class OrchestrationMutationExecutor {
   private readonly inFlight = new Map<string, InFlightMutation>()
 
-  constructor(private readonly runtime: OrcaRuntimeService) {}
+  constructor(private readonly runtime: DolphinRuntimeService) {}
 
   async run(
     request: RpcRequest,
     params: unknown,
     invoke: (mutation?: DurableMutationInvocation) => unknown,
     callerFingerprintOverride?: string,
-    /** The resolved session's Orca session id; it joins the payload so another caller cannot replay it. */
-    callerOrcaSessionId?: OrcaSessionId
+    /** The resolved session's Dolphin session id; it joins the payload so another caller cannot replay it. */
+    callerDolphinSessionId?: DolphinSessionId
   ): Promise<unknown> {
     const requestId = request.orchestrationRequestId
     if (!requestId || !isDurableMutation(request.method, params)) {
@@ -64,7 +64,7 @@ export class OrchestrationMutationExecutor {
     }
     const callerFingerprint =
       callerFingerprintOverride ?? this.getLocalAuthenticatedCallerFingerprint()
-    const stableParams = replayStableCallerParams(this.runtime, params, callerOrcaSessionId)
+    const stableParams = replayStableCallerParams(this.runtime, params, callerDolphinSessionId)
     const basePayloadHash = hashCanonical({ method: request.method, params: stableParams })
     const key = `${callerFingerprint}:${requestId}`
     const db = this.runtime.getOrchestrationDb()
@@ -207,7 +207,7 @@ export class OrchestrationMutationExecutor {
             ? {
                 requestId,
                 dispatchId: recovery.dispatchId,
-                recoveryCommand: `orca orchestration worker-show --dispatch ${recovery.dispatchId} --json`
+                recoveryCommand: `dolphin orchestration worker-show --dispatch ${recovery.dispatchId} --json`
               }
             : { requestId }
         )
@@ -271,10 +271,10 @@ export class OrchestrationMutationExecutor {
   }
 }
 
-const executorsByRuntime = new WeakMap<OrcaRuntimeService, OrchestrationMutationExecutor>()
+const executorsByRuntime = new WeakMap<DolphinRuntimeService, OrchestrationMutationExecutor>()
 
 export function getOrchestrationMutationExecutor(
-  runtime: OrcaRuntimeService
+  runtime: DolphinRuntimeService
 ): OrchestrationMutationExecutor {
   const existing = executorsByRuntime.get(runtime)
   if (existing) {

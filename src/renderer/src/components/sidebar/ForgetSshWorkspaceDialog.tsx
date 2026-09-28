@@ -98,7 +98,7 @@ export function ForgetSshWorkspaceDialog(): React.JSX.Element | null {
     }
   }
 
-  // Remove Orca's records only — never touches remote files, worktrees, or branches.
+  // Remove Dolphin's records only — never touches remote files, worktrees, or branches.
   const handleForget = async (): Promise<void> => {
     setBusy('forget')
     try {

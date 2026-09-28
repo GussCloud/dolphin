@@ -86,13 +86,13 @@ describe('runtime RPC startup failure reporting', () => {
     ['ENAMETOOLONG', 'invalid_path'],
     ['unexpected', 'unknown']
   ] as const)('classifies %s without exposing the raw error', (code, expected) => {
-    const error = Object.assign(new Error('/Users/private/orca-runtime.json'), { code })
+    const error = Object.assign(new Error('/Users/private/dolphin-runtime.json'), { code })
 
     expect(classifyRuntimeRpcStartFailure(error)).toBe(expected)
   })
 
   it('classifies a code carried on a wrapped cause', () => {
-    const error = new Error('failed to publish orca-runtime.json', {
+    const error = new Error('failed to publish dolphin-runtime.json', {
       cause: Object.assign(new Error('read-only volume'), { code: 'EROFS' })
     })
 
@@ -100,7 +100,7 @@ describe('runtime RPC startup failure reporting', () => {
   })
 
   it('walks past an unmapped wrapper code to the mapped cause', () => {
-    const error = Object.assign(new Error('failed to publish orca-runtime.json'), {
+    const error = Object.assign(new Error('failed to publish dolphin-runtime.json'), {
       code: 'ERR_PUBLISH_FAILED',
       cause: Object.assign(new Error('permission denied'), { code: 'EACCES' })
     })
@@ -117,7 +117,9 @@ describe('runtime RPC startup failure reporting', () => {
 
   it('records a privacy-safe telemetry event', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const error = Object.assign(new Error('/Users/private/orca-runtime.json'), { code: 'EACCES' })
+    const error = Object.assign(new Error('/Users/private/dolphin-runtime.json'), {
+      code: 'EACCES'
+    })
 
     recordRuntimeRpcStartFailure(error)
 
@@ -156,7 +158,7 @@ describe('runtime RPC startup failure reporting', () => {
         title: 'Dolphin CLI unavailable',
         message: "Dolphin couldn't start its local command transport.",
         detail: expect.stringMatching(
-          /orca status.*orca terminal.*orchestration.*Cause: metadata write failed/s
+          /dolphin status.*dolphin terminal.*orchestration.*Cause: metadata write failed/s
         )
       })
     )

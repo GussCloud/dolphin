@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      ORCA_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     env:
-      ORCA_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -94,7 +94,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     env:
-      ORCA_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      ORCA_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
     steps:
       - uses: actions/checkout@v6
         with:

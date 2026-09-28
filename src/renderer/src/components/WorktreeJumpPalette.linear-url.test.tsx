@@ -133,7 +133,7 @@ vi.mock('@/components/ui/command', async () => {
   }
 })
 
-const LINEAR_URL = 'https://linear.app/stably/issue/STA-4084/restore-osc-133-shell-integration'
+const LINEAR_URL = 'https://linear.app/gusscloud/issue/STA-4084/restore-osc-133-shell-integration'
 const initialAppState = useAppStore.getInitialState()
 let testRoot: Root
 let testContainer: HTMLDivElement
@@ -144,13 +144,13 @@ function makeLinearIssue(patch: Partial<LinearIssue> = {}): LinearIssue {
   return {
     id: 'issue-sta-4084',
     workspaceId: 'linear-workspace-1',
-    workspaceName: 'Stably',
+    workspaceName: 'GussCloud',
     identifier: 'STA-4084',
     title: 'Restore OSC 133 shell integration',
     branchName: 'sta-4084-restore-osc-133-shell-integration',
     url: LINEAR_URL,
     state: { name: 'Todo', type: 'unstarted', color: '#999999' },
-    team: { id: 'team-sta', name: 'Stably', key: 'STA' },
+    team: { id: 'team-sta', name: 'GussCloud', key: 'STA' },
     labels: [],
     labelIds: [],
     estimate: null,
@@ -199,8 +199,8 @@ async function renderPalette(overrides: Partial<AppState>): Promise<void> {
           displayName: 'Linear User',
           email: null,
           organizationId: 'linear-organization-1',
-          organizationName: 'Stably',
-          organizationUrlKey: 'stably'
+          organizationName: 'GussCloud',
+          organizationUrlKey: 'gusscloud'
         }
       ],
       selectedWorkspaceId: 'all'
@@ -263,8 +263,8 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
             displayName: 'Linear User',
             email: null,
             organizationId: 'linear-organization-1',
-            organizationName: 'Stably',
-            organizationUrlKey: 'stably'
+            organizationName: 'GussCloud',
+            organizationUrlKey: 'gusscloud'
           }
         ],
         selectedWorkspaceId: 'all'
@@ -377,7 +377,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
         providerIdentity: {
           provider: 'linear',
           workspaceId: 'linear-workspace-1',
-          workspaceName: 'Stably',
+          workspaceName: 'GussCloud',
           teamId: 'team-sta',
           teamKey: 'STA'
         }
@@ -453,13 +453,13 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
     const localSibling = {
       ...makeRepo(),
       id: 'local-sibling',
-      upstream: { owner: 'stablyai', repo: 'orca' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     }
     const runtimeOwnedRepo = {
       ...makeRepo(),
       id: 'runtime-owned',
       connectionId: 'runtime-ssh-workspace-1',
-      upstream: { owner: 'stablyai', repo: 'orca' }
+      upstream: { owner: 'gusscloud', repo: 'dolphin' }
     }
     const fetchLinearIssue = vi.fn(async () => makeLinearIssue())
     await renderPalette({
@@ -475,7 +475,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
       'linear-workspace-1',
       expect.objectContaining({
         sourceContext: expect.objectContaining({
-          projectId: 'github:stablyai/orca',
+          projectId: 'github:gusscloud/dolphin',
           repoId: 'local-sibling'
         })
       })
@@ -539,7 +539,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
     await act(async () => setCommandQuery?.(LINEAR_URL))
     await flushEffects()
     await act(async () =>
-      setCommandQuery?.('https://linear.app/stably/issue/STA-4099/current-second-issue')
+      setCommandQuery?.('https://linear.app/gusscloud/issue/STA-4099/current-second-issue')
     )
     await flushEffects()
 
@@ -554,7 +554,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
           id: 'issue-sta-4099',
           identifier: 'STA-4099',
           title: 'Current second issue',
-          url: 'https://linear.app/stably/issue/STA-4099/current-second-issue'
+          url: 'https://linear.app/gusscloud/issue/STA-4099/current-second-issue'
         })
       )
       await secondLookup.promise
@@ -576,7 +576,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
     })
 
     vi.useFakeTimers()
-    await act(async () => setCommandQuery?.('https://linear.app/stably/issue/STA-4084/first'))
+    await act(async () => setCommandQuery?.('https://linear.app/gusscloud/issue/STA-4084/first'))
     await flushEffects()
     await act(async () => {
       await vi.advanceTimersByTimeAsync(200)
@@ -584,7 +584,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
     expect(testContainer.textContent).toContain('Loading Linear issue…')
 
     await act(async () => {
-      flushSync(() => setCommandQuery?.('https://linear.app/stably/issue/STA-4099/second'))
+      flushSync(() => setCommandQuery?.('https://linear.app/gusscloud/issue/STA-4099/second'))
       const currentPendingRow = testContainer.querySelector<HTMLElement>(
         '[data-cmd-j-linear-issue-preview="true"]'
       )
@@ -611,7 +611,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
           id: 'issue-sta-4099',
           identifier: 'STA-4099',
           title: 'Current second issue',
-          url: 'https://linear.app/stably/issue/STA-4099/current-second-issue'
+          url: 'https://linear.app/gusscloud/issue/STA-4099/current-second-issue'
         })
       )
       await secondLookup.promise
@@ -626,7 +626,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
   it('selects an existing Linear-linked worktree and keeps create underneath', async () => {
     const linked = makeWorktree('wt-linked', 'Linked Linear workspace', {
       linkedLinearIssue: 'STA-4084',
-      linkedLinearIssueOrganizationUrlKey: 'stably'
+      linkedLinearIssueOrganizationUrlKey: 'gusscloud'
     })
     const other = makeWorktree('wt-other', 'Unrelated workspace')
     await renderPalette({
@@ -646,7 +646,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
   })
 
   it('resolves a pasted GitHub issue URL and opens create with the linked issue', async () => {
-    const githubIssueUrl = 'https://github.com/stablyai/orca/issues/14198'
+    const githubIssueUrl = 'https://github.com/gusscloud/dolphin/issues/14198'
     const githubIssue = {
       id: 'issue-14198',
       type: 'issue',
@@ -673,7 +673,7 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
     expect(preview?.dataset.cmdJTaskUrlProvider).toBe('github')
     expect(preview?.dataset.cmdJTaskUrlState).toBe('resolved')
     expect(preview?.getAttribute('aria-label')).toBe(
-      'Create worktree from GitHub issue stablyai/orca#14198: Agent terminals disappearing randomly'
+      'Create worktree from GitHub issue gusscloud/dolphin#14198: Agent terminals disappearing randomly'
     )
     expect(preview?.textContent).toContain('#14198')
     expect(preview?.textContent).toContain('Agent terminals disappearing randomly')
@@ -709,13 +709,13 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
 
   it('previews a pasted GitHub pull URL', async () => {
     await renderPalette({})
-    await act(async () => setCommandQuery?.('https://github.com/stablyai/orca/pull/12789'))
+    await act(async () => setCommandQuery?.('https://github.com/gusscloud/dolphin/pull/12789'))
     await flushEffects()
 
     const preview = testContainer.querySelector<HTMLElement>('[data-cmd-j-task-url-preview="true"]')
     expect(preview?.dataset.cmdJTaskUrlProvider).toBe('github')
     expect(preview?.getAttribute('aria-label')).toBe(
-      'Create worktree from GitHub pull request stablyai/orca#12789'
+      'Create worktree from GitHub pull request gusscloud/dolphin#12789'
     )
     expect(preview?.textContent).toContain('#12789')
   })
@@ -724,11 +724,11 @@ describe('WorktreeJumpPalette Linear URL intent', () => {
     const linked = makeWorktree('wt-linked', 'Linked GitHub workspace', { linkedIssue: 14198 })
     const other = makeWorktree('wt-other', 'Unrelated workspace', { linkedIssue: 7 })
     await renderPalette({
-      repos: [{ ...makeRepo(), displayName: 'stablyai/orca' }],
+      repos: [{ ...makeRepo(), displayName: 'gusscloud/dolphin' }],
       worktreesByRepo: { 'repo-1': [other, linked] }
     })
 
-    await act(async () => setCommandQuery?.('https://github.com/stablyai/orca/issues/14198'))
+    await act(async () => setCommandQuery?.('https://github.com/gusscloud/dolphin/issues/14198'))
     await flushEffects()
 
     expect(getRenderedRowIds().filter(Boolean)).toEqual([

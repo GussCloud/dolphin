@@ -3,21 +3,16 @@
   "family": "aiVault.resume-launch",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "02a55944347346065453e179e071e64d9ae861dc",
-  "lockfileSha256": "9317f3a98ab047f9f96fe26fd8531b8a632ac5954064b322f41a904148cbf6bb",
-  "recorderSha256": "0317fe2aebe4743ce5e7ae194531aa91b4fe0a84df457640851fe6dfdb9362af",
-  "adapterSha256": "2f43211e4084c0493bd02ec98868acf53a4c748f89a70cd9657c9c3ee87b12fb",
-  "scenarioSha256": "f0ac1c996e5b1b4043e0a081978476c6c2dd8a5d517d5752857721205a588fb0",
-  "platform": "darwin",
+  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
+  "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
+  "adapterSha256": "a92ede0a09b116a913a395cada4359e83a5d33d0531efe5cd55efce087084b99",
+  "scenarioSha256": "e9c9ff20e44095a340fd09a4ac9ff95560ba6f0517fd401d9e45127487ac5e4d",
+  "platform": "linux",
   "scenarioVersion": 1,
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "0bce25f5646d": {
-      "name": "session.tabs.createTerminal#1",
-      "ordinal": 2,
-      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"session.tabs.createTerminal\",\"params\":{\"worktree\":\"id:workspace-1\",\"env\":{\"ORCA_RESUME\":\"1\"},\"envToDelete\":[\"CODEX_HOME\"],\"launchAgent\":\"codex\",\"clientMutationId\":\"resume-mutation-1\",\"activate\":false,\"select\":true,\"navigation\":\"caller\"}}"
-    },
     "400d946a183d": {
       "failure": {
         "$rpc": "null"
@@ -43,7 +38,7 @@
       "ordinal": 4,
       "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"terminal.send\",\"params\":{\"terminal\":\"terminal-9\",\"text\":\"codex resume rollout\",\"enter\":true}}"
     },
-    "a67829619e64": {
+    "92ba8e926411": {
       "name": "session.tabs.createTerminal#1",
       "ordinal": 1,
       "args": [
@@ -57,7 +52,7 @@
             "activate": false,
             "clientMutationId": "resume-mutation-1",
             "env": {
-              "ORCA_RESUME": "1"
+              "DOLPHIN_RESUME": "1"
             },
             "envToDelete": ["CODEX_HOME"],
             "launchAgent": "codex",
@@ -90,6 +85,11 @@
           }
         }
       }
+    },
+    "c7158448bbd4": {
+      "name": "session.tabs.createTerminal#1",
+      "ordinal": 2,
+      "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"session.tabs.createTerminal\",\"params\":{\"worktree\":\"id:workspace-1\",\"env\":{\"DOLPHIN_RESUME\":\"1\"},\"envToDelete\":[\"CODEX_HOME\"],\"launchAgent\":\"codex\",\"clientMutationId\":\"resume-mutation-1\",\"activate\":false,\"select\":true,\"navigation\":\"caller\"}}"
     },
     "cceac9bcb36d": {
       "name": "terminal.send#1",
@@ -136,8 +136,8 @@
       {
         "id": "resumed",
         "observation": {
-          "sender": ["a67829619e64", "cceac9bcb36d"],
-          "payloads": ["0bce25f5646d", "7d9e7036f3d0"],
+          "sender": ["92ba8e926411", "cceac9bcb36d"],
+          "payloads": ["c7158448bbd4", "7d9e7036f3d0"],
           "settlements": {
             "full": "6e79da536ca9"
           },
