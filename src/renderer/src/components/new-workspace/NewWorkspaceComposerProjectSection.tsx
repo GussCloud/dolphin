@@ -11,6 +11,7 @@ import type {
   NewWorkspaceComposerCardProps
 } from './new-workspace-composer-card-props'
 import { EMPTY_PROJECT_OPTIONS } from './new-workspace-composer-card-props'
+import { MultiProjectWorktreesField } from './MultiProjectWorktreesField'
 
 type NewWorkspaceComposerProjectSectionProps = Pick<
   NewWorkspaceComposerCardProps,
@@ -140,6 +141,7 @@ export function NewWorkspaceComposerProjectSection({
           ) : null}
         </div>
       </div>
+      <MultiProjectWorktreesField selectedProjectId={selectedProjectId} />
       {shouldShowRunTargetPicker ? (
         <div className="space-y-1 pt-3">
           <label className="block min-w-0 truncate text-xs font-medium text-muted-foreground">

@@ -30,6 +30,8 @@ export const worktreesApi = {
 
   adoptProvisionedRoot: (args) => ipcRenderer.invoke('worktrees:adoptProvisionedRoot', args),
 
+  createMultiProject: (args) => ipcRenderer.invoke('worktrees:createMultiProject', args),
+
   onCreateProgress: (
     callback: (data: { creationId?: string; phase: 'fetching' | 'creating' }) => void
   ): (() => void) => {

@@ -6,6 +6,7 @@ import type {
 } from '../runtime/dolphin-runtime'
 import { createSenderScopedRequestCancellations } from './sender-scoped-request-cancellation'
 import { registerWorktreeCreateHandlers } from './worktrees/create/register-worktree-create-handlers'
+import { registerMultiProjectWorkspaceHandler } from './worktrees/create/register-multi-project-workspace-handler'
 import { registerWorktreePrefetchHandler } from './worktrees/create/register-worktree-prefetch-handler'
 import { registerReviewBaseHandlers } from './worktrees/create/register-review-base-handlers'
 import { registerWorktreeHookCheckHandler } from './hooks/register-worktree-hook-check-handler'
@@ -41,6 +42,7 @@ const WORKTREE_HANDLER_CHANNELS = [
   'worktrees:cancelListDetected',
   'worktrees:create',
   'worktrees:adoptProvisionedRoot',
+  'worktrees:createMultiProject',
   'worktrees:prefetchCreateBase',
   'worktrees:resolvePrBase',
   'worktrees:resolveMrBase',
@@ -91,6 +93,7 @@ export function registerWorktreeHandlers(
   registerDetectedWorktreeHandlers(context)
   registerWorktreePrefetchHandler(context)
   registerWorktreeCreateHandlers(context)
+  registerMultiProjectWorkspaceHandler(context)
   registerReviewBaseHandlers(context)
   registerWorktreeRemovalHandlers(context)
   registerWorktreeForgetHandlers(context)

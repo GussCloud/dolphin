@@ -3,6 +3,7 @@ import { detectLanguage } from '@/lib/language-detect'
 import { getDiffCommentSource } from '@/lib/diff-comment-compat'
 import { joinPath } from '@/lib/path'
 import { useAppStore } from '@/store'
+import { useRevealScopedWorktree } from '../listing/source-control-scope'
 import type {
   GitBranchChangeEntry,
   GitBranchCompareSummary
@@ -43,6 +44,7 @@ export function useSourceControlNoteOpening({
   const setMarkdownViewMode = useAppStore((s) => s.setMarkdownViewMode)
   const setPendingEditorReveal = useAppStore((s) => s.setPendingEditorReveal)
   const setScrollToDiffCommentId = useAppStore((s) => s.setScrollToDiffCommentId)
+  const revealScopedWorktree = useRevealScopedWorktree()
   const pendingCommentEditorRevealFrameIdsRef = useRef<number[]>([])
   const setSourceControlRoot = useCallback(
     (node: HTMLDivElement | null) => {
@@ -61,6 +63,7 @@ export function useSourceControlNoteOpening({
       if (!activeWorktreeId || !worktreePath) {
         return
       }
+      revealScopedWorktree()
       const filePath = comment.filePath
       const commentId = comment.id
       // Clear any dangling prior scroll request; only the diff branches below re-stamp it.
@@ -135,6 +138,7 @@ export function useSourceControlNoteOpening({
       handleOpenDiff,
       openCommittedDiff,
       openFile,
+      revealScopedWorktree,
       setEditorViewMode,
       setScrollToDiffCommentId,
       setMarkdownViewMode,

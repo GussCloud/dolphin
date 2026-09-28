@@ -2,6 +2,10 @@ import type { GhAccountBinding } from '../../../../shared/github/account-binding
 import type { SshRepoReadoption } from '../../../../shared/ssh-types'
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
 import type {
+  MultiProjectWorkspaceCreateArgs,
+  MultiProjectWorkspaceCreateResult
+} from '../../../../shared/multi-project-workspace-types'
+import type {
   NestedRepoScanResult,
   ProjectGroup,
   ProjectGroupImportResult
@@ -209,6 +213,10 @@ export type RepoSlice = {
     },
     options?: FolderWorkspacePathStatusRouteOptions
   ) => Promise<FolderWorkspace | null>
+  /** Creates a folder workspace plus one worktree per selected project, all or nothing. */
+  createMultiProjectWorkspace: (
+    args: MultiProjectWorkspaceCreateArgs
+  ) => Promise<MultiProjectWorkspaceCreateResult>
   getFolderWorkspacePathStatusCacheKey: (
     request: FolderWorkspacePathStatusRequest,
     options?: FolderWorkspacePathStatusRouteOptions

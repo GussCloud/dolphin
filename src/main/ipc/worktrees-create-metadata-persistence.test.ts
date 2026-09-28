@@ -25,6 +25,7 @@ const WORKTREE_HANDLER_CHANNELS = [
   'worktrees:cancelListDetected',
   'worktrees:create',
   'worktrees:adoptProvisionedRoot',
+  'worktrees:createMultiProject',
   'worktrees:prefetchCreateBase',
   'worktrees:resolvePrBase',
   'worktrees:resolveMrBase',
