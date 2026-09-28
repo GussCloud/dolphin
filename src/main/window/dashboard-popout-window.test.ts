@@ -205,7 +205,7 @@ describe('createOrFocusDashboardPopout', () => {
     // Native frame: neither a custom titleBarStyle nor frame:false is set.
     expect(opts.titleBarStyle).toBeUndefined()
     expect(opts.frame).toBeUndefined()
-    expect(opts.backgroundColor).toBe('#0a0a0a') // dark theme mock
+    expect(opts.backgroundColor).toBe('#0b1220') // dark theme mock
     expect(opts.webPreferences?.sandbox).toBe(true)
     expect(opts.webPreferences?.partition).toBe('dolphin-dashboard-popout')
     expect(opts.webPreferences?.webviewTag).toBe(false)
