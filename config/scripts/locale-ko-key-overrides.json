@@ -585,7 +585,7 @@
     "ko": "워크트리"
   },
   "auto.components.automations.AutomationMissedRunGraceField.3d70c185c8": {
-    "ko": "Dolphin 또는 실행 호스트를 예약된 시간에 사용할 수 없었다면, 이 기간 안에 다시 사용 가능해졌을 때 Dolphin가 놓친 실행을 한 번 실행합니다. 더 오래된 놓친 실행은 건너뜁니다."
+    "ko": "Dolphin 또는 실행 호스트를 예약된 시간에 사용할 수 없었다면, 이 기간 안에 다시 사용 가능해졌을 때 Dolphin이 놓친 실행을 한 번 실행합니다. 더 오래된 놓친 실행은 건너뜁니다."
   },
   "auto.components.automations.AutomationMissedRunGraceField.529dc6c0b7": {
     "ko": "유예 없음"
@@ -1020,7 +1020,7 @@
     "ko": "클릭 전송됨"
   },
   "auto.components.feature.wall.ConnectIntegrationsList.33b650af52": {
-    "ko": "팀이 작업을 추적하는 서비스를 연결하세요. Dolphin는 이슈 제목, 링크, 컨텍스트가 이미 첨부된 워크스페이스를 시작합니다."
+    "ko": "팀이 작업을 추적하는 서비스를 연결하세요. Dolphin은 이슈 제목, 링크, 컨텍스트가 이미 첨부된 워크스페이스를 시작합니다."
   },
   "auto.components.feature.wall.ConnectIntegrationsList.3dddb2d565": {
     "ko": "작업용으로 연결됨"
@@ -1038,13 +1038,13 @@
     "ko": ", 그리고 "
   },
   "auto.components.feature.wall.ConnectIntegrationsList.review_step_description": {
-    "ko": "Dolphin가 PR 또는 MR 상태, 체크, 리뷰를 표시할 수 있도록 리뷰 공급자를 연결하세요."
+    "ko": "Dolphin이 PR 또는 MR 상태, 체크, 리뷰를 표시할 수 있도록 리뷰 공급자를 연결하세요."
   },
   "auto.components.feature.wall.ConnectIntegrationsList.review_step_title": {
     "ko": "agents가 작업하는 동안 PR 상태 보기"
   },
   "auto.components.feature.wall.ConnectIntegrationsList.task_step_title": {
-    "ko": "Dolphin를 떠나지 않고 작업에서 agents 시작"
+    "ko": "Dolphin을 떠나지 않고 작업에서 agents 시작"
   },
   "auto.components.feature.wall.EditorAnimatedVisual.22ae7b4d9d": {
     "ko": "팀을 위한 간단한 메모 - 출시하기 전에 남은 항목을 정리합니다."
@@ -1503,7 +1503,7 @@
     "ko": "로그인 중"
   },
   "auto.components.onboarding.OnboardingFlow.322fc50a18": {
-    "ko": "Dolphin는 모든 CLI agent와 함께 작동합니다. 가장 자주 사용할 agent를 선택하세요. 언제든지 전환할 수 있습니다."
+    "ko": "Dolphin은 모든 CLI agent와 함께 작동합니다. 가장 자주 사용할 agent를 선택하세요. 언제든지 전환할 수 있습니다."
   },
   "auto.components.onboarding.OnboardingFlow.a5e5da02f7": {
     "ko": "연동"
@@ -2103,7 +2103,7 @@
     "ko": "Agent 권한"
   },
   "auto.components.settings.AgentsPane.agentPermissionsDescription": {
-    "ko": "Dolphin가 agents를 실행할 때 권한 프롬프트를 줄일지, 수동 확인을 유지할지 선택합니다."
+    "ko": "Dolphin이 agents를 실행할 때 권한 프롬프트를 줄일지, 수동 확인을 유지할지 선택합니다."
   },
   "auto.components.settings.AgentsPane.agentPermissionsInfo": {
     "ko": "Agent 권한 정보"
@@ -2133,7 +2133,7 @@
     "ko": "{assistantMessage}"
   },
   "auto.components.settings.AutoRenameBranchFromWorkSetting.d9b65054ef": {
-    "ko": ") 작업을 요약하는 짧은 이름으로 변경됩니다. Dolphin가 직접 이름 붙인 브랜치만 이름을 바꾸며, 푸시된 후에는 이름을 바꾸지 않습니다."
+    "ko": ") 작업을 요약하는 짧은 이름으로 변경됩니다. Dolphin이 직접 이름 붙인 브랜치만 이름을 바꾸며, 푸시된 후에는 이름을 바꾸지 않습니다."
   },
   "auto.components.settings.AutoRenameBranchPromptEditor.ebb942a2ec": {
     "ko": "fix-login-flow"
@@ -2214,7 +2214,7 @@
     "ko": "터미널과 개발 도구가 로컬 네트워크의 서비스에 연결할 수 있도록 허용합니다. macOS는 이 권한의 현재 상태를 Dolphin에 보고하지 않습니다."
   },
   "auto.components.settings.ExperimentalPane.agentHibernation.idleMinutesDescription": {
-    "ko": "완료된 백그라운드 agent를 Dolphin가 최대 절전 모드로 전환하기 전에 기다릴 유휴 시간(분)입니다."
+    "ko": "완료된 백그라운드 agent를 Dolphin이 최대 절전 모드로 전환하기 전에 기다릴 유휴 시간(분)입니다."
   },
   "auto.components.settings.ExperimentalPane.agentHibernation.idleMinutesLabel": {
     "ko": "최대 절전까지"
@@ -2271,10 +2271,10 @@
     "ko": "Git 사용자 이름"
   },
   "auto.components.settings.GitPane.36e3de3619": {
-    "ko": "오래된 기록과 비교하지 않도록 합니다. Dolphin는 해당 브랜치에 commits 되지 않은 변경 사항이나 로컬 전용 commits이 있으면 업데이트를 건너뜁니다."
+    "ko": "오래된 기록과 비교하지 않도록 합니다. Dolphin은 해당 브랜치에 commits 되지 않은 변경 사항이나 로컬 전용 commits이 있으면 업데이트를 건너뜁니다."
   },
   "auto.components.settings.GitPane.976afc6b3e": {
-    "ko": "워크스페이스를 만들면 Dolphin가 원격 기준 브랜치를 새로고침하고, 일치하는 로컬 브랜치를 안전하게 fast-forward합니다. 예:"
+    "ko": "워크스페이스를 만들면 Dolphin이 원격 기준 브랜치를 새로고침하고, 일치하는 로컬 브랜치를 안전하게 fast-forward합니다. 예:"
   },
   "auto.components.settings.GitPane.b9c011fbc2": {
     "ko": "속도 제한"
@@ -2298,16 +2298,16 @@
     "ko": "GitHub CLI가 설치되어 있지만 인증되지 않았습니다. terminal에서 다음 명령을 실행하세요."
   },
   "auto.components.settings.IntegrationsPane.1683acbac4": {
-    "ko": "Dolphin가 PR, MR, 체크, 리뷰 상태에 사용할 소스 호스트를 연결합니다."
+    "ko": "Dolphin이 PR, MR, 체크, 리뷰 상태에 사용할 소스 호스트를 연결합니다."
   },
   "auto.components.settings.IntegrationsPane.1a62c295c6": {
-    "ko": "Gitea 자격 증명이 구성되었지만 인증할 수 없습니다. 토큰, API 기본 URL, repos 권한을 확인한 후 환경 변수가 변경된 경우 Dolphin를 다시 시작하세요."
+    "ko": "Gitea 자격 증명이 구성되었지만 인증할 수 없습니다. 토큰, API 기본 URL, repos 권한을 확인한 후 환경 변수가 변경된 경우 Dolphin을 다시 시작하세요."
   },
   "auto.components.settings.IntegrationsPane.2c0330ec3e": {
     "ko": "비공개 repos의 경우, 그리고"
   },
   "auto.components.settings.IntegrationsPane.3ba07f933b": {
-    "ko": "Dolphin가 작업을 탐색하고 연결된 컨텍스트로 워크스페이스를 시작하는 데 사용할 이슈 트래커를 연결합니다."
+    "ko": "Dolphin이 작업을 탐색하고 연결된 컨텍스트로 워크스페이스를 시작하는 데 사용할 이슈 트래커를 연결합니다."
   },
   "auto.components.settings.IntegrationsPane.67a9f26a80": {
     "ko": ". 설정"
@@ -2343,7 +2343,7 @@
     "ko": "가용성"
   },
   "auto.components.settings.MobilePane.35100bca5d": {
-    "ko": "휴대폰에서 terminals을 사용하는 동안 Dolphin는 휴대폰 화면에 맞게 terminals을 축소합니다. 앱을 닫거나 다른 곳으로 전환하면 terminals이 휴대폰 크기로 유지되는지(대화형 CLI 도구가 리플로우되지 않음) 또는 데스크탑으로 다시 크기가 조정되는지 여부가 제어됩니다. 배너에서 '이 terminals 복원' 또는 '모든 terminals 복원'을 사용해 언제든지 수동으로 크기를 조정할 수 있습니다."
+    "ko": "휴대폰에서 terminals을 사용하는 동안 Dolphin은 휴대폰 화면에 맞게 terminals을 축소합니다. 앱을 닫거나 다른 곳으로 전환하면 terminals이 휴대폰 크기로 유지되는지(대화형 CLI 도구가 리플로우되지 않음) 또는 데스크탑으로 다시 크기가 조정되는지 여부가 제어됩니다. 배너에서 '이 terminals 복원' 또는 '모든 terminals 복원'을 사용해 언제든지 수동으로 크기를 조정할 수 있습니다."
   },
   "auto.components.settings.MobileSettingsPane.b0088412a1": {
     "ko": "또는 다음에서 Android APK를 받으세요"
@@ -2538,7 +2538,7 @@
     "ko": "호스트 기능 확인 중"
   },
   "auto.components.settings.RepositoryPane.hostSetupMissingCapability": {
-    "ko": "프로젝트를 설정하려면 이 호스트의 Dolphin를 업데이트하세요."
+    "ko": "프로젝트를 설정하려면 이 호스트의 Dolphin을 업데이트하세요."
   },
   "auto.components.settings.RepositoryPane.hostSetupStateError": {
     "ko": "오류"
@@ -2658,7 +2658,7 @@
     "ko": "명령 또는 키 검색"
   },
   "auto.components.settings.ShortcutTerminalPolicyControl.0f55c6f15c": {
-    "ko": "단축키가 겹칠 때 Dolphin와 포커스된 terminal 중 어느 쪽이 우선할지 선택합니다."
+    "ko": "단축키가 겹칠 때 Dolphin과 포커스된 terminal 중 어느 쪽이 우선할지 선택합니다."
   },
   "auto.components.settings.ShortcutsPane.4b7ae34062": {
     "ko": "직접."
@@ -2703,7 +2703,7 @@
     "ko": "이 SSH 대상의 원격 릴레이를 강제로 중지합니다. 이 대상의 활성 원격 terminals과 포트 포워딩이 종료됩니다."
   },
   "auto.components.settings.SshTargetForm.137e88ce8d": {
-    "ko": "Dolphin가 이 호스트에서 연결 해제된 뒤에도 원격 터미널은 계속 실행됩니다."
+    "ko": "Dolphin이 이 호스트에서 연결 해제된 뒤에도 원격 터미널은 계속 실행됩니다."
   },
   "auto.components.settings.SshTargetForm.2ee9bcd2e8": {
     "ko": "server, deploy@server:2222, ssh://server"
@@ -2823,7 +2823,7 @@
     "ko": "라이트 모드에서 패널 사이의 분할 구분선을 제어합니다."
   },
   "auto.components.settings.TerminalThemeSections.d56af60e6f": {
-    "ko": "Dolphin가 라이트 모드일 때 사용되는 테마를 선택합니다."
+    "ko": "Dolphin이 라이트 모드일 때 사용되는 테마를 선택합니다."
   },
   "auto.components.settings.TerminalThemeSections.d76f60c9cc": {
     "ko": "라이트 모드에서 별도 테마 사용"
@@ -2961,7 +2961,7 @@
     "ko": "WSL에 `{{value0}}`을(를) 등록하지 못했습니다."
   },
   "auto.components.settings.WslCliRegistration.7ee4e52b99": {
-    "ko": "Dolphin는 명령이 WSL terminals에서 작동하도록 {{value0}}을(를) 등록합니다."
+    "ko": "Dolphin은 명령이 WSL terminals에서 작동하도록 {{value0}}을(를) 등록합니다."
   },
   "auto.components.settings.WslCliRegistration.951536dda5": {
     "ko": "WSL에 `{{value0}}`을(를) 등록했습니다."
@@ -3171,7 +3171,7 @@
     "ko": "이 기기"
   },
   "auto.components.settings.computerUseSummary.checkingDescription": {
-    "ko": "Dolphin가 Computer Use 도우미의 macOS 개인정보 보호 권한을 확인하고 있습니다."
+    "ko": "Dolphin이 Computer Use 도우미의 macOS 개인정보 보호 권한을 확인하고 있습니다."
   },
   "auto.components.settings.computerUseSummary.checkingTitle": {
     "ko": "Computer Use 액세스 확인 중입니다."
@@ -3342,7 +3342,7 @@
     "ko": "전환"
   },
   "auto.components.settings.git.search.0e993bf00f": {
-    "ko": "워크스페이스를 만들면 Dolphin가 원격 기준 브랜치를 새로고침하고, main 또는 master처럼 일치하는 로컬 브랜치를 안전하게 fast-forward합니다. 이렇게 하면 git diff main...HEAD 같은 명령이 오래된 기록과 비교되지 않습니다. 해당 브랜치에 commits 되지 않은 변경 사항이나 로컬 전용 commits이 있으면 Dolphin가 업데이트를 건너뜁니다."
+    "ko": "워크스페이스를 만들면 Dolphin이 원격 기준 브랜치를 새로고침하고, main 또는 master처럼 일치하는 로컬 브랜치를 안전하게 fast-forward합니다. 이렇게 하면 git diff main...HEAD 같은 명령이 오래된 기록과 비교되지 않습니다. 해당 브랜치에 commits 되지 않은 변경 사항이나 로컬 전용 commits이 있으면 Dolphin이 업데이트를 건너뜁니다."
   },
   "auto.components.settings.git.search.1d2fae1fa2": {
     "ko": "Git 사용자 이름"
@@ -3669,7 +3669,7 @@
     "ko": "단축키"
   },
   "auto.components.settings.shortcuts.search.ebd7d81e1d": {
-    "ko": "단축키가 겹칠 때 Dolphin와 포커스된 terminal 중 어느 쪽이 우선할지 선택합니다."
+    "ko": "단축키가 겹칠 때 Dolphin과 포커스된 terminal 중 어느 쪽이 우선할지 선택합니다."
   },
   "auto.components.settings.shortcuts.search.f1adebbe8c": {
     "ko": "셸"
@@ -3786,7 +3786,7 @@
     "ko": "Mac"
   },
   "auto.components.settings.terminal.search.1dee533bd9": {
-    "ko": "Dolphin가 라이트 모드일 때 사용되는 테마를 선택합니다."
+    "ko": "Dolphin이 라이트 모드일 때 사용되는 테마를 선택합니다."
   },
   "auto.components.settings.terminal.search.20ce287cc6": {
     "ko": "두께"
@@ -3990,7 +3990,7 @@
     "ko": "PR 및 빌드 상태"
   },
   "auto.components.settings.token.source.control.integration.cards.19fb419c12": {
-    "ko": "Gitea 자격 증명이 구성되어 있지만 인증할 수 없습니다. 토큰, API 기본 URL, repos 권한을 확인하고, 환경 변수가 변경되었다면 Dolphin를 다시 시작하세요."
+    "ko": "Gitea 자격 증명이 구성되어 있지만 인증할 수 없습니다. 토큰, API 기본 URL, repos 권한을 확인하고, 환경 변수가 변경되었다면 Dolphin을 다시 시작하세요."
   },
   "auto.components.settings.token.source.control.integration.cards.1a9475dace": {
     "ko": "자세히 알아보기"
@@ -3999,7 +3999,7 @@
     "ko": "이 런타임에서는 아직 Bitbucket 상태를 사용할 수 없습니다."
   },
   "auto.components.settings.token.source.control.integration.cards.40f678df73": {
-    "ko": "Azure DevOps 자격 증명이 구성되어 있지만 인증할 수 없습니다. 토큰, API 기본 URL, repos 권한을 확인하고, 환경 변수가 변경되었다면 Dolphin를 다시 시작하세요."
+    "ko": "Azure DevOps 자격 증명이 구성되어 있지만 인증할 수 없습니다. 토큰, API 기본 URL, repos 권한을 확인하고, 환경 변수가 변경되었다면 Dolphin을 다시 시작하세요."
   },
   "auto.components.settings.token.source.control.integration.cards.52f75876be": {
     "ko": "감지된 repos의 PR 및 commit 상태"
@@ -4008,10 +4008,10 @@
     "ko": "감지된 Azure Repos의 PR 및 빌드 상태"
   },
   "auto.components.settings.token.source.control.integration.cards.60708f23da": {
-    "ko": "Dolphin가 원격에서 API URL을 추론할 수 없는 경우에만 사용하세요."
+    "ko": "Dolphin이 원격에서 API URL을 추론할 수 없는 경우에만 사용하세요."
   },
   "auto.components.settings.token.source.control.integration.cards.6154b02093": {
-    "ko": "Bitbucket 자격 증명이 구성되어 있지만 인증할 수 없습니다. 토큰과 repos 권한을 확인하고, 환경 변수가 변경되었다면 Dolphin를 다시 시작하세요."
+    "ko": "Bitbucket 자격 증명이 구성되어 있지만 인증할 수 없습니다. 토큰과 repos 권한을 확인하고, 환경 변수가 변경되었다면 Dolphin을 다시 시작하세요."
   },
   "auto.components.settings.token.source.control.integration.cards.6da9dfa5de": {
     "ko": "비공개 repos의 경우, 그리고"
@@ -4020,7 +4020,7 @@
     "ko": "다시 확인"
   },
   "auto.components.settings.token.source.control.integration.cards.7bd345e3f6": {
-    "ko": "Dolphin가 Git 원격에서 API 기본 URL을 추론할 수 없는 경우에만 사용하세요."
+    "ko": "Dolphin이 Git 원격에서 API 기본 URL을 추론할 수 없는 경우에만 사용하세요."
   },
   "auto.components.settings.token.source.control.integration.cards.a924e8dcd1": {
     "ko": "Bitbucket Cloud API 토큰을 통한 PR 및 빌드 상태입니다."
@@ -4464,7 +4464,7 @@
     "ko": "src/renderer packages/ui"
   },
   "auto.components.star.nag.StarNagToastHost.body": {
-    "ko": "Dolphin가 마음에 드신다면 GitHub 별표가 다른 개발자가 Dolphin를 발견하는 데 도움이 됩니다."
+    "ko": "Dolphin이 마음에 드신다면 GitHub 별표가 다른 개발자가 Dolphin을 발견하는 데 도움이 됩니다."
   },
   "auto.components.star.nag.StarNagToastHost.githubOpened": {
     "ko": "GitHub 열림"
@@ -4851,7 +4851,7 @@
     "ko": "일치하는 GitHub 작업 없음"
   },
   "auto.components.taskPageEmptyState.noProjectSourcesDescription": {
-    "ko": "Dolphin가 어느 호스트/계정에서 작업을 가져올지 알 수 있도록 프로젝트 소스를 하나 이상 선택하세요."
+    "ko": "Dolphin이 어느 호스트/계정에서 작업을 가져올지 알 수 있도록 프로젝트 소스를 하나 이상 선택하세요."
   },
   "auto.components.taskPageEmptyState.noProjectSourcesTitle": {
     "ko": "선택한 프로젝트 소스 없음"
@@ -4998,10 +4998,10 @@
     "ko": "선택한 호스트에 경로를 입력하려면 프로젝트 추가를 사용하세요."
   },
   "auto.store.slices.worktrees.903b51c2ed": {
-    "ko": "{{value0}}에서 워크스페이스를 만들었지만 {{value2}} 때문에 Dolphin가 로컬 {{value1}}을(를) fast-forward할 수 없습니다."
+    "ko": "{{value0}}에서 워크스페이스를 만들었지만 {{value2}} 때문에 Dolphin이 로컬 {{value1}}을(를) fast-forward할 수 없습니다."
   },
   "auto.store.slices.worktrees.d1d78a7baa": {
-    "ko": "Git이 \"{{value0}}\"{{value1}} 브랜치를 안전하게 삭제할 수 없어, 로컬 commits 손실을 방지하기 위해 Dolphin가 브랜치를 유지했습니다."
+    "ko": "Git이 \"{{value0}}\"{{value1}} 브랜치를 안전하게 삭제할 수 없어, 로컬 commits 손실을 방지하기 위해 Dolphin이 브랜치를 유지했습니다."
   },
   "auto.store.slices.worktrees.fa9299a66f": {
     "ko": "새 워크트리는 최신이지만 로컬 {{value0}}은(는) {{value1}} {{value2}} 뒤처져 있습니다. AI diff가 최근 commits을 놓칠 수 있습니다."
