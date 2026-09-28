@@ -13,7 +13,7 @@ export { getMobileSettingsPaneSearchEntries }
 
 const DOLPHIN_IOS_APP_STORE_URL = 'https://apps.apple.com/app/dolphin-ide/id6766130217'
 const DOLPHIN_ANDROID_APK_URL =
-  'https://github.com/GussCloud/dolphin/releases/download/mobile-android-v0.0.48/app-release.apk'
+  'https://github.com/GussCloud/dolphin/releases/download/mobile-android-latest/dolphin-android.apk'
 
 export function MobileSettingsPane(): React.JSX.Element {
   const showMobileButton = useAppStore((s) => s.settings?.showMobileButton !== false)
