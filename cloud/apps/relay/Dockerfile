@@ -23,7 +23,9 @@ COPY apps/relay/package.json apps/relay/package.json
 COPY --from=build /app/packages/relay-contract/dist packages/relay-contract/dist
 COPY --from=build /app/packages/postgres-schema/dist packages/postgres-schema/dist
 COPY --from=build /app/apps/relay/dist apps/relay/dist
-RUN pnpm install --prod --frozen-lockfile --filter @dolphin-cloud/relay...
+RUN pnpm install --prod --frozen-lockfile --filter @dolphin-cloud/relay... \
+  && mkdir -p /data && chown node:node /data
 USER node
 EXPOSE 8080
+VOLUME ["/data"]
 CMD ["node", "apps/relay/dist/index.js"]
