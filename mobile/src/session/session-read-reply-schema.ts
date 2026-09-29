@@ -36,6 +36,21 @@ export const runtimeRepoListSchema = z
   .transform((reply) => reply.repos)
 
 /**
+ * The folder workspace list, narrowed to what resolves a `folder:<id>` route's connection: the id
+ * it is found by and the SSH connection its terminals run on (null or absent means local).
+ */
+export const folderWorkspaceConnectionListSchema = z
+  .looseObject({
+    folderWorkspaces: salvagingArray(
+      z.looseObject({
+        id: z.string(),
+        connectionId: salvagedOptional('connectionId', z.string().nullable())
+      })
+    )
+  })
+  .transform((reply) => reply.folderWorkspaces)
+
+/**
  * The agents a host reports for a workspace.
  *
  * An array and nothing more: buildMobileNewTabAgentOptions spreads it

@@ -2,6 +2,7 @@ import { bindDeferredRpcOperation, defineRpcOperation } from '../transport/rpc-o
 import { rpcResultVariant } from '../transport/rpc-operation-result-reader'
 import {
   detectedAgentsSchema,
+  folderWorkspaceConnectionListSchema,
   markdownTabDocumentSchema,
   runtimeRepoListSchema,
   sessionForwardedReplySchema,
@@ -65,6 +66,17 @@ export const nativeChatRepoListRead = bindDeferredRpcOperation(
     acceptance: 'success-result-or-skip',
     barrier: 'after-caller-barrier',
     read: repoListReader
+  })
+)
+
+/** The folder workspace list a `folder:<id>` route resolves its connection through. */
+export const folderWorkspaceConnectionListRead = bindDeferredRpcOperation(
+  defineRpcOperation({
+    name: 'folderWorkspace.list-for-connection',
+    method: 'folderWorkspace.list',
+    acceptance: 'require-result-or-throw-message',
+    barrier: 'after-caller-barrier',
+    read: rpcResultVariant('folder-workspace-connections', folderWorkspaceConnectionListSchema)
   })
 )
 

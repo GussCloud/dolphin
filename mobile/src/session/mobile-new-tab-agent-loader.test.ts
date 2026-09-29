@@ -42,6 +42,53 @@ describe('mobile new-tab agent loading', () => {
     ])
   })
 
+  it('detects agents locally for a multi-project folder workspace', async () => {
+    const client = createClient(async (method) => {
+      if (method === 'settings.get') {
+        return { ok: true, result: { settings: {} } }
+      }
+      if (method === 'folderWorkspace.list') {
+        return {
+          ok: true,
+          result: { folderWorkspaces: [{ id: 'fw-1', kind: 'multi-project', connectionId: null }] }
+        }
+      }
+      if (method === 'preflight.detectAgents') {
+        return { ok: true, result: ['claude'] }
+      }
+      throw new Error(`unexpected request: ${method}`)
+    })
+
+    await expect(
+      loadMobileNewTabAgentOptions({ client, worktreeId: 'folder:fw-1' })
+    ).resolves.toEqual([{ agent: 'claude', label: 'Claude' }])
+    expect(client.sendRequest.mock.calls.map(([method]) => method)).toEqual([
+      'folderWorkspace.list',
+      'settings.get',
+      'preflight.detectAgents'
+    ])
+  })
+
+  it('detects agents through the folder workspace connection for SSH folders', async () => {
+    const client = createClient(async (method, params) => {
+      if (method === 'settings.get') {
+        return { ok: true, result: { settings: {} } }
+      }
+      if (method === 'folderWorkspace.list') {
+        return { ok: true, result: { folderWorkspaces: [{ id: 'fw-1', connectionId: 'ssh-1' }] } }
+      }
+      if (method === 'preflight.detectRemoteAgents') {
+        expect(params).toEqual({ connectionId: 'ssh-1' })
+        return { ok: true, result: ['codex'] }
+      }
+      throw new Error(`unexpected request: ${method}`)
+    })
+
+    await expect(
+      loadMobileNewTabAgentOptions({ client, worktreeId: 'folder:fw-1' })
+    ).resolves.toEqual([{ agent: 'codex', label: 'Codex' }])
+  })
+
   it('detects agents through the worktree repo connection for SSH sessions', async () => {
     const client = createClient(async (method, params) => {
       if (method === 'settings.get') {

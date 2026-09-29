@@ -1,5 +1,6 @@
 import { newTabSettingsRead } from '../transport/settings-read-operations'
 import {
+  folderWorkspaceConnectionListRead,
   type MobileRuntimeRepoSummary,
   newTabRepoListRead,
   preflightDetectAgentsRead,
@@ -55,15 +56,7 @@ async function loadDetectedAgents(
       interpret: preflightDetectAgentsRead.interpret
     }
   }
-  const repoResponse = await newTabRepoListRead.request(client)
-  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Preserve the established response shape at this boundary.
-  const repos = (newTabRepoListRead.interpret(repoResponse) as MobileRuntimeRepoSummary[]) ?? []
-  const repoId = getRepoIdFromMobileWorktreeId(worktreeId)
-  const repo = repos.find((candidate) => candidate.id === repoId)
-  if (!repo) {
-    throw new Error('worktree_repo_not_found')
-  }
-  const connectionId = repo.connectionId?.trim() || null
+  const connectionId = await resolveWorkspaceConnectionId(client, worktreeId)
   return connectionId
     ? {
         reply: await preflightDetectRemoteAgentsRead.request(client, { connectionId }),
@@ -73,4 +66,31 @@ async function loadDetectedAgents(
         reply: await preflightDetectAgentsRead.request(client),
         interpret: preflightDetectAgentsRead.interpret
       }
+}
+
+async function resolveWorkspaceConnectionId(
+  client: RpcClient,
+  worktreeId: string
+): Promise<string | null> {
+  // Why: a folder workspace route (multi-project included) names no repo, so repo.list can't find it.
+  if (worktreeId.startsWith('folder:')) {
+    const folderWorkspaceId = worktreeId.slice('folder:'.length)
+    const response = await folderWorkspaceConnectionListRead.request(client)
+    const folderWorkspace = folderWorkspaceConnectionListRead
+      .interpret(response)
+      .find((candidate) => candidate.id === folderWorkspaceId)
+    if (!folderWorkspace) {
+      throw new Error('folder_workspace_not_found')
+    }
+    return folderWorkspace.connectionId?.trim() || null
+  }
+  const repoResponse = await newTabRepoListRead.request(client)
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Preserve the established response shape at this boundary.
+  const repos = (newTabRepoListRead.interpret(repoResponse) as MobileRuntimeRepoSummary[]) ?? []
+  const repoId = getRepoIdFromMobileWorktreeId(worktreeId)
+  const repo = repos.find((candidate) => candidate.id === repoId)
+  if (!repo) {
+    throw new Error('worktree_repo_not_found')
+  }
+  return repo.connectionId?.trim() || null
 }
