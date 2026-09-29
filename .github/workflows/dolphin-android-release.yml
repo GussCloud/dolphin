@@ -88,20 +88,27 @@ jobs:
           MOBILE_ANDROID_PUBLISH_RELEASE: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_github_release }}
         run: node scripts/prepare-android-release.mjs
 
-      # Why skip rather than fail: most main pushes that touch app.json change config, not the
-      # version, and must not error on a release that already exists.
+      # Why skip rather than fail on branch pushes: most main pushes that touch app.json change
+      # config, not the version. Tag pushes and dispatches that would publish fail here instead of
+      # after the ~25 min build.
       - name: Skip versions already released
         id: gate
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
+          PUBLISH_RELEASE: ${{ steps.release.outputs.publish_release }}
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* ]] \
-            && gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "skip=false" >>"$GITHUB_OUTPUT"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* ]]; then
             echo "$TAG is already released; nothing to do."
             echo "skip=true" >>"$GITHUB_OUTPUT"
+          elif [[ "$PUBLISH_RELEASE" == "true" ]]; then
+            echo "::error::release $TAG already exists; bump mobile/app.json, or dispatch with publish_github_release=false to build the APK artifact only."
+            exit 1
           else
+            echo "$TAG exists; building the APK artifact without publishing."
             echo "skip=false" >>"$GITHUB_OUTPUT"
           fi
 
