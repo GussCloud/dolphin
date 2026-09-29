@@ -15,6 +15,17 @@ import {
 } from '../source-control/hosted-review-creation'
 import { createStackedHostedReview } from '../source-control/stacked-hosted-review-creation'
 import { getHostedReviewForBranch } from '../source-control/hosted-review'
+import {
+  getHostedReviewDetails,
+  performHostedReviewAction
+} from '../source-control/hosted-review-actions'
+import type {
+  HostedReviewActionArgs,
+  HostedReviewActionResult,
+  HostedReviewDetails,
+  HostedReviewDetailsArgs
+} from '../../shared/hosted-review-actions'
+import { HostedReviewActionSchema } from '../../shared/rpc-contract/hosted-review-action-params'
 import { resolveRegisteredWorktreePath } from './registered-worktree-roots-cache'
 import { listRepoWorktreeGraph } from '../repo-worktrees'
 import {
@@ -137,6 +148,39 @@ export function registerHostedReviewHandlers(store: Store, stats: StatsCollector
     }
     return review
   })
+
+  ipcMain.handle(
+    'hostedReview:details',
+    async (_event, args: HostedReviewDetailsArgs): Promise<HostedReviewDetails | null> => {
+      const repo = assertRegisteredRepo(args.repoPath, store, args.repoId)
+      return getHostedReviewDetails({
+        repoPath: repo.path,
+        executionHostId: getRepoHostedReviewExecutionHostId(repo),
+        provider: args.provider,
+        number: args.number
+      })
+    }
+  )
+
+  ipcMain.handle(
+    'hostedReview:action',
+    async (_event, args: HostedReviewActionArgs): Promise<HostedReviewActionResult> => {
+      const repo = assertRegisteredRepo(args.repoPath, store, args.repoId)
+      const action = HostedReviewActionSchema.safeParse(args.action)
+      if (!action.success) {
+        return { ok: false, error: 'Invalid review action' }
+      }
+      return performHostedReviewAction(
+        {
+          repoPath: repo.path,
+          executionHostId: getRepoHostedReviewExecutionHostId(repo),
+          provider: args.provider,
+          number: args.number
+        },
+        action.data
+      )
+    }
+  )
 
   ipcMain.handle(
     'hostedReview:getCreationEligibility',

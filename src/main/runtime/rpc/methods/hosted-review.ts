@@ -6,6 +6,10 @@ import {
   HostedReviewCreationEligibility,
   HostedReviewForBranch
 } from '../../../../shared/rpc-contract/hosted-review-params'
+import {
+  HostedReviewActionParams,
+  HostedReviewDetailsParams
+} from '../../../../shared/rpc-contract/hosted-review-action-params'
 
 export const HOSTED_REVIEW_METHODS = [
   defineMethod({
@@ -28,6 +32,27 @@ export const HOSTED_REVIEW_METHODS = [
         linkedGiteaPR: params.linkedGiteaPR ?? null
       })
     }
+  }),
+  defineMethod({
+    name: 'hostedReview.details',
+    params: HostedReviewDetailsParams,
+    handler: async (params, { runtime }) =>
+      runtime.getHostedReviewDetails({
+        repoSelector: params.repo,
+        provider: params.provider,
+        number: params.number
+      })
+  }),
+  defineMethod({
+    name: 'hostedReview.action',
+    params: HostedReviewActionParams,
+    handler: async (params, { runtime }) =>
+      runtime.performHostedReviewAction({
+        repoSelector: params.repo,
+        provider: params.provider,
+        number: params.number,
+        action: params.action
+      })
   }),
   defineMethod({
     name: 'hostedReview.getCreationEligibility',

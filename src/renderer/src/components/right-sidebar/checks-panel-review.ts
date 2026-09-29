@@ -2,6 +2,7 @@ import type { PRInfo } from '../../../../shared/github/pull-request-types'
 import type { HostedReviewInfo } from '../../../../shared/hosted-review'
 import { hostedReviewInfoFromGitHubPRInfo } from '../../../../shared/hosted-review-github'
 import { isGitHubPRSuppressed } from '../../../../shared/worktree/github-pr-suppression'
+import { supportsHostedReviewDetails } from '../../../../shared/hosted-review-actions'
 
 export type ChecksPanelReview = HostedReviewInfo
 
@@ -32,9 +33,12 @@ export function selectChecksPanelReview({
   linkedAzureDevOpsPR,
   linkedGiteaPR
 }: ChecksPanelReviewSelectionInput): ChecksPanelReview | null {
-  const gitLabHostedReview = hostedReview?.provider === 'gitlab' ? hostedReview : null
-  if (gitLabHostedReview) {
-    return gitLabHostedReview
+  // GitLab and detail-capable providers render from the hosted-review cache entry.
+  if (
+    hostedReview &&
+    (hostedReview.provider === 'gitlab' || supportsHostedReviewDetails(hostedReview.provider))
+  ) {
+    return hostedReview
   }
   const hasNonGitHubLinkedReview =
     linkedGitLabMR !== null ||

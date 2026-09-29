@@ -12,6 +12,12 @@ import type {
   HostedReviewForBranchArgs,
   HostedReviewInfo
 } from '../../shared/hosted-review'
+import type {
+  HostedReviewActionArgs,
+  HostedReviewActionResult,
+  HostedReviewDetails,
+  HostedReviewDetailsArgs
+} from '../../shared/hosted-review-actions'
 
 export type HostedReviewApi = {
   forBranch: (args: HostedReviewForBranchArgs) => Promise<HostedReviewInfo | null>
@@ -20,6 +26,8 @@ export type HostedReviewApi = {
   ) => Promise<HostedReviewCreationEligibility>
   create: (args: CreateHostedReviewArgs) => Promise<CreateHostedReviewResult>
   createStacked: (args: CreateStackedHostedReviewArgs) => Promise<CreateStackedHostedReviewResult>
+  details: (args: HostedReviewDetailsArgs) => Promise<HostedReviewDetails | null>
+  action: (args: HostedReviewActionArgs) => Promise<HostedReviewActionResult>
 }
 
 export type BitbucketApi = {
