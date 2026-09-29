@@ -1,6 +1,10 @@
 import type { RelayReconnectController } from './mobile-relay-reconnect-controller'
 import type { StableLogicalRpcClient } from './stable-logical-rpc-client'
 import type { ScheduleTimer } from './timer-scheduler'
+import {
+  backgroundRelayRetentionWindowMs,
+  type BackgroundRelayRetention
+} from './background-relay-retention'
 
 // Retain a healthy Relay briefly across routine app switches without waking the app.
 export const RELAY_BACKGROUND_GRACE_MS = 30_000
@@ -9,6 +13,7 @@ type RelayBackgroundGraceDependencies = {
   now: () => number
   setTimer: ScheduleTimer
   clearTimer: typeof clearTimeout
+  backgroundRelayRetention?: () => BackgroundRelayRetention
 }
 
 export class MobileRelayBackgroundGraceTimer {
@@ -21,9 +26,9 @@ export class MobileRelayBackgroundGraceTimer {
     private readonly onExpired: () => void
   ) {}
 
-  arm(): void {
+  arm(windowMs = RELAY_BACKGROUND_GRACE_MS): void {
     this.clear()
-    this.deadlineAt = this.dependencies.now() + RELAY_BACKGROUND_GRACE_MS
+    this.deadlineAt = this.dependencies.now() + windowMs
     const generation = this.generation
     this.timer = this.dependencies.setTimer(() => {
       if (generation !== this.generation || this.deadlineAt === null) {
@@ -32,7 +37,7 @@ export class MobileRelayBackgroundGraceTimer {
       this.timer = null
       this.deadlineAt = null
       this.onExpired()
-    }, RELAY_BACKGROUND_GRACE_MS)
+    }, windowMs)
   }
 
   consumeExpired(): boolean {
@@ -58,21 +63,27 @@ type DirectGrace = Clearable & { arm(): void }
 export class MobileRelayBackgroundGrace {
   private foregroundState = true
   private retainedRelaySuspended = false
+  // Opted-in background retention: Relay recovery keeps running until the window ends.
+  private relayRetained = false
   private readonly timer: MobileRelayBackgroundGraceTimer
 
   constructor(
-    dependencies: RelayBackgroundGraceDependencies,
+    private readonly dependencies: RelayBackgroundGraceDependencies,
     private readonly logical: StableLogicalRpcClient,
     private readonly relayReconnect: RelayReconnectController,
     private readonly leaseRotation: Clearable,
     private readonly directProbe: DirectProbe,
     private readonly directGrace: DirectGrace
   ) {
-    this.timer = new MobileRelayBackgroundGraceTimer(dependencies, () => this.suspendRelay())
+    this.timer = new MobileRelayBackgroundGraceTimer(dependencies, () => this.expire())
   }
 
   isForeground(): boolean {
     return this.foregroundState
+  }
+
+  keepsRelay(): boolean {
+    return this.foregroundState || this.relayRetained
   }
 
   setForeground(foreground: boolean): void {
@@ -89,6 +100,7 @@ export class MobileRelayBackgroundGrace {
   }
 
   stop(): void {
+    this.relayRetained = false
     this.timer.clear()
     this.directProbe.clear()
     this.relayReconnect.clear()
@@ -106,10 +118,19 @@ export class MobileRelayBackgroundGrace {
 
   private background(): void {
     this.retainedRelaySuspended = false
+    const retention = this.dependencies.backgroundRelayRetention?.() ?? 'off'
     const retainsRelay =
       this.logical.getActivePath() === 'relay' && this.logical.getState() === 'connected'
     this.directProbe.clear()
     this.directGrace.clear()
+    if (retention !== 'off' && this.logical.getActivePath() === 'relay') {
+      this.relayRetained = true
+      const windowMs = backgroundRelayRetentionWindowMs(retention)
+      if (windowMs !== null) {
+        this.timer.arm(windowMs)
+      }
+      return
+    }
     this.logical.setRecoveryPath(null)
     if (retainsRelay) {
       this.timer.arm()
@@ -123,9 +144,19 @@ export class MobileRelayBackgroundGrace {
   }
 
   private foreground(): void {
+    this.relayRetained = false
     if (this.timer.consumeExpired()) {
       this.suspendRelay()
     }
+  }
+
+  private expire(): void {
+    if (this.relayRetained) {
+      this.relayRetained = false
+      this.relayReconnect.clear()
+      this.logical.setRecoveryPath(null)
+    }
+    this.suspendRelay()
   }
 
   private suspendRelay(): void {

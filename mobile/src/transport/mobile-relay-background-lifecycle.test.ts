@@ -162,4 +162,36 @@ describe('mobile Relay background lifecycle', () => {
     expect(logical.getState()).toBe('connected')
     supervisor.stop()
   })
+
+  it('keeps an opted-in relay past the short grace and releases it when the window ends', async () => {
+    const logical = new FakeLogicalClient('connected', 'relay')
+    const deps = dependencies({ backgroundRelayRetention: () => '15m' })
+    const supervisor = new MobileEndpointSupervisor(logical, host.id, relay, deps)
+    await supervisor.start()
+
+    supervisor.setForeground(false)
+    await vi.advanceTimersByTimeAsync(15 * 60_000 - 1)
+    expect(logical.suspendActiveSession).not.toHaveBeenCalled()
+    expect(logical.getState()).toBe('connected')
+
+    await vi.advanceTimersByTimeAsync(1)
+    expect(logical.suspendActiveSession).toHaveBeenCalledOnce()
+    supervisor.stop()
+  })
+
+  it('recovers an opted-in relay that fails while backgrounded', async () => {
+    const logical = new FakeLogicalClient('connected', 'relay')
+    const deps = dependencies({ backgroundRelayRetention: () => 'always' })
+    const supervisor = new MobileEndpointSupervisor(logical, host.id, relay, deps)
+    await supervisor.start()
+
+    supervisor.setForeground(false)
+    await vi.advanceTimersByTimeAsync(60 * 60_000)
+    logical.publishState('disconnected')
+
+    await vi.waitFor(() => expect(deps.openRelay).toHaveBeenCalledOnce())
+    expect(logical.suspendActiveSession).not.toHaveBeenCalled()
+    expect(logical.getState()).toBe('connected')
+    supervisor.stop()
+  })
 })
