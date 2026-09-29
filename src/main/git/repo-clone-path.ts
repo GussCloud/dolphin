@@ -19,7 +19,11 @@ export function deriveCloneRepoNameFromUrl(url: string): string {
   // be "." or ".."; rejecting them prevents parent/destination deletion.
   const source = url.replace(/\.git\/?$/, '')
   const isWindowsLocalSource = /^[A-Za-z]:[\\/]/.test(source) || source.startsWith('\\\\')
-  const repoName = isWindowsLocalSource ? win32.basename(source) : posix.basename(source)
+  const baseName = isWindowsLocalSource ? win32.basename(source) : posix.basename(source)
+  const isLocalPathSource = isWindowsLocalSource || /^(\/|\.{1,2}\/|~)/.test(source)
+  // Why: hosts like Azure DevOps percent-encode spaces ("EVUP%20-%20ELOS");
+  // local paths are left as-is since "%20" may be a literal folder name.
+  const repoName = isLocalPathSource ? baseName : decodeUrlPathSegment(baseName)
   if (!repoName || repoName === '.' || repoName === '..') {
     throw new Error('Invalid repository name derived from URL')
   }
@@ -27,6 +31,14 @@ export function deriveCloneRepoNameFromUrl(url: string): string {
     throw new Error('Invalid repository name derived from URL')
   }
   return repoName
+}
+
+function decodeUrlPathSegment(segment: string): string {
+  try {
+    return decodeURIComponent(segment)
+  } catch {
+    return segment
+  }
 }
 
 export function deriveValidatedClonePath(args: { url: string; destination: string }): string {

@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { deriveValidatedClonePath, getClonePathComparisonKey } from './repo-clone-path'
+import {
+  deriveCloneRepoNameFromUrl,
+  deriveValidatedClonePath,
+  getClonePathComparisonKey
+} from './repo-clone-path'
 
 describe('repo clone path helpers', () => {
   it('allows safe repository names that start with two dots', async () => {
@@ -17,6 +21,35 @@ describe('repo clone path helpers', () => {
     } finally {
       await rm(destination, { recursive: true, force: true })
     }
+  })
+
+  it('decodes percent-encoded repository names from remote URLs', () => {
+    expect(
+      deriveCloneRepoNameFromUrl('https://dev.azure.com/org/EVUP%20-%20ELOS/_git/EVUP%20-%20ELOS')
+    ).toBe('EVUP - ELOS')
+    expect(
+      deriveCloneRepoNameFromUrl(
+        'https://org@dev.azure.com/org/EVUP%20-%20ELOS/_git/EVUP%20-%20ELOS'
+      )
+    ).toBe('EVUP - ELOS')
+    expect(
+      deriveCloneRepoNameFromUrl('git@ssh.dev.azure.com:v3/org/EVUP%20-%20ELOS/EVUP%20-%20ELOS')
+    ).toBe('EVUP - ELOS')
+    expect(deriveCloneRepoNameFromUrl('https://example.com/bad%E0%A4%A.git')).toBe('bad%E0%A4%A')
+  })
+
+  it('keeps literal percent sequences in local path sources', () => {
+    expect(deriveCloneRepoNameFromUrl('/srv/git/EVUP%20-%20ELOS')).toBe('EVUP%20-%20ELOS')
+    expect(deriveCloneRepoNameFromUrl('C:\\git\\EVUP%20-%20ELOS')).toBe('EVUP%20-%20ELOS')
+  })
+
+  it('rejects encoded separators and dot segments after decoding', () => {
+    expect(() => deriveCloneRepoNameFromUrl('https://example.com/a%2Fb')).toThrow(
+      'Invalid repository name derived from URL'
+    )
+    expect(() => deriveCloneRepoNameFromUrl('https://example.com/%2E%2E')).toThrow(
+      'Invalid repository name derived from URL'
+    )
   })
 
   it('rejects Windows-looking destinations on non-Windows hosts', async () => {
