@@ -5,7 +5,7 @@ import { createMultiProjectWorkspace } from './multi-project-workspace-create'
 type Reply = { ok: true; result: unknown } | { ok: false; error: { code: string; message: string } }
 
 function client(replies: Record<string, Reply>) {
-  const sendRequest = vi.fn(async (method: string) => ({
+  const sendRequest = vi.fn(async (method: string, _params?: unknown) => ({
     id: '1',
     ...replies[method],
     _meta: { runtimeId: 'r' }

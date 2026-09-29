@@ -7,7 +7,7 @@ const { createForRemoteClient } = vi.hoisted(() => ({
   createForRemoteClient: vi.fn()
 }))
 
-vi.mock('../../../ipc/worktrees/create/multi-project-workspace-remote-create', () => ({
+vi.mock('../../multi-project-workspace-create-port', () => ({
   createMultiProjectWorkspaceForRemoteClient: createForRemoteClient
 }))
 

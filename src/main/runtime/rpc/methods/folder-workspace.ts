@@ -1,5 +1,5 @@
 import { defineMethod } from '../core'
-import { createMultiProjectWorkspaceForRemoteClient } from '../../../ipc/worktrees/create/multi-project-workspace-remote-create'
+import { createMultiProjectWorkspaceForRemoteClient } from '../../multi-project-workspace-create-port'
 import { resolveRpcWorkspaceCreatorProvenance } from '../workspace-creator-context'
 import {
   FolderWorkspaceCreate,
