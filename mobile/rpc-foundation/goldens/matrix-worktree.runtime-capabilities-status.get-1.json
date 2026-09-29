@@ -3,7 +3,7 @@
   "family": "worktree.runtime-capabilities",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "baseline": "8342a59dbceb8a2e99ead409c68840f74b2dd1d6",
   "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
   "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "52a76b7a830b32287bce14abbe1b9d9ac70e71eafe5b4c6801c2eb14a4150125",
@@ -13,19 +13,6 @@
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "041e5e32563c": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": {
-        "agentLaunch": false,
-        "hostPlatform": {
-          "$rpc": "null"
-        },
-        "tasksSupported": false,
-        "worktreeCreateIdempotency": false
-      }
-    },
     "0474a1603b70": {
       "name": "status.get#1",
       "ordinal": 1,
@@ -61,6 +48,20 @@
         }
       }
     },
+    "0c6755036041": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": {
+        "agentLaunch": false,
+        "hostPlatform": {
+          "$rpc": "null"
+        },
+        "multiProjectCreate": false,
+        "tasksSupported": false,
+        "worktreeCreateIdempotency": false
+      }
+    },
     "0ccee4def5e0": {
       "name": "status.get#1",
       "ordinal": 1,
@@ -89,18 +90,6 @@
         "value": {
           "id": "frame-1",
           "ok": true
-        }
-      }
-    },
-    "120979f40a68": {
-      "capabilities": {
-        "agentLaunch": false,
-        "hostPlatform": {
-          "$rpc": "null"
-        },
-        "tasksSupported": true,
-        "worktreeCreateIdempotency": {
-          "dedupeTtlMs": 45000
         }
       }
     },
@@ -209,21 +198,6 @@
         }
       }
     },
-    "3a7704ccec26": {
-      "status": "fulfilled",
-      "startedAt": 0,
-      "settledAt": 0,
-      "value": {
-        "agentLaunch": false,
-        "hostPlatform": {
-          "$rpc": "null"
-        },
-        "tasksSupported": true,
-        "worktreeCreateIdempotency": {
-          "dedupeTtlMs": 45000
-        }
-      }
-    },
     "41e8e39cc47e": {
       "name": "status.get#1",
       "ordinal": 1,
@@ -259,6 +233,17 @@
             "ok": false
           }
         }
+      }
+    },
+    "4b19ead6f90e": {
+      "capabilities": {
+        "agentLaunch": false,
+        "hostPlatform": {
+          "$rpc": "null"
+        },
+        "multiProjectCreate": false,
+        "tasksSupported": false,
+        "worktreeCreateIdempotency": false
       }
     },
     "73bcd4456e97": {
@@ -396,6 +381,35 @@
         }
       }
     },
+    "c4056dbc109f": {
+      "status": "fulfilled",
+      "startedAt": 0,
+      "settledAt": 0,
+      "value": {
+        "agentLaunch": false,
+        "hostPlatform": {
+          "$rpc": "null"
+        },
+        "multiProjectCreate": false,
+        "tasksSupported": true,
+        "worktreeCreateIdempotency": {
+          "dedupeTtlMs": 45000
+        }
+      }
+    },
+    "d0194ee26726": {
+      "capabilities": {
+        "agentLaunch": false,
+        "hostPlatform": {
+          "$rpc": "null"
+        },
+        "multiProjectCreate": false,
+        "tasksSupported": true,
+        "worktreeCreateIdempotency": {
+          "dedupeTtlMs": 45000
+        }
+      }
+    },
     "d08f74d65ee6": {
       "name": "status.get#1",
       "ordinal": 2,
@@ -435,16 +449,6 @@
           "ok": false
         }
       }
-    },
-    "f793cb0dfb40": {
-      "capabilities": {
-        "agentLaunch": false,
-        "hostPlatform": {
-          "$rpc": "null"
-        },
-        "tasksSupported": false,
-        "worktreeCreateIdempotency": false
-      }
     }
   },
   "recording": {
@@ -456,9 +460,9 @@
           "sender": ["216adda2100c"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "3a7704ccec26"
+            "probe": "c4056dbc109f"
           },
-          "state": "120979f40a68",
+          "state": "d0194ee26726",
           "effects": []
         }
       },
@@ -468,9 +472,9 @@
           "sender": ["0ccee4def5e0"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -480,9 +484,9 @@
           "sender": ["73bcd4456e97"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -492,9 +496,9 @@
           "sender": ["7b0d9b0d2428"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -504,9 +508,9 @@
           "sender": ["0474a1603b70"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -516,9 +520,9 @@
           "sender": ["41e8e39cc47e"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -528,9 +532,9 @@
           "sender": ["16a71e555cb2"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -540,9 +544,9 @@
           "sender": ["82f760e2c99f"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -552,9 +556,9 @@
           "sender": ["e90520ab92af"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -564,9 +568,9 @@
           "sender": ["2b8c44a85130"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       },
@@ -576,9 +580,9 @@
           "sender": ["b799ba7b0c33"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "041e5e32563c"
+            "probe": "0c6755036041"
           },
-          "state": "f793cb0dfb40",
+          "state": "4b19ead6f90e",
           "effects": []
         }
       }

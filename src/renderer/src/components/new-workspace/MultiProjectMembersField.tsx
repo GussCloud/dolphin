@@ -8,7 +8,7 @@ import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { useMultiProjectComposerSelectionStore } from '@/store/multi-project-composer-selection'
 import type { Repo } from '../../../../shared/repo-types'
-import { isMultiProjectEligibleRepo } from './multi-project-workspace-eligibility'
+import { isMultiProjectEligibleRepo } from '../../../../shared/multi-project-workspace-eligibility'
 import {
   MultiProjectProjectPicker,
   useAvailableMultiProjectRepos

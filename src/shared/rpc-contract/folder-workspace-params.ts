@@ -40,6 +40,19 @@ export const FolderWorkspaceCreate = z
   })
   .superRefine(assertLinkedTaskSourceContextMatch)
 
+/** One worktree per project inside a new container folder; the host runs it locally. */
+export const FolderWorkspaceCreateMultiProject = z
+  .object({
+    name: z.string().trim().min(1, 'Missing workspace name'),
+    repoIds: z.array(z.string().min(1)).min(2).max(50),
+    setupDecision: z.enum(['inherit', 'run', 'skip']).optional(),
+    linkedTask: FolderWorkspaceLinkedTask.optional(),
+    linkedTaskSourceContext: TaskSourceContextSchema.nullable().optional(),
+    createdWithAgent: z.string().refine(isTuiAgent).optional(),
+    pendingFirstAgentMessageRename: z.boolean().optional()
+  })
+  .superRefine(assertLinkedTaskSourceContextMatch)
+
 export const FolderWorkspaceUpdate = z.object({
   folderWorkspaceId: requiredString('Missing folder workspace id'),
   updates: z

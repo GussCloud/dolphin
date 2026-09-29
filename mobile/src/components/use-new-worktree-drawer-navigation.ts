@@ -7,6 +7,7 @@ export type NewWorktreeDrawerView =
   | 'transition'
   | 'source'
   | 'project'
+  | 'extraProject'
   | 'runTarget'
   | 'agent'
   | 'trust'

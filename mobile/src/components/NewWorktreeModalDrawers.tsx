@@ -16,6 +16,7 @@ import { getMobileWorkspaceRepoBadgeColor } from './new-worktree-modal-types'
 import { PickerListDrawer } from './PickerListDrawer'
 import { SetupHookTrustDrawer, type SetupTrustPrompt } from './SetupHookTrustDrawer'
 import { SmartWorkspaceSourceDrawer } from './SmartWorkspaceSourceDrawer'
+import type { ExtraProjectPickerItem } from './use-new-workspace-multi-project'
 import type { NewWorktreeDrawerView } from './use-new-worktree-drawer-navigation'
 
 type Composer = ReturnType<typeof useMobileComposerSource>
@@ -32,6 +33,7 @@ export function NewWorktreeModalDrawers(props: {
   sshReady: boolean
   projectPickerItems: NewWorkspaceProjectOption<MobileWorkspaceRepo>[]
   selectedProjectId: string | null
+  extraProjectPickerItems: ExtraProjectPickerItem[]
   runTargetPickerItems: NewWorkspaceRunTargetOption<MobileWorkspaceRepo>[]
   pickerAgentOptions: NewWorktreeAgentOption[]
   selectedAgent: NewWorktreeAgentOption
@@ -39,6 +41,7 @@ export function NewWorktreeModalDrawers(props: {
   creating: boolean
   onSourceRepoChange: (repo: MobileWorkspaceRepo) => void
   onRepoChange: (repo: MobileWorkspaceRepo) => void
+  onExtraProjectAdd: (repoId: string) => void
   onAgentChange: (agent: NewWorktreeAgentOption) => void
   onTransitionToForm: () => void
   onApproveSetupTrust: (alwaysTrust: boolean) => void
@@ -70,6 +73,23 @@ export function NewWorktreeModalDrawers(props: {
         items={props.projectPickerItems}
         selectedId={props.selectedProjectId ?? ''}
         onSelect={(item) => props.onRepoChange(item.repo)}
+        onClose={props.onTransitionToForm}
+        renderIcon={(item) => (
+          <View
+            style={[
+              styles.repoDot,
+              { backgroundColor: getMobileWorkspaceRepoBadgeColor(item.repo) }
+            ]}
+          />
+        )}
+      />
+
+      <PickerListDrawer
+        visible={props.visible && props.drawerView === 'extraProject'}
+        title="Add project"
+        items={props.extraProjectPickerItems}
+        selectedId=""
+        onSelect={(item) => props.onExtraProjectAdd(item.id)}
         onClose={props.onTransitionToForm}
         renderIcon={(item) => (
           <View

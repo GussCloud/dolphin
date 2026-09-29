@@ -27,6 +27,7 @@ import { NewWorktreeModalDrawers } from './NewWorktreeModalDrawers'
 import { useNewWorkspaceAgentSelection } from './use-new-workspace-agent-selection'
 import { useNewWorkspaceCreateSubmit } from './use-new-workspace-create-submit'
 import { useNewWorkspaceExecutionTarget } from './use-new-workspace-execution-target'
+import { useNewWorkspaceMultiProject } from './use-new-workspace-multi-project'
 import { useNewWorkspaceRepositories } from './use-new-workspace-repositories'
 import { useNewWorkspaceRuntimeContext } from './use-new-workspace-runtime-context'
 import { useNewWorkspaceSetupScript } from './use-new-workspace-setup-script'
@@ -74,8 +75,18 @@ function NewWorktreeModalContent(props: NewWorktreeModalProps) {
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
   const runtime = useNewWorkspaceRuntimeContext(client, visible, hostId)
-  const { tasksSupported, hostPlatform, getWorktreeCreateCutoverSupport, getAgentLaunchSupport } =
-    useNewWorktreeRuntimeCapabilities(client, visible)
+  const {
+    tasksSupported,
+    hostPlatform,
+    multiProjectCreate,
+    getWorktreeCreateCutoverSupport,
+    getAgentLaunchSupport
+  } = useNewWorktreeRuntimeCapabilities(client, visible)
+  const multiProject = useNewWorkspaceMultiProject({
+    repos,
+    selectedRepo,
+    supported: multiProjectCreate
+  })
   const selectedRepoConnectionId = selectedRepo?.connectionId ?? null
   const executionTarget = useNewWorkspaceExecutionTarget({
     client,
@@ -110,6 +121,7 @@ function NewWorktreeModalContent(props: NewWorktreeModalProps) {
   const createSubmit = useNewWorkspaceCreateSubmit({
     client,
     selectedRepo,
+    multiProjectRepoIds: multiProject.memberRepoIds,
     selectedAgent: agentSelection.selectedAgent,
     setSelectedAgent: agentSelection.setSelectedAgent,
     setAgentOverridden: agentSelection.setAgentOverridden,
@@ -169,10 +181,11 @@ function NewWorktreeModalContent(props: NewWorktreeModalProps) {
   const canCreate =
     selectedRepo != null &&
     !createSubmit.creating &&
-    !executionTarget.sshGate.requiresConnection &&
-    (!needsSetupChoice || setupScript.setupDecisionChoice != null)
+    (multiProject.memberRepoIds != null ||
+      (!executionTarget.sshGate.requiresConnection &&
+        (!needsSetupChoice || setupScript.setupDecisionChoice != null)))
 
-  function openPicker(view: 'project' | 'runTarget' | 'agent'): void {
+  function openPicker(view: 'project' | 'extraProject' | 'runTarget' | 'agent'): void {
     Keyboard.dismiss()
     navigation.transitionDrawer(view)
   }
@@ -222,12 +235,15 @@ function NewWorktreeModalContent(props: NewWorktreeModalProps) {
         setupRunPolicy={setupScript.setupRunPolicy}
         setupDecisionChoice={setupScript.setupDecisionChoice}
         runSetup={setupScript.runSetup}
+        multiProject={multiProject.state}
         error={error}
         creating={createSubmit.creating}
         canCreate={canCreate}
         onClose={onClose}
         onOpenExternalUrl={openExternalUrl}
         onOpenProject={() => openPicker('project')}
+        onAddProject={() => openPicker('extraProject')}
+        onRemoveProject={multiProject.remove}
         onOpenRunTarget={() => openPicker('runTarget')}
         onOpenSource={navigation.openSourceDrawer}
         onClearError={() => setError('')}
@@ -252,6 +268,7 @@ function NewWorktreeModalContent(props: NewWorktreeModalProps) {
         sshReady={!executionTarget.sshGate.requiresConnection}
         projectPickerItems={projectPickerItems}
         selectedProjectId={selectedProjectId}
+        extraProjectPickerItems={multiProject.pickerItems}
         runTargetPickerItems={runTargetPickerItems}
         pickerAgentOptions={agentSelection.pickerAgentOptions}
         selectedAgent={agentSelection.selectedAgent}
@@ -259,6 +276,7 @@ function NewWorktreeModalContent(props: NewWorktreeModalProps) {
         creating={createSubmit.creating}
         onSourceRepoChange={(repo) => selectRepo(repo, false)}
         onRepoChange={(repo) => selectRepo(repo, true)}
+        onExtraProjectAdd={multiProject.add}
         onAgentChange={(agent) => {
           agentSelection.setAgentOverridden(true)
           agentSelection.setSelectedAgent(agent)

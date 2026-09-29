@@ -83,6 +83,7 @@ export function workspaceSettingsMounts(
       const model = observableModel(context, {
         client: context.client,
         selectedRepo: { id: 'repo-1', displayName: 'Repo' },
+        multiProjectRepoIds: null,
         selectedAgent: { id: 'claude', label: 'Claude' },
         runtimeSettings: { disabledTuiAgents: ['claude'] },
         detectedAgentIds: new Set(['codex']),

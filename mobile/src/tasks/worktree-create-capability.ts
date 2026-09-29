@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   AGENT_LAUNCH_REPLAY_REQUIRED_RUNTIME_CAPABILITY,
-  AGENT_LAUNCH_RUNTIME_CAPABILITY
+  AGENT_LAUNCH_RUNTIME_CAPABILITY,
+  MULTI_PROJECT_WORKSPACE_CREATE_RUNTIME_CAPABILITY
 } from '../../../src/shared/protocol-version'
 import type { AgentLaunchSupport } from './agent-launch-worktree-create'
 import type { RpcClient } from '../transport/rpc-client'
@@ -29,10 +30,13 @@ export type NewWorktreeRuntimeCapabilities = {
    *  an older one only knows `worktree.create` + `startupAgent`, always a terminal agent. */
   agentLaunch: AgentLaunchSupport | false
   hostPlatform: NodeJS.Platform | null
+  /** The host can create one worktree per project in a shared container (`folderWorkspace.createMultiProject`). */
+  multiProjectCreate: boolean
 }
 
 const UNSUPPORTED_CAPABILITIES: NewWorktreeRuntimeCapabilities = {
   tasksSupported: false,
+  multiProjectCreate: false,
   worktreeCreateIdempotency: false,
   agentLaunch: false,
   hostPlatform: null
@@ -74,7 +78,8 @@ export async function readNewWorktreeRuntimeCapabilities(
                 )
               : { dedupeTtlMs: 0 }
           : false,
-        hostPlatform: readMobileRuntimeHostPlatform(result)
+        hostPlatform: readMobileRuntimeHostPlatform(result),
+        multiProjectCreate: capabilities.includes(MULTI_PROJECT_WORKSPACE_CREATE_RUNTIME_CAPABILITY)
       }
     } catch (error) {
       if (!isLogicalClientCutoverError(error) || migrationRetry >= STATUS_CUTOVER_MAX_RETRIES) {
@@ -90,11 +95,13 @@ export function useNewWorktreeRuntimeCapabilities(
 ): {
   tasksSupported: boolean
   hostPlatform: NodeJS.Platform | null
+  multiProjectCreate: boolean
   getWorktreeCreateCutoverSupport: () => Promise<WorktreeCreateIdempotencySupport | false>
   getAgentLaunchSupport: () => Promise<AgentLaunchSupport | false>
 } {
   const [tasksSupported, setTasksSupported] = useState(false)
   const [hostPlatform, setHostPlatform] = useState<NodeJS.Platform | null>(null)
+  const [multiProjectCreate, setMultiProjectCreate] = useState(false)
   const capabilityProbeRef = useRef<{
     client: RpcClient | null
     promise: Promise<NewWorktreeRuntimeCapabilities>
@@ -122,6 +129,7 @@ export function useNewWorktreeRuntimeCapabilities(
       if (!stale) {
         setTasksSupported(capabilities.tasksSupported)
         setHostPlatform(capabilities.hostPlatform)
+        setMultiProjectCreate(capabilities.multiProjectCreate)
       }
     })
     return () => {
@@ -137,5 +145,11 @@ export function useNewWorktreeRuntimeCapabilities(
     () => getCapabilities().then((capabilities) => capabilities.agentLaunch),
     [getCapabilities]
   )
-  return { tasksSupported, hostPlatform, getWorktreeCreateCutoverSupport, getAgentLaunchSupport }
+  return {
+    tasksSupported,
+    hostPlatform,
+    multiProjectCreate,
+    getWorktreeCreateCutoverSupport,
+    getAgentLaunchSupport
+  }
 }
