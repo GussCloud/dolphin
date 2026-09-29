@@ -3,7 +3,7 @@
   "family": "worktree.runtime-capabilities",
   "namedDeltas": [],
   "runnerVersion": 1,
-  "baseline": "480786e1e0aef19d424d9287bc6fcc2aa85ee31a",
+  "baseline": "8342a59dbceb8a2e99ead409c68840f74b2dd1d6",
   "lockfileSha256": "d5c24c8408fc0fea0cddf92033c0cec19bcc78801544e49f45cf51f869dad406",
   "recorderSha256": "f0a87fb9eae197e0d71010a530fff5a0a26610799225bd07648473367b854a5d",
   "adapterSha256": "52a76b7a830b32287bce14abbe1b9d9ac70e71eafe5b4c6801c2eb14a4150125",
@@ -13,7 +13,20 @@
   "projectionVersion": 2,
   "goldenFormatVersion": 5,
   "values": {
-    "ab209a152529": {
+    "2259efb3daa0": {
+      "capabilities": {
+        "agentLaunch": false,
+        "hostPlatform": {
+          "$rpc": "null"
+        },
+        "multiProjectCreate": false,
+        "tasksSupported": false,
+        "worktreeCreateIdempotency": {
+          "dedupeTtlMs": 60000
+        }
+      }
+    },
+    "824b5cc05b85": {
       "status": "fulfilled",
       "startedAt": 0,
       "settledAt": 0,
@@ -22,6 +35,7 @@
         "hostPlatform": {
           "$rpc": "null"
         },
+        "multiProjectCreate": false,
         "tasksSupported": false,
         "worktreeCreateIdempotency": {
           "dedupeTtlMs": 60000
@@ -66,18 +80,6 @@
           }
         }
       }
-    },
-    "f079a530dc44": {
-      "capabilities": {
-        "agentLaunch": false,
-        "hostPlatform": {
-          "$rpc": "null"
-        },
-        "tasksSupported": false,
-        "worktreeCreateIdempotency": {
-          "dedupeTtlMs": 60000
-        }
-      }
     }
   },
   "recording": {
@@ -89,9 +91,9 @@
           "sender": ["eaed1eb137b5"],
           "payloads": ["d08f74d65ee6"],
           "settlements": {
-            "probe": "ab209a152529"
+            "probe": "824b5cc05b85"
           },
-          "state": "f079a530dc44",
+          "state": "2259efb3daa0",
           "effects": []
         }
       }
