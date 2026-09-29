@@ -15,6 +15,7 @@ import { directPathForEndpoint } from './mobile-direct-endpoint-probe'
 import { MobileRelayDirectUpgradeController } from './mobile-relay-direct-upgrade-controller'
 import { defaultCancelTimer, defaultScheduleTimer } from './timer-scheduler'
 import type { StableLogicalRpcClient } from './stable-logical-rpc-client'
+import { getBackgroundRelayRetention } from './background-relay-retention'
 
 type EndpointLifecycle = {
   setForeground(foreground: boolean): void
@@ -110,6 +111,7 @@ function createSupervisor(
     now: Date.now,
     randomBytes: ExpoCrypto.getRandomBytes,
     setTimer: defaultScheduleTimer,
-    clearTimer: defaultCancelTimer
+    clearTimer: defaultCancelTimer,
+    backgroundRelayRetention: getBackgroundRelayRetention
   })
 }

@@ -3,7 +3,7 @@ import { MobileEndpointNudgeRouter } from './mobile-endpoint-nudge-router'
 import type { RelayReconnectController } from './mobile-relay-reconnect-controller'
 import type { StableLogicalRpcClient } from './stable-logical-rpc-client'
 
-function routerFixture() {
+function routerFixture(retainsRelayInBackground = false) {
   let foreground = false
   const logical = {
     getActivePath: vi.fn(() => 'relay'),
@@ -11,7 +11,8 @@ function routerFixture() {
     getGeneration: vi.fn(() => 1),
     sendRequest: vi.fn(async () => ({}))
   } as unknown as StableLogicalRpcClient
-  const handleActiveNudge = vi.fn(() => 'probe' as const)
+  const handleActiveNudge = vi.fn((): 'probe' | 'replace' => 'probe')
+  const replaceRelay = vi.fn()
   const setForeground = vi.fn((next: boolean) => {
     foreground = next
   })
@@ -21,11 +22,12 @@ function routerFixture() {
     controller: { handleActiveNudge } as unknown as RelayReconnectController,
     isStopped: () => false,
     isForeground: () => foreground,
+    retainsRelayInBackground: () => retainsRelayInBackground,
     setForeground,
-    replaceRelay: vi.fn(),
+    replaceRelay,
     scheduleDirectProbe
   })
-  return { handleActiveNudge, logical, router, scheduleDirectProbe, setForeground }
+  return { handleActiveNudge, logical, replaceRelay, router, scheduleDirectProbe, setForeground }
 }
 
 describe('MobileEndpointNudgeRouter', () => {
@@ -47,6 +49,17 @@ describe('MobileEndpointNudgeRouter', () => {
 
     expect(fixture.setForeground).not.toHaveBeenCalled()
     expect(fixture.handleActiveNudge).not.toHaveBeenCalled()
+    expect(fixture.scheduleDirectProbe).not.toHaveBeenCalled()
+  })
+
+  it('replaces a retained background relay on a network nudge without foregrounding', () => {
+    const fixture = routerFixture(true)
+    fixture.handleActiveNudge.mockReturnValue('replace')
+
+    fixture.router.nudge('network-change')
+
+    expect(fixture.setForeground).not.toHaveBeenCalled()
+    expect(fixture.replaceRelay).toHaveBeenCalledOnce()
     expect(fixture.scheduleDirectProbe).not.toHaveBeenCalled()
   })
 })

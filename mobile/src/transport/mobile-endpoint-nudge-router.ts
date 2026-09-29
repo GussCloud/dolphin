@@ -11,6 +11,7 @@ export class MobileEndpointNudgeRouter {
       controller: RelayReconnectController
       isStopped: () => boolean
       isForeground: () => boolean
+      retainsRelayInBackground: () => boolean
       setForeground: (foreground: boolean) => void
       replaceRelay: () => void
       scheduleDirectProbe: () => void
@@ -26,6 +27,13 @@ export class MobileEndpointNudgeRouter {
       // Why: a background network flap must not re-open a billed relay splice;
       // focus/app-resume imply the app is visible even if AppState lags.
       if (reason === 'network-change') {
+        // Opted-in retention still replaces make-before-break across a network handoff.
+        if (
+          args.retainsRelayInBackground() &&
+          args.controller.handleActiveNudge(args.logical, reason) === 'replace'
+        ) {
+          args.replaceRelay()
+        }
         return
       }
       args.setForeground(true)

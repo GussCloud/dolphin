@@ -7,6 +7,7 @@ import type { RpcClient } from './rpc-client'
 import type { MobileConnectionPath } from './stable-logical-rpc-client'
 import type { ScheduleTimer } from './timer-scheduler'
 import type { ConnectionLogSink } from './types'
+import type { BackgroundRelayRetention } from './background-relay-retention'
 
 export type MobileEndpointSupervisorDependencies = {
   openDirect: () => RpcClient
@@ -26,4 +27,5 @@ export type MobileEndpointSupervisorDependencies = {
   setTimer: ScheduleTimer
   clearTimer: typeof clearTimeout
   onLog?: ConnectionLogSink
+  backgroundRelayRetention?: () => BackgroundRelayRetention
 }

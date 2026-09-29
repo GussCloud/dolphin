@@ -1,6 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { persistMirrored } from './mirrored-storage-keys'
 import { TERMINAL_TEXT_SCALES } from '../terminal/terminal-text-scales'
+import {
+  DEFAULT_BACKGROUND_RELAY_RETENTION,
+  isBackgroundRelayRetention,
+  type BackgroundRelayRetention
+} from '../transport/background-relay-retention'
 
 const PINS_PREFIX = 'dolphin:pins:'
 // Consent to the push service is separate from the old socket notification choice.
@@ -335,4 +340,21 @@ export async function savePinnedIds(hostId: string, ids: Set<string>): Promise<v
   const key = PINS_PREFIX + hostId
   const value = JSON.stringify([...ids])
   await persistMirrored(key, value)
+}
+
+const BACKGROUND_RELAY_RETENTION_KEY = 'dolphin:backgroundRelayRetention'
+
+export async function loadBackgroundRelayRetention(): Promise<BackgroundRelayRetention> {
+  try {
+    const raw = await AsyncStorage.getItem(BACKGROUND_RELAY_RETENTION_KEY)
+    return isBackgroundRelayRetention(raw) ? raw : DEFAULT_BACKGROUND_RELAY_RETENTION
+  } catch {
+    return DEFAULT_BACKGROUND_RELAY_RETENTION
+  }
+}
+
+export async function saveBackgroundRelayRetention(
+  retention: BackgroundRelayRetention
+): Promise<void> {
+  await AsyncStorage.setItem(BACKGROUND_RELAY_RETENTION_KEY, retention)
 }

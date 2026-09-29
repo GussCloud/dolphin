@@ -1,5 +1,6 @@
 import { startAndroidForegroundPushPresentation } from '../src/notifications/android-foreground-push'
 import { registerPushDismissalTask } from '../src/notifications/push-background-dismissal'
+import { startBackgroundRelayService } from '../src/platform/background-relay-service'
 import { readNativeNotificationData } from '../src/notifications/native-notification-data'
 import { setNotificationViewingWorkspace } from '../src/notifications/notification-viewing-policy'
 import { useCallback, useEffect, useRef } from 'react'
@@ -66,6 +67,7 @@ export default function RootLayout() {
   // has to be re-registered with the new one as soon as the provider hands it over.
   useEffect(() => startPushTokenSync(), [])
   useEffect(() => startAndroidForegroundPushPresentation(), [])
+  useEffect(() => startBackgroundRelayService(), [])
 
   // Why: route `dolphin://pair?...` deep links to the confirm screen so
   // the same pairing flow runs whether the link arrived via QR scan,
@@ -227,6 +229,7 @@ export default function RootLayout() {
           <Stack.Screen name="browser-settings" options={{ headerShown: false }} />
           <Stack.Screen name="voice-settings" options={{ headerShown: false }} />
           <Stack.Screen name="notifications" options={{ headerShown: false }} />
+          <Stack.Screen name="background-connection" options={{ headerShown: false }} />
           <Stack.Screen name="troubleshoot" options={{ headerShown: false }} />
           <Stack.Screen name="connection-log" options={{ headerShown: false }} />
           <Stack.Screen name="about" options={{ headerShown: false }} />

@@ -72,6 +72,7 @@ export class MobileEndpointSupervisor {
       controller: this.relayReconnect,
       isStopped: () => this.stopped,
       isForeground: () => this.backgroundGrace.isForeground(),
+      retainsRelayInBackground: () => this.backgroundGrace.keepsRelay(),
       setForeground: (foreground) => this.setForeground(foreground),
       replaceRelay: () => void this.recoverRelay(true, true),
       scheduleDirectProbe: () => this.directProbe.schedule(0)
@@ -92,8 +93,8 @@ export class MobileEndpointSupervisor {
       openRelay: dependencies.openRelay,
       randomBytes: dependencies.randomBytes,
       writeBundle: dependencies.writeBundle,
-      isActive: () => this.isActive(),
-      isForeground: () => this.backgroundGrace.isForeground(),
+      isActive: () => this.relayActive(),
+      isForeground: () => this.backgroundGrace.keepsRelay(),
       isStopped: () => this.stopped,
       hostId,
       relay,
@@ -164,7 +165,7 @@ export class MobileEndpointSupervisor {
           void this.rotateCredentialIfNeeded(this.relayReconnect.resetForDirectConnection())
         }
         this.directProbe.schedule()
-      } else if (!this.backgroundGrace.isForeground()) {
+      } else if (!this.backgroundGrace.keepsRelay()) {
         this.backgroundGrace.handleStateFailure()
       } else {
         // Why: the direct client enters reconnecting after its first failed
@@ -201,9 +202,9 @@ export class MobileEndpointSupervisor {
     this.backgroundGrace.stop()
   }
 
-  private isActive(): boolean {
-    return !this.stopped && this.backgroundGrace.isForeground()
-  }
+  private readonly isActive = (): boolean => !this.stopped && this.backgroundGrace.isForeground()
+  // Wider than isActive: an opted-in background retention keeps Relay recovering.
+  private readonly relayActive = (): boolean => !this.stopped && this.backgroundGrace.keepsRelay()
 
   // forceReplacement: dial past the "direct still looks live" guard — a lease
   // rotation, a network-change replacement, or the happy-eyeballs grace race.
@@ -211,7 +212,7 @@ export class MobileEndpointSupervisor {
   // shared cooldown and any session left stale-'connected' by a half-open socket
   // comes down; lease rotation clears it because armRetry owns its own retry.
   private async recoverRelay(forceReplacement = false, ownsRecovery = false): Promise<void> {
-    if (!this.isActive()) {
+    if (!this.relayActive()) {
       return
     }
     if (this.operationInFlight) {
@@ -266,7 +267,7 @@ export class MobileEndpointSupervisor {
       }
       const recoveryNeeded =
         forceReplacement || this.relayReconnect.needsRecovery(this.logical.getState())
-      if (!this.isActive() || !recoveryNeeded) {
+      if (!this.relayActive() || !recoveryNeeded) {
         return
       }
       this.logical.setRecoveryPath('relay', this.relayReconnect.getFailureCount())
@@ -285,7 +286,7 @@ export class MobileEndpointSupervisor {
       }
       // Why: cleanup may happen while a relay dial is awaiting the network;
       // record its outcome without recreating a foreground retry timer.
-      const scheduleRetry = (!forceReplacement || ownsRecovery) && this.isActive()
+      const scheduleRetry = (!forceReplacement || ownsRecovery) && this.relayActive()
       this.relayReconnect.registerFailure(dialed.error, scheduleRetry)
       recoveryPresentation.clearIfCredentialBlocked(this.logical, this.relayReconnect)
       if (ownsRecovery) {
@@ -293,11 +294,11 @@ export class MobileEndpointSupervisor {
       }
     } finally {
       this.operationInFlight = false
-      if (forceReplacement && this.relayRotationPending && this.isActive()) {
+      if (forceReplacement && this.relayRotationPending && this.relayActive()) {
         this.leaseRotation.armRetry(this.relayReconnect.retryDelayMs(5000))
       }
       // Why: the active relay can drop while migration follow-up still owns the mutex.
-      if (retryAfterOperation && this.isActive()) {
+      if (retryAfterOperation && this.relayActive()) {
         void this.recoverRelay()
       }
     }
