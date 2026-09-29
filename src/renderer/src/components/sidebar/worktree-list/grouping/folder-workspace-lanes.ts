@@ -30,7 +30,10 @@ export function getRenderableFolderWorkspaces(
   const projectGroupsById = new Map(projectGroups.map((group) => [group.id, group]))
   const renderable: RenderableFolderWorkspace[] = []
   for (const folderWorkspace of folderWorkspaces) {
-    const projectGroup = projectGroupsById.get(folderWorkspace.projectGroupId)
+    const projectGroup =
+      folderWorkspace.projectGroupId === null
+        ? undefined
+        : projectGroupsById.get(folderWorkspace.projectGroupId)
     // A group filtered out for host visibility legitimately hides its workspaces.
     if (!projectGroup?.parentPath) {
       continue

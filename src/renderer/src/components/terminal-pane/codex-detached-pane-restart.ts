@@ -151,7 +151,9 @@ function buildPaneIdentityEnv(
     DOLPHIN_WORKSPACE_ID: worktreeId,
     ...(folderWorkspace
       ? {
-          DOLPHIN_PROJECT_GROUP_ID: folderWorkspace.projectGroupId,
+          ...(folderWorkspace.projectGroupId !== null
+            ? { DOLPHIN_PROJECT_GROUP_ID: folderWorkspace.projectGroupId }
+            : {}),
           DOLPHIN_WORKSPACE_ROOT: folderWorkspace.folderPath
         }
       : {}),

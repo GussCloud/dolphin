@@ -89,7 +89,10 @@ export function getFolderWorkspaceRevealGroupKeys(
   // Under non-repo grouping the project-group headers above do not exist, so the
   // lane and host headers are the ones actually hiding the row (#15362). Lane
   // keys come from the same function grouping uses, so the two cannot disagree.
-  const owningGroup = groupsById.get(folderWorkspace.projectGroupId)
+  const owningGroup =
+    folderWorkspace.projectGroupId === null
+      ? undefined
+      : groupsById.get(folderWorkspace.projectGroupId)
   if (options?.groupBy && options.groupBy !== 'repo' && owningGroup) {
     keys.push(
       getFolderWorkspaceLaneKey(

@@ -56,7 +56,7 @@ function getRepoScopeConnectionId(repo: Repo): string | null {
 
 function getFolderScopeCandidateRepos(args: {
   folderPath: string
-  projectGroupId: string
+  projectGroupId: string | null
   connectionId: string | null
   projectGroups: readonly ProjectGroup[]
   repos: readonly Repo[]

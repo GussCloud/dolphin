@@ -29,7 +29,7 @@ export function getLocalRepos(store: Store) {
 
 function isRemoteOnlyFolderScope(
   folderPath: string,
-  projectGroupId: string,
+  projectGroupId: string | null,
   hasRemoteOwner: boolean,
   childGroupIndex: ProjectGroupChildIndex,
   repos: readonly Repo[]

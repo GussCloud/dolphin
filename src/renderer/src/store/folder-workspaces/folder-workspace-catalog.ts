@@ -53,7 +53,10 @@ function getFolderWorkspaceHostIdFromIndex(
   workspace: FolderWorkspace,
   hostByGroupId: FolderWorkspaceHostIndex
 ): ExecutionHostId {
-  return hostByGroupId.get(workspace.projectGroupId) ?? LOCAL_EXECUTION_HOST_ID
+  return (
+    (workspace.projectGroupId === null ? undefined : hostByGroupId.get(workspace.projectGroupId)) ??
+    LOCAL_EXECUTION_HOST_ID
+  )
 }
 
 function createFolderWorkspaceHostResolver(

@@ -3,7 +3,7 @@ import type { PersistedState } from '../../../shared/persisted-state-types'
 import type { WorkspaceLineage } from '../../../shared/worktree/lineage-types'
 import { normalizeFeatureInteractions } from '../../../shared/feature-interactions'
 import { normalizeContextualTourIds } from '../../../shared/contextual-tours'
-import { isWorkspaceKey } from '../../../shared/workspace-scope'
+import { isWorkspaceKey, parseWorkspaceKey } from '../../../shared/workspace-scope'
 
 export function mergeFeatureInteractions(
   current: PersistedState['ui']['featureInteractions'],
@@ -57,7 +57,9 @@ export function stripMainOwnedTelemetryMarkerFromUI(
 }
 
 export function normalizeWorkspaceLineageByChildKey(
-  value: unknown
+  value: unknown,
+  /** When given, rows whose folder parent is gone are dropped; they would make host lineage ambiguous. */
+  knownFolderWorkspaceIds?: ReadonlySet<string>
 ): Record<WorkspaceKey, WorkspaceLineage> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {}
@@ -79,6 +81,14 @@ export function normalizeWorkspaceLineageByChildKey(
       !isWorkspaceKey(parentWorkspaceKey) ||
       childWorkspaceKey !== key ||
       childWorkspaceKey === parentWorkspaceKey
+    ) {
+      continue
+    }
+    const parentScope = parseWorkspaceKey(parentWorkspaceKey)
+    if (
+      knownFolderWorkspaceIds &&
+      parentScope?.type === 'folder' &&
+      !knownFolderWorkspaceIds.has(parentScope.folderWorkspaceId)
     ) {
       continue
     }

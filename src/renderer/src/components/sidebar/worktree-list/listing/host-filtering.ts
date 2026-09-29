@@ -50,7 +50,10 @@ export function filterFolderWorkspacesForVisibleHosts(
     visibleHostIdSet.has(
       getFolderWorkspaceExecutionHostIdForRows({
         folderWorkspace,
-        projectGroup: projectGroupById.get(folderWorkspace.projectGroupId),
+        projectGroup:
+          folderWorkspace.projectGroupId === null
+            ? undefined
+            : projectGroupById.get(folderWorkspace.projectGroupId),
         defaultHostId
       })
     )

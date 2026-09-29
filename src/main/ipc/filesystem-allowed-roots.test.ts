@@ -103,7 +103,7 @@ function referenceAllowedRoots(store: Store): string[] {
   const projectGroups = scopeStore.getProjectGroups?.() ?? []
   const isRemoteOnly = (
     folderPath: string,
-    projectGroupId: string,
+    projectGroupId: string | null,
     connectionId: string | null | undefined
   ): boolean => {
     if (connectionId) {

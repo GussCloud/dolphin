@@ -122,12 +122,15 @@ export function collectActiveDashboardWorkspaces(
     if (folderWorkspace.isArchived || seenWorkspaceIds.has(worktree.id)) {
       continue
     }
-    const projectGroup = projectGroupsById.get(folderWorkspace.projectGroupId)
+    const projectGroup =
+      folderWorkspace.projectGroupId === null
+        ? undefined
+        : projectGroupsById.get(folderWorkspace.projectGroupId)
     const workspaceHostLabel = includeMapMetadata
       ? resolveHostLabel(getWorktreeExecutionHostId(worktree, undefined))
       : undefined
     workspaces.push({
-      projectId: `folder-workspace:${folderWorkspace.projectGroupId}`,
+      projectId: worktree.repoId,
       projectName: projectGroup?.name ?? folderWorkspace.name,
       repo: null,
       repoIcon: null,

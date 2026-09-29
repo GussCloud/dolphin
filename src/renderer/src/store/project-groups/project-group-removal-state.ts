@@ -23,6 +23,7 @@ export function applyProjectGroupDeleteCascade(
     projectGroups: state.projectGroups.filter((group) => !isDeletedGroup(group)),
     folderWorkspaces: state.folderWorkspaces.filter(
       (workspace) =>
+        workspace.projectGroupId === null ||
         !deletedGroupIds.has(workspace.projectGroupId) ||
         // Why: resolve the workspace's host against the pre-delete group list, which still holds its owner row.
         !ownsRowHost(getFolderWorkspaceHostId(workspace, state.projectGroups))

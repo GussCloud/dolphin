@@ -55,7 +55,10 @@ function detectedAgentsForWorktree(
   const workspaceScope = parseWorkspaceKey(worktreeId)
   if (workspaceScope?.type === 'folder') {
     const folder = catalog.foldersById.get(workspaceScope.folderWorkspaceId)
-    const group = folder ? catalog.groupsById.get(folder.projectGroupId) : undefined
+    const group =
+      folder && folder.projectGroupId !== null
+        ? catalog.groupsById.get(folder.projectGroupId)
+        : undefined
     const host = parseExecutionHostId(group?.executionHostId)
     if (host?.kind === 'runtime') {
       return state.runtimeDetectedAgentIds?.[host.environmentId] ?? []

@@ -60,3 +60,43 @@ describe('normalizeFolderWorkspaces host attribution', () => {
     expect(inherited.connectionId).toBe('ssh-group')
   })
 })
+
+describe('normalizeFolderWorkspaces multi-project workspaces', () => {
+  const multiProjectRow = {
+    id: 'ws-multi',
+    projectGroupId: null,
+    kind: 'multi-project',
+    name: 'feature-x',
+    folderPath: '/workspaces/feature-x'
+  }
+
+  it('keeps a groupless multi-project workspace across a reload', () => {
+    const [workspace] = normalizeFolderWorkspaces([multiProjectRow], [])
+
+    expect(workspace).toMatchObject({
+      id: 'ws-multi',
+      projectGroupId: null,
+      kind: 'multi-project',
+      folderPath: '/workspaces/feature-x'
+    })
+  })
+
+  it('detaches a multi-project workspace from a group that no longer exists', () => {
+    const [workspace] = normalizeFolderWorkspaces(
+      [{ ...multiProjectRow, projectGroupId: 'gone' }],
+      [folderGroup]
+    )
+
+    expect(workspace.projectGroupId).toBeNull()
+  })
+
+  it('still drops a plain folder workspace whose group is gone', () => {
+    expect(
+      normalizeFolderWorkspaces([{ ...multiProjectRow, kind: undefined }], [folderGroup])
+    ).toEqual([])
+  })
+
+  it('drops a multi-project workspace without a container folder', () => {
+    expect(normalizeFolderWorkspaces([{ ...multiProjectRow, folderPath: '' }], [])).toEqual([])
+  })
+})

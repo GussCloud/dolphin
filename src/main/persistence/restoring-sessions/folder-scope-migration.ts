@@ -61,7 +61,8 @@ export function backfillFolderScopeConnectionIds(state: PersistedState): {
   })
   const groupsById = new Map(projectGroups.map((group) => [group.id, group]))
   const folderWorkspaces = (state.folderWorkspaces ?? []).map((workspace) => {
-    if (workspace.connectionId) {
+    // Why: a multi-project workspace has no group to inherit a connection from.
+    if (workspace.connectionId || workspace.projectGroupId === null) {
       return workspace
     }
     const groupConnectionId = groupsById.get(workspace.projectGroupId)?.connectionId ?? null

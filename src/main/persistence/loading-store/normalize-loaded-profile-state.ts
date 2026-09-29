@@ -36,6 +36,10 @@ export function normalizeLoadedProfileState(
   const { defaults, migratedExternalVisibility, osc52ClipboardNoticePending } = terminal
   const { normalizedOnboarding, normalizedProjectGroups, loadedCompactWorktreeCards } = profile
   const projectCatalog = normalizeLoadedProjectCatalog(parsed, markNeedsSave)
+  const folderWorkspaces = normalizeFolderWorkspaces(
+    parsed.folderWorkspaces,
+    normalizedProjectGroups
+  )
   // Ordered: the host partitions drop the global fields this slice already owns.
   const workspaceSession = normalizeLoadedLocalSession(parsed, defaults, markNeedsSave)
 
@@ -50,7 +54,7 @@ export function normalizeLoadedProfileState(
     // Why: persisted catalog rows are untrusted JSON; consumers call string methods on fields the type says are strings.
     projects: projectCatalog.projects,
     projectHostSetups: projectCatalog.projectHostSetups,
-    folderWorkspaces: normalizeFolderWorkspaces(parsed.folderWorkspaces, normalizedProjectGroups),
+    folderWorkspaces,
     folderWorkspaceDiffComments: normalizeFolderWorkspaceDiffComments(
       parsed.folderWorkspaceDiffComments
     ),
@@ -66,7 +70,8 @@ export function normalizeLoadedProfileState(
       parsed.mobileClientTabSelectionsByDeviceId
     ),
     workspaceLineageByChildKey: normalizeWorkspaceLineageByChildKey(
-      parsed.workspaceLineageByChildKey
+      parsed.workspaceLineageByChildKey,
+      new Set(folderWorkspaces.map((workspace) => workspace.id))
     ),
     settings: normalizeLoadedGlobalSettings(parsed, terminal, profile),
     // Why: legacy 'recent' meant the smart sort; migrate once on the raw value so a fresh 'recent' default isn't remigrated.

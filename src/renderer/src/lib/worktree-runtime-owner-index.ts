@@ -301,10 +301,10 @@ export function findIndexedFolderWorkspaceOwner<T extends FolderWorkspaceOwnerRe
 
 export function findIndexedProjectGroupOwner<T extends ProjectGroupOwnerRecord>(
   projectGroups: readonly T[] | undefined,
-  projectGroupId: string,
+  projectGroupId: string | null,
   executionHostId?: ExecutionHostId
 ): T | null {
-  if (!projectGroups) {
+  if (!projectGroups || projectGroupId === null) {
     return null
   }
   let index = projectGroupOwnerIndexCache.get(projectGroups)
