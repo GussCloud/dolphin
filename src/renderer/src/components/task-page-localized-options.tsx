@@ -1,5 +1,5 @@
 import React from 'react'
-import { Github, Gitlab, LayoutGrid, List } from 'lucide-react'
+import { Github, Gitlab, Kanban, LayoutGrid, List } from 'lucide-react'
 
 import { JiraIcon } from '@/components/icons/JiraIcon'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
@@ -131,6 +131,11 @@ export const getSourceOptions = createLocalizedCatalog((): SourceOption[] => [
     id: 'jira',
     label: translate('auto.components.TaskPage.9cd11ba218', 'Jira'),
     Icon: ({ className }) => <JiraIcon className={className} />
+  },
+  {
+    id: 'azure-boards',
+    label: translate('auto.components.TaskPage.azureBoards', 'Azure Boards'),
+    Icon: ({ className }) => <Kanban className={className} />
   }
 ])
 

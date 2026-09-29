@@ -30,5 +30,8 @@ export function shouldHideTaskPageListChrome({
       return hasJiraDetail
     case 'linear':
       return hasLinearIssueDetail || hasLinearProjectContext || hasLinearViewContext
+    case 'azure-boards':
+      // Azure Boards renders its detail beside the list inside its own content view.
+      return false
   }
 }

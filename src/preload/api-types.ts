@@ -35,6 +35,7 @@ import type { GithubWorkItemApi } from './api/github-work-item-api'
 import type { GitLabApi } from './api/gitlab-api'
 import type { BitbucketApi, HostedReviewApi } from './api/hosted-review-api'
 import type { AzureDevOpsApi } from './api/azure-devops-api'
+import type { AzureBoardsApi } from './api/azure-boards-api'
 import type { JiraApi } from './api/jira-api'
 import type { LinearApi } from './api/linear-api'
 import type { MobileApi } from './api/mobile-api'
@@ -92,6 +93,7 @@ export type PreloadApi = {
   gl: GitLabApi
   bitbucket: BitbucketApi
   azureDevOps: AzureDevOpsApi
+  azureBoards: AzureBoardsApi
   linear: LinearApi
   jira: JiraApi
   starNag: StarNagApi

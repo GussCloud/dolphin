@@ -16,7 +16,7 @@ export type ComposerDerivedModel = {
   currentYamlHooks: DolphinHooks | null
   setupConfig: SetupConfig | null
   setupPolicy: SetupRunPolicy
-  linkedWorkItemProvider: 'github' | 'gitlab' | 'linear' | 'jira' | null
+  linkedWorkItemProvider: 'github' | 'gitlab' | 'linear' | 'jira' | 'azure-boards' | null
   willApplyIssueCommandAsPrompt: boolean
   shouldWaitForIssueAutomationCheck: boolean
   requiresExplicitSetupChoice: boolean

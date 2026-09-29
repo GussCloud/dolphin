@@ -1,4 +1,6 @@
 import { getExecutionHostLabel } from '../../../../shared/execution-host'
+import { taskProviderLabel } from '../../../../shared/task-providers'
+import { taskProviderIdentityLabel } from '../../../../shared/task-provider-identity'
 import type { TaskSourceContext } from '../../../../shared/task-source-context'
 
 export type AutomationSourceDisplay = {
@@ -32,33 +34,14 @@ export function getAutomationSourceDisplay(
 }
 
 function getProviderLabel(provider: TaskSourceContext['provider']): string {
-  switch (provider) {
-    case 'github':
-      return 'GitHub'
-    case 'gitlab':
-      return 'GitLab'
-    case 'linear':
-      return 'Linear'
-    case 'jira':
-      return 'Jira'
-  }
+  return taskProviderLabel(provider)
 }
 
 function getSourceIdentityLabel(sourceContext: TaskSourceContext): string | null {
-  const identity = sourceContext.providerIdentity
-  if (identity) {
-    switch (identity.provider) {
-      case 'github':
-        return `${identity.owner}/${identity.repo}`
-      case 'gitlab':
-        return identity.namespace && identity.project
-          ? `${identity.namespace}/${identity.project}`
-          : (identity.projectId ?? null)
-      case 'linear':
-        return identity.workspaceName ?? identity.workspaceId ?? null
-      case 'jira':
-        return identity.siteUrl ?? identity.siteId ?? null
-    }
-  }
-  return sourceContext.accountLabel ?? sourceContext.repoId ?? null
+  return (
+    taskProviderIdentityLabel(sourceContext.providerIdentity) ??
+    sourceContext.accountLabel ??
+    sourceContext.repoId ??
+    null
+  )
 }

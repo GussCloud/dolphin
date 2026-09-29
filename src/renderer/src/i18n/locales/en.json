@@ -2336,7 +2336,8 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to a Dolphin workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to a Dolphin workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces"
+        "linearWorktreesColumn": "Workspaces",
+        "azureBoards": "Azure Boards"
       },
       "Terminal": {
         "73768427cf": "Close",
@@ -8719,7 +8720,9 @@
           "integrationsHint": "Credentials for all providers also live under",
           "integrationsLink": "Integrations",
           "skillHint": ". After Linear is connected, usage examples stay under Settings → Linear.",
-          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks."
+          "incompleteBannerBodyWithLinear": "Hide providers you do not use, or expand a card and finish its steps. For Linear: API access, the agent skill, and Show in Tasks.",
+          "azureBoards": "Azure Boards",
+          "azureBoardsDescription": "Browse Azure DevOps work items with your Azure DevOps sign-in and start workspaces from them."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Thickness of the pane divider line.",
@@ -17471,6 +17474,39 @@
           "projects": "Projects",
           "groups": "Add all projects in a group",
           "hint": "Each project gets a worktree on the same branch, inside one folder for this workspace."
+        }
+      },
+      "taskPage": {
+        "azureBoards": {
+          "project": "Project",
+          "searchPlaceholder": "Search title or ID",
+          "assignedToMe": "Assigned to me",
+          "includeClosed": "Include closed",
+          "refresh": "Refresh",
+          "new": "New",
+          "start": "Start",
+          "setupTitle": "Set up Azure Boards",
+          "setupDescription": "Sign in to Azure DevOps and choose a default organization in Settings > Integrations.",
+          "openIntegrations": "Open Integrations",
+          "retry": "Retry",
+          "hide": "Hide Azure Boards",
+          "empty": "No work items match these filters.",
+          "createTitle": "New work item",
+          "type": "Type",
+          "titleLabel": "Title",
+          "descriptionLabel": "Description",
+          "cancel": "Cancel",
+          "create": "Create",
+          "commentPlaceholder": "Add a comment",
+          "comment": "Comment",
+          "close": "Close",
+          "startWorkspace": "Start workspace",
+          "openInBrowser": "Open in Azure DevOps",
+          "state": "State",
+          "assignedTo": "Assigned to {{value0}}",
+          "unassigned": "Unassigned",
+          "noDescription": "No description.",
+          "comments": "Comments"
         }
       }
     },

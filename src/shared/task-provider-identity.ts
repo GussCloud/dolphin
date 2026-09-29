@@ -29,11 +29,18 @@ export type JiraTaskProviderIdentity = {
   projectKey?: string | null
 }
 
+export type AzureBoardsTaskProviderIdentity = {
+  provider: 'azure-boards'
+  organizationUrl?: string | null
+  project?: string | null
+}
+
 export type TaskProviderIdentity =
   | GitHubTaskProviderIdentity
   | GitLabTaskProviderIdentity
   | LinearTaskProviderIdentity
   | JiraTaskProviderIdentity
+  | AzureBoardsTaskProviderIdentity
 
 export function normalizeTaskProviderIdentity(
   provider: TaskProvider,
@@ -79,6 +86,12 @@ export function normalizeTaskProviderIdentity(
         siteUrl: normalizeNonEmptyString(raw.siteUrl),
         projectKey: normalizeNonEmptyString(raw.projectKey)
       }
+    case 'azure-boards':
+      return {
+        provider,
+        organizationUrl: normalizeNonEmptyString(raw.organizationUrl),
+        project: normalizeNonEmptyString(raw.project)
+      }
   }
 }
 
@@ -112,6 +125,8 @@ export function isStoredTaskProviderIdentity(provider: TaskProvider, identity: u
       )
     case 'jira':
       return ['siteId', 'siteUrl', 'projectKey'].every((key) => isNullableOptionalString(raw[key]))
+    case 'azure-boards':
+      return ['organizationUrl', 'project'].every((key) => isNullableOptionalString(raw[key]))
   }
 }
 
@@ -119,7 +134,8 @@ const TASK_PROVIDER_IDENTITY_FIELDS: Record<TaskProvider, readonly string[]> = {
   github: ['owner', 'repo', 'host'],
   gitlab: ['projectId', 'namespace', 'project', 'webUrl'],
   linear: ['workspaceId', 'workspaceName', 'teamId', 'teamKey'],
-  jira: ['siteId', 'siteUrl', 'projectKey']
+  jira: ['siteId', 'siteUrl', 'projectKey'],
+  'azure-boards': ['organizationUrl', 'project']
 }
 
 export function areTaskProviderIdentitiesEqual(
@@ -157,6 +173,31 @@ export function taskProviderIdentityCachePart(
       return [identity.workspaceId, identity.teamId ?? identity.teamKey].filter(Boolean).join('/')
     case 'jira':
       return [identity.siteId ?? identity.siteUrl, identity.projectKey].filter(Boolean).join('/')
+    case 'azure-boards':
+      return [identity.organizationUrl, identity.project].filter(Boolean).join('/')
+  }
+}
+
+/** Short human label for the source an identity points at (repo, workspace, site, project). */
+export function taskProviderIdentityLabel(
+  identity: TaskProviderIdentity | null | undefined
+): string | null {
+  if (!identity) {
+    return null
+  }
+  switch (identity.provider) {
+    case 'github':
+      return `${identity.owner}/${identity.repo}`
+    case 'gitlab':
+      return identity.namespace && identity.project
+        ? `${identity.namespace}/${identity.project}`
+        : (identity.projectId ?? null)
+    case 'linear':
+      return identity.workspaceName ?? identity.workspaceId ?? null
+    case 'jira':
+      return identity.siteUrl ?? identity.siteId ?? null
+    case 'azure-boards':
+      return identity.project ?? identity.organizationUrl ?? null
   }
 }
 

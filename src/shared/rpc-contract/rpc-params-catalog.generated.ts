@@ -50,6 +50,14 @@ import {
   AutomationRuns,
   AutomationUpdate
 } from './automation-params'
+import {
+  AzureBoardsAddComment,
+  AzureBoardsCreate,
+  AzureBoardsGet,
+  AzureBoardsList,
+  AzureBoardsProject,
+  AzureBoardsUpdateState
+} from './azure-boards-params'
 import { AzureDevOpsConfigureCliDefaults, AzureDevOpsSetAuthMethod } from './azure-devops-params'
 import { CertificateProceed } from './browser-core-params'
 import { MouseClick } from './browser-extras-params'
@@ -620,6 +628,13 @@ export const RPC_PARAMS_BY_METHOD = {
   'automation.runs': AutomationRuns,
   'automation.show': AutomationId,
   'automation.update': AutomationUpdate,
+  'azureBoards.addComment': AzureBoardsAddComment,
+  'azureBoards.create': AzureBoardsCreate,
+  'azureBoards.get': AzureBoardsGet,
+  'azureBoards.list': AzureBoardsList,
+  'azureBoards.scope': null,
+  'azureBoards.types': AzureBoardsProject,
+  'azureBoards.updateState': AzureBoardsUpdateState,
   'azureDevOps.configureCliDefaults': AzureDevOpsConfigureCliDefaults,
   'azureDevOps.refreshCliSession': null,
   'azureDevOps.setAuthMethod': AzureDevOpsSetAuthMethod,

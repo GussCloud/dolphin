@@ -1,6 +1,29 @@
-export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira'
+export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira' | 'azure-boards'
 
-export const TASK_PROVIDERS: readonly TaskProvider[] = ['github', 'gitlab', 'linear', 'jira']
+export const TASK_PROVIDERS: readonly TaskProvider[] = [
+  'github',
+  'gitlab',
+  'linear',
+  'jira',
+  'azure-boards'
+]
+
+const TASK_PROVIDER_LABELS: Record<TaskProvider, string> = {
+  github: 'GitHub',
+  gitlab: 'GitLab',
+  linear: 'Linear',
+  jira: 'Jira',
+  'azure-boards': 'Azure Boards'
+}
+
+export function taskProviderLabel(provider: TaskProvider): string {
+  return TASK_PROVIDER_LABELS[provider]
+}
+
+/** Sources scoped to an account (workspace, site, organization) rather than a repository. */
+export function isAccountBackedTaskSource(provider: TaskProvider): boolean {
+  return provider === 'linear' || provider === 'jira' || provider === 'azure-boards'
+}
 
 const TASK_PROVIDER_SET = new Set<TaskProvider>(TASK_PROVIDERS)
 
@@ -102,7 +125,8 @@ function isTaskProviderAvailable(
   }
   // Why: Jira can be connected from the Tasks surface itself, so hiding it
   // when disconnected would remove the entry point for first-time setup.
-  if (provider === 'jira') {
+  // Azure Boards likewise explains its setup (Azure CLI or token) in place.
+  if (provider === 'jira' || provider === 'azure-boards') {
     return true
   }
   return availability.linearConnected

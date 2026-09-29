@@ -20,6 +20,7 @@ import { STORAGE_METHODS } from './storage'
 import { ACCOUNT_METHODS } from './accounts'
 import { PREFLIGHT_METHODS } from './preflight'
 import { AZURE_DEVOPS_METHODS } from './azure-devops'
+import { AZURE_BOARDS_METHODS } from './azure-boards'
 import { COMPUTER_METHODS } from './computer'
 import { SESSION_TAB_METHODS } from './session-tabs'
 import { NATIVE_CHAT_METHODS } from './native-chat'
@@ -82,6 +83,7 @@ export const ALL_RPC_METHODS = [
   ...ACCOUNT_METHODS,
   ...PREFLIGHT_METHODS,
   ...AZURE_DEVOPS_METHODS,
+  ...AZURE_BOARDS_METHODS,
   ...COMPUTER_METHODS,
   ...SESSION_TAB_METHODS,
   ...NATIVE_CHAT_METHODS,

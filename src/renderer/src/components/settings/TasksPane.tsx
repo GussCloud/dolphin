@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Github, Gitlab } from 'lucide-react'
+import { Github, Gitlab, Kanban } from 'lucide-react'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { TaskProvider } from '../../../../shared/task-providers'
 import {
@@ -89,6 +89,18 @@ const PROVIDER_META: Record<
       )
     },
     Icon: ({ className }) => <JiraIcon className={className} />
+  },
+  'azure-boards': {
+    get label() {
+      return translate('auto.components.settings.TasksPane.azureBoards', 'Azure Boards')
+    },
+    get description() {
+      return translate(
+        'auto.components.settings.TasksPane.azureBoardsDescription',
+        'Browse Azure DevOps work items with your Azure DevOps sign-in and start workspaces from them.'
+      )
+    },
+    Icon: ({ className }) => <Kanban className={className} />
   }
 }
 

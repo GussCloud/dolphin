@@ -388,6 +388,10 @@ vi.mock('../azure-devops', () => ({
   registerAzureDevOpsHandlers: vi.fn()
 }))
 
+vi.mock('../azure-boards', () => ({
+  registerAzureBoardsHandlers: vi.fn()
+}))
+
 vi.mock('../bitbucket', () => ({
   registerBitbucketHandlers: registerBitbucketHandlersMock
 }))

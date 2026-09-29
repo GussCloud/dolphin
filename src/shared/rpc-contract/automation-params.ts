@@ -100,6 +100,13 @@ export const TaskProviderIdentity = z
         siteUrl: z.string().nullable().optional(),
         projectKey: z.string().nullable().optional()
       })
+      .passthrough(),
+    z
+      .object({
+        provider: z.literal('azure-boards'),
+        organizationUrl: z.string().nullable().optional(),
+        project: z.string().nullable().optional()
+      })
       .passthrough()
   ])
   .optional()
@@ -108,7 +115,7 @@ export const TaskProviderIdentity = z
 export const TaskSourceContext = z
   .object({
     kind: z.literal('task-source'),
-    provider: z.enum(['github', 'gitlab', 'linear', 'jira']),
+    provider: z.enum(['github', 'gitlab', 'linear', 'jira', 'azure-boards']),
     projectId: requiredString('Missing source project id'),
     hostId: ExecutionHostId,
     projectHostSetupId: OptionalNullablePlainString,

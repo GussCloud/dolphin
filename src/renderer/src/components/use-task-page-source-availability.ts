@@ -1,3 +1,4 @@
+import { isAccountBackedTaskSource } from '../../../shared/task-providers'
 import type { TaskPageRuntimeHostsModel } from './use-task-page-runtime-hosts'
 import { useCallback, useMemo } from 'react'
 import type { Repo } from '../../../shared/repo-types'
@@ -139,7 +140,7 @@ export function useTaskPageSourceAvailabilityPrelude(model: TaskPageRuntimeHosts
     ? getTaskSourceCacheScope(jiraTaskSourceContext)
     : providerRuntimeContextKey
   const accountBackedTaskSourceHostAvailability = useMemo<TaskSourceHostAvailability[]>(() => {
-    if (taskSource !== 'linear' && taskSource !== 'jira') {
+    if (!isAccountBackedTaskSource(taskSource)) {
       return []
     }
     const host = hostRegistryById.get(accountBackedTaskSourceHostId)
