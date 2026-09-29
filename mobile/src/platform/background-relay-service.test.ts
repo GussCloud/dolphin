@@ -23,8 +23,8 @@ function fixture() {
     openAutostartSettings: () => true
   }
   let listener: ((state: AppStateStatus) => void) | null = null
-  const appState = {
-    currentState: 'active' as AppStateStatus,
+  const appState: NonNullable<Parameters<typeof startBackgroundRelayService>[1]> = {
+    currentState: 'active',
     addEventListener: (_type: 'change', next: (state: AppStateStatus) => void) => {
       listener = next
       return { remove: vi.fn() }
