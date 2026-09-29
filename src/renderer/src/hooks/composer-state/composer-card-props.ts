@@ -33,6 +33,7 @@ export function buildComposerCardProps(state: ComposerModel) {
     folderTargetRequiresConnection,
     folderTargetSshStatus,
     forkPushWarning,
+    multiProjectMemberRepoIds,
     handleAddAttachment,
     handleBaseBranchChange,
     handleBaseBranchMrSelect,
@@ -136,7 +137,15 @@ export function buildComposerCardProps(state: ComposerModel) {
     createGateMode === 'quick'
       ? getQuickComposerCreateDisabled(createGateInput)
       : getFullComposerCreateDisabled(createGateInput)
-  const createDisabled = isProjectGroupTarget ? folderCreateDisabled : repoCreateDisabled
+  const isMultiProjectTarget = multiProjectMemberRepoIds !== null
+  // Why: branch, setup, sparse and host choices belong to one repo; a group or several projects have none.
+  const hidesRepoOnlyFields = isProjectGroupTarget || isMultiProjectTarget
+  const multiProjectCreateDisabled = creating || !workspaceSeedName || sourceIntentBlocksCreate
+  const createDisabled = isProjectGroupTarget
+    ? folderCreateDisabled
+    : isMultiProjectTarget
+      ? multiProjectCreateDisabled
+      : repoCreateDisabled
   const cardProps: ComposerCardSourceProps & ComposerCardActionProps = {
     eligibleRepos: isProjectGroupTarget ? folderSourceRepos : eligibleRepos,
     repoId,
@@ -145,30 +154,30 @@ export function buildComposerCardProps(state: ComposerModel) {
     selectedRepoIsGit: isProjectGroupTarget ? true : selectedRepoIsGit,
     onRepoChange: isProjectGroupTarget ? handleFolderSourceRepoChange : handleRepoChange,
     onProjectChange: handleProjectChange,
-    projectHostSetupOptions: isProjectGroupTarget ? [] : projectHostSetupOptions,
-    selectedProjectHostSetupId: isProjectGroupTarget ? null : selectedProjectHostSetupId,
+    projectHostSetupOptions: hidesRepoOnlyFields ? [] : projectHostSetupOptions,
+    selectedProjectHostSetupId: hidesRepoOnlyFields ? null : selectedProjectHostSetupId,
     onProjectHostSetupChange: handleProjectHostSetupChange,
-    ephemeralVmRecipes: isProjectGroupTarget || !ephemeralVmsEnabled ? [] : ephemeralVmRecipes,
+    ephemeralVmRecipes: hidesRepoOnlyFields || !ephemeralVmsEnabled ? [] : ephemeralVmRecipes,
     selectedEphemeralVmRecipeId:
-      isProjectGroupTarget || !ephemeralVmsEnabled ? null : selectedEphemeralVmRecipeId,
+      hidesRepoOnlyFields || !ephemeralVmsEnabled ? null : selectedEphemeralVmRecipeId,
     onEphemeralVmRecipeChange: setSelectedEphemeralVmRecipeId,
     ephemeralVmRecipeError:
-      isProjectGroupTarget || !ephemeralVmsEnabled ? null : ephemeralVmRecipeError,
+      hidesRepoOnlyFields || !ephemeralVmsEnabled ? null : ephemeralVmRecipeError,
     repoBackedSearchRepos: isProjectGroupTarget ? folderSourceRepos : undefined,
     repoBackedSourcesDisabled: isProjectGroupTarget ? folderSourceRepos.length === 0 : false,
     allowSmartNameAddProject: !isProjectGroupTarget,
     smartNameRepoSwitchTarget: isProjectGroupTarget ? 'task-source' : 'project',
     name,
     onNameValueChange: handleNameValueChange,
-    branchNameOverride: isProjectGroupTarget ? undefined : branchNameOverride,
-    onBranchNameOverrideChange: isProjectGroupTarget ? () => {} : handleBranchNameOverrideChange,
-    parentWorktreeId: isProjectGroupTarget ? null : parentWorktreeId,
-    onParentWorktreeIdChange: isProjectGroupTarget ? () => {} : setParentWorktreeId,
+    branchNameOverride: hidesRepoOnlyFields ? undefined : branchNameOverride,
+    onBranchNameOverrideChange: hidesRepoOnlyFields ? () => {} : handleBranchNameOverrideChange,
+    parentWorktreeId: hidesRepoOnlyFields ? null : parentWorktreeId,
+    onParentWorktreeIdChange: hidesRepoOnlyFields ? () => {} : setParentWorktreeId,
     selectedRepoExecutionHostId: isProjectGroupTarget ? null : selectedRepoExecutionHostId,
     selectedRepoProjectId: isProjectGroupTarget ? null : selectedRepoProjectId,
     onSmartGitHubItemSelect: handleSmartGitHubItemSelect,
     onSmartGitLabItemSelect: handleSmartGitLabItemSelect,
-    onSmartBranchSelect: isProjectGroupTarget ? () => {} : handleSmartBranchSelect,
+    onSmartBranchSelect: hidesRepoOnlyFields ? () => {} : handleSmartBranchSelect,
     onSmartNameModeChange: setSmartNameMode,
     onSmartLinearIssueSelect: handleSmartLinearIssueSelect,
     onSmartJiraIssueSelect: handleSmartJiraIssueSelect,
@@ -179,13 +188,11 @@ export function buildComposerCardProps(state: ComposerModel) {
     smartNameSelection,
     onClearSmartNameSelection: handleClearSmartNameSelection,
     canReuseSelectedBranch:
-      !isProjectGroupTarget &&
-      reuseEligibleBranch !== null &&
-      smartNameSelection?.kind === 'branch',
+      !hidesRepoOnlyFields && reuseEligibleBranch !== null && smartNameSelection?.kind === 'branch',
     reuseSelectedBranch,
     onReuseSelectedBranchChange: handleReuseSelectedBranchChange,
     // Why: "create multiple" applies only to worktree (git) targets; folder-workspace keeps create-and-close.
-    showCreateMultiple: !isProjectGroupTarget,
+    showCreateMultiple: !hidesRepoOnlyFields,
     createMultiple,
     onCreateMultipleChange: setCreateMultiple,
     agentPrompt,
@@ -217,13 +224,13 @@ export function buildComposerCardProps(state: ComposerModel) {
     projectError: isProjectGroupTarget ? pathStatusProjectError : projectError,
     creating,
     onCreate: () => void submit(),
-    baseBranch: isProjectGroupTarget ? undefined : baseBranch,
-    onBaseBranchChange: isProjectGroupTarget ? () => {} : handleBaseBranchChange,
-    onBaseBranchPrSelect: isProjectGroupTarget ? () => {} : handleBaseBranchPrSelect,
-    onBaseBranchMrSelect: isProjectGroupTarget ? () => {} : handleBaseBranchMrSelect,
+    baseBranch: hidesRepoOnlyFields ? undefined : baseBranch,
+    onBaseBranchChange: hidesRepoOnlyFields ? () => {} : handleBaseBranchChange,
+    onBaseBranchPrSelect: hidesRepoOnlyFields ? () => {} : handleBaseBranchPrSelect,
+    onBaseBranchMrSelect: hidesRepoOnlyFields ? () => {} : handleBaseBranchMrSelect,
     baseBranchLinkedPrNumber:
       linkedWorkItem?.type === 'pr' && baseBranch ? linkedWorkItem.number : null,
-    selectedRepoPath: isProjectGroupTarget ? null : (selectedRepo?.path ?? null),
+    selectedRepoPath: hidesRepoOnlyFields ? null : (selectedRepo?.path ?? null),
     selectedRepoIsRemote: isProjectGroupTarget
       ? folderTargetIsRemote
       : Boolean(selectedRepo?.connectionId),
@@ -240,30 +247,30 @@ export function buildComposerCardProps(state: ComposerModel) {
     onConnectSelectedRepo: isProjectGroupTarget
       ? onConnectSelectedProjectGroup
       : onConnectSelectedRepo,
-    startFromResetHint: isProjectGroupTarget ? null : startFromResetHint,
-    forkPushWarning: isProjectGroupTarget ? null : forkPushWarning,
+    startFromResetHint: hidesRepoOnlyFields ? null : startFromResetHint,
+    forkPushWarning: hidesRepoOnlyFields ? null : forkPushWarning,
     note,
     onNoteChange: setNote,
-    setupConfig: isProjectGroupTarget ? null : setupConfig,
-    requiresExplicitSetupChoice: isProjectGroupTarget ? false : requiresExplicitSetupChoice,
-    setupDecision: isProjectGroupTarget ? null : setupDecision,
-    onSetupDecisionChange: isProjectGroupTarget ? () => {} : setSetupDecision,
-    setupAgentStartupPolicy: isProjectGroupTarget ? 'start-immediately' : setupAgentStartupPolicy,
-    onSetupAgentStartupPolicyChange: isProjectGroupTarget
+    setupConfig: hidesRepoOnlyFields ? null : setupConfig,
+    requiresExplicitSetupChoice: hidesRepoOnlyFields ? false : requiresExplicitSetupChoice,
+    setupDecision: hidesRepoOnlyFields ? null : setupDecision,
+    onSetupDecisionChange: hidesRepoOnlyFields ? () => {} : setSetupDecision,
+    setupAgentStartupPolicy: hidesRepoOnlyFields ? 'start-immediately' : setupAgentStartupPolicy,
+    onSetupAgentStartupPolicyChange: hidesRepoOnlyFields
       ? () => {}
       : handleSetupAgentStartupPolicyChange,
-    shouldWaitForSetupCheck: isProjectGroupTarget ? false : shouldWaitForSetupCheck,
-    resolvedSetupDecision: isProjectGroupTarget ? null : resolvedSetupDecision,
+    shouldWaitForSetupCheck: hidesRepoOnlyFields ? false : shouldWaitForSetupCheck,
+    resolvedSetupDecision: hidesRepoOnlyFields ? null : resolvedSetupDecision,
     createError,
-    canUseSparseCheckout: isProjectGroupTarget
+    canUseSparseCheckout: hidesRepoOnlyFields
       ? false
       : selectedRepoIsGit && !selectedRepo?.connectionId,
-    sparsePresets: isProjectGroupTarget ? [] : sparsePresets,
-    sparseSelectedPresetId: isProjectGroupTarget ? null : sparseSelectedPresetId,
-    onSparseSelectPreset: isProjectGroupTarget ? () => {} : handleSparseSelectPreset,
-    branchesEnabled: !isProjectGroupTarget,
-    setupControlsEnabled: !isProjectGroupTarget,
-    sparseControlsEnabled: !isProjectGroupTarget
+    sparsePresets: hidesRepoOnlyFields ? [] : sparsePresets,
+    sparseSelectedPresetId: hidesRepoOnlyFields ? null : sparseSelectedPresetId,
+    onSparseSelectPreset: hidesRepoOnlyFields ? () => {} : handleSparseSelectPreset,
+    branchesEnabled: !hidesRepoOnlyFields,
+    setupControlsEnabled: !hidesRepoOnlyFields,
+    sparseControlsEnabled: !hidesRepoOnlyFields
   }
 
   return { cardProps, createDisabled }

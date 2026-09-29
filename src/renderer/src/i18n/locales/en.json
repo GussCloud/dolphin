@@ -1750,6 +1750,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "Create worktree",
         "createWorkspace": "Create workspace",
+        "createMultiProjectWorkspace": "Create multi-project workspace",
         "fa90f739a5": "Choose the project, workspace name, and agent before creating the workspace."
       },
       "PullRequestPage": {
@@ -5338,6 +5339,13 @@
           "971d85cc84": "Opens as a project on this host · {{value0}}",
           "00c4235c10": "No matches for '{{value0}}'",
           "largeInputNoMatches": "No matches for this long input"
+        },
+        "DeleteMultiProjectWorkspaceDialog": {
+          "title": "Delete \"{{value0}}\"?",
+          "description": "This workspace has a worktree in {{value0}} projects: {{value1}}.",
+          "removeMembers": "Also delete its worktrees. Worktrees with uncommitted changes stop the delete.",
+          "cancel": "Cancel",
+          "delete": "Delete"
         },
         "RemoveFolderDialog": {
           "4dc5b5065b": "Remove",
@@ -17371,8 +17379,11 @@
         }
       },
       "newWorkspace": {
-        "MultiProjectWorktreesField": {
-          "toggle": "Create a worktree in each project",
+        "MultiProjectMembersField": {
+          "add": "Add another project",
+          "remove": "Remove {{value0}}",
+          "projects": "Projects",
+          "groups": "Add all projects in a group",
           "hint": "Each project gets a worktree on the same branch, inside one folder for this workspace."
         }
       }

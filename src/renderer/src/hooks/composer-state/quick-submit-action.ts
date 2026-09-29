@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 
 import type { ComposerModel } from './composer-model'
 
-type QuickSubmitActionInput = Pick<
+export type QuickSubmitActionInput = Pick<
   ComposerModel,
   | 'effectiveLinkedPR'
   | 'executeQuickCreation'
@@ -37,6 +37,8 @@ type QuickSubmitActionInput = Pick<
   | 'sourceIntentBlocksCreate'
   | 'sparseError'
   | 'submitFolderTarget'
+  | 'multiProjectMemberRepoIds'
+  | 'submitMultiProjectTarget'
 >
 
 export function useQuickSubmitAction(input: QuickSubmitActionInput) {
@@ -62,7 +64,9 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
     showProjectRequiredError,
     sourceIntentBlocksCreate,
     sparseError,
-    submitFolderTarget
+    submitFolderTarget,
+    multiProjectMemberRepoIds,
+    submitMultiProjectTarget
   } = input
 
   const submitQuick = useCallback(
@@ -82,6 +86,18 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
 
       if (!repoId || !selectedRepo) {
         showProjectRequiredError()
+        return
+      }
+
+      if (multiProjectMemberRepoIds) {
+        // Why: the name seeds the shared branch and container folder, so it must exist up front.
+        if (workspaceNameSeed && !sourceIntentBlocksCreate) {
+          await submitMultiProjectTarget(
+            requestedAgent,
+            multiProjectMemberRepoIds,
+            workspaceNameSeed
+          )
+        }
         return
       }
 
@@ -179,7 +195,9 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
       showProjectRequiredError,
       sourceIntentBlocksCreate,
       sparseError,
-      submitFolderTarget
+      submitFolderTarget,
+      multiProjectMemberRepoIds,
+      submitMultiProjectTarget
     ]
   )
 

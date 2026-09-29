@@ -12,12 +12,17 @@ import { useQuickSubmitSourcePreparation } from './quick-submit-source-preparati
 import { useQuickSubmitPreparation } from './quick-submit-preparation'
 import { useQuickCreationExecution } from './quick-creation-execution'
 import { useQuickSubmitAction } from './quick-submit-action'
+import { useMultiProjectMemberRepoIds } from '@/components/new-workspace/use-multi-project-members'
 
 export function useComposerSubmitOrchestration(
   target: ComposerTargetState,
   external: ComposerExternalSyncState,
   source: ComposerSourceState
 ): ComposerSubmitState {
+  const multiProjectMemberRepoIds = useMultiProjectMemberRepoIds(
+    target.initialTargetState.repoId,
+    target.runtimeTargetSelection.isProjectGroupTarget
+  )
   const folderSubmitOrchestration = useFolderSubmitOrchestration({
     clearNewWorkspaceDraft: target.composerTargetStore.clearNewWorkspaceDraft,
     createFolderWorkspace: target.composerTargetStore.createFolderWorkspace,
@@ -134,6 +139,8 @@ export function useComposerSubmitOrchestration(
     sourceIntentBlocksCreate: target.workspaceIdentityState.sourceIntentBlocksCreate,
     sparseError: target.derivedComposerState.sparseError,
     submitFolderTarget: folderSubmitOrchestration.submitFolderTarget,
+    multiProjectMemberRepoIds,
+    submitMultiProjectTarget: folderSubmitOrchestration.submitMultiProjectTarget,
     tuiAgent: target.workspaceIdentityState.tuiAgent,
     workspaceSeedName: target.derivedComposerState.workspaceSeedName
   })
@@ -241,10 +248,13 @@ export function useComposerSubmitOrchestration(
     showProjectRequiredError: source.branchStartPointActions.showProjectRequiredError,
     sourceIntentBlocksCreate: target.workspaceIdentityState.sourceIntentBlocksCreate,
     sparseError: target.derivedComposerState.sparseError,
-    submitFolderTarget: folderSubmitOrchestration.submitFolderTarget
+    submitFolderTarget: folderSubmitOrchestration.submitFolderTarget,
+    multiProjectMemberRepoIds,
+    submitMultiProjectTarget: folderSubmitOrchestration.submitMultiProjectTarget
   })
   return {
     folderSubmitOrchestration,
+    multiProjectMembers: { multiProjectMemberRepoIds },
     fullSubmitSourcePreparation,
     fullSubmitPreparation,
     fullCreationExecution,

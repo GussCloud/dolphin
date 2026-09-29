@@ -48,6 +48,8 @@ describe('useFullSubmitOrchestration cancellation', () => {
       sourceIntentBlocksCreate: false,
       sparseError: null,
       submitFolderTarget: vi.fn<FullSubmitOrchestrationInput['submitFolderTarget']>(),
+      multiProjectMemberRepoIds: null,
+      submitMultiProjectTarget: vi.fn<FullSubmitOrchestrationInput['submitMultiProjectTarget']>(),
       tuiAgent: 'claude',
       workspaceSeedName: 'workspace'
     } satisfies FullSubmitOrchestrationInput

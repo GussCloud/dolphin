@@ -14,6 +14,7 @@ import type { LaunchSource } from '../../../../shared/telemetry-events'
 import type { SessionOptionValue } from '../../../../shared/native-chat-session-options'
 import type { TaskSourceContext } from '../../../../shared/task-source-context'
 import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
+import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import {
   getLinkedItemDisplayName,
   toFolderWorkspaceLinkedTask
@@ -35,7 +36,7 @@ export {
 } from './folder-workspace-agent-startup'
 
 type FolderWorkspaceCreateInput = {
-  projectGroupId: string
+  projectGroupId: string | null
   name: string
   connectionId?: string | null
   linkedTask: FolderWorkspace['linkedTask']
@@ -45,7 +46,8 @@ type FolderWorkspaceCreateInput = {
 }
 
 type SubmitFolderWorkspaceCreateParams = {
-  projectGroup: ProjectGroup
+  /** Null for a multi-project workspace, which runs locally and belongs to no group. */
+  projectGroup: ProjectGroup | null
   name: string
   lastAutoName: string
   linkedWorkItem: LinkedWorkItemSummary | null
@@ -89,11 +91,15 @@ export async function submitFolderWorkspaceCreate({
   const workspaceName =
     nameIsAutoManaged && linkedName
       ? linkedName
-      : name.trim() || linkedName || `${projectGroup.name} workspace`
-  const launchPlatform = getFolderWorkspaceAgentLaunchPlatform(projectGroup)
+      : name.trim() ||
+        linkedName ||
+        (projectGroup ? `${projectGroup.name} workspace` : 'Multi-project workspace')
+  const launchPlatform = getFolderWorkspaceAgentLaunchPlatform(
+    projectGroup ?? { connectionId: null, parentPath: null }
+  )
   // Why: an SSH folder group runs the plain `dolphin` relay shim, so the Linux-only
   // `dolphin-ide` rename must not be applied for remote launches.
-  const launchIsRemote = Boolean(projectGroup.connectionId)
+  const launchIsRemote = Boolean(projectGroup?.connectionId)
   const launchShell = resolveLocalWindowsAgentStartupShell({
     platform: launchPlatform,
     isRemote: launchIsRemote,
@@ -137,7 +143,9 @@ export async function submitFolderWorkspaceCreate({
         workspace: {
           kind: 'folder',
           runtimeEnvironmentId,
-          executionHostId: getNewWorkspaceProjectGroupHostId(projectGroup)
+          executionHostId: projectGroup
+            ? getNewWorkspaceProjectGroupHostId(projectGroup)
+            : LOCAL_EXECUTION_HOST_ID
         },
         prompt: launchDraftPrompt ?? note,
         promptDelivery: launchDraftPrompt ? 'draft' : 'auto-submit',
@@ -155,11 +163,11 @@ export async function submitFolderWorkspaceCreate({
     note.trim().length > 0
 
   const workspace = await createFolderWorkspace({
-    projectGroupId: projectGroup.id,
+    projectGroupId: projectGroup?.id ?? null,
     name: workspaceName,
     // Why: SSH folder groups must keep their target provenance even when the
     // focused runtime is local or another host.
-    connectionId: projectGroup.connectionId ?? null,
+    connectionId: projectGroup?.connectionId ?? null,
     linkedTask: toFolderWorkspaceLinkedTask(linkedWorkItem),
     ...(linkedTaskSourceContext ? { linkedTaskSourceContext } : {}),
     ...(quickAgent ? { createdWithAgent: quickAgent } : {}),
@@ -172,7 +180,7 @@ export async function submitFolderWorkspaceCreate({
     await preflightAgentTrust({
       agent: quickAgent,
       workspacePath: workspace.folderPath,
-      connectionId: workspace.connectionId ?? projectGroup.connectionId
+      connectionId: workspace.connectionId ?? projectGroup?.connectionId
     })
   }
   if (startupPlan && !startupPlan.launchToken) {
