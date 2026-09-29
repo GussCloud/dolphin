@@ -1,4 +1,5 @@
 import type { Automation } from '../../../../shared/automations-types'
+import { taskProviderLabel } from '../../../../shared/task-providers'
 import { getRepoExecutionHostId, parseExecutionHostId } from '../../../../shared/execution-host'
 import {
   describeRuntimeCompatBlock,
@@ -250,16 +251,7 @@ function getAutomationSourceAvailability(
 }
 
 function getAutomationSourceProviderLabel(provider: TaskSourceContext['provider']): string {
-  switch (provider) {
-    case 'github':
-      return 'GitHub'
-    case 'gitlab':
-      return 'GitLab'
-    case 'linear':
-      return 'Linear'
-    case 'jira':
-      return 'Jira'
-  }
+  return taskProviderLabel(provider)
 }
 
 export function getRuntimeAutomationAvailability(

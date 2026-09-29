@@ -13,6 +13,8 @@ type AzureDevOpsSendOptions = {
   body?: unknown
   searchParams?: Record<string, string | number>
   apiVersion?: string
+  // Work item updates require application/json-patch+json.
+  contentType?: string
 }
 
 function buildUrl(baseUrl: string, path: string, options: AzureDevOpsSendOptions): URL {
@@ -20,9 +22,12 @@ function buildUrl(baseUrl: string, path: string, options: AzureDevOpsSendOptions
   for (const [key, value] of Object.entries(options.searchParams ?? {})) {
     url.searchParams.set(key, String(value))
   }
+  // An explicitly versioned preview API (e.g. 7.1-preview.4) is already preview-safe.
   url.searchParams.set(
     'api-version',
-    azureDevOpsApiVersionForOrigin(url.origin, options.apiVersion)
+    options.apiVersion?.includes('-preview')
+      ? options.apiVersion
+      : azureDevOpsApiVersionForOrigin(url.origin, options.apiVersion)
   )
   return url
 }
@@ -32,7 +37,9 @@ async function send(url: URL, options: AzureDevOpsSendOptions): Promise<Response
     method: options.method,
     headers: {
       Accept: 'application/json',
-      ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.body !== undefined
+        ? { 'Content-Type': options.contentType ?? 'application/json' }
+        : {}),
       ...(await resolveAzureDevOpsAuthHeaders())
     },
     ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),

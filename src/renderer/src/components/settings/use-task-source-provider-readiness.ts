@@ -57,6 +57,8 @@ export function useTaskSourceProviderReadiness(
     reviewReadyForConnection &&
     preflightStatus?.glab?.installed === true &&
     preflightStatus.glab.authenticated === true
+  const azureBoardsConnected =
+    reviewReadyForConnection && preflightStatus?.azureDevOps?.authenticated === true
   const jiraChecking = jiraStatusContextKey !== providerRuntimeContextKey || !jiraStatusChecked
   const jiraConnected = !jiraChecking && jiraStatus.connected === true
   const linearChecking =
@@ -91,9 +93,16 @@ export function useTaskSourceProviderReadiness(
         connected: jiraConnected,
         checking: jiraChecking,
         visible: visible.has('jira')
+      },
+      'azure-boards': {
+        connected: azureBoardsConnected,
+        checking: reviewChecking,
+        unavailable: reviewUnavailable,
+        visible: visible.has('azure-boards')
       }
     }
   }, [
+    azureBoardsConnected,
     githubConnected,
     gitlabConnected,
     jiraChecking,

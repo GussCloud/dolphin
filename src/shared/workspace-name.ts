@@ -47,7 +47,7 @@ export type WorkspaceIntentWorkItem = {
   type: 'issue' | 'pr' | 'mr'
   number: number
   title: string
-  provider?: 'github' | 'gitlab' | 'linear' | 'jira'
+  provider?: 'github' | 'gitlab' | 'linear' | 'jira' | 'azure-boards'
   linearIdentifier?: string
   jiraIdentifier?: string
 }
@@ -161,6 +161,9 @@ function workItemIdentity(item: WorkspaceIntentWorkItem): string {
   }
   if (item.jiraIdentifier) {
     return item.jiraIdentifier.toUpperCase()
+  }
+  if (item.provider === 'azure-boards') {
+    return `AB ${item.number}`
   }
   if (item.type === 'pr') {
     return `PR ${item.number}`

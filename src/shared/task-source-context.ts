@@ -208,6 +208,7 @@ function normalizeTaskProvider(value: unknown): TaskProvider | null {
     case 'gitlab':
     case 'linear':
     case 'jira':
+    case 'azure-boards':
       return value
     default:
       return null

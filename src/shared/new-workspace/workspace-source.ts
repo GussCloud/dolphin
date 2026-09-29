@@ -49,6 +49,7 @@ export type WorkspaceSourceSelectionKind =
   | 'branch'
   | 'linear'
   | 'jira'
+  | 'azure-boards'
 
 export type WorkspaceSourceSelection = {
   kind: WorkspaceSourceSelectionKind
@@ -64,6 +65,10 @@ export function isGitLabIssueUrl(url: string): boolean {
   } catch {
     return GITLAB_ISSUE_PATH_RE.test(url)
   }
+}
+
+function isAzureBoardsWorkItemUrl(url: string): boolean {
+  return /\/_workitems\/edit\/\d+/i.test(url)
 }
 
 function isJiraIssueUrl(url: string): boolean {
@@ -87,6 +92,9 @@ export function getWorkspaceSourceProvider(item: WorkspaceSourceItemLike): Works
   }
   if (item.jiraIdentifier || isJiraIssueUrl(item.url)) {
     return 'jira'
+  }
+  if (isAzureBoardsWorkItemUrl(item.url)) {
+    return 'azure-boards'
   }
   if (item.type === 'mr' || isGitLabIssueUrl(item.url)) {
     return 'gitlab'
@@ -196,8 +204,8 @@ export function buildWorkspaceSourceSelection(args: {
   const kind: WorkspaceSourceSelectionKind =
     provider === 'linear'
       ? 'linear'
-      : provider === 'jira'
-        ? 'jira'
+      : provider === 'jira' || provider === 'azure-boards'
+        ? provider
         : provider === 'gitlab'
           ? linkedWorkItem.type === 'mr'
             ? 'gitlab-mr'
@@ -222,5 +230,6 @@ export function shouldPreserveWorkspaceSourceOnRepoChange(
     return false
   }
   const provider = getWorkspaceSourceProvider(item)
-  return provider === 'linear' || provider === 'jira'
+  // Account-backed sources are not tied to the selected repository.
+  return provider === 'linear' || provider === 'jira' || provider === 'azure-boards'
 }
