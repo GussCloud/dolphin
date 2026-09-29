@@ -1,4 +1,5 @@
 import { useAppStore } from '@/store'
+import { openMultiProjectDeleteDialogIfNeeded } from './multi-project-workspace-delete'
 import { getAllWorktreesFromState } from '@/store/selectors'
 import type { AppState } from '@/store/types'
 import { isEditableTarget } from '@/lib/editable-target'
@@ -103,6 +104,9 @@ export function deleteHoveredWorkspaceImmediately(
     return false
   }
   if (target.kind === 'folder') {
+    if (openMultiProjectDeleteDialogIfNeeded(target.folderWorkspaceId, target.executionHostId)) {
+      return true
+    }
     const pendingIdentity = composeWorktreeHostIdentity(target.executionHostId, target.workspaceKey)
     if (pendingFolderDeletes.has(pendingIdentity)) {
       return false

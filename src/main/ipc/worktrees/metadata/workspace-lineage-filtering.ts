@@ -21,10 +21,13 @@ export function getFolderLineageCandidateRepos(
   context: LineageResolutionContext,
   folder: LineageFolder
 ): Repo[] {
-  let groupIds = context.groupSubtreeIdsByRoot.get(folder.projectGroupId)
+  const rootGroupId = folder.projectGroupId
+  let groupIds = rootGroupId === null ? undefined : context.groupSubtreeIdsByRoot.get(rootGroupId)
   if (!groupIds) {
-    groupIds = getProjectGroupSubtreeIds(context.groups, folder.projectGroupId)
-    context.groupSubtreeIdsByRoot.set(folder.projectGroupId, groupIds)
+    groupIds = getProjectGroupSubtreeIds(context.groups, rootGroupId)
+    if (rootGroupId !== null) {
+      context.groupSubtreeIdsByRoot.set(rootGroupId, groupIds)
+    }
   }
   const grouped = context.repos.filter(
     (repo) => typeof repo.projectGroupId === 'string' && groupIds.has(repo.projectGroupId)
@@ -34,7 +37,7 @@ export function getFolderLineageCandidateRepos(
       !(typeof repo.projectGroupId === 'string' && groupIds.has(repo.projectGroupId)) &&
       isPathInsideOrEqual(folder.folderPath, repo.path)
   )
-  const group = context.groupsById.get(folder.projectGroupId)?.[0]
+  const group = rootGroupId === null ? undefined : context.groupsById.get(rootGroupId)?.[0]
   const connectionId = folder.connectionId ?? group?.connectionId ?? null
   if (connectionId) {
     return [...grouped, ...pathRepos.filter((repo) => (repo.connectionId ?? null) === connectionId)]
@@ -69,8 +72,10 @@ export function resolveFolderLineageOwner(
     return remember({ status: 'ambiguous' })
   }
   const folder = folders[0]
-  const groups = context.groupsById.get(folder.projectGroupId) ?? []
-  if (groups.length !== 1) {
+  // Why: a multi-project workspace has no group; its folder row alone names the owner.
+  const groups =
+    folder.projectGroupId === null ? [] : (context.groupsById.get(folder.projectGroupId) ?? [])
+  if (folder.projectGroupId !== null && groups.length !== 1) {
     return remember({ status: 'ambiguous' })
   }
   const group = groups[0]
@@ -78,10 +83,10 @@ export function resolveFolderLineageOwner(
   if (folder.connectionId) {
     hosts.add(`ssh:${encodeURIComponent(folder.connectionId)}`)
   }
-  if (group.connectionId) {
+  if (group?.connectionId) {
     hosts.add(`ssh:${encodeURIComponent(group.connectionId)}`)
   }
-  if (group.executionHostId) {
+  if (group?.executionHostId) {
     const parsed = parseExecutionHostId(group.executionHostId)
     if (!parsed) {
       return remember({ status: 'ambiguous' })

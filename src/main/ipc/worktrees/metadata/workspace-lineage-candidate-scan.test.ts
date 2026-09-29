@@ -3,7 +3,10 @@ import type { Repo } from '../../../../shared/repo-types'
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
 import type { ProjectGroup } from '../../../../shared/project-group-types'
 import { createLineageResolutionContext } from './lineage-owner-resolution'
-import { getFolderLineageCandidateRepos } from './workspace-lineage-filtering'
+import {
+  getFolderLineageCandidateRepos,
+  resolveFolderLineageOwner
+} from './workspace-lineage-filtering'
 
 vi.mock('../../worktree-logic', () => ({ parseWorktreeId: vi.fn() }))
 
@@ -154,5 +157,28 @@ describe('folder lineage candidate lookup', () => {
     expect(getFolderLineageCandidateRepos(current, folder())).toEqual([grouped, a])
     grouped.connectionId = 'b'
     expect(getFolderLineageCandidateRepos(current, folder())).toEqual([grouped, b])
+  })
+})
+
+describe('multi-project workspace lineage owner', () => {
+  it('owns a groupless multi-project workspace on the local host instead of going ambiguous', () => {
+    const multiProject = folder({
+      projectGroupId: null,
+      kind: 'multi-project',
+      folderPath: '/workspaces/feature'
+    })
+    const store = {
+      getRepos: () => [repo('api', { path: '/elsewhere/api' })],
+      getFolderWorkspaces: () => [multiProject],
+      getProjectGroups: () => []
+    }
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Context construction only reads these three store catalogs.
+    const lineageContext = createLineageResolutionContext(store as never)
+
+    expect(getFolderLineageCandidateRepos(lineageContext, multiProject)).toEqual([])
+    expect(resolveFolderLineageOwner(lineageContext, 'folder')).toEqual({
+      status: 'owned',
+      hostId: 'local'
+    })
   })
 })

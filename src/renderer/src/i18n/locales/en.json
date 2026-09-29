@@ -1750,6 +1750,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "Create worktree",
         "createWorkspace": "Create workspace",
+        "createMultiProjectWorkspace": "Create multi-project workspace",
         "fa90f739a5": "Choose the project, workspace name, and agent before creating the workspace."
       },
       "PullRequestPage": {
@@ -5339,6 +5340,21 @@
           "00c4235c10": "No matches for '{{value0}}'",
           "largeInputNoMatches": "No matches for this long input"
         },
+        "AddMultiProjectMemberDialog": {
+          "title": "Add a project to \"{{value0}}\"",
+          "description": "The project gets a worktree on the branch this workspace already uses.",
+          "adding": "Creating the worktree…"
+        },
+        "MultiProjectWorkspaceMenuItems": {
+          "addProject": "Add Project…"
+        },
+        "DeleteMultiProjectWorkspaceDialog": {
+          "title": "Delete \"{{value0}}\"?",
+          "description": "This workspace has a worktree in {{value0}} projects: {{value1}}.",
+          "removeMembers": "Also delete its worktrees. Worktrees with uncommitted changes stop the delete.",
+          "cancel": "Cancel",
+          "delete": "Delete"
+        },
         "RemoveFolderDialog": {
           "4dc5b5065b": "Remove",
           "d36883e046": "Cancel",
@@ -6051,6 +6067,7 @@
               "4aeefc5996": "Pinned",
               "682ed5d551": "Closed",
               "7c2f009786": "In progress",
+              "multiProjectWorkspaces": "Multi-project workspaces",
               "6798dc7c94": "In review",
               "5076efc3d2": "Done"
             }
@@ -16844,7 +16861,8 @@
         "FolderWorkspaceSourceControl": {
           "emptyTitle": "No Git projects in this workspace",
           "emptyCopy": "Create a workspace with several projects, or attach worktrees to this one, to see their changes here.",
-          "membersLabel": "Projects"
+          "membersLabel": "Projects",
+          "addProject": "Add project to workspace"
         }
       },
       "link": {
@@ -17370,8 +17388,11 @@
         }
       },
       "newWorkspace": {
-        "MultiProjectWorktreesField": {
-          "toggle": "Create a worktree in each project",
+        "MultiProjectMembersField": {
+          "add": "Add another project",
+          "remove": "Remove {{value0}}",
+          "projects": "Projects",
+          "groups": "Add all projects in a group",
           "hint": "Each project gets a worktree on the same branch, inside one folder for this workspace."
         }
       }

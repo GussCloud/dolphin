@@ -121,16 +121,22 @@ export function buildProjectGroupChildIndex(
 
 export function getProjectGroupSubtreeIds(
   groups: readonly Pick<ProjectGroup, 'id' | 'parentGroupId'>[],
-  rootGroupId: string
+  rootGroupId: string | null
 ): Set<string> {
+  if (rootGroupId === null) {
+    return new Set()
+  }
   return collectProjectGroupSubtreeIds(buildProjectGroupChildIndex(groups), rootGroupId)
 }
 
 export function collectProjectGroupSubtreeIds(
   childGroupsByParentId: ProjectGroupChildIndex,
-  rootGroupId: string
+  rootGroupId: string | null
 ): Set<string> {
   const subtreeIds = new Set<string>()
+  if (rootGroupId === null) {
+    return subtreeIds
+  }
   const pending = [rootGroupId]
   while (pending.length > 0) {
     const groupId = pending.pop()!

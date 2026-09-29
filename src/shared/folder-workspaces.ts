@@ -35,16 +35,18 @@ export function normalizeFolderWorkspaces(
       continue
     }
     const raw = candidate as Partial<FolderWorkspace>
+    // Why: a multi-project workspace owns its container folder, so it survives without a group.
+    const isMultiProject = raw.kind === 'multi-project'
+    const projectGroupId = typeof raw.projectGroupId === 'string' ? raw.projectGroupId : null
     if (
       typeof raw.id !== 'string' ||
       raw.id.trim().length === 0 ||
       seen.has(raw.id) ||
-      typeof raw.projectGroupId !== 'string' ||
-      !folderGroups.has(raw.projectGroupId)
+      (!isMultiProject && (projectGroupId === null || !folderGroups.has(projectGroupId)))
     ) {
       continue
     }
-    const group = folderGroups.get(raw.projectGroupId)
+    const group = projectGroupId === null ? undefined : folderGroups.get(projectGroupId)
     const folderPath =
       typeof raw.folderPath === 'string' && raw.folderPath.trim().length > 0
         ? raw.folderPath
@@ -62,7 +64,8 @@ export function normalizeFolderWorkspaces(
     // carries no generation to fence on. `connectionId` below is the durable pin main projects from.
     workspaces.push({
       id: raw.id,
-      projectGroupId: raw.projectGroupId,
+      projectGroupId: isMultiProject && !group ? null : projectGroupId,
+      ...(isMultiProject ? { kind: 'multi-project' as const } : {}),
       name: normalizeFolderWorkspaceName(raw.name),
       folderPath,
       connectionId:

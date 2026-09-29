@@ -1,5 +1,7 @@
 import type { StateCreator } from 'zustand'
 import type {
+  MultiProjectMemberAddArgs,
+  MultiProjectMemberAddResult,
   MultiProjectWorkspaceCreateArgs,
   MultiProjectWorkspaceCreateResult
 } from '../../../../shared/multi-project-workspace-types'
@@ -38,5 +40,20 @@ export function createMultiProjectWorkspaceAction(
       applyCreatedWorktree(set, member.worktree.repoId, member)
     }
     return { ...result, folderWorkspace: ownedWorkspace }
+  }
+}
+
+export function addMultiProjectWorkspaceMemberAction(
+  set: Parameters<StateCreator<AppState>>[0]
+): RepoSlice['addMultiProjectWorkspaceMember'] {
+  return async (args: MultiProjectMemberAddArgs): Promise<MultiProjectMemberAddResult> => {
+    const addMember = window.api.worktrees.addMultiProjectMember
+    if (!addMember) {
+      throw new Error('Workspaces with several projects need the desktop app.')
+    }
+    const result = await addMember(args)
+    // Why: the member's lineage row is what attaches it to the workspace.
+    applyCreatedWorktree(set, result.member.worktree.repoId, result.member)
+    return result
   }
 }

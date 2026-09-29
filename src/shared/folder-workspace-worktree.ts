@@ -13,8 +13,8 @@ import { normalizeWorkspaceCreatorProvenance } from './workspace-creator-provena
  */
 const FOLDER_WORKSPACE_REPO_ID_PREFIX = 'folder-workspace:'
 
-export function folderWorkspaceRepoId(projectGroupId: string): string {
-  return `${FOLDER_WORKSPACE_REPO_ID_PREFIX}${projectGroupId}`
+export function folderWorkspaceRepoId(projectGroupId: string | null): string {
+  return `${FOLDER_WORKSPACE_REPO_ID_PREFIX}${projectGroupId ?? ''}`
 }
 
 /** The project group a synthetic repoId stands for, or null when it names a real git repo. */

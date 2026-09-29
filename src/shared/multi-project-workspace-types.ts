@@ -4,11 +4,10 @@ import type { TuiAgent } from './tui-agent'
 import type { CreateWorktreeResult, SetupDecision } from './worktree/create-types'
 
 /**
- * A folder workspace whose folder is a fresh container holding one new worktree per selected
- * project, all on the same branch name. Members attach to the workspace through lineage.
+ * A groupless folder workspace whose folder is a fresh container holding one new worktree per
+ * selected project, all on the same branch name. Members attach to the workspace through lineage.
  */
 export type MultiProjectWorkspaceCreateArgs = {
-  projectGroupId: string
   name: string
   repoIds: string[]
   setupDecision?: SetupDecision
@@ -21,4 +20,16 @@ export type MultiProjectWorkspaceCreateArgs = {
 export type MultiProjectWorkspaceCreateResult = {
   folderWorkspace: FolderWorkspace
   members: CreateWorktreeResult[]
+}
+
+/** Adds one project to an existing multi-project workspace. */
+export type MultiProjectMemberAddArgs = {
+  folderWorkspaceId: string
+  repoId: string
+  /** The branch the existing members share, so the new member joins it. */
+  branchName?: string
+}
+
+export type MultiProjectMemberAddResult = {
+  member: CreateWorktreeResult
 }

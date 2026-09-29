@@ -110,4 +110,11 @@ export type ComposerSubmitModel = {
   submit: () => Promise<void>
   submitQuick: (agent: TuiAgent | null) => Promise<void>
   submitFolderTarget: (requestedAgent: TuiAgent | null) => Promise<void>
+  submitMultiProjectTarget: (
+    requestedAgent: TuiAgent | null,
+    repoIds: readonly string[],
+    workspaceName: string
+  ) => Promise<void>
+  /** Primary project plus the added ones, or null for an ordinary single-project create. */
+  multiProjectMemberRepoIds: string[] | null
 }

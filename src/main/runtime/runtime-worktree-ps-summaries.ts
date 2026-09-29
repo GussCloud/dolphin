@@ -79,8 +79,12 @@ export function buildRuntimeWorktreePsSummaries(args: {
     (args.store?.getProjectGroups?.() ?? []).map((group) => [group.id, group])
   )
   for (const folderWorkspace of args.store?.getFolderWorkspaces?.() ?? []) {
-    const projectGroup = projectGroupById.get(folderWorkspace.projectGroupId)
-    if (!projectGroup?.parentPath) {
+    const projectGroup =
+      folderWorkspace.projectGroupId === null
+        ? undefined
+        : projectGroupById.get(folderWorkspace.projectGroupId)
+    // Why: a multi-project workspace stands on its own container folder, not a group's.
+    if (folderWorkspace.kind !== 'multi-project' && !projectGroup?.parentPath) {
       continue
     }
     const worktree = folderWorkspaceToWorktree(folderWorkspace)
@@ -88,7 +92,7 @@ export function buildRuntimeWorktreePsSummaries(args: {
       workspaceKind: 'folder-workspace',
       worktreeId: worktree.id,
       repoId: worktree.repoId,
-      repo: projectGroup.name,
+      repo: projectGroup?.name ?? folderWorkspace.name,
       path: worktree.path,
       branch: worktree.branch,
       isArchived: worktree.isArchived,

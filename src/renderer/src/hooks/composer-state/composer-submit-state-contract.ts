@@ -1,6 +1,7 @@
 import type { ComposerModel } from './composer-model'
 export type ComposerSubmitState = {
-  folderSubmitOrchestration: Pick<ComposerModel, 'submitFolderTarget'>
+  folderSubmitOrchestration: Pick<ComposerModel, 'submitFolderTarget' | 'submitMultiProjectTarget'>
+  multiProjectMembers: Pick<ComposerModel, 'multiProjectMemberRepoIds'>
   fullSubmitSourcePreparation: Pick<ComposerModel, 'prepareFullSubmitSource'>
   fullSubmitPreparation: Pick<ComposerModel, 'prepareFullSubmit'>
   fullCreationExecution: Pick<ComposerModel, 'executeFullCreation'>

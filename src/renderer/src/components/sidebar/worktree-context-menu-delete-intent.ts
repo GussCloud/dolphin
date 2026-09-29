@@ -1,6 +1,7 @@
 import { useAppStore } from '@/store'
 import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
 import { runWorktreeBatchDelete, runWorktreeDelete } from './delete-worktree-flow'
+import { openMultiProjectDeleteDialogIfNeeded } from './multi-project-workspace-delete'
 import type { WorktreeDeleteIdentity } from './worktree-delete-request'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
@@ -47,6 +48,9 @@ export function runWorktreeContextMenuDeleteIntent(intent: WorktreeContextMenuDe
       expectedInstanceId: intent.worktree.instanceId,
       ...(intent.worktree.hostId ? { expectedHostId: intent.worktree.hostId } : {})
     })
+    return
+  }
+  if (openMultiProjectDeleteDialogIfNeeded(intent.folderWorkspaceId, intent.executionHostId)) {
     return
   }
   const state = useAppStore.getState()

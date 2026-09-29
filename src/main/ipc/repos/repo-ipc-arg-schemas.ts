@@ -142,7 +142,6 @@ export const FolderWorkspaceCreateArgs = z
 
 export const MultiProjectWorkspaceCreateArgs = z
   .object({
-    projectGroupId: z.string().min(1),
     name: z.string().trim().min(1),
     repoIds: z.array(z.string().min(1)).min(1).max(50),
     setupDecision: z.enum(['inherit', 'run', 'skip']).optional(),
@@ -152,6 +151,12 @@ export const MultiProjectWorkspaceCreateArgs = z
     pendingFirstAgentMessageRename: z.boolean().optional()
   })
   .superRefine(assertFolderWorkspaceLinkedSourceContextMatch)
+
+export const MultiProjectMemberAddArgs = z.object({
+  folderWorkspaceId: z.string().min(1),
+  repoId: z.string().min(1),
+  branchName: z.string().trim().min(1).optional()
+})
 
 export const FolderWorkspaceUpdateArgs = z.object({
   folderWorkspaceId: z.string().min(1),

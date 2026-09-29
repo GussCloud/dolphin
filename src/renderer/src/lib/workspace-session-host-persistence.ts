@@ -42,7 +42,7 @@ export type HostPersistenceState = WorkspaceTabOwnerCatalog & {
   projectGroups?: readonly { id: string; executionHostId?: string | null }[]
   folderWorkspaces?: readonly {
     id: string
-    projectGroupId: string
+    projectGroupId: string | null
     executionHostId?: ExecutionHostId | null
   }[]
   worktreesByRepo: Record<string, readonly WorkspaceRuntimeOwnerProjection[]>

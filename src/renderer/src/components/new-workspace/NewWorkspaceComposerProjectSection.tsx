@@ -11,10 +11,12 @@ import type {
   NewWorkspaceComposerCardProps
 } from './new-workspace-composer-card-props'
 import { EMPTY_PROJECT_OPTIONS } from './new-workspace-composer-card-props'
-import { MultiProjectWorktreesField } from './MultiProjectWorktreesField'
+import { MultiProjectMembersField } from './MultiProjectMembersField'
+import { getProjectGroupIdFromNewWorkspaceOptionId } from '@/lib/new-workspace-project-options'
 
 type NewWorkspaceComposerProjectSectionProps = Pick<
   NewWorkspaceComposerCardProps,
+  | 'repoId'
   | 'projectOptions'
   | 'selectedProjectId'
   | 'onProjectChange'
@@ -49,6 +51,7 @@ type NewWorkspaceComposerProjectSectionProps = Pick<
 }
 
 export function NewWorkspaceComposerProjectSection({
+  repoId,
   projectOptions = EMPTY_PROJECT_OPTIONS,
   selectedProjectId = null,
   onProjectChange,
@@ -141,7 +144,13 @@ export function NewWorkspaceComposerProjectSection({
           ) : null}
         </div>
       </div>
-      <MultiProjectWorktreesField selectedProjectId={selectedProjectId} />
+      <MultiProjectMembersField
+        primaryRepoId={repoId || null}
+        isProjectGroupTarget={
+          selectedProjectId !== null &&
+          getProjectGroupIdFromNewWorkspaceOptionId(selectedProjectId) !== null
+        }
+      />
       {shouldShowRunTargetPicker ? (
         <div className="space-y-1 pt-3">
           <label className="block min-w-0 truncate text-xs font-medium text-muted-foreground">

@@ -22,6 +22,8 @@ export type FullSubmitOrchestrationInput = Pick<
   | 'sourceIntentBlocksCreate'
   | 'sparseError'
   | 'submitFolderTarget'
+  | 'multiProjectMemberRepoIds'
+  | 'submitMultiProjectTarget'
   | 'tuiAgent'
   | 'workspaceSeedName'
 >
@@ -58,6 +60,8 @@ export function useFullSubmitOrchestration(input: FullSubmitOrchestrationInput) 
     sourceIntentBlocksCreate,
     sparseError,
     submitFolderTarget,
+    multiProjectMemberRepoIds,
+    submitMultiProjectTarget,
     tuiAgent,
     workspaceSeedName
   } = input
@@ -65,6 +69,12 @@ export function useFullSubmitOrchestration(input: FullSubmitOrchestrationInput) 
   const submit = useCallback(async (): Promise<void> => {
     if (isProjectGroupTarget) {
       await submitFolderTarget(tuiAgent)
+      return
+    }
+    if (multiProjectMemberRepoIds) {
+      if (workspaceSeedName) {
+        await submitMultiProjectTarget(tuiAgent, multiProjectMemberRepoIds, workspaceSeedName)
+      }
       return
     }
 
@@ -139,6 +149,8 @@ export function useFullSubmitOrchestration(input: FullSubmitOrchestrationInput) 
     sourceIntentBlocksCreate,
     sparseError,
     submitFolderTarget,
+    multiProjectMemberRepoIds,
+    submitMultiProjectTarget,
     tuiAgent,
     workspaceSeedName
   ])

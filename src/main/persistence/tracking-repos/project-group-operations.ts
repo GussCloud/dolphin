@@ -103,7 +103,7 @@ export class ProjectGroupPersistenceOperations {
     )
     const removedFolderWorkspaceKeys = new Set<string>()
     for (const workspace of this.state.folderWorkspaces ?? []) {
-      if (deletedGroupIds.has(workspace.projectGroupId)) {
+      if (workspace.projectGroupId !== null && deletedGroupIds.has(workspace.projectGroupId)) {
         removedFolderWorkspaceKeys.add(folderWorkspaceKey(workspace.id))
         // Every partition, not just the local blob: the same reason `removeFolderWorkspace` does.
         removeWorkspaceSessionOwnerEverywhere(this.state, folderWorkspaceKey(workspace.id))
@@ -111,7 +111,8 @@ export class ProjectGroupPersistenceOperations {
       }
     }
     this.state.folderWorkspaces = (this.state.folderWorkspaces ?? []).filter(
-      (workspace) => !deletedGroupIds.has(workspace.projectGroupId)
+      (workspace) =>
+        workspace.projectGroupId === null || !deletedGroupIds.has(workspace.projectGroupId)
     )
     this.pruneMobileClientTabSelections((worktreeId) => removedFolderWorkspaceKeys.has(worktreeId))
     this.scheduleSave()

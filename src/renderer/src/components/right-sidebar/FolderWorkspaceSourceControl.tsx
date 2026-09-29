@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { openAddMultiProjectMemberDialog } from '@/components/sidebar/multi-project-workspace-members'
+import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
 import RepoBadgeLabel from '@/components/repo/RepoBadgeLabel'
 import { Badge } from '@/components/ui/badge'
 import { translate } from '@/i18n/i18n'
@@ -29,6 +33,14 @@ export function FolderWorkspaceSourceControl(): React.JSX.Element {
     (s) => s.rightSidebarOpen && s.rightSidebarTab === 'source-control'
   )
   const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(null)
+  const activeScope = parseWorkspaceKey(activeWorktreeId ?? '')
+  const multiProjectWorkspaceId =
+    activeScope?.type === 'folder' &&
+    folderWorkspaces.some(
+      (entry) => entry.id === activeScope.folderWorkspaceId && entry.kind === 'multi-project'
+    )
+      ? activeScope.folderWorkspaceId
+      : null
 
   const members = useMemo(() => {
     const { childWorktrees } = getAttachedWorktreesForFolderWorkspace({
@@ -95,6 +107,22 @@ export function FolderWorkspaceSourceControl(): React.JSX.Element {
             onSelect={() => setSelectedWorktreeId(member.worktree.id)}
           />
         ))}
+        {multiProjectWorkspaceId ? (
+          <div className="px-2 pt-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              onClick={() => openAddMultiProjectMemberDialog(multiProjectWorkspaceId)}
+            >
+              <Plus className="size-3" />
+              {translate(
+                'auto.components.rightSidebar.FolderWorkspaceSourceControl.addProject',
+                'Add project to workspace'
+              )}
+            </Button>
+          </div>
+        ) : null}
       </div>
       <div className="min-h-0 flex-1">
         {/* Why: keyed so switching members remounts the panel instead of carrying one repo's local state into another. */}

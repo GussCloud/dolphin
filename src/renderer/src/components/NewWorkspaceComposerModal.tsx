@@ -27,6 +27,8 @@ import type { TaskSourceContext } from '../../../shared/task-source-context'
 import { translate } from '@/i18n/i18n'
 import { getWorkspaceComposerInitialFocusTarget } from '@/lib/workspace-composer-initial-focus'
 import { getFolderWorkspacePrimaryActionLabel } from '@/components/sidebar/folder-workspace-composer-helpers'
+import { useMultiProjectMemberRepoIds } from '@/components/new-workspace/use-multi-project-members'
+import { useMultiProjectComposerSelectionStore } from '@/store/multi-project-composer-selection'
 
 // Why: match App-level AddRepoDialog loading — the add flow is off the hot
 // path for the composer, so keep its clone/SSH machinery out of the entry render.
@@ -74,6 +76,12 @@ function ComposerModalBody({
   onClose: () => void
 }): React.JSX.Element {
   const submitCancelledRef = useRef(false)
+  const resetMultiProjectSelection = useMultiProjectComposerSelectionStore((s) => s.reset)
+  // Why: added projects belong to one composer session; a reopened composer starts single-project.
+  useEffect(() => {
+    resetMultiProjectSelection()
+    return resetMultiProjectSelection
+  }, [resetMultiProjectSelection])
   const handleDismiss = useCallback(() => {
     submitCancelledRef.current = true
     onClose()
@@ -229,11 +237,18 @@ function QuickTabBody({
     (option) => option.id === cardProps.selectedProjectId
   )
   const isFolderWorkspaceTarget = selectedProjectOption?.kind === 'project-group'
+  const isMultiProjectTarget =
+    useMultiProjectMemberRepoIds(cardProps.repoId || null, isFolderWorkspaceTarget) !== null
   const primaryActionLabel = isFolderWorkspaceTarget
     ? getFolderWorkspacePrimaryActionLabel()
-    : cardProps.selectedRepoIsGit
-      ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
-      : translate('auto.components.NewWorkspaceComposerModal.createWorkspace', 'Create workspace')
+    : isMultiProjectTarget
+      ? translate(
+          'auto.components.NewWorkspaceComposerModal.createMultiProjectWorkspace',
+          'Create multi-project workspace'
+        )
+      : cardProps.selectedRepoIsGit
+        ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
+        : translate('auto.components.NewWorkspaceComposerModal.createWorkspace', 'Create workspace')
 
   // Cmd/Ctrl+Enter submits. Escape belongs to the dialog's dismissable layer:
   // the page-style "blur the focused field first" rule assumes the user chose

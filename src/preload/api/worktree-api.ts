@@ -20,6 +20,8 @@ import type {
 } from '../../shared/host-lineage-contract'
 import type { FolderWorkspace } from '../../shared/folder-workspace-types'
 import type {
+  MultiProjectMemberAddArgs,
+  MultiProjectMemberAddResult,
   MultiProjectWorkspaceCreateArgs,
   MultiProjectWorkspaceCreateResult
 } from '../../shared/multi-project-workspace-types'
@@ -72,6 +74,8 @@ export type WorktreeApi = {
   createMultiProject?: (
     args: MultiProjectWorkspaceCreateArgs
   ) => Promise<MultiProjectWorkspaceCreateResult>
+  /** Local desktop only, like createMultiProject. */
+  addMultiProjectMember?: (args: MultiProjectMemberAddArgs) => Promise<MultiProjectMemberAddResult>
   /** Two-phase progress for a background `create`, correlated by `creationId`. The remote/runtime
    *  create path emits nothing, so the surface falls back to an indeterminate spinner. */
   onCreateProgress: (

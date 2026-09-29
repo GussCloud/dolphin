@@ -60,7 +60,9 @@ export function installAgentIdleWorkingHandlers(session: ConnectPanePtySession):
       : null
   session.workspaceEnv = { DOLPHIN_WORKSPACE_ID: session.deps.worktreeId }
   if (session.folderWorkspace) {
-    session.workspaceEnv.DOLPHIN_PROJECT_GROUP_ID = session.folderWorkspace.projectGroupId
+    if (session.folderWorkspace.projectGroupId !== null) {
+      session.workspaceEnv.DOLPHIN_PROJECT_GROUP_ID = session.folderWorkspace.projectGroupId
+    }
     session.workspaceEnv.DOLPHIN_WORKSPACE_ROOT = session.folderWorkspace.folderPath
   }
   session.paneIdentityEnv = {

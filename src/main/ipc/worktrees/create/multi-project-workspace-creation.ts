@@ -11,7 +11,7 @@ import type { Repo } from '../../../../shared/repo-types'
 import type { CreateWorktreeResult } from '../../../../shared/worktree/create-types'
 import { splitWorktreeId } from '../../../../shared/worktree/id'
 import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
-import { planMultiProjectWorkspace } from '../../../project-groups/multi-project-workspace-plan'
+import { planMultiProjectWorkspace } from './multi-project-workspace-plan'
 import { getWorktreeMirrorDistro } from '../../../project-runtime-git-options'
 import { notifyReposChanged } from '../../repos/repos-changed-notification'
 import {
@@ -37,10 +37,8 @@ export async function createMultiProjectWorkspace(
   const { store, mainWindow, runtime } = context
   const settings = store.getSettings()
   const plan = planMultiProjectWorkspace({
-    projectGroupId: args.projectGroupId,
     containerName: args.name,
     repoIds: args.repoIds,
-    projectGroups: store.getProjectGroups(),
     repos: store.getRepos(),
     resolveWorkspaceRoot: (repo) =>
       computeWorkspaceRoot(repo.path, getWorktreePathSettings(repo, settings)),
@@ -61,7 +59,8 @@ export async function createMultiProjectWorkspace(
   let failingRepo: Repo | null = null
   try {
     folderWorkspace = store.createFolderWorkspace({
-      projectGroupId: plan.group.id,
+      projectGroupId: null,
+      kind: 'multi-project',
       name: args.name,
       folderPath: plan.containerPath,
       connectionId: null,

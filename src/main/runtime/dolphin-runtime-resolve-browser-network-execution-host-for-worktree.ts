@@ -180,7 +180,9 @@ export class DolphinRuntimeWithResolveBrowserNetworkExecutionHostForWorktree ext
     return {
       ...env,
       DOLPHIN_WORKSPACE_ID: scope.id,
-      DOLPHIN_PROJECT_GROUP_ID: scope.folderWorkspace.projectGroupId,
+      ...(scope.folderWorkspace.projectGroupId !== null
+        ? { DOLPHIN_PROJECT_GROUP_ID: scope.folderWorkspace.projectGroupId }
+        : {}),
       DOLPHIN_WORKSPACE_ROOT: scope.folderWorkspace.folderPath
     }
   }

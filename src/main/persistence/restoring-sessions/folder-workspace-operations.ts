@@ -52,7 +52,9 @@ export class FolderWorkspacePersistenceOperations {
   }
 
   createFolderWorkspace(input: {
-    projectGroupId: string
+    /** Null only for a multi-project workspace, which must then name its own folder. */
+    projectGroupId: string | null
+    kind?: FolderWorkspace['kind']
     name?: string
     folderPath?: string | null
     linkedTask?: FolderWorkspace['linkedTask']
@@ -62,26 +64,36 @@ export class FolderWorkspacePersistenceOperations {
     createdWithAgent?: FolderWorkspace['createdWithAgent']
     pendingFirstAgentMessageRename?: boolean
   }): FolderWorkspace {
-    const group = (this.state.projectGroups ?? []).find(
-      (entry) => entry.id === input.projectGroupId
-    )
+    const isMultiProject = input.kind === 'multi-project'
+    const group =
+      input.projectGroupId === null
+        ? undefined
+        : (this.state.projectGroups ?? []).find((entry) => entry.id === input.projectGroupId)
     // Why trim: the guard below accepts a padded path, so persist the same value it validated.
     const folderPath =
       typeof input.folderPath === 'string' && input.folderPath.trim().length > 0
         ? input.folderPath
         : group?.parentPath?.trim()
-    if (!group || !folderPath) {
-      throw new Error('Folder-backed project group not found.')
+    if (!folderPath || (!group && !isMultiProject)) {
+      throw new Error(
+        isMultiProject
+          ? 'Multi-project workspace folder is missing.'
+          : 'Folder-backed project group not found.'
+      )
     }
     const now = Date.now()
     const linkedTask = normalizeWorkspaceLinkedItem(input.linkedTask)
     const sourceContext = normalizeStoredTaskSourceContext(input.linkedTaskSourceContext)
     const workspace: FolderWorkspace = {
       id: randomUUID(),
-      projectGroupId: group.id,
-      name: normalizeFolderWorkspaceName(input.name, `${group.name} workspace`),
+      projectGroupId: group?.id ?? null,
+      ...(isMultiProject ? { kind: 'multi-project' as const } : {}),
+      name: normalizeFolderWorkspaceName(
+        input.name,
+        group ? `${group.name} workspace` : 'Multi-project workspace'
+      ),
       folderPath,
-      connectionId: input.connectionId ?? group.connectionId ?? null,
+      connectionId: input.connectionId ?? group?.connectionId ?? null,
       ...(input.creatorProvenance ? { creatorProvenance: input.creatorProvenance } : {}),
       linkedTask,
       linkedTaskSourceContext: isWorkspaceLinkedItemSourceContextMatch(linkedTask, sourceContext)

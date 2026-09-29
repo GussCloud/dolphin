@@ -281,7 +281,8 @@ export function resolveDirectSshTargetScope(
       ambiguousOwnerCount++
       continue
     }
-    const groupRows = groupRowsById.get(rows[0].projectGroupId) ?? []
+    const folderGroupId = rows[0].projectGroupId
+    const groupRows = folderGroupId === null ? [] : (groupRowsById.get(folderGroupId) ?? [])
     if (groupRows.length > 1) {
       ambiguousOwnerCount++
       continue

@@ -16,7 +16,10 @@ export type WorkspaceKey = `worktree:${string}` | `folder:${string}`
 
 export type FolderWorkspace = {
   id: string
-  projectGroupId: string
+  /** Null for a multi-project workspace, which belongs to its member projects, not a group. */
+  projectGroupId: string | null
+  /** Marks a container holding one worktree per member project (members attach via lineage). */
+  kind?: 'multi-project'
   name: string
   folderPath: string
   /** SSH target ID for folder workspaces whose folder path lives remotely. */

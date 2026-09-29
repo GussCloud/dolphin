@@ -244,11 +244,14 @@ describe('useComposerState host-context boundaries', () => {
     expect(targetSection).toContain('useDetectedAgents(folderTargetAgentDetectionTarget)')
 
     const submitSection = COMPOSER_SOURCE.folderSubmit
-    expect(submitSection).toContain('isRemote: folderTargetIsRemote')
+    // Why: group folder targets keep their host; multi-project workspaces always run locally.
+    expect(submitSection).toContain('isRemote: run.projectGroup ? folderTargetIsRemote : false')
     expect(submitSection).toContain(
       "launchSource: telemetrySource === 'onboarding' ? 'onboarding' : 'new_workspace_composer'"
     )
-    expect(submitSection).toContain('runtimeEnvironmentId: folderTargetRuntimeEnvironmentId')
+    expect(submitSection).toContain(
+      'runtimeEnvironmentId: run.projectGroup ? folderTargetRuntimeEnvironmentId : null'
+    )
   })
 
   it('detects composer agents against the repo host: SSH, then runtime, then local (#7082)', () => {

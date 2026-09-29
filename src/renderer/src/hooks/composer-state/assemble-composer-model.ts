@@ -34,6 +34,7 @@ export function assembleComposerModel(
     ...source.issueSourceActions,
     ...source.composerNavigationActions,
     ...submit.folderSubmitOrchestration,
+    ...submit.multiProjectMembers,
     ...submit.fullSubmitSourcePreparation,
     ...submit.fullSubmitPreparation,
     ...submit.fullCreationExecution,

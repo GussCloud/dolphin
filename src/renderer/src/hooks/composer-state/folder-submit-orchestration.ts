@@ -29,6 +29,8 @@ type FolderSubmitOrchestrationInput = Pick<
 
 import { useCallback } from 'react'
 import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { ProjectGroup } from '../../../../shared/project-group-types'
+import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
 import { settleComposerSubmit } from '@/lib/composer-submit-cancellation'
 import { isTuiAgentEnabled } from '../../../../shared/tui-agent-selection'
 import {
@@ -47,15 +49,24 @@ import {
   getWorkspaceCreateErrorToastMessage
 } from '@/lib/workspace-create-error-format'
 import { toast } from 'sonner'
-import { getMultiProjectEligibleRepos } from '@/components/new-workspace/multi-project-workspace-eligibility'
-import { ensureWorktreeHasInitialTerminal } from '@/lib/worktree-initial-terminal-seeding'
+import { seedMultiProjectMemberSetup } from '@/lib/multi-project-member-setup'
 import { useAppStore } from '@/store'
-import {
-  getMultiProjectWorktreeSelection,
-  resolveMultiProjectWorktreeRepoIds,
-  useMultiProjectWorktreeSelectionStore
-} from '@/store/multi-project-worktree-selection'
 import type { MultiProjectWorkspaceCreateResult } from '../../../../shared/multi-project-workspace-types'
+
+type FolderWorkspaceCreateRequest = Parameters<
+  Parameters<typeof submitFolderWorkspaceCreate>[0]['createFolderWorkspace']
+>[0]
+
+type FolderSubmitRun = {
+  /** Null for a multi-project workspace, which belongs to no group and runs locally. */
+  projectGroup: ProjectGroup | null
+  requestedAgent: TuiAgent | null
+  /** Overrides the typed name, e.g. with the seed a multi-project create needs for its branch. */
+  name?: string
+  canResolveSmartGitHub: boolean
+  create: (request: FolderWorkspaceCreateRequest) => Promise<FolderWorkspace | null>
+  afterCreate?: () => void
+}
 
 export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInput) {
   const {
@@ -85,19 +96,13 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
   } = input
   const { canResolveFolderSmartGitHubSubmit } = decisions
 
-  const submitFolderTarget = useCallback(
-    async (requestedAgent: TuiAgent | null): Promise<void> => {
-      if (!selectedProjectGroup?.parentPath || folderCreateDisabled) {
-        return
-      }
+  const runFolderSubmit = useCallback(
+    async (run: FolderSubmitRun): Promise<void> => {
       setCreateError(null)
       setCreating(true)
       try {
-        const shouldResolveSmartGitHubSubmit = canResolveFolderSmartGitHubSubmit({
-          hasFolderSourceRepos: folderSourceRepos.length > 0
-        })
         const smartGitHubSettlement = await settleComposerSubmit(
-          shouldResolveSmartGitHubSubmit
+          run.canResolveSmartGitHub
             ? resolvePendingSmartGitHubSubmit()
             : Promise.resolve({ kind: 'none' } as const),
           isSubmissionCancelled
@@ -110,29 +115,21 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
           smartGitHubResolution.kind === 'none' ? null : smartGitHubResolution
         const submitLinkedWorkItem = smartGitHubMetadata?.linkedWorkItem ?? linkedWorkItem
         const agent =
-          requestedAgent && isTuiAgentEnabled(requestedAgent, disabledTuiAgents)
-            ? requestedAgent
+          run.requestedAgent && isTuiAgentEnabled(run.requestedAgent, disabledTuiAgents)
+            ? run.requestedAgent
             : null
         if (isSubmissionCancelled()) {
           return
         }
-        const multiProjectRepoIds = resolveMultiProjectWorktreeRepoIds(
-          getMultiProjectWorktreeSelection(
-            useMultiProjectWorktreeSelectionStore.getState().byProjectGroupId,
-            selectedProjectGroup.id
-          ),
-          getMultiProjectEligibleRepos(selectedProjectGroup, folderSourceRepos).map(
-            (repo) => repo.id
-          )
-        )
-        let multiProjectResult: MultiProjectWorkspaceCreateResult | null = null
+        // Why: a multi-project workspace always runs on this machine, whatever group is selected.
+        const connectionId = run.projectGroup ? folderTargetConnectionId : null
         const folderLaunchDraftText =
           agent && submitLinkedWorkItem
             ? resolveFolderWorkspaceLaunchDraft(submitLinkedWorkItem, note)
             : null
         const folderWorkspaceCreated = await submitFolderWorkspaceCreate({
-          projectGroup: selectedProjectGroup,
-          name: smartGitHubMetadata?.workspaceName ?? name,
+          projectGroup: run.projectGroup,
+          name: run.name ?? smartGitHubMetadata?.workspaceName ?? name,
           lastAutoName: lastAutoNameRef.current,
           linkedWorkItem: submitLinkedWorkItem,
           linkedTaskSourceContext: taskSourceContext,
@@ -157,35 +154,15 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
                     ? { promptDelivery: 'draft' as const, launchDraftText: folderLaunchDraftText }
                     : {}),
                   nativeChatTranscriptIsLocalReadable:
-                    isNativeChatTranscriptLocalReadable(folderTargetConnectionId)
+                    isNativeChatTranscriptLocalReadable(connectionId)
                 }
               )
             : undefined,
           terminalWindowsShell: settings?.terminalWindowsShell,
-          isRemote: folderTargetIsRemote,
+          isRemote: run.projectGroup ? folderTargetIsRemote : false,
           launchSource: telemetrySource === 'onboarding' ? 'onboarding' : 'new_workspace_composer',
-          runtimeEnvironmentId: folderTargetRuntimeEnvironmentId,
-          createFolderWorkspace: async (input) => {
-            if (!multiProjectRepoIds) {
-              return createFolderWorkspace(input, {
-                runtimeEnvironmentId: folderTargetRuntimeEnvironmentId
-              })
-            }
-            multiProjectResult = await useAppStore.getState().createMultiProjectWorkspace({
-              projectGroupId: input.projectGroupId,
-              name: input.name,
-              repoIds: multiProjectRepoIds,
-              linkedTask: input.linkedTask,
-              ...(input.linkedTaskSourceContext
-                ? { linkedTaskSourceContext: input.linkedTaskSourceContext }
-                : {}),
-              ...(input.createdWithAgent ? { createdWithAgent: input.createdWithAgent } : {}),
-              ...(input.pendingFirstAgentMessageRename
-                ? { pendingFirstAgentMessageRename: true }
-                : {})
-            })
-            return multiProjectResult.folderWorkspace
-          },
+          runtimeEnvironmentId: run.projectGroup ? folderTargetRuntimeEnvironmentId : null,
+          createFolderWorkspace: run.create,
           onOpenChange: (open) => {
             if (!open) {
               if (persistDraft) {
@@ -195,8 +172,8 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
             }
           }
         })
-        if (folderWorkspaceCreated && multiProjectResult) {
-          seedMultiProjectMemberSetup(multiProjectResult)
+        if (folderWorkspaceCreated) {
+          run.afterCreate?.()
         }
         if (!folderWorkspaceCreated) {
           setCreateError({
@@ -223,14 +200,10 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
     },
     [
       clearNewWorkspaceDraft,
-      createFolderWorkspace,
-      canResolveFolderSmartGitHubSubmit,
       disabledTuiAgents,
-      folderCreateDisabled,
       folderTargetConnectionId,
       folderTargetIsRemote,
       folderTargetRuntimeEnvironmentId,
-      folderSourceRepos,
       isSubmissionCancelled,
       linkedWorkItem,
       name,
@@ -238,7 +211,6 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
       onCreated,
       persistDraft,
       resolvePendingSmartGitHubSubmit,
-      selectedProjectGroup,
       settings,
       taskSourceContext,
       telemetrySource,
@@ -248,24 +220,77 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
     ]
   )
 
-  return {
-    submitFolderTarget
-  }
-}
+  const submitFolderTarget = useCallback(
+    async (requestedAgent: TuiAgent | null): Promise<void> => {
+      if (!selectedProjectGroup?.parentPath || folderCreateDisabled) {
+        return
+      }
+      const projectGroupId = selectedProjectGroup.id
+      await runFolderSubmit({
+        projectGroup: selectedProjectGroup,
+        requestedAgent,
+        canResolveSmartGitHub: canResolveFolderSmartGitHubSubmit({
+          hasFolderSourceRepos: folderSourceRepos.length > 0
+        }),
+        create: (request) =>
+          createFolderWorkspace(
+            { ...request, projectGroupId },
+            { runtimeEnvironmentId: folderTargetRuntimeEnvironmentId }
+          )
+      })
+    },
+    [
+      canResolveFolderSmartGitHubSubmit,
+      createFolderWorkspace,
+      folderCreateDisabled,
+      folderSourceRepos.length,
+      folderTargetRuntimeEnvironmentId,
+      runFolderSubmit,
+      selectedProjectGroup
+    ]
+  )
 
-/** Members aren't activated on create, so queue their setup/default tabs for when they open. */
-function seedMultiProjectMemberSetup(result: MultiProjectWorkspaceCreateResult): void {
-  for (const member of result.members) {
-    if (!member.setup && !member.defaultTabs) {
-      continue
-    }
-    ensureWorktreeHasInitialTerminal(
-      useAppStore.getState(),
-      member.worktree.id,
-      undefined,
-      member.setup,
-      undefined,
-      member.defaultTabs
-    )
+  /** Creates one workspace holding a worktree per project, all on the branch named after it. */
+  const submitMultiProjectTarget = useCallback(
+    async (
+      requestedAgent: TuiAgent | null,
+      repoIds: readonly string[],
+      workspaceName: string
+    ): Promise<void> => {
+      let result: MultiProjectWorkspaceCreateResult | null = null
+      await runFolderSubmit({
+        projectGroup: null,
+        requestedAgent,
+        name: workspaceName,
+        // Why: the linked item is resolved against the primary project, like a single create.
+        canResolveSmartGitHub: true,
+        create: async (request) => {
+          result = await useAppStore.getState().createMultiProjectWorkspace({
+            name: request.name,
+            repoIds: [...repoIds],
+            linkedTask: request.linkedTask,
+            ...(request.linkedTaskSourceContext
+              ? { linkedTaskSourceContext: request.linkedTaskSourceContext }
+              : {}),
+            ...(request.createdWithAgent ? { createdWithAgent: request.createdWithAgent } : {}),
+            ...(request.pendingFirstAgentMessageRename
+              ? { pendingFirstAgentMessageRename: true }
+              : {})
+          })
+          return result.folderWorkspace
+        },
+        afterCreate: () => {
+          if (result) {
+            seedMultiProjectMemberSetup(result.members)
+          }
+        }
+      })
+    },
+    [runFolderSubmit]
+  )
+
+  return {
+    submitFolderTarget,
+    submitMultiProjectTarget
   }
 }

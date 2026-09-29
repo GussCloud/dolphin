@@ -8,12 +8,12 @@ import {
 import { ALL_GROUP_KEY, getPRLaneKey } from './group-keys'
 import type { WorktreeGroupBy } from './row-types'
 
-/** A folder workspace paired with the project group that owns it. The pair is
- *  carried through grouping because FolderWorkspaceRow needs a non-optional
- *  ProjectGroup and the section emitters have no owner resolver. */
+/** A folder workspace paired with the project group that owns it, or null for a groupless
+ *  multi-project workspace. The pair is carried through grouping because the section emitters
+ *  have no owner resolver. */
 export type RenderableFolderWorkspace = {
   folderWorkspace: FolderWorkspace
-  projectGroup: ProjectGroup
+  projectGroup: ProjectGroup | null
 }
 
 /**
@@ -30,7 +30,14 @@ export function getRenderableFolderWorkspaces(
   const projectGroupsById = new Map(projectGroups.map((group) => [group.id, group]))
   const renderable: RenderableFolderWorkspace[] = []
   for (const folderWorkspace of folderWorkspaces) {
-    const projectGroup = projectGroupsById.get(folderWorkspace.projectGroupId)
+    const projectGroup =
+      folderWorkspace.projectGroupId === null
+        ? undefined
+        : projectGroupsById.get(folderWorkspace.projectGroupId)
+    if (folderWorkspace.kind === 'multi-project' && !projectGroup) {
+      renderable.push({ folderWorkspace, projectGroup: null })
+      continue
+    }
     // A group filtered out for host visibility legitimately hides its workspaces.
     if (!projectGroup?.parentPath) {
       continue
