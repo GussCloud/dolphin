@@ -3,6 +3,8 @@ import { Check, LoaderCircle, Pencil, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { DetachedHeadBadge } from '@/components/DetachedHeadBadge'
 import HostedReviewActions from '../HostedReviewActions'
+import { supportsHostedReviewDetails } from '../../../../../shared/hosted-review-actions'
+import { HostedReviewDetailsSection } from './HostedReviewDetailsSection'
 import { GitHubPRStackMap } from '../GitHubPRStackMap'
 import { SourceControlAgentActionDialog } from '../SourceControlAgentActionDialog'
 import { ChecksPanelUpdatedAtMetadata } from '../checks-panel-updated-at-metadata'
@@ -108,6 +110,8 @@ export function ChecksPanelActiveContent({
     return null
   }
   const reviewShortLabel = activeReview.provider === 'gitlab' ? 'MR' : 'PR'
+  // Detail-capable providers own their actions and comments in HostedReviewDetailsSection.
+  const hasReviewDetails = supportsHostedReviewDetails(activeReview.provider)
   const shouldShowReviewTriageStrip =
     activeConflictReview !== null || getBrokenChecks(checks).length > 0
   const hostedReviewModifierHintDestination = resolveChecksPanelHostedReviewModifierDestination(
@@ -201,7 +205,14 @@ export function ChecksPanelActiveContent({
           />
         )}
         {/* Merge / Delete Workspace actions */}
-        {activeReview && activeWorktree && repo && (
+        {repo && hasReviewDetails ? (
+          <HostedReviewDetailsSection
+            review={activeReview}
+            repo={repo}
+            onRefreshReview={refreshHostedReviewAfterMutation}
+          />
+        ) : null}
+        {activeReview && activeWorktree && repo && !hasReviewDetails && (
           <HostedReviewActions
             review={activeReview}
             githubPR={pr}
@@ -248,26 +259,28 @@ export function ChecksPanelActiveContent({
           getGitLabProjectRef={getGitLabProjectRef}
         />
       )}
-      <PRCommentsList
-        comments={comments}
-        commentsLoading={commentsLoading}
-        reviewKind={reviewShortLabel}
-        commentsDisabled={!canTargetPRComments}
-        commentsDisabledReason={commentsDisabledReason}
-        selectionContextKey={stateRequestKey}
-        selectionClearRequest={commentsSelectionClearRequest}
-        resolveCommentsWithAIDisabled={Boolean(resolveCommentsWithAIDisabledReason)}
-        resolveCommentsWithAIDisabledReason={resolveCommentsWithAIDisabledReason}
-        onAddComment={pr ? handleAddPRComment : undefined}
-        onResolveSelectedCommentsWithAI={
-          sourceControlAiActionsVisible ? handleResolveCommentsWithAI : undefined
-        }
-        onReply={pr ? handleReplyToComment : undefined}
-        onResolve={pr || activeGitLabReview ? handleResolve : undefined}
-        onEditComment={pr ? handleEditComment : undefined}
-        onDeleteComment={pr ? handleDeleteComment : undefined}
-        onSetReaction={canTargetPRComments ? handleSetReaction : undefined}
-      />
+      {hasReviewDetails ? null : (
+        <PRCommentsList
+          comments={comments}
+          commentsLoading={commentsLoading}
+          reviewKind={reviewShortLabel}
+          commentsDisabled={!canTargetPRComments}
+          commentsDisabledReason={commentsDisabledReason}
+          selectionContextKey={stateRequestKey}
+          selectionClearRequest={commentsSelectionClearRequest}
+          resolveCommentsWithAIDisabled={Boolean(resolveCommentsWithAIDisabledReason)}
+          resolveCommentsWithAIDisabledReason={resolveCommentsWithAIDisabledReason}
+          onAddComment={pr ? handleAddPRComment : undefined}
+          onResolveSelectedCommentsWithAI={
+            sourceControlAiActionsVisible ? handleResolveCommentsWithAI : undefined
+          }
+          onReply={pr ? handleReplyToComment : undefined}
+          onResolve={pr || activeGitLabReview ? handleResolve : undefined}
+          onEditComment={pr ? handleEditComment : undefined}
+          onDeleteComment={pr ? handleDeleteComment : undefined}
+          onSetReaction={canTargetPRComments ? handleSetReaction : undefined}
+        />
+      )}
       <SourceControlAgentActionDialog
         open={sourceControlAiActionsVisible && agentComposerState !== null}
         onOpenChange={(open) => {

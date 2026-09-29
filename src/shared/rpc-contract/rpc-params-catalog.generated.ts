@@ -286,6 +286,7 @@ import {
   WorkItemDetails,
   WorkItemsList as WorkItemsListOfGitlabParams
 } from './gitlab-params'
+import { HostedReviewActionParams, HostedReviewDetailsParams } from './hosted-review-action-params'
 import {
   HostedReviewCreate,
   HostedReviewCreationEligibility,
@@ -903,8 +904,10 @@ export const RPC_PARAMS_BY_METHOD = {
   'host.pwsh.isAvailable': null,
   'host.wsl.isAvailable': null,
   'host.wsl.listDistros': null,
+  'hostedReview.action': HostedReviewActionParams,
   'hostedReview.create': HostedReviewCreate,
   'hostedReview.createStacked': HostedReviewCreate,
+  'hostedReview.details': HostedReviewDetailsParams,
   'hostedReview.forBranch': HostedReviewForBranch,
   'hostedReview.getCreationEligibility': HostedReviewCreationEligibility,
   'jira.addIssueComment': IssueCommentOfJiraParams,

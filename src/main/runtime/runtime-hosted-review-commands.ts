@@ -32,6 +32,15 @@ import {
 } from '../source-control/hosted-review-creation'
 import type { HostedReviewExecutionOptions } from '../source-control/hosted-review-git-options'
 import { createStackedHostedReview } from '../source-control/stacked-hosted-review-creation'
+import {
+  getHostedReviewDetails,
+  performHostedReviewAction
+} from '../source-control/hosted-review-actions'
+import type {
+  HostedReviewAction,
+  HostedReviewActionResult,
+  HostedReviewDetails
+} from '../../shared/hosted-review-actions'
 
 type HostedReviewTargetArgs = { repoSelector: string; worktreeSelector?: string }
 
@@ -133,6 +142,38 @@ export class RuntimeHostedReviewCommands {
       this.deps.recordCreated(repo.id, review.number, review.url)
     }
     return review
+  }
+
+  async getHostedReviewDetails(args: {
+    repoSelector: string
+    provider: string
+    number: number
+  }): Promise<HostedReviewDetails | null> {
+    const repo = await this.deps.resolveRepo(args.repoSelector)
+    return getHostedReviewDetails({
+      repoPath: repo.path,
+      executionHostId: getRepoHostedReviewExecutionHostId(repo),
+      provider: args.provider,
+      number: args.number
+    })
+  }
+
+  async performHostedReviewAction(args: {
+    repoSelector: string
+    provider: string
+    number: number
+    action: HostedReviewAction
+  }): Promise<HostedReviewActionResult> {
+    const repo = await this.deps.resolveRepo(args.repoSelector)
+    return performHostedReviewAction(
+      {
+        repoPath: repo.path,
+        executionHostId: getRepoHostedReviewExecutionHostId(repo),
+        provider: args.provider,
+        number: args.number
+      },
+      args.action
+    )
   }
 
   async getHostedReviewCreationEligibility(

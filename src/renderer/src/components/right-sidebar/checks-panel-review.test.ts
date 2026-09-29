@@ -79,6 +79,23 @@ describe('selectChecksPanelReview', () => {
     ).toBe(review)
   })
 
+  it('surfaces a cached Azure DevOps review so its details panel can render', () => {
+    const review = { ...makeGitLabReview({ number: 9 }), provider: 'azure-devops' as const }
+
+    expect(
+      selectChecksPanelReview({
+        hostedReview: review,
+        pr: makePR({ number: 12 }),
+        linkedPR: null,
+        suppressedGitHubPR: null,
+        linkedGitLabMR: null,
+        linkedBitbucketPR: null,
+        linkedAzureDevOpsPR: 9,
+        linkedGiteaPR: null
+      })
+    ).toBe(review)
+  })
+
   it('uses GitHub PR cache when no non-GitHub review is linked', () => {
     const selected = selectChecksPanelReview({
       hostedReview: null,

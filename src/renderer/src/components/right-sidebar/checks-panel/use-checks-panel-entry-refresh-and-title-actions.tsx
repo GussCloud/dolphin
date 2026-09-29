@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { ENTRY_REFRESH_GRACE_MS, shouldEntryRefresh } from '../checks-entry-refresh'
 import { refreshHostedReviewCard } from '@/store/slices/hosted-review-card-refresh'
 import { toast } from 'sonner'
+import { supportsHostedReviewDetails } from '../../../../../shared/hosted-review-actions'
+import { performHostedReviewAction } from '@/lib/hosted-review-details-client'
 
 import type { ChecksPanelContextState } from './use-checks-panel-context-state'
 import type { ChecksPanelControllerState } from './use-checks-panel-controller-state'
@@ -200,6 +202,20 @@ export function useChecksPanelEntryRefreshAndTitleActions(
     if (!repo || !branch) {
       return
     }
+    if (activeReview && supportsHostedReviewDetails(activeReview.provider)) {
+      await refreshHostedReviewCard(fetchHostedReviewForBranch, {
+        repoPath: repo.path,
+        repoId: repo.id,
+        branch,
+        linkedGitHubPR: linkedPR,
+        fallbackGitHubPR: fallbackGitHubPRNumber,
+        linkedGitLabMR,
+        linkedBitbucketPR,
+        linkedAzureDevOpsPR,
+        linkedGiteaPR
+      })
+      return
+    }
     if (activeReview?.provider === 'gitlab') {
       const refreshedReview = await refreshHostedReviewCard(fetchHostedReviewForBranch, {
         repoPath: repo.path,
@@ -243,7 +259,7 @@ export function useChecksPanelEntryRefreshAndTitleActions(
     })
   }, [
     activeGitLabReview,
-    activeReview?.provider,
+    activeReview,
     activeWorktreeId,
     branch,
     fallbackGitHubPRNumber,
@@ -293,7 +309,17 @@ export function useChecksPanelEntryRefreshAndTitleActions(
     }
     setTitleSaving(true)
     try {
-      if (activeReview.provider === 'gitlab') {
+      if (supportsHostedReviewDetails(activeReview.provider)) {
+        const result = await performHostedReviewAction(repo, activeReview, {
+          kind: 'edit',
+          title: nextTitle
+        })
+        if (!result.ok) {
+          toast.error(result.error)
+          return
+        }
+        await refreshHostedReviewAfterMutation()
+      } else if (activeReview.provider === 'gitlab') {
         const result = await window.api.gl.updateMR({
           repoPath: repo.path,
           repoId: repo.id,
