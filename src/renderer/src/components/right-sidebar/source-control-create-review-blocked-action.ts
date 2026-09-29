@@ -28,7 +28,7 @@ export function resolveHostedReviewAuthInstruction(provider: HostedReviewProvide
     return 'Run glab auth login'
   }
   if (provider === 'azure-devops') {
-    return 'Set DOLPHIN_AZURE_DEVOPS_TOKEN'
+    return 'Connect Azure DevOps in Settings > Integrations'
   }
   if (provider === 'gitea') {
     return 'Set DOLPHIN_GITEA_TOKEN'

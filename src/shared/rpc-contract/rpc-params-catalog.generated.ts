@@ -50,6 +50,7 @@ import {
   AutomationRuns,
   AutomationUpdate
 } from './automation-params'
+import { AzureDevOpsConfigureCliDefaults, AzureDevOpsSetAuthMethod } from './azure-devops-params'
 import { CertificateProceed } from './browser-core-params'
 import { MouseClick } from './browser-extras-params'
 import { BrowserIdentitySet, ProfileCreate } from './browser-identity-params'
@@ -618,6 +619,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'automation.runs': AutomationRuns,
   'automation.show': AutomationId,
   'automation.update': AutomationUpdate,
+  'azureDevOps.configureCliDefaults': AzureDevOpsConfigureCliDefaults,
+  'azureDevOps.refreshCliSession': null,
+  'azureDevOps.setAuthMethod': AzureDevOpsSetAuthMethod,
   'browser.back': BrowserTarget,
   'browser.capture.start': BrowserTarget,
   'browser.capture.stop': BrowserTarget,
