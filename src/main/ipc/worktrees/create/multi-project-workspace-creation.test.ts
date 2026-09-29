@@ -3,7 +3,6 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
-import type { ProjectGroup } from '../../../../shared/project-group-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { WorktreeIpcContext } from '../worktree-ipc-context'
 
@@ -28,35 +27,24 @@ import { createMultiProjectWorkspace } from './multi-project-workspace-creation'
 
 let workspaceDir: string
 
+// Why: unrelated parent folders and no group, the shape users pick projects from.
 function makeRepo(id: string): Repo {
   return {
     id,
-    path: join(workspaceDir, 'sources', id),
+    path: join(workspaceDir, `${id}-home`, id),
     displayName: id,
     badgeColor: '#000',
     addedAt: 0,
-    kind: 'git',
-    projectGroupId: 'group'
+    kind: 'git'
   }
 }
 
 function makeContext() {
-  const group: ProjectGroup = {
-    id: 'group',
-    name: 'Group',
-    parentPath: join(workspaceDir, 'sources'),
-    parentGroupId: null,
-    createdFrom: 'folder-scan',
-    tabOrder: 0,
-    isCollapsed: false,
-    color: null,
-    createdAt: 0,
-    updatedAt: 0
-  }
   const repos = [makeRepo('api'), makeRepo('web')]
   const folderWorkspace: FolderWorkspace = {
     id: 'fw-1',
-    projectGroupId: 'group',
+    projectGroupId: null,
+    kind: 'multi-project',
     name: 'Feature',
     folderPath: '',
     linkedTask: null,
@@ -71,7 +59,7 @@ function makeContext() {
   }
   const store = {
     getSettings: () => ({ workspaceDir: join(workspaceDir, 'worktrees'), nestWorkspaces: false }),
-    getProjectGroups: () => [group],
+    getProjectGroups: () => [],
     getRepos: () => repos,
     createFolderWorkspace: vi.fn((input: { folderPath: string }) => ({
       ...folderWorkspace,
@@ -103,14 +91,17 @@ describe('createMultiProjectWorkspace', () => {
     const containerPath = join(workspaceDir, 'worktrees', 'Feature')
 
     const result = await createMultiProjectWorkspace(context, {
-      projectGroupId: 'group',
       name: 'Feature',
       repoIds: ['api', 'web'],
       setupDecision: 'skip'
     })
 
     expect(store.createFolderWorkspace).toHaveBeenCalledWith(
-      expect.objectContaining({ projectGroupId: 'group', folderPath: containerPath })
+      expect.objectContaining({
+        projectGroupId: null,
+        kind: 'multi-project',
+        folderPath: containerPath
+      })
     )
     expect(mocks.createLocalWorktree.mock.calls.map((call) => [call[0], call[5]])).toEqual([
       [
@@ -148,7 +139,6 @@ describe('createMultiProjectWorkspace', () => {
 
     await expect(
       createMultiProjectWorkspace(context, {
-        projectGroupId: 'group',
         name: 'Feature',
         repoIds: ['api', 'web']
       })
@@ -167,14 +157,12 @@ describe('createMultiProjectWorkspace', () => {
   it('refuses a name whose container folder already exists', async () => {
     const { context, store } = makeContext()
     await createMultiProjectWorkspace(context, {
-      projectGroupId: 'group',
       name: 'Feature',
       repoIds: ['api']
     })
 
     await expect(
       createMultiProjectWorkspace(context, {
-        projectGroupId: 'group',
         name: 'Feature',
         repoIds: ['api']
       })

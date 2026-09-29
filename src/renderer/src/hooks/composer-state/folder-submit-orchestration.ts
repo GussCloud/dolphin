@@ -172,7 +172,6 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
               })
             }
             multiProjectResult = await useAppStore.getState().createMultiProjectWorkspace({
-              projectGroupId: input.projectGroupId,
               name: input.name,
               repoIds: multiProjectRepoIds,
               linkedTask: input.linkedTask,

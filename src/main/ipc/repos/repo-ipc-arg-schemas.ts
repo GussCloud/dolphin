@@ -142,7 +142,6 @@ export const FolderWorkspaceCreateArgs = z
 
 export const MultiProjectWorkspaceCreateArgs = z
   .object({
-    projectGroupId: z.string().min(1),
     name: z.string().trim().min(1),
     repoIds: z.array(z.string().min(1)).min(1).max(50),
     setupDecision: z.enum(['inherit', 'run', 'skip']).optional(),
