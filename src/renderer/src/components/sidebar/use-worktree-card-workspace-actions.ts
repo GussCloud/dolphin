@@ -4,6 +4,7 @@ import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { runWorktreeDelete } from './delete-worktree-flow'
+import { openMultiProjectDeleteDialogIfNeeded } from './multi-project-workspace-delete'
 import { isEventTargetInsideCurrentTarget } from './worktree-card-dom-events'
 import type { ResolvedWorktreeCardProps } from './worktree-card-model'
 import { writeWorkspaceDragData } from './workspace-status'
@@ -54,6 +55,9 @@ export function useWorktreeCardWorkspaceActions({
       event.stopPropagation()
       if (showDeleteQuickAction) {
         if (folderWorkspaceId) {
+          if (openMultiProjectDeleteDialogIfNeeded(folderWorkspaceId, worktree.hostId)) {
+            return
+          }
           void deleteFolderWorkspace(
             folderWorkspaceId,
             worktree.hostId ? { executionHostId: worktree.hostId } : undefined

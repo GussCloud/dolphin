@@ -26,6 +26,9 @@ const SidebarAgentsList = lazyWithRetry(() => import('./SidebarAgentsList'))
 
 const WorktreeMetaDialog = lazyWithRetry(() => import('./WorktreeMetaDialog'))
 const RemoveFolderDialog = lazyWithRetry(() => import('./RemoveFolderDialog'))
+const DeleteMultiProjectWorkspaceDialog = lazyWithRetry(
+  () => import('./DeleteMultiProjectWorkspaceDialog')
+)
 const WorktreeVisibilityDialog = lazyWithRetry(() => import('./WorktreeVisibilityDialog'))
 const DolphinYamlTrustDialog = lazyWithRetry(() => import('./DolphinYamlTrustDialog'))
 const ForgetSshWorkspaceDialog = lazyWithRetry(() => import('./ForgetSshWorkspaceDialog'))
@@ -250,6 +253,9 @@ function Sidebar({
       <React.Suspense fallback={null}>
         {activeModal === 'edit-meta' ? <WorktreeMetaDialog /> : null}
         {activeModal === 'confirm-remove-folder' ? <RemoveFolderDialog /> : null}
+        {activeModal === 'delete-multi-project-workspace' ? (
+          <DeleteMultiProjectWorkspaceDialog />
+        ) : null}
         {activeModal === 'worktree-visibility' ? <WorktreeVisibilityDialog /> : null}
         {activeModal === 'confirm-dolphin-yaml-hooks' ? <DolphinYamlTrustDialog /> : null}
         {activeModal === 'forget-ssh-workspace' ? <ForgetSshWorkspaceDialog /> : null}
