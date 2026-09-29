@@ -1,36 +1,26 @@
 {
   "project_info": {
-    "project_number": "120364513935",
-    "project_id": "dolphin-cloud",
-    "storage_bucket": "dolphin-cloud.firebasestorage.app"
+    "project_number": "291191820823",
+    "project_id": "dolphin-cloud-cf4ca",
+    "storage_bucket": "dolphin-cloud-cf4ca.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:120364513935:android:1d951dc430aeb9bc664efa",
+        "mobilesdk_app_id": "1:291191820823:android:bfc1a8d1550f543899c252",
         "android_client_info": {
           "package_name": "com.gusscloud.dolphin.mobile"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "120364513935-evfa8502bp5r9hn7afhd9i03oibs8223.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBmT_w0OUQSiVfxblx-F0qlRvGkBBkTNQU"
+          "current_key": "AIzaSyBy13EKawqdcxDDwh_UBk4vAEI3Cu0T-Dc"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "120364513935-evfa8502bp5r9hn7afhd9i03oibs8223.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

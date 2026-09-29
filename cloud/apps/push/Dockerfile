@@ -23,7 +23,8 @@ COPY apps/push/package.json apps/push/package.json
 COPY --from=build /app/packages/push-contract/dist packages/push-contract/dist
 COPY --from=build /app/packages/postgres-schema/dist packages/postgres-schema/dist
 COPY --from=build /app/apps/push/dist apps/push/dist
-RUN pnpm install --prod --frozen-lockfile --filter @dolphin-cloud/push...
+RUN pnpm install --prod --frozen-lockfile --filter @dolphin-cloud/push...   && mkdir -p /data && chown node:node /data
 USER node
 EXPOSE 8080
+VOLUME ["/data"]
 CMD ["node", "apps/push/dist/index.js"]

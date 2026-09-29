@@ -43,3 +43,8 @@ api.{$DOLPHIN_DOMAIN} {
 relay.{$DOLPHIN_DOMAIN} {
 	reverse_proxy relay:8080
 }
+
+# Desktop hosts register phones and send notifications here; the service relays them to FCM.
+push.{$DOLPHIN_DOMAIN} {
+	reverse_proxy push:8080
+}
