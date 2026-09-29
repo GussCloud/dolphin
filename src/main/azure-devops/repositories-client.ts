@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { AzureDevOpsRepository } from '../../shared/azure-devops-auth'
 import { getAzureBoardsOrganizationUrl } from '../azure-boards/azure-boards-scope'
 import { resolveAzureDevOpsGitApiBaseUrl } from './azure-devops-api-request'
@@ -6,47 +7,43 @@ import type { AzureDevOpsRepoRef } from './repository-ref'
 
 const BRANCH_SEARCH_LIMIT = 20
 
-function listOf(payload: unknown): unknown[] {
-  return payload &&
-    typeof payload === 'object' &&
-    'value' in payload &&
-    Array.isArray(payload.value)
-    ? payload.value
-    : []
-}
+const NonEmpty = z.string().min(1)
 
-function stringField(record: object, key: string): string | null {
-  const value: unknown = Object.getOwnPropertyDescriptor(record, key)?.value
-  return typeof value === 'string' && value ? value : null
+const RawRepository = z.object({
+  name: NonEmpty,
+  remoteUrl: NonEmpty,
+  project: z.object({ name: NonEmpty }),
+  sshUrl: z.string().nullish(),
+  webUrl: z.string().nullish(),
+  defaultBranch: z.string().nullish(),
+  isDisabled: z.boolean().nullish()
+})
+
+const RawRef = z.object({ name: NonEmpty })
+
+// Azure DevOps list responses wrap items in `value`; unparseable items are dropped one by one.
+function parseList<T>(payload: unknown, item: z.ZodType<T>): T[] {
+  const list = z.object({ value: z.array(z.unknown()) }).safeParse(payload)
+  if (!list.success) {
+    return []
+  }
+  return list.data.value.flatMap((raw) => {
+    const parsed = item.safeParse(raw)
+    return parsed.success ? [parsed.data] : []
+  })
 }
 
 export function mapAzureDevOpsRepositories(payload: unknown): AzureDevOpsRepository[] {
-  return listOf(payload)
-    .flatMap((raw): AzureDevOpsRepository[] => {
-      if (!raw || typeof raw !== 'object') {
-        return []
-      }
-      const name = stringField(raw, 'name')
-      const remoteUrl = stringField(raw, 'remoteUrl')
-      const project =
-        'project' in raw && raw.project && typeof raw.project === 'object'
-          ? stringField(raw.project, 'name')
-          : null
-      // Disabled repositories cannot be cloned.
-      if (!name || !remoteUrl || !project || ('isDisabled' in raw && raw.isDisabled === true)) {
-        return []
-      }
-      return [
-        {
-          name,
-          project,
-          remoteUrl,
-          sshUrl: stringField(raw, 'sshUrl'),
-          webUrl: stringField(raw, 'webUrl'),
-          defaultBranch: stringField(raw, 'defaultBranch')?.replace(/^refs\/heads\//, '') ?? null
-        }
-      ]
-    })
+  return parseList(payload, RawRepository)
+    .filter((raw) => raw.isDisabled !== true)
+    .map((raw) => ({
+      name: raw.name,
+      project: raw.project.name,
+      remoteUrl: raw.remoteUrl,
+      sshUrl: raw.sshUrl || null,
+      webUrl: raw.webUrl || null,
+      defaultBranch: raw.defaultBranch?.replace(/^refs\/heads\//, '') || null
+    }))
     .sort(
       (left, right) =>
         left.project.localeCompare(right.project) || left.name.localeCompare(right.name)
@@ -83,8 +80,7 @@ export async function searchAzureDevOpsBranches(
       }
     }
   )
-  return listOf(payload).flatMap((ref) => {
-    const name = ref && typeof ref === 'object' ? stringField(ref, 'name') : null
-    return name?.startsWith('refs/heads/') ? [name.slice('refs/heads/'.length)] : []
-  })
+  return parseList(payload, RawRef).flatMap(({ name }) =>
+    name.startsWith('refs/heads/') ? [name.slice('refs/heads/'.length)] : []
+  )
 }
