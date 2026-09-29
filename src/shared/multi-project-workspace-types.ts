@@ -21,3 +21,15 @@ export type MultiProjectWorkspaceCreateResult = {
   folderWorkspace: FolderWorkspace
   members: CreateWorktreeResult[]
 }
+
+/** Adds one project to an existing multi-project workspace. */
+export type MultiProjectMemberAddArgs = {
+  folderWorkspaceId: string
+  repoId: string
+  /** The branch the existing members share, so the new member joins it. */
+  branchName?: string
+}
+
+export type MultiProjectMemberAddResult = {
+  member: CreateWorktreeResult
+}

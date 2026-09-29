@@ -152,6 +152,12 @@ export const MultiProjectWorkspaceCreateArgs = z
   })
   .superRefine(assertFolderWorkspaceLinkedSourceContextMatch)
 
+export const MultiProjectMemberAddArgs = z.object({
+  folderWorkspaceId: z.string().min(1),
+  repoId: z.string().min(1),
+  branchName: z.string().trim().min(1).optional()
+})
+
 export const FolderWorkspaceUpdateArgs = z.object({
   folderWorkspaceId: z.string().min(1),
   updates: z

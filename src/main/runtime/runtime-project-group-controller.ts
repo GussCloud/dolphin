@@ -1,5 +1,5 @@
-import { rmdir } from 'node:fs/promises'
 import type { FolderWorkspace } from '../../shared/folder-workspace-types'
+import { removeEmptyMultiProjectContainer } from '../multi-project-workspace-container'
 import type { ProjectGroup } from '../../shared/project-group-types'
 import type { Repo } from '../../shared/repo-types'
 import type {
@@ -236,8 +236,8 @@ export class RuntimeProjectGroupController {
     if (deleted) {
       this.deps.notifyReposChanged()
       if (workspace?.kind === 'multi-project') {
-        // Why: non-recursive, so the container only goes once its member worktrees are gone.
-        await rmdir(workspace.folderPath).catch(() => {})
+        // Why: not awaited; trashed members can take a while to delete in the background.
+        void removeEmptyMultiProjectContainer(workspace.folderPath)
       }
     }
     return { deleted }

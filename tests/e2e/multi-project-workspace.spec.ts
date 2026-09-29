@@ -1,4 +1,12 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import type { ElectronApplication, Page } from '@playwright/test'
@@ -171,6 +179,56 @@ test('creates a workspace from projects in unrelated folders and keeps it across
       timeout: 30_000
     })
     await second.page.screenshot({ path: testInfo.outputPath('4-after-restart.png') })
+
+    // Started with the CRM projects; now the SaaS one joins on the same branch.
+    await second.page.evaluate((workspaceId) => {
+      const state = window.__store!.getState()
+      state.setActiveWorktree(`folder:${workspaceId}`)
+      state.setRightSidebarOpen(true)
+      state.setRightSidebarTab('source-control')
+    }, created.workspaceId)
+    await second.page.getByRole('button', { name: 'Add project to workspace' }).click()
+    const addDialog = second.page.locator('[data-slot="dialog-content"]')
+    await expect(addDialog).toContainText('Add a project to "mp-feature"')
+    await second.page.getByRole('option').filter({ hasText: 'saas' }).first().click()
+    await expect(addDialog).toBeHidden({ timeout: 60_000 })
+    await expect
+      .poll(
+        async () => (await readMultiProjectWorkspace(second.page, 'mp-feature')).memberKeys.length,
+        {
+          timeout: 30_000
+        }
+      )
+      .toBe(3)
+    const saasWorktree = path.join(created.folderPath!, 'saas')
+    expect(await git(saasWorktree, ['branch', '--show-current'])).toMatch(/mp-feature/)
+    await second.page.screenshot({ path: testInfo.outputPath('5-after-add-project.png') })
+
+    await second.page
+      .locator(`[role="option"][data-worktree-id="folder:${created.workspaceId}"]`)
+      .click({ button: 'right' })
+    await second.page.getByRole('menuitem', { name: 'Remove Workspace' }).click()
+    const deleteDialog = second.page.locator('[data-slot="dialog-content"]')
+    await expect(deleteDialog).toContainText('This workspace has a worktree in 3 projects')
+    await second.page.screenshot({ path: testInfo.outputPath('6-delete-dialog.png') })
+    await deleteDialog.getByRole('button', { name: 'Delete', exact: true }).click()
+    await expect(deleteDialog).toBeHidden({ timeout: 90_000 })
+    await expect
+      .poll(async () => (await readMultiProjectWorkspace(second.page, 'mp-feature')).workspaceId, {
+        timeout: 60_000
+      })
+      .toBeNull()
+    // Why: only Dolphin's own leftovers must go; the isolated e2e shell may write a cache there.
+    await expect
+      .poll(
+        () =>
+          existsSync(created.folderPath!)
+            ? readdirSync(created.folderPath!).filter((entry) => entry !== 'Microsoft')
+            : [],
+        { timeout: 30_000 }
+      )
+      .toEqual([])
+    await expect(second.page.getByText('Multi-project workspaces', { exact: true })).toBeHidden()
   } finally {
     if (app) {
       await session.close(app)

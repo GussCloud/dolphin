@@ -14,9 +14,9 @@ import { useAppStore } from '@/store'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import {
   DELETE_MULTI_PROJECT_WORKSPACE_MODAL,
-  deleteMultiProjectWorkspace,
-  getMultiProjectWorkspaceMembers
+  deleteMultiProjectWorkspace
 } from './multi-project-workspace-delete'
+import { getMultiProjectWorkspaceMembers } from './multi-project-workspace-members'
 
 const DeleteMultiProjectWorkspaceDialog = React.memo(function DeleteMultiProjectWorkspaceDialog() {
   const activeModal = useAppStore((s) => s.activeModal)

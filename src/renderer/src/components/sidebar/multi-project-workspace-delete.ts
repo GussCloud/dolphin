@@ -1,10 +1,8 @@
 import { useAppStore } from '@/store'
-import type { AppState } from '@/store/types'
-import { getWorktreeOnHostFromState } from '@/store/selectors'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import { toWorktreeRemovalTarget } from '../../../../shared/worktree/removal'
-import type { Worktree } from '../../../../shared/worktree/types'
-import { folderWorkspaceKey, parseWorkspaceKey } from '../../../../shared/workspace-scope'
+import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
+import { getMultiProjectWorkspaceMembers } from './multi-project-workspace-members'
 import { runWorktreeDeleteWithToast } from './run-worktree-delete-with-toast'
 
 export const DELETE_MULTI_PROJECT_WORKSPACE_MODAL = 'delete-multi-project-workspace'
@@ -12,30 +10,6 @@ export const DELETE_MULTI_PROJECT_WORKSPACE_MODAL = 'delete-multi-project-worksp
 export type DeleteMultiProjectWorkspaceModalData = {
   folderWorkspaceId: string
   executionHostId?: ExecutionHostId
-}
-
-/** The worktrees attached to a multi-project workspace, one per member project. */
-export function getMultiProjectWorkspaceMembers(
-  state: Pick<AppState, 'folderWorkspaces' | 'workspaceLineageByChildKey' | 'worktreesByRepo'>,
-  folderWorkspaceId: string
-): Worktree[] {
-  const workspace = state.folderWorkspaces.find((entry) => entry.id === folderWorkspaceId)
-  if (workspace?.kind !== 'multi-project') {
-    return []
-  }
-  const parentKey = folderWorkspaceKey(folderWorkspaceId)
-  const members: Worktree[] = []
-  for (const lineage of Object.values(state.workspaceLineageByChildKey)) {
-    const child = parseWorkspaceKey(lineage.childWorkspaceKey)
-    if (lineage.parentWorkspaceKey !== parentKey || child?.type !== 'worktree') {
-      continue
-    }
-    const worktree = getWorktreeOnHostFromState(state, child.worktreeId, undefined)
-    if (worktree) {
-      members.push(worktree)
-    }
-  }
-  return members
 }
 
 /**

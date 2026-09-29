@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import { WorktreeOpenInSubMenu } from './WorktreeOpenInMenu'
 import { WorktreeDeveloperMenu } from './WorktreeDeveloperMenu'
 import { WorkspaceSleepMenuItems } from './WorkspaceSleepMenuItems'
+import { MultiProjectWorkspaceMenuItems } from './MultiProjectWorkspaceMenuItems'
 import { isEventTargetInsideCurrentTarget } from './worktree-card-dom-events'
 import { translate } from '@/i18n/i18n'
 import { useOptionalShortcutLabel } from '@/hooks/useShortcutLabel'
@@ -304,6 +305,10 @@ export default function WorktreeContextMenuView({ model }: { model: WorktreeCont
               <DropdownMenuSeparator />
             </>
           ) : null}
+          <MultiProjectWorkspaceMenuItems
+            folderWorkspaceId={isMultiContext ? null : folderWorkspaceId}
+            disabled={isDeleting}
+          />
           <WorkspaceSleepMenuItems
             isMultiContext={isMultiContext}
             sleepLabel={sleepLabel}

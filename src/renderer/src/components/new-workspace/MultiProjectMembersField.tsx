@@ -1,25 +1,18 @@
 import React, { useMemo, useState } from 'react'
-import { FolderTree, Plus, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from '@/components/ui/command'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import RepoBadgeLabel from '@/components/repo/RepoBadgeLabel'
-import { getFolderSourceRepos } from '@/components/sidebar/folder-workspace-composer-helpers'
-import { EMPTY_PROJECT_GROUPS } from '@/components/sidebar/worktree-list/viewport/viewport-props'
 import { translate } from '@/i18n/i18n'
-import { searchRepos } from '@/lib/repo-search'
 import { useAppStore } from '@/store'
 import { useMultiProjectComposerSelectionStore } from '@/store/multi-project-composer-selection'
 import type { Repo } from '../../../../shared/repo-types'
 import { isMultiProjectEligibleRepo } from './multi-project-workspace-eligibility'
+import {
+  MultiProjectProjectPicker,
+  useAvailableMultiProjectRepos
+} from './MultiProjectProjectPicker'
 import { canHostCreateMultiProjectWorkspace } from './use-multi-project-members'
 
 /**
@@ -34,12 +27,10 @@ export function MultiProjectMembersField({
   isProjectGroupTarget: boolean
 }): React.JSX.Element | null {
   const repos = useAppStore((s) => s.repos)
-  const projectGroups = useAppStore((s) => s.projectGroups ?? EMPTY_PROJECT_GROUPS)
   const extraRepoIds = useMultiProjectComposerSelectionStore((s) => s.extraRepoIds)
   const addRepoIds = useMultiProjectComposerSelectionStore((s) => s.addRepoIds)
   const removeRepoId = useMultiProjectComposerSelectionStore((s) => s.removeRepoId)
   const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
 
   const repoById = useMemo(() => new Map(repos.map((repo) => [repo.id, repo])), [repos])
   const primaryRepo = primaryRepoId ? repoById.get(primaryRepoId) : undefined
@@ -54,25 +45,10 @@ export function MultiProjectMembersField({
     [extraRepoIds, primaryRepoId, repoById]
   )
   const takenRepoIds = useMemo(
-    () => new Set([primaryRepoId, ...selectedRepos.map((repo) => repo.id)]),
+    () => new Set([primaryRepoId ?? '', ...selectedRepos.map((repo) => repo.id)]),
     [primaryRepoId, selectedRepos]
   )
-  const availableRepos = useMemo(
-    () => repos.filter((repo) => isMultiProjectEligibleRepo(repo) && !takenRepoIds.has(repo.id)),
-    [repos, takenRepoIds]
-  )
-  const groupPresets = useMemo(
-    () =>
-      projectGroups
-        .map((group) => ({
-          group,
-          repoIds: getFolderSourceRepos(repos, projectGroups, group)
-            .filter((repo) => isMultiProjectEligibleRepo(repo) && !takenRepoIds.has(repo.id))
-            .map((repo) => repo.id)
-        }))
-        .filter((preset) => preset.repoIds.length > 0),
-    [projectGroups, repos, takenRepoIds]
-  )
+  const { availableRepos } = useAvailableMultiProjectRepos(takenRepoIds)
 
   if (
     isProjectGroupTarget ||
@@ -82,18 +58,6 @@ export function MultiProjectMembersField({
   ) {
     return null
   }
-
-  const normalizedQuery = query.trim().toLowerCase()
-  const filteredRepos = searchRepos(availableRepos, query)
-  const filteredPresets = groupPresets.filter((preset) =>
-    preset.group.name.toLowerCase().includes(normalizedQuery)
-  )
-  const addAndClose = (repoIds: readonly string[]): void => {
-    addRepoIds(repoIds)
-    setOpen(false)
-    setQuery('')
-  }
-  const canAddMore = availableRepos.length > 0
 
   return (
     <div className="space-y-1.5 pt-2">
@@ -116,16 +80,8 @@ export function MultiProjectMembersField({
             </Button>
           </Badge>
         ))}
-        {canAddMore ? (
-          <Popover
-            open={open}
-            onOpenChange={(nextOpen) => {
-              setOpen(nextOpen)
-              if (!nextOpen) {
-                setQuery('')
-              }
-            }}
-          >
+        {availableRepos.length > 0 ? (
+          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button type="button" variant="ghost" size="xs">
                 <Plus className="size-3" />
@@ -136,72 +92,13 @@ export function MultiProjectMembersField({
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-[min(320px,calc(100vw-1rem))]">
-              <Command shouldFilter={false}>
-                <CommandInput
-                  autoFocus
-                  placeholder={translate(
-                    'auto.components.ui.repo.multi.combobox.a58a0cd100',
-                    'Search projects...'
-                  )}
-                  value={query}
-                  onValueChange={setQuery}
-                />
-                <CommandList>
-                  <CommandEmpty>
-                    {translate(
-                      'auto.components.ui.repo.multi.combobox.4471d4a1c0',
-                      'No projects match your search.'
-                    )}
-                  </CommandEmpty>
-                  {filteredRepos.length > 0 ? (
-                    <CommandGroup
-                      heading={translate(
-                        'auto.components.newWorkspace.MultiProjectMembersField.projects',
-                        'Projects'
-                      )}
-                    >
-                      {filteredRepos.map((repo) => (
-                        <CommandItem
-                          key={repo.id}
-                          value={`repo:${repo.id}`}
-                          onSelect={() => addAndClose([repo.id])}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <RepoBadgeLabel name={repo.displayName} color={repo.badgeColor} />
-                            <p className="truncate text-[11px] text-muted-foreground">
-                              {repo.path}
-                            </p>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-                  {filteredPresets.length > 0 ? (
-                    <CommandGroup
-                      heading={translate(
-                        'auto.components.newWorkspace.MultiProjectMembersField.groups',
-                        'Add all projects in a group'
-                      )}
-                    >
-                      {filteredPresets.map((preset) => (
-                        <CommandItem
-                          key={preset.group.id}
-                          value={`group:${preset.group.id}`}
-                          onSelect={() => addAndClose(preset.repoIds)}
-                        >
-                          <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <FolderTree className="size-3 text-muted-foreground" />
-                            <span className="min-w-0 flex-1 truncate">{preset.group.name}</span>
-                            <span className="text-[11px] text-muted-foreground">
-                              {preset.repoIds.length}
-                            </span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ) : null}
-                </CommandList>
-              </Command>
+              <MultiProjectProjectPicker
+                takenRepoIds={takenRepoIds}
+                onPick={(repoIds) => {
+                  addRepoIds(repoIds)
+                  setOpen(false)
+                }}
+              />
             </PopoverContent>
           </Popover>
         ) : null}

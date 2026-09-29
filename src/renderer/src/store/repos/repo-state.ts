@@ -2,6 +2,8 @@ import type { GhAccountBinding } from '../../../../shared/github/account-binding
 import type { SshRepoReadoption } from '../../../../shared/ssh-types'
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
 import type {
+  MultiProjectMemberAddArgs,
+  MultiProjectMemberAddResult,
   MultiProjectWorkspaceCreateArgs,
   MultiProjectWorkspaceCreateResult
 } from '../../../../shared/multi-project-workspace-types'
@@ -217,6 +219,10 @@ export type RepoSlice = {
   createMultiProjectWorkspace: (
     args: MultiProjectWorkspaceCreateArgs
   ) => Promise<MultiProjectWorkspaceCreateResult>
+  /** Adds one project to an existing multi-project workspace, on its shared branch. */
+  addMultiProjectWorkspaceMember: (
+    args: MultiProjectMemberAddArgs
+  ) => Promise<MultiProjectMemberAddResult>
   getFolderWorkspacePathStatusCacheKey: (
     request: FolderWorkspacePathStatusRequest,
     options?: FolderWorkspacePathStatusRouteOptions

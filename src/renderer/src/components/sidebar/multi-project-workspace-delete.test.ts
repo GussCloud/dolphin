@@ -14,9 +14,9 @@ vi.mock('./run-worktree-delete-with-toast', () => ({
 
 import {
   deleteMultiProjectWorkspace,
-  getMultiProjectWorkspaceMembers,
   openMultiProjectDeleteDialogIfNeeded
 } from './multi-project-workspace-delete'
+import { getMultiProjectWorkspaceMembers } from './multi-project-workspace-members'
 
 function makeWorktree(id: string, repoId: string): Worktree {
   const partial = {

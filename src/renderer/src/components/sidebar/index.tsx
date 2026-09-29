@@ -26,6 +26,7 @@ const SidebarAgentsList = lazyWithRetry(() => import('./SidebarAgentsList'))
 
 const WorktreeMetaDialog = lazyWithRetry(() => import('./WorktreeMetaDialog'))
 const RemoveFolderDialog = lazyWithRetry(() => import('./RemoveFolderDialog'))
+const AddMultiProjectMemberDialog = lazyWithRetry(() => import('./AddMultiProjectMemberDialog'))
 const DeleteMultiProjectWorkspaceDialog = lazyWithRetry(
   () => import('./DeleteMultiProjectWorkspaceDialog')
 )
@@ -253,6 +254,7 @@ function Sidebar({
       <React.Suspense fallback={null}>
         {activeModal === 'edit-meta' ? <WorktreeMetaDialog /> : null}
         {activeModal === 'confirm-remove-folder' ? <RemoveFolderDialog /> : null}
+        {activeModal === 'add-multi-project-member' ? <AddMultiProjectMemberDialog /> : null}
         {activeModal === 'delete-multi-project-workspace' ? (
           <DeleteMultiProjectWorkspaceDialog />
         ) : null}

@@ -49,7 +49,7 @@ import {
   getWorkspaceCreateErrorToastMessage
 } from '@/lib/workspace-create-error-format'
 import { toast } from 'sonner'
-import { ensureWorktreeHasInitialTerminal } from '@/lib/worktree-initial-terminal-seeding'
+import { seedMultiProjectMemberSetup } from '@/lib/multi-project-member-setup'
 import { useAppStore } from '@/store'
 import type { MultiProjectWorkspaceCreateResult } from '../../../../shared/multi-project-workspace-types'
 
@@ -174,7 +174,8 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
         })
         if (folderWorkspaceCreated) {
           run.afterCreate?.()
-        } else {
+        }
+        if (!folderWorkspaceCreated) {
           setCreateError({
             title: translate(
               'auto.hooks.useComposerState.folderWorkspaceCreateFailedTitle',
@@ -280,7 +281,7 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
         },
         afterCreate: () => {
           if (result) {
-            seedMultiProjectMemberSetup(result)
+            seedMultiProjectMemberSetup(result.members)
           }
         }
       })
@@ -291,22 +292,5 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
   return {
     submitFolderTarget,
     submitMultiProjectTarget
-  }
-}
-
-/** Members aren't activated on create, so queue their setup/default tabs for when they open. */
-function seedMultiProjectMemberSetup(result: MultiProjectWorkspaceCreateResult): void {
-  for (const member of result.members) {
-    if (!member.setup && !member.defaultTabs) {
-      continue
-    }
-    ensureWorktreeHasInitialTerminal(
-      useAppStore.getState(),
-      member.worktree.id,
-      undefined,
-      member.setup,
-      undefined,
-      member.defaultTabs
-    )
   }
 }
