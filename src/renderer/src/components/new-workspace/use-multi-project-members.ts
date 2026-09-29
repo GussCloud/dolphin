@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { useMultiProjectComposerSelectionStore } from '@/store/multi-project-composer-selection'
-import { resolveMultiProjectMemberRepoIds } from './multi-project-workspace-eligibility'
+import { resolveMultiProjectMemberRepoIds } from '../../../../shared/multi-project-workspace-eligibility'
 
 /** Why: web clients reach a remote host, which can't place worktrees on this machine's disk. */
 export function canHostCreateMultiProjectWorkspace(): boolean {

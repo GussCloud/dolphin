@@ -11,8 +11,10 @@ import {
 import type { WorktreeIpcContext } from '../worktree-ipc-context'
 import { addMultiProjectWorkspaceMember } from './multi-project-member-addition'
 import { createMultiProjectWorkspace } from './multi-project-workspace-creation'
+import { setMultiProjectWorkspaceCreateContext } from './multi-project-workspace-remote-create'
 
 export function registerMultiProjectWorkspaceHandler(context: WorktreeIpcContext): void {
+  setMultiProjectWorkspaceCreateContext(context)
   ipcMain.handle(
     'worktrees:createMultiProject',
     async (_event, rawArgs: unknown): Promise<MultiProjectWorkspaceCreateResult> => {

@@ -1,12 +1,15 @@
-import { getRepoExecutionHostId, LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
-import { isGitRepoKind } from '../../../../shared/repo-kind'
-import type { Repo } from '../../../../shared/repo-types'
+import { getRepoExecutionHostId, LOCAL_EXECUTION_HOST_ID } from './execution-host'
+import { isGitRepoKind } from './repo-kind'
+import type { Repo } from './repo-types'
+
+type MultiProjectCandidateRepo = Pick<Repo, 'id'> &
+  Partial<Pick<Repo, 'kind' | 'connectionId' | 'executionHostId' | 'worktreeBasePath'>>
 
 /**
  * Whether a project can get a worktree in a multi-project workspace. The host places members with
  * local git at the shared worktree root, so remote projects and custom worktree locations can't.
  */
-export function isMultiProjectEligibleRepo(repo: Repo): boolean {
+export function isMultiProjectEligibleRepo(repo: MultiProjectCandidateRepo): boolean {
   return (
     isGitRepoKind(repo) &&
     !repo.connectionId &&
@@ -23,7 +26,7 @@ export function isMultiProjectEligibleRepo(repo: Repo): boolean {
 export function resolveMultiProjectMemberRepoIds(args: {
   primaryRepoId: string | null
   extraRepoIds: readonly string[]
-  repos: readonly Repo[]
+  repos: readonly MultiProjectCandidateRepo[]
 }): string[] | null {
   const repoById = new Map(args.repos.map((repo) => [repo.id, repo]))
   const primary = args.primaryRepoId ? repoById.get(args.primaryRepoId) : undefined

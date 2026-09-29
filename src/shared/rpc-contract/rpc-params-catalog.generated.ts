@@ -184,6 +184,7 @@ import { FileOpen, WorktreeSelector } from './files-target-params'
 import { TerminalArtifactFile, TerminalArtifactFileWrite } from './files-terminal-artifact-params'
 import {
   FolderWorkspaceCreate,
+  FolderWorkspaceCreateMultiProject,
   FolderWorkspacePathStatus,
   FolderWorkspaceSelector,
   FolderWorkspaceUpdate
@@ -780,6 +781,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'files.writeBase64Chunk': FileWriteBase64Chunk,
   'files.writeTerminalArtifact': TerminalArtifactFileWrite,
   'folderWorkspace.create': FolderWorkspaceCreate,
+  'folderWorkspace.createMultiProject': FolderWorkspaceCreateMultiProject,
   'folderWorkspace.delete': FolderWorkspaceSelector,
   'folderWorkspace.getPathStatus': FolderWorkspacePathStatus,
   'folderWorkspace.list': null,

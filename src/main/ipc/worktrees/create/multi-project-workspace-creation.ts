@@ -9,6 +9,7 @@ import type {
 import { WorktreeCreateCollisionError } from '../../../../shared/new-workspace/worktree-create-collision'
 import type { Repo } from '../../../../shared/repo-types'
 import type { CreateWorktreeResult } from '../../../../shared/worktree/create-types'
+import type { WorkspaceCreatorProvenance } from '../../../../shared/worktree/types'
 import { splitWorktreeId } from '../../../../shared/worktree/id'
 import { folderWorkspaceKey } from '../../../../shared/workspace-scope'
 import { planMultiProjectWorkspace } from './multi-project-workspace-plan'
@@ -32,7 +33,8 @@ type CreatedMember = { repo: Repo; result: CreateWorktreeResult }
  */
 export async function createMultiProjectWorkspace(
   context: WorktreeIpcContext,
-  args: MultiProjectWorkspaceCreateArgs
+  args: MultiProjectWorkspaceCreateArgs,
+  creatorProvenance: WorkspaceCreatorProvenance = { kind: 'host' }
 ): Promise<MultiProjectWorkspaceCreateResult> {
   const { store, mainWindow, runtime } = context
   const settings = store.getSettings()
@@ -68,7 +70,7 @@ export async function createMultiProjectWorkspace(
       ...(args.linkedTaskSourceContext
         ? { linkedTaskSourceContext: args.linkedTaskSourceContext }
         : {}),
-      creatorProvenance: { kind: 'host' },
+      creatorProvenance,
       ...(args.createdWithAgent ? { createdWithAgent: args.createdWithAgent } : {}),
       ...(args.pendingFirstAgentMessageRename ? { pendingFirstAgentMessageRename: true } : {})
     })

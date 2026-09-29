@@ -9,6 +9,9 @@ import { MobileAgentIcon } from './MobileAgentIcon'
 import type { NewWorktreeAgentOption } from './new-worktree-agent-selection'
 import { newWorktreeFormStyles as styles } from './new-worktree-form-styles'
 import type { SetupRunPolicy } from './new-worktree-modal-types'
+import { MobileWorkspaceNameInput } from './MobileWorkspaceNameInput'
+import type { MobileWorkspaceRepo } from './new-worktree-modal-types'
+import { NewWorktreeExtraProjectsField } from './NewWorktreeExtraProjectsField'
 import { NewWorktreeProjectTargetFields } from './NewWorktreeProjectTargetFields'
 import { NewWorkspaceSetupScriptField } from './NewWorkspaceSetupScriptField'
 import { NewWorkspaceSshConnectionField } from './NewWorkspaceSshConnectionField'
@@ -17,6 +20,14 @@ import { SmartWorkspaceSourceField } from './SmartWorkspaceSourceField'
 
 type Composer = ReturnType<typeof useMobileComposerSource>
 type Selection = { label: string; detail?: string }
+
+/** Null when the host or the primary project can't take part in a multi-project workspace. */
+export type NewWorktreeMultiProjectState = {
+  extraRepos: readonly MobileWorkspaceRepo[]
+  canAddMore: boolean
+  /** Two or more projects: one worktree each, in a shared container on the host. */
+  active: boolean
+}
 
 export function NewWorktreeFormSheet(props: {
   visible: boolean
@@ -39,12 +50,15 @@ export function NewWorktreeFormSheet(props: {
   setupRunPolicy: SetupRunPolicy
   setupDecisionChoice: Exclude<WorkspaceCreateSetupDecision, 'inherit'> | null
   runSetup: boolean
+  multiProject: NewWorktreeMultiProjectState | null
   error: string
   creating: boolean
   canCreate: boolean
   onClose: () => void
   onOpenExternalUrl: (url: string) => void
   onOpenProject: () => void
+  onAddProject: () => void
+  onRemoveProject: (repoId: string) => void
   onOpenRunTarget: () => void
   onOpenSource: () => void
   onClearError: () => void
@@ -56,10 +70,13 @@ export function NewWorktreeFormSheet(props: {
   onRunSetupChange: (run: boolean) => void
   onCreate: () => void
 }) {
+  const multiProjectActive = props.multiProject?.active === true
   return (
     <BottomDrawer visible={props.visible} interactive={props.interactive} onClose={props.onClose}>
       <View style={styles.header}>
-        <Text style={styles.title}>Create worktree</Text>
+        <Text style={styles.title}>
+          {multiProjectActive ? 'Create multi-project workspace' : 'Create worktree'}
+        </Text>
       </View>
 
       {props.loading ? (
@@ -76,25 +93,50 @@ export function NewWorktreeFormSheet(props: {
             project={props.project}
             runTarget={props.runTarget}
             projectBadgeColor={props.projectBadgeColor}
+            showRunTarget={!multiProjectActive}
             onOpenProject={props.onOpenProject}
             onOpenRunTarget={props.onOpenRunTarget}
+            projectFooter={
+              props.multiProject ? (
+                <NewWorktreeExtraProjectsField
+                  extraRepos={props.multiProject.extraRepos}
+                  canAddMore={props.multiProject.canAddMore}
+                  disabled={props.creating}
+                  onAdd={props.onAddProject}
+                  onRemove={props.onRemoveProject}
+                />
+              ) : null
+            }
           />
 
-          <SmartWorkspaceSourceField
-            composer={props.composer}
-            label={props.selectedRepoIsGit ? "Name or 'Create From'" : 'Workspace name'}
-            disabled={props.sshGate.requiresConnection}
-            interactive={props.interactive}
-            onOpenExternalUrl={props.onOpenExternalUrl}
-            onBeforeOpen={props.onClearError}
-            onOpenDrawer={props.onOpenSource}
-          />
+          {multiProjectActive ? (
+            <View style={styles.field}>
+              <Text style={styles.label}>Workspace name</Text>
+              <MobileWorkspaceNameInput
+                shouldAutoFocus={false}
+                style={styles.input}
+                value={props.composer.name}
+                onChangeText={props.composer.setName}
+                placeholderTextColor={colors.textMuted}
+              />
+            </View>
+          ) : (
+            <SmartWorkspaceSourceField
+              composer={props.composer}
+              label={props.selectedRepoIsGit ? "Name or 'Create From'" : 'Workspace name'}
+              disabled={props.sshGate.requiresConnection}
+              interactive={props.interactive}
+              onOpenExternalUrl={props.onOpenExternalUrl}
+              onBeforeOpen={props.onClearError}
+              onOpenDrawer={props.onOpenSource}
+            />
+          )}
 
-          {props.composer.forkPushWarning ? (
+          {!multiProjectActive && props.composer.forkPushWarning ? (
             <Text style={styles.sourceWarning}>{props.composer.forkPushWarning}</Text>
           ) : null}
 
-          {props.selectedRepoConnectionId ? (
+          {!multiProjectActive && props.selectedRepoConnectionId ? (
             <NewWorkspaceSshConnectionField
               repoName={props.selectedRepoName}
               sshGate={props.sshGate}
@@ -119,19 +161,21 @@ export function NewWorktreeFormSheet(props: {
             </Pressable>
           </View>
 
-          <Pressable
-            style={styles.advancedToggle}
-            onPress={() => props.onShowAdvancedChange(!props.showAdvanced)}
-          >
-            <Text style={styles.advancedText}>Advanced</Text>
-            {props.showAdvanced ? (
-              <ChevronUp size={14} color={colors.textSecondary} />
-            ) : (
-              <ChevronDown size={14} color={colors.textSecondary} />
-            )}
-          </Pressable>
+          {multiProjectActive ? null : (
+            <Pressable
+              style={styles.advancedToggle}
+              onPress={() => props.onShowAdvancedChange(!props.showAdvanced)}
+            >
+              <Text style={styles.advancedText}>Advanced</Text>
+              {props.showAdvanced ? (
+                <ChevronUp size={14} color={colors.textSecondary} />
+              ) : (
+                <ChevronDown size={14} color={colors.textSecondary} />
+              )}
+            </Pressable>
+          )}
 
-          {props.showAdvanced ? (
+          {!multiProjectActive && props.showAdvanced ? (
             <>
               <SmartWorkspaceAdvancedFields
                 composer={props.composer}
@@ -174,7 +218,11 @@ export function NewWorktreeFormSheet(props: {
                 <ActivityIndicator size="small" color={colors.bgBase} />
               ) : (
                 <Text style={styles.createText}>
-                  {props.sshGate.requiresConnection ? 'Connect target' : 'Create worktree'}
+                  {props.sshGate.requiresConnection
+                    ? 'Connect target'
+                    : multiProjectActive
+                      ? 'Create workspace'
+                      : 'Create worktree'}
                 </Text>
               )}
             </Pressable>

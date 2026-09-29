@@ -11,6 +11,7 @@ import {
   wasSetupHookPreviouslyApproved,
   type SetupHookTrust
 } from '../tasks/setup-hook-trust'
+import { createMultiProjectWorkspace } from '../tasks/multi-project-workspace-create'
 import { createWorkspaceFromComposerSource } from '../tasks/source-workspace-create'
 import { normalizeWorkspaceAgent } from '../tasks/workspace-agent-selection'
 import type { WorkspaceCreateSetupDecision } from '../tasks/workspace-create-params'
@@ -38,6 +39,8 @@ type Composer = ReturnType<typeof useMobileComposerSource>
 export function useNewWorkspaceCreateSubmit(args: {
   client: RpcClient | null
   selectedRepo: MobileWorkspaceRepo | null
+  /** Set when two or more projects are picked: one worktree each, in one workspace. */
+  multiProjectRepoIds: string[] | null
   selectedAgent: NewWorktreeAgentOption
   setSelectedAgent: (agent: NewWorktreeAgentOption) => void
   setAgentOverridden: (overridden: boolean) => void
@@ -84,7 +87,7 @@ export function useNewWorkspaceCreateSubmit(args: {
     setCreating(true)
     args.setError('')
     try {
-      if (args.sshGate.requiresConnection) {
+      if (!args.multiProjectRepoIds && args.sshGate.requiresConnection) {
         args.setError(`Connect ${selectedRepo.displayName} before creating a workspace.`)
         return
       }
@@ -120,6 +123,18 @@ export function useNewWorkspaceCreateSubmit(args: {
           undefined,
           args.retiredWorktreeNames
         )
+      if (args.multiProjectRepoIds) {
+        const created = await createMultiProjectWorkspace({
+          client,
+          name: baseName,
+          repoIds: args.multiProjectRepoIds,
+          agent: args.selectedAgent.id !== '__blank__' ? args.selectedAgent.id : undefined,
+          agentLaunchSupported: args.getAgentLaunchSupport()
+        })
+        args.onClose()
+        args.onCreated(created.worktreeId, created.name, created.warning)
+        return
+      }
       let setupDecision: WorkspaceCreateSetupDecision = 'inherit'
       if (args.setupCommand) {
         if (options.setupOverride) {

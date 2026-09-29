@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   AGENT_LAUNCH_REPLAY_REQUIRED_RUNTIME_CAPABILITY,
   AGENT_LAUNCH_REPLAY_RUNTIME_CAPABILITY,
-  AGENT_LAUNCH_RUNTIME_CAPABILITY
+  AGENT_LAUNCH_RUNTIME_CAPABILITY,
+  MULTI_PROJECT_WORKSPACE_CREATE_RUNTIME_CAPABILITY
 } from '../../../src/shared/protocol-version'
 import type { RpcClient } from '../transport/rpc-client'
 import { LogicalClientCutoverError } from '../transport/stable-logical-rpc-client'
@@ -61,8 +62,17 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       tasksSupported: true,
       worktreeCreateIdempotency: { dedupeTtlMs: 20_000 },
       agentLaunch: false,
-      hostPlatform: 'darwin'
+      hostPlatform: 'darwin',
+      multiProjectCreate: false
     })
+  })
+
+  it('reads multi-project create support from the same status.get probe', async () => {
+    await expect(
+      readNewWorktreeRuntimeCapabilities(
+        statusClient([[MULTI_PROJECT_WORKSPACE_CREATE_RUNTIME_CAPABILITY]])
+      )
+    ).resolves.toMatchObject({ multiProjectCreate: true })
   })
 
   it('reads agent.launch support from the same status.get probe', async () => {
@@ -78,7 +88,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       // Advertising the method is not advertising the ledger: `operationId` degrades silently on a
       // host that has one and not the other, so the two are answered separately.
       agentLaunch: { replay: false },
-      hostPlatform: 'darwin'
+      hostPlatform: 'darwin',
+      multiProjectCreate: false
     })
   })
 
@@ -98,7 +109,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       tasksSupported: false,
       worktreeCreateIdempotency: false,
       agentLaunch: { replay: true },
-      hostPlatform: 'darwin'
+      hostPlatform: 'darwin',
+      multiProjectCreate: false
     })
   })
 
@@ -131,7 +143,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       tasksSupported: false,
       worktreeCreateIdempotency: { dedupeTtlMs: WORKTREE_CREATE_DEDUPE_TTL_CLIENT_CEILING_MS },
       agentLaunch: false,
-      hostPlatform: 'darwin'
+      hostPlatform: 'darwin',
+      multiProjectCreate: false
     })
   })
 
@@ -149,7 +162,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       tasksSupported: false,
       worktreeCreateIdempotency: { dedupeTtlMs: 0 },
       agentLaunch: false,
-      hostPlatform: 'darwin'
+      hostPlatform: 'darwin',
+      multiProjectCreate: false
     })
   })
 
@@ -174,7 +188,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
         tasksSupported: false,
         worktreeCreateIdempotency: { dedupeTtlMs: 0 },
         agentLaunch: false,
-        hostPlatform: 'darwin'
+        hostPlatform: 'darwin',
+        multiProjectCreate: false
       })
     }
   )
@@ -193,7 +208,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       tasksSupported: false,
       worktreeCreateIdempotency: { dedupeTtlMs: WORKTREE_CREATE_DEDUPE_TTL_LEGACY_HOST_MS },
       agentLaunch: false,
-      hostPlatform: 'darwin'
+      hostPlatform: 'darwin',
+      multiProjectCreate: false
     })
   })
 
@@ -213,7 +229,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
         tasksSupported: false,
         worktreeCreateIdempotency: { dedupeTtlMs: 0 },
         agentLaunch: false,
-        hostPlatform: 'darwin'
+        hostPlatform: 'darwin',
+        multiProjectCreate: false
       })
     }
   )
@@ -233,7 +250,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       tasksSupported: false,
       worktreeCreateIdempotency: { dedupeTtlMs: 30_000 },
       agentLaunch: false,
-      hostPlatform: 'darwin'
+      hostPlatform: 'darwin',
+      multiProjectCreate: false
     })
   })
 
@@ -242,7 +260,8 @@ describe('readNewWorktreeRuntimeCapabilities', () => {
       tasksSupported: false,
       worktreeCreateIdempotency: false,
       agentLaunch: false,
-      hostPlatform: null
+      hostPlatform: null,
+      multiProjectCreate: false
     })
   })
 })

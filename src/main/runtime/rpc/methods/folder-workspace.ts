@@ -1,7 +1,9 @@
 import { defineMethod } from '../core'
+import { createMultiProjectWorkspaceForRemoteClient } from '../../../ipc/worktrees/create/multi-project-workspace-remote-create'
 import { resolveRpcWorkspaceCreatorProvenance } from '../workspace-creator-context'
 import {
   FolderWorkspaceCreate,
+  FolderWorkspaceCreateMultiProject,
   FolderWorkspacePathStatus,
   FolderWorkspaceSelector,
   FolderWorkspaceUpdate
@@ -24,6 +26,15 @@ export const FOLDER_WORKSPACE_METHODS = [
         creatorProvenance: resolveRpcWorkspaceCreatorProvenance(context)
       })
     })
+  }),
+  defineMethod({
+    name: 'folderWorkspace.createMultiProject',
+    params: FolderWorkspaceCreateMultiProject,
+    handler: async (params, context) =>
+      createMultiProjectWorkspaceForRemoteClient(
+        params,
+        resolveRpcWorkspaceCreatorProvenance(context)
+      )
   }),
   defineMethod({
     name: 'folderWorkspace.update',

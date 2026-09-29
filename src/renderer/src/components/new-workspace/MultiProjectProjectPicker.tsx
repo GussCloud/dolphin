@@ -14,7 +14,7 @@ import { EMPTY_PROJECT_GROUPS } from '@/components/sidebar/worktree-list/viewpor
 import { translate } from '@/i18n/i18n'
 import { searchRepos } from '@/lib/repo-search'
 import { useAppStore } from '@/store'
-import { isMultiProjectEligibleRepo } from './multi-project-workspace-eligibility'
+import { isMultiProjectEligibleRepo } from '../../../../shared/multi-project-workspace-eligibility'
 
 /** Eligible projects not already taken, for the pickers that add projects to a workspace. */
 export function useAvailableMultiProjectRepos(takenRepoIds: ReadonlySet<string>) {
