@@ -88,7 +88,7 @@ export type FolderWorkspaceRow = {
   type: 'folder-workspace'
   key: string
   folderWorkspace: FolderWorkspace
-  projectGroup: ProjectGroup
+  projectGroup: ProjectGroup | null
   depth: number
   groupDepth: number
 }

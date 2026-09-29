@@ -16,6 +16,7 @@ import type {
 } from '../../../../../../shared/worktree/types'
 import type { GroupHeaderRow, WorktreeGroupBy } from '../grouping/row-types'
 import { PINNED_GROUP_KEY } from '../grouping/group-keys'
+import { MULTI_PROJECT_WORKSPACES_HEADER_KEY } from '../grouping/multi-project-workspace-section'
 import { getWorkspaceStatusFromGroupKey } from '../../workspace-status'
 import { getVirtualRowTransform } from '../viewport/virtual-rows'
 import { resolveProjectGroupHeaderColor } from '../../project-header-color'
@@ -175,7 +176,11 @@ export function renderWorktreeSectionHeaderRow(args: {
   // Why: repo/project/status/pinned share compact section chrome; flat "All" stays a simple label.
   const showHeaderCollapseAffordance =
     row.count > 0 &&
-    (isRepoHeader || isProjectGroupHeader || headerWorkspaceStatus !== null || isPinnedHeader)
+    (isRepoHeader ||
+      isProjectGroupHeader ||
+      headerWorkspaceStatus !== null ||
+      isPinnedHeader ||
+      row.key === MULTI_PROJECT_WORKSPACES_HEADER_KEY)
   return (
     <div
       key={vItem.key}

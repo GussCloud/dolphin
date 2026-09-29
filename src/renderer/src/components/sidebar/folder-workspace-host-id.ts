@@ -13,9 +13,9 @@ import type { ProjectGroup } from '../../../../shared/project-group-types'
  */
 export function getFolderWorkspaceHostId(
   folderWorkspace: Pick<FolderWorkspace, 'connectionId'>,
-  projectGroup: Pick<ProjectGroup, 'connectionId'>,
+  projectGroup: Pick<ProjectGroup, 'connectionId'> | null | undefined,
   defaultHostId: ExecutionHostId
 ): ExecutionHostId {
-  const connectionId = folderWorkspace.connectionId ?? projectGroup.connectionId
+  const connectionId = folderWorkspace.connectionId ?? projectGroup?.connectionId
   return connectionId ? toSshExecutionHostId(connectionId) : defaultHostId
 }

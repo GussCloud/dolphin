@@ -6,6 +6,7 @@ import { parseWorkspaceKey } from '../../../../../../shared/workspace-scope'
 import { getProjectGroupHeaderKey } from '../grouping/group-keys'
 import type { ExecutionHostId } from '../../../../../../shared/execution-host'
 import { getFolderWorkspaceLaneKey } from '../grouping/folder-workspace-lanes'
+import { MULTI_PROJECT_WORKSPACES_HEADER_KEY } from '../grouping/multi-project-workspace-section'
 import type { WorktreeGroupBy } from '../grouping/row-types'
 import { getFolderWorkspaceHostId } from '../../folder-workspace-host-id'
 
@@ -93,16 +94,20 @@ export function getFolderWorkspaceRevealGroupKeys(
     folderWorkspace.projectGroupId === null
       ? undefined
       : groupsById.get(folderWorkspace.projectGroupId)
-  if (options?.groupBy && options.groupBy !== 'repo' && owningGroup) {
+  const isGrouplessMultiProject = folderWorkspace.kind === 'multi-project' && !owningGroup
+  if ((options?.groupBy ?? 'repo') === 'repo' && isGrouplessMultiProject) {
+    keys.push(MULTI_PROJECT_WORKSPACES_HEADER_KEY)
+  }
+  if (options?.groupBy && options.groupBy !== 'repo' && (owningGroup || isGrouplessMultiProject)) {
     keys.push(
       getFolderWorkspaceLaneKey(
-        { folderWorkspace, projectGroup: owningGroup },
+        { folderWorkspace, projectGroup: owningGroup ?? null },
         options.groupBy,
         options.workspaceStatuses ?? []
       )
     )
   }
-  if (owningGroup && options?.defaultHostId) {
+  if ((owningGroup || isGrouplessMultiProject) && options?.defaultHostId) {
     keys.push(
       `host:${getFolderWorkspaceHostId(folderWorkspace, owningGroup, options.defaultHostId)}`
     )

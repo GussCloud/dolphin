@@ -22,6 +22,7 @@ import {
 import { buildProjectGroupingIndex } from './project-grouping'
 import type { ProjectGroupingModel } from './project-grouping'
 import { appendProjectGroupSections } from './project-group-sections'
+import { appendMultiProjectWorkspaceSection } from './multi-project-workspace-section'
 import { getPinnedSectionWorktrees } from '../../pinned-section-worktrees'
 import { emitPinnedGroup } from './pinned-group-rows'
 import {
@@ -232,11 +233,14 @@ export function buildRows(
     cyclicLineageIds
   }
 
-  if (groupBy !== 'repo' || projectGroups.length === 0) {
-    appendOrderedGroups(
-      sectionContext,
-      groupBy === 'repo' ? withRepoSectionDisplayLabels(orderedGroups) : orderedGroups
-    )
+  if (groupBy !== 'repo') {
+    appendOrderedGroups(sectionContext, orderedGroups)
+    return result
+  }
+
+  appendMultiProjectWorkspaceSection(sectionContext, renderableFolderWorkspaces)
+  if (projectGroups.length === 0) {
+    appendOrderedGroups(sectionContext, withRepoSectionDisplayLabels(orderedGroups))
     return result
   }
 

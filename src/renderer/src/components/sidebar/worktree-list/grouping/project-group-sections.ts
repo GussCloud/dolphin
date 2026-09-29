@@ -59,6 +59,10 @@ export function appendProjectGroupSections(
   // repo grouping no longer owns the filter — it only groups and orders (#15362).
   const folderWorkspacesByProjectGroupId = new Map<string, RenderableFolderWorkspace[]>()
   for (const pair of folderWorkspaces) {
+    // Groupless multi-project workspaces render in their own section.
+    if (pair.projectGroup === null) {
+      continue
+    }
     const groupId = pair.projectGroup.id
     const list = folderWorkspacesByProjectGroupId.get(groupId) ?? []
     list.push(pair)
