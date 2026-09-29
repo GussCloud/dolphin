@@ -40,7 +40,7 @@ function integrationStatusLabel(
   }
 }
 
-function ProviderAccountScopeDetails({
+export function ProviderAccountScopeDetails({
   children
 }: {
   children?: React.ReactNode

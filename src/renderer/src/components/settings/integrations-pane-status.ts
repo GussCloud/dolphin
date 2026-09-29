@@ -1,4 +1,5 @@
 import type { PreflightStatus } from '../../../../preload/api-types'
+import type { AzureDevOpsAuthStatus } from '../../../../shared/azure-devops-auth'
 
 export type GhStatus = 'checking' | 'connected' | 'not-installed' | 'not-authenticated'
 // Why: parallel to GhStatus — GitLab uses glab and the same three failure
@@ -22,13 +23,7 @@ export type PreflightIntegrationStatuses = {
   giteaBaseUrl: string | null
 }
 
-type TokenApiPreflightStatus = {
-  configured: boolean
-  authenticated: boolean
-  account: string | null
-  baseUrl: string | null
-  tokenConfigured: boolean
-}
+type TokenApiPreflightStatus = AzureDevOpsAuthStatus
 
 type GiteaPreflightStatus = {
   configured: boolean
@@ -41,6 +36,12 @@ type GiteaPreflightStatus = {
 export function tokenApiStatusFromPreflight(
   status: TokenApiPreflightStatus | undefined
 ): AzureDevOpsStatus {
+  if (status?.authMethod === 'azure-cli') {
+    if (!status.azureCli?.authenticated) {
+      return 'not-configured'
+    }
+    return status.authenticated ? 'configured' : 'not-authenticated'
+  }
   if (!status?.configured) {
     return 'not-configured'
   }

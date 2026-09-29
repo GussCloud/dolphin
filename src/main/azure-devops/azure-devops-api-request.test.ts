@@ -6,6 +6,11 @@ import {
 } from './azure-devops-api-request'
 import type { AzureDevOpsRepoRef } from './repository-ref'
 
+// Why: the real store reads ~/<state>/azure-devops-auth.json, which a dev machine may have set.
+vi.mock('./azure-devops-auth-preference-store', () => ({
+  getAzureDevOpsAuthPreference: () => ({ method: 'token' })
+}))
+
 const OLD_ENV = process.env
 const OLD_FETCH = globalThis.fetch
 

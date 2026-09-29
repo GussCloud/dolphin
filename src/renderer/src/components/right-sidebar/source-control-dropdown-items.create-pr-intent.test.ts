@@ -143,7 +143,7 @@ describe('resolveDropdownItems Create PR intent', () => {
   )
 
   it.each([
-    ['azure-devops', 'Set DOLPHIN_AZURE_DEVOPS_TOKEN in this environment'],
+    ['azure-devops', 'Connect Azure DevOps in Settings > Integrations in this environment'],
     ['gitea', 'Set DOLPHIN_GITEA_TOKEN in this environment']
   ] as const)('uses token auth copy when %s PR creation needs authentication', (provider, hint) => {
     const items = resolveDropdownItems(

@@ -1,3 +1,4 @@
+import type { AzureDevOpsAuthStatus } from '../../shared/azure-devops-auth'
 import type { ZCodeInteractiveCapability } from '../../shared/zcode-missing-tui'
 import type { ProjectExecutionRuntimeResolution } from '../../shared/project-execution-runtime'
 import type {
@@ -11,13 +12,7 @@ export type PreflightStatus = {
   /** Optional — older preload payloads predating GitLab support omit it; consumers gate on `glab?.installed`. */
   glab?: { installed: boolean; authenticated: boolean }
   bitbucket?: { configured: boolean; authenticated: boolean; account: string | null }
-  azureDevOps?: {
-    configured: boolean
-    authenticated: boolean
-    account: string | null
-    baseUrl: string | null
-    tokenConfigured: boolean
-  }
+  azureDevOps?: AzureDevOpsAuthStatus
   gitea?: {
     configured: boolean
     authenticated: boolean

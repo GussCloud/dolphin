@@ -7,6 +7,11 @@ import { _resetAzureDevOpsPreviewApiVersionCache } from './azure-devops-api-requ
 import { _resetAzureDevOpsRepoRefCache } from './repository-ref'
 import { REMOTE_URL_PROBE_TIMEOUT_MS } from '../git/remote-url-probe'
 
+// Why: the real store reads ~/<state>/azure-devops-auth.json, which a dev machine may have set.
+vi.mock('./azure-devops-auth-preference-store', () => ({
+  getAzureDevOpsAuthPreference: () => ({ method: 'token' })
+}))
+
 const { gitExecFileAsyncMock, getSshGitProviderMock } = vi.hoisted(() => ({
   gitExecFileAsyncMock: vi.fn(),
   getSshGitProviderMock: vi.fn()
@@ -47,9 +52,9 @@ describe('Azure DevOps pull request creation', () => {
     _resetAzureDevOpsRepoRefCache()
   })
 
-  it('treats token-only auth as sufficient for repo-scoped creation', () => {
+  it('treats token-only auth as sufficient for repo-scoped creation', async () => {
     delete process.env.DOLPHIN_AZURE_DEVOPS_API_BASE_URL
-    expect(isAzureDevOpsReviewCreationAuthenticated()).toBe(true)
+    await expect(isAzureDevOpsReviewCreationAuthenticated()).resolves.toBe(true)
   })
 
   it('posts a pull request create body to the repository REST endpoint', async () => {

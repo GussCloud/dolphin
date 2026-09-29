@@ -1,6 +1,5 @@
 import type { ExecutionHostId } from '../../shared/execution-host'
 import { hostedReviewSshConnectionId } from '../source-control/hosted-review-execution-host'
-import { Buffer } from 'node:buffer'
 import type { CreateHostedReviewInput, CreateHostedReviewResult } from '../../shared/hosted-review'
 import {
   normalizeHostedReviewBaseRef,
@@ -18,44 +17,18 @@ import {
   resolveAzureDevOpsGitApiBaseUrl
 } from './azure-devops-api-request'
 import { getAzureDevOpsPullRequestForBranch } from './client'
+import {
+  azureDevOpsAuthInstruction,
+  hasAzureDevOpsCredential,
+  resolveAzureDevOpsAuthHeaders
+} from './azure-devops-credential'
 import { mapAzureDevOpsPullRequest, type RawAzureDevOpsPullRequest } from './pull-request-mappers'
 import { getAzureDevOpsRepoRef, type AzureDevOpsRepoRef } from './repository-ref'
 
 const CREATE_REQUEST_TIMEOUT_MS = 60_000
 
-type AzureDevOpsCreateAuthConfig = {
-  pat: string | null
-  accessToken: string | null
-  username: string | null
-}
-
-function envValue(name: string): string | null {
-  const value = process.env[name]?.trim() ?? ''
-  return value.length > 0 ? value : null
-}
-
-function getAuthConfig(): AzureDevOpsCreateAuthConfig {
-  return {
-    pat: envValue('DOLPHIN_AZURE_DEVOPS_TOKEN') ?? envValue('DOLPHIN_AZURE_DEVOPS_PAT'),
-    accessToken: envValue('DOLPHIN_AZURE_DEVOPS_ACCESS_TOKEN'),
-    username: envValue('DOLPHIN_AZURE_DEVOPS_USERNAME')
-  }
-}
-
-export function isAzureDevOpsReviewCreationAuthenticated(): boolean {
-  const config = getAuthConfig()
-  return Boolean(config.pat || config.accessToken)
-}
-
-function authHeaders(config: AzureDevOpsCreateAuthConfig): Record<string, string> {
-  if (config.accessToken) {
-    return { Authorization: `Bearer ${config.accessToken}` }
-  }
-  if (config.pat) {
-    const encoded = Buffer.from(`${config.username ?? ''}:${config.pat}`).toString('base64')
-    return { Authorization: `Basic ${encoded}` }
-  }
-  return {}
+export function isAzureDevOpsReviewCreationAuthenticated(): Promise<boolean> {
+  return hasAzureDevOpsCredential()
 }
 
 function apiUrl(repo: AzureDevOpsRepoRef, path: string): URL {
@@ -125,8 +98,7 @@ function classifyCreateError(error: unknown): CreateHostedReviewResult {
     return {
       ok: false,
       code: 'auth_required',
-      error:
-        'Create PR failed: Azure DevOps is not authenticated. Next step: set DOLPHIN_AZURE_DEVOPS_TOKEN in this environment.'
+      error: `Create PR failed: Azure DevOps is not authenticated. Next step: ${azureDevOpsAuthInstruction()}.`
     }
   }
   if (status === 409 || lower.includes('already exists') || lower.includes('active pull request')) {
@@ -232,7 +204,7 @@ export async function createAzureDevOpsPullRequest(
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          ...authHeaders(getAuthConfig())
+          ...(await resolveAzureDevOpsAuthHeaders())
         },
         body: JSON.stringify(requestBody)
       }

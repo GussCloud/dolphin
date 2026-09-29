@@ -12221,6 +12221,36 @@
           "usageLabel": "Usage",
           "noAllowance": "Cursor reported no usage allowance for this account.",
           "staleUsage": "Last known usage — the latest refresh failed: {{reason}}"
+        },
+        "azureDevOpsIntegrationCard": {
+          "authMethodLabel": "Azure DevOps sign-in method",
+          "methodToken": "Token (PAT)",
+          "methodAzureCli": "Azure CLI",
+          "methodChangeFailed": "Could not change the Azure DevOps sign-in method: {{value0}}",
+          "azureCliDescription": "Pull requests, repositories and work items through your Azure CLI sign-in."
+        },
+        "azureCliSetupDetails": {
+          "defaultsHelp": "Default organization and project for Azure CLI commands (az devops configure).",
+          "organizationLabel": "Organization",
+          "projectPlaceholder": "Project (optional)",
+          "projectLabel": "Project",
+          "saving": "Saving…",
+          "save": "Save",
+          "unavailable": "Azure CLI status is not available on this host yet. Re-check after the host updates.",
+          "notInstalled": "The Azure CLI (az) is not installed on this host. Install it, then re-check.",
+          "notAuthenticated": "Sign in with the Azure CLI. Dolphin uses that sign-in for Azure DevOps requests.",
+          "noAccess": "Signed in as {{value0}}, but Azure DevOps rejected the sign-in. Check the organization or sign in with another account.",
+          "signedInAs": "Signed in as {{value0}}.",
+          "install": "Install Azure CLI",
+          "signInAgain": "Sign in again",
+          "signIn": "Sign in",
+          "installExtension": "Install azure-devops extension",
+          "recheck": "Re-check",
+          "terminalTitle": "Azure CLI setup",
+          "terminalAriaLabel": "Azure CLI setup command",
+          "signInDescription": "Press Enter to run az login. Finish the browser sign-in; Dolphin re-checks when the command ends.",
+          "extensionDescription": "Press Enter to install the azure-devops extension. Dolphin re-checks when the command ends.",
+          "organizationPlaceholder": "https://dev.azure.com/contoso"
         }
       },
       "right": {

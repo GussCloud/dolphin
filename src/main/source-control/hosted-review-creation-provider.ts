@@ -2,6 +2,7 @@ import type { ExecutionHostId } from '../../shared/execution-host'
 import type { HostedReviewProvider } from '../../shared/hosted-review'
 import type { HostedReviewCreationProvider } from '../../shared/hosted-review-creation-providers'
 import { isAzureDevOpsReviewCreationAuthenticated } from '../azure-devops/pull-request-creation'
+import { azureDevOpsAuthInstruction } from '../azure-devops/azure-devops-credential'
 import { isBitbucketReviewCreationAuthenticated } from '../bitbucket/pull-request-creation'
 import { isGiteaReviewCreationAuthenticated } from '../gitea/pull-request-creation'
 import { getEnterpriseGitHubRepoSlug } from '../github/github-enterprise-repository'
@@ -69,6 +70,10 @@ async function isGitLabAuthenticated(
   }
 }
 
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
 export function reviewCopy(provider: HostedReviewProvider): {
   shortLabel: 'PR' | 'MR'
   reviewLabel: 'pull request' | 'merge request'
@@ -88,7 +93,7 @@ export function reviewCopy(provider: HostedReviewProvider): {
       shortLabel: 'PR',
       reviewLabel: 'pull request',
       providerName: 'Azure DevOps',
-      authInstruction: 'Set DOLPHIN_AZURE_DEVOPS_TOKEN'
+      authInstruction: capitalize(azureDevOpsAuthInstruction())
     }
   }
   if (provider === 'gitea') {

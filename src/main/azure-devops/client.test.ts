@@ -16,6 +16,11 @@ vi.mock('../git/runner', () => ({
   gitExecFileAsync: gitExecFileAsyncMock
 }))
 
+// Why: the real store reads ~/<state>/azure-devops-auth.json, which a dev machine may have set.
+vi.mock('./azure-devops-auth-preference-store', () => ({
+  getAzureDevOpsAuthPreference: () => ({ method: 'token' })
+}))
+
 /** Serve the remote URL plus the #9171 default-branch resolver probes. */
 function primeGitExecWithDefaultBranch(defaultRef = 'refs/remotes/origin/main'): void {
   gitExecFileAsyncMock.mockImplementation(async (args: string[]) => {
@@ -63,7 +68,8 @@ describe('Azure DevOps client', () => {
       authenticated: false,
       account: null,
       baseUrl: null,
-      tokenConfigured: true
+      tokenConfigured: true,
+      authMethod: 'token'
     })
   })
 
@@ -91,7 +97,8 @@ describe('Azure DevOps client', () => {
       authenticated: true,
       account: 'Server User',
       baseUrl: 'https://ado.example.com:8443/tfs/MyCollection',
-      tokenConfigured: true
+      tokenConfigured: true,
+      authMethod: 'token'
     })
     expect(versions).toEqual(['7.1', '7.1-preview'])
   })

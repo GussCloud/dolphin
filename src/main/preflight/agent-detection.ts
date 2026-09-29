@@ -11,6 +11,7 @@ import type {
 } from '../../shared/shell-path-hydration-types'
 import { hydrateShellPath, mergePathSegments } from '../startup/hydrate-shell-path'
 import { getAzureDevOpsAuthStatus } from '../azure-devops/client'
+import type { AzureDevOpsAuthStatus } from '../../shared/azure-devops-auth'
 import { getBitbucketAuthStatus } from '../bitbucket/client'
 import { getGiteaAuthStatus } from '../gitea/client'
 import { _resetKnownHostsCache } from '../gitlab/gl-utils'
@@ -56,13 +57,7 @@ export type PreflightStatus = {
   // gate on `glab?.authenticated`.
   glab?: { installed: boolean; authenticated: boolean }
   bitbucket?: { configured: boolean; authenticated: boolean; account: string | null }
-  azureDevOps?: {
-    configured: boolean
-    authenticated: boolean
-    account: string | null
-    baseUrl: string | null
-    tokenConfigured: boolean
-  }
+  azureDevOps?: AzureDevOpsAuthStatus
   gitea?: {
     configured: boolean
     authenticated: boolean
