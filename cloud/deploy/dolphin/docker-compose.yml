@@ -24,6 +24,7 @@ services:
     depends_on:
       - auth
       - relay
+      - push
 
   auth:
     build:
@@ -54,8 +55,25 @@ services:
     volumes:
       - relay-data:/data
 
+  # Android push via FCM. firebase-sa.json is the dolphin-cloud-cf4ca service-account key, placed
+  # beside this file on the VPS (never committed).
+  push:
+    build:
+      context: ../..
+      dockerfile: apps/push/Dockerfile
+    restart: unless-stopped
+    environment:
+      DOLPHIN_PUSH_PUBLIC_URL: https://push.${DOLPHIN_DOMAIN}
+      DOLPHIN_PUSH_FCM_PROJECT_ID: dolphin-cloud-cf4ca
+      DOLPHIN_PUSH_DATA_DIR: /data
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase-sa.json
+    volumes:
+      - push-data:/data
+      - ./firebase-sa.json:/run/secrets/firebase-sa.json:ro
+
 volumes:
   caddy-data:
   caddy-config:
   auth-data:
   relay-data:
+  push-data:
