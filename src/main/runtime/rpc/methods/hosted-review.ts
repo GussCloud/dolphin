@@ -8,7 +8,8 @@ import {
 } from '../../../../shared/rpc-contract/hosted-review-params'
 import {
   HostedReviewActionParams,
-  HostedReviewDetailsParams
+  HostedReviewDetailsParams,
+  HostedReviewSearchBranchesParams
 } from '../../../../shared/rpc-contract/hosted-review-action-params'
 
 export const HOSTED_REVIEW_METHODS = [
@@ -41,6 +42,16 @@ export const HOSTED_REVIEW_METHODS = [
         repoSelector: params.repo,
         provider: params.provider,
         number: params.number
+      })
+  }),
+  defineMethod({
+    name: 'hostedReview.searchBranches',
+    params: HostedReviewSearchBranchesParams,
+    handler: async (params, { runtime }) =>
+      runtime.searchHostedReviewBranches({
+        repoSelector: params.repo,
+        provider: params.provider,
+        query: params.query
       })
   }),
   defineMethod({

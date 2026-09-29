@@ -6456,6 +6456,11 @@
           "copied": "Command copied",
           "retry": "Retry now",
           "restored": "Git is working again. Worktrees refreshed."
+        },
+        "azureReposClonePicker": {
+          "browse": "Browse Azure DevOps",
+          "filter": "Filter repositories",
+          "empty": "No repositories found."
         }
       },
       "shared": {

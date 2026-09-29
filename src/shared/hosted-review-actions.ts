@@ -99,6 +99,10 @@ export type HostedReviewDetailsArgs = {
 
 export type HostedReviewActionArgs = HostedReviewDetailsArgs & { action: HostedReviewAction }
 
+export type HostedReviewSearchBranchesArgs = Omit<HostedReviewDetailsArgs, 'number'> & {
+  query: string
+}
+
 export const NO_HOSTED_REVIEW_ACTIONS: HostedReviewActionCapabilities = {
   vote: false,
   editReviewers: false,

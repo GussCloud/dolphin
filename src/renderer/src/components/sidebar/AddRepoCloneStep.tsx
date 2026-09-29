@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { translate } from '@/i18n/i18n'
 import { RemoteFileBrowser } from './RemoteFileBrowser'
+import { AzureReposClonePicker } from './AzureReposClonePicker'
 
 type CloneStepProps = {
   cloneUrl: string
@@ -126,6 +127,7 @@ export function CloneStep({
             disabled={isCloning}
             autoFocus
           />
+          <AzureReposClonePicker disabled={isCloning} onPick={onUrlChange} />
         </div>
 
         <div className="space-y-1">

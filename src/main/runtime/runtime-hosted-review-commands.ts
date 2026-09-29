@@ -34,7 +34,8 @@ import type { HostedReviewExecutionOptions } from '../source-control/hosted-revi
 import { createStackedHostedReview } from '../source-control/stacked-hosted-review-creation'
 import {
   getHostedReviewDetails,
-  performHostedReviewAction
+  performHostedReviewAction,
+  searchHostedReviewBranches
 } from '../source-control/hosted-review-actions'
 import type {
   HostedReviewAction,
@@ -156,6 +157,22 @@ export class RuntimeHostedReviewCommands {
       provider: args.provider,
       number: args.number
     })
+  }
+
+  async searchHostedReviewBranches(args: {
+    repoSelector: string
+    provider: string
+    query: string
+  }): Promise<string[]> {
+    const repo = await this.deps.resolveRepo(args.repoSelector)
+    return searchHostedReviewBranches(
+      {
+        repoPath: repo.path,
+        executionHostId: getRepoHostedReviewExecutionHostId(repo),
+        provider: args.provider
+      },
+      args.query
+    )
   }
 
   async performHostedReviewAction(args: {

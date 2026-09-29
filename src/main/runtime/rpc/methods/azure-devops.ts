@@ -1,6 +1,7 @@
 import { defineMethod } from '../core'
 import {
   changeAzureDevOpsAuthMethod,
+  listAzureDevOpsRepositoriesResult,
   refreshAzureCliSession,
   setAzureDevOpsCliDefaults
 } from '../../../azure-devops/azure-devops-auth-commands'
@@ -24,5 +25,10 @@ export const AZURE_DEVOPS_METHODS = [
     name: 'azureDevOps.refreshCliSession',
     params: null,
     handler: async () => refreshAzureCliSession()
+  }),
+  defineMethod({
+    name: 'azureDevOps.listRepositories',
+    params: null,
+    handler: async () => listAzureDevOpsRepositoriesResult()
   })
 ]

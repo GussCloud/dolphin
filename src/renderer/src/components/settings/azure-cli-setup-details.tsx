@@ -8,7 +8,7 @@ import { OnboardingInlineCommandTerminal } from '@/components/onboarding/Onboard
 import {
   configureAzureDevOpsCliDefaults,
   refreshAzureCliSession
-} from '@/lib/azure-devops-auth-client'
+} from '@/lib/azure-devops-host-client'
 import {
   AZURE_DEVOPS_CLI_EXTENSION_NAME,
   type AzureCliStatus,

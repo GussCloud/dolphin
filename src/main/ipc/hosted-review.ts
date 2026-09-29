@@ -17,13 +17,15 @@ import { createStackedHostedReview } from '../source-control/stacked-hosted-revi
 import { getHostedReviewForBranch } from '../source-control/hosted-review'
 import {
   getHostedReviewDetails,
-  performHostedReviewAction
+  performHostedReviewAction,
+  searchHostedReviewBranches
 } from '../source-control/hosted-review-actions'
 import type {
   HostedReviewActionArgs,
   HostedReviewActionResult,
   HostedReviewDetails,
-  HostedReviewDetailsArgs
+  HostedReviewDetailsArgs,
+  HostedReviewSearchBranchesArgs
 } from '../../shared/hosted-review-actions'
 import { HostedReviewActionSchema } from '../../shared/rpc-contract/hosted-review-action-params'
 import { resolveRegisteredWorktreePath } from './registered-worktree-roots-cache'
@@ -159,6 +161,21 @@ export function registerHostedReviewHandlers(store: Store, stats: StatsCollector
         provider: args.provider,
         number: args.number
       })
+    }
+  )
+
+  ipcMain.handle(
+    'hostedReview:searchBranches',
+    async (_event, args: HostedReviewSearchBranchesArgs): Promise<string[]> => {
+      const repo = assertRegisteredRepo(args.repoPath, store, args.repoId)
+      return searchHostedReviewBranches(
+        {
+          repoPath: repo.path,
+          executionHostId: getRepoHostedReviewExecutionHostId(repo),
+          provider: args.provider
+        },
+        String(args.query ?? '').slice(0, 200)
+      )
     }
   )
 

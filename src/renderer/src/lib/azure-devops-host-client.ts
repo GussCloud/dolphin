@@ -1,7 +1,8 @@
 import type {
   AzureDevOpsAuthMethod,
   AzureDevOpsAuthPreference,
-  AzureDevOpsConfigureDefaultsResult
+  AzureDevOpsConfigureDefaultsResult,
+  AzureDevOpsRepositoriesResult
 } from '../../../shared/azure-devops-auth'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import { callRuntimeRpc, getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
@@ -40,6 +41,15 @@ export function configureAzureDevOpsCliDefaults(
         args
       )
     : desktopApi().configureCliDefaults(args)
+}
+
+export function listAzureDevOpsRepositories(
+  settings: RuntimeSettings
+): Promise<AzureDevOpsRepositoriesResult> {
+  const target = getActiveRuntimeTarget(settings)
+  return target.kind === 'environment'
+    ? callRuntimeRpc<AzureDevOpsRepositoriesResult>(target, 'azureDevOps.listRepositories')
+    : desktopApi().listRepositories()
 }
 
 export function refreshAzureCliSession(settings: RuntimeSettings): Promise<void> {

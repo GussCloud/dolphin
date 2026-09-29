@@ -294,7 +294,11 @@ import {
   WorkItemDetails,
   WorkItemsList as WorkItemsListOfGitlabParams
 } from './gitlab-params'
-import { HostedReviewActionParams, HostedReviewDetailsParams } from './hosted-review-action-params'
+import {
+  HostedReviewActionParams,
+  HostedReviewDetailsParams,
+  HostedReviewSearchBranchesParams
+} from './hosted-review-action-params'
 import {
   HostedReviewCreate,
   HostedReviewCreationEligibility,
@@ -636,6 +640,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'azureBoards.types': AzureBoardsProject,
   'azureBoards.updateState': AzureBoardsUpdateState,
   'azureDevOps.configureCliDefaults': AzureDevOpsConfigureCliDefaults,
+  'azureDevOps.listRepositories': null,
   'azureDevOps.refreshCliSession': null,
   'azureDevOps.setAuthMethod': AzureDevOpsSetAuthMethod,
   'browser.back': BrowserTarget,
@@ -925,6 +930,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'hostedReview.details': HostedReviewDetailsParams,
   'hostedReview.forBranch': HostedReviewForBranch,
   'hostedReview.getCreationEligibility': HostedReviewCreationEligibility,
+  'hostedReview.searchBranches': HostedReviewSearchBranchesParams,
   'jira.addIssueComment': IssueCommentOfJiraParams,
   'jira.connect': Connect,
   'jira.createIssue': CreateIssueOfJiraParams,

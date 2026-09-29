@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import { setAzureDevOpsAuthMethod } from '@/lib/azure-devops-auth-client'
+import { setAzureDevOpsAuthMethod } from '@/lib/azure-devops-host-client'
 import {
   isAzureDevOpsAuthMethod,
   type AzureDevOpsAuthMethod

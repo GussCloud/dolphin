@@ -7,6 +7,7 @@ import type {
 import { performAzureDevOpsPullRequestAction } from '../azure-devops/pull-request-actions'
 import { fetchAzureDevOpsPullRequestDetails } from '../azure-devops/pull-request-details'
 import { getAzureDevOpsRepoRef } from '../azure-devops/repository-ref'
+import { searchAzureDevOpsBranches } from '../azure-devops/repositories-client'
 import { hostedReviewSshConnectionId } from './hosted-review-execution-host'
 
 type HostedReviewTarget = {
@@ -19,7 +20,7 @@ type HostedReviewTarget = {
 
 const UNSUPPORTED = 'Review actions are not available for this provider yet.'
 
-async function azureRepo(target: HostedReviewTarget) {
+async function azureRepo(target: Omit<HostedReviewTarget, 'number'>) {
   // REST calls run on this client; only the remote-URL read is routed to an SSH host.
   const repo = await getAzureDevOpsRepoRef(
     target.repoPath,
@@ -38,6 +39,17 @@ export async function getHostedReviewDetails(
     return null
   }
   return fetchAzureDevOpsPullRequestDetails(await azureRepo(target), target.number)
+}
+
+/** Branches on the provider's remote, so a base can be picked before it is fetched locally. */
+export async function searchHostedReviewBranches(
+  target: Omit<HostedReviewTarget, 'number'>,
+  query: string
+): Promise<string[]> {
+  if (target.provider !== 'azure-devops') {
+    return []
+  }
+  return searchAzureDevOpsBranches(await azureRepo(target), query)
 }
 
 export async function performHostedReviewAction(

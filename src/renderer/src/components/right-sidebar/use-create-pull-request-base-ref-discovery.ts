@@ -1,5 +1,9 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
-import type { AppState } from '@/store'
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
+import { useAppStore, type AppState } from '@/store'
+import { supportsHostedReviewDetails } from '../../../../shared/hosted-review-actions'
+import type { HostedReviewProvider } from '../../../../shared/hosted-review'
+import type { Repo } from '../../../../shared/repo-types'
+import { searchHostedReviewBranches } from '@/lib/hosted-review-details-client'
 import {
   getRuntimeRepoBaseRefDefault,
   searchRuntimeRepoBaseRefDetails
@@ -19,6 +23,25 @@ type CreatePullRequestBaseRefDiscoveryOptions = {
   setBaseResults: Dispatch<SetStateAction<string[]>>
   setBaseSearchPending: Dispatch<SetStateAction<boolean>>
   setBaseSearchError: Dispatch<SetStateAction<string | null>>
+  // Providers with a hosted branch search also offer branches not fetched locally yet.
+  reviewProvider?: HostedReviewProvider | null
+}
+
+async function searchBaseBranches(
+  settings: AppState['settings'],
+  repoId: string,
+  query: string,
+  remote: { repo: Repo; provider: HostedReviewProvider } | null
+): Promise<string[]> {
+  const [local, hosted] = await Promise.all([
+    searchRuntimeRepoBaseRefDetails(settings, repoId, query, 20),
+    // A remote lookup failure must not hide the local results.
+    remote
+      ? searchHostedReviewBranches(remote.repo, remote.provider, query).catch(() => [])
+      : Promise.resolve([])
+  ])
+  const branches = normalizeCreateReviewBaseSearchResults(local)
+  return [...branches, ...hosted.filter((branch) => !branches.includes(branch))]
 }
 
 export function useCreatePullRequestBaseRefDiscovery({
@@ -30,8 +53,17 @@ export function useCreatePullRequestBaseRefDiscovery({
   setBase,
   setBaseResults,
   setBaseSearchPending,
-  setBaseSearchError
+  setBaseSearchError,
+  reviewProvider = null
 }: CreatePullRequestBaseRefDiscoveryOptions): string | null {
+  const repo = useAppStore((s) => s.repos.find((candidate) => candidate.id === repoId) ?? null)
+  const remoteBranchSource = useMemo(
+    () =>
+      repo && reviewProvider && supportsHostedReviewDetails(reviewProvider)
+        ? { repo, provider: reviewProvider }
+        : null,
+    [repo, reviewProvider]
+  )
   // Why: stamped with the repo it came from — this hook outlives a repo switch, and a
   // previous repo's default branch would silently suppress the stacked-PR lookup.
   const [repoDefault, setRepoDefault] = useState<{ repoId: string; baseRef: string } | null>(null)
@@ -76,10 +108,10 @@ export function useCreatePullRequestBaseRefDiscovery({
     let stale = false
     setBaseSearchPending(true)
     const timer = window.setTimeout(() => {
-      void searchRuntimeRepoBaseRefDetails(settings, repoId, baseQuery.trim(), 20)
+      void searchBaseBranches(settings, repoId, baseQuery.trim(), remoteBranchSource)
         .then((results) => {
           if (!stale) {
-            setBaseResults(normalizeCreateReviewBaseSearchResults(results))
+            setBaseResults(results)
             setBaseSearchError(null)
           }
         })
@@ -99,7 +131,16 @@ export function useCreatePullRequestBaseRefDiscovery({
       stale = true
       window.clearTimeout(timer)
     }
-  }, [baseQuery, open, repoId, settings, setBaseResults, setBaseSearchError, setBaseSearchPending])
+  }, [
+    baseQuery,
+    open,
+    remoteBranchSource,
+    repoId,
+    settings,
+    setBaseResults,
+    setBaseSearchError,
+    setBaseSearchPending
+  ])
 
   return repoDefaultBaseRef
 }
