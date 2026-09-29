@@ -5,6 +5,7 @@ import type {
 } from '../../shared/azure-devops-auth'
 import {
   changeAzureDevOpsAuthMethod,
+  listAzureDevOpsRepositoriesResult,
   refreshAzureCliSession,
   setAzureDevOpsCliDefaults
 } from '../azure-devops/azure-devops-auth-commands'
@@ -41,4 +42,6 @@ export function registerAzureDevOpsHandlers(): void {
   )
 
   ipcMain.handle('azureDevOps:refreshCliSession', (): void => refreshAzureCliSession())
+
+  ipcMain.handle('azureDevOps:listRepositories', () => listAzureDevOpsRepositoriesResult())
 }

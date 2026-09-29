@@ -53,6 +53,12 @@ export const HostedReviewDetailsParams = z.object({
   number: z.number().int().positive()
 })
 
+export const HostedReviewSearchBranchesParams = z.object({
+  repo: requiredString('Missing repo selector'),
+  provider: z.string(),
+  query: z.string().max(200)
+})
+
 export const HostedReviewActionParams = HostedReviewDetailsParams.extend({
   action: HostedReviewActionSchema
 })

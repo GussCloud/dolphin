@@ -193,7 +193,8 @@ export function useCreatePullRequestDialogFields({
     setBase,
     setBaseResults,
     setBaseSearchPending,
-    setBaseSearchError
+    setBaseSearchError,
+    reviewProvider: eligibility?.provider ?? null
   })
 
   const {

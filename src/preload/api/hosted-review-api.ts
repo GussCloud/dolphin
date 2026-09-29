@@ -16,7 +16,8 @@ import type {
   HostedReviewActionArgs,
   HostedReviewActionResult,
   HostedReviewDetails,
-  HostedReviewDetailsArgs
+  HostedReviewDetailsArgs,
+  HostedReviewSearchBranchesArgs
 } from '../../shared/hosted-review-actions'
 
 export type HostedReviewApi = {
@@ -28,6 +29,7 @@ export type HostedReviewApi = {
   createStacked: (args: CreateStackedHostedReviewArgs) => Promise<CreateStackedHostedReviewResult>
   details: (args: HostedReviewDetailsArgs) => Promise<HostedReviewDetails | null>
   action: (args: HostedReviewActionArgs) => Promise<HostedReviewActionResult>
+  searchBranches: (args: HostedReviewSearchBranchesArgs) => Promise<string[]>
 }
 
 export type BitbucketApi = {

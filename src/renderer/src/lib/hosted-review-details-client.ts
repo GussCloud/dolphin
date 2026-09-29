@@ -37,6 +37,27 @@ export function fetchHostedReviewDetails(
   })
 }
 
+export function searchHostedReviewBranches(
+  repo: Repo,
+  provider: HostedReviewProvider,
+  query: string
+): Promise<string[]> {
+  const environmentId = runtimeEnvironmentId(repo)
+  if (environmentId) {
+    return callRuntimeRpc<string[]>(
+      { kind: 'environment', environmentId },
+      'hostedReview.searchBranches',
+      { repo: repo.id, provider, query }
+    )
+  }
+  return window.api.hostedReview.searchBranches({
+    repoPath: repo.path,
+    repoId: repo.id,
+    provider,
+    query
+  })
+}
+
 export function performHostedReviewAction(
   repo: Repo,
   review: ReviewRef,

@@ -38,6 +38,19 @@ export type AzureDevOpsAuthPreference = {
   method: AzureDevOpsAuthMethod
 }
 
+export type AzureDevOpsRepository = {
+  name: string
+  project: string
+  remoteUrl: string
+  sshUrl: string | null
+  webUrl: string | null
+  defaultBranch: string | null
+}
+
+export type AzureDevOpsRepositoriesResult =
+  | { ok: true; repositories: AzureDevOpsRepository[] }
+  | { ok: false; error: string }
+
 export type AzureDevOpsConfigureDefaultsInput = {
   organization: string
   project: string | null
