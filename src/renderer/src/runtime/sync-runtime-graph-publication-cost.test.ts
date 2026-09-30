@@ -203,7 +203,8 @@ describe('mobile session publication cost', () => {
       .map(([worktreeId]) => worktreeId)
 
     expect(titleReads()).toBeGreaterThan(0)
-    expect(titleReads()).toBeLessThan(fullBuildReads / WORKTREES + 1)
+    // Why built snapshots, not WORKTREES: the startup hydration budget skips idle worktrees past its cap.
+    expect(titleReads()).toBeLessThan(fullBuildReads / beforeByWorktree.size + 1)
     expect(rebuiltWorktrees).toEqual(['repo::/title-wt-7'])
   })
 })
