@@ -1,5 +1,5 @@
 /**
- * A WSL shell prints `/home/neil/qa-repo`; the runtime stored the same directory as the UNC path
+ * A WSL shell prints `/home/alex/qa-repo`; the runtime stored the same directory as the UNC path
  * Windows sees (#16628). The CLI translates, proving the caller's distro from its own UNC cwd —
  * this resolver also feeds `worktree rm`, so a tail-only match would delete another distro's copy.
  */
@@ -40,8 +40,8 @@ import { DolphinRuntimeService } from './dolphin-runtime'
 
 const UBUNTU = 'Ubuntu-24.04'
 const DEBIAN = 'Debian'
-const LINUX_REPO_PATH = '/home/neil/repo'
-const LINUX_WORKTREE_PATH = '/home/neil/qa-repo'
+const LINUX_REPO_PATH = '/home/alex/repo'
+const LINUX_WORKTREE_PATH = '/home/alex/qa-repo'
 
 /** The cwd the WSL launcher hands the CLI: the caller's directory, already in UNC form. */
 function uncPath(distro: string, linuxPath: string): string {
@@ -157,7 +157,7 @@ describe('a WSL caller typing the Linux path of a UNC-stored worktree (#16628)',
 
     const selector = await selectorTheCliWouldSend(
       runtime,
-      uncPath(UBUNTU, '/home/neil'),
+      uncPath(UBUNTU, '/home/alex'),
       LINUX_WORKTREE_PATH
     )
 
@@ -173,7 +173,7 @@ describe('a WSL caller typing the Linux path of a UNC-stored worktree (#16628)',
 
     const selector = await selectorTheCliWouldSend(
       runtime,
-      uncPath(UBUNTU, '/home/neil'),
+      uncPath(UBUNTU, '/home/alex'),
       LINUX_WORKTREE_PATH
     )
 
@@ -186,7 +186,7 @@ describe('a WSL caller typing the Linux path of a UNC-stored worktree (#16628)',
     const runtime = makeRuntime([registration(UBUNTU, (linuxPath) => uncPath(UBUNTU, linuxPath))])
     const selector = await selectorTheCliWouldSend(
       runtime,
-      uncPath(DEBIAN, '/home/neil'),
+      uncPath(DEBIAN, '/home/alex'),
       LINUX_WORKTREE_PATH
     )
 
@@ -203,7 +203,7 @@ describe('a WSL caller typing the Linux path of a UNC-stored worktree (#16628)',
 
     const selector = await selectorTheCliWouldSend(
       runtime,
-      uncPath(DEBIAN, '/home/neil'),
+      uncPath(DEBIAN, '/home/alex'),
       LINUX_WORKTREE_PATH
     )
 
@@ -216,7 +216,7 @@ describe('a WSL caller typing the Linux path of a UNC-stored worktree (#16628)',
     const posix = (linuxPath: string) => linuxPath
     const runtime = makeRuntime([registration(UBUNTU, posix)])
 
-    const selector = await selectorTheCliWouldSend(runtime, '/home/neil', LINUX_WORKTREE_PATH)
+    const selector = await selectorTheCliWouldSend(runtime, '/home/alex', LINUX_WORKTREE_PATH)
 
     expect(selector).toBe(`path:${LINUX_WORKTREE_PATH}`)
     await expect(runtime.showManagedWorktree(selector)).resolves.toMatchObject({

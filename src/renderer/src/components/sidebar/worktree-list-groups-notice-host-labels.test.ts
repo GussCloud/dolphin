@@ -33,13 +33,13 @@ const HOST_LABELS = new Map([
 const sshTwin: Repo = {
   ...repo,
   id: 'repo-ssh-twin',
-  path: '/home/brennan/dolphin',
+  path: '/home/spencer/dolphin',
   connectionId: 'openclaw-target'
 }
 const envTwin: Repo = {
   ...repo,
   id: 'repo-env-twin',
-  path: '/home/brennan/dolphin',
+  path: '/home/spencer/dolphin',
   connectionId: null,
   executionHostId: ENV_HOST_ID
 }

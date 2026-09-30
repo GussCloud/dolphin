@@ -364,10 +364,10 @@ describe('splitIncludeArguments against a measured ssh', () => {
   it('keeps backslashes as separators on Windows', () => {
     // Measured on Windows OpenSSH: `Include C:\\Users\\...\\x.conf` resolves. Answering doubt here
     // would reinstate the lockout, since every absolute Windows Include contains backslashes.
-    expect(windows('C:\\Users\\neil\\conf\\x.conf')).toEqual(['C:\\Users\\neil\\conf\\x.conf'])
+    expect(windows('C:\\Users\\alex\\conf\\x.conf')).toEqual(['C:\\Users\\alex\\conf\\x.conf'])
     // Measured too: an escaped space still escapes, even amid separators.
-    expect(windows('C:\\Users\\neil\\sp\\ ace\\x.conf')).toEqual([
-      'C:\\Users\\neil\\sp ace\\x.conf'
+    expect(windows('C:\\Users\\alex\\sp\\ ace\\x.conf')).toEqual([
+      'C:\\Users\\alex\\sp ace\\x.conf'
     ])
   })
 

@@ -18,110 +18,39 @@
 
 <h3 align="center"><a href="https://github.com/GussCloud/dolphin/releases/latest"><ins>Download Dolphin for Windows</ins></a></h3>
 
-<p align="center">
-  <img src="docs/assets/readme-hero.jpg" alt="Dolphin desktop app running agents in parallel worktrees, with the mobile companion app in the corner" width="960" />
-</p>
-
 ## Features
-
-<table>
-<tr>
-<td width="50%" valign="middle">
 
 ### Parallel Worktrees
 
 Fan one prompt across several agents, each in its own isolated git worktree, then compare the results and merge the winner.
 
-</td>
-<td width="50%">
-  <picture><source srcset="docs/site/public/docs/tab-split.gif" type="image/gif"><img src="docs/site/public/docs/posters/tab-split.jpg" alt="Parallel worktree orchestration" width="100%" /></picture>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
-
 ### Terminal Splits
 
 GPU-rendered terminals with unlimited splits and scrollback that survives restarts.
-
-</td>
-<td width="50%">
-  <picture><source srcset="resources/onboarding/feature-wall/tile-02.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-02.poster.jpg" alt="Terminal splits" width="100%" /></picture>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
 
 ### Design Mode
 
 Click any element in a real Chromium window to send its HTML, CSS and a cropped screenshot into your agent's prompt.
 
-</td>
-<td width="50%">
-  <picture><source srcset="docs/site/public/docs/dolphin-design-mode.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-05.poster.jpg" alt="Embedded browser and Design Mode" width="100%" /></picture>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
-
 ### GitHub &amp; Linear
 
 Browse PRs, issues and project boards in the app, and open a worktree from any task.
-
-</td>
-<td width="50%">
-  <picture><source srcset="resources/onboarding/feature-wall/tile-03.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-03.poster.jpg" alt="GitHub and Linear task workflows in Dolphin" width="100%" /></picture>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
 
 ### SSH and WSL Worktrees
 
 Run agents on a remote machine or inside WSL with full file editing, git and terminals.
 
-</td>
-<td width="50%">
-  <picture><source srcset="resources/onboarding/feature-wall/tile-06.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-06.poster.jpg" alt="Remote worktrees over SSH" width="100%" /></picture>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
-
 ### Annotate AI Diffs
 
 Comment on any diff line and send it back to the agent, then review, edit and commit without leaving Dolphin.
-
-</td>
-<td width="50%">
-  <picture><source srcset="docs/site/public/docs/annotate-ai-diff.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-08.poster.jpg" alt="Annotate AI-generated diffs" width="100%" /></picture>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
 
 ### Dolphin CLI
 
 Agents drive Dolphin too: script workflows with `dolphin worktree create`, `snapshot`, `click` and `fill`.
 
-</td>
-<td width="50%">
-  <picture><source srcset="resources/onboarding/feature-wall/tile-09.gif" type="image/gif"><img src="resources/onboarding/feature-wall/tile-09.poster.jpg" alt="Script Dolphin from the CLI" width="100%" /></picture>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="middle">
-
 ### Mobile Companion
 
 Pair an Android phone with the desktop app to watch your agents and send follow-ups.
-
-</td>
-<td width="50%">
-  <picture><source srcset="docs/assets/feature-wall/mobile-companion-app-showcase.gif" type="image/gif"><img src="docs/assets/feature-wall/mobile-companion-app-showcase.jpg" alt="Dolphin desktop with the mobile companion app" width="100%" /></picture>
-</td>
-</tr>
-</table>
 
 ---
 

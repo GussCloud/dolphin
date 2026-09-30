@@ -869,13 +869,13 @@
       ]
 
       const repos = [
-        { id: 'repo-dolphin', displayName: 'dolphin', path: '/Users/jinwoo/dolphin' },
-        { id: 'repo-sdk', displayName: 'gusscloud-sdk', path: '/Users/jinwoo/gusscloud-sdk' },
+        { id: 'repo-dolphin', displayName: 'dolphin', path: '/Users/morgan/dolphin' },
+        { id: 'repo-sdk', displayName: 'gusscloud-sdk', path: '/Users/morgan/gusscloud-sdk' },
         { id: 'repo-ssh', displayName: 'prod-remote', path: 'ssh://desk/dolphin' },
         {
           id: 'repo-folder',
           displayName: 'notes-folder',
-          path: '/Users/jinwoo/notes',
+          path: '/Users/morgan/notes',
           unsupported: true
         }
       ]
@@ -905,7 +905,7 @@
             state: 'open',
             updatedAt: '18m',
             labels: ['mobile', 'tasks'],
-            assignees: ['jinwoo'],
+            assignees: ['morgan'],
             body: 'Mobile Tasks should match the desktop workflow: inspect the issue, understand the recent discussion, then create a workspace without bouncing to a browser.',
             comments: [
               {
@@ -1013,7 +1013,7 @@
             state: 'opened',
             updatedAt: '12m',
             labels: ['gitlab'],
-            assignees: ['jinwoo'],
+            assignees: ['morgan'],
             body: 'MR workspaces should start from the source branch fetched from the same remote selected for GitLab issue-source preference.',
             comments: [
               {
@@ -1117,7 +1117,7 @@
             state: 'in-progress',
             updatedAt: '25m',
             labels: ['ux'],
-            assignee: 'Jinwoo',
+            assignee: 'Morgan',
             project: 'Mobile parity',
             description:
               'Audit whether the mobile task sheet gives enough context to act without opening Linear on desktop.',
@@ -1363,7 +1363,7 @@
           if (state.linearFilter === 'completed')
             items = items.filter((item) => item.state === 'done')
           else if (state.linearFilter === 'assigned')
-            items = items.filter((item) => item.assignee === 'Jinwoo')
+            items = items.filter((item) => item.assignee === 'Morgan')
           else if (state.linearFilter === 'created')
             items = items.filter((item) => item.key === 'lin-405')
         }

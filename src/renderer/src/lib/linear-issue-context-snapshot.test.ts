@@ -33,7 +33,7 @@ function makeIssue(patch: Partial<LinearIssue> = {}): LinearIssue {
     ],
     labels: ['bug', 'agent'],
     labelIds: ['label-1', 'label-2'],
-    assignee: { id: 'user-1', displayName: 'Brennan' },
+    assignee: { id: 'user-1', displayName: 'Spencer' },
     estimate: 3,
     priority: 2,
     updatedAt: '2026-05-29T12:00:00.000Z',
@@ -72,7 +72,7 @@ describe('buildLinearIssueContextSnapshot', () => {
     expect(snapshot).toContain('Title: Fix launch context handoff')
     expect(snapshot).toContain('Priority: High (2)')
     expect(snapshot).toContain('Estimate: 3')
-    expect(snapshot).toContain('Assignee: Brennan')
+    expect(snapshot).toContain('Assignee: Spencer')
     expect(snapshot).toContain('Team: Engineering (ENG)')
     expect(snapshot).toContain('Workspace: Acme')
     expect(snapshot).toContain('Project: Agent Launches (https://linear.app/acme/project/a)')

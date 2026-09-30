@@ -27,10 +27,10 @@ describe('live-remote-bulk-open-freeze-metrics', () => {
   it('builds worktree selectors from id/path', () => {
     expect(
       worktreeSelector({
-        id: 'repo::C:/Users/neil/dolphin/dolphin',
-        path: 'C:/Users/neil/dolphin/dolphin'
+        id: 'repo::C:/Users/alex/dolphin/dolphin',
+        path: 'C:/Users/alex/dolphin/dolphin'
       })
-    ).toBe('id:repo::C:/Users/neil/dolphin/dolphin')
+    ).toBe('id:repo::C:/Users/alex/dolphin/dolphin')
     expect(worktreeSelector({ path: '/tmp/x' })).toBe('path:/tmp/x')
     expect(worktreeSelector({})).toBeNull()
   })

@@ -84,7 +84,7 @@ function renderGitPane(searchQuery: string): string {
         settings: getDefaultSettings(os.homedir()),
         updateSettings: () => {},
         writeSourceControlAiSettings: async () => {},
-        displayedGitUsername: 'brennan',
+        displayedGitUsername: 'spencer',
         settingsSearchQuery: searchQuery
       })
     )

@@ -78,7 +78,7 @@ export function DocsFooter() {
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-6 font-mono text-sm text-muted-foreground md:flex-row">
           <p>
-            © {new Date().getFullYear()} Lovecast Inc. ·{' '}
+            © {new Date().getFullYear()} Dolphin ·{' '}
             <a
               href="https://github.com/GussCloud/dolphin/blob/main/LICENSE"
               className="rounded-sm underline decoration-border underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"

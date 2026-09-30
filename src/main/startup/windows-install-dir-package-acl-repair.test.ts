@@ -15,7 +15,7 @@ import {
   type WindowsInstallDirAclRepairResult
 } from './windows-install-dir-package-acl-repair'
 
-const INSTALL_DIR = 'C:\\Users\\neil\\AppData\\Local\\Programs\\dolphin'
+const INSTALL_DIR = 'C:\\Users\\alex\\AppData\\Local\\Programs\\dolphin'
 const APP_VERSION = '1.4.184'
 
 /** icacls' real success summary; the /T pass prints one per tree. */

@@ -5,7 +5,7 @@ import { getRepoMultiComboboxDetail } from './repo-multi-combobox'
 function repo(overrides: Partial<Repo> = {}): Repo {
   return {
     id: 'repo-1',
-    path: '/Users/jinwoo/dolphin',
+    path: '/Users/morgan/dolphin',
     displayName: 'dolphin',
     badgeColor: '#999999',
     addedAt: 1,
@@ -16,7 +16,7 @@ function repo(overrides: Partial<Repo> = {}): Repo {
 describe('getRepoMultiComboboxDetail', () => {
   it('shows host context before the path when available', () => {
     expect(getRepoMultiComboboxDetail(repo(), 'Local Mac')).toBe(
-      'Local Mac · /Users/jinwoo/dolphin'
+      'Local Mac · /Users/morgan/dolphin'
     )
     expect(getRepoMultiComboboxDetail(repo({ path: '/home/dolphin/dolphin' }), 'openclaw 2')).toBe(
       'openclaw 2 · /home/dolphin/dolphin'
@@ -24,7 +24,7 @@ describe('getRepoMultiComboboxDetail', () => {
   })
 
   it('keeps the existing path-only detail when no host label is provided', () => {
-    expect(getRepoMultiComboboxDetail(repo(), null)).toBe('/Users/jinwoo/dolphin')
-    expect(getRepoMultiComboboxDetail(repo(), '   ')).toBe('/Users/jinwoo/dolphin')
+    expect(getRepoMultiComboboxDetail(repo(), null)).toBe('/Users/morgan/dolphin')
+    expect(getRepoMultiComboboxDetail(repo(), '   ')).toBe('/Users/morgan/dolphin')
   })
 })

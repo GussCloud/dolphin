@@ -67,9 +67,9 @@ describe('codexDaemonSocketPathExceedsLimit', () => {
   })
 
   it('flags the Windows managed home against the 108-byte uds_windows limit', () => {
-    const home = `C:\\Users\\neil\\AppData\\Roaming\\dolphin\\codex-accounts\\${UUID}\\home`
+    const home = `C:\\Users\\alex\\AppData\\Roaming\\dolphin\\codex-accounts\\${UUID}\\home`
     expect(codexDaemonSocketPathExceedsLimit(home, 'win32')).toBe(true)
-    expect(codexDaemonSocketPathExceedsLimit('C:\\Users\\neil\\.codex', 'win32')).toBe(false)
+    expect(codexDaemonSocketPathExceedsLimit('C:\\Users\\alex\\.codex', 'win32')).toBe(false)
   })
 })
 

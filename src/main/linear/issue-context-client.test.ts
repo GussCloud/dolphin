@@ -29,13 +29,14 @@ function makeEntry(options: {
   organizationName: string
   rawRequest: ReturnType<typeof vi.fn>
 }): LinearClientForWorkspace {
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: test double implements only the Linear client members these tests call.
   return {
     workspace: {
       id: options.workspaceId,
       organizationId: options.workspaceId,
       organizationName: options.organizationName,
-      displayName: 'Brennan',
-      email: 'brennan@example.com'
+      displayName: 'Spencer',
+      email: 'spencer@example.com'
     },
     client: {
       client: { rawRequest: options.rawRequest }
@@ -134,15 +135,15 @@ describe('Linear agent issue context client', () => {
           id: 'workspace-stale',
           organizationId: 'workspace-stale',
           organizationName: 'Stale',
-          displayName: 'Brennan',
-          email: 'brennan@example.com'
+          displayName: 'Spencer',
+          email: 'spencer@example.com'
         },
         {
           id: 'workspace-good',
           organizationId: 'workspace-good',
           organizationName: 'Good',
-          displayName: 'Brennan',
-          email: 'brennan@example.com'
+          displayName: 'Spencer',
+          email: 'spencer@example.com'
         }
       ]
     })
@@ -207,8 +208,8 @@ describe('Linear agent issue context client', () => {
           id: 'workspace-selected',
           organizationId: 'workspace-selected',
           organizationName: 'Selected',
-          displayName: 'Brennan',
-          email: 'brennan@example.com'
+          displayName: 'Spencer',
+          email: 'spencer@example.com'
         }
       ]
     })
@@ -233,8 +234,8 @@ describe('Linear agent issue context client', () => {
           id: 'workspace-selected',
           organizationId: 'workspace-selected',
           organizationName: 'Selected',
-          displayName: 'Brennan',
-          email: 'brennan@example.com'
+          displayName: 'Spencer',
+          email: 'spencer@example.com'
         }
       ]
     })
@@ -261,8 +262,8 @@ describe('Linear agent issue context client', () => {
           id: 'workspace-selected',
           organizationId: 'workspace-selected',
           organizationName: 'Selected',
-          displayName: 'Brennan',
-          email: 'brennan@example.com'
+          displayName: 'Spencer',
+          email: 'spencer@example.com'
         }
       ]
     })
@@ -289,8 +290,8 @@ describe('Linear agent issue context client', () => {
           id: 'workspace-selected',
           organizationId: 'workspace-selected',
           organizationName: 'Selected',
-          displayName: 'Brennan',
-          email: 'brennan@example.com'
+          displayName: 'Spencer',
+          email: 'spencer@example.com'
         }
       ]
     })

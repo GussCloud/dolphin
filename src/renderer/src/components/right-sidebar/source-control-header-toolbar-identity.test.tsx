@@ -75,7 +75,7 @@ function renderToolbar(options?: {
       compareBaseRef={options?.compareBaseRef === undefined ? null : options.compareBaseRef}
       headDisplay={
         options?.headDisplay === undefined
-          ? { kind: 'branch', branchName: 'brennanb2025/source-control-branch-name' }
+          ? { kind: 'branch', branchName: 'spencerb2025/source-control-branch-name' }
           : options.headDisplay
       }
       branchLineTotal={options?.branchLineTotal}
@@ -112,14 +112,14 @@ describe('SourceControlHeaderToolbar branch identity', () => {
 
   it('keeps Create PR while stacking head above base in the context row', () => {
     const markup = renderToolbar()
-    const branchIndex = markup.indexOf('brennanb2025/source-control-branch-name')
+    const branchIndex = markup.indexOf('spencerb2025/source-control-branch-name')
     const createPrIndex = markup.indexOf('Create PR')
 
     // Why: the #9787 regression — identity must not evict Create PR.
     expect(branchIndex).toBeGreaterThan(-1)
     expect(createPrIndex).toBeGreaterThan(-1)
-    expect(markup).toContain('aria-label="brennanb2025/source-control-branch-name → origin/main"')
-    expect(markup).toContain('aria-label="Current branch: brennanb2025/source-control-branch-name"')
+    expect(markup).toContain('aria-label="spencerb2025/source-control-branch-name → origin/main"')
+    expect(markup).toContain('aria-label="Current branch: spencerb2025/source-control-branch-name"')
     expect(markup).toContain('data-testid="source-control-head-identity"')
   })
 

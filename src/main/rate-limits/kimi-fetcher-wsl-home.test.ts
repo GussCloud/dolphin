@@ -21,13 +21,13 @@ vi.mock('node:fs/promises', () => ({
     return contents
   }
 }))
-vi.mock('node:os', () => ({ homedir: () => '/home/neil' }))
+vi.mock('node:os', () => ({ homedir: () => '/home/alex' }))
 
 import { fetchKimiRateLimits } from './kimi-fetcher'
 
 // Built with `join` so the key matches the separator the fetcher emits on this runner's platform.
-const HOST_CREDENTIALS = join('/home/neil', '.kimi-code', 'credentials', 'kimi-code.json')
-const WSL_HOME = '\\\\wsl.localhost\\Ubuntu\\home\\neil\\.kimi-code'
+const HOST_CREDENTIALS = join('/home/alex', '.kimi-code', 'credentials', 'kimi-code.json')
+const WSL_HOME = '\\\\wsl.localhost\\Ubuntu\\home\\alex\\.kimi-code'
 const WSL_CREDENTIALS = `${WSL_HOME}\\credentials\\kimi-code.json`
 
 function credentials(token: string, expiresInSeconds: number): string {
@@ -119,7 +119,7 @@ describe('fetchKimiRateLimits with a WSL credentials home', () => {
   // Last: an unsettled UNC read stays shared for its path by design, so the stalled
   // distro gets its own home to avoid poisoning the other cases.
   it('bounds a stalled UNC read instead of parking the poll cycle', async () => {
-    const stalledHome = '\\\\wsl.localhost\\Stopped\\home\\neil\\.kimi-code'
+    const stalledHome = '\\\\wsl.localhost\\Stopped\\home\\alex\\.kimi-code'
     files.set(`${stalledHome}\\credentials\\kimi-code.json`, STALLED)
     const timeoutController = new AbortController()
     const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeoutController.signal)

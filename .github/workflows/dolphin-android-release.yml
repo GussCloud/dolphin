@@ -1,8 +1,7 @@
 name: Dolphin Android Release
 
 # Builds the Dolphin Mobile APK and publishes it as a GitHub release asset, the Android twin of
-# dolphin-windows-release.yml. Revived from upstream's mobile-android-release.yml (removed with
-# Stably's release workflows) under the fork's identity.
+# dolphin-windows-release.yml.
 #
 # Cut a release: bump mobile/app.json "version" and "versionCode" and merge to main. A main push
 # that lands a version with no release yet builds and publishes it; a push tag

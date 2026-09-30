@@ -75,7 +75,7 @@ describe('ghExecFileAsync WSL fallback', () => {
 
     await expect(
       ghExecFileAsync(['issue', 'list', '--repo', 'gusscloudhq/noqa', '--json', 'number,title'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\morgan\gusscloud\noqa`
       })
     ).resolves.toEqual({ stdout: '[]', stderr: '' })
 
@@ -88,7 +88,7 @@ describe('ghExecFileAsync WSL fallback', () => {
         '--exec',
         'bash',
         '-c',
-        "cd '/home/jinwoo/gusscloud/noqa' && 'gh' 'issue' 'list' '--repo' 'gusscloudhq/noqa' '--json' 'number,title'"
+        "cd '/home/morgan/gusscloud/noqa' && 'gh' 'issue' 'list' '--repo' 'gusscloudhq/noqa' '--json' 'number,title'"
       ],
       // Why a concrete directory (#16463): `undefined` makes CreateProcessW inherit
       // Dolphin's own cwd, a deletable WSL UNC path when it was launched from a
@@ -108,7 +108,7 @@ describe('ghExecFileAsync WSL fallback', () => {
 
     await expect(
       ghExecFileAsync(['issue', 'list'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\morgan\gusscloud\noqa`
       })
     ).rejects.toThrow('gh: command not found')
 
@@ -124,7 +124,7 @@ describe('ghExecFileAsync WSL fallback', () => {
 
     await expect(
       ghExecFileAsync(['issue', 'list', '-R', 'gusscloudhq/noqa'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\morgan\gusscloud\noqa`
       })
     ).resolves.toEqual({ stdout: '[]', stderr: '' })
 
@@ -145,7 +145,7 @@ describe('ghExecFileAsync WSL fallback', () => {
 
     await expect(
       ghExecFileAsync(['issue', 'list', '-Rgusscloudhq/noqa'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\morgan\gusscloud\noqa`
       })
     ).resolves.toEqual({ stdout: '[]', stderr: '' })
 
@@ -168,7 +168,7 @@ describe('ghExecFileAsync WSL fallback', () => {
       ghExecFileAsync(
         ['repo', 'view', 'github.acme-corp.com/gusscloudhq/noqa', '--json', 'isFork,parent'],
         {
-          cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`,
+          cwd: String.raw`\\wsl.localhost\Ubuntu\home\morgan\gusscloud\noqa`,
           host: 'github.acme-corp.com'
         }
       )
@@ -187,7 +187,7 @@ describe('ghExecFileAsync WSL fallback', () => {
 
     await expect(
       ghExecFileAsync(['api', 'repos/gusscloudhq/noqa/branches/{branch}'], {
-        cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
+        cwd: String.raw`\\wsl.localhost\Ubuntu\home\morgan\gusscloud\noqa`
       })
     ).rejects.toThrow('gh: command not found')
 
@@ -351,7 +351,7 @@ describe('ghExecFileAsync WSL fallback', () => {
     )
 
     const options = {
-      cwd: String.raw`\\wsl.localhost\Ubuntu\home\jinwoo\gusscloud\noqa`
+      cwd: String.raw`\\wsl.localhost\Ubuntu\home\morgan\gusscloud\noqa`
     }
     await expect(ghExecFileAsync(['api', 'repos/acme/widgets/pulls'], options)).rejects.toThrow(
       'rate limit'

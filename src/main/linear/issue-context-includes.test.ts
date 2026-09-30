@@ -22,8 +22,8 @@ vi.mock('./issue-context-client', () => ({
       id: 'workspace-1',
       organizationId: 'workspace-1',
       organizationName: 'Acme',
-      displayName: 'Brennan',
-      email: 'brennan@example.com'
+      displayName: 'Spencer',
+      email: 'spencer@example.com'
     },
     client: { client: { rawRequest: plainRawRequest } }
   }),
@@ -64,8 +64,8 @@ function resolvedIssue(): ResolvedIssue {
       id: 'workspace-1',
       organizationId: 'workspace-1',
       organizationName: 'Acme',
-      displayName: 'Brennan',
-      email: 'brennan@example.com'
+      displayName: 'Spencer',
+      email: 'spencer@example.com'
     }
   }
 }

@@ -564,7 +564,7 @@ describe('buildRows with pinned worktrees', () => {
     const windowsRepo: Repo = {
       ...repo,
       id: 'repo-windows',
-      path: 'C:\\Users\\neil\\dolphin\\dolphin',
+      path: 'C:\\Users\\alex\\dolphin\\dolphin',
       executionHostId: windowsHostId
     }
     const folderRepoA: Repo = {

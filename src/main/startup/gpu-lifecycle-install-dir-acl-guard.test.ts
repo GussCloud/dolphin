@@ -59,7 +59,7 @@ import {
   WINDOWS_INSTALL_DIR_ACL_REPAIR_SCHEME_VERSION
 } from './windows-install-dir-package-acl-repair'
 
-const INSTALL_DIR = 'C:\\Users\\neil\\AppData\\Local\\Programs\\dolphin'
+const INSTALL_DIR = 'C:\\Users\\alex\\AppData\\Local\\Programs\\dolphin'
 
 function recoveryOptions(userDataPath?: string): {
   platform: 'win32'

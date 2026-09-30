@@ -8,7 +8,7 @@
  * nothing changed for it. `useShallow` suppresses the *re-render*, never the
  * selector body, so it does not help here.
  *
- * Scale is Jinjing's live 1.4.203-hourly capture: ~870 workspaces, ~1,400
+ * Scale is Kendall's live 1.4.203-hourly capture: ~870 workspaces, ~1,400
  * terminal tabs, ~857 sleeping-agent records, ~177 agent-status rows, 20
  * mounted panes/cards.
  *

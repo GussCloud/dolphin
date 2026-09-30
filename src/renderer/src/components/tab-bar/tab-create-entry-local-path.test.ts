@@ -90,17 +90,18 @@ describe('getTabEntryAllowAbsolutePaths', () => {
       repos: [makeRepo({ id: 'repo-ssh', connectionId: 'ssh-1' })],
       worktreesByRepo: {
         'repo-ssh': [
+          // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixture sets only the worktree fields the path policy reads.
           {
-            id: 'repo-ssh::/home/neil/repo',
+            id: 'repo-ssh::/home/alex/repo',
             repoId: 'repo-ssh',
-            path: '/home/neil/repo'
+            path: '/home/alex/repo'
           } as never
         ]
       },
       settings: { activeRuntimeEnvironmentId: null } as never
     })
 
-    expect(getTabEntryAllowAbsolutePaths(useAppStore.getState(), 'repo-ssh::/home/neil/repo')).toBe(
+    expect(getTabEntryAllowAbsolutePaths(useAppStore.getState(), 'repo-ssh::/home/alex/repo')).toBe(
       false
     )
   })

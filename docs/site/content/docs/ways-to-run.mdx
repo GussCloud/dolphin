@@ -3,7 +3,7 @@ title: Ways to run Dolphin
 description: Local desktop, SSH hosts, self-hosted Dolphin servers, and on-demand per-workspace VMs — pick the right compute for each task.
 ---
 
-import { Callout, ImagePlaceholder } from '@/components/docs/prose'
+import { Callout } from '@/components/docs/prose'
 
 Dolphin is not locked to your laptop. Every worktree runs somewhere — on the machine in front of you, on a box you already own, on a shared always-on server, or on a fresh cloud VM spun up for that one workspace.
 
@@ -76,16 +76,6 @@ Each worktree can boot its own on-demand environment — a cloud sandbox, VM, or
 In the product UI this surface is labeled **Cloud VM** under [Settings → Experimental](/docs/settings). Recipes still create per-workspace environments.
 
 Providers people wire today include Vercel Sandbox, Fly, Modal, plain SSH hosts, and local Docker. Connection is either **Dolphin server** (recipe starts `dolphin serve` and returns a pairing URL) or **SSH** (recipe returns connection details Dolphin dials).
-
-<ImagePlaceholder
-  src="/docs/ways-to-run-per-workspace-env.png"
-  caption="Settings → Experimental → Cloud VM — enable the skill, then have an agent set up a recipe for the repo."
-/>
-
-<ImagePlaceholder
-  src="/docs/ways-to-run-local-sidebar.png"
-  caption="Choose a local or remote run target from the workspace sidebar."
-/>
 
 **Good fit when:** you want clean isolation per task, disposable compute, or a standard environment every agent boots into.
 

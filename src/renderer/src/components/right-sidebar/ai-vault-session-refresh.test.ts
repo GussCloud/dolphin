@@ -765,7 +765,7 @@ describe('useAiVaultSessionRefresh in-app agent session behavior', () => {
   // workspace worked. The file explorer already recovers off this same signal.
   it('retries after a not-ready failure once the SSH connection lands', async () => {
     listSessionsMock.mockRejectedValueOnce(new Error('SSH relay is not ready'))
-    await renderHook(['/home/neil/projects/dolphin'])
+    await renderHook(['/home/alex/projects/dolphin'])
     await flushMicrotasks()
 
     expect(latest?.error).toBe('SSH relay is not ready')
@@ -788,7 +788,7 @@ describe('useAiVaultSessionRefresh in-app agent session behavior', () => {
     // Gated on a prior error so a local workspace, or one that already listed fine, does not rescan
     // every time some unrelated host connects.
     listSessionsMock.mockResolvedValue(EMPTY_RESULT)
-    await renderHook(['/home/neil/projects/dolphin'])
+    await renderHook(['/home/alex/projects/dolphin'])
     await flushMicrotasks()
 
     expect(latest?.error).toBeNull()

@@ -65,7 +65,7 @@ describe('MachineNameField', () => {
   it('captions a saved override without asking the runtime, so a stale read cannot show the old name', async () => {
     // Why: the store only holds a saved value after main has written it, so it already is what
     // devices see. A runtime that still answers with the previous name must not win.
-    mocks.getStatus.mockResolvedValue({ machineName: 'Brennan’s MacBook Pro' })
+    mocks.getStatus.mockResolvedValue({ machineName: 'Spencer’s MacBook Pro' })
     renderField('QA Override Desk')
     await act(async () => {})
 

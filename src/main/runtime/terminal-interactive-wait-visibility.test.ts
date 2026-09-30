@@ -295,7 +295,7 @@ describe('terminal interactive-wait visibility (STA-4513, STA-3714)', () => {
       // `user@host: ~/repo`, which no title rule recognizes, and a hook row stays fresh for
       // AGENT_STATUS_STALE_AFTER_MS — half an hour of reporting a dead agent as waiting.
       const { runtime, handle } = await createPane({
-        paneTitle: 'jinwoo@host: ~/repo',
+        paneTitle: 'morgan@host: ~/repo',
         foregroundProcess: 'zsh',
         data: agentStatusOsc('waiting')
       })

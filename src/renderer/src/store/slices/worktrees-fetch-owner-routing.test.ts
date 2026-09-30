@@ -499,7 +499,7 @@ describe('fetchWorktrees', () => {
       id: 'repo-remote::/vercel/sandbox/dolphin',
       repoId: 'repo-remote',
       path: '/vercel/sandbox/dolphin',
-      branch: 'refs/heads/Jinwoo-H/vm-improve-2',
+      branch: 'refs/heads/Morgan-H/vm-improve-2',
       hostId: 'local'
     })
     store.setState({

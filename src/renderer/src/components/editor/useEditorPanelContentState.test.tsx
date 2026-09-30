@@ -170,7 +170,7 @@ describe('useEditorPanelContentState', () => {
 
   it('loads folder workspace files through the path-specific SSH connection', async () => {
     const activeFile = createOpenFile({
-      filePath: '/home/neil/platform/api/src/file.ts',
+      filePath: '/home/alex/platform/api/src/file.ts',
       relativePath: 'api/src/file.ts',
       worktreeId: 'folder:folder-workspace-1'
     })
@@ -190,11 +190,11 @@ describe('useEditorPanelContentState', () => {
     )
     expect(mocks.getConnectionIdForFile).toHaveBeenCalledWith(
       'folder:folder-workspace-1',
-      '/home/neil/platform/api/src/file.ts'
+      '/home/alex/platform/api/src/file.ts'
     )
     expect(mocks.readRuntimeFileContent).toHaveBeenCalledWith(
       expect.objectContaining({
-        filePath: '/home/neil/platform/api/src/file.ts',
+        filePath: '/home/alex/platform/api/src/file.ts',
         relativePath: 'api/src/file.ts',
         worktreeId: 'folder:folder-workspace-1',
         connectionId: 'ssh-1'
@@ -381,7 +381,7 @@ describe('useEditorPanelContentState', () => {
   it('loads folder workspace branch diffs through the path-specific SSH connection', async () => {
     const activeFile = createOpenFile({
       id: 'branch-diff',
-      filePath: '/home/neil/platform/api/src/file.ts',
+      filePath: '/home/alex/platform/api/src/file.ts',
       relativePath: 'api/src/file.ts',
       worktreeId: 'folder:folder-workspace-1',
       mode: 'diff',
@@ -417,12 +417,12 @@ describe('useEditorPanelContentState', () => {
     )
     expect(mocks.getConnectionIdForFile).toHaveBeenCalledWith(
       'folder:folder-workspace-1',
-      '/home/neil/platform/api/src/file.ts'
+      '/home/alex/platform/api/src/file.ts'
     )
     expect(mocks.getRuntimeGitBranchDiff).toHaveBeenCalledWith(
       expect.objectContaining({
         worktreeId: 'folder:folder-workspace-1',
-        worktreePath: '/home/neil/platform',
+        worktreePath: '/home/alex/platform',
         connectionId: 'ssh-1'
       }),
       expect.objectContaining({

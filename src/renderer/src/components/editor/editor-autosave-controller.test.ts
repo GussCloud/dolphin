@@ -218,11 +218,12 @@ describe('attachEditorAutosaveController', () => {
     const workspaceKey = folderWorkspaceKey('folder-workspace-1')
     store.setState({
       worktreesByRepo: {
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixture sets only the worktree fields autosave reads.
         'folder-workspace-1': [
           {
             id: workspaceKey,
             repoId: 'folder-workspace-1',
-            path: '/home/neil/platform',
+            path: '/home/alex/platform',
             hostId: 'ssh:ssh-1'
           }
         ] as never
@@ -241,21 +242,21 @@ describe('attachEditorAutosaveController', () => {
       ])
     })
     store.getState().openFile({
-      filePath: '/home/neil/platform/api/src/file.ts',
+      filePath: '/home/alex/platform/api/src/file.ts',
       relativePath: 'api/src/file.ts',
       worktreeId: workspaceKey,
       language: 'typescript',
       mode: 'edit'
     })
-    store.getState().setEditorDraft('/home/neil/platform/api/src/file.ts', 'edited')
-    store.getState().markFileDirty('/home/neil/platform/api/src/file.ts', true)
+    store.getState().setEditorDraft('/home/alex/platform/api/src/file.ts', 'edited')
+    store.getState().markFileDirty('/home/alex/platform/api/src/file.ts', true)
 
     const cleanup = attachEditorAutosaveController(store)
     try {
       await requestDirtyFileSave()
 
       expect(writeFile).toHaveBeenCalledWith({
-        filePath: '/home/neil/platform/api/src/file.ts',
+        filePath: '/home/alex/platform/api/src/file.ts',
         content: 'edited',
         connectionId: 'ssh-1',
         expectedExecutionHostId: 'ssh:ssh-1',

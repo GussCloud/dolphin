@@ -19,7 +19,7 @@ const initialState = useAppStore.getInitialState()
 
 function makeRepo(overrides: Partial<Repo> & { id: string }): Repo {
   return {
-    path: '/home/neil/repo',
+    path: '/home/alex/repo',
     displayName: 'repo',
     badgeColor: '#000',
     addedAt: 0,
@@ -64,7 +64,7 @@ describe('getConnectionId', () => {
       worktreesByRepo: {}
     })
 
-    expect(getConnectionId('repo-ssh::/home/neil/repo-feature')).toBe('ssh-1')
+    expect(getConnectionId('repo-ssh::/home/alex/repo-feature')).toBe('ssh-1')
   })
 
   it('returns null for known local repos without a discovered worktree', () => {
@@ -92,7 +92,7 @@ describe('getConnectionId', () => {
           id: 'folder-workspace-1',
           projectGroupId: 'group-1',
           name: 'Platform workspace',
-          folderPath: '/home/neil/platform',
+          folderPath: '/home/alex/platform',
           linkedTask: null,
           comment: '',
           isArchived: false,
@@ -108,7 +108,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-1',
           name: 'Platform',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           parentGroupId: null,
           createdFrom: 'folder-scan',
           tabOrder: 0,
@@ -121,7 +121,7 @@ describe('getConnectionId', () => {
       repos: [
         makeRepo({
           id: 'repo-ssh',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-1'
         })
@@ -139,7 +139,7 @@ describe('getConnectionId', () => {
           id: 'folder-workspace-1',
           projectGroupId: 'group-1',
           name: 'Platform workspace',
-          folderPath: '/home/neil/platform',
+          folderPath: '/home/alex/platform',
           connectionId: 'ssh-1',
           linkedTask: null,
           comment: '',
@@ -156,7 +156,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-1',
           name: 'Platform',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           connectionId: 'ssh-1',
           parentGroupId: null,
           createdFrom: 'folder-scan',
@@ -181,7 +181,7 @@ describe('getConnectionId', () => {
           id: 'folder-workspace-1',
           projectGroupId: 'group-1',
           name: 'Platform workspace',
-          folderPath: '/home/neil/platform',
+          folderPath: '/home/alex/platform',
           connectionId: 'ssh-1',
           linkedTask: null,
           comment: '',
@@ -198,7 +198,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-1',
           name: 'Platform',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           connectionId: 'ssh-1',
           parentGroupId: null,
           createdFrom: 'folder-scan',
@@ -212,7 +212,7 @@ describe('getConnectionId', () => {
       repos: [
         makeRepo({
           id: 'repo-ssh',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-2'
         })
@@ -231,7 +231,7 @@ describe('getConnectionId', () => {
           id: 'folder-workspace-1',
           projectGroupId: 'group-1',
           name: 'Platform workspace',
-          folderPath: '/home/neil/platform',
+          folderPath: '/home/alex/platform',
           linkedTask: null,
           comment: '',
           isArchived: false,
@@ -247,7 +247,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-1',
           name: 'Platform',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           parentGroupId: null,
           createdFrom: 'folder-scan',
           tabOrder: 0,
@@ -260,12 +260,12 @@ describe('getConnectionId', () => {
       repos: [
         makeRepo({
           id: 'repo-local',
-          path: '/home/neil/platform/web',
+          path: '/home/alex/platform/web',
           projectGroupId: 'group-1'
         }),
         makeRepo({
           id: 'repo-ssh',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-1'
         })
@@ -274,11 +274,11 @@ describe('getConnectionId', () => {
     })
 
     expect(getConnectionId(workspaceKey)).toBeUndefined()
-    expect(getConnectionIdForFile(workspaceKey, '/home/neil/platform/api/src/index.ts')).toBe(
+    expect(getConnectionIdForFile(workspaceKey, '/home/alex/platform/api/src/index.ts')).toBe(
       'ssh-1'
     )
-    expect(getConnectionIdForFile(workspaceKey, '/home/neil/platform/web/src/index.ts')).toBeNull()
-    expect(getConnectionIdForFile(workspaceKey, '/home/neil/platform/README.md')).toBeUndefined()
+    expect(getConnectionIdForFile(workspaceKey, '/home/alex/platform/web/src/index.ts')).toBeNull()
+    expect(getConnectionIdForFile(workspaceKey, '/home/alex/platform/README.md')).toBeUndefined()
   })
 
   it('resolves folder workspace combined diff sections by child repo path', () => {
@@ -289,7 +289,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-1',
           name: 'Platform',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           parentGroupId: null,
           createdFrom: 'folder-scan',
           tabOrder: 0,
@@ -302,12 +302,12 @@ describe('getConnectionId', () => {
       repos: [
         makeRepo({
           id: 'repo-local',
-          path: '/home/neil/platform/web',
+          path: '/home/alex/platform/web',
           projectGroupId: 'group-1'
         }),
         makeRepo({
           id: 'repo-ssh',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-1'
         })
@@ -315,8 +315,8 @@ describe('getConnectionId', () => {
       worktreesByRepo: {}
     })
 
-    expect(getConnectionIdForFile(workspaceKey, '/home/neil/platform')).toBeUndefined()
-    expect(getConnectionIdForFile(workspaceKey, '/home/neil/platform/api/src/index.ts')).toBe(
+    expect(getConnectionIdForFile(workspaceKey, '/home/alex/platform')).toBeUndefined()
+    expect(getConnectionIdForFile(workspaceKey, '/home/alex/platform/api/src/index.ts')).toBe(
       'ssh-1'
     )
   })
@@ -328,7 +328,7 @@ describe('getConnectionId', () => {
           id: 'folder-workspace-1',
           projectGroupId: 'group-1',
           name: 'Platform workspace',
-          folderPath: '/home/neil/platform',
+          folderPath: '/home/alex/platform',
           connectionId: 'ssh-1',
           linkedTask: null,
           comment: '',
@@ -345,7 +345,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-1',
           name: 'Platform',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           connectionId: 'ssh-1',
           parentGroupId: null,
           createdFrom: 'folder-scan',
@@ -358,7 +358,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-2',
           name: 'Platform copy',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           connectionId: 'ssh-2',
           parentGroupId: null,
           createdFrom: 'folder-scan',
@@ -372,13 +372,13 @@ describe('getConnectionId', () => {
       repos: [
         makeRepo({
           id: 'repo-ssh-1',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-1'
         }),
         makeRepo({
           id: 'repo-ssh-2',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-2',
           connectionId: 'ssh-2'
         })
@@ -392,13 +392,13 @@ describe('getConnectionId', () => {
   it('reports a worktree owner as unresolved until its backing repo hydrates (#6648)', () => {
     useAppStore.setState({ repos: [], worktreesByRepo: {} })
     // SSH repo not yet in the store -> owner unknown, must not read locally.
-    expect(isWorktreeConnectionResolved('repo-ssh::/home/neil/repo')).toBe(false)
+    expect(isWorktreeConnectionResolved('repo-ssh::/home/alex/repo')).toBe(false)
 
     useAppStore.setState({
       repos: [makeRepo({ id: 'repo-ssh', connectionId: 'ssh-1' })],
       worktreesByRepo: {}
     })
-    expect(isWorktreeConnectionResolved('repo-ssh::/home/neil/repo')).toBe(true)
+    expect(isWorktreeConnectionResolved('repo-ssh::/home/alex/repo')).toBe(true)
   })
 
   it('treats null worktrees and folder workspaces as resolved owners', () => {
@@ -424,7 +424,7 @@ describe('getConnectionId', () => {
           id: 'folder-workspace-1',
           projectGroupId: 'group-1',
           name: 'Platform workspace',
-          folderPath: '/home/neil/platform',
+          folderPath: '/home/alex/platform',
           linkedTask: null,
           comment: '',
           isArchived: false,
@@ -440,7 +440,7 @@ describe('getConnectionId', () => {
         {
           id: 'group-1',
           name: 'Platform',
-          parentPath: '/home/neil/platform',
+          parentPath: '/home/alex/platform',
           parentGroupId: null,
           createdFrom: 'folder-scan',
           tabOrder: 0,
@@ -453,13 +453,13 @@ describe('getConnectionId', () => {
       repos: [
         makeRepo({
           id: 'repo-ssh-1',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-1'
         }),
         makeRepo({
           id: 'repo-ssh-2',
-          path: '/home/neil/platform/api/',
+          path: '/home/alex/platform/api/',
           projectGroupId: 'group-1',
           connectionId: 'ssh-2'
         })
@@ -468,7 +468,7 @@ describe('getConnectionId', () => {
     })
 
     expect(
-      getConnectionIdForFile(workspaceKey, '/home/neil/platform/api/src/index.ts')
+      getConnectionIdForFile(workspaceKey, '/home/alex/platform/api/src/index.ts')
     ).toBeUndefined()
   })
 })
@@ -478,7 +478,7 @@ function makeFolderWorkspace(overrides: Partial<FolderWorkspace> = {}): FolderWo
     id: 'folder-workspace-1',
     projectGroupId: 'group-1',
     name: 'Platform workspace',
-    folderPath: '/home/neil/platform',
+    folderPath: '/home/alex/platform',
     connectionId: null,
     linkedTask: null,
     comment: '',
@@ -497,7 +497,7 @@ function makeProjectGroup(overrides: Partial<ProjectGroup> = {}): ProjectGroup {
   return {
     id: 'group-1',
     name: 'Platform',
-    parentPath: '/home/neil/platform',
+    parentPath: '/home/alex/platform',
     connectionId: null,
     parentGroupId: null,
     createdFrom: 'folder-scan',
@@ -543,7 +543,7 @@ describe('getConnectionIdFromState', () => {
       worktreesByRepo: {}
     }
 
-    expect(getConnectionIdFromState(state, 'repo-ssh::/home/neil/repo-feature')).toBe('ssh-2')
+    expect(getConnectionIdFromState(state, 'repo-ssh::/home/alex/repo-feature')).toBe('ssh-2')
   })
 
   it('refuses to resolve a connection when duplicate repo rows disagree about the owning host', () => {
@@ -559,7 +559,7 @@ describe('getConnectionIdFromState', () => {
       worktreesByRepo: {}
     }
 
-    expect(getConnectionIdFromState(state, 'repo-dup::/home/neil/repo-feature')).toBeUndefined()
+    expect(getConnectionIdFromState(state, 'repo-dup::/home/alex/repo-feature')).toBeUndefined()
   })
 
   it('still resolves duplicate repo rows that agree about the owning host', () => {
@@ -568,12 +568,12 @@ describe('getConnectionIdFromState', () => {
       projectGroups: [],
       repos: [
         makeRepo({ id: 'repo-dup', connectionId: 'ssh-same' }),
-        makeRepo({ id: 'repo-dup', connectionId: 'ssh-same', path: '/home/neil/other' })
+        makeRepo({ id: 'repo-dup', connectionId: 'ssh-same', path: '/home/alex/other' })
       ],
       worktreesByRepo: {}
     }
 
-    expect(getConnectionIdFromState(state, 'repo-dup::/home/neil/repo-feature')).toBe('ssh-same')
+    expect(getConnectionIdFromState(state, 'repo-dup::/home/alex/repo-feature')).toBe('ssh-same')
   })
 
   it('never hands a worktree the SSH connection of a different host', () => {
@@ -735,8 +735,8 @@ describe('getConnectionIdFromState', () => {
 
   it('recomputes a retained file-owner selector when ownership slices hydrate', () => {
     const selector = createConnectionIdForFileSelector(
-      'repo-ssh::/home/neil/repo-feature',
-      '/home/neil/repo-feature/README.md'
+      'repo-ssh::/home/alex/repo-feature',
+      '/home/alex/repo-feature/README.md'
     )
     const unresolved: ConnectionContextState = {
       folderWorkspaces: [],

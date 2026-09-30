@@ -1127,11 +1127,11 @@ does not mean the surrounding phase is complete.
 
 The connected Dolphin environment `windows 2` was reachable on 2026-08-11 and ran Dolphin `1.4.180` with
 runtime ID `68b5e70d-baaf-40a5-b384-be09cc088880`. Validation used the isolated checkout
-`C:\Users\neil\dolphin\skills-share-validation` and WSL distro `Ubuntu-24.04`; no production skill
+`C:\Users\alex\dolphin\skills-share-validation` and WSL distro `Ubuntu-24.04`; no production skill
 directory was used for destructive failure injection.
 
 The final combined run used workspace `skills-share-staging-validation` at
-`C:\Users\neil\dolphin\workspaces\dolphin\skills-share-staging-validation` on branch
+`C:\Users\alex\dolphin\workspaces\dolphin\skills-share-staging-validation` on branch
 `DolphinWin/skills-share-staging-validation`. At `44d1266641`, native-Windows, real-process, and real
 WSL coverage ran together: 67 files passed, 449 tests passed, and 17 intentional platform skips
 remained. The Windows checkout was clean afterward, and WSL `/tmp` contained no remaining
@@ -1140,9 +1140,9 @@ remained. The Windows checkout was clean afterward, and WSL `/tmp` contained no 
 The 2026-08-11 host inventory recorded Windows 11 Pro `10.0.26200` build `26200`, x64, healthy
 NTFS, Windows Defender, `LongPathsEnabled=0`, no Developer Mode registry grant, and an expected
 `UnauthorizedAccessException` for an unprivileged directory-symlink probe. The current user home
-is `C:\Users\neil` and the temp root is under that profile. WSL `2.7.11.0` uses kernel
+is `C:\Users\alex` and the temp root is under that profile. WSL `2.7.11.0` uses kernel
 `6.18.33.2-microsoft-standard-WSL2`; its only installed distro is the running default
-`Ubuntu-24.04` WSL2 instance, with default user `neil`, home `/home/neil`, x86_64, and an ext-family
+`Ubuntu-24.04` WSL2 instance, with default user `alex`, home `/home/alex`, x86_64, and an ext-family
 distro filesystem. No standalone Dolphin CLI is installed inside that distro; WSL skill operations
 are owned by the connected Windows Dolphin runtime. A reproducible second-distro setup is
 `wsl --install -d Debian --no-launch`, followed by first launch and an isolated Dolphin test user/home

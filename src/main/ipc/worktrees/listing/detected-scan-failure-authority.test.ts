@@ -109,10 +109,10 @@ describe('detected worktree listing authority', () => {
   // deleted guest repo fails as `bash: cd` exit 1 — not ENOENT — and must stay retained, not pruned.
   it('retains a WSL repo whose guest directory is gone, and says why', async () => {
     gitExecFileAsyncMock.mockRejectedValue(
-      Object.assign(new Error('bash: line 1: cd: /home/neil/repo: No such file or directory'), {
+      Object.assign(new Error('bash: line 1: cd: /home/alex/repo: No such file or directory'), {
         code: 1,
         stdout: '',
-        stderr: 'bash: line 1: cd: /home/neil/repo: No such file or directory\n'
+        stderr: 'bash: line 1: cd: /home/alex/repo: No such file or directory\n'
       })
     )
 

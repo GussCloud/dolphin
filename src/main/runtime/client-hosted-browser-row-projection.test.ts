@@ -46,7 +46,7 @@ describe('projectClientHostedBrowserRows', () => {
     const rows = projectClientHostedBrowserRows(registryWithPages().listPages('wt-1'), {
       hasLivePlacement: () => true,
       resolveDeviceName: (pairedDeviceId) =>
-        pairedDeviceId === 'device-a' ? "Jinwoo's MacBook" : null
+        pairedDeviceId === 'device-a' ? "Morgan's MacBook" : null
     })
 
     expect(rows).toEqual([
@@ -57,7 +57,7 @@ describe('projectClientHostedBrowserRows', () => {
         title: 'Live docs',
         loading: false,
         browserHostClientId: 'host-a',
-        hostDeviceName: "Jinwoo's MacBook",
+        hostDeviceName: "Morgan's MacBook",
         hostAbsent: false
       },
       {

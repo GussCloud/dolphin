@@ -3,7 +3,7 @@ title: Remote Dolphin Servers
 description: Keep Dolphin running on another computer and connect from your laptop.
 ---
 
-import { Callout, ImagePlaceholder } from '@/components/docs/prose'
+import { Callout } from '@/components/docs/prose'
 
 A Remote Dolphin Server lets one computer do the work while another computer provides the UI. The server keeps the projects, worktrees, terminals, tabs, provider accounts, and agent sessions. Your laptop connects to that running Dolphin instance.
 
@@ -83,16 +83,6 @@ On the computer you want to use as the client:
 1. Paste the access link from the server.
 1. Click **Add Server**.
 1. If the saved server shows **Disconnected**, click **Connect**.
-
-<ImagePlaceholder
-  src="/docs/remote-server-add-client.png"
-  caption="On the client: name the server, paste its access link, and add it. The pairing code is redacted in this example."
-/>
-
-<ImagePlaceholder
-  src="/docs/remote-server-share-desktop.png"
-  caption="Share a Dolphin desktop runtime with another client over a private network."
-/>
 
 Adding a server saves it without forcing every new project onto it. Open **Advanced → Active Server** only when you want server-routed projects, terminals, provider checks, and browser or mobile handoff to use that server by default.
 

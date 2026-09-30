@@ -50,7 +50,7 @@ describe('generateCommitMessageFromContext', () => {
         cwd: '/repo',
         missingBinaryLocation: 'remote PATH',
         execute: async () => ({
-          stdout: 'ERROR: fatal: C:\\Users\\Brennan Doe\\secret\\file.ts failed',
+          stdout: 'ERROR: fatal: C:\\Users\\Spencer Doe\\secret\\file.ts failed',
           stderr: '',
           exitCode: 1,
           timedOut: false
@@ -82,7 +82,7 @@ describe('generateCommitMessageFromContext', () => {
         missingBinaryLocation: 'remote PATH',
         execute: async () => ({
           stdout: '',
-          stderr: 'ERROR: failed at \\\\server\\share\\Brennan Repo\\secret\\file.ts',
+          stderr: 'ERROR: failed at \\\\server\\share\\Spencer Repo\\secret\\file.ts',
           exitCode: 1,
           timedOut: false
         })

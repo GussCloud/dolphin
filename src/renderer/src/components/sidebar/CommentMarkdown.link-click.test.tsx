@@ -341,7 +341,7 @@ describe('CommentMarkdown link click handler', () => {
       root?.render(
         <CommentMarkdown
           variant="document"
-          content={"Don't skip \"Brennan's Folder/notes.md\"; open 'My Folder/guide.md'."}
+          content={"Don't skip \"Spencer's Folder/notes.md\"; open 'My Folder/guide.md'."}
           onLinkClick={vi.fn()}
           linkifyFilePaths
         />
@@ -350,16 +350,16 @@ describe('CommentMarkdown link click handler', () => {
 
     const anchors = container.querySelectorAll<HTMLAnchorElement>('a')
     expect(Array.from(anchors).map((anchor) => anchor.textContent)).toEqual([
-      "Brennan's Folder/notes.md",
+      "Spencer's Folder/notes.md",
       'My Folder/guide.md'
     ])
     expect(container.textContent).toBe(
-      "Don't skip \"Brennan's Folder/notes.md\"; open 'My Folder/guide.md'."
+      "Don't skip \"Spencer's Folder/notes.md\"; open 'My Folder/guide.md'."
     )
     expect(
       Array.from(anchors).map((anchor) => routeNativeChatHref(anchor.getAttribute('href')))
     ).toEqual([
-      { kind: 'file', pathText: "Brennan's Folder/notes.md", line: null },
+      { kind: 'file', pathText: "Spencer's Folder/notes.md", line: null },
       { kind: 'file', pathText: 'My Folder/guide.md', line: null }
     ])
   })

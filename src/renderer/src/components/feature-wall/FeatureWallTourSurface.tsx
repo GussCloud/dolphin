@@ -24,7 +24,6 @@ import {
 } from '@/hooks/useInstalledAgentSkills'
 import { useActiveProjectSkillRuntime } from '@/hooks/useActiveProjectSkillRuntime'
 import { usePrefersReducedMotion } from './feature-wall-modal-helpers'
-import { toFeatureWallAssetUrl, useFeatureWallAssetBaseUrl } from './feature-wall-assets'
 import { useFeatureWallTaskSourcePresentation } from './use-feature-wall-task-source-presentation'
 import { useFeatureWallCompletion } from './use-feature-wall-completion'
 import { useFeatureWallTourTelemetry } from './use-feature-wall-tour-telemetry'
@@ -67,7 +66,6 @@ export function FeatureWallTourSurface({
   const settings = useAppStore((s) => s.settings)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const activeSkillRuntime = useActiveProjectSkillRuntime()
-  const assetBaseUrl = useFeatureWallAssetBaseUrl(isOpen)
   const prefersReducedMotion = usePrefersReducedMotion()
   const reactId = useId()
   const previewPanelId = `${reactId}-feature-wall-preview-panel`
@@ -156,9 +154,6 @@ export function FeatureWallTourSurface({
     selected.id === 'review'
       ? (reviewSteps.find((s) => s.id === reviewStepId) ?? reviewSteps[0] ?? null)
       : null
-  const primaryTile = getFeatureWallMediaTile(selected.primaryTileId)
-  const posterUrl = primaryTile ? toFeatureWallAssetUrl(assetBaseUrl, primaryTile.posterPath) : null
-  const gifUrl = primaryTile ? toFeatureWallAssetUrl(assetBaseUrl, primaryTile.gifPath) : null
   const activeStepCopy = getFeatureWallActiveStepCopy(
     agentsActiveStep,
     workbenchActiveStep,
@@ -365,7 +360,6 @@ export function FeatureWallTourSurface({
     return null
   }
 
-  const showGif = !prefersReducedMotion && gifUrl !== null
   const previewTitleId = `${reactId}-feature-wall-preview-${selected.id}`
   const description = activeStepCopy?.description ?? selectedPresentation.lede
   const continueButton = (
@@ -401,9 +395,6 @@ export function FeatureWallTourSurface({
       reviewSteps={reviewSteps}
       reviewActiveStep={reviewActiveStep}
       onSelectReviewStep={handleSelectReviewStep}
-      posterUrl={posterUrl}
-      gifUrl={gifUrl}
-      showGif={showGif}
       prefersReducedMotion={prefersReducedMotion}
       source={source}
       orchestrationSkill={orchestrationSkill}
