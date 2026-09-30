@@ -10,6 +10,10 @@ import {
 import { RuntimeClientError, RuntimeRpcFailureError, type RuntimeRpcSuccess } from './types'
 import { isProcessRunning } from './runtime-pid-liveness'
 
+/** A live process still inside this window may honestly be `starting`. Past it, status.get
+ * failing means the runtime is not accepting commands, not that boot is still in progress. */
+export const RUNTIME_STARTING_GRACE_MS = 15_000
+
 export { projectRemoteAppStatus, resolveDesktopWindowStatus }
 
 export async function getCliStatus(
@@ -63,7 +67,10 @@ export async function getCliStatus(
           ? { remoteUpdateSupport: response.result.remoteUpdateSupport }
           : {}),
         ...(response.result.capabilities ? { capabilities: response.result.capabilities } : {}),
-        ...(response.result.degradations ? { degradations: response.result.degradations } : {})
+        ...(response.result.degradations ? { degradations: response.result.degradations } : {}),
+        ...(response.result.worktreeHydration
+          ? { worktreeHydration: response.result.worktreeHydration }
+          : {})
       },
       graph: {
         state: graphState
@@ -81,13 +88,17 @@ export async function getCliStatus(
         pid: running ? metadata.pid : null
       },
       runtime: {
-        state: running ? 'starting' : 'stale_bootstrap',
+        state: running ? unreachableLiveRuntimeState(metadata.startedAt) : 'stale_bootstrap',
         reachable: false,
         connectionState: 'disconnected',
         runtimeId: null
       },
       graph: {
-        state: running ? 'starting' : 'not_running'
+        state: running
+          ? unreachableLiveRuntimeState(metadata.startedAt) === 'unresponsive'
+            ? 'unavailable'
+            : 'starting'
+          : 'not_running'
       }
     })
   }
@@ -102,4 +113,13 @@ function buildCliStatusResponse(result: CliStatusResult): RuntimeRpcSuccess<CliS
       runtimeId: result.runtime.runtimeId ?? 'none'
     }
   }
+}
+
+function unreachableLiveRuntimeState(
+  startedAt: number | null | undefined
+): 'starting' | 'unresponsive' {
+  if (typeof startedAt !== 'number' || !Number.isFinite(startedAt)) {
+    return 'starting'
+  }
+  return Date.now() - startedAt > RUNTIME_STARTING_GRACE_MS ? 'unresponsive' : 'starting'
 }
