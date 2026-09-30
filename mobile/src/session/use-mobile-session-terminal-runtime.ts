@@ -125,6 +125,7 @@ export function useMobileSessionTerminalRuntime(scope: MobileSessionScreenStateM
     liveInputRef,
     liveInputTerminalHandles,
     liveInputTerminalHandlesRef,
+    liveInputScope: terminalInventoryRecoveryScope,
     sendLiveTerminalInputRef,
     setLiveInputCapture
   })
