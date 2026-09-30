@@ -142,7 +142,7 @@ describe('mobile root error boundary', () => {
     })
 
     const fallback = renderer.root.findByProps({ testID: 'mobile-root-error-boundary' })
-    const buttons = fallback.findAllByType('Pressable')
+    const buttons = fallback.findAll((node) => String(node.type) === 'Pressable')
     expect(buttons.map((button) => button.props.accessibilityLabel)).toEqual([
       'Retry',
       'Return home',
@@ -160,8 +160,8 @@ describe('mobile root error boundary', () => {
     expect(buttons[1]?.props.style).toEqual(
       expect.objectContaining({ backgroundColor: colors.bgRaised })
     )
-    expect(buttons[1]?.findByType('House').props.color).toBe(colors.textPrimary)
-    expect(buttons[2]?.findByType('AlertTriangle').props.color).toBe(colors.textPrimary)
+    expect(buttons[1]?.find((node) => String(node.type) === 'House').props.color).toBe(colors.textPrimary)
+    expect(buttons[2]?.find((node) => String(node.type) === 'AlertTriangle').props.color).toBe(colors.textPrimary)
 
     act(() => buttons[2]?.props.onPress())
     expect(mocks.shareDiagnostics).toHaveBeenCalledOnce()
