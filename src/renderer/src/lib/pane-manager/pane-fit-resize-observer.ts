@@ -9,9 +9,17 @@ type ProposedDimensions = {
 type StableFitPane = ManagedPane &
   Partial<Pick<ManagedPaneInternal, 'xtermContainer' | 'pendingObservedFitRafId'>>
 
+type RowFlipHold = { cols: number; lowRows: number; highRows: number }
+type LastFit = { cols: number; rows: number; at: number }
+
 const MAX_STABILITY_FRAMES = 8
+// Why: a fit that lands the box on a cell boundary can make the next measure propose the rows it
+// just left; that feedback reverses within a frame or two, a user resize does not.
+const ROW_FLIP_WINDOW_MS = 250
 const pendingStableFitRafIds = new WeakMap<StableFitPane, number>()
 const stableFitCallbacks = new WeakMap<StableFitPane, Set<() => void>>()
+const lastFitByPane = new WeakMap<StableFitPane, LastFit>()
+const rowFlipHoldByPane = new WeakMap<StableFitPane, RowFlipHold>()
 
 function getPendingObservedFitRafId(pane: StableFitPane): number | null {
   return pane.pendingObservedFitRafId ?? pendingStableFitRafIds.get(pane) ?? null
@@ -74,8 +82,50 @@ function flushStableFitCallbacks(pane: StableFitPane): void {
   }
 }
 
-function finishStableFit(pane: StableFitPane): void {
+function isOneRowReversal(pane: StableFitPane, next: ProposedDimensions): boolean {
+  const last = lastFitByPane.get(pane)
+  return (
+    last !== undefined &&
+    Date.now() - last.at < ROW_FLIP_WINDOW_MS &&
+    next.cols === last.cols &&
+    next.rows === last.rows &&
+    next.cols === pane.terminal.cols &&
+    Math.abs(next.rows - pane.terminal.rows) === 1
+  )
+}
+
+/** True when `next` would re-enter a row flip, so the pane keeps its current grid instead. */
+function shouldHoldRowFlip(pane: StableFitPane, next: ProposedDimensions): boolean {
+  const hold = rowFlipHoldByPane.get(pane)
+  if (hold) {
+    if (next.cols === hold.cols && (next.rows === hold.lowRows || next.rows === hold.highRows)) {
+      // Why the smaller grid wins: holding the larger one would clip the bottom row.
+      return next.rows === hold.highRows
+    }
+    rowFlipHoldByPane.delete(pane)
+    return false
+  }
+  if (!isOneRowReversal(pane, next)) {
+    return false
+  }
+  rowFlipHoldByPane.set(pane, {
+    cols: next.cols,
+    lowRows: Math.min(next.rows, pane.terminal.rows),
+    highRows: Math.max(next.rows, pane.terminal.rows)
+  })
+  return next.rows > pane.terminal.rows
+}
+
+function releaseHeldFit(pane: StableFitPane): void {
   setPendingObservedFitRafId(pane, null)
+  flushStableFitCallbacks(pane)
+}
+
+function finishStableFit(pane: StableFitPane, next?: ProposedDimensions): void {
+  setPendingObservedFitRafId(pane, null)
+  if (next && !terminalDimensionsEqual(pane, next)) {
+    lastFitByPane.set(pane, { cols: pane.terminal.cols, rows: pane.terminal.rows, at: Date.now() })
+  }
   // Why: an equal grid still proves a restored pane is measurable, so it must
   // release reattach continuations that were parked while the tab was hidden.
   safeFitAndThen(pane, 'stable-pane-fit', () => flushStableFitCallbacks(pane))
@@ -120,14 +170,19 @@ export function requestStablePaneFit(pane: StableFitPane, onSettled?: () => void
           return
         }
 
+        if (shouldHoldRowFlip(pane, next)) {
+          releaseHeldFit(pane)
+          return
+        }
+
         if (dimensionsEqual(previous, next)) {
-          finishStableFit(pane)
+          finishStableFit(pane, next)
           return
         }
 
         previous = next
         if (frameCount >= MAX_STABILITY_FRAMES) {
-          finishStableFit(pane)
+          finishStableFit(pane, next)
           return
         }
 
