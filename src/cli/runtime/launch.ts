@@ -23,7 +23,11 @@ import { RuntimeClientError } from './types'
 const IGNORED_NON_RECIPE_STDOUT = '[serve] ignored non-recipe stdout'
 const USER_NAMESPACE_PROBE_TIMEOUT_MS = 2_000
 
-export function launchDolphinApp(): void {
+export type LaunchDolphinAppOptions = {
+  disableGpu?: boolean
+}
+
+export function launchDolphinApp(options: LaunchDolphinAppOptions = {}): void {
   const overrideCommand = process.env.DOLPHIN_OPEN_COMMAND
   if (typeof overrideCommand === 'string' && overrideCommand.trim().length > 0) {
     spawnDetached(overrideCommand, [], { shell: true })
@@ -32,7 +36,7 @@ export function launchDolphinApp(): void {
 
   const overrideExecutable = process.env.DOLPHIN_APP_EXECUTABLE
   if (typeof overrideExecutable === 'string' && overrideExecutable.trim().length > 0) {
-    spawnDetached(overrideExecutable, getExecutableAppArgs(overrideExecutable), {
+    spawnDetached(overrideExecutable, getExecutableAppArgs(overrideExecutable, options), {
       ...getExecutableSpawnOptions(overrideExecutable),
       env: stripElectronRunAsNode(process.env)
     })
@@ -46,14 +50,17 @@ export function launchDolphinApp(): void {
         // Why: launching the inner MacOS binary directly can trigger macOS app
         // launch failures and bypass normal bundle lifecycle. The public
         // packaged CLI should re-open the .app the same way Finder does.
-        spawnDetached('open', [appBundlePath], {
+        const openArgs = options.disableGpu
+          ? [appBundlePath, '--args', '--disable-gpu']
+          : [appBundlePath]
+        spawnDetached('open', openArgs, {
           env: stripElectronRunAsNode(process.env)
         })
         return
       }
     }
 
-    spawnDetached(process.execPath, getExecutableAppArgs(process.execPath), {
+    spawnDetached(process.execPath, getExecutableAppArgs(process.execPath, options), {
       env: stripElectronRunAsNode(process.env)
     })
     return
@@ -255,10 +262,16 @@ function waitForRecipeJson(child: ReturnType<typeof spawnProcess>): Promise<numb
   })
 }
 
-export function getExecutableAppArgs(executable: string): string[] {
+export function getExecutableAppArgs(
+  executable: string,
+  options: LaunchDolphinAppOptions = {}
+): string[] {
   const args = process.env.DOLPHIN_APP_EXECUTABLE_NEEDS_APP_ROOT === '1' ? [resolveAppRoot()] : []
   if (shouldDisableExtractedAppImageSandbox(executable)) {
     args.push('--no-sandbox')
+  }
+  if (options.disableGpu) {
+    args.push('--disable-gpu')
   }
   return args
 }

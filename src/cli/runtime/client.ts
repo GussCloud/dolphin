@@ -9,7 +9,7 @@ import {
   orchestrationMigrationData
 } from '../../shared/orchestration-rpc-contract'
 import type { PairingOffer } from '../../shared/pairing'
-import { launchDolphinApp } from './launch'
+import { launchDolphinApp, type LaunchDolphinAppOptions } from './launch'
 import { getDefaultUserDataPath, readMetadata } from './metadata'
 import { getCliStatus, projectRemoteAppStatus } from './status'
 import { sendRequest } from './transport'
@@ -266,7 +266,10 @@ export class RuntimeClient {
     }
   }
 
-  async openDolphin(timeoutMs = 15_000): Promise<RuntimeRpcSuccess<CliStatusResult>> {
+  async openDolphin(
+    timeoutMs = 15_000,
+    options?: LaunchDolphinAppOptions
+  ): Promise<RuntimeRpcSuccess<CliStatusResult>> {
     const initial = await this.getCliStatus()
     if (this.remotePairing) {
       return initial
@@ -277,7 +280,7 @@ export class RuntimeClient {
     if (initial.result.app.desktopWindowStatus === 'blocked') {
       throwDesktopActivationBlocked()
     }
-    launchDolphinApp()
+    launchDolphinApp(options)
     if (initial.result.app.desktopWindowStatus === 'available') {
       return initial
     }
