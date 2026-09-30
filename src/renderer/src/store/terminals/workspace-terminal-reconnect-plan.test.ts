@@ -6,6 +6,7 @@ import type { WorkspaceSessionState } from '../../../../shared/workspace-session
 import { buildWorkspaceTerminalReconnectPlan } from './workspace-terminal-reconnect-plan'
 
 function worktree(id: string, automation: boolean, status = 'in-progress'): Worktree {
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: partial fixture; the planner reads only the fields set here.
   return {
     id,
     repoId: 'repo',
@@ -39,6 +40,7 @@ function worktree(id: string, automation: boolean, status = 'in-progress'): Work
 }
 
 function tab(id: string, worktreeId: string, ptyId: string | null = null): TerminalTab {
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: partial fixture; the planner reads only the fields set here.
   return {
     id,
     ptyId,
@@ -61,6 +63,7 @@ describe('buildWorkspaceTerminalReconnectPlan startup hydration cap', () => {
       [liveId]: [tab('live-tab', liveId, 'pty-live')],
       ...Object.fromEntries(leftoverIds.map((id) => [id, [tab(`${id}-tab`, id)]]))
     }
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: partial fixture; the planner reads only the fields set here.
     const session = {
       activeWorktreeId: activeId,
       activeWorktreeIdsOnShutdown: [activeId, liveId, ...leftoverIds],
@@ -75,6 +78,7 @@ describe('buildWorkspaceTerminalReconnectPlan startup hydration cap', () => {
     const plan = buildWorkspaceTerminalReconnectPlan({
       reconnectPtyIdByRetainedTabId: new Map(),
       releasedPtyIdsByTabId: new Map(),
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: partial fixture; the planner reads only the fields set here.
       repos: [{ id: 'repo' } as Repo],
       session,
       validTabIds: new Set(Object.values(tabsByWorktree).flatMap((tabs) => tabs.map((t) => t.id))),
