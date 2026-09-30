@@ -5,7 +5,9 @@ import { getAzureDevOpsAuthStatus } from './azure-devops-auth-status'
 const mocks = vi.hoisted(() => ({
   preference: vi.fn(),
   cliStatus: vi.fn(),
-  token: vi.fn()
+  token: vi.fn(),
+  expiresAt: vi.fn(),
+  forget: vi.fn()
 }))
 
 vi.mock('./azure-devops-auth-preference-store', () => ({
@@ -13,6 +15,10 @@ vi.mock('./azure-devops-auth-preference-store', () => ({
 }))
 vi.mock('./azure-cli-status', () => ({ getAzureCliStatus: mocks.cliStatus }))
 vi.mock('./azure-cli-access-token', () => ({ getAzureCliAccessToken: mocks.token }))
+vi.mock('./azure-cli-session-store', () => ({
+  getAzureCliTokenExpiresAt: mocks.expiresAt,
+  forgetAzureCliSession: mocks.forget
+}))
 
 const signedIn: AzureCliStatus = {
   installed: true,
@@ -30,7 +36,25 @@ describe('getAzureDevOpsAuthStatus in azure-cli mode', () => {
     process.env = { ...OLD_ENV }
     delete process.env.DOLPHIN_AZURE_DEVOPS_API_BASE_URL
     Object.values(mocks).forEach((mock) => mock.mockReset())
-    mocks.preference.mockReturnValue({ method: 'azure-cli' })
+    mocks.preference.mockReturnValue({ method: 'azure-cli', autoRenewCliSession: true })
+    mocks.expiresAt.mockReturnValue(null)
+  })
+
+  it('reports the saved token validity and the auto-renew choice', async () => {
+    mocks.cliStatus.mockResolvedValue({ ...signedIn, defaultOrganization: null })
+    mocks.token.mockResolvedValue('entra-token')
+    mocks.expiresAt.mockReturnValue(1_900_000_000_000)
+
+    const status = await getAzureDevOpsAuthStatus()
+    expect(status.autoRenewCliSession).toBe(true)
+    expect(status.azureCli?.tokenExpiresAt).toBe(1_900_000_000_000)
+    expect(mocks.forget).not.toHaveBeenCalled()
+  })
+
+  it('forgets the session after the user signs out of the CLI', async () => {
+    mocks.cliStatus.mockResolvedValue({ ...signedIn, authenticated: false, account: null })
+    await getAzureDevOpsAuthStatus()
+    expect(mocks.forget).toHaveBeenCalledOnce()
   })
 
   afterEach(() => {

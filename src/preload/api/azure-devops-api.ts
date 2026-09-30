@@ -11,6 +11,7 @@ export type AzureDevOpsApi = {
     organization: string
     project: string | null
   }) => Promise<AzureDevOpsConfigureDefaultsResult>
+  setCliAutoRenew: (enabled: boolean) => Promise<AzureDevOpsAuthPreference>
   refreshCliSession: () => Promise<void>
   listRepositories: () => Promise<AzureDevOpsRepositoriesResult>
 }

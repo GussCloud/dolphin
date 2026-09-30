@@ -23,6 +23,8 @@ function azureCliEnv(): NodeJS.ProcessEnv {
     AZURE_CORE_ONLY_SHOW_ERRORS: 'true',
     AZURE_CORE_NO_COLOR: 'true',
     AZURE_CORE_SURVEY_MESSAGE: 'false',
+    // Why: `az login` otherwise ends in an interactive subscription picker.
+    AZURE_CORE_LOGIN_EXPERIENCE_V2: 'off',
     AZURE_EXTENSION_USE_DYNAMIC_INSTALL: 'no'
   }
 }

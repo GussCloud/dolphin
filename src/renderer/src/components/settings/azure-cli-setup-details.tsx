@@ -16,6 +16,7 @@ import {
 } from '../../../../shared/azure-devops-auth'
 import { ProviderAccountScopeDetails } from './cli-source-control-integration-cards'
 import { deriveAzureCliCardState } from './azure-cli-card-state'
+import { AzureCliAutoRenewControl } from './azure-cli-auto-renew-control'
 
 const INSTALL_URL = 'https://learn.microsoft.com/en-us/cli/azure/install-azure-cli'
 const SIGN_IN_COMMAND = 'az login'
@@ -148,6 +149,9 @@ export function AzureCliSetupDetails(props: {
   const state = deriveAzureCliCardState(props.status, props.checking)
   const azureCli = props.status?.azureCli
   const signedIn = state === 'connected' || state === 'no-access'
+  const autoRenew = props.status?.autoRenewCliSession
+  // Why: an older remote host omits the field and has no auto-renew to toggle.
+  const showAutoRenew = autoRenew !== undefined && (signedIn || state === 'not-authenticated')
   const message = stateMessage(state, props.status?.account ?? azureCli?.account ?? null)
 
   const afterCommand = (exitCode: number | null): void => {
@@ -214,6 +218,13 @@ export function AzureCliSetupDetails(props: {
           </Button>
         ) : null}
       </div>
+      {showAutoRenew ? (
+        <AzureCliAutoRenewControl
+          enabled={autoRenew}
+          tokenExpiresAt={azureCli?.tokenExpiresAt}
+          onChanged={props.refresh}
+        />
+      ) : null}
       {signedIn && azureCli?.devopsExtensionInstalled ? (
         <DefaultsForm
           // Why keyed: reset the fields when the host reports new saved defaults.

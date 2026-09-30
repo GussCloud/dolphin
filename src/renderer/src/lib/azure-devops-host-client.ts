@@ -52,6 +52,16 @@ export function listAzureDevOpsRepositories(
     : desktopApi().listRepositories()
 }
 
+export function setAzureCliAutoRenew(
+  settings: RuntimeSettings,
+  enabled: boolean
+): Promise<AzureDevOpsAuthPreference> {
+  const target = getActiveRuntimeTarget(settings)
+  return target.kind === 'environment'
+    ? callRuntimeRpc<AzureDevOpsAuthPreference>(target, 'azureDevOps.setCliAutoRenew', { enabled })
+    : desktopApi().setCliAutoRenew(enabled)
+}
+
 export function refreshAzureCliSession(settings: RuntimeSettings): Promise<void> {
   const target = getActiveRuntimeTarget(settings)
   return target.kind === 'environment'
