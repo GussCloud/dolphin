@@ -5,15 +5,17 @@ import { join } from 'node:path'
 import { AgentHookServer } from './server'
 import { buildBody, postHookEvent, PANE } from './server.test-fixtures'
 
+import type * as FsPromises from 'node:fs/promises'
+
 const { renameMock } = vi.hoisted(() => ({ renameMock: vi.fn() }))
 vi.mock('node:fs/promises', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('node:fs/promises')>()),
+  ...(await importOriginal<typeof FsPromises>()),
   rename: renameMock
 }))
 vi.mock('../telemetry/client', () => ({ track: vi.fn() }))
 vi.mock('../telemetry/cohort-classifier', () => ({ getCohortAtEmit: vi.fn() }))
 
-const filesystem = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
+const filesystem = await vi.importActual<typeof FsPromises>('node:fs/promises')
 
 class PersistenceTestServer extends AgentHookServer {
   constructor() {

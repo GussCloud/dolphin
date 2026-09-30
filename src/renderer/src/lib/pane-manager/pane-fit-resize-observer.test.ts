@@ -85,6 +85,12 @@ function createPane(
   }
 }
 
+// Why a helper: xterm types cols/rows as readonly, but the fake terminal stands in for fit's effect.
+function setGrid(target: { cols: number; rows: number }, cols: number, rows: number): void {
+  target.cols = cols
+  target.rows = rows
+}
+
 describe('attachPaneFitResizeObserver', () => {
   beforeEach(() => {
     mockResizeObservers = []
@@ -247,10 +253,9 @@ describe('attachPaneFitResizeObserver', () => {
   it('stops a fit that flips the row count back and forth on a cell boundary', () => {
     // Boundary feedback: fitting to 50 rows makes the box measure 49, and 49 measures 50.
     const pane = createPane(() => ({ cols: 138, rows: pane.terminal.rows === 50 ? 49 : 50 }))
-    pane.terminal.cols = 138
-    pane.terminal.rows = 50
+    setGrid(pane.terminal, 138, 50)
     vi.mocked(pane.fitAddon.fit).mockImplementation(() => {
-      pane.terminal.rows = pane.terminal.rows === 50 ? 49 : 50
+      setGrid(pane.terminal, 138, pane.terminal.rows === 50 ? 49 : 50)
     })
 
     attachPaneFitResizeObserver(pane)
@@ -268,10 +273,9 @@ describe('attachPaneFitResizeObserver', () => {
   it('leaves the flip hold once the pane really changes size', () => {
     let proposedRows = 49
     const pane = createPane(() => ({ cols: 138, rows: proposedRows }))
-    pane.terminal.cols = 138
-    pane.terminal.rows = 50
+    setGrid(pane.terminal, 138, 50)
     vi.mocked(pane.fitAddon.fit).mockImplementation(() => {
-      pane.terminal.rows = proposedRows
+      setGrid(pane.terminal, 138, proposedRows)
       proposedRows = proposedRows === 50 ? 49 : 50
     })
 
@@ -284,7 +288,7 @@ describe('attachPaneFitResizeObserver', () => {
     const heldFits = vi.mocked(pane.fitAddon.fit).mock.calls.length
 
     vi.mocked(pane.fitAddon.fit).mockImplementation(() => {
-      pane.terminal.rows = 60
+      setGrid(pane.terminal, 138, 60)
     })
     proposedRows = 60
     mockResizeObservers[0]?.trigger()

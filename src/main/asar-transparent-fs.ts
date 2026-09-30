@@ -24,6 +24,7 @@ function resolveOriginalFsPromises(): OriginalFsPromises | null {
     // Why require and not an import: `original-fs` only exists inside Electron, so vitest, the
     // `dolphin` CLI and the plain-node entrypoints must resolve `node:fs/promises` instead — and there
     // the shim does not exist either, so plain `fs` is already asar-transparent.
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: `original-fs` is Electron's unpatched `fs`, whose `promises` has this shape; each member is type-checked before use.
     const originalFs = createRequire(__filename)('original-fs') as { promises?: OriginalFsPromises }
     return originalFs.promises ?? null
   } catch {

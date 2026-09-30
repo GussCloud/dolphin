@@ -51,7 +51,9 @@ describe('asynchronous hook listener lifecycle ordering', () => {
     let failStartup: ((error: Error) => void) | undefined
     const failedServer = {
       once: vi.fn((event: string, listener: (error: Error) => void) => {
-        if (event === 'error') failStartup = listener
+        if (event === 'error') {
+          failStartup = listener
+        }
         return failedServer
       }),
       off: vi.fn(() => failedServer),

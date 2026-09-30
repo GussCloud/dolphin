@@ -279,6 +279,7 @@ describe('DaemonPtyAdapter (IPtyProvider)', () => {
         await server.shutdown()
         await waitFor(() => !client.isConnected())
 
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: reads a private timer field the recovery path owns, only to assert it was armed.
         const internal = healingAdapter as unknown as {
           pendingWriteRecoveryRetryTimer: NodeJS.Timeout | null
         }
