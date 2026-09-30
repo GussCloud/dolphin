@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getDefaultWorkspaceSession } from '../../shared/constants'
+import type { ClaudeAgentTeamsService } from './claude-agent-teams-service'
 import type * as ShimEnvModule from './claude-agent-teams-shim-env'
 import { DolphinRuntimeService } from './dolphin-runtime'
 
@@ -14,6 +15,12 @@ vi.mock('./claude-agent-teams-shim-env', async (importOriginal) => ({
   resolveClaudeAgentTeamsShimBin: vi.fn(() => shimEnv.shimBin),
   resolveClaudeAgentTeamsShimPathDirs: vi.fn((shimDir: string) => ['C:\\bundled-tmux', shimDir])
 }))
+
+type RuntimeInternals = {
+  issuePtyHandle: (pty: unknown) => string
+  ptysById: Map<string, unknown>
+  claudeAgentTeams: ClaudeAgentTeamsService
+}
 
 const WORKTREE_ID = 'repo-1::C:\\src\\app'
 const LEADER_PTY_ID = 'pty-leader'
@@ -35,11 +42,10 @@ function createLeader(options: { gitBash: string | null; isWsl?: boolean }) {
     { tabId: 'tab-1', leafId: 'leaf-1' },
     options.isWsl ?? false
   )
-  const handle: string = Reflect.get(runtime, 'issuePtyHandle').call(
-    runtime,
-    Reflect.get(runtime, 'ptysById').get(LEADER_PTY_ID)
-  )
-  const activeTeams = (): number => Reflect.get(runtime, 'claudeAgentTeams').getActiveTeamCount()
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: names only private runtime members the leader test reads; each is initialized in the constructor.
+  const internals = runtime as unknown as RuntimeInternals
+  const handle = internals.issuePtyHandle(internals.ptysById.get(LEADER_PTY_ID))
+  const activeTeams = (): number => internals.claudeAgentTeams.getActiveTeamCount()
   return { runtime, handle, activeTeams }
 }
 

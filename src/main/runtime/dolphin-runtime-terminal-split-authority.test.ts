@@ -183,12 +183,13 @@ function createHarness(
       ...(options.sourceIncarnationId ? { incarnationId: options.sourceIncarnationId } : {})
     })
   }
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: names only private runtime members this harness reads; each is initialized in the constructor.
   const internals = runtime as unknown as {
     issueHandle: (leaf: unknown) => string
     issuePtyHandle: (pty: unknown) => string
     leaves: Map<string, unknown>
     mobileSessionTabsByWorktree: Map<string, RuntimeMobileSessionTabsSnapshot>
-    ptysById: Map<string, unknown>
+    ptysById: Map<string, { connected: boolean }>
   }
   const handle =
     options.graphOnlySource || options.leafHandle
@@ -205,6 +206,12 @@ function createHarness(
     rendererSplitTerminal,
     getSession: () => session,
     getSnapshot: () => internals.mobileSessionTabsByWorktree.get(WORKTREE_ID),
+    disconnectSourcePty: () => {
+      const pty = internals.ptysById.get(SOURCE_PTY_ID)
+      if (pty) {
+        pty.connected = false
+      }
+    },
     requestedSessionHostIds,
     replaceSourceIncarnation: (incarnationId: string) =>
       runtime.registerPty(SOURCE_PTY_ID, WORKTREE_ID, connectionId, {
@@ -260,7 +267,7 @@ describe('terminal split shell override', () => {
 
   it('fails instead of a renderer split when the source has no live PTY', async () => {
     const harness = createHarness(true, { rendererMounted: true, leafHandle: true })
-    Reflect.get(harness.runtime, 'ptysById').get(SOURCE_PTY_ID).connected = false
+    harness.disconnectSourcePty()
 
     await expect(
       harness.runtime.splitTerminal(harness.handle, { shellOverride: 'git-bash' })

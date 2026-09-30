@@ -418,7 +418,7 @@ describe('ClaudeAgentTeamsService', () => {
       expect(setup.api.resolveHostShell).not.toHaveBeenCalled()
     })
 
-    it('keeps the default shell and env for POSIX and WSL teams', async () => {
+    it('keeps the default shell and env for teams whose host shell is not Git Bash', async () => {
       const setup = createServiceWithLeader({ hostShell: 'default' })
       await runPlaceholderThenRespawn(setup)
 

@@ -4,6 +4,8 @@ import type * as ShimEnv from './claude-agent-teams-shim-env'
 vi.mock('./claude-agent-teams-shim-env', async (importOriginal) => ({
   ...(await importOriginal<typeof ShimEnv>()),
   ensureClaudeAgentTeamsShimDir: vi.fn(async () => 'C:\\shim'),
+  // Why: the real resolver's `isAbsolute` follows the host OS, so a `C:\` path is relative on Linux CI.
+  resolveClaudeAgentTeamsShimBin: vi.fn(() => 'C:\\dolphin.exe'),
   resolveClaudeAgentTeamsShimPathDirs: vi.fn((shimDir: string) => [shimDir])
 }))
 
