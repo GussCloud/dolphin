@@ -1,8 +1,10 @@
 import {
   sanitizeCrashReportBreadcrumbs,
   sanitizeCrashReportString,
-  type CrashReportBreadcrumb
+  type CrashReportBreadcrumb,
+  type CrashReportBreadcrumbInput
 } from '../../../src/shared/crash-reporting'
+import { isRecord } from '../../../src/shared/agent-status-child-work-value-guards'
 
 export type MobileCrashStorage = {
   getItem: (key: string) => Promise<string | null>
@@ -45,8 +47,8 @@ export function snapshotMobileCrashSession(
 
 export function parseMobileCrashJournal(raw: string): PersistedMobileCrashJournal | null {
   try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>
-    if (parsed.version !== 1) {
+    const parsed: unknown = JSON.parse(raw)
+    if (!isRecord(parsed) || parsed.version !== 1) {
       return null
     }
     const activeSession = parseSession(parsed.activeSession)
@@ -105,26 +107,28 @@ export function serializeMobileCrashJournal(journal: PersistedMobileCrashJournal
 }
 
 function parseSession(value: unknown): PersistedMobileCrashSession | null {
-  const candidate = value as Record<string, unknown> | null
   const session = parseSessionData(value)
-  if (!candidate || !session || (candidate.marker !== 'open' && candidate.marker !== 'closed')) {
+  if (
+    !isRecord(value) ||
+    !session ||
+    (value.marker !== 'open' && value.marker !== 'closed')
+  ) {
     return null
   }
   return {
     ...session,
-    marker: candidate.marker
+    marker: value.marker
   }
 }
 
 function parseSnapshot(value: unknown): MobileCrashSessionSnapshot | null {
-  const candidate = value as Record<string, unknown> | null
   const session = parseSessionData(value)
-  if (!candidate || !session) {
+  if (!isRecord(value) || !session) {
     return null
   }
   const endedAbnormally =
-    typeof candidate.endedAbnormally === 'boolean'
-      ? candidate.endedAbnormally
+    typeof value.endedAbnormally === 'boolean'
+      ? value.endedAbnormally
       : !session.breadcrumbs.some((breadcrumb) => breadcrumb.name === 'render_error_contained')
   return { ...session, endedAbnormally }
 }
@@ -132,21 +136,31 @@ function parseSnapshot(value: unknown): MobileCrashSessionSnapshot | null {
 function parseSessionData(
   value: unknown
 ): Omit<MobileCrashSessionSnapshot, 'endedAbnormally'> | null {
-  if (!value || typeof value !== 'object') {
+  if (!isRecord(value)) {
     return null
   }
-  const candidate = value as Record<string, unknown>
-  if (typeof candidate.openedAt !== 'string' || !Array.isArray(candidate.breadcrumbs)) {
+  if (typeof value.openedAt !== 'string' || !Array.isArray(value.breadcrumbs)) {
     return null
   }
-  const recentBreadcrumbs = (candidate.breadcrumbs as CrashReportBreadcrumb[]).slice(
-    -MAX_STORED_MOBILE_CRASH_BREADCRUMBS
-  )
+  const recentBreadcrumbs = value.breadcrumbs
+    .filter(isStoredBreadcrumb)
+    .slice(-MAX_STORED_MOBILE_CRASH_BREADCRUMBS)
   const breadcrumbs = recentBreadcrumbs.flatMap(
     (breadcrumb) => sanitizeCrashReportBreadcrumbs([breadcrumb]) ?? []
   )
   return {
-    openedAt: sanitizeCrashReportString(candidate.openedAt, 80),
+    openedAt: sanitizeCrashReportString(value.openedAt, 80),
     breadcrumbs
   }
+}
+
+// Why a guard: the journal is read back from device storage, so each row is re-checked, not trusted.
+function isStoredBreadcrumb(value: unknown): value is CrashReportBreadcrumbInput {
+  return (
+    isRecord(value) &&
+    typeof value.createdAt === 'string' &&
+    typeof value.name === 'string' &&
+    (value.data === undefined || isRecord(value.data)) &&
+    (value.origin === undefined || typeof value.origin === 'string')
+  )
 }
