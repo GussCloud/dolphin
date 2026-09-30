@@ -9,9 +9,12 @@ export const CORE_COMMAND_SPECS: CommandSpec[] = [
   {
     path: ['open'],
     summary: 'Launch Dolphin and wait for the runtime to be reachable',
-    usage: 'dolphin open [--json]',
-    allowedFlags: [...GLOBAL_FLAGS],
-    examples: ['dolphin open', 'dolphin open --json']
+    usage: 'dolphin open [--disable-gpu] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'disable-gpu'],
+    notes: [
+      'Use --disable-gpu when Linux graphics initialization prevents the desktop window from opening.'
+    ],
+    examples: ['dolphin open', 'dolphin open --json', 'dolphin open --disable-gpu']
   },
   ...SERVE_COMMAND_SPECS,
   {

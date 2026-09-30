@@ -9,8 +9,9 @@ import {
   orchestrationMigrationData
 } from '../../shared/orchestration-rpc-contract'
 import type { PairingOffer } from '../../shared/pairing'
-import { launchDolphinApp } from './launch'
+import { launchDolphinApp, type LaunchDolphinAppOptions } from './launch'
 import { getDefaultUserDataPath, readMetadata } from './metadata'
+import { refuseBlockedDesktopActivation, waitForDesktopOpen } from './desktop-open-wait'
 import { getCliStatus, projectRemoteAppStatus } from './status'
 import { sendRequest } from './transport'
 import { RuntimeClientError, RuntimeRpcFailureError, type RuntimeRpcSuccess } from './types'
@@ -233,7 +234,10 @@ export class RuntimeClient {
               ? { remoteUpdateSupport: response.result.remoteUpdateSupport }
               : {}),
             ...(response.result.capabilities ? { capabilities: response.result.capabilities } : {}),
-            ...(response.result.degradations ? { degradations: response.result.degradations } : {})
+            ...(response.result.degradations ? { degradations: response.result.degradations } : {}),
+            ...(response.result.worktreeHydration
+              ? { worktreeHydration: response.result.worktreeHydration }
+              : {})
           },
           graph: {
             state: graphState
@@ -266,7 +270,10 @@ export class RuntimeClient {
     }
   }
 
-  async openDolphin(timeoutMs = 15_000): Promise<RuntimeRpcSuccess<CliStatusResult>> {
+  async openDolphin(
+    timeoutMs = 15_000,
+    options?: LaunchDolphinAppOptions
+  ): Promise<RuntimeRpcSuccess<CliStatusResult>> {
     const initial = await this.getCliStatus()
     if (this.remotePairing) {
       return initial
@@ -274,38 +281,8 @@ export class RuntimeClient {
 
     // Why: a blocked runtime can't open a window, so spawning the app would
     // only hit the single-instance lock and exit — bail before launching.
-    if (initial.result.app.desktopWindowStatus === 'blocked') {
-      throwDesktopActivationBlocked()
-    }
-    launchDolphinApp()
-    if (initial.result.app.desktopWindowStatus === 'available') {
-      return initial
-    }
-
-    const startedAt = Date.now()
-    while (Date.now() - startedAt < timeoutMs) {
-      const status = await this.getCliStatus()
-      if (status.result.app.desktopWindowStatus === 'blocked') {
-        throwDesktopActivationBlocked()
-      }
-      if (status.result.app.desktopWindowStatus === 'available') {
-        return status
-      }
-      await delay(250)
-    }
-
-    throw new RuntimeClientError(
-      'runtime_open_timeout',
-      'Timed out waiting for a Dolphin desktop window. The runtime may still be running headlessly.'
-    )
+    refuseBlockedDesktopActivation(initial.result)
+    launchDolphinApp(options)
+    return waitForDesktopOpen(initial, timeoutMs, () => this.getCliStatus())
   }
 }
-
-function throwDesktopActivationBlocked(): never {
-  throw new RuntimeClientError(
-    'desktop_activation_blocked',
-    'Dolphin is running headlessly, but it cannot open a desktop window safely because the persistent terminal provider is unavailable. Quit Dolphin normally and start the app again; do not use open -n.'
-  )
-}
-
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
