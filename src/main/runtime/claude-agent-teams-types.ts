@@ -6,6 +6,7 @@ import type {
   RuntimeTerminalShow,
   RuntimeTerminalSplit
 } from '../../shared/runtime-types'
+import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
 
 export type AgentTeamsTmuxCompatRequest = {
   teamId: string
@@ -38,8 +39,11 @@ export type AgentTeamsTerminalApi = {
       env?: Record<string, string>
       envToDelete?: string[]
       activate?: boolean
+      shellOverride?: string
     }
   ): Promise<RuntimeTerminalSplit>
+  /** Null when the leader's PTY is unknown on a host where the answer matters. */
+  resolveHostShell(leaderHandle: string): AgentTeamHostShell | null
   readTerminal(handle: string, opts?: { limit?: number }): Promise<RuntimeTerminalRead>
   sendTerminal(
     handle: string,
@@ -52,7 +56,9 @@ export type AgentTeamsTerminalApi = {
 
 export type TeamPane = {
   fakePaneId: string
-  handle: string
+  // Why: null while pending — Git Bash teams defer the real split of Claude's `-- cat`
+  // holding pane until `respawn-pane` brings the teammate command.
+  handle: string | null
   index: number
   // Why: Claude Code splits a holding pane (`-- cat`) then `respawn-pane`s it
   // with the real teammate command. We remember how the pane was first split so
@@ -60,6 +66,8 @@ export type TeamPane = {
   splitFromPane?: string
   splitDirection?: 'horizontal' | 'vertical'
   respawnBlockedReason?: string
+  /** Git Bash teams: the one-shot script the pane was told to source; removed if it never ran. */
+  commandScriptPath?: string
 }
 
 export type AgentTeam = {
@@ -71,6 +79,8 @@ export type AgentTeam = {
   windowIndex: string
   tmuxValue: string
   baseEnv: Record<string, string>
+  // Why: null until the leader PTY is known; pre-spawn launch paths create the team before it exists.
+  hostShell: AgentTeamHostShell | null
   panes: Map<string, TeamPane>
   paneOrder: string[]
   nextPaneNumber: number

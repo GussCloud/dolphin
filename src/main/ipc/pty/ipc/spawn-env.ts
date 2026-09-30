@@ -20,6 +20,7 @@ import { parseValidPaneKey } from '../pane/key-state'
 import { shouldRefreshNativeClaudeAgentTeamsEnv } from '../pane/launch-authority'
 import type { PtyIpcSpawnState } from './spawn-state'
 import { assemblePtyIpcSpawnCodexEnv } from './spawn-env-codex'
+import { overlayPlatformEnv } from '../../../../shared/platform-env-overlay'
 
 export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<void> {
   const args = ctx.args
@@ -92,6 +93,7 @@ export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<voi
       runtime?.createPreAllocatedTerminalHandle() ??
       null)
     : null
+  let agentTeamsEnvToDelete: string[] = []
   if (shouldRefreshAgentTeamsEnv && ctx.preAllocatedHandle && runtime) {
     // Why: Agent Teams ids/tokens are process-local, so the team env must be regenerated for the new leader PTY.
     const prepared = await runtime.prepareClaudeAgentTeamsLeaderForHandle({
@@ -99,24 +101,23 @@ export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<voi
       baseEnv: ctx.baseEnv ?? {}
     })
     ctx.agentTeamsLeaderHandle = ctx.preAllocatedHandle
-    ctx.baseEnv = {
-      ...ctx.baseEnv,
-      ...prepared.env
-    }
+    // Why overlay: a pane `Path` beside the team's `PATH` would let Windows pick the one without the shim.
+    ctx.baseEnv = overlayPlatformEnv(ctx.baseEnv ?? {}, prepared.env)
     if (args.launchConfig) {
       ctx.effectiveLaunchConfig = {
         ...args.launchConfig,
-        agentEnv: {
-          ...args.launchConfig.agentEnv,
-          ...prepared.env
-        }
+        agentEnv: overlayPlatformEnv(args.launchConfig.agentEnv ?? {}, prepared.env)
       }
     }
+    agentTeamsEnvToDelete = prepared.envToDelete ?? []
   }
   ctx.requestedAgentTeamsPath = ctx.baseEnv?.DOLPHIN_AGENT_TEAMS_TEAM_ID
     ? ctx.baseEnv[resolvePathEnvKey(ctx.baseEnv, process.platform)]
     : undefined
-  ctx.agentTeamsEnvToDelete = shouldRefreshAgentTeamsEnv ? ['TERM_PROGRAM'] : undefined
+  // Why prepared deletions: an in-process degrade drops an inherited TMUX so `--teammate-mode auto` stays in-process.
+  ctx.agentTeamsEnvToDelete = shouldRefreshAgentTeamsEnv
+    ? [...new Set(['TERM_PROGRAM', ...agentTeamsEnvToDelete])]
+    : undefined
   const canForwardPaneEnv = !args.connectionId || isRemoteAgentHooksEnabled()
   if (ctx.baseEnv && ctx.stablePaneKey && canForwardPaneEnv) {
     ctx.baseEnv.DOLPHIN_PANE_KEY = ctx.stablePaneKey

@@ -403,6 +403,7 @@ module.exports = {
     // mapping fails packaging before bundled content reaches users.
     verifyPackagedPluginResources(resourcesDir)
     finalizePackagedRipgrep(resourcesDir)
+    verifyPackagedWindowsCliLaunchers(resourcesDir, context.electronPlatformName)
     chmodUnixCliLaunchers(resourcesDir, context.electronPlatformName)
     chmodMacServeSimHelpers(resourcesDir, context.electronPlatformName)
     for (const filename of readdirSync(resourcesDir)) {
@@ -466,6 +467,10 @@ module.exports = {
       {
         from: `native/windows-cli-launcher/.build/${forkIdentity.cliCommandName}.exe`,
         to: `bin/${forkIdentity.cliCommandName}.exe`
+      },
+      {
+        from: 'native/windows-cli-launcher/.build/agent-teams/tmux.exe',
+        to: 'bin/agent-teams/tmux.exe'
       },
       {
         from: 'node_modules/agent-browser/bin/agent-browser-win32-x64.exe',
@@ -698,6 +703,22 @@ function stampPackagedCliVersion(resourcesDir, version) {
   }
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
   writeFileSync(packageJsonPath, `${JSON.stringify({ ...packageJson, version }, null, 2)}\n`)
+}
+
+// Why: electron-builder only warns on a missing extraResources source, so a launcher whose build was
+// skipped would ship an install where `dolphin` or Claude Agent Teams' tmux shim silently fails.
+function verifyPackagedWindowsCliLaunchers(resourcesDir, electronPlatformName) {
+  if (electronPlatformName !== 'win32') {
+    return
+  }
+  for (const launcher of [`${forkIdentity.cliCommandName}.exe`, join('agent-teams', 'tmux.exe')]) {
+    const launcherPath = join(resourcesDir, 'bin', launcher)
+    if (!existsSync(launcherPath)) {
+      throw new Error(
+        `Missing packaged Windows CLI launcher ${launcherPath}; run config/scripts/build-windows-cli-launcher.mjs.`
+      )
+    }
+  }
 }
 
 function chmodUnixCliLaunchers(resourcesDir, electronPlatformName) {

@@ -1,28 +1,51 @@
-import { describe, expect, it, vi } from 'vitest'
+import { rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterAll, describe, expect, it, vi } from 'vitest'
+import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
 import { ClaudeAgentTeamsService, type AgentTeamsTerminalApi } from './claude-agent-teams-service'
 
-function createServiceWithLeader(): {
+type SplitOpts = Parameters<AgentTeamsTerminalApi['splitTerminal']>[1]
+
+const paneCommandScriptDir = vi.hoisted(() => ({ current: '' }))
+paneCommandScriptDir.current = join(tmpdir(), `dolphin-agent-teams-service-test-${process.pid}`)
+// Why: Git Bash teams write teammate command scripts; keep them out of the real home dir.
+vi.mock('./claude-agent-teams-pane-command-script', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  defaultPaneCommandScriptDir: () => paneCommandScriptDir.current
+}))
+afterAll(async () => {
+  await rm(paneCommandScriptDir.current, { recursive: true, force: true })
+})
+
+function createServiceWithLeader(
+  options: { hostShell?: AgentTeamHostShell; resolvedHostShell?: AgentTeamHostShell | null } = {}
+): {
   service: ClaudeAgentTeamsService
   teamId: string
   token: string
   leaderPane: string
   api: AgentTeamsTerminalApi
   splitCalls: { handle: string; direction?: string; command?: string; envPane?: string }[]
+  splitOpts: SplitOpts[]
 } {
   const service = new ClaudeAgentTeamsService()
   const launch = service.createLaunchEnv({
     leaderHandle: 'leader-handle',
     baseEnv: { PATH: '/usr/bin' },
     shimDir: '/tmp/dolphin-shim',
-    shimBin: '/usr/bin/dolphin'
+    shimBin: '/usr/bin/dolphin',
+    hostShell: options.hostShell
   })
   expect(launch.env.DOLPHIN_AGENT_TEAMS_SHIM_DIR).toBe('/tmp/dolphin-shim')
   const splitCalls: { handle: string; direction?: string; command?: string; envPane?: string }[] =
     []
+  const splitOpts: SplitOpts[] = []
   let splitCount = 0
   const api: AgentTeamsTerminalApi = {
     splitTerminal: vi.fn(async (handle, opts) => {
       splitCount += 1
+      splitOpts.push(opts)
       splitCalls.push({
         handle,
         direction: opts.direction,
@@ -60,7 +83,10 @@ function createServiceWithLeader(): {
       paneRuntimeId: -1,
       ptyId: 'pty-1',
       rendererGraphEpoch: 1
-    }))
+    })),
+    resolveHostShell: vi.fn(() =>
+      options.resolvedHostShell === undefined ? 'default' : options.resolvedHostShell
+    )
   }
   return {
     service,
@@ -68,8 +94,23 @@ function createServiceWithLeader(): {
     token: launch.token,
     leaderPane: launch.leaderPane,
     api,
-    splitCalls
+    splitCalls,
+    splitOpts
   }
+}
+
+async function runPlaceholderThenRespawn(
+  setup: ReturnType<typeof createServiceWithLeader>
+): Promise<void> {
+  const { service, teamId, token, leaderPane, api } = setup
+  const request = (argv: string[]) =>
+    service.handleTmuxCompat({ teamId, token, envPane: leaderPane, argv }, api)
+  await expect(
+    request(['split-window', '-d', '-t', leaderPane, '-h', '-P', '-F', '#{pane_id}', '--', 'cat'])
+  ).resolves.toMatchObject({ exitCode: 0 })
+  await expect(
+    request(['respawn-pane', '-k', '-t', '%2', '--', "cd '/repo' && env CLAUDECODE=1 claude"])
+  ).resolves.toMatchObject({ exitCode: 0 })
 }
 
 describe('ClaudeAgentTeamsService', () => {
@@ -316,5 +357,105 @@ describe('ClaudeAgentTeamsService', () => {
         Object.defineProperty(process, 'platform', platform)
       }
     }
+  })
+
+  it('puts the bundled tmux dir before the shim dir and base PATH on Windows', () => {
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
+    try {
+      const launch = new ClaudeAgentTeamsService().createLaunchEnv({
+        leaderHandle: 'leader-handle',
+        baseEnv: { Path: 'C:\\Windows\\system32' },
+        shimDir: 'C:\\dolphin-shim',
+        shimBin: 'C:\\dolphin.exe',
+        shimPathDirs: ['C:\\dolphin\\tmux', 'C:\\dolphin-shim']
+      })
+
+      expect(launch.env.Path).toBe('C:\\dolphin\\tmux;C:\\dolphin-shim;C:\\Windows\\system32')
+      expect(launch.env.DOLPHIN_AGENT_TEAMS_SHIM_DIR).toBe('C:\\dolphin-shim')
+    } finally {
+      if (platform) {
+        Object.defineProperty(process, 'platform', platform)
+      }
+    }
+  })
+
+  it('keeps the POSIX PATH as shim dir then base PATH', () => {
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' })
+    try {
+      const create = (shimPathDirs?: string[]) =>
+        new ClaudeAgentTeamsService().createLaunchEnv({
+          leaderHandle: 'leader-handle',
+          baseEnv: { PATH: '/usr/bin' },
+          shimDir: '/tmp/dolphin-shim',
+          shimBin: '/usr/bin/dolphin',
+          shimPathDirs
+        }).env.PATH
+
+      expect(create()).toBe('/tmp/dolphin-shim:/usr/bin')
+      expect(create(['/tmp/dolphin-shim'])).toBe('/tmp/dolphin-shim:/usr/bin')
+    } finally {
+      if (platform) {
+        Object.defineProperty(process, 'platform', platform)
+      }
+    }
+  })
+
+  describe('teammate pane host shell', () => {
+    it('spawns native Windows teammates once, in Git Bash, without MSYS env', async () => {
+      const setup = createServiceWithLeader({ hostShell: 'native-windows-git-bash' })
+      await runPlaceholderThenRespawn(setup)
+
+      expect(setup.splitOpts).toHaveLength(1)
+      const [opts] = setup.splitOpts
+      expect(opts!.shellOverride).toBe('git-bash')
+      expect(opts!.env).toMatchObject({ TMUX_PANE: '%2' })
+      expect(opts!.env).not.toHaveProperty('MSYS2_ARG_CONV_EXCL')
+      expect(opts!.env).not.toHaveProperty('MSYS_NO_PATHCONV')
+      expect(opts!.command).toMatch(/^\. '.+\.sh'$/)
+      expect(setup.api.closeTerminal).not.toHaveBeenCalled()
+      expect(setup.api.resolveHostShell).not.toHaveBeenCalled()
+    })
+
+    it('keeps the default shell and env for POSIX and WSL teams', async () => {
+      const setup = createServiceWithLeader({ hostShell: 'default' })
+      await runPlaceholderThenRespawn(setup)
+
+      expect(setup.splitOpts).toHaveLength(2)
+      for (const opts of setup.splitOpts) {
+        expect(opts).not.toHaveProperty('shellOverride')
+        expect(opts.env).not.toHaveProperty('MSYS2_ARG_CONV_EXCL')
+        expect(opts.env).not.toHaveProperty('MSYS_NO_PATHCONV')
+      }
+    })
+
+    it('resolves the host shell from the leader once when the team was created before its PTY', async () => {
+      const setup = createServiceWithLeader({ resolvedHostShell: 'native-windows-git-bash' })
+      await runPlaceholderThenRespawn(setup)
+
+      expect(setup.api.resolveHostShell).toHaveBeenCalledTimes(1)
+      expect(setup.api.resolveHostShell).toHaveBeenCalledWith('leader-handle')
+      expect(setup.splitOpts.map((opts) => opts.shellOverride)).toEqual(['git-bash'])
+    })
+
+    it('refuses to split when the leader shell host cannot be determined', async () => {
+      const { service, teamId, token, leaderPane, api, splitCalls } = createServiceWithLeader({
+        resolvedHostShell: null
+      })
+
+      await expect(
+        service.handleTmuxCompat(
+          {
+            teamId,
+            token,
+            envPane: leaderPane,
+            argv: ['split-window', '-t', leaderPane, '-h', '-P', '-F', '#{pane_id}', 'cat']
+          },
+          api
+        )
+      ).resolves.toMatchObject({ ok: false, exitCode: 1 })
+      expect(splitCalls).toHaveLength(0)
+    })
   })
 })

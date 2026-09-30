@@ -460,7 +460,7 @@ describe('DolphinRuntimeService', () => {
   // platform (launchCmdByPlatform), so it is what proves resolution is
   // platform-aware rather than a fixed string.
   it.each([
-    { platform: 'win32' as const, expected: 'dolphin.cmd claude-teams' },
+    { platform: 'win32' as const, expected: 'claude --teammate-mode auto' },
     { platform: 'linux' as const, expected: 'dolphin-ide claude-teams' },
     { platform: 'darwin' as const, expected: 'dolphin claude-teams' }
   ])(

@@ -117,7 +117,8 @@ export type RuntimeNotifier = {
     baseVersion: string,
     content: string
   ): Promise<RuntimeMarkdownSaveTabResult>
-  closeTerminal(tabId: string, paneRuntimeId?: number): void
+  /** No pane id or leaf id closes the whole tab; a leaf id that no longer exists is ignored. */
+  closeTerminal(tabId: string, paneRuntimeId?: number, leafId?: string): void
   closeTerminalTab?(
     tabId: string,
     options?: { localPtyTeardownOwnedExternally?: boolean; force?: boolean }

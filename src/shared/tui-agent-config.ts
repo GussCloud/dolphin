@@ -31,6 +31,8 @@ export type TuiAgentConfig = {
   detectRequiredCommands?: readonly string[]
   /** Detection runtimes where this launch mode is not available as a detected agent. */
   detectUnsupportedRuntimes?: readonly TuiAgentDetectionRuntime[]
+  /** Detection runtimes where Dolphin itself supplies `detectCmd` in every terminal. */
+  detectProvidedRuntimes?: readonly TuiAgentDetectionRuntime[]
   launchCmd: string
   /** Platform-specific launch command when the public binary name differs. */
   launchCmdByPlatform?: Partial<Record<NodeJS.Platform, string>>
@@ -90,12 +92,14 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
     detectCmdAliases: [DEV_CLI_COMMAND_NAME, LINUX_CLI_COMMAND_NAME],
     // Why: require Claude too so fresh installs (Dolphin shim always present) don't report Agent Teams without an agent CLI.
     detectRequiredCommands: ['claude'],
-    // Why: Windows/WSL use Claude's in-process Agent Teams fallback, not this Dolphin native-pane/tmux-shim wrapper.
-    detectUnsupportedRuntimes: ['win32', 'wsl'],
+    // Why: every Dolphin WSL terminal carries the managed CLI, which a distro PATH probe never sees; only claude must be installed there.
+    detectProvidedRuntimes: ['wsl'],
     launchCmd: `${CLI_COMMAND_NAME} claude-teams`,
     launchCmdByPlatform: {
       linux: `${getCliCommandFileNameForPlatform('linux')} claude-teams`,
-      win32: `${getCliCommandFileNameForPlatform('win32')} claude-teams`
+      // Why direct claude: a claude child of the Electron-as-Node CLI never paints its TUI on Windows;
+      // PTY spawn sees `--teammate-mode auto` and injects the team env itself.
+      win32: 'claude --teammate-mode auto'
     },
     expectedProcess: 'claude',
     promptInjectionMode: 'stdin-after-start',

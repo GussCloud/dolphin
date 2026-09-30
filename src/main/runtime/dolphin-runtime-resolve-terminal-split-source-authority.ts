@@ -12,9 +12,20 @@ import type {
 } from './claude-agent-teams-service'
 import {
   ensureClaudeAgentTeamsShimDir,
-  resolveClaudeAgentTeamsShimBin
+  resolveClaudeAgentTeamsShimBin,
+  resolveClaudeAgentTeamsShimPathDirs
 } from './claude-agent-teams-shim-env'
 import { applyClaudeEnvPatch } from '../claude-accounts/environment'
+import {
+  canLaunchAgentTeamPanes,
+  isWslAgentTeamLeader,
+  IN_PROCESS_AGENT_TEAMS_ENV,
+  IN_PROCESS_AGENT_TEAMS_ENV_TO_DELETE,
+  resolveAgentTeamHostShell,
+  type AgentTeamHostShell
+} from './claude-agent-teams-host-shell'
+import { resolveGitBashPath } from '../git-bash'
+import { overlayPlatformEnv } from '../../shared/platform-env-overlay'
 
 export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends DolphinRuntimeWithSplitPtyBackedTerminal {
   protected resolveTerminalSplitSourceAuthority(
@@ -103,8 +114,21 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       sendTerminal: (handle, action) => this.sendTerminal(handle, action),
       focusTerminal: (handle) => this.focusTerminal(handle),
       closeTerminal: (handle) => this.closeTerminal(handle),
-      showTerminal: (handle) => this.showTerminal(handle)
+      showTerminal: (handle) => this.showTerminal(handle),
+      resolveHostShell: (leaderHandle) => this.resolveClaudeAgentTeamsHostShell(leaderHandle)
     })
+  }
+
+  protected resolveClaudeAgentTeamsGitBash(): string | null {
+    return resolveGitBashPath()
+  }
+
+  private resolveClaudeAgentTeamsHostShell(leaderHandle: string): AgentTeamHostShell | null {
+    return resolveAgentTeamHostShell(this.getTerminalPtyRecordForHandle(leaderHandle))
+  }
+
+  private isClaudeAgentTeamsWslLeader(leaderHandle: string): boolean {
+    return isWslAgentTeamLeader(this.getTerminalPtyRecordForHandle(leaderHandle))
   }
 
   async prepareClaudeAgentTeamsLeader(args: {
@@ -128,10 +152,8 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     baseEnv?: Record<string, string>
     prepareAuth?: boolean
   }): Promise<{ env: Record<string, string>; envToDelete?: string[] }> {
-    const baseEnv = {
-      ...process.env,
-      ...args.baseEnv
-    }
+    // Why overlay: the pane's `PATH` must replace main's `Path`, or the launch PATH is built from Electron's.
+    const baseEnv = overlayPlatformEnv<string | undefined>(process.env, args.baseEnv ?? {})
     const inheritedEnvKeys = new Set(Object.keys(baseEnv))
     const auth = args.prepareAuth && this.prepareClaudeAuth ? await this.prepareClaudeAuth() : null
     if (auth) {
@@ -140,13 +162,30 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     const envToDelete = auth?.stripAuthEnv
       ? [...inheritedEnvKeys].filter((key) => !(key in baseEnv))
       : undefined
-    const shimDir = await ensureClaudeAgentTeamsShimDir()
     const shimBin = resolveClaudeAgentTeamsShimBin(baseEnv)
+    const hostShell = this.resolveClaudeAgentTeamsHostShell(args.handle)
+    if (
+      !canLaunchAgentTeamPanes({
+        hostShell,
+        leaderIsWsl: this.isClaudeAgentTeamsWslLeader(args.handle),
+        shimBin,
+        resolveGitBash: () => this.resolveClaudeAgentTeamsGitBash()
+      })
+    ) {
+      // Why: agreed degrade — no team is registered, so Claude keeps teammates in-process.
+      return {
+        env: { ...auth?.envPatch, ...IN_PROCESS_AGENT_TEAMS_ENV },
+        envToDelete: [...(envToDelete ?? []), ...IN_PROCESS_AGENT_TEAMS_ENV_TO_DELETE]
+      }
+    }
+    const shimDir = await ensureClaudeAgentTeamsShimDir()
     const launch = this.claudeAgentTeams.createLaunchEnv({
       leaderHandle: args.handle,
       baseEnv,
       shimDir,
-      shimBin
+      shimBin,
+      shimPathDirs: resolveClaudeAgentTeamsShimPathDirs(shimDir),
+      hostShell: hostShell ?? undefined
     })
     const env = auth ? { ...auth.envPatch, ...launch.env } : launch.env
     return envToDelete ? { env, envToDelete } : { env }

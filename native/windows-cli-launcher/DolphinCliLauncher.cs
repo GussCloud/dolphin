@@ -9,6 +9,15 @@ internal static class DolphinCliLauncher
     {
         try
         {
+            string launcherPath = typeof(DolphinCliLauncher).Assembly.Location;
+            if (string.Equals(
+                Path.GetFileNameWithoutExtension(launcherPath),
+                "tmux",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return RunTmuxShim(launcherPath, args);
+            }
+
             string launcherDirectory = Path.GetDirectoryName(typeof(DolphinCliLauncher).Assembly.Location);
             string resourcesDirectory = Directory.GetParent(launcherDirectory).FullName;
             string appDirectory = Directory.GetParent(resourcesDirectory).FullName;
@@ -66,6 +75,67 @@ internal static class DolphinCliLauncher
         {
             Console.Error.WriteLine("Unable to start the Dolphin CLI: {0}", error.Message);
             return 1;
+        }
+    }
+
+    // Why: Claude Agent Teams runs `tmux` from a shim dir outside the install tree, so the target
+    // comes from the team env; a native exe keeps cmd.exe from expanding `%NAME%` in tmux args.
+    private static int RunTmuxShim(string shimPath, string[] args)
+    {
+        string target = Environment.GetEnvironmentVariable("DOLPHIN_AGENT_TEAMS_SHIM_BIN");
+        if (!IsQualifiedShimTarget(target, shimPath))
+        {
+            Console.Error.WriteLine(
+                "dolphin agent-teams tmux shim: DOLPHIN_AGENT_TEAMS_SHIM_BIN must be an absolute path"
+            );
+            return 127;
+        }
+
+        StringBuilder commandLine = new StringBuilder("agent-teams-tmux");
+        foreach (string arg in args)
+        {
+            commandLine.Append(' ');
+            commandLine.Append(QuoteArgument(arg));
+        }
+
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            FileName = target,
+            Arguments = commandLine.ToString(),
+            UseShellExecute = false
+        };
+        using (Process child = Process.Start(startInfo))
+        {
+            child.WaitForExit();
+            return child.ExitCode;
+        }
+    }
+
+    private static bool IsQualifiedShimTarget(string target, string shimPath)
+    {
+        if (string.IsNullOrEmpty(target))
+        {
+            return false;
+        }
+        bool driveQualified = target.Length >= 3
+            && Char.IsLetter(target[0])
+            && target[1] == ':'
+            && (target[2] == '\\' || target[2] == '/');
+        bool uncQualified = target.StartsWith("\\\\", StringComparison.Ordinal);
+        if (!driveQualified && !uncQualified)
+        {
+            return false;
+        }
+        try
+        {
+            string fullTarget = Path.GetFullPath(target);
+            // Why: pointing the shim at itself would recurse forever.
+            return File.Exists(fullTarget)
+                && !string.Equals(fullTarget, Path.GetFullPath(shimPath), StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception)
+        {
+            return false;
         }
     }
 

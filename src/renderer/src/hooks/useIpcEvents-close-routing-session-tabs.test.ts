@@ -100,6 +100,23 @@ describe('useIpcEvents browser tab close routing', () => {
     })
   })
 
+  it('routes a leaf-addressed terminal close to that pane, never the whole tab', async () => {
+    const closeTerminalListenerRef: { current: CloseTerminalListener | null } = { current: null }
+    await useIpcEventsForCloseRouting({
+      closeTerminalListenerRef,
+      getState: () => ({})
+    })
+
+    closeTerminalListenerRef.current?.({ tabId: 'terminal-1', leafId: 'leaf-2' })
+
+    expect(closeTerminalTabMock).not.toHaveBeenCalled()
+    const dispatched = vi.mocked(window.dispatchEvent).mock.calls.at(-1)?.[0]
+    if (!(dispatched instanceof CustomEvent)) {
+      throw new Error('expected a pane close event')
+    }
+    expect(dispatched.detail).toEqual({ tabId: 'terminal-1', leafId: 'leaf-2' })
+  })
+
   it('acknowledges whole-tab close only after the fresh session is durably persisted', async () => {
     const listenerRef: { current: TerminalTabCloseRequestListener | null } = { current: null }
     let finishPersist!: () => void

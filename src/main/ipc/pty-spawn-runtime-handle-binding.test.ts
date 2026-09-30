@@ -416,6 +416,48 @@ describe('registerPtyHandlers', () => {
       baseEnv: expect.any(Object)
     })
   })
+  it('drops an inherited TMUX when the leader degrades to in-process teammates', async () => {
+    const leafId = '11111111-1111-4111-8111-111111111111'
+    const runtime = {
+      setPtyController: vi.fn(),
+      createPreAllocatedTerminalHandle: vi.fn(() => 'term_agent_teams'),
+      prepareClaudeAgentTeamsLeaderForHandle: vi.fn(async () => ({
+        env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' },
+        envToDelete: ['TMUX', 'TMUX_PANE']
+      })),
+      registerPreAllocatedHandleForPty: vi.fn(),
+      registerPty: vi.fn(),
+      getDriver: vi.fn(() => ({ kind: 'host' })),
+      onPtySpawned: vi.fn(),
+      onPtyExit: vi.fn(),
+      onPtyData: vi.fn()
+    }
+
+    registerPtyHandlers(mainWindow as never, runtime as never)
+    await handlers.get('pty:spawn')!(mainWindowIpcEvent, {
+      cols: 80,
+      rows: 24,
+      cwd: '/repo',
+      command: 'claude --teammate-mode auto',
+      tabId: 'tab-1',
+      leafId,
+      worktreeId: 'wt-1',
+      env: {
+        DOLPHIN_PANE_KEY: `tab-1:${leafId}`,
+        DOLPHIN_TAB_ID: 'tab-1',
+        DOLPHIN_WORKTREE_ID: 'wt-1',
+        TMUX: '/tmp/real-tmux,1,0',
+        TMUX_PANE: '%7'
+      },
+      launchConfig: { agentCommand: 'claude --teammate-mode auto', agentArgs: '', agentEnv: {} },
+      launchAgent: 'claude-agent-teams'
+    })
+
+    const spawnOptions = spawnMock.mock.calls.at(-1)?.[2] as { env: Record<string, string> }
+    expect(spawnOptions.env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS).toBe('1')
+    expect(spawnOptions.env.TMUX).toBeUndefined()
+    expect(spawnOptions.env.TMUX_PANE).toBeUndefined()
+  })
   it('restores daemon launch identity without minting renderer authority on reattach', async () => {
     const incarnationId = 'ssh-reattach-incarnation'
     const spawn = vi.fn(async () => ({

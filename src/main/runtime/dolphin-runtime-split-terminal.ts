@@ -2,6 +2,7 @@
 import { DolphinRuntimeWithStopExplicitlyClosedTabPtys } from './dolphin-runtime-stop-explicitly-closed-tab-ptys'
 import type { TerminalPaneSplitSource } from '../../shared/feature-education-telemetry'
 import type { RuntimeTerminalSplit } from '../../shared/runtime-types'
+import type { RuntimePtyWorktreeRecord } from './runtime-terminal-state-records'
 import { randomUUID } from 'node:crypto'
 
 export class DolphinRuntimeWithSplitTerminal extends DolphinRuntimeWithStopExplicitlyClosedTabPtys {
@@ -17,11 +18,20 @@ export class DolphinRuntimeWithSplitTerminal extends DolphinRuntimeWithStopExpli
       // workspace, for splits the user never asked to see.
       surfaceOwner?: false
       telemetrySource?: TerminalPaneSplitSource
+      shellOverride?: string
     } = {}
   ): Promise<RuntimeTerminalSplit> {
     const livePty = this.getLivePtyForHandle(handle)
     if (livePty) {
       return await this.splitPtyBackedTerminal(livePty.pty, opts)
+    }
+    if (opts.shellOverride) {
+      // Why: the renderer split below drops env and shell, so it would run the command in the default shell.
+      const sourcePty = this.getTerminalPtyRecordForHandle(handle)
+      if (!sourcePty?.connected) {
+        throw new Error('terminal_split_shell_override_requires_live_pty')
+      }
+      return await this.splitPtyBackedTerminal(sourcePty, opts)
     }
     this.assertGraphReady()
     const { leaf } = this.getLiveLeafForHandle(handle)
@@ -45,5 +55,15 @@ export class DolphinRuntimeWithSplitTerminal extends DolphinRuntimeWithStopExpli
       paneRuntimeId: leaf.paneRuntimeId,
       leafId: newLeafId
     }
+  }
+
+  /** The PTY behind a handle, whether runtime-owned or a renderer leaf. */
+  protected getTerminalPtyRecordForHandle(handle: string): RuntimePtyWorktreeRecord | null {
+    const livePty = this.getLivePtyForHandle(handle)
+    if (livePty) {
+      return livePty.pty
+    }
+    const ptyId = this.handles.get(handle)?.ptyId
+    return ptyId ? (this.ptysById.get(ptyId) ?? null) : null
   }
 }

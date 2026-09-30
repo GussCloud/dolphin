@@ -259,4 +259,51 @@ describe('addDolphinWslInteropEnv', () => {
     expect(env.WSLENV).not.toContain('OPENCODE_CONFIG_DIR')
     expect(env.WSLENV).not.toContain('DOLPHIN_OPENCODE_CONFIG_DIR')
   })
+
+  it('forwards an Agent Teams pane its team coordinates but never the Windows shim or PATH', () => {
+    const env: Record<string, string> = {
+      Path: 'C:\\Users\\jin\\.dolphin\\claude-agent-teams-bin;C:\\Windows',
+      TMUX: '/tmp/dolphin-claude-agent-teams/team-1,0,1',
+      TMUX_PANE: '%2',
+      TERM: 'screen-256color',
+      COLORTERM: 'truecolor',
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
+      DOLPHIN_AGENT_TEAMS_TEAM_ID: 'team-1',
+      DOLPHIN_AGENT_TEAMS_TOKEN: 'secret',
+      DOLPHIN_AGENT_TEAMS_LEADER_PANE: '%1',
+      DOLPHIN_AGENT_TEAMS_SHIM_DIR: 'C:\\Users\\jin\\.dolphin\\claude-agent-teams-bin',
+      DOLPHIN_AGENT_TEAMS_SHIM_BIN: 'C:\\Dolphin\\dolphin.exe'
+    }
+
+    addDolphinWslInteropEnv(env)
+
+    const entries = env.WSLENV.split(':')
+    for (const name of [
+      'TMUX',
+      'TMUX_PANE',
+      'TERM',
+      'COLORTERM',
+      'CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS',
+      'DOLPHIN_AGENT_TEAMS_TEAM_ID',
+      'DOLPHIN_AGENT_TEAMS_TOKEN',
+      'DOLPHIN_AGENT_TEAMS_LEADER_PANE'
+    ]) {
+      expect(entries).toContain(`${name}/u`)
+    }
+    expect(env.WSLENV).not.toMatch(
+      /(^|:)(PATH|Path|DOLPHIN_AGENT_TEAMS_SHIM_DIR|DOLPHIN_AGENT_TEAMS_SHIM_BIN)(\/|:|$)/
+    )
+  })
+
+  it('keeps TERM and TMUX out of ordinary WSL panes', () => {
+    const env: Record<string, string> = {
+      TMUX: '/tmp/tmux-1000/default,1,0',
+      TERM: 'xterm-256color',
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1'
+    }
+
+    addDolphinWslInteropEnv(env)
+
+    expect(env.WSLENV).not.toMatch(/(^|:)(TMUX|TERM|CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS)\//)
+  })
 })

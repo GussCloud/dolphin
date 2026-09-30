@@ -4,6 +4,7 @@ import { EXPLICIT_TERMINAL_CLOSE_STOP_TIMEOUT_MS } from './dolphin-runtime-core'
 import { SSH_PROVIDER_UNREGISTERED_REASON } from '../../shared/pty-liveness-verdict'
 import type { RuntimeTerminalClose } from '../../shared/runtime-types'
 import { countTerminalLayoutLeaves } from './headless-terminal-split-layout'
+import { parsePaneKey } from '../../shared/stable-pane-id'
 import type { RuntimePtyTabCloseAuthority } from './runtime-terminal-state-records'
 
 export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntimeWithFocusTerminal {
@@ -171,12 +172,16 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
         } else {
           this.notifier?.closeTerminal(tabId)
         }
+      } else {
+        const paneKey = parsePaneKey(pty.pty.paneKey ?? '')
+        if (paneKey) {
+          this.closeKilledSplitLeaf(paneKey.tabId, paneKey.leafId)
+        }
       }
       return this.describeTerminalClose(handle, tabId, pty.pty.ptyId, ptyKilled)
     }
     this.assertGraphReady()
     const { leaf } = this.getLiveLeafForHandle(handle)
-    // Why: in a multi-pane tab, killing the PTY is enough (renderer's exit handler closes the pane); an extra IPC close would race it and close the whole tab.
     const siblingCount = this.countLeavesInTab(leaf.tabId)
     const ptyIdsToKill =
       siblingCount <= 1
@@ -190,10 +195,19 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
     const ptyKilled = leaf.ptyId
       ? await this.stopExplicitlyClosedTabPtys(ptyIdsToKill, leaf.ptyId)
       : false
-    if (siblingCount > 1 ? !ptyKilled : !this.notifier?.closeTerminalTab) {
+    if (siblingCount > 1 && ptyKilled) {
+      this.closeKilledSplitLeaf(leaf.tabId, leaf.leafId)
+    } else if (siblingCount > 1 || !this.notifier?.closeTerminalTab) {
       this.notifier?.closeTerminal(leaf.tabId, leaf.paneRuntimeId)
     }
     return this.describeTerminalClose(handle, leaf.tabId, leaf.ptyId ?? null, ptyKilled)
+  }
+
+  // Why: the renderer keeps a local pane whose process exits non-zero as a "Terminal exited"
+  // pane (a killed process on Windows exits 1). Leaf-addressed, not by pane id, so a pane that
+  // already closed itself is ignored instead of the close falling through to the whole tab.
+  private closeKilledSplitLeaf(tabId: string, leafId: string): void {
+    this.notifier?.closeTerminal(tabId, undefined, leafId)
   }
 
   async closeTerminalTab(handle: string): Promise<RuntimeTerminalClose> {

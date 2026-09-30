@@ -29,7 +29,6 @@
 # add any. Only -execution.ts and -raw-process.ts spawn, and both already pass
 # windowsHide; the other four import ChildProcess as a type only.
 src/cli/handlers/account.ts
-src/cli/handlers/core.ts
 src/cli/handlers/interactive-login-interruption.ts
 src/cli/handlers/skills.ts
 src/cli/runtime/launch.ts
