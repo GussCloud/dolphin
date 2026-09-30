@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   _resetAzureCliSessionRenewal,
   hostCanOpenSignInBrowser,
@@ -29,6 +29,8 @@ const loginFailed = { code: 1, signal: null, timedOut: false, stdout: '', stderr
 describe('renewAzureCliSession', () => {
   beforeEach(() => {
     _resetAzureCliSessionRenewal()
+    // Why: CI runs on headless Linux, where renewal is correctly disabled.
+    vi.stubEnv('DISPLAY', ':0')
     vi.clearAllMocks()
     mocks.preference.mockReturnValue({ method: 'azure-cli', autoRenewCliSession: true })
     mocks.expiresAt.mockReturnValue(1_000)
@@ -77,6 +79,10 @@ describe('renewAzureCliSession', () => {
     mocks.runAzureCli.mockResolvedValue(loginOk)
     await expect(renewAzureCliSession(failedAt + 15 * 60_000)).resolves.toBe(true)
   })
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 describe('hostCanOpenSignInBrowser', () => {
