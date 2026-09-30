@@ -4,14 +4,16 @@ import { startBackgroundRelayService } from '../src/platform/background-relay-se
 import { readNativeNotificationData } from '../src/notifications/native-notification-data'
 import { setNotificationViewingWorkspace } from '../src/notifications/notification-viewing-policy'
 import { useCallback, useEffect, useRef } from 'react'
-import { View, StyleSheet } from 'react-native'
-import { Stack, useRouter, useGlobalSearchParams, usePathname } from 'expo-router'
+import { AppState, View, StyleSheet } from 'react-native'
+import { Stack, useRouter, useGlobalSearchParams, usePathname, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import * as Notifications from 'expo-notifications'
 import * as Linking from 'expo-linking'
 import { colors } from '../src/theme/mobile-theme'
 import { DolphinLogo } from '../src/components/DolphinLogo'
+import { MobileRootErrorBoundary } from '../src/components/MobileRootErrorBoundary'
+import { PreviousCrashSessionLaunchNotice } from '../src/components/PreviousCrashSessionLaunchNotice'
 import { RpcClientProvider } from '../src/transport/client-context'
 import { getNotificationNavigationTarget } from '../src/notifications/notification-routing'
 import { useOpenNotificationRoute } from '../src/notifications/use-open-notification-route'
@@ -25,6 +27,11 @@ import { ensureDesktopNotificationChannel } from '../src/notifications/desktop-n
 import { loadHostCatalog } from '../src/transport/host-store'
 import { extractPairingCodeFromUrl } from '../src/transport/pairing'
 import { recoverMobileRelayPairing } from '../src/transport/mobile-relay-pairing-recovery'
+import {
+  recordMobileAppState,
+  recordMobileRouteBreadcrumb,
+  startMobileCrashSession
+} from '../src/diagnostics/mobile-crash-diagnostics'
 
 // Why: keeps the native splash screen visible until the React tree is mounted
 // and ready to render. Without this the user sees a blank white/black frame
@@ -42,10 +49,28 @@ Notifications.setNotificationHandler({
   handleNotification: foregroundNotificationBehavior
 })
 
-export default function RootLayout() {
+// Why: the open marker must land before the first route can fail during render.
+void startMobileCrashSession()
+
+function RootLayoutContents() {
   const router = useRouter()
+  const segments = useSegments()
+  const routeKey = segments.join('\u0000')
   const pathname = usePathname()
   const { hostId, worktreeId } = useGlobalSearchParams<{ hostId?: string; worktreeId?: string }>()
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      // Why: background is mobile's last reliable clean handoff before the OS may terminate us.
+      void recordMobileAppState(state)
+    })
+    return () => subscription.remove()
+  }, [])
+
+  useEffect(() => {
+    void recordMobileRouteBreadcrumb(routeKey ? routeKey.split('\u0000') : [])
+  }, [routeKey])
+
   useEffect(() => {
     setNotificationViewingWorkspace(
       pathname.includes('/session/') && typeof hostId === 'string' && typeof worktreeId === 'string'
@@ -195,6 +220,7 @@ export default function RootLayout() {
     <RpcClientProvider>
       <View style={styles.root} onLayout={onNavigatorLayout}>
         <StatusBar style="light" />
+        <PreviousCrashSessionLaunchNotice />
         <Stack
           screenOptions={{
             headerStyle: { backgroundColor: colors.bgPanel },
@@ -237,6 +263,17 @@ export default function RootLayout() {
         </Stack>
       </View>
     </RpcClientProvider>
+  )
+}
+
+export default function RootLayout() {
+  const router = useRouter()
+  const returnHome = useCallback(() => router.replace('/'), [router])
+
+  return (
+    <MobileRootErrorBoundary onReturnHome={returnHome}>
+      <RootLayoutContents />
+    </MobileRootErrorBoundary>
   )
 }
 
