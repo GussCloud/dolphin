@@ -1,4 +1,7 @@
-import { REMOTE_SERVER_UPDATE_CAPABILITY } from './remote-server-update'
+import {
+  MOBILE_REMOTE_UPDATE_CAPABILITY,
+  REMOTE_SERVER_UPDATE_CAPABILITY
+} from './remote-server-update'
 import {
   SKILL_BUNDLE_INSTALL_CAPABILITY,
   SKILL_DELETE_CAPABILITY,
@@ -152,7 +155,10 @@ export const SESSION_TABS_RETIREMENT_PROOF_DELTA_RUNTIME_CAPABILITY =
   'session-tabs.retirement-proof-delta.v1' as const
 export const AGENT_SESSION_BOUNDARY_RUNTIME_CAPABILITY =
   'agent-session.session-boundary.v1' as const
-export { REMOTE_SERVER_UPDATE_CAPABILITY } from './remote-server-update'
+export {
+  MOBILE_REMOTE_UPDATE_CAPABILITY,
+  REMOTE_SERVER_UPDATE_CAPABILITY
+} from './remote-server-update'
 export const AGENT_SESSION_HOST_AUTHORITY_RUNTIME_CAPABILITY =
   'agent-session.host-authority.v1' as const
 // Older launch schemas reject unknown fields; advertise before clients send keyboard support.
@@ -370,6 +376,7 @@ export const RUNTIME_CAPABILITIES = [
   SESSION_TABS_SPLIT_GROUP_PLACEMENT_RUNTIME_CAPABILITY,
   AGENT_SESSION_BOUNDARY_RUNTIME_CAPABILITY,
   REMOTE_SERVER_UPDATE_CAPABILITY,
+  MOBILE_REMOTE_UPDATE_CAPABILITY,
   AGENT_SESSION_HOST_AUTHORITY_RUNTIME_CAPABILITY,
   AGENT_SESSION_OMP_RESUME_PATH_RUNTIME_CAPABILITY,
   AGENT_SESSION_KEYBOARD_RUNTIME_CAPABILITY,

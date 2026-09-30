@@ -1,4 +1,7 @@
-export const MOBILE_RPC_METHOD_ALLOWLIST = new Set([
+import { MOBILE_UPDATER_RPC_METHODS } from './runtime-rpc-mobile-updater-methods'
+
+export const MOBILE_RPC_METHOD_ALLOWLIST = new Set<string>([
+  ...MOBILE_UPDATER_RPC_METHODS,
   'accounts.list',
   'accounts.consumeCodexResetCredit',
   'accounts.selectClaude',

@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { decodeAccountsSnapshot } from '../components/AccountUsage'
+import {
+  fetchDesktopUpdateOffer,
+  type DesktopUpdateOffersSetter
+} from '../desktop-update/desktop-update-offer-fetch'
 import { subscribeToDesktopNotifications } from '../notifications/mobile-notifications'
 import { usePrimeHosts } from '../transport/client-context'
 import { createHostConnectRefetchGate } from '../transport/host-connect-refetch-gate'
@@ -29,6 +33,7 @@ type Setters = {
   setWorktreeInfo: HostWorktreeInfoSetter
   setAccounts: HomeAccountsSetter
   setTaskProviders: HomeTaskProvidersSetter
+  setDesktopUpdates: DesktopUpdateOffersSetter
 }
 
 function wireMobileHomeHostSubscriptions(
@@ -71,6 +76,7 @@ function wireMobileHomeHostSubscriptions(
           setters.setTaskProviders,
           () => false
         )
+        fetchDesktopUpdateOffer(entry.client, entry.hostId, setters.setDesktopUpdates, () => false)
       }
       return
     }
@@ -104,7 +110,7 @@ export function useMobileHomeHostConnections(
   })
   const primeHosts = usePrimeHosts()
   const subscriptionsRef = useRef(new Map<string, { client: RpcClient; cleanup: () => void }>())
-  const { setAccounts, setStats, setTaskProviders, setWorktreeInfo } = setters
+  const { setAccounts, setDesktopUpdates, setStats, setTaskProviders, setWorktreeInfo } = setters
 
   useEffect(() => {
     if (hosts.length > 0) {
@@ -126,7 +132,13 @@ export function useMobileHomeHostConnections(
         subscriptionsRef.current.delete(hostId)
       }
     }
-    const activeSetters = { setAccounts, setStats, setTaskProviders, setWorktreeInfo }
+    const activeSetters = {
+      setAccounts,
+      setDesktopUpdates,
+      setStats,
+      setTaskProviders,
+      setWorktreeInfo
+    }
     for (const entry of allClients) {
       if (!subscriptionsRef.current.has(entry.hostId)) {
         subscriptionsRef.current.set(entry.hostId, {
@@ -135,7 +147,7 @@ export function useMobileHomeHostConnections(
         })
       }
     }
-  }, [allClients, setAccounts, setStats, setTaskProviders, setWorktreeInfo])
+  }, [allClients, setAccounts, setDesktopUpdates, setStats, setTaskProviders, setWorktreeInfo])
 
   useEffect(() => {
     const subscriptions = subscriptionsRef.current

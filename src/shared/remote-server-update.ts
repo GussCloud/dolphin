@@ -1,6 +1,8 @@
 import type { UpdateStatus } from './update-status-types'
 
 export const REMOTE_SERVER_UPDATE_CAPABILITY = 'updater.remote-control.v1' as const
+// Why: older hosts refuse updater.* from mobile-scoped tokens, so the phone only offers the update when advertised.
+export const MOBILE_REMOTE_UPDATE_CAPABILITY = 'updater.mobile-remote-control.v1' as const
 
 export type RemoteServerUpdateInstallMode =
   | 'interactive'

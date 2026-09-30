@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AccountsSnapshot } from '../components/AccountUsage'
 import { hasRenderableUsage } from '../components/AccountUsage'
 import { loadHomeSnapshot, saveHomeSnapshot } from '../cache/home-snapshot-cache'
+import { fetchDesktopUpdateOffer } from '../desktop-update/desktop-update-offer-fetch'
+import type { DesktopUpdateOffer } from '../desktop-update/desktop-update-offer'
+import { useDesktopUpdateRuns } from '../desktop-update/use-desktop-update-runs'
 import { getCachedWorktrees, setCachedWorktrees } from '../cache/worktree-cache'
 import {
   loadMobileOnboardingSteps,
@@ -39,6 +42,9 @@ export function useMobileHomeData() {
   const [worktreeInfo, setWorktreeInfo] = useState<Record<string, HostWorktreeInfo>>({})
   const [accountsByHost, setAccountsByHost] = useState<Record<string, AccountsSnapshot>>({})
   const [taskProvidersByHost, setTaskProvidersByHost] = useState<Record<string, TaskProvider[]>>({})
+  const [desktopUpdates, setDesktopUpdates] = useState<Record<string, DesktopUpdateOffer | null>>(
+    {}
+  )
   const [lastVisited, setLastVisited] = useState<{ hostId: string; worktreeId: string } | null>(
     null
   )
@@ -49,8 +55,10 @@ export function useMobileHomeData() {
     setStats: setStatsByHost,
     setWorktreeInfo,
     setAccounts: setAccountsByHost,
-    setTaskProviders: setTaskProvidersByHost
+    setTaskProviders: setTaskProvidersByHost,
+    setDesktopUpdates
   })
+  const desktopUpdateRuns = useDesktopUpdateRuns(connections.allClients, setDesktopUpdates)
   const allClientsRef = useRef(connections.allClients)
 
   useEffect(() => {
@@ -123,6 +131,7 @@ export function useMobileHomeData() {
             setTaskProvidersByHost,
             () => stale
           )
+          fetchDesktopUpdateOffer(entry.client, entry.hostId, setDesktopUpdates, () => stale)
         }
       }
       return () => {
@@ -177,6 +186,8 @@ export function useMobileHomeData() {
     ...connections,
     accountsHosts,
     connectedHosts,
+    desktopUpdateRuns,
+    desktopUpdates,
     hostCatalog,
     hostConnections,
     primaryHost,

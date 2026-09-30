@@ -2,6 +2,11 @@ import { memo, useCallback, type ReactElement } from 'react'
 import { FlatList, StyleSheet, View } from 'react-native'
 import type { ListRenderItemInfo } from 'react-native'
 import { MobileHostCard } from '../components/MobileHostCard'
+import {
+  desktopUpdateTag,
+  type DesktopUpdateOffer,
+  type DesktopUpdateRun
+} from '../desktop-update/desktop-update-offer'
 import type { HomeStatsSummary } from '../stats/home-stats-total'
 import { spacing } from '../theme/mobile-theme'
 import { classifyConnection } from '../transport/connection-health'
@@ -15,6 +20,8 @@ type MobileHomeHostListProps = {
   autoConnectHostIds: string[]
   bottomInset: number
   contentMaxWidth: number
+  desktopUpdates: Record<string, DesktopUpdateOffer | null>
+  desktopUpdateRuns: Record<string, DesktopUpdateRun>
   footer: ReactElement
   hostAttempts: Record<string, number>
   hostLastConnected: Record<string, number | null>
@@ -27,6 +34,7 @@ type MobileHomeHostListProps = {
   onOpen: (host: HostCatalogEntry) => void
   onLongPress: (host: HostCatalogEntry) => void
   onOpenActions: (host: HostCatalogEntry) => void
+  onPressUpdate: (host: HostCatalogEntry) => void
 }
 
 export function MobileHomeHostList(props: MobileHomeHostListProps) {
@@ -35,6 +43,8 @@ export function MobileHomeHostList(props: MobileHomeHostListProps) {
       <MobileHomeHostRow
         item={item}
         autoConnectHostIds={props.autoConnectHostIds}
+        desktopUpdate={props.desktopUpdates[item.id] ?? null}
+        desktopUpdateRun={props.desktopUpdateRuns[item.id] ?? null}
         hostAttempts={props.hostAttempts}
         hostLastConnected={props.hostLastConnected}
         hostConnections={props.hostConnections}
@@ -43,10 +53,13 @@ export function MobileHomeHostList(props: MobileHomeHostListProps) {
         onOpen={props.onOpen}
         onLongPress={props.onLongPress}
         onOpenActions={props.onOpenActions}
+        onPressUpdate={props.onPressUpdate}
       />
     ),
     [
       props.autoConnectHostIds,
+      props.desktopUpdates,
+      props.desktopUpdateRuns,
       props.hostAttempts,
       props.hostLastConnected,
       props.hostConnections,
@@ -54,6 +67,7 @@ export function MobileHomeHostList(props: MobileHomeHostListProps) {
       props.onLongPress,
       props.onOpen,
       props.onOpenActions,
+      props.onPressUpdate,
       props.worktreeInfo
     ]
   )
@@ -90,10 +104,15 @@ type MobileHomeHostRowProps = Pick<
   | 'onOpen'
   | 'onLongPress'
   | 'onOpenActions'
-> & { item: HostCatalogEntry }
+  | 'onPressUpdate'
+> & {
+  item: HostCatalogEntry
+  desktopUpdate: DesktopUpdateOffer | null
+  desktopUpdateRun: DesktopUpdateRun | null
+}
 
 const MobileHomeHostRow = memo(function MobileHomeHostRow(props: MobileHomeHostRowProps) {
-  const { item, onLongPress, onOpen, onOpenActions } = props
+  const { item, onLongPress, onOpen, onOpenActions, onPressUpdate } = props
   const state = resolveHomeHostConnectionState(
     item.id,
     props.hostStates[item.id],
@@ -113,6 +132,7 @@ const MobileHomeHostRow = memo(function MobileHomeHostRow(props: MobileHomeHostR
   const open = useCallback(() => onOpen(item), [item, onOpen])
   const longPress = useCallback(() => onLongPress(item), [item, onLongPress])
   const openActions = useCallback(() => onOpenActions(item), [item, onOpenActions])
+  const pressUpdate = useCallback(() => onPressUpdate(item), [item, onPressUpdate])
 
   return (
     <MobileHostCard
@@ -122,6 +142,8 @@ const MobileHomeHostRow = memo(function MobileHomeHostRow(props: MobileHomeHostR
       verdict={verdict}
       path={connection?.path ?? 'lan'}
       worktreeInfo={props.worktreeInfo[item.id]}
+      updateTag={desktopUpdateTag(props.desktopUpdate, props.desktopUpdateRun)}
+      onPressUpdate={pressUpdate}
       onPress={open}
       onLongPress={longPress}
       onOpenActions={openActions}
