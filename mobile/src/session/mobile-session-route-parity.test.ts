@@ -125,7 +125,9 @@ const HEAD_CALLBACK_BODY_SHA256 = '2ccbfb5ee57e7dfeb07dafaee6fa592b95862b3bc898a
 // the diff-comments effect, which now catches the loader's rejection. Count unchanged.
 // Moved again by the keyboard seam above, which is the +1 effect.
 // -1 effect for the Markdown actions' Back registration, which is `useBackClaim`'s own now.
-const HEAD_EFFECT_SHA256 = '8be50dd3f2463b905f5c9755248a88e3c570df9b8203e4544108c0cb397f821d'
+// Refreshed for the new-tab agent options effect, which shows this connection's cached agents
+// before refreshing them. Count unchanged.
+const HEAD_EFFECT_SHA256 = '2e94e06aca66ecde8893e7f6fab0e3e8dcb340e07dacaddb6250f02cb1bb95a1'
 const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fef5cc45fde6f8189581'
 // Same pin for the 12 bodies that sit in nested functions rather than callbacks, moved by the same
 // rewrite of those send and read expressions. Count unchanged. Refreshed again in step 6 for
@@ -171,8 +173,9 @@ const HEAD_TIMER_CLEANUP_SHA256 = 'c73f1d1c2cc89642f3d727d6f3b6b81860a9d6f342345
 // 529 -> 530, and the host-JSX hash: `key="terminal-frame"`, so the page's frame mounts with its
 // onLayout rather than reusing the loading View. Native measured 47 rows before and after: its
 // frame reported either way, and its window is its frame, so both measure paths agree there.
+// +1 string: the root layout's route breadcrumb joins segments with '\u0000'.
 const HEAD_RUNTIME_STRING_SHA256 =
-  '7deef811ca97c637d4b0d8c3907863044cfb8456295443adaac135276cdde939'
+  '903b86c848947cff7b65a9b473c2874ebf400ed33a7d807fb085ff7037644ffc'
 // Moved by both of the dock's fields: their refs, and the live one's submit handler, are the seam's now.
 const HEAD_HOST_JSX_SHA256 = 'ca4c8b46af86a05cb671de91c22111c9e4aaeefd4a04c7b8b09976ca01a31c9b'
 const HEAD_LEAF_JSX_SHA256 = 'c7e1a4b90197697f1eaa640c38da63281b4f7b84fb036ae2152f00c2f7d7cb77'
@@ -611,7 +614,7 @@ describe('mobile session route extraction parity', () => {
 
   it('preserves runtime strings, styles, and the expanded JSX tree', () => {
     const strings = readRuntimeStrings()
-    expect(strings).toHaveLength(531)
+    expect(strings).toHaveLength(532)
     expect(hash(strings)).toBe(HEAD_RUNTIME_STRING_SHA256)
     const jsx = readJsxFacts(readDefinitions())
     expect(jsx.host).toHaveLength(124)
