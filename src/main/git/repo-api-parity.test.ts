@@ -9,7 +9,6 @@ describe('repo public API parity', () => {
         'buildSearchBaseRefsArgv',
         'getBaseRefDefault',
         'getBranchConflictKind',
-        'getDefaultBaseRef',
         'getDefaultRemote',
         'getGitRepoRoot',
         'getLinkedWorktreeMainRepoRoot',
