@@ -68,7 +68,7 @@ describe('Endpoint file lifecycle', () => {
       expect(contents).toContain(`${prefix}DOLPHIN_AGENT_HOOK_VERSION=1`)
       expect(contents).toContain(`${prefix}DOLPHIN_AGENT_HOOK_TRANSPORT=raw-json-v1`)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -84,7 +84,7 @@ describe('Endpoint file lifecycle', () => {
       const mode = statSync(filePath).mode & 0o777
       expect(mode).toBe(0o600)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -93,7 +93,7 @@ describe('Endpoint file lifecycle', () => {
     await server.start({ env: 'production', userDataPath })
     const firstPath = server.endpointFilePath
     const firstToken = server.buildPtyEnv().DOLPHIN_AGENT_HOOK_TOKEN
-    server.stop()
+    await server.stop()
 
     await server.start({ env: 'production', userDataPath })
     try {
@@ -111,7 +111,7 @@ describe('Endpoint file lifecycle', () => {
       expect(contents).toContain(`DOLPHIN_AGENT_HOOK_TOKEN=${secondToken}`)
       expect(contents).not.toContain(`DOLPHIN_AGENT_HOOK_TOKEN=${firstToken}`)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -121,7 +121,7 @@ describe('Endpoint file lifecycle', () => {
     await server.start({ env: 'production', userDataPath })
     const filePath = server.endpointFilePath!
     expect(existsSync(filePath)).toBe(true)
-    server.stop()
+    await server.stop()
     expect(existsSync(filePath)).toBe(true)
   })
 
@@ -132,7 +132,7 @@ describe('Endpoint file lifecycle', () => {
       const env = server.buildPtyEnv()
       expect(env.DOLPHIN_AGENT_HOOK_ENDPOINT).toBe(server.endpointFilePath)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -150,7 +150,7 @@ describe('Endpoint file lifecycle', () => {
       expect(env.DOLPHIN_AGENT_HOOK_PORT).toBeTruthy()
       expect(env.DOLPHIN_AGENT_HOOK_TOKEN).toBeTruthy()
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -170,8 +170,8 @@ describe('Endpoint file lifecycle', () => {
       expect(existsSync(firstServer.endpointFilePath!)).toBe(true)
       expect(existsSync(secondServer.endpointFilePath!)).toBe(true)
     } finally {
-      firstServer.stop()
-      secondServer.stop()
+      await firstServer.stop()
+      await secondServer.stop()
     }
   })
 
@@ -185,7 +185,7 @@ describe('Endpoint file lifecycle', () => {
       expect(env.DOLPHIN_AGENT_HOOK_PORT).toBeTruthy()
       expect(env.DOLPHIN_AGENT_HOOK_TOKEN).toBeTruthy()
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -211,7 +211,7 @@ describe('Endpoint file lifecycle', () => {
       expect(existsSync(staleTmp)).toBe(false)
       expect(existsSync(freshTmp)).toBe(true)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -226,7 +226,7 @@ describe('Endpoint file lifecycle', () => {
       expect(server.buildPtyEnv().DOLPHIN_AGENT_HOOK_PORT).toBeTruthy()
       expect(server.buildPtyEnv().DOLPHIN_AGENT_HOOK_TOKEN).toBeTruthy()
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -310,7 +310,7 @@ describe('Endpoint file lifecycle', () => {
         .trim()
       expect(out).toBe(expectedPort)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 })

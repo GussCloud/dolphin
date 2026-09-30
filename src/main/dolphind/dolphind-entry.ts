@@ -165,7 +165,7 @@ async function startDolphindRuntime(
         } finally {
           uninstallObservedStatusIdentity()
           uninstallHookStatusRepublish()
-          agentHookServer.stop()
+          await agentHookServer.stop()
         }
       }
     }

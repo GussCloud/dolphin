@@ -72,7 +72,7 @@ describe('AgentHookServer listener replay', () => {
         })
       ])
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -125,7 +125,7 @@ describe('AgentHookServer listener replay', () => {
       unsubscribePlugin()
       assistantRetry.mockRestore()
       codexRetry.mockRestore()
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -154,7 +154,7 @@ describe('AgentHookServer listener replay', () => {
     } finally {
       assistantRetry.mockRestore()
       codexRetry.mockRestore()
-      server.stop()
+      await server.stop()
     }
   })
   it('ignores local nested Claude Stop while a parent Codex hook status is active', async () => {
@@ -212,7 +212,7 @@ describe('AgentHookServer listener replay', () => {
         })
       )
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -257,7 +257,7 @@ describe('AgentHookServer listener replay', () => {
       expect(server._getStateForTests().claudeRunningNonAgentTaskPaneKeys.has(PANE)).toBe(true)
       expect(server._getStateForTests().claudeActiveSessionCronPaneKeys.has(PANE)).toBe(true)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -301,7 +301,7 @@ describe('AgentHookServer listener replay', () => {
         })
       )
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -335,7 +335,7 @@ describe('AgentHookServer listener replay', () => {
         reason: 'empty_pane_key'
       })
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -400,7 +400,7 @@ describe('AgentHookServer listener replay', () => {
       // Why: assert fanout still fires on the second event too, else a refactor that drops it would pass on warn-count alone.
       expect(listener).toHaveBeenCalledTimes(2)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -446,7 +446,7 @@ describe('AgentHookServer listener replay', () => {
       )
       expect(warn).not.toHaveBeenCalled()
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -496,7 +496,7 @@ describe('AgentHookServer listener replay', () => {
         })
       )
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -600,7 +600,7 @@ describe('AgentHookServer listener replay', () => {
         })
       )
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -641,7 +641,7 @@ describe('AgentHookServer listener replay', () => {
         })
       )
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -682,7 +682,7 @@ describe('AgentHookServer listener replay', () => {
         })
       )
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 })

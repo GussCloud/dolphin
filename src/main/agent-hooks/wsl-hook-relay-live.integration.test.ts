@@ -52,9 +52,9 @@ describe.skipIf(process.platform === 'win32')(
       }
     }, 120_000)
 
-    afterEach(() => {
+    afterEach(async () => {
       manager?.disposeAll()
-      dolphinServer?.stop()
+      await dolphinServer?.stop()
       child?.kill()
       rmSync(fakeHome, { recursive: true, force: true })
     })
