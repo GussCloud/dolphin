@@ -10,7 +10,7 @@ const initialState = useAppStore.getInitialState()
 
 function makeRepo(overrides: Partial<Repo> & { id: string }): Repo {
   return {
-    path: '/home/neil/repo',
+    path: '/home/alex/repo',
     displayName: 'repo',
     badgeColor: '#000',
     addedAt: 0,
@@ -59,13 +59,13 @@ describe('getCombinedDiffSectionConnectionId', () => {
   it('routes a section to its SSH child repo in a mixed folder workspace (#6688)', () => {
     const workspaceKey = folderWorkspaceKey('folder-workspace-1')
     useAppStore.setState({
-      folderWorkspaces: [makeFolderWorkspace('/home/neil/platform')],
-      projectGroups: [makeGroup('/home/neil/platform')],
+      folderWorkspaces: [makeFolderWorkspace('/home/alex/platform')],
+      projectGroups: [makeGroup('/home/alex/platform')],
       repos: [
-        makeRepo({ id: 'repo-local', path: '/home/neil/platform/web', projectGroupId: 'group-1' }),
+        makeRepo({ id: 'repo-local', path: '/home/alex/platform/web', projectGroupId: 'group-1' }),
         makeRepo({
           id: 'repo-ssh',
-          path: '/home/neil/platform/api',
+          path: '/home/alex/platform/api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-1'
         })
@@ -76,15 +76,15 @@ describe('getCombinedDiffSectionConnectionId', () => {
     // Section paths are repo-tree-relative; joined onto the workspace root they
     // must resolve to the owning child repo, not the ambiguous workspace.
     expect(
-      getCombinedDiffSectionConnectionId(workspaceKey, '/home/neil/platform', 'api/src/index.ts')
+      getCombinedDiffSectionConnectionId(workspaceKey, '/home/alex/platform', 'api/src/index.ts')
     ).toBe('ssh-1')
     // Local child repo -> no connection (local read).
     expect(
-      getCombinedDiffSectionConnectionId(workspaceKey, '/home/neil/platform', 'web/src/index.ts')
+      getCombinedDiffSectionConnectionId(workspaceKey, '/home/alex/platform', 'web/src/index.ts')
     ).toBeUndefined()
     // A path owned by no single child repo stays ambiguous.
     expect(
-      getCombinedDiffSectionConnectionId(workspaceKey, '/home/neil/platform', 'README.md')
+      getCombinedDiffSectionConnectionId(workspaceKey, '/home/alex/platform', 'README.md')
     ).toBeUndefined()
   })
 
@@ -94,17 +94,17 @@ describe('getCombinedDiffSectionConnectionId', () => {
     // resolution must fall through to composing the section path — the behavior
     // this test guards. A single-SSH workspace would resolve before joinPath.
     useAppStore.setState({
-      folderWorkspaces: [makeFolderWorkspace('C:\\Users\\neil\\platform')],
-      projectGroups: [makeGroup('C:\\Users\\neil\\platform')],
+      folderWorkspaces: [makeFolderWorkspace('C:\\Users\\alex\\platform')],
+      projectGroups: [makeGroup('C:\\Users\\alex\\platform')],
       repos: [
         makeRepo({
           id: 'repo-local',
-          path: 'C:\\Users\\neil\\platform\\web',
+          path: 'C:\\Users\\alex\\platform\\web',
           projectGroupId: 'group-1'
         }),
         makeRepo({
           id: 'repo-ssh',
-          path: 'C:\\Users\\neil\\platform\\api',
+          path: 'C:\\Users\\alex\\platform\\api',
           projectGroupId: 'group-1',
           connectionId: 'ssh-1'
         })
@@ -115,14 +115,14 @@ describe('getCombinedDiffSectionConnectionId', () => {
     expect(
       getCombinedDiffSectionConnectionId(
         workspaceKey,
-        'C:\\Users\\neil\\platform',
+        'C:\\Users\\alex\\platform',
         'api/src/index.ts'
       )
     ).toBe('ssh-1')
     expect(
       getCombinedDiffSectionConnectionId(
         workspaceKey,
-        'C:\\Users\\neil\\platform',
+        'C:\\Users\\alex\\platform',
         'web/src/index.ts'
       )
     ).toBeUndefined()

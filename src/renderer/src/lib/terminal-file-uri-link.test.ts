@@ -20,9 +20,9 @@ describe('detectTerminalFileUriLinks', () => {
   })
 
   it('keeps standard unescaped parentheses and apostrophes inside the path', () => {
-    const uri = "file:///tmp/Brennan's%20Report%20(final)"
+    const uri = "file:///tmp/Spencer's%20Report%20(final)"
     const [link] = detectTerminalFileUriLinks(`open (${uri})`)
-    expect(link.pathText).toBe("/tmp/Brennan's Report (final)")
+    expect(link.pathText).toBe("/tmp/Spencer's Report (final)")
     expect(link.displayText).toBe(uri)
   })
 

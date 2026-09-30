@@ -865,7 +865,7 @@ describe('gh error classification', () => {
   // per-repo selector to an origin fork that has issues disabled.
   it('classifies "has disabled issues" stderr as issues_disabled', () => {
     const stderr =
-      "Command failed: gh issue list --limit 36 --json number,title,state --repo brennanb2025/dolphin --state open\nthe 'brennanb2025/dolphin' repository has disabled issues"
+      "Command failed: gh issue list --limit 36 --json number,title,state --repo spencerb2025/dolphin --state open\nthe 'spencerb2025/dolphin' repository has disabled issues"
     expect(classifyGhError(stderr)).toEqual({
       type: 'issues_disabled',
       message: 'Issues are disabled on this repository.'

@@ -17,7 +17,7 @@ import {
   RESTRICTED_PACKAGES_ACE
 } from './windows-install-dir-acl.test-fixture'
 
-const INSTALL_DIR = 'C:\\Users\\neil\\AppData\\Local\\Programs\\dolphin'
+const INSTALL_DIR = 'C:\\Users\\alex\\AppData\\Local\\Programs\\dolphin'
 const ORPHAN = ORPHAN_PACKAGE_ACE
 const RESTRICTED_GRANT = RESTRICTED_PACKAGES_ACE
 

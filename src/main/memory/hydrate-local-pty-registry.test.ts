@@ -581,16 +581,17 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
 
   it('matches Windows worktree path spelling while preserving the daemon worktree id', async () => {
     const { hydrate, listRegisteredPtys } = await loadFresh()
-    const worktreeId = 'repo-a::C:/Users/Neil/Dolphin'
+    const worktreeId = 'repo-a::C:/Users/Alex/Dolphin'
     const ptyId = `${worktreeId}@@cafebabe`
     getDaemonProviderMock.mockReturnValue(
       makeProvider([
-        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Neil/Dolphin' } as unknown as SessionInfo
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixture sets only the SessionInfo fields hydration reads.
+        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Alex/Dolphin' } as unknown as SessionInfo
       ])
     )
     listLocalRepoWorktreesStrictMock.mockResolvedValue([
       {
-        path: 'c:\\users\\neil\\dolphin',
+        path: 'c:\\users\\alex\\dolphin',
         head: '',
         branch: '',
         isBare: false,
@@ -598,29 +599,30 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
       }
     ])
 
-    await hydrate(makeStore([{ id: 'repo-a', path: 'C:\\Users\\Neil\\Dolphin' }]))
+    await hydrate(makeStore([{ id: 'repo-a', path: 'C:\\Users\\Alex\\Dolphin' }]))
 
     expect(listRegisteredPtys()).toEqual([expect.objectContaining({ ptyId, worktreeId })])
   })
 
   it('fails closed when live worktrees collide on one normalized key', async () => {
     const { hydrate, listRegisteredPtys } = await loadFresh()
-    const ptyId = 'repo-a::C:/Users/Neil/Dolphin@@cafebabe'
+    const ptyId = 'repo-a::C:/Users/Alex/Dolphin@@cafebabe'
     getDaemonProviderMock.mockReturnValue(
       makeProvider([
-        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Neil/Dolphin' } as unknown as SessionInfo
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixture sets only the SessionInfo fields hydration reads.
+        { sessionId: ptyId, pid: 4242, cwd: 'C:/Users/Alex/Dolphin' } as unknown as SessionInfo
       ])
     )
     listLocalRepoWorktreesStrictMock.mockResolvedValue([
       {
-        path: 'C:/Users/Neil/Dolphin',
+        path: 'C:/Users/Alex/Dolphin',
         head: '',
         branch: '',
         isBare: false,
         isMainWorktree: true
       },
       {
-        path: 'c:\\users\\neil\\dolphin',
+        path: 'c:\\users\\alex\\dolphin',
         head: '',
         branch: '',
         isBare: false,
@@ -628,27 +630,28 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
       }
     ])
 
-    await hydrate(makeStore([{ id: 'repo-a', path: 'C:/Users/Neil/Dolphin' }]))
+    await hydrate(makeStore([{ id: 'repo-a', path: 'C:/Users/Alex/Dolphin' }]))
 
     expect(listRegisteredPtys()).toHaveLength(0)
   })
 
   it('matches local WSL UNC aliases without treating WSL as a remote host', async () => {
     const { hydrate, listRegisteredPtys } = await loadFresh()
-    const worktreeId = 'repo-a::\\\\wsl$\\Ubuntu\\home\\neil\\dolphin'
+    const worktreeId = 'repo-a::\\\\wsl$\\Ubuntu\\home\\alex\\dolphin'
     const ptyId = `${worktreeId}@@cafebabe`
     getDaemonProviderMock.mockReturnValue(
       makeProvider([
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixture sets only the SessionInfo fields hydration reads.
         {
           sessionId: ptyId,
           pid: 4242,
-          cwd: '\\\\wsl$\\Ubuntu\\home\\neil\\dolphin'
+          cwd: '\\\\wsl$\\Ubuntu\\home\\alex\\dolphin'
         } as unknown as SessionInfo
       ])
     )
     listLocalRepoWorktreesStrictMock.mockResolvedValue([
       {
-        path: '\\\\wsl.localhost\\ubuntu\\home\\neil\\dolphin',
+        path: '\\\\wsl.localhost\\ubuntu\\home\\alex\\dolphin',
         head: '',
         branch: '',
         isBare: false,
@@ -656,7 +659,7 @@ describe('hydrateLocalPtyRegistryAtBoot', () => {
       }
     ])
 
-    await hydrate(makeStore([{ id: 'repo-a', path: '\\\\wsl$\\Ubuntu\\home\\neil\\dolphin' }]))
+    await hydrate(makeStore([{ id: 'repo-a', path: '\\\\wsl$\\Ubuntu\\home\\alex\\dolphin' }]))
 
     expect(listRegisteredPtys()).toEqual([expect.objectContaining({ ptyId, worktreeId })])
   })

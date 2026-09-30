@@ -42,7 +42,7 @@ describe('DolphinRuntimeService', () => {
       {
         path: '/tmp/worktree-a',
         head: 'abc',
-        branch: 'refs/heads/Jinwoo-H/test-3a',
+        branch: 'refs/heads/Morgan-H/test-3a',
         isBare: false,
         isMainWorktree: false
       }
@@ -50,9 +50,9 @@ describe('DolphinRuntimeService', () => {
 
     const runtime = new DolphinRuntimeService(store)
 
-    const worktree = await runtime.showManagedWorktree('branch:Jinwoo-H/test-3a')
+    const worktree = await runtime.showManagedWorktree('branch:Morgan-H/test-3a')
     expect(worktree).toMatchObject({
-      branch: 'refs/heads/Jinwoo-H/test-3a',
+      branch: 'refs/heads/Morgan-H/test-3a',
       path: '/tmp/worktree-a'
     })
   })

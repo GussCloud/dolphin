@@ -100,12 +100,12 @@ describe('useGitHubSlugMetadata', () => {
     let assigneeLogins: string[] = []
     apiMocks.listAssignableUsersBySlug.mockResolvedValue({
       ok: true,
-      users: [{ login: 'jinwoo', name: 'Jinwoo', avatarUrl: 'https://example.test/avatar.png' }]
+      users: [{ login: 'morgan', name: 'Morgan', avatarUrl: 'https://example.test/avatar.png' }]
     })
 
     function AssigneesProbe(): null {
       renders += 1
-      const metadata = useRepoAssigneesBySlug('gusscloud', 'dolphin', ['jinwoo'], {
+      const metadata = useRepoAssigneesBySlug('gusscloud', 'dolphin', ['morgan'], {
         activeRuntimeEnvironmentId: null
       })
       assigneeLogins = metadata.data.map((user) => user.login)
@@ -115,12 +115,12 @@ describe('useGitHubSlugMetadata', () => {
     renderProbe(<AssigneesProbe />)
     await flushEffects()
 
-    expect(assigneeLogins).toEqual(['jinwoo'])
+    expect(assigneeLogins).toEqual(['morgan'])
     expect(apiMocks.listAssignableUsersBySlug).toHaveBeenCalledExactlyOnceWith({
       owner: 'gusscloud',
       repo: 'dolphin',
       host: 'github.com',
-      seedLogins: ['jinwoo']
+      seedLogins: ['morgan']
     })
     expect(renders).toBeLessThanOrEqual(4)
   })
@@ -183,7 +183,7 @@ describe('useGitHubSlugMetadata', () => {
 
     function FailingAssigneesProbe(): null {
       renders += 1
-      const metadata = useRepoAssigneesBySlug('gusscloud', 'dolphin', ['jinwoo'], {
+      const metadata = useRepoAssigneesBySlug('gusscloud', 'dolphin', ['morgan'], {
         activeRuntimeEnvironmentId: null
       })
       error = metadata.error

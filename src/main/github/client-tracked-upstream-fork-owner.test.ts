@@ -118,7 +118,7 @@ describe('getPRForBranch', () => {
       ],
       headRepo: { owner: 'origin-owner', repo: 'dolphin' }
     })
-    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'brennanb2025', repo: 'dolphin' })
+    getOwnerRepoForRemoteMock.mockResolvedValueOnce({ owner: 'spencerb2025', repo: 'dolphin' })
     ghExecFileAsyncMock
       .mockResolvedValueOnce({ stdout: JSON.stringify([]) })
       .mockResolvedValueOnce({ stdout: JSON.stringify([]) })
@@ -134,7 +134,7 @@ describe('getPRForBranch', () => {
             mergeable: true,
             base: { ref: 'main', sha: 'base-oid' },
             head: {
-              ref: 'brennanb2025/worktree-remove-fix',
+              ref: 'spencerb2025/worktree-remove-fix',
               sha: 'same-name-fork-head-oid'
             }
           }
@@ -151,31 +151,31 @@ describe('getPRForBranch', () => {
           isDraft: false,
           mergeable: 'MERGEABLE',
           baseRefName: 'main',
-          headRefName: 'brennanb2025/worktree-remove-fix',
+          headRefName: 'spencerb2025/worktree-remove-fix',
           baseRefOid: 'base-oid',
           headRefOid: 'same-name-fork-head-oid'
         })
       })
     gitExecFileAsyncMock.mockResolvedValueOnce({
-      stdout: 'brennanb2025/worktree-remove-fix\0brennan/brennanb2025/worktree-remove-fix\n',
+      stdout: 'spencerb2025/worktree-remove-fix\0spencer/spencerb2025/worktree-remove-fix\n',
       stderr: ''
     })
 
-    const pr = await getPRForBranch('/repo-root', 'brennanb2025/worktree-remove-fix')
+    const pr = await getPRForBranch('/repo-root', 'spencerb2025/worktree-remove-fix')
 
-    expect(getOwnerRepoForRemoteMock).toHaveBeenCalledWith('/repo-root', 'brennan', undefined)
+    expect(getOwnerRepoForRemoteMock).toHaveBeenCalledWith('/repo-root', 'spencer', undefined)
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(
       3,
       [
         'api',
-        'repos/gusscloud/dolphin/pulls?head=brennanb2025%3Abrennanb2025%2Fworktree-remove-fix&state=all&per_page=1'
+        'repos/gusscloud/dolphin/pulls?head=spencerb2025%3Aspencerb2025%2Fworktree-remove-fix&state=all&per_page=1'
       ],
       { cwd: '/repo-root' }
     )
     expect(pr).toMatchObject({
       number: 6433,
       prRepo: { owner: 'gusscloud', repo: 'dolphin' },
-      headRepo: { owner: 'brennanb2025', repo: 'dolphin' }
+      headRepo: { owner: 'spencerb2025', repo: 'dolphin' }
     })
   })
 

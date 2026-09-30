@@ -23,7 +23,7 @@ const LOCAL_WINDOWS_ARGS: AgentResumeLaunchTargetArgs = {
   projectRuntime: undefined,
   connectionId: null,
   executionHostId: 'local',
-  worktreePath: 'C:\\Users\\neil\\dolphin\\workspaces\\dolphin\\feature',
+  worktreePath: 'C:\\Users\\alex\\dolphin\\workspaces\\dolphin\\feature',
   terminalWindowsShell: null
 }
 
@@ -101,7 +101,7 @@ describe('resolveAgentResumeLaunchTarget on a Windows client', () => {
   it('keeps POSIX quoting for a WSL UNC worktree', async () => {
     await expect(
       resolveWith({
-        worktreePath: '\\\\wsl.localhost\\Ubuntu\\home\\neil\\repo',
+        worktreePath: '\\\\wsl.localhost\\Ubuntu\\home\\alex\\repo',
         terminalWindowsShell: 'cmd.exe'
       })
     ).resolves.toEqual({ platform: 'linux', shell: undefined })
@@ -141,7 +141,7 @@ describe('resolveAgentResumeLaunchTarget off Windows', () => {
   it('ignores a stale Windows shell setting on a mac client', async () => {
     await expect(
       resolveWith({
-        worktreePath: '/Users/neil/repo',
+        worktreePath: '/Users/alex/repo',
         terminalWindowsShell: 'cmd.exe'
       })
     ).resolves.toEqual({ platform: 'darwin', shell: undefined })

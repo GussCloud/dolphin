@@ -58,15 +58,15 @@ describe('isWslUncPathForCallerLinuxPath', () => {
   it('matches the Linux path a WSL shell prints against both UNC spellings of its own distro', () => {
     expect(
       isWslUncPathForCallerLinuxPath(
-        '\\\\wsl.localhost\\Ubuntu-24.04\\home\\neil\\qa-repo',
-        '/home/neil/qa-repo',
+        '\\\\wsl.localhost\\Ubuntu-24.04\\home\\alex\\qa-repo',
+        '/home/alex/qa-repo',
         UBUNTU
       )
     ).toBe(true)
     expect(
       isWslUncPathForCallerLinuxPath(
-        '//wsl$/ubuntu-24.04/home/neil/qa-repo',
-        '/home/neil/qa-repo',
+        '//wsl$/ubuntu-24.04/home/alex/qa-repo',
+        '/home/alex/qa-repo',
         UBUNTU
       )
     ).toBe(true)
@@ -76,8 +76,8 @@ describe('isWslUncPathForCallerLinuxPath', () => {
   it('refuses a Linux path another distro spells identically', () => {
     expect(
       isWslUncPathForCallerLinuxPath(
-        '\\\\wsl.localhost\\Debian\\home\\neil\\qa-repo',
-        '/home/neil/qa-repo',
+        '\\\\wsl.localhost\\Debian\\home\\alex\\qa-repo',
+        '/home/alex/qa-repo',
         UBUNTU
       )
     ).toBe(false)
@@ -86,15 +86,15 @@ describe('isWslUncPathForCallerLinuxPath', () => {
   it('keeps the Linux tail case-sensitive and refuses a non-WSL path', () => {
     expect(
       isWslUncPathForCallerLinuxPath(
-        '\\\\wsl.localhost\\Ubuntu-24.04\\home\\Neil\\qa-repo',
-        '/home/neil/qa-repo',
+        '\\\\wsl.localhost\\Ubuntu-24.04\\home\\Alex\\qa-repo',
+        '/home/alex/qa-repo',
         UBUNTU
       )
     ).toBe(false)
-    expect(isWslUncPathForCallerLinuxPath('/home/neil/qa-repo', '/home/neil/qa-repo', UBUNTU)).toBe(
+    expect(isWslUncPathForCallerLinuxPath('/home/alex/qa-repo', '/home/alex/qa-repo', UBUNTU)).toBe(
       false
     )
-    expect(isWslUncPathForCallerLinuxPath('C:\\repos\\qa-repo', '/home/neil/qa-repo', UBUNTU)).toBe(
+    expect(isWslUncPathForCallerLinuxPath('C:\\repos\\qa-repo', '/home/alex/qa-repo', UBUNTU)).toBe(
       false
     )
   })
@@ -104,14 +104,14 @@ describe('isWslUncPathForLinuxMountedPath', () => {
   it('matches a shared /mnt drive regardless of distro', () => {
     expect(
       isWslUncPathForLinuxMountedPath(
-        '\\\\wsl.localhost\\Ubuntu\\mnt\\c\\Users\\Neil\\repo',
-        '/mnt/c/users/neil/repo'
+        '\\\\wsl.localhost\\Ubuntu\\mnt\\c\\Users\\Alex\\repo',
+        '/mnt/c/users/alex/repo'
       )
     ).toBe(true)
     expect(
       isWslUncPathForLinuxMountedPath(
-        '\\\\wsl.localhost\\Debian\\mnt\\c\\Users\\Neil\\repo',
-        '/mnt/c/users/neil/repo'
+        '\\\\wsl.localhost\\Debian\\mnt\\c\\Users\\Alex\\repo',
+        '/mnt/c/users/alex/repo'
       )
     ).toBe(true)
   })
@@ -119,8 +119,8 @@ describe('isWslUncPathForLinuxMountedPath', () => {
   it('keeps non-mounted Linux paths out of the distro-independent match', () => {
     expect(
       isWslUncPathForLinuxMountedPath(
-        '\\\\wsl.localhost\\Ubuntu\\home\\Neil\\repo',
-        '/home/neil/repo'
+        '\\\\wsl.localhost\\Ubuntu\\home\\Alex\\repo',
+        '/home/alex/repo'
       )
     ).toBe(false)
   })

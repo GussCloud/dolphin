@@ -3,8 +3,6 @@ title: Privacy & Telemetry
 description: What anonymous usage data Dolphin collects, what it never collects, and how to opt out.
 ---
 
-import { ImagePlaceholder } from '@/components/docs/prose'
-
 This page describes the anonymous product-usage telemetry we collect in packaged Dolphin builds, what we never collect, and how to opt out.
 
 ## Summary
@@ -42,15 +40,10 @@ Every field we transmit is either a fixed enum value, a version string, or the a
 You can disable telemetry in three ways. Any one of them is sufficient; they compose.
 
 1. **In the app.** Settings → Privacy → toggle "Share anonymous usage data" off. The change is immediate and persistent.
-
-<ImagePlaceholder
-  src="/docs/privacy-toggle.png"
-  caption="Settings → Privacy — toggle 'Share anonymous usage data' off to disable telemetry."
-/>
 2. **`DO_NOT_TRACK=1`** — community-standard environment variable. Disables transmission for that
-launch. Unsetting it restores your stored preference on the next launch. 3.
-**`DOLPHIN_TELEMETRY_DISABLED=1`** — Dolphin-specific kill switch with the same semantics as
-`DO_NOT_TRACK`.
+   launch. Unsetting it restores your stored preference on the next launch.
+3. **`DOLPHIN_TELEMETRY_DISABLED=1`** — Dolphin-specific kill switch with the same semantics as
+   `DO_NOT_TRACK`.
 
 ## Where the data goes
 

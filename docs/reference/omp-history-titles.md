@@ -30,5 +30,5 @@ both cold and incrementally cached scans. It checks one full parse, one append
 parse and identical-object reuse on an unchanged scan. All home/config/data roots
 are disposable; no model requests are made.
 
-This is the OMP subset of the history-name behavior proposed in PR #15696 by
-Brennan Benson. Pi naming and title changes in the terminal are separate concerns.
+This is the OMP subset of the history-name behavior proposed upstream.
+Pi naming and title changes in the terminal are separate concerns.

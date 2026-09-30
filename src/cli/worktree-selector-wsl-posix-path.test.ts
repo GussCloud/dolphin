@@ -1,5 +1,5 @@
 /**
- * The CLI half of #16628: inside WSL the user types `/home/neil/qa-repo`, the runtime stored the
+ * The CLI half of #16628: inside WSL the user types `/home/alex/qa-repo`, the runtime stored the
  * UNC path Windows sees. Only this process sits in the distro, so only it may translate — and the
  * same selector reaches `worktree rm`, so an unprovable distro must leave the path alone.
  */
@@ -10,8 +10,8 @@ import { normalizeWorktreeSelectorForCaller } from './selectors'
 
 const UBUNTU = 'Ubuntu-24.04'
 const DEBIAN = 'Debian'
-const LINUX_PATH = '/home/neil/qa-repo'
-const MOUNTED_PATH = '/mnt/c/Users/neil/qa-repo'
+const LINUX_PATH = '/home/alex/qa-repo'
+const MOUNTED_PATH = '/mnt/c/Users/alex/qa-repo'
 
 function uncPath(distro: string, linuxPath: string): string {
   return `\\\\wsl.localhost\\${distro}${linuxPath.replace(/\//g, '\\')}`
@@ -39,11 +39,11 @@ afterEach(() => {
 
 describe('normalizeWorktreeSelectorForCaller in a WSL shell (#16628)', () => {
   it('resolves a shared /mnt drive without requiring the caller distro', async () => {
-    const storedPath = uncPath(UBUNTU, '/mnt/c/Users/neil/qa-repo')
+    const storedPath = uncPath(UBUNTU, '/mnt/c/Users/alex/qa-repo')
     const { client } = makeClient([storedPath])
 
     await expect(
-      normalizeWorktreeSelectorForCaller(`path:${MOUNTED_PATH}`, '/mnt/c/Users/neil', client)
+      normalizeWorktreeSelectorForCaller(`path:${MOUNTED_PATH}`, '/mnt/c/Users/alex', client)
     ).resolves.toBe(`path:${storedPath}`)
   })
 
@@ -57,7 +57,7 @@ describe('normalizeWorktreeSelectorForCaller in a WSL shell (#16628)', () => {
     await expect(
       normalizeWorktreeSelectorForCaller(
         `path:${LINUX_PATH}`,
-        uncPath(UBUNTU, '/home/neil'),
+        uncPath(UBUNTU, '/home/alex'),
         client
       )
     ).resolves.toBe(`path:${storedPath}`)
@@ -71,7 +71,7 @@ describe('normalizeWorktreeSelectorForCaller in a WSL shell (#16628)', () => {
     await expect(
       normalizeWorktreeSelectorForCaller(
         `path:${LINUX_PATH}`,
-        uncPath(DEBIAN, '/home/neil'),
+        uncPath(DEBIAN, '/home/alex'),
         client
       )
     ).resolves.toBe(`path:${LINUX_PATH}`)
@@ -83,15 +83,15 @@ describe('normalizeWorktreeSelectorForCaller in a WSL shell (#16628)', () => {
     await expect(
       normalizeWorktreeSelectorForCaller(
         `path:${LINUX_PATH}`,
-        uncPath(DEBIAN, '/home/neil'),
+        uncPath(DEBIAN, '/home/alex'),
         client
       )
     ).resolves.toBe(`path:${uncPath(DEBIAN, LINUX_PATH)}`)
   })
 
   it.each([
-    ['a Linux-native cwd', '/home/neil', `path:${LINUX_PATH}`],
-    ['a Windows drive cwd', 'C:\\Users\\neil', `path:${LINUX_PATH}`]
+    ['a Linux-native cwd', '/home/alex', `path:${LINUX_PATH}`],
+    ['a Windows drive cwd', 'C:\\Users\\alex', `path:${LINUX_PATH}`]
   ])('never lists worktrees for %s', async (_label, cwd, selector) => {
     const { client, call } = makeClient([uncPath(UBUNTU, LINUX_PATH)])
     vi.stubEnv('WSL_DISTRO_NAME', UBUNTU)
@@ -105,12 +105,12 @@ describe('normalizeWorktreeSelectorForCaller in a WSL shell (#16628)', () => {
     ['a relative path', 'path:qa-repo'],
     // A UNC path is already the runtime's spelling; a backslash inside a Linux path has no UNC form.
     ['a UNC path selector', `path:${uncPath(UBUNTU, LINUX_PATH)}`],
-    ['a Linux path containing a backslash', 'path:/home/neil/qa\\repo']
+    ['a Linux path containing a backslash', 'path:/home/alex/qa\\repo']
   ])('leaves %s untranslated', async (_label, selector) => {
     const { client, call } = makeClient([uncPath(UBUNTU, LINUX_PATH)])
 
     await expect(
-      normalizeWorktreeSelectorForCaller(selector, uncPath(UBUNTU, '/home/neil'), client)
+      normalizeWorktreeSelectorForCaller(selector, uncPath(UBUNTU, '/home/alex'), client)
     ).resolves.toBe(selector)
     expect(call).not.toHaveBeenCalled()
   })
@@ -121,7 +121,7 @@ describe('normalizeWorktreeSelectorForCaller in a WSL shell (#16628)', () => {
     await expect(
       normalizeWorktreeSelectorForCaller(
         `path:${LINUX_PATH}`,
-        uncPath(UBUNTU, '/home/neil'),
+        uncPath(UBUNTU, '/home/alex'),
         client
       )
     ).resolves.toBe(`path:${LINUX_PATH}`)

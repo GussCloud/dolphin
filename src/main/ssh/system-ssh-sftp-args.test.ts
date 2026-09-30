@@ -20,9 +20,9 @@ describe('translateSshArgsToSftpArgs', () => {
   it('sends the login name as an option, since sftp has no -l', () => {
     // `buildSshArgs` emits `-l` for a config alias no Host block claims. Throwing here would send
     // exactly those hosts to the transport this PR exists to stop using, silently.
-    const args = translateSshArgsToSftpArgs(['-l', 'neil', '--', 'awin'])
+    const args = translateSshArgsToSftpArgs(['-l', 'alex', '--', 'awin'])
 
-    expect(args).toEqual(['-o', 'User=neil', '--', 'awin'])
+    expect(args).toEqual(['-o', 'User=alex', '--', 'awin'])
   })
 
   it('translates the whole unclaimed-alias shape buildSshArgs emits', () => {
@@ -37,7 +37,7 @@ describe('translateSshArgsToSftpArgs', () => {
       '-p',
       '2222',
       '-l',
-      'neil',
+      'alex',
       '--',
       'awin'
     ])
@@ -52,7 +52,7 @@ describe('translateSshArgsToSftpArgs', () => {
       '-o',
       'Port=2222',
       '-o',
-      'User=neil',
+      'User=alex',
       '--',
       'awin'
     ])

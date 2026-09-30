@@ -18,10 +18,6 @@
 
 <h3 align="center"><a href="https://github.com/GussCloud/dolphin/releases/latest"><ins>Baixar o Dolphin para Windows</ins></a></h3>
 
-<p align="center">
-  <img src="../assets/readme-hero.jpg" alt="Dolphin rodando agentes em worktrees paralelas, com o app mobile no canto" width="960" />
-</p>
-
 ## Recursos
 
 - **Worktrees em paralelo:** envie um prompt para vários agentes, cada um na sua worktree git isolada, compare os resultados e faça merge do melhor.

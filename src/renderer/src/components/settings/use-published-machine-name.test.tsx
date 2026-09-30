@@ -15,12 +15,12 @@ beforeEach(() => {
 afterEach(() => cleanup())
 
 it('names a saved override at once and asks the runtime only for the detected name', async () => {
-  getStatus.mockResolvedValue({ machineName: 'Brennan’s MacBook Pro' })
+  getStatus.mockResolvedValue({ machineName: 'Spencer’s MacBook Pro' })
   const view = renderHook(({ saved }) => usePublishedMachineName(saved), {
     initialProps: { saved: '' }
   })
   await act(async () => {})
-  expect(view.result.current).toBe('Brennan’s MacBook Pro')
+  expect(view.result.current).toBe('Spencer’s MacBook Pro')
   expect(getStatus).toHaveBeenCalledTimes(1)
 
   // The runtime still answering with the old name must not reach the caption.
@@ -29,10 +29,10 @@ it('names a saved override at once and asks the runtime only for the detected na
   expect(view.result.current).toBe('QA Override Desk')
   expect(getStatus).toHaveBeenCalledTimes(1)
 
-  getStatus.mockResolvedValue({ machineName: 'Brennan’s MacBook Pro' })
+  getStatus.mockResolvedValue({ machineName: 'Spencer’s MacBook Pro' })
   view.rerender({ saved: '' })
   await act(async () => {})
-  expect(view.result.current).toBe('Brennan’s MacBook Pro')
+  expect(view.result.current).toBe('Spencer’s MacBook Pro')
   expect(getStatus).toHaveBeenCalledTimes(2)
 })
 

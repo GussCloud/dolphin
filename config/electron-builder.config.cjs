@@ -81,10 +81,6 @@ const devChannelRepo = isHourlyChannel
       ? `${forkIdentity.releaseRepo}-adhoc`
       : null
 const appId = forkIdentity.appId
-const featureWallResources = {
-  from: 'resources/onboarding/feature-wall',
-  to: 'onboarding/feature-wall'
-}
 // Why: freshness detection needs immutable identity metadata from this exact
 // app build, but never needs the skill package bytes or a runtime network read.
 const skillFreshnessResources = {
@@ -240,9 +236,6 @@ module.exports = {
     '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,CHANGELOG.md,README.md}',
     '!{.env,.env.*,.npmrc,pnpm-lock.yaml}',
     '!tsconfig.json',
-    // Why: feature-wall media is copied via extraResources so runtime can read
-    // it from process.resourcesPath; exclude the source copy from app.asar.
-    '!resources/onboarding/feature-wall/**',
     '!resources/skills/**',
     // Why: bundled plugins ship via extraResources to resources/plugins/launch;
     // packing the source tree into app.asar would duplicate those exact bytes.
@@ -481,8 +474,7 @@ module.exports = {
       {
         from: 'native/computer-use-windows/runtime.ps1',
         to: 'computer-use-windows/runtime.ps1'
-      },
-      featureWallResources
+      }
     ]
   },
   nsis: {
@@ -561,8 +553,7 @@ module.exports = {
       {
         from: 'native/computer-use-macos/.build/release/Dolphin Computer Use.app',
         to: 'Dolphin Computer Use.app'
-      },
-      featureWallResources
+      }
     ],
     // Why: the notification-status helper must execute from Contents/MacOS —
     // on macOS 26 UNUserNotificationCenter aborts (bundleProxyForCurrentProcess
@@ -629,8 +620,7 @@ module.exports = {
       {
         from: 'native/computer-use-linux/runtime.py',
         to: 'computer-use-linux/runtime.py'
-      },
-      featureWallResources
+      }
     ],
     // Keep local artifacts aligned with the release pipeline.
     target: ['AppImage', 'deb', 'rpm'],

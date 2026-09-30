@@ -218,11 +218,11 @@ describe('registerWorktreeHandlers', () => {
 
     await handlers['worktrees:prefetchCreateBase'](null, {
       repoId: 'repo-1',
-      baseBranch: 'Jinwoo-H/vm-improve-2'
+      baseBranch: 'Morgan-H/vm-improve-2'
     })
 
     expect(runtimeStub.fetchRemoteWithCache).toHaveBeenCalledWith('/workspace/repo', 'origin')
-    expect(runtimeStub.fetchRemoteWithCache).not.toHaveBeenCalledWith('/workspace/repo', 'Jinwoo-H')
+    expect(runtimeStub.fetchRemoteWithCache).not.toHaveBeenCalledWith('/workspace/repo', 'Morgan-H')
     expect(addWorktreeMock).not.toHaveBeenCalled()
   })
 
@@ -324,12 +324,12 @@ describe('registerWorktreeHandlers', () => {
     await handlers['worktrees:create'](null, {
       repoId: 'repo-1',
       name: 'slash-base',
-      baseBranch: 'Jinwoo-H/vm-improve-2',
+      baseBranch: 'Morgan-H/vm-improve-2',
       branchNameOverride: 'slash-base'
     })
 
     expect(runtimeStub.fetchRemoteWithCache).toHaveBeenCalledWith('/workspace/repo', 'origin')
-    expect(runtimeStub.fetchRemoteWithCache).not.toHaveBeenCalledWith('/workspace/repo', 'Jinwoo-H')
+    expect(runtimeStub.fetchRemoteWithCache).not.toHaveBeenCalledWith('/workspace/repo', 'Morgan-H')
     expect(addWorktreeMock).toHaveBeenCalled()
   })
 

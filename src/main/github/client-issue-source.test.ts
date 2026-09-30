@@ -256,15 +256,15 @@ describe('GitHub issue source split', () => {
       stdout: '[]'
     })
 
-    await listWorkItems('/home/jinwoo/dolphin', 10, undefined, undefined, 'auto', 'openclaw-2')
+    await listWorkItems('/home/morgan/dolphin', 10, undefined, undefined, 'auto', 'openclaw-2')
 
     expect(resolveIssueSourceMock).toHaveBeenCalledWith(
-      '/home/jinwoo/dolphin',
+      '/home/morgan/dolphin',
       'auto',
       'openclaw-2',
       {}
     )
-    expect(getOwnerRepoMock).toHaveBeenCalledWith('/home/jinwoo/dolphin', 'openclaw-2', {})
+    expect(getOwnerRepoMock).toHaveBeenCalledWith('/home/morgan/dolphin', 'openclaw-2', {})
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(1, issueSearchArgs('gusscloud/dolphin'), {})
     expect(ghExecFileAsyncMock).toHaveBeenNthCalledWith(2, prListArgs('fork/dolphin'), {})
   })

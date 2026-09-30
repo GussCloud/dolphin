@@ -108,7 +108,7 @@ function placeAndPublish(
 
 describe('client-hosted browser row push', () => {
   it('pushes the row to the host window when the session-tabs announcement fires', () => {
-    const { runtime, events } = createRuntime({ 'device-host-a': "Jinwoo's MacBook" })
+    const { runtime, events } = createRuntime({ 'device-host-a': "Morgan's MacBook" })
     attachHost(runtime, 'host-a')
     placeAndPublish(runtime, 'page-a', 'host-a')
 
@@ -125,7 +125,7 @@ describe('client-hosted browser row push', () => {
             title: 'Internal docs',
             loading: false,
             browserHostClientId: 'host-a',
-            hostDeviceName: "Jinwoo's MacBook",
+            hostDeviceName: "Morgan's MacBook",
             hostAbsent: false
           }
         ]

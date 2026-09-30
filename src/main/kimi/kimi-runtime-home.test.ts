@@ -6,7 +6,7 @@ const wslMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('../wsl', () => wslMocks)
-vi.mock('node:os', () => ({ homedir: () => 'C:\\Users\\neil' }))
+vi.mock('node:os', () => ({ homedir: () => 'C:\\Users\\alex' }))
 
 import { getHostKimiHome, getKimiRuntimeTarget, resolveKimiHome } from './kimi-runtime-home'
 import type { GlobalSettings } from '../../shared/global-settings-types'
@@ -53,7 +53,7 @@ describe('resolveKimiHome', () => {
   beforeEach(() => {
     delete process.env.KIMI_CODE_HOME
     wslMocks.listWslDistrosAsync.mockReset().mockResolvedValue(['Ubuntu'])
-    wslMocks.getWslHomeAsync.mockReset().mockResolvedValue('\\\\wsl.localhost\\Ubuntu\\home\\neil')
+    wslMocks.getWslHomeAsync.mockReset().mockResolvedValue('\\\\wsl.localhost\\Ubuntu\\home\\alex')
   })
 
   afterEach(() => {
@@ -77,14 +77,14 @@ describe('resolveKimiHome', () => {
     expect(await resolveKimiHome({ runtime: 'wsl', wslDistro: 'Ubuntu' }, 'win32')).toEqual({
       runtime: 'wsl',
       wslDistro: 'Ubuntu',
-      path: '\\\\wsl.localhost\\Ubuntu\\home\\neil\\.kimi-code'
+      path: '\\\\wsl.localhost\\Ubuntu\\home\\alex\\.kimi-code'
     })
   })
 
   it('ignores the host KIMI_CODE_HOME when reading a WSL home', async () => {
     process.env.KIMI_CODE_HOME = 'D:\\kimi-home'
     expect((await resolveKimiHome({ runtime: 'wsl', wslDistro: 'Ubuntu' }, 'win32')).path).toBe(
-      '\\\\wsl.localhost\\Ubuntu\\home\\neil\\.kimi-code'
+      '\\\\wsl.localhost\\Ubuntu\\home\\alex\\.kimi-code'
     )
   })
 

@@ -11,7 +11,7 @@ describe('readGrokAuthSession', () => {
       existsSync: vi.fn(() => true),
       readFileSync: vi.fn(() => {
         throw new Error(
-          'EACCES: permission denied, open /Users/brennanbenson/private/.grok/auth.json'
+          'EACCES: permission denied, open /Users/spencerwolfe/private/.grok/auth.json'
         )
       })
     }))

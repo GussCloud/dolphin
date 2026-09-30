@@ -164,7 +164,7 @@ describe('registerNotificationHandlers', () => {
           source: 'agent-task-complete',
           worktreeId: 'repo::wt1',
           worktreeLabel: 'main',
-          repoLabel: 'jinjing-work',
+          repoLabel: 'kendall-work',
           hasMultipleActiveRepos: true,
           agentType: 'claude',
           agentState: 'done',
@@ -175,7 +175,7 @@ describe('registerNotificationHandlers', () => {
 
     expect(notificationCtorMock).toHaveBeenCalledWith(
       expectedNativeNotificationOptions({
-        title: 'jinjing-work / main - Claude finished',
+        title: 'kendall-work / main - Claude finished',
         body: 'Claude finished.'
       })
     )

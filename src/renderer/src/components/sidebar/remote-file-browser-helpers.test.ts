@@ -89,7 +89,7 @@ describe('decideEscAction', () => {
 
 describe('parentPath', () => {
   it('strips last segment', () => {
-    expect(parentPath('/home/neil/docs')).toBe('/home/neil')
+    expect(parentPath('/home/alex/docs')).toBe('/home/alex')
   })
   it('stays at root', () => {
     expect(parentPath('/')).toBe('/')
@@ -256,21 +256,21 @@ describe('resolveSegmentStep', () => {
   ]
 
   it('exact directory match descends', () => {
-    expect(resolveSegmentStep('Documents', '/home/neil', listing)).toEqual({
+    expect(resolveSegmentStep('Documents', '/home/alex', listing)).toEqual({
       type: 'descend',
       name: 'Documents'
     })
   })
 
   it('unique prefix descends', () => {
-    expect(resolveSegmentStep('dolphin', '/home/neil', listing)).toEqual({
+    expect(resolveSegmentStep('dolphin', '/home/alex', listing)).toEqual({
       type: 'descend',
       name: 'dolphin-internal'
     })
   })
 
   it('ambiguous prefix errors', () => {
-    const r = resolveSegmentStep('Do', '/home/neil', listing)
+    const r = resolveSegmentStep('Do', '/home/alex', listing)
     expect(r.type).toBe('error')
     if (r.type === 'error') {
       expect(r.message).toMatch(/multiple directories/)
@@ -278,14 +278,14 @@ describe('resolveSegmentStep', () => {
   })
 
   it('missing segment errors', () => {
-    const r = resolveSegmentStep('zzz', '/home/neil', listing)
+    const r = resolveSegmentStep('zzz', '/home/alex', listing)
     expect(r.type).toBe('error')
   })
 
   it('exact file match reports not-a-directory instead of prefix-descending', () => {
     // `notes.txt` matches exactly as a file; must not fall through to a
     // prefix-match heuristic that picks the first folder starting with "n".
-    const r = resolveSegmentStep('notes.txt', '/home/neil', listing)
+    const r = resolveSegmentStep('notes.txt', '/home/alex', listing)
     expect(r.type).toBe('error')
     if (r.type === 'error') {
       expect(r.message).toMatch(/isn't a directory/)
@@ -293,22 +293,22 @@ describe('resolveSegmentStep', () => {
   })
 
   it('`.` stays', () => {
-    expect(resolveSegmentStep('.', '/home/neil', listing).type).toBe('stay')
+    expect(resolveSegmentStep('.', '/home/alex', listing).type).toBe('stay')
   })
 
   it('`..` stays (parent nav handled by caller)', () => {
-    expect(resolveSegmentStep('..', '/home/neil', listing).type).toBe('stay')
+    expect(resolveSegmentStep('..', '/home/alex', listing).type).toBe('stay')
   })
 
   it('case-insensitive exact match descends when no case-sensitive match exists', () => {
-    expect(resolveSegmentStep('documents', '/home/neil', listing)).toEqual({
+    expect(resolveSegmentStep('documents', '/home/alex', listing)).toEqual({
       type: 'descend',
       name: 'Documents'
     })
   })
 
   it('case-insensitive unique prefix descends', () => {
-    expect(resolveSegmentStep('down', '/home/neil', listing)).toEqual({
+    expect(resolveSegmentStep('down', '/home/alex', listing)).toEqual({
       type: 'descend',
       name: 'Downloads'
     })
@@ -319,18 +319,18 @@ describe('resolveSegmentStep', () => {
       { name: 'Documents', isDirectory: true },
       { name: 'documents', isDirectory: true }
     ]
-    expect(resolveSegmentStep('documents', '/home/neil', mixed)).toEqual({
+    expect(resolveSegmentStep('documents', '/home/alex', mixed)).toEqual({
       type: 'descend',
       name: 'documents'
     })
-    expect(resolveSegmentStep('Documents', '/home/neil', mixed)).toEqual({
+    expect(resolveSegmentStep('Documents', '/home/alex', mixed)).toEqual({
       type: 'descend',
       name: 'Documents'
     })
   })
 
   it('case-insensitive ambiguous prefix errors', () => {
-    const r = resolveSegmentStep('do', '/home/neil', listing)
+    const r = resolveSegmentStep('do', '/home/alex', listing)
     expect(r.type).toBe('error')
     if (r.type === 'error') {
       expect(r.message).toMatch(/multiple directories/)

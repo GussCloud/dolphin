@@ -24,15 +24,16 @@ const store = {
     {
       id: 'repo-1',
       connectionId: null as string | null,
-      path: 'C:\\Users\\neil\\repo'
+      path: 'C:\\Users\\alex\\repo'
     }
   ],
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fixture sets only the worktree fields the launch path reads.
   worktreesByRepo: {
     'repo-1': [
       {
         id: 'wt-1',
         repoId: 'repo-1',
-        path: 'C:\\Users\\neil\\repo\\feature',
+        path: 'C:\\Users\\alex\\repo\\feature',
         displayName: 'feature'
       }
     ]
@@ -96,13 +97,13 @@ describe('launchSleepingAgentSession Windows shell quoting', () => {
       agentDefaultEnv: {},
       activeRuntimeEnvironmentId: null
     }
-    store.repos = [{ id: 'repo-1', connectionId: null, path: 'C:\\Users\\neil\\repo' }]
+    store.repos = [{ id: 'repo-1', connectionId: null, path: 'C:\\Users\\alex\\repo' }]
     store.worktreesByRepo = {
       'repo-1': [
         {
           id: 'wt-1',
           repoId: 'repo-1',
-          path: 'C:\\Users\\neil\\repo\\feature',
+          path: 'C:\\Users\\alex\\repo\\feature',
           displayName: 'feature'
         }
       ]
@@ -136,13 +137,13 @@ describe('launchSleepingAgentSession Windows shell quoting', () => {
 
   it('ignores the local Windows shell setting for an SSH workspace', async () => {
     store.settings.terminalWindowsShell = 'cmd.exe'
-    store.repos = [{ id: 'repo-1', connectionId: 'ssh-1', path: '/home/neil/repo' }]
+    store.repos = [{ id: 'repo-1', connectionId: 'ssh-1', path: '/home/alex/repo' }]
     store.worktreesByRepo = {
       'repo-1': [
         {
           id: 'wt-1',
           repoId: 'repo-1',
-          path: '/home/neil/repo/feature',
+          path: '/home/alex/repo/feature',
           displayName: 'feature'
         }
       ]

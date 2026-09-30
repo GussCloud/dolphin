@@ -25,9 +25,6 @@ import { translate } from '@/i18n/i18n'
 
 export function FeatureWallBody(props: {
   selected: FeatureWallWorkflow
-  posterUrl: string | null
-  gifUrl: string | null
-  showGif: boolean
   prefersReducedMotion: boolean
   source: FeatureWallOpenSourceTelemetry
   agentsActiveStep: AgentsStep | null
@@ -41,9 +38,6 @@ export function FeatureWallBody(props: {
 }): JSX.Element {
   const {
     selected,
-    posterUrl,
-    gifUrl,
-    showGif,
     prefersReducedMotion,
     source,
     agentsActiveStep,
@@ -239,13 +233,7 @@ export function FeatureWallBody(props: {
         )}
       >
         {!hasAnimatedVisual ? (
-          <PreviewMedia
-            key={selected.id}
-            posterUrl={posterUrl}
-            gifUrl={gifUrl}
-            showGif={showGif}
-            workflowTitle={selected.title}
-          />
+          <PreviewMedia key={selected.id} workflowTitle={selected.title} />
         ) : null}
 
         {hasAnimatedVisual ? (

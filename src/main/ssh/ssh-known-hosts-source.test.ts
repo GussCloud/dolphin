@@ -465,7 +465,7 @@ const WINDOWS_SSH_G_OUTPUT = [
   'hashknownhosts no',
   'stricthostkeychecking ask',
   'globalknownhostsfile __PROGRAMDATA__\\ssh/ssh_known_hosts __PROGRAMDATA__\\ssh/ssh_known_hosts2',
-  'userknownhostsfile C:\\Users\\neil/.ssh/known_hosts C:\\Users\\neil/.ssh/known_hosts2'
+  'userknownhostsfile C:\\Users\\alex/.ssh/known_hosts C:\\Users\\alex/.ssh/known_hosts2'
 ].join('\n')
 
 describe('parsing real ssh -G output from Windows OpenSSH', () => {
@@ -510,12 +510,12 @@ describe('parsing real ssh -G output from Windows OpenSSH', () => {
   })
 
   it('keeps a drive-letter path with mixed separators intact', () => {
-    // `C:\Users\neil/.ssh/known_hosts` is what it really prints. Node's fs accepts both separators
+    // `C:\Users\alex/.ssh/known_hosts` is what it really prints. Node's fs accepts both separators
     // on Windows, so the requirement is that nothing here rewrites or truncates it.
     const resolved = parseSshGOutput(WINDOWS_SSH_G_OUTPUT)
     expect(resolved.userKnownHostsFiles).toEqual([
-      'C:\\Users\\neil/.ssh/known_hosts',
-      'C:\\Users\\neil/.ssh/known_hosts2'
+      'C:\\Users\\alex/.ssh/known_hosts',
+      'C:\\Users\\alex/.ssh/known_hosts2'
     ])
   })
 

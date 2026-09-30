@@ -288,7 +288,7 @@ describe('getEditingTargetFromSshConfigHost', () => {
       alias: 'gpu-lab',
       hostname: 'gpu-lab',
       port: 22,
-      username: 'jinjing',
+      username: 'kendall',
       identityFiles: [],
       identitiesOnly: false,
       forwardAgent: false,
@@ -300,7 +300,7 @@ describe('getEditingTargetFromSshConfigHost', () => {
     expect(getSshTargetDraftConnectionFields(draft)).toEqual({
       host: 'gpu-lab',
       configHost: 'gpu-lab',
-      username: 'jinjing',
+      username: 'kendall',
       port: 22
     })
   })

@@ -430,7 +430,7 @@ describe('RateLimitService', () => {
     const home = {
       runtime: 'wsl' as const,
       wslDistro: 'Ubuntu',
-      path: '\\\\wsl.localhost\\Ubuntu\\home\\neil\\.kimi-code'
+      path: '\\\\wsl.localhost\\Ubuntu\\home\\alex\\.kimi-code'
     }
     const resolver = vi.fn(async () => home)
     service.setKimiHomeResolver(resolver)

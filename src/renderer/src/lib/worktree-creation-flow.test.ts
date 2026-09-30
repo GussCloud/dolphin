@@ -240,7 +240,7 @@ describe('runBackgroundWorktreeCreation', () => {
           recipeId: 'cloud-sandbox',
           projectId: 'project-1'
         },
-        baseBranch: 'Jinwoo-H/setup-vercel-sandbox',
+        baseBranch: 'Morgan-H/setup-vercel-sandbox',
         worktreeCreateProgressMode: 'indeterminate'
       })
     )
