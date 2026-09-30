@@ -64,7 +64,12 @@ export function useTerminalParkingFoundation(controller: TerminalEditorCloseCont
   const [evictionExemptTerminalTabIds, setEvictionExemptTerminalTabIds] = useState<
     ReadonlySet<string>
   >(() => new Set())
+  const [retentionParkedTerminalTabIds, setRetentionParkedTerminalTabIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set())
   const parkedCaptureDoneRef = useRef(new Set<string>())
+  const retentionHiddenSinceByTabIdRef = useRef(new Map<string, number>())
+  const retentionParkRecheckTimerRef = useRef<number | null>(null)
   const backgroundMountTabIdsByWorktreeRef = useRef(new Map<string, ReadonlySet<string>>())
   const activationDeferredMountTabIdsByWorktreeRef = useRef(new Map<string, ReadonlySet<string>>())
   const lastActivationWorktreeIdRef = useRef<string | null>(null)
@@ -136,6 +141,17 @@ export function useTerminalParkingFoundation(controller: TerminalEditorCloseCont
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- controller refs and setters preserve their original stable identities.
   }, [])
 
+  useEffect(
+    () => () => {
+      const timer = retentionParkRecheckTimerRef.current
+      if (timer !== null) {
+        window.clearTimeout(timer)
+        retentionParkRecheckTimerRef.current = null
+      }
+    },
+    []
+  )
+
   useEffect(() => {
     const timers = terminalWorktreeParkingTimersRef.current
     return () => {
@@ -163,7 +179,11 @@ export function useTerminalParkingFoundation(controller: TerminalEditorCloseCont
     setForceParkedTerminalWorktreeIds,
     evictionExemptTerminalTabIds,
     setEvictionExemptTerminalTabIds,
+    retentionParkedTerminalTabIds,
+    setRetentionParkedTerminalTabIds,
     parkedCaptureDoneRef,
+    retentionHiddenSinceByTabIdRef,
+    retentionParkRecheckTimerRef,
     backgroundMountTabIdsByWorktreeRef,
     activationDeferredMountTabIdsByWorktreeRef,
     lastActivationWorktreeIdRef,
