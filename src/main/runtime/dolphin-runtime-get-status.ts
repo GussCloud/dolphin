@@ -36,6 +36,7 @@ import type {
 } from '../../shared/runtime-client-events'
 import { parsePaneKey } from '../../shared/stable-pane-id'
 import { wakeFolderRepoGitUpgradeWatch } from '../ipc/folder-repo-git-upgrade-wake'
+import { readStartupWorktreeHydrationCensus } from '../git/startup-worktree-hydration-census'
 import { runWorktreeChangeInvalidators } from '../ipc/worktree-change-invalidators'
 import { MACHINE_NAME_PUBLISH_WAIT_MS } from './runtime-machine-name'
 
@@ -132,6 +133,7 @@ export class DolphinRuntimeWithGetStatus extends DolphinRuntimeWithGetRuntimeId 
     if (terminalDegradation) {
       degradations.push(terminalDegradation)
     }
+    const worktreeHydration = readStartupWorktreeHydrationCensus()
     return {
       runtimeId: this.runtimeId,
       rendererGraphEpoch: this.rendererGraphEpoch,
@@ -146,6 +148,7 @@ export class DolphinRuntimeWithGetStatus extends DolphinRuntimeWithGetRuntimeId 
       // must not treat browser panes as supported just because runtime RPC is up.
       capabilities,
       ...(degradations.length > 0 ? { degradations } : {}),
+      ...(worktreeHydration ? { worktreeHydration } : {}),
       worktreeCreateIdempotency: { dedupeTtlMs: WORKTREE_CREATE_RESULT_TTL_MS },
       ...(windowsProcessStartTimeAvailable ? { windowsProcessStartTimeAvailable } : {}),
       hostPlatform: process.platform,
