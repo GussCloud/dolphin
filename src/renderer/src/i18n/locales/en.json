@@ -12259,6 +12259,13 @@
           "signInDescription": "Press Enter to run az login. Finish the browser sign-in; Dolphin re-checks when the command ends.",
           "extensionDescription": "Press Enter to install the azure-devops extension. Dolphin re-checks when the command ends.",
           "organizationPlaceholder": "https://dev.azure.com/contoso"
+        },
+        "azureCliAutoRenewControl": {
+          "validUntil": "Token valid until {{value0}}.",
+          "expiredAt": "Token expired at {{value0}}.",
+          "changeFailed": "Could not change Azure CLI auto-renew: {{value0}}",
+          "label": "Renew automatically when it expires?",
+          "help": "Dolphin runs az login in the background when the sign-in expires; confirm it in the browser window that opens."
         }
       },
       "right": {

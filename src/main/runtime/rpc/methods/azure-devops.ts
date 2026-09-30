@@ -3,11 +3,13 @@ import {
   changeAzureDevOpsAuthMethod,
   listAzureDevOpsRepositoriesResult,
   refreshAzureCliSession,
+  setAzureCliAutoRenew,
   setAzureDevOpsCliDefaults
 } from '../../../azure-devops/azure-devops-auth-commands'
 import {
   AzureDevOpsConfigureCliDefaults,
-  AzureDevOpsSetAuthMethod
+  AzureDevOpsSetAuthMethod,
+  AzureDevOpsSetCliAutoRenew
 } from '../../../../shared/rpc-contract/azure-devops-params'
 
 export const AZURE_DEVOPS_METHODS = [
@@ -20,6 +22,11 @@ export const AZURE_DEVOPS_METHODS = [
     name: 'azureDevOps.configureCliDefaults',
     params: AzureDevOpsConfigureCliDefaults,
     handler: async (params) => setAzureDevOpsCliDefaults(params)
+  }),
+  defineMethod({
+    name: 'azureDevOps.setCliAutoRenew',
+    params: AzureDevOpsSetCliAutoRenew,
+    handler: async (params) => setAzureCliAutoRenew(params.enabled)
   }),
   defineMethod({
     name: 'azureDevOps.refreshCliSession',

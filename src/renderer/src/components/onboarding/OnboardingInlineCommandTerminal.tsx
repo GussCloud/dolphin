@@ -15,8 +15,9 @@ const ONBOARDING_INLINE_TERMINAL_WORKTREE_ID = 'onboarding-inline-terminal'
 const AUTO_INSERT_DELAY_MS = 250
 const READY_RETRY_MS = 100
 // Why: PTY startup can fail before [data-pty-id] appears; cap polling so the
-// setup panel does not leave a hidden retry timer alive forever.
-export const READY_MAX_ATTEMPTS = 50
+// setup panel does not leave a hidden retry timer alive forever. 30s covers a
+// cold Windows PTY + PowerShell profile start; 5s left the command unpasted.
+export const READY_MAX_ATTEMPTS = 300
 const PTY_TEXT_FALLBACK_MS = 750
 
 type OnboardingInlineCommandTerminalProps = {

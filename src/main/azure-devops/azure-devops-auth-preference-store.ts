@@ -9,10 +9,17 @@ import {
 } from '../../shared/azure-devops-auth'
 import { writeCredentialFileAtomic } from '../integration-credential-file'
 
-type StoredPreference = { version: 1; method: AzureDevOpsAuthMethod }
+type StoredPreference = {
+  version: 1
+  method: AzureDevOpsAuthMethod
+  autoRenewCliSession?: boolean
+}
 
 // Why 'token' default: profiles from before the Azure CLI option keep their env-var behavior.
-const DEFAULT_PREFERENCE: AzureDevOpsAuthPreference = { method: 'token' }
+const DEFAULT_PREFERENCE: AzureDevOpsAuthPreference = {
+  method: 'token',
+  autoRenewCliSession: false
+}
 
 let cached: AzureDevOpsAuthPreference | null = null
 
@@ -29,8 +36,9 @@ function readFromDisk(): AzureDevOpsAuthPreference {
     const parsed: unknown = JSON.parse(readFileSync(path, 'utf-8'))
     if (parsed && typeof parsed === 'object' && 'method' in parsed) {
       const { method } = parsed
+      const autoRenew = 'autoRenewCliSession' in parsed ? parsed.autoRenewCliSession : false
       if (isAzureDevOpsAuthMethod(method)) {
-        return { method }
+        return { method, autoRenewCliSession: autoRenew === true }
       }
     }
   } catch (error) {
@@ -45,13 +53,14 @@ export function getAzureDevOpsAuthPreference(): AzureDevOpsAuthPreference {
 }
 
 export function setAzureDevOpsAuthPreference(
-  preference: AzureDevOpsAuthPreference
+  update: Partial<AzureDevOpsAuthPreference>
 ): AzureDevOpsAuthPreference {
+  const next = { ...getAzureDevOpsAuthPreference(), ...update }
   const dir = join(homedir(), FORK_HOME_STATE_DIR_NAME)
   mkdirSync(dir, { recursive: true })
-  const stored: StoredPreference = { version: 1, method: preference.method }
+  const stored: StoredPreference = { version: 1, ...next }
   writeCredentialFileAtomic(preferencePath(), Buffer.from(JSON.stringify(stored), 'utf-8'))
-  cached = { method: preference.method }
+  cached = next
   return cached
 }
 

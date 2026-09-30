@@ -21,6 +21,8 @@ export type AzureCliStatus = {
   account: string | null
   defaultOrganization: string | null
   defaultProject: string | null
+  // Epoch ms of the last Azure DevOps token the CLI issued; optional for older hosts.
+  tokenExpiresAt?: number | null
 }
 
 export type AzureDevOpsAuthStatus = {
@@ -32,10 +34,13 @@ export type AzureDevOpsAuthStatus = {
   // Optional so remote servers that predate the Azure CLI option still parse.
   authMethod?: AzureDevOpsAuthMethod
   azureCli?: AzureCliStatus
+  autoRenewCliSession?: boolean
 }
 
 export type AzureDevOpsAuthPreference = {
   method: AzureDevOpsAuthMethod
+  // Re-runs `az login` in the background when the CLI can no longer issue a token.
+  autoRenewCliSession: boolean
 }
 
 export type AzureDevOpsRepository = {

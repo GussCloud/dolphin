@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type * as Runner from './azure-cli-runner'
 import {
   clearAzureCliAccessTokenCache,
   getAzureCliAccessToken,
@@ -6,8 +7,21 @@ import {
 } from './azure-cli-access-token'
 
 const runAzureCliJsonMock = vi.hoisted(() => vi.fn())
+const sessionMocks = vi.hoisted(() => ({
+  record: vi.fn(),
+  renew: vi.fn(),
+  shouldRenew: vi.fn()
+}))
 
-vi.mock('./azure-cli-runner', () => ({ runAzureCliJson: runAzureCliJsonMock }))
+vi.mock('./azure-cli-runner', async () => {
+  const actual = await vi.importActual<typeof Runner>('./azure-cli-runner')
+  return { AzureCliCommandError: actual.AzureCliCommandError, runAzureCliJson: runAzureCliJsonMock }
+})
+vi.mock('./azure-cli-session-store', () => ({ recordAzureCliTokenExpiry: sessionMocks.record }))
+vi.mock('./azure-cli-session-renewal', () => ({
+  renewAzureCliSession: sessionMocks.renew,
+  shouldRenewAzureCliSession: sessionMocks.shouldRenew
+}))
 
 const inSeconds = (seconds: number): number => Math.floor(Date.now() / 1000) + seconds
 
@@ -31,6 +45,30 @@ describe('getAzureCliAccessToken', () => {
   beforeEach(() => {
     clearAzureCliAccessTokenCache()
     runAzureCliJsonMock.mockReset()
+    vi.clearAllMocks()
+    sessionMocks.renew.mockResolvedValue(false)
+    sessionMocks.shouldRenew.mockReturnValue(false)
+  })
+
+  it('persists the validity of each issued token', async () => {
+    runAzureCliJsonMock.mockResolvedValue({ accessToken: 'tok', expires_on: 1_900_000_000 })
+    await getAzureCliAccessToken()
+    expect(sessionMocks.record).toHaveBeenCalledWith(1_900_000_000_000)
+  })
+
+  it('starts a session renewal when the CLI refuses to issue a token', async () => {
+    const { AzureCliCommandError } = await import('./azure-cli-runner')
+    runAzureCliJsonMock.mockRejectedValue(
+      new AzureCliCommandError(['account'], {
+        code: 1,
+        signal: null,
+        timedOut: false,
+        stdout: '',
+        stderr: 'AADSTS700082: The refresh token has expired'
+      })
+    )
+    await expect(getAzureCliAccessToken()).rejects.toThrow('AADSTS700082')
+    expect(sessionMocks.renew).toHaveBeenCalledOnce()
   })
 
   it('requests the Azure DevOps resource once and reuses the unexpired token', async () => {

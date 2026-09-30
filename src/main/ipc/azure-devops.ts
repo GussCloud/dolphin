@@ -7,6 +7,7 @@ import {
   changeAzureDevOpsAuthMethod,
   listAzureDevOpsRepositoriesResult,
   refreshAzureCliSession,
+  setAzureCliAutoRenew,
   setAzureDevOpsCliDefaults
 } from '../azure-devops/azure-devops-auth-commands'
 
@@ -39,6 +40,11 @@ export function registerAzureDevOpsHandlers(): void {
       }
       return setAzureDevOpsCliDefaults(input)
     }
+  )
+
+  ipcMain.handle(
+    'azureDevOps:setCliAutoRenew',
+    (_event, enabled: unknown): AzureDevOpsAuthPreference => setAzureCliAutoRenew(enabled)
   )
 
   ipcMain.handle('azureDevOps:refreshCliSession', (): void => refreshAzureCliSession())

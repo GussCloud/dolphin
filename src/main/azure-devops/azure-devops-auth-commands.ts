@@ -11,6 +11,7 @@ import { configureAzureDevOpsDefaults } from './azure-cli-status'
 import { listAzureDevOpsRepositories } from './repositories-client'
 import { clearAzureBoardsOrganizationCache } from '../azure-boards/azure-boards-scope'
 import { setAzureDevOpsAuthPreference } from './azure-devops-auth-preference-store'
+import { onAzureCliSessionRenewed } from './azure-cli-session-renewal'
 
 // Shared by the desktop IPC handlers and the runtime RPC methods so both hosts apply
 // the same validation and cache invalidation.
@@ -23,6 +24,17 @@ export function changeAzureDevOpsAuthMethod(method: unknown): AzureDevOpsAuthPre
   clearAzureCliAccessTokenCache()
   clearAzureBoardsOrganizationCache()
   // Preflight caches the integration status per session; the card must reflect the switch.
+  _resetPreflightCache()
+  return preference
+}
+
+export function setAzureCliAutoRenew(enabled: unknown): AzureDevOpsAuthPreference {
+  if (typeof enabled !== 'boolean') {
+    throw new Error('Invalid Azure CLI auto-renew value')
+  }
+  const preference = setAzureDevOpsAuthPreference({ autoRenewCliSession: enabled })
+  // Why: the next token acquisition (re)arms or skips the proactive refresh timer.
+  clearAzureCliAccessTokenCache()
   _resetPreflightCache()
   return preference
 }
@@ -57,3 +69,7 @@ export function refreshAzureCliSession(): void {
   clearAzureBoardsOrganizationCache()
   _resetPreflightCache()
 }
+
+// Why here: this module owns cache invalidation for both hosts, and a background
+// `az login` changes the CLI token cache outside any user action.
+onAzureCliSessionRenewed(refreshAzureCliSession)

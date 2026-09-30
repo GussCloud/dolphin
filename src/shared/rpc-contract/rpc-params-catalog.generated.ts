@@ -58,7 +58,11 @@ import {
   AzureBoardsProject,
   AzureBoardsUpdateState
 } from './azure-boards-params'
-import { AzureDevOpsConfigureCliDefaults, AzureDevOpsSetAuthMethod } from './azure-devops-params'
+import {
+  AzureDevOpsConfigureCliDefaults,
+  AzureDevOpsSetAuthMethod,
+  AzureDevOpsSetCliAutoRenew
+} from './azure-devops-params'
 import { CertificateProceed } from './browser-core-params'
 import { MouseClick } from './browser-extras-params'
 import { BrowserIdentitySet, ProfileCreate } from './browser-identity-params'
@@ -643,6 +647,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'azureDevOps.listRepositories': null,
   'azureDevOps.refreshCliSession': null,
   'azureDevOps.setAuthMethod': AzureDevOpsSetAuthMethod,
+  'azureDevOps.setCliAutoRenew': AzureDevOpsSetCliAutoRenew,
   'browser.back': BrowserTarget,
   'browser.capture.start': BrowserTarget,
   'browser.capture.stop': BrowserTarget,
