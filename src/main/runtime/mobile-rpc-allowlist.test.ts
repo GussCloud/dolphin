@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { ALL_RPC_METHODS } from './rpc/methods'
+import { MOBILE_UPDATER_RPC_METHODS } from './runtime-rpc/runtime-rpc-mobile-updater-methods'
 
 const MOBILE_DYNAMIC_RPC_METHODS = [
   // Why: computed sendRequest method names do not appear as literals in the
@@ -105,11 +106,16 @@ function mobileRpcAllowlist(): Set<string> {
     join(process.cwd(), 'src/main/runtime/runtime-rpc/runtime-rpc-mobile-method-allowlist.ts'),
     'utf8'
   )
-  const allowlist = source.match(/const MOBILE_RPC_METHOD_ALLOWLIST = new Set\(\[([\s\S]*?)\]\)/)
+  const allowlist = source.match(
+    /const MOBILE_RPC_METHOD_ALLOWLIST = new Set<string>\(\[([\s\S]*?)\]\)/
+  )
   if (!allowlist) {
     throw new Error('MOBILE_RPC_METHOD_ALLOWLIST not found')
   }
-  return new Set([...allowlist[1]!.matchAll(/'([^']+)'/g)].map((match) => match[1]!))
+  return new Set([
+    ...MOBILE_UPDATER_RPC_METHODS,
+    ...[...allowlist[1]!.matchAll(/'([^']+)'/g)].map((match) => match[1]!)
+  ])
 }
 
 function registeredRuntimeMethods(): Set<string> {
@@ -142,13 +148,15 @@ describe('mobile RPC allowlist', () => {
     expect(missing).toEqual([])
   })
 
-  it('does not grant mobile credentials control over host updates', () => {
+  it('lets mobile finish an update the host found but never pick or trigger a check', () => {
+    // Why: the token already drives host terminals; the added power is only restarting Dolphin
+    // onto a release the host itself selected.
     const allowed = mobileRpcAllowlist()
     expect(
       ['updater.getStatus', 'updater.check', 'updater.download', 'updater.install'].filter(
         (method) => allowed.has(method)
       )
-    ).toEqual([])
+    ).toEqual(['updater.getStatus', 'updater.download', 'updater.install'])
   })
 
   it('exposes only the mobile structured agent-session surface', () => {

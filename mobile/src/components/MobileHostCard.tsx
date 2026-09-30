@@ -1,4 +1,5 @@
-import { Monitor, MoreVertical } from 'lucide-react-native'
+import { ArrowUpCircle, Monitor, MoreVertical } from 'lucide-react-native'
+import type { DesktopUpdateTag } from '../desktop-update/desktop-update-offer'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { ConnectionVerdict } from '../transport/connection-health'
 import { verdictDisplayLabel } from '../transport/connection-health'
@@ -19,6 +20,8 @@ export function MobileHostCard(props: {
   // Why: the card owns the fresh/stale/unavailable wording so no caller can re-gate the counts
   // away (STA-3123 shipped that bug once already).
   worktreeInfo?: HostWorktreeInfo
+  updateTag?: DesktopUpdateTag | null
+  onPressUpdate?: () => void
   onPress: () => void
   onLongPress: () => void
   onOpenActions: () => void
@@ -65,7 +68,8 @@ export function MobileHostCard(props: {
     connected ? worktreeSummary?.replace(' · ', ', ') : null,
     discoveryHint,
     credentialHint,
-    verdictDetail
+    verdictDetail,
+    connected ? props.updateTag?.label : null
   ]
     .filter(Boolean)
     .join(', ')
@@ -93,6 +97,9 @@ export function MobileHostCard(props: {
             <Text style={styles.platformText} numberOfLines={1}>
               {descriptorText}
             </Text>
+          ) : null}
+          {connected && props.updateTag ? (
+            <DesktopUpdateTagPill tag={props.updateTag} onPress={props.onPressUpdate} />
           ) : null}
           <View style={styles.meta}>
             <StatusDot state={props.state} verdict={statusVerdict} />
@@ -143,6 +150,36 @@ export function MobileHostCard(props: {
   )
 }
 
+const UPDATE_TAG_TONE_COLOR: Record<DesktopUpdateTag['tone'], string> = {
+  accent: colors.accentBlue,
+  progress: colors.textSecondary,
+  error: colors.statusRed
+}
+
+function DesktopUpdateTagPill(props: { tag: DesktopUpdateTag; onPress?: () => void }) {
+  const toneColor = UPDATE_TAG_TONE_COLOR[props.tag.tone]
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={props.tag.label}
+      accessibilityState={{ disabled: !props.tag.actionable }}
+      disabled={!props.tag.actionable || !props.onPress}
+      hitSlop={6}
+      style={({ pressed }) => [
+        styles.updateTag,
+        { borderColor: toneColor },
+        pressed && styles.cardPressed
+      ]}
+      onPress={props.onPress}
+    >
+      <ArrowUpCircle size={12} color={toneColor} />
+      <Text style={[styles.updateTagText, { color: toneColor }]} numberOfLines={1}>
+        {props.tag.label}
+      </Text>
+    </Pressable>
+  )
+}
+
 const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
@@ -174,6 +211,18 @@ const styles = StyleSheet.create({
   main: { flex: 1, minWidth: 0, marginRight: spacing.sm },
   name: { color: colors.textPrimary, fontSize: 15, fontWeight: '600', lineHeight: 20 },
   platformText: { color: colors.textSecondary, fontSize: 12, lineHeight: 16 },
+  updateTag: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radii.card,
+    borderWidth: 1
+  },
+  updateTagText: { fontSize: 11, lineHeight: 15, fontWeight: '600' },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3, minWidth: 0 },
   metaText: { flex: 1, fontSize: 12, color: colors.textSecondary },
   worktreeMetaText: {

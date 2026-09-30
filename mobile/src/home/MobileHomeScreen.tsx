@@ -5,6 +5,7 @@ import { useOpenMobileAccounts } from '../accounts/use-open-mobile-accounts'
 import { getProvenCachedWorktrees } from '../cache/worktree-cache'
 import { ActionSheetModal } from '../components/ActionSheetModal'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { desktopUpdateConfirmMessage } from '../desktop-update/desktop-update-offer'
 import { getHostListActionSheetActions } from '../host-list-action-sheet-actions'
 import { hostNewWorktreeRoute } from '../host-route-action-state'
 import { hostRouteWithNotice } from '../host-route-notice'
@@ -46,6 +47,7 @@ export function MobileHomeScreen() {
   const forceReconnectHost = useForceReconnect()
   const [actionTarget, setActionTarget] = useState<HostProfile | null>(null)
   const [confirmRemove, setConfirmRemove] = useState<{ id: string; name: string } | null>(null)
+  const [confirmUpdate, setConfirmUpdate] = useState<HostCatalogEntry | null>(null)
 
   const openResume = useCallback(
     (card: HomeResumeCard) => {
@@ -154,6 +156,9 @@ export function MobileHomeScreen() {
             openHostActions(host)
           }}
           onOpenActions={openHostActions}
+          desktopUpdates={data.desktopUpdates}
+          desktopUpdateRuns={data.desktopUpdateRuns.runs}
+          onPressUpdate={setConfirmUpdate}
         />
       )}
       <ActionSheetModal
@@ -190,6 +195,27 @@ export function MobileHomeScreen() {
         destructive
         onConfirm={() => void handleRemove()}
         onCancel={() => setConfirmRemove(null)}
+      />
+      <ConfirmModal
+        visible={confirmUpdate != null}
+        title="Update Desktop"
+        message={
+          confirmUpdate
+            ? desktopUpdateConfirmMessage(
+                confirmUpdate.name,
+                data.desktopUpdates[confirmUpdate.id] ?? null,
+                data.desktopUpdateRuns.runs[confirmUpdate.id] ?? null
+              )
+            : undefined
+        }
+        confirmLabel="Update"
+        onConfirm={() => {
+          if (confirmUpdate) {
+            data.desktopUpdateRuns.start(confirmUpdate.id)
+          }
+          setConfirmUpdate(null)
+        }}
+        onCancel={() => setConfirmUpdate(null)}
       />
     </SafeAreaView>
   )

@@ -16,7 +16,7 @@ import type { RuntimeStatus } from '../../../shared/runtime-types'
 import type { UpdateCheckOptions } from '../../../shared/update-status-types'
 import { waitForReplacementRuntime } from './remote-server-restart-wait'
 import { remoteServerUpdateErrorMessage } from './remote-server-update-errors'
-import { pollRemoteServerUpdater } from './remote-server-updater-polling'
+import { pollRemoteServerUpdater } from '../../../shared/remote-server-updater-polling'
 
 export type RemoteServerUpdatePhase =
   | 'checking'
