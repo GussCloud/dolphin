@@ -54,7 +54,7 @@ describe('AgentHookServer prompt-sent telemetry', () => {
         nth_repo_added: 2
       })
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -520,7 +520,7 @@ describe('AgentHookServer prompt-sent telemetry', () => {
         nth_repo_added: 2
       })
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 

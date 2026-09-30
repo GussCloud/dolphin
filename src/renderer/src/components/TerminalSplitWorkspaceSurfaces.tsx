@@ -21,6 +21,7 @@ export function TerminalSplitWorkspaceSurfaces({
     measurableBackgroundWorktreeIdsRef,
     mountedWorktreeIdsRef,
     renderedActiveWorktreeId,
+    retentionParkedTerminalTabIds,
     workspaceSurfaces
   } = controller
   // Why: this and TerminalSurface are both strict ancestors of every browser <webview>, so a
@@ -65,6 +66,7 @@ export function TerminalSplitWorkspaceSurfaces({
               shouldMeasureHiddenWorktree={shouldMeasureHiddenWorktree}
               shouldColdParkTerminalPanes={shouldColdParkTerminalPanes}
               isForceParked={forceParkedTerminalWorktreeIds.has(workspace.id)}
+              retentionParkedTerminalTabIds={retentionParkedTerminalTabIds}
               activityTerminalPortals={activityTerminalPortals}
               backgroundMountTabIds={
                 backgroundMountTabIdsByWorktreeRef.current.get(workspace.id) ?? null

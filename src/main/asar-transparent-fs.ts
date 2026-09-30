@@ -9,27 +9,48 @@
 // `app.asar`. See `cli/appimage-payload-removal.ts` for the same bug at a call site short enough to
 // use the process-global flag.
 
-import { rm as nodeRm } from 'node:fs/promises'
+import type { PathLike, Stats } from 'node:fs'
+import { rm as nodeRm, stat as nodeStat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 
 type Rm = typeof nodeRm
+type Stat = typeof nodeStat
+type OriginalFsPromises = { rm?: Rm; stat?: Stat }
 
-let resolvedRm: Rm | undefined
+let resolvedPromises: OriginalFsPromises | null | undefined
 
-function resolveRm(): Rm {
+function resolveOriginalFsPromises(): OriginalFsPromises | null {
   try {
     // Why require and not an import: `original-fs` only exists inside Electron, so vitest, the
     // `dolphin` CLI and the plain-node entrypoints must resolve `node:fs/promises` instead — and there
     // the shim does not exist either, so plain `fs` is already asar-transparent.
-    const originalFs = createRequire(__filename)('original-fs') as { promises?: { rm?: Rm } }
-    return typeof originalFs.promises?.rm === 'function' ? originalFs.promises.rm : nodeRm
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: `original-fs` is Electron's unpatched `fs`, whose `promises` has this shape; each member is type-checked before use.
+    const originalFs = createRequire(__filename)('original-fs') as { promises?: OriginalFsPromises }
+    return originalFs.promises ?? null
   } catch {
-    return nodeRm
+    return null
   }
+}
+
+function originalFsPromises(): OriginalFsPromises | null {
+  if (resolvedPromises === undefined) {
+    resolvedPromises = resolveOriginalFsPromises()
+  }
+  return resolvedPromises
 }
 
 /** `fs.promises.rm` that sees a `*.asar` as the file it is rather than as a directory. */
 export const rm: Rm = (path, options) => {
-  resolvedRm ??= resolveRm()
-  return resolvedRm(path, options)
+  const originalRm = originalFsPromises()?.rm
+  return typeof originalRm === 'function' ? originalRm(path, options) : nodeRm(path, options)
+}
+
+/**
+ * `fs.promises.stat` that does not open the archive. Electron's patched `stat` on a `*.asar` opens
+ * it and caches the handle for the life of the process, so on Windows the file can no longer be
+ * deleted or replaced.
+ */
+export function stat(path: PathLike): Promise<Stats> {
+  const originalStat = originalFsPromises()?.stat
+  return typeof originalStat === 'function' ? originalStat(path) : nodeStat(path)
 }

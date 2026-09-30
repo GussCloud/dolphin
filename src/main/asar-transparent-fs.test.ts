@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
-import { rm } from './asar-transparent-fs'
+import { rm, stat } from './asar-transparent-fs'
 
 // Why not an asar fixture here: plain Node has no asar shim to see through, so the archive case can
 // only be settled by the real binary — `host-tree-removal-asar.electron.test.ts` does that. What
@@ -39,5 +39,19 @@ describe('asar-transparent rm', () => {
     await expect(rm(join(root, 'absent'), { recursive: true })).rejects.toMatchObject({
       code: 'ENOENT'
     })
+  })
+})
+
+describe('asar-transparent stat', () => {
+  it('reports a *.asar file as a file where `original-fs` is unresolvable', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-asar-transparent-'))
+    roots.push(root)
+    const archive = join(root, 'app.asar')
+    await writeFile(archive, 'not a real archive', 'utf8')
+
+    const result = await stat(archive)
+
+    expect(result.isFile()).toBe(true)
+    expect(result.isDirectory()).toBe(false)
   })
 })

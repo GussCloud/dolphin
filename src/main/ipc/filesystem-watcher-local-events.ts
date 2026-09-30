@@ -1,4 +1,3 @@
-import { stat } from 'node:fs/promises'
 import type { Event as WatcherEvent } from '@parcel/watcher'
 import type { FsChangeEvent, FsChangedPayload } from '../../shared/filesystem-entry-types'
 import {
@@ -18,6 +17,8 @@ import {
 } from './filesystem-watcher-listener-lifecycle'
 import { cancelLocalBatchFlush, createDebouncedBatch } from './filesystem-watcher-batch-control'
 import { mapWithConcurrency } from '../../shared/map-with-concurrency'
+// Why: the watcher stats every changed path; Electron's patched stat would pin every *.asar it sees.
+import { stat } from '../asar-transparent-fs'
 
 // Why: matches the watcher subprocess budget in parcel-watcher-event-delivery.ts.
 const DIRECTORY_STAT_CONCURRENCY = 8

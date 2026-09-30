@@ -114,7 +114,7 @@ describe('Integration: relay hook server → mux → AgentHookServer.ingestRemot
     mux.dispose()
     dispatcher.dispose()
     hookServer.stop()
-    dolphinServer.stop()
+    await dolphinServer.stop()
     rmSync(tmpDir, { recursive: true, force: true })
   })
 

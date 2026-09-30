@@ -85,6 +85,12 @@ function createPane(
   }
 }
 
+// Why a helper: xterm types cols/rows as readonly, but the fake terminal stands in for fit's effect.
+function setGrid(target: { cols: number; rows: number }, cols: number, rows: number): void {
+  target.cols = cols
+  target.rows = rows
+}
+
 describe('attachPaneFitResizeObserver', () => {
   beforeEach(() => {
     mockResizeObservers = []
@@ -242,6 +248,55 @@ describe('attachPaneFitResizeObserver', () => {
 
     expect(pane.fitAddon.fit).toHaveBeenCalledTimes(1)
     expect(pane.pendingObservedFitRafId).toBeNull()
+  })
+
+  it('stops a fit that flips the row count back and forth on a cell boundary', () => {
+    // Boundary feedback: fitting to 50 rows makes the box measure 49, and 49 measures 50.
+    const pane = createPane(() => ({ cols: 138, rows: pane.terminal.rows === 50 ? 49 : 50 }))
+    setGrid(pane.terminal, 138, 50)
+    vi.mocked(pane.fitAddon.fit).mockImplementation(() => {
+      setGrid(pane.terminal, 138, pane.terminal.rows === 50 ? 49 : 50)
+    })
+
+    attachPaneFitResizeObserver(pane)
+    for (let i = 0; i < 20; i += 1) {
+      mockResizeObservers[0]?.trigger()
+      flushAnimationFrames()
+      flushAnimationFrames()
+    }
+
+    expect(vi.mocked(pane.fitAddon.fit).mock.calls.length).toBeLessThanOrEqual(2)
+    // Why the smaller grid: holding the larger one would clip the bottom row.
+    expect(pane.terminal.rows).toBe(49)
+  })
+
+  it('leaves the flip hold once the pane really changes size', () => {
+    let proposedRows = 49
+    const pane = createPane(() => ({ cols: 138, rows: proposedRows }))
+    setGrid(pane.terminal, 138, 50)
+    vi.mocked(pane.fitAddon.fit).mockImplementation(() => {
+      setGrid(pane.terminal, 138, proposedRows)
+      proposedRows = proposedRows === 50 ? 49 : 50
+    })
+
+    attachPaneFitResizeObserver(pane)
+    for (let i = 0; i < 6; i += 1) {
+      mockResizeObservers[0]?.trigger()
+      flushAnimationFrames()
+      flushAnimationFrames()
+    }
+    const heldFits = vi.mocked(pane.fitAddon.fit).mock.calls.length
+
+    vi.mocked(pane.fitAddon.fit).mockImplementation(() => {
+      setGrid(pane.terminal, 138, 60)
+    })
+    proposedRows = 60
+    mockResizeObservers[0]?.trigger()
+    flushAnimationFrames()
+    flushAnimationFrames()
+
+    expect(vi.mocked(pane.fitAddon.fit).mock.calls.length).toBe(heldFits + 1)
+    expect(pane.terminal.rows).toBe(60)
   })
 
   it('disconnects the observer and cancels any queued fit', () => {

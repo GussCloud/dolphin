@@ -195,7 +195,7 @@ describe('opencode binder loop', () => {
     })
     server.startBinderLoop()
     await vi.waitFor(() => expect(sweepCalls).toBe(1))
-    server.stop()
+    await server.stop()
     server.startBinderLoop()
     await vi.waitFor(() => expect(sweepCalls).toBe(2))
     // The obsolete round finishes while the new round is still parked: its
