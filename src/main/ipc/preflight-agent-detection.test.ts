@@ -216,7 +216,7 @@ describe('preflight', () => {
     await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'claude-agent-teams'])
   })
 
-  it('does not report Claude Agent Teams on native Windows', async () => {
+  it('reports Claude Agent Teams on native Windows when Dolphin and Claude are present', async () => {
     Object.defineProperty(process, 'platform', {
       configurable: true,
       value: 'win32'
@@ -246,7 +246,7 @@ describe('preflight', () => {
       throw new Error('not found')
     })
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude'])
+    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'claude-agent-teams'])
   })
 
   it('detects agents via the install-dir resolver when which fails (stripped GUI PATH)', async () => {
@@ -413,11 +413,11 @@ describe('preflight', () => {
 
     await expect(
       detectInstalledAgentsWithShellPathHydration({ wslDistro: 'Ubuntu' })
-    ).resolves.toEqual(['claude'])
+    ).resolves.toEqual(['claude', 'claude-agent-teams'])
     expect(hydrateShellPathMock).not.toHaveBeenCalled()
   })
 
-  it('does not report Claude Agent Teams from WSL agent detection', async () => {
+  it('reports Claude Agent Teams from WSL detection when the distro has claude', async () => {
     Object.defineProperty(process, 'platform', {
       configurable: true,
       value: 'win32'
@@ -438,7 +438,10 @@ describe('preflight', () => {
       throw new Error('not found')
     })
 
-    await expect(detectInstalledAgents({ wslDistro: 'Ubuntu' })).resolves.toEqual(['claude'])
+    await expect(detectInstalledAgents({ wslDistro: 'Ubuntu' })).resolves.toEqual([
+      'claude',
+      'claude-agent-teams'
+    ])
   })
 
   it('detects Mistral Vibe from the installed vibe executable', async () => {
@@ -493,7 +496,10 @@ describe('preflight', () => {
       throw new Error('not found')
     })
 
-    await expect(detectInstalledAgents({ wslDistro: 'Ubuntu' })).resolves.toEqual(['claude'])
+    await expect(detectInstalledAgents({ wslDistro: 'Ubuntu' })).resolves.toEqual([
+      'claude',
+      'claude-agent-teams'
+    ])
     expect(runWslProcessMock).toHaveBeenCalledTimes(1)
     // Why: the local fallback must not report host binaries as WSL binaries.
     expect(resolveCliCommandsMock).not.toHaveBeenCalled()

@@ -79,6 +79,7 @@ function createHarness(
     includePairedSnapshot?: boolean
     rendererMounted?: boolean
     graphOnlySource?: boolean
+    leafHandle?: boolean
     sourceIncarnationId?: string
     stopAndWaitResult?: boolean
   } = {}
@@ -182,16 +183,18 @@ function createHarness(
       ...(options.sourceIncarnationId ? { incarnationId: options.sourceIncarnationId } : {})
     })
   }
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: names only private runtime members this harness reads; each is initialized in the constructor.
   const internals = runtime as unknown as {
     issueHandle: (leaf: unknown) => string
     issuePtyHandle: (pty: unknown) => string
     leaves: Map<string, unknown>
     mobileSessionTabsByWorktree: Map<string, RuntimeMobileSessionTabsSnapshot>
-    ptysById: Map<string, unknown>
+    ptysById: Map<string, { connected: boolean }>
   }
-  const handle = options.graphOnlySource
-    ? internals.issueHandle([...internals.leaves.values()][0])
-    : internals.issuePtyHandle(internals.ptysById.get(SOURCE_PTY_ID))
+  const handle =
+    options.graphOnlySource || options.leafHandle
+      ? internals.issueHandle([...internals.leaves.values()][0])
+      : internals.issuePtyHandle(internals.ptysById.get(SOURCE_PTY_ID))
   return {
     runtime,
     handle,
@@ -203,6 +206,12 @@ function createHarness(
     rendererSplitTerminal,
     getSession: () => session,
     getSnapshot: () => internals.mobileSessionTabsByWorktree.get(WORKTREE_ID),
+    disconnectSourcePty: () => {
+      const pty = internals.ptysById.get(SOURCE_PTY_ID)
+      if (pty) {
+        pty.connected = false
+      }
+    },
     requestedSessionHostIds,
     replaceSourceIncarnation: (incarnationId: string) =>
       runtime.registerPty(SOURCE_PTY_ID, WORKTREE_ID, connectionId, {
@@ -223,6 +232,59 @@ function createHarness(
     resolveSpawn: () => resolveSpawn?.({ id: SPLIT_PTY_ID })
   }
 }
+
+describe('terminal split shell override', () => {
+  it('spawns a PTY-backed split in the requested shell', async () => {
+    const harness = createHarness()
+
+    await harness.runtime.splitTerminal(harness.handle, {
+      direction: 'vertical',
+      shellOverride: 'git-bash'
+    })
+
+    expect(harness.spawn).toHaveBeenCalledWith(
+      expect.objectContaining({ shellOverride: 'git-bash' })
+    )
+  })
+
+  it('splits a renderer leaf from its own PTY so the shell and env are not dropped', async () => {
+    const harness = createHarness(true, { rendererMounted: true, leafHandle: true })
+
+    await harness.runtime.splitTerminal(harness.handle, {
+      direction: 'vertical',
+      env: { TMUX_PANE: '%2' },
+      shellOverride: 'git-bash'
+    })
+
+    expect(harness.rendererSplitTerminal).not.toHaveBeenCalled()
+    expect(harness.spawn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shellOverride: 'git-bash',
+        env: expect.objectContaining({ TMUX_PANE: '%2' })
+      })
+    )
+  })
+
+  it('fails instead of a renderer split when the source has no live PTY', async () => {
+    const harness = createHarness(true, { rendererMounted: true, leafHandle: true })
+    harness.disconnectSourcePty()
+
+    await expect(
+      harness.runtime.splitTerminal(harness.handle, { shellOverride: 'git-bash' })
+    ).rejects.toThrow('terminal_split_shell_override_requires_live_pty')
+    expect(harness.rendererSplitTerminal).not.toHaveBeenCalled()
+    expect(harness.spawn).not.toHaveBeenCalled()
+  })
+
+  it('keeps the renderer split without a shell override', async () => {
+    const harness = createHarness(true, { rendererMounted: true, leafHandle: true })
+
+    void harness.runtime.splitTerminal(harness.handle, { direction: 'vertical' }).catch(() => {})
+
+    expect(harness.rendererSplitTerminal).toHaveBeenCalledTimes(1)
+    expect(harness.spawn).not.toHaveBeenCalled()
+  })
+})
 
 describe('remote runtime terminal split authority', () => {
   it('addresses a graph-backed split by stable leaf identity across a parked remount', async () => {
@@ -301,9 +363,7 @@ describe('remote runtime terminal split authority', () => {
     const persistedLayout = harness.getSession().terminalLayoutsByTabId[TAB_ID]
     expect(persistedLayout).toMatchObject({
       root: { type: 'split', direction: 'vertical' },
-      ptyIdsByLeafId: {
-        [SOURCE_LEAF_ID]: SOURCE_PTY_ID
-      }
+      ptyIdsByLeafId: { [SOURCE_LEAF_ID]: SOURCE_PTY_ID }
     })
     expect(Object.values(persistedLayout!.ptyIdsByLeafId!)).toContain(SPLIT_PTY_ID)
     const siblingSurfaces = harness

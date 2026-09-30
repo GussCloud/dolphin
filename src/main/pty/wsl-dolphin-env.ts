@@ -10,6 +10,7 @@ import {
 } from '../../shared/setup-agent-sequencing'
 import { getShellReadyWrapperRoot } from '../providers/local-pty-shell-ready-wrapper-root'
 import { DOLPHIN_IMAGE_PROTOCOL_ENV } from '../../shared/terminal-image-protocol'
+import { WSL_AGENT_TEAMS_GUEST_ENV_KEYS } from '../../shared/claude-agent-teams-wsl-guest-env'
 
 const WSLENV_ENTRY_SEPARATOR = ':'
 
@@ -54,6 +55,15 @@ function worktreeSetupWslenvEntries(env: Record<string, string | undefined>): st
     // A display name, never a path.
     'DOLPHIN_WORKSPACE_NAME/u'
   ]
+}
+
+// Why team-gated: a teammate pane's claude and tmux shim need the team coordinates in the
+// guest, while TERM/TMUX must never leak into ordinary WSL panes. PATH and the Windows
+// shim dir/bin stay out: the guest shim dir is added in-guest (wsl-managed-cli-path-restore).
+function agentTeamsWslenvEntries(env: Record<string, string | undefined>): string[] {
+  return env.DOLPHIN_AGENT_TEAMS_TEAM_ID
+    ? WSL_AGENT_TEAMS_GUEST_ENV_KEYS.map((name) => `${name}/u`)
+    : []
 }
 
 /** Adds the host environment values required by a WSL PTY and its guest relay. */
@@ -111,7 +121,8 @@ export function addDolphinWslInteropEnv(env: Record<string, string>): void {
     ...(env.DOLPHIN_PI_SOURCE_AGENT_DIR?.startsWith('/') ? ['DOLPHIN_PI_SOURCE_AGENT_DIR/u'] : []),
     `${DOLPHIN_IMAGE_PROTOCOL_ENV}/u`,
     'DOLPHIN_OMP_FRESH_CONFIG/p',
-    ...worktreeSetupWslenvEntries(env)
+    ...worktreeSetupWslenvEntries(env),
+    ...agentTeamsWslenvEntries(env)
   ]
   applyWslenvPassthrough(env, passthroughEntries)
 }

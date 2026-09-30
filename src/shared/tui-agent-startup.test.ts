@@ -287,9 +287,9 @@ describe('tui agent startup plans', () => {
     expect(plan?.launchCommand).toBe('dolphin claude-teams')
   })
 
-  it('keeps the Windows dolphin.cmd shim for Claude Agent Teams on SSH remotes', () => {
-    // Why: the Windows remote shim is also `dolphin.cmd`, matching the local
-    // win32 override, so remoteness must not alter the Windows command.
+  it('launches Claude directly for Claude Agent Teams on Windows, SSH remotes included', () => {
+    // Why: the Windows CLI hop cannot host claude's TUI, and the relay refuses
+    // claude-teams; a remote leader with no team env keeps teammates in-process.
     const plan = buildAgentStartupPlan({
       agent: 'claude-agent-teams',
       prompt: '',
@@ -299,7 +299,7 @@ describe('tui agent startup plans', () => {
       allowEmptyPromptLaunch: true
     })
 
-    expect(plan?.launchCommand).toBe('dolphin.cmd claude-teams')
+    expect(plan?.launchCommand).toBe('claude --teammate-mode auto')
   })
 
   it('keeps the Linux dolphin-ide wrapper for local (non-remote) Claude Agent Teams', () => {

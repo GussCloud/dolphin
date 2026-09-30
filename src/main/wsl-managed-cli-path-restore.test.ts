@@ -1,4 +1,4 @@
-import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
@@ -9,6 +9,9 @@ const posix = process.platform !== 'win32'
 const hasZsh = posix && runProcessSync({ program: 'sh', args: ['-c', 'command -v zsh'] }).code === 0
 const root = posix ? mkdtempSync(join(tmpdir(), 'dolphin managed cli restore ')) : ''
 if (posix) {
+  mkdirSync(join(root, 'agent-teams-bin'))
+  writeFileSync(join(root, 'agent-teams-bin', 'tmux'), '#!/bin/sh\n')
+  chmodSync(join(root, 'agent-teams-bin', 'tmux'), 0o755)
   writeFileSync(join(root, 'dolphin-dev'), '#!/bin/sh\n')
   chmodSync(join(root, 'dolphin-dev'), 0o755)
   writeFileSync(join(root, 'dolphin-ide'), '#!/bin/sh\n')
@@ -48,6 +51,19 @@ describe.each(SHELLS)('WSL_MANAGED_CLI_PATH_RESTORE in $name', (shell) => {
   it.skipIf(!shell.enabled)('leads PATH with a directory holding an executable CLI', () => {
     const result = run(shell, { DOLPHIN_WSL_CLI_DIR: root, DOLPHIN_CLI_COMMAND: 'dolphin-dev' })
     expect(result).toMatchObject({ code: 0, stdout: `${root}:/usr/bin:/bin`, stderr: '' })
+  })
+
+  it.skipIf(!shell.enabled)('adds the tmux shim dir only for Agent Teams panes', () => {
+    const result = run(shell, {
+      DOLPHIN_WSL_CLI_DIR: root,
+      DOLPHIN_CLI_COMMAND: 'dolphin-dev',
+      DOLPHIN_AGENT_TEAMS_TEAM_ID: 'team-1'
+    })
+    expect(result).toMatchObject({
+      code: 0,
+      stdout: `${root}/agent-teams-bin:${root}:/usr/bin:/bin`,
+      stderr: ''
+    })
   })
 
   it.skipIf(!shell.enabled)('warns and keeps PATH when the CLI cannot run', () => {

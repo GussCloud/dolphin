@@ -1,17 +1,20 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   buildClaudeAgentTeamsLaunchPlan,
   ensureClaudeAgentTeamsShimDir,
+  resolveBundledAgentTeamsTmuxDir,
   resolveClaudeAgentTeamsShimBin,
+  resolveClaudeAgentTeamsShimPathDirs,
   windowsClaudeAgentTeamsShimScript
 } from './claude-agent-teams-shim-env'
 
 const roots: string[] = []
+const GIT_BASH = 'C:\\Program Files\\Git\\bin\\bash.exe'
 
 afterEach(async () => {
   await Promise.all(roots.map((root) => rm(root, { recursive: true, force: true })))
@@ -43,6 +46,7 @@ describe('claude agent teams shim env', () => {
       command: "claude 'hello'",
       mode: 'native-panes-shim',
       baseEnv: { PATH: root },
+      resolveGitBash: () => GIT_BASH,
       createTeamEnv: (shimDir, shimBin) => {
         capturedShimBin = shimBin
         return {
@@ -53,21 +57,13 @@ describe('claude agent teams shim env', () => {
       }
     })
 
-    if (process.platform === 'win32') {
-      expect(plan).toMatchObject({
-        command: "claude --teammate-mode in-process 'hello'",
-        env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' }
-      })
-      expect(plan?.envToDelete).toBeUndefined()
-      expect(capturedShimBin).toBe('')
-    } else {
-      expect(plan).toMatchObject({
-        command: "claude --teammate-mode auto 'hello'",
-        env: expect.objectContaining({ TMUX_PANE: '%1' }),
-        envToDelete: ['TERM_PROGRAM']
-      })
-      expect(capturedShimBin).toBe(cliPath)
-    }
+    expect(plan).toMatchObject({
+      command: "claude --teammate-mode auto 'hello'",
+      env: expect.objectContaining({ TMUX_PANE: '%1' }),
+      envToDelete: ['TERM_PROGRAM'],
+      teammateMode: 'auto'
+    })
+    expect(capturedShimBin).toBe(cliPath)
 
     await expect(
       buildClaudeAgentTeamsLaunchPlan({
@@ -140,8 +136,134 @@ describe('claude agent teams shim env', () => {
       })
     ).resolves.toEqual({
       command: 'claude --teammate-mode in-process',
-      env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' }
+      env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' },
+      teammateMode: 'in-process'
     })
+  })
+
+  it('uses native panes on Windows when Git Bash resolves, and in-process otherwise', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-agent-teams-cli-'))
+    roots.push(root)
+    const cliName = process.platform === 'win32' ? 'dolphin-dev.cmd' : 'dolphin-dev'
+    await writeFile(join(root, cliName), '#!/usr/bin/env sh\n', 'utf8')
+    if (process.platform !== 'win32') {
+      await chmod(join(root, cliName), 0o755)
+    }
+    const build = (gitBash: string | null) =>
+      buildClaudeAgentTeamsLaunchPlan({
+        command: 'claude',
+        mode: 'native-panes-shim',
+        baseEnv: { PATH: root },
+        platform: 'win32',
+        resolveGitBash: () => gitBash,
+        createTeamEnv: () => ({ TMUX_PANE: '%1' })
+      })
+
+    await expect(build(null)).resolves.toEqual({
+      command: 'claude --teammate-mode in-process',
+      env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' },
+      teammateMode: 'in-process'
+    })
+    await expect(build(GIT_BASH)).resolves.toMatchObject({
+      command: 'claude --teammate-mode auto',
+      teammateMode: 'auto'
+    })
+  })
+
+  it('does not require Git Bash for a WSL or SSH leader on a Windows host', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-agent-teams-cli-'))
+    roots.push(root)
+    const cliName = process.platform === 'win32' ? 'dolphin-dev.cmd' : 'dolphin-dev'
+    await writeFile(join(root, cliName), '#!/usr/bin/env sh\n', 'utf8')
+    if (process.platform !== 'win32') {
+      await chmod(join(root, cliName), 0o755)
+    }
+    const resolveGitBash = vi.fn(() => null)
+    const build = (hostShell: 'default' | 'native-windows-git-bash' | null) =>
+      buildClaudeAgentTeamsLaunchPlan({
+        command: 'claude',
+        mode: 'native-panes-shim',
+        baseEnv: { PATH: root },
+        platform: 'win32',
+        hostShell,
+        resolveGitBash,
+        createTeamEnv: () => ({ TMUX_PANE: '%1' })
+      })
+
+    await expect(build('default')).resolves.toMatchObject({ teammateMode: 'auto' })
+    expect(resolveGitBash).not.toHaveBeenCalled()
+    await expect(build('native-windows-git-bash')).resolves.toMatchObject({
+      teammateMode: 'in-process'
+    })
+    await expect(build(null)).resolves.toMatchObject({ teammateMode: 'in-process' })
+  })
+
+  it('honors explicit in-process mode even when native panes are available', async () => {
+    await expect(
+      buildClaudeAgentTeamsLaunchPlan({
+        command: 'claude',
+        mode: 'in-process',
+        baseEnv: {},
+        resolveGitBash: () => GIT_BASH,
+        createTeamEnv: () => ({})
+      })
+    ).resolves.toMatchObject({ teammateMode: 'in-process' })
+  })
+
+  it('puts the packaged tmux.exe dir ahead of the tmux.cmd shim dir on Windows', async () => {
+    const resources = await mkdtemp(join(tmpdir(), 'dolphin-agent-teams-resources-'))
+    roots.push(resources)
+    const bundledDir = join(resources, 'bin', 'agent-teams')
+
+    expect(resolveBundledAgentTeamsTmuxDir('win32', resources)).toBeNull()
+    await mkdir(bundledDir, { recursive: true })
+    await writeFile(join(bundledDir, 'tmux.exe'), 'launcher')
+    expect(resolveBundledAgentTeamsTmuxDir('win32', resources)).toBe(bundledDir)
+    expect(resolveBundledAgentTeamsTmuxDir('linux', resources)).toBeNull()
+    expect(resolveBundledAgentTeamsTmuxDir('win32', undefined)).toBeNull()
+
+    expect(resolveClaudeAgentTeamsShimPathDirs('/shim', bundledDir)).toEqual([bundledDir, '/shim'])
+    expect(resolveClaudeAgentTeamsShimPathDirs('/shim', null)).toEqual(['/shim'])
+  })
+
+  it('hands the ordered shim PATH dirs to the team env', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-agent-teams-cli-'))
+    roots.push(root)
+    const cliName = process.platform === 'win32' ? 'dolphin-dev.cmd' : 'dolphin-dev'
+    await writeFile(join(root, cliName), '#!/usr/bin/env sh\n', 'utf8')
+    if (process.platform !== 'win32') {
+      await chmod(join(root, cliName), 0o755)
+    }
+    let captured: string[] = []
+
+    await buildClaudeAgentTeamsLaunchPlan({
+      command: 'claude',
+      mode: 'native-panes-shim',
+      baseEnv: { PATH: root },
+      platform: 'win32',
+      resolveGitBash: () => GIT_BASH,
+      bundledTmuxDir: 'C:/Dolphin/resources/bin/agent-teams',
+      createTeamEnv: (shimDir, _shimBin, shimPathDirs) => {
+        captured = shimPathDirs
+        expect(shimPathDirs.at(-1)).toBe(shimDir)
+        return {}
+      }
+    })
+
+    expect(captured[0]).toBe('C:/Dolphin/resources/bin/agent-teams')
+    expect(captured).toHaveLength(2)
+  })
+
+  it('writes tmux.cmd only on Windows', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-agent-teams-shim-'))
+    roots.push(root)
+
+    await ensureClaudeAgentTeamsShimDir(join(root, 'win'), 'win32')
+    await ensureClaudeAgentTeamsShimDir(join(root, 'posix'), 'linux')
+
+    expect(existsSync(join(root, 'win', 'tmux.cmd'))).toBe(true)
+    expect(existsSync(join(root, 'win', 'tmux.exe'))).toBe(false)
+    expect(existsSync(join(root, 'posix', 'tmux.cmd'))).toBe(false)
   })
 
   it.skipIf(process.platform === 'win32')(

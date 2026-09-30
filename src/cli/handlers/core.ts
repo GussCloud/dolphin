@@ -1,9 +1,11 @@
-import { spawn } from 'node:child_process'
 import type { CommandHandler } from '../dispatch'
 import { formatCliStatus, formatStatus, printResult } from '../format'
 import { RuntimeClientError, serveDolphinApp } from '../runtime-client'
 import { stripElectronRunAsNode } from '../runtime/launch'
+import { getWslAccountTarget } from './account-wsl-location'
+import { spawnProcess } from '../../shared/child-process/run-process'
 import { getServeOptionValidationError } from '../../shared/serve-option-validation'
+import { overlayPlatformEnv } from '../../shared/platform-env-overlay'
 
 function envRecord(): Record<string, string> {
   // Why: the `dolphin` launcher runs Dolphin's Electron binary as Node, so this CLI
@@ -28,7 +30,9 @@ function withTeammateModeAuto(args: string[]): string[] {
 
 async function runClaudeAgentTeams(env: Record<string, string>, args: string[]): Promise<number> {
   return await new Promise((resolve, reject) => {
-    const child = spawn('claude', withTeammateModeAuto(args), {
+    const child = spawnProcess({
+      program: 'claude',
+      args: withTeammateModeAuto(args),
       stdio: 'inherit',
       env
     })
@@ -59,11 +63,21 @@ function getOptionalServePort(flags: Map<string, string | boolean>): string | nu
 }
 
 export const CORE_HANDLERS: Record<string, CommandHandler> = {
-  'claude-teams': async ({ client, rawArgs }) => {
+  'claude-teams': async ({ client, cwd, rawArgs }) => {
+    // Why: the current WSL launcher runs the distro's claude itself and never forwards
+    // claude-teams here; reaching this means a launcher from an older build.
+    if (getWslAccountTarget(cwd)) {
+      throw new RuntimeClientError(
+        'unsupported_platform',
+        'This WSL terminal has an outdated Dolphin CLI. Open a new Dolphin WSL terminal to use Claude Agent Teams.'
+      )
+    }
+    // Why: the CLI runs as Electron-as-Node (a GUI-subsystem image), and a claude child inheriting
+    // its stdio on Windows never paints its TUI or reads input; the agent launches claude directly.
     if (process.platform === 'win32') {
       throw new RuntimeClientError(
         'unsupported_platform',
-        'Claude Agent Teams native panes are not supported on Windows.'
+        'On Windows, start Claude Agent Teams from the Dolphin agent picker; dolphin claude-teams cannot host its terminal UI there.'
       )
     }
     const paneKey = process.env.DOLPHIN_PANE_KEY
@@ -85,10 +99,7 @@ export const CORE_HANDLERS: Record<string, CommandHandler> = {
       delete inheritedEnv[key]
     }
     process.exitCode = await runClaudeAgentTeams(
-      {
-        ...inheritedEnv,
-        ...response.result.launch.env
-      },
+      overlayPlatformEnv(inheritedEnv, response.result.launch.env),
       rawArgs ?? []
     )
   },

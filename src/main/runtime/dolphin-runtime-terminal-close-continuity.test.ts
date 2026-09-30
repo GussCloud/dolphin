@@ -204,6 +204,23 @@ describe('terminal close and handle incarnation continuity', () => {
     expect(harness.getSession().tabsByWorktree[WORKTREE_ID]).toEqual([])
   })
 
+  it('closes a killed PTY-backed split pane by its leaf, not the tab', async () => {
+    const harness = createHarness({ registerPtyBacked: true })
+    harness.syncSplitFixtureGraph()
+    harness.setVerifiedStopResult(true)
+    const terminal = (await harness.runtime.listTerminals(`id:${WORKTREE_ID}`)).terminals.find(
+      (candidate) => candidate.ptyId === PTY_ID
+    )!
+
+    await expect(harness.runtime.closeTerminal(terminal.handle)).resolves.toMatchObject({
+      ptyKilled: true
+    })
+
+    expect(harness.closeTerminalTab).not.toHaveBeenCalled()
+    expect(harness.closeTerminal).toHaveBeenCalledTimes(1)
+    expect(harness.closeTerminal).toHaveBeenCalledWith(TAB_ID, undefined, LEAF_ID)
+  })
+
   it('fences final-pane exit ordering until exact retirement commits', async () => {
     const harness = createHarness({
       includeCanary: true,

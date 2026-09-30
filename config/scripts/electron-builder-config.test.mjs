@@ -226,6 +226,10 @@ describe('electron-builder config', () => {
         expect.objectContaining({
           from: 'native/windows-cli-launcher/.build/dolphin.exe',
           to: 'bin/dolphin.exe'
+        }),
+        expect.objectContaining({
+          from: 'native/windows-cli-launcher/.build/agent-teams/tmux.exe',
+          to: 'bin/agent-teams/tmux.exe'
         })
       ])
     )

@@ -12,7 +12,11 @@ export type RequestTabCloseListener = (data: {
 export type CloseActiveTabListener = (payload?: { sourceId: string }) => void
 export type CloseFloatingItemListener = (payload: { sourceId: string }) => void
 export type SelectFloatingIndexListener = (payload: { index: number }) => void
-export type CloseTerminalListener = (data: { tabId: string; paneRuntimeId?: number | null }) => void
+export type CloseTerminalListener = (data: {
+  tabId: string
+  paneRuntimeId?: number | null
+  leafId?: string
+}) => void
 export type CloseSessionTabListener = (data: { tabId: string; worktreeId: string }) => void
 export type SessionTabCloseRequestListener = (data: {
   requestId: string

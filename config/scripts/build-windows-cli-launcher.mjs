@@ -24,14 +24,18 @@ export function shouldReuseCompiledWindowsCliLauncher(
   return statSync(outputPath).mtimeMs >= statSync(sourcePath).mtimeMs
 }
 
+function launcherBuildDirectory(projectRoot) {
+  return join(projectRoot, 'native', 'windows-cli-launcher', '.build')
+}
+
 function defaultOutputPath(projectRoot) {
-  return join(
-    projectRoot,
-    'native',
-    'windows-cli-launcher',
-    '.build',
-    `${forkIdentity.cliCommandName}.exe`
-  )
+  return join(launcherBuildDirectory(projectRoot), `${forkIdentity.cliCommandName}.exe`)
+}
+
+// Why: the same launcher switches to Claude Agent Teams tmux-shim mode when its file is named
+// tmux.exe; building it under that name avoids copying our signed image at runtime (EDR T1036).
+export function agentTeamsTmuxShimOutputPath(projectRoot) {
+  return join(launcherBuildDirectory(projectRoot), 'agent-teams', 'tmux.exe')
 }
 
 function findFrameworkCompiler(env) {
@@ -62,35 +66,40 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
 
   const repoRoot = resolve(import.meta.dirname, '../..')
   const sourcePath = join(repoRoot, 'native', 'windows-cli-launcher', 'DolphinCliLauncher.cs')
-  const outputPath = readArg('--output') ?? defaultOutputPath(repoRoot)
+  const explicitOutput = readArg('--output')
+  const outputPaths = explicitOutput
+    ? [explicitOutput]
+    : [defaultOutputPath(repoRoot), agentTeamsTmuxShimOutputPath(repoRoot)]
   const compilerPath = findFrameworkCompiler(process.env)
 
   if (!compilerPath) {
     throw new Error('Unable to find the .NET Framework C# compiler required for the CLI launcher.')
   }
 
-  mkdirSync(dirname(outputPath), { recursive: true })
-  if (
-    shouldReuseCompiledWindowsCliLauncher(outputPath, sourcePath, {
-      reuseCached: process.env.DOLPHIN_REUSE_WINDOWS_CLI_LAUNCHER === '1'
-    })
-  ) {
-    console.log(`[native-build] reusing Windows CLI launcher at ${outputPath}`)
-    process.exit(0)
-  }
-  const result = spawnSync(
-    compilerPath,
-    ['/nologo', '/target:exe', '/optimize+', '/warnaserror+', `/out:${outputPath}`, sourcePath],
-    { cwd: repoRoot, stdio: 'inherit' }
-  )
+  for (const outputPath of outputPaths) {
+    mkdirSync(dirname(outputPath), { recursive: true })
+    if (
+      shouldReuseCompiledWindowsCliLauncher(outputPath, sourcePath, {
+        reuseCached: process.env.DOLPHIN_REUSE_WINDOWS_CLI_LAUNCHER === '1'
+      })
+    ) {
+      console.log(`[native-build] reusing Windows CLI launcher at ${outputPath}`)
+      continue
+    }
+    const result = spawnSync(
+      compilerPath,
+      ['/nologo', '/target:exe', '/optimize+', '/warnaserror+', `/out:${outputPath}`, sourcePath],
+      { cwd: repoRoot, stdio: 'inherit' }
+    )
 
-  if (result.signal) {
-    process.kill(process.pid, result.signal)
-  }
-  if (result.error) {
-    throw result.error
-  }
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1)
+    if (result.signal) {
+      process.kill(process.pid, result.signal)
+    }
+    if (result.error) {
+      throw result.error
+    }
+    if (result.status !== 0) {
+      process.exit(result.status ?? 1)
+    }
   }
 }

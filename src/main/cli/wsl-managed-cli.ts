@@ -7,6 +7,10 @@ import { writeShellWrapperFiles } from '../shell-wrapper-file-writer'
 import { getBundledLauncherPath, LINUX_CLI_COMMAND_NAME } from './bundled-cli-launcher-path'
 import { DEV_COMMAND_NAME } from './cli-install-constants'
 import {
+  buildWslAgentTeamsTmuxShim,
+  WSL_AGENT_TEAMS_BIN_DIR_NAME
+} from './wsl-agent-teams-guest-scripts'
+import {
   buildColocatedWslLauncher,
   buildWslBridgeScript,
   WSL_BRIDGE_FILE_NAME
@@ -44,11 +48,20 @@ export function getManagedWslCliDir(opts: {
   }
   const launcher = buildColocatedWslLauncher(launcherPath, windowsPowerShellPath())
   const bridge = buildWslBridgeScript({ userDataPath: opts.userDataPath, cliEntryPath })
-  const digest = createHash('sha256').update(launcher).update(bridge).digest('hex').slice(0, 20)
+  const commandName = getWslCliCommandName(opts.isPackaged)
+  const tmuxShim = buildWslAgentTeamsTmuxShim(commandName)
+  const digest = createHash('sha256')
+    .update(launcher)
+    .update(bridge)
+    .update(tmuxShim)
+    .digest('hex')
+    .slice(0, 20)
   const directory = join(opts.userDataPath, 'wsl-managed-cli', digest)
   const files = [
-    [join(directory, getWslCliCommandName(opts.isPackaged)), launcher],
-    [join(directory, WSL_BRIDGE_FILE_NAME), bridge]
+    [join(directory, commandName), launcher],
+    [join(directory, WSL_BRIDGE_FILE_NAME), bridge],
+    // Why a subdir: only Agent Teams panes put it on PATH, so normal panes keep the distro's tmux.
+    [join(directory, WSL_AGENT_TEAMS_BIN_DIR_NAME, 'tmux'), tmuxShim]
   ] as const
   const ready =
     files.every(([path]) => existsSync(path)) ||

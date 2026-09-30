@@ -13,53 +13,110 @@ import {
   getCliCommandFileNameForPlatform
 } from '../../shared/cli-command-names'
 import { getBundledLauncherPath } from '../cli/bundled-cli-launcher-path'
+import { resolveGitBashPath } from '../git-bash'
+import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
 import { resolvePathEnvKey } from '../pty/windows-path-segment-merge'
 
 export type ClaudeAgentTeamsLaunchPlan = {
   command: string
   env: Record<string, string>
   envToDelete?: string[]
+  teammateMode: 'auto' | 'in-process'
 }
 
-export async function ensureClaudeAgentTeamsShimDir(root = defaultShimRoot()): Promise<string> {
+export async function ensureClaudeAgentTeamsShimDir(
+  root = defaultShimRoot(),
+  platform: NodeJS.Platform = process.platform
+): Promise<string> {
   await mkdir(root, { recursive: true })
   await writeIfChanged(join(root, 'tmux'), unixShimScript())
-  if (process.platform === 'win32') {
+  if (platform === 'win32') {
+    // Why: dev fallback only — cmd.exe expands `%NAME%` in tmux args; packaged builds put tmux.exe ahead of it.
     await writeIfChanged(join(root, 'tmux.cmd'), windowsClaudeAgentTeamsShimScript())
   }
   return root
+}
+
+/** Packaged `bin/agent-teams` dir holding the native tmux.exe shim, or null when this build has none. */
+export function resolveBundledAgentTeamsTmuxDir(
+  platform: NodeJS.Platform = process.platform,
+  resourcesPath: string | undefined = process.resourcesPath
+): string | null {
+  if (platform !== 'win32' || !resourcesPath) {
+    return null
+  }
+  const dir = join(resourcesPath, 'bin', 'agent-teams')
+  return existsSync(join(dir, 'tmux.exe')) ? dir : null
+}
+
+/** Directories to prepend to the leader PATH, highest precedence first. */
+export function resolveClaudeAgentTeamsShimPathDirs(
+  shimDir: string,
+  bundledTmuxDir: string | null = resolveBundledAgentTeamsTmuxDir()
+): string[] {
+  // Why: tmux.exe must win over the dev tmux.cmd, whose cmd.exe hop rewrites `%NAME%` in tmux args.
+  return bundledTmuxDir ? [bundledTmuxDir, shimDir] : [shimDir]
 }
 
 export async function buildClaudeAgentTeamsLaunchPlan(args: {
   command: string | undefined
   mode: ClaudeAgentTeamsMode | undefined
   baseEnv: Record<string, string | undefined>
-  createTeamEnv: (shimDir: string, shimBin: string) => Record<string, string>
+  createTeamEnv: (
+    shimDir: string,
+    shimBin: string,
+    shimPathDirs: string[]
+  ) => Record<string, string>
+  platform?: NodeJS.Platform
+  /** 'default' (WSL, SSH) runs teammates in the pane's own POSIX shell; unknown or native Windows needs Git Bash. */
+  hostShell?: AgentTeamHostShell | null
+  resolveGitBash?: () => string | null
+  bundledTmuxDir?: string | null
 }): Promise<ClaudeAgentTeamsLaunchPlan | null> {
   const mode = args.mode ?? 'off'
   if (!args.command || mode === 'off' || !isDirectClaudeCommand(args.command)) {
     return null
   }
-  if (mode === 'in-process' || process.platform === 'win32') {
-    return {
-      command: addClaudeTeammateModeInProcess(args.command),
-      env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' }
-    }
+  if (mode === 'in-process') {
+    return inProcessPlan(args.command)
+  }
+  const platform = args.platform ?? process.platform
+  // Why: native Windows teammate panes run Claude's POSIX respawn command in Git Bash; WSL/SSH panes already are POSIX.
+  if (
+    platform === 'win32' &&
+    args.hostShell !== 'default' &&
+    !(args.resolveGitBash ?? (() => resolveGitBashPath()))()
+  ) {
+    return inProcessPlan(args.command)
   }
   const shimBin = resolveClaudeAgentTeamsShimBin(args.baseEnv)
   if (!shimBin) {
     // Why: without an absolute CLI path the shim would resolve a bare `dolphin` against the pane cwd, so degrade instead.
-    return {
-      command: addClaudeTeammateModeInProcess(args.command),
-      env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' }
-    }
+    return inProcessPlan(args.command)
   }
-  const shimDir = await ensureClaudeAgentTeamsShimDir()
-  const env = args.createTeamEnv(shimDir, shimBin)
+  const shimDir = await ensureClaudeAgentTeamsShimDir(undefined, platform)
+  const bundledTmuxDir =
+    args.bundledTmuxDir === undefined
+      ? resolveBundledAgentTeamsTmuxDir(platform)
+      : args.bundledTmuxDir
+  const env = args.createTeamEnv(
+    shimDir,
+    shimBin,
+    resolveClaudeAgentTeamsShimPathDirs(shimDir, bundledTmuxDir)
+  )
   return {
     command: addClaudeTeammateModeAuto(args.command),
     env,
-    envToDelete: ['TERM_PROGRAM']
+    envToDelete: ['TERM_PROGRAM'],
+    teammateMode: 'auto'
+  }
+}
+
+function inProcessPlan(command: string): ClaudeAgentTeamsLaunchPlan {
+  return {
+    command: addClaudeTeammateModeInProcess(command),
+    env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' },
+    teammateMode: 'in-process'
   }
 }
 

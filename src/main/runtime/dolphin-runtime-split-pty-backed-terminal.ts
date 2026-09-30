@@ -21,6 +21,7 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
       // workspace, for splits the user never asked to see.
       surfaceOwner?: false
       telemetrySource?: TerminalPaneSplitSource
+      shellOverride?: string
     } = {}
   ): Promise<RuntimeTerminalSplit> {
     if (!this.ptyController?.spawn) {
@@ -58,6 +59,7 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
       commandDelivery: 'provider',
       env: this.buildTerminalWorkspaceEnv(workspace, opts.env ?? {}, paneKey, parentTabId),
       envToDelete: opts.envToDelete,
+      ...(opts.shellOverride ? { shellOverride: opts.shellOverride } : {}),
       connectionId: workspace.connectionId,
       worktreeId: workspace.id,
       preAllocatedHandle,

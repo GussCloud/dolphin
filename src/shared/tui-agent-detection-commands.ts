@@ -13,6 +13,8 @@ export type TuiAgentDetectionCommand = {
   reportVersion?: true
   requiredCommands?: readonly string[]
   unsupportedRuntimes?: readonly TuiAgentDetectionRuntime[]
+  /** Runtimes where Dolphin supplies `cmd` in every terminal, so only `requiredCommands` are probed. */
+  providedRuntimes?: readonly TuiAgentDetectionRuntime[]
 }
 
 export const KNOWN_TUI_AGENT_DETECTION_COMMANDS = buildTuiAgentDetectionCommands()
@@ -38,6 +40,9 @@ function buildTuiAgentDetectionCommand(
       : {}),
     ...(config.detectUnsupportedRuntimes?.length
       ? { unsupportedRuntimes: config.detectUnsupportedRuntimes }
+      : {}),
+    ...(config.detectProvidedRuntimes?.length
+      ? { providedRuntimes: config.detectProvidedRuntimes }
       : {})
   }
 }
@@ -51,7 +56,10 @@ export function getTuiAgentDetectionProbeCommands(
       commands.flatMap((command) =>
         isDetectionUnsupportedInRuntime(command, runtime)
           ? []
-          : [command.cmd, ...(command.requiredCommands ?? [])]
+          : [
+              ...(isDetectionProvidedInRuntime(command, runtime) ? [] : [command.cmd]),
+              ...(command.requiredCommands ?? [])
+            ]
       )
     )
   ]
@@ -66,7 +74,7 @@ export function resolveDetectedTuiAgentIds(
     .filter(
       (command) =>
         !isDetectionUnsupportedInRuntime(command, runtime) &&
-        foundCommands.has(command.cmd) &&
+        (isDetectionProvidedInRuntime(command, runtime) || foundCommands.has(command.cmd)) &&
         (command.requiredCommands ?? []).every((required) => foundCommands.has(required))
     )
     .map(({ id }) => id)
@@ -78,4 +86,11 @@ export function isDetectionUnsupportedInRuntime(
   runtime: TuiAgentDetectionRuntime
 ): boolean {
   return command.unsupportedRuntimes?.includes(runtime) === true
+}
+
+function isDetectionProvidedInRuntime(
+  command: TuiAgentDetectionCommand,
+  runtime: TuiAgentDetectionRuntime
+): boolean {
+  return command.providedRuntimes?.includes(runtime) === true
 }

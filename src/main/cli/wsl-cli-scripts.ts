@@ -1,6 +1,7 @@
 import { CLI_COMMAND_NAME } from '../../shared/cli-command-names'
 import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { quotePowerShellLiteral } from '../../shared/powershell-native-argument'
+import { buildClaudeTeamsGuestLaunch } from './wsl-agent-teams-guest-scripts'
 
 export const WSL_BRIDGE_FILE_NAME = `${CLI_COMMAND_NAME}-wsl-bridge.ps1`
 const WSL_SHARE_DIR_NAME = FORK_IDENTITY.userDataDirName
@@ -61,6 +62,7 @@ DOLPHIN_WSL_CWD=$(pwd -P 2>/dev/null) || {
 }
 DOLPHIN_BRIDGE_PS1_WIN=$(wslpath -w "$DOLPHIN_BRIDGE_PS1")
 DOLPHIN_WSL_CWD_WIN=$(wslpath -w "$DOLPHIN_WSL_CWD")
+${buildClaudeTeamsGuestLaunch()}
 if [ -n "\${WSL_DISTRO_NAME:-}" ]; then
   set -- -WslDistro "$WSL_DISTRO_NAME" "$@"
 fi

@@ -16,6 +16,7 @@ import {
 } from './execution-host-flag'
 import { listSshTargets } from './host-selector-alternatives'
 import { reportCliError } from './cli-error'
+import { WSL_AGENT_TEAMS_ENV_COMMAND } from '../shared/claude-agent-teams-wsl-guest-env'
 import { printHelp } from './help'
 import type { RuntimeClient } from './runtime-client'
 import { COMMAND_SPECS } from './specs'
@@ -82,6 +83,10 @@ export async function main(
   }
   if (argv[0] === 'claude-teams') {
     await runClaudeTeams(argv.slice(1), cwd)
+    return
+  }
+  if (argv[0] === WSL_AGENT_TEAMS_ENV_COMMAND) {
+    await runAgentTeamsWslEnv(cwd)
     return
   }
   const parsed = normalizeCommandPositionals(
@@ -203,6 +208,18 @@ async function runClaudeTeams(argv: string[], cwd: string): Promise<void> {
     })
   } catch (error) {
     reportCliError(error, false, { commandPath: ['claude-teams'] })
+    process.exitCode = 1
+  }
+}
+
+async function runAgentTeamsWslEnv(cwd: string): Promise<void> {
+  try {
+    const { prepareClaudeAgentTeamsWslGuestEnv } =
+      await import('./handlers/claude-agent-teams-wsl-env.js')
+    const client = new (await loadRuntimeClientClass())(undefined, undefined, null, null)
+    process.stdout.write(await prepareClaudeAgentTeamsWslGuestEnv(client, cwd))
+  } catch (error) {
+    reportCliError(error, false, { commandPath: [WSL_AGENT_TEAMS_ENV_COMMAND] })
     process.exitCode = 1
   }
 }

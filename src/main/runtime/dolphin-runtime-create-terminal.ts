@@ -3,6 +3,8 @@ import { DolphinRuntimeWithTerminalCreateDeduplication } from './dolphin-runtime
 import * as dependencies from './dolphin-runtime-create-terminal-dependencies'
 import { createDesktopTerminal } from './dolphin-runtime-create-terminal-desktop'
 import { buildRuntimeAgentTeamsLaunchPlan } from './dolphin-runtime-agent-teams-launch-plan'
+import { resolveWorkspaceAgentTeamHostShell } from './claude-agent-teams-host-shell'
+import { overlayPlatformEnv } from '../../shared/platform-env-overlay'
 import { createPtySpawnCommitReporter } from './dolphin-runtime-report-pty-spawn-commit'
 import { recordPtySurface, spawnSurfaceClaimSequence } from './pty-recorded-surface-topology'
 
@@ -78,6 +80,7 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
           ...launchOpts.env,
           ...(launchToken ? { DOLPHIN_AGENT_LAUNCH_TOKEN: launchToken } : {})
         }
+        const teamBaseEnv = overlayPlatformEnv<string | undefined>(process.env, baseEnv)
         let agentTeamsPlan: Awaited<ReturnType<typeof dependencies.buildClaudeAgentTeamsLaunchPlan>>
         let sequencedStartupCommand: string | undefined
         let effectiveLaunchConfig = launchOpts.launchConfig
@@ -87,14 +90,16 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
             command: launchOpts.command,
             claudeAgentTeamsSourceCommand: launchOpts.claudeAgentTeamsSourceCommand,
             claudeAgentTeamsMode: this.store?.getSettings?.().claudeAgentTeamsMode,
-            baseEnv: { ...process.env, ...baseEnv },
+            baseEnv: teamBaseEnv,
             adoptedBeforeLaunch,
-            createTeamEnv: (shimDir, shimBin) =>
+            hostShell: resolveWorkspaceAgentTeamHostShell(workspace),
+            createTeamEnv: (shimDir, shimBin, shimPathDirs) =>
               this.claudeAgentTeams.createLaunchEnv({
                 leaderHandle: preAllocatedHandle,
-                baseEnv: { ...process.env, ...baseEnv },
+                baseEnv: teamBaseEnv,
                 shimDir,
-                shimBin
+                shimBin,
+                shimPathDirs
               }).env
           })
           agentTeamsPlan = agentTeams.plan

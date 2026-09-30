@@ -237,7 +237,7 @@ export type UiCommandEventApi = {
   onMobileMarkdownRequest: (callback: (request: RuntimeMobileMarkdownRequest) => void) => () => void
   respondMobileMarkdownRequest: (response: RuntimeMobileMarkdownResponse) => void
   onCloseTerminal: (
-    callback: (data: { tabId: string; paneRuntimeId?: number }) => void
+    callback: (data: { tabId: string; paneRuntimeId?: number; leafId?: string }) => void
   ) => () => void
   onTerminalTabCloseRequest: (callback: (request: TerminalTabCloseRequest) => void) => () => void
   respondTerminalTabClose: (response: TerminalTabCloseResponse) => void

@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto'
 import { splitTmuxCommand } from '../../shared/claude-agent-teams-tmux-compat'
 import { ClaudeAgentTeamsTmuxDispatcher } from './claude-agent-teams-tmux-dispatcher'
 import { resolvePathEnvKey } from '../pty/windows-environment-path'
+import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
 import type {
   AgentTeam,
   AgentTeamsLaunchEnv,
@@ -28,13 +29,17 @@ export class ClaudeAgentTeamsService {
     shimDir: string
     /** Absolute path only; null leaves the var unset so the shim refuses to guess a cwd-relative CLI. */
     shimBin: string | null
+    /** PATH dirs to prepend, highest precedence first; defaults to just `shimDir`. */
+    shimPathDirs?: string[]
+    /** Omitted when the leader PTY is not spawned yet; resolved on the first teammate split. */
+    hostShell?: AgentTeamHostShell
   }): AgentTeamsLaunchEnv {
     const teamId = `team-${randomUUID()}`
     const token = randomBytes(32).toString('base64url')
     const leaderPane = '%1'
     // Why: Windows callers pass an env spelt `Path`; reading `PATH` there truncated the launch PATH to just the shim dir.
     const pathKey = resolvePathEnvKey(args.baseEnv, process.platform)
-    const pathValue = [args.shimDir, args.baseEnv[pathKey]]
+    const pathValue = [...(args.shimPathDirs ?? [args.shimDir]), args.baseEnv[pathKey]]
       .filter(Boolean)
       .join(process.platform === 'win32' ? ';' : ':')
     const tmuxValue = `/tmp/dolphin-claude-agent-teams/${teamId},0,1`
@@ -70,6 +75,7 @@ export class ClaudeAgentTeamsService {
       windowIndex: '0',
       tmuxValue,
       baseEnv: env,
+      hostShell: args.hostShell ?? null,
       panes: new Map([[leaderPane, leader]]),
       paneOrder: [leaderPane],
       nextPaneNumber: 2,
@@ -83,6 +89,7 @@ export class ClaudeAgentTeamsService {
     for (const [teamId, team] of this.teams) {
       if (team.leaderHandle === handle) {
         this.teams.delete(teamId)
+        void this.dispatcher.releaseTeam(team)
       }
     }
   }

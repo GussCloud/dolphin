@@ -16,19 +16,19 @@ describe('tui agent detection commands', () => {
         id: 'claude-agent-teams',
         cmd: 'dolphin',
         requiredCommands: ['claude'],
-        unsupportedRuntimes: ['win32', 'wsl']
+        providedRuntimes: ['wsl']
       },
       {
         id: 'claude-agent-teams',
         cmd: 'dolphin-dev',
         requiredCommands: ['claude'],
-        unsupportedRuntimes: ['win32', 'wsl']
+        providedRuntimes: ['wsl']
       },
       {
         id: 'claude-agent-teams',
         cmd: 'dolphin-ide',
         requiredCommands: ['claude'],
-        unsupportedRuntimes: ['win32', 'wsl']
+        providedRuntimes: ['wsl']
       }
     ])
     expect(getTuiAgentDetectionProbeCommands(commands, 'linux')).toEqual([
@@ -41,13 +41,21 @@ describe('tui agent detection commands', () => {
     expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin', 'claude']), 'linux')).toEqual([
       'claude-agent-teams'
     ])
-    expect(getTuiAgentDetectionProbeCommands(commands, 'win32')).toEqual([])
-    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin', 'claude']), 'win32')).toEqual(
-      []
-    )
-    expect(getTuiAgentDetectionProbeCommands(commands, 'wsl')).toEqual([])
-    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin-ide', 'claude']), 'wsl')).toEqual(
-      []
-    )
+    expect(getTuiAgentDetectionProbeCommands(commands, 'win32')).toEqual([
+      'dolphin',
+      'claude',
+      'dolphin-dev',
+      'dolphin-ide'
+    ])
+    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin']), 'win32')).toEqual([])
+    expect(resolveDetectedTuiAgentIds(commands, new Set(['dolphin', 'claude']), 'win32')).toEqual([
+      'claude-agent-teams'
+    ])
+    // WSL terminals always carry the managed CLI, so only the distro's claude is probed.
+    expect(getTuiAgentDetectionProbeCommands(commands, 'wsl')).toEqual(['claude'])
+    expect(resolveDetectedTuiAgentIds(commands, new Set(), 'wsl')).toEqual([])
+    expect(resolveDetectedTuiAgentIds(commands, new Set(['claude']), 'wsl')).toEqual([
+      'claude-agent-teams'
+    ])
   })
 })

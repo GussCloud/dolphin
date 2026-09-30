@@ -164,7 +164,7 @@ describe('preflight', () => {
     }
 
     expect(result).toEqual({
-      agents: ['claude'],
+      agents: ['claude', 'claude-agent-teams'],
       addedPathSegments: [],
       shellHydrationOk: true,
       pathSource: 'sync_seed_only',

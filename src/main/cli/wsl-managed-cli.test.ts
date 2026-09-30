@@ -37,6 +37,17 @@ describe('managed WSL CLI provisioning', () => {
     expect(getManagedWslCliDir({ ...update, userDataPath: host.userDataPath })).not.toBe(directory)
   })
 
+  it('ships the Agent Teams tmux shim in a subdir that is not the PATH-listed CLI dir', () => {
+    const host = fixture()
+    const directory = getManagedWslCliDir(host) ?? ''
+    expect(readFileSync(join(directory, 'agent-teams-bin', 'tmux'), 'utf8')).toContain(
+      'exec "$(dirname -- "$0")/../dolphin-ide" agent-teams-tmux "$@"'
+    )
+    rmSync(join(directory, 'agent-teams-bin'), { recursive: true })
+    expect(getManagedWslCliDir(host)).toBe(directory)
+    expect(statSync(join(directory, 'agent-teams-bin', 'tmux')).isFile()).toBe(true)
+  })
+
   it('provides nothing when the packaged CLI runtime is missing', () => {
     const host = fixture()
     rmSync(join(host.resourcesPath, 'bin', 'dolphin.exe'))
