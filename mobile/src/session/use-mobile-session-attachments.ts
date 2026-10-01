@@ -3,6 +3,10 @@ import { AppState, type AppStateStatus } from 'react-native'
 import { useClipboardReader } from '../platform/clipboard'
 import { triggerSelection, triggerError } from '../platform/haptics'
 import { loadMobileNewTabAgentOptions } from './mobile-new-tab-agent-loader'
+import {
+  readCachedNewTabAgentOptions,
+  writeCachedNewTabAgentOptions
+} from './mobile-new-tab-agent-options-cache'
 import { useMobileSessionImageAttachments } from './use-mobile-session-image-attachments'
 import { useMobileAttachmentInputLeaseGate } from './use-mobile-attachment-input-lease-gate'
 import { useMobileTerminalPaste } from './use-mobile-terminal-paste'
@@ -134,21 +138,31 @@ export function useMobileSessionAttachments(scope: MobileSessionAccessorySelecti
     }
 
     let stale = false
-    setCreateTabAgentLoadState('loading')
-    setCreateTabAgentOptions([])
+    // Why: show the agents this connection already detected at once, then refresh them in the
+    // background, so each new tab does not sit on "Detecting agents".
+    const cached = readCachedNewTabAgentOptions(client, worktreeId)
+    if (cached) {
+      setCreateTabAgentOptions([...cached])
+      setCreateTabAgentLoadState('loaded')
+    } else {
+      setCreateTabAgentLoadState('loading')
+      setCreateTabAgentOptions([])
+    }
 
     void (async () => {
       const options = await loadMobileNewTabAgentOptions({
         client,
         worktreeId
       })
+      writeCachedNewTabAgentOptions(client, worktreeId, options)
       if (stale) {
         return
       }
       setCreateTabAgentOptions(options)
       setCreateTabAgentLoadState('loaded')
     })().catch(() => {
-      if (!stale) {
+      // Why keep a cached list on a failed refresh: those agents were detected on this same connection.
+      if (!stale && !cached) {
         setCreateTabAgentOptions([])
         setCreateTabAgentLoadState('error')
       }

@@ -30,6 +30,7 @@ type TerminalLiveInputCommitHarness = {
   readonly handlers: TerminalLiveInputCommitHandlers
   readonly sent: readonly string[]
   readonly setActiveSessionTabType: (next: string | undefined) => void
+  readonly setActiveTerminal: (scope: string, handle: string | null) => void
   readonly setConnected: (next: boolean) => void
   readonly setSendResult: (next: boolean) => void
   readonly unmount: () => void
@@ -43,6 +44,8 @@ function createTerminalLiveInputCommitHarness({
   sendResult = true
 }: TerminalLiveInputCommitHarnessOptions = {}): TerminalLiveInputCommitHarness {
   const activeHandle = 'terminal-a'
+  let currentActiveHandle: string | null = activeHandle
+  let currentScope = 'workspace-a'
   const activeHandleRef: RefObject<string | null> = { current: activeHandle }
   const activeSessionTabTypeRef: RefObject<string | null> = { current: 'terminal' }
   const captures: string[] = []
@@ -70,7 +73,7 @@ function createTerminalLiveInputCommitHarness({
 
   function Harness(): null {
     handlers = useTerminalLiveInputCommit({
-      activeHandle,
+      activeHandle: currentActiveHandle,
       activeHandleRef,
       activeSessionTabType: currentActiveSessionTabType,
       activeSessionTabTypeRef,
@@ -78,6 +81,7 @@ function createTerminalLiveInputCommitHarness({
       liveInputRef,
       liveInputTerminalHandles,
       liveInputTerminalHandlesRef,
+      liveInputScope: currentScope,
       sendLiveTerminalInputRef,
       setLiveInputCapture
     })
@@ -110,6 +114,18 @@ function createTerminalLiveInputCommitHarness({
         renderer?.update(createElement(Harness))
       })
     },
+    setActiveTerminal: (scope: string, handle: string | null): void => {
+      currentScope = scope
+      currentActiveHandle = handle
+      activeHandleRef.current = handle
+      if (handle) {
+        liveInputTerminalHandles.add(handle)
+        liveInputTerminalHandlesRef.current.add(handle)
+      }
+      act(() => {
+        renderer?.update(createElement(Harness))
+      })
+    },
     setConnected: (next: boolean): void => {
       currentConnected = next
       act(() => {
@@ -129,6 +145,19 @@ describe('terminal live input commit hook', () => {
   afterEach(() => {
     vi.useRealTimers()
     composingRange.hostReportsNone = false
+  })
+
+  it('Given sent live input When another workspace terminal becomes active Then the field starts empty', async () => {
+    // Given: `gg` already reached terminal A's PTY, so no commit is pending
+    const harness = createTerminalLiveInputCommitHarness()
+    changeLiveInput(harness.handlers, 'gg', false)
+    await vi.waitFor(() => expect(harness.sent).toEqual(['gg']))
+
+    // When: the same handle name in another workspace takes over
+    harness.setActiveTerminal('workspace-b', 'terminal-a')
+
+    // Then: the mirror no longer carries A's text
+    expect(harness.captures.at(-1)).toBe('')
   })
 
   it('Given Hangul composition and no marked-text report When steps arrive Then no jamo leaks', async () => {

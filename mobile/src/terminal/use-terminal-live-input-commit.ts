@@ -37,6 +37,8 @@ type TerminalLiveInputCommitOptions<TTabType extends string> = {
   readonly liveInputRef: RefObject<TextInput | null>
   readonly liveInputTerminalHandles: ReadonlySet<string>
   readonly liveInputTerminalHandlesRef: RefObject<Set<string>>
+  /** Host and workspace the handle belongs to; a handle alone can repeat across workspaces. */
+  readonly liveInputScope?: string
   readonly sendLiveTerminalInputRef: RefObject<TerminalLiveInputSender>
   readonly setLiveInputCapture: (text: string) => void
 }
@@ -62,6 +64,7 @@ export function useTerminalLiveInputCommit<TTabType extends string>({
   liveInputRef,
   liveInputTerminalHandles,
   liveInputTerminalHandlesRef,
+  liveInputScope = '',
   sendLiveTerminalInputRef,
   setLiveInputCapture
 }: TerminalLiveInputCommitOptions<TTabType>): TerminalLiveInputCommitHandlers {
@@ -93,6 +96,21 @@ export function useTerminalLiveInputCommit<TTabType extends string>({
       clearPendingLiveInputCommit()
     }
   }, [connected, clearPendingLiveInputCommit])
+
+  const liveInputTerminalIdentityRef = useRef<string | null>(null)
+  useEffect(() => {
+    // Why null is skipped: a lagging tab list briefly has no active handle while the terminal stays.
+    if (!activeHandle) {
+      return
+    }
+    const identity = JSON.stringify([liveInputScope, activeHandle])
+    const previousIdentity = liveInputTerminalIdentityRef.current
+    liveInputTerminalIdentityRef.current = identity
+    // Why: the field text and mirror belong to one PTY; carrying them over would prepend it to the next terminal's input.
+    if (previousIdentity !== null && previousIdentity !== identity) {
+      clearPendingLiveInputCommit()
+    }
+  }, [activeHandle, clearPendingLiveInputCommit, liveInputScope])
 
   useEffect(() => {
     const pendingHandle = pendingLiveInputHandleRef.current

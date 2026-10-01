@@ -2,7 +2,7 @@
   "expo": {
     "name": "Dolphin",
     "slug": "dolphin-mobile",
-    "version": "0.0.58",
+    "version": "0.0.59",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -75,7 +75,7 @@
       "allowBackup": false,
       "permissions": ["RECORD_AUDIO", "MODIFY_AUDIO_SETTINGS"],
       "package": "com.gusscloud.dolphin.mobile",
-      "versionCode": 25,
+      "versionCode": 26,
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
