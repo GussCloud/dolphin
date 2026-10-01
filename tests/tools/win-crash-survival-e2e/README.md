@@ -2,7 +2,7 @@
 
 **Windows only.** Proves that a **crash of Dolphin's main process** does not orphan
 open terminal PTYs — the regression behind
-[GitHub #7742](https://github.com/GussCloud/dolphin/issues/7742) —
+GitHub #7742 (upstream issue 7742) —
 with machine-checkable assertions against an **already-installed, packaged**
 `Dolphin.exe`.
 

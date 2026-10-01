@@ -2,7 +2,7 @@
 
 A host-requested whole-tab close can return `closed: true` while its row remains in `dolphin-data.json`. Once a repository's host topology revision is positive, the Store preserves host membership against a renderer save that merely omits a tab. The renderer acknowledges after its session flush; its graph removal can arrive later. The existing runtime fallback committed retirement only after that graph stopped owning the parent.
 
-This fixes that acknowledgement ordering path relevant to [#17344](https://github.com/GussCloud/dolphin/issues/17344). It does not establish that every tab in that report followed this path or explain large RSS from the small persisted row alone.
+This fixes that acknowledgement ordering path relevant to #17344 (upstream issue 17344). It does not establish that every tab in that report followed this path or explain large RSS from the small persisted row alone.
 
 ## Run
 

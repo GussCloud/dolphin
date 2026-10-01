@@ -118,7 +118,7 @@ Which package manager appears depends on what your system actually has: `apt`, e
 **A distro-managed build is left alone.** If you are running a repackaged Dolphin — an AUR build, a Nix derivation — Dolphin sees that no package manager it can drive owns this install and stops offering a download it could never apply. It still reports that a new version exists, so you can update the way you normally would.
 
 <Callout title="Planned: a signed apt/yum repository">
-  [#18086](https://github.com/GussCloud/dolphin/issues/18086) tracks publishing a signed repository
+  #18086 (upstream issue 18086) tracks publishing a signed repository
   so your OS package manager owns Dolphin updates the way it owns everything else. It does not exist
   yet — today, `.deb` and `.rpm` updates are the manual step described above.
 </Callout>

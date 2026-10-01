@@ -2,7 +2,7 @@
 
 A restored split pane can be explicitly closed while its IPC spawn/reattach reply is pending. Its transport has no bound PTY ID yet. The old close path deleted the durable leaf binding and destroyed the unbound transport without requesting retirement. The late-result cleanup deliberately preserved reattach and cold-restore replies for remounts, so an existing shell or newly cold-restored shell could remain live with no pane and no kill request.
 
-This is a concrete mechanism matching the **missing kill requests** in [#15210](https://github.com/GussCloud/dolphin/issues/15210). The relevant close, late-result exclusion, and daemon cold-restore behavior exists in both `v1.4.184` and `v1.4.198`. The report does not establish that this sequence produced its 51 shells. It also does not establish a retained Electron-main heap slope or independently explain [#19831](https://github.com/GussCloud/dolphin/issues/19831).
+This is a concrete mechanism matching the **missing kill requests** in #15210 (upstream issue 15210). The relevant close, late-result exclusion, and daemon cold-restore behavior exists in both `v1.4.184` and `v1.4.198`. The report does not establish that this sequence produced its 51 shells. It also does not establish a retained Electron-main heap slope or independently explain #19831 (upstream issue 19831).
 
 ## Ownership and fix
 

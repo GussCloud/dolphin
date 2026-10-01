@@ -7,7 +7,7 @@ incomplete carry through existing `ownRetainedString`; short prefixes, content,
 parsing, callbacks, authority and reset behavior are preserved.
 
 This adds the fifteenth retained-text boundary to
-[#20960](https://github.com/GussCloud/dolphin/pull/20960), following the
+#20960 (upstream PR 20960), following the
 [kitty/mouse tails](../terminal-mode-tail-retention/README.md) and other
 [retained text slices](../retained-text-slices/README.md). It introduces no wire
 change and applies equally to local and SSH/remote terminal bytes reaching the

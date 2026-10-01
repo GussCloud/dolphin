@@ -28,7 +28,7 @@ and the dynamic loader then refuses to load it:
 
 Because the Dolphin main process loads node-pty at startup, that failure crashes the
 whole app before a window appears — this is exactly what shipped in v1.4.150 and
-broke launch on Ubuntu 20.04 ([#9902](https://github.com/GussCloud/dolphin/issues/9902)).
+broke launch on Ubuntu 20.04 (#9902 (upstream issue 9902)).
 
 The specific trap is glibc's 2.32–2.34 "libpthread/libutil merge", which moved
 several long-stable functions into libc under brand-new symbol versions:
@@ -150,7 +150,7 @@ GPU child involved, and the corruption surfaces wherever the next allocation
 lands, which is why reports name unrelated frames (`gtk_widget_realize`,
 libxcb-dri3, FontConfig/expat). Dolphin 1.4.199/1.4.200 shipped that runtime and
 died on launch on Ubuntu + NVIDIA/X11
-([#20081](https://github.com/GussCloud/dolphin/issues/20081)).
+(#20081 (upstream issue 20081)).
 
 Electron 43.7.0 fixes it by overriding `setenv`/`unsetenv`/`putenv`/`clearenv`
 so a published `environ` is never freed, deferring to glibc on 2.41+
