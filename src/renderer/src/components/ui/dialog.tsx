@@ -125,11 +125,23 @@ function DialogFooter({
   )
 }
 
-function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
+const DIALOG_TITLE_SIZE_CLASSES = {
+  default: 'text-lg leading-snug',
+  // Why: feature tips lead with a large headline beside their animated visual.
+  hero: 'text-2xl leading-tight tracking-tight md:text-[1.75rem]'
+} as const
+
+function DialogTitle({
+  className,
+  size = 'default',
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title> & {
+  size?: keyof typeof DIALOG_TITLE_SIZE_CLASSES
+}) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('text-lg leading-snug font-semibold break-words', className)}
+      className={cn(DIALOG_TITLE_SIZE_CLASSES[size], 'font-semibold break-words', className)}
       {...props}
     />
   )

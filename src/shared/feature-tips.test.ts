@@ -3,6 +3,7 @@ import {
   FEATURE_TIPS,
   getCompletedFeatureTipIds,
   getOrderedUnseenFeatureTips,
+  isFeatureTipForAudience,
   normalizeFeatureTipIds,
   type FeatureTipId
 } from './feature-tips'
@@ -25,7 +26,8 @@ describe('feature tips', () => {
         'voice-dictation',
         'dolphin-cli',
         'cmd-j-palette',
-        'agent-session-search'
+        'agent-session-search',
+        'claude-agent-teams-windows'
       ])
     })
 
@@ -119,5 +121,44 @@ describe('feature tips', () => {
     expect(voiceTip?.priority).toBe('unseen')
     expect(voiceTip?.title).toBe('Dictate into any pane')
     expect(voiceTip?.ctaLabel).toBe('Set up voice dictation')
+  })
+
+  describe('Claude Agent Teams on Windows tip', () => {
+    const tip = FEATURE_TIPS.find((entry) => entry.id === 'claude-agent-teams-windows')
+    if (!tip) {
+      throw new Error('Expected claude-agent-teams-windows feature tip')
+    }
+
+    it('is a new passive tip', () => {
+      expect(tip).toMatchObject({
+        action: 'learn-claude-agent-teams',
+        priority: 'new',
+        eyebrow: 'New',
+        ctaLabel: 'Got it'
+      })
+    })
+
+    it('shows on Windows from 0.1.21 on', () => {
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.1.21', windows: true })).toBe(true)
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.2.0', windows: true })).toBe(true)
+    })
+
+    it('stays hidden before 0.1.21, off Windows, or while the version is unknown', () => {
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.1.20', windows: true })).toBe(false)
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.1.21-rc.1', windows: true })).toBe(false)
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.1.21', windows: false })).toBe(false)
+      expect(isFeatureTipForAudience(tip, { appVersion: null, windows: true })).toBe(false)
+      expect(isFeatureTipForAudience(tip, { appVersion: 'dev', windows: true })).toBe(false)
+      expect(isFeatureTipForAudience(tip, undefined)).toBe(false)
+    })
+
+    it('comes first for an eligible audience', () => {
+      const tips = getOrderedUnseenFeatureTips({
+        seenTipIds: new Set<FeatureTipId>(),
+        audience: { appVersion: '0.1.21', windows: true }
+      })
+
+      expect(tips[0]?.id).toBe('claude-agent-teams-windows')
+    })
   })
 })

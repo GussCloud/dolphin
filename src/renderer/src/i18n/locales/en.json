@@ -18409,6 +18409,25 @@
     }
   },
   "featureTips": {
+    "agentTeams": {
+      "demoPrompt": "Create a team: one teammate on the API, one on tests.",
+      "demoShell": "Git Bash",
+      "demoTabTitle": "Claude Agent Teams",
+      "demoLead": "lead",
+      "demoPlanning": "Creating a team with 2 teammates",
+      "demoLeadDone": "Both teammates reported back",
+      "demoApiTeammate": "api",
+      "demoApiRead": "Reading routes.ts",
+      "demoApiEdit": "Adding input checks",
+      "demoApiDone": "Sent summary to lead",
+      "demoTestsTeammate": "tests",
+      "demoTestsWrite": "Writing routes.test.ts",
+      "demoTestsRun": "Running 12 tests",
+      "demoTestsDone": "12 passed",
+      "launchInstruction": "Pick Claude Agent Teams when you start an agent, then ask it to create a team.",
+      "settingsInstruction": "Change what every team is told in",
+      "settingsLink": "Settings → Agents"
+    },
     "voice": {
       "demoPrompt": "Review this diff for edge cases and add tests for anything you find.",
       "startDictation": "Start dictation",

@@ -12,6 +12,8 @@ import {
 } from '../components/feature-tips/feature-tip-telemetry'
 import { useAppStore } from '../store'
 import { isWebClientLocation } from '../lib/web-client-location'
+import { isWindowsUserAgent } from '../components/terminal-pane/pane-helpers'
+import type { FeatureTipAudience } from '../../../shared/feature-tips'
 import type { OnboardingState } from '../../../shared/onboarding-state-types'
 
 export type OnboardingGate = ReturnType<typeof useOnboardingAndFeatureTips>
@@ -24,6 +26,7 @@ export function useOnboardingAndFeatureTips() {
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null)
   const [onboardingLoaded, setOnboardingLoaded] = useState(false)
   const [featureTipCliInstalled, setFeatureTipCliInstalled] = useState<boolean | null>(null)
+  const [featureTipAudience, setFeatureTipAudience] = useState<FeatureTipAudience | null>(null)
   const promptedThisSessionRef = useRef(false)
   const suppressedByOnboardingThisSessionRef = useRef(false)
 
@@ -91,8 +94,35 @@ export function useOnboardingAndFeatureTips() {
   }, [persistedUIReady])
 
   useEffect(() => {
+    if (!persistedUIReady) {
+      return
+    }
+
+    let cancelled = false
+    const windows = isWindowsUserAgent()
+    void window.api.updater
+      .getVersion()
+      .then((appVersion) => {
+        if (!cancelled) {
+          setFeatureTipAudience({ appVersion, windows })
+        }
+      })
+      .catch(() => {
+        // Why: an unknown version only hides version-gated tips; the rest must still open.
+        if (!cancelled) {
+          setFeatureTipAudience({ appVersion: null, windows })
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [persistedUIReady])
+
+  useEffect(() => {
     const featureTipsDecision = getFeatureTipsAppOpenDecision({
       activeModal,
+      audience: featureTipAudience,
       cliInstalled: featureTipCliInstalled,
       featureTipsSeenIds,
       featureInteractions,
@@ -129,6 +159,7 @@ export function useOnboardingAndFeatureTips() {
   }, [
     activeModal,
     actions,
+    featureTipAudience,
     featureTipCliInstalled,
     featureInteractions,
     featureTipsSeenIds,
