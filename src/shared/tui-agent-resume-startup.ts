@@ -25,6 +25,7 @@ export function buildAgentResumeStartupPlan(args: {
   sessionOptions?: Record<string, SessionOptionValue>
   sessionOptionsOverrideAgentArgs?: boolean
   isRemote?: boolean
+  sessionInstructions?: string | null
 }): AgentStartupPlan | null {
   const argv = getAgentResumeArgv(args.agent, args.providerSession, args.ompResumeFilePath)
   if (!argv) {
@@ -47,7 +48,8 @@ export function buildAgentResumeStartupPlan(args: {
         agentArgs: args.agentArgs,
         sessionOptions: args.sessionOptions,
         sessionOptionsOverrideAgentArgs: args.sessionOptionsOverrideAgentArgs,
-        isRemote: args.isRemote
+        isRemote: args.isRemote,
+        sessionInstructions: args.sessionInstructions
       })
   if (!baseCommand.ok) {
     return null

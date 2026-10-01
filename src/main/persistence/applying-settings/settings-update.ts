@@ -1,3 +1,4 @@
+import { normalizeTuiAgentSessionInstructionsRecord } from '../../../shared/tui-agent-session-instructions'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import { normalizeDisabledTuiAgents } from '../../../shared/tui-agent-selection'
 import { resolveNestedWorkerMaxDepth } from '../../../shared/nested-worker-depth'
@@ -103,6 +104,11 @@ export function updateSettings(
   if ('agentDefaultEnv' in updates) {
     sanitizedUpdates.agentDefaultEnv = normalizeTuiAgentEnvRecord(updates.agentDefaultEnv)
     sanitizedUpdates.agentYoloDefaultsMigrated = true
+  }
+  if ('agentSessionInstructions' in updates) {
+    sanitizedUpdates.agentSessionInstructions = normalizeTuiAgentSessionInstructionsRecord(
+      updates.agentSessionInstructions
+    )
   }
   if ('terminalQuickCommands' in updates) {
     sanitizedUpdates.terminalQuickCommands = normalizeTerminalQuickCommands(

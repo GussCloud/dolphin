@@ -1,3 +1,4 @@
+import { normalizeTuiAgentSessionInstructionsRecord } from '../tui-agent-session-instructions'
 import { z } from 'zod'
 import { isTaskProvider } from '../task-providers'
 import type { TaskProvider } from '../task-providers'
@@ -101,6 +102,10 @@ export const SettingsUpdate = z
     agentDefaultEnv: z
       .unknown()
       .transform((value) => normalizeTuiAgentEnvRecord(value))
+      .optional(),
+    agentSessionInstructions: z
+      .unknown()
+      .transform((value) => normalizeTuiAgentSessionInstructionsRecord(value))
       .optional(),
     defaultTaskSource: TaskProviderParam.optional(),
     visibleTaskProviders: z.array(TaskProviderParam).optional(),

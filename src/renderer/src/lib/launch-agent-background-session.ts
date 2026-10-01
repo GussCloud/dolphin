@@ -7,10 +7,7 @@ import type {
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
 import { scheduleAgentBackgroundDraft } from '@/lib/agent-background-draft-delivery'
 import { requestBackgroundTerminalWorktreeMount } from '@/components/terminal/background-terminal-worktree-mount'
-import {
-  resolveTuiAgentLaunchArgs,
-  resolveTuiAgentLaunchEnv
-} from '../../../shared/tui-agent-launch-defaults'
+import { resolveTuiAgentLaunchDefaults } from '../../../shared/tui-agent-launch-defaults'
 import { requireTuiAgentConfig } from '../../../shared/require-tui-agent-config'
 import { resolveAgentBackgroundLaunchHost } from '@/lib/agent-background-session-launch-host'
 import { makePaneKey } from '../../../shared/stable-pane-id'
@@ -56,8 +53,10 @@ export async function launchAgentBackgroundSession(
     throw new Error('The target workspace is no longer available.')
   }
   const cmdOverrides = store.settings?.agentCmdOverrides ?? {}
-  const agentArgs = resolveTuiAgentLaunchArgs(agent, store.settings?.agentDefaultArgs)
-  const agentEnv = resolveTuiAgentLaunchEnv(agent, store.settings?.agentDefaultEnv)
+  const { agentArgs, agentEnv, sessionInstructions } = resolveTuiAgentLaunchDefaults(
+    agent,
+    store.settings
+  )
   // Folder launch ownership cannot be derived from a repo row (#2989).
   const launchHost = resolveAgentBackgroundLaunchHost({
     store,
@@ -94,6 +93,7 @@ export async function launchAgentBackgroundSession(
     cmdOverrides,
     agentArgs,
     agentEnv,
+    sessionInstructions,
     platform: launchPlatform,
     shell: startupShell,
     isRemote,

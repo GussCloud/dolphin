@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../../shared/tui-agent-session-instructions'
 import type { ComposerModel } from './composer-model'
 
 type FullSubmitPreparationInput = Pick<
@@ -184,6 +185,10 @@ export function useFullSubmitPreparation(input: FullSubmitPreparationInput) {
         cmdOverrides: settings?.agentCmdOverrides ?? {},
         agentArgs: resolveTuiAgentLaunchArgs(tuiAgent, settings?.agentDefaultArgs),
         agentEnv: resolveTuiAgentLaunchEnv(tuiAgent, settings?.agentDefaultEnv),
+        sessionInstructions: resolveTuiAgentSessionInstructions(
+          tuiAgent,
+          settings?.agentSessionInstructions
+        ),
         sessionOptions: resolveInitialNativeChatSessionOptions(
           {
             experimentalNativeChat: settings?.experimentalNativeChat,

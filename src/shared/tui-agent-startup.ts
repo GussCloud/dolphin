@@ -53,6 +53,7 @@ export function buildAgentStartupPlan(args: {
   /** Why: SSH remotes deploy the CLI shim as plain `dolphin`, so the Linux-only
    * `dolphin-ide` rename must be skipped for remote launches. */
   isRemote?: boolean
+  sessionInstructions?: string | null
 }): AgentStartupPlan | null {
   const { agent, prompt, cmdOverrides, platform, allowEmptyPromptLaunch = false } = args
   const shell = resolveStartupShell(platform, args.shell)
@@ -67,7 +68,8 @@ export function buildAgentStartupPlan(args: {
     agentArgs: usesQuery ? null : args.agentArgs,
     sessionOptions: args.sessionOptions,
     sessionOptionsOverrideAgentArgs: args.sessionOptionsOverrideAgentArgs,
-    isRemote: args.isRemote
+    isRemote: args.isRemote,
+    sessionInstructions: args.sessionInstructions
   })
   if (!baseCommand.ok) {
     return null
@@ -226,6 +228,7 @@ export function buildAgentDraftLaunchPlan(args: {
   sessionOptionsOverrideAgentArgs?: boolean
   /** Why: see buildAgentStartupPlan — remote launches use the plain `dolphin` shim. */
   isRemote?: boolean
+  sessionInstructions?: string | null
 }): AgentDraftLaunchPlan | null {
   const { agent, draft, cmdOverrides, platform } = args
   const shell = resolveStartupShell(platform, args.shell)
@@ -242,7 +245,8 @@ export function buildAgentDraftLaunchPlan(args: {
     agentArgs: args.agentArgs,
     sessionOptions: args.sessionOptions,
     sessionOptionsOverrideAgentArgs: args.sessionOptionsOverrideAgentArgs,
-    isRemote: args.isRemote
+    isRemote: args.isRemote,
+    sessionInstructions: args.sessionInstructions
   })
   if (!baseCommand.ok) {
     return null

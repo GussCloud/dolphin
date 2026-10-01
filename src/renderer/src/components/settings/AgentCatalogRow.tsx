@@ -9,6 +9,7 @@ import { SettingsBadge, SettingsSegmentedControl } from './SettingsFormControls'
 import type { AgentSessionSourceHomeControl } from './codex-session-source-home-control'
 import { AgentSessionSourceHomeInput } from './codex-session-source-home-control'
 import { stringifyAgentDefaultEnvDraft } from './agent-default-env-draft'
+import { AgentSessionInstructionsInput } from './AgentSessionInstructionsInput'
 import {
   AgentCommandOverrideInput,
   AgentDefaultArgsInput,
@@ -74,6 +75,13 @@ export type AgentCatalogRowProps = {
   onSaveArgs: (value: string) => void
   onSaveEnv: (value: Record<string, string>) => void
   sessionSourceHome?: AgentSessionSourceHomeControl
+  sessionInstructions?: AgentSessionInstructionsControl
+}
+
+export type AgentSessionInstructionsControl = {
+  defaultValue: string
+  value: string
+  onSave: (value: string) => void
 }
 
 export function AgentCatalogRow({
@@ -94,12 +102,17 @@ export function AgentCatalogRow({
   onSaveOverride,
   onSaveArgs,
   onSaveEnv,
-  sessionSourceHome
+  sessionSourceHome,
+  sessionInstructions
 }: AgentCatalogRowProps): React.JSX.Element {
   const envSummary = stringifyAgentDefaultEnvDraft(envOverride)
   const defaultEnvSummary = stringifyAgentDefaultEnvDraft(defaultEnv)
   const [cmdOpen, setCmdOpen] = useState(
-    Boolean(cmdOverride) || argsOverride !== defaultArgs || envSummary !== defaultEnvSummary
+    Boolean(cmdOverride) ||
+      argsOverride !== defaultArgs ||
+      envSummary !== defaultEnvSummary ||
+      (sessionInstructions !== undefined &&
+        sessionInstructions.value !== sessionInstructions.defaultValue)
   )
 
   return (
@@ -223,6 +236,16 @@ export function AgentCatalogRow({
                 defaultEnv={defaultEnv}
                 envOverride={envOverride}
                 onSaveEnv={onSaveEnv}
+              />
+            </div>
+          )}
+          {sessionInstructions && (
+            <div className="mt-2">
+              <AgentSessionInstructionsInput
+                key={`${agentId}:${sessionInstructions.value}`}
+                defaultInstructions={sessionInstructions.defaultValue}
+                instructions={sessionInstructions.value}
+                onSaveInstructions={sessionInstructions.onSave}
               />
             </div>
           )}

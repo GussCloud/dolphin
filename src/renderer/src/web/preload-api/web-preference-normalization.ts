@@ -1,3 +1,4 @@
+import { normalizeTuiAgentSessionInstructionsRecord } from '../../../../shared/tui-agent-session-instructions'
 import { normalizeAutoRenameBranchFromWorkDefaultOn } from '../../../../shared/auto-rename-branch-from-work-settings'
 import {
   getDefaultSettings,
@@ -153,6 +154,9 @@ export function mergeSettings(
       updates.agentDefaultArgs ?? base.agentDefaultArgs
     ),
     agentDefaultEnv: normalizeTuiAgentEnvRecord(updates.agentDefaultEnv ?? base.agentDefaultEnv),
+    agentSessionInstructions: normalizeTuiAgentSessionInstructionsRecord(
+      updates.agentSessionInstructions ?? base.agentSessionInstructions
+    ),
     voice: {
       ...(base.voice ?? defaults.voice),
       ...updates.voice

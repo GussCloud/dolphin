@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../shared/tui-agent-session-instructions'
 import { useAppStore } from '@/store'
 import type { AgentStartupPlan } from '@/lib/tui-agent-startup'
 import { planLaunchAgentStartupPrompt } from '@/lib/launch-agent-startup-prompt-plan'
@@ -151,6 +152,10 @@ function launchAgentInNewTabInternal(args: LaunchAgentInNewTabArgs): LaunchAgent
     isRemote,
     agentArgs: effectiveAgentArgs,
     agentEnv,
+    sessionInstructions: resolveTuiAgentSessionInstructions(
+      agent,
+      store.settings?.agentSessionInstructions
+    ),
     sessionOptions: resolveInitialNativeChatSessionOptions(store.settings, initialViewModeOptions)
   }
   const { startupPlan, pasteDraftAfterLaunch, submitPastedPrompt } = planLaunchAgentStartupPrompt({

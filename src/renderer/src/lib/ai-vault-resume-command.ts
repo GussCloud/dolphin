@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../shared/tui-agent-session-instructions'
 import type { AiVaultSession } from '../../../shared/ai-vault-types'
 import {
   buildAiVaultResumeCommand,
@@ -175,6 +176,10 @@ function buildAiVaultResumeForWorktree(
         args.state.settings?.agentDefaultArgs
       ),
       agentEnv: resolveTuiAgentLaunchEnv(args.session.agent, args.state.settings?.agentDefaultEnv),
+      sessionInstructions: resolveTuiAgentSessionInstructions(
+        args.session.agent,
+        args.state.settings?.agentSessionInstructions
+      ),
       ...(args.session.agent === 'omp' && resumeFilePath
         ? { ompResumeFilePath: resumeFilePath }
         : {})

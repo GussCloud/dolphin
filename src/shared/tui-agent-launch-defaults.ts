@@ -7,6 +7,7 @@ import {
   type AgentStartupShell
 } from './tui-agent-startup-shell'
 import type { TuiAgent } from './tui-agent'
+import { resolveTuiAgentSessionInstructions } from './tui-agent-session-instructions'
 import { resolveLocalWindowsAgentStartupShell } from './windows-terminal-shell'
 
 const UNSUPPORTED_TUI_AGENT_ARGS: Partial<Record<TuiAgent, readonly string[]>> = {
@@ -163,4 +164,24 @@ export function resolveTuiAgentLaunchEnv(
     return { ...configuredEnv[agent] }
   }
   return getTuiAgentDefaultEnv(agent)
+}
+
+/** The per-agent launch defaults a host reads from settings, resolved together. */
+export function resolveTuiAgentLaunchDefaults(
+  agent: TuiAgent,
+  settings:
+    | Partial<
+        Pick<GlobalSettings, 'agentDefaultArgs' | 'agentDefaultEnv' | 'agentSessionInstructions'>
+      >
+    | null
+    | undefined
+): { agentArgs: string; agentEnv: Record<string, string>; sessionInstructions: string | null } {
+  return {
+    agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
+    agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
+    sessionInstructions: resolveTuiAgentSessionInstructions(
+      agent,
+      settings?.agentSessionInstructions
+    )
+  }
 }

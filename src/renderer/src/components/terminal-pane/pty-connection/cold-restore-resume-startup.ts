@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../../../shared/tui-agent-session-instructions'
 import { useAppStore } from '@/store'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import { buildAgentResumeStartupPlan } from '@/lib/tui-agent-startup'
@@ -92,6 +93,10 @@ export function bindBuildColdRestoreAgentResumeStartup(session: ConnectPanePtySe
         launchConfig !== undefined
           ? launchConfig.agentEnv
           : resolveTuiAgentLaunchEnv(agent, state.settings?.agentDefaultEnv),
+      sessionInstructions: resolveTuiAgentSessionInstructions(
+        agent,
+        state.settings?.agentSessionInstructions
+      ),
       ...(launchConfig?.agentCommand ? { agentCommand: launchConfig.agentCommand } : {}),
       ...(launchConfig?.ompResumeFilePath
         ? { ompResumeFilePath: launchConfig.ompResumeFilePath }

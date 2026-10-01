@@ -1,4 +1,5 @@
 // @ts-nocheck -- mechanically split from DolphinRuntimeService; behavior is covered by AST equivalence and characterization tests.
+import { resolveTuiAgentSessionInstructions } from '../../shared/tui-agent-session-instructions'
 import { DolphinRuntimeWithResolveWorktreeRemovalTarget } from './dolphin-runtime-resolve-worktree-removal-target'
 import type { TerminalWorkspaceLaunchScope } from './runtime-legacy-worker-terminal-recovery-types'
 import type { TuiAgent } from '../../shared/tui-agent'
@@ -134,6 +135,10 @@ export class DolphinRuntimeWithGetAgentSessionExecutionNamespace extends Dolphin
           ? request.agentArgs
           : resolveTuiAgentLaunchArgs(request.agent, settings.agentDefaultArgs),
       agentEnv: resolveTuiAgentLaunchEnv(request.agent, settings.agentDefaultEnv),
+      sessionInstructions: resolveTuiAgentSessionInstructions(
+        request.agent,
+        settings.agentSessionInstructions
+      ),
       ompResumeFilePath: request.ompResumeFilePath,
       sessionOptions: this.toAgentSessionOptions(request.launchPreferences),
       sessionOptionsOverrideAgentArgs: Boolean(request.launchPreferences),

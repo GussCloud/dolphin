@@ -2,6 +2,7 @@ import type { GlobalSettings } from './global-settings-types'
 import type { SessionOptionValue } from './native-chat-session-options'
 import type { TuiAgent } from './tui-agent'
 import { resolveTuiAgentLaunchArgs, resolveTuiAgentLaunchEnv } from './tui-agent-launch-defaults'
+import { resolveTuiAgentSessionInstructions } from './tui-agent-session-instructions'
 import type { AgentStartupShell } from './tui-agent-startup-shell'
 import { resolveLocalWindowsAgentStartupShell } from './windows-terminal-shell'
 
@@ -9,7 +10,11 @@ import { resolveLocalWindowsAgentStartupShell } from './windows-terminal-shell'
 export type AgentStartupSettings = Partial<
   Pick<
     GlobalSettings,
-    'agentCmdOverrides' | 'agentDefaultArgs' | 'agentDefaultEnv' | 'terminalWindowsShell'
+    | 'agentCmdOverrides'
+    | 'agentDefaultArgs'
+    | 'agentDefaultEnv'
+    | 'agentSessionInstructions'
+    | 'terminalWindowsShell'
   >
 >
 
@@ -24,6 +29,7 @@ export type AgentStartupPlanInputs = {
   isRemote: boolean
   sessionOptions?: Record<string, SessionOptionValue>
   sessionOptionsOverrideAgentArgs: boolean
+  sessionInstructions: string | null
 }
 
 /**
@@ -68,6 +74,10 @@ export function resolveAgentStartupPlanInputs(args: {
     ...(sessionOptions ? { sessionOptions } : {}),
     // Why: session options are an explicit per-launch pick, so they outrank configured args —
     // without this the two spellings of the same flag both reach argv and the last one wins.
-    sessionOptionsOverrideAgentArgs: Boolean(sessionOptions)
+    sessionOptionsOverrideAgentArgs: Boolean(sessionOptions),
+    sessionInstructions: resolveTuiAgentSessionInstructions(
+      agent,
+      settings.agentSessionInstructions
+    )
   }
 }

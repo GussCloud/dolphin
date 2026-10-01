@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../../shared/tui-agent-session-instructions'
 import type { ComposerModel } from './composer-model'
 
 type FolderSubmitOrchestrationInput = Pick<
@@ -141,6 +142,9 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
             ? resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs)
             : undefined,
           agentEnv: agent ? resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv) : undefined,
+          sessionInstructions: agent
+            ? resolveTuiAgentSessionInstructions(agent, settings?.agentSessionInstructions)
+            : null,
           sessionOptions: agent
             ? resolveInitialNativeChatSessionOptions(
                 {
