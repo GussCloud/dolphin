@@ -90,7 +90,7 @@ describe('Windows CLI launcher', () => {
 
   itCrossHost('never materializes the child environment block from ProcessStartInfo', () => {
     // Why: both ProcessStartInfo env properties copy the process block into a case-insensitive
-    // dictionary that throws when the inherited block holds PATH and Path (gusscloud/dolphin#12046).
+    // dictionary that throws when the inherited block holds PATH and Path (upstream #12046).
     const source = readFileSync(
       join(projectRoot, 'native', 'windows-cli-launcher', 'DolphinCliLauncher.cs'),
       'utf8'

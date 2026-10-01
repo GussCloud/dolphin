@@ -9,7 +9,7 @@ input alive through a V8 sliced string.
 The fix uses the existing `ownRetainedString` copier when dropping oversized
 input. It preserves URL reconstruction, status detection, UTF-16 code units,
 binding/unbinding, cache limits, and remote/local authority. These are three
-additional boundaries in [#20960](https://github.com/GussCloud/dolphin/pull/20960).
+additional boundaries in #20960 (upstream PR 20960).
 
 ## Reproduce
 

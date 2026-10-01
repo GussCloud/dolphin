@@ -118,7 +118,7 @@ async function runAgentLoginInTerminal(
     }
     // Why paired after the seed: addAgentNodePaths prepends the *newest* version
     // manager bin, which is not necessarily where this CLI lives. Pairing last puts
-    // the CLI's own node in front of that seed (GussCloud/dolphin#10932).
+    // the CLI's own node in front of that seed (upstream #10932).
     const env = withCliRuntimeOnPath(
       resolvedCommand,
       addAgentNodePaths({ ...stripElectronRunAsNode(process.env), ...extraEnv })

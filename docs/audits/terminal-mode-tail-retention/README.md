@@ -3,7 +3,7 @@
 The kitty keyboard tracker and daemon mouse-mode mirror retain an incomplete
 escape-sequence tail of at most 4,096 UTF-16 code units. A V8 sliced string can
 keep the entire consumed input alive through that small tail. An ordinary
-split grouped mode sequence, `ESC[?1049;2004;1000;`, is enough: its 18-character
+split grouped mode sequence, `ESC?1049;2004;1000;`, is enough: its 18-character
 tail retains each input backing string while its parser stays idle.
 
 The correction copies only accepted incomplete tails through the existing
@@ -11,7 +11,7 @@ The correction copies only accepted incomplete tails through the existing
 their existing behavior; the helper leaves strings shorter than 13 code units
 alone. Parser state, live/replay semantics, stack caps, mode flags, and wire
 content are unchanged. These are additional boundaries in
-[#20960](https://github.com/GussCloud/dolphin/pull/20960), alongside the
+[#20960 (upstream PR 20960), alongside the
 [PTY detector carries](../pty-detector-retention/README.md).
 
 ## Reproduce

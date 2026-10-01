@@ -2,7 +2,7 @@
 
 A provider inventory started before a process exit can finish afterward and reconnect the exited runtime record. If a replacement was admitted under the same ID, the old response can also overwrite its incarnation, invalidate its terminal handle, and clear its pane binding.
 
-This is a separate source-level explanation for stale terminal ownership such as [#19018](https://github.com/GussCloud/dolphin/issues/19018). The proof does not establish the cause of [#19768](https://github.com/GussCloud/dolphin/issues/19768) or [#19831](https://github.com/GussCloud/dolphin/issues/19831), or measure their reported memory growth.
+This is a separate source-level explanation for stale terminal ownership such as #19018 (upstream issue 19018). The proof does not establish the cause of #19768 (upstream issue 19768) or #19831 (upstream issue 19831), or measure their reported memory growth.
 
 ## Reproduce
 

@@ -83,7 +83,7 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
     detectCmd: 'claude',
     promptInjectionMode: 'argv',
     pasteNeedsTypedRequest: true,
-    // Why: `claude --prefill <text>` seeds the input without submitting, avoiding the paste-after-ready race (PR https://github.com/GussCloud/dolphin/pull/926).
+    // Why: `claude --prefill <text>` seeds the input without submitting, avoiding the paste-after-ready race (PR upstream PR 926).
     draftPromptFlag: '--prefill'
   },
   'claude-agent-teams': {

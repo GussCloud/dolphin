@@ -472,7 +472,7 @@ describe('serializeRichMarkdownForReconcile (real editor pipeline)', () => {
     expect(reconciled).toBe('Cost \\$1 for _em_.\n\ntext')
   })
 
-  it('applies normalizeEmptyListItems so empty list items round-trip gusscloud', () => {
+  it('applies normalizeEmptyListItems so empty list items round-trip stably', () => {
     // `3. ` immediately before a heading parses as an empty list item; without the
     // normalize step the safety re-parse would spuriously mismatch and no-op.
     const doc = '3. \n# Heading\n'

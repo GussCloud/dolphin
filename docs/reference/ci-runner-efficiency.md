@@ -24,7 +24,7 @@ minutes saved across 14 consumers, before artifact transfer overhead. Runner
 variation is substantial; this is not a measured workflow wall-time reduction.
 Test coverage and deadlines stay intact.
 
-[PR #23368](https://github.com/GussCloud/dolphin/pull/23368) overlaps shell installation
+PR #23368 (upstream PR 23368) overlaps shell installation
 with dependency setup, starts localization extraction before the dolphind smoke,
 and prepares mobile route snapshots while WebKit and the bundle are being built.
 Its 27 checks passed without retries; seven existing conditional checks skipped.
@@ -136,7 +136,7 @@ Linux or Windows hosted savings. Restore cost is common to both policies.
 
 ## September 26 verification
 
-[PR #23053](https://github.com/GussCloud/dolphin/pull/23053) was merged before its
+PR #23053 (upstream PR 23053) was merged before its
 latest full run finished. That run,
 [36221874572](https://github.com/GussCloud/dolphin/actions/runs/36221874572), ultimately
 failed the mobile pending-frame precondition, just as the previous run had.
@@ -170,8 +170,8 @@ focused measurement, not a claim of a 23.6% improvement to the full unit suite.
 The default-branch warmer
 [36221917346](https://github.com/GussCloud/dolphin/actions/runs/36221917346) successfully
 published native modules and TypeScript state. Fresh PRs
-[#23101](https://github.com/GussCloud/dolphin/pull/23101) and
-[#23104](https://github.com/GussCloud/dolphin/pull/23104) restored both on their first
+#23101 (upstream PR 23101) and
+#23104 (upstream PR 23104) restored both on their first
 runs. Scope inventories showed neither PR had a private copy; the TypeScript
 key existed only on main. Native restore took 0.45/0.54 seconds; TypeScript restore
 took 0.38/1.31 seconds, with compiler steps of 8/39 seconds versus the warmer's
@@ -303,7 +303,7 @@ default worker count, isolation, timeouts, retries, and coverage. The first tria
 also found an outdated hook-order snapshot after main added three layout-persistence
 hooks. That snapshot was refreshed only after comparing the exact old and merged
 hook sequences. Final verification is linked from
-[PR #23053](https://github.com/GussCloud/dolphin/pull/23053). Failed timing reports
+PR #23053 (upstream PR 23053). Failed timing reports
 never replace the checked-in baseline.
 
 No account settings, paid services, or runner entitlements changed. Standard
