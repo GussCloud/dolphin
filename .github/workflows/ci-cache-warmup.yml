@@ -1,0 +1,75 @@
+name: CI cache warm-up
+
+# Why: a pull request can only restore caches saved on its own ref or on main, and nothing else
+# on main installs the apt sets the PR lanes need. Without this, every PR re-downloads them
+# from a mirror that has taken 20-45 minutes on bad days.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/actions/install-apt-packages/**'
+      - 'config/scripts/ci-apt-package-sets.mjs'
+      - 'pnpm-lock.yaml'
+  # Unused caches expire after 7 days and runner images roll about weekly.
+  schedule:
+    - cron: '17 6 * * 1,4'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/ci-cache-warmup.yml'
+      - '.github/actions/install-apt-packages/**'
+      - 'config/scripts/ci-apt-package-sets.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-cache-warmup-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    name: discover apt package sets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      sets: ${{ steps.sets.outputs.sets }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/install-node-dependencies
+
+      - name: Collect install-apt-packages invocations
+        id: sets
+        run: node config/scripts/ci-apt-package-sets.mjs | tee -a "$GITHUB_OUTPUT"
+
+  warm:
+    name: warm apt ${{ matrix.playwright-browser || matrix.packages }}
+    needs: discover
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.discover.outputs.sets) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Only the Playwright set resolves its packages through node_modules.
+      - uses: ./.github/actions/install-node-dependencies
+        if: matrix.playwright-browser != ''
+
+      # A slow mirror is this job's whole cost; let it finish so PR lanes do not pay it.
+      - uses: ./.github/actions/install-apt-packages
+        with:
+          packages: ${{ matrix.packages }}
+          playwright-browser: ${{ matrix.playwright-browser }}
+          no-install-recommends: ${{ matrix.no-install-recommends }}
+          timeout-seconds: '3000'

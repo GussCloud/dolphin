@@ -673,6 +673,8 @@ jobs:
     needs: [code_paths]
     if: needs.code_paths.outputs.mobile_web_app == 'true'
     runs-on: ubuntu-latest
+    # A healthy run takes ~5 minutes; bound a stalled mirror instead of holding verify open.
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -695,7 +697,10 @@ jobs:
       - name: Install WebKit for the drawer check
         id: webkit
         background: true
-        run: pnpm exec playwright install --with-deps webkit
+        uses: ./.github/actions/install-apt-packages
+        with:
+          playwright-browser: webkit
+          no-install-recommends: true
 
       # The entry lives in mobile/ so one React resolves; without this every RN import is nothing.
       - uses: ./.github/actions/install-mobile-dependencies
