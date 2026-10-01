@@ -7,7 +7,7 @@ import { WindowsShellPathOwnership, createWindowsPathKey } from './windows-shell
 // Why: GUI-launched Electron can miss PATH entries added by shell profiles.
 // Tools installed into ~/.opencode/bin, ~/.cargo/bin, pyenv/volta/fnm
 // shims, and countless other user-local locations end up invisible to our
-// `which` probe even though they work fine from Terminal (see GussCloud/dolphin#829).
+// `which` probe even though they work fine from Terminal (see upstream #829).
 //
 // Probe the profile-loading shell once instead of hard-coding every tool's install path.
 

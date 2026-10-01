@@ -1,6 +1,6 @@
 # Queued renderer graph restores an exited pane owner
 
-This is a separate source-level explanation for part of [#19018](https://github.com/GussCloud/dolphin/issues/19018). It reproduces an execution host certifying exit, followed by a queued renderer graph restoring that PTY's runtime `connected` flag and making the actual stable-pane resolver throw `terminal_pane_owner_conflict` against the successor's durable binding.
+This is a separate source-level explanation for part of #19018 (upstream issue 19018). It reproduces an execution host certifying exit, followed by a queued renderer graph restoring that PTY's runtime `connected` flag and making the actual stable-pane resolver throw `terminal_pane_owner_conflict` against the successor's durable binding.
 
 ## Run
 

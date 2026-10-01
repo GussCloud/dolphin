@@ -41,7 +41,7 @@ export type LinuxTerminalDolphinCliShimOptions = {
 // Dolphin file manager at /usr/bin/dolphin — but agent-facing surfaces (skills,
 // dispatch preambles, CLI hints) all invoke bare `dolphin`, so on stock Ubuntu an
 // agent inside a Dolphin terminal would launch the screen reader instead
-// (GussCloud/dolphin#7904). Prepending this userData-scoped shim dir to managed-PTY
+// (upstream #7904). Prepending this userData-scoped shim dir to managed-PTY
 // PATH makes bare `dolphin` resolve to the Dolphin CLI inside Dolphin terminals only,
 // leaving the user's own shells (and their screen reader) untouched.
 export function ensureLinuxTerminalDolphinCliShimDir(

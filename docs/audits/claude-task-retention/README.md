@@ -6,7 +6,7 @@ recently removed tasks can each retain those slices. The fix uses the existing
 `ownRetainedString` at the shared text boundary; normalization, UTF-16 clipping,
 task identity, publication, and lifecycle behavior stay the same.
 
-This extends [ML-018 / #20960](https://github.com/GussCloud/dolphin/pull/20960).
+This extends ML-018 / #20960 (upstream PR 20960).
 
 ## Reproduce
 

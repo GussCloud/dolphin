@@ -15,7 +15,7 @@ The fix subscribes from the app shell and lazily receives the model registry fro
 
 All four controls pass with their stated before/fixed expectations on both graphs and both runtimes: **32 comparative cases**, Node 24.20.0 and Electron 43.7.0 / Node 24.21.0. Reports are `worktree-*-results.json` and `main-*-results.json`. Contents use eight distinct fixture paths and 256 KiB of logical characters per model; this is a controlled amplification, not a field file-size measurement or heap-byte estimate.
 
-This explains a concrete renderer retention mechanism relevant to [#12845](https://github.com/GussCloud/dolphin/issues/12845). The same conditional panel, hook placement, and `keepCurrentModel` chain exists in reported v1.4.170; `source-versions.json` records four historical source hashes and matching line numbers. That comparison is static, not an execution of the historical application. It does not establish which allocations caused #12845's reported heap, or the process and cause of [#19831](https://github.com/GussCloud/dolphin/issues/19831).
+This explains a concrete renderer retention mechanism relevant to #12845 (upstream issue 12845). The same conditional panel, hook placement, and `keepCurrentModel` chain exists in reported v1.4.170; `source-versions.json` records four historical source hashes and matching line numbers. That comparison is static, not an execution of the historical application. It does not establish which allocations caused #12845's reported heap, or the process and cause of #19831 (upstream issue 19831).
 
 ## Ownership and regression coverage
 

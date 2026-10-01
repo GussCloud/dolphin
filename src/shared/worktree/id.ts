@@ -55,6 +55,23 @@ export function worktreeIdsEqual(left: string, right: string): boolean {
   return leftKey === null ? left === right : leftKey === worktreeIdComparisonKey(right)
 }
 
+/**
+ * Known ids absent from a scan, matched like `worktreeIdsEqual`. Why not exact: the terminal sweep
+ * that follows matches normalized ids, so a live worktree spelled differently (`C:\` vs `c:/`) would
+ * be declared missing and have its live terminals killed.
+ */
+export function selectMissingWorktreeIds(
+  knownWorktreeIds: readonly string[],
+  detectedWorktreeIds: readonly string[]
+): string[] {
+  const detectedKeys = new Set(
+    detectedWorktreeIds.map((worktreeId) => worktreeIdComparisonKey(worktreeId) ?? worktreeId)
+  )
+  return knownWorktreeIds.filter(
+    (worktreeId) => !detectedKeys.has(worktreeIdComparisonKey(worktreeId) ?? worktreeId)
+  )
+}
+
 export function splitWorktreeId(worktreeId: string): ParsedWorktreeId | null {
   const separatorIdx = worktreeId.indexOf(WORKTREE_ID_SEPARATOR)
   if (separatorIdx === -1) {

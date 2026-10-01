@@ -5,7 +5,7 @@
  * treatment. A structured worker has no PTY, but its provider child runs `dolphin orchestration ...`
  * exactly like a PTY worker's agent does, and it was inheriting the ambient PATH instead. On
  * packaged Linux that made bare `dolphin` resolve to GNOME's /usr/bin/dolphin screen reader, because
- * Dolphin's Linux CLI installs as `dolphin-ide` to avoid claiming that name (GussCloud/dolphin#7904); on
+ * Dolphin's Linux CLI installs as `dolphin-ide` to avoid claiming that name (upstream #7904); on
  * packaged macOS/Windows it reached this app's bundled CLI only if the user had separately
  * registered the CLI globally.
  *
@@ -44,7 +44,7 @@ export function prependDolphinCliDirToChildPath(
       ? `${devCliBin}${pathDelimiter}${inheritedPath}`
       : devCliBin
   } else if (platform === 'linux') {
-    // Why: bare-`dolphin` shim scoped to Dolphin PTYs — Linux CLI installs as `dolphin-ide` to avoid shadowing GNOME's /usr/bin/dolphin screen reader (GussCloud/dolphin#7904).
+    // Why: bare-`dolphin` shim scoped to Dolphin PTYs — Linux CLI installs as `dolphin-ide` to avoid shadowing GNOME's /usr/bin/dolphin screen reader (upstream #7904).
     const shimDir = ensureLinuxTerminalDolphinCliShimDir({ userDataPath: opts.userDataPath })
     if (shimDir) {
       const inheritedEntries = readInheritedPath(env, platform)
