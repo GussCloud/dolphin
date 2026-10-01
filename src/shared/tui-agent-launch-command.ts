@@ -11,6 +11,7 @@ import {
   type AgentStartupShell
 } from './tui-agent-startup-shell'
 import type { TuiAgent } from './tui-agent'
+import { appendSessionInstructionsArg } from './tui-agent-session-instructions'
 
 export type ResolvedAgentLaunchCommand =
   | {
@@ -30,13 +31,20 @@ export function resolveAgentLaunchCommand(args: {
   sessionOptions?: Record<string, SessionOptionValue>
   sessionOptionsOverrideAgentArgs?: boolean
   isRemote?: boolean
+  /** Resolved via `resolveTuiAgentSessionInstructions`; null for agents without the setting. */
+  sessionInstructions?: string | null
 }): ResolvedAgentLaunchCommand {
   const override = args.cmdOverrides[args.agent]
-  const command =
-    override ||
-    getTuiAgentLaunchCommand(TUI_AGENT_CONFIG[args.agent], args.platform, {
-      isRemote: args.isRemote
-    })
+  const command = appendSessionInstructionsArg({
+    command:
+      override ||
+      getTuiAgentLaunchCommand(TUI_AGENT_CONFIG[args.agent], args.platform, {
+        isRemote: args.isRemote
+      }),
+    instructions: args.sessionInstructions,
+    agentArgs: args.agentArgs,
+    shell: args.shell
+  })
   const suffix = planAgentCliArgsSuffix(args.agentArgs, args.shell)
   if (!suffix.ok) {
     return suffix

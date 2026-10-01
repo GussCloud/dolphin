@@ -38,6 +38,7 @@ export function buildFolderWorkspaceLinkedStartupPlan(args: {
   agentCmdOverrides: Record<string, string> | undefined
   agentArgs?: string | null
   agentEnv?: Record<string, string>
+  sessionInstructions?: string | null
   sessionOptions?: Record<string, SessionOptionValue>
   platform: NodeJS.Platform
   shell?: AgentStartupShell
@@ -51,6 +52,7 @@ export function buildFolderWorkspaceLinkedStartupPlan(args: {
         cmdOverrides: args.agentCmdOverrides ?? {},
         agentArgs: args.agentArgs,
         agentEnv: args.agentEnv,
+        sessionInstructions: args.sessionInstructions,
         sessionOptions: args.sessionOptions,
         platform: args.platform,
         shell: args.shell,
@@ -79,6 +81,7 @@ export function buildFolderWorkspaceLinkedStartupPlan(args: {
     cmdOverrides: args.agentCmdOverrides ?? {},
     agentArgs: args.agentArgs,
     agentEnv: args.agentEnv,
+    sessionInstructions: args.sessionInstructions,
     sessionOptions: args.sessionOptions,
     platform: args.platform,
     shell: args.shell,

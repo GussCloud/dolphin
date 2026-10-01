@@ -30,6 +30,10 @@ import {
   resolveTuiAgentLaunchEnv
 } from '../../../../shared/tui-agent-launch-defaults'
 import {
+  getTuiAgentDefaultSessionInstructions,
+  supportsTuiAgentSessionInstructions
+} from '../../../../shared/tui-agent-session-instructions'
+import {
   applyAgentPermissionMode,
   resolveAgentPermissionModeSummary,
   type AgentPermissionMode
@@ -177,6 +181,7 @@ export function AgentsPane({
   const cmdOverrides = settings.agentCmdOverrides ?? {}
   const agentDefaultArgs = settings.agentDefaultArgs ?? {}
   const agentDefaultEnv = settings.agentDefaultEnv ?? {}
+  const agentSessionInstructions = settings.agentSessionInstructions ?? {}
   const disabledAgents = normalizeDisabledTuiAgents(settings.disabledTuiAgents)
   const detectedAgents =
     detectedIds === null ? [] : catalog.filter((agent) => detectedIds.has(agent.id))
@@ -232,7 +237,18 @@ export function AgentsPane({
     sessionSourceHome:
       isDetected && agent.id === 'codex'
         ? buildCodexSessionSourceHomeControl(settings, updateSettings)
-        : undefined
+        : undefined,
+    sessionInstructions: supportsTuiAgentSessionInstructions(agent.id)
+      ? {
+          defaultValue: getTuiAgentDefaultSessionInstructions(agent.id),
+          value:
+            agentSessionInstructions[agent.id] ?? getTuiAgentDefaultSessionInstructions(agent.id),
+          onSave: (value) =>
+            updateSettings({
+              agentSessionInstructions: { ...agentSessionInstructions, [agent.id]: value }
+            })
+        }
+      : undefined
   })
 
   return (

@@ -171,11 +171,19 @@ export function isDirectClaudeCommand(command: string | undefined): boolean {
   if (!trimmed) {
     return false
   }
-  if (/[;&|<>`]/.test(trimmed)) {
+  // Why strip quoted runs: a quoted `--append-system-prompt` text may hold `&` or `>` without chaining a command.
+  if (/[;&|<>`]/.test(stripQuotedRuns(trimmed))) {
     return false
   }
   const first = trimmed.match(/^\S+/)?.[0] ?? ''
   return first === 'claude' || first.endsWith('/claude')
+}
+
+function stripQuotedRuns(command: string): string {
+  // Why keep backticks from "…": POSIX shells still run command substitution inside double quotes.
+  return command
+    .replace(/'[^']*'/g, '')
+    .replace(/"((?:[^"\\]|\\.)*)"/g, (_run, body: string) => body.replace(/[^`]/g, ''))
 }
 
 export function addClaudeTeammateModeAuto(command: string): string {

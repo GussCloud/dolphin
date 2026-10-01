@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../shared/tui-agent-session-instructions'
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { buildAgentResumeStartupPlan } from '@/lib/tui-agent-startup'
@@ -81,6 +82,10 @@ export function launchSleepingAgentSession(
       launchConfig !== undefined
         ? launchConfig.agentEnv
         : resolveTuiAgentLaunchEnv(record.agent, state.settings?.agentDefaultEnv),
+    sessionInstructions: resolveTuiAgentSessionInstructions(
+      record.agent,
+      state.settings?.agentSessionInstructions
+    ),
     ...(launchConfig?.agentCommand ? { agentCommand: launchConfig.agentCommand } : {}),
     ...(launchConfig?.ompResumeFilePath
       ? { ompResumeFilePath: launchConfig.ompResumeFilePath }

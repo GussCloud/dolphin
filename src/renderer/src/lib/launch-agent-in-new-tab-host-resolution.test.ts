@@ -22,6 +22,8 @@ type StoreWorktree = {
   displayName: string
 }
 
+const NO_SESSION_INSTRUCTIONS: Record<string, string> = {}
+
 const store = {
   activeRepoId: 'repo-1',
   activeWorktreeId: 'wt-1',
@@ -29,6 +31,7 @@ const store = {
     agentCmdOverrides: {} as Record<string, string>,
     agentDefaultArgs: {} as Record<string, string>,
     agentDefaultEnv: {} as Record<string, Record<string, string>>,
+    agentSessionInstructions: NO_SESSION_INSTRUCTIONS,
     activeRuntimeEnvironmentId: null as string | null
   },
   projects: [{ id: 'repo-1', localWindowsRuntimePreference: { kind: 'inherit-global' as const } }],
@@ -107,6 +110,8 @@ describe('launchAgentInNewTab execution host resolution', () => {
       agentCmdOverrides: {},
       agentDefaultArgs: {},
       agentDefaultEnv: {},
+      // Why off: these cases pin the host-specific CLI name, not the team instructions.
+      agentSessionInstructions: { 'claude-agent-teams': '' },
       activeRuntimeEnvironmentId: null
     }
     store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1' }] }

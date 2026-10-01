@@ -58,6 +58,7 @@ type SubmitFolderWorkspaceCreateParams = {
   agentCmdOverrides: Record<string, string> | undefined
   agentArgs?: string | null
   agentEnv?: Record<string, string>
+  sessionInstructions?: string | null
   sessionOptions?: Record<string, SessionOptionValue>
   terminalWindowsShell?: string | null
   isRemote?: boolean
@@ -79,6 +80,7 @@ export async function submitFolderWorkspaceCreate({
   agentCmdOverrides,
   agentArgs,
   agentEnv,
+  sessionInstructions,
   sessionOptions,
   terminalWindowsShell,
   launchSource = 'sidebar',
@@ -114,6 +116,7 @@ export async function submitFolderWorkspaceCreate({
           agentCmdOverrides,
           agentArgs,
           agentEnv,
+          sessionInstructions,
           sessionOptions,
           platform: launchPlatform,
           shell: launchShell,
@@ -126,6 +129,7 @@ export async function submitFolderWorkspaceCreate({
             cmdOverrides: agentCmdOverrides ?? {},
             agentArgs,
             agentEnv,
+            sessionInstructions,
             sessionOptions,
             platform: launchPlatform,
             shell: launchShell,

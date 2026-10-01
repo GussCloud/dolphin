@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../shared/tui-agent-session-instructions'
 import { toast } from 'sonner'
 import { track, tuiAgentToAgentKind } from '@/lib/telemetry'
 import {
@@ -28,6 +29,7 @@ export function buildDirectWorkItemAgentStartupPlan(args: {
         agentCmdOverrides?: Partial<Record<TuiAgent, string>>
         agentDefaultArgs?: Partial<Record<TuiAgent, string>>
         agentDefaultEnv?: Partial<Record<TuiAgent, Record<string, string>>>
+        agentSessionInstructions?: Partial<Record<TuiAgent, string>>
         experimentalNativeChat?: boolean
         openAgentTabsInChatByDefault?: boolean
         nativeChatSessionOptions?: PersistedNativeChatSessionOptions
@@ -53,6 +55,10 @@ export function buildDirectWorkItemAgentStartupPlan(args: {
       ? resolveTuiAgentLaunchArgs(args.agent, args.settings?.agentDefaultArgs)
       : args.agentArgs
   const effectiveAgentEnv = resolveTuiAgentLaunchEnv(args.agent, args.settings?.agentDefaultEnv)
+  const sessionInstructions = resolveTuiAgentSessionInstructions(
+    args.agent,
+    args.settings?.agentSessionInstructions
+  )
   const sessionOptions = resolveInitialNativeChatSessionOptions(args.settings, {
     agent: args.agent,
     ...(args.promptDelivery === 'draft'
@@ -71,7 +77,8 @@ export function buildDirectWorkItemAgentStartupPlan(args: {
           isRemote: args.isRemote,
           agentArgs: effectiveAgentArgs,
           agentEnv: effectiveAgentEnv,
-          sessionOptions
+          sessionOptions,
+          sessionInstructions
         })
 
   if (draftLaunchPlan) {
@@ -104,6 +111,7 @@ export function buildDirectWorkItemAgentStartupPlan(args: {
     agentArgs: effectiveAgentArgs,
     agentEnv: effectiveAgentEnv,
     sessionOptions,
+    sessionInstructions,
     allowEmptyPromptLaunch: true
   })
   if (startupPlan && args.promptDelivery === 'draft') {

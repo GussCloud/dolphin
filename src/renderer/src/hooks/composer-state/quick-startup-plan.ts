@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../../shared/tui-agent-session-instructions'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { AgentStartupShell } from '../../../../shared/tui-agent-startup-shell'
@@ -61,6 +62,10 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
           cmdOverrides: settings?.agentCmdOverrides ?? {},
           agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
           agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
+          sessionInstructions: resolveTuiAgentSessionInstructions(
+            agent,
+            settings?.agentSessionInstructions
+          ),
           sessionOptions,
           platform: input.platform,
           shell: input.shell ?? undefined,
@@ -87,6 +92,10 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
       cmdOverrides: settings?.agentCmdOverrides ?? {},
       agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
       agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
+      sessionInstructions: resolveTuiAgentSessionInstructions(
+        agent,
+        settings?.agentSessionInstructions
+      ),
       sessionOptions,
       platform: input.platform,
       shell: input.shell ?? undefined,

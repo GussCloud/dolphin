@@ -1,3 +1,4 @@
+import { resolveTuiAgentSessionInstructions } from '../../../shared/tui-agent-session-instructions'
 import { buildAgentStartupPlan } from '@/lib/tui-agent-startup'
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
 import { isTuiAgentEnabled } from '../../../shared/tui-agent-selection'
@@ -51,6 +52,10 @@ export function buildOnboardingFolderAgentStartup(
     cmdOverrides: settings.agentCmdOverrides ?? {},
     agentArgs: resolveTuiAgentLaunchArgs(agent, settings.agentDefaultArgs),
     agentEnv: resolveTuiAgentLaunchEnv(agent, settings.agentDefaultEnv),
+    sessionInstructions: resolveTuiAgentSessionInstructions(
+      agent,
+      settings.agentSessionInstructions
+    ),
     sessionOptions: resolveInitialNativeChatSessionOptions(settings, {
       agent,
       nativeChatTranscriptIsLocalReadable
