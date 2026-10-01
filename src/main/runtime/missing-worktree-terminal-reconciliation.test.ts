@@ -59,6 +59,24 @@ describe('stopMissingWorktreeTerminals', () => {
     )
   })
 
+  it('keeps a live worktree whose id the scan spells differently', async () => {
+    // The restored session wrote the id with a backslash and capital drive; git reports it with forward slashes.
+    const knownId = 'repo-1::C:\\work\\wt'
+    const scannedId = 'repo-1::c:/work/wt/'
+    const provider = createProvider([`${knownId}@@live-session`])
+    const runtime = createRuntime()
+
+    const result = await stopMissingWorktreeTerminals(localRepo, [knownId], [scannedId], {
+      runtime,
+      getLocalProvider: () => provider,
+      getSshProvider: () => undefined
+    })
+
+    expect(result).toEqual({ stoppedWorktreeIds: [] })
+    expect(provider.shutdown).not.toHaveBeenCalled()
+    expect(runtime.stopTerminalsForWorktree).not.toHaveBeenCalled()
+  })
+
   it('uses the owning SSH provider without consulting the local provider', async () => {
     const deletedId = 'repo-1::/workspace/deleted'
     const localProvider = createProvider([`${deletedId}@@local-session`])

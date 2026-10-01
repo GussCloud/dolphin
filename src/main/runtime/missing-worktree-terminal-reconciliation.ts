@@ -1,6 +1,6 @@
 import type { IPtyProvider } from '../providers/types'
 import type { Repo } from '../../shared/repo-types'
-import { splitWorktreeId } from '../../shared/worktree/id'
+import { selectMissingWorktreeIds, splitWorktreeId } from '../../shared/worktree/id'
 import { mapWithConcurrency } from '../../shared/map-with-concurrency'
 import type { DolphinRuntimeService } from './dolphin-runtime'
 import { killAllProcessesForWorktree } from './worktree-teardown'
@@ -72,18 +72,24 @@ export async function stopMissingWorktreeTerminals(
   detectedWorktreeIds: readonly string[],
   deps: MissingWorktreeTerminalReconciliationDeps
 ): Promise<{ stoppedWorktreeIds: string[] }> {
-  const detectedIds = new Set(detectedWorktreeIds)
   const missingIds = [
     ...new Set(
-      knownWorktreeIds.filter(
-        (worktreeId) =>
-          splitWorktreeId(worktreeId)?.repoId === repo.id && !detectedIds.has(worktreeId)
+      selectMissingWorktreeIds(
+        knownWorktreeIds.filter((worktreeId) => splitWorktreeId(worktreeId)?.repoId === repo.id),
+        detectedWorktreeIds
       )
     )
   ]
   if (missingIds.length === 0) {
     return { stoppedWorktreeIds: [] }
   }
+  // Why: this sweep kills immediately and unprompted, so its log line must name what it acted on.
+  console.info('[pty-stop] missing-worktree sweep', {
+    repoId: repo.id,
+    missingWorktreeIds: missingIds,
+    knownCount: knownWorktreeIds.length,
+    detectedCount: detectedWorktreeIds.length
+  })
 
   const ownedProvider = repo.connectionId
     ? deps.getSshProvider(repo.connectionId)

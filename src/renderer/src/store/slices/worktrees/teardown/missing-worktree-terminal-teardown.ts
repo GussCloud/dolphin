@@ -2,6 +2,7 @@ import { callRuntimeRpc, getActiveRuntimeTarget } from '../../../../runtime/runt
 import type { AppState } from '../../../types'
 import type { DetectedWorktreeListResult } from '../../../../../../shared/worktree/types'
 import { isRuntimeMethodNotFoundError } from '../listing/runtime-worktree-rpc-errors'
+import { selectMissingWorktreeIds } from '../../../../../../shared/worktree/id'
 
 // Why: teardown cannot ride the scan's coalescing (each caller has its own known-id
 // snapshot), so dedupe on the request it actually produces — identical fan-out
@@ -20,8 +21,10 @@ export async function teardownMissingWorktreeTerminalsBestEffort(
   if (!detected.authoritative || !knownWorktreeIds || knownWorktreeIds.length === 0) {
     return
   }
-  const detectedIds = new Set(detected.worktrees.map((worktree) => worktree.id))
-  const missingIds = knownWorktreeIds.filter((worktreeId) => !detectedIds.has(worktreeId))
+  const missingIds = selectMissingWorktreeIds(
+    knownWorktreeIds,
+    detected.worktrees.map((worktree) => worktree.id)
+  )
   if (missingIds.length === 0) {
     return
   }
