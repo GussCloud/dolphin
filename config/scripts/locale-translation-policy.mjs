@@ -222,35 +222,48 @@ export const NATIVE_PICKER_LABELS = {
     korean: '한국어',
     japanese: '日本語',
     spanish: 'Español',
-    french: 'Français'
+    french: 'Français',
+    portuguese: 'Português (Brasil)'
   },
   ko: {
     chinese: '中文（简体）',
     korean: '한국어',
     japanese: '日本語',
     spanish: 'Español',
-    french: 'Français'
+    french: 'Français',
+    portuguese: 'Português (Brasil)'
   },
   ja: {
     chinese: '中文（简体）',
     korean: '한국어',
     japanese: '日本語',
     spanish: 'Español',
-    french: 'Français'
+    french: 'Français',
+    portuguese: 'Português (Brasil)'
   },
   es: {
     chinese: '中文（简体）',
     korean: '한국어',
     japanese: '日本語',
     spanish: 'Español',
-    french: 'Français'
+    french: 'Français',
+    portuguese: 'Português (Brasil)'
   },
   fr: {
     chinese: '中文（简体）',
     korean: '한국어',
     japanese: '日本語',
     spanish: 'Español',
-    french: 'Français'
+    french: 'Français',
+    portuguese: 'Português (Brasil)'
+  },
+  'pt-BR': {
+    chinese: '中文（简体）',
+    korean: '한국어',
+    japanese: '日本語',
+    spanish: 'Español',
+    french: 'Français',
+    portuguese: 'Português (Brasil)'
   }
 }
 

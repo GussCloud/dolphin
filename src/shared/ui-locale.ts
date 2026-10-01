@@ -4,13 +4,14 @@ import {
   UI_LANGUAGE_FRENCH,
   UI_LANGUAGE_JAPANESE,
   UI_LANGUAGE_KOREAN,
+  UI_LANGUAGE_PORTUGUESE_BRAZIL,
   UI_LANGUAGE_SPANISH,
   UI_LANGUAGE_SYSTEM,
   isPluginUiLanguage,
   type UiLanguage
 } from './ui-language'
 
-export const SUPPORTED_UI_LOCALES = ['en', 'zh', 'ko', 'ja', 'es', 'fr'] as const
+export const SUPPORTED_UI_LOCALES = ['en', 'zh', 'ko', 'ja', 'es', 'fr', 'pt-BR'] as const
 export type SupportedUiLocale = (typeof SUPPORTED_UI_LOCALES)[number]
 
 export const DEFAULT_UI_LOCALE: SupportedUiLocale = 'en'
@@ -27,6 +28,10 @@ export function normalizeSupportedUiLocale(locale: string | undefined): Supporte
       return DEFAULT_UI_LOCALE
     }
     return 'zh'
+  }
+  if (primary === 'pt') {
+    // Why: only the Brazilian variant ships; European Portuguese stays English like zh-TW.
+    return tag === 'pt-br' || tag.startsWith('pt-br-') ? 'pt-BR' : DEFAULT_UI_LOCALE
   }
   return SUPPORTED_UI_LOCALES.includes(primary as SupportedUiLocale)
     ? (primary as SupportedUiLocale)
@@ -57,6 +62,9 @@ export function resolveUiLocale(
   }
   if (language === UI_LANGUAGE_FRENCH) {
     return 'fr'
+  }
+  if (language === UI_LANGUAGE_PORTUGUESE_BRAZIL) {
+    return 'pt-BR'
   }
   return normalizeSupportedUiLocale(systemLocale)
 }

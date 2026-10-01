@@ -7,6 +7,7 @@ import {
   UI_LANGUAGE_FRENCH,
   UI_LANGUAGE_JAPANESE,
   UI_LANGUAGE_KOREAN,
+  UI_LANGUAGE_PORTUGUESE_BRAZIL,
   UI_LANGUAGE_SPANISH,
   UI_LANGUAGE_SYSTEM
 } from './ui-language'
@@ -39,6 +40,16 @@ describe('ui-locale', () => {
     expect(normalizeSupportedUiLocale('fr-FR')).toBe('fr')
     expect(normalizeSupportedUiLocale('fr-CA')).toBe('fr')
     expect(normalizeSupportedUiLocale('fr')).toBe('fr')
+  })
+
+  it('normalizes Brazilian Portuguese locale tags', () => {
+    expect(normalizeSupportedUiLocale('pt-BR')).toBe('pt-BR')
+    expect(normalizeSupportedUiLocale('pt_BR')).toBe('pt-BR')
+  })
+
+  it('does not map European Portuguese to Brazilian Portuguese', () => {
+    expect(normalizeSupportedUiLocale('pt-PT')).toBe('en')
+    expect(normalizeSupportedUiLocale('pt')).toBe('en')
   })
 
   it('falls back unsupported locales to English', () => {
@@ -75,6 +86,10 @@ describe('ui-locale', () => {
     expect(resolveUiLocale(UI_LANGUAGE_FRENCH, 'en-US')).toBe('fr')
   })
 
+  it('resolves explicit Brazilian Portuguese independently of system locale', () => {
+    expect(resolveUiLocale(UI_LANGUAGE_PORTUGUESE_BRAZIL, 'en-US')).toBe('pt-BR')
+  })
+
   it('preserves a selected plugin language bundle id', () => {
     expect(resolveUiLocale('plugin:dolphin-samples.portuguese/pt-BR')).toBe(
       'plugin:dolphin-samples.portuguese/pt-BR'
@@ -88,6 +103,7 @@ describe('ui-locale', () => {
     expect(resolveUiLocale(UI_LANGUAGE_SYSTEM, 'ja-JP')).toBe('ja')
     expect(resolveUiLocale(UI_LANGUAGE_SYSTEM, 'es-MX')).toBe('es')
     expect(resolveUiLocale(UI_LANGUAGE_SYSTEM, 'fr-FR')).toBe('fr')
+    expect(resolveUiLocale(UI_LANGUAGE_SYSTEM, 'pt-BR')).toBe('pt-BR')
   })
 
   it('uses renderer system locale only for the system setting', () => {
@@ -97,5 +113,6 @@ describe('ui-locale', () => {
     expect(resolveRendererUiLocale(UI_LANGUAGE_JAPANESE)).toBe('ja')
     expect(resolveRendererUiLocale(UI_LANGUAGE_SPANISH)).toBe('es')
     expect(resolveRendererUiLocale(UI_LANGUAGE_FRENCH)).toBe('fr')
+    expect(resolveRendererUiLocale(UI_LANGUAGE_PORTUGUESE_BRAZIL)).toBe('pt-BR')
   })
 })
