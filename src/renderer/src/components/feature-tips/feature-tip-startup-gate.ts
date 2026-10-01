@@ -2,6 +2,7 @@ import {
   getCompletedFeatureTipIds,
   getOrderedUnseenFeatureTips,
   type FeatureTip,
+  type FeatureTipAudience,
   type FeatureTipId
 } from '../../../../shared/feature-tips'
 import { resolveAiVaultSearchSettings } from '../../../../shared/ai-vault-search-settings'
@@ -42,9 +43,11 @@ export function getPendingFeatureTips(args: {
   featureInteractions: FeatureInteractionState
   settings: FeatureTipSettings | null | undefined
   webClient: boolean
+  audience?: FeatureTipAudience
 }): FeatureTip[] {
   return getOrderedUnseenFeatureTips({
     seenTipIds: new Set(args.seenTipIds),
+    audience: args.audience,
     completedTipIds: getCompletedFeatureTipIds({
       cliInstalled: args.cliInstalled,
       voiceDictationEnabled: args.settings?.voice?.enabled === true,
@@ -56,6 +59,8 @@ export function getPendingFeatureTips(args: {
 
 export function getFeatureTipsAppOpenDecision(args: {
   activeModal: string
+  /** null while the app version is still loading. */
+  audience?: FeatureTipAudience | null
   cliInstalled: boolean | null
   featureTipsSeenIds: readonly FeatureTipId[]
   featureInteractions: FeatureInteractionState
@@ -78,6 +83,7 @@ export function getFeatureTipsAppOpenDecision(args: {
     args.onboarding === null ||
     args.activeModal !== 'none' ||
     args.cliInstalled === null ||
+    args.audience === null ||
     shouldShowOnboarding(args.onboarding)
   ) {
     return { kind: 'skip' }
@@ -88,7 +94,8 @@ export function getFeatureTipsAppOpenDecision(args: {
     cliInstalled: args.cliInstalled,
     featureInteractions: args.featureInteractions,
     settings: args.settings,
-    webClient: args.webClient
+    webClient: args.webClient,
+    audience: args.audience ?? undefined
   })[0]
   return nextTip ? { kind: 'open', tipId: nextTip.id } : { kind: 'skip' }
 }

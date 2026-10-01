@@ -1,3 +1,4 @@
+import { compareAppVersions, isValidAppVersion } from './app-version'
 import {
   hasFeatureInteraction,
   type FeatureInteractionId,
@@ -9,6 +10,7 @@ export type FeatureTipId =
   | 'dolphin-cli'
   | 'cmd-j-palette'
   | 'agent-session-search'
+  | 'claude-agent-teams-windows'
 
 export type FeatureTipPriority = 'new' | 'unseen'
 
@@ -17,6 +19,13 @@ export type FeatureTipAction =
   | 'setup-cli'
   | 'learn-cmd-j-palette'
   | 'enable-session-search'
+  | 'learn-claude-agent-teams'
+
+/** Who is running the app; tips with an audience rule stay hidden until it is known. */
+export type FeatureTipAudience = {
+  appVersion: string | null
+  windows: boolean
+}
 
 export type FeatureTip = {
   id: FeatureTipId
@@ -28,6 +37,9 @@ export type FeatureTip = {
   ctaLabel: string
   /** Feature interactions that mean this tip is no longer useful to show. */
   completedByFeatureInteractions?: readonly FeatureInteractionId[]
+  /** Shown only from this app version on, so the tip announces what that release shipped. */
+  minAppVersion?: string
+  windowsOnly?: boolean
 }
 
 export type CompletedFeatureTipState = {
@@ -39,6 +51,19 @@ export type CompletedFeatureTipState = {
 }
 
 export const FEATURE_TIPS = [
+  {
+    id: 'claude-agent-teams-windows',
+    priority: 'new',
+    eyebrow: 'New',
+    title: 'Claude Agent Teams on Windows',
+    description:
+      'Start Claude Agent Teams and each teammate opens in its own Dolphin pane, side by side with the lead.',
+    action: 'learn-claude-agent-teams',
+    ctaLabel: 'Got it',
+    completedByFeatureInteractions: [],
+    minAppVersion: '0.1.21',
+    windowsOnly: true
+  },
   {
     id: 'agent-session-search',
     priority: 'new',
@@ -128,13 +153,35 @@ export function getCompletedFeatureTipIds(state: CompletedFeatureTipState): Set<
   return completedIds
 }
 
+export function isFeatureTipForAudience(
+  tip: FeatureTip,
+  audience: FeatureTipAudience | undefined
+): boolean {
+  if (tip.windowsOnly && audience?.windows !== true) {
+    return false
+  }
+  if (tip.minAppVersion === undefined) {
+    return true
+  }
+  const appVersion = audience?.appVersion
+  return (
+    typeof appVersion === 'string' &&
+    isValidAppVersion(appVersion) &&
+    compareAppVersions(appVersion, tip.minAppVersion) >= 0
+  )
+}
+
 export function getOrderedUnseenFeatureTips(args: {
   seenTipIds: ReadonlySet<FeatureTipId>
   completedTipIds?: ReadonlySet<FeatureTipId>
+  audience?: FeatureTipAudience
 }): FeatureTip[] {
   const completedTipIds = args.completedTipIds ?? new Set<FeatureTipId>()
   const unseenTips = FEATURE_TIPS.filter(
-    (tip) => !args.seenTipIds.has(tip.id) && !completedTipIds.has(tip.id)
+    (tip) =>
+      !args.seenTipIds.has(tip.id) &&
+      !completedTipIds.has(tip.id) &&
+      isFeatureTipForAudience(tip, args.audience)
   )
   return [
     ...unseenTips.filter((tip) => tip.priority === 'new'),

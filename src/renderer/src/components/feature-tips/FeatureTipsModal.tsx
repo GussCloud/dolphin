@@ -7,6 +7,7 @@ import {
   notifyOrchestrationSetupStateChanged
 } from '@/lib/orchestration-setup-state'
 import { useAppStore } from '@/store'
+import { AgentTeamsTipDialog } from './AgentTeamsTipDialog'
 import { CliSetupTipDialog } from './CliSetupTipDialog'
 import { CmdJPaletteTipDialog } from './CmdJPaletteTipDialog'
 import { installCliFromFeatureTip } from './feature-tip-cli-install-action'
@@ -104,6 +105,13 @@ export default function FeatureTipsModal(): JSX.Element | null {
     openSettingsPage()
   }
 
+  const openAgentSettings = (): void => {
+    markCurrentTipSeen()
+    closeModal()
+    openSettingsTarget({ pane: 'agents', repoId: null })
+    openSettingsPage()
+  }
+
   const openSessionSearchSettings = (): void => {
     markCurrentTipSeen()
     closeModal()
@@ -130,6 +138,10 @@ export default function FeatureTipsModal(): JSX.Element | null {
         trackCmdJPaletteFeatureTipAcknowledged(
           getDolphinCliFeatureTipTelemetrySource(modalData.source)
         )
+        closeModal()
+        break
+      }
+      case 'learn-claude-agent-teams': {
         closeModal()
         break
       }
@@ -272,6 +284,20 @@ export default function FeatureTipsModal(): JSX.Element | null {
         onPrimaryAction={() => void handlePrimaryAction()}
         onSkip={handleSkip}
         onRebindClick={openShortcutsSettings}
+      />
+    )
+  }
+
+  if (currentTip.action === 'learn-claude-agent-teams') {
+    return (
+      <AgentTeamsTipDialog
+        open={isOpen}
+        tip={currentTip}
+        primaryBusy={primaryBusy}
+        onOpenChange={handleOpenChange}
+        onPrimaryAction={() => void handlePrimaryAction()}
+        onSkip={handleSkip}
+        onAgentSettingsClick={openAgentSettings}
       />
     )
   }

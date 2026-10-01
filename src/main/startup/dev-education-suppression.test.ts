@@ -135,6 +135,7 @@ describe('suppressDevEducationForStore', () => {
     })
     expect(state.ui.featureTipsSeenIds).toEqual([
       'voice-dictation',
+      'claude-agent-teams-windows',
       'agent-session-search',
       'dolphin-cli',
       'cmd-j-palette'

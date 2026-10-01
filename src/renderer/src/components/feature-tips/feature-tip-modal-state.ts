@@ -3,11 +3,13 @@ import {
   FEATURE_TIPS,
   isFeatureTipId,
   type FeatureTip,
+  type FeatureTipAudience,
   type FeatureTipId
 } from '../../../../shared/feature-tips'
 import { getPendingFeatureTips, type FeatureTipSettings } from './feature-tip-startup-gate'
 
 export function getFeatureTipForModal(args: {
+  audience?: FeatureTipAudience
   cliInstalled: boolean
   modalData: Record<string, unknown>
   seenTipIds: readonly FeatureTipId[]

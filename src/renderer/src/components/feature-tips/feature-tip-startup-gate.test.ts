@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getDefaultOnboardingState, getDefaultVoiceSettings } from '../../../../shared/constants'
 import type { CliInstallStatus } from '../../../../shared/cli-install-types'
+import type { FeatureTipAudience } from '../../../../shared/feature-tips'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { OnboardingState } from '../../../../shared/onboarding-state-types'
 import {
@@ -278,9 +279,11 @@ describe('feature tip startup gate', () => {
     sessionSearchEnabled: boolean
     webClient: boolean
     featureTipsSeenIds?: ('agent-session-search' | 'dolphin-cli')[]
+    audience?: FeatureTipAudience | null
   }): ReturnType<typeof getFeatureTipsAppOpenDecision> {
     return getFeatureTipsAppOpenDecision({
       activeModal: 'none',
+      audience: args.audience,
       cliInstalled: false,
       featureTipsSeenIds: args.featureTipsSeenIds ?? [],
       featureInteractions: {},
@@ -323,5 +326,38 @@ describe('feature tip startup gate', () => {
 
   it('treats a profile with no session search settings as search off', () => {
     expect(isSessionSearchFeatureTipCompleted({}, false)).toBe(false)
+  })
+
+  it('waits for the app version before choosing a tip', () => {
+    expect(
+      decideForExistingUser({ sessionSearchEnabled: false, webClient: false, audience: null })
+    ).toEqual({ kind: 'skip' })
+  })
+
+  it('opens the Agent Teams tip first for Windows users on 0.1.21', () => {
+    expect(
+      decideForExistingUser({
+        sessionSearchEnabled: false,
+        webClient: false,
+        audience: { appVersion: '0.1.21', windows: true }
+      })
+    ).toEqual({ kind: 'open', tipId: 'claude-agent-teams-windows' })
+  })
+
+  it('skips the Agent Teams tip off Windows or before 0.1.21', () => {
+    expect(
+      decideForExistingUser({
+        sessionSearchEnabled: false,
+        webClient: false,
+        audience: { appVersion: '0.1.21', windows: false }
+      })
+    ).toEqual({ kind: 'open', tipId: 'agent-session-search' })
+    expect(
+      decideForExistingUser({
+        sessionSearchEnabled: false,
+        webClient: false,
+        audience: { appVersion: '0.1.20', windows: true }
+      })
+    ).toEqual({ kind: 'open', tipId: 'agent-session-search' })
   })
 })
