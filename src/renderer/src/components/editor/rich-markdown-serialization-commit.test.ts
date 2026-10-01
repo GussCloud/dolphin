@@ -94,7 +94,8 @@ describe('commitRichMarkdownSerialization (shared disk-bound serialize chokepoin
         throwingRoundTrip
       )
 
-      expect(markdown).toBe('# 변경\r\n\r\n*강조*')
+      // The fallback keeps the source's single final newline that canonical output lacks.
+      expect(markdown).toBe('# 변경\r\n\r\n*강조*\r\n')
       expect(didSerialize).toBe(true)
       expect(r.originalSourceRef.current).toBe(markdown)
       expect(r.baseCanonicalRef.current).toBe('# 변경\n\n*강조*')

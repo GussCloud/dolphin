@@ -2,8 +2,8 @@ import type { MutableRefObject } from 'react'
 import type { Editor } from '@tiptap/react'
 import { reconcileRichMarkdownBlockSource } from './rich-markdown-block-source'
 import {
-  reconcileSerializedMarkdown,
-  restoreMarkdownSourceEol
+  canonicalMarkdownFallback,
+  reconcileSerializedMarkdown
 } from './rich-markdown-source-reconcile'
 
 export type RichMarkdownReconcileRefs = {
@@ -56,13 +56,13 @@ export function commitRichMarkdownSerialization(
   } catch (error) {
     // Why: style reconciliation is best-effort; preserve content and source EOL when it fails.
     console.error('[editor] markdown reconcile failed; falling back to canonical output', error)
-    reconciled = restoreMarkdownSourceEol(edited, refs.originalSourceRef.current)
+    reconciled = canonicalMarkdownFallback(edited, refs.originalSourceRef.current)
   }
 
   if (
     editor &&
     edited !== refs.baseCanonicalRef.current &&
-    reconciled === restoreMarkdownSourceEol(edited, refs.originalSourceRef.current)
+    reconciled === canonicalMarkdownFallback(edited, refs.originalSourceRef.current)
   ) {
     const preserved = reconcileRichMarkdownBlockSource(
       editor,
