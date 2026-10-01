@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -101,7 +101,8 @@ function reply(socket, request, body) {
 
 describeWindows('tmux.exe Agent Teams shim', () => {
   beforeAll(() => {
-    root = mkdtempSync(join(tmpdir(), 'dolphin tmux shim '))
+    // Why: CI's TEMP is an 8.3 short path, but tmux.exe reports its cwd in long form.
+    root = realpathSync.native(mkdtempSync(join(tmpdir(), 'dolphin tmux shim ')))
     tmuxPath = join(root, 'tmux.exe')
     const build = spawnSync(
       process.execPath,
