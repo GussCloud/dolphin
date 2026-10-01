@@ -38,7 +38,7 @@ export function buildPaneCommandScript(gitBashScriptPath: string, command: strin
 
 export type WrittenPaneCommandScript = {
   filePath: string
-  /** The short line typed into the Git Bash pane instead of Claude's long command. */
+  /** The short `.` line the pane runs: a `bash -c` launch arg, or typed by a host that predates it. */
   typedCommand: string
 }
 

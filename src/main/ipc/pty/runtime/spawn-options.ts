@@ -146,6 +146,9 @@ export async function buildRuntimePtySpawnOptions(
   }
   if (!args.connectionId) {
     ctx.spawnOptions.shellOverride = ctx.terminalRuntimeOptions.shellOverride
+    if (args.gitBashStartupCommandInArgs === true) {
+      ctx.spawnOptions.gitBashStartupCommandInArgs = true
+    }
     ctx.spawnOptions.terminalShellArgs = resolveConfiguredTerminalShellArgs({
       connectionId: args.connectionId,
       requestedShellOverride: args.shellOverride,

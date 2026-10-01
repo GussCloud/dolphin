@@ -1,7 +1,8 @@
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { splitTmuxCommand } from '../../shared/claude-agent-teams-tmux-compat'
 import { ClaudeAgentTeamsTmuxDispatcher } from './claude-agent-teams-tmux-dispatcher'
 import { resolvePathEnvKey } from '../pty/windows-environment-path'
+import { AGENT_TEAMS_SHIM_PATH_DIRS_ENV } from '../claude-agent-teams-path-restore'
 import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
 import type {
   AgentTeam,
@@ -22,6 +23,14 @@ export type {
 export class ClaudeAgentTeamsService {
   private readonly teams = new Map<string, AgentTeam>()
   private readonly dispatcher = new ClaudeAgentTeamsTmuxDispatcher()
+  private pipeEndpoint: string | null = null
+
+  constructor(private readonly platform: NodeJS.Platform = process.platform) {}
+
+  /** Agent-teams-only named pipe that tmux.exe calls directly; null when no listener is up. */
+  setPipeEndpoint(endpoint: string | null): void {
+    this.pipeEndpoint = endpoint
+  }
 
   createLaunchEnv(args: {
     leaderHandle: string
@@ -39,9 +48,9 @@ export class ClaudeAgentTeamsService {
     const leaderPane = '%1'
     // Why: Windows callers pass an env spelt `Path`; reading `PATH` there truncated the launch PATH to just the shim dir.
     const pathKey = resolvePathEnvKey(args.baseEnv, process.platform)
-    const pathValue = [...(args.shimPathDirs ?? [args.shimDir]), args.baseEnv[pathKey]]
-      .filter(Boolean)
-      .join(process.platform === 'win32' ? ';' : ':')
+    const pathDelimiter = process.platform === 'win32' ? ';' : ':'
+    const shimPathDirs = (args.shimPathDirs ?? [args.shimDir]).filter(Boolean)
+    const pathValue = [...shimPathDirs, args.baseEnv[pathKey]].filter(Boolean).join(pathDelimiter)
     const tmuxValue = `/tmp/dolphin-claude-agent-teams/${teamId},0,1`
     const env: Record<string, string> = {
       CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
@@ -53,7 +62,9 @@ export class ClaudeAgentTeamsService {
       DOLPHIN_AGENT_TEAMS_TEAM_ID: teamId,
       DOLPHIN_AGENT_TEAMS_TOKEN: token,
       DOLPHIN_AGENT_TEAMS_LEADER_PANE: leaderPane,
-      DOLPHIN_AGENT_TEAMS_SHIM_DIR: args.shimDir
+      DOLPHIN_AGENT_TEAMS_SHIM_DIR: args.shimDir,
+      // Why: pane shells re-lead PATH after profile scripts; the ordered list keeps tmux.exe ahead of tmux.cmd.
+      [AGENT_TEAMS_SHIM_PATH_DIRS_ENV]: shimPathDirs.join(pathDelimiter)
     }
     if (args.shimBin) {
       env.DOLPHIN_AGENT_TEAMS_SHIM_BIN = args.shimBin
@@ -63,6 +74,11 @@ export class ClaudeAgentTeamsService {
     }
     if (args.baseEnv.DOLPHIN_ENVIRONMENT) {
       env.DOLPHIN_ENVIRONMENT = args.baseEnv.DOLPHIN_ENVIRONMENT
+    }
+    // Why: pairing/environment routes the shim to a remote runtime; this local pipe would bypass it.
+    const routesRemote = Boolean(env.DOLPHIN_PAIRING_CODE || env.DOLPHIN_ENVIRONMENT)
+    if (this.platform === 'win32' && this.pipeEndpoint && !routesRemote) {
+      env.DOLPHIN_AGENT_TEAMS_ENDPOINT = this.pipeEndpoint
     }
 
     const leader: TeamPane = { fakePaneId: leaderPane, handle: args.leaderHandle, index: 0 }
@@ -115,7 +131,7 @@ export class ClaudeAgentTeamsService {
 
   private resolveTeam(request: AgentTeamsTmuxCompatRequest): AgentTeam {
     const team = this.teams.get(request.teamId)
-    if (!team || team.token !== request.token) {
+    if (!team || !tokensMatch(team.token, request.token)) {
       throw new Error('stale or unauthorized agent team')
     }
     if (!team.panes.has(request.envPane)) {
@@ -123,4 +139,10 @@ export class ClaudeAgentTeamsService {
     }
     return team
   }
+}
+
+function tokensMatch(expected: string, actual: string): boolean {
+  const expectedBytes = Buffer.from(expected, 'utf8')
+  const actualBytes = Buffer.from(actual, 'utf8')
+  return expectedBytes.length === actualBytes.length && timingSafeEqual(expectedBytes, actualBytes)
 }

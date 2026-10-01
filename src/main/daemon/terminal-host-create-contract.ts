@@ -24,6 +24,7 @@ export type CreateOrAttachOptions = {
   attachOnly?: boolean
   /** Explicit shell the renderer asked for, forwarded to the subprocess. */
   shellOverride?: string
+  gitBashStartupCommandInArgs?: boolean
   terminalShellArgs?: string[]
   terminalWindowsWslDistro?: string | null
   terminalWindowsPowerShellImplementation?: 'auto' | 'powershell.exe' | 'pwsh.exe'

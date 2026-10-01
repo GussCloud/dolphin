@@ -40,6 +40,8 @@ export type AgentTeamsTerminalApi = {
       envToDelete?: string[]
       activate?: boolean
       shellOverride?: string
+      /** Run `command` as a Git Bash launch arg; the pane still works if the host types it. */
+      gitBashStartupCommandInArgs?: boolean
     }
   ): Promise<RuntimeTerminalSplit>
   /** Null when the leader's PTY is unknown on a host where the answer matters. */

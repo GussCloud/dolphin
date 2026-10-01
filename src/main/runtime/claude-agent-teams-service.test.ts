@@ -373,6 +373,10 @@ describe('ClaudeAgentTeamsService', () => {
 
       expect(launch.env.Path).toBe('C:\\dolphin\\tmux;C:\\dolphin-shim;C:\\Windows\\system32')
       expect(launch.env.DOLPHIN_AGENT_TEAMS_SHIM_DIR).toBe('C:\\dolphin-shim')
+      // Teammate pane shells re-lead PATH from this ordered list after their profile scripts.
+      expect(launch.env.DOLPHIN_AGENT_TEAMS_SHIM_PATH_DIRS).toBe(
+        'C:\\dolphin\\tmux;C:\\dolphin-shim'
+      )
     } finally {
       if (platform) {
         Object.defineProperty(process, 'platform', platform)
@@ -395,6 +399,15 @@ describe('ClaudeAgentTeamsService', () => {
 
       expect(create()).toBe('/tmp/dolphin-shim:/usr/bin')
       expect(create(['/tmp/dolphin-shim'])).toBe('/tmp/dolphin-shim:/usr/bin')
+      expect(
+        new ClaudeAgentTeamsService().createLaunchEnv({
+          leaderHandle: 'leader-handle',
+          baseEnv: { PATH: '/usr/bin' },
+          shimDir: '/tmp/dolphin-shim',
+          shimBin: '/usr/bin/dolphin',
+          shimPathDirs: ['/opt/tmux', '/tmp/dolphin-shim']
+        }).env.DOLPHIN_AGENT_TEAMS_SHIM_PATH_DIRS
+      ).toBe('/opt/tmux:/tmp/dolphin-shim')
     } finally {
       if (platform) {
         Object.defineProperty(process, 'platform', platform)
@@ -410,7 +423,10 @@ describe('ClaudeAgentTeamsService', () => {
       expect(setup.splitOpts).toHaveLength(1)
       const [opts] = setup.splitOpts
       expect(opts!.shellOverride).toBe('git-bash')
-      expect(opts!.env).toMatchObject({ TMUX_PANE: '%2' })
+      expect(opts!.env).toMatchObject({
+        TMUX_PANE: '%2',
+        DOLPHIN_AGENT_TEAMS_SHIM_PATH_DIRS: '/tmp/dolphin-shim'
+      })
       expect(opts!.env).not.toHaveProperty('MSYS2_ARG_CONV_EXCL')
       expect(opts!.env).not.toHaveProperty('MSYS_NO_PATHCONV')
       expect(opts!.command).toMatch(/^\. '.+\.sh'$/)

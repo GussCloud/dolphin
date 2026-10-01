@@ -1,5 +1,6 @@
 import { getPosixOmpShellWrapper } from '../pty/omp-shell-wrapper'
 import { getPosixCodexShellLaunchPreflight } from '../pty/codex-shell-launch-preflight'
+import { AGENT_TEAMS_PATH_RESTORE_BLOCK } from '../claude-agent-teams-path-restore'
 import { BASH_PROMPT_COMMAND_COMPOSITION_BLOCK } from '../bash-prompt-command-composition'
 import { BASH_FEATURE_CHANNEL_BLOCK, SHELL_STARTUP_IDENTITY_MARKER_BLOCK } from '../shell-templates'
 
@@ -26,14 +27,7 @@ fi
 # treat each embedded newline as Enter and mangle the prompt into PS2
 # continuation. Modern readline defaults this on; force it for the rest.
 [[ $- == *i* ]] && bind 'set enable-bracketed-paste on' 2>/dev/null
-__dolphin_restore_agent_teams_path() {
-  [[ -n "\${DOLPHIN_AGENT_TEAMS_SHIM_DIR:-}" ]] || return 0
-  case "$PATH" in
-    "\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}"|"\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}:"*) return 0 ;;
-  esac
-  export PATH="\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}:$PATH"
-}
-__dolphin_restore_agent_teams_path
+${AGENT_TEAMS_PATH_RESTORE_BLOCK}
 # Why: user startup files may set the default OpenCode config after Dolphin's
 # spawn env; restore the Dolphin-managed config dir before the first prompt.
 [[ -n "\${DOLPHIN_OPENCODE_CONFIG_DIR:-}" ]] && export OPENCODE_CONFIG_DIR="\${DOLPHIN_OPENCODE_CONFIG_DIR}"

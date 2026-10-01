@@ -119,6 +119,10 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     })
   }
 
+  setClaudeAgentTeamsPipeEndpoint(endpoint: string | null): void {
+    this.claudeAgentTeams.setPipeEndpoint(endpoint)
+  }
+
   protected resolveClaudeAgentTeamsGitBash(): string | null {
     return resolveGitBashPath()
   }

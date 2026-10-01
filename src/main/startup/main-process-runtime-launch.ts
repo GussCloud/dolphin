@@ -91,7 +91,8 @@ function installRuntimeRpc(
           preferPinnedWsPort: true
         }
       : {}),
-    webClientRoot: getBundledWebClientRoot()
+    webClientRoot: getBundledWebClientRoot(),
+    enableAgentTeamsPipe: true
   })
   state.runtimeRpc = runtimeRpc
   registerMobileHandlers(runtimeRpc, {

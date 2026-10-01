@@ -104,6 +104,7 @@ export type RuntimePtySpawnArgs = {
   leafId?: string
   sessionId?: string
   shellOverride?: string
+  gitBashStartupCommandInArgs?: boolean
   isNewSession?: boolean
   /** No renderer view exists at spawn; main owns delivery and query replies until one mounts. */
   initiallyHidden?: boolean

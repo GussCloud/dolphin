@@ -60,6 +60,8 @@ export type RuntimePtyController = {
     sessionId?: string
     /** Windows shell to spawn AS this PTY, instead of the host default. */
     shellOverride?: string
+    /** Git Bash only: run `command` via `bash -c`; a host that cannot still types it. */
+    gitBashStartupCommandInArgs?: boolean
     isNewSession?: boolean
     /** No renderer view exists at spawn; main owns delivery and query replies until one mounts. */
     initiallyHidden?: boolean

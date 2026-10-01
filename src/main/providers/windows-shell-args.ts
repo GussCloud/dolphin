@@ -69,6 +69,12 @@ export type WindowsShellLaunchArgs = {
   validationCwd: string
 }
 
+/** Opt-in launch choices a caller makes per spawn; absent means the default typed delivery. */
+export type WindowsShellLaunchOptions = {
+  /** Git Bash only: run the startup command as `bash -c` instead of typing it into the prompt. */
+  gitBashStartupCommandInArgs?: boolean
+}
+
 export type WindowsShellWslContext = {
   distro: string
   treatPosixCwdAsWsl?: boolean
@@ -94,6 +100,10 @@ function getCmdShellArgStartupCommand(command?: string): string | null {
     return null
   }
   return command
+}
+
+function getGitBashArgStartupCommand(command?: string): string | null {
+  return command && command.length <= STARTUP_COMMAND_TEXT_MAX_CHARS ? command : null
 }
 
 /**
@@ -180,7 +190,8 @@ export function resolveWindowsShellLaunchArgs(
   defaultCwd: string,
   wslContext?: WindowsShellWslContext,
   startupCommand?: string,
-  codexLaunchPreflightCommand?: string
+  codexLaunchPreflightCommand?: string,
+  launchOptions?: WindowsShellLaunchOptions
 ): WindowsShellLaunchArgs {
   const shellBasename = pathWin32.basename(shellPath).toLowerCase()
   const nativeCwd = normalizeWindowsTerminalCwd(cwd)
@@ -216,8 +227,18 @@ export function resolveWindowsShellLaunchArgs(
   }
 
   if (isWindowsGitBashShellPath(shellPath)) {
+    const launchCommand = getGitBashLaunchCommand(codexLaunchPreflightCommand)
+    const argCommand = launchOptions?.gitBashStartupCommandInArgs
+      ? getGitBashArgStartupCommand(startupCommand)
+      : null
+    // Why: Git Bash echoes typed input at ~13ms/char; `-c` on the same interactive login shell
+    // reads the same rc files, and the shell exits when the command ends instead of prompting.
     return {
-      shellArgs: ['-c', getGitBashLaunchCommand(codexLaunchPreflightCommand)],
+      shellArgs: [
+        '-c',
+        argCommand ? `${launchCommand} -c ${quotePosixShell(argCommand)}` : launchCommand
+      ],
+      ...(argCommand ? { startupCommandDeliveredInShellArgs: true } : {}),
       effectiveCwd: nativeCwd,
       validationCwd: nativeCwd
     }

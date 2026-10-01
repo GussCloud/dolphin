@@ -125,6 +125,7 @@ async function spawnAndPublishSession(
     startupCommandDelivery: opts.startupCommandDelivery,
     ...(opts.launchAgent ? { launchAgent: opts.launchAgent } : {}),
     shellOverride: opts.shellOverride,
+    ...(opts.gitBashStartupCommandInArgs ? { gitBashStartupCommandInArgs: true } : {}),
     terminalShellArgs: opts.terminalShellArgs,
     terminalWindowsWslDistro: opts.terminalWindowsWslDistro,
     terminalWindowsPowerShellImplementation: opts.terminalWindowsPowerShellImplementation,

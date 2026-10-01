@@ -2,6 +2,7 @@ import type { RuntimeTransportMetadata } from '../../../shared/runtime-bootstrap
 import { watchRuntimeMetadataOwnership } from '../runtime-metadata-ownership-watch'
 import type { RpcTransport } from '../rpc/transport'
 import { UnixSocketTransport } from '../rpc/unix-socket-transport'
+import { startAgentTeamsPipeListener } from '../claude-agent-teams-pipe-listener'
 import { WebSocketTransport } from '../rpc/ws-transport'
 import { readWsFallbackPort, writeWsFallbackPort } from '../rpc/ws-fallback-port-store'
 import type { DeviceRegistry } from '../device-registry'
@@ -68,6 +69,10 @@ export class RuntimeRpcLifecycle extends RuntimeRpcWebSocketDispatch {
     await socketTransport.start()
 
     const activeTransports: RpcTransport[] = [socketTransport]
+    const agentTeamsPipe = await this.startAgentTeamsPipe()
+    if (agentTeamsPipe) {
+      activeTransports.push(agentTeamsPipe)
+    }
     const transportsMeta: RuntimeTransportMetadata[] = [transportMeta]
 
     // Why: WebSocket uses per-device tokens + E2EE (tweetnacl) instead of TLS since React Native can't pin self-signed certs.
@@ -115,6 +120,10 @@ export class RuntimeRpcLifecycle extends RuntimeRpcWebSocketDispatch {
       // Why: a runtime that can't publish metadata is invisible to the CLI — close transports rather than run undiscoverable.
       this.activeTransports = []
       this.transports = []
+      // Why: new teams must not advertise the pipe this rollback is about to close.
+      if (this.enableAgentTeamsPipe && this.platform === 'win32') {
+        this.runtime.setClaudeAgentTeamsPipeEndpoint(null)
+      }
       await Promise.all(activeTransports.map((t) => t.stop().catch(() => {}))).catch(() => {})
       throw error
     }
@@ -137,6 +146,24 @@ export class RuntimeRpcLifecycle extends RuntimeRpcWebSocketDispatch {
         )
       }
     })
+  }
+
+  // Why: supplementary like WebSocket — on failure tmux.exe keeps using the CLI path.
+  private async startAgentTeamsPipe(): Promise<RpcTransport | null> {
+    if (!this.enableAgentTeamsPipe || this.platform !== 'win32') {
+      return null
+    }
+    try {
+      const { transport, endpoint } = await startAgentTeamsPipeListener({
+        pid: this.pid,
+        handle: (request) => this.runtime.handleAgentTeamsTmuxCompat(request)
+      })
+      this.runtime.setClaudeAgentTeamsPipeEndpoint(endpoint)
+      return transport
+    } catch (error) {
+      console.error('[runtime] Failed to start the Agent Teams pipe:', error)
+      return null
+    }
   }
 
   // Why: STA-2370 — a desktop with no previously-connected device stays on loopback until the user

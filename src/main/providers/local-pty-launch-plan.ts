@@ -177,7 +177,9 @@ function createWindowsLocalPtyLaunchPlan(
       cwd,
       defaultCwd,
       seed.launchWslContext,
-      args.command
+      args.command,
+      undefined,
+      { gitBashStartupCommandInArgs: args.gitBashStartupCommandInArgs }
     )
     return finalizeLocalPtyLaunchPlan(seed, {
       shellPath,

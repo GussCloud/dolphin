@@ -50,6 +50,8 @@ export type DolphinRuntimeRpcServerOptions = {
    */
   pinnedBindHost?: string
   webClientRoot?: string
+  // Why: Windows only; the runtime that hosts Agent Teams leaders opts in so fake test runtimes stay inert.
+  enableAgentTeamsPipe?: boolean
   // Why: test-only overrides for the two constants below; production must not pass these (defaults set by §3.1).
   keepaliveIntervalMs?: number
   longPollCap?: number

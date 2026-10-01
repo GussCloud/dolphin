@@ -18,12 +18,17 @@ describe('DaemonPtyAdapter startup delivery', () => {
   let dir: string
   let lastSubprocess: ReturnType<typeof createMockSubprocess>
   let lastSpawnOpts: Parameters<SpawnSubprocess>[0] | null
+  let subprocessRanCommandAsArg: boolean | undefined
 
   beforeEach(async () => {
     lastSpawnOpts = null
+    subprocessRanCommandAsArg = undefined
     harness = await startDaemonAdapterHarness((opts) => {
       lastSpawnOpts = opts
       lastSubprocess = createMockSubprocess()
+      if (subprocessRanCommandAsArg !== undefined) {
+        lastSubprocess.startupCommandDeliveredInShellArgs = subprocessRanCommandAsArg
+      }
       return lastSubprocess
     })
     adapter = harness.adapter
@@ -104,4 +109,28 @@ describe('DaemonPtyAdapter startup delivery', () => {
     await waitFor(() => vi.mocked(lastSubprocess.write).mock.calls.length > 0)
     expect(lastSubprocess.write).toHaveBeenCalledExactlyOnceWith(`${startup.command}\n`)
   })
+
+  it.each([
+    { subprocessRanItAsArg: true, typed: false },
+    { subprocessRanItAsArg: false, typed: true }
+  ])(
+    'forwards the Git Bash launch-arg option and types the command only if the subprocess did not: %j',
+    async ({ subprocessRanItAsArg, typed }) => {
+      // Why: a daemon that predates the option spawns the plain shell, like `false` here.
+      subprocessRanCommandAsArg = subprocessRanItAsArg
+      const command = ". '/c/Users/jin/pane-cmds/a.sh'"
+      await adapter.spawn({ cols: 80, rows: 24, command, gitBashStartupCommandInArgs: true })
+
+      expect(lastSpawnOpts).toMatchObject({ command, gitBashStartupCommandInArgs: true })
+      await new Promise((resolve) => setTimeout(resolve, 350))
+      lastSubprocess._simulateData('\x1b]777;dolphin-shell-ready\x07\r\n$ ')
+      if (typed) {
+        await waitFor(() => vi.mocked(lastSubprocess.write).mock.calls.length > 0)
+        expect(lastSubprocess.write).toHaveBeenCalledWith(expect.stringContaining(command))
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+        expect(lastSubprocess.write).not.toHaveBeenCalled()
+      }
+    }
+  )
 })

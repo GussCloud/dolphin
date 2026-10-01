@@ -28,6 +28,7 @@
  */
 import { getPosixOmpShellWrapper } from './pty/omp-shell-wrapper'
 import { WSL_MANAGED_CLI_PATH_RESTORE } from './wsl-managed-cli-path-restore'
+import { AGENT_TEAMS_PATH_RESTORE_BLOCK } from './claude-agent-teams-path-restore'
 import { getPosixCodexShellLaunchPreflight } from './pty/codex-shell-launch-preflight'
 import {
   getZshShellReadyMarkerRegistrationBlock,
@@ -63,15 +64,6 @@ export type ZshStartupHookSpec = {
   overlayRestoreComment: string
   restores: ZshWrapperRestoreSpec
 }
-
-const AGENT_TEAMS_PATH_RESTORE_BLOCK = `__dolphin_restore_agent_teams_path() {
-  [[ -n "\${DOLPHIN_AGENT_TEAMS_SHIM_DIR:-}" ]] || return 0
-  case "$PATH" in
-    "\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}"|"\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}:"*) return 0 ;;
-  esac
-  export PATH="\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}:$PATH"
-}
-__dolphin_restore_agent_teams_path`
 
 const OPENCODE_CONFIG_DIR_RESTORE = `[[ -n "\${DOLPHIN_OPENCODE_CONFIG_DIR:-}" ]] && export OPENCODE_CONFIG_DIR="\${DOLPHIN_OPENCODE_CONFIG_DIR}"`
 const MIMOCODE_HOME_RESTORE = `[[ -n "\${DOLPHIN_MIMOCODE_HOME:-}" ]] && export MIMOCODE_HOME="\${DOLPHIN_MIMOCODE_HOME}"`

@@ -45,6 +45,23 @@ Git Bash echoes typed input slowly: a ~400-character teammate command took ~55s 
   pane ends when the teammate does. The command can carry secrets: it is never logged, the
   file is removed on `kill-pane`, on a failed spawn, by `releaseTeam`, and by a 15-minute
   stale sweep on each write.
+- **Launch-arg delivery.** Typing even the short `.` line costs ~1-1.5s (Git Bash echoes at
+  ~13ms/char, superlinear). The split carries `gitBashStartupCommandInArgs`, so the provider
+  (local `local-pty-launch-plan.ts` or the daemon's `shell-launch-plan.ts`, both through
+  `resolveWindowsShellLaunchArgs`) starts the pane as
+  `bash -c 'chcp.com 65001 …; exec "$BASH" --rcfile <shell-ready rcfile> -i -c ". '<script>'"'`
+  and types nothing (`--login -i -c` only when no shell-ready wrapper is in use). The rcfile
+  sources `/etc/profile` and `~/.bash_profile` like a login shell, so with `-i` Claude sees the
+  same PATH/HOME and job control as a typed shell; `-c` makes bash exit after the script,
+  which already ends in `exit`. The rcfile then re-leads PATH with
+  `DOLPHIN_AGENT_TEAMS_SHIM_PATH_DIRS` (the leader's ordered shim dirs, converted to POSIX
+  with `cygpath`), so the teammate's own tmux calls hit `tmux.exe`, not `tmux.cmd`. The flag is
+  a new optional field on `createOrAttach`: a daemon that predates it drops it and types the
+  same `.` line, so the pane still starts. Ordinary Git Bash startup commands never set it and
+  keep their interactive prompt.
+- **~5s before each teammate `claude.exe` starts is not Dolphin.** Measured outside Dolphin:
+  the same argv started from any process in that tree takes ~5s, most likely AV/EDR
+  command-line scanning. Don't chase it in the pane or shim code.
 
 macOS, Linux, WSL and SSH teams keep the placeholder split and type the command as-is.
 
@@ -68,6 +85,21 @@ an extensionless script is ignored.
   rather than copied at runtime because copying our signed image under another name is
   the MITRE T1036 shape in [`windows-edr-posture.md`](./windows-edr-posture.md).
   Packaging fails if it is missing.
+- **Fast path:** every CLI hop costs ~360ms (tmux.exe → dolphin.exe → Electron-as-Node →
+  RPC), and a two-teammate spawn makes ~19 sequential calls. So `tmux.exe` first answers
+  state-free commands itself (`-V`, `show … extended-keys`, and the no-op `set*`, `has*`,
+  `resize-pane`, … list — `AgentTeamsTmuxStaticAnswers.cs` mirrors the dispatcher; keep them
+  in step), then sends the rest as one JSON line to `DOLPHIN_AGENT_TEAMS_ENDPOINT`, a
+  per-launch pipe `\\.\pipe\dolphin-agent-teams-<pid>-<32 hex>`
+  (`claude-agent-teams-pipe-listener.ts`). That pipe serves only
+  `{"v":1,id,teamId,token,envPane,cwd,argv}` and authenticates with the team token; the
+  master RPC token never enters the team env. The endpoint is injected on win32 only, never
+  when `DOLPHIN_PAIRING_CODE`/`DOLPHIN_ENVIRONMENT` route to a remote runtime, and it is not
+  in the WSL guest env lists. `tmux.exe` waits up to 30s for the answer: `split-window` and
+  `respawn-pane` wait on the terminal daemon, which took 10.4s while busy spawning another
+  pane. `tmux.exe` falls back to the CLI only when the endpoint is
+  missing, malformed, or refuses the connection — never after writing the request, because
+  `split-window`/`respawn-pane` are not idempotent.
 - **Dev fallback:** `~/.dolphin/claude-agent-teams-bin/tmux.cmd`. `cmd.exe` expands
   `%NAME%` in the arguments, so values containing `%` can be corrupted; packaged builds put
   `tmux.exe` ahead of it on PATH.
