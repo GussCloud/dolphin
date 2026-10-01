@@ -18,6 +18,9 @@ export class RuntimeRpcShutdown extends RuntimeRpcMobilePairing {
       })
     }
     const transports = this.activeTransports
+    if (this.enableAgentTeamsPipe && this.platform === 'win32') {
+      this.runtime.setClaudeAgentTeamsPipeEndpoint(null)
+    }
     this.activeTransports = []
     this.transports = []
     this.metadataOwnershipWatch?.stop()

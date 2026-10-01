@@ -13,7 +13,10 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
-import { shouldReuseCompiledWindowsCliLauncher } from './build-windows-cli-launcher.mjs'
+import {
+  shouldReuseCompiledWindowsCliLauncher,
+  windowsCliLauncherSourcePaths
+} from './build-windows-cli-launcher.mjs'
 
 const itCrossHost = process.platform === 'win32' ? it.skip : it
 const projectRoot = resolve(import.meta.dirname, '../..')
@@ -91,10 +94,9 @@ describe('Windows CLI launcher', () => {
   itCrossHost('never materializes the child environment block from ProcessStartInfo', () => {
     // Why: both ProcessStartInfo env properties copy the process block into a case-insensitive
     // dictionary that throws when the inherited block holds PATH and Path (gusscloud/dolphin#12046).
-    const source = readFileSync(
-      join(projectRoot, 'native', 'windows-cli-launcher', 'DolphinCliLauncher.cs'),
-      'utf8'
-    )
+    const source = windowsCliLauncherSourcePaths(projectRoot)
+      .map((sourcePath) => readFileSync(sourcePath, 'utf8'))
+      .join('\n')
     const code = source.replace(/^\s*\/\/.*$/gm, '')
 
     expect(code).not.toContain('EnvironmentVariables')

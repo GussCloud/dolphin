@@ -15,6 +15,7 @@ export type TerminalHostOptions = {
     startupCommandDelivery?: StartupCommandDelivery
     launchAgent?: TuiAgent
     shellOverride?: string
+    gitBashStartupCommandInArgs?: boolean
     terminalShellArgs?: string[]
     terminalWindowsWslDistro?: string | null
     terminalWindowsPowerShellImplementation?: 'auto' | 'powershell.exe' | 'pwsh.exe'

@@ -93,14 +93,16 @@ describe('Git Bash teams (native Windows)', () => {
     expect(team.panes.get('%2')?.handle).toBe('teammate-1')
   })
 
-  it('types a short source line instead of the secret-bearing command', async () => {
+  it('runs a short source line as a launch arg instead of the secret-bearing command', async () => {
     const { splits, tmux } = setup('native-windows-git-bash')
     await tmux('split-window', ...splitHolding)
     await tmux('respawn-pane', '-k', '-t', '%2', '--', TEAMMATE_COMMAND)
 
-    const typed = splits[0]!.opts.command!
-    expect(typed).toMatch(/^\. '\/.+\.sh'$/)
-    expect(typed).not.toContain('s3cr3t')
+    const sourceLine = splits[0]!.opts.command!
+    expect(sourceLine).toMatch(/^\. '\/.+\.sh'$/)
+    expect(sourceLine).not.toContain('s3cr3t')
+    // Why the command stays set: a host that drops the option types it instead.
+    expect(splits[0]!.opts.gitBashStartupCommandInArgs).toBe(true)
     expect(await readdir(scriptDir)).toHaveLength(1)
   })
 
@@ -179,6 +181,7 @@ describe('Git Bash teams (native Windows)', () => {
     await tmux('split-window', '-t', '%1', '-h', '-P', '-F', '#{pane_id}', '--', 'claude')
 
     expect(splits).toHaveLength(1)
+    expect(splits[0]!.opts.gitBashStartupCommandInArgs).toBe(true)
   })
 })
 
@@ -194,6 +197,7 @@ describe('default host shell teams', () => {
       ['leader-handle', 'claude --agent-id a']
     ])
     expect(splits[1]!.opts).not.toHaveProperty('shellOverride')
+    expect(splits[1]!.opts).not.toHaveProperty('gitBashStartupCommandInArgs')
     expect(await readdir(scriptDir)).toEqual([])
   })
 })

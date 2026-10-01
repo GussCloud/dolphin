@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createRequire } from 'node:module'
@@ -10,7 +10,7 @@ const forkIdentity = createRequire(import.meta.url)('../../src/shared/fork-ident
 
 export function shouldReuseCompiledWindowsCliLauncher(
   outputPath,
-  sourcePath,
+  sourcePaths,
   { reuseCached = false } = {}
 ) {
   if (!existsSync(outputPath)) {
@@ -21,7 +21,17 @@ export function shouldReuseCompiledWindowsCliLauncher(
   if (reuseCached) {
     return true
   }
-  return statSync(outputPath).mtimeMs >= statSync(sourcePath).mtimeMs
+  const outputMtimeMs = statSync(outputPath).mtimeMs
+  return [sourcePaths].flat().every((sourcePath) => outputMtimeMs >= statSync(sourcePath).mtimeMs)
+}
+
+/** Every C# source of the launcher; csc compiles them into one image. */
+export function windowsCliLauncherSourcePaths(projectRoot) {
+  const sourceDirectory = join(projectRoot, 'native', 'windows-cli-launcher')
+  return readdirSync(sourceDirectory)
+    .filter((name) => name.endsWith('.cs'))
+    .sort()
+    .map((name) => join(sourceDirectory, name))
 }
 
 function launcherBuildDirectory(projectRoot) {
@@ -65,7 +75,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
 
   const repoRoot = resolve(import.meta.dirname, '../..')
-  const sourcePath = join(repoRoot, 'native', 'windows-cli-launcher', 'DolphinCliLauncher.cs')
+  const sourcePaths = windowsCliLauncherSourcePaths(repoRoot)
   const explicitOutput = readArg('--output')
   const outputPaths = explicitOutput
     ? [explicitOutput]
@@ -79,7 +89,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   for (const outputPath of outputPaths) {
     mkdirSync(dirname(outputPath), { recursive: true })
     if (
-      shouldReuseCompiledWindowsCliLauncher(outputPath, sourcePath, {
+      shouldReuseCompiledWindowsCliLauncher(outputPath, sourcePaths, {
         reuseCached: process.env.DOLPHIN_REUSE_WINDOWS_CLI_LAUNCHER === '1'
       })
     ) {
@@ -88,7 +98,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     }
     const result = spawnSync(
       compilerPath,
-      ['/nologo', '/target:exe', '/optimize+', '/warnaserror+', `/out:${outputPath}`, sourcePath],
+      [
+        '/nologo',
+        '/target:exe',
+        '/optimize+',
+        '/warnaserror+',
+        `/out:${outputPath}`,
+        ...sourcePaths
+      ],
       { cwd: repoRoot, stdio: 'inherit' }
     )
 

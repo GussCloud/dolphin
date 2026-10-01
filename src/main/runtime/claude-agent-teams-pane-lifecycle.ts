@@ -115,6 +115,7 @@ export class ClaudeAgentTeamsPaneLifecycle {
       const split = await api.splitTerminal(origin.handle, {
         direction: origin.direction,
         command: (script ? script.typedCommand : command) || undefined,
+        ...(script ? { gitBashStartupCommandInArgs: true } : {}),
         ...teammatePaneSpawnOptions(team, hostShell, pane.fakePaneId),
         activate: false
       })

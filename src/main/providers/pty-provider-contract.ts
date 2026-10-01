@@ -88,6 +88,9 @@ export type PtySpawnOptions = {
    *  changing the user's persistent default shell setting. Only consulted on
    *  Windows; ignored on macOS/Linux where shell selection is not exposed. */
   shellOverride?: string
+  /** Git Bash only: pass `command` as a `bash -c` launch arg instead of typing it. Hosts that
+   *  predate it drop the key and type the command, so `command` must stay runnable typed. */
+  gitBashStartupCommandInArgs?: boolean
   /** Optional Unix interactive profile args; ignored for command and agent launches. */
   terminalShellArgs?: string[]
   /** Preferred WSL distro for generic `wsl.exe` launches. Worktree/session

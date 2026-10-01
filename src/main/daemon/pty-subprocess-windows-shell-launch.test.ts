@@ -347,6 +347,45 @@ describe('createPtySubprocess', () => {
     )
   })
 
+  it('runs a Git Bash startup command as a launch arg only when the spawn asks for it', async () => {
+    spawnMock.mockImplementation(() => mockPtyProcess())
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')
+    Object.defineProperty(process, 'platform', { value: 'win32' })
+    const command = ". '/c/Users/jin/pane-cmds/a.sh'"
+    let asArg: Awaited<ReturnType<typeof createPtySubprocess>>
+    let typed: Awaited<ReturnType<typeof createPtySubprocess>>
+    try {
+      const base = {
+        cols: 80,
+        rows: 24,
+        cwd: 'C:\\Users\\jin\\repo',
+        shellOverride: 'C:\\PortableGit\\bin\\bash.exe',
+        command
+      }
+      asArg = await createPtySubprocess({
+        ...base,
+        sessionId: 'as-arg',
+        gitBashStartupCommandInArgs: true
+      })
+      typed = await createPtySubprocess({ ...base, sessionId: 'typed' })
+    } finally {
+      if (platform) {
+        Object.defineProperty(process, 'platform', platform)
+      }
+    }
+
+    expect(spawnMock.mock.calls[0]?.[1]).toEqual([
+      '-c',
+      `chcp.com 65001 >/dev/null 2>&1; exec "$BASH" --login -i -c '. '\\''/c/Users/jin/pane-cmds/a.sh'\\'''`
+    ])
+    expect(asArg!.startupCommandDeliveredInShellArgs).toBe(true)
+    expect(spawnMock.mock.calls[1]?.[1]).toEqual([
+      '-c',
+      'chcp.com 65001 >/dev/null 2>&1; exec "$BASH" --login -i'
+    ])
+    expect(typed!.startupCommandDeliveredInShellArgs).toBeUndefined()
+  })
+
   it('rejects a missing explicit native Windows cwd before node-pty spawn', async () => {
     const platform = Object.getOwnPropertyDescriptor(process, 'platform')
     Object.defineProperty(process, 'platform', { value: 'win32' })

@@ -633,6 +633,52 @@ describe('LocalPtyProvider', () => {
       )
     })
 
+    it('runs a Git Bash startup command as a launch arg when the spawn asks for it', async () => {
+      const platform = Object.getOwnPropertyDescriptor(process, 'platform')
+      const originalProgramFiles = process.env.ProgramFiles
+      Object.defineProperty(process, 'platform', { value: 'win32' })
+      process.env.ProgramFiles = 'C:\\Program Files'
+      // Why the preflight env: it re-resolves Git Bash args after env finalization, which must keep the option.
+      provider.configure({
+        getWindowsShell: () => 'git-bash',
+        buildSpawnEnv: (_id, env) => ({
+          ...env,
+          DOLPHIN_CODEX_LAUNCH_PREFLIGHT: CODEX_LAUNCH_PREFLIGHT
+        })
+      })
+
+      try {
+        await provider.spawn({
+          cols: 80,
+          rows: 24,
+          cwd: 'C:\\Users\\jin\\repo',
+          command: ". '/c/Users/jin/pane-cmds/a.sh'",
+          gitBashStartupCommandInArgs: true
+        })
+      } finally {
+        if (platform) {
+          Object.defineProperty(process, 'platform', platform)
+        }
+        if (originalProgramFiles === undefined) {
+          delete process.env.ProgramFiles
+        } else {
+          process.env.ProgramFiles = originalProgramFiles
+        }
+      }
+
+      expect(spawnMock).toHaveBeenCalledWith(
+        'C:\\Program Files\\Git\\bin\\bash.exe',
+        [
+          '-c',
+          expect.stringMatching(
+            /exec "\$BASH" --rcfile '[^']+' -i -c '\. '\\''\/c\/Users\/jin\/pane-cmds\/a\.sh'\\'''$/
+          )
+        ],
+        expect.any(Object)
+      )
+      expect(mockProc.write).not.toHaveBeenCalled()
+    })
+
     it('runs the Codex preflight once in the cmd.exe startup chain', async () => {
       const platform = Object.getOwnPropertyDescriptor(process, 'platform')
       Object.defineProperty(process, 'platform', { value: 'win32' })

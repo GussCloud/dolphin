@@ -4,6 +4,7 @@
  * Why: bash gets a single `--rcfile` wrapper (not a ZDOTDIR tree), so the login
  * startup-file chain, OSC 133 hooks, and the shell-ready marker all live here.
  */
+import { AGENT_TEAMS_PATH_RESTORE_BLOCK } from '../claude-agent-teams-path-restore'
 import { BASH_PROMPT_COMMAND_COMPOSITION_BLOCK } from '../bash-prompt-command-composition'
 import { WSL_MANAGED_CLI_PATH_RESTORE } from '../wsl-managed-cli-path-restore'
 import { getPosixOmpShellWrapper } from '../pty/omp-shell-wrapper'
@@ -38,14 +39,7 @@ fi
 # Why: preserve bash's normal login-shell contract. Many users already source
 # ~/.bashrc from ~/.bash_profile; forcing ~/.bashrc again here would duplicate
 # PATH edits, hooks, and prompt init in Dolphin startup-command shells.
-__dolphin_restore_agent_teams_path() {
-  [[ -n "\${DOLPHIN_AGENT_TEAMS_SHIM_DIR:-}" ]] || return 0
-  case "$PATH" in
-    "\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}"|"\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}:"*) return 0 ;;
-  esac
-  export PATH="\${DOLPHIN_AGENT_TEAMS_SHIM_DIR}:$PATH"
-}
-__dolphin_restore_agent_teams_path
+${AGENT_TEAMS_PATH_RESTORE_BLOCK}
 ${WSL_MANAGED_CLI_PATH_RESTORE}
 # Why: user startup files may set the default OpenCode config after Dolphin's
 # spawn env; restore the Dolphin-managed config dir before the first prompt.

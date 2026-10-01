@@ -81,7 +81,8 @@ export function finalizeWindowsLocalPtySpawnEnvironment(args: {
       plan.defaultCwd,
       plan.launchWslContext,
       spawn.command,
-      codexLaunchPreflightCommand
+      codexLaunchPreflightCommand,
+      { gitBashStartupCommandInArgs: spawn.gitBashStartupCommandInArgs }
     )
     plan.shellArgs = resolved.shellArgs
     plan.effectiveCwd = resolved.effectiveCwd

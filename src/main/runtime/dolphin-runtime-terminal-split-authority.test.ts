@@ -247,6 +247,34 @@ describe('terminal split shell override', () => {
     )
   })
 
+  it('spawns the PTY-backed split hidden so main answers ConPTY startup DA1 before the pane mounts', async () => {
+    const harness = createHarness()
+
+    await harness.runtime.splitTerminal(harness.handle, { shellOverride: 'git-bash' })
+
+    expect(harness.spawn).toHaveBeenCalledWith(expect.objectContaining({ initiallyHidden: true }))
+  })
+
+  it('forwards the Git Bash launch-arg option only when the split asks for it', async () => {
+    const harness = createHarness()
+
+    await harness.runtime.splitTerminal(harness.handle, {
+      shellOverride: 'git-bash',
+      command: ". '/c/x.sh'",
+      gitBashStartupCommandInArgs: true
+    })
+    await harness.runtime.splitTerminal(harness.handle, { shellOverride: 'git-bash' })
+
+    expect(harness.spawn).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ command: ". '/c/x.sh'", gitBashStartupCommandInArgs: true })
+    )
+    expect(harness.spawn).toHaveBeenNthCalledWith(
+      2,
+      expect.not.objectContaining({ gitBashStartupCommandInArgs: expect.anything() })
+    )
+  })
+
   it('splits a renderer leaf from its own PTY so the shell and env are not dropped', async () => {
     const harness = createHarness(true, { rendererMounted: true, leafHandle: true })
 

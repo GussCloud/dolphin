@@ -123,7 +123,8 @@ export function createPtyShellLaunchPlan(
         resolveSafePtyDefaultCwd(),
         resolvedWslContext,
         opts.command,
-        env.DOLPHIN_CODEX_LAUNCH_PREFLIGHT
+        env.DOLPHIN_CODEX_LAUNCH_PREFLIGHT,
+        { gitBashStartupCommandInArgs: opts.gitBashStartupCommandInArgs }
       )
       shellArgs = resolved.shellArgs
       spawnCwd = resolved.effectiveCwd

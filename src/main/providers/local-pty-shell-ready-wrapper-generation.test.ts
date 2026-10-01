@@ -338,7 +338,7 @@ describePosix('local PTY shell-ready launch config', () => {
       '[[ -n "${DOLPHIN_MIMOCODE_HOME:-}" ]] && export MIMOCODE_HOME="${DOLPHIN_MIMOCODE_HOME}"'
     const codexRestoreLine =
       '[[ -n "${DOLPHIN_CODEX_HOME:-}" ]] && export CODEX_HOME="${DOLPHIN_CODEX_HOME}"'
-    const agentTeamsPathRestoreLine = '[[ -n "${DOLPHIN_AGENT_TEAMS_SHIM_DIR:-}" ]] || return 0'
+    const agentTeamsPathRestoreLine = '__dolphin_restore_agent_teams_path() {'
     const ompWrapperLine = 'command omp --extension "${DOLPHIN_OMP_STATUS_EXTENSION}" "$@"'
     expect(zshrc).toContain(restoreLine)
     expect(zlogin).toContain(restoreLine)

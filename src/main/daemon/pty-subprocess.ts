@@ -28,6 +28,8 @@ export type PtySubprocessOptions = {
   launchAgent?: TuiAgent
   /** Explicit shell executable path/basename requested by the renderer. */
   shellOverride?: string
+  /** Git Bash only: run `command` as a `bash -c` launch arg instead of typing it. */
+  gitBashStartupCommandInArgs?: boolean
   /** Optional Unix interactive profile args; ignored for command and agent launches. */
   terminalShellArgs?: string[]
   terminalWindowsWslDistro?: string | null

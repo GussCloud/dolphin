@@ -81,3 +81,29 @@ describe('runtime pty spawn preflight: requested shell on a local Windows host',
     await expect(resolveSpawnShell(undefined)).resolves.toBe(HOST_DEFAULT_SHELL)
   })
 })
+
+describe('runtime pty spawn options: Git Bash launch-arg delivery', () => {
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { configurable: true, value: hostPlatform })
+  })
+
+  async function buildOptions(args: Partial<RuntimePtySpawnArgs>) {
+    const ctx = createRuntimePtySpawnState(makeDeps(), { cols: 120, rows: 40, ...args })
+    await prepareRuntimePtySpawn(ctx)
+    await buildRuntimePtySpawnOptions(ctx)
+    ctx.finishTerminalInstall()
+    return ctx.spawnOptions
+  }
+
+  it('hands the option to a local provider with the command it would otherwise type', async () => {
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
+    const command = ". '/c/x.sh'"
+
+    await expect(
+      buildOptions({ shellOverride: 'git-bash', command, gitBashStartupCommandInArgs: true })
+    ).resolves.toMatchObject({ command, gitBashStartupCommandInArgs: true })
+    await expect(buildOptions({ shellOverride: 'git-bash', command })).resolves.not.toHaveProperty(
+      'gitBashStartupCommandInArgs'
+    )
+  })
+})

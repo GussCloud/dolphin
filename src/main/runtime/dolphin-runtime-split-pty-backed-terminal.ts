@@ -22,6 +22,8 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
       surfaceOwner?: false
       telemetrySource?: TerminalPaneSplitSource
       shellOverride?: string
+      /** Agent-teams teammate panes only; see PtySpawnOptions.gitBashStartupCommandInArgs. */
+      gitBashStartupCommandInArgs?: boolean
     } = {}
   ): Promise<RuntimeTerminalSplit> {
     if (!this.ptyController?.spawn) {
@@ -60,11 +62,15 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
       env: this.buildTerminalWorkspaceEnv(workspace, opts.env ?? {}, paneKey, parentTabId),
       envToDelete: opts.envToDelete,
       ...(opts.shellOverride ? { shellOverride: opts.shellOverride } : {}),
+      ...(opts.gitBashStartupCommandInArgs ? { gitBashStartupCommandInArgs: true } : {}),
       connectionId: workspace.connectionId,
       worktreeId: workspace.id,
       preAllocatedHandle,
       tabId: parentTabId,
       leafId,
+      // Why: the pane mounts only after spawn, so main must answer ConPTY's blocking startup DA1
+      // (unanswered, the shell stalls ~4s); same as createTerminal's background spawn.
+      initiallyHidden: true,
       persistHostSessionBinding: true,
       ...(sourceAuthority.persisted
         ? {

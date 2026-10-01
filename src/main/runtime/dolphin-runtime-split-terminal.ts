@@ -19,6 +19,8 @@ export class DolphinRuntimeWithSplitTerminal extends DolphinRuntimeWithStopExpli
       surfaceOwner?: false
       telemetrySource?: TerminalPaneSplitSource
       shellOverride?: string
+      /** Agent-teams teammate panes only; see PtySpawnOptions.gitBashStartupCommandInArgs. */
+      gitBashStartupCommandInArgs?: boolean
     } = {}
   ): Promise<RuntimeTerminalSplit> {
     const livePty = this.getLivePtyForHandle(handle)

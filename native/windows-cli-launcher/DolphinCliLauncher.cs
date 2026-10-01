@@ -78,9 +78,27 @@ internal static class DolphinCliLauncher
         }
     }
 
+    // Why: each CLI hop costs ~360ms (Electron-as-Node startup), and Claude runs ~19 tmux calls per
+    // two-teammate spawn; static answers and the direct pipe skip it.
+    private static int RunTmuxShim(string shimPath, string[] args)
+    {
+        string staticStdout;
+        if (AgentTeamsTmuxStaticAnswers.TryAnswer(args, out staticStdout))
+        {
+            AgentTeamsTmuxPipeClient.WriteUtf8(Console.OpenStandardOutput(), staticStdout);
+            return 0;
+        }
+        int pipeExitCode;
+        if (AgentTeamsTmuxPipeClient.TryRun(args, out pipeExitCode))
+        {
+            return pipeExitCode;
+        }
+        return RunTmuxShimThroughCli(shimPath, args);
+    }
+
     // Why: Claude Agent Teams runs `tmux` from a shim dir outside the install tree, so the target
     // comes from the team env; a native exe keeps cmd.exe from expanding `%NAME%` in tmux args.
-    private static int RunTmuxShim(string shimPath, string[] args)
+    private static int RunTmuxShimThroughCli(string shimPath, string[] args)
     {
         string target = Environment.GetEnvironmentVariable("DOLPHIN_AGENT_TEAMS_SHIM_BIN");
         if (!IsQualifiedShimTarget(target, shimPath))

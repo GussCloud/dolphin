@@ -310,6 +310,71 @@ describe('resolveWindowsShellLaunchArgs', () => {
     expect(result.startupCommandDeliveredInShellArgs).toBeUndefined()
   })
 
+  it('passes a Git Bash startup command as a `-c` launch arg only when asked', () => {
+    const gitBash = 'C:\\Program Files\\Git\\bin\\bash.exe'
+    const command = ". '/c/Users/alice/x.sh'"
+    const asArg = (startupCommand?: string, preflight?: string) =>
+      resolveWindowsShellLaunchArgs(
+        gitBash,
+        'C:\\Users\\alice',
+        'C:\\Users\\alice',
+        undefined,
+        startupCommand,
+        preflight,
+        { gitBashStartupCommandInArgs: true }
+      )
+
+    expect(asArg(command)).toEqual({
+      shellArgs: [
+        '-c',
+        `chcp.com 65001 >/dev/null 2>&1; exec "$BASH" --login -i -c '. '\\''/c/Users/alice/x.sh'\\'''`
+      ],
+      startupCommandDeliveredInShellArgs: true,
+      effectiveCwd: 'C:\\Users\\alice',
+      validationCwd: 'C:\\Users\\alice'
+    })
+    // Same login + interactive shell as the typed path, so Claude sees the same rc env.
+    const typed = resolveWindowsShellLaunchArgs(
+      gitBash,
+      'C:\\Users\\alice',
+      'C:\\Users\\alice',
+      undefined,
+      command
+    )
+    expect(asArg(command).shellArgs[1]?.startsWith(`${typed.shellArgs[1]} -c `)).toBe(true)
+    expect(typed.startupCommandDeliveredInShellArgs).toBeUndefined()
+
+    const withPreflight = asArg(command, CODEX_LAUNCH_PREFLIGHT)
+    expect(withPreflight.shellArgs[1]).toMatch(/--rcfile '[^']+' -i -c '\. /)
+    expect(withPreflight.startupCommandDeliveredInShellArgs).toBe(true)
+
+    expect(asArg(undefined).startupCommandDeliveredInShellArgs).toBeUndefined()
+    expect(asArg(undefined).shellArgs[1]).toMatch(/--login -i$/)
+    expect(asArg(`x${'y'.repeat(7000)}`).startupCommandDeliveredInShellArgs).toBeUndefined()
+  })
+
+  it('ignores the Git Bash launch-arg option for other shells', () => {
+    for (const shell of ['cmd.exe', 'C:\\msys64\\usr\\bin\\bash.exe']) {
+      const plain = resolveWindowsShellLaunchArgs(
+        shell,
+        'C:\\repo',
+        'C:\\Users\\alice',
+        undefined,
+        'ls'
+      )
+      const opted = resolveWindowsShellLaunchArgs(
+        shell,
+        'C:\\repo',
+        'C:\\Users\\alice',
+        undefined,
+        'ls',
+        undefined,
+        { gitBashStartupCommandInArgs: true }
+      )
+      expect(opted).toEqual(plain)
+    }
+  })
+
   it('quotes a spaced preflight path through each shell environment', () => {
     const cmd = resolveWindowsShellLaunchArgs(
       'cmd.exe',
