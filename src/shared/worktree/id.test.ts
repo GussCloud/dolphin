@@ -4,10 +4,35 @@ import {
   getRepoIdFromWorktreeId,
   getRepoMainWorktreeId,
   getWorktreePathBasenameFromId,
+  selectMissingWorktreeIds,
   splitWorktreeId,
   splitWorktreeIdForFilesystem,
   worktreeIdComparisonKey
 } from './id'
+
+describe('selectMissingWorktreeIds', () => {
+  it('treats a differently spelled Windows path as the same worktree', () => {
+    expect(selectMissingWorktreeIds(['repo::C:\\work\\wt'], ['repo::c:/work/wt/'])).toEqual([])
+  })
+
+  it('still reports a worktree the scan no longer lists', () => {
+    expect(
+      selectMissingWorktreeIds(['repo::/work/gone', 'repo::/work/kept'], ['repo::/work/kept'])
+    ).toEqual(['repo::/work/gone'])
+  })
+
+  it('keeps POSIX paths case-sensitive', () => {
+    expect(selectMissingWorktreeIds(['repo::/work/WT'], ['repo::/work/wt'])).toEqual([
+      'repo::/work/WT'
+    ])
+  })
+
+  it('does not fold two folder workspaces that share one directory', () => {
+    expect(
+      selectMissingWorktreeIds(['repo::/work/dir::workspace:a'], ['repo::/work/dir::workspace:b'])
+    ).toEqual(['repo::/work/dir::workspace:a'])
+  })
+})
 
 describe('WORKTREE_ID_SEPARATOR', () => {
   it('is the literal "::" separator', () => {
