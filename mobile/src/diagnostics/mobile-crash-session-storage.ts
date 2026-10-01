@@ -108,11 +108,7 @@ export function serializeMobileCrashJournal(journal: PersistedMobileCrashJournal
 
 function parseSession(value: unknown): PersistedMobileCrashSession | null {
   const session = parseSessionData(value)
-  if (
-    !isRecord(value) ||
-    !session ||
-    (value.marker !== 'open' && value.marker !== 'closed')
-  ) {
+  if (!isRecord(value) || !session || (value.marker !== 'open' && value.marker !== 'closed')) {
     return null
   }
   return {
