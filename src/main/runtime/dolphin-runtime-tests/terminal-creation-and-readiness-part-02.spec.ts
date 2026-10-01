@@ -475,7 +475,9 @@ describe('DolphinRuntimeService', () => {
           disabledTuiAgents: [],
           agentCmdOverrides: {},
           agentDefaultArgs: { 'claude-agent-teams': '' },
-          agentDefaultEnv: {}
+          agentDefaultEnv: {},
+          // Why off: this pins the launcher name, not the team instructions.
+          agentSessionInstructions: { 'claude-agent-teams': '' }
         })
       })
       runtime.setPtyController({
