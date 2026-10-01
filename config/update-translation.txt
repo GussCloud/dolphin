@@ -2,7 +2,7 @@
 
 Recurring task: after a batch of merged PRs, scan for i18n gaps and fix them:
 1. unkeyed user-visible UI strings (gate: `audit:localization` / `verify:localization-coverage`),
-2. keyed strings missing target-locale translations (en.json has the key, es/fr/ja/ko/zh does not),
+2. keyed strings missing target-locale translations (en.json has the key, es/fr/ja/ko/pt-BR/zh does not),
 3. badly translated target values (placeholder mismatch, brand/term policy violations).
 
 Method (reproducible):
@@ -20,6 +20,10 @@ Method (reproducible):
   (validates placeholder parity and runs every value through `repairTranslatedValue`
   so CJK spacing, brand-mistranslation fixes, and phrase fixes match the repo pipeline).
 - Re-run all four gates plus the vitest locale suites before finishing.
+- pt-BR (added 2026-10-01) follows the same delta flow. Its glossary keeps git/agent terms in
+  English (worktree, workspace, branch, commit, pull request, issue, skill) and uses the
+  infinitive for buttons/menus; the free Google endpoint in bootstrap-locale-catalog.mjs
+  rate-limits after ~1.5k strings, so large pt-BR deltas were translated by LLM agents.
 - Mobile (`mobile/`) has no locale catalogs (only SVG `translate()` transforms); out of scope
   until the mobile catalog migration lands. Missing keys fall back to English at runtime
   (sparse-catalog architecture, PR #8512), so untranslated leftovers are safe, not broken.

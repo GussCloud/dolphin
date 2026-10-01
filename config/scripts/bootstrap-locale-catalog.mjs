@@ -39,6 +39,12 @@ const LOCALE_CONFIG = {
     targetLanguage: 'fr',
     displayName: 'French',
     cacheFile: '.fr-catalog-cache.json'
+  },
+  'pt-BR': {
+    // Why: Google's `pt` target is Brazilian Portuguese; `pt-PT` is the European variant.
+    targetLanguage: 'pt',
+    displayName: 'Brazilian Portuguese',
+    cacheFile: '.pt-BR-catalog-cache.json'
   }
 }
 
