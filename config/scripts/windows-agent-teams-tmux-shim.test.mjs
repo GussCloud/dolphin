@@ -75,7 +75,7 @@ async function withServer(onRequest, test) {
     socket.setEncoding('utf8')
     socket.on('error', () => {})
     socket.on('data', (chunk) => {
-      buffer += chunk
+      buffer += String(chunk)
       const newline = buffer.indexOf('\n')
       if (newline === -1) {
         return
