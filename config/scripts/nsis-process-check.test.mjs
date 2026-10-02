@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { runProcessSync } from '../../src/shared/child-process/run-process'
 
 const hooks = readFileSync(new URL('../nsis/dolphin-installer-hooks.nsh', import.meta.url), 'utf8')
@@ -66,8 +66,7 @@ describe.runIf(process.platform === 'win32')(
       `[Console]::Out.WriteLine('${policyReceipt}');`
     ].join(' ')
 
-    function runProbe(arch, prefix = '') {
-      const { args, command } = readPowerShellProbe()
+    function runPowerShell(arch, args, timeoutMs) {
       if (!process.env.SystemRoot) {
         throw new Error('SystemRoot is required on Windows')
       }
@@ -77,15 +76,33 @@ describe.runIf(process.platform === 'win32')(
       )
       return runProcessSync({
         program: join(process.env.SystemRoot, arch, 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
-        args: [...args, '-Command', `${policyCheck} ${prefix}${command}`],
+        args,
         env: {
           ...env,
           DOLPHIN_BACKGROUND_LAUNCH: '1',
           PSExecutionPolicyPreference: 'Restricted'
         },
-        timeoutMs: 20_000
+        timeoutMs
       })
     }
+
+    function runProbe(arch, prefix = '') {
+      const { args, command } = readPowerShellProbe()
+      return runPowerShell(
+        arch,
+        [...args, '-Command', `${policyCheck} ${prefix}${command}`],
+        20_000
+      )
+    }
+
+    // Why: a fresh runner's first CIM query starts WMI and the first WOW64 host loads .NET cold;
+    // that took 7-14s and sometimes past the 20s bound. Warming keeps the bound on the probe itself.
+    beforeAll(() => {
+      const { args, command } = readPowerShellProbe()
+      for (const arch of ['SysWOW64', 'System32']) {
+        runPowerShell(arch, [...args, '-Command', command], 120_000)
+      }
+    }, 300_000)
 
     it.each(['SysWOW64', 'System32'])('%s permits the real inline process query', (arch) => {
       const result = runProbe(arch)
