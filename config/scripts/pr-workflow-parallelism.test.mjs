@@ -87,9 +87,9 @@ describe('PR workflow parallelism', () => {
     ).toBe('${{ matrix.node }}')
     expect(sharedTest.strategy.matrix.node).toBe('${{ fromJSON(inputs.node_versions) }}')
     expect(sharedTest.strategy.matrix.shard).toEqual(
-      Array.from({ length: 8 }, (_, index) => index + 1)
+      Array.from({ length: 12 }, (_, index) => index + 1)
     )
-    expect(sharedTest.strategy.matrix.shard_total).toEqual([8])
+    expect(sharedTest.strategy.matrix.shard_total).toEqual([12])
     expect(installStep.with['node-version']).toBe('${{ matrix.node }}')
     expect(installStep.with['cache-electron-package']).toBe('true')
     expect(testStep.run).toContain('--shard=${{ matrix.shard }}/${{ matrix.shard_total }}')

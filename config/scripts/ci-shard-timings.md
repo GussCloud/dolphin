@@ -134,7 +134,7 @@ For E2E reproduction, check out the recorded source and pass the saved list to t
 existing command: `pnpm run test:e2e --test-list=/path/to/selected.txt` with the same
 CI environment/build inputs. For unit reproduction, use the unchanged workflow
 command and exclusions with `DOLPHIN_BALANCE_UNIT_SHARDS=1` and the recorded
-`--shard=INDEX/8`. Direct test-file reruns remain supported.
+`--shard=INDEX/12`. Direct test-file reruns remain supported.
 
 To refresh unit weights, download all `unit-shard-node-*` artifacts from one
 complete successful unit shard set, run attempt and Node version into a directory,
