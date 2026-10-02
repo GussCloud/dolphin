@@ -8,7 +8,7 @@ const projectDir = resolve(import.meta.dirname, '../..')
 describe('client-hosted browser package coverage', () => {
   it('finishes the installer process probe before concurrent native boundaries', () => {
     const workflow = parse(readFileSync(join(projectDir, '.github/workflows/pr.yml'), 'utf8'))
-    const steps = workflow.jobs.package_windows.steps
+    const steps = workflow.jobs.windows_boundaries.steps
     const probe = steps.findIndex((step) => step.name === 'Test Windows installer process probe')
     const boundaries = steps.findIndex((step) => step.name === 'Test Windows-specific boundaries')
     const file = 'config/scripts/nsis-process-check.test.mjs'
@@ -32,7 +32,7 @@ describe('client-hosted browser package coverage', () => {
     const linuxStep = parsedWorkflow.jobs.package.steps.find(
       (step) => step.name === 'Test Linux Electron lifecycle boundary'
     )
-    const windowsStep = parsedWorkflow.jobs.package_windows.steps.find(
+    const windowsStep = parsedWorkflow.jobs.windows_boundaries.steps.find(
       (step) => step.name === 'Test Windows-specific boundaries'
     )
 

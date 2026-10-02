@@ -30,11 +30,14 @@ const expensiveJobs = [
 
 const ALWAYS_ON = ['static_analysis', 'typecheck', 'test']
 
+// The Windows lane runs on two runners; its boundary half always follows the package half.
+const PAIRED_JOBS = { windows_boundaries: 'package_windows' }
+
 function expectedJobs(overrides, { alwaysOn = true } = {}) {
   return Object.fromEntries(
     PR_CHECK_JOBS.map((job) => [
       job,
-      (alwaysOn && ALWAYS_ON.includes(job)) || Boolean(overrides[job])
+      (alwaysOn && ALWAYS_ON.includes(job)) || Boolean(overrides[PAIRED_JOBS[job] ?? job])
     ])
   )
 }

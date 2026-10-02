@@ -8,9 +8,10 @@ import { classifyPrJobs } from './pr-code-change-scope.mjs'
 /**
  * Every Windows-gated test file must be registered in BOTH Windows-lane lists.
  *
- * PR CI has exactly one job on a Windows runner -- asserted below on any
- * `runs-on` spelling that could land there, because that premise is what makes
- * this guard meaningful -- and it runs a curated explicit file list. Everything else runs on `ubuntu-latest`, where a Windows-gated
+ * PR CI has exactly one Windows test lane -- asserted below on any `runs-on`
+ * spelling that could land there, because that premise is what makes this guard
+ * meaningful -- and it runs a curated explicit file list. The packaging job beside it
+ * runs no vitest. Everything else runs on `ubuntu-latest`, where a Windows-gated
  * suite self-skips and reports success. So a new Windows-gated file that nobody
  * registers executes on no machine and passes green, silently. A recent
  * security effort added six such files; five ran nowhere, including one whose
@@ -20,7 +21,7 @@ import { classifyPrJobs } from './pr-code-change-scope.mjs'
  * guard.
  *
  * Both lists matter and being in one is not enough: `WINDOWS_PACKAGE_TESTS` in
- * pr-code-change-scope.mjs decides whether the `package_windows` job RUNS at
+ * pr-code-change-scope.mjs decides whether the Windows jobs RUN at
  * all for a diff, and the workflow step's vitest argv decides whether the FILE
  * runs once the job started.
  *
@@ -68,7 +69,9 @@ import { classifyPrJobs } from './pr-code-change-scope.mjs'
  */
 
 const projectDir = resolve(import.meta.dirname, '../..')
-const WINDOWS_LANE_JOB = 'package_windows'
+const WINDOWS_LANE_JOB = 'windows_boundaries'
+// The packaging job shares the lane's trigger, so the classifier reports both under this key.
+const WINDOWS_CLASSIFIER_JOB = 'package_windows'
 const WINDOWS_LANE_STEPS = [
   'Test Windows-specific boundaries',
   'Test Windows installer process probe'
@@ -307,11 +310,16 @@ function readWindowsWorkflow() {
   const run = runs.join(' ')
   return {
     windowsJobNames: windowsJobs.map(([name]) => name),
+    windowsVitestJobNames: windowsJobs
+      .filter(([, job]) =>
+        (job?.steps ?? []).some((step) => /vitest/.test(String(step?.run ?? '')))
+      )
+      .map(([name]) => name),
     laneFiles: run.split(/\s+/).filter((token) => TEST_FILE_PATTERN.test(token))
   }
 }
 
-const { windowsJobNames, laneFiles } = readWindowsWorkflow()
+const { windowsJobNames, windowsVitestJobNames, laneFiles } = readWindowsWorkflow()
 const scannedTestFiles = scanSourceTree(projectDir, {
   includeTests: true,
   extensions: TEST_FILE_PATTERN
@@ -328,7 +336,7 @@ const gatedFiles = scannedTestFiles
  * read as registered without being listed -- no test file is one today.
  */
 function isInClassifier(path) {
-  return classifyPrJobs([path])[WINDOWS_LANE_JOB] === true
+  return classifyPrJobs([path])[WINDOWS_CLASSIFIER_JOB] === true
 }
 
 function registrationFailure(path) {
@@ -357,13 +365,16 @@ describe('Windows-gated test files are registered in the Windows CI lane', () =>
     expect(scannedTestFiles.length).toBeGreaterThan(5000)
   })
 
-  it('has exactly one windows-2022 job to register into', () => {
+  it('has exactly one windows-2022 test lane to register into', () => {
     // The whole premise: one Windows lane, one curated list. A second lane would
     // mean a file could be registered in the wrong one and still run nowhere.
     expect(
-      windowsJobNames,
-      `Expected only ${WINDOWS_LANE_JOB} to run on ${WINDOWS_LANE_RUNNER}.`
-    ).toEqual([WINDOWS_LANE_JOB])
+      windowsJobNames.toSorted(),
+      `Expected only ${WINDOWS_LANE_JOB} and ${WINDOWS_CLASSIFIER_JOB} on ${WINDOWS_LANE_RUNNER}.`
+    ).toEqual([WINDOWS_CLASSIFIER_JOB, WINDOWS_LANE_JOB].toSorted())
+    expect(windowsVitestJobNames, `Only ${WINDOWS_LANE_JOB} may run vitest on Windows.`).toEqual([
+      WINDOWS_LANE_JOB
+    ])
   })
 
   it('parses a plausible Windows lane invocation', () => {

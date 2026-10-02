@@ -486,7 +486,8 @@ describe('PR workflow parallelism', () => {
       'mobile_web_app',
       'managed_hook_node18',
       'package',
-      'package_windows'
+      'package_windows',
+      'windows_boundaries'
     ])
     const verifyStep = workflow.jobs.verify.steps.find(
       (step) => step.name === 'Require successful checks'

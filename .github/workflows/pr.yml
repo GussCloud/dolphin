@@ -49,6 +49,7 @@ jobs:
       managed_hook_node18: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.managed_hook_node18 }}
       package: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package }}
       package_windows: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package_windows }}
+      windows_boundaries: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.windows_boundaries }}
       e2e_should_run: ${{ steps.e2e_filter.outputs.should_run }}
       test_files: ${{ steps.e2e_filter.outputs.test_files }}
       ssh_source_changed: ${{ steps.e2e_filter.outputs.ssh_source_changed }}
@@ -972,6 +973,100 @@ jobs:
             node_modules/.pnpm/@vscode+windows-process-tre*/node_modules/@vscode/windows-process-tree/build
           key: native-modules-${{ runner.os }}-${{ steps.deps.outputs.native-cache-scope }}-${{ runner.arch }}-node-node${{ steps.deps.outputs.node-version }}-${{ hashFiles('pnpm-lock.yaml', '.github/actions/install-node-dependencies/action.yml', 'config/scripts/ensure-native-runtime.mjs', 'config/scripts/rebuild-native-deps.mjs', 'config/patches/node-pty@1.1.0.patch', 'config/patches/@vscode__windows-process-tree@0.8.0.patch', 'native/windows-registry/src/addon.cc', 'native/windows-registry/binding.gyp', 'native/windows-registry/package.json') }}
 
+      # Why the :parallel variant: identical to build:release except the three
+      # electron-vite targets overlap instead of running back to back. The Linux package
+      # job already packages and smoke-tests an AppImage built that way.
+      - name: Cache Windows CLI launcher
+        uses: actions/cache@v5
+        with:
+          path: native/windows-cli-launcher/.build
+          key: windows-cli-launcher-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('native/windows-cli-launcher/**', 'config/scripts/build-windows-cli-launcher.mjs') }}
+
+      - name: Build package inputs
+        env:
+          DOLPHIN_REUSE_WINDOWS_CLI_LAUNCHER: '1'
+        run: pnpm run build:release:parallel
+
+      - name: Restore compiled Electron native modules
+        uses: actions/cache@v5
+        with:
+          path: |
+            node_modules/.pnpm/node-pty@*/node_modules/node-pty/build
+            native/windows-registry/build
+            node_modules/.pnpm/@vscode+windows-process-tre*/node_modules/@vscode/windows-process-tree/build
+          key: native-modules-${{ runner.os }}-${{ steps.deps.outputs.native-cache-scope }}-${{ runner.arch }}-electron-node${{ steps.deps.outputs.node-version }}-${{ hashFiles('pnpm-lock.yaml', '.github/actions/install-node-dependencies/action.yml', 'config/scripts/ensure-native-runtime.mjs', 'config/scripts/rebuild-native-deps.mjs', 'config/patches/node-pty@1.1.0.patch', 'config/patches/@vscode__windows-process-tree@0.8.0.patch', 'native/windows-registry/src/addon.cc', 'native/windows-registry/binding.gyp', 'native/windows-registry/package.json') }}
+
+      - name: Prepare Electron native runtime
+        run: node config/scripts/ensure-native-runtime.mjs --runtime=electron
+
+      - name: Package unpacked app
+        env:
+          DOLPHIN_REUSE_PREPARED_NATIVE_RUNTIME: '1'
+        run: pnpm exec electron-builder --config config/electron-builder.config.cjs --dir
+
+      - name: Smoke packaged Windows PTY native capability
+        shell: bash
+        run: |
+          exe="$(node -p "require('./src/shared/fork-identity.json').executableName")"
+          pnpm run smoke:windows-pty-native-capability -- "--exe=dist/win-unpacked/$exe.exe"
+
+      - name: Smoke packaged CLI
+        run: node config/scripts/smoke-packaged-cli.mjs --app-dir=dist/win-unpacked
+
+  # Why its own job: the Windows boundary tests and the release build each took ~1.5 min and
+  # ran back to back. On separate runners they overlap; same trigger, same install, same tests.
+  windows_boundaries:
+    name: windows boundaries
+    needs: [code_paths]
+    if: needs.code_paths.outputs.windows_boundaries == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Why: a fresh runner's first CIM query starts WMI, measured at up to ~2 min. Pay it while
+      # dependencies install instead of inside the installer probe. Best effort; the probe still
+      # warms itself before its bounded assertions.
+      - name: Warm WMI for the installer probe
+        id: wmi
+        background: true
+        shell: pwsh
+        run: |
+          Remove-Item Env:PSModulePath -ErrorAction SilentlyContinue
+          foreach ($arch in 'SysWOW64', 'System32') {
+            $exe = Join-Path $env:SystemRoot "$arch\WindowsPowerShell\v1.0\powershell.exe"
+            $query = 'Get-CimInstance -ClassName Win32_Process | Select-Object -First 1 | Out-Null'
+            $process = Start-Process -FilePath $exe -ArgumentList '-NoProfile', '-NonInteractive', '-Command', $query -PassThru -NoNewWindow
+            if (-not $process.WaitForExit(180000)) { $process.Kill() }
+          }
+          exit 0
+
+      - name: Cache electron-builder downloads
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: electron-builder-win-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-builder-win-
+
+      # Node ABI only: nothing in this job rebuilds for Electron, so the post-job save is safe.
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: node
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - wait: wmi
+
       # vitest runs here directly rather than through `pnpm test`, so the addon
       # assertions only hold once install-node-dependencies has rebuilt natives.
       - name: Test Windows installer process probe
@@ -1040,46 +1135,6 @@ jobs:
           src/main/ipc/pty-spawn-env-codex-resume-provenance.test.ts
           src/relay/windows-port-scan.win32.test.ts
 
-      # Why the :parallel variant: identical to build:release except the three
-      # electron-vite targets overlap instead of running back to back. The Linux package
-      # job already packages and smoke-tests an AppImage built that way.
-      - name: Cache Windows CLI launcher
-        uses: actions/cache@v5
-        with:
-          path: native/windows-cli-launcher/.build
-          key: windows-cli-launcher-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('native/windows-cli-launcher/**', 'config/scripts/build-windows-cli-launcher.mjs') }}
-
-      - name: Build package inputs
-        env:
-          DOLPHIN_REUSE_WINDOWS_CLI_LAUNCHER: '1'
-        run: pnpm run build:release:parallel
-
-      - name: Restore compiled Electron native modules
-        uses: actions/cache@v5
-        with:
-          path: |
-            node_modules/.pnpm/node-pty@*/node_modules/node-pty/build
-            native/windows-registry/build
-            node_modules/.pnpm/@vscode+windows-process-tre*/node_modules/@vscode/windows-process-tree/build
-          key: native-modules-${{ runner.os }}-${{ steps.deps.outputs.native-cache-scope }}-${{ runner.arch }}-electron-node${{ steps.deps.outputs.node-version }}-${{ hashFiles('pnpm-lock.yaml', '.github/actions/install-node-dependencies/action.yml', 'config/scripts/ensure-native-runtime.mjs', 'config/scripts/rebuild-native-deps.mjs', 'config/patches/node-pty@1.1.0.patch', 'config/patches/@vscode__windows-process-tree@0.8.0.patch', 'native/windows-registry/src/addon.cc', 'native/windows-registry/binding.gyp', 'native/windows-registry/package.json') }}
-
-      - name: Prepare Electron native runtime
-        run: node config/scripts/ensure-native-runtime.mjs --runtime=electron
-
-      - name: Package unpacked app
-        env:
-          DOLPHIN_REUSE_PREPARED_NATIVE_RUNTIME: '1'
-        run: pnpm exec electron-builder --config config/electron-builder.config.cjs --dir
-
-      - name: Smoke packaged Windows PTY native capability
-        shell: bash
-        run: |
-          exe="$(node -p "require('./src/shared/fork-identity.json').executableName")"
-          pnpm run smoke:windows-pty-native-capability -- "--exe=dist/win-unpacked/$exe.exe"
-
-      - name: Smoke packaged CLI
-        run: node config/scripts/smoke-packaged-cli.mjs --app-dir=dist/win-unpacked
-
   e2e:
     name: e2e
     needs: code_paths
@@ -1121,6 +1176,7 @@ jobs:
       - managed_hook_node18
       - package
       - package_windows
+      - windows_boundaries
     # Evaluating job results only needs the lightweight container runner.
     runs-on: ubuntu-slim
     timeout-minutes: 5
@@ -1162,6 +1218,8 @@ jobs:
           PACKAGE_SHOULD_RUN: ${{ needs.code_paths.outputs.package }}
           PACKAGE_WINDOWS: ${{ needs.package_windows.result }}
           PACKAGE_WINDOWS_SHOULD_RUN: ${{ needs.code_paths.outputs.package_windows }}
+          WINDOWS_BOUNDARIES: ${{ needs.windows_boundaries.result }}
+          WINDOWS_BOUNDARIES_SHOULD_RUN: ${{ needs.code_paths.outputs.windows_boundaries }}
         run: |
           if [ "$CODE_PATHS" != "success" ]; then
             exit 1
@@ -1197,4 +1255,5 @@ jobs:
           check_job managed_hook_node18 "$MANAGED_HOOK_NODE18" "$MANAGED_HOOK_NODE18_SHOULD_RUN"
           check_job package "$PACKAGE" "$PACKAGE_SHOULD_RUN"
           check_job package_windows "$PACKAGE_WINDOWS" "$PACKAGE_WINDOWS_SHOULD_RUN"
+          check_job windows_boundaries "$WINDOWS_BOUNDARIES" "$WINDOWS_BOUNDARIES_SHOULD_RUN"
           exit "$failed"
