@@ -17,6 +17,7 @@ import { registerJiraHandlers } from '../jira'
 import { registerBitbucketHandlers } from '../bitbucket'
 import { registerAzureDevOpsHandlers } from '../azure-devops'
 import { registerAzureBoardsHandlers } from '../azure-boards'
+import { registerOpenObserveHandlers } from '../openobserve'
 import { registerFeedbackHandlers } from '../feedback'
 import { registerCrashReportingHandlers } from '../crash-reporting'
 import { registerExportHandlers } from '../export'
@@ -165,6 +166,7 @@ export function registerCoreHandlers(
   registerBitbucketHandlers()
   registerAzureDevOpsHandlers()
   registerAzureBoardsHandlers()
+  registerOpenObserveHandlers()
   registerFeedbackHandlers()
   if (crashReports) {
     registerCrashReportingHandlers(crashReports)

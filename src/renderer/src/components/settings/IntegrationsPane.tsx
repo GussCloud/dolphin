@@ -6,6 +6,7 @@ import {
   GitLabIntegrationCard
 } from './source-control-integration-cards'
 import { JiraIntegrationCard, LinearIntegrationCard } from './task-tracker-integration-cards'
+import { OpenObserveIntegrationCard } from './openobserve-integration-card'
 import { useIntegrationProviderStatusRefresh } from './use-integration-provider-status-refresh'
 import { translate } from '@/i18n/i18n'
 export { getIntegrationsPaneSearchEntries } from './integrations-search'
@@ -51,6 +52,23 @@ export function IntegrationsPane(): React.JSX.Element {
         <div className="space-y-3">
           <LinearIntegrationCard />
           <JiraIntegrationCard />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-foreground">
+            {translate('auto.components.settings.IntegrationsPane.observability', 'Observability')}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {translate(
+              'auto.components.settings.IntegrationsPane.observabilityDescription',
+              'Connect observability tools so agents can read logs, metrics and traces while they work.'
+            )}
+          </p>
+        </div>
+        <div className="space-y-3">
+          <OpenObserveIntegrationCard />
         </div>
       </section>
     </div>
