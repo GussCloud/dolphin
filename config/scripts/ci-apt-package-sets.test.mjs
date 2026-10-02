@@ -64,6 +64,13 @@ describe('CI apt package sets', () => {
     expect(warmup.jobs.warm.strategy.matrix.include).toBe(
       '${{ fromJSON(needs.discover.outputs.sets) }}'
     )
+    // package (windows) only saves native modules on its PR ref, so a fresh PR recompiled both.
+    const native = warmup.jobs['warm-native'].strategy.matrix.include
+    for (const runtime of ['node', 'electron']) {
+      expect(native).toContainEqual(
+        expect.objectContaining({ runner: 'windows-2022', 'native-runtime': runtime })
+      )
+    }
     expect(cleanup.on.pull_request.types).toEqual(['closed'])
     expect(cleanup.permissions.actions).toBe('write')
     expect(cleanup.jobs.cleanup.steps[0].run).toContain('refs/pull/$PR_NUMBER/merge')
