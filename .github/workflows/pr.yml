@@ -49,8 +49,7 @@ jobs:
       managed_hook_node18: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.managed_hook_node18 }}
       package: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package }}
       package_windows: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package_windows }}
-      # Same trigger as package_windows: the two jobs split one lane across runners.
-      windows_boundaries: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package_windows }}
+      windows_boundaries: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.windows_boundaries }}
       e2e_should_run: ${{ steps.e2e_filter.outputs.should_run }}
       test_files: ${{ steps.e2e_filter.outputs.test_files }}
       ssh_source_changed: ${{ steps.e2e_filter.outputs.ssh_source_changed }}
@@ -1029,12 +1028,29 @@ jobs:
         with:
           persist-credentials: false
 
+      # Why: a fresh runner's first CIM query starts WMI, measured at up to ~2 min. Pay it while
+      # dependencies install instead of inside the installer probe. Best effort; the probe still
+      # warms itself before its bounded assertions.
+      - name: Warm WMI for the installer probe
+        id: wmi
+        background: true
+        shell: pwsh
+        run: |
+          Remove-Item Env:PSModulePath -ErrorAction SilentlyContinue
+          foreach ($arch in 'SysWOW64', 'System32') {
+            $exe = Join-Path $env:SystemRoot "$arch\WindowsPowerShell\v1.0\powershell.exe"
+            $query = 'Get-CimInstance -ClassName Win32_Process | Select-Object -First 1 | Out-Null'
+            $process = Start-Process -FilePath $exe -ArgumentList '-NoProfile', '-NonInteractive', '-Command', $query -PassThru -NoNewWindow
+            if (-not $process.WaitForExit(180000)) { $process.Kill() }
+          }
+          exit 0
+
       - name: Cache electron-builder downloads
         uses: actions/cache/restore@v5
         with:
           path: |
-            ~AppDataLocalelectronCache
-            ~AppDataLocalelectron-builderCache
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
           key: electron-builder-win-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             electron-builder-win-
@@ -1048,6 +1064,8 @@ jobs:
             mobile/pnpm-lock.yaml
 
       - uses: ./.github/actions/install-mobile-dependencies
+
+      - wait: wmi
 
       # vitest runs here directly rather than through `pnpm test`, so the addon
       # assertions only hold once install-node-dependencies has rebuilt natives.

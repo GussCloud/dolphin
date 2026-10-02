@@ -29,7 +29,8 @@ export const PR_CHECK_JOBS = [
   'mobile_web_app',
   'managed_hook_node18',
   'package',
-  'package_windows'
+  'package_windows',
+  'windows_boundaries'
 ]
 
 const ALWAYS_ON_CODE_JOBS = new Set(['static_analysis', 'typecheck', 'test'])
@@ -404,7 +405,9 @@ function jobDetector(job) {
       return (files) => files.some((file) => matchesPrefix(file, MANAGED_HOOK_PREFIXES))
     case 'package':
       return (files) => files.some(isLinuxPackagePath)
+    // The Windows lane is split across two runners that must run together.
     case 'package_windows':
+    case 'windows_boundaries':
       return (files) => files.some(isWindowsPackagePath)
     default:
       return () => true
