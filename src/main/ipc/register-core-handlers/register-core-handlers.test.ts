@@ -392,6 +392,10 @@ vi.mock('../azure-boards', () => ({
   registerAzureBoardsHandlers: vi.fn()
 }))
 
+vi.mock('../openobserve', () => ({
+  registerOpenObserveHandlers: vi.fn()
+}))
+
 vi.mock('../bitbucket', () => ({
   registerBitbucketHandlers: registerBitbucketHandlersMock
 }))

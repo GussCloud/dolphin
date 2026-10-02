@@ -30,6 +30,7 @@ import { glApiBridge } from './api/gl-bridge'
 import { bitbucketApi } from './api/bitbucket-bridge'
 import { azureDevOpsApi } from './api/azure-devops-bridge'
 import { azureBoardsApi } from './api/azure-boards-bridge'
+import { openObserveApi } from './api/openobserve-bridge'
 import { linearApi } from './api/linear-bridge'
 import { jiraApi } from './api/jira-bridge'
 import { starNagApi } from './api/star-nag-bridge'
@@ -128,6 +129,7 @@ const api = {
   bitbucket: bitbucketApi,
   azureDevOps: azureDevOpsApi,
   azureBoards: azureBoardsApi,
+  openObserve: openObserveApi,
   linear: linearApi,
   jira: jiraApi,
   starNag: starNagApi,

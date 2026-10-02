@@ -36,6 +36,7 @@ import type { GitLabApi } from './api/gitlab-api'
 import type { BitbucketApi, HostedReviewApi } from './api/hosted-review-api'
 import type { AzureDevOpsApi } from './api/azure-devops-api'
 import type { AzureBoardsApi } from './api/azure-boards-api'
+import type { OpenObserveApi } from './api/openobserve-api'
 import type { JiraApi } from './api/jira-api'
 import type { LinearApi } from './api/linear-api'
 import type { MobileApi } from './api/mobile-api'
@@ -94,6 +95,7 @@ export type PreloadApi = {
   bitbucket: BitbucketApi
   azureDevOps: AzureDevOpsApi
   azureBoards: AzureBoardsApi
+  openObserve: OpenObserveApi
   linear: LinearApi
   jira: JiraApi
   starNag: StarNagApi

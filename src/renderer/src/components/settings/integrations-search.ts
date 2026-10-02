@@ -221,5 +221,34 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
         'disconnect'
       )
     ]
+  },
+  {
+    title: translate(
+      'auto.components.settings.integrations.search.openObserveTitle',
+      'OpenObserve Integration'
+    ),
+    description: translate(
+      'auto.components.settings.integrations.search.openObserveDescription',
+      'Logs, metrics and traces for agents via the openobserve-cli CLI.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.openObserveKeyword',
+        'openobserve'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.c450244ad7',
+        'integration'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.observabilityKeyword',
+        'observability'
+      ),
+      ...translateSearchKeyword('auto.components.settings.integrations.search.logsKeyword', 'logs'),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.tracesKeyword',
+        'traces'
+      )
+    ]
   }
 ])

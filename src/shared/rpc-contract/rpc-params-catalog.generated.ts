@@ -370,6 +370,7 @@ import {
   NotificationUnsubscribeParams,
   NotificationsSubscribeParams
 } from './notifications-params'
+import { OpenObserveActivateContext, OpenObserveSaveContext } from './openobserve-params'
 import {
   FederationDispatchParams,
   FederationFleetSnapshotParams,
@@ -1016,6 +1017,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'notifications.testPush': null,
   'notifications.unregisterPush': null,
   'notifications.unsubscribe': NotificationUnsubscribeParams,
+  'openObserve.activateContext': OpenObserveActivateContext,
+  'openObserve.saveContext': OpenObserveSaveContext,
+  'openObserve.status': null,
   'orchestration.ask': AskParams,
   'orchestration.check': CheckParams,
   'orchestration.dispatch': DispatchParams,

@@ -190,7 +190,7 @@ export function buildSetupSettingsSections({
       title: translate('auto.hooks.useSettingsNavigationMetadata.2b043783ef', 'Integrations'),
       description: translate(
         'auto.hooks.useSettingsNavigationMetadata.33a5e1d597',
-        'Connect GitHub, GitLab, Linear, and source-hosting services.'
+        'Connect GitHub, GitLab, Linear, OpenObserve, and source-hosting services.'
       ),
       icon: Blocks,
       searchEntries: getIntegrationsPaneSearchEntries(),
