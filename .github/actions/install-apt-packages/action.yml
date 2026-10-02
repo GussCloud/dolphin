@@ -1,0 +1,123 @@
+name: Install apt packages
+description: Installs Ubuntu packages through a reusable .deb archive cache, with wall-clock bounds on every apt call.
+
+inputs:
+  packages:
+    description: Space-separated apt packages. Already-installed ones are skipped.
+    required: false
+    default: ''
+  playwright-browser:
+    description: Also install this Playwright browser and the system libraries it is missing. Needs node_modules.
+    required: false
+    default: ''
+  no-install-recommends:
+    description: Pass --no-install-recommends to apt-get install.
+    required: false
+    default: 'false'
+  timeout-seconds:
+    description: Wall-clock bound for the package install; the index refresh has its own.
+    required: false
+    default: '600'
+
+runs:
+  using: composite
+  steps:
+    # Why: the hosted Azure mirror serves the index fast but packages at ~50 kB/s on bad days;
+    # a 116 MB WebKit dependency set once took 43 minutes. Cached archives skip that download.
+    - name: Resolve missing apt packages
+      id: resolve
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.packages }}
+        PLAYWRIGHT_BROWSER: ${{ inputs.playwright-browser }}
+      run: |
+        set -euo pipefail
+        missing=()
+        for package in $PACKAGES; do
+          if [ "$(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true)" != 'install ok installed' ]; then
+            missing+=("$package")
+          fi
+        done
+        identity="${ImageOS:-unknown} $(printf '%s\n' $PACKAGES | sort -u | tr '\n' ' ')"
+        if [ -n "$PLAYWRIGHT_BROWSER" ]; then
+          # The dry run simulates Playwright's own install and lists every package it would add.
+          browser_deps=()
+          for attempt in 1 2; do
+            report="$(pnpm exec playwright install-deps --dry-run "$PLAYWRIGHT_BROWSER" 2>&1 || true)"
+            printf '%s\n' "$report"
+            mapfile -t browser_deps < <(printf '%s\n' "$report" | sed -n 's/^  \([a-z0-9][a-z0-9.+-]*\)$/\1/p')
+            if [ "${#browser_deps[@]}" -gt 0 ] || grep -q 'All system dependencies are installed' <<<"$report"; then
+              break
+            fi
+            if [ "$attempt" = 2 ]; then
+              echo "::error::Could not resolve Playwright $PLAYWRIGHT_BROWSER system dependencies."
+              exit 1
+            fi
+            # The simulation reads the image's apt index; refresh it once if that index is unusable.
+            timeout 180 sudo apt-get update || true
+          done
+          missing+=("${browser_deps[@]}")
+          identity+="$(pnpm exec playwright --version)-$PLAYWRIGHT_BROWSER"
+        fi
+        echo "Missing apt packages: ${missing[*]:-none}"
+        {
+          echo "missing=${missing[*]}"
+          echo "hash=$(printf '%s' "$identity" | sha256sum | cut -c1-16)"
+          echo "image=${ImageVersion:-unknown}"
+          echo "archives=$RUNNER_TEMP/apt-archives"
+        } >> "$GITHUB_OUTPUT"
+
+    # ImageVersion is last so a new runner image still reuses most archives through the prefix.
+    - name: Restore apt archives
+      id: restore
+      if: steps.resolve.outputs.missing != ''
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ steps.resolve.outputs.archives }}
+        key: apt-archives-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.resolve.outputs.hash }}-${{ steps.resolve.outputs.image }}
+        restore-keys: |
+          apt-archives-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.resolve.outputs.hash }}-
+
+    - name: Install apt packages
+      if: steps.resolve.outputs.missing != ''
+      shell: bash
+      env:
+        MISSING: ${{ steps.resolve.outputs.missing }}
+        ARCHIVES: ${{ steps.resolve.outputs.archives }}
+        NO_RECOMMENDS: ${{ inputs.no-install-recommends }}
+        INSTALL_TIMEOUT: ${{ inputs.timeout-seconds }}
+      run: |
+        set -euo pipefail
+        mkdir -p "$ARCHIVES/partial"
+        sudo tee /etc/apt/apt.conf.d/99-dolphin-ci-timeouts >/dev/null <<'APTCONF'
+        Acquire::http::Timeout "30";
+        Acquire::https::Timeout "30";
+        Acquire::Retries "2";
+        APTCONF
+        # Tolerant: an unrelated repo without a Release file must not fail the lane.
+        timeout 180 sudo apt-get update || echo '::warning::apt-get update did not finish cleanly.'
+        flags=(-y -o "Dir::Cache::Archives=$ARCHIVES")
+        if [ "$NO_RECOMMENDS" = true ]; then
+          flags+=(--no-install-recommends)
+        fi
+        # shellcheck disable=SC2086 -- MISSING is a space-separated package list.
+        if ! timeout "$INSTALL_TIMEOUT" sudo apt-get install "${flags[@]}" $MISSING; then
+          echo "::error::apt-get install failed or exceeded ${INSTALL_TIMEOUT}s; the Ubuntu mirror is likely stalled. Re-run the job."
+          exit 1
+        fi
+        sudo rm -rf "$ARCHIVES/partial" "$ARCHIVES/lock"
+        sudo chown -R "$(id -u):$(id -g)" "$ARCHIVES"
+
+    - name: Save apt archives
+      if: steps.resolve.outputs.missing != '' && steps.restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ steps.resolve.outputs.archives }}
+        key: ${{ steps.restore.outputs.cache-primary-key }}
+
+    - name: Install Playwright browser
+      if: inputs.playwright-browser != ''
+      shell: bash
+      env:
+        PLAYWRIGHT_BROWSER: ${{ inputs.playwright-browser }}
+      run: pnpm exec playwright install "$PLAYWRIGHT_BROWSER"

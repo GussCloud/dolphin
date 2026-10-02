@@ -1,0 +1,46 @@
+name: CI cache cleanup
+
+# Why: caches saved on refs/pull/N/merge serve only that PR, yet count against the 10 GB
+# repository quota. Left behind they push it over, and eviction then drops main's caches,
+# which are the ones every PR can restore.
+on:
+  pull_request:
+    types: [closed]
+  # Sweeps caches of every PR that is no longer open, e.g. ones closed before this existed.
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  cleanup:
+    name: delete closed pull request caches
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Delete caches
+        run: |
+          set -euo pipefail
+          if [ -n "$PR_NUMBER" ]; then
+            refs="refs/pull/$PR_NUMBER/merge"
+          else
+            open="$(gh pr list --state open --limit 500 --json number -q '.[].number')"
+            refs="$(gh cache list --limit 1000 --json ref -q '.[].ref' | grep '^refs/pull/' | sort -u |
+              while read -r ref; do
+                number="${ref#refs/pull/}"
+                number="${number%%/*}"
+                grep -qx "$number" <<<"$open" || echo "$ref"
+              done)"
+          fi
+          for ref in $refs; do
+            for id in $(gh cache list --ref "$ref" --limit 1000 --json id -q '.[].id'); do
+              # A concurrent cleanup may delete the same entry first.
+              gh cache delete "$id" || echo "::warning::Could not delete cache $id on $ref"
+            done
+            echo "Cleaned $ref"
+          done
