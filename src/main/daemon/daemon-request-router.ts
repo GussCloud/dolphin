@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks'
 import { readCurrentProcessMacSystemResolverHealth } from '../network/macos-system-resolver-health'
 import type { ConnectedDaemonClient, DaemonClientConnections } from './daemon-client-connections'
 import type { DaemonFileLog } from './daemon-file-log'
+import { readDaemonHeapUsage } from './daemon-heap-usage'
 import type { DaemonPtySpawnPreparations } from './daemon-pty-spawn-preparations'
 import type { DaemonServerLifecycle } from './daemon-server-lifecycle'
 import type { DaemonSessionAttachments } from './daemon-session-attachments'
@@ -150,6 +151,8 @@ export class DaemonRequestRouter {
       case 'ptySpawnHealth':
         await this.options.ptySpawnHealthCheck()
         return { healthy: true }
+      case 'heapUsage':
+        return readDaemonHeapUsage(this.options.host)
       case 'shutdown':
         return this.shutdown(clientId, request.id, request.payload.killSessions)
     }
