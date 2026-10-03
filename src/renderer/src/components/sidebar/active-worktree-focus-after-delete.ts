@@ -6,6 +6,7 @@ import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { getWorktreeVisitTimestamp } from '@/lib/worktree-visit-recency'
 import { getDeleteStateForWorktreeHost } from './worktree-delete-state-host-match'
+import { isSleepingWorktree } from './use-worktree-sleep-state'
 
 type AppStoreState = ReturnType<typeof useAppStore.getState>
 
@@ -34,11 +35,10 @@ function isHostedOnRuntimeOwnedSshTarget(
   })
 }
 
-// Why: after deleting the workspace the user is currently viewing, leaving the
-// active workspace empty loses their place. Pick the next workspace to focus
-// so a delete behaves like closing a tab — prefer another non-base/primary
-// workspace of the same project (most-recently-visited first), and fall back to
-// the project's base/primary workspace when no other workspace remains.
+// Why: after deleting the workspace the user is currently viewing, hand focus to
+// another awake workspace of the same project — non-primary first (most-recently-
+// visited), then the primary. A sleeping workspace is never a successor: focusing
+// it would wake it, which the user did not ask for. No awake sibling, no focus.
 function pickNextWorktreeIdAfterDelete(
   state: AppStoreState,
   repoId: string,
@@ -51,7 +51,8 @@ function pickNextWorktreeIdAfterDelete(
       worktree.id !== deletedWorktreeId &&
       !getDeleteStateForWorktreeHost(worktree, deleteState)?.isDeleting &&
       // Skip siblings hosted on the now-destroyed runtime-owned SSH target (see helper).
-      !isHostedOnRuntimeOwnedSshTarget(worktree, repoById)
+      !isHostedOnRuntimeOwnedSshTarget(worktree, repoById) &&
+      !isSleepingWorktree(state, worktree.id)
   )
   const others = siblings.filter((worktree) => !worktree.isMainWorktree)
   if (others.length > 0) {
@@ -86,8 +87,12 @@ function focusNextWorktreeAfterActiveDelete(
   }
   const nextWorktreeId = pickNextWorktreeIdAfterDelete(state, repoId, deletedWorktreeId)
   if (nextWorktreeId) {
-    // Keep successor focus from replacing the deleted row's spatial context.
-    activateAndRevealWorktree(nextWorktreeId, { revealInSidebar: false })
+    // Keep successor focus from replacing the deleted row's spatial context, and never seed a
+    // shell there: the user asked to delete a workspace, not to open a terminal in another one.
+    activateAndRevealWorktree(nextWorktreeId, {
+      revealInSidebar: false,
+      providesInitialSurface: true
+    })
   }
 }
 

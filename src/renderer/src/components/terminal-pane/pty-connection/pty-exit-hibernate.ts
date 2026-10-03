@@ -21,6 +21,7 @@ import type { PtyPaneStartup } from '../pty-connection-types'
 
 import type { ConnectPanePtySession } from './connect-pane-pty-session'
 import { isPtyExitReplacedByRestart } from '../pty-exit-delivery'
+import { deferExitUntilWorktreeDeleteSettles } from './worktree-delete-pane-exit'
 
 /** PTY exit handling, hibernated-pane wake targets, and post-exit focus transfer. */
 export function installPtyExitHibernate(session: ConnectPanePtySession): void {
@@ -297,6 +298,11 @@ export function installPtyExitHibernate(session: ConnectPanePtySession): void {
       return
     }
     session.manager.setPaneGpuRendering(session.pane.id, true)
+    // Why: the delete killed this PTY on purpose — no generic overlay, and no tab close (which can
+    // reseed a shell into the doomed workspace).
+    if (deferExitUntilWorktreeDeleteSettles(session, exitCode)) {
+      return
+    }
     const failedLocalProcess =
       !session.connectionId && session.runtimeEnvironmentId === null && exitCode !== 0
     if (failedLocalProcess && session.deps.onPaneProcessDied) {

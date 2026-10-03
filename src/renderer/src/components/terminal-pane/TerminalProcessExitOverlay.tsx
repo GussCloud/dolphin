@@ -3,6 +3,43 @@ import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import type { PaneProcessExit } from './pty-connection-types'
 
+function describeProcessExit(processExit: PaneProcessExit): { title: string; detail: string } {
+  if (processExit.reason === 'git-bash-console-capacity') {
+    return {
+      title: translate(
+        'auto.components.terminal.pane.TerminalProcessExitOverlay.capacityTitle',
+        'Git Bash console limit reached'
+      ),
+      detail: translate(
+        'auto.components.terminal.pane.TerminalProcessExitOverlay.capacityDetail',
+        'Git Bash reached its 128-console limit. Close unused Git Bash terminals, then restart this terminal.'
+      )
+    }
+  }
+  if (processExit.reason === 'workspace-delete-failed') {
+    return {
+      title: translate(
+        'auto.components.terminal.pane.TerminalProcessExitOverlay.deleteFailedTitle',
+        'Workspace delete did not finish'
+      ),
+      detail: translate(
+        'auto.components.terminal.pane.TerminalProcessExitOverlay.deleteFailedDetail',
+        'Deleting this workspace stopped this terminal, but the workspace was kept. Restart the terminal to keep working here. Its output is preserved.'
+      )
+    }
+  }
+  return {
+    title: translate(
+      'auto.components.terminal.pane.TerminalProcessExitOverlay.failedTitle',
+      'Terminal exited'
+    ),
+    detail: translate(
+      'auto.components.terminal.pane.TerminalProcessExitOverlay.failedDetail',
+      'The shell process ended with exit code {{code}}. Its output is preserved.'
+    ).replace('{{code}}', String(processExit.exitCode))
+  }
+}
+
 export function TerminalProcessExitOverlay({
   processExit,
   onRestart,
@@ -12,25 +49,7 @@ export function TerminalProcessExitOverlay({
   onRestart: () => void
   onClose: () => void
 }): React.JSX.Element {
-  const capacityError = processExit.reason === 'git-bash-console-capacity'
-  const title = capacityError
-    ? translate(
-        'auto.components.terminal.pane.TerminalProcessExitOverlay.capacityTitle',
-        'Git Bash console limit reached'
-      )
-    : translate(
-        'auto.components.terminal.pane.TerminalProcessExitOverlay.failedTitle',
-        'Terminal exited'
-      )
-  const detail = capacityError
-    ? translate(
-        'auto.components.terminal.pane.TerminalProcessExitOverlay.capacityDetail',
-        'Git Bash reached its 128-console limit. Close unused Git Bash terminals, then restart this terminal.'
-      )
-    : translate(
-        'auto.components.terminal.pane.TerminalProcessExitOverlay.failedDetail',
-        'The shell process ended with exit code {{code}}. Its output is preserved.'
-      ).replace('{{code}}', String(processExit.exitCode))
+  const { title, detail } = describeProcessExit(processExit)
 
   return (
     <div className="pointer-events-none absolute inset-0 z-40 flex items-end justify-center p-4">

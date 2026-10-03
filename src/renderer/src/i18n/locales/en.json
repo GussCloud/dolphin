@@ -3239,6 +3239,8 @@
             "capacityDetail": "Git Bash reached its 128-console limit. Close unused Git Bash terminals, then restart this terminal.",
             "failedTitle": "Terminal exited",
             "failedDetail": "The shell process ended with exit code {{code}}. Its output is preserved.",
+            "deleteFailedTitle": "Workspace delete did not finish",
+            "deleteFailedDetail": "Deleting this workspace stopped this terminal, but the workspace was kept. Restart the terminal to keep working here. Its output is preserved.",
             "close": "Close",
             "restart": "Restart"
           },

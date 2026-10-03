@@ -3239,6 +3239,8 @@
             "capacityDetail": "O Git Bash atingiu seu limite de 128 consoles. Feche terminais Git Bash não usados e depois reinicie este terminal.",
             "failedTitle": "Terminal saiu",
             "failedDetail": "O processo do shell terminou com código de saída {{code}}. Sua saída é preservada.",
+            "deleteFailedTitle": "A exclusão do workspace não foi concluída",
+            "deleteFailedDetail": "A exclusão encerrou este terminal, mas o workspace foi mantido. Reinicie o terminal para continuar trabalhando aqui. Sua saída é preservada.",
             "close": "Fechar",
             "restart": "Reiniciar"
           },

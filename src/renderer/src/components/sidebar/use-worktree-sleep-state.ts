@@ -68,15 +68,17 @@ function selectWorktreeIdsWithLiveAgent(state: SleepStateInput): ReadonlySet<str
  * are asleep.
  */
 export function useIsSleepingWorktree(worktreeId: string): boolean {
-  return useAppStore((state) =>
-    isInactiveWorkspace(
-      worktreeId,
-      state.tabsByWorktree,
-      state.ptyIdsByTabId,
-      state.browserTabsByWorktree,
-      selectWorktreeIdsWithLiveAgent(state),
-      getWorktreeIdsWithStructuredChat(state.unifiedTabsByWorktree)
-    )
+  return useAppStore((state) => isSleepingWorktree(state, worktreeId))
+}
+
+export function isSleepingWorktree(state: SleepStateInput, worktreeId: string): boolean {
+  return isInactiveWorkspace(
+    worktreeId,
+    state.tabsByWorktree,
+    state.ptyIdsByTabId,
+    state.browserTabsByWorktree,
+    selectWorktreeIdsWithLiveAgent(state),
+    getWorktreeIdsWithStructuredChat(state.unifiedTabsByWorktree)
   )
 }
 
