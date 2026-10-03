@@ -7,6 +7,7 @@ import {
   type EligiblePane
 } from './agent-hibernation-pane-eligibility'
 import type { AgentHibernationPlannerSnapshot } from './agent-hibernation-planner-snapshot'
+import { getMemoryPressureIdleMs } from './agent-hibernation-memory-pressure'
 
 export type { AgentHibernationPlannerSnapshot } from './agent-hibernation-planner-snapshot'
 
@@ -103,7 +104,15 @@ export function planAgentHibernationCandidates(
   if (snapshot.settings?.experimentalAgentHibernation !== true) {
     return []
   }
-  const idleMs = getEffectiveAgentHibernationIdleMs(snapshot.settings.agentHibernationIdleMs)
+  const configuredIdleMs = getEffectiveAgentHibernationIdleMs(
+    snapshot.settings.agentHibernationIdleMs
+  )
+  const pressuredIdleMs = getMemoryPressureIdleMs(
+    configuredIdleMs,
+    snapshot.hostMemoryPressureLevel ?? 'none',
+    MIN_AGENT_HIBERNATION_IDLE_MS
+  )
+  const hostLocalWorktreeIds = new Set(snapshot.hostLocalWorktreeIds ?? [])
   const mobileLockedPtyIds = new Set(snapshot.mobileLockedPtyIds.map(toRuntimePtyId))
   const foregroundTerminalTabIds = new Set(snapshot.foregroundTerminalTabIds)
   const runtimeLivenessRequiredWorktreeIds = new Set(
@@ -125,6 +134,8 @@ export function planAgentHibernationCandidates(
     ) {
       continue
     }
+    // Why: this host's memory says nothing about agents on an SSH or runtime host.
+    const idleMs = hostLocalWorktreeIds.has(worktreeId) ? pressuredIdleMs : configuredIdleMs
     for (const tab of tabs) {
       if (foregroundTerminalTabIds.has(tab.id)) {
         continue
