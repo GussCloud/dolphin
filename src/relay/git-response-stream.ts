@@ -14,9 +14,13 @@
 // streams would stall at STREAM_ACK_WINDOW_CHUNKS forever. See
 // `relay-runtime-services.ts` for the wiring.
 import type { RelayDispatcher, RequestContext } from './dispatcher'
+import { TooManyStreamsError } from './fs-stream-registry'
 import {
   GIT_RESPONSE_CHUNK_SIZE,
+  GIT_RESPONSE_STREAM_ACK_STALL_DEADLINE_MS,
   GIT_RESPONSE_STREAM_THRESHOLD,
+  MAX_CONCURRENT_GIT_RESPONSE_STREAMS,
+  RelayErrorCode,
   STREAM_ACK_WINDOW_CHUNKS,
   STREAM_ACK_STALL_RECHECK_MS,
   type GitResponseStreamMarker
@@ -28,30 +32,37 @@ type GitResponseStreamEntry = {
   /** Highest chunk seq the client acknowledged (in-order; -1 = none yet). */
   ackedThroughSeq: number
   ackWaiters: Set<() => void>
+  /** Serialized reply; null once the stream ends so a parked pump pins nothing. */
+  payload: Buffer | null
+  chunkBytes: number
 }
 
-/** Serialized git responses are chunked as base64 so multi-byte UTF-8
- * sequences never split across a chunk boundary (the client concatenates the
- * decoded bytes and parses once). */
-function encodeChunks(payload: Buffer, chunkBytes = GIT_RESPONSE_CHUNK_SIZE): string[] {
-  const chunks: string[] = []
-  for (let offset = 0; offset < payload.length; offset += chunkBytes) {
-    chunks.push(payload.subarray(offset, offset + chunkBytes).toString('base64'))
+/** The reader stopped acknowledging while still attached; its payload was dropped. */
+export class GitResponseAckStallError extends Error {
+  readonly code = RelayErrorCode.StreamProtocolError
+  constructor(streamId: number, stalledMs: number) {
+    super(`Git response stream ${streamId} stalled: no ack for ${stalledMs}ms`)
   }
-  return chunks
 }
+
+type AckCreditOutcome = 'credited' | 'stale' | 'aborted' | 'stalled'
 
 export class GitResponseStreamRegistry {
   private streams = new Map<number, GitResponseStreamEntry>()
   private nextId = 1
 
-  private register(ownerClientId: number): number {
+  private register(ownerClientId: number, payload: Buffer): number {
+    if (this.streams.size >= MAX_CONCURRENT_GIT_RESPONSE_STREAMS) {
+      throw new TooManyStreamsError()
+    }
     const streamId = this.nextId++
     this.streams.set(streamId, {
       ownerClientId,
       aborted: false,
       ackedThroughSeq: -1,
-      ackWaiters: new Set()
+      ackWaiters: new Set(),
+      payload,
+      chunkBytes: GIT_RESPONSE_CHUNK_SIZE
     })
     return streamId
   }
@@ -88,9 +99,20 @@ export class GitResponseStreamRegistry {
     }
   }
 
+  size(): number {
+    return this.streams.size
+  }
+
   private wake(entry: GitResponseStreamEntry): void {
     for (const waiter of Array.from(entry.ackWaiters)) {
       waiter()
+    }
+  }
+
+  private release(streamId: number, entry: GitResponseStreamEntry): void {
+    entry.payload = null
+    if (this.streams.get(streamId) === entry) {
+      this.streams.delete(streamId)
     }
   }
 
@@ -116,17 +138,50 @@ export class GitResponseStreamRegistry {
     })
   }
 
+  /** Parks until `seq` fits the ack window. The stall clock starts when the pump
+   * parks and restarts on every ack advance, so time spent in a saturated
+   * notifyBulk never counts against a reader that is still acknowledging. */
+  private async awaitAckCredit(
+    streamId: number,
+    entry: GitResponseStreamEntry,
+    seq: number,
+    context: RequestContext
+  ): Promise<AckCreditOutcome> {
+    let progressAt = Date.now()
+    let lastAcked = entry.ackedThroughSeq
+    while (seq - entry.ackedThroughSeq > STREAM_ACK_WINDOW_CHUNKS) {
+      if (context.isStale()) {
+        return 'stale'
+      }
+      if (entry.aborted) {
+        return 'aborted'
+      }
+      if (entry.ackedThroughSeq !== lastAcked) {
+        lastAcked = entry.ackedThroughSeq
+        progressAt = Date.now()
+      } else if (Date.now() - progressAt >= GIT_RESPONSE_STREAM_ACK_STALL_DEADLINE_MS) {
+        return 'stalled'
+      }
+      await this.waitForAck(streamId)
+    }
+    if (context.isStale()) {
+      return 'stale'
+    }
+    return entry.aborted ? 'aborted' : 'credited'
+  }
+
   /**
    * Register a stream for `payload`, kick off the bulk-lane pump on a later
    * task (so the sentinel response reaches the client first), and return the
-   * sentinel marker to send as the RPC result.
+   * sentinel marker to send as the RPC result. Throws TooManyStreamsError when
+   * the relay already holds MAX_CONCURRENT_GIT_RESPONSE_STREAMS payloads.
    */
   startStream(
     payload: Buffer,
     dispatcher: RelayDispatcher,
     context: RequestContext
   ): GitResponseStreamMarker {
-    const streamId = this.register(context.clientId)
+    const streamId = this.register(context.clientId, payload)
     const base64Budget =
       dispatcher.producerDataBudget?.(
         'git.responseChunk',
@@ -138,82 +193,82 @@ export class GitResponseStreamRegistry {
       this.streams.delete(streamId)
       throw new Error('Git response stream has no encoded producer capacity')
     }
-    const chunks = encodeChunks(payload, Math.min(GIT_RESPONSE_CHUNK_SIZE, sinkChunkBytes))
+    // Why: base64 is encoded per chunk at send time; encoding eagerly pinned a
+    // second, 4/3-expanded copy of every parked reply until its final ack.
+    const chunkBytes = Math.min(GIT_RESPONSE_CHUNK_SIZE, sinkChunkBytes)
+    const entry = this.streams.get(streamId)
+    if (entry) {
+      entry.chunkBytes = chunkBytes
+    }
     // Why: kick the pump off the response task so the client sees the sentinel
     // (and can subscribe/reassemble) before the first chunk frame arrives.
     setImmediate(() => {
-      void this.pump(streamId, chunks, dispatcher, context)
+      void this.pump(streamId, dispatcher, context)
     })
     return {
       __dolphinGitResponseStream: {
         streamId,
         totalBytes: payload.length,
-        chunkCount: chunks.length
+        chunkCount: Math.ceil(payload.length / chunkBytes)
       }
     }
   }
 
   private async pump(
     streamId: number,
-    chunks: string[],
     dispatcher: RelayDispatcher,
     context: RequestContext
   ): Promise<void> {
     const entry = this.streams.get(streamId)
-    if (!entry) {
+    if (!entry?.payload) {
       return
     }
     const clientId = context.clientId
-    let seq = 0
-    let endReason: 'end' | 'aborted' | 'stale' = 'end'
+    const totalBytes = entry.payload.length
+    const chunkCount = Math.ceil(totalBytes / entry.chunkBytes)
+    let endReason: AckCreditOutcome | 'end' = 'end'
     try {
-      for (seq = 0; seq < chunks.length; seq += 1) {
-        if (context.isStale()) {
-          endReason = 'stale'
-          break
-        }
-        if (entry.aborted) {
-          endReason = 'aborted'
-          break
-        }
+      for (let seq = 0; seq < chunkCount; seq += 1) {
         // Why: credit window — the client acks each chunk, bounding how many
         // bulk bytes a keystroke echo can queue behind on the shared channel.
-        while (
-          seq - entry.ackedThroughSeq > STREAM_ACK_WINDOW_CHUNKS &&
-          !context.isStale() &&
-          !entry.aborted
-        ) {
-          await this.waitForAck(streamId)
+        const credit = await this.awaitAckCredit(streamId, entry, seq, context)
+        if (credit === 'stalled') {
+          throw new GitResponseAckStallError(streamId, GIT_RESPONSE_STREAM_ACK_STALL_DEADLINE_MS)
         }
-        if (context.isStale()) {
-          endReason = 'stale'
+        if (credit !== 'credited') {
+          endReason = credit
           break
         }
-        if (entry.aborted) {
+        const payload = entry.payload
+        if (!payload) {
           endReason = 'aborted'
           break
         }
+        const offset = seq * entry.chunkBytes
+        const data = payload
+          .subarray(offset, Math.min(totalBytes, offset + entry.chunkBytes))
+          .toString('base64')
         // Why: notifyBulk waits out sink saturation so chunk frames never pile
         // up in the outbound pipe ahead of interactive pty.data frames.
-        await dispatcher.notifyBulk(
-          'git.responseChunk',
-          { streamId, seq, data: chunks[seq] },
-          {
-            clientId
-          }
-        )
+        await dispatcher.notifyBulk('git.responseChunk', { streamId, seq, data }, { clientId })
       }
       if (endReason === 'end') {
+        this.release(streamId, entry)
         await dispatcher.notifyBulk('git.responseEnd', { streamId }, { clientId })
       }
     } catch (err) {
+      // Why: drop the payload before reporting — the error send can itself park
+      // on a saturated sink, and it must not keep the reply pinned meanwhile.
+      this.release(streamId, entry)
       if (!context.isStale() && !entry.aborted) {
         try {
           await dispatcher.notifyBulk(
             'git.responseError',
             {
               streamId,
-              message: err instanceof Error ? err.message : String(err)
+              message: err instanceof Error ? err.message : String(err),
+              // Optional: clients predating it read only `message`.
+              ...(err instanceof GitResponseAckStallError ? { code: err.code } : {})
             },
             { clientId }
           )
@@ -223,13 +278,14 @@ export class GitResponseStreamRegistry {
         }
       }
     } finally {
-      this.streams.delete(streamId)
+      this.release(streamId, entry)
     }
   }
 
   disposeAll(): void {
     for (const entry of this.streams.values()) {
       entry.aborted = true
+      entry.payload = null
       this.wake(entry)
     }
     this.streams.clear()
