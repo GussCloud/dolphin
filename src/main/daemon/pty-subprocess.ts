@@ -11,6 +11,10 @@ import {
   runPtySpawnHealthProbe
 } from './pty-subprocess/spawn-preflight'
 import { createDaemonPtySubprocessHandle } from './pty-subprocess/subprocess-handle'
+import {
+  observePtyStartupLatency,
+  type PtyStartupLatency
+} from './pty-subprocess/pty-startup-latency-probe'
 import type { StartupCommandDelivery } from '../../shared/codex-startup-delivery'
 import type { TuiAgent } from '../../shared/tui-agent'
 
@@ -38,7 +42,11 @@ export type PtySubprocessOptions = {
   /** Aborts in-progress cwd validation; `isCanceled` is only polled between steps. */
   cancelSignal?: AbortSignal
   onMacosTccSpawnStrategy?: (strategy: 'wrapped' | 'direct') => void
+  onSpawnTiming?: (timing: PtySpawnTiming) => void
+  onStartupLatency?: (latency: PtyStartupLatency) => void
 }
+
+export type PtySpawnTiming = { preflightMs: number; nativeSpawnMs: number; handleMs: number }
 
 export async function checkPtySpawnHealth(): Promise<void> {
   if (!preflightPtySpawnHealth()) {
@@ -74,6 +82,7 @@ export async function createPtySubprocess(opts: PtySubprocessOptions): Promise<S
   const env = createDaemonPtyEnvironment(opts)
   const launch = createPtyShellLaunchPlan(opts, env)
 
+  const startedAt = performance.now()
   await preflightPtySpawn({
     validationCwd: launch.validationCwd,
     cwdWasExplicit: opts.cwd !== undefined,
@@ -84,6 +93,7 @@ export async function createPtySubprocess(opts: PtySubprocessOptions): Promise<S
     throw new TerminalAttachCanceledError(opts.sessionId)
   }
 
+  const preflightEndedAt = performance.now()
   let spawned: SpawnedDaemonPty
   try {
     spawned = await spawnNativeDaemonPty({
@@ -103,7 +113,11 @@ export async function createPtySubprocess(opts: PtySubprocessOptions): Promise<S
     throw error
   }
 
-  return createDaemonPtySubprocessHandle({
+  const spawnEndedAt = performance.now()
+  if (opts.onStartupLatency) {
+    observePtyStartupLatency(spawned.process, opts.onStartupLatency)
+  }
+  const handle = createDaemonPtySubprocessHandle({
     process: spawned.process,
     shellPath: spawned.shellPath,
     spawnCwd: spawned.spawnCwd,
@@ -115,4 +129,10 @@ export async function createPtySubprocess(opts: PtySubprocessOptions): Promise<S
     sessionId: opts.sessionId,
     startupAgentRecognition: launch.startupAgentRecognition
   })
+  opts.onSpawnTiming?.({
+    preflightMs: Math.round(preflightEndedAt - startedAt),
+    nativeSpawnMs: Math.round(spawnEndedAt - preflightEndedAt),
+    handleMs: Math.round(performance.now() - spawnEndedAt)
+  })
+  return handle
 }
