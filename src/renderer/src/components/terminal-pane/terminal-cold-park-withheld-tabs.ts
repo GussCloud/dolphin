@@ -22,6 +22,8 @@ export function withholdUnparkableTerminalTabs(args: {
   worktreeId: string
   terminalTabs: readonly TerminalTab[]
   coldParkedTabIds: ReadonlySet<string>
+  /** Tabs with no live PTY, so watcher coverage cannot apply (hibernated tabs). */
+  watcherFreeTabIds?: ReadonlySet<string>
   parkVerdictRecords: Map<string, ParkVerdictFlipRecord>
   nowMs: number
 }): WithheldTerminalTabParking {
@@ -44,7 +46,8 @@ export function withholdUnparkableTerminalTabs(args: {
     // for bells/titles/completions — the failure that sank the first attempt.
     if (
       parkVerdictPinUntilMs !== null ||
-      !canWatcherCoverParkedTerminalTab(args.worktreeId, terminalTab)
+      (!args.watcherFreeTabIds?.has(terminalTab.id) &&
+        !canWatcherCoverParkedTerminalTab(args.worktreeId, terminalTab))
     ) {
       parkedTabIds.delete(terminalTab.id)
     }

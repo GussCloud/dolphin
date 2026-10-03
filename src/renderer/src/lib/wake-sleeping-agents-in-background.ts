@@ -7,6 +7,7 @@ import { useAppStore } from '@/store'
 import type { SleepingAgentSessionRecord } from '../../../shared/agent-session-resume'
 import { parseLegacyNumericPaneKey, parsePaneKey } from '../../../shared/stable-pane-id'
 import { resumeSleepingAgentSessionsForWorktree } from './resume-sleeping-agent-session'
+import { requestHibernatedWakeMount } from './hibernated-wake-mount-requests'
 import {
   getProviderSessionClaimKey,
   isPassiveCompletedHibernationEvidence,
@@ -197,6 +198,8 @@ export function wakeSleepingAgentsForWorktreeInBackground(worktreeId: string): v
     const tabId = getSleepingRecordTabId(record)
     if (tabId) {
       passiveTabIds.add(tabId)
+      // Why: a parked hibernated tab renders no pane, so the mount below alone cannot wake it.
+      requestHibernatedWakeMount(tabId, record)
     } else {
       hasUntargetablePassiveRecord = true
     }

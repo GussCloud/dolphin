@@ -8,6 +8,10 @@ import {
   type WakeHibernatedAgentsWorktreeDetail
 } from '@/constants/terminal'
 import type { ResumeSleepingAgentSessionsOptions } from './resume-sleeping-agent-session'
+import {
+  getHibernatedWakeMountRequests,
+  resetHibernatedWakeMountRequestsForTest
+} from './hibernated-wake-mount-requests'
 
 const resumeSpy = vi.fn<
   (worktreeId: string, options?: ResumeSleepingAgentSessionsOptions) => number
@@ -149,6 +153,9 @@ describe('wakeSleepingAgentsForWorktreeInBackground', () => {
     // Why: the mount targets only the sleeping record's tab, so one slept agent
     // does not permanently mount every saved tab in the worktree.
     expect(rec.mountDetails[0]?.tabIds).toEqual(['tab-a'])
+    // Why: the tab may be parked, and a parked tab renders no pane for the mount to wake.
+    expect(getHibernatedWakeMountRequests().get('tab-a')?.[0]?.record).toBe(sleepingRecords.k1)
+    resetHibernatedWakeMountRequestsForTest()
     // (c) non-passive records resume with navigation suppressed (INV-2).
     expect(resumeSpy).toHaveBeenCalledWith(
       'wt-1',
