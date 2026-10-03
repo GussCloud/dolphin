@@ -7,6 +7,7 @@ import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import { resolveUnifiedTabLabel } from '../../../../shared/tab-title-resolution'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import type { FloatingTerminalPanelStoreState } from './use-floating-terminal-panel-store-state'
+import { useClosedFloatingPanelParking } from './use-closed-floating-panel-parking'
 
 const NO_ACTIVITY_TERMINAL_PORTALS = []
 
@@ -74,13 +75,14 @@ export function useFloatingTerminalPanelItems({
     }
     return assignments
   }, [activeTerminalId, unifiedTabs])
+  const closedPanelParked = useClosedFloatingPanelParking({ open, terminalTabs: tabs })
   const parkedTerminalTabIds = useTerminalTabColdParking({
     worktreeId: FLOATING_TERMINAL_WORKTREE_ID,
     terminalTabs: tabs,
     assignments: terminalAssignments,
     activeTerminalTabId: activeTerminalId,
     isWorktreeActive: open,
-    coldParkTerminalPanes: false,
+    coldParkTerminalPanes: closedPanelParked,
     shouldMeasureHiddenWorktree: false,
     activityTerminalPortals: NO_ACTIVITY_TERMINAL_PORTALS
   })
