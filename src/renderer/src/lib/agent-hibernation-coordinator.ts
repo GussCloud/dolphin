@@ -22,15 +22,23 @@ import {
   observeHibernationPtyBindings
 } from './agent-hibernation-pane-age'
 import { mergePendingTerminalInputActivity } from './terminal-input-activity-coalescing'
-import { getRuntimeEnvironmentIdForWorktree } from './worktree-runtime-owner'
-import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
-import { toRuntimeWorktreeSelector } from '@/runtime/runtime-worktree-selector'
-import type {
-  RuntimeTerminalListResult,
-  RuntimeTerminalSummary
-} from '../../../shared/runtime-types'
-import { getWindowParkVisible, subscribeWindowParkVisibility } from './window-park-visibility'
-import { getEntryTabId } from './agent-hibernation-pane-eligibility'
+import {
+  getKnownExecutionHostIdForWorktree,
+  getRuntimeEnvironmentIdForWorktree
+} from './worktree-runtime-owner'
+import {
+  collectRuntimePtyLiveness,
+  getRuntimeLivenessTargetWorktrees,
+  type RuntimePtyLivenessSample
+} from './agent-hibernation-runtime-liveness'
+import {
+  orderByHeaviestSession,
+  type HostMemoryPressureLevel
+} from './agent-hibernation-memory-pressure'
+import {
+  readSessionMemoryByPaneKey,
+  sampleHostMemoryPressure
+} from './agent-hibernation-host-memory-sampling'
 
 export const AGENT_HIBERNATION_TICK_MS = 60 * 1000
 
@@ -43,7 +51,7 @@ type AgentHibernationCoordinatorOptions = {
 
 type AgentHibernationCoordinatorState = {
   interval: IntervalHandle | null
-  unsubscribeVisibility: (() => void) | null
+  intervalMs: number
   confirmationState: AgentHibernationConfirmationState
   tickInFlight: boolean
   shuttingDownCandidateIds: Set<string>
@@ -52,31 +60,38 @@ type AgentHibernationCoordinatorState = {
 
 const coordinator: AgentHibernationCoordinatorState = {
   interval: null,
-  unsubscribeVisibility: null,
+  intervalMs: AGENT_HIBERNATION_TICK_MS,
   confirmationState: {},
   tickInFlight: false,
   shuttingDownCandidateIds: new Set(),
   now: () => Date.now()
 }
 
-type RuntimePtyLivenessSample = {
-  runtimeLivePtyIdsByWorktreeId: Record<string, string[]>
-  runtimeLivenessRequiredWorktreeIds: string[]
+// Why: known-local only; a worktree whose host is not yet known is not shortened.
+function getHostLocalWorktreeIds(
+  state: AppState,
+  tabsByWorktree: AppState['tabsByWorktree']
+): string[] {
+  return Object.keys(tabsByWorktree).filter(
+    (worktreeId) => getKnownExecutionHostIdForWorktree(state, worktreeId) === 'local'
+  )
 }
 
 function snapshotFromState(
   state: AppState,
   now: number,
   runtimeLiveness: RuntimePtyLivenessSample,
+  hostMemoryPressureLevel: HostMemoryPressureLevel,
   targetWorktreeId?: string
 ): AgentHibernationPlannerSnapshot {
+  const tabsByWorktree = targetWorktreeId
+    ? { [targetWorktreeId]: state.tabsByWorktree[targetWorktreeId] ?? [] }
+    : state.tabsByWorktree
   return {
     settings: state.settings,
     activeWorktreeId: state.activeWorktreeId,
     foregroundTerminalTabIds: getForegroundTerminalTabIds(),
-    tabsByWorktree: targetWorktreeId
-      ? { [targetWorktreeId]: state.tabsByWorktree[targetWorktreeId] ?? [] }
-      : state.tabsByWorktree,
+    tabsByWorktree,
     terminalLayoutsByTabId: state.terminalLayoutsByTabId,
     ptyIdsByTabId: state.ptyIdsByTabId,
     runtimeLivePtyIdsByWorktreeId: runtimeLiveness.runtimeLivePtyIdsByWorktreeId,
@@ -103,99 +118,18 @@ function snapshotFromState(
     foregroundTerminalLastSeenAtByTabId: getForegroundTerminalTabLastSeenAtById(),
     ptyBindingFirstSeenAtByPaneKey: getHibernationPtyBindingFirstSeenAtByPaneKey(),
     boundaryResolvedAtByPaneKey: getHibernationBoundaryResolvedAtByPaneKey(),
+    hostMemoryPressureLevel,
+    hostLocalWorktreeIds:
+      hostMemoryPressureLevel === 'none' ? [] : getHostLocalWorktreeIds(state, tabsByWorktree),
     now
   }
 }
 
-function getRuntimeLivenessTargetWorktrees(
-  state: AppState,
+async function currentCandidates(
+  now: number,
+  hostMemoryPressureLevel: HostMemoryPressureLevel,
   targetWorktreeId?: string
-): Map<string, string> {
-  const targets = new Map<string, string>()
-  const worktreeIds = targetWorktreeId
-    ? Object.hasOwn(state.tabsByWorktree, targetWorktreeId)
-      ? [targetWorktreeId]
-      : []
-    : Object.keys(state.tabsByWorktree)
-  for (const worktreeId of worktreeIds) {
-    const runtimeEnvironmentId = getRuntimeEnvironmentIdForWorktree(state, worktreeId)
-    if (runtimeEnvironmentId) {
-      targets.set(worktreeId, runtimeEnvironmentId)
-    }
-  }
-  return targets
-}
-
-function getTypedRuntimePtyId(terminal: RuntimeTerminalSummary): string | null {
-  if (terminal.ptyId) {
-    return terminal.ptyId
-  }
-  if (terminal.tabId.startsWith('pty:') && terminal.tabId === terminal.leafId) {
-    return terminal.tabId.slice('pty:'.length) || null
-  }
-  return null
-}
-
-async function collectRuntimePtyLiveness(
-  state: AppState,
-  targetWorktreeId?: string
-): Promise<RuntimePtyLivenessSample> {
-  const targets = getRuntimeLivenessTargetWorktrees(state, targetWorktreeId)
-  const runtimeLivePtyIdsByWorktreeId: Record<string, string[]> = {}
-  const runtimeLivenessRequiredWorktreeIds = [...targets.keys()]
-  if (targets.size === 0) {
-    // Why: an all-local install has nothing to ask, so it must not pay the status scan below.
-    return { runtimeLivePtyIdsByWorktreeId, runtimeLivenessRequiredWorktreeIds }
-  }
-  const completedTabIds = new Set<string>()
-  for (const entry of Object.values(state.agentStatusByPaneKey)) {
-    const tabId = entry?.state === 'done' ? getEntryTabId(entry) : null
-    if (tabId) {
-      completedTabIds.add(tabId)
-    }
-  }
-  await Promise.all(
-    [...targets].map(async ([worktreeId, runtimeEnvironmentId]) => {
-      if (!state.tabsByWorktree[worktreeId]?.some((tab) => completedTabIds.has(tab.id))) {
-        // Skipped owners still require host evidence if an agent completes during this pass.
-        return
-      }
-      try {
-        const result = await callRuntimeRpc<RuntimeTerminalListResult>(
-          { kind: 'environment', environmentId: runtimeEnvironmentId },
-          'terminal.list',
-          {
-            worktree: toRuntimeWorktreeSelector(worktreeId),
-            limit: 10_000,
-            requireFreshPtyLiveness: true,
-            includeVisualLayouts: false
-          },
-          { timeoutMs: 10_000 }
-        )
-        if (result.truncated) {
-          return
-        }
-        const ptyIds = new Set<string>()
-        for (const terminal of result.terminals) {
-          if (!terminal.connected || terminal.worktreeId !== worktreeId) {
-            continue
-          }
-          const ptyId = getTypedRuntimePtyId(terminal)
-          if (ptyId) {
-            ptyIds.add(ptyId)
-          }
-        }
-        runtimeLivePtyIdsByWorktreeId[worktreeId] = [...ptyIds].sort()
-      } catch {
-        // Why: stale runtime liveness is unsafe for all-or-nothing hibernation;
-        // omitting the worktree makes the planner fail closed for this pass.
-      }
-    })
-  )
-  return { runtimeLivePtyIdsByWorktreeId, runtimeLivenessRequiredWorktreeIds }
-}
-
-async function currentCandidates(now: number, targetWorktreeId?: string) {
+) {
   const runtimeLiveness = await collectRuntimePtyLiveness(useAppStore.getState(), targetWorktreeId)
   const freshState = useAppStore.getState()
   // Why: age the PTY bindings from the same state the plan is built from, so a pane
@@ -207,7 +141,7 @@ async function currentCandidates(now: number, targetWorktreeId?: string) {
     idleMs: getEffectiveAgentHibernationIdleMs(freshState.settings?.agentHibernationIdleMs)
   })
   return planAgentHibernationCandidates(
-    snapshotFromState(freshState, now, runtimeLiveness, targetWorktreeId)
+    snapshotFromState(freshState, now, runtimeLiveness, hostMemoryPressureLevel, targetWorktreeId)
   )
     .filter((candidate) => {
       const runtimeEnvironmentId = getRuntimeEnvironmentIdForWorktree(
@@ -225,7 +159,8 @@ async function currentCandidates(now: number, targetWorktreeId?: string) {
 }
 
 async function hibernatePaneIfStillEligible(
-  confirmedCandidate: AgentHibernationCandidate
+  confirmedCandidate: AgentHibernationCandidate,
+  hostMemoryPressureLevel: HostMemoryPressureLevel
 ): Promise<void> {
   const { id, worktreeId } = confirmedCandidate
   if (coordinator.shuttingDownCandidateIds.has(id)) {
@@ -233,7 +168,9 @@ async function hibernatePaneIfStillEligible(
   }
   // Why: the confirmed pane can only be authorized by its owning worktree. A
   // global sweep here made C pane teardowns issue C×W fresh runtime listings.
-  const candidates = await currentCandidates(coordinator.now(), worktreeId)
+  // Why: re-plan under the tick's pressure level so a pressure-eligible pane is not
+  // rejected by its own re-validation; a pane that stopped qualifying still is.
+  const candidates = await currentCandidates(coordinator.now(), hostMemoryPressureLevel, worktreeId)
   const stillEligible = candidates.some(
     (candidate) =>
       candidate.id === confirmedCandidate.id && candidate.signature === confirmedCandidate.signature
@@ -267,11 +204,23 @@ export async function runAgentHibernationTick(): Promise<void> {
   }
   coordinator.tickInFlight = true
   try {
+    // Why: hibernation off must not pay for a host-memory read every minute.
+    const hostMemoryPressureLevel =
+      useAppStore.getState().settings?.experimentalAgentHibernation === true
+        ? await sampleHostMemoryPressure()
+        : 'none'
     const plan = confirmAgentHibernationCandidates(
       coordinator.confirmationState,
-      await currentCandidates(coordinator.now())
+      await currentCandidates(coordinator.now(), hostMemoryPressureLevel)
     )
     coordinator.confirmationState = plan.confirmationState
+    const drainOrder =
+      hostMemoryPressureLevel !== 'none' && plan.candidates.length > 1
+        ? orderByHeaviestSession(
+            plan.candidates,
+            await readSessionMemoryByPaneKey(coordinator.now(), coordinator.intervalMs * 2)
+          )
+        : plan.candidates
     // Why: drain sequentially. Each shutdown re-runs a full runtime-liveness sweep and
     // then a stopExact RPC, so firing the whole confirmed set at once meant ~100
     // concurrent sweeps plus ~100 concurrent stops on the first pass after a backlog —
@@ -279,8 +228,8 @@ export async function runAgentHibernationTick(): Promise<void> {
     // `tickInFlight` actually cover the drain; unawaited, it was cleared the moment the
     // promises were launched. Each candidate re-validates against a fresh plan at its own
     // turn, so a slow drain cannot act on stale confirmation.
-    for (const candidate of plan.candidates) {
-      await hibernatePaneIfStillEligible(candidate)
+    for (const candidate of drainOrder) {
+      await hibernatePaneIfStillEligible(candidate, hostMemoryPressureLevel)
     }
   } finally {
     coordinator.tickInFlight = false
@@ -295,23 +244,13 @@ export function startAgentHibernationCoordinator(
   }
   coordinator.now = options.now ?? (() => Date.now())
   const intervalMs = options.intervalMs ?? AGENT_HIBERNATION_TICK_MS
+  coordinator.intervalMs = intervalMs
+  // Why: ticks keep running while the window is hidden. Idle agents hold host RAM whether or
+  // not anyone is looking, and an uninterrupted cadence keeps the "two consecutive ticks"
+  // rule one interval apart — no visibility-triggered extra tick can shorten it.
   coordinator.interval = setInterval(() => {
-    // Why: hibernation only reclaims memory for a visible session — a hidden window postpones
-    // reclaim to the becoming-visible run below. getWindowParkVisible, not raw
-    // visibilityState: macOS can wedge the latter at 'hidden' with no further
-    // visibilitychange, which would stop reclaiming for the rest of the session.
-    if (!getWindowParkVisible()) {
-      return
-    }
     void runAgentHibernationTick()
   }, intervalMs)
-  // Why: confirmationState survives the hidden gap, so without a resume run the "two
-  // consecutive ticks" rule would span the whole time the window was away.
-  coordinator.unsubscribeVisibility = subscribeWindowParkVisibility(() => {
-    if (getWindowParkVisible()) {
-      void runAgentHibernationTick()
-    }
-  })
   return stopAgentHibernationCoordinator
 }
 
@@ -320,8 +259,6 @@ export function stopAgentHibernationCoordinator(): void {
     clearInterval(coordinator.interval)
     coordinator.interval = null
   }
-  coordinator.unsubscribeVisibility?.()
-  coordinator.unsubscribeVisibility = null
   coordinator.confirmationState = {}
 }
 
