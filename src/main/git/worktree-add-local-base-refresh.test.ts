@@ -27,12 +27,16 @@ vi.mock('../worktree-trash', () => ({
 }))
 
 import { addWorktree, WORKTREE_ADD_TIMEOUT_MS } from './worktree'
+import { _awaitPendingLocalBaseRefRefreshesForTests } from './worktree-base-refresh'
 import { registerWorktreeSuiteHooks } from './worktree-test-harness'
 
 registerWorktreeSuiteHooks()
 
 describe('addWorktree', () => {
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(async () => {
+    await _awaitPendingLocalBaseRefRefreshesForTests()
+    vi.restoreAllMocks()
+  })
   const resolveCreationBaseConfigWrite = () => {
     gitExecFileAsyncMock.mockResolvedValueOnce({ stdout: '' }) // config --local --replace-all branch.<branch>.base
   }
@@ -65,6 +69,7 @@ describe('addWorktree', () => {
       .mockResolvedValueOnce({ stdout: '' }) // config --local set push.autoSetupRemote
 
     await addWorktree('/repo', '/repo-feature', 'feature/test', 'origin/main', true)
+    await _awaitPendingLocalBaseRefRefreshesForTests()
 
     expect(gitExecFileAsyncMock.mock.calls).toEqual([
       [['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/main^{commit}'], { cwd: '/repo' }],
@@ -127,6 +132,7 @@ describe('addWorktree', () => {
       .mockResolvedValueOnce({ stdout: '' }) // config --local set push.autoSetupRemote
 
     await addWorktree('/repo', '/repo-feature', 'feature/test', 'origin/main', true)
+    await _awaitPendingLocalBaseRefRefreshesForTests()
 
     expect(gitExecFileAsyncMock.mock.calls[6]).toEqual([
       ['status', '--porcelain', '--untracked-files=no'],
