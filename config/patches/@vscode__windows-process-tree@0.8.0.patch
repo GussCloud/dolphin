@@ -1,5 +1,5 @@
 diff --git a/binding.gyp b/binding.gyp
-index 855bd4b86f0a3c18c7594212c0e42b6e35bc4001..0bb2af7923b6e6f1f0da40cae8067304cd1fea14 100644
+index 11a5e71..196e431 100644
 --- a/binding.gyp
 +++ b/binding.gyp
 @@ -3,7 +3,6 @@
@@ -28,10 +28,10 @@ index 855bd4b86f0a3c18c7594212c0e42b6e35bc4001..0bb2af7923b6e6f1f0da40cae8067304
                  "/guard:cf",
                  "/sdl",
 diff --git a/lib/index.js b/lib/index.js
-index e586cd6ead522a4ff060f5338201f45e3467d639..0ee62c35558ff40e2298c464fdf6e9485f9d181d 100644
+index e586cd6..fb02387 100644
 --- a/lib/index.js
 +++ b/lib/index.js
-@@ -7,11 +7,14 @@
+@@ -7,11 +7,15 @@
  exports.getAllProcesses = exports.getProcessTree = exports.getProcessCpuUsage = exports.getProcessList = exports.filterProcessList = exports.buildProcessTree = exports.ProcessDataFlag = void 0;
  const util_1 = require("util");
  const native = process.platform === 'win32' ? require('../build/Release/windows_process_tree.node') : undefined;
@@ -43,10 +43,11 @@ index e586cd6ead522a4ff060f5338201f45e3467d639..0ee62c35558ff40e2298c464fdf6e948
      ProcessDataFlag[ProcessDataFlag["Memory"] = 1] = "Memory";
      ProcessDataFlag[ProcessDataFlag["CommandLine"] = 2] = "CommandLine";
 +    ProcessDataFlag[ProcessDataFlag["CreationTime"] = 4] = "CreationTime";
++    ProcessDataFlag[ProcessDataFlag["ResourceUsage"] = 8] = "ResourceUsage";
  })(ProcessDataFlag = exports.ProcessDataFlag || (exports.ProcessDataFlag = {}));
  // requestInProgress is used for any function that uses CreateToolhelp32Snapshot, as multiple calls
  // to this cannot be done at the same time.
-@@ -66,11 +69,12 @@
+@@ -66,11 +70,12 @@
      // • the properties are inlined/splatted
      // • the 'ppid' field is omitted
      // • the depth of the tree is limited by `maxDepth`
@@ -61,10 +62,10 @@ index e586cd6ead522a4ff060f5338201f45e3467d639..0ee62c35558ff40e2298c464fdf6e948
      });
      return buildNode(root, maxDepth);
 diff --git a/lib/index.ts b/lib/index.ts
-index 7b53aad05c3682a5c7d814d81a39c3f391ae97e3..284dae185b56241244b4d6bcab9e08f7530b8cf3 100644
+index 7b53aad..718578b 100644
 --- a/lib/index.ts
 +++ b/lib/index.ts
-@@ -6,12 +6,16 @@
+@@ -6,12 +6,17 @@
  import { promisify } from 'util';
  
  const native = process.platform === 'win32' ? require('../build/Release/windows_process_tree.node') : undefined;
@@ -78,11 +79,12 @@ index 7b53aad05c3682a5c7d814d81a39c3f391ae97e3..284dae185b56241244b4d6bcab9e08f7
    Memory = 1,
 -  CommandLine = 2
 +  CommandLine = 2,
-+  CreationTime = 4
++  CreationTime = 4,
++  ResourceUsage = 8
  }
  
  type RequestCallback = (processList: IProcessInfo[]) => void;
-@@ -81,11 +85,12 @@
+@@ -81,11 +86,12 @@
    // • the properties are inlined/splatted
    // • the 'ppid' field is omitted
    // • the depth of the tree is limited by `maxDepth`
@@ -97,13 +99,13 @@ index 7b53aad05c3682a5c7d814d81a39c3f391ae97e3..284dae185b56241244b4d6bcab9e08f7
    });
  
 diff --git a/src/addon.cc b/src/addon.cc
-index 5253960ad97496b53c4a02572b64b270302af22f..a801526e20af72b6442c769a8ba1640386c23f46 100644
+index 5253960..b5672cd 100644
 --- a/src/addon.cc
 +++ b/src/addon.cc
 @@ -50,9 +50,32 @@
    worker->Queue();
  }
-
+ 
 +Napi::Value ReadProcessCreationTime(const Napi::CallbackInfo& args) {
 +  Napi::Env env(args.Env());
 +  if (args.Length() != 1 || !args[0].IsNumber()) {
@@ -126,15 +128,15 @@ index 5253960ad97496b53c4a02572b64b270302af22f..a801526e20af72b6442c769a8ba16403
 +  exports.Set("getProcessCreationTime", Napi::Function::New(env, ReadProcessCreationTime));
    exports.Set("getProcessList", Napi::Function::New(env, GetProcessList));
    exports.Set("getProcessCpuUsage", Napi::Function::New(env, GetProcessCpuUsage));
-+  // Lets a caller prove THIS BINARY understands CREATIONTIME. The JS enum is
++  // Lets a caller prove THIS BINARY understands CREATIONTIME and RESOURCEUSAGE. The JS enum is
 +  // patched source and says nothing about what the .node was compiled from.
 +  exports.Set("supportedProcessDataFlags",
-+              Napi::Number::New(env, MEMORY | COMMANDLINE | CREATIONTIME));
++              Napi::Number::New(env, MEMORY | COMMANDLINE | CREATIONTIME | RESOURCEUSAGE));
    return exports;
  }
  
 diff --git a/src/process.cc b/src/process.cc
-index 3eea92077c4d1d433119361d5c432881859131e9..22a47421da919c76e2194280974d39c2287b098d 100644
+index ad63727..3ee8376 100644
 --- a/src/process.cc
 +++ b/src/process.cc
 @@ -21,7 +21,8 @@ uint32_t GetRawProcessList(std::vector<ProcessInfo>& process_info,
@@ -147,11 +149,15 @@ index 3eea92077c4d1d433119361d5c432881859131e9..22a47421da919c76e2194280974d39c2
          pinfo.pid = process_entry.th32ProcessID;
          pinfo.ppid = process_entry.th32ParentProcessID;
  
-@@ -33,23 +34,51 @@ uint32_t GetRawProcessList(std::vector<ProcessInfo>& process_info,
+@@ -33,23 +34,59 @@ uint32_t GetRawProcessList(std::vector<ProcessInfo>& process_info,
            GetProcessCommandLine(pinfo);
          }
  
-+        if (CREATIONTIME & process_data_flags) {
++        // RESOURCEUSAGE also fills creationTimeMs from its own handle, so asking
++        // for both still costs one OpenProcess per process.
++        if (RESOURCEUSAGE & process_data_flags) {
++          GetProcessResourceUsage(pinfo);
++        } else if (CREATIONTIME & process_data_flags) {
 +          GetProcessCreationTime(pinfo);
 +        }
 +
@@ -167,6 +173,18 @@ index 3eea92077c4d1d433119361d5c432881859131e9..22a47421da919c76e2194280974d39c2
    return process_count;
  }
  
++static ULONGLONG UnixMsFromFileTime(const FILETIME& fileTime) {
++  ULARGE_INTEGER timestamp;
++  timestamp.LowPart = fileTime.dwLowDateTime;
++  timestamp.HighPart = fileTime.dwHighDateTime;
++  constexpr ULONGLONG WINDOWS_EPOCH_OFFSET_100NS = 116444736000000000ULL;
++  constexpr ULONGLONG HUNDRED_NS_PER_MILLISECOND = 10000ULL;
++  if (timestamp.QuadPart < WINDOWS_EPOCH_OFFSET_100NS) {
++    return 0;
++  }
++  return (timestamp.QuadPart - WINDOWS_EPOCH_OFFSET_100NS) / HUNDRED_NS_PER_MILLISECOND;
++}
++
 +void GetProcessCreationTime(ProcessInfo& process_info) {
 +  HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_info.pid);
 +  if (hProcess == NULL) {
@@ -175,15 +193,7 @@ index 3eea92077c4d1d433119361d5c432881859131e9..22a47421da919c76e2194280974d39c2
 +
 +  FILETIME creationTime, exitTime, kernelTime, userTime;
 +  if (GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime)) {
-+    ULARGE_INTEGER timestamp;
-+    timestamp.LowPart = creationTime.dwLowDateTime;
-+    timestamp.HighPart = creationTime.dwHighDateTime;
-+    constexpr ULONGLONG WINDOWS_EPOCH_OFFSET_100NS = 116444736000000000ULL;
-+    constexpr ULONGLONG HUNDRED_NS_PER_MILLISECOND = 10000ULL;
-+    if (timestamp.QuadPart >= WINDOWS_EPOCH_OFFSET_100NS) {
-+      process_info.creationTimeMs =
-+          (timestamp.QuadPart - WINDOWS_EPOCH_OFFSET_100NS) / HUNDRED_NS_PER_MILLISECOND;
-+    }
++    process_info.creationTimeMs = UnixMsFromFileTime(creationTime);
 +  }
 +
 +  CloseHandle(hProcess);
@@ -201,7 +211,7 @@ index 3eea92077c4d1d433119361d5c432881859131e9..22a47421da919c76e2194280974d39c2
  
    if (hProcess == NULL) {
      return;
-@@ -81,7 +110,8 @@ void GetCpuUsage(Cpu& cpu_info, bool first_pass) {
+@@ -81,7 +118,8 @@ void GetCpuUsage(Cpu& cpu_info, bool first_pass) {
    DWORD pid = cpu_info.pid;
    HANDLE hProcess;
  
@@ -211,15 +221,50 @@ index 3eea92077c4d1d433119361d5c432881859131e9..22a47421da919c76e2194280974d39c2
  
    if (hProcess == NULL) {
      return;
+@@ -105,4 +143,27 @@ void GetCpuUsage(Cpu& cpu_info, bool first_pass) {
+   }
+ 
+   CloseHandle(hProcess);
+-}
+\ No newline at end of file
++}
++
++// Working set, commit (private bytes), cumulative CPU and start time from one
++// PROCESS_QUERY_LIMITED_INFORMATION handle: the counters Task Manager shows, read
++// from kernel bookkeeping, never from the target's address space.
++void GetProcessResourceUsage(ProcessInfo& process_info) {
++  HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, process_info.pid);
++  if (hProcess == NULL) {
++    return;
++  }
++
++  PROCESS_MEMORY_COUNTERS_EX pmc{};
++  FILETIME creationTime, exitTime, kernelTime, userTime;
++  if (GetProcessMemoryInfo(hProcess, reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pmc), sizeof(pmc)) &&
++      GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime)) {
++    process_info.hasResourceUsage = true;
++    process_info.workingSetBytes = pmc.WorkingSetSize;
++    process_info.privateBytes = pmc.PrivateUsage;
++    process_info.cpuTime100ns = GetTotalTime(&kernelTime, &userTime);
++    process_info.creationTimeMs = UnixMsFromFileTime(creationTime);
++  }
++
++  CloseHandle(hProcess);
++}
 diff --git a/src/process.h b/src/process.h
-index 82f8e4bcfa742551e5d874a7632736a7611d7aa7..78d1d2c3b2360ed06fd624b4cb2f5042510f7a77 100644
+index 3c9b852..6401266 100644
 --- a/src/process.h
 +++ b/src/process.h
-@@ -22,18 +22,22 @@ struct ProcessInfo {
+@@ -22,18 +22,30 @@ struct ProcessInfo {
    DWORD ppid;
    DWORD memory; // Reported in bytes
    std::string commandLine;
 +  ULONGLONG creationTimeMs;
++  // RESOURCEUSAGE: 64-bit, unlike `memory`, which wraps a DWORD above 4 GB.
++  bool hasResourceUsage;
++  ULONGLONG workingSetBytes;
++  ULONGLONG privateBytes;
++  ULONGLONG cpuTime100ns;
  };
  
  enum ProcessDataFlags {
@@ -227,7 +272,8 @@ index 82f8e4bcfa742551e5d874a7632736a7611d7aa7..78d1d2c3b2360ed06fd624b4cb2f5042
    MEMORY = 1,
 -  COMMANDLINE = 2
 +  COMMANDLINE = 2,
-+  CREATIONTIME = 4
++  CREATIONTIME = 4,
++  RESOURCEUSAGE = 8
  };
  
  uint32_t GetRawProcessList(std::vector<ProcessInfo>& process_info, DWORD flags);
@@ -236,11 +282,13 @@ index 82f8e4bcfa742551e5d874a7632736a7611d7aa7..78d1d2c3b2360ed06fd624b4cb2f5042
  
 +void GetProcessCreationTime(ProcessInfo& process_info);
 +
++void GetProcessResourceUsage(ProcessInfo& process_info);
++
  void GetCpuUsage(Cpu& cpu_info, bool first_run);
  
  #endif  // SRC_PROCESS_H_
 diff --git a/src/process_commandline.cc b/src/process_commandline.cc
-index ea822b120e8038a4803e34647042f08f4aaf5ca1..25907c0bf542bed6c72b1b462b19bcf3210c3cfd 100644
+index 716051d..3c12f07 100644
 --- a/src/process_commandline.cc
 +++ b/src/process_commandline.cc
 @@ -7,61 +7,119 @@
@@ -406,34 +454,46 @@ index ea822b120e8038a4803e34647042f08f4aaf5ca1..25907c0bf542bed6c72b1b462b19bcf3
 +                              command_line->Length / sizeof(wchar_t));
  }
 diff --git a/src/process_worker.cc b/src/process_worker.cc
-index c9e3457a759c1acaa2644231a4917d45aed951f8..3f26a354477f062b34bd31fbd17be529e6a2fd7a 100644
+index f59559d..3734640 100644
 --- a/src/process_worker.cc
 +++ b/src/process_worker.cc
-@@ -43,6 +43,11 @@ void GetProcessesWorker::OnOK() {
+@@ -43,6 +43,22 @@ void GetProcessesWorker::OnOK() {
            Napi::String::New(env, pinfo.commandLine));
      }
  
-+    if ((CREATIONTIME & process_data_flags_) && pinfo.creationTimeMs != 0) {
++    if (((CREATIONTIME | RESOURCEUSAGE) & process_data_flags_) && pinfo.creationTimeMs != 0) {
 +      object.Set("creationTimeMs",
 +                 Napi::Number::New(env, static_cast<double>(pinfo.creationTimeMs)));
++    }
++
++    // Absent, never zero, when the process denied the handle: callers must tell
++    // "cannot read" from a process using nothing.
++    if ((RESOURCEUSAGE & process_data_flags_) && pinfo.hasResourceUsage) {
++      object.Set("workingSetBytes",
++                 Napi::Number::New(env, static_cast<double>(pinfo.workingSetBytes)));
++      object.Set("privateBytes",
++                 Napi::Number::New(env, static_cast<double>(pinfo.privateBytes)));
++      object.Set("cpuTime100ns",
++                 Napi::Number::New(env, static_cast<double>(pinfo.cpuTime100ns)));
 +    }
 +
      result.Set(i, object);
    }
  
 diff --git a/typings/windows-process-tree.d.ts b/typings/windows-process-tree.d.ts
-index 70e242b123e76d43c452007be1ce92a6d224c8bb..b1d0a53c0c18cc16531b394c19bb256bdbaf782f 100644
+index 70e242b..e0837bf 100644
 --- a/typings/windows-process-tree.d.ts
 +++ b/typings/windows-process-tree.d.ts
-@@ -7,8 +7,17 @@
+@@ -7,9 +7,19 @@
    export enum ProcessDataFlag {
      None = 0,
      Memory = 1,
 -    CommandLine = 2
 +    CommandLine = 2,
-+    CreationTime = 4
++    CreationTime = 4,
++    ResourceUsage = 8
    }
-+
+ 
 +  /**
 +   * The flag bits the compiled addon actually understands, or undefined off
 +   * win32. `ProcessDataFlag` above is source; this is what the binary reports,
@@ -441,20 +501,30 @@ index 70e242b123e76d43c452007be1ce92a6d224c8bb..b1d0a53c0c18cc16531b394c19bb256b
 +   */
 +  export const supportedProcessDataFlags: number | undefined;
 +  export const getProcessCreationTime: ((pid: number) => number | undefined) | undefined;
-
++
    export interface IProcessInfo {
      pid: number;
-@@ -24,6 +33,9 @@
+     ppid: number;
+@@ -24,6 +34,18 @@
       * The string returned is at most 512 chars, strings exceeding this length are truncated.
       */
      commandLine?: string;
 +
 +    /** Process creation time in Unix milliseconds. */
 +    creationTimeMs?: number;
++
++    /** ResourceUsage: working set in bytes (64-bit, unlike `memory`). */
++    workingSetBytes?: number;
++
++    /** ResourceUsage: committed private bytes, resident or paged out. */
++    privateBytes?: number;
++
++    /** ResourceUsage: cumulative kernel + user CPU time in 100 ns units. */
++    cpuTime100ns?: number;
    }
  
    export interface IProcessCpuInfo extends IProcessInfo {
-@@ -35,6 +47,7 @@
+@@ -35,6 +57,7 @@
      name: string;
      memory?: number;
      commandLine?: string;
