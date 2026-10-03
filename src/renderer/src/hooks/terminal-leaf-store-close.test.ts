@@ -61,6 +61,30 @@ describe('closeTerminalLeafInStore', () => {
     expect(store.closeTab).not.toHaveBeenCalled()
   })
 
+  it('closes the tab of a rootless single-pane layout bound to the leaf', () => {
+    const store = {
+      ...makeStore(),
+      terminalLayoutsByTabId: {
+        [TAB_ID]: {
+          root: null,
+          activeLeafId: TEAMMATE_LEAF,
+          expandedLeafId: null,
+          ptyIdsByLeafId: { [TEAMMATE_LEAF]: 'pty-teammate' }
+        }
+      }
+    }
+
+    expect(
+      closeTerminalLeafInStore(store, TAB_ID, TEAMMATE_LEAF, {
+        preserveSleepingAgentSession: true
+      })
+    ).toBe('removed')
+    expect(store.closeTab).toHaveBeenCalledWith(TAB_ID, {
+      reason: 'pty-exit',
+      captureRecentlyClosed: false
+    })
+  })
+
   it('ignores a leaf that is no longer in the layout', () => {
     const store = makeStore()
 

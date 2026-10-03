@@ -32,7 +32,10 @@ export function closeTerminalLeafInStore(
   )
   const layout = store.terminalLayoutsByTabId[tabId]
   const root = normalizeTerminalLayoutSnapshot(layout).snapshot.root
-  if (!tabExists || !root || !collectLeafIdsInOrder(root).includes(leafId)) {
+  // Why: a rootless single-pane layout names its leaf only through the PTY binding.
+  const leafPresent =
+    collectLeafIdsInOrder(root).includes(leafId) || Boolean(layout?.ptyIdsByLeafId?.[leafId])
+  if (!tabExists || !leafPresent) {
     return 'already-removed'
   }
   const detached = detachTerminalLayoutLeaf(layout, leafId)
