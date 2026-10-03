@@ -23,6 +23,7 @@ import { resolveUnixShellPath } from '../providers/local-pty-utils'
 import type { PtySpawnOptions, PtySpawnResult } from '../providers/types'
 import { injectHistoryEnv, injectWslFishHistoryEnv, logHistoryInjection } from '../terminal-history'
 import { addWslEnvKeys } from '../wsl-env'
+import { timeTerminalSpawnStep } from '../worktree-create-terminal-spawn-timing'
 
 export abstract class DaemonPtySessionSpawn extends DaemonPtySpawnResult {
   async spawn(opts: PtySpawnOptions): Promise<PtySpawnResult> {
@@ -47,7 +48,9 @@ export abstract class DaemonPtySessionSpawn extends DaemonPtySpawnResult {
     try {
       return await this.withHistorySpawnLock(sessionId, () =>
         this.withDaemonRetry(() =>
-          this.doSpawn({ ...spawnOpts, sessionId }, operation, historyRecovery)
+          timeTerminalSpawnStep('daemon_do_spawn', () =>
+            this.doSpawn({ ...spawnOpts, sessionId }, operation, historyRecovery)
+          )
         )
       )
     } finally {
@@ -177,13 +180,14 @@ export abstract class DaemonPtySessionSpawn extends DaemonPtySpawnResult {
       throw new TerminalKilledError(sessionId)
     }
 
-    if (opts.isNewSession) {
-      await this.replaceUnhealthyMacResolverDaemonBeforeNewPty()
-      await this.replaceStaleBundleDaemonBeforeNewPty()
-      await this.replaceSeveredMacTccDaemonBeforeNewPty()
-    }
-
-    await this.ensureConnected()
+    await timeTerminalSpawnStep('daemon_preflight', async () => {
+      if (opts.isNewSession) {
+        await this.replaceUnhealthyMacResolverDaemonBeforeNewPty()
+        await this.replaceStaleBundleDaemonBeforeNewPty()
+        await this.replaceSeveredMacTccDaemonBeforeNewPty()
+      }
+      await this.ensureConnected()
+    })
     // Why before createOrAttach: a preserved daemon may still think this session is backgrounded — from
     // a v19 that thins without a recoverable seq, or (#9993) from a pre-v29 that a previous desktop
     // handed 2031 scan authority to and can never retract it. Clear it before any bytes are attached.
@@ -251,7 +255,9 @@ export abstract class DaemonPtySessionSpawn extends DaemonPtySpawnResult {
       detectColdRestore
     }
     activeSpawnContext = context
-    const result = await this.createOrAttachSpawn(context, context.historySeedSegments)
+    const result = await timeTerminalSpawnStep('daemon_create_or_attach', () =>
+      this.createOrAttachSpawn(context, context.historySeedSegments)
+    )
     if (result.isNew && !attachOnly) {
       // Not awaited: the app-side read behind it can sit on an unanswered macOS folder prompt.
       void reportDaemonPtyCwdVerdict({

@@ -25,6 +25,7 @@ import { getExplicitWorktreeIdSelector } from './runtime-worktree-selection'
 import { WORKTREE_ID_SEPARATOR } from '../../shared/worktree/id'
 import { WorktreeIdRequiresFullPathError } from './runtime-worktree-lineage-resolution'
 import { triggerTerminalSpawnPushTargetMaterialization } from './runtime-terminal-spawn-push-target-materialization'
+import { timeTerminalSpawnStep } from '../worktree-create-terminal-spawn-timing'
 
 export class DolphinRuntimeWithResolveBrowserNetworkExecutionHostForWorktree extends DolphinRuntimeWithTransitionGraphReloadToTerminalState {
   protected resolveBrowserNetworkExecutionHostForWorktree(worktree?: {
@@ -90,7 +91,11 @@ export class DolphinRuntimeWithResolveBrowserNetworkExecutionHostForWorktree ext
   protected async resolveTerminalWorkspaceLaunchScope(
     selector: string
   ): Promise<TerminalWorkspaceLaunchScope> {
-    return (await this.resolveTerminalWorkspaceLaunchTarget(selector)).scope
+    return (
+      await timeTerminalSpawnStep('resolve_workspace', () =>
+        this.resolveTerminalWorkspaceLaunchTarget(selector)
+      )
+    ).scope
   }
 
   protected async resolveTerminalWorkspaceLaunchTarget(

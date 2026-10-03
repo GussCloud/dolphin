@@ -123,7 +123,16 @@ describe('addWorktree', () => {
     )
 
     expect(gitExecFileAsyncMock).toHaveBeenCalledWith(
-      ['-c', 'core.longpaths=true', 'worktree', 'add', 'C:\\repo-feature', 'feature/test'],
+      [
+        '-c',
+        'core.longpaths=true',
+        '-c',
+        'checkout.workers=0',
+        'worktree',
+        'add',
+        'C:\\repo-feature',
+        'feature/test'
+      ],
       { cwd: 'C:\\repo', timeout: WORKTREE_ADD_TIMEOUT_MS }
     )
   })
@@ -145,7 +154,16 @@ describe('addWorktree', () => {
     )
 
     expect(gitExecFileAsyncMock).toHaveBeenCalledWith(
-      ['-c', 'core.longpaths=true', 'worktree', 'add', 'C:\\repo-feature', 'feature/test'],
+      [
+        '-c',
+        'core.longpaths=true',
+        '-c',
+        'checkout.workers=0',
+        'worktree',
+        'add',
+        'C:\\repo-feature',
+        'feature/test'
+      ],
       { cwd: 'C:\\repo', wslDistro: 'Ubuntu', timeout: WORKTREE_ADD_TIMEOUT_MS }
     )
   })

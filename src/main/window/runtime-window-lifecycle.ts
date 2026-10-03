@@ -17,6 +17,7 @@ import { registerRendererDocumentNavigation } from './renderer-document-navigati
 import { createRuntimeRendererNotificationSender } from './runtime-renderer-notification-sender'
 import { requestSessionTabCloseFromRenderer } from './session-tab-close-request-relay'
 import { requestTerminalTabCloseFromRenderer } from './terminal-tab-close-request-relay'
+import { timeTerminalSpawnStep } from '../worktree-create-terminal-spawn-timing'
 
 let runtimeNotifierTokenCounter = 0
 let activeRuntimeNotifierToken: number | null = null
@@ -70,84 +71,90 @@ export function registerRuntimeWindowLifecycle(
         ...(opts.presentation ? { presentation: opts.presentation } : {})
       }),
     revealTerminalSession: (worktreeId, opts) =>
-      new Promise((resolve, reject) => {
-        const requestId = randomUUID()
-        const targetWebContents = mainWindow.webContents
-        const expectedIdentity = opts.expectedProcessIdentity
-          ? opts.tabId && opts.leafId
-            ? { worktreeId, tabId: opts.tabId, leafId: opts.leafId, ptyId: opts.ptyId }
-            : null
-          : undefined
-        if (expectedIdentity === null) {
-          reject(new Error('terminal_reveal_identity_required'))
-          return
-        }
-        const timer = setTimeout(() => {
-          ipcMain.removeListener('terminal:tabCreateReply', handler)
-          reject(new Error('Terminal reveal timed out'))
-        }, 10_000)
-        const handler = (event: Electron.IpcMainEvent, reply: TerminalTabCreateReply): void => {
-          // Why: requestId is renderer-supplied, so only the targeted main window may satisfy the reveal.
-          if (
-            mainWindow.isDestroyed() ||
-            event.sender !== targetWebContents ||
-            reply.requestId !== requestId
-          ) {
-            return
-          }
-          clearTimeout(timer)
-          ipcMain.removeListener('terminal:tabCreateReply', handler)
-          if (reply.error) {
-            reject(new Error(reply.error))
-            return
-          }
-          if (
-            expectedIdentity &&
-            (!reply.identity ||
-              reply.identity.worktreeId !== expectedIdentity.worktreeId ||
-              reply.identity.tabId !== expectedIdentity.tabId ||
-              reply.identity.leafId !== expectedIdentity.leafId ||
-              reply.identity.ptyId !== expectedIdentity.ptyId)
-          ) {
-            reject(new Error('terminal_reveal_identity_mismatch'))
-            return
-          }
-          resolve({
-            tabId: reply.tabId!,
-            title: reply.title,
-            ...(reply.identity ? { identity: reply.identity } : {})
+      timeTerminalSpawnStep(
+        'reveal',
+        () =>
+          new Promise((resolve, reject) => {
+            const requestId = randomUUID()
+            const targetWebContents = mainWindow.webContents
+            const expectedIdentity = opts.expectedProcessIdentity
+              ? opts.tabId && opts.leafId
+                ? { worktreeId, tabId: opts.tabId, leafId: opts.leafId, ptyId: opts.ptyId }
+                : null
+              : undefined
+            if (expectedIdentity === null) {
+              reject(new Error('terminal_reveal_identity_required'))
+              return
+            }
+            const timer = setTimeout(() => {
+              ipcMain.removeListener('terminal:tabCreateReply', handler)
+              reject(new Error('Terminal reveal timed out'))
+            }, 10_000)
+            const handler = (event: Electron.IpcMainEvent, reply: TerminalTabCreateReply): void => {
+              // Why: requestId is renderer-supplied, so only the targeted main window may satisfy the reveal.
+              if (
+                mainWindow.isDestroyed() ||
+                event.sender !== targetWebContents ||
+                reply.requestId !== requestId
+              ) {
+                return
+              }
+              clearTimeout(timer)
+              ipcMain.removeListener('terminal:tabCreateReply', handler)
+              if (reply.error) {
+                reject(new Error(reply.error))
+                return
+              }
+              if (
+                expectedIdentity &&
+                (!reply.identity ||
+                  reply.identity.worktreeId !== expectedIdentity.worktreeId ||
+                  reply.identity.tabId !== expectedIdentity.tabId ||
+                  reply.identity.leafId !== expectedIdentity.leafId ||
+                  reply.identity.ptyId !== expectedIdentity.ptyId)
+              ) {
+                reject(new Error('terminal_reveal_identity_mismatch'))
+                return
+              }
+              resolve({
+                tabId: reply.tabId!,
+                title: reply.title,
+                ...(reply.identity ? { identity: reply.identity } : {})
+              })
+            }
+            ipcMain.on('terminal:tabCreateReply', handler)
+            const sent = send('ui:createTerminal', {
+              requestId,
+              worktreeId,
+              ptyId: opts.ptyId,
+              title: opts.title ?? undefined,
+              ...(opts.cwd ? { cwd: opts.cwd } : {}),
+              ...(opts.launchConfig ? { launchConfig: opts.launchConfig } : {}),
+              ...(opts.launchToken ? { launchToken: opts.launchToken } : {}),
+              ...(opts.launchAgent ? { launchAgent: opts.launchAgent } : {}),
+              ...(opts.viewMode ? { viewMode: opts.viewMode } : {}),
+              activate: opts.activate !== false,
+              ...(opts.presentation ? { presentation: opts.presentation } : {}),
+              ...(opts.surfaceOwner === false ? { surfaceOwner: false } : {}),
+              // Why: pre-minted tabId aligns the renderer tab id with the paneKey baked into the PTY env, so hook events route right.
+              ...(opts.tabId !== undefined ? { tabId: opts.tabId } : {}),
+              ...(opts.leafId !== undefined ? { leafId: opts.leafId } : {}),
+              ...(opts.splitFromLeafId !== undefined
+                ? { splitFromLeafId: opts.splitFromLeafId }
+                : {}),
+              ...(opts.splitDirection !== undefined ? { splitDirection: opts.splitDirection } : {}),
+              ...(opts.splitTelemetrySource !== undefined
+                ? { splitTelemetrySource: opts.splitTelemetrySource }
+                : {}),
+              ...(opts.focus !== undefined ? { focus: opts.focus } : {})
+            })
+            if (!sent) {
+              clearTimeout(timer)
+              ipcMain.removeListener('terminal:tabCreateReply', handler)
+              reject(new Error('runtime_unavailable'))
+            }
           })
-        }
-        ipcMain.on('terminal:tabCreateReply', handler)
-        const sent = send('ui:createTerminal', {
-          requestId,
-          worktreeId,
-          ptyId: opts.ptyId,
-          title: opts.title ?? undefined,
-          ...(opts.cwd ? { cwd: opts.cwd } : {}),
-          ...(opts.launchConfig ? { launchConfig: opts.launchConfig } : {}),
-          ...(opts.launchToken ? { launchToken: opts.launchToken } : {}),
-          ...(opts.launchAgent ? { launchAgent: opts.launchAgent } : {}),
-          ...(opts.viewMode ? { viewMode: opts.viewMode } : {}),
-          activate: opts.activate !== false,
-          ...(opts.presentation ? { presentation: opts.presentation } : {}),
-          ...(opts.surfaceOwner === false ? { surfaceOwner: false } : {}),
-          // Why: pre-minted tabId aligns the renderer tab id with the paneKey baked into the PTY env, so hook events route right.
-          ...(opts.tabId !== undefined ? { tabId: opts.tabId } : {}),
-          ...(opts.leafId !== undefined ? { leafId: opts.leafId } : {}),
-          ...(opts.splitFromLeafId !== undefined ? { splitFromLeafId: opts.splitFromLeafId } : {}),
-          ...(opts.splitDirection !== undefined ? { splitDirection: opts.splitDirection } : {}),
-          ...(opts.splitTelemetrySource !== undefined
-            ? { splitTelemetrySource: opts.splitTelemetrySource }
-            : {}),
-          ...(opts.focus !== undefined ? { focus: opts.focus } : {})
-        })
-        if (!sent) {
-          clearTimeout(timer)
-          ipcMain.removeListener('terminal:tabCreateReply', handler)
-          reject(new Error('runtime_unavailable'))
-        }
-      }),
+      ),
     resolveLegacyWorkerTerminalRecovery: (paneKey, resolution, ptyId) =>
       send('agentStatus:legacyWorkerTerminalRecovery', {
         paneKey,

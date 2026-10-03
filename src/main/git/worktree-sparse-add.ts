@@ -1,4 +1,5 @@
 import { windowsLongPathGitArgs } from '../../shared/windows-long-path-git-args'
+import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
 import { gitExecFileAsync } from './runner'
 import { addWorktree, unsetWorktreeCreationBase } from './worktree-add'
 import type {
@@ -43,7 +44,7 @@ export async function addSparseWorktree(
       gitExecOptions(worktreePath, options)
     )
     await gitExecFileAsync(
-      [...longPathArgs, 'checkout', branch],
+      [...longPathArgs, ...windowsParallelCheckoutGitArgs(worktreePath), 'checkout', branch],
       gitExecOptions(worktreePath, options)
     )
     return addResult
