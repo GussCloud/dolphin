@@ -7,10 +7,6 @@ import { resolveWorkspaceAgentTeamHostShell } from './claude-agent-teams-host-sh
 import { overlayPlatformEnv } from '../../shared/platform-env-overlay'
 import { createPtySpawnCommitReporter } from './dolphin-runtime-report-pty-spawn-commit'
 import { recordPtySurface, spawnSurfaceClaimSequence } from './pty-recorded-surface-topology'
-import {
-  timeTerminalSpawnStep,
-  timeTerminalSpawnStepSync
-} from '../worktree-create-terminal-spawn-timing'
 
 export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminalCreateDeduplication {
   async createTerminal(
@@ -33,12 +29,8 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
       if (!this.ptyController?.spawn) {
         throw new Error('runtime_unavailable')
       }
-      const workspace = await timeTerminalSpawnStep('resolve_workspace', () =>
-        this.resolveTerminalWorkspaceLaunchScope(worktreeSelector)
-      )
-      const launchOpts = await timeTerminalSpawnStep('resolve_launch_options', () =>
-        this.resolveAgentTerminalCreateOptions(workspace, opts)
-      )
+      const workspace = await this.resolveTerminalWorkspaceLaunchScope(worktreeSelector)
+      const launchOpts = await this.resolveAgentTerminalCreateOptions(workspace, opts)
       const reportPtySpawnCommitted = createPtySpawnCommitReporter(launchOpts.onPtySpawnCommitted)
       const cwd =
         this.resolveWorkspaceTerminalStartupCwd(workspace, launchOpts.cwd) ?? workspace.path
@@ -71,18 +63,16 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
         if (launchOpts.signal?.aborted) {
           throw new Error('client_disconnected')
         }
-        const adoptedBeforeLaunch = await timeTerminalSpawnStep('adopt_stable_pane', async () =>
-          this.ptyController.adoptStablePane?.({
-            cols: 120,
-            rows: 40,
-            cwd,
-            connectionId: workspace.connectionId,
-            worktreeId: workspace.id,
-            preAllocatedHandle,
-            tabId,
-            leafId
-          })
-        )
+        const adoptedBeforeLaunch = await this.ptyController.adoptStablePane?.({
+          cols: 120,
+          rows: 40,
+          cwd,
+          connectionId: workspace.connectionId,
+          worktreeId: workspace.id,
+          preAllocatedHandle,
+          tabId,
+          leafId
+        })
         const launchToken = launchOpts.launchConfig
           ? (launchOpts.launchToken ?? dependencies.randomUUID())
           : undefined
@@ -95,25 +85,23 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
         let sequencedStartupCommand: string | undefined
         let effectiveLaunchConfig = launchOpts.launchConfig
         try {
-          const agentTeams = await timeTerminalSpawnStep('agent_teams_plan', () =>
-            buildRuntimeAgentTeamsLaunchPlan({
-              launchConfig: launchOpts.launchConfig,
-              command: launchOpts.command,
-              claudeAgentTeamsSourceCommand: launchOpts.claudeAgentTeamsSourceCommand,
-              claudeAgentTeamsMode: this.store?.getSettings?.().claudeAgentTeamsMode,
-              baseEnv: teamBaseEnv,
-              adoptedBeforeLaunch,
-              hostShell: resolveWorkspaceAgentTeamHostShell(workspace),
-              createTeamEnv: (shimDir, shimBin, shimPathDirs) =>
-                this.claudeAgentTeams.createLaunchEnv({
-                  leaderHandle: preAllocatedHandle,
-                  baseEnv: teamBaseEnv,
-                  shimDir,
-                  shimBin,
-                  shimPathDirs
-                }).env
-            })
-          )
+          const agentTeams = await buildRuntimeAgentTeamsLaunchPlan({
+            launchConfig: launchOpts.launchConfig,
+            command: launchOpts.command,
+            claudeAgentTeamsSourceCommand: launchOpts.claudeAgentTeamsSourceCommand,
+            claudeAgentTeamsMode: this.store?.getSettings?.().claudeAgentTeamsMode,
+            baseEnv: teamBaseEnv,
+            adoptedBeforeLaunch,
+            hostShell: resolveWorkspaceAgentTeamHostShell(workspace),
+            createTeamEnv: (shimDir, shimBin, shimPathDirs) =>
+              this.claudeAgentTeams.createLaunchEnv({
+                leaderHandle: preAllocatedHandle,
+                baseEnv: teamBaseEnv,
+                shimDir,
+                shimBin,
+                shimPathDirs
+              }).env
+          })
           agentTeamsPlan = agentTeams.plan
           sequencedStartupCommand = agentTeams.sequencedStartupCommand
           effectiveLaunchConfig = agentTeams.effectiveLaunchConfig
@@ -121,21 +109,17 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
           releaseStablePaneCreate?.()
           throw error
         }
-        const env = timeTerminalSpawnStepSync('build_env', () =>
-          this.buildTerminalWorkspaceEnv(
-            workspace,
-            {
-              ...baseEnv,
-              ...(sequencedStartupCommand
-                ? {
-                    [dependencies.SETUP_AGENT_SEQUENCE_STARTUP_COMMAND_ENV]: sequencedStartupCommand
-                  }
-                : {})
-            },
-            paneKey,
-            tabId,
-            agentTeamsPlan?.env
-          )
+        const env = this.buildTerminalWorkspaceEnv(
+          workspace,
+          {
+            ...baseEnv,
+            ...(sequencedStartupCommand
+              ? { [dependencies.SETUP_AGENT_SEQUENCE_STARTUP_COMMAND_ENV]: sequencedStartupCommand }
+              : {})
+          },
+          paneKey,
+          tabId,
+          agentTeamsPlan?.env
         )
         const terminalColorQueryReplies =
           launchOpts.terminalColorQueryReplies ??
@@ -145,58 +129,56 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
         }
         let result: Awaited<ReturnType<NonNullable<dependencies.RuntimePtyController['spawn']>>>
         try {
-          result = await timeTerminalSpawnStep('pty_spawn', () =>
-            this.ptyController.spawn({
-              cols: 120,
-              rows: 40,
-              cwd,
-              command: sequencedStartupCommand
-                ? launchOpts.command
-                : (agentTeamsPlan?.command ?? launchOpts.command),
-              launchAgent: launchOpts.launchAgent,
-              commandDelivery: 'provider',
-              startupCommandDelivery: launchOpts.startupCommandDelivery,
-              env,
-              envToDelete: dependencies.mergeTerminalEnvDeletionKeys(
-                launchOpts.envToDelete,
-                agentTeamsPlan?.envToDelete
-              ),
-              resumeProviderSession: launchOpts.resumeProviderSession,
-              telemetry: launchOpts.telemetry,
-              connectionId: workspace.connectionId,
-              worktreeId: workspace.id,
-              preAllocatedHandle,
-              tabId,
-              leafId,
-              ...(launchOpts.shellOverride ? { shellOverride: launchOpts.shellOverride } : {}),
-              ...(terminalColorQueryReplies ? { terminalColorQueryReplies } : {}),
-              terminalKittyKeyboardProtocol: launchOpts.terminalKittyKeyboardProtocol,
-              ...(launchOpts.agentSessionClaim
-                ? {
-                    agentSessionEnsure: {
-                      claim: launchOpts.agentSessionClaim,
-                      surface: {
-                        worktreeId: workspace.id,
-                        tabId,
-                        leafId,
-                        terminalHandle: preAllocatedHandle
-                      }
+          result = await this.ptyController.spawn({
+            cols: 120,
+            rows: 40,
+            cwd,
+            command: sequencedStartupCommand
+              ? launchOpts.command
+              : (agentTeamsPlan?.command ?? launchOpts.command),
+            launchAgent: launchOpts.launchAgent,
+            commandDelivery: 'provider',
+            startupCommandDelivery: launchOpts.startupCommandDelivery,
+            env,
+            envToDelete: dependencies.mergeTerminalEnvDeletionKeys(
+              launchOpts.envToDelete,
+              agentTeamsPlan?.envToDelete
+            ),
+            resumeProviderSession: launchOpts.resumeProviderSession,
+            telemetry: launchOpts.telemetry,
+            connectionId: workspace.connectionId,
+            worktreeId: workspace.id,
+            preAllocatedHandle,
+            tabId,
+            leafId,
+            ...(launchOpts.shellOverride ? { shellOverride: launchOpts.shellOverride } : {}),
+            ...(terminalColorQueryReplies ? { terminalColorQueryReplies } : {}),
+            terminalKittyKeyboardProtocol: launchOpts.terminalKittyKeyboardProtocol,
+            ...(launchOpts.agentSessionClaim
+              ? {
+                  agentSessionEnsure: {
+                    claim: launchOpts.agentSessionClaim,
+                    surface: {
+                      worktreeId: workspace.id,
+                      tabId,
+                      leafId,
+                      terminalHandle: preAllocatedHandle
                     }
                   }
-                : {}),
-              ...(launchOpts.agentSessionCreateOperationId
-                ? { agentSessionCreateOperationId: launchOpts.agentSessionCreateOperationId }
-                : {}),
-              ...(launchOpts.signal ? { signal: launchOpts.signal } : {}),
-              ...(launchOpts.onPtySpawnCommitted
-                ? { onPtySpawnCommitted: reportPtySpawnCommitted }
-                : {}),
-              ...(adoptedBeforeLaunch ? { adoptedStablePane: adoptedBeforeLaunch } : {}),
-              ...(launchOpts.sessionId ? { sessionId: launchOpts.sessionId } : {}),
-              ...(!adoptedBeforeLaunch && launchOpts.isNewSession ? { isNewSession: true } : {}),
-              ...dependencies.BACKGROUND_TERMINAL_SPAWN_FLAGS
-            })
-          )
+                }
+              : {}),
+            ...(launchOpts.agentSessionCreateOperationId
+              ? { agentSessionCreateOperationId: launchOpts.agentSessionCreateOperationId }
+              : {}),
+            ...(launchOpts.signal ? { signal: launchOpts.signal } : {}),
+            ...(launchOpts.onPtySpawnCommitted
+              ? { onPtySpawnCommitted: reportPtySpawnCommitted }
+              : {}),
+            ...(adoptedBeforeLaunch ? { adoptedStablePane: adoptedBeforeLaunch } : {}),
+            ...(launchOpts.sessionId ? { sessionId: launchOpts.sessionId } : {}),
+            ...(!adoptedBeforeLaunch && launchOpts.isNewSession ? { isNewSession: true } : {}),
+            ...dependencies.BACKGROUND_TERMINAL_SPAWN_FLAGS
+          })
         } finally {
           releaseStablePaneCreate?.()
         }
@@ -273,22 +255,20 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
         let warning: string | undefined
         if (presentation !== 'background' && this.notifier?.revealTerminalSession) {
           try {
-            await timeTerminalSpawnStep('reveal', () =>
-              this.notifier.revealTerminalSession(workspace.id, {
-                ptyId: result.id,
-                title: launchOpts.title ?? null,
-                ...(cwd !== workspace.path ? { cwd } : {}),
-                ...(effectiveLaunchConfig ? { launchConfig: effectiveLaunchConfig } : {}),
-                ...(launchToken ? { launchToken } : {}),
-                ...(launchOpts.launchAgent ? { launchAgent: launchOpts.launchAgent } : {}),
-                ...(launchOpts.viewMode ? { viewMode: launchOpts.viewMode } : {}),
-                activate: presentation === 'focused',
-                ...(presentation ? { presentation } : {}),
-                ...dependencies.ownerSurfacing(opts.surfaceOwner !== false),
-                tabId,
-                leafId
-              })
-            )
+            await this.notifier.revealTerminalSession(workspace.id, {
+              ptyId: result.id,
+              title: launchOpts.title ?? null,
+              ...(cwd !== workspace.path ? { cwd } : {}),
+              ...(effectiveLaunchConfig ? { launchConfig: effectiveLaunchConfig } : {}),
+              ...(launchToken ? { launchToken } : {}),
+              ...(launchOpts.launchAgent ? { launchAgent: launchOpts.launchAgent } : {}),
+              ...(launchOpts.viewMode ? { viewMode: launchOpts.viewMode } : {}),
+              activate: presentation === 'focused',
+              ...(presentation ? { presentation } : {}),
+              ...dependencies.ownerSurfacing(opts.surfaceOwner !== false),
+              tabId,
+              leafId
+            })
             surface = 'visible'
           } catch (err) {
             console.warn(`[terminal-create] failed to create inactive tab for ${result.id}:`, err)

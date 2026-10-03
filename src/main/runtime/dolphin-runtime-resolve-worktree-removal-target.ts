@@ -21,6 +21,7 @@ import { resolveLocalProjectRuntimeForWorktreeId } from '../local-project-runtim
 import { resolveBareAgentLaunchCommand } from './runtime-agent-launch-resolution'
 import { buildAgentStartupPlan } from '../../shared/tui-agent-startup'
 import { resolveAgentStartupPlanInputs } from '../../shared/agent-startup-plan-inputs'
+import { timeTerminalSpawnStep } from '../worktree-create-terminal-spawn-timing'
 
 export class DolphinRuntimeWithResolveWorktreeRemovalTarget extends DolphinRuntimeWithRemoveManagedWorktree {
   protected async resolveWorktreeRemovalTarget(
@@ -147,7 +148,16 @@ export class DolphinRuntimeWithResolveWorktreeRemovalTarget extends DolphinRunti
     return { handle, tabId: leaf.tabId, title }
   }
 
-  protected async resolveAgentTerminalCreateOptions(
+  protected resolveAgentTerminalCreateOptions(
+    workspace: TerminalWorkspaceLaunchScope,
+    opts: TerminalCreateOptions
+  ): Promise<TerminalCreateOptions> {
+    return timeTerminalSpawnStep('resolve_launch_options', () =>
+      this.resolveAgentTerminalCreateOptionsUntimed(workspace, opts)
+    )
+  }
+
+  private async resolveAgentTerminalCreateOptionsUntimed(
     workspace: TerminalWorkspaceLaunchScope,
     opts: TerminalCreateOptions
   ): Promise<TerminalCreateOptions> {

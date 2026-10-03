@@ -2,14 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { createWorktreeCreateTimingRecorder } from './worktree-create-timing'
 import {
   runWithTerminalSpawnTiming,
-  timeTerminalSpawnStep,
-  timeTerminalSpawnStepSync
+  timeTerminalSpawnStep
 } from './worktree-create-terminal-spawn-timing'
 
 async function spawnDeepInRuntime(): Promise<string> {
-  const env = timeTerminalSpawnStepSync('build_env', () => 'env')
+  const env = await timeTerminalSpawnStep('agent_teams_plan', async () => 'env')
   await Promise.resolve()
-  return timeTerminalSpawnStep('pty_spawn', async () => `${env}:pty`)
+  return timeTerminalSpawnStep('daemon_create_or_attach', async () => `${env}:pty`)
 }
 
 describe('terminal spawn timing', () => {
@@ -20,8 +19,8 @@ describe('terminal spawn timing', () => {
 
     expect(result).toBe('env:pty')
     expect(recorder.finish().phases.map((phase) => phase.phase)).toEqual([
-      'terminal_build_env',
-      'terminal_pty_spawn'
+      'terminal_agent_teams_plan',
+      'terminal_daemon_create_or_attach'
     ])
   })
 

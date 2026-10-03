@@ -5,10 +5,7 @@ import type { WorktreeCreateTimingRecorder } from './worktree-create-timing'
 export type TerminalSpawnTimingStep =
   | 'resolve_workspace'
   | 'resolve_launch_options'
-  | 'adopt_stable_pane'
   | 'agent_teams_plan'
-  | 'build_env'
-  | 'pty_spawn'
   | 'daemon_do_spawn'
   | 'daemon_preflight'
   | 'daemon_create_or_attach'
@@ -30,9 +27,4 @@ export function timeTerminalSpawnStep<T>(
 ): Promise<T> {
   const recorder = recorderStorage.getStore()
   return recorder ? recorder.time(`terminal_${step}`, operation) : operation()
-}
-
-export function timeTerminalSpawnStepSync<T>(step: TerminalSpawnTimingStep, operation: () => T): T {
-  const recorder = recorderStorage.getStore()
-  return recorder ? recorder.timeSync(`terminal_${step}`, operation) : operation()
 }

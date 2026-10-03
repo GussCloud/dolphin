@@ -8,6 +8,7 @@ import {
   buildClaudeAgentTeamsLaunchPlan,
   inferCapturedClaudeAgentTeamsMode
 } from './dolphin-runtime-create-terminal-dependencies'
+import { timeTerminalSpawnStep } from '../worktree-create-terminal-spawn-timing'
 
 export async function buildRuntimeAgentTeamsLaunchPlan(args: {
   launchConfig: TerminalCreateOptions['launchConfig']
@@ -37,13 +38,15 @@ export async function buildRuntimeAgentTeamsLaunchPlan(args: {
   )
   const plan = args.adoptedBeforeLaunch
     ? undefined
-    : await buildClaudeAgentTeamsLaunchPlan({
-        command: sourceCommand,
-        mode,
-        baseEnv: args.baseEnv,
-        hostShell: args.hostShell,
-        createTeamEnv: args.createTeamEnv
-      })
+    : await timeTerminalSpawnStep('agent_teams_plan', () =>
+        buildClaudeAgentTeamsLaunchPlan({
+          command: sourceCommand,
+          mode,
+          baseEnv: args.baseEnv,
+          hostShell: args.hostShell,
+          createTeamEnv: args.createTeamEnv
+        })
+      )
   const sequencedStartupCommand =
     plan && sourceCommand && args.command && sourceCommand !== args.command
       ? plan.command
