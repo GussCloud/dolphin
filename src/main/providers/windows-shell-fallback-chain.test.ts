@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { win32 as pathWin32 } from 'node:path'
 import { buildWindowsPowerShellSpawnAttempts } from './windows-shell-fallback-chain'
+import {
+  POWERSHELL_BOOTSTRAP_ENV,
+  POWERSHELL_BOOTSTRAP_ENV_STUB
+} from '../powershell-osc133-bootstrap'
 
 const WIN_ENV: NodeJS.ProcessEnv = {
   ProgramW6432: 'C:\\Program Files',
@@ -49,10 +53,13 @@ describe('buildWindowsPowerShellSpawnAttempts', () => {
       }
     })
     expect(attempts.map((a) => a.shellPath)).toEqual([PWSH7, WINDOWS_POWERSHELL, CMD])
-    // PowerShell links use -EncodedCommand; cmd.exe uses /K chcp.
-    expect(attempts[0].shellArgs).toContain('-EncodedCommand')
-    expect(attempts[1].shellArgs).toContain('-EncodedCommand')
+    // PowerShell links carry the bootstrap in their own env; cmd.exe uses /K chcp and none.
+    expect(attempts[0].shellArgs).toContain(POWERSHELL_BOOTSTRAP_ENV_STUB)
+    expect(attempts[1].shellArgs).toContain(POWERSHELL_BOOTSTRAP_ENV_STUB)
+    expect(Object.keys(attempts[0].shellEnv)).toEqual([POWERSHELL_BOOTSTRAP_ENV])
+    expect(Object.keys(attempts[1].shellEnv)).toEqual([POWERSHELL_BOOTSTRAP_ENV])
     expect(attempts[2].shellArgs[0]).toBe('/K')
+    expect(attempts[2].shellEnv).toEqual({})
   })
 
   it('repro: when pwsh is only a Store alias, the primary attempt is the real Windows PowerShell', () => {

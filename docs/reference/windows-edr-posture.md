@@ -172,8 +172,12 @@ Three sites are named in the incident analysis:
   all — `netstat.exe -ano`, with the owning process name projected off the shared
   native table — and that payload survives only as the last-resort fallback, as
   `-Command` with no policy override.
-- `src/main/daemon/shell-ready.ts` uses `-EncodedCommand` for the OSC 133
-  bootstrap.
+- `src/main/daemon/shell-ready.ts` used `-EncodedCommand` for the OSC 133
+  bootstrap. The PTY bootstraps now pass a constant `-Command` stub and carry the
+  script in `DOLPHIN_PS_BOOTSTRAP` (`src/main/powershell-osc133-bootstrap.ts`):
+  Defender held `CreateProcessW` ~5s per pane on either payload-bearing shape
+  (measured 4.8–5.1s vs 35–57ms), keyed on the exact command line, which embedded
+  the cwd and startup command.
 - `src/main/agent-hooks/windows-powershell-hook-launcher.ts` wraps managed hooks.
 
 **No site spells the pair any more.** `src/main/ssh/ssh-remote-powershell.ts`,
@@ -186,9 +190,7 @@ a process-scope `Set-ExecutionPolicy` (`setup-agent-sequencing.ts`), which is th
 pattern to copy rather than restoring the switch — the switch loses to a GPO
 scope anyway, so it never covered the locked-down case.
 
-What remains is `-EncodedCommand` without the bypass: the PTY bootstraps
-(`src/main/daemon/shell-ready.ts`, `src/main/providers/local-pty-shell-ready.ts`,
-`src/main/providers/windows-shell-args.ts`), the hook wrappers
+What remains is `-EncodedCommand` without the bypass: the hook wrappers
 (`src/main/agent-hooks/windows-powershell-hook-launcher.ts` and its callers
 `src/main/agent-hooks/runtime-home-hook-command.ts`,
 `src/main/agent-hooks/installer-utils.ts`, and `src/main/claude/hook-settings.ts`
@@ -383,16 +385,16 @@ changed. Check the code before relying on it.
 
 The checklist. On Windows, do not reach for:
 
-| Don't                                         | Instead                                                                                                                             |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `-ExecutionPolicy Bypass` on the command line | Set the policy in-payload at process scope, as `windows-powershell-hook-launcher.ts` does, or do not run a `.ps1` at all            |
-| `-EncodedCommand`                             | A temp `.ps1` with an argument, or no PowerShell hop: prefer a native API or an existing Node path                                  |
-| `cmd.exe /c` carrying escaped free text       | Spawn the real target directly. `cmd.exe` is only unavoidable for `.cmd`/`.bat`; keep free text out of the line where you can       |
-| Forking `powershell.exe` to read system state | The native reader — [`windows-process-enumeration.md`](./windows-process-enumeration.md) is the standing rule for the process table |
-| A process per operation in a loop             | One long-lived helper with a request channel. A burst of short-lived interpreters under one parent is itself the signal             |
-| `Add-Type -TypeDefinition` at runtime         | A precompiled, signed assembly, or a native helper                                                                                  |
-| Copying our own image under a different name  | Copy it verbatim — [`windows-daemon-host-relocation.md`](./windows-daemon-host-relocation.md) (done for the daemon host)            |
-| Deriving a script runner from a UI preference | [`windows-setup-shell.md`](./windows-setup-shell.md) — the script declares its own interpreter                                      |
+| Don't                                         | Instead                                                                                                                                                                           |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-ExecutionPolicy Bypass` on the command line | Set the policy in-payload at process scope, as `windows-powershell-hook-launcher.ts` does, or do not run a `.ps1` at all                                                          |
+| `-EncodedCommand`                             | A constant stub reading the script from an env var (as the PTY bootstraps do), a temp `.ps1` with an argument, or no PowerShell hop: prefer a native API or an existing Node path |
+| `cmd.exe /c` carrying escaped free text       | Spawn the real target directly. `cmd.exe` is only unavoidable for `.cmd`/`.bat`; keep free text out of the line where you can                                                     |
+| Forking `powershell.exe` to read system state | The native reader — [`windows-process-enumeration.md`](./windows-process-enumeration.md) is the standing rule for the process table                                               |
+| A process per operation in a loop             | One long-lived helper with a request channel. A burst of short-lived interpreters under one parent is itself the signal                                                           |
+| `Add-Type -TypeDefinition` at runtime         | A precompiled, signed assembly, or a native helper                                                                                                                                |
+| Copying our own image under a different name  | Copy it verbatim — [`windows-daemon-host-relocation.md`](./windows-daemon-host-relocation.md) (done for the daemon host)                                                          |
+| Deriving a script runner from a UI preference | [`windows-setup-shell.md`](./windows-setup-shell.md) — the script declares its own interpreter                                                                                    |
 
 Two framing rules that outlast the table:
 

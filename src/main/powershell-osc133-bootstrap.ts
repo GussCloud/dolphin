@@ -3,40 +3,29 @@ import { getPowerShellCodexShellLaunchPreflight } from './pty/codex-shell-launch
 export { encodePowerShellCommand } from '../shared/powershell-command-encoding'
 
 /**
- * Why every PTY site delivers this payload as `-EncodedCommand` and keeps doing so.
+ * Why every PTY site delivers this payload through an environment variable.
  *
- * An MDE report named the base64 a contributing "suspicious PowerShell" signal and
- * pointed at VS Code as the counter-example. VS Code and its forks actually ship
- * `["-noexit","-command",'try { . "{0}\\...\\shellIntegration.ps1" } catch {}']` -- a
- * one-liner that dot-sources a *file*, not inline script. Dot-sourcing is
- * execution-policy gated; inline text is not. Measured on Windows 11:
+ * Windows Defender holds `CreateProcessW` for ~5s on a `powershell.exe` whose command
+ * line carries a script, whether as `-EncodedCommand` or inline `-Command`, and it
+ * caches the verdict per exact command line. This payload is not static --
+ * providers/windows-shell-args.ts appends the PTY cwd and the queued startup command
+ * -- so every terminal paid the full hold. A constant stub that reads the script from
+ * {@link POWERSHELL_BOOTSTRAP_ENV} measured 35-57ms on the same host.
+ *
+ * Why not dot-source a temp `.ps1` like VS Code: dot-sourcing is execution-policy
+ * gated; inline text is not. Measured on Windows 11:
  *
  *   policy        dot-source .ps1   -Command inline   -EncodedCommand
  *   Restricted    blocked           runs              runs
  *   AllSigned     blocked           runs              runs
  *   RemoteSigned  runs              runs              runs
  *
- * So VS Code's shape silently drops OSC 133 -- and with it foreground-process and
- * exit-code tracking -- on exactly the locked-down fleets MDE runs on; its `catch {}`
- * is that failure being swallowed.
- *
- * Inline `-Command` does carry this payload intact through node-pty/ConPTY (verified
- * on powershell.exe 5.1 and pwsh 7.6.5), so the switch is feasible; it is declined
- * because it costs more signal than it removes. No PTY site spells `-ExecutionPolicy
- * Bypass`, so base64 is the whole of what would go, and AMSI and script-block logging
- * decode it anyway -- nothing is hidden from MDE today. What would change is the
- * process command line, which would then carry `$ExecutionContext.SessionState.
- * LanguageMode`, a `function Global:prompt` override and `[char]27`-assembled control
- * sequences in clear text: higher-signal for command-line heuristics than an opaque
- * token with no `Bypass` beside it.
- *
- * The payload is also not static -- providers/windows-shell-args.ts appends the PTY
- * cwd and the queued startup command. #7978 had to move cmd.exe startup commands off
- * `/K` to stdin because node-pty's argv escaping mangled their quotes; PowerShell
- * never needed that workaround, because `-EncodedCommand` is quoting-proof.
+ * A function built from the env text is inline text, so it keeps running on the
+ * locked-down fleets where a file would silently drop OSC 133. The env channel is
+ * also quoting-proof, which #7978 found node-pty's argv escaping is not.
  */
 const POWERSHELL_OSC133_BOOTSTRAP = `# Dolphin OSC 133 shell integration for PowerShell.
-# Profiles have already loaded normally by the time -EncodedCommand runs.
+# Profiles have already loaded normally by the time this bootstrap runs.
 # Restore managed ownership before the shell-integration compatibility guard.
 if ($env:DOLPHIN_OPENCODE_CONFIG_DIR) { $env:OPENCODE_CONFIG_DIR = $env:DOLPHIN_OPENCODE_CONFIG_DIR }
 if ($env:DOLPHIN_MIMOCODE_HOME) { $env:MIMOCODE_HOME = $env:DOLPHIN_MIMOCODE_HOME }
@@ -101,6 +90,44 @@ ${getPowerShellCodexShellLaunchPreflight()}
 
 export function getPowerShellOsc133Bootstrap(): string {
   return POWERSHELL_OSC133_BOOTSTRAP
+}
+
+/** Carries the PTY bootstrap script; profiles still see it, but the stub deletes it before children started after the stub. */
+export const POWERSHELL_BOOTSTRAP_ENV = 'DOLPHIN_PS_BOOTSTRAP'
+
+// Why under 32,767: that is Windows' per-variable ceiling, name and `=` included.
+const POWERSHELL_BOOTSTRAP_ENV_MAX_CHARS = 30_000
+
+const POWERSHELL_BOOTSTRAP_FUNCTION = 'Function:__DolphinPsBootstrap'
+
+// Why constant and quote-free: Defender caches its verdict per exact command line, and
+// node-pty backslash-escapes argv quotes. Why a function, not [scriptblock]::Create:
+// ConstrainedLanguage blocks that method call but allows Set-Item on Function:.
+export const POWERSHELL_BOOTSTRAP_ENV_STUB = `if ($env:${POWERSHELL_BOOTSTRAP_ENV}) { Set-Item ${POWERSHELL_BOOTSTRAP_FUNCTION} $env:${POWERSHELL_BOOTSTRAP_ENV}; Remove-Item Env:${POWERSHELL_BOOTSTRAP_ENV}; . __DolphinPsBootstrap }`
+
+// Why first: the function would otherwise outlive a long-running startup command.
+const POWERSHELL_BOOTSTRAP_FUNCTION_CLEANUP = `Remove-Item ${POWERSHELL_BOOTSTRAP_FUNCTION}\n`
+
+export type PowerShellBootstrapLaunch = {
+  args: string[]
+  /** Entries the spawn env must carry for these args to run the script. */
+  env: Record<string, string>
+}
+
+/** False when appending to `script` would push the env var past Windows' per-variable ceiling. */
+export function fitsPowerShellBootstrapEnvBudget(script: string): boolean {
+  return (
+    POWERSHELL_BOOTSTRAP_FUNCTION_CLEANUP.length + script.length <=
+    POWERSHELL_BOOTSTRAP_ENV_MAX_CHARS
+  )
+}
+
+/** Args + env that dot-source `script` into the interactive shell after profiles load. */
+export function buildPowerShellBootstrapLaunch(script: string): PowerShellBootstrapLaunch {
+  return {
+    args: ['-NoLogo', '-NoExit', '-Command', POWERSHELL_BOOTSTRAP_ENV_STUB],
+    env: { [POWERSHELL_BOOTSTRAP_ENV]: `${POWERSHELL_BOOTSTRAP_FUNCTION_CLEANUP}${script}` }
+  }
 }
 
 export function isPowerShellExecutableName(shellName: string): boolean {

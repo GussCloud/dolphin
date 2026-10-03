@@ -5,6 +5,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { buildWslInteractiveLoginShellCommand } from '../../shared/wsl-login-shell-command'
 import { resolveSetupRunnerCommand } from '../../shared/setup-runner-command'
 import { resolveWindowsShellLaunchArgs } from './windows-shell-args'
+import { POWERSHELL_BOOTSTRAP_ENV } from '../powershell-osc133-bootstrap'
+import {
+  POWERSHELL_BOOTSTRAP_STUB_ARGS,
+  readPowerShellBootstrapScript
+} from '../powershell-osc133-bootstrap.test-fixture'
 // Why resolved rather than hardcoded: the wrapper tree is content-addressed.
 import { getShellReadyWrapperRoot } from './local-pty-shell-ready-wrapper-root'
 
@@ -22,8 +27,7 @@ function expectedWslArgs(linuxCwd: string, distro?: string): string[] {
 }
 
 function decodePowerShellCommand(result: ReturnType<typeof resolveWindowsShellLaunchArgs>): string {
-  expect(result.shellArgs.slice(0, 3)).toEqual(['-NoLogo', '-NoExit', '-EncodedCommand'])
-  return Buffer.from(result.shellArgs[3] ?? '', 'base64').toString('utf16le')
+  return readPowerShellBootstrapScript(result.shellArgs, result.shellEnv)
 }
 
 function expectedPowerShellRestoreCwdCommand(cwdLiteral: string): string {
@@ -121,7 +125,7 @@ describe('resolveWindowsShellLaunchArgs', () => {
       'C:\\Users\\alice',
       'C:\\Users\\alice'
     )
-    expect(result.shellArgs).toEqual(['-NoLogo', '-NoExit', '-EncodedCommand', expect.any(String)])
+    expect(result.shellArgs).toEqual(POWERSHELL_BOOTSTRAP_STUB_ARGS)
 
     const command = decodePowerShellCommand(result)
     const outputEncodingIndex = command.indexOf('[Console]::OutputEncoding')
@@ -205,7 +209,7 @@ describe('resolveWindowsShellLaunchArgs', () => {
     expect(command.trimEnd().endsWith("& 'codex' '--no-alt-screen'")).toBe(true)
   })
 
-  it('preserves complex PowerShell startup command text through EncodedCommand', () => {
+  it('preserves complex PowerShell startup command text through the bootstrap env', () => {
     const startupCommand =
       '& "C:\\Program Files\\Dolphin CLI\\dolphin.exe" "--label" "quoted value"; $env:DOLPHIN_VALUE = "nested"'
     const result = resolveWindowsShellLaunchArgs(
@@ -232,7 +236,7 @@ describe('resolveWindowsShellLaunchArgs', () => {
     )
 
     expect(result.startupCommandDeliveredInShellArgs).toBeUndefined()
-    expect(result.shellArgs).toEqual(['-NoLogo', '-NoExit', '-EncodedCommand', expect.any(String)])
+    expect(result.shellArgs).toEqual(POWERSHELL_BOOTSTRAP_STUB_ARGS)
     expect(decodePowerShellCommand(result)).toContain(
       expectedPowerShellRestoreCwdCommand("'C:\\Users\\alice'")
     )
@@ -240,7 +244,7 @@ describe('resolveWindowsShellLaunchArgs', () => {
 
   it('handles pwsh.exe (PowerShell Core) the same as Windows PowerShell', () => {
     const result = resolveWindowsShellLaunchArgs('pwsh.exe', 'C:\\', 'C:\\Users\\alice')
-    expect(result.shellArgs).toEqual(['-NoLogo', '-NoExit', '-EncodedCommand', expect.any(String)])
+    expect(result.shellArgs).toEqual(POWERSHELL_BOOTSTRAP_STUB_ARGS)
     expect(decodePowerShellCommand(result)).toContain(expectedPowerShellRestoreCwdCommand("'C:\\'"))
   })
 
@@ -553,18 +557,65 @@ describe('resolveWindowsShellLaunchArgs', () => {
     expect(result.validationCwd).toBe('C:\\Users\\alice')
   })
 
+  it('keeps cwd and startup command out of the PowerShell command line', () => {
+    const startupCommand = "& 'codex' '--no-alt-screen'"
+    const first = resolveWindowsShellLaunchArgs(
+      'powershell.exe',
+      'C:\\Users\\alice\\one',
+      'C:\\Users\\alice',
+      undefined,
+      startupCommand
+    )
+    const second = resolveWindowsShellLaunchArgs('pwsh.exe', 'D:\\two', 'C:\\Users\\alice')
+
+    // Why identical argv: Defender caches its CreateProcess verdict per exact command line.
+    expect(first.shellArgs).toEqual(second.shellArgs)
+    expect(first.shellArgs.join(' ')).not.toContain('alice')
+    expect(first.shellArgs.join(' ')).not.toContain('codex')
+    expect(first.shellArgs).not.toContain('-EncodedCommand')
+    expect(Object.keys(first.shellEnv ?? {})).toEqual([POWERSHELL_BOOTSTRAP_ENV])
+    expect(decodePowerShellCommand(first)).toContain('one')
+    expect(decodePowerShellCommand(first).trimEnd().endsWith(startupCommand)).toBe(true)
+    expect(decodePowerShellCommand(second)).toContain("'D:\\two'")
+  })
+
+  it('routes a startup command to stdin when it would push the env var past its budget', () => {
+    const cwd = `C:\\${'d'.repeat(20_000)}`
+    const startupCommand = `dolphin ${'x'.repeat(5000)}`
+    const result = resolveWindowsShellLaunchArgs(
+      'powershell.exe',
+      cwd,
+      'C:\\Users\\alice',
+      undefined,
+      startupCommand
+    )
+
+    expect(result.startupCommandDeliveredInShellArgs).toBeUndefined()
+    const script = decodePowerShellCommand(result)
+    expect(script).toContain(cwd)
+    expect(script).not.toContain(startupCommand)
+  })
+
+  it('returns no shell env for non-PowerShell shells', () => {
+    for (const shell of ['cmd.exe', 'wsl.exe']) {
+      expect(
+        resolveWindowsShellLaunchArgs(shell, 'C:\\Users\\alice', 'C:\\Users\\alice').shellEnv
+      ).toBeUndefined()
+    }
+  })
+
   it('is case-insensitive on the shell basename', () => {
     const result = resolveWindowsShellLaunchArgs('PowerShell.EXE', 'C:\\', 'C:\\')
-    expect(result.shellArgs).toEqual(['-NoLogo', '-NoExit', '-EncodedCommand', expect.any(String)])
+    expect(result.shellArgs).toEqual(POWERSHELL_BOOTSTRAP_STUB_ARGS)
   })
 })
 
 // Regression guard for issue #7236: a worktree Setup Script runs through a
 // generated `.cmd` runner invoked as `cmd.exe /c "<runner>"`. When PowerShell
 // received that command as raw typed stdin, a dropped/unbalanced quote surfaced
-// as a "missing terminator" parser error. Delivering it via -EncodedCommand
-// (base64 UTF-16) keeps the quotes balanced and the text verbatim, so it can
-// never be re-parsed as an open string.
+// as a "missing terminator" parser error. Delivering it inside the bootstrap
+// script (an env var, never argv) keeps the quotes balanced and the text
+// verbatim, so it can never be re-parsed as an open string.
 describe('issue #7236: PowerShell setup-runner command delivery', () => {
   // git rev-parse hands back a forward-slash Windows-absolute path for the runner.
   const runnerPath = 'C:/Users/alice/repo/.git/dolphin/setup-runner.cmd'
@@ -575,7 +626,7 @@ describe('issue #7236: PowerShell setup-runner command delivery', () => {
     expect((command.match(/"/g) ?? []).length % 2).toBe(0)
   })
 
-  it('delivers the setup-runner command through -EncodedCommand, never raw stdin', () => {
+  it('delivers the setup-runner command through the bootstrap env, never raw stdin', () => {
     const { command } = resolveSetupRunnerCommand(runnerPath, 'windows')
     const result = resolveWindowsShellLaunchArgs(
       'powershell.exe',
@@ -588,9 +639,7 @@ describe('issue #7236: PowerShell setup-runner command delivery', () => {
     // The flag tells the daemon/provider NOT to also type the command over
     // stdin — raw stdin delivery is the pre-encoded path that broke in #7236.
     expect(result.startupCommandDeliveredInShellArgs).toBe(true)
-    expect(result.shellArgs.slice(0, 3)).toEqual(['-NoLogo', '-NoExit', '-EncodedCommand'])
-
-    const decoded = Buffer.from(result.shellArgs[3] ?? '', 'base64').toString('utf16le')
+    const decoded = decodePowerShellCommand(result)
     expect(decoded).toContain(`\n${command}`)
     expect(decoded.trimEnd().endsWith(command)).toBe(true)
     // Quotes survive encoding intact, so PowerShell parses one balanced string.

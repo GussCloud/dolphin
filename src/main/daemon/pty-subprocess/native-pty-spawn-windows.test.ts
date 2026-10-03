@@ -1,19 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { WindowsShellSpawnAttempt } from '../../providers/windows-shell-fallback-chain'
 import { spawnNativeDaemonPty } from './native-pty-spawn'
 import { WindowsBunPtySpawnUnconfirmedError } from './windows-bun-pty-spawn-receipt'
 
-const attempts = ['pwsh.exe', 'powershell.exe', 'cmd.exe'].map((shellPath) => ({
-  shellPath,
-  shellArgs: [shellPath === 'cmd.exe' ? '/K' : '-NoExit'],
-  effectiveCwd: 'C:\\work',
-  validationCwd: 'C:\\work',
-  startupCommandDeliveredInShellArgs: true
-}))
+const attempts = ['pwsh.exe', 'powershell.exe', 'cmd.exe'].map(
+  (shellPath): WindowsShellSpawnAttempt => ({
+    shellPath,
+    shellArgs: [shellPath === 'cmd.exe' ? '/K' : '-NoExit'],
+    shellEnv: shellPath === 'cmd.exe' ? {} : { DOLPHIN_PS_BOOTSTRAP: `boot:${shellPath}` },
+    effectiveCwd: 'C:\\work',
+    validationCwd: 'C:\\work',
+    startupCommandDeliveredInShellArgs: true
+  })
+)
 const args = {
   shellPath: attempts[0]!.shellPath,
   shellArgs: attempts[0]!.shellArgs,
+  shellEnv: attempts[0]!.shellEnv,
   spawnCwd: 'C:\\work',
-  env: {},
+  env: { PATH: 'C:\\bin' },
   cols: 80,
   rows: 24,
   windowsFallbackAttempts: attempts
@@ -51,7 +56,7 @@ describe('Windows Bun shell fallback after gated spawn', () => {
   })
 
   it('walks both fallback shells when gate wrappers start but their actual shells fail', async () => {
-    const spawnBunPty = vi.fn(({ file }: { file: string }) =>
+    const spawnBunPty = vi.fn(({ file }: { file: string; env: Record<string, string> }) =>
       createProcess(async () => {
         await Promise.resolve()
         if (file !== 'cmd.exe') {
@@ -66,6 +71,13 @@ describe('Windows Bun shell fallback after gated spawn', () => {
       'cmd.exe'
     ])
     expect(result.shellPath).toBe('cmd.exe')
+    // Each attempt gets only its own bootstrap env; cmd.exe inherits none of it.
+    expect(spawnBunPty.mock.calls.map(([args]) => args.env)).toEqual([
+      { PATH: 'C:\\bin', DOLPHIN_PS_BOOTSTRAP: 'boot:pwsh.exe' },
+      { PATH: 'C:\\bin', DOLPHIN_PS_BOOTSTRAP: 'boot:powershell.exe' },
+      { PATH: 'C:\\bin' }
+    ])
+    expect(args.env).toEqual({ PATH: 'C:\\bin' })
     expect(result.startupCommandDeliveredInShellArgs).toBe(true)
     expect(spawnBunPty.mock.results[0]!.value.destroy).toHaveBeenCalledOnce()
     expect(spawnBunPty.mock.results[1]!.value.destroy).toHaveBeenCalledOnce()

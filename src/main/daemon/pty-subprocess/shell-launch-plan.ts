@@ -26,6 +26,7 @@ import {
   resolveWindowsShellLaunchArgs
 } from '../../providers/windows-shell-args'
 import { resolveUnixShellPath } from '../../providers/local-pty-utils'
+import { POWERSHELL_BOOTSTRAP_ENV } from '../../powershell-osc133-bootstrap'
 import { selectShellStartupFeatures } from '../../shell-startup-features'
 import { parseWslPath } from '../../wsl'
 import { addWslEnvKeys } from '../../wsl-env'
@@ -43,6 +44,8 @@ import type { PtySubprocessOptions } from '../pty-subprocess'
 export type PtyShellLaunchPlan = {
   shellPath: string
   shellArgs: string[]
+  /** Kept out of `env`: only this shell's args need it, not a fallback shell or the session record. */
+  shellEnv: Record<string, string>
   spawnCwd: string
   validationCwd: string
   startupCommandDeliveredInShellArgs: boolean
@@ -57,6 +60,7 @@ export function createPtyShellLaunchPlan(
   const resolvedWslContext = resolveWslSessionContext(opts)
   let shellPath = resolvedWslContext ? 'wsl.exe' : opts.shellOverride || resolvePtyShellPath(env)
   let shellArgs: string[]
+  let shellEnv: Record<string, string> = {}
   let startupCommandDeliveredInShellArgs = false
   let windowsFallbackAttempts: WindowsShellSpawnAttempt[] = []
   const startupAgentRecognition = recognizeAgentProcessFromCommandLine(opts.command)
@@ -113,6 +117,7 @@ export function createPtyShellLaunchPlan(
     if (primaryAttempt) {
       shellPath = primaryAttempt.shellPath
       shellArgs = primaryAttempt.shellArgs
+      shellEnv = primaryAttempt.shellEnv
       spawnCwd = primaryAttempt.effectiveCwd
       validationCwd = primaryAttempt.validationCwd
       startupCommandDeliveredInShellArgs = primaryAttempt.startupCommandDeliveredInShellArgs
@@ -127,6 +132,7 @@ export function createPtyShellLaunchPlan(
         { gitBashStartupCommandInArgs: opts.gitBashStartupCommandInArgs }
       )
       shellArgs = resolved.shellArgs
+      shellEnv = resolved.shellEnv ?? {}
       spawnCwd = resolved.effectiveCwd
       validationCwd = resolved.validationCwd
       startupCommandDeliveredInShellArgs = resolved.startupCommandDeliveredInShellArgs === true
@@ -155,6 +161,7 @@ export function createPtyShellLaunchPlan(
               env.DOLPHIN_CODEX_LAUNCH_PREFLIGHT
             )
             shellArgs = resolved.shellArgs
+            shellEnv = resolved.shellEnv ?? {}
             spawnCwd = resolved.effectiveCwd
             validationCwd = resolved.validationCwd
             startupCommandDeliveredInShellArgs =
@@ -209,11 +216,13 @@ export function createPtyShellLaunchPlan(
         emitsStartupIdentity: waitsForShellReady
       })
     )
+    const profileArgs = !opts.command && !opts.launchAgent ? opts.terminalShellArgs : undefined
     Object.assign(env, shellLaunch.env)
-    shellArgs =
-      !opts.command && !opts.launchAgent && opts.terminalShellArgs !== undefined
-        ? opts.terminalShellArgs
-        : (shellLaunch.args ?? ['-l'])
+    if (profileArgs !== undefined) {
+      // Why: only the replaced stub args read and delete it; otherwise every child inherits ~7KB.
+      delete env[POWERSHELL_BOOTSTRAP_ENV]
+    }
+    shellArgs = profileArgs ?? shellLaunch.args ?? ['-l']
   }
 
   seedPowerlevel10kWizardEnv(env, { envToDelete: opts.envToDelete })
@@ -229,6 +238,7 @@ export function createPtyShellLaunchPlan(
   return {
     shellPath,
     shellArgs,
+    shellEnv,
     spawnCwd,
     validationCwd,
     startupCommandDeliveredInShellArgs,

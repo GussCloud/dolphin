@@ -1,6 +1,10 @@
 // Native Windows shell launch: PowerShell implementations, cmd.exe and Git Bash.
 import { describe, expect, it, vi } from 'vitest'
 import type * as LocalPtyUtils from '../providers/local-pty-utils'
+import {
+  POWERSHELL_BOOTSTRAP_STUB_ARGS,
+  readPowerShellBootstrapScript
+} from '../powershell-osc133-bootstrap.test-fixture'
 
 const {
   spawnMock,
@@ -77,7 +81,7 @@ vi.mock('../providers/windows-pty-job-membership', () => ({
 import { createPtySubprocess } from './pty-subprocess'
 import { mockPtyProcess, useDaemonPtySubprocessEnv } from './pty-subprocess-test-harness'
 
-const POWERSHELL_OSC133_COMMAND_ARGS = ['-NoLogo', '-NoExit', '-EncodedCommand', expect.any(String)]
+const POWERSHELL_OSC133_COMMAND_ARGS = [...POWERSHELL_BOOTSTRAP_STUB_ARGS]
 const CODEX_LAUNCH_PREFLIGHT = 'C:\\Program Files\\Dolphin\\dolphin.exe'
 
 describe('createPtySubprocess', () => {
@@ -266,8 +270,7 @@ describe('createPtySubprocess', () => {
     }
 
     const lastCall = spawnMock.mock.calls.at(-1)!
-    const encoded = String(lastCall[1][3])
-    const command = Buffer.from(encoded, 'base64').toString('utf16le')
+    const command = readPowerShellBootstrapScript(lastCall[1], lastCall[2]?.env)
     expect(command.trimEnd().endsWith("& 'codex' '--no-alt-screen'")).toBe(true)
     expect(handle!.startupCommandDeliveredInShellArgs).toBe(true)
   })

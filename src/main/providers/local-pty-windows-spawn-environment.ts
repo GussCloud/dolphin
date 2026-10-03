@@ -38,6 +38,7 @@ export function finalizeWindowsLocalPtySpawnEnvironment(args: {
             }
           )
           plan.shellArgs = resolved.shellArgs
+          plan.shellEnv = resolved.shellEnv ?? {}
           plan.effectiveCwd = resolved.effectiveCwd
           plan.validationCwd = resolved.validationCwd
           plan.startupCommandDeliveredInShellArgs =
@@ -85,6 +86,7 @@ export function finalizeWindowsLocalPtySpawnEnvironment(args: {
       { gitBashStartupCommandInArgs: spawn.gitBashStartupCommandInArgs }
     )
     plan.shellArgs = resolved.shellArgs
+    plan.shellEnv = resolved.shellEnv ?? {}
     plan.effectiveCwd = resolved.effectiveCwd
     plan.validationCwd = resolved.validationCwd
     plan.startupCommandDeliveredInShellArgs = resolved.startupCommandDeliveredInShellArgs === true
