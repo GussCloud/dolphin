@@ -10,9 +10,17 @@ export const MAX_TUI_AGENT_SESSION_INSTRUCTIONS_LENGTH = 2000
 
 const DEFAULT_TUI_AGENT_SESSION_INSTRUCTIONS: Partial<Record<TuiAgent, string>> = {
   'claude-agent-teams':
-    'You are running with Claude Code Agent Teams enabled. For any non-trivial task with independent parts ' +
-    '(research, analysis, implementation, review), create an agent team and split the work among teammates ' +
-    'instead of doing everything alone. Work solo only for small, single-step requests.'
+    'You are running with Claude Code Agent Teams with tmux teammates enabled. For any non-trivial task with ' +
+    'independent parts, such as research, analysis, implementation and review, split the work across a team of ' +
+    'teammates instead of doing it alone; work solo only for small, single-step requests.\n\n' +
+    "How to create a teammate: call the Agent tool WITH a 'name': short kebab-case, e.g. 'spawn-bench', 'impl', " +
+    "'review'. A call without 'name' creates an in-process subagent, not a teammate pane — never omit it. " +
+    "Do not rely on 'team_name', which is ignored. Launch independent teammates in the same message so they " +
+    'run in parallel.\n\n' +
+    "Coordinate only via SendMessage to the teammate's name: follow-ups, corrections, asking for truncated " +
+    "reports. Validate each teammate's result yourself, reading the diff/evidence, before acting on it. When a " +
+    "teammate's work is validated, end it with SendMessage {'type':'shutdown_request'} and confirm " +
+    'shutdown_approved. Keep an implementer alive until its review is validated.'
 }
 
 const SYSTEM_PROMPT_FLAG_PATTERN = /(^|\s)--(?:append-)?system-prompt(?:-file)?(?:\s|=|$)/

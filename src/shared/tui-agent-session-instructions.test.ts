@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isDirectClaudeCommand } from './claude-agent-teams-tmux-compat'
 import { resolveAgentStartupPlanInputs } from './agent-startup-plan-inputs'
 import { buildAgentStartupPlan } from './tui-agent-startup'
+import { tokenizeStartupCommand } from './tui-agent-startup-shell'
 import {
   appendSessionInstructionsArg,
   getTuiAgentDefaultSessionInstructions,
@@ -95,6 +96,56 @@ describe('Agent Teams launch with session instructions', () => {
     expect(buildTeamsLaunch('darwin', 'Team up')?.launchCommand).toMatch(
       /claude-teams --append-system-prompt 'Team up'$/
     )
+  })
+})
+
+describe('Agent Teams default session instructions', () => {
+  const defaultText = getTuiAgentDefaultSessionInstructions('claude-agent-teams')
+  const singleLine = defaultText.replace(/\s*[\r\n]+\s*/g, ' ')
+
+  it('fits the command-line cap', () => {
+    expect(defaultText.length).toBeGreaterThan(0)
+    expect(defaultText.length).toBeLessThanOrEqual(MAX_TUI_AGENT_SESSION_INSTRUCTIONS_LENGTH)
+  })
+
+  it('avoids characters a Windows launch line cannot carry', () => {
+    // Why: PowerShell 5.1 drops embedded `"` from native argv, cmd cannot quote it, and a
+    // backtick in cmd's "…" makes isDirectClaudeCommand drop the Agent Teams env.
+    expect(defaultText).not.toMatch(/["`]/)
+    // Why: cmd's ^-escapes stay literal inside "…", so the carets would reach Claude.
+    expect(defaultText).not.toMatch(/[()&|<>%!^]/)
+  })
+
+  it.each(['posix', 'powershell'] as const)('round-trips intact through %s quoting', (shell) => {
+    const command = appendSessionInstructionsArg({
+      command: 'claude',
+      instructions: defaultText,
+      shell
+    })
+    const tokenized = tokenizeStartupCommand(command, shell)
+    expect(tokenized.ok && tokenized.tokens).toEqual([
+      'claude',
+      '--append-system-prompt',
+      singleLine
+    ])
+    expect(tokenized.ok && tokenized.spans.some((span) => span.divergesFromShell)).toBe(false)
+  })
+
+  it.each(['posix', 'powershell', 'cmd'] as const)(
+    'keeps the %s launch a direct claude command',
+    (shell) => {
+      expect(
+        isDirectClaudeCommand(
+          appendSessionInstructionsArg({ command: 'claude', instructions: defaultText, shell })
+        )
+      ).toBe(true)
+    }
+  )
+
+  it('keeps the default Windows Agent Teams launch direct', () => {
+    const plan = buildTeamsLaunch('win32', defaultText)
+    expect(isDirectClaudeCommand(plan?.launchCommand)).toBe(true)
+    expect(plan?.launchCommand).toContain('--append-system-prompt')
   })
 })
 
