@@ -116,13 +116,16 @@ See
 [`windows-process-enumeration.md`](./windows-process-enumeration.md).
 
 Asking for fewer fields is cheaper, and each caller now asks for the smallest set
-that answers it. There are exactly **two** TTL-cached snapshots, one per flag
-set, never one per caller: the fan-out the cache exists to remove is one scan per
+that answers it. There is exactly one TTL-cached snapshot per flag set (identity,
+detailed, and the Resource Manager's `ResourceUsage` counters), never one per
+caller: the fan-out the cache exists to remove is one scan per
 _caller_, and each reader still serves every caller wanting its flag set, so a
 32-wide teardown still collapses into one scan of each. Teardown identity and the
 owner probe select the identity set and therefore open no handles; the per-pane
-foreground tracker genuinely needs a command line and still pays for one. A third
-cache would need a third flag set, not a third caller. Measured at 492 processes,
+foreground tracker genuinely needs a command line and still pays for one. A new
+cache needs a new flag set, never a new caller. The Resource Manager's counters
+used to be the last per-poll `powershell.exe` sweep; they now come from the
+`ResourceUsage` flag on the same limited handle. Measured at 492 processes,
 p50: identity 6.3 ms, detailed 12.3 ms — see
 [`windows-process-enumeration.md`](./windows-process-enumeration.md).
 

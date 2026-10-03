@@ -94,9 +94,22 @@ describe('windows-process-tree command line patch', () => {
       expect(source).not.toMatch(/ReadProcessMemory\(/)
     }
     // Memory and CPU counters kept VM_READ and never read an address space.
-    // Three sites now: those two plus GetProcessCreationTime, which needs the
-    // same limited handle for GetProcessTimes.
-    expect(processSource.match(/OpenProcess\(PROCESS_QUERY_LIMITED_INFORMATION/g)).toHaveLength(3)
+    // Four sites now: those two, GetProcessCreationTime, and
+    // GetProcessResourceUsage -- each needs only the limited handle.
+    expect(processSource.match(/OpenProcess\(PROCESS_QUERY_LIMITED_INFORMATION/g)).toHaveLength(4)
+  })
+
+  it('reads resource counters 64-bit from one handle that also yields start time', () => {
+    expect(processSource).toContain('PROCESS_MEMORY_COUNTERS_EX pmc{};')
+    expect(processSource).toContain('process_info.privateBytes = pmc.PrivateUsage;')
+    expect(processSource).toContain('process_info.workingSetBytes = pmc.WorkingSetSize;')
+    expect(processSource).toContain(
+      'process_info.creationTimeMs = UnixMsFromFileTime(creationTime);'
+    )
+    // ResourceUsage replaces, not adds to, the creation-time handle.
+    expect(processSource).toMatch(
+      /if \(RESOURCEUSAGE & process_data_flags\) \{\s*GetProcessResourceUsage\(pinfo\);\s*\} else if \(CREATIONTIME & process_data_flags\)/
+    )
   })
 
   it('value-initializes ProcessInfo so memory is not stack garbage', () => {

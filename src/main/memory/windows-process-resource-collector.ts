@@ -2,10 +2,17 @@ import { runProcess } from '../../shared/child-process/run-process'
 import os from 'node:os'
 import { performance } from 'node:perf_hooks'
 import {
+  isWindowsProcessResourceUsageAvailable,
+  isWindowsProcessTableAvailable,
+  readWindowsProcessResourceTable,
+  type WindowsProcessResourceCountersRow
+} from '../windows/windows-process-table'
+import {
   parseTypeperfProcessOutput,
   parseWindowsProcessSample,
   TYPEPERF_COUNTERS,
   type ParsedWindowsProcessSample,
+  type WindowsCpuTimes,
   type WindowsProcessResourceRow
 } from './windows-process-sample-parsing'
 
@@ -17,6 +24,8 @@ const CPU_MIN_SAMPLE_MS = 250
 const CPU_STALE_AFTER_MS = 10_000
 const HUNDRED_NS_TICKS_PER_MS = 10_000
 const CIM_RETRY_AFTER_MS = 30_000
+/** An addon that loads but predates ResourceUsage pays for a shell sweep at most this often. */
+const STALE_ADDON_SWEEP_INTERVAL_MS = 30_000
 
 type WindowsProcessSample = ParsedWindowsProcessSample & {
   sampledAtMs: number
@@ -25,8 +34,87 @@ type WindowsProcessSample = ParsedWindowsProcessSample & {
 let processBackend: 'cim' | 'typeperf' = 'cim'
 let previousCpuSample: WindowsProcessSample | null = null
 let retryCimAtMs = 0
+let warnedAboutNativeFailure = false
+let staleAddonSweep: { rows: WindowsProcessResourceRow[]; sampledAtMs: number } | null = null
 
 export async function enumerateWindowsProcessResources(): Promise<WindowsProcessResourceRow[]> {
+  // Why native first: the addon reads the same counters in-process, where the
+  // CIM sweep forked powershell.exe on every two-second poll — the pattern
+  // docs/reference/windows-edr-posture.md says behavioural EDR scores.
+  if (isWindowsProcessResourceUsageAvailable()) {
+    return enumerateWindowsWithNativeTable()
+  }
+  if (isWindowsProcessTableAvailable()) {
+    return enumerateWindowsWithStaleAddon()
+  }
+  return enumerateWindowsWithShellSweep(CPU_STALE_AFTER_MS)
+}
+
+/**
+ * A prebuilt or pre-patch addon (e.g. a relay/dolphind host that has not been
+ * redeployed): keep the Resource Manager working, but serve cached rows between
+ * sweeps instead of forking powershell.exe on every poll.
+ */
+async function enumerateWindowsWithStaleAddon(): Promise<WindowsProcessResourceRow[]> {
+  const now = performance.now()
+  if (staleAddonSweep && now - staleAddonSweep.sampledAtMs < STALE_ADDON_SWEEP_INTERVAL_MS) {
+    return staleAddonSweep.rows.map((row) => ({ ...row }))
+  }
+  // Why a wider staleness window: sweeps are now ~30 s apart by design.
+  const rows = await enumerateWindowsWithShellSweep(STALE_ADDON_SWEEP_INTERVAL_MS * 3)
+  staleAddonSweep = { rows: rows.map((row) => ({ ...row })), sampledAtMs: now }
+  return rows
+}
+
+async function enumerateWindowsWithNativeTable(): Promise<WindowsProcessResourceRow[]> {
+  try {
+    const rows = await readWindowsProcessResourceTable()
+    return applyWindowsCpuSample(
+      { ...toWindowsProcessSample(rows), sampledAtMs: performance.now() },
+      CPU_STALE_AFTER_MS
+    )
+  } catch (err) {
+    // Why no shell fallback: a loaded reader that fails or wedges must not
+    // start forking a shell at the poll rate (windows-process-enumeration.md).
+    if (!warnedAboutNativeFailure) {
+      warnedAboutNativeFailure = true
+      console.warn('[memory] native Windows process resource read failed', err)
+    }
+    previousCpuSample = null
+    return []
+  }
+}
+
+/** Native counters in the shape the CIM sweep produces, so CPU deltas share one path. */
+function toWindowsProcessSample(
+  rows: readonly WindowsProcessResourceCountersRow[]
+): ParsedWindowsProcessSample {
+  const sampleRows: WindowsProcessResourceRow[] = []
+  const cpuByPid = new Map<number, WindowsCpuTimes>()
+  for (const row of rows) {
+    sampleRows.push({
+      pid: row.pid,
+      ppid: row.ppid,
+      cpu: 0,
+      memory: row.workingSetBytes ?? 0,
+      ...(row.privateBytes === undefined ? {} : { privateMemory: row.privateBytes }),
+      ...(row.name ? { name: row.name } : {})
+    })
+    // Start time keys the PID-reuse guard; without it a delta could span two processes.
+    if (row.cpuTime100ns !== undefined && row.creationTimeMs !== undefined) {
+      cpuByPid.set(row.pid, {
+        cpuTicks: BigInt(Math.trunc(row.cpuTime100ns)),
+        startTimeId: String(row.creationTimeMs)
+      })
+    }
+  }
+  return { rows: sampleRows, cpuByPid }
+}
+
+/** Hosts with no usable ResourceUsage addon; see enumerateWindowsWithStaleAddon for cadence. */
+async function enumerateWindowsWithShellSweep(
+  cpuStaleAfterMs: number
+): Promise<WindowsProcessResourceRow[]> {
   // Why: one CIM sweep supplies both resource values and process identity,
   // avoiding a second host-wide PowerShell process on every open-popover poll.
   if (processBackend === 'typeperf') {
@@ -38,7 +126,7 @@ export async function enumerateWindowsProcessResources(): Promise<WindowsProcess
 
   const sample = await enumerateWindowsWithCim()
   if (sample) {
-    return applyWindowsCpuSample(sample)
+    return applyWindowsCpuSample(sample, cpuStaleAfterMs)
   }
   // Why: avoid repeating a blocked CIM timeout every two-second poll while
   // still recovering CPU attribution after a transient PowerShell failure.
@@ -48,7 +136,10 @@ export async function enumerateWindowsProcessResources(): Promise<WindowsProcess
   return enumerateWindowsWithTypeperf()
 }
 
-function applyWindowsCpuSample(sample: WindowsProcessSample): WindowsProcessResourceRow[] {
+function applyWindowsCpuSample(
+  sample: WindowsProcessSample,
+  cpuStaleAfterMs: number
+): WindowsProcessResourceRow[] {
   const previous = previousCpuSample
   if (!previous) {
     previousCpuSample = sample
@@ -61,7 +152,7 @@ function applyWindowsCpuSample(sample: WindowsProcessSample): WindowsProcessReso
     return sample.rows
   }
   previousCpuSample = sample
-  if (elapsedMs > CPU_STALE_AFTER_MS) {
+  if (elapsedMs > cpuStaleAfterMs) {
     // Why: closing Resource Manager or sleeping the machine leaves a stale
     // baseline whose long-term average is not the current CPU usage.
     return sample.rows

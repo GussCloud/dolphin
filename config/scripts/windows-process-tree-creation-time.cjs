@@ -17,6 +17,8 @@
 
 /** `ProcessDataFlags::CREATIONTIME` in src/process.h. */
 const CREATION_TIME_FLAG = 4
+/** `ProcessDataFlags::RESOURCEUSAGE`: the Resource Manager's counters, read in-process. */
+const RESOURCE_USAGE_FLAG = 8
 
 function assertWindowsProcessTreeCreationTime({ module, platform = process.platform }) {
   if (platform !== 'win32') {
@@ -28,7 +30,18 @@ function assertWindowsProcessTreeCreationTime({ module, platform = process.platf
     (supported & CREATION_TIME_FLAG) !== 0 &&
     typeof module?.getProcessCreationTime === 'function'
   ) {
-    return
+    if ((supported & RESOURCE_USAGE_FLAG) !== 0) {
+      return
+    }
+    // Why fail rather than degrade: without the bit the Resource Manager falls
+    // back to forking powershell.exe every poll, which only a rebuild fixes.
+    throw new Error(
+      [
+        '@vscode/windows-process-tree does not report ResourceUsage support',
+        `(supportedProcessDataFlags=${String(supported)}).`,
+        'Rebuild it from source so config/patches/@vscode__windows-process-tree@0.8.0.patch applies.'
+      ].join(' ')
+    )
   }
   throw new Error(
     [
@@ -41,4 +54,4 @@ function assertWindowsProcessTreeCreationTime({ module, platform = process.platf
   )
 }
 
-module.exports = { assertWindowsProcessTreeCreationTime, CREATION_TIME_FLAG }
+module.exports = { assertWindowsProcessTreeCreationTime, CREATION_TIME_FLAG, RESOURCE_USAGE_FLAG }

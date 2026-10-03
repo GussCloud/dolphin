@@ -29,6 +29,14 @@ vi.mock('../../shared/child-process/run-process', () => ({
   runProcess: (spec: { program: string; args?: string[] }) => runProcessMock(spec)
 }))
 
+// Pin the shell-sweep path: a Windows host with a ResourceUsage-capable addon
+// would otherwise read native counters and never reach the mocked runProcess.
+vi.mock('../windows/windows-process-table', () => ({
+  isWindowsProcessResourceUsageAvailable: () => false,
+  isWindowsProcessTableAvailable: () => false,
+  readWindowsProcessResourceTable: () => Promise.reject(new Error('not under test'))
+}))
+
 vi.mock('./pty-registry', () => ({
   listRegisteredPtys: listRegisteredPtysMock
 }))

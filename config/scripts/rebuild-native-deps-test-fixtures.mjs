@@ -25,7 +25,7 @@ import { peImage } from './windows-pe-image-fixture.mjs'
 const { CYGWIN_BREAKAWAY_MARKER, CYGWIN_BREAKAWAY_MARKER_TEXT } = createRequire(import.meta.url)(
   './node-pty-job-ownership.cjs'
 )
-const { CREATION_TIME_FLAG } = createRequire(import.meta.url)(
+const { CREATION_TIME_FLAG, RESOURCE_USAGE_FLAG } = createRequire(import.meta.url)(
   './windows-process-tree-creation-time.cjs'
 )
 
@@ -430,7 +430,7 @@ export function writeFakeWindowsRegistry(projectDir) {
 }
 
 /**
- * A healthy one: the addon reports CreationTime, which is what a build of the
+ * A healthy one: the addon reports CreationTime and ResourceUsage, which is what a build of the
  * patched source does and what the probe has required since the creation-time
  * gate landed. Exporting nothing means "the tarball prebuilt" to that gate.
  */
@@ -439,7 +439,7 @@ export function writeFakeWindowsProcessTree(projectDir) {
   mkdirSync(processTreeDir, { recursive: true })
   writeFileSync(
     join(processTreeDir, 'index.js'),
-    `module.exports = { supportedProcessDataFlags: ${CREATION_TIME_FLAG}, getProcessCreationTime: () => undefined }\n`
+    `module.exports = { supportedProcessDataFlags: ${CREATION_TIME_FLAG | RESOURCE_USAGE_FLAG}, getProcessCreationTime: () => undefined }\n`
   )
 }
 

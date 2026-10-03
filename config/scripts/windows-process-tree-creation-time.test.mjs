@@ -18,9 +18,18 @@ it('accepts the compiled capability only when both readers are available', () =>
   expect(() =>
     assertWindowsProcessTreeCreationTime({
       platform: 'win32',
-      module: { supportedProcessDataFlags: 7, getProcessCreationTime: () => undefined }
+      module: { supportedProcessDataFlags: 15, getProcessCreationTime: () => undefined }
     })
   ).not.toThrow()
+})
+
+it('rejects a binary built before resource counters existed so it is rebuilt', () => {
+  expect(() =>
+    assertWindowsProcessTreeCreationTime({
+      platform: 'win32',
+      module: { supportedProcessDataFlags: 7, getProcessCreationTime: () => undefined }
+    })
+  ).toThrow('ResourceUsage support')
 })
 
 it('still rejects a binary without table creation-time support', () => {

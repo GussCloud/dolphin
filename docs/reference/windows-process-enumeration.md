@@ -61,18 +61,19 @@ So be precise about what these two flag sets buy now. A detailed scan is one
 access at all. What the split buys on top of that is the handle itself: an
 identity scan opens nothing.
 
-So the module exposes two snapshots, and the row types differ so a cheap caller
-cannot read what its flag set did not pay for:
+So the module exposes three snapshots, and the row types differ so a cheap caller
+cannot read what its flag set did not pay for (the flag sets and row shapes live in
+`windows-process-table-flag-sets.ts`):
 
-| reader                                     | row type                    | flags                  | per-process handles |
-| ------------------------------------------ | --------------------------- | ---------------------- | ------------------- |
-| `readWindowsProcessIdentityTable[Fresh]()` | `WindowsProcessIdentityRow` | `None \| CreationTime` | none                |
-| `readWindowsProcessTable[Fresh]()`         | `WindowsProcessRow`         | `+ CommandLine`        | one `OpenProcess`   |
+| reader                                     | row type                            | flags                  | per-process handles |
+| ------------------------------------------ | ----------------------------------- | ---------------------- | ------------------- |
+| `readWindowsProcessIdentityTable[Fresh]()` | `WindowsProcessIdentityRow`         | `None \| CreationTime` | none                |
+| `readWindowsProcessTable[Fresh]()`         | `WindowsProcessRow`                 | `+ CommandLine`        | one `OpenProcess`   |
+| `readWindowsProcessResourceTable()`        | `WindowsProcessResourceCountersRow` | `ResourceUsage`        | one `OpenProcess`   |
 
-`Memory` is requested by neither. Nothing reads a working set off this table —
-`windows-process-resource-collector.ts` runs its own sweep because it needs
-commit and CPU counters in the same pass, and the addon stores `WorkingSetSize`
-into a `DWORD` so anything above 4 GB wraps anyway.
+`Memory` is requested by none of them: the addon stores its `WorkingSetSize` in a
+`DWORD`, so anything above 4 GB wraps. `ResourceUsage` (flag 8) is the Resource
+Manager's reader instead — see [Resource counters](#resource-counters).
 
 Measured on Windows 11 with 492 processes (p50 / p95):
 
@@ -83,10 +84,10 @@ Measured on Windows 11 with 492 processes (p50 / p95):
 | _retired_ (+ memory)             | 13.1 ms | 14.1 ms |
 | `Get-CimInstance` via PowerShell | 706 ms  | 723 ms  |
 
-There are exactly **two** caches, never one per caller. The fan-out this module
+There is exactly one cache per flag set, never one per caller. The fan-out this module
 exists to prevent is one scan per _caller_, and each reader still serves every
 caller wanting its flag set, so a 32-wide teardown still collapses into one scan
-of each. A third cache would need a third flag set, not a third caller.
+of each. A new cache needs a new flag set, never a new caller.
 
 ### Only one native read may be in flight, ever
 
@@ -344,7 +345,7 @@ on any other OS keeps using the scan.
 
 ## Why the package is patched
 
-`config/patches/@vscode__windows-process-tree@0.8.0.patch` carries six changes.
+`config/patches/@vscode__windows-process-tree@0.8.0.patch` carries seven changes.
 
 1. **Spectre mitigation.** The upstream `binding.gyp` requires Spectre-mitigated
    libraries, which Dolphin's Windows build agents do not install. `node-pty` is
@@ -386,6 +387,10 @@ on any other OS keeps using the scan.
    chat believes it has a reaper. And `windows-process-tree-creation-time.cjs`
    asserts it during install, which is what forces a from-source rebuild —
    the same role `node-pty-job-ownership.cjs` plays for node-pty's job exports.
+
+7. **The `ResourceUsage` flag (8).** See [Resource counters](#resource-counters).
+   `windows-process-tree-creation-time.cjs` requires this bit too, so an addon
+   compiled before it existed is rebuilt rather than silently degraded.
 
 The typings claim `commandLine` is truncated at 512 characters. Measured, it is
 not: the longest observed on a real host was 26,059.
@@ -521,19 +526,50 @@ already has, which is why the addon is checked again at load.
 ## What the snapshot does not provide
 
 `CreationDate` (process start time) now has an equivalent — `creationTimeMs`,
-above — but only inside this module. Daemon identity, managed-hook ownership and
-CPU accounting in the memory collector still read a start time through their own
-queries; those callers are not migrated.
+above — but only inside this module. Daemon identity and managed-hook ownership
+still read a start time through their own queries; those callers are not migrated.
+The memory collector's CPU accounting now reads it from `ResourceUsage`.
 
-Committed private bytes have no equivalent either, and the one memory value the
-addon can produce is unusable for the sizes Dolphin now sees: `process.cc` stores
-`pmc.WorkingSetSize` into a `DWORD`, so anything above 4 GB wraps — which is why
-neither flag set asks for it. That is the second reason
-`windows-process-resource-collector.ts` still runs its own
-`Get-CimInstance` sweep — it needs `PageFileUsage` (commit) and the CPU-time
-counters in the same pass. Migrating it to the native table would cost both, and
-it is why this module no longer sets the `Memory` flag at all: the field had no
-reader, and asking for it opened a handle per process on every snapshot.
+The retired `Memory` flag stays retired: `process.cc` stores
+`pmc.WorkingSetSize` into a `DWORD`, so anything above 4 GB wraps, and it opened a
+second handle per process. Resource counters come from `ResourceUsage` instead.
+
+## Resource counters
+
+The Resource Manager polls every two seconds while its panel is open, and it
+used to fork `powershell.exe` for a `Get-CimInstance Win32_Process` sweep on each
+poll — the per-operation interpreter spawn
+[`windows-edr-posture.md`](./windows-edr-posture.md) says behavioural EDR scores.
+The patch's `ResourceUsage` flag (8) answers the same question in-process.
+
+`GetProcessResourceUsage` opens one `PROCESS_QUERY_LIMITED_INFORMATION` handle
+per process and reads `GetProcessMemoryInfo` (`PROCESS_MEMORY_COUNTERS_EX`) plus
+`GetProcessTimes` — the counters Task Manager shows, kept by the kernel, never read
+from the target's address space. Each row gains `workingSetBytes`, `privateBytes`
+(`PrivateUsage`, the commit charge CIM reports as `PageFileUsage`) and
+`cpuTime100ns`, all 64-bit. The same `GetProcessTimes` call fills
+`creationTimeMs`, so the flag never needs `CreationTime` beside it and never opens
+a second handle. A process that refuses the handle (protected and elevated
+system processes) carries none of the counters — absent, not zero.
+
+Measured on Windows 11, 350 processes: p50 10.4 ms / p95 11.2 ms per scan against
+621 ms for one CIM call. Values agree with CIM for the same process. 217 of 350
+processes opened; Dolphin's own subtree always does.
+
+`windows-process-resource-collector.ts` reads it only when
+`isWindowsProcessResourceUsageAvailable()` — the **binary's** bit, for the same
+reason as `CreationTime` above. If a loaded reader then fails or wedges, the
+collector returns no rows for that poll rather than forking a shell.
+
+An addon that loads but predates flag 8 — a relay or dolphind host whose staged
+`.node` has not been redeployed, or a stale local build — keeps working: identity
+and detailed reads are unchanged, and the collector falls back to the CIM/typeperf
+sweep at most once per 30 s, serving cached rows in between. Only a host with no
+addon at all still sweeps at the poll rate, which is the documented no-binding
+fallback above. Desktop installs cannot stay stale:
+`windows-process-tree-creation-time.cjs` requires the bit, so
+`ensure-native-runtime` and `rebuild-native-deps` rebuild the addon, and the
+packaged copy comes from that rebuild.
 
 Start time is a proxy for identity, not identity. For the process trees Dolphin
 itself spawns the durable answer is still an inherited handle: a job object
