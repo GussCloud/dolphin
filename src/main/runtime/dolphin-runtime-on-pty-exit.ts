@@ -10,6 +10,7 @@ import { SSH_EXIT_UNCONFIRMED_REASON } from '../../shared/pty-liveness-verdict'
 import type { RetiredTerminalSurface } from './mobile-session-terminal-retirement'
 import { parsePaneKey } from '../../shared/stable-pane-id'
 import { advertisedUrlWatcher } from '../ports/advertised-url-watcher'
+import { compactExitedTerminalTail } from './exited-terminal-tail-retention'
 
 export class DolphinRuntimeWithOnPtyExit extends DolphinRuntimeWithOnClientDisconnected {
   onPtyExit(
@@ -245,6 +246,10 @@ export class DolphinRuntimeWithOnPtyExit extends DolphinRuntimeWithOnClientDisco
       leaf.lastExitCause = exitCause
       leaf.lastAgentStatusObservedLive = false
       this.resolveExitWaiters(leaf)
+      // Why after the waiters: they read the full tail. Unconfirmed SSH exits keep it — the process may still be live.
+      if (!preservesAbnormalSshSurface) {
+        compactExitedTerminalTail(leaf)
+      }
       const leafHandle = this.handleByLeafKey.get(this.getLeafKey(leaf.tabId, leaf.leafId))
       if (leafHandle) {
         exitedSurfaces.push({ handle: leafHandle, paneKey: `${leaf.tabId}:${leaf.leafId}` })
