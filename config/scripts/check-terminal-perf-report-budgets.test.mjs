@@ -200,7 +200,7 @@ describe('check-terminal-perf-report-budgets', () => {
 
   it('accepts parked-memory rows that carry only heap and view-count metrics', () => {
     const reportPath = writeReport(
-      'panes=8 parkedTabs=8 heapUsedMB=87.8 liveTerminals=1 livePaneManagers=1',
+      'panes=8 parkedTabs=7 heapUsedMB=87.8 liveTerminals=2 livePaneManagers=2',
       'opencode-parked-memory'
     )
 
@@ -210,6 +210,35 @@ describe('check-terminal-perf-report-budgets', () => {
     })
 
     expect(output).toContain('Terminal perf budget check passed for 1 annotation row(s).')
+  })
+
+  it('fails parked-memory rows over the renderer heap or live-view budgets', () => {
+    const result = runChecker(
+      writeReport(
+        'panes=8 parkedTabs=7 heapUsedMB=128.1 liveTerminals=3 livePaneManagers=3',
+        'opencode-parked-memory'
+      )
+    )
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('renderer JS heap 128.1MB exceeded budget 128MB')
+    expect(result.stderr).toContain('live xterm instances 3 exceeded budget 2')
+    expect(result.stderr).toContain('live pane managers 3 exceeded budget 2')
+  })
+
+  // The kill-switch scenario retains every view by design; only its heap is budgeted.
+  it('budgets only the heap for the parking-disabled scenario', () => {
+    const scenario = 'opencode-parked-memory-disabled'
+    const retained = 'panes=8 parkedTabs=0 liveTerminals=9 livePaneManagers=9'
+    expect(runChecker(writeReport(`${retained} heapUsedMB=192.0`, scenario)).status).toBe(0)
+    const over = runChecker(writeReport(`${retained} heapUsedMB=250.0`, scenario))
+    expect(over.status).toBe(1)
+    expect(over.stderr).toContain('renderer JS heap 250MB exceeded budget 192MB')
+  })
+
+  it('leaves memory metrics unbudgeted outside parked-memory scenarios', () => {
+    const result = runChecker(writeReport('heapUsedMB=900.0 livePaneManagers=50'))
+    expect(result.status, result.stderr).toBe(0)
   })
 
   it('fails OpenCode annotation rows that contain no budget metrics', () => {
