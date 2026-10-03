@@ -82,6 +82,7 @@ export function installTerminalPaneMountEvents(args: {
     if (!mgr) {
       return
     }
+    detail.onClaimedByMountedTab?.()
     const result = applyTerminalPaneCloseRequest({
       detail,
       manager: mgr,

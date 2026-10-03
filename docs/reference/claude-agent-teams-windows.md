@@ -73,6 +73,12 @@ siblings also sends the renderer a leaf-addressed close (`ui:closeTerminal` with
 a pane that already closed itself is ignored rather than falling through to a tab close.
 A teammate that exits 0 closes its pane through the normal exit path.
 
+When the leader's tab is not mounted (another worktree is active), no pane manager hears
+that close, so `dispatchLeafCloseWithStoreFallback` removes the leaf from the stored layout
+and retires its agent session. Otherwise the leaf respawns on the next mount and
+cold-restores `claude --resume <teammate session>` as a plain interactive session outside
+the team.
+
 ## The shim is a native tmux.exe
 
 Verified in Claude 2.1.286: backend selection has no win32 block (if `TMUX` is set it

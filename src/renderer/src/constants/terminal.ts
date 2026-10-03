@@ -71,6 +71,8 @@ export type CloseTerminalPaneDetail = {
   preservePty?: boolean
   retireSurface?: boolean
   expectedPtyId?: string
+  /** Called by the mounted pane manager that owns the tab; unclaimed closes fall back to the store. */
+  onClaimedByMountedTab?: () => void
 }
 
 export type BackgroundMountTerminalWorktreeDetail = {

@@ -6,6 +6,7 @@ import { runSleepWorktree } from '@/components/sidebar/sleep-worktree-flow'
 import { buildWorkspaceSessionPayload } from '@/lib/workspace-session'
 import { persistWorkspaceSessionByHost } from '@/lib/workspace-session-host-persistence'
 import { useAppStore } from '../../store'
+import { dispatchLeafCloseWithStoreFallback } from '../terminal-leaf-store-close'
 
 export function registerMobileAndTerminalCloseIpcBridge(
   unsubs: (() => void)[],
@@ -54,11 +55,12 @@ export function registerMobileAndTerminalCloseIpcBridge(
 
   unsubs.push(
     window.api.ui.onCloseTerminal(({ tabId, paneRuntimeId, leafId }) => {
-      if (paneRuntimeId != null || leafId) {
+      if (paneRuntimeId != null) {
         // Why: route pane closes via the lifecycle hook for sibling promotion (falls through to closeTab on the last pane).
-        const detail: CloseTerminalPaneDetail =
-          paneRuntimeId != null ? { tabId, paneRuntimeId } : { tabId, leafId }
+        const detail: CloseTerminalPaneDetail = { tabId, paneRuntimeId }
         window.dispatchEvent(new CustomEvent(CLOSE_TERMINAL_PANE_EVENT, { detail }))
+      } else if (leafId) {
+        dispatchLeafCloseWithStoreFallback(tabId, leafId)
       } else {
         // Why: the CLI/RPC caller is answered immediately, so it cannot wait on a modal.
         closeTerminalTab(tabId, { skipRunningProcessConfirm: true })
