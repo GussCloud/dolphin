@@ -129,6 +129,8 @@ export abstract class UsageProviderStoreLifecycle<
       return
     }
 
+    // Why: a persisted error must be cleared on disk even when the data did not change.
+    const persistedError = this.state.scanState.lastScanError !== null
     this.state.scanState.lastScanStartedAt = Date.now()
     this.state.scanState.lastScanError = null
 
@@ -138,20 +140,31 @@ export abstract class UsageProviderStoreLifecycle<
         const repos = this.store.getRepos()
         const worktreesByRepo = loadKnownUsageWorktreesByRepo(this.store, repos)
         const worktreeFingerprint = getUsageWorktreeFingerprint(worktreesByRepo)
+        const reusesCache = this.state.worktreeFingerprint === worktreeFingerprint
         const result = await this.config.scan(
           createWorktreeRefs(repos, worktreesByRepo),
-          this.state.worktreeFingerprint === worktreeFingerprint
+          reusesCache
             ? this.state[this.config.sourceKey]
             : this.config.createDefaultState()[this.config.sourceKey]
         )
-        this.state[this.config.sourceKey] = result[this.config.sourceKey]
-        this.state.sessions = result.sessions
-        this.state.dailyAggregates = result.dailyAggregates
-        this.state.worktreeFingerprint = worktreeFingerprint
+        // Why reusesCache: "unchanged" is relative to the cache the scan was given.
+        // Why `in`: scans may add UsageScanResult.unchanged beyond the persisted projection.
+        const unchanged = 'unchanged' in result && result.unchanged === true && reusesCache
+        if (!unchanged) {
+          this.state[this.config.sourceKey] = result[this.config.sourceKey]
+          this.state.sessions = result.sessions
+          this.state.dailyAggregates = result.dailyAggregates
+          this.state.worktreeFingerprint = worktreeFingerprint
+        }
         this.state.scanState.lastScanCompletedAt = Date.now()
         this.state.scanState.lastScanError = null
-        // Persistence failures do not turn a successful source scan into a scan failure.
-        await this.writeToDisk().catch(() => {})
+        // Why skip: re-serializing an identical history snapshot is the whole cost of the write;
+        // the only stale field left on disk is lastScanCompletedAt, which load() never trusts
+        // beyond triggering one early, cache-reusing rescan.
+        if (!unchanged || persistedError) {
+          // Persistence failures do not turn a successful source scan into a scan failure.
+          await this.writeToDisk().catch(() => {})
+        }
       } catch (error) {
         this.state.scanState.lastScanError = error instanceof Error ? error.message : String(error)
         await this.writeToDisk().catch(() => {})

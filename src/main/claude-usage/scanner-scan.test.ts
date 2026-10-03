@@ -367,6 +367,9 @@ describe('scanClaudeUsageFiles', () => {
     expect(third.dailyAggregates.reduce((sum, aggregate) => sum + aggregate.inputTokens, 0)).toBe(
       150
     )
+    expect(first.unchanged).toBe(false)
+    expect(second.unchanged).toBe(false)
+    expect(third.unchanged).toBe(true)
   })
 
   it('migrates a cache written with raw ownership keys without double counting a fork', async () => {
@@ -410,6 +413,8 @@ describe('scanClaudeUsageFiles', () => {
       [ownershipKey('msg_1:req_1')],
       []
     ])
+    // A migrated cache must be persisted even though nothing was reparsed.
+    expect((await scanClaudeUsageFiles([], legacyCache)).unchanged).toBe(false)
   })
 
   it('reclaims fork-copied turns when the owning original file is deleted', async () => {

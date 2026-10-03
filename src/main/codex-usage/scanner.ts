@@ -9,6 +9,7 @@ import { codexUsageAggregation } from './codex-usage-aggregation'
 import { getProcessedFileInfo, parseCodexUsageFile } from './codex-rollout-file-parse'
 import { resolveCodexRolloutResume } from './codex-rollout-resume-state'
 import { compactLegacyUsageOwnershipKeys } from '../usage/usage-ownership-key'
+import { isUnchangedUsageScan } from '../usage/usage-unchanged-scan'
 import type {
   CodexUsageDailyAggregate,
   CodexUsageParseResumeState,
@@ -41,6 +42,7 @@ export async function scanCodexUsageFiles(
   processedFiles: CodexUsagePersistedFile[]
   sessions: CodexUsageSession[]
   dailyAggregates: CodexUsageDailyAggregate[]
+  unchanged: boolean
 }> {
   const files = await listCodexSessionFiles()
   const previousProcessedFiles = cachedProcessedFiles.map(withCompactOwnership)
@@ -155,6 +157,12 @@ export async function scanCodexUsageFiles(
 
   return {
     processedFiles,
+    unchanged: isUnchangedUsageScan({
+      cached: cachedProcessedFiles,
+      migrated: previousProcessedFiles,
+      processed: processedFiles,
+      parsedCount: pathsToParse.length
+    }),
     sessions: finalizeSessions(sessionsById),
     dailyAggregates: sortDailyAggregates(dailyByKey)
   }

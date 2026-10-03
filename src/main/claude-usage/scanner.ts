@@ -20,6 +20,7 @@ import {
   mergeClaudeSessions
 } from './usage-aggregation'
 import { compactLegacyUsageOwnershipKeys, toUsageOwnershipKey } from '../usage/usage-ownership-key'
+import { isUnchangedUsageScan } from '../usage/usage-unchanged-scan'
 
 const FILE_SCAN_BATCH_SIZE = 4
 
@@ -55,6 +56,7 @@ export async function scanClaudeUsageFiles(
   processedFiles: ClaudeUsagePersistedFile[]
   sessions: ClaudeUsageSession[]
   dailyAggregates: ClaudeUsageDailyAggregate[]
+  unchanged: boolean
 }> {
   const files = await listClaudeTranscriptFiles()
   const previousProcessedFiles = cachedProcessedFiles.map(withCompactOwnership)
@@ -180,6 +182,12 @@ export async function scanClaudeUsageFiles(
 
   return {
     processedFiles,
+    unchanged: isUnchangedUsageScan({
+      cached: cachedProcessedFiles,
+      migrated: previousProcessedFiles,
+      processed: processedFiles,
+      parsedCount: pathsToParse.length
+    }),
     sessions: finalizeClaudeSessions(sessionsById),
     dailyAggregates: [...dailyByKey.values()].sort((left, right) =>
       left.day === right.day

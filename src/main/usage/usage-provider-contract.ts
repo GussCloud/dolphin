@@ -33,6 +33,9 @@ export type UsageScanResult<TSourceKey extends string, TSource, TSession, TDaily
 > & {
   sessions: readonly TSession[]
   dailyAggregates: readonly TDaily[]
+  /** Every cached source was reused unchanged; the arrays may then be empty and the caller
+   *  keeps its previous projection. */
+  unchanged?: boolean
 }
 
 export type UsageProvider<TSourceKey extends string, TSource, TSession, TDaily> = {

@@ -58,6 +58,7 @@ type ProviderScanResult<TSource, TSession, TDaily> = {
   source: TSource[]
   sessions: TSession[]
   dailyAggregates: TDaily[]
+  unchanged?: boolean
 }
 
 /**

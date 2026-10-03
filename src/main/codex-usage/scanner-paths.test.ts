@@ -533,6 +533,8 @@ describe('listCodexSessionFiles', () => {
     expect(
       third.dailyAggregates.reduce((total, aggregate) => total + aggregate.totalTokens, 0)
     ).toBe(22)
+    expect(second.unchanged).toBe(false)
+    expect(third.unchanged).toBe(true)
   })
 
   it('migrates a cache written with raw event keys without double counting a fork', async () => {
