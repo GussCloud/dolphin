@@ -3,6 +3,7 @@ import { spawnProcess, type SpawnedProcess } from '../../shared/child-process/ru
 import { getAppEnvironment } from '../../shared/app-environment'
 import { buildDurableDaemonScopeCommand } from './daemon-cgroup-scope'
 import { daemonLogArgs } from './daemon-launch-paths'
+import { daemonHeapCeilingExecArgv } from './daemon-heap-ceiling'
 
 export type DaemonChildSpawnOptions = {
   entryPath: string
@@ -57,6 +58,7 @@ export function spawnDaemonChildProcess(
 ): SpawnedProcess {
   const { forkEntryPath, relocatedExecPath, userDataPath, launchNonce } = options
   const scriptArgs = buildDaemonScriptArgs(options)
+  const heapCeilingArgs = daemonHeapCeilingExecArgv()
   // Why: run as plain Node so Electron's GPU/display init can't interfere with node-pty's posix_spawn of the spawn-helper.
   const daemonEnv = {
     ...process.env,
@@ -78,12 +80,16 @@ export function spawnDaemonChildProcess(
       args: scriptArgs,
       // Why: run the byte-identical relocated Dolphin.exe so the image path sits outside the updater's kill zone.
       ...(relocatedExecPath ? { execPath: relocatedExecPath } : {}),
+      // Why keep process.execArgv: setting execArgv replaces fork's inherited default.
+      ...(heapCeilingArgs.length > 0
+        ? { execArgv: [...process.execArgv, ...heapCeilingArgs] }
+        : {}),
       env: daemonEnv
     })
   }
   const scoped = buildDurableDaemonScopeCommand(
     relocatedExecPath ?? process.execPath,
-    [forkEntryPath, ...scriptArgs, '--fresh-daemon-scope'],
+    [...heapCeilingArgs, forkEntryPath, ...scriptArgs, '--fresh-daemon-scope'],
     launchNonce,
     daemonEnv
   )
