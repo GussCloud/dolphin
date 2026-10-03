@@ -141,6 +141,16 @@ export const GIT_RESPONSE_STREAM_THRESHOLD = 256 * 1024
  * the client reassembles by concatenation (it does not depend on chunk size). */
 export const GIT_RESPONSE_CHUNK_SIZE = 128 * 1024
 
+/** Concurrent git/listFiles response streams per relay; each pins its whole
+ * serialized payload until the last chunk is acknowledged. Mirrors fs streams. */
+export const MAX_CONCURRENT_GIT_RESPONSE_STREAMS = MAX_CONCURRENT_STREAMS
+
+/** How long a pump parked on a full ack window may go without ack progress
+ * before the relay drops the payload and fails the stream. Twice the client's
+ * 30 s reassembly inactivity timeout, so a live reader always gives up (and
+ * cancels) first; this only reclaims streams whose reader is gone silently. */
+export const GIT_RESPONSE_STREAM_ACK_STALL_DEADLINE_MS = 60_000
+
 /** Sentinel result returned in place of a large git response: the real payload
  * follows as git.responseChunk frames on the bulk lane. Old relays never emit
  * this, so a new client falls back to the plain result they return. */
