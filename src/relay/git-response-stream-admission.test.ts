@@ -23,6 +23,13 @@ function windowOverflowPayload(): Buffer {
   return Buffer.alloc(GIT_RESPONSE_CHUNK_SIZE * (STREAM_ACK_WINDOW_CHUNKS * 3), 0x61)
 }
 
+function chunkData(params: unknown): string {
+  if (typeof params === 'object' && params !== null && 'data' in params) {
+    return typeof params.data === 'string' ? params.data : ''
+  }
+  return ''
+}
+
 function sentMethods(notifyBulk: ReturnType<typeof vi.fn>): string[] {
   return notifyBulk.mock.calls.map(([method]) => String(method))
 }
@@ -141,7 +148,7 @@ describe('GitResponseStreamRegistry admission and ack stall deadline', () => {
 
     const chunks = notifyBulk.mock.calls
       .filter(([method]) => method === 'git.responseChunk')
-      .map(([, params]) => Buffer.from(String(Reflect.get(Object(params), 'data')), 'base64'))
+      .map(([, params]) => Buffer.from(chunkData(params), 'base64'))
     expect(chunks).toHaveLength(chunkCount)
     expect(Buffer.concat(chunks).equals(payload)).toBe(true)
     expect(sentMethods(notifyBulk).at(-1)).toBe('git.responseEnd')
