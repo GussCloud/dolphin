@@ -52,6 +52,17 @@ peak queue spans the active/revisit ACK-pressure scenarios.
   The old 2 Mi peak budget rejects ordinary deliberately held-ACK bursts; the
   proposed 5 Mi e2e ceiling was unnecessarily loose. Other scenarios keep 2 Mi.
 
+- Parked-memory renderer JS heap: **128 MB** with parking on and **192 MB** with the
+  `terminalHiddenViewParking` kill switch off, both for the 8-tab
+  `terminal-parked-memory.spec.ts` scenarios. Evidence: the spec's introduction
+  recorded 87.8 / 89.1 MB, and a 2026-10-03 local Windows run measured 65.3 / 114.6 MB.
+  That leaves 1.5–2x headroom over the largest sample, enough for GC noise while a
+  retained scrollback leak still fails. The heap figure leaves out xterm's typed-array
+  rows, so the parked scenario also caps live xterm instances and pane managers at
+  **2** (the visible tab plus the last-active warm tab). The disabled scenario
+  keeps every view by design, so only its heap is capped. Other scenarios do not
+  budget these metrics.
+
 For the linked September 21 report, the two peak-queue failures are corrected;
 the three slow restores, worst-key stall, and timer stall still fail. This change
 does not claim to fix those stalls or make that run green. Re-evaluate future

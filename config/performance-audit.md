@@ -23,7 +23,14 @@ and inherit the full suite's setup and forced-GC support. This makes existing
 regression coverage easy to run and attribute; it does not create new workload
 coverage by itself.
 
-No CI workflow runs these contracts; run `pnpm run test:perf:contracts` locally. Run the existing
+The nightly `Memory contracts` workflow (`.github/workflows/memory-contracts.yml`,
+also `workflow_dispatch`) runs these contracts, then
+`node config/scripts/run-memory-audit-reproductions.mjs`. That runner executes a few
+cheap, deterministic `docs/audits/*/reproduce.mjs` scripts and checks the current
+source against a count or heap oracle: a fixed case must retain less than half its
+in-memory baseline and stay under an absolute ceiling. It is not a PR gate. The
+reproductions replace exact source text, so run them on an LF checkout. On a CRLF
+Windows checkout they report a changed baseline. Run the existing
 `test:e2e:terminal-perf:scale:report` for rendered typing/frame budgets and
 `test:e2e:ssh-docker-perf` for real transport behavior. Relay unit tests do not
 measure SSH RTT, WSL scheduling or a packaged Electron renderer.

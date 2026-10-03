@@ -108,12 +108,20 @@ function validateRow(row) {
     parseCount(row.rendererDroppedBacklogs, 'rendererDroppedBacklogs', row, failures),
     budgets.rendererDroppedBacklogs
   )
-  // Why: parked-memory rows carry heap/view-count metrics with no latency
-  // budget; recognize them so memory-only scenarios pass the gate instead of
-  // tripping the "no recognized budget metrics" guard.
-  for (const fieldName of ['heapUsedMB', 'liveTerminals', 'livePaneManagers']) {
-    if (parseCount(row[fieldName], fieldName, row, failures) != null) {
-      checkedMetricCount += 1
+  // Why: memory metrics are budgeted only for the scenarios that define a
+  // ceiling; elsewhere they still count as recognized evidence.
+  for (const [fieldName, label, unit] of [
+    ['heapUsedMB', 'renderer JS heap', 'MB'],
+    ['liveTerminals', 'live xterm instances', ''],
+    ['livePaneManagers', 'live pane managers', '']
+  ]) {
+    const actual = parseCount(row[fieldName], fieldName, row, failures)
+    if (actual == null) {
+      continue
+    }
+    checkedMetricCount += 1
+    if (budgets[fieldName] != null) {
+      addMaxFailure(failures, row, label, actual, budgets[fieldName], unit)
     }
   }
   if (checkedMetricCount === 0) {

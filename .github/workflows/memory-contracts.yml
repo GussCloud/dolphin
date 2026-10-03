@@ -1,0 +1,49 @@
+name: Memory contracts
+
+# Why: nightly memory/performance regression signal; never a PR gate. Contracts
+# are serial, retry-free, and the reproductions are deterministic heap/count
+# oracles (config/performance-audit.md).
+on:
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ref to check out (defaults to the workflow ref)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: memory-contracts-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  memory-contracts:
+    name: performance contracts and memory audit reproductions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          persist-credentials: false
+
+      # Why: the SQLite contracts load native modules built for plain Node.
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: node
+
+      - name: Run performance contracts
+        run: pnpm exec vitest run --config config/vitest.performance.config.ts
+
+      # Why: run even when a contract fails so one red step does not hide the other signal.
+      - name: Run memory audit reproductions
+        if: success() || failure()
+        run: node config/scripts/run-memory-audit-reproductions.mjs

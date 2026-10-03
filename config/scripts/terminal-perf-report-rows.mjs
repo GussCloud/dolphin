@@ -10,7 +10,10 @@ const ROW_BUDGET_FIELDS = [
   ['restoreMs', 'restore'],
   ['rendererQueuedChars', 'rendererQueuedChars'],
   ['rendererPeakQueuedChars', 'rendererPeakQueuedChars'],
-  ['rendererDroppedBacklogs', 'rendererDroppedBacklogs']
+  ['rendererDroppedBacklogs', 'rendererDroppedBacklogs'],
+  ['heapUsedMB', 'heapUsedMB'],
+  ['liveTerminals', 'liveTerminals'],
+  ['livePaneManagers', 'livePaneManagers']
 ]
 
 const SCENARIO_LABELS = [
