@@ -64,6 +64,8 @@ export class DaemonTerminalAdmission {
       throw new Error(DAEMON_ENDPOINT_LOST_MESSAGE)
     }
     this.createOrAttachInFlight++
+    const admittedAt = performance.now()
+    let hostStartedAt = admittedAt
     let routedSessionId = payload.sessionId
     let result: CreateOrAttachResult
     let spawnPreparation: PendingPtySpawnPreparation | null = null
@@ -93,6 +95,7 @@ export class DaemonTerminalAdmission {
           : payload.historySeed !== undefined
             ? [payload.historySeed]
             : undefined
+      hostStartedAt = performance.now()
       result = await this.options.host.createOrAttach({
         sessionId: payload.sessionId,
         cols: payload.cols,
@@ -155,7 +158,9 @@ export class DaemonTerminalAdmission {
     this.options.log.log(result.isNew ? 'session-created' : 'session-attached', {
       sessionId: routedSessionId,
       pid: result.pid,
-      incarnationId: result.incarnationId
+      incarnationId: result.incarnationId,
+      prepareMs: Math.round(hostStartedAt - admittedAt),
+      hostCreateMs: Math.round(performance.now() - hostStartedAt)
     })
     return {
       isNew: result.isNew,

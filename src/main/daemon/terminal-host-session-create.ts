@@ -1,3 +1,4 @@
+import type { PtySpawnTiming } from './pty-subprocess'
 import { buildStartupCommandSubmission } from '../../shared/startup-command-submission'
 import { resolvePtyOwnerBackend } from '../../shared/pty-owner-backend'
 import { getDaemonSessionResultMetadata } from './daemon-create-or-attach-result'
@@ -112,8 +113,11 @@ async function spawnAndPublishSession(
 ): Promise<CreateOrAttachResult> {
   const { size, wslDistro } = ctx
   // Why before the fork: the shell's own cwd may already have fallen back, so probe the requested path.
+  const startedAt = performance.now()
   const cwdReadableByDaemon =
     opts.cwd && !wslDistro ? await isCwdReadableByThisProcess(opts.cwd) : null
+  const cwdProbeEndedAt = performance.now()
+  let spawnTiming: PtySpawnTiming | undefined
   const subprocess = await deps.spawnSubprocess({
     sessionId: opts.sessionId,
     cols: size.cols,
@@ -130,7 +134,16 @@ async function spawnAndPublishSession(
     terminalWindowsWslDistro: opts.terminalWindowsWslDistro,
     terminalWindowsPowerShellImplementation: opts.terminalWindowsPowerShellImplementation,
     isCanceled: opts.isCanceled,
-    ...(opts.cancelSignal ? { cancelSignal: opts.cancelSignal } : {})
+    ...(opts.cancelSignal ? { cancelSignal: opts.cancelSignal } : {}),
+    onSpawnTiming: (timing) => {
+      spawnTiming = timing
+    },
+    onStartupLatency: createStartupLatencyReporter(deps.reportReadinessEvent, opts.sessionId)
+  })
+  reportSessionDiagnostic(deps, opts.sessionId, {
+    cwdProbeMs: Math.round(cwdProbeEndedAt - startedAt),
+    spawnSubprocessMs: Math.round(performance.now() - cwdProbeEndedAt),
+    ...spawnTiming
   })
 
   // Why: a fallback shell does not emit the preferred shell's ready marker;
@@ -219,6 +232,35 @@ async function spawnAndPublishSession(
     ...getDaemonSessionResultMetadata(session),
     ...(cwdReadableByDaemon !== null ? { cwdReadableByDaemon } : {}),
     attachToken: token
+  }
+}
+
+function reportSessionDiagnostic(
+  deps: TerminalHostSessionCreateDependencies,
+  sessionId: string,
+  timing: Record<string, number | undefined>
+): void {
+  try {
+    deps.reportReadinessEvent?.('session-spawn-timing', { sessionId, ...timing })
+  } catch {
+    // Diagnostics must never turn a live PTY into a failed create.
+  }
+}
+
+// Why a standalone closure: it outlives the spawn by seconds and must not retain the request or env.
+function createStartupLatencyReporter(
+  report: TerminalHostSessionCreateDependencies['reportReadinessEvent'],
+  sessionId: string
+): ((latency: Record<string, number | undefined>) => void) | undefined {
+  if (!report) {
+    return undefined
+  }
+  return (latency) => {
+    try {
+      report('session-startup-latency', { sessionId, ...latency })
+    } catch {
+      // Diagnostics only.
+    }
   }
 }
 

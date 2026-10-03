@@ -1,6 +1,8 @@
 import type { StartupCommandDelivery } from '../../shared/codex-startup-delivery'
 import type { TuiAgent } from '../../shared/tui-agent'
 import type { SubprocessHandle } from './session-subprocess-handle'
+import type { PtySpawnTiming } from './pty-subprocess'
+import type { PtyStartupLatency } from './pty-subprocess/pty-startup-latency-probe'
 import type { TakePendingOutputResult, TerminalSnapshot } from './types'
 
 export type TerminalHostOptions = {
@@ -21,6 +23,8 @@ export type TerminalHostOptions = {
     terminalWindowsPowerShellImplementation?: 'auto' | 'powershell.exe' | 'pwsh.exe'
     isCanceled?: () => boolean
     cancelSignal?: AbortSignal
+    onSpawnTiming?: (timing: PtySpawnTiming) => void
+    onStartupLatency?: (latency: PtyStartupLatency) => void
     // Async production spawns and sync test stubs share this boundary.
   }) => SubprocessHandle | Promise<SubprocessHandle>
   // Why: login-session death detection (#7936) needs subprocess exits even when no client is attached.
