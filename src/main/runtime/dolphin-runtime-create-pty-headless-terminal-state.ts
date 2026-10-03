@@ -1,11 +1,15 @@
 // @ts-nocheck -- mechanically split from DolphinRuntimeService; behavior is covered by AST equivalence and characterization tests.
 import { DolphinRuntimeWithMaybeHydrateHeadlessFromRenderer } from './dolphin-runtime-maybe-hydrate-headless-from-renderer'
 import type { RuntimeHeadlessTerminal } from './runtime-terminal-state-records'
-import { HeadlessEmulator } from '../daemon/headless-emulator'
 import { shouldForwardHeadlessTerminalQueryReply } from './headless-terminal-query-reply-policy'
 import { isNativeWindowsConptyPty } from './terminal-model-query-authority'
 import { getTerminalViewAttributes } from './terminal-view-attribute-store'
 import { PtyShellOwnershipMirror } from './pty-shell-ownership-mirror'
+import {
+  DepthGrowingHeadlessEmulator,
+  headlessModelScrollbackRows,
+  type HeadlessModelBinding
+} from './headless-model-depth-policy'
 
 export class DolphinRuntimeWithCreatePtyHeadlessTerminalState extends DolphinRuntimeWithMaybeHydrateHeadlessFromRenderer {
   /** Shared factory for the per-PTY runtime emulators (seed, hydration, and
@@ -17,9 +21,10 @@ export class DolphinRuntimeWithCreatePtyHeadlessTerminalState extends DolphinRun
   ): RuntimeHeadlessTerminal {
     let state: RuntimeHeadlessTerminal | null = null
     const pathFlavor = this.pathFlavorForPty(this.ptysById.get(ptyId))
-    const emulator = new HeadlessEmulator({
+    const emulator = new DepthGrowingHeadlessEmulator({
       cols: dims.cols,
       rows: dims.rows,
+      scrollback: headlessModelScrollbackRows(this.headlessModelBindingForPty(ptyId)),
       pathFlavor,
       remotePosixFileUriAuthority:
         !!this.ptysById.get(ptyId)?.connectionId && pathFlavor !== 'win32',
@@ -82,6 +87,22 @@ export class DolphinRuntimeWithCreatePtyHeadlessTerminalState extends DolphinRun
     }
     state = constructed
     return state
+  }
+
+  protected headlessModelBindingForPty(ptyId: string): HeadlessModelBinding {
+    return this.leafExistsForPty(ptyId) ||
+      this.ptyController?.hasRendererSerializer?.(ptyId) === true
+      ? 'desktop-bound'
+      : 'pane-less'
+  }
+
+  /** Called when a desktop pane binds this PTY; the model only ever grows while bound. */
+  protected raiseHeadlessModelDepthForDesktopBinding(ptyId: string): void {
+    const emulator = this.headlessTerminals.get(ptyId)?.emulator
+    // Why the guard: test fixtures may install plain models into the map.
+    if (emulator instanceof DepthGrowingHeadlessEmulator) {
+      emulator.growScrollbackRows(headlessModelScrollbackRows('desktop-bound'))
+    }
   }
 
   /** Phase-5 ConPTY DA1 retrofit (terminal-query-authority.md): invoked via

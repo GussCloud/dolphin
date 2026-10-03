@@ -184,6 +184,9 @@ export class DolphinRuntimeWithRefreshFloatingWorkspacePtyLiveness extends Dolph
       }
     }
     this.leavesByPtyId = next
+    for (const ptyId of next.keys()) {
+      this.raiseHeadlessModelDepthForDesktopBinding(ptyId)
+    }
   }
 
   protected getLeavesForPty(ptyId: string): RuntimeLeafRecord[] {
