@@ -151,7 +151,11 @@ import {
 } from '../../shared/setup-runner-command'
 import { createSequencedSetupAgentCommands } from '../../shared/setup-agent-sequencing'
 import { shouldWaitForSetupBeforeAgentStartup } from '../../shared/setup-agent-startup-policy'
-import { createWorktreeCreateTimingRecorder } from '../worktree-create-timing'
+import {
+  createWorktreeCreateTimingRecorder,
+  type WorktreeCreateTimingRecorder
+} from '../worktree-create-timing'
+import { runWithTerminalSpawnTiming } from '../worktree-create-terminal-spawn-timing'
 import {
   markCodexProjectTrusted,
   markCopilotFolderTrusted,
@@ -403,6 +407,7 @@ async function spawnLocalStartupAndSetupTerminals(args: {
   defaultTabs: CreateWorktreeResult['defaultTabs']
   settings: GlobalSettings
   createdWithAgent: CreateWorktreeArgs['createdWithAgent']
+  timing?: WorktreeCreateTimingRecorder
 }): Promise<StagedStartupResult> {
   const { runtime, worktree, startup, setup, defaultTabs, settings, createdWithAgent } = args
   if (!runtime || !startup || defaultTabs?.tabs.length) {
@@ -457,17 +462,22 @@ async function spawnLocalStartupAndSetupTerminals(args: {
         // Best-effort: launch still proceeds and the agent can ask interactively.
       }
     }
-    const terminal = await runtime.createTerminal(`id:${worktree.id}`, {
-      command: sequencedStartup.command,
-      ...(setup ? { claudeAgentTeamsSourceCommand: startup.command } : {}),
-      env: sequencedStartup.env,
-      ...(sequencedStartup.launchConfig ? { launchConfig: sequencedStartup.launchConfig } : {}),
-      ...(isTuiAgent(createdWithAgent) ? { launchAgent: createdWithAgent } : {}),
-      ...(sequencedStartup.viewMode ? { viewMode: sequencedStartup.viewMode } : {}),
-      startupCommandDelivery: sequencedStartup.startupCommandDelivery,
-      telemetry: sequencedStartup.telemetry,
-      activate: true
-    })
+    const createStartupTerminal = () =>
+      runtime.createTerminal(`id:${worktree.id}`, {
+        command: sequencedStartup.command,
+        ...(setup ? { claudeAgentTeamsSourceCommand: startup.command } : {}),
+        env: sequencedStartup.env,
+        ...(sequencedStartup.launchConfig ? { launchConfig: sequencedStartup.launchConfig } : {}),
+        ...(isTuiAgent(createdWithAgent) ? { launchAgent: createdWithAgent } : {}),
+        ...(sequencedStartup.viewMode ? { viewMode: sequencedStartup.viewMode } : {}),
+        startupCommandDelivery: sequencedStartup.startupCommandDelivery,
+        telemetry: sequencedStartup.telemetry,
+        activate: true
+      })
+    // Only the agent terminal is timed; the setup terminal below would overwrite its steps.
+    const terminal = args.timing
+      ? await runWithTerminalSpawnTiming(args.timing, createStartupTerminal)
+      : await createStartupTerminal()
     startupTerminalHandle = terminal.handle
     startupTerminal = {
       spawned: true,
@@ -3077,7 +3087,8 @@ async function performLocalWorktreeCreate(
       setup,
       defaultTabs,
       settings,
-      createdWithAgent: args.createdWithAgent
+      createdWithAgent: args.createdWithAgent,
+      timing
     })
   )
 

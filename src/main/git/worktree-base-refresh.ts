@@ -4,6 +4,7 @@ import {
   evaluateLocalBaseRefRefreshability,
   getLocalBaseRefUpdateSuggestionForWorktreeCreate
 } from './worktree-base-refresh-analysis'
+import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
 import { parseWorktreeList } from '../../shared/git-worktree-porcelain-parser'
 import type { AddWorktreeOptions, GitWorktreeExecOptions } from './worktree-operation-options'
 import { gitExecOptions } from './worktree-operation-options'
@@ -57,7 +58,12 @@ export async function refreshLocalBaseRefForWorktreeCreate(
         }
       }
       await gitExecFileAsync(
-        ['reset', '--hard', evaluation.remoteOid],
+        [
+          ...windowsParallelCheckoutGitArgs(currentOwner.path),
+          'reset',
+          '--hard',
+          evaluation.remoteOid
+        ],
         gitExecOptions(currentOwner.path, options)
       )
       return { ...resultBase, status: 'updated', ownerWorktreePath: currentOwner.path }

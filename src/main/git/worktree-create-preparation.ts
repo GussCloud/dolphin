@@ -1,4 +1,5 @@
 import { windowsLongPathGitArgs } from '../../shared/windows-long-path-git-args'
+import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
 import { resolveWorktreeAddBaseRef } from '../../shared/worktree/base-ref'
 import type { AddWorktreeOptions, AddWorktreeResult, GitWorktreeExecOptions } from './worktree'
 import { gitExecOptions, type GitExecOptionsForWorktree } from './worktree-operation-options'
@@ -81,7 +82,13 @@ export async function prepareWorktreeCreateCheckout(
           invalidateWslLinkedWorktreeGitRouting(worktreePath)
           // Why: reset materializes files without running user post-checkout hooks before submit.
           await gitExecFileAsync(
-            [...windowsLongPathGitArgs(worktreePath), 'reset', '--hard', effectiveBase],
+            [
+              ...windowsLongPathGitArgs(worktreePath),
+              ...windowsParallelCheckoutGitArgs(worktreePath),
+              'reset',
+              '--hard',
+              effectiveBase
+            ],
             { ...gitExecOptions(worktreePath, options), timeout: resolveWorktreeAddTimeoutMs() }
           )
           await gitExecFileAsync(
@@ -218,7 +225,13 @@ export async function finalizePreparedWorktree(
       const preparedHeadOutput = preparedResult.value.stdout
       if (preparedHeadOutput.trim() !== targetHead) {
         await gitExecFileAsync(
-          [...windowsLongPathGitArgs(preparedPath), 'reset', '--hard', targetHead],
+          [
+            ...windowsLongPathGitArgs(preparedPath),
+            ...windowsParallelCheckoutGitArgs(preparedPath),
+            'reset',
+            '--hard',
+            targetHead
+          ],
           gitExecOptions(preparedPath, finalizeGitOptions)
         )
       }

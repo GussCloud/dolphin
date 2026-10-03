@@ -98,7 +98,7 @@ describe('addSparseWorktree', () => {
     expect(calls).toEqual(
       expect.arrayContaining([
         'git -c core.longpaths=true sparse-checkout set -- packages/web',
-        'git -c core.longpaths=true checkout feature/test'
+        'git -c core.longpaths=true -c checkout.workers=0 checkout feature/test'
       ])
     )
   })
@@ -116,6 +116,7 @@ describe('addSparseWorktree', () => {
       ])
     )
     expect(calls.some((call) => call.includes('core.longpaths'))).toBe(false)
+    expect(calls.some((call) => call.includes('checkout.workers'))).toBe(false)
   })
 
   it('separates sparse checkout directory operands from options', async () => {
