@@ -63,6 +63,12 @@ export function createColdParkingModule() {
   }
 }
 
+export function createClosedFloatingPanelParkingModule() {
+  return {
+    useClosedFloatingPanelParking: () => false
+  }
+}
+
 export function createParkedTabWatchersModule(): Pick<
   FloatingTerminalPanelMocks,
   'shouldDeferParkedPtyExitTabClose'

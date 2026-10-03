@@ -41,6 +41,12 @@ vi.mock('@/components/terminal-pane/use-terminal-tab-cold-parking', async () => 
   return (await import('./floating-terminal-panel-test-module-mocks')).createColdParkingModule()
 })
 
+vi.mock('./use-closed-floating-panel-parking', async () => {
+  return (
+    await import('./floating-terminal-panel-test-module-mocks')
+  ).createClosedFloatingPanelParkingModule()
+})
+
 vi.mock('@/components/terminal-pane/terminal-parked-tab-watchers', async () => {
   return (
     await import('./floating-terminal-panel-test-module-mocks')

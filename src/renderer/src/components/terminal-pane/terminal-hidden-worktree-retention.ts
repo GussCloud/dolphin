@@ -48,6 +48,10 @@ export function selectHiddenTerminalTabsBeyondRetentionBudget(args: {
   retentionTtlMs?: number
   retentionLimit?: number
   retentionBytes?: number
+  /** Bytes of hidden panes that stay mounted whatever the budget says (sleeping-record, exempt,
+   *  split-lease, unwatchable). Why counted: the budget bounds what hidden panes hold in total, so
+   *  bytes nobody may evict leave less room for the ones that can be. */
+  pinnedBytes?: number
 }): Set<string> {
   if (!args.enabled) {
     return new Set()
@@ -71,7 +75,7 @@ export function selectHiddenTerminalTabsBeyondRetentionBudget(args: {
   }
   eligible.sort((a, b) => b.hiddenSinceMs - a.hiddenSinceMs || a.tabId.localeCompare(b.tabId))
   let retainedTabs = 0
-  let retainedBytes = 0
+  let retainedBytes = args.pinnedBytes ?? 0
   for (const candidate of eligible) {
     if (
       retainedTabs >= retentionLimit ||
