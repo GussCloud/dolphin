@@ -79,6 +79,11 @@ export abstract class AgentHookServerStatusApplication extends AgentHookServerSt
     }
   }
 
+  /** Register an Agent Teams teammate pane: Dolphin must never relaunch it with provider resume. */
+  markPaneNotTerminalResumable(paneKey: string): void {
+    this.notTerminalResumablePaneKeys.add(this.resolvePaneKeyAlias(paneKey))
+  }
+
   protected writeLegacyStatusRow(entry: EnrichedAgentHookEventPayload): boolean {
     return admitLegacyAgentStatus(
       this.state,
@@ -113,9 +118,14 @@ export abstract class AgentHookServerStatusApplication extends AgentHookServerSt
       previous && previous.payload.state === payload.payload.state && !commandCodeNewTurn
         ? previous.stateStartedAt
         : (observedAt ?? now)
+    // Why sticky: a teammate pane stays one after hydrate even if its registration never replays.
+    const notResumable =
+      previous?.terminalResumeEligible === false ||
+      this.notTerminalResumablePaneKeys.has(payload.paneKey)
     // Why: `stateStartedAt` tracks the current state, while `receivedAt` tracks every arrival.
     return {
       ...payload,
+      ...(notResumable ? { terminalResumeEligible: false as const } : {}),
       receivedAt: now,
       evidenceObservedAt: observedAt ?? this.resolveEvidenceObservedAt(payload, previous, now),
       stateStartedAt

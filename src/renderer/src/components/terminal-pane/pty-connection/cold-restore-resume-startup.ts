@@ -31,6 +31,10 @@ export function bindBuildColdRestoreAgentResumeStartup(session: ConnectPanePtySe
     const sleepingRecordEntry = session.getSleepingRecordForPane(state)
     const sleepingRecord = sleepingRecordEntry?.record
 
+    // Why: an Agent Teams teammate resumed outside its team returns as a stray interactive session.
+    if (entry?.terminalResumeEligible === false) {
+      return null
+    }
     const useLiveEntry = entry && entry.state !== 'done'
     const agent = useLiveEntry ? entry.agentType : sleepingRecord?.agent
     if (!agent || !isResumableTuiAgent(agent)) {

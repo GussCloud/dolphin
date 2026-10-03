@@ -94,6 +94,8 @@ export class DolphinRuntimeWithPreservedBranchCleanup extends DolphinRuntimeWith
     | ((paneKeys: Iterable<string>) => void)
     | null
 
+  protected readonly markAgentPaneNotTerminalResumableFn: ((paneKey: string) => void) | null
+
   protected readonly canRecoverPersistentLocalPtysFn: () => boolean
 
   protected readonly getPairedDeviceNameFn: (pairedDeviceId: string) => string | null

@@ -46,6 +46,8 @@ export type AgentTeamsTerminalApi = {
   ): Promise<RuntimeTerminalSplit>
   /** Null when the leader's PTY is unknown on a host where the answer matters. */
   resolveHostShell(leaderHandle: string): AgentTeamHostShell | null
+  /** A resumed teammate would come back as a plain session outside its team. */
+  markTeammatePaneNotResumable(handle: string): void
   readTerminal(handle: string, opts?: { limit?: number }): Promise<RuntimeTerminalRead>
   sendTerminal(
     handle: string,

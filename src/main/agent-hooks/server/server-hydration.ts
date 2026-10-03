@@ -101,6 +101,9 @@ export abstract class AgentHookServerHydration extends AgentHookServerReaping {
             (entry.payload.subagents?.length ?? 0) - (hydratedPayload.subagents?.length ?? 0)
           entry.payload = hydratedPayload
         }
+        if (entry.terminalResumeEligible === false) {
+          this.notTerminalResumablePaneKeys.add(resolvedPaneKey)
+        }
         if (entry.payload.state !== 'done') {
           // Why: the terminal transition may have fired while no receiver was up; restore as unconfirmed, never as live truth.
           entry.restoredUnconfirmed = true

@@ -123,6 +123,8 @@ export abstract class AgentHookServerState {
   )
   // Why: hydrated rows give UI continuity but aren't evidence of live agent work in this runtime.
   protected runtimeObservedStatusPaneKeys = new Set<string>()
+  /** Agent Teams teammate panes; every row written for them is stamped not terminal-resumable. */
+  protected notTerminalResumablePaneKeys = new Set<string>()
   protected hydratedAuthorityCommitments: readonly AgentHookAuthorityEvidence[] = Object.freeze([])
   protected hydratedLaunchTokenHashByPaneKey = new Map<string, string>()
   protected persistedAuthorityCommitmentsByPaneKey = new Map<string, AgentHookAuthorityEvidence>()

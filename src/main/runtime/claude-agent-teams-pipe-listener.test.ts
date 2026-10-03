@@ -38,6 +38,7 @@ function teamHandler(): { teamId: string; token: string; handle: AgentTeamsTmuxC
   const api: AgentTeamsTerminalApi = {
     splitTerminal: unused,
     resolveHostShell: () => null,
+    markTeammatePaneNotResumable: () => {},
     readTerminal: unused,
     sendTerminal: unused,
     focusTerminal: unused,

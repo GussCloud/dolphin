@@ -118,6 +118,8 @@ export function initializeMainProcessRuntime(): DolphinRuntimeService {
       agentHookServer.retirePaneAuthority(paneKey),
     reconcileAgentStatusForEndedProcess: (paneKeys) =>
       agentHookServer.reconcileEndedProcessForPaneKeys(paneKeys),
+    markAgentPaneNotTerminalResumable: (paneKey) =>
+      agentHookServer.markPaneNotTerminalResumable(paneKey),
     canRecoverPersistentLocalPtys: () => getDaemonProvider() !== null,
     // Why: evaluated per call, not captured — the RPC server that owns the device registry is
     // constructed with this runtime and does not exist yet at this point.

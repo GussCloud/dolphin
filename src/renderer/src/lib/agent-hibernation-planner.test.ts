@@ -133,6 +133,13 @@ describe('agent sleep planner', () => {
     ).toEqual([])
   })
 
+  it('never hibernates an Agent Teams teammate pane, which cannot be resumed', () => {
+    const teammate = entry({ terminalResumeEligible: false })
+    expect(
+      plannedPaneKeys(snapshot({ agentStatusByPaneKey: { [teammate.paneKey]: teammate } }))
+    ).toEqual([])
+  })
+
   it('treats an idle done copilot pane as a hibernation candidate', () => {
     const copilot = entry({
       agentType: 'copilot',

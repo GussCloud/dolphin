@@ -115,7 +115,13 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       focusTerminal: (handle) => this.focusTerminal(handle),
       closeTerminal: (handle) => this.closeTerminal(handle),
       showTerminal: (handle) => this.showTerminal(handle),
-      resolveHostShell: (leaderHandle) => this.resolveClaudeAgentTeamsHostShell(leaderHandle)
+      resolveHostShell: (leaderHandle) => this.resolveClaudeAgentTeamsHostShell(leaderHandle),
+      markTeammatePaneNotResumable: (handle) => {
+        const paneKey = this.getPaneKeyForTerminalHandle(handle)
+        if (paneKey) {
+          this.markAgentPaneNotTerminalResumableFn?.(paneKey)
+        }
+      }
     })
   }
 

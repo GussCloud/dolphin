@@ -83,6 +83,8 @@ export class DolphinRuntimeWithStateFields extends DolphinRuntimeWithLinearComma
       }) => AgentHookAuthorityAttestation | null
       retireAgentHookCompatibilityAuthority?: (paneKey: string) => void
       reconcileAgentStatusForEndedProcess?: (paneKeys: Iterable<string>) => void
+      /** Registers an Agent Teams teammate pane so Dolphin never resumes it as a plain session. */
+      markAgentPaneNotTerminalResumable?: (paneKey: string) => void
       canRecoverPersistentLocalPtys?: () => boolean
       // Why: the device registry lives on the RPC server, which is constructed with this runtime;
       // a closure defers the lookup past that ordering instead of inverting ownership.
@@ -233,6 +235,7 @@ export class DolphinRuntimeWithStateFields extends DolphinRuntimeWithLinearComma
     this.retireAgentHookCompatibilityAuthorityFn =
       deps?.retireAgentHookCompatibilityAuthority ?? null
     this.reconcileAgentStatusForEndedProcessFn = deps?.reconcileAgentStatusForEndedProcess ?? null
+    this.markAgentPaneNotTerminalResumableFn = deps?.markAgentPaneNotTerminalResumable ?? null
     this.canRecoverPersistentLocalPtysFn = deps?.canRecoverPersistentLocalPtys ?? (() => true)
     this.getPairedDeviceNameFn = deps?.getPairedDeviceName ?? (() => null)
     // Why: configure the shared AiVault scan cache from a serve-mode-reachable
