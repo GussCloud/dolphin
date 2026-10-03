@@ -20,6 +20,7 @@ import {
   consumePreparedWorktreeCreate,
   type PreparationRearmHolder
 } from '../worktree-create-preparation'
+import type { LocalBaseRefMutationGate } from '../git/worktree-base-refresh-deferred-apply'
 import {
   failedWorktreeCreationNeedsRetirement,
   retireGeneratedWorktreeName
@@ -59,6 +60,7 @@ export async function createRuntimeLocalGitWorktree(args: {
   ) => Promise<RemoteFetchResult>
   fetchRemote: (repoPath: string, remote: string, options?: LocalGitExecOptions) => Promise<void>
   rearm: PreparationRearmHolder
+  localBaseRefMutationGate?: LocalBaseRefMutationGate
 }): Promise<{
   remoteTrackingBase: RemoteTrackingBase | null
   sparseDirectories: string[]
@@ -127,7 +129,10 @@ export async function createRuntimeLocalGitWorktree(args: {
   const preparedWorktreeOptions: AddWorktreeOptions = {
     ...remoteOption,
     ...(suggestLocalBaseRefUpdate ? { suggestLocalBaseRefUpdate } : {}),
-    ...args.localWorktreeGitOptions
+    ...args.localWorktreeGitOptions,
+    ...(args.localBaseRefMutationGate && args.settings.refreshLocalBaseRefOnWorktreeCreate
+      ? { localBaseRefMutationGate: args.localBaseRefMutationGate }
+      : {})
   }
   const addOptions: AddWorktreeOptions = {
     ...preparedWorktreeOptions,

@@ -6,6 +6,7 @@ import { readGitCommandFailureText } from '../../shared/git-command-failure-text
 import type { RemoveWorktreeResult } from '../../shared/worktree/create-types'
 import type { GitAdmissionTier } from '../../shared/rpc-contract/git-admission-tier-params'
 import type { GitWorktreeInfo } from '../../shared/worktree/types'
+import type { LocalBaseRefMutationGate } from './worktree-base-refresh-deferred-apply'
 
 export type AddWorktreeResult = {
   localBaseRefRefresh?: LocalBaseRefRefreshResult
@@ -31,6 +32,8 @@ export type WorktreeRemovalPreflightOptions = GitWorktreeExecOptions & {
 export type AddWorktreeOptions = GitWorktreeExecOptions & {
   checkoutExistingBranch?: boolean
   suggestLocalBaseRefUpdate?: boolean
+  /** Holds the local base ref fast-forward until this create's critical path is done. */
+  localBaseRefMutationGate?: LocalBaseRefMutationGate
   remoteTrackingBase?: {
     base: string
     branch: string

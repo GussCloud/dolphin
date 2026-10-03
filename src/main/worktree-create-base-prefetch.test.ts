@@ -8,11 +8,13 @@ const mocks = vi.hoisted(() => ({
   resolveRemoteTrackingBase: vi.fn(),
   hasRemoteTrackingRef: vi.fn(),
   getOrStartRemoteTrackingBaseRefresh: vi.fn(),
-  fetchRemoteWithCache: vi.fn()
+  fetchRemoteWithCache: vi.fn(),
+  warmLocalGitUsername: vi.fn()
 }))
 
 vi.mock('./git/repo', () => ({ getBaseRefDefault: mocks.getBaseRefDefault }))
 vi.mock('./git/runner', () => ({ gitExecFileAsync: mocks.gitExecFileAsync }))
+vi.mock('./git/git-username', () => ({ warmLocalGitUsername: mocks.warmLocalGitUsername }))
 vi.mock('./providers/ssh-git-dispatch', () => ({ getSshGitProvider: mocks.getSshGitProvider }))
 vi.mock('./ipc/worktree-remote', () => ({
   prefetchRemoteWorktreeCreateBase: mocks.prefetchRemoteWorktreeCreateBase
@@ -321,4 +323,36 @@ it('does not prepare folder repositories', async () => {
   ).resolves.toBeUndefined()
   expect(prepareCheckout).not.toHaveBeenCalled()
   expect(mocks.gitExecFileAsync).not.toHaveBeenCalled()
+})
+
+describe('prefetchWorktreeCreateBase git username warm-up', () => {
+  it('warms the local username only when asked', async () => {
+    await prefetchWorktreeCreateBase({ repo, runtime: runtime(), gitOptions: {} })
+    expect(mocks.warmLocalGitUsername).not.toHaveBeenCalled()
+
+    await prefetchWorktreeCreateBase({
+      repo,
+      runtime: runtime(),
+      gitOptions: {},
+      warmGitUsername: true
+    })
+    expect(mocks.warmLocalGitUsername).toHaveBeenCalledWith(repo.path)
+  })
+
+  it('never warms the local resolver for SSH or folder projects', async () => {
+    mocks.getSshGitProvider.mockReturnValue({})
+    await prefetchWorktreeCreateBase({
+      repo: { ...repo, connectionId: 'ssh-1' },
+      runtime: runtime(),
+      gitOptions: {},
+      warmGitUsername: true
+    })
+    await prefetchWorktreeCreateBase({
+      repo: { ...repo, kind: 'folder' },
+      runtime: runtime(),
+      gitOptions: {},
+      warmGitUsername: true
+    })
+    expect(mocks.warmLocalGitUsername).not.toHaveBeenCalled()
+  })
 })

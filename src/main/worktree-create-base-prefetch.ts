@@ -3,6 +3,7 @@ import type { Repo } from '../shared/repo-types'
 import { isFullGitObjectId } from './git/commit-object-ref'
 import { hasLocalWorktreeBaseRef } from './git/worktree-base-ref-probe'
 import { getBaseRefDefault } from './git/repo'
+import { warmLocalGitUsername } from './git/git-username'
 import { getSshGitProvider } from './providers/ssh-git-dispatch'
 import { prefetchRemoteWorktreeCreateBase } from './ipc/worktree-remote'
 import { resolveWorktreeCreateBase } from './worktree-create-base'
@@ -125,6 +126,8 @@ export async function prefetchWorktreeCreateBase(args: {
    *  warm up the wrong ref store — pass `{}` for host Git. */
   gitOptions: WorktreeCreateBaseGitOptions
   prepareCheckout?: (base: string) => Promise<void>
+  /** Set when the branch prefix is the git username, so create finds it already resolved. */
+  warmGitUsername?: boolean
 }): Promise<string | undefined> {
   if (isFolderRepo(args.repo)) {
     return undefined
@@ -136,6 +139,9 @@ export async function prefetchWorktreeCreateBase(args: {
     }
     await prefetchRemoteWorktreeCreateBase(provider, args.repo, { baseBranch: args.baseBranch })
     return undefined
+  }
+  if (args.warmGitUsername) {
+    warmLocalGitUsername(args.repo.path)
   }
   const prepareCheckout = args.prepareCheckout
   let preparation: Promise<void> | undefined

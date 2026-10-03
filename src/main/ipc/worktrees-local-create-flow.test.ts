@@ -719,6 +719,8 @@ describe('registerWorktreeHandlers', () => {
     )
     expect(result.timing?.phases.map((phase) => phase.phase)).toEqual(
       expect.arrayContaining([
+        'resolve_username',
+        'resolve_base',
         'git_worktree_add',
         'list_created_worktree',
         'resolve_worktreeinclude',
