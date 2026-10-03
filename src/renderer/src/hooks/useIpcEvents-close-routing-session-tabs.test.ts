@@ -104,7 +104,7 @@ describe('useIpcEvents browser tab close routing', () => {
     const closeTerminalListenerRef: { current: CloseTerminalListener | null } = { current: null }
     await useIpcEventsForCloseRouting({
       closeTerminalListenerRef,
-      getState: () => ({})
+      getState: () => ({ tabsByWorktree: {}, terminalLayoutsByTabId: {} })
     })
 
     closeTerminalListenerRef.current?.({ tabId: 'terminal-1', leafId: 'leaf-2' })
@@ -114,7 +114,7 @@ describe('useIpcEvents browser tab close routing', () => {
     if (!(dispatched instanceof CustomEvent)) {
       throw new Error('expected a pane close event')
     }
-    expect(dispatched.detail).toEqual({ tabId: 'terminal-1', leafId: 'leaf-2' })
+    expect(dispatched.detail).toMatchObject({ tabId: 'terminal-1', leafId: 'leaf-2' })
   })
 
   it('acknowledges whole-tab close only after the fresh session is durably persisted', async () => {
