@@ -10,7 +10,6 @@ describe('ResourceUsageStatusSegment session inventory', () => {
     const source = readFileSync(SOURCE_PATH, 'utf8')
     const inventoryHookSource = readFileSync(INVENTORY_HOOK_PATH, 'utf8')
 
-    expect(source).not.toContain('installWindowVisibilityInterval')
     expect(source).not.toContain('SESSIONS_POLL_MS')
     expect(inventoryHookSource).not.toContain('setInterval')
     // Why: every seed/action/lifecycle refresh shares one guarded inventory
@@ -48,5 +47,16 @@ describe('ResourceUsageStatusSegment session inventory', () => {
     const readySeedBlock = source.slice(source.indexOf('// Why: seed RAM after session restore'))
     expect(readySeedBlock).toContain('void fetchSnapshot()')
     expect(readySeedBlock).toContain('workspaceSessionReady')
+  })
+
+  it('refreshes the closed RAM chip every 10s while the window is visible', () => {
+    const source = readFileSync(SOURCE_PATH, 'utf8')
+
+    expect(source).toContain('const CLOSED_VISIBLE_POLL_MS = 10_000')
+    const closedStart = source.indexOf('if (open || !workspaceSessionReady)')
+    const closedBlock = source.slice(closedStart, source.indexOf('}, [open', closedStart))
+    expect(closedBlock).toContain('installWindowVisibilityInterval')
+    expect(closedBlock).toContain('intervalMs: CLOSED_VISIBLE_POLL_MS')
+    expect(closedBlock).not.toContain('refreshSessions')
   })
 })
