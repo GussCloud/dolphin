@@ -1,23 +1,48 @@
 import type { LocalBaseRefRefreshResult } from '../../shared/worktree/base-ref-drift-types'
 import { gitExecFileAsync, translateWslOutputPaths } from './runner'
+import { runWithGitReadCacheInvalidation } from './status'
 import {
   evaluateLocalBaseRefRefreshability,
   getLocalBaseRefUpdateSuggestionForWorktreeCreate
 } from './worktree-base-refresh-analysis'
+import {
+  localBaseRefRefreshQueueKey,
+  runSerializedLocalBaseRefRefresh,
+  type LocalBaseRefRefreshPlan
+} from './worktree-base-refresh-deferred-apply'
 import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
 import { parseWorktreeList } from '../../shared/git-worktree-porcelain-parser'
 import type { AddWorktreeOptions, GitWorktreeExecOptions } from './worktree-operation-options'
 import { gitExecOptions } from './worktree-operation-options'
 
 export { getLocalBaseRefUpdateSuggestionForWorktreeCreate }
+export { _awaitPendingLocalBaseRefRefreshesForTests } from './worktree-base-refresh-deferred-apply'
 
-export async function refreshLocalBaseRefForWorktreeCreate(
+type RefreshPlan = LocalBaseRefRefreshPlan<LocalBaseRefRefreshResult | undefined>
+
+/**
+ * The new worktree is based on the remote-tracking ref either way, so the local-branch
+ * fast-forward runs after the create returns; only the checks that decide the result block it.
+ */
+export function refreshLocalBaseRefForWorktreeCreate(
   repoPath: string,
   baseBranch: string,
   remoteTrackingRef: string,
   remoteTrackingBase?: AddWorktreeOptions['remoteTrackingBase'],
   options: GitWorktreeExecOptions = {}
 ): Promise<LocalBaseRefRefreshResult | undefined> {
+  return runSerializedLocalBaseRefRefresh(localBaseRefRefreshQueueKey(repoPath, options), () =>
+    planLocalBaseRefRefresh(repoPath, baseBranch, remoteTrackingRef, remoteTrackingBase, options)
+  )
+}
+
+async function planLocalBaseRefRefresh(
+  repoPath: string,
+  baseBranch: string,
+  remoteTrackingRef: string,
+  remoteTrackingBase: AddWorktreeOptions['remoteTrackingBase'],
+  options: GitWorktreeExecOptions
+): Promise<RefreshPlan> {
   const evaluation = await evaluateLocalBaseRefRefreshability(
     repoPath,
     baseBranch,
@@ -26,13 +51,16 @@ export async function refreshLocalBaseRefForWorktreeCreate(
     options
   )
   if (!evaluation) {
-    return undefined
+    return { result: undefined }
   }
   if (!evaluation.refreshable) {
-    return evaluation.result
+    return { result: evaluation.result }
   }
 
   const resultBase = { baseRef: evaluation.baseRef, localBranch: evaluation.localBranch }
+  // Why: the mutation outlives the create, so the create's abort signal must not kill a half-applied reset --hard.
+  const mutationOptions: GitWorktreeExecOptions = { ...options, signal: undefined }
+  const context = { repoPath, localBranch: evaluation.localBranch, wslDistro: options.wslDistro }
   try {
     if (evaluation.ownerWorktreePath) {
       const { stdout: worktreeListOutput } = await gitExecFileAsync(
@@ -44,7 +72,7 @@ export async function refreshLocalBaseRefForWorktreeCreate(
       )
       const currentOwner = worktrees.find((wt) => wt.branch === evaluation.fullRef)
       if (!currentOwner || currentOwner.path !== evaluation.ownerWorktreePath) {
-        return { ...resultBase, status: 'skipped_error' }
+        return { result: { ...resultBase, status: 'skipped_error' } }
       }
       const { stdout: status } = await gitExecFileAsync(
         ['status', '--porcelain', '--untracked-files=no'],
@@ -52,31 +80,49 @@ export async function refreshLocalBaseRefForWorktreeCreate(
       )
       if (status.trim()) {
         return {
-          ...resultBase,
-          status: 'skipped_dirty_worktree',
-          ownerWorktreePath: currentOwner.path
+          result: {
+            ...resultBase,
+            status: 'skipped_dirty_worktree',
+            ownerWorktreePath: currentOwner.path
+          }
         }
       }
-      await gitExecFileAsync(
-        [
-          ...windowsParallelCheckoutGitArgs(currentOwner.path),
-          'reset',
-          '--hard',
-          evaluation.remoteOid
-        ],
-        gitExecOptions(currentOwner.path, options)
-      )
-      return { ...resultBase, status: 'updated', ownerWorktreePath: currentOwner.path }
+      return {
+        result: { ...resultBase, status: 'updated', ownerWorktreePath: currentOwner.path },
+        deferredMutation: {
+          context: { ...context, ownerWorktreePath: currentOwner.path },
+          start: () =>
+            runWithGitReadCacheInvalidation(() =>
+              gitExecFileAsync(
+                [
+                  ...windowsParallelCheckoutGitArgs(currentOwner.path),
+                  'reset',
+                  '--hard',
+                  evaluation.remoteOid
+                ],
+                gitExecOptions(currentOwner.path, mutationOptions)
+              )
+            )
+        }
+      }
     }
-
-    // Why: no owner worktree — fast-forward the bare ref; the expected-old-OID form is a no-op-safe CAS if the ref moved since evaluation.
-    await gitExecFileAsync(
-      ['update-ref', evaluation.fullRef, evaluation.remoteOid, evaluation.localOid],
-      gitExecOptions(repoPath, options)
-    )
-    return { ...resultBase, status: 'updated' }
   } catch {
-    // update-ref/reset can fail on locked refs or odd worktree states; worktree creation should still proceed.
-    return { ...resultBase, status: 'skipped_error' }
+    // Owner revalidation can fail on odd worktree states; worktree creation should still proceed.
+    return { result: { ...resultBase, status: 'skipped_error' } }
+  }
+
+  // Why: no owner worktree — fast-forward the bare ref; the expected-old-OID form is a no-op-safe CAS if the ref moved since evaluation.
+  return {
+    result: { ...resultBase, status: 'updated' },
+    deferredMutation: {
+      context,
+      start: () =>
+        runWithGitReadCacheInvalidation(() =>
+          gitExecFileAsync(
+            ['update-ref', evaluation.fullRef, evaluation.remoteOid, evaluation.localOid],
+            gitExecOptions(repoPath, mutationOptions)
+          )
+        )
+    }
   }
 }
