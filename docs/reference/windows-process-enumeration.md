@@ -559,8 +559,17 @@ processes opened; Dolphin's own subtree always does.
 `windows-process-resource-collector.ts` reads it only when
 `isWindowsProcessResourceUsageAvailable()` — the **binary's** bit, for the same
 reason as `CreationTime` above. If a loaded reader then fails or wedges, the
-collector returns no rows for that poll rather than forking a shell; only an addon
-compiled before flag 8 still uses the CIM/typeperf sweep.
+collector returns no rows for that poll rather than forking a shell.
+
+An addon that loads but predates flag 8 — a relay or dolphind host whose staged
+`.node` has not been redeployed, or a stale local build — keeps working: identity
+and detailed reads are unchanged, and the collector falls back to the CIM/typeperf
+sweep at most once per 30 s, serving cached rows in between. Only a host with no
+addon at all still sweeps at the poll rate, which is the documented no-binding
+fallback above. Desktop installs cannot stay stale:
+`windows-process-tree-creation-time.cjs` requires the bit, so
+`ensure-native-runtime` and `rebuild-native-deps` rebuild the addon, and the
+packaged copy comes from that rebuild.
 
 Start time is a proxy for identity, not identity. For the process trees Dolphin
 itself spawns the durable answer is still an inherited handle: a job object
