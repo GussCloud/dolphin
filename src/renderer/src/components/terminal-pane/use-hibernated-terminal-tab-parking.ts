@@ -17,6 +17,8 @@ export type HibernatedTerminalTabParking = {
   wakeRequestedTabIds: ReadonlySet<string>
 }
 
+/** Why two fields and no wrapper memo: callers depend on the sets themselves (stable selector
+ *  output), never on a container whose identity a dropped memo cache would churn every render. */
 export function useHibernatedTerminalTabParking(worktreeId: string): HibernatedTerminalTabParking {
   const hibernatedTabIds = useAppStore(
     useShallow((state) => selectHibernatedTerminalTabIds(state, worktreeId))
@@ -34,10 +36,7 @@ export function useHibernatedTerminalTabParking(worktreeId: string): HibernatedT
       )
     )
   )
-  return useMemo(
-    () => ({ hibernatedTabIds, wakeRequestedTabIds }),
-    [hibernatedTabIds, wakeRequestedTabIds]
-  )
+  return { hibernatedTabIds, wakeRequestedTabIds }
 }
 
 export function addParkedHibernatedTerminalTabs(
