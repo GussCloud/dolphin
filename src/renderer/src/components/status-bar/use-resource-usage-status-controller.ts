@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMountedRef } from '@/hooks/useMountedRef'
 import { useAppStore } from '../../store'
+import { installWindowVisibilityInterval } from '@/lib/window-visibility-interval'
 import { useDaemonActions } from '../shared/useDaemonActions'
 import type { UnifiedSessionRow } from './resource-usage-merge-types'
 import type { ResourceSessionBindingInputs } from './resource-session-bindings'
@@ -27,8 +28,9 @@ import { useResourceUsageActions } from './use-resource-usage-actions'
 import { useResourceUsageDerivedModel } from './use-resource-usage-derived-model'
 
 const POLL_MS = 2_000
-// Why: memory-budget warnings must reach the closed chip, but one process sweep per five minutes
-// is the most a closed segment should cost.
+// Why: the closed chip shows live RAM; the sweep is in-process (native addon) or one `ps`, so 10s is cheap.
+const CLOSED_VISIBLE_POLL_MS = 10_000
+// Why: memory-budget warnings must still be evaluated while the window is hidden and the visible poll is paused.
 const CLOSED_MEMORY_BUDGET_POLL_MS = 5 * 60_000
 
 export function useResourceUsageStatusController() {
@@ -194,10 +196,15 @@ export function useResourceUsageStatusController() {
     if (open || !workspaceSessionReady) {
       return
     }
+    const stopVisiblePoll = installWindowVisibilityInterval({
+      run: () => void fetchSnapshot(),
+      intervalMs: CLOSED_VISIBLE_POLL_MS
+    })
     const budgetTimer = window.setInterval(() => {
       void fetchSnapshot()
     }, CLOSED_MEMORY_BUDGET_POLL_MS)
     return () => {
+      stopVisiblePoll()
       window.clearInterval(budgetTimer)
     }
   }, [open, workspaceSessionReady, fetchSnapshot])
