@@ -2,10 +2,16 @@ import { runProcess } from '../../shared/child-process/run-process'
 import os from 'node:os'
 import { performance } from 'node:perf_hooks'
 import {
+  isWindowsProcessResourceUsageAvailable,
+  readWindowsProcessResourceTable,
+  type WindowsProcessResourceCountersRow
+} from '../windows/windows-process-table'
+import {
   parseTypeperfProcessOutput,
   parseWindowsProcessSample,
   TYPEPERF_COUNTERS,
   type ParsedWindowsProcessSample,
+  type WindowsCpuTimes,
   type WindowsProcessResourceRow
 } from './windows-process-sample-parsing'
 
@@ -25,8 +31,68 @@ type WindowsProcessSample = ParsedWindowsProcessSample & {
 let processBackend: 'cim' | 'typeperf' = 'cim'
 let previousCpuSample: WindowsProcessSample | null = null
 let retryCimAtMs = 0
+let warnedAboutNativeFailure = false
 
 export async function enumerateWindowsProcessResources(): Promise<WindowsProcessResourceRow[]> {
+  // Why native first: the addon reads the same counters in-process, where the
+  // CIM sweep forked powershell.exe on every two-second poll — the pattern
+  // docs/reference/windows-edr-posture.md says behavioural EDR scores.
+  if (isWindowsProcessResourceUsageAvailable()) {
+    return enumerateWindowsWithNativeTable()
+  }
+  return enumerateWindowsWithShellSweep()
+}
+
+async function enumerateWindowsWithNativeTable(): Promise<WindowsProcessResourceRow[]> {
+  try {
+    const rows = await readWindowsProcessResourceTable()
+    return applyWindowsCpuSample({
+      ...toWindowsProcessSample(rows),
+      sampledAtMs: performance.now()
+    })
+  } catch (err) {
+    // Why no shell fallback: a loaded reader that fails or wedges must not
+    // start forking a shell at the poll rate (windows-process-enumeration.md).
+    if (!warnedAboutNativeFailure) {
+      warnedAboutNativeFailure = true
+      console.warn('[memory] native Windows process resource read failed', err)
+    }
+    previousCpuSample = null
+    return []
+  }
+}
+
+/** Native counters in the shape the CIM sweep produces, so CPU deltas share one path. */
+function toWindowsProcessSample(
+  rows: readonly WindowsProcessResourceCountersRow[]
+): ParsedWindowsProcessSample {
+  const sampleRows: WindowsProcessResourceRow[] = []
+  const cpuByPid = new Map<number, WindowsCpuTimes>()
+  for (const row of rows) {
+    sampleRows.push({
+      pid: row.pid,
+      ppid: row.ppid,
+      cpu: 0,
+      memory: row.workingSetBytes ?? 0,
+      ...(row.privateBytes === undefined ? {} : { privateMemory: row.privateBytes }),
+      ...(row.name ? { name: row.name } : {})
+    })
+    // Start time keys the PID-reuse guard; without it a delta could span two processes.
+    if (row.cpuTime100ns !== undefined && row.creationTimeMs !== undefined) {
+      cpuByPid.set(row.pid, {
+        cpuTicks: BigInt(Math.trunc(row.cpuTime100ns)),
+        startTimeId: String(row.creationTimeMs)
+      })
+    }
+  }
+  return { rows: sampleRows, cpuByPid }
+}
+
+/**
+ * Only for an addon compiled before ResourceUsage existed: packaged builds
+ * always rebuild it from the patched source.
+ */
+async function enumerateWindowsWithShellSweep(): Promise<WindowsProcessResourceRow[]> {
   // Why: one CIM sweep supplies both resource values and process identity,
   // avoiding a second host-wide PowerShell process on every open-popover poll.
   if (processBackend === 'typeperf') {
