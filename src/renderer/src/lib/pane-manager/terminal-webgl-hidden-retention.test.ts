@@ -3,6 +3,7 @@ import type { ManagedPaneInternal, PaneManagerOptions } from './pane-manager-typ
 import { resumePaneRendering, suspendPaneRendering } from './pane-rendering-control'
 import { PaneManager } from './pane-manager'
 import {
+  releaseAllRetainedHiddenWebgl,
   releaseHiddenWebglRetention,
   resetHiddenWebglRetentionForTest,
   retainedHiddenWebglOwnerCountForTest,
@@ -160,6 +161,21 @@ describe('terminal-webgl-hidden-retention', () => {
       suspendPaneRendering(otherPanes, retentionFor(other, otherPanes))
       expect(otherPanes.every((pane) => pane.webglAddon != null)).toBe(true)
     }
+  })
+
+  it('releaseAllRetainedHiddenWebgl disposes every retained hidden context for memory pressure', () => {
+    const owners = [{}, {}]
+    const panes = owners.map((owner) => {
+      const ownerPanes = [createPane(), createPane()]
+      suspendPaneRendering(ownerPanes, retentionFor(owner, ownerPanes))
+      return ownerPanes
+    })
+    const addons = panes.flat().map((pane) => pane.webglAddon)
+
+    expect(releaseAllRetainedHiddenWebgl()).toBe(2)
+    expect(addons.every((addon) => vi.mocked(addon!.dispose).mock.calls.length === 1)).toBe(true)
+    expect(retainedHiddenWebglOwnerCountForTest()).toBe(0)
+    expect(releaseAllRetainedHiddenWebgl()).toBe(0)
   })
 
   it('releaseHiddenWebglRetention never disposes addons (destroy path owns that)', () => {
