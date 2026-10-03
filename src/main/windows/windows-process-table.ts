@@ -3,6 +3,25 @@ import { createRequire } from 'node:module'
 import { createProcessTableSnapshotReader } from '../../shared/process-table-snapshot-reader'
 import { reportWindowsCommandLineRecoveryHealth } from './windows-command-line-recovery-health'
 import { readWindowsProcessRowsWithCim } from './windows-process-table-cim-scan'
+import {
+  DETAILED_PROJECTION as DETAILED_ROW_PROJECTION,
+  IDENTITY_PROJECTION,
+  PROCESS_DATA_FLAG,
+  RESOURCE_PROJECTION,
+  toIdentityRow,
+  type NativeProcessInfo,
+  type ProcessRowProjection,
+  type WindowsProcessIdentityRow,
+  type WindowsProcessResourceCountersRow,
+  type WindowsProcessRow,
+  type WindowsProcessTreeModule
+} from './windows-process-table-flag-sets'
+
+export type {
+  WindowsProcessIdentityRow,
+  WindowsProcessResourceCountersRow,
+  WindowsProcessRow
+} from './windows-process-table-flag-sets'
 
 /**
  * The only place Dolphin reads the Windows process table.
@@ -21,9 +40,9 @@ import { readWindowsProcessRowsWithCim } from './windows-process-table-cim-scan'
  * A Toolhelp32 snapshot answers the same question in ~16 ms with no child
  * process at all, so none of those failure modes have anywhere to live.
  *
- * Two flag sets, because only some callers need a command line, and exactly one
- * native read in flight at a time, because the vendored wrapper coalesces
- * differing flags -- see docs/reference/windows-process-enumeration.md.
+ * Three flag sets, because only some callers need a command line or resource
+ * counters, and exactly one native read in flight at a time, because the
+ * vendored wrapper coalesces differing flags -- see docs/reference/windows-process-enumeration.md.
  *
  * Measured on Windows 11 (492 processes), p50 / p95:
  *   identity  pid+ppid+name         6.3 / 7.0  ms   0 OpenProcess
@@ -45,49 +64,6 @@ import { readWindowsProcessRowsWithCim } from './windows-process-table-cim-scan'
  * The desktop bundles it; no released relay carries it, so on an SSH host the
  * CIM row is the operative number and the child process is not avoided at all.
  */
-
-/** Everything a Toolhelp32 walk alone can answer. */
-export type WindowsProcessIdentityRow = {
-  pid: number
-  ppid: number
-  name: string
-  /** Process creation time in Unix milliseconds, when the native snapshot provides it. */
-  creationTimeMs?: number
-}
-
-/** Adds the kernel-supplied command line. Only ask for this if you read it. */
-export type WindowsProcessRow = WindowsProcessIdentityRow & {
-  /** Full command line. Empty when the process denied a query handle. */
-  command: string
-}
-
-type NativeProcessInfo = {
-  pid: number
-  ppid: number
-  name: string
-  commandLine?: string
-  creationTimeMs?: number
-}
-
-type WindowsProcessTreeModule = {
-  ProcessDataFlag: {
-    None: number
-    CommandLine: number
-    CreationTime?: number
-  }
-  /**
-   * Flag bits the COMPILED addon reports, straight from `addon.cc`. Absent on a
-   * build that predates the patch — which is not the same question as the enum
-   * above, because pnpm patches the source tree and leaves the tarball's
-   * prebuilt `.node` in place.
-   */
-  supportedProcessDataFlags?: number
-  getProcessCreationTime?: (pid: number) => number | undefined
-  getAllProcesses: (
-    callback: (processes: NativeProcessInfo[] | undefined) => void,
-    flags?: number
-  ) => void
-}
 
 const requireFromMain = createRequire(__filename)
 
@@ -120,16 +96,6 @@ type WindowsProcessTreeAddon = {
   ) => void
   supportedProcessDataFlags?: number
 }
-
-/**
- * Mirrors the package's enum; the addon takes the raw bit field. `Memory` (1)
- * is listed for completeness and is deliberately never set — see the projections
- * below.
- *
- * Naming `CreationTime` here only decides what we ASK for; whether the binary
- * answers is `supportedProcessDataFlags`, which the addon reports itself.
- */
-const PROCESS_DATA_FLAG = { None: 0, Memory: 1, CommandLine: 2, CreationTime: 4 } as const
 
 /** Staged beside the relay bundle by build-relay; see RELAY_ARTIFACTS. */
 const RELAY_ADDON_FILENAME = './windows-process-tree.node'
@@ -263,7 +229,7 @@ const WINDOWS_PROCESS_QUERY_TIMEOUT_MS = 3_000
  * Refusing re-entry bounds both vendored callbacks and relay addon workers to
  * one; read ids keep a late callback from clearing a newer wedge.
  *
- * One gate for both flag sets, not one each: they call the same addon, so a
+ * One gate for every flag set, not one each: they call the same addon, so a
  * wedged read latches the one `requestInProgress` and pins the one libuv slot
  * whichever flags asked for it. Retention stays at exactly one callback rather
  * than one per reader because `nativeReadGate` below already admits only one
@@ -275,7 +241,7 @@ let readSequence = 0
 let nativeReaderEpoch = 0
 
 /**
- * Admits one native read at a time, across both flag sets. Nothing else does.
+ * Admits one native read at a time, across every flag set. Nothing else does.
  *
  * The npm wrapper coalesces rather than queues: `getRawProcessList` pushes the
  * callback onto one list and only calls the addon when no request is in
@@ -312,52 +278,9 @@ function resetNativeReaderState(): void {
   nativeReadGate = nativeReadGate.then(ignoreSettlement, ignoreSettlement)
 }
 
-/** A flag set and the row shape it can honestly produce. */
-type ProcessRowProjection<Row> = {
-  flags: (native: WindowsProcessTreeModule) => number
-  fromNative: (row: NativeProcessInfo) => Row
-  /**
-   * The no-binding scan, on the one flag set it can serve. Absent on the other,
-   * because a relay must never run two `Get-CimInstance` scans at ~1.4s each --
-   * `readWindowsProcessIdentityTable` projects the detailed snapshot instead.
-   */
-  cimFallback?: () => Promise<Row[]>
-}
-
-function toIdentityRow(row: {
-  pid: number
-  ppid: number
-  name: string
-  creationTimeMs?: number
-}): WindowsProcessIdentityRow {
-  return {
-    pid: row.pid,
-    ppid: row.ppid,
-    name: row.name,
-    ...(typeof row.creationTimeMs === 'number' ? { creationTimeMs: row.creationTimeMs } : {})
-  }
-}
-
-/**
- * Toolhelp32 and nothing else: no `OpenProcess` per process, so this read has
- * none of the shape an EDR scores as walking another process's memory.
- */
-const IDENTITY_PROJECTION: ProcessRowProjection<WindowsProcessIdentityRow> = {
-  flags: (native) => native.ProcessDataFlag.None | (native.ProcessDataFlag.CreationTime ?? 0),
-  fromNative: toIdentityRow
-}
-
-/**
- * Adds, per process, one `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` and an
- * `NtQueryInformationProcess(ProcessCommandLineInformation)` -- which is what
- * agent recognition and port attribution match on. `Memory` is deliberately
- * absent: it took a second handle carrying `PROCESS_VM_READ` and then never read
- * through it, and no caller reads a working set off this table (the Resource
- * Manager runs its own sweep, and the native field wraps above 4 GB anyway).
- */
+/** The no-binding CIM scan serves this flag set only; see ProcessRowProjection. */
 const DETAILED_PROJECTION: ProcessRowProjection<WindowsProcessRow> = {
-  flags: (native) => IDENTITY_PROJECTION.flags(native) | native.ProcessDataFlag.CommandLine,
-  fromNative: (row) => ({ ...toIdentityRow(row), command: row.commandLine ?? '' }),
+  ...DETAILED_ROW_PROJECTION,
   cimFallback: readCimRows
 }
 
@@ -466,17 +389,23 @@ async function readCimRows(): Promise<WindowsProcessRow[]> {
 // tears down PTYs 32-wide. The shared TTL + single-in-flight reader collapses
 // that burst into one scan, exactly as the PowerShell path had to.
 //
-// Why two caches are safe where N would not be: the fan-out this prevents is
+// Why one cache per flag set is safe where N would not be: the fan-out this prevents is
 // one scan per *caller*, and each reader below still serves every caller that
 // wants its flag set, so a 32-wide teardown collapses into one scan per flag
-// set. Two is the number of distinct native calls that exist -- a third cache
-// would need a third flag set, never a third caller.
+// set. The cache count is the number of distinct native calls -- a new cache
+// needs a new flag set, never a new caller.
 const identityReader = createProcessTableSnapshotReader<WindowsProcessIdentityRow[]>({
   runPs: () => readNativeRows(IDENTITY_PROJECTION),
   now: () => Date.now()
 })
 const detailedReader = createProcessTableSnapshotReader<WindowsProcessRow[]>({
   runPs: () => readNativeRows(DETAILED_PROJECTION),
+  now: () => Date.now()
+})
+// The third flag set, so the third cache. Only the Resource Manager reads it,
+// and only while its panel polls.
+const resourceReader = createProcessTableSnapshotReader<WindowsProcessResourceCountersRow[]>({
+  runPs: () => readNativeRows(RESOURCE_PROJECTION),
   now: () => Date.now()
 })
 
@@ -517,6 +446,31 @@ export function readWindowsProcessIdentityTable(): Promise<WindowsProcessIdentit
 /** The identity snapshot, from a scan that starts after this call. */
 export function readWindowsProcessIdentityTableFresh(): Promise<WindowsProcessIdentityRow[]> {
   return readIdentityRows(true)
+}
+
+/**
+ * Cached resource-counter snapshot. Rejects unless
+ * `isWindowsProcessResourceUsageAvailable()`; there is deliberately no CIM
+ * fallback here, because the caller owns how often it may fork a shell.
+ */
+export function readWindowsProcessResourceTable(): Promise<WindowsProcessResourceCountersRow[]> {
+  if (!isWindowsProcessResourceUsageAvailable()) {
+    return Promise.reject(new Error('windows process resource counters unavailable'))
+  }
+  return resourceReader.getSnapshot()
+}
+
+/**
+ * Whether the COMPILED addon reports resource counters. Same reason as
+ * `isWindowsProcessStartTimeAvailable`: a patched `lib/index.js` can sit over a
+ * binary built before flag 8 existed, and that binary silently ignores it.
+ */
+export function isWindowsProcessResourceUsageAvailable(): boolean {
+  const native = moduleLoader()
+  return (
+    native !== null &&
+    ((native.supportedProcessDataFlags ?? 0) & PROCESS_DATA_FLAG.ResourceUsage) !== 0
+  )
 }
 
 /** Whether the native table can be read at all on this host. */
@@ -561,6 +515,7 @@ export function readWindowsProcessCreationTime(pid: number): number | null {
 function resetSnapshotReaders(): void {
   identityReader.reset()
   detailedReader.reset()
+  resourceReader.reset()
 }
 
 /**

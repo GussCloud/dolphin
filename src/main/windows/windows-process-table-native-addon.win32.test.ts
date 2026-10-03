@@ -1,7 +1,9 @@
 import { expect, it } from 'vitest'
 import {
+  isWindowsProcessResourceUsageAvailable,
   isWindowsProcessStartTimeAvailable,
   readWindowsProcessCreationTime,
+  readWindowsProcessResourceTable,
   readWindowsProcessTableFresh
 } from './windows-process-table'
 
@@ -25,5 +27,22 @@ it.runIf(process.platform === 'win32')(
     expect(self?.creationTimeMs).toBeLessThanOrEqual(Date.now())
     expect(readWindowsProcessCreationTime(process.pid)).toBe(self?.creationTimeMs)
     expect(readWindowsProcessCreationTime(process.pid)).toBe(self?.creationTimeMs)
+  }
+)
+
+it.runIf(process.platform === 'win32')(
+  'reads resource counters for our own process from the real addon',
+  async () => {
+    expect(isWindowsProcessResourceUsageAvailable()).toBe(true)
+
+    const rows = await readWindowsProcessResourceTable()
+    const self = rows.find((row) => row.pid === process.pid)
+    // Bounded both ways: a DWORD-truncated or unconverted counter falls outside.
+    const rss = process.memoryUsage().rss
+    expect(self?.workingSetBytes).toBeGreaterThan(rss / 4)
+    expect(self?.workingSetBytes).toBeLessThan(rss * 4)
+    expect(self?.privateBytes).toBeGreaterThan(0)
+    expect(self?.cpuTime100ns).toBeGreaterThan(0)
+    expect(self?.creationTimeMs).toBe(readWindowsProcessCreationTime(process.pid))
   }
 )
