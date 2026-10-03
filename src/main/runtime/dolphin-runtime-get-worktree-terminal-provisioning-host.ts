@@ -55,7 +55,8 @@ export class DolphinRuntimeWithGetWorktreeTerminalProvisioningHost extends Dolph
       baseBranch: args.baseBranch,
       runtime: this,
       gitOptions: getWorktreeCreatePrefetchGitOptions(store, repo),
-      prepareCheckout: (base) => prepareWorktreeCreateForRepo(store, repo, base)
+      prepareCheckout: (base) => prepareWorktreeCreateForRepo(store, repo, base),
+      warmGitUsername: store.getSettings().branchPrefix === 'git-username'
     })
   }
 }

@@ -259,44 +259,106 @@ async function getConfiguredBranchRemote(repoPath: string, branch: string | null
  * the GitHub account name as its branch prefix.
  */
 async function localRepoHasEffectiveGitHubRemote(repoPath: string): Promise<boolean> {
-  const remoteList = await gitExecFileAsync(['remote'], {
+  // Independent reads run concurrently; decisions below still follow the original candidate order.
+  const remoteListPromise = gitExecFileAsync(['remote'], {
     cwd: repoPath,
     timeout: LOCAL_GIT_READ_TIMEOUT_MS
   }).catch(() => null)
+  const defaultBaseRefPromise = resolveDefaultBaseRefViaExec((argv) =>
+    gitExecFileAsync(argv, { cwd: repoPath, timeout: LOCAL_GIT_READ_TIMEOUT_MS })
+  )
+  const currentBranchPromise = readGitStdout(repoPath, ['branch', '--show-current'])
+  const remoteList = await remoteListPromise
   const remotes = (remoteList?.stdout.trim() ?? '').split('\n').filter(Boolean)
   // Only a successful empty list proves there is no hosted remote to inspect.
   if (remoteList && remotes.length === 0) {
+    defaultBaseRefPromise.catch(() => {})
     return false
   }
-  const defaultBaseRef = await resolveDefaultBaseRefViaExec((argv) =>
-    gitExecFileAsync(argv, { cwd: repoPath, timeout: LOCAL_GIT_READ_TIMEOUT_MS })
-  )
+  const [defaultBaseRef, currentBranch] = await Promise.all([
+    defaultBaseRefPromise,
+    currentBranchPromise
+  ])
   const defaultBaseRemote = defaultBaseRef ? getRemoteNameFromRef(defaultBaseRef, remotes) : ''
   const defaultBranch = defaultBaseRef
     ? getDefaultBranchName(defaultBaseRef, defaultBaseRemote)
     : null
 
-  const currentBranch = await readGitStdout(repoPath, ['branch', '--show-current'])
+  const [currentBranchRemote, defaultBranchRemote] = await Promise.all([
+    getConfiguredBranchRemote(repoPath, currentBranch || null),
+    getConfiguredBranchRemote(repoPath, defaultBranch)
+  ])
   const candidateRemotes = [
-    await getConfiguredBranchRemote(repoPath, currentBranch || null),
-    await getConfiguredBranchRemote(repoPath, defaultBranch),
-    defaultBaseRemote,
-    'origin',
-    remotes.length === 1 ? remotes[0] : ''
+    ...new Set(
+      [
+        currentBranchRemote,
+        defaultBranchRemote,
+        defaultBaseRemote,
+        'origin',
+        remotes.length === 1 ? remotes[0] : ''
+      ].filter(Boolean)
+    )
   ]
+  // Why get-url and not config: it applies url.insteadOf rewrites.
+  const remoteUrls = await Promise.all(
+    candidateRemotes.map((remote) => readGitStdout(repoPath, ['remote', 'get-url', remote]))
+  )
+  return remoteUrls.some((url) => url && parseHostedRemote(url)?.provider === 'github')
+}
 
-  const seen = new Set<string>()
-  for (const remote of candidateRemotes) {
-    if (!remote || seen.has(remote)) {
-      continue
-    }
-    seen.add(remote)
-    const remoteUrl = await readGitStdout(repoPath, ['remote', 'get-url', remote])
-    if (remoteUrl && parseHostedRemote(remoteUrl)?.provider === 'github') {
-      return true
-    }
+async function readExplicitConfiguredUsername(repoPath: string): Promise<string> {
+  const values = await Promise.all(
+    EXPLICIT_USERNAME_CONFIG_KEYS.map((key) => readGitStdout(repoPath, ['config', '--get', key]))
+  )
+  // Why: config can hold free-form strings; only branch-safe logins become prefixes.
+  return values.map(normalizeConfiguredLogin).find(Boolean) ?? ''
+}
+
+async function resolveLocalGitUsernameUncached(repoPath: string): Promise<ResolvedGitUsername> {
+  // Why concurrent: the gate costs several git spawns and its result is only used when no
+  // explicit key is set, so overlapping it changes latency, not the answer.
+  const hasGitHubRemote = localRepoHasEffectiveGitHubRemote(repoPath)
+  const configured = await readExplicitConfiguredUsername(repoPath)
+  if (configured) {
+    hasGitHubRemote.catch(() => {})
+    return { username: configured, authoritative: true }
   }
-  return false
+  if (await hasGitHubRemote) {
+    const outcome = await getGhLoginOutcome()
+    return { username: outcome.login, authoritative: !outcome.timedOut }
+  }
+  return { username: '', authoritative: true }
+}
+
+// Why: create waits on this, and every resolution spawns ~9 git processes that stall under
+// startup contention. Keyed by repo path, which is already host-scoped for local and WSL repos.
+type CachedUsername = { username: string; resolvedAt: number }
+const cachedUsernameByRepo = new Map<string, CachedUsername>()
+const usernameResolutionInFlight = new Map<string, Promise<ResolvedGitUsername>>()
+// Why: revalidation spawns ~9 git processes. The prewarm runs off the create path, so it may
+// refresh often; a create/enrich read only refreshes very stale entries, so CLI/runtime creates
+// that never prewarm still pick up changes without competing with their own git work.
+const PREWARM_REVALIDATE_AFTER_MS = 30_000
+const READ_REVALIDATE_AFTER_MS = 10 * 60_000
+
+function startUsernameResolution(repoPath: string): Promise<ResolvedGitUsername> {
+  const inFlight = usernameResolutionInFlight.get(repoPath)
+  if (inFlight) {
+    return inFlight
+  }
+  const resolution = resolveLocalGitUsernameUncached(repoPath)
+    .then((resolved) => {
+      // Non-authoritative '' (gh timed out) says nothing about the account; keep any prior value.
+      if (resolved.authoritative) {
+        cachedUsernameByRepo.set(repoPath, { username: resolved.username, resolvedAt: Date.now() })
+      }
+      return resolved
+    })
+    .finally(() => {
+      usernameResolutionInFlight.delete(repoPath)
+    })
+  usernameResolutionInFlight.set(repoPath, resolution)
+  return resolution
 }
 
 /**
@@ -304,39 +366,42 @@ async function localRepoHasEffectiveGitHubRemote(repoPath: string): Promise<bool
  * first, then the `gh` login — but only for repos whose effective remote is
  * GitHub, since a GitHub account name would be the wrong branch prefix for
  * GitLab/Bitbucket/self-hosted repos. Never rejects; unknown resolves to
- * { username: '', authoritative: false }.
+ * { username: '', authoritative: false }. Serves a cached value immediately and
+ * revalidates stale entries in the background.
  */
 export async function resolveLocalGitUsernameDetailed(
   repoPath: string
 ): Promise<ResolvedGitUsername> {
-  for (const key of EXPLICIT_USERNAME_CONFIG_KEYS) {
-    try {
-      const { stdout } = await gitExecFileAsync(['config', '--get', key], {
-        cwd: repoPath,
-        timeout: LOCAL_GIT_READ_TIMEOUT_MS
-      })
-      // Why: config can hold free-form strings; only branch-safe logins become prefixes.
-      const username = normalizeConfiguredLogin(stdout)
-      if (username) {
-        return { username, authoritative: true }
-      }
-    } catch {
-      // Missing config keys are expected; try the next explicit username key.
-    }
+  return resolveCachedLocalGitUsername(repoPath, READ_REVALIDATE_AFTER_MS)
+}
+
+async function resolveCachedLocalGitUsername(
+  repoPath: string,
+  revalidateAfterMs: number
+): Promise<ResolvedGitUsername> {
+  const cached = cachedUsernameByRepo.get(repoPath)
+  if (!cached) {
+    return startUsernameResolution(repoPath)
   }
-  if (await localRepoHasEffectiveGitHubRemote(repoPath)) {
-    const outcome = await getGhLoginOutcome()
-    return { username: outcome.login, authoritative: !outcome.timedOut }
+  if (Date.now() - cached.resolvedAt >= revalidateAfterMs) {
+    startUsernameResolution(repoPath).catch(() => {})
   }
-  return { username: '', authoritative: true }
+  return { username: cached.username, authoritative: true }
 }
 
 export async function resolveLocalGitUsername(repoPath: string): Promise<string> {
   return (await resolveLocalGitUsernameDetailed(repoPath)).username
 }
 
+/** Fire-and-forget warm-up so the first create after launch does not wait on resolution. */
+export function warmLocalGitUsername(repoPath: string): void {
+  resolveCachedLocalGitUsername(repoPath, PREWARM_REVALIDATE_AFTER_MS).catch(() => {})
+}
+
 export function resetGhLoginCacheForTests(): void {
   cachedGhLogin = null
   ghLoginTimedOutAt = null
   ghLoginProbeInFlight = null
+  cachedUsernameByRepo.clear()
+  usernameResolutionInFlight.clear()
 }

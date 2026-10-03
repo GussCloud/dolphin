@@ -9,6 +9,7 @@ import { ExecutionHostNotDispatchableError } from '../providers/execution-host-p
 import { createRuntimeFolderWorktree } from './runtime-folder-worktree-create'
 import { createRuntimeLocalManagedWorktree } from './runtime-local-worktree-create'
 import type { PreparationRearmHolder } from '../worktree-create-preparation'
+import { LocalBaseRefMutationGate } from '../git/worktree-base-refresh-deferred-apply'
 import { prepareRuntimeLocalWorktreeSetup } from './runtime-local-worktree-setup'
 import { invalidateAuthorizedRootsCacheForRepo } from '../ipc/filesystem-auth'
 import { startRuntimeLocalWorktreeTerminals } from './runtime-local-worktree-terminal-startup'
@@ -21,16 +22,20 @@ export class DolphinRuntimeWithCreateManagedWorktree extends DolphinRuntimeWithG
     // create that fails anywhere after that — include copy, push target, terminal startup — must
     // still arm the replacement. On success it fires last, once the startup terminals are up.
     const rearm: PreparationRearmHolder = { fire: () => {} }
+    // Why: the primary checkout's base fast-forward is disk-bound like our own checkout; same release point as rearm.
+    const baseRefMutationGate = new LocalBaseRefMutationGate()
     try {
-      return await this.performManagedWorktreeCreate(args, rearm)
+      return await this.performManagedWorktreeCreate(args, rearm, baseRefMutationGate)
     } finally {
       rearm.fire()
+      baseRefMutationGate.release()
     }
   }
 
   private async performManagedWorktreeCreate(
     args: RuntimeManagedWorktreeCreateArgs,
-    rearm: PreparationRearmHolder
+    rearm: PreparationRearmHolder,
+    baseRefMutationGate: LocalBaseRefMutationGate
   ): Promise<CreateWorktreeResult> {
     if (!this.store) {
       throw new Error('runtime_unavailable')
@@ -179,7 +184,8 @@ export class DolphinRuntimeWithCreateManagedWorktree extends DolphinRuntimeWithG
           this.fetchRemoteWithCache(path, remote, ...options),
         onWorktreeMetadataPersisted: (persistedWorktree) =>
           this.recordCreatedWorktreeLineage(persistedWorktree, lineageResolution),
-        rearm
+        rearm,
+        localBaseRefMutationGate: baseRefMutationGate
       })
     const settings = createSettings
     const { lineage, workspaceLineage, warnings: lineageWarnings } = metadataResult

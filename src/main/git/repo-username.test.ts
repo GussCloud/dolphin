@@ -145,11 +145,11 @@ describe('resolveLocalGitUsername', () => {
       username: '',
       authoritative: true
     })
-    expect(gitExecFileAsyncMock.mock.calls.map(([args]) => args)).toEqual([
-      ['config', '--get', 'github.user'],
-      ['config', '--get', 'user.username'],
-      ['remote']
-    ])
+    // Base/branch probes overlap `remote`, but nothing that depends on a remote runs after it.
+    const calls = gitExecFileAsyncMock.mock.calls.map(([args]) => args.join(' '))
+    expect(calls).toContain('remote')
+    expect(calls.filter((call) => call.startsWith('remote get-url'))).toEqual([])
+    expect(calls.filter((call) => call.startsWith('config --get branch.'))).toEqual([])
     expect(ghExecFileAsyncMock).not.toHaveBeenCalled()
   })
 

@@ -9,6 +9,7 @@ import {
   gitExecFileAsyncMock
 } from './worktrees-test-module-mocks'
 import { handlers, setupWorktreeHandlers, store } from './worktrees-test-harness'
+import { LocalBaseRefMutationGate } from '../git/worktree-base-refresh-deferred-apply'
 import type { WorktreeRuntimeStub } from './worktrees-test-runtime-stub'
 
 vi.mock('electron', async () =>
@@ -549,4 +550,39 @@ describe('registerWorktreeHandlers', () => {
     ).rejects.toThrow(/Could not resolve a default base ref/)
     expect(addWorktreeMock).not.toHaveBeenCalled()
   })
+
+  it('holds the local base ref fast-forward until the create settles, even when it fails', async () => {
+    store.getSettings.mockReturnValue({
+      branchPrefix: 'none',
+      nestWorkspaces: false,
+      refreshLocalBaseRefOnWorktreeCreate: true,
+      workspaceDir: '/workspace'
+    })
+    const releasedSoon = (gate: LocalBaseRefMutationGate): Promise<boolean> =>
+      Promise.race([
+        gate.hold().then(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 0))
+      ])
+    let capturedGate: LocalBaseRefMutationGate | undefined
+    let gateDuringAdd: boolean | undefined
+    addWorktreeMock.mockImplementation(async (...args: unknown[]): Promise<never> => {
+      const options = args[6]
+      if (options && typeof options === 'object' && 'localBaseRefMutationGate' in options) {
+        const gate = options.localBaseRefMutationGate
+        if (gate instanceof LocalBaseRefMutationGate) {
+          capturedGate = gate
+          gateDuringAdd = await releasedSoon(gate)
+        }
+      }
+      throw new Error('worktree add failed')
+    })
+
+    await expect(
+      handlers['worktrees:create'](null, { repoId: 'repo-1', name: 'improve-dashboard' })
+    ).rejects.toThrow('worktree add failed')
+
+    expect(gateDuringAdd).toBe(false)
+    expect(capturedGate && (await releasedSoon(capturedGate))).toBe(true)
+  })
 })
+

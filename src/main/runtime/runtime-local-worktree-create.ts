@@ -20,6 +20,7 @@ import { resolveRuntimeLocalWorktreeCreateCandidate } from './runtime-local-work
 import { createRuntimeLocalGitWorktree } from './runtime-local-git-worktree-create'
 import { materializeRuntimeLocalWorktree } from './runtime-local-worktree-materialization'
 import type { PreparationRearmHolder } from '../worktree-create-preparation'
+import type { LocalBaseRefMutationGate } from '../git/worktree-base-refresh-deferred-apply'
 
 type RuntimeLocalWorktreeCreateArgs<T> = {
   request: RuntimeManagedWorktreeCreateArgs
@@ -45,6 +46,7 @@ type RuntimeLocalWorktreeCreateArgs<T> = {
   fetchRemote: (path: string, remote: string, options?: LocalGitExecOptions) => Promise<void>
   onWorktreeMetadataPersisted: (worktree: Worktree) => T
   rearm: PreparationRearmHolder
+  localBaseRefMutationGate?: LocalBaseRefMutationGate
 }
 
 export function createRuntimeLocalManagedWorktree<T>(args: RuntimeLocalWorktreeCreateArgs<T>) {
@@ -116,7 +118,8 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
     hasRemoteTrackingRef: args.hasRemoteTrackingRef,
     refreshRemoteTrackingBase: args.refreshRemoteTrackingBase,
     fetchRemote: args.fetchRemote,
-    rearm: args.rearm
+    rearm: args.rearm,
+    localBaseRefMutationGate: args.localBaseRefMutationGate
   })
   const materialized = await materializeRuntimeLocalWorktree({
     request,

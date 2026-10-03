@@ -56,6 +56,7 @@ import type { ForgeProviderId } from '../source-control/forge-provider'
 import { validateGitPushTarget } from '../git/push-target-validation'
 import { assertValidGitPushTarget } from '../../shared/git-push-target-validation'
 import { gitExecFileAsync } from '../git/runner'
+import { LocalBaseRefMutationGate } from '../git/worktree-base-refresh-deferred-apply'
 import type {
   DolphinRuntimeService,
   RemoteFetchResult,
@@ -2345,10 +2346,24 @@ export function createLocalWorktree(
   // create that fails after that point — include copy, push target, terminal startup — must still
   // arm the replacement. Fires exactly once, after startup on the success path.
   const rearm: PreparationRearmHolder = { fire: () => {} }
+  // Why: the primary checkout's base fast-forward is disk-bound like our own checkout; same release point as rearm.
+  const baseRefMutationGate = new LocalBaseRefMutationGate()
   return worktreeCreateGit
-    .run(() => performLocalWorktreeCreate(args, repo, store, mainWindow, rearm, runtime, placement))
+    .run(() =>
+      performLocalWorktreeCreate(
+        args,
+        repo,
+        store,
+        mainWindow,
+        rearm,
+        baseRefMutationGate,
+        runtime,
+        placement
+      )
+    )
     .finally(() => {
       rearm.fire()
+      baseRefMutationGate.release()
     })
 }
 
@@ -2358,6 +2373,7 @@ async function performLocalWorktreeCreate(
   store: Store,
   mainWindow: BrowserWindow,
   rearm: PreparationRearmHolder,
+  baseRefMutationGate: LocalBaseRefMutationGate,
   runtime?: DolphinRuntimeService,
   placement?: LocalWorktreePlacement
 ): Promise<CreateWorktreeResult> {
@@ -2376,7 +2392,10 @@ async function performLocalWorktreeCreate(
     : []
   const addProjectGitOptions = (options?: AddWorktreeOptions): AddWorktreeOptions => ({
     ...options,
-    ...localWorktreeGitOptions
+    ...localWorktreeGitOptions,
+    ...(settings.refreshLocalBaseRefOnWorktreeCreate
+      ? { localBaseRefMutationGate: baseRefMutationGate }
+      : {})
   })
 
   const requestedName = args.name
@@ -2423,81 +2442,108 @@ async function performLocalWorktreeCreate(
       return hasLocalWorktreeBaseRef(repo.path, baseBranchCandidate, localGitExecOptions)
     }
   })
-  const [username, resolvedBaseBranch] = await Promise.all([usernamePromise, baseBranchPromise])
-  let baseBranch = resolvedBaseBranch
-  if (!baseBranch) {
+  // Why: the remote-tracking probes depend only on the base, so they chain onto it instead of
+  // waiting for the username; both are timed so create stops reporting them as unattributed.
+  const resolveBaseTracking = async (resolvedBaseBranch: string) => {
+    let baseBranch = resolvedBaseBranch
+    let remoteTrackingBase: RemoteTrackingBase | null = null
+    let baseFallback: WorktreeCreateBaseFallback | undefined
+    let remoteTrackingRefresh: {
+      base: RemoteTrackingBase
+      hadLocalBaseRef: boolean
+      promise: Promise<RemoteFetchResult>
+    } | null = null
+    let legacyFetchPromise: Promise<void> | null = null
+
+    if (runtime) {
+      remoteTrackingBase = await runtime.resolveRemoteTrackingBase(
+        repo.path,
+        baseBranch,
+        ...localWorktreeGitOptionArgs
+      )
+      if (remoteTrackingBase) {
+        const [hasRemoteTrackingBaseRef, hasNamedLocalBaseRef] = await Promise.all([
+          runtime.hasRemoteTrackingRef(
+            repo.path,
+            remoteTrackingBase,
+            ...localWorktreeGitOptionArgs
+          ),
+          hasLocalWorktreeBaseRef(repo.path, baseBranch, localGitExecOptions)
+        ])
+        const hasFallbackLocalBaseRef =
+          !hasNamedLocalBaseRef &&
+          (await hasLocalWorktreeBaseRef(repo.path, remoteTrackingBase.branch, localGitExecOptions))
+        const hasLocalBaseRef =
+          hasRemoteTrackingBaseRef || hasNamedLocalBaseRef || hasFallbackLocalBaseRef
+        if (!hasRemoteTrackingBaseRef && hasLocalBaseRef) {
+          // Why: use the usable local branch when offline refresh cannot create its tracking ref.
+          if (hasFallbackLocalBaseRef) {
+            baseBranch = remoteTrackingBase.branch
+          }
+          baseFallback = {
+            requestedRef: remoteTrackingBase.base,
+            localRef: baseBranch
+          }
+          remoteTrackingBase = null
+        } else {
+          emitCreateWorktreeProgress(mainWindow, 'fetching', args.creationId)
+          remoteTrackingRefresh = {
+            base: remoteTrackingBase,
+            hadLocalBaseRef: hasRemoteTrackingBaseRef,
+            promise: runtime.getOrStartRemoteTrackingBaseRefresh(
+              repo.path,
+              remoteTrackingBase,
+              ...localWorktreeGitOptionArgs
+            )
+          }
+        }
+      } else if (!(await hasLocalWorktreeBaseRef(repo.path, baseBranch, localGitExecOptions))) {
+        // Why: non-remote-prefix bases (plain main/master/local) keep the legacy best-effort fetch; verified PR SHA bases already have the object.
+        legacyFetchPromise = runtime
+          .fetchRemoteWithCache(repo.path, 'origin', ...localWorktreeGitOptionArgs)
+          .then(() => undefined)
+          .catch(() => undefined)
+        emitCreateWorktreeProgress(mainWindow, 'fetching', args.creationId)
+      }
+    } else {
+      if (!(await hasLocalWorktreeBaseRef(repo.path, baseBranch, localGitExecOptions))) {
+        legacyFetchPromise = gitExecFileAsync(['fetch', 'origin'], {
+          ...localGitExecOptions,
+          timeout: CREATE_BASE_FALLBACK_FETCH_TIMEOUT_MS
+        })
+          .then(() => undefined)
+          .catch(() => undefined)
+        emitCreateWorktreeProgress(mainWindow, 'fetching', args.creationId)
+      }
+    }
+    return {
+      baseBranch,
+      remoteTrackingBase,
+      baseFallback,
+      remoteTrackingRefresh,
+      legacyFetchPromise
+    }
+  }
+  const [username, resolvedBase] = await Promise.all([
+    timing.time('resolve_username', () => usernamePromise),
+    timing.time('resolve_base', async () => {
+      const resolvedBaseBranch = await baseBranchPromise
+      return resolvedBaseBranch ? resolveBaseTracking(resolvedBaseBranch) : null
+    })
+  ])
+  if (!resolvedBase) {
     // Why: no default base resolved; fail clearly rather than pass a hardcoded non-existent ref to git worktree add (opaque error) so the UI can prompt.
     throw new Error(
       'Could not resolve a default base ref for this repo. Pick a base branch explicitly and try again.'
     )
   }
-
-  let remoteTrackingBase: RemoteTrackingBase | null = null
-  let baseFallback: WorktreeCreateBaseFallback | undefined
-  let remoteTrackingRefresh: {
-    base: RemoteTrackingBase
-    hadLocalBaseRef: boolean
-    promise: Promise<RemoteFetchResult>
-  } | null = null
-  let legacyFetchPromise: Promise<void> | null = null
-
-  if (runtime) {
-    remoteTrackingBase = await runtime.resolveRemoteTrackingBase(
-      repo.path,
-      baseBranch,
-      ...localWorktreeGitOptionArgs
-    )
-    if (remoteTrackingBase) {
-      const [hasRemoteTrackingBaseRef, hasNamedLocalBaseRef] = await Promise.all([
-        runtime.hasRemoteTrackingRef(repo.path, remoteTrackingBase, ...localWorktreeGitOptionArgs),
-        hasLocalWorktreeBaseRef(repo.path, baseBranch, localGitExecOptions)
-      ])
-      const hasFallbackLocalBaseRef =
-        !hasNamedLocalBaseRef &&
-        (await hasLocalWorktreeBaseRef(repo.path, remoteTrackingBase.branch, localGitExecOptions))
-      const hasLocalBaseRef =
-        hasRemoteTrackingBaseRef || hasNamedLocalBaseRef || hasFallbackLocalBaseRef
-      if (!hasRemoteTrackingBaseRef && hasLocalBaseRef) {
-        // Why: use the usable local branch when offline refresh cannot create its tracking ref.
-        if (hasFallbackLocalBaseRef) {
-          baseBranch = remoteTrackingBase.branch
-        }
-        baseFallback = {
-          requestedRef: remoteTrackingBase.base,
-          localRef: baseBranch
-        }
-        remoteTrackingBase = null
-      } else {
-        emitCreateWorktreeProgress(mainWindow, 'fetching', args.creationId)
-        remoteTrackingRefresh = {
-          base: remoteTrackingBase,
-          hadLocalBaseRef: hasRemoteTrackingBaseRef,
-          promise: runtime.getOrStartRemoteTrackingBaseRefresh(
-            repo.path,
-            remoteTrackingBase,
-            ...localWorktreeGitOptionArgs
-          )
-        }
-      }
-    } else if (!(await hasLocalWorktreeBaseRef(repo.path, baseBranch, localGitExecOptions))) {
-      // Why: non-remote-prefix bases (plain main/master/local) keep the legacy best-effort fetch; verified PR SHA bases already have the object.
-      legacyFetchPromise = runtime
-        .fetchRemoteWithCache(repo.path, 'origin', ...localWorktreeGitOptionArgs)
-        .then(() => undefined)
-        .catch(() => undefined)
-      emitCreateWorktreeProgress(mainWindow, 'fetching', args.creationId)
-    }
-  } else {
-    if (!(await hasLocalWorktreeBaseRef(repo.path, baseBranch, localGitExecOptions))) {
-      legacyFetchPromise = gitExecFileAsync(['fetch', 'origin'], {
-        ...localGitExecOptions,
-        timeout: CREATE_BASE_FALLBACK_FETCH_TIMEOUT_MS
-      })
-        .then(() => undefined)
-        .catch(() => undefined)
-      emitCreateWorktreeProgress(mainWindow, 'fetching', args.creationId)
-    }
-  }
+  const {
+    baseBranch,
+    remoteTrackingBase,
+    baseFallback,
+    remoteTrackingRefresh,
+    legacyFetchPromise
+  } = resolvedBase
   const workspaceRoot = await computeWorkspaceRootAsync(repo.path, worktreePathSettings)
 
   // Why: this validation doesn't depend on remote refs, so it can overlap a required remote-tracking base refresh.

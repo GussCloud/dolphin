@@ -20,7 +20,8 @@ export function registerWorktreePrefetchHandler(context: WorktreeIpcContext): vo
           baseBranch: args.baseBranch,
           runtime,
           gitOptions: getWorktreeCreatePrefetchGitOptions(store, repo),
-          prepareCheckout: (base) => prepareWorktreeCreateForRepo(store, repo, base)
+          prepareCheckout: (base) => prepareWorktreeCreateForRepo(store, repo, base),
+          warmGitUsername: store.getSettings().branchPrefix === 'git-username'
         })
       } catch {
         // Why: optimistic warm-up; the real create path awaits the same refresh and reports failures there.

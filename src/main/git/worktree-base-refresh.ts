@@ -8,6 +8,7 @@ import {
 import {
   localBaseRefRefreshQueueKey,
   runSerializedLocalBaseRefRefresh,
+  type LocalBaseRefMutationGate,
   type LocalBaseRefRefreshPlan
 } from './worktree-base-refresh-deferred-apply'
 import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
@@ -16,7 +17,10 @@ import type { AddWorktreeOptions, GitWorktreeExecOptions } from './worktree-oper
 import { gitExecOptions } from './worktree-operation-options'
 
 export { getLocalBaseRefUpdateSuggestionForWorktreeCreate }
-export { _awaitPendingLocalBaseRefRefreshesForTests } from './worktree-base-refresh-deferred-apply'
+export {
+  _awaitPendingLocalBaseRefRefreshesForTests,
+  LocalBaseRefMutationGate
+} from './worktree-base-refresh-deferred-apply'
 
 type RefreshPlan = LocalBaseRefRefreshPlan<LocalBaseRefRefreshResult | undefined>
 
@@ -29,10 +33,13 @@ export function refreshLocalBaseRefForWorktreeCreate(
   baseBranch: string,
   remoteTrackingRef: string,
   remoteTrackingBase?: AddWorktreeOptions['remoteTrackingBase'],
-  options: GitWorktreeExecOptions = {}
+  options: GitWorktreeExecOptions & { localBaseRefMutationGate?: LocalBaseRefMutationGate } = {}
 ): Promise<LocalBaseRefRefreshResult | undefined> {
-  return runSerializedLocalBaseRefRefresh(localBaseRefRefreshQueueKey(repoPath, options), () =>
-    planLocalBaseRefRefresh(repoPath, baseBranch, remoteTrackingRef, remoteTrackingBase, options)
+  return runSerializedLocalBaseRefRefresh(
+    localBaseRefRefreshQueueKey(repoPath, options),
+    () =>
+      planLocalBaseRefRefresh(repoPath, baseBranch, remoteTrackingRef, remoteTrackingBase, options),
+    options.localBaseRefMutationGate
   )
 }
 
@@ -91,6 +98,13 @@ async function planLocalBaseRefRefresh(
         result: { ...resultBase, status: 'updated', ownerWorktreePath: currentOwner.path },
         deferredMutation: {
           context: { ...context, ownerWorktreePath: currentOwner.path },
+          revalidate: () =>
+            ownerCheckoutChangedSincePlan(
+              currentOwner.path,
+              evaluation.fullRef,
+              evaluation.localOid,
+              mutationOptions
+            ),
           start: () =>
             runWithGitReadCacheInvalidation(() =>
               gitExecFileAsync(
@@ -116,6 +130,17 @@ async function planLocalBaseRefRefresh(
     result: { ...resultBase, status: 'updated' },
     deferredMutation: {
       context,
+      revalidate: async () => {
+        const { stdout } = await gitExecFileAsync(
+          ['worktree', 'list', '--porcelain'],
+          gitExecOptions(repoPath, mutationOptions)
+        )
+        const owner = parseWorktreeList(translateWslOutputPaths(stdout, repoPath, options)).find(
+          (wt) => wt.branch === evaluation.fullRef
+        )
+        // Moving a checked-out branch's ref under it would leave that checkout's index stale.
+        return owner ? 'branch_checked_out' : undefined
+      },
       start: () =>
         runWithGitReadCacheInvalidation(() =>
           gitExecFileAsync(
@@ -125,4 +150,28 @@ async function planLocalBaseRefRefresh(
         )
     }
   }
+}
+
+/** Skip reason when the owner checkout no longer has the planned branch at the planned oid, clean. */
+async function ownerCheckoutChangedSincePlan(
+  ownerPath: string,
+  fullRef: string,
+  localOid: string,
+  options: GitWorktreeExecOptions
+): Promise<string | undefined> {
+  // Why porcelain=v2 (Git >=2.11): one call reports HEAD's branch, its oid, and tracked changes.
+  const { stdout } = await gitExecFileAsync(
+    ['status', '--porcelain=v2', '--branch', '--untracked-files=no'],
+    gitExecOptions(ownerPath, options)
+  )
+  const lines = stdout.split(/\r?\n/).filter((line) => line.trim())
+  const header = (name: string): string | undefined =>
+    lines.find((line) => line.startsWith(`# ${name} `))?.slice(name.length + 3)
+  if (`refs/heads/${header('branch.head') ?? ''}` !== fullRef) {
+    return 'branch_switched'
+  }
+  if (header('branch.oid') !== localOid) {
+    return 'ref_moved'
+  }
+  return lines.some((line) => !line.startsWith('#')) ? 'dirty_worktree' : undefined
 }
