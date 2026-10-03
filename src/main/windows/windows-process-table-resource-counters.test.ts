@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   __setWindowsProcessTreeLoaderForTests,
+  __setWindowsProcessTreeRequireForTests,
   isWindowsProcessResourceUsageAvailable,
   readWindowsProcessResourceTable,
   readWindowsProcessTableFresh
@@ -158,5 +159,28 @@ describe('windows process resource counters', () => {
       SELF_COUNTERS.privateBytes
     )
     expect(detailed.find((row) => row.pid === process.pid)?.command).toBe('vitest.exe --run')
+  })
+
+  it('still binds an older staged relay addon that predates ResourceUsage', async () => {
+    // A Windows SSH host keeps its staged .node until the relay is redeployed.
+    __setWindowsProcessTreeRequireForTests((specifier: string) => {
+      if (specifier === '@vscode/windows-process-tree') {
+        throw new Error('not installed on a relay host')
+      }
+      return {
+        supportedProcessDataFlags: 7,
+        getProcessList: (callback: (rows: NativeRow[]) => void, flags: number) => {
+          calls.push(flags)
+          callback(rowsFor(flags))
+        }
+      }
+    })
+
+    expect(isWindowsProcessResourceUsageAvailable()).toBe(false)
+    const detailed = await readWindowsProcessTableFresh()
+    expect(detailed.find((row) => row.pid === process.pid)?.command).toBe('vitest.exe --run')
+    await expect(readWindowsProcessResourceTable()).rejects.toThrow(/unavailable/)
+    expect(calls).not.toContain(RESOURCE_USAGE_FLAG)
+    __setWindowsProcessTreeRequireForTests()
   })
 })

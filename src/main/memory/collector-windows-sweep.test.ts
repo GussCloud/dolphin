@@ -33,6 +33,7 @@ vi.mock('../../shared/child-process/run-process', () => ({
 // would otherwise read native counters and never reach the mocked runProcess.
 vi.mock('../windows/windows-process-table', () => ({
   isWindowsProcessResourceUsageAvailable: () => false,
+  isWindowsProcessTableAvailable: () => false,
   readWindowsProcessResourceTable: () => Promise.reject(new Error('not under test'))
 }))
 

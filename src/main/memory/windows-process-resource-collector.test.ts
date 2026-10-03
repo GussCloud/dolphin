@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { WindowsProcessResourceCountersRow } from '../windows/windows-process-table'
 
-const { availableMock, readTableMock, runProcessMock } = vi.hoisted(() => ({
+const { availableMock, tableAvailableMock, readTableMock, runProcessMock } = vi.hoisted(() => ({
   availableMock: vi.fn<() => boolean>(),
+  tableAvailableMock: vi.fn<() => boolean>(),
   readTableMock: vi.fn<() => Promise<WindowsProcessResourceCountersRow[]>>(),
   runProcessMock: vi.fn()
 }))
 
 vi.mock('../windows/windows-process-table', () => ({
   isWindowsProcessResourceUsageAvailable: availableMock,
+  isWindowsProcessTableAvailable: tableAvailableMock,
   readWindowsProcessResourceTable: readTableMock
 }))
 
@@ -44,6 +46,8 @@ describe('Windows process resources from the native counters', () => {
     readTableMock.mockReset()
     runProcessMock.mockReset()
     availableMock.mockReturnValue(true)
+    tableAvailableMock.mockReset()
+    tableAvailableMock.mockReturnValue(true)
   })
 
   afterEach(() => {
@@ -115,8 +119,9 @@ describe('Windows process resources from the native counters', () => {
     expect(console.warn).toHaveBeenCalledTimes(1)
   })
 
-  it('keeps the CIM sweep for an addon compiled before ResourceUsage existed', async () => {
+  it('keeps the per-poll CIM sweep when no native addon loads at all', async () => {
     availableMock.mockReturnValue(false)
+    tableAvailableMock.mockReturnValue(false)
     runProcessMock.mockResolvedValue({
       code: 0,
       signal: null,
@@ -131,5 +136,36 @@ describe('Windows process resources from the native counters', () => {
     expect(readTableMock).not.toHaveBeenCalled()
     expect(runProcessMock.mock.calls[0]?.[0]).toMatchObject({ program: 'powershell.exe' })
     expect(rows[0]).toMatchObject({ pid: 10, memory: 1_048_576, privateMemory: 2048 * 1024 })
+  })
+
+  it('sweeps at most every 30 s for an addon compiled before ResourceUsage existed', async () => {
+    availableMock.mockReturnValue(false)
+    const cimRow = (cpuTicks: number): string =>
+      `10	1	1048576	${cpuTicks}	0	638830000000000000	2048	node.exe`
+    const outputs = [cimRow(0), cimRow(300_000_000)]
+    runProcessMock.mockImplementation(() =>
+      Promise.resolve({
+        code: 0,
+        signal: null,
+        stdout: outputs.shift() ?? '',
+        stderr: '',
+        timedOut: false
+      })
+    )
+    let nowMs = 1_000
+    vi.spyOn(performance, 'now').mockImplementation(() => nowMs)
+    const { enumerateWindowsProcessResources } = await loadCollector()
+
+    await enumerateWindowsProcessResources()
+    nowMs += 2_000
+    const cached = await enumerateWindowsProcessResources()
+    nowMs += 28_000
+    const resampled = await enumerateWindowsProcessResources()
+
+    expect(readTableMock).not.toHaveBeenCalled()
+    expect(runProcessMock).toHaveBeenCalledTimes(2)
+    expect(cached[0]).toMatchObject({ pid: 10, memory: 1_048_576 })
+    // 30 s of CPU over 30 s of wall time, despite the wide sample spacing.
+    expect(resampled[0].cpu).toBe(100)
   })
 })
