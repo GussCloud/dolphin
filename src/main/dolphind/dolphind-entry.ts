@@ -198,6 +198,12 @@ async function startDolphindRuntime(
   // adapter as THE local provider, and the registry's contract is that it lands before
   // registerPtyHandlers so the IPC layer routes through the daemon from the first call.
   await startDolphindDaemon()
+  const { startRuntimeHostHeapHeartbeat } =
+    await import('../diagnostics/runtime-host-heap-heartbeat')
+  // Why stdout: dolphind's log is whatever its supervisor captures (journald, launchd, a file).
+  startRuntimeHostHeapHeartbeat((fields) =>
+    console.info(`[dolphind] heap-heartbeat ${JSON.stringify(fields)}`)
+  )
 
   // Why a holder and not a direct reference: the index is installed after the runtime is
   // constructed, and the deps hook is only ever called later, from an RPC.
