@@ -3,17 +3,24 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 
-const mocks = vi.hoisted(() => ({
-  storeState: {
-    pendingStartupByTabId: {} as Record<string, unknown>,
-    runtimeStatusByEnvironmentId: new Map(),
-    settings: {} as Record<string, unknown>,
-    repos: []
-  },
-  watcherCoverage: true,
-  captureResult: true,
-  captureCalls: [] as { worktreeId: string; tabIds: readonly string[]; localOnly: boolean }[]
-}))
+type CaptureCall = { worktreeId: string; tabIds: readonly string[]; localOnly: boolean }
+
+const mocks = vi.hoisted(() => {
+  const pendingStartupByTabId: Record<string, unknown> = {}
+  const settings: Record<string, unknown> = {}
+  const captureCalls: CaptureCall[] = []
+  return {
+    storeState: {
+      pendingStartupByTabId,
+      runtimeStatusByEnvironmentId: new Map(),
+      settings,
+      repos: []
+    },
+    watcherCoverage: true,
+    captureResult: true,
+    captureCalls
+  }
+})
 
 vi.mock('@/store', () => ({
   useAppStore: Object.assign(
