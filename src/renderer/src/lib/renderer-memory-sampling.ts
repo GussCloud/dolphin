@@ -12,10 +12,15 @@ import {
 import { recordRendererCrashBreadcrumb } from './crash-breadcrumb-recorder'
 import { compactBreadcrumbData, toMegabytes } from './crash-breadcrumb-data'
 import { collectRendererMemoryProfileCounts } from './renderer-memory-profile'
+import {
+  RENDERER_MEMORY_PRESSURE_HEAP_RATIO,
+  RENDERER_MEMORY_PRESSURE_PRIVATE_MB,
+  noteRendererMemoryPressureSample
+} from './renderer-memory-pressure'
 
 const BYTES_PER_KILOBYTE = 1024
 // Why: one detailed breadcrumb per threshold names what grew before an OOM.
-const RENDERER_MEMORY_HIGHWATER_RATIOS = [0.6, 0.8] as const
+const RENDERER_MEMORY_HIGHWATER_RATIOS = [0.6, RENDERER_MEMORY_PRESSURE_HEAP_RATIO] as const
 /**
  * Private-footprint marks that arm the same profile when the growth is NOT in
  * the JS heap. Windows crash 36048e26 reported a 618MB private renderer whose
@@ -24,7 +29,7 @@ const RENDERER_MEMORY_HIGHWATER_RATIOS = [0.6, 0.8] as const
  * scrollback (`Uint32Array` backing stores) and WebGL glyph atlases both live
  * outside every heap counter, so footprint is the only mark that sees them.
  */
-const RENDERER_PRIVATE_HIGHWATER_MB = [600, 1000] as const
+const RENDERER_PRIVATE_HIGHWATER_MB = [600, RENDERER_MEMORY_PRESSURE_PRIVATE_MB] as const
 
 export type RendererSurface = 'main' | 'dashboard-popout'
 
@@ -91,6 +96,41 @@ export function recordRendererMemorySample(reason: string): void {
     })
   )
   recordRendererMemoryHighwater(memory, browserWebviews, footprint)
+  noteRendererMemoryPressure(memory, footprint)
+}
+
+// Why after the highwater crumb: the census it records describes the renderer before shedding.
+function noteRendererMemoryPressure(
+  memory: HeapMetrics,
+  footprint: RendererProcessMemory | null
+): void {
+  const sample = readPressureSample(memory, footprint)
+  const signal = noteRendererMemoryPressureSample(sample, Date.now())
+  if (signal) {
+    recordRendererCrashBreadcrumb(
+      'renderer_memory_pressure_response',
+      compactBreadcrumbData({
+        rendererSurface,
+        trigger: signal.trigger,
+        heapPct: signal.heapRatio === null ? undefined : Math.round(signal.heapRatio * 100),
+        privateMB: signal.privateMB ?? undefined
+      })
+    )
+  }
+}
+
+function readPressureSample(
+  memory: HeapMetrics,
+  footprint: RendererProcessMemory | null
+): { heapRatio: number | null; privateMB: number | null } {
+  const used = memory.usedJSHeapSize
+  const limit = memory.jsHeapSizeLimit
+  // Why: NaN would satisfy no comparison and silently disarm the marks.
+  const heapRatio =
+    isFiniteHeapBytes(used) && isFiniteHeapBytes(limit) && limit > 0 ? used / limit : null
+  const privateMB =
+    footprint === null ? null : (toMegabytes(footprint.privateKB * BYTES_PER_KILOBYTE) ?? null)
+  return { heapRatio, privateMB }
 }
 
 /** Stays null on shells without the bridge, or when the runtime withholds it. */
@@ -153,12 +193,7 @@ function recordRendererMemoryHighwater(
 ): void {
   const used = memory.usedJSHeapSize
   const limit = memory.jsHeapSizeLimit
-  // Why: NaN would satisfy `ratio < threshold` for nothing, emitting both
-  // levels spuriously and disarming the one-shot for the session.
-  const ratio =
-    isFiniteHeapBytes(used) && isFiniteHeapBytes(limit) && limit > 0 ? used / limit : null
-  const privateMB =
-    footprint === null ? null : (toMegabytes(footprint.privateKB * BYTES_PER_KILOBYTE) ?? null)
+  const { heapRatio: ratio, privateMB } = readPressureSample(memory, footprint)
   let crossedThreshold = false
   if (ratio !== null) {
     for (const threshold of RENDERER_MEMORY_HIGHWATER_RATIOS) {

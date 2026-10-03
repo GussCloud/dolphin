@@ -450,6 +450,28 @@ describe('renderer crash diagnostics', () => {
       expect(highwaterCalls().at(-1)!.data).toMatchObject({ thresholdPrivateMB: 1000 })
     })
 
+    it('signals memory pressure past the top footprint mark, once per cool-down', async () => {
+      const pressure = await import('./renderer-memory-pressure')
+      const signals: unknown[] = []
+      pressure.subscribeRendererMemoryPressure((signal) => signals.push(signal))
+      const pressureCalls = (): unknown[] =>
+        recordBreadcrumbMock.mock.calls.filter(
+          ([entry]) => entry?.name === 'renderer_memory_pressure_response'
+        )
+      stubFootprint(1200)
+      diagnostics.installRendererCrashDiagnostics()
+      await flush()
+      const tick = setIntervalMock.mock.calls[0][0] as () => void
+      tick()
+      await flush()
+      tick()
+
+      expect(signals).toEqual([
+        { trigger: 'private', heapRatio: expect.any(Number), privateMB: 1200 }
+      ])
+      expect(pressureCalls()).toHaveLength(1)
+    })
+
     it('keeps sampling when the shell has no footprint bridge at all', async () => {
       ;(window.api.crashReports as unknown as Record<string, unknown>).readProcessMemory = undefined
 
