@@ -1,5 +1,5 @@
 import type { TelemetryConsentState } from '../../shared/telemetry-consent-types'
-import type { MemorySnapshot, StatsSummary } from '../../shared/process-stats-types'
+import type { HostMemory, MemorySnapshot, StatsSummary } from '../../shared/process-stats-types'
 
 export type StatsApi = {
   getSummary: () => Promise<StatsSummary>
@@ -32,6 +32,8 @@ export type DiagnosticsUploadPayload =
 
 export type MemoryApi = {
   getSnapshot: () => Promise<MemorySnapshot>
+  /** This machine's memory totals without a process sweep; null when the client has no local host. */
+  getHostMemory: () => Promise<HostMemory | null>
 }
 
 export type DiagnosticsApi = {
