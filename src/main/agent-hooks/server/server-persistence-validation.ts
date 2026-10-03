@@ -168,6 +168,7 @@ export function sanitizeHydratedEntry(
     providerSession,
     providerSessionOnly: providerSessionOnly ? true : undefined,
     retainedForLiveness: retainedForLiveness ? true : undefined,
+    ...(record.terminalResumeEligible === false ? { terminalResumeEligible: false as const } : {}),
     payload,
     receivedAt,
     stateStartedAt

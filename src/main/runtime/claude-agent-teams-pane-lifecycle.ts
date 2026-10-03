@@ -120,6 +120,7 @@ export class ClaudeAgentTeamsPaneLifecycle {
         activate: false
       })
       pane.handle = split.handle
+      api.markTeammatePaneNotResumable(split.handle)
       pane.commandScriptPath = script?.filePath
     } catch (error) {
       await removePaneCommandScript(script?.filePath)

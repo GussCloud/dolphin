@@ -47,6 +47,11 @@ export abstract class AgentHookServerTabCleanup extends AgentHookServerCleanup {
         paneKeysToClear.add(paneKey)
       }
     }
+    for (const paneKey of this.notTerminalResumablePaneKeys) {
+      if (paneCacheKeyMatchesTab(paneKey, tabId)) {
+        paneKeysToClear.add(paneKey)
+      }
+    }
     for (const paneKey of this.promptSentDedupeByPaneKey.keys()) {
       if (paneCacheKeyMatchesTab(paneKey, tabId)) {
         paneKeysToClear.add(paneKey)
@@ -79,6 +84,7 @@ export abstract class AgentHookServerTabCleanup extends AgentHookServerCleanup {
       clearPaneCacheState(this.state, paneKey)
       this.activeHookTurnCompletedAtByPaneKey.delete(paneKey)
       this.runtimeObservedStatusPaneKeys.delete(paneKey)
+      this.notTerminalResumablePaneKeys.delete(paneKey)
       this.currentAuthorityObservations.delete(paneKey)
       this.promptSentDedupeByPaneKey.delete(paneKey)
       this.restartedStatusLaunchTokenHashByPaneKey.delete(paneKey)

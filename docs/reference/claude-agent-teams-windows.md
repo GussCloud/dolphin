@@ -79,6 +79,11 @@ and retires its agent session. Otherwise the leaf respawns on the next mount and
 cold-restores `claude --resume <teammate session>` as a plain interactive session outside
 the team.
 
+Teammate panes are also never resumed by any other path. On spawn the pane lifecycle calls
+`markTeammatePaneNotResumable`, the hook server stamps every row for that paneKey
+`terminalResumeEligible: false` (sticky, persisted in `last-status.json`, re-registered on
+hydrate), and the renderer skips cold-restore, hibernation and sleeping records for it.
+
 ## The shim is a native tmux.exe
 
 Verified in Claude 2.1.286: backend selection has no win32 block (if `TMUX` is set it

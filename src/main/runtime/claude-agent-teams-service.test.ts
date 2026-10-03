@@ -86,7 +86,8 @@ function createServiceWithLeader(
     })),
     resolveHostShell: vi.fn(() =>
       options.resolvedHostShell === undefined ? 'default' : options.resolvedHostShell
-    )
+    ),
+    markTeammatePaneNotResumable: vi.fn()
   }
   return {
     service,

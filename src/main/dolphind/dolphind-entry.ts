@@ -241,6 +241,8 @@ async function startDolphindRuntime(
     },
     reconcileAgentStatusForEndedProcess: (paneKeys) =>
       agentHookServer.reconcileEndedProcessForPaneKeys(paneKeys),
+    markAgentPaneNotTerminalResumable: (paneKey) =>
+      agentHookServer.markPaneNotTerminalResumable(paneKey),
     buildAgentHookPtyEnv: () =>
       isAgentStatusHooksEnabled(profileStore.getSettings()) ? agentHookServer.buildPtyEnv() : {},
     // Why the dedupe here and not in the instance: `apply` closes and reconstructs

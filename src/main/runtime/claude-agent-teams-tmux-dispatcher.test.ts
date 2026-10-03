@@ -54,6 +54,7 @@ function setup(hostShell: AgentTeamHostShell) {
       }
     }),
     resolveHostShell: vi.fn(() => hostShell),
+    markTeammatePaneNotResumable: vi.fn(),
     readTerminal: vi.fn(async (handle: string) => ({
       handle,
       status: 'running' as const,
@@ -199,5 +200,14 @@ describe('default host shell teams', () => {
     expect(splits[1]!.opts).not.toHaveProperty('shellOverride')
     expect(splits[1]!.opts).not.toHaveProperty('gitBashStartupCommandInArgs')
     expect(await readdir(scriptDir)).toEqual([])
+  })
+
+  it('marks every spawned teammate pane not resumable, never the leader', async () => {
+    const { api, tmux } = setup('default')
+    await tmux('split-window', ...splitHolding)
+    await tmux('respawn-pane', '-k', '-t', '%2', '--', 'claude --agent-id a')
+
+    expect(api.markTeammatePaneNotResumable.mock.calls).toEqual([['teammate-1'], ['teammate-2']])
+    expect(api.markTeammatePaneNotResumable).not.toHaveBeenCalledWith('leader-handle')
   })
 })

@@ -89,6 +89,7 @@ export function getEligiblePane(args: {
   )
   if (
     entry.state !== 'done' ||
+    entry.terminalResumeEligible === false ||
     entry.interrupted === true ||
     Boolean(entry.subagents?.length) ||
     hasUnsettledOrUnknownDispatch(entry) ||

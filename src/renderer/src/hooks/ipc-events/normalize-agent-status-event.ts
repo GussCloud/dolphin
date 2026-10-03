@@ -31,12 +31,14 @@ export function normalizeAgentStatusMetadata(
   data: AgentStatusIpcPayload,
   authorityRestartId?: string
 ): AgentStatusMetadata | undefined {
-  if (!data.providerSession && !data.launchToken && !authorityRestartId) {
+  const notResumable = data.terminalResumeEligible === false
+  if (!data.providerSession && !data.launchToken && !authorityRestartId && !notResumable) {
     return undefined
   }
   return {
     ...(authorityRestartId ? { authorityRestartId } : {}),
     ...(data.providerSession ? { providerSession: data.providerSession } : {}),
-    ...(data.launchToken ? { launchToken: data.launchToken } : {})
+    ...(data.launchToken ? { launchToken: data.launchToken } : {}),
+    ...(notResumable ? { terminalResumeEligible: false as const } : {})
   }
 }
