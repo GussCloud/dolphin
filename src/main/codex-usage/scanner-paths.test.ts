@@ -7,6 +7,7 @@ import {
   rmSync,
   symlinkSync,
   unlinkSync,
+  utimesSync,
   writeFileSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -546,8 +547,7 @@ describe('listCodexSessionFiles', () => {
       `${JSON.stringify({
         type: 'session_meta',
         payload: { id: 'session-1', cwd: join(fakeHomeDir, 'repo') }
-      })}
-`,
+      })}\n`,
       usageRecord('2026-05-26T12:00:00.000Z', 10),
       usageRecord('2026-05-26T12:01:00.000Z', 5, 15)
     ].join('')
@@ -569,6 +569,52 @@ describe('listCodexSessionFiles', () => {
     ).toBe(22)
     expect(second.processedFiles[0]?.ownedEventKeys).toEqual(rawKeys.map(toUsageOwnershipKey))
     expect(second.processedFiles[1]?.ownedEventKeys).toHaveLength(1)
+  })
+
+  it('keeps totals unchanged when a pre-upgrade cache rescans the same rollouts', async () => {
+    const sessionsDir = join(userDataDir, 'codex-runtime-home', 'home', 'sessions')
+    mkdirSync(sessionsDir, { recursive: true })
+    const originalPath = join(sessionsDir, 'aaaa-original.jsonl')
+    const forkPath = join(sessionsDir, 'zzzz-fork.jsonl')
+    const copiedPrefix = [
+      `${JSON.stringify({
+        type: 'session_meta',
+        payload: { id: 'session-1', cwd: join(fakeHomeDir, 'repo') }
+      })}\n`,
+      usageRecord('2026-05-26T12:00:00.000Z', 10),
+      usageRecord('2026-05-26T12:01:00.000Z', 5, 15)
+    ].join('')
+    writeFileSync(originalPath, copiedPrefix, 'utf-8')
+    writeFileSync(forkPath, `${copiedPrefix}${usageRecord('2026-05-26T12:02:00.000Z', 7, 22)}`)
+    const totalTokens = (scan: Awaited<ReturnType<typeof scanCodexUsageFiles>>): number =>
+      scan.dailyAggregates.reduce((total, aggregate) => total + aggregate.totalTokens, 0)
+    const first = await scanCodexUsageFiles([], [])
+    expect(totalTokens(first)).toBe(22)
+
+    const rawByCompact = new Map(
+      [
+        '2026-05-26T12:00:00.000Z|10,0,0,0,10|10,0,0,0,10',
+        '2026-05-26T12:01:00.000Z|15,0,0,0,15|5,0,0,0,5',
+        '2026-05-26T12:02:00.000Z|22,0,0,0,22|7,0,0,0,7'
+      ].map((raw) => [toUsageOwnershipKey(raw), raw])
+    )
+    const preUpgradeCache = first.processedFiles.map((file) => ({
+      ...file,
+      ownedEventKeys: file.ownedEventKeys.map((key) => rawByCompact.get(key) ?? key)
+    }))
+    expect(preUpgradeCache.flatMap((file) => file.ownedEventKeys)).toHaveLength(3)
+    expect(
+      preUpgradeCache.flatMap((file) => file.ownedEventKeys).every((key) => key.includes('|'))
+    ).toBe(true)
+    // Force the fork to reparse against the original's migrated raw claims.
+    utimesSync(forkPath, new Date(), new Date(Date.now() + 5_000))
+
+    const rescan = await scanCodexUsageFiles([], preUpgradeCache)
+
+    expect(totalTokens(rescan)).toBe(22)
+    expect(rescan.processedFiles.map((file) => file.ownedEventKeys)).toEqual(
+      first.processedFiles.map((file) => file.ownedEventKeys)
+    )
   })
 
   it('reclaims copied token events when the owning original file is deleted', async () => {

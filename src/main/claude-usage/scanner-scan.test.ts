@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, rm, utimes, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -415,6 +415,63 @@ describe('scanClaudeUsageFiles', () => {
     ])
     // A migrated cache must be persisted even though nothing was reparsed.
     expect((await scanClaudeUsageFiles([], legacyCache)).unchanged).toBe(false)
+  })
+
+  it('keeps totals unchanged when a pre-upgrade cache rescans the same transcripts', async () => {
+    const root = await makeClaudeProjectsRoot()
+    const projectDir = join(root, '.claude', 'projects', 'project-a')
+    const originalFile = join(projectDir, 'aaaa-original.jsonl')
+    const forkFile = join(projectDir, 'zzzz-fork.jsonl')
+    const turn = (sessionId: string, messageId: string, requestId: string, input: number): string =>
+      JSON.stringify({
+        type: 'assistant',
+        sessionId,
+        timestamp: '2026-04-09T10:00:00.000Z',
+        requestId,
+        cwd: '/workspace/repo-a',
+        message: {
+          id: messageId,
+          model: 'claude-sonnet-4-6',
+          usage: { input_tokens: input, output_tokens: 10 }
+        }
+      })
+    await writeFile(originalFile, turn('session-1', 'msg_1', 'req_1', 100))
+    await writeFile(
+      forkFile,
+      [turn('session-2', 'msg_1', 'req_1', 100), turn('session-2', 'msg_9', 'req_9', 50)].join('\n')
+    )
+
+    vi.resetModules()
+    vi.doMock('os', async () => ({
+      ...(await vi.importActual<typeof Os>('os')),
+      homedir: () => root
+    }))
+    const { scanClaudeUsageFiles } = await import('./scanner')
+    const totalInput = (scan: Awaited<ReturnType<typeof scanClaudeUsageFiles>>): number =>
+      scan.dailyAggregates.reduce((sum, row) => sum + row.inputTokens, 0)
+    const first = await scanClaudeUsageFiles([])
+    expect(totalInput(first)).toBe(150)
+
+    const rawByCompact = new Map(
+      ['msg_1:req_1', 'msg_9:req_9'].map((raw) => [ownershipKey(raw), raw])
+    )
+    const preUpgradeCache = first.processedFiles.map((file) => ({
+      ...file,
+      ownedDedupeKeys: file.ownedDedupeKeys.map((key) => rawByCompact.get(key) ?? key)
+    }))
+    expect(preUpgradeCache.map((file) => file.ownedDedupeKeys)).toEqual([
+      ['msg_1:req_1'],
+      ['msg_9:req_9']
+    ])
+    // Force the fork to reparse against the original's migrated raw claim.
+    await utimes(forkFile, new Date(), new Date(Date.now() + 5_000))
+
+    const rescan = await scanClaudeUsageFiles([], preUpgradeCache)
+
+    expect(totalInput(rescan)).toBe(150)
+    expect(rescan.processedFiles.map((file) => file.ownedDedupeKeys)).toEqual(
+      first.processedFiles.map((file) => file.ownedDedupeKeys)
+    )
   })
 
   it('reclaims fork-copied turns when the owning original file is deleted', async () => {

@@ -6,7 +6,10 @@ import type { CodexUsageDailyAggregate, CodexUsagePersistedFile, CodexUsageSessi
 // so forks that rewrite session_meta still match. Older caches used session-
 // scoped keys and can double-count after fork/resume (#8006).
 // v6 adds per-request long-context token counts, which older rows cannot be backfilled with.
-export const CODEX_USAGE_SCHEMA_VERSION = 6
+// v7 stores ownership keys as compact digests; v6 caches are migrated in place by the scan
+// worker, and older builds reset on v7 rather than mismatching digests and raw keys.
+export const CODEX_USAGE_SCHEMA_VERSION = 7
+export const CODEX_USAGE_RAW_OWNERSHIP_KEY_SCHEMA_VERSION = 6
 
 export const codexUsageProvider = {
   id: 'codex',

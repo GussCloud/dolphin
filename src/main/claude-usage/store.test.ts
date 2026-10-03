@@ -118,6 +118,44 @@ describe('ClaudeUsageStore', () => {
     expect(store.getScanState().enabled).toBe(false)
   })
 
+  it('keeps a v6 cache across the compact-key upgrade and persists it as v7', async () => {
+    const cacheFile = join(tempUserData, 'dolphin-claude-usage.json')
+    const processedFile = {
+      path: '/claude/projects/a.jsonl',
+      mtimeMs: 1,
+      size: 10,
+      lineCount: 1,
+      sessions: [],
+      dailyAggregates: [],
+      ownedDedupeKeys: ['msg_1:req_1'],
+      hasDeferredClaims: false
+    }
+    writeFileSync(
+      cacheFile,
+      JSON.stringify({
+        schemaVersion: 6,
+        worktreeFingerprint: '[]',
+        processedFiles: [processedFile],
+        sessions: [],
+        dailyAggregates: [],
+        scanState: {
+          enabled: true,
+          lastScanStartedAt: null,
+          lastScanCompletedAt: null,
+          lastScanError: null
+        }
+      })
+    )
+
+    const store = new ClaudeUsageStore(createBackingStore())
+    await store.refresh(true)
+    await store.flush()
+
+    // The raw keys reach the scan worker, which migrates them instead of a full rescan.
+    expect(scanClaudeUsageFilesViaWorker).toHaveBeenCalledWith([], [processedFile])
+    expect(JSON.parse(readFileSync(cacheFile, 'utf-8')).schemaVersion).toBe(7)
+  })
+
   it('reports no data for Dolphin scope when only non-Dolphin usage exists', async () => {
     const store = createStoreWithState({
       sessions: [

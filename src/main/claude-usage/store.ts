@@ -24,7 +24,11 @@ import { resolveAutomationRunUsage } from './claude-usage-automation-attribution
 // caches either lack ownership or used narrower keys and can under/over-count
 // after fork reclaim (#8006). v6 adds the 1-hour cache-write split, which older
 // caches never recorded, so their cost estimates stay stuck at the 5m rate (#15993).
-const SCHEMA_VERSION = 6
+// v7 stores ownership keys as compact digests. v6 caches keep their totals: the scan
+// worker migrates their raw keys in place. Older builds reset on v7 instead of
+// mismatching digests against the raw keys they compute.
+const SCHEMA_VERSION = 7
+const RAW_OWNERSHIP_KEY_SCHEMA_VERSION = 6
 
 // Why: capture the path after configureDevUserDataPath() but before app.setName()
 // mutates Electron's derived userData location, matching the persistence/store pattern.
@@ -49,6 +53,9 @@ function getDefaultState(): ClaudeUsagePersistedState {
 function normalizePersistedState(state: ClaudeUsagePersistedState): ClaudeUsagePersistedState {
   if (state.schemaVersion === SCHEMA_VERSION) {
     return state
+  }
+  if (state.schemaVersion === RAW_OWNERSHIP_KEY_SCHEMA_VERSION) {
+    return { ...state, schemaVersion: SCHEMA_VERSION }
   }
   // Scanner changes invalidate totals, but preserving enabled keeps existing tracking on.
   const defaults = getDefaultState()
