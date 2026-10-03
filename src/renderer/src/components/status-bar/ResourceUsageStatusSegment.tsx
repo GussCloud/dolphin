@@ -60,6 +60,7 @@ export function ResourceUsageStatusSegment({
     sessionsOnlyError,
     resourceManagerTooltipLines,
     resourceManagerAriaLabel,
+    memoryOverBudget,
     toggleRepo,
     toggleWorktree,
     navigateToWorktree,
@@ -91,7 +92,8 @@ export function ResourceUsageStatusSegment({
         memBadgeLabel,
         triggerSessionCount,
         orphanCount,
-        resourceManagerTooltipLines
+        resourceManagerTooltipLines,
+        memoryOverBudget
       })}
 
       <PopoverContent

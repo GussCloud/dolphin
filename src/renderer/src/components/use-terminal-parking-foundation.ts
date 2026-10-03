@@ -17,6 +17,7 @@ import {
   useManualTerminalWorktreeParking
 } from './terminal-pane/use-manual-terminal-worktree-parking'
 import type { TerminalEditorCloseController } from './use-terminal-editor-close-dialog-actions'
+import { useTerminalMemoryPressureResponse } from './use-terminal-memory-pressure-response'
 
 export function useTerminalParkingFoundation(controller: TerminalEditorCloseController) {
   const {
@@ -45,6 +46,9 @@ export function useTerminalParkingFoundation(controller: TerminalEditorCloseCont
   const measurableBackgroundWorktreeTimersRef = useRef(new Map<string, number>())
   const [backgroundMountRevision, setBackgroundMountRevision] = useState(0)
   const [terminalParkingRevision, setTerminalParkingRevision] = useState(0)
+  const memoryPressureParkRequestedRef = useTerminalMemoryPressureResponse(
+    setTerminalParkingRevision
+  )
   const [browserGuestRetentionRevision, setBrowserGuestRetentionRevision] = useState(0)
   const [parkedTerminalWorktreeIds, setParkedTerminalWorktreeIds] = useState<ReadonlySet<string>>(
     () => new Set()
@@ -184,6 +188,7 @@ export function useTerminalParkingFoundation(controller: TerminalEditorCloseCont
     parkedCaptureDoneRef,
     retentionHiddenSinceByTabIdRef,
     retentionParkRecheckTimerRef,
+    memoryPressureParkRequestedRef,
     backgroundMountTabIdsByWorktreeRef,
     activationDeferredMountTabIdsByWorktreeRef,
     lastActivationWorktreeIdRef,

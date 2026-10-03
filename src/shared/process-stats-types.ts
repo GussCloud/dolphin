@@ -91,6 +91,14 @@ export type HostMemory = {
   loadAverage1m: number
 }
 
+/** An owner over its warn-only memory budget (see main/diagnostics/memory-budget.ts). */
+export type MemoryBudgetWarning = {
+  kind: 'renderer' | 'session' | 'daemon'
+  subject: string
+  bytes: number
+  limitBytes: number
+}
+
 export type MemorySnapshot = {
   app: AppMemory
   worktrees: WorktreeMemory[]
@@ -120,5 +128,7 @@ export type MemorySnapshot = {
   daemon?: DaemonMemory
   /** Processes in every registered session subtree. Absent from older hosts. */
   trackedProcessCount?: number
+  /** Owners over their memory budget at collection time. Absent from older hosts and when none are over. */
+  budgetWarnings?: MemoryBudgetWarning[]
   collectedAt: number
 }

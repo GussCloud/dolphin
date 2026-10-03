@@ -4010,6 +4010,14 @@
                 "workingSetDescription": "Somme des working sets (WS). Les pages partagées peuvent apparaître dans plusieurs processus.",
                 "rssDescription": "Somme des tailles résidentes (RSS). Les pages partagées ou aliasées peuvent apparaître dans plusieurs processus.",
                 "privateBytesDescription": "Octets privés additionnés : mémoire engagée par ces processus, comptée si elle est résidente ou paginée. C'est ce que l'hôte facture par rapport à sa limite de validation, de sorte qu'elle continue d'augmenter tandis que l'ensemble de travail ci-dessus diminue sous la pagination."
+              },
+              "budget": {
+                "copy": {
+                  "rendererOwner": "Fenêtre Dolphin",
+                  "daemonOwner": "Démon des terminaux",
+                  "overBudget": "{{owner}} dépasse le budget mémoire : {{used}} (limite {{limit}})",
+                  "triggerLabel": "Mémoire au-delà du budget"
+                }
               }
             },
             "manager": {

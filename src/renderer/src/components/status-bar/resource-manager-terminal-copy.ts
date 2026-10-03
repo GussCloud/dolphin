@@ -1,4 +1,6 @@
 import { translate } from '@/i18n/i18n'
+import type { MemoryBudgetWarning } from '../../../../shared/process-stats-types'
+import { formatMemoryBudgetWarning } from './resource-memory-budget-copy'
 
 export function formatTerminalSessionCount(count: number): string {
   return count === 1
@@ -31,7 +33,7 @@ function spaceScanReadyLabel(): string {
  * unlike the translated text, which locales are free to duplicate across rows.
  */
 export type ResourceManagerTooltipLine = {
-  id: 'summary' | 'space-scan' | 'sessions-hint'
+  id: 'summary' | 'space-scan' | 'sessions-hint' | `memory-budget-${number}`
   text: string
   emphasized: boolean
 }
@@ -40,6 +42,7 @@ export function getResourceManagerTooltipLines(args: {
   memoryLabel: string
   sessionCount: number
   spaceScanReady: boolean
+  budgetWarnings?: readonly MemoryBudgetWarning[]
 }): ResourceManagerTooltipLine[] {
   const rawMemoryLabel = args.memoryLabel.trim()
   const memoryLabel =
@@ -62,6 +65,14 @@ export function getResourceManagerTooltipLines(args: {
       emphasized: false
     }
   ]
+
+  for (const [index, warning] of (args.budgetWarnings ?? []).entries()) {
+    lines.push({
+      id: `memory-budget-${index}`,
+      text: formatMemoryBudgetWarning(warning),
+      emphasized: true
+    })
+  }
 
   if (args.spaceScanReady) {
     lines.push({ id: 'space-scan', text: spaceScanReadyLabel(), emphasized: true })

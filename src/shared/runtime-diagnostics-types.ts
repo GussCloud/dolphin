@@ -1,4 +1,4 @@
-import type { MemorySnapshot } from './process-stats-types'
+import type { MemorySnapshot, MemoryBudgetWarning } from './process-stats-types'
 import type { ProcessHeapSample } from './process-heap-sample'
 import type { SessionLifecycleState } from './session-lifecycle'
 
@@ -49,12 +49,7 @@ export type SessionInconsistency = {
   pid: number | null
 }
 
-export type MemoryBudgetWarning = {
-  kind: 'renderer' | 'session' | 'daemon'
-  subject: string
-  bytes: number
-  limitBytes: number
-}
+export type { MemoryBudgetWarning } from './process-stats-types'
 
 export type RuntimeDiagnostics = {
   collectedAt: number

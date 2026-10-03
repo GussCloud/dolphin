@@ -11,6 +11,7 @@ import { selectSleepingRecordParkExemptTabIds } from './terminal-pane/sleeping-r
 import { getTerminalPaneSplitMountLeaseTabIds } from './terminal-pane/terminal-pane-split-request-routing'
 import { captureParkedTerminalBuffers } from './terminal-pane/parked-terminal-buffer-capture'
 import { haveSameIdSet } from './terminal-workspace-model'
+import { recordRendererCrashBreadcrumb } from '@/lib/crash-breadcrumb-recorder'
 import type { collectTerminalParkingPassCandidates } from './terminal-parking-pass-candidates'
 import type { TerminalParkingFoundation } from './use-terminal-parking-foundation'
 
@@ -53,6 +54,7 @@ export function runHiddenTabRetentionPass(
     retentionParkedTerminalTabIds,
     retentionHiddenSinceByTabIdRef,
     retentionParkRecheckTimerRef,
+    memoryPressureParkRequestedRef,
     setRetentionParkedTerminalTabIds,
     setTerminalParkingRevision,
     tabsByWorktree,
@@ -157,12 +159,17 @@ export function runHiddenTabRetentionPass(
       globalCandidates.push({ tabId: tab.id, hiddenSinceMs, estimatedBufferBytes })
     }
   }
+  // Why one-shot: a pressure shed parks every eligible hidden tab once; retention parks are sticky,
+  // so later passes keep them parked without holding the budget at zero.
+  const memoryPressureShed = memoryPressureParkRequestedRef.current
+  memoryPressureParkRequestedRef.current = false
   const budgetParkedTabIds = withholdUncapturedRetentionParks(
     selectHiddenTerminalTabsBeyondRetentionBudget({
       candidates: globalCandidates,
       nowMs: pass.nowMs,
       enabled: globalRetentionEnabled,
       pinnedBytes,
+      ...(memoryPressureShed ? { retentionLimit: 0, retentionBytes: 0 } : {}),
       ...(pass.overrides.coldParkDelayMs !== undefined
         ? { coldParkDelayMs: pass.overrides.coldParkDelayMs }
         : {})
@@ -172,6 +179,12 @@ export function runHiddenTabRetentionPass(
   )
   for (const tabId of budgetParkedTabIds) {
     nextRetentionParkedTabIds.add(tabId)
+  }
+  if (memoryPressureShed) {
+    recordRendererCrashBreadcrumb('terminal_memory_pressure_park', {
+      candidates: globalCandidates.length,
+      parked: budgetParkedTabIds.size
+    })
   }
   setRetentionParkedTerminalTabIds((current) =>
     haveSameIdSet(current, nextRetentionParkedTabIds) ? current : nextRetentionParkedTabIds

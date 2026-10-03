@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from './status-bar-context-menu-policy'
+import { memoryOverBudgetLabel } from './resource-memory-budget-copy'
 
 export function renderResourceUsageStatusTrigger({
   daemonUnreachable,
@@ -15,7 +16,8 @@ export function renderResourceUsageStatusTrigger({
   memBadgeLabel,
   triggerSessionCount,
   orphanCount,
-  resourceManagerTooltipLines
+  resourceManagerTooltipLines,
+  memoryOverBudget
 }: {
   daemonUnreachable: boolean
   resourceManagerAriaLabel: string
@@ -26,6 +28,7 @@ export function renderResourceUsageStatusTrigger({
   triggerSessionCount: number
   orphanCount: number
   resourceManagerTooltipLines: { id: string; text: string; emphasized: boolean }[]
+  memoryOverBudget: boolean
 }): React.JSX.Element {
   return (
     <Tooltip delayDuration={150}>
@@ -78,6 +81,12 @@ export function renderResourceUsageStatusTrigger({
               <span className="text-[11px] tabular-nums text-muted-foreground">
                 {triggerSessionCount}
               </span>
+            )}
+            {memoryOverBudget && (
+              <AlertTriangle
+                className="size-3 text-status-warning"
+                aria-label={memoryOverBudgetLabel()}
+              />
             )}
             {daemonUnreachable && (
               <AlertTriangle

@@ -184,8 +184,10 @@ export function useResourceUsageDerivedModel({
           .join(' · ')
       : memBadgeLabel,
     sessionCount: triggerSessionCount,
-    spaceScanReady
+    spaceScanReady,
+    budgetWarnings: resourceSnapshot?.budgetWarnings
   })
+  const memoryOverBudget = (resourceSnapshot?.budgetWarnings?.length ?? 0) > 0
   const resourceManagerAriaLabel = getResourceManagerAriaLabel({
     sessionCount: triggerSessionCount,
     spaceScanReady
@@ -205,6 +207,7 @@ export function useResourceUsageDerivedModel({
     daemonUnreachable,
     sessionsOnlyError,
     resourceManagerTooltipLines,
-    resourceManagerAriaLabel
+    resourceManagerAriaLabel,
+    memoryOverBudget
   }
 }

@@ -1,14 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { handleMock, collectMemorySnapshotMock, collectHostMemoryMock } = vi.hoisted(() => ({
-  handleMock: vi.fn(),
-  collectMemorySnapshotMock: vi.fn(),
-  collectHostMemoryMock: vi.fn()
-}))
+const { handleMock, collectMemorySnapshotMock, collectHostMemoryMock, evaluateMemoryBudgetMock } =
+  vi.hoisted(() => ({
+    handleMock: vi.fn(),
+    collectMemorySnapshotMock: vi.fn(),
+    collectHostMemoryMock: vi.fn(),
+    evaluateMemoryBudgetMock: vi.fn((): unknown[] => [])
+  }))
 
 vi.mock('electron', () => ({ ipcMain: { handle: handleMock } }))
 vi.mock('../memory/collector', () => ({ collectMemorySnapshot: collectMemorySnapshotMock }))
 vi.mock('../memory/host-memory', () => ({ collectHostMemory: collectHostMemoryMock }))
+vi.mock('../diagnostics/memory-budget', () => ({
+  evaluateMemoryBudget: evaluateMemoryBudgetMock,
+  readMemoryBudget: () => ({})
+}))
+vi.mock('../observability/tracer', () => ({ startSpan: () => ({ end: () => {} }) }))
 
 import { registerMemoryHandlers } from './memory'
 
@@ -34,6 +41,8 @@ describe('registerMemoryHandlers', () => {
     handleMock.mockReset()
     collectMemorySnapshotMock.mockReset()
     collectHostMemoryMock.mockReset()
+    evaluateMemoryBudgetMock.mockReset()
+    evaluateMemoryBudgetMock.mockReturnValue([])
   })
 
   it('serves host memory without running the process-table snapshot', async () => {
@@ -52,5 +61,20 @@ describe('registerMemoryHandlers', () => {
 
     await expect(handlerFor('memory:getSnapshot')()).resolves.toEqual({ collectedAt: 1 })
     expect(collectMemorySnapshotMock).toHaveBeenCalledWith(store)
+  })
+
+  it('attaches over-budget owners to the snapshot only when there are any', async () => {
+    const warning = { kind: 'daemon', subject: 'pid 7', bytes: 600, limitBytes: 512 }
+    collectMemorySnapshotMock.mockResolvedValue({ collectedAt: 2 })
+    evaluateMemoryBudgetMock.mockReturnValue([warning])
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    registerMemoryHandlers(fakeStore())
+
+    await expect(handlerFor('memory:getSnapshot')()).resolves.toEqual({
+      collectedAt: 2,
+      budgetWarnings: [warning]
+    })
+    expect(warn).toHaveBeenCalledTimes(1)
+    warn.mockRestore()
   })
 })

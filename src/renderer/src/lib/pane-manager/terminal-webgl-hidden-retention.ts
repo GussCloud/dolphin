@@ -75,6 +75,16 @@ export function releaseHiddenWebglRetention(owner: HiddenWebglRetentionOwner): v
   removeEntry(owner)
 }
 
+/** Memory-pressure shed: dispose every retained hidden context (its glyph atlas goes with it).
+ *  Reveal reattaches WebGL exactly as it does after an over-cap eviction. Returns owners released. */
+export function releaseAllRetainedHiddenWebgl(): number {
+  const released = retainedEntries.splice(0)
+  for (const entry of released) {
+    disposeEntryContexts(entry)
+  }
+  return released.length
+}
+
 export function retainedHiddenWebglOwnerCountForTest(): number {
   return retainedEntries.length
 }
