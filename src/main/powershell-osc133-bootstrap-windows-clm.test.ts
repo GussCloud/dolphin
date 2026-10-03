@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { encodePowerShellCommand } from './powershell-osc133-bootstrap'
+import { readPowerShellBootstrapScript } from './powershell-osc133-bootstrap.test-fixture'
 import { resolveWindowsShellLaunchArgs } from './providers/windows-shell-args'
 
 const WINDOWS_POWERSHELLS = ['powershell.exe', 'pwsh.exe'] as const
@@ -18,7 +19,7 @@ for (const shell of WINDOWS_POWERSHELLS) {
         const cwd = mkdtempSync(join(tmpdir(), 'dolphin-powershell-clm-'))
         try {
           expect(runBootstrap(shell, languageMode, cwd)).toContain(
-            `mode=${languageMode};codexHome=${MANAGED_CODEX_HOME};dolphinHome=${MANAGED_CODEX_HOME};startupCount=2;cwd=${cwd}`
+            `mode=${languageMode};codexHome=${MANAGED_CODEX_HOME};dolphinHome=${MANAGED_CODEX_HOME};startupCount=2;cwd=${cwd};bootstrapEnvRemoved=True;bootstrapFunctionLeft=False;errors=0`
           )
         } finally {
           rmSync(cwd, { recursive: true, force: true })
@@ -41,10 +42,9 @@ function runBootstrap(
     '$env:DOLPHIN_TEST_STARTUP_COUNT = 1 + [int]$env:DOLPHIN_TEST_STARTUP_COUNT'
   )
   expect(launch.startupCommandDeliveredInShellArgs).toBe(true)
-  const encodedCommandIndex = launch.shellArgs.indexOf('-EncodedCommand')
-  expect(encodedCommandIndex).toBeGreaterThanOrEqual(0)
-  const encodedCommand = launch.shellArgs[encodedCommandIndex + 1]
-  expect(encodedCommand).toBeTruthy()
+  readPowerShellBootstrapScript(launch.shellArgs, launch.shellEnv)
+  const stub = launch.shellArgs.at(-1)
+  expect(stub).toBeTruthy()
 
   return execFileSync(
     shell,
@@ -55,7 +55,8 @@ function runBootstrap(
         ...process.env,
         CODEX_HOME: PROFILE_CODEX_HOME,
         DOLPHIN_CODEX_HOME: MANAGED_CODEX_HOME,
-        DOLPHIN_TEST_BOOTSTRAP: encodedCommand,
+        ...launch.shellEnv,
+        DOLPHIN_TEST_STUB: stub,
         DOLPHIN_TEST_LANGUAGE_MODE: languageMode
       },
       windowsHide: true
@@ -85,16 +86,21 @@ $runspace = [System.Management.Automation.Runspaces.RunspaceFactory]::CreateRuns
 $runspace.Open()
 $runner = [System.Management.Automation.PowerShell]::Create()
 $runner.Runspace = $runspace
-$bootstrap = [Text.Encoding]::Unicode.GetString(
-  [Convert]::FromBase64String($env:DOLPHIN_TEST_BOOTSTRAP)
-)
-$null = $runner.AddScript($bootstrap).Invoke()
+$bootstrap = $env:DOLPHIN_PS_BOOTSTRAP
+# Run the real argv stub, as the PTY would, so CLM covers the stub's own commands too.
+$null = $runner.AddScript($env:DOLPHIN_TEST_STUB).Invoke()
 $runner.Commands.Clear()
-$null = $runner.AddScript($bootstrap).Invoke()
+$bootstrapEnvRemoved = $null -eq $env:DOLPHIN_PS_BOOTSTRAP
+$env:DOLPHIN_PS_BOOTSTRAP = $bootstrap
+$null = $runner.AddScript($env:DOLPHIN_TEST_STUB).Invoke()
 $runner.Commands.Clear()
-$runner.AddScript(
+$errors = $runner.Streams.Error.Count
+$state = $runner.AddScript(
   '"mode=$($ExecutionContext.SessionState.LanguageMode);codexHome=$env:CODEX_HOME;dolphinHome=$env:DOLPHIN_CODEX_HOME;startupCount=$env:DOLPHIN_TEST_STARTUP_COUNT;cwd=$($PWD.Path)"'
 ).Invoke()
+$runner.Commands.Clear()
+$functionLeft = $runner.AddScript('Test-Path Function:__DolphinPsBootstrap').Invoke()
+"$state;bootstrapEnvRemoved=$bootstrapEnvRemoved;bootstrapFunctionLeft=$functionLeft;errors=$errors"
 $runner.Dispose()
 $runspace.Dispose()
 `)

@@ -11,6 +11,8 @@ import {
 export type WindowsShellSpawnAttempt = {
   shellPath: string
   shellArgs: string[]
+  /** Spawn-env entries this attempt's args need; never shared with other attempts. */
+  shellEnv: Record<string, string>
   effectiveCwd: string
   validationCwd: string
   startupCommandDeliveredInShellArgs: boolean
@@ -33,6 +35,7 @@ function toAttempt(
   return {
     shellPath,
     shellArgs: resolved.shellArgs,
+    shellEnv: resolved.shellEnv ?? {},
     effectiveCwd: resolved.effectiveCwd,
     validationCwd: resolved.validationCwd,
     startupCommandDeliveredInShellArgs: resolved.startupCommandDeliveredInShellArgs === true

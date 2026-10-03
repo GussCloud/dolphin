@@ -44,6 +44,8 @@ export type LocalPtyLaunchPlan = {
   launchWslContext: WslLaunchContext | undefined
   shellPath: string
   shellArgs: string[]
+  /** Env entries only the primary shell's args need; merged at spawn, never into the shared env. */
+  shellEnv: Record<string, string>
   effectiveCwd: string
   validationCwd: string
   startupCommandDeliveredInShellArgs: boolean
@@ -71,6 +73,7 @@ function finalizeLocalPtyLaunchPlan(
   shell: {
     shellPath: string
     shellArgs: string[]
+    shellEnv?: Record<string, string>
     effectiveCwd: string
     validationCwd: string
     startupCommandDeliveredInShellArgs?: boolean
@@ -95,6 +98,7 @@ function finalizeLocalPtyLaunchPlan(
     launchWslContext: seed.launchWslContext,
     shellPath: shell.shellPath,
     shellArgs: shell.shellArgs,
+    shellEnv: shell.shellEnv ?? {},
     effectiveCwd: shell.effectiveCwd,
     validationCwd: shell.validationCwd,
     startupCommandDeliveredInShellArgs: shell.startupCommandDeliveredInShellArgs ?? false,
@@ -166,6 +170,7 @@ function createWindowsLocalPtyLaunchPlan(
       return finalizeLocalPtyLaunchPlan(seed, {
         shellPath: primaryAttempt.shellPath,
         shellArgs: primaryAttempt.shellArgs,
+        shellEnv: primaryAttempt.shellEnv,
         effectiveCwd: primaryAttempt.effectiveCwd,
         validationCwd: primaryAttempt.validationCwd,
         startupCommandDeliveredInShellArgs: primaryAttempt.startupCommandDeliveredInShellArgs,
@@ -184,6 +189,7 @@ function createWindowsLocalPtyLaunchPlan(
     return finalizeLocalPtyLaunchPlan(seed, {
       shellPath,
       shellArgs: resolved.shellArgs,
+      shellEnv: resolved.shellEnv,
       effectiveCwd: resolved.effectiveCwd,
       validationCwd: resolved.validationCwd,
       startupCommandDeliveredInShellArgs: resolved.startupCommandDeliveredInShellArgs === true,

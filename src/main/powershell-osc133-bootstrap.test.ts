@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildPowerShellBootstrapLaunch,
   encodePowerShellCommand,
-  getPowerShellOsc133Bootstrap
+  fitsPowerShellBootstrapEnvBudget,
+  getPowerShellOsc133Bootstrap,
+  POWERSHELL_BOOTSTRAP_ENV,
+  POWERSHELL_BOOTSTRAP_ENV_STUB
 } from './powershell-osc133-bootstrap'
+import { readPowerShellBootstrapScript } from './powershell-osc133-bootstrap.test-fixture'
 import { getShellLaunchConfig } from './daemon/shell-ready'
+import { getShellLaunchConfig as getLocalShellLaunchConfig } from './providers/local-pty-shell-ready'
 import { resolveWindowsShellLaunchArgs } from './providers/windows-shell-args'
 import { STARTUP_COMMAND_FEATURES } from './shell-startup-launch-intent-fixtures'
 
@@ -48,30 +54,66 @@ describe('PowerShell OSC 133 bootstrap', () => {
     )
   })
 
-  // Why pinned: the MDE review (see powershell-osc133-bootstrap.ts) declined a
-  // switch to -Command. Any future delivery shape must still hand PowerShell this
-  // payload byte for byte -- comments, quotes, `$` and newlines included.
+  describe('env-delivered launch', () => {
+    it('keeps the argv stub constant, quote-free and payload-free', () => {
+      const launch = buildPowerShellBootstrapLaunch('Write-Output "one"')
+      expect(launch.args).toEqual(buildPowerShellBootstrapLaunch('Write-Output two').args)
+      expect(launch.args).toEqual(['-NoLogo', '-NoExit', '-Command', POWERSHELL_BOOTSTRAP_ENV_STUB])
+      expect(POWERSHELL_BOOTSTRAP_ENV_STUB).not.toContain('"')
+      expect(POWERSHELL_BOOTSTRAP_ENV_STUB).not.toContain('one')
+      expect(Object.keys(launch.env)).toEqual([POWERSHELL_BOOTSTRAP_ENV])
+    })
+
+    it('removes the env var before running, so children started after the stub never inherit it', () => {
+      const stub = POWERSHELL_BOOTSTRAP_ENV_STUB
+      expect(stub.indexOf(`Remove-Item Env:${POWERSHELL_BOOTSTRAP_ENV}`)).toBeGreaterThan(-1)
+      expect(stub.indexOf(`Remove-Item Env:${POWERSHELL_BOOTSTRAP_ENV}`)).toBeLessThan(
+        stub.indexOf('. __DolphinPsBootstrap')
+      )
+      // The script's first act removes the transient function it runs as.
+      expect(buildPowerShellBootstrapLaunch('Write-Output ok').env[POWERSHELL_BOOTSTRAP_ENV]).toBe(
+        'Remove-Item Function:__DolphinPsBootstrap\nWrite-Output ok'
+      )
+    })
+
+    it('budgets the env var below the Windows per-variable ceiling', () => {
+      expect(fitsPowerShellBootstrapEnvBudget('x'.repeat(29_000))).toBe(true)
+      expect(fitsPowerShellBootstrapEnvBudget('x'.repeat(30_000))).toBe(false)
+    })
+  })
+
+  // Why pinned: any delivery shape must still hand PowerShell this payload byte for
+  // byte -- comments, quotes, `$` and newlines included -- and never on argv.
   describe.each([
     [
       'daemon shell-ready',
-      () => getShellLaunchConfig('powershell.exe', STARTUP_COMMAND_FEATURES).args ?? []
+      () => {
+        const config = getShellLaunchConfig('powershell.exe', STARTUP_COMMAND_FEATURES)
+        return { args: config.args, env: config.env }
+      }
+    ],
+    [
+      'local shell-ready',
+      () => {
+        const config = getLocalShellLaunchConfig('pwsh', STARTUP_COMMAND_FEATURES)
+        return { args: config.args, env: config.env }
+      }
     ],
     [
       'windows shell args',
-      () => resolveWindowsShellLaunchArgs('pwsh.exe', 'C:\\repo', 'C:\\repo').shellArgs
+      () => {
+        const launch = resolveWindowsShellLaunchArgs('pwsh.exe', 'C:\\repo', 'C:\\repo')
+        return { args: launch.shellArgs, env: launch.shellEnv }
+      }
     ]
-  ])('%s PowerShell launch', (_name, getArgs) => {
+  ])('%s PowerShell launch', (_name, getLaunch) => {
     it('delivers the bootstrap unmangled', () => {
-      const args = getArgs()
-      const encodedIndex = args.indexOf('-EncodedCommand')
+      const { args, env } = getLaunch()
+      const delivered = readPowerShellBootstrapScript(args, env)
 
-      expect(encodedIndex).toBeGreaterThanOrEqual(0)
-      expect(args).not.toContain('-Command')
+      expect(args).not.toContain('-EncodedCommand')
       expect(args).not.toContain('-ExecutionPolicy')
-
-      const delivered = Buffer.from(args[encodedIndex + 1] ?? '', 'base64').toString('utf16le')
-
-      expect(delivered.startsWith(getPowerShellOsc133Bootstrap())).toBe(true)
+      expect(delivered).toContain(`\n${getPowerShellOsc133Bootstrap()}`)
     })
   })
 })

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as MacosTccLoginShell from './macos-tcc-login-shell'
+import { POWERSHELL_BOOTSTRAP_ENV } from '../powershell-osc133-bootstrap'
+import { POWERSHELL_BOOTSTRAP_STUB_ARGS } from '../powershell-osc133-bootstrap.test-fixture'
 
 const {
   existsSyncMock,
@@ -408,7 +410,8 @@ describe('LocalPtyProvider', () => {
 
       const spawnCall = spawnMock.mock.calls.at(-1)!
       expect(spawnCall[0]).toBe(PWSH7_ABS)
-      expect(spawnCall[1]).toContain('-EncodedCommand')
+      expect(spawnCall[1]).toEqual(POWERSHELL_BOOTSTRAP_STUB_ARGS)
+      expect(spawnCall[2]?.env).toHaveProperty(POWERSHELL_BOOTSTRAP_ENV)
       expect(pwshAvailable).not.toHaveBeenCalled()
     })
 

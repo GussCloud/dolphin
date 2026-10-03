@@ -1,6 +1,7 @@
 import { basename, isAbsolute, join } from 'node:path'
 import { existsSync, accessSync, statSync, chmodSync, constants as fsConstants } from 'node:fs'
 import type * as pty from 'node-pty'
+import type { WindowsShellSpawnAttempt } from './windows-shell-fallback-chain'
 import { usesNodePtySpawnHelper } from '../../shared/node-pty-spawn-helper'
 import {
   hostReportsChildExitStatus,
@@ -110,20 +111,13 @@ export function ensureNodePtySpawnHelperExecutable(): void {
   }
 }
 
-/** A pre-resolved Windows shell attempt: an absolute executable plus the launch
- *  args + cwd computed for it. Used to walk the PowerShell -> Windows PowerShell
- *  -> cmd.exe fallback chain when ConPTY rejects the primary shell. */
-export type WindowsShellSpawnAttempt = {
-  shellPath: string
-  shellArgs: string[]
-  effectiveCwd: string
-  validationCwd: string
-  startupCommandDeliveredInShellArgs: boolean
-}
+export type { WindowsShellSpawnAttempt }
 
 export type ShellSpawnParams = {
   shellPath: string
   shellArgs: string[]
+  /** Env entries only the primary shell's args need (Windows PowerShell bootstrap). */
+  shellEnv?: Record<string, string>
   termName?: string
   cols: number
   rows: number
@@ -189,7 +183,7 @@ function spawnWindowsFallbackChain(
         cols,
         rows,
         cwd: attempt.effectiveCwd,
-        env,
+        env: { ...env, ...attempt.shellEnv },
         ...windowsConptyDllOptions()
       })
       console.warn(
@@ -239,7 +233,7 @@ export function spawnShellWithFallback(params: ShellSpawnParams): ShellSpawnResu
           cols,
           rows,
           cwd,
-          env,
+          env: params.shellEnv ? { ...env, ...params.shellEnv } : env,
           ...windowsConptyDllOptions()
         }),
         shellPath,

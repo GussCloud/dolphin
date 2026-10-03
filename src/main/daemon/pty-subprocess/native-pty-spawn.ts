@@ -32,6 +32,8 @@ export async function spawnNativeDaemonPty(
   args: {
     shellPath: string
     shellArgs: string[]
+    /** Env entries only the primary shell's args need; fallback attempts carry their own. */
+    shellEnv?: Record<string, string>
     spawnCwd: string
     env: Record<string, string>
     cols: number
@@ -46,17 +48,19 @@ export async function spawnNativeDaemonPty(
   const spawnAt = async (
     shellPath: string,
     shellArgs: string[],
-    cwd: string
+    cwd: string,
+    shellEnv: Record<string, string> | undefined
   ): Promise<pty.IPty> => {
     args.signal?.throwIfAborted()
-    const wrapped = wrapShellSpawnForMacosTccAttribution(shellPath, shellArgs, args.env)
+    const env = shellEnv ? { ...args.env, ...shellEnv } : args.env
+    const wrapped = wrapShellSpawnForMacosTccAttribution(shellPath, shellArgs, env)
     reportsChildExitStatus = hostReportsChildExitStatus(wrapped.file)
     if (runtime.canUseBunPty()) {
       const proc = runtime.spawnBunPty({
         file: wrapped.file,
         args: wrapped.args,
         cwd,
-        env: args.env,
+        env,
         cols: args.cols,
         rows: args.rows
       })
@@ -86,7 +90,7 @@ export async function spawnNativeDaemonPty(
       cols: args.cols,
       rows: args.rows,
       cwd,
-      env: args.env,
+      env,
       // Why: bundled ConPTY has the wrap-marker behavior xterm expects.
       ...(process.platform === 'win32' ? { useConptyDll: true } : {})
     })
@@ -96,7 +100,7 @@ export async function spawnNativeDaemonPty(
   }
 
   try {
-    const process_ = await spawnAt(args.shellPath, args.shellArgs, args.spawnCwd)
+    const process_ = await spawnAt(args.shellPath, args.shellArgs, args.spawnCwd, args.shellEnv)
     return {
       process: process_,
       shellPath: args.shellPath,
@@ -110,7 +114,12 @@ export async function spawnNativeDaemonPty(
     }
     for (const attempt of args.windowsFallbackAttempts.slice(1)) {
       try {
-        const process = await spawnAt(attempt.shellPath, attempt.shellArgs, attempt.effectiveCwd)
+        const process = await spawnAt(
+          attempt.shellPath,
+          attempt.shellArgs,
+          attempt.effectiveCwd,
+          attempt.shellEnv
+        )
         const message = primaryErr instanceof Error ? primaryErr.message : String(primaryErr)
         console.warn(
           `[daemon/pty] Primary shell "${args.shellPath}" failed (${message}), fell back to "${attempt.shellPath}"`

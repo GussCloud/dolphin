@@ -9,15 +9,16 @@ import {
 import { getBashWrapperLaunchArgs } from './local-pty-shell-ready'
 import { ensureShellReadyWrappersAt } from './local-pty-shell-ready-wrapper-generation'
 import {
-  encodePowerShellCommand,
-  getPowerShellOsc133Bootstrap
+  buildPowerShellBootstrapLaunch,
+  fitsPowerShellBootstrapEnvBudget,
+  getPowerShellOsc133Bootstrap,
+  type PowerShellBootstrapLaunch
 } from '../powershell-osc133-bootstrap'
 import { quoteStartupArg } from '../../shared/tui-agent-startup-shell'
 
 /** cmd.exe's own documented ceiling; callers that go through sshd budget below it. */
 export const CMD_EXE_COMMAND_LINE_MAX_CHARS = 8191
 const STARTUP_COMMAND_TEXT_MAX_CHARS = 6000
-const POWERSHELL_ENCODED_COMMAND_ARG_MAX_CHARS = 28_000
 const CMD_UTF8_SETUP_COMMAND = 'chcp 65001 > nul'
 export const DOLPHIN_CODEX_LAUNCH_PREFLIGHT_CMD_QUOTE_ENV =
   'DOLPHIN_CODEX_LAUNCH_PREFLIGHT_CMD_QUOTE'
@@ -56,6 +57,8 @@ function getGitBashLaunchCommand(codexLaunchPreflightCommand?: string): string {
  *  decision here keeps both paths honest. */
 export type WindowsShellLaunchArgs = {
   shellArgs: string[]
+  /** Entries the spawn env must carry for shellArgs to work; spawners merge them per attempt. */
+  shellEnv?: Record<string, string>
   /** True when the startup command was embedded in shellArgs and must not be
    *  written again through stdin. */
   startupCommandDeliveredInShellArgs?: boolean
@@ -106,12 +109,6 @@ function getGitBashArgStartupCommand(command?: string): string | null {
   return command && command.length <= STARTUP_COMMAND_TEXT_MAX_CHARS ? command : null
 }
 
-/**
- * Builds the PowerShell -EncodedCommand payload for startup bootstrap.
- *
- * Short startup commands are appended to the bootstrap and marked as delivered;
- * large payloads return the bootstrap alone so stdin delivery remains available.
- */
 function getPowerShellRestoreCwdCommand(cwd: string): string {
   return [
     '',
@@ -120,30 +117,26 @@ function getPowerShellRestoreCwdCommand(cwd: string): string {
   ].join('\n')
 }
 
-function getPowerShellEncodedCommand(
+/**
+ * Builds the PowerShell bootstrap launch for a PTY.
+ *
+ * Short startup commands are appended to the bootstrap and marked as delivered;
+ * large payloads return the bootstrap alone so stdin delivery remains available.
+ */
+function getPowerShellBootstrapLaunch(
   cwd: string,
   startupCommand?: string
-): {
-  encodedCommand: string
-  startupCommandDeliveredInShellArgs?: boolean
-} {
+): PowerShellBootstrapLaunch & { startupCommandDeliveredInShellArgs?: boolean } {
   const bootstrap = `${getPowerShellOsc133Bootstrap()}${getPowerShellRestoreCwdCommand(cwd)}`
   if (!startupCommand || startupCommand.length > STARTUP_COMMAND_TEXT_MAX_CHARS) {
-    return { encodedCommand: encodePowerShellCommand(bootstrap) }
+    return buildPowerShellBootstrapLaunch(bootstrap)
   }
 
   const command = `${bootstrap}\n${startupCommand}`
-  const encodedCommand = encodePowerShellCommand(command)
-  // Why: -EncodedCommand expands UTF-16 text into base64; keep a conservative
-  // margin under Windows CreateProcess' 32,767-character command line limit.
-  if (encodedCommand.length > POWERSHELL_ENCODED_COMMAND_ARG_MAX_CHARS) {
-    return { encodedCommand: encodePowerShellCommand(bootstrap) }
+  if (!fitsPowerShellBootstrapEnvBudget(command)) {
+    return buildPowerShellBootstrapLaunch(bootstrap)
   }
-
-  return {
-    encodedCommand,
-    startupCommandDeliveredInShellArgs: true
-  }
+  return { ...buildPowerShellBootstrapLaunch(command), startupCommandDeliveredInShellArgs: true }
 }
 
 /**
@@ -212,12 +205,13 @@ export function resolveWindowsShellLaunchArgs(
   }
 
   if (shellBasename === 'powershell.exe' || shellBasename === 'pwsh.exe') {
-    const powerShellCommand = getPowerShellEncodedCommand(nativeCwd, startupCommand)
+    const powerShellCommand = getPowerShellBootstrapLaunch(nativeCwd, startupCommand)
     // Why: foreground-process status on Windows depends on OSC 133 C/D, and
     // PowerShell needs a prompt/readline bootstrap after profiles finish.
-    // Why base64 and not -Command: see powershell-osc133-bootstrap.ts (MDE review).
+    // Why env and not argv: see powershell-osc133-bootstrap.ts (Defender CreateProcess hold).
     return {
-      shellArgs: ['-NoLogo', '-NoExit', '-EncodedCommand', powerShellCommand.encodedCommand],
+      shellArgs: powerShellCommand.args,
+      shellEnv: powerShellCommand.env,
       ...(powerShellCommand.startupCommandDeliveredInShellArgs
         ? { startupCommandDeliveredInShellArgs: true }
         : {}),

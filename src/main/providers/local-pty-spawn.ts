@@ -84,6 +84,7 @@ export async function spawnLocalPty(
       const pendingSpawn = spawn({
         shellPath: plan.shellPath,
         shellArgs: plan.shellArgs,
+        shellEnv: plan.shellEnv,
         cols: args.cols,
         rows: args.rows,
         cwd: plan.effectiveCwd,

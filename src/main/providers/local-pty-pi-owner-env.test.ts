@@ -26,6 +26,7 @@ const plan: LocalPtyLaunchPlan = {
   launchWslContext: undefined,
   shellPath: process.platform === 'win32' ? 'cmd.exe' : '/bin/sh',
   shellArgs: [],
+  shellEnv: {},
   effectiveCwd: '',
   validationCwd: '',
   startupCommandDeliveredInShellArgs: false,

@@ -30,6 +30,7 @@ function makeAttempt(
   return {
     shellPath,
     shellArgs: ['-NoLogo'],
+    shellEnv: {},
     effectiveCwd: 'C:\\repo',
     validationCwd: 'C:\\repo',
     startupCommandDeliveredInShellArgs: false,
@@ -119,6 +120,44 @@ describe('spawnShellWithFallback on Windows', () => {
 
     expect(result.shellPath).toBe(CMD)
     expect(result.startupCommandDeliveredInShellArgs).toBe(true)
+  })
+
+  it('gives each attempt only its own shell env, so cmd.exe never inherits the PowerShell bootstrap', () => {
+    restorePlatform = setPlatform('win32')
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const attempts: WindowsShellSpawnAttempt[] = [
+      makeAttempt(PWSH7, { shellEnv: { DOLPHIN_PS_BOOTSTRAP: 'pwsh boot' } }),
+      makeAttempt(WINDOWS_POWERSHELL, { shellEnv: { DOLPHIN_PS_BOOTSTRAP: 'ps boot' } }),
+      makeAttempt(CMD, { shellArgs: ['/K', 'chcp 65001 > nul'] })
+    ]
+    const ptySpawn = vi.fn((shellPath: string) => {
+      if (shellPath === CMD) {
+        return makeFakePty()
+      }
+      throw new Error(ACCESS_DENIED_5)
+    }) as unknown as typeof pty.spawn
+    const env = { PATH: 'C:\\bin' }
+
+    spawnShellWithFallback({
+      shellPath: PWSH7,
+      shellArgs: attempts[0].shellArgs,
+      shellEnv: attempts[0].shellEnv,
+      cols: 80,
+      rows: 24,
+      cwd: 'C:\\repo',
+      env,
+      ptySpawn,
+      windowsFallbackAttempts: attempts
+    })
+
+    const spawnedEnvs = vi.mocked(ptySpawn).mock.calls.map(([, , options]) => options?.env)
+    expect(spawnedEnvs).toEqual([
+      { PATH: 'C:\\bin', DOLPHIN_PS_BOOTSTRAP: 'pwsh boot' },
+      { PATH: 'C:\\bin', DOLPHIN_PS_BOOTSTRAP: 'ps boot' },
+      { PATH: 'C:\\bin' }
+    ])
+    expect(env).toEqual({ PATH: 'C:\\bin' })
   })
 
   it('throws a descriptive error when every Windows fallback fails', () => {
