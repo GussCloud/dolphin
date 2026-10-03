@@ -69,6 +69,7 @@ export async function scanClaudeUsageFilesViaWorker(
   processedFiles: ClaudeUsagePersistedFile[]
   sessions: ClaudeUsageSession[]
   dailyAggregates: ClaudeUsageDailyAggregate[]
+  unchanged?: boolean
 }> {
   const value = await scanClaudeUsageOnWorker(
     (body) => getSharedClient().scan(body),
@@ -78,7 +79,8 @@ export async function scanClaudeUsageFilesViaWorker(
   return {
     processedFiles: value.source,
     sessions: value.sessions,
-    dailyAggregates: value.dailyAggregates
+    dailyAggregates: value.dailyAggregates,
+    ...(value.unchanged ? { unchanged: true } : {})
   }
 }
 
@@ -95,6 +97,7 @@ export async function scanCodexUsageFilesViaWorker(
   processedFiles: CodexUsagePersistedFile[]
   sessions: CodexUsageSession[]
   dailyAggregates: CodexUsageDailyAggregate[]
+  unchanged?: boolean
 }> {
   const value = await scanCodexUsageOnWorker(
     (body) => getSharedClient().scan(body),
@@ -104,7 +107,8 @@ export async function scanCodexUsageFilesViaWorker(
   return {
     processedFiles: value.source,
     sessions: value.sessions,
-    dailyAggregates: value.dailyAggregates
+    dailyAggregates: value.dailyAggregates,
+    ...(value.unchanged ? { unchanged: true } : {})
   }
 }
 

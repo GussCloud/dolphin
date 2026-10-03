@@ -61,12 +61,16 @@ export type UsageScanWorkerValue =
       source: ClaudeUsagePersistedFile[]
       sessions: ClaudeUsageSession[]
       dailyAggregates: ClaudeUsageDailyAggregate[]
+      /** The arrays are left empty; the caller keeps its previous projection. */
+      unchanged?: boolean
     }
   | {
       providerId: 'codex'
       source: CodexUsagePersistedFile[]
       sessions: CodexUsageSession[]
       dailyAggregates: CodexUsageDailyAggregate[]
+      /** The arrays are left empty; the caller keeps its previous projection. */
+      unchanged?: boolean
     }
   | {
       providerId: 'opencode'

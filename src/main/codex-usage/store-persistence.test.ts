@@ -45,6 +45,34 @@ describe('CodexUsageStore', () => {
     expect(persistedJson).toBe(JSON.stringify(JSON.parse(persistedJson)))
   })
 
+  it('keeps a v6 cache across the compact-key upgrade instead of rescanning from scratch', () => {
+    const v6 = {
+      schemaVersion: 6,
+      worktreeFingerprint: '[]',
+      processedFiles: [
+        {
+          path: '/codex/sessions/rollout-1.jsonl',
+          mtimeMs: 1,
+          size: 10,
+          sessions: [],
+          dailyAggregates: [],
+          ownedEventKeys: ['2026-05-26T12:00:00.000Z|10,0,0,0,10|10,0,0,0,10'],
+          hasDeferredClaims: false,
+          parseResumeState: null
+        }
+      ],
+      sessions: [],
+      dailyAggregates: [],
+      scanState: {
+        enabled: true,
+        lastScanStartedAt: 1,
+        lastScanCompletedAt: 2,
+        lastScanError: null
+      }
+    }
+    expect(normalizePersistedState(v6)).toEqual({ ...v6, schemaVersion: 7 })
+  })
+
   it('drops persisted caches from older schemas that lack scoped model breakdown data', () => {
     const normalized = normalizePersistedState({
       schemaVersion: 1,
@@ -81,7 +109,7 @@ describe('CodexUsageStore', () => {
     } as unknown as CodexUsagePersistedState)
 
     expect(normalized).toEqual({
-      schemaVersion: 6,
+      schemaVersion: 7,
       worktreeFingerprint: null,
       processedFiles: [],
       sessions: [],

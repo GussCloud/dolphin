@@ -55,6 +55,12 @@ function createProgressReporter(id: number): (count: number) => void {
   }
 }
 
+// Why: the cache is the whole transcript history; cloning it back to main on every
+// unchanged refresh only to replace an identical copy is the dominant scan cost there.
+function unchangedScanValue(providerId: 'claude' | 'codex'): UsageScanWorkerValue {
+  return { providerId, source: [], sessions: [], dailyAggregates: [], unchanged: true }
+}
+
 async function runScan(
   request: UsageScanWorkerRequest,
   onFilesScanned: (count: number) => void
@@ -64,6 +70,9 @@ async function runScan(
   switch (request.providerId) {
     case 'claude': {
       const result = await scanClaudeUsageFiles(request.worktrees, request.previous, onFilesScanned)
+      if (result.unchanged) {
+        return unchangedScanValue('claude')
+      }
       return {
         providerId: 'claude',
         source: result.processedFiles,
@@ -73,6 +82,9 @@ async function runScan(
     }
     case 'codex': {
       const result = await scanCodexUsageFiles(request.worktrees, request.previous, onFilesScanned)
+      if (result.unchanged) {
+        return unchangedScanValue('codex')
+      }
       return {
         providerId: 'codex',
         source: result.processedFiles,

@@ -52,7 +52,9 @@ type TestState = {
   dailyAggregates: TestDailyAggregate[]
   scanState: TestScanState
 }
-type TestScanResult = Pick<TestState, 'processedSources' | 'sessions' | 'dailyAggregates'>
+type TestScanResult = Pick<TestState, 'processedSources' | 'sessions' | 'dailyAggregates'> & {
+  unchanged?: boolean
+}
 type TestScan = (
   worktrees: UsageScanWorktreeRef[],
   previous: TestSource[]
@@ -289,5 +291,71 @@ describe('UsageProviderStoreLifecycle', () => {
     expect(JSON.parse(readFileSync(cacheFile, 'utf-8')).scanState.lastScanError).toBe(
       'scan exploded'
     )
+  })
+
+  it('keeps the projection and skips the rewrite when a scan reports no change', async () => {
+    const store = createStore()
+    const previousState = makeState({
+      worktreeFingerprint: EMPTY_WORKTREE_FINGERPRINT,
+      processedSources: [{ id: 'source' }],
+      sessions: [{ id: 'session' }],
+      dailyAggregates: [{ day: '2026-04-09' }],
+      scanState: { enabled: true, lastScanCompletedAt: NOW - 10 * 60_000 }
+    })
+    store.replaceState(previousState)
+    scan.mockResolvedValueOnce({ ...emptyScanResult(), unchanged: true })
+
+    await expect(store.refresh()).resolves.toMatchObject({
+      lastScanCompletedAt: NOW,
+      lastScanError: null,
+      hasAnyTestData: true
+    })
+    await store.flush()
+
+    expect(scan).toHaveBeenCalledWith([], previousState.processedSources)
+    expect(store.getState().processedSources).toBe(previousState.processedSources)
+    expect(store.getState().sessions).toBe(previousState.sessions)
+    expect(writeProbe.opens).toBe(0)
+  })
+
+  it('still persists an unchanged scan that clears a previously saved error', async () => {
+    const cacheFile = join(tempDirectory, 'usage-0.json')
+    const store = createStore()
+    store.replaceState(
+      makeState({
+        worktreeFingerprint: EMPTY_WORKTREE_FINGERPRINT,
+        processedSources: [{ id: 'source' }],
+        scanState: { enabled: true, lastScanError: 'earlier failure' }
+      })
+    )
+    scan.mockResolvedValueOnce({ ...emptyScanResult(), unchanged: true })
+
+    await store.refresh(true)
+    await store.flush()
+
+    const persisted = JSON.parse(readFileSync(cacheFile, 'utf-8'))
+    expect(persisted.scanState.lastScanError).toBeNull()
+    expect(persisted.processedSources).toEqual([{ id: 'source' }])
+  })
+
+  it('ignores "unchanged" when the scan was not given the cache', async () => {
+    const store = createStore()
+    store.replaceState(
+      makeState({
+        worktreeFingerprint: 'outdated',
+        processedSources: [{ id: 'stale' }],
+        sessions: [{ id: 'stale-session' }],
+        scanState: { enabled: true }
+      })
+    )
+    scan.mockResolvedValueOnce({ ...emptyScanResult(), unchanged: true })
+
+    await store.refresh(true)
+
+    expect(store.getState()).toMatchObject({
+      worktreeFingerprint: EMPTY_WORKTREE_FINGERPRINT,
+      processedSources: [],
+      sessions: []
+    })
   })
 })

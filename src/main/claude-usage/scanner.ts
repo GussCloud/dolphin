@@ -19,6 +19,8 @@ import {
   mergeClaudeDailyAggregates,
   mergeClaudeSessions
 } from './usage-aggregation'
+import { compactLegacyUsageOwnershipKeys, toUsageOwnershipKey } from '../usage/usage-ownership-key'
+import { isUnchangedUsageScan } from '../usage/usage-unchanged-scan'
 
 const FILE_SCAN_BATCH_SIZE = 4
 
@@ -39,16 +41,25 @@ async function getProcessedFileStat(
   }
 }
 
+function withCompactOwnership(file: ClaudeUsagePersistedFile): ClaudeUsagePersistedFile {
+  const compacted = Array.isArray(file.ownedDedupeKeys)
+    ? compactLegacyUsageOwnershipKeys(file.ownedDedupeKeys)
+    : null
+  return compacted ? { ...file, ownedDedupeKeys: compacted } : file
+}
+
 export async function scanClaudeUsageFiles(
   worktrees: ClaudeUsageWorktreeRef[],
-  previousProcessedFiles: ClaudeUsagePersistedFile[] = [],
+  cachedProcessedFiles: ClaudeUsagePersistedFile[] = [],
   onFilesScanned?: (count: number) => void
 ): Promise<{
   processedFiles: ClaudeUsagePersistedFile[]
   sessions: ClaudeUsageSession[]
   dailyAggregates: ClaudeUsageDailyAggregate[]
+  unchanged: boolean
 }> {
   const files = await listClaudeTranscriptFiles()
+  const previousProcessedFiles = cachedProcessedFiles.map(withCompactOwnership)
   const previousByPath = new Map(previousProcessedFiles.map((file) => [file.path, file]))
   const worktreeLookup = await buildWorktreeLookup(worktrees)
 
@@ -131,13 +142,14 @@ export async function scanClaudeUsageFiles(
       let hasDeferredClaims = false
       for (const turn of turns) {
         if (turn.dedupeKey) {
-          const owner = turnOwnerByDedupeKey.get(turn.dedupeKey)
+          const ownershipKey = toUsageOwnershipKey(turn.dedupeKey)
+          const owner = turnOwnerByDedupeKey.get(ownershipKey)
           if (owner !== undefined && owner !== filePath) {
             hasDeferredClaims = true
             continue
           }
-          turnOwnerByDedupeKey.set(turn.dedupeKey, filePath)
-          ownedDedupeKeys.push(turn.dedupeKey)
+          turnOwnerByDedupeKey.set(ownershipKey, filePath)
+          ownedDedupeKeys.push(ownershipKey)
         }
         ownedTurns.push(stripClaudeSourceMetadata(turn))
       }
@@ -170,6 +182,12 @@ export async function scanClaudeUsageFiles(
 
   return {
     processedFiles,
+    unchanged: isUnchangedUsageScan({
+      cached: cachedProcessedFiles,
+      migrated: previousProcessedFiles,
+      processed: processedFiles,
+      parsedCount: pathsToParse.length
+    }),
     sessions: finalizeClaudeSessions(sessionsById),
     dailyAggregates: [...dailyByKey.values()].sort((left, right) =>
       left.day === right.day

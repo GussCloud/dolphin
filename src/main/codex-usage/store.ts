@@ -14,7 +14,11 @@ import type { AutomationRunUsage } from '../../shared/automations-types'
 import type { Store } from '../persistence'
 import type { CodexUsagePersistedState } from './types'
 import type { AutomationUsageLookupInput } from './codex-automation-run-attribution'
-import { CODEX_USAGE_SCHEMA_VERSION, codexUsageProvider } from './codex-usage-provider'
+import {
+  CODEX_USAGE_RAW_OWNERSHIP_KEY_SCHEMA_VERSION,
+  CODEX_USAGE_SCHEMA_VERSION,
+  codexUsageProvider
+} from './codex-usage-provider'
 import { resolveCodexAutomationRunUsage } from './codex-automation-run-attribution'
 import { buildRecentSessions } from './codex-usage-session-rows'
 import { buildBreakdown, buildDaily, buildSummary } from './codex-usage-rollup-projections'
@@ -41,7 +45,10 @@ function getDefaultState(): CodexUsagePersistedState {
 }
 
 export function normalizePersistedState(state: CodexUsagePersistedState): CodexUsagePersistedState {
-  if (state.schemaVersion !== SCHEMA_VERSION) {
+  if (
+    state.schemaVersion !== SCHEMA_VERSION &&
+    state.schemaVersion !== CODEX_USAGE_RAW_OWNERSHIP_KEY_SCHEMA_VERSION
+  ) {
     // Why: Dolphin-scoped Codex projections now depend on locationModelBreakdown.
     // Reusing an older cache would silently serve wrong model/session rows
     // until the next forced rescan, so schema changes must invalidate stale
@@ -59,6 +66,7 @@ export function normalizePersistedState(state: CodexUsagePersistedState): CodexU
   }
   return {
     ...state,
+    schemaVersion: SCHEMA_VERSION,
     sessions: state.sessions.map((session) => ({
       ...session,
       locationModelBreakdown: session.locationModelBreakdown ?? []
