@@ -85,7 +85,7 @@ export class ClaudeUsageStore extends UsageProviderStoreLifecycle<
       normalizeState: normalizePersistedState,
       sourceKey: 'processedFiles',
       dataPresenceKey: 'hasAnyClaudeData',
-      jsonIndent: 2,
+      // Why no indent: the cache holds the whole transcript history and is machine-read only.
       scan: scanClaudeUsageFilesViaWorker
     })
   }
