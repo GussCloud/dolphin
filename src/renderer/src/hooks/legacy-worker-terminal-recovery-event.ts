@@ -1,7 +1,9 @@
 import type { CloseTerminalPaneDetail } from '@/constants/terminal'
-import { detachTerminalLayoutLeaf } from '@/components/terminal-pane/terminal-layout-leaf-detach'
-import type { AppState } from '@/store'
-import { makePaneKey, parsePaneKey } from '../../../shared/stable-pane-id'
+import { parsePaneKey } from '../../../shared/stable-pane-id'
+import {
+  closeTerminalLeafInStore,
+  type TerminalLeafStoreCloseStore
+} from './terminal-leaf-store-close'
 
 type LegacyWorkerTerminalRecoveryEvent = {
   paneKey: string
@@ -35,18 +37,8 @@ export function resolveLegacyWorkerTerminalRecoveryAction(
     : { kind: 'ignore' }
 }
 
-type LegacyWorkerTerminalRecoveryStore = Pick<
-  AppState,
-  | 'tabsByWorktree'
-  | 'terminalLayoutsByTabId'
-  | 'setTabLayout'
-  | 'clearTabPtyId'
-  | 'closeTab'
-  | 'retireAgentPaneAuthority'
->
-
 export function rollbackLegacyWorkerTerminalSurfaceInStore(
-  store: LegacyWorkerTerminalRecoveryStore,
+  store: TerminalLeafStoreCloseStore,
   detail: CloseTerminalPaneDetail
 ): 'removed' | 'already-removed' | 'identity-mismatch' {
   const tabExists = Object.values(store.tabsByWorktree).some((tabs) =>
@@ -66,18 +58,7 @@ export function rollbackLegacyWorkerTerminalSurfaceInStore(
   if (boundPtyId !== detail.expectedPtyId) {
     return 'identity-mismatch'
   }
-  const detached = detachTerminalLayoutLeaf(layout, detail.leafId)
-  if (detached) {
-    store.retireAgentPaneAuthority(makePaneKey(detail.tabId, detail.leafId), {
-      preserveSleepingAgentSession: true
-    })
-    store.setTabLayout(detail.tabId, detached.sourceLayout)
-    store.clearTabPtyId(detail.tabId, detail.expectedPtyId)
-  } else {
-    store.closeTab(detail.tabId, {
-      reason: 'pty-exit',
-      captureRecentlyClosed: false
-    })
-  }
-  return 'removed'
+  return closeTerminalLeafInStore(store, detail.tabId, detail.leafId, {
+    preserveSleepingAgentSession: true
+  })
 }
