@@ -1,7 +1,7 @@
 import type { AppState } from '@/store/types'
 import type { ExecutionHostId } from '../../../../../shared/execution-host'
-import { composeWorktreeHostIdentity } from '../../../../../shared/worktree/host-qualified-identity'
 import { collectLeafIdsInOrder } from '../terminal-layout-leaf-ids'
+import { isWorktreeDeletePending } from './worktree-delete-pending'
 
 // Main can give a remounted pane the same PTY, so disposal alone does not make it ownerless.
 export function shouldRetainDisposedPaneSpawn(
@@ -11,14 +11,7 @@ export function shouldRetainDisposedPaneSpawn(
   leafId: string,
   executionHostId?: ExecutionHostId
 ): boolean {
-  const deleteState =
-    (executionHostId
-      ? state.deleteStateByWorktreeId?.[composeWorktreeHostIdentity(executionHostId, worktreeId)]
-      : undefined) ?? state.deleteStateByWorktreeId?.[worktreeId]
-  if (
-    deleteState?.isDeleting &&
-    (!deleteState.executionHostId || deleteState.executionHostId === executionHostId)
-  ) {
+  if (isWorktreeDeletePending(state, worktreeId, executionHostId)) {
     return false
   }
   const tabPresent = Object.values(state.tabsByWorktree).some((tabs) =>

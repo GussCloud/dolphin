@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => {
     deleteStateByWorktreeId: {} as Record<string, { isDeleting?: boolean }>,
     worktreeMap: new Map<string, SeedWorktree>()
   }
-  return { state }
+  return { state, sleeping: new Set<string>() }
 })
 
 vi.mock('@/store', () => ({
@@ -31,6 +31,10 @@ vi.mock('@/store', () => ({
 vi.mock('@/store/selectors', () => ({
   getWorktreeMapFromState: () => mocks.state.worktreeMap,
   getRepoMapFromState: () => new Map(mocks.state.repos.map((repo) => [repo.id, repo]))
+}))
+
+vi.mock('./use-worktree-sleep-state', () => ({
+  isSleepingWorktree: (_state: unknown, worktreeId: string) => mocks.sleeping.has(worktreeId)
 }))
 
 vi.mock('@/lib/worktree-activation', () => ({
@@ -85,7 +89,42 @@ describe('prepareActiveWorktreeFocusAfterDelete', () => {
     mocks.state.lastVisitedAtByWorktreeId = {}
     mocks.state.deleteStateByWorktreeId = {}
     mocks.state.worktreeMap = new Map()
+    mocks.sleeping.clear()
     vi.mocked(activateAndRevealWorktree).mockClear()
+  })
+
+  it('skips a sleeping sibling and focuses the awake one', () => {
+    seed([
+      { id: 'main', isMainWorktree: true },
+      { id: 'wt-awake' },
+      { id: 'wt-asleep' },
+      { id: 'wt-del' }
+    ])
+    mocks.state.activeWorktreeId = 'wt-del'
+    mocks.state.lastVisitedAtByWorktreeId = { 'wt-awake': 100, 'wt-asleep': 200 }
+    mocks.sleeping.add('wt-asleep')
+
+    const commit = prepareActiveWorktreeFocusAfterDelete('wt-del')
+    simulateDelete('wt-del', true)
+    commit()
+
+    expect(activateAndRevealWorktree).toHaveBeenCalledWith('wt-awake', {
+      revealInSidebar: false,
+      providesInitialSurface: true
+    })
+  })
+
+  it('focuses nothing when every remaining workspace, the primary included, is asleep', () => {
+    seed([{ id: 'main', isMainWorktree: true }, { id: 'wt-asleep' }, { id: 'wt-del' }])
+    mocks.state.activeWorktreeId = 'wt-del'
+    mocks.sleeping.add('main')
+    mocks.sleeping.add('wt-asleep')
+
+    const commit = prepareActiveWorktreeFocusAfterDelete('wt-del')
+    simulateDelete('wt-del', true)
+    commit()
+
+    expect(activateAndRevealWorktree).not.toHaveBeenCalled()
   })
 
   it('focuses the most-recently-visited non-base sibling of the same project', () => {
@@ -97,7 +136,10 @@ describe('prepareActiveWorktreeFocusAfterDelete', () => {
     simulateDelete('wt-del', true)
     commit()
 
-    expect(activateAndRevealWorktree).toHaveBeenCalledWith('wt-b', { revealInSidebar: false })
+    expect(activateAndRevealWorktree).toHaveBeenCalledWith('wt-b', {
+      revealInSidebar: false,
+      providesInitialSurface: true
+    })
   })
 
   it('falls back to the base/primary worktree when no other workspace remains', () => {
@@ -108,7 +150,10 @@ describe('prepareActiveWorktreeFocusAfterDelete', () => {
     simulateDelete('wt-del', true)
     commit()
 
-    expect(activateAndRevealWorktree).toHaveBeenCalledWith('main', { revealInSidebar: false })
+    expect(activateAndRevealWorktree).toHaveBeenCalledWith('main', {
+      revealInSidebar: false,
+      providesInitialSurface: true
+    })
   })
 
   it('does not re-focus a sibling hosted on a torn-down runtime-owned SSH target', () => {
@@ -141,7 +186,8 @@ describe('prepareActiveWorktreeFocusAfterDelete', () => {
     commit()
 
     expect(activateAndRevealWorktree).toHaveBeenCalledWith('main-1', {
-      revealInSidebar: false
+      revealInSidebar: false,
+      providesInitialSurface: true
     })
   })
 
@@ -231,7 +277,10 @@ describe('prepareActiveWorktreeFocusAfterDelete', () => {
     mocks.state.deleteStateByWorktreeId = { 'wt-a': { isDeleting: true } }
     commit()
 
-    expect(activateAndRevealWorktree).toHaveBeenCalledWith('main', { revealInSidebar: false })
+    expect(activateAndRevealWorktree).toHaveBeenCalledWith('main', {
+      revealInSidebar: false,
+      providesInitialSurface: true
+    })
   })
 
   it('does not steal focus when a non-worktree workspace is active', () => {

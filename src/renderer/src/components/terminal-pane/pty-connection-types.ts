@@ -49,7 +49,7 @@ export type PtyPaneStartup = {
 export type PaneProcessExit = {
   paneId: number
   exitCode: number
-  reason: 'git-bash-console-capacity' | 'process-failed'
+  reason: 'git-bash-console-capacity' | 'process-failed' | 'workspace-delete-failed'
   startup: PtyPaneStartup
 }
 
