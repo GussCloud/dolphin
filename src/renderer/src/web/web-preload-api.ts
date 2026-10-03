@@ -100,7 +100,8 @@ function createWebPreloadApi(): Partial<PreloadApi> {
         }))
     },
     memory: {
-      getSnapshot: () => Promise.resolve(createEmptyMemorySnapshot())
+      getSnapshot: () => Promise.resolve(createEmptyMemorySnapshot()),
+      getHostMemory: () => Promise.resolve(null)
     },
     aiVault: createWebAiVaultApi(),
     preflight: createPreflightApi(),

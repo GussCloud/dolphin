@@ -39,6 +39,15 @@ Under the **Agent hibernation** toggle, **Hibernate after** sets how many idle m
 
 Longer windows trade memory savings for fewer pauses; shorter windows pause more aggressively but cost a resume next time you switch back.
 
+### When this computer runs low on memory
+
+Dolphin checks this computer's available memory once a minute, even while its window is minimized or hidden. When memory gets low, it shortens the idle window for agents running on this computer:
+
+- **Low** (less than 20% of RAM or 4 GB available, whichever is smaller): the window drops to a quarter of your setting, but never below 1 minute.
+- **Critical** (less than 10% of RAM or 2 GB available, whichever is smaller): the window drops to 1 minute.
+
+When several agents qualify at once, Dolphin pauses the ones using the most memory first. Every other check above still applies. Agents running on an SSH host or a remote runtime keep your configured window, because this computer's memory doesn't tell Dolphin anything about those hosts.
+
 ## Finding sleeping worktrees
 
 The sidebar filter menu controls whether sleeping worktrees are shown. If you hide them often, assign **Toggle Sleeping Workspaces** under [Settings → Shortcuts](/docs/settings) to show or hide them without opening the filter menu.

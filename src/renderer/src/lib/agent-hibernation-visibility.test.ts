@@ -1,10 +1,15 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  resetAgentHibernationCoordinatorForTests,
   startAgentHibernationCoordinator,
   stopAgentHibernationCoordinator
 } from './agent-hibernation-coordinator'
+import {
+  installEligibleState,
+  LEAF,
+  NOW,
+  resetAgentHibernationCoordinatorFixture
+} from './agent-hibernation-coordinator-test-fixture'
 import { resetStaleDocumentVisibilityForTesting } from '@/components/terminal-pane/stale-document-visibility'
 
 function setVisibility(state: 'visible' | 'hidden'): void {
@@ -12,37 +17,52 @@ function setVisibility(state: 'visible' | 'hidden'): void {
   document.dispatchEvent(new Event('visibilitychange'))
 }
 
-describe('agent hibernation coordinator visibility wiring', () => {
+describe('agent hibernation coordinator while the window is hidden', () => {
   beforeEach(() => {
     setVisibility('visible')
     resetStaleDocumentVisibilityForTesting()
   })
   afterEach(() => {
-    resetAgentHibernationCoordinatorForTests()
+    resetAgentHibernationCoordinatorFixture()
     resetStaleDocumentVisibilityForTesting()
     setVisibility('visible')
     vi.restoreAllMocks()
   })
 
-  it('subscribes to the becoming-visible pass on start and unsubscribes on stop', () => {
-    const add = vi.spyOn(document, 'addEventListener')
-    const remove = vi.spyOn(document, 'removeEventListener')
+  it('keeps ticking and hibernates idle agents while hidden', async () => {
+    vi.useFakeTimers()
+    const shutdown = installEligibleState(vi.fn().mockResolvedValue(undefined))
+    setVisibility('hidden')
+    startAgentHibernationCoordinator({ intervalMs: 1000, now: () => NOW })
 
-    startAgentHibernationCoordinator({ intervalMs: 60_000, now: () => 0 })
-    expect(add.mock.calls.some(([type]) => type === 'visibilitychange')).toBe(true)
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(shutdown).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1000)
 
-    stopAgentHibernationCoordinator()
-    expect(remove.mock.calls.some(([type]) => type === 'visibilitychange')).toBe(true)
+    expect(shutdown).toHaveBeenCalledWith('wt-bg', {
+      paneKey: `tab-1:${LEAF}`,
+      tabId: 'tab-1',
+      leafId: LEAF,
+      ptyId: 'pty-1'
+    })
   })
 
-  it('leaves no visibility listener behind after a start/stop cycle', () => {
-    startAgentHibernationCoordinator({ intervalMs: 60_000, now: () => 0 })
-    stopAgentHibernationCoordinator()
+  // Why: an extra tick on visibility change would confirm a candidate seconds after it first
+  // appeared instead of one full interval later.
+  it('does not tick on visibility changes', async () => {
+    vi.useFakeTimers()
+    const add = vi.spyOn(document, 'addEventListener')
+    const shutdown = installEligibleState(vi.fn().mockResolvedValue(undefined))
+    startAgentHibernationCoordinator({ intervalMs: 60_000, now: () => NOW })
 
-    const afterStop = vi.spyOn(document, 'addEventListener')
     setVisibility('hidden')
     setVisibility('visible')
-    // A stopped coordinator must not react to visibility at all.
-    expect(afterStop).not.toHaveBeenCalled()
+    setVisibility('hidden')
+    setVisibility('visible')
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(add.mock.calls.some(([type]) => type === 'visibilitychange')).toBe(false)
+    expect(shutdown).not.toHaveBeenCalled()
+    stopAgentHibernationCoordinator()
   })
 })
