@@ -83,6 +83,7 @@ export function runHiddenTabRetentionPass(
     estimatedBufferBytes: number
   }[] = []
   let hasHiddenMountedTab = false
+  let pinnedBytes = 0
   for (const worktreeId of workspaceSurfaceIds) {
     const tabs = tabsByWorktree[worktreeId] ?? []
     const worktreeCandidate = pass.retentionCandidates.find(
@@ -122,6 +123,9 @@ export function runHiddenTabRetentionPass(
         exemptTabIds.has(tab.id)
       if (release) {
         retentionHiddenSinceByTabIdRef.current.delete(tab.id)
+        if (!isVisible && !portalTabIds.has(tab.id) && !hasPendingSpawn) {
+          pinnedBytes += mountedBufferBytesByTabId.get(tab.id) ?? 0
+        }
         continue
       }
       if (retentionParkedTerminalTabIds.has(tab.id)) {
@@ -142,6 +146,10 @@ export function runHiddenTabRetentionPass(
         exemptTabIds.has(tab.id) ||
         !canWatcherCoverParkedTerminalTab(worktreeId, tab)
       ) {
+        // Why not the ordinarily parked worktree: its panes unmount in this same commit.
+        if (!pass.nextParkedTerminalWorktreeIds.has(worktreeId)) {
+          pinnedBytes += estimatedBufferBytes
+        }
         continue
       }
       const hiddenSinceMs = retentionHiddenSinceByTabIdRef.current.get(tab.id) ?? pass.nowMs
@@ -154,6 +162,7 @@ export function runHiddenTabRetentionPass(
       candidates: globalCandidates,
       nowMs: pass.nowMs,
       enabled: globalRetentionEnabled,
+      pinnedBytes,
       ...(pass.overrides.coldParkDelayMs !== undefined
         ? { coldParkDelayMs: pass.overrides.coldParkDelayMs }
         : {})

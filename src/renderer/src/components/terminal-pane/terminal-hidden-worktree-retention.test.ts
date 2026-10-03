@@ -349,6 +349,25 @@ describe('selectHiddenTerminalTabsBeyondRetentionBudget', () => {
     ).toEqual(new Set(['old']))
   })
 
+  it('counts pinned hidden bytes against the budget without counting them as tabs', () => {
+    const args = {
+      candidates: [candidate('old', 4_000, 100), candidate('new', 2_000, 100)],
+      nowMs,
+      enabled: true,
+      coldParkDelayMs: 1,
+      retentionTtlMs: 60_000,
+      retentionLimit: 2,
+      retentionBytes: 300
+    }
+    expect(selectHiddenTerminalTabsBeyondRetentionBudget(args).size).toBe(0)
+    expect(selectHiddenTerminalTabsBeyondRetentionBudget({ ...args, pinnedBytes: 150 })).toEqual(
+      new Set(['old'])
+    )
+    expect(selectHiddenTerminalTabsBeyondRetentionBudget({ ...args, pinnedBytes: 250 })).toEqual(
+      new Set(['old', 'new'])
+    )
+  })
+
   it('parks the oldest tabs once the count cap is exceeded', () => {
     expect(
       selectHiddenTerminalTabsBeyondRetentionBudget({
