@@ -5,7 +5,7 @@ const { handleMock, collectMemorySnapshotMock, collectHostMemoryMock, evaluateMe
     handleMock: vi.fn(),
     collectMemorySnapshotMock: vi.fn(),
     collectHostMemoryMock: vi.fn(),
-    evaluateMemoryBudgetMock: vi.fn(() => [] as unknown[])
+    evaluateMemoryBudgetMock: vi.fn((): unknown[] => [])
   }))
 
 vi.mock('electron', () => ({ ipcMain: { handle: handleMock } }))
