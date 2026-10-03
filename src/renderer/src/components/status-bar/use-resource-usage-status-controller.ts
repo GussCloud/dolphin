@@ -27,6 +27,9 @@ import { useResourceUsageActions } from './use-resource-usage-actions'
 import { useResourceUsageDerivedModel } from './use-resource-usage-derived-model'
 
 const POLL_MS = 2_000
+// Why: memory-budget warnings must reach the closed chip, but one process sweep per five minutes
+// is the most a closed segment should cost.
+const CLOSED_MEMORY_BUDGET_POLL_MS = 5 * 60_000
 
 export function useResourceUsageStatusController() {
   const snapshot = useAppStore((s) => s.memorySnapshot)
@@ -186,6 +189,18 @@ export function useResourceUsageStatusController() {
       clearSessionsError()
     }
   }, [open, clearSessionsError])
+
+  useEffect(() => {
+    if (open || !workspaceSessionReady) {
+      return
+    }
+    const budgetTimer = window.setInterval(() => {
+      void fetchSnapshot()
+    }, CLOSED_MEMORY_BUDGET_POLL_MS)
+    return () => {
+      window.clearInterval(budgetTimer)
+    }
+  }, [open, workspaceSessionReady, fetchSnapshot])
 
   const derived = useResourceUsageDerivedModel({
     open,

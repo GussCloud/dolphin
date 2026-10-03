@@ -4070,6 +4070,14 @@
                 "workingSetDescription": "Conjunto de trabalho somado (WS): páginas residentes em RAM agora. Páginas compartilhadas podem aparecer em mais de um processo e a memória que Windows paginou não é contada aqui.",
                 "privateBytesDescription": "Bytes privados somados: memória que esses processos confirmaram, contada independentemente de estar residente ou paginada. Isso é o que o host cobra em relação ao seu limite de confirmação, portanto continua aumentando enquanto o conjunto de trabalho acima diminui sob paginação.",
                 "rssDescription": "Tamanho do conjunto residente somado (RSS). Páginas compartilhadas ou aliased podem aparecer em mais de um processo."
+              },
+              "budget": {
+                "copy": {
+                  "rendererOwner": "Janela do Dolphin",
+                  "daemonOwner": "Daemon de terminais",
+                  "overBudget": "{{owner}} acima do orçamento de memória: {{used}} (limite {{limit}})",
+                  "triggerLabel": "Memória acima do orçamento"
+                }
               }
             },
             "manager": {

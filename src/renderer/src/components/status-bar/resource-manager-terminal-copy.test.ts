@@ -19,6 +19,31 @@ describe('resource manager terminal copy', () => {
     expect(formatTerminalSessionCount(3)).toBe('3 terminal sessions')
   })
 
+  it('lists each over-budget owner as an emphasized line after the summary', () => {
+    const MB = 1024 * 1024
+    const lines = getResourceManagerTooltipLines({
+      memoryLabel: '2.0 GB · Σ RSS',
+      sessionCount: 1,
+      spaceScanReady: false,
+      budgetWarnings: [
+        { kind: 'renderer', subject: 'renderer', bytes: 1600 * MB, limitBytes: 1500 * MB },
+        { kind: 'session', subject: 'repo / pty-1', bytes: 2048 * MB, limitBytes: 1024 * MB }
+      ]
+    })
+    expect(lines.map((line) => line.id)).toEqual([
+      'summary',
+      'memory-budget-0',
+      'memory-budget-1',
+      'sessions-hint'
+    ])
+    expect(lines[1]).toEqual({
+      id: 'memory-budget-0',
+      text: 'Dolphin window over memory budget: 1.56 GB (limit 1.46 GB)',
+      emphasized: true
+    })
+    expect(lines[2].text).toBe('repo / pty-1 over memory budget: 2.00 GB (limit 1.00 GB)')
+  })
+
   it('points users from the status-bar count back to workspace terminals', () => {
     expect(
       getResourceManagerTooltipLines({
