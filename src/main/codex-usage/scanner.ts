@@ -8,6 +8,7 @@ import type { CodexUsageWorktreeRef } from './codex-usage-event-attribution'
 import { codexUsageAggregation } from './codex-usage-aggregation'
 import { getProcessedFileInfo, parseCodexUsageFile } from './codex-rollout-file-parse'
 import { resolveCodexRolloutResume } from './codex-rollout-resume-state'
+import { compactLegacyUsageOwnershipKeys } from '../usage/usage-ownership-key'
 import type {
   CodexUsageDailyAggregate,
   CodexUsageParseResumeState,
@@ -25,9 +26,16 @@ type CodexRolloutResumePlan = {
   previous: CodexUsagePersistedFile
 }
 
+function withCompactOwnership(file: CodexUsagePersistedFile): CodexUsagePersistedFile {
+  const compacted = Array.isArray(file.ownedEventKeys)
+    ? compactLegacyUsageOwnershipKeys(file.ownedEventKeys)
+    : null
+  return compacted ? { ...file, ownedEventKeys: compacted } : file
+}
+
 export async function scanCodexUsageFiles(
   worktrees: CodexUsageWorktreeRef[],
-  previousProcessedFiles: CodexUsagePersistedFile[],
+  cachedProcessedFiles: CodexUsagePersistedFile[],
   onFilesScanned?: (count: number) => void
 ): Promise<{
   processedFiles: CodexUsagePersistedFile[]
@@ -35,6 +43,7 @@ export async function scanCodexUsageFiles(
   dailyAggregates: CodexUsageDailyAggregate[]
 }> {
   const files = await listCodexSessionFiles()
+  const previousProcessedFiles = cachedProcessedFiles.map(withCompactOwnership)
   const previousByPath = new Map(previousProcessedFiles.map((file) => [file.path, file]))
   // Why: one resolver for the whole scan so every file shares the per-cwd memo.
   const resolveWorktree = await createUsageWorktreeResolver(worktrees)

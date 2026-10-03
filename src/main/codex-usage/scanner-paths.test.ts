@@ -38,6 +38,7 @@ import {
   listCodexSessionFiles
 } from './codex-session-file-discovery'
 import { scanCodexUsageFiles } from './scanner'
+import { toUsageOwnershipKey } from '../usage/usage-ownership-key'
 
 const originalCodexHome = process.env.CODEX_HOME
 let fakeHomeDir: string
@@ -532,6 +533,40 @@ describe('listCodexSessionFiles', () => {
     expect(
       third.dailyAggregates.reduce((total, aggregate) => total + aggregate.totalTokens, 0)
     ).toBe(22)
+  })
+
+  it('migrates a cache written with raw event keys without double counting a fork', async () => {
+    const sessionsDir = join(userDataDir, 'codex-runtime-home', 'home', 'sessions')
+    mkdirSync(sessionsDir, { recursive: true })
+    const originalPath = join(sessionsDir, 'aaaa-original.jsonl')
+    const forkPath = join(sessionsDir, 'zzzz-fork.jsonl')
+    const copiedPrefix = [
+      `${JSON.stringify({
+        type: 'session_meta',
+        payload: { id: 'session-1', cwd: join(fakeHomeDir, 'repo') }
+      })}
+`,
+      usageRecord('2026-05-26T12:00:00.000Z', 10),
+      usageRecord('2026-05-26T12:01:00.000Z', 5, 15)
+    ].join('')
+    writeFileSync(originalPath, copiedPrefix, 'utf-8')
+    const first = await scanCodexUsageFiles([], [])
+    // What an older build persisted: timestamp|total tuple|last tuple.
+    const rawKeys = [
+      '2026-05-26T12:00:00.000Z|10,0,0,0,10|10,0,0,0,10',
+      '2026-05-26T12:01:00.000Z|15,0,0,0,15|5,0,0,0,5'
+    ]
+    expect(first.processedFiles[0]?.ownedEventKeys).toEqual(rawKeys.map(toUsageOwnershipKey))
+    const legacyCache = first.processedFiles.map((file) => ({ ...file, ownedEventKeys: rawKeys }))
+
+    writeFileSync(forkPath, `${copiedPrefix}${usageRecord('2026-05-26T12:02:00.000Z', 7, 22)}`)
+    const second = await scanCodexUsageFiles([], legacyCache)
+
+    expect(
+      second.dailyAggregates.reduce((total, aggregate) => total + aggregate.totalTokens, 0)
+    ).toBe(22)
+    expect(second.processedFiles[0]?.ownedEventKeys).toEqual(rawKeys.map(toUsageOwnershipKey))
+    expect(second.processedFiles[1]?.ownedEventKeys).toHaveLength(1)
   })
 
   it('reclaims copied token events when the owning original file is deleted', async () => {

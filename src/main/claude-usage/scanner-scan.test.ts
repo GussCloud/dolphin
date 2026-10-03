@@ -2,6 +2,7 @@ import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { toUsageOwnershipKey as ownershipKey } from '../usage/usage-ownership-key'
 import type * as Os from 'node:os'
 import type * as FsPromises from 'node:fs/promises'
 
@@ -199,8 +200,8 @@ describe('scanClaudeUsageFiles', () => {
 
     const result = await scanClaudeUsageFiles([])
     expect(result.dailyAggregates.reduce((sum, row) => sum + row.inputTokens, 0)).toBe(150)
-    expect(result.processedFiles[0]?.ownedDedupeKeys).toEqual(['msg:msg_1'])
-    expect(result.processedFiles[1]?.ownedDedupeKeys).toEqual(['msg:msg_2'])
+    expect(result.processedFiles[0]?.ownedDedupeKeys).toEqual([ownershipKey('msg:msg_1')])
+    expect(result.processedFiles[1]?.ownedDedupeKeys).toEqual([ownershipKey('msg:msg_2')])
   })
 
   it('dedupes fork copies via uuid when message ids are absent', async () => {
@@ -237,8 +238,8 @@ describe('scanClaudeUsageFiles', () => {
 
     const result = await scanClaudeUsageFiles([])
     expect(result.dailyAggregates.reduce((sum, row) => sum + row.inputTokens, 0)).toBe(140)
-    expect(result.processedFiles[0]?.ownedDedupeKeys).toEqual(['uuid:uuid-1'])
-    expect(result.processedFiles[1]?.ownedDedupeKeys).toEqual(['uuid:uuid-2'])
+    expect(result.processedFiles[0]?.ownedDedupeKeys).toEqual([ownershipKey('uuid:uuid-1')])
+    expect(result.processedFiles[1]?.ownedDedupeKeys).toEqual([ownershipKey('uuid:uuid-2')])
   })
 
   it('counts turns copied into forked session files exactly once', async () => {
@@ -297,9 +298,12 @@ describe('scanClaudeUsageFiles', () => {
     )
 
     expect(totalInput).toBe(700)
-    expect(result.processedFiles[0]?.ownedDedupeKeys).toEqual(['msg_1:req_1', 'msg_2:req_2'])
+    expect(result.processedFiles[0]?.ownedDedupeKeys).toEqual([
+      ownershipKey('msg_1:req_1'),
+      ownershipKey('msg_2:req_2')
+    ])
     expect(result.processedFiles[0]?.hasDeferredClaims).toBe(false)
-    expect(result.processedFiles[1]?.ownedDedupeKeys).toEqual(['msg_3:req_3'])
+    expect(result.processedFiles[1]?.ownedDedupeKeys).toEqual([ownershipKey('msg_3:req_3')])
     expect(result.processedFiles[1]?.hasDeferredClaims).toBe(true)
   })
 
@@ -338,7 +342,7 @@ describe('scanClaudeUsageFiles', () => {
     const { scanClaudeUsageFiles } = await import('./scanner')
 
     const first = await scanClaudeUsageFiles([])
-    expect(first.processedFiles[0]?.ownedDedupeKeys).toEqual(['msg_1:req_1'])
+    expect(first.processedFiles[0]?.ownedDedupeKeys).toEqual([ownershipKey('msg_1:req_1')])
 
     // A fork appears later while the original stays unchanged (cache reuse).
     await writeFile(
@@ -354,8 +358,8 @@ describe('scanClaudeUsageFiles', () => {
 
     expect(totalInput).toBe(150)
     expect(second.processedFiles.map((file) => file.ownedDedupeKeys)).toEqual([
-      ['msg_1:req_1'],
-      ['msg_9:req_9']
+      [ownershipKey('msg_1:req_1')],
+      [ownershipKey('msg_9:req_9')]
     ])
 
     // Rescanning with the full cache stays stable.
@@ -363,6 +367,49 @@ describe('scanClaudeUsageFiles', () => {
     expect(third.dailyAggregates.reduce((sum, aggregate) => sum + aggregate.inputTokens, 0)).toBe(
       150
     )
+  })
+
+  it('migrates a cache written with raw ownership keys without double counting a fork', async () => {
+    const root = await makeClaudeProjectsRoot()
+    const projectDir = join(root, '.claude', 'projects', 'project-a')
+    const originalFile = join(projectDir, 'aaaa-original.jsonl')
+    const forkFile = join(projectDir, 'zzzz-fork.jsonl')
+    const turn = (sessionId: string, messageId: string, requestId: string): string =>
+      JSON.stringify({
+        type: 'assistant',
+        sessionId,
+        timestamp: '2026-04-09T10:00:00.000Z',
+        requestId,
+        cwd: '/workspace/repo-a',
+        message: {
+          id: messageId,
+          model: 'claude-sonnet-4-6',
+          usage: { input_tokens: 100, output_tokens: 10 }
+        }
+      })
+    await writeFile(originalFile, turn('session-1', 'msg_1', 'req_1'))
+
+    vi.resetModules()
+    vi.doMock('os', async () => ({
+      ...(await vi.importActual<typeof Os>('os')),
+      homedir: () => root
+    }))
+    const { scanClaudeUsageFiles } = await import('./scanner')
+    const first = await scanClaudeUsageFiles([])
+    // What an older build persisted: the raw message/request key.
+    const legacyCache = first.processedFiles.map((file) => ({
+      ...file,
+      ownedDedupeKeys: ['msg_1:req_1']
+    }))
+
+    await writeFile(forkFile, turn('session-2', 'msg_1', 'req_1'))
+    const second = await scanClaudeUsageFiles([], legacyCache)
+
+    expect(second.dailyAggregates.reduce((sum, row) => sum + row.inputTokens, 0)).toBe(100)
+    expect(second.processedFiles.map((file) => file.ownedDedupeKeys)).toEqual([
+      [ownershipKey('msg_1:req_1')],
+      []
+    ])
   })
 
   it('reclaims fork-copied turns when the owning original file is deleted', async () => {
@@ -407,8 +454,8 @@ describe('scanClaudeUsageFiles', () => {
     expect(first.dailyAggregates.reduce((sum, aggregate) => sum + aggregate.inputTokens, 0)).toBe(
       150
     )
-    expect(first.processedFiles[0]?.ownedDedupeKeys).toEqual(['msg_1:req_1'])
-    expect(first.processedFiles[1]?.ownedDedupeKeys).toEqual(['msg_9:req_9'])
+    expect(first.processedFiles[0]?.ownedDedupeKeys).toEqual([ownershipKey('msg_1:req_1')])
+    expect(first.processedFiles[1]?.ownedDedupeKeys).toEqual([ownershipKey('msg_9:req_9')])
 
     // Deleting the owner must reparse deferred forks so they can re-claim the
     // copied turn instead of permanently under-counting.
@@ -419,7 +466,10 @@ describe('scanClaudeUsageFiles', () => {
       150
     )
     expect(second.processedFiles).toHaveLength(1)
-    expect(second.processedFiles[0]?.ownedDedupeKeys).toEqual(['msg_1:req_1', 'msg_9:req_9'])
+    expect(second.processedFiles[0]?.ownedDedupeKeys).toEqual([
+      ownershipKey('msg_1:req_1'),
+      ownershipKey('msg_9:req_9')
+    ])
   })
 
   it('keeps unrelated cached transcripts when a different owner file is deleted', async () => {
@@ -465,7 +515,7 @@ describe('scanClaudeUsageFiles', () => {
     const first = await scanClaudeUsageFiles([])
     const unrelatedBefore = first.processedFiles.find((file) => file.path === unrelatedFile)
     expect(unrelatedBefore?.hasDeferredClaims).toBe(false)
-    expect(unrelatedBefore?.ownedDedupeKeys).toEqual(['msg_u:req_u'])
+    expect(unrelatedBefore?.ownedDedupeKeys).toEqual([ownershipKey('msg_u:req_u')])
 
     await rm(originalFile)
 

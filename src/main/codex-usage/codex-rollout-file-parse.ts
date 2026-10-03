@@ -17,6 +17,7 @@ import type {
   CodexUsageProcessedFile,
   CodexUsageSession
 } from './types'
+import { toUsageOwnershipKey } from '../usage/usage-ownership-key'
 
 const { finalizeSessions, mergeSessions, mergeDailyAggregates, sortDailyAggregates } =
   codexUsageAggregation
@@ -133,11 +134,12 @@ export async function parseCodexUsageFile(
     // Why: fork/resume rollouts start with a copied prefix of the parent file.
     // Events another file already owns are dropped here, but the record still
     // advanced context.previousTotals above, so later deltas stay correct.
-    if (options.claimEventKey && !options.claimEventKey(parsed.eventKey)) {
+    const ownershipKey = toUsageOwnershipKey(parsed.eventKey)
+    if (options.claimEventKey && !options.claimEventKey(ownershipKey)) {
       hasDeferredClaims = true
       continue
     }
-    ownedEventKeys.add(parsed.eventKey)
+    ownedEventKeys.add(ownershipKey)
     const attributed = await attributeCodexUsageEvent(parsed, resolveWorktree)
     if (attributed) {
       events.push(attributed)
