@@ -1,3 +1,4 @@
+import type { ProcessHeapSample } from '../shared/process-heap-sample'
 import type { RuntimeDiagnostics } from '../shared/runtime-diagnostics-types'
 import { formatByteCount } from './workspace-format'
 
@@ -62,6 +63,7 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
       (w) =>
         `  ! ${w.kind} over budget: ${w.subject}  ${formatByteCount(w.bytes)} > ${formatByteCount(w.limitBytes)}`
     ),
+    ...formatHeapLines(d),
     '',
     'Disk',
     ...storage.entries.map(
@@ -73,6 +75,24 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
     `  ${'total:'.padEnd(22)}${formatByteCount(storage.totalBytes)}`
   ]
   return lines.join('\n')
+}
+
+function formatHeapSample(sample: ProcessHeapSample): string {
+  const limit =
+    sample.heapLimitBytes === undefined ? '' : ` / ${formatByteCount(sample.heapLimitBytes)} limit`
+  return `${formatByteCount(sample.heapUsedBytes)} used${limit}, rss ${formatByteCount(sample.rssBytes)}`
+}
+
+function formatHeapLines(d: RuntimeDiagnostics): string[] {
+  if (!d.heap) {
+    return []
+  }
+  return [
+    '',
+    'Heap',
+    `  Runtime host:         ${formatHeapSample(d.heap.host)}`,
+    `  Daemon:               ${d.heap.daemon ? formatHeapSample(d.heap.daemon) : 'unknown'}`
+  ]
 }
 
 function formatLifecycleLines(d: RuntimeDiagnostics): string[] {

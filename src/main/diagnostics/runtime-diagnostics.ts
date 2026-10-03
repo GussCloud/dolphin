@@ -3,6 +3,8 @@ import { getAppEnvironment } from '../../shared/app-environment'
 import type { MemorySnapshot } from '../../shared/process-stats-types'
 import type { RuntimeDiagnostics } from '../../shared/runtime-diagnostics-types'
 import type { DaemonSessionInfo } from '../daemon/types'
+import type { ProcessHeapSample } from '../../shared/process-heap-sample'
+import { readProcessHeapSample } from './process-heap-heartbeat'
 import { listRegisteredPtys } from '../memory/pty-registry'
 import { localPtySessionLifecycle } from '../session/session-lifecycle-ledger'
 import { findSessionInconsistencies, probeLocalPid } from './session-inconsistencies'
@@ -22,6 +24,8 @@ export type RuntimeDiagnosticsDeps = {
   readLocalPersistedWorkspaceSession?: () => unknown
   /** Session ids with history on disk that a reopen could cold-restore. */
   listRestorableSessionIds?: () => Promise<ReadonlySet<string>>
+  /** The current daemon's own heap; null when it is absent or predates the request. */
+  readDaemonHeap?: () => Promise<ProcessHeapSample | null>
 }
 
 // Why: closed-tab tombstones name ids no tab will reopen; they are not saved-tab references.
@@ -55,11 +59,12 @@ export async function collectRuntimeDiagnostics(
   deps: RuntimeDiagnosticsDeps
 ): Promise<RuntimeDiagnostics> {
   const env = getAppEnvironment()
-  const [memory, inventory, storage, restorable] = await Promise.all([
+  const [memory, inventory, storage, restorable, daemonHeap] = await Promise.all([
     deps.getMemorySnapshot(),
     deps.listDaemonSessions().catch(() => ({ sessions: [], complete: false })),
     measureStorageFootprint(listStorageFootprintRoots(env.getPath('userData'))),
-    deps.listRestorableSessionIds?.().catch(() => undefined)
+    deps.listRestorableSessionIds?.().catch(() => undefined),
+    deps.readDaemonHeap?.().catch(() => null) ?? Promise.resolve(null)
   ])
   const persisted = deps.readLocalPersistedWorkspaceSession?.()
   const referencedBySavedTabs =
@@ -115,6 +120,7 @@ export async function collectRuntimeDiagnostics(
     },
     memory,
     memoryWarnings: evaluateMemoryBudget(memory, readMemoryBudget()),
+    heap: { host: readProcessHeapSample(), daemon: daemonHeap },
     storage
   }
 }

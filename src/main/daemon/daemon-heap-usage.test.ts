@@ -8,6 +8,8 @@ import type { ProcessHeapHeartbeatOptions } from '../diagnostics/process-heap-he
 import { DaemonClient } from './client'
 import type { DaemonFileLog } from './daemon-file-log'
 import { countLiveDaemonSessions, parseDaemonHeapUsage } from './daemon-heap-usage'
+import { DaemonPtyAdapter } from './daemon-pty-adapter'
+import { DaemonRequestRouter } from './daemon-request-router'
 import { DaemonServer } from './daemon-server'
 import { getDaemonSocketPath } from './daemon-spawner'
 import type { SubprocessHandle } from './session-subprocess-handle'
@@ -119,5 +121,30 @@ describe('DaemonServer heap reporting', () => {
     client = undefined
     await server.shutdown()
     expect(heartbeat.stop).toHaveBeenCalled()
+  })
+
+  it('reads the heap through the adapter, and treats an older daemon as unavailable', async () => {
+    await server.start()
+    const adapter = new DaemonPtyAdapter({
+      socketPath: getDaemonSocketPath(dir),
+      tokenPath: join(dir, 'test.token')
+    })
+    try {
+      expect((await adapter.readHeapUsage())?.liveSessionCount).toBe(0)
+
+      const route = DaemonRequestRouter.prototype.route
+      const olderDaemon = vi
+        .spyOn(DaemonRequestRouter.prototype, 'route')
+        .mockImplementation(async function (this: DaemonRequestRouter, clientId, request) {
+          if (request.type === 'heapUsage') {
+            throw new Error('Unknown request type: heapUsage')
+          }
+          return route.call(this, clientId, request)
+        })
+      await expect(adapter.readHeapUsage()).resolves.toBeNull()
+      olderDaemon.mockRestore()
+    } finally {
+      adapter.dispose()
+    }
   })
 })

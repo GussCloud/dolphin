@@ -5,6 +5,7 @@ import { getDaemonProvider } from './daemon-init'
 import { getCurrentDaemonAdapter } from './daemon-provider-routing'
 import type { DaemonEndpointIdentity } from './daemon-hello-protocol'
 import type { DaemonSessionInfo } from './types'
+import type { DaemonHeapUsage } from './daemon-heap-usage'
 
 export function getDaemonAdapters(): DaemonPtyAdapter[] {
   const provider = getDaemonProvider()
@@ -31,6 +32,12 @@ export function isDaemonDegraded(): boolean {
 export function readCurrentDaemonIdentity(): DaemonEndpointIdentity | null {
   const provider = getDaemonProvider()
   return provider ? getCurrentDaemonAdapter(provider).getDaemonIdentity() : null
+}
+
+/** The daemon now spawning terminals reports its own heap; null when absent or too old. */
+export async function readCurrentDaemonHeapUsage(): Promise<DaemonHeapUsage | null> {
+  const provider = getDaemonProvider()
+  return provider ? await getCurrentDaemonAdapter(provider).readHeapUsage() : null
 }
 
 export type DaemonSessionInventory = { sessions: DaemonSessionInfo[]; complete: boolean }

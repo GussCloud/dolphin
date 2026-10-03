@@ -83,4 +83,36 @@ describe('collectRuntimeDiagnostics', () => {
     ])
     expect(result.sessions.matchedSessionCount).toBe(0)
   })
+
+  it('reports the host heap and the daemon heap, tolerating a daemon that cannot answer', async () => {
+    const daemonHeap = {
+      rssBytes: 10,
+      heapUsedBytes: 5,
+      heapTotalBytes: 8,
+      externalBytes: 1,
+      arrayBuffersBytes: 0
+    }
+    const base = {
+      getMemorySnapshot: async () => emptySnapshot,
+      listDaemonSessions: async () => ({ sessions: [], complete: true }),
+      readDaemonPid: () => null,
+      isDaemonDegraded: () => false
+    }
+
+    const answered = await collectRuntimeDiagnostics({
+      ...base,
+      readDaemonHeap: async () => daemonHeap
+    })
+    expect(answered.heap?.daemon).toEqual(daemonHeap)
+    expect(answered.heap?.host.heapUsedBytes).toBeGreaterThan(0)
+
+    const failed = await collectRuntimeDiagnostics({
+      ...base,
+      readDaemonHeap: async () => {
+        throw new Error('daemon gone')
+      }
+    })
+    expect(failed.heap?.daemon).toBeNull()
+    expect((await collectRuntimeDiagnostics(base)).heap?.daemon).toBeNull()
+  })
 })
