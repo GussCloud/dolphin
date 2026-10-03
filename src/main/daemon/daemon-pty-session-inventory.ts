@@ -13,8 +13,11 @@ import { DaemonPtyProcessInspection } from './daemon-pty-process-inspection'
 import { remainingDaemonRequestTimeoutMs } from './daemon-request-deadline'
 import { parsePtySessionId } from './pty-session-id'
 import type { ListSessionsResult, SessionInfo } from './types'
+import { parseDaemonHeapUsage, type DaemonHeapUsage } from './daemon-heap-usage'
 import { PtyProcessListAdmission } from '../providers/pty-process-list-admission'
 import type { PtyProcessInfo } from '../providers/types'
+
+const HEAP_USAGE_REQUEST_TIMEOUT_MS = 5_000
 
 export abstract class DaemonPtySessionInventory extends DaemonPtyProcessInspection {
   async listProcesses(opts?: { deadlineMs?: number }): Promise<PtyProcessInfo[]> {
@@ -128,6 +131,19 @@ export abstract class DaemonPtySessionInventory extends DaemonPtyProcessInspecti
         ...session,
         ...this.validatedAgentSessionOwners(session.agentSessionOwners)
       }))
+  }
+
+  // Why null on any failure: daemons older than `heapUsage` reject it, and a diagnostics read
+  // must never fail the report it decorates.
+  async readHeapUsage(): Promise<DaemonHeapUsage | null> {
+    try {
+      await this.ensureConnected()
+      return parseDaemonHeapUsage(
+        await this.client.request('heapUsage', undefined, HEAP_USAGE_REQUEST_TIMEOUT_MS)
+      )
+    } catch {
+      return null
+    }
   }
 
   getActiveSessionIds(): string[] {

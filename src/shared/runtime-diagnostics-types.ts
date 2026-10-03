@@ -1,4 +1,5 @@
 import type { MemorySnapshot } from './process-stats-types'
+import type { ProcessHeapSample } from './process-heap-sample'
 import type { SessionLifecycleState } from './session-lifecycle'
 
 export type StorageFootprintKind =
@@ -85,5 +86,10 @@ export type RuntimeDiagnostics = {
   memory: MemorySnapshot
   /** Over-budget owners; absent from older hosts. */
   memoryWarnings?: MemoryBudgetWarning[]
+  /** Self-reported JS heaps; absent from older hosts. `daemon` is null when it did not answer. */
+  heap?: {
+    host: ProcessHeapSample
+    daemon: ProcessHeapSample | null
+  }
   storage: StorageFootprint
 }

@@ -1,13 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { spawnDaemonChildProcess } from './daemon-launched-child-spawn'
 
-const { spawn, fork } = vi.hoisted(() => ({ spawn: vi.fn(), fork: vi.fn() }))
+const { spawn, fork, heapCeilingArgs } = vi.hoisted(() => ({
+  spawn: vi.fn(),
+  fork: vi.fn(),
+  heapCeilingArgs: vi.fn((): string[] => ['--max-old-space-size=2048'])
+}))
 vi.mock('../../shared/child-process/run-process', () => ({ spawnProcess: spawn }))
 vi.mock('../../shared/child-process/fork-process', () => ({ forkProcess: fork }))
 vi.mock('../../shared/app-environment', () => ({
   getAppEnvironment: () => ({ getVersion: () => '1.0.0' })
 }))
 vi.mock('./daemon-launch-paths', () => ({ daemonLogArgs: () => [] }))
+vi.mock('./daemon-heap-ceiling', () => ({ daemonHeapCeilingExecArgv: heapCeilingArgs }))
 
 const options = {
   entryPath: '/app/daemon-entry.js',
@@ -47,5 +52,31 @@ describe('daemon launch scope ownership', () => {
         args: expect.not.arrayContaining(['--fresh-daemon-scope'])
       })
     )
+  })
+})
+
+describe('daemon heap ceiling', () => {
+  it('passes the ceiling as an engine flag on the direct fork, keeping inherited flags', () => {
+    spawnDaemonChildProcess(options, false)
+    expect(fork).toHaveBeenCalledWith(
+      expect.objectContaining({
+        execArgv: [...process.execArgv, '--max-old-space-size=2048'],
+        args: expect.not.arrayContaining(['--max-old-space-size=2048'])
+      })
+    )
+  })
+
+  it('places the ceiling before the entry module inside the scope launcher', () => {
+    spawnDaemonChildProcess(options, true)
+    const args: string[] = spawn.mock.calls[0][0].args
+    const flagIndex = args.indexOf('--max-old-space-size=2048')
+    expect(flagIndex).toBeGreaterThan(args.indexOf('--'))
+    expect(flagIndex).toBeLessThan(args.indexOf(options.forkEntryPath))
+  })
+
+  it('leaves fork inheriting execArgv when there is no ceiling', () => {
+    heapCeilingArgs.mockReturnValueOnce([])
+    spawnDaemonChildProcess(options, false)
+    expect(fork.mock.calls[0][0]).not.toHaveProperty('execArgv')
   })
 })

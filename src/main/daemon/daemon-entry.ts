@@ -12,6 +12,10 @@ import { createPtySubprocess } from './pty-subprocess'
 import { warmWindowsConptyOnce } from './windows-conpty-warmup'
 import { warmPwshAvailabilityCache } from '../pwsh'
 import { createDaemonFileLog, createNoopDaemonFileLog } from './daemon-file-log'
+import {
+  formatProcessHeapHeartbeatFields,
+  readProcessHeapSample
+} from '../diagnostics/process-heap-heartbeat'
 import { PROTOCOL_VERSION } from './types'
 import { detectOwnCgroupScopeUnit } from './daemon-cgroup-scope'
 import {
@@ -134,7 +138,12 @@ async function main(): Promise<void> {
   const readyIdentity = await readCurrentDaemonReadyIdentity(startedAtMs)
   // Fail-open: a broken log path must never block daemon startup.
   const daemonLog = logFilePath ? createDaemonFileLog(logFilePath) : createNoopDaemonFileLog()
-  daemonLog.log('startup', { protocolVersion: PROTOCOL_VERSION, socketPath })
+  // Why the heap fields: heapLimitMb confirms which old-space ceiling this launch applied.
+  daemonLog.log('startup', {
+    protocolVersion: PROTOCOL_VERSION,
+    socketPath,
+    ...formatProcessHeapHeartbeatFields(readProcessHeapSample(), null)
+  })
   startDaemonScopeDeathWatch({
     freshScope: freshDaemonScope === true,
     launchNonce,

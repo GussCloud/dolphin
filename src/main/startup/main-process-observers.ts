@@ -8,6 +8,8 @@ import { installHookStatusSessionTabsRepublish } from '../agent-hooks/hook-statu
 import { initTelemetry, track } from '../telemetry/client'
 import { setCodexTrustGrantTelemetry } from '../codex/codex-trust-grant-telemetry'
 import { initObservability } from '../observability'
+import { startSpan } from '../observability/tracer'
+import { startRuntimeHostHeapHeartbeat } from '../diagnostics/runtime-host-heap-heartbeat'
 import { recordDurableCrashBreadcrumb } from '../crash-reporting/durable-crash-breadcrumb'
 import { recoverPendingSkillTransactions } from '../skills/skill-transaction-startup-recovery'
 import { initCohortClassifier } from '../telemetry/cohort-classifier'
@@ -97,6 +99,10 @@ export function initializeMainProcessObservers(): void {
   // Honors DO_NOT_TRACK / DOLPHIN_TELEMETRY_DISABLED / DOLPHIN_DIAGNOSTICS_DISABLED
   // / CI internally; those gates do not need to be re-checked here.
   initObservability()
+  // Why a span: main.trace.ndjson is main's only on-disk log and it ships in support bundles.
+  startRuntimeHostHeapHeartbeat((fields) =>
+    startSpan('process.heap-heartbeat', { attributes: { process: 'main', ...fields } }).end()
+  )
   recordDurableCrashBreadcrumb('main_process_lifecycle_started', {
     packaged: app.isPackaged,
     platform: process.platform

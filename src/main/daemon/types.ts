@@ -192,6 +192,12 @@ export type PtySpawnHealthRequest = {
   type: 'ptySpawnHealth'
 }
 
+// Why optional for clients: daemons older than this request answer "Unknown request type".
+export type HeapUsageRequest = {
+  id: string
+  type: 'heapUsage'
+}
+
 export type GetSnapshotRequest = {
   id: string
   type: 'getSnapshot'
@@ -281,6 +287,7 @@ export type DaemonRequest =
   | PingRequest
   | SystemResolverHealthRequest
   | PtySpawnHealthRequest
+  | HeapUsageRequest
   | GetSnapshotRequest
   | GetSizeRequest
   | TakePendingOutputRequest

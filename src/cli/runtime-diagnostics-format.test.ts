@@ -107,6 +107,24 @@ describe('formatRuntimeDiagnostics', () => {
     expect(text).toContain('Inconsistencies:      1')
     expect(text).toContain('- registered-pty-exited  s1  pid 42')
   })
+
+  it('shows self-reported heaps, and omits the section for older hosts', () => {
+    const mb = 1024 * 1024
+    const sample = {
+      rssBytes: 300 * mb,
+      heapUsedBytes: 120 * mb,
+      heapTotalBytes: 150 * mb,
+      externalBytes: 0,
+      arrayBuffersBytes: 0
+    }
+    const text = formatRuntimeDiagnostics({
+      ...diagnostics(),
+      heap: { host: { ...sample, heapLimitBytes: 4096 * mb }, daemon: null }
+    })
+    expect(text).toContain('Runtime host:         120 MB used / 4.0 GB limit, rss 300 MB')
+    expect(text).toContain('Daemon:               unknown')
+    expect(formatRuntimeDiagnostics(diagnostics())).not.toContain('Heap')
+  })
 })
 
 describe('formatDuration', () => {

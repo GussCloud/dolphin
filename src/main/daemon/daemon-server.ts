@@ -9,6 +9,8 @@ import {
 import { DaemonClientConnections } from './daemon-client-connections'
 import { DaemonEndpointLifecycle } from './daemon-endpoint-lifecycle'
 import { createNoopDaemonFileLog, type DaemonFileLog } from './daemon-file-log'
+import { countLiveDaemonSessions } from './daemon-heap-usage'
+import { startProcessHeapHeartbeat } from '../diagnostics/process-heap-heartbeat'
 import { DaemonPtySpawnPreparations } from './daemon-pty-spawn-preparations'
 import { DaemonRequestRouter } from './daemon-request-router'
 import { DaemonServerLifecycle } from './daemon-server-lifecycle'
@@ -45,6 +47,7 @@ export class DaemonServer {
   private readonly admission: DaemonTerminalAdmission
   private readonly requestRouter: DaemonRequestRouter
   private stopStreamBacklogProbe: () => void = () => {}
+  private readonly stopHeapHeartbeat: () => void
 
   constructor(options: DaemonServerOptions) {
     this.log = options.log ?? createNoopDaemonFileLog()
@@ -223,6 +226,10 @@ export class DaemonServer {
       })),
       backgroundedSessionIdSuffixes: this.transientFactRelay.backgroundedSessionIdSuffixes()
     }))
+    this.stopHeapHeartbeat = startProcessHeapHeartbeat({
+      emit: (fields) => this.log.log('heap-heartbeat', fields),
+      readSessionCount: () => countLiveDaemonSessions(this.host.listSessions())
+    })
   }
 
   start(): Promise<void> {
@@ -246,6 +253,7 @@ export class DaemonServer {
   private async disposeResources(): Promise<void> {
     this.endpoint.stopOwnershipWatch()
     this.stopStreamBacklogProbe()
+    this.stopHeapHeartbeat()
     this.transientFactRelay.dispose()
     this.preparations.cancelAll()
     try {

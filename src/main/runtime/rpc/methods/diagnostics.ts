@@ -19,13 +19,18 @@ export const DIAGNOSTICS_METHODS = [
     name: 'diagnostics.runtime',
     params: null,
     handler: async (_params, { runtime }) => {
-      const { isDaemonDegraded, listDaemonSessionInventory, readCurrentDaemonIdentity } =
-        await loadDaemonSessionInventory()
+      const {
+        isDaemonDegraded,
+        listDaemonSessionInventory,
+        readCurrentDaemonHeapUsage,
+        readCurrentDaemonIdentity
+      } = await loadDaemonSessionInventory()
       return await collectRuntimeDiagnostics({
         getMemorySnapshot: () => runtime.getMemorySnapshot(),
         listDaemonSessions: listDaemonSessionInventory,
         readDaemonPid: () => readCurrentDaemonIdentity()?.pid ?? null,
         isDaemonDegraded,
+        readDaemonHeap: async () => (await readCurrentDaemonHeapUsage())?.heap ?? null,
         readLocalPersistedWorkspaceSession: () => runtime.readPersistedWorkspaceSessions('local'),
         listRestorableSessionIds: async () =>
           new Set(
