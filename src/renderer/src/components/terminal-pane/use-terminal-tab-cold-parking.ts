@@ -34,6 +34,12 @@ import {
   selectEvictionExemptTerminalTabLayoutKey
 } from './terminal-eviction-exempt-tabs'
 import { selectSleepingRecordParkExemptTabIds } from './sleeping-record-park-exemption'
+import {
+  addParkedHibernatedTerminalTabs,
+  canRenderParkHibernationAware,
+  useHibernatedTerminalTabParking,
+  useWatchedParkedTerminalTabIds
+} from './use-hibernated-terminal-tab-parking'
 import { usePendingStartupParkPresence } from './terminal-pending-startup-park-presence'
 import { canWatcherCoverParkedTerminalTab } from './terminal-parked-tab-watchers'
 import { captureNewlyParkedTerminalTabs } from './parked-terminal-tab-capture-episodes'
@@ -124,6 +130,7 @@ export function useTerminalTabColdParking(args: {
   const sleepingRecordOwnedTabIds = useAppStore(
     useShallow((state) => selectSleepingRecordParkExemptTabIds(state, worktreeId))
   )
+  const hibernatedParking = useHibernatedTerminalTabParking(worktreeId)
   const terminalTabHiddenSinceRef = useRef(new Map<string, number>())
   // Why: view switches hide every tab at once, so the park clock cannot rank them.
   const terminalTabActivationOrderRef = useRef<ReturnType<typeof createTerminalTabActivationOrder>>(
@@ -214,10 +221,18 @@ export function useTerminalTabColdParking(args: {
       },
       ...overrides
     })
+    addParkedHibernatedTerminalTabs(nextColdParkedTerminalTabIds, hibernatedParking, {
+      candidates,
+      parkingEnabled: terminalParkingEnabled,
+      nowMs,
+      coldParkDelayMs: overrides.coldParkDelayMs ?? TERMINAL_TAB_COLD_PARK_DELAY_MS
+    })
     const { parkedTabIds, parkVerdictPinUntilMsByTabId } = withholdUnparkableTerminalTabs({
       worktreeId,
       terminalTabs,
       coldParkedTabIds: nextColdParkedTerminalTabIds,
+      // Why: a hibernated tab has no live PTY whose bytes a watcher would have to cover.
+      watcherFreeTabIds: hibernatedParking.hibernatedTabIds,
       parkVerdictRecords: parkVerdictRecordsRef.current,
       nowMs
     })
@@ -267,6 +282,7 @@ export function useTerminalTabColdParking(args: {
   }, [
     activityTerminalPortals,
     activeTerminalTabId,
+    hibernatedParking,
     isWorktreeActive,
     pendingStartupByTabId,
     pairedRuntimeParkingEnvironmentIds,
@@ -330,7 +346,11 @@ export function useTerminalTabColdParking(args: {
         !terminalPaneSplitMountLeaseTabIds.has(terminalTab.id) &&
         // Why: the hidden-measuring startup probe needs mounted panes; gate
         // here too so the reveal lands in the same render that starts it.
-        !shouldMeasureHiddenWorktree
+        canRenderParkHibernationAware(
+          hibernatedParking,
+          terminalTab.id,
+          shouldMeasureHiddenWorktree
+        )
       ) {
         parked.add(terminalTab.id)
       }
@@ -354,6 +374,7 @@ export function useTerminalTabColdParking(args: {
     retentionParkedTerminalTabIds,
     activationDeferredMountTabIds,
     evictionExemptTerminalTabIds,
+    hibernatedParking,
     isWorktreeActive,
     shouldMeasureHiddenWorktree,
     sleepingRecordOwnedTabIds,
@@ -373,6 +394,11 @@ export function useTerminalTabColdParking(args: {
     allowSustainedPin: !isForceParked
   })
 
+  const watchedParkedTerminalTabIds = useWatchedParkedTerminalTabIds(
+    parkedTerminalTabIds,
+    hibernatedParking.hibernatedTabIds
+  )
+
   // Why: runs in the same effect flush as the commit that parked/revealed the
   // panes — watcher disposal therefore lands before any PTY data IPC can
   // reach a freshly remounted pane, and watcher start lands after the parked
@@ -382,7 +408,7 @@ export function useTerminalTabColdParking(args: {
     terminalTabs,
     assignmentsKey: terminalParkingAssignmentsKey,
     inputsKey: terminalParkingInputsKey,
-    parkedTabIds: parkedTerminalTabIds,
+    parkedTabIds: watchedParkedTerminalTabIds,
     activationDeferredMountTabIds
   })
 
