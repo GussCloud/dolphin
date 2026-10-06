@@ -37,6 +37,7 @@ import { installLinuxBareDolphinDispatcher } from '../cli/linux-bare-dolphin-dis
 import { scheduleAllPendingHistoryTreeRemovals } from '../terminal-history-deletion'
 import { triggerStartupNotificationRegistration } from '../ipc/startup-notification-registration'
 import { startDesktopPushService } from './main-process-push-startup'
+import { startWorkPresencePublishing } from './main-process-work-presence-startup'
 import { mainProcessState as state } from './main-process-state'
 import { logStartupMilestone } from './startup-diagnostics'
 import { emitServeBrowserIdentityActionLine } from '../server/serve-stdout-boundary'
@@ -253,6 +254,7 @@ async function launchDesktopMode(
   // Why after the proxy await: the push gateway client is an app-owned fetcher, so it must not
   // issue its first request ahead of the persisted proxy.
   startDesktopPushService(runtimeRpc)
+  startWorkPresencePublishing()
   const cloudAuth = getDolphinCloudAuthConfig()
   if (cloudAuth.configured) {
     try {

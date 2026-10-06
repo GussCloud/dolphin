@@ -45,6 +45,7 @@ import {
   markCloudConnectAttemptLinked
 } from './profile-cloud-connect-attempts'
 import { markDolphinCloudExplicitSignOut } from './profile-cloud-sign-out-marker'
+import { emitDolphinCloudSigningOut } from './profile-cloud-sign-out-events'
 
 export { refreshCurrentDolphinProfileAuth } from './profile-cloud-capability-refresh'
 
@@ -154,6 +155,7 @@ export async function signOutCurrentDolphinProfile(
     )
   }
   if (!isDolphinCloudDevAuthEnabled() && configState.configured && session.status === 'found') {
+    await emitDolphinCloudSigningOut(session.session)
     await revokeDolphinCloudSession(configState.config, session.session).catch(() => undefined)
   }
   if (hasCloudConnectLinkedSince(signOutEpoch)) {

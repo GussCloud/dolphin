@@ -17,6 +17,9 @@ import { consoleRoutes } from './console-routes.js'
 import type { SigningKey } from './signing-key.js'
 import type { AuthStore } from './store.js'
 import { feedbackRoutes } from './feedback.js'
+import { WorkPresenceRegistry } from './work-presence-registry.js'
+import { workPresenceRoutes } from './work-presence-routes.js'
+import type { WorkViewStreamTiming } from './work-view-stream.js'
 
 const AUTH_CODE_TTL_MS = 5 * 60 * 1000
 const B64URL = /^[A-Za-z0-9_-]{16,128}$/
@@ -71,8 +74,11 @@ export function createAuthApp(deps: {
   config: AuthConfig
   key: SigningKey
   azureDevOpsFetch?: AzureDevOpsFetch
+  workPresence?: WorkPresenceRegistry
+  streamTiming?: WorkViewStreamTiming
 }) {
   const { store, config, key } = deps
+  const workPresence = deps.workPresence ?? new WorkPresenceRegistry()
   const verifier = createAzureDevOpsVerifier(deps.azureDevOpsFetch)
   const app = new Hono()
   const now = (): number => Date.now()
@@ -233,7 +239,8 @@ export function createAuthApp(deps: {
   app.route('/', feedbackRoutes(store))
   app.route('/', azureDevOpsLinkRoutes({ store, verifier, authed }))
   app.route('/', azureDevOpsSignInRoutes({ store, config, verifier }))
-  app.route('/', consoleRoutes({ store, config, verifier }))
+  app.route('/', workPresenceRoutes({ store, registry: workPresence, authed }))
+  app.route('/', consoleRoutes({ store, config, verifier, workPresence, streamTiming: deps.streamTiming }))
   return app
 }
 

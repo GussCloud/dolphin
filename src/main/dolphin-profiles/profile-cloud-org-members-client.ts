@@ -124,7 +124,11 @@ export async function extractErrorCode(response: Response): Promise<string | und
 // Why: these are fixed first-party endpoints bearing the profile's access token;
 // following a redirect would leak that token to another origin, and a stalled
 // server must not hang the renderer's awaited IPC call forever.
-function requestInit(method: 'GET' | 'POST', accessToken: string, body?: unknown): RequestInit {
+export function cloudBearerRequestInit(
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  accessToken: string,
+  body?: unknown
+): RequestInit {
   return {
     method,
     headers: {
@@ -156,7 +160,7 @@ export async function listDolphinCloudOrgMembers(
 ): Promise<DolphinOrgMembersRoster> {
   return requestOrgMembers(
     orgMembersUrl(config, orgId, '/members'),
-    requestInit('GET', session.accessToken),
+    cloudBearerRequestInit('GET', session.accessToken),
     normalizeRoster
   )
 }
@@ -168,7 +172,7 @@ export async function inviteDolphinCloudOrgMember(
 ): Promise<void> {
   await requestOrgMembers(
     orgMembersUrl(config, args.orgId, '/invites'),
-    requestInit('POST', session.accessToken, { email: args.email, role: args.role }),
+    cloudBearerRequestInit('POST', session.accessToken, { email: args.email, role: args.role }),
     () => undefined
   )
 }
@@ -180,7 +184,7 @@ export async function revokeDolphinCloudOrgInvite(
 ): Promise<void> {
   await requestOrgMembers(
     orgMembersUrl(config, args.orgId, '/invites/revoke'),
-    requestInit('POST', session.accessToken, { email: args.email }),
+    cloudBearerRequestInit('POST', session.accessToken, { email: args.email }),
     () => undefined
   )
 }
@@ -192,7 +196,7 @@ export async function changeDolphinCloudOrgMemberRole(
 ): Promise<void> {
   await requestOrgMembers(
     orgMembersUrl(config, args.orgId, '/members/role'),
-    requestInit('POST', session.accessToken, { userId: args.userId, role: args.role }),
+    cloudBearerRequestInit('POST', session.accessToken, { userId: args.userId, role: args.role }),
     () => undefined
   )
 }
@@ -235,7 +239,7 @@ export async function linkDolphinCloudOrgByAzureDevOps(
 ): Promise<DolphinCloudAzureDevOpsLinkResponse> {
   return requestOrgMembers(
     `${config.apiBaseUrl}/v1/desktop/orgs/azure-devops/link`,
-    requestInit('POST', session.accessToken, args),
+    cloudBearerRequestInit('POST', session.accessToken, args),
     normalizeAzureDevOpsLinkResponse
   )
 }
@@ -247,7 +251,7 @@ export async function removeDolphinCloudOrgMember(
 ): Promise<void> {
   await requestOrgMembers(
     orgMembersUrl(config, args.orgId, '/members/remove'),
-    requestInit('POST', session.accessToken, { userId: args.userId }),
+    cloudBearerRequestInit('POST', session.accessToken, { userId: args.userId }),
     () => undefined
   )
 }

@@ -136,4 +136,27 @@ td{border:none;padding:6px 14px;display:flex;justify-content:space-between;gap:1
 td[data-label]::before{content:attr(data-label);color:var(--muted-foreground);font-size:13px}
 td.person-cell::before{display:none}.row-actions{justify-content:flex-start}.pop-panel{left:0;right:auto}}`
 
-export const CONSOLE_STYLE = [TOKENS, BASE, AUTH, SHELL, MEMBERS].join('\n')
+// Work view: the canvas palette is the pixel-art scene's own, so only the frame uses console tokens.
+const OFFICE = `.page.wide{max-width:none}
+.office-stage{display:flex;flex-direction:column;height:calc(100vh - 190px);min-height:420px;overflow:hidden;
+border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);background:#e8d9bf;box-shadow:var(--shadow)}
+.office-stage:fullscreen,.office-stage.tv{height:100vh;min-height:0;border:0;border-radius:0;box-shadow:none}
+.office-bar,.office-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:8px 12px;background:var(--card)}
+.office-bar{border-bottom:1px solid var(--border)}
+.office-legend{border-top:1px solid var(--border);font-size:12px;color:var(--muted-foreground);padding:6px 12px}
+.office-stats{font-variant-numeric:tabular-nums;color:var(--muted-foreground)}.office-stats b{color:var(--foreground)}
+.office-tools{display:flex;gap:4px;margin-left:auto}.office-tools button{padding:6px 10px}
+.office-tools button[aria-pressed=true]{background:var(--accent);color:var(--primary)}
+.office-conn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted-foreground)}
+.office-conn::before{content:"";width:8px;height:8px;border-radius:50%;background:#9aa6b0}
+.office-conn[data-conn=live]::before{background:#45d16b}.office-conn[data-conn=retrying]::before{background:#f2a93b}
+.office-host{position:relative;flex:1;min-height:0}
+.office-dot{display:inline-block;width:8px;height:8px;margin-right:6px;vertical-align:1px}
+.office-links{display:grid;margin:0;padding:0;list-style:none}
+.office-links li{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border)}
+.office-links li:first-child{border-top:0}.office-links form{display:block}
+.office-new-link{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.office-copy{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+@media (max-width:768px){.office-stage{height:70vh}.office-new-link{grid-template-columns:1fr}}`
+
+export const CONSOLE_STYLE = [TOKENS, BASE, AUTH, SHELL, MEMBERS, OFFICE].join('\n')

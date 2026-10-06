@@ -6,23 +6,41 @@ import { readAuthConfig } from '../config.js'
 import { hashPassword } from '../secrets.js'
 import { loadSigningKey } from '../signing-key.js'
 import { AuthStore } from '../store.js'
+import { WorkPresenceRegistry } from '../work-presence-registry.js'
+import type { WorkViewStreamTiming } from '../work-view-stream.js'
 import { fakeAzureDevOps, type FakeAzureDevOpsOrg } from './fake-azure-devops.js'
 
 export const TEST_ISSUER = 'https://auth.dolphin.example'
 export const TEST_PASSWORD = 'correct horse battery'
 
 /** An auth app on a throwaway SQLite dir, wired to a fake Azure DevOps. */
-export async function createTestAuthApp(options: { orgs?: FakeAzureDevOpsOrg[]; env?: NodeJS.ProcessEnv } = {}) {
+export async function createTestAuthApp(
+  options: {
+    orgs?: FakeAzureDevOpsOrg[]
+    env?: NodeJS.ProcessEnv
+    workPresence?: WorkPresenceRegistry
+    streamTiming?: WorkViewStreamTiming
+  } = {}
+) {
   const dataDir = mkdtempSync(join(tmpdir(), 'dolphin-auth-'))
   const config = readAuthConfig({ DOLPHIN_AUTH_ISSUER: TEST_ISSUER, DOLPHIN_AUTH_DATA_DIR: dataDir, ...options.env })
   const store = new AuthStore(dataDir)
   const azure = fakeAzureDevOps(options.orgs ?? [])
-  const app = createAuthApp({ store, config, key: await loadSigningKey(dataDir, null), azureDevOpsFetch: azure.fetch })
+  const workPresence = options.workPresence ?? new WorkPresenceRegistry()
+  const app = createAuthApp({
+    store,
+    config,
+    key: await loadSigningKey(dataDir, null),
+    azureDevOpsFetch: azure.fetch,
+    workPresence,
+    ...(options.streamTiming ? { streamTiming: options.streamTiming } : {})
+  })
   return {
     app,
     store,
     config,
     azure,
+    workPresence,
     createUser: async (id: string, email: string) =>
       store.createUser({ id, email, passwordHash: await hashPassword(TEST_PASSWORD) }),
     // Why close first: Windows refuses to delete an open SQLite file (EPERM).

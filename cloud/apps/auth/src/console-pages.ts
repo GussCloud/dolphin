@@ -64,6 +64,7 @@ export function renderCreateOrganizationPage(
     section: 'organization',
     auth: params,
     hasOrganization: false,
+    hasMembership: params.memberships.length > 0,
     body: `<section class="card">${message(params.message)}<form method="post" action="${CONSOLE_PATH}/organization">${csrfField(params.csrf)}
 ${field('Nome da organização', `<input name="organizationName" required maxlength="100" value="${escapeHtml(params.organizationName ?? '')}">`)}
 ${field('Código de convite', '<input name="inviteCode" autocomplete="off" required>')}
