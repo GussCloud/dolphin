@@ -5,12 +5,15 @@ export type AzureDevOpsOrgLinkStatus =
   | { status: 'connected'; organizationName: string }
   | { status: 'not-registered' }
   | { status: 'signed-out' }
-  | { status: 'azure-devops-not-authenticated' }
+  // `public-org-scope`: the organization has public projects and the PAT lacks Project and team (read).
+  | { status: 'azure-devops-not-authenticated'; reason?: AzureDevOpsLinkCredentialsReason }
   // Authenticated, but no Azure DevOps organization is configured to check.
   | { status: 'no-organization' }
   | { status: 'unsupported-host' }
   | { status: 'remote-host-unavailable' }
   | { status: 'error'; reason: string }
+
+export type AzureDevOpsLinkCredentialsReason = 'public-org-scope'
 
 export type AzureDevOpsOrgLinkArgs = { force?: boolean }
 

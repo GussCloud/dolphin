@@ -209,6 +209,14 @@ describe('getAzureDevOpsOrgLink', () => {
     })
   })
 
+  it('passes through the public-organization PAT scope reason', async () => {
+    serverAnswers({ status: 'invalid-credentials', reason: 'public-org-scope' })
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({
+      status: 'azure-devops-not-authenticated',
+      reason: 'public-org-scope'
+    })
+  })
+
   it('reports an unauthenticated Azure DevOps host without a request', async () => {
     mocks.authStatus.mockResolvedValue({ ...authenticated, authenticated: false })
     await expect(getAzureDevOpsOrgLink()).resolves.toEqual({

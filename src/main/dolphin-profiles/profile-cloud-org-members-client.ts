@@ -4,6 +4,7 @@ import type {
   DolphinOrgPendingInvite,
   DolphinOrgRole
 } from '../../shared/dolphin-profiles'
+import type { AzureDevOpsLinkCredentialsReason } from '../../shared/azure-devops-org-link'
 import type { DolphinCloudAuthConfig } from './profile-cloud-auth-config'
 import type { DolphinCloudSession } from './profile-cloud-session-store'
 import { DolphinCloudRequestError } from './profile-cloud-client'
@@ -199,7 +200,7 @@ export async function changeDolphinCloudOrgMemberRole(
 export type DolphinCloudAzureDevOpsLinkResponse =
   | { status: 'connected'; organizationName: string }
   | { status: 'not-registered' }
-  | { status: 'invalid-credentials' }
+  | { status: 'invalid-credentials'; reason?: AzureDevOpsLinkCredentialsReason }
   | { status: 'unsupported-host' }
 
 function readRecord(value: unknown): Record<string, unknown> {
@@ -217,9 +218,11 @@ function normalizeAzureDevOpsLinkResponse(value: unknown): DolphinCloudAzureDevO
   }
   switch (status) {
     case 'not-registered':
-    case 'invalid-credentials':
     case 'unsupported-host':
       return { status }
+    case 'invalid-credentials':
+      // Why: unknown reasons from newer servers fall back to the generic message.
+      return record.reason === 'public-org-scope' ? { status, reason: record.reason } : { status }
   }
   throw new Error('invalid_dolphin_azure_devops_link_response')
 }

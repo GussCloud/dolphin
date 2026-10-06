@@ -175,6 +175,23 @@ describe('Dolphin cloud org members client', () => {
     )
   })
 
+  it('keeps only the known invalid-credentials reason', async () => {
+    const args = {
+      organizationUrl: 'https://dev.azure.com/contoso',
+      azureDevOpsToken: 't',
+      tokenKind: 'pat' as const
+    }
+    mockJsonResponse({ status: 'invalid-credentials', reason: 'public-org-scope' })
+    await expect(linkDolphinCloudOrgByAzureDevOps(config, session, args)).resolves.toEqual({
+      status: 'invalid-credentials',
+      reason: 'public-org-scope'
+    })
+    mockJsonResponse({ status: 'invalid-credentials', reason: 'something-new' })
+    await expect(linkDolphinCloudOrgByAzureDevOps(config, session, args)).resolves.toEqual({
+      status: 'invalid-credentials'
+    })
+  })
+
   it('rejects malformed Azure DevOps link responses', async () => {
     mockJsonResponse({ status: 'connected', organization: {} })
     await expect(

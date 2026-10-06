@@ -27,10 +27,15 @@ function orgLinkMessage(link: AzureDevOpsOrgLinkStatus): string {
         'Sign in to your Dolphin account to connect to your organization'
       )
     case 'azure-devops-not-authenticated':
-      return translate(
-        'auto.components.settings.azureDevOpsOrgLink.azureDevOpsNotAuthenticated',
-        'Azure DevOps did not accept your sign-in, so your Dolphin organization could not be checked'
-      )
+      return link.reason === 'public-org-scope'
+        ? translate(
+            'auto.components.settings.azureDevOpsOrgLink.publicOrgScope',
+            'Your Azure DevOps token needs the Project and team (read) scope to connect to this organization'
+          )
+        : translate(
+            'auto.components.settings.azureDevOpsOrgLink.azureDevOpsNotAuthenticated',
+            'Azure DevOps did not accept your sign-in, so your Dolphin organization could not be checked'
+          )
     case 'no-organization':
       return translate(
         'auto.components.settings.azureDevOpsOrgLink.noOrganization',

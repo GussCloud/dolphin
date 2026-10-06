@@ -73,6 +73,14 @@ describe('AzureDevOpsOrgLinkRow', () => {
   it.each<[AzureDevOpsOrgLinkStatus, string]>([
     [{ status: 'connected', organizationName: 'Contoso' }, 'Connected to organization Contoso'],
     [{ status: 'not-registered' }, "Your Azure DevOps organization isn't registered in Dolphin"],
+    [
+      { status: 'azure-devops-not-authenticated' },
+      'Azure DevOps did not accept your sign-in, so your Dolphin organization could not be checked'
+    ],
+    [
+      { status: 'azure-devops-not-authenticated', reason: 'public-org-scope' },
+      'Your Azure DevOps token needs the Project and team (read) scope to connect to this organization'
+    ],
     [{ status: 'unsupported-host' }, 'Azure DevOps Services (dev.azure.com) only'],
     [{ status: 'error', reason: 'boom' }, 'Could not check your Dolphin organization: boom']
   ])('shows %j', async (link, text) => {

@@ -91,7 +91,7 @@ async function requestLink(
   switch (result.status) {
     case 'ok':
       return result.value.status === 'invalid-credentials'
-        ? { status: 'azure-devops-not-authenticated' }
+        ? { ...result.value, status: 'azure-devops-not-authenticated' }
         : result.value
     case 'reconnect-required':
       return { status: 'signed-out' }
