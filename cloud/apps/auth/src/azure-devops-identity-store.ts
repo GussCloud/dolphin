@@ -36,6 +36,30 @@ export class AzureDevOpsIdentityStore {
     return row?.user_id
   }
 
+  /**
+   * Binds identities recorded on memberships before this table existed (each was token-verified, as in rule 4).
+   * Idempotent; skips an identity seen on two users and a user with another or a second candidate identity.
+   */
+  backfillFromMemberships(now: number): number {
+    return Number(
+      this.db
+        .prepare(
+          `WITH candidates AS (
+             SELECT azure_devops_user_id, MIN(user_id) AS user_id FROM organization_members
+             WHERE azure_devops_user_id IS NOT NULL GROUP BY azure_devops_user_id
+             HAVING COUNT(DISTINCT user_id) = 1
+           )
+           INSERT INTO user_azure_devops_identities (azure_devops_user_id, user_id, email, created_at)
+           SELECT c.azure_devops_user_id, c.user_id, NULL, ? FROM candidates c
+           WHERE NOT EXISTS (SELECT 1 FROM user_azure_devops_identities i
+                             WHERE i.azure_devops_user_id = c.azure_devops_user_id OR i.user_id = c.user_id)
+             AND (SELECT COUNT(*) FROM candidates d WHERE d.user_id = c.user_id) = 1
+           ON CONFLICT (azure_devops_user_id) DO NOTHING`
+        )
+        .run(now).changes
+    )
+  }
+
   /** Never rebinds: the primary key decides, and the existing owner is reported on conflict. */
   bind(binding: AzureDevOpsIdentityBinding): { status: 'bound' | 'already-bound' | 'bound-to-other'; userId: string } {
     const inserted = this.db

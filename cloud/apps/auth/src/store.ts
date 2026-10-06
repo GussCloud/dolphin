@@ -86,6 +86,7 @@ export class AuthStore {
     this.organizations = new OrganizationStore(this.db)
     this.consoleSessions = new ConsoleSessionStore(this.db)
     this.azureDevOpsIdentities = new AzureDevOpsIdentityStore(this.db)
+    this.azureDevOpsIdentities.backfillFromMemberships(Date.now())
   }
 
   /** Runs `work` atomically; any throw rolls back every write it made. */

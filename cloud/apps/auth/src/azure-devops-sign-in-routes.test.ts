@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { AZURE_DEVOPS_ONLY_PASSWORD } from './azure-devops-identity-store.js'
 import { verifyPassword } from './secrets.js'
+import { AuthStore } from './store.js'
 import { issueSession } from './session-service.js'
 import { ConsoleBrowser } from './test-fixtures/console-browser.js'
 import { createTestAuthApp, dumpDatabase } from './test-fixtures/auth-test-app.js'
@@ -349,5 +350,38 @@ describe('Azure DevOps-only accounts have no password', () => {
       password: AZURE_DEVOPS_ONLY_PASSWORD
     })
     expect(login.res.status).toBe(401)
+  })
+})
+
+describe('backfill of identities linked before binding existed', () => {
+  const recordMember = (orgId: string, userId: string, n: number) =>
+    ctx.store.organizations.recordAzureDevOpsMember({ orgId, userId, azureDevOpsUserId: azdoId(n), now: Date.now() })
+
+  it('binds a pre-existing linked member at startup, so their AzDO sign-in finds their account', async () => {
+    recordMember('corg_contoso', 'usr_member', 4)
+    const restarted = new AuthStore(ctx.config.dataDir)
+    restarted.close()
+    expect(ctx.store.azureDevOpsIdentities.findUserId(azdoId(4))).toBe('usr_member')
+
+    const { body } = await signIn(contoso(COLLIDING_TOKEN))
+    expect(body).toMatchObject({ status: 'signed-in', accountCreated: false })
+    expect(sessionOf(body).cloud.userId).toBe('usr_member')
+  })
+
+  it('is a no-op when run again', () => {
+    recordMember('corg_contoso', 'usr_member', 4)
+    expect(ctx.store.azureDevOpsIdentities.backfillFromMemberships(Date.now())).toBe(1)
+    expect(ctx.store.azureDevOpsIdentities.backfillFromMemberships(Date.now())).toBe(0)
+    expect(ctx.store.azureDevOpsIdentities.findUserId(azdoId(4))).toBe('usr_member')
+  })
+
+  it('skips an id seen on two users and a user already bound to another identity', () => {
+    recordMember('corg_contoso', 'usr_member', 8)
+    recordMember('corg_open', 'usr_owner', 8)
+    ctx.store.azureDevOpsIdentities.bind({ azureDevOpsUserId: azdoId(3), userId: 'usr_other', email: null, now: 1 })
+    recordMember('corg_contoso', 'usr_other', 2)
+    expect(ctx.store.azureDevOpsIdentities.backfillFromMemberships(Date.now())).toBe(0)
+    expect(ctx.store.azureDevOpsIdentities.findUserId(azdoId(8))).toBeUndefined()
+    expect(ctx.store.azureDevOpsIdentities.findUserId(azdoId(2))).toBeUndefined()
   })
 })

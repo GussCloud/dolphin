@@ -38,8 +38,8 @@ const ConnectionData = z.object({
   authorizedUser: ConnectionIdentity.optional()
 })
 
-// Live dev.azure.com answers carry `properties.Account.$value` (the sign-in email/UPN); some put
-// the email in providerDisplayName instead.
+// Live dev.azure.com/evuptec (PAT): properties.Account = {"$type":"System.String","$value":"<sign-in email>"};
+// providerDisplayName may also hold the email, so it is the fallback.
 const IdentityProfile = z.object({
   providerDisplayName: z.string().optional(),
   customDisplayName: z.string().optional(),
