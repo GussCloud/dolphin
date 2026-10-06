@@ -1,3 +1,5 @@
+import { escapeHtml } from './html-escape.js'
+
 export type AuthorizeParams = {
   client_id: string
   redirect_uri: string
@@ -5,10 +7,6 @@ export type AuthorizeParams = {
   nonce: string
   code_challenge: string
   local_profile_id: string
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 }
 
 /** Minimal self-contained sign-in page; no external assets, so it works behind any proxy. */
