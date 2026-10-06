@@ -12369,6 +12369,20 @@
           "title": "Usage and tips",
           "skillLabel": "Agent skill:",
           "examplesIntro": "Commands you or your agents can run in any terminal:"
+        },
+        "azureDevOpsOrgLink": {
+          "connected": "Connected to organization {{value0}}",
+          "notRegistered": "Your Azure DevOps organization isn't registered in Dolphin",
+          "signedOut": "Sign in to your Dolphin account to connect to your organization",
+          "publicOrgScope": "Your Azure DevOps token needs the Project and team (read) scope to connect to this organization",
+          "azureDevOpsNotAuthenticated": "Azure DevOps did not accept your sign-in, so your Dolphin organization could not be checked",
+          "noOrganization": "Set a default Azure DevOps organization to connect to your Dolphin organization",
+          "unsupportedHost": "Dolphin organizations support Azure DevOps Services (dev.azure.com) only",
+          "remoteHostUnavailable": "Dolphin organization status is unavailable for remote hosts",
+          "error": "Could not check your Dolphin organization: {{value0}}",
+          "checking": "Checking your Dolphin organization…",
+          "openAccount": "Open Dolphin account",
+          "checkNow": "Check now"
         }
       },
       "right": {

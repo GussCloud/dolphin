@@ -12146,6 +12146,20 @@
           "title": "用法和提示",
           "skillLabel": "智能体技能：",
           "examplesIntro": "您或您的智能体可以在任意终端中运行的命令："
+        },
+        "azureDevOpsOrgLink": {
+          "connected": "已连接到组织 {{value0}}",
+          "notRegistered": "您的 Azure DevOps 组织尚未在 Dolphin 中注册",
+          "signedOut": "登录您的 Dolphin 账户以连接到您的组织",
+          "publicOrgScope": "您的 Azure DevOps 令牌需要 Project and team (read) 范围才能连接到此组织",
+          "azureDevOpsNotAuthenticated": "Azure DevOps 未接受您的登录，因此无法检查您的 Dolphin 组织",
+          "noOrganization": "请设置默认的 Azure DevOps 组织以连接到您的 Dolphin 组织",
+          "unsupportedHost": "Dolphin 组织仅支持 Azure DevOps Services (dev.azure.com)",
+          "remoteHostUnavailable": "远程主机无法查看 Dolphin 组织状态",
+          "error": "无法检查您的 Dolphin 组织：{{value0}}",
+          "checking": "正在检查您的 Dolphin 组织…",
+          "openAccount": "打开 Dolphin 账户",
+          "checkNow": "立即检查"
         }
       },
       "right": {
