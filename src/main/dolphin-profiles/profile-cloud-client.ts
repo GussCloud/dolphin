@@ -142,7 +142,7 @@ function normalizeCloudSummary(value: unknown): DolphinProfileCloudSummary {
   }
 }
 
-function normalizeSessionResponse(value: unknown): DolphinCloudSessionExchangeResponse {
+export function normalizeSessionResponse(value: unknown): DolphinCloudSessionExchangeResponse {
   if (!value || typeof value !== 'object') {
     throw new Error('invalid_dolphin_cloud_session')
   }
