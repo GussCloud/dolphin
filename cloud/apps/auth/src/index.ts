@@ -8,7 +8,7 @@ import { WorkPresenceRegistry } from './work-presence-registry.js'
 const config = readAuthConfig()
 const store = new AuthStore(config.dataDir)
 const key = await loadSigningKey(config.dataDir, config.signingKeyPem)
-const workPresence = new WorkPresenceRegistry()
+const workPresence = new WorkPresenceRegistry({ log: (line) => console.log(`[work-presence] ${line}`) })
 const app = createAuthApp({ store, config, key, workPresence })
 
 setInterval(() => store.pruneExpired(Date.now()), 60 * 60 * 1000).unref()

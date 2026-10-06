@@ -14,11 +14,12 @@ export type WorkPresencePublisherDeps = {
 
 export const WORK_PRESENCE_DEBOUNCE_MS = 1_000
 export const WORK_PRESENCE_DEFAULT_HEARTBEAT_MS = 20_000
-// Why 40s ceiling: the server marks a machine offline after 45s without a snapshot.
+// Why 40s ceiling: the server marks a machine offline after 60s without a snapshot.
 const MIN_HEARTBEAT_MS = 5_000
 const MAX_HEARTBEAT_MS = 40_000
 export const WORK_PRESENCE_IDLE_RECHECK_MS = 10 * 60_000
-const FAILURE_BACKOFF_BASE_MS = 5_000
+// Why 2s: four quick retries still land inside the server's offline window.
+const FAILURE_BACKOFF_BASE_MS = 2_000
 const FAILURE_BACKOFF_MAX_MS = 5 * 60_000
 
 type PublishReason = 'change' | 'cycle'
@@ -37,6 +38,9 @@ export class WorkPresencePublisher {
   private cycleTimer: ReturnType<typeof setTimeout> | null = null
   private inFlight: Promise<void> | null = null
   private changedDuringFlight = false
+  // A heartbeat that landed mid-publish; dropping it would end the heartbeat chain.
+  private cycleDuringFlight = false
+  private heartbeatMs: number | null = null
   private lastSentJson: string | null = null
   // Machine the server currently holds a snapshot for; DELETE targets it.
   private publishedMachineId: string | null = null
@@ -142,12 +146,21 @@ export class WorkPresencePublisher {
       return
     }
     if (this.inFlight) {
-      this.changedDuringFlight = true
+      if (reason === 'cycle') {
+        this.cycleDuringFlight = true
+      } else {
+        this.changedDuringFlight = true
+      }
       return
     }
     this.inFlight = this.runPublish(reason).finally(() => {
       this.inFlight = null
-      if (this.changedDuringFlight) {
+      if (this.cycleDuringFlight) {
+        // A cycle sends unconditionally, so it also covers any change seen meanwhile.
+        this.cycleDuringFlight = false
+        this.changedDuringFlight = false
+        this.publish('cycle')
+      } else if (this.changedDuringFlight) {
         this.changedDuringFlight = false
         this.notifyChange()
       }
@@ -164,6 +177,7 @@ export class WorkPresencePublisher {
       machineId = snapshot.machineId
       // Why: hook events fire per tool call while the visible state is unchanged; the heartbeat still renews.
       if (reason === 'change' && json === this.lastSentJson) {
+        this.ensureHeartbeat()
         return
       }
       if (!this.running || this.signingOut) {
@@ -182,12 +196,20 @@ export class WorkPresencePublisher {
     this.applyOutcome(outcome, json)
   }
 
+  /** Invariant: while active, some heartbeat is always pending. */
+  private ensureHeartbeat(): void {
+    if (this.running && this.mode === 'active' && !this.cycleTimer && !this.cycleDuringFlight) {
+      this.scheduleCycle(heartbeatDelay(this.heartbeatMs))
+    }
+  }
+
   private applyOutcome(outcome: WorkPresenceSendOutcome, json: string): void {
     switch (outcome.status) {
       case 'ok':
         this.mode = 'active'
         this.failures = 0
         this.lastSentJson = json
+        this.heartbeatMs = outcome.heartbeatMs
         this.scheduleCycle(heartbeatDelay(outcome.heartbeatMs))
         return
       case 'no-organization':

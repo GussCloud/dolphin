@@ -43,13 +43,14 @@ describe('WorkPresenceRegistry', () => {
     expect(registry.view(MEMBERS).devs[0]?.projects).toEqual([])
   })
 
-  it('goes offline after 45 s of silence, drops 120 s later, and revives on the next snapshot', () => {
+  it('goes offline after 60 s of silence, drops 120 s later, and revives on the next snapshot', () => {
     const time = clock()
-    const registry = new WorkPresenceRegistry({ now: time.now })
+    const lines: string[] = []
+    const registry = new WorkPresenceRegistry({ now: time.now, log: (line) => lines.push(line) })
     let changes = 0
     registry.subscribe(() => changes++)
     registry.put('usr_a', snapshot('m1', [dolphin()]))
-    time.advance(45_000)
+    time.advance(60_000)
     registry.sweep()
     expect(registry.view(MEMBERS).devs[0]?.status).toBe('online')
     time.advance(1)
@@ -60,9 +61,10 @@ describe('WorkPresenceRegistry', () => {
     expect(changes).toBe(2)
     registry.put('usr_a', snapshot('m1', [dolphin()]))
     expect(registry.view(MEMBERS).devs[0]?.status).toBe('online')
-    time.advance(165_001)
+    time.advance(180_001)
     registry.sweep()
     expect(registry.view(MEMBERS).devs).toEqual([])
+    expect(lines.map((line) => line.split(' ')[0])).toEqual(['online', 'offline', 'back', 'dropped'])
   })
 
   it('keeps a dev online while any of their machines is', () => {

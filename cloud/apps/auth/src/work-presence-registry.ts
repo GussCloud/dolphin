@@ -1,7 +1,8 @@
 import { z } from 'zod'
 
 export const WORK_PRESENCE_HEARTBEAT_MS = 20_000
-const OFFLINE_AFTER_MS = 45_000
+// Why 60s: three missed 20s heartbeats, so one slow or lost request never greys a room.
+const OFFLINE_AFTER_MS = 60_000
 const DROP_AFTER_OFFLINE_MS = 120_000
 
 const OpaqueId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/)
@@ -56,9 +57,11 @@ export class WorkPresenceRegistry {
   private readonly users = new Map<string, Map<string, MachinePresence>>()
   private readonly listeners = new Set<() => void>()
   private readonly now: () => number
+  private readonly log: (line: string) => void
 
-  constructor(options: { now?: () => number } = {}) {
+  constructor(options: { now?: () => number; log?: (line: string) => void } = {}) {
     this.now = options.now ?? Date.now
+    this.log = options.log ?? (() => {})
   }
 
   put(userId: string, snapshot: WorkPresenceSnapshot): void {
@@ -67,7 +70,14 @@ export class WorkPresenceRegistry {
       machines = new Map()
       this.users.set(userId, machines)
     }
-    machines.set(snapshot.machineId, { snapshot, lastSeenAt: this.now(), offline: false })
+    const previous = machines.get(snapshot.machineId)
+    const at = this.now()
+    if (!previous) {
+      this.log(`online user=${userId} machine=${snapshot.machineId}`)
+    } else if (previous.offline) {
+      this.log(`back online user=${userId} machine=${snapshot.machineId} silentMs=${at - previous.lastSeenAt}`)
+    }
+    machines.set(snapshot.machineId, { snapshot, lastSeenAt: at, offline: false })
     this.emit()
   }
 
@@ -77,6 +87,7 @@ export class WorkPresenceRegistry {
     if (!machines?.delete(machineId)) {
       return
     }
+    this.log(`goodbye user=${userId} machine=${machineId}`)
     if (machines.size === 0) {
       this.users.delete(userId)
     }
@@ -92,9 +103,11 @@ export class WorkPresenceRegistry {
         const silence = at - machine.lastSeenAt
         if (silence > OFFLINE_AFTER_MS + DROP_AFTER_OFFLINE_MS) {
           machines.delete(machineId)
+          this.log(`dropped user=${userId} machine=${machineId} silentMs=${silence}`)
           changed = true
         } else if (silence > OFFLINE_AFTER_MS && !machine.offline) {
           machine.offline = true
+          this.log(`offline user=${userId} machine=${machineId} silentMs=${silence}`)
           changed = true
         }
       }
