@@ -5,7 +5,10 @@ import { useMountedRef } from '@/hooks/useMountedRef'
 import { translate } from '@/i18n/i18n'
 import { getAzureDevOpsOrgLink } from '@/lib/azure-devops-host-client'
 import { useAppStore } from '@/store'
-import type { AzureDevOpsOrgLinkStatus } from '../../../../shared/azure-devops-org-link'
+import type {
+  AzureDevOpsOrgLinkArgs,
+  AzureDevOpsOrgLinkStatus
+} from '../../../../shared/azure-devops-org-link'
 import { useIntegrationSubordinateRowClass } from './integration-card-presentation'
 
 function orgLinkMessage(link: AzureDevOpsOrgLinkStatus): string {
@@ -25,6 +28,11 @@ function orgLinkMessage(link: AzureDevOpsOrgLinkStatus): string {
       return translate(
         'auto.components.settings.azureDevOpsOrgLink.signedOut',
         'Sign in to your Dolphin account to connect to your organization'
+      )
+    case 'account-exists':
+      return translate(
+        'auto.components.settings.azureDevOpsOrgLink.accountExists',
+        'A Dolphin account with this email already exists. Sign in once to link it.'
       )
     case 'azure-devops-not-authenticated':
       return link.reason === 'public-org-scope'
@@ -73,11 +81,11 @@ export function AzureDevOpsOrgLinkRow(): React.JSX.Element {
   const runtimeEnvironmentId = settings?.activeRuntimeEnvironmentId ?? null
 
   const check = useCallback(
-    (force: boolean): void => {
+    (args: AzureDevOpsOrgLinkArgs): void => {
       const request = ++latestRequestRef.current
       const isLatest = (): boolean => mountedRef.current && request === latestRequestRef.current
       setChecking(true)
-      void getAzureDevOpsOrgLink({ activeRuntimeEnvironmentId: runtimeEnvironmentId }, { force })
+      void getAzureDevOpsOrgLink({ activeRuntimeEnvironmentId: runtimeEnvironmentId }, args)
         .catch((error: unknown): AzureDevOpsOrgLinkStatus => ({
           status: 'error',
           reason: error instanceof Error ? error.message : String(error)
@@ -97,10 +105,11 @@ export function AzureDevOpsOrgLinkRow(): React.JSX.Element {
   )
 
   useEffect(() => {
-    check(false)
+    check({ force: false })
   }, [check])
 
   const remote = link?.status === 'remote-host-unavailable'
+  const signedOut = link?.status === 'signed-out'
   return (
     <div className={rowClass} data-testid="azure-devops-org-link">
       <Building2 className="size-4 shrink-0 text-muted-foreground" />
@@ -112,7 +121,15 @@ export function AzureDevOpsOrgLinkRow(): React.JSX.Element {
               'Checking your Dolphin organization…'
             )}
       </p>
-      {link?.status === 'signed-out' ? (
+      {signedOut ? (
+        <Button size="sm" disabled={checking} onClick={() => check({ force: true, signIn: true })}>
+          {translate(
+            'auto.components.settings.azureDevOpsOrgLink.signInWithAzureDevOps',
+            'Sign in with Azure DevOps'
+          )}
+        </Button>
+      ) : null}
+      {signedOut || link?.status === 'account-exists' ? (
         <Button
           variant="outline"
           size="sm"
@@ -125,7 +142,12 @@ export function AzureDevOpsOrgLinkRow(): React.JSX.Element {
         </Button>
       ) : null}
       {remote ? null : (
-        <Button variant="ghost" size="sm" disabled={checking} onClick={() => check(true)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={checking}
+          onClick={() => check({ force: true })}
+        >
           {checking ? <LoaderCircle className="size-3.5 mr-1.5 animate-spin" /> : null}
           {translate('auto.components.settings.azureDevOpsOrgLink.checkNow', 'Check now')}
         </Button>

@@ -12382,7 +12382,9 @@
           "error": "Could not check your Dolphin organization: {{value0}}",
           "checking": "Checking your Dolphin organization…",
           "openAccount": "Open Dolphin account",
-          "checkNow": "Check now"
+          "checkNow": "Check now",
+          "accountExists": "A Dolphin account with this email already exists. Sign in once to link it.",
+          "signInWithAzureDevOps": "Sign in with Azure DevOps"
         }
       },
       "right": {

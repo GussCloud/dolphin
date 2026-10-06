@@ -105,7 +105,7 @@ function orgMembersUrl(config: DolphinCloudAuthConfig, orgId: string, path: stri
   return `${config.apiBaseUrl}/v1/desktop/orgs/${encodeURIComponent(orgId)}${path}`
 }
 
-async function extractErrorCode(response: Response): Promise<string | undefined> {
+export async function extractErrorCode(response: Response): Promise<string | undefined> {
   try {
     const body = (await response.json()) as unknown
     if (

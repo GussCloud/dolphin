@@ -36,16 +36,17 @@ import {
 } from './profile-cloud-dev-service'
 import { getDolphinProfileAuthStatusFromProfile } from './profile-cloud-auth-status'
 import { selectCloudOrgWithMutationFence } from './profile-cloud-org-selection'
+import {
+  beginBrowserCloudSignIn,
+  beginCloudConnectAttempt,
+  hasCloudConnectLinkedSince,
+  invalidateOutstandingCloudConnectAttempts,
+  isCloudConnectAttemptSuperseded,
+  markCloudConnectAttemptLinked
+} from './profile-cloud-connect-attempts'
+import { markDolphinCloudExplicitSignOut } from './profile-cloud-sign-out-marker'
 
 export { refreshCurrentDolphinProfileAuth } from './profile-cloud-capability-refresh'
-
-let nextCloudConnectAttempt = 0
-let linkedCloudConnectAttempt = 0
-
-function invalidateOutstandingCloudConnectAttempts(): void {
-  nextCloudConnectAttempt += 1
-  linkedCloudConnectAttempt = nextCloudConnectAttempt
-}
 
 function isUserCancelledAuthError(message: string): boolean {
   return message === 'dolphin_cloud_auth_timeout' || message === 'dolphin_cloud_auth_denied'
@@ -87,10 +88,11 @@ export async function connectCurrentDolphinProfile(
     }
   }
 
-  const attempt = ++nextCloudConnectAttempt
+  const attempt = beginCloudConnectAttempt()
+  const endBrowserSignIn = beginBrowserCloudSignIn()
   try {
     const code = await beginDolphinCloudPkceFlow(configState.config, active.profile.id)
-    if (attempt < linkedCloudConnectAttempt) {
+    if (isCloudConnectAttemptSuperseded(attempt)) {
       return {
         status: 'cancelled',
         auth: getCurrentDolphinProfileAuthStatus(userDataPath)
@@ -100,7 +102,7 @@ export async function connectCurrentDolphinProfile(
       ...code,
       localProfileId: active.profile.id
     })
-    if (attempt < linkedCloudConnectAttempt) {
+    if (isCloudConnectAttemptSuperseded(attempt)) {
       return {
         status: 'cancelled',
         auth: getCurrentDolphinProfileAuthStatus(userDataPath)
@@ -108,7 +110,7 @@ export async function connectCurrentDolphinProfile(
     }
     saveDolphinCloudSessionExchange(active.profile.id, userDataPath, exchange)
     const list = linkDolphinProfileToCloud(active.profile.id, exchange.cloud, userDataPath)
-    linkedCloudConnectAttempt = attempt
+    markCloudConnectAttemptLinked(attempt)
     return {
       status: 'connected',
       auth: getCurrentDolphinProfileAuthStatus(userDataPath),
@@ -128,6 +130,8 @@ export async function connectCurrentDolphinProfile(
       auth: getCurrentDolphinProfileAuthStatus(userDataPath),
       error: message
     }
+  } finally {
+    endBrowserSignIn()
   }
 }
 
@@ -136,9 +140,9 @@ export async function signOutCurrentDolphinProfile(
 ): Promise<SignOutCurrentDolphinProfileResult> {
   // Why: a Sign in click still waiting in the browser must not relink after
   // the user explicitly signed out.
-  invalidateOutstandingCloudConnectAttempts()
-  const signOutEpoch = linkedCloudConnectAttempt
+  const signOutEpoch = invalidateOutstandingCloudConnectAttempts()
   const active = ensureActiveDolphinProfile(userDataPath)
+  markDolphinCloudExplicitSignOut(active.profile.id, userDataPath)
   const configState = getDolphinCloudAuthConfig()
   const session = readDolphinCloudSession(active.profile.id, userDataPath)
   if (active.profile.cloud) {
@@ -152,7 +156,7 @@ export async function signOutCurrentDolphinProfile(
   if (!isDolphinCloudDevAuthEnabled() && configState.configured && session.status === 'found') {
     await revokeDolphinCloudSession(configState.config, session.session).catch(() => undefined)
   }
-  if (linkedCloudConnectAttempt > signOutEpoch) {
+  if (hasCloudConnectLinkedSince(signOutEpoch)) {
     const current = ensureActiveDolphinProfile(userDataPath)
     return {
       status: 'signed-out',

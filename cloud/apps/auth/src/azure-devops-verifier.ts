@@ -5,7 +5,14 @@ export type AzureDevOpsTokenKind = 'bearer' | 'pat'
 export type AzureDevOpsFetch = (url: string, init: RequestInit) => Promise<Response>
 
 export type AzureDevOpsProof =
-  | { status: 'verified'; instanceId: string; azureDevOpsUserId: string }
+  | {
+      status: 'verified'
+      instanceId: string
+      azureDevOpsUserId: string
+      /** Lowercased; null when the identity exposes no email (never guessed). */
+      email: string | null
+      displayName: string | null
+    }
   | { status: 'invalid-credentials'; reason?: 'public-org-scope' }
   | { status: 'not-admin' }
   | { status: 'unavailable' }
@@ -26,9 +33,33 @@ const PERSON_DESCRIPTOR_TYPE = 'Microsoft.IdentityModel.Claims.ClaimsIdentity;'
 const ConnectionIdentity = z.object({ id: z.string().uuid(), descriptor: z.string() })
 const ConnectionData = z.object({
   instanceId: z.string().uuid(),
-  authenticatedUser: ConnectionIdentity,
+  // passthrough keeps the profile fields that identityProfile reads leniently.
+  authenticatedUser: ConnectionIdentity.passthrough(),
   authorizedUser: ConnectionIdentity.optional()
 })
+
+// Live dev.azure.com/evuptec (PAT): properties.Account = {"$type":"System.String","$value":"<sign-in email>"};
+// providerDisplayName may also hold the email, so it is the fallback.
+const IdentityProfile = z.object({
+  providerDisplayName: z.string().optional(),
+  customDisplayName: z.string().optional(),
+  properties: z.object({ Account: z.object({ $value: z.string() }).optional() }).optional()
+})
+const Email = z.string().trim().toLowerCase().email().max(254)
+const DISPLAY_NAME_MAX = 100
+
+function identityProfile(user: unknown): { email: string | null; displayName: string | null } {
+  const profile = IdentityProfile.safeParse(user)
+  if (!profile.success) {
+    return { email: null, displayName: null }
+  }
+  const { providerDisplayName, customDisplayName, properties } = profile.data
+  const email = [properties?.Account?.$value, providerDisplayName]
+    .map((candidate) => Email.safeParse(candidate))
+    .find((parsed) => parsed.success)?.data
+  const displayName = (customDisplayName ?? providerDisplayName)?.trim().slice(0, DISPLAY_NAME_MAX)
+  return { email: email ?? null, displayName: displayName || null }
+}
 
 function isMemberIdentity(data: z.infer<typeof ConnectionData>): boolean {
   const user = data.authenticatedUser
@@ -150,7 +181,8 @@ export function createAzureDevOpsVerifier(fetchImpl: AzureDevOpsFetch = fetch) {
     return {
       status: 'verified',
       instanceId: parsed.data.instanceId.toLowerCase(),
-      azureDevOpsUserId: parsed.data.authenticatedUser.id.toLowerCase()
+      azureDevOpsUserId: parsed.data.authenticatedUser.id.toLowerCase(),
+      ...identityProfile(parsed.data.authenticatedUser)
     }
   }
 

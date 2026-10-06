@@ -18,6 +18,9 @@ export type FakeAzureDevOpsOrg = {
       authorizedAs?: FakeAzureDevOpsIdentity
       /** false: a signed-in outsider (or a PAT without vso.project) whose org-level calls are refused. */
       orgMember?: boolean
+      /** Emitted as `properties.Account.$value`, the shape dev.azure.com returns. */
+      account?: string
+      providerDisplayName?: string
     }
   >
   /** Public projects: unknown callers get 200 as the public-access identity instead of 401. */
@@ -82,7 +85,9 @@ export function fakeAzureDevOps(orgs: FakeAzureDevOpsOrg[]) {
     if (path === '/_apis/connectionData') {
       const user = {
         id: member.id,
-        descriptor: member.descriptor ?? `Microsoft.IdentityModel.Claims.ClaimsIdentity;fake-tenant\\${member.id}@example.com`
+        descriptor: member.descriptor ?? `Microsoft.IdentityModel.Claims.ClaimsIdentity;fake-tenant\\${member.id}@example.com`,
+        ...(member.providerDisplayName ? { providerDisplayName: member.providerDisplayName } : {}),
+        ...(member.account ? { properties: { Account: { $type: 'System.String', $value: member.account } } } : {})
       }
       return Response.json({ instanceId: org.instanceId, authenticatedUser: user, authorizedUser: member.authorizedAs ?? user })
     }

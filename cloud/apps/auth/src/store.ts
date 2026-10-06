@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
+import { AzureDevOpsIdentityStore } from './azure-devops-identity-store.js'
 import { ConsoleSessionStore } from './console-session.js'
 import { OrganizationStore } from './organization-store.js'
 import { hashToken } from './secrets.js'
@@ -75,6 +76,7 @@ export class AuthStore {
   readonly db: DatabaseSync
   readonly organizations: OrganizationStore
   readonly consoleSessions: ConsoleSessionStore
+  readonly azureDevOpsIdentities: AzureDevOpsIdentityStore
 
   constructor(dataDir: string) {
     mkdirSync(dataDir, { recursive: true })
@@ -83,6 +85,8 @@ export class AuthStore {
     this.db.exec(SCHEMA)
     this.organizations = new OrganizationStore(this.db)
     this.consoleSessions = new ConsoleSessionStore(this.db)
+    this.azureDevOpsIdentities = new AzureDevOpsIdentityStore(this.db)
+    this.azureDevOpsIdentities.backfillFromMemberships(Date.now())
   }
 
   /** Runs `work` atomically; any throw rolls back every write it made. */
@@ -125,11 +129,13 @@ export class AuthStore {
     return this.db.prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined
   }
 
-  listUsers(): Pick<UserRow, 'id' | 'email' | 'display_name'>[] {
-    return this.db.prepare('SELECT id, email, display_name FROM users ORDER BY email').all() as Pick<
-      UserRow,
-      'id' | 'email' | 'display_name'
-    >[]
+  listUsers(): (Pick<UserRow, 'id' | 'email' | 'display_name'> & { azure_devops: 'yes' | '' })[] {
+    return this.db
+      .prepare(
+        `SELECT id, email, display_name, CASE WHEN EXISTS (SELECT 1 FROM user_azure_devops_identities i
+         WHERE i.user_id = users.id) THEN 'yes' ELSE '' END AS azure_devops FROM users ORDER BY email`
+      )
+      .all() as (Pick<UserRow, 'id' | 'email' | 'display_name'> & { azure_devops: 'yes' | '' })[]
   }
 
   insertCode(row: Omit<AuthCodeRow, 'used'>): void {

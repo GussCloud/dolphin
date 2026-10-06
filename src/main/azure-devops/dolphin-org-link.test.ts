@@ -21,6 +21,8 @@ const mocks = vi.hoisted(() => {
     runOrgMemberCall: vi.fn(),
     link: vi.fn(),
     readSession: vi.fn(),
+    signIn: vi.fn(),
+    explicitSignOut: vi.fn(),
     profile
   }
 })
@@ -42,6 +44,12 @@ vi.mock('../dolphin-profiles/profile-cloud-org-members-service', () => ({
 }))
 vi.mock('../dolphin-profiles/profile-cloud-org-members-client', () => ({
   linkDolphinCloudOrgByAzureDevOps: mocks.link
+}))
+vi.mock('../dolphin-profiles/profile-cloud-azure-devops-sign-in', () => ({
+  signInCurrentDolphinProfileWithAzureDevOps: mocks.signIn
+}))
+vi.mock('../dolphin-profiles/profile-cloud-sign-out-marker', () => ({
+  hasDolphinCloudExplicitSignOut: mocks.explicitSignOut
 }))
 vi.mock('../dolphin-profiles/profile-cloud-session-store', () => ({
   readDolphinCloudSession: mocks.readSession
@@ -101,6 +109,8 @@ beforeEach(() => {
     username: null
   })
   mocks.readSession.mockReturnValue({ status: 'found' })
+  mocks.signIn.mockResolvedValue({ status: 'not-registered' })
+  mocks.explicitSignOut.mockReturnValue(false)
   mocks.profile.current = { id: 'local-1', cloud: { userId: 'user-1' } }
   mocks.authStatusListeners.length = 0
   mocks.signInListeners.length = 0
@@ -188,13 +198,15 @@ describe('getAzureDevOpsOrgLink', () => {
     await expect(getAzureDevOpsOrgLink()).resolves.toEqual({ status: 'not-registered' })
   })
 
-  it('reports signed-out without a Dolphin session and skips the server', async () => {
+  it('reports signed-out after an explicit Dolphin sign-out and skips the server', async () => {
+    mocks.explicitSignOut.mockReturnValue(true)
     mocks.readSession.mockReturnValue({ status: 'missing' })
     await expect(getAzureDevOpsOrgLink()).resolves.toEqual({ status: 'signed-out' })
     mocks.profile.current = { id: 'local-1' }
     mocks.readSession.mockReturnValue({ status: 'found' })
     await expect(getAzureDevOpsOrgLink()).resolves.toEqual({ status: 'signed-out' })
     expect(mocks.runOrgMemberCall).not.toHaveBeenCalled()
+    expect(mocks.signIn).not.toHaveBeenCalled()
   })
 
   it('reports signed-out when the Dolphin session is rejected', async () => {
@@ -289,5 +301,137 @@ describe('startAzureDevOpsOrgLinkAutoCheck', () => {
     mocks.authStatusListeners[0]({ ...authenticated, authenticated: false })
     mocks.signInListeners[0]()
     expect(mocks.runOrgMemberCall).not.toHaveBeenCalled()
+  })
+})
+
+describe('signing in to Dolphin with Azure DevOps', () => {
+  beforeEach(() => {
+    mocks.readSession.mockReturnValue({ status: 'missing' })
+    mocks.profile.current = { id: 'local-1' }
+  })
+
+  it('signs in automatically without a Dolphin session and reports connected', async () => {
+    const onDolphinSignedIn = vi.fn()
+    startAzureDevOpsOrgLinkAutoCheck({ onDolphinSignedIn })
+    mocks.signIn.mockResolvedValue({ status: 'signed-in', organizationName: 'Contoso' })
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({
+      status: 'connected',
+      organizationName: 'Contoso'
+    })
+    expect(mocks.signIn).toHaveBeenCalledWith(expect.anything(), '/user-data', {
+      organizationUrl: 'https://dev.azure.com/contoso',
+      azureDevOpsToken: 'entra-token',
+      tokenKind: 'bearer'
+    })
+    expect(onDolphinSignedIn).toHaveBeenCalledTimes(1)
+    expect(mocks.runOrgMemberCall).not.toHaveBeenCalled()
+  })
+
+  it('leaves an explicit sign-out alone until Sign in with Azure DevOps is pressed', async () => {
+    mocks.explicitSignOut.mockReturnValue(true)
+    mocks.signIn.mockResolvedValue({ status: 'signed-in', organizationName: 'Contoso' })
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({ status: 'signed-out' })
+    await expect(getAzureDevOpsOrgLink({ force: true })).resolves.toEqual({
+      status: 'signed-out'
+    })
+    expect(mocks.signIn).not.toHaveBeenCalled()
+    await expect(getAzureDevOpsOrgLink({ force: true, signIn: true })).resolves.toEqual({
+      status: 'connected',
+      organizationName: 'Contoso'
+    })
+    expect(mocks.signIn).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    [{ status: 'not-registered' }, { status: 'not-registered' }],
+    [{ status: 'account-exists' }, { status: 'account-exists' }],
+    [{ status: 'unsupported-host' }, { status: 'unsupported-host' }],
+    [{ status: 'invalid-credentials' }, { status: 'azure-devops-not-authenticated' }],
+    [
+      { status: 'invalid-credentials', reason: 'public-org-scope' },
+      { status: 'azure-devops-not-authenticated', reason: 'public-org-scope' }
+    ]
+  ])('maps the sign-in answer %j', async (answer, expected) => {
+    mocks.signIn.mockResolvedValue(answer)
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual(expected)
+  })
+
+  it('caches account-exists until a Dolphin sign-in, then checks the link', async () => {
+    startAzureDevOpsOrgLinkAutoCheck()
+    mocks.authStatusListeners[0](authenticated)
+    mocks.signIn.mockResolvedValue({ status: 'account-exists' })
+    await vi.waitFor(() => expect(mocks.signIn).toHaveBeenCalledTimes(1))
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({ status: 'account-exists' })
+    expect(mocks.signIn).toHaveBeenCalledTimes(1)
+    mocks.readSession.mockReturnValue({ status: 'found' })
+    mocks.profile.current = { id: 'local-1', cloud: { userId: 'user-1' } }
+    mocks.signInListeners[0]()
+    await vi.waitFor(() => expect(mocks.link).toHaveBeenCalledTimes(1))
+  })
+
+  it('maps server errors without caching them', async () => {
+    mocks.signIn.mockRejectedValueOnce(new DolphinCloudRequestError(400, 'invalid_request'))
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({
+      status: 'error',
+      reason: 'invalid_request'
+    })
+    mocks.signIn.mockRejectedValueOnce(new DolphinCloudRequestError(502))
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({
+      status: 'error',
+      reason: 'Azure DevOps is unavailable right now'
+    })
+    mocks.signIn.mockRejectedValueOnce(new Error('fetch failed'))
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({
+      status: 'error',
+      reason: 'fetch failed'
+    })
+    expect(mocks.signIn).toHaveBeenCalledTimes(3)
+  })
+
+  it('shares one sign-in between the auto-check and the card', async () => {
+    mocks.signIn.mockResolvedValue({ status: 'signed-in', organizationName: 'Contoso' })
+    await Promise.all([getAzureDevOpsOrgLink(), getAzureDevOpsOrgLink()])
+    expect(mocks.signIn).toHaveBeenCalledTimes(1)
+  })
+
+  it('reports whatever a browser sign-in that overtook it decided', async () => {
+    mocks.signIn.mockImplementation(async () => {
+      mocks.readSession.mockReturnValue({ status: 'found' })
+      mocks.profile.current = { id: 'local-1', cloud: { userId: 'user-2' } }
+      return { status: 'superseded' }
+    })
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({
+      status: 'connected',
+      organizationName: 'Contoso'
+    })
+    expect(mocks.link).toHaveBeenCalledTimes(1)
+  })
+
+  it('stays signed out when a sign-out overtook it, without retrying', async () => {
+    mocks.signIn.mockResolvedValue({ status: 'superseded' })
+    await expect(getAzureDevOpsOrgLink()).resolves.toEqual({ status: 'signed-out' })
+    expect(mocks.signIn).toHaveBeenCalledTimes(1)
+  })
+
+  it('never replaces a session file it cannot read', async () => {
+    mocks.readSession.mockReturnValue({ status: 'unreadable' })
+    await expect(getAzureDevOpsOrgLink({ force: true, signIn: true })).resolves.toEqual({
+      status: 'signed-out'
+    })
+    expect(mocks.signIn).not.toHaveBeenCalled()
+  })
+
+  it('keeps the Azure DevOps token out of every answer', async () => {
+    mocks.signIn.mockRejectedValueOnce(new Error('fetch failed'))
+    const failed = await getAzureDevOpsOrgLink()
+    mocks.signIn.mockResolvedValue({ status: 'signed-in', organizationName: 'Contoso' })
+    const connected = await getAzureDevOpsOrgLink()
+    expect(JSON.stringify([failed, connected])).not.toContain('entra-token')
+  })
+
+  it('does not sign in under Dolphin dev auth', async () => {
+    vi.stubEnv('DOLPHIN_CLOUD_DEV_AUTH', '1')
+    await expect(getAzureDevOpsOrgLink()).resolves.toMatchObject({ status: 'error' })
+    expect(mocks.signIn).not.toHaveBeenCalled()
   })
 })

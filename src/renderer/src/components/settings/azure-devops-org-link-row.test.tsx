@@ -115,6 +115,36 @@ describe('AzureDevOpsOrgLinkRow', () => {
     expect(state.openSettingsTarget).toHaveBeenCalledWith({ pane: 'dolphin-account', repoId: null })
   })
 
+  it('signs in with Azure DevOps from the signed-out row', async () => {
+    installStore()
+    const rendered = await renderRow({ status: 'signed-out' })
+    expect(button(rendered, 'Open Dolphin account')).toBeDefined()
+    mocks.orgLink.mockResolvedValue({ status: 'connected', organizationName: 'Contoso' })
+    await act(async () => {
+      button(rendered, 'Sign in with Azure DevOps')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      )
+    })
+    expect(mocks.orgLink).toHaveBeenLastCalledWith({ force: true, signIn: true })
+    expect(rendered.textContent).toContain('Connected to organization Contoso')
+    expect(button(rendered, 'Sign in with Azure DevOps')).toBeUndefined()
+  })
+
+  it('asks for a one-time sign-in when the email already has a Dolphin account', async () => {
+    const state = installStore()
+    const rendered = await renderRow({ status: 'account-exists' })
+    expect(rendered.textContent).toContain(
+      'A Dolphin account with this email already exists. Sign in once to link it.'
+    )
+    expect(button(rendered, 'Sign in with Azure DevOps')).toBeUndefined()
+    await act(async () => {
+      button(rendered, 'Open Dolphin account')?.dispatchEvent(
+        new MouseEvent('click', { bubbles: true })
+      )
+    })
+    expect(state.openSettingsTarget).toHaveBeenCalledWith({ pane: 'dolphin-account', repoId: null })
+  })
+
   it('does not ask a remote host and hides Check now', async () => {
     installStore('runtime-1')
     const rendered = await renderRow({ status: 'connected', organizationName: 'Contoso' })

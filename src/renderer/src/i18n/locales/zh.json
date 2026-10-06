@@ -12159,7 +12159,9 @@
           "error": "无法检查您的 Dolphin 组织：{{value0}}",
           "checking": "正在检查您的 Dolphin 组织…",
           "openAccount": "打开 Dolphin 账户",
-          "checkNow": "立即检查"
+          "checkNow": "立即检查",
+          "accountExists": "已存在使用此邮箱的 Dolphin 账户。请登录一次以完成关联。",
+          "signInWithAzureDevOps": "使用 Azure DevOps 登录"
         }
       },
       "right": {

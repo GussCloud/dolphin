@@ -21,6 +21,7 @@ const AUDITED_GLOBAL_FETCH_LINES = new Map<string, number>([
   ['main/bitbucket/client.ts', 1],
   ['main/bitbucket/user-request.ts', 1],
   ['main/gitea/client.ts', 1],
+  ['main/dolphin-profiles/profile-cloud-azure-devops-sign-in-client.ts', 1],
   ['main/dolphin-profiles/profile-cloud-client.ts', 1],
   ['main/dolphin-profiles/profile-cloud-org-members-client.ts', 1],
   ['main/rate-limits/codex-fetcher.ts', 3],
