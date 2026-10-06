@@ -59,6 +59,8 @@ describe('console members page', () => {
     const byDate = await browser.get('/console/members?from=2026-03-01&to=2026-03-10')
     expect(byDate.html).toContain('Bruno Silva')
     expect(byDate.html).not.toContain('Carla Souza')
+    const impossible = await browser.get('/console/members?to=2026-02-31')
+    expect(impossible.html).toContain('Carla Souza')
     const none = await browser.get('/console/members?q=ninguem')
     expect(none.html).toContain('Nenhum membro encontrado')
   })

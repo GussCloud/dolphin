@@ -23,7 +23,8 @@ function dayStart(value: string | undefined): number | undefined {
     return undefined
   }
   const ms = Date.parse(`${value}T00:00:00-03:00`)
-  return Number.isFinite(ms) ? ms : undefined
+  // Rejects impossible days such as 2026-02-31, which Date would roll into March.
+  return Number.isFinite(ms) && new Date(ms + 3 * 3600 * 1000).toISOString().startsWith(value) ? ms : undefined
 }
 
 function readFilters(source: (key: string) => string | undefined): MemberFilterValues {
