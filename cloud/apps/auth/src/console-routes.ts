@@ -282,22 +282,34 @@ export function consoleRoutes(deps: { store: AuthStore; config: AuthConfig; veri
       return fail('Não foi possível falar com o Azure DevOps agora. Tente de novo em instantes.', 502)
     }
     const at = now()
-    const registered = orgs.registerAzureDevOps({
-      org_id: organization.id,
-      organization_name: target.organizationName,
-      instance_id: proof.instanceId,
-      verified_at: at,
-      verified_by: auth.user.id
+    const registered = store.transaction(() => {
+      const outcome = orgs.registerAzureDevOps({
+        org_id: organization.id,
+        organization_name: target.organizationName,
+        instance_id: proof.instanceId,
+        verified_at: at,
+        verified_by: auth.user.id
+      })
+      if (outcome === 'registered') {
+        orgs.recordAzureDevOpsMember({
+          orgId: organization.id,
+          userId: auth.user.id,
+          azureDevOpsUserId: proof.azureDevOpsUserId,
+          now: at
+        })
+        // Lets the owner later sign in to Dolphin with Azure DevOps alone; never rebinds another user's identity.
+        store.azureDevOpsIdentities.bind({
+          azureDevOpsUserId: proof.azureDevOpsUserId,
+          userId: auth.user.id,
+          email: proof.email,
+          now: at
+        })
+      }
+      return outcome
     })
     if (registered === 'taken') {
       return fail('Organização do Azure DevOps já cadastrada por outra organização do Dolphin.', 409)
     }
-    orgs.recordAzureDevOpsMember({
-      orgId: organization.id,
-      userId: auth.user.id,
-      azureDevOpsUserId: proof.azureDevOpsUserId,
-      now: at
-    })
     return c.redirect(`${CONSOLE_PATH}?notice=connected`, 303)
   })
 

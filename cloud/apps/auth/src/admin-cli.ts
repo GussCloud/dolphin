@@ -6,7 +6,7 @@ import { AuthStore } from './store.js'
 // Usage (inside the container):
 //   node apps/auth/dist/admin-cli.js create-user <email> [display name]   (password from DOLPHIN_PASSWORD)
 //   node apps/auth/dist/admin-cli.js set-password <email>                  (password from DOLPHIN_PASSWORD)
-//   node apps/auth/dist/admin-cli.js list-users
+//   node apps/auth/dist/admin-cli.js list-users                            (azure_devops: yes = signs in with Azure DevOps)
 //   node apps/auth/dist/admin-cli.js create-invite                         (prints a single-use console invite)
 //   node apps/auth/dist/admin-cli.js list-orgs
 const [command, email, ...nameParts] = process.argv.slice(2)

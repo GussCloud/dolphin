@@ -1,5 +1,10 @@
 import { Hono, type Context } from 'hono'
-import { z } from 'zod'
+import {
+  AzureDevOpsTokenRequest,
+  joinOrganization,
+  rejectionResponse,
+  verifyRegisteredMember
+} from './azure-devops-org-membership.js'
 import { parseAzureDevOpsOrganizationUrl, type AzureDevOpsVerifier } from './azure-devops-verifier.js'
 import type { AzureDevOpsLinkRow, OrganizationRow } from './organization-store.js'
 import type { AuthStore, UserRow } from './store.js'
@@ -9,12 +14,6 @@ export type AuthedHandler = (
 ) => (c: Context) => Promise<Response>
 
 const LINK_PATH = '/v1/desktop/orgs/azure-devops/link'
-
-const LinkRequest = z.object({
-  organizationUrl: z.string().min(1).max(2048),
-  azureDevOpsToken: z.string().min(1).max(8192),
-  tokenKind: z.enum(['bearer', 'pat'])
-})
 
 function connected(organization: OrganizationRow, link: AzureDevOpsLinkRow) {
   return {
@@ -39,35 +38,16 @@ export function azureDevOpsLinkRoutes(deps: { store: AuthStore; verifier: AzureD
       } catch {
         // Falls through to invalid_request.
       }
-      const body = LinkRequest.safeParse(raw)
+      const body = AzureDevOpsTokenRequest.safeParse(raw)
       if (!body.success) {
         return c.json({ error: 'invalid_request' }, 400)
       }
-      const target = parseAzureDevOpsOrganizationUrl(body.data.organizationUrl)
-      if (!target) {
-        return c.json({ status: 'unsupported-host' })
+      const member = await verifyRegisteredMember(store, verifier, body.data)
+      if (member.status !== 'registered-member') {
+        return rejectionResponse(c, member)
       }
-      const proof = await verifier.verifyMember(target, body.data.azureDevOpsToken, body.data.tokenKind)
-      if (proof.status === 'unavailable') {
-        return c.json({ error: 'azure_devops_unavailable' }, 502)
-      }
-      if (proof.status !== 'verified') {
-        // Optional field: older desktops ignore `reason`.
-        const reason = proof.status === 'invalid-credentials' ? proof.reason : undefined
-        return c.json({ status: 'invalid-credentials', ...(reason ? { reason } : {}) })
-      }
-      const link = orgs.findAzureDevOpsLinkByInstance(proof.instanceId)
-      const organization = link ? orgs.findOrganization(link.org_id) : undefined
-      if (!link || !organization) {
-        return c.json({ status: 'not-registered' })
-      }
-      orgs.renameAzureDevOpsOrganization(link.instance_id, target.organizationName)
-      orgs.recordAzureDevOpsMember({
-        orgId: organization.id,
-        userId: user.id,
-        azureDevOpsUserId: proof.azureDevOpsUserId,
-        now: Date.now()
-      })
+      store.transaction(() => joinOrganization(store, member, user.id, Date.now()))
+      const { organization, link, target } = member
       return c.json(connected(organization, { ...link, organization_name: target.organizationName }))
     })
   )
