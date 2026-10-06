@@ -10,10 +10,16 @@ export type MemberView = {
   user_id: string
   email: string
   display_name: string | null
+  /** Org-scoped name set by the owner; overrides the account's display_name inside this org only. */
+  nickname: string | null
   role: MemberRole
   source: MemberSource
   joined_at: number
 }
+
+export type MemberFilter = { search?: string; joinedFrom?: number; joinedBefore?: number }
+
+export type MemberRemoval = 'removed' | 'owner' | 'not-found'
 
 export type AzureDevOpsLinkRow = {
   org_id: string
@@ -69,6 +75,14 @@ export class OrganizationStore {
   constructor(db: DatabaseSync) {
     this.db = db
     this.db.exec(SCHEMA)
+    this.migrate()
+  }
+
+  private migrate(): void {
+    const columns = this.db.prepare('PRAGMA table_info(organization_members)').all() as { name: string }[]
+    if (!columns.some((c) => c.name === 'nickname')) {
+      this.db.exec('ALTER TABLE organization_members ADD COLUMN nickname TEXT')
+    }
   }
 
   insertInvite(code: string, now: number): void {
@@ -122,14 +136,61 @@ export class OrganizationStore {
     this.db.prepare('UPDATE organizations SET name = ? WHERE id = ?').run(name, id)
   }
 
-  listMembers(orgId: string): MemberView[] {
+  listMembers(orgId: string, filter: MemberFilter = {}): MemberView[] {
+    const where = ['m.org_id = ?']
+    const args: (string | number)[] = [orgId]
+    const search = filter.search?.trim()
+    if (search) {
+      const pattern = `%${search.replace(/[!%_]/g, (ch) => `!${ch}`)}%`
+      where.push("(m.nickname LIKE ? ESCAPE '!' OR u.display_name LIKE ? ESCAPE '!' OR u.email LIKE ? ESCAPE '!')")
+      args.push(pattern, pattern, pattern)
+    }
+    if (filter.joinedFrom !== undefined) {
+      where.push('m.joined_at >= ?')
+      args.push(filter.joinedFrom)
+    }
+    if (filter.joinedBefore !== undefined) {
+      where.push('m.joined_at < ?')
+      args.push(filter.joinedBefore)
+    }
     return this.db
       .prepare(
-        `SELECT m.user_id, u.email, u.display_name, m.role, m.source, m.joined_at
+        `SELECT m.user_id, u.email, u.display_name, m.nickname, m.role, m.source, m.joined_at
          FROM organization_members m JOIN users u ON u.id = m.user_id
-         WHERE m.org_id = ? ORDER BY m.role DESC, m.joined_at`
+         WHERE ${where.join(' AND ')} ORDER BY m.role DESC, m.joined_at`
       )
-      .all(orgId) as MemberView[]
+      .all(...args) as MemberView[]
+  }
+
+  countMembers(orgId: string): number {
+    const row = this.db.prepare('SELECT COUNT(*) AS n FROM organization_members WHERE org_id = ?').get(orgId) as {
+      n: number
+    }
+    return row.n
+  }
+
+  /** `null` falls back to the account's own display_name. */
+  setMemberNickname(orgId: string, userId: string, nickname: string | null): boolean {
+    return (
+      this.db
+        .prepare('UPDATE organization_members SET nickname = ? WHERE org_id = ? AND user_id = ?')
+        .run(nickname, orgId, userId).changes > 0
+    )
+  }
+
+  /** Removes the membership only; the account stays, and an Azure DevOps sign-in rejoins it. */
+  removeMember(orgId: string, userId: string): MemberRemoval {
+    const row = this.db
+      .prepare('SELECT role FROM organization_members WHERE org_id = ? AND user_id = ?')
+      .get(orgId, userId) as { role: MemberRole } | undefined
+    if (!row) {
+      return 'not-found'
+    }
+    if (row.role === 'owner') {
+      return 'owner'
+    }
+    this.db.prepare('DELETE FROM organization_members WHERE org_id = ? AND user_id = ?').run(orgId, userId)
+    return 'removed'
   }
 
   findAzureDevOpsLink(orgId: string): AzureDevOpsLinkRow | undefined {
