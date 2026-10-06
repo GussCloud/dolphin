@@ -103,14 +103,10 @@ async function requestLink(
 }
 
 function cacheTtlMs(result: AzureDevOpsOrgLinkStatus): number | null {
-  switch (result.status) {
-    case 'connected':
-      return CONNECTED_TTL_MS
-    case 'not-registered':
-      return NOT_REGISTERED_TTL_MS
-    default:
-      return null
+  if (result.status === 'connected') {
+    return CONNECTED_TTL_MS
   }
+  return result.status === 'not-registered' ? NOT_REGISTERED_TTL_MS : null
 }
 
 /** Dolphin organization the configured Azure DevOps organization links this user to. */
