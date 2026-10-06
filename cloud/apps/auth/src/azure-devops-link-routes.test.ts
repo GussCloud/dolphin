@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { issueSession } from './session-service.js'
 import { createTestAuthApp, dumpDatabase } from './test-fixtures/auth-test-app.js'
-import { OUTAGE_TOKEN, SIGN_IN_REDIRECT_TOKEN } from './test-fixtures/fake-azure-devops.js'
+import { OUTAGE_TOKEN, PUBLIC_ACCESS_IDENTITY, SIGN_IN_REDIRECT_TOKEN } from './test-fixtures/fake-azure-devops.js'
 
 const MEMBER_TOKEN = 'fake-token-not-a-secret-member'
 const OWNER_TOKEN = 'fake-token-not-a-secret-owner'
 const CONTOSO_ID = '22222222-2222-4222-8222-222222222222'
 const FABRIKAM_ID = '33333333-3333-4333-8333-333333333333'
+const OPEN_ID = '44444444-4444-4444-8444-444444444444'
+const BUILD_SERVICE_TOKEN = 'fake-token-not-a-secret-build-service'
+const IMPERSONATED_TOKEN = 'fake-token-not-a-secret-impersonated'
 const MEMBER_AZDO_ID = 'bbbbbbbb-0000-4000-8000-000000000001'
 const LINK = '/v1/desktop/orgs/azure-devops/link'
 
@@ -25,7 +28,31 @@ beforeEach(async () => {
           [OWNER_TOKEN, { id: 'bbbbbbbb-0000-4000-8000-000000000002', admin: true }]
         ])
       },
-      { name: 'fabrikam', instanceId: FABRIKAM_ID, members: new Map([[MEMBER_TOKEN, { id: MEMBER_AZDO_ID, admin: false }]]) }
+      { name: 'fabrikam', instanceId: FABRIKAM_ID, members: new Map([[MEMBER_TOKEN, { id: MEMBER_AZDO_ID, admin: false }]]) },
+      {
+        name: 'open-source',
+        instanceId: OPEN_ID,
+        publicProjects: true,
+        members: new Map([
+          [MEMBER_TOKEN, { id: MEMBER_AZDO_ID, admin: false }],
+          [
+            BUILD_SERVICE_TOKEN,
+            {
+              id: 'cccccccc-0000-4000-8000-000000000001',
+              admin: false,
+              descriptor: `Microsoft.TeamFoundation.ServiceIdentity;fake-build:Build:${OPEN_ID}`
+            }
+          ],
+          [
+            IMPERSONATED_TOKEN,
+            {
+              id: 'cccccccc-0000-4000-8000-000000000002',
+              admin: false,
+              authorizedAs: { id: PUBLIC_ACCESS_IDENTITY.id, descriptor: PUBLIC_ACCESS_IDENTITY.descriptor }
+            }
+          ]
+        ])
+      }
     ]
   })
   await ctx.createUser('usr_member', 'member@example.com')
@@ -38,6 +65,15 @@ beforeEach(async () => {
     instance_id: CONTOSO_ID,
     verified_at: Date.now(),
     verified_by: 'usr_owner'
+  })
+  await ctx.createUser('usr_oss', 'oss@example.com')
+  orgs.createOrganization({ id: 'corg_open', name: 'Open', ownerId: 'usr_oss', now: Date.now() })
+  orgs.registerAzureDevOps({
+    org_id: 'corg_open',
+    organization_name: 'open-source',
+    instance_id: OPEN_ID,
+    verified_at: Date.now(),
+    verified_by: 'usr_oss'
   })
   const user = (id: string) => ctx.store.findUser(id) ?? expect.unreachable()
   memberAccess = issueSession(ctx.store, ctx.config, user('usr_member')).accessToken
@@ -130,6 +166,24 @@ describe('desktop Azure DevOps link', () => {
 
   it('reads not-linked before the first link', async () => {
     expect(await (await readLink('https://dev.azure.com/contoso')).json()).toEqual({ status: 'not-linked' })
+  })
+
+  it('rejects the public-access identity a public org returns for non-members', async () => {
+    const open = { ...contosoPat, organizationUrl: 'https://dev.azure.com/open-source' }
+    for (const attempt of [
+      { ...open, azureDevOpsToken: 'fake-pat-from-another-org' },
+      { ...open, azureDevOpsToken: 'fake-entra-token-other-tenant', tokenKind: 'bearer' },
+      { ...open, azureDevOpsToken: BUILD_SERVICE_TOKEN },
+      { ...open, azureDevOpsToken: IMPERSONATED_TOKEN }
+    ]) {
+      expect(await (await link(attempt)).json()).toEqual({ status: 'invalid-credentials' })
+    }
+    expect(ctx.store.organizations.listMembers('corg_open').map((m) => m.user_id)).toEqual(['usr_oss'])
+    // A real member of the same public org still links.
+    expect(await (await link({ ...open, azureDevOpsToken: MEMBER_TOKEN })).json()).toMatchObject({
+      status: 'connected',
+      organization: { id: 'corg_open' }
+    })
   })
 
   it('never stores the AzDO token', async () => {

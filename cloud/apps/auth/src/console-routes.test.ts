@@ -9,6 +9,7 @@ const CONTOSO_ID = '11111111-1111-4111-8111-111111111111'
 
 const contoso = (): FakeAzureDevOpsOrg => ({
   name: 'contoso',
+  publicProjects: true,
   instanceId: CONTOSO_ID,
   members: new Map([
     [ADMIN_PAT, { id: 'aaaaaaaa-0000-4000-8000-000000000001', admin: true }],
@@ -179,6 +180,15 @@ describe('console organization page', () => {
     const browser = await signedInOwner()
     expect((await connect(browser, MEMBER_PAT)).res.status).toBe(303)
     expect(ctx.azure.calls.some((call) => call.url.includes('/_apis/permissions/'))).toBe(false)
+  })
+
+  it('refuses to register an org from the public-access identity, even in member mode', async () => {
+    await setup({ AZDO_ORG_PROOF: 'member' })
+    const browser = await signedInOwner()
+    const refused = await connect(browser, 'fake-pat-not-a-secret-outsider')
+    expect(refused.res.status).toBe(400)
+    expect(refused.html).toContain('O Azure DevOps recusou o token.')
+    expect(ctx.store.organizations.listOrganizations()[0]?.azure_devops_name).toBeNull()
   })
 
   it('reports an invalid PAT and an unsupported host', async () => {

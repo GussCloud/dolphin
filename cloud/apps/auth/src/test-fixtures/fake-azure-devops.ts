@@ -3,11 +3,23 @@ import type { AzureDevOpsFetch } from '../azure-devops-verifier.js'
 export const OUTAGE_TOKEN = 'fake-token-outage'
 export const SIGN_IN_REDIRECT_TOKEN = 'fake-token-sign-in-redirect'
 
+export type FakeAzureDevOpsIdentity = { id: string; descriptor: string }
+
 export type FakeAzureDevOpsOrg = {
   name: string
   instanceId: string
   /** Token → AzDO user; tokens are obviously fake so secret scanners stay quiet. */
-  members: Map<string, { id: string; admin: boolean }>
+  members: Map<string, { id: string; admin: boolean; descriptor?: string; authorizedAs?: FakeAzureDevOpsIdentity }>
+  /** Public projects: unknown callers get 200 as the public-access identity instead of 401. */
+  publicProjects?: boolean
+}
+
+// Captured from dev.azure.com/dnceng-public/_apis/connectionData with no or a bogus token.
+const PUBLIC_ACCESS_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+export const PUBLIC_ACCESS_IDENTITY = {
+  id: PUBLIC_ACCESS_ID,
+  descriptor: `System:PublicAccess;${PUBLIC_ACCESS_ID}`,
+  providerDisplayName: 'Anonymous'
 }
 
 const PERMISSIONS_PATH = '/_apis/permissions/3e65f728-f8bc-4ecd-8764-7e378b19bfa7/2'
@@ -42,11 +54,22 @@ export function fakeAzureDevOps(orgs: FakeAzureDevOpsOrg[]) {
     }
     const org = orgs.find((candidate) => candidate.name === name)
     const member = org?.members.get(token)
+    if (org?.publicProjects && !member && path === '/_apis/connectionData') {
+      return Response.json({
+        instanceId: org.instanceId,
+        authenticatedUser: PUBLIC_ACCESS_IDENTITY,
+        authorizedUser: PUBLIC_ACCESS_IDENTITY
+      })
+    }
     if (!org || !member) {
       return new Response('unauthorized', { status: 401 })
     }
     if (path === '/_apis/connectionData') {
-      return Response.json({ instanceId: org.instanceId, authenticatedUser: { id: member.id } })
+      const user = {
+        id: member.id,
+        descriptor: member.descriptor ?? `Microsoft.IdentityModel.Claims.ClaimsIdentity;fake-tenant\\${member.id}@example.com`
+      }
+      return Response.json({ instanceId: org.instanceId, authenticatedUser: user, authorizedUser: member.authorizedAs ?? user })
     }
     if (path === PERMISSIONS_PATH && parsed.searchParams.get('tokens') === 'NAMESPACE') {
       return Response.json({ count: 1, value: [member.admin] })
