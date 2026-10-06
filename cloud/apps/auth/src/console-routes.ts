@@ -10,12 +10,13 @@ import {
   renderSignupPage,
   type PageMessage
 } from './console-pages.js'
+import { registerMemberRoutes } from './console-member-routes.js'
 import { CONSOLE_PATH, consoleCookies, type ConsoleSessionRow } from './console-session.js'
 import type { OrganizationRow } from './organization-store.js'
 import { constantTimeEqual, hashPassword, verifyPassword } from './secrets.js'
 import type { AuthStore, UserRow } from './store.js'
 
-type ConsoleEnv = {
+export type ConsoleEnv = {
   Variables: {
     user: UserRow | undefined
     session: ConsoleSessionRow | undefined
@@ -118,7 +119,7 @@ export function consoleRoutes(deps: { store: AuthStore; config: AuthConfig; veri
   const overviewData = (organization: OrganizationRow) => ({
     organization,
     link: orgs.findAzureDevOpsLink(organization.id),
-    members: orgs.listMembers(organization.id),
+    memberCount: orgs.countMembers(organization.id),
     proof: config.azureDevOpsOrgProof
   })
 
@@ -312,6 +313,8 @@ export function consoleRoutes(deps: { store: AuthStore; config: AuthConfig; veri
     }
     return c.redirect(`${CONSOLE_PATH}?notice=connected`, 303)
   })
+
+  registerMemberRoutes(app, { store, signedIn, toLogin })
 
   return app
 }

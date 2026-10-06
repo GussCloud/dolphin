@@ -82,7 +82,7 @@ describe('console sign-up and sign-in', () => {
     const browser = await signedInOwner()
     const home = await browser.get('/console')
     expect(home.html).toContain('Contoso Brasil')
-    expect(home.html).toContain('Proprietário')
+    expect((await browser.get('/console/members')).html).toContain('Proprietário')
     const [org] = ctx.store.organizations.listOrganizations()
     expect(org?.id).toMatch(/^corg_/)
     expect(org?.owner_email).toBe('owner@example.com')
