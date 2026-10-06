@@ -10,11 +10,26 @@ import {
   setAzureCliAutoRenew,
   setAzureDevOpsCliDefaults
 } from '../azure-devops/azure-devops-auth-commands'
-import type { AzureDevOpsOrgLinkStatus } from '../../shared/azure-devops-org-link'
+import type {
+  AzureDevOpsOrgLinkArgs,
+  AzureDevOpsOrgLinkStatus
+} from '../../shared/azure-devops-org-link'
 import {
   getAzureDevOpsOrgLink,
-  startAzureDevOpsOrgLinkAutoCheck
+  startAzureDevOpsOrgLinkAutoCheck,
+  type AzureDevOpsOrgLinkAutoCheckOptions
 } from '../azure-devops/dolphin-org-link'
+
+// Why: older renderers send `{ force }` only, so every field is optional and strict-true.
+function readOrgLinkArgs(value: unknown): AzureDevOpsOrgLinkArgs {
+  if (!value || typeof value !== 'object') {
+    return {}
+  }
+  return {
+    force: 'force' in value && value.force === true,
+    signIn: 'signIn' in value && value.signIn === true
+  }
+}
 
 function readConfigureDefaultsInput(
   value: unknown
@@ -30,8 +45,10 @@ function readConfigureDefaultsInput(
   return { organization, project: typeof project === 'string' ? project : null }
 }
 
-export function registerAzureDevOpsHandlers(): void {
-  startAzureDevOpsOrgLinkAutoCheck()
+export function registerAzureDevOpsHandlers(
+  orgLinkOptions: AzureDevOpsOrgLinkAutoCheckOptions = {}
+): void {
+  startAzureDevOpsOrgLinkAutoCheck(orgLinkOptions)
 
   ipcMain.handle(
     'azureDevOps:setAuthMethod',
@@ -61,8 +78,6 @@ export function registerAzureDevOpsHandlers(): void {
   ipcMain.handle(
     'azureDevOps:orgLink',
     (_event, args: unknown): Promise<AzureDevOpsOrgLinkStatus> =>
-      getAzureDevOpsOrgLink({
-        force: Boolean(args && typeof args === 'object' && 'force' in args && args.force === true)
-      })
+      getAzureDevOpsOrgLink(readOrgLinkArgs(args))
   )
 }

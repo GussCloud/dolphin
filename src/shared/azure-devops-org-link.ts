@@ -5,6 +5,9 @@ export type AzureDevOpsOrgLinkStatus =
   | { status: 'connected'; organizationName: string }
   | { status: 'not-registered' }
   | { status: 'signed-out' }
+  // Signing in with Azure DevOps found a Dolphin account with the same email; the user
+  // signs in once (browser) and the link then binds the Azure DevOps identity to it.
+  | { status: 'account-exists' }
   // `public-org-scope`: the organization has public projects and the PAT lacks Project and team (read).
   | { status: 'azure-devops-not-authenticated'; reason?: AzureDevOpsLinkCredentialsReason }
   // Authenticated, but no Azure DevOps organization is configured to check.
@@ -15,7 +18,11 @@ export type AzureDevOpsOrgLinkStatus =
 
 export type AzureDevOpsLinkCredentialsReason = 'public-org-scope'
 
-export type AzureDevOpsOrgLinkArgs = { force?: boolean }
+export type AzureDevOpsOrgLinkArgs = {
+  force?: boolean
+  // Sign in to Dolphin with Azure DevOps even after the user explicitly signed out.
+  signIn?: boolean
+}
 
 export type AzureDevOpsLinkOrganization = {
   // Canonical URL the auth server accepts: https://dev.azure.com/{org} or https://{org}.visualstudio.com.

@@ -16,6 +16,7 @@ import { registerLinearHandlers } from '../linear'
 import { registerJiraHandlers } from '../jira'
 import { registerBitbucketHandlers } from '../bitbucket'
 import { registerAzureDevOpsHandlers } from '../azure-devops'
+import { broadcastDolphinProfileAuthStatusChanged } from '../dolphin-profile-auth-status-broadcast'
 import { registerAzureBoardsHandlers } from '../azure-boards'
 import { registerOpenObserveHandlers } from '../openobserve'
 import { registerFeedbackHandlers } from '../feedback'
@@ -164,7 +165,13 @@ export function registerCoreHandlers(
   registerLinearHandlers()
   registerJiraHandlers()
   registerBitbucketHandlers()
-  registerAzureDevOpsHandlers()
+  registerAzureDevOpsHandlers({
+    // Why: mirrors a browser sign-in (relay re-arms), plus a push because no pane asked.
+    onDolphinSignedIn: () => {
+      lifecycleOptions.onDolphinProfileAuthMutation?.()
+      broadcastDolphinProfileAuthStatusChanged()
+    }
+  })
   registerAzureBoardsHandlers()
   registerOpenObserveHandlers()
   registerFeedbackHandlers()

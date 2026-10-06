@@ -12159,7 +12159,9 @@
           "error": "Dolphin の組織を確認できませんでした: {{value0}}",
           "checking": "Dolphin の組織を確認しています…",
           "openAccount": "Dolphin アカウントを開く",
-          "checkNow": "今すぐ確認"
+          "checkNow": "今すぐ確認",
+          "accountExists": "このメールアドレスの Dolphin アカウントはすでに存在します。一度サインインしてリンクしてください。",
+          "signInWithAzureDevOps": "Azure DevOps でサインイン"
         }
       },
       "right": {

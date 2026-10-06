@@ -4,7 +4,10 @@ import type {
   AzureDevOpsConfigureDefaultsResult,
   AzureDevOpsRepositoriesResult
 } from '../../../shared/azure-devops-auth'
-import type { AzureDevOpsOrgLinkStatus } from '../../../shared/azure-devops-org-link'
+import type {
+  AzureDevOpsOrgLinkArgs,
+  AzureDevOpsOrgLinkStatus
+} from '../../../shared/azure-devops-org-link'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import { callRuntimeRpc, getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 
@@ -74,7 +77,7 @@ export function refreshAzureCliSession(settings: RuntimeSettings): Promise<void>
 // host does not hold; asking the host would check someone else's session or none.
 export async function getAzureDevOpsOrgLink(
   settings: RuntimeSettings,
-  args: { force?: boolean } = {}
+  args: AzureDevOpsOrgLinkArgs = {}
 ): Promise<AzureDevOpsOrgLinkStatus> {
   const orgLink = window.api?.azureDevOps?.orgLink
   if (getActiveRuntimeTarget(settings).kind === 'environment' || !orgLink) {

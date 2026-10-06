@@ -12262,7 +12262,9 @@
           "error": "Impossible de vérifier votre organisation Dolphin : {{value0}}",
           "checking": "Vérification de votre organisation Dolphin…",
           "openAccount": "Ouvrir le compte Dolphin",
-          "checkNow": "Vérifier maintenant"
+          "checkNow": "Vérifier maintenant",
+          "accountExists": "Un compte Dolphin existe déjà avec cette adresse e-mail. Connectez-vous une fois pour le lier.",
+          "signInWithAzureDevOps": "Se connecter avec Azure DevOps"
         }
       },
       "right": {
