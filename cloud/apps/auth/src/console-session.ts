@@ -43,6 +43,13 @@ export class ConsoleSessionStore {
       .get(hashToken(token), now) as ConsoleSessionRow | undefined
   }
 
+  /** For long-lived streams that keep only the hash, never the raw cookie. */
+  findByHash(tokenHash: string, now: number): ConsoleSessionRow | undefined {
+    return this.db
+      .prepare('SELECT * FROM console_sessions WHERE token_hash = ? AND expires_at > ?')
+      .get(tokenHash, now) as ConsoleSessionRow | undefined
+  }
+
   revoke(token: string): void {
     this.db.prepare('DELETE FROM console_sessions WHERE token_hash = ?').run(hashToken(token))
   }

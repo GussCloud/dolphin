@@ -11,10 +11,13 @@ import {
   type PageMessage
 } from './console-pages.js'
 import { registerMemberRoutes } from './console-member-routes.js'
+import { registerOfficeRoutes } from './console-office-routes.js'
 import { CONSOLE_PATH, consoleCookies, type ConsoleSessionRow } from './console-session.js'
 import type { OrganizationRow } from './organization-store.js'
 import { constantTimeEqual, hashPassword, verifyPassword } from './secrets.js'
 import type { AuthStore, UserRow } from './store.js'
+import type { WorkPresenceRegistry } from './work-presence-registry.js'
+import type { WorkViewStreamTiming } from './work-view-stream.js'
 
 export type ConsoleEnv = {
   Variables: {
@@ -62,7 +65,13 @@ function newOrganizationId(): string {
 }
 
 /** Server-rendered admin console for corporate orgs, mounted under /console. */
-export function consoleRoutes(deps: { store: AuthStore; config: AuthConfig; verifier: AzureDevOpsVerifier }) {
+export function consoleRoutes(deps: {
+  store: AuthStore
+  config: AuthConfig
+  verifier: AzureDevOpsVerifier
+  workPresence: WorkPresenceRegistry
+  streamTiming?: WorkViewStreamTiming | undefined
+}) {
   const { store, config, verifier } = deps
   const orgs = store.organizations
   const cookies = consoleCookies(config.issuer.startsWith('https:'))
@@ -315,6 +324,13 @@ export function consoleRoutes(deps: { store: AuthStore; config: AuthConfig; veri
   })
 
   registerMemberRoutes(app, { store, signedIn, toLogin })
+  registerOfficeRoutes(app, {
+    store,
+    registry: deps.workPresence,
+    signedIn,
+    toLogin,
+    ...(deps.streamTiming ? { streamTiming: deps.streamTiming } : {})
+  })
 
   return app
 }

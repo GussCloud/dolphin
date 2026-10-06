@@ -17,6 +17,8 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/auth/package.json apps/auth/package.json
 COPY --from=build /app/apps/auth/dist apps/auth/dist
+# Browser scripts for the work view; read at startup from ../static relative to dist/.
+COPY apps/auth/static apps/auth/static
 RUN pnpm install --prod --frozen-lockfile --filter @dolphin-cloud/auth... \
   && mkdir -p /data && chown node:node /data
 USER node

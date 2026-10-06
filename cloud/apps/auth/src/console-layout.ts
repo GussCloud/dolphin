@@ -5,7 +5,7 @@ import type { UserRow } from './store.js'
 
 export type PageMessage = { kind: 'error' | 'notice'; text: string }
 export type SignedIn = { user: UserRow; csrf: string }
-export type ConsoleSection = 'organization' | 'members'
+export type ConsoleSection = 'organization' | 'members' | 'office'
 
 // Lucide paths, inlined so the console ships no assets.
 const ICON_PATHS = {
@@ -22,6 +22,9 @@ const ICON_PATHS = {
     '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
   alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+  office:
+    '<rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  maximize: '<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>',
   link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'
 } as const
 
@@ -88,15 +91,16 @@ export function initials(text: string): string {
   return escapeHtml(((parts[0]?.[0] ?? '?') + (parts[1]?.[0] ?? '')).toUpperCase())
 }
 
-function document(title: string, body: string): string {
+/** `head` and `tail` are trusted markup (fonts, page scripts); callers escape any user text first. */
+export function consoleDocument(title: string, body: string, extra: { head?: string; tail?: string } = {}): string {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} · Dolphin</title>
-<script>${HEAD_SCRIPT}</script><style>${CONSOLE_STYLE}</style></head><body>${body}<script>${BODY_SCRIPT}</script></body></html>`
+<script>${HEAD_SCRIPT}</script><style>${CONSOLE_STYLE}</style>${extra.head ?? ''}</head><body>${body}<script>${BODY_SCRIPT}</script>${extra.tail ?? ''}</body></html>`
 }
 
 /** Sign-in / sign-up shell: brand panel beside the form, the panel folds into a logo on small screens. */
 export function authLayout(title: string, card: string): string {
-  return document(
+  return consoleDocument(
     title,
     `<div class="auth"><aside class="brand-panel"><div class="brand-mark">${logo('brand-logo')}Dolphin</div>
 <div class="brand-copy"><h2>Console da organização</h2>
@@ -109,7 +113,7 @@ export function authLayout(title: string, card: string): string {
 }
 
 function navItem(section: ConsoleSection, current: ConsoleSection, href: string, label: string, extra = ''): string {
-  const iconName = section === 'organization' ? 'building' : 'users'
+  const iconName = section === 'organization' ? 'building' : section === 'members' ? 'users' : 'office'
   const aria = section === current ? ' aria-current="page"' : ''
   return `<a class="nav-item" href="${href}"${aria} title="${label}">${icon(iconName)}<span class="side-label">${label}</span>${extra}</a>`
 }
@@ -124,6 +128,12 @@ export function appLayout(params: {
   body: string
   memberCount?: number
   hasOrganization: boolean
+  /** Member of any corporate org, owned or not; unlocks the work view. Defaults to hasOrganization. */
+  hasMembership?: boolean
+  /** Full-width page body, for the work view canvas. */
+  wide?: boolean
+  head?: string
+  tail?: string
 }): string {
   const { auth } = params
   const name = auth.user.display_name ?? auth.user.email
@@ -137,20 +147,25 @@ export function appLayout(params: {
           params.memberCount === undefined ? '' : `<span class="count badge">${params.memberCount}</span>`
         )
       : ''
-  return document(
+  const office =
+    (params.hasMembership ?? params.hasOrganization)
+      ? navItem('office', params.section, `${CONSOLE_PATH}/office`, 'Escritório dos agentes')
+      : ''
+  return consoleDocument(
     params.title,
     `<div class="shell"><aside class="sidebar" id="sidebar">
 <div class="side-head"><a class="side-brand" href="${CONSOLE_PATH}">${logo('side-logo')}<span class="side-label">Dolphin</span></a>
 <button type="button" class="ghost collapse" data-toggle-sidebar aria-controls="sidebar" aria-expanded="true" title="Recolher menu" aria-label="Recolher menu">${icon('panel')}</button></div>
 <nav aria-label="Console"><span class="nav-section">Organização</span>
-${navItem('organization', params.section, CONSOLE_PATH, 'Cadastro da organização')}${members}</nav>
+${navItem('organization', params.section, CONSOLE_PATH, 'Cadastro da organização')}${members}${office}</nav>
 <div class="side-foot"><div class="account" title="${escapeHtml(auth.user.email)}"><span class="avatar">${initials(name)}</span>
 <span class="side-label"><strong>${escapeHtml(name)}</strong><br><span class="muted">${escapeHtml(auth.user.email)}</span></span></div>
 <form method="post" action="${CONSOLE_PATH}/logout">${csrfField(auth.csrf)}<button type="submit" class="ghost" title="Sair">${icon('logout')}<span class="side-label">Sair</span></button></form></div></aside>
 <div class="backdrop"></div><div class="content"><header class="topbar">
 <button type="button" class="ghost menu" data-toggle-sidebar aria-controls="sidebar" aria-label="Abrir menu">${icon('menu')}</button>
 <span class="muted">Console</span><span class="muted">/</span><strong>${escapeHtml(params.heading)}</strong></header>
-<main class="page"><div class="page-head"><h1>${escapeHtml(params.heading)}</h1>${params.subtitle ? `<p class="muted">${escapeHtml(params.subtitle)}</p>` : ''}</div>
-${params.body}</main></div></div>`
+<main class="page${params.wide ? ' wide' : ''}"><div class="page-head"><h1>${escapeHtml(params.heading)}</h1>${params.subtitle ? `<p class="muted">${escapeHtml(params.subtitle)}</p>` : ''}</div>
+${params.body}</main></div></div>`,
+    { head: params.head, tail: params.tail }
   )
 }
