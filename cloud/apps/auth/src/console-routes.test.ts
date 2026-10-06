@@ -5,6 +5,7 @@ import type { FakeAzureDevOpsOrg } from './test-fixtures/fake-azure-devops.js'
 
 const ADMIN_PAT = 'fake-pat-not-a-secret-admin'
 const MEMBER_PAT = 'fake-pat-not-a-secret-member'
+const OUTSIDER_PAT = 'fake-pat-not-a-secret-outsider-signed-in'
 const CONTOSO_ID = '11111111-1111-4111-8111-111111111111'
 
 const contoso = (): FakeAzureDevOpsOrg => ({
@@ -13,7 +14,8 @@ const contoso = (): FakeAzureDevOpsOrg => ({
   instanceId: CONTOSO_ID,
   members: new Map([
     [ADMIN_PAT, { id: 'aaaaaaaa-0000-4000-8000-000000000001', admin: true }],
-    [MEMBER_PAT, { id: 'aaaaaaaa-0000-4000-8000-000000000002', admin: false }]
+    [MEMBER_PAT, { id: 'aaaaaaaa-0000-4000-8000-000000000002', admin: false }],
+    [OUTSIDER_PAT, { id: 'aaaaaaaa-0000-4000-8000-000000000003', admin: true, orgMember: false }]
   ])
 })
 
@@ -188,6 +190,15 @@ describe('console organization page', () => {
     const refused = await connect(browser, 'fake-pat-not-a-secret-outsider')
     expect(refused.res.status).toBe(400)
     expect(refused.html).toContain('O Azure DevOps recusou o token.')
+    expect(ctx.store.organizations.listOrganizations()[0]?.azure_devops_name).toBeNull()
+  })
+
+  it('explains the vso.project scope when a public org refuses the member probe', async () => {
+    await setup()
+    const browser = await signedInOwner()
+    const refused = await connect(browser, OUTSIDER_PAT)
+    expect(refused.res.status).toBe(400)
+    expect(refused.html).toContain('vso.project')
     expect(ctx.store.organizations.listOrganizations()[0]?.azure_devops_name).toBeNull()
   })
 

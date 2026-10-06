@@ -52,7 +52,9 @@ export function azureDevOpsLinkRoutes(deps: { store: AuthStore; verifier: AzureD
         return c.json({ error: 'azure_devops_unavailable' }, 502)
       }
       if (proof.status !== 'verified') {
-        return c.json({ status: 'invalid-credentials' })
+        // Optional field: older desktops ignore `reason`.
+        const reason = proof.status === 'invalid-credentials' ? proof.reason : undefined
+        return c.json({ status: 'invalid-credentials', ...(reason ? { reason } : {}) })
       }
       const link = orgs.findAzureDevOpsLinkByInstance(proof.instanceId)
       const organization = link ? orgs.findOrganization(link.org_id) : undefined

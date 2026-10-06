@@ -6,7 +6,7 @@ export type AzureDevOpsFetch = (url: string, init: RequestInit) => Promise<Respo
 
 export type AzureDevOpsProof =
   | { status: 'verified'; instanceId: string; azureDevOpsUserId: string }
-  | { status: 'invalid-credentials' }
+  | { status: 'invalid-credentials'; reason?: 'public-org-scope' }
   | { status: 'not-admin' }
   | { status: 'unavailable' }
 
@@ -37,6 +37,10 @@ function isMemberIdentity(data: z.infer<typeof ConnectionData>): boolean {
   return sameIdentity && user.descriptor.startsWith(PERSON_DESCRIPTOR_TYPE)
 }
 const PermissionResults = z.object({ value: z.array(z.boolean()) })
+// Signed-in non-members of a public org may get their own identity back from connectionData, but
+// "Azure DevOps rejects any REST API calls that aren't scoped to a project" for them:
+// https://learn.microsoft.com/en-us/azure/devops/extend/develop/public-project
+const MEMBER_PROBE_PATH = '/_apis/projects?$top=1&api-version=7.1'
 
 /** SSRF guard: only the two public Azure DevOps URL forms, rebuilt from the org name alone. */
 export function parseAzureDevOpsOrganizationUrl(raw: string): AzureDevOpsOrganizationRef | null {
@@ -72,11 +76,18 @@ function authorizationHeader(token: string, kind: AzureDevOpsTokenKind): string 
 type JsonOutcome = { status: 'json'; body: unknown } | { status: 'invalid-credentials' } | { status: 'unavailable' }
 
 export function createAzureDevOpsVerifier(fetchImpl: AzureDevOpsFetch = fetch) {
-  async function getJson(url: string, token: string, kind: AzureDevOpsTokenKind): Promise<JsonOutcome> {
+  /** `credentials: null` calls anonymously. */
+  async function getJson(
+    url: string,
+    credentials: { token: string; kind: AzureDevOpsTokenKind } | null
+  ): Promise<JsonOutcome> {
     let res: Response
     try {
       res = await fetchImpl(url, {
-        headers: { authorization: authorizationHeader(token, kind), accept: 'application/json' },
+        headers: {
+          accept: 'application/json',
+          ...(credentials ? { authorization: authorizationHeader(credentials.token, credentials.kind) } : {})
+        },
         // Why manual, not error: a sign-in redirect must read as bad credentials, not as an outage.
         redirect: 'manual',
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
@@ -110,13 +121,31 @@ export function createAzureDevOpsVerifier(fetchImpl: AzureDevOpsFetch = fetch) {
     token: string,
     kind: AzureDevOpsTokenKind
   ): Promise<AzureDevOpsProof> {
-    const outcome = await getJson(`${org.baseUrl}/_apis/connectionData`, token, kind)
+    const connectionData = `${org.baseUrl}/_apis/connectionData`
+    // Only orgs with public projects answer anonymously; private orgs skip the member probe.
+    const [outcome, anonymous] = await Promise.all([
+      getJson(connectionData, { token, kind }),
+      getJson(connectionData, null)
+    ])
     if (outcome.status !== 'json') {
       return outcome
     }
     const parsed = ConnectionData.safeParse(outcome.body)
     if (!parsed.success || !isMemberIdentity(parsed.data)) {
       return { status: 'invalid-credentials' }
+    }
+    if (anonymous.status === 'unavailable') {
+      return anonymous
+    }
+    if (anonymous.status === 'json') {
+      const probe = await getJson(`${org.baseUrl}${MEMBER_PROBE_PATH}`, { token, kind })
+      if (probe.status === 'unavailable') {
+        return probe
+      }
+      if (probe.status !== 'json') {
+        // A non-member and a member whose PAT lacks vso.project look the same here.
+        return { status: 'invalid-credentials', reason: 'public-org-scope' }
+      }
     }
     return {
       status: 'verified',
@@ -139,7 +168,7 @@ export function createAzureDevOpsVerifier(fetchImpl: AzureDevOpsFetch = fetch) {
     const url =
       `${org.baseUrl}/_apis/permissions/${COLLECTION_NAMESPACE_ID}/${COLLECTION_GENERIC_WRITE}` +
       '?tokens=NAMESPACE&alwaysAllowAdministrators=false&api-version=7.1'
-    const outcome = await getJson(url, token, kind)
+    const outcome = await getJson(url, { token, kind })
     if (outcome.status === 'unavailable') {
       return outcome
     }

@@ -9,7 +9,17 @@ export type FakeAzureDevOpsOrg = {
   name: string
   instanceId: string
   /** Token → AzDO user; tokens are obviously fake so secret scanners stay quiet. */
-  members: Map<string, { id: string; admin: boolean; descriptor?: string; authorizedAs?: FakeAzureDevOpsIdentity }>
+  members: Map<
+    string,
+    {
+      id: string
+      admin: boolean
+      descriptor?: string
+      authorizedAs?: FakeAzureDevOpsIdentity
+      /** false: a signed-in outsider (or a PAT without vso.project) whose org-level calls are refused. */
+      orgMember?: boolean
+    }
+  >
   /** Public projects: unknown callers get 200 as the public-access identity instead of 401. */
   publicProjects?: boolean
 }
@@ -53,6 +63,11 @@ export function fakeAzureDevOps(orgs: FakeAzureDevOpsOrg[]) {
       return new Response(null, { status: 302, headers: { location: 'https://login.example/sign-in' } })
     }
     const org = orgs.find((candidate) => candidate.name === name)
+    if (!authorization) {
+      return org?.publicProjects && path === '/_apis/connectionData'
+        ? Response.json({ instanceId: org.instanceId, authenticatedUser: PUBLIC_ACCESS_IDENTITY })
+        : new Response(null, { status: 302, headers: { location: 'https://login.example/sign-in' } })
+    }
     const member = org?.members.get(token)
     if (org?.publicProjects && !member && path === '/_apis/connectionData') {
       return Response.json({
@@ -70,6 +85,11 @@ export function fakeAzureDevOps(orgs: FakeAzureDevOpsOrg[]) {
         descriptor: member.descriptor ?? `Microsoft.IdentityModel.Claims.ClaimsIdentity;fake-tenant\\${member.id}@example.com`
       }
       return Response.json({ instanceId: org.instanceId, authenticatedUser: user, authorizedUser: member.authorizedAs ?? user })
+    }
+    if (path === '/_apis/projects' && parsed.searchParams.get('$top') === '1') {
+      return member.orgMember === false
+        ? new Response('unauthorized', { status: 401 })
+        : Response.json({ count: 0, value: [] })
     }
     if (path === PERMISSIONS_PATH && parsed.searchParams.get('tokens') === 'NAMESPACE') {
       return Response.json({ count: 1, value: [member.admin] })

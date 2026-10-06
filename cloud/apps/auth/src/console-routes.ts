@@ -264,7 +264,13 @@ export function consoleRoutes(deps: { store: AuthStore; config: AuthConfig; veri
         ? await verifier.verifyAdministrator(target, pat, 'pat')
         : await verifier.verifyMember(target, pat, 'pat')
     if (proof.status === 'invalid-credentials') {
-      return fail('O Azure DevOps recusou o token. Confira o PAT e a URL da organização.', 400)
+      return fail(
+        proof.reason === 'public-org-scope'
+          ? 'Esta organização tem projetos públicos, então precisamos confirmar que você é membro dela. ' +
+              'Gere um PAT com o escopo "Project and team (Read)" (vso.project) e tente de novo.'
+          : 'O Azure DevOps recusou o token. Confira o PAT e a URL da organização.',
+        400
+      )
     }
     if (proof.status === 'not-admin') {
       return fail(

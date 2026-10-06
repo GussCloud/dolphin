@@ -11,6 +11,7 @@ const OPEN_ID = '44444444-4444-4444-8444-444444444444'
 const BUILD_SERVICE_TOKEN = 'fake-token-not-a-secret-build-service'
 const IMPERSONATED_TOKEN = 'fake-token-not-a-secret-impersonated'
 const SERVICE_PRINCIPAL_TOKEN = 'fake-token-not-a-secret-service-principal'
+const OUTSIDER_TOKEN = 'fake-token-not-a-secret-signed-in-outsider'
 const MEMBER_AZDO_ID = 'bbbbbbbb-0000-4000-8000-000000000001'
 const LINK = '/v1/desktop/orgs/azure-devops/link'
 
@@ -44,6 +45,7 @@ beforeEach(async () => {
               descriptor: `Microsoft.TeamFoundation.ServiceIdentity;fake-build:Build:${OPEN_ID}`
             }
           ],
+          [OUTSIDER_TOKEN, { id: 'cccccccc-0000-4000-8000-000000000004', admin: false, orgMember: false }],
           [
             SERVICE_PRINCIPAL_TOKEN,
             {
@@ -194,6 +196,25 @@ describe('desktop Azure DevOps link', () => {
       status: 'connected',
       organization: { id: 'corg_open' }
     })
+  })
+
+  it('skips the member probe for a private org', async () => {
+    expect(await (await link(contosoPat)).json()).toMatchObject({ status: 'connected' })
+    expect(ctx.azure.calls.some((call) => call.url.includes('/_apis/projects'))).toBe(false)
+  })
+
+  it('probes membership on a public org: members pass, signed-in outsiders get the scope hint', async () => {
+    const open = { ...contosoPat, organizationUrl: 'https://dev.azure.com/open-source' }
+    expect(await (await link(open)).json()).toMatchObject({ status: 'connected' })
+    const probe = ctx.azure.calls.find((call) => call.url.includes('/_apis/projects'))
+    expect(probe?.authorization).toMatch(/^Basic /)
+
+    const outsider = await link({ ...open, azureDevOpsToken: OUTSIDER_TOKEN, tokenKind: 'bearer' }, ownerAccess)
+    expect(await outsider.json()).toEqual({ status: 'invalid-credentials', reason: 'public-org-scope' })
+    expect(ctx.store.organizations.listMembers('corg_open').map((m) => m.user_id).sort()).toEqual([
+      'usr_member',
+      'usr_oss'
+    ])
   })
 
   it('never stores the AzDO token', async () => {
