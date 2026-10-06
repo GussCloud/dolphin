@@ -10,6 +10,7 @@ const FABRIKAM_ID = '33333333-3333-4333-8333-333333333333'
 const OPEN_ID = '44444444-4444-4444-8444-444444444444'
 const BUILD_SERVICE_TOKEN = 'fake-token-not-a-secret-build-service'
 const IMPERSONATED_TOKEN = 'fake-token-not-a-secret-impersonated'
+const SERVICE_PRINCIPAL_TOKEN = 'fake-token-not-a-secret-service-principal'
 const MEMBER_AZDO_ID = 'bbbbbbbb-0000-4000-8000-000000000001'
 const LINK = '/v1/desktop/orgs/azure-devops/link'
 
@@ -41,6 +42,14 @@ beforeEach(async () => {
               id: 'cccccccc-0000-4000-8000-000000000001',
               admin: false,
               descriptor: `Microsoft.TeamFoundation.ServiceIdentity;fake-build:Build:${OPEN_ID}`
+            }
+          ],
+          [
+            SERVICE_PRINCIPAL_TOKEN,
+            {
+              id: 'cccccccc-0000-4000-8000-000000000003',
+              admin: false,
+              descriptor: 'Microsoft.VisualStudio.Services.Claims.AadServicePrincipal;fake-tenant\\fake-app'
             }
           ],
           [
@@ -168,12 +177,13 @@ describe('desktop Azure DevOps link', () => {
     expect(await (await readLink('https://dev.azure.com/contoso')).json()).toEqual({ status: 'not-linked' })
   })
 
-  it('rejects the public-access identity a public org returns for non-members', async () => {
+  it('rejects public-access, service and service-principal identities; only people link', async () => {
     const open = { ...contosoPat, organizationUrl: 'https://dev.azure.com/open-source' }
     for (const attempt of [
       { ...open, azureDevOpsToken: 'fake-pat-from-another-org' },
       { ...open, azureDevOpsToken: 'fake-entra-token-other-tenant', tokenKind: 'bearer' },
       { ...open, azureDevOpsToken: BUILD_SERVICE_TOKEN },
+      { ...open, azureDevOpsToken: SERVICE_PRINCIPAL_TOKEN, tokenKind: 'bearer' },
       { ...open, azureDevOpsToken: IMPERSONATED_TOKEN }
     ]) {
       expect(await (await link(attempt)).json()).toEqual({ status: 'invalid-credentials' })

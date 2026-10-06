@@ -18,13 +18,10 @@ const VISUALSTUDIO_SUFFIX = '.visualstudio.com'
 const COLLECTION_NAMESPACE_ID = '3e65f728-f8bc-4ecd-8764-7e378b19bfa7'
 const COLLECTION_GENERIC_WRITE = 2
 
-// Only real people (Entra/MSA) and Entra service principals; public orgs answer anyone else as
+// Only real people (Entra/MSA) may join; public orgs answer anyone else as
 // `System:PublicAccess;aaaaaaaa-…` ("Anonymous") with 200, even for a bogus token (seen on dev.azure.com/dnceng-public).
 // Shape: https://learn.microsoft.com/en-us/javascript/api/azure-devops-extension-api/connectiondata
-const MEMBER_DESCRIPTOR_TYPES = [
-  'Microsoft.IdentityModel.Claims.ClaimsIdentity;',
-  'Microsoft.VisualStudio.Services.Claims.AadServicePrincipal;'
-]
+const PERSON_DESCRIPTOR_TYPE = 'Microsoft.IdentityModel.Claims.ClaimsIdentity;'
 
 const ConnectionIdentity = z.object({ id: z.string().uuid(), descriptor: z.string() })
 const ConnectionData = z.object({
@@ -37,7 +34,7 @@ function isMemberIdentity(data: z.infer<typeof ConnectionData>): boolean {
   const user = data.authenticatedUser
   // A differing authorized identity means the request ran as someone else (or as public access).
   const sameIdentity = !data.authorizedUser || data.authorizedUser.id.toLowerCase() === user.id.toLowerCase()
-  return sameIdentity && MEMBER_DESCRIPTOR_TYPES.some((type) => user.descriptor.startsWith(type))
+  return sameIdentity && user.descriptor.startsWith(PERSON_DESCRIPTOR_TYPE)
 }
 const PermissionResults = z.object({ value: z.array(z.boolean()) })
 
