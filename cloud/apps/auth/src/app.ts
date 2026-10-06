@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 import { renderAuthorizePage, type AuthorizeParams } from './authorize-page.js'
 import { azureDevOpsLinkRoutes, type AuthedHandler } from './azure-devops-link-routes.js'
+import { azureDevOpsSignInRoutes } from './azure-devops-sign-in-routes.js'
 import { createAzureDevOpsVerifier, type AzureDevOpsFetch } from './azure-devops-verifier.js'
 import type { AuthConfig } from './config.js'
 import { relayHostIdForPublicKey, signRelayToken } from './relay-token.js'
@@ -231,6 +232,7 @@ export function createAuthApp(deps: {
 
   app.route('/', feedbackRoutes(store))
   app.route('/', azureDevOpsLinkRoutes({ store, verifier, authed }))
+  app.route('/', azureDevOpsSignInRoutes({ store, config, verifier }))
   app.route('/', consoleRoutes({ store, config, verifier }))
   return app
 }
