@@ -5,6 +5,7 @@ import {
   extractErrorCode
 } from '../dolphin-profiles/profile-cloud-org-members-client'
 import type { DolphinCloudSession } from '../dolphin-profiles/profile-cloud-session-store'
+import { cancelUnreadResponseBody } from '../lib/unread-response-body'
 import type { WorkPresenceSnapshot } from './work-presence-snapshot'
 
 export type WorkPresencePutResponse = { heartbeatMs: number | null }
@@ -53,4 +54,5 @@ export async function deleteDolphinCloudWorkPresence(
   if (!response.ok) {
     throw new DolphinCloudRequestError(response.status, await extractErrorCode(response))
   }
+  await cancelUnreadResponseBody(response)
 }

@@ -33,6 +33,7 @@ const AUDITED_GLOBAL_FETCH_LINES = new Map<string, number>([
   ['main/runtime/relay/relay-region-probe.ts', 1],
   ['main/source-control/hosted-review-api-request.ts', 1],
   ['main/speech/openai-transcription-client.ts', 1],
+  ['main/work-presence/work-presence-client.ts', 2],
   // Main HTTP port: one type declaration plus the Node fallback call. The fallback
   // returns the Response to its caller without inspecting it, so the consume/cancel
   // obligation stays with the caller — unchanged from when those callers used
