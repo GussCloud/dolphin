@@ -9,6 +9,7 @@ import type {
 } from '../../shared/dolphin-profiles'
 import { getDolphinProfileDirectory } from './profile-storage-paths'
 import { emitDolphinCloudSignedIn } from './profile-cloud-sign-in-events'
+import { clearDolphinCloudExplicitSignOut } from './profile-cloud-sign-out-marker'
 import { allowsPlaintextDolphinCloudSession } from './profile-cloud-auth-config'
 import type { DolphinCloudSessionExchangeResponse } from './profile-cloud-session-exchange'
 import {
@@ -168,6 +169,7 @@ export function saveDolphinCloudSessionExchange(
     organizations: exchange.organizations,
     capabilities: exchange.capabilities
   })
+  clearDolphinCloudExplicitSignOut(profileId, userDataPath)
   emitDolphinCloudSignedIn()
   return persistence
 }
