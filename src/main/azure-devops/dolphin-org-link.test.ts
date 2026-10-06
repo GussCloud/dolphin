@@ -6,6 +6,7 @@ type ProfileFixture = { id: string; cloud?: { userId: string } }
 
 const mocks = vi.hoisted(() => {
   const authStatusListeners: ((status: unknown) => void)[] = []
+  const signInListeners: (() => void)[] = []
   const method: { current: 'azure-cli' | 'token' } = { current: 'azure-cli' }
   const profile: { current: ProfileFixture } = {
     current: { id: 'local-1', cloud: { userId: 'user-1' } }
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => {
   return {
     authStatus: vi.fn(),
     authStatusListeners,
+    signInListeners,
     cliToken: vi.fn(),
     method,
     envConfig: vi.fn(),
@@ -43,6 +45,12 @@ vi.mock('../dolphin-profiles/profile-cloud-org-members-client', () => ({
 }))
 vi.mock('../dolphin-profiles/profile-cloud-session-store', () => ({
   readDolphinCloudSession: mocks.readSession
+}))
+vi.mock('../dolphin-profiles/profile-cloud-sign-in-events', () => ({
+  onDolphinCloudSignedIn: (listener: () => void) => {
+    mocks.signInListeners.push(listener)
+    return () => undefined
+  }
 }))
 vi.mock('../dolphin-profiles/profile-index-store', () => ({
   ensureActiveDolphinProfile: () => ({ profile: mocks.profile.current })
@@ -95,6 +103,7 @@ beforeEach(() => {
   mocks.readSession.mockReturnValue({ status: 'found' })
   mocks.profile.current = { id: 'local-1', cloud: { userId: 'user-1' } }
   mocks.authStatusListeners.length = 0
+  mocks.signInListeners.length = 0
   serverAnswers({ status: 'connected', organizationName: 'Contoso' })
 })
 
@@ -141,6 +150,29 @@ describe('getAzureDevOpsOrgLink', () => {
       status: 'not-registered'
     })
     expect(mocks.link).toHaveBeenCalledTimes(2)
+  })
+
+  it('expires not-registered after 10 minutes and connected after an hour', async () => {
+    vi.useFakeTimers({ now: 0, toFake: ['Date'] })
+    try {
+      serverAnswers({ status: 'not-registered' })
+      await getAzureDevOpsOrgLink()
+      vi.setSystemTime(10 * 60_000 - 1)
+      await getAzureDevOpsOrgLink()
+      expect(mocks.link).toHaveBeenCalledTimes(1)
+      serverAnswers({ status: 'connected', organizationName: 'Contoso' })
+      vi.setSystemTime(10 * 60_000)
+      await expect(getAzureDevOpsOrgLink()).resolves.toMatchObject({ status: 'connected' })
+      expect(mocks.link).toHaveBeenCalledTimes(2)
+      vi.setSystemTime(70 * 60_000 - 1)
+      await getAzureDevOpsOrgLink()
+      expect(mocks.link).toHaveBeenCalledTimes(2)
+      vi.setSystemTime(70 * 60_000)
+      await getAzureDevOpsOrgLink()
+      expect(mocks.link).toHaveBeenCalledTimes(3)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('does not cache failures', async () => {
@@ -230,5 +262,24 @@ describe('startAzureDevOpsOrgLinkAutoCheck', () => {
     await expect(getAzureDevOpsOrgLink()).resolves.toMatchObject({ status: 'connected' })
     expect(mocks.authStatus).not.toHaveBeenCalled()
     expect(mocks.link).toHaveBeenCalledTimes(1)
+  })
+
+  it('re-checks after a Dolphin sign-in instead of serving a cached miss', async () => {
+    startAzureDevOpsOrgLinkAutoCheck()
+    serverAnswers({ status: 'not-registered' })
+    mocks.authStatusListeners[0](authenticated)
+    await vi.waitFor(() => expect(mocks.link).toHaveBeenCalledTimes(1))
+    serverAnswers({ status: 'connected', organizationName: 'Contoso' })
+    mocks.signInListeners[0]()
+    await vi.waitFor(() => expect(mocks.link).toHaveBeenCalledTimes(2))
+    await expect(getAzureDevOpsOrgLink()).resolves.toMatchObject({ status: 'connected' })
+    expect(mocks.link).toHaveBeenCalledTimes(2)
+  })
+
+  it('skips the sign-in re-check while Azure DevOps is signed out', () => {
+    startAzureDevOpsOrgLinkAutoCheck()
+    mocks.authStatusListeners[0]({ ...authenticated, authenticated: false })
+    mocks.signInListeners[0]()
+    expect(mocks.runOrgMemberCall).not.toHaveBeenCalled()
   })
 })

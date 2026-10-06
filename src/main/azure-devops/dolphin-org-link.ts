@@ -11,6 +11,7 @@ import {
 import { linkDolphinCloudOrgByAzureDevOps } from '../dolphin-profiles/profile-cloud-org-members-client'
 import { runOrgMemberCall } from '../dolphin-profiles/profile-cloud-org-members-service'
 import { readDolphinCloudSession } from '../dolphin-profiles/profile-cloud-session-store'
+import { onDolphinCloudSignedIn } from '../dolphin-profiles/profile-cloud-sign-in-events'
 import { ensureActiveDolphinProfile } from '../dolphin-profiles/profile-index-store'
 import { getProfileUserDataPath } from '../dolphin-profiles/profile-storage-paths'
 import { getAzureCliAccessToken } from './azure-cli-access-token'
@@ -20,8 +21,14 @@ import { getAzureDevOpsAuthConfig } from './azure-devops-env-config'
 
 type AzureDevOpsLinkToken = { azureDevOpsToken: string; tokenKind: 'bearer' | 'pat' }
 
-// Only definitive answers are cached; failures retry on the next read.
-const linkCache = new Map<string, AzureDevOpsOrgLinkStatus>()
+// Why: an admin may register the organization after a miss, so not-registered expires
+// sooner; connected still expires so a removed membership is noticed. Failures never cache.
+const NOT_REGISTERED_TTL_MS = 10 * 60_000
+const CONNECTED_TTL_MS = 60 * 60_000
+
+type CachedLink = { result: AzureDevOpsOrgLinkStatus; expiresAtMs: number }
+
+const linkCache = new Map<string, CachedLink>()
 const inflightLinks = new Map<string, Promise<AzureDevOpsOrgLinkStatus>>()
 let lastAuthStatus: AzureDevOpsAuthStatus | null = null
 
@@ -95,8 +102,15 @@ async function requestLink(
   }
 }
 
-function isCacheable(result: AzureDevOpsOrgLinkStatus): boolean {
-  return result.status === 'connected' || result.status === 'not-registered'
+function cacheTtlMs(result: AzureDevOpsOrgLinkStatus): number | null {
+  switch (result.status) {
+    case 'connected':
+      return CONNECTED_TTL_MS
+    case 'not-registered':
+      return NOT_REGISTERED_TTL_MS
+    default:
+      return null
+  }
 }
 
 /** Dolphin organization the configured Azure DevOps organization links this user to. */
@@ -125,16 +139,17 @@ export async function getAzureDevOpsOrgLink(
   }
   const key = `${userDataPath}\0${active.profile.id}\0${cloudUserId}\0${organization.organizationName}`
   const cached = linkCache.get(key)
-  if (cached && !args.force) {
-    return cached
+  if (cached && cached.expiresAtMs > Date.now() && !args.force) {
+    return cached.result
   }
   // Why: the auto-check and the card's first read land together; one request serves both.
   let inflight = inflightLinks.get(key)
   if (!inflight) {
     inflight = requestLink(organization.organizationUrl, status)
       .then((result) => {
-        if (isCacheable(result)) {
-          linkCache.set(key, result)
+        const ttlMs = cacheTtlMs(result)
+        if (ttlMs !== null) {
+          linkCache.set(key, { result, expiresAtMs: Date.now() + ttlMs })
         } else {
           linkCache.delete(key)
         }
@@ -146,14 +161,28 @@ export async function getAzureDevOpsOrgLink(
   return inflight
 }
 
-/** Links automatically whenever this host's Azure DevOps status turns authenticated. */
+function checkInBackground(): void {
+  void getAzureDevOpsOrgLink().catch(() => undefined)
+}
+
+/** Links automatically on each authenticated status and after every Dolphin sign-in. */
 export function startAzureDevOpsOrgLinkAutoCheck(): () => void {
-  return onAzureDevOpsAuthStatus((status) => {
-    const wasAuthenticated =
-      lastAuthStatus?.authenticated === true && lastAuthStatus.baseUrl === status.baseUrl
+  // Why: the cache makes a fresh answer free, so every status probe can also renew an expired one.
+  const stopAuthStatus = onAzureDevOpsAuthStatus((status) => {
     lastAuthStatus = status
-    if (status.authenticated && !wasAuthenticated) {
-      void getAzureDevOpsOrgLink().catch(() => undefined)
+    if (status.authenticated) {
+      checkInBackground()
     }
   })
+  // Why: signing in again (or as another user) must not wait out a cached miss.
+  const stopSignIn = onDolphinCloudSignedIn(() => {
+    linkCache.clear()
+    if (lastAuthStatus?.authenticated) {
+      checkInBackground()
+    }
+  })
+  return () => {
+    stopAuthStatus()
+    stopSignIn()
+  }
 }
