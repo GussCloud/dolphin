@@ -1,6 +1,8 @@
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
+import { ConsoleSessionStore } from './console-session.js'
+import { OrganizationStore } from './organization-store.js'
 import { hashToken } from './secrets.js'
 
 export type UserRow = { id: string; email: string; password_hash: string; display_name: string | null }
@@ -71,12 +73,33 @@ CREATE TABLE IF NOT EXISTS feedback (
 /** SQLite-backed state; small enough for one VPS and needs no native module (node:sqlite). */
 export class AuthStore {
   readonly db: DatabaseSync
+  readonly organizations: OrganizationStore
+  readonly consoleSessions: ConsoleSessionStore
 
   constructor(dataDir: string) {
     mkdirSync(dataDir, { recursive: true })
     this.db = new DatabaseSync(join(dataDir, 'dolphin-auth.sqlite'))
     this.db.exec('PRAGMA journal_mode = WAL;')
     this.db.exec(SCHEMA)
+    this.organizations = new OrganizationStore(this.db)
+    this.consoleSessions = new ConsoleSessionStore(this.db)
+  }
+
+  /** Runs `work` atomically; any throw rolls back every write it made. */
+  transaction<T>(work: () => T): T {
+    this.db.exec('BEGIN IMMEDIATE')
+    try {
+      const result = work()
+      this.db.exec('COMMIT')
+      return result
+    } catch (error) {
+      this.db.exec('ROLLBACK')
+      throw error
+    }
+  }
+
+  close(): void {
+    this.db.close()
   }
 
   createUser(user: { id: string; email: string; passwordHash: string; displayName?: string }): void {
@@ -182,6 +205,7 @@ export class AuthStore {
   pruneExpired(now: number): void {
     this.db.prepare('DELETE FROM auth_codes WHERE expires_at < ?').run(now)
     this.db.prepare('DELETE FROM sessions WHERE refresh_expires_at < ? OR revoked = 1').run(now)
+    this.consoleSessions.pruneExpired(now)
   }
 
   insertFeedback(row: {

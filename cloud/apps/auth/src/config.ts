@@ -12,6 +12,22 @@ export type AuthConfig = {
   refreshTokenTtlMs: number
   relayTokenTtlSeconds: number
   capabilityFlags: Record<string, boolean>
+  /** What registering an Azure DevOps org requires: a Project Collection Administrator, or any member. */
+  azureDevOpsOrgProof: AzureDevOpsOrgProof
+}
+
+export type AzureDevOpsOrgProof = 'admin' | 'member'
+
+function readOrgProof(env: NodeJS.ProcessEnv): AzureDevOpsOrgProof {
+  const value = env.AZDO_ORG_PROOF?.trim() || 'admin'
+  if (value !== 'admin' && value !== 'member') {
+    throw new Error('AZDO_ORG_PROOF must be admin or member')
+  }
+  // Why: in member mode any AzDO member could claim the org first, so it is a dev/test mode only.
+  if (value === 'member' && env.NODE_ENV === 'production') {
+    throw new Error('AZDO_ORG_PROOF=member is not allowed when NODE_ENV=production')
+  }
+  return value
 }
 
 function requireOrigin(name: string, value: string | undefined): string {
@@ -45,6 +61,7 @@ export function readAuthConfig(env: NodeJS.ProcessEnv = process.env): AuthConfig
     refreshTokenTtlMs: positiveInt(env.DOLPHIN_AUTH_REFRESH_TTL_DAYS, 60) * 24 * 3600 * 1000,
     relayTokenTtlSeconds: positiveInt(env.DOLPHIN_AUTH_RELAY_TOKEN_TTL_SECONDS, 3600),
     // Why only relay.use: it is the one flag the desktop reads; sharing needs a server we do not run.
-    capabilityFlags: { 'relay.use': true }
+    capabilityFlags: { 'relay.use': true },
+    azureDevOpsOrgProof: readOrgProof(env)
   }
 }
