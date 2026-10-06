@@ -196,6 +196,47 @@ export async function changeDolphinCloudOrgMemberRole(
   )
 }
 
+export type DolphinCloudAzureDevOpsLinkResponse =
+  | { status: 'connected'; organizationName: string }
+  | { status: 'not-registered' }
+  | { status: 'invalid-credentials' }
+  | { status: 'unsupported-host' }
+
+function readRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? Object.fromEntries(Object.entries(value)) : {}
+}
+
+function normalizeAzureDevOpsLinkResponse(value: unknown): DolphinCloudAzureDevOpsLinkResponse {
+  const record = readRecord(value)
+  const status = record.status
+  if (status === 'connected') {
+    const name = optionalString(readRecord(record.organization).name)
+    if (name) {
+      return { status, organizationName: name }
+    }
+  }
+  switch (status) {
+    case 'not-registered':
+    case 'invalid-credentials':
+    case 'unsupported-host':
+      return { status }
+  }
+  throw new Error('invalid_dolphin_azure_devops_link_response')
+}
+
+// The Azure DevOps token goes only into this request body; the server never stores it.
+export async function linkDolphinCloudOrgByAzureDevOps(
+  config: DolphinCloudAuthConfig,
+  session: DolphinCloudSession,
+  args: { organizationUrl: string; azureDevOpsToken: string; tokenKind: 'bearer' | 'pat' }
+): Promise<DolphinCloudAzureDevOpsLinkResponse> {
+  return requestOrgMembers(
+    `${config.apiBaseUrl}/v1/desktop/orgs/azure-devops/link`,
+    requestInit('POST', session.accessToken, args),
+    normalizeAzureDevOpsLinkResponse
+  )
+}
+
 export async function removeDolphinCloudOrgMember(
   config: DolphinCloudAuthConfig,
   session: DolphinCloudSession,
