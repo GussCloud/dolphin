@@ -33,6 +33,9 @@ services:
     restart: unless-stopped
     environment:
       DOLPHIN_AUTH_ISSUER: https://auth.${DOLPHIN_DOMAIN}
+      # admin: registering an Azure DevOps org needs a Project Collection Administrator PAT.
+      # member is for development only; the service refuses to start with it in production.
+      AZDO_ORG_PROOF: ${AZDO_ORG_PROOF:-admin}
     volumes:
       - auth-data:/data
 

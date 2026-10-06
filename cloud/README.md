@@ -12,7 +12,8 @@ the repository's root [MIT license](../LICENSE).
 ## Packages
 
 - `apps/auth`: cloud sign-in for the desktop app, the relay host tokens, the
-  JWKS the relay trusts, and the feedback endpoint.
+  JWKS the relay trusts, the feedback endpoint, and the organization web
+  console (`/console`) that links a Dolphin organization to Azure DevOps.
 - `apps/relay` and `packages/relay-contract`: the relay server and the wire
   contract it shares with the desktop and mobile apps (frame shapes, close
   codes, admission budgets, splice state machine). The same image runs as a

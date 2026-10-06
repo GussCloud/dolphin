@@ -24,7 +24,20 @@
 }
 
 auth.{$DOLPHIN_DOMAIN} {
+	# The web console has its own host, so its cookies never share an origin with desktop sign-in.
+	@console path /console /console/*
+	respond @console 404
 	reverse_proxy auth:8080
+}
+
+# Organization admin console (apps/auth, mounted under /console).
+console.{$DOLPHIN_DOMAIN} {
+	@console path /console /console/*
+	handle @console {
+		reverse_proxy auth:8080
+	}
+	redir / /console 302
+	respond 404
 }
 
 # Feedback and crash reports land on the auth service's /v1/feedback.
