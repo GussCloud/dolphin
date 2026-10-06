@@ -10,6 +10,11 @@ import {
   setAzureCliAutoRenew,
   setAzureDevOpsCliDefaults
 } from '../azure-devops/azure-devops-auth-commands'
+import type { AzureDevOpsOrgLinkStatus } from '../../shared/azure-devops-org-link'
+import {
+  getAzureDevOpsOrgLink,
+  startAzureDevOpsOrgLinkAutoCheck
+} from '../azure-devops/dolphin-org-link'
 
 function readConfigureDefaultsInput(
   value: unknown
@@ -26,6 +31,8 @@ function readConfigureDefaultsInput(
 }
 
 export function registerAzureDevOpsHandlers(): void {
+  startAzureDevOpsOrgLinkAutoCheck()
+
   ipcMain.handle(
     'azureDevOps:setAuthMethod',
     (_event, method: unknown): AzureDevOpsAuthPreference => changeAzureDevOpsAuthMethod(method)
@@ -50,4 +57,12 @@ export function registerAzureDevOpsHandlers(): void {
   ipcMain.handle('azureDevOps:refreshCliSession', (): void => refreshAzureCliSession())
 
   ipcMain.handle('azureDevOps:listRepositories', () => listAzureDevOpsRepositoriesResult())
+
+  ipcMain.handle(
+    'azureDevOps:orgLink',
+    (_event, args: unknown): Promise<AzureDevOpsOrgLinkStatus> =>
+      getAzureDevOpsOrgLink({
+        force: Boolean(args && typeof args === 'object' && 'force' in args && args.force === true)
+      })
+  )
 }

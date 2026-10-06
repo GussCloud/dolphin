@@ -25,12 +25,13 @@ const RelayClaims = z.object({
 })
 
 let dataDir: string
+let store: AuthStore
 let app: ReturnType<typeof createAuthApp>
 
 beforeEach(async () => {
   dataDir = mkdtempSync(join(tmpdir(), 'dolphin-auth-'))
   const config = readAuthConfig({ DOLPHIN_AUTH_ISSUER: ISSUER, DOLPHIN_AUTH_DATA_DIR: dataDir })
-  const store = new AuthStore(dataDir)
+  store = new AuthStore(dataDir)
   store.createUser({
     id: 'usr_1',
     email: 'dev@example.com',
@@ -39,7 +40,11 @@ beforeEach(async () => {
   app = createAuthApp({ store, config, key: await loadSigningKey(dataDir, null) })
 })
 
-afterEach(() => rmSync(dataDir, { recursive: true, force: true }))
+afterEach(() => {
+  // Why close first: Windows refuses to delete an open SQLite file (EPERM).
+  store.close()
+  rmSync(dataDir, { recursive: true, force: true })
+})
 
 function pkce() {
   const verifier = randomBytes(32).toString('base64url')

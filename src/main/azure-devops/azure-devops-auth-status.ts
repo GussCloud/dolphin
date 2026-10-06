@@ -98,8 +98,23 @@ async function getAzureCliAuthStatus(): Promise<AzureDevOpsAuthStatus> {
   }
 }
 
-export function getAzureDevOpsAuthStatus(): Promise<AzureDevOpsAuthStatus> {
-  return getAzureDevOpsAuthPreference().method === 'azure-cli'
-    ? getAzureCliAuthStatus()
-    : getTokenAuthStatus()
+type AuthStatusListener = (status: AzureDevOpsAuthStatus) => void
+
+const authStatusListeners = new Set<AuthStatusListener>()
+
+/** Observes every computed status, e.g. to react when the host becomes authenticated. */
+export function onAzureDevOpsAuthStatus(listener: AuthStatusListener): () => void {
+  authStatusListeners.add(listener)
+  return () => authStatusListeners.delete(listener)
+}
+
+export async function getAzureDevOpsAuthStatus(): Promise<AzureDevOpsAuthStatus> {
+  const status =
+    getAzureDevOpsAuthPreference().method === 'azure-cli'
+      ? await getAzureCliAuthStatus()
+      : await getTokenAuthStatus()
+  for (const listener of authStatusListeners) {
+    listener(status)
+  }
+  return status
 }

@@ -1,6 +1,8 @@
 import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 import { renderAuthorizePage, type AuthorizeParams } from './authorize-page.js'
+import { azureDevOpsLinkRoutes, type AuthedHandler } from './azure-devops-link-routes.js'
+import { createAzureDevOpsVerifier, type AzureDevOpsFetch } from './azure-devops-verifier.js'
 import type { AuthConfig } from './config.js'
 import { relayHostIdForPublicKey, signRelayToken } from './relay-token.js'
 import { hashToken, randomToken, s256Challenge, verifyPassword } from './secrets.js'
@@ -10,8 +12,9 @@ import {
   issueSession,
   organizationsFor
 } from './session-service.js'
+import { consoleRoutes } from './console-routes.js'
 import type { SigningKey } from './signing-key.js'
-import type { AuthStore, UserRow } from './store.js'
+import type { AuthStore } from './store.js'
 import { feedbackRoutes } from './feedback.js'
 
 const AUTH_CODE_TTL_MS = 5 * 60 * 1000
@@ -62,8 +65,14 @@ function redirectWith(redirectUri: string, params: Record<string, string>): stri
   return url.toString()
 }
 
-export function createAuthApp(deps: { store: AuthStore; config: AuthConfig; key: SigningKey }) {
+export function createAuthApp(deps: {
+  store: AuthStore
+  config: AuthConfig
+  key: SigningKey
+  azureDevOpsFetch?: AzureDevOpsFetch
+}) {
   const { store, config, key } = deps
+  const verifier = createAzureDevOpsVerifier(deps.azureDevOpsFetch)
   const app = new Hono()
   const now = (): number => Date.now()
 
@@ -149,7 +158,7 @@ export function createAuthApp(deps: { store: AuthStore; config: AuthConfig; key:
     return c.json(issueSession(store, config, user))
   })
 
-  const authed = (handler: (c: Context, user: UserRow, sessionId: string) => Promise<Response> | Response) =>
+  const authed: AuthedHandler = (handler) =>
     async (c: Context): Promise<Response> => {
       const header = c.req.header('authorization') ?? ''
       const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
@@ -221,6 +230,8 @@ export function createAuthApp(deps: { store: AuthStore; config: AuthConfig; key:
   )
 
   app.route('/', feedbackRoutes(store))
+  app.route('/', azureDevOpsLinkRoutes({ store, verifier, authed }))
+  app.route('/', consoleRoutes({ store, config, verifier }))
   return app
 }
 

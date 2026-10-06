@@ -4,6 +4,7 @@ import type {
   DolphinOrgPendingInvite,
   DolphinOrgRole
 } from '../../shared/dolphin-profiles'
+import type { AzureDevOpsLinkCredentialsReason } from '../../shared/azure-devops-org-link'
 import type { DolphinCloudAuthConfig } from './profile-cloud-auth-config'
 import type { DolphinCloudSession } from './profile-cloud-session-store'
 import { DolphinCloudRequestError } from './profile-cloud-client'
@@ -193,6 +194,49 @@ export async function changeDolphinCloudOrgMemberRole(
     orgMembersUrl(config, args.orgId, '/members/role'),
     requestInit('POST', session.accessToken, { userId: args.userId, role: args.role }),
     () => undefined
+  )
+}
+
+export type DolphinCloudAzureDevOpsLinkResponse =
+  | { status: 'connected'; organizationName: string }
+  | { status: 'not-registered' }
+  | { status: 'invalid-credentials'; reason?: AzureDevOpsLinkCredentialsReason }
+  | { status: 'unsupported-host' }
+
+function readRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? Object.fromEntries(Object.entries(value)) : {}
+}
+
+function normalizeAzureDevOpsLinkResponse(value: unknown): DolphinCloudAzureDevOpsLinkResponse {
+  const record = readRecord(value)
+  const status = record.status
+  if (status === 'connected') {
+    const name = optionalString(readRecord(record.organization).name)
+    if (name) {
+      return { status, organizationName: name }
+    }
+  }
+  switch (status) {
+    case 'not-registered':
+    case 'unsupported-host':
+      return { status }
+    case 'invalid-credentials':
+      // Why: unknown reasons from newer servers fall back to the generic message.
+      return record.reason === 'public-org-scope' ? { status, reason: record.reason } : { status }
+  }
+  throw new Error('invalid_dolphin_azure_devops_link_response')
+}
+
+// The Azure DevOps token goes only into this request body; the server never stores it.
+export async function linkDolphinCloudOrgByAzureDevOps(
+  config: DolphinCloudAuthConfig,
+  session: DolphinCloudSession,
+  args: { organizationUrl: string; azureDevOpsToken: string; tokenKind: 'bearer' | 'pat' }
+): Promise<DolphinCloudAzureDevOpsLinkResponse> {
+  return requestOrgMembers(
+    `${config.apiBaseUrl}/v1/desktop/orgs/azure-devops/link`,
+    requestInit('POST', session.accessToken, args),
+    normalizeAzureDevOpsLinkResponse
   )
 }
 

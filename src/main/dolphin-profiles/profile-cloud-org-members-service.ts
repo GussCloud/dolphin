@@ -31,7 +31,7 @@ import {
   revokeDevDolphinCloudOrgInvite
 } from './profile-cloud-dev-org-members'
 
-type OrgCallResult<T> =
+export type OrgCallResult<T> =
   | { status: 'ok'; value: T }
   | { status: 'reconnect-required' }
   | { status: 'request-error'; error: DolphinCloudRequestError }
@@ -42,7 +42,7 @@ type OrgCallResult<T> =
 // must interpret, so they are surfaced as values rather than thrown — otherwise
 // runWithFreshDolphinCloudSession would treat a 403 as an auth failure and burn a
 // pointless token refresh + retry before giving up.
-async function runOrgMemberCall<T>(
+export async function runOrgMemberCall<T>(
   config: DolphinCloudAuthConfig,
   active: ActiveDolphinProfileState,
   userDataPath: string,

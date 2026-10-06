@@ -6,5 +6,6 @@ export const azureDevOpsApi = {
   configureCliDefaults: (args) => ipcRenderer.invoke('azureDevOps:configureCliDefaults', args),
   setCliAutoRenew: (enabled) => ipcRenderer.invoke('azureDevOps:setCliAutoRenew', enabled),
   refreshCliSession: () => ipcRenderer.invoke('azureDevOps:refreshCliSession'),
-  listRepositories: () => ipcRenderer.invoke('azureDevOps:listRepositories')
+  listRepositories: () => ipcRenderer.invoke('azureDevOps:listRepositories'),
+  orgLink: (args) => ipcRenderer.invoke('azureDevOps:orgLink', args)
 } satisfies PreloadApi['azureDevOps']

@@ -8,6 +8,7 @@ import type {
   DolphinCloudSessionPersistence
 } from '../../shared/dolphin-profiles'
 import { getDolphinProfileDirectory } from './profile-storage-paths'
+import { emitDolphinCloudSignedIn } from './profile-cloud-sign-in-events'
 import { allowsPlaintextDolphinCloudSession } from './profile-cloud-auth-config'
 import type { DolphinCloudSessionExchangeResponse } from './profile-cloud-session-exchange'
 import {
@@ -160,13 +161,15 @@ export function saveDolphinCloudSessionExchange(
   exchange: DolphinCloudSessionExchangeResponse
 ): DolphinCloudSessionPersistence {
   recordSuccessfulCloudSessionLogin(cloudSessionIdentity(profileId, exchange.cloud), userDataPath)
-  return saveDolphinCloudSession(profileId, userDataPath, {
+  const persistence = saveDolphinCloudSession(profileId, userDataPath, {
     accessToken: exchange.accessToken,
     refreshToken: exchange.refreshToken,
     expiresAt: exchange.expiresAt,
     organizations: exchange.organizations,
     capabilities: exchange.capabilities
   })
+  emitDolphinCloudSignedIn()
+  return persistence
 }
 
 export function saveDolphinCloudSessionIfCurrent(

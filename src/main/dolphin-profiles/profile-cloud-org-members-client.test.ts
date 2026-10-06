@@ -5,6 +5,7 @@ import { DolphinCloudRequestError } from './profile-cloud-client'
 import {
   changeDolphinCloudOrgMemberRole,
   inviteDolphinCloudOrgMember,
+  linkDolphinCloudOrgByAzureDevOps,
   listDolphinCloudOrgMembers,
   removeDolphinCloudOrgMember,
   revokeDolphinCloudOrgInvite
@@ -151,5 +152,54 @@ describe('Dolphin cloud org members client', () => {
       'https://dolphin-cloud.example/v1/desktop/orgs/org-1/invites/revoke',
       expect.objectContaining({ body: JSON.stringify({ email: 'gone@example.com' }) })
     )
+  })
+
+  it('posts the Azure DevOps link and reads the Dolphin organization name', async () => {
+    mockJsonResponse({
+      status: 'connected',
+      organization: { id: 'corg_1', name: 'Contoso' },
+      azureDevOps: { organizationName: 'contoso', instanceId: 'guid' }
+    })
+    const args = {
+      organizationUrl: 'https://dev.azure.com/contoso',
+      azureDevOpsToken: 'entra-token',
+      tokenKind: 'bearer' as const
+    }
+    await expect(linkDolphinCloudOrgByAzureDevOps(config, session, args)).resolves.toEqual({
+      status: 'connected',
+      organizationName: 'Contoso'
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://dolphin-cloud.example/v1/desktop/orgs/azure-devops/link',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(args) })
+    )
+  })
+
+  it('keeps only the known invalid-credentials reason', async () => {
+    const args = {
+      organizationUrl: 'https://dev.azure.com/contoso',
+      azureDevOpsToken: 't',
+      tokenKind: 'pat' as const
+    }
+    mockJsonResponse({ status: 'invalid-credentials', reason: 'public-org-scope' })
+    await expect(linkDolphinCloudOrgByAzureDevOps(config, session, args)).resolves.toEqual({
+      status: 'invalid-credentials',
+      reason: 'public-org-scope'
+    })
+    mockJsonResponse({ status: 'invalid-credentials', reason: 'something-new' })
+    await expect(linkDolphinCloudOrgByAzureDevOps(config, session, args)).resolves.toEqual({
+      status: 'invalid-credentials'
+    })
+  })
+
+  it('rejects malformed Azure DevOps link responses', async () => {
+    mockJsonResponse({ status: 'connected', organization: {} })
+    await expect(
+      linkDolphinCloudOrgByAzureDevOps(config, session, {
+        organizationUrl: 'https://dev.azure.com/contoso',
+        azureDevOpsToken: 't',
+        tokenKind: 'pat'
+      })
+    ).rejects.toThrow('invalid_dolphin_azure_devops_link_response')
   })
 })
