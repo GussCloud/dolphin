@@ -68,7 +68,7 @@ Sent on graceful quit or sign-out. The room leaves immediately with the goodbye 
 ## Liveness (auth server)
 
 Presence is held in memory (one auth instance). For each machine:
-- No snapshot for 45 s: the machine is `offline`. A dev whose machines are all offline is drawn greyed with "sem sinal".
+- No snapshot for 60 s (three missed heartbeats): the machine is `offline`. Every online / offline / back online / dropped / goodbye transition is logged as `[work-presence]`. A dev whose machines are all offline is drawn greyed with "sem sinal".
 - 120 s more without a snapshot: the machine is dropped, and the room plays the goodbye and closes once no machine is left.
 - A new snapshot at any time revives it.
 

@@ -8,6 +8,8 @@ import type { DolphinCloudSession } from '../dolphin-profiles/profile-cloud-sess
 import { cancelUnreadResponseBody } from '../lib/unread-response-body'
 import type { WorkPresenceSnapshot } from './work-presence-snapshot'
 
+const WORK_PRESENCE_REQUEST_TIMEOUT_MS = 10_000
+
 export type WorkPresencePutResponse = { heartbeatMs: number | null }
 
 function workPresenceUrl(config: DolphinCloudAuthConfig): string {
@@ -32,10 +34,11 @@ export async function putDolphinCloudWorkPresence(
   session: DolphinCloudSession,
   snapshot: WorkPresenceSnapshot
 ): Promise<WorkPresencePutResponse> {
-  const response = await fetch(
-    workPresenceUrl(config),
-    cloudBearerRequestInit('PUT', session.accessToken, snapshot)
-  )
+  const response = await fetch(workPresenceUrl(config), {
+    ...cloudBearerRequestInit('PUT', session.accessToken, snapshot),
+    // Why shorter than the cloud default: a hung PUT must fail and retry inside the 60s offline window.
+    signal: AbortSignal.timeout(WORK_PRESENCE_REQUEST_TIMEOUT_MS)
+  })
   if (!response.ok) {
     throw new DolphinCloudRequestError(response.status, await extractErrorCode(response))
   }
