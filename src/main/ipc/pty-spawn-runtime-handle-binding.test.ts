@@ -112,7 +112,10 @@ describe('registerPtyHandlers', () => {
     )
   })
   it('gives SSH Agent Teams leaders the in-process teams flag, never the host shim env', async () => {
-    const spawn = vi.fn(async () => ({ id: 'remote-teams-pty' }))
+    const spawn = vi.fn(async (_opts: { env?: Record<string, string> }) => ({
+      id: 'remote-teams-pty'
+    }))
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: test double implements only the provider methods pty:spawn reaches.
     registerSshPtyProvider('ssh-teams', {
       spawn,
       write: vi.fn(),
@@ -151,12 +154,10 @@ describe('registerPtyHandlers', () => {
       env: { EXISTING: '1' }
     })
 
-    const env = (spawn.mock.calls.at(-1) as unknown[] | undefined)?.[0] as {
-      env: Record<string, string>
-    }
-    expect(env.env).toMatchObject({ EXISTING: '1', CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' })
-    expect(env.env.TMUX).toBeUndefined()
-    expect(env.env.DOLPHIN_AGENT_TEAMS_TEAM_ID).toBeUndefined()
+    const env = spawn.mock.lastCall?.[0].env
+    expect(env).toMatchObject({ EXISTING: '1', CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' })
+    expect(env?.TMUX).toBeUndefined()
+    expect(env?.DOLPHIN_AGENT_TEAMS_TEAM_ID).toBeUndefined()
     expect(runtime.prepareClaudeAgentTeamsLeaderForHandle).not.toHaveBeenCalled()
   })
   it('refreshes captured native Agent Teams env for renderer PTY spawns', async () => {
