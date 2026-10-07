@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { UI_LANGUAGE_ENGLISH, UI_LANGUAGE_PORTUGUESE_BRAZIL } from '../../shared/ui-language'
+import { setMainUiLanguage } from '../i18n/main-i18n'
 
 const { showMessageBoxMock } = vi.hoisted(() => ({
   showMessageBoxMock: vi.fn()
 }))
 
 vi.mock('electron', () => ({
+  app: { getLocale: () => 'en-US' },
   dialog: { showMessageBox: showMessageBoxMock }
 }))
 
 import { promptForGpuFallbackRestart } from './gpu-fallback-restart-prompt'
 
-beforeEach(() => {
+beforeEach(async () => {
   showMessageBoxMock.mockReset()
+  await setMainUiLanguage(UI_LANGUAGE_ENGLISH)
 })
 
 describe('promptForGpuFallbackRestart', () => {
@@ -37,5 +41,15 @@ describe('promptForGpuFallbackRestart', () => {
 
     await expect(promptForGpuFallbackRestart()).resolves.toBe('continue')
     expect(showMessageBoxMock).toHaveBeenCalledOnce()
+  })
+})
+
+describe('promptForGpuFallbackRestart localization', () => {
+  it('reads the dialog copy in the selected UI language at prompt time', async () => {
+    await setMainUiLanguage(UI_LANGUAGE_PORTUGUESE_BRAZIL)
+    showMessageBoxMock.mockResolvedValue({ response: 0 })
+
+    await promptForGpuFallbackRestart()
+    expect(showMessageBoxMock.mock.calls[0][0].buttons[0]).toBe('Reiniciar no Modo Gráfico Seguro')
   })
 })
