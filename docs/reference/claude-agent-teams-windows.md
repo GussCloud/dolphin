@@ -63,7 +63,8 @@ Git Bash echoes typed input slowly: a ~400-character teammate command took ~55s 
   the same argv started from any process in that tree takes ~5s, most likely AV/EDR
   command-line scanning. Don't chase it in the pane or shim code.
 
-macOS, Linux, WSL and SSH teams keep the placeholder split and type the command as-is.
+macOS, Linux and WSL teams keep the placeholder split and type the command as-is. SSH leaders
+have no panes (see below).
 
 ### Closed panes leave no dead pane
 
@@ -119,10 +120,27 @@ an extensionless script is ignored.
 
 Native panes degrade to Claude's in-process teammates (one terminal) instead of failing
 when the leader is native Windows and Git Bash does not resolve, or when no absolute
-Dolphin CLI can back the shim. WSL and SSH leaders do not need Git Bash, and a WSL leader
-does not need the Windows shim CLI either (`canLaunchAgentTeamPanes` `leaderIsWsl`): its guest
-tmux shim calls the guest launcher directly. A WSL leader whose team cannot be prepared starts
+Dolphin CLI can back the shim. WSL leaders do not need Git Bash or the Windows shim CLI
+(`canLaunchAgentTeamPanes` `leaderIsWsl`): their guest tmux shim calls the guest launcher
+directly. A WSL leader whose team cannot be prepared starts
 `claude --teammate-mode in-process` with a one-line notice instead of failing.
+
+## SSH leaders are always in-process
+
+An SSH leader gets no teammate panes. `dolphin claude-teams` cannot run there: the remote
+`dolphin` is the relay CLI bridge, a buffered one-shot call that refuses interactive commands
+(`ssh-remote-dolphin-cli.ts`), and it refuses `agent-teams-tmux` for the same reason. The team
+env would also be wrong on the remote: `TMUX`, the shim dir on `PATH`, and
+`DOLPHIN_AGENT_TEAMS_SHIM_BIN` are paths on the Dolphin machine, and the relay shell overlay
+does not restore an agent-teams `PATH`.
+
+So `remoteLaunchCmd` in `tui-agent-config.ts` launches `claude --teammate-mode in-process` on
+every SSH remote, and PTY spawn adds only `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
+(`resolveSshClaudeAgentTeamsLeaderEnv` for renderer spawns; `sshLeader` in
+`buildClaudeAgentTeamsLaunchPlan` for runtime-created terminals, which also keeps the shim env off an older
+`--teammate-mode auto` launch). Teammates then share the leader's terminal.
+Real panes over SSH would need a relay-side tmux shim that routes to the client's pane API;
+none exists.
 
 ## Re-verifying against a new Claude version
 

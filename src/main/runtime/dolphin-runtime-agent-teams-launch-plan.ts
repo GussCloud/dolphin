@@ -19,6 +19,8 @@ export async function buildRuntimeAgentTeamsLaunchPlan(args: {
   adoptedBeforeLaunch: boolean
   /** Leader execution host; decides whether native-Windows Git Bash is required. */
   hostShell?: AgentTeamHostShell | null
+  /** SSH leaders keep teammates in-process: the tmux shim and its CLI live only on this machine. */
+  sshLeader?: boolean
   createTeamEnv: (
     shimDir: string,
     shimBin: string,
@@ -44,6 +46,7 @@ export async function buildRuntimeAgentTeamsLaunchPlan(args: {
           mode,
           baseEnv: args.baseEnv,
           hostShell: args.hostShell,
+          sshLeader: args.sshLeader,
           createTeamEnv: args.createTeamEnv
         })
       )

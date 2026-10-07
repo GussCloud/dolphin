@@ -46,7 +46,7 @@ const HOST_INTERACTIVE_COMMANDS: Record<string, string> = {
   serve:
     'dolphin serve starts a foreground headless Dolphin server and cannot run through the SSH relay bridge. Run it directly on the machine that should host Dolphin.',
   'claude-teams':
-    'dolphin claude-teams starts an interactive Claude Code session and cannot run through the SSH relay bridge. Run it in a terminal on the Dolphin host machine.',
+    'dolphin claude-teams starts an interactive Claude Code session and cannot run through the SSH relay bridge. Start Claude Agent Teams from the Dolphin agent picker instead; on SSH hosts its teammates run in-process.',
   'agent-teams-tmux':
     'dolphin agent-teams-tmux is a tmux pane shim for the Dolphin host machine and cannot run through the SSH relay bridge.',
   'account add':

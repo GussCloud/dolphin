@@ -70,6 +70,8 @@ export async function buildClaudeAgentTeamsLaunchPlan(args: {
   platform?: NodeJS.Platform
   /** 'default' (WSL, SSH) runs teammates in the pane's own POSIX shell; unknown or native Windows needs Git Bash. */
   hostShell?: AgentTeamHostShell | null
+  /** SSH leaders cannot reach the host-local tmux shim, so teammates stay in-process. */
+  sshLeader?: boolean
   resolveGitBash?: () => string | null
   bundledTmuxDir?: string | null
 }): Promise<ClaudeAgentTeamsLaunchPlan | null> {
@@ -77,7 +79,7 @@ export async function buildClaudeAgentTeamsLaunchPlan(args: {
   if (!args.command || mode === 'off' || !isDirectClaudeCommand(args.command)) {
     return null
   }
-  if (mode === 'in-process') {
+  if (mode === 'in-process' || args.sshLeader) {
     return inProcessPlan(args.command)
   }
   const platform = args.platform ?? process.platform
@@ -112,12 +114,34 @@ export async function buildClaudeAgentTeamsLaunchPlan(args: {
   }
 }
 
+function inProcessTeamsEnv(): Record<string, string> {
+  return { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' }
+}
+
 function inProcessPlan(command: string): ClaudeAgentTeamsLaunchPlan {
   return {
     command: addClaudeTeammateModeInProcess(command),
-    env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' },
+    env: inProcessTeamsEnv(),
     teammateMode: 'in-process'
   }
+}
+
+/**
+ * Teams env for an SSH leader's direct `claude --teammate-mode …` launch, or null for any other
+ * launch. Never the TMUX/shim env: those paths and the shim CLI exist only on this machine.
+ */
+export function resolveSshClaudeAgentTeamsLeaderEnv(args: {
+  command?: string
+  launchConfig?: { agentCommand?: string; agentArgs?: string }
+}): Record<string, string> | null {
+  const capturedCommand = args.launchConfig?.agentCommand?.trim() || args.command?.trim() || ''
+  if (!isDirectClaudeCommand(capturedCommand)) {
+    return null
+  }
+  const capturedLaunch = `${capturedCommand} ${args.launchConfig?.agentArgs?.trim() ?? ''}`
+  return /(^|\s)--teammate-mode(?:=|\s+)(?:auto|in-process)(?:\s|$)/.test(capturedLaunch)
+    ? inProcessTeamsEnv()
+    : null
 }
 
 /** Absolute path to the Dolphin CLI that backs the tmux shim, or null when none can be qualified. */
