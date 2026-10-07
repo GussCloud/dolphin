@@ -160,6 +160,33 @@ describe('areWorktreeListsEqual', () => {
     expect(areWorktreeListsEqual(first, second)).toBe(false)
   })
 
+  it('detects teammate changes on an agent row', () => {
+    const teammate = {
+      id: 't1',
+      description: 'researcher',
+      state: 'working',
+      startedAt: 1
+    }
+    const first = [worktree({ agents: [Object.assign(agent(), { subagents: [teammate] })] })]
+    const second = [
+      worktree({
+        agents: [
+          Object.assign(agent(), {
+            subagents: [{ ...teammate, state: 'idle' }]
+          })
+        ]
+      })
+    ]
+    expect(areWorktreeListsEqual(first, second)).toBe(false)
+    expect(
+      areWorktreeListsEqual(first, [
+        worktree({
+          agents: [Object.assign(agent(), { subagents: [teammate] })]
+        })
+      ])
+    ).toBe(true)
+  })
+
   it('detects monitoring mode changes within working', () => {
     const first = [worktree({ agents: [agent({ state: 'working' })] })]
     const second = [worktree({ agents: [agent({ state: 'working', workingMode: 'monitoring' })] })]

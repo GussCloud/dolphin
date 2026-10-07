@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
 import { colors, spacing } from '../theme/mobile-theme'
 import { agentDisplayLabel, agentDotState, formatTimeAgo } from '../worktree/agent-row-display'
+import type { AgentRowSubagent } from '../worktree/agent-row-subagents'
 import { AgentStateDot } from './AgentStateDot'
 import { MobileAgentIcon } from './MobileAgentIcon'
 
@@ -39,6 +40,29 @@ function WorktreeAgentRowComponent({ agent, depth, now, unvisited }: Props) {
 }
 
 export const WorktreeAgentRow = memo(WorktreeAgentRowComponent)
+
+// A teammate/subagent of the row above: no PTY of its own, so it shows identity and state only.
+function WorktreeAgentSubagentRowComponent(props: {
+  subagent: AgentRowSubagent
+  depth: number
+  now: number
+}) {
+  const { subagent } = props
+  return (
+    <View
+      style={[styles.row, { paddingLeft: props.depth * INDENT_PER_DEPTH }]}
+      accessibilityLabel={`Teammate ${subagent.name}, ${subagent.stateLabel}`}
+    >
+      <AgentStateDot state={subagent.dotState} />
+      <Text style={styles.label} numberOfLines={1}>
+        {`${subagent.name} · ${subagent.stateLabel}`}
+      </Text>
+      <Text style={styles.time}>{formatTimeAgo(subagent.startedAt, props.now)}</Text>
+    </View>
+  )
+}
+
+export const WorktreeAgentSubagentRow = memo(WorktreeAgentSubagentRowComponent)
 
 const styles = StyleSheet.create({
   row: {

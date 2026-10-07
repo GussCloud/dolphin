@@ -1,4 +1,5 @@
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
+import { agentRowSubagentsSignature } from './agent-row-subagents'
 import type { Worktree } from './workspace-list-sections'
 
 export function areWorktreeListsEqual(
@@ -111,7 +112,8 @@ function areAgentRowsEqual(
       a.toolInput !== b.toolInput ||
       a.interrupted !== b.interrupted ||
       a.stateStartedAt !== b.stateStartedAt ||
-      a.updatedAt !== b.updatedAt
+      a.updatedAt !== b.updatedAt ||
+      agentRowSubagentsSignature(a) !== agentRowSubagentsSignature(b)
     ) {
       return false
     }
