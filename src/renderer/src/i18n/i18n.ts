@@ -133,6 +133,10 @@ export function setRendererPluginLanguagePacks(
   for (const language of registeredPluginLanguages) {
     i18n.removeResourceBundle(language, 'translation')
   }
+  if (registeredPluginLanguages.size > 0) {
+    // Why: removeResourceBundle also drops 'translation' from options.ns, which silently stops later lazy locale loads.
+    void i18n.loadNamespaces('translation')
+  }
   registeredPluginLanguages.clear()
   pluginLanguagePacks = packs
   for (const pack of packs) {
