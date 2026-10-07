@@ -4,7 +4,7 @@ import type { filesEn } from './en'
 export const filesZh: MobileLocaleMessages<typeof filesEn> = {
   // Explorer
   title: '文件',
-  worktreeShowingFirst: '{worktree} - 仅显示前 {count} 个',
+  showingFirstSuffix: ' - 仅显示前 {count} 个',
   closeFiles: '关闭文件',
   backToSession: '返回会话',
   retry: '重试',

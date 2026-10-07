@@ -4,7 +4,7 @@ import type { filesEn } from './en'
 export const filesKo: MobileLocaleMessages<typeof filesEn> = {
   // Explorer
   title: '파일',
-  worktreeShowingFirst: '{worktree} - 처음 {count}개만 표시',
+  showingFirstSuffix: ' - 처음 {count}개만 표시',
   closeFiles: '파일 닫기',
   backToSession: '세션으로 돌아가기',
   retry: '다시 시도',

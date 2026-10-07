@@ -322,9 +322,8 @@ export function MobileFileExplorerPanel(props: {
           {t('title')}
         </Text>
         <Text style={styles.meta} numberOfLines={1}>
-          {legacyListTruncated
-            ? t('worktreeShowingFirst', { worktree: worktreeLabel, count: 5000 })
-            : worktreeLabel}
+          {worktreeLabel}
+          {legacyListTruncated ? t('showingFirstSuffix', { count: 5000 }) : ''}
         </Text>
       </View>
     </View>

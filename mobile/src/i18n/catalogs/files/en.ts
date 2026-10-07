@@ -3,7 +3,7 @@ import type { MobileCatalogSource } from '../../mobile-i18n-catalog'
 export const filesEn = {
   // Explorer
   title: 'Files',
-  worktreeShowingFirst: '{worktree} - Showing first {count}',
+  showingFirstSuffix: ' - Showing first {count}',
   closeFiles: 'Close files',
   backToSession: 'Back to session',
   retry: 'Retry',

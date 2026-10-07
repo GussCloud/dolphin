@@ -4,7 +4,7 @@ import type { filesEn } from './en'
 export const filesJa: MobileLocaleMessages<typeof filesEn> = {
   // Explorer
   title: 'ファイル',
-  worktreeShowingFirst: '{worktree} - 最初の {count} 件を表示',
+  showingFirstSuffix: ' - 最初の {count} 件を表示',
   closeFiles: 'ファイルを閉じる',
   backToSession: 'セッションに戻る',
   retry: '再試行',

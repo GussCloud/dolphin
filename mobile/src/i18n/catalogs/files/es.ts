@@ -4,7 +4,7 @@ import type { filesEn } from './en'
 export const filesEs: MobileLocaleMessages<typeof filesEn> = {
   // Explorer
   title: 'Archivos',
-  worktreeShowingFirst: '{worktree} - Se muestran los primeros {count}',
+  showingFirstSuffix: ' - Se muestran los primeros {count}',
   closeFiles: 'Cerrar archivos',
   backToSession: 'Volver a la sesión',
   retry: 'Reintentar',
