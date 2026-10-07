@@ -38,9 +38,10 @@ export function mobileWebAppBundleMaxAssets(routeCount, imageCount) {
  * refused asset on a phone. Splitting barely moves it — the same code is emitted in more files —
  * so shrinking this still means cutting code.
  *
- * This head reads 7,686,714 bytes of the 9,437,184 here, 81.5%, leaving 1,750,470. A reading and
- * not a pin: nothing asserts it, because the number moves with every build. It is here so the
- * generation that spends the rest can see it was already this close.
+ * This head reads 8,456,202 bytes of the 9,437,184 here, 89.6%, leaving 980,982. The mobile i18n
+ * catalogs, every string in seven locales, spent 650,737 of it: the head before them read 7,805,465.
+ * A reading and not a pin: nothing asserts it, because the number moves with every build. It is here
+ * so the generation that spends the rest can see it was already this close.
  */
 export const MOBILE_WEB_APP_BUNDLE_MAX_TOTAL_BYTES = 9 * 1024 * 1024
 
@@ -50,9 +51,17 @@ export const MOBILE_WEB_APP_BUNDLE_MAX_TOTAL_BYTES = 9 * 1024 * 1024
  * A chunk is emitted per distinct set of importers, not per route, so a route's marginal cost is
  * what it fails to share rather than what it weighs. Re-measured on this head by building
  * `routes.slice(0, n)` for every n, which is what the fence below is derived from rather than
- * fitted to. The spread it shows is 1 to 9: `pr` and `web` add one script each, `review` adds nine.
- * The root `./_layout.tsx` (the page's web sibling of the native root) sorts first; with it the
- * swept tree reads 69 scripts at 16 routes, the old 15 read 67 on the same head.
+ * fitted to. The spread it shows is 1 to 9: `pr` and `web` add one script each, `index` and
+ * `session` nine. The root `./_layout.tsx` (the page's web sibling of the native root) sorts first.
+ *
+ * The swept tree reads 77 scripts at 16 routes with no route added, where the head before it read
+ * 71 against a table still saying 69. The cause is the mobile i18n catalogs
+ * (`mobile/src/i18n/catalogs/<namespace>`): each is a module set per feature, and a namespace whose
+ * set of importing routes no other module shares is a chunk of its own — `session`,
+ * `components`, `host-routes`, `transport` and `mobile-web-shell` each emit one, and the language
+ * preference the root layout now reads moved `mirrored-storage-keys` into another. Every prefix
+ * from `accounts` on moved, by up to seven at `index` (37 to 44). That is new shared code, not a
+ * refactor, so it is re-measured here rather than spent from the margin.
  *
  * This table is the fence's only input, so a route added to the tree stales it and the pins beside
  * the fence fail until it is re-measured. That is the point: the bound is re-derived, never bumped.
@@ -60,20 +69,20 @@ export const MOBILE_WEB_APP_BUNDLE_MAX_TOTAL_BYTES = 9 * 1024 * 1024
 export const MOBILE_WEB_APP_BUNDLE_SCRIPT_SWEEP = [
   ['./_layout.tsx', 3],
   ['./h/[hostId]/[...page].tsx', 7],
-  ['./h/[hostId]/accounts.tsx', 9],
-  ['./h/[hostId]/agent-history/[worktreeId].tsx', 13],
-  ['./h/[hostId]/edit.tsx', 18],
-  ['./h/[hostId]/files/[worktreeId].tsx', 21],
-  ['./h/[hostId]/files/preview/[worktreeId].tsx', 28],
-  ['./h/[hostId]/history/[worktreeId].tsx', 30],
-  ['./h/[hostId]/index.tsx', 35],
-  ['./h/[hostId]/pr/[worktreeId].tsx', 36],
-  ['./h/[hostId]/review/[worktreeId].tsx', 45],
-  ['./h/[hostId]/session/[worktreeId].tsx', 54],
-  ['./h/[hostId]/source-control/[worktreeId].tsx', 59],
-  ['./h/[hostId]/tasks.tsx', 66],
-  ['./h/[hostId]/web.tsx', 67],
-  ['./h/_layout.tsx', 69]
+  ['./h/[hostId]/accounts.tsx', 10],
+  ['./h/[hostId]/agent-history/[worktreeId].tsx', 16],
+  ['./h/[hostId]/edit.tsx', 21],
+  ['./h/[hostId]/files/[worktreeId].tsx', 25],
+  ['./h/[hostId]/files/preview/[worktreeId].tsx', 33],
+  ['./h/[hostId]/history/[worktreeId].tsx', 35],
+  ['./h/[hostId]/index.tsx', 44],
+  ['./h/[hostId]/pr/[worktreeId].tsx', 45],
+  ['./h/[hostId]/review/[worktreeId].tsx', 53],
+  ['./h/[hostId]/session/[worktreeId].tsx', 62],
+  ['./h/[hostId]/source-control/[worktreeId].tsx', 67],
+  ['./h/[hostId]/tasks.tsx', 74],
+  ['./h/[hostId]/web.tsx', 75],
+  ['./h/_layout.tsx', 77]
 ]
 
 const sweptScripts = MOBILE_WEB_APP_BUNDLE_SCRIPT_SWEEP.map(([, scripts]) => scripts)
@@ -93,7 +102,7 @@ export const MOBILE_WEB_APP_BUNDLE_ROUTE_SCRIPT_SPREAD = sweptScripts
  * the page's second Zod moved it by one everywhere. Four is that worst step, which is what a shared
  * importer set moving between heads costs. Summing the steps instead would grow this number every
  * head and loosen the fence for free. A refactor inside four keeps building; anything past it
- * re-measures the sweep.
+ * re-measures the sweep, as the i18n catalogs did (seven at `index`).
  */
 export const MOBILE_WEB_APP_BUNDLE_SCRIPT_MARGIN = 4
 
@@ -134,7 +143,7 @@ export function mobileWebAppBundleMaxChunks(routeCount) {
 /**
  * What the browser must parse before the first route can paint: the entry plus every chunk it
  * reaches by static import. This is the budget splitting exists to hold — it was 8.16 MB as one
- * chunk and measures 1,244,312 bytes split on this head, 1.19 of the 3 MiB — so a route
+ * chunk and measures 1,370,616 bytes split on this head, 1.31 of the 3 MiB — so a route
  * re-imported statically, or `splitting` dropped, fails the build here instead of arriving as a
  * slow first open on a phone.
  *
