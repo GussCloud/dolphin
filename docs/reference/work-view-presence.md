@@ -56,6 +56,11 @@ Full snapshot of one machine, idempotent. Sent on change (debounced ~1 s) and as
 
 Limits: ≤ 50 projects, ≤ 100 agents per machine; `branch` nullable (folder workspaces), max 120 chars.
 
+Forward compatibility (desktops and the auth server update independently, see [remote-wire-compatibility.md](./remote-wire-compatibility.md)):
+- `schemaVersion` is any integer ≥ 1. A later version may only add fields; the server strips fields it does not know and reads the v1 ones. A change that alters or removes a v1 field needs a new route, not a version bump.
+- An agent `state` the server does not know (any string up to 40 chars) is shown as `idle` rather than rejecting the snapshot, so a newer desktop never greys its room. Adding a state therefore means updating the server first and the desktop mapping second.
+- Anything else outside the limits above still rejects the whole snapshot with `400 { "error": "invalid_request" }`.
+
 Responses:
 - `200 { "organizationId": "corg_…", "heartbeatMs": 20000 }`
 - `404 { "error": "no_organization" }`: the account is in no corporate org; retry after 10 minutes.

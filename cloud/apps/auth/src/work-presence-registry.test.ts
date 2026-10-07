@@ -93,9 +93,31 @@ describe('WorkPresenceRegistry', () => {
     const agents = Array.from({ length: 60 }, (_, i) => ({ id: `a${i}`, cli: 'codex', state: 'idle', branch: null }))
     const tooMany = { ...snapshot('m1'), projects: [{ id: 'p1', name: 'x', agents }, { id: 'p2', name: 'y', agents }] }
     expect(WorkPresenceSnapshot.safeParse(tooMany).success).toBe(false)
-    const badState = { ...snapshot('m1'), projects: [{ ...dolphin(), agents: [{ id: 'a', cli: 'x', state: 'done', branch: null }] }] }
+    const badState = { ...snapshot('m1'), projects: [{ ...dolphin(), agents: [{ id: 'a', cli: 'x', state: null, branch: null }] }] }
     expect(WorkPresenceSnapshot.safeParse(badState).success).toBe(false)
     expect(WorkPresenceSnapshot.safeParse({ ...snapshot('m1'), machineId: '../etc' }).success).toBe(false)
     expect(WorkPresenceSnapshot.safeParse(snapshot('m1', [dolphin()])).success).toBe(true)
+  })
+})
+
+describe('WorkPresenceSnapshot', () => {
+  const raw = (state: unknown, schemaVersion: unknown = 1) => ({
+    schemaVersion,
+    machineId: 'm1',
+    machineLabel: 'host',
+    projects: [{ id: 'p1', name: 'dolphin', agents: [{ id: 'a1', cli: 'claude', state, branch: null }] }]
+  })
+  const stateOf = (input: unknown) => WorkPresenceSnapshot.parse(input).projects[0]?.agents[0]?.state
+
+  it('keeps known states and degrades unknown ones to idle', () => {
+    expect(stateOf(raw('permission'))).toBe('permission')
+    expect(stateOf(raw('some-future-state'))).toBe('idle')
+    expect(WorkPresenceSnapshot.safeParse(raw(42)).success).toBe(false)
+  })
+
+  it('accepts forward schema versions and rejects invalid ones', () => {
+    expect(stateOf(raw('working', 3))).toBe('working')
+    expect(WorkPresenceSnapshot.safeParse(raw('working', 0)).success).toBe(false)
+    expect(WorkPresenceSnapshot.safeParse(raw('working', 1.5)).success).toBe(false)
   })
 })
