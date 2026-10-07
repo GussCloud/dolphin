@@ -1,4 +1,9 @@
-import type { AgentStatusState, AgentType, AgentWorkingMode } from './agent-status-types'
+import type {
+  AgentStatusState,
+  AgentSubagentSnapshot,
+  AgentType,
+  AgentWorkingMode
+} from './agent-status-types'
 import type { BaseRefSearchResult, Repo } from './repo-types'
 import type { CreateWorktreeResult, RemoveWorktreeResult } from './worktree/create-types'
 import type {
@@ -28,6 +33,9 @@ export type RuntimeWorktreeAgentRow = {
   /** The structured session host still runs this row's provider child, so it is fresh regardless
    *  of age. Optional on the wire: old hosts never send it. */
   structuredHostOwned?: true
+  /** Live in-process subagents/teammates from the pane's status entry; omitted when none.
+   *  Optional on the wire: old hosts never send it and old clients ignore it. */
+  subagents?: AgentSubagentSnapshot[]
 }
 
 export type RuntimeWorktreePsSummary = {
