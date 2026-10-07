@@ -2,10 +2,13 @@ import { Platform } from 'react-native'
 import { classifyConnection, verdictDisplayLabel } from '../transport/connection-health'
 import { computeActiveTerminalKeyboardLift } from '../terminal/terminal-keyboard-avoidance-lift'
 import { useInitialSessionTerminalAutoCreate } from './use-initial-session-terminal-autocreate'
-import { MOBILE_SESSION_STATUS_LABELS } from './mobile-session-route-helpers'
+import { MOBILE_SESSION_STATUS_LABEL_KEYS } from './mobile-session-route-helpers'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import type { MobileSessionBulkCloseModel } from './use-mobile-session-bulk-close'
 
 export function useMobileSessionPresentation(scope: MobileSessionBulkCloseModel) {
+  const t = useMobileTranslation(sessionCatalog)
   const {
     created,
     worktreeId,
@@ -64,15 +67,13 @@ export function useMobileSessionPresentation(scope: MobileSessionBulkCloseModel)
   const terminalSummary =
     connState === 'connected'
       ? showLoadingState
-        ? 'Loading tabs'
-        : visibleTabs.length === 1
-          ? '1 tab'
-          : `${visibleTabs.length} tabs`
+        ? t('loadingTabs')
+        : t('tabCount', { count: visibleTabs.length })
       : showConnectionRetry
-        ? `${verdictDisplayLabel(connectionVerdict)} — tap to retry`
+        ? t('connectionTapToRetry', { status: verdictDisplayLabel(connectionVerdict) })
         : connectionEscalated
           ? verdictDisplayLabel(connectionVerdict)
-          : MOBILE_SESSION_STATUS_LABELS[connState]
+          : t(MOBILE_SESSION_STATUS_LABEL_KEYS[connState])
 
   // Why: iOS keyboard height includes the home-indicator inset; Android IME height does not.
   const keyboardLift =

@@ -1,6 +1,8 @@
 import { refusedRpcMessageOrFallback } from '../transport/rpc-refusal-message'
 import { reviewTerminalCreateRun, reviewTerminalSendRun } from './mobile-review-terminal-operations'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 // Pure launch path for the PR triage actions ("Fix checks with AI" / "Resolve
 // conflicts with AI"). Reuses the same two RPCs the diff-review send flow uses —
@@ -24,7 +26,9 @@ export async function createTerminalAndSendPrompt(
   try {
     terminalTab = reviewTerminalCreateRun.interpret(createdReply)
   } catch (error) {
-    throw new Error(refusedRpcMessageOrFallback(error, 'Failed to create terminal'))
+    throw new Error(
+      refusedRpcMessageOrFallback(error, translate(sessionReviewCatalog, 'createTerminalFailed'))
+    )
   }
   const sentReply = await reviewTerminalSendRun.request(client, {
     terminal: terminalTab.terminal,
@@ -35,9 +39,11 @@ export async function createTerminalAndSendPrompt(
   try {
     accepted = reviewTerminalSendRun.interpret(sentReply)
   } catch (error) {
-    throw new Error(refusedRpcMessageOrFallback(error, 'Failed to send prompt'))
+    throw new Error(
+      refusedRpcMessageOrFallback(error, translate(sessionReviewCatalog, 'sendPromptFailed'))
+    )
   }
   if (!accepted) {
-    throw new Error('Terminal input is locked')
+    throw new Error(translate(sessionReviewCatalog, 'terminalInputLocked'))
   }
 }

@@ -4,6 +4,8 @@ import { triggerSelection } from '../platform/haptics'
 import { openMobileFileTap, type FileTapSessionTab } from './mobile-file-tap-open'
 import { openMobileNativeChatFileTap } from './mobile-native-chat-open-file'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 type MobileFileTapHandlerOptions<T extends FileTapSessionTab> = {
   client: RpcOperationSender | null
@@ -176,7 +178,10 @@ export function useMobileFileTapHandlers<T extends FileTapSessionTab>(
       }),
       switchSessionTab: current.switchSessionTab,
       scheduleDelayedAction: current.scheduleDelayedAction,
-      onOpenFailed: () => current.reportChatTapFailure(`Couldn't open ${pathText}`)
+      onOpenFailed: () =>
+        current.reportChatTapFailure(
+          translate(sessionCatalog, 'openPathFailed', { path: pathText })
+        )
     })
   }, [])
 

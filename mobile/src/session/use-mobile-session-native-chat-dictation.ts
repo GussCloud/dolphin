@@ -17,6 +17,8 @@ import { useMobileNativeChatSendError } from './use-mobile-native-chat-send-erro
 import { mobileNativeChatScopeKey } from './mobile-native-chat-scope-key'
 import { useMobileSendCompletionGeneration } from './use-mobile-send-completion-generation'
 import type { MobileSessionFeedbackCapabilitiesModel } from './use-mobile-session-feedback-capabilities'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionNativeChatDictation(
   scope: MobileSessionFeedbackCapabilitiesModel,
@@ -120,7 +122,7 @@ export function useMobileSessionNativeChatDictation(
         nativeChatController.setChatComposerText((current) =>
           appendBufferedDictation(current, text)
         )
-        showToast('Dictation inserted')
+        showToast(translate(sessionCatalog, 'dictationInserted'))
         return
       }
       // Live mode inserts the transcript into its PTY as text (no Return); buffered mode appends to the command field.
@@ -142,13 +144,13 @@ export function useMobileSessionNativeChatDictation(
           }
           const sent = await sendLiveTerminalInput(insertHandle, route.text)
           if (sent) {
-            showToast('Dictation inserted')
+            showToast(translate(sessionCatalog, 'dictationInserted'))
           }
         })()
         return
       }
       setInput((current) => appendBufferedDictation(current, route.text))
-      showToast('Dictation inserted')
+      showToast(translate(sessionCatalog, 'dictationInserted'))
     },
     onError: (err) => {
       dictationRouteContextRef.current = null

@@ -21,6 +21,8 @@ import {
   nextReviewIndexAfterMarkReviewed,
   reviewDescriptorFromItem
 } from './mobile-diff-review-screen-model'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 type CommentActionsInput = {
   client: RpcClient | null
@@ -66,7 +68,7 @@ export function useMobileDiffReviewCommentActions(input: CommentActionsInput) {
   const persistMetadata = useCallback(
     async (comments: readonly DiffComment[], reviewState: MobileDiffReviewState) => {
       if (!client || connState !== 'connected') {
-        throw new Error('Waiting for desktop...')
+        throw new Error(translate(sessionReviewCatalog, 'waitingForDesktop'))
       }
       const response = await sessionWorktreeNotesWrite.request(client, {
         worktree: `id:${worktreeId}`,
@@ -75,7 +77,7 @@ export function useMobileDiffReviewCommentActions(input: CommentActionsInput) {
       })
       interpretOrThrowRefusalMessage(
         () => sessionWorktreeNotesWrite.interpret(response),
-        'Failed to save review state'
+        translate(sessionReviewCatalog, 'saveReviewStateFailed')
       )
     },
     [client, connState, worktreeId]
@@ -100,7 +102,9 @@ export function useMobileDiffReviewCommentActions(input: CommentActionsInput) {
           setScreenState(previous)
         }
         triggerError()
-        setActionError(err instanceof Error ? err.message : 'Failed to save review')
+        setActionError(
+          err instanceof Error ? err.message : translate(sessionReviewCatalog, 'saveReviewFailed')
+        )
         throw err
       }
     },

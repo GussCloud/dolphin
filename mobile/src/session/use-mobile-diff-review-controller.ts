@@ -28,6 +28,8 @@ import type {
 } from './mobile-diff-review-screen-model'
 import { useMobileDiffReviewInteractions } from './use-mobile-diff-review-interactions'
 import { useMobilePrSidebarController } from './use-mobile-pr-sidebar-controller'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 type ControllerInput = {
   client: RpcClient | null
@@ -77,7 +79,7 @@ export function useMobileDiffReviewController(input: ControllerInput) {
     loadGenerationRef.current = generation
     const isCurrent = () => generation === loadGenerationRef.current
     if (!worktreeId) {
-      setScreenState({ kind: 'error', message: 'Missing worktree' })
+      setScreenState({ kind: 'error', message: translate(sessionReviewCatalog, 'missingWorktree') })
       return
     }
     // Why (F10): a loaded review outlives a blip — the waiting state is for a screen with nothing
@@ -85,7 +87,9 @@ export function useMobileDiffReviewController(input: ControllerInput) {
     const keepReady = (fallback: ReviewScreenState) => (prev: ReviewScreenState) =>
       prev.kind === 'ready' ? prev : fallback
     if (!client || connState !== 'connected') {
-      setScreenState(keepReady({ kind: 'error', message: 'Waiting for desktop...' }))
+      setScreenState(
+        keepReady({ kind: 'error', message: translate(sessionReviewCatalog, 'waitingForDesktop') })
+      )
       return
     }
     setScreenState(keepReady({ kind: 'loading' }))
@@ -103,7 +107,10 @@ export function useMobileDiffReviewController(input: ControllerInput) {
         setScreenState(
           keepReady({
             kind: 'error',
-            message: err instanceof Error ? err.message : 'Unable to load review'
+            message:
+              err instanceof Error
+                ? err.message
+                : translate(sessionReviewCatalog, 'loadReviewFailed')
           })
         )
       }

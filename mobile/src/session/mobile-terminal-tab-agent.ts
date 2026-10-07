@@ -4,6 +4,8 @@ import type { AgentStatusEntry } from '../../../src/shared/agent-status-types'
 import type { TuiAgent } from '../../../src/shared/tui-agent'
 import { isBlankBrowserUrl } from '../browser/browser-url'
 import type { MobileSessionTab } from './mobile-session-route-types'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 // Why: tab identity + title cleaning uses the same shared glyph/label maps as
 // desktop, so the two platforms do not drift on which titles identify agents.
@@ -52,24 +54,26 @@ export function getMobileSessionTabTitle(tab: MobileSessionTab): string {
       return title
     }
     if (isBlankBrowserUrl(tab.url)) {
-      return 'New Browser'
+      return translate(sessionCatalog, 'newBrowser')
     }
-    return 'Browser'
+    return translate(sessionCatalog, 'browser')
   }
   if (tab.type === 'markdown') {
-    return tab.title || 'Markdown'
+    return tab.title || translate(sessionCatalog, 'markdown')
   }
   if (tab.type === 'file') {
-    return tab.title || 'File'
+    return tab.title || translate(sessionCatalog, 'file')
   }
   if (tab.type === 'agent-session') {
-    return tab.title || 'Chat'
+    return tab.title || translate(sessionCatalog, 'chat')
   }
   // Why: strip the leading agent status glyph (✳ etc.) once the tab shows the
   // provider icon. Mobile falls back for glyph-only titles because iOS can
   // render the bare status glyph as a stray colored box beside the icon.
   if (resolveMobileTerminalTabAgentId(tab)) {
-    return stripLeadingAgentTitleDecorationOrEmpty(tab.title) || 'Terminal'
+    return (
+      stripLeadingAgentTitleDecorationOrEmpty(tab.title) || translate(sessionCatalog, 'terminal')
+    )
   }
-  return tab.title || 'Terminal'
+  return tab.title || translate(sessionCatalog, 'terminal')
 }

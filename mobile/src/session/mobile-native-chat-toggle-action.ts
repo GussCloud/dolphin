@@ -1,6 +1,8 @@
 import { MessageSquare, SquareTerminal } from 'lucide-react-native'
 import type { ActionSheetAction } from '../components/ActionSheetModal'
 import { resolveMobileNativeChat, type MobileNativeChatTab } from './mobile-native-chat-eligibility'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 type ToggleTab = MobileNativeChatTab & {
   id: string
@@ -26,7 +28,9 @@ export function getMobileNativeChatToggleActions(args: {
   const isChat = isTabChatView(tab.id)
   return [
     {
-      label: isChat ? 'Switch to terminal view' : 'Switch to chat view',
+      label: isChat
+        ? translate(sessionChatCatalog, 'toggleToTerminalView')
+        : translate(sessionChatCatalog, 'toggleToChatView'),
       icon: isChat ? SquareTerminal : MessageSquare,
       onPress: () => {
         onClose()

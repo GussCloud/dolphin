@@ -2,6 +2,8 @@ import type {
   AgentJournalApprovalMatchedAskRule,
   AgentJournalApprovalSubject
 } from '../../../src/shared/agent-session-journal-types'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 // Agent permission asks (e.g. Claude/Codex "Do you want to proceed?") surface
 // as plain TUI text in the agent's last assistant message — there is no
@@ -61,11 +63,11 @@ export function parseApprovalFromStatus(
   }
   const summary = (approval as { summary?: unknown }).summary
   return {
-    title: `Allow ${tool}?`,
+    title: translate(sessionChatCatalog, 'permissionAllowToolTitle', { tool }),
     detail: typeof summary === 'string' && summary.length > 0 ? summary : undefined,
     options: [
-      { label: 'Allow', send: '1' },
-      { label: 'Deny', send: ESCAPE }
+      { label: translate(sessionChatCatalog, 'permissionAllow'), send: '1' },
+      { label: translate(sessionChatCatalog, 'permissionDeny'), send: ESCAPE }
     ]
   }
 }
@@ -138,7 +140,7 @@ function buildNumberedPermission(
   detail: string | undefined
 ): MobileChatPermission {
   return {
-    title: 'Permission requested',
+    title: translate(sessionChatCatalog, 'permissionRequested'),
     detail,
     options: options.map((opt) => ({ label: shortLabel(opt.text), send: opt.num }))
   }
@@ -181,12 +183,15 @@ export function detectAgentPermission(input: PermissionInput): MobileChatPermiss
   // text actually offers a persistent option, to avoid sending a token the agent
   // doesn't understand.
   const options: MobileChatPermission['options'] = [
-    { label: 'Allow', send: 'y' },
-    { label: 'Deny', send: 'n' }
+    { label: translate(sessionChatCatalog, 'permissionAllow'), send: 'y' },
+    { label: translate(sessionChatCatalog, 'permissionDeny'), send: 'n' }
   ]
   if (isAlwaysLabel(text)) {
-    options.splice(1, 0, { label: 'Allow always', send: 'a' })
+    options.splice(1, 0, {
+      label: translate(sessionChatCatalog, 'permissionAllowAlways'),
+      send: 'a'
+    })
   }
 
-  return { title: 'Permission requested', detail, options }
+  return { title: translate(sessionChatCatalog, 'permissionRequested'), detail, options }
 }

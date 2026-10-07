@@ -20,6 +20,8 @@ import {
   buildReplyParams,
   buildResolveParams
 } from './pr-comment-actions'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type PrCommentMutations = {
   reply: (args: {
@@ -146,7 +148,11 @@ export function useMobilePrCommentActions(input: PrCommentActionsInput) {
         // Why: if a mutation (or the refetch) throws, still honor the boolean
         // contract — error haptic + message, return false — rather than rejecting.
         triggerError()
-        setError(err instanceof Error ? err.message : 'Comment action failed')
+        setError(
+          err instanceof Error
+            ? err.message
+            : translate(sessionReviewCatalog, 'commentActionFailed')
+        )
         return false
       } finally {
         inFlightRef.current.delete(key)

@@ -2,6 +2,8 @@ import type { RpcMethodName } from '../transport/rpc-params-contract'
 import { refusedRpcMessageOrFallback } from '../transport/rpc-refusal-message'
 import type { RpcResponse } from '../transport/types'
 import type { GitHubPrMutationStatus } from './github-pr-mutation-operations'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 // How a `github.*` PR mutation's reply becomes the one outcome the action engine routes on. The
 // two settle shapes below are the two reply contracts the host uses, and they differ in one place
@@ -22,7 +24,7 @@ function extractMutationError(error: unknown, method: string): string {
       return message
     }
   }
-  return `Request failed: ${method}`
+  return translate(sessionReviewCatalog, 'requestFailed', { method: method })
 }
 
 /** As much of a bound operation as a settle shape needs; the read settle takes the same shape. */
@@ -43,7 +45,7 @@ export async function settleGithubPrMutation(
   send: () => Promise<RpcResponse>
 ): Promise<GitHubPrMutationOutcome> {
   const method = mutation.operation.method
-  const fallback = `Request failed: ${method}`
+  const fallback = translate(sessionReviewCatalog, 'requestFailed', { method: method })
   let reply: RpcResponse
   try {
     reply = await send()
@@ -75,7 +77,9 @@ export async function settleGithubPrConfirmation(
   send: () => Promise<RpcResponse>,
   unconfirmed: string
 ): Promise<GitHubPrMutationOutcome> {
-  const fallback = `Request failed: ${mutation.operation.method}`
+  const fallback = translate(sessionReviewCatalog, 'requestFailed', {
+    method: mutation.operation.method
+  })
   let reply: RpcResponse
   try {
     reply = await send()

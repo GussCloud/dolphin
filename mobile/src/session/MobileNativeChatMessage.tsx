@@ -11,6 +11,8 @@ import { ToolRun } from './MobileNativeChatToolRun'
 import type { NativeChatTurnStatus } from './use-mobile-native-chat-turn-status'
 import { isRenderableImageUri } from './mobile-native-chat-image-preview'
 import { styles, TEXT_SIZE } from './mobile-native-chat-message-styles'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 function Prose({
   block,
@@ -23,6 +25,7 @@ function Prose({
   fontScale: number
   onOpenFile?: (relativePath: string) => void
 }): React.JSX.Element | null {
+  const t = useMobileTranslation(sessionChatCatalog)
   if (isTextBlock(block)) {
     // Inverted (user) bubbles use a fixed dark-on-light text rather than the
     // markdown renderer's light-on-dark palette.
@@ -52,13 +55,13 @@ function Prose({
           source={{ uri }}
           style={styles.imageThumb}
           resizeMode="contain"
-          accessibilityLabel={block.alt ?? 'Attached image'}
+          accessibilityLabel={block.alt ?? t('attachedImage')}
         />
       )
     }
     return (
       <NativeText style={[styles.imageRef, { fontSize: TEXT_SIZE * fontScale }]}>
-        🖼 {block.alt ?? block.path ?? block.url ?? 'image'}
+        🖼 {block.alt ?? block.path ?? block.url ?? t('imageFallback')}
       </NativeText>
     )
   }

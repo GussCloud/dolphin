@@ -1,10 +1,12 @@
+import type { sessionEn } from '../i18n/catalogs/session/en'
+
 export type BulkTabCloseMode = 'others' | 'left'
 
 /** Long-press sheet entries, in display order. */
-export const BULK_TAB_CLOSE_ACTIONS: { mode: BulkTabCloseMode; label: string }[] = [
-  { mode: 'others', label: 'Close Other Tabs' },
-  { mode: 'left', label: 'Close Tabs to the Left' }
-]
+export const BULK_TAB_CLOSE_ACTIONS = [
+  { mode: 'others', labelKey: 'closeOtherTabs' },
+  { mode: 'left', labelKey: 'closeTabsToTheLeft' }
+] as const satisfies readonly { mode: BulkTabCloseMode; labelKey: keyof typeof sessionEn }[]
 
 type BulkClosableTab = {
   id: string

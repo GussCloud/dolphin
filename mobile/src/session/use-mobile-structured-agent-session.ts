@@ -40,6 +40,8 @@ import {
   pendingStructuredPromptIdentity,
   requestMobileStructuredAgentSessionCancel
 } from './mobile-structured-agent-session-cancel'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 type StructuredMobileAttachment = StructuredAgentSessionAttachment & {
   id?: string
@@ -166,16 +168,16 @@ export function useMobileStructuredAgentSession(args: {
     ): Promise<MobileNativeChatSendOutcome> => {
       const currentFence = stateRef.current.fence
       if (!client || !sessionId || !enabled || currentFence === null) {
-        onSendError('Message not sent (disconnected)')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSentDisconnected'))
         return 'rejected'
       }
       const timeoutMs = timeoutForDeadline(deadline)
       if (timeoutMs === null) {
-        onSendError('Message not sent')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
         return 'rejected'
       }
       if (attachments === undefined && images !== undefined && images.length > 0) {
-        onSendError('Message not sent')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
         return 'rejected'
       }
       const sendAttachments = attachments ?? []

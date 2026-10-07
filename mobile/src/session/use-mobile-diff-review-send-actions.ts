@@ -14,6 +14,8 @@ import {
 import { interpretOrThrowRefusalMessage } from '../transport/rpc-refusal-message'
 import { healMobileNativeChatStaleInput } from './mobile-native-chat-stale-input'
 import type { ReviewScreenState, SendSheetState } from './mobile-diff-review-screen-model'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 type SendActionsInput = {
   client: RpcClient | null
@@ -51,11 +53,15 @@ export function useMobileDiffReviewSendActions(input: SendActionsInput) {
     try {
       await clipboard.writeText(formatDiffComments(screenState.comments))
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Unable to copy the review notes')
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : translate(sessionReviewCatalog, 'copyReviewNotesFailed')
+      )
       return
     }
     triggerSuccess()
-    setActionError('Review notes copied')
+    setActionError(translate(sessionReviewCatalog, 'reviewNotesCopied'))
   }, [clipboard, screenState, setActionError])
 
   const clearSentNotes = useCallback(async () => {
@@ -84,12 +90,12 @@ export function useMobileDiffReviewSendActions(input: SendActionsInput) {
   const sendPromptToTerminal = useCallback(
     async (terminal: string, comments: readonly DiffComment[]) => {
       if (!client || connState !== 'connected') {
-        throw new Error('Waiting for desktop...')
+        throw new Error(translate(sessionReviewCatalog, 'waitingForDesktop'))
       }
       // Marked by terminal handle, not by surface, so a paste orphaned here by native
       // chat would ride along with these notes (#10228). Diff review carries no device token.
       if (!(await healMobileNativeChatStaleInput({ client, terminal, deviceToken: null }))) {
-        throw new Error('Failed to send notes')
+        throw new Error(translate(sessionReviewCatalog, 'sendNotesFailed'))
       }
       const response = await reviewTerminalSendRun.request(client, {
         terminal,
@@ -99,14 +105,14 @@ export function useMobileDiffReviewSendActions(input: SendActionsInput) {
       let accepted
       accepted = interpretOrThrowRefusalMessage(
         () => reviewTerminalSendRun.interpret(response),
-        'Failed to send notes'
+        translate(sessionReviewCatalog, 'sendNotesFailed')
       )
       if (!accepted) {
-        throw new Error('Terminal input is locked')
+        throw new Error(translate(sessionReviewCatalog, 'terminalInputLocked'))
       }
       await markNotesSent(comments)
       triggerSuccess()
-      setActionError('Review notes sent')
+      setActionError(translate(sessionReviewCatalog, 'reviewNotesSent'))
       setSendSheet(null)
     },
     [client, connState, markNotesSent, setActionError, setSendSheet]
@@ -115,7 +121,7 @@ export function useMobileDiffReviewSendActions(input: SendActionsInput) {
   const createTerminalAndSend = useCallback(
     async (comments: readonly DiffComment[]) => {
       if (!client || connState !== 'connected') {
-        throw new Error('Waiting for desktop...')
+        throw new Error(translate(sessionReviewCatalog, 'waitingForDesktop'))
       }
       const response = await reviewTerminalCreateRun.request(client, {
         worktree: `id:${worktreeId}`,
@@ -126,7 +132,7 @@ export function useMobileDiffReviewSendActions(input: SendActionsInput) {
       let created
       created = interpretOrThrowRefusalMessage(
         () => reviewTerminalCreateRun.interpret(response),
-        'Failed to create terminal'
+        translate(sessionReviewCatalog, 'createTerminalFailed')
       )
       await sendPromptToTerminal(created.terminal, comments)
     },
@@ -135,7 +141,7 @@ export function useMobileDiffReviewSendActions(input: SendActionsInput) {
 
   const openSendSheet = useCallback(async () => {
     if (!client || connState !== 'connected') {
-      setActionError('Waiting for desktop...')
+      setActionError(translate(sessionReviewCatalog, 'waitingForDesktop'))
       return
     }
     setSendSheet({ kind: 'loading' })
@@ -146,13 +152,16 @@ export function useMobileDiffReviewSendActions(input: SendActionsInput) {
       let terminals
       terminals = interpretOrThrowRefusalMessage(
         () => reviewTerminalListRead.interpret(response),
-        'Unable to load agent sessions'
+        translate(sessionReviewCatalog, 'loadAgentSessionsFailed')
       )
       setSendSheet({ kind: 'ready', terminals })
     } catch (err) {
       setSendSheet({
         kind: 'error',
-        message: err instanceof Error ? err.message : 'Unable to load agent sessions',
+        message:
+          err instanceof Error
+            ? err.message
+            : translate(sessionReviewCatalog, 'loadAgentSessionsFailed'),
         terminals: []
       })
     }

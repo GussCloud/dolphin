@@ -3,6 +3,8 @@ import type { AgentSessionHandleProvider } from '../../../src/shared/agent-sessi
 import { isStructuredAgentSessionComposerCommand } from '../../../src/shared/structured-agent-session-composer'
 import type { MobileNativeChatSendOutcome } from './mobile-native-chat-send'
 import type { MobileNativeChatSendOrigin } from './use-mobile-native-chat-drafts'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 type StructuredNativeChatAttachment = {
   id?: string
@@ -57,7 +59,7 @@ export function useMobileStructuredNativeChatSendBridge(args: {
     ): Promise<MobileNativeChatSendOutcome> => {
       const origin = captureSendOrigin(text.trimEnd())
       if (!origin) {
-        onSendError('Message not sent (disconnected)')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSentDisconnected'))
         return 'rejected'
       }
       const isHostCommand = isStructuredAgentSessionComposerCommand(text, agent)
@@ -82,7 +84,7 @@ export function useMobileStructuredNativeChatSendBridge(args: {
           return 'unknown'
         }
         holdUnconfirmedSend(origin, text.trimEnd(), () =>
-          onSendError('Delivery unconfirmed — check chat before retrying')
+          onSendError(translate(sessionChatCatalog, 'sendDeliveryUnconfirmed'))
         )
         return 'unknown'
       }

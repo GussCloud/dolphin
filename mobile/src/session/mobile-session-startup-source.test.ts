@@ -3,6 +3,8 @@ import {
   readMobileSessionRouteSource,
   readMobileSessionRouteSourceFamily
 } from './mobile-session-route-source-family.test-support'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 const source = readMobileSessionRouteSourceFamily()
 const startupSource = readMobileSessionRouteSource('./use-mobile-session-startup.ts')
@@ -166,7 +168,10 @@ describe('mobile session startup', () => {
       startupEffect.indexOf('await ensureSessionTabs()')
     )
     expect(startupEffect).toContain('headlessActivationNeedsHostRenderer(activation.value)')
-    expect(startupEffect).toContain("showToast('Open Dolphin on the host to wake sleeping agents.'")
+    expect(startupEffect).toContain("showToast(translate(sessionCatalog, 'wakeSleepingAgents')")
+    expect(translate(sessionCatalog, 'wakeSleepingAgents')).toBe(
+      'Open Dolphin on the host to wake sleeping agents.'
+    )
   })
 
   it('fails runtime capability gates closed before probing a replacement client', () => {
@@ -241,19 +246,19 @@ describe('mobile session startup', () => {
 
   it('keeps dynamic agent rows above fixed New Tab actions', () => {
     const newTabActions = sliceBetween(
-      'title="New Tab"',
+      "title={t('newTab')}",
       'onClose={() => setShowCreateTabDrawer',
       sheetsSource
     )
 
     expect(newTabActions.indexOf('...createTabAgentActions')).toBeLessThan(
-      newTabActions.indexOf("label: 'Terminal'")
+      newTabActions.indexOf("label: t('terminal')")
     )
-    expect(newTabActions.indexOf("label: 'Terminal'")).toBeLessThan(
-      newTabActions.indexOf("label: 'Browser'")
+    expect(newTabActions.indexOf("label: t('terminal')")).toBeLessThan(
+      newTabActions.indexOf("label: t('browser')")
     )
-    expect(newTabActions.indexOf("label: 'Browser'")).toBeLessThan(
-      newTabActions.indexOf("label: 'Markdown Note'")
+    expect(newTabActions.indexOf("label: t('browser')")).toBeLessThan(
+      newTabActions.indexOf("label: t('markdownNote')")
     )
   })
 

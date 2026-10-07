@@ -21,6 +21,8 @@ import { useMobileDiffReviewCommentActions } from './use-mobile-diff-review-comm
 import { useMobileDiffReviewGitActions } from './use-mobile-diff-review-git-actions'
 import { useMobileDiffReviewSendActions } from './use-mobile-diff-review-send-actions'
 import { connectionRetryAction } from '../transport/connection-retry-action'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 type InteractionInput = {
   client: RpcClient | null
@@ -193,7 +195,9 @@ export function useMobileDiffReviewInteractions(input: InteractionInput) {
       try {
         sourceFileDiffOpenRun.interpret(response)
       } catch (error) {
-        setActionError(refusedRpcMessageOrFallback(error, 'Unable to open in session'))
+        setActionError(
+          refusedRpcMessageOrFallback(error, translate(sessionReviewCatalog, 'openInSessionFailed'))
+        )
         return
       }
       onOpenSession()

@@ -10,6 +10,12 @@ import {
   type SessionOptionValueMarker,
   type SessionOptionValue
 } from '../../../src/shared/native-chat-session-options'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
+import {
+  mobileSessionChoiceLabel,
+  mobileSessionOptionLabel
+} from './mobile-native-chat-session-option-labels'
 
 /** Muted one-liner above a group — dispatch state, or why a row is locked. */
 export function SessionOptionCaption({ children }: { children: string }): React.JSX.Element {
@@ -111,13 +117,16 @@ function ToggleRow({
   grouped: boolean
   onToggle: (next: boolean) => void
 }): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   return (
     <View style={[styles.row, grouped && styles.rowGrouped, disabled && styles.rowDisabled]}>
       <View style={styles.rowBody}>
         <Text style={styles.rowLabel}>{label}</Text>
       </View>
       {marker ? (
-        <Text style={styles.rowMarker}>{marker === 'default' ? 'Default' : 'Not reported'}</Text>
+        <Text style={styles.rowMarker}>
+          {marker === 'default' ? t('optionValueIsDefault') : t('optionValueNotReported')}
+        </Text>
       ) : null}
       <Switch
         accessibilityLabel={label}
@@ -206,12 +215,13 @@ export function DescriptorRows({
   onSetOption: (value: SessionOptionValue) => void
   onInvokeAction: () => void
 }): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   const locked = disabled || !descriptor.settable
   // Why: flip-only without a baseline is an action — never claim On/Off.
   if (descriptor.action?.type === 'toggle-command') {
     return (
       <ActionRow
-        label={`Toggle ${descriptor.label.toLowerCase()}`}
+        label={t('optionToggle', { option: mobileSessionOptionLabel(descriptor).toLowerCase() })}
         disabled={locked}
         grouped={grouped}
         onPress={onInvokeAction}
@@ -222,7 +232,7 @@ export function DescriptorRows({
   if (descriptor.action?.type === 'agent-picker') {
     return (
       <ActionRow
-        label="Choose in agent picker…"
+        label={t('optionChooseInAgentPicker')}
         disabled={locked}
         grouped={grouped}
         onPress={onInvokeAction}
@@ -235,7 +245,7 @@ export function DescriptorRows({
   if (descriptor.kind.type === 'boolean') {
     return (
       <ToggleRow
-        label={descriptor.label}
+        label={mobileSessionOptionLabel(descriptor)}
         checked={descriptor.kind.currentValue}
         marker={sessionOptionValueMarker(descriptor)}
         disabled={locked}
@@ -250,7 +260,7 @@ export function DescriptorRows({
       {choices.map((choice, index) => (
         <ChoiceRow
           key={choice.value}
-          label={choice.label}
+          label={mobileSessionChoiceLabel(choice)}
           description={choice.description}
           selected={choice.value === currentValue}
           disabled={locked}

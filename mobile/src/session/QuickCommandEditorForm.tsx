@@ -12,6 +12,8 @@ import {
 } from '../terminal/quick-commands'
 import type { QuickCommandDraft } from './quick-command-draft'
 import { isQuickCommandDraftValid } from './quick-command-draft'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   draft: QuickCommandDraft
@@ -35,6 +37,7 @@ function ActionToggle({
   value: QuickCommandDraft['action']
   onChange: (action: QuickCommandDraft['action']) => void
 }) {
+  const t = useMobileTranslation(sessionCatalog)
   return (
     <View style={styles.toggleGroup}>
       {(['terminal-command', 'agent-prompt'] as const).map((action) => {
@@ -52,7 +55,9 @@ function ActionToggle({
             accessibilityState={{ selected }}
           >
             <Text style={[styles.toggleText, selected && styles.toggleTextSelected]}>
-              {action === 'terminal-command' ? 'Terminal Command' : 'Agent Prompt'}
+              {action === 'terminal-command'
+                ? t('quickCommandTerminalCommand')
+                : t('quickCommandAgentPrompt')}
             </Text>
           </Pressable>
         )
@@ -73,6 +78,7 @@ export function QuickCommandEditorForm({
   onCancel,
   onSave
 }: Props) {
+  const t = useMobileTranslation(sessionCatalog)
   const hasRepoScope = repoId !== null
   const [advancedOpen, setAdvancedOpen] = useState(draft.scope.type === 'repo')
   const isAgent = draft.action === 'agent-prompt'
@@ -81,12 +87,12 @@ export function QuickCommandEditorForm({
   return (
     <View style={styles.form}>
       <View style={styles.field}>
-        <Text style={styles.label}>Label</Text>
+        <Text style={styles.label}>{t('quickCommandLabel')}</Text>
         <TextInput
           style={styles.input}
           value={draft.label}
           onChangeText={(label) => onChange({ label })}
-          placeholder="Start dev server"
+          placeholder={t('quickCommandLabelPlaceholder')}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
@@ -95,13 +101,13 @@ export function QuickCommandEditorForm({
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Action</Text>
+        <Text style={styles.label}>{t('quickCommandAction')}</Text>
         <ActionToggle value={draft.action} onChange={(action) => onChange({ action })} />
       </View>
 
       {isAgent ? (
         <View style={styles.field}>
-          <Text style={styles.label}>Agent</Text>
+          <Text style={styles.label}>{t('quickCommandAgent')}</Text>
           <Pressable
             style={({ pressed }) => [styles.select, pressed && styles.pressed]}
             onPress={onOpenAgentPicker}
@@ -113,7 +119,7 @@ export function QuickCommandEditorForm({
                 <Text style={styles.selectValueText}>{getQuickCommandAgentLabel(draft.agent)}</Text>
               </View>
             ) : (
-              <Text style={styles.selectPlaceholder}>Choose agent</Text>
+              <Text style={styles.selectPlaceholder}>{t('quickCommandChooseAgent')}</Text>
             )}
             <ChevronDown size={16} color={colors.textMuted} />
           </Pressable>
@@ -121,12 +127,14 @@ export function QuickCommandEditorForm({
       ) : null}
 
       <View style={styles.field}>
-        <Text style={styles.label}>{isAgent ? 'Prompt' : 'Command Text'}</Text>
+        <Text style={styles.label}>
+          {isAgent ? t('quickCommandPrompt') : t('quickCommandCommandText')}
+        </Text>
         <TextInput
           style={[styles.input, styles.textarea, !isAgent && styles.mono]}
           value={isAgent ? draft.prompt : draft.command}
           onChangeText={(text) => onChange(isAgent ? { prompt: text } : { command: text })}
-          placeholder={isAgent ? 'Ask the agent to investigate this workspace' : 'npm run dev'}
+          placeholder={isAgent ? t('quickCommandPromptPlaceholder') : 'npm run dev'}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
@@ -135,9 +143,7 @@ export function QuickCommandEditorForm({
             isAgent ? MAX_QUICK_COMMAND_AGENT_PROMPT_LENGTH : MAX_QUICK_COMMAND_TERMINAL_TEXT_LENGTH
           }
         />
-        {isAgent ? (
-          <Text style={styles.hint}>Supports skills, file paths, and built-in commands.</Text>
-        ) : null}
+        {isAgent ? <Text style={styles.hint}>{t('quickCommandPromptHint')}</Text> : null}
       </View>
 
       <View style={styles.field}>
@@ -152,7 +158,7 @@ export function QuickCommandEditorForm({
           ) : (
             <ChevronRight size={16} color={colors.textSecondary} />
           )}
-          <Text style={styles.advancedText}>Advanced</Text>
+          <Text style={styles.advancedText}>{t('quickCommandAdvanced')}</Text>
         </Pressable>
 
         {advancedOpen ? (
@@ -160,10 +166,8 @@ export function QuickCommandEditorForm({
             {!isAgent ? (
               <View style={styles.switchRow}>
                 <View style={styles.switchText}>
-                  <Text style={styles.switchTitle}>Append Enter</Text>
-                  <Text style={styles.switchDesc}>
-                    Submit immediately instead of only inserting text.
-                  </Text>
+                  <Text style={styles.switchTitle}>{t('quickCommandAppendEnter')}</Text>
+                  <Text style={styles.switchDesc}>{t('quickCommandAppendEnterHint')}</Text>
                 </View>
                 <Switch
                   value={draft.appendEnter}
@@ -175,7 +179,7 @@ export function QuickCommandEditorForm({
             ) : null}
 
             <View style={styles.field}>
-              <Text style={styles.label}>Scope</Text>
+              <Text style={styles.label}>{t('quickCommandScope')}</Text>
               <View style={styles.toggleGroup}>
                 {(['global', 'repo'] as const).map((scopeType) => {
                   const selected = draft.scope.type === scopeType
@@ -202,7 +206,9 @@ export function QuickCommandEditorForm({
                       accessibilityState={{ selected, disabled }}
                     >
                       <Text style={[styles.toggleText, selected && styles.toggleTextSelected]}>
-                        {scopeType === 'global' ? 'Global' : 'Project'}
+                        {scopeType === 'global'
+                          ? t('quickCommandScopeGlobal')
+                          : t('quickCommandScopeProject')}
                       </Text>
                     </Pressable>
                   )
@@ -224,7 +230,7 @@ export function QuickCommandEditorForm({
           onPress={onCancel}
           accessibilityRole="button"
         >
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>{t('cancel')}</Text>
         </Pressable>
         <Pressable
           style={[styles.button, styles.saveButton, !canSave && styles.saveButtonDisabled]}
@@ -233,7 +239,7 @@ export function QuickCommandEditorForm({
           accessibilityRole="button"
         >
           <Text style={[styles.saveText, !canSave && styles.saveTextDisabled]}>
-            {mode === 'edit' ? 'Save' : 'Add Quick Command'}
+            {mode === 'edit' ? t('save') : t('addQuickCommand')}
           </Text>
         </Pressable>
       </View>

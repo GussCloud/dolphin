@@ -20,6 +20,8 @@ import { useAgentSendKeyboardDismissal } from './use-agent-send-keyboard-dismiss
 import type { MobileSessionTab } from './mobile-session-route-types'
 import { useMobileSessionTabActionSheetOpener } from './use-mobile-session-tab-action-targets'
 import type { MobileSessionTerminalWebviewModel } from './use-mobile-session-terminal-webview'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminalWebviewModel) {
   const {
@@ -169,7 +171,7 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
       }
       if (!isTerminalLiveInputWithinByteLimit(text)) {
         triggerError()
-        showToast('Input too large (max 256 KiB)', 1500)
+        showToast(translate(sessionCatalog, 'inputTooLarge'), 1500)
         return false
       }
       const rpc = clientRef.current

@@ -8,6 +8,8 @@ import type { TerminalQuickCommand } from '../../../src/shared/terminal-quick-co
 import type { TuiAgent } from '../../../src/shared/tui-agent'
 import { supportsTerminalAgentQuickCommand } from '../terminal/quick-commands'
 import { QuickCommandRow } from './QuickCommandRow'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export const QUICK_COMMAND_SUPPORTED_AGENTS = MOBILE_AGENT_CATALOG.filter((entry) =>
   supportsTerminalAgentQuickCommand(entry.id)
@@ -46,6 +48,7 @@ export function QuickCommandsList({
   onDelete,
   onAdd
 }: ListProps) {
+  const t = useMobileTranslation(sessionCatalog)
   const hasVisible = repoCommands.length + globalCommands.length > 0
   const addDisabled = disabled || !canAdd
   // Why: keep an active filter clearable if a delete or paired desktop edit
@@ -60,7 +63,7 @@ export function QuickCommandsList({
             style={styles.searchInput}
             value={query}
             onChangeText={onQueryChange}
-            placeholder="Search quick commands..."
+            placeholder={t('quickCommandsSearchPlaceholder')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -78,16 +81,16 @@ export function QuickCommandsList({
       ) : null}
 
       {!loading && totalCount === 0 ? (
-        <Text style={styles.empty}>No quick commands yet.</Text>
+        <Text style={styles.empty}>{t('quickCommandsEmpty')}</Text>
       ) : null}
 
       {!loading && totalCount > 0 && !hasVisible ? (
-        <Text style={styles.empty}>No matching quick commands.</Text>
+        <Text style={styles.empty}>{t('quickCommandsNoMatch')}</Text>
       ) : null}
 
       {repoCommands.length > 0 ? (
         <QuickCommandGroup
-          label="This project"
+          label={t('quickCommandsThisProject')}
           commands={repoCommands}
           onLaunch={onLaunch}
           onEdit={onEdit}
@@ -98,7 +101,7 @@ export function QuickCommandsList({
 
       {globalCommands.length > 0 ? (
         <QuickCommandGroup
-          label="Global"
+          label={t('quickCommandScopeGlobal')}
           commands={globalCommands}
           onLaunch={onLaunch}
           onEdit={onEdit}
@@ -119,7 +122,7 @@ export function QuickCommandsList({
       >
         <Plus size={18} color={colors.textSecondary} />
         <Text style={styles.addText}>
-          {canAdd ? 'New quick command' : 'Quick command limit reached'}
+          {canAdd ? t('quickCommandsNew') : t('quickCommandsLimitReached')}
         </Text>
       </Pressable>
     </View>

@@ -15,6 +15,8 @@ import type { MobileBrowserNavigationMethod } from './MobileBrowserTabActionShee
 import { isFileExistsErrorMessage } from './mobile-session-route-helpers'
 import type { MobileSessionTab } from './mobile-session-route-types'
 import type { MobileSessionTerminalCreateActionsModel } from './use-mobile-session-terminal-create-actions'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 /** The tab sheet names the method it wants; each one is a separate operation on the same policy. */
 const BROWSER_NAVIGATION_COMMANDS = {
@@ -65,7 +67,7 @@ export function useMobileSessionContentCreateActions(
           if (isFileExistsErrorMessage(message) && attempt < 100) {
             continue
           }
-          throw new Error(message || 'Failed to create markdown note')
+          throw new Error(message || translate(sessionCatalog, 'createMarkdownNoteFailed'))
         }
 
         const openResponse = await sourceFileOpenRun.request(
@@ -77,9 +79,10 @@ export function useMobileSessionContentCreateActions(
         scheduleDelayedAction(() => void fetchSessionTabs(), 300)
         return
       }
-      throw new Error('Unable to create untitled markdown note')
+      throw new Error(translate(sessionCatalog, 'createUntitledMarkdownFailed'))
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create markdown note'
+      const message =
+        err instanceof Error ? err.message : translate(sessionCatalog, 'createMarkdownNoteFailed')
       setCreateError(message)
       showToast(message, 1800)
     } finally {
@@ -93,12 +96,12 @@ export function useMobileSessionContentCreateActions(
     }
     // Why: read via ref so a tap before the capability probe resolves (or a stale callback) still sees the live value.
     if (browserScreencastSupportedRef.current !== true) {
-      showToast('Desktop update required for mobile browser streaming', 1600)
+      showToast(translate(sessionCatalog, 'browserStreamingNeedsDesktopUpdate'), 1600)
       return false
     }
     const url = normalizeBrowserUrl(rawUrl)
     if (!url) {
-      const message = 'Enter a valid URL'
+      const message = translate(sessionCatalog, 'enterValidUrl')
       setCreateError(message)
       showToast(message, 1400)
       return false
@@ -130,7 +133,8 @@ export function useMobileSessionContentCreateActions(
       scheduleDelayedAction(() => void fetchPendingBrowserSessionTabs(), 1200)
       return true
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create browser'
+      const message =
+        err instanceof Error ? err.message : translate(sessionCatalog, 'createBrowserFailed')
       setCreateError(message)
       showToast(message, 1800)
       return false
@@ -146,7 +150,7 @@ export function useMobileSessionContentCreateActions(
     method: MobileBrowserNavigationMethod
   ) {
     if (!client || !tab.browserPageId) {
-      showToast('Browser page is not available yet.', 1500)
+      showToast(translate(sessionCatalog, 'browserPageNotAvailable'), 1500)
       return
     }
     try {
@@ -162,7 +166,8 @@ export function useMobileSessionContentCreateActions(
       interpretOrThrowRefusalMessage(() => command.interpret(response), '')
       scheduleDelayedAction(() => void fetchSessionTabs(), 250)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Browser command failed'
+      const message =
+        err instanceof Error ? err.message : translate(sessionCatalog, 'browserCommandFailed')
       showToast(message, 1600)
     }
   }

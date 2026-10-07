@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 import { BULK_TAB_CLOSE_ACTIONS, selectBulkCloseTabs } from './mobile-tab-close-selection'
 
 const tab = (id: string, isDirty?: boolean, isPinned?: boolean) => ({
@@ -11,7 +13,12 @@ describe('selectBulkCloseTabs', () => {
   const tabs = [tab('a'), tab('b'), tab('c'), tab('d')]
 
   it('offers only close-others and close-left actions', () => {
-    expect(BULK_TAB_CLOSE_ACTIONS).toEqual([
+    expect(
+      BULK_TAB_CLOSE_ACTIONS.map(({ mode, labelKey }) => ({
+        mode,
+        label: translate(sessionCatalog, labelKey)
+      }))
+    ).toEqual([
       { mode: 'others', label: 'Close Other Tabs' },
       { mode: 'left', label: 'Close Tabs to the Left' }
     ])

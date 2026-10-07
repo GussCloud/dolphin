@@ -6,6 +6,8 @@ import { markdownTabSave } from './mobile-session-write-operations'
 import { triggerSuccess, triggerError } from '../platform/haptics'
 import type { DirtyMarkdownDraft, MobileSessionTab } from './mobile-session-route-types'
 import type { MobileSessionDiffCommentsModel } from './use-mobile-session-diff-comments'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 /**
  * What these actions read, which is fourteen of the session model's two hundred and sixty-eight.
@@ -76,16 +78,16 @@ export function useMobileSessionMarkdownActions(scope: MobileSessionMarkdownActi
       }
       // Caught here because the only caller is `void copyMarkdownLocalContent(...)`: the seam
       // rejects when the pasteboard refused the text, and an uncaught rejection would leave
-      // "Copied" as the last word on a copy that did not happen.
+      // translate(sessionCatalog, 'copied') as the last word on a copy that did not happen.
       try {
         await clipboard.writeText(current.localContent)
       } catch {
         triggerError()
-        showToast("Couldn't copy", 1500)
+        showToast(translate(sessionCatalog, 'copyFailed'), 1500)
         return
       }
       triggerSuccess()
-      showToast('Copied')
+      showToast(translate(sessionCatalog, 'copied'))
     },
     [clipboard, markdownDocs, showToast]
   )
@@ -95,7 +97,11 @@ export function useMobileSessionMarkdownActions(scope: MobileSessionMarkdownActi
     for (const [tabId, doc] of markdownDocs) {
       if (doc.status === 'ready' && doc.isDirty) {
         const tab = sessionTabs.find((candidate) => candidate.id === tabId)
-        drafts.push({ tabId, title: tab?.title || 'Markdown', content: doc.localContent })
+        drafts.push({
+          tabId,
+          title: tab?.title || translate(sessionCatalog, 'markdown'),
+          content: doc.localContent
+        })
       }
     }
     return drafts
@@ -202,10 +208,11 @@ export function useMobileSessionMarkdownActions(scope: MobileSessionMarkdownActi
         )
         markdownSaveSeqRef.current.delete(tab.id)
         triggerSuccess()
-        showToast('Saved')
+        showToast(translate(sessionCatalog, 'saved'))
       } catch (error) {
         triggerError()
-        const message = error instanceof Error ? error.message : 'Save failed'
+        const message =
+          error instanceof Error ? error.message : translate(sessionCatalog, 'saveFailed')
         if (markdownSaveSeqRef.current.get(tab.id) !== saveSeq) {
           return
         }
@@ -217,7 +224,7 @@ export function useMobileSessionMarkdownActions(scope: MobileSessionMarkdownActi
           return new Map(prev).set(tab.id, {
             ...existing,
             saving: false,
-            saveError: message || 'Save failed'
+            saveError: message || translate(sessionCatalog, 'saveFailed')
           })
         })
       } finally {

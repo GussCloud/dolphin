@@ -38,6 +38,8 @@ import type { MobileChatQuestion } from './mobile-native-chat-question'
 import type { MobileNativeChatSessionOptionPickersProps } from './MobileNativeChatSessionOptionPickers'
 import { MobileNativeChatMessage } from './MobileNativeChatMessage'
 import type { MobileNativeChatStatus } from './use-mobile-native-chat-session'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /** Why the composer input is locked: the transport is disconnected, or the
  *  terminal subscription has not acknowledged its input lease yet. */
@@ -188,6 +190,7 @@ export function MobileNativeChatView({
   onOpenFile,
   keyboardInset = 0
 }: Props): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   const insets = useSafeAreaInsets()
   const [toolsExpanded, setToolsExpanded] = useState(false)
   // Lift the composer clear of the keyboard, plus the bottom safe-area so it
@@ -331,7 +334,7 @@ export function MobileNativeChatView({
                     {loadingEarlier ? (
                       <ActivityIndicator size="small" color={colors.textMuted} />
                     ) : (
-                      <Text style={styles.loadEarlierText}>Load earlier messages</Text>
+                      <Text style={styles.loadEarlierText}>{t('loadEarlierMessages')}</Text>
                     )}
                   </Pressable>
                 ) : null
@@ -362,7 +365,7 @@ export function MobileNativeChatView({
           {/* Jump-to-latest control. */}
           {showJumpToTail ? (
             <Pressable
-              accessibilityLabel="Scroll to latest"
+              accessibilityLabel={t('scrollToLatest')}
               style={[styles.fab, styles.fabBottom]}
               onPress={jumpToTail}
             >
@@ -396,7 +399,9 @@ export function MobileNativeChatView({
             ) : (
               <ChevronsUpDown size={14} color={colors.textMuted} strokeWidth={2} />
             )}
-            <Text style={styles.chromeToggleLabel}>{toolsExpanded ? 'Collapse' : 'Tools'}</Text>
+            <Text style={styles.chromeToggleLabel}>
+              {toolsExpanded ? t('collapseTools') : t('expandTools')}
+            </Text>
           </Pressable>
         </View>
         {canStop ? (
@@ -404,10 +409,10 @@ export function MobileNativeChatView({
             style={({ pressed }) => [styles.stopButton, pressed && styles.pressed]}
             onPress={onStop}
             hitSlop={8}
-            accessibilityLabel="Stop the agent"
+            accessibilityLabel={t('stopAgent')}
           >
             <Square size={13} color={colors.statusRed} strokeWidth={2.4} fill={colors.statusRed} />
-            <Text style={styles.stopLabel}>Stop</Text>
+            <Text style={styles.stopLabel}>{t('stop')}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -444,10 +449,10 @@ export function MobileNativeChatView({
         disabled={lockReason !== null}
         placeholder={
           lockReason === 'disconnected'
-            ? 'Reconnecting…'
+            ? t('composerReconnecting')
             : lockReason === 'waiting'
-              ? 'Waiting for terminal…'
-              : 'Message, @files, /commands'
+              ? t('composerWaitingForTerminal')
+              : t('composerPlaceholder')
         }
         filePaths={filePaths}
         onNeedFiles={onNeedFiles}

@@ -9,6 +9,8 @@ import {
 } from './session-panel-host'
 import { MobileAgentIcon } from '../components/MobileAgentIcon'
 import type { MobileSessionPresentationModel } from './use-mobile-session-presentation'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentationModel) {
   const {
@@ -40,7 +42,7 @@ export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentati
     createTabAgentLoadState === 'loading'
       ? [
           {
-            label: 'Detecting Agents',
+            label: translate(sessionCatalog, 'detectingAgents'),
             icon: Bot,
             disabled: true,
             loading: true,
@@ -59,7 +61,7 @@ export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentati
         : createTabAgentLoadState === 'loaded'
           ? [
               {
-                label: 'No Enabled Agents',
+                label: translate(sessionCatalog, 'noEnabledAgents'),
                 icon: Bot,
                 disabled: true,
                 onPress: () => {}
@@ -68,8 +70,8 @@ export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentati
           : createTabAgentLoadState === 'error'
             ? [
                 {
-                  label: 'Agent Presets Unavailable',
-                  hint: 'Check the host connection',
+                  label: translate(sessionCatalog, 'agentPresetsUnavailable'),
+                  hint: translate(sessionCatalog, 'checkHostConnection'),
                   icon: Bot,
                   disabled: true,
                   onPress: () => {}
@@ -82,7 +84,7 @@ export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentati
       : createTabAgentLoadState === 'loading'
         ? [
             {
-              label: 'Detecting Agents',
+              label: translate(sessionCatalog, 'detectingAgents'),
               icon: Bot,
               disabled: true,
               loading: true,
@@ -92,7 +94,7 @@ export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentati
         : createTabAgentOptions.length > 0
           ? createTabAgentOptions.map((option) => ({
               label: option.label,
-              hint: 'New agent session',
+              hint: translate(sessionCatalog, 'newAgentSession'),
               icon: Bot,
               onPress: () => {
                 const delivery = pendingDiffNotesDelivery
@@ -109,7 +111,7 @@ export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentati
           : createTabAgentLoadState === 'loaded'
             ? [
                 {
-                  label: 'No Enabled Agents',
+                  label: translate(sessionCatalog, 'noEnabledAgents'),
                   icon: Bot,
                   disabled: true,
                   onPress: () => {}
@@ -118,8 +120,8 @@ export function useMobileSessionPanelRouteActions(scope: MobileSessionPresentati
             : createTabAgentLoadState === 'error'
               ? [
                   {
-                    label: 'Agent Presets Unavailable',
-                    hint: 'Copy notes instead',
+                    label: translate(sessionCatalog, 'agentPresetsUnavailable'),
+                    hint: translate(sessionCatalog, 'copyNotesInstead'),
                     icon: Bot,
                     disabled: true,
                     onPress: () => {}

@@ -92,8 +92,12 @@ const HOST_COMPONENT_NAMES = new Set([
 // never pass it. Found by pullfrog on #22300.
 // Moved, count unchanged, when the Markdown actions' Back `useEffect` became `useBackClaim`, the
 // seam that also claims the key on the page while a draft is dirty.
-const HEAD_MAIN_HOOK_SHA256 = 'f161e14a9c53d80c3dc75f51dd8ecb339b59b7239c9c3e067791b8612f51ede2'
-const HEAD_HOOK_BINDING_SHA256 = '7a9e256e2058635850253a74b9faa05bcafbbcaa1e5b0b3ef7f677dde85753a2'
+// Refreshed for mobile i18n: copy moved into the `session`, `session-chat` and `session-review`
+// catalogs. +1 main hook (`useMobileTranslation` in the presentation hook), +3 content bindings
+// (one `t` each in MarkdownReader, DiffLineRow and FileReader), 532 -> 517 runtime strings as
+// literals became catalog keys, and every hash that read those literals moved. No behaviour change.
+const HEAD_MAIN_HOOK_SHA256 = 'c6dffbfde1ed32d27200cbd6f562b1f5174045fa8989abbea82dfbe3a446df2d'
+const HEAD_HOOK_BINDING_SHA256 = '2f73e6f59c2fc11e3c5496a1405a9ee50f62d7bca83d6137d577d62f340c209b'
 const HEAD_CALLBACK_IDENTITY_SHA256 =
   '373dca17a060e63d8cb4e32416ca2889b8404cee78f7b47e632940a9980baf23'
 // Pins that no callback body in the route changed unnoticed. Body text, not behaviour: the sends
@@ -115,7 +119,7 @@ const HEAD_CALLBACK_IDENTITY_SHA256 =
 // the other's body. The hook and string counts are C7.2's and stand.
 // Refreshed once more for the two dictation failure handlers, which now both call
 // `reportDictationFailure` instead of each choosing between the setup sheet and a toast.
-const HEAD_CALLBACK_BODY_SHA256 = '2ccbfb5ee57e7dfeb07dafaee6fa592b95862b3bc898a5ac2995e7c69913bfc4'
+const HEAD_CALLBACK_BODY_SHA256 = '9465d851347dd1e3dabf7f584d2285c07fa69e98394de4b43d8f523e1d38dcfa'
 // Refreshed for the startup effect: both `worktree.activate` sends became `worktreeActivate`, and
 // the sleeping-agent check reads that operation's verdict instead of the reply envelope. Refreshed
 // again when the reporter took the reply and interpreted it itself, retiring the hand-built
@@ -127,8 +131,8 @@ const HEAD_CALLBACK_BODY_SHA256 = '2ccbfb5ee57e7dfeb07dafaee6fa592b95862b3bc898a
 // -1 effect for the Markdown actions' Back registration, which is `useBackClaim`'s own now.
 // Refreshed for the new-tab agent options effect, which shows this connection's cached agents
 // before refreshing them. Count unchanged.
-const HEAD_EFFECT_SHA256 = '2e94e06aca66ecde8893e7f6fab0e3e8dcb340e07dacaddb6250f02cb1bb95a1'
-const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fef5cc45fde6f8189581'
+const HEAD_EFFECT_SHA256 = '6477b8eb8831f5f5c297fe09523b9824cf8461fe34fdbced3a8f7b11cd889a0e'
+const HEAD_CONTENT_HOOK_SHA256 = '33a47c861132d045c19ec48e3781eccb5ebddbc516a1891d612d3b56c80e488a'
 // Same pin for the 12 bodies that sit in nested functions rather than callbacks, moved by the same
 // rewrite of those send and read expressions. Count unchanged. Refreshed again in step 6 for
 // `handleClearTerminal`, whose send became `terminalBufferClear`, in step 7 for the browser tab
@@ -137,7 +141,7 @@ const HEAD_CONTENT_HOOK_SHA256 = '9c3b612fef3f370d66873aefdbe1d701f20cb64ded31fe
 // branch became that operation's own throw-the-host-message acceptance. Refreshed for negotiated
 // optimistic placement, which defers to legacy host snapshots when ownership paths disagree.
 const HEAD_NESTED_FUNCTION_SHA256 =
-  '923b5ea7fe3330cbd98213b72736bf1f653115ddb5492cb8eb8306d8ca4f28e8'
+  '365a56c0f672db54d329ad83996c212f234880d3afb32ce83450002155a8d673'
 // -1 registration and -1 removal: the Markdown actions' `BackHandler` pair is `useBackClaim`'s.
 const HEAD_NATIVE_REGISTRATION_SHA256 =
   '87d4599f475575131d4d5daa20f0dac579ca6c829353cbb654206ea6965dadae'
@@ -175,10 +179,10 @@ const HEAD_TIMER_CLEANUP_SHA256 = 'c73f1d1c2cc89642f3d727d6f3b6b81860a9d6f342345
 // frame reported either way, and its window is its frame, so both measure paths agree there.
 // +1 string: the root layout's route breadcrumb joins segments with '\u0000'.
 const HEAD_RUNTIME_STRING_SHA256 =
-  '903b86c848947cff7b65a9b473c2874ebf400ed33a7d807fb085ff7037644ffc'
+  '3ce44caca9768123528ad7cd8b822ac09a5a310f7de6964f7ad0d437e9979933'
 // Moved by both of the dock's fields: their refs, and the live one's submit handler, are the seam's now.
-const HEAD_HOST_JSX_SHA256 = 'ca4c8b46af86a05cb671de91c22111c9e4aaeefd4a04c7b8b09976ca01a31c9b'
-const HEAD_LEAF_JSX_SHA256 = 'c7e1a4b90197697f1eaa640c38da63281b4f7b84fb036ae2152f00c2f7d7cb77'
+const HEAD_HOST_JSX_SHA256 = '2de9785e8b96e03ab3f722145c5e2be029f16348104cf3b11dfafd6fa0596e77'
+const HEAD_LEAF_JSX_SHA256 = '89be36a0260325d4fe59f4a14f4a7c579eddc08db4706af73e39b4eb28b9681d'
 const HEAD_STYLE_REFERENCE_SHA256 =
   '295a3501c2c6d7bea7c8bbf38b3f3534f01344cd7e1b91bb8e07c040821d596a'
 const HEAD_IDENTITY_FIELD_SHA256 =
@@ -569,7 +573,7 @@ describe('mobile session route extraction parity', () => {
     const contentBindings = CONTENT_COMPONENT_NAMES.flatMap(
       (name) => readHookFacts(name, definitions).bindings
     )
-    expect(main.hooks).toHaveLength(282)
+    expect(main.hooks).toHaveLength(283)
     expect(hash(main.hooks)).toBe(HEAD_MAIN_HOOK_SHA256)
     expect(hash(main.bindings)).toBe(HEAD_HOOK_BINDING_SHA256)
     expect(main.callbacks).toHaveLength(79)
@@ -577,7 +581,7 @@ describe('mobile session route extraction parity', () => {
     expect(hash(main.callbackBodies)).toBe(HEAD_CALLBACK_BODY_SHA256)
     expect(main.effects).toHaveLength(24)
     expect(hash(main.effects)).toBe(HEAD_EFFECT_SHA256)
-    expect(contentBindings).toHaveLength(14)
+    expect(contentBindings).toHaveLength(17)
     expect(hash(contentBindings)).toBe(HEAD_CONTENT_HOOK_SHA256)
     const nestedFunctions = readNestedFunctions(definitions)
     expect(nestedFunctions).toHaveLength(12)
@@ -614,7 +618,7 @@ describe('mobile session route extraction parity', () => {
 
   it('preserves runtime strings, styles, and the expanded JSX tree', () => {
     const strings = readRuntimeStrings()
-    expect(strings).toHaveLength(532)
+    expect(strings).toHaveLength(517)
     expect(hash(strings)).toBe(HEAD_RUNTIME_STRING_SHA256)
     const jsx = readJsxFacts(readDefinitions())
     expect(jsx.host).toHaveLength(124)

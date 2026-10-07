@@ -1,8 +1,5 @@
 import { formatAgentTypeLabel } from '../../../src/shared/agent-type-label'
-import {
-  formatNativeChatEmptyStateCopy,
-  type NativeChatEmptyStateCopy
-} from '../../../src/shared/native-chat-empty-state'
+import type { NativeChatEmptyStateCopy } from '../../../src/shared/native-chat-empty-state'
 import { stripNoiseMessages } from '../../../src/shared/native-chat-noise'
 import { foldToolMessages } from '../../../src/shared/native-chat-tool-fold'
 import { isImageRefBlock, type NativeChatMessage } from '../../../src/shared/native-chat-types'
@@ -11,6 +8,8 @@ import {
   normalizeImageTranscriptMessages
 } from './mobile-native-chat-image-transcript-markers'
 import type { MobileNativeChatStatus } from './use-mobile-native-chat-session'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 /** The centered empty-state copy for a chat with no messages, mirroring the
  *  desktop `NativeChatEmptyState` (shared copy + agent label) so the two surfaces
@@ -21,7 +20,9 @@ export function mobileNativeChatEmptyState(
   agent: string | null,
   error?: string
 ): NativeChatEmptyStateCopy | null {
-  const agentLabel = agent ? formatAgentTypeLabel(agent) : 'the agent'
+  const agentLabel = agent
+    ? formatAgentTypeLabel(agent)
+    : translate(sessionChatCatalog, 'emptyStateAgentFallback')
   switch (status) {
     // A live agent with no transcript yet — an unwritten transcript file, or a
     // loaded-but-empty one — is "start a chat"; invite the first message instead
@@ -29,11 +30,15 @@ export function mobileNativeChatEmptyState(
     case 'waiting-session':
     case 'awaiting-transcript':
     case 'ready':
-      return formatNativeChatEmptyStateCopy('empty', agentLabel)
-    case 'error': {
-      const copy = formatNativeChatEmptyStateCopy('error', agentLabel)
-      return error ? { ...copy, subtitle: error } : copy
-    }
+      return {
+        title: translate(sessionChatCatalog, 'emptyStateTitle', { agent: agentLabel }),
+        subtitle: translate(sessionChatCatalog, 'emptyStateSubtitle', { agent: agentLabel })
+      }
+    case 'error':
+      return {
+        title: translate(sessionChatCatalog, 'loadErrorTitle'),
+        subtitle: error || translate(sessionChatCatalog, 'loadErrorSubtitle')
+      }
     default:
       return null
   }

@@ -2,6 +2,8 @@ import { Eraser, Monitor, Smartphone } from 'lucide-react-native'
 import type { ActionSheetAction } from '../components/ActionSheetModal'
 import type { MobileNativeChatTab } from './mobile-native-chat-eligibility'
 import { getMobileNativeChatToggleActions } from './mobile-native-chat-toggle-action'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 type TerminalTab = MobileNativeChatTab & { id: string; terminal: string | null }
 
@@ -45,7 +47,9 @@ export function getMobileTerminalActionSheetActions<
       onToggle: args.onToggleChat
     }),
     {
-      label: phoneMode ? 'Switch to Desktop' : 'Switch to Phone',
+      label: phoneMode
+        ? translate(sessionCatalog, 'switchToDesktop')
+        : translate(sessionCatalog, 'switchToPhone'),
       icon: phoneMode ? Monitor : Smartphone,
       onPress: () => {
         args.onDismiss()
@@ -53,14 +57,14 @@ export function getMobileTerminalActionSheetActions<
       }
     },
     {
-      label: 'Rename',
+      label: translate(sessionCatalog, 'rename'),
       closeBeforePress: true,
       onPress: () => {
         args.onRename(target)
       }
     },
     {
-      label: 'Clear Terminal',
+      label: translate(sessionCatalog, 'clearTerminal'),
       icon: Eraser,
       onPress: () => {
         args.onDismiss()
@@ -68,7 +72,7 @@ export function getMobileTerminalActionSheetActions<
       }
     },
     {
-      label: 'Close',
+      label: translate(sessionCatalog, 'close'),
       destructive: true,
       onPress: () => {
         args.onDismiss()

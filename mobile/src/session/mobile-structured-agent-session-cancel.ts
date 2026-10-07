@@ -8,6 +8,8 @@ import {
   retainStructuredSessionOperationId,
   type StructuredAgentSessionMutationCallResult
 } from './mobile-structured-agent-session-rpc'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 type PromptIdentity = { itemId: string; expectedRevision: number }
 
@@ -37,7 +39,7 @@ export async function requestMobileStructuredAgentSessionCancel(args: {
   const current = stateRef.current
   const turnId = activeStructuredAgentSessionTurnId(current.items)
   if (!client || !sessionId || !enabled || current.fence === null || !turnId) {
-    onSendError('Stop not sent')
+    onSendError(translate(sessionChatCatalog, 'sendStopNotSent'))
     return false
   }
   // Check the capability before fields enter either the fingerprint or operation key.
@@ -71,11 +73,15 @@ export async function requestMobileStructuredAgentSessionCancel(args: {
     return true
   }
   if (result.status === 'unknown') {
-    onSendError('Stop unconfirmed — check chat before retrying')
+    onSendError(translate(sessionChatCatalog, 'sendStopUnconfirmed'))
   } else if (result.status === 'refused') {
     onSendError(result.message)
   } else if (result.status === 'failed') {
-    onSendError(result.message === 'Request not sent' ? 'Stop not sent' : result.message)
+    onSendError(
+      result.message === 'Request not sent'
+        ? translate(sessionChatCatalog, 'sendStopNotSent')
+        : result.message
+    )
   }
   return false
 }

@@ -6,6 +6,8 @@ import type { RpcOperationSender } from '../transport/rpc-operation-sender'
 import { fetchUpdatePRTitle, type GitHubPrMutationOutcome } from './github-pr-mutations'
 import { triggerError, triggerSuccess } from '../platform/haptics'
 import { buildUpdatePRTitleParams } from './pr-title-edit'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type PrTitleMutations = {
   updateTitle: (args: {
@@ -62,7 +64,7 @@ export function useMobilePrTitleAction(input: PrTitleActionInput) {
       // Why: surface an explicit error when offline/not-ready so Save doesn't
       // silently no-op (the editor stays open with a reason instead of nothing).
       if (!ready || !mutations) {
-        setError('Not connected to desktop.')
+        setError(translate(sessionReviewCatalog, 'notConnectedToDesktop'))
         return false
       }
       inFlightRef.current = true
@@ -82,7 +84,9 @@ export function useMobilePrTitleAction(input: PrTitleActionInput) {
         // Why: updateTitle/refetch can throw; without this the `void save()`
         // rejection is unhandled — set the error + error haptic and return false.
         triggerError()
-        setError(err instanceof Error ? err.message : 'Failed to update title.')
+        setError(
+          err instanceof Error ? err.message : translate(sessionReviewCatalog, 'updateTitleFailed')
+        )
         return false
       } finally {
         inFlightRef.current = false

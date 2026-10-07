@@ -20,6 +20,8 @@ import {
   getOrCreateMobileStructuredSendOperation,
   mobileStructuredSendOperationKey
 } from './mobile-structured-send-operation-journal'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 export async function sendMobileStructuredAgentSessionMessage(input: {
   client: RpcClient
@@ -34,7 +36,7 @@ export async function sendMobileStructuredAgentSessionMessage(input: {
 }): Promise<MobileNativeChatSendOutcome> {
   const timeoutMs = timeoutForDeadline(input.deadline)
   if (timeoutMs === null) {
-    input.onError('Message not sent')
+    input.onError(translate(sessionChatCatalog, 'sendMessageNotSent'))
     return 'rejected'
   }
   const requestedBody = structuredAgentSessionSendBody(input.text, input.attachments)
@@ -73,7 +75,7 @@ export async function sendMobileStructuredAgentSessionMessage(input: {
       createOperationId: structuredSessionOperationId
     })
   } catch {
-    input.onError('Message not sent')
+    input.onError(translate(sessionChatCatalog, 'sendMessageNotSent'))
     return 'rejected'
   }
   const body = structuredAgentSessionSendBody(
@@ -86,7 +88,7 @@ export async function sendMobileStructuredAgentSessionMessage(input: {
     fields: { body }
   })
   if (payloadFingerprint !== operation.payloadFingerprint) {
-    input.onError('Message not sent')
+    input.onError(translate(sessionChatCatalog, 'sendMessageNotSent'))
     return 'rejected'
   }
   const result = await requestStructuredAgentSessionMutation<AgentSessionSendResult>({

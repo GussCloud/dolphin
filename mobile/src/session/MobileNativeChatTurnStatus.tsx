@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import {
-  formatNativeChatActiveTurnLabel,
-  formatNativeChatTurnStatusLabel,
-  NATIVE_CHAT_TURN_STATUS_COPY,
+  describeNativeChatActiveTurnLabel,
+  describeNativeChatTurnStatus,
   nativeChatElapsedSeconds
 } from '../../../src/shared/native-chat-turn-status'
+import { sessionChatCatalog, type sessionChatEn } from '../i18n/catalogs/session-chat'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, spacing, typography } from '../theme/mobile-theme'
 
 /** Seconds tick only while a turn is actually counting, so a settled transcript
@@ -24,6 +26,19 @@ function useElapsedSeconds(startedAt: number | null, counting: boolean): number 
     return () => clearInterval(timer)
   }, [counting])
   return counting ? nativeChatElapsedSeconds(startedAt, mountedAt, now) : 0
+}
+
+function statusLabel(
+  t: MobileTranslate<typeof sessionChatEn>,
+  status: { key: 'thinking' | 'workingFor' | 'workedFor'; duration: string | null }
+): string {
+  if (status.key === 'thinking') {
+    return t('turnThinking')
+  }
+  const duration = status.duration ?? ''
+  return status.key === 'workedFor'
+    ? t('turnWorkedFor', { duration })
+    : t('turnWorkingFor', { duration })
 }
 
 /** The per-turn status row. While the turn runs it is the one live indicator — a
@@ -50,9 +65,16 @@ export function MobileNativeChatTurnStatus({
   const settled = workedSeconds != null
   const counting = !settled && !thinking && !activityText?.trim()
   const elapsedSeconds = useElapsedSeconds(startedAt, counting)
-  const label = settled
-    ? formatNativeChatTurnStatusLabel({ thinking, workedSeconds, elapsedSeconds })
-    : formatNativeChatActiveTurnLabel({ activityText, thinking, elapsedSeconds })
+  const t = useMobileTranslation(sessionChatCatalog)
+  const activeLabel = settled
+    ? null
+    : describeNativeChatActiveTurnLabel({ activityText, thinking, elapsedSeconds })
+  const label =
+    activeLabel === null
+      ? statusLabel(t, describeNativeChatTurnStatus({ thinking, workedSeconds, elapsedSeconds }))
+      : activeLabel.source === 'activity'
+        ? activeLabel.text
+        : statusLabel(t, activeLabel)
 
   if (settled && onToggleExpanded) {
     return (
@@ -62,7 +84,7 @@ export function MobileNativeChatTurnStatus({
         hitSlop={6}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
-        accessibilityLabel={NATIVE_CHAT_TURN_STATUS_COPY.toggleDetails}
+        accessibilityLabel={t('turnToggleDetails')}
       >
         <Text style={styles.label}>{label}</Text>
         <View style={expanded ? styles.caretOpen : undefined}>
@@ -76,7 +98,7 @@ export function MobileNativeChatTurnStatus({
     <View
       style={[styles.row, settled ? styles.rowSettled : null]}
       accessibilityLiveRegion="polite"
-      accessibilityLabel={NATIVE_CHAT_TURN_STATUS_COPY.responding}
+      accessibilityLabel={t('turnResponding')}
     >
       {settled ? null : <ActivityIndicator size="small" color={colors.textMuted} />}
       <Text style={styles.label} numberOfLines={1}>

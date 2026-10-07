@@ -13,6 +13,8 @@ import {
 } from './mobile-diff-comments'
 import type { DiffComment } from '../../../src/shared/diff-comment-types'
 import type { MobileSessionDocumentReadersModel } from './use-mobile-session-document-readers'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionDiffComments(scope: MobileSessionDocumentReadersModel) {
   const {
@@ -45,7 +47,7 @@ export function useMobileSessionDiffComments(scope: MobileSessionDocumentReaders
   const persistDiffComments = useCallback(
     async (comments: readonly DiffComment[]): Promise<void> => {
       if (!client || connState !== 'connected') {
-        throw new Error('Waiting for desktop...')
+        throw new Error(translate(sessionCatalog, 'waitingForDesktop'))
       }
       const response = await sessionWorktreeNotesWrite.request(client, {
         worktree: `id:${worktreeId}`,
@@ -53,7 +55,7 @@ export function useMobileSessionDiffComments(scope: MobileSessionDocumentReaders
       })
       interpretOrThrowRefusalMessage(
         () => sessionWorktreeNotesWrite.interpret(response),
-        'Failed to save review notes'
+        translate(sessionCatalog, 'saveReviewNotesFailed')
       )
     },
     [client, connState, worktreeId]
@@ -89,12 +91,15 @@ export function useMobileSessionDiffComments(scope: MobileSessionDocumentReaders
       try {
         await persistDiffComments(result.comments)
         triggerSuccess()
-        showToast('Note added')
+        showToast(translate(sessionCatalog, 'noteAdded'))
         return true
       } catch (err) {
         setDiffComments(previous)
         triggerError()
-        showToast(err instanceof Error ? err.message : 'Failed to save note', 1600)
+        showToast(
+          err instanceof Error ? err.message : translate(sessionCatalog, 'saveNoteFailed'),
+          1600
+        )
         return false
       } finally {
         setDiffCommentBusy(false)
@@ -121,7 +126,10 @@ export function useMobileSessionDiffComments(scope: MobileSessionDocumentReaders
       } catch (err) {
         setDiffComments(previous)
         triggerError()
-        showToast(err instanceof Error ? err.message : 'Failed to delete note', 1600)
+        showToast(
+          err instanceof Error ? err.message : translate(sessionCatalog, 'deleteNoteFailed'),
+          1600
+        )
       } finally {
         setDiffCommentBusy(false)
       }
@@ -137,10 +145,10 @@ export function useMobileSessionDiffComments(scope: MobileSessionDocumentReaders
     try {
       await clipboard.writeText(formatDiffComments(comments))
       triggerSuccess()
-      showToast('Notes copied')
+      showToast(translate(sessionCatalog, 'notesCopied'))
     } catch {
       triggerError()
-      showToast("Couldn't copy notes", 1600)
+      showToast(translate(sessionCatalog, 'copyNotesFailed'), 1600)
     }
   }, [clipboard, showToast])
 

@@ -12,6 +12,8 @@ import {
 import type { GitHubPrRepoSlug } from './github-pr-rpc'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
 import { PrActionsEngine, type PrActionMutations, type PrActionBusyKey } from './pr-actions-engine'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type { PrActionBusyKey, PrActionMutations } from './pr-actions-engine'
 
@@ -145,7 +147,10 @@ export function useMobilePrActions(input: PrActionsInput) {
 // Stand-in mutations used before a client exists; they never fire (the hook gates
 // on `ready`) but keep the engine constructable.
 function noopMutations(): PrActionMutations {
-  const fail = async () => ({ ok: false as const, error: 'Not connected' })
+  const fail = async () => ({
+    ok: false as const,
+    error: translate(sessionReviewCatalog, 'notConnected')
+  })
   return {
     mergePR: fail,
     setPRAutoMerge: fail,

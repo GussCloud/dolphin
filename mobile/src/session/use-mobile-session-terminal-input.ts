@@ -21,6 +21,8 @@ import {
 } from './mobile-session-route-helpers'
 import type { Terminal, TerminalGestureInputQueue } from './mobile-session-route-types'
 import type { MobileSessionFileActionsModel } from './use-mobile-session-file-actions'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionTerminalInput(scope: MobileSessionFileActionsModel) {
   const {
@@ -236,9 +238,9 @@ export function useMobileSessionTerminalInput(scope: MobileSessionFileActionsMod
     try {
       // The reply is unread: main toasted success on any fulfilled envelope, refusal included.
       await terminalBufferClear.request(client, { terminal: target.handle })
-      showToast('Terminal cleared')
+      showToast(translate(sessionCatalog, 'terminalCleared'))
     } catch {
-      showToast("Couldn't clear terminal", 1500)
+      showToast(translate(sessionCatalog, 'clearTerminalFailed'), 1500)
     }
   }
   return {
