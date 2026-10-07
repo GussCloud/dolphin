@@ -9,7 +9,10 @@ import { TUI_AGENT_CONFIG } from '../../../shared/tui-agent-config'
 import { isTuiAgentEnabled } from '../../../shared/tui-agent-selection'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { translate } from '@/i18n/i18n'
-import { resolveLocalWindowsAgentStartupShell } from '../../../shared/windows-terminal-shell'
+import {
+  resolveAgentStartupPlanInputs,
+  type AgentStartupSettings
+} from '../../../shared/agent-startup-plan-inputs'
 import type { SessionOptionValue } from '../../../shared/native-chat-session-options'
 
 export type SourceControlLaunchPlanDelivery =
@@ -35,11 +38,12 @@ export function planSourceControlAgentActionLaunch(args: {
   promptDelivery: 'auto-submit' | 'draft' | 'submit-after-ready'
   detectedAgents: TuiAgent[]
   disabledAgents?: TuiAgent[]
-  cmdOverrides?: Partial<Record<TuiAgent, string>>
+  /** Settings-derived inputs (default args/env, session instructions) the real launch applies. */
+  settings?: AgentStartupSettings | null
+  /** Omitted means the configured default args, matching the real launch. */
   agentArgs?: string | null
   sessionOptions?: Record<string, SessionOptionValue>
   platform?: NodeJS.Platform
-  terminalWindowsShell?: string | null
   /** Why: SSH remotes deploy the CLI shim as plain `dolphin`, so the Linux-only
    * `dolphin-ide` rename must not be applied for remote launches. */
   isRemote?: boolean
@@ -84,45 +88,35 @@ export function planSourceControlAgentActionLaunch(args: {
     }
   }
 
-  const cmdOverrides = args.cmdOverrides ?? {}
   const platform = args.platform ?? CLIENT_PLATFORM
-  const isRemote = args.isRemote ?? false
-  const shell =
-    resolveLocalWindowsAgentStartupShell({
-      platform,
-      isRemote,
-      terminalWindowsShell: args.terminalWindowsShell
-    }) ?? (platform === 'win32' ? 'powershell' : 'posix')
-  const plannedArgs = planAgentCliArgsSuffix(args.agentArgs, shell)
+  const inputs = resolveAgentStartupPlanInputs({
+    agent,
+    settings: args.settings ?? {},
+    platform,
+    isRemote: args.isRemote ?? false,
+    ...(args.agentArgs !== undefined ? { agentArgs: args.agentArgs } : {}),
+    sessionOptions: args.sessionOptions
+  })
+  const shell = inputs.shell ?? (platform === 'win32' ? 'powershell' : 'posix')
+  const plannedArgs = planAgentCliArgsSuffix(inputs.agentArgs, shell)
   if (!plannedArgs.ok) {
     return { ok: false, error: plannedArgs.error }
   }
+  const planInputs = { ...inputs, shell }
   let startupPlan: AgentStartupPlan | null = null
   let delivery: SourceControlLaunchPlanDelivery
 
   if (args.promptDelivery === 'submit-after-ready') {
     startupPlan = buildAgentStartupPlan({
-      agent,
+      ...planInputs,
       prompt: '',
-      cmdOverrides,
-      platform,
-      shell,
-      isRemote,
-      agentArgs: args.agentArgs,
-      sessionOptions: args.sessionOptions,
       allowEmptyPromptLaunch: true
     })
     delivery = 'paste-submit'
   } else if (args.promptDelivery === 'draft') {
     const draftLaunchPlan = buildAgentDraftLaunchPlan({
-      agent,
-      draft: trimmedInput,
-      cmdOverrides,
-      platform,
-      shell,
-      isRemote,
-      agentArgs: args.agentArgs,
-      sessionOptions: args.sessionOptions
+      ...planInputs,
+      draft: trimmedInput
     })
     if (draftLaunchPlan) {
       startupPlan = {
@@ -142,41 +136,23 @@ export function planSourceControlAgentActionLaunch(args: {
       delivery = 'draft-native'
     } else {
       startupPlan = buildAgentStartupPlan({
-        agent,
+        ...planInputs,
         prompt: '',
-        cmdOverrides,
-        platform,
-        shell,
-        isRemote,
-        agentArgs: args.agentArgs,
-        sessionOptions: args.sessionOptions,
         allowEmptyPromptLaunch: true
       })
       delivery = 'draft-paste'
     }
   } else if (TUI_AGENT_CONFIG[agent].promptInjectionMode === 'stdin-after-start') {
     startupPlan = buildAgentStartupPlan({
-      agent,
+      ...planInputs,
       prompt: '',
-      cmdOverrides,
-      platform,
-      shell,
-      isRemote,
-      agentArgs: args.agentArgs,
-      sessionOptions: args.sessionOptions,
       allowEmptyPromptLaunch: true
     })
     delivery = 'draft-paste'
   } else {
     startupPlan = buildAgentStartupPlan({
-      agent,
+      ...planInputs,
       prompt: trimmedInput,
-      cmdOverrides,
-      platform,
-      shell,
-      isRemote,
-      agentArgs: args.agentArgs,
-      sessionOptions: args.sessionOptions,
       allowEmptyPromptLaunch: false
     })
     delivery = 'argv'

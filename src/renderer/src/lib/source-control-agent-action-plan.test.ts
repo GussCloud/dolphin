@@ -37,7 +37,8 @@ describe('planSourceControlAgentActionLaunch', () => {
     })
 
     expect(result.ok && result.delivery).toBe('paste-submit')
-    expect(result.ok && result.commandLabel).toBe('codex')
+    // Built-in default args apply when no per-action args are given, as in the real launch.
+    expect(result.ok && result.commandLabel).toBe("codex '--dangerously-bypass-approvals-and-sandbox'")
     expect(result.ok && result.summary).toContain('pastes and submits')
     expect(result.ok && result.caveat).toContain('PATH')
   })
@@ -73,7 +74,7 @@ describe('planSourceControlAgentActionLaunch', () => {
         promptDelivery: 'auto-submit',
         detectedAgents: ['hermes'],
         platform: 'win32',
-        terminalWindowsShell
+        settings: { terminalWindowsShell }
       })
 
       expect(result.ok && result.plan.launchCommand).toContain(expectedCommand)
@@ -108,5 +109,63 @@ describe('planSourceControlAgentActionLaunch', () => {
 
     expect(result.ok && result.delivery).toBe('draft-native')
     expect(result.ok && result.commandLabel).toContain('--prefill')
+  })
+
+  it('applies configured session instructions like the real launch does', () => {
+    const result = planSourceControlAgentActionLaunch({
+      agent: 'claude-agent-teams',
+      commandInput: 'Fix checks',
+      promptDelivery: 'submit-after-ready',
+      detectedAgents: ['claude-agent-teams'],
+      platform: 'linux',
+      settings: { agentSessionInstructions: { 'claude-agent-teams': 'Use three teammates.' } }
+    })
+
+    expect(result.ok && result.commandLabel).toContain('--append-system-prompt')
+    expect(result.ok && result.commandLabel).toContain('Use three teammates.')
+  })
+
+  it('omits session instructions the user cleared', () => {
+    const result = planSourceControlAgentActionLaunch({
+      agent: 'claude-agent-teams',
+      commandInput: 'Fix checks',
+      promptDelivery: 'submit-after-ready',
+      detectedAgents: ['claude-agent-teams'],
+      platform: 'linux',
+      settings: { agentSessionInstructions: { 'claude-agent-teams': '' } }
+    })
+
+    expect(result.ok && result.commandLabel).not.toContain('--append-system-prompt')
+  })
+
+  it('falls back to configured default args and env when no per-action args are given', () => {
+    const result = planSourceControlAgentActionLaunch({
+      agent: 'codex',
+      commandInput: 'Fix checks',
+      promptDelivery: 'submit-after-ready',
+      detectedAgents: ['codex'],
+      platform: 'linux',
+      settings: {
+        agentDefaultArgs: { codex: '--model gpt-5.5' },
+        agentDefaultEnv: { codex: { CODEX_HOME: '/tmp/codex' } }
+      }
+    })
+
+    expect(result.ok && result.commandLabel).toBe("codex '--model' 'gpt-5.5'")
+    expect(result.ok && result.plan.env?.CODEX_HOME).toBe('/tmp/codex')
+  })
+
+  it('lets per-action args replace the configured default args', () => {
+    const result = planSourceControlAgentActionLaunch({
+      agent: 'codex',
+      commandInput: 'Fix checks',
+      agentArgs: '',
+      promptDelivery: 'submit-after-ready',
+      detectedAgents: ['codex'],
+      platform: 'linux',
+      settings: { agentDefaultArgs: { codex: '--model gpt-5.5' } }
+    })
+
+    expect(result.ok && result.commandLabel).toBe('codex')
   })
 })
