@@ -9,6 +9,8 @@ import {
   getProjectIdentityKey,
   getProjectProviderIdentity
 } from '../../../src/shared/project-host-setup-projection'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { translate } from '../i18n/mobile-locale-state'
 
 type WorkspaceRepo = Pick<Repo, 'id' | 'displayName' | 'path'> &
   Partial<
@@ -53,7 +55,11 @@ export function buildNewWorkspaceProjectOptions<TRepo extends WorkspaceRepo>(
       ? `${providerIdentity.owner}/${providerIdentity.repo}`
       : ''
     const hostCount = hostIdsByProject.get(option.id)?.size ?? 0
-    const detail = providerDetail || (hostCount > 1 ? `${hostCount} hosts configured` : '')
+    const detail =
+      providerDetail ||
+      (hostCount > 1
+        ? translate(componentsNewWorkspaceCatalog, 'hostsConfigured', { count: hostCount })
+        : '')
     return detail ? { ...option, detail } : option
   })
 }
@@ -72,10 +78,15 @@ export function getNewWorkspaceRunTarget(
     return { label: `SSH · ${hostLabel}`, detail: repo.path }
   }
   if (host?.kind === 'runtime') {
-    return { label: `Remote · ${hostLabel}`, detail: repo.path }
+    return {
+      label: translate(componentsNewWorkspaceCatalog, 'remoteHost', { host: hostLabel }),
+      detail: repo.path
+    }
   }
   return {
-    label: localPlatform ? getLocalExecutionHostLabel(localPlatform) : 'This computer',
+    label: localPlatform
+      ? getLocalExecutionHostLabel(localPlatform)
+      : translate(componentsNewWorkspaceCatalog, 'thisComputer'),
     detail: repo.path
   }
 }

@@ -6,6 +6,8 @@ import { agentDisplayLabel, agentDotState, formatTimeAgo } from '../worktree/age
 import type { AgentRowSubagent } from '../worktree/agent-row-subagents'
 import { AgentStateDot } from './AgentStateDot'
 import { MobileAgentIcon } from './MobileAgentIcon'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const INDENT_PER_DEPTH = 14
 
@@ -47,11 +49,12 @@ function WorktreeAgentSubagentRowComponent(props: {
   depth: number
   now: number
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   const { subagent } = props
   return (
     <View
       style={[styles.row, { paddingLeft: props.depth * INDENT_PER_DEPTH }]}
-      accessibilityLabel={`Teammate ${subagent.name}, ${subagent.stateLabel}`}
+      accessibilityLabel={t('teammateLabel', { name: subagent.name, state: subagent.stateLabel })}
     >
       <AgentStateDot state={subagent.dotState} />
       <Text style={styles.label} numberOfLines={1}>

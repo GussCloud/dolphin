@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { GitPullRequestArrow, Link2, RefreshCw } from 'lucide-react-native'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import type { RpcClient } from '../../transport/rpc-client'
 import type { ConnectionState } from '../../transport/types'
 import type { MobileGitStatusResult } from '../../source-control/mobile-git-status'
@@ -45,6 +47,7 @@ export function PrSidebarCreateEmptyState({
   connState,
   onCreated
 }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [mode, setMode] = useState<Mode>('choose')
   const [loading, setLoading] = useState(false)
   const [createWarning, setCreateWarning] = useState<string | null>(null)
@@ -97,7 +100,7 @@ export function PrSidebarCreateEmptyState({
     setLoading(true)
     try {
       if (!gitBranch) {
-        setCreateWarning('Check out a branch before creating a pull request.')
+        setCreateWarning(t('checkoutBranchFirst'))
         return
       }
       // Why: mobile skips the local compose step here and runs the hosted create
@@ -131,7 +134,7 @@ export function PrSidebarCreateEmptyState({
       openMobilePrUrl(outcome.url)
       onCreated()
     } catch (err) {
-      setCreateWarning(err instanceof Error ? err.message : 'Failed to create pull request.')
+      setCreateWarning(err instanceof Error ? err.message : t('createPrFailed'))
     } finally {
       setLoading(false)
     }
@@ -160,14 +163,14 @@ export function PrSidebarCreateEmptyState({
       <View style={styles.header}>
         <View style={styles.headerTitle}>
           <GitPullRequestArrow size={14} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.headerLabel}>Pull request</Text>
+          <Text style={styles.headerLabel}>{t('pullRequest')}</Text>
         </View>
         <View style={styles.headerActions}>
           <Pressable
             style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
             onPress={refreshPrState}
             accessibilityRole="button"
-            accessibilityLabel="Refresh pull request"
+            accessibilityLabel={t('refreshPullRequest')}
             hitSlop={6}
           >
             <RefreshCw size={16} color={colors.textSecondary} strokeWidth={2.2} />
@@ -177,27 +180,29 @@ export function PrSidebarCreateEmptyState({
             onPress={() => void openComposer()}
             disabled={!canCreate || loading}
             accessibilityRole="button"
-            accessibilityLabel="Create pull request"
+            accessibilityLabel={t('createPullRequest')}
           >
             {loading ? (
               <ActivityIndicator color={colors.bgBase} />
             ) : (
               <GitPullRequestArrow size={14} color={colors.bgBase} strokeWidth={2.2} />
             )}
-            <Text style={styles.createButtonText}>Create PR</Text>
+            <Text style={styles.createButtonText}>{t('createPr')}</Text>
           </Pressable>
         </View>
       </View>
       <View style={styles.body}>
         <Text style={styles.bodyTitle}>
-          {orphanLinkedPR ? `Linked PR #${orphanLinkedPR} unavailable` : 'No open pull request'}
+          {orphanLinkedPR
+            ? t('linkedPrUnavailable', { number: orphanLinkedPR })
+            : t('noOpenPullRequest')}
         </Text>
         <Text style={styles.bodyText}>
           {orphanLinkedPR
-            ? 'Refresh to check again, or create a new PR for this branch.'
+            ? t('linkedPrUnavailableHint')
             : gitBranch
-              ? `${gitBranch} is not linked to an open PR.`
-              : 'The current branch is not linked to an open PR.'}
+              ? t('branchNotLinked', { branch: gitBranch })
+              : t('currentBranchNotLinked')}
         </Text>
         {commitFailureRecovery ? (
           <MobileCommitFailurePanel
@@ -216,7 +221,7 @@ export function PrSidebarCreateEmptyState({
           onPress={() => setMode('link')}
           disabled={!client}
           accessibilityRole="button"
-          accessibilityLabel="Link an existing pull request"
+          accessibilityLabel={t('linkExistingPullRequest')}
           accessibilityState={{ disabled: !client }}
           hitSlop={6}
         >
@@ -225,7 +230,7 @@ export function PrSidebarCreateEmptyState({
             color={client ? colors.textSecondary : colors.textMuted}
             strokeWidth={2.2}
           />
-          <Text style={styles.linkButtonText}>Link an existing PR</Text>
+          <Text style={styles.linkButtonText}>{t('linkExistingPr')}</Text>
         </Pressable>
       </View>
     </View>

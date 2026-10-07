@@ -11,6 +11,8 @@ import {
 import { Search, X } from 'lucide-react-native'
 import { colors, radii, spacing } from '../theme/mobile-theme'
 import { TEXT_INPUT_FONT_SIZE } from '../platform/text-input-font-size'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Why: toolbar/list chrome paints and settles after the open tap; native
 // autoFocus alone often fails to raise the soft keyboard on iOS/Android.
@@ -44,7 +46,7 @@ export function MobileSearchField({
   placeholder,
   onClear,
   showClear,
-  clearAccessibilityLabel = 'Clear search',
+  clearAccessibilityLabel,
   autoFocus = false,
   focusKey,
   returnKeyType = 'search',
@@ -53,6 +55,7 @@ export function MobileSearchField({
   editable = true,
   accessibilityLabel
 }: MobileSearchFieldProps) {
+  const t = useMobileTranslation(componentsCatalog)
   const inputRef = useRef<TextInput>(null)
   const [focused, setFocused] = useState(false)
   const clearVisible = showClear ?? value.length > 0
@@ -130,7 +133,7 @@ export function MobileSearchField({
           onPress={handleClear}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={clearAccessibilityLabel}
+          accessibilityLabel={clearAccessibilityLabel ?? t('clearSearch')}
           style={({ pressed }) => [styles.clearButton, pressed && styles.clearButtonPressed]}
         >
           {/* Why: chip + larger hit target — a bare 14px X was hard to tap and

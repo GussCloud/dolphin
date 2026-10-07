@@ -16,6 +16,8 @@ import { NewWorkspaceSetupScriptField } from './NewWorkspaceSetupScriptField'
 import { NewWorkspaceSshConnectionField } from './NewWorkspaceSshConnectionField'
 import { SmartWorkspaceAdvancedFields } from './SmartWorkspaceAdvancedFields'
 import { SmartWorkspaceSourceField } from './SmartWorkspaceSourceField'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Composer = ReturnType<typeof useMobileComposerSource>
 type Selection = { label: string; detail?: string }
@@ -69,12 +71,13 @@ export function NewWorktreeFormSheet(props: {
   onRunSetupChange: (run: boolean) => void
   onCreate: () => void
 }) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   const multiProjectActive = props.multiProject?.active === true
   return (
     <BottomDrawer visible={props.visible} interactive={props.interactive} onClose={props.onClose}>
       <View style={styles.header}>
         <Text style={styles.title}>
-          {multiProjectActive ? 'Create multi-project workspace' : 'Create worktree'}
+          {multiProjectActive ? t('createMultiProjectWorkspace') : t('createWorktree')}
         </Text>
       </View>
 
@@ -84,7 +87,7 @@ export function NewWorktreeFormSheet(props: {
         </View>
       ) : !props.hasRepos ? (
         <View style={styles.loadingContainer}>
-          <Text style={styles.emptyText}>No projects found</Text>
+          <Text style={styles.emptyText}>{t('noProjectsFound')}</Text>
         </View>
       ) : (
         <>
@@ -110,7 +113,7 @@ export function NewWorktreeFormSheet(props: {
 
           {multiProjectActive ? (
             <View style={styles.field}>
-              <Text style={styles.label}>Workspace name</Text>
+              <Text style={styles.label}>{t('workspaceName')}</Text>
               <MobileWorkspaceNameInput
                 shouldAutoFocus={false}
                 style={styles.input}
@@ -122,7 +125,7 @@ export function NewWorktreeFormSheet(props: {
           ) : (
             <SmartWorkspaceSourceField
               composer={props.composer}
-              label={props.selectedRepoIsGit ? "Name or 'Create From'" : 'Workspace name'}
+              label={props.selectedRepoIsGit ? t('nameOrCreateFrom') : t('workspaceName')}
               disabled={props.sshGate.requiresConnection}
               interactive={props.interactive}
               onOpenExternalUrl={props.onOpenExternalUrl}
@@ -144,7 +147,7 @@ export function NewWorktreeFormSheet(props: {
           ) : null}
 
           <View style={styles.field}>
-            <Text style={styles.label}>Agent</Text>
+            <Text style={styles.label}>{t('agent')}</Text>
             <Pressable
               style={[styles.fieldButton, props.sshGate.requiresConnection && styles.disabled]}
               disabled={props.sshGate.requiresConnection}
@@ -153,7 +156,7 @@ export function NewWorktreeFormSheet(props: {
               <MobileAgentIcon agentId={props.selectedAgent.id} size={16} />
               <Text style={styles.fieldButtonText} numberOfLines={1}>
                 {props.sshGate.requiresConnection
-                  ? 'Connect target first'
+                  ? t('connectTargetFirst')
                   : props.selectedAgent.label}
               </Text>
               <ChevronDown size={14} color={colors.textMuted} />
@@ -165,7 +168,7 @@ export function NewWorktreeFormSheet(props: {
               style={styles.advancedToggle}
               onPress={() => props.onShowAdvancedChange(!props.showAdvanced)}
             >
-              <Text style={styles.advancedText}>Advanced</Text>
+              <Text style={styles.advancedText}>{t('advanced')}</Text>
               {props.showAdvanced ? (
                 <ChevronUp size={14} color={colors.textSecondary} />
               ) : (
@@ -181,12 +184,12 @@ export function NewWorktreeFormSheet(props: {
                 selectedRepoIsGit={props.selectedRepoIsGit}
               />
               <View style={styles.field}>
-                <Text style={styles.label}>Note</Text>
+                <Text style={styles.label}>{t('note')}</Text>
                 <TextInput
                   style={styles.input}
                   value={props.note}
                   onChangeText={props.onNoteChange}
-                  placeholder="Write a note"
+                  placeholder={t('notePlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -218,10 +221,10 @@ export function NewWorktreeFormSheet(props: {
               ) : (
                 <Text style={styles.createText}>
                   {props.sshGate.requiresConnection
-                    ? 'Connect target'
+                    ? t('connectTarget')
                     : multiProjectActive
-                      ? 'Create workspace'
-                      : 'Create worktree'}
+                      ? t('createWorkspace')
+                      : t('createWorktree')}
                 </Text>
               )}
             </Pressable>

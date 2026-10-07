@@ -1,5 +1,7 @@
 import { Pressable, Text } from 'react-native'
 import { authFailedBannerStyles as styles } from './auth-failed-banner-styles'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /**
  * The page offers Re-pair alone: its push of `/pair-scan` is handed to the shell
@@ -15,12 +17,13 @@ export function AuthFailedBannerActions({
   onRepair: () => void
   onRemove: () => void
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <>
       <Pressable style={styles.action} onPress={onRepair}>
-        <Text style={styles.actionText}>Re-pair</Text>
+        <Text style={styles.actionText}>{t('rePair')}</Text>
       </Pressable>
-      <Text style={styles.note}>Reconnect or remove this host from the Dolphin app.</Text>
+      <Text style={styles.note}>{t('authFailedWebNote')}</Text>
     </>
   )
 }

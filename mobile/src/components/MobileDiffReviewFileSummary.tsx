@@ -5,11 +5,12 @@ import { colors } from '../theme/mobile-theme'
 import type { MobileDiffReviewQueueItem } from '../session/mobile-diff-review-queue'
 import { MOBILE_GIT_STATUS_LABELS } from '../source-control/mobile-git-status'
 import {
-  mobileReviewCountLabel,
   mobileReviewScopeLabel,
   type ReviewDiffState
 } from '../session/mobile-diff-review-screen-model'
 import { mobileDiffReviewStyles as styles } from './mobile-diff-review-screen-styles'
+import { componentsDiffReviewCatalog } from '../i18n/catalogs/components-diff-review'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   currentIndex: number
@@ -49,6 +50,7 @@ export function MobileDiffReviewFileSummary({
   onEditNote,
   onJumpHunk
 }: Props) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   const hunkDisabled = diffState.kind !== 'ready' || diffState.hunks.length === 0
   const badgeColor = statusColor(item.status)
   return (
@@ -65,7 +67,7 @@ export function MobileDiffReviewFileSummary({
           </Text>
           <Text style={styles.fileMeta} numberOfLines={1}>
             {mobileReviewScopeLabel(item)}
-            {item.oldPath ? ` from ${item.oldPath}` : ''}
+            {item.oldPath ? ` ${t('renamedFrom', { path: item.oldPath })}` : ''}
           </Text>
         </View>
       </View>
@@ -73,15 +75,13 @@ export function MobileDiffReviewFileSummary({
         <Text style={styles.fileMeta}>
           {currentIndex + 1}/{filteredCount}
         </Text>
-        {item.isReviewed ? <Text style={styles.reviewedPill}>Reviewed</Text> : null}
-        {item.changedSinceReview ? <Text style={styles.stalePill}>Changed</Text> : null}
+        {item.isReviewed ? <Text style={styles.reviewedPill}>{t('reviewed')}</Text> : null}
+        {item.changedSinceReview ? <Text style={styles.stalePill}>{t('changed')}</Text> : null}
         {item.noteCount > 0 ? (
-          <Text style={styles.fileMeta}>
-            {mobileReviewCountLabel(item.noteCount, 'note', 'notes')}
-          </Text>
+          <Text style={styles.fileMeta}>{t('notesCount', { count: item.noteCount })}</Text>
         ) : null}
         {item.staleNoteCount > 0 ? (
-          <Text style={styles.staleText}>{item.staleNoteCount} stale</Text>
+          <Text style={styles.staleText}>{t('staleCount', { count: item.staleNoteCount })}</Text>
         ) : null}
       </View>
       {fileNotes.length > 0 ? (
@@ -92,12 +92,14 @@ export function MobileDiffReviewFileSummary({
               style={({ pressed }) => [styles.fileNote, pressed && styles.fileNotePressed]}
               onPress={() => onEditNote(note)}
               accessibilityRole="button"
-              accessibilityLabel="Edit file note"
+              accessibilityLabel={t('editFileNote')}
             >
               <Text style={styles.fileNoteText} numberOfLines={2}>
                 {note.body}
               </Text>
-              {staleCommentIds.has(note.id) ? <Text style={styles.staleText}>Stale</Text> : null}
+              {staleCommentIds.has(note.id) ? (
+                <Text style={styles.staleText}>{t('stale')}</Text>
+              ) : null}
             </Pressable>
           ))}
         </View>
@@ -108,20 +110,20 @@ export function MobileDiffReviewFileSummary({
           disabled={hunkDisabled}
           onPress={() => onJumpHunk('previous')}
           accessibilityRole="button"
-          accessibilityLabel="Previous hunk"
+          accessibilityLabel={t('previousHunk')}
         >
           <ArrowUp size={14} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.hunkButtonText}>Hunk</Text>
+          <Text style={styles.hunkButtonText}>{t('hunk')}</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.hunkButton, pressed && styles.hunkButtonPressed]}
           disabled={hunkDisabled}
           onPress={() => onJumpHunk('next')}
           accessibilityRole="button"
-          accessibilityLabel="Next hunk"
+          accessibilityLabel={t('nextHunk')}
         >
           <ArrowDown size={14} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.hunkButtonText}>Hunk</Text>
+          <Text style={styles.hunkButtonText}>{t('hunk')}</Text>
         </Pressable>
       </View>
     </View>

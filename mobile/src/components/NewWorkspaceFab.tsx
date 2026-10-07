@@ -2,6 +2,8 @@ import { Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Plus } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Diameter of the phone "new workspace" floating action button. Exported so the
 // worktree list can reserve matching bottom padding and keep the last row tappable.
@@ -15,6 +17,7 @@ type NewWorkspaceFabProps = {
 // Phone-only floating "+" for creating a workspace. Absolutely positioned so it
 // never intercepts list row taps, and lifted above the home indicator.
 export function NewWorkspaceFab({ onPress, disabled }: NewWorkspaceFabProps): React.JSX.Element {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   const insets = useSafeAreaInsets()
   return (
     <Pressable
@@ -27,7 +30,7 @@ export function NewWorkspaceFab({ onPress, disabled }: NewWorkspaceFabProps): Re
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel="New workspace"
+      accessibilityLabel={t('newWorkspace')}
       hitSlop={8}
     >
       <Plus size={24} color={colors.bgBase} strokeWidth={2.75} />

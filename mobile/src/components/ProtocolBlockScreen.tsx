@@ -4,6 +4,10 @@ import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { CompatVerdict } from '../transport/protocol-compat'
 import type { MobileWebBundleCompatVerdict } from '../transport/mobile-web-bundle-compat'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import type { componentsEn } from '../i18n/catalogs/components/en'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const RELEASES_URL = 'https://github.com/GussCloud/dolphin/releases'
 const IOS_APP_STORE_URL = 'itms-apps://apps.apple.com/app/dolphin-ide/id6766130217'
@@ -18,8 +22,8 @@ type Props = {
   verdict: BlockedVerdict
 }
 
-const DESKTOP_TOO_OLD_BODY =
-  'This paired desktop app is too old for your current Dolphin Mobile app. Update Dolphin on your computer, then try this host again.'
+type ComponentsTranslate = MobileTranslate<typeof componentsEn>
+type MobileStore = 'app-store' | 'github-releases'
 
 /** What clears the wall. `refresh-bundle` is the one that no store can: the cached workspace is
  *  older than this host's client floor, so a download fixes it and an app update does not. */
@@ -38,55 +42,63 @@ function blockRemedy(verdict: BlockedVerdict): BlockRemedy {
   }
 }
 
-function blockTitle(remedy: BlockRemedy): string {
+function blockTitle(remedy: BlockRemedy, t: ComponentsTranslate): string {
   switch (remedy) {
     case 'update-mobile':
-      return 'Update Dolphin Mobile'
+      return t('blockUpdateMobileTitle')
     case 'update-desktop':
-      return 'Update Dolphin on your computer'
+      return t('blockUpdateDesktopTitle')
     case 'refresh-bundle':
-      return 'Refresh the mobile workspace'
+      return t('blockRefreshBundleTitle')
   }
 }
 
-function blockBody(verdict: BlockedVerdict, remedy: BlockRemedy, storeName: string): string {
+function blockBody(
+  verdict: BlockedVerdict,
+  remedy: BlockRemedy,
+  store: MobileStore,
+  t: ComponentsTranslate
+): string {
   if (remedy === 'refresh-bundle') {
-    return 'The workspace cached for this host is older than the desktop expects. Reconnect to this host to download the current one.'
+    return t('blockRefreshBundleBody')
   }
   if (verdict.reason === 'mobile-too-old') {
-    return `This desktop needs a newer Dolphin Mobile app. Update Dolphin Mobile from ${storeName}, then try this host again.`
+    return store === 'app-store'
+      ? t('blockMobileTooOldAppStoreBody')
+      : t('blockMobileTooOldGitHubBody')
   }
   if (verdict.reason === 'bundle-unavailable') {
-    return 'This paired desktop app does not include the mobile workspace yet. Update Dolphin on your computer, then try this host again.'
+    return t('blockBundleUnavailableBody')
   }
   if (remedy === 'update-mobile') {
-    return `This desktop's mobile workspace needs a newer Dolphin Mobile app. Update Dolphin Mobile from ${storeName}, then try this host again.`
+    return store === 'app-store'
+      ? t('blockBundleMobileAppStoreBody')
+      : t('blockBundleMobileGitHubBody')
   }
-  return DESKTOP_TOO_OLD_BODY
+  return t('blockDesktopTooOldBody')
 }
 
 export function ProtocolBlockScreen({ verdict }: Props) {
+  const t = useMobileTranslation(componentsCatalog)
   const router = useRouteHandoff()
   const remedy = blockRemedy(verdict)
   // Why: Android APKs ship through GitHub Releases until a Play Store listing exists.
   const mobileUpdateTarget =
     Platform.OS === 'ios'
-      ? { label: 'Open App Store', url: IOS_APP_STORE_URL, storeName: 'the App Store' }
-      : { label: 'Open GitHub Releases', url: RELEASES_URL, storeName: 'GitHub Releases' }
+      ? { label: t('openAppStore'), url: IOS_APP_STORE_URL, store: 'app-store' as const }
+      : { label: t('openGitHubReleases'), url: RELEASES_URL, store: 'github-releases' as const }
   // No download to offer when the fix is a refetch: reconnecting is what this screen leaves you to do.
   const primaryAction =
     remedy === 'refresh-bundle'
       ? null
       : remedy === 'update-mobile'
         ? { label: mobileUpdateTarget.label, url: mobileUpdateTarget.url }
-        : { label: 'Open GitHub Releases', url: RELEASES_URL }
+        : { label: t('openGitHubReleases'), url: RELEASES_URL }
 
-  const title = blockTitle(remedy)
-  const body = blockBody(verdict, remedy, mobileUpdateTarget.storeName)
+  const title = blockTitle(remedy, t)
+  const body = blockBody(verdict, remedy, mobileUpdateTarget.store, t)
   const recoveryNote =
-    remedy === 'refresh-bundle'
-      ? 'If this message stays, remove this host and pair it again.'
-      : 'Already updated? Go back to Hosts and refresh the connection. If this message stays, remove this host and pair it again.'
+    remedy === 'refresh-bundle' ? t('blockRecoveryNoteRefresh') : t('blockRecoveryNoteUpdate')
 
   return (
     <View style={styles.container}>
@@ -114,7 +126,7 @@ export function ProtocolBlockScreen({ verdict }: Props) {
             router.replace('/')
           }}
         >
-          <Text style={styles.secondaryButtonText}>Back to hosts</Text>
+          <Text style={styles.secondaryButtonText}>{t('backToHosts')}</Text>
         </Pressable>
         <Text style={styles.recoveryNote}>{recoveryNote}</Text>
       </View>

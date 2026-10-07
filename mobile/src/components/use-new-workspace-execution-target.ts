@@ -11,6 +11,8 @@ import {
   type WorkspaceSshGate,
   type WorkspaceSshRecord
 } from '../tasks/workspace-ssh-gate'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { translate } from '../i18n/mobile-locale-state'
 
 type DetectedAgentIdsState = {
   connectionId: string | null
@@ -71,7 +73,9 @@ export function useNewWorkspaceExecutionTarget(args: {
             fallbackSshState(
               connectionId,
               'error',
-              error instanceof Error ? error.message : 'Failed to read SSH connection state.'
+              error instanceof Error
+                ? error.message
+                : translate(componentsNewWorkspaceCatalog, 'sshStateReadFailed')
             )
           )
         }
@@ -129,7 +133,9 @@ export function useNewWorkspaceExecutionTarget(args: {
         fallbackSshState(
           connectionId,
           'error',
-          error instanceof Error ? error.message : 'Failed to connect to SSH repository.'
+          error instanceof Error
+            ? error.message
+            : translate(componentsNewWorkspaceCatalog, 'sshConnectFailed')
         )
       )
     } finally {

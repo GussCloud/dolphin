@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native'
 import { ChevronDown, Monitor } from 'lucide-react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Selection = { label: string; detail?: string }
 
@@ -22,15 +24,16 @@ export function NewWorktreeProjectTargetFields({
   onOpenProject: () => void
   onOpenRunTarget: () => void
 }) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   return (
     <>
       <View style={styles.field}>
-        <Text style={styles.label}>Project</Text>
+        <Text style={styles.label}>{t('project')}</Text>
         <Pressable style={styles.fieldButton} onPress={onOpenProject}>
           {projectBadgeColor ? (
             <View style={[styles.projectDot, { backgroundColor: projectBadgeColor }]} />
           ) : null}
-          <SelectionCopy selection={project} placeholder="Select a project" />
+          <SelectionCopy selection={project} placeholder={t('selectProject')} />
           <ChevronDown size={14} color={colors.textMuted} />
         </Pressable>
       </View>
@@ -38,10 +41,10 @@ export function NewWorktreeProjectTargetFields({
 
       {showRunTarget ? (
         <View style={styles.field}>
-          <Text style={styles.label}>Run on</Text>
+          <Text style={styles.label}>{t('runOn')}</Text>
           <Pressable style={styles.fieldButton} onPress={onOpenRunTarget}>
             <Monitor size={14} color={colors.textMuted} />
-            <SelectionCopy selection={runTarget} placeholder="Select a run target" />
+            <SelectionCopy selection={runTarget} placeholder={t('selectRunTarget')} />
             <ChevronDown size={14} color={colors.textMuted} />
           </Pressable>
         </View>

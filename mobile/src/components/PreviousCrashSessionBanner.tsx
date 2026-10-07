@@ -2,6 +2,8 @@ import { AlertTriangle, ChevronRight, X } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import { previousSessionTitle } from '../diagnostics/mobile-crash-session'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function PreviousCrashSessionBanner({
   endedAbnormally,
@@ -14,13 +16,12 @@ export function PreviousCrashSessionBanner({
   onPress?: () => void
   style?: StyleProp<ViewStyle>
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   const copy = (
     <View style={styles.copy}>
       <Text style={styles.title}>{previousSessionTitle(endedAbnormally)}</Text>
-      <Text style={styles.description}>
-        Crash diagnostics are available to copy and share with support.
-      </Text>
-      {onPress ? <Text style={styles.actionText}>View diagnostics</Text> : null}
+      <Text style={styles.description}>{t('crashDiagnosticsAvailable')}</Text>
+      {onPress ? <Text style={styles.actionText}>{t('viewDiagnostics')}</Text> : null}
     </View>
   )
 
@@ -30,7 +31,7 @@ export function PreviousCrashSessionBanner({
       {onPress ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="View crash diagnostics"
+          accessibilityLabel={t('viewCrashDiagnostics')}
           onPress={onPress}
           style={styles.open}
         >
@@ -43,7 +44,7 @@ export function PreviousCrashSessionBanner({
       {onDismiss ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Dismiss crash diagnostics notice"
+          accessibilityLabel={t('dismissCrashNotice')}
           hitSlop={spacing.sm}
           onPress={onDismiss}
           style={styles.dismiss}

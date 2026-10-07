@@ -6,6 +6,8 @@ import { htmlPreviewWithInertLinks } from './html-preview-inert-links'
 import { useHtmlPreviewLinkGrant } from './use-html-preview-link-grant'
 // The native component's own prop type, so a change to it fails here rather than drifting.
 import type { MobileHtmlPreviewProps } from './MobileHtmlPreview'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /**
  * The `sandbox` the preview frame carries, and the whole of what makes it safe to render an
@@ -69,6 +71,7 @@ export const MOBILE_HTML_PREVIEW_SEALED_SANDBOX = ''
  * frame's image despite the attribute, where Chromium sends none.
  */
 export function MobileHtmlPreview({ html, renderSource }: MobileHtmlPreviewProps) {
+  const t = useMobileTranslation(componentsCatalog)
   const [mode, setMode] = useState<'preview' | 'source'>('preview')
   // The shell's answer for this session, asked once: the page mounts after `init` and a session's
   // grants do not change for the life of the document.
@@ -93,10 +96,10 @@ export function MobileHtmlPreview({ html, renderSource }: MobileHtmlPreviewProps
           // no `aria-selected` without the line below.
           accessibilityState={{ selected: mode === 'preview' }}
           aria-selected={mode === 'preview'}
-          accessibilityLabel="Preview rendered HTML"
+          accessibilityLabel={t('previewRenderedHtml')}
         >
           <Eye size={13} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.toggleText}>Preview</Text>
+          <Text style={styles.toggleText}>{t('preview')}</Text>
         </Pressable>
         <Pressable
           style={[styles.toggle, mode === 'source' && styles.toggleActive]}
@@ -104,10 +107,10 @@ export function MobileHtmlPreview({ html, renderSource }: MobileHtmlPreviewProps
           accessibilityRole="tab"
           accessibilityState={{ selected: mode === 'source' }}
           aria-selected={mode === 'source'}
-          accessibilityLabel="View HTML source"
+          accessibilityLabel={t('viewHtmlSource')}
         >
           <Code size={13} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.toggleText}>Source</Text>
+          <Text style={styles.toggleText}>{t('source')}</Text>
         </Pressable>
       </View>
       {/* The Source tab shows what the author wrote, never the rewrite: the rewrite is a rendering
@@ -126,10 +129,11 @@ export function MobileHtmlPreview({ html, renderSource }: MobileHtmlPreviewProps
  * the browser parses it inside a frame that can run nothing.
  */
 function PreviewFrame({ html, linksOpen }: { html: string; linksOpen: boolean }) {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <View style={styles.frame}>
       <iframe
-        title="HTML preview"
+        title={t('htmlPreviewFrameTitle')}
         sandbox={linksOpen ? MOBILE_HTML_PREVIEW_SANDBOX : MOBILE_HTML_PREVIEW_SEALED_SANDBOX}
         srcDoc={html}
         style={IFRAME_STYLE}

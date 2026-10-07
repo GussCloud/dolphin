@@ -19,10 +19,12 @@ import {
 } from 'lucide-react-native'
 import { colors, radii, spacing } from '../theme/mobile-theme'
 import type { MobileRichMarkdownCommand } from './mobile-rich-markdown-editor-contract'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type ToolbarItem = {
   command: MobileRichMarkdownCommand
-  label: string
+  labelKey: string
   icon: ComponentType<{ size?: number; color?: string }>
 }
 
@@ -33,23 +35,23 @@ type ToolbarItem = {
  * WebView the press becomes an injected `runCommand` and on the page it is a call, but the row of
  * controls is the same row and a command added to the contract has to appear on both.
  */
-const TOOLBAR_ITEMS: ToolbarItem[] = [
-  { command: 'paragraph', label: 'Body', icon: Pilcrow },
-  { command: 'heading1', label: 'H1', icon: Heading1 },
-  { command: 'heading2', label: 'H2', icon: Heading2 },
-  { command: 'heading3', label: 'H3', icon: Heading3 },
-  { command: 'bold', label: 'Bold', icon: Bold },
-  { command: 'italic', label: 'Italic', icon: Italic },
-  { command: 'strike', label: 'Strike', icon: Strikethrough },
-  { command: 'bulletList', label: 'Bullet list', icon: List },
-  { command: 'orderedList', label: 'Numbered list', icon: ListOrdered },
-  { command: 'taskList', label: 'Checklist', icon: ListTodo },
-  { command: 'quote', label: 'Quote', icon: Quote },
-  { command: 'link', label: 'Link', icon: Link },
-  { command: 'image', label: 'Image', icon: ImageIcon },
-  { command: 'inlineCode', label: 'Inline code', icon: Code2 },
-  { command: 'codeBlock', label: 'Code block', icon: FileCode2 }
-]
+const TOOLBAR_ITEMS = [
+  { command: 'paragraph', labelKey: 'toolbarBody', icon: Pilcrow },
+  { command: 'heading1', labelKey: 'toolbarHeading1', icon: Heading1 },
+  { command: 'heading2', labelKey: 'toolbarHeading2', icon: Heading2 },
+  { command: 'heading3', labelKey: 'toolbarHeading3', icon: Heading3 },
+  { command: 'bold', labelKey: 'toolbarBold', icon: Bold },
+  { command: 'italic', labelKey: 'toolbarItalic', icon: Italic },
+  { command: 'strike', labelKey: 'toolbarStrike', icon: Strikethrough },
+  { command: 'bulletList', labelKey: 'toolbarBulletList', icon: List },
+  { command: 'orderedList', labelKey: 'toolbarNumberedList', icon: ListOrdered },
+  { command: 'taskList', labelKey: 'toolbarChecklist', icon: ListTodo },
+  { command: 'quote', labelKey: 'toolbarQuote', icon: Quote },
+  { command: 'link', labelKey: 'toolbarLink', icon: Link },
+  { command: 'image', labelKey: 'toolbarImage', icon: ImageIcon },
+  { command: 'inlineCode', labelKey: 'toolbarInlineCode', icon: Code2 },
+  { command: 'codeBlock', labelKey: 'toolbarCodeBlock', icon: FileCode2 }
+] as const satisfies readonly ToolbarItem[]
 
 /** The commands alone, for a caller that drives the row rather than renders it. */
 export const MOBILE_RICH_MARKDOWN_TOOLBAR_COMMANDS = TOOLBAR_ITEMS.map((item) => item.command)
@@ -61,6 +63,7 @@ export const MobileRichMarkdownToolbar = memo(function MobileRichMarkdownToolbar
   editable: boolean
   onCommand: (command: MobileRichMarkdownCommand) => void
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <View style={styles.toolbar}>
       <ScrollView
@@ -76,7 +79,7 @@ export const MobileRichMarkdownToolbar = memo(function MobileRichMarkdownToolbar
               key={item.command}
               disabled={!editable}
               accessibilityRole="button"
-              accessibilityLabel={item.label}
+              accessibilityLabel={t(item.labelKey)}
               onPress={() => onCommand(item.command)}
               style={({ pressed }) => [
                 styles.toolbarButton,

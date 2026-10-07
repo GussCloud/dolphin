@@ -4,11 +4,14 @@ import { Check, Copy, FileText, Plus, Send, Trash2, X } from 'lucide-react-nativ
 import type { DiffComment } from '../../../src/shared/diff-comment-types'
 import { useKeyboardAvoidingPadding } from '../platform/keyboard-occlusion'
 import { colors } from '../theme/mobile-theme'
+import { componentsDiffReviewCatalog } from '../i18n/catalogs/components-diff-review'
+import type { componentsDiffReviewEn } from '../i18n/catalogs/components-diff-review/en'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import type { ActionSheetAction } from './ActionSheetModal'
 import { ActionSheetModal } from './ActionSheetModal'
 import { BottomDrawer } from './BottomDrawer'
 import { ConfirmModal } from './ConfirmModal'
-import { mobileReviewCountLabel } from '../session/mobile-diff-review-screen-model'
 import type { useMobileDiffReviewController } from '../session/use-mobile-diff-review-controller'
 import { mobileDiffReviewStyles as styles } from './mobile-diff-review-screen-styles'
 
@@ -16,17 +19,20 @@ type Props = {
   controller: ReturnType<typeof useMobileDiffReviewController>
 }
 
+type DiffReviewTranslate = MobileTranslate<typeof componentsDiffReviewEn>
+
 export function MobileDiffReviewDrawers({ controller }: Props) {
-  const sendActions = useSendActions(controller)
-  const overflowActions = useOverflowActions(controller)
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
+  const sendActions = useSendActions(controller, t)
+  const overflowActions = useOverflowActions(controller, t)
   return (
     <>
       <ActionSheetModal
         visible={controller.showOverflow}
-        title="Review Actions"
+        title={t('reviewActions')}
         message={
           controller.reviewedUnstagedCount > 0
-            ? `${controller.reviewedUnstagedCount} reviewed unstaged files can be staged`
+            ? t('reviewedUnstagedCanBeStaged', { count: controller.reviewedUnstagedCount })
             : undefined
         }
         actions={overflowActions}
@@ -34,20 +40,20 @@ export function MobileDiffReviewDrawers({ controller }: Props) {
       />
       <ActionSheetModal
         visible={controller.sendSheet !== null}
-        title="Send Notes"
-        message={sendSheetMessage(controller)}
+        title={t('sendNotes')}
+        message={sendSheetMessage(controller, t)}
         actions={sendActions}
         onClose={() => controller.setSendSheet(null)}
       />
       <ConfirmModal
         visible={controller.discardTarget !== null}
-        title="Discard File"
+        title={t('discardFile')}
         message={
           controller.discardTarget
-            ? `Discard changes to "${controller.discardTarget.filePath}"? This cannot be undone.`
+            ? t('discardFileMessage', { path: controller.discardTarget.filePath })
             : undefined
         }
-        confirmLabel="Discard"
+        confirmLabel={t('discard')}
         destructive
         onConfirm={() => {
           const target = controller.discardTarget
@@ -64,13 +70,16 @@ export function MobileDiffReviewDrawers({ controller }: Props) {
   )
 }
 
-function useSendActions(controller: ReturnType<typeof useMobileDiffReviewController>) {
+function useSendActions(
+  controller: ReturnType<typeof useMobileDiffReviewController>,
+  t: DiffReviewTranslate
+) {
   return useMemo<ActionSheetAction[]>(() => {
     const comments = controller.unsentComments
     const terminalActions =
       controller.sendSheet?.kind === 'ready' || controller.sendSheet?.kind === 'error'
         ? controller.sendSheet.terminals.map((terminal) => ({
-            label: `${terminal.title || 'Terminal'} (${terminal.terminal.slice(0, 6)})`,
+            label: `${terminal.title || t('terminal')} (${terminal.terminal.slice(0, 6)})`,
             icon: Send,
             disabled: comments.length === 0,
             skipAutoClose: true,
@@ -80,42 +89,45 @@ function useSendActions(controller: ReturnType<typeof useMobileDiffReviewControl
     return [
       ...terminalActions,
       {
-        label: 'New Agent Session',
+        label: t('newAgentSession'),
         icon: Plus,
         disabled: comments.length === 0,
         skipAutoClose: true,
         onPress: () => void controller.createTerminalAndSend(comments)
       },
       {
-        label: 'Copy Notes',
+        label: t('copyNotes'),
         icon: Copy,
         disabled:
           controller.screenState.kind !== 'ready' || controller.screenState.comments.length === 0,
         onPress: () => void controller.copyNotes()
       }
     ]
-  }, [controller])
+  }, [controller, t])
 }
 
-function useOverflowActions(controller: ReturnType<typeof useMobileDiffReviewController>) {
+function useOverflowActions(
+  controller: ReturnType<typeof useMobileDiffReviewController>,
+  t: DiffReviewTranslate
+) {
   return useMemo<ActionSheetAction[]>(
     () => [
       {
-        label: 'Copy Notes',
+        label: t('copyNotes'),
         icon: Copy,
         disabled:
           controller.screenState.kind !== 'ready' || controller.screenState.comments.length === 0,
         onPress: () => void controller.copyNotes()
       },
       {
-        label: 'Send Unsent Notes',
+        label: t('sendUnsentNotes'),
         icon: Send,
         disabled: controller.unsentComments.length === 0,
         skipAutoClose: true,
         onPress: () => void controller.openSendSheet()
       },
       {
-        label: 'Clear Sent Notes',
+        label: t('clearSentNotes'),
         icon: Trash2,
         disabled:
           controller.screenState.kind !== 'ready' ||
@@ -124,14 +136,14 @@ function useOverflowActions(controller: ReturnType<typeof useMobileDiffReviewCon
         onPress: () => void controller.clearSentNotes()
       },
       {
-        label: 'Stage Reviewed Files',
+        label: t('stageReviewedFiles'),
         icon: Check,
         disabled: controller.reviewedUnstagedCount === 0 || controller.busyAction !== null,
         skipAutoClose: true,
         onPress: () => void controller.stageReviewedFiles()
       },
       {
-        label: 'Mark Unreviewed',
+        label: t('markUnreviewed'),
         icon: X,
         disabled:
           controller.screenState.kind !== 'ready' ||
@@ -141,27 +153,29 @@ function useOverflowActions(controller: ReturnType<typeof useMobileDiffReviewCon
         onPress: () => void controller.markUnreviewed()
       },
       {
-        label: 'Open in Session',
+        label: t('openInSession'),
         icon: FileText,
         disabled: !controller.currentItem || controller.currentItem.scope === 'branch',
         onPress: () => void controller.openInSession()
       }
     ],
-    [controller]
+    [controller, t]
   )
 }
 
 function sendSheetMessage(
-  controller: ReturnType<typeof useMobileDiffReviewController>
+  controller: ReturnType<typeof useMobileDiffReviewController>,
+  t: DiffReviewTranslate
 ): string | undefined {
   return controller.sendSheet?.kind === 'loading'
-    ? 'Loading agent sessions...'
+    ? t('loadingAgentSessions')
     : controller.sendSheet?.kind === 'error'
       ? controller.sendSheet.message
-      : `${controller.unsentComments.length} unsent notes`
+      : t('unsentNotesCount', { count: controller.unsentComments.length })
 }
 
 function NoteComposerDrawer({ controller }: Props) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   const composer = controller.composer
   // Zero on a phone, where `KeyboardAvoidingView` above already moved this; the page's own
   // keyboard measurement where it cannot, because that view is driven by events RN Web never
@@ -176,19 +190,19 @@ function NoteComposerDrawer({ controller }: Props) {
         <View style={styles.composerHeader}>
           <View>
             <Text style={styles.drawerTitle}>
-              {composer?.mode === 'edit' ? 'Edit Note' : 'Add Note'}
+              {composer?.mode === 'edit' ? t('editNote') : t('addNote')}
             </Text>
             <Text style={styles.drawerSubtitle}>
               {composer?.mode === 'create' && composer.lineNumber > 0
-                ? `Line ${composer.lineNumber}`
-                : 'File note'}
+                ? t('lineNumber', { line: composer.lineNumber })
+                : t('fileNote')}
             </Text>
           </View>
           <Pressable
             style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
             onPress={controller.closeComposer}
             accessibilityRole="button"
-            accessibilityLabel="Cancel note"
+            accessibilityLabel={t('cancelNote')}
           >
             <X size={18} color={colors.textPrimary} strokeWidth={2.2} />
           </Pressable>
@@ -199,9 +213,9 @@ function NoteComposerDrawer({ controller }: Props) {
           onChangeText={controller.setComposerBody}
           multiline
           autoFocus
-          placeholder="Review note"
+          placeholder={t('reviewNote')}
           placeholderTextColor={colors.textMuted}
-          accessibilityLabel={composerLabel(composer)}
+          accessibilityLabel={composerLabel(composer, t)}
         />
         <View style={styles.drawerButtonRow}>
           {composer?.mode === 'edit' ? (
@@ -215,23 +229,25 @@ function NoteComposerDrawer({ controller }: Props) {
 }
 
 function composerLabel(
-  composer: { mode: 'create'; lineNumber: number } | { mode: 'edit'; comment: DiffComment } | null
+  composer: { mode: 'create'; lineNumber: number } | { mode: 'edit'; comment: DiffComment } | null,
+  t: DiffReviewTranslate
 ): string {
   return composer?.mode === 'create' && composer.lineNumber > 0
-    ? `Save note on line ${composer.lineNumber}`
-    : 'Review note'
+    ? t('saveNoteOnLine', { line: composer.lineNumber })
+    : t('reviewNote')
 }
 
 function DeleteNoteButton({ onPress }: { onPress: () => Promise<void> }) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   return (
     <Pressable
       style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
       onPress={() => void onPress()}
       accessibilityRole="button"
-      accessibilityLabel="Delete note"
+      accessibilityLabel={t('deleteNote')}
     >
       <Trash2 size={14} color={colors.statusRed} strokeWidth={2.2} />
-      <Text style={styles.destructiveText}>Delete</Text>
+      <Text style={styles.destructiveText}>{t('delete')}</Text>
     </Pressable>
   )
 }
@@ -243,6 +259,7 @@ function SaveNoteButton({
   controller: ReturnType<typeof useMobileDiffReviewController>
   composer: ReturnType<typeof useMobileDiffReviewController>['composer']
 }) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   const disabled = controller.composerBody.trim().length === 0
   return (
     <Pressable
@@ -254,15 +271,16 @@ function SaveNoteButton({
       disabled={disabled}
       onPress={() => void controller.saveComposer()}
       accessibilityRole="button"
-      accessibilityLabel={composerLabel(composer)}
+      accessibilityLabel={composerLabel(composer, t)}
     >
       <Check size={14} color={colors.bgBase} strokeWidth={2.2} />
-      <Text style={styles.primaryButtonText}>Save</Text>
+      <Text style={styles.primaryButtonText}>{t('save')}</Text>
     </Pressable>
   )
 }
 
 function CompletionDrawer({ controller }: Props) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   const noteCount =
     controller.screenState.kind === 'ready' ? controller.screenState.comments.length : 0
   return (
@@ -270,10 +288,12 @@ function CompletionDrawer({ controller }: Props) {
       visible={controller.showCompletion}
       onClose={() => controller.setShowCompletion(false)}
     >
-      <Text style={styles.drawerTitle}>Review Complete</Text>
+      <Text style={styles.drawerTitle}>{t('reviewComplete')}</Text>
       <Text style={styles.drawerSubtitle}>
-        {mobileReviewCountLabel(controller.queue.length, 'file', 'files')} reviewed,{' '}
-        {mobileReviewCountLabel(noteCount, 'note', 'notes')}
+        {t('reviewCompleteSummary', {
+          files: t('filesCount', { count: controller.queue.length }),
+          notes: t('notesCount', { count: noteCount })
+        })}
       </Text>
       <View style={styles.drawerButtonRow}>
         <Pressable
@@ -281,20 +301,20 @@ function CompletionDrawer({ controller }: Props) {
           disabled={controller.reviewedUnstagedCount === 0}
           onPress={() => void controller.stageReviewedFiles()}
           accessibilityRole="button"
-          accessibilityLabel="Stage reviewed files"
+          accessibilityLabel={t('stageReviewedFilesLabel')}
         >
           <Check size={14} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.secondaryButtonText}>Stage Reviewed</Text>
+          <Text style={styles.secondaryButtonText}>{t('stageReviewed')}</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
           disabled={controller.unsentComments.length === 0}
           onPress={() => void controller.openSendSheet()}
           accessibilityRole="button"
-          accessibilityLabel="Send notes to agent"
+          accessibilityLabel={t('sendNotesToAgent')}
         >
           <Send size={14} color={colors.bgBase} strokeWidth={2.2} />
-          <Text style={styles.primaryButtonText}>Send Notes</Text>
+          <Text style={styles.primaryButtonText}>{t('sendNotes')}</Text>
         </Pressable>
       </View>
     </BottomDrawer>

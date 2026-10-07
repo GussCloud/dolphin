@@ -6,6 +6,8 @@ import {
   recordMobileRenderError,
   shareMobileCrashDiagnostics
 } from '../diagnostics/mobile-crash-diagnostics'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   children: ReactNode
@@ -72,44 +74,43 @@ function MobileRootErrorFallback({
   onReturnHome: () => void
   onReport: () => void
 }): ReactNode {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <View style={styles.container} accessibilityRole="alert" testID="mobile-root-error-boundary">
       <View style={styles.iconBadge}>
         <AlertTriangle size={20} color={colors.statusRed} />
       </View>
       <View style={styles.copy}>
-        <Text style={styles.title}>This part of Dolphin hit an error.</Text>
-        <Text style={styles.description}>
-          The app is still running. Retry this screen, return home, or share diagnostic details.
-        </Text>
+        <Text style={styles.title}>{t('errorBoundaryTitle')}</Text>
+        <Text style={styles.description}>{t('errorBoundaryDescription')}</Text>
       </View>
       <View style={styles.actions}>
         <Pressable
-          accessibilityLabel="Retry"
+          accessibilityLabel={t('retry')}
           accessibilityRole="button"
           style={styles.primaryButton}
           onPress={onRetry}
         >
           <RefreshCw size={16} color={colors.bgBase} />
-          <Text style={styles.primaryButtonText}>Retry</Text>
+          <Text style={styles.primaryButtonText}>{t('retry')}</Text>
         </Pressable>
         <Pressable
-          accessibilityLabel="Return home"
+          accessibilityLabel={t('returnHome')}
           accessibilityRole="button"
           style={styles.secondaryButton}
           onPress={onReturnHome}
         >
           <House size={16} color={colors.textPrimary} />
-          <Text style={styles.secondaryButtonText}>Return home</Text>
+          <Text style={styles.secondaryButtonText}>{t('returnHome')}</Text>
         </Pressable>
         <Pressable
-          accessibilityLabel="Report error"
+          accessibilityLabel={t('reportError')}
           accessibilityRole="button"
           style={styles.secondaryButton}
           onPress={onReport}
         >
           <AlertTriangle size={16} color={colors.textPrimary} />
-          <Text style={styles.secondaryButtonText}>Report error</Text>
+          <Text style={styles.secondaryButtonText}>{t('reportError')}</Text>
         </Pressable>
       </View>
     </View>

@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { isSubmittableCommentBody } from '../../session/pr-comment-actions'
 import { prCommentComposerStyles as styles } from './pr-comment-composer-styles'
 
@@ -27,6 +29,7 @@ export function PRCommentComposer({
   onCancel,
   autoFocus
 }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [body, setBody] = useState(initialBody ?? '')
   // Why: parent `submitting` flips async; a fast double-tap can fire onSubmit
   // twice before it flips, so guard locally in the same synchronous tick.
@@ -67,9 +70,9 @@ export function PRCommentComposer({
             onPress={onCancel}
             disabled={submitting}
             accessibilityRole="button"
-            accessibilityLabel="Cancel"
+            accessibilityLabel={t('cancel')}
           >
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={styles.cancelText}>{t('cancel')}</Text>
           </Pressable>
         ) : null}
         <Pressable

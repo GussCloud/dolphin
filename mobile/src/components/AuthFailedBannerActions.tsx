@@ -1,6 +1,8 @@
 import { Pressable, Text } from 'react-native'
 import { colors } from '../theme/mobile-theme'
 import { authFailedBannerStyles as styles } from './auth-failed-banner-styles'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /**
  * What the banner offers once authentication has failed: reconnect, re-pair, or drop the pairing.
@@ -20,18 +22,19 @@ export function AuthFailedBannerActions({
   onRepair: () => void
   onRemove: () => void
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <>
       {canRetry && (
         <Pressable style={styles.action} onPress={onRetry}>
-          <Text style={styles.actionText}>Retry</Text>
+          <Text style={styles.actionText}>{t('retry')}</Text>
         </Pressable>
       )}
       <Pressable style={styles.action} onPress={onRepair}>
-        <Text style={styles.actionText}>Re-pair</Text>
+        <Text style={styles.actionText}>{t('rePair')}</Text>
       </Pressable>
       <Pressable style={styles.action} onPress={onRemove}>
-        <Text style={[styles.actionText, { color: colors.statusRed }]}>Remove</Text>
+        <Text style={[styles.actionText, { color: colors.statusRed }]}>{t('remove')}</Text>
       </Pressable>
     </>
   )

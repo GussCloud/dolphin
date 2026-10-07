@@ -1,6 +1,8 @@
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { RotateCw } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import type { PrSidebarState } from '../session/mobile-pr-sidebar-state'
 import type { ConnectionState } from '../transport/types'
 import type { RpcClient } from '../transport/rpc-client'
@@ -162,16 +164,17 @@ function PrSidebarContent({
   showOpenOnWeb: boolean
   botAuthorOverrides: ReadonlySet<string>
 }) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   if (branch === 'loading') {
     return (
       <View style={styles.stateArea}>
         <ActivityIndicator color={colors.textSecondary} />
-        <Text style={styles.stateText}>Loading pull request…</Text>
+        <Text style={styles.stateText}>{t('loadingPullRequest')}</Text>
       </View>
     )
   }
   if (branch === 'error') {
-    const message = state.kind === 'error' ? state.message : 'Something went wrong.'
+    const message = state.kind === 'error' ? state.message : t('somethingWentWrong')
     return (
       <View style={styles.stateArea}>
         <Text style={styles.stateText}>{message}</Text>
@@ -179,10 +182,10 @@ function PrSidebarContent({
           style={styles.retryButton}
           onPress={onRetry}
           accessibilityRole="button"
-          accessibilityLabel="Retry loading pull request"
+          accessibilityLabel={t('retryLoadingPullRequest')}
         >
           <RotateCw size={14} color={colors.textPrimary} strokeWidth={2.2} />
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t('retry')}</Text>
         </Pressable>
       </View>
     )
@@ -191,10 +194,7 @@ function PrSidebarContent({
     // Permanent failure (R9): explanatory, no retry-encouragement styling. A
     // mutation-time block (actions.blocked) routes here even from a ready state.
     const message =
-      actions.blocked ??
-      (state.kind === 'blocked'
-        ? state.message
-        : 'Not permitted — your GitHub account is not connected.')
+      actions.blocked ?? (state.kind === 'blocked' ? state.message : t('githubNotConnected'))
     return (
       <View style={styles.stateArea}>
         <Text style={styles.blockedText}>{message}</Text>

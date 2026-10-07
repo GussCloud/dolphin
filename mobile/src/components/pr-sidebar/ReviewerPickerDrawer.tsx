@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
 import { Check } from 'lucide-react-native'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import type { GitHubAssignableUser } from '../../../../src/shared/github/pull-request-types'
 import type { RpcClient } from '../../transport/rpc-client'
 import { fetchAssignableUsers } from '../../session/github-pr-rpc'
@@ -39,6 +41,7 @@ export function ReviewerPickerDrawer({
   isRequested,
   onToggle
 }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [load, setLoad] = useState<LoadState>({ status: 'idle' })
   const [query, setQuery] = useState('')
 
@@ -61,13 +64,13 @@ export function ReviewerPickerDrawer({
       })
       .catch(() => {
         if (!cancelled) {
-          setLoad({ status: 'error', message: 'Failed to load people' })
+          setLoad({ status: 'error', message: t('peopleLoadFailed') })
         }
       })
     return () => {
       cancelled = true
     }
-  }, [visible, client, worktreeId])
+  }, [visible, client, worktreeId, t])
 
   const ordered = useMemo(() => {
     if (load.status !== 'loaded') {
@@ -91,12 +94,12 @@ export function ReviewerPickerDrawer({
 
   return (
     <BottomDrawer visible={visible} onClose={onClose} dragContentToDismiss={false}>
-      <Text style={styles.pickerTitle}>Reviewers</Text>
+      <Text style={styles.pickerTitle}>{t('reviewers')}</Text>
       <TextInput
         style={styles.pickerSearch}
         value={query}
         onChangeText={setQuery}
-        placeholder="Search people"
+        placeholder={t('searchPeople')}
         placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
         autoCorrect={false}
@@ -111,7 +114,7 @@ export function ReviewerPickerDrawer({
         </View>
       ) : ordered.length === 0 ? (
         <View style={styles.pickerStateArea}>
-          <Text style={styles.emptyText}>No matching people</Text>
+          <Text style={styles.emptyText}>{t('noMatchingPeople')}</Text>
         </View>
       ) : (
         <View style={styles.pickerList}>
@@ -124,7 +127,11 @@ export function ReviewerPickerDrawer({
                 onPress={() => onToggle(item.login)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: requested }}
-                accessibilityLabel={`${requested ? 'Remove' : 'Request'} ${item.login}`}
+                accessibilityLabel={
+                  requested
+                    ? t('removeReviewer', { login: item.login })
+                    : t('requestReviewer', { login: item.login })
+                }
               >
                 <View style={styles.rowTrailing}>
                   {requested ? (

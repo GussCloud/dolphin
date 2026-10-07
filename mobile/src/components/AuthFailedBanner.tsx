@@ -1,6 +1,8 @@
 import { View, Text } from 'react-native'
 import { AuthFailedBannerActions } from './AuthFailedBannerActions'
 import { authFailedBannerStyles as styles } from './auth-failed-banner-styles'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Why: auth-failed is no longer necessarily terminal (issue #5200) — a
 // transient rejection can latch it even though the desktop still lists this
@@ -17,11 +19,10 @@ export function AuthFailedBanner({
   onRepair: () => void
   onRemove: () => void
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <View style={styles.banner}>
-      <Text style={styles.text}>
-        Authentication failed — try reconnecting first; if it keeps failing, re-pair from desktop.
-      </Text>
+      <Text style={styles.text}>{t('authFailedMessage')}</Text>
       <View style={styles.actions}>
         <AuthFailedBannerActions
           canRetry={canRetry}

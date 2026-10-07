@@ -3,6 +3,8 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { openExternalLink } from '../../platform/external-link'
 import { ChevronDown, ChevronRight, ExternalLink, RotateCw, Sparkles } from 'lucide-react-native'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import type { PRCheckDetail } from '../../../../src/shared/github/check-types'
 import type { RpcClient } from '../../transport/rpc-client'
 import { fetchPRCheckDetails, type GitHubPrRepoSlug } from '../../session/github-pr-rpc'
@@ -54,6 +56,7 @@ export function PRChecksSection({
   actions,
   triage
 }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const sorted = sortPRChecks(checks)
   const summary = summarizePRChecks(checks)
   const rerunBusy = actions?.isBusy({ kind: 'rerun' }) ?? false
@@ -82,12 +85,12 @@ export function PRChecksSection({
         // spinning forever — fall back to an error detail.
         entry = {
           status: 'error',
-          message: err instanceof Error ? err.message : 'Failed to load check details'
+          message: err instanceof Error ? err.message : t('checkDetailsLoadFailed')
         }
       }
       setDetailCache((prev) => ({ ...prev, [key]: entry }))
     },
-    [client, worktreeId, prRepo]
+    [client, worktreeId, prRepo, t]
   )
 
   // Fetch a check's detail the first time it expands; the loaded entry is the cache.
@@ -145,7 +148,7 @@ export function PRChecksSection({
 
   return (
     <PRSection
-      title="Checks"
+      title={t('checks')}
       trailing={
         <>
           <Text
@@ -163,7 +166,7 @@ export function PRChecksSection({
               onPress={() => actions.rerunFailingChecks()}
               disabled={rerunBusy}
               accessibilityRole="button"
-              accessibilityLabel="Rerun failing checks"
+              accessibilityLabel={t('rerunFailingChecks')}
             >
               {rerunBusy ? (
                 <ActivityIndicator color={colors.textSecondary} />
@@ -181,10 +184,10 @@ export function PRChecksSection({
         <View style={triageStyles.triageStrip}>
           <View style={triageStyles.triageStripText}>
             <Text style={triageStyles.triageStripTitle} numberOfLines={1}>
-              {summary.failed} failing check{summary.failed === 1 ? '' : 's'}
+              {t('failingChecksCount', { count: summary.failed })}
             </Text>
             <Text style={triageStyles.triageStripSubtitle} numberOfLines={1}>
-              Inspect details or start an AI fix pass.
+              {t('failingChecksHint')}
             </Text>
           </View>
           <Pressable
@@ -192,14 +195,14 @@ export function PRChecksSection({
             onPress={triage.fixChecks}
             disabled={triage.isBusy}
             accessibilityRole="button"
-            accessibilityLabel="Fix failing checks with AI"
+            accessibilityLabel={t('fixFailingChecksWithAi')}
           >
             {triage.isBusy ? (
               <ActivityIndicator color={colors.textSecondary} />
             ) : (
               <Sparkles size={13} color={colors.textSecondary} strokeWidth={2.2} />
             )}
-            <Text style={triageStyles.triageStripButtonText}>Fix</Text>
+            <Text style={triageStyles.triageStripButtonText}>{t('fix')}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -217,7 +220,7 @@ export function PRChecksSection({
               style={styles.row}
               onPress={() => toggle(check)}
               accessibilityRole="button"
-              accessibilityLabel={`${check.name} check details`}
+              accessibilityLabel={t('checkDetailsLabel', { name: check.name })}
             >
               <Chevron size={14} color={colors.textSecondary} strokeWidth={2.2} />
               <View style={[styles.statusDot, { backgroundColor: statusColor(token) }]} />
@@ -237,7 +240,7 @@ export function PRChecksSection({
                   onPress={() => openExternalLink(url)}
                   hitSlop={6}
                   accessibilityRole="button"
-                  accessibilityLabel={`Open ${check.name} on the web`}
+                  accessibilityLabel={t('openCheckOnWeb', { name: check.name })}
                 >
                   <ExternalLink size={13} color={colors.textSecondary} strokeWidth={2.2} />
                 </Pressable>

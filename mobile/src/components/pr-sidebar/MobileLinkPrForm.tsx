@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { colors, radii, spacing, typography } from '../../theme/mobile-theme'
 import type { RpcClient } from '../../transport/rpc-client'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { triggerError, triggerSuccess } from '../../platform/haptics'
 import { parseGitHubPrReference } from '../../source-control/github-pr-link-parse'
 import { linkMobilePr } from '../../source-control/mobile-pr-link'
@@ -18,6 +20,7 @@ type Props = {
 // it can sit inline inside the PR sidebar's ScrollView, mirroring the compose
 // form fix — a BottomDrawer overlay nested in a ScrollView gets clipped.
 export function MobileLinkPrForm({ client, worktreeId, onCancel, onLinked }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [input, setInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,23 +50,23 @@ export function MobileLinkPrForm({ client, worktreeId, onCancel, onLinked }: Pro
   return (
     <View>
       <View style={styles.headingRow}>
-        <Text style={styles.heading}>Link existing pull request</Text>
+        <Text style={styles.heading}>{t('linkExistingPullRequestHeading')}</Text>
         <Pressable
           onPress={onCancel}
           disabled={submitting}
           accessibilityRole="button"
-          accessibilityLabel="Cancel"
+          accessibilityLabel={t('cancel')}
           hitSlop={8}
         >
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>{t('cancel')}</Text>
         </Pressable>
       </View>
-      <Text style={styles.label}>PR number or GitHub URL</Text>
+      <Text style={styles.label}>{t('prNumberOrUrl')}</Text>
       <TextInput
         style={styles.input}
         value={input}
         onChangeText={setInput}
-        placeholder="#123 or https://github.com/owner/repo/pull/123"
+        placeholder={t('prNumberOrUrlPlaceholder')}
         placeholderTextColor={colors.textMuted}
         autoCapitalize="none"
         autoCorrect={false}
@@ -82,7 +85,9 @@ export function MobileLinkPrForm({ client, worktreeId, onCancel, onLinked }: Pro
         {submitting ? (
           <ActivityIndicator size="small" color={colors.bgBase} />
         ) : (
-          <Text style={styles.submitText}>{parsed ? `Link #${parsed}` : 'Link pull request'}</Text>
+          <Text style={styles.submitText}>
+            {parsed ? t('linkPrNumber', { number: parsed }) : t('linkPullRequest')}
+          </Text>
         )}
       </Pressable>
     </View>

@@ -4,6 +4,8 @@ import { useHostClient } from '../transport/client-context'
 import { useHostStatusGates, type HostStatusGates } from '../transport/host-status-gates'
 import { colors } from '../theme/mobile-theme'
 import { ProtocolBlockScreen } from './ProtocolBlockScreen'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   hostId: string | undefined
@@ -23,6 +25,7 @@ export function useHostProtocolGates(): HostStatusGates {
 // Why: single choke point above every /h/[hostId] route so a blocked verdict replaces the
 // whole host UI (sidebar + detail stack) while the host list and other hosts stay usable.
 export function HostProtocolGate({ hostId, children }: Props) {
+  const t = useMobileTranslation(componentsCatalog)
   const { client, state } = useHostClient(hostId)
   const gates = useHostStatusGates({ hostId, client, connState: state })
   const { compatVerdict, statusPending } = gates
@@ -56,7 +59,7 @@ export function HostProtocolGate({ hostId, children }: Props) {
       <View style={styles.pending}>
         <ActivityIndicator
           color={colors.textSecondary}
-          accessibilityLabel="Checking host compatibility"
+          accessibilityLabel={t('checkingHostCompatibility')}
         />
       </View>
     )
@@ -90,7 +93,7 @@ export function HostProtocolGate({ hostId, children }: Props) {
           >
             <ActivityIndicator
               color={colors.textSecondary}
-              accessibilityLabel="Checking host compatibility"
+              accessibilityLabel={t('checkingHostCompatibility')}
             />
           </View>
         ) : null}

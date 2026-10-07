@@ -19,6 +19,8 @@ import {
   type AccountsSnapshot,
   type ProviderRateLimits
 } from './accounts-snapshot'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type CodexResetCreditOutcome = 'reset' | 'nothingToReset' | 'noCredit' | 'alreadyRedeemed'
 
@@ -82,7 +84,7 @@ export function getCodexResetCreditSummary(
       : null
   return {
     availableCount: count,
-    availabilityLabel: `${count} ${count === 1 ? 'reset' : 'resets'} available`,
+    availabilityLabel: translate(componentsCatalog, 'resetsAvailable', { count }),
     expiryLabel
   }
 }
@@ -93,18 +95,24 @@ export function getCodexResetCreditOutcomeCopy(outcome: CodexResetCreditOutcome)
 } {
   switch (outcome) {
     case 'reset':
-      return { title: 'Rate limits reset', message: 'Codex usage has been refreshed.' }
+      return {
+        title: translate(componentsCatalog, 'resetOutcomeResetTitle'),
+        message: translate(componentsCatalog, 'resetOutcomeRefreshed')
+      }
     case 'alreadyRedeemed':
-      return { title: 'Reset already applied', message: 'Codex usage has been refreshed.' }
+      return {
+        title: translate(componentsCatalog, 'resetOutcomeAlreadyAppliedTitle'),
+        message: translate(componentsCatalog, 'resetOutcomeRefreshed')
+      }
     case 'nothingToReset':
       return {
-        title: 'Nothing to reset',
-        message: 'No eligible Codex rate-limit window is exhausted.'
+        title: translate(componentsCatalog, 'resetOutcomeNothingTitle'),
+        message: translate(componentsCatalog, 'resetOutcomeNothingMessage')
       }
     case 'noCredit':
       return {
-        title: 'No reset available',
-        message: 'This account has no earned reset credits available.'
+        title: translate(componentsCatalog, 'resetOutcomeNoCreditTitle'),
+        message: translate(componentsCatalog, 'resetOutcomeNoCreditMessage')
       }
   }
 }

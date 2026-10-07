@@ -1,6 +1,8 @@
 import { StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import type { ConnectionState } from '../../transport/types'
 import type { RpcClient } from '../../transport/rpc-client'
 import type { MobileGitStatusResult } from '../../source-control/mobile-git-status'
@@ -33,6 +35,7 @@ export function MobilePrViewPanelBody({
   branchContextLoaded = true,
   controller
 }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const insets = useSafeAreaInsets()
 
   const sidebarState = !branchContextLoaded
@@ -40,12 +43,12 @@ export function MobilePrViewPanelBody({
     : !isGithubRepo
       ? ({
           kind: 'blocked',
-          message: 'Hosted review panel unavailable for this provider.'
+          message: t('hostedReviewUnavailable')
         } as const)
       : branch === null
         ? ({
             kind: 'error',
-            message: 'Current branch unavailable.'
+            message: t('currentBranchUnavailable')
           } as const)
         : controller.prSidebarState
 

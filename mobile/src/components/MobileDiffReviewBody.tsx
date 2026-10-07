@@ -11,6 +11,8 @@ import type {
 } from '../session/mobile-diff-review-screen-model'
 import type { MobileDiffReviewQueueItem } from '../session/mobile-diff-review-queue'
 import { mobileDiffReviewStyles as styles } from './mobile-diff-review-screen-styles'
+import { componentsDiffReviewCatalog } from '../i18n/catalogs/components-diff-review'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   activeHunkIndex: number | null
@@ -39,23 +41,26 @@ export function MobileDiffReviewBody({
   onEditNote,
   onRetry
 }: Props) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   if (screenState.kind === 'loading') {
-    return <CenteredState text="Loading review..." busy />
+    return <CenteredState text={t('loadingReview')} busy />
   }
   if (screenState.kind === 'error' || screenState.kind === 'unavailable') {
     return (
       <CenteredState
-        title={screenState.kind === 'unavailable' ? 'Review Unavailable' : 'Unable to Load Review'}
+        title={
+          screenState.kind === 'unavailable' ? t('reviewUnavailable') : t('unableToLoadReview')
+        }
         text={screenState.message}
         onRetry={onRetry}
       />
     )
   }
   if (filteredCount === 0) {
-    return <CenteredState title="No Reviewable Changes" text="Try a different review filter." />
+    return <CenteredState title={t('noReviewableChanges')} text={t('tryDifferentFilter')} />
   }
   if (diffState.kind === 'loading') {
-    return <CenteredState text="Loading diff..." busy muted />
+    return <CenteredState text={t('loadingDiff')} busy muted />
   }
   if (diffState.kind !== 'ready') {
     return <DiffUnavailableState diffState={diffState} onRetry={onRetry} />
@@ -90,9 +95,7 @@ export function MobileDiffReviewBody({
         })
       }}
       ListFooterComponent={
-        diffState.truncated ? (
-          <Text style={styles.truncatedText}>Diff truncated for mobile preview.</Text>
-        ) : null
+        diffState.truncated ? <Text style={styles.truncatedText}>{t('diffTruncated')}</Text> : null
       }
     />
   )
@@ -105,24 +108,25 @@ function DiffUnavailableState({
   diffState: ReviewDiffState
   onRetry: (() => void) | undefined
 }) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   const title =
     diffState.kind === 'binary'
-      ? 'Binary Diff'
+      ? t('binaryDiff')
       : diffState.kind === 'too-large'
-        ? 'Diff Too Large'
+        ? t('diffTooLarge')
         : diffState.kind === 'deleted'
-          ? 'Deleted File'
-          : 'Diff Unavailable'
+          ? t('deletedFile')
+          : t('diffUnavailable')
   const text =
     diffState.kind === 'binary'
-      ? 'This file cannot be rendered as text on mobile.'
+      ? t('binaryDiffMessage')
       : diffState.kind === 'too-large'
-        ? 'This diff is too large for the mobile preview.'
+        ? t('diffTooLargeMessage')
         : diffState.kind === 'deleted'
-          ? 'This file was deleted. Add a file note or mark it reviewed.'
+          ? t('deletedFileMessage')
           : diffState.kind === 'error'
             ? diffState.message
-            : 'Select a file to review.'
+            : t('selectFileToReview')
   return <CenteredState title={title} text={text} onRetry={onRetry} />
 }
 
@@ -139,6 +143,7 @@ function CenteredState({
   text: string
   onRetry?: () => void
 }) {
+  const t = useMobileTranslation(componentsDiffReviewCatalog)
   return (
     <View style={styles.state}>
       {busy ? (
@@ -151,10 +156,10 @@ function CenteredState({
           style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}
           onPress={onRetry}
           accessibilityRole="button"
-          accessibilityLabel="Retry loading review"
+          accessibilityLabel={t('retryLoadingReview')}
         >
           <RefreshCw size={14} color={colors.textPrimary} strokeWidth={2.2} />
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t('retry')}</Text>
         </Pressable>
       ) : null}
     </View>

@@ -18,6 +18,8 @@ import { SetupHookTrustDrawer, type SetupTrustPrompt } from './SetupHookTrustDra
 import { SmartWorkspaceSourceDrawer } from './SmartWorkspaceSourceDrawer'
 import type { ExtraProjectPickerItem } from './use-new-workspace-multi-project'
 import type { NewWorktreeDrawerView } from './use-new-worktree-drawer-navigation'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Composer = ReturnType<typeof useMobileComposerSource>
 
@@ -48,6 +50,7 @@ export function NewWorktreeModalDrawers(props: {
   onSkipSetupTrust: () => void
   onCloseSetupTrust: () => void
 }) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   return (
     <>
       <SmartWorkspaceSourceDrawer
@@ -69,7 +72,7 @@ export function NewWorktreeModalDrawers(props: {
 
       <PickerListDrawer
         visible={props.visible && props.drawerView === 'project'}
-        title="Project"
+        title={t('project')}
         items={props.projectPickerItems}
         selectedId={props.selectedProjectId ?? ''}
         onSelect={(item) => props.onRepoChange(item.repo)}
@@ -86,7 +89,7 @@ export function NewWorktreeModalDrawers(props: {
 
       <PickerListDrawer
         visible={props.visible && props.drawerView === 'extraProject'}
-        title="Add project"
+        title={t('addProject')}
         items={props.extraProjectPickerItems}
         selectedId=""
         onSelect={(item) => props.onExtraProjectAdd(item.id)}
@@ -103,7 +106,7 @@ export function NewWorktreeModalDrawers(props: {
 
       <PickerListDrawer
         visible={props.visible && props.drawerView === 'runTarget'}
-        title="Run on"
+        title={t('runOn')}
         items={props.runTargetPickerItems}
         selectedId={props.selectedRepo?.id ?? ''}
         onSelect={(item) => props.onRepoChange(item.repo)}
@@ -113,7 +116,7 @@ export function NewWorktreeModalDrawers(props: {
 
       <PickerListDrawer
         visible={props.visible && props.drawerView === 'agent'}
-        title="Agent"
+        title={t('agent')}
         items={props.pickerAgentOptions}
         selectedId={props.selectedAgent.id}
         onSelect={props.onAgentChange}

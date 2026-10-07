@@ -29,6 +29,8 @@ import { useInsideBottomDrawerModalHost } from './bottom-drawer-modal-host'
 import { useResponsiveLayout } from '../layout/responsive-layout'
 import { useBackClaim } from '../navigation/use-back-claim'
 import { currentSoftKeyboardHeight, subscribeSoftKeyboard } from '../platform/keyboard-occlusion'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const DISMISS_THRESHOLD = 80
 const SPRING_CONFIG = { damping: 28, stiffness: 400 }
@@ -64,6 +66,7 @@ export function MountedBottomDrawer({
   interactive = true,
   zIndex = 1000
 }: MountedBottomDrawerProps) {
+  const t = useMobileTranslation(componentsCatalog)
   const translateY = useSharedValue(0)
   const progress = useSharedValue(0)
   const keyboardOffset = useSharedValue(0)
@@ -317,7 +320,7 @@ export function MountedBottomDrawer({
       <Animated.View
         style={styles.handleHitArea}
         accessibilityRole="button"
-        accessibilityLabel="Dismiss drawer"
+        accessibilityLabel={t('dismissDrawer')}
       >
         <View style={styles.handle} />
       </Animated.View>

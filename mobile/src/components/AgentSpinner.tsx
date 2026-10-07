@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { Activity } from 'lucide-react-native'
 import { Animated, Easing, StyleSheet, View } from 'react-native'
 import type { AgentWorkingMode } from '../../../src/shared/agent-status-types'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type WorktreeStatus = 'working' | 'active' | 'permission' | 'done' | 'inactive'
 
@@ -26,6 +28,7 @@ export function AgentSpinner({
   status: WorktreeStatus
   workingMode?: AgentWorkingMode
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   const spinValue = useRef(new Animated.Value(0)).current
   const monitoring = status === 'working' && workingMode === 'monitoring'
 
@@ -49,7 +52,7 @@ export function AgentSpinner({
 
   if (monitoring) {
     return (
-      <View style={styles.wrapper} accessibilityLabel="Monitoring background tasks">
+      <View style={styles.wrapper} accessibilityLabel={t('monitoringBackgroundTasks')}>
         <Activity size={12} color={STATUS_COLORS.working} />
       </View>
     )

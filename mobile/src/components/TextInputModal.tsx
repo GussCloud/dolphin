@@ -11,6 +11,8 @@ import {
 import { colors, spacing, radii, typography } from '../theme/mobile-theme'
 import { TEXT_INPUT_FONT_SIZE } from '../platform/text-input-font-size'
 import { BottomDrawer } from './BottomDrawer'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   visible: boolean
@@ -34,7 +36,7 @@ export function TextInputModal({
   message,
   defaultValue = '',
   placeholder,
-  submitLabel = 'Save',
+  submitLabel,
   selectTextOnFocus = false,
   allowEmpty = false,
   keyboardType,
@@ -42,6 +44,7 @@ export function TextInputModal({
   onCancel,
   onAfterClose
 }: Props) {
+  const t = useMobileTranslation(componentsCatalog)
   const [value, setValue] = useState(defaultValue)
   const [previousVisible, setPreviousVisible] = useState(visible)
   const [previousDefaultValue, setPreviousDefaultValue] = useState(defaultValue)
@@ -94,7 +97,7 @@ export function TextInputModal({
           style={({ pressed }) => [styles.cancelButton, pressed && styles.buttonPressed]}
           onPress={onCancel}
         >
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={styles.cancelText}>{t('cancel')}</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
@@ -105,7 +108,7 @@ export function TextInputModal({
           disabled={!canSubmit}
           onPress={handleSubmit}
         >
-          <Text style={styles.submitText}>{submitLabel}</Text>
+          <Text style={styles.submitText}>{submitLabel ?? t('save')}</Text>
         </Pressable>
       </View>
     </BottomDrawer>

@@ -18,7 +18,6 @@ import {
   mountRichMarkdownWebDocument,
   type RichMarkdownWebDocument
 } from './rich-markdown/rich-markdown-web-document-mount'
-import { RICH_MARKDOWN_URL_PROMPT_LABELS } from './rich-markdown/document-host-seams'
 import { useMobileRichMarkdownEditorController } from './use-mobile-rich-markdown-editor-controller'
 import type {
   RichMarkdownEditorApi,
@@ -31,6 +30,8 @@ import type {
   MobileRichMarkdownEditorComponentProps,
   MobileRichMarkdownEditorHandle
 } from './MobileRichMarkdownEditor'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /**
  * Web sibling: the same editor, with the WebView taken out.
@@ -57,6 +58,7 @@ function MobileRichMarkdownEditorWebInner(
   { content, editable, onChange, onOpenLink }: MobileRichMarkdownEditorComponentProps,
   ref: ForwardedRef<MobileRichMarkdownEditorHandle>
 ) {
+  const t = useMobileTranslation(componentsCatalog)
   const hostRef = useRef<View>(null)
   const documentRef = useRef<RichMarkdownWebDocument | null>(null)
   // The document reports itself ready from inside the mount call, so the controller answers it —
@@ -201,9 +203,11 @@ function MobileRichMarkdownEditorWebInner(
       <View ref={hostRef} style={styles.host} />
       <TextInputModal
         visible={urlPromptKind !== null}
-        title={urlPromptKind === null ? '' : RICH_MARKDOWN_URL_PROMPT_LABELS[urlPromptKind]}
+        title={
+          urlPromptKind === null ? '' : urlPromptKind === 'link' ? t('linkUrl') : t('imageUrl')
+        }
         placeholder="https://"
-        submitLabel="Insert"
+        submitLabel={t('insert')}
         keyboardType="url"
         onSubmit={answerUrlPrompt}
         onCancel={() => answerUrlPrompt(null)}

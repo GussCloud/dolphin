@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { ActivityIndicator, Pressable, Text, View } from 'react-native'
 import { UserPlus, X } from 'lucide-react-native'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import type { GitHubWorkItemDetails } from '../../../../src/shared/github/work-item-types'
 import type { RpcClient } from '../../transport/rpc-client'
 import type { MobilePrActions } from '../../session/use-mobile-pr-actions'
@@ -21,6 +23,7 @@ type Props = {
 // Requested reviewers + their latest review status, with a picker to request /
 // remove (optimistic add/remove via the actions hook).
 export function PRReviewersSection({ details, actions, client, worktreeId }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   // details === null means phase 2 (work-item payload) is still in flight — same
   // signal Comments uses. Do not treat that as "no reviewers" or the section goes
   // blank while checks (phase 1) already paint. A synthetic placeholder means
@@ -61,23 +64,23 @@ export function PRReviewersSection({ details, actions, client, worktreeId }: Pro
       style={styles.iconButton}
       onPress={() => setPickerOpen(true)}
       accessibilityRole="button"
-      accessibilityLabel="Add or remove reviewers"
+      accessibilityLabel={t('addOrRemoveReviewers')}
     >
       <UserPlus size={16} color={colors.textSecondary} strokeWidth={2.2} />
     </Pressable>
   )
 
   return (
-    <PRSection title="Reviewers" trailing={addButton}>
+    <PRSection title={t('reviewers')} trailing={addButton}>
       {loadingDetails ? (
         <View style={styles.reviewersStatus}>
           <ActivityIndicator color={colors.textSecondary} />
-          <Text style={styles.emptyText}>Loading reviewers…</Text>
+          <Text style={styles.emptyText}>{t('loadingReviewers')}</Text>
         </View>
       ) : detailsFailed ? (
-        <Text style={styles.emptyText}>Could not load reviewers. Tap refresh to try again.</Text>
+        <Text style={styles.emptyText}>{t('reviewersLoadFailed')}</Text>
       ) : rows.length === 0 ? (
-        <Text style={styles.emptyText}>No reviewers requested</Text>
+        <Text style={styles.emptyText}>{t('noReviewersRequested')}</Text>
       ) : (
         rows.map((row) => {
           const busy = actions.isBusy({ kind: 'reviewer', login: row.login })
@@ -98,7 +101,7 @@ export function PRReviewersSection({ details, actions, client, worktreeId }: Pro
                 onPress={() => actions.removeReviewer(row.login)}
                 disabled={busy}
                 accessibilityRole="button"
-                accessibilityLabel={`Remove ${row.login}`}
+                accessibilityLabel={t('removeReviewer', { login: row.login })}
               >
                 {busy ? (
                   <ActivityIndicator color={colors.textSecondary} />
