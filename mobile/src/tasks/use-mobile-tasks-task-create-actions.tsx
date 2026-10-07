@@ -13,6 +13,7 @@ import {
   linearIssueCreate
 } from './mobile-task-item-state-operations'
 import { taskRepoPreferenceWrite } from './mobile-task-list-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksTaskCreateActions(model: LinearItemActionsModel) {
   const {
@@ -52,7 +53,9 @@ export function useMobileTasksTaskCreateActions(model: LinearItemActionsModel) {
         const repo = hostedRepos.find((entry) => entry.id === createRepoId) ?? hostedRepos[0]
         if (!repo) {
           throw new Error(
-            `Add a Git repository before creating a ${provider === 'github' ? 'GitHub' : 'GitLab'} issue.`
+            provider === 'github'
+              ? t('githubIssueNeedsRepository')
+              : t('gitlabIssueNeedsRepository')
           )
         }
         // Two providers, two methods: each arm sends its own operation rather than one call
@@ -75,7 +78,8 @@ export function useMobileTasksTaskCreateActions(model: LinearItemActionsModel) {
               )
         if (created.ok === false) {
           throw new Error(
-            created.error ?? `Failed to create ${provider === 'github' ? 'GitHub' : 'GitLab'} issue`
+            created.error ??
+              (provider === 'github' ? t('githubIssueCreateError') : t('gitlabIssueCreateError'))
           )
         }
         if (typeof created.number === 'number') {
@@ -113,7 +117,7 @@ export function useMobileTasksTaskCreateActions(model: LinearItemActionsModel) {
       } else {
         const team = linearTeams.find((entry) => entry.id === createTeamId) ?? linearTeams[0]
         if (!team) {
-          throw new Error('Select a Linear team first.')
+          throw new Error(t('selectLinearTeamFirst'))
         }
         const reply = await linearIssueCreate.request(client, {
           teamId: team.id,
@@ -123,7 +127,7 @@ export function useMobileTasksTaskCreateActions(model: LinearItemActionsModel) {
         })
         const result = linearIssueCreate.interpret(reply)
         if (result.ok === false || !result.id || !result.identifier) {
-          throw new Error(result.error ?? 'Failed to create Linear issue')
+          throw new Error(result.error ?? t('linearIssueCreateError'))
         }
         setActionItem(
           createLinearTask({
@@ -147,7 +151,7 @@ export function useMobileTasksTaskCreateActions(model: LinearItemActionsModel) {
       setCreateBody('')
       await loadTasks({ silent: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create task')
+      setError(err instanceof Error ? err.message : t('taskCreateError'))
     } finally {
       setCreatingTask(false)
     }
@@ -187,7 +191,7 @@ export function useMobileTasksTaskCreateActions(model: LinearItemActionsModel) {
         await repoListReload().catch(() => {})
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update issue source')
+        setError(err instanceof Error ? err.message : t('issueSourceUpdateError'))
       }
     },
     [client, loadTasks, repoListReload, taskUiReady]

@@ -29,6 +29,7 @@ import {
   type WorktreeCreateIdempotencyProbe,
   type WorktreeCreateIdempotencySupport
 } from './worktree-create-idempotency-policy'
+import { translateTasks as t } from './tasks-translate'
 
 // Why: server-side collision checks (branch already exists locally / on a remote
 // / already has PR #N) can fire even after a pre-flight basename dedupe —
@@ -144,7 +145,7 @@ export async function createWorktreeWithNameRetry(
           ...(created.warning ? { warning: created.warning } : {})
         }
       }
-      lastError = 'Failed to create workspace'
+      lastError = t('createWorkspaceError')
       break
     }
     lastError = response.error.message
@@ -153,7 +154,7 @@ export async function createWorktreeWithNameRetry(
       break
     }
   }
-  return { error: lastError ?? 'Failed to create workspace' }
+  return { error: lastError ?? t('createWorkspaceError') }
 }
 
 async function resolveAgentLaunchRoute(

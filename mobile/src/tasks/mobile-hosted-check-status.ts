@@ -3,6 +3,7 @@ import type {
   ProviderCheckSummary
 } from '../../../src/shared/github/pull-request-types'
 import { getProviderChecksLabel } from '../../../src/shared/provider-check-summary'
+import { translateTasks as t } from './tasks-translate'
 
 export type MobileHostedReviewStatus = {
   checksSummary?: ProviderCheckSummary
@@ -15,31 +16,29 @@ export type MobileHostedReviewStatus = {
 
 export function getHostedReviewLabel(item: MobileHostedReviewStatus): string {
   if (item.reviewDecision === 'approved' || item.reviewDecision === 'APPROVED') {
-    return 'Approved'
+    return t('reviewApproved')
   }
   if (item.reviewDecision === 'changes_requested' || item.reviewDecision === 'CHANGES_REQUESTED') {
-    return 'Changes requested'
+    return t('reviewChangesRequested')
   }
   if (item.reviewDecision === 'review_required' || item.reviewDecision === 'REVIEW_REQUIRED') {
-    return 'Review required'
+    return t('reviewRequired')
   }
   const reviewerCount = item.reviewerCount ?? item.reviewRequests?.length
-  return reviewerCount
-    ? `${reviewerCount} reviewer${reviewerCount === 1 ? '' : 's'}`
-    : 'No reviewers'
+  return reviewerCount ? t('reviewerCount', { count: reviewerCount }) : t('noReviewers')
 }
 
 export function getHostedMergeLabel(item: MobileHostedReviewStatus): string {
   if (item.mergeable === 'CONFLICTING' || item.mergeStateStatus === 'BLOCKED') {
-    return 'Conflicts'
+    return t('mergeConflicts')
   }
   if (item.mergeStateStatus === 'BEHIND' || item.checksSummary?.state === 'pending') {
-    return 'Behind'
+    return t('mergeBehind')
   }
   if (item.mergeable === 'MERGEABLE' || item.mergeStateStatus === 'CLEAN') {
-    return 'Able to merge'
+    return t('mergeAble')
   }
-  return 'Unknown'
+  return t('unknown')
 }
 
 export function getHostedChecksLabel(item: { checksSummary?: ProviderCheckSummary }): string {

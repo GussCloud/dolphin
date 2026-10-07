@@ -12,6 +12,7 @@ import {
 } from './mobile-tasks-dependencies'
 import { TASK_SECONDARY_DRAWER_Z_INDEX, setupSourceLabel } from './mobile-tasks-legacy-foundation'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 
 export function renderMobileTasksWorkspaceSparseDrawer(model: ConnectionPresentationModel) {
   const {
@@ -39,12 +40,12 @@ export function renderMobileTasksWorkspaceSparseDrawer(model: ConnectionPresenta
         <View>
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>
-              {workspaceSparseDraft.mode === 'new' ? 'New Sparse Preset' : 'Edit Sparse Preset'}
+              {workspaceSparseDraft.mode === 'new' ? t('newSparsePreset') : t('editSparsePreset')}
             </Text>
           </View>
           <View style={styles.detailGroup}>
             <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>Name</Text>
+              <Text style={styles.detailSectionTitle}>{t('presetName')}</Text>
               <TextInput
                 style={styles.input}
                 value={workspaceSparseDraft.name}
@@ -57,7 +58,7 @@ export function renderMobileTasksWorkspaceSparseDrawer(model: ConnectionPresenta
               />
             </View>
             <View style={styles.detailSection}>
-              <Text style={styles.detailSectionTitle}>Directories</Text>
+              <Text style={styles.detailSectionTitle}>{t('presetDirectories')}</Text>
               <TextInput
                 style={[styles.input, styles.bodyInput, styles.monoInput]}
                 value={workspaceSparseDraft.directoriesText}
@@ -74,9 +75,7 @@ export function renderMobileTasksWorkspaceSparseDrawer(model: ConnectionPresenta
             </View>
             <Text style={workspaceSparseDraftError ? styles.detailError : styles.detailMuted}>
               {workspaceSparseDraftError ??
-                (workspaceSparseDraftParsed?.directories.length === 1
-                  ? '1 directory'
-                  : `${workspaceSparseDraftParsed?.directories.length ?? 0} directories`)}
+                t('directoryCount', { count: workspaceSparseDraftParsed?.directories.length ?? 0 })}
             </Text>
           </View>
           <View style={styles.drawerActionRow}>
@@ -85,7 +84,7 @@ export function renderMobileTasksWorkspaceSparseDrawer(model: ConnectionPresenta
               disabled={workspaceSparseSaving}
               onPress={() => setWorkspaceSparseDraft(null)}
             >
-              <Text style={styles.secondaryActionText}>Cancel</Text>
+              <Text style={styles.secondaryActionText}>{t('cancel')}</Text>
             </Pressable>
             <Pressable
               style={[
@@ -98,7 +97,7 @@ export function renderMobileTasksWorkspaceSparseDrawer(model: ConnectionPresenta
               {workspaceSparseSaving ? (
                 <ActivityIndicator size="small" color={colors.bgBase} />
               ) : null}
-              <Text style={styles.primaryActionText}>Save</Text>
+              <Text style={styles.primaryActionText}>{t('save')}</Text>
             </Pressable>
           </View>
         </View>
@@ -118,9 +117,9 @@ export function renderMobileTasksSetupTrustDrawer(model: ConnectionPresentationM
       {setupPrompt ? (
         <View>
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Run Setup Script?</Text>
+            <Text style={styles.sheetTitle}>{t('runSetupScriptTitle')}</Text>
             <Text style={styles.sheetSubtitle}>
-              {setupPrompt.repoName} requires a setup choice before creating this workspace.
+              {t('setupChoiceRequired', { repo: setupPrompt.repoName })}
             </Text>
           </View>
 
@@ -151,7 +150,7 @@ export function renderMobileTasksSetupTrustDrawer(model: ConnectionPresentationM
             >
               <Check size={16} color={colors.textPrimary} />
               <Text style={styles.actionText}>
-                {creatingKey === setupPrompt.item.key ? 'Creating...' : 'Run setup and create'}
+                {creatingKey === setupPrompt.item.key ? t('creating') : t('runSetupAndCreate')}
               </Text>
             </Pressable>
             <View style={styles.actionSeparator} />
@@ -173,7 +172,7 @@ export function renderMobileTasksSetupTrustDrawer(model: ConnectionPresentationM
               }
             >
               <X size={16} color={colors.textPrimary} />
-              <Text style={styles.actionText}>Skip setup and create</Text>
+              <Text style={styles.actionText}>{t('skipSetupAndCreate')}</Text>
             </Pressable>
           </View>
         </View>
@@ -203,19 +202,16 @@ export function renderMobileTasksDolphinYamlTrustDrawer(model: ConnectionPresent
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>
               {dolphinYamlTrustPrompt.previouslyApproved
-                ? `${dolphinYamlTrustPrompt.repoName}'s setup script changed`
-                : `Run setup from ${dolphinYamlTrustPrompt.repoName}?`}
+                ? t('setupScriptChanged', { repo: dolphinYamlTrustPrompt.repoName })
+                : t('runSetupFrom', { repo: dolphinYamlTrustPrompt.repoName })}
             </Text>
-            <Text style={styles.sheetSubtitle}>
-              This repository's dolphin.yaml runs on your machine before the workspace starts. Only
-              run it if you trust this repository.
-            </Text>
+            <Text style={styles.sheetSubtitle}>{t('setupTrustWarning')}</Text>
           </View>
 
           <View style={styles.setupPromptBox}>
             <View style={styles.detailSectionHeader}>
               <Text style={styles.detailSectionTitle}>
-                {dolphinYamlTrustPrompt.previouslyApproved ? 'New setup script' : 'Setup script'}
+                {dolphinYamlTrustPrompt.previouslyApproved ? t('newSetupScript') : t('setupScript')}
               </Text>
             </View>
             <Text style={styles.setupPromptCommand}>{dolphinYamlTrustPrompt.scriptContent}</Text>
@@ -247,13 +243,13 @@ export function renderMobileTasksDolphinYamlTrustDrawer(model: ConnectionPresent
                       dolphinYamlTrustPrompt.contentHash
                     )
                   } catch (err) {
-                    setError(err instanceof Error ? err.message : 'Failed to trust setup script.')
+                    setError(err instanceof Error ? err.message : t('trustSetupScriptError'))
                   }
                 })()
               }
             >
               <Check size={16} color={colors.textPrimary} />
-              <Text style={styles.actionText}>Run hooks</Text>
+              <Text style={styles.actionText}>{t('runHooks')}</Text>
             </Pressable>
             <View style={styles.actionSeparator} />
             <Pressable
@@ -281,13 +277,13 @@ export function renderMobileTasksDolphinYamlTrustDrawer(model: ConnectionPresent
                       dolphinYamlTrustPrompt.contentHash
                     )
                   } catch (err) {
-                    setError(err instanceof Error ? err.message : 'Failed to trust setup script.')
+                    setError(err instanceof Error ? err.message : t('trustSetupScriptError'))
                   }
                 })()
               }
             >
               <Check size={16} color={colors.textPrimary} />
-              <Text style={styles.actionText}>Always trust and run</Text>
+              <Text style={styles.actionText}>{t('alwaysTrustAndRun')}</Text>
             </Pressable>
             <View style={styles.actionSeparator} />
             <Pressable
@@ -310,7 +306,7 @@ export function renderMobileTasksDolphinYamlTrustDrawer(model: ConnectionPresent
               }}
             >
               <X size={16} color={colors.textPrimary} />
-              <Text style={styles.actionText}>Don't run</Text>
+              <Text style={styles.actionText}>{t('dontRun')}</Text>
             </Pressable>
           </View>
         </View>

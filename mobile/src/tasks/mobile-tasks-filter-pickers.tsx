@@ -11,12 +11,9 @@ import {
 } from './mobile-tasks-dependencies'
 import { linearWorkspaceSelect } from './mobile-task-runtime-operations'
 import { styles } from './mobile-tasks-legacy-styles'
-import {
-  GITLAB_VIEW_OPTIONS,
-  GITLAB_FILTER_OPTIONS,
-  LINEAR_FILTER_OPTIONS,
-  TASK_SECONDARY_DRAWER_Z_INDEX
-} from './mobile-tasks-legacy-foundation'
+import { translateTasks as t } from './tasks-translate'
+import { TASK_SECONDARY_DRAWER_Z_INDEX } from './mobile-tasks-legacy-foundation'
+import { gitlabFilterOptions, gitlabViewOptions, linearFilterOptions } from './mobile-tasks-options'
 
 export function renderMobileTasksGitHubProjectFieldsPicker(model: ConnectionPresentationModel) {
   const {
@@ -33,12 +30,12 @@ export function renderMobileTasksGitHubProjectFieldsPicker(model: ConnectionPres
       onClose={() => setShowGitHubProjectFieldsPicker(false)}
     >
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>Project Fields</Text>
-        <Text style={styles.sheetSubtitle}>Choose which Project fields appear on item cards.</Text>
+        <Text style={styles.sheetTitle}>{t('projectFieldsTitle')}</Text>
+        <Text style={styles.sheetSubtitle}>{t('projectFieldsSubtitle')}</Text>
       </View>
       <View style={styles.repoPickerGroup}>
         {githubProjectAvailableSummaryFields.length === 0 ? (
-          <Text style={styles.repoPickerSubtitle}>This view has no extra fields to show.</Text>
+          <Text style={styles.repoPickerSubtitle}>{t('projectFieldsEmpty')}</Text>
         ) : (
           githubProjectAvailableSummaryFields.map((field, index) => {
             const visible = !githubProjectHiddenFieldIds.has(field.id)
@@ -54,7 +51,7 @@ export function renderMobileTasksGitHubProjectFieldsPicker(model: ConnectionPres
                       {field.name}
                     </Text>
                     <Text style={styles.repoPickerSubtitle} numberOfLines={1}>
-                      {visible ? 'Shown on cards' : 'Hidden from cards'}
+                      {visible ? t('fieldShownOnCards') : t('fieldHiddenFromCards')}
                     </Text>
                   </View>
                   {visible ? <Check size={15} color={colors.textPrimary} /> : null}
@@ -81,8 +78,8 @@ export function renderMobileTasksGitLabViewPicker(model: ConnectionPresentationM
   return (
     <PickerModal
       visible={taskUiReady && showGitLabViewPicker}
-      title="GitLab View"
-      options={GITLAB_VIEW_OPTIONS}
+      title={t('gitlabViewTitle')}
+      options={gitlabViewOptions(t)}
       selected={gitlabView}
       onSelect={(view) => {
         setGitlabView(view)
@@ -110,8 +107,8 @@ export function renderMobileTasksGitLabFilterPicker(model: ConnectionPresentatio
   return (
     <PickerModal
       visible={taskUiReady && showGitLabFilterPicker}
-      title="GitLab Filter"
-      options={GITLAB_FILTER_OPTIONS}
+      title={t('gitlabFilterTitle')}
+      options={gitlabFilterOptions(t)}
       selected={gitlabFilter}
       onSelect={setGitlabFilter}
       onClose={() => setShowGitLabFilterPicker(false)}
@@ -133,8 +130,8 @@ export function renderMobileTasksLinearFilterPicker(model: ConnectionPresentatio
   return (
     <PickerModal
       visible={taskUiReady && showLinearFilterPicker}
-      title="Linear Filter"
-      options={LINEAR_FILTER_OPTIONS}
+      title={t('linearFilterTitle')}
+      options={linearFilterOptions(t)}
       selected={linearFilter}
       onSelect={(filter) => {
         setLinearFilter(filter)
@@ -163,7 +160,7 @@ export function renderMobileTasksLinearWorkspacePicker(model: ConnectionPresenta
   return (
     <PickerModal
       visible={taskUiReady && showLinearWorkspacePicker}
-      title="Linear Workspace"
+      title={t('linearWorkspaceTitle')}
       options={linearWorkspaceOptions}
       selected={selectedLinearWorkspaceId ?? ''}
       onSelect={(workspaceId) => {
@@ -174,7 +171,7 @@ export function renderMobileTasksLinearWorkspacePicker(model: ConnectionPresenta
             .request(client, { workspaceId })
             .then(() => loadLinearContext())
             .catch((err) => {
-              setError(err instanceof Error ? err.message : 'Failed to switch workspace')
+              setError(err instanceof Error ? err.message : t('linearWorkspaceSwitchError'))
             })
         }
       }}
@@ -199,8 +196,8 @@ export function renderMobileTasksLinearTeamPicker(model: ConnectionPresentationM
       onClose={() => setShowLinearTeamPicker(false)}
     >
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>Linear Teams</Text>
-        <Text style={styles.sheetSubtitle}>Choose which teams appear in Tasks.</Text>
+        <Text style={styles.sheetTitle}>{t('linearTeamsTitle')}</Text>
+        <Text style={styles.sheetSubtitle}>{t('linearTeamsSubtitle')}</Text>
       </View>
       <View style={styles.repoPickerGroup}>
         <Pressable
@@ -212,8 +209,10 @@ export function renderMobileTasksLinearTeamPicker(model: ConnectionPresentationM
           }}
         >
           <View style={styles.repoPickerTextWrap}>
-            <Text style={styles.repoPickerTitle}>All teams</Text>
-            <Text style={styles.repoPickerSubtitle}>{linearTeams.length} teams</Text>
+            <Text style={styles.repoPickerTitle}>{t('allTeams')}</Text>
+            <Text style={styles.repoPickerSubtitle}>
+              {t('teamCount', { count: linearTeams.length })}
+            </Text>
           </View>
           {selectedLinearTeamIds.size === linearTeams.length ? (
             <Check size={15} color={colors.textPrimary} />
@@ -276,19 +275,19 @@ export function renderMobileTasksLinearStatusPicker(model: ConnectionPresentatio
       zIndex={TASK_SECONDARY_DRAWER_Z_INDEX}
     >
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>Change Status</Text>
+        <Text style={styles.sheetTitle}>{t('changeStatusTitle')}</Text>
         <Text style={styles.sheetSubtitle}>
-          {linearStatusPickerItem?.source.identifier ?? 'Linear issue'}
+          {linearStatusPickerItem?.source.identifier ?? t('linearIssueFallback')}
         </Text>
       </View>
       <View style={styles.repoPickerGroup}>
         {linearStatesLoading ? (
           <View style={styles.detailLoadingInline}>
             <ActivityIndicator size="small" color={colors.textSecondary} />
-            <Text style={styles.detailMuted}>Loading states...</Text>
+            <Text style={styles.detailMuted}>{t('loadingStates')}</Text>
           </View>
         ) : linearStates.length === 0 ? (
-          <Text style={styles.emptyInlineText}>No states available</Text>
+          <Text style={styles.emptyInlineText}>{t('noStatesAvailable')}</Text>
         ) : (
           linearStates.map((state, index) => {
             const selected =

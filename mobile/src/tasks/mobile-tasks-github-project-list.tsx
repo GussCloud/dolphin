@@ -12,6 +12,7 @@ import {
   TaskProviderLogo
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import {
   projectGroupMeta,
   formatUpdatedAt,
@@ -44,7 +45,7 @@ export function renderMobileTasksGitHubProjectList(model: ConnectionPresentation
     </View>
   ) : !activeGitHubProject ? (
     <View style={styles.centered}>
-      <Text style={styles.emptyText}>Choose a GitHub project</Text>
+      <Text style={styles.emptyText}>{t('chooseGitHubProject')}</Text>
       <Pressable
         style={[styles.targetButton, styles.centerActionButton]}
         disabled={!taskUiReady}
@@ -55,7 +56,7 @@ export function renderMobileTasksGitHubProjectList(model: ConnectionPresentation
           setShowGitHubProjectPicker(true)
         }}
       >
-        <Text style={styles.targetButtonText}>Browse projects</Text>
+        <Text style={styles.targetButtonText}>{t('browseProjects')}</Text>
       </Pressable>
     </View>
   ) : githubProjectError ? (
@@ -68,7 +69,7 @@ export function renderMobileTasksGitHubProjectList(model: ConnectionPresentation
     </View>
   ) : !githubProjectTable || visibleGitHubProjectRows.length === 0 ? (
     <View style={styles.centered}>
-      <Text style={styles.emptyText}>No project items</Text>
+      <Text style={styles.emptyText}>{t('noProjectItems')}</Text>
     </View>
   ) : (
     <FlatList
@@ -101,7 +102,7 @@ export function renderMobileTasksGitHubProjectList(model: ConnectionPresentation
                 style={entry.collapsed ? styles.projectGroupChevronCollapsed : undefined}
               />
               <Text style={styles.projectGroupTitle} numberOfLines={1}>
-                {entry.group.label || 'Items'}
+                {entry.group.label || t('projectGroupItems')}
               </Text>
               <Text style={styles.projectGroupMeta}>{projectGroupMeta(entry.group)}</Text>
             </Pressable>
@@ -141,10 +142,10 @@ export function renderMobileTasksGitHubProjectList(model: ConnectionPresentation
                 />
                 <Text style={styles.subtitle} numberOfLines={1}>
                   {row.itemType === 'PULL_REQUEST'
-                    ? 'Pull request'
+                    ? t('pullRequest')
                     : row.itemType === 'ISSUE'
-                      ? 'Issue'
-                      : 'Project item'}{' '}
+                      ? t('issue')
+                      : t('projectItem')}{' '}
                   · {row.content.repository ?? githubProjectTable.project.title}
                   {row.content.number ? ` #${row.content.number}` : ''}
                 </Text>
@@ -153,7 +154,7 @@ export function renderMobileTasksGitHubProjectList(model: ConnectionPresentation
                 <View style={styles.projectFieldPillRow}>
                   {githubProjectSummaryFields.slice(0, 4).map((field) => {
                     const value = projectFieldDisplayLabel(row, field)
-                    const isEmpty = value === 'Empty'
+                    const isEmpty = value === t('fieldEmpty')
                     return (
                       <View key={field.id} style={styles.projectFieldPill}>
                         <Text style={styles.projectFieldPillText} numberOfLines={1}>
@@ -168,7 +169,7 @@ export function renderMobileTasksGitHubProjectList(model: ConnectionPresentation
                   {githubProjectSummaryFields.length > 4 ? (
                     <View style={styles.projectFieldPill}>
                       <Text style={styles.projectFieldPillText}>
-                        +{githubProjectSummaryFields.length - 4} fields
+                        {t('moreFields', { count: githubProjectSummaryFields.length - 4 })}
                       </Text>
                     </View>
                   ) : null}

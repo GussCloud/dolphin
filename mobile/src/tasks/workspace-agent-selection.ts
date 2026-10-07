@@ -7,6 +7,7 @@ import {
   MOBILE_TUI_AGENT_LABELS,
   pickMobileTuiAgent
 } from './mobile-tui-agents'
+import { translateTasks as t } from './tasks-translate'
 
 export type WorkspaceAgentChoice = TuiAgent | 'blank'
 
@@ -27,7 +28,7 @@ type ResolveWorkspaceAgentSelectionArgs = WorkspaceAgentSelectionState & {
 }
 
 export function workspaceAgentLabel(agent: WorkspaceAgentChoice): string {
-  return agent === 'blank' ? 'Blank Terminal' : MOBILE_TUI_AGENT_LABELS[agent]
+  return agent === 'blank' ? t('blankTerminal') : MOBILE_TUI_AGENT_LABELS[agent]
 }
 
 export function normalizeWorkspaceAgent(value: unknown): WorkspaceAgentChoice | null {

@@ -1,6 +1,5 @@
 import { projectRowType } from './mobile-tasks-item-mapping'
 import type {
-  HostedReviewItem,
   HostedReviewMergeMethod,
   PendingHostedMerge,
   PendingHostedStateChange,
@@ -13,17 +12,23 @@ import type {
   GitHubPRReviewerRow,
   GitHubWorkItem
 } from './mobile-tasks-provider-detail-types'
-
-export const LINEAR_PRIORITY_LABELS: Record<number, string> = {
-  0: 'None',
-  1: 'Urgent',
-  2: 'High',
-  3: 'Medium',
-  4: 'Low'
-}
+import { translateTasks as t } from './tasks-translate'
 
 export function getLinearPriorityLabel(priority: number): string {
-  return LINEAR_PRIORITY_LABELS[priority] ?? `P${priority}`
+  switch (priority) {
+    case 0:
+      return t('none')
+    case 1:
+      return t('priorityUrgent')
+    case 2:
+      return t('priorityHigh')
+    case 3:
+      return t('priorityMedium')
+    case 4:
+      return t('priorityLow')
+    default:
+      return `P${priority}`
+  }
 }
 
 export function getLinearPriorityRank(priority: number): number {
@@ -33,17 +38,17 @@ export function getLinearPriorityRank(priority: number): number {
 export function formatGitHubReviewState(state: string | null | undefined): string {
   switch (state) {
     case 'APPROVED':
-      return 'Approved'
+      return t('reviewApproved')
     case 'CHANGES_REQUESTED':
-      return 'Changes requested'
+      return t('reviewChangesRequested')
     case 'COMMENTED':
-      return 'Commented'
+      return t('reviewCommented')
     case 'DISMISSED':
-      return 'Dismissed'
+      return t('reviewDismissed')
     case 'PENDING':
-      return 'Pending'
+      return t('reviewPending')
     default:
-      return 'Reviewed'
+      return t('reviewReviewed')
   }
 }
 
@@ -61,7 +66,7 @@ export function getGitHubReviewerRows(item: {
       login,
       name: user.name,
       avatarUrl: user.avatarUrl,
-      stateLabel: 'Requested'
+      stateLabel: t('reviewRequested')
     })
   }
   for (const review of item.latestReviews ?? []) {
@@ -86,19 +91,19 @@ export function getGitHubReviewSummary(item: {
   latestReviews?: GitHubPRReviewSummary[]
 }): string {
   if (item.reviewDecision === 'APPROVED') {
-    return 'Approved'
+    return t('reviewApproved')
   }
   if (item.reviewDecision === 'CHANGES_REQUESTED') {
-    return 'Changes requested'
+    return t('reviewChangesRequested')
   }
   const rows = getGitHubReviewerRows(item)
   if (rows.length === 0) {
-    return 'No reviewers'
+    return t('noReviewers')
   }
   if (rows.length === 1) {
-    return `${rows[0]!.login} - ${rows[0]!.stateLabel}`
+    return t('reviewerSummaryOne', { login: rows[0]!.login, state: rows[0]!.stateLabel })
   }
-  return `${rows[0]!.login} +${rows.length - 1}`
+  return t('reviewerSummaryMany', { login: rows[0]!.login, count: rows.length - 1 })
 }
 
 export function formatGitHubPRDelta(item: GitHubWorkItem): string | null {
@@ -110,7 +115,7 @@ export function formatGitHubPRDelta(item: GitHubWorkItem): string | null {
     parts.push(`-${item.deletions}`)
   }
   if (typeof item.changedFiles === 'number') {
-    parts.push(`${item.changedFiles} ${item.changedFiles === 1 ? 'file' : 'files'}`)
+    parts.push(t('changedFileCount', { count: item.changedFiles }))
   }
   return parts.length > 0 ? parts.join(' ') : null
 }
@@ -118,14 +123,14 @@ export function formatGitHubPRDelta(item: GitHubWorkItem): string | null {
 export function hostedBranchSummary(item: TaskItem): { head: string; base: string } | null {
   if (item.provider === 'github' && item.source.type === 'pr') {
     return {
-      head: item.source.branchName?.trim() || 'unknown head',
-      base: item.source.baseRefName?.trim() || 'base'
+      head: item.source.branchName?.trim() || t('unknownHead'),
+      base: item.source.baseRefName?.trim() || t('baseBranchFallback')
     }
   }
   if (item.provider === 'gitlab' && item.source.type === 'mr') {
     return {
-      head: item.source.branchName?.trim() || 'unknown head',
-      base: item.source.baseRefName?.trim() || 'base'
+      head: item.source.branchName?.trim() || t('unknownHead'),
+      base: item.source.baseRefName?.trim() || t('baseBranchFallback')
     }
   }
   return null
@@ -133,103 +138,130 @@ export function hostedBranchSummary(item: TaskItem): { head: string; base: strin
 
 export function getGitHubMergeLabel(item: GitHubWorkItem): string {
   if (item.mergeable === undefined && item.mergeStateStatus === undefined) {
-    return 'Merge'
+    return t('merge')
   }
   if (item.state === 'merged') {
-    return 'Merged'
+    return t('merged')
   }
   if (item.state === 'closed') {
-    return 'Closed'
+    return t('closed')
   }
   if (item.mergeable === 'CONFLICTING') {
-    return 'Conflicts'
+    return t('mergeConflicts')
   }
   if (item.mergeStateStatus === 'BEHIND') {
-    return 'Behind'
+    return t('mergeBehind')
   }
   if (item.mergeStateStatus === 'BLOCKED') {
-    return 'Blocked'
+    return t('mergeBlocked')
   }
   if (item.mergeable === 'MERGEABLE' || item.mergeStateStatus === 'CLEAN') {
-    return 'Able to merge'
+    return t('mergeAble')
   }
-  return 'Unknown'
+  return t('unknown')
 }
 
 export function getHostedReviewMergeMethodLabel(method: HostedReviewMergeMethod): string {
   if (method === 'squash') {
-    return 'Squash and merge'
+    return t('mergeMethodSquash')
   }
   if (method === 'rebase') {
-    return 'Rebase and merge'
+    return t('mergeMethodRebase')
   }
-  return 'Create merge commit'
-}
-
-export function hostedReviewMergeTargetLabel(item: HostedReviewItem): string {
-  return item.provider === 'gitlab' ? 'merge request' : 'PR'
+  return t('mergeMethodMergeCommit')
 }
 
 export function getHostedMergeConfirmMessage(pending: PendingHostedMerge): string {
-  const target = hostedReviewMergeTargetLabel(pending.item)
-  if (pending.method === 'squash') {
-    return `Squash and merge ${target} #${pending.item.source.number}?`
+  const number = pending.item.source.number
+  if (pending.item.provider === 'gitlab') {
+    if (pending.method === 'squash') {
+      return t('mergeConfirmSquashMr', { number })
+    }
+    return pending.method === 'rebase'
+      ? t('mergeConfirmRebaseMr', { number })
+      : t('mergeConfirmMergeMr', { number })
   }
-  const action = pending.method === 'rebase' ? 'Rebase and merge' : 'Merge'
-  return `${action} ${target} #${pending.item.source.number}?`
+  if (pending.method === 'squash') {
+    return t('mergeConfirmSquashPr', { number })
+  }
+  return pending.method === 'rebase'
+    ? t('mergeConfirmRebasePr', { number })
+    : t('mergeConfirmMergePr', { number })
 }
 
 export function getProjectGitHubMergeConfirmMessage(pending: PendingProjectGitHubMerge): string {
-  const number = pending.row.content.number
+  const number = String(pending.row.content.number)
   if (pending.method === 'squash') {
-    return `Squash and merge PR #${number}?`
+    return t('mergeConfirmSquashPr', { number })
   }
-  const action = pending.method === 'rebase' ? 'Rebase and merge' : 'Merge'
-  return `${action} PR #${number}?`
+  return pending.method === 'rebase'
+    ? t('mergeConfirmRebasePr', { number })
+    : t('mergeConfirmMergePr', { number })
 }
 
-export function hostedStateChangeAction(nextState: PendingHostedStateChange['nextState']): string {
-  return nextState === 'closed' ? 'Close' : 'Reopen'
-}
+type HostedStateChangeTarget = 'pr' | 'mr' | 'issue'
 
-export function hostedStateChangeTarget(pending: PendingHostedStateChange): {
-  titleTarget: string
-  labelTarget: string
-  number: number | null
+function hostedStateChangeTarget(pending: PendingHostedStateChange): {
+  target: HostedStateChangeTarget
+  number: string
 } {
   if (pending.source === 'project') {
-    const type = projectRowType(pending.row)
     return {
-      titleTarget: type === 'pr' ? 'Pull Request' : 'Issue',
-      labelTarget: type === 'pr' ? 'PR' : 'Issue',
-      number: pending.row.content.number
+      target: projectRowType(pending.row) === 'pr' ? 'pr' : 'issue',
+      number: String(pending.row.content.number)
     }
   }
+  const number = String(pending.item.source.number)
   if (pending.item.provider === 'gitlab') {
-    return {
-      titleTarget: pending.item.source.type === 'mr' ? 'Merge Request' : 'Issue',
-      labelTarget: pending.item.source.type === 'mr' ? 'MR' : 'Issue',
-      number: pending.item.source.number
-    }
+    return { target: pending.item.source.type === 'mr' ? 'mr' : 'issue', number }
   }
-  return {
-    titleTarget: pending.item.source.type === 'pr' ? 'Pull Request' : 'Issue',
-    labelTarget: pending.item.source.type === 'pr' ? 'PR' : 'Issue',
-    number: pending.item.source.number
-  }
+  return { target: pending.item.source.type === 'pr' ? 'pr' : 'issue', number }
 }
 
 export function getHostedStateConfirmTitle(pending: PendingHostedStateChange): string {
-  const target = hostedStateChangeTarget(pending)
-  return `${hostedStateChangeAction(pending.nextState)} ${target.titleTarget}`
+  const { target } = hostedStateChangeTarget(pending)
+  if (pending.nextState === 'closed') {
+    return target === 'pr'
+      ? t('closePullRequestTitle')
+      : target === 'mr'
+        ? t('closeMergeRequestTitle')
+        : t('closeIssueTitle')
+  }
+  return target === 'pr'
+    ? t('reopenPullRequestTitle')
+    : target === 'mr'
+      ? t('reopenMergeRequestTitle')
+      : t('reopenIssueTitle')
 }
 
 export function getHostedStateConfirmMessage(pending: PendingHostedStateChange): string {
-  const target = hostedStateChangeTarget(pending)
-  return `${hostedStateChangeAction(pending.nextState)} ${target.labelTarget} #${target.number}?`
+  const { target, number } = hostedStateChangeTarget(pending)
+  if (pending.nextState === 'closed') {
+    return target === 'pr'
+      ? t('closePrMessage', { number })
+      : target === 'mr'
+        ? t('closeMrMessage', { number })
+        : t('closeIssueMessage', { number })
+  }
+  return target === 'pr'
+    ? t('reopenPrMessage', { number })
+    : target === 'mr'
+      ? t('reopenMrMessage', { number })
+      : t('reopenIssueMessage', { number })
 }
 
 export function getHostedStateConfirmLabel(pending: PendingHostedStateChange): string {
-  const target = hostedStateChangeTarget(pending)
-  return `${hostedStateChangeAction(pending.nextState)} ${target.labelTarget}`
+  const { target } = hostedStateChangeTarget(pending)
+  if (pending.nextState === 'closed') {
+    return target === 'pr'
+      ? t('closePrLabel')
+      : target === 'mr'
+        ? t('closeMrLabel')
+        : t('closeIssueLabel')
+  }
+  return target === 'pr'
+    ? t('reopenPrLabel')
+    : target === 'mr'
+      ? t('reopenMrLabel')
+      : t('reopenIssueLabel')
 }

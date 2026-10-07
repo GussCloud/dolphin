@@ -23,12 +23,13 @@ import type {
 } from './mobile-tasks-view-state-types'
 import type { ActionableTaskItem } from './mobile-tasks-project-workspace-types'
 import type { LinearIssue } from './mobile-tasks-provider-detail-types'
+import type { TasksTranslate } from './tasks-translate'
 
-export const PROVIDER_OPTIONS: PickerOption<TaskProvider>[] = [
+export const providerOptions = (t: TasksTranslate): PickerOption<TaskProvider>[] => [
   {
     value: 'github',
     label: 'GitHub',
-    subtitle: 'Issues and pull requests',
+    subtitle: t('providerGitHubSubtitle'),
     renderIcon: (selected) => (
       <TaskProviderLogo
         provider="github"
@@ -40,7 +41,7 @@ export const PROVIDER_OPTIONS: PickerOption<TaskProvider>[] = [
   {
     value: 'gitlab',
     label: 'GitLab',
-    subtitle: 'Issues and merge requests',
+    subtitle: t('providerGitLabSubtitle'),
     renderIcon: (selected) => (
       <TaskProviderLogo
         provider="gitlab"
@@ -52,7 +53,7 @@ export const PROVIDER_OPTIONS: PickerOption<TaskProvider>[] = [
   {
     value: 'linear',
     label: 'Linear',
-    subtitle: 'Assigned and team issues',
+    subtitle: t('providerLinearSubtitle'),
     renderIcon: (selected) => (
       <TaskProviderLogo
         provider="linear"
@@ -63,23 +64,31 @@ export const PROVIDER_OPTIONS: PickerOption<TaskProvider>[] = [
   }
 ]
 
-export const GITLAB_FILTER_OPTIONS: PickerOption<GitLabFilter>[] = [
-  { value: 'opened', label: 'Open', subtitle: 'Open issues and merge requests' },
-  { value: 'merged', label: 'Merged', subtitle: 'Merged merge requests' },
-  { value: 'closed', label: 'Closed', subtitle: 'Closed issues and merge requests' },
-  { value: 'all', label: 'All', subtitle: 'Any GitLab state' }
+export const gitlabFilterOptions = (t: TasksTranslate): PickerOption<GitLabFilter>[] => [
+  { value: 'opened', label: t('open'), subtitle: t('gitlabFilterOpenSubtitle') },
+  { value: 'merged', label: t('merged'), subtitle: t('gitlabFilterMergedSubtitle') },
+  { value: 'closed', label: t('closed'), subtitle: t('gitlabFilterClosedSubtitle') },
+  { value: 'all', label: t('all'), subtitle: t('gitlabFilterAllSubtitle') }
 ]
 
-export const LINEAR_FILTER_OPTIONS: PickerOption<LinearFilter>[] = [
-  { value: 'all', label: 'All', subtitle: 'Open issues across connected workspaces' },
-  { value: 'assigned', label: 'My Issues', subtitle: 'Issues assigned to you' },
-  { value: 'created', label: 'Created', subtitle: 'Issues created by you' },
-  { value: 'completed', label: 'Completed', subtitle: 'Recently completed issues' }
+export const linearFilterOptions = (t: TasksTranslate): PickerOption<LinearFilter>[] => [
+  { value: 'all', label: t('all'), subtitle: t('linearFilterAllSubtitle') },
+  {
+    value: 'assigned',
+    label: t('linearFilterAssigned'),
+    subtitle: t('linearFilterAssignedSubtitle')
+  },
+  { value: 'created', label: t('linearFilterCreated'), subtitle: t('linearFilterCreatedSubtitle') },
+  {
+    value: 'completed',
+    label: t('linearFilterCompleted'),
+    subtitle: t('linearFilterCompletedSubtitle')
+  }
 ]
 
-export const LINEAR_VIEW_OPTIONS: PickerOption<LinearViewMode>[] = [
-  { value: 'list', label: 'List', subtitle: 'Compact issue rows' },
-  { value: 'board', label: 'Board', subtitle: 'Grouped columns' }
+export const linearViewOptions = (t: TasksTranslate): PickerOption<LinearViewMode>[] => [
+  { value: 'list', label: t('linearViewList'), subtitle: t('linearViewListSubtitle') },
+  { value: 'board', label: t('linearViewBoard'), subtitle: t('linearViewBoardSubtitle') }
 ]
 
 export function taskWorkspaceFallback(item: ActionableTaskItem): string {
@@ -110,27 +119,27 @@ export const COMMENT_REACTION_EMOJI: Record<string, string> = {
   eyes: 'eyes'
 }
 
-export const LINEAR_GROUP_OPTIONS: PickerOption<LinearGroupBy>[] = [
-  { value: 'none', label: 'No grouping' },
-  { value: 'status', label: 'Status' },
-  { value: 'assignee', label: 'Assignee' },
-  { value: 'priority', label: 'Priority' },
-  { value: 'team', label: 'Team' }
+export const linearGroupOptions = (t: TasksTranslate): PickerOption<LinearGroupBy>[] => [
+  { value: 'none', label: t('linearGroupNone') },
+  { value: 'status', label: t('status') },
+  { value: 'assignee', label: t('assignee') },
+  { value: 'priority', label: t('priority') },
+  { value: 'team', label: t('team') }
 ]
 
-export const LINEAR_ORDER_OPTIONS: PickerOption<LinearOrderBy>[] = [
-  { value: 'priority', label: 'Priority' },
-  { value: 'updated', label: 'Updated' },
-  { value: 'identifier', label: 'Identifier' }
+export const linearOrderOptions = (t: TasksTranslate): PickerOption<LinearOrderBy>[] => [
+  { value: 'priority', label: t('priority') },
+  { value: 'updated', label: t('updated') },
+  { value: 'identifier', label: t('linearOrderIdentifier') }
 ]
 
-export const LINEAR_DISPLAY_OPTIONS: PickerOption<LinearDisplayProperty>[] = [
-  { value: 'state', label: 'Status' },
-  { value: 'priority', label: 'Priority' },
-  { value: 'assignee', label: 'Assignee' },
-  { value: 'team', label: 'Team' },
-  { value: 'labels', label: 'Labels' },
-  { value: 'updated', label: 'Updated' }
+export const linearDisplayOptions = (t: TasksTranslate): PickerOption<LinearDisplayProperty>[] => [
+  { value: 'state', label: t('status') },
+  { value: 'priority', label: t('priority') },
+  { value: 'assignee', label: t('assignee') },
+  { value: 'team', label: t('team') },
+  { value: 'labels', label: t('labels') },
+  { value: 'updated', label: t('updated') }
 ]
 
 export const DEFAULT_LINEAR_DISPLAY_PROPERTIES: LinearDisplayProperty[] = [
@@ -142,35 +151,35 @@ export const DEFAULT_LINEAR_DISPLAY_PROPERTIES: LinearDisplayProperty[] = [
   'updated'
 ]
 
-export const GITHUB_KIND_OPTIONS: PickerOption<GitHubMode>[] = [
-  { value: 'issues', label: 'Issues', subtitle: 'GitHub issues' },
-  { value: 'prs', label: 'PRs', subtitle: 'GitHub pull requests' },
-  { value: 'project', label: 'Projects', subtitle: 'GitHub Projects views' }
+export const githubKindOptions = (t: TasksTranslate): PickerOption<GitHubMode>[] => [
+  { value: 'issues', label: t('githubKindIssues'), subtitle: t('githubKindIssuesSubtitle') },
+  { value: 'prs', label: t('githubKindPrs'), subtitle: t('githubKindPrsSubtitle') },
+  { value: 'project', label: t('githubKindProjects'), subtitle: t('githubKindProjectsSubtitle') }
 ]
 
-export const ISSUE_PRESETS: PickerOption<GitHubPreset>[] = [
-  { value: 'issues', label: 'Open', subtitle: 'Open GitHub issues' },
-  { value: 'my-issues', label: 'Assigned to me', subtitle: 'Open issues assigned to you' }
-]
-
-export const PR_PRESETS: PickerOption<GitHubPreset>[] = [
-  { value: 'prs', label: 'Open', subtitle: 'Open pull requests' },
-  { value: 'my-prs', label: 'Mine', subtitle: 'Pull requests authored by you' },
-  { value: 'review', label: 'Needs review', subtitle: 'Review requests assigned to you' }
-]
-
-export const GITLAB_VIEW_OPTIONS: PickerOption<GitLabView>[] = [
-  { value: 'project', label: 'Project MRs', subtitle: 'Merge requests and issues by repository' },
-  { value: 'todos', label: 'My Todos', subtitle: 'Pending GitLab todos' }
-]
-
-export const SORT_OPTIONS: PickerOption<TaskSort>[] = [
-  { value: 'updated', label: 'Updated', subtitle: 'Newest activity first' },
+export const issuePresets = (t: TasksTranslate): PickerOption<GitHubPreset>[] => [
+  { value: 'issues', label: t('open'), subtitle: t('issuePresetOpenSubtitle') },
   {
-    value: 'repository',
-    label: 'Repository',
-    subtitle: 'Group by repository, then newest activity'
+    value: 'my-issues',
+    label: t('issuePresetAssigned'),
+    subtitle: t('issuePresetAssignedSubtitle')
   }
+]
+
+export const prPresets = (t: TasksTranslate): PickerOption<GitHubPreset>[] => [
+  { value: 'prs', label: t('open'), subtitle: t('prPresetOpenSubtitle') },
+  { value: 'my-prs', label: t('prPresetMine'), subtitle: t('prPresetMineSubtitle') },
+  { value: 'review', label: t('prPresetReview'), subtitle: t('prPresetReviewSubtitle') }
+]
+
+export const gitlabViewOptions = (t: TasksTranslate): PickerOption<GitLabView>[] => [
+  { value: 'project', label: t('gitlabViewProject'), subtitle: t('gitlabViewProjectSubtitle') },
+  { value: 'todos', label: t('gitlabViewTodos'), subtitle: t('gitlabViewTodosSubtitle') }
+]
+
+export const sortOptions = (t: TasksTranslate): PickerOption<TaskSort>[] => [
+  { value: 'updated', label: t('updated'), subtitle: t('sortUpdatedSubtitle') },
+  { value: 'repository', label: t('repository'), subtitle: t('sortRepositorySubtitle') }
 ]
 
 export type ProjectSortOverride = { fieldId: string; direction: GitHubProjectSortDirection }

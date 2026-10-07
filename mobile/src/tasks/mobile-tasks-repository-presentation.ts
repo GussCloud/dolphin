@@ -3,17 +3,18 @@ import { taskTime } from './mobile-tasks-item-mapping'
 import type { TaskItem } from './mobile-tasks-project-workspace-types'
 import type { RepoSummary } from './mobile-tasks-provider-detail-types'
 import type { TaskSort } from './mobile-tasks-view-state-types'
+import { translateTasks as t } from './tasks-translate'
 
 export function isFailedGitHubCheck(check: { conclusion?: string | null }): boolean {
   return ['failure', 'cancelled', 'timed_out'].includes(check.conclusion ?? '')
 }
 
 export function repositoryCount(count: number): string {
-  return `${count} ${count === 1 ? 'repository' : 'repositories'}`
+  return t('repositoryCount', { count })
 }
 
 export function buildPartialRepositoryNotice(failedCount: number, totalCount: number): string {
-  return `${failedCount} of ${repositoryCount(totalCount)} failed to load.`
+  return t('partialRepositoryNotice', { failed: failedCount, count: totalCount })
 }
 
 export function repoColor(name: string): string {
@@ -36,9 +37,9 @@ export function setupSourceLabel(source: string | null | undefined): string {
     return 'dolphin.yaml'
   }
   if (source === 'legacy') {
-    return 'local hooks'
+    return t('setupSourceLegacy')
   }
-  return 'repository hooks'
+  return t('setupSourceRepository')
 }
 
 export function taskRepositoryMeta(

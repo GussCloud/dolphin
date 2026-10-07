@@ -9,6 +9,7 @@ import {
   RefreshCw
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import { taskKindLabel } from './mobile-tasks-legacy-foundation'
 import { renderMobileTasksItemDetailContent } from './mobile-tasks-item-detail-content'
 import { renderMobileTasksItemActions } from './mobile-tasks-item-actions'
@@ -32,7 +33,7 @@ export function renderMobileTasksItemDetailDrawer(model: ConnectionPresentationM
               <Pressable
                 style={styles.iconButton}
                 disabled={detailLoading}
-                accessibilityLabel="Refresh details"
+                accessibilityLabel={t('refreshDetails')}
                 onPress={() => setDetailRefreshSeq((current) => current + 1)}
               >
                 <RefreshCw

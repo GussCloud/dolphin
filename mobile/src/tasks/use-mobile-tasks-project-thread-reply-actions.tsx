@@ -14,6 +14,7 @@ import {
   githubReviewCommentReplyWrite,
   githubReviewThreadResolve
 } from './mobile-task-item-comment-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectThreadReplyActions(
   model: ProjectWorkspaceCommentActionsModel
@@ -40,7 +41,7 @@ export function useMobileTasksProjectThreadReplyActions(
       const slug = splitRepositorySlug(row.content.repository)
       const commentId = Number(comment.id)
       if (!slug || !Number.isInteger(commentId) || commentId <= 0) {
-        setProjectRowDetailError('This project comment cannot be deleted from mobile.')
+        setProjectRowDetailError(t('projectCommentNotDeletable'))
         return
       }
       setProjectMutating(true)
@@ -61,7 +62,7 @@ export function useMobileTasksProjectThreadReplyActions(
           throw new Error(
             typeof result.error === 'string'
               ? result.error
-              : (result.error?.message ?? 'Failed to delete comment')
+              : (result.error?.message ?? t('deleteCommentError'))
           )
         }
         setProjectRowDetail((current) =>
@@ -77,7 +78,7 @@ export function useMobileTasksProjectThreadReplyActions(
           setProjectEditingCommentDraft('')
         }
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to delete comment')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('deleteCommentError'))
       } finally {
         setProjectMutating(false)
       }
@@ -112,7 +113,7 @@ export function useMobileTasksProjectThreadReplyActions(
           { timeoutMs: 30_000 }
         )
         if (githubReviewThreadResolve.interpret(reply) !== true) {
-          throw new Error(resolve ? 'Failed to resolve thread' : 'Failed to reopen thread')
+          throw new Error(resolve ? t('resolveThreadError') : t('reopenThreadError'))
         }
         setProjectRowDetail((current) =>
           current?.provider === 'github'
@@ -127,9 +128,7 @@ export function useMobileTasksProjectThreadReplyActions(
             : current
         )
       } catch (err) {
-        setProjectRowDetailError(
-          err instanceof Error ? err.message : 'Failed to update review thread'
-        )
+        setProjectRowDetailError(err instanceof Error ? err.message : t('reviewThreadUpdateError'))
       } finally {
         setProjectMutating(false)
       }
@@ -193,13 +192,13 @@ export function useMobileTasksProjectThreadReplyActions(
               )
             )
         if (written.ok === false) {
-          throw new Error(written.error ?? 'Failed to reply')
+          throw new Error(written.error ?? t('replyError'))
         }
         const reply: DetailComment = written.comment ?? {
           id: `local-${Date.now()}`,
           body,
           createdAt: new Date().toISOString(),
-          author: 'You',
+          author: t('you'),
           path: comment.path,
           line: comment.line,
           threadId: comment.threadId
@@ -215,7 +214,7 @@ export function useMobileTasksProjectThreadReplyActions(
             : current
         )
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to reply')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('replyError'))
       } finally {
         setProjectMutating(false)
       }

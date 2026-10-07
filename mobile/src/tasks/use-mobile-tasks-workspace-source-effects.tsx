@@ -4,6 +4,7 @@ import {
   repoBaseRefSearchRead,
   repoSparsePresetListRead
 } from './mobile-workspace-source-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksWorkspaceSourceEffects(model: WorkspaceCreateProjectionModel) {
   const {
@@ -68,7 +69,7 @@ export function useMobileTasksWorkspaceSourceEffects(model: WorkspaceCreateProje
           setWorkspaceSparsePresetsLoaded(false)
           setWorkspaceSparsePresetId(null)
           setWorkspaceSparsePresetsError(
-            err instanceof Error ? err.message : 'Failed to load sparse presets.'
+            err instanceof Error ? err.message : t('sparsePresetsLoadError')
           )
         }
       })
@@ -132,9 +133,7 @@ export function useMobileTasksWorkspaceSourceEffects(model: WorkspaceCreateProje
       .catch((err) => {
         if (!stale) {
           setWorkspaceBaseBranchResults([])
-          setWorkspaceBaseBranchError(
-            err instanceof Error ? err.message : 'Failed to search branches.'
-          )
+          setWorkspaceBaseBranchError(err instanceof Error ? err.message : t('branchSearchError'))
         }
       })
       .finally(() => {

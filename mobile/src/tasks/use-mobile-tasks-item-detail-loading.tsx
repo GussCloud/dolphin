@@ -11,6 +11,7 @@ import {
   linearIssueCommentsRead,
   linearIssueRead
 } from './mobile-task-item-detail-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffectsModel) {
   const {
@@ -50,7 +51,7 @@ export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffects
         )
         const details = githubItemDetailRead.interpret(reply)
         if (!details) {
-          throw new Error('Details not found')
+          throw new Error(t('detailsNotFound'))
         }
         if (!stale) {
           setDetailPayload({
@@ -85,7 +86,7 @@ export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffects
         )
         const details = gitlabItemDetailRead.interpret(reply)
         if (!details) {
-          throw new Error('Details not found')
+          throw new Error(t('detailsNotFound'))
         }
         if (!stale) {
           setDetailPayload({
@@ -163,7 +164,7 @@ export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffects
       const accepted = linearIssueCommentsRead.interpret(commentsReply)
       const comments = accepted.accepted ? (accepted.value ?? []) : []
       if (!issue) {
-        throw new Error('Details not found')
+        throw new Error(t('detailsNotFound'))
       }
       if (!stale) {
         setDetailPayload({
@@ -195,7 +196,7 @@ export function useMobileTasksItemDetailLoading(model: ItemDetailMetadataEffects
     void loadDetails()
       .catch((err) => {
         if (!stale) {
-          setDetailError(err instanceof Error ? err.message : 'Failed to load details')
+          setDetailError(err instanceof Error ? err.message : t('detailsLoadError'))
         }
       })
       .finally(() => {

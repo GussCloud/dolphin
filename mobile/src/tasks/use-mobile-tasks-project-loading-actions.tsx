@@ -17,6 +17,7 @@ import {
   githubProjectViewListRead,
   githubProjectViewTableRead
 } from './mobile-task-project-board-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectLoadingActions(model: TaskPaginationActionsModel) {
   const {
@@ -137,7 +138,7 @@ export function useMobileTasksProjectLoadingActions(model: TaskPaginationActions
         )
       } catch (err) {
         setGithubProjectTable(null)
-        setGithubProjectError(err instanceof Error ? err.message : 'Failed to load project view')
+        setGithubProjectError(err instanceof Error ? err.message : t('projectViewLoadError'))
       } finally {
         setGithubProjectLoading(false)
       }
@@ -195,21 +196,21 @@ export function useMobileTasksProjectLoadingActions(model: TaskPaginationActions
           // replacement view, not as a failed project selection.
           const supportedViews = views.filter((view) => view.layout === 'TABLE_LAYOUT')
           if (supportedViews.length === 0) {
-            throw new Error('This project has no supported views.')
+            throw new Error(t('projectNoSupportedViews'))
           }
           setPendingGitHubProjectViewSelection(project)
           setShowGitHubProjectViewPicker(true)
           return
         }
         if (explicitView && explicitView.layout !== 'TABLE_LAYOUT') {
-          throw new Error("Dolphin doesn't support this GitHub Project layout yet.")
+          throw new Error(t('projectLayoutUnsupported'))
         }
         if (!explicitView && !rememberedView) {
           // Why: desktop asks which Project view to open the first time a project
           // is selected. Mobile should not silently choose the first table view.
           const supportedViews = views.filter((view) => view.layout === 'TABLE_LAYOUT')
           if (supportedViews.length === 0) {
-            throw new Error('This project has no supported views.')
+            throw new Error(t('projectNoSupportedViews'))
           }
           setPendingGitHubProjectViewSelection(project)
           setShowGitHubProjectViewPicker(true)
@@ -220,11 +221,11 @@ export function useMobileTasksProjectLoadingActions(model: TaskPaginationActions
           views.find((view) => view.id === rememberedView && view.layout === 'TABLE_LAYOUT') ??
           undefined
         if (!selectedView) {
-          throw new Error('This project has no supported views.')
+          throw new Error(t('projectNoSupportedViews'))
         }
         commitGitHubProjectView(project, selectedView.id)
       } catch (err) {
-        setGithubProjectError(err instanceof Error ? err.message : 'Failed to select project')
+        setGithubProjectError(err instanceof Error ? err.message : t('projectSelectError'))
       } finally {
         setGithubProjectLoading(false)
       }
@@ -245,7 +246,7 @@ export function useMobileTasksProjectLoadingActions(model: TaskPaginationActions
     const input = githubProjectPasteInput.trim()
     const parsed = parseProjectInput(input)
     if (!parsed) {
-      setGithubProjectPasteError('Expected a project URL or owner/number.')
+      setGithubProjectPasteError(t('projectPasteInvalid'))
       return
     }
     setGithubProjectPasteBusy(true)
@@ -273,7 +274,7 @@ export function useMobileTasksProjectLoadingActions(model: TaskPaginationActions
         { viewNumber: result.viewNumber }
       )
     } catch (err) {
-      setGithubProjectPasteError(err instanceof Error ? err.message : 'Failed to add project.')
+      setGithubProjectPasteError(err instanceof Error ? err.message : t('projectAddError'))
     } finally {
       setGithubProjectPasteBusy(false)
     }

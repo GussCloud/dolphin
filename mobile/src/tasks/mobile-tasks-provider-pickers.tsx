@@ -17,10 +17,11 @@ import {
   normalizeLinearFilter,
   repositoryCount,
   getRepoBadgeColor,
-  issueSourceSlug,
-  GITHUB_KIND_OPTIONS
+  issueSourceSlug
 } from './mobile-tasks-legacy-foundation'
+import { githubKindOptions } from './mobile-tasks-options'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 
 export function renderMobileTasksProviderPicker(model: ConnectionPresentationModel) {
   const {
@@ -44,7 +45,7 @@ export function renderMobileTasksProviderPicker(model: ConnectionPresentationMod
   return (
     <PickerModal
       visible={taskUiReady && showProviderPicker}
-      title="Task Source"
+      title={t('taskSourceTitle')}
       options={providerOptions}
       selected={provider}
       onSelect={(next) => {
@@ -102,8 +103,8 @@ export function renderMobileTasksRepoPicker(model: ConnectionPresentationModel) 
   return (
     <BottomDrawer visible={taskUiReady && showRepoPicker} onClose={() => setShowRepoPicker(false)}>
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>Repositories</Text>
-        <Text style={styles.sheetSubtitle}>Choose which repositories to query.</Text>
+        <Text style={styles.sheetTitle}>{t('repositoriesTitle')}</Text>
+        <Text style={styles.sheetSubtitle}>{t('repositoriesSubtitle')}</Text>
       </View>
 
       <View style={styles.repoPickerGroup}>
@@ -116,7 +117,7 @@ export function renderMobileTasksRepoPicker(model: ConnectionPresentationModel) 
           }}
         >
           <View style={styles.repoPickerTextWrap}>
-            <Text style={styles.repoPickerTitle}>All repositories</Text>
+            <Text style={styles.repoPickerTitle}>{t('allRepositories')}</Text>
             <Text style={styles.repoPickerSubtitle}>{repositoryCount(hostedRepos.length)}</Text>
           </View>
           {selectedRepoIds.size === 0 ? <Check size={15} color={colors.textPrimary} /> : null}
@@ -166,16 +167,14 @@ export function renderMobileTasksGitHubIssueSourcePicker(model: ConnectionPresen
       onClose={() => setShowGitHubIssueSourcePicker(false)}
     >
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>GitHub Issue Sources</Text>
-        <Text style={styles.sheetSubtitle}>
-          Choose whether each repository queries and creates work from upstream or origin.
-        </Text>
+        <Text style={styles.sheetTitle}>{t('issueSourcesTitle')}</Text>
+        <Text style={styles.sheetSubtitle}>{t('issueSourcesSubtitle')}</Text>
       </View>
 
       <View style={styles.repoPickerGroup}>
         {githubIssueSourceRows.length === 0 ? (
           <View style={styles.drawerLoadingRow}>
-            <Text style={styles.detailMuted}>No alternate issue sources available.</Text>
+            <Text style={styles.detailMuted}>{t('issueSourcesEmpty')}</Text>
           </View>
         ) : (
           githubIssueSourceRows.map(({ repo, sources }, index) => {
@@ -192,10 +191,11 @@ export function renderMobileTasksGitHubIssueSourcePicker(model: ConnectionPresen
                       {repo.displayName}
                     </Text>
                     <Text style={styles.issueSourceHint} numberOfLines={2}>
-                      Querying{' '}
-                      {issueSourceSlug(
-                        selectedPreference === 'origin' ? sources.prs : sources.upstreamCandidate
-                      )}
+                      {t('issueSourceQuerying', {
+                        slug: issueSourceSlug(
+                          selectedPreference === 'origin' ? sources.prs : sources.upstreamCandidate
+                        )
+                      })}
                     </Text>
                   </View>
                   <View style={styles.issueSourceSegment}>
@@ -221,7 +221,7 @@ export function renderMobileTasksGitHubIssueSourcePicker(model: ConnectionPresen
                               selected && styles.issueSourceSegmentTextActive
                             ]}
                           >
-                            {preference === 'upstream' ? 'Upstream' : 'Origin'}
+                            {preference === 'upstream' ? t('upstream') : t('origin')}
                           </Text>
                           <Text style={styles.issueSourceSlug} numberOfLines={1}>
                             {slug}
@@ -258,8 +258,8 @@ export function renderMobileTasksGitHubViewPicker(model: ConnectionPresentationM
   return (
     <PickerModal
       visible={taskUiReady && showGitHubKindPicker}
-      title="GitHub View"
-      options={GITHUB_KIND_OPTIONS}
+      title={t('githubViewTitle')}
+      options={githubKindOptions(t)}
       selected={githubMode === 'project' ? 'project' : githubKind}
       onSelect={(kind) => {
         if (kind === 'project') {
@@ -305,7 +305,7 @@ export function renderMobileTasksGitHubPresetPicker(model: ConnectionPresentatio
   return (
     <PickerModal
       visible={taskUiReady && showGitHubPresetPicker}
-      title={githubKind === 'prs' ? 'Pull Requests' : 'Issues'}
+      title={githubKind === 'prs' ? t('pullRequestsTitle') : t('issuesTitle')}
       options={githubPresetPickerOptions}
       selected={githubPreset}
       onSelect={(preset) => {
@@ -343,8 +343,8 @@ export function renderMobileTasksPagePicker(model: ConnectionPresentationModel) 
       onClose={() => setShowGitHubPagePicker(false)}
     >
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>GitHub Pages</Text>
-        <Text style={styles.sheetSubtitle}>Jump to a loaded or available result page.</Text>
+        <Text style={styles.sheetTitle}>{t('githubPagesTitle')}</Text>
+        <Text style={styles.sheetSubtitle}>{t('githubPagesSubtitle')}</Text>
       </View>
       <ScrollView style={styles.pagePickerList}>
         {githubPagePickerPages.map((index) => {
@@ -361,9 +361,9 @@ export function renderMobileTasksPagePicker(model: ConnectionPresentationModel) 
               }}
             >
               <View style={styles.pickerRowContent}>
-                <Text style={styles.pickerRowLabel}>Page {index + 1}</Text>
+                <Text style={styles.pickerRowLabel}>{t('pageNumber', { page: index + 1 })}</Text>
                 <Text style={styles.pickerRowSubtitle}>
-                  {loaded ? 'Loaded' : 'Loads older results'}
+                  {loaded ? t('pageLoaded') : t('pageLoadsOlder')}
                 </Text>
               </View>
               {selected ? <Check size={16} color={colors.textPrimary} /> : null}

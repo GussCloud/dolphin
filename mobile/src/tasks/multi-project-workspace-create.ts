@@ -8,6 +8,7 @@ import type { AgentLaunchSupport } from './agent-launch-worktree-create'
 import { readAgentLaunchCreateOutcome } from './agent-launch-worktree-create'
 import { agentLaunchRun } from './mobile-workspace-create-operations'
 import { WORKTREE_CREATE_TIMEOUT_MS } from './workspace-create-timeout'
+import { translateTasks as t } from './tasks-translate'
 
 // Checked against src/main/runtime/rpc/methods/folder-workspace.ts (MultiProjectWorkspaceCreateResult).
 const multiProjectWorkspaceReceiptSchema = z.looseObject({
@@ -71,7 +72,7 @@ async function launchAgentInContainer(
   launch: { supported: AgentLaunchSupport | false }
 ): Promise<string | undefined> {
   if (!launch.supported) {
-    return 'Workspace created, but this computer cannot start the agent from the phone.'
+    return t('agentLaunchUnsupportedWarning')
   }
   try {
     const reply = await agentLaunchRun.request(
@@ -82,6 +83,6 @@ async function launchAgentInContainer(
     return readAgentLaunchCreateOutcome(agentLaunchRun.interpret(reply))?.warning
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error)
-    return `Workspace created, but the agent did not start: ${reason}`
+    return t('agentLaunchFailedWarning', { reason })
   }
 }

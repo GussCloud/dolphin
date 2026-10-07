@@ -9,6 +9,7 @@ import {
 import { linearIssueRead } from './mobile-task-item-detail-operations'
 import { linearIssueCommentWrite } from './mobile-task-item-comment-operations'
 import { linearIssueCreate } from './mobile-task-item-state-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksLinearItemActions(model: GithubReplyMergeActionsModel) {
   const {
@@ -46,13 +47,13 @@ export function useMobileTasksLinearItemActions(model: GithubReplyMergeActionsMo
         )
         const result = linearIssueCommentWrite.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to add comment')
+          throw new Error(result.error ?? t('commentError'))
         }
         const comment: DetailComment = {
           id: result.id ?? `local-${Date.now()}`,
           body,
           createdAt: new Date().toISOString(),
-          user: { displayName: 'You' }
+          user: { displayName: t('you') }
         }
         setLinearCommentDraft('')
         setDetailPayload((current) =>
@@ -61,7 +62,7 @@ export function useMobileTasksLinearItemActions(model: GithubReplyMergeActionsMo
             : current
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to add Linear comment')
+        setError(err instanceof Error ? err.message : t('linearCommentError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -84,11 +85,11 @@ export function useMobileTasksLinearItemActions(model: GithubReplyMergeActionsMo
         )
         const issue = linearIssueRead.interpret(reply)
         if (!issue) {
-          throw new Error('Sub-issue not found')
+          throw new Error(t('subIssueNotFound'))
         }
         setActionItem(createLinearTask(issue) as Extract<TaskItem, { provider: 'linear' }>)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load Linear sub-issue')
+        setError(err instanceof Error ? err.message : t('linearSubIssueLoadError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -121,7 +122,7 @@ export function useMobileTasksLinearItemActions(model: GithubReplyMergeActionsMo
         )
         const result = linearIssueCreate.interpret(reply)
         if (result.ok === false || !result.id || !result.identifier) {
-          throw new Error(result.error ?? 'Failed to create sub-issue')
+          throw new Error(result.error ?? t('subIssueCreateError'))
         }
         const child: LinearIssueChild = {
           id: result.id,
@@ -141,7 +142,7 @@ export function useMobileTasksLinearItemActions(model: GithubReplyMergeActionsMo
             : current
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create Linear sub-issue')
+        setError(err instanceof Error ? err.message : t('linearSubIssueCreateError'))
       } finally {
         setMutatingStatus(false)
       }

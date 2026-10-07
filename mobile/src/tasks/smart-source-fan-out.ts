@@ -15,6 +15,7 @@ import {
   searchGitLabItems,
   searchLinearIssues
 } from './smart-source-search-requests'
+import { translateTasks as t } from './tasks-translate'
 
 export type SmartFanOutResult = {
   githubItems: GitHubWorkItem[]
@@ -107,7 +108,7 @@ export async function fanOutSmartSearch(args: FanOutArgs): Promise<SmartFanOutRe
   let error = ''
   const fail = (reason: unknown) => {
     if (!isSmart) {
-      error = reason instanceof Error ? reason.message : 'Search failed'
+      error = reason instanceof Error ? reason.message : t('searchFailed')
     }
   }
   if (github.status === 'rejected') {

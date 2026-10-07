@@ -12,6 +12,7 @@ import {
 } from './mobile-tasks-dependencies'
 import { TASK_SECONDARY_DRAWER_Z_INDEX } from './mobile-tasks-legacy-foundation'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 
 export function renderMobileTasksWorkspaceBaseBranchPicker(model: ConnectionPresentationModel) {
   const {
@@ -36,15 +37,15 @@ export function renderMobileTasksWorkspaceBaseBranchPicker(model: ConnectionPres
     >
       <View>
         <View style={styles.sheetHeader}>
-          <Text style={styles.sheetTitle}>Start From</Text>
-          <Text style={styles.sheetSubtitle}>Pick an existing branch or ref.</Text>
+          <Text style={styles.sheetTitle}>{t('startFromTitle')}</Text>
+          <Text style={styles.sheetSubtitle}>{t('startFromSubtitle')}</Text>
         </View>
         <View style={styles.detailGroup}>
           <TextInput
             style={styles.input}
             value={workspaceBaseBranchQuery}
             onChangeText={setWorkspaceBaseBranchQuery}
-            placeholder="Search branches"
+            placeholder={t('searchBranches')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -59,8 +60,8 @@ export function renderMobileTasksWorkspaceBaseBranchPicker(model: ConnectionPres
               {workspaceBaseBranch === null ? <Check size={16} color={colors.textPrimary} /> : null}
             </View>
             <View style={styles.pickerContent}>
-              <Text style={styles.pickerLabel}>Default branch</Text>
-              <Text style={styles.pickerSubtitle}>Use this repository's configured base</Text>
+              <Text style={styles.pickerLabel}>{t('defaultBranch')}</Text>
+              <Text style={styles.pickerSubtitle}>{t('defaultBranchSubtitle')}</Text>
             </View>
           </Pressable>
           {workspaceBaseBranchLoading ? (
@@ -70,7 +71,7 @@ export function renderMobileTasksWorkspaceBaseBranchPicker(model: ConnectionPres
           ) : workspaceBaseBranchError ? (
             <Text style={styles.detailError}>{workspaceBaseBranchError}</Text>
           ) : workspaceBaseBranchQuery.trim() && workspaceBaseBranchResults.length === 0 ? (
-            <Text style={styles.detailMuted}>No branches match.</Text>
+            <Text style={styles.detailMuted}>{t('noBranchesMatch')}</Text>
           ) : null}
           {workspaceBaseBranchResults.map((branch) => (
             <View key={`${branch.refName}:${branch.localBranchName}`}>
@@ -92,7 +93,7 @@ export function renderMobileTasksWorkspaceBaseBranchPicker(model: ConnectionPres
                   </Text>
                   {branch.localBranchName !== branch.refName ? (
                     <Text style={styles.pickerSubtitle} numberOfLines={1}>
-                      Branch name: {branch.localBranchName}
+                      {t('branchNameLabel', { branch: branch.localBranchName })}
                     </Text>
                   ) : null}
                 </View>
@@ -127,7 +128,7 @@ export function renderMobileTasksWorkspaceSparsePicker(model: ConnectionPresenta
     >
       <View>
         <View style={styles.sheetHeader}>
-          <Text style={styles.sheetTitle}>Sparse Checkout</Text>
+          <Text style={styles.sheetTitle}>{t('sparseCheckoutTitle')}</Text>
         </View>
         <View style={styles.detailGroup}>
           <Pressable
@@ -143,8 +144,8 @@ export function renderMobileTasksWorkspaceSparsePicker(model: ConnectionPresenta
               ) : null}
             </View>
             <View style={styles.pickerContent}>
-              <Text style={styles.pickerLabel}>Full checkout</Text>
-              <Text style={styles.pickerSubtitle}>Use the whole repository</Text>
+              <Text style={styles.pickerLabel}>{t('fullCheckout')}</Text>
+              <Text style={styles.pickerSubtitle}>{t('fullCheckoutSubtitle')}</Text>
             </View>
           </Pressable>
           {workspaceSparsePresets.map((preset) => (
@@ -175,7 +176,7 @@ export function renderMobileTasksWorkspaceSparsePicker(model: ConnectionPresenta
                 <Pressable
                   style={styles.iconActionButton}
                   accessibilityRole="button"
-                  accessibilityLabel={`Edit ${preset.name}`}
+                  accessibilityLabel={t('editPresetLabel', { name: preset.name })}
                   onPress={() => startEditWorkspaceSparsePreset(preset)}
                 >
                   <Pencil size={15} color={colors.textMuted} />
@@ -194,7 +195,7 @@ export function renderMobileTasksWorkspaceSparsePicker(model: ConnectionPresenta
           disabled={!workspaceSparsePresetsLoaded || workspaceSparsePresetsLoading}
           onPress={startNewWorkspaceSparsePreset}
         >
-          <Text style={styles.inlineSaveText}>New preset</Text>
+          <Text style={styles.inlineSaveText}>{t('newPreset')}</Text>
         </Pressable>
       </View>
     </BottomDrawer>

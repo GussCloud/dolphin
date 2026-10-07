@@ -6,6 +6,7 @@ import {
   githubProjectIssueTypeListRead,
   githubProjectLabelListRead
 } from './mobile-task-project-board-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectMetadataLoading(model: ProjectDetailLoadingModel) {
   const {
@@ -50,13 +51,13 @@ export function useMobileTasksProjectMetadataLoading(model: ProjectDetailLoading
         }
         const result = githubProjectLabelListRead.interpret(response)
         if (!result.ok) {
-          throw new Error(result.error?.message ?? 'Failed to load labels')
+          throw new Error(result.error?.message ?? t('labelsLoadError'))
         }
         setProjectAvailableLabels(result.labels ?? [])
       })
       .catch((err) => {
         if (!stale) {
-          setProjectLabelsError(err instanceof Error ? err.message : 'Failed to load labels')
+          setProjectLabelsError(err instanceof Error ? err.message : t('labelsLoadError'))
         }
       })
       .finally(() => {
@@ -100,14 +101,14 @@ export function useMobileTasksProjectMetadataLoading(model: ProjectDetailLoading
         }
         const result = githubProjectAssignableUserListRead.interpret(response)
         if (!result.ok) {
-          throw new Error(result.error?.message ?? 'Failed to load assignees')
+          throw new Error(result.error?.message ?? t('assigneesLoadError'))
         }
         setProjectAssignableUsers(result.users ?? [])
       })
       .catch((err) => {
         if (!stale) {
           setProjectAssignableUsersError(
-            err instanceof Error ? err.message : 'Failed to load assignees'
+            err instanceof Error ? err.message : t('assigneesLoadError')
           )
         }
       })
@@ -153,16 +154,14 @@ export function useMobileTasksProjectMetadataLoading(model: ProjectDetailLoading
         }
         const result = githubProjectIssueTypeListRead.interpret(response)
         if (!result.ok) {
-          throw new Error(result.error?.message ?? 'Failed to load issue types')
+          throw new Error(result.error?.message ?? t('issueTypesLoadError'))
         }
         // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the schema requires the `id` the issue-type write sends and types `name`; `color` and `description` are declared non-nullable by GitHubIssueType but absent from the recorded reply, so requiring them would drop a row main renders.
         setProjectIssueTypes((result.types ?? []) as GitHubIssueType[])
       })
       .catch((err) => {
         if (!stale) {
-          setProjectIssueTypesError(
-            err instanceof Error ? err.message : 'Failed to load issue types'
-          )
+          setProjectIssueTypesError(err instanceof Error ? err.message : t('issueTypesLoadError'))
         }
       })
       .finally(() => {

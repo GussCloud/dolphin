@@ -15,6 +15,7 @@ import {
   githubPullRequestStateUpdate
 } from './mobile-task-item-state-operations'
 import { githubReviewCommentWrite } from './mobile-task-item-comment-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckActionsModel) {
   const {
@@ -61,7 +62,7 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
         !projectRowDetail.headSha ||
         !projectRowDetail.baseSha
       ) {
-        setProjectRowDetailError('Unable to load file contents for this pull request.')
+        setProjectRowDetailError(t('fileContentsUnavailableError'))
         return
       }
       setPrFileLoadingPath(file.path)
@@ -84,9 +85,7 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
         const contents = githubPullRequestFileContentsRead.interpret(reply)
         setPrFileContents((current) => ({ ...current, [file.path]: contents }))
       } catch (err) {
-        setProjectRowDetailError(
-          err instanceof Error ? err.message : 'Failed to load file contents'
-        )
+        setProjectRowDetailError(err instanceof Error ? err.message : t('fileContentsLoadError'))
       } finally {
         setPrFileLoadingPath(null)
       }
@@ -114,7 +113,7 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
         return
       }
       if (projectRowDetail?.provider !== 'github' || !projectRowDetail.headSha) {
-        setProjectRowDetailError('Unable to comment without the PR head SHA.')
+        setProjectRowDetailError(t('reviewCommentNeedsHeadSha'))
         return
       }
       const draftKey = `${file.path}:${line}`
@@ -140,11 +139,11 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
         )
         const result = githubReviewCommentWrite.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to add review comment')
+          throw new Error(result.error ?? t('reviewCommentError'))
         }
         const comment: DetailComment = result.comment ?? {
           id: `local-${Date.now()}`,
-          author: 'You',
+          author: t('you'),
           body,
           createdAt: new Date().toISOString(),
           path: file.path,
@@ -161,9 +160,7 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
             : current
         )
       } catch (err) {
-        setProjectRowDetailError(
-          err instanceof Error ? err.message : 'Failed to add review comment'
-        )
+        setProjectRowDetailError(err instanceof Error ? err.message : t('reviewCommentError'))
       } finally {
         setProjectMutating(false)
       }
@@ -208,7 +205,7 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
         )
         const result = githubPullRequestMerge.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to merge pull request')
+          throw new Error(result.error ?? t('mergePullRequestError'))
         }
         setProjectRowItem((current) =>
           current?.id === row.id
@@ -228,9 +225,7 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
             : table
         )
       } catch (err) {
-        setProjectRowDetailError(
-          err instanceof Error ? err.message : 'Failed to merge pull request'
-        )
+        setProjectRowDetailError(err instanceof Error ? err.message : t('mergePullRequestError'))
       } finally {
         setProjectMutating(false)
       }
@@ -266,12 +261,12 @@ export function useMobileTasksProjectFileMergeActions(model: ProjectReviewCheckA
                 })
               )
         if (updated.ok === false) {
-          throw new Error(updated.error ?? 'Failed to update GitHub status')
+          throw new Error(updated.error ?? t('githubStatusUpdateError'))
         }
         setActionItem(null)
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update status')
+        setError(err instanceof Error ? err.message : t('statusUpdateError'))
       } finally {
         setMutatingStatus(false)
       }

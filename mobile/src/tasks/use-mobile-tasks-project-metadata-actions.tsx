@@ -14,6 +14,7 @@ import {
   githubProjectIssueTypeUpdate,
   githubProjectIssueUpdate
 } from './mobile-task-project-board-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyActionsModel) {
   const {
@@ -43,7 +44,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
       }
       const slug = splitRepositorySlug(row.content.repository)
       if (!slug || !row.content.number) {
-        setProjectRowDetailError('This project item cannot be edited from mobile.')
+        setProjectRowDetailError(t('projectItemNotEditable'))
         return
       }
       setProjectMutating(true)
@@ -61,7 +62,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
         )
         const result = githubProjectIssueUpdate.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error?.message ?? 'Failed to update GitHub item')
+          throw new Error(result.error?.message ?? t('githubItemUpdateError'))
         }
         const applyContentUpdate = (candidate: GitHubProjectRow): GitHubProjectRow => {
           const labels = new Map(candidate.content.labels.map((label) => [label.name, label]))
@@ -130,7 +131,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
             : current
         )
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to update item')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('itemUpdateError'))
       } finally {
         setProjectMutating(false)
       }
@@ -180,7 +181,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
               )
         const result = written
         if (result.ok === false) {
-          throw new Error(result.error?.message ?? 'Failed to update project field')
+          throw new Error(result.error?.message ?? t('projectFieldUpdateError'))
         }
         const patchRow = (candidate: GitHubProjectRow): GitHubProjectRow => {
           const fieldValuesByFieldId = { ...candidate.fieldValuesByFieldId }
@@ -208,9 +209,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
           setProjectFieldDrafts((current) => ({ ...current, [field.id]: '' }))
         }
       } catch (err) {
-        setProjectRowDetailError(
-          err instanceof Error ? err.message : 'Failed to update project field'
-        )
+        setProjectRowDetailError(err instanceof Error ? err.message : t('projectFieldUpdateError'))
       } finally {
         setProjectMutating(false)
       }
@@ -225,7 +224,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
       }
       const slug = splitRepositorySlug(row.content.repository)
       if (row.itemType !== 'ISSUE' || !slug || !row.content.number) {
-        setProjectRowDetailError('This project issue type cannot be edited from mobile.')
+        setProjectRowDetailError(t('projectIssueTypeNotEditable'))
         return
       }
       setProjectMutating(true)
@@ -243,7 +242,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
         )
         const result = githubProjectIssueTypeUpdate.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error?.message ?? 'Failed to update issue type')
+          throw new Error(result.error?.message ?? t('issueTypeUpdateError'))
         }
         const patchRow = (candidate: GitHubProjectRow): GitHubProjectRow => ({
           ...candidate,
@@ -263,7 +262,7 @@ export function useMobileTasksProjectMetadataActions(model: ProjectThreadReplyAc
             : table
         )
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to update issue type')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('issueTypeUpdateError'))
       } finally {
         setProjectMutating(false)
       }

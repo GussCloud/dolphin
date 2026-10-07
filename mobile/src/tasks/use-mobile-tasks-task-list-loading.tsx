@@ -20,6 +20,7 @@ import {
   linearAssignedIssueListRead,
   linearIssueSearchRead
 } from './mobile-task-source-search-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksTaskListLoading(model: ProviderLoadActionsModel) {
   const {
@@ -116,7 +117,7 @@ export function useMobileTasksTaskListLoading(model: ProviderLoadActionsModel) {
             setGithubSourceErrors(page.sourceErrors)
             setGithubSourceFallbacks(page.sourceFallbacks)
             if (page.failedCount === queriedRepos.length) {
-              throw new Error('Failed to load GitHub tasks')
+              throw new Error(t('githubTasksLoadError'))
             }
             setGithubPages([page.items])
             setGithubCurrentPage(0)
@@ -181,7 +182,7 @@ export function useMobileTasksTaskListLoading(model: ProviderLoadActionsModel) {
                 console.warn(`[mobile tasks] failed to fetch ${provider} work items`, repo.id, err)
                 return {
                   items: [] as TaskItem[],
-                  error: err instanceof Error ? err.message : 'Failed to load GitLab tasks'
+                  error: err instanceof Error ? err.message : t('gitlabTasksLoadError')
                 }
               }
             }
@@ -192,7 +193,7 @@ export function useMobileTasksTaskListLoading(model: ProviderLoadActionsModel) {
           const failedCount = results.filter((result) => result.error).length
           if (failedCount === queriedRepos.length) {
             throw new Error(
-              results.find((result) => result.error)?.error ?? 'Failed to load GitLab tasks'
+              results.find((result) => result.error)?.error ?? t('gitlabTasksLoadError')
             )
           }
           setItems(
@@ -241,7 +242,7 @@ export function useMobileTasksTaskListLoading(model: ProviderLoadActionsModel) {
         }
         setItems([])
         resetGitHubItemsState()
-        setError(err instanceof Error ? err.message : 'Failed to load tasks')
+        setError(err instanceof Error ? err.message : t('tasksLoadError'))
       } finally {
         if (isCurrent()) {
           setLoading(false)

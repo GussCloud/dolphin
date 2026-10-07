@@ -24,6 +24,7 @@ import {
   worktreeMrBaseResolve,
   worktreePrBaseResolve
 } from './mobile-workspace-create-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksWorkspaceCreateActions(model: WorkspaceSshStateModel) {
   const {
@@ -72,8 +73,8 @@ export function useMobileTasksWorkspaceCreateActions(model: WorkspaceSshStateMod
         if (!targetRepo) {
           throw new Error(
             item.provider === 'linear'
-              ? 'Add a Git repository before creating a Linear workspace.'
-              : 'Repository not found.'
+              ? t('linearWorkspaceNeedsRepository')
+              : t('repositoryNotFound')
           )
         }
         await ensureWorkspaceSshReady(targetRepo)
@@ -102,7 +103,7 @@ export function useMobileTasksWorkspaceCreateActions(model: WorkspaceSshStateMod
         ) {
           setWorkspaceAgent(selectedAgent)
           setWorkspaceAgentOverridden(false)
-          throw new Error('Selected agent is disabled. Choose an enabled agent before creating.')
+          throw new Error(t('agentDisabled'))
         }
         const setupResolution = await resolveCreateSetupDecision(targetRepo, setupOverride)
         const comment = noteOverride?.trim()
@@ -275,7 +276,7 @@ export function useMobileTasksWorkspaceCreateActions(model: WorkspaceSshStateMod
           )
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create workspace')
+        setError(err instanceof Error ? err.message : t('createWorkspaceError'))
       } finally {
         setCreatingKey(null)
       }

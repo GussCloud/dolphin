@@ -19,6 +19,7 @@ import {
   getHostedMergeLabel
 } from './mobile-tasks-dependencies'
 import { styles, getPrSignalToneStyle } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import {
   taskRepositoryMeta,
   formatGitHubPRDelta,
@@ -26,7 +27,8 @@ import {
   formatUpdatedAt,
   taskKindLabel,
   getGitHubReviewSummary,
-  getGitHubMergeLabel
+  getGitHubMergeLabel,
+  taskStatusLabel
 } from './mobile-tasks-legacy-foundation'
 
 export function renderMobileTasksProviderItemList(model: ConnectionPresentationModel) {
@@ -78,7 +80,7 @@ export function renderMobileTasksProviderItemList(model: ConnectionPresentationM
           <View style={styles.paginationFooter}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Previous page"
+              accessibilityLabel={t('previousPage')}
               accessibilityState={{
                 disabled: githubCurrentPage === 0 || githubPaginationLoading
               }}
@@ -96,8 +98,8 @@ export function renderMobileTasksProviderItemList(model: ConnectionPresentationM
               accessibilityRole="button"
               accessibilityLabel={
                 githubTotalCount === null
-                  ? `Select page, Page ${githubCurrentPage + 1}`
-                  : `Select page, Page ${githubCurrentPage + 1} of ${githubTotalPages}`
+                  ? t('selectPageLabel', { page: githubCurrentPage + 1 })
+                  : t('selectPageOfLabel', { page: githubCurrentPage + 1, total: githubTotalPages })
               }
               accessibilityState={{ disabled: githubPaginationLoading }}
               style={styles.paginationLabelButton}
@@ -111,13 +113,13 @@ export function renderMobileTasksProviderItemList(model: ConnectionPresentationM
             >
               <Text style={styles.paginationLabel}>
                 {githubTotalCount === null
-                  ? `Page ${githubCurrentPage + 1}`
-                  : `Page ${githubCurrentPage + 1} of ${githubTotalPages}`}
+                  ? t('pageNumber', { page: githubCurrentPage + 1 })
+                  : t('pageOf', { page: githubCurrentPage + 1, total: githubTotalPages })}
               </Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Next page"
+              accessibilityLabel={t('nextPage')}
               accessibilityState={{
                 disabled:
                   (!githubCanLoadUncountedNextPage && githubCurrentPage >= githubTotalPages - 1) ||
@@ -200,7 +202,7 @@ export function renderMobileTasksProviderItemList(model: ConnectionPresentationM
                     {branchSummary.head}
                   </Text>
                   <Text style={styles.branchMetaBase} numberOfLines={1}>
-                    into {branchSummary.base}
+                    {t('branchInto', { base: branchSummary.base })}
                   </Text>
                 </View>
               ) : null}
@@ -257,7 +259,7 @@ export function renderMobileTasksProviderItemList(model: ConnectionPresentationM
             <View style={styles.taskRowTrailing}>
               <View style={styles.statusPill}>
                 <Text style={styles.statusText} numberOfLines={1}>
-                  {item.status}
+                  {taskStatusLabel(item)}
                 </Text>
               </View>
             </View>

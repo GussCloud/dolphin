@@ -6,6 +6,7 @@ import {
   gitlabIssueUpdate,
   gitlabMergeRequestStateUpdate
 } from './mobile-task-item-state-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksGitlabGithubStatusActions(model: ProjectFileMergeActionsModel) {
   const {
@@ -53,12 +54,12 @@ export function useMobileTasksGitlabGithubStatusActions(model: ProjectFileMergeA
                 })
               )
         if (updated.ok === false) {
-          throw new Error(updated.error ?? 'Failed to update GitLab item')
+          throw new Error(updated.error ?? t('gitlabItemUpdateError'))
         }
         setActionItem(null)
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update GitLab item')
+        setError(err instanceof Error ? err.message : t('gitlabItemUpdateError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -95,7 +96,7 @@ export function useMobileTasksGitlabGithubStatusActions(model: ProjectFileMergeA
         )
         const result = githubIssueUpdate.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to update GitHub issue')
+          throw new Error(result.error ?? t('githubIssueUpdateError'))
         }
 
         const nextLabels = [
@@ -166,7 +167,7 @@ export function useMobileTasksGitlabGithubStatusActions(model: ProjectFileMergeA
         setItemRemoveAssigneesDraft('')
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update GitHub issue')
+        setError(err instanceof Error ? err.message : t('githubIssueUpdateError'))
       } finally {
         setMutatingStatus(false)
       }

@@ -13,6 +13,7 @@ import {
   TaskProviderLogo
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import {
   createLinearTask,
   type TaskItem,
@@ -82,7 +83,7 @@ export function renderMobileTasksLinearList(model: ConnectionPresentationModel) 
                     style={[styles.statusPillSelf, styles.linearStatePill]}
                     disabled={mutatingStatus}
                     accessibilityRole="button"
-                    accessibilityLabel={`Change status from ${issue.state.name}`}
+                    accessibilityLabel={t('changeStatusFrom', { status: issue.state.name })}
                     onPress={(event) => {
                       event.stopPropagation()
                       triggerMediumImpact()
@@ -170,7 +171,7 @@ export function renderMobileTasksLinearList(model: ConnectionPresentationModel) 
                   style={[styles.statusPill, styles.linearStatePill]}
                   disabled={mutatingStatus}
                   accessibilityRole="button"
-                  accessibilityLabel={`Change status from ${issue.state.name}`}
+                  accessibilityLabel={t('changeStatusFrom', { status: issue.state.name })}
                   onPress={(event) => {
                     event.stopPropagation()
                     triggerMediumImpact()

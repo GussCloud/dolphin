@@ -31,6 +31,7 @@ import {
 } from './mobile-task-list-operations'
 import { githubWorkItemSearchRead } from './mobile-task-source-search-operations'
 import { taskSettingsWrite } from './mobile-task-runtime-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProviderLoadActions(model: RuntimeHydrationModel) {
   const {
@@ -149,7 +150,7 @@ export function useMobileTasksProviderLoadActions(model: RuntimeHydrationModel) 
             return {
               items: [] as Array<Extract<TaskItem, { provider: 'github' }>>,
               repoId: repo.id,
-              error: err instanceof Error ? err.message : 'Failed to load GitHub tasks'
+              error: err instanceof Error ? err.message : t('githubTasksLoadError')
             }
           }
         }

@@ -7,6 +7,7 @@ import {
   splitRepositorySlug
 } from './mobile-tasks-legacy-foundation'
 import { githubProjectRowDetailRead } from './mobile-task-project-board-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectDetailLoading(model: ItemDetailLoadingModel) {
   const {
@@ -123,7 +124,7 @@ export function useMobileTasksProjectDetailLoading(model: ItemDetailLoadingModel
       })
       .catch((err) => {
         if (!stale) {
-          setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to load details')
+          setProjectRowDetailError(err instanceof Error ? err.message : t('detailsLoadError'))
         }
       })
       .finally(() => {

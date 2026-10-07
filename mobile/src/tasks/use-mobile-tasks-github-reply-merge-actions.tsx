@@ -18,6 +18,7 @@ import {
   createLinearTask,
   isGitHubPrMergeBlocked
 } from './mobile-tasks-legacy-foundation'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksGithubReplyMergeActions(model: GithubCheckFileActionsModel) {
   const {
@@ -89,13 +90,13 @@ export function useMobileTasksGithubReplyMergeActions(model: GithubCheckFileActi
               )
             )
         if (replyResult.ok === false) {
-          throw new Error(replyResult.error ?? 'Failed to reply')
+          throw new Error(replyResult.error ?? t('replyError'))
         }
         const reply: DetailComment = replyResult.comment ?? {
           id: `local-${Date.now()}`,
           body,
           createdAt: new Date().toISOString(),
-          author: 'You',
+          author: t('you'),
           path: comment.path,
           line: comment.line,
           threadId: comment.threadId
@@ -111,7 +112,7 @@ export function useMobileTasksGithubReplyMergeActions(model: GithubCheckFileActi
             : current
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to reply')
+        setError(err instanceof Error ? err.message : t('replyError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -134,7 +135,7 @@ export function useMobileTasksGithubReplyMergeActions(model: GithubCheckFileActi
         return
       }
       if (item.provider === 'github' && isGitHubPrMergeBlocked(item)) {
-        setError('GitHub reports merge conflicts. Open in GitHub to continue.')
+        setError(t('githubMergeConflictsOpenInGitHub'))
         return
       }
       setMutatingStatus(true)
@@ -166,12 +167,12 @@ export function useMobileTasksGithubReplyMergeActions(model: GithubCheckFileActi
                 )
               )
         if (merged.ok === false) {
-          throw new Error(merged.error ?? 'Failed to merge')
+          throw new Error(merged.error ?? t('mergeError'))
         }
         setActionItem(null)
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to merge')
+        setError(err instanceof Error ? err.message : t('mergeError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -223,7 +224,7 @@ export function useMobileTasksGithubReplyMergeActions(model: GithubCheckFileActi
         })
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update Linear issue')
+        setError(err instanceof Error ? err.message : t('linearIssueUpdateError'))
       } finally {
         setMutatingStatus(false)
       }

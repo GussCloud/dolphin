@@ -27,6 +27,7 @@ import {
   normalizeLinearFilter,
   scopeGitHubTaskSearch
 } from './mobile-tasks-legacy-foundation'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel) {
   const {
@@ -245,7 +246,7 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
         setMergeMethodTaskItem(null)
         setMergeMethodProjectRow(null)
         resetWorkspaceCreateState()
-        setError('Update Dolphin desktop to use Tasks on mobile.')
+        setError(t('desktopTooOld'))
         setTaskStateHydrated(false)
         return
       }
@@ -350,7 +351,7 @@ export function useMobileTasksRuntimeHydration(model: ClientSettingsActionsModel
       if (stale) {
         return
       }
-      setError(err instanceof Error ? err.message : 'Failed to load Tasks settings')
+      setError(err instanceof Error ? err.message : t('tasksSettingsLoadError'))
       setTaskStateHydrated(false)
     })
 

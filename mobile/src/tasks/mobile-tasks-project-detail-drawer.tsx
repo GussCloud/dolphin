@@ -16,6 +16,7 @@ import {
   GitBranch
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import {
   projectRowStatusLabel,
   SHOW_MOBILE_DETAIL_LABEL_CHIPS,
@@ -49,10 +50,11 @@ export function renderMobileTasksProjectMissingRepoDrawer(model: ConnectionPrese
       {projectRepoNotInDolphin ? (
         <View>
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Repository not in Dolphin</Text>
+            <Text style={styles.sheetTitle}>{t('repositoryNotInDolphin')}</Text>
             <Text style={styles.sheetSubtitle}>
-              {projectRepoNotInDolphin.owner}/{projectRepoNotInDolphin.repo} is not added to
-              Dolphin. Add this repository from the desktop app, then refresh mobile Tasks.
+              {t('repositoryNotInDolphinHint', {
+                slug: `${projectRepoNotInDolphin.owner}/${projectRepoNotInDolphin.repo}`
+              })}
             </Text>
           </View>
 
@@ -67,7 +69,7 @@ export function renderMobileTasksProjectMissingRepoDrawer(model: ConnectionPrese
                 }}
               >
                 <ExternalLink size={16} color={colors.textPrimary} />
-                <Text style={styles.actionText}>Open in GitHub</Text>
+                <Text style={styles.actionText}>{t('openInGitHub')}</Text>
               </Pressable>
             ) : null}
             {projectRepoNotInDolphin.url ? <View style={styles.actionSeparator} /> : null}
@@ -84,8 +86,8 @@ export function renderMobileTasksProjectMissingRepoDrawer(model: ConnectionPrese
               <Text style={styles.actionText}>
                 {copiedLinkKey ===
                 `project-repo:${projectRepoNotInDolphin.owner}/${projectRepoNotInDolphin.repo}`
-                  ? 'Copied'
-                  : 'Copy repository'}
+                  ? t('copied')
+                  : t('copyRepository')}
               </Text>
             </Pressable>
           </View>
@@ -138,19 +140,19 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
           <View style={styles.detailGroup}>
             <View style={styles.detailMetaGrid}>
               <View style={styles.detailMetaItem}>
-                <Text style={styles.detailMetaLabel}>Type</Text>
+                <Text style={styles.detailMetaLabel}>{t('type')}</Text>
                 <Text style={styles.detailMetaValue}>
                   {projectRowItem.itemType === 'PULL_REQUEST'
-                    ? 'Pull request'
+                    ? t('pullRequest')
                     : projectRowItem.itemType === 'ISSUE'
-                      ? 'Issue'
+                      ? t('issue')
                       : projectRowItem.itemType === 'DRAFT_ISSUE'
-                        ? 'Draft issue'
-                        : 'Project item'}
+                        ? t('draftIssue')
+                        : t('projectItem')}
                 </Text>
               </View>
               <View style={styles.detailMetaItem}>
-                <Text style={styles.detailMetaLabel}>Status</Text>
+                <Text style={styles.detailMetaLabel}>{t('status')}</Text>
                 <Text style={styles.detailMetaValue}>{projectRowStatusLabel(projectRowItem)}</Text>
               </View>
             </View>
@@ -175,22 +177,20 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
             {SHOW_MOBILE_PROJECT_METADATA_EDITORS && projectRowItem.itemType === 'ISSUE' ? (
               <View style={styles.detailSection}>
                 <View style={styles.detailSectionHeader}>
-                  <Text style={styles.detailSectionTitle}>Issue type</Text>
+                  <Text style={styles.detailSectionTitle}>{t('issueType')}</Text>
                   <Text style={styles.detailSectionMeta}>
-                    {projectRowItem.content.issueType?.name ?? 'No type'}
+                    {projectRowItem.content.issueType?.name ?? t('noIssueType')}
                   </Text>
                 </View>
                 {projectIssueTypesLoading ? (
                   <View style={styles.detailLoadingInline}>
                     <ActivityIndicator size="small" color={colors.textSecondary} />
-                    <Text style={styles.detailMuted}>Loading issue types...</Text>
+                    <Text style={styles.detailMuted}>{t('loadingIssueTypes')}</Text>
                   </View>
                 ) : projectIssueTypesError ? (
                   <Text style={styles.detailError}>{projectIssueTypesError}</Text>
                 ) : projectIssueTypes.length === 0 ? (
-                  <Text style={styles.detailMuted}>
-                    No issue types configured for this repository.
-                  </Text>
+                  <Text style={styles.detailMuted}>{t('noIssueTypesConfigured')}</Text>
                 ) : (
                   <View style={styles.chipRow}>
                     {projectIssueTypes.map((issueType) => {
@@ -223,7 +223,7 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
                         disabled={projectMutating}
                         onPress={() => void mutateProjectRowIssueType(projectRowItem, null)}
                       >
-                        <Text style={styles.detailChipText}>Clear type</Text>
+                        <Text style={styles.detailChipText}>{t('clearType')}</Text>
                       </Pressable>
                     ) : null}
                   </View>
@@ -244,12 +244,10 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
                 onPress={() => void createWorkspaceFromProjectRow(projectRowItem)}
               >
                 <Plus size={16} color={colors.textPrimary} />
-                <Text style={styles.actionText}>Create Workspace</Text>
+                <Text style={styles.actionText}>{t('createWorkspace')}</Text>
               </Pressable>
             ) : (
-              <Text style={styles.emptyInlineText}>
-                Workspaces can only be created from GitHub issues and pull requests.
-              </Text>
+              <Text style={styles.emptyInlineText}>{t('workspaceFromProjectRowUnsupported')}</Text>
             )}
 
             {projectRowItem.content.url ? (
@@ -266,7 +264,7 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
                   }}
                 >
                   <ExternalLink size={16} color={colors.textPrimary} />
-                  <Text style={styles.actionText}>Open in GitHub</Text>
+                  <Text style={styles.actionText}>{t('openInGitHub')}</Text>
                 </Pressable>
                 <View style={styles.actionSeparator} />
                 <Pressable
@@ -283,8 +281,8 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
                   <Copy size={16} color={colors.textPrimary} />
                   <Text style={styles.actionText}>
                     {copiedLinkKey === `github-project:${projectRowItem.id}`
-                      ? 'Copied'
-                      : 'Copy GitHub link'}
+                      ? t('copied')
+                      : t('copyGitHubLink')}
                   </Text>
                 </Pressable>
               </>
@@ -320,7 +318,7 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
                     <X size={16} color={colors.textPrimary} />
                   )}
                   <Text style={styles.actionText}>
-                    {projectRowItem.content.state === 'CLOSED' ? 'Reopen item' : 'Close item'}
+                    {projectRowItem.content.state === 'CLOSED' ? t('reopenItem') : t('closeItem')}
                   </Text>
                 </Pressable>
               </>
@@ -336,12 +334,10 @@ export function renderMobileTasksProjectDetailDrawer(model: ConnectionPresentati
                   onPress={() => setMergeMethodProjectRow(projectRowItem)}
                 >
                   <GitBranch size={16} color={colors.textPrimary} />
-                  <Text style={styles.actionText}>Merge pull request</Text>
+                  <Text style={styles.actionText}>{t('mergePullRequestAction')}</Text>
                 </Pressable>
                 {!projectRowHostedRepo ? (
-                  <Text style={styles.emptyInlineText}>
-                    Merge requires this repository in Dolphin.
-                  </Text>
+                  <Text style={styles.emptyInlineText}>{t('mergeRequiresRepository')}</Text>
                 ) : null}
               </>
             ) : null}

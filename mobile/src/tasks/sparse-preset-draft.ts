@@ -1,3 +1,5 @@
+import { translateTasks as t } from './tasks-translate'
+
 const WINDOWS_DRIVE_PATH_PATTERN = /^[A-Za-z]:/
 
 export type SparsePresetDirectoryParseResult = {
@@ -40,7 +42,7 @@ export function parseSparsePresetDirectories(value: string): SparsePresetDirecto
   if (rawEntries.some(isAbsoluteSparseDirectoryPath)) {
     return {
       directories: [],
-      error: 'Use repo-relative directories, not root, absolute paths, or parent segments.'
+      error: t('sparseDirectoriesInvalid')
     }
   }
 
@@ -49,14 +51,14 @@ export function parseSparsePresetDirectories(value: string): SparsePresetDirecto
   if (directories.length === 0) {
     return {
       directories,
-      error: 'Add at least one directory.'
+      error: t('sparseDirectoriesEmpty')
     }
   }
 
   if (directories.some((entry) => entry === '.' || entry.split('/').includes('..'))) {
     return {
       directories: [],
-      error: 'Use repo-relative directories, not root, absolute paths, or parent segments.'
+      error: t('sparseDirectoriesInvalid')
     }
   }
 

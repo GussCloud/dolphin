@@ -1,42 +1,49 @@
 import { type ReactNode, View, Text } from './mobile-tasks-dependencies'
-import { gitLabTodoTargetLabel } from './mobile-tasks-item-mapping'
 import { COMMENT_REACTION_EMOJI } from './mobile-tasks-options'
 import type { DetailCommentGroup } from './mobile-tasks-view-state-types'
 import type { TaskItem } from './mobile-tasks-project-workspace-types'
 import type { DetailComment } from './mobile-tasks-provider-detail-types'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 
 export function taskKindLabel(item: TaskItem): string {
   if (item.provider === 'github') {
-    return item.source.type === 'pr' ? 'Pull request' : 'Issue'
+    return item.source.type === 'pr' ? t('pullRequest') : t('issue')
   }
   if (item.provider === 'gitlab') {
-    return item.source.type === 'mr' ? 'Merge request' : 'Issue'
+    return item.source.type === 'mr' ? t('mergeRequest') : t('issue')
   }
   if (item.provider === 'gitlabTodo') {
-    return `${gitLabTodoTargetLabel(item.source)} todo`
+    if (item.source.targetType === 'MergeRequest') {
+      return t('mergeRequestTodo')
+    }
+    return item.source.targetType === 'Issue' ? t('issueTodo') : t('gitlabTodo')
   }
-  return 'Linear ticket'
+  return t('linearTicket')
 }
 
 export function taskExternalOpenLabel(item: TaskItem): string {
   if (item.provider === 'github') {
-    return 'Open in GitHub'
+    return t('openInGitHub')
   }
   if (item.provider === 'gitlab' || item.provider === 'gitlabTodo') {
-    return 'Open in GitLab'
+    return t('openInGitLab')
   }
-  return 'Open in Linear'
+  return t('openInLinear')
 }
 
 export function taskStatusActionLabel(item: TaskItem): string {
-  const verb =
-    item.provider === 'github' || item.provider === 'gitlab'
-      ? item.source.state === 'closed'
-        ? 'Reopen'
-        : 'Close'
-      : ''
-  return verb ? `${verb} ${taskKindLabel(item).toLowerCase()}` : ''
+  if (item.provider !== 'github' && item.provider !== 'gitlab') {
+    return ''
+  }
+  const reopen = item.source.state === 'closed'
+  if (item.source.type === 'pr') {
+    return reopen ? t('reopenPullRequestAction') : t('closePullRequestAction')
+  }
+  if (item.source.type === 'mr') {
+    return reopen ? t('reopenMergeRequestAction') : t('closeMergeRequestAction')
+  }
+  return reopen ? t('reopenIssueAction') : t('closeIssueAction')
 }
 
 export function isGitHubPrMergeBlocked(item: Extract<TaskItem, { provider: 'github' }>): boolean {
@@ -61,9 +68,9 @@ export function formatDurationSeconds(value: number | null | undefined): string 
   }
   const seconds = Math.max(0, Math.floor(value))
   if (seconds >= 60) {
-    return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+    return t('durationMinutesSeconds', { minutes: Math.floor(seconds / 60), seconds: seconds % 60 })
   }
-  return `${seconds}s`
+  return t('durationSeconds', { seconds })
 }
 
 export function commentSourceLabel(comment: DetailComment): string {
@@ -75,12 +82,14 @@ export function commentSourceLabel(comment: DetailComment): string {
           : String(comment.line)
         : ''
     const location = line ? `${comment.path}:${line}` : comment.path
-    return `${comment.isResolved ? 'Resolved review' : 'Review'} · ${location}`
+    return comment.isResolved
+      ? t('commentResolvedReviewAt', { location })
+      : t('commentReviewAt', { location })
   }
   if (comment.threadId) {
-    return comment.isResolved ? 'Resolved review thread' : 'Review thread'
+    return comment.isResolved ? t('commentResolvedReviewThread') : t('commentReviewThread')
   }
-  return 'Top-level comment'
+  return t('commentTopLevel')
 }
 
 export function groupDetailComments(comments: DetailComment[]): DetailCommentGroup[] {
@@ -136,9 +145,9 @@ export function isResolvedDetailCommentGroup(group: DetailCommentGroup): boolean
 
 export function discussionSummary(count: number): string {
   if (count === 0) {
-    return 'No comments yet'
+    return t('noCommentsYet')
   }
-  return `${count} ${count === 1 ? 'comment' : 'comments'}`
+  return t('commentCount', { count })
 }
 
 export function renderCommentReactions(comment: DetailComment): ReactNode {

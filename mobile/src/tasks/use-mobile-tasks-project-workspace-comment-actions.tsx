@@ -14,6 +14,7 @@ import {
   githubProjectIssueUpdate,
   githubProjectPullRequestUpdate
 } from './mobile-task-project-board-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCreateActionsModel) {
   const {
@@ -44,13 +45,13 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
       const kind = projectRowType(row)
       const repo = findProjectRowRepo(row)
       if (!kind || !row.content.number || !row.content.url) {
-        setError('Add the project item repository to Dolphin before creating a workspace.')
+        setError(t('projectRepoMissingForWorkspace'))
         return
       }
       if (!repo) {
         const slug = splitRepositorySlug(row.content.repository)
         setProjectRepoNotInDolphin({
-          owner: slug?.owner ?? 'Unknown',
+          owner: slug?.owner ?? t('unknown'),
           repo: slug?.repo ?? row.content.repository ?? 'repository',
           url: row.content.url ?? null
         })
@@ -101,7 +102,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
       const type = projectRowType(row)
       const slug = splitRepositorySlug(row.content.repository)
       if (!type || !slug || !row.content.number) {
-        setProjectRowDetailError('This project item cannot be edited from mobile.')
+        setProjectRowDetailError(t('projectItemNotEditable'))
         return
       }
       setProjectMutating(true)
@@ -140,7 +141,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
               )
         const result = updated
         if (result.ok === false) {
-          throw new Error(result.error?.message ?? 'Failed to update GitHub item')
+          throw new Error(result.error?.message ?? t('githubItemUpdateError'))
         }
         setProjectRowItem((current) => {
           if (!current || current.id !== row.id) {
@@ -186,7 +187,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
           )
         }
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to update item')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('itemUpdateError'))
       } finally {
         setProjectMutating(false)
       }
@@ -219,7 +220,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
         )
         const result = githubProjectCommentWrite.interpret(reply)
         if (!result.ok) {
-          throw new Error(result.error?.message ?? 'Failed to add comment')
+          throw new Error(result.error?.message ?? t('commentError'))
         }
         setProjectCommentDraft('')
         if (result.comment) {
@@ -231,7 +232,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
           )
         }
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to add comment')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('commentError'))
       } finally {
         setProjectMutating(false)
       }
@@ -248,7 +249,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
       const commentId = Number(comment.id)
       const body = projectEditingCommentDraft.trim()
       if (!slug || !Number.isInteger(commentId) || commentId <= 0 || !body) {
-        setProjectRowDetailError('This project comment cannot be edited from mobile.')
+        setProjectRowDetailError(t('projectCommentNotEditable'))
         return
       }
       setProjectMutating(true)
@@ -270,7 +271,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
           throw new Error(
             typeof result.error === 'string'
               ? result.error
-              : (result.error?.message ?? 'Failed to edit comment')
+              : (result.error?.message ?? t('editCommentError'))
           )
         }
         setProjectRowDetail((current) =>
@@ -286,7 +287,7 @@ export function useMobileTasksProjectWorkspaceCommentActions(model: WorkspaceCre
         setProjectEditingCommentId(null)
         setProjectEditingCommentDraft('')
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to edit comment')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('editCommentError'))
       } finally {
         setProjectMutating(false)
       }

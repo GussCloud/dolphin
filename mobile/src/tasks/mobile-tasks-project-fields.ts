@@ -9,6 +9,7 @@ import type {
   GitHubProjectRow,
   GitHubProjectTable
 } from './mobile-tasks-view-state-types'
+import { translateTasks as t } from './tasks-translate'
 
 export function editableProjectFields(table: GitHubProjectTable | null): GitHubProjectField[] {
   return (
@@ -21,7 +22,7 @@ export function editableProjectFields(table: GitHubProjectTable | null): GitHubP
 export function projectFieldValueLabel(row: GitHubProjectRow, field: GitHubProjectField): string {
   const value = row.fieldValuesByFieldId?.[field.id]
   if (!value) {
-    return 'Empty'
+    return t('fieldEmpty')
   }
   if (value.kind === 'single-select') {
     return value.name
@@ -30,7 +31,7 @@ export function projectFieldValueLabel(row: GitHubProjectRow, field: GitHubProje
     return value.title
   }
   if (value.kind === 'text') {
-    return value.text || 'Empty'
+    return value.text || t('fieldEmpty')
   }
   if (value.kind === 'number') {
     return String(value.number)
@@ -39,29 +40,29 @@ export function projectFieldValueLabel(row: GitHubProjectRow, field: GitHubProje
     return value.date
   }
   if (value.kind === 'labels') {
-    return value.labels.map((label) => label.name).join(', ') || 'Empty'
+    return value.labels.map((label) => label.name).join(', ') || t('fieldEmpty')
   }
   if (value.kind === 'users') {
-    return value.users.map((user) => user.login).join(', ') || 'Empty'
+    return value.users.map((user) => user.login).join(', ') || t('fieldEmpty')
   }
-  return 'Empty'
+  return t('fieldEmpty')
 }
 
 export function projectFieldDisplayLabel(row: GitHubProjectRow, field: GitHubProjectField): string {
   if (field.dataType === 'ASSIGNEES') {
-    return row.content.assignees.map((user) => user.login).join(', ') || 'Empty'
+    return row.content.assignees.map((user) => user.login).join(', ') || t('fieldEmpty')
   }
   if (field.dataType === 'LABELS') {
-    return row.content.labels.map((label) => label.name).join(', ') || 'Empty'
+    return row.content.labels.map((label) => label.name).join(', ') || t('fieldEmpty')
   }
   if (field.dataType === 'REPOSITORY') {
-    return row.content.repository ?? 'Empty'
+    return row.content.repository ?? t('fieldEmpty')
   }
   if (field.dataType === 'PARENT_ISSUE') {
-    return row.content.parentIssue ? `#${row.content.parentIssue.number}` : 'Empty'
+    return row.content.parentIssue ? `#${row.content.parentIssue.number}` : t('fieldEmpty')
   }
   if (field.dataType === 'ISSUE_TYPE') {
-    return row.content.issueType?.name ?? 'Empty'
+    return row.content.issueType?.name ?? t('fieldEmpty')
   }
   if (field.dataType === 'TITLE') {
     return row.content.title
@@ -149,7 +150,7 @@ export function projectGroupMeta(group: ProjectGroup): string {
       parts.push(`${group.iteration.startDate} - ${endDate.toISOString().slice(0, 10)}`)
     }
     if (isIterationCurrent(group.iteration)) {
-      parts.push('Current')
+      parts.push(t('iterationCurrent'))
     }
   }
   return parts.join(' · ')
@@ -165,7 +166,7 @@ export function optimisticProjectFieldValue(
       kind: 'single-select',
       fieldId: field.id,
       optionId: value.optionId,
-      name: option?.name ?? 'Selected',
+      name: option?.name ?? t('fieldSelected'),
       color: option?.color ?? 'GRAY'
     }
   }
@@ -175,7 +176,7 @@ export function optimisticProjectFieldValue(
       kind: 'iteration',
       fieldId: field.id,
       iterationId: value.iterationId,
-      title: iteration?.title ?? 'Iteration',
+      title: iteration?.title ?? t('fieldIteration'),
       startDate: iteration?.startDate ?? '',
       duration: iteration?.duration ?? 0
     }

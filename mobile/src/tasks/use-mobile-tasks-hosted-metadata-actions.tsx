@@ -6,6 +6,7 @@ import {
   gitlabIssueUpdate,
   gitlabMergeRequestUpdate
 } from './mobile-task-item-state-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksHostedMetadataActions(model: GitlabGithubStatusActionsModel) {
   const {
@@ -52,7 +53,7 @@ export function useMobileTasksHostedMetadataActions(model: GitlabGithubStatusAct
         )
         const result = githubPullRequestUpdate.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to update GitHub pull request')
+          throw new Error(result.error ?? t('githubPullRequestUpdateError'))
         }
         if (nextTitle !== undefined) {
           setActionItem((current) =>
@@ -83,7 +84,7 @@ export function useMobileTasksHostedMetadataActions(model: GitlabGithubStatusAct
         }
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update GitHub pull request')
+        setError(err instanceof Error ? err.message : t('githubPullRequestUpdateError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -143,7 +144,7 @@ export function useMobileTasksHostedMetadataActions(model: GitlabGithubStatusAct
                 )
               )
         if (updated.ok === false) {
-          throw new Error(updated.error ?? 'Failed to update GitLab item')
+          throw new Error(updated.error ?? t('gitlabItemUpdateError'))
         }
         const nextLabels = [
           ...new Set([
@@ -215,7 +216,7 @@ export function useMobileTasksHostedMetadataActions(model: GitlabGithubStatusAct
         }
         await loadTasks({ silent: true })
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update GitLab item')
+        setError(err instanceof Error ? err.message : t('gitlabItemUpdateError'))
       } finally {
         setMutatingStatus(false)
       }

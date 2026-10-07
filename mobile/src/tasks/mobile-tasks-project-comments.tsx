@@ -9,6 +9,7 @@ import {
   MobileMarkdown
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import {
   discussionSummary,
   detailCommentGroupId,
@@ -53,13 +54,13 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
   return projectRowDetail?.provider === 'github' ? (
     <View style={styles.detailSection}>
       <View style={styles.detailSectionHeader}>
-        <Text style={styles.detailSectionTitle}>Discussion</Text>
+        <Text style={styles.detailSectionTitle}>{t('discussion')}</Text>
         <Text style={styles.detailSectionMeta}>
           {discussionSummary(projectRowDetail.comments.length)}
         </Text>
       </View>
       {projectRowDetail.comments.length === 0 ? (
-        <Text style={styles.detailMuted}>No comments.</Text>
+        <Text style={styles.detailMuted}>{t('noComments')}</Text>
       ) : (
         projectDetailCommentGroups.map((group) => {
           const groupId = detailCommentGroupId(group)
@@ -81,11 +82,12 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                 }
               >
                 <Text style={styles.resolvedCommentTitle} numberOfLines={1}>
-                  Resolved {group.kind === 'thread' ? 'thread' : 'comment'} by{' ' as string}
-                  {commentAuthor(root)}
+                  {group.kind === 'thread'
+                    ? t('resolvedThreadBy', { author: commentAuthor(root) })
+                    : t('resolvedCommentBy', { author: commentAuthor(root) })}
                 </Text>
                 <Text style={styles.detailSectionMeta}>
-                  {count > 1 ? `${count} comments` : 'Show'}
+                  {count > 1 ? t('commentCount', { count }) : t('show')}
                 </Text>
               </Pressable>
             )
@@ -120,7 +122,7 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                       style={[styles.input, styles.commentInput]}
                       value={projectEditingCommentDraft}
                       onChangeText={setProjectEditingCommentDraft}
-                      placeholder="Edit comment"
+                      placeholder={t('editCommentPlaceholder')}
                       placeholderTextColor={colors.textMuted}
                       multiline
                       textAlignVertical="top"
@@ -131,7 +133,7 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                         disabled={projectMutating || projectEditingCommentDraft.trim().length === 0}
                         onPress={() => void updateProjectRowComment(projectRowItem, comment)}
                       >
-                        <Text style={styles.inlineSaveText}>Save</Text>
+                        <Text style={styles.inlineSaveText}>{t('save')}</Text>
                       </Pressable>
                       <Pressable
                         style={styles.inlineSaveButtonCompact}
@@ -141,7 +143,7 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                           setProjectEditingCommentDraft('')
                         }}
                       >
-                        <Text style={styles.inlineSaveText}>Cancel</Text>
+                        <Text style={styles.inlineSaveText}>{t('cancel')}</Text>
                       </Pressable>
                     </View>
                   </>
@@ -160,7 +162,7 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                             }
                           >
                             <Text style={styles.inlineSaveText}>
-                              {comment.isResolved ? 'Reopen thread' : 'Resolve thread'}
+                              {comment.isResolved ? t('reopenThread') : t('resolveThread')}
                             </Text>
                           </Pressable>
                         ) : null}
@@ -173,7 +175,7 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                               [commentId]: next
                             }))
                           }
-                          placeholder="Reply"
+                          placeholder={t('replyPlaceholder')}
                           placeholderTextColor={colors.textMuted}
                           multiline
                           textAlignVertical="top"
@@ -183,7 +185,7 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                           disabled={projectMutating || !(itemReplyDrafts[commentId] ?? '').trim()}
                           onPress={() => void replyToProjectGitHubComment(projectRowItem, comment)}
                         >
-                          <Text style={styles.inlineSaveText}>Reply</Text>
+                          <Text style={styles.inlineSaveText}>{t('replyPlaceholder')}</Text>
                         </Pressable>
                         <Pressable
                           style={styles.inlineSaveButtonCompact}
@@ -193,14 +195,14 @@ export function renderMobileTasksProjectComments(model: ConnectionPresentationMo
                             setProjectEditingCommentDraft(comment.body)
                           }}
                         >
-                          <Text style={styles.inlineSaveText}>Edit</Text>
+                          <Text style={styles.inlineSaveText}>{t('edit')}</Text>
                         </Pressable>
                         <Pressable
                           style={styles.inlineSaveButtonCompact}
                           disabled={projectMutating}
                           onPress={() => void deleteProjectRowComment(projectRowItem, comment)}
                         >
-                          <Text style={styles.inlineDeleteText}>Delete</Text>
+                          <Text style={styles.inlineDeleteText}>{t('delete')}</Text>
                         </Pressable>
                       </View>
                     ) : null}
