@@ -8,6 +8,8 @@ import type { AiVaultSession } from '../../../src/shared/ai-vault-types'
 import type { MobileAgentHistorySection } from './agent-history-sections'
 import type { MobileAgentHistoryCard } from './agent-history-session-card'
 import { styles } from './agent-history-styles'
+import { agentHistoryCatalog } from '../i18n/catalogs/agent-history'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Lazy-render at most this many preview turns when a card is tapped — the
 // scanner already bounds preview text, but rendering them only on tap keeps the
@@ -104,6 +106,7 @@ function AgentHistoryCardRow({
   onResume?: (session: AiVaultSession) => void | Promise<void>
   onPress: () => void
 }) {
+  const t = useMobileTranslation(agentHistoryCatalog)
   const previewTurns = useMemo(
     () => (expanded && session ? recentSessionConversationTurns(session, PREVIEW_TURN_LIMIT) : []),
     [expanded, session]
@@ -128,12 +131,10 @@ function AgentHistoryCardRow({
       ) : null}
       <View style={styles.cardMetaRow}>
         <Text style={styles.cardMetaText}>{card.agentLabel}</Text>
-        <Text style={styles.cardMetaText}>
-          {card.messageCount} {card.messageCount === 1 ? 'message' : 'messages'}
-        </Text>
+        <Text style={styles.cardMetaText}>{t('messageCount', { count: card.messageCount })}</Text>
         {showCurrentWorktreeBadge && card.isCurrentWorktree ? (
           <View style={styles.currentBadge}>
-            <Text style={styles.currentBadgeText}>current worktree</Text>
+            <Text style={styles.currentBadgeText}>{t('currentWorktree')}</Text>
           </View>
         ) : null}
         {session && onResume ? (
@@ -152,7 +153,7 @@ function AgentHistoryCardRow({
             disabled={resumeActionState?.disabled}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Resume agent session"
+            accessibilityLabel={t('resumeSession')}
           >
             {resumeActionState?.loading ? (
               <ActivityIndicator size="small" color={colors.textPrimary} />

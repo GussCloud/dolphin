@@ -106,20 +106,28 @@ const hash = (parts: string[] | string): string =>
 // or removed — the host signature gains `hitSlop` — so the count holds at 3,274 and only the hash
 // moves. The render-token stream gains the four tokens that one attribute is, 35,203 -> 35,207.
 // Nothing else in the family moves.
+//
+// i18n moves every count but the diff hooks and styles: user-facing literals become catalog
+// lookups (`t('key')`), so `semantics` and the render stream change wherever copy was. Hooks
+// 351 -> 355 and statements 418 -> 421 are the `useMobileTranslation`/`useMobileLocale`
+// subscriptions and their bindings; declarations 194 -> 193 because module-scope option lists became
+// builders and two English-only helpers were folded. No RPC call or method literal moved.
+// Statements 421 -> 424 and semantics 3533 -> 3529: the create-target label reads typed repo/team
+// selections instead of casting one union value.
 
-const SCREEN_RPC_SCREEN_HOOKS = 'ba21beaab61fcbc64120d5d7c473cf43618dc6f4392303ef017bfd3632bbd0fe'
+const SCREEN_RPC_SCREEN_HOOKS = '664a805e6318ed5112f177eefba9704604146a378cb046a062783d85e5e42df5'
 const PRE_REFACTOR_DIFF_HOOKS = '93c7189b32bed8456cc51814fffa8ce80cf62011ef968a9d53ddec2b9686f58f'
-const SCREEN_RPC_STATEMENTS = '83a1540e483f1e0df5f6049a05099e8316366539c1b56a0377767c64e1eab961'
+const SCREEN_RPC_STATEMENTS = 'c40945005936ea9dddbe66554393cb4df43209eff8b5401a4b6b8709ca8231d4'
 // Saved Linear selections now accept unknown persisted values; reconciliation tests cover them.
-const MAIN_REBASED_DECLARATIONS = '3ccaca473a103a345dd876869d9ddc11c45e975b7775a3f2e058446352f937ff'
-const SCREEN_RPC_SEMANTICS = '620b00bf52e4bc29367ef7e74261ab243c36346127b3e2619ea6d3b8b14ab055'
+const MAIN_REBASED_DECLARATIONS = '912b1b52450690526cb4a7e00971cad18aceb617ef38df10e0ac808e20e5eee3'
+const SCREEN_RPC_SEMANTICS = '56be9e93b9767aa8d3512f365a0bcd1ebbdf07ec77770971f824ec9168608b33'
 const PRE_REFACTOR_STYLES = '1db6af69c791d9963928541ad5310942fcbda6d984b422c90b6eb92b6816579a'
-const SCREEN_RPC_RENDER_TREE = '48335b47b43e7f7d930cc08d967af0c019a2ae86d94924c0c65fe2bf4ba50081'
+const SCREEN_RPC_RENDER_TREE = 'a5e6e662974904a701055154252f3ecd82932770823e662ab508d020b5e03302'
 
 describe('Mobile Tasks refactor parity', () => {
   it('preserves recursively flattened hook and dependency order', () => {
     const screenHooks = readFlattenedMobileTasksHookSignatures('MobileTasksScreen')
-    expect(screenHooks).toHaveLength(351)
+    expect(screenHooks).toHaveLength(355)
     expect(hash(screenHooks)).toBe(SCREEN_RPC_SCREEN_HOOKS)
 
     const diffHooks = readFlattenedMobileTasksHookSignatures('GitHubPrFileDiff')
@@ -129,25 +137,25 @@ describe('Mobile Tasks refactor parity', () => {
 
   it('preserves every screen statement in execution order', () => {
     const statements = readFlattenedMobileTasksCoreStatements()
-    expect(statements).toHaveLength(418)
+    expect(statements).toHaveLength(424)
     expect(hash(statements)).toBe(SCREEN_RPC_STATEMENTS)
   })
 
   it('preserves every moved top-level declaration', () => {
     const declarations = readMobileTasksDeclarationSignatures()
-    expect(declarations).toHaveLength(194)
+    expect(declarations).toHaveLength(193)
     expect(hash(declarations)).toBe(MAIN_REBASED_DECLARATIONS)
   })
 
   it('preserves RPC calls, runtime strings, and JSX host signatures', () => {
     const semantics = readMobileTasksSemanticSource()
-    expect(semantics.split('\n')).toHaveLength(3_274)
+    expect(semantics.split('\n')).toHaveLength(3_529)
     expect(hash(semantics)).toBe(SCREEN_RPC_SEMANTICS)
   })
 
   it('preserves render expressions and event handlers in tree order', () => {
     const tokens = readFlattenedMobileTasksRenderTokens()
-    expect(tokens).toHaveLength(35_207)
+    expect(tokens).toHaveLength(36_432)
     expect(hash(tokens)).toBe(SCREEN_RPC_RENDER_TREE)
   })
 

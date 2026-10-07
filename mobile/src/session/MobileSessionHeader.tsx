@@ -22,6 +22,8 @@ import { colors } from '../theme/mobile-theme'
 import { QuickCommandsTabButton } from './QuickCommandsTabButton'
 import { styles } from './mobile-session-styles'
 import type { MobileSessionController } from './use-mobile-session-controller'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileSessionHeader({ controller }: { controller: MobileSessionController }) {
   const {
@@ -58,6 +60,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
     handlePanelTap,
     showHeaderMoreButton
   } = controller
+  const t = useMobileTranslation(sessionCatalog)
   return (
     <SafeAreaView style={styles.sessionChrome} edges={['top']}>
       <View style={styles.sessionTopBar}>
@@ -66,14 +69,14 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
           onPress={requestLeaveSession}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Back to worktrees"
+          accessibilityLabel={t('backToWorktrees')}
         >
           <ChevronLeft size={22} color={colors.textSecondary} strokeWidth={2.2} />
         </Pressable>
 
         <View style={styles.sessionTitleBlock}>
           <Text style={styles.sessionTitle} numberOfLines={1}>
-            {worktreeName || 'Terminal'}
+            {worktreeName || t('terminal')}
           </Text>
           <Pressable
             style={styles.sessionMetaRow}
@@ -84,7 +87,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
               }
             }}
             accessibilityRole={showConnectionRetry ? 'button' : undefined}
-            accessibilityLabel={showConnectionRetry ? 'Reconnect to desktop' : undefined}
+            accessibilityLabel={showConnectionRetry ? t('reconnectToDesktop') : undefined}
           >
             <StatusDot state={connState} />
             <Text style={styles.sessionMetaText} numberOfLines={1}>
@@ -95,7 +98,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
         {!isFloatingWorkspaceRoute && (
           <MobileSessionHeaderIconButton
             active={activePanel === 'files'}
-            accessibilityLabel="Open file explorer"
+            accessibilityLabel={t('openFileExplorer')}
             icon={Folder}
             onPress={() => handlePanelTap('files')}
           />
@@ -103,7 +106,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
         {!isFolderWorkspaceRoute && !isFloatingWorkspaceRoute && (
           <MobileSessionHeaderIconButton
             active={activePanel === 'sourceControl'}
-            accessibilityLabel="Open source control"
+            accessibilityLabel={t('openSourceControl')}
             icon={GitBranch}
             onPress={() => handlePanelTap('sourceControl')}
           />
@@ -111,7 +114,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
         {showHeaderMoreButton ? (
           <MobileSessionHeaderIconButton
             active={activePanel === 'pr'}
-            accessibilityLabel="More session actions"
+            accessibilityLabel={t('moreSessionActions')}
             icon={MoreHorizontal}
             onPress={() => setShowHeaderMoreActions(true)}
           />
@@ -198,7 +201,7 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
               setCreateError('')
               setShowCreateTabDrawer(true)
             }}
-            accessibilityLabel="New tab"
+            accessibilityLabel={t('newTabAccessibility')}
           >
             <Plus size={16} color={colors.textSecondary} strokeWidth={2.2} />
           </Pressable>
@@ -212,8 +215,8 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
               }
               showToast(
                 quickCommandsSupported === false
-                  ? 'Desktop update required for quick commands'
-                  : 'Checking desktop capabilities — try again in a moment',
+                  ? t('quickCommandsNeedDesktopUpdate')
+                  : t('checkingDesktopCapabilities'),
                 1600
               )
             }}

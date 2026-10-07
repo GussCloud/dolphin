@@ -1,14 +1,15 @@
 import type { TerminalModes } from '../terminal/terminal-webview-contract'
 import type { ConnectionState } from '../transport/types'
+import type { sessionEn } from '../i18n/catalogs/session/en'
 
-export const MOBILE_SESSION_STATUS_LABELS: Record<ConnectionState, string> = {
-  connecting: 'Connecting',
-  handshaking: 'Securing',
-  connected: 'Connected',
-  disconnected: 'Disconnected',
-  reconnecting: 'Reconnecting',
-  'auth-failed': 'Pairing invalid'
-}
+export const MOBILE_SESSION_STATUS_LABEL_KEYS = {
+  connecting: 'statusConnecting',
+  handshaking: 'statusSecuring',
+  connected: 'statusConnected',
+  disconnected: 'statusDisconnected',
+  reconnecting: 'statusReconnecting',
+  'auth-failed': 'statusPairingInvalid'
+} as const satisfies Record<ConnectionState, keyof typeof sessionEn>
 
 export const TERMINAL_GESTURE_INPUT_BUCKET_CAPACITY = 64
 export const TERMINAL_GESTURE_INPUT_REFILL_PER_SECOND = 120

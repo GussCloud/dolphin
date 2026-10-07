@@ -12,6 +12,8 @@ import {
   canResumeInMobileSessionWorktree,
   resolveMobileAgentHistorySessionWorktree
 } from './agent-history-session-worktree'
+import { agentHistoryCatalog } from '../i18n/catalogs/agent-history'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type MobileAiVaultResumeTargetStatus = 'local' | 'ssh' | 'runtime' | 'unknown'
 
@@ -106,12 +108,12 @@ export function mobileAiVaultResumeTargetBlockMessage(
   status: MobileAiVaultResumeTargetStatus
 ): string {
   if (status === 'runtime') {
-    return 'Resume from history is not available in runtime-hosted workspaces.'
+    return translate(agentHistoryCatalog, 'blockedRuntime')
   }
   if (status === 'ssh') {
-    return 'This session is stored on the host machine, so it cannot be resumed in an SSH workspace. Open a local workspace for this project.'
+    return translate(agentHistoryCatalog, 'blockedSsh')
   }
-  return 'Open a local workspace before resuming a session.'
+  return translate(agentHistoryCatalog, 'blockedNoLocal')
 }
 
 export function resolveMobileAiVaultSessionResumeTarget(args: {

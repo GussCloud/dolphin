@@ -34,6 +34,9 @@ import {
 } from '../../../src/components/codex-reset-credit'
 import { CodexResetCreditAction } from '../../../src/components/CodexResetCreditAction'
 import { useCodexResetCreditAction } from '../../../src/components/use-codex-reset-credit-action'
+import { hostRoutesCatalog } from '../../../src/i18n/catalogs/host-routes'
+import { translate } from '../../../src/i18n/mobile-locale-state'
+import { useMobileTranslation } from '../../../src/i18n/use-mobile-translation'
 
 export default function AccountsScreen() {
   const router = useRouter()
@@ -42,6 +45,7 @@ export default function AccountsScreen() {
 
   // Why: shared client per host. See docs/mobile-shared-client-per-host.md.
   const { client, state: connState } = useHostClient(hostId)
+  const t = useMobileTranslation(hostRoutesCatalog)
   const [hostName, setHostName] = useState<string>('')
   const [snapshot, setSnapshot] = useState<AccountsSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -57,7 +61,7 @@ export default function AccountsScreen() {
     // Why: a stale snapshot can expose a finite reset action for the wrong
     // account; fail closed if a host sends a shape this mobile cannot prove.
     setSnapshot(null)
-    setError('Invalid accounts snapshot from host')
+    setError(translate(hostRoutesCatalog, 'invalidSnapshot'))
   }, [])
   const {
     supported: codexResetSupported,
@@ -94,7 +98,7 @@ export default function AccountsScreen() {
       }
       const host = hosts.find((h) => h.id === hostId)
       if (!host) {
-        setError('Host not found')
+        setError(translate(hostRoutesCatalog, 'hostNotFound'))
         return
       }
       setHostName(host.name)
@@ -174,7 +178,7 @@ export default function AccountsScreen() {
           codexTarget?.runtime === 'wsl' ? { accountId, target: codexTarget } : { accountId }
         const res = await client.sendRequest(method, params)
         if (!res.ok) {
-          Alert.alert('Could not switch account', res.error.message)
+          Alert.alert(translate(hostRoutesCatalog, 'couldNotSwitchAccount'), res.error.message)
         } else {
           // Why: optimistic refresh — the streaming subscription will also
           // emit, but a one-shot keeps the UI responsive even if the stream
@@ -182,7 +186,10 @@ export default function AccountsScreen() {
           await refresh()
         }
       } catch (e) {
-        Alert.alert('Could not switch account', e instanceof Error ? e.message : String(e))
+        Alert.alert(
+          translate(hostRoutesCatalog, 'couldNotSwitchAccount'),
+          e instanceof Error ? e.message : String(e)
+        )
       } finally {
         setBusyAccountId(null)
       }
@@ -218,8 +225,8 @@ export default function AccountsScreen() {
             disabled={busyAccountId !== null || resettingCodex || connState !== 'connected'}
           >
             <View style={styles.rowMain}>
-              <Text style={styles.rowTitle}>System default</Text>
-              <Text style={styles.rowSubtitle}>Use the agent's own login</Text>
+              <Text style={styles.rowTitle}>{t('systemDefault')}</Text>
+              <Text style={styles.rowSubtitle}>{t('useAgentLogin')}</Text>
               {/* Why: when system default is the active selection, activeUsage
                   holds the system-default login's rate limits — surface them
                   here so non-managed users still see their usage. */}
@@ -333,7 +340,7 @@ export default function AccountsScreen() {
           <ChevronLeft size={22} color={colors.textPrimary} />
         </Pressable>
         <View style={styles.titleWrap}>
-          <Text style={styles.heading}>Accounts</Text>
+          <Text style={styles.heading}>{t('accounts')}</Text>
           {hostName ? (
             <Text style={styles.subheading} numberOfLines={1}>
               {hostName}
@@ -366,7 +373,9 @@ export default function AccountsScreen() {
         {connState !== 'connected' && !snapshot ? (
           <View style={styles.placeholder}>
             <ActivityIndicator color={colors.textSecondary} />
-            <Text style={styles.placeholderText}>Connecting to {hostName || 'host'}…</Text>
+            <Text style={styles.placeholderText}>
+              {hostName ? t('connectingToHost', { host: hostName }) : t('connectingToHostGeneric')}
+            </Text>
           </View>
         ) : error && !snapshot ? (
           <View style={styles.placeholder}>
@@ -375,7 +384,7 @@ export default function AccountsScreen() {
         ) : !snapshot ? (
           <View style={styles.placeholder}>
             <ActivityIndicator color={colors.textSecondary} />
-            <Text style={styles.placeholderText}>Loading accounts…</Text>
+            <Text style={styles.placeholderText}>{t('loadingAccounts')}</Text>
           </View>
         ) : (
           <>
@@ -383,9 +392,7 @@ export default function AccountsScreen() {
             {renderProviderSection('codex', 'Codex')}
             <View style={styles.footerHint}>
               <User size={14} color={colors.textMuted} />
-              <Text style={styles.footerHintText}>
-                Add or re-authenticate accounts from desktop Settings → Accounts.
-              </Text>
+              <Text style={styles.footerHintText}>{t('addAccountsHint')}</Text>
             </View>
           </>
         )}

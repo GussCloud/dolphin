@@ -1,5 +1,7 @@
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { colors } from '../theme/mobile-theme'
+import { mobileWebShellCatalog } from '../i18n/catalogs/mobile-web-shell'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /**
  * What a route switch paints while the hybrid shell flag is still being read, which is a
@@ -11,9 +13,10 @@ import { colors } from '../theme/mobile-theme'
  * state to the pixel, which is the surface directly above every switch that uses this one.
  */
 export function ShellSwitchPendingScreen() {
+  const t = useMobileTranslation(mobileWebShellCatalog)
   return (
     <View style={styles.pending}>
-      <ActivityIndicator color={colors.textSecondary} accessibilityLabel="Loading" />
+      <ActivityIndicator color={colors.textSecondary} accessibilityLabel={t('loading')} />
     </View>
   )
 }

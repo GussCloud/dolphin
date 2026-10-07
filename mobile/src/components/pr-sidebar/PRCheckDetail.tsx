@@ -1,5 +1,7 @@
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import type { PRCheckRunDetails } from '../../../../src/shared/github/check-types'
 import { presentCheckDetail, type CheckDetailJob } from './pr-check-detail-content'
 import { mobilePrSidebarStyles as styles } from './mobile-pr-sidebar-styles'
@@ -16,6 +18,7 @@ export type DetailEntry =
 // (parity with the desktop ChecksPanel detail). Muted/monochrome and scrollable
 // so long CI output never breaks the sidebar layout.
 export function PRCheckDetailView({ entry }: { entry: DetailEntry | undefined }) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   if (!entry || entry.status === 'loading') {
     return (
       <View style={styles.checkDetailArea}>
@@ -33,7 +36,7 @@ export function PRCheckDetailView({ entry }: { entry: DetailEntry | undefined })
   if (!entry.details) {
     return (
       <View style={styles.checkDetailArea}>
-        <Text style={styles.checkDetailText}>No details available.</Text>
+        <Text style={styles.checkDetailText}>{t('checkNoDetails')}</Text>
       </View>
     )
   }
@@ -47,7 +50,7 @@ export function PRCheckDetailView({ entry }: { entry: DetailEntry | undefined })
   return (
     <View style={styles.checkDetailArea}>
       {isEmpty ? (
-        <Text style={styles.checkDetailText}>No details available.</Text>
+        <Text style={styles.checkDetailText}>{t('checkNoDetails')}</Text>
       ) : (
         <>
           {content.summaryLines.map((line, index) => (
@@ -57,7 +60,7 @@ export function PRCheckDetailView({ entry }: { entry: DetailEntry | undefined })
           ))}
           {content.annotations.length > 0 ? (
             <View style={styles.checkDetailGroup}>
-              <Text style={styles.checkDetailGroupLabel}>Annotations</Text>
+              <Text style={styles.checkDetailGroupLabel}>{t('checkAnnotations')}</Text>
               {content.annotations.map((annotation, index) => (
                 <View key={index}>
                   <Text style={styles.checkDetailLocator} numberOfLines={1}>
@@ -71,18 +74,24 @@ export function PRCheckDetailView({ entry }: { entry: DetailEntry | undefined })
                 </View>
               ))}
               {content.annotationsTruncated ? (
-                <Text style={styles.checkDetailText}>Showing first 20 annotations</Text>
+                <Text style={styles.checkDetailText}>
+                  {t('checkAnnotationsTruncated', { count: 20 })}
+                </Text>
               ) : null}
             </View>
           ) : null}
           {content.jobs.length > 0 ? (
             <View style={styles.checkDetailGroup}>
-              <Text style={styles.checkDetailGroupLabel}>{content.jobsLabel}</Text>
+              <Text style={styles.checkDetailGroupLabel}>
+                {content.jobsLabel === 'Failed jobs' ? t('checkFailedJobs') : t('checkJobs')}
+              </Text>
               {content.jobs.map((job, index) => (
                 <JobRow key={index} job={job} />
               ))}
               {content.jobsTruncated ? (
-                <Text style={styles.checkDetailText}>Showing first 100 jobs</Text>
+                <Text style={styles.checkDetailText}>
+                  {t('checkJobsTruncated', { count: 100 })}
+                </Text>
               ) : null}
             </View>
           ) : null}

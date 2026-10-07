@@ -567,13 +567,13 @@ describe('the Phase C budget', () => {
     // types mermaid lazily imports. Both frozen at the head that measured them, because this case
     // pins the discrimination and not either build's size.
     //
-    // 69 now sits just under the envelope: a sweep that falls further means re-measure, not raise.
+    // 69 now sits under the envelope: a sweep that falls further means re-measure, not raise.
     const ROUTES = 14
     const WITH_ONE_ARTIFACT = 69
     const CHUNKED_ALONG_THE_ENGINE = 172
     expect(WITH_ONE_ARTIFACT).toBeLessThanOrEqual(mobileWebAppBundleMaxChunks(ROUTES))
     expect(CHUNKED_ALONG_THE_ENGINE).toBeGreaterThan(mobileWebAppBundleMaxChunks(ROUTES))
-    // And the assets that came with it: 215 against the 113 this head's envelope allows, of the
+    // And the assets that came with it: 215 against the 124 this head's envelope allows, of the
     // 256 the shell will load.
     expect(mobileWebAppBundleMaxAssets(ROUTES, 42)).toBeLessThan(CHUNKED_ALONG_THE_ENGINE + 42 + 1)
   })
@@ -614,13 +614,14 @@ describe('the Phase C budget', () => {
   it('fails the build when the derived ceiling passes what the phone will accept', async () => {
     // The shell hands back null for a manifest over its own ceiling, so a derived ceiling above
     // that ships a green build no device can open. At the 42 images the tree carries, the envelope
-    // plus 42 plus the document crosses 256 at 32 routes, which Phase C reaches. The crossing came
+    // plus 42 plus the document crosses 256 at 31 routes, which Phase C reaches. The crossing came
     // in from 50 with the envelope: it grants the worst swept route to each one past the sweep,
     // where `4r + 16` granted four, so re-measuring a tree whose routes share more moves it out.
+    // The i18n catalogs' re-measure (69 to 77 at the swept tree) moved it in from 32.
     expect(await readMobileWebBundleMaxAssets()).toBe(MOBILE_WEB_BUNDLE_MAX_ASSETS)
-    expect(assertAssetCeilingFitsShell(31, 42, MOBILE_WEB_BUNDLE_MAX_ASSETS)).toBe(251)
-    expect(() => assertAssetCeilingFitsShell(32, 42, MOBILE_WEB_BUNDLE_MAX_ASSETS)).toThrow(
-      /260 .*256/
+    expect(assertAssetCeilingFitsShell(30, 42, MOBILE_WEB_BUNDLE_MAX_ASSETS)).toBe(250)
+    expect(() => assertAssetCeilingFitsShell(31, 42, MOBILE_WEB_BUNDLE_MAX_ASSETS)).toThrow(
+      /259 .*256/
     )
   })
 })

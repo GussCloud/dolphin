@@ -10,6 +10,8 @@ import type {
 import type { MobileDiffReviewFileDescriptor } from './mobile-diff-review-state'
 import type { MobileHighlightedDiffLine } from './mobile-file-syntax'
 import type { MobileReviewTerminalTab } from './review-terminal-reply-schema'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type ReviewScreenState =
   | { kind: 'loading' }
@@ -109,11 +111,9 @@ export function nextReviewIndexAfterMarkReviewed({
 
 export function mobileReviewScopeLabel(item: MobileDiffReviewQueueItem): string {
   if (item.scope === 'branch') {
-    return 'Branch'
+    return translate(sessionReviewCatalog, 'scopeBranch')
   }
-  return item.scope === 'staged' ? 'Staged' : 'Unstaged'
-}
-
-export function mobileReviewCountLabel(count: number, singular: string, plural: string): string {
-  return `${count} ${count === 1 ? singular : plural}`
+  return item.scope === 'staged'
+    ? translate(sessionReviewCatalog, 'scopeStaged')
+    : translate(sessionReviewCatalog, 'scopeUnstaged')
 }

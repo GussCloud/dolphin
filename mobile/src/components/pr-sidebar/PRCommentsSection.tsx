@@ -5,6 +5,8 @@ import type { PRState } from '../../../../src/shared/github/pull-request-types'
 import type { GitHubWorkItemDetails } from '../../../../src/shared/github/work-item-types'
 import type { GitHubPrRepoSlug } from '../../session/github-pr-rpc'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { canAddRootComment } from '../../session/pr-comment-actions'
 import { isPrSidebarDetailsPlaceholder } from '../../session/mobile-pr-sidebar-state'
 import type { MobilePrCommentActions } from '../../session/use-mobile-pr-comment-actions'
@@ -65,6 +67,7 @@ export function PRCommentsSection({
 }: Props) {
   // details is null while phase 2 (the heavy comments/body payload) is still loading.
   // A synthetic placeholder means phase 2 failed — do not paint that as empty success.
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const loadingDetails = details === null
   const detailsFailed = details != null && isPrSidebarDetailsPlaceholder(details)
   const body = details?.body ?? ''
@@ -123,22 +126,20 @@ export function PRCommentsSection({
 
   return (
     <>
-      <PRSection title="Description">
+      <PRSection title={t('description')}>
         {loadingDetails ? (
           <ActivityIndicator color={colors.textSecondary} />
         ) : detailsFailed ? (
-          <Text style={styles.noDescription}>
-            Could not load description. Tap refresh to try again.
-          </Text>
+          <Text style={styles.noDescription}>{t('descriptionLoadFailed')}</Text>
         ) : body.trim() ? (
           <CommentMarkdown content={body} variant="document" />
         ) : (
-          <Text style={styles.noDescription}>No description provided.</Text>
+          <Text style={styles.noDescription}>{t('noDescription')}</Text>
         )}
       </PRSection>
 
       <PRSection
-        title="Comments"
+        title={t('comments')}
         trailing={
           comments.length > 0 ? (
             <View style={styles.countChip}>
@@ -150,11 +151,11 @@ export function PRCommentsSection({
         {loadingDetails ? (
           <ActivityIndicator color={colors.textSecondary} />
         ) : detailsFailed ? (
-          <Text style={styles.empty}>Could not load comments. Tap refresh to try again.</Text>
+          <Text style={styles.empty}>{t('commentsLoadFailed')}</Text>
         ) : (
           <View style={styles.list}>
             {comments.length === 0 ? (
-              <Text style={styles.empty}>No comments yet.</Text>
+              <Text style={styles.empty}>{t('noCommentsYet')}</Text>
             ) : (
               <>
                 {isPr ? (
@@ -172,7 +173,7 @@ export function PRCommentsSection({
                           <Text
                             style={[styles.audienceTabText, active && styles.audienceTabTextActive]}
                           >
-                            {tab.label}
+                            {t(tab.labelKey)}
                           </Text>
                           <Text
                             style={[styles.audienceTabText, active && styles.audienceTabTextActive]}
@@ -203,8 +204,9 @@ export function PRCommentsSection({
                         accessibilityRole="button"
                       >
                         <Text style={styles.showMoreText}>
-                          Show {Math.min(remaining, COMMENT_PAGE)} more
-                          {remaining > COMMENT_PAGE ? ` of ${remaining}` : ''}
+                          {remaining > COMMENT_PAGE
+                            ? t('showMoreOf', { count: COMMENT_PAGE, total: remaining })
+                            : t('showMore', { count: remaining })}
                         </Text>
                       </Pressable>
                     ) : null}
@@ -216,8 +218,8 @@ export function PRCommentsSection({
             {canComment && actions ? (
               <View style={styles.rootComposer}>
                 <PRCommentComposer
-                  placeholder="Add a comment…"
-                  submitLabel="Comment"
+                  placeholder={t('addCommentPlaceholder')}
+                  submitLabel={t('comment')}
                   submitting={actions.isRootBusy}
                   onSubmit={actions.addRootComment}
                 />
@@ -239,6 +241,7 @@ function CommentGroupView({
   actions?: PRCommentCardActions
   now: number
 }) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [expanded, setExpanded] = useState(false)
   const cards =
     group.kind === 'thread'
@@ -274,7 +277,9 @@ function CommentGroupView({
       >
         <Chevron size={14} color={colors.textSecondary} strokeWidth={2.2} />
         <Text style={styles.resolvedHeaderText} numberOfLines={1}>
-          Resolved {group.kind === 'thread' ? 'thread' : 'comment'} by {root.author}
+          {group.kind === 'thread'
+            ? t('resolvedThreadBy', { author: root.author })
+            : t('resolvedCommentBy', { author: root.author })}
           {count > 1 ? ` (${count})` : ''}
         </Text>
       </Pressable>

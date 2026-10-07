@@ -10,17 +10,20 @@ import {
 } from '../components/AccountUsage'
 import { colors, radii, spacing } from '../theme/mobile-theme'
 import type { HostProfile } from '../transport/types'
+import { homeCatalog } from '../i18n/catalogs/home'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileHomeAccountUsageCards(props: {
   items: { host: HostProfile; snapshot: AccountsSnapshot }[]
   onOpen: (hostId: string) => void
 }) {
+  const t = useMobileTranslation(homeCatalog)
   if (props.items.length === 0) {
     return null
   }
   return (
     <>
-      <Text style={styles.sectionHeading}>Account usage</Text>
+      <Text style={styles.sectionHeading}>{t('accountUsage')}</Text>
       {props.items.map(({ host, snapshot }) => {
         const claudeActive =
           snapshot.claude.accounts.find(
@@ -62,7 +65,7 @@ export function MobileHomeAccountUsageCards(props: {
                   </View>
                   <View style={styles.info}>
                     <Text style={styles.email} numberOfLines={1}>
-                      {active?.email ?? 'System default'}
+                      {active?.email ?? t('systemDefaultAccount')}
                     </Text>
                     <View style={styles.bars}>
                       <UsageBar

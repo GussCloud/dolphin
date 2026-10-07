@@ -10,6 +10,7 @@ import {
 import { pushMobileHostedReviewBranch } from './mobile-hosted-review-git-preparation'
 import { linkMobileHostedReview } from './mobile-pr-link'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sourceControlText } from './source-control-text'
 
 // The mobile worktree id is `${repoId}::${path}`; hosted-review RPCs expect the
 // repo selector separately, matching the desktop/runtime hosted-review service.
@@ -174,8 +175,6 @@ export type MobileHostedReviewCreateOutcome =
   | { ok: true; url: string; number?: number; existing?: boolean; linkError?: string }
   | { ok: false; error: string }
 
-const PUSH_BEFORE_CREATE_ERROR = 'Push failed. Resolve the push error, then try again.'
-
 // Why the host's own message is discarded here: the compose form shows one actionable line for
 // every push failure, refusal and transport drop alike.
 async function pushMobileBranchBeforeCreate(
@@ -185,9 +184,11 @@ async function pushMobileBranchBeforeCreate(
   const pushed = await pushMobileHostedReviewBranch(
     client,
     { worktree: `id:${worktreeId}` },
-    PUSH_BEFORE_CREATE_ERROR
+    sourceControlText('pushBeforeCreateFailed')
   )
-  return pushed.ok ? { ok: true } : { ok: false, error: PUSH_BEFORE_CREATE_ERROR }
+  return pushed.ok
+    ? { ok: true }
+    : { ok: false, error: sourceControlText('pushBeforeCreateFailed') }
 }
 
 function formatMobileHostedReviewCreateError(
@@ -202,7 +203,10 @@ function formatMobileHostedReviewCreateError(
     return result.error
   }
   const prefix = new RegExp(`^Create ${shortLabel} failed:\\s*`, 'i')
-  return `Push succeeded, but ${shortLabel} creation failed: ${result.error.replace(prefix, '')}`
+  return sourceControlText('pushSucceededCreateFailed', {
+    review: shortLabel,
+    error: result.error.replace(prefix, '')
+  })
 }
 
 async function finishMobileHostedReviewCreateSuccess(
@@ -251,7 +255,7 @@ export async function createMobileHostedReview(
     } catch (error) {
       return {
         ok: false,
-        error: refusedRpcMessageOrFallback(error, 'Failed to create pull request')
+        error: refusedRpcMessageOrFallback(error, sourceControlText('failedToCreatePr'))
       }
     }
     if (result.ok) {
@@ -281,14 +285,14 @@ export async function createMobileHostedReview(
           result,
           pushed,
           hostedReviewCopy(input.provider).shortLabel
-        ) || 'Failed to create pull request'
+        ) || sourceControlText('failedToCreatePr')
     }
   } catch (err) {
     // Why: create review runs from an inline form; transport drops should surface
     // as form errors instead of escaping as unhandled promise rejections.
     return {
       ok: false,
-      error: err instanceof Error ? err.message : 'Failed to create pull request'
+      error: err instanceof Error ? err.message : sourceControlText('failedToCreatePr')
     }
   }
 }

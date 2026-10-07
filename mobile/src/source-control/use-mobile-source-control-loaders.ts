@@ -26,6 +26,7 @@ import {
   type ScreenState,
   type StatusLoadInFlight
 } from './mobile-source-control-screen-state'
+import { sourceControlText } from './source-control-text'
 
 type Params = {
   client: RpcClient | null
@@ -162,7 +163,9 @@ export function useMobileSourceControlLoaders(params: Params): MobileSourceContr
             setScreenState({
               kind: 'error',
               message:
-                connState === 'connected' ? 'Connecting to desktop...' : 'Waiting for desktop...'
+                connState === 'connected'
+                  ? sourceControlText('connectingToDesktop')
+                  : sourceControlText('waitingForDesktop')
             })
           }
           return false
@@ -197,7 +200,7 @@ export function useMobileSourceControlLoaders(params: Params): MobileSourceContr
             if (isMobileGitUnavailableReply(reply)) {
               setScreenState({
                 kind: 'unavailable',
-                message: 'Update Dolphin desktop to use Source Control on mobile.'
+                message: sourceControlText('updateDesktopForSourceControl')
               })
               return false
             }
@@ -211,13 +214,14 @@ export function useMobileSourceControlLoaders(params: Params): MobileSourceContr
               }
               continue
             }
-            throw new Error(refusal.message || 'Unable to load source control')
+            throw new Error(refusal.message || sourceControlText('unableToLoadSourceControl'))
           }
         } catch (err) {
           if (!isCurrentLoad()) {
             return false
           }
-          const message = err instanceof Error ? err.message : 'Unable to load source control'
+          const message =
+            err instanceof Error ? err.message : sourceControlText('unableToLoadSourceControl')
           setScreenState((prev) => {
             // Why: git mutations can succeed while the immediate status refresh
             // races a desktop abort; keep the last good screen instead of flashing

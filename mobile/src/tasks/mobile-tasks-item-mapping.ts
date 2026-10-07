@@ -18,6 +18,7 @@ import type {
   LinearIssue,
   RepoSummary
 } from './mobile-tasks-provider-detail-types'
+import { translateTasks as t } from './tasks-translate'
 
 export function isSuccess(response: unknown): response is RpcSuccess {
   return Boolean(response && typeof response === 'object' && (response as RpcSuccess).ok)
@@ -35,13 +36,13 @@ export function formatUpdatedAt(value: string): string {
   }
   const minutes = Math.max(0, Math.floor((Date.now() - time) / 60_000))
   if (minutes < 60) {
-    return `${minutes}m`
+    return t('relativeMinutes', { count: minutes })
   }
   const hours = Math.floor(minutes / 60)
   if (hours < 24) {
-    return `${hours}h`
+    return t('relativeHours', { count: hours })
   }
-  return `${Math.floor(hours / 24)}d`
+  return t('relativeDays', { count: Math.floor(hours / 24) })
 }
 
 export function getTaskPresetQuery(preset: GitHubPreset): string {
@@ -147,21 +148,21 @@ export function githubProjectOptionColor(color: string | null | undefined): stri
 
 export function projectRowStatusLabel(row: GitHubProjectRow): string {
   if (row.itemType === 'DRAFT_ISSUE') {
-    return 'Draft'
+    return t('draft')
   }
   if (row.itemType === 'REDACTED') {
-    return 'Redacted'
+    return t('redacted')
   }
   if (row.content.isDraft) {
-    return 'Draft'
+    return t('draft')
   }
   if (row.content.state === 'MERGED') {
-    return 'Merged'
+    return t('merged')
   }
   if (row.content.state === 'CLOSED') {
-    return 'Closed'
+    return t('closed')
   }
-  return 'Open'
+  return t('open')
 }
 
 export function scopeGitHubTaskSearch(query: string, kind: GitHubTaskKind): string {
@@ -177,12 +178,12 @@ export function scopeGitHubTaskSearch(query: string, kind: GitHubTaskKind): stri
 
 export function gitHubStatusLabel(item: GitHubWorkItem): string {
   if (item.state === 'merged') {
-    return 'Merged'
+    return t('merged')
   }
   if (item.state === 'draft') {
-    return 'Draft'
+    return t('draft')
   }
-  return item.state === 'closed' ? 'Closed' : 'Open'
+  return item.state === 'closed' ? t('closed') : t('open')
 }
 
 export function gitHubTaskSubtitle(item: GitHubWorkItem): string {
@@ -207,15 +208,15 @@ export function createGitHubTask(
 
 export function gitLabStatusLabel(item: GitLabWorkItem): string {
   if (item.state === 'opened') {
-    return 'Open'
+    return t('open')
   }
   if (item.state === 'merged') {
-    return 'Merged'
+    return t('merged')
   }
   if (item.state === 'draft') {
-    return 'Draft'
+    return t('draft')
   }
-  return item.state === 'closed' ? 'Closed' : 'Locked'
+  return item.state === 'closed' ? t('closed') : t('locked')
 }
 
 export function createGitLabTask(
@@ -236,12 +237,12 @@ export function createGitLabTask(
 
 export function gitLabTodoTargetLabel(todo: Pick<GitLabTodo, 'targetType'>): string {
   if (todo.targetType === 'MergeRequest') {
-    return 'Merge request'
+    return t('mergeRequest')
   }
   if (todo.targetType === 'Issue') {
-    return 'Issue'
+    return t('issue')
   }
-  return 'GitLab todo'
+  return t('gitlabTodo')
 }
 
 export function gitLabTodoTargetRef(todo: Pick<GitLabTodo, 'targetType' | 'targetIid'>): string {
@@ -257,6 +258,17 @@ export function gitLabTodoTargetRef(todo: Pick<GitLabTodo, 'targetType' | 'targe
   return String(todo.targetIid)
 }
 
+/** Status for display, re-derived so it follows the active language. */
+export function taskStatusLabel(item: TaskItem): string {
+  if (item.provider === 'github') {
+    return gitHubStatusLabel(item.source)
+  }
+  if (item.provider === 'gitlab') {
+    return gitLabStatusLabel(item.source)
+  }
+  return item.status
+}
+
 export function createGitLabTodoTask(todo: GitLabTodo): TaskItem {
   const targetRef = gitLabTodoTargetRef(todo)
   return {
@@ -264,7 +276,7 @@ export function createGitLabTodoTask(todo: GitLabTodo): TaskItem {
     provider: 'gitlabTodo',
     title: todo.targetTitle || todo.targetUrl,
     subtitle: `${todo.projectPath}${targetRef ? ` ${targetRef}` : ''}`,
-    status: todo.actionName.replace(/_/g, ' ') || 'Todo',
+    status: todo.actionName.replace(/_/g, ' ') || t('todo'),
     updatedAt: todo.updatedAt,
     source: todo
   }

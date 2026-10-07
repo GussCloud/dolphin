@@ -7,6 +7,7 @@ import {
 } from './mobile-tasks-dependencies'
 import { type TaskItem, buildPartialRepositoryNotice } from './mobile-tasks-legacy-foundation'
 import { linearAccountConnect } from './mobile-task-list-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksTaskPaginationActions(model: TaskListLoadingModel) {
   const {
@@ -53,7 +54,7 @@ export function useMobileTasksTaskPaginationActions(model: TaskListLoadingModel)
       const reply = await linearAccountConnect.request(client, { apiKey })
       const result = linearAccountConnect.interpret(reply)
       if (result.ok === false) {
-        throw new Error(result.error ?? 'Failed to connect Linear')
+        throw new Error(result.error ?? t('linearConnectError'))
       }
       setLinearApiKeyDraft('')
       setLinearConnectState('idle')
@@ -66,7 +67,7 @@ export function useMobileTasksTaskPaginationActions(model: TaskListLoadingModel)
       await loadLinearContext()
     } catch (err) {
       setLinearConnectState('error')
-      setLinearConnectError(err instanceof Error ? err.message : 'Connection failed')
+      setLinearConnectError(err instanceof Error ? err.message : t('sshConnectionFailed'))
     }
   }, [client, connState, linearApiKeyDraft, linearConnectState, loadLinearContext, taskUiReady])
 
@@ -182,7 +183,7 @@ export function useMobileTasksTaskPaginationActions(model: TaskListLoadingModel)
         setGithubCurrentPage(nextPage)
         setItems(allPages[nextPage] ?? [])
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load more GitHub tasks')
+        setError(err instanceof Error ? err.message : t('githubTasksLoadMoreError'))
       } finally {
         setGithubPaginationLoading(false)
         setGithubLoadingTargetPage(null)

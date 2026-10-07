@@ -2,6 +2,8 @@ import { Pressable, Text, View } from 'react-native'
 import type { WorkspaceSshGate } from '../tasks/workspace-ssh-gate'
 import { workspaceSshStatusLabel } from '../tasks/workspace-ssh-gate'
 import { newWorktreeFormStyles as styles } from './new-worktree-form-styles'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function NewWorkspaceSshConnectionField({
   repoName,
@@ -12,9 +14,10 @@ export function NewWorkspaceSshConnectionField({
   sshGate: WorkspaceSshGate
   onConnect: () => void
 }) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>SSH Connection</Text>
+      <Text style={styles.label}>{t('sshConnection')}</Text>
       <View style={styles.sshBox}>
         <View style={styles.sshRow}>
           <View
@@ -40,7 +43,7 @@ export function NewWorkspaceSshConnectionField({
               onPress={onConnect}
             >
               <Text style={styles.sshConnectText}>
-                {sshGate.connectInProgress ? 'Connecting...' : 'Connect'}
+                {sshGate.connectInProgress ? t('connecting') : t('connect')}
               </Text>
             </Pressable>
           )}

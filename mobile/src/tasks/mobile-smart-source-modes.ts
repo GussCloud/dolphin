@@ -1,4 +1,5 @@
 import type { MrStateFilter, SmartNameMode } from './mobile-composer-source-types'
+import { translateTasks as t } from './tasks-translate'
 
 // Icon each tab renders: lucide glyphs for the neutral modes, the inline brand
 // SVGs (TaskProviderLogo) for the provider modes since lucide dropped its brand
@@ -15,13 +16,32 @@ export type SmartModeOption = {
 
 // Order + labels + icons mirror desktop getSmartWorkspaceNameModes():
 // Smart · GitHub · Linear · GitLab · Branch · Name.
+// Why getters: labels are read at render so they follow the active language.
 export const SMART_MODE_OPTIONS: readonly SmartModeOption[] = [
-  { id: 'smart', label: 'Smart', icon: { type: 'lucide', name: 'sparkles' } },
+  {
+    id: 'smart',
+    get label() {
+      return t('smartModeSmart')
+    },
+    icon: { type: 'lucide', name: 'sparkles' }
+  },
   { id: 'github', label: 'GitHub', icon: { type: 'provider', provider: 'github' } },
   { id: 'linear', label: 'Linear', icon: { type: 'provider', provider: 'linear' } },
   { id: 'gitlab', label: 'GitLab', icon: { type: 'provider', provider: 'gitlab' } },
-  { id: 'branches', label: 'Branch', icon: { type: 'lucide', name: 'git-branch' } },
-  { id: 'text', label: 'Name', icon: { type: 'lucide', name: 'case-sensitive' } }
+  {
+    id: 'branches',
+    get label() {
+      return t('smartModeBranch')
+    },
+    icon: { type: 'lucide', name: 'git-branch' }
+  },
+  {
+    id: 'text',
+    get label() {
+      return t('smartModeName')
+    },
+    icon: { type: 'lucide', name: 'case-sensitive' }
+  }
 ]
 
 export type SmartModeAvailabilityInput = {
@@ -84,10 +104,30 @@ export type MrStateFilterOption = { id: MrStateFilter; label: string }
 
 // Desktop getMrStateFilters(): Open · Merged · Closed · All, default 'opened'.
 export const MR_STATE_FILTER_OPTIONS: readonly MrStateFilterOption[] = [
-  { id: 'opened', label: 'Open' },
-  { id: 'merged', label: 'Merged' },
-  { id: 'closed', label: 'Closed' },
-  { id: 'all', label: 'All' }
+  {
+    id: 'opened',
+    get label() {
+      return t('open')
+    }
+  },
+  {
+    id: 'merged',
+    get label() {
+      return t('merged')
+    }
+  },
+  {
+    id: 'closed',
+    get label() {
+      return t('closed')
+    }
+  },
+  {
+    id: 'all',
+    get label() {
+      return t('all')
+    }
+  }
 ]
 
 export const DEFAULT_MR_STATE_FILTER: MrStateFilter = 'opened'

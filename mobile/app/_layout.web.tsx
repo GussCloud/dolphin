@@ -5,6 +5,7 @@ import { SafeAreaFrameContext, SafeAreaInsetsContext } from 'react-native-safe-a
 import { ZERO_SAFE_AREA_INSETS } from '../src/mobile-web-shell/bridge/bridge-safe-area-insets'
 import { usePageBridgeClient } from '../src/transport/client-context.web'
 import { colors } from '../src/theme/mobile-theme'
+import { MobileLocaleProvider } from '../src/i18n/mobile-locale-provider'
 
 /**
  * The page's root layout, standing where the native `_layout.tsx` does. Without one expo-router
@@ -23,9 +24,11 @@ export default function PageRootLayout() {
   return (
     <SafeAreaFrameContext.Provider value={frame}>
       <SafeAreaInsetsContext.Provider value={insets}>
-        <View style={styles.root}>
-          <Slot />
-        </View>
+        <MobileLocaleProvider>
+          <View style={styles.root}>
+            <Slot />
+          </View>
+        </MobileLocaleProvider>
       </SafeAreaInsetsContext.Provider>
     </SafeAreaFrameContext.Provider>
   )

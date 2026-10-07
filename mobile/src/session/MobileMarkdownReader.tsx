@@ -12,6 +12,8 @@ import {
 } from './markdown-floating-actions-layout'
 import type { MarkdownDocState } from './mobile-session-route-types'
 import { styles } from './mobile-session-styles'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   documentId: string
@@ -34,6 +36,7 @@ export function MobileMarkdownReader({
   onDiscard,
   keyboardLift
 }: Props) {
+  const t = useMobileTranslation(sessionCatalog)
   const editorRef = useRef<MobileRichMarkdownEditorHandle>(null)
   // Native Keyboard events under-report the WebView editor's covered area, so prefer the larger WebView-measured inset.
   const [webviewKeyboardInset, setWebviewKeyboardInset] = useState(0)
@@ -53,7 +56,7 @@ export function MobileMarkdownReader({
         <Text style={styles.markdownError}>{doc.message}</Text>
         <Pressable style={styles.markdownRefreshButton} onPress={onRefresh}>
           <RefreshCw size={14} color={colors.textPrimary} />
-          <Text style={styles.markdownRefreshText}>Retry</Text>
+          <Text style={styles.markdownRefreshText}>{t('retry')}</Text>
         </Pressable>
       </View>
     )
@@ -62,9 +65,9 @@ export function MobileMarkdownReader({
   const statusText = doc.saveError
     ? doc.saveError
     : doc.readOnlyReason
-      ? 'Read only'
+      ? t('markdownReadOnly')
       : doc.stale
-        ? 'Changed on desktop'
+        ? t('markdownChangedOnDesktop')
         : null
   const showRefresh = Boolean((doc.stale && !doc.isDirty) || !doc.editable)
   const showCopy = Boolean(doc.saveError || !doc.editable)
@@ -117,8 +120,8 @@ export function MobileMarkdownReader({
                 onPress={() => editorRef.current?.dismissKeyboard()}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel="Dismiss keyboard"
-                accessibilityHint="Hides the software keyboard and keeps the markdown editor open."
+                accessibilityLabel={t('dismissKeyboard')}
+                accessibilityHint={t('dismissKeyboardMarkdownHint')}
               >
                 <View style={styles.keyboardDismissGlyph}>
                   <KeyboardIcon size={15} color={colors.textSecondary} strokeWidth={2} />
@@ -133,18 +136,18 @@ export function MobileMarkdownReader({
             ) : null}
             {showCopy ? (
               <Pressable style={styles.markdownFloatingButton} onPress={onCopy}>
-                <Text style={styles.markdownFloatingButtonText}>Copy</Text>
+                <Text style={styles.markdownFloatingButtonText}>{t('copy')}</Text>
               </Pressable>
             ) : null}
             {showRefresh ? (
               <Pressable style={styles.markdownFloatingButton} onPress={onRefresh}>
                 <RefreshCw size={13} color={colors.textPrimary} />
-                <Text style={styles.markdownFloatingButtonText}>Refresh</Text>
+                <Text style={styles.markdownFloatingButtonText}>{t('refresh')}</Text>
               </Pressable>
             ) : null}
             {doc.isDirty ? (
               <Pressable style={styles.markdownFloatingButton} onPress={onDiscard}>
-                <Text style={styles.markdownFloatingButtonText}>Discard</Text>
+                <Text style={styles.markdownFloatingButtonText}>{t('discard')}</Text>
               </Pressable>
             ) : null}
             {showSave ? (
@@ -160,7 +163,7 @@ export function MobileMarkdownReader({
                 {doc.saving ? (
                   <ActivityIndicator size="small" color={colors.textPrimary} />
                 ) : (
-                  <Text style={styles.markdownFloatingButtonText}>Save</Text>
+                  <Text style={styles.markdownFloatingButtonText}>{t('save')}</Text>
                 )}
               </Pressable>
             ) : null}

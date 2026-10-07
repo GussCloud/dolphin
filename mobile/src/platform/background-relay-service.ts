@@ -7,9 +7,10 @@ import {
 } from '../transport/background-relay-retention'
 import { loadBackgroundRelayRetention } from '../storage/preferences'
 import { nativeBackgroundRelay, type NativeBackgroundRelay } from './native-background-relay'
+import { platformCatalog } from '../i18n/catalogs/platform'
+import { translate } from '../i18n/mobile-locale-state'
 
 const NOTIFICATION_TITLE = 'Dolphin'
-const NOTIFICATION_TEXT = 'Keeping your desktop connection open in the background'
 
 type AppStateSource = {
   currentState: AppStateStatus
@@ -35,7 +36,7 @@ export function startBackgroundRelayService(
       return
     }
     if (!native.isRunning()) {
-      native.start(NOTIFICATION_TITLE, NOTIFICATION_TEXT)
+      native.start(NOTIFICATION_TITLE, translate(platformCatalog, 'backgroundRelayNotification'))
     }
     native.enterForeground()
   }

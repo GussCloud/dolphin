@@ -8,6 +8,8 @@ import {
   MobileFilePreviewTruncatedNote
 } from './MobileFilePreviewSourceText'
 import { filePreviewStyles as styles } from './mobile-file-preview-styles'
+import { filesCatalog } from '../i18n/catalogs/files'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   relativePath: string
@@ -24,6 +26,7 @@ export function MobileFileMarkdownPreview({
   byteLength,
   initialLine
 }: Props) {
+  const t = useMobileTranslation(filesCatalog)
   const [mode, setMode] = useState<'preview' | 'source'>(() => (initialLine ? 'source' : 'preview'))
   const [previousRelativePath, setPreviousRelativePath] = useState(relativePath)
   const [previousInitialLine, setPreviousInitialLine] = useState(initialLine)
@@ -45,7 +48,7 @@ export function MobileFileMarkdownPreview({
           onPress={() => setMode('source')}
           accessibilityRole="button"
           accessibilityState={{ selected: sourceSelected }}
-          accessibilityLabel="View Markdown source"
+          accessibilityLabel={t('viewMarkdownSourceA11y')}
         >
           <Code
             size={15}
@@ -58,7 +61,7 @@ export function MobileFileMarkdownPreview({
           onPress={() => setMode('preview')}
           accessibilityRole="button"
           accessibilityState={{ selected: previewSelected }}
-          accessibilityLabel="View rendered Markdown preview"
+          accessibilityLabel={t('viewRenderedMarkdownA11y')}
         >
           <Pencil
             size={15}

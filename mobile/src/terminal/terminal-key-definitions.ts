@@ -1,4 +1,6 @@
 import type { TerminalAccessoryKey, TerminalShortcutSpecialKey } from './terminal-accessory-keys'
+import type { terminalEn } from '../i18n/catalogs/terminal/en'
+import { terminalText } from './terminal-text'
 
 export const SPECIAL_KEY_LABELS: Record<string, string> = {
   escape: 'Esc',
@@ -30,34 +32,49 @@ export const SPECIAL_KEY_LABELS: Record<string, string> = {
   f12: 'F12'
 }
 
-const SPECIAL_KEY_ACCESSIBILITY_LABELS: Record<string, string> = {
-  escape: 'Escape',
-  tab: 'Tab',
-  enter: 'Enter',
-  backspace: 'Backspace',
-  delete: 'Forward delete',
-  insert: 'Insert',
-  arrowUp: 'Arrow up',
-  arrowDown: 'Arrow down',
-  arrowLeft: 'Arrow left',
-  arrowRight: 'Arrow right',
-  home: 'Home',
-  end: 'End',
-  pageUp: 'Page up',
-  pageDown: 'Page down',
-  space: 'Space',
-  f1: 'F1',
-  f2: 'F2',
-  f3: 'F3',
-  f4: 'F4',
-  f5: 'F5',
-  f6: 'F6',
-  f7: 'F7',
-  f8: 'F8',
-  f9: 'F9',
-  f10: 'F10',
-  f11: 'F11',
-  f12: 'F12'
+// Catalog keys, not copy: the labels are read through getters so each read uses the active locale.
+const SPECIAL_KEY_ACCESSIBILITY_KEYS: Record<string, TerminalKeyA11yKey> = {
+  escape: 'keyEscape',
+  tab: 'keyTab',
+  enter: 'keyEnter',
+  backspace: 'keyBackspace',
+  delete: 'keyForwardDelete',
+  insert: 'keyInsert',
+  arrowUp: 'keyArrowUp',
+  arrowDown: 'keyArrowDown',
+  arrowLeft: 'keyArrowLeft',
+  arrowRight: 'keyArrowRight',
+  home: 'keyHome',
+  end: 'keyEnd',
+  pageUp: 'keyPageUp',
+  pageDown: 'keyPageDown',
+  space: 'keySpace'
+}
+
+type TerminalKeyA11yKey = Extract<keyof typeof terminalEn, `key${string}`>
+
+/** Function keys keep their own name; everything else reads the catalog. */
+function keyAccessibilityLabel(id: string): string {
+  const key = SPECIAL_KEY_ACCESSIBILITY_KEYS[id]
+  return key ? terminalText(key) : (SPECIAL_KEY_LABELS[id] ?? id)
+}
+
+function accessoryKey(
+  id: string,
+  label: string,
+  bytes: string,
+  a11yKey: TerminalKeyA11yKey,
+  repeatable?: boolean
+): TerminalAccessoryKey {
+  return {
+    id,
+    label,
+    bytes,
+    get accessibilityLabel() {
+      return terminalText(a11yKey)
+    },
+    ...(repeatable ? { repeatable } : {})
+  }
 }
 
 export const TERMINAL_SHORTCUT_SPECIAL_KEY_DEFINITIONS: TerminalShortcutSpecialKey[] = [
@@ -91,53 +108,31 @@ export const TERMINAL_SHORTCUT_SPECIAL_KEY_DEFINITIONS: TerminalShortcutSpecialK
 ].map((id) => ({
   id,
   label: SPECIAL_KEY_LABELS[id]!,
-  accessibilityLabel: SPECIAL_KEY_ACCESSIBILITY_LABELS[id]!
+  get accessibilityLabel() {
+    return keyAccessibilityLabel(id)
+  }
 }))
 
 export const TERMINAL_ACCESSORY_KEY_DEFINITIONS: TerminalAccessoryKey[] = [
-  { id: 'escape', label: 'Esc', bytes: '\x1b', accessibilityLabel: 'Escape' },
-  { id: 'tab', label: 'Tab', bytes: '\t', accessibilityLabel: 'Tab' },
-  { id: 'enter', label: 'Enter', bytes: '\r', accessibilityLabel: 'Enter' },
+  accessoryKey('escape', 'Esc', '\x1b', 'keyEscape'),
+  accessoryKey('tab', 'Tab', '\t', 'keyTab'),
+  accessoryKey('enter', 'Enter', '\r', 'keyEnter'),
   // Why: terminal apps recognize ESC [ Z as the reverse-tab sequence.
-  { id: 'shiftTab', label: 'Shift+Tab', bytes: '\x1b[Z', accessibilityLabel: 'Shift Tab' },
-  { id: 'space', label: 'Space', bytes: ' ', accessibilityLabel: 'Space' },
-  { id: 'backspace', label: '⌫', bytes: '\x7f', accessibilityLabel: 'Backspace', repeatable: true },
-  {
-    id: 'delete',
-    label: 'Del',
-    bytes: '\x1b[3~',
-    accessibilityLabel: 'Forward delete',
-    repeatable: true
-  },
-  { id: 'arrowUp', label: '↑', bytes: '\x1b[A', accessibilityLabel: 'Arrow Up', repeatable: true },
-  {
-    id: 'arrowDown',
-    label: '↓',
-    bytes: '\x1b[B',
-    accessibilityLabel: 'Arrow Down',
-    repeatable: true
-  },
-  {
-    id: 'arrowLeft',
-    label: '←',
-    bytes: '\x1b[D',
-    accessibilityLabel: 'Arrow Left',
-    repeatable: true
-  },
-  {
-    id: 'arrowRight',
-    label: '→',
-    bytes: '\x1b[C',
-    accessibilityLabel: 'Arrow Right',
-    repeatable: true
-  },
-  { id: 'ctrlC', label: 'Ctrl+C', bytes: '\x03', accessibilityLabel: 'Interrupt terminal' },
-  { id: 'ctrlD', label: 'Ctrl+D', bytes: '\x04', accessibilityLabel: 'Send EOF' },
-  { id: 'ctrlL', label: 'Ctrl+L', bytes: '\x0c', accessibilityLabel: 'Clear screen' },
-  { id: 'ctrlZ', label: 'Ctrl+Z', bytes: '\x1a', accessibilityLabel: 'Suspend process' },
-  { id: 'ctrlR', label: 'Ctrl+R', bytes: '\x12', accessibilityLabel: 'Reverse search' },
-  { id: 'ctrlA', label: 'Ctrl+A', bytes: '\x01', accessibilityLabel: 'Start of line' },
-  { id: 'ctrlE', label: 'Ctrl+E', bytes: '\x05', accessibilityLabel: 'End of line' },
-  { id: 'ctrlW', label: 'Ctrl+W', bytes: '\x17', accessibilityLabel: 'Delete word backward' },
-  { id: 'ctrlU', label: 'Ctrl+U', bytes: '\x15', accessibilityLabel: 'Clear line before cursor' }
+  accessoryKey('shiftTab', 'Shift+Tab', '\x1b[Z', 'keyShiftTab'),
+  accessoryKey('space', 'Space', ' ', 'keySpace'),
+  accessoryKey('backspace', '⌫', '\x7f', 'keyBackspace', true),
+  accessoryKey('delete', 'Del', '\x1b[3~', 'keyForwardDelete', true),
+  accessoryKey('arrowUp', '↑', '\x1b[A', 'keyArrowUp', true),
+  accessoryKey('arrowDown', '↓', '\x1b[B', 'keyArrowDown', true),
+  accessoryKey('arrowLeft', '←', '\x1b[D', 'keyArrowLeft', true),
+  accessoryKey('arrowRight', '→', '\x1b[C', 'keyArrowRight', true),
+  accessoryKey('ctrlC', 'Ctrl+C', '\x03', 'keyInterrupt'),
+  accessoryKey('ctrlD', 'Ctrl+D', '\x04', 'keySendEof'),
+  accessoryKey('ctrlL', 'Ctrl+L', '\x0c', 'keyClearScreen'),
+  accessoryKey('ctrlZ', 'Ctrl+Z', '\x1a', 'keySuspend'),
+  accessoryKey('ctrlR', 'Ctrl+R', '\x12', 'keyReverseSearch'),
+  accessoryKey('ctrlA', 'Ctrl+A', '\x01', 'keyStartOfLine'),
+  accessoryKey('ctrlE', 'Ctrl+E', '\x05', 'keyEndOfLine'),
+  accessoryKey('ctrlW', 'Ctrl+W', '\x17', 'keyDeleteWordBackward'),
+  accessoryKey('ctrlU', 'Ctrl+U', '\x15', 'keyClearLineBeforeCursor')
 ]

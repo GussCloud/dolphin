@@ -11,6 +11,7 @@ import {
   linearComposerTeamListRead,
   linearTeamStateListRead
 } from './mobile-task-item-detail-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksListAndDetailEffects(model: ProjectLoadingActionsModel) {
   const {
@@ -131,7 +132,7 @@ export function useMobileTasksListAndDetailEffects(model: ProjectLoadingActionsM
       return
     }
     void loadLinearContext().catch((err) => {
-      setError(err instanceof Error ? err.message : 'Failed to load Linear context')
+      setError(err instanceof Error ? err.message : t('linearContextLoadError'))
     })
   }, [linearConnected, loadLinearContext, provider, taskStateHydrated])
 
@@ -146,7 +147,7 @@ export function useMobileTasksListAndDetailEffects(model: ProjectLoadingActionsM
       void selectGitHubProject(activeGitHubProject)
     } else {
       void loadGitHubProjects().catch((err) => {
-        setGithubProjectError(err instanceof Error ? err.message : 'Failed to load projects')
+        setGithubProjectError(err instanceof Error ? err.message : t('projectsLoadError'))
       })
     }
   }, [
@@ -167,7 +168,7 @@ export function useMobileTasksListAndDetailEffects(model: ProjectLoadingActionsM
       return
     }
     void loadGitHubProjects().catch((err) => {
-      setGithubProjectError(err instanceof Error ? err.message : 'Failed to load projects')
+      setGithubProjectError(err instanceof Error ? err.message : t('projectsLoadError'))
     })
   }, [loadGitHubProjects, showGitHubProjectPicker, taskUiReady])
 

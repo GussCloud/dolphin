@@ -17,6 +17,8 @@ import {
   structuredAgentSupportProbe
 } from './mobile-session-launch-operations'
 import { structuredSessionRandomUuid } from './structured-session-operation-id'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 type StructuredCreateSupport = {
   supported?: boolean
@@ -57,11 +59,13 @@ function unknownCreateResult(
 }
 
 function unconfirmedMessage(agent: AgentSessionHandleProvider): string {
-  return `The ${TUI_AGENT_DISPLAY_NAMES[agent]} chat result could not be confirmed.`
+  return translate(sessionChatCatalog, 'launchUnconfirmed', {
+    agent: TUI_AGENT_DISPLAY_NAMES[agent]
+  })
 }
 
 function failedMessage(agent: AgentSessionHandleProvider): string {
-  return `Could not open ${TUI_AGENT_DISPLAY_NAMES[agent]} chat.`
+  return translate(sessionChatCatalog, 'launchFailed', { agent: TUI_AGENT_DISPLAY_NAMES[agent] })
 }
 
 /** Only a refusal the host names as definitive may become `failed`; anything else keeps the

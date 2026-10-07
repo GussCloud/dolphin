@@ -3,6 +3,7 @@ import { buildMobileSourceControlActions } from './mobile-source-control-actions
 import type { ActionSheetAction } from '../components/ActionSheetModal'
 import { SOURCE_CONTROL_ACTION_ICONS } from './mobile-source-control-screen-state'
 import type { MobileSourceControlState } from './use-mobile-source-control-state'
+import { useMobileLocale } from '../i18n/use-mobile-translation'
 
 // Builds the bottom action-sheet entries from the source-control state. Kept
 // out of the panel component so the giant action map doesn't bloat the view.
@@ -28,6 +29,8 @@ export function useMobileSourceControlActionSheet(
     openHistory
   } = state
 
+  // Why: the builder translates its labels, so a language change must rebuild them.
+  const locale = useMobileLocale()
   return useMemo<ActionSheetAction[]>(
     () =>
       buildMobileSourceControlActions({
@@ -66,6 +69,7 @@ export function useMobileSourceControlActionSheet(
       busyAction,
       commitMessage,
       createPr,
+      locale,
       openBranchPicker,
       openHistory,
       openingBranchPath,

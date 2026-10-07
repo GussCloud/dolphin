@@ -28,6 +28,7 @@ import type {
   MobileLinkedWorkItem,
   SmartNameSelection
 } from './mobile-composer-source-types'
+import { translateTasks as t } from './tasks-translate'
 const EMPTY_BASE: ComposerBaseState = {}
 
 export type UseMobileComposerSourceArgs = {
@@ -100,7 +101,7 @@ export function useMobileComposerSource(args: UseMobileComposerSourceArgs) {
             return
           }
           setBase(EMPTY_BASE)
-          onError?.(error instanceof Error ? error.message : 'Failed to resolve base branch.')
+          onError?.(error instanceof Error ? error.message : t('resolveBaseBranchError'))
         })
         .finally(() => {
           if (resolveTokenRef.current === token) {

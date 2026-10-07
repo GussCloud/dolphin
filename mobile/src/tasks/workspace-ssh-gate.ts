@@ -1,4 +1,5 @@
 import type { SshConnectionState, SshConnectionStatus } from '../../../src/shared/ssh-types'
+import { translateTasks as t } from './tasks-translate'
 
 /**
  * What mobile stores for an SSH connection.
@@ -27,27 +28,27 @@ function isWorkspaceSshConnectInProgress(status: SshConnectionStatus | null): bo
 
 export function workspaceSshStatusLabel(status: SshConnectionStatus | null): string {
   if (status === 'connected') {
-    return 'Connected'
+    return t('sshConnected')
   }
   if (status === 'connecting') {
-    return 'Connecting'
+    return t('sshConnecting')
   }
   if (status === 'deploying-relay') {
-    return 'Deploying relay'
+    return t('sshDeployingRelay')
   }
   if (status === 'reconnecting') {
-    return 'Reconnecting'
+    return t('sshReconnecting')
   }
   if (status === 'auth-failed') {
-    return 'Authentication failed'
+    return t('sshAuthFailed')
   }
   if (status === 'reconnection-failed') {
-    return 'Reconnect failed'
+    return t('sshReconnectFailed')
   }
   if (status === 'error') {
-    return 'Connection failed'
+    return t('sshConnectionFailed')
   }
-  return 'Disconnected'
+  return t('sshDisconnected')
 }
 
 export function deriveWorkspaceSshGate(args: {

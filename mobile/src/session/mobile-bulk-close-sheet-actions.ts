@@ -5,6 +5,8 @@ import {
   selectBulkCloseTabs,
   type BulkTabCloseMode
 } from './mobile-tab-close-selection'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 /** Session-route state the bulk close orchestration reads and drives. */
 type BulkCloseSheetDeps = {
@@ -58,8 +60,8 @@ export function createBulkCloseSheetActions(deps: BulkCloseSheetDeps) {
     }
     return BULK_TAB_CLOSE_ACTIONS.filter(
       ({ mode }) => selectClosable(anchor.id, mode).length > 0
-    ).map(({ mode, label }) => ({
-      label,
+    ).map(({ mode, labelKey }) => ({
+      label: translate(sessionCatalog, labelKey),
       destructive: true,
       onPress: () => {
         dismiss()
@@ -79,7 +81,7 @@ export function createCloseWithBulkActions(
 ) {
   return (target: MobileSessionTab | null, dismiss: () => void): ActionSheetAction[] => [
     {
-      label: 'Close',
+      label: translate(sessionCatalog, 'close'),
       destructive: true,
       onPress: () => {
         dismiss()

@@ -16,6 +16,8 @@ import {
   didMobileDiffReviewFileChangeSinceReview,
   isMobileDiffReviewFileReviewed
 } from './mobile-diff-review-state'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type MobileDiffReviewQueueFilter =
   | 'all'
@@ -190,7 +192,10 @@ function statusEntryToQueueItem(
     oldPath: entry.oldPath,
     status: entry.status,
     title: entry.path,
-    subtitle: scope === 'staged' ? 'Staged' : 'Unstaged',
+    subtitle:
+      scope === 'staged'
+        ? translate(sessionReviewCatalog, 'scopeStaged')
+        : translate(sessionReviewCatalog, 'scopeUnstaged'),
     added: entry.added,
     removed: entry.removed,
     canStage: isMobileGitStageableEntry(entry),
@@ -225,7 +230,7 @@ function branchEntryToQueueItem(
     oldPath: entry.oldPath,
     status: entry.status,
     title: entry.path,
-    subtitle: 'Committed on branch',
+    subtitle: translate(sessionReviewCatalog, 'committedOnBranch'),
     added: entry.added,
     removed: entry.removed,
     canStage: false,

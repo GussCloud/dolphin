@@ -12,6 +12,8 @@ import {
 } from '../../src/storage/preferences'
 import { HostProtocolGate } from '../../src/components/HostProtocolGate'
 import { HostScreen } from '../../src/host-screen/HostScreen'
+import { hostRoutesCatalog } from '../../src/i18n/catalogs/host-routes'
+import { useMobileTranslation } from '../../src/i18n/use-mobile-translation'
 
 // Keep at least this much room for the detail pane when resizing the sidebar.
 const MIN_DETAIL_WIDTH = 320
@@ -28,6 +30,7 @@ function clampSidebarToWindow(width: number, windowWidth: number): number {
 }
 
 function HostStack({ animation }: { animation: 'none' | 'default' }) {
+  const t = useMobileTranslation(hostRoutesCatalog)
   return (
     <Stack
       screenOptions={{
@@ -39,27 +42,27 @@ function HostStack({ animation }: { animation: 'none' | 'default' }) {
         animation
       }}
     >
-      <Stack.Screen name="[hostId]/index" options={{ title: 'Host' }} />
-      <Stack.Screen name="[hostId]/edit" options={{ title: 'Edit host' }} />
-      <Stack.Screen name="[hostId]/accounts" options={{ title: 'Accounts' }} />
-      <Stack.Screen name="[hostId]/tasks" options={{ title: 'Tasks' }} />
-      <Stack.Screen name="[hostId]/session/[worktreeId]" options={{ title: 'Terminal' }} />
+      <Stack.Screen name="[hostId]/index" options={{ title: t('routeHost') }} />
+      <Stack.Screen name="[hostId]/edit" options={{ title: t('editHost') }} />
+      <Stack.Screen name="[hostId]/accounts" options={{ title: t('routeAccounts') }} />
+      <Stack.Screen name="[hostId]/tasks" options={{ title: t('routeTasks') }} />
+      <Stack.Screen name="[hostId]/session/[worktreeId]" options={{ title: t('routeTerminal') }} />
       <Stack.Screen
         name="[hostId]/source-control/[worktreeId]"
-        options={{ title: 'Source Control' }}
+        options={{ title: t('routeSourceControl') }}
       />
       <Stack.Screen
         name="[hostId]/agent-history/[worktreeId]"
-        options={{ title: 'Agent Session History' }}
+        options={{ title: t('routeAgentHistory') }}
       />
-      <Stack.Screen name="[hostId]/review/[worktreeId]" options={{ title: 'Changes' }} />
-      <Stack.Screen name="[hostId]/pr/[worktreeId]" options={{ title: 'Pull Request' }} />
+      <Stack.Screen name="[hostId]/review/[worktreeId]" options={{ title: t('routeChanges') }} />
+      <Stack.Screen name="[hostId]/pr/[worktreeId]" options={{ title: t('routePullRequest') }} />
       {/* Dev-flag only: redirects to the host screen unless the hybrid shell flag is on. */}
-      <Stack.Screen name="[hostId]/web" options={{ title: 'Workspace' }} />
+      <Stack.Screen name="[hostId]/web" options={{ title: t('routeWorkspace') }} />
       {/* Last, and matched last: every pathname above has a file of its own, so this takes only
           what expo-router would otherwise send to Unmatched. Declared for the title alone — an
           undeclared child still renders, appended after these with this group's screenOptions. */}
-      <Stack.Screen name="[hostId]/[...page]" options={{ title: 'Workspace' }} />
+      <Stack.Screen name="[hostId]/[...page]" options={{ title: t('routeWorkspace') }} />
     </Stack>
   )
 }

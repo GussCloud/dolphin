@@ -2,7 +2,7 @@ import {
   buildMobileQuickCommandLaunch,
   type MobileQuickCommandLaunch
 } from '../terminal/quick-commands'
-import type { RpcFailure, RpcSuccess } from '../transport/types'
+import type { RpcSuccess } from '../transport/types'
 import { sessionTabCreateTerminal } from './mobile-session-write-operations'
 import { triggerSuccess, triggerError } from '../platform/haptics'
 import { buildTerminalSendParams } from '../terminal/terminal-send-request'
@@ -15,6 +15,8 @@ import { isAgentSessionHandleProvider } from '../../../src/shared/agent-session-
 import { createMobileStructuredAgentSession } from './mobile-structured-agent-session-launch'
 import { placeCreatedSessionTab } from '../../../src/shared/session-tab-placement'
 import { SESSION_TABS_SPLIT_GROUP_PLACEMENT_RUNTIME_CAPABILITY } from '../../../src/shared/protocol-version'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionTerminalCreateActions(scope: MobileSessionAttachmentsModel) {
   const {
@@ -68,10 +70,12 @@ export function useMobileSessionTerminalCreateActions(scope: MobileSessionAttach
       .slice(2, 10)}`
 
     // Why: the host names the real cause (pty exhaustion, disabled agent, unresolved worktree);
-    // collapsing every failure to 'Failed to create terminal' left the phone undiagnosable.
+    // collapsing every failure to translate(sessionCatalog, 'createTerminalFailed') left the phone undiagnosable.
     function reportCreateFailure(hostReason: string): void {
       const reason = hostReason.trim()
-      setCreateError(reason || options?.errorToast || 'Failed to create terminal')
+      setCreateError(
+        reason || options?.errorToast || translate(sessionCatalog, 'createTerminalFailed')
+      )
       if (options?.errorToast) {
         triggerError()
         showToast(options.errorToast, 1800)
@@ -164,7 +168,7 @@ export function useMobileSessionTerminalCreateActions(scope: MobileSessionAttach
           const existing = prev.find((terminal) => terminal.handle === createdHandle)
           const createdTerminal: Terminal = {
             handle: createdHandle,
-            title: created.title || existing?.title || 'Terminal',
+            title: created.title || existing?.title || translate(sessionCatalog, 'terminal'),
             terminalTheme: created.terminalTheme ?? existing?.terminalTheme,
             isActive: true
           }
@@ -194,23 +198,26 @@ export function useMobileSessionTerminalCreateActions(scope: MobileSessionAttach
             .then((sendResponse) => {
               if (!sendResponse.ok) {
                 throw new Error(
-                  (sendResponse as RpcFailure).error.message || 'Failed to send notes'
+                  sendResponse.error.message || translate(sessionCatalog, 'sendNotesError')
                 )
               }
               const result = (sendResponse as RpcSuccess).result as {
                 send?: { accepted?: boolean }
               }
               if (result.send?.accepted === false) {
-                throw new Error('Terminal input is locked by another client.')
+                throw new Error(translate(sessionCatalog, 'terminalInputLockedByOtherClient'))
               }
               triggerSuccess()
-              showToast(options.successToast ?? 'Notes sent')
+              showToast(options.successToast ?? translate(sessionCatalog, 'notesSent'))
               options.onPromptSent?.()
             })
             .catch((err) => {
               triggerError()
               showToast(
-                options.errorToast ?? (err instanceof Error ? err.message : "Couldn't send notes"),
+                options.errorToast ??
+                  (err instanceof Error
+                    ? err.message
+                    : translate(sessionCatalog, 'sendNotesFailed')),
                 1800
               )
             })
@@ -249,13 +256,13 @@ export function useMobileSessionTerminalCreateActions(scope: MobileSessionAttach
     const launch = buildMobileQuickCommandLaunch(command)
     if (!launch) {
       triggerError()
-      showToast('Edit this quick command before running it', 1800)
+      showToast(translate(sessionCatalog, 'quickCommandNeedsEdit'), 1800)
       return false
     }
-    const label = command.label.trim() || 'Quick command'
+    const label = command.label.trim() || translate(sessionCatalog, 'quickCommandFallbackLabel')
     void handleCreateTerminal(launch.agent, {
       ...launch.options,
-      errorToast: `Couldn't run ${label}`
+      errorToast: translate(sessionCatalog, 'quickCommandRunFailed', { label })
     })
     return true
   }

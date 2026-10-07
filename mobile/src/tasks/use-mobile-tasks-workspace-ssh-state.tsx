@@ -19,6 +19,7 @@ import {
   sshRepoConnectRun,
   sshRepoStateRead
 } from './mobile-workspace-source-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksWorkspaceSshState(model: WorkspaceSparseActionsModel) {
   const {
@@ -70,7 +71,7 @@ export function useMobileTasksWorkspaceSshState(model: WorkspaceSparseActionsMod
       setWorkspaceSshState({
         targetId: workspaceCreateTargetConnectionId,
         status: 'error',
-        error: err instanceof Error ? err.message : 'Failed to connect to SSH repository.',
+        error: err instanceof Error ? err.message : t('sshConnectError'),
         reconnectAttempt: 0
       })
     } finally {
@@ -95,7 +96,7 @@ export function useMobileTasksWorkspaceSshState(model: WorkspaceSparseActionsMod
         setWorkspaceSshState(state)
       }
       if (state?.status !== 'connected') {
-        throw new Error(`Connect ${repo.displayName} before creating a workspace.`)
+        throw new Error(t('connectRepoBeforeWorkspace', { repo: repo.displayName }))
       }
     },
     [client, tasksSupported, workspaceSshState]

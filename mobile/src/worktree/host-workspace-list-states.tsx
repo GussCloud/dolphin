@@ -4,6 +4,8 @@ import {
   selectHostWorkspaceListState,
   type HostWorkspaceListStateInput
 } from './host-workspace-list-state'
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function HostWorkspaceListStates(
   props: HostWorkspaceListStateInput & {
@@ -11,6 +13,7 @@ export function HostWorkspaceListStates(
     activeFilterCount: number
   }
 ) {
+  const t = useMobileTranslation(worktreeCatalog)
   const state = selectHostWorkspaceListState(props)
   if (state === 'loading') {
     return (
@@ -22,9 +25,12 @@ export function HostWorkspaceListStates(
   if (state === 'catalog-error') {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>Could not load workspaces from this host</Text>
+        <Text style={styles.emptyText}>{t('catalogLoadError')}</Text>
         <Text style={styles.catalogErrorDetail}>
-          {`worktree.ps failed (${props.catalogError}) — retrying automatically`}
+          {t('catalogLoadErrorDetail', {
+            command: 'worktree.ps',
+            error: String(props.catalogError)
+          })}
         </Text>
       </View>
     )
@@ -34,10 +40,10 @@ export function HostWorkspaceListStates(
       <View style={styles.centered}>
         <Text style={styles.emptyText}>
           {props.search
-            ? 'No matching worktrees'
+            ? t('emptySearch')
             : props.activeFilterCount > 0
-              ? 'No worktrees match filters'
-              : 'No worktrees'}
+              ? t('emptyFiltered')
+              : t('empty')}
         </Text>
       </View>
     )

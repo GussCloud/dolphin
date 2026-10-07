@@ -5,6 +5,8 @@ import {
   getMobileWorkspaceRepoBadgeColor,
   type MobileWorkspaceRepo
 } from './new-worktree-modal-types'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /** The projects added next to the primary one; each gets its own worktree in one workspace. */
 export function NewWorktreeExtraProjectsField(props: {
@@ -14,6 +16,7 @@ export function NewWorktreeExtraProjectsField(props: {
   onAdd: () => void
   onRemove: (repoId: string) => void
 }) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   return (
     <View style={styles.field}>
       {props.extraRepos.length > 0 ? (
@@ -27,7 +30,7 @@ export function NewWorktreeExtraProjectsField(props: {
                 {repo.displayName}
               </Text>
               <Pressable
-                accessibilityLabel={`Remove ${repo.displayName}`}
+                accessibilityLabel={t('removeProject', { name: repo.displayName })}
                 hitSlop={8}
                 disabled={props.disabled}
                 onPress={() => props.onRemove(repo.id)}
@@ -45,7 +48,7 @@ export function NewWorktreeExtraProjectsField(props: {
           onPress={props.onAdd}
         >
           <Plus size={14} color={colors.textSecondary} />
-          <Text style={styles.addText}>Add another project</Text>
+          <Text style={styles.addText}>{t('addAnotherProject')}</Text>
         </Pressable>
       ) : null}
     </View>

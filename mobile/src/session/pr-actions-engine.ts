@@ -5,6 +5,8 @@ import { createOptimisticField, type OptimisticField } from './optimistic-write-
 import type { GitHubPrMutationOutcome } from './github-pr-mutations'
 import type { GitHubPrRepoSlug } from './github-pr-rpc'
 import type { PrActionMutations } from './pr-action-mutation-contract'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type { PrActionMutations } from './pr-action-mutation-contract'
 
@@ -166,7 +168,11 @@ export class PrActionsEngine {
         await this.cfg.refetch()
       } catch (err) {
         if (this.identity === identity) {
-          this.setError(err instanceof Error ? err.message : 'Failed to refresh pull request.')
+          this.setError(
+            err instanceof Error
+              ? err.message
+              : translate(sessionReviewCatalog, 'refreshPullRequestFailed')
+          )
         }
       }
       return
@@ -195,7 +201,11 @@ export class PrActionsEngine {
       await this.settle(identity, outcome, { onSuccess: () => {}, onRevert: () => {} })
     } catch (err) {
       if (this.identity === identity) {
-        this.setError(err instanceof Error ? err.message : 'Failed to merge pull request.')
+        this.setError(
+          err instanceof Error
+            ? err.message
+            : translate(sessionReviewCatalog, 'mergePullRequestFailed')
+        )
       }
     } finally {
       this.clearBusyIfOwned(identity, { kind: 'merge' })

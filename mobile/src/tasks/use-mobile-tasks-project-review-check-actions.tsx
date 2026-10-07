@@ -13,6 +13,7 @@ import {
   githubPullRequestFileViewedWrite,
   githubReviewerRequest
 } from './mobile-task-item-state-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataActionsModel) {
   const {
@@ -53,7 +54,7 @@ export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataAc
         )
         const result = githubReviewerRequest.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to request reviewers')
+          throw new Error(result.error ?? t('requestReviewersError'))
         }
         const nextReviewRequests = (() => {
           const byLogin = new Map<string, GitHubAssignableUser>()
@@ -86,7 +87,7 @@ export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataAc
           setProjectReviewersDraft('')
         }
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to request reviewers')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('requestReviewersError'))
       } finally {
         setProjectMutating(false)
       }
@@ -134,7 +135,7 @@ export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataAc
           current?.provider === 'github' ? { ...current, checks } : current
         )
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to refresh checks')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('refreshChecksError'))
       } finally {
         setProjectMutating(false)
       }
@@ -170,11 +171,11 @@ export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataAc
         )
         const result = githubPullRequestChecksRerun.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to rerun checks')
+          throw new Error(result.error ?? t('rerunChecksError'))
         }
         setProjectRowDetailRefreshSeq((current) => current + 1)
       } catch (err) {
-        setProjectRowDetailError(err instanceof Error ? err.message : 'Failed to rerun checks')
+        setProjectRowDetailError(err instanceof Error ? err.message : t('rerunChecksError'))
       } finally {
         setProjectMutating(false)
       }
@@ -189,7 +190,7 @@ export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataAc
         return
       }
       if (projectRowDetail?.provider !== 'github' || !projectRowDetail.pullRequestId) {
-        setProjectRowDetailError('Unable to sync viewed state for this pull request.')
+        setProjectRowDetailError(t('viewedStateUnavailable'))
         return
       }
       const viewed = file.viewerViewedState !== 'VIEWED'
@@ -208,7 +209,7 @@ export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataAc
           { timeoutMs: 30_000 }
         )
         if (githubPullRequestFileViewedWrite.interpret(reply) !== true) {
-          throw new Error('Failed to sync viewed state with GitHub.')
+          throw new Error(t('viewedStateSyncError'))
         }
         setProjectRowDetail((current) =>
           current?.provider === 'github'
@@ -223,9 +224,7 @@ export function useMobileTasksProjectReviewCheckActions(model: ProjectMetadataAc
             : current
         )
       } catch (err) {
-        setProjectRowDetailError(
-          err instanceof Error ? err.message : 'Failed to update viewed state'
-        )
+        setProjectRowDetailError(err instanceof Error ? err.message : t('viewedStateUpdateError'))
       } finally {
         setProjectMutating(false)
       }

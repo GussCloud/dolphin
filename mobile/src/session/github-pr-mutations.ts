@@ -24,6 +24,8 @@ import {
   type GitHubPrRepoSlug
 } from './github-pr-repo-slug'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 // The github.* PR mutation surface: merge, auto-merge, open/close, reviewers, check reruns, the
 // inline title edit, and the conversation mutations (thread replies, root comments, resolution,
@@ -68,7 +70,7 @@ export function fetchUpdatePRTitle(
           prRepo: args.prRepo
         })
       ),
-    'Failed to update title.'
+    translate(sessionReviewCatalog, 'updateTitleFailed')
   )
 }
 
@@ -258,7 +260,7 @@ export function fetchResolveReviewThread(
           { prRepo: args.prRepo }
         )
       ),
-    'Failed to update review thread.'
+    translate(sessionReviewCatalog, 'updateReviewThreadFailed')
   )
 }
 

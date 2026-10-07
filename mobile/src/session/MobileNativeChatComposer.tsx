@@ -29,6 +29,8 @@ import {
   MobileNativeChatSessionOptionPickers,
   type MobileNativeChatSessionOptionPickersProps
 } from './MobileNativeChatSessionOptionPickers'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import type { PendingNativeChatImage } from './mobile-native-chat-image-attachment'
 import { mobileNativeChatInputStyles } from './mobile-native-chat-input-styles'
 
@@ -90,10 +92,11 @@ export function MobileNativeChatComposer({
   onMicPressIn,
   onMicPressOut,
   disabled = false,
-  placeholder = 'Message, @files, /commands',
+  placeholder,
   filePaths = NO_FILE_PATHS,
   onNeedFiles
 }: Props): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   const [cursor, setCursor] = useState(0)
   // Transiently drives the native caret after a mid-text autocomplete insert,
   // then released on the next selection change so manual caret placement still
@@ -234,7 +237,7 @@ export function MobileNativeChatComposer({
               />
               {onRemoveAttachment ? (
                 <Pressable
-                  accessibilityLabel="Remove image"
+                  accessibilityLabel={t('removeImage')}
                   style={styles.attachmentRemove}
                   onPress={() => onRemoveAttachment(attachment.id)}
                   hitSlop={8}
@@ -258,7 +261,7 @@ export function MobileNativeChatComposer({
               setCursor(e.nativeEvent.selection.end)
               setPendingSelection(null)
             }}
-            placeholder={placeholder}
+            placeholder={placeholder ?? t('composerPlaceholder')}
             placeholderTextColor={colors.textMuted}
             selectionColor={colors.accentBlue}
             multiline
@@ -270,7 +273,7 @@ export function MobileNativeChatComposer({
           <View style={styles.actionRow} testID="native-chat-composer-actions">
             {onAttachImage ? (
               <Pressable
-                accessibilityLabel="Attach image"
+                accessibilityLabel={t('attachImage')}
                 style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
                 onPress={onAttachImage}
                 disabled={isAttaching || disabled}
@@ -291,7 +294,7 @@ export function MobileNativeChatComposer({
             <View style={styles.actionSpacer} />
             {onMicPress ? (
               <Pressable
-                accessibilityLabel={micActive ? 'Stop dictation' : 'Dictate'}
+                accessibilityLabel={micActive ? t('stopDictation') : t('dictate')}
                 style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
                 // Hold mode is walkie-talkie (press-in/out); toggle mode taps.
                 onPress={dictationMode === 'hold' ? undefined : onMicPress}
@@ -312,7 +315,7 @@ export function MobileNativeChatComposer({
               </Pressable>
             ) : null}
             <Pressable
-              accessibilityLabel="Send message"
+              accessibilityLabel={t('sendMessage')}
               style={({ pressed }) => [
                 styles.sendButton,
                 !canSend && styles.sendButtonDisabled,

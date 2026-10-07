@@ -4,6 +4,7 @@ import {
   githubAssignableUserListRead,
   githubRepoLabelListRead
 } from './mobile-task-item-detail-operations'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksItemDetailMetadataEffects(model: ListAndDetailEffectsModel) {
   const {
@@ -55,7 +56,7 @@ export function useMobileTasksItemDetailMetadataEffects(model: ListAndDetailEffe
         })
         .catch((err) => {
           if (!stale) {
-            setItemLabelsError(err instanceof Error ? err.message : 'Failed to load labels')
+            setItemLabelsError(err instanceof Error ? err.message : t('labelsLoadError'))
           }
         })
         .finally(() => {
@@ -82,9 +83,7 @@ export function useMobileTasksItemDetailMetadataEffects(model: ListAndDetailEffe
       })
       .catch((err) => {
         if (!stale) {
-          setItemAssignableUsersError(
-            err instanceof Error ? err.message : 'Failed to load assignees'
-          )
+          setItemAssignableUsersError(err instanceof Error ? err.message : t('assigneesLoadError'))
         }
       })
       .finally(() => {

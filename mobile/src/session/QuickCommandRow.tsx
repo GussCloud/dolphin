@@ -11,6 +11,8 @@ import {
   getTerminalQuickCommandBody,
   isAgentQuickCommand
 } from '../terminal/quick-commands'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type QuickCommandRowProps = {
   command: TerminalQuickCommand
@@ -34,6 +36,7 @@ export function QuickCommandRow({
   onDelete,
   disabled
 }: QuickCommandRowProps) {
+  const t = useMobileTranslation(sessionCatalog)
   const clipboard = useClipboardWriter()
   const isAgent = isAgentQuickCommand(command)
   const body = getTerminalQuickCommandBody(command)
@@ -99,12 +102,12 @@ export function QuickCommandRow({
   const copyDisabled = disabled || !canCopy
   const copyLabel =
     copyStatus === 'copied'
-      ? 'Copied'
+      ? t('copied')
       : copyStatus === 'failed'
-        ? "Couldn't copy"
+        ? t('copyFailed')
         : canCopy
-          ? `Copy ${command.label}`
-          : 'Nothing to copy'
+          ? t('quickCommandCopy', { label: command.label })
+          : t('quickCommandNothingToCopy')
   const copyIconColor =
     copyStatus === 'copied'
       ? colors.statusGreen
@@ -119,7 +122,7 @@ export function QuickCommandRow({
         disabled={disabled}
         onPress={() => onLaunch(command)}
         accessibilityRole="button"
-        accessibilityLabel={`Run ${command.label}`}
+        accessibilityLabel={t('quickCommandRun', { label: command.label })}
       >
         <View style={styles.rowIcon}>
           {isAgent ? (
@@ -160,7 +163,7 @@ export function QuickCommandRow({
         style={({ pressed }) => [styles.rowAction, pressed && !disabled && styles.pressed]}
         disabled={disabled}
         onPress={() => onEdit(command)}
-        accessibilityLabel={`Edit ${command.label}`}
+        accessibilityLabel={t('quickCommandEdit', { label: command.label })}
       >
         <Pencil size={15} color={colors.textSecondary} />
       </Pressable>
@@ -168,7 +171,7 @@ export function QuickCommandRow({
         style={({ pressed }) => [styles.rowAction, pressed && !disabled && styles.pressed]}
         disabled={disabled}
         onPress={() => onDelete(command)}
-        accessibilityLabel={`Delete ${command.label}`}
+        accessibilityLabel={t('quickCommandDelete', { label: command.label })}
       >
         <Trash2 size={15} color={colors.statusRed} />
       </Pressable>

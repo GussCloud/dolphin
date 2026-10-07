@@ -8,6 +8,8 @@ import {
   acquireMobileNativeChatTerminalWrite,
   releaseMobileNativeChatTerminalWrite
 } from './mobile-native-chat-terminal-write-lock'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function sendMobileNativeChatPermissionResponse(args: {
   client: RpcClient
@@ -37,13 +39,13 @@ export function useMobileNativeChatPermissionSend(args: {
     async (text: string): Promise<boolean> => {
       const terminal = args.handleRef.current
       if (!args.client || !terminal || !args.enabled) {
-        args.onSendError('Response not sent (disconnected)')
+        args.onSendError(translate(sessionChatCatalog, 'sendResponseNotSentDisconnected'))
         return false
       }
       // A choice keystroke must not interleave into a mid-flight composed write
       // (image paste, paced answer) on the same PTY.
       if (!acquireMobileNativeChatTerminalWrite(terminal)) {
-        args.onSendError('Response not sent')
+        args.onSendError(translate(sessionChatCatalog, 'sendResponseNotSent'))
         return false
       }
       // No stale-input heal here (unlike the text/ask sends): a choice is an
@@ -63,9 +65,9 @@ export function useMobileNativeChatPermissionSend(args: {
       if (outcome === 'unknown') {
         // Why: the response may have been delivered (ack lost / path cutover) —
         // a definite "not sent" would invite a double answer.
-        args.onSendError('Response unconfirmed — check chat before retrying')
+        args.onSendError(translate(sessionChatCatalog, 'sendResponseUnconfirmed'))
       } else if (outcome === 'rejected') {
-        args.onSendError('Response not sent')
+        args.onSendError(translate(sessionChatCatalog, 'sendResponseNotSent'))
       }
       return outcome === 'accepted'
     },

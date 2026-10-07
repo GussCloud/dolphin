@@ -133,12 +133,12 @@ describe('MobileNativeChatPermission', () => {
     // Same shared region as every other context row, so it inherits the cap.
     expect(content.props.style).toMatchObject({ maxHeight: 240, minHeight: 0, flexShrink: 1 })
     expect(content.findByType('MobileMarkdown').props.content).toBe(planText)
-    // The path renders as an interpolated child, so match within the children.
+    // The path is interpolated into the translated label, so match the joined children.
     const planFileShown = content.findAllByType('Text').some((node) => {
       const children = Array.isArray(node.props.children)
         ? node.props.children
         : [node.props.children]
-      return children.includes('/repo/PLAN.md')
+      return children.join('') === 'Plan file: /repo/PLAN.md'
     })
     expect(planFileShown).toBe(true)
     // A typed plan replaces the generic detail rather than rendering both.

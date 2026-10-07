@@ -12,6 +12,8 @@ import { colors, spacing } from '../theme/mobile-theme'
 import { type FileExplorerRow, isMarkdownPath, type TreeNode } from './file-tree'
 import { fileExplorerStyles as styles } from './mobile-file-explorer-styles'
 import { canPreviewMobileFileRow } from './mobile-file-preview-navigation'
+import { filesCatalog } from '../i18n/catalogs/files'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   item: FileExplorerRow
@@ -22,6 +24,7 @@ type Props = {
 }
 
 export function MobileFileExplorerRow(props: Props) {
+  const t = useMobileTranslation(filesCatalog)
   const { item, expanded, onPreviewFile, onRetryDirectory, onToggleDirectory } = props
 
   if (item.kind === 'loading') {
@@ -29,7 +32,7 @@ export function MobileFileExplorerRow(props: Props) {
       <View style={[styles.inlineStatusRow, { paddingLeft: spacing.lg + item.depth * 18 }]}>
         <View style={styles.chevronSpacer} />
         <ActivityIndicator size="small" color={colors.textSecondary} />
-        <Text style={styles.inlineStatusText}>Loading...</Text>
+        <Text style={styles.inlineStatusText}>{t('loading')}</Text>
       </View>
     )
   }
@@ -39,7 +42,7 @@ export function MobileFileExplorerRow(props: Props) {
       <View style={[styles.inlineStatusRow, { paddingLeft: spacing.lg + item.depth * 18 }]}>
         <View style={styles.chevronSpacer} />
         <Text style={styles.inlineErrorText} numberOfLines={1}>
-          {item.message || 'Unable to load folder'}
+          {item.message || t('unableToLoadFolder')}
         </Text>
         <Pressable
           style={({ pressed }) => [styles.inlineRetryButton, pressed && styles.rowPressed]}
@@ -47,9 +50,9 @@ export function MobileFileExplorerRow(props: Props) {
             triggerSelection()
             onRetryDirectory(item.relativePath)
           }}
-          accessibilityLabel={`Retry loading ${item.relativePath}`}
+          accessibilityLabel={t('retryLoadingA11y', { path: item.relativePath })}
         >
-          <Text style={styles.inlineRetryText}>Retry</Text>
+          <Text style={styles.inlineRetryText}>{t('retry')}</Text>
         </Pressable>
       </View>
     )
@@ -79,6 +82,7 @@ function TreeRow(props: {
   onPreviewFile: (relativePath: string, displayName: string) => void
   onToggleDirectory: (relativePath: string) => void
 }) {
+  const t = useMobileTranslation(filesCatalog)
   const { item, expanded, onPreviewFile, onToggleDirectory } = props
   const isDirectory = item.kind === 'directory'
   const isExpanded = expanded.has(item.relativePath)
@@ -110,10 +114,10 @@ function TreeRow(props: {
       }}
       accessibilityLabel={
         isDirectory
-          ? `Open folder ${item.name}`
+          ? t('openFolderA11y', { name: item.name })
           : disabled
-            ? `${item.name} unavailable on mobile`
-            : `Preview file ${item.name}`
+            ? t('unavailableOnMobileA11y', { name: item.name })
+            : t('previewFileA11y', { name: item.name })
       }
     >
       {isDirectory ? (
@@ -138,7 +142,7 @@ function TreeRow(props: {
         <Text style={[styles.rowTitle, disabled && styles.rowTitleDisabled]} numberOfLines={1}>
           {item.name}
         </Text>
-        {disabled ? <Text style={styles.rowMeta}>Unavailable on mobile</Text> : null}
+        {disabled ? <Text style={styles.rowMeta}>{t('unavailableOnMobile')}</Text> : null}
       </View>
     </Pressable>
   )

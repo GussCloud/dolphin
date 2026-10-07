@@ -10,6 +10,7 @@ import {
   Plus
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import { renderMobileTasksProviderControls } from './mobile-tasks-provider-controls'
 import { renderMobileTasksSearchControl } from './mobile-tasks-search-control'
 
@@ -56,13 +57,13 @@ export function renderMobileTasksStatusBar(model: ConnectionPresentationModel) {
         onPress={() => router.back()}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel="Back"
+        accessibilityLabel={t('back')}
       >
         <ChevronLeft size={22} color={colors.textPrimary} />
       </Pressable>
       <View style={styles.titleWrap}>
         <StatusDot state={connState} verdict={headerVerdict} />
-        <Text style={styles.title}>Tasks</Text>
+        <Text style={styles.title}>{t('screenTitle')}</Text>
       </View>
       <Pressable
         style={styles.iconButton}

@@ -15,6 +15,7 @@ import type {
   ConnectionState,
   MobileConnectionDiagnosticPath
 } from '../transport/types'
+import { useMobileLocale } from '../i18n/use-mobile-translation'
 
 export function ConnectionDiagnosticsScreen({
   device,
@@ -43,8 +44,9 @@ export function ConnectionDiagnosticsScreen({
   const [copiedHostId, setCopiedHostId] = useState<string | null>(null)
   const [submissionStates, setSubmissionStates] = useState<DiagnosticsSubmissionStates>({})
 
+  const locale = useMobileLocale()
   const diagnosisArgs = host
-    ? { endpoint: host.endpoint, state, activePath, pendingPath, entries }
+    ? { endpoint: host.endpoint, state, activePath, pendingPath, entries, locale }
     : null
   const diagnosis = diagnosisArgs ? diagnoseConnection(diagnosisArgs) : null
   const incidentId = diagnosisArgs ? getReportableConnectionIncidentId(diagnosisArgs) : null

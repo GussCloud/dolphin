@@ -6,7 +6,7 @@ import type { RpcClient } from '../transport/rpc-client'
 import type { ConnectionState } from '../transport/types'
 import { sessionWorktreeRecordRead } from './mobile-session-read-operations'
 import { getLiveWorktreeDisplayName } from './worktree-display-name'
-import { FLOATING_WORKSPACE_TITLE, isFloatingWorkspaceWorktreeId } from './floating-workspace'
+import { floatingWorkspaceTitle, isFloatingWorkspaceWorktreeId } from './floating-workspace'
 import {
   classifyWorktreeShowResponse,
   type WorktreeShowResolution
@@ -201,7 +201,7 @@ export function useLiveWorktreeName({
 
   if (isFloatingWorkspace) {
     // The sentinel has no worktree record to resolve, so nothing is ever proven about it.
-    return { name: FLOATING_WORKSPACE_TITLE, resolution: 'unknown' }
+    return { name: floatingWorkspaceTitle(), resolution: 'unknown' }
   }
   return {
     name: worktreeName.worktreeId === worktreeId ? worktreeName.name : routeNameHint,

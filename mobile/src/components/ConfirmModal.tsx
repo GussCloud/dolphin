@@ -1,6 +1,8 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { colors, spacing, radii, typography } from '../theme/mobile-theme'
 import { BottomDrawer } from './BottomDrawer'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   visible: boolean
@@ -17,12 +19,13 @@ export function ConfirmModal({
   visible,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   destructive = false,
   onConfirm,
   onCancel
 }: Props) {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <BottomDrawer visible={visible} onClose={onCancel}>
       <View style={styles.content}>
@@ -34,7 +37,7 @@ export function ConfirmModal({
           style={({ pressed }) => [styles.button, styles.cancelButton, pressed && styles.pressed]}
           onPress={onCancel}
         >
-          <Text style={styles.cancelText}>{cancelLabel}</Text>
+          <Text style={styles.cancelText}>{cancelLabel ?? t('cancel')}</Text>
         </Pressable>
         <Pressable
           style={({ pressed }) => [
@@ -48,7 +51,7 @@ export function ConfirmModal({
           }}
         >
           <Text style={destructive ? styles.destructiveText : styles.confirmText}>
-            {confirmLabel}
+            {confirmLabel ?? t('confirm')}
           </Text>
         </Pressable>
       </View>

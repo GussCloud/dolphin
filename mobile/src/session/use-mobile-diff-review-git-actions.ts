@@ -9,7 +9,8 @@ import {
 import { triggerError, triggerSuccess } from '../platform/haptics'
 import type { MobileDiffReviewQueueItem } from './mobile-diff-review-queue'
 import type { GitMutationMethod } from './mobile-diff-review-screen-model'
-import { mobileReviewCountLabel } from './mobile-diff-review-screen-model'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 type GitActionsInput = {
   client: RpcClient | null
@@ -28,7 +29,7 @@ export function useMobileDiffReviewGitActions(input: GitActionsInput) {
   const runGitMutation = useCallback(
     async (method: GitMutationMethod, item: MobileDiffReviewQueueItem) => {
       if (!client || connState !== 'connected') {
-        setActionError('Waiting for desktop...')
+        setActionError(translate(sessionReviewCatalog, 'waitingForDesktop'))
         return
       }
       setBusyAction(`${method}:${item.filePath}`)
@@ -41,13 +42,17 @@ export function useMobileDiffReviewGitActions(input: GitActionsInput) {
         })
         interpretOrThrowRefusalMessage(
           () => mutation.interpret(response),
-          'Source control action failed'
+          translate(sessionReviewCatalog, 'sourceControlActionFailed')
         )
         triggerSuccess()
         await loadReviewData()
       } catch (err) {
         triggerError()
-        setActionError(err instanceof Error ? err.message : 'Source control action failed')
+        setActionError(
+          err instanceof Error
+            ? err.message
+            : translate(sessionReviewCatalog, 'sourceControlActionFailed')
+        )
       } finally {
         setBusyAction(null)
       }
@@ -57,7 +62,7 @@ export function useMobileDiffReviewGitActions(input: GitActionsInput) {
 
   const stageReviewedFiles = useCallback(async () => {
     if (!client || connState !== 'connected') {
-      setActionError('Waiting for desktop...')
+      setActionError(translate(sessionReviewCatalog, 'waitingForDesktop'))
       return
     }
     const files = queue.filter(
@@ -87,8 +92,8 @@ export function useMobileDiffReviewGitActions(input: GitActionsInput) {
     triggerSuccess()
     setActionError(
       failed > 0
-        ? `${staged} staged, ${failed} failed`
-        : `${mobileReviewCountLabel(staged, 'reviewed file', 'reviewed files')} staged`
+        ? translate(sessionReviewCatalog, 'stagedWithFailures', { staged, failed })
+        : translate(sessionReviewCatalog, 'reviewedFilesStaged', { count: staged })
     )
     await loadReviewData()
   }, [client, connState, loadReviewData, queue, setActionError, setBusyAction, worktreeId])

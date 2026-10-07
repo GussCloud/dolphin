@@ -29,8 +29,10 @@ import { useMobileSourceControlCommitFailure } from './use-mobile-source-control
 import {
   buildMobileGitStatusEntryViews,
   formatBranchLabel,
+  describeMobileUpstream,
   type MobileBranchEntryView
 } from './mobile-source-control-screen-state'
+import { useMobileLocale } from '../i18n/use-mobile-translation'
 
 type MobileGitLocalBranches = RuntimeGitLocalBranches
 
@@ -61,6 +63,7 @@ export function useMobileSourceControlState(params: MobileSourceControlStatePara
     onOpenHistory
   } = params
   const insets = useSafeAreaInsets()
+  const locale = useMobileLocale() // Why: sections and actions are translated when built.
   const { client, state: connState } = useHostClient(hostId)
   const forceReconnect = useForceReconnect()
   const [busyAction, setBusyAction] = useState<string | null>(null)
@@ -120,8 +123,10 @@ export function useMobileSourceControlState(params: MobileSourceControlStatePara
 
   const status = screenState.kind === 'ready' ? screenState.status : null
   const entries = status?.entries ?? []
-  const derivedEntries = useMemo(() => buildMobileGitStatusEntryViews(entries), [entries])
-  const sections = useMemo(() => buildMobileSourceControlSections(derivedEntries), [derivedEntries])
+  const sections = useMemo(
+    () => buildMobileSourceControlSections(buildMobileGitStatusEntryViews(entries)),
+    [entries, locale]
+  )
   const branchCompareResult = branchCompareState.kind === 'ready' ? branchCompareState.result : null
   const branchCompareSection = useMemo(
     () => buildMobileBranchCompareSection(branchCompareResult?.entries ?? []),
@@ -161,14 +166,7 @@ export function useMobileSourceControlState(params: MobileSourceControlStatePara
     [entries]
   )
   const branchLabel = formatBranchLabel(status?.branch, status?.head)
-  const upstream = status?.upstreamStatus
-  const upstreamKnown = upstream !== undefined
-  const syncLabel =
-    upstream && upstream.hasUpstream
-      ? `${upstream.ahead} ahead, ${upstream.behind} behind`
-      : upstream && !upstream.hasUpstream
-        ? 'No upstream'
-        : null
+  const { upstream, upstreamKnown, syncLabel } = describeMobileUpstream(status?.upstreamStatus)
 
   const { sendGitRequest, sendCommitRequest, runGitSyncSteps } = useMobileGitRequests({
     client,
@@ -241,6 +239,7 @@ export function useMobileSourceControlState(params: MobileSourceControlStatePara
       busyAction,
       commitMessage,
       hasUnresolvedConflicts,
+      locale,
       openingBranchPath,
       openingPath,
       runners.commit,

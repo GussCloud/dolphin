@@ -8,8 +8,11 @@ import {
   subscribePendingHostCredentialCleanup
 } from '../transport/host-credential-cleanup'
 import { retryPendingHostCredentialCleanup } from '../transport/host-store'
+import { settingsCatalog } from '../i18n/catalogs/settings'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function PendingCredentialCleanupCard() {
+  const t = useMobileTranslation(settingsCatalog)
   const [pendingCredentialIds, setPendingCredentialIds] = useState<string[]>([])
   const [credentialStorageUnreadable, setCredentialStorageUnreadable] = useState(false)
   const [retryingCredentialCleanup, setRetryingCredentialCleanup] = useState(false)
@@ -75,18 +78,18 @@ export function PendingCredentialCleanupCard() {
       <View style={styles.credentialCleanupRow}>
         <KeyRound size={16} color={colors.statusAmber} />
         <View style={styles.credentialCleanupCopy}>
-          <Text style={styles.credentialCleanupTitle}>Pairing credential cleanup</Text>
+          <Text style={styles.credentialCleanupTitle}>{t('credentialCleanupTitle')}</Text>
           <Text accessibilityLiveRegion="polite" style={styles.rowHint}>
             {credentialRetryFailed
-              ? "Cleanup still couldn't be confirmed. Try again later."
+              ? t('credentialCleanupRetryFailed')
               : pendingCredentialCount > 0
-                ? `Couldn't confirm cleanup for ${pendingCredentialCount} credential${pendingCredentialCount === 1 ? '' : 's'} on this device.`
-                : "Couldn't check cleanup status on this device. Retry to be safe."}
+                ? t('credentialCleanupPending', { count: pendingCredentialCount })
+                : t('credentialCleanupUnreadable')}
           </Text>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Retry clearing pairing credentials"
+          accessibilityLabel={t('credentialCleanupRetryLabel')}
           accessibilityState={{
             busy: retryingCredentialCleanup,
             disabled: retryingCredentialCleanup
@@ -102,7 +105,7 @@ export function PendingCredentialCleanupCard() {
           {retryingCredentialCleanup ? (
             <ActivityIndicator size="small" color={colors.textSecondary} />
           ) : (
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>{t('retry')}</Text>
           )}
         </Pressable>
       </View>

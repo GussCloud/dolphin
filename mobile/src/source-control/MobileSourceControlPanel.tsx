@@ -20,6 +20,8 @@ import { useMobilePrSidebarController } from '../session/use-mobile-pr-sidebar-c
 import { prSidebarDetailsNeedFetch } from '../session/mobile-pr-sidebar-state'
 import { MobilePrViewPanelBody } from '../components/pr-sidebar/MobilePrViewPanel'
 import { openMobilePrUrl } from '../components/mobile-pr-url'
+import { sourceControlCatalog } from '../i18n/catalogs/source-control'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export type MobileSourceControlPanelProps = {
   hostId: string
@@ -46,6 +48,7 @@ export function MobileSourceControlPanel({
   onFileOpenStart,
   onOpenedFileDiff
 }: MobileSourceControlPanelProps) {
+  const t = useMobileTranslation(sourceControlCatalog)
   const [activeTab, setActiveTab] = useState<SourceControlHubTab>(initialTab)
   // Track first visit so Changes/History stay mounted (keep scroll) after first open; PR still unmounts when inactive.
   const [visitedTabs, setVisitedTabs] = useState<ReadonlySet<SourceControlHubTab>>(
@@ -195,7 +198,8 @@ export function MobileSourceControlPanel({
         ? countUnresolvedReviewThreads(prController.prSidebarState.data.details?.comments)
         : null
     return buildMobilePrChipSummary(prController.prSidebarState, commentCount)
-  }, [isHostedRepo, prBranch, prController.prSidebarState])
+    // Why t: the rollup text is translated when the summary is built.
+  }, [isHostedRepo, prBranch, prController.prSidebarState, t])
 
   // Refresh the active segment plus git.status (branch card stays honest on History); preserve ready on failure so the PR chip isn't wiped.
   const onRefresh = useCallback(() => {
@@ -257,12 +261,12 @@ export function MobileSourceControlPanel({
     ) : screenState.kind === 'error' || screenState.kind === 'unavailable' ? (
       <View style={styles.state}>
         <Text style={styles.stateTitle}>
-          {screenState.kind === 'unavailable' ? 'Source Control Unavailable' : 'Unable to Load'}
+          {screenState.kind === 'unavailable' ? t('unavailableTitle') : t('unableToLoadTitle')}
         </Text>
         <Text style={styles.stateText}>{screenState.message}</Text>
         {screenState.kind === 'error' && statusRetry ? (
           <Pressable style={styles.retryButton} onPress={statusRetry}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('retry')}</Text>
           </Pressable>
         ) : null}
       </View>

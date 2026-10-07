@@ -10,14 +10,22 @@ import {
   requestCodexResetCredit
 } from './codex-reset-credit'
 import { useCodexResetCreditCapability } from './codex-reset-credit-capability'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import type { componentsEn } from '../i18n/catalogs/components/en'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
-function describeScope(snapshot: AccountsSnapshot, scope: CodexResetCreditExpectedScope): string {
+function describeScope(
+  snapshot: AccountsSnapshot,
+  scope: CodexResetCreditExpectedScope,
+  t: MobileTranslate<typeof componentsEn>
+): string {
   const account = snapshot.codex.accounts.find((candidate) => candidate.id === scope.accountId)
-  const identity = account?.email ?? 'the selected managed account'
+  const identity = account?.email ?? t('resetScopeSelectedAccount')
   if (scope.target.runtime === 'host') {
-    return `${identity} on the host`
+    return t('resetScopeOnHost', { identity })
   }
-  return `${identity} on WSL ${scope.target.wslDistro}`
+  return t('resetScopeOnWsl', { identity, distro: scope.target.wslDistro ?? '' })
 }
 
 export function useCodexResetCreditAction({
@@ -41,6 +49,7 @@ export function useCodexResetCreditAction({
   scopeLabel: string | null
   confirmReset: () => void
 } {
+  const t = useMobileTranslation(componentsCatalog)
   const supported = useCodexResetCreditCapability(client, connected)
   const [resetting, setResetting] = useState(false)
   const inFlightRef = useRef(false)
@@ -49,8 +58,8 @@ export function useCodexResetCreditAction({
     [snapshot]
   )
   const scopeLabel = useMemo(
-    () => (snapshot && resetScope ? describeScope(snapshot, resetScope) : null),
-    [resetScope, snapshot]
+    () => (snapshot && resetScope ? describeScope(snapshot, resetScope, t) : null),
+    [resetScope, snapshot, t]
   )
 
   const consume = useCallback(
@@ -68,31 +77,30 @@ export function useCodexResetCreditAction({
         })
         onSnapshot(result.snapshot)
         if ('status' in result) {
-          const cleanupWarning = result.attemptJournalRetained
-            ? '\n\nThis phone could not clear the discarded retry record. Retrying it is safe, but the record must be cleared before a new reset can be confirmed for this account.'
-            : ''
+          const message = t('resetDetailsChangedMessage')
           Alert.alert(
-            'Reset details changed',
-            `The account or reset offer changed before the host contacted Codex. Review the updated details, then confirm again.${cleanupWarning}`
+            t('resetDetailsChangedTitle'),
+            result.attemptJournalRetained
+              ? `${message}\n\n${t('resetDiscardedRecordWarning')}`
+              : message
           )
           return
         }
         const copy = getCodexResetCreditOutcomeCopy(result.outcome)
-        const cleanupWarning = result.attemptJournalRetained
-          ? '\n\nThe host confirmed this attempt, but this phone could not clear its retry record. A later retry will reuse the same safe operation ID.'
-          : ''
-        Alert.alert(copy.title, `${copy.message}${cleanupWarning}`)
-      } catch (error) {
         Alert.alert(
-          'Could not reset rate limits',
-          error instanceof Error ? error.message : String(error)
+          copy.title,
+          result.attemptJournalRetained
+            ? `${copy.message}\n\n${t('resetConfirmedRecordWarning')}`
+            : copy.message
         )
+      } catch (error) {
+        Alert.alert(t('resetFailedTitle'), error instanceof Error ? error.message : String(error))
       } finally {
         inFlightRef.current = false
         setResetting(false)
       }
     },
-    [client, hostId, onSnapshot]
+    [client, hostId, onSnapshot, t]
   )
 
   const confirmReset = useCallback(() => {
@@ -100,16 +108,12 @@ export function useCodexResetCreditAction({
       return
     }
     const confirmedScope = resetScope
-    const confirmedLabel = describeScope(snapshot, confirmedScope)
-    Alert.alert(
-      'Use a rate-limit reset?',
-      `This spends one earned reset for ${confirmedLabel} and immediately resets eligible rate-limit windows.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Use reset', onPress: () => void consume(confirmedScope) }
-      ]
-    )
-  }, [accountMutationBusy, connected, consume, resetScope, resetting, snapshot, supported])
+    const confirmedLabel = describeScope(snapshot, confirmedScope, t)
+    Alert.alert(t('useResetConfirmTitle'), t('useResetConfirmMessage', { scope: confirmedLabel }), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('useReset'), onPress: () => void consume(confirmedScope) }
+    ])
+  }, [accountMutationBusy, connected, consume, resetScope, resetting, snapshot, supported, t])
 
   return { supported, resetting, resetScope, scopeLabel, confirmReset }
 }

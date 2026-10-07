@@ -22,6 +22,8 @@ import {
   resolveNativeChatTranscriptAgent,
   shouldStepNativeChatAskAnswer
 } from '../../../src/shared/native-chat-agent-support'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 /** Sends an ask-user answer to the active chat pane. Claude and Codex selectors
  *  use their agent-specific keystrokes; other agents get pasted label text.
@@ -107,7 +109,7 @@ export function useMobileNativeChatAnswerSend(args: {
     async (prompt: AskPrompt, selections: AskAnswerSelection[]): Promise<boolean> => {
       const handle = handleRef.current
       if (!client || !handle || !enabled) {
-        onSendError('Answer not sent (disconnected)')
+        onSendError(translate(sessionChatCatalog, 'sendAnswerNotSentDisconnected'))
         return false
       }
       if (!hasAskAnswer(prompt, selections)) {
@@ -120,7 +122,7 @@ export function useMobileNativeChatAnswerSend(args: {
       const holds = writeHoldsRef.current
       const heldCount = holds.get(handle) ?? 0
       if (heldCount === 0 && !acquireMobileNativeChatTerminalWrite(handle)) {
-        onSendError('Answer not sent')
+        onSendError(translate(sessionChatCatalog, 'sendAnswerNotSent'))
         return false
       }
       holds.set(handle, heldCount + 1)
@@ -146,7 +148,7 @@ export function useMobileNativeChatAnswerSend(args: {
           // the generation without writing the Escape that Stop and ask-cancel do,
           // so the card is still up and silence there strands an advanced selector.
           if (writeTurnsRef.current.get(handle) === turn) {
-            onSendError('Answer not sent — check chat before retrying')
+            onSendError(translate(sessionChatCatalog, 'sendAnswerNotSentCheckChat'))
           }
           return false
         }
@@ -215,10 +217,10 @@ export function useMobileNativeChatAnswerSend(args: {
             // user nothing was sent invites a retry on top of the advanced state.
             onSendError(
               sawAcceptedGroup
-                ? 'Answer partly sent — check chat before retrying'
+                ? translate(sessionChatCatalog, 'sendAnswerPartlySent')
                 : sawUnknownOutcome
-                  ? 'Answer unconfirmed — check chat before retrying'
-                  : 'Answer not sent'
+                  ? translate(sessionChatCatalog, 'sendAnswerUnconfirmed')
+                  : translate(sessionChatCatalog, 'sendAnswerNotSent')
             )
           }
           return false
@@ -243,7 +245,7 @@ export function useMobileNativeChatAnswerSend(args: {
             }))
           ) {
             if (generationRef.current === generation) {
-              onSendError('Answer not sent')
+              onSendError(translate(sessionChatCatalog, 'sendAnswerNotSent'))
             }
             return false
           }

@@ -1,5 +1,7 @@
 import { markRpcDeliveryUnknown } from '../../transport/rpc-delivery-ambiguity'
 import type { BridgeRefusal } from './bridge-caps'
+import { mobileWebShellCatalog } from '../../i18n/catalogs/mobile-web-shell'
+import { translate } from '../../i18n/mobile-locale-state'
 
 /** Everything the page's own client raises, as opposed to what it reconstructs from the shell. */
 
@@ -70,7 +72,7 @@ export class BridgeRequestOversizedError extends Error {
   readonly code = 'bridge_request_oversized'
 
   constructor() {
-    super('This action sends too much at once to reach Dolphin. Try it on fewer files.')
+    super(translate(mobileWebShellCatalog, 'requestOversized'))
     this.name = 'BridgeRequestOversizedError'
   }
 }

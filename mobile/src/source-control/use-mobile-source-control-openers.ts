@@ -27,6 +27,7 @@ import type {
   MobileBranchDiffPreviewState
 } from './mobile-source-control-screen-state'
 import type { MobileGitDiffReply } from './git-compare-reply-schema'
+import { sourceControlText as scText } from './source-control-text'
 
 type Params = {
   client: RpcClient | null
@@ -93,7 +94,7 @@ export function useMobileSourceControlOpeners(params: Params) {
         if (!mountedRef.current) {
           return
         }
-        setActionError('Waiting for desktop...')
+        setActionError(scText('waitingForDesktop'))
         return
       }
       openingPathRef.current = entry.path
@@ -139,7 +140,7 @@ export function useMobileSourceControlOpeners(params: Params) {
             sourceFileDiffOpenRun.interpret(diffReply)
           }
         } catch (error) {
-          throw new Error(refusedRpcMessageOrFallback(error, 'Unable to open diff'))
+          throw new Error(refusedRpcMessageOrFallback(error, scText('unableToOpenDiff')))
         }
         if (!mountedRef.current) {
           return
@@ -157,7 +158,7 @@ export function useMobileSourceControlOpeners(params: Params) {
           return
         }
         if (revealResult === 'timeout') {
-          throw new Error("The file opened, but its tab isn't ready yet. Try again.")
+          throw new Error(scText('fileTabNotReady'))
         }
         triggerSelection()
         // Why: when launched from the session screen, opening a file dismisses
@@ -176,7 +177,7 @@ export function useMobileSourceControlOpeners(params: Params) {
           return
         }
         triggerError()
-        setActionError(err instanceof Error ? err.message : 'Unable to open diff')
+        setActionError(err instanceof Error ? err.message : scText('unableToOpenDiff'))
       } finally {
         if (openingPathRef.current === entry.path) {
           openingPathRef.current = null
@@ -213,7 +214,7 @@ export function useMobileSourceControlOpeners(params: Params) {
         if (!mountedRef.current) {
           return
         }
-        setActionError('Waiting for desktop...')
+        setActionError(scText('waitingForDesktop'))
         return
       }
       if (branchCompareState.kind !== 'ready') {
@@ -260,10 +261,10 @@ export function useMobileSourceControlOpeners(params: Params) {
         try {
           result = gitBranchDiffRead.interpret(reply)
         } catch (error) {
-          throw new Error(refusedRpcMessageOrFallback(error, 'Unable to load committed diff'))
+          throw new Error(refusedRpcMessageOrFallback(error, scText('unableToLoadCommittedDiff')))
         }
         if (result.kind !== 'text') {
-          throw new Error('Binary branch diff preview unavailable on mobile')
+          throw new Error(scText('binaryBranchDiffUnavailable'))
         }
         const diff = buildMobileDiffLines(result.originalContent, result.modifiedContent)
         const syntaxLanguage = resolveMobileSyntaxLanguage(entry.path)
@@ -286,7 +287,7 @@ export function useMobileSourceControlOpeners(params: Params) {
         setBranchDiffPreview({
           kind: 'error',
           entry,
-          message: err instanceof Error ? err.message : 'Unable to load committed diff'
+          message: err instanceof Error ? err.message : scText('unableToLoadCommittedDiff')
         })
       } finally {
         if (openingBranchPathRef.current === entry.path) {

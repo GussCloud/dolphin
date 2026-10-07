@@ -3,6 +3,8 @@ import { Text, TextInput, View } from 'react-native'
 import type { MobileFilePreviewLineColumn } from './mobile-file-preview-line-column'
 import { textOffsetForLineColumn } from './mobile-file-preview-line-column'
 import { filePreviewStyles as styles } from './mobile-file-preview-styles'
+import { filesCatalog } from '../i18n/catalogs/files'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   title: string
@@ -19,6 +21,7 @@ export function MobileFilePreviewEditableSource({
   saveError,
   onDraftChange
 }: Props) {
+  const t = useMobileTranslation(filesCatalog)
   const selectionTargetKey = lineColumn
     ? `${title}:${lineColumn.line}:${lineColumn.column ?? ''}`
     : ''
@@ -49,7 +52,7 @@ export function MobileFilePreviewEditableSource({
         autoCorrect={false}
         selection={selection ?? undefined}
         onSelectionChange={() => setSelection(null)}
-        accessibilityLabel={`${title} editor`}
+        accessibilityLabel={t('editorA11y', { title })}
       />
     </View>
   )

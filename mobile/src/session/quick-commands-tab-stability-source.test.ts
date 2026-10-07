@@ -1,5 +1,7 @@
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 import { readMobileSessionRouteSource } from './mobile-session-route-source-family.test-support'
 
 const sourcePath = './MobileSessionHeader.tsx'
@@ -31,7 +33,7 @@ function findQuickCommandsTabButtons(): ts.JsxSelfClosingElement[] {
 }
 
 function getQuickCommandsTabSource(): string {
-  const start = source.indexOf('accessibilityLabel="New tab"')
+  const start = source.indexOf("accessibilityLabel={t('newTabAccessibility')}")
   expect(start).toBeGreaterThanOrEqual(0)
   const end = source.indexOf('</SafeAreaView>', start)
   expect(end).toBeGreaterThan(start)
@@ -57,8 +59,14 @@ describe('quick-commands tab stability', () => {
     expect(style?.initializer?.getText(sourceFile)).toBe('{styles.tabBar}')
     expect(tabSource).toContain('if (quickCommandsSupported === true)')
     expect(tabSource).toContain('setShowQuickCommands(true)')
-    expect(tabSource).toContain('Desktop update required for quick commands')
-    expect(tabSource).toContain('Checking desktop capabilities — try again in a moment')
+    expect(tabSource).toContain("t('quickCommandsNeedDesktopUpdate')")
+    expect(tabSource).toContain("t('checkingDesktopCapabilities')")
+    expect(translate(sessionCatalog, 'quickCommandsNeedDesktopUpdate')).toBe(
+      'Desktop update required for quick commands'
+    )
+    expect(translate(sessionCatalog, 'checkingDesktopCapabilities')).toBe(
+      'Checking desktop capabilities — try again in a moment'
+    )
   })
 
   it('only presents the sheet after support is confirmed', () => {

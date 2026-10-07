@@ -2,6 +2,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { RotateCcw } from 'lucide-react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { CodexResetCreditSummary } from './codex-reset-credit'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function CodexResetCreditAction({
   summary,
@@ -16,6 +18,7 @@ export function CodexResetCreditAction({
   disabled: boolean
   onPress: () => void
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <>
       <View style={styles.separator} />
@@ -23,8 +26,7 @@ export function CodexResetCreditAction({
         <View style={styles.copy}>
           <Text style={styles.title}>{summary.availabilityLabel}</Text>
           <Text style={styles.subtitle}>
-            {[summary.expiryLabel, scopeLabel].filter(Boolean).join(' · ') ||
-              'Earned Codex rate-limit reset'}
+            {[summary.expiryLabel, scopeLabel].filter(Boolean).join(' · ') || t('earnedCodexReset')}
           </Text>
         </View>
         <Pressable
@@ -36,11 +38,9 @@ export function CodexResetCreditAction({
           onPress={onPress}
           disabled={disabled}
           accessibilityRole="button"
-          accessibilityLabel={busy ? 'Resetting Codex rate limits' : 'Use Codex rate-limit reset'}
+          accessibilityLabel={busy ? t('resettingCodexLimits') : t('useCodexReset')}
           accessibilityHint={
-            scopeLabel
-              ? `Uses one earned reset for ${scopeLabel}`
-              : 'Uses one earned reset for the active Codex account'
+            scopeLabel ? t('useResetHintScoped', { scope: scopeLabel }) : t('useResetHintActive')
           }
           accessibilityState={{ busy, disabled }}
           hitSlop={8}
@@ -50,7 +50,7 @@ export function CodexResetCreditAction({
           ) : (
             <RotateCcw size={14} color={colors.textPrimary} />
           )}
-          <Text style={styles.buttonText}>{busy ? 'Resetting…' : 'Use reset'}</Text>
+          <Text style={styles.buttonText}>{busy ? t('resetting') : t('useReset')}</Text>
         </Pressable>
       </View>
     </>

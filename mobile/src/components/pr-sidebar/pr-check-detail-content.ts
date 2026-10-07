@@ -4,6 +4,8 @@ import type {
   PRCheckRunDetails,
   PRCheckStep
 } from '../../../../src/shared/github/check-types'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { translate } from '../../i18n/mobile-locale-state'
 
 // Pure mapping from the github.prCheckDetails payload to the rows the mobile
 // expanded check detail renders. No React/native imports so it stays unit-testable
@@ -52,7 +54,7 @@ export type CheckDetailContent = {
 }
 
 function mapAnnotation(annotation: PRCheckAnnotation): CheckDetailAnnotation {
-  const path = annotation.path ?? 'Annotation'
+  const path = annotation.path ?? translate(componentsPrSidebarCatalog, 'checkAnnotation')
   const locator = annotation.startLine ? `${path}:${annotation.startLine}` : path
   return {
     locator,

@@ -4,6 +4,8 @@ import { ShieldQuestion, X } from 'lucide-react-native'
 import { MobileMarkdown } from '../components/MobileMarkdown'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { MobileChatPermission } from './mobile-native-chat-permission'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Renders a detected agent permission ask as a card with tappable options.
 // The first option is treated as the primary (allow) action and gets a filled
@@ -17,6 +19,7 @@ function MobileNativeChatPermissionImpl({
   onRespond: (send: string) => Promise<boolean>
   onCancel?: (prompt?: NonNullable<MobileChatPermission['prompt']>) => Promise<boolean>
 }): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
   const hasContext = Boolean(
@@ -53,7 +56,7 @@ function MobileNativeChatPermissionImpl({
         </Text>
         {onCancel ? (
           <Pressable
-            accessibilityLabel="Cancel"
+            accessibilityLabel={t('cancel')}
             hitSlop={8}
             style={styles.cancel}
             onPress={() => void onCancel(permission.prompt)}
@@ -75,19 +78,19 @@ function MobileNativeChatPermissionImpl({
           ) : null}
           {permission.decisionReason ? (
             <Text style={styles.detail}>
-              <Text style={styles.contextLabel}>Reason: </Text>
+              <Text style={styles.contextLabel}>{t('permissionReasonLabel')}</Text>
               {permission.decisionReason}
             </Text>
           ) : null}
           {permission.blockedPath ? (
             <Text style={styles.detail}>
-              <Text style={styles.contextLabel}>Blocked path: </Text>
+              <Text style={styles.contextLabel}>{t('permissionBlockedPathLabel')}</Text>
               {permission.blockedPath}
             </Text>
           ) : null}
           {permission.matchedAskRule ? (
             <Text style={styles.detail}>
-              <Text style={styles.contextLabel}>Ask rule: </Text>
+              <Text style={styles.contextLabel}>{t('permissionAskRuleLabel')}</Text>
               {permission.matchedAskRule.ruleContent ?? permission.matchedAskRule.toolName}
               {' · '}
               {permission.matchedAskRule.source}
@@ -97,7 +100,9 @@ function MobileNativeChatPermissionImpl({
             <View>
               <MobileMarkdown content={permission.subject.text} />
               {permission.subject.filePath ? (
-                <Text style={styles.planFile}>Plan file: {permission.subject.filePath}</Text>
+                <Text style={styles.planFile}>
+                  {t('permissionPlanFile', { path: permission.subject.filePath })}
+                </Text>
               ) : null}
             </View>
           ) : permission.detail ? (

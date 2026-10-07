@@ -1,3 +1,6 @@
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { translate } from '../i18n/mobile-locale-state'
+
 export type HomeWorktreeSummary = {
   worktreeId: string
   repo: string
@@ -57,15 +60,22 @@ export function homeHostWorktreeSummary(
   }
   // Why (STA-3123): a catalog that never loaded must not assert a count the host has not proven.
   if (info.catalogUnavailable && !info.staleCounts) {
-    return 'Worktree list unavailable'
+    return translate(worktreeCatalog, 'worktreeListUnavailable')
   }
-  const counts = `${info.totalWorktrees} worktree${info.totalWorktrees === 1 ? '' : 's'}${
-    info.activeCount > 0 ? ` · ${info.activeCount} active` : ''
-  }`
+  const total = translate(worktreeCatalog, 'worktreeCount', { count: info.totalWorktrees })
+  const counts =
+    info.activeCount > 0
+      ? translate(worktreeCatalog, 'worktreeCountWithActive', {
+          worktrees: total,
+          active: info.activeCount
+        })
+      : total
   // Age bounds liveness, not the counts themselves: a failed refresh — or a rehydrated snapshot the
   // host has not re-confirmed — is still the last thing it told us, so keep it and drop the claim
   // that it is current.
-  return info.staleCounts || !provenRecently(info, now) ? `Last known: ${counts}` : counts
+  return info.staleCounts || !provenRecently(info, now)
+    ? translate(worktreeCatalog, 'lastKnown', { summary: counts })
+    : counts
 }
 
 function provenRecently(info: HostWorktreeInfo, now: number): boolean {

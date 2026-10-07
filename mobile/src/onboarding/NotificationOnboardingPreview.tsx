@@ -3,10 +3,12 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native'
 import { DolphinLogo } from '../components/DolphinLogo'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import { useReducedMotionEnabled } from './use-reduced-motion'
+import { onboardingCatalog } from '../i18n/catalogs/onboarding'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const SAMPLE_NOTIFICATIONS = [
-  { title: 'Codex finished', body: 'Tests are passing.' },
-  { title: 'Claude needs input', body: 'Waiting on you.' }
+  { titleKey: 'sampleCodexTitle', bodyKey: 'sampleCodexBody' },
+  { titleKey: 'sampleClaudeTitle', bodyKey: 'sampleClaudeBody' }
 ] as const
 
 const ENTER_MS = 676
@@ -86,6 +88,7 @@ export function NotificationOnboardingPreview({ active }: Props) {
 }
 
 function SampleBanner({ notification }: { notification: (typeof SAMPLE_NOTIFICATIONS)[number] }) {
+  const t = useMobileTranslation(onboardingCatalog)
   return (
     <View style={styles.card}>
       <View style={styles.appIcon}>
@@ -94,13 +97,13 @@ function SampleBanner({ notification }: { notification: (typeof SAMPLE_NOTIFICAT
       <View style={styles.cardCopy}>
         <View style={styles.cardMeta}>
           <Text style={styles.appName}>Dolphin</Text>
-          <Text style={styles.now}>now</Text>
+          <Text style={styles.now}>{t('sampleNow')}</Text>
         </View>
         <Text style={styles.cardTitle} numberOfLines={1}>
-          {notification.title}
+          {t(notification.titleKey)}
         </Text>
         <Text style={styles.cardBody} numberOfLines={1}>
-          {notification.body}
+          {t(notification.bodyKey)}
         </Text>
       </View>
     </View>

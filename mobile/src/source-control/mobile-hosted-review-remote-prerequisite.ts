@@ -3,6 +3,7 @@ import type { MobileHostedReviewCreateIntentProgress } from './mobile-hosted-rev
 import type { MobilePrPrefill } from './mobile-pr-create'
 import { pushMobileHostedReviewBranch } from './mobile-hosted-review-git-preparation'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sourceControlText } from './source-control-text'
 
 type RemotePrerequisiteInput = {
   status: MobileGitStatusResult | null
@@ -22,7 +23,7 @@ export async function applyMobileHostedReviewRemotePrerequisite(
       const result = await pushMobileHostedReviewBranch(
         client,
         { worktree, publish: true },
-        'Failed to publish branch'
+        sourceControlText('failedToPublishBranch')
       )
       return result.ok ? { ok: true, ran: true } : result
     }
@@ -31,7 +32,7 @@ export async function applyMobileHostedReviewRemotePrerequisite(
       const result = await pushMobileHostedReviewBranch(
         client,
         { worktree },
-        'Failed to push commits'
+        sourceControlText('failedToPushCommits')
       )
       return result.ok ? { ok: true, ran: true } : result
     }
@@ -43,7 +44,7 @@ export async function applyMobileHostedReviewRemotePrerequisite(
       const result = await pushMobileHostedReviewBranch(
         client,
         { worktree, forceWithLease: true },
-        'Failed to force push with lease'
+        sourceControlText('failedToForcePush')
       )
       return result.ok ? { ok: true, ran: true } : result
     }

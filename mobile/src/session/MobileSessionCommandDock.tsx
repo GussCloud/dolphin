@@ -20,6 +20,8 @@ import { isTerminalPhoneDisplayMode } from './mobile-session-route-helpers'
 import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-session-styles'
 import type { MobileSessionController } from './use-mobile-session-controller'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileSessionCommandDock({ controller }: { controller: MobileSessionController }) {
   const {
@@ -65,6 +67,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     activeBrowserTab,
     keyboardLift
   } = controller
+  const t = useMobileTranslation(sessionCatalog)
   return (
     !activeMarkdownTab &&
     !activeFileTab &&
@@ -88,8 +91,8 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               onPress={dismissSoftwareKeyboard}
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="Dismiss keyboard"
-              accessibilityHint="Hides the software keyboard and keeps the current terminal session open."
+              accessibilityLabel={t('dismissKeyboard')}
+              accessibilityHint={t('dismissKeyboardTerminalHint')}
             >
               <View style={styles.keyboardDismissGlyph}>
                 <KeyboardIcon size={15} color={colors.textSecondary} strokeWidth={2} />
@@ -124,8 +127,8 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               }}
               accessibilityLabel={
                 isTerminalPhoneDisplayMode(activeHandle, terminalModes)
-                  ? 'Switch to desktop mode'
-                  : 'Switch to phone mode'
+                  ? t('switchToDesktopMode')
+                  : t('switchToPhoneMode')
               }
             >
               {isTerminalPhoneDisplayMode(activeHandle, terminalModes) ? (
@@ -145,9 +148,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               disabled={!canCompose}
               onPress={toggleLiveInput}
               accessibilityLabel={
-                liveInputEnabled
-                  ? 'Switch to buffered command input'
-                  : 'Switch to live terminal input'
+                liveInputEnabled ? t('switchToBufferedInput') : t('switchToLiveInput')
               }
             >
               <ChevronsRight
@@ -170,12 +171,12 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                 ]}
                 disabled={!canSend}
                 onPress={() => void handlePaste()}
-                accessibilityLabel="Paste from clipboard"
+                accessibilityLabel={t('pasteFromClipboard')}
               >
                 <Text
                   style={[styles.accessoryKeyText, !canSend && styles.accessoryKeyTextDisabled]}
                 >
-                  Paste
+                  {t('paste')}
                 </Text>
               </Pressable>
             )}
@@ -207,7 +208,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                   }
                   void handleAccessoryKey(createTerminalLiveAccessoryInput(key))
                 }}
-                accessibilityLabel={key.accessibilityLabel ?? `Send ${key.label}`}
+                accessibilityLabel={key.accessibilityLabel ?? t('sendKey', { key: key.label })}
               >
                 <Text
                   style={[styles.accessoryKeyText, !canSend && styles.accessoryKeyTextDisabled]}
@@ -232,7 +233,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                   setDeleteKeyTarget(key)
                 }}
                 delayLongPress={400}
-                accessibilityLabel={`Send ${key.label}`}
+                accessibilityLabel={t('sendKey', { key: key.label })}
               >
                 <Text
                   style={[styles.accessoryKeyText, !canSend && styles.accessoryKeyTextDisabled]}
@@ -244,7 +245,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
             <Pressable
               style={({ pressed }) => [styles.accessoryKey, pressed && styles.accessoryKeyPressed]}
               onPress={() => setShowCustomKeyModal(true)}
-              accessibilityLabel="Add custom shortcut"
+              accessibilityLabel={t('addCustomShortcut')}
             >
               <Plus size={14} color={colors.textSecondary} strokeWidth={2.2} />
             </Pressable>
@@ -263,8 +264,8 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               disabled={!canSend}
               onPress={focusLiveInput}
               accessibilityRole="button"
-              accessibilityLabel="Show keyboard for live terminal input"
-              accessibilityHint="Typed text is sent directly to the active terminal"
+              accessibilityLabel={t('showLiveInputKeyboard')}
+              accessibilityHint={t('showLiveInputKeyboardHint')}
             >
               <KeyboardIcon size={16} color={colors.textSecondary} strokeWidth={2} />
               <MobileTerminalLiveInputStatus
@@ -326,7 +327,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               value={bufferedTerminalDraftState.input}
               // Why: iOS kills active dictation/IME if JS writes a value differing from native text; store raw, normalize at send.
               onChangeText={bufferedTerminalDraftState.setInput}
-              placeholder="Type a command…"
+              placeholder={t('typeCommandPlaceholder')}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={autocompleteEnabled}
@@ -360,7 +361,7 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
               disabled={!canSend}
               onPress={() => void handleSend()}
-              accessibilityLabel="Send command"
+              accessibilityLabel={t('sendCommand')}
             >
               <ArrowUp size={18} color={colors.textSecondary} strokeWidth={2.5} />
             </Pressable>

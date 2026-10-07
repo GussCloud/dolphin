@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native'
 import { ArrowRight, ExternalLink, Pencil } from 'lucide-react-native'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import type { PRInfo } from '../../../../src/shared/github/pull-request-types'
 import type { GitHubWorkItemDetails } from '../../../../src/shared/github/work-item-types'
 import type { MobilePrTitleAction } from '../../session/use-mobile-pr-title-action'
@@ -32,6 +34,7 @@ export function PRSidebarHeader({
   showOpenOnWeb = true,
   bare = false
 }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const item = details?.item
   const badge = prStateBadge(pr.state)
   const badgeColor = statusColor(badge.token)
@@ -50,7 +53,7 @@ export function PRSidebarHeader({
             onPress={openPr}
             disabled={!openPr}
             accessibilityRole="link"
-            accessibilityLabel={`Open pull request #${pr.number} on the web`}
+            accessibilityLabel={t('openPullRequestOnWeb', { number: pr.number })}
             style={({ pressed }) => [
               styles.badge,
               { borderColor: badgeColor },
@@ -63,7 +66,7 @@ export function PRSidebarHeader({
             style={styles.prMetaStrong}
             onPress={openPr}
             accessibilityRole="link"
-            accessibilityLabel={`Open pull request #${pr.number} on the web`}
+            accessibilityLabel={t('openPullRequestOnWeb', { number: pr.number })}
           >
             #{pr.number}
           </Text>
@@ -74,7 +77,7 @@ export function PRSidebarHeader({
             onPress={openPr}
             hitSlop={8}
             accessibilityRole="link"
-            accessibilityLabel={`Open pull request #${pr.number} in browser`}
+            accessibilityLabel={t('openPullRequestInBrowser', { number: pr.number })}
             style={({ pressed }) => [styles.iconButton, pressed && { opacity: 0.6 }]}
           >
             <ExternalLink size={16} color={colors.textSecondary} strokeWidth={2.2} />
@@ -115,6 +118,7 @@ function PRTitle({
   editable: boolean
   titleAction: MobilePrTitleAction
 }) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(title)
 
@@ -154,21 +158,21 @@ function PRTitle({
             onPress={cancel}
             disabled={titleAction.saving}
             accessibilityRole="button"
-            accessibilityLabel="Cancel editing title"
+            accessibilityLabel={t('cancelEditingTitle')}
           >
-            <Text style={composerStyles.cancelText}>Cancel</Text>
+            <Text style={composerStyles.cancelText}>{t('cancel')}</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [composerStyles.submit, pressed && composerStyles.pressed]}
             onPress={() => void save()}
             disabled={titleAction.saving}
             accessibilityRole="button"
-            accessibilityLabel="Save title"
+            accessibilityLabel={t('saveTitle')}
           >
             {titleAction.saving ? (
               <ActivityIndicator size="small" color={colors.bgBase} />
             ) : (
-              <Text style={composerStyles.submitText}>Save</Text>
+              <Text style={composerStyles.submitText}>{t('save')}</Text>
             )}
           </Pressable>
         </View>
@@ -182,7 +186,7 @@ function PRTitle({
       onPress={editable ? startEdit : undefined}
       disabled={!editable}
       accessibilityRole={editable ? 'button' : undefined}
-      accessibilityLabel={editable ? 'Edit pull request title' : undefined}
+      accessibilityLabel={editable ? t('editPullRequestTitle') : undefined}
     >
       <Text style={styles.prTitle}>{title}</Text>
       {editable ? (

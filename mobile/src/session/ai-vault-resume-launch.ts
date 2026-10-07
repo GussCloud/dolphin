@@ -21,6 +21,8 @@ import { interpretOrThrowRefusalMessage } from '../transport/rpc-refusal-message
 import { reviewTerminalCreateRun, reviewTerminalSendRun } from './mobile-review-terminal-operations'
 import type { MobileReviewTerminalTab } from './review-terminal-reply-schema'
 import type { MobileAiVaultResumeTargetStatus } from '../agent-history/agent-history-resume-target'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function buildMobileAiVaultResumeCommand(args: {
   session: Pick<AiVaultSession, 'agent' | 'sessionId' | 'cwd' | 'codexHome'> &
@@ -173,7 +175,7 @@ export async function resumeAiVaultSessionInTerminal(
   let terminalTab
   terminalTab = interpretOrThrowRefusalMessage(
     () => reviewTerminalCreateRun.interpret(created),
-    'Failed to create terminal'
+    translate(sessionReviewCatalog, 'createTerminalFailed')
   )
   const sent = await reviewTerminalSendRun.request(
     client,
@@ -187,10 +189,10 @@ export async function resumeAiVaultSessionInTerminal(
   let accepted
   accepted = interpretOrThrowRefusalMessage(
     () => reviewTerminalSendRun.interpret(sent),
-    'Failed to send resume command'
+    translate(sessionReviewCatalog, 'sendResumeCommandFailed')
   )
   if (!accepted) {
-    throw new Error('Terminal input is locked')
+    throw new Error(translate(sessionReviewCatalog, 'terminalInputLocked'))
   }
   return terminalTab
 }

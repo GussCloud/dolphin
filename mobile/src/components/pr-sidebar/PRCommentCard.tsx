@@ -8,6 +8,8 @@ import type {
   PRComment
 } from '../../../../src/shared/github/comment-types'
 import { colors } from '../../theme/mobile-theme'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { canEditComment, isResolvableComment } from '../../session/pr-comment-actions'
 import { ConfirmModal } from '../ConfirmModal'
 import { CommentMarkdown } from './CommentMarkdown'
@@ -75,6 +77,7 @@ export const PRCommentCard = memo(function PRCommentCard({
   actions?: PRCommentCardActions
   now: number
 }) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [replyOpen, setReplyOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -138,7 +141,7 @@ export const PRCommentCard = memo(function PRCommentCard({
         ) : null}
         {comment.isResolved ? (
           <View style={styles.resolvedChip}>
-            <Text style={styles.resolvedChipText}>resolved</Text>
+            <Text style={styles.resolvedChipText}>{t('commentResolvedChip')}</Text>
           </View>
         ) : null}
         {comment.url ? (
@@ -147,7 +150,7 @@ export const PRCommentCard = memo(function PRCommentCard({
             onPress={() => openExternalLink(comment.url)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Open comment on GitHub"
+            accessibilityLabel={t('openCommentOnGitHub')}
           >
             <ExternalLink size={14} color={colors.textSecondary} strokeWidth={2.2} />
           </Pressable>
@@ -156,8 +159,8 @@ export const PRCommentCard = memo(function PRCommentCard({
       {editOpen && actions ? (
         <View style={styles.composer}>
           <PRCommentComposer
-            placeholder="Edit comment…"
-            submitLabel="Save"
+            placeholder={t('editCommentPlaceholder')}
+            submitLabel={t('save')}
             submitting={editBusy}
             initialBody={comment.body}
             onSubmit={submitEdit}
@@ -179,10 +182,10 @@ export const PRCommentCard = memo(function PRCommentCard({
             disabled={replyBusy}
             hitSlop={6}
             accessibilityRole="button"
-            accessibilityLabel="Reply to comment"
+            accessibilityLabel={t('replyToComment')}
           >
             <CornerDownRight size={13} color={colors.textSecondary} strokeWidth={2.2} />
-            <Text style={styles.actionButtonText}>Reply</Text>
+            <Text style={styles.actionButtonText}>{t('reply')}</Text>
           </Pressable>
           {canMutate ? (
             <Pressable
@@ -195,10 +198,10 @@ export const PRCommentCard = memo(function PRCommentCard({
               disabled={editBusy}
               hitSlop={6}
               accessibilityRole="button"
-              accessibilityLabel="Edit comment"
+              accessibilityLabel={t('editComment')}
             >
               <Pencil size={13} color={colors.textSecondary} strokeWidth={2.2} />
-              <Text style={styles.actionButtonText}>Edit</Text>
+              <Text style={styles.actionButtonText}>{t('edit')}</Text>
             </Pressable>
           ) : null}
           {canMutate ? (
@@ -208,10 +211,10 @@ export const PRCommentCard = memo(function PRCommentCard({
               disabled={deleteBusy}
               hitSlop={6}
               accessibilityRole="button"
-              accessibilityLabel="Delete comment"
+              accessibilityLabel={t('deleteComment')}
             >
               <Trash2 size={13} color={colors.textSecondary} strokeWidth={2.2} />
-              <Text style={styles.actionButtonText}>{deleteBusy ? '…' : 'Delete'}</Text>
+              <Text style={styles.actionButtonText}>{deleteBusy ? '…' : t('delete')}</Text>
             </Pressable>
           ) : null}
           {canResolve ? (
@@ -221,7 +224,7 @@ export const PRCommentCard = memo(function PRCommentCard({
               disabled={resolveBusy}
               hitSlop={6}
               accessibilityRole="button"
-              accessibilityLabel={comment.isResolved ? 'Unresolve thread' : 'Resolve thread'}
+              accessibilityLabel={comment.isResolved ? t('unresolveThread') : t('resolveThread')}
             >
               {comment.isResolved ? (
                 <Undo2 size={13} color={colors.textSecondary} strokeWidth={2.2} />
@@ -229,7 +232,7 @@ export const PRCommentCard = memo(function PRCommentCard({
                 <Check size={13} color={colors.textSecondary} strokeWidth={2.2} />
               )}
               <Text style={styles.actionButtonText}>
-                {resolveBusy ? '…' : comment.isResolved ? 'Unresolve' : 'Resolve'}
+                {resolveBusy ? '…' : comment.isResolved ? t('unresolve') : t('resolve')}
               </Text>
             </Pressable>
           ) : null}
@@ -238,8 +241,8 @@ export const PRCommentCard = memo(function PRCommentCard({
       {replyOpen && !editOpen && actions ? (
         <View style={styles.composer}>
           <PRCommentComposer
-            placeholder="Write a reply…"
-            submitLabel="Reply"
+            placeholder={t('replyPlaceholder')}
+            submitLabel={t('reply')}
             submitting={replyBusy}
             onSubmit={submitReply}
             onCancel={() => setReplyOpen(false)}
@@ -250,9 +253,9 @@ export const PRCommentCard = memo(function PRCommentCard({
       {actions ? (
         <ConfirmModal
           visible={confirmDelete}
-          title="Delete comment?"
-          message="This permanently deletes the comment on GitHub."
-          confirmLabel="Delete"
+          title={t('deleteCommentConfirmTitle')}
+          message={t('deleteCommentConfirmMessage')}
+          confirmLabel={t('delete')}
           destructive
           onConfirm={() => void actions.deleteComment(comment.id)}
           onCancel={() => setConfirmDelete(false)}

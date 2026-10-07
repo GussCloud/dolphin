@@ -32,6 +32,8 @@ import { useNewWorkspaceRepositories } from './use-new-workspace-repositories'
 import { useNewWorkspaceRuntimeContext } from './use-new-workspace-runtime-context'
 import { useNewWorkspaceSetupScript } from './use-new-workspace-setup-script'
 import { useNewWorktreeDrawerNavigation } from './use-new-worktree-drawer-navigation'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function NewWorktreeModal(props: NewWorktreeModalProps) {
   // Why: each drawer opening is a fresh form session; remounting resets local
@@ -56,6 +58,7 @@ export function NewWorktreeModal(props: NewWorktreeModalProps) {
 }
 
 function NewWorktreeModalContent(props: NewWorktreeModalProps) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   const {
     visible,
     client,
@@ -224,7 +227,7 @@ function NewWorktreeModalContent(props: NewWorktreeModalProps) {
         projectBadgeColor={selectedRepo ? getMobileWorkspaceRepoBadgeColor(selectedRepo) : null}
         selectedRepoIsGit={selectedRepoIsGit}
         selectedRepoConnectionId={selectedRepoConnectionId}
-        selectedRepoName={selectedRepo?.displayName ?? 'Remote repository'}
+        selectedRepoName={selectedRepo?.displayName ?? t('remoteRepository')}
         sshGate={executionTarget.sshGate}
         composer={composer}
         selectedAgent={agentSelection.selectedAgent}

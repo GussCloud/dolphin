@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react-native'
 import { colors, spacing, typography } from '../theme/mobile-theme'
+import { settingsCatalog } from '../i18n/catalogs/settings'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileSettingsFrame({
   children,
@@ -14,18 +16,19 @@ export function MobileSettingsFrame({
 }) {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const t = useMobileTranslation(settingsCatalog)
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.topRow}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('back')}
           style={styles.backButton}
           onPress={onBack ?? (() => router.back())}
         >
           <ChevronLeft size={22} color={colors.textSecondary} />
         </Pressable>
-        <Text style={styles.heading}>Settings</Text>
+        <Text style={styles.heading}>{t('settings')}</Text>
       </View>
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + spacing.lg }}

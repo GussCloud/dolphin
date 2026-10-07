@@ -47,6 +47,9 @@ import {
 import { buildMobileAgentHistoryResumeActionState } from './agent-history-session-card'
 import { styles } from './agent-history-styles'
 import { useNow } from '../hooks/use-now'
+import { agentHistoryCatalog } from '../i18n/catalogs/agent-history'
+import { translate } from '../i18n/mobile-locale-state'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export type MobileAgentSessionHistoryPanelProps = {
   hostId: string
@@ -54,11 +57,11 @@ export type MobileAgentSessionHistoryPanelProps = {
   name?: string
 }
 
-const SCOPE_TABS: { scope: AiVaultScope; label: string }[] = [
-  { scope: 'workspace', label: 'Workspace' },
-  { scope: 'project', label: 'Project' },
-  { scope: 'all', label: 'All' }
-]
+const SCOPE_TABS = [
+  { scope: 'workspace', labelKey: 'scopeWorkspace' },
+  { scope: 'project', labelKey: 'scopeProject' },
+  { scope: 'all', labelKey: 'scopeAll' }
+] as const satisfies readonly { scope: AiVaultScope; labelKey: string }[]
 
 export function MobileAgentSessionHistoryPanel({
   hostId,
@@ -68,6 +71,7 @@ export function MobileAgentSessionHistoryPanel({
   // Not `useRouter`: inside the shell's page this screen is one document standing in for one
   // screen, and the session it resumes into is a native route the shell has to push.
   const router = useRouteHandoff()
+  const t = useMobileTranslation(agentHistoryCatalog)
   const { client, state: connState } = useHostClient(hostId)
   const [worktrees, setWorktrees] = useState<Worktree[]>([])
   const [worktreesLoaded, setWorktreesLoaded] = useState(false)
@@ -167,12 +171,12 @@ export function MobileAgentSessionHistoryPanel({
         return
       }
       if (!client || connState !== 'connected') {
-        setResumeMessage('Waiting for host...')
+        setResumeMessage(t('waitingForHost'))
         triggerError()
         return
       }
       if (!session.sessionId) {
-        setResumeMessage('This session is missing a resume id.')
+        setResumeMessage(t('missingResumeId'))
         triggerError()
         return
       }
@@ -212,7 +216,7 @@ export function MobileAgentSessionHistoryPanel({
           target.terminalPlatform
         )
         if (!platform) {
-          setResumeMessage('Unable to determine host platform.')
+          setResumeMessage(t('unknownHostPlatform'))
           triggerError()
           return
         }
@@ -230,7 +234,7 @@ export function MobileAgentSessionHistoryPanel({
         })
         resumeMutationRegistryRef.current.releaseOnSuccess(session.id)
         triggerSuccess()
-        setResumeMessage('Agent session queued.')
+        setResumeMessage(t('sessionQueued'))
         router.push(
           `/h/${encodeURIComponent(hostId)}/session/${encodeURIComponent(target.worktreeId)}` as Parameters<
             typeof router.push
@@ -238,7 +242,7 @@ export function MobileAgentSessionHistoryPanel({
         )
       } catch (err) {
         triggerError()
-        setResumeMessage(err instanceof Error ? err.message : 'Failed to resume session.')
+        setResumeMessage(err instanceof Error ? err.message : t('resumeFailed'))
       } finally {
         resumeLaunchInFlightRef.current = false
         setResumingSessionId(null)
@@ -251,6 +255,7 @@ export function MobileAgentSessionHistoryPanel({
       hostPlatform,
       hostTerminalWindowsShell,
       router,
+      t,
       worktreeId,
       worktrees
     ]
@@ -265,13 +270,13 @@ export function MobileAgentSessionHistoryPanel({
             onPress={() => router.back()}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel="Back"
+            accessibilityLabel={t('back')}
           >
             <ChevronLeft size={22} color={colors.textSecondary} strokeWidth={2.2} />
           </Pressable>
           <View style={styles.titleBlock}>
             <Text style={styles.title} numberOfLines={1}>
-              Agent Session History
+              {t('title')}
             </Text>
             <Text style={styles.meta} numberOfLines={1}>
               {worktreeLabel}
@@ -281,7 +286,7 @@ export function MobileAgentSessionHistoryPanel({
             style={({ pressed }) => [styles.refreshButton, pressed && styles.refreshButtonPressed]}
             onPress={() => void onRefresh()}
             hitSlop={8}
-            accessibilityLabel="Refresh agent sessions"
+            accessibilityLabel={t('refresh')}
           >
             <RefreshCw size={18} color={colors.textSecondary} strokeWidth={2.1} />
           </Pressable>
@@ -294,18 +299,16 @@ export function MobileAgentSessionHistoryPanel({
         </View>
       ) : screenState.kind === 'unsupported' ? (
         <View style={styles.state}>
-          <Text style={styles.stateTitle}>Agent Session History Unavailable</Text>
-          <Text style={styles.stateText}>
-            Update Dolphin on this host to browse agent session history.
-          </Text>
+          <Text style={styles.stateTitle}>{t('unavailableTitle')}</Text>
+          <Text style={styles.stateText}>{t('unavailableBody')}</Text>
         </View>
       ) : screenState.kind === 'error' ? (
         <View style={styles.state}>
-          <Text style={styles.stateTitle}>Unable to Load</Text>
+          <Text style={styles.stateTitle}>{t('loadErrorTitle')}</Text>
           <Text style={styles.stateText}>{screenState.message}</Text>
           {retry ? (
             <Pressable style={styles.retryButton} onPress={retry}>
-              <Text style={styles.retryText}>Retry</Text>
+              <Text style={styles.retryText}>{t('retry')}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -321,7 +324,7 @@ export function MobileAgentSessionHistoryPanel({
                   onPress={() => onSelectScope(tab.scope)}
                 >
                   <Text style={[styles.scopeTabText, active && styles.scopeTabTextActive]}>
-                    {tab.label}
+                    {t(tab.labelKey)}
                   </Text>
                 </Pressable>
               )
@@ -332,7 +335,7 @@ export function MobileAgentSessionHistoryPanel({
               style={styles.searchInput}
               value={query}
               onChangeText={setQuery}
-              placeholder="Search sessions, repo:, path:"
+              placeholder={t('searchPlaceholder')}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -341,7 +344,7 @@ export function MobileAgentSessionHistoryPanel({
           {issues.length > 0 ? (
             <View style={styles.noticeBanner}>
               <Text style={styles.noticeText}>
-                {issues.length} {issues.length === 1 ? 'transcript' : 'transcripts'} skipped
+                {t('transcriptsSkipped', { count: issues.length })}
               </Text>
             </View>
           ) : null}
@@ -352,10 +355,8 @@ export function MobileAgentSessionHistoryPanel({
           ) : null}
           {sections.length === 0 ? (
             <View style={styles.state}>
-              <Text style={styles.stateTitle}>No agent sessions</Text>
-              <Text style={styles.stateText}>
-                {query ? 'No sessions match your search.' : 'No past agent sessions in this scope.'}
-              </Text>
+              <Text style={styles.stateTitle}>{t('emptyTitle')}</Text>
+              <Text style={styles.stateText}>{query ? t('emptySearch') : t('emptyScope')}</Text>
             </View>
           ) : (
             <MobileAgentSessionHistoryList
@@ -406,7 +407,7 @@ async function loadMobileResumeMetadata(client: RpcClient): Promise<{
     ])
   const repoResult = interpretOrThrowRefusalMessage(
     () => resumeRepoListRead.interpret(repoReply),
-    'Unable to load workspace metadata.'
+    translate(agentHistoryCatalog, 'workspaceMetadataError')
   )
   const folderWorkspaceResult =
     folderWorkspaceReply && resumeFolderWorkspaceListRead.interpret(folderWorkspaceReply)

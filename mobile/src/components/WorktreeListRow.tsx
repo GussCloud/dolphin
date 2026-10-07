@@ -19,6 +19,8 @@ import { AgentSpinner } from './AgentSpinner'
 import { MobileRepoIcon } from './MobileRepoIcon'
 import { WorktreeAgentList } from './WorktreeAgentList'
 import { WorktreeMetaGlyphs, prStateColor } from './WorktreeMetaGlyphs'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Strip the refs/heads/ prefix for display, matching the desktop sidebar
 // (WorktreeCardHelpers.formatBranchName).
@@ -86,8 +88,9 @@ function WorktreeListRowComponent<T extends WorktreeListRowItem>({
   onLongPress,
   onToggleLineage
 }: Props<T>) {
+  const t = useMobileTranslation(componentsCatalog)
   const isFolderWorkspace = item.workspaceKind === 'folder-workspace'
-  const folderMeta = item.comment?.trim() || item.path || 'Folder'
+  const folderMeta = item.comment?.trim() || item.path || t('folder')
   const metaText = isFolderWorkspace ? folderMeta : displayBranch(item.branch)
   const lineageDepth = Math.max(0, item.lineageDepth ?? 0)
   const lineageChildCount = item.lineageChildCount ?? 0
@@ -146,7 +149,7 @@ function WorktreeListRowComponent<T extends WorktreeListRowItem>({
           )}
           {isFolderWorkspace && (
             <View style={styles.folderBadge}>
-              <Text style={styles.folderBadgeText}>Folder</Text>
+              <Text style={styles.folderBadgeText}>{t('folder')}</Text>
             </View>
           )}
           <WorktreeMetaGlyphs
@@ -161,7 +164,7 @@ function WorktreeListRowComponent<T extends WorktreeListRowItem>({
           {lineageDepth > 0 && (
             <View style={styles.childBadge}>
               <GitBranch size={10} color={colors.textMuted} />
-              <Text style={styles.childBadgeText}>Child</Text>
+              <Text style={styles.childBadgeText}>{t('childWorkspace')}</Text>
             </View>
           )}
           {item.hostContextLabel ? (

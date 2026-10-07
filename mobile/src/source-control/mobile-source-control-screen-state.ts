@@ -25,8 +25,10 @@ import {
   isMobileGitDiscardableEntry,
   isMobileGitStageableEntry,
   type MobileGitFileStatus,
-  type MobileGitStatusEntry
+  type MobileGitStatusEntry,
+  type MobileGitUpstreamStatus
 } from './mobile-git-status'
+import { sourceControlText } from './source-control-text'
 
 export type ScreenState =
   | { kind: 'loading' }
@@ -127,7 +129,22 @@ export function formatBranchLabel(branch: string | undefined, head: string | und
   if (branch?.startsWith('refs/heads/')) {
     return branch.slice('refs/heads/'.length)
   }
-  return branch || head?.slice(0, 7) || 'No branch'
+  return branch || head?.slice(0, 7) || sourceControlText('noBranch')
+}
+
+/** The branch card's upstream reading; `upstreamKnown` is false until git.status reports one. */
+export function describeMobileUpstream(upstream: MobileGitUpstreamStatus | undefined): {
+  upstream: MobileGitUpstreamStatus | undefined
+  upstreamKnown: boolean
+  syncLabel: string | null
+} {
+  if (!upstream) {
+    return { upstream, upstreamKnown: false, syncLabel: null }
+  }
+  const syncLabel = upstream.hasUpstream
+    ? sourceControlText('syncAheadBehind', { ahead: upstream.ahead, behind: upstream.behind })
+    : sourceControlText('noUpstream')
+  return { upstream, upstreamKnown: true, syncLabel }
 }
 
 export function statusColor(status: MobileGitFileStatus): string {

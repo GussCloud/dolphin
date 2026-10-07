@@ -2,6 +2,8 @@ import { Platform, StyleSheet, Switch, Text, TextInput, View } from 'react-nativ
 import type { MobileComposerSource } from '../tasks/use-mobile-composer-source'
 import { colors, radii, spacing } from '../theme/mobile-theme'
 import { TEXT_INPUT_FONT_SIZE } from '../platform/text-input-font-size'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   composer: MobileComposerSource
@@ -12,18 +14,19 @@ type Props = {
 // pill is shown (the field itself is no longer the name input); the branch-name
 // override and reuse toggle mirror the desktop composer's advanced branch fields.
 export function SmartWorkspaceAdvancedFields({ composer, selectedRepoIsGit }: Props) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   const selection = composer.smartNameSelection
   const showBranchOverride = selectedRepoIsGit && (!selection || selection.kind === 'branch')
   return (
     <>
       {selection ? (
         <View style={styles.field}>
-          <Text style={styles.label}>Name</Text>
+          <Text style={styles.label}>{t('name')}</Text>
           <TextInput
             style={styles.input}
             value={composer.name}
             onChangeText={composer.setName}
-            placeholder="Workspace name"
+            placeholder={t('workspaceName')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -33,12 +36,12 @@ export function SmartWorkspaceAdvancedFields({ composer, selectedRepoIsGit }: Pr
 
       {showBranchOverride ? (
         <View style={styles.field}>
-          <Text style={styles.label}>Branch name</Text>
+          <Text style={styles.label}>{t('branchName')}</Text>
           <TextInput
             style={styles.input}
             value={composer.branchNameOverride ?? ''}
             onChangeText={composer.handleBranchNameOverrideChange}
-            placeholder="Derived from name"
+            placeholder={t('derivedFromName')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -50,7 +53,7 @@ export function SmartWorkspaceAdvancedFields({ composer, selectedRepoIsGit }: Pr
         <View style={styles.field}>
           <View style={styles.reuseRow}>
             <Text style={styles.reuseLabel} numberOfLines={1}>
-              Reuse branch “{composer.reuseEligibleBranch}”
+              {t('reuseBranch', { branch: composer.reuseEligibleBranch })}
             </Text>
             <Switch
               value={composer.reuseSelectedBranch}

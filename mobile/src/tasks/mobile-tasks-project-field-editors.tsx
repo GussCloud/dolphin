@@ -6,6 +6,7 @@ import {
 } from './mobile-tasks-legacy-foundation'
 import { View, Text, Pressable, Check, colors, TextInput } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 
 export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentationModel) {
   const {
@@ -23,7 +24,7 @@ export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentati
   return SHOW_MOBILE_PROJECT_METADATA_EDITORS &&
     editableProjectFields(githubProjectTable).length > 0 ? (
     <View style={styles.detailSection}>
-      <Text style={styles.detailSectionTitle}>Project fields</Text>
+      <Text style={styles.detailSectionTitle}>{t('projectFields')}</Text>
       {editableProjectFields(githubProjectTable).map((field) => {
         const currentLabel = projectFieldValueLabel(projectRowItem, field)
         const draftValue = projectFieldDrafts[field.id] ?? ''
@@ -31,7 +32,7 @@ export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentati
           if (field.dataType === 'NUMBER') {
             const number = Number(draftValue)
             if (!Number.isFinite(number)) {
-              setProjectRowDetailError('Enter a valid number.')
+              setProjectRowDetailError(t('enterValidNumber'))
               return
             }
             void mutateProjectRowField(projectRowItem, field, {
@@ -43,7 +44,7 @@ export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentati
           if (field.dataType === 'DATE') {
             const date = draftValue.trim()
             if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-              setProjectRowDetailError('Enter a date as YYYY-MM-DD.')
+              setProjectRowDetailError(t('enterValidDate'))
               return
             }
             void mutateProjectRowField(projectRowItem, field, { kind: 'date', date })
@@ -92,7 +93,7 @@ export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentati
             ) : field.dataType === 'ITERATION' && field.kind === 'iteration' ? (
               <View style={styles.projectIterationList}>
                 {field.iterations.length === 0 ? (
-                  <Text style={styles.detailMuted}>No iterations available.</Text>
+                  <Text style={styles.detailMuted}>{t('noIterations')}</Text>
                 ) : (
                   field.iterations.map((iteration) => {
                     const fieldValue = projectRowItem.fieldValuesByFieldId?.[field.id]
@@ -114,8 +115,13 @@ export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentati
                         <View style={styles.projectIterationCopy}>
                           <Text style={styles.actionText}>{iteration.title}</Text>
                           <Text style={styles.detailMuted}>
-                            {iteration.completed ? 'Completed' : 'Current & upcoming'} ·{' '}
-                            {iteration.startDate} · {iteration.duration}d
+                            {t('iterationSummary', {
+                              status: iteration.completed
+                                ? t('iterationCompleted')
+                                : t('iterationUpcoming'),
+                              startDate: iteration.startDate,
+                              duration: iteration.duration
+                            })}
                           </Text>
                         </View>
                         {selected ? <Check size={14} color={colors.textSecondary} /> : null}
@@ -139,8 +145,8 @@ export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentati
                     field.dataType === 'DATE'
                       ? 'YYYY-MM-DD'
                       : field.dataType === 'NUMBER'
-                        ? 'Number'
-                        : 'Text'
+                        ? t('fieldNumberPlaceholder')
+                        : t('fieldTextPlaceholder')
                   }
                   placeholderTextColor={colors.textMuted}
                   keyboardType={field.dataType === 'NUMBER' ? 'numeric' : 'default'}
@@ -151,16 +157,16 @@ export function renderMobileTasksProjectFieldEditors(model: ConnectionPresentati
                   disabled={projectMutating}
                   onPress={saveTextField}
                 >
-                  <Text style={styles.inlineSaveText}>Save field</Text>
+                  <Text style={styles.inlineSaveText}>{t('saveField')}</Text>
                 </Pressable>
               </>
             )}
             <Pressable
               style={styles.inlineSaveButton}
-              disabled={projectMutating || currentLabel === 'Empty'}
+              disabled={projectMutating || currentLabel === t('fieldEmpty')}
               onPress={() => void mutateProjectRowField(projectRowItem, field, null)}
             >
-              <Text style={styles.inlineSaveText}>Clear field</Text>
+              <Text style={styles.inlineSaveText}>{t('clearField')}</Text>
             </Pressable>
           </View>
         )

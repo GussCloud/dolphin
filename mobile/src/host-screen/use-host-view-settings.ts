@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import type { RpcClient } from '../transport/rpc-client'
 import type { ConnectionState } from '../transport/types'
 import { getMobileWorkspaceLineageGroupKey } from '../worktree/mobile-workspace-lineage'
-import { WORKSPACE_SORT_OPTIONS as SORT_OPTIONS } from '../worktree/workspace-list-picker-options'
+import { workspaceSortOptions } from '../worktree/workspace-list-picker-options'
 import {
   applyDesktopViewSettings,
   buildWorkspaceViewSettingsUpdate,
@@ -14,6 +14,8 @@ import {
 import type { Worktree } from '../worktree/workspace-list-sections'
 import { hostViewSettingsRead, hostViewSettingsWrite } from './host-screen-operations'
 import type { HostScreenState } from './use-host-screen-state'
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function useHostViewSettings(args: {
   client: RpcClient | null
@@ -22,6 +24,7 @@ export function useHostViewSettings(args: {
   state: HostScreenState
 }) {
   const { client, connState, hostId, state } = args
+  const t = useMobileTranslation(worktreeCatalog)
   const {
     clientRef,
     collapsedGroups,
@@ -158,7 +161,7 @@ export function useHostViewSettings(args: {
     return count
   }, [filters])
   const selectedSortLabel =
-    SORT_OPTIONS.find((option) => option.value === sortMode)?.label ?? 'Recent'
+    workspaceSortOptions(t).find((option) => option.value === sortMode)?.label ?? t('sortRecent')
 
   const handleGroupChange = useCallback(
     (value: MobileGroupMode) => {

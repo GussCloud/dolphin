@@ -4,12 +4,13 @@ import type { Worktree } from './workspace-list-sections'
 // no PR/draft/unknown -> "In Progress", open -> "In Review", merged -> "Done", closed -> "Closed"
 export type PRGroupKey = 'done' | 'in-review' | 'in-progress' | 'closed'
 
-export const PR_GROUP_LABELS: Record<PRGroupKey, string> = {
-  done: 'Done',
-  'in-review': 'In Review',
-  'in-progress': 'In Progress',
-  closed: 'Closed'
-}
+/** Catalog keys in the `worktree` namespace. */
+export const PR_GROUP_LABEL_KEYS = {
+  done: 'prGroupDone',
+  'in-review': 'prGroupInReview',
+  'in-progress': 'prGroupInProgress',
+  closed: 'prGroupClosed'
+} as const satisfies Record<PRGroupKey, string>
 
 export const PR_GROUP_ORDER: PRGroupKey[] = ['done', 'in-review', 'in-progress', 'closed']
 

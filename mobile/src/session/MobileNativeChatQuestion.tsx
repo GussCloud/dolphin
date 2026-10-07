@@ -2,6 +2,8 @@ import { useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { ArrowUp, Check, CircleHelp, X } from 'lucide-react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { mobileNativeChatInputStyles } from './mobile-native-chat-input-styles'
 import {
   formatQuestionAnswerByIndexes,
@@ -25,6 +27,7 @@ export function MobileNativeChatQuestion({
   onAnswer,
   onCancel
 }: Props): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   const [selectedOptionIndexes, setSelectedOptionIndexes] = useState<number[]>([])
   const [freeText, setFreeText] = useState('')
   const [sending, setSending] = useState(false)
@@ -110,7 +113,7 @@ export function MobileNativeChatQuestion({
         <Text style={styles.question}>{question.question}</Text>
         {onCancel ? (
           <Pressable
-            accessibilityLabel="Cancel"
+            accessibilityLabel={t('cancel')}
             hitSlop={8}
             style={styles.cancel}
             onPress={() => void onCancel(question.prompt)}
@@ -158,7 +161,7 @@ export function MobileNativeChatQuestion({
 
       {question.multiSelect && hasOptions ? (
         <Pressable
-          accessibilityLabel="Submit selected options"
+          accessibilityLabel={t('questionSubmitSelected')}
           style={({ pressed }) => [
             styles.submit,
             !canSubmitMulti && styles.submitDisabled,
@@ -168,7 +171,9 @@ export function MobileNativeChatQuestion({
           disabled={!canSubmitMulti}
         >
           <Text style={[styles.submitText, !canSubmitMulti && styles.submitTextDisabled]}>
-            Submit{selectedOptionIndexes.length > 0 ? ` (${selectedOptionIndexes.length})` : ''}
+            {selectedOptionIndexes.length > 0
+              ? t('questionSubmitCount', { count: selectedOptionIndexes.length })
+              : t('submit')}
           </Text>
         </Pressable>
       ) : null}
@@ -179,7 +184,7 @@ export function MobileNativeChatQuestion({
             style={mobileNativeChatInputStyles.freeInput}
             value={freeText}
             onChangeText={setFreeText}
-            placeholder={hasOptions ? 'Or type a reply…' : 'Type your reply…'}
+            placeholder={hasOptions ? t('questionOrTypeReply') : t('questionTypeReply')}
             placeholderTextColor={colors.textMuted}
             selectionColor={colors.accentBlue}
             onSubmitEditing={submitFreeText}
@@ -187,7 +192,7 @@ export function MobileNativeChatQuestion({
             multiline
           />
           <Pressable
-            accessibilityLabel="Send reply"
+            accessibilityLabel={t('questionSendReply')}
             style={({ pressed }) => [
               styles.freeSend,
               !canSendFreeText && styles.freeSendDisabled,

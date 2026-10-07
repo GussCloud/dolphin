@@ -8,6 +8,8 @@ import {
   summarizeProviderChecks,
   type CheckOutcome as SharedCheckOutcome
 } from '../../../../src/shared/provider-check-summary'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { translate } from '../../i18n/mobile-locale-state'
 import { prStateToken } from '../pr-state-token'
 
 // Pure presentation logic for the PR sidebar's checks + state badge. No React /
@@ -77,23 +79,30 @@ const OUTCOME_BY_STATE: Record<ProviderCheckSummary['state'], CheckOutcome | 'no
 
 export function summarizePRChecks(checks: readonly PRCheckDetail[]): PRChecksSummary {
   if (checks.length === 0) {
-    return { total: 0, passed: 0, pending: 0, failed: 0, outcome: 'none', label: 'No checks' }
+    return {
+      total: 0,
+      passed: 0,
+      pending: 0,
+      failed: 0,
+      outcome: 'none',
+      label: translate(componentsPrSidebarCatalog, 'checksNone')
+    }
   }
   // Counts and the worst-case rollup come from the shared summarizer; only the label wording is mobile's.
   const { total, passed, pending, failed, neutral, state } = summarizeProviderChecks(checks)
   const outcome = OUTCOME_BY_STATE[state]
   const parts: string[] = []
   if (failed > 0) {
-    parts.push(`${failed} failing`)
+    parts.push(translate(componentsPrSidebarCatalog, 'checksFailingCount', { count: failed }))
   }
   if (pending > 0) {
-    parts.push(`${pending} pending`)
+    parts.push(translate(componentsPrSidebarCatalog, 'checksPendingCount', { count: pending }))
   }
   if (passed > 0) {
-    parts.push(`${passed} passed`)
+    parts.push(translate(componentsPrSidebarCatalog, 'checksPassedCount', { count: passed }))
   }
   if (neutral > 0) {
-    parts.push(`${neutral} neutral`)
+    parts.push(translate(componentsPrSidebarCatalog, 'checksNeutralCount', { count: neutral }))
   }
   return {
     total,
@@ -107,32 +116,41 @@ export function summarizePRChecks(checks: readonly PRCheckDetail[]): PRChecksSum
 
 /** An unreadable checks reply is not an absent one, so the header must not read "No checks". */
 export function prChecksSummaryLabel(summary: PRChecksSummary, checksError: string | null): string {
-  return checksError === null ? summary.label : 'Checks unavailable'
+  return checksError === null
+    ? summary.label
+    : translate(componentsPrSidebarCatalog, 'checksUnavailable')
 }
 
 // Per-row status word shown beside each check (desktop ChecksList parity), so the
 // outcome is readable without expanding the row. Mirrors getCheckStatusLabel.
 export function checkStatusLabel(check: PRCheckDetail): string {
   if (check.status !== 'completed') {
-    return check.status === 'in_progress' ? 'In progress' : 'Pending'
+    return translate(
+      componentsPrSidebarCatalog,
+      check.status === 'in_progress' ? 'checkInProgress' : 'checkPending'
+    )
   }
-  switch (check.conclusion) {
+  return translate(componentsPrSidebarCatalog, checkConclusionKey(check.conclusion))
+}
+
+function checkConclusionKey(conclusion: PRCheckDetail['conclusion']) {
+  switch (conclusion) {
     case 'success':
-      return 'Successful'
+      return 'checkSuccessful'
     case 'failure':
-      return 'Failed'
+      return 'checkFailed'
     case 'cancelled':
-      return 'Cancelled'
+      return 'checkCancelled'
     case 'timed_out':
-      return 'Timed out'
+      return 'checkTimedOut'
     case 'action_required':
-      return 'Action required'
+      return 'checkActionRequired'
     case 'neutral':
-      return 'Neutral'
+      return 'checkNeutral'
     case 'skipped':
-      return 'Skipped'
+      return 'checkSkipped'
     default:
-      return 'Pending'
+      return 'checkPending'
   }
 }
 
@@ -179,18 +197,22 @@ export type PRStateBadge = {
   token: MobileStatusToken
 }
 
-const PR_STATE_LABELS: Record<PRState, string> = {
-  open: 'Open',
-  merged: 'Merged',
-  draft: 'Draft',
-  closed: 'Closed'
-}
+const PR_STATE_LABEL_KEYS = {
+  open: 'prStateOpen',
+  merged: 'prStateMerged',
+  draft: 'prStateDraft',
+  closed: 'prStateClosed'
+} as const satisfies Record<PRState, string>
 
 // State-badge color comes from the shared prStateToken so the sidebar badge and
 // the workspace-list linked-PR badge resolve the SAME color per state (merged =
 // purple, open = green, closed = red, draft/unknown = muted).
 export function prStateBadge(state: PRState): PRStateBadge {
-  return { label: PR_STATE_LABELS[state] ?? state, token: prStateToken(state) }
+  const labelKey: (typeof PR_STATE_LABEL_KEYS)[PRState] | undefined = PR_STATE_LABEL_KEYS[state]
+  return {
+    label: labelKey ? translate(componentsPrSidebarCatalog, labelKey) : state,
+    token: prStateToken(state)
+  }
 }
 
 export type ReviewerRow = {
@@ -207,20 +229,38 @@ function reviewStateLabel(state: string | null | undefined): {
 } {
   switch (state) {
     case 'APPROVED':
-      return { label: 'Approved', token: 'statusGreen' }
+      return {
+        label: translate(componentsPrSidebarCatalog, 'reviewApproved'),
+        token: 'statusGreen'
+      }
     case 'CHANGES_REQUESTED':
-      return { label: 'Changes requested', token: 'statusRed' }
+      return {
+        label: translate(componentsPrSidebarCatalog, 'reviewChangesRequested'),
+        token: 'statusRed'
+      }
     case 'COMMENTED':
-      return { label: 'Commented', token: 'textSecondary' }
+      return {
+        label: translate(componentsPrSidebarCatalog, 'reviewCommented'),
+        token: 'textSecondary'
+      }
     case 'DISMISSED':
-      return { label: 'Dismissed', token: 'textSecondary' }
+      return {
+        label: translate(componentsPrSidebarCatalog, 'reviewDismissed'),
+        token: 'textSecondary'
+      }
     case 'PENDING':
-      return { label: 'Pending', token: 'statusAmber' }
+      return { label: translate(componentsPrSidebarCatalog, 'reviewPending'), token: 'statusAmber' }
     case null:
     case undefined:
-      return { label: 'Reviewed', token: 'textSecondary' }
+      return {
+        label: translate(componentsPrSidebarCatalog, 'reviewReviewed'),
+        token: 'textSecondary'
+      }
     default:
-      return { label: 'Reviewed', token: 'textSecondary' }
+      return {
+        label: translate(componentsPrSidebarCatalog, 'reviewReviewed'),
+        token: 'textSecondary'
+      }
   }
 }
 
@@ -242,7 +282,7 @@ export function getPRReviewerRows(item: ReviewDisplayItem): ReviewerRow[] {
       login,
       name: user.name,
       avatarUrl: user.avatarUrl,
-      stateLabel: 'Requested',
+      stateLabel: translate(componentsPrSidebarCatalog, 'reviewRequested'),
       token: 'statusAmber'
     })
   }

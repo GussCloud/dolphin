@@ -27,6 +27,7 @@ export type {
   MobileFilePreviewResult,
   MobileFilePreviewTextKind
 } from './mobile-file-preview-response'
+import { filesText } from './files-text'
 
 export type MobileFilePreviewReadMethod = 'files.read' | 'files.readPreview'
 export type MobileTerminalArtifactPreviewReadMethod =
@@ -265,7 +266,7 @@ async function verifyTerminalArtifactBaseContent(
       status: 'error',
       error: {
         status: 'error',
-        message: 'File changed on desktop. Reload preview before saving',
+        message: filesText('fileChangedOnDesktop'),
         reconnect: false
       }
     }

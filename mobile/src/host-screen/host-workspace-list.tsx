@@ -14,6 +14,8 @@ import { getWorktreeStatus } from '../worktree/workspace-list-sections'
 import { repoColor } from '../worktree/repo-color'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import type { HostScreenController } from './use-host-screen-controller'
+import { hostScreenCatalog } from '../i18n/catalogs/host-screen'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function HostWorkspaceList({ controller }: { controller: HostScreenController }) {
   const {
@@ -41,6 +43,7 @@ export function HostWorkspaceList({ controller }: { controller: HostScreenContro
     state
   } = controller
   const { rawSections, sections, uniqueRepoColors } = sectionsResult
+  const t = useMobileTranslation(hostScreenCatalog)
 
   return (
     <>
@@ -89,11 +92,11 @@ export function HostWorkspaceList({ controller }: { controller: HostScreenContro
           <MobileSearchField
             value={state.search}
             onChangeText={state.setSearch}
-            placeholder="Search worktrees…"
+            placeholder={t('searchWorktreesPlaceholder')}
             autoFocus
             // Why: new key per open remounts the focus effect across rapid toggles so the keyboard reappears.
             focusKey={state.showSearch}
-            accessibilityLabel="Search worktrees"
+            accessibilityLabel={t('searchWorktrees')}
           />
         </View>
       )}

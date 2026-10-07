@@ -8,6 +8,7 @@ import {
   type Worktree
 } from './workspace-list-sections'
 import { repoColor } from './repo-color'
+import { useMobileLocale } from '../i18n/use-mobile-translation'
 
 export type WorkspaceSectionRepo = {
   name: string
@@ -44,6 +45,8 @@ export function useWorkspaceSections(args: {
     collapsedGroups,
     workspaceStatuses
   } = args
+  // Why: section titles are translated inside buildSections, so a language change must rebuild.
+  const locale = useMobileLocale()
 
   const uniqueRepos = useMemo(() => {
     const repos = new Map<string, { id: string; color: string }>()
@@ -85,7 +88,8 @@ export function useWorkspaceSections(args: {
       pinnedIds,
       repoIdsByName,
       workspaceStatuses,
-      collapsedGroups
+      collapsedGroups,
+      locale
     ]
   )
 

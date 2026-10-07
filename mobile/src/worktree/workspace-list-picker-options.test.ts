@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { WORKSPACE_SORT_OPTIONS } from './workspace-list-picker-options'
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { translate } from '../i18n/mobile-locale-state'
+import { workspaceSortOptions } from './workspace-list-picker-options'
 
-describe('WORKSPACE_SORT_OPTIONS', () => {
+const sortOptions = () =>
+  workspaceSortOptions((key, ...args) => translate(worktreeCatalog, key, ...args))
+
+describe('workspaceSortOptions', () => {
   it('keeps the persisted sort values stable for desktop compatibility', () => {
-    expect(WORKSPACE_SORT_OPTIONS.map((option) => option.value)).toEqual([
+    expect(sortOptions().map((option) => option.value)).toEqual([
       'smart',
       'name',
       'recent',
@@ -13,7 +18,7 @@ describe('WORKSPACE_SORT_OPTIONS', () => {
   })
 
   it('keeps the smart sort value while showing the agent activity label', () => {
-    expect(WORKSPACE_SORT_OPTIONS.find((option) => option.value === 'smart')).toEqual({
+    expect(sortOptions().find((option) => option.value === 'smart')).toEqual({
       value: 'smart',
       label: 'Agent activity',
       subtitle: 'Agents that need attention, then recent activity'

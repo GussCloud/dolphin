@@ -11,6 +11,8 @@ import {
   ConfirmModal
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
+import { useMobileLocale } from '../i18n/use-mobile-translation'
 import {
   getHostedReviewMergeMethodLabel,
   getHostedMergeConfirmMessage,
@@ -76,7 +78,11 @@ import {
 } from './mobile-tasks-project-detail-drawer'
 import { renderMobileTasksItemDetailDrawer } from './mobile-tasks-item-detail-drawer'
 
+const SLUG_MARKER = '\u0000'
+
 export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentationModel }) {
+  // Why: render helpers read copy through translateTasks; subscribing re-renders on a language change.
+  useMobileLocale()
   const {
     error,
     githubMode,
@@ -121,8 +127,7 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
               style={styles.sourceNoticeBanner}
             >
               <Text style={styles.sourceNoticeText}>
-                Preferred issue source upstream is unavailable for {fallback.repoLabel}. Using
-                origin.
+                {t('issueSourceFallback', { repo: fallback.repoLabel })}
               </Text>
             </View>
           ))
@@ -131,6 +136,10 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
       {!error && provider === 'github' && githubMode === 'items'
         ? githubSourceErrors.map((sourceError) => {
             const isRetrying = retryingGithubSourceRepoPaths.has(sourceError.repoPath)
+            // Why split on a marker: the slug is styled inline, and its position differs per language.
+            const [sourceErrorBefore, sourceErrorAfter] = t('issueSourceLoadError', {
+              slug: SLUG_MARKER
+            }).split(SLUG_MARKER)
             return (
               <View
                 key={`github-source-error:${sourceError.repoId}:${sourceError.source.owner}/${sourceError.source.repo}`}
@@ -138,11 +147,11 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
               >
                 <View style={styles.sourceErrorCopy}>
                   <Text style={styles.sourceErrorText}>
-                    Couldn't load issues from{' '}
+                    {sourceErrorBefore}
                     <Text style={styles.sourceErrorSlug}>
                       {sourceError.source.owner}/{sourceError.source.repo}
                     </Text>
-                    .
+                    {sourceErrorAfter}
                   </Text>
                   <Text style={styles.sourceErrorMessage} numberOfLines={2}>
                     {sourceError.message}
@@ -150,13 +159,15 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
                 </View>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Retry loading issues from ${sourceError.source.owner}/${sourceError.source.repo}`}
+                  accessibilityLabel={t('issueSourceRetryLabel', {
+                    slug: `${sourceError.source.owner}/${sourceError.source.repo}`
+                  })}
                   style={styles.sourceErrorRetry}
                   disabled={loading || isRetrying}
                   onPress={() => void retryGitHubIssueSourceFetch(sourceError.repoPath)}
                 >
                   <Text style={styles.sourceErrorRetryText}>
-                    {isRetrying ? 'Retrying...' : 'Retry'}
+                    {isRetrying ? t('retrying') : t('retry')}
                   </Text>
                 </Pressable>
               </View>
@@ -170,9 +181,7 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
       githubProjectTable?.parentFieldDropped === true ? (
         <View style={styles.projectDataNotice}>
           <AlertTriangle size={15} color={colors.statusAmber} />
-          <Text style={styles.projectDataNoticeText}>
-            Sub-issue data is unavailable for your token.
-          </Text>
+          <Text style={styles.projectDataNoticeText}>{t('subIssueDataUnavailable')}</Text>
         </View>
       ) : null}
 
@@ -252,8 +261,8 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
 
       <ActionSheetModal
         visible={taskUiReady && mergeMethodProjectRow != null}
-        title="Merge method"
-        message="Choose how this pull request should be merged."
+        title={t('mergeMethodTitle')}
+        message={t('mergeMethodPrMessage')}
         actions={
           mergeMethodProjectRow
             ? (['squash', 'merge', 'rebase'] as const).map((method) => ({
@@ -269,11 +278,11 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
       />
       <ActionSheetModal
         visible={taskUiReady && mergeMethodTaskItem != null}
-        title="Merge method"
+        title={t('mergeMethodTitle')}
         message={
           mergeMethodTaskItem?.provider === 'gitlab'
-            ? 'Choose how this merge request should be merged.'
-            : 'Choose how this pull request should be merged.'
+            ? t('mergeMethodMrMessage')
+            : t('mergeMethodPrMessage')
         }
         actions={
           mergeMethodTaskItem
@@ -283,7 +292,7 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
               ).map((method) => ({
                 label:
                   mergeMethodTaskItem.provider === 'gitlab' && method === 'merge'
-                    ? 'Merge'
+                    ? t('merge')
                     : getHostedReviewMergeMethodLabel(method),
                 icon: GitBranch,
                 onPress: () => {
@@ -298,11 +307,15 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
       <ConfirmModal
         visible={taskUiReady && pendingHostedMerge != null}
         title={
-          pendingHostedMerge?.item.provider === 'gitlab' ? 'Merge Request' : 'Merge Pull Request'
+          pendingHostedMerge?.item.provider === 'gitlab'
+            ? t('mergeRequestTitle')
+            : t('mergePullRequestTitle')
         }
         message={pendingHostedMerge ? getHostedMergeConfirmMessage(pendingHostedMerge) : undefined}
         confirmLabel={
-          pendingHostedMerge ? getHostedReviewMergeMethodLabel(pendingHostedMerge.method) : 'Merge'
+          pendingHostedMerge
+            ? getHostedReviewMergeMethodLabel(pendingHostedMerge.method)
+            : t('merge')
         }
         onConfirm={() => {
           if (!taskUiReady || !pendingHostedMerge) {
@@ -314,7 +327,7 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
       />
       <ConfirmModal
         visible={taskUiReady && pendingProjectGitHubMerge != null}
-        title="Merge Pull Request"
+        title={t('mergePullRequestTitle')}
         message={
           pendingProjectGitHubMerge
             ? getProjectGitHubMergeConfirmMessage(pendingProjectGitHubMerge)
@@ -323,7 +336,7 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
         confirmLabel={
           pendingProjectGitHubMerge
             ? getHostedReviewMergeMethodLabel(pendingProjectGitHubMerge.method)
-            : 'Merge'
+            : t('merge')
         }
         onConfirm={() => {
           if (!taskUiReady || !pendingProjectGitHubMerge) {
@@ -341,7 +354,7 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
         title={
           pendingHostedStateChange
             ? getHostedStateConfirmTitle(pendingHostedStateChange)
-            : 'Update Item'
+            : t('updateItemTitle')
         }
         message={
           pendingHostedStateChange
@@ -351,7 +364,7 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
         confirmLabel={
           pendingHostedStateChange
             ? getHostedStateConfirmLabel(pendingHostedStateChange)
-            : 'Confirm'
+            : t('confirm')
         }
         destructive={pendingHostedStateChange?.nextState === 'closed'}
         onConfirm={() => {

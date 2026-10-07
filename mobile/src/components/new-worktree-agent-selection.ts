@@ -2,6 +2,8 @@ import type { TuiAgent } from '../../../src/shared/tui-agent'
 import { MOBILE_AGENT_CATALOG } from '../tasks/mobile-agent-catalog'
 import { isMobileTuiAgentEnabled } from '../tasks/mobile-tui-agents'
 import { pickWorkspaceAgent } from '../tasks/workspace-agent-selection'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type NewWorktreeRuntimeSettings = {
   defaultTuiAgent?: TuiAgent | 'blank' | null
@@ -18,7 +20,10 @@ export const NEW_WORKTREE_AGENT_OPTIONS: NewWorktreeAgentOption[] = MOBILE_AGENT
 
 export const NEW_WORKTREE_BLANK_AGENT: NewWorktreeAgentOption = {
   id: '__blank__',
-  label: 'Blank Terminal'
+  // Getter so the picker reads the active locale, not the one at module load.
+  get label() {
+    return translate(componentsNewWorkspaceCatalog, 'blankTerminal')
+  }
 }
 
 export function newWorktreeAgentOptionFor(id: string | null | undefined): NewWorktreeAgentOption {

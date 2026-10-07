@@ -23,6 +23,7 @@ import {
   renderCommentReactions
 } from './mobile-tasks-legacy-foundation'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksDetailCommentRenderers(model: TaskCreateActionsModel) {
   const {
@@ -49,7 +50,7 @@ export function useMobileTasksDetailCommentRenderers(model: TaskCreateActionsMod
           style={[styles.input, styles.commentInput, styles.commentComposerInput]}
           value={args.value}
           onChangeText={args.onChangeText}
-          placeholder="Add a comment"
+          placeholder={t('addCommentPlaceholder')}
           placeholderTextColor={colors.textMuted}
           editable={!args.disabled}
           multiline
@@ -59,7 +60,7 @@ export function useMobileTasksDetailCommentRenderers(model: TaskCreateActionsMod
         {hasText ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Send comment"
+            accessibilityLabel={t('sendComment')}
             style={({ pressed }) => [
               styles.commentComposerSend,
               pressed && !args.disabled && styles.commentComposerSendPressed,
@@ -111,7 +112,7 @@ export function useMobileTasksDetailCommentRenderers(model: TaskCreateActionsMod
                   onPress={() => void toggleGitHubReviewThread(actionItem, comment)}
                 >
                   <Text style={styles.inlineSaveText}>
-                    {comment.isResolved ? 'Reopen thread' : 'Resolve thread'}
+                    {comment.isResolved ? t('reopenThread') : t('resolveThread')}
                   </Text>
                 </Pressable>
               ) : null}
@@ -124,7 +125,7 @@ export function useMobileTasksDetailCommentRenderers(model: TaskCreateActionsMod
                     [String(comment.id)]: next
                   }))
                 }
-                placeholder="Reply"
+                placeholder={t('replyPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 textAlignVertical="top"
@@ -134,7 +135,7 @@ export function useMobileTasksDetailCommentRenderers(model: TaskCreateActionsMod
                 disabled={mutatingStatus || !(itemReplyDrafts[String(comment.id)] ?? '').trim()}
                 onPress={() => void replyToGitHubComment(actionItem, comment)}
               >
-                <Text style={styles.inlineSaveText}>Reply</Text>
+                <Text style={styles.inlineSaveText}>{t('reply')}</Text>
               </Pressable>
             </>
           ) : null}
@@ -164,9 +165,13 @@ export function useMobileTasksDetailCommentRenderers(model: TaskCreateActionsMod
           }
         >
           <Text style={styles.resolvedCommentTitle} numberOfLines={1}>
-            Resolved {group.kind === 'thread' ? 'thread' : 'comment'} by {commentAuthor(root)}
+            {group.kind === 'thread'
+              ? t('resolvedThreadBy', { author: commentAuthor(root) })
+              : t('resolvedCommentBy', { author: commentAuthor(root) })}
           </Text>
-          <Text style={styles.detailSectionMeta}>{count > 1 ? `${count} comments` : 'Show'}</Text>
+          <Text style={styles.detailSectionMeta}>
+            {count > 1 ? t('commentCount', { count }) : t('show')}
+          </Text>
         </Pressable>
       )
     }

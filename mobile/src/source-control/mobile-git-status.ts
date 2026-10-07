@@ -5,6 +5,7 @@ import type {
   MobileGitStatusHostPayload,
   MobileGitUpstreamStatus
 } from './git-status-reply-schema'
+import { sourceControlText } from './source-control-text'
 
 export type MobileGitFileStatus = GitFileStatus
 export type MobileGitStagingArea = GitStagingArea
@@ -23,11 +24,11 @@ export type MobileSourceControlSection<TEntry extends MobileGitStatusEntry = Mob
 
 const AREA_ORDER: MobileGitStagingArea[] = ['unstaged', 'untracked', 'staged']
 
-const AREA_TITLES: Record<MobileGitStagingArea, string> = {
-  unstaged: 'Changes',
-  untracked: 'Untracked Files',
-  staged: 'Staged Changes'
-}
+const AREA_TITLE_KEYS = {
+  unstaged: 'sectionChanges',
+  untracked: 'sectionUntracked',
+  staged: 'sectionStaged'
+} as const satisfies Record<MobileGitStagingArea, string>
 
 export const MOBILE_GIT_STATUS_LABELS: Record<MobileGitFileStatus, string> = {
   modified: 'M',
@@ -53,7 +54,7 @@ export function buildMobileSourceControlSections<TEntry extends MobileGitStatusE
 ): MobileSourceControlSection<TEntry>[] {
   const sections = AREA_ORDER.map((area) => ({
     area,
-    title: AREA_TITLES[area],
+    title: sourceControlText(AREA_TITLE_KEYS[area]),
     data: entries.filter((entry) => entry.area === area)
   })).filter((section) => section.data.length > 0)
   if (sections.some((section) => section.data.length > 1)) {

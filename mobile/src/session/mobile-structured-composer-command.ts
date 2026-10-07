@@ -10,6 +10,8 @@ import {
   requestStructuredAgentSessionMutation,
   retainStructuredSessionOperationId
 } from './mobile-structured-agent-session-rpc'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 export async function dispatchMobileStructuredCommand(input: {
   text: string
@@ -32,7 +34,7 @@ export async function dispatchMobileStructuredCommand(input: {
     return null
   }
   if (input.hasAttachments) {
-    input.onError('Remove attachments before using a chat-session command.')
+    input.onError(translate(sessionChatCatalog, 'commandRemoveAttachments'))
     return 'rejected'
   }
   let unknown = false
@@ -42,7 +44,7 @@ export async function dispatchMobileStructuredCommand(input: {
       if (!input.canRun()) {
         return {
           accepted: false,
-          error: 'Wait for pending work to finish before using this command.'
+          error: translate(sessionChatCatalog, 'commandWaitForPendingWork')
         }
       }
       input.pending.current = true
@@ -71,7 +73,7 @@ export async function dispatchMobileStructuredCommand(input: {
           unknown = true
           return {
             accepted: false,
-            error: 'Conversation operation is unconfirmed; retry checks the same operation.'
+            error: translate(sessionChatCatalog, 'commandOperationUnconfirmed')
           }
         }
         input.operationIds.delete(key)

@@ -7,6 +7,8 @@ import {
   type MobileImageSource
 } from '../platform/media-picker-contract'
 import { attachMobileImageToTerminal } from './mobile-image-attachment'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 type CurrentRef<T> = {
   readonly current: T
@@ -77,18 +79,18 @@ export function useMobileImageAttachment({
       } catch (error) {
         onError()
         if (connState !== 'connected') {
-          showToast('Attach failed (disconnected)', 1500)
+          showToast(translate(sessionCatalog, 'attachFailedDisconnected'), 1500)
           return
         }
         if (error instanceof ImageLibraryPermissionError) {
-          showToast('Photo permission denied', 1500)
+          showToast(translate(sessionCatalog, 'attachPhotoPermissionDenied'), 1500)
           return
         }
         if (getErrorMessage(error) === 'Clipboard image is too large') {
-          showToast('Image too large to attach', 1500)
+          showToast(translate(sessionCatalog, 'attachImageTooLarge'), 1500)
           return
         }
-        showToast('Attach failed', 1500)
+        showToast(translate(sessionCatalog, 'attachFailed'), 1500)
       } finally {
         setIsAttaching(false)
       }

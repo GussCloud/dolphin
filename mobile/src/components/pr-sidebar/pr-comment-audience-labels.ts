@@ -1,18 +1,20 @@
 import type { PRCommentAudienceFilter } from '../../../../src/shared/pr-comment-audience'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { translate } from '../../i18n/mobile-locale-state'
 
 export const PR_COMMENT_AUDIENCE_FILTERS = [
-  { value: 'all', label: 'All' },
-  { value: 'human', label: 'Humans' },
-  { value: 'bot', label: 'Bots' }
-] satisfies { value: PRCommentAudienceFilter; label: string }[]
+  { value: 'all', labelKey: 'audienceAll' },
+  { value: 'human', labelKey: 'audienceHumans' },
+  { value: 'bot', labelKey: 'audienceBots' }
+] as const satisfies readonly { value: PRCommentAudienceFilter; labelKey: string }[]
 
 export function getPRCommentAudienceEmptyLabel(filter: PRCommentAudienceFilter): string {
   switch (filter) {
     case 'bot':
-      return 'No bot comments.'
+      return translate(componentsPrSidebarCatalog, 'noBotComments')
     case 'human':
-      return 'No human comments.'
+      return translate(componentsPrSidebarCatalog, 'noHumanComments')
     case 'all':
-      return 'No comments yet.'
+      return translate(componentsPrSidebarCatalog, 'noCommentsYet')
   }
 }

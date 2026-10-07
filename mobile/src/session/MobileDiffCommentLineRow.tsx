@@ -5,6 +5,8 @@ import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-session-styles'
 import type { DiffComment } from '../../../src/shared/diff-comment-types'
 import type { RenderableDiffLine } from './mobile-session-route-types'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileDiffCommentLineRow({
   line,
@@ -37,6 +39,7 @@ export function MobileDiffCommentLineRow({
   const isCommenting = commentLine !== undefined && activeCommentLine === commentLine
   const canComment = commentLine !== undefined
   // Why: review notes anchor to the modified side, so show that line number in the single mobile gutter.
+  const t = useMobileTranslation(sessionCatalog)
   const gutterLineNumber = line.newLineNumber ?? line.oldLineNumber ?? ''
   return (
     <View style={styles.diffLineBlock}>
@@ -51,7 +54,7 @@ export function MobileDiffCommentLineRow({
         <Text
           selectable
           style={styles.diffText}
-          accessibilityLabel={`${title} diff line ${index + 1}`}
+          accessibilityLabel={t('diffLineAccessibility', { title, line: index + 1 })}
         >
           <Text
             style={[
@@ -77,7 +80,7 @@ export function MobileDiffCommentLineRow({
                 onStartComment(commentLine)
               }
             }}
-            accessibilityLabel={`Add note on line ${commentLine}`}
+            accessibilityLabel={t('addNoteOnLine', { line: commentLine ?? '' })}
           >
             <Plus size={12} color={colors.textSecondary} strokeWidth={2.3} />
           </Pressable>
@@ -89,12 +92,14 @@ export function MobileDiffCommentLineRow({
             <View key={comment.id} style={styles.diffCommentCard}>
               <View style={styles.diffCommentHeader}>
                 <MessageSquare size={12} color={colors.textMuted} strokeWidth={2.2} />
-                <Text style={styles.diffCommentMeta}>Line {comment.lineNumber}</Text>
+                <Text style={styles.diffCommentMeta}>
+                  {t('noteLine', { line: comment.lineNumber })}
+                </Text>
                 <Pressable
                   style={styles.diffCommentDeleteButton}
                   disabled={commentsBusy}
                   onPress={() => onDeleteComment(comment.id)}
-                  accessibilityLabel={`Delete note on line ${comment.lineNumber}`}
+                  accessibilityLabel={t('deleteNoteOnLine', { line: comment.lineNumber })}
                 >
                   <X size={12} color={colors.textMuted} strokeWidth={2.2} />
                 </Pressable>
@@ -110,7 +115,7 @@ export function MobileDiffCommentLineRow({
             style={[styles.textInput, styles.diffCommentInput]}
             value={commentDraft}
             onChangeText={onDraftChange}
-            placeholder="Add review note"
+            placeholder={t('addReviewNotePlaceholder')}
             placeholderTextColor={colors.textMuted}
             editable={!commentsBusy}
             multiline
@@ -123,7 +128,7 @@ export function MobileDiffCommentLineRow({
               disabled={commentsBusy}
               onPress={onCancelComment}
             >
-              <Text style={styles.diffCommentSecondaryText}>Cancel</Text>
+              <Text style={styles.diffCommentSecondaryText}>{t('cancel')}</Text>
             </Pressable>
             <Pressable
               style={[
@@ -137,7 +142,7 @@ export function MobileDiffCommentLineRow({
                 }
               }}
             >
-              <Text style={styles.diffCommentPrimaryText}>Save note</Text>
+              <Text style={styles.diffCommentPrimaryText}>{t('saveNote')}</Text>
             </Pressable>
           </View>
         </View>

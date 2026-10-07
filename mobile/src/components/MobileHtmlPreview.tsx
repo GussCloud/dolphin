@@ -4,6 +4,8 @@ import { WebView } from 'react-native-webview'
 import { Code, Eye } from 'lucide-react-native'
 import { openExternalLink } from '../platform/external-link'
 import { colors, spacing, typography } from '../theme/mobile-theme'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export type MobileHtmlPreviewProps = {
   html: string
@@ -16,6 +18,7 @@ export type MobileHtmlPreviewProps = {
 // loads in-place; any link tap opens externally so a page can't hijack the
 // review surface.
 export function MobileHtmlPreview({ html, renderSource }: MobileHtmlPreviewProps) {
+  const t = useMobileTranslation(componentsCatalog)
   const [mode, setMode] = useState<'preview' | 'source'>('preview')
 
   return (
@@ -32,10 +35,10 @@ export function MobileHtmlPreview({ html, renderSource }: MobileHtmlPreviewProps
           // no `aria-selected` without the line below.
           accessibilityState={{ selected: mode === 'preview' }}
           aria-selected={mode === 'preview'}
-          accessibilityLabel="Preview rendered HTML"
+          accessibilityLabel={t('previewRenderedHtml')}
         >
           <Eye size={13} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.toggleText}>Preview</Text>
+          <Text style={styles.toggleText}>{t('preview')}</Text>
         </Pressable>
         <Pressable
           style={[styles.toggle, mode === 'source' && styles.toggleActive]}
@@ -43,10 +46,10 @@ export function MobileHtmlPreview({ html, renderSource }: MobileHtmlPreviewProps
           accessibilityRole="tab"
           accessibilityState={{ selected: mode === 'source' }}
           aria-selected={mode === 'source'}
-          accessibilityLabel="View HTML source"
+          accessibilityLabel={t('viewHtmlSource')}
         >
           <Code size={13} color={colors.textSecondary} strokeWidth={2.2} />
-          <Text style={styles.toggleText}>Source</Text>
+          <Text style={styles.toggleText}>{t('source')}</Text>
         </Pressable>
       </View>
       {mode === 'preview' ? (

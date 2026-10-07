@@ -14,6 +14,7 @@ import type {
   LinearIssue,
   LinearTeam
 } from './mobile-tasks-provider-detail-types'
+import { translateTasks as t } from './tasks-translate'
 
 export function mergeGitHubAssignableUsers(
   users: GitHubAssignableUser[],
@@ -80,7 +81,7 @@ export function hasGitHubIssueSourceChoice(sources: GitHubRepoSources | undefine
 }
 
 export function issueSourceSlug(source: GitHubOwnerRepo | null | undefined): string {
-  return source ? `${source.owner}/${source.repo}` : 'Unknown'
+  return source ? `${source.owner}/${source.repo}` : t('unknown')
 }
 
 export function sortLinearIssues(
@@ -117,7 +118,7 @@ export function getLinearIssueGroup(
   if (groupBy === 'assignee') {
     return {
       key: `assignee:${issue.assignee?.id ?? issue.assignee?.displayName ?? 'unassigned'}`,
-      label: issue.assignee?.displayName ?? 'Unassigned',
+      label: issue.assignee?.displayName ?? t('unassigned'),
       color: colors.accentBlue
     }
   }
@@ -131,7 +132,7 @@ export function getLinearIssueGroup(
   if (groupBy === 'team') {
     return { key: `team:${issue.team.id}`, label: issue.team.name, color: issue.state.color }
   }
-  return { key: 'all', label: 'Issues', color: colors.accentBlue }
+  return { key: 'all', label: t('issuesTitle'), color: colors.accentBlue }
 }
 
 export function groupLinearIssues(
@@ -155,7 +156,7 @@ function groupOrderedLinearIssues(
   groupBy: LinearGroupBy
 ): LinearIssueSection[] {
   if (groupBy === 'none') {
-    return [{ key: 'all', label: 'Issues', color: colors.accentBlue, issues: sorted }]
+    return [{ key: 'all', label: t('issuesTitle'), color: colors.accentBlue, issues: sorted }]
   }
   const sections = new Map<
     string,

@@ -9,6 +9,8 @@ import {
   dictationSetupRead
 } from './mobile-dictation-operations'
 import type { MobileSpeechModelReply, MobileSpeechSetupReply } from './dictation-reply-schema'
+import { dictationCatalog } from '../i18n/catalogs/dictation'
+import { translate } from '../i18n/mobile-locale-state'
 
 // The setup as the reply reader hands it back, not RuntimeSpeechSetupState: the reader salvages the
 // members the sheet reads behind a guard, so the screens see what it actually checked.
@@ -19,8 +21,6 @@ export type MobileSpeechModel = MobileSpeechModelReply
 // configured. Mapping them lets the mic entry point open the setup sheet
 // instead of dead-ending on a toast.
 const SETUP_REQUIRED_CODES = new Set(['voice_dictation_disabled', 'voice_model_not_selected'])
-const LEGACY_DESKTOP_SPEECH_SETUP_MESSAGE =
-  'Update the paired desktop Dolphin app to use mobile voice settings.'
 
 // Why: mobile can pair with older desktop runtimes that predate speech.models.list;
 // show upgrade guidance instead of leaking the raw denial or not-found error.
@@ -45,11 +45,11 @@ export function isDictationSetupRequiredError(message: string): boolean {
 export async function fetchDictationSetup(client: RpcClient): Promise<MobileSpeechSetup> {
   const reply = await requestDictationSetupReply(client)
   if (isLegacyDesktopSpeechSetupReply(reply)) {
-    throw new Error(LEGACY_DESKTOP_SPEECH_SETUP_MESSAGE)
+    throw new Error(translate(dictationCatalog, 'legacyDesktop'))
   }
   return interpretOrThrowRefusalMessage(
     () => dictationSetupRead.interpret(reply),
-    'Failed to load dictation models'
+    translate(dictationCatalog, 'loadModelsFailed')
   )
 }
 
@@ -70,7 +70,7 @@ export async function downloadDictationModel(client: RpcClient, modelId: string)
   const reply = await dictationModelDownload.request(client, { modelId })
   interpretOrThrowRefusalMessage(
     () => dictationModelDownload.interpret(reply),
-    'Failed to start download'
+    translate(dictationCatalog, 'downloadFailed')
   )
 }
 
@@ -81,7 +81,7 @@ export async function deleteDictationModel(
   const reply = await dictationModelDelete.request(client, { modelId })
   return interpretOrThrowRefusalMessage(
     () => dictationModelDelete.interpret(reply),
-    'Failed to delete model'
+    translate(dictationCatalog, 'deleteFailed')
   )
 }
 
@@ -92,7 +92,7 @@ export async function setDictationConfig(
   const reply = await dictationConfigWrite.request(client, params)
   return interpretOrThrowRefusalMessage(
     () => dictationConfigWrite.interpret(reply),
-    'Failed to update dictation settings'
+    translate(dictationCatalog, 'updateSettingsFailed')
   )
 }
 

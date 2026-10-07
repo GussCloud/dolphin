@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { Activity } from 'lucide-react-native'
 import { Animated, Easing, StyleSheet, View } from 'react-native'
 import type { AgentDotState } from '../worktree/agent-row-display'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Per-agent state indicator, 1:1 with desktop AgentStateDot
 // (src/renderer/src/components/AgentStateDot.tsx): yellow spinner for 'working',
@@ -18,6 +20,7 @@ const DOT_COLORS: Record<Exclude<AgentDotState, 'working' | 'monitoring'>, strin
 const WORKING_COLOR = '#eab308'
 
 export function AgentStateDot({ state }: { state: AgentDotState }) {
+  const t = useMobileTranslation(componentsCatalog)
   const spinValue = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
@@ -48,7 +51,7 @@ export function AgentStateDot({ state }: { state: AgentDotState }) {
 
   if (state === 'monitoring') {
     return (
-      <View style={styles.wrapper} accessibilityLabel="Monitoring background tasks">
+      <View style={styles.wrapper} accessibilityLabel={t('monitoringBackgroundTasks')}>
         <Activity size={10} color={WORKING_COLOR} />
       </View>
     )

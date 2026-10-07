@@ -5,6 +5,8 @@ import { styles } from './mobile-source-control-styles'
 import { MobileSourceControlPrChip } from './MobileSourceControlPrChip'
 import type { MobilePrChipSummary } from './mobile-pr-chip-summary'
 import { mobileConflictAbortLabel } from './mobile-source-control-conflict-abort'
+import { sourceControlCatalog } from '../i18n/catalogs/source-control'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   branchLabel: string
@@ -39,6 +41,7 @@ export function MobileSourceControlBranchCard({
   prChip,
   onOpenPr
 }: Props) {
+  const t = useMobileTranslation(sourceControlCatalog)
   const showConflict = conflictOperation !== null && conflictOperation !== 'unknown'
   return (
     <View style={styles.summaryCard}>
@@ -52,14 +55,24 @@ export function MobileSourceControlBranchCard({
         {syncLabel ? <Text style={styles.syncText}>{syncLabel}</Text> : null}
       </View>
       <View style={styles.countRow}>
-        <Text style={styles.countText}>{unstagedCount} changed</Text>
-        <Text style={styles.countText}>{stagedCount} staged</Text>
-        {branchCount > 0 ? <Text style={styles.countText}>{branchCount} on branch</Text> : null}
+        <Text style={styles.countText}>{t('countChanged', { count: unstagedCount })}</Text>
+        <Text style={styles.countText}>{t('countStaged', { count: stagedCount })}</Text>
+        {branchCount > 0 ? (
+          <Text style={styles.countText}>{t('countOnBranch', { count: branchCount })}</Text>
+        ) : null}
       </View>
       {/* Own row so Abort never overflows past the card when counts are long. */}
       {showConflict ? (
         <View style={styles.conflictRow}>
-          <Text style={styles.conflictText}>{conflictOperation}</Text>
+          <Text style={styles.conflictText}>
+            {conflictOperation === 'merge'
+              ? t('conflictMerge')
+              : conflictOperation === 'rebase'
+                ? t('conflictRebase')
+                : conflictOperation === 'cherry-pick'
+                  ? t('conflictCherryPick')
+                  : conflictOperation}
+          </Text>
           {conflictOperation === 'merge' || conflictOperation === 'rebase' ? (
             <Pressable
               style={({ pressed }) => [

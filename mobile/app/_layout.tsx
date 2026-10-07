@@ -15,6 +15,7 @@ import { DolphinLogo } from '../src/components/DolphinLogo'
 import { MobileRootErrorBoundary } from '../src/components/MobileRootErrorBoundary'
 import { PreviousCrashSessionLaunchNotice } from '../src/components/PreviousCrashSessionLaunchNotice'
 import { RpcClientProvider } from '../src/transport/client-context'
+import { MobileLocaleProvider } from '../src/i18n/mobile-locale-provider'
 import { getNotificationNavigationTarget } from '../src/notifications/notification-routing'
 import { useOpenNotificationRoute } from '../src/notifications/use-open-notification-route'
 import {
@@ -258,6 +259,7 @@ function RootLayoutContents() {
           <Stack.Screen name="voice-settings" options={{ headerShown: false }} />
           <Stack.Screen name="notifications" options={{ headerShown: false }} />
           <Stack.Screen name="background-connection" options={{ headerShown: false }} />
+          <Stack.Screen name="language-settings" options={{ headerShown: false }} />
           <Stack.Screen name="troubleshoot" options={{ headerShown: false }} />
           <Stack.Screen name="connection-log" options={{ headerShown: false }} />
           <Stack.Screen name="about" options={{ headerShown: false }} />
@@ -274,7 +276,9 @@ export default function RootLayout() {
 
   return (
     <MobileRootErrorBoundary onReturnHome={returnHome}>
-      <RootLayoutContents />
+      <MobileLocaleProvider>
+        <RootLayoutContents />
+      </MobileLocaleProvider>
     </MobileRootErrorBoundary>
   )
 }

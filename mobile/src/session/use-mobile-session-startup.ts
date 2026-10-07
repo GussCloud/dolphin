@@ -4,6 +4,8 @@ import { headlessActivationNeedsHostRenderer } from '../worktree/worktree-activa
 import { createInitialSessionAutoCreateState } from './use-initial-session-terminal-autocreate'
 import type { MobileSessionKeyboardStateModel } from './use-mobile-session-keyboard-state'
 import type { RpcResponse } from '../transport/types'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionStartup(scope: MobileSessionKeyboardStateModel) {
   const {
@@ -127,7 +129,7 @@ export function useMobileSessionStartup(scope: MobileSessionKeyboardStateModel) 
           activation?.accepted === true &&
           headlessActivationNeedsHostRenderer(activation.value)
         ) {
-          showToast('Open Dolphin on the host to wake sleeping agents.', 3000)
+          showToast(translate(sessionCatalog, 'wakeSleepingAgents'), 3000)
         }
       }
       if (client && created !== '1' && !isFloatingWorkspaceRoute) {

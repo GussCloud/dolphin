@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react'
 import { RefreshCw } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { colors } from '../theme/mobile-theme'
+import { terminalCatalog } from '../i18n/catalogs/terminal'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export type NativeWebViewEngineEvent = {
   readonly nativeEvent?: object
@@ -78,15 +80,21 @@ export function TerminalWebViewEngineErrorOverlay({
   message,
   onReload
 }: TerminalWebViewEngineErrorOverlayProps) {
+  const t = useMobileTranslation(terminalCatalog)
   return (
     <View style={styles.errorOverlay}>
-      <Text style={styles.errorTitle}>Terminal failed to load</Text>
+      <Text style={styles.errorTitle}>{t('engineFailedToLoad')}</Text>
       <Text style={styles.errorDetail} numberOfLines={4}>
         {message}
       </Text>
-      <Pressable accessibilityRole="button" style={styles.reloadButton} onPress={onReload}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('reload')}
+        style={styles.reloadButton}
+        onPress={onReload}
+      >
         <RefreshCw size={16} color={colors.terminalBg} />
-        <Text style={styles.reloadButtonText}>Reload</Text>
+        <Text style={styles.reloadButtonText}>{t('reload')}</Text>
       </Pressable>
     </View>
   )

@@ -7,6 +7,7 @@ import {
   type MobileGitUpstreamStatus
 } from './mobile-git-status'
 import type { GitCommitResult, GitRequestError } from './mobile-source-control-screen-state'
+import { sourceControlText } from './source-control-text'
 
 type Params = {
   client: RpcClient | null
@@ -20,17 +21,17 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
   const sendGitRequest = useCallback(
     async <T>(method: string, params?: Record<string, unknown>): Promise<T> => {
       if (!client || connState !== 'connected') {
-        throw new Error('Waiting for desktop...')
+        throw new Error(sourceControlText('waitingForDesktop'))
       }
       const response = await client.sendRequest(method, {
         worktree: `id:${worktreeId}`,
         ...params
       })
       if (!response.ok) {
-        const error = new Error(
-          response.error?.message || 'Source control action failed'
-        ) as GitRequestError
-        error.code = response.error?.code
+        const error: GitRequestError = Object.assign(
+          new Error(response.error?.message || sourceControlText('sourceControlActionFailed')),
+          { code: response.error?.code }
+        )
         throw error
       }
       return (response as RpcSuccess).result as T
@@ -42,7 +43,7 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
     async (message: string): Promise<GitCommitResult> => {
       const result = await sendGitRequest<GitCommitResult>('git.commit', { message })
       if (!result || result.success !== true) {
-        throw new Error(result?.error || 'Commit failed')
+        throw new Error(result?.error || sourceControlText('commitFailed'))
       }
       return result
     },
@@ -60,7 +61,7 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
       }
       const status = await sendGitRequest<MobileGitStatusResult>('git.status')
       if (!status.upstreamStatus) {
-        throw new Error('Branch status unavailable')
+        throw new Error(sourceControlText('branchStatusUnavailable'))
       }
       return status.upstreamStatus
     }

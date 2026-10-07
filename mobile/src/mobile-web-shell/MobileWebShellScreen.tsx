@@ -40,31 +40,37 @@ import { useShellPageBack } from './use-shell-page-back'
 import { useShellStackPop } from './use-shell-stack-pop'
 import { useMobileWebShellSession } from './use-mobile-web-shell-session'
 import { usePageHostSnapshot } from './use-page-host-snapshot'
-import { SHELL_OPENING_LABEL, ShellPageCover, ShellWaitingFrame } from './ShellWaitingFrame'
+import { ShellPageCover, ShellWaitingFrame } from './ShellWaitingFrame'
 import { pageSafeAreaInsets, usePublishedSafeAreaInsets } from './page-safe-area-insets'
+import { mobileWebShellCatalog } from '../i18n/catalogs/mobile-web-shell'
+import type { mobileWebShellEn } from '../i18n/catalogs/mobile-web-shell/en'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
-function failureMessage(reason: MobileWebShellFailureCause): string {
+type ShellTranslate = MobileTranslate<typeof mobileWebShellEn>
+
+function failureMessage(reason: MobileWebShellFailureCause, t: ShellTranslate): string {
   switch (reason) {
     case 'isolation-unavailable':
-      return "This device's WebView is too old to open the workspace safely."
+      return t('failureIsolationUnavailable')
     case 'download-failed':
-      return 'The workspace could not be downloaded from this host.'
+      return t('failureDownload')
     case 'status-unreadable':
-      return "Could not read this host's status. Go back and reopen it."
+      return t('failureStatusUnreadable')
     case 'render-process-gone':
-      return 'The workspace stopped responding.'
+      return t('failureStoppedResponding')
     case 'generation-unreadable':
     case 'document-load-failed':
-      return 'The downloaded workspace could not be opened.'
+      return t('failureCouldNotOpen')
   }
 }
 
 /** Says what happened and what is on screen because of it, and claims nothing else: the shell does
  *  not schedule a second attempt, so this must not promise one. */
-function updateNoticeMessage(notice: MobileWebShellUpdateNotice): string {
+function updateNoticeMessage(notice: MobileWebShellUpdateNotice, t: ShellTranslate): string {
   switch (notice) {
     case 'update-failed':
-      return "Couldn't update the workspace from this host. Showing the last version that worked."
+      return t('updateFailedNotice')
   }
 }
 
@@ -81,12 +87,18 @@ function Waiting({ label }: { label: string }) {
 }
 
 function Fetching({ state }: { state: Extract<MobileWebShellSessionState, { kind: 'fetching' }> }) {
+  const t = useMobileTranslation(mobileWebShellCatalog)
   return (
     <Centered>
-      <ActivityIndicator color={colors.textSecondary} accessibilityLabel="Downloading workspace" />
-      <Text style={styles.waitingLabel}>Downloading workspace</Text>
+      <ActivityIndicator color={colors.textSecondary} accessibilityLabel={t('downloading')} />
+      <Text style={styles.waitingLabel}>{t('downloading')}</Text>
       <Text style={styles.progress} testID="mobile-web-shell-progress">
-        {`${state.completedAssets}/${state.totalAssets} files · ${state.receivedBytes}/${state.totalBytes} bytes`}
+        {t('downloadProgress', {
+          completedAssets: state.completedAssets,
+          totalAssets: state.totalAssets,
+          receivedBytes: state.receivedBytes,
+          totalBytes: state.totalBytes
+        })}
       </Text>
     </Centered>
   )
@@ -102,10 +114,11 @@ function Failed({
   // No retry for the fence, and none for an unread status: a device whose WebView cannot be
   // isolated will not grow one on a tap, and a retry re-reads the same settled gate it already has.
   const retryable = state.reason !== 'isolation-unavailable' && state.reason !== 'status-unreadable'
+  const t = useMobileTranslation(mobileWebShellCatalog)
   return (
     <Centered>
       <Text style={styles.failedMessage} testID="mobile-web-shell-failed">
-        {failureMessage(state.reason)}
+        {failureMessage(state.reason, t)}
       </Text>
       {retryable ? (
         <Pressable
@@ -113,7 +126,7 @@ function Failed({
           testID="mobile-web-shell-retry"
           onPress={onRetry}
         >
-          <Text style={styles.retryLabel}>Try again</Text>
+          <Text style={styles.retryLabel}>{t('tryAgain')}</Text>
         </Pressable>
       ) : null}
     </Centered>
@@ -177,6 +190,7 @@ export function MobileWebShellScreen({
   onRouteParamClear,
   runtime
 }: MobileWebShellScreenProps) {
+  const t = useMobileTranslation(mobileWebShellCatalog)
   const insets = useSafeAreaInsets()
   // The page cannot see the IME for itself: edge-to-edge makes the manifest's `adjustResize` inert,
   // so the window never shrinks and `visualViewport` inside the WebView reads full height with the
@@ -357,7 +371,7 @@ export function MobileWebShellScreen({
     return (
       <Centered>
         <Text style={styles.waitingLabel} testID="mobile-web-shell-offline">
-          Connect to this host to download the workspace
+          {t('offline')}
         </Text>
       </Centered>
     )
@@ -366,7 +380,7 @@ export function MobileWebShellScreen({
     return <Fetching state={state} />
   }
   if (state.kind !== 'ready') {
-    return <Waiting label={state.kind === 'activating' ? SHELL_OPENING_LABEL : 'Checking host'} />
+    return <Waiting label={state.kind === 'activating' ? t('opening') : t('checkingHost')} />
   }
   return (
     <View
@@ -385,7 +399,7 @@ export function MobileWebShellScreen({
           works, and the only thing that did not happen is the update to a newer one. */}
       {updateNotice !== null && noticeShown && (
         <HostRouteNoticeBanner
-          message={updateNoticeMessage(updateNotice)}
+          message={updateNoticeMessage(updateNotice, t)}
           tone="failure"
           onDismiss={() => setNoticeDismissedFor(state.sessionId)}
         />
@@ -428,7 +442,7 @@ export function MobileWebShellScreen({
           }
         }}
       />
-      <ShellPageCover label={SHELL_OPENING_LABEL} visible={pageFrame === 'unpainted'} />
+      <ShellPageCover label={t('opening')} visible={pageFrame === 'unpainted'} />
       <DevFacts state={state} droppedBinaryFrames={droppedBinaryFrames} />
     </View>
   )

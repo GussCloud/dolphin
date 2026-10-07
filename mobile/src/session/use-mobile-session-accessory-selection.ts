@@ -18,6 +18,8 @@ import { stripTerminalSelectionGutter } from '../../../src/shared/terminal-selec
 import { useTerminalCopyTrimsGutter } from '../terminal/terminal-copy-gutter-preference'
 import { getRepoIdFromMobileWorktreeId } from './mobile-session-route-helpers'
 import type { MobileSessionTerminalInputModel } from './use-mobile-session-terminal-input'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionAccessorySelection(scope: MobileSessionTerminalInputModel) {
   const {
@@ -126,7 +128,7 @@ export function useMobileSessionAccessorySelection(scope: MobileSessionTerminalI
         triggerSuccess()
         // Why: Android 13+ shows its own system copy toast; iOS shows none, so only iOS needs our in-app toast.
         if (Platform.OS === 'ios') {
-          showToast('Copied')
+          showToast(translate(sessionCatalog, 'copied'))
         }
         terminalRefs.current.get(handle)?.cancelSelect()
       } catch (e) {
@@ -137,7 +139,7 @@ export function useMobileSessionAccessorySelection(scope: MobileSessionTerminalI
           name: err.name,
           message: err.message
         })
-        showToast("Couldn't copy", 1500)
+        showToast(translate(sessionCatalog, 'copyFailed'), 1500)
       }
     },
     [clipboard, showToast]
@@ -150,7 +152,7 @@ export function useMobileSessionAccessorySelection(scope: MobileSessionTerminalI
       }
       // eslint-disable-next-line no-console
       console.warn('[mobile-clip] selection evicted')
-      showToast('Selection cleared (scrolled out of buffer)', 1500)
+      showToast(translate(sessionCatalog, 'selectionCleared'), 1500)
       setSelectModeActive(false)
     },
     [showToast]

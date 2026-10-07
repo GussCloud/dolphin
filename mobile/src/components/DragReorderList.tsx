@@ -22,6 +22,8 @@ import {
   orderedKeysFromDragReorderPositions,
   type DragReorderPositions
 } from './drag-reorder-positions'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const ROW_SPRING = { damping: 28, stiffness: 350 }
 const LONG_PRESS_ACTIVATION_MS = 200
@@ -227,6 +229,7 @@ function DragReorderRow({
   onAccessibilityMove: (key: string, delta: number) => void
   children: ReactNode
 }): React.JSX.Element {
+  const t = useMobileTranslation(componentsCatalog)
   const {
     positions,
     activeKey,
@@ -296,11 +299,11 @@ function DragReorderRow({
           style={styles.handle}
           accessible
           accessibilityRole="button"
-          accessibilityLabel="Drag to reorder"
-          accessibilityHint="Use the move up and move down actions to reorder without dragging"
+          accessibilityLabel={t('dragToReorder')}
+          accessibilityHint={t('dragToReorderHint')}
           accessibilityActions={[
-            { name: 'moveUp', label: 'Move up' },
-            { name: 'moveDown', label: 'Move down' }
+            { name: 'moveUp', label: t('moveUp') },
+            { name: 'moveDown', label: t('moveDown') }
           ]}
           onAccessibilityAction={(event) => {
             if (event.nativeEvent.actionName === 'moveUp') {

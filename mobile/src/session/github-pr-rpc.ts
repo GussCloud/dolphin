@@ -18,6 +18,8 @@ import {
 import type { GitHubPrSettleableOperation } from './github-pr-mutation-outcome'
 import { githubPrRequestParams, type GitHubPrRepoSlug } from './github-pr-repo-slug'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 // Re-export the PR-scoped param builder so consumers (and tests) have a single entry point for the
 // github.* PR RPC surface. The reply parsers it used to re-export are schemas now, and the schema
@@ -49,7 +51,9 @@ async function settleGithubPrRead<Value>(
   read: GitHubPrSettleableOperation<Value>,
   send: () => Promise<RpcResponse>
 ): Promise<GitHubPrReadOutcome<Value>> {
-  const fallback = `Request failed: ${read.operation.method}`
+  const fallback = translate(sessionReviewCatalog, 'requestFailed', {
+    method: read.operation.method
+  })
   let reply: RpcResponse
   try {
     reply = await send()

@@ -2,6 +2,10 @@ import { defineConfig } from 'vitest/config'
 
 const vitestOxcConfig = { tsconfig: false } as never
 
+// Why: forked workers inherit this, so Intl's default locale (the app's "System default") is
+// English even in a test that resets modules past the vitest.setup.ts pin.
+process.env.LC_ALL = 'en_US.UTF-8'
+
 export default defineConfig({
   root: import.meta.dirname,
   // Why: the app tsconfig intentionally excludes tests; Vite 8's OXC transform

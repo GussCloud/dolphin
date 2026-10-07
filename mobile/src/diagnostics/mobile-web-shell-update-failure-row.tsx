@@ -5,6 +5,8 @@ import { processGenerationStore } from '../mobile-web-shell/process-generation-s
 import { loadHosts } from '../transport/host-store'
 import { formatUpdateFailure } from './mobile-web-shell-update-failure-copy'
 import { troubleshootScreenStyles as styles } from './troubleshoot-screen-styles'
+import { diagnosticsCatalog } from '../i18n/catalogs/diagnostics'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Line = { readonly hostId: string; readonly text: string }
 
@@ -31,6 +33,7 @@ export function updateFailureLines(
  * that can run the shell.
  */
 export function MobileWebShellUpdateFailureRow() {
+  const t = useMobileTranslation(diagnosticsCatalog)
   const [lines, setLines] = useState<readonly Line[]>([])
 
   useEffect(() => {
@@ -53,7 +56,7 @@ export function MobileWebShellUpdateFailureRow() {
   }
   return (
     <View testID="mobile-web-shell-update-failures">
-      <Text style={styles.sectionHeading}>Workspace updates</Text>
+      <Text style={styles.sectionHeading}>{t('workspaceUpdates')}</Text>
       <View style={styles.section}>
         <View style={styles.accordionBody}>
           {lines.map((line) => (

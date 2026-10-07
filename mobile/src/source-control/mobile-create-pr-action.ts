@@ -2,6 +2,7 @@ import type { MobileHostedReviewEligibilityReply } from './hosted-review-reply-s
 import { supportsHostedReviewCreation } from '../../../src/shared/hosted-review-creation-providers'
 import { hostedReviewCopy } from './hosted-review-copy'
 import { getMobilePrCreateBlockMessage } from './mobile-pr-create'
+import { sourceControlText } from './source-control-text'
 
 export type MobileCreatePrEligibilityState =
   | { kind: 'idle' }
@@ -31,7 +32,7 @@ const BUSY_ACTIONS = new Set(['create-pr', 'push-create-pr'])
 function hiddenAction(onPress: () => void): MobileCreatePrAction {
   return {
     visible: false,
-    label: 'Create Pull Request',
+    label: sourceControlText('createReview', { review: sourceControlText('reviewTitlePr') }),
     disabled: true,
     loading: false,
     pushFirst: false,
@@ -52,7 +53,7 @@ export function buildMobileCreatePrAction({
   if (eligibilityState.kind === 'error') {
     return {
       visible: true,
-      label: 'Review status unavailable',
+      label: sourceControlText('reviewStatusUnavailable'),
       disabled: true,
       loading: false,
       pushFirst: false,
@@ -63,7 +64,7 @@ export function buildMobileCreatePrAction({
   if (!eligibility) {
     return {
       visible: true,
-      label: 'Checking review status…',
+      label: sourceControlText('checkingReviewStatus'),
       disabled: true,
       loading: true,
       pushFirst: false,
@@ -76,7 +77,7 @@ export function buildMobileCreatePrAction({
   if (!supportsHostedReviewCreation(eligibility.provider)) {
     return {
       visible: true,
-      label: 'Review creation unavailable for this provider',
+      label: sourceControlText('reviewCreationUnavailable'),
       disabled: true,
       loading: false,
       pushFirst: false,
@@ -84,7 +85,7 @@ export function buildMobileCreatePrAction({
     }
   }
   const copy = hostedReviewCopy(eligibility.provider)
-  const label = `Create ${copy.titleLabel}`
+  const label = sourceControlText('createReview', { review: copy.titleLabel })
   // Any in-flight git work blocks the action: runGitWorkflow no-ops while
   // busyActionRef is set, so an enabled-looking button would silently do nothing.
   const busy = busyAction !== null
@@ -118,7 +119,7 @@ export function buildMobileCreatePrAction({
       canCreate: false,
       blockedReason: eligibility.blockedReason,
       nextAction: eligibility.nextAction
-    }) ?? `This branch is not ready for a ${copy.reviewLabel} yet.`
+    }) ?? sourceControlText('reviewNotReady', { review: copy.reviewLabel })
 
   return {
     visible: true,

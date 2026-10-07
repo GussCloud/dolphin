@@ -1,4 +1,6 @@
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { translate } from '../i18n/mobile-locale-state'
 
 // Mirrors the desktop AGENT_STATUS_STALE_AFTER_MS (src/shared/agent-status-types.ts:
 // 30 min). Defined locally rather than imported because a runtime-value import
@@ -47,19 +49,19 @@ export function agentDotState(
 export function agentStateLabel(state: AgentDotState): string {
   switch (state) {
     case 'working':
-      return 'Working'
+      return translate(worktreeCatalog, 'agentWorking')
     case 'monitoring':
-      return 'Monitoring background tasks'
+      return translate(worktreeCatalog, 'agentMonitoring')
     case 'blocked':
-      return 'Blocked'
+      return translate(worktreeCatalog, 'agentBlocked')
     case 'waiting':
-      return 'Waiting for input'
+      return translate(worktreeCatalog, 'agentWaiting')
     case 'interrupted':
-      return 'Interrupted'
+      return translate(worktreeCatalog, 'agentInterrupted')
     case 'done':
-      return 'Done'
+      return translate(worktreeCatalog, 'agentDone')
     case 'idle':
-      return 'Idle'
+      return translate(worktreeCatalog, 'agentIdle')
   }
 }
 
@@ -103,16 +105,16 @@ export function agentIdentityLabel(agentType: string | null): string {
 export function formatTimeAgo(ts: number, now: number): string {
   const delta = now - ts
   if (delta < 60_000) {
-    return 'just now'
+    return translate(worktreeCatalog, 'timeJustNow')
   }
   const minutes = Math.floor(delta / 60_000)
   if (minutes < 60) {
-    return `${minutes}m`
+    return translate(worktreeCatalog, 'timeMinutes', { minutes })
   }
   const hours = Math.floor(minutes / 60)
   if (hours < 24) {
-    return `${hours}h`
+    return translate(worktreeCatalog, 'timeHours', { hours })
   }
   const days = Math.floor(hours / 24)
-  return `${days}d`
+  return translate(worktreeCatalog, 'timeDays', { days })
 }

@@ -37,7 +37,9 @@ export function buildConnectionDiagnosticsReport(args: {
     state: args.state,
     activePath: args.activePath,
     pendingPath: args.pendingPath,
-    entries
+    entries,
+    // Why: the report goes to support, so it stays English whatever the UI language.
+    locale: 'en'
   })
   const lines: string[] = []
   lines.push('Dolphin Mobile connection diagnostics')

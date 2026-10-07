@@ -4,6 +4,8 @@ import type { RpcClient } from '../transport/rpc-client'
 import { loadMobileDiffReviewDiff } from './mobile-diff-review-loaders'
 import type { MobileDiffReviewQueueItem } from './mobile-diff-review-queue'
 import type { ReviewDiffState, ReviewScreenState } from './mobile-diff-review-screen-model'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 type DiffLoadingInput = {
   client: RpcClient | null
@@ -16,7 +18,7 @@ type DiffLoadingInput = {
 
 // Owns the diff body for the reviewed item. Split out of the review controller so the loaded diff
 // can survive a transport blip: a drop re-runs this effect, and (F10) a diff already on screen for
-// the same item stays there instead of being replaced by "Waiting for desktop..." or a spinner.
+// the same item stays there instead of being replaced by translate(sessionReviewCatalog, 'waitingForDesktop') or a spinner.
 export function useMobileDiffReviewDiffLoading(input: DiffLoadingInput): ReviewDiffState {
   const { client, connState, worktreeId, currentItem, screenState, setActiveHunkIndex } = input
   const [diffState, setDiffState] = useState<ReviewDiffState>({ kind: 'idle' })
@@ -42,7 +44,13 @@ export function useMobileDiffReviewDiffLoading(input: DiffLoadingInput): ReviewD
     const keepLoadedDiff = (fallback: ReviewDiffState) => (prev: ReviewDiffState) =>
       prev.kind === 'ready' && prev.itemKey === itemKey ? prev : fallback
     if (!client || connState !== 'connected') {
-      setDiffState(keepLoadedDiff({ kind: 'error', itemKey, message: 'Waiting for desktop...' }))
+      setDiffState(
+        keepLoadedDiff({
+          kind: 'error',
+          itemKey,
+          message: translate(sessionReviewCatalog, 'waitingForDesktop')
+        })
+      )
       return
     }
     let stale = false
@@ -65,7 +73,10 @@ export function useMobileDiffReviewDiffLoading(input: DiffLoadingInput): ReviewD
             keepLoadedDiff({
               kind: 'error',
               itemKey,
-              message: err instanceof Error ? err.message : 'Unable to load diff'
+              message:
+                err instanceof Error
+                  ? err.message
+                  : translate(sessionReviewCatalog, 'loadDiffFailed')
             })
           )
         }

@@ -31,6 +31,8 @@ import {
   releaseMobileNativeChatTerminalWrite
 } from './mobile-native-chat-terminal-write-lock'
 import { useMobileNativeChatImageUpload } from './use-mobile-native-chat-image-upload'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 type CurrentRef<T> = { readonly current: T }
 type ShowToast = (message: string, durationMs?: number) => void
@@ -161,7 +163,7 @@ export function useMobileNativeChatImageAttachments({
       const operationTerminal = activeHandleRef.current
       if (operationTerminal && !acquireMobileNativeChatTerminalWrite(operationTerminal)) {
         onError?.()
-        onSendError('Message not sent')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
         return false
       }
       // One budget for the whole user action. The paste loop, the settle, and the
@@ -175,7 +177,7 @@ export function useMobileNativeChatImageAttachments({
         if (structuredNativeChat && pendingImages.length > 0 && scope) {
           if (!client || !enabled || connState !== 'connected') {
             onError?.()
-            onSendError('Message not sent (disconnected)')
+            onSendError(translate(sessionChatCatalog, 'sendMessageNotSentDisconnected'))
             return false
           }
           const outcome = await baseSend(
@@ -204,11 +206,11 @@ export function useMobileNativeChatImageAttachments({
           if (staleTerminal && isMobileNativeChatInputStale(staleTerminal)) {
             // Why: the heal is itself a terminal.send, so without the input lease it
             // can only be rejected — which used to latch the marker and fail every
-            // later send with a bare "Message not sent" (#10681). Gate it like the
+            // later send with a bare translate(sessionChatCatalog, 'sendMessageNotSent') (#10681). Gate it like the
             // image path; the heal retries once the lease is back.
             if (!client || !enabled || connState !== 'connected') {
               onError?.()
-              onSendError('Message not sent (disconnected)')
+              onSendError(translate(sessionChatCatalog, 'sendMessageNotSentDisconnected'))
               return false
             }
             const healed = await healMobileNativeChatStaleInput({
@@ -221,7 +223,7 @@ export function useMobileNativeChatImageAttachments({
             // clear never touched, so abort rather than reroute it.
             if (!healed || activeHandleRef.current !== staleTerminal) {
               onError?.()
-              onSendError('Message not sent')
+              onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
               return false
             }
           }
@@ -232,7 +234,7 @@ export function useMobileNativeChatImageAttachments({
         if (!client || !handle || !enabled || connState !== 'connected') {
           onError?.()
           // Mirror the text path's failure surface (the base send is never reached).
-          onSendError('Message not sent (disconnected)')
+          onSendError(translate(sessionChatCatalog, 'sendMessageNotSentDisconnected'))
           return false
         }
         try {
@@ -253,7 +255,7 @@ export function useMobileNativeChatImageAttachments({
             // Keep the chips so the user can retry; the failed paste never submitted.
             markMobileNativeChatInputStale(handle)
             onError?.()
-            onSendError('Message not sent')
+            onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
             return false
           }
           // The paste's leading Ctrl+U cleared any earlier stale input in `handle`.
@@ -271,7 +273,7 @@ export function useMobileNativeChatImageAttachments({
           if (activeHandleRef.current !== handle) {
             markMobileNativeChatInputStale(handle)
             onError?.()
-            onSendError('Message not sent')
+            onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
             return false
           }
           const outcome = await baseSend(
@@ -305,7 +307,7 @@ export function useMobileNativeChatImageAttachments({
           // attempt's leading Ctrl+U clears whatever fraction of the paste landed.
           markMobileNativeChatInputStale(handle)
           onError?.()
-          onSendError('Message not sent')
+          onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
           return false
         }
       } finally {

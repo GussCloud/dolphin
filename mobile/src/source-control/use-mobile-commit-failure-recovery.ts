@@ -9,6 +9,7 @@ import {
   hasExpandedCommitFailureDetails,
   summarizeCommitFailure
 } from './mobile-commit-failure-recovery'
+import { sourceControlText } from './source-control-text'
 
 type Params = {
   client: RpcClient | null
@@ -49,7 +50,7 @@ export function useMobileCommitFailureRecovery({ client, connState, worktreeId, 
       return false
     }
     if (!client || connState !== 'connected') {
-      setLaunchError('Waiting for desktop...')
+      setLaunchError(sourceControlText('waitingForDesktop'))
       triggerError()
       return false
     }
@@ -61,7 +62,7 @@ export function useMobileCommitFailureRecovery({ client, connState, worktreeId, 
       return true
     } catch (err) {
       triggerError()
-      setLaunchError(err instanceof Error ? err.message : 'Failed to launch agent')
+      setLaunchError(err instanceof Error ? err.message : sourceControlText('failedToLaunchAgent'))
       return false
     } finally {
       setLaunching(false)

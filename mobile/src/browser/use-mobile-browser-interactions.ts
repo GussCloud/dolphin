@@ -25,6 +25,8 @@ import type { BrowserPageCommandSend, BrowserPageParams } from './use-mobile-bro
 import type { BrowserScreencastFrameMetadata } from '../transport/browser-screencast-protocol'
 
 import { useMobileBrowserCommands } from './use-mobile-browser-commands'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { translate } from '../i18n/mobile-locale-state'
 const TAP_SLOP = 16
 const SCROLL_START_SLOP = 22
 const LONG_PRESS_MS = 550
@@ -153,7 +155,7 @@ export function useMobileBrowserInteractions(args: MobileBrowserInteractionArgs)
         }
         rightClickSentRef.current = true
         void sendPointerClick(point, 'right')
-        onToast('Right click')
+        onToast(translate(browserCatalog, 'rightClick'))
       }, LONG_PRESS_MS)
     },
     [clearLongPressTimer, frameGeometry, mapTouchPoint, onToast, sendPointerClick]

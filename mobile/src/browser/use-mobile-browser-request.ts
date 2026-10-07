@@ -1,6 +1,8 @@
 import { useCallback, type Dispatch, type SetStateAction } from 'react'
 import type { RpcClient, SendRequestOptions } from '../transport/rpc-client'
 import { browserErrorMessage, shouldSurfaceBrowserError } from './mobile-browser-frame-state'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type BrowserPageParams = { worktree: string; page: string }
 /**
@@ -56,7 +58,7 @@ export function useMobileBrowserRequest(args: BrowserRequestArgs) {
         setError(null)
         return result
       } catch (err) {
-        const message = browserErrorMessage(err, 'Browser command failed')
+        const message = browserErrorMessage(err, translate(browserCatalog, 'commandFailed'))
         if (!opts.suppressError && shouldSurfaceBrowserError(message)) {
           setError(message)
         }

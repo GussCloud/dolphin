@@ -12,6 +12,8 @@ import type { MobileComposerSource } from '../tasks/use-mobile-composer-source'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import { TaskProviderLogo } from './TaskProviderLogo'
 import { TEXT_INPUT_FONT_SIZE } from '../platform/text-input-font-size'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   composer: MobileComposerSource
@@ -51,6 +53,7 @@ export function SmartWorkspaceSourceField({
   onBeforeOpen,
   onOpenDrawer
 }: Props) {
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
   const selection = composer.smartNameSelection
 
   function openDrawer(): void {
@@ -64,7 +67,7 @@ export function SmartWorkspaceSourceField({
   return (
     <View style={styles.field}>
       <Text style={styles.label}>
-        {label} <Text style={styles.labelHint}>[Optional]</Text>
+        {label} <Text style={styles.labelHint}>{t('optionalHint')}</Text>
       </Text>
       {selection ? (
         <View style={styles.pill}>
@@ -75,7 +78,7 @@ export function SmartWorkspaceSourceField({
           {selection.url ? (
             <Pressable
               accessibilityRole="link"
-              accessibilityLabel="Open selected source"
+              accessibilityLabel={t('openSelectedSource')}
               hitSlop={6}
               onPress={() => {
                 if (selection.url) {
@@ -100,7 +103,7 @@ export function SmartWorkspaceSourceField({
           onChangeText={composer.setName}
           onFocus={openDrawer}
           editable={!disabled && interactive}
-          placeholder="Type a name or search a source"
+          placeholder={t('sourceSearchPlaceholder')}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}

@@ -6,6 +6,7 @@ import { gitBranchCompareRead } from './mobile-git-read-operations'
 import { isMobileGitUnavailableReply } from './mobile-git-status'
 import type { MobileGitBranchCompareReply } from './git-compare-reply-schema'
 import type { MobileBranchCompareState } from './mobile-source-control-screen-state'
+import { sourceControlText } from './source-control-text'
 
 // The compare leg's own protocol and screen mapping: what one attempt against the worktree's base
 // can end as, and what each ending leaves on screen. Nothing here reaches React.
@@ -37,7 +38,7 @@ export async function readBranchCompareOutcome(
       return null
     }
     if (!baseRef) {
-      return { kind: 'failed', message: 'Unable to resolve the base branch for comparison.' }
+      return { kind: 'failed', message: sourceControlText('unableToResolveCompareBase') }
     }
     const reply = await gitBranchCompareRead.request(client, {
       worktree: `id:${worktreeId}`,
@@ -53,13 +54,17 @@ export async function readBranchCompareOutcome(
     } catch (error) {
       return {
         kind: 'failed',
-        message: refusedRpcMessageOrFallback(error, 'Unable to load committed changes')
+        message: refusedRpcMessageOrFallback(
+          error,
+          sourceControlText('unableToLoadCommittedChanges')
+        )
       }
     }
   } catch (err) {
     return {
       kind: 'failed',
-      message: err instanceof Error ? err.message : 'Unable to load committed changes'
+      message:
+        err instanceof Error ? err.message : sourceControlText('unableToLoadCommittedChanges')
     }
   }
 }

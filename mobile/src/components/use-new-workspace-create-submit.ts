@@ -28,6 +28,8 @@ import type { MobileWorkspaceRepo, SetupRunPolicy } from './new-worktree-modal-t
 import type { SetupTrustPrompt } from './SetupHookTrustDrawer'
 import type { NewWorktreeDrawerView } from './use-new-worktree-drawer-navigation'
 import { getSuggestedCreatureName } from './worktree-name-suggestion'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import { translate } from '../i18n/mobile-locale-state'
 
 type CreateOptions = {
   setupOverride?: Exclude<WorkspaceCreateSetupDecision, 'inherit'>
@@ -88,7 +90,11 @@ export function useNewWorkspaceCreateSubmit(args: {
     args.setError('')
     try {
       if (!args.multiProjectRepoIds && args.sshGate.requiresConnection) {
-        args.setError(`Connect ${selectedRepo.displayName} before creating a workspace.`)
+        args.setError(
+          translate(componentsNewWorkspaceCatalog, 'connectRepoBeforeCreate', {
+            repo: selectedRepo.displayName
+          })
+        )
         return
       }
       let latestRuntimeSettings = args.runtimeSettings
@@ -111,7 +117,7 @@ export function useNewWorkspaceCreateSubmit(args: {
           pickPreferredNewWorktreeAgent(latestRuntimeSettings, args.detectedAgentIds)
         )
         args.setAgentOverridden(false)
-        args.setError('Selected agent is disabled. Choose an enabled agent before creating.')
+        args.setError(translate(componentsNewWorkspaceCatalog, 'selectedAgentDisabled'))
         return
       }
 
@@ -141,7 +147,7 @@ export function useNewWorkspaceCreateSubmit(args: {
           setupDecision = options.setupOverride
         } else if (args.setupRunPolicy === 'ask') {
           if (!args.setupDecisionChoice) {
-            args.setError('Choose whether to run the setup script.')
+            args.setError(translate(componentsNewWorkspaceCatalog, 'chooseSetupDecision'))
             return
           }
           setupDecision = args.setupDecisionChoice
@@ -204,7 +210,11 @@ export function useNewWorkspaceCreateSubmit(args: {
       args.onClose()
       args.onCreated(result.worktreeId, result.name, result.warning)
     } catch (error) {
-      args.setError(error instanceof Error ? error.message : 'Failed to create workspace')
+      args.setError(
+        error instanceof Error
+          ? error.message
+          : translate(componentsNewWorkspaceCatalog, 'createWorkspaceFailed')
+      )
     } finally {
       createInFlightRef.current = false
       setCreating(false)
@@ -236,7 +246,11 @@ export function useNewWorkspaceCreateSubmit(args: {
       args.transitionDrawer('form')
       await create({ setupOverride: 'run', approvedSetupContentHash: approvedHash })
     } catch (error) {
-      args.setError(error instanceof Error ? error.message : 'Failed to trust setup script.')
+      args.setError(
+        error instanceof Error
+          ? error.message
+          : translate(componentsNewWorkspaceCatalog, 'trustSetupFailed')
+      )
     } finally {
       setupTrustActionInFlightRef.current = false
       if (!createInFlightRef.current) {

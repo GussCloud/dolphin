@@ -12,17 +12,35 @@ import {
 } from '../../../src/shared/native-chat-tool-summary'
 import {
   describeActiveToolCall,
-  formatActiveToolLabel,
-  formatToolCallCount,
-  selectActiveToolCall
+  selectActiveToolCall,
+  type NativeChatActiveToolDescriptor
 } from '../../../src/shared/native-chat-tool-activity'
 import { isShellActivityToolCall } from '../../../src/shared/native-chat-tool-icon'
 import type { NativeChatBlock } from '../../../src/shared/native-chat-types'
+import { sessionChatCatalog, type sessionChatEn } from '../i18n/catalogs/session-chat'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-native-chat-message-styles'
 
 const MAX_VISIBLE_TOOL_PAIRS = 6
 const MAX_TOOL_RUN_DIFF_ROWS = 240
+
+function activeToolLabel(
+  t: MobileTranslate<typeof sessionChatEn>,
+  { key, toolName, preview }: NativeChatActiveToolDescriptor
+): string {
+  switch (key) {
+    case 'runningPreview':
+      return t('toolRunningPreview', { preview })
+    case 'runningCommand':
+      return t('toolRunningCommand')
+    case 'runningNamedPreview':
+      return t('toolRunningNamedPreview', { toolName, preview })
+    case 'runningNamed':
+      return t('toolRunningNamed', { toolName })
+  }
+}
 
 function DiffView({ lines }: { lines: DiffLine[] }): React.JSX.Element {
   return (
@@ -80,9 +98,10 @@ function ToolLine({
   diffLineLimit: number
   onOpenFile?: (relativePath: string) => void
 }): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   const [expanded, setExpanded] = useState(defaultExpanded)
   const { call, result } = pair
-  const name = call ? call.name : 'Result'
+  const name = call ? call.name : t('toolResult')
   const inputDisplay = call ? createToolInputDisplay(call.input) : null
   const preview = inputDisplay?.label ?? result?.output.split('\n')[0]?.slice(0, 80) ?? ''
   // Why: collapsed tool rows are the common path; defer bounded diff parsing
@@ -182,6 +201,7 @@ export function ToolRun({
   activeCall: ReturnType<typeof selectActiveToolCall>
   onOpenFile?: (relativePath: string) => void
 }): React.JSX.Element {
+  const t = useMobileTranslation(sessionChatCatalog)
   const [open, setOpen] = useState(defaultExpanded)
   const pairs = pairToolBlocks(blocks, MAX_VISIBLE_TOOL_PAIRS)
   const diffLineLimit = Math.max(1, Math.floor(MAX_TOOL_RUN_DIFF_ROWS / (pairs.length * 2 || 1)))
@@ -211,7 +231,7 @@ export function ToolRun({
           >
             <ActiveToolIcon size={15} color={colors.textMuted} strokeWidth={2} />
             <PulsingText style={styles.toolRunActiveLabel} numberOfLines={1}>
-              {formatActiveToolLabel(describeActiveToolCall(activeCall))}
+              {activeToolLabel(t, describeActiveToolCall(activeCall))}
             </PulsingText>
             {open ? <ChevronDown size={15} color={colors.textMuted} strokeWidth={2} /> : null}
           </Pressable>
@@ -224,7 +244,7 @@ export function ToolRun({
             )}
             <Text style={styles.toolRunCount}>{callCount}×</Text>
             <Text style={styles.toolRunLabel} numberOfLines={1}>
-              {summary || formatToolCallCount(callCount)}
+              {summary || t('toolCallCount', { count: callCount })}
             </Text>
           </Pressable>
         )}
@@ -241,7 +261,9 @@ export function ToolRun({
             />
           ))}
           {callCount > pairs.length ? (
-            <Text style={styles.toolPreview}>… {callCount - pairs.length} more tool calls</Text>
+            <Text style={styles.toolPreview}>
+              {t('toolMoreCalls', { count: callCount - pairs.length })}
+            </Text>
           ) : null}
         </View>
       ) : null}

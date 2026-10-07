@@ -13,6 +13,7 @@ import {
   GitBranch
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import {
   taskExternalOpenLabel,
   type TaskItem,
@@ -53,7 +54,7 @@ export function renderMobileTasksItemActions(model: ConnectionPresentationModel)
       >
         <Plus size={16} color={colors.textPrimary} />
         <Text style={styles.actionText}>
-          {creatingKey === actionItem.key ? 'Creating...' : 'Create Workspace'}
+          {creatingKey === actionItem.key ? t('creating') : t('createWorkspace')}
         </Text>
       </Pressable>
 
@@ -77,7 +78,7 @@ export function renderMobileTasksItemActions(model: ConnectionPresentationModel)
           >
             <Copy size={16} color={colors.textPrimary} />
             <Text style={styles.actionText}>
-              {copiedLinkKey === `linear-url:${actionItem.key}` ? 'Copied' : 'Copy Linear link'}
+              {copiedLinkKey === `linear-url:${actionItem.key}` ? t('copied') : t('copyLinearLink')}
             </Text>
           </Pressable>
         </>
@@ -92,7 +93,7 @@ export function renderMobileTasksItemActions(model: ConnectionPresentationModel)
           >
             <Copy size={16} color={colors.textPrimary} />
             <Text style={styles.actionText}>
-              {copiedLinkKey === `task:${actionItem.key}` ? 'Copied' : 'Copy GitHub link'}
+              {copiedLinkKey === `task:${actionItem.key}` ? t('copied') : t('copyGitHubLink')}
             </Text>
           </Pressable>
         </>
@@ -136,10 +137,10 @@ export function renderMobileTasksItemActions(model: ConnectionPresentationModel)
             }
           >
             <GitBranch size={16} color={colors.textPrimary} />
-            <Text style={styles.actionText}>Merge pull request</Text>
+            <Text style={styles.actionText}>{t('mergePullRequestAction')}</Text>
           </Pressable>
           {isGitHubPrMergeBlocked(actionItem) ? (
-            <Text style={styles.emptyInlineText}>GitHub reports merge conflicts.</Text>
+            <Text style={styles.emptyInlineText}>{t('githubMergeConflicts')}</Text>
           ) : null}
         </>
       ) : null}
@@ -184,7 +185,7 @@ export function renderMobileTasksItemActions(model: ConnectionPresentationModel)
             }
           >
             <GitBranch size={16} color={colors.textPrimary} />
-            <Text style={styles.actionText}>Merge merge request</Text>
+            <Text style={styles.actionText}>{t('mergeMergeRequestAction')}</Text>
           </Pressable>
         </>
       ) : null}
@@ -200,7 +201,7 @@ export function renderMobileTasksItemActions(model: ConnectionPresentationModel)
             }}
           >
             <GitBranch size={16} color={colors.textPrimary} />
-            <Text style={styles.actionText}>Change status</Text>
+            <Text style={styles.actionText}>{t('changeStatusAction')}</Text>
           </Pressable>
         </>
       ) : null}

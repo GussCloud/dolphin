@@ -30,6 +30,8 @@ import type {
   RenderableDiffLine
 } from './mobile-session-route-types'
 import { DiffLineRow } from './MobileSessionDiffLineRow'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function FileReader({
   doc,
@@ -44,6 +46,7 @@ export function FileReader({
   language?: string
   diffCommentActions?: DiffCommentActions
 }) {
+  const t = useMobileTranslation(sessionCatalog)
   const syntaxLanguage = useMemo(
     () => resolveMobileSyntaxLanguage(relativePath || title, language),
     [language, relativePath, title]
@@ -200,8 +203,8 @@ export function FileReader({
               <MessageSquare size={14} color={colors.textSecondary} strokeWidth={2.2} />
               <Text style={styles.diffNotesTitle}>
                 {commentCount === 0
-                  ? 'No review notes'
-                  : `${commentCount} review ${commentCount === 1 ? 'note' : 'notes'}`}
+                  ? t('noReviewNotes')
+                  : t('reviewNoteCount', { count: commentCount })}
               </Text>
             </View>
             <View style={styles.diffNotesActions}>
@@ -212,10 +215,10 @@ export function FileReader({
                 ]}
                 disabled={!canCopyNotes}
                 onPress={() => void diffCommentActions.onCopyAll()}
-                accessibilityLabel="Copy review notes"
+                accessibilityLabel={t('copyReviewNotes')}
               >
                 <Copy size={13} color={colors.textSecondary} strokeWidth={2.2} />
-                <Text style={styles.diffNotesActionText}>Copy</Text>
+                <Text style={styles.diffNotesActionText}>{t('copy')}</Text>
               </Pressable>
               <Pressable
                 style={[
@@ -224,10 +227,10 @@ export function FileReader({
                 ]}
                 disabled={!canSendNotes}
                 onPress={diffCommentActions.onSendAll}
-                accessibilityLabel="Send review notes to AI"
+                accessibilityLabel={t('sendReviewNotesToAi')}
               >
                 <Send size={13} color={colors.textSecondary} strokeWidth={2.2} />
-                <Text style={styles.diffNotesActionText}>Send</Text>
+                <Text style={styles.diffNotesActionText}>{t('send')}</Text>
               </Pressable>
             </View>
           </View>
@@ -264,7 +267,7 @@ export function FileReader({
             source={{ uri: doc.dataUri }}
             style={styles.imagePreview}
             resizeMode="contain"
-            accessibilityLabel={`${title} image`}
+            accessibilityLabel={t('fileImageAccessibility', { title })}
           />
         </ScrollView>
       </View>
@@ -277,7 +280,11 @@ export function FileReader({
         style={styles.filePreviewScroll}
         contentContainerStyle={styles.filePreviewContent}
       >
-        <Text selectable style={styles.filePreviewText} accessibilityLabel={`${title} preview`}>
+        <Text
+          selectable
+          style={styles.filePreviewText}
+          accessibilityLabel={t('filePreviewAccessibility', { title })}
+        >
           <MobileSyntaxSegments
             segments={
               fileSyntax?.doc === doc && fileSyntax.language === syntaxLanguage

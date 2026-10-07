@@ -33,6 +33,9 @@ import { fileDirectoryRead, legacyFileListRead } from './mobile-file-explorer-op
 import { fileExplorerStyles as styles } from './mobile-file-explorer-styles'
 import { MobileFileExplorerRow } from './mobile-file-explorer-row'
 import { navigateToMobileFilePreview } from './mobile-file-preview-navigation'
+import { filesCatalog } from '../i18n/catalogs/files'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
+import { filesText } from './files-text'
 
 export function MobileFileExplorerPanel(props: {
   hostId: string
@@ -42,6 +45,7 @@ export function MobileFileExplorerPanel(props: {
   onRequestClose?: () => void
 }) {
   const { hostId, worktreeId, name, embedded, onRequestClose } = props
+  const t = useMobileTranslation(filesCatalog)
   const router = useRouteHandoff()
   const { client, state: connState } = useHostClient(hostId)
   const forceReconnect = useForceReconnect()
@@ -66,7 +70,9 @@ export function MobileFileExplorerPanel(props: {
 
       if (!client || connState !== 'connected') {
         const message =
-          connState === 'connected' ? 'Connecting to desktop...' : 'Waiting for desktop...'
+          connState === 'connected'
+            ? filesText('connectingToDesktop')
+            : filesText('waitingForDesktop')
         if (rootLoad) {
           const hasLoadedRoot =
             (getDirectoryCacheState(directoryCacheRef.current, '')?.entries.length ?? 0) > 0
@@ -141,10 +147,10 @@ export function MobileFileExplorerPanel(props: {
               // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: this policy skips only a refusal, so an unaccepted reply is a failure envelope.
               (legacyReply as RpcFailure).error?.message ||
                 refusal?.message ||
-                'Unable to load files'
+                filesText('unableToLoadFiles')
             )
           }
-          throw new Error(refusal?.message || 'Unable to load files')
+          throw new Error(refusal?.message || filesText('unableToLoadFiles'))
         }
         if (
           !isCurrentDirectoryLoad(directoryLoadRevisionsRef.current, scopeRef.current, loadToken)
@@ -165,7 +171,7 @@ export function MobileFileExplorerPanel(props: {
         ) {
           return
         }
-        const message = err instanceof Error ? err.message : 'Unable to load files'
+        const message = err instanceof Error ? err.message : filesText('unableToLoadFiles')
         if (rootLoad) {
           // Why: a failed background refresh keeps the cached tree browsable;
           // only a cold load surfaces the full-screen error.
@@ -296,7 +302,7 @@ export function MobileFileExplorerPanel(props: {
           style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
           onPress={() => onRequestClose?.()}
           hitSlop={8}
-          accessibilityLabel="Close files"
+          accessibilityLabel={t('closeFiles')}
         >
           <X size={20} color={colors.textSecondary} strokeWidth={2.2} />
         </Pressable>
@@ -306,18 +312,18 @@ export function MobileFileExplorerPanel(props: {
           onPress={() => router.back()}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Back to session"
+          accessibilityLabel={t('backToSession')}
         >
           <ChevronLeft size={22} color={colors.textSecondary} strokeWidth={2.2} />
         </Pressable>
       )}
       <View style={styles.titleBlock}>
         <Text style={styles.title} numberOfLines={1}>
-          Files
+          {t('title')}
         </Text>
         <Text style={styles.meta} numberOfLines={1}>
           {worktreeLabel}
-          {legacyListTruncated ? ' - Showing first 5000' : ''}
+          {legacyListTruncated ? t('showingFirstSuffix', { count: 5000 }) : ''}
         </Text>
       </View>
     </View>
@@ -340,13 +346,13 @@ export function MobileFileExplorerPanel(props: {
       <Text style={styles.errorText}>{error}</Text>
       {rootRetry ? (
         <Pressable style={styles.retryButton} onPress={rootRetry}>
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t('retry')}</Text>
         </Pressable>
       ) : null}
     </View>
   ) : rows.length === 0 ? (
     <View style={styles.state}>
-      <Text style={styles.emptyText}>No files found</Text>
+      <Text style={styles.emptyText}>{t('noFilesFound')}</Text>
     </View>
   ) : (
     <FlatList

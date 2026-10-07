@@ -7,10 +7,9 @@ import {
   fileOwnershipWorktreeRead,
   type MobileFileOwnershipRpcSender
 } from './mobile-file-ownership-operations'
+import { filesText } from './files-text'
 
 const FILE_MUTATION_TIMEOUT_MS = 15_000
-const SSH_OWNER_CHANGED_MESSAGE =
-  "Couldn't verify the SSH connection. Reconnect the host and try again."
 
 export type MobileFileMutationOwnership = SshMutationExpectation & {
   expectedExecutionHostId: 'local' | `ssh:${string}`
@@ -29,13 +28,13 @@ export function buildMobileFileMutationOwnership(
 ): MobileFileMutationOwnership {
   const host = parseExecutionHostId(worktreeHostId)
   if (worktreeHostId !== undefined && !host) {
-    throw new Error(SSH_OWNER_CHANGED_MESSAGE)
+    throw new Error(filesText('sshOwnerChanged'))
   }
   if (!host || host.kind === 'local' || host.kind === 'runtime') {
     return { expectedExecutionHostId: 'local' }
   }
   if (sshState?.targetId !== host.targetId || sshState.connectionGeneration === undefined) {
-    throw new Error(SSH_OWNER_CHANGED_MESSAGE)
+    throw new Error(filesText('sshOwnerChanged'))
   }
   return {
     expectedExecutionHostId: host.id,
@@ -61,7 +60,7 @@ export async function captureMobileFileMutationOwnership(
   )
   const summary = fileOwnershipWorktreeRead.interpret(worktreeReply)
   if (!summary) {
-    throw new Error(SSH_OWNER_CHANGED_MESSAGE)
+    throw new Error(filesText('sshOwnerChanged'))
   }
 
   const host = parseExecutionHostId(summary.hostId)

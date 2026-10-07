@@ -10,6 +10,7 @@ import {
   TextInput
 } from './mobile-tasks-dependencies'
 import { styles, getGitLabPipelineStatusStyle } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import {
   taskKindLabel,
   SHOW_MOBILE_DETAIL_LABEL_CHIPS,
@@ -17,7 +18,8 @@ import {
   isFailedGitHubCheck,
   formatDurationSeconds,
   SHOW_MOBILE_LINEAR_DETAIL_TOOLS,
-  discussionSummary
+  discussionSummary,
+  taskStatusLabel
 } from './mobile-tasks-legacy-foundation'
 import {
   renderMobileTasksItemBodyEditor,
@@ -62,29 +64,29 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
     <>
       <View style={styles.detailMetaGrid}>
         <View style={styles.detailMetaItem}>
-          <Text style={styles.detailMetaLabel}>Type</Text>
+          <Text style={styles.detailMetaLabel}>{t('type')}</Text>
           <Text style={styles.detailMetaValue}>{taskKindLabel(actionItem)}</Text>
         </View>
         <View style={styles.detailMetaItem}>
-          <Text style={styles.detailMetaLabel}>Status</Text>
-          <Text style={styles.detailMetaValue}>{actionItem.status}</Text>
+          <Text style={styles.detailMetaLabel}>{t('status')}</Text>
+          <Text style={styles.detailMetaValue}>{taskStatusLabel(actionItem)}</Text>
         </View>
         {detailPayload.provider === 'linear' && detailPayload.assignee ? (
           <View style={styles.detailMetaItem}>
-            <Text style={styles.detailMetaLabel}>Assignee</Text>
+            <Text style={styles.detailMetaLabel}>{t('assignee')}</Text>
             <Text style={styles.detailMetaValue}>{detailPayload.assignee}</Text>
           </View>
         ) : null}
         {detailPayload.provider === 'linear' && detailPayload.project ? (
           <View style={styles.detailMetaItem}>
-            <Text style={styles.detailMetaLabel}>Project</Text>
+            <Text style={styles.detailMetaLabel}>{t('project')}</Text>
             <Text style={styles.detailMetaValue}>{detailPayload.project.name}</Text>
           </View>
         ) : null}
         {(detailPayload.provider === 'github' || detailPayload.provider === 'gitlab') &&
         detailPayload.assignees.length > 0 ? (
           <View style={styles.detailMetaItem}>
-            <Text style={styles.detailMetaLabel}>Assignees</Text>
+            <Text style={styles.detailMetaLabel}>{t('assignees')}</Text>
             <Text style={styles.detailMetaValue}>{detailPayload.assignees.join(', ')}</Text>
           </View>
         ) : null}
@@ -101,7 +103,7 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
       ) : null}
 
       <View style={styles.detailSection}>
-        <Text style={styles.detailSectionTitle}>Description</Text>
+        <Text style={styles.detailSectionTitle}>{t('description')}</Text>
         {renderMobileTasksItemBodyEditor(model)}
       </View>
 
@@ -115,33 +117,33 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
       actionItem.source.type === 'pr' ? (
         <View style={styles.detailSection}>
           <View style={styles.detailSectionHeader}>
-            <Text style={styles.detailSectionTitle}>Checks</Text>
+            <Text style={styles.detailSectionTitle}>{t('checks')}</Text>
             <View style={styles.inlineActionRow}>
               <Pressable
                 style={styles.inlineSaveButtonCompact}
                 disabled={mutatingStatus}
                 onPress={() => void refreshGitHubChecks(actionItem)}
               >
-                <Text style={styles.inlineSaveText}>Refresh</Text>
+                <Text style={styles.inlineSaveText}>{t('refresh')}</Text>
               </Pressable>
               <Pressable
                 style={styles.inlineSaveButtonCompact}
                 disabled={mutatingStatus || !detailPayload.checks.some(isFailedGitHubCheck)}
                 onPress={() => void rerunGitHubChecks(actionItem, true)}
               >
-                <Text style={styles.inlineSaveText}>Rerun failed</Text>
+                <Text style={styles.inlineSaveText}>{t('rerunFailed')}</Text>
               </Pressable>
               <Pressable
                 style={styles.inlineSaveButtonCompact}
                 disabled={mutatingStatus || detailPayload.checks.length === 0}
                 onPress={() => void rerunGitHubChecks(actionItem, false)}
               >
-                <Text style={styles.inlineSaveText}>Rerun all</Text>
+                <Text style={styles.inlineSaveText}>{t('rerunAll')}</Text>
               </Pressable>
             </View>
           </View>
           {detailPayload.checks.length === 0 ? (
-            <Text style={styles.detailMuted}>No checks found.</Text>
+            <Text style={styles.detailMuted}>{t('noChecksFound')}</Text>
           ) : (
             detailPayload.checks.map((check) => (
               <Pressable
@@ -172,15 +174,15 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
       actionItem.source.type === 'mr' ? (
         <View style={styles.detailSection}>
           <View style={styles.detailSectionHeader}>
-            <Text style={styles.detailSectionTitle}>Pipeline</Text>
+            <Text style={styles.detailSectionTitle}>{t('pipeline')}</Text>
             <Text style={styles.detailSectionMeta}>
               {detailPayload.pipelineJobs.length
-                ? `${detailPayload.pipelineJobs.length} jobs`
-                : 'None'}
+                ? t('jobCount', { count: detailPayload.pipelineJobs.length })
+                : t('none')}
             </Text>
           </View>
           {detailPayload.pipelineJobs.length === 0 ? (
-            <Text style={styles.detailMuted}>No pipeline runs for this MR.</Text>
+            <Text style={styles.detailMuted}>{t('noPipelineRuns')}</Text>
           ) : (
             detailPayload.pipelineJobs.map((job) => {
               const duration = formatDurationSeconds(job.duration)
@@ -220,11 +222,13 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
       actionItem.provider === 'linear' ? (
         <View style={styles.detailSection}>
           <View style={styles.detailSectionHeader}>
-            <Text style={styles.detailSectionTitle}>Sub-issues</Text>
-            <Text style={styles.detailSectionMeta}>{detailPayload.children.length || 'None'}</Text>
+            <Text style={styles.detailSectionTitle}>{t('subIssues')}</Text>
+            <Text style={styles.detailSectionMeta}>
+              {detailPayload.children.length || t('none')}
+            </Text>
           </View>
           {detailPayload.children.length === 0 ? (
-            <Text style={styles.detailMuted}>No sub-issues.</Text>
+            <Text style={styles.detailMuted}>{t('noSubIssues')}</Text>
           ) : (
             detailPayload.children.map((child) => (
               <Pressable
@@ -236,7 +240,7 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
                 <Text style={styles.detailLine}>
                   {child.identifier} · {child.title}
                 </Text>
-                <Text style={styles.detailSectionMeta}>Open</Text>
+                <Text style={styles.detailSectionMeta}>{t('open')}</Text>
               </Pressable>
             ))
           )}
@@ -244,7 +248,7 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
             style={[styles.input, styles.stackedInput]}
             value={linearSubIssueTitle}
             onChangeText={setLinearSubIssueTitle}
-            placeholder="Sub-issue title"
+            placeholder={t('subIssueTitlePlaceholder')}
             placeholderTextColor={colors.textMuted}
           />
           <Pressable
@@ -252,20 +256,20 @@ export function renderMobileTasksItemDetailContent(model: ConnectionPresentation
             disabled={mutatingStatus || linearSubIssueTitle.trim().length === 0}
             onPress={() => void createLinearSubIssue(actionItem)}
           >
-            <Text style={styles.inlineSaveText}>Add sub-issue</Text>
+            <Text style={styles.inlineSaveText}>{t('addSubIssue')}</Text>
           </Pressable>
         </View>
       ) : null}
 
       <View style={styles.detailSection}>
         <View style={styles.detailSectionHeader}>
-          <Text style={styles.detailSectionTitle}>Discussion</Text>
+          <Text style={styles.detailSectionTitle}>{t('discussion')}</Text>
           <Text style={styles.detailSectionMeta}>
             {discussionSummary(detailPayload.comments.length)}
           </Text>
         </View>
         {detailPayload.comments.length === 0 ? (
-          <Text style={styles.detailMuted}>No comments.</Text>
+          <Text style={styles.detailMuted}>{t('noComments')}</Text>
         ) : (
           detailCommentGroups.map(renderDetailCommentGroup)
         )}

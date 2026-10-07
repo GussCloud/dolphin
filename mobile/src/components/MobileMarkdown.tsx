@@ -27,6 +27,8 @@ import {
 import { isMobileMermaidLanguage } from './mobile-mermaid-language'
 import { parseMobileMarkdown } from './mobile-markdown-parser'
 import { MermaidDiagram } from './pr-sidebar/MermaidDiagram'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   content?: string
@@ -215,6 +217,7 @@ function MobileMarkdownContent({
   textScale = 1,
   onOpenFile
 }: Props) {
+  const t = useMobileTranslation(componentsCatalog)
   const text = content?.trim() ?? ''
   const previewText = useMemo(() => normalizeMobileMarkdownPreviewHtml(text), [text])
   const blocks = useMemo(() => parseMobileMarkdown(previewText), [previewText])
@@ -289,7 +292,7 @@ function MobileMarkdownContent({
               style={styles.imageFrame}
               onPress={() => openMarkdownHref(block.url, onOpenFile)}
             >
-              <NativeText style={styles.link}>{block.alt || 'Open image'}</NativeText>
+              <NativeText style={styles.link}>{block.alt || t('openImage')}</NativeText>
               <NativeText style={styles.imageCaption} numberOfLines={1}>
                 {block.url}
               </NativeText>
@@ -326,9 +329,9 @@ function MobileMarkdownContent({
                 ))}
                 {hiddenRows > 0 || hiddenColumns > 0 ? (
                   <NativeText style={styles.tableTruncated}>
-                    {hiddenRows > 0 ? `${hiddenRows} more rows` : ''}
+                    {hiddenRows > 0 ? t('tableMoreRows', { count: hiddenRows }) : ''}
                     {hiddenRows > 0 && hiddenColumns > 0 ? ' · ' : ''}
-                    {hiddenColumns > 0 ? `${hiddenColumns} more columns` : ''}
+                    {hiddenColumns > 0 ? t('tableMoreColumns', { count: hiddenColumns }) : ''}
                   </NativeText>
                 ) : null}
               </View>

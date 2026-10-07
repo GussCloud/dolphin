@@ -3,6 +3,8 @@ import type { ConnectionState } from '../transport/types'
 import type { RpcClient } from '../transport/rpc-client'
 import { triggerError, triggerSuccess } from '../platform/haptics'
 import { createTerminalAndSendPrompt } from './pr-ai-triage-launch'
+import { sessionReviewCatalog } from '../i18n/catalogs/session-review'
+import { translate } from '../i18n/mobile-locale-state'
 
 // Launches an agent for the PR triage actions ("Fix checks with AI" / "Resolve
 // conflicts with AI") via createTerminalAndSendPrompt; see pr-ai-triage-launch.ts.
@@ -31,7 +33,7 @@ export function useMobilePrAiTriage(input: Input) {
         return false
       }
       if (!client || connState !== 'connected') {
-        setError('Waiting for desktop…')
+        setError(translate(sessionReviewCatalog, 'waitingForDesktopEllipsis'))
         triggerError()
         return false
       }
@@ -44,7 +46,9 @@ export function useMobilePrAiTriage(input: Input) {
         return true
       } catch (err) {
         triggerError()
-        setError(err instanceof Error ? err.message : 'Failed to launch agent')
+        setError(
+          err instanceof Error ? err.message : translate(sessionReviewCatalog, 'launchAgentFailed')
+        )
         return false
       } finally {
         inFlightRef.current = false

@@ -5,6 +5,7 @@ import {
 } from '../../../src/shared/source-control-primary-action-decision'
 import type { MobileGitBranchCompareResult } from './mobile-branch-compare'
 import type { MobileGitStatusResult } from './mobile-git-status'
+import { sourceControlText } from './source-control-text'
 
 type GitStep = { method: string; params?: Record<string, unknown> }
 
@@ -129,67 +130,70 @@ function getMobileBranchCommitsAhead(
 
 function getMobilePrimaryActionLabel(decision: MobileSourceControlPrimaryActionDecision): string {
   if (decision.requiresForceWithLease) {
-    return 'Force Push'
+    return sourceControlText('actionForcePush')
   }
   switch (decision.kind) {
     case 'commit':
-      return 'Commit'
+      return sourceControlText('actionCommit')
     case 'stage':
-      return 'Stage All'
+      return sourceControlText('stageAll')
     case 'push':
-      return 'Push'
+      return sourceControlText('actionPush')
     case 'pull':
-      return 'Pull'
+      return sourceControlText('actionPull')
     case 'sync':
-      return 'Sync'
+      return sourceControlText('actionSync')
     case 'publish':
-      return 'Publish Branch'
+      return sourceControlText('actionPublishBranch')
   }
 }
 
 function getMobilePrimaryActionHint(decision: MobileSourceControlPrimaryActionDecision): string {
   switch (decision.titleIntent) {
     case 'commit_in_progress':
-      return 'Commit in progress.'
+      return sourceControlText('hintCommitInProgress')
     case 'force_push_in_progress':
-      return 'Force push in progress.'
+      return sourceControlText('hintForcePushInProgress')
     case 'action_in_progress':
     case 'remote_operation_in_progress':
-      return 'Remote operation in progress.'
+      return sourceControlText('hintRemoteInProgress')
     case 'remote_operation_blocks_commit':
-      return 'Try again once the remote operation finishes.'
+      return sourceControlText('hintRemoteBlocksCommit')
     case 'resolve_conflicts_before_commit':
-      return 'Resolve conflicts before committing.'
+      return sourceControlText('hintResolveConflicts')
     case 'commit_staged_changes':
-      return 'Commit staged changes.'
+      return sourceControlText('hintCommitStaged')
     case 'enter_commit_message':
-      return 'Enter a commit message to commit.'
+      return sourceControlText('hintEnterMessage')
     case 'stage_all_changes':
-      return 'Stage all changes.'
+      return sourceControlText('hintStageAll')
     case 'stage_file_to_commit':
-      return 'Stage at least one file to commit.'
+      return sourceControlText('hintStageFile')
     case 'checkout_branch_before_publish':
-      return 'Check out a branch before publishing commits.'
+      return sourceControlText('hintCheckoutBeforePublish')
     case 'checking_review_status':
-      return 'Checking review status.'
+      return sourceControlText('hintCheckingReview')
     case 'review_already_merged':
-      return 'Nothing to commit. The review is already merged.'
+      return sourceControlText('hintReviewMerged')
     case 'publish_branch':
-      return 'Publish this branch to origin.'
+      return sourceControlText('hintPublishBranch')
     case 'push_linked_review':
-      return 'Push updates to the linked review branch.'
+      return sourceControlText('hintPushLinkedReview')
     case 'linked_review_target_unavailable':
-      return 'The linked review branch is unavailable.'
+      return sourceControlText('hintLinkedReviewUnavailable')
     case 'force_push_with_lease':
-      return 'Force push with lease to update the remote branch.'
+      return sourceControlText('hintForcePushWithLease')
     case 'sync_counts':
-      return `Pull ${decision.behind ?? 0}, push ${decision.ahead ?? 0}.`
+      return sourceControlText('hintSyncCounts', {
+        behind: decision.behind ?? 0,
+        ahead: decision.ahead ?? 0
+      })
     case 'pull_count':
-      return `Pull ${decision.count ?? 0} commit${decision.count === 1 ? '' : 's'}.`
+      return sourceControlText('hintPullCount', { count: decision.count ?? 0 })
     case 'push_count':
-      return `Push ${decision.count ?? 0} commit${decision.count === 1 ? '' : 's'}.`
+      return sourceControlText('hintPushCount', { count: decision.count ?? 0 })
     case 'nothing_to_commit_up_to_date':
-      return 'Nothing to commit. Branch is up to date.'
+      return sourceControlText('hintUpToDate')
   }
 }
 

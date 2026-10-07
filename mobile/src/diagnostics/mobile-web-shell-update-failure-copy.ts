@@ -7,42 +7,44 @@ import type {
   MobileWebShellUpdateFailureWall
 } from '../mobile-web-shell/mobile-web-shell-update-failure'
 import { formatTimeAgo } from '../worktree/agent-row-display'
+import { diagnosticsCatalog } from '../i18n/catalogs/diagnostics'
+import { translate } from '../i18n/mobile-locale-state'
 
 /** Each phrase restates the recorded code and nothing more: this row claims only what was written. */
-const REASON_COPY: Record<MobileWebShellUpdateFailureReason, string> = {
-  'no-connection': 'not connected to the host',
-  'connection-lost': 'the connection dropped',
-  'host-refused': 'the host refused the read',
-  'reply-unreadable': 'the host sent a reply this app could not read',
-  'chunk-oversize': 'a chunk was larger than the host allows',
-  'asset-overlong': 'an asset was longer than the manifest declares',
-  'asset-no-progress': 'an asset read made no progress',
-  'asset-short': 'an asset ended short of its declared size',
-  'asset-checksum-mismatch': 'asset checksum mismatch',
-  'build-changed-mid-fetch': "the host's build changed during the download",
-  'chunk-misrouted': 'a chunk answered the wrong asset or offset',
-  'asset-entry-changed': 'an asset no longer matched the manifest',
-  'range-undecodable': 'a compressed read could not be decoded',
-  'fetch-stopped': 'the download was stopped',
-  'cache-write-failed': 'saving the download on this phone failed',
-  'unrecognised-error': 'an unrecognised error'
-}
+const REASON_COPY = {
+  'no-connection': 'reasonNoConnection',
+  'connection-lost': 'reasonConnectionLost',
+  'host-refused': 'reasonHostRefused',
+  'reply-unreadable': 'reasonReplyUnreadable',
+  'chunk-oversize': 'reasonChunkOversize',
+  'asset-overlong': 'reasonAssetOverlong',
+  'asset-no-progress': 'reasonAssetNoProgress',
+  'asset-short': 'reasonAssetShort',
+  'asset-checksum-mismatch': 'reasonAssetChecksumMismatch',
+  'build-changed-mid-fetch': 'reasonBuildChangedMidFetch',
+  'chunk-misrouted': 'reasonChunkMisrouted',
+  'asset-entry-changed': 'reasonAssetEntryChanged',
+  'range-undecodable': 'reasonRangeUndecodable',
+  'fetch-stopped': 'reasonFetchStopped',
+  'cache-write-failed': 'reasonCacheWriteFailed',
+  'unrecognised-error': 'reasonUnrecognisedError'
+} as const satisfies Record<MobileWebShellUpdateFailureReason, string>
 
-const HOST_CODE_COPY: Record<MobileWebBundleErrorCode, string> = {
-  mobile_web_bundle_unavailable: 'the host has no workspace bundle',
-  mobile_web_bundle_build_changed: "the host's build changed during the download",
-  mobile_web_bundle_asset_unknown: 'the host did not recognise an asset',
-  mobile_web_bundle_asset_changed: 'an asset changed on the host',
-  mobile_web_bundle_offset_invalid: 'the host refused a read offset',
-  mobile_web_bundle_read_limited: 'the host limited concurrent reads'
-}
+const HOST_CODE_COPY = {
+  mobile_web_bundle_unavailable: 'hostCodeUnavailable',
+  mobile_web_bundle_build_changed: 'hostCodeBuildChanged',
+  mobile_web_bundle_asset_unknown: 'hostCodeAssetUnknown',
+  mobile_web_bundle_asset_changed: 'hostCodeAssetChanged',
+  mobile_web_bundle_offset_invalid: 'hostCodeOffsetInvalid',
+  mobile_web_bundle_read_limited: 'hostCodeReadLimited'
+} as const satisfies Record<MobileWebBundleErrorCode, string>
 
-const WALL_COPY: Record<MobileWebShellUpdateFailureWall, string> = {
-  'bundle-unavailable': 'the host has no workspace bundle',
-  'bundle-shell-too-old': 'this app is too old for the saved bundle',
-  'host-too-old-for-bundle': 'the host is too old for the saved bundle',
-  'bundle-too-old-for-host': 'the saved bundle is too old for the host'
-}
+const WALL_COPY = {
+  'bundle-unavailable': 'wallBundleUnavailable',
+  'bundle-shell-too-old': 'wallBundleShellTooOld',
+  'host-too-old-for-bundle': 'wallHostTooOldForBundle',
+  'bundle-too-old-for-host': 'wallBundleTooOldForHost'
+} as const satisfies Record<MobileWebShellUpdateFailureWall, string>
 
 function generation(buildId: string): string {
   return `${buildId.slice(0, BUILD_ID_PREFIX_LENGTH)}…`
@@ -53,18 +55,22 @@ function outcomeCopy(failure: MobileWebShellUpdateFailure): string {
   switch (outcome) {
     case 'opened-cached':
       return failure.cachedBuildId === null
-        ? 'Fell back to the saved version.'
-        : `Fell back to the saved version (generation ${generation(failure.cachedBuildId)}).`
+        ? translate(diagnosticsCatalog, 'outcomeOpenedCached')
+        : translate(diagnosticsCatalog, 'outcomeOpenedCachedGeneration', {
+            generation: generation(failure.cachedBuildId)
+          })
     case 'wall':
       return failure.wall === null
-        ? 'Blocked the workspace.'
-        : `Blocked: ${WALL_COPY[failure.wall]}.`
+        ? translate(diagnosticsCatalog, 'outcomeWall')
+        : translate(diagnosticsCatalog, 'outcomeWallReason', {
+            reason: translate(diagnosticsCatalog, WALL_COPY[failure.wall])
+          })
     case 'native-route':
-      return 'Showed the native screen.'
+      return translate(diagnosticsCatalog, 'outcomeNativeRoute')
     case 'failed':
-      return 'Showed the failure screen.'
+      return translate(diagnosticsCatalog, 'outcomeFailed')
     case 'waiting':
-      return 'Waited for the host.'
+      return translate(diagnosticsCatalog, 'outcomeWaiting')
   }
 }
 
@@ -75,11 +81,25 @@ export function formatUpdateFailure(
   hostName: string,
   now: number
 ): string {
-  const ago = formatTimeAgo(failure.at, now)
-  const when = ago === 'just now' ? ago : `${ago} ago`
-  const reason =
+  const reasonText = translate(
+    diagnosticsCatalog,
     failure.hostCode === null ? REASON_COPY[failure.reason] : HOST_CODE_COPY[failure.hostCode]
-  const offered =
-    failure.offeredBuildId === null ? '' : ` (generation ${generation(failure.offeredBuildId)})`
-  return `Last update from ${hostName} failed ${when}: ${reason}${offered}. ${outcomeCopy(failure)}`
+  )
+  const reason =
+    failure.offeredBuildId === null
+      ? reasonText
+      : translate(diagnosticsCatalog, 'reasonWithGeneration', {
+          reason: reasonText,
+          generation: generation(failure.offeredBuildId)
+        })
+  // Same threshold as formatTimeAgo's "just now".
+  const sentence =
+    now - failure.at < 60_000
+      ? translate(diagnosticsCatalog, 'updateFailedJustNow', { host: hostName, reason })
+      : translate(diagnosticsCatalog, 'updateFailedAgo', {
+          host: hostName,
+          ago: formatTimeAgo(failure.at, now),
+          reason
+        })
+  return `${sentence} ${outcomeCopy(failure)}`
 }

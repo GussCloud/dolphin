@@ -21,6 +21,8 @@ import {
   AGENT_TUI_CLEAR_INPUT_LINE,
   buildAgentTuiClearInputForText
 } from '../../../src/shared/agent-tui-input-clear'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type MobileNativeChatMessageSend = {
   /** Composer send that syncs the draft (clear on send, restore on rejection). */
@@ -107,7 +109,7 @@ export function useMobileNativeChatMessageSend(args: {
       // answer (which reaches this send directly) would otherwise burn the whole
       // 15s heal+send budget waiting on a socket that is already gone.
       if (!client || !handle || !origin || !enabled) {
-        onSendError('Message not sent (disconnected)')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSentDisconnected'))
         return 'rejected'
       }
       // The agent's input may still hold an orphaned image paste from an earlier
@@ -125,7 +127,7 @@ export function useMobileNativeChatMessageSend(args: {
         deadline
       }
       if (!(await healMobileNativeChatStaleInput(healArgs))) {
-        onSendError('Message not sent')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
         return 'rejected'
       }
       // Why: empty the composer at send time, not on the ack — over relay the
@@ -159,7 +161,7 @@ export function useMobileNativeChatMessageSend(args: {
           if (syncComposer) {
             restoreRejectedDraft(origin, draftText)
           }
-          onSendError('Message not sent')
+          onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
           return 'rejected'
         }
       }
@@ -196,7 +198,7 @@ export function useMobileNativeChatMessageSend(args: {
           // Why: an ack-lost send usually WAS delivered (issue seen on cellular
           // relay) — verify via the transcript echo instead of a false "not sent".
           holdUnconfirmedSend(origin, text, () =>
-            onSendError('Delivery unconfirmed — check chat before retrying')
+            onSendError(translate(sessionChatCatalog, 'sendDeliveryUnconfirmed'))
           )
         }
         return 'unknown'
@@ -205,7 +207,7 @@ export function useMobileNativeChatMessageSend(args: {
         if (syncComposer) {
           restoreRejectedDraft(origin, draftText)
         }
-        onSendError('Message not sent')
+        onSendError(translate(sessionChatCatalog, 'sendMessageNotSent'))
         return 'rejected'
       }
       if (classification === 'chat') {
@@ -258,7 +260,7 @@ export function useMobileNativeChatMessageSend(args: {
     async (text: string): Promise<boolean> => {
       const terminal = handleRef.current
       if (terminal && !acquireMobileNativeChatTerminalWrite(terminal)) {
-        onSendError('Answer not sent')
+        onSendError(translate(sessionChatCatalog, 'sendAnswerNotSent'))
         return false
       }
       try {

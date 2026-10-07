@@ -3,6 +3,12 @@ import { CaseSensitive, GitBranch, Sparkles } from 'lucide-react-native'
 import type { SmartWorkspaceSourceRow as SourceRow } from '../../../src/shared/new-workspace/smart-workspace-source-results'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import { TaskProviderLogo } from './TaskProviderLogo'
+import { componentsNewWorkspaceCatalog } from '../i18n/catalogs/components-new-workspace'
+import type { componentsNewWorkspaceEn } from '../i18n/catalogs/components-new-workspace/en'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
+
+type NewWorkspaceTranslate = MobileTranslate<typeof componentsNewWorkspaceEn>
 
 type Props = {
   row: SourceRow
@@ -16,32 +22,38 @@ type RowContent = {
   status?: string
 }
 
-function resolveRowContent(row: SourceRow): RowContent {
+function resolveRowContent(row: SourceRow, t: NewWorkspaceTranslate): RowContent {
   switch (row.kind) {
     case 'use-name':
       return {
         icon: <Sparkles size={16} color={colors.textSecondary} />,
-        title: `Use "${row.name}"`,
-        subtitle: 'Name this workspace'
+        title: t('useName', { name: row.name }),
+        subtitle: t('nameThisWorkspace')
       }
     case 'create-branch':
       return {
         icon: <GitBranch size={16} color={colors.accentBlue} />,
-        title: `Create branch "${row.name}"`,
-        subtitle: 'New branch'
+        title: t('createBranchNamed', { name: row.name }),
+        subtitle: t('newBranch')
       }
     case 'github':
       return {
         icon: <TaskProviderLogo provider="github" size={16} color={colors.textSecondary} />,
         title: row.item.title,
-        subtitle: `${row.item.type === 'pr' ? 'PR #' : 'Issue #'}${row.item.number}`,
+        subtitle:
+          row.item.type === 'pr'
+            ? t('sourcePrNumber', { number: row.item.number })
+            : t('sourceIssueNumber', { number: row.item.number }),
         status: row.item.state
       }
     case 'gitlab':
       return {
         icon: <TaskProviderLogo provider="gitlab" size={16} color={colors.textSecondary} />,
         title: row.item.title,
-        subtitle: `${row.item.type === 'mr' ? 'MR !' : 'Issue #'}${row.item.number}`,
+        subtitle:
+          row.item.type === 'mr'
+            ? t('sourceMrNumber', { number: row.item.number })
+            : t('sourceIssueNumber', { number: row.item.number }),
         status: row.item.state
       }
     case 'branch':
@@ -63,7 +75,8 @@ function resolveRowContent(row: SourceRow): RowContent {
 }
 
 export function SmartWorkspaceSourceRow({ row, onPress }: Props) {
-  const content = resolveRowContent(row)
+  const t = useMobileTranslation(componentsNewWorkspaceCatalog)
+  const content = resolveRowContent(row, t)
   return (
     <Pressable
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}

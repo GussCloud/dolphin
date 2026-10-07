@@ -8,6 +8,7 @@ import {
   Pressable
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import { renderMobileTasksGitHubProjectList } from './mobile-tasks-github-project-list'
 import { renderMobileTasksLinearList } from './mobile-tasks-linear-list'
 import { renderMobileTasksProviderItemList } from './mobile-tasks-provider-item-list'
@@ -28,10 +29,8 @@ export function renderMobileTasksListSurface(model: ConnectionPresentationModel)
   return !tasksSupported ? (
     tasksUnsupported ? (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>Update Dolphin desktop</Text>
-        <Text style={styles.centeredHint}>
-          This mobile Tasks view needs a newer desktop runtime.
-        </Text>
+        <Text style={styles.emptyText}>{t('updateDesktopTitle')}</Text>
+        <Text style={styles.centeredHint}>{t('updateDesktopHint')}</Text>
       </View>
     ) : (
       <View style={styles.centered}>
@@ -41,10 +40,8 @@ export function renderMobileTasksListSurface(model: ConnectionPresentationModel)
   ) : provider === 'linear' && !linearConnected ? (
     <View style={styles.centered}>
       <TaskProviderLogo provider="linear" size={32} color={colors.textSecondary} />
-      <Text style={styles.emptyText}>Connect your Linear account</Text>
-      <Text style={styles.centeredHint}>
-        Browse and start work on your assigned Linear issues directly from Tasks.
-      </Text>
+      <Text style={styles.emptyText}>{t('connectLinearAccountTitle')}</Text>
+      <Text style={styles.centeredHint}>{t('connectLinearAccountHint')}</Text>
       <Pressable
         style={[styles.targetButton, styles.centerActionButton]}
         disabled={!taskUiReady}
@@ -58,7 +55,7 @@ export function renderMobileTasksListSurface(model: ConnectionPresentationModel)
           setShowLinearConnect(true)
         }}
       >
-        <Text style={styles.targetButtonText}>Connect Linear</Text>
+        <Text style={styles.targetButtonText}>{t('connectLinear')}</Text>
       </Pressable>
     </View>
   ) : provider === 'github' && githubMode === 'project' ? (

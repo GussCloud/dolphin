@@ -11,9 +11,12 @@ import {
 import {
   mobileModelPillLabel,
   mobileOptionsPillLabel,
+  mobileSessionOptionLabel,
   mobileSessionOptionSummaryValue,
   mobileSessionOptionDisabledReason
 } from './mobile-native-chat-session-option-labels'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import {
   DescriptorRows,
   Pill,
@@ -41,6 +44,7 @@ export function MobileNativeChatSessionOptionPickers({
   isWorking,
   sendInFlight = false
 }: MobileNativeChatSessionOptionPickersProps): React.JSX.Element | null {
+  const t = useMobileTranslation(sessionChatCatalog)
   const [openDescriptorId, setOpenDescriptorId] = useState<string | null>(null)
   const [lastRequest, setLastRequest] = useState(controller.optionPickerRequest)
   if (controller.optionPickerRequest && lastRequest !== controller.optionPickerRequest) {
@@ -95,7 +99,7 @@ export function MobileNativeChatSessionOptionPickers({
     <View>
       <Pill
         label={pillLabel}
-        accessibleName={`Model, ${pillLabel}`}
+        accessibleName={t('optionModelPillAccessibleName', { label: pillLabel })}
         disabled={disabled}
         onPress={openPicker}
       />
@@ -104,7 +108,7 @@ export function MobileNativeChatSessionOptionPickers({
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
               <Pressable
-                accessibilityLabel={modelView ? 'Close picker' : 'Back to models'}
+                accessibilityLabel={modelView ? t('optionClosePicker') : t('optionBackToModels')}
                 accessibilityRole="button"
                 style={({ pressed }) => [styles.sheetNav, pressed && styles.pressed]}
                 onPress={modelView ? closePicker : () => setOpenDescriptorId(model.id)}
@@ -117,7 +121,11 @@ export function MobileNativeChatSessionOptionPickers({
                 )}
               </Pressable>
               <Text style={styles.sheetTitle}>
-                {modelView ? 'Select model' : `Select ${activeDescriptor.label.toLowerCase()}`}
+                {modelView
+                  ? t('optionSelectModel')
+                  : t('optionSelectNamed', {
+                      option: mobileSessionOptionLabel(activeDescriptor).toLowerCase()
+                    })}
               </Text>
               <View style={styles.sheetHeaderSide}>
                 {pendingId !== null ? (
@@ -126,7 +134,7 @@ export function MobileNativeChatSessionOptionPickers({
               </View>
             </View>
             {sessionOptionDispatchUnconfirmed(activeDescriptor) ? (
-              <SessionOptionCaption>Sent to the agent — not confirmed</SessionOptionCaption>
+              <SessionOptionCaption>{t('optionSentNotConfirmed')}</SessionOptionCaption>
             ) : null}
             {reason ? <SessionOptionCaption>{reason}</SessionOptionCaption> : null}
             <View style={styles.choiceGroup}>
@@ -143,7 +151,7 @@ export function MobileNativeChatSessionOptionPickers({
                 {options.map((descriptor, index) => (
                   <SessionOptionSummaryRow
                     key={descriptor.id}
-                    label={descriptor.label}
+                    label={mobileSessionOptionLabel(descriptor)}
                     value={mobileSessionOptionSummaryValue(descriptor)}
                     disabled={disabled}
                     divided={index < options.length - 1}

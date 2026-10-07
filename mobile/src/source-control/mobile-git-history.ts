@@ -2,6 +2,7 @@ import type { MobileGitHistoryItem, MobileGitHistoryResult } from './git-history
 import { refusedRpcMessageOrFallback } from '../transport/rpc-refusal-message'
 import { gitHistoryRead } from './mobile-git-read-operations'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sourceControlText } from './source-control-text'
 
 export type MobileCommitRow = {
   id: string
@@ -21,32 +22,32 @@ export function formatCommitTime(timestampMs: number | null | undefined, nowMs: 
   }
   const delta = nowMs - timestampMs
   if (delta < 60_000) {
-    return 'just now'
+    return sourceControlText('timeJustNow')
   }
   const minutes = Math.floor(delta / 60_000)
   if (minutes < 60) {
-    return `${minutes}m`
+    return sourceControlText('timeMinutes', { count: minutes })
   }
   const hours = Math.floor(minutes / 60)
   if (hours < 24) {
-    return `${hours}h`
+    return sourceControlText('timeHours', { count: hours })
   }
   const days = Math.floor(hours / 24)
   if (days < 30) {
-    return `${days}d`
+    return sourceControlText('timeDays', { count: days })
   }
   const months = Math.floor(days / 30)
   if (months < 12) {
-    return `${months}mo`
+    return sourceControlText('timeMonths', { count: months })
   }
-  return `${Math.floor(months / 12)}y`
+  return sourceControlText('timeYears', { count: Math.floor(months / 12) })
 }
 
 export function toMobileCommitRow(item: MobileGitHistoryItem, nowMs: number): MobileCommitRow {
   return {
     id: item.id,
     shortId: item.displayId ?? item.id.slice(0, 7),
-    subject: item.subject || '(no commit message)',
+    subject: item.subject || sourceControlText('noCommitMessage'),
     author: item.author ?? '',
     parentId: item.parentIds[0] ?? null,
     relativeTime: formatCommitTime(item.timestamp, nowMs)
@@ -70,6 +71,8 @@ export async function fetchMobileGitHistory(
   try {
     return gitHistoryRead.interpret(reply)
   } catch (error) {
-    throw new Error(refusedRpcMessageOrFallback(error, 'Failed to load commit history'))
+    throw new Error(
+      refusedRpcMessageOrFallback(error, sourceControlText('failedToLoadCommitHistory'))
+    )
   }
 }

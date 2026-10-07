@@ -5,6 +5,8 @@ import { mobileOnboardingStyles as styles } from './mobile-onboarding-styles'
 import { NotificationOnboardingPreview } from './NotificationOnboardingPreview'
 import type { MobileSessionView } from '../storage/session-view-preferences'
 import { colors } from '../theme/mobile-theme'
+import { onboardingCatalog } from '../i18n/catalogs/onboarding'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export type NotificationOnboardingChoice = 'enable' | 'skip'
 export type MobileOnboardingBusyChoice = MobileSessionView | NotificationOnboardingChoice | null
@@ -28,6 +30,7 @@ export function MobileOnboardingPage({
   onSessionChoice,
   onNotificationChoice
 }: Props) {
+  const t = useMobileTranslation(onboardingCatalog)
   const busy = busyChoice !== null
   const isSessionView = step === 'session-view'
 
@@ -48,21 +51,16 @@ export function MobileOnboardingPage({
           <NotificationOnboardingPreview active={active} />
         )}
         <Text style={styles.title}>
-          {isSessionView ? 'How should sessions open?' : 'Don’t miss when an agent needs you'}
+          {isSessionView ? t('sessionViewTitle') : t('notificationsTitle')}
         </Text>
         <Text style={styles.body}>
-          {isSessionView
-            ? 'Choose whether supported agent sessions open in the terminal or Chat UI on this device. Press and hold a session tab to switch its view, or change the default later in Settings.'
-            : 'Get a notification on this phone when an agent finishes or is waiting — even if you aren’t using the app.'}
+          {isSessionView ? t('sessionViewBody') : t('notificationsBody')}
         </Text>
       </View>
 
       <View style={styles.footer}>
         {!isSessionView ? (
-          <Text style={styles.disclosure}>
-            Delivered through Dolphin’s push service after your desktop has been idle for 3 minutes.
-            Change this anytime in Settings.
-          </Text>
+          <Text style={styles.disclosure}>{t('notificationsDisclosure')}</Text>
         ) : null}
         {error ? (
           <Text style={styles.error} accessibilityRole="alert">
@@ -92,19 +90,20 @@ function SessionViewChoices({
   disabled: boolean
   onChoice: (view: MobileSessionView) => void
 }) {
+  const t = useMobileTranslation(onboardingCatalog)
   return (
     <>
       <ChoiceButton
-        label="Use Chat UI"
-        accessibilityLabel="Open sessions in Chat UI"
+        label={t('useChatUi')}
+        accessibilityLabel={t('useChatUiA11y')}
         primary
         busy={busyChoice === 'chat'}
         disabled={disabled}
         onPress={() => onChoice('chat')}
       />
       <ChoiceButton
-        label="Keep terminal"
-        accessibilityLabel="Open sessions in the terminal"
+        label={t('keepTerminal')}
+        accessibilityLabel={t('keepTerminalA11y')}
         busy={busyChoice === 'terminal'}
         disabled={disabled}
         onPress={() => onChoice('terminal')}
@@ -122,19 +121,20 @@ function NotificationChoices({
   disabled: boolean
   onChoice: (choice: NotificationOnboardingChoice) => void
 }) {
+  const t = useMobileTranslation(onboardingCatalog)
   return (
     <>
       <ChoiceButton
-        label="Enable notifications"
-        accessibilityLabel="Enable agent notifications"
+        label={t('enableNotifications')}
+        accessibilityLabel={t('enableNotificationsA11y')}
         primary
         busy={busyChoice === 'enable'}
         disabled={disabled}
         onPress={() => onChoice('enable')}
       />
       <ChoiceButton
-        label="Not now"
-        accessibilityLabel="Skip notifications for now"
+        label={t('notNow')}
+        accessibilityLabel={t('notNowA11y')}
         busy={busyChoice === 'skip'}
         disabled={disabled}
         onPress={() => onChoice('skip')}

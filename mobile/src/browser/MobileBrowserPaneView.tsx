@@ -31,6 +31,8 @@ import type {
 import type { MobileBrowserViewMode } from './browser-screencast-request'
 import type { MobileBrowserTab } from './MobileBrowserPane'
 import type { BrowserDialogState } from './mobile-browser-stream-events'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 // Why: seeds layer 0 as the visible one; the pacer owns opacity after mount, so a render must not.
 const FRAME_LAYER_STYLES: [StyleProp<ViewStyle>, StyleProp<ViewStyle>] = [
@@ -118,26 +120,27 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
     togglePointerModifier,
     zoom
   } = props
+  const t = useMobileTranslation(browserCatalog)
   return (
     <View ref={setRootViewRef} style={styles.root}>
       <View style={styles.toolbar}>
         <MobileBrowserToolbarIconButton
           disabled={controlsDisabled || !tab.canGoBack}
-          label="Back"
+          label={t('back')}
           onPress={goBack}
         >
           <ChevronLeft size={15} color={buttonColor(!controlsDisabled && tab.canGoBack)} />
         </MobileBrowserToolbarIconButton>
         <MobileBrowserToolbarIconButton
           disabled={controlsDisabled || !tab.canGoForward}
-          label="Forward"
+          label={t('forward')}
           onPress={goForward}
         >
           <ChevronRight size={15} color={buttonColor(!controlsDisabled && tab.canGoForward)} />
         </MobileBrowserToolbarIconButton>
         <MobileBrowserToolbarIconButton
           disabled={controlsDisabled}
-          label="Reload"
+          label={t('reload')}
           onPress={reloadPage}
         >
           <RefreshCw size={15} color={buttonColor(!controlsDisabled)} />
@@ -259,7 +262,7 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
         {dialog ? (
           <View style={styles.dialogOverlay}>
             <View style={styles.dialogCard}>
-              <Text style={styles.dialogTitle}>Browser Dialog</Text>
+              <Text style={styles.dialogTitle}>{t('dialogTitle')}</Text>
               <Text style={styles.dialogMessage}>{dialog.message}</Text>
               {/* The page is still blocked, so the buttons stay live and the card says why. */}
               {dialog.error ? <Text style={styles.dialogError}>{dialog.error}</Text> : null}
@@ -274,7 +277,7 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
                     ]}
                     onPress={() => void sendDialogCommand('browser.dialogDismiss')}
                   >
-                    <Text style={styles.dialogButtonText}>Cancel</Text>
+                    <Text style={styles.dialogButtonText}>{t('cancel')}</Text>
                   </Pressable>
                 ) : null}
                 <Pressable
@@ -287,7 +290,9 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
                   ]}
                   onPress={() => void sendDialogCommand('browser.dialogAccept')}
                 >
-                  <Text style={[styles.dialogButtonText, styles.dialogButtonPrimaryText]}>OK</Text>
+                  <Text style={[styles.dialogButtonText, styles.dialogButtonPrimaryText]}>
+                    {t('ok')}
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -315,7 +320,7 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
             style={styles.keyboardInput}
             value={keyboardValue}
             onChangeText={setKeyboardValue}
-            placeholder="Type on page…"
+            placeholder={t('typeOnPage')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -326,7 +331,7 @@ export function MobileBrowserPaneView(props: MobileBrowserPaneViewProps) {
             style={[styles.sendButton, (controlsDisabled || !keyboardValue) && styles.disabled]}
             disabled={controlsDisabled || !keyboardValue}
             onPress={() => void sendKeyboardText()}
-            accessibilityLabel="Send text to browser"
+            accessibilityLabel={t('sendText')}
           >
             <ArrowUp size={18} color={buttonColor(!controlsDisabled && !!keyboardValue)} />
           </Pressable>

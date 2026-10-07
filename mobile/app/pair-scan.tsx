@@ -25,6 +25,8 @@ import {
   loadMobileOnboardingSteps,
   mobileOnboardingDestination
 } from '../src/onboarding/mobile-onboarding-plan'
+import { appRoutesCatalog } from '../src/i18n/catalogs/app-routes'
+import { useMobileTranslation } from '../src/i18n/use-mobile-translation'
 import { pairScanStyles as styles } from '../src/pair-scan-styles'
 
 // Why: see pair-confirm.tsx — cap initial-pair "Connecting…" so a broken
@@ -48,6 +50,7 @@ function Step({ number, text }: { number: number; text: string }) {
 export default function PairScanScreen() {
   const router = useRouter()
   const refreshHostClient = useRefreshHostClient()
+  const t = useMobileTranslation(appRoutesCatalog)
   const insets = useSafeAreaInsets()
   const [permission, requestPermission] = useCameraPermissions()
   const [status, setStatus] = useState<'scanning' | 'connecting' | 'error'>('scanning')
@@ -82,33 +85,36 @@ export default function PairScanScreen() {
       const offer = decodePairingUrl(data)
       if (!offer) {
         setStatus('error')
-        setErrorMessage('Not a valid Dolphin QR code')
+        setErrorMessage(t('invalidQrCode'))
         processingRef.current = false
         return
       }
 
       void testAndSave(offer)
     },
-    [router]
+    [router, t]
   )
 
-  const handlePasteSubmit = useCallback((input: string) => {
-    setPasteVisible(false)
-    if (processingRef.current) {
-      return
-    }
-    processingRef.current = true
+  const handlePasteSubmit = useCallback(
+    (input: string) => {
+      setPasteVisible(false)
+      if (processingRef.current) {
+        return
+      }
+      processingRef.current = true
 
-    const offer = parsePairingCode(input)
-    if (!offer) {
-      setStatus('error')
-      setErrorMessage('Not a valid pairing code — copy it from your computer and paste again')
-      processingRef.current = false
-      return
-    }
+      const offer = parsePairingCode(input)
+      if (!offer) {
+        setStatus('error')
+        setErrorMessage(t('invalidPairingCode'))
+        processingRef.current = false
+        return
+      }
 
-    void testAndSave(offer)
-  }, [])
+      void testAndSave(offer)
+    },
+    [t]
+  )
 
   const handleCameraLayout = useCallback((event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout
@@ -177,8 +183,8 @@ export default function PairScanScreen() {
       setStatus('error')
       setErrorMessage(
         timedOut
-          ? `Couldn't connect within ${PAIRING_OVERALL_TIMEOUT_MS / 1000}s — see log below for where it stalled`
-          : `Pairing failed: ${err instanceof Error ? err.message : String(err)}`
+          ? t('pairingTimedOut', { seconds: PAIRING_OVERALL_TIMEOUT_MS / 1000 })
+          : t('pairingFailed', { reason: err instanceof Error ? err.message : String(err) })
       )
       processingRef.current = false
     }
@@ -218,17 +224,20 @@ export default function PairScanScreen() {
     const canAskAgain = permission.canAskAgain !== false
     return (
       <View ref={setPairScanRootRef} style={[styles.container, containerPadding]}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
+        <Pressable
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('back')}
+          onPress={() => router.back()}
+        >
           <ChevronLeft size={22} color={colors.textSecondary} />
         </Pressable>
         <View style={styles.centered}>
           <Text style={styles.title}>
-            {canAskAgain ? 'Pair with desktop' : 'Camera Access Disabled'}
+            {canAskAgain ? t('pairWithDesktop') : t('cameraAccessDisabled')}
           </Text>
           <Text style={styles.subtitle}>
-            {canAskAgain
-              ? 'Scan the QR code from Dolphin on your desktop, or paste the pairing code instead.'
-              : 'Enable camera access in Settings, or paste the pairing code instead.'}
+            {canAskAgain ? t('scanPrompt') : t('cameraDisabledPrompt')}
           </Text>
           <Pressable
             style={styles.primaryButton}
@@ -236,7 +245,7 @@ export default function PairScanScreen() {
           >
             {canAskAgain && <QrCode size={16} color={colors.bgBase} />}
             <Text style={styles.primaryButtonText}>
-              {canAskAgain ? 'Continue' : 'Open Settings'}
+              {canAskAgain ? t('continue') : t('openSettings')}
             </Text>
           </Pressable>
           <Pressable
@@ -244,14 +253,14 @@ export default function PairScanScreen() {
             onPress={() => setPasteVisible(true)}
           >
             <ClipboardIcon size={16} color={colors.textSecondary} />
-            <Text style={styles.pasteButtonText}>Paste code instead</Text>
+            <Text style={styles.pasteButtonText}>{t('pasteCodeInstead')}</Text>
           </Pressable>
         </View>
         <TextInputModal
           visible={pasteVisible}
-          title="Paste pairing code"
-          message="Copy the code shown under the QR on your computer."
-          placeholder="dolphin://pair?code=... or paste the code"
+          title={t('pasteCodeTitle')}
+          message={t('pasteCodeMessage')}
+          placeholder={t('pasteCodePlaceholder')}
           onSubmit={handlePasteSubmit}
           onCancel={() => setPasteVisible(false)}
         />
@@ -261,14 +270,19 @@ export default function PairScanScreen() {
 
   return (
     <View ref={setPairScanRootRef} style={[styles.container, containerPadding]}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
+      <Pressable
+        style={styles.backButton}
+        accessibilityRole="button"
+        accessibilityLabel={t('back')}
+        onPress={() => router.back()}
+      >
         <ChevronLeft size={22} color={colors.textSecondary} />
       </Pressable>
 
       <View style={styles.steps}>
-        <Step number={1} text="Open Dolphin on your computer" />
-        <Step number={2} text="Go to Settings → Mobile" />
-        <Step number={3} text="Scan the QR code" />
+        <Step number={1} text={t('scanStepOpenDolphin')} />
+        <Step number={2} text={t('scanStepOpenMobileSettings')} />
+        <Step number={3} text={t('scanStepScan')} />
       </View>
 
       {status === 'scanning' && (
@@ -302,7 +316,7 @@ export default function PairScanScreen() {
             onPress={() => setPasteVisible(true)}
           >
             <ClipboardIcon size={16} color={colors.textSecondary} />
-            <Text style={styles.pasteButtonText}>Or paste pairing code</Text>
+            <Text style={styles.pasteButtonText}>{t('orPasteCode')}</Text>
           </Pressable>
         </>
       )}
@@ -310,9 +324,9 @@ export default function PairScanScreen() {
       {status === 'connecting' && (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.textSecondary} />
-          <Text style={styles.connectingText}>Connecting…</Text>
+          <Text style={styles.connectingText}>{t('connecting')}</Text>
           <View style={styles.logSlot}>
-            <ConnectionLog entries={logs} title="Pairing log" />
+            <ConnectionLog entries={logs} title={t('pairingLog')} />
           </View>
         </View>
       )}
@@ -322,12 +336,12 @@ export default function PairScanScreen() {
           <Text style={styles.errorText}>{errorMessage}</Text>
           {logs.length > 0 && (
             <View style={styles.logSlot}>
-              <ConnectionLog entries={logs} title="Pairing log" />
+              <ConnectionLog entries={logs} title={t('pairingLog')} />
             </View>
           )}
           <View style={styles.errorActions}>
             <Pressable style={styles.primaryButton} onPress={retry}>
-              <Text style={styles.primaryButtonText}>Try Again</Text>
+              <Text style={styles.primaryButtonText}>{t('tryAgain')}</Text>
             </Pressable>
             <Pressable
               style={({ pressed }) => [
@@ -339,7 +353,7 @@ export default function PairScanScreen() {
                 setPasteVisible(true)
               }}
             >
-              <Text style={styles.secondaryButtonText}>Paste code instead</Text>
+              <Text style={styles.secondaryButtonText}>{t('pasteCodeInstead')}</Text>
             </Pressable>
           </View>
         </View>
@@ -347,9 +361,9 @@ export default function PairScanScreen() {
 
       <TextInputModal
         visible={pasteVisible}
-        title="Paste pairing code"
-        message="Copy the code shown under the QR on your computer."
-        placeholder="dolphin://pair?code=... or paste the code"
+        title={t('pasteCodeTitle')}
+        message={t('pasteCodeMessage')}
+        placeholder={t('pasteCodePlaceholder')}
         onSubmit={handlePasteSubmit}
         onCancel={() => setPasteVisible(false)}
       />

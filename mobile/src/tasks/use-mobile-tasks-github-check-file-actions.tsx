@@ -15,6 +15,7 @@ import type {
   GitHubDetailFile,
   TaskItem
 } from './mobile-tasks-legacy-foundation'
+import { translateTasks as t } from './tasks-translate'
 
 export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewActionsModel) {
   const {
@@ -53,11 +54,11 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
         )
         const result = githubPullRequestChecksRerun.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to rerun checks')
+          throw new Error(result.error ?? t('rerunChecksError'))
         }
         setDetailRefreshSeq((current) => current + 1)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to rerun checks')
+        setError(err instanceof Error ? err.message : t('rerunChecksError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -74,7 +75,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
         return
       }
       if (detailPayload?.provider !== 'github' || !detailPayload.pullRequestId) {
-        setError('Unable to sync viewed state for this pull request.')
+        setError(t('viewedStateUnavailable'))
         return
       }
       const viewed = file.viewerViewedState !== 'VIEWED'
@@ -92,7 +93,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
           { timeoutMs: 30_000 }
         )
         if (githubPullRequestFileViewedWrite.interpret(reply) !== true) {
-          throw new Error('Failed to sync viewed state with GitHub.')
+          throw new Error(t('viewedStateSyncError'))
         }
         setDetailPayload((current) =>
           current?.provider === 'github'
@@ -107,7 +108,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
             : current
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update viewed state')
+        setError(err instanceof Error ? err.message : t('viewedStateUpdateError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -137,7 +138,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
           { timeoutMs: 30_000 }
         )
         if (githubReviewThreadResolve.interpret(reply) !== true) {
-          throw new Error(resolve ? 'Failed to resolve thread' : 'Failed to reopen thread')
+          throw new Error(resolve ? t('resolveThreadError') : t('reopenThreadError'))
         }
         setDetailPayload((current) =>
           current?.provider === 'github'
@@ -152,7 +153,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
             : current
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update review thread')
+        setError(err instanceof Error ? err.message : t('reviewThreadUpdateError'))
       } finally {
         setMutatingStatus(false)
       }
@@ -180,7 +181,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
         !detailPayload.headSha ||
         !detailPayload.baseSha
       ) {
-        setError('Unable to load file contents for this pull request.')
+        setError(t('fileContentsUnavailableError'))
         return
       }
       setPrFileLoadingPath(file.path)
@@ -202,7 +203,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
         const contents = githubPullRequestFileContentsRead.interpret(reply)
         setPrFileContents((current) => ({ ...current, [file.path]: contents }))
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load file contents')
+        setError(err instanceof Error ? err.message : t('fileContentsLoadError'))
       } finally {
         setPrFileLoadingPath(null)
       }
@@ -220,7 +221,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
         return
       }
       if (detailPayload?.provider !== 'github' || !detailPayload.headSha) {
-        setError('Unable to comment without the PR head SHA.')
+        setError(t('reviewCommentNeedsHeadSha'))
         return
       }
       const draftKey = `${file.path}:${line}`
@@ -245,11 +246,11 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
         )
         const result = githubReviewCommentWrite.interpret(reply)
         if (result.ok === false) {
-          throw new Error(result.error ?? 'Failed to add review comment')
+          throw new Error(result.error ?? t('reviewCommentError'))
         }
         const comment: DetailComment = result.comment ?? {
           id: `local-${Date.now()}`,
-          author: 'You',
+          author: t('you'),
           body,
           createdAt: new Date().toISOString(),
           path: file.path,
@@ -266,7 +267,7 @@ export function useMobileTasksGithubCheckFileActions(model: HostedCommentReviewA
             : current
         )
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to add review comment')
+        setError(err instanceof Error ? err.message : t('reviewCommentError'))
       } finally {
         setMutatingStatus(false)
       }

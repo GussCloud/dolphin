@@ -25,6 +25,8 @@ import {
 } from './browser-touch-geometry'
 import type { BrowserPointerModifier } from './MobileBrowserPointerModifiers'
 import type { BrowserDialogState } from './mobile-browser-stream-events'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { translate } from '../i18n/mobile-locale-state'
 
 const TOUCH_CLICK_RADIUS_DIP = 14
 type PendingWheelCommand = {
@@ -229,7 +231,7 @@ export function useMobileBrowserCommands(args: MobileBrowserCommandArgs) {
       { suppressError: true }
     )
     if (result !== null) {
-      onToast('Sent')
+      onToast(translate(browserCatalog, 'sent'))
     } else {
       setKeyboardValue(text)
     }
@@ -270,7 +272,7 @@ export function useMobileBrowserCommands(args: MobileBrowserCommandArgs) {
           : {
               ...current,
               pending: undefined,
-              ...(result === null ? { error: 'That answer did not reach the page.' } : {})
+              ...(result === null ? { error: translate(browserCatalog, 'dialogAnswerFailed') } : {})
             }
       )
     },

@@ -6,6 +6,8 @@ import type { GitHubPRMergeMethod, PRInfo } from '../../../../src/shared/github/
 import type { RpcClient } from '../../transport/rpc-client'
 import type { MobilePrActions } from '../../session/use-mobile-pr-actions'
 import { unlinkMobilePr } from '../../source-control/mobile-pr-link'
+import { componentsPrSidebarCatalog } from '../../i18n/catalogs/components-pr-sidebar'
+import { useMobileTranslation } from '../../i18n/use-mobile-translation'
 import { ConfirmModal } from '../ConfirmModal'
 import { canShowMobilePRAutoMergeControl } from './pr-auto-merge-availability'
 import { resolveMobilePrMergeMethod, resolvePrActionAvailability } from './pr-actions-state'
@@ -27,6 +29,7 @@ type Confirm =
 // Merge primary; Close/Reopen + Unlink share one secondary row. No section title —
 // button labels are self-explanatory and a header wasted a full row on mobile.
 export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }: Props) {
+  const t = useMobileTranslation(componentsPrSidebarCatalog)
   const [confirm, setConfirm] = useState<Confirm | null>(null)
   const [unlinking, setUnlinking] = useState(false)
   // Local unlink errors — unlink is not routed through the actions engine.
@@ -65,31 +68,31 @@ export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }
         setUnlinkError(outcome.error)
       }
     } catch (err) {
-      setUnlinkError(err instanceof Error ? err.message : 'Failed to unlink pull request.')
+      setUnlinkError(err instanceof Error ? err.message : t('unlinkFailed'))
     } finally {
       setUnlinking(false)
     }
-  }, [client, onUnlinked, unlinking, worktreeId])
+  }, [client, onUnlinked, t, unlinking, worktreeId])
 
   const confirmCopy = (): { title: string; message: string; confirmLabel: string } => {
     if (confirm?.kind === 'merge') {
       return {
-        title: 'Merge pull request?',
-        message: `This will merge #${pr.number} into its base branch.`,
-        confirmLabel: 'Merge'
+        title: t('mergeConfirmTitle'),
+        message: t('mergeConfirmMessage', { number: pr.number }),
+        confirmLabel: t('merge')
       }
     }
     if (confirm?.kind === 'state' && confirm.state === 'closed') {
       return {
-        title: 'Close pull request?',
-        message: `#${pr.number} will be closed without merging.`,
-        confirmLabel: 'Close'
+        title: t('closeConfirmTitle'),
+        message: t('closeConfirmMessage', { number: pr.number }),
+        confirmLabel: t('close')
       }
     }
     return {
-      title: 'Reopen pull request?',
-      message: `#${pr.number} will be reopened.`,
-      confirmLabel: 'Reopen'
+      title: t('reopenConfirmTitle'),
+      message: t('reopenConfirmMessage', { number: pr.number }),
+      confirmLabel: t('reopen')
     }
   }
 
@@ -123,7 +126,7 @@ export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }
           }}
           disabled={mergeBusy}
           accessibilityRole="button"
-          accessibilityLabel="Merge pull request"
+          accessibilityLabel={t('mergePullRequest')}
         >
           {mergeBusy ? (
             <ActivityIndicator color={colors.onMergeGreen} />
@@ -131,14 +134,14 @@ export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }
             <GitMerge size={16} color={colors.onMergeGreen} strokeWidth={2.2} />
           )}
           <Text style={[styles.actionButtonText, styles.actionButtonTextMerge]}>
-            Merge pull request
+            {t('mergePullRequest')}
           </Text>
         </Pressable>
       ) : null}
 
       {showAutoMerge ? (
         <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>Auto-merge when ready</Text>
+          <Text style={styles.toggleLabel}>{t('autoMergeWhenReady')}</Text>
           <Pressable
             style={[styles.togglePill, autoMerge && styles.togglePillOn]}
             onPress={() => {
@@ -148,13 +151,13 @@ export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }
             disabled={autoMergeBusy}
             accessibilityRole="switch"
             accessibilityState={{ checked: autoMerge }}
-            accessibilityLabel="Toggle auto-merge"
+            accessibilityLabel={t('toggleAutoMerge')}
           >
             {autoMergeBusy ? (
               <ActivityIndicator color={colors.textSecondary} />
             ) : (
               <Text style={[styles.togglePillText, autoMerge && styles.togglePillTextOn]}>
-                {autoMerge ? 'On' : 'Off'}
+                {autoMerge ? t('on') : t('off')}
               </Text>
             )}
           </Pressable>
@@ -176,7 +179,7 @@ export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }
               }}
               disabled={stateBusy}
               accessibilityRole="button"
-              accessibilityLabel={avail.canClose ? 'Close pull request' : 'Reopen pull request'}
+              accessibilityLabel={avail.canClose ? t('closePullRequest') : t('reopenPullRequest')}
             >
               {stateBusy ? <ActivityIndicator color={colors.textSecondary} /> : null}
               <Text
@@ -185,7 +188,7 @@ export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }
                   avail.canClose && styles.actionButtonDestructiveText
                 ]}
               >
-                {avail.canClose ? 'Close' : 'Reopen'}
+                {avail.canClose ? t('close') : t('reopen')}
               </Text>
             </Pressable>
           ) : null}
@@ -199,14 +202,14 @@ export function PRActionsSection({ pr, actions, client, worktreeId, onUnlinked }
               onPress={() => void unlink()}
               disabled={unlinkBusy}
               accessibilityRole="button"
-              accessibilityLabel="Unlink pull request"
+              accessibilityLabel={t('unlinkPullRequest')}
             >
               {unlinking ? (
                 <ActivityIndicator color={colors.textSecondary} />
               ) : (
                 <Link2Off size={16} color={colors.textSecondary} strokeWidth={2.2} />
               )}
-              <Text style={styles.actionButtonText}>Unlink</Text>
+              <Text style={styles.actionButtonText}>{t('unlink')}</Text>
             </Pressable>
           ) : null}
         </View>

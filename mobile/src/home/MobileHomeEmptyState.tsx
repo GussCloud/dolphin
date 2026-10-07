@@ -1,21 +1,14 @@
 import { QrCode } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { colors, radii, spacing } from '../theme/mobile-theme'
+import { homeCatalog } from '../i18n/catalogs/home'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const ONBOARDING_STEPS = [
-  {
-    title: 'Open Dolphin desktop',
-    desc: 'Go to Settings → Mobile and generate a pairing QR code.'
-  },
-  {
-    title: 'Scan the code',
-    desc: 'Tap the button above to open the scanner. Point at the QR code on your screen.'
-  },
-  {
-    title: "You're connected",
-    desc: 'Your desktop will appear here. Everything is encrypted end-to-end.'
-  }
-]
+  { titleKey: 'stepOpenDesktopTitle', descKey: 'stepOpenDesktopDesc' },
+  { titleKey: 'stepScanTitle', descKey: 'stepScanDesc' },
+  { titleKey: 'stepConnectedTitle', descKey: 'stepConnectedDesc' }
+] as const
 
 export function MobileHomeEmptyState(props: {
   bottomInset: number
@@ -23,6 +16,7 @@ export function MobileHomeEmptyState(props: {
   isWideLayout: boolean
   onPairDesktop: () => void
 }) {
+  const t = useMobileTranslation(homeCatalog)
   return (
     <View
       style={[
@@ -36,26 +30,23 @@ export function MobileHomeEmptyState(props: {
       ]}
     >
       <View style={styles.emptyHero}>
-        <Text style={styles.emptyTitle}>Connect your desktop</Text>
-        <Text style={styles.emptyBody}>
-          Pair with Dolphin on your computer to check on your agents, jump into any terminal, and
-          drive work from your phone.
-        </Text>
+        <Text style={styles.emptyTitle}>{t('emptyTitle')}</Text>
+        <Text style={styles.emptyBody}>{t('emptyBody')}</Text>
         <Pressable style={styles.primaryButton} onPress={props.onPairDesktop}>
           <QrCode size={17} color={colors.bgBase} />
-          <Text style={styles.primaryButtonText}>Pair Desktop</Text>
+          <Text style={styles.primaryButtonText}>{t('pairDesktop')}</Text>
         </Pressable>
       </View>
       <View style={styles.stepsSection}>
-        <Text style={styles.sectionHeading}>How it works</Text>
+        <Text style={styles.sectionHeading}>{t('howItWorks')}</Text>
         {ONBOARDING_STEPS.map((step, index) => (
-          <View key={step.title} style={[styles.stepRow, index > 0 && styles.stepRowBorder]}>
+          <View key={step.titleKey} style={[styles.stepRow, index > 0 && styles.stepRowBorder]}>
             <View style={styles.stepNum}>
               <Text style={styles.stepNumText}>{index + 1}</Text>
             </View>
             <View style={styles.stepText}>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepDesc}>{step.desc}</Text>
+              <Text style={styles.stepTitle}>{t(step.titleKey)}</Text>
+              <Text style={styles.stepDesc}>{t(step.descKey)}</Text>
             </View>
           </View>
         ))}

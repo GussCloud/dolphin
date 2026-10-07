@@ -1,0 +1,37 @@
+import type { MobileLocaleMessages } from '../../mobile-i18n-catalog'
+import type { appRoutesEn } from './en'
+
+export const appRoutesZh: MobileLocaleMessages<typeof appRoutesEn> = {
+  back: '返回',
+  cancel: '取消',
+  continue: '继续',
+  openSettings: '打开设置',
+  tryAgain: '重试',
+  backToHome: '返回首页',
+  missingPairingCode: '缺少配对码',
+  pairConfirmTitle: '与此桌面端配对？',
+  pairConfirmSubtitle: '你从桌面端打开了一个配对链接。确认后会将其添加到你的主机列表。',
+  pair: '配对',
+  connecting: '正在连接…',
+  pairingLog: '配对日志',
+  pairingTimedOut: '{seconds} 秒内未能连接 — 请查看下方日志了解卡在哪一步',
+  pairingFailed: '配对失败：{reason}',
+  invalidQrCode: '不是有效的 Dolphin 二维码',
+  invalidPairingCode: '配对码无效 — 请从电脑上重新复制并粘贴',
+  pairWithDesktop: '与桌面端配对',
+  cameraAccessDisabled: '相机权限已关闭',
+  scanPrompt: '扫描桌面端 Dolphin 中的二维码，或改为粘贴配对码。',
+  cameraDisabledPrompt: '请在设置中开启相机权限，或改为粘贴配对码。',
+  pasteCodeInstead: '改为粘贴配对码',
+  orPasteCode: '或粘贴配对码',
+  pasteCodeTitle: '粘贴配对码',
+  pasteCodeMessage: '复制电脑上二维码下方显示的配对码。',
+  pasteCodePlaceholder: 'dolphin://pair?code=... 或粘贴配对码',
+  scanStepOpenDolphin: '在电脑上打开 Dolphin',
+  scanStepOpenMobileSettings: '前往 设置 → 移动端',
+  scanStepScan: '扫描二维码',
+  onboardingSaveChoiceError: '无法保存你的选择，请重试。',
+  onboardingNotificationsError: '无法更新通知设置，请重试。',
+  onboardingProgress: '引导进度',
+  onboardingStep: '第 {current} 步，共 {total} 步'
+}

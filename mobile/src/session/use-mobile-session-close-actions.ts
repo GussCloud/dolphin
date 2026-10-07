@@ -5,6 +5,8 @@ import {
 } from './mobile-session-write-operations'
 import type { MobileSessionTab, Terminal } from './mobile-session-route-types'
 import type { MobileSessionContentCreateActionsModel } from './use-mobile-session-content-create-actions'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionCloseActions(scope: MobileSessionContentCreateActionsModel) {
   const {
@@ -51,7 +53,7 @@ export function useMobileSessionCloseActions(scope: MobileSessionContentCreateAc
         setTerminals((prev) => {
           const next = prev.map((terminal) =>
             terminal.handle === target.handle
-              ? { ...terminal, title: title || 'Terminal' }
+              ? { ...terminal, title: title || translate(sessionCatalog, 'terminal') }
               : terminal
           )
           terminalsRef.current = next

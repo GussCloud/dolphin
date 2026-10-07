@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { bindDeferredRpcOperation, defineRpcOperation } from '../transport/rpc-operation'
 import { rpcResultVariant } from '../transport/rpc-operation-result-reader'
+import { sourceControlText } from './source-control-text'
 
 // Mirrors the host GenerateCommitMessageResult (src/main/text-generation/
 // commit-message-text-generation.ts) — a single resolved result, not a stream.
@@ -66,8 +67,6 @@ export const gitBulkStageRun = bindDeferredRpcOperation(
   })
 )
 
-const GENERATE_FAILED = 'Failed to generate commit message'
-
 /**
  * Normalizes the host GenerateCommitMessageResult into the discriminated result the UI switches on.
  *
@@ -77,8 +76,6 @@ const GENERATE_FAILED = 'Failed to generate commit message'
  * `sc-commit-message-canceled` scenario takes — `{ success: false, error: '', canceled: true }`
  * keeps its cancel mark while its empty error falls back to the screen's copy.
  */
-const NO_MESSAGE_GENERATED = 'No commit message generated'
-
 const generatedCommitMessageSchema: z.ZodType<MobileGenerateCommitMessageResult, unknown> = z
   .union([
     z
@@ -105,7 +102,7 @@ const generatedCommitMessageSchema: z.ZodType<MobileGenerateCommitMessageResult,
 
       .transform((value): MobileGenerateCommitMessageResult => ({
         success: false,
-        error: NO_MESSAGE_GENERATED,
+        error: sourceControlText('noCommitMessageGenerated'),
         ...(value.canceled ? { canceled: true } : {})
       })),
     // Main split its fallback in two: a non-object reply says the generation failed, while an
@@ -116,10 +113,13 @@ const generatedCommitMessageSchema: z.ZodType<MobileGenerateCommitMessageResult,
       .refine((value) => !value || typeof value !== 'object')
       .transform((): MobileGenerateCommitMessageResult => ({
         success: false,
-        error: GENERATE_FAILED
+        error: sourceControlText('failedToGenerateCommitMessage')
       }))
   ])
-  .catch({ success: false, error: NO_MESSAGE_GENERATED })
+  .catch((): MobileGenerateCommitMessageResult => ({
+    success: false,
+    error: sourceControlText('noCommitMessageGenerated')
+  }))
 
 export const gitGenerateCommitMessageRun = bindDeferredRpcOperation(
   defineRpcOperation({

@@ -6,6 +6,8 @@ import { MobileNativeChatOverlay } from './MobileNativeChatOverlay'
 import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-session-styles'
 import type { MobileSessionController } from './use-mobile-session-controller'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { FileReader } from './MobileSessionFileReader'
 import { MarkdownReader } from './MobileSessionMarkdownReader'
 
@@ -81,13 +83,14 @@ export function MobileSessionActiveContent({
     toastAnimatedStyle,
     createTabBusy
   } = controller
+  const t = useMobileTranslation(sessionCatalog)
   return showLoadingState ? (
     <View style={styles.emptyState}>
       <ActivityIndicator size="small" color={colors.textSecondary} />
     </View>
   ) : showEmptyState ? (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyText}>No tabs in this session</Text>
+      <Text style={styles.emptyText}>{t('noTabsInSession')}</Text>
       {createError ? <Text style={styles.createError}>{createError}</Text> : null}
       <View style={styles.emptyActions}>
         <Pressable
@@ -102,7 +105,7 @@ export function MobileSessionActiveContent({
           }}
         >
           <Text style={styles.createButtonText}>
-            {createTabBusy ? 'Creating...' : 'Create Tab'}
+            {createTabBusy ? t('creatingTab') : t('createTab')}
           </Text>
         </Pressable>
       </View>
@@ -129,7 +132,7 @@ export function MobileSessionActiveContent({
     <View style={styles.markdownFrame}>
       <FileReader
         doc={fileDocs.get(activeFileTab.id)}
-        title={activeFileTab.title || 'File'}
+        title={activeFileTab.title || t('file')}
         relativePath={activeFileTab.relativePath}
         language={activeFileTab.language}
         diffCommentActions={
@@ -177,17 +180,17 @@ export function MobileSessionActiveContent({
       )}
       <Text style={styles.emptyText}>
         {isPendingTerminalRecoveryParked
-          ? 'Terminal is taking longer than expected'
-          : activePendingTerminalTab.title || 'Loading terminal'}
+          ? t('terminalTakingLonger')
+          : activePendingTerminalTab.title || t('loadingTerminal')}
       </Text>
       {isPendingTerminalRecoveryParked && (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Retry loading terminal"
+          accessibilityLabel={t('retryLoadingTerminal')}
           style={({ pressed }) => [styles.createButton, pressed && styles.newTerminalButtonPressed]}
           onPress={() => void retryPendingTerminalRecovery()}
         >
-          <Text style={styles.createButtonText}>Retry</Text>
+          <Text style={styles.createButtonText}>{t('retry')}</Text>
         </Pressable>
       )}
     </View>

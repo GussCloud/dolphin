@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { readMobileSessionRouteSource } from '../session/mobile-session-route-source-family.test-support'
+import { sessionEn } from '../i18n/catalogs/session/en'
 
 const commandDockSource = readMobileSessionRouteSource('../session/MobileSessionCommandDock.tsx')
 const terminalRuntimeSource = readMobileSessionRouteSource(
@@ -40,9 +41,11 @@ describe('terminal live input affordance', () => {
 
     expect(block).toContain('onPress={focusLiveInput}')
     expect(block).toContain('accessibilityRole="button"')
-    expect(block).toContain('accessibilityLabel="Show keyboard for live terminal input"')
-    expect(block).toContain(
-      'accessibilityHint="Typed text is sent directly to the active terminal"'
+    expect(block).toContain("accessibilityLabel={t('showLiveInputKeyboard')}")
+    expect(block).toContain("accessibilityHint={t('showLiveInputKeyboardHint')}")
+    expect(sessionEn.showLiveInputKeyboard).toBe('Show keyboard for live terminal input')
+    expect(sessionEn.showLiveInputKeyboardHint).toBe(
+      'Typed text is sent directly to the active terminal'
     )
     expect(block).toContain('pressed && styles.liveInputFocusTargetPressed')
     expect(block).toContain('!canSend && styles.liveInputFocusTargetDisabled')
@@ -63,8 +66,8 @@ describe('terminal live input affordance', () => {
   })
 
   it('makes the live keyboard target visible instead of status-only chrome', () => {
-    expect(liveInputStatusSource).toContain("'Tap to show keyboard'")
-    expect(liveInputStatusSource).toContain("liveInputText || 'Tap to show keyboard'")
+    expect(sessionEn.liveInputTapToShowKeyboard).toBe('Tap to show keyboard')
+    expect(liveInputStatusSource).toContain("liveInputText || t('liveInputTapToShowKeyboard')")
     expect(liveInputStatusSource).toContain('ellipsizeMode="head"')
     expect(commandInputStylesSource).toContain('backgroundColor: colors.bgRaised')
     expect(commandInputStylesSource).toContain('borderWidth: 1')

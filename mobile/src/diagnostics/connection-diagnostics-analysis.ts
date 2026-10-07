@@ -8,6 +8,18 @@ import type {
   ConnectionState,
   MobileConnectionDiagnosticPath
 } from '../transport/types'
+import type { SupportedUiLocale } from '../../../src/shared/ui-locale'
+import { diagnosticsCatalog } from '../i18n/catalogs/diagnostics'
+import type { diagnosticsEn } from '../i18n/catalogs/diagnostics/en'
+import {
+  formatMobileCatalogMessage,
+  type MobileCatalogKey,
+  type MobileTranslate,
+  type MobileTranslateArgs
+} from '../i18n/mobile-i18n-catalog'
+import { getActiveMobileLocale } from '../i18n/mobile-locale-state'
+
+type DiagnosticsTranslate = MobileTranslate<typeof diagnosticsEn>
 
 export type ConnectionDiagnosis = {
   likelyCause: string
@@ -21,30 +33,43 @@ type DiagnoseConnectionArgs = {
   activePath?: MobileConnectionDiagnosticPath
   pendingPath?: MobileConnectionDiagnosticPath | null
   entries: readonly ConnectionLogEntry[]
+  /** The shareable report passes `en` so support reads one language; the screen omits it. */
+  locale?: SupportedUiLocale
+}
+
+function diagnosticsTranslator(locale: SupportedUiLocale): DiagnosticsTranslate {
+  return <Key extends MobileCatalogKey<typeof diagnosticsEn>>(
+    key: Key,
+    ...args: MobileTranslateArgs<typeof diagnosticsEn, Key>
+  ) => formatMobileCatalogMessage(diagnosticsCatalog, locale, key, args[0])
 }
 
 export function diagnoseConnection(args: DiagnoseConnectionArgs): ConnectionDiagnosis {
+  const t = diagnosticsTranslator(args.locale ?? getActiveMobileLocale())
   if (args.state === 'connected') {
     return {
-      likelyCause: `Connection is healthy${args.activePath ? ` via ${formatPath(args.activePath)}` : ''}.`,
-      nextStep: 'No action needed.',
+      likelyCause: args.activePath
+        ? t('causeHealthyVia', { path: formatPath(args.activePath, t) })
+        : t('causeHealthy'),
+      nextStep: t('nextNoAction'),
       reportability: 'none'
     }
   }
   const selected = selectDiagnosticFailure(args.entries)
   const failure = selected?.entry
   const evidence = failure ? diagnosticEvidence(failure) : ''
-  const diagnosis = diagnoseFailure(args, failure, evidence)
+  const diagnosis = diagnoseFailure(args, failure, evidence, t)
   if (!selected?.staleSince) {
     return diagnosis
   }
   // Evidence from before the last resume or network change is still the best
   // account of a host that has not answered since; it is just not a current,
   // sendable incident.
-  const boundary =
-    selected.staleSince === 'network-changed' ? 'the last network change' : 'the app last resumed'
   return {
-    likelyCause: `Before ${boundary}: ${diagnosis.likelyCause}`,
+    likelyCause:
+      selected.staleSince === 'network-changed'
+        ? t('causeBeforeNetworkChange', { cause: diagnosis.likelyCause })
+        : t('causeBeforeResume', { cause: diagnosis.likelyCause }),
     nextStep: diagnosis.nextStep,
     reportability: 'none'
   }
@@ -53,12 +78,13 @@ export function diagnoseConnection(args: DiagnoseConnectionArgs): ConnectionDiag
 function diagnoseFailure(
   args: DiagnoseConnectionArgs,
   failure: ConnectionLogEntry | undefined,
-  evidence: string
+  evidence: string,
+  t: DiagnosticsTranslate
 ): ConnectionDiagnosis {
   if (/relay director resolve failed \(401\)/i.test(evidence)) {
     return {
-      likelyCause: 'Relay rejected the saved resume credential.',
-      nextStep: 'Try a direct connection; if Relay keeps returning 401, pair this device again.',
+      likelyCause: t('causeRelayCredentialRejected'),
+      nextStep: t('nextRelayCredentialRejected'),
       reportability: 'none'
     }
   }
@@ -66,14 +92,17 @@ function diagnoseFailure(
   if (/relay director resolve failed \(503\)/i.test(evidence)) {
     const retryMs = parseRetryDelayMs(evidence)
     return {
-      likelyCause: `Relay service was temporarily unavailable${retryMs == null ? '.' : ` and asked Dolphin to retry in ${formatDelay(retryMs)}.`}`,
-      nextStep: 'Keep Dolphin open; recovery should retry automatically.',
+      likelyCause:
+        retryMs == null
+          ? t('causeRelayUnavailable')
+          : t('causeRelayUnavailableRetry', { delay: formatDelay(retryMs, t) }),
+      nextStep: t('nextRelayUnavailable'),
       reportability: 'none'
     }
   }
 
   // After the director branches: a director error also arrives as a relay dial failure.
-  const relayDial = relayDialFailure(failure)
+  const relayDial = relayDialFailure(failure, t)
   if (relayDial) {
     return relayDial
   }
@@ -83,21 +112,18 @@ function diagnoseFailure(
     const structuredDirectLiveness =
       failure?.code === 'liveness-timeout' &&
       (failure.path === 'lan' || failure.path === 'tailscale')
-    const path =
-      relayLiveness || (!structuredDirectLiveness && args.activePath === 'relay')
-        ? 'Relay'
-        : 'The connected host'
+    const viaRelay = relayLiveness || (!structuredDirectLiveness && args.activePath === 'relay')
     return {
-      likelyCause: `${path} stopped answering authenticated health checks.`,
-      nextStep: 'Dolphin closed the stale session and started recovery.',
+      likelyCause: viaRelay ? t('causeRelayLiveness') : t('causeHostLiveness'),
+      nextStep: t('nextLiveness'),
       reportability: relayLiveness ? 'dolphin-relay' : 'none'
     }
   }
 
   if (/relay-session-failed|active relay session failed/i.test(evidence)) {
     return {
-      likelyCause: 'The active Relay session closed unexpectedly.',
-      nextStep: 'Dolphin started Relay recovery; the event history includes the cell close reason.',
+      likelyCause: t('causeRelaySessionFailed'),
+      nextStep: t('nextRelaySessionFailed'),
       reportability:
         failure?.code === 'relay-session-failed' && failure.path === 'relay'
           ? 'dolphin-relay'
@@ -107,8 +133,8 @@ function diagnoseFailure(
 
   if (/authentication-rejected|unauthorized|pairing may be revoked/i.test(evidence)) {
     return {
-      likelyCause: 'The desktop rejected this device during authentication.',
-      nextStep: 'Confirm the device is still paired; pair it again if the rejection repeats.',
+      likelyCause: t('causeAuthRejected'),
+      nextStep: t('nextAuthRejected'),
       reportability: 'none'
     }
   }
@@ -116,35 +142,33 @@ function diagnoseFailure(
   if (/connect-timeout|websocket connect timeout/i.test(evidence)) {
     return {
       likelyCause: isTailscaleEndpoint(args.endpoint)
-        ? 'The saved Tailscale endpoint did not answer before the connection timeout.'
-        : 'The saved direct endpoint did not answer before the connection timeout.',
+        ? t('causeTailscaleTimeout')
+        : t('causeDirectTimeout'),
       nextStep:
-        args.pendingPath === 'relay'
-          ? 'Relay recovery is in progress; keep Dolphin open while it retries.'
-          : 'Check the local/VPN network and confirm the desktop is awake.',
+        args.pendingPath === 'relay' ? t('nextRelayRecoveryInProgress') : t('nextCheckNetwork'),
       reportability: 'none'
     }
   }
 
   if (/handshake-timeout|handshake timeout/i.test(evidence)) {
     return {
-      likelyCause: 'The endpoint opened, but the encrypted Dolphin handshake did not finish.',
-      nextStep: 'Confirm the desktop is running a compatible Dolphin version and retry.',
+      likelyCause: t('causeHandshakeTimeout'),
+      nextStep: t('nextHandshakeTimeout'),
       reportability: 'none'
     }
   }
 
   if (args.pendingPath === 'relay') {
     return {
-      likelyCause: 'Relay recovery is selected, but no more specific failure is recorded yet.',
-      nextStep: 'Keep this page open while the next recovery event is recorded.',
+      likelyCause: t('causeRelayRecoveryPending'),
+      nextStep: t('nextRelayRecoveryPending'),
       reportability: 'none'
     }
   }
 
   return {
-    likelyCause: 'No single failure cause can be determined from the recorded events.',
-    nextStep: 'Run diagnostics and copy the report again after the next connection attempt.',
+    likelyCause: t('causeUnknown'),
+    nextStep: t('nextUnknown'),
     reportability: 'none'
   }
 }
@@ -154,56 +178,52 @@ export function getReportableConnectionIncidentId(args: DiagnoseConnectionArgs):
   if (!selected || selected.staleSince) {
     return null
   }
-  return diagnoseFailure(args, selected.entry, diagnosticEvidence(selected.entry)).reportability ===
-    'dolphin-relay'
+  const t = diagnosticsTranslator(args.locale ?? getActiveMobileLocale())
+  return diagnoseFailure(args, selected.entry, diagnosticEvidence(selected.entry), t)
+    .reportability === 'dolphin-relay'
     ? selected.entry.id
     : null
 }
 
 // Reads to the relay close code behind a failed dial. Longer than the host
 // row's copy on purpose: this is the line the user pastes into a bug report.
-const RELAY_DIAL_ADVICE: Record<
-  RelayHostReachabilityFromCloseCode,
-  { likelyCause: (code: number) => string; nextStep: string }
-> = {
-  'host-offline': {
-    likelyCause: (code) =>
-      `Relay answered, but the desktop is not connected to it (close code ${code}, host offline).`,
-    nextStep:
-      'Check the desktop is awake, Dolphin is running, and it is signed in to Dolphin Cloud.'
-  },
+const RELAY_DIAL_ADVICE = {
+  'host-offline': { likelyCause: 'causeRelayHostOffline', nextStep: 'nextRelayHostOffline' },
   'credential-refused': {
-    likelyCause: (code) => `Relay refused this device’s relay credential (close code ${code}).`,
-    nextStep: 'Re-pair this phone with the desktop.'
+    likelyCause: 'causeRelayCredentialRefused',
+    nextStep: 'nextRelayCredentialRefused'
   },
-  unreachable: {
-    likelyCause: (code) => `The phone could not reach the Relay cell (transport close ${code}).`,
-    nextStep: 'Check this phone’s network connection; Relay recovery retries automatically.'
-  },
-  connecting: {
-    likelyCause: (code) =>
-      `Relay closed the dial with code ${code}; recovery re-resolves and retries.`,
-    nextStep: 'Keep Dolphin open while Relay recovery retries.'
-  }
-}
+  unreachable: { likelyCause: 'causeRelayUnreachable', nextStep: 'nextRelayUnreachable' },
+  connecting: { likelyCause: 'causeRelayConnecting', nextStep: 'nextRelayConnecting' }
+} as const satisfies Record<
+  RelayHostReachabilityFromCloseCode,
+  { likelyCause: string; nextStep: string }
+>
 
 // The cell's close code names the desktop's state; a direct timeout in the same
 // window only says the phone is off the LAN, so the relay verdict wins. Never
 // reportable: every cause here is the desktop's or the phone's, not Relay's.
-function relayDialFailure(failure: ConnectionLogEntry | undefined): ConnectionDiagnosis | null {
+function relayDialFailure(
+  failure: ConnectionLogEntry | undefined,
+  t: DiagnosticsTranslate
+): ConnectionDiagnosis | null {
   if (failure?.code !== 'relay-dial-failed') {
     return null
   }
   const code = failure.relayCloseCode
   if (code == null) {
     return {
-      likelyCause: 'The Relay dial failed before the cell answered.',
-      nextStep: RELAY_DIAL_ADVICE.unreachable.nextStep,
+      likelyCause: t('causeRelayDialNoAnswer'),
+      nextStep: t(RELAY_DIAL_ADVICE.unreachable.nextStep),
       reportability: 'none'
     }
   }
   const advice = RELAY_DIAL_ADVICE[relayHostReachabilityForCloseCode(code)]
-  return { likelyCause: advice.likelyCause(code), nextStep: advice.nextStep, reportability: 'none' }
+  return {
+    likelyCause: t(advice.likelyCause, { code }),
+    nextStep: t(advice.nextStep),
+    reportability: 'none'
+  }
 }
 
 // Newest failure since the last resume/network change; failing that, the newest
@@ -270,13 +290,15 @@ function parseRetryDelayMs(evidence: string): number | null {
   return match ? Number(match[1]) : null
 }
 
-function formatDelay(ms: number): string {
-  return ms < 60_000 ? `${Math.round(ms / 1000)}s` : `${Math.round(ms / 60_000)}m`
+function formatDelay(ms: number, t: DiagnosticsTranslate): string {
+  return ms < 60_000
+    ? t('delaySeconds', { seconds: Math.round(ms / 1000) })
+    : t('delayMinutes', { minutes: Math.round(ms / 60_000) })
 }
 
-function formatPath(path: MobileConnectionDiagnosticPath): string {
+function formatPath(path: MobileConnectionDiagnosticPath, t: DiagnosticsTranslate): string {
   if (path === 'relay') {
     return 'Relay'
   }
-  return path === 'tailscale' ? 'Tailscale/direct' : 'LAN/direct'
+  return path === 'tailscale' ? t('pathTailscaleDirect') : t('pathLanDirect')
 }

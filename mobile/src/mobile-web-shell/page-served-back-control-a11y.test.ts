@@ -1,5 +1,5 @@
-import { readFileSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 import {
@@ -124,20 +124,60 @@ function pressGoesBack(source: ts.SourceFile, press: Read): boolean {
   return BACK_HANDLER.test(text) || BACK_CALL.test(declarationText(source, text))
 }
 
+/**
+ * A label written as `t('key')` is read through the English catalog the file's `t` is bound to, so
+ * the rule judges the words a screen reader announces rather than the call that produces them.
+ */
+function resolveTranslatedLabel(path: string, text: string, label: Read): Read {
+  const key = label.known ? /^t\((['"])(\w+)\1\)$/.exec(label.value)?.[2] : undefined
+  const catalogDir = key ? translationCatalogDir(path, text) : null
+  if (!key || !catalogDir) {
+    return label
+  }
+  const english = readFileSync(join(MOBILE_ROOT, catalogDir, 'en.ts'), 'utf8')
+  const value = new RegExp(`\\b${key}:\\s*(['"])(.*?)\\1`).exec(english)?.[2]
+  return value === undefined ? label : { known: true, value }
+}
+
+/** The catalog `t` reads: the hook's argument here, or one hop through a module imported `as t`. */
+function translationCatalogDir(path: string, text: string): string | null {
+  const catalog = /const t = useMobileTranslation\((\w+)\)/.exec(text)?.[1]
+  if (catalog) {
+    const from = new RegExp(`import \\{[^}]*\\b${catalog}\\b[^}]*\\} from '([^']+)'`).exec(
+      text
+    )?.[1]
+    return from ? join(dirname(path), from) : null
+  }
+  const helper = /import \{[^}]*\bas t\b[^}]*\} from '([^']+)'/.exec(text)?.[1]
+  if (!helper) {
+    return null
+  }
+  const helperPath = join(dirname(path), helper)
+  const helperFile = ['.ts', '.tsx']
+    .map((extension) => `${helperPath}${extension}`)
+    .find((candidate) => existsSync(join(MOBILE_ROOT, candidate)))
+  if (!helperFile) {
+    return null
+  }
+  const from = /from '([^']*i18n\/catalogs\/[\w-]+)'/.exec(
+    readFileSync(join(MOBILE_ROOT, helperFile), 'utf8')
+  )?.[1]
+  return from ? join(dirname(helperFile), from) : null
+}
+
 function backControlsIn(path: string): BackControl[] {
-  const source = ts.createSourceFile(
-    path,
-    readFileSync(join(MOBILE_ROOT, path), 'utf8'),
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  )
+  const text = readFileSync(join(MOBILE_ROOT, path), 'utf8')
+  const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
   const found: BackControl[] = []
   function visit(node: ts.Node): void {
     if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
       const element = ts.isJsxElement(node) ? node.openingElement : node
       if (PRESSABLE_TAGS.has(element.tagName.getText())) {
-        const label = readAttribute(element, 'accessibilityLabel')
+        const label = resolveTranslatedLabel(
+          path,
+          text,
+          readAttribute(element, 'accessibilityLabel')
+        )
         const named = label.known && /^Back\b/.test(label.value)
         if (
           spreadsProps(element) ||

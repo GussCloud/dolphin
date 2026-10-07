@@ -13,6 +13,7 @@ import {
   PickerModal
 } from './mobile-tasks-dependencies'
 import { styles } from './mobile-tasks-legacy-styles'
+import { translateTasks as t } from './tasks-translate'
 import { PROJECT_VIEW_DEFAULT_SORT } from './mobile-tasks-legacy-foundation'
 
 export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentationModel) {
@@ -48,8 +49,8 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
       onClose={() => setShowGitHubProjectPicker(false)}
     >
       <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>GitHub Projects</Text>
-        <Text style={styles.sheetSubtitle}>Choose a project view for the Tasks page.</Text>
+        <Text style={styles.sheetTitle}>{t('githubProjectsTitle')}</Text>
+        <Text style={styles.sheetSubtitle}>{t('githubProjectsSubtitle')}</Text>
       </View>
 
       <View style={styles.projectPickerControls}>
@@ -57,7 +58,7 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
           style={styles.input}
           value={githubProjectPickerSearch}
           onChangeText={setGithubProjectPickerSearch}
-          placeholder="Search projects"
+          placeholder={t('searchProjects')}
           placeholderTextColor={colors.textMuted}
           autoCapitalize="none"
           autoCorrect={false}
@@ -71,7 +72,7 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
               setGithubProjectPasteError('')
             }}
             onSubmitEditing={() => void resolveGitHubProjectFromInput()}
-            placeholder="Add by URL or owner/number"
+            placeholder={t('addProjectPlaceholder')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -82,7 +83,7 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
             onPress={() => void resolveGitHubProjectFromInput()}
           >
             <Text style={styles.inlineSaveText}>
-              {githubProjectPasteBusy ? 'Adding...' : 'Add'}
+              {githubProjectPasteBusy ? t('adding') : t('add')}
             </Text>
           </Pressable>
         </View>
@@ -100,10 +101,10 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
             <Text style={styles.projectWarningTitle}>
               {githubProjectPartialFailures.length === 1 &&
               githubProjectPartialFailures[0]!.owner !== '*'
-                ? `Couldn't load projects from ${githubProjectPartialFailures[0]!.owner}.`
-                : `Some organizations didn't load (${githubProjectPartialFailures.length}).`}
+                ? t('projectsLoadFailedOwner', { owner: githubProjectPartialFailures[0]!.owner })
+                : t('projectsLoadFailedSome', { count: githubProjectPartialFailures.length })}
             </Text>
-            <Text style={styles.projectWarningText}>Use Add by URL to reach missing projects.</Text>
+            <Text style={styles.projectWarningText}>{t('projectsLoadFailedHint')}</Text>
             <Text style={styles.projectWarningText} numberOfLines={2}>
               {githubProjectPartialFailures
                 .map(
@@ -128,22 +129,20 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
             style={styles.repoPickerRow}
             onPress={() =>
               void loadGitHubProjects().catch((err) => {
-                setGithubProjectError(
-                  err instanceof Error ? err.message : 'Failed to load projects'
-                )
+                setGithubProjectError(err instanceof Error ? err.message : t('projectsLoadError'))
               })
             }
           >
             <View style={styles.repoPickerTextWrap}>
-              <Text style={styles.repoPickerTitle}>No projects loaded</Text>
-              <Text style={styles.repoPickerSubtitle}>Tap to retry.</Text>
+              <Text style={styles.repoPickerTitle}>{t('noProjectsLoaded')}</Text>
+              <Text style={styles.repoPickerSubtitle}>{t('tapToRetry')}</Text>
             </View>
           </Pressable>
         ) : (
           <>
             {pinnedGitHubProjects.length > 0 ? (
               <>
-                <Text style={styles.linearStatesTitle}>Pinned</Text>
+                <Text style={styles.linearStatesTitle}>{t('pinned')}</Text>
                 {pinnedGitHubProjects.map((project, index) => {
                   const key = githubProjectKey(project)
                   const selected =
@@ -178,7 +177,7 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
                             })
                           }}
                         >
-                          <Text style={styles.inlineSaveText}>Remove</Text>
+                          <Text style={styles.inlineSaveText}>{t('remove')}</Text>
                         </Pressable>
                         {selected ? <Check size={15} color={colors.textPrimary} /> : null}
                       </Pressable>
@@ -190,7 +189,7 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
 
             {recentGitHubProjects.length > 0 ? (
               <>
-                <Text style={styles.linearStatesTitle}>Recent</Text>
+                <Text style={styles.linearStatesTitle}>{t('recent')}</Text>
                 {recentGitHubProjects.map((project, index) => {
                   const key = githubProjectKey(project)
                   const selected =
@@ -231,7 +230,7 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
                               })
                             }}
                           >
-                            <Text style={styles.inlineSaveText}>Pin</Text>
+                            <Text style={styles.inlineSaveText}>{t('pin')}</Text>
                           </Pressable>
                         ) : null}
                         {selected ? <Check size={15} color={colors.textPrimary} /> : null}
@@ -243,11 +242,11 @@ export function renderMobileTasksGitHubProjectPicker(model: ConnectionPresentati
             ) : null}
 
             <Text style={styles.linearStatesTitle}>
-              {githubProjectLoading ? 'Browse all (loading...)' : 'Browse all'}
+              {githubProjectLoading ? t('browseAllLoading') : t('browseAll')}
             </Text>
             {browseGitHubProjects.length === 0 ? (
               <Text style={styles.emptyInlineText}>
-                {githubProjectPickerSearch.trim() ? 'No matching projects.' : 'No more projects.'}
+                {githubProjectPickerSearch.trim() ? t('noMatchingProjects') : t('noMoreProjects')}
               </Text>
             ) : (
               browseGitHubProjects.map((project, index) => {
@@ -303,13 +302,15 @@ export function renderMobileTasksGitHubProjectViewPicker(model: ConnectionPresen
   return (
     <PickerModal
       visible={taskUiReady && showGitHubProjectViewPicker}
-      title={pendingGitHubProjectViewSelection ? 'Choose Project View' : 'Project View'}
+      title={
+        pendingGitHubProjectViewSelection ? t('chooseProjectViewTitle') : t('projectViewTitle')
+      }
       options={githubProjectViewOptions}
       selected={pendingGitHubProjectViewSelection ? '' : (activeGitHubProjectViewId ?? '')}
       onSelect={(viewId) => {
         const view = githubProjectViews.find((candidate) => candidate.id === viewId)
         if (view && view.layout !== 'TABLE_LAYOUT') {
-          setGithubProjectError("Dolphin doesn't support this GitHub Project layout yet.")
+          setGithubProjectError(t('projectLayoutUnsupported'))
           return
         }
         if (pendingGitHubProjectViewSelection) {
@@ -344,7 +345,7 @@ export function renderMobileTasksGitHubProjectSortPicker(model: ConnectionPresen
   return (
     <PickerModal
       visible={taskUiReady && showGitHubProjectSortPicker}
-      title="Project Sort"
+      title={t('projectSortTitle')}
       options={githubProjectSortOptions}
       selected={githubProjectSortOverride?.fieldId ?? PROJECT_VIEW_DEFAULT_SORT}
       onSelect={(fieldId) => {

@@ -6,6 +6,10 @@ import {
   type MobileSpeechModel,
   type MobileSpeechSetup
 } from '../dictation/mobile-dictation-setup'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import type { componentsEn } from '../i18n/catalogs/components/en'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   setup: MobileSpeechSetup
@@ -24,7 +28,7 @@ function formatSize(bytes: number | null | undefined): string {
   return `${Math.round(bytes / 1_000_000)} MB`
 }
 
-function modelMeta(model: MobileSpeechModel): string {
+function modelMeta(model: MobileSpeechModel, t: MobileTranslate<typeof componentsEn>): string {
   if (model.provider === 'openai') {
     return 'OpenAI API'
   }
@@ -33,7 +37,7 @@ function modelMeta(model: MobileSpeechModel): string {
     return `${formatSize(model.sizeBytes)} · ${Math.round(model.progress * 100)}%`
   }
   if (model.status === 'extracting') {
-    return `${formatSize(model.sizeBytes)} · extracting…`
+    return `${formatSize(model.sizeBytes)} · ${t('modelExtracting')}`
   }
   return formatSize(model.sizeBytes)
 }
@@ -48,6 +52,7 @@ export function VoiceModelList({
   onDownload,
   onDelete
 }: Props): React.JSX.Element {
+  const t = useMobileTranslation(componentsCatalog)
   return (
     <View style={disabled ? styles.disabled : undefined} pointerEvents={disabled ? 'none' : 'auto'}>
       {setup.models.map((model, idx) => {
@@ -67,20 +72,22 @@ export function VoiceModelList({
                   <Text style={styles.modelLabel} numberOfLines={1}>
                     {model.label}
                   </Text>
-                  {model.recommended ? <Text style={styles.recommended}>Recommended</Text> : null}
+                  {model.recommended ? (
+                    <Text style={styles.recommended}>{t('modelRecommended')}</Text>
+                  ) : null}
                 </View>
-                <Text style={styles.modelMeta}>{modelMeta(model)}</Text>
+                <Text style={styles.modelMeta}>{modelMeta(model, t)}</Text>
               </View>
               {model.provider === 'openai' ? (
                 <Text style={styles.modelStateText}>
-                  {model.status === 'ready' ? 'API key set' : 'Set up on desktop'}
+                  {model.status === 'ready' ? t('modelApiKeySet') : t('modelSetUpOnDesktop')}
                 </Text>
               ) : model.status === 'ready' ? (
                 <View style={styles.readyActions}>
                   {isSelected ? (
                     <View style={styles.selectedTag}>
                       <Check size={14} color={colors.statusGreen} strokeWidth={2.4} />
-                      <Text style={styles.selectedText}>In use</Text>
+                      <Text style={styles.selectedText}>{t('modelInUse')}</Text>
                     </View>
                   ) : (
                     <Pressable
@@ -94,7 +101,7 @@ export function VoiceModelList({
                       {selectBusy ? (
                         <ActivityIndicator size="small" color={colors.textSecondary} />
                       ) : (
-                        <Text style={styles.actionText}>Use</Text>
+                        <Text style={styles.actionText}>{t('modelUse')}</Text>
                       )}
                     </Pressable>
                   )}
@@ -102,7 +109,7 @@ export function VoiceModelList({
                     style={({ pressed }) => [styles.iconButton, pressed && styles.actionPressed]}
                     disabled={anyBusy}
                     onPress={() => onDelete(model)}
-                    accessibilityLabel={'Delete ' + model.label}
+                    accessibilityLabel={t('deleteModel', { model: model.label ?? '' })}
                   >
                     {deleteBusy ? (
                       <ActivityIndicator size="small" color={colors.statusRed} />
@@ -118,7 +125,7 @@ export function VoiceModelList({
                   style={({ pressed }) => [styles.iconButton, pressed && styles.actionPressed]}
                   disabled={anyBusy}
                   onPress={() => onDownload(model)}
-                  accessibilityLabel={'Download ' + model.label}
+                  accessibilityLabel={t('downloadModel', { model: model.label ?? '' })}
                 >
                   {downloadBusy ? (
                     <ActivityIndicator size="small" color={colors.textSecondary} />

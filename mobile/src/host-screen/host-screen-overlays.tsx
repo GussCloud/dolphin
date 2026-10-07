@@ -11,12 +11,15 @@ import { colors } from '../theme/mobile-theme'
 import { hostNewWorktreeSessionRoute } from '../host-route-action-state'
 import { getWorktreeRowIdentity } from '../worktree/worktree-host-row-identity'
 import {
-  WORKSPACE_GROUP_OPTIONS as GROUP_OPTIONS,
-  WORKSPACE_SORT_OPTIONS as SORT_OPTIONS
+  workspaceGroupOptions,
+  workspaceSortOptions
 } from '../worktree/workspace-list-picker-options'
 import { isWorktreePinned } from '../worktree/workspace-list-sections'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import type { HostScreenController } from './use-host-screen-controller'
+import { hostScreenCatalog } from '../i18n/catalogs/host-screen'
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function HostScreenOverlays({ controller }: { controller: HostScreenController }) {
   const {
@@ -31,13 +34,15 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
     state
   } = controller
   const actionTarget = state.actionTarget
+  const t = useMobileTranslation(hostScreenCatalog)
+  const tWorktree = useMobileTranslation(worktreeCatalog)
 
   return (
     <>
       <PickerModal
         visible={state.showSortPicker}
-        title="Sort By"
-        options={SORT_OPTIONS}
+        title={t('sortByTitle')}
+        options={workspaceSortOptions(tWorktree)}
         selected={state.sortMode}
         onSelect={settings.handleSortChange}
         onClose={() => state.setShowSortPicker(false)}
@@ -45,8 +50,8 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
 
       <PickerModal
         visible={state.showGroupPicker}
-        title="Group By"
-        options={GROUP_OPTIONS}
+        title={t('groupByTitle')}
+        options={workspaceGroupOptions(tWorktree)}
         selected={state.groupMode}
         onSelect={settings.handleGroupChange}
         onClose={() => state.setShowGroupPicker(false)}
@@ -54,30 +59,30 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
 
       <BottomDrawer visible={state.showFilterModal} onClose={() => state.setShowFilterModal(false)}>
         <View style={styles.filterModalHeader}>
-          <Text style={styles.filterModalTitle}>Filter</Text>
+          <Text style={styles.filterModalTitle}>{t('filter')}</Text>
           {settings.activeFilterCount > 0 && (
             <Pressable onPress={settings.clearFilters}>
-              <Text style={styles.clearFiltersText}>Clear filters</Text>
+              <Text style={styles.clearFiltersText}>{t('clearFilters')}</Text>
             </Pressable>
           )}
         </View>
 
-        <Text style={styles.filterSectionLabel}>Workspaces</Text>
+        <Text style={styles.filterSectionLabel}>{t('filterWorkspacesSection')}</Text>
         <View style={styles.filterGroup}>
           <Pressable style={styles.filterRow} onPress={settings.toggleHideSleeping}>
-            <Text style={styles.filterRowText}>Hide sleeping</Text>
+            <Text style={styles.filterRowText}>{t('hideSleeping')}</Text>
             {state.filters.hideSleeping && <Check size={14} color={colors.textPrimary} />}
           </Pressable>
           <View style={styles.filterSeparator} />
           <Pressable style={styles.filterRow} onPress={settings.toggleHideDefaultBranch}>
-            <Text style={styles.filterRowText}>Hide default branch</Text>
+            <Text style={styles.filterRowText}>{t('hideDefaultBranch')}</Text>
             {state.filters.hideDefaultBranch && <Check size={14} color={colors.textPrimary} />}
           </Pressable>
         </View>
 
         {controller.sectionsResult.uniqueRepos.length > 1 && (
           <>
-            <Text style={styles.filterSectionLabel}>Repositories</Text>
+            <Text style={styles.filterSectionLabel}>{t('filterRepositoriesSection')}</Text>
             <View style={styles.filterGroup}>
               {controller.sectionsResult.uniqueRepos.map((repo, i) => (
                 <View key={repo.id}>
@@ -112,10 +117,12 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
         {state.confirmDelete ? (
           <View>
             <View style={styles.confirmContent}>
-              <Text style={styles.confirmTitle}>Delete Worktree</Text>
+              <Text style={styles.confirmTitle}>{t('deleteWorktreeTitle')}</Text>
               <Text style={styles.confirmMessage}>
-                Delete "{state.confirmDelete.displayName || state.confirmDelete.repo}" (
-                {state.confirmDelete.branch})?
+                {t('deleteWorktreeMessage', {
+                  name: state.confirmDelete.displayName || state.confirmDelete.repo,
+                  branch: state.confirmDelete.branch
+                })}
               </Text>
             </View>
             <View style={styles.confirmButtons}>
@@ -127,7 +134,7 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                 ]}
                 onPress={() => state.setConfirmDelete(null)}
               >
-                <Text style={styles.confirmBtnCancelText}>Cancel</Text>
+                <Text style={styles.confirmBtnCancelText}>{t('cancel')}</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [
@@ -143,7 +150,7 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                   state.setActionTarget(null)
                 }}
               >
-                <Text style={styles.confirmBtnDestructiveText}>Delete</Text>
+                <Text style={styles.confirmBtnDestructiveText}>{t('delete')}</Text>
               </Pressable>
             </View>
           </View>
@@ -163,7 +170,7 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                       onDone: () => state.setActionTarget(null)
                     }),
                     {
-                      label: 'Sleep',
+                      label: t('sleep'),
                       icon: Moon,
                       onPress: () => {
                         if (client) {
@@ -180,14 +187,16 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                       }
                     },
                     {
-                      label: isWorktreePinned(actionTarget, state.pinnedIds) ? 'Unpin' : 'Pin',
+                      label: isWorktreePinned(actionTarget, state.pinnedIds)
+                        ? t('unpin')
+                        : t('pin'),
                       onPress: () => {
                         actions.togglePin(actionTarget.worktreeId)
                         state.setActionTarget(null)
                       }
                     },
                     {
-                      label: 'Delete',
+                      label: t('delete'),
                       destructive: true,
                       onPress: () => state.setConfirmDelete(actionTarget)
                     }
@@ -201,9 +210,9 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
       {/* Host remove confirmation */}
       <ConfirmModal
         visible={state.confirmRemoveHost}
-        title="Remove Host"
-        message={`Remove "${state.hostName}"? You can re-pair later.`}
-        confirmLabel="Remove"
+        title={t('removeHostTitle')}
+        message={t('removeHostMessage', { name: state.hostName })}
+        confirmLabel={t('remove')}
         destructive
         onConfirm={() => void actions.handleRemoveHost()}
         onCancel={() => state.setConfirmRemoveHost(false)}

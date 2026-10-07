@@ -5,6 +5,8 @@ import { dismissMobileSessionCreateWarningState } from './mobile-session-create-
 import { colors } from '../theme/mobile-theme'
 import { styles } from './mobile-session-styles'
 import type { MobileSessionController } from './use-mobile-session-controller'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { MobileSessionActiveContent } from './MobileSessionActiveContent'
 import { MobileSessionCommandDock } from './MobileSessionCommandDock'
 
@@ -23,6 +25,7 @@ export function MobileSessionContentRow({ controller }: { controller: MobileSess
     handleOpenedFileDiff,
     handleSessionContentRowLayout
   } = controller
+  const t = useMobileTranslation(sessionCatalog)
   return (
     <View style={styles.sessionContentRow} onLayout={handleSessionContentRowLayout}>
       <View style={styles.sessionContentMain}>
@@ -33,7 +36,7 @@ export function MobileSessionContentRow({ controller }: { controller: MobileSess
             <Pressable
               style={styles.createWarningDismiss}
               onPress={() => setCreateWarningState(dismissMobileSessionCreateWarningState)}
-              accessibilityLabel="Dismiss workspace creation warning"
+              accessibilityLabel={t('dismissCreateWarning')}
               hitSlop={8}
             >
               <X size={16} color={colors.textMuted} strokeWidth={2.2} />

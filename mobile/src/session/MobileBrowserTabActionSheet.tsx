@@ -2,6 +2,8 @@ import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react-native'
 import type { MobileSessionTab } from './mobile-session-route-types'
 import { ActionSheetModal, type ActionSheetAction } from '../components/ActionSheetModal'
 import { getMobileSessionTabTitle } from './mobile-terminal-tab-agent'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 type BrowserTab = Extract<MobileSessionTab, { type: 'browser' }>
 export type MobileBrowserNavigationMethod = 'browser.back' | 'browser.forward' | 'browser.reload'
@@ -21,12 +23,12 @@ export function MobileBrowserTabActionSheet(props: {
   return (
     <ActionSheetModal
       visible={target != null}
-      title={target ? getMobileSessionTabTitle(target) : 'Browser'}
+      title={target ? getMobileSessionTabTitle(target) : translate(sessionCatalog, 'browser')}
       actions={[
         ...(target?.canGoBack
           ? [
               {
-                label: 'Back',
+                label: translate(sessionCatalog, 'browserBack'),
                 icon: ChevronLeft,
                 onPress: () => {
                   const current = target
@@ -41,7 +43,7 @@ export function MobileBrowserTabActionSheet(props: {
         ...(target?.canGoForward
           ? [
               {
-                label: 'Forward',
+                label: translate(sessionCatalog, 'browserForward'),
                 icon: ChevronRight,
                 onPress: () => {
                   const current = target
@@ -54,7 +56,7 @@ export function MobileBrowserTabActionSheet(props: {
             ]
           : []),
         {
-          label: 'Reload',
+          label: translate(sessionCatalog, 'browserReload'),
           icon: RefreshCw,
           onPress: () => {
             const current = target
@@ -65,7 +67,7 @@ export function MobileBrowserTabActionSheet(props: {
           }
         },
         {
-          label: 'Close',
+          label: translate(sessionCatalog, 'close'),
           destructive: true,
           onPress: () => {
             const current = target

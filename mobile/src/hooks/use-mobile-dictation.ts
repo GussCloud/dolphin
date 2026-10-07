@@ -22,6 +22,8 @@ import type {
   UseMobileDictationOptions,
   UseMobileDictationResult
 } from './mobile-dictation-session-state'
+import { dictationCatalog } from '../i18n/catalogs/dictation'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type { UseMobileDictationResult } from './mobile-dictation-session-state'
 
@@ -160,8 +162,8 @@ export function useMobileDictation(options: UseMobileDictationOptions): UseMobil
       applyStatus('idle')
       throw new Error(
         opened.reason === 'permission-denied'
-          ? 'Microphone permission denied'
-          : 'Failed to initialize microphone'
+          ? translate(dictationCatalog, 'microphonePermissionDenied')
+          : translate(dictationCatalog, 'microphoneInitFailed')
       )
     }
 

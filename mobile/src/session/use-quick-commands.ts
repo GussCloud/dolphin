@@ -14,6 +14,8 @@ import {
   parseNormalizedTerminalQuickCommands,
   type TerminalQuickCommandMutation
 } from '../terminal/quick-commands'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 type Args = {
   client: RpcClient | null
@@ -134,11 +136,13 @@ export function useQuickCommands({ client, enabled }: Args): QuickCommandsState 
         try {
           next = parseNormalizedTerminalQuickCommands(quickCommandsRead.interpret(response))
         } catch (err) {
-          setError(refusedRpcMessageOrFallback(err, 'Failed to load quick commands'))
+          setError(
+            refusedRpcMessageOrFallback(err, translate(sessionCatalog, 'quickCommandsLoadFailed'))
+          )
           return
         }
         if (!next) {
-          setError('Failed to load quick commands')
+          setError(translate(sessionCatalog, 'quickCommandsLoadFailed'))
           return
         }
         mutationContext.confirmed = next
@@ -151,7 +155,11 @@ export function useQuickCommands({ client, enabled }: Args): QuickCommandsState 
           operationId === operationIdRef.current &&
           mutationContextRef.current === mutationContext
         ) {
-          setError(err instanceof Error ? err.message : 'Failed to load quick commands')
+          setError(
+            err instanceof Error
+              ? err.message
+              : translate(sessionCatalog, 'quickCommandsLoadFailed')
+          )
         }
       } finally {
         if (
@@ -198,18 +206,19 @@ export function useQuickCommands({ client, enabled }: Args): QuickCommandsState 
           let confirmed
           confirmed = interpretOrThrowRefusalMessage(
             () => parseNormalizedTerminalQuickCommands(quickCommandsWrite.interpret(response)),
-            'Failed to save quick command'
+            translate(sessionCatalog, 'quickCommandSaveFailed')
           )
           if (!confirmed) {
             // Why: treating an invalid success payload as [] would let the next
             // full-list mutation erase commands that still exist on the host.
-            throw new Error('Failed to save quick command')
+            throw new Error(translate(sessionCatalog, 'quickCommandSaveFailed'))
           }
           mutationContext.confirmed = confirmed
           succeeded = true
           return true
         } catch (err) {
-          failureMessage = err instanceof Error ? err.message : 'Failed to save quick command'
+          failureMessage =
+            err instanceof Error ? err.message : translate(sessionCatalog, 'quickCommandSaveFailed')
           return false
         } finally {
           mutationContext.pending = mutationContext.pending.filter(

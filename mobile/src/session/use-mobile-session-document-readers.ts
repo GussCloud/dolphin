@@ -9,6 +9,8 @@ import {
 } from './mobile-markdown-disk-fallback'
 import type { MobileSessionTab } from './mobile-session-route-types'
 import type { MobileSessionTabApplicationModel } from './use-mobile-session-tab-application'
+import { sessionCatalog } from '../i18n/catalogs/session'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useMobileSessionDocumentReaders(scope: MobileSessionTabApplicationModel) {
   const { worktreeId, client, setMarkdownDocs, setFileDocs } = scope
@@ -50,7 +52,7 @@ export function useMobileSessionDocumentReaders(scope: MobileSessionTabApplicati
           })
         )
         if (!fallback.accepted) {
-          throw new Error('Unable to read markdown')
+          throw new Error(translate(sessionCatalog, 'readMarkdownFailed'))
         }
         const fileResult = fallback.value
         setMarkdownDocs((prev) =>
@@ -67,7 +69,7 @@ export function useMobileSessionDocumentReaders(scope: MobileSessionTabApplicati
         setMarkdownDocs((prev) =>
           new Map(prev).set(tab.id, {
             status: 'error',
-            message: "Couldn't load markdown"
+            message: translate(sessionCatalog, 'loadMarkdownFailed')
           })
         )
       }
@@ -92,12 +94,12 @@ export function useMobileSessionDocumentReaders(scope: MobileSessionTabApplicati
         const message = err instanceof Error ? err.message : ''
         const previewMessage =
           message === 'binary_file'
-            ? 'Binary preview unavailable'
+            ? translate(sessionCatalog, 'binaryPreviewUnavailable')
             : message === 'file_too_large'
-              ? 'File too large for mobile preview'
+              ? translate(sessionCatalog, 'fileTooLargeForPreview')
               : tab.diffSource === 'staged' || tab.diffSource === 'unstaged'
-                ? "Couldn't load diff preview"
-                : "Couldn't load file preview"
+                ? translate(sessionCatalog, 'loadDiffPreviewFailed')
+                : translate(sessionCatalog, 'loadFilePreviewFailed')
         setFileDocs((prev) =>
           new Map(prev).set(tab.id, {
             status: 'error',

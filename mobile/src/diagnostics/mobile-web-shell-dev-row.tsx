@@ -10,6 +10,8 @@ import {
 } from '../storage/preferences'
 import { colors } from '../theme/mobile-theme'
 import { troubleshootScreenStyles as styles } from './troubleshoot-screen-styles'
+import { diagnosticsCatalog } from '../i18n/catalogs/diagnostics'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /**
  * The one caller of `saveMobileWebShellEnabled`, and the one way into the hybrid shell route that
@@ -25,12 +27,13 @@ import { troubleshootScreenStyles as styles } from './troubleshoot-screen-styles
  */
 /** What this build is, not what the row is for: an OTA build is the page's own release binary. */
 const HYBRID_SHELL_LABELS = {
-  native: 'Hybrid shell (development build)',
-  ota: 'Hybrid shell (OTA build)'
+  native: 'hybridShellDevelopmentBuild',
+  ota: 'hybridShellOtaBuild'
 } as const
 
 export function MobileWebShellDevRow() {
   const router = useRouter()
+  const t = useMobileTranslation(diagnosticsCatalog)
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
   const [hostId, setHostId] = useState<string | null>(null)
@@ -55,7 +58,7 @@ export function MobileWebShellDevRow() {
     <View>
       <View style={styles.checkRow}>
         <Text style={styles.checkLabel} testID="mobile-web-shell-label">
-          {HYBRID_SHELL_LABELS[mobileShellBuildKind()]}
+          {t(HYBRID_SHELL_LABELS[mobileShellBuildKind()])}
         </Text>
         <Switch
           testID="mobile-web-shell-flag"
@@ -91,9 +94,7 @@ export function MobileWebShellDevRow() {
         }}
       >
         <LayoutTemplate size={16} color={colors.textPrimary} />
-        <Text style={styles.diagnosticButtonLabel}>
-          Open hybrid shell for the first paired host
-        </Text>
+        <Text style={styles.diagnosticButtonLabel}>{t('openHybridShell')}</Text>
       </Pressable>
     </View>
   )

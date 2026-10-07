@@ -5,6 +5,8 @@ import { formatPreviewByteLength } from './mobile-file-preview-request'
 import { scrollOffsetForPreviewLine } from './mobile-file-preview-line-column'
 import { buildMobileFilePreviewSyntax } from './mobile-file-preview-syntax'
 import { filePreviewStyles as styles } from './mobile-file-preview-styles'
+import { filesCatalog } from '../i18n/catalogs/files'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileFilePreviewSourceText({
   relativePath,
@@ -19,6 +21,7 @@ export function MobileFilePreviewSourceText({
   byteLength?: number
   initialLine?: number
 }) {
+  const t = useMobileTranslation(filesCatalog)
   const scrollRef = useRef<ScrollView>(null)
   const revealedRef = useRef(false)
   const syntax = useMemo(
@@ -51,7 +54,7 @@ export function MobileFilePreviewSourceText({
       {truncated ? (
         <MobileFilePreviewTruncatedNote byteLength={byteLength ?? content.length} />
       ) : null}
-      <Text selectable style={styles.textPreview} accessibilityLabel="File preview">
+      <Text selectable style={styles.textPreview} accessibilityLabel={t('filePreviewA11y')}>
         <MobileSyntaxSegments segments={syntax.segments} />
       </Text>
     </ScrollView>
@@ -59,9 +62,10 @@ export function MobileFilePreviewSourceText({
 }
 
 export function MobileFilePreviewTruncatedNote({ byteLength }: { byteLength: number }) {
+  const t = useMobileTranslation(filesCatalog)
   return (
     <Text style={styles.truncatedNote}>
-      Preview truncated. File size: {formatPreviewByteLength(byteLength)}.
+      {t('previewTruncated', { size: formatPreviewByteLength(byteLength) })}
     </Text>
   )
 }

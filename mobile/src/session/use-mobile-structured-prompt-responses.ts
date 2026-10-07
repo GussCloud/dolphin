@@ -13,6 +13,8 @@ import {
   groupedQuestionPromptKey,
   type GroupedQuestionDraft
 } from './mobile-structured-grouped-question'
+import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
+import { translate } from '../i18n/mobile-locale-state'
 
 /**
  * Answering the two durable prompt kinds. Kept beside the session hook rather than inside it
@@ -54,7 +56,7 @@ export function useMobileStructuredPromptResponses(args: {
         target
       )
       if (result.status === 'unknown') {
-        onSendError('Response unconfirmed — check chat before retrying')
+        onSendError(translate(sessionChatCatalog, 'sendResponseUnconfirmed'))
         return false
       }
       return result.status === 'accepted'
@@ -94,7 +96,7 @@ export function useMobileStructuredPromptResponses(args: {
           )
         }
         if (result.status === 'unknown') {
-          onSendError('Answer unconfirmed — check chat before retrying')
+          onSendError(translate(sessionChatCatalog, 'sendAnswerUnconfirmed'))
           return false
         }
         return result.status === 'accepted'
@@ -109,7 +111,7 @@ export function useMobileStructuredPromptResponses(args: {
         target
       )
       if (result.status === 'unknown') {
-        onSendError('Answer unconfirmed — check chat before retrying')
+        onSendError(translate(sessionChatCatalog, 'sendAnswerUnconfirmed'))
         return false
       }
       return result.status === 'accepted'

@@ -1,3 +1,5 @@
+import { transportText } from './transport-text'
+
 /**
  * Removing a host is pairing work, and the page cannot do it.
  *
@@ -18,7 +20,7 @@ export class PageHostRemovalUnavailableError extends Error {
   constructor() {
     // Why plain copy: this reaches the host screen's error banner unchanged, and it has to name
     // where removal does work rather than ask for a retry that cannot succeed here.
-    super('Remove this host from the host list in the Dolphin app.')
+    super(transportText('removeHostInApp'))
     this.name = PAGE_HOST_REMOVAL_UNAVAILABLE_NAME
   }
 }

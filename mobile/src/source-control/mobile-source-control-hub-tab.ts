@@ -10,11 +10,12 @@ export const SOURCE_CONTROL_HUB_TABS: readonly SourceControlHubTab[] = [
   'history'
 ] as const
 
-export const SOURCE_CONTROL_HUB_TAB_LABELS: Record<SourceControlHubTab, string> = {
-  changes: 'Changes',
-  pr: 'Pull Request',
-  history: 'Commits'
-}
+// Catalog keys, not copy: module-scope labels would freeze the first locale.
+export const SOURCE_CONTROL_HUB_TAB_LABEL_KEYS = {
+  changes: 'tabChanges',
+  pr: 'tabPullRequest',
+  history: 'tabCommits'
+} as const satisfies Record<SourceControlHubTab, string>
 
 // Normalize a route param (possibly an array from expo-router, possibly unknown)
 // to a valid tab, defaulting to 'changes'. Deep links that name a stale/invalid

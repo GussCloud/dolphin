@@ -10,6 +10,8 @@ import type { ConnectionState, HostCatalogEntry, HostProfile } from '../transpor
 import { colors, radii, spacing } from '../theme/mobile-theme'
 import { homeHostWorktreeSummary, type HostWorktreeInfo } from '../worktree/home-worktree-info'
 import { StatusDot } from './StatusDot'
+import { componentsCatalog } from '../i18n/catalogs/components'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileHostCard(props: {
   host: HostProfile | HostCatalogEntry
@@ -26,15 +28,16 @@ export function MobileHostCard(props: {
   onLongPress: () => void
   onOpenActions: () => void
 }) {
+  const t = useMobileTranslation(componentsCatalog)
   const credentialUnavailable = props.credentialStatus === 'temporarily-unavailable'
   const credentialMissing = props.credentialStatus === 'missing'
   const connected = props.state === 'connected' && !credentialUnavailable && !credentialMissing
   const isError =
     credentialMissing || ['warning', 'unreachable', 'auth-failed'].includes(props.verdict.kind)
   const statusLabel = credentialMissing
-    ? 'Pairing invalid'
+    ? t('pairingInvalid')
     : credentialUnavailable
-      ? 'Pairing temporarily unavailable'
+      ? t('pairingTemporarilyUnavailable')
       : verdictDisplayLabel(props.verdict)
   const statusVerdict: ConnectionVerdict = credentialMissing
     ? { kind: 'auth-failed', label: statusLabel }
@@ -49,19 +52,17 @@ export function MobileHostCard(props: {
       ? mobileConnectionPathLabel(props.path)
       : null
   const discoveryHint =
-    props.verdict.kind === 'unreachable' && !props.host.relay
-      ? 'Update desktop Dolphin and sign in to connect from anywhere'
-      : null
+    props.verdict.kind === 'unreachable' && !props.host.relay ? t('discoveryHint') : null
   const credentialHint = credentialMissing
-    ? 'Tap to re-pair with your desktop'
+    ? t('credentialMissingHint')
     : credentialUnavailable
-      ? 'Unlock your phone, then tap to retry'
+      ? t('credentialUnavailableHint')
       : null
   // The verdict's own second line (what to check on the desktop); credential copy wins.
   const verdictDetail =
     credentialHint === null && 'detail' in props.verdict ? (props.verdict.detail ?? null) : null
   const accessibilityLabel = [
-    `Open ${display.title}`,
+    t('openHost', { name: display.title }),
     descriptorText,
     statusLabel,
     connectionPathLabel?.replace(' · ', ' via '),
@@ -139,7 +140,7 @@ export function MobileHostCard(props: {
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Actions for ${display.title}`}
+        accessibilityLabel={t('hostActions', { name: display.title })}
         hitSlop={8}
         style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
         onPress={props.onOpenActions}
