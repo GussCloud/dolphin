@@ -2,7 +2,7 @@ import {
   buildMobileQuickCommandLaunch,
   type MobileQuickCommandLaunch
 } from '../terminal/quick-commands'
-import type { RpcFailure, RpcSuccess } from '../transport/types'
+import type { RpcSuccess } from '../transport/types'
 import { sessionTabCreateTerminal } from './mobile-session-write-operations'
 import { triggerSuccess, triggerError } from '../platform/haptics'
 import { buildTerminalSendParams } from '../terminal/terminal-send-request'
@@ -198,8 +198,7 @@ export function useMobileSessionTerminalCreateActions(scope: MobileSessionAttach
             .then((sendResponse) => {
               if (!sendResponse.ok) {
                 throw new Error(
-                  (sendResponse as RpcFailure).error.message ||
-                    translate(sessionCatalog, 'sendNotesError')
+                  sendResponse.error.message || translate(sessionCatalog, 'sendNotesError')
                 )
               }
               const result = (sendResponse as RpcSuccess).result as {

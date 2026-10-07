@@ -2,7 +2,6 @@ import type { DetailCommentRenderersModel } from './use-mobile-tasks-detail-comm
 import { type PickerOption, View, useMemo } from './mobile-tasks-dependencies'
 import {
   type GitHubRepoSources,
-  type LinearTeam,
   PROJECT_VIEW_DEFAULT_SORT,
   type RepoSummary,
   type TaskListEntry,
@@ -63,14 +62,17 @@ export function useMobileTasksPickerProjection(model: DetailCommentRenderersMode
           })),
     [hostedRepos, linearTeams, provider]
   )
-  const selectedCreateTarget =
-    provider === 'github' || provider === 'gitlab'
-      ? (hostedRepos.find((repo) => repo.id === createRepoId) ?? hostedRepos[0] ?? null)
-      : (linearTeams.find((team) => team.id === createTeamId) ?? linearTeams[0] ?? null)
-  const selectedCreateTargetLabel =
-    provider === 'github' || provider === 'gitlab'
-      ? ((selectedCreateTarget as RepoSummary | null)?.displayName ?? t('selectTarget'))
-      : ((selectedCreateTarget as LinearTeam | null)?.name ?? t('selectTarget'))
+  const createTargetIsRepo = provider === 'github' || provider === 'gitlab'
+  const selectedRepoTarget = createTargetIsRepo
+    ? (hostedRepos.find((repo) => repo.id === createRepoId) ?? hostedRepos[0] ?? null)
+    : null
+  const selectedTeamTarget = createTargetIsRepo
+    ? null
+    : (linearTeams.find((team) => team.id === createTeamId) ?? linearTeams[0] ?? null)
+  const selectedCreateTarget = selectedRepoTarget ?? selectedTeamTarget
+  const selectedCreateTargetLabel = createTargetIsRepo
+    ? (selectedRepoTarget?.displayName ?? t('selectTarget'))
+    : (selectedTeamTarget?.name ?? t('selectTarget'))
   const providerLabel =
     provider === 'github' ? 'GitHub' : provider === 'gitlab' ? 'GitLab' : 'Linear'
   const showHeaderCreateTask =
@@ -79,10 +81,7 @@ export function useMobileTasksPickerProjection(model: DetailCommentRenderersMode
     () => buildProviderOptions(t).filter((option) => visibleProviders.includes(option.value)),
     [t, visibleProviders]
   )
-  const selectedCreateRepo =
-    provider === 'github' || provider === 'gitlab'
-      ? (selectedCreateTarget as RepoSummary | null)
-      : null
+  const selectedCreateRepo = selectedRepoTarget
   const selectedCreateGitHubSources =
     provider === 'github' && selectedCreateRepo
       ? githubRepoSources[selectedCreateRepo.id]

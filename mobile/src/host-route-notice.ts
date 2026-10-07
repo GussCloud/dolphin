@@ -16,10 +16,14 @@ export type HostRouteNotice = keyof typeof HOST_ROUTE_NOTICES
 export function hostRouteNoticeMessage(notice: string | undefined): string | null {
   // Why hasOwn: the param is attacker-adjacent URL text, and a plain lookup of 'toString'
   // would hand the banner a function off the prototype instead of missing.
-  if (!notice || !Object.hasOwn(HOST_ROUTE_NOTICES, notice)) {
+  if (!notice || !isHostRouteNotice(notice)) {
     return null
   }
-  return translate(hostRoutesActionsCatalog, HOST_ROUTE_NOTICES[notice as HostRouteNotice])
+  return translate(hostRoutesActionsCatalog, HOST_ROUTE_NOTICES[notice])
+}
+
+function isHostRouteNotice(notice: string): notice is HostRouteNotice {
+  return Object.hasOwn(HOST_ROUTE_NOTICES, notice)
 }
 
 export function hostRouteWithNotice(hostId: string, notice: HostRouteNotice): string {

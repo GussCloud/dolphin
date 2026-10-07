@@ -140,8 +140,9 @@ const HEAD_CONTENT_HOOK_SHA256 = '33a47c861132d045c19ec48e3781eccb5ebddbc516a189
 // `handleCreateTerminal`, whose send became `sessionTabCreateTerminal` and whose `response.ok`
 // branch became that operation's own throw-the-host-message acceptance. Refreshed for negotiated
 // optimistic placement, which defers to legacy host snapshots when ownership paths disagree.
+// Refreshed again when the notes-send failure dropped its `RpcFailure` cast for the narrowed reply.
 const HEAD_NESTED_FUNCTION_SHA256 =
-  '365a56c0f672db54d329ad83996c212f234880d3afb32ce83450002155a8d673'
+  'c1fb20449bd65a4696d2c7c5c4bc7aeaf1053e134ef2cbc7a29c13eb69113f8f'
 // -1 registration and -1 removal: the Markdown actions' `BackHandler` pair is `useBackClaim`'s.
 const HEAD_NATIVE_REGISTRATION_SHA256 =
   '87d4599f475575131d4d5daa20f0dac579ca6c829353cbb654206ea6965dadae'

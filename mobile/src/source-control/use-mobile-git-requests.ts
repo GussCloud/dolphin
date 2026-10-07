@@ -28,10 +28,10 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
         ...params
       })
       if (!response.ok) {
-        const error = new Error(
-          response.error?.message || sourceControlText('sourceControlActionFailed')
-        ) as GitRequestError
-        error.code = response.error?.code
+        const error: GitRequestError = Object.assign(
+          new Error(response.error?.message || sourceControlText('sourceControlActionFailed')),
+          { code: response.error?.code }
+        )
         throw error
       }
       return (response as RpcSuccess).result as T

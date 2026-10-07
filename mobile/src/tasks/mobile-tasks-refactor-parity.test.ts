@@ -112,13 +112,15 @@ const hash = (parts: string[] | string): string =>
 // 351 -> 355 and statements 418 -> 421 are the `useMobileTranslation`/`useMobileLocale`
 // subscriptions and their bindings; declarations 194 -> 193 because module-scope option lists became
 // builders and two English-only helpers were folded. No RPC call or method literal moved.
+// Statements 421 -> 424 and semantics 3533 -> 3529: the create-target label reads typed repo/team
+// selections instead of casting one union value.
 
 const SCREEN_RPC_SCREEN_HOOKS = '664a805e6318ed5112f177eefba9704604146a378cb046a062783d85e5e42df5'
 const PRE_REFACTOR_DIFF_HOOKS = '93c7189b32bed8456cc51814fffa8ce80cf62011ef968a9d53ddec2b9686f58f'
-const SCREEN_RPC_STATEMENTS = '6f4f1c27b3e59700872dab2bdabb06e553def89fc409852fb062ae980ac462e6'
+const SCREEN_RPC_STATEMENTS = 'c40945005936ea9dddbe66554393cb4df43209eff8b5401a4b6b8709ca8231d4'
 // Saved Linear selections now accept unknown persisted values; reconciliation tests cover them.
 const MAIN_REBASED_DECLARATIONS = '912b1b52450690526cb4a7e00971cad18aceb617ef38df10e0ac808e20e5eee3'
-const SCREEN_RPC_SEMANTICS = '57796280c0cb0a43cb3a68fc3029be708a574068306f7277058d94aa2435c6da'
+const SCREEN_RPC_SEMANTICS = '56be9e93b9767aa8d3512f365a0bcd1ebbdf07ec77770971f824ec9168608b33'
 const PRE_REFACTOR_STYLES = '1db6af69c791d9963928541ad5310942fcbda6d984b422c90b6eb92b6816579a'
 const SCREEN_RPC_RENDER_TREE = 'a5e6e662974904a701055154252f3ecd82932770823e662ab508d020b5e03302'
 
@@ -135,7 +137,7 @@ describe('Mobile Tasks refactor parity', () => {
 
   it('preserves every screen statement in execution order', () => {
     const statements = readFlattenedMobileTasksCoreStatements()
-    expect(statements).toHaveLength(421)
+    expect(statements).toHaveLength(424)
     expect(hash(statements)).toBe(SCREEN_RPC_STATEMENTS)
   })
 
@@ -147,7 +149,7 @@ describe('Mobile Tasks refactor parity', () => {
 
   it('preserves RPC calls, runtime strings, and JSX host signatures', () => {
     const semantics = readMobileTasksSemanticSource()
-    expect(semantics.split('\n')).toHaveLength(3_533)
+    expect(semantics.split('\n')).toHaveLength(3_529)
     expect(hash(semantics)).toBe(SCREEN_RPC_SEMANTICS)
   })
 
