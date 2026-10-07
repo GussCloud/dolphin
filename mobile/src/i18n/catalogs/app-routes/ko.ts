@@ -1,0 +1,37 @@
+import type { MobileLocaleMessages } from '../../mobile-i18n-catalog'
+import type { appRoutesEn } from './en'
+
+export const appRoutesKo: MobileLocaleMessages<typeof appRoutesEn> = {
+  back: '뒤로',
+  cancel: '취소',
+  continue: '계속',
+  openSettings: '설정 열기',
+  tryAgain: '다시 시도',
+  backToHome: '홈으로 돌아가기',
+  missingPairingCode: '페어링 코드가 없습니다',
+  pairConfirmTitle: '이 데스크톱과 페어링할까요?',
+  pairConfirmSubtitle: '데스크톱에서 페어링 링크를 열었습니다. 확인하면 호스트에 추가됩니다.',
+  pair: '페어링',
+  connecting: '연결 중…',
+  pairingLog: '페어링 로그',
+  pairingTimedOut: '{seconds}초 안에 연결하지 못했습니다 — 어디서 멈췄는지 아래 로그를 확인하세요',
+  pairingFailed: '페어링 실패: {reason}',
+  invalidQrCode: '유효한 Dolphin QR 코드가 아닙니다',
+  invalidPairingCode: '유효한 페어링 코드가 아닙니다 — 컴퓨터에서 복사해 다시 붙여넣으세요',
+  pairWithDesktop: '데스크톱과 페어링',
+  cameraAccessDisabled: '카메라 접근이 꺼져 있음',
+  scanPrompt: '데스크톱의 Dolphin에 표시된 QR 코드를 스캔하거나 페어링 코드를 붙여넣으세요.',
+  cameraDisabledPrompt: '설정에서 카메라 접근을 허용하거나 페어링 코드를 붙여넣으세요.',
+  pasteCodeInstead: '코드 붙여넣기',
+  orPasteCode: '또는 페어링 코드 붙여넣기',
+  pasteCodeTitle: '페어링 코드 붙여넣기',
+  pasteCodeMessage: '컴퓨터의 QR 코드 아래에 표시된 코드를 복사하세요.',
+  pasteCodePlaceholder: 'dolphin://pair?code=... 또는 코드 붙여넣기',
+  scanStepOpenDolphin: '컴퓨터에서 Dolphin 열기',
+  scanStepOpenMobileSettings: '설정 → 모바일로 이동',
+  scanStepScan: 'QR 코드 스캔',
+  onboardingSaveChoiceError: '선택을 저장하지 못했습니다. 다시 시도하세요.',
+  onboardingNotificationsError: '알림 설정을 업데이트하지 못했습니다. 다시 시도하세요.',
+  onboardingProgress: '온보딩 진행 상황',
+  onboardingStep: '{total}단계 중 {current}단계'
+}

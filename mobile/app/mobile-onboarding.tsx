@@ -17,6 +17,8 @@ import {
   type MobileSessionView
 } from '../src/storage/session-view-preferences'
 import { setRemotePushEnabled } from '../src/notifications/push-registration'
+import { appRoutesCatalog } from '../src/i18n/catalogs/app-routes'
+import { useMobileTranslation } from '../src/i18n/use-mobile-translation'
 
 const SLIDE_DURATION_MS = 280
 
@@ -45,6 +47,7 @@ function MobileOnboardingFlow({
   rawSteps: string | undefined
 }) {
   const router = useRouter()
+  const t = useMobileTranslation(appRoutesCatalog)
   const steps = useMemo(() => parseMobileOnboardingSteps(rawSteps), [rawSteps])
   const { width } = useWindowDimensions()
   const [activeIndex, setActiveIndex] = useState(0)
@@ -103,12 +106,12 @@ function MobileOnboardingFlow({
         await saveDefaultSessionView(view)
         advanceOrContinue()
       } catch {
-        setError('Your choice could not be saved. Try again.')
+        setError(t('onboardingSaveChoiceError'))
         setBusyChoice(null)
         choiceInFlightRef.current = false
       }
     },
-    [advanceOrContinue]
+    [advanceOrContinue, t]
   )
 
   const chooseNotifications = useCallback(
@@ -124,12 +127,12 @@ function MobileOnboardingFlow({
         await setRemotePushEnabled(enabled)
         advanceOrContinue()
       } catch {
-        setError('Notification settings could not be updated. Try again.')
+        setError(t('onboardingNotificationsError'))
         setBusyChoice(null)
         choiceInFlightRef.current = false
       }
     },
-    [advanceOrContinue]
+    [advanceOrContinue, t]
   )
 
   const translateX = useMemo(() => Animated.multiply(slideProgress, -width), [slideProgress, width])
@@ -143,8 +146,10 @@ function MobileOnboardingFlow({
           <View
             accessible
             accessibilityRole="progressbar"
-            accessibilityLabel="Onboarding progress"
-            accessibilityValue={{ text: `Step ${activeIndex + 1} of ${steps.length}` }}
+            accessibilityLabel={t('onboardingProgress')}
+            accessibilityValue={{
+              text: t('onboardingStep', { current: activeIndex + 1, total: steps.length })
+            }}
             style={styles.progress}
           >
             {steps.map((step, index) => (

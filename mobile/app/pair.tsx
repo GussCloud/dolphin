@@ -3,9 +3,12 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'r
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { colors, radii, spacing, typography } from '../src/theme/mobile-theme'
 import { extractPairingCodeFromUrl } from '../src/transport/pairing'
+import { appRoutesCatalog } from '../src/i18n/catalogs/app-routes'
+import { useMobileTranslation } from '../src/i18n/use-mobile-translation'
 
 export default function PairRedirectScreen() {
   const router = useRouter()
+  const t = useMobileTranslation(appRoutesCatalog)
   const params = useLocalSearchParams<{ code?: string }>()
   const [missingCode, setMissingCode] = useState(false)
 
@@ -45,9 +48,9 @@ export default function PairRedirectScreen() {
     <View style={styles.container}>
       {missingCode ? (
         <>
-          <Text style={styles.errorText}>Missing pairing code</Text>
+          <Text style={styles.errorText}>{t('missingPairingCode')}</Text>
           <Pressable style={styles.primaryButton} onPress={goHome}>
-            <Text style={styles.primaryButtonText}>Back to home</Text>
+            <Text style={styles.primaryButtonText}>{t('backToHome')}</Text>
           </Pressable>
         </>
       ) : (

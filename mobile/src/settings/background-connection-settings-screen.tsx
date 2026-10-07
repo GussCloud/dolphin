@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BatteryCharging, ChevronLeft, ChevronRight, Power, Radio } from 'lucide-react-native'
@@ -11,16 +11,32 @@ import {
 } from '../transport/background-relay-retention'
 import { colors, spacing, typography } from '../theme/mobile-theme'
 import { voiceSettingsStyles as styles } from './voice-settings-styles'
+import { settingsCatalog } from '../i18n/catalogs/settings'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import type { settingsEn } from '../i18n/catalogs/settings/en'
 
-const RETENTION_OPTIONS: PickerOption<BackgroundRelayRetention>[] = [
-  { value: 'off', label: 'Off', subtitle: 'Disconnect shortly after you leave the app.' },
-  { value: '15m', label: '15 minutes', subtitle: 'Stay connected for 15 minutes in background.' },
-  { value: '1h', label: '1 hour', subtitle: 'Stay connected for 1 hour in background.' },
-  { value: 'always', label: 'Always', subtitle: 'Stay connected until you turn this off.' }
-]
-
-function retentionLabel(retention: BackgroundRelayRetention): string {
-  return RETENTION_OPTIONS.find((option) => option.value === retention)?.label ?? 'Off'
+function retentionOptions(
+  t: MobileTranslate<typeof settingsEn>
+): PickerOption<BackgroundRelayRetention>[] {
+  return [
+    { value: 'off', label: t('off'), subtitle: t('backgroundRetentionOffSubtitle') },
+    {
+      value: '15m',
+      label: t('backgroundRetention15m'),
+      subtitle: t('backgroundRetention15mSubtitle')
+    },
+    {
+      value: '1h',
+      label: t('backgroundRetention1h'),
+      subtitle: t('backgroundRetention1hSubtitle')
+    },
+    {
+      value: 'always',
+      label: t('backgroundRetentionAlways'),
+      subtitle: t('backgroundRetentionAlwaysSubtitle')
+    }
+  ]
 }
 
 export default function BackgroundConnectionSettingsScreen({
@@ -31,6 +47,8 @@ export default function BackgroundConnectionSettingsScreen({
   onBack: () => void
 }): React.JSX.Element {
   const insets = useSafeAreaInsets()
+  const t = useMobileTranslation(settingsCatalog)
+  const options = useMemo(() => retentionOptions(t), [t])
   const [retention, setRetention] = useState<BackgroundRelayRetention>('off')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -61,14 +79,12 @@ export default function BackgroundConnectionSettingsScreen({
       setError(null)
       setRetention(next)
       setBackgroundRelayRetention(next)
-      void saveBackgroundRelayRetention(next).catch(() =>
-        setError('Could not save background connection. Try again.')
-      )
+      void saveBackgroundRelayRetention(next).catch(() => setError(t('backgroundSaveError')))
       if (next !== 'off' && !native.isIgnoringBatteryOptimizations()) {
         native.requestIgnoreBatteryOptimizations()
       }
     },
-    [native]
+    [native, t]
   )
 
   return (
@@ -76,24 +92,21 @@ export default function BackgroundConnectionSettingsScreen({
       <View style={styles.topRow}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('back')}
           style={styles.backButton}
           onPress={onBack}
         >
           <ChevronLeft size={22} color={colors.textSecondary} />
         </Pressable>
-        <Text style={styles.heading}>Background connection</Text>
+        <Text style={styles.heading}>{t('backgroundConnection')}</Text>
       </View>
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.groupHeading}>RELAY</Text>
-        <Text style={localStyles.description}>
-          Keep the Relay connection open after you leave the app so it reopens instantly. While on,
-          Android shows a persistent notification and battery use goes up.
-        </Text>
+        <Text style={styles.groupHeading}>{t('backgroundRelayHeading')}</Text>
+        <Text style={localStyles.description}>{t('backgroundRelayDescription')}</Text>
         {error && (
           <Text accessibilityRole="alert" style={styles.error}>
             {error}
@@ -102,14 +115,16 @@ export default function BackgroundConnectionSettingsScreen({
         <View style={[styles.section, styles.sectionTopGap]}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Stay connected in background"
+            accessibilityLabel={t('backgroundStayConnected')}
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             onPress={() => setPickerOpen(true)}
           >
             <Radio size={16} color={colors.textSecondary} />
             <View style={styles.rowContent}>
-              <Text style={styles.rowLabel}>Stay connected in background</Text>
-              <Text style={styles.rowSublabel}>{retentionLabel(retention)}</Text>
+              <Text style={styles.rowLabel}>{t('backgroundStayConnected')}</Text>
+              <Text style={styles.rowSublabel}>
+                {options.find((option) => option.value === retention)?.label ?? t('off')}
+              </Text>
             </View>
             <ChevronRight size={16} color={colors.textMuted} />
           </Pressable>
@@ -117,24 +132,27 @@ export default function BackgroundConnectionSettingsScreen({
 
         {retention !== 'off' && (
           <>
-            <Text style={[styles.groupHeading, styles.inputGroupGap]}>SYSTEM</Text>
+            <Text style={[styles.groupHeading, styles.inputGroupGap]}>
+              {t('backgroundSystemHeading')}
+            </Text>
             <Text style={localStyles.description}>
-              Battery savers can still close the connection. Allow Dolphin to run unrestricted
-              {hasAutostart ? ' and enable Autostart' : ''}.
+              {hasAutostart
+                ? t('backgroundSystemDescriptionWithAutostart')
+                : t('backgroundSystemDescription')}
             </Text>
             <View style={[styles.section, styles.sectionTopGap]}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Battery optimization"
+                accessibilityLabel={t('backgroundBatteryOptimization')}
                 disabled={unrestricted}
                 style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
                 onPress={() => native.requestIgnoreBatteryOptimizations()}
               >
                 <BatteryCharging size={16} color={colors.textSecondary} />
                 <View style={styles.rowContent}>
-                  <Text style={styles.rowLabel}>Battery optimization</Text>
+                  <Text style={styles.rowLabel}>{t('backgroundBatteryOptimization')}</Text>
                   <Text style={styles.rowSublabel}>
-                    {unrestricted ? 'Unrestricted' : 'Restricted — tap to allow'}
+                    {unrestricted ? t('backgroundUnrestricted') : t('backgroundRestricted')}
                   </Text>
                 </View>
                 {!unrestricted && <ChevronRight size={16} color={colors.textMuted} />}
@@ -144,14 +162,14 @@ export default function BackgroundConnectionSettingsScreen({
                   <View style={styles.separator} />
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel="Autostart"
+                    accessibilityLabel={t('backgroundAutostart')}
                     style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
                     onPress={() => native.openAutostartSettings()}
                   >
                     <Power size={16} color={colors.textSecondary} />
                     <View style={styles.rowContent}>
-                      <Text style={styles.rowLabel}>Autostart</Text>
-                      <Text style={styles.rowSublabel}>Required on Xiaomi, Redmi and POCO</Text>
+                      <Text style={styles.rowLabel}>{t('backgroundAutostart')}</Text>
+                      <Text style={styles.rowSublabel}>{t('backgroundAutostartHint')}</Text>
                     </View>
                     <ChevronRight size={16} color={colors.textMuted} />
                   </Pressable>
@@ -164,8 +182,8 @@ export default function BackgroundConnectionSettingsScreen({
 
       <PickerModal<BackgroundRelayRetention>
         visible={pickerOpen}
-        title="Stay connected in background"
-        options={RETENTION_OPTIONS}
+        title={t('backgroundStayConnected')}
+        options={options}
         selected={retention}
         onSelect={selectRetention}
         onClose={() => setPickerOpen(false)}

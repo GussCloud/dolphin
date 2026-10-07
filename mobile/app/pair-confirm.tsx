@@ -16,6 +16,8 @@ import {
   loadMobileOnboardingSteps,
   mobileOnboardingDestination
 } from '../src/onboarding/mobile-onboarding-plan'
+import { appRoutesCatalog } from '../src/i18n/catalogs/app-routes'
+import { useMobileTranslation } from '../src/i18n/use-mobile-translation'
 
 type Status = 'awaiting-confirm' | 'connecting' | 'error'
 
@@ -29,6 +31,7 @@ const PAIRING_OVERALL_TIMEOUT_MS = 25_000
 export default function PairConfirmScreen() {
   const router = useRouter()
   const refreshHostClient = useRefreshHostClient()
+  const t = useMobileTranslation(appRoutesCatalog)
   const insets = useSafeAreaInsets()
   const params = useLocalSearchParams<{ code?: string }>()
   const [status, setStatus] = useState<Status>('awaiting-confirm')
@@ -133,8 +136,8 @@ export default function PairConfirmScreen() {
       setStatus('error')
       setErrorMessage(
         timedOut
-          ? `Couldn't connect within ${PAIRING_OVERALL_TIMEOUT_MS / 1000}s — see log below for where it stalled`
-          : `Pairing failed: ${err instanceof Error ? err.message : String(err)}`
+          ? t('pairingTimedOut', { seconds: PAIRING_OVERALL_TIMEOUT_MS / 1000 })
+          : t('pairingFailed', { reason: err instanceof Error ? err.message : String(err) })
       )
     }
   }
@@ -143,23 +146,26 @@ export default function PairConfirmScreen() {
 
   return (
     <View ref={setPairConfirmRootRef} style={[styles.container, containerPadding]}>
-      <Pressable style={styles.backButton} onPress={cancel}>
+      <Pressable
+        style={styles.backButton}
+        accessibilityRole="button"
+        accessibilityLabel={t('back')}
+        onPress={cancel}
+      >
         <ChevronLeft size={22} color={colors.textSecondary} />
       </Pressable>
 
       <View style={styles.content}>
         {offer && resolvedStatus === 'awaiting-confirm' && (
           <>
-            <Text style={styles.title}>Pair with this desktop?</Text>
-            <Text style={styles.subtitle}>
-              You opened a pairing link from your desktop. Confirm to add it to your hosts.
-            </Text>
+            <Text style={styles.title}>{t('pairConfirmTitle')}</Text>
+            <Text style={styles.subtitle}>{t('pairConfirmSubtitle')}</Text>
             <View style={styles.actionStack}>
               <Pressable style={styles.primaryButton} onPress={() => void confirm()}>
-                <Text style={styles.primaryButtonText}>Pair</Text>
+                <Text style={styles.primaryButtonText}>{t('pair')}</Text>
               </Pressable>
               <Pressable style={styles.secondaryButton} onPress={cancel}>
-                <Text style={styles.secondaryButtonText}>Cancel</Text>
+                <Text style={styles.secondaryButtonText}>{t('cancel')}</Text>
               </Pressable>
             </View>
           </>
@@ -168,9 +174,9 @@ export default function PairConfirmScreen() {
         {resolvedStatus === 'connecting' && (
           <>
             <ActivityIndicator size="large" color={colors.textSecondary} />
-            <Text style={styles.connectingText}>Connecting…</Text>
+            <Text style={styles.connectingText}>{t('connecting')}</Text>
             <View style={styles.logSlot}>
-              <ConnectionLog entries={logs} title="Pairing log" />
+              <ConnectionLog entries={logs} title={t('pairingLog')} />
             </View>
           </>
         )}
@@ -180,12 +186,12 @@ export default function PairConfirmScreen() {
             <Text style={styles.errorText}>{resolvedErrorMessage}</Text>
             {logs.length > 0 && (
               <View style={styles.logSlot}>
-                <ConnectionLog entries={logs} title="Pairing log" />
+                <ConnectionLog entries={logs} title={t('pairingLog')} />
               </View>
             )}
             <View style={styles.actionStack}>
               <Pressable style={styles.primaryButton} onPress={cancel}>
-                <Text style={styles.primaryButtonText}>Back to home</Text>
+                <Text style={styles.primaryButtonText}>{t('backToHome')}</Text>
               </Pressable>
             </View>
           </>

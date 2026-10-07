@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
@@ -10,24 +10,26 @@ import {
   type MobileTerminalLinkOpenMode
 } from '../storage/preferences'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { settingsCatalog } from '../i18n/catalogs/settings'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import type { settingsEn } from '../i18n/catalogs/settings/en'
 
-const LINK_MODE_OPTIONS: PickerOption<MobileTerminalLinkOpenMode>[] = [
-  {
-    value: 'dolphin-browser',
-    label: 'Dolphin browser on desktop',
-    subtitle: 'Open in the streamed browser from your paired desktop.'
-  },
-  {
-    value: 'phone-browser',
-    label: 'Phone browser',
-    subtitle: 'Open in Safari, Chrome, or another browser on this phone.'
-  }
-]
-
-function linkModeLabel(mode: MobileTerminalLinkOpenMode): string {
-  return (
-    LINK_MODE_OPTIONS.find((option) => option.value === mode)?.label ?? LINK_MODE_OPTIONS[0]!.label
-  )
+function linkModeOptions(
+  t: MobileTranslate<typeof settingsEn>
+): PickerOption<MobileTerminalLinkOpenMode>[] {
+  return [
+    {
+      value: 'dolphin-browser',
+      label: t('browserModeDolphin'),
+      subtitle: t('browserModeDolphinSubtitle')
+    },
+    {
+      value: 'phone-browser',
+      label: t('browserModePhone'),
+      subtitle: t('browserModePhoneSubtitle')
+    }
+  ]
 }
 
 export default function BrowserSettingsScreen({
@@ -37,6 +39,8 @@ export default function BrowserSettingsScreen({
 }): React.JSX.Element {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const t = useMobileTranslation(settingsCatalog)
+  const options = useMemo(() => linkModeOptions(t), [t])
   const [linkMode, setLinkMode] = useState<MobileTerminalLinkOpenMode>('dolphin-browser')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +55,7 @@ export default function BrowserSettingsScreen({
       },
       () => {
         if (active) {
-          setError('Could not load browser preferences. Try again.')
+          setError(t('browserLoadError'))
         }
       }
     )
@@ -60,34 +64,33 @@ export default function BrowserSettingsScreen({
     }
   }, [])
 
-  const selectLinkMode = useCallback((mode: MobileTerminalLinkOpenMode) => {
-    setError(null)
-    // Optimistic, as base was: the row shows the tapped mode before the write lands.
-    setLinkMode(mode)
-    void saveTerminalLinkOpenMode(mode).catch(() =>
-      setError('Could not save browser preferences. Try again.')
-    )
-  }, [])
+  const selectLinkMode = useCallback(
+    (mode: MobileTerminalLinkOpenMode) => {
+      setError(null)
+      // Optimistic, as base was: the row shows the tapped mode before the write lands.
+      setLinkMode(mode)
+      void saveTerminalLinkOpenMode(mode).catch(() => setError(t('browserSaveError')))
+    },
+    [t]
+  )
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.topRow}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('back')}
           style={styles.backButton}
           onPress={onBack ?? (() => router.back())}
         >
           <ChevronLeft size={22} color={colors.textSecondary} />
         </Pressable>
-        <Text style={styles.heading}>Browser</Text>
+        <Text style={styles.heading}>{t('browser')}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.groupHeading}>LINKS</Text>
-        <Text style={styles.groupDescription}>
-          Choose where HTTP(S) links tapped in terminal output open.
-        </Text>
+        <Text style={styles.groupHeading}>{t('browserLinksHeading')}</Text>
+        <Text style={styles.groupDescription}>{t('browserLinksDescription')}</Text>
         {error && (
           <Text accessibilityRole="alert" style={styles.groupDescription}>
             {error}
@@ -96,14 +99,16 @@ export default function BrowserSettingsScreen({
         <View style={[styles.section, styles.sectionTopGap]}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Open terminal links"
+            accessibilityLabel={t('browserOpenTerminalLinks')}
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
             onPress={() => setPickerOpen(true)}
           >
             <Globe size={16} color={colors.textSecondary} />
             <View style={styles.rowContent}>
-              <Text style={styles.rowLabel}>Open terminal links</Text>
-              <Text style={styles.rowSublabel}>{linkModeLabel(linkMode)}</Text>
+              <Text style={styles.rowLabel}>{t('browserOpenTerminalLinks')}</Text>
+              <Text style={styles.rowSublabel}>
+                {(options.find((option) => option.value === linkMode) ?? options[0]!).label}
+              </Text>
             </View>
             <ChevronRight size={16} color={colors.textMuted} />
           </Pressable>
@@ -112,8 +117,8 @@ export default function BrowserSettingsScreen({
 
       <PickerModal<MobileTerminalLinkOpenMode>
         visible={pickerOpen}
-        title="Open terminal links"
-        options={LINK_MODE_OPTIONS}
+        title={t('browserOpenTerminalLinks')}
+        options={options}
         selected={linkMode}
         onSelect={selectLinkMode}
         onClose={() => setPickerOpen(false)}

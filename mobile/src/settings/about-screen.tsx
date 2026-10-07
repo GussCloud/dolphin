@@ -5,6 +5,8 @@ import { ChevronLeft, Globe } from 'lucide-react-native'
 import Svg, { Path } from 'react-native-svg'
 import { DolphinLogo } from '../components/DolphinLogo'
 import { colors, spacing, typography } from '../theme/mobile-theme'
+import { settingsCatalog } from '../i18n/catalogs/settings'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 function GithubIcon({ size = 16, color = colors.textSecondary }) {
   return (
@@ -31,10 +33,11 @@ export default function AboutScreen({
   openExternal: (url: string) => Promise<unknown>
   versionLabel: string
 }) {
+  const t = useMobileTranslation(settingsCatalog)
   const [error, setError] = useState<string | null>(null)
   const openLink = (url: string) => {
     setError(null)
-    void openExternal(url).catch(() => setError('Could not open the link. Try again.'))
+    void openExternal(url).catch(() => setError(t('aboutOpenLinkError')))
   }
   const insets = useSafeAreaInsets()
 
@@ -44,25 +47,25 @@ export default function AboutScreen({
         <Pressable
           style={styles.backButton}
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('back')}
           onPress={onBack}
         >
           <ChevronLeft size={22} color={colors.textSecondary} />
         </Pressable>
-        <Text style={styles.heading}>About</Text>
+        <Text style={styles.heading}>{t('about')}</Text>
       </View>
 
       <View style={styles.brand}>
         <DolphinLogo size={28} />
         <Text style={styles.brandName}>Dolphin</Text>
-        <Text style={styles.brandSub}>Open-source agent IDE for 100x builders</Text>
+        <Text style={styles.brandSub}>{t('aboutTagline')}</Text>
       </View>
 
       <View style={styles.section}>
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Dolphin website"
+          accessibilityLabel={t('aboutWebsite')}
           onPress={() => openLink('https://dolphin.guss.dev.br')}
         >
           <Globe size={16} color={colors.textSecondary} />
@@ -72,7 +75,7 @@ export default function AboutScreen({
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Dolphin source code"
+          accessibilityLabel={t('aboutSourceCode')}
           onPress={() => openLink('https://github.com/GussCloud/dolphin')}
         >
           <GithubIcon />
@@ -82,7 +85,7 @@ export default function AboutScreen({
         <Pressable
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           accessibilityRole="button"
-          accessibilityLabel="Dolphin on X"
+          accessibilityLabel={t('aboutOnX')}
           onPress={() => openLink('https://x.com/dolphin_build')}
         >
           <XIcon />
