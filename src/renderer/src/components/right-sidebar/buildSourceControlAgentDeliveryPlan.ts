@@ -47,8 +47,7 @@ export function buildSourceControlAgentDeliveryPlan({
     promptDelivery,
     detectedAgents,
     disabledAgents: settings?.disabledTuiAgents,
-    cmdOverrides: settings?.agentCmdOverrides,
-    terminalWindowsShell: settings?.terminalWindowsShell,
+    settings,
     platform: launchPlatform,
     isRemote
   })

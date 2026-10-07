@@ -145,10 +145,12 @@ describe('launchAgentInNewTab execution host resolution', () => {
 
     await launchOnLinux()
 
-    expect(queuedCommand()).toBe("dolphin claude-teams '--dangerously-skip-permissions'")
+    expect(queuedCommand()).toBe(
+      "claude --teammate-mode in-process '--dangerously-skip-permissions'"
+    )
   })
 
-  it('keeps a runtime host reaching a nested SSH target on the relay shim name', async () => {
+  it('launches in-process teammates on a runtime host reaching a nested SSH target', async () => {
     store.repos = [
       { id: 'repo-1', connectionId: 'nested', executionHostId: 'runtime:vm-1', path: '/srv/vm' }
     ]
@@ -156,7 +158,9 @@ describe('launchAgentInNewTab execution host resolution', () => {
 
     await launchOnLinux()
 
-    expect(queuedCommand()).toBe("dolphin claude-teams '--dangerously-skip-permissions'")
+    expect(queuedCommand()).toBe(
+      "claude --teammate-mode in-process '--dangerously-skip-permissions'"
+    )
   })
 
   it('keeps a runtime host with no nested SSH target on the local CLI name', async () => {

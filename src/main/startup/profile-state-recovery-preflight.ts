@@ -11,6 +11,7 @@ import {
   type ProfileStateRecoveryResponse
 } from '../../shared/profile-state-recovery-command'
 import { acquireProfileStateMaintenance } from '../persistence/profile-state/profile-state-access'
+import { translateMain } from '../i18n/main-i18n'
 import { rollbackProfileState } from '../persistence/profile-state/profile-state-recovery-command'
 import { applyBackgroundActivationPolicy } from '../window/foreground-activation-policy'
 import { acquireSingleInstanceLock } from './single-instance-lock'
@@ -45,7 +46,10 @@ export function runProfileStateRecoveryPreflight(argv: readonly string[] = proce
 /** Build the relaunch argv that applies a startup-dialog choice before ordinary startup. */
 export function profileStateDesktopRecoveryArgs(
   argv: readonly string[],
-  request: { userDataPath: string; selector: { kind: 'current-json' | 'current-sqlite' } }
+  request: {
+    userDataPath: string
+    selector: { kind: 'current-json' | 'current-sqlite' }
+  }
 ): string[] {
   return [
     ...stripRecoveryArgs(argv.slice(1)),
@@ -74,10 +78,19 @@ function runDesktopRecovery(argv: readonly string[]): void {
     .then(() =>
       dialog.showMessageBox({
         type: 'error',
-        buttons: ['Quit'],
-        title: 'Dolphin profile state was not changed',
-        message: 'Dolphin could not apply the selected profile state.',
-        detail: `${response.message}\n\nReopen Dolphin to choose again.`
+        buttons: [translateMain('profileStateRecovery.failedDialog.quitButton', 'Quit')],
+        title: translateMain(
+          'profileStateRecovery.failedDialog.title',
+          'Dolphin profile state was not changed'
+        ),
+        message: translateMain(
+          'profileStateRecovery.failedDialog.message',
+          'Dolphin could not apply the selected profile state.'
+        ),
+        detail: `${response.message}\n\n${translateMain(
+          'profileStateRecovery.failedDialog.reopenHint',
+          'Reopen Dolphin to choose again.'
+        )}`
       })
     )
     .catch((error: unknown) => console.warn('[profile-state] Recovery error dialog failed:', error))

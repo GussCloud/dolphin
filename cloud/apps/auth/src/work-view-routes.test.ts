@@ -89,8 +89,22 @@ describe('desktop work presence API', () => {
 
   it('rejects snapshots outside the contract', async () => {
     const { tokenFor } = await setup()
-    expect((await put(tokenFor('usr_bruno'), { ...SNAPSHOT, schemaVersion: 2 })).status).toBe(400)
+    expect((await put(tokenFor('usr_bruno'), { ...SNAPSHOT, schemaVersion: 0 })).status).toBe(400)
     expect((await put(tokenFor('usr_bruno'), { ...SNAPSHOT, prompt: 'x', projects: 'nope' })).status).toBe(400)
+  })
+
+  it('accepts a newer desktop snapshot, degrading unknown agent states to idle', async () => {
+    const { tokenFor } = await setup()
+    const [project] = SNAPSHOT.projects
+    const newer = {
+      ...SNAPSHOT,
+      schemaVersion: 2,
+      addedLater: { anything: true },
+      projects: [{ ...project, agents: [{ id: 'a1', cli: 'claude', state: 'compacting', branch: null, mood: 'x' }] }]
+    }
+    expect((await put(tokenFor('usr_bruno'), newer)).status).toBe(200)
+    const agent = ctx.workPresence.view([{ userId: 'usr_bruno', name: 'Bruno' }]).devs[0]?.projects[0]?.agents[0]
+    expect(agent).toEqual({ id: 'machine1:a1', cli: 'claude', state: 'idle', branch: null })
   })
 
   it('accepts a member snapshot, returns the heartbeat, and removes the machine on DELETE', async () => {

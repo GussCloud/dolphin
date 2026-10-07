@@ -36,6 +36,8 @@ export type TuiAgentConfig = {
   launchCmd: string
   /** Platform-specific launch command when the public binary name differs. */
   launchCmdByPlatform?: Partial<Record<NodeJS.Platform, string>>
+  /** Launch command for SSH remotes, whose relay CLI shim cannot host an interactive TUI. */
+  remoteLaunchCmd?: string
   expectedProcess: string
   promptInjectionMode: AgentPromptInjectionMode
   /** Option terminator required before positional prompts that may look like CLI syntax. */
@@ -101,6 +103,9 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
       // PTY spawn sees `--teammate-mode auto` and injects the team env itself.
       win32: 'claude --teammate-mode auto'
     },
+    // Why: `dolphin claude-teams` is refused by the SSH relay bridge and the tmux shim is host-local,
+    // so SSH leaders run Claude's own in-process teammates; PTY spawn adds the teams env.
+    remoteLaunchCmd: 'claude --teammate-mode in-process',
     expectedProcess: 'claude',
     promptInjectionMode: 'stdin-after-start',
     pasteNeedsTypedRequest: true
@@ -371,6 +376,9 @@ export function getTuiAgentLaunchCommand(
   platform: NodeJS.Platform,
   opts?: { isRemote?: boolean }
 ): string {
+  if (opts?.isRemote && config.remoteLaunchCmd) {
+    return config.remoteLaunchCmd
+  }
   // Why: the local-only Linux -ide name must not leak to Linux remotes, whose relay shim uses the bare name.
   if (opts?.isRemote && platform === 'linux') {
     return config.launchCmd

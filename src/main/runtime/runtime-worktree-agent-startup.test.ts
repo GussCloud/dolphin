@@ -48,7 +48,7 @@ const settings = {
   terminalWindowsShell: null
 } as never
 
-/** The launched CLI name is the whole decision: `dolphin` is the relay shim, `dolphin-ide` is local. */
+/** The launched CLI name is the whole decision: SSH runs `claude` directly, `dolphin-ide` is local. */
 function launchCliNameFor(repo: Repo): string {
   return buildWorktreeStartupForAgent({
     repo,
@@ -62,9 +62,9 @@ function launchCliNameFor(repo: Repo): string {
 describe('buildWorktreeStartupForAgent host resolution', () => {
   // Why two hosts: one SSH fixture passes even when the launch shape is resolved off another
   // host's row, which is the shape of the `ssh:m4air` -> openclaw leak.
-  it('drops the Linux-only rename for both spellings of SSH ownership on two hosts', () => {
-    expect(launchCliNameFor(makeRepo({ connectionId: 'm4air' }))).toBe('dolphin')
-    expect(launchCliNameFor(makeRepo({ executionHostId: 'ssh:openclaw' }))).toBe('dolphin')
+  it('launches SSH-direct for both spellings of SSH ownership on two hosts', () => {
+    expect(launchCliNameFor(makeRepo({ connectionId: 'm4air' }))).toBe('claude')
+    expect(launchCliNameFor(makeRepo({ executionHostId: 'ssh:openclaw' }))).toBe('claude')
   })
 
   it('keeps the Linux rename for a local row carrying a stale connection', () => {
@@ -73,10 +73,10 @@ describe('buildWorktreeStartupForAgent host resolution', () => {
     )
   })
 
-  it('drops the rename for a runtime host reaching a nested SSH target', () => {
+  it('launches SSH-direct for a runtime host reaching a nested SSH target', () => {
     expect(
       launchCliNameFor(makeRepo({ connectionId: 'nested', executionHostId: 'runtime:vm-1' }))
-    ).toBe('dolphin')
+    ).toBe('claude')
   })
 
   it('keeps the rename for a runtime host with no nested SSH target', () => {

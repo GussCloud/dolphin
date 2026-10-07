@@ -1631,6 +1631,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "创建工作树",
         "createWorkspace": "创建工作区",
+        "createMultiProjectWorkspace": "创建多项目工作区",
         "fa90f739a5": "创建工作区之前选择项目、工作区名称和智能体。"
       },
       "PullRequestPage": {
@@ -2170,6 +2171,7 @@
         "linearEmptyHasWorktree": "还没有关联到 Dolphin 工作区的 Linear 工单。从 Linear 议题开始工作后会显示在这里。",
         "linearOpenAttachedWorkspace": "打开关联到 {{value0}} 的工作区",
         "linearWorktreesColumn": "工作区",
+        "azureBoards": "Azure Boards",
         "jiraSortAscending": "升序",
         "jiraSortDescending": "降序",
         "jiraSortBy": "排序方式",
@@ -5160,6 +5162,21 @@
           "00c4235c10": "没有匹配“{{value0}}”",
           "largeInputNoMatches": "没有匹配此长输入的结果"
         },
+        "AddMultiProjectMemberDialog": {
+          "title": "向“{{value0}}”添加项目",
+          "description": "该项目会在此工作区已使用的分支上获得一个工作树。",
+          "adding": "正在创建工作树…"
+        },
+        "MultiProjectWorkspaceMenuItems": {
+          "addProject": "添加项目…"
+        },
+        "DeleteMultiProjectWorkspaceDialog": {
+          "title": "删除“{{value0}}”？",
+          "description": "此工作区在 {{value0}} 个项目中有工作树：{{value1}}。",
+          "removeMembers": "同时删除其工作树。如有工作树包含未提交的更改，删除将停止。",
+          "cancel": "取消",
+          "delete": "删除"
+        },
         "RemoveFolderDialog": {
           "4dc5b5065b": "移除",
           "d36883e046": "取消",
@@ -5890,6 +5907,7 @@
               "4aeefc5996": "已固定",
               "682ed5d551": "已关闭",
               "7c2f009786": "进行中",
+              "multiProjectWorkspaces": "多项目工作区",
               "6798dc7c94": "评审中",
               "5076efc3d2": "完成"
             }
@@ -6293,6 +6311,11 @@
           "copied": "命令已复制",
           "retry": "立即重试",
           "restored": "Git 已恢复正常。工作树已刷新。"
+        },
+        "azureReposClonePicker": {
+          "browse": "浏览 Azure DevOps",
+          "filter": "筛选仓库",
+          "empty": "未找到仓库。"
         }
       },
       "shared": {
@@ -8504,7 +8527,9 @@
           "integrationsHint": "所有提供商的凭据也可在此管理：",
           "integrationsLink": "集成",
           "skillHint": "。连接 Linear 后，可在设置 → Linear 中查看使用示例。",
-          "incompleteBannerBodyWithLinear": "隐藏不使用的提供商，或展开卡片并完成其中的步骤。Linear 需要 API 访问权限、智能体技能以及在任务中显示。"
+          "incompleteBannerBodyWithLinear": "隐藏不使用的提供商，或展开卡片并完成其中的步骤。Linear 需要 API 访问权限、智能体技能以及在任务中显示。",
+          "azureBoards": "Azure Boards",
+          "azureBoardsDescription": "使用你的 Azure DevOps 登录浏览 Azure DevOps 工作项，并基于工作项启动工作区。"
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "窗格分隔线的厚度。",
@@ -12071,6 +12096,44 @@
           "usageLabel": "用量",
           "usageTitle": "每月套餐用量"
         },
+        "azureDevOpsIntegrationCard": {
+          "authMethodLabel": "Azure DevOps 登录方式",
+          "methodToken": "令牌 (PAT)",
+          "methodAzureCli": "Azure CLI",
+          "methodChangeFailed": "无法更改 Azure DevOps 登录方式：{{value0}}",
+          "azureCliDescription": "通过你的 Azure CLI 登录使用 PR、仓库和工作项。"
+        },
+        "azureCliSetupDetails": {
+          "defaultsHelp": "Azure CLI 命令的默认组织和项目（az devops configure）。",
+          "organizationLabel": "组织",
+          "projectPlaceholder": "项目（可选）",
+          "projectLabel": "项目",
+          "saving": "保存中…",
+          "save": "保存",
+          "unavailable": "此主机上暂时无法获取 Azure CLI 状态。请在主机更新后重新检查。",
+          "notInstalled": "此主机未安装 Azure CLI (az)。请先安装，然后重新检查。",
+          "notAuthenticated": "请使用 Azure CLI 登录。Dolphin 会使用该登录发送 Azure DevOps 请求。",
+          "noAccess": "已以 {{value0}} 身份登录，但 Azure DevOps 拒绝了该登录。请检查组织，或使用其他账号登录。",
+          "signedInAs": "已以 {{value0}} 身份登录。",
+          "install": "安装 Azure CLI",
+          "signInAgain": "重新登录",
+          "signIn": "登录",
+          "installExtension": "安装 azure-devops 扩展",
+          "recheck": "重新检查",
+          "terminalTitle": "Azure CLI 设置",
+          "terminalAriaLabel": "Azure CLI 设置命令",
+          "signInDescription": "按 Enter 运行 az login。在浏览器中完成登录；命令结束后 Dolphin 会重新检查。",
+          "extensionDescription": "按 Enter 安装 azure-devops 扩展。命令结束后 Dolphin 会重新检查。",
+          "organizationPlaceholder": "https://dev.azure.com/contoso"
+        },
+        "azureCliAutoRenewControl": {
+          "validUntil": "令牌有效期至 {{value0}}。",
+          "expiredAt": "令牌已于 {{value0}} 过期。",
+          "changeFailed": "无法更改 Azure CLI 自动续期：{{value0}}",
+          "label": "过期时自动续期？",
+          "help": "登录过期时，Dolphin 会在后台运行 az login；请在打开的浏览器窗口中确认。",
+          "unavailableHelp": "此主机不可用：它没有可打开浏览器登录的显示器。登录过期后，请在主机上运行 az login。"
+        },
         "openObserveContextForm": {
           "invalidName": "配置文件名称只能使用字母、数字、点、短横线或下划线。",
           "invalidBaseUrl": "请输入 OpenObserve 实例的地址，例如 https://openobserve.example.com。",
@@ -13675,6 +13738,53 @@
             "sourceMissing": "成绩单不再可用",
             "metadataMatch": "会话元数据中的匹配",
             "sourceActionsUnavailable": "转录来源不可用。"
+          },
+          "hostedReviewDetails": {
+            "vote": "投票",
+            "resetVote": "重置投票",
+            "complete": "完成",
+            "publish": "发布",
+            "markDraft": "标记为草稿",
+            "abandon": "放弃",
+            "reactivatePr": "重新激活",
+            "description": "描述",
+            "cancel": "取消",
+            "save": "保存",
+            "noDescription": "无描述。",
+            "editDescription": "编辑描述",
+            "loading": "正在加载评审详情…",
+            "unavailable": "评审详情不可用。",
+            "conflicts": "此 PR 存在合并冲突。",
+            "strategyMerge": "合并（不快进）",
+            "strategySquash": "压缩提交",
+            "strategyRebase": "变基并快进",
+            "strategyRebaseMerge": "半线性合并",
+            "completeTitle": "完成 PR",
+            "completeDescription": "将源分支合并到目标分支。分支策略仍然适用。",
+            "mergeType": "合并类型",
+            "deleteSourceBranch": "合并后删除源分支",
+            "completeMerge": "完成合并",
+            "voteApproved": "已批准",
+            "voteApprovedWithSuggestions": "已批准（附建议）",
+            "voteWaiting": "等待作者",
+            "voteRejected": "已拒绝",
+            "voteNone": "未投票",
+            "required": "（必需）",
+            "removeReviewer": "移除 {{value0}}",
+            "reviewers": "评审人",
+            "noReviewers": "暂无评审人。",
+            "addReviewerPlaceholder": "通过邮箱添加评审人",
+            "addReviewerLabel": "评审人邮箱或名称",
+            "add": "添加",
+            "generalThread": "通用",
+            "reactivate": "重新激活",
+            "resolve": "解决",
+            "replyPlaceholder": "回复",
+            "reply": "回复",
+            "comments": "评论",
+            "noComments": "暂无评论。",
+            "commentPlaceholder": "发表评论",
+            "comment": "评论"
           }
         }
       },
@@ -16789,6 +16899,21 @@
           "actionsUnavailable": "此客户端不支持插件操作。",
           "messageTooLarge": "消息超过大小限制。",
           "tooManyRequests": "请求过多。"
+        },
+        "FolderWorkspaceBatchBar": {
+          "failed": "{{value1}} 个项目中有 {{value0}} 个失败",
+          "nothingToDo": "所有项目都无需操作",
+          "done": "已在 {{value1}} 个项目中的 {{value0}} 个完成",
+          "messagePlaceholder": "所有项目的提交信息",
+          "commitAll": "全部提交",
+          "pullAll": "全部拉取",
+          "pushAll": "全部推送"
+        },
+        "FolderWorkspaceSourceControl": {
+          "emptyTitle": "此工作区中没有 Git 项目",
+          "emptyCopy": "创建包含多个项目的工作区，或为此工作区附加工作树，即可在此查看它们的更改。",
+          "membersLabel": "项目",
+          "addProject": "向工作区添加项目"
         }
       },
       "link": {
@@ -17351,6 +17476,48 @@
           "cursorAccounts": {
             "hostOnly": "Cursor 登录详情仅可在运行 Dolphin 的电脑上读取。"
           }
+        }
+      },
+      "newWorkspace": {
+        "MultiProjectMembersField": {
+          "add": "添加其他项目",
+          "remove": "移除 {{value0}}",
+          "projects": "项目",
+          "groups": "添加某个分组中的所有项目",
+          "hint": "每个项目都会在同一分支上获得一个工作树，并放在此工作区的同一个文件夹中。"
+        }
+      },
+      "taskPage": {
+        "azureBoards": {
+          "project": "项目",
+          "searchPlaceholder": "搜索标题或 ID",
+          "assignedToMe": "分配给我",
+          "includeClosed": "包括已关闭",
+          "refresh": "刷新",
+          "new": "新建",
+          "start": "开始",
+          "setupTitle": "设置 Azure Boards",
+          "setupDescription": "登录 Azure DevOps，并在“设置 > 集成”中选择默认组织。",
+          "openIntegrations": "打开集成",
+          "retry": "重试",
+          "hide": "隐藏 Azure Boards",
+          "empty": "没有符合这些筛选条件的工作项。",
+          "createTitle": "新建工作项",
+          "type": "类型",
+          "titleLabel": "标题",
+          "descriptionLabel": "描述",
+          "cancel": "取消",
+          "create": "创建",
+          "commentPlaceholder": "添加评论",
+          "comment": "评论",
+          "close": "关闭",
+          "startWorkspace": "启动工作区",
+          "openInBrowser": "在 Azure DevOps 中打开",
+          "state": "状态",
+          "assignedTo": "已分配给 {{value0}}",
+          "unassigned": "未分配",
+          "noDescription": "无描述。",
+          "comments": "评论"
         }
       }
     },
@@ -18376,6 +18543,25 @@
     }
   },
   "featureTips": {
+    "agentTeams": {
+      "demoPrompt": "创建一个团队：一名队友负责 API，一名负责测试。",
+      "demoShell": "git bash",
+      "demoTabTitle": "Claude Agent Teams",
+      "demoLead": "负责人",
+      "demoPlanning": "正在创建包含 2 名队友的团队",
+      "demoLeadDone": "两名队友都已汇报",
+      "demoApiTeammate": "api",
+      "demoApiRead": "正在读取 routes.ts",
+      "demoApiEdit": "正在添加输入校验",
+      "demoApiDone": "已向负责人发送总结",
+      "demoTestsTeammate": "tests",
+      "demoTestsWrite": "正在编写 routes.test.ts",
+      "demoTestsRun": "正在运行 12 个测试",
+      "demoTestsDone": "12 个通过",
+      "launchInstruction": "启动代理时选择 Claude Agent Teams，然后让它创建一个团队。",
+      "settingsInstruction": "可在以下位置更改发给每个团队的指令",
+      "settingsLink": "设置 → 代理"
+    },
     "voice": {
       "demoPrompt": "查看此差异以了解边缘情况，并为您发现的任何内容添加测试。",
       "startDictation": "开始听写",
@@ -18460,7 +18646,58 @@
     "genericDetail": "这通常是图形驱动程序或安装问题。重新加载以重试，或退出并重新启动 Dolphin。",
     "title": "Dolphin 一直无法加载",
     "stalledMessage": "崩溃后重新加载时应用程序窗口停止响应。",
-    "crashLoopMessage": "应用程序窗口反复崩溃并自动停止重新加载。"
+    "crashLoopMessage": "应用程序窗口反复崩溃并自动停止重新加载。",
+    "lowCommitMessage": "Windows 内存不足。",
+    "lowCommitDetail": "Windows 仅剩 {{availableMB}} MB 内存可供应用使用，因此窗口在重新加载后再次耗尽内存。",
+    "lowCommitAdvice": "请关闭其他应用或增大 Windows 页面文件大小，然后点击“重新加载”。"
+  },
+  "gpuFallback": {
+    "restartPrompt": {
+      "restartButton": "以安全图形模式重启",
+      "keepRunningButton": "继续运行",
+      "title": "要以安全图形模式重启 Dolphin 吗？",
+      "message": "Dolphin 的图形进程反复崩溃。",
+      "detail": "安全图形模式会为此 Dolphin 版本关闭硬件加速和 WebGL。终端和 3D 内容的渲染可能会变慢。选择“继续运行”不会更改图形设置。"
+    },
+    "recoveredLaunch": {
+      "keepSafeButton": "保持安全图形模式",
+      "tryHardwareButton": "尝试硬件加速",
+      "title": "安全图形模式已启用",
+      "message": "Dolphin 已在安全图形模式下恢复。",
+      "detail": "由于图形反复崩溃，已启用安全图形模式。为稳定起见可继续使用，或重启后再次尝试硬件加速。"
+    }
+  },
+  "profileStateRecovery": {
+    "failedDialog": {
+      "quitButton": "退出",
+      "title": "Dolphin 配置文件状态未更改",
+      "message": "Dolphin 无法应用所选的配置文件状态。",
+      "reopenHint": "请重新打开 Dolphin 再次选择。"
+    }
+  },
+  "localBuild": {
+    "switch": {
+      "chooseTitle": "选择本地 Dolphin 构建",
+      "chooseButton": "选择构建",
+      "manifestFilter": "Dolphin 更新清单",
+      "sameVersion": "此构建与正在运行的应用版本相同。请再次运行 pn build:mac，创建具有唯一版本号的构建。",
+      "noLiveTerminals": "没有需要重新连接的活动终端。",
+      "oneLiveTerminal": "1 个活动终端将在重启后重新连接。",
+      "manyLiveTerminals": "{{terminalCount}} 个活动终端将在重启后重新连接。",
+      "confirmTitle": "使用本地 Dolphin 构建？",
+      "confirmDetail": "{{terminalSummary}}\n工作区卡片和设置与状态架构 {{schemaVersion}} 兼容。\n\n该构建必须具有与 Dolphin 相同的有效代码签名，否则安装将停止。",
+      "useButton": "使用本地构建",
+      "cancelButton": "取消"
+    }
+  },
+  "diagnostics": {
+    "uploadConfirm": {
+      "sendButton": "发送",
+      "cancelButton": "取消",
+      "title": "要将此文件发送给支持团队吗？",
+      "message": "这将上传你已检查过的、已脱敏的应用诊断文件。",
+      "detail": "诊断 ID：{{submissionId}}\n诊断记录：{{recordCount}}\n大小：{{sizeKb}} KB"
+    }
   },
   "sessionSearch": {
     "panel": {

@@ -1,6 +1,7 @@
 import * as path from 'node:path'
 import { resolveWorktreeAddBaseRef } from '../shared/worktree/base-ref'
 import { windowsLongPathGitArgs } from '../shared/windows-long-path-git-args'
+import { windowsParallelCheckoutGitArgs } from '../shared/windows-parallel-checkout-git-args'
 import type { GitExec } from './git-handler-ops'
 export { removeWorktreeOp } from './git-handler-worktree-remove'
 export { readRelayWorktreeList } from './git-handler-worktree-list'
@@ -68,14 +69,17 @@ export async function addWorktreeOp(
         })
       : undefined
 
-  // Why: a Windows SSH host hits the same MAX_PATH ceiling as a local Windows checkout.
-  const longPathArgs = windowsLongPathGitArgs(targetDir, platform)
+  // Why: a Windows SSH host hits the same MAX_PATH ceiling and per-file write cost as a local Windows checkout.
+  const globalArgs = [
+    ...windowsLongPathGitArgs(targetDir, platform),
+    ...windowsParallelCheckoutGitArgs(targetDir, platform)
+  ]
   const args = checkoutExistingBranch
-    ? [...longPathArgs, 'worktree', 'add', targetDir, branchName]
-    : [...longPathArgs, 'worktree', 'add', '--no-track', '-b', branchName, targetDir]
+    ? [...globalArgs, 'worktree', 'add', targetDir, branchName]
+    : [...globalArgs, 'worktree', 'add', '--no-track', '-b', branchName, targetDir]
   if (!checkoutExistingBranch && noCheckout) {
     // Why: offset by the global-option prefix so --no-checkout still lands before -b.
-    args.splice(longPathArgs.length + 3, 0, '--no-checkout')
+    args.splice(globalArgs.length + 3, 0, '--no-checkout')
   }
   if (effectiveBase) {
     args.push(effectiveBase)

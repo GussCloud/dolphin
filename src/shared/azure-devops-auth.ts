@@ -35,6 +35,8 @@ export type AzureDevOpsAuthStatus = {
   authMethod?: AzureDevOpsAuthMethod
   azureCli?: AzureCliStatus
   autoRenewCliSession?: boolean
+  // False on hosts that cannot open the `az login` browser (headless SSH). Older hosts omit it.
+  autoRenewCliSessionAvailable?: boolean
 }
 
 export type AzureDevOpsAuthPreference = {

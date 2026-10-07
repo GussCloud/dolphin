@@ -111,6 +111,7 @@ vi.mock('../notifications/desktop-notification-channel', () => ({
 vi.mock('../diagnostics/mobile-crash-diagnostics', () => ({
   dismissPreviousMobileCrashSession: mocks.dismissCrash,
   getUndismissedPreviousMobileCrashSession: mocks.getUndismissedCrash,
+  installMobileGlobalCrashCapture: vi.fn(),
   recordMobileAppState: mocks.recordAppState,
   recordMobileRenderError: mocks.recordRenderError,
   recordMobileRouteBreadcrumb: mocks.recordRoute,

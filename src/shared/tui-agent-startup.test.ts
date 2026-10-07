@@ -270,32 +270,30 @@ describe('tui agent startup plans', () => {
     expect(plan?.launchCommand).toBe('dolphin-ide claude-teams')
   })
 
-  it('uses the plain dolphin shim for Claude Agent Teams on Linux SSH remotes', () => {
-    // Why: the SSH relay deploys the CLI shim as `dolphin` (not the local-only
-    // `dolphin-ide` GNOME-screen-reader workaround), so a remote launch must not
-    // emit `dolphin-ide claude-teams` — that name is not on the remote PATH and
-    // `claude-teams` is rejected by the relay's CLI switch (issue #6500).
-    const plan = buildAgentStartupPlan({
-      agent: 'claude-agent-teams',
-      prompt: '',
-      cmdOverrides: {},
-      platform: 'linux',
-      isRemote: true,
-      allowEmptyPromptLaunch: true
-    })
+  it.each(['linux', 'darwin', 'win32'] as const)(
+    'launches Claude with in-process teammates for Claude Agent Teams on %s SSH remotes',
+    (platform) => {
+      // Why: the relay CLI bridge refuses `dolphin claude-teams` and the tmux shim is host-local.
+      const plan = buildAgentStartupPlan({
+        agent: 'claude-agent-teams',
+        prompt: '',
+        cmdOverrides: {},
+        platform,
+        isRemote: true,
+        allowEmptyPromptLaunch: true
+      })
 
-    expect(plan?.launchCommand).toBe('dolphin claude-teams')
-  })
+      expect(plan?.launchCommand).toBe('claude --teammate-mode in-process')
+    }
+  )
 
-  it('launches Claude directly for Claude Agent Teams on Windows, SSH remotes included', () => {
-    // Why: the Windows CLI hop cannot host claude's TUI, and the relay refuses
-    // claude-teams; a remote leader with no team env keeps teammates in-process.
+  it('keeps the direct auto launch for local Windows Claude Agent Teams', () => {
     const plan = buildAgentStartupPlan({
       agent: 'claude-agent-teams',
       prompt: '',
       cmdOverrides: {},
       platform: 'win32',
-      isRemote: true,
+      isRemote: false,
       allowEmptyPromptLaunch: true
     })
 

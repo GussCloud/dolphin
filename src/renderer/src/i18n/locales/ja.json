@@ -1631,6 +1631,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "ワークツリーを作成する",
         "createWorkspace": "ワークスペースを作成",
+        "createMultiProjectWorkspace": "マルチプロジェクトのワークスペースを作成",
         "fa90f739a5": "ワークスペースを作成する前に、プロジェクト、ワークスペース名、および Agent を選択します。"
       },
       "PullRequestPage": {
@@ -2170,6 +2171,7 @@
         "linearEmptyHasWorktree": "Dolphin ワークスペースにリンクされた Linear チケットはまだありません。Linear の Issue から作業を開始すると、ここに表示されます。",
         "linearOpenAttachedWorkspace": "{{value0}} にリンクされたワークスペースを開く",
         "linearWorktreesColumn": "ワークスペース",
+        "azureBoards": "Azure Boards",
         "jiraSortAscending": "昇順",
         "jiraSortDescending": "降順",
         "jiraSortBy": "並べ替え",
@@ -5160,6 +5162,21 @@
           "00c4235c10": "「{{value0}}」に一致するものはありません",
           "largeInputNoMatches": "この長い入力に一致するものはありません"
         },
+        "AddMultiProjectMemberDialog": {
+          "title": "「{{value0}}」にプロジェクトを追加",
+          "description": "プロジェクトには、このワークスペースが既に使用しているブランチ上にワークツリーが作成されます。",
+          "adding": "ワークツリーを作成しています…"
+        },
+        "MultiProjectWorkspaceMenuItems": {
+          "addProject": "プロジェクトを追加…"
+        },
+        "DeleteMultiProjectWorkspaceDialog": {
+          "title": "「{{value0}}」を削除しますか?",
+          "description": "このワークスペースには {{value0}} 個のプロジェクトにワークツリーがあります: {{value1}}。",
+          "removeMembers": "ワークツリーも削除します。コミットされていない変更があるワークツリーがあると、削除は中止されます。",
+          "cancel": "キャンセル",
+          "delete": "削除"
+        },
         "RemoveFolderDialog": {
           "4dc5b5065b": "削除",
           "d36883e046": "キャンセル",
@@ -5890,6 +5907,7 @@
               "4aeefc5996": "ピン留め済み",
               "682ed5d551": "クローズ",
               "7c2f009786": "進行中",
+              "multiProjectWorkspaces": "マルチプロジェクトのワークスペース",
               "6798dc7c94": "レビュー中",
               "5076efc3d2": "完了"
             }
@@ -6293,6 +6311,11 @@
           "copied": "コマンドをコピーしました",
           "retry": "今すぐ再試行",
           "restored": "Git が再び動作しています。ワークツリーを更新しました。"
+        },
+        "azureReposClonePicker": {
+          "browse": "Azure DevOps を参照",
+          "filter": "リポジトリを絞り込む",
+          "empty": "リポジトリが見つかりません。"
         }
       },
       "shared": {
@@ -8541,7 +8564,9 @@
           "integrationsHint": "すべてのプロバイダーの認証情報は次の場所でも管理できます：",
           "integrationsLink": "連携",
           "skillHint": "。Linear の接続後、使用例は設定 → Linear で確認できます。",
-          "incompleteBannerBodyWithLinear": "使用しないプロバイダーを非表示にするか、カードを展開して手順を完了してください。Linear では API アクセス、Agent スキル、タスクへの表示が必要です。"
+          "incompleteBannerBodyWithLinear": "使用しないプロバイダーを非表示にするか、カードを展開して手順を完了してください。Linear では API アクセス、Agent スキル、タスクへの表示が必要です。",
+          "azureBoards": "Azure Boards",
+          "azureBoardsDescription": "Azure DevOps のサインインで Azure DevOps の作業項目を参照し、そこからワークスペースを開始します。"
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "ペイン分割線の太さ。",
@@ -12071,6 +12096,44 @@
           "usageLabel": "使用量",
           "usageTitle": "月間プラン使用状況"
         },
+        "azureDevOpsIntegrationCard": {
+          "authMethodLabel": "Azure DevOps のサインイン方法",
+          "methodToken": "トークン (PAT)",
+          "methodAzureCli": "Azure CLI",
+          "methodChangeFailed": "Azure DevOps のサインイン方法を変更できませんでした: {{value0}}",
+          "azureCliDescription": "Azure CLI のサインインを使って PR、リポジトリ、作業項目を扱います。"
+        },
+        "azureCliSetupDetails": {
+          "defaultsHelp": "Azure CLI コマンドの既定の組織とプロジェクト (az devops configure)。",
+          "organizationLabel": "組織",
+          "projectPlaceholder": "プロジェクト (任意)",
+          "projectLabel": "プロジェクト",
+          "saving": "保存中…",
+          "save": "保存",
+          "unavailable": "このホストではまだ Azure CLI の状態を取得できません。ホストの更新後に再確認してください。",
+          "notInstalled": "このホストには Azure CLI (az) がインストールされていません。インストールしてから再確認してください。",
+          "notAuthenticated": "Azure CLI でサインインしてください。Dolphin はそのサインインを Azure DevOps へのリクエストに使用します。",
+          "noAccess": "{{value0}} としてサインインしていますが、Azure DevOps がサインインを拒否しました。組織を確認するか、別のアカウントでサインインしてください。",
+          "signedInAs": "{{value0}} としてサインイン中です。",
+          "install": "Azure CLI をインストール",
+          "signInAgain": "再度サインイン",
+          "signIn": "サインイン",
+          "installExtension": "azure-devops 拡張機能をインストール",
+          "recheck": "再確認",
+          "terminalTitle": "Azure CLI のセットアップ",
+          "terminalAriaLabel": "Azure CLI のセットアップコマンド",
+          "signInDescription": "Enter キーを押して az login を実行します。ブラウザでサインインを完了してください。コマンドが終了すると Dolphin が再確認します。",
+          "extensionDescription": "Enter キーを押して azure-devops 拡張機能をインストールします。コマンドが終了すると Dolphin が再確認します。",
+          "organizationPlaceholder": "https://dev.azure.com/contoso"
+        },
+        "azureCliAutoRenewControl": {
+          "validUntil": "トークンの有効期限: {{value0}}。",
+          "expiredAt": "トークンは {{value0}} に期限切れになりました。",
+          "changeFailed": "Azure CLI の自動更新を変更できませんでした: {{value0}}",
+          "label": "期限切れ時に自動で更新しますか?",
+          "help": "サインインの期限が切れると、Dolphin がバックグラウンドで az login を実行します。開いたブラウザウィンドウで確認してください。",
+          "unavailableHelp": "このホストでは利用できません: ブラウザでのサインインを開くディスプレイがありません。サインインの期限が切れたら、ホストで az login を実行してください。"
+        },
         "openObserveContextForm": {
           "invalidName": "プロファイル名には英字、数字、ドット、ハイフン、アンダースコアを使用してください。",
           "invalidBaseUrl": "OpenObserve インスタンスのアドレスを入力してください（例: https://openobserve.example.com）。",
@@ -13675,6 +13738,53 @@
             "sourceMissing": "トランスクリプトは利用できなくなりました",
             "metadataMatch": "セッションメタデータ内の一致",
             "sourceActionsUnavailable": "トランスクリプトのソースが利用できません。"
+          },
+          "hostedReviewDetails": {
+            "vote": "投票",
+            "resetVote": "投票をリセット",
+            "complete": "完了",
+            "publish": "公開",
+            "markDraft": "下書きにする",
+            "abandon": "破棄",
+            "reactivatePr": "再アクティブ化",
+            "description": "説明",
+            "cancel": "キャンセル",
+            "save": "保存",
+            "noDescription": "説明はありません。",
+            "editDescription": "説明を編集",
+            "loading": "レビューの詳細を読み込んでいます…",
+            "unavailable": "レビューの詳細を利用できません。",
+            "conflicts": "この PR にはマージの競合があります。",
+            "strategyMerge": "マージ (fast-forward なし)",
+            "strategySquash": "スカッシュコミット",
+            "strategyRebase": "リベースして fast-forward",
+            "strategyRebaseMerge": "セミリニアマージ",
+            "completeTitle": "PR を完了",
+            "completeDescription": "ソースブランチをターゲットブランチにマージします。ブランチポリシーは引き続き適用されます。",
+            "mergeType": "マージの種類",
+            "deleteSourceBranch": "マージ後にソースブランチを削除",
+            "completeMerge": "マージを完了",
+            "voteApproved": "承認済み",
+            "voteApprovedWithSuggestions": "提案付きで承認",
+            "voteWaiting": "作成者の対応待ち",
+            "voteRejected": "却下",
+            "voteNone": "投票なし",
+            "required": "(必須)",
+            "removeReviewer": "{{value0}} を削除",
+            "reviewers": "レビュアー",
+            "noReviewers": "レビュアーはまだいません。",
+            "addReviewerPlaceholder": "メールアドレスでレビュアーを追加",
+            "addReviewerLabel": "レビュアーのメールアドレスまたは名前",
+            "add": "追加",
+            "generalThread": "一般",
+            "reactivate": "再アクティブ化",
+            "resolve": "解決",
+            "replyPlaceholder": "返信",
+            "reply": "返信",
+            "comments": "コメント",
+            "noComments": "コメントはまだありません。",
+            "commentPlaceholder": "コメントを残す",
+            "comment": "コメント"
           }
         }
       },
@@ -16789,6 +16899,21 @@
           "actionsUnavailable": "このクライアントではプラグイン操作を利用できません。",
           "messageTooLarge": "メッセージがサイズ制限を超えています。",
           "tooManyRequests": "リクエストが多すぎます。"
+        },
+        "FolderWorkspaceBatchBar": {
+          "failed": "{{value1}} 個中 {{value0}} 個のプロジェクトで失敗しました",
+          "nothingToDo": "どのプロジェクトにも実行する操作はありません",
+          "done": "{{value1}} 個中 {{value0}} 個のプロジェクトで完了しました",
+          "messagePlaceholder": "すべてのプロジェクトのコミットメッセージ",
+          "commitAll": "すべてコミット",
+          "pullAll": "すべてプル",
+          "pushAll": "すべてプッシュ"
+        },
+        "FolderWorkspaceSourceControl": {
+          "emptyTitle": "このワークスペースに Git プロジェクトはありません",
+          "emptyCopy": "複数のプロジェクトでワークスペースを作成するか、このワークスペースにワークツリーを追加すると、ここに変更が表示されます。",
+          "membersLabel": "プロジェクト",
+          "addProject": "ワークスペースにプロジェクトを追加"
         }
       },
       "link": {
@@ -17351,6 +17476,48 @@
           "cursorAccounts": {
             "hostOnly": "Cursor のサインイン詳細は、Dolphin を実行しているコンピュータでのみ読み取れます。"
           }
+        }
+      },
+      "newWorkspace": {
+        "MultiProjectMembersField": {
+          "add": "別のプロジェクトを追加",
+          "remove": "{{value0}} を削除",
+          "projects": "プロジェクト",
+          "groups": "グループ内のすべてのプロジェクトを追加",
+          "hint": "各プロジェクトには、このワークスペース用の 1 つのフォルダー内に、同じブランチ上のワークツリーが作成されます。"
+        }
+      },
+      "taskPage": {
+        "azureBoards": {
+          "project": "プロジェクト",
+          "searchPlaceholder": "タイトルまたは ID で検索",
+          "assignedToMe": "自分に割り当て",
+          "includeClosed": "クローズ済みを含める",
+          "refresh": "更新",
+          "new": "新規",
+          "start": "開始",
+          "setupTitle": "Azure Boards をセットアップ",
+          "setupDescription": "Azure DevOps にサインインし、[設定] > [連携] で既定の組織を選択してください。",
+          "openIntegrations": "連携を開く",
+          "retry": "再試行",
+          "hide": "Azure Boards を非表示",
+          "empty": "これらのフィルターに一致する作業項目はありません。",
+          "createTitle": "新規作業項目",
+          "type": "種類",
+          "titleLabel": "タイトル",
+          "descriptionLabel": "説明",
+          "cancel": "キャンセル",
+          "create": "作成",
+          "commentPlaceholder": "コメントを追加",
+          "comment": "コメント",
+          "close": "閉じる",
+          "startWorkspace": "ワークスペースを開始",
+          "openInBrowser": "Azure DevOps で開く",
+          "state": "状態",
+          "assignedTo": "担当: {{value0}}",
+          "unassigned": "未割り当て",
+          "noDescription": "説明はありません。",
+          "comments": "コメント"
         }
       }
     },
@@ -18376,6 +18543,25 @@
     }
   },
   "featureTips": {
+    "agentTeams": {
+      "demoPrompt": "チームを作成して。API 担当と、テスト担当のチームメイトを 1 人ずつ。",
+      "demoShell": "Git Bash",
+      "demoTabTitle": "Claude Agent Teams",
+      "demoLead": "リーダー",
+      "demoPlanning": "チームメイト 2 人のチームを作成中",
+      "demoLeadDone": "両方のチームメイトから報告がありました",
+      "demoApiTeammate": "api",
+      "demoApiRead": "routes.ts を読み込み中",
+      "demoApiEdit": "入力チェックを追加中",
+      "demoApiDone": "リーダーに要約を送信しました",
+      "demoTestsTeammate": "tests",
+      "demoTestsWrite": "routes.test.ts を作成中",
+      "demoTestsRun": "12 件のテストを実行中",
+      "demoTestsDone": "12 件成功",
+      "launchInstruction": "Agent を開始するときに Claude Agent Teams を選び、チームの作成を依頼してください。",
+      "settingsInstruction": "すべてのチームに伝える指示は次の場所で変更できます:",
+      "settingsLink": "設定 → Agent"
+    },
     "voice": {
       "demoPrompt": "特殊なケースについてはこの差分を確認し、見つかったものについてはテストを追加してください。",
       "startDictation": "ディクテーションを開始する",
@@ -18460,7 +18646,58 @@
     "genericDetail": "これは多くの場合、グラフィックスドライバーまたはインストールの問題です。リロードして再試行するか、Dolphin を終了して再起動してください。",
     "title": "Dolphin がロードに失敗し続ける",
     "stalledMessage": "クラッシュ後のリロード中にアプリウィンドウが応答を停止しました。",
-    "crashLoopMessage": "アプリウィンドウが繰り返しクラッシュし、自動的にリロードされなくなりました。"
+    "crashLoopMessage": "アプリウィンドウが繰り返しクラッシュし、自動的にリロードされなくなりました。",
+    "lowCommitMessage": "Windows のメモリが不足しています。",
+    "lowCommitDetail": "Windows でアプリが使えるメモリが残り {{availableMB}} MB しかないため、リロード後にウィンドウが再びメモリ不足になりました。",
+    "lowCommitAdvice": "ほかのアプリを閉じるか、Windows のページファイルのサイズを増やしてから、[リロード] をクリックしてください。"
+  },
+  "gpuFallback": {
+    "restartPrompt": {
+      "restartButton": "セーフグラフィックモードで再起動",
+      "keepRunningButton": "このまま続行",
+      "title": "Dolphin をセーフグラフィックモードで再起動",
+      "message": "Dolphin のグラフィックプロセスが繰り返しクラッシュしました。",
+      "detail": "セーフグラフィックモードでは、この Dolphin バージョンのハードウェアアクセラレーションと WebGL が無効になります。ターミナルや 3D コンテンツの描画が遅くなる場合があります。「このまま続行」を選ぶとグラフィック設定は変更されません。"
+    },
+    "recoveredLaunch": {
+      "keepSafeButton": "セーフグラフィックモードを維持",
+      "tryHardwareButton": "ハードウェアアクセラレーションを試す",
+      "title": "セーフグラフィックモードが有効です",
+      "message": "Dolphin はセーフグラフィックモードで復旧しました。",
+      "detail": "グラフィックのクラッシュが繰り返されたため、セーフグラフィックモードが有効になりました。安定性を優先してこのまま使うか、再起動してハードウェアアクセラレーションをもう一度試してください。"
+    }
+  },
+  "profileStateRecovery": {
+    "failedDialog": {
+      "quitButton": "終了",
+      "title": "Dolphin のプロファイル状態は変更されていません",
+      "message": "Dolphin は選択したプロファイル状態を適用できませんでした。",
+      "reopenHint": "Dolphin を開き直して、もう一度選択してください。"
+    }
+  },
+  "localBuild": {
+    "switch": {
+      "chooseTitle": "Dolphin のローカルビルドを選択",
+      "chooseButton": "ビルドを選択",
+      "manifestFilter": "Dolphin 更新マニフェスト",
+      "sameVersion": "このビルドは実行中のアプリと同じバージョンです。pn build:mac をもう一度実行して、固有のバージョンのビルドを作成してください。",
+      "noLiveTerminals": "再接続が必要な実行中のターミナルはありません。",
+      "oneLiveTerminal": "実行中のターミナル 1 個が再起動後に再接続されます。",
+      "manyLiveTerminals": "実行中のターミナル {{terminalCount}} 個が再起動後に再接続されます。",
+      "confirmTitle": "Dolphin のローカルビルドを使用しますか?",
+      "confirmDetail": "{{terminalSummary}}\nワークスペースカードと設定は状態スキーマ {{schemaVersion}} と互換性があります。\n\nビルドには Dolphin と同じ有効なコード署名が必要です。署名が一致しない場合、インストールは停止します。",
+      "useButton": "ローカルビルドを使用",
+      "cancelButton": "キャンセル"
+    }
+  },
+  "diagnostics": {
+    "uploadConfirm": {
+      "sendButton": "送信",
+      "cancelButton": "キャンセル",
+      "title": "このファイルをサポートに送信しますか?",
+      "message": "確認済みの、機密情報を除去したアプリ診断ファイルをアップロードします。",
+      "detail": "診断 ID: {{submissionId}}\n診断レコード: {{recordCount}}\nサイズ: {{sizeKb}} KB"
+    }
   },
   "sessionSearch": {
     "panel": {

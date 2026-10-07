@@ -1,12 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { UI_LANGUAGE_ENGLISH, UI_LANGUAGE_PORTUGUESE_BRAZIL } from '../../shared/ui-language'
+import { setMainUiLanguage } from '../i18n/main-i18n'
 
 const { showMessageBoxMock } = vi.hoisted(() => ({
   showMessageBoxMock: vi.fn()
 }))
 
 vi.mock('electron', () => ({
+  app: { getLocale: () => 'en-US' },
   dialog: { showMessageBox: showMessageBoxMock }
 }))
 
@@ -17,8 +20,9 @@ import {
   type GpuFallbackRecoveredLaunchHandlers
 } from './gpu-fallback-recovered-launch'
 
-beforeEach(() => {
+beforeEach(async () => {
   showMessageBoxMock.mockReset()
+  await setMainUiLanguage(UI_LANGUAGE_ENGLISH)
 })
 
 function createHandlers(
@@ -98,7 +102,9 @@ describe('handleGpuFallbackRecoveredLaunch', () => {
   })
 
   it('does not mutate the marker when shutdown starts while the prompt is open', async () => {
-    const { handlers } = createHandlers('retry-hardware', { isQuitting: () => true })
+    const { handlers } = createHandlers('retry-hardware', {
+      isQuitting: () => true
+    })
     await handleGpuFallbackRecoveredLaunch(handlers)
     expect(handlers.confirmSafeGraphics).not.toHaveBeenCalled()
     expect(handlers.clearSafeGraphics).not.toHaveBeenCalled()
@@ -122,5 +128,15 @@ describe('recovered safe-graphics production wiring', () => {
     expect(lifecycleSource).toMatch(
       /persistMarker:[\s\S]*?userConfirmed: false[\s\S]*?confirmMarker:[\s\S]*?userConfirmed: true/
     )
+  })
+})
+
+describe('promptForGpuFallbackRecoveredLaunch localization', () => {
+  it('reads the dialog copy in the selected UI language at prompt time', async () => {
+    await setMainUiLanguage(UI_LANGUAGE_PORTUGUESE_BRAZIL)
+    showMessageBoxMock.mockResolvedValue({ response: 0 })
+
+    await promptForGpuFallbackRecoveredLaunch()
+    expect(showMessageBoxMock.mock.calls[0][0].buttons[0]).toBe('Manter o Modo Gráfico Seguro')
   })
 })

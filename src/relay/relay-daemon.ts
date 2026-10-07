@@ -3,6 +3,7 @@ import { readLaunchVersion } from './relay-handshake'
 import type { RelayLaunchOptions } from './relay-launch-options'
 import { RELAY_EMPTY_DETACHED_STARTUP_GRACE_MS, RELAY_IDLE_GRACE_MS } from './relay-launch-options'
 import { relayLogLine } from './relay-diagnostic-log'
+import { startRelayHeapHeartbeat } from './relay-heap-heartbeat'
 import { RelayPrimaryChannel } from './relay-primary-channel'
 import { RelayRuntimeServices } from './relay-runtime-services'
 import { RelayAgentHookRuntime } from './relay-agent-hook-runtime'
@@ -49,6 +50,7 @@ export async function runRelayDaemon(options: RelayLaunchOptions): Promise<void>
   )
   fatalPtyHandler = runtime.ptyHandler
   let reconnectListener: RelayReconnectListener | null = null
+  const stopHeapHeartbeat = startRelayHeapHeartbeat(() => runtime.ptyHandler.activePtyCount)
   const agentHooks = new RelayAgentHookRuntime(
     primaryChannel.dispatcher,
     runtime.ptyHandler,
@@ -66,6 +68,7 @@ export async function runRelayDaemon(options: RelayLaunchOptions): Promise<void>
     ownsSocketPath: () => socketOwnership.owned,
     disposeOwnedProcesses: () => runtime.disposeOwnedProcesses(),
     disposeRuntime: () => {
+      stopHeapHeartbeat()
       primaryChannel.dispatcher.dispose()
       runtime.disposeHandlers()
       agentHooks.stop()

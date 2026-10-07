@@ -13,9 +13,12 @@ vi.mock('electron', () => ({
 import {
   UI_LANGUAGE_CHINESE,
   UI_LANGUAGE_ENGLISH,
+  UI_LANGUAGE_FRENCH,
   UI_LANGUAGE_JAPANESE,
   UI_LANGUAGE_KOREAN,
-  UI_LANGUAGE_SPANISH
+  UI_LANGUAGE_PORTUGUESE_BRAZIL,
+  UI_LANGUAGE_SPANISH,
+  type UiLanguage
 } from '../../shared/ui-language'
 import {
   ensureMainI18n,
@@ -89,5 +92,35 @@ describe('main-i18n lazy locale loading', () => {
     setMainPluginLanguagePacks([])
     expect(await setMainUiLanguage(id)).toBe('en')
     expect(translateMain('menu.file', 'File')).toBe('File')
+
+    // Removing the pack must not stop built-in catalogs from lazy-loading afterwards.
+    await setMainUiLanguage(UI_LANGUAGE_FRENCH)
+    expect(translateMain('menu.file', 'File')).toBe('Fichier')
+  })
+
+  it('translates native dialog copy in every shipped locale', async () => {
+    const dialogKeys = [
+      'gpuFallback.restartPrompt.detail',
+      'gpuFallback.recoveredLaunch.detail',
+      'profileStateRecovery.failedDialog.message',
+      'localBuild.switch.confirmDetail',
+      'diagnostics.uploadConfirm.detail'
+    ]
+    const languages: UiLanguage[] = [
+      UI_LANGUAGE_SPANISH,
+      UI_LANGUAGE_FRENCH,
+      UI_LANGUAGE_JAPANESE,
+      UI_LANGUAGE_KOREAN,
+      UI_LANGUAGE_CHINESE,
+      UI_LANGUAGE_PORTUGUESE_BRAZIL
+    ]
+    for (const language of languages) {
+      await setMainUiLanguage(language)
+      for (const key of dialogKeys) {
+        expect(translateMain(key, 'English fallback'), `${language} ${key}`).not.toBe(
+          'English fallback'
+        )
+      }
+    }
   })
 })

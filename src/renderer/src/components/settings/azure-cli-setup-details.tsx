@@ -221,6 +221,8 @@ export function AzureCliSetupDetails(props: {
       {showAutoRenew ? (
         <AzureCliAutoRenewControl
           enabled={autoRenew}
+          // Why default true: hosts that predate the field never reported it.
+          available={props.status?.autoRenewCliSessionAvailable ?? true}
           tokenExpiresAt={azureCli?.tokenExpiresAt}
           onChanged={props.refresh}
         />

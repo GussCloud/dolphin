@@ -21,6 +21,9 @@ export async function runDesktopUpdate(
   if (!offer) {
     throw new Error('remote_update_not_available')
   }
+  if (offer.phase === 'manual') {
+    throw new Error('remote_update_manual_required')
+  }
   let version = offer.version
   onRun({ phase: 'starting', version })
   if (offer.phase === 'available') {

@@ -16,7 +16,10 @@ vi.mock('lucide-react-native', () => ({
 }))
 vi.mock('./AgentStateDot', () => ({ AgentStateDot: () => null }))
 vi.mock('./MobileAgentIcon', () => ({ MobileAgentIcon: () => null }))
-vi.mock('./WorktreeAgentRow', () => ({ WorktreeAgentRow: 'WorktreeAgentRow' }))
+vi.mock('./WorktreeAgentRow', () => ({
+  WorktreeAgentRow: 'WorktreeAgentRow',
+  WorktreeAgentSubagentRow: 'WorktreeAgentSubagentRow'
+}))
 
 function agent(paneKey: string, parentPaneKey: string | null = null): RuntimeWorktreeAgentRow {
   return {
@@ -97,5 +100,34 @@ describe('WorktreeAgentList', () => {
     })
 
     expect(renderer!.root.findByType('Pressable').props.accessibilityLabel).toBe('Expand 2 agents')
+  })
+
+  it('renders teammates as indented child rows under their leader', async () => {
+    const leader = Object.assign(agent('leader'), {
+      subagents: [
+        {
+          id: 'tm-1',
+          description: 'researcher',
+          state: 'working',
+          startedAt: 1_500
+        },
+        { id: 'tm-2', agentType: 'tester', state: 'idle', startedAt: 1_600 }
+      ]
+    })
+    await act(async () => {
+      renderer = create(
+        createElement(WorktreeAgentList, {
+          agents: [leader],
+          now: 2_000,
+          unvisited: false
+        })
+      )
+    })
+
+    const children = renderer!.root.findAllByType('WorktreeAgentSubagentRow')
+    expect(children.map((child) => [child.props.subagent.name, child.props.depth])).toEqual([
+      ['researcher', 1],
+      ['tester', 1]
+    ])
   })
 })

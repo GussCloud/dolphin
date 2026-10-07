@@ -10,6 +10,7 @@ import {
   resolveBundledAgentTeamsTmuxDir,
   resolveClaudeAgentTeamsShimBin,
   resolveClaudeAgentTeamsShimPathDirs,
+  resolveSshClaudeAgentTeamsLeaderEnv,
   windowsClaudeAgentTeamsShimScript
 } from './claude-agent-teams-shim-env'
 
@@ -196,6 +197,44 @@ describe('claude agent teams shim env', () => {
       teammateMode: 'in-process'
     })
     await expect(build(null)).resolves.toMatchObject({ teammateMode: 'in-process' })
+  })
+
+  it('keeps an SSH leader in-process even in native-panes mode', async () => {
+    const createTeamEnv = vi.fn(() => ({ TMUX: '/tmp/x,0,1' }))
+    await expect(
+      buildClaudeAgentTeamsLaunchPlan({
+        command: 'claude --teammate-mode auto',
+        mode: 'native-panes-shim',
+        baseEnv: {},
+        hostShell: 'default',
+        sshLeader: true,
+        createTeamEnv
+      })
+    ).resolves.toEqual({
+      command: 'claude --teammate-mode auto',
+      env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' },
+      teammateMode: 'in-process'
+    })
+    expect(createTeamEnv).not.toHaveBeenCalled()
+  })
+
+  it('gives an SSH leader only the teams flag, never the host-local shim env', () => {
+    expect(
+      resolveSshClaudeAgentTeamsLeaderEnv({ command: 'claude --teammate-mode in-process' })
+    ).toEqual({ CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' })
+    expect(
+      resolveSshClaudeAgentTeamsLeaderEnv({
+        launchConfig: {
+          agentCommand: "claude --teammate-mode in-process --append-system-prompt 'a & b'",
+          agentArgs: ''
+        }
+      })
+    ).toEqual({ CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' })
+    expect(resolveSshClaudeAgentTeamsLeaderEnv({ command: 'claude' })).toBeNull()
+    expect(resolveSshClaudeAgentTeamsLeaderEnv({ command: 'dolphin claude-teams' })).toBeNull()
+    expect(
+      resolveSshClaudeAgentTeamsLeaderEnv({ command: 'claude --teammate-mode in-process; rm x' })
+    ).toBeNull()
   })
 
   it('honors explicit in-process mode even when native panes are available', async () => {

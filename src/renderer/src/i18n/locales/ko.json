@@ -1631,6 +1631,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "작업 트리 만들기",
         "createWorkspace": "워크스페이스 만들기",
+        "createMultiProjectWorkspace": "멀티 프로젝트 워크스페이스 만들기",
         "fa90f739a5": "워크스페이스를 만들기 전에 프로젝트, 워크스페이스 이름, agent를 선택하세요."
       },
       "PullRequestPage": {
@@ -2170,6 +2171,7 @@
         "linearEmptyHasWorktree": "아직 Dolphin 워크스페이스에 연결된 Linear 티켓이 없습니다. Linear 이슈에서 작업을 시작하면 여기에 표시됩니다.",
         "linearOpenAttachedWorkspace": "{{value0}}에 연결된 워크스페이스 열기",
         "linearWorktreesColumn": "워크스페이스",
+        "azureBoards": "Azure Boards",
         "jiraSortAscending": "오름차순",
         "jiraSortDescending": "내림차순",
         "jiraSortBy": "정렬 기준",
@@ -5160,6 +5162,21 @@
           "00c4235c10": "'{{value0}}'과(와) 일치하는 항목이 없습니다.",
           "largeInputNoMatches": "이 긴 입력과 일치하는 항목 없음"
         },
+        "AddMultiProjectMemberDialog": {
+          "title": "\"{{value0}}\"에 프로젝트 추가",
+          "description": "이 워크스페이스가 이미 사용하는 브랜치에 프로젝트의 워크트리가 생성됩니다.",
+          "adding": "워크트리를 만드는 중…"
+        },
+        "MultiProjectWorkspaceMenuItems": {
+          "addProject": "프로젝트 추가…"
+        },
+        "DeleteMultiProjectWorkspaceDialog": {
+          "title": "\"{{value0}}\"을(를) 삭제할까요?",
+          "description": "이 워크스페이스에는 프로젝트 {{value0}}개에 워크트리가 있습니다: {{value1}}.",
+          "removeMembers": "워크트리도 삭제합니다. 커밋되지 않은 변경 사항이 있는 워크트리가 있으면 삭제가 중단됩니다.",
+          "cancel": "취소",
+          "delete": "삭제"
+        },
         "RemoveFolderDialog": {
           "4dc5b5065b": "제거",
           "d36883e046": "취소",
@@ -5890,6 +5907,7 @@
               "4aeefc5996": "고정됨",
               "682ed5d551": "닫힘",
               "7c2f009786": "진행중",
+              "multiProjectWorkspaces": "멀티 프로젝트 워크스페이스",
               "6798dc7c94": "리뷰 중",
               "5076efc3d2": "완료"
             }
@@ -6293,6 +6311,11 @@
           "copied": "명령이 복사됨",
           "retry": "지금 다시 시도",
           "restored": "Git이 다시 작동합니다. 워크트리를 새로고침했습니다."
+        },
+        "azureReposClonePicker": {
+          "browse": "Azure DevOps 둘러보기",
+          "filter": "저장소 필터링",
+          "empty": "저장소를 찾을 수 없습니다."
         }
       },
       "shared": {
@@ -8504,7 +8527,9 @@
           "integrationsHint": "모든 제공업체의 자격 증명은 다음에서도 관리할 수 있습니다:",
           "integrationsLink": "연동",
           "skillHint": ". Linear를 연결한 후 사용 예시는 설정 → Linear에서 확인할 수 있습니다.",
-          "incompleteBannerBodyWithLinear": "사용하지 않는 제공업체를 숨기거나 카드를 펼쳐 단계를 완료하세요. Linear에는 API 액세스, 에이전트 스킬, 작업에 표시가 필요합니다."
+          "incompleteBannerBodyWithLinear": "사용하지 않는 제공업체를 숨기거나 카드를 펼쳐 단계를 완료하세요. Linear에는 API 액세스, 에이전트 스킬, 작업에 표시가 필요합니다.",
+          "azureBoards": "Azure Boards",
+          "azureBoardsDescription": "Azure DevOps 로그인으로 Azure DevOps 작업 항목을 둘러보고, 작업 항목에서 워크스페이스를 시작합니다."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "창 구분선의 두께입니다.",
@@ -12071,6 +12096,44 @@
           "usageLabel": "사용량",
           "usageTitle": "월간 플랜 사용량"
         },
+        "azureDevOpsIntegrationCard": {
+          "authMethodLabel": "Azure DevOps 로그인 방법",
+          "methodToken": "토큰 (PAT)",
+          "methodAzureCli": "Azure CLI",
+          "methodChangeFailed": "Azure DevOps 로그인 방법을 변경하지 못했습니다: {{value0}}",
+          "azureCliDescription": "Azure CLI 로그인을 통해 PR, 저장소, 작업 항목을 사용합니다."
+        },
+        "azureCliSetupDetails": {
+          "defaultsHelp": "Azure CLI 명령의 기본 조직과 프로젝트입니다(az devops configure).",
+          "organizationLabel": "조직",
+          "projectPlaceholder": "프로젝트(선택 사항)",
+          "projectLabel": "프로젝트",
+          "saving": "저장 중…",
+          "save": "저장",
+          "unavailable": "이 호스트에서는 아직 Azure CLI 상태를 확인할 수 없습니다. 호스트가 업데이트된 후 다시 확인하세요.",
+          "notInstalled": "이 호스트에 Azure CLI(az)가 설치되어 있지 않습니다. 설치한 후 다시 확인하세요.",
+          "notAuthenticated": "Azure CLI로 로그인하세요. Dolphin은 이 로그인을 Azure DevOps 요청에 사용합니다.",
+          "noAccess": "{{value0}}(으)로 로그인했지만 Azure DevOps가 로그인을 거부했습니다. 조직을 확인하거나 다른 계정으로 로그인하세요.",
+          "signedInAs": "{{value0}}(으)로 로그인했습니다.",
+          "install": "Azure CLI 설치",
+          "signInAgain": "다시 로그인",
+          "signIn": "로그인",
+          "installExtension": "azure-devops 확장 설치",
+          "recheck": "다시 확인",
+          "terminalTitle": "Azure CLI 설정",
+          "terminalAriaLabel": "Azure CLI 설정 명령",
+          "signInDescription": "Enter 키를 눌러 az login을 실행하세요. 브라우저에서 로그인을 마치면 명령이 끝날 때 Dolphin이 다시 확인합니다.",
+          "extensionDescription": "Enter 키를 눌러 azure-devops 확장을 설치하세요. 명령이 끝나면 Dolphin이 다시 확인합니다.",
+          "organizationPlaceholder": "https://dev.azure.com/contoso"
+        },
+        "azureCliAutoRenewControl": {
+          "validUntil": "토큰 유효 기한: {{value0}}.",
+          "expiredAt": "토큰이 {{value0}}에 만료되었습니다.",
+          "changeFailed": "Azure CLI 자동 갱신을 변경하지 못했습니다: {{value0}}",
+          "label": "만료되면 자동으로 갱신할까요?",
+          "help": "로그인이 만료되면 Dolphin이 백그라운드에서 az login을 실행합니다. 열리는 브라우저 창에서 확인하세요.",
+          "unavailableHelp": "이 호스트에서는 사용할 수 없습니다. 브라우저 로그인을 열 디스플레이가 없습니다. 로그인이 만료되면 호스트에서 az login을 실행하세요."
+        },
         "openObserveContextForm": {
           "invalidName": "프로필 이름에는 영문자, 숫자, 점, 하이픈, 밑줄만 사용하세요.",
           "invalidBaseUrl": "OpenObserve 인스턴스 주소를 입력하세요. 예: https://openobserve.example.com",
@@ -13675,6 +13738,53 @@
             "sourceMissing": "스크립트를 더 이상 사용할 수 없습니다.",
             "metadataMatch": "세션 메타데이터 일치",
             "sourceActionsUnavailable": "스크립트 소스를 사용할 수 없습니다."
+          },
+          "hostedReviewDetails": {
+            "vote": "투표",
+            "resetVote": "투표 초기화",
+            "complete": "완료",
+            "publish": "게시",
+            "markDraft": "초안으로 표시",
+            "abandon": "중단",
+            "reactivatePr": "다시 활성화",
+            "description": "설명",
+            "cancel": "취소",
+            "save": "저장",
+            "noDescription": "설명이 없습니다.",
+            "editDescription": "설명 편집",
+            "loading": "리뷰 세부 정보를 불러오는 중…",
+            "unavailable": "리뷰 세부 정보를 사용할 수 없습니다.",
+            "conflicts": "이 PR에 병합 충돌이 있습니다.",
+            "strategyMerge": "병합(fast-forward 없음)",
+            "strategySquash": "스쿼시 커밋",
+            "strategyRebase": "리베이스 후 fast-forward",
+            "strategyRebaseMerge": "세미 리니어 병합",
+            "completeTitle": "PR 완료",
+            "completeDescription": "소스 브랜치를 대상 브랜치에 병합합니다. 브랜치 정책은 계속 적용됩니다.",
+            "mergeType": "병합 유형",
+            "deleteSourceBranch": "병합 후 소스 브랜치 삭제",
+            "completeMerge": "병합 완료",
+            "voteApproved": "승인됨",
+            "voteApprovedWithSuggestions": "제안과 함께 승인됨",
+            "voteWaiting": "작성자 대기 중",
+            "voteRejected": "거부됨",
+            "voteNone": "투표 없음",
+            "required": "(필수)",
+            "removeReviewer": "{{value0}} 제거",
+            "reviewers": "리뷰어",
+            "noReviewers": "아직 리뷰어가 없습니다.",
+            "addReviewerPlaceholder": "이메일로 리뷰어 추가",
+            "addReviewerLabel": "리뷰어 이메일 또는 이름",
+            "add": "추가",
+            "generalThread": "일반",
+            "reactivate": "다시 활성화",
+            "resolve": "해결",
+            "replyPlaceholder": "회신",
+            "reply": "회신",
+            "comments": "댓글",
+            "noComments": "아직 댓글이 없습니다.",
+            "commentPlaceholder": "댓글 남기기",
+            "comment": "댓글"
           }
         }
       },
@@ -16789,6 +16899,21 @@
           "actionsUnavailable": "이 클라이언트에서는 플러그인 작업을 사용할 수 없습니다.",
           "messageTooLarge": "메시지가 크기 제한을 초과합니다.",
           "tooManyRequests": "요청이 너무 많습니다."
+        },
+        "FolderWorkspaceBatchBar": {
+          "failed": "프로젝트 {{value1}}개 중 {{value0}}개 실패",
+          "nothingToDo": "어떤 프로젝트에도 수행할 작업이 없습니다",
+          "done": "프로젝트 {{value1}}개 중 {{value0}}개 완료",
+          "messagePlaceholder": "모든 프로젝트에 사용할 커밋 메시지",
+          "commitAll": "모두 커밋",
+          "pullAll": "모두 풀",
+          "pushAll": "모두 푸시"
+        },
+        "FolderWorkspaceSourceControl": {
+          "emptyTitle": "이 워크스페이스에 Git 프로젝트가 없습니다",
+          "emptyCopy": "여러 프로젝트로 워크스페이스를 만들거나 이 워크스페이스에 워크트리를 연결하면 여기에서 변경 사항을 볼 수 있습니다.",
+          "membersLabel": "프로젝트",
+          "addProject": "워크스페이스에 프로젝트 추가"
         }
       },
       "link": {
@@ -17351,6 +17476,48 @@
           "cursorAccounts": {
             "hostOnly": "Cursor 로그인 정보는 Dolphin이 실행 중인 컴퓨터에서만 읽을 수 있습니다."
           }
+        }
+      },
+      "newWorkspace": {
+        "MultiProjectMembersField": {
+          "add": "다른 프로젝트 추가",
+          "remove": "{{value0}} 제거",
+          "projects": "프로젝트",
+          "groups": "그룹의 모든 프로젝트 추가",
+          "hint": "각 프로젝트는 이 워크스페이스용 폴더 하나 안에서 같은 브랜치의 워크트리를 갖습니다."
+        }
+      },
+      "taskPage": {
+        "azureBoards": {
+          "project": "프로젝트",
+          "searchPlaceholder": "제목 또는 ID 검색",
+          "assignedToMe": "나에게 할당됨",
+          "includeClosed": "닫힌 항목 포함",
+          "refresh": "새로고침",
+          "new": "새로 만들기",
+          "start": "시작",
+          "setupTitle": "Azure Boards 설정",
+          "setupDescription": "Azure DevOps에 로그인하고 설정 > 연동에서 기본 조직을 선택하세요.",
+          "openIntegrations": "연동 열기",
+          "retry": "다시 시도",
+          "hide": "Azure Boards 숨기기",
+          "empty": "이 필터와 일치하는 작업 항목이 없습니다.",
+          "createTitle": "새 작업 항목",
+          "type": "유형",
+          "titleLabel": "제목",
+          "descriptionLabel": "설명",
+          "cancel": "취소",
+          "create": "생성",
+          "commentPlaceholder": "댓글 추가",
+          "comment": "댓글",
+          "close": "닫기",
+          "startWorkspace": "워크스페이스 시작",
+          "openInBrowser": "Azure DevOps에서 열기",
+          "state": "상태",
+          "assignedTo": "담당자: {{value0}}",
+          "unassigned": "할당되지 않음",
+          "noDescription": "설명이 없습니다.",
+          "comments": "댓글"
         }
       }
     },
@@ -18376,6 +18543,25 @@
     }
   },
   "featureTips": {
+    "agentTeams": {
+      "demoPrompt": "팀을 만들어 줘. 팀원 한 명은 API, 한 명은 테스트를 맡아.",
+      "demoShell": "Git Bash",
+      "demoTabTitle": "Claude Agent Teams",
+      "demoLead": "리더",
+      "demoPlanning": "팀원 2명으로 팀을 만드는 중",
+      "demoLeadDone": "두 팀원 모두 결과를 보고했습니다",
+      "demoApiTeammate": "api",
+      "demoApiRead": "routes.ts 읽는 중",
+      "demoApiEdit": "입력 검사 추가 중",
+      "demoApiDone": "리더에게 요약을 보냈습니다",
+      "demoTestsTeammate": "tests",
+      "demoTestsWrite": "routes.test.ts 작성 중",
+      "demoTestsRun": "테스트 12개 실행 중",
+      "demoTestsDone": "12개 통과",
+      "launchInstruction": "에이전트를 시작할 때 Claude Agent Teams를 선택한 다음 팀을 만들어 달라고 요청하세요.",
+      "settingsInstruction": "모든 팀에 전달할 지침은 다음에서 변경할 수 있습니다.",
+      "settingsLink": "설정 → 에이전트"
+    },
     "voice": {
       "demoPrompt": "극단적인 경우에 대해 이 차이점을 검토하고 찾은 항목에 대한 테스트를 추가하세요.",
       "startDictation": "받아쓰기 시작",
@@ -18460,7 +18646,58 @@
     "genericDetail": "이는 종종 그래픽 드라이버 또는 설치 문제입니다. 새로고침하여 다시 시도하거나 Dolphin을 종료하고 다시 시작하세요.",
     "title": "Dolphin이 계속 로드되지 않습니다.",
     "stalledMessage": "충돌 후 다시 로드하는 동안 앱 창이 응답을 멈췄습니다.",
-    "crashLoopMessage": "앱 창이 반복적으로 충돌하고 자동으로 다시 로드되지 않았습니다."
+    "crashLoopMessage": "앱 창이 반복적으로 충돌하고 자동으로 다시 로드되지 않았습니다.",
+    "lowCommitMessage": "Windows 메모리가 부족합니다.",
+    "lowCommitDetail": "Windows에서 앱이 사용할 수 있는 메모리가 {{availableMB}}MB밖에 남지 않아 다시 로드한 후 창의 메모리가 또 부족해졌습니다.",
+    "lowCommitAdvice": "다른 앱을 닫거나 Windows 페이지 파일 크기를 늘린 다음 새로고침을 클릭하세요."
+  },
+  "gpuFallback": {
+    "restartPrompt": {
+      "restartButton": "안전 그래픽 모드로 다시 시작",
+      "keepRunningButton": "계속 실행",
+      "title": "Dolphin을 안전 그래픽 모드로 다시 시작할까요?",
+      "message": "Dolphin의 그래픽 프로세스가 반복해서 충돌했습니다.",
+      "detail": "안전 그래픽 모드는 이 Dolphin 버전에서 하드웨어 가속과 WebGL을 끕니다. 터미널과 3D 콘텐츠가 더 느리게 렌더링될 수 있습니다. 계속 실행을 선택하면 그래픽 설정이 바뀌지 않습니다."
+    },
+    "recoveredLaunch": {
+      "keepSafeButton": "안전 그래픽 모드 유지",
+      "tryHardwareButton": "하드웨어 가속 사용해 보기",
+      "title": "안전 그래픽 모드가 켜져 있습니다",
+      "message": "Dolphin이 안전 그래픽 모드로 복구되었습니다.",
+      "detail": "그래픽 충돌이 반복되어 안전 그래픽 모드가 켜졌습니다. 안정성을 위해 유지하거나, 다시 시작해서 하드웨어 가속을 다시 사용해 보세요."
+    }
+  },
+  "profileStateRecovery": {
+    "failedDialog": {
+      "quitButton": "종료",
+      "title": "Dolphin 프로필 상태가 변경되지 않았습니다",
+      "message": "Dolphin이 선택한 프로필 상태를 적용하지 못했습니다.",
+      "reopenHint": "Dolphin을 다시 열어 다시 선택하세요."
+    }
+  },
+  "localBuild": {
+    "switch": {
+      "chooseTitle": "Dolphin 로컬 빌드 선택",
+      "chooseButton": "빌드 선택",
+      "manifestFilter": "Dolphin 업데이트 매니페스트",
+      "sameVersion": "이 빌드는 실행 중인 앱과 버전이 같습니다. pn build:mac을 다시 실행해 고유한 버전의 빌드를 만드세요.",
+      "noLiveTerminals": "다시 연결할 실행 중인 터미널이 없습니다.",
+      "oneLiveTerminal": "실행 중인 터미널 1개가 다시 시작 후 다시 연결됩니다.",
+      "manyLiveTerminals": "실행 중인 터미널 {{terminalCount}}개가 다시 시작 후 다시 연결됩니다.",
+      "confirmTitle": "Dolphin 로컬 빌드를 사용할까요?",
+      "confirmDetail": "{{terminalSummary}}\n워크스페이스 카드와 설정은 상태 스키마 {{schemaVersion}}과(와) 호환됩니다.\n\n빌드에는 Dolphin과 동일한 유효한 코드 서명이 있어야 하며, 그렇지 않으면 설치가 중단됩니다.",
+      "useButton": "로컬 빌드 사용",
+      "cancelButton": "취소"
+    }
+  },
+  "diagnostics": {
+    "uploadConfirm": {
+      "sendButton": "보내기",
+      "cancelButton": "취소",
+      "title": "이 파일을 지원팀에 보낼까요?",
+      "message": "검토한, 민감한 정보가 제거된 앱 진단 파일을 업로드합니다.",
+      "detail": "진단 ID: {{submissionId}}\n진단 레코드: {{recordCount}}\n크기: {{sizeKb}} KB"
+    }
   },
   "sessionSearch": {
     "panel": {

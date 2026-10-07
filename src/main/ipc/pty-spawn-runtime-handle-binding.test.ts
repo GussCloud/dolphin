@@ -111,6 +111,55 @@ describe('registerPtyHandlers', () => {
       'term_remote'
     )
   })
+  it('gives SSH Agent Teams leaders the in-process teams flag, never the host shim env', async () => {
+    const spawn = vi.fn(async (_opts: { env?: Record<string, string> }) => ({
+      id: 'remote-teams-pty'
+    }))
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: test double implements only the provider methods pty:spawn reaches.
+    registerSshPtyProvider('ssh-teams', {
+      spawn,
+      write: vi.fn(),
+      resize: vi.fn(),
+      shutdown: vi.fn(),
+      sendSignal: vi.fn(),
+      getCwd: vi.fn(),
+      getInitialCwd: vi.fn(),
+      clearBuffer: vi.fn(),
+      onData: vi.fn(() => () => {}),
+      onReplay: vi.fn(() => () => {}),
+      onExit: vi.fn(() => () => {}),
+      listProcesses: vi.fn(),
+      hasChildProcesses: vi.fn(),
+      getForegroundProcess: vi.fn(),
+      serialize: vi.fn(),
+      revive: vi.fn(),
+      getDefaultShell: vi.fn(),
+      getProfiles: vi.fn(),
+      acknowledgeDataEvent: vi.fn()
+    } as never)
+    const runtime = {
+      setPtyController: vi.fn(),
+      noteTerminalSpawnCommand: vi.fn(),
+      createPreAllocatedTerminalHandle: vi.fn(() => 'term_remote_teams'),
+      prepareClaudeAgentTeamsLeaderForHandle: vi.fn(),
+      registerPreAllocatedHandleForPty: vi.fn()
+    }
+
+    registerPtyHandlers(mainWindow as never, runtime as never)
+    await handlers.get('pty:spawn')!(null, {
+      cols: 80,
+      rows: 24,
+      connectionId: 'ssh-teams',
+      command: 'claude --teammate-mode in-process',
+      env: { EXISTING: '1' }
+    })
+
+    const env = spawn.mock.lastCall?.[0].env
+    expect(env).toMatchObject({ EXISTING: '1', CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' })
+    expect(env?.TMUX).toBeUndefined()
+    expect(env?.DOLPHIN_AGENT_TEAMS_TEAM_ID).toBeUndefined()
+    expect(runtime.prepareClaudeAgentTeamsLeaderForHandle).not.toHaveBeenCalled()
+  })
   it('refreshes captured native Agent Teams env for renderer PTY spawns', async () => {
     const leafId = '11111111-1111-4111-8111-111111111111'
     const runtime = {

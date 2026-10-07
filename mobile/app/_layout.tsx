@@ -28,6 +28,7 @@ import { loadHostCatalog } from '../src/transport/host-store'
 import { extractPairingCodeFromUrl } from '../src/transport/pairing'
 import { recoverMobileRelayPairing } from '../src/transport/mobile-relay-pairing-recovery'
 import {
+  installMobileGlobalCrashCapture,
   recordMobileAppState,
   recordMobileRouteBreadcrumb,
   startMobileCrashSession
@@ -51,6 +52,7 @@ Notifications.setNotificationHandler({
 
 // Why: the open marker must land before the first route can fail during render.
 void startMobileCrashSession()
+installMobileGlobalCrashCapture()
 
 function RootLayoutContents() {
   const router = useRouter()

@@ -115,7 +115,7 @@ describe('addWorktreeOp', () => {
     ])
   })
 
-  it('enables long paths when the SSH execution host is Windows', async () => {
+  it('enables long paths and parallel checkout when the SSH execution host is Windows', async () => {
     // Why: only the host's OS matters — a macOS client can drive a Windows SSH host,
     // which hits the same MAX_PATH ceiling (issue #15785).
     const git = vi.fn<GitExec>(async () => ({ stdout: '', stderr: '' }))
@@ -132,11 +132,20 @@ describe('addWorktreeOp', () => {
     )
 
     expect(git.mock.calls.map((call) => call[0])).toEqual([
-      ['-c', 'core.longpaths=true', 'worktree', 'add', 'C:\\repo-feature', 'feature/test']
+      [
+        '-c',
+        'core.longpaths=true',
+        '-c',
+        'checkout.workers=0',
+        'worktree',
+        'add',
+        'C:\\repo-feature',
+        'feature/test'
+      ]
     ])
   })
 
-  it('keeps --no-checkout ahead of -b once the long-path prefix is present', async () => {
+  it('keeps --no-checkout ahead of -b once the global-option prefix is present', async () => {
     const git = vi.fn<GitExec>(async () => ({ stdout: '', stderr: '' }))
 
     await addWorktreeOp(
@@ -153,6 +162,8 @@ describe('addWorktreeOp', () => {
     expect(git.mock.calls[0][0]).toEqual([
       '-c',
       'core.longpaths=true',
+      '-c',
+      'checkout.workers=0',
       'worktree',
       'add',
       '--no-track',
@@ -163,7 +174,7 @@ describe('addWorktreeOp', () => {
     ])
   })
 
-  it('omits the long-path option on a WSL UNC target on a Windows SSH host', async () => {
+  it('omits the long-path and parallel-checkout options on a WSL UNC target on a Windows SSH host', async () => {
     const git = vi.fn<GitExec>(async () => ({ stdout: '', stderr: '' }))
 
     await addWorktreeOp(

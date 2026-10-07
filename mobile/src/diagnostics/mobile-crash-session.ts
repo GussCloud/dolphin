@@ -5,6 +5,7 @@ import {
   type CrashReportBreadcrumbData
 } from '../../../src/shared/crash-reporting'
 import { describeCrashError } from '../../../src/shared/crash-error-description'
+import { formatRouteTemplate } from './mobile-crash-route-template'
 import {
   MAX_STORED_MOBILE_CRASH_BREADCRUMBS,
   MOBILE_CRASH_SESSION_STORAGE_KEY,
@@ -24,41 +25,11 @@ export {
   type MobileCrashStorage
 } from './mobile-crash-session-storage'
 
+export type MobileUncaughtErrorKind = 'fatal' | 'non_fatal' | 'unhandled_rejection'
+
 type JournalOptions = {
   now?: () => number
 }
-
-const SAFE_ROUTE_SEGMENTS = new Set([
-  'about',
-  'accounts',
-  'agent-history',
-  'browser-settings',
-  'connection-log',
-  'edit',
-  'files',
-  'h',
-  'history',
-  'index',
-  'mobile-onboarding',
-  'native-chat-settings',
-  'notification-opt-in',
-  'notifications',
-  'pair',
-  'pair-confirm',
-  'pair-scan',
-  'pr',
-  'preview',
-  'review',
-  'session',
-  'settings',
-  'source-control',
-  'tasks',
-  'terminal-settings',
-  'troubleshoot',
-  'voice-settings',
-  '[hostId]',
-  '[worktreeId]'
-])
 
 export class MobileCrashSessionJournal {
   private readonly storage: MobileCrashStorage
@@ -135,6 +106,18 @@ export class MobileCrashSessionJournal {
     await this.start()
     await this.enqueue(async () => {
       this.appendBreadcrumb('render_error_contained', describeCrashError(error, componentStack))
+      await this.persistJournal()
+    })
+  }
+
+  async recordUncaughtError(error: unknown, kind: MobileUncaughtErrorKind): Promise<void> {
+    await this.start()
+    await this.enqueue(async () => {
+      // Why: a fatal while backgrounded must still read as abnormal on the next launch.
+      if (kind === 'fatal' && this.journal) {
+        this.journal.activeSession.marker = 'open'
+      }
+      this.appendBreadcrumb('js_error_uncaught', { kind, ...describeCrashError(error) })
       await this.persistJournal()
     })
   }
@@ -250,15 +233,6 @@ function createBreadcrumb(
       name
     }
   )
-}
-
-function formatRouteTemplate(segments: readonly string[]): string {
-  if (segments.length === 0) {
-    return 'index'
-  }
-  return segments
-    .map((segment) => (SAFE_ROUTE_SEGMENTS.has(segment) ? segment : '[dynamic]'))
-    .join(' > ')
 }
 
 function normalizeAppState(state: string): string {

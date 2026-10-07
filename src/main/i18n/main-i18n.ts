@@ -104,6 +104,10 @@ function applyMainPluginLanguagePacks(): void {
   for (const language of registeredPluginLanguages) {
     mainI18n.removeResourceBundle(language, 'translation')
   }
+  if (registeredPluginLanguages.size > 0) {
+    // Why: removeResourceBundle also drops 'translation' from options.ns, which silently stops later lazy locale loads.
+    void mainI18n.loadNamespaces('translation')
+  }
   registeredPluginLanguages.clear()
   for (const pack of pluginLanguagePacks) {
     mainI18n.addResourceBundle(pack.resourceLanguage, 'translation', pack.catalog, true, true)

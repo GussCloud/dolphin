@@ -21,6 +21,7 @@ import { shouldRefreshNativeClaudeAgentTeamsEnv } from '../pane/launch-authority
 import type { PtyIpcSpawnState } from './spawn-state'
 import { assemblePtyIpcSpawnCodexEnv } from './spawn-env-codex'
 import { overlayPlatformEnv } from '../../../../shared/platform-env-overlay'
+import { resolveSshClaudeAgentTeamsLeaderEnv } from '../../../runtime/claude-agent-teams-shim-env'
 
 export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<void> {
   const args = ctx.args
@@ -110,6 +111,19 @@ export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<voi
       }
     }
     agentTeamsEnvToDelete = prepared.envToDelete ?? []
+  }
+  const sshAgentTeamsEnv = args.connectionId
+    ? resolveSshClaudeAgentTeamsLeaderEnv({ command: args.command, launchConfig: args.launchConfig })
+    : null
+  if (sshAgentTeamsEnv) {
+    // Why: SSH leaders run in-process teammates; the host-local tmux shim cannot reach them.
+    ctx.baseEnv = { ...ctx.baseEnv, ...sshAgentTeamsEnv }
+    if (args.launchConfig) {
+      ctx.effectiveLaunchConfig = {
+        ...args.launchConfig,
+        agentEnv: { ...args.launchConfig.agentEnv, ...sshAgentTeamsEnv }
+      }
+    }
   }
   ctx.requestedAgentTeamsPath = ctx.baseEnv?.DOLPHIN_AGENT_TEAMS_TEAM_ID
     ? ctx.baseEnv[resolvePathEnvKey(ctx.baseEnv, process.platform)]

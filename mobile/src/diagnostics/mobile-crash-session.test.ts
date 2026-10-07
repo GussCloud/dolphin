@@ -203,4 +203,41 @@ describe('mobile crash session journal', () => {
     expect(raw?.length).toBeLessThanOrEqual(MAX_MOBILE_CRASH_DIAGNOSTICS_CHARS)
     expect(JSON.parse(raw ?? '{}').activeSession.breadcrumbs).toHaveLength(30)
   })
+
+  it('journals a redacted fatal uncaught error and flags the session abnormal even after background', async () => {
+    const storage = new MemoryStorage()
+    const first = new MobileCrashSessionJournal(storage, { now: () => FIRST_SESSION_AT })
+    await first.start()
+    await first.recordAppState('background')
+    await first.recordUncaughtError(
+      new Error('boom at /Users/example/private-repo/a.ts token=secret-value'),
+      'fatal'
+    )
+
+    const persisted = storage.values.get(MOBILE_CRASH_SESSION_STORAGE_KEY) ?? ''
+    expect(persisted).not.toContain('secret-value')
+    expect(persisted).not.toContain('/Users/example/private-repo')
+
+    const second = new MobileCrashSessionJournal(storage, { now: () => SECOND_SESSION_AT })
+    const abnormal = await second.start()
+    expect(abnormal?.endedAbnormally).toBe(true)
+    expect(abnormal?.breadcrumbs.at(-1)).toMatchObject({
+      name: 'js_error_uncaught',
+      data: expect.objectContaining({ kind: 'fatal', errorName: 'Error' })
+    })
+  })
+
+  it('records non-fatal errors and unhandled rejections without marking a clean exit abnormal', async () => {
+    const storage = new MemoryStorage()
+    const first = new MobileCrashSessionJournal(storage, { now: () => FIRST_SESSION_AT })
+    await first.start()
+    await first.recordUncaughtError(new Error('soft'), 'non_fatal')
+    await first.recordUncaughtError('rejected', 'unhandled_rejection')
+    await first.recordAppState('background')
+
+    const second = new MobileCrashSessionJournal(storage, { now: () => SECOND_SESSION_AT })
+    expect(await second.start()).toBeNull()
+    const kinds = JSON.parse(storage.values.get(MOBILE_CRASH_SESSION_STORAGE_KEY) ?? '{}')
+    expect(kinds.activeSession.breadcrumbs).toHaveLength(1)
+  })
 })

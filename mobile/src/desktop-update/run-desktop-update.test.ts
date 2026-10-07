@@ -45,6 +45,21 @@ describe('runDesktopUpdate', () => {
     expect(updater.install).toHaveBeenCalledTimes(1)
   })
 
+  it('refuses to drive a manual-install desktop', async () => {
+    const updater = port([
+      {
+        ...snapshot({ state: 'available', version: '1.1.0' }),
+        support: { automatic: false }
+      }
+    ])
+
+    await expect(runDesktopUpdate(updater, () => undefined)).rejects.toThrow(
+      'remote_update_manual_required'
+    )
+    expect(updater.download).not.toHaveBeenCalled()
+    expect(updater.install).not.toHaveBeenCalled()
+  })
+
   it('refuses when the desktop no longer offers an update', async () => {
     const updater = port([snapshot({ state: 'not-available' })])
 

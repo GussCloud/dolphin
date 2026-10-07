@@ -1,3 +1,4 @@
+import { compareAppVersions } from '../../../src/shared/app-version'
 import type { DesktopUpdaterSnapshot } from './desktop-update-reply-schema'
 
 /** What the desktop's own updater holds that this phone may finish for it. */
@@ -5,6 +6,8 @@ export type DesktopUpdateOffer =
   | { phase: 'available'; version: string }
   | { phase: 'downloading'; version: string; percent: number }
   | { phase: 'ready'; version: string }
+  // Why: manual-install hosts (deb/rpm, unsupervised serve, dev builds) can only be told, not driven.
+  | { phase: 'manual'; version: string }
 
 /** An update this phone started; it outranks the host's offer on the card until it settles. */
 export type DesktopUpdateRun =
@@ -22,13 +25,17 @@ export type DesktopUpdateTag = {
 export function projectDesktopUpdateOffer(
   snapshot: DesktopUpdaterSnapshot | null
 ): DesktopUpdateOffer | null {
-  // Why: manual-install hosts (deb/rpm, unsupervised serve, dev builds) get no tag at all.
-  if (!snapshot?.support.automatic) {
+  if (!snapshot) {
     return null
   }
   const { state, version, percent } = snapshot.status
   if (!version) {
     return null
+  }
+  if (!snapshot.support.automatic) {
+    return ['available', 'downloading', 'downloaded'].includes(state)
+      ? { phase: 'manual', version }
+      : null
   }
   switch (state) {
     case 'available':
@@ -55,6 +62,8 @@ export function desktopUpdateTag(
       return { label: 'Update available', tone: 'accent', actionable: true }
     case 'ready':
       return { label: 'Update ready', tone: 'accent', actionable: true }
+    case 'manual':
+      return { label: 'Update available · Install on desktop', tone: 'accent', actionable: false }
     case 'starting':
       return { label: 'Starting update…', tone: 'progress', actionable: false }
     case 'downloading':
@@ -85,6 +94,21 @@ export function desktopUpdateConfirmMessage(
 `
       : ''
   return `${failure}Install ${target} on "${hostName}"? Dolphin will restart on that desktop.`
+}
+
+/** A relaunch on an older version than the install promised is a failed install, not success. */
+export function settleInstalledDesktopUpdate(
+  targetVersion: string,
+  snapshot: DesktopUpdaterSnapshot
+): DesktopUpdateRun | null {
+  if (!targetVersion || compareAppVersions(snapshot.appVersion, targetVersion) >= 0) {
+    return null
+  }
+  return {
+    phase: 'failed',
+    version: targetVersion,
+    message: `The desktop restarted on ${snapshot.appVersion}; ${targetVersion} was not installed.`
+  }
 }
 
 export function desktopUpdateErrorMessage(error: unknown): string {

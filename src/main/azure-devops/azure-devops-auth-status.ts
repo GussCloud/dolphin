@@ -8,6 +8,7 @@ import { getAzureDevOpsAuthPreference } from './azure-devops-auth-preference-sto
 import { getAzureCliAccessToken } from './azure-cli-access-token'
 import { getAzureCliStatus } from './azure-cli-status'
 import { forgetAzureCliSession, getAzureCliTokenExpiresAt } from './azure-cli-session-store'
+import { hostCanOpenSignInBrowser } from './azure-cli-session-renewal'
 
 export type { AzureDevOpsAuthStatus }
 
@@ -79,6 +80,7 @@ async function getAzureCliAuthStatus(): Promise<AzureDevOpsAuthStatus> {
     authMethod: 'azure-cli' as const,
     azureCli: { ...azureCli, tokenExpiresAt: getAzureCliTokenExpiresAt() },
     autoRenewCliSession: getAzureDevOpsAuthPreference().autoRenewCliSession,
+    autoRenewCliSessionAvailable: hostCanOpenSignInBrowser(),
     baseUrl,
     tokenConfigured: false
   }

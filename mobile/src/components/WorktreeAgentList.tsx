@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
 import { buildAgentRowLineageTree, flattenAgentRowLineage } from '../worktree/agent-row-lineage'
-import { WorktreeAgentRow } from './WorktreeAgentRow'
+import { readAgentRowSubagents } from '../worktree/agent-row-subagents'
+import { WorktreeAgentRow, WorktreeAgentSubagentRow } from './WorktreeAgentRow'
 import { WorktreeAgentSummary } from './WorktreeAgentSummary'
 
 type Props = {
@@ -35,13 +36,22 @@ export function WorktreeAgentList({ agents, now, unvisited }: Props) {
       ) : null}
       {!usesSummary || expanded
         ? nodes.map((node) => (
-            <WorktreeAgentRow
-              key={node.row.paneKey}
-              agent={node.row}
-              depth={node.depth}
-              now={now}
-              unvisited={unvisited}
-            />
+            <Fragment key={node.row.paneKey}>
+              <WorktreeAgentRow
+                agent={node.row}
+                depth={node.depth}
+                now={now}
+                unvisited={unvisited}
+              />
+              {readAgentRowSubagents(node.row, now).map((subagent) => (
+                <WorktreeAgentSubagentRow
+                  key={subagent.id}
+                  subagent={subagent}
+                  depth={node.depth + 1}
+                  now={now}
+                />
+              ))}
+            </Fragment>
           ))
         : null}
     </View>

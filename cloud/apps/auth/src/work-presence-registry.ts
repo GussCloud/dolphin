@@ -7,8 +7,22 @@ const DROP_AFTER_OFFLINE_MS = 120_000
 
 const OpaqueId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/)
 
+const WORK_VIEW_AGENT_STATES = ['working', 'permission', 'idle'] as const
+type WorkViewAgentState = (typeof WORK_VIEW_AGENT_STATES)[number]
+
+function isWorkViewAgentState(value: string): value is WorkViewAgentState {
+  return WORK_VIEW_AGENT_STATES.some((state) => state === value)
+}
+
+// Why degrade: a newer desktop's new state must not reject the whole snapshot and grey the room.
+const WorkViewAgentStateSchema = z
+  .string()
+  .max(40)
+  .transform((state): WorkViewAgentState => (isWorkViewAgentState(state) ? state : 'idle'))
+
 export const WorkPresenceSnapshot = z.object({
-  schemaVersion: z.literal(1),
+  // Why any version >= 1: later versions only add fields, which are stripped here.
+  schemaVersion: z.number().int().min(1),
   machineId: OpaqueId,
   machineLabel: z.string().trim().max(64),
   projects: z
@@ -21,7 +35,7 @@ export const WorkPresenceSnapshot = z.object({
             z.object({
               id: OpaqueId,
               cli: z.string().trim().min(1).max(40),
-              state: z.enum(['working', 'permission', 'idle']),
+              state: WorkViewAgentStateSchema,
               branch: z.string().max(120).nullable()
             })
           )
@@ -33,7 +47,7 @@ export const WorkPresenceSnapshot = z.object({
     .refine((projects) => projects.reduce((n, p) => n + p.agents.length, 0) <= 100, 'too many agents')
 })
 
-export type WorkPresenceSnapshot = z.infer<typeof WorkPresenceSnapshot>
+export type WorkPresenceSnapshot = z.output<typeof WorkPresenceSnapshot>
 
 export type WorkViewAgent = WorkPresenceSnapshot['projects'][number]['agents'][number]
 export type WorkViewProject = { id: string; name: string; agents: WorkViewAgent[] }
