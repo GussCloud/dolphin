@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   desktopUpdateConfirmMessage,
   desktopUpdateTag,
-  projectDesktopUpdateOffer
+  projectDesktopUpdateOffer,
+  settleInstalledDesktopUpdate
 } from './desktop-update-offer'
 import type { DesktopUpdaterSnapshot } from './desktop-update-reply-schema'
 
@@ -28,9 +29,16 @@ describe('projectDesktopUpdateOffer', () => {
     })
   })
 
-  it('hides the offer when the desktop cannot update itself remotely', () => {
+  it('offers a manual-install hint when the desktop cannot update itself remotely', () => {
+    for (const state of ['available', 'downloading', 'downloaded']) {
+      expect(projectDesktopUpdateOffer(snapshot({ state, version: '1.1.0' }, false))).toEqual({
+        phase: 'manual',
+        version: '1.1.0'
+      })
+    }
+    expect(projectDesktopUpdateOffer(snapshot({ state: 'idle' }, false))).toBeNull()
     expect(
-      projectDesktopUpdateOffer(snapshot({ state: 'available', version: '1.1.0' }, false))
+      projectDesktopUpdateOffer(snapshot({ state: 'error', version: '1.1.0' }, false))
     ).toBeNull()
   })
 
@@ -63,6 +71,14 @@ describe('desktopUpdateTag', () => {
     ).toMatchObject({ actionable: true })
   })
 
+  it('shows the manual-install hint without an action', () => {
+    expect(desktopUpdateTag({ phase: 'manual', version: '1.1.0' }, null)).toEqual({
+      label: 'Update available · Install on desktop',
+      tone: 'accent',
+      actionable: false
+    })
+  })
+
   it('shows nothing without an offer or run', () => {
     expect(desktopUpdateTag(null, null)).toBeNull()
   })
@@ -80,5 +96,42 @@ describe('desktopUpdateConfirmMessage', () => {
         message: 'Disk full'
       })
     ).toContain('Last attempt failed: Disk full')
+  })
+})
+
+describe('settleInstalledDesktopUpdate', () => {
+  it('settles when the desktop relaunched on the target version or newer', () => {
+    expect(
+      settleInstalledDesktopUpdate('1.1.0', {
+        ...snapshot({ state: 'idle' }),
+        appVersion: '1.1.0'
+      })
+    ).toBeNull()
+    expect(
+      settleInstalledDesktopUpdate('1.1.0', {
+        ...snapshot({ state: 'idle' }),
+        appVersion: '1.2.0'
+      })
+    ).toBeNull()
+  })
+
+  it('fails when the desktop relaunched on the old version', () => {
+    expect(
+      settleInstalledDesktopUpdate('1.1.0', snapshot({ state: 'downloaded', version: '1.1.0' }))
+    ).toEqual({
+      phase: 'failed',
+      version: '1.1.0',
+      message: 'The desktop restarted on 1.0.0; 1.1.0 was not installed.'
+    })
+  })
+
+  it('treats an unknown target or unparseable version as unverifiable', () => {
+    expect(settleInstalledDesktopUpdate('', snapshot({ state: 'idle' }))).toBeNull()
+    expect(
+      settleInstalledDesktopUpdate('1.1.0', {
+        ...snapshot({ state: 'idle' }),
+        appVersion: 'dev'
+      })
+    ).toBeNull()
   })
 })

@@ -7,7 +7,11 @@ import {
   desktopUpdaterStatusPoll
 } from './desktop-update-operations'
 import type { DesktopUpdateOffersSetter } from './desktop-update-offer-fetch'
-import { desktopUpdateErrorMessage, type DesktopUpdateRun } from './desktop-update-offer'
+import {
+  desktopUpdateErrorMessage,
+  settleInstalledDesktopUpdate,
+  type DesktopUpdateRun
+} from './desktop-update-offer'
 import { runDesktopUpdate, type DesktopUpdatePort } from './run-desktop-update'
 
 function desktopUpdatePort(client: RpcClient): DesktopUpdatePort {
@@ -22,16 +26,44 @@ function desktopUpdatePort(client: RpcClient): DesktopUpdatePort {
 }
 
 /** Settles an installing run once the desktop comes back; a drop alone proves nothing. */
-function clearRunOnReconnect(client: RpcClient, clear: () => void): () => void {
+function settleRunOnReconnect(
+  client: RpcClient,
+  targetVersion: string,
+  clear: () => void,
+  fail: (run: DesktopUpdateRun) => void
+): () => void {
   const gate = createHostConnectRefetchGate()
   gate.observe(client.getState())
+  let disposed = false
   const unsubscribe = client.onStateChange((state) => {
-    if (gate.observe(state)) {
-      unsubscribe()
-      clear()
+    if (!gate.observe(state)) {
+      return
     }
+    void desktopUpdaterStatusPoll
+      .request(client)
+      .then((reply) =>
+        settleInstalledDesktopUpdate(targetVersion, desktopUpdaterStatusPoll.interpret(reply))
+      )
+      // Why: an unreadable status is unverifiable, not a failure; fall back to the offer refetch.
+      .catch(() => null)
+      .then((failed) => {
+        if (disposed) {
+          return
+        }
+        if (!failed) {
+          dispose()
+          clear()
+          return
+        }
+        // Why: keep watching — a later reconnect on the target version still settles the run.
+        fail(failed)
+      })
   })
-  return unsubscribe
+  const dispose = (): void => {
+    disposed = true
+    unsubscribe()
+  }
+  return dispose
 }
 
 export function useDesktopUpdateRuns(
@@ -73,7 +105,13 @@ export function useDesktopUpdateRuns(
       const setRun = (run: DesktopUpdateRun): void => {
         setRuns((previous) => ({ ...previous, [hostId]: run }))
         if (run.phase === 'installing') {
-          cleanupsRef.current.set(hostId, clearRunOnReconnect(client, clearRun))
+          const failRun = (failed: DesktopUpdateRun): void => {
+            setRuns((previous) => ({ ...previous, [hostId]: failed }))
+          }
+          cleanupsRef.current.set(
+            hostId,
+            settleRunOnReconnect(client, run.version, clearRun, failRun)
+          )
         }
       }
       runDesktopUpdate(desktopUpdatePort(client), setRun).catch((error: unknown) => {
