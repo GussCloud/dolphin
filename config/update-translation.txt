@@ -69,3 +69,31 @@ Method (reproducible):
   ko 색인화. R3 sign-off clean on all locales (R2 fixes byte-verified,
   full placeholder parity 0 mismatches, 0 missing keys).
 
+## Scan 2026-10-07
+
+- HEAD scanned: d9f06f74 (2026-10-06). Window covered: a15a5c8c1a6 .. HEAD.
+- Delta since base: 158 en keys missing from fr/ja/ko/zh/es (138 auto.components.* for
+  Azure Boards, Azure CLI sign-in, hosted-review details, multi-project workspaces and the
+  folder-workspace batch bar; 17 featureTips.agentTeams.* from ed379e8a; 3
+  rendererRecovery.lowCommit*). pt-BR (added 2026-10-01) lacked only 20: the 17 agentTeams
+  keys and 3 AgentsPane team-instruction keys from 1758c31f.
+- Applied: fr/ja/ko/zh +158, es +158 (+10 older rendererRecovery.* so the low-memory dialog's
+  "click Reload" matches its button), pt-BR +20, all through repairTranslatedValue. Kept
+  pipeline repairs (ja ブラウザ/一般/新規, ko 회신/생성/댓글, zh 代理/通用, zh Git Bash ->
+  git bash per value override); rejected three that broke meaning (ja 再起動か?,
+  ja/ko 半 Linear) by rewording to stable values.
+- pt-BR English leftovers fixed (glossary terms kept): Squash and merge, Squash commit,
+  Force Push, Use issue, Cleaned/Native user-agent options, Two Tone, Origin, wk,
+  iOS Simulator, Source Control AI; plus delta polish (Comentar button, Atribuído a,
+  Não atribuído, Workspaces multiprojeto, worktree gender).
+- New main-process keys in all 7 locales (native dialogs moved to translateMain):
+  gpuFallback.restartPrompt.*, gpuFallback.recoveredLaunch.*, profileStateRecovery.failedDialog.*,
+  localBuild.switch.*, diagnostics.uploadConfirm.*; plus
+  auto.components.settings.azureCliAutoRenewControl.unavailableHelp.
+- Fixed main-i18n: removing a plugin language pack dropped 'translation' from i18next
+  options.ns, so later built-in locale switches never loaded their catalog.
+- Gates after fix: catalog verify PASS (fr/ja/ko/pt-BR/zh 15031/15031; es 12636/15031, the
+  2395 missing are the pre-existing es backlog), catalogs PASS, coverage --check PASS
+  (58 allowlisted), extraction PASS, runtime-catalog PASS, locale vitest suites PASS.
+- Not done: es backlog (out of delta scope); renderer i18n.ts uses the same
+  removeResourceBundle pattern and was not changed here.

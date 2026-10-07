@@ -1734,6 +1734,7 @@
       "NewWorkspaceComposerModal": {
         "createWorktree": "Créer un worktree",
         "createWorkspace": "Créer un espace de travail",
+        "createMultiProjectWorkspace": "Créer un espace de travail multiprojet",
         "fa90f739a5": "Choisissez le projet, le nom de l'espace de travail et l'agent avant de créer l'espace de travail."
       },
       "PullRequestPage": {
@@ -2283,7 +2284,8 @@
         "linearModeHasWorktreeTooltip": "Tickets Linear liés à un espace de travail Dolphin",
         "linearEmptyHasWorktree": "Aucun ticket Linear n'est encore lié à un espace de travail Dolphin. Démarrez le travail depuis une issue Linear pour le voir ici.",
         "linearOpenAttachedWorkspace": "Ouvrir l'espace de travail attaché à {{value0}}",
-        "linearWorktreesColumn": "Espaces de travail"
+        "linearWorktreesColumn": "Espaces de travail",
+        "azureBoards": "Azure Boards"
       },
       "Terminal": {
         "73768427cf": "Fermer",
@@ -5297,6 +5299,21 @@
           "00c4235c10": "Aucun résultat pour « {{value0}} »",
           "largeInputNoMatches": "Aucun résultat pour cette saisie longue"
         },
+        "AddMultiProjectMemberDialog": {
+          "title": "Ajouter un projet à « {{value0}} »",
+          "description": "Le projet obtient un worktree sur la branche que cet espace de travail utilise déjà.",
+          "adding": "Création du worktree…"
+        },
+        "MultiProjectWorkspaceMenuItems": {
+          "addProject": "Ajouter un projet…"
+        },
+        "DeleteMultiProjectWorkspaceDialog": {
+          "title": "Supprimer « {{value0}} » ?",
+          "description": "Cet espace de travail a un worktree dans {{value0}} projets : {{value1}}.",
+          "removeMembers": "Supprimer aussi ses worktrees. Les worktrees avec des modifications non commitées bloquent la suppression.",
+          "cancel": "Annuler",
+          "delete": "Supprimer"
+        },
         "RemoveFolderDialog": {
           "4dc5b5065b": "Supprimer",
           "d36883e046": "Annuler",
@@ -6009,6 +6026,7 @@
               "4aeefc5996": "Épinglés",
               "682ed5d551": "Fermé",
               "7c2f009786": "En cours",
+              "multiProjectWorkspaces": "Espaces de travail multiprojets",
               "6798dc7c94": "En revue",
               "5076efc3d2": "Terminé"
             }
@@ -6396,6 +6414,11 @@
           "copied": "Commande copiée",
           "retry": "Réessayer maintenant",
           "restored": "Git fonctionne à nouveau. Worktrees actualisés."
+        },
+        "azureReposClonePicker": {
+          "browse": "Parcourir Azure DevOps",
+          "filter": "Filtrer les dépôts",
+          "empty": "Aucun dépôt trouvé."
         }
       },
       "shared": {
@@ -8660,7 +8683,9 @@
           "integrationsHint": "Les identifiants de tous les fournisseurs se trouvent aussi sous",
           "integrationsLink": "Intégrations",
           "skillHint": ". Une fois Linear connecté, des exemples d'utilisation restent disponibles sous Paramètres → Linear.",
-          "incompleteBannerBodyWithLinear": "Masquez les fournisseurs que vous n'utilisez pas, ou dépliez une carte et terminez ses étapes. Pour Linear : accès API, skill d'agent et Afficher dans Tâches."
+          "incompleteBannerBodyWithLinear": "Masquez les fournisseurs que vous n'utilisez pas, ou dépliez une carte et terminez ses étapes. Pour Linear : accès API, skill d'agent et Afficher dans Tâches.",
+          "azureBoards": "Azure Boards",
+          "azureBoardsDescription": "Parcourez les éléments de travail Azure DevOps avec votre connexion Azure DevOps et démarrez des espaces de travail à partir de ceux-ci."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Épaisseur de la ligne de séparation des volets.",
@@ -12174,6 +12199,44 @@
           "usageLabel": "Utilisation",
           "usageTitle": "Utilisation mensuelle du forfait"
         },
+        "azureDevOpsIntegrationCard": {
+          "authMethodLabel": "Méthode de connexion Azure DevOps",
+          "methodToken": "Jeton (PAT)",
+          "methodAzureCli": "Azure CLI",
+          "methodChangeFailed": "Impossible de modifier la méthode de connexion Azure DevOps : {{value0}}",
+          "azureCliDescription": "Pull requests, dépôts et éléments de travail via votre connexion Azure CLI."
+        },
+        "azureCliSetupDetails": {
+          "defaultsHelp": "Organisation et projet par défaut pour les commandes Azure CLI (az devops configure).",
+          "organizationLabel": "Organisation",
+          "projectPlaceholder": "Projet (facultatif)",
+          "projectLabel": "Projet",
+          "saving": "Enregistrement…",
+          "save": "Enregistrer",
+          "unavailable": "L'état d'Azure CLI n'est pas encore disponible sur cet hôte. Revérifiez après la mise à jour de l'hôte.",
+          "notInstalled": "Azure CLI (az) n'est pas installé sur cet hôte. Installez-le, puis revérifiez.",
+          "notAuthenticated": "Connectez-vous avec Azure CLI. Dolphin utilise cette connexion pour les requêtes Azure DevOps.",
+          "noAccess": "Connecté en tant que {{value0}}, mais Azure DevOps a refusé la connexion. Vérifiez l'organisation ou connectez-vous avec un autre compte.",
+          "signedInAs": "Connecté en tant que {{value0}}.",
+          "install": "Installer Azure CLI",
+          "signInAgain": "Se reconnecter",
+          "signIn": "Se connecter",
+          "installExtension": "Installer l'extension azure-devops",
+          "recheck": "Revérifier",
+          "terminalTitle": "Configuration d'Azure CLI",
+          "terminalAriaLabel": "Commande de configuration d'Azure CLI",
+          "signInDescription": "Appuyez sur Entrée pour exécuter az login. Terminez la connexion dans le navigateur ; Dolphin revérifie à la fin de la commande.",
+          "extensionDescription": "Appuyez sur Entrée pour installer l'extension azure-devops. Dolphin revérifie à la fin de la commande.",
+          "organizationPlaceholder": "https://dev.azure.com/contoso"
+        },
+        "azureCliAutoRenewControl": {
+          "validUntil": "Jeton valide jusqu'au {{value0}}.",
+          "expiredAt": "Jeton expiré le {{value0}}.",
+          "changeFailed": "Impossible de modifier le renouvellement automatique d'Azure CLI : {{value0}}",
+          "label": "Renouveler automatiquement à l'expiration ?",
+          "help": "Dolphin exécute az login en arrière-plan quand la connexion expire ; confirmez-la dans la fenêtre du navigateur qui s'ouvre.",
+          "unavailableHelp": "Indisponible sur cet hôte : il n'a pas d'écran pour ouvrir la connexion dans le navigateur. Exécutez az login sur l'hôte quand la connexion expire."
+        },
         "openObserveContextForm": {
           "invalidName": "Utilisez des lettres, chiffres, points, tirets ou tirets bas pour le nom du profil.",
           "invalidBaseUrl": "Saisissez l'adresse de votre instance OpenObserve, par exemple https://openobserve.example.com.",
@@ -13778,6 +13841,53 @@
             "sourceMissing": "La transcription n'est plus disponible",
             "metadataMatch": "Faire correspondre les métadonnées de la session",
             "sourceActionsUnavailable": "La source de la transcription n'est pas disponible."
+          },
+          "hostedReviewDetails": {
+            "vote": "Voter",
+            "resetVote": "Réinitialiser le vote",
+            "complete": "Terminer",
+            "publish": "Publier",
+            "markDraft": "Marquer comme brouillon",
+            "abandon": "Abandonner",
+            "reactivatePr": "Réactiver",
+            "description": "Description",
+            "cancel": "Annuler",
+            "save": "Enregistrer",
+            "noDescription": "Aucune description.",
+            "editDescription": "Modifier la description",
+            "loading": "Chargement des détails de la revue…",
+            "unavailable": "Les détails de la revue ne sont pas disponibles.",
+            "conflicts": "Cette pull request a des conflits de merge.",
+            "strategyMerge": "Merge (sans fast-forward)",
+            "strategySquash": "Commit squashé",
+            "strategyRebase": "Rebase et fast-forward",
+            "strategyRebaseMerge": "Merge semi-linéaire",
+            "completeTitle": "Terminer la pull request",
+            "completeDescription": "Merge la branche source dans la branche cible. Les stratégies de branche s'appliquent toujours.",
+            "mergeType": "Type de merge",
+            "deleteSourceBranch": "Supprimer la branche source après le merge",
+            "completeMerge": "Terminer le merge",
+            "voteApproved": "Approuvé",
+            "voteApprovedWithSuggestions": "Approuvé avec suggestions",
+            "voteWaiting": "En attente de l'auteur",
+            "voteRejected": "Refusé",
+            "voteNone": "Aucun vote",
+            "required": "(obligatoire)",
+            "removeReviewer": "Retirer {{value0}}",
+            "reviewers": "Reviewers",
+            "noReviewers": "Aucun reviewer pour l'instant.",
+            "addReviewerPlaceholder": "Ajouter un reviewer par e-mail",
+            "addReviewerLabel": "E-mail ou nom du reviewer",
+            "add": "Ajouter",
+            "generalThread": "Général",
+            "reactivate": "Réactiver",
+            "resolve": "Résoudre",
+            "replyPlaceholder": "Répondre",
+            "reply": "Répondre",
+            "comments": "Commentaires",
+            "noComments": "Aucun commentaire pour l'instant.",
+            "commentPlaceholder": "Laisser un commentaire",
+            "comment": "Commenter"
           }
         }
       },
@@ -16892,6 +17002,21 @@
           "actionsUnavailable": "Les actions de plugin ne sont pas disponibles dans ce client.",
           "messageTooLarge": "Le message dépasse la taille limite.",
           "tooManyRequests": "Trop de requêtes."
+        },
+        "FolderWorkspaceBatchBar": {
+          "failed": "Échec dans {{value0}} projets sur {{value1}}",
+          "nothingToDo": "Rien à faire dans aucun projet",
+          "done": "Terminé dans {{value0}} projets sur {{value1}}",
+          "messagePlaceholder": "Message de commit pour tous les projets",
+          "commitAll": "Tout commiter",
+          "pullAll": "Tout puller",
+          "pushAll": "Tout pusher"
+        },
+        "FolderWorkspaceSourceControl": {
+          "emptyTitle": "Aucun projet Git dans cet espace de travail",
+          "emptyCopy": "Créez un espace de travail avec plusieurs projets, ou associez-lui des worktrees, pour voir leurs modifications ici.",
+          "membersLabel": "Projets",
+          "addProject": "Ajouter un projet à l'espace de travail"
         }
       },
       "link": {
@@ -17450,6 +17575,48 @@
           "cursorAccounts": {
             "hostOnly": "Les détails de connexion Cursor ne sont lisibles que sur l'ordinateur qui exécute Dolphin."
           }
+        }
+      },
+      "newWorkspace": {
+        "MultiProjectMembersField": {
+          "add": "Ajouter un autre projet",
+          "remove": "Retirer {{value0}}",
+          "projects": "Projets",
+          "groups": "Ajouter tous les projets d'un groupe",
+          "hint": "Chaque projet obtient un worktree sur la même branche, dans un dossier unique pour cet espace de travail."
+        }
+      },
+      "taskPage": {
+        "azureBoards": {
+          "project": "Projet",
+          "searchPlaceholder": "Rechercher par titre ou ID",
+          "assignedToMe": "Qui me sont assignés",
+          "includeClosed": "Inclure les fermés",
+          "refresh": "Actualiser",
+          "new": "Nouveau",
+          "start": "Démarrer",
+          "setupTitle": "Configurer Azure Boards",
+          "setupDescription": "Connectez-vous à Azure DevOps et choisissez une organisation par défaut dans Paramètres > Intégrations.",
+          "openIntegrations": "Ouvrir les intégrations",
+          "retry": "Réessayer",
+          "hide": "Masquer Azure Boards",
+          "empty": "Aucun élément de travail ne correspond à ces filtres.",
+          "createTitle": "Nouvel élément de travail",
+          "type": "Type",
+          "titleLabel": "Titre",
+          "descriptionLabel": "Description",
+          "cancel": "Annuler",
+          "create": "Créer",
+          "commentPlaceholder": "Ajouter un commentaire",
+          "comment": "Commenter",
+          "close": "Fermer",
+          "startWorkspace": "Démarrer l'espace de travail",
+          "openInBrowser": "Ouvrir dans Azure DevOps",
+          "state": "État",
+          "assignedTo": "Assigné à {{value0}}",
+          "unassigned": "Non assigné",
+          "noDescription": "Aucune description.",
+          "comments": "Commentaires"
         }
       }
     },
@@ -18331,6 +18498,25 @@
     }
   },
   "featureTips": {
+    "agentTeams": {
+      "demoPrompt": "Crée une équipe : un coéquipier sur l'API, un autre sur les tests.",
+      "demoShell": "Git Bash",
+      "demoTabTitle": "Claude Agent Teams",
+      "demoLead": "lead",
+      "demoPlanning": "Création d'une équipe de 2 coéquipiers",
+      "demoLeadDone": "Les deux coéquipiers ont fait leur rapport",
+      "demoApiTeammate": "api",
+      "demoApiRead": "Lecture de routes.ts",
+      "demoApiEdit": "Ajout de contrôles des entrées",
+      "demoApiDone": "Résumé envoyé au lead",
+      "demoTestsTeammate": "tests",
+      "demoTestsWrite": "Écriture de routes.test.ts",
+      "demoTestsRun": "Exécution de 12 tests",
+      "demoTestsDone": "12 réussis",
+      "launchInstruction": "Choisissez Claude Agent Teams au démarrage d'un agent, puis demandez-lui de créer une équipe.",
+      "settingsInstruction": "Modifiez les instructions données à chaque équipe dans",
+      "settingsLink": "Paramètres → Agents"
+    },
     "voice": {
       "demoPrompt": "Relisez ce diff à la recherche de cas limites et ajoutez des tests pour tout ce que vous trouvez.",
       "startDictation": "Démarrer la dictée",
@@ -18460,7 +18646,58 @@
     "genericDetail": "Il s'agit souvent d'un problème de pilote graphique ou d'installation. Rechargez pour réessayer, ou quittez et relancez Dolphin.",
     "title": "Dolphin ne parvient toujours pas à charger",
     "stalledMessage": "La fenêtre de l'application a cessé de répondre lors du rechargement après un crash.",
-    "crashLoopMessage": "La fenêtre de l'application s'est écrasée à plusieurs reprises et a cessé de se recharger automatiquement."
+    "crashLoopMessage": "La fenêtre de l'application s'est écrasée à plusieurs reprises et a cessé de se recharger automatiquement.",
+    "lowCommitMessage": "Windows manque de mémoire.",
+    "lowCommitDetail": "Il ne reste à Windows que {{availableMB}} Mo de mémoire pour les applications ; la fenêtre a donc de nouveau manqué de mémoire après le rechargement.",
+    "lowCommitAdvice": "Fermez d'autres applications ou augmentez la taille du fichier d'échange de Windows, puis cliquez sur Recharger."
+  },
+  "gpuFallback": {
+    "restartPrompt": {
+      "restartButton": "Redémarrer en mode graphique sans échec",
+      "keepRunningButton": "Continuer",
+      "title": "Redémarrer Dolphin en mode graphique sans échec ?",
+      "message": "Le processus graphique de Dolphin a planté à plusieurs reprises.",
+      "detail": "Le mode graphique sans échec désactive l'accélération matérielle et WebGL pour cette version de Dolphin. Les terminaux et le contenu 3D peuvent s'afficher plus lentement. Continuer laisse les paramètres graphiques inchangés."
+    },
+    "recoveredLaunch": {
+      "keepSafeButton": "Garder le mode graphique sans échec",
+      "tryHardwareButton": "Essayer l'accélération matérielle",
+      "title": "Le mode graphique sans échec est actif",
+      "message": "Dolphin a redémarré en mode graphique sans échec.",
+      "detail": "Le mode graphique sans échec a été activé après des plantages graphiques répétés. Gardez-le pour plus de stabilité, ou redémarrez et réessayez l'accélération matérielle."
+    }
+  },
+  "profileStateRecovery": {
+    "failedDialog": {
+      "quitButton": "Quitter",
+      "title": "L'état du profil Dolphin n'a pas été modifié",
+      "message": "Dolphin n'a pas pu appliquer l'état de profil sélectionné.",
+      "reopenHint": "Rouvrez Dolphin pour choisir à nouveau."
+    }
+  },
+  "localBuild": {
+    "switch": {
+      "chooseTitle": "Choisir un build local de Dolphin",
+      "chooseButton": "Choisir le build",
+      "manifestFilter": "Manifeste de mise à jour Dolphin",
+      "sameVersion": "Ce build a la même version que l'application en cours d'exécution. Relancez pn build:mac pour créer un build avec une version unique.",
+      "noLiveTerminals": "Aucun terminal actif ne doit se reconnecter.",
+      "oneLiveTerminal": "1 terminal actif se reconnectera après le redémarrage.",
+      "manyLiveTerminals": "{{terminalCount}} terminaux actifs se reconnecteront après le redémarrage.",
+      "confirmTitle": "Utiliser le build local de Dolphin ?",
+      "confirmDetail": "{{terminalSummary}}\nLes cartes d'espace de travail et les paramètres sont compatibles avec le schéma d'état {{schemaVersion}}.\n\nLe build doit avoir la même signature de code valide que Dolphin, sinon l'installation s'arrêtera.",
+      "useButton": "Utiliser le build local",
+      "cancelButton": "Annuler"
+    }
+  },
+  "diagnostics": {
+    "uploadConfirm": {
+      "sendButton": "Envoyer",
+      "cancelButton": "Annuler",
+      "title": "Envoyer ce fichier au support ?",
+      "message": "Cela envoie le fichier de diagnostic expurgé de l'application que vous avez vérifié.",
+      "detail": "ID de diagnostic : {{submissionId}}\nEnregistrements de diagnostic : {{recordCount}}\nTaille : {{sizeKb}} Ko"
+    }
   },
   "sessionSearch": {
     "panel": {

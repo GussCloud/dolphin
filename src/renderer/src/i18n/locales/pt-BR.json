@@ -206,10 +206,10 @@
         "loading": "Carregando…",
         "resetRequired": "Dados de identidade devem ser reconfigurados explicitamente antes de serem alterados.",
         "resetRequiredCommand": "Redefina-o a partir da linha de comando: dolphin browser identity set --mode <mode> --reset",
-        "optionClean": "Cleaned",
+        "optionClean": "Limpo",
         "optionCleanTooltip": "Remove tokens Dolphin e Electron para combinar com sessões Chrome importadas.",
-        "optionNative": "Native",
-        "optionNativeTooltip": "Mantém a identidade integrada do Electron para sites que rejeitam a identidade cleaned. Google sign-in não está disponível no modo Native.",
+        "optionNative": "Nativo",
+        "optionNativeTooltip": "Mantém a identidade integrada do Electron para sites que rejeitam a identidade limpa. O login do Google não está disponível no modo nativo.",
         "restartRequired": "Reinicialização necessária",
         "unavailable": "Identidade do navegador não está disponível."
       }
@@ -2318,7 +2318,7 @@
         "repository": "Repositório",
         "backToCloseReasons": "Voltar",
         "searchIssues": "Pesquisar issues",
-        "useIssueNumber": "Use issue #{{value0}}",
+        "useIssueNumber": "Usar issue #{{value0}}",
         "noMatchingIssuesLoaded": "Nenhuma issue correspondente carregada.",
         "editReviewersWithCurrent": "Editar revisores: {{value0}}",
         "linearEmptyAttributeFilter": "Nenhuma issue corresponde aos filtros selecionados. Limpe um filtro ou tente critérios diferentes.",
@@ -2690,7 +2690,7 @@
           "d6aeb2012b": "Mostrando issues de",
           "787c970baf": "Fonte de issue",
           "643d7e9496": "upstream",
-          "51d1608920": "Origin",
+          "51d1608920": "Origem",
           "cdc9bd64fa": "compacto",
           "30b2c9df91": "Upstream"
         },
@@ -2904,7 +2904,7 @@
             "588c90487d": "Blip",
             "1e4b81d892": "Thump",
             "86af8d938c": "Bong",
-            "80f7cc95b3": "Two Tone",
+            "80f7cc95b3": "Dois tons",
             "017abebfa6": "Padrão do Sistema"
           }
         }
@@ -3784,7 +3784,7 @@
             "2483c60695": "···",
             "c35af53b73": "Entrar",
             "f19a63e7cd": "Entrar para ver o uso",
-            "5c938d39ac": "wk",
+            "5c938d39ac": "sem.",
             "54e8d6bb2d": "Fable",
             "d79c3362c4": "5h",
             "a79c64f87e": "Fable",
@@ -6084,7 +6084,7 @@
               "4aeefc5996": "Fixado",
               "682ed5d551": "Fechado",
               "7c2f009786": "Em progresso",
-              "multiProjectWorkspaces": "workspaces de múltiplos projetos",
+              "multiProjectWorkspaces": "Workspaces multiprojeto",
               "6798dc7c94": "Em revisão",
               "5076efc3d2": "Concluído"
             }
@@ -6474,7 +6474,7 @@
           "restored": "Git está funcionando novamente. Worktrees atualizadas."
         },
         "azureReposClonePicker": {
-          "browse": "Procurar Azure DevOps",
+          "browse": "Navegar no Azure DevOps",
           "filter": "Filtrar repositórios",
           "empty": "Nenhum repositório encontrado."
         }
@@ -6792,6 +6792,9 @@
           "9b175d0f5e": "Agente pré-selecionado ao abrir um novo workspace.",
           "385212c7a1": "Agente Padrão",
           "f9f127d664": "Substitua o caminho ou nome binário e edite os argumentos de lançamento padrão ou ambiente para este agente.",
+          "a7c3e91f42": "Instruções do time",
+          "b2d84e0c19": "Sem instruções — o Claude decide sozinho quando criar um time",
+          "c5f17a3d68": "Enviadas ao Claude como instrução de sistema no início de cada sessão, então valem mesmo quando você digita a primeira mensagem no terminal. Deixe em branco para desativar.",
           "f95b5c79b8": "Instalar",
           "fe4d630c94": "Documentação",
           "8dc0192e48": "Desativado",
@@ -8232,7 +8235,7 @@
         "RepositorySourceControlAiSection": {
           "67b3ff5467": "Descartar",
           "8b8bc5913a": "Receitas de ação do repositório. Configurações globais são usadas até que este repositório as customize.",
-          "71b003b62b": "Source Control AI",
+          "71b003b62b": "IA de Controle de Código-Fonte",
           "152268c295": "Salvar",
           "57e6e9d4b1": "Salvando…",
           "ccb07dd027": "Salvo",
@@ -11237,7 +11240,7 @@
           "b94ff260e6": "Baixar Android Studio",
           "18925b082d": "Localizar pasta SDK",
           "8c52684db8": "Limpar",
-          "76eb88b88e": "iOS Simulator (Xcode)",
+          "76eb88b88e": "Simulador iOS (Xcode)",
           "c6f3ea4f12": "Pronto",
           "e4f14b50d7": "Instale Xcode e adicione um runtime iOS Simulator.",
           "63fe73a1ea": "Não foi possível atualizar a pasta Android SDK."
@@ -12289,7 +12292,8 @@
           "expiredAt": "Token expirado em {{value0}}.",
           "changeFailed": "Não foi possível alterar a renovação automática do CLI do Azure: {{value0}}",
           "label": "Renovar automaticamente quando expirar?",
-          "help": "O Dolphin executa az login em segundo plano quando a entrada expira; confirme-a na janela do navegador que se abre."
+          "help": "O Dolphin executa az login em segundo plano quando a entrada expira; confirme-a na janela do navegador que se abre.",
+          "unavailableHelp": "Indisponível neste host: ele não tem tela para abrir o login no navegador. Execute az login no host quando o login expirar."
         },
         "openObserveContextForm": {
           "invalidName": "Use letras, números, pontos, hifens ou sublinhados no nome do perfil.",
@@ -13388,7 +13392,7 @@
                   "95550cff15": "Fazer push",
                   "d64292a938": "Fazer pull",
                   "795f1509c5": "Sincronizar",
-                  "390abeab93": "Force Push",
+                  "390abeab93": "Forçar push",
                   "1884cf34af": "Publicar este branch para origin",
                   "7b4d02e6b8": "Publicar Branch",
                   "3d5dccef0b": "Nada para fazer commit. PR já foi feito merge.",
@@ -13913,7 +13917,7 @@
             "unavailable": "Os detalhes da revisão estão indisponíveis.",
             "conflicts": "Este pull request tem conflitos de merge.",
             "strategyMerge": "Fazer merge (sem avanço rápido)",
-            "strategySquash": "Squash commit",
+            "strategySquash": "Commit com squash",
             "strategyRebase": "Rebase e avanço rápido",
             "strategyRebaseMerge": "Merge semi-linear",
             "completeTitle": "Concluir pull request",
@@ -13941,7 +13945,7 @@
             "comments": "Comentários",
             "noComments": "Sem comentários ainda.",
             "commentPlaceholder": "Deixar um comentário",
-            "comment": "Comentário"
+            "comment": "Comentar"
           }
         }
       },
@@ -14705,7 +14709,7 @@
             "8ed213397c": "Executando",
             "d340c052fb": "verificar",
             "9a097cae12": "1 pendente",
-            "2f37142229": "Squash and merge",
+            "2f37142229": "Fazer squash e merge",
             "0aab7ab84a": "Adicionar rastreamento de erros de diagnóstico local",
             "dfe313e0c9": "ABERTO",
             "6e3f5223c5": "Explorador",
@@ -17601,14 +17605,14 @@
           "remove": "Remover {{value0}}",
           "projects": "Projetos",
           "groups": "Adicionar todos os projetos em um grupo",
-          "hint": "Cada projeto recebe uma worktree no mesmo branch, dentro de uma pasta para este workspace."
+          "hint": "Cada projeto recebe um worktree no mesmo branch, dentro de uma pasta para este workspace."
         }
       },
       "taskPage": {
         "azureBoards": {
           "project": "Projeto",
           "searchPlaceholder": "Pesquisar por título ou ID",
-          "assignedToMe": "Atribuído para mim",
+          "assignedToMe": "Atribuídos a mim",
           "includeClosed": "Incluir fechados",
           "refresh": "Atualizar",
           "new": "Novo",
@@ -17626,13 +17630,13 @@
           "cancel": "Cancelar",
           "create": "Criar",
           "commentPlaceholder": "Adicionar um comentário",
-          "comment": "Comentário",
+          "comment": "Comentar",
           "close": "Fechar",
           "startWorkspace": "Iniciar workspace",
           "openInBrowser": "Abrir no Azure DevOps",
           "state": "Estado",
-          "assignedTo": "Atribuída para {{value0}}",
-          "unassigned": "Desatribuído",
+          "assignedTo": "Atribuído a {{value0}}",
+          "unassigned": "Não atribuído",
           "noDescription": "Sem descrição.",
           "comments": "Comentários"
         }
@@ -18516,6 +18520,25 @@
     }
   },
   "featureTips": {
+    "agentTeams": {
+      "demoPrompt": "Crie um time: um colega na API, outro nos testes.",
+      "demoShell": "Git Bash",
+      "demoTabTitle": "Claude Agent Teams",
+      "demoLead": "líder",
+      "demoPlanning": "Criando um time com 2 colegas",
+      "demoLeadDone": "Os dois colegas responderam",
+      "demoApiTeammate": "api",
+      "demoApiRead": "Lendo routes.ts",
+      "demoApiEdit": "Adicionando validações de entrada",
+      "demoApiDone": "Resumo enviado ao líder",
+      "demoTestsTeammate": "testes",
+      "demoTestsWrite": "Escrevendo routes.test.ts",
+      "demoTestsRun": "Executando 12 testes",
+      "demoTestsDone": "12 aprovados",
+      "launchInstruction": "Escolha Claude Agent Teams ao iniciar um agente e peça para ele criar um time.",
+      "settingsInstruction": "Altere as instruções enviadas a todo time em",
+      "settingsLink": "Configurações → Agentes"
+    },
     "voice": {
       "demoPrompt": "Revise este diff para casos extremos e adicione testes para tudo que encontrar.",
       "startDictation": "Iniciar ditação",
@@ -18619,6 +18642,54 @@
     "lowCommitMessage": "O Windows ficou sem memória.",
     "lowCommitDetail": "O Windows tem apenas {{availableMB}} MB de memória restantes para apps, então a janela ficou sem memória novamente após recarregar.",
     "lowCommitAdvice": "Feche outros apps ou aumente o tamanho do arquivo de página do Windows e clique em Recarregar."
+  },
+  "gpuFallback": {
+    "restartPrompt": {
+      "restartButton": "Reiniciar no Modo Gráfico Seguro",
+      "keepRunningButton": "Continuar Executando",
+      "title": "Reiniciar o Dolphin no Modo Gráfico Seguro?",
+      "message": "O processo gráfico do Dolphin falhou repetidamente.",
+      "detail": "O modo gráfico seguro desativa a aceleração de hardware e o WebGL nesta versão do Dolphin. Terminais e conteúdo 3D podem ser renderizados mais devagar. Continuar Executando mantém as configurações gráficas inalteradas."
+    },
+    "recoveredLaunch": {
+      "keepSafeButton": "Manter o Modo Gráfico Seguro",
+      "tryHardwareButton": "Tentar Aceleração de Hardware",
+      "title": "O Modo Gráfico Seguro está ativo",
+      "message": "O Dolphin se recuperou no Modo Gráfico Seguro.",
+      "detail": "O Modo Gráfico Seguro foi ativado após falhas gráficas repetidas. Mantenha-o para ter estabilidade ou reinicie e tente a aceleração de hardware novamente."
+    }
+  },
+  "profileStateRecovery": {
+    "failedDialog": {
+      "quitButton": "Sair",
+      "title": "O estado do perfil do Dolphin não foi alterado",
+      "message": "O Dolphin não conseguiu aplicar o estado de perfil selecionado.",
+      "reopenHint": "Abra o Dolphin novamente para escolher outra vez."
+    }
+  },
+  "localBuild": {
+    "switch": {
+      "chooseTitle": "Escolher um Build Local do Dolphin",
+      "chooseButton": "Escolher Build",
+      "manifestFilter": "Manifesto de atualização do Dolphin",
+      "sameVersion": "Este build tem a mesma versão do app em execução. Execute pn build:mac novamente para criar um build com versão única.",
+      "noLiveTerminals": "Nenhum terminal ativo precisa se reconectar.",
+      "oneLiveTerminal": "1 terminal ativo vai se reconectar após reiniciar.",
+      "manyLiveTerminals": "{{terminalCount}} terminais ativos vão se reconectar após reiniciar.",
+      "confirmTitle": "Usar Build Local do Dolphin?",
+      "confirmDetail": "{{terminalSummary}}\nOs cards de workspace e as configurações são compatíveis com o esquema de estado {{schemaVersion}}.\n\nO build precisa ter a mesma assinatura de código válida do Dolphin, ou a instalação será interrompida.",
+      "useButton": "Usar Build Local",
+      "cancelButton": "Cancelar"
+    }
+  },
+  "diagnostics": {
+    "uploadConfirm": {
+      "sendButton": "Enviar",
+      "cancelButton": "Cancelar",
+      "title": "Enviar este arquivo ao suporte?",
+      "message": "Isso envia o arquivo de diagnóstico do app, já sem dados sensíveis, que você revisou.",
+      "detail": "ID do diagnóstico: {{submissionId}}\nRegistros de diagnóstico: {{recordCount}}\nTamanho: {{sizeKb}} KB"
+    }
   },
   "notifications": {
     "agentStatus": {
