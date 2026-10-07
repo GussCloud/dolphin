@@ -10,6 +10,7 @@ import {
   type MobileHostedReviewEligibilityInput,
   type MobileHostedReviewPrefill
 } from './mobile-hosted-review-service'
+import { sourceControlText } from './source-control-text'
 
 export type MobilePrEligibilityInput = MobileHostedReviewEligibilityInput
 export type MobilePrPrefill = MobileHostedReviewPrefill
@@ -31,11 +32,14 @@ export function getMobilePrCreateSuccessWarning(
   const copy = hostedReviewCopy(provider)
   if (outcome.existing) {
     return outcome.number
-      ? `${copy.titleLabel} #${outcome.number} is already open.`
-      : `${copy.titleLabel} is already open.`
+      ? sourceControlText('reviewAlreadyOpenNumbered', {
+          review: copy.titleLabel,
+          number: outcome.number
+        })
+      : sourceControlText('reviewAlreadyOpen', { review: copy.titleLabel })
   }
   if (outcome.linkError) {
-    return `${copy.titleLabel} created, but Dolphin could not refresh it yet.`
+    return sourceControlText('reviewCreatedNotRefreshed', { review: copy.titleLabel })
   }
   return undefined
 }
@@ -49,38 +53,38 @@ export function getMobilePrCreateBlockMessage(prefill: MobilePrPrefill): string 
     // mobile has no refresh/review-lookup signal of its own, so it must not
     // offer create, or the needs_push Push & Create path would slip through.
     if (prefill.reviewLookupOutcome !== 'not_found') {
-      return `Dolphin could not confirm whether this branch already has a ${copy.reviewLabel}. Try again in a moment.`
+      return sourceControlText('reviewLookupUnconfirmed', { review: copy.reviewLabel })
     }
     return null
   }
   switch (prefill.blockedReason) {
     case 'dirty':
-      return `Commit changes before creating a ${copy.reviewLabel}.`
+      return sourceControlText('blockDirty', { review: copy.reviewLabel })
     case 'detached_head':
-      return `Check out a branch before creating a ${copy.reviewLabel}.`
+      return sourceControlText('blockDetachedHead', { review: copy.reviewLabel })
     case 'default_branch':
-      return `Switch to a feature branch before creating a ${copy.reviewLabel}.`
+      return sourceControlText('blockDefaultBranch', { review: copy.reviewLabel })
     case 'no_upstream':
-      return `Publish commits before creating a ${copy.reviewLabel}.`
+      return sourceControlText('blockNoUpstream', { review: copy.reviewLabel })
     case 'needs_sync':
-      return `Sync this branch before creating a ${copy.reviewLabel}.`
+      return sourceControlText('blockNeedsSync', { review: copy.reviewLabel })
     case 'auth_required':
-      return `Authenticate before creating a ${copy.reviewLabel}.`
+      return sourceControlText('blockAuthRequired', { review: copy.reviewLabel })
     case 'unsupported_provider':
-      return `Creating ${copy.reviewLabel}s is not supported for this repo.`
+      return sourceControlText('blockUnsupportedProvider', { review: copy.reviewLabel })
     case 'existing_review':
-      return `A ${copy.reviewLabel} already exists for this branch.`
+      return sourceControlText('blockExistingReview', { review: copy.reviewLabel })
     case 'fork_head_unsupported':
-      return `Creating a ${copy.reviewLabel} from this fork is not supported.`
+      return sourceControlText('blockForkHead', { review: copy.reviewLabel })
     case 'base_not_on_remote':
-      return `Push the base branch before creating a ${copy.reviewLabel}.`
+      return sourceControlText('blockBaseNotOnRemote', { review: copy.reviewLabel })
     case 'needs_push':
     case null:
     case undefined:
-      return `This branch is not ready for a ${copy.reviewLabel} yet.`
+      return sourceControlText('reviewNotReady', { review: copy.reviewLabel })
     default:
       // Why: desktop can add blocked reasons before a long-lived mobile branch
       // catches up; remain safely blocked while preserving merge-ref typechecks.
-      return `This branch is not ready for a ${copy.reviewLabel} yet.`
+      return sourceControlText('reviewNotReady', { review: copy.reviewLabel })
   }
 }

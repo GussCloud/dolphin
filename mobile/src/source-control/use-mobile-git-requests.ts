@@ -7,6 +7,7 @@ import {
   type MobileGitUpstreamStatus
 } from './mobile-git-status'
 import type { GitCommitResult, GitRequestError } from './mobile-source-control-screen-state'
+import { sourceControlText } from './source-control-text'
 
 type Params = {
   client: RpcClient | null
@@ -20,7 +21,7 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
   const sendGitRequest = useCallback(
     async <T>(method: string, params?: Record<string, unknown>): Promise<T> => {
       if (!client || connState !== 'connected') {
-        throw new Error('Waiting for desktop...')
+        throw new Error(sourceControlText('waitingForDesktop'))
       }
       const response = await client.sendRequest(method, {
         worktree: `id:${worktreeId}`,
@@ -28,7 +29,7 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
       })
       if (!response.ok) {
         const error = new Error(
-          response.error?.message || 'Source control action failed'
+          response.error?.message || sourceControlText('sourceControlActionFailed')
         ) as GitRequestError
         error.code = response.error?.code
         throw error
@@ -42,7 +43,7 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
     async (message: string): Promise<GitCommitResult> => {
       const result = await sendGitRequest<GitCommitResult>('git.commit', { message })
       if (!result || result.success !== true) {
-        throw new Error(result?.error || 'Commit failed')
+        throw new Error(result?.error || sourceControlText('commitFailed'))
       }
       return result
     },
@@ -60,7 +61,7 @@ export function useMobileGitRequests({ client, connState, worktreeId }: Params) 
       }
       const status = await sendGitRequest<MobileGitStatusResult>('git.status')
       if (!status.upstreamStatus) {
-        throw new Error('Branch status unavailable')
+        throw new Error(sourceControlText('branchStatusUnavailable'))
       }
       return status.upstreamStatus
     }

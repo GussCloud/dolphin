@@ -2,6 +2,7 @@ import { classifyMobileArtifact } from '../session/mobile-artifact-kind'
 import type { RpcFailure } from '../transport/types'
 import { isMarkdownPath } from './file-tree'
 import { isTerminalArtifactGrantError } from './terminal-artifact-grant-error'
+import { filesText } from './files-text'
 
 export type MobileFilePreviewTextKind = 'html' | 'markdown' | 'text'
 
@@ -56,13 +57,13 @@ export function previewErrorFromRefusal(error: RpcFailure['error']): MobileFileP
 export function previewError(message: string): MobileFilePreviewResult {
   const normalized = message.toLowerCase()
   if (normalized === 'binary_file' || normalized.includes('binary_file')) {
-    return { status: 'error', message: 'Binary preview unavailable', reconnect: false }
+    return { status: 'error', message: filesText('binaryPreviewUnavailable'), reconnect: false }
   }
   if (normalized === 'file_too_large' || normalized.includes('file_too_large')) {
-    return { status: 'error', message: 'File too large for mobile preview', reconnect: false }
+    return { status: 'error', message: filesText('fileTooLarge'), reconnect: false }
   }
   if (isTerminalArtifactGrantError(normalized)) {
-    return { status: 'error', message: 'Reload preview before saving', reconnect: false }
+    return { status: 'error', message: filesText('reloadBeforeSaving'), reconnect: false }
   }
   if (
     normalized.includes('remote connection dropped') ||
@@ -70,7 +71,7 @@ export function previewError(message: string): MobileFilePreviewResult {
     normalized.includes('disconnected') ||
     normalized.includes('reconnect the ssh target')
   ) {
-    return { status: 'error', message: 'Unable to reach the desktop filesystem', reconnect: true }
+    return { status: 'error', message: filesText('unableToReachFilesystem'), reconnect: true }
   }
   if (
     normalized.includes('enoent') ||
@@ -78,14 +79,14 @@ export function previewError(message: string): MobileFilePreviewResult {
     normalized.includes('not found') ||
     normalized.includes('does not exist')
   ) {
-    return { status: 'error', message: 'File not found', reconnect: false }
+    return { status: 'error', message: filesText('fileNotFound'), reconnect: false }
   }
-  return { status: 'error', message: 'Unable to load preview', reconnect: false }
+  return { status: 'error', message: filesText('unableToLoadPreview'), reconnect: false }
 }
 
 export function formatPreviewByteLength(byteLength: number): string {
   if (!Number.isFinite(byteLength) || byteLength < 0) {
-    return 'unknown size'
+    return filesText('unknownSize')
   }
   if (byteLength < 1024) {
     return `${byteLength} B`

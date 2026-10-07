@@ -2,6 +2,7 @@ import { isTailscaleEndpoint } from '../../../src/shared/remote-runtime-tailscal
 import type { RelayHostReachability } from './relay-host-reachability'
 import type { MobileConnectionPath } from './stable-logical-rpc-client'
 import type { ConnectionState } from './types'
+import { transportText } from './transport-text'
 
 // Why: thresholds for escalating connection UX from neutral
 // "Reconnecting…" to alarming "host appears unreachable, re-pair?".
@@ -28,7 +29,6 @@ const STALE_SINCE_LAST_CONNECT_MS = 60_000
 // the phone's Tailscale tunnel is down or wedged (a known iOS failure mode
 // that only a manual toggle fixes) — not that the desktop moved. Say so
 // instead of leaving the user staring at a generic "Can't connect".
-const TAILSCALE_HINT = 'check Tailscale'
 
 // Label + second line per relay verdict, and the severity each one earns. No
 // Tailscale hint on any of these: it would be wrong advice for a desktop that is
@@ -36,32 +36,32 @@ const TAILSCALE_HINT = 'check Tailscale'
 // signed-out desktop yields a plain 4404 once the cell no longer remembers why.
 const RELAY_HOST_COPY: Record<
   Exclude<RelayHostReachability, 'connecting'>,
-  { kind: 'warning' | 'unreachable'; label: (host: string) => string; detail: string }
+  { kind: 'warning' | 'unreachable'; label: (host: string) => string; detail: () => string }
 > = {
   'signed-out': {
     kind: 'unreachable',
-    label: (host) => `Sign-in required on ${host}`,
-    detail: 'Sign in to Dolphin on your desktop to reconnect'
+    label: (host) => transportText('signInRequired', { host }),
+    detail: () => transportText('signInRequiredDetail')
   },
   'host-offline': {
     kind: 'unreachable',
-    label: (host) => `${host} is offline`,
-    detail: "Check it's awake, Dolphin is running, and you're signed in"
+    label: (host) => transportText('hostOffline', { host }),
+    detail: () => transportText('hostOfflineDetail')
   },
   // The cell refused this phone's relay credential (revoked, a month unused, or
   // desynced). A direct session would also rotate it, but re-pairing is the one
   // remedy that works from anywhere, so it is the only one worth printing.
   'credential-refused': {
     kind: 'unreachable',
-    label: (host) => `Relay access expired for ${host}`,
-    detail: 'Re-pair with your desktop'
+    label: (host) => transportText('relayAccessExpired', { host }),
+    detail: () => transportText('relayAccessExpiredDetail')
   },
   // Amber, not red: the phone never reached the cell, which says nothing about
   // the desktop.
   unreachable: {
     kind: 'warning',
-    label: () => "Can't reach Relay",
-    detail: 'Check your connection'
+    label: () => transportText('cantReachRelay'),
+    detail: () => transportText('cantReachRelayDetail')
   }
 }
 
@@ -105,18 +105,18 @@ export function classifyConnection(args: {
 }): ConnectionVerdict {
   const { state, reconnectAttempts, lastConnectedAt } = args
   const now = args.nowMs ?? Date.now()
-  const hint = isTailscaleEndpoint(args.endpoint) ? TAILSCALE_HINT : undefined
-  const host = args.hostName?.trim() || 'Host'
+  const hint = isTailscaleEndpoint(args.endpoint) ? transportText('tailscaleHint') : undefined
+  const host = args.hostName?.trim() || transportText('hostFallbackName')
   const staleReason = lastConnectedAt == null ? 'never-connected' : 'stale'
 
   // Why: auth-failed means the desktop no longer recognizes this pairing (e.g. it
   // lost its device registry) — retrying can't fix it, only re-pairing can, so say so.
   if (state === 'auth-failed' || (args.pairingRejected && state !== 'connected')) {
-    return { kind: 'auth-failed', label: 'Pairing invalid — re-pair with your desktop' }
+    return { kind: 'auth-failed', label: transportText('pairingInvalid') }
   }
 
   if (state === 'connected') {
-    return { kind: 'normal', label: 'Connected' }
+    return { kind: 'normal', label: transportText('connected') }
   }
 
   // Below auth-failed because a revoked pairing cannot be fixed by signing in.
@@ -126,8 +126,8 @@ export function classifyConnection(args: {
   if (reachability !== 'connecting') {
     const copy = RELAY_HOST_COPY[reachability]
     return copy.kind === 'warning'
-      ? { kind: 'warning', label: copy.label(host), detail: copy.detail }
-      : { kind: 'unreachable', label: copy.label(host), reason: staleReason, detail: copy.detail }
+      ? { kind: 'warning', label: copy.label(host), detail: copy.detail() }
+      : { kind: 'unreachable', label: copy.label(host), reason: staleReason, detail: copy.detail() }
   }
 
   // A disconnected pending path can survive a cleared retry timer during a
@@ -136,17 +136,21 @@ export function classifyConnection(args: {
   if (args.pendingPath === 'relay' && (state !== 'disconnected' || reconnectAttempts > 0)) {
     if (reconnectAttempts >= UNREACHABLE_ATTEMPTS) {
       if (lastConnectedAt == null) {
-        return { kind: 'unreachable', label: "Can't connect via Relay", reason: 'never-connected' }
+        return {
+          kind: 'unreachable',
+          label: transportText('cantConnectViaRelay'),
+          reason: 'never-connected'
+        }
       }
       if (now - lastConnectedAt >= STALE_SINCE_LAST_CONNECT_MS) {
-        return { kind: 'unreachable', label: "Can't connect via Relay", reason: 'stale' }
+        return { kind: 'unreachable', label: transportText('cantConnectViaRelay'), reason: 'stale' }
       }
     }
-    return { kind: 'normal', label: 'Connecting via Relay…' }
+    return { kind: 'normal', label: transportText('connectingViaRelay') }
   }
 
   if (state === 'disconnected') {
-    return { kind: 'normal', label: 'Disconnected' }
+    return { kind: 'normal', label: transportText('disconnected') }
   }
 
   // connecting / handshaking / reconnecting from here. The gates apply to all
@@ -157,7 +161,7 @@ export function classifyConnection(args: {
     if (lastConnectedAt == null) {
       return {
         kind: 'unreachable',
-        label: "Can't reach desktop",
+        label: transportText('cantReachDesktop'),
         reason: 'never-connected',
         hint
       }
@@ -165,7 +169,7 @@ export function classifyConnection(args: {
     if (now - lastConnectedAt >= STALE_SINCE_LAST_CONNECT_MS) {
       return {
         kind: 'unreachable',
-        label: "Can't reach desktop",
+        label: transportText('cantReachDesktop'),
         reason: 'stale',
         hint
       }
@@ -173,17 +177,20 @@ export function classifyConnection(args: {
   }
 
   if (reconnectAttempts >= WARNING_ATTEMPTS) {
-    return { kind: 'warning', label: "Can't connect", hint }
+    return { kind: 'warning', label: transportText('cantConnect'), hint }
   }
 
-  return { kind: 'normal', label: state === 'reconnecting' ? 'Reconnecting…' : 'Connecting…' }
+  return {
+    kind: 'normal',
+    label: state === 'reconnecting' ? transportText('reconnecting') : transportText('connecting')
+  }
 }
 
 // Why: single place that turns a verdict into display text so every screen
 // renders the Tailscale hint the same way.
 export function verdictDisplayLabel(verdict: ConnectionVerdict): string {
   if ((verdict.kind === 'warning' || verdict.kind === 'unreachable') && verdict.hint) {
-    return `${verdict.label} — ${verdict.hint}`
+    return transportText('labelWithHint', { label: verdict.label, hint: verdict.hint })
   }
   return verdict.label
 }

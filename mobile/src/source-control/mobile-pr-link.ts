@@ -2,6 +2,7 @@ import type { RpcSendParams } from '../transport/rpc-params-contract'
 import { refusedRpcMessageOrFallback } from '../transport/rpc-refusal-message'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
 import { worktreeLinkSet, worktreeSummaryRead } from './mobile-worktree-metadata-operations'
+import { sourceControlText } from './source-control-text'
 
 // Link / unlink review metadata via worktree.set (the same path desktop uses).
 // GitHub's existing manual link flow writes linkedPR; hosted-review creation maps
@@ -77,7 +78,7 @@ export function linkMobilePr(
   return setWorktreeReviewLink(
     client,
     buildWorktreeSetLinkParams(worktreeId, prNumber),
-    'Failed to update linked pull request'
+    sourceControlText('failedToUpdateLinkedPr')
   )
 }
 
@@ -94,7 +95,7 @@ export async function linkMobileHostedReview(
   }
   // Why a distinct fallback: the review already exists, so callers surface this as a non-fatal
   // refresh problem rather than losing the created URL.
-  return setWorktreeReviewLink(client, params, 'Failed to update linked review')
+  return setWorktreeReviewLink(client, params, sourceControlText('failedToUpdateLinkedReview'))
 }
 
 export function unlinkMobilePr(
@@ -104,7 +105,7 @@ export function unlinkMobilePr(
   return setWorktreeReviewLink(
     client,
     buildWorktreeSetLinkParams(worktreeId, null),
-    'Failed to update linked pull request'
+    sourceControlText('failedToUpdateLinkedPr')
   )
 }
 

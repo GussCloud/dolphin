@@ -3,6 +3,7 @@ import { isMobileGitUnavailableReply } from './mobile-git-status'
 import { repoBaseRefListRead, repoDefaultBaseRefRead } from './mobile-repo-base-ref-operations'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
 import { worktreeSummaryRead } from './mobile-worktree-metadata-operations'
+import { sourceControlText } from './source-control-text'
 
 function getRepoIdFromMobileWorktreeId(id: string): string {
   const separatorIdx = id.indexOf('::')
@@ -48,6 +49,8 @@ export async function resolveMobileBranchCompareBaseRef(
   try {
     return repoDefaultBaseRefRead.interpret(defaultReply)
   } catch (error) {
-    throw new Error(refusedRpcMessageOrFallback(error, 'Unable to resolve branch base'))
+    throw new Error(
+      refusedRpcMessageOrFallback(error, sourceControlText('unableToResolveBranchBase'))
+    )
   }
 }

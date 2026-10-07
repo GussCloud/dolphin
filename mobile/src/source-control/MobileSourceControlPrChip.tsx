@@ -12,6 +12,10 @@ import { colors } from '../theme/mobile-theme'
 import { statusColor } from '../components/pr-sidebar/pr-sidebar-status-color'
 import { hubStyles } from './mobile-source-control-hub-styles'
 import type { MobilePrChipRollup, MobilePrChipSummary } from './mobile-pr-chip-summary'
+import { sourceControlCatalog } from '../i18n/catalogs/source-control'
+import type { sourceControlEn } from '../i18n/catalogs/source-control/en'
+import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   summary: MobilePrChipSummary
@@ -22,12 +26,13 @@ type Props = {
 // Pull Request segment. Rendered only when the repo supports hosted review — the
 // parent gates on that, so this component always has something meaningful to show.
 export function MobileSourceControlPrChip({ summary, onPress }: Props) {
+  const t = useMobileTranslation(sourceControlCatalog)
   return (
     <Pressable
       style={({ pressed }) => [hubStyles.chip, pressed && hubStyles.chipPressed]}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={chipAccessibilityLabel(summary)}
+      accessibilityLabel={chipAccessibilityLabel(summary, t)}
     >
       <View style={hubStyles.chipIcon}>
         <GitPullRequest size={15} color={colors.textSecondary} strokeWidth={2.1} />
@@ -36,12 +41,12 @@ export function MobileSourceControlPrChip({ summary, onPress }: Props) {
         <>
           <ActivityIndicator size="small" color={colors.textSecondary} />
           <Text style={hubStyles.chipMutedText} numberOfLines={1}>
-            Loading pull request…
+            {t('prChipLoading')}
           </Text>
         </>
       ) : summary.kind === 'none' ? (
         <>
-          <Text style={hubStyles.chipCreateText}>Create pull request</Text>
+          <Text style={hubStyles.chipCreateText}>{t('prChipCreate')}</Text>
           <View style={hubStyles.chipSpacer} />
           <ChevronRight size={16} color={colors.textMuted} strokeWidth={2.1} />
         </>
@@ -102,20 +107,26 @@ function RollupIcon({ kind, color }: { kind: MobilePrChipRollup['kind']; color: 
   }
 }
 
-function chipAccessibilityLabel(summary: MobilePrChipSummary): string {
+function chipAccessibilityLabel(
+  summary: MobilePrChipSummary,
+  t: MobileTranslate<typeof sourceControlEn>
+): string {
   switch (summary.kind) {
     case 'loading':
-      return 'Loading pull request'
+      return t('prChipLoadingA11y')
     case 'none':
-      return 'Create pull request'
+      return t('prChipCreate')
     case 'unavailable':
-      return `Pull request unavailable: ${summary.message}`
+      return t('prChipUnavailableA11y', { message: summary.message })
     case 'ready': {
-      const comments =
-        summary.commentCount != null && summary.commentCount > 0
-          ? `, ${summary.commentCount} unresolved comments`
-          : ''
-      return `Pull request #${summary.number}, ${summary.stateLabel}, ${summary.rollup.text}${comments}. Open pull request.`
+      const vars = {
+        number: summary.number,
+        state: summary.stateLabel,
+        checks: summary.rollup.text
+      }
+      return summary.commentCount != null && summary.commentCount > 0
+        ? t('prChipReadyWithCommentsA11y', { ...vars, count: summary.commentCount })
+        : t('prChipReadyA11y', vars)
     }
   }
 }

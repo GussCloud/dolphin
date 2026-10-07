@@ -1,3 +1,5 @@
+import { sourceControlText } from './source-control-text'
+
 // Pure helpers for the branch-card conflict Abort control. Kept free of React so
 // the busy-label rule (abort-in-flight only) is unit-testable.
 
@@ -14,5 +16,14 @@ export function isMobileConflictAborting(
 
 /** Label for the Abort control — never says "Aborting…" for unrelated busy work. */
 export function mobileConflictAbortLabel(conflictOperation: string, aborting: boolean): string {
-  return aborting ? 'Aborting…' : `Abort ${conflictOperation}`
+  if (aborting) {
+    return sourceControlText('aborting')
+  }
+  if (conflictOperation === 'merge') {
+    return sourceControlText('abortMerge')
+  }
+  if (conflictOperation === 'rebase') {
+    return sourceControlText('abortRebase')
+  }
+  return sourceControlText('abortOperation', { operation: conflictOperation })
 }

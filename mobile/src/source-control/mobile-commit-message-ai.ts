@@ -5,6 +5,7 @@ import {
   type MobileGenerateCommitMessageResult
 } from './mobile-git-mutation-operations'
 import type { RpcOperationSender } from '../transport/rpc-operation-sender'
+import { sourceControlText } from './source-control-text'
 
 export type { MobileGenerateCommitMessageResult }
 
@@ -22,7 +23,7 @@ export async function requestMobileCommitMessage(
   } catch (error) {
     return {
       success: false,
-      error: refusedRpcMessageOrFallback(error, 'Failed to generate commit message')
+      error: refusedRpcMessageOrFallback(error, sourceControlText('failedToGenerateCommitMessage'))
     }
   }
 }

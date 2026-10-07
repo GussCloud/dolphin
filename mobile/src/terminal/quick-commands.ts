@@ -16,6 +16,7 @@ import {
 } from '../../../src/shared/terminal-quick-commands'
 import { TERMINAL_QUICK_COMMANDS_RUNTIME_CAPABILITY } from '../../../src/shared/protocol-version'
 import { MOBILE_TUI_AGENT_LABELS } from '../tasks/mobile-tui-agents'
+import { terminalText } from './terminal-text'
 
 // Reuse the canonical desktop quick-command logic (pure, no heavy deps) so
 // mobile behaves identically to desktop. Only genuinely mobile-specific pieces
@@ -69,7 +70,9 @@ export function buildMobileQuickCommandLaunch(
         options: {
           initialPrompt: command.command,
           enter: false,
-          successToast: `${command.label.trim() || 'Quick command'} inserted`
+          successToast: terminalText('quickCommandInserted', {
+            label: command.label.trim() || terminalText('quickCommandFallbackLabel')
+          })
         }
       }
     : {

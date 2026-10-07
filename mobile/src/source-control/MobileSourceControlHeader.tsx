@@ -1,6 +1,8 @@
 import { Pressable, Text, View } from 'react-native'
 import { ChevronLeft, ExternalLink, RefreshCw, X } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
+import { sourceControlCatalog } from '../i18n/catalogs/source-control'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { styles } from './mobile-source-control-styles'
 
 type Props = {
@@ -28,6 +30,7 @@ export function MobileSourceControlHeader({
   onOpenPrWeb,
   prNumber = null
 }: Props) {
+  const t = useMobileTranslation(sourceControlCatalog)
   return (
     <View style={styles.topBar}>
       {/* Two controls, not one with a conditional label: the dock's dismiss is a close, and a
@@ -38,7 +41,7 @@ export function MobileSourceControlHeader({
           onPress={onClose}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Close source control"
+          accessibilityLabel={t('closeSourceControl')}
         >
           <X size={22} color={colors.textSecondary} strokeWidth={2.2} />
         </Pressable>
@@ -48,14 +51,14 @@ export function MobileSourceControlHeader({
           onPress={onBack}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Back to session"
+          accessibilityLabel={t('backToSession')}
         >
           <ChevronLeft size={22} color={colors.textSecondary} strokeWidth={2.2} />
         </Pressable>
       )}
       <View style={styles.titleBlock}>
         <Text style={styles.title} numberOfLines={1}>
-          Source Control
+          {t('title')}
         </Text>
         <Text style={styles.meta} numberOfLines={1}>
           {worktreeLabel}
@@ -68,9 +71,7 @@ export function MobileSourceControlHeader({
           hitSlop={8}
           accessibilityRole="link"
           accessibilityLabel={
-            prNumber != null
-              ? `Open pull request #${prNumber} on the web`
-              : 'Open pull request on the web'
+            prNumber != null ? t('openPrOnWebNumbered', { number: prNumber }) : t('openPrOnWeb')
           }
         >
           <ExternalLink size={18} color={colors.textSecondary} strokeWidth={2.1} />
@@ -86,7 +87,7 @@ export function MobileSourceControlHeader({
         disabled={ioBusy}
         hitSlop={8}
         accessibilityRole="button"
-        accessibilityLabel="Refresh source control"
+        accessibilityLabel={t('refreshSourceControl')}
       >
         <RefreshCw size={18} color={colors.textSecondary} strokeWidth={2.1} />
       </Pressable>

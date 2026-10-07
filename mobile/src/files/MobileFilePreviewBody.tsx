@@ -6,6 +6,8 @@ import { MobileFilePreviewEditableSource } from './MobileFilePreviewEditableSour
 import { MobileFilePreviewSourceText } from './MobileFilePreviewSourceText'
 import type { MobileFilePreviewLineColumn } from './mobile-file-preview-line-column'
 import { filePreviewStyles as styles } from './mobile-file-preview-styles'
+import { filesCatalog } from '../i18n/catalogs/files'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   preview: MobileFilePreviewResult
@@ -24,6 +26,7 @@ type Props = {
 }
 
 export function MobileFilePreviewBody({ preview, ...options }: Props) {
+  const t = useMobileTranslation(filesCatalog)
   if (preview.status === 'loading') {
     return (
       <View style={styles.state}>
@@ -38,7 +41,7 @@ export function MobileFilePreviewBody({ preview, ...options }: Props) {
         <Text style={styles.errorText}>{preview.message}</Text>
         {options.onRetry ? (
           <Pressable style={styles.retryButton} onPress={options.onRetry}>
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{t('retry')}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -49,7 +52,7 @@ export function MobileFilePreviewBody({ preview, ...options }: Props) {
       <EditablePreviewSource {...options} />
     ) : (
       <View style={styles.state}>
-        <Text style={styles.stateText}>Empty file</Text>
+        <Text style={styles.stateText}>{t('emptyFile')}</Text>
       </View>
     )
   }
@@ -68,7 +71,7 @@ export function MobileFilePreviewBody({ preview, ...options }: Props) {
             style={[styles.image, { width: options.imageWidth, height: options.imageHeight }]}
             resizeMode="contain"
             onError={options.onImageError}
-            accessibilityLabel={`${options.title} image`}
+            accessibilityLabel={t('imageA11y', { title: options.title })}
           />
         </ScrollView>
       </View>

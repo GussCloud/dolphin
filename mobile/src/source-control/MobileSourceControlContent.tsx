@@ -9,6 +9,8 @@ import {
 } from 'react-native'
 import { Minus, MoreHorizontal, Plus, Sparkles } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
+import { sourceControlCatalog } from '../i18n/catalogs/source-control'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { MobileSourceControlCreatePrEntry } from './MobileSourceControlCreatePrEntry'
 import { MobileCommitFailurePanel } from './MobileCommitFailurePanel'
 import { KEYBOARD_COMMIT_BAR_CLEARANCE } from './mobile-source-control-screen-state'
@@ -24,6 +26,7 @@ type Props = {
 // Changes tab: local file changes only — uncommitted (staged/unstaged) plus
 // committed-on-branch vs base. PR conflicts and push status live elsewhere.
 export function MobileSourceControlContent({ state }: Props) {
+  const t = useMobileTranslation(sourceControlCatalog)
   const {
     insets,
     connState,
@@ -82,7 +85,7 @@ export function MobileSourceControlContent({ state }: Props) {
         // Surface the reconnect state where the user is looking.
         <View style={styles.reconnectBanner}>
           <ActivityIndicator size="small" color={colors.statusAmber} />
-          <Text style={styles.reconnectBannerText}>Reconnecting to desktop...</Text>
+          <Text style={styles.reconnectBannerText}>{t('reconnectingToDesktop')}</Text>
         </View>
       ) : null}
       <View style={hubStyles.changesControls}>
@@ -114,7 +117,7 @@ export function MobileSourceControlContent({ state }: Props) {
             ) : (
               <Plus size={15} color={colors.textPrimary} strokeWidth={2.2} />
             )}
-            <Text style={styles.bulkButtonText}>Stage All</Text>
+            <Text style={styles.bulkButtonText}>{t('stageAll')}</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [
@@ -130,7 +133,7 @@ export function MobileSourceControlContent({ state }: Props) {
             ) : (
               <Minus size={15} color={colors.textPrimary} strokeWidth={2.2} />
             )}
-            <Text style={styles.bulkButtonText}>Unstage All</Text>
+            <Text style={styles.bulkButtonText}>{t('unstageAll')}</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [
@@ -141,7 +144,7 @@ export function MobileSourceControlContent({ state }: Props) {
             onPress={() => setShowActionSheet(true)}
             disabled={ioBusy}
             hitSlop={8}
-            accessibilityLabel="Open source control actions"
+            accessibilityLabel={t('openActions')}
           >
             <MoreHorizontal size={18} color={colors.textPrimary} strokeWidth={2.1} />
           </Pressable>
@@ -150,8 +153,8 @@ export function MobileSourceControlContent({ state }: Props) {
 
       {!hasVisibleChanges ? (
         <View style={styles.state}>
-          <Text style={styles.stateTitle}>No local changes</Text>
-          <Text style={styles.stateText}>Working tree is clean.</Text>
+          <Text style={styles.stateTitle}>{t('noLocalChanges')}</Text>
+          <Text style={styles.stateText}>{t('workingTreeClean')}</Text>
         </View>
       ) : sections.length === 0 ? (
         // Why: RN SectionList with empty `sections` often skips ListFooterComponent,
@@ -199,16 +202,16 @@ export function MobileSourceControlContent({ state }: Props) {
               style={[styles.commitInput, styles.commitInputDisabled]}
               accessibilityRole="text"
               accessibilityState={{ disabled: true }}
-              accessibilityLabel="Commit message disabled. No staged files."
+              accessibilityLabel={t('commitDisabledA11y')}
             >
-              <Text style={styles.commitInputDisabledText}>No staged files</Text>
+              <Text style={styles.commitInputDisabledText}>{t('noStagedFiles')}</Text>
             </View>
           ) : (
             <TextInput
               style={styles.commitInput}
               value={commitMessage}
               onChangeText={setCommitMessage}
-              placeholder="Commit message"
+              placeholder={t('commitMessagePlaceholder')}
               placeholderTextColor={colors.textMuted}
               editable={busyAction === null && openingPath === null && openingBranchPath === null}
               returnKeyType="done"
@@ -228,11 +231,7 @@ export function MobileSourceControlContent({ state }: Props) {
               onPress={() =>
                 generatingMessage ? cancelGenerateCommitMessage() : void generateCommitMessage()
               }
-              accessibilityLabel={
-                generatingMessage
-                  ? 'Cancel commit message generation'
-                  : 'Generate commit message with AI'
-              }
+              accessibilityLabel={generatingMessage ? t('cancelGenerateA11y') : t('generateA11y')}
             >
               {generatingMessage ? (
                 <ActivityIndicator size="small" color={colors.textSecondary} />

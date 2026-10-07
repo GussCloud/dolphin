@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { resolveMobileTerminalInputGate } from './terminal-input-connection-gate'
 import { buildTerminalSendParams, TERMINAL_INPUT_SEND_OPTIONS } from './terminal-send-request'
 import { readMobileSessionRouteSource } from '../session/mobile-session-route-source-family.test-support'
+import { sessionEn } from '../i18n/catalogs/session/en'
 
 const runtimeSource = readMobileSessionRouteSource(
   '../session/use-mobile-session-terminal-runtime.ts'
@@ -108,8 +109,9 @@ describe('session route offline-compose wiring', () => {
     const sendButton = sourceSlice(
       commandDockSource,
       'styles.sendButton,',
-      'accessibilityLabel="Send command"'
+      "accessibilityLabel={t('sendCommand')}"
     )
+    expect(sessionEn.sendCommand).toBe('Send command')
     expect(sendButton).toContain('disabled={!canSend}')
   })
 

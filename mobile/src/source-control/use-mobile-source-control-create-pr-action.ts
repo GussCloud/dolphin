@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { buildMobileCreatePrAction } from './mobile-create-pr-action'
 import { useMobileHostedReviewEligibility } from './use-mobile-hosted-review-eligibility'
 import type { MobileGitStatusResult } from './mobile-git-status'
+import { useMobileLocale } from '../i18n/use-mobile-translation'
 
 type Params = {
   client: Parameters<typeof useMobileHostedReviewEligibility>[0]['client']
@@ -37,6 +38,8 @@ export function useMobileSourceControlCreatePrAction({
     hasUncommittedChanges
   })
 
+  // Why: the builder translates its labels, so a language change must rebuild them.
+  const locale = useMobileLocale()
   return useMemo(
     () =>
       buildMobileCreatePrAction({
@@ -45,6 +48,6 @@ export function useMobileSourceControlCreatePrAction({
         busyAction,
         onCreatePr: createPr
       }),
-    [busyAction, createPr, eligibilityState, status?.branch]
+    [busyAction, createPr, eligibilityState, locale, status?.branch]
   )
 }

@@ -3,6 +3,7 @@ import type {
   MobileGitBranchCompareReply,
   MobileGitBranchCompareSummary
 } from './git-compare-reply-schema'
+import { sourceControlText } from './source-control-text'
 
 // The shapes mobile reads off the compare replies are the reply schemas' outputs, not the desktop
 // aggregates: a member with no reader in mobile/ is stripped rather than re-declared here.
@@ -39,11 +40,11 @@ export function formatMobileBranchCompareSummary(
   if (summary.status !== 'ready') {
     return summary.errorMessage ?? null
   }
-  const parts = [`${summary.changedFiles} ${summary.changedFiles === 1 ? 'file' : 'files'}`]
+  const parts = [sourceControlText('branchSummaryFiles', { count: summary.changedFiles })]
   if (summary.commitsAhead !== undefined) {
-    parts.push(`${summary.commitsAhead} ${summary.commitsAhead === 1 ? 'commit' : 'commits'}`)
+    parts.push(sourceControlText('branchSummaryCommits', { count: summary.commitsAhead }))
   }
-  parts.push(`vs ${summary.baseRef}`)
+  parts.push(sourceControlText('branchSummaryVs', { base: summary.baseRef }))
   return parts.join(' - ')
 }
 

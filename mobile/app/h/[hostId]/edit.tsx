@@ -19,6 +19,9 @@ import { displayHostEndpoint } from '../../../src/transport/host-endpoint'
 import { resolveHostEndpointEdit } from '../../../src/transport/host-endpoint-edit'
 import { usePrimeHosts, useRefreshHostClient } from '../../../src/transport/client-context'
 import type { HostProfile } from '../../../src/transport/types'
+import { hostRoutesCatalog } from '../../../src/i18n/catalogs/host-routes'
+import { translate } from '../../../src/i18n/mobile-locale-state'
+import { useMobileTranslation } from '../../../src/i18n/use-mobile-translation'
 
 export default function EditHostScreen() {
   const router = useRouter()
@@ -26,6 +29,7 @@ export default function EditHostScreen() {
   const { hostId } = useLocalSearchParams<{ hostId: string }>()
   const primeHosts = usePrimeHosts()
   const refreshHostClient = useRefreshHostClient()
+  const t = useMobileTranslation(hostRoutesCatalog)
 
   const [host, setHost] = useState<HostProfile | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -39,14 +43,14 @@ export default function EditHostScreen() {
 
   const load = useCallback(async () => {
     if (!hostId) {
-      setLoadError('Missing host.')
+      setLoadError(translate(hostRoutesCatalog, 'missingHost'))
       return
     }
     try {
       const hosts = await loadHosts()
       const found = hosts.find((h) => h.id === hostId) ?? null
       if (!found) {
-        setLoadError('This host was removed from this phone.')
+        setLoadError(translate(hostRoutesCatalog, 'hostRemoved'))
         setHost(null)
         return
       }
@@ -56,7 +60,9 @@ export default function EditHostScreen() {
       setAddress(displayHostEndpoint(found.endpoint))
       setLoadError(null)
     } catch (err) {
-      setLoadError(err instanceof Error ? err.message : 'Failed to load host.')
+      setLoadError(
+        err instanceof Error ? err.message : translate(hostRoutesCatalog, 'failedToLoadHost')
+      )
       setHost(null)
     }
   }, [hostId])
@@ -109,7 +115,7 @@ export default function EditHostScreen() {
         ...(nextEndpoint !== undefined ? { endpoint: nextEndpoint } : {})
       })
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save host.')
+      setSaveError(err instanceof Error ? err.message : t('failedToSaveHost'))
       savingRef.current = false
       setSaving(false)
       return
@@ -142,11 +148,11 @@ export default function EditHostScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel={t('back')}
         >
           <ChevronLeft size={22} color={colors.textSecondary} />
         </Pressable>
-        <Text style={styles.heading}>Edit host</Text>
+        <Text style={styles.heading}>{t('editHost')}</Text>
         <Pressable
           style={({ pressed }) => [
             styles.saveButton,
@@ -155,12 +161,12 @@ export default function EditHostScreen() {
           onPress={() => void handleSave()}
           disabled={!canSave}
           accessibilityRole="button"
-          accessibilityLabel="Save host"
+          accessibilityLabel={t('saveHostA11y')}
         >
           {saving ? (
             <ActivityIndicator size="small" color={colors.bgBase} />
           ) : (
-            <Text style={styles.saveButtonText}>Save</Text>
+            <Text style={styles.saveButtonText}>{t('save')}</Text>
           )}
         </Pressable>
       </View>
@@ -169,7 +175,7 @@ export default function EditHostScreen() {
         <View style={styles.errorState}>
           <Text style={styles.errorText}>{loadError}</Text>
           <Pressable style={styles.secondaryButton} onPress={() => router.back()}>
-            <Text style={styles.secondaryButtonText}>Go back</Text>
+            <Text style={styles.secondaryButtonText}>{t('goBack')}</Text>
           </Pressable>
         </View>
       ) : !host ? (
@@ -185,33 +191,28 @@ export default function EditHostScreen() {
             contentContainerStyle={[styles.form, { paddingBottom: insets.bottom + spacing.xl }]}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.help}>
-              Change the display name or connection address. Leave the name empty to use the name
-              the desktop reports. Address edits only switch where this phone connects — they do not
-              re-pair. Use this when the same desktop is reachable at a different IP (for example
-              home LAN vs Tailscale).
-            </Text>
+            <Text style={styles.help}>{t('editHelp')}</Text>
 
-            <Text style={styles.label}>Name</Text>
+            <Text style={styles.label}>{t('name')}</Text>
             <TextInput
               style={styles.input}
-              accessibilityLabel="Name"
+              accessibilityLabel={t('name')}
               value={name}
               onChangeText={(value) => {
                 setName(value)
                 setSaveError(null)
               }}
-              placeholder={host.lastKnownMachineName ?? 'Host name'}
+              placeholder={host.lastKnownMachineName ?? t('hostNamePlaceholder')}
               placeholderTextColor={colors.textMuted}
               autoCapitalize="words"
               autoCorrect={false}
               returnKeyType="next"
             />
 
-            <Text style={styles.label}>Address</Text>
+            <Text style={styles.label}>{t('address')}</Text>
             <TextInput
               style={styles.input}
-              accessibilityLabel="Address"
+              accessibilityLabel={t('address')}
               value={address}
               onChangeText={(value) => {
                 setAddress(value)
@@ -230,14 +231,11 @@ export default function EditHostScreen() {
                 }
               }}
             />
-            <Text style={styles.hint}>
-              Accepts IP, host:port, or ws:// / wss://. Missing port defaults to the current port
-              (or 6768).
-            </Text>
+            <Text style={styles.hint}>{t('addressHint')}</Text>
 
             {endpointEdit == null ? null : endpointEdit.kind !== 'invalid' ? (
               <Text style={styles.preview} numberOfLines={2}>
-                Connects to {endpointEdit.endpoint}
+                {t('connectsTo', { endpoint: endpointEdit.endpoint })}
               </Text>
             ) : address.trim().length > 0 ? (
               <Text style={styles.previewError}>{endpointEdit.error}</Text>
