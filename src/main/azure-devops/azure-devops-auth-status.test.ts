@@ -7,12 +7,14 @@ const mocks = vi.hoisted(() => ({
   cliStatus: vi.fn(),
   token: vi.fn(),
   expiresAt: vi.fn(),
-  forget: vi.fn()
+  forget: vi.fn(),
+  canOpenBrowser: vi.fn()
 }))
 
 vi.mock('./azure-devops-auth-preference-store', () => ({
   getAzureDevOpsAuthPreference: mocks.preference
 }))
+vi.mock('./azure-cli-session-renewal', () => ({ hostCanOpenSignInBrowser: mocks.canOpenBrowser }))
 vi.mock('./azure-cli-status', () => ({ getAzureCliStatus: mocks.cliStatus }))
 vi.mock('./azure-cli-access-token', () => ({ getAzureCliAccessToken: mocks.token }))
 vi.mock('./azure-cli-session-store', () => ({
@@ -38,6 +40,7 @@ describe('getAzureDevOpsAuthStatus in azure-cli mode', () => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.preference.mockReturnValue({ method: 'azure-cli', autoRenewCliSession: true })
     mocks.expiresAt.mockReturnValue(null)
+    mocks.canOpenBrowser.mockReturnValue(true)
   })
 
   it('reports the saved token validity and the auto-renew choice', async () => {
@@ -47,8 +50,18 @@ describe('getAzureDevOpsAuthStatus in azure-cli mode', () => {
 
     const status = await getAzureDevOpsAuthStatus()
     expect(status.autoRenewCliSession).toBe(true)
+    expect(status.autoRenewCliSessionAvailable).toBe(true)
     expect(status.azureCli?.tokenExpiresAt).toBe(1_900_000_000_000)
     expect(mocks.forget).not.toHaveBeenCalled()
+  })
+
+  it('reports auto-renew as unavailable on a host without a display', async () => {
+    mocks.cliStatus.mockResolvedValue({ ...signedIn, defaultOrganization: null })
+    mocks.token.mockResolvedValue('entra-token')
+    mocks.canOpenBrowser.mockReturnValue(false)
+
+    const status = await getAzureDevOpsAuthStatus()
+    expect(status.autoRenewCliSessionAvailable).toBe(false)
   })
 
   it('forgets the session after the user signs out of the CLI', async () => {

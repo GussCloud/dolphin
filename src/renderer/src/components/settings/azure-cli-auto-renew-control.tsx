@@ -33,12 +33,14 @@ export function azureCliTokenValidityMessage(
 
 export function AzureCliAutoRenewControl(props: {
   enabled: boolean
+  // False when the host has no display for the browser sign-in, so renewal never runs.
+  available: boolean
   tokenExpiresAt: number | null | undefined
   onChanged: () => void
 }): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const [pending, setPending] = useState<boolean | null>(null)
-  const checked = pending ?? props.enabled
+  const checked = props.available && (pending ?? props.enabled)
   // Why lazy state: render must stay pure; a stale clock only delays the "expired" wording.
   const [nowMs] = useState(Date.now)
   const validity = azureCliTokenValidityMessage(props.tokenExpiresAt, nowMs)
@@ -65,7 +67,7 @@ export function AzureCliAutoRenewControl(props: {
       <label className="flex items-start gap-2 text-xs">
         <Checkbox
           checked={checked}
-          disabled={pending !== null}
+          disabled={!props.available || pending !== null}
           onCheckedChange={(value) => change(value === true)}
         />
         <span className="space-y-0.5">
@@ -76,10 +78,15 @@ export function AzureCliAutoRenewControl(props: {
             )}
           </span>
           <span className="block text-muted-foreground">
-            {translate(
-              'auto.components.settings.azureCliAutoRenewControl.help',
-              'Dolphin runs az login in the background when the sign-in expires; confirm it in the browser window that opens.'
-            )}
+            {props.available
+              ? translate(
+                  'auto.components.settings.azureCliAutoRenewControl.help',
+                  'Dolphin runs az login in the background when the sign-in expires; confirm it in the browser window that opens.'
+                )
+              : translate(
+                  'auto.components.settings.azureCliAutoRenewControl.unavailableHelp',
+                  'Not available on this host: it has no display to open the browser sign-in. Run az login on the host when the sign-in expires.'
+                )}
           </span>
         </span>
       </label>
