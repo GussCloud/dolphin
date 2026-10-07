@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  HOST_ROUTE_NOTICES,
   hostRouteNoticeMessage,
   hostRouteWithNotice,
   visibleHostRouteNotice
@@ -8,7 +7,9 @@ import {
 
 describe('hostRouteNoticeMessage', () => {
   it('maps a known code to its banner text', () => {
-    expect(hostRouteNoticeMessage('worktree-missing')).toBe(HOST_ROUTE_NOTICES['worktree-missing'])
+    expect(hostRouteNoticeMessage('worktree-missing')).toBe(
+      'That workspace no longer exists on this host.'
+    )
   })
 
   it('renders nothing for absent or unrecognized codes', () => {
@@ -35,7 +36,7 @@ describe('hostRouteWithNotice', () => {
 })
 
 describe('visibleHostRouteNotice', () => {
-  const message = HOST_ROUTE_NOTICES['worktree-missing']
+  const message = 'That workspace no longer exists on this host.'
 
   it('shows a notice the user has not dismissed', () => {
     expect(visibleHostRouteNotice(false, 'worktree-missing', null)).toBe(message)

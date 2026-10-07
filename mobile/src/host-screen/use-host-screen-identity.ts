@@ -5,6 +5,8 @@ import { loadHosts, updateLastConnected } from '../transport/host-store'
 import type { RpcClient } from '../transport/rpc-client'
 import type { Worktree } from '../worktree/workspace-list-sections'
 import type { HostScreenState } from './use-host-screen-state'
+import { hostScreenCatalog } from '../i18n/catalogs/host-screen'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useHostScreenIdentity(args: {
   client: RpcClient | null
@@ -85,7 +87,7 @@ export function useHostScreenIdentity(args: {
       }
       const host = hosts.find((h) => h.id === hostId)
       if (!host) {
-        setError('Host not found')
+        setError(translate(hostScreenCatalog, 'hostNotFound'))
         return
       }
       setHostName(host.name)

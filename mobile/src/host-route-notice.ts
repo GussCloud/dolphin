@@ -1,8 +1,12 @@
+import { hostRoutesActionsCatalog } from './i18n/catalogs/host-routes-actions'
+import { translate } from './i18n/mobile-locale-state'
+
 // Why a route param rather than a toast: the screen that learns the bad news (the session)
 // unmounts as it bounces, so the message has to travel with the navigation to survive.
 
+// Values are catalog keys, translated when the banner is drawn.
 export const HOST_ROUTE_NOTICES = {
-  'worktree-missing': 'That workspace no longer exists on this host.'
+  'worktree-missing': 'noticeWorktreeMissing'
 } as const
 
 export type HostRouteNotice = keyof typeof HOST_ROUTE_NOTICES
@@ -15,7 +19,7 @@ export function hostRouteNoticeMessage(notice: string | undefined): string | nul
   if (!notice || !Object.hasOwn(HOST_ROUTE_NOTICES, notice)) {
     return null
   }
-  return HOST_ROUTE_NOTICES[notice as HostRouteNotice]
+  return translate(hostRoutesActionsCatalog, HOST_ROUTE_NOTICES[notice as HostRouteNotice])
 }
 
 export function hostRouteWithNotice(hostId: string, notice: HostRouteNotice): string {

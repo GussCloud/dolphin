@@ -29,6 +29,8 @@ import { MobileBrowserPaneView } from './MobileBrowserPaneView'
 import { useMobileBrowserInteractions } from './use-mobile-browser-interactions'
 import { useMobileBrowserStream } from './use-mobile-browser-stream'
 import { useBrowserBinaryScreencastGrant } from './use-browser-binary-screencast-grant'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type MobileBrowserTab = {
   type: 'browser'
@@ -220,7 +222,7 @@ export function MobileBrowserPane({
   const navigateToAddress = useCallback(async () => {
     const url = normalizeBrowserUrl(addressValue)
     if (!url) {
-      setError('Enter a valid URL.')
+      setError(translate(browserCatalog, 'invalidUrl'))
       return
     }
     const settled = await sendBrowserRequest(

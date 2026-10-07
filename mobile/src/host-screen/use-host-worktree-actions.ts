@@ -13,6 +13,8 @@ import { getWorktreeRowIdentity, removeWorktreeRow } from '../worktree/worktree-
 import { isWorktreePinned, type Worktree } from '../worktree/workspace-list-sections'
 import { worktreeActivate, worktreePinWrite, worktreeRemove } from './host-screen-operations'
 import type { HostScreenState } from './use-host-screen-state'
+import { hostScreenCatalog } from '../i18n/catalogs/host-screen'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useHostWorktreeActions(args: {
   client: RpcClient | null
@@ -162,7 +164,7 @@ export function useHostWorktreeActions(args: {
       // this failure had no surface at all. And not the identity error either: that one is an
       // early return over the whole screen with nothing to dismiss it, so a removal that failed
       // once would cost the list, the header and the confirm this line is asking to re-open.
-      setActionError('Could not remove host. Please try again.')
+      setActionError(translate(hostScreenCatalog, 'removeHostError'))
     }
   }, [hostId, leaveHost, forgetHostClient, setActionError, setConfirmRemoveHost])
 

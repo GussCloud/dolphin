@@ -1,5 +1,7 @@
 import { compareAppVersions } from '../../../src/shared/app-version'
 import type { DesktopUpdaterSnapshot } from './desktop-update-reply-schema'
+import { desktopUpdateCatalog } from '../i18n/catalogs/desktop-update'
+import { translate } from '../i18n/mobile-locale-state'
 
 /** What the desktop's own updater holds that this phone may finish for it. */
 export type DesktopUpdateOffer =
@@ -59,24 +61,50 @@ export function desktopUpdateTag(
   }
   switch (current.phase) {
     case 'available':
-      return { label: 'Update available', tone: 'accent', actionable: true }
+      return {
+        label: translate(desktopUpdateCatalog, 'tagAvailable'),
+        tone: 'accent',
+        actionable: true
+      }
     case 'ready':
-      return { label: 'Update ready', tone: 'accent', actionable: true }
+      return {
+        label: translate(desktopUpdateCatalog, 'tagReady'),
+        tone: 'accent',
+        actionable: true
+      }
     case 'manual':
-      return { label: 'Update available · Install on desktop', tone: 'accent', actionable: false }
+      return {
+        label: translate(desktopUpdateCatalog, 'tagManual'),
+        tone: 'accent',
+        actionable: false
+      }
     case 'starting':
-      return { label: 'Starting update…', tone: 'progress', actionable: false }
+      return {
+        label: translate(desktopUpdateCatalog, 'tagStarting'),
+        tone: 'progress',
+        actionable: false
+      }
     case 'downloading':
       return {
-        label: `Downloading ${Math.round(current.percent)}%`,
+        label: translate(desktopUpdateCatalog, 'tagDownloading', {
+          percent: Math.round(current.percent)
+        }),
         tone: 'progress',
         // Why: a download the desktop started on its own can still be finished from here.
         actionable: run === null
       }
     case 'installing':
-      return { label: 'Restarting desktop…', tone: 'progress', actionable: false }
+      return {
+        label: translate(desktopUpdateCatalog, 'tagInstalling'),
+        tone: 'progress',
+        actionable: false
+      }
     case 'failed':
-      return { label: 'Update failed · Retry', tone: 'error', actionable: true }
+      return {
+        label: translate(desktopUpdateCatalog, 'tagFailed'),
+        tone: 'error',
+        actionable: true
+      }
   }
 }
 
@@ -86,14 +114,12 @@ export function desktopUpdateConfirmMessage(
   run: DesktopUpdateRun | null
 ): string {
   const version = run?.version || offer?.version
-  const target = version ? `Dolphin ${version}` : 'the latest Dolphin'
-  const failure =
-    run?.phase === 'failed'
-      ? `Last attempt failed: ${run.message}
-
-`
-      : ''
-  return `${failure}Install ${target} on "${hostName}"? Dolphin will restart on that desktop.`
+  const question = version
+    ? translate(desktopUpdateCatalog, 'confirmInstallVersion', { version, hostName })
+    : translate(desktopUpdateCatalog, 'confirmInstallLatest', { hostName })
+  return run?.phase === 'failed'
+    ? `${translate(desktopUpdateCatalog, 'confirmLastAttemptFailed', { message: run.message })}\n\n${question}`
+    : question
 }
 
 /** A relaunch on an older version than the install promised is a failed install, not success. */
@@ -107,7 +133,10 @@ export function settleInstalledDesktopUpdate(
   return {
     phase: 'failed',
     version: targetVersion,
-    message: `The desktop restarted on ${snapshot.appVersion}; ${targetVersion} was not installed.`
+    message: translate(desktopUpdateCatalog, 'errorRestartedOnOlder', {
+      installedVersion: snapshot.appVersion,
+      targetVersion
+    })
   }
 }
 
@@ -115,13 +144,13 @@ export function desktopUpdateErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error)
   switch (message) {
     case 'remote_update_manual_required':
-      return 'This desktop must be updated manually.'
+      return translate(desktopUpdateCatalog, 'errorManualRequired')
     case 'remote_update_not_available':
-      return 'The desktop no longer reports an available update.'
+      return translate(desktopUpdateCatalog, 'errorNotAvailable')
     case 'remote_update_not_downloaded':
-      return 'The update has not finished downloading on the desktop.'
+      return translate(desktopUpdateCatalog, 'errorNotDownloaded')
     case 'remote_update_updater_timeout':
-      return 'Timed out waiting for the desktop updater.'
+      return translate(desktopUpdateCatalog, 'errorUpdaterTimeout')
     default:
       return message
   }

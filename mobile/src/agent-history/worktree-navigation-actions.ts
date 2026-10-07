@@ -3,6 +3,8 @@ import type { ActionSheetAction } from '../components/ActionSheetModal'
 import { colors } from '../theme/mobile-theme'
 import { MOBILE_AI_VAULT_CAPABILITY } from './agent-history-capability'
 import { MobileAgentSessionHistoryIcon } from './MobileAgentSessionHistoryIcon'
+import { agentHistoryCatalog } from '../i18n/catalogs/agent-history'
+import { translate } from '../i18n/mobile-locale-state'
 
 type Args = {
   hostId: string
@@ -21,7 +23,7 @@ type Args = {
 export function buildWorktreeNavigationActions(args: Args): ActionSheetAction[] {
   const actions: ActionSheetAction[] = [
     {
-      label: 'Source Control',
+      label: translate(agentHistoryCatalog, 'sourceControl'),
       icon: GitBranch,
       onPress: () => {
         const params = new URLSearchParams({ name: args.worktreeName, origin: 'host' })
@@ -34,7 +36,7 @@ export function buildWorktreeNavigationActions(args: Args): ActionSheetAction[] 
   ]
   if (args.hostCapabilities.includes(MOBILE_AI_VAULT_CAPABILITY)) {
     actions.push({
-      label: 'Agent Session History',
+      label: translate(agentHistoryCatalog, 'title'),
       renderIcon: () =>
         MobileAgentSessionHistoryIcon({ size: 16, color: colors.textSecondary, strokeWidth: 2 }),
       onPress: () => {

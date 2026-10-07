@@ -2,8 +2,11 @@ import { Settings } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { DolphinLogo } from '../components/DolphinLogo'
 import { colors, spacing } from '../theme/mobile-theme'
+import { homeCatalog } from '../i18n/catalogs/home'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileHomeTopBar({ onOpenSettings }: { onOpenSettings: () => void }) {
+  const t = useMobileTranslation(homeCatalog)
   return (
     <View style={styles.topBar}>
       <View style={styles.brandLockup}>
@@ -14,6 +17,8 @@ export function MobileHomeTopBar({ onOpenSettings }: { onOpenSettings: () => voi
       </View>
       <Pressable
         style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
+        accessibilityRole="button"
+        accessibilityLabel={t('openSettings')}
         onPress={onOpenSettings}
       >
         <Settings size={18} color={colors.textSecondary} />

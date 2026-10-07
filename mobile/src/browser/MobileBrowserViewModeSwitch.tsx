@@ -2,6 +2,8 @@ import { Pressable, StyleSheet, View } from 'react-native'
 import { Monitor, Smartphone, type LucideIcon } from 'lucide-react-native'
 import { colors, radii } from '../theme/mobile-theme'
 import type { MobileBrowserViewMode } from './browser-screencast-request'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   disabled: boolean
@@ -9,23 +11,24 @@ type Props = {
   onChange: (mode: MobileBrowserViewMode) => void
 }
 
-const VIEW_MODES: { id: MobileBrowserViewMode; label: string; icon: LucideIcon }[] = [
-  { id: 'web', label: 'Web', icon: Monitor },
-  { id: 'mobile', label: 'Mobile', icon: Smartphone }
-]
+const VIEW_MODES = [
+  { id: 'web', a11yKey: 'showWebView', icon: Monitor },
+  { id: 'mobile', a11yKey: 'showMobileView', icon: Smartphone }
+] as const satisfies readonly { id: MobileBrowserViewMode; a11yKey: string; icon: LucideIcon }[]
 
 export function MobileBrowserViewModeSwitch({
   disabled,
   value,
   onChange
 }: Props): React.JSX.Element {
+  const t = useMobileTranslation(browserCatalog)
   return (
     <View style={styles.switch}>
       {VIEW_MODES.map((mode) => (
         <ViewModeButton
           key={mode.id}
           Icon={mode.icon}
-          label={mode.label}
+          label={t(mode.a11yKey)}
           selected={value === mode.id}
           disabled={disabled}
           onPress={() => onChange(mode.id)}
@@ -60,7 +63,7 @@ function ViewModeButton({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
-      accessibilityLabel={`Show ${label.toLowerCase()} website view`}
+      accessibilityLabel={label}
     >
       <Icon size={14} color={selected ? colors.bgBase : colors.textSecondary} />
     </Pressable>

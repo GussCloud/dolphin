@@ -15,6 +15,7 @@ import type { ConnectionState, HostCatalogEntry } from '../transport/types'
 import type { HostWorktreeInfo } from '../worktree/home-worktree-info'
 import type { HomeHostConnections } from './home-host-connection-projection'
 import { MobileHomeListHeader } from './MobileHomeListHeader'
+import { useMobileLocale } from '../i18n/use-mobile-translation'
 
 type MobileHomeHostListProps = {
   autoConnectHostIds: string[]
@@ -113,6 +114,8 @@ type MobileHomeHostRowProps = Pick<
 
 const MobileHomeHostRow = memo(function MobileHomeHostRow(props: MobileHomeHostRowProps) {
   const { item, onLongPress, onOpen, onOpenActions, onPressUpdate } = props
+  // Why: re-render the memoized row so the update tag follows a language change.
+  useMobileLocale()
   const state = resolveHomeHostConnectionState(
     item.id,
     props.hostStates[item.id],

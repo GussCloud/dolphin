@@ -1,6 +1,8 @@
 import { StyleSheet, Switch, Text, View } from 'react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import type { NotificationDeliveryPreferences } from './notification-delivery-preferences'
+import { notificationsCatalog } from '../i18n/catalogs/notifications'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 type Props = {
   value: NotificationDeliveryPreferences
@@ -9,6 +11,7 @@ type Props = {
 }
 
 export function NotificationDeliverySection({ value, disabled, onChange }: Props) {
+  const t = useMobileTranslation(notificationsCatalog)
   const row = (key: keyof NotificationDeliveryPreferences, label: string, hint?: string) => {
     return (
       <View key={key} style={[styles.row, disabled && styles.disabled]}>
@@ -31,22 +34,11 @@ export function NotificationDeliverySection({ value, disabled, onChange }: Props
   return (
     <>
       <View style={styles.section}>
-        {row(
-          'onlyWhenDesktopAway',
-          'Only when away from desktop',
-          'After 3 minutes without keyboard or mouse activity, or when locked.'
-        )}
-        {row('sound', 'Notification sound')}
-        {row(
-          'suppressWhileViewing',
-          'Suppress while focused',
-          'Skip alerts for the workspace open on this phone.'
-        )}
+        {row('onlyWhenDesktopAway', t('onlyWhenAway'), t('onlyWhenAwayHint'))}
+        {row('sound', t('sound'))}
+        {row('suppressWhileViewing', t('suppressWhileFocused'), t('suppressWhileFocusedHint'))}
       </View>
-      <Text style={styles.footer}>
-        Alert types follow each paired desktop’s notification settings. Notifications pause after 7
-        days without using this app; open it and reconnect to resume.
-      </Text>
+      <Text style={styles.footer}>{t('footer')}</Text>
     </>
   )
 }

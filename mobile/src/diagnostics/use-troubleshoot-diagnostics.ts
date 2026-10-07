@@ -8,6 +8,8 @@ import {
 } from './diagnostic-fetch-timeout'
 import { formatEndpoint, testHostReachability, unreachableHostDetail } from './host-reachability'
 import type { CheckResult, DiagnosticStatus } from './troubleshoot-view'
+import { diagnosticsCatalog } from '../i18n/catalogs/diagnostics'
+import { translate } from '../i18n/mobile-locale-state'
 
 export function useTroubleshootDiagnostics() {
   const [diagnosticStatus, setDiagnosticStatus] = useState<DiagnosticStatus>('idle')
@@ -44,11 +46,23 @@ export function useTroubleshootDiagnostics() {
       const hosts = await loadHosts()
       results.push(
         hosts.length > 0
-          ? { label: 'Paired hosts', status: 'pass', detail: `${hosts.length} paired` }
-          : { label: 'Paired hosts', status: 'fail', detail: 'None — scan a QR to pair' }
+          ? {
+              label: translate(diagnosticsCatalog, 'checkPairedHosts'),
+              status: 'pass',
+              detail: translate(diagnosticsCatalog, 'checkPairedCount', { count: hosts.length })
+            }
+          : {
+              label: translate(diagnosticsCatalog, 'checkPairedHosts'),
+              status: 'fail',
+              detail: translate(diagnosticsCatalog, 'checkPairedNone')
+            }
       )
     } catch {
-      results.push({ label: 'Paired hosts', status: 'warn', detail: 'Could not read host data' })
+      results.push({
+        label: translate(diagnosticsCatalog, 'checkPairedHosts'),
+        status: 'warn',
+        detail: translate(diagnosticsCatalog, 'checkPairedReadError')
+      })
     }
 
     if (!isCurrentRun()) {
@@ -67,14 +81,26 @@ export function useTroubleshootDiagnostics() {
       }
       results.push(
         resp.ok
-          ? { label: 'Internet', status: 'pass', detail: 'Connected' }
-          : { label: 'Internet', status: 'warn', detail: 'Unexpected response' }
+          ? {
+              label: translate(diagnosticsCatalog, 'checkInternet'),
+              status: 'pass',
+              detail: translate(diagnosticsCatalog, 'checkInternetConnected')
+            }
+          : {
+              label: translate(diagnosticsCatalog, 'checkInternet'),
+              status: 'warn',
+              detail: translate(diagnosticsCatalog, 'checkInternetUnexpected')
+            }
       )
     } catch {
       if (!isCurrentRun()) {
         return
       }
-      results.push({ label: 'Internet', status: 'fail', detail: 'No connection' })
+      results.push({
+        label: translate(diagnosticsCatalog, 'checkInternet'),
+        status: 'fail',
+        detail: translate(diagnosticsCatalog, 'checkInternetNone')
+      })
     } finally {
       internetCheck.dispose()
       if (activeInternetCheckRef.current === internetCheck) {
@@ -101,13 +127,19 @@ export function useTroubleshootDiagnostics() {
           label: host.name,
           status: reachable ? 'pass' : 'fail',
           detail: reachable
-            ? `Reachable at ${formatEndpoint(host.endpoint)}`
+            ? translate(diagnosticsCatalog, 'checkReachableAt', {
+                endpoint: formatEndpoint(host.endpoint)
+              })
             : unreachableHostDetail(host.endpoint)
         })
         setChecks([...results])
       }
     } catch {
-      results.push({ label: 'Hosts', status: 'warn', detail: 'Could not test' })
+      results.push({
+        label: translate(diagnosticsCatalog, 'checkHosts'),
+        status: 'warn',
+        detail: translate(diagnosticsCatalog, 'checkHostsError')
+      })
     }
 
     if (!isCurrentRun()) {
@@ -115,7 +147,7 @@ export function useTroubleshootDiagnostics() {
     }
 
     results.push({
-      label: 'Platform',
+      label: translate(diagnosticsCatalog, 'checkPlatform'),
       status: 'pass',
       detail: `${Platform.OS} ${Platform.Version ?? ''}`
     })

@@ -1,6 +1,8 @@
 import type { AgentSubagentState } from '../../../src/shared/agent-status-types'
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
 import { AGENT_STATUS_STALE_AFTER_MS, type AgentDotState } from './agent-row-display'
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { translate } from '../i18n/mobile-locale-state'
 
 /** A live in-process teammate/subagent of a pane, shown as a child row under its leader. */
 export type AgentRowSubagent = {
@@ -54,7 +56,7 @@ export function readAgentRowSubagents(
     const effective = !parentFresh && state !== 'idle' ? 'unverifiable' : state
     out.push({
       id,
-      name: subagent.name ?? 'Teammate',
+      name: subagent.name ?? translate(worktreeCatalog, 'teammate'),
       dotState: effective === 'unverifiable' ? 'idle' : effective,
       stateLabel: subagentStateLabel(effective),
       startedAt: startedAt ?? row.stateStartedAt
@@ -93,15 +95,15 @@ function parseSubagentEntry(entry: unknown): ParsedSubagentEntry | null {
 function subagentStateLabel(state: AgentSubagentState): string {
   switch (state) {
     case 'working':
-      return 'Working'
+      return translate(worktreeCatalog, 'agentWorking')
     case 'blocked':
-      return 'Blocked'
+      return translate(worktreeCatalog, 'agentBlocked')
     case 'waiting':
-      return 'Waiting for input'
+      return translate(worktreeCatalog, 'agentWaiting')
     case 'idle':
-      return 'Idle'
+      return translate(worktreeCatalog, 'agentIdle')
     case 'unverifiable':
-      return 'Unverifiable'
+      return translate(worktreeCatalog, 'agentUnverifiable')
   }
 }
 

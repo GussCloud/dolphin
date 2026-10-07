@@ -33,8 +33,11 @@ import { MobileHomeHostList } from './MobileHomeHostList'
 import { MobileHomeListFooter } from './MobileHomeListFooter'
 import { MobileHomeTopBar } from './MobileHomeTopBar'
 import { useMobileHomeData } from './use-mobile-home-data'
+import { homeCatalog } from '../i18n/catalogs/home'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export function MobileHomeScreen() {
+  const t = useMobileTranslation(homeCatalog)
   const data = useMobileHomeData()
   const insets = useSafeAreaInsets()
   const { isWideLayout, contentMaxWidth } = useResponsiveLayout()
@@ -84,7 +87,7 @@ export function MobileHomeScreen() {
     } else if (host.credentialStatus === 'temporarily-unavailable') {
       void loadHostCatalog()
         .then(data.setHostCatalog)
-        .catch(() => Alert.alert('Could not check pairing', 'Please try again.'))
+        .catch(() => Alert.alert(t('checkPairingErrorTitle'), t('pleaseTryAgain')))
     } else {
       data.router.push(`/h/${host.id}`)
     }
@@ -109,7 +112,7 @@ export function MobileHomeScreen() {
       data.setHostCatalog(await loadHostCatalog())
     } catch {
       setConfirmRemove(host)
-      Alert.alert('Could not remove host', 'Please try again.')
+      Alert.alert(t('removeHostErrorTitle'), t('pleaseTryAgain'))
     }
   }
 
@@ -189,16 +192,16 @@ export function MobileHomeScreen() {
       />
       <ConfirmModal
         visible={confirmRemove != null}
-        title="Remove Host"
-        message={`Remove "${confirmRemove?.name}"? You can re-pair later.`}
-        confirmLabel="Remove"
+        title={t('removeHostTitle')}
+        message={t('removeHostMessage', { name: confirmRemove?.name ?? '' })}
+        confirmLabel={t('remove')}
         destructive
         onConfirm={() => void handleRemove()}
         onCancel={() => setConfirmRemove(null)}
       />
       <ConfirmModal
         visible={confirmUpdate != null}
-        title="Update Desktop"
+        title={t('updateDesktopTitle')}
         message={
           confirmUpdate
             ? desktopUpdateConfirmMessage(
@@ -208,7 +211,7 @@ export function MobileHomeScreen() {
               )
             : undefined
         }
-        confirmLabel="Update"
+        confirmLabel={t('update')}
         onConfirm={() => {
           if (confirmUpdate) {
             data.desktopUpdateRuns.start(confirmUpdate.id)

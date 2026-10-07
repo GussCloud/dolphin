@@ -6,11 +6,13 @@ import {
   getMobileWorkspaceStatusGroupKey
 } from './mobile-workspace-statuses'
 import { applyMobileWorkspaceLineage } from './mobile-workspace-lineage'
-import { getPRGroupKey, PR_GROUP_LABELS, PR_GROUP_ORDER } from './workspace-pr-status-groups'
+import { getPRGroupKey, PR_GROUP_LABEL_KEYS, PR_GROUP_ORDER } from './workspace-pr-status-groups'
 import type { FilterState, Section, Worktree } from './workspace-list-types'
 import type { MobileGroupMode, MobileSortMode } from './workspace-view-settings'
 import { sortWorktrees } from './workspace-list-ordering'
 import { getWorktreeRowIdentity } from './worktree-host-row-identity'
+import { worktreeCatalog } from '../i18n/catalogs/worktree'
+import { translate } from '../i18n/mobile-locale-state'
 
 export type { FilterState, Section, Worktree } from './workspace-list-types'
 export { CREATE_GRACE_MS, getWorktreeStatus, sortWorktrees } from './workspace-list-ordering'
@@ -141,12 +143,20 @@ export function buildSections(
 
   const sections: Section[] = []
   if (pinned.length > 0) {
-    sections.push(makeSection('pinned', 'Pinned', pinned, 'pin'))
+    sections.push(makeSection('pinned', translate(worktreeCatalog, 'sectionPinned'), pinned, 'pin'))
   }
 
   if (groupMode === 'none') {
     if (canonicalGroupWorktrees.length > 0) {
-      sections.push(makeSection('all', 'All', canonicalGroupWorktrees, undefined, collapsedGroups))
+      sections.push(
+        makeSection(
+          'all',
+          translate(worktreeCatalog, 'sectionAll'),
+          canonicalGroupWorktrees,
+          undefined,
+          collapsedGroups
+        )
+      )
     }
   } else if (groupMode === 'repo') {
     const byRepo = new Map<string, Worktree[]>()
@@ -224,7 +234,7 @@ export function buildSections(
         sections.push(
           makeSection(
             `pr:${groupKey}`,
-            PR_GROUP_LABELS[groupKey],
+            translate(worktreeCatalog, PR_GROUP_LABEL_KEYS[groupKey]),
             items,
             undefined,
             collapsedGroups

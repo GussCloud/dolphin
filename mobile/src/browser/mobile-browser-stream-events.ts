@@ -1,6 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { displayBrowserUrl } from './browser-url'
 import { shouldSurfaceBrowserError } from './mobile-browser-frame-state'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { translate } from '../i18n/mobile-locale-state'
 
 /**
  * `error` is set when an answer did not reach the page, which leaves the page still blocked, and
@@ -68,7 +70,7 @@ export function handleBrowserScreencastEvent(args: HandleScreencastEventArgs): v
   } else if (event.type === 'dialog') {
     setDialog({
       dialogType: event.dialogType ?? 'alert',
-      message: event.message ?? 'Browser dialog'
+      message: event.message ?? translate(browserCatalog, 'dialogFallback')
     })
   } else if (event.type === 'dialogClosed') {
     setDialog(null)
@@ -78,7 +80,8 @@ export function handleBrowserScreencastEvent(args: HandleScreencastEventArgs): v
       busyRef.current = false
       setBusy(false)
     }
-    const message = event.message ?? event.error?.message ?? 'Browser stream failed.'
+    const message =
+      event.message ?? event.error?.message ?? translate(browserCatalog, 'streamFailed')
     if (shouldSurfaceBrowserError(message)) {
       setError(message)
     }

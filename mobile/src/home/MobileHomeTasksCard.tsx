@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { TaskProviderLogo } from '../components/TaskProviderLogo'
 import type { TaskProvider } from '../tasks/mobile-task-providers'
 import { colors, radii, spacing } from '../theme/mobile-theme'
+import { homeCatalog } from '../i18n/catalogs/home'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const TASK_PROVIDER_LABELS: Record<TaskProvider, string> = {
   github: 'GitHub',
@@ -15,6 +17,7 @@ export function MobileHomeTasksCard(props: {
   providers: TaskProvider[]
   onOpen: (provider?: TaskProvider) => void
 }) {
+  const t = useMobileTranslation(homeCatalog)
   return (
     <Pressable
       disabled={!props.enabled}
@@ -29,11 +32,11 @@ export function MobileHomeTasksCard(props: {
         <ListTodo size={18} color={colors.textSecondary} />
       </View>
       <View style={styles.main}>
-        <Text style={styles.title}>Tasks</Text>
+        <Text style={styles.title}>{t('tasks')}</Text>
         <Text style={styles.subtitle} numberOfLines={1}>
           {props.providers.length > 0
             ? props.providers.map((provider) => TASK_PROVIDER_LABELS[provider]).join(' · ')
-            : 'No task sources connected'}
+            : t('noTaskSources')}
         </Text>
       </View>
       <View style={styles.trailing}>
@@ -47,7 +50,9 @@ export function MobileHomeTasksCard(props: {
             <Pressable
               key={provider}
               accessibilityRole="button"
-              accessibilityLabel={`Open ${TASK_PROVIDER_LABELS[provider]} tasks`}
+              accessibilityLabel={t('openProviderTasks', {
+                provider: TASK_PROVIDER_LABELS[provider]
+              })}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.providerButton,

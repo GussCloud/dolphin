@@ -2,6 +2,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { hostStackHostRoute } from '../navigation/host-stack-navigation'
 import { useRouteHandoff } from '../navigation/route-handoff'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { mobileWebShellCatalog } from '../i18n/catalogs/mobile-web-shell'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 /**
  * What a host-scoped pathname nothing can paint lands on.
@@ -28,11 +30,12 @@ import { colors, radii, spacing, typography } from '../theme/mobile-theme'
  */
 export function PageRouteUnavailableScreen({ hostId }: { hostId: string }) {
   const router = useRouteHandoff()
+  const t = useMobileTranslation(mobileWebShellCatalog)
   const target = hostId === '' ? '/' : hostStackHostRoute(hostId)
-  const label = hostId === '' ? 'Back to hosts' : 'Back to workspaces'
+  const label = hostId === '' ? t('backToHosts') : t('backToWorkspaces')
   return (
     <View style={styles.root} testID="mobile-web-page-route-unavailable">
-      <Text style={styles.message}>This workspace screen is not available on this host.</Text>
+      <Text style={styles.message}>{t('routeUnavailable')}</Text>
       <Pressable
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}
         accessibilityRole="button"

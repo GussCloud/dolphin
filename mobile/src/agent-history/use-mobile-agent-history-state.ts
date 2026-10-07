@@ -14,6 +14,8 @@ import {
 } from './mobile-agent-history-operations'
 import { interpretOrThrowRefusalMessage } from '../transport/rpc-refusal-message'
 import { MOBILE_AI_VAULT_CAPABILITY } from './agent-history-capability'
+import { agentHistoryCatalog } from '../i18n/catalogs/agent-history'
+import { translate } from '../i18n/mobile-locale-state'
 
 export { MOBILE_AI_VAULT_CAPABILITY }
 
@@ -80,7 +82,9 @@ export function useMobileAgentHistoryState(params: MobileAgentHistoryStateParams
           // (connState flips re-run the load effect) instead of tearing it
           // down to a full-screen error, matching the host list screen.
           setScreenState((prev) =>
-            prev.kind === 'ready' ? prev : { kind: 'error', message: 'Waiting for host…' }
+            prev.kind === 'ready'
+              ? prev
+              : { kind: 'error', message: translate(agentHistoryCatalog, 'waitingForHost') }
           )
         }
         return
@@ -96,7 +100,7 @@ export function useMobileAgentHistoryState(params: MobileAgentHistoryStateParams
         }
         const status = interpretOrThrowRefusalMessage(
           () => agentHistoryHostStatusRead.interpret(statusReply),
-          'Unable to reach host'
+          translate(agentHistoryCatalog, 'hostUnreachable')
         )
         setHostStatusResult(status)
         if (!status.capabilities?.includes(MOBILE_AI_VAULT_CAPABILITY)) {
@@ -126,7 +130,7 @@ export function useMobileAgentHistoryState(params: MobileAgentHistoryStateParams
         }
         const result = interpretOrThrowRefusalMessage(
           () => agentHistorySessionScan.interpret(reply),
-          'Unable to load agent sessions'
+          translate(agentHistoryCatalog, 'sessionsLoadError')
         )
         setScreenState({
           kind: 'ready',
@@ -139,7 +143,8 @@ export function useMobileAgentHistoryState(params: MobileAgentHistoryStateParams
         if (!isCurrent()) {
           return
         }
-        const message = err instanceof Error ? err.message : 'Unable to load agent sessions'
+        const message =
+          err instanceof Error ? err.message : translate(agentHistoryCatalog, 'sessionsLoadError')
         setHostStatusResult(null)
         setScreenState({ kind: 'error', message })
       }

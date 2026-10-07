@@ -27,6 +27,8 @@ import {
 } from './mobile-browser-stream-events'
 import { createBrowserFramePacer } from './browser-frame-pacer'
 import { useMobileBrowserRequest } from './use-mobile-browser-request'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { translate } from '../i18n/mobile-locale-state'
 
 type MobileBrowserStreamArgs = {
   binaryScreencastGranted: boolean
@@ -171,13 +173,13 @@ export function useMobileBrowserStream(args: MobileBrowserStreamArgs) {
       if (!binaryScreencastGranted) {
         // Before the desktop's answer, because this one is about the app in the user's hand and no
         // desktop update can change it.
-        setError('Update the Dolphin app to stream browser tabs here.')
+        setError(translate(browserCatalog, 'updateAppForStreaming'))
       } else if (screencastSupported === false) {
-        setError('Update desktop Dolphin to stream browser tabs on mobile.')
+        setError(translate(browserCatalog, 'updateDesktopForStreaming'))
       } else if (screencastSupported === null) {
-        setError('Checking desktop browser streaming support.')
+        setError(translate(browserCatalog, 'checkingStreamingSupport'))
       } else if (!tab.browserPageId) {
-        setError('Browser page is not available yet.')
+        setError(translate(browserCatalog, 'pageNotAvailable'))
       }
       return
     }
@@ -189,7 +191,7 @@ export function useMobileBrowserStream(args: MobileBrowserStreamArgs) {
       }
       busyRef.current = false
       setBusy(false)
-      setError('Browser stream timed out.')
+      setError(translate(browserCatalog, 'streamTimedOut'))
     }, 15_000)
     const clearStartupTimer = (): void => {
       if (startupTimer) {

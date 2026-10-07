@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { browserCatalog } from '../i18n/catalogs/browser'
+import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 export type BrowserPointerModifier = 'cmd' | 'ctrl' | 'alt' | 'shift'
 
@@ -21,6 +23,7 @@ export function MobileBrowserPointerModifiers({
   selectedModifiers,
   onToggle
 }: Props): React.JSX.Element {
+  const t = useMobileTranslation(browserCatalog)
   return (
     <View style={styles.modifierRow}>
       {BROWSER_POINTER_MODIFIERS.map((modifier) => {
@@ -38,7 +41,7 @@ export function MobileBrowserPointerModifiers({
             onPress={() => onToggle(modifier.id)}
             accessibilityRole="button"
             accessibilityState={{ selected, disabled }}
-            accessibilityLabel={`${modifier.label} click modifier`}
+            accessibilityLabel={t('clickModifier', { key: modifier.label })}
           >
             <Text
               style={[

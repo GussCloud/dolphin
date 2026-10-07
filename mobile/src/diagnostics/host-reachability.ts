@@ -1,4 +1,6 @@
 import { isTailscaleEndpoint } from '../../../src/shared/remote-runtime-tailscale-hint'
+import { diagnosticsCatalog } from '../i18n/catalogs/diagnostics'
+import { translate } from '../i18n/mobile-locale-state'
 
 const HOST_REACHABILITY_TIMEOUT_MS = 4000
 
@@ -64,7 +66,9 @@ export function formatEndpoint(endpoint: string): string {
 // toggling the VPN) — point at that instead of a bare "Cannot reach".
 export function unreachableHostDetail(endpoint: string): string {
   if (isTailscaleEndpoint(endpoint)) {
-    return `Cannot reach ${formatEndpoint(endpoint)} — check Tailscale`
+    return translate(diagnosticsCatalog, 'cannotReachTailscale', {
+      endpoint: formatEndpoint(endpoint)
+    })
   }
-  return `Cannot reach ${formatEndpoint(endpoint)}`
+  return translate(diagnosticsCatalog, 'cannotReach', { endpoint: formatEndpoint(endpoint) })
 }
