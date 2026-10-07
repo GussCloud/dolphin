@@ -76,7 +76,7 @@ describe('agentRowSubagentsSignature', () => {
       agentRowSubagentsSignature({
         paneKey: 'p',
         parentPaneKey: null,
-        state: 'idle',
+        state: 'done',
         agentType: null,
         prompt: '',
         taskTitle: null,

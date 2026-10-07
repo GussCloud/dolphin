@@ -89,10 +89,12 @@ describe('installMobileGlobalErrorCapture', () => {
 
   it('journals unhandled promise rejections through the tracker', () => {
     const record = vi.fn().mockResolvedValue(undefined)
-    let onUnhandled: ((id: number, error: unknown) => void) | null = null
+    const captured: { onUnhandled: ((id: number, error: unknown) => void) | null } = {
+      onUnhandled: null
+    }
     const tracker: PromiseRejectionTrackerPort = (options) => {
       expect(options.allRejections).toBe(true)
-      onUnhandled = options.onUnhandled
+      captured.onUnhandled = options.onUnhandled
     }
     installMobileGlobalErrorCapture({
       errorUtils: null,
@@ -100,7 +102,7 @@ describe('installMobileGlobalErrorCapture', () => {
       record
     })
 
-    onUnhandled?.(1, 'nope')
+    captured.onUnhandled?.(1, 'nope')
     expect(record).toHaveBeenCalledWith('nope', 'unhandled_rejection')
   })
 })

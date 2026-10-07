@@ -34,11 +34,11 @@ function optionalText(value: unknown): string | null {
  * Old hosts send none; malformed entries are dropped instead of failing the row.
  */
 export function readAgentRowSubagents(
-  row: Pick<RuntimeWorktreeAgentRow, 'updatedAt' | 'stateStartedAt' | 'subagents'>,
+  // Why unknown: the host is a different build, so entries are re-validated here.
+  row: Pick<RuntimeWorktreeAgentRow, 'updatedAt' | 'stateStartedAt'> & { subagents?: unknown },
   now: number
 ): AgentRowSubagent[] {
-  // Why unknown: the host is a different build, so entries are re-validated here.
-  const raw: unknown = row.subagents
+  const raw = row.subagents
   if (!Array.isArray(raw)) {
     return []
   }
