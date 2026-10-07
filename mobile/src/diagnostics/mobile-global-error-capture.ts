@@ -65,19 +65,21 @@ export function installMobileGlobalErrorCapture(options: GlobalErrorCaptureOptio
   })
 }
 
+/** The slice of the Hermes runtime global this module uses. */
+export type HermesInternalPort = {
+  enablePromiseRejectionTracker?: PromiseRejectionTrackerPort
+}
+
 /** Hermes' tracker replaces RN's dev one (LogBox warnings), so only claim it outside dev. */
 export function resolveReleaseRejectionTracker(
-  hermesInternal: unknown,
+  hermesInternal: HermesInternalPort | null | undefined,
   isDev: boolean
 ): PromiseRejectionTrackerPort | null {
-  if (isDev || typeof hermesInternal !== 'object' || hermesInternal === null) {
-    return null
-  }
-  const enable: unknown = Reflect.get(hermesInternal, 'enablePromiseRejectionTracker')
-  if (typeof enable !== 'function') {
+  const enable = hermesInternal?.enablePromiseRejectionTracker
+  if (isDev || typeof enable !== 'function') {
     return null
   }
   return (trackerOptions) => {
-    Reflect.apply(enable, hermesInternal, [trackerOptions])
+    enable.call(hermesInternal, trackerOptions)
   }
 }

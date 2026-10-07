@@ -25,8 +25,7 @@ function isSubagentState(value: unknown): value is AgentSubagentState {
   return SUBAGENT_STATES.some((state) => state === value)
 }
 
-function optionalText(record: object, key: string): string | null {
-  const value: unknown = Reflect.get(record, key)
+function optionalText(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
@@ -35,10 +34,11 @@ function optionalText(record: object, key: string): string | null {
  * Old hosts send none; malformed entries are dropped instead of failing the row.
  */
 export function readAgentRowSubagents(
-  row: Pick<RuntimeWorktreeAgentRow, 'updatedAt' | 'stateStartedAt'>,
+  row: Pick<RuntimeWorktreeAgentRow, 'updatedAt' | 'stateStartedAt' | 'subagents'>,
   now: number
 ): AgentRowSubagent[] {
-  const raw: unknown = Reflect.get(row, 'subagents')
+  // Why unknown: the host is a different build, so entries are re-validated here.
+  const raw: unknown = row.subagents
   if (!Array.isArray(raw)) {
     return []
   }
@@ -46,25 +46,48 @@ export function readAgentRowSubagents(
   const parentFresh = now - row.updatedAt <= AGENT_STATUS_STALE_AFTER_MS
   const out: AgentRowSubagent[] = []
   for (const entry of raw.slice(0, MAX_SUBAGENT_ROWS)) {
-    if (typeof entry !== 'object' || entry === null) {
+    const subagent = parseSubagentEntry(entry)
+    if (!subagent) {
       continue
     }
-    const id = optionalText(entry, 'id')
-    const state: unknown = Reflect.get(entry, 'state')
-    if (!id || !isSubagentState(state)) {
-      continue
-    }
-    const startedAt: unknown = Reflect.get(entry, 'startedAt')
+    const { id, state, startedAt } = subagent
     const effective = !parentFresh && state !== 'idle' ? 'unverifiable' : state
     out.push({
       id,
-      name: optionalText(entry, 'description') ?? optionalText(entry, 'agentType') ?? 'Teammate',
+      name: subagent.name ?? 'Teammate',
       dotState: effective === 'unverifiable' ? 'idle' : effective,
       stateLabel: subagentStateLabel(effective),
-      startedAt: typeof startedAt === 'number' && startedAt > 0 ? startedAt : row.stateStartedAt
+      startedAt: startedAt ?? row.stateStartedAt
     })
   }
   return out
+}
+
+type ParsedSubagentEntry = {
+  id: string
+  state: AgentSubagentState
+  name: string | null
+  startedAt: number | null
+}
+
+function parseSubagentEntry(entry: unknown): ParsedSubagentEntry | null {
+  if (typeof entry !== 'object' || entry === null) {
+    return null
+  }
+  const fields: Partial<
+    Record<'id' | 'state' | 'description' | 'agentType' | 'startedAt', unknown>
+  > = { ...entry }
+  const id = optionalText(fields.id)
+  if (!id || !isSubagentState(fields.state)) {
+    return null
+  }
+  return {
+    id,
+    state: fields.state,
+    name: optionalText(fields.description) ?? optionalText(fields.agentType),
+    startedAt:
+      typeof fields.startedAt === 'number' && fields.startedAt > 0 ? fields.startedAt : null
+  }
 }
 
 function subagentStateLabel(state: AgentSubagentState): string {
@@ -82,8 +105,7 @@ function subagentStateLabel(state: AgentSubagentState): string {
   }
 }
 
-/** Change signature for list-equality checks; the row type does not declare `subagents`. */
+/** Change signature for list-equality checks. */
 export function agentRowSubagentsSignature(row: RuntimeWorktreeAgentRow): string {
-  const raw: unknown = Reflect.get(row, 'subagents')
-  return Array.isArray(raw) ? JSON.stringify(raw) : ''
+  return row.subagents?.length ? JSON.stringify(row.subagents) : ''
 }

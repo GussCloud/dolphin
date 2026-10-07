@@ -18,7 +18,7 @@ export function installMobileGlobalCrashCapture(): void {
   installMobileGlobalErrorCapture({
     errorUtils: typeof ErrorUtils === 'undefined' ? null : ErrorUtils,
     enableRejectionTracker: resolveReleaseRejectionTracker(
-      Reflect.get(globalThis, 'HermesInternal'),
+      typeof HermesInternal === 'undefined' ? undefined : HermesInternal,
       __DEV__
     ),
     record: (error, kind) => journal.recordUncaughtError(error, kind)
