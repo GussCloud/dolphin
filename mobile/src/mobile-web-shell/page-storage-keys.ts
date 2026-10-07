@@ -36,7 +36,9 @@ export const PAGE_STORAGE_EXACT_KEYS = [
   /** Whether the terminal's command inputs offer autocorrect. */
   'dolphin:terminalAutocompleteEnabled',
   /** Whether a terminal link opens in Dolphin's browser or the phone's. */
-  'dolphin:terminalLinkOpenMode'
+  'dolphin:terminalLinkOpenMode',
+  /** The app language, which `MobileLocaleProvider` in the page's root layout reads. */
+  'dolphin:uiLanguage'
 ] as const
 
 export const PAGE_STORAGE_KEY_PREFIXES = [
