@@ -3,6 +3,7 @@ import {
   normalizeOptionalField,
   normalizePromptField
 } from './agent-status-field-normalization'
+import { structuredAgentSessionTabId } from './structured-agent-session-tab-id'
 import {
   AGENT_JOURNAL_MESSAGE_SEND_MODES,
   type AgentJournalMessageSendMode,
@@ -216,9 +217,7 @@ export function hasUnansweredStructuredAgentSessionDispatch(
 
 export type StructuredAgentSessionProjectedStatus = 'working' | 'attention' | 'idle'
 
-export function structuredAgentSessionTabId(sessionId: string): string {
-  return `structured-agent-session-${sessionId}`
-}
+export { structuredAgentSessionTabId }
 
 export function projectStructuredAgentSessionStatus(
   items: readonly AgentJournalRenderItem[],
