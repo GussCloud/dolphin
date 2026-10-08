@@ -48,6 +48,16 @@ describe('pty transcript secret scan', () => {
     )
   })
 
+  it('does not mistake a long CLI option after a cursor move for a token', () => {
+    const esc = String.fromCharCode(27)
+    expect(
+      scanTranscriptForSecrets(`${esc}[5;3H--dangerously-load-development-channels is for local`)
+    ).toEqual([])
+    expect(
+      scanTranscriptForSecrets('--abcdefghijklmnopqrstuvwxyz0123456789ABCDEF').map((f) => f.kind)
+    ).toEqual(['opaque-token'])
+  })
+
   it('reports a clean transcript as clean', () => {
     const findings = scanTranscriptForSecrets('Antigravity CLI 1.1.17\nSonnet 4.6 (High)\n> ')
     expect(findings).toEqual([])

@@ -35,6 +35,7 @@ import {
   discardUnpersistedPtySpawn,
   registerPersistedPtySpawn
 } from '../pane/spawn-registration'
+import { markClaudeChannelPty } from '../../../telegram/claude-channel-panes'
 
 export async function commitRuntimePtySpawn(ctx: RuntimePtySpawnState) {
   const args = ctx.args
@@ -224,6 +225,7 @@ export async function commitRuntimePtySpawn(ctx: RuntimePtySpawnState) {
   }
   if (ctx.isClaudeLaunch && !ctx.stablePaneOwner) {
     markClaudePtySpawned(ctx.result.id)
+    markClaudeChannelPty(ctx.result.id, ctx.env)
   }
   if (args.telemetry && !ctx.stablePaneOwner) {
     recordPtySpawnTelemetry(args.telemetry)

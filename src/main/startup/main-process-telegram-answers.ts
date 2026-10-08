@@ -6,11 +6,14 @@ import type { TelegramBridgeService } from '../telegram/telegram-bridge-service'
 import { createTelegramPromptAnswerPorts } from '../telegram/telegram-prompt-answer-ports'
 import { createTelegramPromptAnswerService } from '../telegram/telegram-prompt-answer-service'
 import { createTelegramPromptButtonDecorator } from '../telegram/telegram-prompt-buttons'
+import type { TelegramInboundHandler } from '../telegram/telegram-inbound'
 
-/** Adds answer buttons to notices and answers taps/replies; PR3's channel registers after this. */
+/** Adds answer buttons to notices and answers taps/replies; `wrapInboundHandler` lets the Claude channel answer first. */
 export function startMainProcessTelegramAnswers(
   bridge: TelegramBridgeService,
-  runtime: DolphinRuntimeService
+  runtime: DolphinRuntimeService,
+  wrapInboundHandler: (handler: TelegramInboundHandler) => TelegramInboundHandler = (handler) =>
+    handler
 ): () => void {
   const dispatcher = new RpcDispatcher({ runtime })
   const ports = createTelegramPromptAnswerPorts({
@@ -22,7 +25,9 @@ export function startMainProcessTelegramAnswers(
   const disposeDecorator = bridge.registerNoticeDecorator(
     createTelegramPromptButtonDecorator(ports.readStructuredPrompt)
   )
-  const disposeHandler = bridge.registerInboundHandler(createTelegramPromptAnswerService(ports))
+  const disposeHandler = bridge.registerInboundHandler(
+    wrapInboundHandler(createTelegramPromptAnswerService(ports))
+  )
   return () => {
     disposeHandler()
     disposeDecorator()

@@ -5,6 +5,8 @@ import { replayPreHandlerPtyData } from '@/components/terminal-pane/pty-pre-hand
 import { isRemoteRuntimePtyId } from '@/runtime/runtime-terminal-inspection'
 import { subscribeToRuntimeTerminalData } from '@/runtime/runtime-terminal-stream'
 import { createDraftPasteReadyScanner } from '../../../shared/draft-paste-ready-scanner'
+import { shouldExtendTimeoutForClaudeDevChannelsDialog } from '../../../shared/claude-dev-channels-dialog'
+import { isClaudeChannelPtyKnown } from './claude-channel-pty'
 
 const BRACKETED_PASTE_QUIET_MS = 1500
 
@@ -26,9 +28,12 @@ export function waitForAgentDraftInputReady(
 ): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     let settled = false
-    const scanner = createDraftPasteReadyScanner(readySignal)
+    const scanner = createDraftPasteReadyScanner(readySignal, {
+      holdOnClaudeDevChannelsDialog: () => isClaudeChannelPtyKnown(ptyId)
+    })
     let quietTimer: number | null = null
     let hardTimer: number | null = null
+    const startedAt = Date.now()
     let unsubscribe: (() => void) | null = null
 
     const finish = (value: boolean): void => {
@@ -50,14 +55,28 @@ export function waitForAgentDraftInputReady(
       if (quietTimer !== null) {
         window.clearTimeout(quietTimer)
       }
-      quietTimer = window.setTimeout(() => finish(true), BRACKETED_PASTE_QUIET_MS)
+      quietTimer = window.setTimeout(() => {
+        quietTimer = null
+        // Why re-arm: the hold may lift without new output (main answers "not a channel PTY").
+        if (
+          shouldExtendTimeoutForClaudeDevChannelsDialog(scanner.isHolding(), startedAt, Date.now())
+        ) {
+          armQuietTimer()
+          return
+        }
+        finish(true)
+      }, BRACKETED_PASTE_QUIET_MS)
     }
 
     const observeData = (data: string): void => {
-      const { ready, armQuietTimer: shouldArm } = scanner.observe(data)
+      const { ready, armQuietTimer: shouldArm, hold } = scanner.observe(data)
       if (ready) {
         finish(true)
         return
+      }
+      if (hold && quietTimer !== null) {
+        window.clearTimeout(quietTimer)
+        quietTimer = null
       }
       if (shouldArm) {
         armQuietTimer()
@@ -86,8 +105,18 @@ export function waitForAgentDraftInputReady(
       replayPreHandlerPtyData(ptyId, observeData)
     }
 
+    // Why: a timeout ends in a blind paste; while Claude's channel dialog is up that paste is lost.
+    const onHardTimeout = (): void => {
+      if (
+        shouldExtendTimeoutForClaudeDevChannelsDialog(scanner.isHolding(), startedAt, Date.now())
+      ) {
+        hardTimer = window.setTimeout(onHardTimeout, timeoutMs)
+        return
+      }
+      finish(false)
+    }
     if (!settled) {
-      hardTimer = window.setTimeout(() => finish(false), timeoutMs)
+      hardTimer = window.setTimeout(onHardTimeout, timeoutMs)
     }
   })
 }

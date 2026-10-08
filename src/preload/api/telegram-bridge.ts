@@ -13,6 +13,7 @@ export const telegramBridgeApi = {
   clearToken: () => ipcRenderer.invoke('telegram:clearToken'),
   issuePairingCode: () => ipcRenderer.invoke('telegram:issuePairingCode'),
   removeChat: (chatId) => ipcRenderer.invoke('telegram:removeChat', chatId),
+  isClaudeChannelPty: (ptyId) => ipcRenderer.invoke('telegram:isClaudeChannelPty', ptyId),
   onChanged: (callback) => {
     const listener = (_event: Electron.IpcRendererEvent, state: TelegramBridgeState): void =>
       callback(state)

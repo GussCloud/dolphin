@@ -12265,7 +12265,10 @@
           "enable": "Agent の通知を Telegram に送信",
           "unavailable": "Telegram 通知は Dolphin デスクトップアプリで動作するため、このホストでは利用できません。",
           "channelsLabel": "チャネル経由で Claude Code に回答 (試験的)",
-          "channelsDescription": "Telegram の返信を Claude Code セッションに直接届けます。オンの間、Claude は起動のたびにローカル開発チャネルの読み込み確認を求めます。チャネルは Claude が claude.ai または Console API キーでサインインしている場合のみ動作します (Bedrock、Vertex AI、Foundry は不可)。"
+          "channelsDescription": "Telegram の返信を Claude Code セッションに直接届けます。オンの間、Claude は起動のたびにローカル開発チャネルの読み込み確認を求めます。チャネルは Claude が claude.ai または Console API キーでサインインしている場合のみ動作します (Bedrock、Vertex AI、Foundry は不可)。",
+          "channelClaudeNotFound": "このコンピューターで Claude Code が見つからないため、返信は引き続きターミナルに送られます。",
+          "channelClaudeTooOld": "チャンネルには Claude Code 2.1.234 以降が必要です。Claude Code を更新してください。それまでは返信はターミナルに送られます。",
+          "channelConfigUnavailable": "すべてのシェルがそのまま読めるパスにチャンネル設定を配置できなかったため、返信は引き続きターミナルに送られます。"
         }
       },
       "right": {
@@ -18878,6 +18881,24 @@
       "submit": "送信",
       "hintMultiSelect": "選択肢を選んでから「送信」をタップしてください。",
       "hintReply": "このメッセージに返信すると回答を入力できます。"
+    },
+    "channel": {
+      "approvalFallback": "Claude チャンネルがこの許可リクエストを中継しませんでした。ここで回答してください:",
+      "sent": "Claude に送信しました。",
+      "unconfirmed": "Claude がメッセージの受信を確認していません。ターミナルを確認してください。",
+      "allowed": "許可しました。",
+      "denied": "拒否しました。",
+      "permissionExpired": "この許可リクエストは期限切れか、すでに回答済みです。",
+      "privateChatOnly": "許可リクエストにはボットとの個人チャットからのみ回答できます。",
+      "severalClaudes": "複数の Claude が接続されています。送信先の Claude のメッセージに返信してください。",
+      "replyToNotice": "複数の Agent が対応を待っています。宛先の Agent の通知に返信してください。",
+      "noAgent": "メッセージを受け取った Agent はいません。",
+      "unknownAction": "認識できない操作です。",
+      "permissionTitle": "Claude が許可を求めています: {{toolName}}",
+      "permissionTypedHint": "(または「はい {{requestId}}」/「いいえ {{requestId}}」と返信)",
+      "yes": "はい",
+      "no": "いいえ",
+      "approveInChannel": "この許可には Claude チャンネルのメッセージで回答してください。"
     }
   }
 }

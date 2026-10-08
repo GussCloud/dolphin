@@ -66,7 +66,7 @@ export class RuntimeTerminalAgentStatusQuery {
     const terminal = this.getSnapshot(handle, ptyId)
     const explicitStatus = this.deps.getExplicitStatus(handle)
     const lifecycle = this.deps.getLifecycleStatus(ptyId)
-    const blockedByWaitText = detectTerminalWaitBlockedReason(terminal.waitText)
+    const blockedByWaitText = detectTerminalWaitBlockedReason(terminal.waitText, ptyId)
     const liveTitleClearsBlockedText =
       terminal.titleStatusIsLive &&
       terminal.titleStatus !== null &&

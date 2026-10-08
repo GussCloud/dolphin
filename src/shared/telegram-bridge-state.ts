@@ -15,6 +15,15 @@ export type TelegramConnectionStatus = {
   detail?: string
 }
 
+/** Whether this host can open Claude panes on the channel; `off` while the setting is off. */
+export type TelegramChannelAvailability =
+  | 'off'
+  | 'checking'
+  | 'ready'
+  | 'claude-not-found'
+  | 'claude-too-old'
+  | 'config-unavailable'
+
 export type TelegramAllowedChatView = { chatId: number; label: string; pairedAt: number }
 
 export type TelegramBridgeState = {
@@ -23,6 +32,8 @@ export type TelegramBridgeState = {
   enabled: boolean
   /** Experimental Claude channel delivery; off by default. */
   channelsEnabled: boolean
+  /** Absent from hosts without the channel. */
+  channelAvailability?: TelegramChannelAvailability
   tokenConfigured: boolean
   allowedChats: TelegramAllowedChatView[]
   pairingCode: { code: string; expiresAt: number } | null

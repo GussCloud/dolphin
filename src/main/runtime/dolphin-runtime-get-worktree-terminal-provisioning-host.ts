@@ -9,6 +9,7 @@ import type { WorktreeStartupReadinessHost } from './runtime-worktree-startup-re
 import { prefetchWorktreeCreateBase } from '../worktree-create-base-prefetch'
 import { prepareWorktreeCreateForRepo } from '../worktree-create-preparation'
 import { getWorktreeCreatePrefetchGitOptions } from '../project-runtime-git-options'
+import { isClaudeChannelPty } from '../telegram/claude-channel-panes'
 
 export class DolphinRuntimeWithGetWorktreeTerminalProvisioningHost extends DolphinRuntimeWithActivateManagedWorktree {
   protected getWorktreeTerminalProvisioningHost(): WorktreeTerminalProvisioningHost {
@@ -36,7 +37,8 @@ export class DolphinRuntimeWithGetWorktreeTerminalProvisioningHost extends Dolph
         this.ptyController!.hasChildProcesses?.(ptyId) ?? Promise.resolve(false),
       subscribeToData: (ptyId, listener) => this.subscribeToTerminalData(ptyId, listener),
       readRecentOutput: (ptyId) => this.recentPtyOutputById.get(ptyId)?.read(),
-      write: (ptyId, data) => this.ptyController?.write(ptyId, data)
+      write: (ptyId, data) => this.ptyController?.write(ptyId, data),
+      isClaudeChannelPty
     }
   }
 

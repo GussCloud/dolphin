@@ -2793,6 +2793,12 @@
       }
     }
   },
+  "telegram": {
+    "channel": {
+      "permissionTitle": "Claude asks permission: {{toolName}}",
+      "permissionTypedHint": "(or reply \"yes {{requestId}}\" / \"no {{requestId}}\")"
+    }
+  },
   "worktreeJumpPalette": {
     "filter": {
       "chipOverflow": "+{{value0}}",

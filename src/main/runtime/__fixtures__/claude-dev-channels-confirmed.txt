@@ -1,0 +1,54 @@
+[?9001h[?1004h[?25l[2J[m[H]0;claude[?25h[?2004h[?2031h[?1004h[<u[>5u[>4;2m[?25l[>0q[?u[>4m[<u[?2031l[?2004l[?2004h[?2031h[?1004h[<u[>5u[>4;2m[>0q
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[3;3HWARNING:[1CLoading[1Cdevelopment[1Cchannels[5;3H--dangerously-load-development-channels[1Cis[1Cfor[1Clocal[1Cchannel[1Cdevelopment[1Conly.[1CDo[1Cnot[1Cuse[1Cthis[1Coption[1Cto[1Crun[6;3Hchannels[1Cyou[1Chave[1Cdownloaded[1Coff[1Cthe[1Cinternet.[8;3HPlease[1Cuse[1C--channels[1Cto[1Crun[1Ca[1Clist[1Cof[1Capproved[1Cchannels.[10;3HChannels:[1Cserver:dolphin-telegram[12;3H❯[1C1.[1CI[1Cam[1Cusing[1Cthis[1Cfor[1Clocal[1Cdevelopment[13;5H2.[1CExit[15;3HEnter[1Cto[1Cconfirm[1C·[1CEsc[1Cto[1Ccancel[?2004h[<u[>5u[>4;2m[>4m[<u[?2031l[?2004l[H[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K[120C[?2004h[?2031h[?1004h[<u[>5u[>4;2m]0;✳ Claude Code[?1049h[2J[<u[>5u[>4;2m[?1000h[?1002h[?1003h[?1006h[H[K
+ ▐▛███▛█   Claude Code v2.1.294[K
+▝▜██████▀  Opus 5.5 with medium effort · Claude Max[K
+ ▝▝   ▝▝   ~\dolphin\xxxxxxxxxxxxxxxxxx\xxxxxxxxxxxxxxxxxxxxxxx[K
+[K
+▎ Channels (experimental) messages from server:dolphin-telegram inject directly in this session · restart without       
+▎ --dangerously-load-development-channels to stop[K
+▎ server:dolphin-telegram · no MCP server configured with that name[K
+[K
+❯ Reply with exactly the word PONG and nothing else.[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+✶ Simmering…[K
+                                                                                                    ◐ medium · /effort  
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────❯ [K
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHILD_SESSION marker · restart with CLAUDE_CODE_FORCE_SESSION_PE…  
+[K
+  ⏵⏵ auto mode on (shift+tab to cycle)[K[32;3H[?25h[?25l[29;14H(running[1CSessionStart[1Chooks…[1C1/2[1C·[1C0s)[32;3H[?25h[>0q[?25l[29;1H·[32;3H[?25h[?25l[2;1H▗▟▂[3C▂[1C▄
+ [7C▘[29;1H✶[21CUserPromptSubmit hooks…[1C0/2 ·[1C0s)[32;3H[?25h[?25l[29;1H✻[32;3H[?25h[?25l[29;1H✽[51C1[32;3H[?25h[?25l[29;14H[K[32;3H[?25h[?25l[2;1H[9X[3;2H▐▂[3C▂[1C 
+~▜██████~[32;3H[?25h[?25l[29;1H✻[32;3H[?25h[?25l[2;2H▐▂███▂█
+▝▜█[3C█[1C▀
+ ▝▝   ▝▝ [32;3H[?25h[?25l[29;1H✶[32;3H[?25h[?25l[29;1H*[32;3H[?25h[?25l[2;3H▛[3C▛[32;3H[?25h[?25l[29;1H✢[32;3H[?25h[?25l[2;3H▂[3C▂[32;3H[?25h]0;✳ PONG reply test[?25l[2;3H▛[3C▛[32;3H[?25h[?25l[29;1H·[32;3H[?25h[?25l[29;3HInfusing…[K[32;3H[?25h[?25l[29;1H✢[11C(2s[1C·[1C↓[1C1[1Ctokens)[32;3H[?25h[?25l[29;1H*[32;3H[?25h[?25l[29;1H✶[32;3H[?25h[?25l[29;1H✻[32;3H[?25h[?25l[29;1H✽[12C3[32;3H[?25h[?25l[12;1H●[1CPONG[29;14Hrunning S[2Cp hooks…[1C0/2[1C·[1C3s[1C·[1C↓[1C1[1Ctokens)[32;3H[?25h[?25l[29;47H3[32;3H[?25h[?25l[29;47H4[32;3H[?25h[?25l[29;34H1[32;3H[?25h[?25l[14;1H✻[1CBrewed[1Cfor[1C3s[1C·[1Cdone[1C9:58[1CAM[29;1H[K[32;3H[?25h[?25l[30;101H[K[32;3H[?25h[?2004h[<u[>5u[>4;2m[?1000h[?1002h[?1003h[?1006h

@@ -7,6 +7,8 @@ import { getSettingsForWorktreeRuntimeOwner } from '@/lib/worktree-runtime-owner
 import { isExpectedAgentProcess } from '../../../../../shared/agent-process-recognition'
 import { resolveDraftPasteReadyTimeoutMs } from '../../../../../shared/draft-paste-ready-timeout'
 import { createDraftPasteReadyScanner } from '../../../../../shared/draft-paste-ready-scanner'
+import { shouldExtendTimeoutForClaudeDevChannelsDialog } from '../../../../../shared/claude-dev-channels-dialog'
+import { isClaudeChannelPtyKnown } from '@/lib/claude-channel-pty'
 import { sendAgentDraftPasteContent } from '@/lib/agent-draft-paste-content'
 import { writeTerminalPastePtyInput } from '../terminal-pty-paste-writer'
 
@@ -68,7 +70,10 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
   const startupDraftReadyScanner = session.ownsStartupDraftPaste
     ? createDraftPasteReadyScanner(
         session.startupDraftAgentConfig?.draftPasteReadySignal ??
-          'render-quiet-after-bracketed-paste'
+          'render-quiet-after-bracketed-paste',
+        {
+          holdOnClaudeDevChannelsDialog: () => isClaudeChannelPtyKnown(session.transport.getPtyId())
+        }
       )
     : null
   let startupDraftReadinessArmed = false
@@ -77,6 +82,7 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
   let startupDraftInputRecorded = false
   let startupDraftQuietTimer: ReturnType<typeof setTimeout> | null = null
   let startupDraftHardTimer: ReturnType<typeof setTimeout> | null = null
+  const startupDraftStartedAt = Date.now()
   const clearStartupDraftPasteTimers = (): void => {
     if (startupDraftQuietTimer !== null) {
       clearTimeout(startupDraftQuietTimer)
@@ -168,6 +174,17 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
     }
     startupDraftHardTimer = setTimeout(() => {
       startupDraftHardTimer = null
+      // Why: the blind delivery below would land in Claude's channel dialog and be lost.
+      if (
+        shouldExtendTimeoutForClaudeDevChannelsDialog(
+          startupDraftReadyScanner?.isHolding() === true,
+          startupDraftStartedAt,
+          Date.now()
+        )
+      ) {
+        armStartupDraftHardTimer()
+        return
+      }
       void deliverStartupDraftIfAgentOwnsPty()
     }, resolveDraftPasteReadyTimeoutMs(session.startupDraftAgent))
   }
@@ -180,6 +197,17 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
     }
     startupDraftQuietTimer = setTimeout(() => {
       startupDraftQuietTimer = null
+      // Why re-arm: the hold may lift without new output (main answers "not a channel PTY").
+      if (
+        shouldExtendTimeoutForClaudeDevChannelsDialog(
+          startupDraftReadyScanner?.isHolding() === true,
+          startupDraftStartedAt,
+          Date.now()
+        )
+      ) {
+        armStartupDraftQuietTimer()
+        return
+      }
       sendStartupDraftPaste()
     }, STARTUP_DRAFT_PASTE_QUIET_MS)
   }
@@ -198,6 +226,10 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
     if (scanned.ready) {
       sendStartupDraftPaste()
       return
+    }
+    if (scanned.hold && startupDraftQuietTimer !== null) {
+      clearTimeout(startupDraftQuietTimer)
+      startupDraftQuietTimer = null
     }
     if (scanned.armQuietTimer) {
       armStartupDraftQuietTimer()

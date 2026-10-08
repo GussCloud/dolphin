@@ -76,3 +76,29 @@ export function telegramStatusHint(state: TelegramBridgeState | null): string | 
       return null
   }
 }
+
+/** Why the Claude channel cannot open on this host; null while it works, is checking, or is off. */
+export function telegramChannelAvailabilityHint(state: TelegramBridgeState | null): string | null {
+  switch (state?.channelAvailability) {
+    case 'claude-not-found':
+      return translate(
+        'auto.components.settings.telegramIntegrationCard.channelClaudeNotFound',
+        'Claude Code was not found on this computer, so replies keep going to the terminal.'
+      )
+    case 'claude-too-old':
+      return translate(
+        'auto.components.settings.telegramIntegrationCard.channelClaudeTooOld',
+        'Channels need Claude Code 2.1.234 or newer. Update Claude Code; until then replies go to the terminal.'
+      )
+    case 'config-unavailable':
+      return translate(
+        'auto.components.settings.telegramIntegrationCard.channelConfigUnavailable',
+        'Dolphin could not place the channel configuration at a path every shell reads literally, so replies keep going to the terminal.'
+      )
+    case 'ready':
+    case 'checking':
+    case 'off':
+    case undefined:
+      return null
+  }
+}

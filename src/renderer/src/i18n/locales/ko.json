@@ -12265,7 +12265,10 @@
           "enable": "에이전트 알림을 Telegram으로 보내기",
           "unavailable": "Telegram 알림은 Dolphin 데스크톱 앱에서 실행되며 이 호스트에서는 사용할 수 없습니다.",
           "channelsLabel": "채널을 통해 Claude Code에 답변 (실험적)",
-          "channelsDescription": "Telegram 답장을 Claude Code 세션에 바로 전달합니다. 켜져 있는 동안 Claude는 시작할 때마다 로컬 개발 채널 로드를 확인하도록 요청하며, 채널은 Claude가 claude.ai 또는 Console API 키로 로그인한 경우에만 작동합니다(Bedrock, Vertex AI, Foundry 제외)."
+          "channelsDescription": "Telegram 답장을 Claude Code 세션에 바로 전달합니다. 켜져 있는 동안 Claude는 시작할 때마다 로컬 개발 채널 로드를 확인하도록 요청하며, 채널은 Claude가 claude.ai 또는 Console API 키로 로그인한 경우에만 작동합니다(Bedrock, Vertex AI, Foundry 제외).",
+          "channelClaudeNotFound": "이 컴퓨터에서 Claude Code를 찾을 수 없어 답장은 계속 터미널로 전달됩니다.",
+          "channelClaudeTooOld": "채널에는 Claude Code 2.1.234 이상이 필요합니다. Claude Code를 업데이트하세요. 그때까지 답장은 터미널로 전달됩니다.",
+          "channelConfigUnavailable": "모든 셸이 그대로 읽을 수 있는 경로에 채널 구성을 둘 수 없어 답장은 계속 터미널로 전달됩니다."
         }
       },
       "right": {
@@ -18878,6 +18881,24 @@
       "submit": "보내기",
       "hintMultiSelect": "옵션을 고른 다음 보내기를 누르세요.",
       "hintReply": "이 메시지에 답장하여 답변을 입력하세요."
+    },
+    "channel": {
+      "approvalFallback": "Claude 채널이 이 권한 요청을 전달하지 않았습니다. 여기에서 응답하세요:",
+      "sent": "Claude에 보냈습니다.",
+      "unconfirmed": "Claude가 메시지 수신을 확인하지 않았습니다. 터미널을 확인하세요.",
+      "allowed": "허용했습니다.",
+      "denied": "거부했습니다.",
+      "permissionExpired": "이 권한 요청은 만료되었거나 이미 응답되었습니다.",
+      "privateChatOnly": "권한 요청은 봇과의 개인 채팅에서만 응답할 수 있습니다.",
+      "severalClaudes": "연결된 Claude가 둘 이상입니다. 받을 Claude의 메시지에 답장하세요.",
+      "replyToNotice": "여러 에이전트가 응답을 기다리고 있습니다. 해당 에이전트의 알림에 답장하세요.",
+      "noAgent": "메시지를 받은 에이전트가 없습니다.",
+      "unknownAction": "알 수 없는 작업입니다.",
+      "permissionTitle": "Claude가 권한을 요청합니다: {{toolName}}",
+      "permissionTypedHint": "(또는 \"네 {{requestId}}\" / \"아니요 {{requestId}}\"로 답장)",
+      "yes": "예",
+      "no": "아니요",
+      "approveInChannel": "이 권한은 Claude 채널 메시지에서 응답하세요."
     }
   }
 }

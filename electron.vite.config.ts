@@ -265,6 +265,8 @@ export const electronViteConfig: UserConfig = {
           // Why: forked with ELECTRON_RUN_AS_NODE so @parcel/watcher faults
           // can't take down the main process (issue #7547).
           'parcel-watcher-process-entry': resolve('src/main/ipc/parcel-watcher-process-entry.ts'),
+          // Why: spawned by `claude` as its Telegram channel MCP server, with ELECTRON_RUN_AS_NODE.
+          'telegram-channel-mcp-entry': resolve('src/main/telegram/telegram-channel-mcp-entry.ts'),
           // Why: a worker thread survives the macOS 26 AppKit main-thread deadlock
           // without paying for another Electron process.
           'main-thread-hang-watchdog-entry': resolve(

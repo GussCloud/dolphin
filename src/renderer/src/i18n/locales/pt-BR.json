@@ -12426,7 +12426,10 @@
           "enable": "Enviar avisos dos agentes para o Telegram",
           "unavailable": "Os avisos do Telegram rodam no app desktop do Dolphin e não estão disponíveis neste host.",
           "channelsLabel": "Responder ao Claude Code por um canal (experimental)",
-          "channelsDescription": "Entrega as respostas do Telegram direto nas sessões do Claude Code. Enquanto estiver ativado, o Claude pede para confirmar o carregamento de um canal de desenvolvimento local toda vez que inicia, e os canais só funcionam quando o Claude está autenticado com claude.ai ou uma chave de API do Console (não Bedrock, Vertex AI ou Foundry)."
+          "channelsDescription": "Entrega as respostas do Telegram direto nas sessões do Claude Code. Enquanto estiver ativado, o Claude pede para confirmar o carregamento de um canal de desenvolvimento local toda vez que inicia, e os canais só funcionam quando o Claude está autenticado com claude.ai ou uma chave de API do Console (não Bedrock, Vertex AI ou Foundry).",
+          "channelClaudeNotFound": "O Claude Code não foi encontrado neste computador, então as respostas continuam indo para o terminal.",
+          "channelClaudeTooOld": "Canais exigem o Claude Code 2.1.234 ou mais recente. Atualize o Claude Code; até lá as respostas vão para o terminal.",
+          "channelConfigUnavailable": "O Dolphin não conseguiu gravar a configuração do canal em um caminho que todo shell lê literalmente, então as respostas continuam indo para o terminal."
         }
       },
       "right": {
@@ -18878,6 +18881,24 @@
       "submit": "Enviar",
       "hintMultiSelect": "Escolha as opções e toque em Enviar.",
       "hintReply": "Responda a esta mensagem para digitar uma resposta."
+    },
+    "channel": {
+      "approvalFallback": "O canal do Claude não repassou este pedido de permissão. Responda aqui:",
+      "sent": "Enviado ao Claude.",
+      "unconfirmed": "O Claude não confirmou o recebimento da mensagem; confira o terminal.",
+      "allowed": "Permitido.",
+      "denied": "Negado.",
+      "permissionExpired": "Esse pedido de permissão expirou ou já foi respondido.",
+      "privateChatOnly": "Pedidos de permissão só podem ser respondidos no seu chat privado com o bot.",
+      "severalClaudes": "Há mais de um Claude conectado. Responda à mensagem do Claude que deve receber isto.",
+      "replyToNotice": "Vários agentes precisam de você. Responda ao aviso daquele a quem isto se destina.",
+      "noAgent": "Nenhum agente recebeu a mensagem.",
+      "unknownAction": "Ação não reconhecida.",
+      "permissionTitle": "Claude pede permissão: {{toolName}}",
+      "permissionTypedHint": "(ou responda \"sim {{requestId}}\" / \"não {{requestId}}\")",
+      "yes": "Sim",
+      "no": "Não",
+      "approveInChannel": "Responda a esta permissão na mensagem do canal do Claude."
     }
   }
 }

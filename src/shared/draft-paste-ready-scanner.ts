@@ -1,3 +1,4 @@
+import { createClaudeDevChannelsDialogTracker } from './claude-dev-channels-dialog'
 import type { DraftPasteReadySignal } from './tui-agent-config'
 
 // Why: agents enable bracketed paste (DECSET 2004) before their composer is
@@ -92,6 +93,8 @@ export type DraftPasteReadyScanResult = {
   ready: boolean
   /** Caller should (re)arm the quiet-window fallback timer for this chunk. */
   armQuietTimer: boolean
+  /** A startup dialog owns the screen: caller must cancel any armed quiet timer. */
+  hold?: true
 }
 
 /**
@@ -138,8 +141,21 @@ export type DraftPasteReadyScanResult = {
  * A 512-byte ring (`recent` / `postAnchorRecent`) covers escape sequences
  * split across chunk boundaries without retaining terminal scrollback.
  */
-export function createDraftPasteReadyScanner(readySignal: DraftPasteReadySignal): {
+export function createDraftPasteReadyScanner(
+  readySignal: DraftPasteReadySignal,
+  options: {
+    /**
+     * True only for a PTY Dolphin launched with the Claude channel flags; the dialog text in any
+     * other pane (an agent reading these sources, a `cat` of a fixture) must never hold a paste.
+     * `unknown` (the caller has not learned it yet) holds too, so a first launch cannot paste into
+     * the dialog before the answer arrives; callers bound every hold by the dialog cap.
+     */
+    holdOnClaudeDevChannelsDialog?: () => boolean | 'unknown'
+  } = {}
+): {
   observe: (data: string) => DraftPasteReadyScanResult
+  /** For timer callbacks: a quiet window or hard timeout must not fire into the dialog. */
+  isHolding: () => boolean
 } {
   let recent = ''
   let postAnchorRecent = ''
@@ -149,6 +165,15 @@ export function createDraftPasteReadyScanner(readySignal: DraftPasteReadySignal)
   let sawQuietAnchor = false
   let codexAltScreen = false
   let sawCodexPromptInAltScreen = false
+  const devChannelsDialog = createClaudeDevChannelsDialogTracker()
+  let readyBehindDialog = false
+  const isHolding = (): boolean => {
+    if (!devChannelsDialog.pending()) {
+      return false
+    }
+    const gate = options.holdOnClaudeDevChannelsDialog?.()
+    return gate === true || gate === 'unknown'
+  }
 
   const {
     markerAnchor,
@@ -223,53 +248,70 @@ export function createDraftPasteReadyScanner(readySignal: DraftPasteReadySignal)
     }
   }
 
+  const scan = (data: string): DraftPasteReadyScanResult => {
+    const combined = recent + data
+    recent = combined.slice(-512)
+    if (!sawQuietAnchor && quietAnchor !== null && combined.includes(quietAnchor)) {
+      sawQuietAnchor = true
+    }
+    if (readySignal === 'codex-composer-prompt' && !sawMarkerAnchor) {
+      scanCodexPreAnchorPrompt(data)
+    }
+    if (signalMarker !== null && markerAnchor !== null) {
+      if (markerAnchorEnd !== null) {
+        // Why: carry only the bytes an anchor could straddle, so already-scanned
+        // output is never re-walked into a second enter/leave transition.
+        const window = anchorCarry + data
+        anchorCarry = window.slice(-ANCHOR_CARRY_CHARS)
+        if (scanRevocableAnchorSegments(window, markerAnchor, markerAnchorEnd)) {
+          return { ready: true, armQuietTimer: false }
+        }
+      } else if (!sawMarkerAnchor) {
+        const anchorIndex = combined.indexOf(markerAnchor)
+        if (anchorIndex !== -1) {
+          sawMarkerAnchor = true
+          if (readySignal === 'codex-composer-prompt' && sawCodexPromptInAltScreen) {
+            return { ready: true, armQuietTimer: false }
+          }
+          const postAnchorChunk = combined.slice(anchorIndex + markerAnchor.length)
+          if (postAnchorChunk.includes(signalMarker)) {
+            return { ready: true, armQuietTimer: false }
+          }
+          postAnchorRecent = postAnchorChunk.slice(-512)
+        }
+      } else {
+        if (data.includes(signalMarker) || (postAnchorRecent + data).includes(signalMarker)) {
+          return { ready: true, armQuietTimer: false }
+        }
+        postAnchorRecent = (postAnchorRecent + data).slice(-512)
+      }
+    }
+    // Why: the Codex glyph and opencode show-cursor signals must NOT arm the
+    // quiet window (they carry no quiet anchor). opencode goes silent for
+    // ~1.5-2s between enabling bracketed paste and mounting its composer, so a
+    // quiet window would fire during that gap — before the composer exists —
+    // and pre-empt the marker. Those signals wait for their marker, bounded
+    // only by the caller's hard timeout (and its best-effort
+    // process-ownership paste after that).
+    return { ready: false, armQuietTimer: sawQuietAnchor }
+  }
+
   return {
     observe(data: string): DraftPasteReadyScanResult {
-      const combined = recent + data
-      recent = combined.slice(-512)
-      if (!sawQuietAnchor && quietAnchor !== null && combined.includes(quietAnchor)) {
-        sawQuietAnchor = true
+      // Why scan anyway: the anchors in this chunk must still be recorded for after the dialog.
+      devChannelsDialog.observe(data)
+      const result = scan(data)
+      if (isHolding()) {
+        // Why remember: a one-shot marker seen behind the dialog must still deliver after it.
+        readyBehindDialog ||= result.ready
+        return { ready: false, armQuietTimer: false, hold: true }
       }
-      if (readySignal === 'codex-composer-prompt' && !sawMarkerAnchor) {
-        scanCodexPreAnchorPrompt(data)
+      if (readyBehindDialog) {
+        readyBehindDialog = false
+        return { ready: true, armQuietTimer: false }
       }
-      if (signalMarker !== null && markerAnchor !== null) {
-        if (markerAnchorEnd !== null) {
-          // Why: carry only the bytes an anchor could straddle, so already-scanned
-          // output is never re-walked into a second enter/leave transition.
-          const window = anchorCarry + data
-          anchorCarry = window.slice(-ANCHOR_CARRY_CHARS)
-          if (scanRevocableAnchorSegments(window, markerAnchor, markerAnchorEnd)) {
-            return { ready: true, armQuietTimer: false }
-          }
-        } else if (!sawMarkerAnchor) {
-          const anchorIndex = combined.indexOf(markerAnchor)
-          if (anchorIndex !== -1) {
-            sawMarkerAnchor = true
-            if (readySignal === 'codex-composer-prompt' && sawCodexPromptInAltScreen) {
-              return { ready: true, armQuietTimer: false }
-            }
-            const postAnchorChunk = combined.slice(anchorIndex + markerAnchor.length)
-            if (postAnchorChunk.includes(signalMarker)) {
-              return { ready: true, armQuietTimer: false }
-            }
-            postAnchorRecent = postAnchorChunk.slice(-512)
-          }
-        } else {
-          if (data.includes(signalMarker) || (postAnchorRecent + data).includes(signalMarker)) {
-            return { ready: true, armQuietTimer: false }
-          }
-          postAnchorRecent = (postAnchorRecent + data).slice(-512)
-        }
-      }
-      // Why: the Codex glyph and opencode show-cursor signals must NOT arm the
-      // quiet window (they carry no quiet anchor). opencode goes silent for
-      // ~1.5-2s between enabling bracketed paste and mounting its composer, so a
-      // quiet window would fire during that gap — before the composer exists —
-      // and pre-empt the marker. Those signals wait for their marker, bounded
-      // only by the caller's hard timeout (and its best-effort
-      // process-ownership paste after that).
-      return { ready: false, armQuietTimer: sawQuietAnchor }
-    }
+      return result
+    },
+    isHolding
   }
 }

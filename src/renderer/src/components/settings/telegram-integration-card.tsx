@@ -9,7 +9,12 @@ import { translate } from '@/i18n/i18n'
 import { TELEGRAM_SETTINGS_TARGET_ID } from '@/lib/settings-navigation-types'
 import type { TelegramBridgeState } from '../../../../shared/telegram-bridge-state'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
-import { telegramStatusHint, telegramStatusLabel, telegramStatusTone } from './telegram-card-state'
+import {
+  telegramChannelAvailabilityHint,
+  telegramStatusHint,
+  telegramStatusLabel,
+  telegramStatusTone
+} from './telegram-card-state'
 import { useTelegramBridgeState } from './use-telegram-bridge-state'
 
 const BOTFATHER_URL = 'https://t.me/BotFather'
@@ -220,6 +225,7 @@ function ChannelsSection(props: {
     'auto.components.settings.telegramIntegrationCard.channelsLabel',
     'Answer Claude Code through a channel (experimental)'
   )
+  const availabilityHint = telegramChannelAvailabilityHint(props.state)
   return (
     <div className="flex items-start gap-3">
       <div className="min-w-0 flex-1 space-y-1">
@@ -230,6 +236,7 @@ function ChannelsSection(props: {
             'Delivers Telegram replies straight into Claude Code sessions. While on, Claude asks you to confirm loading a local development channel every time it starts, and channels only work when Claude is signed in with claude.ai or a Console API key (not Bedrock, Vertex AI or Foundry).'
           )}
         </p>
+        {availabilityHint ? <p className="text-xs text-destructive">{availabilityHint}</p> : null}
       </div>
       <Switch
         id="telegram-claude-channels"

@@ -50,7 +50,7 @@ export function scanTranscriptForSecrets(text) {
       const end = start + match[0].length
       if (!claimed.some(([from, to]) => start < to && end > from)) {
         claimed.push([start, end])
-        if (!isAlreadyScrubbed(kind, match[0])) {
+        if (!isAlreadyScrubbed(kind, match[0]) && !isCliLongOption(kind, match[0])) {
           findings.push({ kind, index: start, match: match[0], ...locate(text, start) })
         }
       }
@@ -72,6 +72,14 @@ function isAlreadyScrubbed(kind, match) {
     return match.toLowerCase() === PLACEHOLDER_UUID
   }
   return /^(.)\1*$/.test(match)
+}
+
+// Why: a long CLI option is all lowercase words, never a credential. A cursor move's final byte
+// (`ESC[3;3H` then `--flag`) glues onto it as `3H--flag`, so that tail is tolerated too.
+const CLI_LONG_OPTION_RE = /^(?:\d*[A-Za-z])?--[a-z]+(?:-[a-z]+)+$/
+
+function isCliLongOption(kind, match) {
+  return kind === 'opaque-token' && CLI_LONG_OPTION_RE.test(match)
 }
 
 function locate(text, index) {

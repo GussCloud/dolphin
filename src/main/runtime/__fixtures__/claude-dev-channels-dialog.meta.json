@@ -1,0 +1,13 @@
+{
+  "capturedAt": "2026-10-08T12:57:10.000Z",
+  "platform": "win32",
+  "command": [
+    "claude",
+    "--mcp-config=<scratch>/cfg.json",
+    "--dangerously-load-development-channels=server:dolphin-telegram"
+  ],
+  "cols": 120,
+  "rows": 36,
+  "note": "Claude Code 2.1.294 (Max plan), Windows 11. Startup confirmation for --dangerously-load-development-channels; capture stopped by --duration 15 with the dialog still up.",
+  "exitCode": 1
+}

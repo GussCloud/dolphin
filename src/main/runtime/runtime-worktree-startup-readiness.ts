@@ -8,6 +8,11 @@ import type {
   WorktreeStartupDraftPaste,
   WorktreeStartupFollowup
 } from './runtime-worktree-agent-startup'
+import {
+  CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS,
+  createClaudeDevChannelsDialogTracker,
+  shouldExtendTimeoutForClaudeDevChannelsDialog
+} from '../../shared/claude-dev-channels-dialog'
 
 const BRACKETED_PASTE_BEGIN = '\x1b[200~'
 const BRACKETED_PASTE_END = '\x1b[201~'
@@ -20,6 +25,8 @@ export type WorktreeStartupReadinessHost = {
   subscribeToData: (ptyId: string, listener: (data: string) => void) => () => void
   readRecentOutput: (ptyId: string) => string | undefined
   write: (ptyId: string, data: string) => void
+  /** True only for a PTY Dolphin launched with the Claude channel flags. */
+  isClaudeChannelPty?: (ptyId: string) => boolean
 }
 
 export function pasteWorktreeStartupDraftWhenReady(
@@ -56,6 +63,27 @@ export function sendWorktreeStartupFollowupWhenReady(
     )
 }
 
+// Why: the follow-up is typed raw; into Claude's channel confirmation it would be swallowed.
+async function waitOutClaudeDevChannelsDialog(
+  host: WorktreeStartupReadinessHost,
+  ptyId: string
+): Promise<boolean> {
+  if (!host.isClaudeChannelPty?.(ptyId)) {
+    return true
+  }
+  const deadline = Date.now() + CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS
+  while (createClaudeDevChannelsDialogTracker().observe(host.readRecentOutput(ptyId) ?? '')) {
+    if (Date.now() > deadline) {
+      console.warn(
+        '[worktree-create] startup follow-up not sent: Claude channel confirmation still open'
+      )
+      return false
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+  return true
+}
+
 export async function waitForWorktreeStartupFollowup(
   host: WorktreeStartupReadinessHost,
   handle: string,
@@ -72,11 +100,11 @@ export async function waitForWorktreeStartupFollowup(
     try {
       const foregroundProcess = await host.getForegroundProcess(ptyId)
       if (isExpectedAgentProcess(foregroundProcess, expectedProcess)) {
-        return ptyId
+        return (await waitOutClaudeDevChannelsDialog(host, ptyId)) ? ptyId : null
       }
       if (attempt >= 4 && !isShellProcess(foregroundProcess ?? '')) {
         if ((await host.hasChildProcesses?.(ptyId).catch(() => false)) ?? false) {
-          return ptyId
+          return (await waitOutClaudeDevChannelsDialog(host, ptyId)) ? ptyId : null
         }
       }
     } catch {
@@ -99,7 +127,10 @@ export function waitForWorktreeStartupDraft(
     TUI_AGENT_CONFIG[agent].draftPasteReadySignal ?? 'render-quiet-after-bracketed-paste'
   return new Promise((resolve) => {
     let settled = false
-    const scanner = createDraftPasteReadyScanner(signal)
+    const scanner = createDraftPasteReadyScanner(signal, {
+      holdOnClaudeDevChannelsDialog: () => host.isClaudeChannelPty?.(ptyId) === true
+    })
+    const startedAt = Date.now()
     let quietTimer: NodeJS.Timeout | null = null
     let hardTimer: NodeJS.Timeout | null = null
     let unsubscribe: (() => void) | null = null
@@ -122,11 +153,29 @@ export function waitForWorktreeStartupDraft(
       if (result.ready) {
         return finish(ptyId)
       }
+      if (result.hold && quietTimer) {
+        clearTimeout(quietTimer)
+        quietTimer = null
+      }
       if (result.armQuietTimer) {
         if (quietTimer) {
           clearTimeout(quietTimer)
         }
-        quietTimer = setTimeout(() => finish(ptyId), BRACKETED_PASTE_QUIET_MS)
+        const onQuiet = (): void => {
+          quietTimer = null
+          if (
+            shouldExtendTimeoutForClaudeDevChannelsDialog(
+              scanner.isHolding(),
+              startedAt,
+              Date.now()
+            )
+          ) {
+            quietTimer = setTimeout(onQuiet, BRACKETED_PASTE_QUIET_MS)
+            return
+          }
+          finish(ptyId)
+        }
+        quietTimer = setTimeout(onQuiet, BRACKETED_PASTE_QUIET_MS)
       }
     }
     unsubscribe = host.subscribeToData(ptyId, observe)
@@ -134,6 +183,16 @@ export function waitForWorktreeStartupDraft(
     if (replay) {
       observe(replay)
     }
-    hardTimer = setTimeout(() => finish(null), resolveDraftPasteReadyTimeoutMs(agent))
+    const timeoutMs = resolveDraftPasteReadyTimeoutMs(agent)
+    const onHardTimeout = (): void => {
+      if (
+        shouldExtendTimeoutForClaudeDevChannelsDialog(scanner.isHolding(), startedAt, Date.now())
+      ) {
+        hardTimer = setTimeout(onHardTimeout, timeoutMs)
+        return
+      }
+      finish(null)
+    }
+    hardTimer = setTimeout(onHardTimeout, timeoutMs)
   })
 }

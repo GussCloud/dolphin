@@ -29,6 +29,7 @@ import {
   paneSpawnReservationsByOwnerKey
 } from '../pane/spawn-reservation'
 import type { RuntimePtySpawnState } from './spawn-state'
+import { applyClaudeChannelLaunch } from '../../../telegram/claude-channel-launch'
 
 /** Headless spawns need the same host-side environment isolation as desktop spawns. */
 export async function buildRuntimePtySpawnOptions(
@@ -37,6 +38,13 @@ export async function buildRuntimePtySpawnOptions(
   (PtySpawnResult & { stablePaneOwner?: { handle: string; tabId: string; leafId: string } }) | null
 > {
   const args = ctx.args
+  ;({ command: ctx.launchCommand, env: ctx.env } = applyClaudeChannelLaunch({
+    command: ctx.launchCommand,
+    env: ctx.env,
+    launchAgent: args.launchAgent,
+    connectionId: args.connectionId,
+    isWsl: ctx.expectedWslDistro !== null
+  }))
 
   const authEnvToDelete = ctx.claudeAuth?.stripAuthEnv
     ? [...CLAUDE_AUTH_ENV_VARS, 'ANTHROPIC_CUSTOM_HEADERS']

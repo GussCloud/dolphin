@@ -7,6 +7,7 @@ import {
 import type { RuntimeTerminalWaitBlockedReason } from '../../shared/runtime-types'
 import { findAntigravityReadyPromptIndex } from './antigravity-terminal-readiness'
 import { startOfLastLines, startOfLastNonBlankLines } from './terminal-wait-tail-window'
+import { isClaudeChannelPty } from '../telegram/claude-channel-panes'
 
 const EXPLICIT_IDLE_TITLE_RE = /(^|\s)(ready|idle|done)(\s|$|[.!?])/i
 const CLAUDE_IDLE_PREFIX = '\u2733'
@@ -67,10 +68,28 @@ export function isMuseReadyPromptPreview(preview: string): boolean {
 }
 
 export function detectTerminalWaitBlockedReason(
-  preview: string
+  preview: string,
+  /** Scopes the Claude channel confirmation to the PTY Dolphin launched with that flag. */
+  ptyId?: string | null
 ): RuntimeTerminalWaitBlockedReason | null {
   const normalized = preview.toLowerCase()
-  return findActionableTerminalWaitBlockedSignal(normalized)?.reason ?? null
+  const reason = findActionableTerminalWaitBlockedSignal(normalized)?.reason ?? null
+  return (
+    reason ?? (isClaudeDevChannelsDialogLive(normalized, ptyId) ? 'agent-interactive-prompt' : null)
+  )
+}
+
+// Why per PTY: the phrase alone is ordinary text when any agent reads these sources or docs.
+function isClaudeDevChannelsDialogLive(
+  normalized: string,
+  ptyId: string | null | undefined
+): boolean {
+  if (!isClaudeChannelPty(ptyId)) {
+    return false
+  }
+  const live = normalized.slice(startOfLastNonBlankLines(normalized, LIVE_PROMPT_TAIL_LINES))
+  const dialogIndex = live.lastIndexOf('loading development channels')
+  return dialogIndex !== -1 && live.includes('enter to confirm', dialogIndex)
 }
 
 export function findActionableTerminalWaitBlockedSignal(

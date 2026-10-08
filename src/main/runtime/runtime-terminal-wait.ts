@@ -92,7 +92,7 @@ export class RuntimeTerminalWait {
         pty.pty.tailPartialLine,
         pty.pty.preview
       )
-      const ptyBlockedReason = detectTerminalWaitBlockedReason(ptyWaitText)
+      const ptyBlockedReason = detectTerminalWaitBlockedReason(ptyWaitText, pty.pty.ptyId)
       if (condition === 'tui-idle' && ptyBlockedReason) {
         return buildPtyTerminalWaitBlockedResult(handle, condition, pty.pty, ptyBlockedReason)
       }
@@ -138,7 +138,7 @@ export class RuntimeTerminalWait {
             live.pty.tailPartialLine,
             live.pty.preview
           )
-          const blockedReason = detectTerminalWaitBlockedReason(livePtyWaitText)
+          const blockedReason = detectTerminalWaitBlockedReason(livePtyWaitText, live.pty.ptyId)
           if (blockedReason) {
             this.waiters.resolve(
               waiter,
@@ -173,7 +173,7 @@ export class RuntimeTerminalWait {
     }
 
     const leafWaitText = buildTerminalWaitText(leaf.tailBuffer, leaf.tailPartialLine, leaf.preview)
-    const leafBlockedReason = detectTerminalWaitBlockedReason(leafWaitText)
+    const leafBlockedReason = detectTerminalWaitBlockedReason(leafWaitText, leaf.ptyId)
     if (condition === 'tui-idle' && leafBlockedReason) {
       return buildTerminalWaitBlockedResult(handle, condition, leaf, leafBlockedReason)
     }
@@ -235,7 +235,7 @@ export class RuntimeTerminalWait {
             live.leaf.tailPartialLine,
             live.leaf.preview
           )
-          const blockedReason = detectTerminalWaitBlockedReason(liveLeafWaitText)
+          const blockedReason = detectTerminalWaitBlockedReason(liveLeafWaitText, live.leaf.ptyId)
           if (blockedReason) {
             this.waiters.resolve(
               waiter,
