@@ -15715,7 +15715,7 @@
       "description": "Sigue todas las sesiones de agentes desde Telegram y respóndelas sin volver a Dolphin.",
       "statusHighlight": "Recibe en Telegram el estado y las preguntas de todas las sesiones de agentes, en todos los worktrees (SSH incluido).",
       "buttonsHighlight": "Responde preguntas y solicitudes de permiso directamente con los botones.",
-      "channelsHighlight": "Conversa con sesiones de Claude Code mediante channels.",
+      "channelsHighlight": "Si quieres, conversa con sesiones de Claude Code mediante un canal (experimental, desactivado por defecto).",
       "cta": "Configurar Telegram",
       "demoBotName": "Dolphin bot",
       "demoBotStatus": "bot",

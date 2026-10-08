@@ -18667,10 +18667,10 @@
     "telegram": {
       "eyebrow": "新機能",
       "title": "Telegram 連携",
-      "description": "すべてのエージェントセッションを Telegram で追跡し、Dolphin に戻らずに返信できます。",
-      "statusHighlight": "すべてのワークツリー（SSH を含む）のエージェントセッションの状態と質問を Telegram で受け取れます。",
+      "description": "すべての Agent セッションを Telegram で追跡し、Dolphin に戻らずに返信できます。",
+      "statusHighlight": "すべてのワークツリー（SSH を含む）の Agent セッションの状態と質問を Telegram で受け取れます。",
       "buttonsHighlight": "質問や権限リクエストにボタンからそのまま回答できます。",
-      "channelsHighlight": "channels を通じて Claude Code セッションと会話できます。",
+      "channelsHighlight": "必要に応じて、チャネル経由で Claude Code セッションと会話できます（試験的機能、既定ではオフ）。",
       "cta": "Telegram を設定",
       "demoBotName": "Dolphin bot",
       "demoBotStatus": "ボット",

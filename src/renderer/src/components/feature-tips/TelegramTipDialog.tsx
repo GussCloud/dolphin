@@ -32,7 +32,7 @@ export function TelegramTipDialog({
     ),
     translate(
       'featureTips.telegram.channelsHighlight',
-      'Chat with Claude Code sessions through channels.'
+      'Optionally, chat with Claude Code sessions through a channel (experimental, off by default).'
     )
   ]
 

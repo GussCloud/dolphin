@@ -42,7 +42,7 @@ describe('TelegramTipDialog', () => {
     expect(html).toContain('Telegram integration')
     expect(html).toContain('across all worktrees (SSH included)')
     expect(html).toContain('right from the buttons')
-    expect(html).toContain('Chat with Claude Code sessions through channels')
+    expect(html).toContain('chat with Claude Code sessions through a channel (experimental, off by default)')
     expect(html).toContain('Set up Telegram')
     expect(html).toContain('Maybe Later')
     expect(html).toContain('telegram-visual')

@@ -18670,7 +18670,7 @@
       "description": "在 Telegram 中跟进所有智能体会话，无需返回 Dolphin 即可回复。",
       "statusHighlight": "在 Telegram 中接收所有工作树（包括 SSH）上智能体会话的状态和问题。",
       "buttonsHighlight": "直接通过按钮回答问题和权限请求。",
-      "channelsHighlight": "通过 channels 与 Claude Code 会话对话。",
+      "channelsHighlight": "还可以通过频道与 Claude Code 会话对话（实验性功能，默认关闭）。",
       "cta": "设置 Telegram",
       "demoBotName": "Dolphin bot",
       "demoBotStatus": "机器人",
