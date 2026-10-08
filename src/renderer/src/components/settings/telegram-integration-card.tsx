@@ -262,7 +262,7 @@ export function TelegramIntegrationCard(): React.JSX.Element {
       )}
       statusLabel={telegramStatusLabel(state)}
       statusTone={telegramStatusTone(state)}
-      checking={state === null}
+      checking={state == null}
       settingsSectionId={TELEGRAM_SETTINGS_TARGET_ID}
       actions={
         state?.available ? (
@@ -275,7 +275,7 @@ export function TelegramIntegrationCard(): React.JSX.Element {
         ) : null
       }
     >
-      {state === null ? null : (
+      {state == null ? null : (
         <IntegrationCardDetails>
           {state.available ? (
             <>

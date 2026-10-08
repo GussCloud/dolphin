@@ -31,3 +31,18 @@ export type TelegramBridgeState = {
 }
 
 export const TELEGRAM_BRIDGE_CHANGED_CHANNEL = 'telegram:changed'
+
+/** Guards IPC results: a fallback API (web client, tests) can resolve undefined. */
+export function isTelegramBridgeState(value: unknown): value is TelegramBridgeState {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'available' in value &&
+    typeof value.available === 'boolean' &&
+    'connection' in value &&
+    typeof value.connection === 'object' &&
+    value.connection !== null &&
+    'allowedChats' in value &&
+    Array.isArray(value.allowedChats)
+  )
+}

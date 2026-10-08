@@ -104,6 +104,22 @@ describe('TelegramIntegrationCard', () => {
     expect(telegram.removeChat).toHaveBeenCalledWith(42)
   })
 
+  it('does not crash when the API resolves nothing (fallback proxy)', async () => {
+    telegram.getState.mockResolvedValue(undefined)
+    container = document.createElement('div')
+    document.body.appendChild(container)
+    root = createRoot(container)
+    await act(async () => {
+      root?.render(
+        <TooltipProvider>
+          <TelegramIntegrationCard />
+        </TooltipProvider>
+      )
+    })
+    expect(container.textContent).toContain('Telegram')
+    expect(container.querySelector('input')).toBeNull()
+  })
+
   it('explains a polling conflict inline', async () => {
     const host = await renderCard({
       ...BASE,

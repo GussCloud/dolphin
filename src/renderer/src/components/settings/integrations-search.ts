@@ -1,8 +1,10 @@
 import { translate } from '@/i18n/i18n'
 import { translateSearchKeyword } from './settings-search-keywords'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
+import { isWebClientLocation } from '@/lib/web-client-location'
+import type { SettingsSearchEntry } from './settings-search'
 
-export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
+const getProviderSearchEntries = createLocalizedCatalog(() => [
   {
     title: translate(
       'auto.components.settings.integrations.search.f16e41cc72',
@@ -250,7 +252,10 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
         'traces'
       )
     ]
-  },
+  }
+])
+
+const getTelegramSearchEntries = createLocalizedCatalog(() => [
   {
     title: translate(
       'auto.components.settings.integrations.search.telegramTitle',
@@ -277,3 +282,10 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
     ]
   }
 ])
+
+export function getIntegrationsPaneSearchEntries(): SettingsSearchEntry[] {
+  // Why: Telegram notices run in desktop main; the web client has no bridge to configure.
+  return isWebClientLocation()
+    ? getProviderSearchEntries()
+    : [...getProviderSearchEntries(), ...getTelegramSearchEntries()]
+}

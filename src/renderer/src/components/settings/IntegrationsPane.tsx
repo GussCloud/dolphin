@@ -10,6 +10,7 @@ import { OpenObserveIntegrationCard } from './openobserve-integration-card'
 import { TelegramIntegrationCard } from './telegram-integration-card'
 import { useIntegrationProviderStatusRefresh } from './use-integration-provider-status-refresh'
 import { translate } from '@/i18n/i18n'
+import { isWebClientLocation } from '@/lib/web-client-location'
 export { getIntegrationsPaneSearchEntries } from './integrations-search'
 
 export function IntegrationsPane(): React.JSX.Element {
@@ -73,22 +74,25 @@ export function IntegrationsPane(): React.JSX.Element {
         </div>
       </section>
 
-      <section className="space-y-3">
-        <div className="space-y-1">
-          <h3 className="text-sm font-semibold text-foreground">
-            {translate('auto.components.settings.IntegrationsPane.agentNotices', 'Agent notices')}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {translate(
-              'auto.components.settings.IntegrationsPane.agentNoticesDescription',
-              'Follow your agents from your phone: finished turns, blocked agents and questions waiting for you.'
-            )}
-          </p>
-        </div>
-        <div className="space-y-3">
-          <TelegramIntegrationCard />
-        </div>
-      </section>
+      {/* Why: the Telegram bridge lives in desktop main; the web client has no telegram API. */}
+      {isWebClientLocation() ? null : (
+        <section className="space-y-3">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-foreground">
+              {translate('auto.components.settings.IntegrationsPane.agentNotices', 'Agent notices')}
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              {translate(
+                'auto.components.settings.IntegrationsPane.agentNoticesDescription',
+                'Follow your agents from your phone: finished turns, blocked agents and questions waiting for you.'
+              )}
+            </p>
+          </div>
+          <div className="space-y-3">
+            <TelegramIntegrationCard />
+          </div>
+        </section>
+      )}
     </div>
   )
 }

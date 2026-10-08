@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import type { TelegramBridgeState } from '../../../../shared/telegram-bridge-state'
+import {
+  isTelegramBridgeState,
+  type TelegramBridgeState
+} from '../../../../shared/telegram-bridge-state'
 
 export function useTelegramBridgeState(): {
   state: TelegramBridgeState | null
@@ -16,11 +19,13 @@ export function useTelegramBridgeState(): {
       .getState()
       .then((next) => {
         if (!disposed) {
-          setState(next)
+          setState(isTelegramBridgeState(next) ? next : null)
         }
       })
       .catch((error: unknown) => console.error('[telegram] failed to load bridge state', error))
-    const unsubscribe = window.api.telegram.onChanged((next) => setState(next))
+    const unsubscribe = window.api.telegram.onChanged((next) =>
+      setState(isTelegramBridgeState(next) ? next : null)
+    )
     return () => {
       disposed = true
       unsubscribe()
@@ -30,7 +35,8 @@ export function useTelegramBridgeState(): {
   const run = useCallback(async (mutation: () => Promise<TelegramBridgeState>) => {
     setBusy(true)
     try {
-      setState(await mutation())
+      const next = await mutation()
+      setState(isTelegramBridgeState(next) ? next : null)
       return true
     } catch (error) {
       toast.error(error instanceof Error ? error.message : String(error))
