@@ -16,11 +16,26 @@ export function resolveWatcherProcessEntryPath(
   isPackaged: boolean,
   pathExists: (candidate: string) => boolean = existsSync
 ): string {
+  return resolveUnpackedMainEntryPath(
+    appPath,
+    isPackaged,
+    'parcel-watcher-process-entry.js',
+    pathExists
+  )
+}
+
+/** Path of a main-build entry that runs under ELECTRON_RUN_AS_NODE (so outside app.asar). */
+export function resolveUnpackedMainEntryPath(
+  appPath: string,
+  isPackaged: boolean,
+  entryFileName: string,
+  pathExists: (candidate: string) => boolean = existsSync
+): string {
   // Why: ELECTRON_RUN_AS_NODE bypasses Electron's asar integration, so the
   // packaged entry must be forked from app.asar.unpacked.
   const usesAsarArchive = isPackaged && appPath.includes('app.asar')
   const basePath = usesAsarArchive ? appPath.replace('app.asar', 'app.asar.unpacked') : appPath
-  const adjacentBuildEntry = join(basePath, 'parcel-watcher-process-entry.js')
+  const adjacentBuildEntry = join(basePath, entryFileName)
   // Why: electron-vite's unpackaged appPath is already out/main. Appending
   // out/main again silently disables crash isolation in dev and E2E builds.
   // Why asar and not isPackaged: dolphind is a packaged non-Electron host whose app root
@@ -29,7 +44,7 @@ export function resolveWatcherProcessEntryPath(
   if (!usesAsarArchive && pathExists(adjacentBuildEntry)) {
     return adjacentBuildEntry
   }
-  return join(basePath, 'out', 'main', 'parcel-watcher-process-entry.js')
+  return join(basePath, 'out', 'main', entryFileName)
 }
 
 export function resolveWatcherProcessEntryPathWithoutApp(

@@ -19,6 +19,7 @@ import {
 import { promoteAgentTeamsShimPath } from '../host-env/path'
 import { clearProviderPtyState } from '../provider/state-cleanup'
 import type { PtyIpcSpawnState } from './spawn-state'
+import { applyClaudeChannelLaunch } from '../../../telegram/claude-channel-launch'
 
 export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promise<void> {
   const args = ctx.args
@@ -53,6 +54,13 @@ export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promis
   const codexResumeHome = ctx.codexResumeLaunch.codexResumeHome
   ctx.launchCommand = ctx.codexResumeLaunch.command
   ctx.baseEnv = ctx.deps.stripSequencedStartupResumeArgv(ctx.baseEnv, ctx.codexResumeLaunch)
+  ;({ command: ctx.launchCommand, env: ctx.baseEnv } = applyClaudeChannelLaunch({
+    command: ctx.launchCommand,
+    env: ctx.baseEnv,
+    launchAgent: args.launchAgent,
+    connectionId: args.connectionId,
+    isWsl: ctx.expectedWslDistro !== null
+  }))
   // Why: declared after the strip so a local-provider spawn cannot capture the
   // pre-strip env — only the daemon branch below re-derives this from baseEnv.
   ctx.env = ctx.baseEnv
