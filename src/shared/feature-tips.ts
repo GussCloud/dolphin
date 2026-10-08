@@ -11,6 +11,7 @@ export type FeatureTipId =
   | 'cmd-j-palette'
   | 'agent-session-search'
   | 'claude-agent-teams-windows'
+  | 'telegram-integration'
 
 export type FeatureTipPriority = 'new' | 'unseen'
 
@@ -20,6 +21,7 @@ export type FeatureTipAction =
   | 'learn-cmd-j-palette'
   | 'enable-session-search'
   | 'learn-claude-agent-teams'
+  | 'setup-telegram'
 
 /** Who is running the app; tips with an audience rule stay hidden until it is known. */
 export type FeatureTipAudience = {
@@ -47,10 +49,25 @@ export type CompletedFeatureTipState = {
   voiceDictationEnabled: boolean
   /** Search is on, or this client cannot turn it on. */
   sessionSearchTipCompleted: boolean
+  /** This client cannot reach the Telegram bridge, which runs in the desktop app. */
+  telegramUnavailable?: boolean
   featureInteractions?: FeatureInteractionState
 }
 
 export const FEATURE_TIPS = [
+  {
+    id: 'telegram-integration',
+    priority: 'new',
+    eyebrow: 'New',
+    title: 'Telegram integration',
+    description:
+      'Follow every agent session from Telegram and answer it without coming back to Dolphin.',
+    action: 'setup-telegram',
+    ctaLabel: 'Set up Telegram',
+    completedByFeatureInteractions: [],
+    // Why: first release that ships the Telegram integration; listed first so it wins that launch.
+    minAppVersion: '0.2.3'
+  },
   {
     id: 'claude-agent-teams-windows',
     priority: 'new',
@@ -140,6 +157,9 @@ export function getCompletedFeatureTipIds(state: CompletedFeatureTipState): Set<
   }
   if (state.sessionSearchTipCompleted) {
     completedIds.add('agent-session-search')
+  }
+  if (state.telegramUnavailable) {
+    completedIds.add('telegram-integration')
   }
   for (const tip of FEATURE_TIPS) {
     if (

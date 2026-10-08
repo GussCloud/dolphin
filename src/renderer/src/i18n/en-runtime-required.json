@@ -2767,6 +2767,14 @@
       "title": "Agent dashboard"
     }
   },
+  "featureTips": {
+    "telegram": {
+      "cta": "Set up Telegram",
+      "description": "Follow every agent session from Telegram and answer it without coming back to Dolphin.",
+      "eyebrow": "New",
+      "title": "Telegram integration"
+    }
+  },
   "runtimeRpc": {
     "startupFailure": {
       "guidance": {

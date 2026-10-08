@@ -18640,6 +18640,26 @@
       "demoHit6Age": "1mo",
       "readyToast": "A pesquisa de sessão está pronta",
       "readyToastOpen": "Aberto"
+    },
+    "telegram": {
+      "eyebrow": "Novidade",
+      "title": "Integração com Telegram",
+      "description": "Acompanhe todas as sessões de agentes pelo Telegram e responda sem precisar voltar ao Dolphin.",
+      "statusHighlight": "Receba no Telegram o status e as perguntas de todas as sessões de agentes, em todas as worktrees (inclusive SSH).",
+      "buttonsHighlight": "Responda perguntas e permissões direto pelos botões.",
+      "channelsHighlight": "Opcionalmente, converse com sessões do Claude Code por um canal (experimental, desativado por padrão).",
+      "cta": "Configurar Telegram",
+      "demoBotName": "Dolphin bot",
+      "demoBotStatus": "bot",
+      "demoStatusMeta": "api-auth · SSH",
+      "demoStatusText": "Claude Code concluiu a tarefa",
+      "demoQuestionMeta": "web-ui · Codex",
+      "demoQuestionText": "Permitir executar pnpm test?",
+      "demoAllow": "Permitir",
+      "demoDeny": "Negar",
+      "demoChannelPrompt": "Atualize também o changelog",
+      "demoChannelMeta": "Claude Code",
+      "demoChannelReply": "Certo: atualizando CHANGELOG.md"
     }
   },
   "quickOpen": {

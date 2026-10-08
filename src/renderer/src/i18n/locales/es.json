@@ -15708,6 +15708,26 @@
       "recent3Title": "Borrador de notas de la versión",
       "settingsLink": "Ajustes → Búsqueda de sesiones de agentes",
       "startSearching": "Empezar a buscar"
+    },
+    "telegram": {
+      "eyebrow": "Novedad",
+      "title": "Integración con Telegram",
+      "description": "Sigue todas las sesiones de agentes desde Telegram y respóndelas sin volver a Dolphin.",
+      "statusHighlight": "Recibe en Telegram el estado y las preguntas de todas las sesiones de agentes, en todos los worktrees (SSH incluido).",
+      "buttonsHighlight": "Responde preguntas y solicitudes de permiso directamente con los botones.",
+      "channelsHighlight": "Si quieres, conversa con sesiones de Claude Code mediante un canal (experimental, desactivado por defecto).",
+      "cta": "Configurar Telegram",
+      "demoBotName": "Dolphin bot",
+      "demoBotStatus": "bot",
+      "demoStatusMeta": "api-auth · SSH",
+      "demoStatusText": "Claude Code terminó la tarea",
+      "demoQuestionMeta": "web-ui · Codex",
+      "demoQuestionText": "¿Permitir ejecutar pnpm test?",
+      "demoAllow": "Permitir",
+      "demoDeny": "Denegar",
+      "demoChannelPrompt": "Actualiza también el changelog",
+      "demoChannelMeta": "Claude Code",
+      "demoChannelReply": "Entendido: actualizando CHANGELOG.md"
     }
   },
   "editor": {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getDefaultOnboardingState, getDefaultVoiceSettings } from '../../../../shared/constants'
 import type { CliInstallStatus } from '../../../../shared/cli-install-types'
-import type { FeatureTipAudience } from '../../../../shared/feature-tips'
+import type { FeatureTipAudience, FeatureTipId } from '../../../../shared/feature-tips'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { OnboardingState } from '../../../../shared/onboarding-state-types'
 import {
@@ -278,7 +278,7 @@ describe('feature tip startup gate', () => {
   function decideForExistingUser(args: {
     sessionSearchEnabled: boolean
     webClient: boolean
-    featureTipsSeenIds?: ('agent-session-search' | 'dolphin-cli')[]
+    featureTipsSeenIds?: FeatureTipId[]
     audience?: FeatureTipAudience | null
   }): ReturnType<typeof getFeatureTipsAppOpenDecision> {
     return getFeatureTipsAppOpenDecision({
@@ -357,6 +357,49 @@ describe('feature tip startup gate', () => {
         sessionSearchEnabled: false,
         webClient: false,
         audience: { appVersion: '0.1.20', windows: true }
+      })
+    ).toEqual({ kind: 'open', tipId: 'agent-session-search' })
+  })
+
+  it('opens the Telegram tip first on the first launch of 0.2.3, on every platform', () => {
+    for (const windows of [true, false]) {
+      expect(
+        decideForExistingUser({
+          sessionSearchEnabled: false,
+          webClient: false,
+          audience: { appVersion: '0.2.3', windows }
+        })
+      ).toEqual({ kind: 'open', tipId: 'telegram-integration' })
+    }
+  })
+
+  it('never reopens the Telegram tip once it was shown', () => {
+    expect(
+      decideForExistingUser({
+        sessionSearchEnabled: true,
+        webClient: false,
+        featureTipsSeenIds: ['telegram-integration', 'dolphin-cli', 'cmd-j-palette'],
+        audience: { appVersion: '0.2.4', windows: false }
+      })
+    ).toEqual({ kind: 'open', tipId: 'voice-dictation' })
+  })
+
+  it('never opens the Telegram tip in the web client', () => {
+    expect(
+      decideForExistingUser({
+        sessionSearchEnabled: false,
+        webClient: true,
+        audience: { appVersion: '0.2.3', windows: false }
+      })
+    ).toEqual({ kind: 'open', tipId: 'dolphin-cli' })
+  })
+
+  it('keeps the Telegram tip hidden before 0.2.3', () => {
+    expect(
+      decideForExistingUser({
+        sessionSearchEnabled: false,
+        webClient: false,
+        audience: { appVersion: '0.2.2', windows: false }
       })
     ).toEqual({ kind: 'open', tipId: 'agent-session-search' })
   })
