@@ -7643,7 +7643,9 @@
           "1683acbac4": "Connect the source hosts Dolphin can use for pull requests, merge requests, checks, and review status.",
           "298c65ecac": "Review providers",
           "observability": "Observability",
-          "observabilityDescription": "Connect observability tools so agents can read logs, metrics and traces while they work."
+          "observabilityDescription": "Connect observability tools so agents can read logs, metrics and traces while they work.",
+          "agentNotices": "Agent notices",
+          "agentNoticesDescription": "Follow your agents from your phone: finished turns, blocked agents and questions waiting for you."
         },
         "KagiSessionLinkForm": {
           "92f0b4e472": "Clear",
@@ -10089,7 +10091,12 @@
             "openObserveKeyword": "openobserve",
             "observabilityKeyword": "observability",
             "logsKeyword": "logs",
-            "tracesKeyword": "traces"
+            "tracesKeyword": "traces",
+            "telegramTitle": "Telegram Agent Notices",
+            "telegramDescription": "Telegram messages when an agent finishes, is blocked, or waits for you.",
+            "telegramKeyword": "telegram",
+            "notificationsKeyword": "notifications",
+            "botKeyword": "bot"
           }
         },
         "jira": {
@@ -12386,6 +12393,38 @@
           "checkNow": "Check now",
           "accountExists": "A Dolphin account with this email already exists. Sign in once to link it.",
           "signInWithAzureDevOps": "Sign in with Azure DevOps"
+        },
+        "telegramIntegrationCard": {
+          "name": "Telegram",
+          "summary": "Get a message when an agent finishes, is blocked, or waits for you, from every workspace.",
+          "statusOff": "Off",
+          "statusNotConfigured": "Not configured",
+          "statusConnecting": "Connecting",
+          "statusOk": "Connected",
+          "statusConflict": "Another app is polling",
+          "statusInvalidToken": "Invalid token",
+          "statusNetworkError": "Unreachable",
+          "conflictHint": "Telegram reports another program reading updates for this bot (HTTP 409). Stop the other poller or webhook; Dolphin retries every 30 seconds.",
+          "invalidTokenHint": "Telegram rejected the bot token. Paste a new token from @BotFather.",
+          "networkHint": "Telegram is unreachable from this computer. Dolphin keeps retrying.",
+          "tokenLabel": "Bot token",
+          "tokenDescription": "Create a bot with @BotFather and paste its token. The token is encrypted on this computer and never shown again.",
+          "saveToken": "Save",
+          "cancel": "Cancel",
+          "openBotFather": "Open @BotFather",
+          "tokenSavedFor": "Token saved for @{{value0}}.",
+          "tokenSaved": "Token saved.",
+          "replaceToken": "Replace",
+          "removeToken": "Remove",
+          "removeChat": "Remove chat",
+          "chatsLabel": "Paired chats",
+          "chatsDescription": "Only paired chats receive notices. Messages from any other chat are ignored.",
+          "noChats": "No chats paired yet.",
+          "pairingInstructionsBot": "Send this message to @{{value0}} within 10 minutes. The code works once.",
+          "pairingInstructions": "Send this message to your bot within 10 minutes. The code works once.",
+          "pairChat": "Pair a chat",
+          "enable": "Send agent notices to Telegram",
+          "unavailable": "Telegram notices run in the Dolphin desktop app and are not available on this host."
         }
       },
       "right": {
@@ -18783,5 +18822,32 @@
   },
   "common": {
     "retry": "Retry"
+  },
+  "telegram": {
+    "notice": {
+      "blocked": "Blocked",
+      "waiting": "Waiting for you",
+      "stopped": "Stopped",
+      "done": "Done",
+      "resolved": "Answered"
+    },
+    "help": {
+      "title": "Dolphin agent notices",
+      "status": "agents waiting, blocked or working",
+      "to": "send text to an agent in that workspace",
+      "reply": "Reply to a notice to answer that agent.",
+      "help": "this message"
+    },
+    "reply": {
+      "notSupported": "Replies are not supported yet."
+    },
+    "pair": {
+      "success": "Paired. This chat now receives Dolphin agent notices.",
+      "already": "This chat is already paired."
+    },
+    "status": {
+      "empty": "No agents reported yet.",
+      "unverified": "unverified"
+    }
   }
 }

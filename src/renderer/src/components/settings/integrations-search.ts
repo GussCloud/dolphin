@@ -250,5 +250,30 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
         'traces'
       )
     ]
+  },
+  {
+    title: translate(
+      'auto.components.settings.integrations.search.telegramTitle',
+      'Telegram Agent Notices'
+    ),
+    description: translate(
+      'auto.components.settings.integrations.search.telegramDescription',
+      'Telegram messages when an agent finishes, is blocked, or waits for you.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.telegramKeyword',
+        'telegram'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.c450244ad7',
+        'integration'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.notificationsKeyword',
+        'notifications'
+      ),
+      ...translateSearchKeyword('auto.components.settings.integrations.search.botKeyword', 'bot')
+    ]
   }
 ])

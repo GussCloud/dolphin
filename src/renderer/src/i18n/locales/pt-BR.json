@@ -7643,7 +7643,9 @@
           "1683acbac4": "Conectar os hosts de origem que o Dolphin pode usar para pull requests, merge requests, verificações e status de revisão.",
           "298c65ecac": "Provedores de revisão",
           "observability": "Observabilidade",
-          "observabilityDescription": "Conecte ferramentas de observabilidade para que os agentes leiam logs, métricas e traces enquanto trabalham."
+          "observabilityDescription": "Conecte ferramentas de observabilidade para que os agentes leiam logs, métricas e traces enquanto trabalham.",
+          "agentNotices": "Avisos de agentes",
+          "agentNoticesDescription": "Acompanhe seus agentes pelo celular: turnos concluídos, agentes bloqueados e perguntas aguardando você."
         },
         "KagiSessionLinkForm": {
           "92f0b4e472": "Limpar",
@@ -10089,7 +10091,12 @@
             "openObserveKeyword": "openobserve",
             "observabilityKeyword": "observabilidade",
             "logsKeyword": "logs",
-            "tracesKeyword": "traces"
+            "tracesKeyword": "traces",
+            "telegramTitle": "Avisos de agentes no Telegram",
+            "telegramDescription": "Mensagens no Telegram quando um agente termina, fica bloqueado ou aguarda você.",
+            "telegramKeyword": "telegram",
+            "notificationsKeyword": "notificações",
+            "botKeyword": "bot"
           }
         },
         "jira": {
@@ -12386,6 +12393,38 @@
           "checkNow": "Verificar agora",
           "accountExists": "Já existe uma conta do Dolphin com este e-mail. Entre uma vez para vinculá-la.",
           "signInWithAzureDevOps": "Entrar com Azure DevOps"
+        },
+        "telegramIntegrationCard": {
+          "name": "Telegram",
+          "summary": "Receba uma mensagem quando um agente terminar, ficar bloqueado ou aguardar você, em qualquer workspace.",
+          "statusOff": "Desligado",
+          "statusNotConfigured": "Não configurado",
+          "statusConnecting": "Conectando",
+          "statusOk": "Conectado",
+          "statusConflict": "Outro app está consultando",
+          "statusInvalidToken": "Token inválido",
+          "statusNetworkError": "Inacessível",
+          "conflictHint": "O Telegram informa que outro programa está lendo as atualizações deste bot (HTTP 409). Pare o outro poller ou webhook; o Dolphin tenta de novo a cada 30 segundos.",
+          "invalidTokenHint": "O Telegram recusou o token do bot. Cole um novo token do @BotFather.",
+          "networkHint": "O Telegram está inacessível a partir deste computador. O Dolphin continua tentando.",
+          "tokenLabel": "Token do bot",
+          "tokenDescription": "Crie um bot com o @BotFather e cole o token dele. O token é criptografado neste computador e nunca mais é exibido.",
+          "saveToken": "Salvar",
+          "cancel": "Cancelar",
+          "openBotFather": "Abrir @BotFather",
+          "tokenSavedFor": "Token salvo para @{{value0}}.",
+          "tokenSaved": "Token salvo.",
+          "replaceToken": "Substituir",
+          "removeToken": "Remover",
+          "removeChat": "Remover chat",
+          "chatsLabel": "Chats pareados",
+          "chatsDescription": "Somente chats pareados recebem avisos. Mensagens de qualquer outro chat são ignoradas.",
+          "noChats": "Nenhum chat pareado ainda.",
+          "pairingInstructionsBot": "Envie esta mensagem para @{{value0}} em até 10 minutos. O código funciona uma única vez.",
+          "pairingInstructions": "Envie esta mensagem para o seu bot em até 10 minutos. O código funciona uma única vez.",
+          "pairChat": "Parear um chat",
+          "enable": "Enviar avisos dos agentes para o Telegram",
+          "unavailable": "Os avisos do Telegram rodam no app desktop do Dolphin e não estão disponíveis neste host."
         }
       },
       "right": {
@@ -18783,5 +18822,32 @@
   },
   "common": {
     "retry": "Tentar novamente"
+  },
+  "telegram": {
+    "notice": {
+      "blocked": "Bloqueado",
+      "waiting": "Aguardando você",
+      "stopped": "Interrompido",
+      "done": "Concluído",
+      "resolved": "Respondido"
+    },
+    "help": {
+      "title": "Avisos de agentes do Dolphin",
+      "status": "agentes aguardando, bloqueados ou trabalhando",
+      "to": "envia texto para um agente nesse workspace",
+      "reply": "Responda a um aviso para responder a esse agente.",
+      "help": "esta mensagem"
+    },
+    "reply": {
+      "notSupported": "Respostas ainda não suportadas."
+    },
+    "pair": {
+      "success": "Pareado. Este chat agora recebe os avisos de agentes do Dolphin.",
+      "already": "Este chat já está pareado."
+    },
+    "status": {
+      "empty": "Nenhum agente reportado ainda.",
+      "unverified": "não verificado"
+    }
   }
 }

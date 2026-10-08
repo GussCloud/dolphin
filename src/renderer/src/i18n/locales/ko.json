@@ -7430,7 +7430,9 @@
           "1683acbac4": "Dolphin이 PR, MR, 체크, 리뷰 상태에 사용할 소스 호스트를 연결합니다.",
           "298c65ecac": "리뷰 제공자",
           "observability": "관측성",
-          "observabilityDescription": "관측성 도구를 연결하면 에이전트가 작업하는 동안 로그, 메트릭, 트레이스를 읽을 수 있습니다."
+          "observabilityDescription": "관측성 도구를 연결하면 에이전트가 작업하는 동안 로그, 메트릭, 트레이스를 읽을 수 있습니다.",
+          "agentNotices": "에이전트 알림",
+          "agentNoticesDescription": "휴대폰에서 에이전트를 확인하세요: 완료된 턴, 차단된 에이전트, 답변을 기다리는 질문."
         },
         "KagiSessionLinkForm": {
           "92f0b4e472": "지우기",
@@ -9866,7 +9868,12 @@
             "openObserveKeyword": "openobserve",
             "observabilityKeyword": "관측성",
             "logsKeyword": "로그",
-            "tracesKeyword": "트레이스"
+            "tracesKeyword": "트레이스",
+            "telegramTitle": "Telegram 에이전트 알림",
+            "telegramDescription": "에이전트가 완료되거나, 차단되거나, 입력을 기다릴 때 Telegram 메시지를 보냅니다.",
+            "telegramKeyword": "telegram",
+            "notificationsKeyword": "알림",
+            "botKeyword": "봇"
           }
         },
         "jira": {
@@ -12225,6 +12232,38 @@
           "checkNow": "지금 확인",
           "accountExists": "이 이메일을 사용하는 Dolphin 계정이 이미 있습니다. 한 번 로그인하여 연결하세요.",
           "signInWithAzureDevOps": "Azure DevOps로 로그인"
+        },
+        "telegramIntegrationCard": {
+          "name": "Telegram",
+          "summary": "모든 워크스페이스에서 에이전트가 완료되거나, 차단되거나, 입력을 기다릴 때 메시지를 받습니다.",
+          "statusOff": "꺼짐",
+          "statusNotConfigured": "구성되지 않음",
+          "statusConnecting": "연결 중",
+          "statusOk": "연결됨",
+          "statusConflict": "다른 앱이 폴링 중",
+          "statusInvalidToken": "잘못된 토큰",
+          "statusNetworkError": "연결할 수 없음",
+          "conflictHint": "Telegram에 따르면 다른 프로그램이 이 봇의 업데이트를 읽고 있습니다(HTTP 409). 다른 폴러나 웹훅을 중지하세요. Dolphin은 30초마다 다시 시도합니다.",
+          "invalidTokenHint": "Telegram이 봇 토큰을 거부했습니다. @BotFather에서 받은 새 토큰을 붙여넣으세요.",
+          "networkHint": "이 컴퓨터에서 Telegram에 연결할 수 없습니다. Dolphin이 계속 다시 시도합니다.",
+          "tokenLabel": "봇 토큰",
+          "tokenDescription": "@BotFather로 봇을 만들고 토큰을 붙여넣으세요. 토큰은 이 컴퓨터에서 암호화되며 다시 표시되지 않습니다.",
+          "saveToken": "저장",
+          "cancel": "취소",
+          "openBotFather": "@BotFather 열기",
+          "tokenSavedFor": "@{{value0}}의 토큰이 저장되었습니다.",
+          "tokenSaved": "토큰이 저장되었습니다.",
+          "replaceToken": "교체",
+          "removeToken": "제거",
+          "removeChat": "채팅 제거",
+          "chatsLabel": "페어링된 채팅",
+          "chatsDescription": "페어링된 채팅만 알림을 받습니다. 다른 채팅의 메시지는 무시됩니다.",
+          "noChats": "아직 페어링된 채팅이 없습니다.",
+          "pairingInstructionsBot": "10분 이내에 이 메시지를 @{{value0}}에게 보내세요. 코드는 한 번만 사용할 수 있습니다.",
+          "pairingInstructions": "10분 이내에 이 메시지를 봇에게 보내세요. 코드는 한 번만 사용할 수 있습니다.",
+          "pairChat": "채팅 페어링",
+          "enable": "에이전트 알림을 Telegram으로 보내기",
+          "unavailable": "Telegram 알림은 Dolphin 데스크톱 앱에서 실행되며 이 호스트에서는 사용할 수 없습니다."
         }
       },
       "right": {
@@ -18783,5 +18822,32 @@
   },
   "common": {
     "retry": "다시 시도"
+  },
+  "telegram": {
+    "notice": {
+      "blocked": "차단됨",
+      "waiting": "입력 대기 중",
+      "stopped": "중지됨",
+      "done": "완료",
+      "resolved": "응답됨"
+    },
+    "help": {
+      "title": "Dolphin 에이전트 알림",
+      "status": "대기 중, 차단됨 또는 작업 중인 에이전트",
+      "to": "해당 워크스페이스의 에이전트에게 텍스트 보내기",
+      "reply": "알림에 답장하면 해당 에이전트에게 응답합니다.",
+      "help": "이 메시지"
+    },
+    "reply": {
+      "notSupported": "답장은 아직 지원되지 않습니다."
+    },
+    "pair": {
+      "success": "페어링되었습니다. 이제 이 채팅에서 Dolphin 에이전트 알림을 받습니다.",
+      "already": "이 채팅은 이미 페어링되어 있습니다."
+    },
+    "status": {
+      "empty": "아직 보고된 에이전트가 없습니다.",
+      "unverified": "확인되지 않음"
+    }
   }
 }

@@ -7430,7 +7430,9 @@
           "1683acbac4": "连接 Dolphin 可用于 pull request、merge request、检查和评审状态的源代码主机。",
           "298c65ecac": "评审提供商",
           "observability": "可观测性",
-          "observabilityDescription": "连接可观测性工具，让智能体在工作时读取日志、指标和链路追踪。"
+          "observabilityDescription": "连接可观测性工具，让智能体在工作时读取日志、指标和链路追踪。",
+          "agentNotices": "智能体通知",
+          "agentNoticesDescription": "在手机上跟进智能体：已完成的回合、被阻塞的智能体以及等待你回答的问题。"
         },
         "KagiSessionLinkForm": {
           "92f0b4e472": "清除",
@@ -9866,7 +9868,12 @@
             "openObserveKeyword": "openobserve",
             "observabilityKeyword": "可观测性",
             "logsKeyword": "日志",
-            "tracesKeyword": "链路追踪"
+            "tracesKeyword": "链路追踪",
+            "telegramTitle": "Telegram 智能体通知",
+            "telegramDescription": "智能体完成、被阻塞或等待你时发送 Telegram 消息。",
+            "telegramKeyword": "telegram",
+            "notificationsKeyword": "通知",
+            "botKeyword": "机器人"
           }
         },
         "jira": {
@@ -12225,6 +12232,38 @@
           "checkNow": "立即检查",
           "accountExists": "已存在使用此邮箱的 Dolphin 账户。请登录一次以完成关联。",
           "signInWithAzureDevOps": "使用 Azure DevOps 登录"
+        },
+        "telegramIntegrationCard": {
+          "name": "Telegram",
+          "summary": "在任意工作区中，当智能体完成、被阻塞或等待你时接收消息。",
+          "statusOff": "已关闭",
+          "statusNotConfigured": "未配置",
+          "statusConnecting": "正在连接",
+          "statusOk": "已连接",
+          "statusConflict": "另一个应用正在轮询",
+          "statusInvalidToken": "令牌无效",
+          "statusNetworkError": "无法访问",
+          "conflictHint": "Telegram 报告有另一个程序正在读取此机器人的更新 (HTTP 409)。请停止其他轮询或 webhook；Dolphin 每 30 秒重试一次。",
+          "invalidTokenHint": "Telegram 拒绝了机器人令牌。请粘贴从 @BotFather 获取的新令牌。",
+          "networkHint": "无法从此计算机访问 Telegram。Dolphin 会持续重试。",
+          "tokenLabel": "机器人令牌",
+          "tokenDescription": "使用 @BotFather 创建机器人并粘贴其令牌。令牌会在此计算机上加密，且不会再次显示。",
+          "saveToken": "保存",
+          "cancel": "取消",
+          "openBotFather": "打开 @BotFather",
+          "tokenSavedFor": "已保存 @{{value0}} 的令牌。",
+          "tokenSaved": "令牌已保存。",
+          "replaceToken": "替换",
+          "removeToken": "移除",
+          "removeChat": "移除聊天",
+          "chatsLabel": "已配对的聊天",
+          "chatsDescription": "只有已配对的聊天会收到通知。来自其他聊天的消息会被忽略。",
+          "noChats": "尚未配对任何聊天。",
+          "pairingInstructionsBot": "请在 10 分钟内将此消息发送给 @{{value0}}。代码只能使用一次。",
+          "pairingInstructions": "请在 10 分钟内将此消息发送给你的机器人。代码只能使用一次。",
+          "pairChat": "配对聊天",
+          "enable": "将智能体通知发送到 Telegram",
+          "unavailable": "Telegram 通知在 Dolphin 桌面应用中运行，此主机上不可用。"
         }
       },
       "right": {
@@ -18783,5 +18822,32 @@
   },
   "common": {
     "retry": "重试"
+  },
+  "telegram": {
+    "notice": {
+      "blocked": "已阻塞",
+      "waiting": "等待你",
+      "stopped": "已停止",
+      "done": "已完成",
+      "resolved": "已回答"
+    },
+    "help": {
+      "title": "Dolphin 智能体通知",
+      "status": "等待中、被阻塞或工作中的智能体",
+      "to": "向该工作区中的智能体发送文本",
+      "reply": "回复通知即可答复该智能体。",
+      "help": "此消息"
+    },
+    "reply": {
+      "notSupported": "暂不支持回复。"
+    },
+    "pair": {
+      "success": "已配对。此聊天现在会接收 Dolphin 智能体通知。",
+      "already": "此聊天已配对。"
+    },
+    "status": {
+      "empty": "尚无智能体上报。",
+      "unverified": "未验证"
+    }
   }
 }

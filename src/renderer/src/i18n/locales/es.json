@@ -6417,7 +6417,9 @@
           "1683acbac4": "Conecta los hosts de código que Dolphin puede usar para pull requests, merge requests, checks y estado de revisión.",
           "298c65ecac": "Proveedores de revisión",
           "observability": "Observabilidad",
-          "observabilityDescription": "Conecta herramientas de observabilidad para que los agentes lean logs, métricas y trazas mientras trabajan."
+          "observabilityDescription": "Conecta herramientas de observabilidad para que los agentes lean logs, métricas y trazas mientras trabajan.",
+          "agentNotices": "Avisos de agentes",
+          "agentNoticesDescription": "Sigue a tus agentes desde el teléfono: turnos terminados, agentes bloqueados y preguntas que te esperan."
         },
         "KagiSessionLinkForm": {
           "92f0b4e472": "Borrar",
@@ -8700,7 +8702,12 @@
             "openObserveKeyword": "openobserve",
             "observabilityKeyword": "observabilidad",
             "logsKeyword": "registros",
-            "tracesKeyword": "trazas"
+            "tracesKeyword": "trazas",
+            "telegramTitle": "Avisos de agentes en Telegram",
+            "telegramDescription": "Mensajes de Telegram cuando un agente termina, se bloquea o te espera.",
+            "telegramKeyword": "telegram",
+            "notificationsKeyword": "notificaciones",
+            "botKeyword": "bot"
           }
         },
         "jira": {
@@ -10664,6 +10671,38 @@
           "checkNow": "Comprobar ahora",
           "accountExists": "Ya existe una cuenta de Dolphin con este correo. Inicia sesión una vez para vincularla.",
           "signInWithAzureDevOps": "Iniciar sesión con Azure DevOps"
+        },
+        "telegramIntegrationCard": {
+          "name": "Telegram",
+          "summary": "Recibe un mensaje cuando un agente termina, se bloquea o te espera, desde cualquier espacio de trabajo.",
+          "statusOff": "Desactivado",
+          "statusNotConfigured": "Sin configurar",
+          "statusConnecting": "Conectando",
+          "statusOk": "Conectado",
+          "statusConflict": "Otra aplicación está consultando",
+          "statusInvalidToken": "Token no válido",
+          "statusNetworkError": "Inaccesible",
+          "conflictHint": "Telegram indica que otro programa está leyendo las actualizaciones de este bot (HTTP 409). Detén el otro sondeo o webhook; Dolphin reintenta cada 30 segundos.",
+          "invalidTokenHint": "Telegram rechazó el token del bot. Pega un token nuevo de @BotFather.",
+          "networkHint": "No se puede acceder a Telegram desde este equipo. Dolphin seguirá reintentando.",
+          "tokenLabel": "Token del bot",
+          "tokenDescription": "Crea un bot con @BotFather y pega su token. El token se cifra en este equipo y no se vuelve a mostrar.",
+          "saveToken": "Guardar",
+          "cancel": "Cancelar",
+          "openBotFather": "Abrir @BotFather",
+          "tokenSavedFor": "Token guardado para @{{value0}}.",
+          "tokenSaved": "Token guardado.",
+          "replaceToken": "Reemplazar",
+          "removeToken": "Quitar",
+          "removeChat": "Quitar chat",
+          "chatsLabel": "Chats vinculados",
+          "chatsDescription": "Solo los chats vinculados reciben avisos. Los mensajes de cualquier otro chat se ignoran.",
+          "noChats": "Aún no hay chats vinculados.",
+          "pairingInstructionsBot": "Envía este mensaje a @{{value0}} en un plazo de 10 minutos. El código solo funciona una vez.",
+          "pairingInstructions": "Envía este mensaje a tu bot en un plazo de 10 minutos. El código solo funciona una vez.",
+          "pairChat": "Vincular un chat",
+          "enable": "Enviar avisos de agentes a Telegram",
+          "unavailable": "Los avisos de Telegram se ejecutan en la aplicación de escritorio de Dolphin y no están disponibles en este host."
         }
       },
       "right": {
@@ -15671,6 +15710,33 @@
       "tooLarge": "El archivo supera el límite de vista previa de {{limit}}. Abre el archivo para ver su código fuente.",
       "tooLargeInDiff": "El archivo supera el límite de vista previa de {{limit}}. Cambia al modo fuente para ver las diferencias.",
       "renderAnyway": "Renderizar de todos modos"
+    }
+  },
+  "telegram": {
+    "notice": {
+      "blocked": "Bloqueado",
+      "waiting": "Esperándote",
+      "stopped": "Detenido",
+      "done": "Listo",
+      "resolved": "Respondido"
+    },
+    "help": {
+      "title": "Avisos de agentes de Dolphin",
+      "status": "agentes esperando, bloqueados o trabajando",
+      "to": "envía texto a un agente de ese espacio de trabajo",
+      "reply": "Responde a un aviso para contestar a ese agente.",
+      "help": "este mensaje"
+    },
+    "reply": {
+      "notSupported": "Las respuestas aún no son compatibles."
+    },
+    "pair": {
+      "success": "Vinculado. Este chat ahora recibe los avisos de agentes de Dolphin.",
+      "already": "Este chat ya está vinculado."
+    },
+    "status": {
+      "empty": "Aún no hay agentes reportados.",
+      "unverified": "sin verificar"
     }
   }
 }

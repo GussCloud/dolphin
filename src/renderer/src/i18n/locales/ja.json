@@ -7467,7 +7467,9 @@
           "1683acbac4": "Dolphin が PR、MR、チェック、レビュー状況に使えるソースホストを接続します。",
           "298c65ecac": "レビュープロバイダー",
           "observability": "オブザーバビリティ",
-          "observabilityDescription": "オブザーバビリティツールを接続すると、Agent が作業中にログ、メトリクス、トレースを読めるようになります。"
+          "observabilityDescription": "オブザーバビリティツールを接続すると、Agent が作業中にログ、メトリクス、トレースを読めるようになります。",
+          "agentNotices": "Agent 通知",
+          "agentNoticesDescription": "スマートフォンから Agent を追跡: 完了したターン、ブロックされた Agent、回答待ちの質問。"
         },
         "KagiSessionLinkForm": {
           "92f0b4e472": "クリア",
@@ -9903,7 +9905,12 @@
             "openObserveKeyword": "openobserve",
             "observabilityKeyword": "オブザーバビリティ",
             "logsKeyword": "ログ",
-            "tracesKeyword": "トレース"
+            "tracesKeyword": "トレース",
+            "telegramTitle": "Telegram Agent 通知",
+            "telegramDescription": "Agent の完了・ブロック・入力待ちを Telegram メッセージで通知します。",
+            "telegramKeyword": "telegram",
+            "notificationsKeyword": "通知",
+            "botKeyword": "ボット"
           }
         },
         "jira": {
@@ -12225,6 +12232,38 @@
           "checkNow": "今すぐ確認",
           "accountExists": "このメールアドレスの Dolphin アカウントはすでに存在します。一度サインインしてリンクしてください。",
           "signInWithAzureDevOps": "Azure DevOps でサインイン"
+        },
+        "telegramIntegrationCard": {
+          "name": "Telegram",
+          "summary": "すべてのワークスペースで、Agent の完了・ブロック・入力待ちをメッセージで受け取ります。",
+          "statusOff": "オフ",
+          "statusNotConfigured": "未設定",
+          "statusConnecting": "接続中",
+          "statusOk": "接続済み",
+          "statusConflict": "別のアプリが取得中",
+          "statusInvalidToken": "無効なトークン",
+          "statusNetworkError": "接続できません",
+          "conflictHint": "Telegram によると、別のプログラムがこのボットの更新を取得しています (HTTP 409)。もう一方のポーリングまたは webhook を停止してください。Dolphin は 30 秒ごとに再試行します。",
+          "invalidTokenHint": "Telegram がボットトークンを拒否しました。@BotFather から新しいトークンを貼り付けてください。",
+          "networkHint": "このコンピューターから Telegram に接続できません。Dolphin は再試行を続けます。",
+          "tokenLabel": "ボットトークン",
+          "tokenDescription": "@BotFather でボットを作成し、そのトークンを貼り付けてください。トークンはこのコンピューター上で暗号化され、再表示されません。",
+          "saveToken": "保存",
+          "cancel": "キャンセル",
+          "openBotFather": "@BotFather を開く",
+          "tokenSavedFor": "@{{value0}} のトークンを保存しました。",
+          "tokenSaved": "トークンを保存しました。",
+          "replaceToken": "置き換え",
+          "removeToken": "削除",
+          "removeChat": "チャットを削除",
+          "chatsLabel": "ペアリング済みのチャット",
+          "chatsDescription": "通知を受け取るのはペアリング済みのチャットだけです。その他のチャットからのメッセージは無視されます。",
+          "noChats": "ペアリング済みのチャットはまだありません。",
+          "pairingInstructionsBot": "10 分以内にこのメッセージを @{{value0}} に送信してください。コードは 1 回だけ有効です。",
+          "pairingInstructions": "10 分以内にこのメッセージをボットに送信してください。コードは 1 回だけ有効です。",
+          "pairChat": "チャットをペアリング",
+          "enable": "Agent の通知を Telegram に送信",
+          "unavailable": "Telegram 通知は Dolphin デスクトップアプリで動作するため、このホストでは利用できません。"
         }
       },
       "right": {
@@ -18783,5 +18822,32 @@
   },
   "common": {
     "retry": "再試行"
+  },
+  "telegram": {
+    "notice": {
+      "blocked": "ブロック中",
+      "waiting": "あなたの入力待ち",
+      "stopped": "停止",
+      "done": "完了",
+      "resolved": "回答済み"
+    },
+    "help": {
+      "title": "Dolphin Agent 通知",
+      "status": "待機中・ブロック中・作業中の Agent",
+      "to": "そのワークスペースの Agent にテキストを送信",
+      "reply": "通知に返信すると、その Agent に回答できます。",
+      "help": "このメッセージ"
+    },
+    "reply": {
+      "notSupported": "返信にはまだ対応していません。"
+    },
+    "pair": {
+      "success": "ペアリングしました。このチャットで Dolphin の Agent 通知を受け取ります。",
+      "already": "このチャットはすでにペアリング済みです。"
+    },
+    "status": {
+      "empty": "まだ報告された Agent はありません。",
+      "unverified": "未確認"
+    }
   }
 }

@@ -7,6 +7,7 @@ import {
 } from './source-control-integration-cards'
 import { JiraIntegrationCard, LinearIntegrationCard } from './task-tracker-integration-cards'
 import { OpenObserveIntegrationCard } from './openobserve-integration-card'
+import { TelegramIntegrationCard } from './telegram-integration-card'
 import { useIntegrationProviderStatusRefresh } from './use-integration-provider-status-refresh'
 import { translate } from '@/i18n/i18n'
 export { getIntegrationsPaneSearchEntries } from './integrations-search'
@@ -69,6 +70,23 @@ export function IntegrationsPane(): React.JSX.Element {
         </div>
         <div className="space-y-3">
           <OpenObserveIntegrationCard />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-foreground">
+            {translate('auto.components.settings.IntegrationsPane.agentNotices', 'Agent notices')}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {translate(
+              'auto.components.settings.IntegrationsPane.agentNoticesDescription',
+              'Follow your agents from your phone: finished turns, blocked agents and questions waiting for you.'
+            )}
+          </p>
+        </div>
+        <div className="space-y-3">
+          <TelegramIntegrationCard />
         </div>
       </section>
     </div>
