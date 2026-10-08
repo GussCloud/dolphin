@@ -8,6 +8,7 @@ import type {
 import { agentSessionPromptQuestions } from '../../shared/agent-session-question-answer'
 import { parseApprovalEnvelope } from '../../shared/agent-prompt-answer-keys'
 import { parseAskFromStatus, type AskQuestion } from '../../shared/native-chat-ask'
+import { telegramAnswerText } from './telegram-answer-text'
 import { parseStructuredAgentSessionTabId } from '../../shared/structured-agent-session-tab-id'
 
 /** A structured session's journal as the host holds it: the pending prompt plus the fence a reply must carry. */
@@ -125,7 +126,22 @@ export function telegramApprovalOptionLabels(prompt: TelegramAnswerablePrompt): 
   }
   return prompt.source === 'structured'
     ? prompt.body.options.map((option) => option.label)
-    : ['Permitir', 'Negar']
+    : [telegramAnswerText.allow(), telegramAnswerText.deny()]
+}
+
+// Two-digit indices in the action grammar; Telegram caps a keyboard at 100 buttons.
+export const TELEGRAM_MAX_PROMPT_QUESTIONS = 4
+export const TELEGRAM_MAX_PROMPT_OPTIONS = 20
+
+/** A partial keyboard could never submit, so oversized prompts get no buttons at all. */
+export function telegramPromptFitsButtons(prompt: TelegramAnswerablePrompt): boolean {
+  if (prompt.kind === 'approval') {
+    return telegramApprovalOptionLabels(prompt).length <= TELEGRAM_MAX_PROMPT_OPTIONS
+  }
+  return (
+    prompt.questions.length <= TELEGRAM_MAX_PROMPT_QUESTIONS &&
+    prompt.questions.every((question) => question.options.length <= TELEGRAM_MAX_PROMPT_OPTIONS)
+  )
 }
 
 /** True when the agent accepts typed text for this question beyond its offered options. */

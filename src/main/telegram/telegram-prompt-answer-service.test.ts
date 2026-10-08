@@ -6,10 +6,11 @@ import {
   structuredAgentSessionTabId
 } from '../../shared/structured-agent-session-projection'
 import { createTelegramPromptButtonDecorator } from './telegram-prompt-buttons'
-import {
-  TELEGRAM_ANSWER_MESSAGES,
-  type TelegramDeliveryOutcome,
-  type TelegramStructuredResponse
+import { telegramAnswerText } from './telegram-answer-text'
+import type {
+  TelegramDeliveryOutcome,
+  TelegramStructuredResponse,
+  TelegramTerminalOutcome
 } from './telegram-prompt-answer-delivery'
 import {
   createTelegramPromptAnswerService,
@@ -44,11 +45,20 @@ const APPROVAL = JSON.stringify({ approval: { tool: 'Bash', summary: 'rm -rf' } 
 
 function harness(initial: AgentStatusEntry | null, structured?: TelegramStructuredPromptSnapshot) {
   let current = initial
-  const sent: { terminal: string; text: string; enter: boolean }[] = []
+  const sent: {
+    terminal: string
+    text?: string
+    enter: boolean
+    requireAgentStatus?: 'sendable'
+  }[] = []
   const responses: TelegramStructuredResponse[] = []
   const messages: { sessionId: string; fence: number; text: string }[] = []
-  let outcomes: TelegramDeliveryOutcome[] = []
+  let outcomes: TelegramTerminalOutcome[] = []
   const inferQuestionAnswered = vi.fn()
+  const nextHostOutcome = (): TelegramDeliveryOutcome => {
+    const outcome = outcomes.shift() ?? 'accepted'
+    return outcome === 'no-agent' || outcome === 'permission' ? 'rejected' : outcome
+  }
   const readStructuredPrompt = (): TelegramStructuredPromptSnapshot | null => structured ?? null
   const ports: TelegramPromptAnswerPorts = {
     readEntry: (paneKey) => (current?.paneKey === paneKey ? current : null),
@@ -59,11 +69,11 @@ function harness(initial: AgentStatusEntry | null, structured?: TelegramStructur
     },
     respondStructured: async (response) => {
       responses.push(response)
-      return outcomes.shift() ?? 'accepted'
+      return nextHostOutcome()
     },
     sendStructuredMessage: async (input) => {
       messages.push(input)
-      return outcomes.shift() ?? 'accepted'
+      return nextHostOutcome()
     },
     inferQuestionAnswered,
     resolveWorktreeQuery: (query) =>
@@ -85,7 +95,7 @@ function harness(initial: AgentStatusEntry | null, structured?: TelegramStructur
     setEntry: (next: AgentStatusEntry | null) => {
       current = next
     },
-    setOutcomes: (next: TelegramDeliveryOutcome[]) => {
+    setOutcomes: (next: TelegramTerminalOutcome[]) => {
       outcomes = next
     },
     /** Actions exactly as the notice decorator rendered them for the current entry. */
@@ -112,15 +122,51 @@ function tap(h: ReturnType<typeof harness>, action: string, route = h.route()) {
 }
 
 describe('PTY approvals', () => {
-  it('sends "1" for Permitir and Escape for Negar without Enter', async () => {
-    const h = harness(entry({ state: 'blocked', interactivePrompt: APPROVAL, toolName: 'Bash' }))
+  it('sends "1" for Allow and Escape for Deny without Enter', async () => {
+    const allowHarness = harness(
+      entry({ state: 'blocked', interactivePrompt: APPROVAL, toolName: 'Bash' })
+    )
+    expect(await tap(allowHarness, allowHarness.actions()[0]!)).toEqual({
+      ok: true,
+      ack: telegramAnswerText.sent()
+    })
+    expect(allowHarness.sent).toEqual([{ terminal: 'term-1', text: '1', enter: false }])
+    const denyHarness = harness(
+      entry({ state: 'blocked', interactivePrompt: APPROVAL, toolName: 'Bash' })
+    )
+    expect(await tap(denyHarness, denyHarness.actions()[1]!)).toMatchObject({ ok: true })
+    expect(denyHarness.sent).toEqual([{ terminal: 'term-1', text: '\x1b', enter: false }])
+  })
+
+  it('refuses Allow-then-Deny and double taps while the row still shows the answered prompt', async () => {
+    const h = harness(entry({ state: 'blocked', interactivePrompt: APPROVAL }))
     const [allow, deny] = h.actions()
-    expect(await tap(h, allow!)).toEqual({ ok: true, ack: TELEGRAM_ANSWER_MESSAGES.sent })
-    expect(await tap(h, deny!)).toMatchObject({ ok: true })
-    expect(h.sent).toEqual([
-      { terminal: 'term-1', text: '1', enter: false },
-      { terminal: 'term-1', text: '\x1b', enter: false }
-    ])
+    await tap(h, allow!)
+    expect(await tap(h, deny!)).toEqual({ ok: false, error: telegramAnswerText.alreadyAnswered() })
+    expect(await tap(h, allow!)).toEqual({ ok: false, error: telegramAnswerText.alreadyAnswered() })
+    expect(h.sent).toHaveLength(1)
+  })
+
+  it('also guards after an unconfirmed send, but not after a definite refusal', async () => {
+    const h = harness(entry({ state: 'blocked', interactivePrompt: APPROVAL }))
+    h.setOutcomes(['rejected'])
+    await tap(h, h.actions()[0]!)
+    expect(await tap(h, h.actions()[0]!)).toMatchObject({ ok: true })
+    const unsure = harness(entry({ state: 'blocked', interactivePrompt: APPROVAL }))
+    unsure.setOutcomes(['unknown'])
+    await tap(unsure, unsure.actions()[0]!)
+    expect(await tap(unsure, unsure.actions()[1]!)).toEqual({
+      ok: false,
+      error: telegramAnswerText.alreadyAnswered()
+    })
+  })
+
+  it('answers again once the pane re-enters the same prompt in a new state', async () => {
+    const h = harness(entry({ state: 'blocked', interactivePrompt: APPROVAL }))
+    await tap(h, h.actions()[0]!)
+    h.setEntry(entry({ state: 'blocked', interactivePrompt: APPROVAL, stateStartedAt: 99 }))
+    expect(await tap(h, h.actions()[0]!)).toMatchObject({ ok: true })
+    expect(h.sent).toHaveLength(2)
   })
 
   it('reports an unconfirmed delivery as such, not as a failure to resend', async () => {
@@ -128,7 +174,7 @@ describe('PTY approvals', () => {
     h.setOutcomes(['unknown'])
     expect(await tap(h, h.actions()[0]!)).toEqual({
       ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.unconfirmed
+      error: telegramAnswerText.unconfirmed()
     })
   })
 })
@@ -139,7 +185,7 @@ describe('stale prompt detection', () => {
     const [red] = h.actions()
     const route = h.route()
     h.setEntry(entry({ state: 'working', interactivePrompt: undefined }))
-    expect(await tap(h, red!, route)).toEqual({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.stale })
+    expect(await tap(h, red!, route)).toEqual({ ok: false, error: telegramAnswerText.stale() })
     expect(h.sent).toEqual([])
   })
 
@@ -152,7 +198,7 @@ describe('stale prompt detection', () => {
     )
     expect(await tap(h, red!, route)).toMatchObject({
       ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.stale
+      error: telegramAnswerText.stale()
     })
     // Even without the pinned prompt JSON, the action tag catches the swap.
     expect(await tap(h, red!, { ...route, interactivePrompt: undefined })).toMatchObject({
@@ -165,7 +211,7 @@ describe('stale prompt detection', () => {
     const h = harness(entry({ interactivePrompt: COLOR }))
     const [red] = h.actions()
     h.setEntry(null)
-    expect(await tap(h, red!)).toMatchObject({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.stale })
+    expect(await tap(h, red!)).toMatchObject({ ok: false, error: telegramAnswerText.stale() })
   })
 })
 
@@ -181,6 +227,17 @@ describe('PTY questions per agent', () => {
       baselinePrompt: 'go',
       baselineAgentType: 'claude'
     })
+  })
+
+  it('does not resend a question answer on a re-tap after success', async () => {
+    const h = harness(entry({ interactivePrompt: COLOR }))
+    const [red, blue] = h.actions()
+    await tap(h, red!)
+    expect(await tap(h, blue!)).toEqual({ ok: false, error: telegramAnswerText.alreadyAnswered() })
+    expect(
+      await h.service.handleText!({ chatId: 1, messageId: 1, text: 'green', route: h.route() })
+    ).toEqual({ ok: false, error: telegramAnswerText.alreadyAnswered() })
+    expect(h.sent).toEqual([{ terminal: 'term-1', text: '1', enter: false }])
   })
 
   it('pastes the label with Enter for agents without a digit selector', async () => {
@@ -217,7 +274,7 @@ describe('PTY questions per agent', () => {
     const [, a2, , b2] = h.actions()
     expect(await tap(h, a2!)).toEqual({ ok: true, ack: '1. a2\n2. —' })
     expect(h.sent).toEqual([])
-    expect(await tap(h, b2!)).toMatchObject({ ok: true, ack: TELEGRAM_ANSWER_MESSAGES.sent })
+    expect(await tap(h, b2!)).toMatchObject({ ok: true, ack: telegramAnswerText.sent() })
     expect(h.sent.map((send) => send.text)).toEqual(['2', '2', '\r'])
   })
 
@@ -251,7 +308,7 @@ describe('PTY questions per agent', () => {
     )
     expect(await tap(h, h.actions().at(-1)!)).toEqual({
       ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.incomplete
+      error: telegramAnswerText.incomplete()
     })
   })
 
@@ -267,7 +324,7 @@ describe('PTY questions per agent', () => {
     const [a1, b1] = h.actions()
     await tap(h, a1!)
     h.setOutcomes(['accepted', 'rejected'])
-    expect(await tap(h, b1!)).toEqual({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.partlySent })
+    expect(await tap(h, b1!)).toEqual({ ok: false, error: telegramAnswerText.partlySent() })
   })
 
   it('refuses a second answer while one is still being typed into the same terminal', async () => {
@@ -302,7 +359,7 @@ describe('PTY questions per agent', () => {
       route,
       action: blue!
     })
-    expect(second).toEqual({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.busy })
+    expect(second).toEqual({ ok: false, error: telegramAnswerText.busy() })
     release()
     expect(await first).toMatchObject({ ok: true })
   })
@@ -315,21 +372,56 @@ describe('text replies', () => {
       await h.service.handleText!({ chatId: 1, messageId: 1, text: 'yes', route: h.route() })
     ).toEqual({
       ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.useButtons
+      error: telegramAnswerText.useButtons()
     })
   })
 
-  it('sends plain text plus Enter to an idle PTY pane, on one line', async () => {
+  it('pastes plain text then submits it, both guarded by agent status', async () => {
     const h = harness(entry({ state: 'done', interactivePrompt: undefined }))
     expect(
       await h.service.handleText!({
         chatId: 1,
         messageId: 1,
-        text: 'run\nthe tests ',
+        text: ' run\nthe tests ',
         route: h.route()
       })
-    ).toMatchObject({ ok: true })
-    expect(h.sent).toEqual([{ terminal: 'term-1', text: 'run the tests', enter: true }])
+    ).toEqual({ ok: true, ack: telegramAnswerText.sent() })
+    expect(h.sent).toEqual([
+      {
+        terminal: 'term-1',
+        text: '\x1b[200~run\nthe tests\x1b[201~',
+        enter: false,
+        requireAgentStatus: 'sendable'
+      },
+      { terminal: 'term-1', enter: true, requireAgentStatus: 'sendable' }
+    ])
+  })
+
+  it('types nothing into a terminal with no live agent', async () => {
+    const h = harness(entry({ state: 'done' }))
+    h.setOutcomes(['no-agent'])
+    expect(
+      await h.service.handleText!({ chatId: 1, messageId: 1, text: 'rm -rf /', route: h.route() })
+    ).toEqual({ ok: false, error: telegramAnswerText.noAgent() })
+    expect(h.sent).toHaveLength(1)
+  })
+
+  it('reports a permission refusal and a lost submit distinctly', async () => {
+    const blocked = harness(entry({ state: 'done' }))
+    blocked.setOutcomes(['permission'])
+    expect(
+      await blocked.service.handleText!({
+        chatId: 1,
+        messageId: 1,
+        text: 'hi',
+        route: blocked.route()
+      })
+    ).toEqual({ ok: false, error: telegramAnswerText.useButtons() })
+    const lost = harness(entry({ state: 'done' }))
+    lost.setOutcomes(['accepted', 'no-agent'])
+    expect(
+      await lost.service.handleText!({ chatId: 1, messageId: 1, text: 'hi', route: lost.route() })
+    ).toEqual({ ok: false, error: telegramAnswerText.textNotSubmitted() })
   })
 
   it('routes /to by worktree and refuses ambiguous or unknown worktrees', async () => {
@@ -337,19 +429,22 @@ describe('text replies', () => {
     expect(
       await h.service.handleText!({ chatId: 1, messageId: 1, text: 'hi', worktreeQuery: 'wt' })
     ).toMatchObject({ ok: true })
-    expect(h.sent).toEqual([{ terminal: 'term-1', text: 'hi', enter: true }])
+    expect(h.sent.map((send) => send.text)).toEqual(['\x1b[200~hi\x1b[201~', undefined])
     expect(
       await h.service.handleText!({ chatId: 1, messageId: 1, text: 'hi', worktreeQuery: 'many' })
-    ).toEqual({
-      ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.ambiguousWorktree
-    })
+    ).toEqual({ ok: false, error: telegramAnswerText.ambiguousWorktree() })
     expect(
       await h.service.handleText!({ chatId: 1, messageId: 1, text: 'hi', worktreeQuery: 'nope' })
-    ).toEqual({
-      ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.noWorktree
-    })
+    ).toEqual({ ok: false, error: telegramAnswerText.noWorktree() })
+  })
+
+  it('sends oversized prompts to Dolphin instead of answering part of them', async () => {
+    const options = Array.from({ length: 21 }, (_, index) => ({ label: `o${index}` }))
+    const h = harness(entry({ interactivePrompt: ask([{ question: 'Big?', options }]) }))
+    expect(h.actions()).toEqual([])
+    expect(
+      await h.service.handleText!({ chatId: 1, messageId: 1, text: 'o3', route: h.route() })
+    ).toEqual({ ok: false, error: telegramAnswerText.answerInDolphin() })
   })
 })
 
@@ -459,7 +554,7 @@ describe('structured sessions', () => {
     await tap(h, a1!, h.route())
     expect(await tap(h, submit!, h.route())).toEqual({
       ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.incomplete
+      error: telegramAnswerText.incomplete()
     })
     expect(h.responses).toEqual([])
   })
@@ -485,7 +580,7 @@ describe('structured sessions', () => {
     })
     expect(await tap(resolved, yes!, h.route())).toEqual({
       ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.stale
+      error: telegramAnswerText.stale()
     })
   })
 
@@ -493,7 +588,7 @@ describe('structured sessions', () => {
     const h = structuredHarness([])
     expect(
       await h.service.handleText!({ chatId: 1, messageId: 1, text: ' run\nall ', route: h.route() })
-    ).toEqual({ ok: true, ack: TELEGRAM_ANSWER_MESSAGES.sent })
+    ).toEqual({ ok: true, ack: telegramAnswerText.sent() })
     expect(h.messages).toEqual([{ sessionId, fence: 7, text: 'run\nall' }])
     expect(h.sent).toEqual([])
   })
@@ -502,7 +597,7 @@ describe('structured sessions', () => {
     const h = structuredHarness([approval])
     expect(
       await h.service.handleText!({ chatId: 1, messageId: 1, text: 'hi', route: h.route() })
-    ).toEqual({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.useButtons })
+    ).toEqual({ ok: false, error: telegramAnswerText.useButtons() })
     expect(h.messages).toEqual([])
   })
 
@@ -515,7 +610,7 @@ describe('structured sessions', () => {
         text: 'hi',
         route: { routeId: 'r9', paneKey: structuredEntry.paneKey }
       })
-    ).toEqual({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.structuredUnavailable })
+    ).toEqual({ ok: false, error: telegramAnswerText.structuredUnavailable() })
   })
 
   it('keeps one in-flight send per structured session', async () => {
@@ -537,7 +632,7 @@ describe('structured sessions', () => {
     const first = slow.handleText!({ chatId: 1, messageId: 1, text: 'a', route })
     expect(await slow.handleText!({ chatId: 1, messageId: 2, text: 'b', route })).toEqual({
       ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.busy
+      error: telegramAnswerText.busy()
     })
     release()
     expect(await first).toMatchObject({ ok: true })

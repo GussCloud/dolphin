@@ -1,9 +1,9 @@
 import type { AgentStatusEntry } from '../../shared/agent-status-types'
-import { collapseTypedAnswerLineBreaks } from '../../shared/agent-prompt-answer-keys'
 import { hasAskAnswer, type AskAnswerSelection } from '../../shared/native-chat-ask'
 import {
   decodeTelegramPromptAction,
   resolveTelegramAnswerablePrompt,
+  telegramPromptFitsButtons,
   telegramQuestionAcceptsFreeText,
   telegramStructuredSessionIdForEntry,
   type TelegramAnswerablePrompt,
@@ -18,12 +18,15 @@ import {
 } from './telegram-prompt-answer-draft'
 import {
   deliverTelegramApproval,
+  deliverTelegramPlainText,
   deliverTelegramQuestion,
   telegramAnswerFailure as fail,
+  telegramAnswerMayHaveLanded,
   telegramOutcomeResult,
-  TELEGRAM_ANSWER_MESSAGES,
   type TelegramAnswerTransport
 } from './telegram-prompt-answer-delivery'
+import { telegramAnswerText } from './telegram-answer-text'
+import { TelegramAnsweredPrompts } from './telegram-answered-prompts'
 import type {
   TelegramCallbackEvent,
   TelegramInboundHandler,
@@ -57,6 +60,23 @@ export function createTelegramPromptAnswerService(
   const drafts = new Map<string, Draft>()
   // One composed answer per terminal/session: interleaved keystroke groups corrupt both.
   const inFlight = new Set<string>()
+  const answered = new TelegramAnsweredPrompts()
+
+  /** Runs one delivery and remembers the prompt once keys may have reached it. */
+  function deliverOnce(
+    entry: AgentStatusEntry,
+    prompt: TelegramAnswerablePrompt,
+    terminal: string | undefined,
+    deliver: () => Promise<TelegramInboundResult>
+  ): Promise<TelegramInboundResult> {
+    return exclusive(exclusiveKey(prompt, terminal), async () => {
+      const result = await deliver()
+      if (telegramAnswerMayHaveLanded(result)) {
+        answered.record(entry, prompt)
+      }
+      return result
+    })
+  }
 
   function saveDraft(routeId: string, draft: Draft): void {
     drafts.delete(routeId)
@@ -79,13 +99,13 @@ export function createTelegramPromptAnswerService(
     run: () => Promise<TelegramInboundResult>
   ): Promise<TelegramInboundResult> {
     if (inFlight.has(key)) {
-      return fail(TELEGRAM_ANSWER_MESSAGES.busy)
+      return fail(telegramAnswerText.busy())
     }
     inFlight.add(key)
     try {
       return await run()
     } catch {
-      return fail(TELEGRAM_ANSWER_MESSAGES.unconfirmed)
+      return fail(telegramAnswerText.unconfirmed())
     } finally {
       inFlight.delete(key)
     }
@@ -111,23 +131,19 @@ export function createTelegramPromptAnswerService(
       return { ok: true, ack: describeTelegramAnswerDraft(prompt.questions, selections) }
     }
     if (!hasAskAnswer({ questions: prompt.questions }, selections)) {
-      return fail(TELEGRAM_ANSWER_MESSAGES.incomplete)
+      return fail(telegramAnswerText.incomplete())
     }
     const terminal = entry.terminalHandle ?? route.terminalHandle
-    return exclusive(exclusiveKey(prompt, terminal), async () => {
-      const result = await deliverTelegramQuestion(transport, entry, terminal, prompt, selections)
-      // Keep the draft only when nothing reached the agent, so a retry starts from it.
-      const nothingSent =
-        !result.ok &&
-        (result.error === TELEGRAM_ANSWER_MESSAGES.notSent ||
-          result.error === TELEGRAM_ANSWER_MESSAGES.incomplete)
-      if (nothingSent) {
-        saveDraft(route.routeId, { tag: prompt.tag, selections })
-      } else {
-        drafts.delete(route.routeId)
-      }
-      return result
-    })
+    const result = await deliverOnce(entry, prompt, terminal, () =>
+      deliverTelegramQuestion(transport, entry, terminal, prompt, selections)
+    )
+    // Keep the draft only when nothing reached the agent, so a retry starts from it.
+    if (telegramAnswerMayHaveLanded(result)) {
+      drafts.delete(route.routeId)
+    } else {
+      saveDraft(route.routeId, { tag: prompt.tag, selections })
+    }
+    return result
   }
 
   async function handleCallback(event: TelegramCallbackEvent): Promise<TelegramInboundResult> {
@@ -142,14 +158,20 @@ export function createTelegramPromptAnswerService(
       entry && pinned ? resolveTelegramAnswerablePrompt(entry, ports.readStructuredPrompt) : null
     if (!action || !entry || !prompt || prompt.tag !== action.tag) {
       drafts.delete(route.routeId)
-      return fail(TELEGRAM_ANSWER_MESSAGES.stale)
+      return fail(telegramAnswerText.stale())
+    }
+    if (answered.isAnswered(entry, prompt)) {
+      return fail(telegramAnswerText.alreadyAnswered())
+    }
+    if (!telegramPromptFitsButtons(prompt)) {
+      return fail(telegramAnswerText.answerInDolphin())
     }
     const terminal = entry.terminalHandle ?? route.terminalHandle
     if (prompt.kind === 'approval') {
       if (action.kind !== 'approval') {
-        return fail(TELEGRAM_ANSWER_MESSAGES.stale)
+        return fail(telegramAnswerText.stale())
       }
-      return exclusive(exclusiveKey(prompt, terminal), () =>
+      return deliverOnce(entry, prompt, terminal, () =>
         deliverTelegramApproval(transport, terminal, prompt, action.optionIndex)
       )
     }
@@ -168,7 +190,7 @@ export function createTelegramPromptAnswerService(
         : null
     return next
       ? advanceQuestionDraft(entry, route, prompt, next, false)
-      : fail(TELEGRAM_ANSWER_MESSAGES.stale)
+      : fail(telegramAnswerText.stale())
   }
 
   function resolveTextRoute(event: TelegramTextEvent): TelegramPaneRoute | string {
@@ -181,8 +203,8 @@ export function createTelegramPromptAnswerService(
     const paneKeys = matches.flatMap((match) => match.paneKeys)
     if (paneKeys.length !== 1) {
       return paneKeys.length === 0
-        ? TELEGRAM_ANSWER_MESSAGES.noWorktree
-        : TELEGRAM_ANSWER_MESSAGES.ambiguousWorktree
+        ? telegramAnswerText.noWorktree()
+        : telegramAnswerText.ambiguousWorktree()
     }
     return { routeId: `to:${paneKeys[0]}`, paneKey: paneKeys[0]! }
   }
@@ -194,11 +216,17 @@ export function createTelegramPromptAnswerService(
     }
     const entry = ports.readEntry(route.paneKey)
     if (!entry) {
-      return fail(TELEGRAM_ANSWER_MESSAGES.noTerminal)
+      return fail(telegramAnswerText.noTerminal())
     }
     const prompt = resolveTelegramAnswerablePrompt(entry, ports.readStructuredPrompt)
+    if (prompt && answered.isAnswered(entry, prompt)) {
+      return fail(telegramAnswerText.alreadyAnswered())
+    }
+    if (prompt && !telegramPromptFitsButtons(prompt)) {
+      return fail(telegramAnswerText.answerInDolphin())
+    }
     if (prompt?.kind === 'approval') {
-      return fail(TELEGRAM_ANSWER_MESSAGES.useButtons)
+      return fail(telegramAnswerText.useButtons())
     }
     if (prompt?.kind === 'question') {
       const next = applyTelegramFreeText(
@@ -209,7 +237,7 @@ export function createTelegramPromptAnswerService(
       )
       return next
         ? advanceQuestionDraft(entry, route, prompt, next, false)
-        : fail(TELEGRAM_ANSWER_MESSAGES.noFreeText)
+        : fail(telegramAnswerText.noFreeText())
     }
     const sessionId = telegramStructuredSessionIdForEntry(entry)
     if (sessionId) {
@@ -217,7 +245,7 @@ export function createTelegramPromptAnswerService(
       const message = event.text.trim()
       const snapshot = ports.readStructuredPrompt(sessionId)
       if (!snapshot || !message) {
-        return fail(TELEGRAM_ANSWER_MESSAGES.structuredUnavailable)
+        return fail(telegramAnswerText.structuredUnavailable())
       }
       return exclusive(`structured:${sessionId}`, async () =>
         telegramOutcomeResult(
@@ -226,14 +254,12 @@ export function createTelegramPromptAnswerService(
       )
     }
     const terminal = entry.terminalHandle ?? route.terminalHandle
-    // Raw keystrokes: a newline would submit early, so the reply is sent as one line.
-    const text = collapseTypedAnswerLineBreaks(event.text).trim()
+    const text = event.text.trim()
     if (!terminal || !text) {
-      return fail(TELEGRAM_ANSWER_MESSAGES.noTerminal)
+      return fail(telegramAnswerText.noTerminal())
     }
-    return exclusive(`pty:${terminal}`, async () =>
-      telegramOutcomeResult(await ports.sendTerminal({ terminal, text, enter: true }))
-    )
+    // Pasted, so line breaks stay inside one message; the guard refuses a terminal with no live agent.
+    return exclusive(`pty:${terminal}`, () => deliverTelegramPlainText(transport, terminal, text))
   }
 
   return { handleCallback, handleText }

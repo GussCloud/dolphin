@@ -7,7 +7,10 @@ import type { StructuredAgentSessionHost } from '../native-chat/agent-session-wi
 import type { RpcRequest, RpcResponse } from '../runtime/rpc/core'
 import type { TelegramStructuredPromptSnapshot } from './telegram-answerable-prompt'
 import { telegramStatusEntryFromEnriched } from './telegram-notice-transitions'
-import type { TelegramDeliveryOutcome } from './telegram-prompt-answer-delivery'
+import type {
+  TelegramDeliveryOutcome,
+  TelegramTerminalOutcome
+} from './telegram-prompt-answer-delivery'
 import type { TelegramPromptAnswerPorts } from './telegram-prompt-answer-service'
 
 export type TelegramPromptAnswerPortDeps = {
@@ -44,6 +47,19 @@ function envelope(
     expectedRuntimeFence: fence,
     payloadFingerprint: computeAgentSessionPayloadFingerprint({ method, sessionId, fields })
   }
+}
+
+function terminalSendOutcome(result: unknown): TelegramTerminalOutcome {
+  const send =
+    typeof result === 'object' && result !== null && 'send' in result ? result.send : null
+  if (typeof send !== 'object' || send === null) {
+    return 'rejected'
+  }
+  if ('accepted' in send && send.accepted === true) {
+    return 'accepted'
+  }
+  const reason = 'refusedReason' in send ? send.refusedReason : undefined
+  return reason === 'no-agent' || reason === 'permission' ? reason : 'rejected'
 }
 
 /** Binds the answer service to the status store, runtime RPC and structured host. */
@@ -88,7 +104,7 @@ export function createTelegramPromptAnswerPorts(
         return null
       }
     },
-    sendTerminal: async ({ terminal, text, enter }) => {
+    sendTerminal: async ({ terminal, text, enter, requireAgentStatus }) => {
       let response: RpcResponse
       try {
         // No client: Telegram has no viewport, so it must not take the mobile input floor.
@@ -96,24 +112,17 @@ export function createTelegramPromptAnswerPorts(
           id: `telegram-${randomUUID()}`,
           authToken: 'telegram-bridge',
           method: 'terminal.send',
-          params: { terminal, text, enter }
+          params: {
+            terminal,
+            ...(text !== undefined ? { text } : {}),
+            enter,
+            ...(requireAgentStatus ? { requireAgentStatus } : {})
+          }
         })
       } catch {
         return 'unknown'
       }
-      if (!response.ok) {
-        return 'rejected'
-      }
-      const result: unknown = response.result
-      const accepted =
-        typeof result === 'object' &&
-        result !== null &&
-        'send' in result &&
-        typeof result.send === 'object' &&
-        result.send !== null &&
-        'accepted' in result.send &&
-        result.send.accepted === true
-      return accepted ? 'accepted' : 'rejected'
+      return response.ok ? terminalSendOutcome(response.result) : 'rejected'
     },
     respondStructured: (response) =>
       runHostMutation((host) => {

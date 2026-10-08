@@ -15,11 +15,18 @@ import {
 } from '../../shared/agent-session-question-answer'
 import { NATIVE_CHAT_QUESTION_STEP_MS } from '../../shared/native-chat-answer-stepping'
 import type { AskAnswerSelection } from '../../shared/native-chat-ask'
+import {
+  buildAgentPromptPasteBytes,
+  getAgentPromptSubmitDelayMs
+} from '../../shared/agent-prompt-injection'
+import { telegramAnswerText } from './telegram-answer-text'
 import type { TelegramAnswerablePrompt } from './telegram-answerable-prompt'
 import type { TelegramInboundResult } from './telegram-inbound'
 
 /** `unknown` = the write may have landed (ack lost); never report it as a definite failure. */
 export type TelegramDeliveryOutcome = 'accepted' | 'rejected' | 'unknown'
+/** terminal.send's `requireAgentStatus: 'sendable'` refusals, before any byte is written. */
+export type TelegramTerminalOutcome = TelegramDeliveryOutcome | 'no-agent' | 'permission'
 
 export type TelegramStructuredResponse = {
   sessionId: string
@@ -35,9 +42,10 @@ export type TelegramAnswerTransport = {
   /** Must go through the runtime `terminal.send` path so SSH/WSL panes and input locks behave as for mobile. */
   sendTerminal: (input: {
     terminal: string
-    text: string
+    text?: string
     enter: boolean
-  }) => Promise<TelegramDeliveryOutcome>
+    requireAgentStatus?: 'sendable'
+  }) => Promise<TelegramTerminalOutcome>
   respondStructured: (response: TelegramStructuredResponse) => Promise<TelegramDeliveryOutcome>
   /** `agentSession.send` of one user text message, fenced like the host's own clients. */
   sendStructuredMessage: (input: {
@@ -49,33 +57,61 @@ export type TelegramAnswerTransport = {
   wait: (ms: number) => Promise<void>
 }
 
-export const TELEGRAM_ANSWER_MESSAGES = {
-  stale: 'pergunta já respondida',
-  sent: 'resposta enviada',
-  unconfirmed: 'resposta pode ter sido enviada; confira o terminal',
-  partlySent: 'resposta enviada em parte; confira o terminal',
-  notSent: 'não foi possível enviar a resposta',
-  busy: 'outra resposta ainda está sendo enviada',
-  noTerminal: 'terminal indisponível',
-  useButtons: 'use os botões para responder a esta permissão',
-  noFreeText: 'esta pergunta só aceita as opções dos botões',
-  incomplete: 'responda todas as perguntas antes de enviar',
-  structuredUnavailable: 'sessão de chat indisponível',
-  noWorktree: 'nenhum agente encontrado para esse worktree',
-  ambiguousWorktree: 'mais de um agente nesse worktree; responda à notificação do agente'
-} as const
-
 export function telegramAnswerFailure(error: string): TelegramInboundResult {
   return { ok: false, error }
 }
 
-export function telegramOutcomeResult(outcome: TelegramDeliveryOutcome): TelegramInboundResult {
-  if (outcome === 'accepted') {
-    return { ok: true, ack: TELEGRAM_ANSWER_MESSAGES.sent }
+export function telegramOutcomeResult(outcome: TelegramTerminalOutcome): TelegramInboundResult {
+  switch (outcome) {
+    case 'accepted':
+      return { ok: true, ack: telegramAnswerText.sent() }
+    case 'unknown':
+      return telegramAnswerFailure(telegramAnswerText.unconfirmed())
+    case 'no-agent':
+      return telegramAnswerFailure(telegramAnswerText.noAgent())
+    case 'permission':
+      return telegramAnswerFailure(telegramAnswerText.useButtons())
+    case 'rejected':
+      return telegramAnswerFailure(telegramAnswerText.notSent())
   }
-  return telegramAnswerFailure(
-    outcome === 'unknown' ? TELEGRAM_ANSWER_MESSAGES.unconfirmed : TELEGRAM_ANSWER_MESSAGES.notSent
+}
+
+/** True when keys may already have reached the agent, so a repeat would answer twice. */
+export function telegramAnswerMayHaveLanded(result: TelegramInboundResult): boolean {
+  return (
+    result.ok ||
+    result.error === telegramAnswerText.unconfirmed() ||
+    result.error === telegramAnswerText.partlySent()
   )
+}
+
+/** Free text into an agent TUI, guarded both phases so a dead agent's shell never runs it. */
+export async function deliverTelegramPlainText(
+  transport: TelegramAnswerTransport,
+  terminal: string,
+  text: string
+): Promise<TelegramInboundResult> {
+  const paste = buildAgentPromptPasteBytes(text)
+  const pasted = await transport.sendTerminal({
+    terminal,
+    text: paste,
+    enter: false,
+    requireAgentStatus: 'sendable'
+  })
+  if (pasted !== 'accepted') {
+    return telegramOutcomeResult(pasted)
+  }
+  await transport.wait(
+    getAgentPromptSubmitDelayMs(process.platform, Buffer.byteLength(paste, 'utf8'))
+  )
+  const submitted = await transport.sendTerminal({
+    terminal,
+    enter: true,
+    requireAgentStatus: 'sendable'
+  })
+  return submitted === 'accepted'
+    ? { ok: true, ack: telegramAnswerText.sent() }
+    : telegramAnswerFailure(telegramAnswerText.textNotSubmitted())
 }
 
 async function sendKeyGroups(
@@ -89,7 +125,7 @@ async function sendKeyGroups(
     if (outcome !== 'accepted') {
       // Any accepted key already moved the selector; a resend would double-step it.
       return accepted > 0
-        ? telegramAnswerFailure(TELEGRAM_ANSWER_MESSAGES.partlySent)
+        ? telegramAnswerFailure(telegramAnswerText.partlySent())
         : telegramOutcomeResult(outcome)
     }
     accepted += 1
@@ -97,7 +133,7 @@ async function sendKeyGroups(
       await transport.wait(NATIVE_CHAT_QUESTION_STEP_MS)
     }
   }
-  return { ok: true, ack: TELEGRAM_ANSWER_MESSAGES.sent }
+  return { ok: true, ack: telegramAnswerText.sent() }
 }
 
 export async function deliverTelegramApproval(
@@ -109,7 +145,7 @@ export async function deliverTelegramApproval(
   if (prompt.source === 'structured') {
     const option = prompt.body.options[optionIndex]
     if (!option) {
-      return telegramAnswerFailure(TELEGRAM_ANSWER_MESSAGES.stale)
+      return telegramAnswerFailure(telegramAnswerText.stale())
     }
     return telegramOutcomeResult(
       await transport.respondStructured({
@@ -124,10 +160,10 @@ export async function deliverTelegramApproval(
   }
   const keys = [APPROVAL_ALLOW_KEYS, APPROVAL_DENY_KEYS][optionIndex]
   if (keys === undefined) {
-    return telegramAnswerFailure(TELEGRAM_ANSWER_MESSAGES.stale)
+    return telegramAnswerFailure(telegramAnswerText.stale())
   }
   if (!terminal) {
-    return telegramAnswerFailure(TELEGRAM_ANSWER_MESSAGES.noTerminal)
+    return telegramAnswerFailure(telegramAnswerText.noTerminal())
   }
   return telegramOutcomeResult(await transport.sendTerminal({ terminal, text: keys, enter: false }))
 }
@@ -161,7 +197,7 @@ export async function deliverTelegramQuestion(
     const answers = structuredAnswers(prompt, selections)
     // The host requires every question answered; refuse before a round trip it would reject.
     if (!isValidAgentSessionQuestionAnswers(prompt.questions, answers)) {
-      return telegramAnswerFailure(TELEGRAM_ANSWER_MESSAGES.incomplete)
+      return telegramAnswerFailure(telegramAnswerText.incomplete())
     }
     return telegramOutcomeResult(
       await transport.respondStructured({
@@ -175,7 +211,7 @@ export async function deliverTelegramQuestion(
     )
   }
   if (!terminal) {
-    return telegramAnswerFailure(TELEGRAM_ANSWER_MESSAGES.noTerminal)
+    return telegramAnswerFailure(telegramAnswerText.noTerminal())
   }
   const delivery = planAskAnswerDelivery(
     entry.agentType,

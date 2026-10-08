@@ -10,6 +10,7 @@ import {
   encodeTelegramPromptAction,
   type TelegramStructuredPromptSnapshot
 } from './telegram-answerable-prompt'
+import { telegramAnswerText } from './telegram-answer-text'
 import { createTelegramPromptButtonDecorator } from './telegram-prompt-buttons'
 import type { TelegramNotice } from './telegram-inbound'
 
@@ -50,20 +51,24 @@ describe('createTelegramPromptButtonDecorator', () => {
     expect(decorate(notice, entry({ state: 'working', interactivePrompt: ask([]) }))).toBe(notice)
   })
 
-  it('builds Permitir/Negar for a PTY permission request', () => {
+  it('builds Allow/Deny for a PTY permission request', () => {
     const decorated = decorate(
       { ...notice, kind: 'blocked' },
       entry({ state: 'blocked', interactivePrompt: JSON.stringify({ approval: { tool: 'Bash' } }) })
     )
     expect(decorated.buttons).toHaveLength(1)
-    expect(decorated.buttons[0]!.map((button) => button.label)).toEqual(['Permitir', 'Negar'])
+    expect(decorated.buttons[0]!.map((button) => button.label)).toEqual([
+      telegramAnswerText.allow(),
+      telegramAnswerText.deny()
+    ])
     expect(decorated.buttons[0]!.map((b) => decodeTelegramPromptAction(b.action)?.kind)).toEqual([
       'approval',
       'approval'
     ])
+    expect(decorated.text).toBe(notice.text)
   })
 
-  it('auto-submits a single single-select question (no Enviar row)', () => {
+  it('does not repeat the first question PR1 already prints', () => {
     const decorated = decorate(
       notice,
       entry({
@@ -74,10 +79,11 @@ describe('createTelegramPromptButtonDecorator', () => {
       })
     )
     expect(decorated.buttons.map((row) => row.map((b) => b.label))).toEqual([['Red'], ['Blue']])
-    expect(decorated.text).toContain('Color?')
+    expect(decorated.text).not.toContain('Color?')
+    expect(decorated.text).toContain(telegramAnswerText.hintReply())
   })
 
-  it('numbers multi-question options and adds Enviar', () => {
+  it('numbers multi-question options, lists later questions, and adds Send', () => {
     const decorated = decorate(
       notice,
       entry({
@@ -88,17 +94,18 @@ describe('createTelegramPromptButtonDecorator', () => {
       })
     )
     const labels = decorated.buttons.map((row) => row[0]!.label)
-    expect(labels).toEqual(['1. a1', '1. a2', '2. b1', 'Enviar'])
+    expect(labels).toEqual(['1. a1', '1. a2', '2. b1', telegramAnswerText.submit()])
     expect(decodeTelegramPromptAction(decorated.buttons[2]![0]!.action)).toMatchObject({
       kind: 'option',
       questionIndex: 1,
       optionIndex: 0
     })
-    expect(decorated.text).toContain('2. B?')
-    expect(decorated.text).toContain('toque Enviar')
+    expect(decorated.text).not.toContain('A?')
+    expect(decorated.text).toContain('<b>2.</b> B?')
+    expect(decorated.text).toContain(telegramAnswerText.hintMultiSelect())
   })
 
-  it('adds Enviar to a lone multi-select question', () => {
+  it('adds Send to a lone multi-select question', () => {
     const decorated = decorate(
       notice,
       entry({
@@ -107,7 +114,7 @@ describe('createTelegramPromptButtonDecorator', () => {
         ])
       })
     )
-    expect(decorated.buttons.at(-1)![0]!.label).toBe('Enviar')
+    expect(decorated.buttons.at(-1)![0]!.label).toBe(telegramAnswerText.submit())
   })
 
   it('truncates long labels, escapes HTML, and keeps callback_data within 64 bytes', () => {
@@ -116,8 +123,8 @@ describe('createTelegramPromptButtonDecorator', () => {
       notice,
       entry({
         interactivePrompt: ask([
-          { question: '<script>&', options: Array.from({ length: 20 }, () => ({ label: long })) },
-          { question: 'q2', options: [{ label: long }] },
+          { question: 'q1', options: Array.from({ length: 20 }, () => ({ label: long })) },
+          { question: '<script>&', options: [{ label: long }] },
           { question: 'q3', options: [{ label: long }] },
           { question: 'q4', multiSelect: true, options: [{ label: long }] }
         ])
@@ -130,6 +137,36 @@ describe('createTelegramPromptButtonDecorator', () => {
         expect(callbackBytes(button.action)).toBeLessThanOrEqual(64)
       }
     }
+  })
+
+  it('keeps the notice under Telegram’s 4096-character limit for huge prompts', () => {
+    const huge = 'x'.repeat(5000)
+    const longNotice: TelegramNotice = { ...notice, text: 'n'.repeat(3500) }
+    const decorated = decorate(
+      longNotice,
+      entry({
+        interactivePrompt: ask([
+          { question: huge, options: [{ label: 'a' }] },
+          { question: huge, options: [{ label: 'b' }] },
+          { question: huge, options: [{ label: 'c' }] },
+          { question: huge, options: [{ label: 'd' }] }
+        ])
+      })
+    )
+    expect(decorated.text.length).toBeLessThanOrEqual(4096)
+    expect(decorated.text.startsWith(longNotice.text)).toBe(true)
+  })
+
+  it('skips buttons entirely for more than 4 questions or 20 options', () => {
+    const fiveQuestions = Array.from({ length: 5 }, (_, index) => ({
+      question: `q${index}`,
+      options: [{ label: 'a' }]
+    }))
+    expect(decorate(notice, entry({ interactivePrompt: ask(fiveQuestions) }))).toBe(notice)
+    const manyOptions = [
+      { question: 'q', options: Array.from({ length: 21 }, (_, i) => ({ label: `o${i}` })) }
+    ]
+    expect(decorate(notice, entry({ interactivePrompt: ask(manyOptions) }))).toBe(notice)
   })
 
   it('builds structured approval buttons from the journal options', () => {
@@ -169,6 +206,8 @@ describe('createTelegramPromptButtonDecorator', () => {
       ['Always allow'],
       ['Deny']
     ])
+    // Structured rows carry no interactivePrompt, so PR1 cannot print the request itself.
+    expect(decorated.text).toContain('Run tests?')
   })
 })
 

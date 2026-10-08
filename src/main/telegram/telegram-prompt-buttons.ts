@@ -1,8 +1,11 @@
 import type { AgentStatusEntry } from '../../shared/agent-status-types'
+import { escapeAndClipTelegramText } from './telegram-agent-notice'
+import { telegramAnswerText } from './telegram-answer-text'
 import {
   encodeTelegramPromptAction,
   resolveTelegramAnswerablePrompt,
   telegramApprovalOptionLabels,
+  telegramPromptFitsButtons,
   type TelegramAnswerablePrompt,
   type TelegramStructuredPromptReader
 } from './telegram-answerable-prompt'
@@ -14,9 +17,11 @@ import type {
 } from './telegram-inbound'
 
 const MAX_BUTTON_LABEL_CHARS = 40
-// Two-digit indices in the action grammar, and Telegram caps a keyboard at 100 buttons.
-const MAX_OPTIONS_PER_QUESTION = 20
-const MAX_QUESTIONS = 4
+const MAX_EXTRA_QUESTION_CHARS = 300
+// Telegram rejects messages over 4096 chars; leave room for PR1's resolved suffix.
+const TELEGRAM_NOTICE_TEXT_BUDGET = 3900
+
+type QuestionPrompt = Extract<TelegramAnswerablePrompt, { kind: 'question' }>
 
 function shortLabel(text: string): string {
   const chars = Array.from(text.replace(/\s+/g, ' ').trim())
@@ -25,27 +30,19 @@ function shortLabel(text: string): string {
     : chars.join('')
 }
 
-function escapeTelegramHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
 function approvalButtons(prompt: TelegramAnswerablePrompt): TelegramNoticeButton[][] {
-  const buttons = telegramApprovalOptionLabels(prompt)
-    .slice(0, MAX_OPTIONS_PER_QUESTION)
-    .map((label, optionIndex) => ({
-      label: shortLabel(label),
-      action: encodeTelegramPromptAction({ tag: prompt.tag, kind: 'approval', optionIndex })
-    }))
+  const buttons = telegramApprovalOptionLabels(prompt).map((label, optionIndex) => ({
+    label: shortLabel(label),
+    action: encodeTelegramPromptAction({ tag: prompt.tag, kind: 'approval', optionIndex })
+  }))
   // Short decision sets read as one row; longer ones stack so labels are not clipped.
   return buttons.length <= 2 ? [buttons] : buttons.map((button) => [button])
 }
 
-function questionButtons(
-  prompt: Extract<TelegramAnswerablePrompt, { kind: 'question' }>
-): TelegramNoticeButton[][] {
+function questionButtons(prompt: QuestionPrompt): TelegramNoticeButton[][] {
   const multiQuestion = prompt.questions.length > 1
-  const rows = prompt.questions.slice(0, MAX_QUESTIONS).flatMap((question, questionIndex) =>
-    question.options.slice(0, MAX_OPTIONS_PER_QUESTION).map((option, optionIndex) => [
+  const rows = prompt.questions.flatMap((question, questionIndex) =>
+    question.options.map((option, optionIndex) => [
       {
         label: shortLabel(`${multiQuestion ? `${questionIndex + 1}. ` : ''}${option.label}`),
         action: encodeTelegramPromptAction({
@@ -59,22 +56,41 @@ function questionButtons(
   )
   if (telegramQuestionsNeedSubmit(prompt.questions) || multiQuestion) {
     rows.push([
-      { label: 'Enviar', action: encodeTelegramPromptAction({ tag: prompt.tag, kind: 'submit' }) }
+      {
+        label: telegramAnswerText.submit(),
+        action: encodeTelegramPromptAction({ tag: prompt.tag, kind: 'submit' })
+      }
     ])
   }
   return rows
 }
 
-function questionText(prompt: Extract<TelegramAnswerablePrompt, { kind: 'question' }>): string {
+/** Lines appended under PR1's notice. PR1 prints a PTY prompt's first question from
+ *  interactivePrompt; structured rows carry none, so theirs are all listed here. */
+function questionLines(prompt: QuestionPrompt): string[] {
   const multiQuestion = prompt.questions.length > 1
-  return prompt.questions
-    .slice(0, MAX_QUESTIONS)
-    .map((question, index) => {
-      const prefix = multiQuestion ? `${index + 1}. ` : ''
-      const hint = question.multiSelect ? ' (várias opções; toque Enviar)' : ''
-      return `<b>${escapeTelegramHtml(`${prefix}${question.question}`)}</b>${hint}`
-    })
-    .join('\n')
+  const first = prompt.source === 'pty' ? 1 : 0
+  const listed = prompt.questions.slice(first).map((question, index) => {
+    const label = multiQuestion ? `<b>${index + first + 1}.</b> ` : ''
+    return `${label}${escapeAndClipTelegramText(question.question, MAX_EXTRA_QUESTION_CHARS)}`
+  })
+  const hints = telegramQuestionsNeedSubmit(prompt.questions)
+    ? [telegramAnswerText.hintMultiSelect(), telegramAnswerText.hintReply()]
+    : [telegramAnswerText.hintReply()]
+  return [...listed, ...hints.map((hint) => `<i>${escapeAndClipTelegramText(hint, 200)}</i>`)]
+}
+
+/** Appends whole lines while they fit, so the notice never crosses Telegram's limit. */
+function appendWithinBudget(text: string, lines: string[]): string {
+  let result = text
+  for (const [index, line] of lines.entries()) {
+    const next = `${result}${index === 0 ? '\n\n' : '\n'}${line}`
+    if (next.length > TELEGRAM_NOTICE_TEXT_BUDGET) {
+      break
+    }
+    result = next
+  }
+  return result
 }
 
 /** Adds answer buttons to blocked/waiting notices whose pane is paused on a prompt. */
@@ -86,15 +102,23 @@ export function createTelegramPromptButtonDecorator(
       return notice
     }
     const prompt = resolveTelegramAnswerablePrompt(entry, readStructuredPrompt)
-    if (!prompt) {
+    if (!prompt || !telegramPromptFitsButtons(prompt)) {
       return notice
     }
     if (prompt.kind === 'approval') {
-      return { ...notice, buttons: [...notice.buttons, ...approvalButtons(prompt)] }
+      const title =
+        prompt.source === 'structured'
+          ? [`🔐 ${escapeAndClipTelegramText(prompt.body.title, MAX_EXTRA_QUESTION_CHARS)}`]
+          : []
+      return {
+        ...notice,
+        text: appendWithinBudget(notice.text, title),
+        buttons: [...notice.buttons, ...approvalButtons(prompt)]
+      }
     }
     return {
       ...notice,
-      text: `${notice.text}\n\n${questionText(prompt)}\n<i>Responda a esta mensagem para digitar uma resposta.</i>`,
+      text: appendWithinBudget(notice.text, questionLines(prompt)),
       buttons: [...notice.buttons, ...questionButtons(prompt)]
     }
   }
