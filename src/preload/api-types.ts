@@ -37,6 +37,7 @@ import type { BitbucketApi, HostedReviewApi } from './api/hosted-review-api'
 import type { AzureDevOpsApi } from './api/azure-devops-api'
 import type { AzureBoardsApi } from './api/azure-boards-api'
 import type { OpenObserveApi } from './api/openobserve-api'
+import type { TelegramBridgeApi } from './api/telegram-api'
 import type { JiraApi } from './api/jira-api'
 import type { LinearApi } from './api/linear-api'
 import type { MobileApi } from './api/mobile-api'
@@ -96,6 +97,7 @@ export type PreloadApi = {
   azureDevOps: AzureDevOpsApi
   azureBoards: AzureBoardsApi
   openObserve: OpenObserveApi
+  telegram: TelegramBridgeApi
   linear: LinearApi
   jira: JiraApi
   starNag: StarNagApi

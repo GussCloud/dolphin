@@ -7580,7 +7580,9 @@
           "1683acbac4": "Connectez les hébergeurs de code qu'Dolphin peut utiliser pour les pull requests, merge requests, checks et statuts de revue.",
           "298c65ecac": "Fournisseurs de revue",
           "observability": "Observabilité",
-          "observabilityDescription": "Connectez des outils d'observabilité pour que les agents lisent les logs, métriques et traces pendant leur travail."
+          "observabilityDescription": "Connectez des outils d'observabilité pour que les agents lisent les logs, métriques et traces pendant leur travail.",
+          "agentNotices": "Avis des agents",
+          "agentNoticesDescription": "Suivez vos agents depuis votre téléphone : tours terminés, agents bloqués et questions qui vous attendent."
         },
         "KagiSessionLinkForm": {
           "92f0b4e472": "Effacer",
@@ -10026,7 +10028,12 @@
             "openObserveKeyword": "openobserve",
             "observabilityKeyword": "observabilité",
             "logsKeyword": "journaux",
-            "tracesKeyword": "traces"
+            "tracesKeyword": "traces",
+            "telegramTitle": "Avis des agents sur Telegram",
+            "telegramDescription": "Messages Telegram quand un agent termine, est bloqué ou vous attend.",
+            "telegramKeyword": "telegram",
+            "notificationsKeyword": "notifications",
+            "botKeyword": "bot"
           }
         },
         "jira": {
@@ -12328,6 +12335,40 @@
           "checkNow": "Vérifier maintenant",
           "accountExists": "Un compte Dolphin existe déjà avec cette adresse e-mail. Connectez-vous une fois pour le lier.",
           "signInWithAzureDevOps": "Se connecter avec Azure DevOps"
+        },
+        "telegramIntegrationCard": {
+          "name": "Telegram",
+          "summary": "Recevez un message quand un agent termine, est bloqué ou vous attend, depuis chaque espace de travail.",
+          "statusOff": "Désactivé",
+          "statusNotConfigured": "Non configuré",
+          "statusConnecting": "Connexion",
+          "statusOk": "Connecté",
+          "statusConflict": "Une autre application interroge",
+          "statusInvalidToken": "Jeton invalide",
+          "statusNetworkError": "Injoignable",
+          "conflictHint": "Telegram signale qu’un autre programme lit les mises à jour de ce bot (HTTP 409). Arrêtez l’autre interrogation ou le webhook ; Dolphin réessaie toutes les 30 secondes.",
+          "invalidTokenHint": "Telegram a refusé le jeton du bot. Collez un nouveau jeton fourni par @BotFather.",
+          "networkHint": "Telegram est injoignable depuis cet ordinateur. Dolphin continue de réessayer.",
+          "tokenLabel": "Jeton du bot",
+          "tokenDescription": "Créez un bot avec @BotFather et collez son jeton. Le jeton est chiffré sur cet ordinateur et n’est plus jamais affiché.",
+          "saveToken": "Enregistrer",
+          "cancel": "Annuler",
+          "openBotFather": "Ouvrir @BotFather",
+          "tokenSavedFor": "Jeton enregistré pour @{{value0}}.",
+          "tokenSaved": "Jeton enregistré.",
+          "replaceToken": "Remplacer",
+          "removeToken": "Supprimer",
+          "removeChat": "Supprimer la discussion",
+          "chatsLabel": "Discussions associées",
+          "chatsDescription": "Seules les discussions associées reçoivent les avis. Les messages de toute autre discussion sont ignorés.",
+          "noChats": "Aucune discussion associée pour le moment.",
+          "pairingInstructionsBot": "Envoyez ce message à @{{value0}} dans les 10 minutes. Le code ne fonctionne qu’une fois.",
+          "pairingInstructions": "Envoyez ce message à votre bot dans les 10 minutes. Le code ne fonctionne qu’une fois.",
+          "pairChat": "Associer une discussion",
+          "enable": "Envoyer les avis des agents sur Telegram",
+          "unavailable": "Les avis Telegram s’exécutent dans l’application de bureau Dolphin et ne sont pas disponibles sur cet hôte.",
+          "channelsLabel": "Répondre à Claude Code via un canal (expérimental)",
+          "channelsDescription": "Transmet les réponses Telegram directement dans les sessions Claude Code. Tant que l’option est active, Claude vous demande de confirmer le chargement d’un canal de développement local à chaque démarrage, et les canaux ne fonctionnent que si Claude est connecté avec claude.ai ou une clé d’API Console (pas Bedrock, Vertex AI ni Foundry)."
         }
       },
       "right": {
@@ -18783,5 +18824,36 @@
   },
   "common": {
     "retry": "Réessayer"
+  },
+  "telegram": {
+    "notice": {
+      "blocked": "Bloqué",
+      "waiting": "En attente de vous",
+      "stopped": "Arrêté",
+      "done": "Terminé",
+      "resolved": "Répondu",
+      "closed": "Fermé"
+    },
+    "help": {
+      "title": "Avis des agents Dolphin",
+      "status": "agents en attente, bloqués ou au travail",
+      "to": "envoyer du texte à un agent de cet espace de travail",
+      "reply": "Répondez à un avis pour répondre à cet agent.",
+      "help": "ce message"
+    },
+    "reply": {
+      "notSupported": "Les réponses ne sont pas encore prises en charge."
+    },
+    "pair": {
+      "success": "Associé. Cette discussion reçoit désormais les avis des agents Dolphin.",
+      "already": "Cette discussion est déjà associée."
+    },
+    "status": {
+      "empty": "Aucun agent signalé pour le moment.",
+      "unverifiable": "invérifiable"
+    },
+    "callback": {
+      "expired": "Ce message a expiré. Utilisez l’avis le plus récent."
+    }
   }
 }

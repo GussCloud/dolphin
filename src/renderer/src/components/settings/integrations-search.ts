@@ -1,8 +1,10 @@
 import { translate } from '@/i18n/i18n'
 import { translateSearchKeyword } from './settings-search-keywords'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
+import { isWebClientLocation } from '@/lib/web-client-location'
+import type { SettingsSearchEntry } from './settings-search'
 
-export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
+const getProviderSearchEntries = createLocalizedCatalog(() => [
   {
     title: translate(
       'auto.components.settings.integrations.search.f16e41cc72',
@@ -252,3 +254,38 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
     ]
   }
 ])
+
+const getTelegramSearchEntries = createLocalizedCatalog(() => [
+  {
+    title: translate(
+      'auto.components.settings.integrations.search.telegramTitle',
+      'Telegram Agent Notices'
+    ),
+    description: translate(
+      'auto.components.settings.integrations.search.telegramDescription',
+      'Telegram messages when an agent finishes, is blocked, or waits for you.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.telegramKeyword',
+        'telegram'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.c450244ad7',
+        'integration'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.notificationsKeyword',
+        'notifications'
+      ),
+      ...translateSearchKeyword('auto.components.settings.integrations.search.botKeyword', 'bot')
+    ]
+  }
+])
+
+export function getIntegrationsPaneSearchEntries(): SettingsSearchEntry[] {
+  // Why: Telegram notices run in desktop main; the web client has no bridge to configure.
+  return isWebClientLocation()
+    ? getProviderSearchEntries()
+    : [...getProviderSearchEntries(), ...getTelegramSearchEntries()]
+}
