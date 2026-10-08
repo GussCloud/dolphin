@@ -190,7 +190,12 @@ export class TelegramBridgeService {
       api,
       onUpdate: (update) => this.router.route(update),
       initialOffset: this.deps.settings.getUpdateOffset(),
-      onOffset: (offset) => this.deps.settings.setUpdateOffset(offset),
+      onOffset: (offset) => {
+        // Why: offsets are per bot; only the session for the current token may persist one.
+        if (this.session?.poller === poller) {
+          this.deps.settings.setUpdateOffset(offset)
+        }
+      },
       onStatus: (status) => {
         this.pollStatus = status
         this.emitStatus()

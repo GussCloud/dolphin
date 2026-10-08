@@ -5,7 +5,7 @@ import type {
   AgentStatusIpcPayload
 } from '../../shared/agent-status-types'
 import type { SecretStore } from '../../shared/secret-store'
-import { TelegramApiError, type TelegramSendOptions } from './telegram-bot-api'
+import { TelegramApiError, type TelegramSendOptions, type TelegramUpdate } from './telegram-bot-api'
 import { TelegramBridgeService, type TelegramBridgeApi } from './telegram-bridge-service'
 import { TelegramSettingsStore } from './telegram-settings'
 
@@ -38,7 +38,10 @@ function makeHarness(options: { snapshot?: AgentStatusIpcPayload[] } = {}) {
   const api = {
     getMe: vi.fn(async () => ({ username: 'dolphin_bot' })),
     // Why: never resolve, so the poll loop parks instead of spinning in the test.
-    getUpdates: vi.fn(() => new Promise<never>(() => {})),
+    getUpdates: vi.fn(
+      (_offset: number, _timeoutSec: number, _signal?: AbortSignal): Promise<TelegramUpdate[]> =>
+        new Promise(() => {})
+    ),
     sendMessage: vi.fn(
       async (_chatId: number, _html: string, _options?: TelegramSendOptions) => nextMessageId++
     ),
@@ -248,6 +251,35 @@ describe('TelegramBridgeService', () => {
       { worktreeId: 'repo::/api', paneKeys: ['p1', 'p2'] }
     ])
     expect(bridge.resolveWorktreeQuery('nope')).toEqual([])
+  })
+
+  it('never saves an offset from a poller whose token was replaced mid-batch', async () => {
+    const { api, settings } = makeHarness()
+    const OTHER_TOKEN = '987654321:BBEabcdefghijklmnopqrstuvwxyz012345'
+    api.getUpdates.mockImplementationOnce(async () => [
+      {
+        updateId: 77,
+        message: {
+          messageId: 1,
+          chatId: CHAT,
+          chatLabel: '@me',
+          chatType: 'private',
+          sentAt: Date.now(),
+          text: '/status'
+        }
+      }
+    ])
+    let replaced = false
+    api.sendMessage.mockImplementationOnce(async () => {
+      settings.setToken(OTHER_TOKEN)
+      replaced = true
+      return 1
+    })
+    settings.setEnabled(true)
+    await vi.waitFor(() => expect(replaced).toBe(true))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(settings.readToken()).toBe(OTHER_TOKEN)
+    expect(settings.getUpdateOffset()).toBe(0)
   })
 
   it('reports disabled / not-configured / connecting status', () => {

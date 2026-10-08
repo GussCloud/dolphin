@@ -79,7 +79,8 @@ export class TelegramUpdatePoller {
             console.error('[telegram] update handler failed', error)
           }
         }
-        if (updates.length > 0) {
+        // Why: a stopped poller may belong to a replaced token; its offset is meaningless for the new bot.
+        if (updates.length > 0 && !signal.aborted) {
           this.options.onOffset?.(this.offset)
         }
       } catch (error) {

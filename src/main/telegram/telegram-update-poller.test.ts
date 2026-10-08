@@ -55,6 +55,16 @@ describe('TelegramUpdatePoller', () => {
     expect(onOffset).toHaveBeenCalledWith(51)
   })
 
+  it('does not report an offset once stopped mid-batch', async () => {
+    const { poller, onOffset, onUpdate } = makePoller(async () => [{ updateId: 5 }])
+    onUpdate.mockImplementation(async () => {
+      poller.stop()
+    })
+    await poller.run()
+    expect(onUpdate).toHaveBeenCalledTimes(1)
+    expect(onOffset).not.toHaveBeenCalled()
+  })
+
   it('surfaces 409 conflicts and backs off instead of spinning', async () => {
     let calls = 0
     const { poller, statuses, sleeps } = makePoller(async () => {
