@@ -46,6 +46,7 @@ function harness(initial: AgentStatusEntry | null, structured?: TelegramStructur
   let current = initial
   const sent: { terminal: string; text: string; enter: boolean }[] = []
   const responses: TelegramStructuredResponse[] = []
+  const messages: { sessionId: string; fence: number; text: string }[] = []
   let outcomes: TelegramDeliveryOutcome[] = []
   const inferQuestionAnswered = vi.fn()
   const readStructuredPrompt = (): TelegramStructuredPromptSnapshot | null => structured ?? null
@@ -58,6 +59,10 @@ function harness(initial: AgentStatusEntry | null, structured?: TelegramStructur
     },
     respondStructured: async (response) => {
       responses.push(response)
+      return outcomes.shift() ?? 'accepted'
+    },
+    sendStructuredMessage: async (input) => {
+      messages.push(input)
       return outcomes.shift() ?? 'accepted'
     },
     inferQuestionAnswered,
@@ -75,6 +80,7 @@ function harness(initial: AgentStatusEntry | null, structured?: TelegramStructur
     service,
     sent,
     responses,
+    messages,
     inferQuestionAnswered,
     setEntry: (next: AgentStatusEntry | null) => {
       current = next
@@ -277,7 +283,8 @@ describe('PTY questions per agent', () => {
         await gate
         return 'accepted'
       },
-      respondStructured: async () => 'accepted'
+      respondStructured: async () => 'accepted',
+      sendStructuredMessage: async () => 'accepted'
     })
     const [red, blue] = h.actions()
     const route = h.route()
@@ -482,13 +489,57 @@ describe('structured sessions', () => {
     })
   })
 
-  it('refuses plain text to a structured pane with no pending question', async () => {
+  it('sends plain text to an idle structured session as a fenced message, keeping line breaks', async () => {
     const h = structuredHarness([])
     expect(
+      await h.service.handleText!({ chatId: 1, messageId: 1, text: ' run\nall ', route: h.route() })
+    ).toEqual({ ok: true, ack: TELEGRAM_ANSWER_MESSAGES.sent })
+    expect(h.messages).toEqual([{ sessionId, fence: 7, text: 'run\nall' }])
+    expect(h.sent).toEqual([])
+  })
+
+  it('refuses plain text while a structured approval is pending', async () => {
+    const h = structuredHarness([approval])
+    expect(
       await h.service.handleText!({ chatId: 1, messageId: 1, text: 'hi', route: h.route() })
-    ).toEqual({
-      ok: false,
-      error: TELEGRAM_ANSWER_MESSAGES.structuredText
+    ).toEqual({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.useButtons })
+    expect(h.messages).toEqual([])
+  })
+
+  it('refuses plain text when the session is not readable on this host', async () => {
+    const h = harness(structuredEntry)
+    expect(
+      await h.service.handleText!({
+        chatId: 1,
+        messageId: 1,
+        text: 'hi',
+        route: { routeId: 'r9', paneKey: structuredEntry.paneKey }
+      })
+    ).toEqual({ ok: false, error: TELEGRAM_ANSWER_MESSAGES.structuredUnavailable })
+  })
+
+  it('keeps one in-flight send per structured session', async () => {
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
     })
+    const slow = createTelegramPromptAnswerService({
+      readEntry: () => structuredEntry,
+      readStructuredPrompt: () => ({ fence: 1, items: [] }),
+      sendTerminal: async () => 'accepted',
+      respondStructured: async () => 'accepted',
+      sendStructuredMessage: async () => {
+        await gate
+        return 'accepted'
+      }
+    })
+    const route = { routeId: 'r9', paneKey: structuredEntry.paneKey }
+    const first = slow.handleText!({ chatId: 1, messageId: 1, text: 'a', route })
+    expect(await slow.handleText!({ chatId: 1, messageId: 2, text: 'b', route })).toEqual({
+      ok: false,
+      error: TELEGRAM_ANSWER_MESSAGES.busy
+    })
+    release()
+    expect(await first).toMatchObject({ ok: true })
   })
 })

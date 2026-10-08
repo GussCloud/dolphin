@@ -39,6 +39,12 @@ export type TelegramAnswerTransport = {
     enter: boolean
   }) => Promise<TelegramDeliveryOutcome>
   respondStructured: (response: TelegramStructuredResponse) => Promise<TelegramDeliveryOutcome>
+  /** `agentSession.send` of one user text message, fenced like the host's own clients. */
+  sendStructuredMessage: (input: {
+    sessionId: string
+    fence: number
+    text: string
+  }) => Promise<TelegramDeliveryOutcome>
   inferQuestionAnswered?: (request: AgentQuestionAnsweredInferenceRequest) => void
   wait: (ms: number) => Promise<void>
 }
@@ -54,7 +60,7 @@ export const TELEGRAM_ANSWER_MESSAGES = {
   useButtons: 'use os botões para responder a esta permissão',
   noFreeText: 'esta pergunta só aceita as opções dos botões',
   incomplete: 'responda todas as perguntas antes de enviar',
-  structuredText: 'sessões de chat só aceitam respostas a perguntas pendentes',
+  structuredUnavailable: 'sessão de chat indisponível',
   noWorktree: 'nenhum agente encontrado para esse worktree',
   ambiguousWorktree: 'mais de um agente nesse worktree; responda à notificação do agente'
 } as const

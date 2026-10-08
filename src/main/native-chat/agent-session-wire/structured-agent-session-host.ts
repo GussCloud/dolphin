@@ -140,6 +140,8 @@ export class StructuredAgentSessionHost {
   private now = (): number => this.deps.now?.() ?? Date.now()
 
   hasSession = (sessionId: string): boolean => this.sessions.has(sessionId)
+  /** The fence an in-process mutation must carry; null when the session is not loaded. */
+  sessionFence = (sessionId: string): number | null => this.sessions.get(sessionId)?.fence ?? null
   isHeld = (sessionId: string): boolean => this.holds.isHeld(sessionId)
 
   /** A surface bound to this session and wants it live. The FIRST hold on a session with no

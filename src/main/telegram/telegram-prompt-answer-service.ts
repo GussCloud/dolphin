@@ -50,6 +50,7 @@ export function createTelegramPromptAnswerService(
   const transport: TelegramAnswerTransport = {
     sendTerminal: ports.sendTerminal,
     respondStructured: ports.respondStructured,
+    sendStructuredMessage: ports.sendStructuredMessage,
     inferQuestionAnswered: ports.inferQuestionAnswered,
     wait: ports.wait ?? ((ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
   }
@@ -210,8 +211,19 @@ export function createTelegramPromptAnswerService(
         ? advanceQuestionDraft(entry, route, prompt, next, false)
         : fail(TELEGRAM_ANSWER_MESSAGES.noFreeText)
     }
-    if (telegramStructuredSessionIdForEntry(entry)) {
-      return fail(TELEGRAM_ANSWER_MESSAGES.structuredText)
+    const sessionId = telegramStructuredSessionIdForEntry(entry)
+    if (sessionId) {
+      // A structured message is not keystrokes, so line breaks are kept.
+      const message = event.text.trim()
+      const snapshot = ports.readStructuredPrompt(sessionId)
+      if (!snapshot || !message) {
+        return fail(TELEGRAM_ANSWER_MESSAGES.structuredUnavailable)
+      }
+      return exclusive(`structured:${sessionId}`, async () =>
+        telegramOutcomeResult(
+          await ports.sendStructuredMessage({ sessionId, fence: snapshot.fence, text: message })
+        )
+      )
     }
     const terminal = entry.terminalHandle ?? route.terminalHandle
     // Raw keystrokes: a newline would submit early, so the reply is sent as one line.
