@@ -31,6 +31,10 @@ export type TelegramIncomingMessage = {
   messageId: number
   chatId: number
   chatLabel: string
+  /** Telegram chat type: 'private', 'group', 'supergroup' or 'channel'. */
+  chatType: string
+  /** Send time in epoch ms. */
+  sentAt?: number
   text?: string
   replyToMessageId?: number
 }
@@ -88,10 +92,13 @@ function parseMessage(raw: unknown): TelegramIncomingMessage | undefined {
     ? readNumber(raw.reply_to_message, 'message_id')
     : undefined
   const text = readText(raw, 'text')
+  const dateSec = readNumber(raw, 'date')
   return {
     messageId,
     chatId,
     chatLabel: chatLabelOf(raw.chat),
+    chatType: readText(raw.chat, 'type') ?? '',
+    ...(dateSec !== undefined ? { sentAt: dateSec * 1000 } : {}),
     ...(text !== undefined ? { text } : {}),
     ...(replyTo !== undefined ? { replyToMessageId: replyTo } : {})
   }

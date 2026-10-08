@@ -7,6 +7,10 @@ describe('TelegramReplyRoutes', () => {
     const route = routes.register({ paneKey: 'p1', connectionId: 'ssh-1' })
     expect(route.routeId).toMatch(/^[A-Za-z0-9]{8}$/)
     expect(routes.parseCallbackData(`${route.routeId}:opt:1`)).toEqual({ route, action: 'opt:1' })
+    expect(routes.parseCallbackData(`${route.routeId}:chp-allow-a1.b2`)).toEqual({
+      route,
+      action: 'chp-allow-a1.b2'
+    })
     expect(routes.parseCallbackData('bad id:x')).toBeNull()
     expect(routes.parseCallbackData('nocolon')).toBeNull()
   })

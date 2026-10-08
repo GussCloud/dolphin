@@ -18,18 +18,28 @@ function makeRouter(handler?: TelegramInboundHandler) {
       handler && handler[method] ? handler : undefined,
     describeStatus: () => 'STATUS',
     reply: vi.fn(async (_chatId: number, _html: string, _replyToMessageId?: number) => {}),
-    answerCallback: vi.fn(async () => {})
+    answerCallback: vi.fn(async () => {}),
+    now: () => NOW
   }
   return { router: new TelegramUpdateRouter(deps), deps, routes }
 }
 
-function message(chatId: number, text: string, replyToMessageId?: number) {
+const NOW = 1_000_000_000
+
+function message(
+  chatId: number,
+  text: string,
+  replyToMessageId?: number,
+  extra: { chatType?: string; sentAt?: number } = {}
+) {
   return {
     updateId: 1,
     message: {
       messageId: 5,
       chatId,
       chatLabel: '@me',
+      chatType: extra.chatType ?? 'private',
+      sentAt: extra.sentAt ?? NOW,
       text,
       ...(replyToMessageId ? { replyToMessageId } : {})
     }
@@ -49,7 +59,7 @@ describe('parseTelegramText', () => {
       worktreeQuery: 'api',
       text: 'run the tests\nplease'
     })
-    expect(parseTelegramText('/to api')).toBeNull()
+    expect(parseTelegramText('/to api')).toEqual({ kind: 'command', command: 'to', args: 'api' })
     expect(parseTelegramText(' yes ')).toEqual({ kind: 'text', text: 'yes' })
     expect(parseTelegramText('   ')).toBeNull()
   })
@@ -70,6 +80,32 @@ describe('TelegramUpdateRouter', () => {
       label: '@me'
     })
     expect(deps.reply).toHaveBeenCalledTimes(1)
+  })
+
+  it('accepts /pair only from a private chat', async () => {
+    const { router, deps } = makeRouter()
+    await router.route(message(STRANGER, '/pair GOODCODE', undefined, { chatType: 'group' }))
+    expect(deps.consumePairingCode).not.toHaveBeenCalled()
+    expect(deps.reply).not.toHaveBeenCalled()
+  })
+
+  it('ignores redelivered messages older than two minutes', async () => {
+    const handleText = vi.fn()
+    const { router, deps } = makeRouter({ handleText })
+    await router.route(message(ALLOWED, '/status', undefined, { sentAt: NOW - 3 * 60_000 }))
+    await router.route(message(ALLOWED, 'yes', undefined, { sentAt: NOW - 3 * 60_000 }))
+    await router.route(message(STRANGER, '/pair GOODCODE', undefined, { sentAt: NOW - 3 * 60_000 }))
+    expect(deps.reply).not.toHaveBeenCalled()
+    expect(handleText).not.toHaveBeenCalled()
+    expect(deps.consumePairingCode).not.toHaveBeenCalled()
+  })
+
+  it('answers `/to name` without text with the help', async () => {
+    const handleText = vi.fn()
+    const { router, deps } = makeRouter({ handleText })
+    await router.route(message(ALLOWED, '/to api'))
+    expect(handleText).not.toHaveBeenCalled()
+    expect(vi.mocked(deps.reply).mock.lastCall?.[1]).toContain('/status')
   })
 
   it('answers /status and /help for an allowed chat', async () => {

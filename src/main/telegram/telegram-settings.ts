@@ -32,6 +32,8 @@ type TelegramSettingsFile = {
   channelsEnabled: boolean
   token?: SealedToken
   allowedChats: TelegramAllowedChat[]
+  /** getUpdates offset already handled, so a restart does not replay commands. Per bot token. */
+  updateOffset?: number
 }
 
 const EMPTY_SETTINGS: TelegramSettingsFile = {
@@ -74,7 +76,10 @@ export function parseTelegramSettingsFile(raw: unknown): TelegramSettingsFile {
     enabled: raw.enabled === true,
     channelsEnabled: raw.channelsEnabled === true,
     ...(token ? { token } : {}),
-    allowedChats
+    allowedChats,
+    ...(typeof raw.updateOffset === 'number' && Number.isSafeInteger(raw.updateOffset)
+      ? { updateOffset: raw.updateOffset }
+      : {})
   }
 }
 
@@ -201,13 +206,29 @@ export class TelegramSettingsStore {
       console.warn('[telegram] safeStorage unavailable; storing the bot token unencrypted')
     }
     this.cachedToken = trimmed
-    this.commit({ ...this.settings, token: sealed })
+    // Why: update ids belong to one bot; a new token must not inherit the old offset.
+    const { updateOffset: _staleOffset, ...rest } = this.settings
+    this.commit({ ...rest, token: sealed })
   }
 
   clearToken(): void {
     this.cachedToken = null
-    const { token: _dropped, ...rest } = this.settings
+    const { token: _dropped, updateOffset: _staleOffset, ...rest } = this.settings
     this.commit({ ...rest, enabled: false })
+  }
+
+  getUpdateOffset(): number {
+    return this.settings.updateOffset ?? 0
+  }
+
+  /** Persists silently: an offset is bookkeeping, not a settings change listeners react to. */
+  setUpdateOffset(offset: number): void {
+    if (offset === this.settings.updateOffset) {
+      return
+    }
+    const next = { ...this.settings, updateOffset: offset }
+    this.writeFile(this.options.filePath, next)
+    this.settings = next
   }
 
   setEnabled(enabled: boolean): void {

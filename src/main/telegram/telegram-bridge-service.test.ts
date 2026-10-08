@@ -5,7 +5,7 @@ import type {
   AgentStatusIpcPayload
 } from '../../shared/agent-status-types'
 import type { SecretStore } from '../../shared/secret-store'
-import type { TelegramSendOptions } from './telegram-bot-api'
+import { TelegramApiError, type TelegramSendOptions } from './telegram-bot-api'
 import { TelegramBridgeService, type TelegramBridgeApi } from './telegram-bridge-service'
 import { TelegramSettingsStore } from './telegram-settings'
 
@@ -157,6 +157,27 @@ describe('TelegramBridgeService', () => {
       buttons: [],
       replyToMessageId: undefined
     })
+  })
+
+  it('closes the open notice when the pane goes away', async () => {
+    const { api, settings, emit, listeners, bridge } = makeHarness()
+    settings.setEnabled(true)
+    await emit('working', 1)
+    await emit('waiting', 2)
+    for (const listener of listeners.clear) {
+      listener({ paneKey: PANE })
+    }
+    await bridge.whenIdle()
+    expect(api.editMessageText).toHaveBeenCalledWith(CHAT, 100, expect.stringContaining('✖ Closed'))
+  })
+
+  it('retries a rate-limited send once after retry_after', async () => {
+    const { api, settings, emit } = makeHarness()
+    settings.setEnabled(true)
+    api.sendMessage.mockRejectedValueOnce(new TelegramApiError('rate-limited', 'slow', 0))
+    await emit('working', 1)
+    await emit('waiting', 2)
+    expect(api.sendMessage).toHaveBeenCalledTimes(2)
   })
 
   it('suppresses a notice a registered filter rejects', async () => {

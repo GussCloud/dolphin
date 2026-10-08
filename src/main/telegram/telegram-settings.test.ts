@@ -87,6 +87,18 @@ describe('TelegramSettingsStore', () => {
     expect(store.consumePairingCode(second.code, { chatId: 1, label: '' })).toBe(false)
   })
 
+  it('persists the update offset silently and resets it with a new token', () => {
+    const { store, files } = makeStore()
+    const listener = vi.fn()
+    store.onChange(listener)
+    store.setUpdateOffset(41)
+    expect(store.getUpdateOffset()).toBe(41)
+    expect(JSON.parse(files.get('telegram.json') ?? '{}').updateOffset).toBe(41)
+    expect(listener).not.toHaveBeenCalled()
+    store.setToken(TOKEN)
+    expect(store.getUpdateOffset()).toBe(0)
+  })
+
   it('removes a chat from the allowlist', () => {
     const { store } = makeStore()
     store.consumePairingCode(store.issuePairingCode().code, { chatId: 7, label: '' })

@@ -36,7 +36,7 @@ export function formatTelegramStatusList(
     const where = name ? `<b>${escapeAndClipTelegramText(name, 80)}</b> · ` : ''
     // Why: a hydrated row is a claim from before the restart, not an observation.
     const unverified = row.restoredUnconfirmed
-      ? ` <i>(${escapeTelegramHtml(translateMain('telegram.status.unverified', 'unverified'))})</i>`
+      ? ` <i>(${escapeTelegramHtml(translateMain('telegram.status.unverifiable', 'unverifiable'))})</i>`
       : ''
     return `${STATE_ICON[row.state]} ${where}${escapeAndClipTelegramText(formatAgentTypeLabel(row.agentType), 60)}${unverified}`
   })

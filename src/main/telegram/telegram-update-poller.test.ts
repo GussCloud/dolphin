@@ -3,11 +3,17 @@ import type { TelegramConnectionStatus } from '../../shared/telegram-bridge-stat
 import { TelegramApiError, type TelegramUpdate } from './telegram-bot-api'
 import { TelegramUpdatePoller } from './telegram-update-poller'
 
-function makePoller(getUpdates: (offset: number) => Promise<TelegramUpdate[]>) {
+function makePoller(
+  getUpdates: (offset: number) => Promise<TelegramUpdate[]>,
+  initialOffset?: number
+) {
   const statuses: TelegramConnectionStatus[] = []
   const sleeps: number[] = []
   const onUpdate = vi.fn(async () => {})
+  const onOffset = vi.fn()
   const poller = new TelegramUpdatePoller({
+    initialOffset,
+    onOffset,
     api: { getMe: async () => ({ username: 'bot' }), getUpdates: vi.fn(getUpdates) },
     onUpdate,
     onStatus: (status) => statuses.push(status),
@@ -15,7 +21,7 @@ function makePoller(getUpdates: (offset: number) => Promise<TelegramUpdate[]>) {
       sleeps.push(ms)
     }
   })
-  return { poller, statuses, sleeps, onUpdate }
+  return { poller, statuses, sleeps, onUpdate, onOffset }
 }
 
 describe('TelegramUpdatePoller', () => {
@@ -32,6 +38,21 @@ describe('TelegramUpdatePoller', () => {
     expect(onUpdate).toHaveBeenCalledTimes(2)
     expect(offsets).toEqual([0, 10, 10])
     expect(statuses.at(-1)).toEqual({ state: 'ok', botUsername: 'bot' })
+  })
+
+  it('resumes from the persisted offset and reports the new one after delivering', async () => {
+    const offsets: number[] = []
+    const { poller, onOffset } = makePoller(async (offset) => {
+      offsets.push(offset)
+      if (offsets.length === 2) {
+        poller.stop()
+      }
+      return offsets.length === 1 ? [{ updateId: 50 }] : []
+    }, 42)
+    await poller.run()
+    expect(offsets[0]).toBe(42)
+    expect(onOffset).toHaveBeenCalledTimes(1)
+    expect(onOffset).toHaveBeenCalledWith(51)
   })
 
   it('surfaces 409 conflicts and backs off instead of spinning', async () => {

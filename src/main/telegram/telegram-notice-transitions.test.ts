@@ -70,14 +70,22 @@ describe('TelegramNoticeTransitions', () => {
     expect(t.observe(entry('waiting', 1), 2_000)).toEqual({})
   })
 
-  it('applies the shared burst cooldown per pane and kind', () => {
+  it('announces back-to-back distinct waits inside the cooldown window', () => {
+    const t = new TelegramNoticeTransitions()
+    t.observe(entry('working', 1), 1_000)
+    expect(t.observe(entry('blocked', 2), 10_000)).toEqual({ notify: 'blocked' })
+    t.observe(entry('working', 3), 10_500)
+    expect(t.observe(entry('blocked', 4), 11_000)).toEqual({ notify: 'blocked' })
+  })
+
+  it('keeps burst protection for the same state instance', () => {
     const t = new TelegramNoticeTransitions()
     t.observe(entry('working', 1), 1_000)
     expect(t.observe(entry('waiting', 2), 10_000)).toEqual({ notify: 'waiting' })
-    t.observe(entry('working', 3), 10_500)
-    expect(t.observe(entry('waiting', 4), 11_000)).toEqual({})
-    t.observe(entry('working', 5), 20_000)
-    expect(t.observe(entry('waiting', 6), 20_001)).toEqual({ notify: 'waiting' })
+    t.forget(PANE)
+    expect(t.observe(entry('waiting', 2), 11_000)).toEqual({})
+    t.forget(PANE)
+    expect(t.observe(entry('waiting', 2), 16_000)).toEqual({ notify: 'waiting' })
   })
 
   it('refreshes the baseline from a replay without notifying', () => {
@@ -90,8 +98,17 @@ describe('TelegramNoticeTransitions', () => {
   it('forgets a pane so its next row is a first sighting', () => {
     const t = new TelegramNoticeTransitions()
     t.observe(entry('working', 1), 1_000)
-    t.forget(PANE)
+    expect(t.forget(PANE)).toBeUndefined()
     expect(t.observe(entry('done', 2), 10_000)).toEqual({})
+  })
+
+  it('hands back the open notice when a pane is forgotten', () => {
+    const t = new TelegramNoticeTransitions()
+    t.observe(entry('working', 1), 1_000)
+    t.observe(entry('waiting', 2), 10_000)
+    t.recordSent(PANE, 2, OPEN)
+    expect(t.forget(PANE)).toBe(OPEN)
+    expect(t.forget(PANE)).toBeUndefined()
   })
 })
 

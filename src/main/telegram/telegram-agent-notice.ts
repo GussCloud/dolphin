@@ -128,6 +128,11 @@ export function buildTelegramAgentNotice(
   return { kind, text: lines.join('\n'), buttons: [] }
 }
 
+export function markTelegramNoticeClosed(text: string): string {
+  const label = escapeTelegramHtml(translateMain('telegram.notice.closed', 'Closed'))
+  return `${text}\n\n<i>✖ ${label}</i>`
+}
+
 export function markTelegramNoticeResolved(text: string): string {
   const label = escapeTelegramHtml(translateMain('telegram.notice.resolved', 'Answered'))
   return `${text}\n\n<i>✔ ${label}</i>`

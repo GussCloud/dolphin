@@ -1,7 +1,12 @@
 // Outbound side: sends a decided notice (or its resolution edit) to every allowlisted chat.
 import type { AgentStatusEntry } from '../../shared/agent-status-types'
-import { buildTelegramAgentNotice, markTelegramNoticeResolved } from './telegram-agent-notice'
-import type { TelegramBotApi, TelegramInlineButton } from './telegram-bot-api'
+import {
+  buildTelegramAgentNotice,
+  markTelegramNoticeClosed,
+  markTelegramNoticeResolved
+} from './telegram-agent-notice'
+import { TelegramApiError } from './telegram-bot-api'
+import type { TelegramBotApi, TelegramInlineButton, TelegramSendOptions } from './telegram-bot-api'
 import type {
   TelegramNotice,
   TelegramNoticeButton,
@@ -27,6 +32,8 @@ export type TelegramNoticeDeliveryDeps = {
   decorators: () => readonly TelegramNoticeDecorator[]
   filters: () => readonly TelegramNoticeFilter[]
   resolveWorktreeName: (worktreeId: string) => string | null
+  /** Test seam for the 429 retry wait. */
+  sleep?: (ms: number) => Promise<void>
 }
 
 function decorate(
@@ -119,9 +126,34 @@ export async function deliverTelegramNotice(
   return { notice, messages }
 }
 
+const RATE_LIMIT_RETRY_MAX_SEC = 30
+
+function defaultSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms).unref?.())
+}
+
+/** One retry after Telegram's retry_after; a second 429 gives up rather than queueing forever. */
+async function sendWithRateLimitRetry(
+  deps: Pick<TelegramNoticeDeliveryDeps, 'api' | 'sleep'>,
+  chatId: number,
+  html: string,
+  options: TelegramSendOptions
+): Promise<number> {
+  try {
+    return await deps.api.sendMessage(chatId, html, options)
+  } catch (error) {
+    if (!(error instanceof TelegramApiError) || error.kind !== 'rate-limited') {
+      throw error
+    }
+    const waitSec = Math.min(error.retryAfterSec ?? 1, RATE_LIMIT_RETRY_MAX_SEC)
+    await (deps.sleep ?? defaultSleep)(waitSec * 1000)
+    return deps.api.sendMessage(chatId, html, options)
+  }
+}
+
 /** Sends already-HTML text to every allowed chat; a route binds the copies and enables buttons. */
 export async function sendTelegramToChats(
-  deps: Pick<TelegramNoticeDeliveryDeps, 'api' | 'routes' | 'allowedChatIds'>,
+  deps: Pick<TelegramNoticeDeliveryDeps, 'api' | 'routes' | 'allowedChatIds' | 'sleep'>,
   html: string,
   opts: {
     route?: TelegramPaneRoute
@@ -141,7 +173,10 @@ export async function sendTelegramToChats(
         ? deps.routes.latestMessageFor(route.routeId, chatId)
         : undefined
     try {
-      const messageId = await deps.api.sendMessage(chatId, html, { buttons, replyToMessageId })
+      const messageId = await sendWithRateLimitRetry(deps, chatId, html, {
+        buttons,
+        replyToMessageId
+      })
       if (route) {
         deps.routes.bindMessage(chatId, messageId, route.routeId)
       }
@@ -156,9 +191,13 @@ export async function sendTelegramToChats(
 /** Edits each sent copy to read as answered; removes its buttons by omitting reply_markup. */
 export async function resolveTelegramNotice(
   deps: Pick<TelegramNoticeDeliveryDeps, 'api'>,
-  open: TelegramOpenNotice
+  open: TelegramOpenNotice,
+  outcome: 'answered' | 'closed' = 'answered'
 ): Promise<void> {
-  const text = markTelegramNoticeResolved(open.text)
+  const text =
+    outcome === 'closed'
+      ? markTelegramNoticeClosed(open.text)
+      : markTelegramNoticeResolved(open.text)
   for (const message of open.messages) {
     try {
       await deps.api.editMessageText(message.chatId, message.messageId, text)

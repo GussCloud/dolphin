@@ -94,7 +94,7 @@ export class TelegramBridgeService {
       settings.onChange(() => this.reconcile()),
       statusSource.subscribeEnrichedStatus((enriched) => this.onStatus(enriched)),
       statusSource.subscribePaneStatusClear((clear) => this.onPaneClear(clear)),
-      statusSource.subscribeStatusDrop((paneKey) => this.transitions.forget(paneKey))
+      statusSource.subscribeStatusDrop((paneKey) => this.closePane(paneKey))
     )
     this.reconcile()
   }
@@ -189,6 +189,8 @@ export class TelegramBridgeService {
     const poller = new TelegramUpdatePoller({
       api,
       onUpdate: (update) => this.router.route(update),
+      initialOffset: this.deps.settings.getUpdateOffset(),
+      onOffset: (offset) => this.deps.settings.setUpdateOffset(offset),
       onStatus: (status) => {
         this.pollStatus = status
         this.emitStatus()
@@ -249,8 +251,18 @@ export class TelegramBridgeService {
   private onPaneClear(clear: AgentStatusClearIpcPayload): void {
     // Why: a transient (connection-scoped) clear is lost contact — `unverifiable`, not exited — so it keeps the baseline.
     if ('paneKey' in clear) {
-      this.enqueue(async () => this.transitions.forget(clear.paneKey))
+      this.closePane(clear.paneKey)
     }
+  }
+
+  /** The pane is gone (tab closed, pty exited, dismissed): close its open notice. */
+  private closePane(paneKey: string): void {
+    this.enqueue(async () => {
+      const open = this.transitions.forget(paneKey)
+      if (open && this.session) {
+        await resolveTelegramNotice({ api: this.session.api }, open, 'closed')
+      }
+    })
   }
 
   private deliveryDeps(api: TelegramBridgeApi): TelegramNoticeDeliveryDeps {

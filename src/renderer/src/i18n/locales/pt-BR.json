@@ -18831,7 +18831,8 @@
       "waiting": "Aguardando você",
       "stopped": "Interrompido",
       "done": "Concluído",
-      "resolved": "Respondido"
+      "resolved": "Respondido",
+      "closed": "Fechado"
     },
     "help": {
       "title": "Avisos de agentes do Dolphin",
@@ -18849,7 +18850,7 @@
     },
     "status": {
       "empty": "Nenhum agente reportado ainda.",
-      "unverified": "não verificado"
+      "unverifiable": "não verificável"
     }
   }
 }

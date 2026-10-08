@@ -15720,7 +15720,8 @@
       "waiting": "Esperándote",
       "stopped": "Detenido",
       "done": "Listo",
-      "resolved": "Respondido"
+      "resolved": "Respondido",
+      "closed": "Cerrado"
     },
     "help": {
       "title": "Avisos de agentes de Dolphin",
@@ -15738,7 +15739,7 @@
     },
     "status": {
       "empty": "Aún no hay agentes reportados.",
-      "unverified": "sin verificar"
+      "unverifiable": "no verificable"
     }
   }
 }

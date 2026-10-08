@@ -18831,7 +18831,8 @@
       "waiting": "あなたの入力待ち",
       "stopped": "停止",
       "done": "完了",
-      "resolved": "回答済み"
+      "resolved": "回答済み",
+      "closed": "終了"
     },
     "help": {
       "title": "Dolphin Agent 通知",
@@ -18849,7 +18850,7 @@
     },
     "status": {
       "empty": "まだ報告された Agent はありません。",
-      "unverified": "未確認"
+      "unverifiable": "検証不能"
     }
   }
 }

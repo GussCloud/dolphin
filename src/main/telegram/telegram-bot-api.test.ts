@@ -108,6 +108,7 @@ describe('parseTelegramUpdates', () => {
           update_id: 10,
           message: {
             message_id: 3,
+            date: 1_700_000_000,
             chat: { id: 99, type: 'private', first_name: 'Ana', last_name: 'Lima' },
             text: '/pair ABC',
             reply_to_message: { message_id: 2 }
@@ -132,6 +133,8 @@ describe('parseTelegramUpdates', () => {
           messageId: 3,
           chatId: 99,
           chatLabel: 'Ana Lima',
+          chatType: 'private',
+          sentAt: 1_700_000_000_000,
           text: '/pair ABC',
           replyToMessageId: 2
         }

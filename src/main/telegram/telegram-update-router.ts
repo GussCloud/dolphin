@@ -33,7 +33,10 @@ export function parseTelegramText(raw: string): TelegramParsedText | null {
   const args = (match[2] ?? '').trim()
   if (command === 'to') {
     const target = /^(\S+)\s+([\s\S]+)$/.exec(args)
-    return target ? { kind: 'to', worktreeQuery: target[1], text: target[2].trim() } : null
+    // Why: `/to name` without text falls through to the help reply.
+    return target
+      ? { kind: 'to', worktreeQuery: target[1], text: target[2].trim() }
+      : { kind: 'command', command, args }
   }
   return { kind: 'command', command, args }
 }
@@ -47,7 +50,11 @@ export type TelegramUpdateRouterDeps = {
   describeStatus: () => string
   reply: (chatId: number, html: string, replyToMessageId?: number) => Promise<void>
   answerCallback: (callbackQueryId: string, text?: string) => Promise<void>
+  now?: () => number
 }
+
+/** Messages older than this are redeliveries (e.g. after a restart) and are not acted on. */
+const STALE_MESSAGE_MS = 2 * 60_000
 
 export function telegramHelpText(): string {
   return [
@@ -77,11 +84,21 @@ export class TelegramUpdateRouter {
   }
 
   private async routeMessage(message: TelegramIncomingMessage): Promise<void> {
+    const now = this.deps.now?.() ?? Date.now()
+    if (message.sentAt !== undefined && now - message.sentAt > STALE_MESSAGE_MS) {
+      return
+    }
     const parsed = parseTelegramText(message.text ?? '')
     const allowed = this.deps.isChatAllowed(message.chatId)
     if (!allowed) {
       // Why: unknown chats get no reply at all; only a valid /pair proves the user holds the code.
-      if (parsed?.kind === 'command' && parsed.command === 'pair' && parsed.args) {
+      // Private chats only: in a group, anyone who sees the code could steer agents.
+      if (
+        message.chatType === 'private' &&
+        parsed?.kind === 'command' &&
+        parsed.command === 'pair' &&
+        parsed.args
+      ) {
         if (
           this.deps.consumePairingCode(parsed.args, {
             chatId: message.chatId,

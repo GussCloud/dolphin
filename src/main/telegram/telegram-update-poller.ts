@@ -12,6 +12,9 @@ export type TelegramUpdatePollerOptions = {
   api: Pick<TelegramBotApi, 'getMe' | 'getUpdates'>
   onUpdate: (update: TelegramUpdate) => Promise<void>
   onStatus: (status: TelegramConnectionStatus) => void
+  /** Resume point from the last run; Telegram redelivers everything below it otherwise. */
+  initialOffset?: number
+  onOffset?: (offset: number) => void
   /** Test seam: resolves after `ms` or when the signal aborts. */
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>
 }
@@ -41,6 +44,7 @@ export class TelegramUpdatePoller {
 
   constructor(private readonly options: TelegramUpdatePollerOptions) {
     this.sleep = options.sleep ?? abortableSleep
+    this.offset = options.initialOffset ?? 0
   }
 
   stop(): void {
@@ -74,6 +78,9 @@ export class TelegramUpdatePoller {
           } catch (error) {
             console.error('[telegram] update handler failed', error)
           }
+        }
+        if (updates.length > 0) {
+          this.options.onOffset?.(this.offset)
         }
       } catch (error) {
         if (signal.aborted) {

@@ -105,7 +105,11 @@ export class TelegramNoticeTransitions {
       kind &&
       !replay &&
       !doneWithoutTurn &&
-      reserveNotificationCooldown(this.recentNotices, `${entry.paneKey}\u0000${kind}`, now)
+      reserveNotificationCooldown(
+        this.recentNotices,
+        `${entry.paneKey}\u0000${kind}\u0000${entry.stateStartedAt}`,
+        now
+      )
     ) {
       decision.notify = kind
     }
@@ -120,8 +124,11 @@ export class TelegramNoticeTransitions {
     }
   }
 
-  forget(paneKey: string): void {
+  /** Drops the pane and hands back its unresolved notice, if any, so it can be closed. */
+  forget(paneKey: string): TelegramOpenNotice | undefined {
+    const open = this.panes.get(paneKey)?.open
     this.panes.delete(paneKey)
+    return open
   }
 
   clear(): void {
