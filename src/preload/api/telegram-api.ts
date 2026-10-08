@@ -9,5 +9,7 @@ export type TelegramBridgeApi = {
   clearToken: () => Promise<TelegramBridgeState>
   issuePairingCode: () => Promise<TelegramBridgeState>
   removeChat: (chatId: number) => Promise<TelegramBridgeState>
+  /** Whether main launched this PTY with the Claude channel flags (its startup dialog may show). */
+  isClaudeChannelPty: (ptyId: string) => Promise<boolean>
   onChanged: (callback: (state: TelegramBridgeState) => void) => () => void
 }

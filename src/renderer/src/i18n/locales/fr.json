@@ -18883,6 +18883,7 @@
       "hintReply": "Répondez à ce message pour saisir une réponse."
     },
     "channel": {
+      "approvalFallback": "Le canal Claude n’a pas relayé cette demande d’autorisation. Répondez ici :",
       "sent": "Envoyé à Claude.",
       "unconfirmed": "Claude n'a pas confirmé la réception du message ; vérifiez le terminal.",
       "allowed": "Autorisé.",

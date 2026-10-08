@@ -10,7 +10,8 @@ import type {
 } from './runtime-worktree-agent-startup'
 import {
   CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS,
-  createClaudeDevChannelsDialogTracker
+  createClaudeDevChannelsDialogTracker,
+  shouldExtendTimeoutForClaudeDevChannelsDialog
 } from '../../shared/claude-dev-channels-dialog'
 
 const BRACKETED_PASTE_BEGIN = '\x1b[200~'
@@ -24,6 +25,8 @@ export type WorktreeStartupReadinessHost = {
   subscribeToData: (ptyId: string, listener: (data: string) => void) => () => void
   readRecentOutput: (ptyId: string) => string | undefined
   write: (ptyId: string, data: string) => void
+  /** True only for a PTY Dolphin launched with the Claude channel flags. */
+  isClaudeChannelPty?: (ptyId: string) => boolean
 }
 
 export function pasteWorktreeStartupDraftWhenReady(
@@ -65,9 +68,15 @@ async function waitOutClaudeDevChannelsDialog(
   host: WorktreeStartupReadinessHost,
   ptyId: string
 ): Promise<boolean> {
+  if (!host.isClaudeChannelPty?.(ptyId)) {
+    return true
+  }
   const deadline = Date.now() + CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS
   while (createClaudeDevChannelsDialogTracker().observe(host.readRecentOutput(ptyId) ?? '')) {
     if (Date.now() > deadline) {
+      console.warn(
+        '[worktree-create] startup follow-up not sent: Claude channel confirmation still open'
+      )
       return false
     }
     await new Promise((resolve) => setTimeout(resolve, 500))
@@ -118,7 +127,10 @@ export function waitForWorktreeStartupDraft(
     TUI_AGENT_CONFIG[agent].draftPasteReadySignal ?? 'render-quiet-after-bracketed-paste'
   return new Promise((resolve) => {
     let settled = false
-    const scanner = createDraftPasteReadyScanner(signal)
+    const scanner = createDraftPasteReadyScanner(signal, {
+      holdOnClaudeDevChannelsDialog: () => host.isClaudeChannelPty?.(ptyId) === true
+    })
+    const startedAt = Date.now()
     let quietTimer: NodeJS.Timeout | null = null
     let hardTimer: NodeJS.Timeout | null = null
     let unsubscribe: (() => void) | null = null
@@ -149,7 +161,12 @@ export function waitForWorktreeStartupDraft(
         if (quietTimer) {
           clearTimeout(quietTimer)
         }
-        quietTimer = setTimeout(() => finish(ptyId), BRACKETED_PASTE_QUIET_MS)
+        quietTimer = setTimeout(() => {
+          quietTimer = null
+          if (!scanner.isHolding()) {
+            finish(ptyId)
+          }
+        }, BRACKETED_PASTE_QUIET_MS)
       }
     }
     unsubscribe = host.subscribeToData(ptyId, observe)
@@ -157,6 +174,16 @@ export function waitForWorktreeStartupDraft(
     if (replay) {
       observe(replay)
     }
-    hardTimer = setTimeout(() => finish(null), resolveDraftPasteReadyTimeoutMs(agent))
+    const timeoutMs = resolveDraftPasteReadyTimeoutMs(agent)
+    const onHardTimeout = (): void => {
+      if (
+        shouldExtendTimeoutForClaudeDevChannelsDialog(scanner.isHolding(), startedAt, Date.now())
+      ) {
+        hardTimer = setTimeout(onHardTimeout, timeoutMs)
+        return
+      }
+      finish(null)
+    }
+    hardTimer = setTimeout(onHardTimeout, timeoutMs)
   })
 }

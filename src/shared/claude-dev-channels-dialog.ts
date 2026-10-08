@@ -20,7 +20,10 @@ function lastMatchIndex(text: string, pattern: RegExp): number {
 }
 
 /** Tracks whether Claude's development-channels confirmation currently owns the screen. */
-export function createClaudeDevChannelsDialogTracker(): { observe: (data: string) => boolean } {
+export function createClaudeDevChannelsDialogTracker(): {
+  observe: (data: string) => boolean
+  pending: () => boolean
+} {
   let carry = ''
   let pending = false
   return {
@@ -35,9 +38,19 @@ export function createClaudeDevChannelsDialogTracker(): { observe: (data: string
         pending = false
       }
       return pending
-    }
+    },
+    pending: () => pending
   }
 }
 
 /** How long a pending paste waits on the dialog before giving up, instead of typing into it. */
 export const CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS = 5 * 60_000
+
+/** Whether a hard timeout should wait longer instead of pasting blind into the dialog. */
+export function shouldExtendTimeoutForClaudeDevChannelsDialog(
+  isHolding: boolean,
+  startedAt: number,
+  now: number
+): boolean {
+  return isHolding && now - startedAt < CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS
+}

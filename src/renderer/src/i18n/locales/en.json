@@ -18883,6 +18883,7 @@
       "hintReply": "Reply to this message to type an answer."
     },
     "channel": {
+      "approvalFallback": "The Claude channel did not relay this permission request. Answer it here:",
       "sent": "Sent to Claude.",
       "unconfirmed": "Claude did not confirm it received the message; check the terminal.",
       "allowed": "Allowed.",

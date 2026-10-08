@@ -18883,6 +18883,7 @@
       "hintReply": "このメッセージに返信すると回答を入力できます。"
     },
     "channel": {
+      "approvalFallback": "Claude チャンネルがこの許可リクエストを中継しませんでした。ここで回答してください:",
       "sent": "Claude に送信しました。",
       "unconfirmed": "Claude がメッセージの受信を確認していません。ターミナルを確認してください。",
       "allowed": "許可しました。",

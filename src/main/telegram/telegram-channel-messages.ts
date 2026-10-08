@@ -52,6 +52,11 @@ export const telegramChannelMessages = {
     ),
   yes: () => translateMain('telegram.channel.yes', 'Yes'),
   no: () => translateMain('telegram.channel.no', 'No'),
+  approvalFallback: () =>
+    translateMain(
+      'telegram.channel.approvalFallback',
+      'The Claude channel did not relay this permission request. Answer it here:'
+    ),
   approveInChannel: () =>
     translateMain(
       'telegram.channel.approveInChannel',

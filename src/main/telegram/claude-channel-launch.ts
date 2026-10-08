@@ -4,12 +4,12 @@
  * `claude` token. Anything this cannot do safely leaves the command untouched, which keeps the pane
  * on the terminal.send fallback.
  */
-import { createHash, timingSafeEqual } from 'node:crypto'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { hasReachedAppVersion } from '../../shared/app-version'
 import { SETUP_AGENT_SEQUENCE_STARTUP_COMMAND_ENV } from '../../shared/setup-agent-sequencing'
 import type { TelegramChannelAvailability } from '../../shared/telegram-bridge-state'
+import { grantClaudeChannelPane } from './claude-channel-panes'
 import { DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME } from './telegram-channel-protocol'
 
 /** Claude Code relays permission prompts only to session-registered channels from this version on. */
@@ -98,41 +98,6 @@ export type ClaudeChannelLaunchPolicy = {
 
 let activePolicy: ClaudeChannelLaunchPolicy | null = null
 
-const MAX_CHANNEL_GRANTS = 512
-// Pane -> sha256 of the launch token Dolphin spawned it with, recorded where the flags are injected.
-const channelGrants = new Map<string, Buffer>()
-
-function hashLaunchToken(token: string): Buffer {
-  return createHash('sha256').update(token.trim()).digest()
-}
-
-function grantChannel(env: Record<string, string> | undefined): void {
-  const paneKey = env?.DOLPHIN_PANE_KEY
-  const launchToken = env?.DOLPHIN_AGENT_LAUNCH_TOKEN?.trim()
-  if (!paneKey || !launchToken) {
-    return
-  }
-  channelGrants.delete(paneKey)
-  channelGrants.set(paneKey, hashLaunchToken(launchToken))
-  if (channelGrants.size > MAX_CHANNEL_GRANTS) {
-    const oldest = channelGrants.keys().next().value
-    if (oldest !== undefined) {
-      channelGrants.delete(oldest)
-    }
-  }
-}
-
-/**
- * True when Dolphin launched this pane's Claude with the channel and this launch token. Why not
- * only hook commitments: Claude's first status hook comes with the first prompt, and a channel
- * must work in a pane the user opened and walked away from.
- */
-export function isClaudeChannelLaunchGranted(paneKey: string, launchToken: string): boolean {
-  const expected = channelGrants.get(paneKey)
-  const actual = launchToken.trim() ? hashLaunchToken(launchToken) : null
-  return Boolean(expected && actual && timingSafeEqual(expected, actual))
-}
-
 export function setClaudeChannelLaunchPolicy(policy: ClaudeChannelLaunchPolicy | null): void {
   activePolicy = policy
 }
@@ -158,7 +123,7 @@ export function applyClaudeChannelLaunch(
     // Why: the setup runner evals this env value, so the claude line lives here, not in command.
     const spliced = spliceClaudeChannelArgs(sequenced, launchArgs)
     if (spliced) {
-      grantChannel(target.env)
+      grantClaudeChannelPane(target.env)
     }
     return spliced
       ? {
@@ -169,7 +134,7 @@ export function applyClaudeChannelLaunch(
   }
   const spliced = target.command ? spliceClaudeChannelArgs(target.command, launchArgs) : null
   if (spliced) {
-    grantChannel(target.env)
+    grantClaudeChannelPane(target.env)
   }
   return spliced ? { command: spliced, env: target.env } : unchanged
 }

@@ -22,6 +22,7 @@ import { admitPtyReattachOwnership, registerPersistedPtySpawn } from '../pane/sp
 import { reflowHeadlessTerminalToCommittedGrid } from '../delivery/attached-pty-size'
 import { seedHeadlessTerminalFromSpawnResult } from '../pane/terminal-spawn-restore'
 import { markNativeWindowsConptyPty } from '../../../runtime/terminal-model-query-authority'
+import { markClaudeChannelPty } from '../../../telegram/claude-channel-panes'
 
 export async function commitPtyIpcSpawn(ctx: PtyIpcSpawnState): Promise<PtySpawnResult> {
   const args = ctx.args
@@ -121,6 +122,7 @@ export async function commitPtyIpcSpawn(ctx: PtyIpcSpawnState): Promise<PtySpawn
   }
   if (ctx.isClaudeLaunch && !ctx.stablePaneOwner) {
     markClaudePtySpawned(ctx.result.id)
+    markClaudeChannelPty(ctx.result.id, ctx.spawnEnv)
   }
   // Why: record the paneKey mapping so clearProviderPtyState can clear the agent-hooks server's per-paneKey caches on exit.
   // Why: args.env is untrusted IPC JSON (type unenforced); bound the paneKey so malformed/oversized values can't pollute ptyPaneKey or clearPaneState.

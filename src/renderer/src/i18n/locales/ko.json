@@ -18883,6 +18883,7 @@
       "hintReply": "이 메시지에 답장하여 답변을 입력하세요."
     },
     "channel": {
+      "approvalFallback": "Claude 채널이 이 권한 요청을 전달하지 않았습니다. 여기에서 응답하세요:",
       "sent": "Claude에 보냈습니다.",
       "unconfirmed": "Claude가 메시지 수신을 확인하지 않았습니다. 터미널을 확인하세요.",
       "allowed": "허용했습니다.",

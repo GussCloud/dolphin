@@ -7,11 +7,15 @@ import {
   buildClaudeChannelLaunchArgs,
   buildClaudeChannelMcpConfig,
   createClaudeChannelLaunchPolicy,
-  isClaudeChannelLaunchGranted,
   shellLiteralConfigPath,
   spliceClaudeChannelArgs,
   writeClaudeChannelMcpConfig
 } from './claude-channel-launch'
+import {
+  isClaudeChannelLaunchGranted,
+  isClaudeChannelPty,
+  markClaudeChannelPty
+} from './claude-channel-panes'
 
 const ARGS =
   '--mcp-config=C:/Users/me/AppData/Roaming/dolphin/telegram-channel/claude-channel-mcp.json --dangerously-load-development-channels=server:dolphin-telegram'
@@ -105,6 +109,14 @@ describe('applyClaudeChannelLaunch', () => {
     expect(isClaudeChannelLaunchGranted('tab-g:leaf-g', 'token-x')).toBe(false)
     expect(isClaudeChannelLaunchGranted('tab-other:leaf', 'token-g')).toBe(false)
     expect(isClaudeChannelLaunchGranted('tab-g:leaf-g', '')).toBe(false)
+    // Only the spawn that carries that very launch is marked as able to show the dialog.
+    markClaudeChannelPty('pty-g', env)
+    markClaudeChannelPty('pty-other', { ...env, DOLPHIN_AGENT_LAUNCH_TOKEN: 'token-x' })
+    markClaudeChannelPty('pty-no-env', undefined)
+    expect(isClaudeChannelPty('pty-g')).toBe(true)
+    expect(isClaudeChannelPty('pty-other')).toBe(false)
+    expect(isClaudeChannelPty('pty-no-env')).toBe(false)
+    expect(isClaudeChannelPty(null)).toBe(false)
   })
 
   it('rewrites the sequenced setup command instead of the runner command', () => {

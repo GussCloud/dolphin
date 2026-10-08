@@ -5,7 +5,8 @@ import { replayPreHandlerPtyData } from '@/components/terminal-pane/pty-pre-hand
 import { isRemoteRuntimePtyId } from '@/runtime/runtime-terminal-inspection'
 import { subscribeToRuntimeTerminalData } from '@/runtime/runtime-terminal-stream'
 import { createDraftPasteReadyScanner } from '../../../shared/draft-paste-ready-scanner'
-import { CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS } from '../../../shared/claude-dev-channels-dialog'
+import { shouldExtendTimeoutForClaudeDevChannelsDialog } from '../../../shared/claude-dev-channels-dialog'
+import { isClaudeChannelPtyKnown } from './claude-channel-pty'
 
 const BRACKETED_PASTE_QUIET_MS = 1500
 
@@ -27,10 +28,11 @@ export function waitForAgentDraftInputReady(
 ): Promise<boolean> {
   return new Promise<boolean>((resolve) => {
     let settled = false
-    const scanner = createDraftPasteReadyScanner(readySignal)
+    const scanner = createDraftPasteReadyScanner(readySignal, {
+      holdOnClaudeDevChannelsDialog: () => isClaudeChannelPtyKnown(ptyId)
+    })
     let quietTimer: number | null = null
     let hardTimer: number | null = null
-    let held = false
     const startedAt = Date.now()
     let unsubscribe: (() => void) | null = null
 
@@ -53,12 +55,16 @@ export function waitForAgentDraftInputReady(
       if (quietTimer !== null) {
         window.clearTimeout(quietTimer)
       }
-      quietTimer = window.setTimeout(() => finish(true), BRACKETED_PASTE_QUIET_MS)
+      quietTimer = window.setTimeout(() => {
+        quietTimer = null
+        if (!scanner.isHolding()) {
+          finish(true)
+        }
+      }, BRACKETED_PASTE_QUIET_MS)
     }
 
     const observeData = (data: string): void => {
       const { ready, armQuietTimer: shouldArm, hold } = scanner.observe(data)
-      held = hold === true
       if (ready) {
         finish(true)
         return
@@ -96,7 +102,9 @@ export function waitForAgentDraftInputReady(
 
     // Why: a timeout ends in a blind paste; while Claude's channel dialog is up that paste is lost.
     const onHardTimeout = (): void => {
-      if (held && Date.now() - startedAt < CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS) {
+      if (
+        shouldExtendTimeoutForClaudeDevChannelsDialog(scanner.isHolding(), startedAt, Date.now())
+      ) {
         hardTimer = window.setTimeout(onHardTimeout, timeoutMs)
         return
       }

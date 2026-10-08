@@ -4,6 +4,7 @@ import {
   type TelegramBridgeState,
   type TelegramChannelAvailability
 } from '../../shared/telegram-bridge-state'
+import { isClaudeChannelPty } from '../telegram/claude-channel-panes'
 import { getTelegramBridge, type TelegramBridgeService } from '../telegram/telegram-bridge-service'
 
 const UNAVAILABLE_STATE: TelegramBridgeState = {
@@ -82,6 +83,10 @@ function mutate(apply: (bridge: TelegramBridgeService) => void): TelegramBridgeS
 }
 
 export function registerTelegramBridgeHandlers(): void {
+  ipcMain.handle(
+    'telegram:isClaudeChannelPty',
+    (_event, ptyId: unknown) => typeof ptyId === 'string' && isClaudeChannelPty(ptyId)
+  )
   ipcMain.handle('telegram:getState', () => {
     subscribeTelegramBridgeBroadcasts()
     return readTelegramBridgeState(getTelegramBridge())

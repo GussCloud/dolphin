@@ -18883,6 +18883,7 @@
       "hintReply": "回复此消息即可输入答案。"
     },
     "channel": {
+      "approvalFallback": "Claude 频道未转发此权限请求。请在此答复：",
       "sent": "已发送给 Claude。",
       "unconfirmed": "Claude 未确认收到消息；请查看终端。",
       "allowed": "已允许。",

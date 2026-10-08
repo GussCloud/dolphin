@@ -115,7 +115,7 @@ export class RuntimeTerminalIdlePolls {
     let startedForegroundPoll = false
     try {
       const waitText = buildTerminalWaitText(leaf.tailBuffer, leaf.tailPartialLine, leaf.preview)
-      const blockedReason = detectTerminalWaitBlockedReason(waitText)
+      const blockedReason = detectTerminalWaitBlockedReason(waitText, leaf.ptyId)
       if (blockedReason) {
         this.stop(entry)
         this.deps.resolve(
@@ -182,7 +182,7 @@ export class RuntimeTerminalIdlePolls {
     let startedForegroundPoll = false
     try {
       const waitText = buildTerminalWaitText(pty.tailBuffer, pty.tailPartialLine, pty.preview)
-      const blockedReason = detectTerminalWaitBlockedReason(waitText)
+      const blockedReason = detectTerminalWaitBlockedReason(waitText, pty.ptyId)
       if (blockedReason) {
         this.stop(entry)
         this.deps.resolve(

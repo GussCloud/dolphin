@@ -141,8 +141,20 @@ export type DraftPasteReadyScanResult = {
  * A 512-byte ring (`recent` / `postAnchorRecent`) covers escape sequences
  * split across chunk boundaries without retaining terminal scrollback.
  */
-export function createDraftPasteReadyScanner(readySignal: DraftPasteReadySignal): {
+export function createDraftPasteReadyScanner(
+  readySignal: DraftPasteReadySignal,
+  options: {
+    /**
+     * True only for a PTY Dolphin launched with the Claude channel flags; the dialog text in any
+     * other pane (an agent reading these sources, a `cat` of a fixture) must never hold a paste.
+     * A function because callers may learn it after the first chunks arrive.
+     */
+    holdOnClaudeDevChannelsDialog?: () => boolean
+  } = {}
+): {
   observe: (data: string) => DraftPasteReadyScanResult
+  /** For timer callbacks: a quiet window or hard timeout must not fire into the dialog. */
+  isHolding: () => boolean
 } {
   let recent = ''
   let postAnchorRecent = ''
@@ -153,6 +165,9 @@ export function createDraftPasteReadyScanner(readySignal: DraftPasteReadySignal)
   let codexAltScreen = false
   let sawCodexPromptInAltScreen = false
   const devChannelsDialog = createClaudeDevChannelsDialogTracker()
+  let readyBehindDialog = false
+  const isHolding = (): boolean =>
+    devChannelsDialog.pending() && options.holdOnClaudeDevChannelsDialog?.() === true
 
   const {
     markerAnchor,
@@ -278,9 +293,19 @@ export function createDraftPasteReadyScanner(readySignal: DraftPasteReadySignal)
   return {
     observe(data: string): DraftPasteReadyScanResult {
       // Why scan anyway: the anchors in this chunk must still be recorded for after the dialog.
-      const dialogPending = devChannelsDialog.observe(data)
+      devChannelsDialog.observe(data)
       const result = scan(data)
-      return dialogPending ? { ready: false, armQuietTimer: false, hold: true } : result
-    }
+      if (isHolding()) {
+        // Why remember: a one-shot marker seen behind the dialog must still deliver after it.
+        readyBehindDialog ||= result.ready
+        return { ready: false, armQuietTimer: false, hold: true }
+      }
+      if (readyBehindDialog) {
+        readyBehindDialog = false
+        return { ready: true, armQuietTimer: false }
+      }
+      return result
+    },
+    isHolding
   }
 }

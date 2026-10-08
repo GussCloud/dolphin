@@ -15772,6 +15772,7 @@
       "hintReply": "Responde a este mensaje para escribir una respuesta."
     },
     "channel": {
+      "approvalFallback": "El canal de Claude no reenvió esta solicitud de permiso. Respóndela aquí:",
       "sent": "Enviado a Claude.",
       "unconfirmed": "Claude no confirmó que recibió el mensaje; revisa la terminal.",
       "allowed": "Permitido.",

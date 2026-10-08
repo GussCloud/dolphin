@@ -7,7 +7,8 @@ import { getSettingsForWorktreeRuntimeOwner } from '@/lib/worktree-runtime-owner
 import { isExpectedAgentProcess } from '../../../../../shared/agent-process-recognition'
 import { resolveDraftPasteReadyTimeoutMs } from '../../../../../shared/draft-paste-ready-timeout'
 import { createDraftPasteReadyScanner } from '../../../../../shared/draft-paste-ready-scanner'
-import { CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS } from '../../../../../shared/claude-dev-channels-dialog'
+import { shouldExtendTimeoutForClaudeDevChannelsDialog } from '../../../../../shared/claude-dev-channels-dialog'
+import { isClaudeChannelPtyKnown } from '@/lib/claude-channel-pty'
 import { sendAgentDraftPasteContent } from '@/lib/agent-draft-paste-content'
 import { writeTerminalPastePtyInput } from '../terminal-pty-paste-writer'
 
@@ -69,7 +70,10 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
   const startupDraftReadyScanner = session.ownsStartupDraftPaste
     ? createDraftPasteReadyScanner(
         session.startupDraftAgentConfig?.draftPasteReadySignal ??
-          'render-quiet-after-bracketed-paste'
+          'render-quiet-after-bracketed-paste',
+        {
+          holdOnClaudeDevChannelsDialog: () => isClaudeChannelPtyKnown(session.transport.getPtyId())
+        }
       )
     : null
   let startupDraftReadinessArmed = false
@@ -78,7 +82,6 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
   let startupDraftInputRecorded = false
   let startupDraftQuietTimer: ReturnType<typeof setTimeout> | null = null
   let startupDraftHardTimer: ReturnType<typeof setTimeout> | null = null
-  let startupDraftHeld = false
   const startupDraftStartedAt = Date.now()
   const clearStartupDraftPasteTimers = (): void => {
     if (startupDraftQuietTimer !== null) {
@@ -173,8 +176,11 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
       startupDraftHardTimer = null
       // Why: the blind delivery below would land in Claude's channel dialog and be lost.
       if (
-        startupDraftHeld &&
-        Date.now() - startupDraftStartedAt < CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS
+        shouldExtendTimeoutForClaudeDevChannelsDialog(
+          startupDraftReadyScanner?.isHolding() === true,
+          startupDraftStartedAt,
+          Date.now()
+        )
       ) {
         armStartupDraftHardTimer()
         return
@@ -191,6 +197,9 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
     }
     startupDraftQuietTimer = setTimeout(() => {
       startupDraftQuietTimer = null
+      if (startupDraftReadyScanner?.isHolding()) {
+        return
+      }
       sendStartupDraftPaste()
     }, STARTUP_DRAFT_PASTE_QUIET_MS)
   }
@@ -210,7 +219,6 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
       sendStartupDraftPaste()
       return
     }
-    startupDraftHeld = scanned.hold === true
     if (scanned.hold && startupDraftQuietTimer !== null) {
       clearTimeout(startupDraftQuietTimer)
       startupDraftQuietTimer = null

@@ -57,6 +57,7 @@ export class TelegramChannelGateway {
     string,
     { ref: TelegramChannelSessionRef; createdAt: number }
   >()
+  private readonly lastRelayAtByPaneKey = new Map<string, number>()
   private readonly now: () => number
   private readonly pollHoldMs: number
   private readonly deliveryTimeoutMs: number
@@ -102,6 +103,10 @@ export class TelegramChannelGateway {
 
   isConnected(paneKey: string): boolean {
     return this.sessions.isConnected(paneKey)
+  }
+
+  lastPermissionRelayAt(paneKey: string): number | null {
+    return this.lastRelayAtByPaneKey.get(paneKey) ?? null
   }
 
   /** Null when the text is not for a connected channel, so the terminal fallback runs. */
@@ -167,14 +172,13 @@ export class TelegramChannelGateway {
       return { ok: false, error: telegramChannelMessages.privateChatOnly() }
     }
     const pending = this.pendingPermissions.get(verdict.requestId)
+    // Why keep it on a pane mismatch: a tap on another pane's notice must not void this request.
+    if (!pending || (paneKey !== null && pending.ref.paneKey !== paneKey)) {
+      return { ok: false, error: telegramChannelMessages.permissionExpired() }
+    }
     this.pendingPermissions.delete(verdict.requestId)
-    const session = pending ? this.sessions.current(pending.ref) : null
-    if (
-      !pending ||
-      !session ||
-      (paneKey !== null && pending.ref.paneKey !== paneKey) ||
-      this.now() - pending.createdAt > PERMISSION_TTL_MS
-    ) {
+    const session = this.sessions.current(pending.ref)
+    if (!session || this.now() - pending.createdAt > PERMISSION_TTL_MS) {
       return { ok: false, error: telegramChannelMessages.permissionExpired() }
     }
     this.sessions.enqueue(session, { kind: 'permission-verdict', ...verdict })
@@ -248,6 +252,7 @@ export class TelegramChannelGateway {
       }
     }
     const ref = { paneKey: request.paneKey, sessionId: request.sessionId }
+    this.lastRelayAtByPaneKey.set(request.paneKey, this.now())
     this.pendingPermissions.set(request.requestId, { ref, createdAt: this.now() })
     const notice = formatChannelPermissionNotice(request)
     try {

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentHookServer, _internals } from '../agent-hooks/server'
 import { buildBody, GOOD_PANE, PANE, postHookEvent } from '../agent-hooks/server.test-fixtures'
-import { applyClaudeChannelLaunch, isClaudeChannelLaunchGranted } from './claude-channel-launch'
+import { applyClaudeChannelLaunch } from './claude-channel-launch'
+import { isClaudeChannelLaunchGranted } from './claude-channel-panes'
 import { TelegramChannelGateway } from './telegram-channel-gateway'
 import {
   createTelegramChannelHttpHost,

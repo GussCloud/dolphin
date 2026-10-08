@@ -15,17 +15,15 @@ import type { Store } from '../persistence'
 import {
   buildClaudeChannelMcpConfig,
   createClaudeChannelLaunchPolicy,
-  isClaudeChannelLaunchGranted,
   setClaudeChannelLaunchPolicy,
   TELEGRAM_CHANNEL_ENTRY_FILE_NAME,
   writeClaudeChannelMcpConfig
 } from '../telegram/claude-channel-launch'
+import { isClaudeChannelLaunchGranted } from '../telegram/claude-channel-panes'
 import type { TelegramBridgeService } from '../telegram/telegram-bridge-service'
 import { TelegramChannelGateway } from '../telegram/telegram-channel-gateway'
-import {
-  chainTelegramChannelInbound,
-  createChannelApprovalButtonStripper
-} from '../telegram/telegram-channel-inbound'
+import { createChannelApprovalButtonStripper } from '../telegram/telegram-channel-approval-fallback'
+import { chainTelegramChannelInbound } from '../telegram/telegram-channel-inbound'
 import type { TelegramInboundHandler } from '../telegram/telegram-inbound'
 
 async function probeLocalClaudeVersion(store: Store): Promise<string | null> {
@@ -117,7 +115,11 @@ export function startMainProcessTelegramChannel(
     wrapInboundHandler: (fallback) => chainTelegramChannelInbound(gateway, fallback),
     registerAfterAnswers: () => {
       disposeDecorator = bridge.registerNoticeDecorator(
-        createChannelApprovalButtonStripper(gateway)
+        createChannelApprovalButtonStripper({
+          gateway,
+          bridge,
+          readPaneStatus: (paneKey) => agentHookServer.getStatusSnapshotForPane(paneKey)[0] ?? null
+        })
       )
     }
   }

@@ -256,6 +256,22 @@ describe('TelegramChannelGateway replies and permission relay', () => {
     gateway.dispose()
   })
 
+  it('keeps a request pending when the notice of another pane is tapped', async () => {
+    const gateway = new TelegramChannelGateway(createBridge())
+    const held = poll(gateway, PANE_A, 's1')
+    await requestPermission(gateway, 'abcde')
+    expect(gateway.lastPermissionRelayAt(PANE_A)).not.toBeNull()
+    const callback = { chatId: 7, messageId: 3, callbackQueryId: 'q', action: 'chp-allow-abcde' }
+    await expect(
+      gateway.tryHandleCallback({ ...callback, route: { routeId: 'r2', paneKey: PANE_B } })
+    ).resolves.toMatchObject({ ok: false })
+    await expect(
+      gateway.tryHandleCallback({ ...callback, route: { routeId: 'r1', paneKey: PANE_A } })
+    ).resolves.toEqual({ ok: true, ack: 'Allowed.' })
+    expect(events(await held)).toMatchObject([{ kind: 'permission-verdict', requestId: 'abcde' }])
+    gateway.dispose()
+  })
+
   it('accepts typed verdicts in several languages', async () => {
     const gateway = new TelegramChannelGateway(createBridge())
     void poll(gateway, PANE_A, 's1')
