@@ -18854,6 +18854,30 @@
     },
     "callback": {
       "expired": "Esta mensagem expirou. Use o aviso mais recente."
+    },
+    "answer": {
+      "stale": "Esta pergunta já foi respondida.",
+      "alreadyAnswered": "Já respondida. Aguardando o agente.",
+      "sent": "Resposta enviada.",
+      "unconfirmed": "A resposta pode ter sido enviada. Confira o terminal.",
+      "partlySent": "A resposta foi enviada só em parte. Confira o terminal.",
+      "textNotSubmitted": "O texto foi digitado, mas não enviado. Confira o terminal.",
+      "notSent": "Não foi possível enviar a resposta.",
+      "busy": "Outra resposta ainda está sendo enviada.",
+      "noTerminal": "O terminal não está disponível.",
+      "noAgent": "Nenhum agente ativo nesse terminal. Nada foi digitado.",
+      "useButtons": "Use os botões para responder a este pedido de permissão.",
+      "noFreeText": "Esta pergunta só aceita as opções oferecidas.",
+      "incomplete": "Responda todas as perguntas antes de enviar.",
+      "answerInDolphin": "Esta solicitação é grande demais para o Telegram. Responda no Dolphin.",
+      "structuredUnavailable": "A sessão de chat não está disponível.",
+      "noWorktree": "Nenhum agente encontrado nesse workspace.",
+      "ambiguousWorktree": "Mais de um agente nesse workspace. Responda à notificação do agente.",
+      "allow": "Permitir",
+      "deny": "Negar",
+      "submit": "Enviar",
+      "hintMultiSelect": "Escolha as opções e toque em Enviar.",
+      "hintReply": "Responda a esta mensagem para digitar uma resposta."
     }
   }
 }

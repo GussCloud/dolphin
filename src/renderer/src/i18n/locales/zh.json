@@ -18854,6 +18854,30 @@
     },
     "callback": {
       "expired": "此消息已过期。请使用最新的通知。"
+    },
+    "answer": {
+      "stale": "此问题已回答。",
+      "alreadyAnswered": "已回答。正在等待代理。",
+      "sent": "答案已发送。",
+      "unconfirmed": "答案可能已发送。请检查终端。",
+      "partlySent": "答案只发送了一部分。请检查终端。",
+      "textNotSubmitted": "文本已输入但未提交。请检查终端。",
+      "notSent": "无法发送答案。",
+      "busy": "另一个答案仍在发送中。",
+      "noTerminal": "终端不可用。",
+      "noAgent": "该终端中没有活动的代理。未输入任何内容。",
+      "useButtons": "请使用按钮回复此权限请求。",
+      "noFreeText": "此问题只接受提供的选项。",
+      "incomplete": "请在发送前回答所有问题。",
+      "answerInDolphin": "此提示对 Telegram 来说太大。请在 Dolphin 中回答。",
+      "structuredUnavailable": "聊天会话不可用。",
+      "noWorktree": "在该工作区中未找到代理。",
+      "ambiguousWorktree": "该工作区中有多个代理。请改为回复该代理的通知。",
+      "allow": "允许",
+      "deny": "拒绝",
+      "submit": "发送",
+      "hintMultiSelect": "选择选项，然后点按“发送”。",
+      "hintReply": "回复此消息即可输入答案。"
     }
   }
 }
