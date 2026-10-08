@@ -27,7 +27,8 @@ describe('feature tips', () => {
         'dolphin-cli',
         'cmd-j-palette',
         'agent-session-search',
-        'claude-agent-teams-windows'
+        'claude-agent-teams-windows',
+        'telegram-integration'
       ])
     })
 
@@ -159,6 +160,43 @@ describe('feature tips', () => {
       })
 
       expect(tips[0]?.id).toBe('claude-agent-teams-windows')
+    })
+  })
+
+  describe('Telegram integration tip', () => {
+    const tip = FEATURE_TIPS.find((entry) => entry.id === 'telegram-integration')
+    if (!tip) {
+      throw new Error('Expected telegram-integration feature tip')
+    }
+
+    it('is a new tip that leads to Telegram setup', () => {
+      expect(tip).toMatchObject({
+        action: 'setup-telegram',
+        priority: 'new',
+        eyebrow: 'New',
+        ctaLabel: 'Set up Telegram'
+      })
+    })
+
+    it('shows from 0.2.3 on, on every platform', () => {
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.2.3', windows: false })).toBe(true)
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.2.3', windows: true })).toBe(true)
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.3.0', windows: false })).toBe(true)
+    })
+
+    it('stays hidden before 0.2.3 or while the version is unknown', () => {
+      expect(isFeatureTipForAudience(tip, { appVersion: '0.2.2', windows: false })).toBe(false)
+      expect(isFeatureTipForAudience(tip, { appVersion: null, windows: false })).toBe(false)
+      expect(isFeatureTipForAudience(tip, undefined)).toBe(false)
+    })
+
+    it('comes before every other tip for an eligible audience', () => {
+      const tips = getOrderedUnseenFeatureTips({
+        seenTipIds: new Set<FeatureTipId>(),
+        audience: { appVersion: '0.2.3', windows: true }
+      })
+
+      expect(tips[0]?.id).toBe('telegram-integration')
     })
   })
 })

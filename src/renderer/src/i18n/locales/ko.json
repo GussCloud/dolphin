@@ -18663,6 +18663,26 @@
       "recent3Title": "릴리스 노트 초안",
       "settingsLink": "설정 → 에이전트 세션 검색",
       "startSearching": "검색 시작하기"
+    },
+    "telegram": {
+      "eyebrow": "새 기능",
+      "title": "Telegram 연동",
+      "description": "Telegram에서 모든 에이전트 세션을 확인하고 Dolphin으로 돌아오지 않고도 응답하세요.",
+      "statusHighlight": "모든 워크트리(SSH 포함)에 있는 에이전트 세션의 상태와 질문을 Telegram으로 받아보세요.",
+      "buttonsHighlight": "질문과 권한 요청에 버튼으로 바로 응답하세요.",
+      "channelsHighlight": "channels를 통해 Claude Code 세션과 대화하세요.",
+      "cta": "Telegram 설정",
+      "demoBotName": "Dolphin bot",
+      "demoBotStatus": "봇",
+      "demoStatusMeta": "api-auth · SSH",
+      "demoStatusText": "Claude Code가 작업을 완료했습니다",
+      "demoQuestionMeta": "web-ui · Codex",
+      "demoQuestionText": "pnpm test 실행을 허용할까요?",
+      "demoAllow": "허용",
+      "demoDeny": "거부",
+      "demoChannelPrompt": "changelog도 업데이트해 줘",
+      "demoChannelMeta": "Claude Code",
+      "demoChannelReply": "알겠습니다: CHANGELOG.md 업데이트 중"
     }
   },
   "quickOpen": {

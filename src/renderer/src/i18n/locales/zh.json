@@ -18663,6 +18663,26 @@
       "recent3Title": "发布说明草稿",
       "settingsLink": "设置 → 代理会话搜索",
       "startSearching": "开始搜索"
+    },
+    "telegram": {
+      "eyebrow": "新功能",
+      "title": "Telegram 集成",
+      "description": "在 Telegram 中跟进所有智能体会话，无需返回 Dolphin 即可回复。",
+      "statusHighlight": "在 Telegram 中接收所有工作树（包括 SSH）上智能体会话的状态和问题。",
+      "buttonsHighlight": "直接通过按钮回答问题和权限请求。",
+      "channelsHighlight": "通过 channels 与 Claude Code 会话对话。",
+      "cta": "设置 Telegram",
+      "demoBotName": "Dolphin bot",
+      "demoBotStatus": "机器人",
+      "demoStatusMeta": "api-auth · SSH",
+      "demoStatusText": "Claude Code 已完成任务",
+      "demoQuestionMeta": "web-ui · Codex",
+      "demoQuestionText": "允许运行 pnpm test 吗？",
+      "demoAllow": "允许",
+      "demoDeny": "拒绝",
+      "demoChannelPrompt": "顺便更新一下 changelog",
+      "demoChannelMeta": "Claude Code",
+      "demoChannelReply": "好的：正在更新 CHANGELOG.md"
     }
   },
   "quickOpen": {

@@ -6,6 +6,7 @@ import {
   ORCHESTRATION_SETUP_DISMISSED_STORAGE_KEY,
   notifyOrchestrationSetupStateChanged
 } from '@/lib/orchestration-setup-state'
+import { TELEGRAM_SETTINGS_TARGET_ID } from '@/lib/settings-navigation-types'
 import { useAppStore } from '@/store'
 import { AgentTeamsTipDialog } from './AgentTeamsTipDialog'
 import { CliSetupTipDialog } from './CliSetupTipDialog'
@@ -22,6 +23,7 @@ import { useMountedRef } from '@/hooks/useMountedRef'
 import { isWebClientLocation } from '@/lib/web-client-location'
 import { translate } from '@/i18n/i18n'
 import { SessionSearchTipDialog } from './SessionSearchTipDialog'
+import { TelegramTipDialog } from './TelegramTipDialog'
 import { useSessionSearchTipSetup } from './use-session-search-tip-setup'
 import { VoiceDictationTipDialog } from './VoiceDictationTipDialog'
 
@@ -143,6 +145,16 @@ export default function FeatureTipsModal(): JSX.Element | null {
       }
       case 'learn-claude-agent-teams': {
         closeModal()
+        break
+      }
+      case 'setup-telegram': {
+        closeModal()
+        openSettingsTarget({
+          pane: 'integrations',
+          repoId: null,
+          sectionId: TELEGRAM_SETTINGS_TARGET_ID
+        })
+        openSettingsPage()
         break
       }
       case 'enable-voice': {
@@ -298,6 +310,19 @@ export default function FeatureTipsModal(): JSX.Element | null {
         onPrimaryAction={() => void handlePrimaryAction()}
         onSkip={handleSkip}
         onAgentSettingsClick={openAgentSettings}
+      />
+    )
+  }
+
+  if (currentTip.action === 'setup-telegram') {
+    return (
+      <TelegramTipDialog
+        open={isOpen}
+        tip={currentTip}
+        primaryBusy={primaryBusy}
+        onOpenChange={handleOpenChange}
+        onPrimaryAction={() => void handlePrimaryAction()}
+        onSkip={handleSkip}
       />
     )
   }

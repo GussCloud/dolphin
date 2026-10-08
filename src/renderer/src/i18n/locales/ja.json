@@ -18663,6 +18663,26 @@
       "recent3Title": "リリースノートの下書き",
       "settingsLink": "設定 → Agent セッションの検索",
       "startSearching": "検索を開始"
+    },
+    "telegram": {
+      "eyebrow": "新機能",
+      "title": "Telegram 連携",
+      "description": "すべてのエージェントセッションを Telegram で追跡し、Dolphin に戻らずに返信できます。",
+      "statusHighlight": "すべてのワークツリー（SSH を含む）のエージェントセッションの状態と質問を Telegram で受け取れます。",
+      "buttonsHighlight": "質問や権限リクエストにボタンからそのまま回答できます。",
+      "channelsHighlight": "channels を通じて Claude Code セッションと会話できます。",
+      "cta": "Telegram を設定",
+      "demoBotName": "Dolphin bot",
+      "demoBotStatus": "ボット",
+      "demoStatusMeta": "api-auth · SSH",
+      "demoStatusText": "Claude Code がタスクを完了しました",
+      "demoQuestionMeta": "web-ui · Codex",
+      "demoQuestionText": "pnpm test の実行を許可しますか？",
+      "demoAllow": "許可",
+      "demoDeny": "拒否",
+      "demoChannelPrompt": "changelog も更新して",
+      "demoChannelMeta": "Claude Code",
+      "demoChannelReply": "了解: CHANGELOG.md を更新中"
     }
   },
   "quickOpen": {
