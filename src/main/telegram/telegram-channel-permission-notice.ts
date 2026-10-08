@@ -1,8 +1,11 @@
 import type { TelegramNoticeButton } from './telegram-inbound'
+import { telegramChannelMessages } from './telegram-channel-messages'
 
 const PERMISSION_ACTION_RE = /^chp-(allow|deny)-([a-km-z]{5})$/
-// Accepts the reply typed by hand, e.g. "sim abcde", "não abcde", "yes abcde".
-const PERMISSION_TEXT_RE = /^\s*(y|yes|s|sim|n|no|não|nao)\s+([a-km-z]{5})\s*$/i
+// Typed verdicts in every UI locale ("sim abcde", "no abcde", "はい abcde"…); ids skip `l`.
+const ALLOW_WORDS = ['y', 'yes', 's', 'sim', 'si', 'sí', 'oui', 'はい', '네', '예', '是', '好']
+const DENY_WORDS = ['n', 'no', 'não', 'nao', 'non', 'いいえ', '아니요', '아니오', '否', '不']
+const PERMISSION_TEXT_RE = /^\s*(\S+)\s+([a-km-z]{5})\s*$/i
 const PREVIEW_MAX_CHARS = 800
 const DESCRIPTION_MAX_CHARS = 400
 
@@ -19,7 +22,7 @@ export function formatChannelPermissionNotice(request: {
   description: string
   inputPreview: string
 }): { text: string; buttons: TelegramNoticeButton[][] } {
-  const lines = [`🔐 Claude pede permissão: ${request.toolName}`]
+  const lines = [`🔐 ${telegramChannelMessages.permissionTitle(request.toolName)}`]
   const description = request.description.trim()
   if (description) {
     lines.push(clip(description, DESCRIPTION_MAX_CHARS))
@@ -28,13 +31,13 @@ export function formatChannelPermissionNotice(request: {
   if (preview) {
     lines.push(clip(preview, PREVIEW_MAX_CHARS))
   }
-  lines.push(`(ou responda "sim ${request.requestId}" / "não ${request.requestId}")`)
+  lines.push(telegramChannelMessages.permissionTypedHint(request.requestId))
   return {
     text: lines.join('\n'),
     buttons: [
       [
-        { label: 'Sim', action: `chp-allow-${request.requestId}` },
-        { label: 'Não', action: `chp-deny-${request.requestId}` }
+        { label: telegramChannelMessages.yes(), action: `chp-allow-${request.requestId}` },
+        { label: telegramChannelMessages.no(), action: `chp-deny-${request.requestId}` }
       ]
     ]
   }
@@ -53,8 +56,9 @@ export function parseChannelPermissionText(text: string): TelegramChannelPermiss
     return null
   }
   const word = match[1].toLowerCase()
-  return {
-    requestId: match[2].toLowerCase(),
-    behavior: word.startsWith('y') || word.startsWith('s') ? 'allow' : 'deny'
+  const requestId = match[2].toLowerCase()
+  if (ALLOW_WORDS.includes(word)) {
+    return { requestId, behavior: 'allow' }
   }
+  return DENY_WORDS.includes(word) ? { requestId, behavior: 'deny' } : null
 }

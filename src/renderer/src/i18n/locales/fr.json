@@ -12368,7 +12368,10 @@
           "enable": "Envoyer les avis des agents sur Telegram",
           "unavailable": "Les avis Telegram s’exécutent dans l’application de bureau Dolphin et ne sont pas disponibles sur cet hôte.",
           "channelsLabel": "Répondre à Claude Code via un canal (expérimental)",
-          "channelsDescription": "Transmet les réponses Telegram directement dans les sessions Claude Code. Tant que l’option est active, Claude vous demande de confirmer le chargement d’un canal de développement local à chaque démarrage, et les canaux ne fonctionnent que si Claude est connecté avec claude.ai ou une clé d’API Console (pas Bedrock, Vertex AI ni Foundry)."
+          "channelsDescription": "Transmet les réponses Telegram directement dans les sessions Claude Code. Tant que l’option est active, Claude vous demande de confirmer le chargement d’un canal de développement local à chaque démarrage, et les canaux ne fonctionnent que si Claude est connecté avec claude.ai ou une clé d’API Console (pas Bedrock, Vertex AI ni Foundry).",
+          "channelClaudeNotFound": "Claude Code est introuvable sur cet ordinateur ; les réponses continuent donc d’aller au terminal.",
+          "channelClaudeTooOld": "Les canaux nécessitent Claude Code 2.1.234 ou plus récent. Mettez Claude Code à jour ; en attendant, les réponses vont au terminal.",
+          "channelConfigUnavailable": "Dolphin n’a pas pu placer la configuration du canal à un chemin que chaque shell lit littéralement ; les réponses continuent donc d’aller au terminal."
         }
       },
       "right": {
@@ -18878,6 +18881,23 @@
       "submit": "Envoyer",
       "hintMultiSelect": "Choisissez les options, puis touchez Envoyer.",
       "hintReply": "Répondez à ce message pour saisir une réponse."
+    },
+    "channel": {
+      "sent": "Envoyé à Claude.",
+      "unconfirmed": "Claude n'a pas confirmé la réception du message ; vérifiez le terminal.",
+      "allowed": "Autorisé.",
+      "denied": "Refusé.",
+      "permissionExpired": "Cette demande d’autorisation a expiré ou a déjà reçu une réponse.",
+      "privateChatOnly": "Les demandes d’autorisation ne peuvent être traitées que depuis votre conversation privée avec le bot.",
+      "severalClaudes": "Plusieurs Claude sont connectés. Répondez au message du Claude qui doit recevoir ceci.",
+      "replyToNotice": "Plusieurs agents ont besoin de vous. Répondez à l’avis de celui qui est concerné.",
+      "noAgent": "Aucun agent n’a reçu le message.",
+      "unknownAction": "Action non reconnue.",
+      "permissionTitle": "Claude demande une autorisation : {{toolName}}",
+      "permissionTypedHint": "(ou répondez « oui {{requestId}} » / « non {{requestId}} »)",
+      "yes": "Oui",
+      "no": "Non",
+      "approveInChannel": "Répondez à cette autorisation dans le message du canal Claude."
     }
   }
 }

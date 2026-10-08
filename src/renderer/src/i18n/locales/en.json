@@ -12426,7 +12426,10 @@
           "enable": "Send agent notices to Telegram",
           "unavailable": "Telegram notices run in the Dolphin desktop app and are not available on this host.",
           "channelsLabel": "Answer Claude Code through a channel (experimental)",
-          "channelsDescription": "Delivers Telegram replies straight into Claude Code sessions. While on, Claude asks you to confirm loading a local development channel every time it starts, and channels only work when Claude is signed in with claude.ai or a Console API key (not Bedrock, Vertex AI or Foundry)."
+          "channelsDescription": "Delivers Telegram replies straight into Claude Code sessions. While on, Claude asks you to confirm loading a local development channel every time it starts, and channels only work when Claude is signed in with claude.ai or a Console API key (not Bedrock, Vertex AI or Foundry).",
+          "channelClaudeNotFound": "Claude Code was not found on this computer, so replies keep going to the terminal.",
+          "channelClaudeTooOld": "Channels need Claude Code 2.1.234 or newer. Update Claude Code; until then replies go to the terminal.",
+          "channelConfigUnavailable": "Dolphin could not place the channel configuration at a path every shell reads literally, so replies keep going to the terminal."
         }
       },
       "right": {
@@ -18878,6 +18881,23 @@
       "submit": "Send",
       "hintMultiSelect": "Pick options, then tap Send.",
       "hintReply": "Reply to this message to type an answer."
+    },
+    "channel": {
+      "sent": "Sent to Claude.",
+      "unconfirmed": "Claude did not confirm it received the message; check the terminal.",
+      "allowed": "Allowed.",
+      "denied": "Denied.",
+      "permissionExpired": "That permission request expired or was already answered.",
+      "privateChatOnly": "Permission requests can only be answered from your private chat with the bot.",
+      "severalClaudes": "More than one Claude is connected. Reply to the message of the Claude that should get this.",
+      "replyToNotice": "Several agents need you. Reply to the notice of the one this is for.",
+      "noAgent": "No agent received the message.",
+      "unknownAction": "Unrecognized action.",
+      "permissionTitle": "Claude asks permission: {{toolName}}",
+      "permissionTypedHint": "(or reply \"yes {{requestId}}\" / \"no {{requestId}}\")",
+      "yes": "Yes",
+      "no": "No",
+      "approveInChannel": "Answer this permission in the Claude channel message."
     }
   }
 }

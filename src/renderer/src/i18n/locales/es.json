@@ -10704,7 +10704,10 @@
           "enable": "Enviar avisos de agentes a Telegram",
           "unavailable": "Los avisos de Telegram se ejecutan en la aplicación de escritorio de Dolphin y no están disponibles en este host.",
           "channelsLabel": "Responder a Claude Code mediante un canal (experimental)",
-          "channelsDescription": "Entrega las respuestas de Telegram directamente en las sesiones de Claude Code. Mientras esté activado, Claude te pedirá confirmar la carga de un canal de desarrollo local cada vez que se inicie, y los canales solo funcionan cuando Claude ha iniciado sesión con claude.ai o una clave de API de Console (no Bedrock, Vertex AI ni Foundry)."
+          "channelsDescription": "Entrega las respuestas de Telegram directamente en las sesiones de Claude Code. Mientras esté activado, Claude te pedirá confirmar la carga de un canal de desarrollo local cada vez que se inicie, y los canales solo funcionan cuando Claude ha iniciado sesión con claude.ai o una clave de API de Console (no Bedrock, Vertex AI ni Foundry).",
+          "channelClaudeNotFound": "No se encontró Claude Code en este equipo, así que las respuestas siguen yendo a la terminal.",
+          "channelClaudeTooOld": "Los canales requieren Claude Code 2.1.234 o posterior. Actualiza Claude Code; mientras tanto las respuestas van a la terminal.",
+          "channelConfigUnavailable": "Dolphin no pudo guardar la configuración del canal en una ruta que todos los shells lean literalmente, así que las respuestas siguen yendo a la terminal."
         }
       },
       "right": {
@@ -15767,6 +15770,23 @@
       "submit": "Enviar",
       "hintMultiSelect": "Elige las opciones y toca Enviar.",
       "hintReply": "Responde a este mensaje para escribir una respuesta."
+    },
+    "channel": {
+      "sent": "Enviado a Claude.",
+      "unconfirmed": "Claude no confirmó que recibió el mensaje; revisa la terminal.",
+      "allowed": "Permitido.",
+      "denied": "Denegado.",
+      "permissionExpired": "Esa solicitud de permiso caducó o ya fue respondida.",
+      "privateChatOnly": "Las solicitudes de permiso solo se pueden responder desde tu chat privado con el bot.",
+      "severalClaudes": "Hay más de un Claude conectado. Responde al mensaje del Claude que debe recibir esto.",
+      "replyToNotice": "Varios agentes te necesitan. Responde al aviso de aquel al que va dirigido.",
+      "noAgent": "Ningún agente recibió el mensaje.",
+      "unknownAction": "Acción no reconocida.",
+      "permissionTitle": "Claude pide permiso: {{toolName}}",
+      "permissionTypedHint": "(o responde \"sí {{requestId}}\" / \"no {{requestId}}\")",
+      "yes": "Sí",
+      "no": "No",
+      "approveInChannel": "Responde a este permiso en el mensaje del canal de Claude."
     }
   }
 }

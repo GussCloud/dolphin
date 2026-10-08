@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AgentHookServer, _internals } from '../agent-hooks/server'
+import { buildBody, GOOD_PANE, PANE, postHookEvent } from '../agent-hooks/server.test-fixtures'
+import { applyClaudeChannelLaunch, isClaudeChannelLaunchGranted } from './claude-channel-launch'
 import { TelegramChannelGateway } from './telegram-channel-gateway'
 import {
   createTelegramChannelHttpHost,
@@ -10,15 +12,39 @@ import { createTelegramChannelMcpServer } from './telegram-channel-mcp-server'
 vi.mock('../telemetry/client', () => ({ track: vi.fn() }))
 vi.mock('../telemetry/cohort-classifier', () => ({ getCohortAtEmit: vi.fn(() => ({})) }))
 
-const PANE = 'tab-1:leaf-1'
+const LAUNCH_TOKEN = 'launch-token-pane-1'
 const servers: AgentHookServer[] = []
 
+function createBridge() {
+  return {
+    sendToAllowedChats: vi.fn(async () => {}),
+    createRoute: (paneKey: string) => ({ routeId: 'abc123', paneKey }),
+    resolveWorktreeQuery: () => []
+  }
+}
+
+/** A hook listener whose PANE committed LAUNCH_TOKEN through a status hook. */
 async function startHookServer(): Promise<AgentHookServer> {
   _internals.resetCachesForTests()
   const server = new AgentHookServer()
   await server.start({ env: 'production' })
   servers.push(server)
+  const response = await postHookEvent(
+    server,
+    buildBody(
+      { hook_event_name: 'UserPromptSubmit', session_id: 'claude-session-1', prompt: 'oi' },
+      { launchToken: LAUNCH_TOKEN }
+    )
+  )
+  expect(response.status).toBe(204)
   return server
+}
+
+function channelHost(server: AgentHookServer, session: Record<string, string>) {
+  return createTelegramChannelHttpHost({
+    session: { paneKey: PANE, sessionId: 'session-1', launchToken: LAUNCH_TOKEN, ...session },
+    resolveEndpoint: () => resolveTelegramChannelEndpoint(server.buildPtyEnv())
+  })
 }
 
 afterEach(async () => {
@@ -29,66 +55,102 @@ afterEach(async () => {
 })
 
 describe('telegram channel over the agent-hook listener', () => {
-  it('rejects channel posts without the hook token and 404s when no gateway is registered', async () => {
+  it('rejects posts without the hook token and 404s when no gateway is registered', async () => {
     const server = await startHookServer()
     const env = server.buildPtyEnv()
     const url = `http://127.0.0.1:${env.DOLPHIN_AGENT_HOOK_PORT}/channel/poll`
-    const body = JSON.stringify({ paneKey: PANE, sessionId: 's' })
+    const body = JSON.stringify({ paneKey: PANE, sessionId: 's', launchToken: LAUNCH_TOKEN })
     const headers = { 'Content-Type': 'application/json' }
     expect((await fetch(url, { method: 'POST', headers, body })).status).toBe(403)
     const authed = { ...headers, 'X-Dolphin-Agent-Hook-Token': env.DOLPHIN_AGENT_HOOK_TOKEN }
     expect((await fetch(url, { method: 'POST', headers: authed, body })).status).toBe(404)
   })
 
+  it('refuses a caller that cannot prove the pane it names', async () => {
+    const server = await startHookServer()
+    const bridge = createBridge()
+    const gateway = new TelegramChannelGateway(bridge, { pollHoldMs: 200 })
+    server.setChannelRouteHandler(gateway.handleRoute)
+    const signal = new AbortController().signal
+    const spoofs: Record<string, string>[] = [
+      { launchToken: 'some-other-token' },
+      { paneKey: GOOD_PANE },
+      { launchToken: '' }
+    ]
+    for (const spoof of spoofs) {
+      const host = channelHost(server, spoof)
+      await expect(host.poll(signal, 0)).rejects.toThrow('401')
+      await expect(host.reply('x')).rejects.toThrow('401')
+      await expect(
+        host.requestPermission({
+          requestId: 'abcde',
+          toolName: 'Bash',
+          description: '',
+          inputPreview: ''
+        })
+      ).rejects.toThrow('401')
+    }
+    expect(gateway.isConnected(PANE)).toBe(false)
+    expect(bridge.sendToAllowedChats).not.toHaveBeenCalled()
+  })
+
+  it('accepts a pane Dolphin launched with the channel before any status hook arrives', async () => {
+    const server = await startHookServer()
+    const gateway = new TelegramChannelGateway(createBridge(), { pollHoldMs: 100 })
+    server.setChannelRouteHandler(gateway.handleRoute, isClaudeChannelLaunchGranted)
+    const host = channelHost(server, { paneKey: GOOD_PANE, launchToken: 'fresh-launch' })
+    const signal = new AbortController().signal
+    await expect(host.poll(signal, 0)).rejects.toThrow('401')
+    applyClaudeChannelLaunch(
+      {
+        command: 'claude',
+        env: { DOLPHIN_PANE_KEY: GOOD_PANE, DOLPHIN_AGENT_LAUNCH_TOKEN: 'fresh-launch' },
+        launchAgent: 'claude',
+        connectionId: null,
+        isWsl: false
+      },
+      { launchArgs: () => '--mcp-config=/c.json' }
+    )
+    await expect(host.poll(signal, 0)).resolves.toEqual([])
+    expect(gateway.isConnected(GOOD_PANE)).toBe(true)
+  })
+
   it('holds a long-poll past the 5s slowloris cap of the listener', async () => {
     const server = await startHookServer()
-    const gateway = new TelegramChannelGateway(
-      { sendToAllowedChats: vi.fn(), createRoute: vi.fn(), resolveWorktreeQuery: () => [] },
-      { pollHoldMs: 7_000 }
-    )
+    const gateway = new TelegramChannelGateway(createBridge(), { pollHoldMs: 7_000 })
     server.setChannelRouteHandler(gateway.handleRoute)
-    const host = createTelegramChannelHttpHost({
-      session: { paneKey: PANE, sessionId: 'long' },
-      resolveEndpoint: () => resolveTelegramChannelEndpoint(server.buildPtyEnv())
-    })
-    const polled = host.poll(new AbortController().signal)
+    const host = channelHost(server, {})
+    const polled = host.poll(new AbortController().signal, 0)
     await new Promise((resolve) => setTimeout(resolve, 6_000))
-    expect(gateway.deliver(PANE, 'late')).toBe(true)
-    await expect(polled).resolves.toEqual([{ kind: 'message', text: 'late', meta: {} }])
+    void gateway.tryHandleText({ chatId: 1, messageId: 2, text: 'late' })
+    await expect(polled).resolves.toEqual([
+      { seq: 1, kind: 'message', text: 'late', meta: { chat_id: '1', message_id: '2' } }
+    ])
   }, 15_000)
 
   it('carries Telegram text in, Claude replies out, and a permission verdict back', async () => {
     const server = await startHookServer()
-    const bridge = {
-      sendToAllowedChats: vi.fn(async () => {}),
-      createRoute: (paneKey: string) => ({ routeId: 'abc123', paneKey }),
-      resolveWorktreeQuery: () => []
-    }
+    const bridge = createBridge()
     const gateway = new TelegramChannelGateway(bridge, { pollHoldMs: 300 })
     server.setChannelRouteHandler(gateway.handleRoute)
-    const host = createTelegramChannelHttpHost({
-      session: { paneKey: PANE, sessionId: 'session-1' },
-      resolveEndpoint: () => resolveTelegramChannelEndpoint(server.buildPtyEnv())
-    })
     const sent: Record<string, unknown>[] = []
     const mcp = createTelegramChannelMcpServer({
-      host,
+      host: channelHost(server, {}),
       version: 'test',
       send: (message) => sent.push(message)
     })
     mcp.handleMessage({ jsonrpc: '2.0', method: 'notifications/initialized' })
     await vi.waitFor(() => expect(gateway.isConnected(PANE)).toBe(true))
 
+    // Resolves only after the next poll acknowledged it, i.e. Claude really got it.
     await expect(
       gateway.tryHandleText({ chatId: 1, messageId: 2, text: 'status do build?' })
-    ).resolves.toEqual({ ok: true, ack: 'Enviado ao Claude.' })
-    await vi.waitFor(() =>
-      expect(sent).toContainEqual({
-        jsonrpc: '2.0',
-        method: 'notifications/claude/channel',
-        params: { content: 'status do build?', meta: { chat_id: '1', message_id: '2' } }
-      })
-    )
+    ).resolves.toEqual({ ok: true, ack: 'Sent to Claude.' })
+    expect(sent).toContainEqual({
+      jsonrpc: '2.0',
+      method: 'notifications/claude/channel',
+      params: { content: 'status do build?', meta: { chat_id: '1', message_id: '2' } }
+    })
 
     mcp.handleMessage({
       jsonrpc: '2.0',

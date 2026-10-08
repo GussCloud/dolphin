@@ -1,10 +1,16 @@
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import {
   applyClaudeChannelLaunch,
   buildClaudeChannelLaunchArgs,
   buildClaudeChannelMcpConfig,
   createClaudeChannelLaunchPolicy,
-  spliceClaudeChannelArgs
+  isClaudeChannelLaunchGranted,
+  shellLiteralConfigPath,
+  spliceClaudeChannelArgs,
+  writeClaudeChannelMcpConfig
 } from './claude-channel-launch'
 
 const ARGS =
@@ -12,15 +18,38 @@ const ARGS =
 const policy = { launchArgs: () => ARGS }
 const base = { env: undefined, connectionId: null, isWsl: false, launchAgent: 'claude' }
 
-describe('buildClaudeChannelLaunchArgs', () => {
-  it('normalizes Windows separators and rejects paths that would need shell quoting', () => {
+describe('shellLiteralConfigPath', () => {
+  it('keeps plain paths bare and normalizes Windows separators', () => {
+    expect(shellLiteralConfigPath('C:\\Users\\me\\x.json')).toBe('C:/Users/me/x.json')
+    expect(shellLiteralConfigPath('/home/me/.config/Dolphin/x.json')).toBe(
+      '/home/me/.config/Dolphin/x.json'
+    )
+  })
+
+  it('double-quotes macOS userData and accented or spaced Windows profiles', () => {
     expect(
-      buildClaudeChannelLaunchArgs(
-        'C:\\Users\\me\\AppData\\Roaming\\dolphin\\telegram-channel\\claude-channel-mcp.json'
+      shellLiteralConfigPath(
+        '/Users/joão/Library/Application Support/Dolphin/telegram-channel/c.json'
       )
-    ).toBe(ARGS)
-    expect(buildClaudeChannelLaunchArgs('C:\\Users\\Jane Doe\\x.json')).toBeNull()
-    expect(buildClaudeChannelLaunchArgs("/home/o'neil/x.json")).toBeNull()
+    ).toBe('"/Users/joão/Library/Application Support/Dolphin/telegram-channel/c.json"')
+    expect(shellLiteralConfigPath('C:\\Users\\João Silva\\AppData\\Roaming\\dolphin\\c.json')).toBe(
+      '"C:/Users/João Silva/AppData/Roaming/dolphin/c.json"'
+    )
+    expect(shellLiteralConfigPath("/Users/o'neil/x (1)/c.json")).toBe(
+      '"/Users/o\'neil/x (1)/c.json"'
+    )
+  })
+
+  it('refuses characters that some shell still expands inside double quotes', () => {
+    for (const path of [
+      '/a/$HOME/c.json',
+      'C:\\%TEMP%\\c.json',
+      '/a/b!c/c.json',
+      '/a/`x`/c.json'
+    ]) {
+      expect(shellLiteralConfigPath(path)).toBeNull()
+    }
+    expect(buildClaudeChannelLaunchArgs('/a/$b/c.json')).toBeNull()
   })
 })
 
@@ -58,16 +87,24 @@ describe('applyClaudeChannelLaunch', () => {
   })
 
   it('skips other agents, SSH panes and WSL panes', () => {
-    expect(
-      applyClaudeChannelLaunch({ ...base, command: 'claude', launchAgent: 'codex' }, policy).command
-    ).toBe('claude')
-    expect(
-      applyClaudeChannelLaunch({ ...base, command: 'claude', connectionId: 'ssh-1' }, policy)
-        .command
-    ).toBe('claude')
-    expect(
-      applyClaudeChannelLaunch({ ...base, command: 'claude', isWsl: true }, policy).command
-    ).toBe('claude')
+    for (const target of [
+      { ...base, command: 'claude', launchAgent: 'codex' },
+      { ...base, command: 'claude', connectionId: 'ssh-1' },
+      { ...base, command: 'claude', isWsl: true }
+    ]) {
+      expect(applyClaudeChannelLaunch(target, policy).command).toBe('claude')
+    }
+  })
+
+  it('grants the pane the channel only for the launch token it was injected with', () => {
+    const env = { DOLPHIN_PANE_KEY: 'tab-g:leaf-g', DOLPHIN_AGENT_LAUNCH_TOKEN: 'token-g' }
+    applyClaudeChannelLaunch({ ...base, command: 'claude', launchAgent: 'codex', env }, policy)
+    expect(isClaudeChannelLaunchGranted('tab-g:leaf-g', 'token-g')).toBe(false)
+    applyClaudeChannelLaunch({ ...base, command: 'claude', env }, policy)
+    expect(isClaudeChannelLaunchGranted('tab-g:leaf-g', 'token-g')).toBe(true)
+    expect(isClaudeChannelLaunchGranted('tab-g:leaf-g', 'token-x')).toBe(false)
+    expect(isClaudeChannelLaunchGranted('tab-other:leaf', 'token-g')).toBe(false)
+    expect(isClaudeChannelLaunchGranted('tab-g:leaf-g', '')).toBe(false)
   })
 
   it('rewrites the sequenced setup command instead of the runner command', () => {
@@ -88,60 +125,97 @@ describe('applyClaudeChannelLaunch', () => {
 })
 
 describe('createClaudeChannelLaunchPolicy', () => {
-  const configPath = 'C:\\data\\telegram-channel\\claude-channel-mcp.json'
-
-  it('gates on the minimum Claude version', async () => {
-    for (const [version, expected] of [
-      ['2.1.294', true],
-      ['2.1.234', true],
-      ['2.1.233', false],
-      [null, false]
+  it('gates on the minimum Claude version and reports why', async () => {
+    for (const [version, availability] of [
+      ['2.1.294', 'ready'],
+      ['2.1.234', 'ready'],
+      ['2.1.233', 'claude-too-old'],
+      [null, 'claude-not-found']
     ] as const) {
-      const writeMcpConfig = vi.fn(() => configPath)
+      const writeMcpConfig = vi.fn(() => ARGS)
       const gate = createClaudeChannelLaunchPolicy({
         isEnabled: () => true,
         probeClaudeVersion: async () => version,
         writeMcpConfig
       })
       await gate.refresh()
-      expect(gate.launchArgs() !== null).toBe(expected)
-      expect(writeMcpConfig).toHaveBeenCalledTimes(expected ? 1 : 0)
+      expect(gate.availability()).toBe(availability)
+      expect(gate.launchArgs()).toBe(availability === 'ready' ? ARGS : null)
+      expect(writeMcpConfig).toHaveBeenCalledTimes(availability === 'ready' ? 1 : 0)
     }
   })
 
-  it('returns null while disabled and before the first probe settles', async () => {
+  it('reports a config it could not place, and notifies on change', async () => {
+    const gate = createClaudeChannelLaunchPolicy({
+      isEnabled: () => true,
+      probeClaudeVersion: async () => '2.1.294',
+      writeMcpConfig: () => null
+    })
+    const listener = vi.fn()
+    gate.onAvailabilityChange(listener)
+    expect(gate.availability()).toBe('checking')
+    await gate.refresh()
+    expect(gate.availability()).toBe('config-unavailable')
+    expect(gate.launchArgs()).toBeNull()
+    expect(listener).toHaveBeenCalledTimes(1)
+  })
+
+  it('is off while disabled and injects nothing before the first probe settles', async () => {
     let enabled = false
     const gate = createClaudeChannelLaunchPolicy({
       isEnabled: () => enabled,
       probeClaudeVersion: async () => '2.1.294',
-      writeMcpConfig: () => configPath
+      writeMcpConfig: () => ARGS
     })
+    expect(gate.availability()).toBe('off')
     expect(gate.launchArgs()).toBeNull()
     enabled = true
     expect(gate.launchArgs()).toBeNull()
-    await vi.waitFor(() => expect(gate.launchArgs()).toContain('--mcp-config=C:/data/'))
+    await vi.waitFor(() => expect(gate.launchArgs()).toBe(ARGS))
   })
 
-  it('treats a probe failure as unsupported', async () => {
+  it('treats a probe failure as Claude not found', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const gate = createClaudeChannelLaunchPolicy({
       isEnabled: () => true,
       probeClaudeVersion: async () => {
         throw new Error('spawn failed')
       },
-      writeMcpConfig: () => configPath
+      writeMcpConfig: () => ARGS
     })
     await gate.refresh()
-    expect(gate.launchArgs()).toBeNull()
+    expect(gate.availability()).toBe('claude-not-found')
     warn.mockRestore()
   })
 })
 
-describe('buildClaudeChannelMcpConfig', () => {
-  it('runs the entry with Dolphin’s Electron binary in Node mode', () => {
-    expect(
-      buildClaudeChannelMcpConfig({ execPath: '/opt/Dolphin/dolphin', entryPath: '/e.js' })
-    ).toEqual({
+describe('writeClaudeChannelMcpConfig', () => {
+  const config = buildClaudeChannelMcpConfig({
+    execPath: '/opt/Dolphin/dolphin',
+    entryPath: '/e.js'
+  })
+
+  it('writes to the first candidate whose path can be typed literally', () => {
+    const root = mkdtempSync(join(tmpdir(), 'tg channel '))
+    try {
+      const unusable = join(root, 'has$dollar')
+      const usable = join(root, 'Application Support')
+      const args = writeClaudeChannelMcpConfig([unusable, usable], config)
+      const written = join(usable, 'claude-channel-mcp.json')
+      expect(args).toBe(buildClaudeChannelLaunchArgs(written))
+      expect(args).toContain('"')
+      expect(JSON.parse(readFileSync(written, 'utf8'))).toEqual(config)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('returns null when no candidate can be typed literally', () => {
+    expect(writeClaudeChannelMcpConfig(['/a/%x%', '/b/$y'], config)).toBeNull()
+  })
+
+  it('runs the entry with the Electron binary of Dolphin in Node mode', () => {
+    expect(config).toEqual({
       mcpServers: {
         'dolphin-telegram': {
           type: 'stdio',

@@ -20,8 +20,11 @@ export type TelegramChannelPermissionRelay = {
 
 /** Dolphin main, as seen from the channel server. */
 export type TelegramChannelHost = {
-  /** Resolves with queued events, or 'superseded' when a newer session owns the pane. */
-  poll(signal: AbortSignal): Promise<TelegramChannelInboundEvent[] | 'superseded'>
+  /**
+   * Resolves with unacknowledged events, or 'superseded' when a newer session owns the pane.
+   * `ack` is the highest seq already emitted, so main can drop them and confirm delivery.
+   */
+  poll(signal: AbortSignal, ack: number): Promise<TelegramChannelInboundEvent[] | 'superseded'>
   reply(text: string): Promise<void>
   requestPermission(request: TelegramChannelPermissionRelay): Promise<void>
   disconnect(): Promise<void>
@@ -111,15 +114,20 @@ export function createTelegramChannelMcpServer(args: {
 
   const runPollLoop = async (): Promise<void> => {
     let retryMs = POLL_RETRY_MIN_MS
+    let lastSeq = 0
     while (!lifetime.signal.aborted) {
       try {
-        const events = await host.poll(lifetime.signal)
+        const events = await host.poll(lifetime.signal, lastSeq)
         if (events === 'superseded') {
           return
         }
         retryMs = POLL_RETRY_MIN_MS
+        // Why skip seen seqs: a lost ack makes main resend, and Claude must not get it twice.
         for (const event of events) {
-          emitInbound(event)
+          if (event.seq > lastSeq) {
+            lastSeq = event.seq
+            emitInbound(event)
+          }
         }
       } catch {
         if (lifetime.signal.aborted) {

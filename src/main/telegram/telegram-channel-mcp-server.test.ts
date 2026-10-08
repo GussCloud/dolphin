@@ -105,14 +105,17 @@ describe('telegram channel MCP server', () => {
   })
 
   it('emits polled Telegram text and permission verdicts as channel notifications', async () => {
-    const { sent, server, pollQueue } = createHarness()
+    const { sent, server, pollQueue, host } = createHarness()
     pollQueue.push(new Error('ECONNREFUSED'))
     pollQueue.push([
-      { kind: 'message', text: 'roda os testes', meta: { chat_id: '42' } },
-      { kind: 'permission-verdict', requestId: 'abcde', behavior: 'allow' }
+      { seq: 1, kind: 'message', text: 'roda os testes', meta: { chat_id: '42' } },
+      { seq: 2, kind: 'permission-verdict', requestId: 'abcde', behavior: 'allow' }
     ])
+    // Resent because the ack was lost: must not reach Claude twice.
+    pollQueue.push([{ seq: 2, kind: 'permission-verdict', requestId: 'abcde', behavior: 'allow' }])
     server.handleMessage({ jsonrpc: '2.0', method: 'notifications/initialized' })
-    await vi.waitFor(() => expect(sent).toHaveLength(2))
+    await vi.waitFor(() => expect(host.poll).toHaveBeenCalledTimes(4))
+    expect(vi.mocked(host.poll).mock.calls.map((call) => call[1])).toEqual([0, 0, 2, 2])
     expect(sent).toEqual([
       {
         jsonrpc: '2.0',

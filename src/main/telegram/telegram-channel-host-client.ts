@@ -107,7 +107,8 @@ export const postLoopbackJson: TelegramChannelPostJson = (endpoint, path, body, 
   })
 
 export function createTelegramChannelHttpHost(args: {
-  session: TelegramChannelSessionRef
+  /** `launchToken` proves the pane to main (DOLPHIN_AGENT_LAUNCH_TOKEN, as hook scripts send it). */
+  session: TelegramChannelSessionRef & { launchToken: string }
   resolveEndpoint: () => TelegramChannelEndpoint | null
   postJson?: TelegramChannelPostJson
 }): TelegramChannelHost {
@@ -129,10 +130,10 @@ export function createTelegramChannelHttpHost(args: {
     }
   }
   return {
-    async poll(signal) {
+    async poll(signal, ack) {
       const result = await post(
         TELEGRAM_CHANNEL_POLL_PATH,
-        {},
+        { ack },
         { timeoutMs: TELEGRAM_CHANNEL_POLL_HOLD_MS + REQUEST_TIMEOUT_MS, signal }
       )
       if (result.status === TELEGRAM_CHANNEL_SUPERSEDED_STATUS) {

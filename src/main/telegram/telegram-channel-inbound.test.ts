@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { AgentStatusEntry } from '../../shared/agent-status-types'
+import { encodeTelegramPromptAction } from './telegram-answerable-prompt'
 import {
   chainTelegramChannelInbound,
-  createChannelPermissionNoticeFilter
+  createChannelApprovalButtonStripper
 } from './telegram-channel-inbound'
 import type { TelegramNotice } from './telegram-inbound'
 
@@ -31,7 +32,7 @@ describe('chainTelegramChannelInbound', () => {
   it('lets the channel answer first and falls back when it declines', async () => {
     const gateway = {
       tryHandleText: vi.fn(async (event: { text: string }) =>
-        event.text === 'channel' ? { ok: true as const, ack: 'Enviado ao Claude.' } : null
+        event.text === 'channel' ? { ok: true as const, ack: 'Sent to Claude.' } : null
       ),
       tryHandleCallback: vi.fn(async () => null),
       isConnected: () => true
@@ -43,7 +44,7 @@ describe('chainTelegramChannelInbound', () => {
     const handler = chainTelegramChannelInbound(gateway, fallback)
     await expect(
       handler.handleText!({ chatId: 1, messageId: 2, text: 'channel' })
-    ).resolves.toEqual({ ok: true, ack: 'Enviado ao Claude.' })
+    ).resolves.toEqual({ ok: true, ack: 'Sent to Claude.' })
     expect(fallback.handleText).not.toHaveBeenCalled()
     await expect(
       handler.handleText!({ chatId: 1, messageId: 2, text: 'terminal' })
@@ -54,20 +55,30 @@ describe('chainTelegramChannelInbound', () => {
   })
 })
 
-describe('createChannelPermissionNoticeFilter', () => {
-  it('drops hook approval notices only while the pane has a connected channel', () => {
+describe('createChannelApprovalButtonStripper', () => {
+  const approvalButton = {
+    label: 'Permitir',
+    action: encodeTelegramPromptAction({ tag: 'abcd1234', kind: 'approval', optionIndex: 0 })
+  }
+  const otherButton = { label: 'Abrir', action: 'open' }
+  const withButtons: TelegramNotice = { ...blocked, buttons: [[approvalButton], [otherButton]] }
+
+  it('keeps the approval notice but strips its approval buttons while the channel relays it', () => {
     let connected = true
-    const keep = createChannelPermissionNoticeFilter({ isConnected: () => connected })
-    expect(keep(blocked, entry({ interactivePrompt: approval }))).toBe(false)
-    expect(keep(blocked, entry({ interactivePrompt: question }))).toBe(true)
-    expect(
-      keep(
-        { ...blocked, kind: 'waiting' },
-        entry({ state: 'waiting', interactivePrompt: question })
-      )
-    ).toBe(true)
-    expect(keep(blocked, entry())).toBe(true)
+    const strip = createChannelApprovalButtonStripper({ isConnected: () => connected })
+    const stripped = strip(withButtons, entry({ interactivePrompt: approval }))
+    expect(stripped.buttons).toEqual([[otherButton]])
+    expect(stripped.text).toContain(blocked.text)
+    expect(stripped.text).toContain('Answer this permission in the Claude channel message.')
     connected = false
-    expect(keep(blocked, entry({ interactivePrompt: approval }))).toBe(true)
+    expect(strip(withButtons, entry({ interactivePrompt: approval }))).toBe(withButtons)
+  })
+
+  it('leaves questions, waiting notices and unparsed prompts alone', () => {
+    const strip = createChannelApprovalButtonStripper({ isConnected: () => true })
+    expect(strip(withButtons, entry({ interactivePrompt: question }))).toBe(withButtons)
+    const waiting = { ...withButtons, kind: 'waiting' as const }
+    expect(strip(waiting, entry({ state: 'waiting', interactivePrompt: approval }))).toBe(waiting)
+    expect(strip(withButtons, entry())).toBe(withButtons)
   })
 })

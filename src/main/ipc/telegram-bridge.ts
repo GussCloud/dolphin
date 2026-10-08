@@ -1,7 +1,8 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import {
   TELEGRAM_BRIDGE_CHANGED_CHANNEL,
-  type TelegramBridgeState
+  type TelegramBridgeState,
+  type TelegramChannelAvailability
 } from '../../shared/telegram-bridge-state'
 import { getTelegramBridge, type TelegramBridgeService } from '../telegram/telegram-bridge-service'
 
@@ -16,6 +17,15 @@ const UNAVAILABLE_STATE: TelegramBridgeState = {
   connection: { state: 'disabled' }
 }
 
+let readChannelAvailability: (() => TelegramChannelAvailability) | null = null
+
+/** Set by the Claude channel at startup so the settings card can say why it is unavailable. */
+export function setTelegramChannelAvailabilityReader(
+  reader: (() => TelegramChannelAvailability) | null
+): void {
+  readChannelAvailability = reader
+}
+
 export function readTelegramBridgeState(bridge: TelegramBridgeService | null): TelegramBridgeState {
   if (!bridge) {
     return UNAVAILABLE_STATE
@@ -25,6 +35,7 @@ export function readTelegramBridgeState(bridge: TelegramBridgeService | null): T
     available: true,
     enabled: snapshot.enabled,
     channelsEnabled: snapshot.channelsEnabled,
+    ...(readChannelAvailability ? { channelAvailability: readChannelAvailability() } : {}),
     tokenConfigured: snapshot.tokenConfigured,
     allowedChats: snapshot.allowedChats,
     pairingCode: bridge.settings.getPairingCode(),
@@ -41,7 +52,7 @@ function requireBridge(): TelegramBridgeService {
   return bridge
 }
 
-function broadcastTelegramBridgeState(): void {
+export function broadcastTelegramBridgeState(): void {
   const state = readTelegramBridgeState(getTelegramBridge())
   for (const window of BrowserWindow.getAllWindows()) {
     if (!window.isDestroyed()) {

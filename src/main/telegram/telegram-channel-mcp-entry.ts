@@ -14,13 +14,14 @@ const CHANNEL_SERVER_VERSION = '1.0.0'
 
 function main(): void {
   const paneKey = process.env.DOLPHIN_PANE_KEY
-  if (!paneKey) {
-    // Why exit: outside a Dolphin pane there is nowhere to route messages; /mcp shows it failed.
-    process.stderr.write('dolphin-telegram channel: DOLPHIN_PANE_KEY is not set\n')
+  const launchToken = process.env.DOLPHIN_AGENT_LAUNCH_TOKEN
+  if (!paneKey || !launchToken) {
+    // Why exit: outside a Dolphin agent pane there is nowhere to route messages; /mcp shows it failed.
+    process.stderr.write('dolphin-telegram channel: not running in a Dolphin agent pane\n')
     process.exit(1)
   }
   const host = createTelegramChannelHttpHost({
-    session: { paneKey, sessionId: randomUUID() },
+    session: { paneKey, sessionId: randomUUID(), launchToken },
     resolveEndpoint: () => resolveTelegramChannelEndpoint(process.env)
   })
   const server = createTelegramChannelMcpServer({

@@ -46,7 +46,7 @@ describe('resolveTelegramChannelEndpoint', () => {
 })
 
 describe('createTelegramChannelHttpHost', () => {
-  const session = { paneKey: 'tab:leaf', sessionId: 's1' }
+  const session = { paneKey: 'tab:leaf', sessionId: 's1', launchToken: 'tok' }
   const endpoint = { port: 1, token: 't' }
 
   it('stamps every post with the session and maps 409 to superseded', async () => {
@@ -56,8 +56,13 @@ describe('createTelegramChannelHttpHost', () => {
       resolveEndpoint: () => endpoint,
       postJson
     })
-    await expect(host.poll(new AbortController().signal)).resolves.toBe('superseded')
-    expect(postJson).toHaveBeenCalledWith(endpoint, '/channel/poll', session, expect.anything())
+    await expect(host.poll(new AbortController().signal, 3)).resolves.toBe('superseded')
+    expect(postJson).toHaveBeenCalledWith(
+      endpoint,
+      '/channel/poll',
+      { ...session, ack: 3 },
+      expect.anything()
+    )
   })
 
   it('parses polled events and drops malformed ones', async () => {
@@ -65,10 +70,11 @@ describe('createTelegramChannelHttpHost', () => {
       status: 200,
       body: {
         events: [
-          { kind: 'message', text: 'oi', meta: { chat_id: '1', 'bad-key': 'x', n: 2 } },
-          { kind: 'permission-verdict', requestId: 'abcde', behavior: 'allow' },
-          { kind: 'permission-verdict', requestId: 'ABCDE', behavior: 'allow' },
-          { kind: 'other' }
+          { seq: 1, kind: 'message', text: 'oi', meta: { chat_id: '1', 'bad-key': 'x', n: 2 } },
+          { seq: 2, kind: 'permission-verdict', requestId: 'abcde', behavior: 'allow' },
+          { seq: 3, kind: 'permission-verdict', requestId: 'ABCDE', behavior: 'allow' },
+          { kind: 'message', text: 'no seq', meta: {} },
+          { seq: 4, kind: 'other' }
         ]
       }
     }))
@@ -77,9 +83,9 @@ describe('createTelegramChannelHttpHost', () => {
       resolveEndpoint: () => endpoint,
       postJson
     })
-    await expect(host.poll(new AbortController().signal)).resolves.toEqual([
-      { kind: 'message', text: 'oi', meta: { chat_id: '1' } },
-      { kind: 'permission-verdict', requestId: 'abcde', behavior: 'allow' }
+    await expect(host.poll(new AbortController().signal, 0)).resolves.toEqual([
+      { seq: 1, kind: 'message', text: 'oi', meta: { chat_id: '1' } },
+      { seq: 2, kind: 'permission-verdict', requestId: 'abcde', behavior: 'allow' }
     ])
   })
 

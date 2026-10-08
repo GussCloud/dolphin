@@ -12265,7 +12265,10 @@
           "enable": "将智能体通知发送到 Telegram",
           "unavailable": "Telegram 通知在 Dolphin 桌面应用中运行，此主机上不可用。",
           "channelsLabel": "通过通道回复 Claude Code（实验性）",
-          "channelsDescription": "将 Telegram 回复直接送入 Claude Code 会话。开启期间，Claude 每次启动都会要求你确认加载本地开发通道；通道仅在 Claude 使用 claude.ai 或 Console API 密钥登录时可用（不支持 Bedrock、Vertex AI 或 Foundry）。"
+          "channelsDescription": "将 Telegram 回复直接送入 Claude Code 会话。开启期间，Claude 每次启动都会要求你确认加载本地开发通道；通道仅在 Claude 使用 claude.ai 或 Console API 密钥登录时可用（不支持 Bedrock、Vertex AI 或 Foundry）。",
+          "channelClaudeNotFound": "这台电脑上未找到 Claude Code，因此回复仍会发送到终端。",
+          "channelClaudeTooOld": "频道需要 Claude Code 2.1.234 或更高版本。请更新 Claude Code；在此之前回复会发送到终端。",
+          "channelConfigUnavailable": "Dolphin 无法把频道配置放在所有 shell 都能按字面读取的路径中，因此回复仍会发送到终端。"
         }
       },
       "right": {
@@ -18878,6 +18881,23 @@
       "submit": "发送",
       "hintMultiSelect": "选择选项，然后点按“发送”。",
       "hintReply": "回复此消息即可输入答案。"
+    },
+    "channel": {
+      "sent": "已发送给 Claude。",
+      "unconfirmed": "Claude 未确认收到消息；请查看终端。",
+      "allowed": "已允许。",
+      "denied": "已拒绝。",
+      "permissionExpired": "该权限请求已过期或已被答复。",
+      "privateChatOnly": "只能在你与机器人的私聊中答复权限请求。",
+      "severalClaudes": "连接了多个 Claude。请回复应接收此内容的 Claude 的消息。",
+      "replyToNotice": "有多个代理在等你。请回复目标代理的通知。",
+      "noAgent": "没有代理收到这条消息。",
+      "unknownAction": "无法识别的操作。",
+      "permissionTitle": "Claude 请求权限：{{toolName}}",
+      "permissionTypedHint": "（或回复“是 {{requestId}}”/“否 {{requestId}}”）",
+      "yes": "是",
+      "no": "否",
+      "approveInChannel": "请在 Claude 频道消息中答复此权限。"
     }
   }
 }

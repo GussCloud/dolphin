@@ -14,6 +14,8 @@ export const TELEGRAM_CHANNEL_DISCONNECT_PATH = '/channel/disconnect'
 
 /** Main holds a poll this long before answering with no events. */
 export const TELEGRAM_CHANNEL_POLL_HOLD_MS = 25_000
+/** A pane with no poll for this long counts as disconnected; texts then take the terminal path. */
+export const TELEGRAM_CHANNEL_STALE_AFTER_MS = 30_000
 
 export const TELEGRAM_CHANNEL_MAX_TEXT_CHARS = 4_000
 
@@ -26,13 +28,12 @@ export type TelegramChannelSessionRef = {
   sessionId: string
 }
 
+/** `seq` grows per session; the server acknowledges the highest one it emitted on its next poll. */
 export type TelegramChannelInboundEvent =
-  | { kind: 'message'; text: string; meta: Record<string, string> }
-  | { kind: 'permission-verdict'; requestId: string; behavior: 'allow' | 'deny' }
+  | { seq: number; kind: 'message'; text: string; meta: Record<string, string> }
+  | { seq: number; kind: 'permission-verdict'; requestId: string; behavior: 'allow' | 'deny' }
 
-export type TelegramChannelPollResponse = {
-  events: TelegramChannelInboundEvent[]
-}
+export type TelegramChannelPollRequest = TelegramChannelSessionRef & { ack: number }
 
 export type TelegramChannelReplyRequest = TelegramChannelSessionRef & { text: string }
 
@@ -55,6 +56,10 @@ function readString(
   return typeof value === 'string' && value.length <= maxLength ? value : null
 }
 
+function readSeq(value: unknown): number | null {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? Object.fromEntries(Object.entries(value))
@@ -69,6 +74,12 @@ export function parseTelegramChannelSessionRef(body: unknown): TelegramChannelSe
   const paneKey = readString(record, 'paneKey', 200)
   const sessionId = readString(record, 'sessionId', 100)
   return paneKey && sessionId ? { paneKey, sessionId } : null
+}
+
+export function parseTelegramChannelPollRequest(body: unknown): TelegramChannelPollRequest | null {
+  const ref = parseTelegramChannelSessionRef(body)
+  const ack = readSeq(asRecord(body)?.ack ?? 0)
+  return ref && ack !== null ? { ...ref, ack } : null
 }
 
 export function parseTelegramChannelReplyRequest(
@@ -98,39 +109,44 @@ export function parseTelegramChannelPermissionRequest(
   return { ...ref, requestId, toolName, description, inputPreview }
 }
 
-export function parseTelegramChannelPollResponse(body: unknown): TelegramChannelInboundEvent[] {
-  const record = asRecord(body)
-  const events = record?.events
-  if (!Array.isArray(events)) {
-    return []
+function parseInboundEvent(raw: unknown): TelegramChannelInboundEvent | null {
+  const event = asRecord(raw)
+  const seq = readSeq(event?.seq)
+  if (!event || seq === null) {
+    return null
   }
-  const parsed: TelegramChannelInboundEvent[] = []
-  for (const raw of events) {
-    const event = asRecord(raw)
-    if (event?.kind === 'message' && typeof event.text === 'string') {
-      const meta = asRecord(event.meta) ?? {}
-      parsed.push({
-        kind: 'message',
-        text: event.text,
-        meta: Object.fromEntries(
-          Object.entries(meta).filter(
-            (entry): entry is [string, string] =>
-              typeof entry[1] === 'string' && /^\w+$/.test(entry[0])
-          )
+  if (event.kind === 'message' && typeof event.text === 'string') {
+    const meta = asRecord(event.meta) ?? {}
+    return {
+      seq,
+      kind: 'message',
+      text: event.text,
+      // Claude Code drops meta keys that are not identifiers, so never send them.
+      meta: Object.fromEntries(
+        Object.entries(meta).filter(
+          (entry): entry is [string, string] =>
+            typeof entry[1] === 'string' && /^\w+$/.test(entry[0])
         )
-      })
-    } else if (
-      event?.kind === 'permission-verdict' &&
-      typeof event.requestId === 'string' &&
-      CLAUDE_CHANNEL_PERMISSION_REQUEST_ID_RE.test(event.requestId) &&
-      (event.behavior === 'allow' || event.behavior === 'deny')
-    ) {
-      parsed.push({
-        kind: 'permission-verdict',
-        requestId: event.requestId,
-        behavior: event.behavior
-      })
+      )
     }
   }
-  return parsed
+  if (
+    event.kind === 'permission-verdict' &&
+    typeof event.requestId === 'string' &&
+    CLAUDE_CHANNEL_PERMISSION_REQUEST_ID_RE.test(event.requestId) &&
+    (event.behavior === 'allow' || event.behavior === 'deny')
+  ) {
+    return { seq, kind: 'permission-verdict', requestId: event.requestId, behavior: event.behavior }
+  }
+  return null
+}
+
+export function parseTelegramChannelPollResponse(body: unknown): TelegramChannelInboundEvent[] {
+  const events = asRecord(body)?.events
+  return Array.isArray(events)
+    ? events.flatMap((raw) => {
+        const event = parseInboundEvent(raw)
+        return event ? [event] : []
+      })
+    : []
 }

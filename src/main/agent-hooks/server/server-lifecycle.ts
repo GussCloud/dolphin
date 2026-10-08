@@ -88,7 +88,12 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeEnv
       })
       const pathname = new URL(req.url ?? '/', 'http://127.0.0.1').pathname
       if (isAgentHookChannelPath(pathname)) {
-        await serveAgentHookChannelRoute(req, res, pathname, this.channelRouteHandler)
+        await serveAgentHookChannelRoute(req, res, pathname, {
+          handler: this.channelRouteHandler,
+          authorize: (paneKey, launchToken) =>
+            this.verifyLocalPaneLaunchToken(paneKey, launchToken) ||
+            this.channelPaneAuthorizer?.(paneKey, launchToken) === true
+        })
         return
       }
       try {

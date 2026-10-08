@@ -167,4 +167,5 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   const telegramBridge = startMainProcessTelegramBridge(store)
   const telegramChannel = startMainProcessTelegramChannel(telegramBridge, store)
   startMainProcessTelegramAnswers(telegramBridge, runtime, telegramChannel.wrapInboundHandler)
+  telegramChannel.registerAfterAnswers()
 }

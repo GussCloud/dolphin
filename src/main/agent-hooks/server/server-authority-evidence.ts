@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 
 import type { AgentHookEventPayload } from '../../../shared/agent-hook-listener/listener-event'
 import type {
@@ -44,6 +44,20 @@ export abstract class AgentHookServerAuthorityEvidence extends AgentHookServerSt
       return null
     }
     return Object.freeze({ paneKey, source: 'current_hook' })
+  }
+
+  /** True when `launchToken` is the one the pane's latest local hook event committed. */
+  verifyLocalPaneLaunchToken(paneKey: string, launchToken: string): boolean {
+    const token = launchToken.trim()
+    const commitment = this.persistedAuthorityCommitmentsByPaneKey.get(
+      this.resolvePaneKeyAlias(paneKey)
+    )
+    if (!token || !commitment || commitment.connectionId !== null) {
+      return false
+    }
+    const actual = createHash('sha256').update(token).digest()
+    const expected = Buffer.from(commitment.launchTokenHash, 'hex')
+    return actual.length === expected.length && timingSafeEqual(actual, expected)
   }
 
   protected captureHydratedAuthorityCommitments(): void {
