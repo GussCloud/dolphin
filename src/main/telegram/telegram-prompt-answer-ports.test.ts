@@ -80,6 +80,31 @@ describe('createTelegramPromptAnswerPorts', () => {
     expect(requests[0]!.params).not.toHaveProperty('client')
   })
 
+  it('forwards the agent-status guard and maps its refusal reasons', async () => {
+    const noAgent = setup({
+      dispatch: success({ send: { accepted: false, refusedReason: 'no-agent' } })
+    })
+    expect(
+      await noAgent.ports.sendTerminal({
+        terminal: 't',
+        text: 'x',
+        enter: false,
+        requireAgentStatus: 'sendable'
+      })
+    ).toBe('no-agent')
+    expect(noAgent.requests[0]!.params).toEqual({
+      terminal: 't',
+      text: 'x',
+      enter: false,
+      requireAgentStatus: 'sendable'
+    })
+    const permission = setup({
+      dispatch: success({ send: { accepted: false, refusedReason: 'permission' } })
+    })
+    expect(await permission.ports.sendTerminal({ terminal: 't', enter: true })).toBe('permission')
+    expect(permission.requests[0]!.params).toEqual({ terminal: 't', enter: true })
+  })
+
   it('maps a refused send to rejected and a transport throw to unknown', async () => {
     const refused = setup({ dispatch: success({ send: { accepted: false } }) })
     expect(await refused.ports.sendTerminal({ terminal: 't', text: 'x', enter: true })).toBe(
