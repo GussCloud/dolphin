@@ -23,7 +23,8 @@ import {
   telegramAnswerFailure as fail,
   telegramAnswerMayHaveLanded,
   telegramOutcomeResult,
-  type TelegramAnswerTransport
+  type TelegramAnswerTransport,
+  type TelegramDeliveryReport
 } from './telegram-prompt-answer-delivery'
 import { telegramAnswerText } from './telegram-answer-text'
 import { TelegramAnsweredPrompts } from './telegram-answered-prompts'
@@ -67,8 +68,8 @@ export function createTelegramPromptAnswerService(
     entry: AgentStatusEntry,
     prompt: TelegramAnswerablePrompt,
     terminal: string | undefined,
-    deliver: () => Promise<TelegramInboundResult>
-  ): Promise<TelegramInboundResult> {
+    deliver: () => Promise<TelegramDeliveryReport>
+  ): Promise<TelegramDeliveryReport> {
     return exclusive(exclusiveKey(prompt, terminal), async () => {
       const result = await deliver()
       if (telegramAnswerMayHaveLanded(result)) {
@@ -96,8 +97,8 @@ export function createTelegramPromptAnswerService(
 
   async function exclusive(
     key: string,
-    run: () => Promise<TelegramInboundResult>
-  ): Promise<TelegramInboundResult> {
+    run: () => Promise<TelegramDeliveryReport>
+  ): Promise<TelegramDeliveryReport> {
     if (inFlight.has(key)) {
       return fail(telegramAnswerText.busy())
     }
@@ -105,7 +106,7 @@ export function createTelegramPromptAnswerService(
     try {
       return await run()
     } catch {
-      return fail(telegramAnswerText.unconfirmed())
+      return fail(telegramAnswerText.unconfirmed(), 'unknown')
     } finally {
       inFlight.delete(key)
     }
@@ -262,5 +263,15 @@ export function createTelegramPromptAnswerService(
     return exclusive(`pty:${terminal}`, () => deliverTelegramPlainText(transport, terminal, text))
   }
 
-  return { handleCallback, handleText }
+  // The landing is internal bookkeeping; the bridge sees the plain contract result.
+  return {
+    handleCallback: async (event) => withoutLanding(await handleCallback(event)),
+    handleText: async (event) => withoutLanding(await handleText(event))
+  }
+}
+
+function withoutLanding(result: TelegramInboundResult): TelegramInboundResult {
+  return result.ok
+    ? { ok: true, ...(result.ack !== undefined ? { ack: result.ack } : {}) }
+    : { ok: false, error: result.error }
 }

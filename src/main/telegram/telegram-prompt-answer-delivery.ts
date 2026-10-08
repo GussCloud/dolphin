@@ -57,16 +57,27 @@ export type TelegramAnswerTransport = {
   wait: (ms: number) => Promise<void>
 }
 
-export function telegramAnswerFailure(error: string): TelegramInboundResult {
-  return { ok: false, error }
+/** Whether keys may have reached the agent; typed so the answered guard never reads localized text. */
+export type TelegramAnswerLanding = 'accepted' | 'unknown' | 'partly-sent' | 'rejected'
+export type TelegramDeliveryReport = TelegramInboundResult & { landing: TelegramAnswerLanding }
+
+export function telegramAnswerFailure(
+  error: string,
+  landing: Exclude<TelegramAnswerLanding, 'accepted'> = 'rejected'
+): TelegramDeliveryReport {
+  return { ok: false, error, landing }
 }
 
-export function telegramOutcomeResult(outcome: TelegramTerminalOutcome): TelegramInboundResult {
+function telegramAnswerSent(): TelegramDeliveryReport {
+  return { ok: true, ack: telegramAnswerText.sent(), landing: 'accepted' }
+}
+
+export function telegramOutcomeResult(outcome: TelegramTerminalOutcome): TelegramDeliveryReport {
   switch (outcome) {
     case 'accepted':
-      return { ok: true, ack: telegramAnswerText.sent() }
+      return telegramAnswerSent()
     case 'unknown':
-      return telegramAnswerFailure(telegramAnswerText.unconfirmed())
+      return telegramAnswerFailure(telegramAnswerText.unconfirmed(), 'unknown')
     case 'no-agent':
       return telegramAnswerFailure(telegramAnswerText.noAgent())
     case 'permission':
@@ -77,12 +88,8 @@ export function telegramOutcomeResult(outcome: TelegramTerminalOutcome): Telegra
 }
 
 /** True when keys may already have reached the agent, so a repeat would answer twice. */
-export function telegramAnswerMayHaveLanded(result: TelegramInboundResult): boolean {
-  return (
-    result.ok ||
-    result.error === telegramAnswerText.unconfirmed() ||
-    result.error === telegramAnswerText.partlySent()
-  )
+export function telegramAnswerMayHaveLanded(report: TelegramDeliveryReport): boolean {
+  return report.landing !== 'rejected'
 }
 
 /** Free text into an agent TUI, guarded both phases so a dead agent's shell never runs it. */
@@ -90,7 +97,7 @@ export async function deliverTelegramPlainText(
   transport: TelegramAnswerTransport,
   terminal: string,
   text: string
-): Promise<TelegramInboundResult> {
+): Promise<TelegramDeliveryReport> {
   const paste = buildAgentPromptPasteBytes(text)
   const pasted = await transport.sendTerminal({
     terminal,
@@ -110,22 +117,22 @@ export async function deliverTelegramPlainText(
     requireAgentStatus: 'sendable'
   })
   return submitted === 'accepted'
-    ? { ok: true, ack: telegramAnswerText.sent() }
-    : telegramAnswerFailure(telegramAnswerText.textNotSubmitted())
+    ? telegramAnswerSent()
+    : telegramAnswerFailure(telegramAnswerText.textNotSubmitted(), 'partly-sent')
 }
 
 async function sendKeyGroups(
   transport: TelegramAnswerTransport,
   terminal: string,
   groups: string[]
-): Promise<TelegramInboundResult> {
+): Promise<TelegramDeliveryReport> {
   let accepted = 0
   for (let index = 0; index < groups.length; index += 1) {
     const outcome = await transport.sendTerminal({ terminal, text: groups[index]!, enter: false })
     if (outcome !== 'accepted') {
       // Any accepted key already moved the selector; a resend would double-step it.
       return accepted > 0
-        ? telegramAnswerFailure(telegramAnswerText.partlySent())
+        ? telegramAnswerFailure(telegramAnswerText.partlySent(), 'partly-sent')
         : telegramOutcomeResult(outcome)
     }
     accepted += 1
@@ -133,7 +140,7 @@ async function sendKeyGroups(
       await transport.wait(NATIVE_CHAT_QUESTION_STEP_MS)
     }
   }
-  return { ok: true, ack: telegramAnswerText.sent() }
+  return telegramAnswerSent()
 }
 
 export async function deliverTelegramApproval(
@@ -141,7 +148,7 @@ export async function deliverTelegramApproval(
   terminal: string | undefined,
   prompt: Extract<TelegramAnswerablePrompt, { kind: 'approval' }>,
   optionIndex: number
-): Promise<TelegramInboundResult> {
+): Promise<TelegramDeliveryReport> {
   if (prompt.source === 'structured') {
     const option = prompt.body.options[optionIndex]
     if (!option) {
@@ -192,7 +199,7 @@ export async function deliverTelegramQuestion(
   terminal: string | undefined,
   prompt: Extract<TelegramAnswerablePrompt, { kind: 'question' }>,
   selections: AskAnswerSelection[]
-): Promise<TelegramInboundResult> {
+): Promise<TelegramDeliveryReport> {
   if (prompt.source === 'structured') {
     const answers = structuredAnswers(prompt, selections)
     // The host requires every question answered; refuse before a round trip it would reject.

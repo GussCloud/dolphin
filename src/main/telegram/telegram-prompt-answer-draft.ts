@@ -3,7 +3,7 @@ import type { AskAnswerSelection, AskQuestion } from '../../shared/native-chat-a
 // Telegram delivers one tap at a time, so a multi-question or multi-select answer
 // is collected here and sent as one keystroke plan once it is complete.
 
-/** Multi-select questions never complete on a tap; the user must press Enviar. */
+/** Multi-select questions never complete on a tap; the user must press Send. */
 export function telegramQuestionsNeedSubmit(questions: readonly AskQuestion[]): boolean {
   return questions.some((question) => question.multiSelect)
 }
