@@ -20,7 +20,8 @@ export function startMainProcessTelegramAnswers(
     statusSource: agentHookServer,
     dispatchRpc: (request) => dispatcher.dispatch(request),
     getStructuredHost: getStructuredAgentSessionHost,
-    resolveWorktreeQuery: (query) => bridge.resolveWorktreeQuery(query)
+    resolveWorktreeQuery: (query) => bridge.resolveWorktreeQuery(query),
+    resolveTerminalHandle: (paneKey) => runtime.getLiveTerminalHandleForPaneKey(paneKey)
   })
   const disposeDecorator = bridge.registerNoticeDecorator(
     createTelegramPromptButtonDecorator(ports.readStructuredPrompt)

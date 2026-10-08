@@ -48,7 +48,8 @@ function setup(
     },
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the ports only call the four HostStub methods.
     getStructuredHost: () => hostStub as unknown as StructuredAgentSessionHost,
-    resolveWorktreeQuery: () => []
+    resolveWorktreeQuery: () => [],
+    resolveTerminalHandle: (paneKey) => (paneKey === 'tab:live' ? 'term-live' : null)
   }
   return { ports: createTelegramPromptAnswerPorts(deps), requests, deps }
 }
@@ -65,6 +66,12 @@ describe('createTelegramPromptAnswerPorts', () => {
       interactivePrompt: '{"questions":[]}'
     })
     expect(ports.readEntry('missing')).toBeNull()
+  })
+
+  it('resolves a pane to its live runtime handle, and to nothing once the terminal is gone', () => {
+    const { ports } = setup()
+    expect(ports.resolveTerminalHandle?.('tab:live')).toBe('term-live')
+    expect(ports.resolveTerminalHandle?.('tab:gone')).toBeUndefined()
   })
 
   it('sends terminal input through runtime terminal.send without a client', async () => {
