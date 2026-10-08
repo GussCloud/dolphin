@@ -49,6 +49,8 @@ export type CompletedFeatureTipState = {
   voiceDictationEnabled: boolean
   /** Search is on, or this client cannot turn it on. */
   sessionSearchTipCompleted: boolean
+  /** This client cannot reach the Telegram bridge, which runs in the desktop app. */
+  telegramUnavailable?: boolean
   featureInteractions?: FeatureInteractionState
 }
 
@@ -155,6 +157,9 @@ export function getCompletedFeatureTipIds(state: CompletedFeatureTipState): Set<
   }
   if (state.sessionSearchTipCompleted) {
     completedIds.add('agent-session-search')
+  }
+  if (state.telegramUnavailable) {
+    completedIds.add('telegram-integration')
   }
   for (const tip of FEATURE_TIPS) {
     if (

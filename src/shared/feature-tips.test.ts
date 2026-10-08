@@ -190,6 +190,17 @@ describe('feature tips', () => {
       expect(isFeatureTipForAudience(tip, undefined)).toBe(false)
     })
 
+    it('is completed where the Telegram bridge is unavailable', () => {
+      const completed = getCompletedFeatureTipIds({
+        cliInstalled: false,
+        voiceDictationEnabled: false,
+        sessionSearchTipCompleted: false,
+        telegramUnavailable: true
+      })
+
+      expect(completed.has('telegram-integration')).toBe(true)
+    })
+
     it('comes before every other tip for an eligible audience', () => {
       const tips = getOrderedUnseenFeatureTips({
         seenTipIds: new Set<FeatureTipId>(),

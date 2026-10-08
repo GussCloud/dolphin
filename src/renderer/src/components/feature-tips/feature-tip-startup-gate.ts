@@ -52,6 +52,8 @@ export function getPendingFeatureTips(args: {
       cliInstalled: args.cliInstalled,
       voiceDictationEnabled: args.settings?.voice?.enabled === true,
       sessionSearchTipCompleted: isSessionSearchFeatureTipCompleted(args.settings, args.webClient),
+      // Why: the web client's preload API has no Telegram bridge, so its settings card can't work.
+      telegramUnavailable: args.webClient,
       featureInteractions: args.featureInteractions
     })
   })

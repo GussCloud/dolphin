@@ -384,6 +384,16 @@ describe('feature tip startup gate', () => {
     ).toEqual({ kind: 'open', tipId: 'voice-dictation' })
   })
 
+  it('never opens the Telegram tip in the web client', () => {
+    expect(
+      decideForExistingUser({
+        sessionSearchEnabled: false,
+        webClient: true,
+        audience: { appVersion: '0.2.3', windows: false }
+      })
+    ).toEqual({ kind: 'open', tipId: 'dolphin-cli' })
+  })
+
   it('keeps the Telegram tip hidden before 0.2.3', () => {
     expect(
       decideForExistingUser({
