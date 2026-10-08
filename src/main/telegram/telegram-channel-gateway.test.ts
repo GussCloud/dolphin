@@ -83,7 +83,7 @@ describe('TelegramChannelGateway', () => {
     await expect(fresh).resolves.toMatchObject({ status: 200 })
   })
 
-  it('forwards replies to the allowed chats with a reply route, escaped', async () => {
+  it('forwards replies to the allowed chats as plain text with a reply route', async () => {
     const bridge = createBridge()
     const gateway = new TelegramChannelGateway(bridge)
     void poll(gateway, PANE_A, 's1')
@@ -93,7 +93,7 @@ describe('TelegramChannelGateway', () => {
       signal: new AbortController().signal
     })
     expect(result).toEqual({ status: 200, json: { ok: true } })
-    expect(bridge.sendToAllowedChats).toHaveBeenCalledWith('a &lt; b &amp; c', {
+    expect(bridge.sendToAllowedChats).toHaveBeenCalledWith('a < b & c', {
       replyToRoute: { routeId: `r${PANE_A.length}xyz`, paneKey: PANE_A }
     })
     const stale = await gateway.handleRoute({
@@ -122,7 +122,7 @@ describe('TelegramChannelGateway', () => {
       signal: new AbortController().signal
     })
     const [text, opts] = bridge.sendToAllowedChats.mock.calls[0]
-    expect(text).toContain('<code>Bash</code>')
+    expect(text).toContain('Claude pede permissão: Bash')
     expect(text).toContain('{"command":"pnpm test"}')
     expect(opts.buttons).toEqual([
       [

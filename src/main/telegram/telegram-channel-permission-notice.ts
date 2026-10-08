@@ -8,32 +8,27 @@ const DESCRIPTION_MAX_CHARS = 400
 
 export type TelegramChannelPermissionVerdict = { requestId: string; behavior: 'allow' | 'deny' }
 
-export function escapeTelegramHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
 function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text
 }
 
+/** Plain text: the bridge escapes it for Telegram's HTML parse mode. */
 export function formatChannelPermissionNotice(request: {
   requestId: string
   toolName: string
   description: string
   inputPreview: string
 }): { text: string; buttons: TelegramNoticeButton[][] } {
-  const lines = [
-    `🔐 <b>Claude pede permissão</b>: <code>${escapeTelegramHtml(request.toolName)}</code>`
-  ]
+  const lines = [`🔐 Claude pede permissão: ${request.toolName}`]
   const description = request.description.trim()
   if (description) {
-    lines.push(escapeTelegramHtml(clip(description, DESCRIPTION_MAX_CHARS)))
+    lines.push(clip(description, DESCRIPTION_MAX_CHARS))
   }
   const preview = request.inputPreview.trim()
   if (preview) {
-    lines.push(`<pre>${escapeTelegramHtml(clip(preview, PREVIEW_MAX_CHARS))}</pre>`)
+    lines.push(clip(preview, PREVIEW_MAX_CHARS))
   }
-  lines.push(`<i>ou responda "sim ${request.requestId}" / "não ${request.requestId}"</i>`)
+  lines.push(`(ou responda "sim ${request.requestId}" / "não ${request.requestId}")`)
   return {
     text: lines.join('\n'),
     buttons: [

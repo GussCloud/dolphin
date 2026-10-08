@@ -13,7 +13,6 @@ import type {
   TelegramTextEvent
 } from './telegram-inbound'
 import {
-  escapeTelegramHtml,
   formatChannelPermissionNotice,
   parseChannelPermissionAction,
   parseChannelPermissionText,
@@ -274,7 +273,7 @@ export class TelegramChannelGateway {
     if (!this.currentSession(request)) {
       return { status: TELEGRAM_CHANNEL_SUPERSEDED_STATUS }
     }
-    const text = escapeTelegramHtml(request.text.slice(0, TELEGRAM_CHANNEL_MAX_TEXT_CHARS))
+    const text = request.text.slice(0, TELEGRAM_CHANNEL_MAX_TEXT_CHARS)
     try {
       await this.bridge.sendToAllowedChats(text, {
         replyToRoute: this.bridge.createRoute(request.paneKey)

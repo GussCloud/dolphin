@@ -22,6 +22,7 @@ import { agentHookServer } from '../agent-hooks/server'
 import { emitPluginWorktreeLifecycle } from './main-process-pty-startup'
 import { startMainProcessTelegramBridge } from './main-process-telegram'
 import { startMainProcessTelegramAnswers } from './main-process-telegram-answers'
+import { startMainProcessTelegramChannel } from './main-process-telegram-channel'
 import { mainProcessState as state } from './main-process-state'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 
@@ -163,5 +164,7 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   })
   runtime.onWorktreeLifecycle(emitPluginWorktreeLifecycle)
   // Telegram notices: a second subscriber on the same status-store tap.
-  startMainProcessTelegramAnswers(startMainProcessTelegramBridge(store), runtime)
+  const telegramBridge = startMainProcessTelegramBridge(store)
+  const telegramChannel = startMainProcessTelegramChannel(telegramBridge, store)
+  startMainProcessTelegramAnswers(telegramBridge, runtime, telegramChannel.wrapInboundHandler)
 }
