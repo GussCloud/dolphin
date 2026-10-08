@@ -151,7 +151,7 @@ function findCodexReadyPromptIndex(normalized: string): number | null {
 }
 
 export const TERMINAL_WAIT_BLOCKED_SENTINEL_RE =
-  /update available|choose working directory to|codex just got an upgrade|hooks need review|do you trust|trust this|trusted workspace|press enter to (?:confirm|continue|view|insert)|press t to trust|permission required|requires permission|allow once|allow always|run this command\?/i
+  /update available|choose working directory to|codex just got an upgrade|hooks need review|do you trust|trust this|trusted workspace|press enter to (?:confirm|continue|view|insert)|press t to trust|permission required|requires permission|allow once|allow always|run this command\?|loading development channels/i
 
 // Why text at all: cursor-agent has no approval hook, so the key-bound menu is the only authority.
 const CURSOR_APPROVAL_CHOICE_MARKERS = [
@@ -285,6 +285,11 @@ function findBlockedSignalInLiveWindow(
     if (!hasSpecificPromptInContext) {
       candidates.push({ reason: 'agent-interactive-prompt', index: interactivePromptIndex })
     }
+  }
+  // Claude's --dangerously-load-development-channels confirmation (Telegram channel opt-in).
+  const devChannelsIndex = normalized.lastIndexOf('loading development channels')
+  if (devChannelsIndex !== -1 && normalized.includes('enter to confirm', devChannelsIndex)) {
+    candidates.push({ reason: 'agent-interactive-prompt', index: devChannelsIndex })
   }
   const cursorApprovalIndex = findCursorApprovalPromptIndex(normalized)
   if (cursorApprovalIndex !== null) {

@@ -7,6 +7,7 @@ import { getSettingsForWorktreeRuntimeOwner } from '@/lib/worktree-runtime-owner
 import { isExpectedAgentProcess } from '../../../../../shared/agent-process-recognition'
 import { resolveDraftPasteReadyTimeoutMs } from '../../../../../shared/draft-paste-ready-timeout'
 import { createDraftPasteReadyScanner } from '../../../../../shared/draft-paste-ready-scanner'
+import { CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS } from '../../../../../shared/claude-dev-channels-dialog'
 import { sendAgentDraftPasteContent } from '@/lib/agent-draft-paste-content'
 import { writeTerminalPastePtyInput } from '../terminal-pty-paste-writer'
 
@@ -77,6 +78,8 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
   let startupDraftInputRecorded = false
   let startupDraftQuietTimer: ReturnType<typeof setTimeout> | null = null
   let startupDraftHardTimer: ReturnType<typeof setTimeout> | null = null
+  let startupDraftHeld = false
+  const startupDraftStartedAt = Date.now()
   const clearStartupDraftPasteTimers = (): void => {
     if (startupDraftQuietTimer !== null) {
       clearTimeout(startupDraftQuietTimer)
@@ -168,6 +171,14 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
     }
     startupDraftHardTimer = setTimeout(() => {
       startupDraftHardTimer = null
+      // Why: the blind delivery below would land in Claude's channel dialog and be lost.
+      if (
+        startupDraftHeld &&
+        Date.now() - startupDraftStartedAt < CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS
+      ) {
+        armStartupDraftHardTimer()
+        return
+      }
       void deliverStartupDraftIfAgentOwnsPty()
     }, resolveDraftPasteReadyTimeoutMs(session.startupDraftAgent))
   }
@@ -198,6 +209,11 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
     if (scanned.ready) {
       sendStartupDraftPaste()
       return
+    }
+    startupDraftHeld = scanned.hold === true
+    if (scanned.hold && startupDraftQuietTimer !== null) {
+      clearTimeout(startupDraftQuietTimer)
+      startupDraftQuietTimer = null
     }
     if (scanned.armQuietTimer) {
       armStartupDraftQuietTimer()

@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-10-08T12:59:22.573Z",
+  "platform": "win32",
+  "command": [
+    "claude",
+    "--mcp-config=<scratch>/cfg.json",
+    "--dangerously-load-development-channels=server:dolphin-telegram",
+    "Reply with exactly the word PONG and nothing else."
+  ],
+  "cols": 120,
+  "rows": 36,
+  "note": "Claude Code 2.1.294 (Max plan), Windows 11. Dialog confirmed with --send \"8000:\r\"; the argv prompt then runs. Workspace path segments scrubbed to same-length x.",
+  "exitCode": 1
+}

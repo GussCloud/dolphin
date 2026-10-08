@@ -8,6 +8,10 @@ import type {
   WorktreeStartupDraftPaste,
   WorktreeStartupFollowup
 } from './runtime-worktree-agent-startup'
+import {
+  CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS,
+  createClaudeDevChannelsDialogTracker
+} from '../../shared/claude-dev-channels-dialog'
 
 const BRACKETED_PASTE_BEGIN = '\x1b[200~'
 const BRACKETED_PASTE_END = '\x1b[201~'
@@ -56,6 +60,21 @@ export function sendWorktreeStartupFollowupWhenReady(
     )
 }
 
+// Why: the follow-up is typed raw; into Claude's channel confirmation it would be swallowed.
+async function waitOutClaudeDevChannelsDialog(
+  host: WorktreeStartupReadinessHost,
+  ptyId: string
+): Promise<boolean> {
+  const deadline = Date.now() + CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS
+  while (createClaudeDevChannelsDialogTracker().observe(host.readRecentOutput(ptyId) ?? '')) {
+    if (Date.now() > deadline) {
+      return false
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+  return true
+}
+
 export async function waitForWorktreeStartupFollowup(
   host: WorktreeStartupReadinessHost,
   handle: string,
@@ -72,11 +91,11 @@ export async function waitForWorktreeStartupFollowup(
     try {
       const foregroundProcess = await host.getForegroundProcess(ptyId)
       if (isExpectedAgentProcess(foregroundProcess, expectedProcess)) {
-        return ptyId
+        return (await waitOutClaudeDevChannelsDialog(host, ptyId)) ? ptyId : null
       }
       if (attempt >= 4 && !isShellProcess(foregroundProcess ?? '')) {
         if ((await host.hasChildProcesses?.(ptyId).catch(() => false)) ?? false) {
-          return ptyId
+          return (await waitOutClaudeDevChannelsDialog(host, ptyId)) ? ptyId : null
         }
       }
     } catch {
@@ -121,6 +140,10 @@ export function waitForWorktreeStartupDraft(
       const result = scanner.observe(data)
       if (result.ready) {
         return finish(ptyId)
+      }
+      if (result.hold && quietTimer) {
+        clearTimeout(quietTimer)
+        quietTimer = null
       }
       if (result.armQuietTimer) {
         if (quietTimer) {

@@ -5,6 +5,7 @@ import { replayPreHandlerPtyData } from '@/components/terminal-pane/pty-pre-hand
 import { isRemoteRuntimePtyId } from '@/runtime/runtime-terminal-inspection'
 import { subscribeToRuntimeTerminalData } from '@/runtime/runtime-terminal-stream'
 import { createDraftPasteReadyScanner } from '../../../shared/draft-paste-ready-scanner'
+import { CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS } from '../../../shared/claude-dev-channels-dialog'
 
 const BRACKETED_PASTE_QUIET_MS = 1500
 
@@ -29,6 +30,8 @@ export function waitForAgentDraftInputReady(
     const scanner = createDraftPasteReadyScanner(readySignal)
     let quietTimer: number | null = null
     let hardTimer: number | null = null
+    let held = false
+    const startedAt = Date.now()
     let unsubscribe: (() => void) | null = null
 
     const finish = (value: boolean): void => {
@@ -54,10 +57,15 @@ export function waitForAgentDraftInputReady(
     }
 
     const observeData = (data: string): void => {
-      const { ready, armQuietTimer: shouldArm } = scanner.observe(data)
+      const { ready, armQuietTimer: shouldArm, hold } = scanner.observe(data)
+      held = hold === true
       if (ready) {
         finish(true)
         return
+      }
+      if (hold && quietTimer !== null) {
+        window.clearTimeout(quietTimer)
+        quietTimer = null
       }
       if (shouldArm) {
         armQuietTimer()
@@ -86,8 +94,16 @@ export function waitForAgentDraftInputReady(
       replayPreHandlerPtyData(ptyId, observeData)
     }
 
+    // Why: a timeout ends in a blind paste; while Claude's channel dialog is up that paste is lost.
+    const onHardTimeout = (): void => {
+      if (held && Date.now() - startedAt < CLAUDE_DEV_CHANNELS_DIALOG_MAX_HOLD_MS) {
+        hardTimer = window.setTimeout(onHardTimeout, timeoutMs)
+        return
+      }
+      finish(false)
+    }
     if (!settled) {
-      hardTimer = window.setTimeout(() => finish(false), timeoutMs)
+      hardTimer = window.setTimeout(onHardTimeout, timeoutMs)
     }
   })
 }
