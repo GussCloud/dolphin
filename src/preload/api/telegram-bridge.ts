@@ -8,6 +8,7 @@ import type { PreloadApi } from '../api-types'
 export const telegramBridgeApi = {
   getState: () => ipcRenderer.invoke('telegram:getState'),
   setEnabled: (enabled) => ipcRenderer.invoke('telegram:setEnabled', enabled),
+  setChannelsEnabled: (enabled) => ipcRenderer.invoke('telegram:setChannelsEnabled', enabled),
   saveToken: (token) => ipcRenderer.invoke('telegram:saveToken', token),
   clearToken: () => ipcRenderer.invoke('telegram:clearToken'),
   issuePairingCode: () => ipcRenderer.invoke('telegram:issuePairingCode'),

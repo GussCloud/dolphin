@@ -21,6 +21,8 @@ export type TelegramBridgeState = {
   /** False on hosts that never start the bridge. */
   available: boolean
   enabled: boolean
+  /** Experimental Claude channel delivery; off by default. */
+  channelsEnabled: boolean
   tokenConfigured: boolean
   allowedChats: TelegramAllowedChatView[]
   pairingCode: { code: string; expiresAt: number } | null

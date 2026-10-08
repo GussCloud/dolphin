@@ -12366,7 +12366,9 @@
           "pairingInstructions": "Envoyez ce message à votre bot dans les 10 minutes. Le code ne fonctionne qu’une fois.",
           "pairChat": "Associer une discussion",
           "enable": "Envoyer les avis des agents sur Telegram",
-          "unavailable": "Les avis Telegram s’exécutent dans l’application de bureau Dolphin et ne sont pas disponibles sur cet hôte."
+          "unavailable": "Les avis Telegram s’exécutent dans l’application de bureau Dolphin et ne sont pas disponibles sur cet hôte.",
+          "channelsLabel": "Répondre à Claude Code via un canal (expérimental)",
+          "channelsDescription": "Transmet les réponses Telegram directement dans les sessions Claude Code. Tant que l’option est active, Claude vous demande de confirmer le chargement d’un canal de développement local à chaque démarrage, et les canaux ne fonctionnent que si Claude est connecté avec claude.ai ou une clé d’API Console (pas Bedrock, Vertex AI ni Foundry)."
         }
       },
       "right": {

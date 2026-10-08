@@ -10,6 +10,7 @@ import { TelegramIntegrationCard } from './telegram-integration-card'
 const BASE: TelegramBridgeState = {
   available: true,
   enabled: false,
+  channelsEnabled: false,
   tokenConfigured: false,
   allowedChats: [],
   pairingCode: null,
@@ -20,6 +21,7 @@ const BASE: TelegramBridgeState = {
 const telegram = {
   getState: vi.fn(),
   setEnabled: vi.fn(),
+  setChannelsEnabled: vi.fn(),
   saveToken: vi.fn(),
   clearToken: vi.fn(),
   issuePairingCode: vi.fn(),
@@ -77,6 +79,9 @@ describe('TelegramIntegrationCard', () => {
     expect(host.textContent).toContain('Off')
     expect(host.querySelector('input[type="password"]')).not.toBeNull()
     expect(button(host, 'Pair a chat').disabled).toBe(true)
+    const channels = host.querySelector('#telegram-claude-channels')
+    expect(channels?.getAttribute('aria-checked')).toBe('false')
+    expect(host.textContent).toContain('local development channel')
   })
 
   it('shows the saved bot, paired chats and the pairing command', async () => {

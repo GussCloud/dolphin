@@ -12263,7 +12263,9 @@
           "pairingInstructions": "10 分以内にこのメッセージをボットに送信してください。コードは 1 回だけ有効です。",
           "pairChat": "チャットをペアリング",
           "enable": "Agent の通知を Telegram に送信",
-          "unavailable": "Telegram 通知は Dolphin デスクトップアプリで動作するため、このホストでは利用できません。"
+          "unavailable": "Telegram 通知は Dolphin デスクトップアプリで動作するため、このホストでは利用できません。",
+          "channelsLabel": "チャネル経由で Claude Code に回答 (試験的)",
+          "channelsDescription": "Telegram の返信を Claude Code セッションに直接届けます。オンの間、Claude は起動のたびにローカル開発チャネルの読み込み確認を求めます。チャネルは Claude が claude.ai または Console API キーでサインインしている場合のみ動作します (Bedrock、Vertex AI、Foundry は不可)。"
         }
       },
       "right": {

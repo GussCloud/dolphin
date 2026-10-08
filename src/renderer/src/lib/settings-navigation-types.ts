@@ -12,6 +12,8 @@ export type SettingsNavInstallStatus =
   | 'needs-attention'
   | 'checking'
 
+export const TELEGRAM_SETTINGS_TARGET_ID = 'integrations-telegram'
+
 const SETTINGS_NAV_TARGETS = [
   'general',
   'integrations',

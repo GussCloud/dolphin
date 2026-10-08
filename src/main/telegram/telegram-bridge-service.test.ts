@@ -59,7 +59,9 @@ function makeHarness(options: { snapshot?: AgentStatusIpcPayload[] } = {}) {
       subscribeEnrichedStatus: subscribe(listeners.status),
       subscribePaneStatusClear: subscribe(listeners.clear),
       subscribeStatusDrop: subscribe(listeners.drop),
-      getStatusSnapshot: () => options.snapshot ?? []
+      getStatusSnapshot: () => options.snapshot ?? [],
+      getStatusSnapshotForPane: (paneKey) =>
+        (options.snapshot ?? []).filter((row) => row.paneKey === paneKey)
     },
     settings,
     resolveWorktreeName: (id) => (id === 'repo::/api' ? 'api' : null),
@@ -152,7 +154,59 @@ describe('TelegramBridgeService', () => {
     settings.setEnabled(true)
     await bridge.sendToAllowedChats('a <b>')
     expect(api.sendMessage).toHaveBeenLastCalledWith(CHAT, 'a &lt;b&gt;', {
+      buttons: [],
       replyToMessageId: undefined
+    })
+  })
+
+  it('suppresses a notice a registered filter rejects', async () => {
+    const { api, settings, emit, bridge } = makeHarness()
+    settings.setEnabled(true)
+    const dispose = bridge.registerNoticeFilter((notice) => notice.kind !== 'waiting')
+    await emit('working', 1)
+    await emit('waiting', 2)
+    expect(api.sendMessage).not.toHaveBeenCalled()
+    dispose()
+    await emit('working', 3)
+    await emit('waiting', 4)
+    expect(api.sendMessage).toHaveBeenCalledTimes(1)
+  })
+
+  it('creates routes from the store row and sends buttons threaded under the route', async () => {
+    const row: AgentStatusIpcPayload = {
+      paneKey: PANE,
+      worktreeId: 'repo::/api',
+      connectionId: 'ssh-1',
+      agentType: 'claude',
+      terminalHandle: 'term-1',
+      state: 'waiting',
+      prompt: '',
+      receivedAt: 1,
+      stateStartedAt: 1
+    }
+    const { api, settings, bridge } = makeHarness({ snapshot: [row] })
+    settings.setEnabled(true)
+    const route = bridge.createRoute(PANE)
+    expect(route).toMatchObject({
+      paneKey: PANE,
+      worktreeId: 'repo::/api',
+      connectionId: 'ssh-1',
+      agentType: 'claude',
+      terminalHandle: 'term-1'
+    })
+    expect(bridge.createRoute('other-pane')).toMatchObject({ paneKey: 'other-pane' })
+    await bridge.sendToAllowedChats('Allow?', {
+      replyToRoute: route,
+      buttons: [[{ label: 'Yes', action: 'chp-allow-ab12' }]]
+    })
+    await bridge.sendToAllowedChats('follow-up', { replyToRoute: route })
+    expect(api.sendMessage).toHaveBeenNthCalledWith(1, CHAT, 'Allow?', {
+      buttons: [[{ text: 'Yes', callbackData: `${route.routeId}:chp-allow-ab12` }]],
+      replyToMessageId: undefined
+    })
+    expect(api.sendMessage).toHaveBeenNthCalledWith(2, CHAT, 'follow-up', {
+      buttons: [],
+      replyToMessageId: 100
     })
   })
 

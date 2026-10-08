@@ -8,6 +8,7 @@ import { getTelegramBridge, type TelegramBridgeService } from '../telegram/teleg
 const UNAVAILABLE_STATE: TelegramBridgeState = {
   available: false,
   enabled: false,
+  channelsEnabled: false,
   tokenConfigured: false,
   allowedChats: [],
   pairingCode: null,
@@ -23,6 +24,7 @@ export function readTelegramBridgeState(bridge: TelegramBridgeService | null): T
   return {
     available: true,
     enabled: snapshot.enabled,
+    channelsEnabled: snapshot.channelsEnabled,
     tokenConfigured: snapshot.tokenConfigured,
     allowedChats: snapshot.allowedChats,
     pairingCode: bridge.settings.getPairingCode(),
@@ -79,6 +81,14 @@ export function registerTelegramBridgeHandlers(): void {
         throw new Error('enabled must be a boolean')
       }
       bridge.settings.setEnabled(enabled)
+    })
+  )
+  ipcMain.handle('telegram:setChannelsEnabled', (_event, enabled: unknown) =>
+    mutate((bridge) => {
+      if (typeof enabled !== 'boolean') {
+        throw new Error('enabled must be a boolean')
+      }
+      bridge.settings.setChannelsEnabled(enabled)
     })
   )
   ipcMain.handle('telegram:saveToken', (_event, token: unknown) =>

@@ -12263,7 +12263,9 @@
           "pairingInstructions": "请在 10 分钟内将此消息发送给你的机器人。代码只能使用一次。",
           "pairChat": "配对聊天",
           "enable": "将智能体通知发送到 Telegram",
-          "unavailable": "Telegram 通知在 Dolphin 桌面应用中运行，此主机上不可用。"
+          "unavailable": "Telegram 通知在 Dolphin 桌面应用中运行，此主机上不可用。",
+          "channelsLabel": "通过通道回复 Claude Code（实验性）",
+          "channelsDescription": "将 Telegram 回复直接送入 Claude Code 会话。开启期间，Claude 每次启动都会要求你确认加载本地开发通道；通道仅在 Claude 使用 claude.ai 或 Console API 密钥登录时可用（不支持 Bedrock、Vertex AI 或 Foundry）。"
         }
       },
       "right": {

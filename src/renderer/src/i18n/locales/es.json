@@ -10702,7 +10702,9 @@
           "pairingInstructions": "Envía este mensaje a tu bot en un plazo de 10 minutos. El código solo funciona una vez.",
           "pairChat": "Vincular un chat",
           "enable": "Enviar avisos de agentes a Telegram",
-          "unavailable": "Los avisos de Telegram se ejecutan en la aplicación de escritorio de Dolphin y no están disponibles en este host."
+          "unavailable": "Los avisos de Telegram se ejecutan en la aplicación de escritorio de Dolphin y no están disponibles en este host.",
+          "channelsLabel": "Responder a Claude Code mediante un canal (experimental)",
+          "channelsDescription": "Entrega las respuestas de Telegram directamente en las sesiones de Claude Code. Mientras esté activado, Claude te pedirá confirmar la carga de un canal de desarrollo local cada vez que se inicie, y los canales solo funcionan cuando Claude ha iniciado sesión con claude.ai o una clave de API de Console (no Bedrock, Vertex AI ni Foundry)."
         }
       },
       "right": {

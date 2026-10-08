@@ -8,10 +8,18 @@ import { escapeTelegramHtml } from './telegram-agent-notice'
 import { TelegramBotApi } from './telegram-bot-api'
 import type {
   TelegramInboundHandler,
+  TelegramNoticeButton,
   TelegramNoticeDecorator,
   TelegramPaneRoute
 } from './telegram-inbound'
-import { deliverTelegramNotice, resolveTelegramNotice } from './telegram-notice-delivery'
+import {
+  deliverTelegramNotice,
+  registerTelegramPaneRoute,
+  resolveTelegramNotice,
+  sendTelegramToChats,
+  type TelegramNoticeDeliveryDeps,
+  type TelegramNoticeFilter
+} from './telegram-notice-delivery'
 import {
   TelegramNoticeTransitions,
   telegramStatusEntryFromEnriched
@@ -28,6 +36,7 @@ export type TelegramStatusSource = Pick<
   | 'subscribePaneStatusClear'
   | 'subscribeStatusDrop'
   | 'getStatusSnapshot'
+  | 'getStatusSnapshotForPane'
 >
 
 export type TelegramBridgeApi = Pick<
@@ -51,6 +60,7 @@ export class TelegramBridgeService {
   private readonly transitions = new TelegramNoticeTransitions()
   private readonly handlers: TelegramInboundHandler[] = []
   private readonly decorators: TelegramNoticeDecorator[] = []
+  private readonly filters: TelegramNoticeFilter[] = []
   private readonly statusListeners = new Set<(status: TelegramConnectionStatus) => void>()
   private readonly disposers: (() => void)[] = []
   private pollStatus: TelegramConnectionStatus = { state: 'connecting' }
@@ -126,25 +136,30 @@ export class TelegramBridgeService {
     return () => removeItem(this.decorators, decorator)
   }
 
-  /** `text` is plain text; the bridge escapes it. Threads under the route's newest notice. */
+  /** `text` is plain (the bridge escapes it). Buttons need `replyToRoute` to carry their route id. */
   async sendToAllowedChats(
     text: string,
-    opts?: { replyToRoute?: TelegramPaneRoute }
+    opts?: { replyToRoute?: TelegramPaneRoute; buttons?: TelegramNoticeButton[][] }
   ): Promise<void> {
     const api = this.session?.api
     if (!api || !text.trim()) {
       return
     }
-    for (const chatId of this.deps.settings.getAllowedChatIds()) {
-      const replyToMessageId = opts?.replyToRoute
-        ? this.routes.latestMessageFor(opts.replyToRoute.routeId, chatId)
-        : undefined
-      try {
-        await api.sendMessage(chatId, escapeTelegramHtml(text), { replyToMessageId })
-      } catch (error) {
-        console.warn('[telegram] send to allowed chat failed', error)
-      }
-    }
+    await sendTelegramToChats(this.deliveryDeps(api), escapeTelegramHtml(text), {
+      ...(opts?.replyToRoute ? { route: opts.replyToRoute, threadUnderRoute: true } : {}),
+      ...(opts?.buttons ? { buttons: opts.buttons } : {})
+    })
+  }
+
+  /** Registers a route for the pane, filled from its current store row when present. */
+  createRoute(paneKey: string): TelegramPaneRoute {
+    const row = this.deps.statusSource.getStatusSnapshotForPane(paneKey)[0]
+    return registerTelegramPaneRoute(this.routes, row ?? { paneKey })
+  }
+
+  registerNoticeFilter(filter: TelegramNoticeFilter): () => void {
+    this.filters.push(filter)
+    return () => removeItem(this.filters, filter)
   }
 
   resolveWorktreeQuery(query: string): { worktreeId: string; paneKeys: string[] }[] {
@@ -220,16 +235,7 @@ export class TelegramBridgeService {
       if (!decision.notify) {
         return
       }
-      const sent = await deliverTelegramNotice(
-        {
-          api: session.api,
-          routes: this.routes,
-          allowedChatIds: () => this.deps.settings.getAllowedChatIds(),
-          decorators: () => this.decorators,
-          resolveWorktreeName: this.deps.resolveWorktreeName
-        },
-        entry
-      )
+      const sent = await deliverTelegramNotice(this.deliveryDeps(session.api), entry)
       if (sent && (sent.notice.kind === 'blocked' || sent.notice.kind === 'waiting')) {
         this.transitions.recordSent(entry.paneKey, entry.stateStartedAt, {
           kind: sent.notice.kind,
@@ -244,6 +250,17 @@ export class TelegramBridgeService {
     // Why: a transient (connection-scoped) clear is lost contact — `unverifiable`, not exited — so it keeps the baseline.
     if ('paneKey' in clear) {
       this.enqueue(async () => this.transitions.forget(clear.paneKey))
+    }
+  }
+
+  private deliveryDeps(api: TelegramBridgeApi): TelegramNoticeDeliveryDeps {
+    return {
+      api,
+      routes: this.routes,
+      allowedChatIds: () => this.deps.settings.getAllowedChatIds(),
+      decorators: () => this.decorators,
+      filters: () => this.filters,
+      resolveWorktreeName: this.deps.resolveWorktreeName
     }
   }
 

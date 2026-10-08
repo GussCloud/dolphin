@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { TELEGRAM_SETTINGS_TARGET_ID } from '@/lib/settings-navigation-types'
 import type { TelegramBridgeState } from '../../../../shared/telegram-bridge-state'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
 import { telegramStatusHint, telegramStatusLabel, telegramStatusTone } from './telegram-card-state'
@@ -210,6 +211,39 @@ function ChatsSection(props: {
   )
 }
 
+function ChannelsSection(props: {
+  state: TelegramBridgeState
+  busy: boolean
+  run: MutationRunner
+}): React.JSX.Element {
+  const label = translate(
+    'auto.components.settings.telegramIntegrationCard.channelsLabel',
+    'Answer Claude Code through a channel (experimental)'
+  )
+  return (
+    <div className="flex items-start gap-3">
+      <div className="min-w-0 flex-1 space-y-1">
+        <Label htmlFor="telegram-claude-channels">{label}</Label>
+        <p className="text-xs text-muted-foreground">
+          {translate(
+            'auto.components.settings.telegramIntegrationCard.channelsDescription',
+            'Delivers Telegram replies straight into Claude Code sessions. While on, Claude asks you to confirm loading a local development channel every time it starts, and channels only work when Claude is signed in with claude.ai or a Console API key (not Bedrock, Vertex AI or Foundry).'
+          )}
+        </p>
+      </div>
+      <Switch
+        id="telegram-claude-channels"
+        aria-label={label}
+        checked={props.state.channelsEnabled}
+        disabled={props.busy}
+        onCheckedChange={(checked) =>
+          void props.run(() => window.api.telegram.setChannelsEnabled(checked))
+        }
+      />
+    </div>
+  )
+}
+
 export function TelegramIntegrationCard(): React.JSX.Element {
   const { state, busy, run } = useTelegramBridgeState()
   const hint = telegramStatusHint(state)
@@ -229,7 +263,7 @@ export function TelegramIntegrationCard(): React.JSX.Element {
       statusLabel={telegramStatusLabel(state)}
       statusTone={telegramStatusTone(state)}
       checking={state === null}
-      settingsSectionId="integrations-telegram"
+      settingsSectionId={TELEGRAM_SETTINGS_TARGET_ID}
       actions={
         state?.available ? (
           <Switch
@@ -248,6 +282,7 @@ export function TelegramIntegrationCard(): React.JSX.Element {
               {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
               <TokenSection state={state} busy={busy} run={run} />
               <ChatsSection state={state} busy={busy} run={run} />
+              <ChannelsSection state={state} busy={busy} run={run} />
             </>
           ) : (
             <p className="text-xs text-muted-foreground">
