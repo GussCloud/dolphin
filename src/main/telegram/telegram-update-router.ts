@@ -179,6 +179,14 @@ export class TelegramUpdateRouter {
     }
     const parsed = callback.data ? this.deps.routes.parseCallbackData(callback.data) : null
     const handler = this.deps.getInboundHandler('handleCallback')
+    if (callback.data && !parsed) {
+      // Why: routes are in-memory and bounded, so a restart or eviction orphans old buttons.
+      await this.deps.answerCallback(
+        callback.id,
+        translateMain('telegram.callback.expired', 'This message expired. Use the latest notice.')
+      )
+      return
+    }
     if (!parsed || !handler?.handleCallback || callback.messageId === undefined) {
       await this.deps.answerCallback(callback.id, notSupportedText())
       return

@@ -175,6 +175,19 @@ describe('TelegramUpdateRouter', () => {
       updateId: 4,
       callbackQuery: { id: 'q2', data: 'Unknown1:yes', chatId: ALLOWED, messageId: 8 }
     })
-    expect(deps.answerCallback).toHaveBeenLastCalledWith('q2', 'Replies are not supported yet.')
+    expect(deps.answerCallback).toHaveBeenLastCalledWith(
+      'q2',
+      'This message expired. Use the latest notice.'
+    )
+  })
+
+  it('says "not supported" for a live route when no callback handler is registered', async () => {
+    const { router, deps, routes } = makeRouter()
+    const route = routes.register({ paneKey: 'p1' })
+    await router.route({
+      updateId: 5,
+      callbackQuery: { id: 'q3', data: `${route.routeId}:yes`, chatId: ALLOWED, messageId: 8 }
+    })
+    expect(deps.answerCallback).toHaveBeenLastCalledWith('q3', 'Replies are not supported yet.')
   })
 })

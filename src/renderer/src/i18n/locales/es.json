@@ -15740,6 +15740,9 @@
     "status": {
       "empty": "Aún no hay agentes reportados.",
       "unverifiable": "no verificable"
+    },
+    "callback": {
+      "expired": "Este mensaje caducó. Usa el aviso más reciente."
     }
   }
 }
