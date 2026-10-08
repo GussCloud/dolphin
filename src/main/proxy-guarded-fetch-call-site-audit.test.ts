@@ -20,7 +20,10 @@ const AUDITED_NON_NET_FETCH_CALLS = new Map<string, number>([
   ['main/rate-limits/minimax/minimax-request-context.ts', 2],
   // Injected HttpClient, not a session: resolves to net.fetch on defaultSession
   // (main/host/electron-http-client.ts) or to the global-fetch-audited Node fallback.
-  ['main/jira/authenticated-request.ts', 1]
+  ['main/jira/authenticated-request.ts', 1],
+  // getMainHttpClient(): net.fetch on defaultSession in the desktop (set in main-process-preflight),
+  // so the proxy guard covers Telegram traffic; the Node fallback is the global-fetch-audited port.
+  ['main/telegram/telegram-bot-api.ts', 1]
 ])
 
 // `globalThis.fetch` / `global.fetch` belong to global-fetch-call-site-audit.test.ts.
