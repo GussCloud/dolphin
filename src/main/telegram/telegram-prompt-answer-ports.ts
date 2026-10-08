@@ -22,6 +22,8 @@ export type TelegramPromptAnswerPortDeps = {
   dispatchRpc: (request: RpcRequest) => Promise<RpcResponse>
   getStructuredHost: () => StructuredAgentSessionHost | null
   resolveWorktreeQuery: (query: string) => { worktreeId: string; paneKeys: string[] }[]
+  /** The runtime's live handle for a pane (local or SSH), or null once its terminal is gone. */
+  resolveTerminalHandle: (paneKey: string) => string | null
 }
 
 const TELEGRAM_STRUCTURED_CALLER = { callerKey: 'trusted-local:telegram' }
@@ -158,6 +160,7 @@ export function createTelegramPromptAnswerPorts(
     inferQuestionAnswered: (request) => {
       deps.statusSource.inferQuestionAnswered(request)
     },
-    resolveWorktreeQuery: deps.resolveWorktreeQuery
+    resolveWorktreeQuery: deps.resolveWorktreeQuery,
+    resolveTerminalHandle: (paneKey) => deps.resolveTerminalHandle(paneKey) ?? undefined
   }
 }

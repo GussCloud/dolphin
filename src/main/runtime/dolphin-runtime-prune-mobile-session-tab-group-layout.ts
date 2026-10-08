@@ -245,16 +245,25 @@ export class DolphinRuntimeWithPruneMobileSessionTabGroupLayout extends DolphinR
     return this.getTerminalHandleForPaneKey(paneKey) ?? undefined
   }
 
-  getTerminalHandleForPaneKey(paneKey: string): string | null {
+  /** Only a pane whose PTY is still connected (local or SSH); never a handle to an exited terminal. */
+  getLiveTerminalHandleForPaneKey(paneKey: string): string | null {
     const parsed = parsePaneKey(paneKey)
     const leaf = parsed ? this.leaves.get(this.getLeafKey(parsed.tabId, parsed.leafId)) : undefined
     if (leaf?.ptyId && leaf.connected) {
       return this.issueHandle(leaf)
     }
     const panePty = this.getPtyRecordForPaneKey(paneKey)
-    if (panePty?.connected) {
-      return this.issuePtyHandle(panePty)
+    return panePty?.connected ? this.issuePtyHandle(panePty) : null
+  }
+
+  getTerminalHandleForPaneKey(paneKey: string): string | null {
+    const live = this.getLiveTerminalHandleForPaneKey(paneKey)
+    if (live) {
+      return live
     }
+    const parsed = parsePaneKey(paneKey)
+    const leaf = parsed ? this.leaves.get(this.getLeafKey(parsed.tabId, parsed.leafId)) : undefined
+    const panePty = this.getPtyRecordForPaneKey(paneKey)
     if (leaf?.ptyId) {
       return this.issueHandle(leaf)
     }

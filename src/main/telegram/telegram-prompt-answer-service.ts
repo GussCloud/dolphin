@@ -40,6 +40,8 @@ export type TelegramPromptAnswerPorts = Omit<TelegramAnswerTransport, 'wait'> & 
   readEntry: (paneKey: string) => AgentStatusEntry | null
   readStructuredPrompt: TelegramStructuredPromptReader
   resolveWorktreeQuery?: (query: string) => { worktreeId: string; paneKeys: string[] }[]
+  /** Hook rows carry no terminal handle; the runtime resolves the pane's live one. */
+  resolveTerminalHandle?: (paneKey: string) => string | undefined
   wait?: (ms: number) => Promise<void>
 }
 
@@ -112,6 +114,12 @@ export function createTelegramPromptAnswerService(
     }
   }
 
+  function terminalFor(entry: AgentStatusEntry, route: TelegramPaneRoute): string | undefined {
+    return (
+      entry.terminalHandle ?? route.terminalHandle ?? ports.resolveTerminalHandle?.(route.paneKey)
+    )
+  }
+
   function exclusiveKey(prompt: TelegramAnswerablePrompt, terminal: string | undefined): string {
     return prompt.source === 'structured' ? `structured:${prompt.sessionId}` : `pty:${terminal}`
   }
@@ -134,7 +142,7 @@ export function createTelegramPromptAnswerService(
     if (!hasAskAnswer({ questions: prompt.questions }, selections)) {
       return fail(telegramAnswerText.incomplete())
     }
-    const terminal = entry.terminalHandle ?? route.terminalHandle
+    const terminal = terminalFor(entry, route)
     const result = await deliverOnce(entry, prompt, terminal, () =>
       deliverTelegramQuestion(transport, entry, terminal, prompt, selections)
     )
@@ -167,11 +175,11 @@ export function createTelegramPromptAnswerService(
     if (!telegramPromptFitsButtons(prompt)) {
       return fail(telegramAnswerText.answerInDolphin())
     }
-    const terminal = entry.terminalHandle ?? route.terminalHandle
     if (prompt.kind === 'approval') {
       if (action.kind !== 'approval') {
         return fail(telegramAnswerText.stale())
       }
+      const terminal = terminalFor(entry, route)
       return deliverOnce(entry, prompt, terminal, () =>
         deliverTelegramApproval(transport, terminal, prompt, action.optionIndex)
       )
@@ -254,7 +262,7 @@ export function createTelegramPromptAnswerService(
         )
       )
     }
-    const terminal = entry.terminalHandle ?? route.terminalHandle
+    const terminal = terminalFor(entry, route)
     const text = event.text.trim()
     if (!terminal || !text) {
       return fail(telegramAnswerText.noTerminal())
