@@ -197,7 +197,15 @@ export function bindSettlePaneSerializer(session: ConnectPanePtySession): void {
     }
     startupDraftQuietTimer = setTimeout(() => {
       startupDraftQuietTimer = null
-      if (startupDraftReadyScanner?.isHolding()) {
+      // Why re-arm: the hold may lift without new output (main answers "not a channel PTY").
+      if (
+        shouldExtendTimeoutForClaudeDevChannelsDialog(
+          startupDraftReadyScanner?.isHolding() === true,
+          startupDraftStartedAt,
+          Date.now()
+        )
+      ) {
+        armStartupDraftQuietTimer()
         return
       }
       sendStartupDraftPaste()

@@ -74,6 +74,14 @@ describe('draft paste readiness under the dialog', () => {
     }
   })
 
+  it('holds while the per-PTY answer is still unknown', () => {
+    const scanner = createDraftPasteReadyScanner('render-quiet-after-bracketed-paste', {
+      holdOnClaudeDevChannelsDialog: () => 'unknown'
+    })
+    chunks(dialog, 32).forEach((chunk) => scanner.observe(chunk))
+    expect(scanner.isHolding()).toBe(true)
+  })
+
   it('still delivers a one-shot ready marker seen behind the dialog once it is dismissed', () => {
     const esc = String.fromCharCode(27)
     const scanner = createDraftPasteReadyScanner('render-cursor-after-bracketed-paste', channelPty)

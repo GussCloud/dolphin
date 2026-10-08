@@ -147,9 +147,10 @@ export function createDraftPasteReadyScanner(
     /**
      * True only for a PTY Dolphin launched with the Claude channel flags; the dialog text in any
      * other pane (an agent reading these sources, a `cat` of a fixture) must never hold a paste.
-     * A function because callers may learn it after the first chunks arrive.
+     * `unknown` (the caller has not learned it yet) holds too, so a first launch cannot paste into
+     * the dialog before the answer arrives; callers bound every hold by the dialog cap.
      */
-    holdOnClaudeDevChannelsDialog?: () => boolean
+    holdOnClaudeDevChannelsDialog?: () => boolean | 'unknown'
   } = {}
 ): {
   observe: (data: string) => DraftPasteReadyScanResult
@@ -166,8 +167,13 @@ export function createDraftPasteReadyScanner(
   let sawCodexPromptInAltScreen = false
   const devChannelsDialog = createClaudeDevChannelsDialogTracker()
   let readyBehindDialog = false
-  const isHolding = (): boolean =>
-    devChannelsDialog.pending() && options.holdOnClaudeDevChannelsDialog?.() === true
+  const isHolding = (): boolean => {
+    if (!devChannelsDialog.pending()) {
+      return false
+    }
+    const gate = options.holdOnClaudeDevChannelsDialog?.()
+    return gate === true || gate === 'unknown'
+  }
 
   const {
     markerAnchor,

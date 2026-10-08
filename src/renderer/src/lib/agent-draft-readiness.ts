@@ -57,9 +57,14 @@ export function waitForAgentDraftInputReady(
       }
       quietTimer = window.setTimeout(() => {
         quietTimer = null
-        if (!scanner.isHolding()) {
-          finish(true)
+        // Why re-arm: the hold may lift without new output (main answers "not a channel PTY").
+        if (
+          shouldExtendTimeoutForClaudeDevChannelsDialog(scanner.isHolding(), startedAt, Date.now())
+        ) {
+          armQuietTimer()
+          return
         }
+        finish(true)
       }, BRACKETED_PASTE_QUIET_MS)
     }
 

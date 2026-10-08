@@ -161,12 +161,21 @@ export function waitForWorktreeStartupDraft(
         if (quietTimer) {
           clearTimeout(quietTimer)
         }
-        quietTimer = setTimeout(() => {
+        const onQuiet = (): void => {
           quietTimer = null
-          if (!scanner.isHolding()) {
-            finish(ptyId)
+          if (
+            shouldExtendTimeoutForClaudeDevChannelsDialog(
+              scanner.isHolding(),
+              startedAt,
+              Date.now()
+            )
+          ) {
+            quietTimer = setTimeout(onQuiet, BRACKETED_PASTE_QUIET_MS)
+            return
           }
-        }, BRACKETED_PASTE_QUIET_MS)
+          finish(ptyId)
+        }
+        quietTimer = setTimeout(onQuiet, BRACKETED_PASTE_QUIET_MS)
       }
     }
     unsubscribe = host.subscribeToData(ptyId, observe)

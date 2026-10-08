@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ConnectPanePtySession } from './connect-pane-pty-session'
 
-const { sendDraft, inspectProcess, channelPty } = vi.hoisted(() => ({
-  sendDraft: vi.fn(async () => true),
-  inspectProcess: vi.fn(async () => ({ foregroundProcess: 'claude' })),
-  channelPty: { value: true }
-}))
+const { sendDraft, inspectProcess, channelPty } = vi.hoisted(() => {
+  const gate: { value: boolean | 'unknown' } = { value: true }
+  return {
+    sendDraft: vi.fn(async () => true),
+    inspectProcess: vi.fn(async () => ({ foregroundProcess: 'claude' })),
+    channelPty: gate
+  }
+})
 
 vi.mock('@/store', () => ({ useAppStore: { getState: () => ({}) } }))
 vi.mock('@/lib/worktree-runtime-owner', () => ({ getSettingsForWorktreeRuntimeOwner: () => null }))
@@ -87,5 +90,52 @@ describe('startup draft paste while Claude shows the development-channels dialog
     session.observeStartupDraftPasteReadiness(`cat fixture\r\n${DIALOG}`)
     await vi.advanceTimersByTimeAsync(QUIET_MS)
     expect(sendDraft).toHaveBeenCalledTimes(1)
+  })
+
+  describe('before main says whether this is a channel PTY', () => {
+    it('does not paste when the quiet window lapses while the answer is unknown', async () => {
+      channelPty.value = 'unknown'
+      const session = createSession()
+      bindSettlePaneSerializer(session)
+      session.observeStartupDraftPasteReadiness(BRACKETED_PASTE_ON)
+      session.observeStartupDraftPasteReadiness(DIALOG)
+      await vi.advanceTimersByTimeAsync(QUIET_MS * 4)
+      expect(sendDraft).not.toHaveBeenCalled()
+    })
+
+    it('keeps holding when main answers that it is a channel PTY', async () => {
+      channelPty.value = 'unknown'
+      const session = createSession()
+      bindSettlePaneSerializer(session)
+      session.observeStartupDraftPasteReadiness(BRACKETED_PASTE_ON + DIALOG)
+      channelPty.value = true
+      await vi.advanceTimersByTimeAsync(HARD_TIMEOUT_MS * 3)
+      expect(sendDraft).not.toHaveBeenCalled()
+      expect(inspectProcess).not.toHaveBeenCalled()
+    })
+
+    it('pastes once main answers that it is not a channel PTY', async () => {
+      channelPty.value = 'unknown'
+      const session = createSession()
+      bindSettlePaneSerializer(session)
+      session.observeStartupDraftPasteReadiness(BRACKETED_PASTE_ON + DIALOG)
+      await vi.advanceTimersByTimeAsync(QUIET_MS)
+      channelPty.value = false
+      await vi.advanceTimersByTimeAsync(HARD_TIMEOUT_MS)
+      expect(sendDraft).toHaveBeenCalledTimes(1)
+    })
+
+    it('re-arms a lapsed quiet window instead of pasting, then pastes when the hold lifts', async () => {
+      channelPty.value = false
+      const session = createSession()
+      bindSettlePaneSerializer(session)
+      session.observeStartupDraftPasteReadiness(BRACKETED_PASTE_ON + DIALOG)
+      channelPty.value = 'unknown'
+      await vi.advanceTimersByTimeAsync(QUIET_MS * 3)
+      expect(sendDraft).not.toHaveBeenCalled()
+      channelPty.value = false
+      await vi.advanceTimersByTimeAsync(QUIET_MS)
+      expect(sendDraft).toHaveBeenCalledTimes(1)
+    })
   })
 })
