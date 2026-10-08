@@ -2,6 +2,11 @@ import type {
   AgentJournalApprovalMatchedAskRule,
   AgentJournalApprovalSubject
 } from '../../../src/shared/agent-session-journal-types'
+import {
+  APPROVAL_ALLOW_KEYS,
+  APPROVAL_DENY_KEYS,
+  parseApprovalEnvelope
+} from '../../../src/shared/agent-prompt-answer-keys'
 import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
 import { translate } from '../i18n/mobile-locale-state'
 
@@ -29,8 +34,6 @@ export type MobileChatPermission = {
   options: Array<{ label: string; send: string }>
 }
 
-const ESCAPE = String.fromCharCode(27)
-
 /** Parse the live `agentStatus.interactivePrompt` approval envelope
  *  (`{ approval: { tool, summary } }`, emitted by the host on a PermissionRequest)
  *  into an Allow/Deny card. This is the reliable, agent-emitted signal — unlike
@@ -41,33 +44,16 @@ const ESCAPE = String.fromCharCode(27)
 export function parseApprovalFromStatus(
   interactivePrompt: string | undefined | null
 ): MobileChatPermission | null {
-  if (!interactivePrompt) {
+  const approval = parseApprovalEnvelope(interactivePrompt)
+  if (!approval) {
     return null
   }
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(interactivePrompt)
-  } catch {
-    return null
-  }
-  if (!parsed || typeof parsed !== 'object') {
-    return null
-  }
-  const approval = (parsed as { approval?: unknown }).approval
-  if (!approval || typeof approval !== 'object') {
-    return null
-  }
-  const tool = (approval as { tool?: unknown }).tool
-  if (typeof tool !== 'string' || tool.length === 0) {
-    return null
-  }
-  const summary = (approval as { summary?: unknown }).summary
   return {
-    title: translate(sessionChatCatalog, 'permissionAllowToolTitle', { tool }),
-    detail: typeof summary === 'string' && summary.length > 0 ? summary : undefined,
+    title: translate(sessionChatCatalog, 'permissionAllowToolTitle', { tool: approval.tool }),
+    detail: approval.summary,
     options: [
-      { label: translate(sessionChatCatalog, 'permissionAllow'), send: '1' },
-      { label: translate(sessionChatCatalog, 'permissionDeny'), send: ESCAPE }
+      { label: translate(sessionChatCatalog, 'permissionAllow'), send: APPROVAL_ALLOW_KEYS },
+      { label: translate(sessionChatCatalog, 'permissionDeny'), send: APPROVAL_DENY_KEYS }
     ]
   }
 }

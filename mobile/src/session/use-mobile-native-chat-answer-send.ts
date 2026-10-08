@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, type MutableRefObject } from 'react'
 import {
-  buildAskAnswerKeys,
-  buildCodexAskAnswerKeys,
-  formatAskAnswer,
   hasAskAnswer,
   type AskAnswerSelection,
   type AskPrompt
 } from '../../../src/shared/native-chat-ask'
+import {
+  askAnswerKeyGroupBytes,
+  planAskAnswerDelivery
+} from '../../../src/shared/agent-prompt-answer-keys'
 import type { RpcClient } from '../transport/rpc-client'
 import { MOBILE_NATIVE_CHAT_QUESTION_STEP_MS } from './mobile-native-chat-answer-stepping'
 import {
@@ -18,10 +19,6 @@ import {
   acquireMobileNativeChatTerminalWrite,
   releaseMobileNativeChatTerminalWrite
 } from './mobile-native-chat-terminal-write-lock'
-import {
-  resolveNativeChatTranscriptAgent,
-  shouldStepNativeChatAskAnswer
-} from '../../../src/shared/native-chat-agent-support'
 import { sessionChatCatalog } from '../i18n/catalogs/session-chat'
 import { translate } from '../i18n/mobile-locale-state'
 
@@ -34,13 +31,6 @@ export type MobileNativeChatAnswerSend = {
   answerAsk: (prompt: AskPrompt, selections: AskAnswerSelection[]) => Promise<boolean>
   /** Drop any in-flight per-keystroke writes (call on Stop). */
   cancelPending: () => void
-}
-
-// A free-text answer is written as raw keystrokes into Claude's "Type something"
-// input (terminal.send has no paste framing), so an embedded newline would
-// submit it early — collapse line breaks to spaces.
-function sanitizeAskFreeText(text: string): string {
-  return text.replace(/[\r\n]+/g, ' ')
 }
 
 /**
@@ -227,7 +217,8 @@ export function useMobileNativeChatAnswerSend(args: {
         }
         // Grok commits pasted labels; Claude and Codex need their selector-specific
         // keystrokes paced so each step renders before the next lands.
-        if (!shouldStepNativeChatAskAnswer(agentRef.current)) {
+        const delivery = planAskAnswerDelivery(agentRef.current, prompt, selections)
+        if (delivery.kind === 'paste') {
           // This shape pastes the label into the composer and commits it, so an
           // orphaned image paste would be submitted along with the answer (#10228).
           // The selector shapes below deliberately skip the heal: their keys are
@@ -257,20 +248,15 @@ export function useMobileNativeChatAnswerSend(args: {
           // successor's fence. Test the turn slot, not the generation counter —
           // Stop, ask-cancel and a dropped lease all bump the generation with no
           // successor, and there a landed answer IS a success.
-          const sent = (await sendTerminal(formatAskAnswer(prompt, selections), true)) || fail()
+          const sent = (await sendTerminal(delivery.text, true)) || fail()
           return sent && writeTurnsRef.current.get(handle) === turn
         }
-        const groups =
-          resolveNativeChatTranscriptAgent(agentRef.current) === 'codex'
-            ? buildCodexAskAnswerKeys(prompt, selections)
-            : buildAskAnswerKeys(prompt, selections)
+        const groups = delivery.groups
         for (let index = 0; index < groups.length; index += 1) {
           if (generationRef.current !== generation) {
             return false
           }
-          const group = groups[index]!
-          const body = 'raw' in group ? group.raw : sanitizeAskFreeText(group.text)
-          if (!(await sendTerminal(body, false))) {
+          if (!(await sendTerminal(askAnswerKeyGroupBytes(groups[index]!), false))) {
             return fail()
           }
           if (index < groups.length - 1) {
