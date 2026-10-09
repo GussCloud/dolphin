@@ -16,17 +16,17 @@ import {
 import { NATIVE_CHAT_QUESTION_STEP_MS } from '../../shared/native-chat-answer-stepping'
 import type { AskAnswerSelection } from '../../shared/native-chat-ask'
 import {
-  buildAgentPromptPasteBytes,
-  getAgentPromptSubmitDelayMs
-} from '../../shared/agent-prompt-injection'
+  deliverAgentPanePlainText,
+  type AgentPaneDeliveryOutcome,
+  type AgentPaneTerminalOutcome,
+  type AgentPaneTerminalSend
+} from '../agent-pane-text-delivery'
 import { telegramAnswerText } from './telegram-answer-text'
 import type { TelegramAnswerablePrompt } from './telegram-answerable-prompt'
 import type { TelegramInboundResult } from './telegram-inbound'
 
-/** `unknown` = the write may have landed (ack lost); never report it as a definite failure. */
-export type TelegramDeliveryOutcome = 'accepted' | 'rejected' | 'unknown'
-/** terminal.send's `requireAgentStatus: 'sendable'` refusals, before any byte is written. */
-export type TelegramTerminalOutcome = TelegramDeliveryOutcome | 'no-agent' | 'permission'
+export type TelegramDeliveryOutcome = AgentPaneDeliveryOutcome
+export type TelegramTerminalOutcome = AgentPaneTerminalOutcome
 
 export type TelegramStructuredResponse = {
   sessionId: string
@@ -40,12 +40,7 @@ export type TelegramStructuredResponse = {
 
 export type TelegramAnswerTransport = {
   /** Must go through the runtime `terminal.send` path so SSH/WSL panes and input locks behave as for mobile. */
-  sendTerminal: (input: {
-    terminal: string
-    text?: string
-    enter: boolean
-    requireAgentStatus?: 'sendable'
-  }) => Promise<TelegramTerminalOutcome>
+  sendTerminal: AgentPaneTerminalSend
   respondStructured: (response: TelegramStructuredResponse) => Promise<TelegramDeliveryOutcome>
   /** `agentSession.send` of one user text message, fenced like the host's own clients. */
   sendStructuredMessage: (input: {
@@ -98,27 +93,10 @@ export async function deliverTelegramPlainText(
   terminal: string,
   text: string
 ): Promise<TelegramDeliveryReport> {
-  const paste = buildAgentPromptPasteBytes(text)
-  const pasted = await transport.sendTerminal({
-    terminal,
-    text: paste,
-    enter: false,
-    requireAgentStatus: 'sendable'
-  })
-  if (pasted !== 'accepted') {
-    return telegramOutcomeResult(pasted)
-  }
-  await transport.wait(
-    getAgentPromptSubmitDelayMs(process.platform, Buffer.byteLength(paste, 'utf8'))
-  )
-  const submitted = await transport.sendTerminal({
-    terminal,
-    enter: true,
-    requireAgentStatus: 'sendable'
-  })
-  return submitted === 'accepted'
-    ? telegramAnswerSent()
-    : telegramAnswerFailure(telegramAnswerText.textNotSubmitted(), 'partly-sent')
+  const result = await deliverAgentPanePlainText(transport, terminal, text)
+  return result === 'partly-sent'
+    ? telegramAnswerFailure(telegramAnswerText.textNotSubmitted(), 'partly-sent')
+    : telegramOutcomeResult(result)
 }
 
 async function sendKeyGroups(

@@ -14,7 +14,10 @@ import { setTrayAttention } from '../tray/system-tray'
 import { isMainWindowVisible } from '../window/main-window-visibility'
 import { activeNotificationsById } from './native-notification-lifecycle'
 import { deliverNativeNotification } from './native-notification-delivery'
-import { createNotificationDeliveryService } from '../notifications/notification-delivery-service'
+import {
+  createNotificationDeliveryService,
+  type NotificationDeliveryService
+} from '../notifications/notification-delivery-service'
 import { createAnnouncedNotificationRegistry } from '../notifications/announced-notification-registry'
 import { registerNotificationSoundHandlers } from './notification-sound-ipc'
 import { openNotificationSystemSettings } from './notification-system-settings-link'
@@ -25,6 +28,15 @@ import {
   recordNotificationDeliveryOutcome,
   resetNotificationPermissionEvidence
 } from './notification-permission-probe'
+
+let activeDeliveryService: NotificationDeliveryService | null = null
+
+/** Main-originated notices (no renderer round trip); null until the handlers are registered. */
+export function dispatchMainProcessNotification(
+  request: NotificationDispatchRequest
+): NotificationDispatchResult | Promise<NotificationDispatchResult> | null {
+  return activeDeliveryService?.dispatch(request) ?? null
+}
 
 export function registerNotificationHandlers(store: Store, runtime?: DolphinRuntimeService): void {
   ipcMain.removeHandler('notifications:getDesktopAwayState')
@@ -139,6 +151,8 @@ export function registerNotificationHandlers(store: Store, runtime?: DolphinRunt
       }
     }
   })
+
+  activeDeliveryService = deliveryService
 
   ipcMain.removeHandler('notifications:dispatch')
   ipcMain.handle(

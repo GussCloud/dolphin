@@ -161,3 +161,25 @@ describe('createNotificationDeliveryService', () => {
     expect(harness.deliverNative).not.toHaveBeenCalled()
   })
 })
+
+describe('auto-retry exhausted notices', () => {
+  it('are gated by the agent task complete toggle like the done notice they replace', () => {
+    const harness = makeHarness(makeSettings({ agentTaskComplete: false }))
+    const result = createNotificationDeliveryService(harness.deps).dispatch(
+      makeRequest({ source: 'agent-auto-retry-exhausted', agentType: 'claude', agentState: 'done' })
+    )
+    expect(result).toEqual({ delivered: false, reason: 'source-disabled' })
+    expect(harness.setTrayAttention).toHaveBeenCalledWith(true)
+  })
+
+  it('reach phones under the shipped agent-task-complete source', () => {
+    const harness = makeHarness(makeSettings())
+    createNotificationDeliveryService(harness.deps).dispatch(
+      makeRequest({ source: 'agent-auto-retry-exhausted', agentType: 'claude', agentState: 'done' })
+    )
+    expect(harness.dispatchMobileNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'agent-task-complete', agentState: 'done' })
+    )
+    expect(harness.deliverNative).toHaveBeenCalledTimes(1)
+  })
+})

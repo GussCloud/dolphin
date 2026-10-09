@@ -7960,7 +7960,13 @@
             "agentPermissions": "Permisos de agentes",
             "agentPermissionsDescription": "Cambia los permisos predeterminados de los agentes entre Yolo y Manual.",
             "agentRuntime": "Runtime del agente",
-            "agentRuntimeDescription": "Elige si los agentes se detectan y ejecutan en Windows o en WSL de forma predeterminada."
+            "agentRuntimeDescription": "Elige si los agentes se detectan y ejecutan en Windows o en WSL de forma predeterminada.",
+            "retry": "reintentar",
+            "continue": "continuar",
+            "connection": "conexión",
+            "network": "red",
+            "apiError": "error de api",
+            "claude": "claude"
           }
         },
         "appearance": {
@@ -10708,6 +10714,10 @@
           "channelClaudeNotFound": "No se encontró Claude Code en este equipo, así que las respuestas siguen yendo a la terminal.",
           "channelClaudeTooOld": "Los canales requieren Claude Code 2.1.234 o posterior. Actualiza Claude Code; mientras tanto las respuestas van a la terminal.",
           "channelConfigUnavailable": "Dolphin no pudo guardar la configuración del canal en una ruta que todos los shells lean literalmente, así que las respuestas siguen yendo a la terminal."
+        },
+        "claude-connection-loss-retry-copy": {
+          "title": "Reintentar Claude tras perder la conexión",
+          "description": "Cuando un turno de Claude termina con \"Connection lost mid-response\", escribe continue por ti hasta 3 veces. Solo se te avisa si todos los reintentos fallan."
         }
       },
       "right": {
@@ -15641,6 +15651,13 @@
       "working": "trabajando",
       "stopped": "detenido",
       "finished": "finalizado"
+    },
+    "autoRetryExhausted": {
+      "title": "se detuvo tras perder la conexión",
+      "body": "Los reintentos automáticos no recuperaron el turno. Escribe continue para reanudar.",
+      "telegram": "Claude perdió la conexión con la API{{where}} y {{attempts}} reintentos automáticos no la recuperaron. Responde \"continue\" para reanudar.",
+      "bodyNoRetry": "Dolphin no pudo reintentar automáticamente. Escribe continue para reanudar.",
+      "telegramNoRetry": "Claude perdió la conexión con la API{{where}} y Dolphin no pudo reintentar automáticamente. Responde \"continue\" para reanudar."
     }
   },
   "featureTips": {

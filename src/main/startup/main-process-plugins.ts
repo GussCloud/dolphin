@@ -21,6 +21,7 @@ import { logStartupMilestone } from './startup-diagnostics'
 import { agentHookServer } from '../agent-hooks/server'
 import { emitPluginWorktreeLifecycle } from './main-process-pty-startup'
 import { startMainProcessTelegramBridge } from './main-process-telegram'
+import { startMainProcessClaudeConnectionLossRetry } from './main-process-claude-connection-loss-retry'
 import { startMainProcessTelegramAnswers } from './main-process-telegram-answers'
 import { startMainProcessTelegramChannel } from './main-process-telegram-channel'
 import { mainProcessState as state } from './main-process-state'
@@ -168,4 +169,5 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   const telegramChannel = startMainProcessTelegramChannel(telegramBridge, store)
   startMainProcessTelegramAnswers(telegramBridge, runtime, telegramChannel.wrapInboundHandler)
   telegramChannel.registerAfterAnswers()
+  startMainProcessClaudeConnectionLossRetry(store, runtime, telegramBridge)
 }

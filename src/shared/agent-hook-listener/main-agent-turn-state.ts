@@ -1,5 +1,6 @@
 import type { AgentStatusState } from '../agent-status-types'
 import type { AgentJournalTurnOutcome } from '../agent-turn-outcome'
+import type { StopFailureErrorKind } from '../stop-failure-error-kind'
 
 /** The Claude main agent's own turn record, published on every row as `mainAgent`. */
 export type ClaudeLeadTurnState = {
@@ -8,6 +9,8 @@ export type ClaudeLeadTurnState = {
    *  Dolphin inferred from the interrupt keystroke); only meaningful while `state` is done.
    *  `cancellation` is what the fold reads as an interrupt. */
   outcome?: AgentJournalTurnOutcome
+  /** StopFailure's allowlisted error class; only set beside `outcome: 'failure'`. */
+  failureKind?: StopFailureErrorKind
   /** When `state` first appeared; the main agent's own clock, distinct from the gated row's. */
   stateStartedAt: number
   /** Subagent that induced the wait; only its next tool activity may clear it, so other children's churn can't dismiss a pending human-input card. */
@@ -19,7 +22,7 @@ export type ClaudeLeadTurnState = {
   /** Main agent state a child-induced wait displaced, restored when the wait clears; can't invent 'working' since the done-gate only downgrades done→working, never back. */
   stateBeforeWait?: Pick<
     ClaudeLeadTurnState,
-    'state' | 'outcome' | 'stateStartedAt' | 'turnCompletedAt'
+    'state' | 'outcome' | 'failureKind' | 'stateStartedAt' | 'turnCompletedAt'
   >
 }
 

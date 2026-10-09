@@ -1,3 +1,4 @@
+import { forgetClientTerminalInput } from '../../../terminal-client-input-clock'
 import { advertisedUrlWatcher } from '../../../ports/advertised-url-watcher'
 import { unregisterPty } from '../../../memory/pty-registry'
 import { markClaudePtyExited } from '../../../claude-accounts/live-pty-gate'
@@ -54,6 +55,7 @@ export function clearProviderPtyState(
   ptySizes.delete(id)
   ptyIncarnationById.delete(id)
   lastInputAtByPty.delete(id)
+  forgetClientTerminalInput(id)
   interactiveOutputCharsByPty.delete(id)
   const activeChanged = activeRendererPtys.delete(id)
   visibleRendererPtys.delete(id)

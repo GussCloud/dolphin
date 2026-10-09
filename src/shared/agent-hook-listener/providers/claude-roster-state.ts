@@ -157,6 +157,9 @@ export function claudeMainAgentStatusForPayload(
   return {
     state: own.state,
     ...(own.state === 'done' && own.outcome ? { outcome: own.outcome } : {}),
+    ...(own.state === 'done' && own.outcome === 'failure' && own.failureKind
+      ? { failureKind: own.failureKind }
+      : {}),
     stateStartedAt: own.stateStartedAt
   }
 }

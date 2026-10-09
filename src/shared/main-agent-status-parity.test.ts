@@ -255,7 +255,11 @@ const STORIES: Story[] = [
         { hook_event_name: 'UserPromptSubmit', prompt: 'go' },
         { hook_event_name: 'StopFailure', error: 'invalid_request' }
       ],
-      expect: { state: 'done', mainAgent: { state: 'done', outcome: 'failure' } }
+      // Why: only Claude's StopFailure names an error kind; the verdict itself matches every lane.
+      expect: {
+        state: 'done',
+        mainAgent: { state: 'done', outcome: 'failure', failureKind: 'invalid_request' }
+      }
     },
     structured: {
       status: 'idle',

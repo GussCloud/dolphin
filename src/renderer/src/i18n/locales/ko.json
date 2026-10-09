@@ -9018,7 +9018,13 @@
             "yolo": "욜로",
             "manual": "수동",
             "skip": "건너뛰다",
-            "checks": "검사"
+            "checks": "검사",
+            "retry": "재시도",
+            "continue": "계속",
+            "connection": "연결",
+            "network": "네트워크",
+            "apiError": "API 오류",
+            "claude": "claude"
           }
         },
         "appearance": {
@@ -12269,6 +12275,10 @@
           "channelClaudeNotFound": "이 컴퓨터에서 Claude Code를 찾을 수 없어 답장은 계속 터미널로 전달됩니다.",
           "channelClaudeTooOld": "채널에는 Claude Code 2.1.234 이상이 필요합니다. Claude Code를 업데이트하세요. 그때까지 답장은 터미널로 전달됩니다.",
           "channelConfigUnavailable": "모든 셸이 그대로 읽을 수 있는 경로에 채널 구성을 둘 수 없어 답장은 계속 터미널로 전달됩니다."
+        },
+        "claude-connection-loss-retry-copy": {
+          "title": "연결이 끊기면 Claude 다시 시도",
+          "description": "Claude 턴이 \"Connection lost mid-response\"로 끝나면 최대 3번까지 대신 continue를 입력합니다. 모든 재시도가 실패한 경우에만 알립니다."
         }
       },
       "right": {
@@ -18562,6 +18572,13 @@
       "working": "작업 중",
       "stopped": "중지됨",
       "finished": "완료됨"
+    },
+    "autoRetryExhausted": {
+      "title": "연결이 끊긴 후 중지됨",
+      "body": "자동 재시도로 턴을 복구하지 못했습니다. 다시 시작하려면 continue를 입력하세요.",
+      "telegram": "Claude의 API 연결이 끊겼고{{where}} 자동 재시도 {{attempts}}회로도 복구되지 않았습니다. 다시 시작하려면 \"continue\"라고 답장하세요.",
+      "bodyNoRetry": "Dolphin이 자동으로 다시 시도하지 못했습니다. 다시 시작하려면 continue를 입력하세요.",
+      "telegramNoRetry": "Claude의 API 연결이 끊겼고{{where}} Dolphin이 자동으로 다시 시도하지 못했습니다. 다시 시작하려면 \"continue\"라고 답장하세요."
     }
   },
   "sidebar": {

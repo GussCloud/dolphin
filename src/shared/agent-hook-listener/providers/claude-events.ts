@@ -1,6 +1,7 @@
 import type { ParsedAgentStatusPayload } from '../../agent-status-types'
 import { isAgentStatusHeldOpenByChildWork } from '../../agent-lead-status-fold'
 import { isAskUserQuestionTool } from '../../agent-question-answered-intent'
+import { readStopFailureErrorKind } from '../../stop-failure-error-kind'
 import { readClaudeBackgroundAgentTasks } from '../../claude-background-task-inventory'
 import {
   claudeRosterHasRestoredSnapshotSubagent,
@@ -235,6 +236,7 @@ export function normalizeClaudeEvent(
             // Why: the verdict and the main agent's own clock are that turn's facts; a child's permission
             // pause after a cancelled turn must not erase them when the wait clears.
             ...(previousLead.outcome ? { outcome: previousLead.outcome } : {}),
+            ...(previousLead.failureKind ? { failureKind: previousLead.failureKind } : {}),
             stateStartedAt: previousLead.stateStartedAt,
             // Why: a child's permission pause displaces an already-finished lead; keep the end time so the later drain is still that turn's tail.
             ...(previousLead.turnCompletedAt !== undefined
@@ -282,6 +284,10 @@ export function normalizeClaudeEvent(
   setClaudeMainAgentTurnState(state, paneKey, {
     state: reportedStateName,
     ...(outcome ? { outcome } : {}),
+    // Why: only the allowlisted code is kept; the provider's message text is never copied.
+    ...(outcome === 'failure'
+      ? { failureKind: readStopFailureErrorKind(hookPayload['error']) }
+      : {}),
     ...(isWaitingInducing && eventAgentId ? { waitingAgentId: eventAgentId } : {}),
     ...(isAskUserQuestionWait && waitingToolUseId !== undefined ? { waitingToolUseId } : {}),
     ...(stateBeforeWait ? { stateBeforeWait } : {}),

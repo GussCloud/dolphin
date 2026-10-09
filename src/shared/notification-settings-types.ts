@@ -21,7 +21,12 @@ export type NotificationSettings = {
   customSoundVolume: number
 }
 
-export type NotificationEventSource = 'agent-task-complete' | 'terminal-bell' | 'test'
+export type NotificationEventSource =
+  | 'agent-task-complete'
+  | 'terminal-bell'
+  | 'test'
+  /** Raised by main when connection-loss auto-retry gave up; gated like agent-task-complete. */
+  | 'agent-auto-retry-exhausted'
 
 export type NotificationDispatchRequest = {
   source: NotificationEventSource
@@ -49,6 +54,8 @@ export type NotificationDispatchRequest = {
    * terminal lane, which is every sender that predates structured chat.
    */
   surface?: 'terminal' | 'agent-session'
+  /** `agent-auto-retry-exhausted` only: retries typed before giving up (0 = none could be sent). */
+  autoRetryAttempts?: number
 }
 
 export type NotificationDispatchResult = {

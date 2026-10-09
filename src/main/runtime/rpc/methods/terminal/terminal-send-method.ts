@@ -14,6 +14,7 @@ import {
   type MobileInputFloorClaimHolder
 } from './terminal-input-delivery'
 import { updateViewportForClient } from './terminal-viewport-update'
+import { noteClientTerminalInput } from '../../../../terminal-client-input-clock'
 import {
   ensureUnsupportedTerminalPromptReceipt,
   observeReplayedTerminalPrompt
@@ -269,6 +270,13 @@ export const TERMINAL_SEND_METHODS = [
       }
       if (result.accepted !== true) {
         mobileFloorClaim.current?.rollback()
+      } else if (
+        leaf?.ptyId &&
+        params.inputKind !== 'query-reply' &&
+        (params.client !== undefined || clientId !== undefined)
+      ) {
+        // Why: a paired client's input is the user's; in-process senders (auto-retry, Telegram) pass no client.
+        noteClientTerminalInput(leaf.ptyId)
       }
       if (
         result.accepted === true &&

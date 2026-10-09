@@ -4,13 +4,11 @@ import { computeAgentSessionPayloadFingerprint } from '../../shared/agent-sessio
 import { pickParsedAgentStatusPayload } from '../../shared/agent-status-types'
 import type { AgentStatusIpcPayload } from '../../shared/agent-status-ipc-payload'
 import type { StructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-host'
+import { createRpcAgentPaneTerminalSend } from '../agent-pane-text-delivery'
 import type { RpcRequest, RpcResponse } from '../runtime/rpc/core'
 import type { TelegramStructuredPromptSnapshot } from './telegram-answerable-prompt'
 import { telegramStatusEntryFromEnriched } from './telegram-notice-transitions'
-import type {
-  TelegramDeliveryOutcome,
-  TelegramTerminalOutcome
-} from './telegram-prompt-answer-delivery'
+import type { TelegramDeliveryOutcome } from './telegram-prompt-answer-delivery'
 import type { TelegramPromptAnswerPorts } from './telegram-prompt-answer-service'
 
 export type TelegramPromptAnswerPortDeps = {
@@ -49,19 +47,6 @@ function envelope(
     expectedRuntimeFence: fence,
     payloadFingerprint: computeAgentSessionPayloadFingerprint({ method, sessionId, fields })
   }
-}
-
-function terminalSendOutcome(result: unknown): TelegramTerminalOutcome {
-  const send =
-    typeof result === 'object' && result !== null && 'send' in result ? result.send : null
-  if (typeof send !== 'object' || send === null) {
-    return 'rejected'
-  }
-  if ('accepted' in send && send.accepted === true) {
-    return 'accepted'
-  }
-  const reason = 'refusedReason' in send ? send.refusedReason : undefined
-  return reason === 'no-agent' || reason === 'permission' ? reason : 'rejected'
 }
 
 /** Binds the answer service to the status store, runtime RPC and structured host. */
@@ -106,26 +91,7 @@ export function createTelegramPromptAnswerPorts(
         return null
       }
     },
-    sendTerminal: async ({ terminal, text, enter, requireAgentStatus }) => {
-      let response: RpcResponse
-      try {
-        // No client: Telegram has no viewport, so it must not take the mobile input floor.
-        response = await deps.dispatchRpc({
-          id: `telegram-${randomUUID()}`,
-          authToken: 'telegram-bridge',
-          method: 'terminal.send',
-          params: {
-            terminal,
-            ...(text !== undefined ? { text } : {}),
-            enter,
-            ...(requireAgentStatus ? { requireAgentStatus } : {})
-          }
-        })
-      } catch {
-        return 'unknown'
-      }
-      return response.ok ? terminalSendOutcome(response.result) : 'rejected'
-    },
+    sendTerminal: createRpcAgentPaneTerminalSend(deps.dispatchRpc, 'telegram-bridge'),
     respondStructured: (response) =>
       runHostMutation((host) => {
         const fields = {

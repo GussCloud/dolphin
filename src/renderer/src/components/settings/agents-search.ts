@@ -14,6 +14,11 @@ import {
   getAgentStatusHooksSearchKeywords,
   getAgentStatusHooksTitle
 } from './agent-status-hooks-copy'
+import {
+  getClaudeConnectionLossRetryDescription,
+  getClaudeConnectionLossRetrySearchKeywords,
+  getClaudeConnectionLossRetryTitle
+} from './claude-connection-loss-retry-copy'
 import { getAgentCacheTimerSearchEntries } from './agent-cache-timer-search'
 import { translate } from '@/i18n/i18n'
 import { searchKeywords, translateSearchKeyword, uniqueKeywords } from './settings-search-keywords'
@@ -119,6 +124,11 @@ const getAllAgentsPaneSearchEntries = createLocalizedCatalog(() => [
     title: getAgentGeneratedTabTitlesTitle(),
     description: getAgentGeneratedTabTitlesDescription(),
     keywords: getAgentGeneratedTabTitlesSearchKeywords()
+  },
+  {
+    title: getClaudeConnectionLossRetryTitle(),
+    description: getClaudeConnectionLossRetryDescription(),
+    keywords: getClaudeConnectionLossRetrySearchKeywords()
   },
   {
     title: getAgentAwakeTitle(),
