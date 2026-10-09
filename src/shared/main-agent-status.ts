@@ -1,5 +1,6 @@
 import type { AgentStatusState } from './agent-status-types'
 import type { AgentJournalTurnOutcome } from './agent-turn-outcome'
+import type { StopFailureErrorKind } from './stop-failure-error-kind'
 
 /** The main agent's OWN state, kept apart from the row's combined `state`. The row's
  *  `state` answers "what should the user see" and folds live child work in, so a settled main agent
@@ -13,6 +14,9 @@ export type AgentMainAgentStatus = {
    *  infers `success`, because an older provider that omits its interrupt flag would turn
    *  a cancel into a false success. */
   outcome?: AgentJournalTurnOutcome
+  /** The provider's error class for a `failure` verdict (Claude StopFailure). Present only with
+   *  `outcome: 'failure'`; absent means the host did not classify it. */
+  failureKind?: StopFailureErrorKind
   /** When the main agent's own `state` first appeared (ms). The row's `stateStartedAt` dates the
    *  combined state instead, so the two differ while child work holds the row open. */
   stateStartedAt: number
@@ -28,5 +32,10 @@ export function mainAgentStatusEqual(
   if (!a || !b) {
     return false
   }
-  return a.state === b.state && a.outcome === b.outcome && a.stateStartedAt === b.stateStartedAt
+  return (
+    a.state === b.state &&
+    a.outcome === b.outcome &&
+    a.failureKind === b.failureKind &&
+    a.stateStartedAt === b.stateStartedAt
+  )
 }

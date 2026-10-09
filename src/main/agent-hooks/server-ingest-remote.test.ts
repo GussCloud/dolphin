@@ -194,6 +194,42 @@ describe('AgentHookServer ingestRemote', () => {
     )
   })
 
+  it('keeps a relay StopFailure failureKind and drops one that is not allowlisted', () => {
+    const server = new AgentHookServer()
+    const listener = vi.fn()
+    server.setListener(listener)
+    const ingest = (paneKey: string, failureKind: unknown) =>
+      server.ingestRemote(
+        {
+          paneKey,
+          tabId: paneKey.split(':')[0],
+          worktreeId: 'wt-1',
+          hookEventName: 'StopFailure',
+          payload: {
+            state: 'done',
+            prompt: 'p',
+            agentType: 'claude',
+            mainAgent: { state: 'done', outcome: 'failure', failureKind, stateStartedAt: 1 }
+          }
+        },
+        'conn-1'
+      )
+    ingest(PANE, 'server_error')
+    ingest('tab-2:22222222-2222-4222-8222-222222222222', 'API Error: Connection lost')
+
+    expect(listener.mock.calls[0]?.[0].payload.mainAgent).toEqual({
+      state: 'done',
+      outcome: 'failure',
+      failureKind: 'server_error',
+      stateStartedAt: 1
+    })
+    expect(listener.mock.calls[1]?.[0].payload.mainAgent).toEqual({
+      state: 'done',
+      outcome: 'failure',
+      stateStartedAt: 1
+    })
+  })
+
   it('preserves active pane identity when a nested remote hook reports another agent', () => {
     vi.useFakeTimers()
     vi.setSystemTime(1_000)

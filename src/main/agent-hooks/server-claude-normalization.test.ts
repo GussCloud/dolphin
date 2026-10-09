@@ -374,6 +374,69 @@ describe('Claude hook normalization', () => {
     expect(result?.payload.lastAssistantMessage).toBeUndefined()
   })
 
+  it.each([
+    ['server_error', 'server_error'],
+    ['rate_limit', 'rate_limit'],
+    ['a-future-code', 'unknown'],
+    [undefined, 'unknown']
+  ])('lead StopFailure error %s classifies as failureKind %s', (error, failureKind) => {
+    _internals.normalizeHookPayload(
+      'claude',
+      buildBody({ hook_event_name: 'UserPromptSubmit', prompt: 'go' }),
+      'production'
+    )
+    const result = _internals.normalizeHookPayload(
+      'claude',
+      buildBody({
+        hook_event_name: 'StopFailure',
+        ...(error !== undefined ? { error } : {}),
+        last_assistant_message:
+          'API Error: Connection lost mid-response. The response above may be incomplete.'
+      }),
+      'production'
+    )
+
+    expect(result?.payload.mainAgent).toMatchObject({
+      state: 'done',
+      outcome: 'failure',
+      failureKind
+    })
+    expect(JSON.stringify(result?.payload)).not.toContain('Connection lost')
+  })
+
+  it('a child StopFailure never classifies the lead turn', () => {
+    _internals.normalizeHookPayload(
+      'claude',
+      buildBody({ hook_event_name: 'UserPromptSubmit', prompt: 'go' }),
+      'production'
+    )
+    const result = _internals.normalizeHookPayload(
+      'claude',
+      buildBody({ hook_event_name: 'StopFailure', agent_id: 'agent-1', error: 'server_error' }),
+      'production'
+    )
+
+    expect(result?.payload.mainAgent?.failureKind).toBeUndefined()
+  })
+
+  it('the next lead turn drops the previous failureKind', () => {
+    for (const hook_event_name of ['UserPromptSubmit', 'StopFailure']) {
+      _internals.normalizeHookPayload(
+        'claude',
+        buildBody({ hook_event_name, prompt: 'go', error: 'server_error' }),
+        'production'
+      )
+    }
+    const next = _internals.normalizeHookPayload(
+      'claude',
+      buildBody({ hook_event_name: 'UserPromptSubmit', prompt: 'continue' }),
+      'production'
+    )
+
+    expect(next?.payload.mainAgent?.state).toBe('working')
+    expect(next?.payload.mainAgent?.failureKind).toBeUndefined()
+  })
+
   describe('Stop transcript scan', () => {
     let tmpDir: string
     let transcriptPath: string
