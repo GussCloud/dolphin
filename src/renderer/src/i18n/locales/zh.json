@@ -9018,7 +9018,13 @@
             "yolo": "约洛",
             "manual": "手动的",
             "skip": "跳过",
-            "checks": "检查"
+            "checks": "检查",
+            "retry": "重试",
+            "continue": "继续",
+            "connection": "连接",
+            "network": "网络",
+            "apiError": "API 错误",
+            "claude": "claude"
           }
         },
         "appearance": {
@@ -12269,6 +12275,10 @@
           "channelClaudeNotFound": "这台电脑上未找到 Claude Code，因此回复仍会发送到终端。",
           "channelClaudeTooOld": "频道需要 Claude Code 2.1.234 或更高版本。请更新 Claude Code；在此之前回复会发送到终端。",
           "channelConfigUnavailable": "Dolphin 无法把频道配置放在所有 shell 都能按字面读取的路径中，因此回复仍会发送到终端。"
+        },
+        "claude-connection-loss-retry-copy": {
+          "title": "连接中断后重试 Claude",
+          "description": "当 Claude 的回合以“Connection lost mid-response”结束时，最多替你输入 3 次 continue。只有所有重试都失败时才会通知你。"
         }
       },
       "right": {
@@ -18562,6 +18572,11 @@
       "working": "处理中",
       "stopped": "已停止",
       "finished": "已完成"
+    },
+    "autoRetryExhausted": {
+      "title": "连接中断后已停止",
+      "body": "自动重试未能恢复此回合。输入 continue 以继续。",
+      "telegram": "Claude 的 API 连接已中断{{where}}，{{attempts}} 次自动重试均未恢复。回复 \"continue\" 以继续。"
     }
   },
   "sidebar": {

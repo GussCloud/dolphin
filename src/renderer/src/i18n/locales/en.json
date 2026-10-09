@@ -9241,7 +9241,13 @@
             "yolo": "yolo",
             "manual": "manual",
             "skip": "skip",
-            "checks": "checks"
+            "checks": "checks",
+            "retry": "retry",
+            "continue": "continue",
+            "connection": "connection",
+            "network": "network",
+            "apiError": "api error",
+            "claude": "claude"
           }
         },
         "appearance": {
@@ -12430,6 +12436,10 @@
           "channelClaudeNotFound": "Claude Code was not found on this computer, so replies keep going to the terminal.",
           "channelClaudeTooOld": "Channels need Claude Code 2.1.234 or newer. Update Claude Code; until then replies go to the terminal.",
           "channelConfigUnavailable": "Dolphin could not place the channel configuration at a path every shell reads literally, so replies keep going to the terminal."
+        },
+        "claude-connection-loss-retry-copy": {
+          "title": "Retry Claude after a lost connection",
+          "description": "When a Claude turn ends with \"Connection lost mid-response\", type continue for you up to 3 times. You are notified only if every retry fails."
         }
       },
       "right": {
@@ -18761,6 +18771,11 @@
       "working": "working",
       "stopped": "stopped",
       "finished": "finished"
+    },
+    "autoRetryExhausted": {
+      "title": "stopped after connection loss",
+      "body": "Automatic retries did not recover the turn. Type continue to resume.",
+      "telegram": "Claude lost its API connection{{where}} and {{attempts}} automatic retries did not recover it. Reply \"continue\" to resume."
     }
   },
   "sessionSearch": {

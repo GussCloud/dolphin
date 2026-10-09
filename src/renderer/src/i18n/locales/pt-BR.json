@@ -9241,7 +9241,13 @@
             "yolo": "yolo",
             "manual": "manual",
             "skip": "pular",
-            "checks": "verificações"
+            "checks": "verificações",
+            "retry": "repetir",
+            "continue": "continuar",
+            "connection": "conexão",
+            "network": "rede",
+            "apiError": "erro de api",
+            "claude": "claude"
           }
         },
         "appearance": {
@@ -12430,6 +12436,10 @@
           "channelClaudeNotFound": "O Claude Code não foi encontrado neste computador, então as respostas continuam indo para o terminal.",
           "channelClaudeTooOld": "Canais exigem o Claude Code 2.1.234 ou mais recente. Atualize o Claude Code; até lá as respostas vão para o terminal.",
           "channelConfigUnavailable": "O Dolphin não conseguiu gravar a configuração do canal em um caminho que todo shell lê literalmente, então as respostas continuam indo para o terminal."
+        },
+        "claude-connection-loss-retry-copy": {
+          "title": "Repetir o Claude após perda de conexão",
+          "description": "Quando um turno do Claude termina com \"Connection lost mid-response\", digita continue por você até 3 vezes. Você só é avisado se todas as tentativas falharem."
         }
       },
       "right": {
@@ -18761,6 +18771,11 @@
       "working": "trabalhando",
       "stopped": "parado",
       "finished": "concluído"
+    },
+    "autoRetryExhausted": {
+      "title": "parou após perder a conexão",
+      "body": "As tentativas automáticas não recuperaram o turno. Digite continue para retomar.",
+      "telegram": "O Claude perdeu a conexão com a API{{where}} e {{attempts}} tentativas automáticas não a recuperaram. Responda \"continue\" para retomar."
     }
   },
   "sessionSearch": {

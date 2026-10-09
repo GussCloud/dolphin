@@ -9055,7 +9055,13 @@
             "yolo": "ヨロ",
             "manual": "マニュアル",
             "skip": "スキップ",
-            "checks": "チェック"
+            "checks": "チェック",
+            "retry": "再試行",
+            "continue": "続行",
+            "connection": "接続",
+            "network": "ネットワーク",
+            "apiError": "API エラー",
+            "claude": "claude"
           }
         },
         "appearance": {
@@ -12269,6 +12275,10 @@
           "channelClaudeNotFound": "このコンピューターで Claude Code が見つからないため、返信は引き続きターミナルに送られます。",
           "channelClaudeTooOld": "チャンネルには Claude Code 2.1.234 以降が必要です。Claude Code を更新してください。それまでは返信はターミナルに送られます。",
           "channelConfigUnavailable": "すべてのシェルがそのまま読めるパスにチャンネル設定を配置できなかったため、返信は引き続きターミナルに送られます。"
+        },
+        "claude-connection-loss-retry-copy": {
+          "title": "接続が切れたら Claude を再試行",
+          "description": "Claude のターンが「Connection lost mid-response」で終わったとき、最大 3 回まで代わりに continue を入力します。すべての再試行が失敗した場合のみ通知します。"
         }
       },
       "right": {
@@ -18562,6 +18572,11 @@
       "working": "処理中",
       "stopped": "停止",
       "finished": "完了"
+    },
+    "autoRetryExhausted": {
+      "title": "接続切断後に停止しました",
+      "body": "自動再試行でターンを回復できませんでした。continue と入力して再開してください。",
+      "telegram": "Claude の API 接続が切れました{{where}}。{{attempts}} 回の自動再試行でも回復しませんでした。再開するには \"continue\" と返信してください。"
     }
   },
   "sidebar": {

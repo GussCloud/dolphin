@@ -14,6 +14,11 @@ import {
   shouldSyncAgentHookCompletionForStoreUpdate,
   type AgentHookCompletionStoreSnapshot
 } from './agent-hook-completion-store-sync'
+import {
+  forgetAutoRetryDeferral,
+  isCompletionDeferredToAutoRetry,
+  recordAutoRetryDeferral
+} from './agent-hook-completion-auto-retry-deferral'
 
 type CoordinatorEntry = {
   worktreeId: string
@@ -41,6 +46,7 @@ function disposeCoordinatorForPaneKey(paneKey: string): void {
   coordinatorsByPaneKey.get(paneKey)?.coordinator.dispose()
   coordinatorsByPaneKey.delete(paneKey)
   paneKeysRequiringFreshWorking.delete(paneKey)
+  forgetAutoRetryDeferral(paneKey)
 }
 
 function buildTabIndex(tabsByWorktree: StoreSnapshot['tabsByWorktree']): TabIndex {
@@ -243,7 +249,11 @@ function createCoordinator(paneKey: string, worktreeId: string): AgentCompletion
     }),
     dispatchHookLifecycle: (payload) => dispatchAgentHookTerminalLifecycle(paneKey, payload),
     dispatchCompletion: (title, meta) => {
-      if (!isAgentTaskCompleteTrackingEnabled() || paneKeysRequiringFreshWorking.has(paneKey)) {
+      if (
+        !isAgentTaskCompleteTrackingEnabled() ||
+        paneKeysRequiringFreshWorking.has(paneKey) ||
+        isCompletionDeferredToAutoRetry(paneKey, meta?.agentStatus)
+      ) {
         return
       }
       dispatchTerminalNotification(worktreeId, {
@@ -313,6 +323,7 @@ export function observeAgentHookCompletionForNotification({
   if (payload.state === 'working' && payload.turnCompletedAt === undefined && trackingEnabled) {
     paneKeysRequiringFreshWorking.delete(paneKey)
   }
+  recordAutoRetryDeferral(paneKey, payload)
   if (seedOnly === true) {
     entry.coordinator.seedHookStatus(payload)
   } else {
@@ -326,6 +337,7 @@ export function resetAgentHookCompletionNotificationCoordinators(): void {
   }
   coordinatorsByPaneKey.clear()
   paneKeysRequiringFreshWorking.clear()
+  forgetAutoRetryDeferral()
   lastPrunedLivenessSnapshot = null
   wasAgentTaskCompleteTrackingEnabled = isAgentTaskCompleteTrackingEnabled()
   requireFreshWorkingForNewTrackingCoordinators = !wasAgentTaskCompleteTrackingEnabled

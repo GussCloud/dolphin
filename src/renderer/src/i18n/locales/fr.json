@@ -9178,7 +9178,13 @@
             "yolo": "yolo",
             "manual": "manuel",
             "skip": "sauter",
-            "checks": "chèques"
+            "checks": "chèques",
+            "retry": "réessayer",
+            "continue": "continuer",
+            "connection": "connexion",
+            "network": "réseau",
+            "apiError": "erreur api",
+            "claude": "claude"
           }
         },
         "appearance": {
@@ -12372,6 +12378,10 @@
           "channelClaudeNotFound": "Claude Code est introuvable sur cet ordinateur ; les réponses continuent donc d’aller au terminal.",
           "channelClaudeTooOld": "Les canaux nécessitent Claude Code 2.1.234 ou plus récent. Mettez Claude Code à jour ; en attendant, les réponses vont au terminal.",
           "channelConfigUnavailable": "Dolphin n’a pas pu placer la configuration du canal à un chemin que chaque shell lit littéralement ; les réponses continuent donc d’aller au terminal."
+        },
+        "claude-connection-loss-retry-copy": {
+          "title": "Relancer Claude après une perte de connexion",
+          "description": "Quand un tour de Claude se termine par \"Connection lost mid-response\", tape continue pour vous jusqu'à 3 fois. Vous n'êtes averti que si toutes les tentatives échouent."
         }
       },
       "right": {
@@ -18649,6 +18659,11 @@
       "working": "en cours",
       "stopped": "arrêté",
       "finished": "terminé"
+    },
+    "autoRetryExhausted": {
+      "title": "arrêté après une perte de connexion",
+      "body": "Les nouvelles tentatives automatiques n'ont pas récupéré le tour. Tapez continue pour reprendre.",
+      "telegram": "Claude a perdu sa connexion à l'API{{where}} et {{attempts}} tentatives automatiques ne l'ont pas récupérée. Répondez \"continue\" pour reprendre."
     }
   },
   "sidebar": {
