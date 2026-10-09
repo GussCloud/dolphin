@@ -10,6 +10,8 @@ import {
   isTerminalInputTooLargeWithYield
 } from '../../../../../shared/terminal-input'
 import type { TerminalViewportClient } from './terminal-stream-types'
+import { isTerminalQueryReply } from '../../../../../shared/terminal-query-reply'
+import { noteClientTerminalInput } from '../../../../terminal-client-input-clock'
 
 export function isTerminalInputLockedForClient(
   runtime: DolphinRuntimeService,
@@ -95,6 +97,18 @@ export function isTerminalStreamInputRejection(error: unknown): boolean {
   return message.includes('terminal_not_writable') || message.includes('terminal_handle_stale')
 }
 
+/** Stream input always comes from a client; automatic terminal query replies are not the user typing. */
+function noteStreamClientInput(
+  runtime: DolphinRuntimeService,
+  terminal: string,
+  text: string
+): void {
+  const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
+  if (ptyId && !isTerminalQueryReply(text)) {
+    noteClientTerminalInput(ptyId)
+  }
+}
+
 export async function sendTerminalStreamInput(
   runtime: DolphinRuntimeService,
   args: {
@@ -110,6 +124,9 @@ export async function sendTerminalStreamInput(
   try {
     if (!clientId) {
       const result = await runtime.sendTerminal(args.terminal, action)
+      if (result.accepted) {
+        noteStreamClientInput(runtime, args.terminal, args.text)
+      }
       return result.accepted ? 'delivered' : 'rejected'
     }
     const result = await runtime.sendTerminal(args.terminal, action, {
@@ -126,6 +143,7 @@ export async function sendTerminalStreamInput(
       floorClaim.current?.rollback()
       return 'rejected'
     }
+    noteStreamClientInput(runtime, args.terminal, args.text)
     return 'delivered'
   } catch (error) {
     floorClaim.current?.rollback()

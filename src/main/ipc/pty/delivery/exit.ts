@@ -1,3 +1,4 @@
+import { forgetClientTerminalInput } from '../../../terminal-client-input-clock'
 import {
   interactiveOutputCharsByPty,
   lastInputAtByPty,
@@ -185,6 +186,7 @@ export function finalizePtyExitForRenderer(
   session.pendingOverflowMarkedPtys.delete(payload.id)
   session.rendererDeliveryRestoreNeededPtys.delete(payload.id)
   lastInputAtByPty.delete(payload.id)
+  forgetClientTerminalInput(payload.id)
   interactiveOutputCharsByPty.delete(payload.id)
   const releasedRendererCredit = getRendererInFlightCharsForPty(session, payload.id)
   session.rendererInFlightTotalChars = Math.max(
