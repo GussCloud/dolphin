@@ -45,6 +45,10 @@ export type NotificationDeliveryService = {
   ) => NotificationDispatchResult | Promise<NotificationDispatchResult>
 }
 
+function isAgentCompletionSource(source: NotificationDispatchRequest['source']): boolean {
+  return source === 'agent-task-complete' || source === 'agent-auto-retry-exhausted'
+}
+
 export function createNotificationDeliveryService(
   deps: NotificationDeliveryDependencies
 ): NotificationDeliveryService {
@@ -73,7 +77,7 @@ export function createNotificationDeliveryService(
     dispatch: (request) => {
       // Why: light the tray attention dot before the cooldown/focus/enabled gates so they
       // can't hold it back (clears on window show/restore; see index.ts).
-      if (request.source === 'agent-task-complete' || request.source === 'terminal-bell') {
+      if (request.source !== 'test') {
         if (!deps.isWindowVisible(deps.findActiveWindow())) {
           deps.setTrayAttention(true)
         }
@@ -82,7 +86,7 @@ export function createNotificationDeliveryService(
       const settings = deps.readNotificationSettings()
       const desktopAllowed =
         settings.enabled &&
-        (request.source !== 'agent-task-complete' || settings.agentTaskComplete) &&
+        (!isAgentCompletionSource(request.source) || settings.agentTaskComplete) &&
         (request.source !== 'terminal-bell' || settings.terminalBell)
 
       const notificationOptions = buildNotificationOptions(request)
@@ -104,7 +108,8 @@ export function createNotificationDeliveryService(
           deps.dispatchMobileNotification({
             type: 'notification',
             emittedAt: deps.now(),
-            source: request.source,
+            // Why: phones only know the shipped push sources; the exhausted notice is still an agent turn ending.
+            source: request.source === 'terminal-bell' ? 'terminal-bell' : 'agent-task-complete',
             ...(!desktopAllowed ? { desktopAllowed: false } : {}),
             title: notificationOptions.title,
             body: notificationOptions.body,

@@ -21,7 +21,12 @@ export type NotificationSettings = {
   customSoundVolume: number
 }
 
-export type NotificationEventSource = 'agent-task-complete' | 'terminal-bell' | 'test'
+export type NotificationEventSource =
+  | 'agent-task-complete'
+  | 'terminal-bell'
+  | 'test'
+  /** Raised by main when connection-loss auto-retry gave up; gated like agent-task-complete. */
+  | 'agent-auto-retry-exhausted'
 
 export type NotificationDispatchRequest = {
   source: NotificationEventSource
