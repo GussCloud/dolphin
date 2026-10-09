@@ -235,7 +235,8 @@ export function startClaudeConnectionLossRetry(ports: ClaudeConnectionLossRetryP
 
   const disposers = [
     ports.subscribeEnrichedStatus(onStatus),
-    ports.subscribeStatusDrop(abandon),
+    // A dismissal means the user has seen the row; they own the turn now.
+    ports.subscribeStatusDrop(forget),
     ports.subscribePaneStatusClear(onPaneClear)
   ]
   return () => {

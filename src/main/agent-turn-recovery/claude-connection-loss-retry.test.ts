@@ -325,17 +325,13 @@ describe('Claude connection-loss auto-retry', () => {
     expect(h.ctx.exhausted).toEqual([{ paneKey: PANE, worktreeId: 'wt-1', attempts: 0 }])
   })
 
-  it('a status drop during backoff notifies once; with nothing pending it stays quiet', async () => {
+  it('a user dismissal during backoff cancels silently', async () => {
     const h = harness()
     h.fail()
     h.drop()
     await advance(60_000)
     expect(h.ctx.sent).toEqual([])
-    expect(h.ctx.exhausted).toEqual([{ paneKey: PANE, worktreeId: 'wt-1', attempts: 0 }])
-
-    const idle = harness()
-    idle.drop()
-    expect(idle.ctx.exhausted).toEqual([])
+    expect(h.ctx.exhausted).toEqual([])
   })
 
   it('a host disconnect notifies panes on that connection only', async () => {
