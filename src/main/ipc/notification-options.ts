@@ -44,10 +44,16 @@ export function buildNotificationOptions(args: NotificationDispatchRequest): {
   if (args.source === 'agent-auto-retry-exhausted') {
     return {
       title: `${formatNotificationWorktreeContext(args)} - ${formatNotificationAgentLabel(args.agentType)} ${translateMain('notifications.autoRetryExhausted.title', 'stopped after connection loss')}`,
-      body: translateMain(
-        'notifications.autoRetryExhausted.body',
-        'Automatic retries did not recover the turn. Type continue to resume.'
-      )
+      body:
+        args.autoRetryAttempts === 0
+          ? translateMain(
+              'notifications.autoRetryExhausted.bodyNoRetry',
+              'Dolphin could not retry automatically. Type continue to resume.'
+            )
+          : translateMain(
+              'notifications.autoRetryExhausted.body',
+              'Automatic retries did not recover the turn. Type continue to resume.'
+            )
     }
   }
 

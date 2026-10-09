@@ -18576,7 +18576,9 @@
     "autoRetryExhausted": {
       "title": "接続切断後に停止しました",
       "body": "自動再試行でターンを回復できませんでした。continue と入力して再開してください。",
-      "telegram": "Claude の API 接続が切れました{{where}}。{{attempts}} 回の自動再試行でも回復しませんでした。再開するには \"continue\" と返信してください。"
+      "telegram": "Claude の API 接続が切れました{{where}}。{{attempts}} 回の自動再試行でも回復しませんでした。再開するには \"continue\" と返信してください。",
+      "bodyNoRetry": "Dolphin は自動で再試行できませんでした。continue と入力して再開してください。",
+      "telegramNoRetry": "Claude の API 接続が切れました{{where}}。Dolphin は自動で再試行できませんでした。再開するには \"continue\" と返信してください。"
     }
   },
   "sidebar": {

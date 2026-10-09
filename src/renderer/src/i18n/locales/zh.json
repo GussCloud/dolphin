@@ -18576,7 +18576,9 @@
     "autoRetryExhausted": {
       "title": "连接中断后已停止",
       "body": "自动重试未能恢复此回合。输入 continue 以继续。",
-      "telegram": "Claude 的 API 连接已中断{{where}}，{{attempts}} 次自动重试均未恢复。回复 \"continue\" 以继续。"
+      "telegram": "Claude 的 API 连接已中断{{where}}，{{attempts}} 次自动重试均未恢复。回复 \"continue\" 以继续。",
+      "bodyNoRetry": "Dolphin 无法自动重试。输入 continue 以继续。",
+      "telegramNoRetry": "Claude 的 API 连接已中断{{where}}，Dolphin 无法自动重试。回复 \"continue\" 以继续。"
     }
   },
   "sidebar": {

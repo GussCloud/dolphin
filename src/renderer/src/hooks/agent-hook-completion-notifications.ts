@@ -284,12 +284,15 @@ export function observeAgentHookCompletionForNotification({
   paneKey,
   worktreeId,
   payload,
-  seedOnly
+  seedOnly,
+  statusFromLocalMain
 }: {
   paneKey: string
   worktreeId: string
   payload: AgentCompletionStatusSnapshot
   seedOnly?: boolean
+  /** Rows from this desktop's own main (local, SSH relay, WSL), whose main runs the auto-retry. */
+  statusFromLocalMain?: boolean
 }): void {
   // Why: replay seeds already passed indexed snapshot ownership; re-resolving every row makes startup batches quadratic.
   if (seedOnly !== true) {
@@ -323,7 +326,7 @@ export function observeAgentHookCompletionForNotification({
   if (payload.state === 'working' && payload.turnCompletedAt === undefined && trackingEnabled) {
     paneKeysRequiringFreshWorking.delete(paneKey)
   }
-  recordAutoRetryDeferral(paneKey, payload)
+  recordAutoRetryDeferral(paneKey, payload, statusFromLocalMain === true)
   if (seedOnly === true) {
     entry.coordinator.seedHookStatus(payload)
   } else {

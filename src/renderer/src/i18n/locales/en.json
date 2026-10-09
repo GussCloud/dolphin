@@ -18775,7 +18775,9 @@
     "autoRetryExhausted": {
       "title": "stopped after connection loss",
       "body": "Automatic retries did not recover the turn. Type continue to resume.",
-      "telegram": "Claude lost its API connection{{where}} and {{attempts}} automatic retries did not recover it. Reply \"continue\" to resume."
+      "telegram": "Claude lost its API connection{{where}} and {{attempts}} automatic retries did not recover it. Reply \"continue\" to resume.",
+      "bodyNoRetry": "Dolphin could not retry automatically. Type continue to resume.",
+      "telegramNoRetry": "Claude lost its API connection{{where}} and Dolphin could not retry automatically. Reply \"continue\" to resume."
     }
   },
   "sessionSearch": {

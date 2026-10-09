@@ -18663,7 +18663,9 @@
     "autoRetryExhausted": {
       "title": "arrêté après une perte de connexion",
       "body": "Les nouvelles tentatives automatiques n'ont pas récupéré le tour. Tapez continue pour reprendre.",
-      "telegram": "Claude a perdu sa connexion à l'API{{where}} et {{attempts}} tentatives automatiques ne l'ont pas récupérée. Répondez \"continue\" pour reprendre."
+      "telegram": "Claude a perdu sa connexion à l'API{{where}} et {{attempts}} tentatives automatiques ne l'ont pas récupérée. Répondez \"continue\" pour reprendre.",
+      "bodyNoRetry": "Dolphin n'a pas pu relancer automatiquement. Tapez continue pour reprendre.",
+      "telegramNoRetry": "Claude a perdu sa connexion à l'API{{where}} et Dolphin n'a pas pu relancer automatiquement. Répondez \"continue\" pour reprendre."
     }
   },
   "sidebar": {

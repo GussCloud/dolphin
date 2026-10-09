@@ -18775,7 +18775,9 @@
     "autoRetryExhausted": {
       "title": "parou após perder a conexão",
       "body": "As tentativas automáticas não recuperaram o turno. Digite continue para retomar.",
-      "telegram": "O Claude perdeu a conexão com a API{{where}} e {{attempts}} tentativas automáticas não a recuperaram. Responda \"continue\" para retomar."
+      "telegram": "O Claude perdeu a conexão com a API{{where}} e {{attempts}} tentativas automáticas não a recuperaram. Responda \"continue\" para retomar.",
+      "bodyNoRetry": "O Dolphin não conseguiu repetir automaticamente. Digite continue para retomar.",
+      "telegramNoRetry": "O Claude perdeu a conexão com a API{{where}} e o Dolphin não conseguiu repetir automaticamente. Responda \"continue\" para retomar."
     }
   },
   "sessionSearch": {

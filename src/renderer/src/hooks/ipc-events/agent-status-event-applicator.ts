@@ -247,6 +247,7 @@ export function createAgentStatusEventApplicator(args: {
           paneKey,
           worktreeId: statusWorktreeId,
           payload: notificationPayload,
+          statusFromLocalMain: true,
           ...(options?.replay === true ? { seedOnly: true } : {})
         })
       }

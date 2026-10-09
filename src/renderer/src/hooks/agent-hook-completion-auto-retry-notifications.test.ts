@@ -38,18 +38,23 @@ function claudeStatus(
   }
 }
 
-async function runTurn(failureKind?: StopFailureErrorKind): Promise<void> {
+async function runTurn(
+  failureKind?: StopFailureErrorKind,
+  statusFromLocalMain = true
+): Promise<void> {
   const { observeAgentHookCompletionForNotification } =
     await import('./agent-hook-completion-notifications')
   observeAgentHookCompletionForNotification({
     paneKey,
     worktreeId: 'wt-1',
-    payload: claudeStatus('working')
+    payload: claudeStatus('working'),
+    statusFromLocalMain
   })
   observeAgentHookCompletionForNotification({
     paneKey,
     worktreeId: 'wt-1',
-    payload: claudeStatus('done', failureKind)
+    payload: claudeStatus('done', failureKind),
+    statusFromLocalMain
   })
   vi.advanceTimersByTime(HOOK_DONE_QUIET_MS)
 }
@@ -79,6 +84,12 @@ describe('hook completion notifications during connection-loss auto-retry', () =
   it('keeps a retryable failed turn quiet while auto-retry owns it', async () => {
     await runTurn('server_error')
     expect(dispatchTerminalNotification).not.toHaveBeenCalled()
+  })
+
+  it('still notifies a retryable failure synced from a remote runtime host', async () => {
+    // The host runs (or, headless, lacks) its own retry; this desktop's setting must not hide it.
+    await runTurn('server_error', false)
+    expect(dispatchTerminalNotification).toHaveBeenCalledTimes(1)
   })
 
   it('still notifies a non-retryable failure', async () => {

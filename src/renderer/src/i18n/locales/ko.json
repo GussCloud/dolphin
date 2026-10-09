@@ -18576,7 +18576,9 @@
     "autoRetryExhausted": {
       "title": "연결이 끊긴 후 중지됨",
       "body": "자동 재시도로 턴을 복구하지 못했습니다. 다시 시작하려면 continue를 입력하세요.",
-      "telegram": "Claude의 API 연결이 끊겼고{{where}} 자동 재시도 {{attempts}}회로도 복구되지 않았습니다. 다시 시작하려면 \"continue\"라고 답장하세요."
+      "telegram": "Claude의 API 연결이 끊겼고{{where}} 자동 재시도 {{attempts}}회로도 복구되지 않았습니다. 다시 시작하려면 \"continue\"라고 답장하세요.",
+      "bodyNoRetry": "Dolphin이 자동으로 다시 시도하지 못했습니다. 다시 시작하려면 continue를 입력하세요.",
+      "telegramNoRetry": "Claude의 API 연결이 끊겼고{{where}} Dolphin이 자동으로 다시 시도하지 못했습니다. 다시 시작하려면 \"continue\"라고 답장하세요."
     }
   },
   "sidebar": {

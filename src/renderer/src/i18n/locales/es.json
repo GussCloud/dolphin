@@ -15655,7 +15655,9 @@
     "autoRetryExhausted": {
       "title": "se detuvo tras perder la conexión",
       "body": "Los reintentos automáticos no recuperaron el turno. Escribe continue para reanudar.",
-      "telegram": "Claude perdió la conexión con la API{{where}} y {{attempts}} reintentos automáticos no la recuperaron. Responde \"continue\" para reanudar."
+      "telegram": "Claude perdió la conexión con la API{{where}} y {{attempts}} reintentos automáticos no la recuperaron. Responde \"continue\" para reanudar.",
+      "bodyNoRetry": "Dolphin no pudo reintentar automáticamente. Escribe continue para reanudar.",
+      "telegramNoRetry": "Claude perdió la conexión con la API{{where}} y Dolphin no pudo reintentar automáticamente. Responde \"continue\" para reanudar."
     }
   },
   "featureTips": {

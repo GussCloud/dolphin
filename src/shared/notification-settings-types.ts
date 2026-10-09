@@ -54,6 +54,8 @@ export type NotificationDispatchRequest = {
    * terminal lane, which is every sender that predates structured chat.
    */
   surface?: 'terminal' | 'agent-session'
+  /** `agent-auto-retry-exhausted` only: retries typed before giving up (0 = none could be sent). */
+  autoRetryAttempts?: number
 }
 
 export type NotificationDispatchResult = {

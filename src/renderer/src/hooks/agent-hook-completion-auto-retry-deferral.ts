@@ -3,14 +3,22 @@ import type { AgentCompletionStatusSnapshot } from '@/components/terminal-pane/a
 import { isDoneNoticeDeferredToAutoRetry } from '../../../shared/stop-failure-error-kind'
 
 // Why: main's connection-loss auto-retry owns these failed turns and raises its own exhausted notice.
+// Only rows from this desktop's own main qualify: a remote runtime host runs (or lacks) its own retry.
+const localPaneKeys = new Set<string>()
 const deferredPaneKeys = new Set<string>()
 
 /** Tracks the pane's latest hook row so a completion dispatched without a snapshot can still defer. */
 export function recordAutoRetryDeferral(
   paneKey: string,
-  payload: AgentCompletionStatusSnapshot
+  payload: AgentCompletionStatusSnapshot,
+  fromLocalMain: boolean
 ): void {
-  if (isDoneNoticeDeferredToAutoRetry(payload.mainAgent, true)) {
+  if (fromLocalMain) {
+    localPaneKeys.add(paneKey)
+  } else {
+    localPaneKeys.delete(paneKey)
+  }
+  if (fromLocalMain && isDoneNoticeDeferredToAutoRetry(payload.mainAgent, true)) {
     deferredPaneKeys.add(paneKey)
   } else {
     deferredPaneKeys.delete(paneKey)
@@ -19,8 +27,10 @@ export function recordAutoRetryDeferral(
 
 export function forgetAutoRetryDeferral(paneKey?: string): void {
   if (paneKey === undefined) {
+    localPaneKeys.clear()
     deferredPaneKeys.clear()
   } else {
+    localPaneKeys.delete(paneKey)
     deferredPaneKeys.delete(paneKey)
   }
 }
@@ -29,6 +39,9 @@ export function isCompletionDeferredToAutoRetry(
   paneKey: string,
   snapshot: AgentCompletionStatusSnapshot | undefined
 ): boolean {
+  if (!localPaneKeys.has(paneKey)) {
+    return false
+  }
   const enabled = useAppStore.getState().settings?.claudeAutoRetryOnConnectionLoss
   return snapshot
     ? isDoneNoticeDeferredToAutoRetry(snapshot.mainAgent, enabled)
