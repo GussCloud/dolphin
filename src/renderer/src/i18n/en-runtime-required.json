@@ -1600,11 +1600,15 @@
             "a79d266f71": "session",
             "afbf35be68": "stable session",
             "affbf130f6": "working",
+            "apiError": "api error",
             "be59907510": "override",
             "be7ea3553b": "tab",
             "c1317fe641": "restore",
             "c64059f50d": "prompt",
             "cbdd7f3b9e": "Choose whether installed agents are detected on this device or in WSL.",
+            "claude": "claude",
+            "connection": "connection",
+            "continue": "continue",
             "d8f3a8b8a0": "default",
             "dbc8aca6b0": "sleep",
             "e2b7c0dcd7": "github",
@@ -1612,7 +1616,9 @@
             "ef804b7337": "Agent Location",
             "f2932bf22b": "detected",
             "f412abbba5": "claude",
-            "ff8de8a2ad": "display"
+            "ff8de8a2ad": "display",
+            "network": "network",
+            "retry": "retry"
           }
         },
         "artifacts": {
