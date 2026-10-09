@@ -8,26 +8,15 @@ import {
   startClaudeConnectionLossRetry,
   type ClaudeConnectionLossExhaustedEvent
 } from '../agent-turn-recovery/claude-connection-loss-retry'
-import { translateMain } from '../i18n/main-i18n'
+import { claudeConnectionLossExhaustedTelegramText } from '../agent-turn-recovery/claude-connection-loss-notice-text'
 import { dispatchMainProcessNotification } from '../ipc/notifications'
 import { lastInputAtByPty } from '../ipc/pty/delivery/visibility-state'
+import { readClientTerminalInputAt } from '../terminal-client-input-clock'
 import type { Store } from '../persistence'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
 import type { TelegramBridgeService } from '../telegram/telegram-bridge-service'
 import { resolveTelegramWorktreeName } from './main-process-telegram'
-
-export function claudeConnectionLossExhaustedTelegramText(
-  worktreeName: string | null,
-  attempts: number
-): string {
-  const where = worktreeName ? ` (${worktreeName})` : ''
-  return `⚠️ ${translateMain(
-    'notifications.autoRetryExhausted.telegram',
-    'Claude lost its API connection{{where}} and {{attempts}} automatic retries did not recover it. Reply "continue" to resume.',
-    { where, attempts }
-  )}`
-}
 
 /** Starts connection-loss auto-retry beside the Telegram bridge, which it also notifies. */
 export function startMainProcessClaudeConnectionLossRetry(
@@ -58,7 +47,8 @@ export function startMainProcessClaudeConnectionLossRetry(
         ...(worktreeId ? { worktreeId } : {}),
         ...(worktreeLabel ? { worktreeLabel } : {}),
         agentType: 'claude',
-        agentState: 'done'
+        agentState: 'done',
+        autoRetryAttempts: attempts
       })
     ).catch((error: unknown) => console.warn('[agent-auto-retry] notification failed', error))
     if (bridge) {
@@ -76,11 +66,16 @@ export function startMainProcessClaudeConnectionLossRetry(
     subscribeStatusDrop: (listener) => agentHookServer.subscribeStatusDrop(listener),
     subscribePaneStatusClear: (listener) => agentHookServer.subscribePaneStatusClear(listener),
     isEnabled,
-    resolveTerminalHandle: (paneKey, reported) =>
-      runtime.getLiveTerminalHandleForPaneKey(paneKey) ?? reported ?? null,
+    // Why: no stale row-handle fallback — a pane the runtime no longer has live must not be typed into.
+    resolveTerminalHandle: (paneKey) => runtime.getLiveTerminalHandleForPaneKey(paneKey),
     readLastInputAt: (terminal) => {
       const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
-      return ptyId ? lastInputAtByPty.get(ptyId) : undefined
+      if (!ptyId) {
+        return undefined
+      }
+      const local = lastInputAtByPty.get(ptyId)
+      const client = readClientTerminalInputAt(ptyId)
+      return local === undefined ? client : client === undefined ? local : Math.max(local, client)
     },
     sendText: (terminal, text) => deliverAgentPanePlainText(transport, terminal, text),
     notifyExhausted

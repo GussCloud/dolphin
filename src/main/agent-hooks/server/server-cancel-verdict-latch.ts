@@ -4,6 +4,7 @@ import { INTERRUPTED_DONE_LATE_WORKING_SUPPRESSION_MS } from './server-constants
 import { foldMainAgentWithRowChildWork } from './server-row-child-work-fold'
 import { isToolProgressWorkingAfterInterrupt } from './server-status-identity'
 import type { EnrichedAgentHookEventPayload } from './server-types'
+import { isChildAttributedHookEvent } from './server-child-attribution'
 
 export type CancelVerdictLatchDecision =
   | { hold: true }
@@ -68,18 +69,15 @@ function opensNewTurn(event: AgentHookEventPayload): boolean {
   )
 }
 
-/** A child's own event: one naming its agent id, or a teammate's idle, which names it by `teammate_name` only. */
-function isChildAttributed(event: AgentHookEventPayload): boolean {
-  return event.toolAgentId !== undefined || event.hookEventName === 'TeammateIdle'
-}
-
 /** A child restates its listener's cached prompt, which a restarted relay has lost; empty there is unknown, not another turn. */
 function restatesAnotherPrompt(
   previous: EnrichedAgentHookEventPayload,
   incoming: AgentHookEventPayload
 ): boolean {
   const prompt = incoming.payload.prompt
-  return prompt !== previous.payload.prompt && (prompt !== '' || !isChildAttributed(incoming))
+  return (
+    prompt !== previous.payload.prompt && (prompt !== '' || !isChildAttributedHookEvent(incoming))
+  )
 }
 
 /**
@@ -111,7 +109,7 @@ export function resolveCancelVerdictLatch(
     latched &&
     incoming.payload.agentType !== 'codex' &&
     incoming.payload.state !== 'done' &&
-    (isChildAttributed(incoming) || incoming.isReplay === true) &&
+    (isChildAttributedHookEvent(incoming) || incoming.isReplay === true) &&
     carriesChildWork(incoming)
   ) {
     return { hold: false, event: refoldUnderLatchedMainAgent(previous, latched, incoming) }

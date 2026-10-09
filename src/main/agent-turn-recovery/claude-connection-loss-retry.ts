@@ -1,6 +1,7 @@
 // Agent turn recovery: when a Claude lead turn ends on a lost API connection (retryable
 // StopFailure), type `continue` for the user with backoff, and notify once retries are exhausted.
 import type { EnrichedAgentHookEventPayload } from '../agent-hooks/server/server-types'
+import { isChildAttributedHookEvent } from '../agent-hooks/server/server-child-attribution'
 import type { AgentStatusClearIpcPayload } from '../../shared/agent-status-types'
 import {
   isDoneNoticeDeferredToAutoRetry,
@@ -25,9 +26,9 @@ export type ClaudeConnectionLossRetryPorts = {
   subscribeStatusDrop: (listener: (paneKey: string) => void) => () => void
   subscribePaneStatusClear: (listener: (clear: AgentStatusClearIpcPayload) => void) => () => void
   isEnabled: () => boolean
-  /** The pane's live terminal handle (local or SSH), or null once it is gone. */
-  resolveTerminalHandle: (paneKey: string, reported: string | undefined) => string | null
-  /** Last user keystroke on the terminal's PTY; undefined when unknown (e.g. no local PTY). */
+  /** The pane's live terminal handle (local or SSH), or null when the runtime has none. */
+  resolveTerminalHandle: (paneKey: string) => string | null
+  /** Last user input on the terminal's PTY from any surface; undefined when unknown. */
   readLastInputAt: (terminal: string) => number | undefined
   sendText: (terminal: string, text: string) => Promise<AgentPaneTextResult>
   notifyExhausted: (event: ClaudeConnectionLossExhaustedEvent) => void
@@ -38,10 +39,13 @@ export type ClaudeConnectionLossRetryPorts = {
 type PaneRetryState = {
   attempts: number
   worktreeId?: string
+  connectionId: string | null
   /** `mainAgent.stateStartedAt` of the failure already handled, so a restated row is not a new failure. */
   failureStamp?: number
-  pending?: { cancel: () => void; terminal: string; inputSnapshot: number | undefined }
-  /** Our own `continue` is in flight; its UserPromptSubmit must not reset the turn's budget. */
+  pending?: { cancel: () => void; inputSnapshot: number | undefined }
+  /** Our `continue` is being typed right now. */
+  inFlight: boolean
+  /** Our `continue` was typed; its UserPromptSubmit must not reset the turn's budget. */
   awaitingOwnPrompt: boolean
   exhausted: boolean
 }
@@ -87,6 +91,15 @@ export function startClaudeConnectionLossRetry(ports: ClaudeConnectionLossRetryP
     })
   }
 
+  /** Lost contact with a pane that still owes a retry: unverifiable, so the user must hear of it. */
+  function abandon(paneKey: string): void {
+    const pane = panes.get(paneKey)
+    if (pane && (pane.pending || pane.inFlight)) {
+      exhaust(paneKey, pane)
+    }
+    forget(paneKey)
+  }
+
   async function fire(paneKey: string, pane: PaneRetryState): Promise<void> {
     const pending = pane.pending
     pane.pending = undefined
@@ -97,29 +110,30 @@ export function startClaudeConnectionLossRetry(ports: ClaudeConnectionLossRetryP
       panes.delete(paneKey)
       return
     }
-    const terminal = ports.resolveTerminalHandle(paneKey, pending.terminal)
-    // Why: the user typed since the failure (or the pane is gone) — they own the turn now.
-    if (!terminal || ports.readLastInputAt(terminal) !== pending.inputSnapshot) {
+    const terminal = ports.resolveTerminalHandle(paneKey)
+    if (!terminal) {
+      exhaust(paneKey, pane)
+      return
+    }
+    // Why: the user typed since the failure (desktop, phone or paired client) — they own the turn now.
+    if (ports.readLastInputAt(terminal) !== pending.inputSnapshot) {
       panes.delete(paneKey)
       return
     }
     pane.attempts += 1
     pane.awaitingOwnPrompt = true
+    pane.inFlight = true
     let result: AgentPaneTextResult
     try {
       result = await ports.sendText(terminal, CLAUDE_CONNECTION_LOSS_RETRY_TEXT)
     } catch {
       result = 'unknown'
     }
+    pane.inFlight = false
     if (panes.get(paneKey) !== pane || result === 'accepted') {
       return
     }
-    if (result === 'no-agent') {
-      // The agent left its prompt (exited or busy elsewhere); nothing to resume.
-      panes.delete(paneKey)
-      return
-    }
-    // Why: 'unknown' on SSH is unverifiable, never proof the agent died — hand the turn back to the user.
+    // Why: no-agent/unknown are unverifiable (on SSH never proof of death) and the done notice is held — hand the turn back.
     exhaust(paneKey, pane)
   }
 
@@ -127,12 +141,15 @@ export function startClaudeConnectionLossRetry(ports: ClaudeConnectionLossRetryP
     const paneKey = enriched.paneKey
     const pane: PaneRetryState = panes.get(paneKey) ?? {
       attempts: 0,
+      connectionId: null,
+      inFlight: false,
       awaitingOwnPrompt: false,
       exhausted: false
     }
     panes.set(paneKey, pane)
     pane.failureStamp = failureStamp
     pane.awaitingOwnPrompt = false
+    pane.connectionId = enriched.connectionId
     if (enriched.worktreeId) {
       pane.worktreeId = enriched.worktreeId
     }
@@ -140,64 +157,86 @@ export function startClaudeConnectionLossRetry(ports: ClaudeConnectionLossRetryP
       return
     }
     const delay = CLAUDE_CONNECTION_LOSS_RETRY_BACKOFF_MS[pane.attempts]
-    const terminal = ports.resolveTerminalHandle(paneKey, enriched.terminalHandle)
+    const terminal = ports.resolveTerminalHandle(paneKey)
     if (delay === undefined || !terminal) {
       exhaust(paneKey, pane)
       return
     }
     const inputSnapshot = ports.readLastInputAt(terminal)
     const cancel = schedule(() => void fire(paneKey, pane), delay)
-    pane.pending = { cancel, terminal, inputSnapshot }
+    pane.pending = { cancel, inputSnapshot }
   }
 
   function onStatus(enriched: EnrichedAgentHookEventPayload): void {
-    // Lead events only: a child's turn end or tool traffic never owns the lead's recovery.
+    // Lead events only: a child's turn end, idle or tool traffic never owns the lead's recovery.
     if (
       enriched.isReplay === true ||
       enriched.providerSessionOnly === true ||
       enriched.source !== 'claude' ||
-      enriched.toolAgentId !== undefined
+      isChildAttributedHookEvent(enriched)
     ) {
       return
     }
     const paneKey = enriched.paneKey
     const pane = panes.get(paneKey)
     const mainAgent = enriched.payload.mainAgent
-    const isFailure = enriched.hookEventName === 'StopFailure'
-    if (isFailure && pane?.failureStamp === mainAgent?.stateStartedAt) {
-      return
-    }
-    cancelPending(pane)
-    if (isFailure && mainAgent && isRetryableAgentTurnFailure(mainAgent)) {
-      if (ports.isEnabled()) {
-        onFailure(enriched, mainAgent.stateStartedAt)
-      } else {
-        panes.delete(paneKey)
+    switch (enriched.hookEventName ?? '') {
+      case 'StopFailure': {
+        if (pane && mainAgent && pane.failureStamp === mainAgent.stateStartedAt) {
+          return
+        }
+        cancelPending(pane)
+        if (mainAgent && isRetryableAgentTurnFailure(mainAgent) && ports.isEnabled()) {
+          onFailure(enriched, mainAgent.stateStartedAt)
+        } else {
+          panes.delete(paneKey)
+        }
+        return
       }
+      case 'UserPromptSubmit': {
+        cancelPending(pane)
+        if (
+          pane?.awaitingOwnPrompt &&
+          enriched.payload.prompt.trim() === CLAUDE_CONNECTION_LOSS_RETRY_TEXT
+        ) {
+          pane.awaitingOwnPrompt = false
+          return
+        }
+        // A prompt the user typed starts a fresh budget.
+        panes.delete(paneKey)
+        return
+      }
+      case 'Stop':
+      case 'SessionStart':
+        forget(paneKey)
+        return
+      default:
+        // Why: other lead traffic (restated rows, compaction) leaves the failed idle prompt alone
+        // unless the main agent is working again.
+        if (pane?.pending && mainAgent && mainAgent.state !== 'done') {
+          forget(paneKey)
+        }
+    }
+  }
+
+  function onPaneClear(clear: AgentStatusClearIpcPayload): void {
+    if ('paneKey' in clear) {
+      // The pane or its worktree was closed: nobody is waiting on it.
+      forget(clear.paneKey)
       return
     }
-    if (enriched.hookEventName === 'UserPromptSubmit' && pane?.awaitingOwnPrompt) {
-      pane.awaitingOwnPrompt = false
-      return
-    }
-    // A clean Stop, a non-retryable failure, or a prompt the user typed starts a fresh budget.
-    if (
-      isFailure ||
-      enriched.hookEventName === 'Stop' ||
-      enriched.hookEventName === 'UserPromptSubmit'
-    ) {
-      panes.delete(paneKey)
+    // A host connection dropped: its panes are unverifiable, not exited.
+    for (const [paneKey, pane] of panes) {
+      if (pane.connectionId === clear.connectionId) {
+        abandon(paneKey)
+      }
     }
   }
 
   const disposers = [
     ports.subscribeEnrichedStatus(onStatus),
-    ports.subscribeStatusDrop(forget),
-    ports.subscribePaneStatusClear((clear) => {
-      if ('paneKey' in clear) {
-        forget(clear.paneKey)
-      }
-    })
+    ports.subscribeStatusDrop(abandon),
+    ports.subscribePaneStatusClear(onPaneClear)
   ]
   return () => {
     for (const dispose of disposers) {

@@ -20,6 +20,17 @@ type HarnessContext = {
   exhausted: ClaudeConnectionLossExhaustedEvent[]
 }
 
+type EmitOptions = {
+  failureKind?: StopFailureErrorKind
+  toolAgentId?: string
+  isReplay?: boolean
+  source?: EnrichedAgentHookEventPayload['source']
+  outcome?: 'failure' | 'success'
+  restate?: boolean
+  prompt?: string
+  mainAgentState?: 'working' | 'done'
+}
+
 function harness() {
   let statusListener: (payload: EnrichedAgentHookEventPayload) => void = () => {}
   let dropListener: (paneKey: string) => void = () => {}
@@ -55,26 +66,19 @@ function harness() {
     notifyExhausted: (event) => ctx.exhausted.push(event)
   })
   let clock = 1_000
-  const emit = (
-    hookEventName: string,
-    options: {
-      failureKind?: StopFailureErrorKind
-      toolAgentId?: string
-      isReplay?: boolean
-      source?: EnrichedAgentHookEventPayload['source']
-      outcome?: 'failure' | 'success'
-      restate?: boolean
-    } = {}
-  ): void => {
+  const emit = (hookEventName: string, options: EmitOptions = {}): void => {
     if (!options.restate) {
       clock += 1
     }
     const isFailure = hookEventName === 'StopFailure'
-    const done = isFailure || hookEventName === 'Stop'
+    const done =
+      options.mainAgentState !== undefined
+        ? options.mainAgentState === 'done'
+        : isFailure || hookEventName === 'Stop'
     statusListener({
       paneKey: PANE,
       worktreeId: 'wt-1',
-      connectionId: null,
+      connectionId: 'conn-1',
       source: options.source ?? 'claude',
       hookEventName,
       ...(options.toolAgentId ? { toolAgentId: options.toolAgentId } : {}),
@@ -83,7 +87,7 @@ function harness() {
       stateStartedAt: clock,
       payload: {
         state: done ? 'done' : 'working',
-        prompt: 'p',
+        prompt: options.prompt ?? 'p',
         agentType: 'claude',
         mainAgent: {
           state: done ? 'done' : 'working',
@@ -96,14 +100,18 @@ function harness() {
       }
     })
   }
-  const fail = (failureKind: StopFailureErrorKind = 'server_error') =>
-    emit('StopFailure', { failureKind })
   return {
     ctx,
     emit,
-    fail,
+    fail: (failureKind: StopFailureErrorKind = 'server_error') =>
+      emit('StopFailure', { failureKind }),
+    /** The UserPromptSubmit our own `continue` produces. */
+    ownPrompt: () => emit('UserPromptSubmit', { prompt: 'continue' }),
+    userPrompt: () => emit('UserPromptSubmit', { prompt: 'do the thing' }),
     drop: () => dropListener(PANE),
     clear: () => clearListener({ paneKey: PANE }),
+    disconnect: (connectionId = 'conn-1') =>
+      clearListener({ transient: true, connectionId, clearedAt: clock }),
     dispose
   }
 }
@@ -118,7 +126,7 @@ describe('Claude connection-loss auto-retry', () => {
 
   it('types continue after 5s, 15s and 45s, then notifies once when retries are exhausted', async () => {
     const h = harness()
-    h.emit('UserPromptSubmit')
+    h.userPrompt()
     h.fail()
     await advance(4_999)
     expect(h.ctx.sent).toEqual([])
@@ -126,19 +134,19 @@ describe('Claude connection-loss auto-retry', () => {
     expect(h.ctx.sent).toEqual([{ terminal: 'term-1', text: 'continue' }])
 
     // Our own continue starts the next attempt without resetting the budget.
-    h.emit('UserPromptSubmit')
+    h.ownPrompt()
     h.fail()
     await advance(14_999)
     expect(h.ctx.sent).toHaveLength(1)
     await advance(1)
     expect(h.ctx.sent).toHaveLength(2)
 
-    h.emit('UserPromptSubmit')
+    h.ownPrompt()
     h.fail()
     await advance(45_000)
     expect(h.ctx.sent).toHaveLength(3)
 
-    h.emit('UserPromptSubmit')
+    h.ownPrompt()
     h.fail()
     await advance(120_000)
     expect(h.ctx.sent).toHaveLength(3)
@@ -149,27 +157,43 @@ describe('Claude connection-loss auto-retry', () => {
     const h = harness()
     h.fail()
     await advance(5_000)
-    h.emit('UserPromptSubmit')
+    h.ownPrompt()
     h.emit('Stop')
-    h.emit('UserPromptSubmit')
+    h.userPrompt()
     h.fail()
     await advance(5_000)
     expect(h.ctx.sent).toHaveLength(2)
+    expect(h.ctx.exhausted).toEqual([])
   })
 
   it('a prompt the user typed resets the budget', async () => {
     const h = harness()
     h.fail()
     await advance(5_000)
-    h.emit('UserPromptSubmit')
+    h.ownPrompt()
     h.fail()
     await advance(15_000)
     expect(h.ctx.sent).toHaveLength(2)
-    h.emit('UserPromptSubmit')
-    // Second prompt with no pending injection is the user's own.
-    h.emit('UserPromptSubmit')
+    h.ownPrompt()
+    h.userPrompt()
     h.fail()
     await advance(5_000)
+    expect(h.ctx.sent).toHaveLength(3)
+  })
+
+  it('a non-matching prompt clears the own-prompt flag instead of being swallowed', async () => {
+    const h = harness()
+    h.fail()
+    await advance(5_000)
+    // Our continue never produced a prompt; the user's real one must reset the budget.
+    h.userPrompt()
+    h.fail()
+    await advance(5_000)
+    expect(h.ctx.sent).toHaveLength(2)
+    h.ownPrompt()
+    h.fail()
+    // The budget restarted at the user's prompt, so this is attempt 2 (15s), not 3 (45s).
+    await advance(15_000)
     expect(h.ctx.sent).toHaveLength(3)
   })
 
@@ -183,24 +207,28 @@ describe('Claude connection-loss auto-retry', () => {
     expect(h.ctx.exhausted).toEqual([])
   })
 
-  it('cancels a pending retry on any newer lead event, status drop or pane clear', async () => {
+  it('cancels when the lead resumes work, a Stop or a SessionStart arrives', async () => {
     const h = harness()
     h.fail()
-    h.emit('PreToolUse')
+    h.emit('PreToolUse', { mainAgentState: 'working' })
     await advance(60_000)
     h.fail()
-    h.drop()
+    h.emit('Stop')
     await advance(60_000)
     h.fail()
-    h.clear()
+    h.emit('SessionStart', { mainAgentState: 'done' })
     await advance(60_000)
     expect(h.ctx.sent).toEqual([])
+    expect(h.ctx.exhausted).toEqual([])
   })
 
-  it('ignores child events, replays and other agents', async () => {
+  it('keeps the timer through child traffic, a teammate idle and other lead restatements', async () => {
     const h = harness()
     h.fail()
     h.emit('PostToolUse', { toolAgentId: 'agent-1' })
+    h.emit('TeammateIdle', { mainAgentState: 'done' })
+    h.emit('SubagentStop', { mainAgentState: 'done' })
+    h.emit('PostCompact', { mainAgentState: 'done' })
     h.emit('StopFailure', { failureKind: 'server_error', isReplay: true })
     h.emit('Stop', { source: 'codex' })
     await advance(5_000)
@@ -256,7 +284,7 @@ describe('Claude connection-loss auto-retry', () => {
     expect(h.ctx.sent).toEqual([])
 
     h.ctx.enabled = true
-    h.emit('UserPromptSubmit')
+    h.userPrompt()
     h.fail()
     h.ctx.enabled = false
     await advance(60_000)
@@ -264,16 +292,7 @@ describe('Claude connection-loss auto-retry', () => {
     expect(h.ctx.exhausted).toEqual([])
   })
 
-  it('stops silently when the agent left its prompt', async () => {
-    const h = harness()
-    h.ctx.results = ['no-agent']
-    h.fail()
-    await advance(5_000)
-    expect(h.ctx.sent).toHaveLength(1)
-    expect(h.ctx.exhausted).toEqual([])
-  })
-
-  it.each<AgentPaneTextResult>(['rejected', 'unknown', 'permission', 'partly-sent'])(
+  it.each<AgentPaneTextResult>(['no-agent', 'rejected', 'unknown', 'permission', 'partly-sent'])(
     'hands the turn back with an exhausted notice when the send is %s',
     async (result) => {
       const h = harness()
@@ -281,7 +300,7 @@ describe('Claude connection-loss auto-retry', () => {
       h.fail()
       await advance(5_000)
       expect(h.ctx.exhausted).toEqual([{ paneKey: PANE, worktreeId: 'wt-1', attempts: 1 }])
-      h.emit('UserPromptSubmit')
+      h.userPrompt()
       h.fail()
       await advance(60_000)
       expect(h.ctx.sent).toHaveLength(2)
@@ -295,6 +314,52 @@ describe('Claude connection-loss auto-retry', () => {
     expect(h.ctx.exhausted).toEqual([{ paneKey: PANE, worktreeId: 'wt-1', attempts: 0 }])
     await advance(60_000)
     expect(h.ctx.sent).toEqual([])
+  })
+
+  it('notifies when the live terminal is gone by the time the retry fires', async () => {
+    const h = harness()
+    h.fail()
+    h.ctx.terminal = null
+    await advance(5_000)
+    expect(h.ctx.sent).toEqual([])
+    expect(h.ctx.exhausted).toEqual([{ paneKey: PANE, worktreeId: 'wt-1', attempts: 0 }])
+  })
+
+  it('a status drop during backoff notifies once; with nothing pending it stays quiet', async () => {
+    const h = harness()
+    h.fail()
+    h.drop()
+    await advance(60_000)
+    expect(h.ctx.sent).toEqual([])
+    expect(h.ctx.exhausted).toEqual([{ paneKey: PANE, worktreeId: 'wt-1', attempts: 0 }])
+
+    const idle = harness()
+    idle.drop()
+    expect(idle.ctx.exhausted).toEqual([])
+  })
+
+  it('a host disconnect notifies panes on that connection only', async () => {
+    const h = harness()
+    h.fail()
+    h.disconnect('conn-other')
+    await advance(5_000)
+    expect(h.ctx.sent).toHaveLength(1)
+
+    h.ownPrompt()
+    h.fail()
+    h.disconnect()
+    await advance(60_000)
+    expect(h.ctx.sent).toHaveLength(1)
+    expect(h.ctx.exhausted).toEqual([{ paneKey: PANE, worktreeId: 'wt-1', attempts: 1 }])
+  })
+
+  it('closing the pane or its worktree cancels silently', async () => {
+    const h = harness()
+    h.fail()
+    h.clear()
+    await advance(60_000)
+    expect(h.ctx.sent).toEqual([])
+    expect(h.ctx.exhausted).toEqual([])
   })
 
   it('dispose cancels pending retries', async () => {
