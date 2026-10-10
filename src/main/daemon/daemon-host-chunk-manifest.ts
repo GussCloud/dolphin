@@ -39,14 +39,17 @@ export function parseDaemonHostChunkManifest(text: string): readonly string[] | 
   } catch {
     return null
   }
-  if (typeof parsed !== 'object' || parsed === null) {
-    return null
-  }
-  const formatVersion: unknown = Reflect.get(parsed, 'formatVersion')
-  const chunks: unknown = Reflect.get(parsed, 'chunks')
-  if (formatVersion !== FORMAT_VERSION || !Array.isArray(chunks)) {
-    return null
-  }
-  const safe = chunks.filter(isSafeChunkPath)
-  return safe.length === chunks.length ? safe : null
+  return isDaemonHostChunkManifest(parsed) ? parsed.chunks : null
+}
+
+function isDaemonHostChunkManifest(value: unknown): value is DaemonHostChunkManifest {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'formatVersion' in value &&
+    value.formatVersion === FORMAT_VERSION &&
+    'chunks' in value &&
+    Array.isArray(value.chunks) &&
+    value.chunks.every(isSafeChunkPath)
+  )
 }

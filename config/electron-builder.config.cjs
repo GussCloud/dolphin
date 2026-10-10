@@ -408,13 +408,18 @@ module.exports = {
     }
     if (canExecuteTargetArch) {
       verifyPackagedDaemonEntryBoots(resourcesDir)
-      verifyPackagedDaemonHostChunksBoot(resourcesDir)
+      // Why win32 only: only the Windows daemon-host relocation reads the chunk list.
+      if (context.electronPlatformName === 'win32') {
+        verifyPackagedDaemonHostChunksBoot(resourcesDir)
+      }
     } else {
       // Why: a cross-arch slice can't be booted by the host Node, but the
       // unpacked entry must still exist — its absence is a layout regression
       // regardless of arch, so only the boot is skipped, not the check.
       assertPackagedDaemonEntryExists(resourcesDir)
-      readPackagedDaemonHostChunks(resourcesDir)
+      if (context.electronPlatformName === 'win32') {
+        readPackagedDaemonHostChunks(resourcesDir)
+      }
       console.log(
         `[verify-packaged-daemon-entry] skipped boot on cross-arch slice (target ${context.arch}, host ${process.arch})`
       )
