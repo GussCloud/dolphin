@@ -63,6 +63,32 @@ const DESKTOP_HUNKS = {
         '                });',
         ''
       ].join('\n')
+    ],
+    // Desktop only: the shared conout worker's loss handler. The relay keeps upstream's worker per
+    // PTY -- its asset rewrites an npm tree at runtime, and a shared worker would widen what that
+    // rewrite must own and verify, for hosts that run few terminals.
+    [
+      [
+        '        // Dolphin: the shared conout worker died or this pipe failed. Output can never resume, so',
+        '        // report the exit and kill the shell instead of leaving it behind a dead stream.',
+        '        this._conoutSocketWorker.onWorkerLost(function () {',
+        '            if (!_this._outSocketReady) {',
+        '                // WindowsTerminal only wires its close->exit handler on ready_datapipe.',
+        "                _this._outSocket.emit('ready_datapipe');",
+        '            }',
+        '            _this._outSocket.destroy();',
+        '            try {',
+        '                _this.kill();',
+        '            }',
+        '            catch (_a) {',
+        '                // The shell may already be gone; the destroyed socket still reports the exit.',
+        '            }',
+        '        });',
+        "        this._outSocket.on('connect', function () {",
+        '            _this._outSocketReady = true;',
+        ''
+      ].join('\n'),
+      ["        this._outSocket.on('connect', function () {", ''].join('\n')
     ]
   ],
   'windowsTerminal.js': [
