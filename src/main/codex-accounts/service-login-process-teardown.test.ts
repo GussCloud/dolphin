@@ -27,6 +27,10 @@ vi.mock('node:os', async () => {
   }
 })
 
+function taskkillResult(code: number | null, timedOut = false) {
+  return { code, signal: null, stdout: '', stderr: '', timedOut }
+}
+
 describe('CodexAccountService config sync', () => {
   registerCodexAccountsTestHomes()
 
@@ -42,10 +46,7 @@ describe('CodexAccountService config sync', () => {
     child.stderr = new PassThrough()
     child.kill = vi.fn()
     const spawnMock = vi.fn(() => child)
-    vi.doMock('node:child_process', () => ({
-      execFileSync: vi.fn(),
-      spawn: spawnMock
-    }))
+    vi.doMock('node:child_process', () => ({ spawn: spawnMock }))
     vi.doMock('../codex-cli/command', () => ({
       resolveCodexCommand: () => 'codex'
     }))
@@ -81,6 +82,7 @@ describe('CodexAccountService config sync', () => {
     } finally {
       vi.useRealTimers()
       vi.doUnmock('node:child_process')
+      vi.doUnmock('../../shared/child-process/run-process')
       vi.doUnmock('../codex-cli/command')
     }
   })
@@ -107,12 +109,10 @@ describe('CodexAccountService config sync', () => {
     child.pid = 4242
     child.exitCode = null
     child.signalCode = null
-    const execFileSyncMock = vi.fn()
+    const runProcessMock = vi.fn(async () => taskkillResult(0))
     const spawnMock = vi.fn(() => child)
-    vi.doMock('node:child_process', () => ({
-      execFileSync: execFileSyncMock,
-      spawn: spawnMock
-    }))
+    vi.doMock('node:child_process', () => ({ spawn: spawnMock }))
+    vi.doMock('../../shared/child-process/run-process', () => ({ runProcess: runProcessMock }))
     vi.doMock('../codex-cli/command', () => ({
       resolveCodexCommand: () => 'codex'
     }))
@@ -134,7 +134,7 @@ describe('CodexAccountService config sync', () => {
       ).runCodexLogin(testState.fakeHomeDir)
 
       await vi.advanceTimersByTimeAsync(1_000)
-      expect(execFileSyncMock).not.toHaveBeenCalled()
+      expect(runProcessMock).not.toHaveBeenCalled()
 
       // Codex finishes the login (auth.json exists) but never exits on its own.
       writeFileSync(
@@ -143,10 +143,12 @@ describe('CodexAccountService config sync', () => {
         'utf-8'
       )
       await vi.advanceTimersByTimeAsync(6_000)
-      expect(execFileSyncMock).toHaveBeenCalledWith(
-        'taskkill',
-        ['/pid', '4242', '/t', '/f'],
-        expect.objectContaining({ windowsHide: true, stdio: 'ignore' })
+      expect(runProcessMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          program: 'taskkill.exe',
+          args: ['/pid', '4242', '/t', '/f'],
+          stdio: 'ignore'
+        })
       )
       expect(child.kill).not.toHaveBeenCalled()
 
@@ -157,6 +159,7 @@ describe('CodexAccountService config sync', () => {
       Object.defineProperty(process, 'platform', originalPlatform)
       vi.useRealTimers()
       vi.doUnmock('node:child_process')
+      vi.doUnmock('../../shared/child-process/run-process')
       vi.doUnmock('../codex-cli/command')
     }
   })
@@ -183,11 +186,9 @@ describe('CodexAccountService config sync', () => {
     child.pid = 4343
     child.exitCode = null
     child.signalCode = null
-    const execFileSyncMock = vi.fn()
-    vi.doMock('node:child_process', () => ({
-      execFileSync: execFileSyncMock,
-      spawn: vi.fn(() => child)
-    }))
+    const runProcessMock = vi.fn(async () => taskkillResult(0))
+    vi.doMock('node:child_process', () => ({ spawn: vi.fn(() => child) }))
+    vi.doMock('../../shared/child-process/run-process', () => ({ runProcess: runProcessMock }))
     vi.doMock('../codex-cli/command', () => ({
       resolveCodexCommand: () => 'codex'
     }))
@@ -212,7 +213,7 @@ describe('CodexAccountService config sync', () => {
       ).runCodexLogin(testState.fakeHomeDir)
 
       await vi.advanceTimersByTimeAsync(6_000)
-      expect(execFileSyncMock).not.toHaveBeenCalled()
+      expect(runProcessMock).not.toHaveBeenCalled()
 
       writeFileSync(
         authPath,
@@ -220,10 +221,12 @@ describe('CodexAccountService config sync', () => {
         'utf-8'
       )
       await vi.advanceTimersByTimeAsync(6_000)
-      expect(execFileSyncMock).toHaveBeenCalledWith(
-        'taskkill',
-        ['/pid', '4343', '/t', '/f'],
-        expect.objectContaining({ windowsHide: true, stdio: 'ignore' })
+      expect(runProcessMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          program: 'taskkill.exe',
+          args: ['/pid', '4343', '/t', '/f'],
+          stdio: 'ignore'
+        })
       )
 
       child.emit('close', 1)
@@ -232,6 +235,74 @@ describe('CodexAccountService config sync', () => {
       Object.defineProperty(process, 'platform', originalPlatform)
       vi.useRealTimers()
       vi.doUnmock('node:child_process')
+      vi.doUnmock('../../shared/child-process/run-process')
+      vi.doUnmock('../codex-cli/command')
+    }
+  })
+
+  it('delivers a Windows login timeout only after the async tree kill settles', async () => {
+    vi.resetModules()
+    vi.useFakeTimers()
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform')!
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true })
+    const child = new EventEmitter() as EventEmitter & {
+      stdout: PassThrough
+      stderr: PassThrough
+      kill: () => void
+      pid: number
+      exitCode: number | null
+      signalCode: string | null
+    }
+    child.stdout = new PassThrough()
+    child.stderr = new PassThrough()
+    child.kill = vi.fn()
+    child.pid = 4545
+    child.exitCode = null
+    child.signalCode = null
+    let finishTaskkill: (result: ReturnType<typeof taskkillResult>) => void = () => {}
+    const runProcessMock = vi.fn(
+      () =>
+        new Promise<ReturnType<typeof taskkillResult>>((resolve) => {
+          finishTaskkill = resolve
+        })
+    )
+    vi.doMock('node:child_process', () => ({ spawn: vi.fn(() => child) }))
+    vi.doMock('../../shared/child-process/run-process', () => ({ runProcess: runProcessMock }))
+    vi.doMock('../codex-cli/command', () => ({ resolveCodexCommand: () => 'codex' }))
+
+    try {
+      const { CodexAccountService } = await import('./service')
+      const service = new CodexAccountService(
+        createStore(createSettings()) as never,
+        createRateLimits() as never,
+        createRuntimeHome() as never
+      )
+      let settled = false
+      const loginPromise = (
+        service as unknown as {
+          runCodexLogin(managedHomePath: string): Promise<void>
+        }
+      ).runCodexLogin(testState.fakeHomeDir)
+      const rejection = expect(
+        loginPromise.finally(() => {
+          settled = true
+        })
+      ).rejects.toThrow('Codex sign-in took too long to finish.')
+
+      await vi.advanceTimersByTimeAsync(180_000)
+      expect(runProcessMock).toHaveBeenCalledOnce()
+      // Why: rollback deletes the home, so it must wait until the tree no longer holds it.
+      expect(settled).toBe(false)
+
+      // A failed taskkill falls back to signalling the direct child.
+      finishTaskkill(taskkillResult(128))
+      await rejection
+      expect(child.kill).toHaveBeenCalledTimes(1)
+    } finally {
+      Object.defineProperty(process, 'platform', originalPlatform)
+      vi.useRealTimers()
+      vi.doUnmock('node:child_process')
+      vi.doUnmock('../../shared/child-process/run-process')
       vi.doUnmock('../codex-cli/command')
     }
   })

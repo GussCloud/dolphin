@@ -313,8 +313,8 @@ describe('bash-only payloads declare their interpreter', () => {
     // script-carrying call is not bash-pinned, flag it.
     //
     // Stripping the bash-pinned calls is what keeps codex-accounts/service.ts
-    // clean -- it pins bash on four inline payloads and on a `bash -lc`
-    // execFileSync, and correctly leaves its printf/mkdir calls unpinned.
+    // clean -- it pins bash on four inline payloads and correctly leaves its
+    // printf/mkdir calls unpinned.
     // Masked by POSITION, not by String.replace: replace() with a string
     // pattern removes only the first match, so two identically-written pinned
     // calls would leave one behind, and a body that also occurs earlier as a

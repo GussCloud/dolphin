@@ -131,3 +131,8 @@ export function createCodexAuthJson(
     2
   )}\n`
 }
+
+/** The startup config mirror runs on the mutation queue, after construction returns. */
+export function settleStartupConfigSync(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve))
+}

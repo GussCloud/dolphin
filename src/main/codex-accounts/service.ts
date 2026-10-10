@@ -1,4 +1,5 @@
-import { execFileSync, spawn } from 'node:child_process'
+import { spawn } from 'node:child_process'
+import { runProcess } from '../../shared/child-process/run-process'
 import type { WindowsHostInteractiveLoginSpawn } from '../../shared/windows-interactive-login-spawn'
 import type {
   CodexManagedAccount,
@@ -11,7 +12,6 @@ import type { CodexResetCreditExpectedScope } from '../../shared/codex-reset-cre
 import type { CodexRuntimeHomeService } from './runtime-home-service'
 import type { Store } from '../persistence'
 import type { RateLimitService } from '../rate-limits/service'
-import { buildEncodedWslBashCommand } from '../wsl-bash-command'
 import { admitSelfInitiatedTreeKill } from '../own-chromium-tree-kill-guard'
 import type { CodexAccountSelectionTarget } from './runtime-selection'
 import { CodexAccountIdentity, type ResolvedCodexIdentity } from './codex-account-identity'
@@ -41,10 +41,10 @@ export type {
 
 const WINDOWS_LOGIN_TREE_KILL_TIMEOUT_MS = 5_000
 
-function killLoginProcessTree(
+async function killLoginProcessTree(
   child: CodexLoginChild,
   interactiveLogin?: WindowsHostInteractiveLoginSpawn | null
-): void {
+): Promise<void> {
   const terminationPid = interactiveLogin?.getTerminationPid?.() ?? child.pid
   if (
     process.platform === 'win32' &&
@@ -63,16 +63,20 @@ function killLoginProcessTree(
       // Why: child.kill() only reaches the direct child (cmd.exe for npm .cmd
       // shims); taskkill /t also ends codex descendants whose open handles on
       // the managed home make post-login file operations fail with ENOTEMPTY.
-      execFileSync('taskkill', ['/pid', String(terminationPid), '/t', '/f'], {
-        windowsHide: true,
-        timeout: WINDOWS_LOGIN_TREE_KILL_TIMEOUT_MS,
+      const result = await runProcess({
+        program: 'taskkill.exe',
+        args: ['/pid', String(terminationPid), '/t', '/f'],
+        timeoutMs: WINDOWS_LOGIN_TREE_KILL_TIMEOUT_MS,
         stdio: 'ignore'
       })
-      return
+      if (result.code === 0 && !result.timedOut) {
+        return
+      }
     } catch {
-      // Why: taskkill can race an already-exited tree; fall back to the plain
-      // signal so the direct child never outlives its deadline.
+      // Fall through to the plain signal below.
     }
+    // Why: taskkill can race an already-exited tree; fall back to the plain
+    // signal so the direct child never outlives its deadline.
   }
   child.kill()
 }
@@ -97,13 +101,7 @@ export class CodexAccountService {
     private readonly runtimeHome: CodexRuntimeHomeService,
     lifecycle: CodexAccountServiceLifecycle = {}
   ) {
-    this.managedHomePaths = new CodexManagedHomePath((distro, script) =>
-      execFileSync(
-        'wsl.exe',
-        ['-d', distro, '--exec', 'bash', '-lc', buildEncodedWslBashCommand(script)],
-        { windowsHide: true, encoding: 'utf-8', timeout: 5000 }
-      )
-    )
+    this.managedHomePaths = new CodexManagedHomePath()
     this.managedHomes = new CodexManagedHomeLifecycle(this.managedHomePaths)
     this.identity = new CodexAccountIdentity((path, accountId) =>
       this.managedHomePaths.assert(path, accountId)
@@ -141,7 +139,8 @@ export class CodexAccountService {
       managedHomes: this.managedHomes,
       login: (managedHomePath) => this.runCodexLogin(managedHomePath)
     })
-    this.configMirror.safeSyncToManagedHomes()
+    // Why queued: account mutations must not interleave with the startup mirror pass.
+    void this.serializeMutation(() => this.configMirror.safeSyncToManagedHomes())
   }
 
   /**
@@ -265,7 +264,7 @@ export class CodexAccountService {
   private readIdentityFromHome(
     managedHomePath: string,
     expectedAccountId: string
-  ): ResolvedCodexIdentity {
+  ): Promise<ResolvedCodexIdentity> {
     return this.identity.readFromHome(managedHomePath, expectedAccountId)
   }
 
@@ -273,8 +272,8 @@ export class CodexAccountService {
     return toCodexManagedAccountSummary(account)
   }
 
-  private safeRemoveManagedHome(candidatePath: string, expectedAccountId: string): void {
-    this.managedHomes.safeRemove(candidatePath, expectedAccountId)
+  private safeRemoveManagedHome(candidatePath: string, expectedAccountId: string): Promise<void> {
+    return this.managedHomes.safeRemove(candidatePath, expectedAccountId)
   }
 
   private async runCodexLogin(managedHomePath: string): Promise<void> {

@@ -8,6 +8,7 @@ import {
   createSettings,
   createStore,
   registerCodexAccountsTestHomes,
+  settleStartupConfigSync,
   testState
 } from './service-test-harness'
 import { createCanonicalHookTrustFixture } from './service-hook-trust-test-fixtures'
@@ -67,6 +68,7 @@ describe('CodexAccountService config sync', () => {
 
     const { CodexAccountService } = await import('./service')
     new CodexAccountService(store as never, rateLimits as never, runtimeHome as never)
+    await settleStartupConfigSync()
 
     expect(readFileSync(join(managedHomePath, 'config.toml'), 'utf-8')).toBe(canonicalConfig)
     expect(readFileSync(join(managedHomePath, 'auth.json'), 'utf-8')).toBe(
@@ -110,6 +112,7 @@ describe('CodexAccountService config sync', () => {
       rateLimits as never,
       runtimeHome as never
     )
+    await settleStartupConfigSync()
     const expectSanitizedManagedConfig = (): void => {
       const entries = readHookTrustEntries(join(managedHomePath, 'config.toml'))
       for (const key of fixture.dolphinKeys) {
@@ -164,6 +167,7 @@ describe('CodexAccountService config sync', () => {
 
     const { CodexAccountService } = await import('./service')
     new CodexAccountService(store as never, rateLimits as never, runtimeHome as never)
+    await settleStartupConfigSync()
 
     const managedConfig = readFileSync(join(managedHomePath, 'config.toml'), 'utf-8')
     expect(managedConfig).toContain(
@@ -213,6 +217,7 @@ describe('CodexAccountService config sync', () => {
 
     const { CodexAccountService } = await import('./service')
     new CodexAccountService(store as never, rateLimits as never, runtimeHome as never)
+    await settleStartupConfigSync()
 
     // The first pass remaps the user hook-trust entry into this home; once that
     // has settled, a later pass must leave the file completely untouched.
@@ -221,6 +226,7 @@ describe('CodexAccountService config sync', () => {
     utimesSync(managedConfigPath, oldDate, oldDate)
 
     new CodexAccountService(store as never, rateLimits as never, runtimeHome as never)
+    await settleStartupConfigSync()
 
     expect(readFileSync(managedConfigPath, 'utf-8')).toBe(settledConfig)
     expect(statSync(managedConfigPath).mtimeMs).toBeLessThan(Date.now() - 60_000)
@@ -271,6 +277,7 @@ describe('CodexAccountService config sync', () => {
 
     const { CodexAccountService } = await import('./service')
     new CodexAccountService(store as never, rateLimits as never, runtimeHome as never)
+    await settleStartupConfigSync()
 
     expect(readFileSync(join(firstManagedHomePath, 'config.toml'), 'utf-8')).toBe(
       'sandbox_mode = "danger-full-access"\n'
@@ -313,6 +320,7 @@ describe('CodexAccountService config sync', () => {
       rateLimits as never,
       runtimeHome as never
     )
+    await settleStartupConfigSync()
 
     writeFileSync(join(managedHomePath, 'config.toml'), 'approval_policy = "untrusted"\n', 'utf-8')
 
@@ -359,6 +367,7 @@ describe('CodexAccountService config sync', () => {
     expect(
       () => new CodexAccountService(store as never, rateLimits as never, runtimeHome as never)
     ).not.toThrow()
+    await settleStartupConfigSync()
     expect(readFileSync(join(managedHomePath, 'config.toml'), 'utf-8')).toBe(
       'approval_policy = "on-request"\n'
     )

@@ -10,6 +10,7 @@ import {
   createSettings,
   createStore,
   registerCodexAccountsTestHomes,
+  settleStartupConfigSync,
   testState
 } from './service-test-harness'
 import {
@@ -159,6 +160,7 @@ describe('Codex reset-credit managed-home ownership', () => {
       fixture.store.replaceCodexResetCreditAttemptLedgerAndFlush.mockClear()
       fixture.store.updateSettings.mockClear()
       const restarted = fixture.createService()
+      await settleStartupConfigSync()
       // Why: construction mirrors config into every managed home; only the retry itself is under test.
       fsFaults.resetMkdirCalls()
 
@@ -189,6 +191,7 @@ describe('Codex reset-credit managed-home ownership', () => {
     fixture.store.updateSettings.mockClear()
     // Why: construction mirrors config into every managed home; only the replay itself is under test.
     const restarted = fixture.createService()
+    await settleStartupConfigSync()
     fsFaults.hold(join(realpathSync(fixture.managedHomePath), '.dolphin-managed-home'))
     fsFaults.resetMkdirCalls()
 
@@ -239,8 +242,10 @@ describe('Codex reset-credit managed-home ownership', () => {
     const { CodexAccountService } = await import('./service')
     const createService = () =>
       new CodexAccountService(store as never, rateLimits as never, createRuntimeHome() as never)
+    const service = createService()
+    await settleStartupConfigSync()
     return {
-      service: createService(),
+      service,
       createService,
       store,
       consume,

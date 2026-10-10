@@ -12,6 +12,7 @@ import {
   createSettings,
   createStore,
   registerCodexAccountsTestHomes,
+  settleStartupConfigSync,
   testState
 } from './service-test-harness'
 
@@ -35,9 +36,10 @@ vi.mock('node:os', async () => {
   }
 })
 
-function decodeEncodedWslBashCommand(command: string): string {
-  const encoded = command.match(/^set -o pipefail; printf %s '([^']+)' \| base64 -d \| bash$/)?.[1]
-  return encoded ? Buffer.from(encoded, 'base64').toString('utf8') : command
+/** The managed-home ownership probe, as opposed to the WSL cleanup that also canonicalizes. */
+function isOwnershipCheck(spec: WslSpec): boolean {
+  const script = String(spec.script)
+  return script.includes('managed_root_real') && !script.includes('rm -rf')
 }
 
 function wslOk(stdout = ''): WslResult {
@@ -116,6 +118,7 @@ describe('CodexAccountService config sync', () => {
       createRateLimits() as never,
       createRuntimeHome() as never
     )
+    await settleStartupConfigSync()
 
     expect(readFileSync(join(wslManagedHomePath, 'config.toml'), 'utf-8')).toBe(
       'sandbox_mode = "danger-full-access"\n\n' +
@@ -138,9 +141,11 @@ describe('CodexAccountService config sync', () => {
     writeFileSync(join(wslManagedHomePath, '.dolphin-managed-home'), 'account-1\n', 'utf-8')
     writeFileSync(wslCanonicalConfigPath, 'model_instructions_file = "instructions.md"\n', 'utf-8')
 
-    vi.doMock('node:child_process', () => ({
-      execFileSync: vi.fn(() => `${wslLinuxHomePath}\n`),
-      spawn: vi.fn()
+    vi.doMock('node:child_process', () => ({ spawn: vi.fn() }))
+    vi.doMock('../wsl/wsl-runner', () => ({
+      runWslProcess: vi.fn(async (spec: WslSpec) =>
+        isOwnershipCheck(spec) ? wslOk(`${wslLinuxHomePath}\n`) : wslOk()
+      )
     }))
     vi.doMock('../../shared/wsl-paths', () => ({
       parseWslUncPath: (path: string) =>
@@ -181,6 +186,7 @@ describe('CodexAccountService config sync', () => {
         createRateLimits() as never,
         createRuntimeHome() as never
       )
+      await settleStartupConfigSync()
 
       expect(readFileSync(join(wslManagedHomePath, 'config.toml'), 'utf-8')).toContain(
         "model_instructions_file = '/mnt/c/Users/alice/.codex/instructions.md'"
@@ -213,15 +219,13 @@ describe('CodexAccountService config sync', () => {
       'utf-8'
     )
 
-    const execFileSyncMock = vi.fn((_command: string, args: string[]) => {
-      const script = decodeEncodedWslBashCommand(String(args.at(-1)))
-      expect(args.slice(0, 2)).toEqual(['-d', 'Debian'])
-      expect(script).toContain('readlink -f')
-      return `${wslLinuxHomePath}\n`
-    })
     const runWslProcessMock = vi.fn(async (spec: WslSpec) => {
       const script = String(spec.script)
       expect(spec.distro).toBe('Debian')
+      if (isOwnershipCheck(spec)) {
+        expect(spec).toMatchObject({ loginPath: 'none', shell: 'bash' })
+        return wslOk(`${wslLinuxHomePath}\n`)
+      }
       if (script.includes('WSL_DISTRO_NAME')) {
         // 'none': reads $HOME and $WSL_DISTRO_NAME, which wsl.exe supplies from
         // /etc/passwd without a login shell.
@@ -274,10 +278,7 @@ describe('CodexAccountService config sync', () => {
     vi.doMock('node:crypto', () => ({
       randomUUID: () => 'account-id-for-test'
     }))
-    vi.doMock('node:child_process', () => ({
-      execFileSync: execFileSyncMock,
-      spawn: spawnMock
-    }))
+    vi.doMock('node:child_process', () => ({ spawn: spawnMock }))
     vi.doMock('../wsl/wsl-runner', () => ({ runWslProcess: runWslProcessMock }))
     vi.doMock('../../shared/wsl-paths', () => ({
       parseWslUncPath: (path: string) =>
@@ -347,15 +348,12 @@ describe('CodexAccountService config sync', () => {
     const wslLinuxHomePath =
       '/home/alice/.local/share/dolphin/codex-accounts/account-id-for-test/home'
 
-    const execFileSyncMock = vi.fn((_command: string, args: string[]) => {
-      const script = decodeEncodedWslBashCommand(String(args.at(-1)))
-      expect(args.slice(0, 2)).toEqual(['-d', 'Debian'])
-      expect(script).toContain('readlink -f')
-      return `${wslLinuxHomePath}\n`
-    })
     const runWslProcessMock = vi.fn(async (spec: WslSpec) => {
       const script = String(spec.script)
       expect(spec.distro).toBe('Debian')
+      if (isOwnershipCheck(spec)) {
+        return wslOk(`${wslLinuxHomePath}\n`)
+      }
       if (script.includes('WSL_DISTRO_NAME')) {
         return wslOk('Debian\n/home/alice\n')
       }
@@ -372,10 +370,7 @@ describe('CodexAccountService config sync', () => {
     vi.doMock('node:crypto', () => ({
       randomUUID: () => 'account-id-for-test'
     }))
-    vi.doMock('node:child_process', () => ({
-      execFileSync: execFileSyncMock,
-      spawn: spawnMock
-    }))
+    vi.doMock('node:child_process', () => ({ spawn: spawnMock }))
     vi.doMock('../wsl/wsl-runner', () => ({ runWslProcess: runWslProcessMock }))
     vi.doMock('../../shared/wsl-paths', () => ({
       parseWslUncPath: (path: string) =>
@@ -426,15 +421,12 @@ describe('CodexAccountService config sync', () => {
     const wslLinuxHomePath =
       '/home/alice/.local/share/dolphin/codex-accounts/account-id-for-test/home'
 
-    const execFileSyncMock = vi.fn((_command: string, args: string[]) => {
-      const script = decodeEncodedWslBashCommand(String(args.at(-1)))
-      expect(args.slice(0, 2)).toEqual(['-d', 'Debian'])
-      expect(script).toContain('readlink -f')
-      return `${wslLinuxHomePath}\n`
-    })
     const runWslProcessMock = vi.fn(async (spec: WslSpec) => {
       const script = String(spec.script)
       expect(spec.distro).toBe('Debian')
+      if (isOwnershipCheck(spec)) {
+        return wslOk(`${wslLinuxHomePath}\n`)
+      }
       if (script.includes('WSL_DISTRO_NAME')) {
         return wslOk('Debian\n/home/alice\n')
       }
@@ -451,10 +443,7 @@ describe('CodexAccountService config sync', () => {
     vi.doMock('node:crypto', () => ({
       randomUUID: () => 'account-id-for-test'
     }))
-    vi.doMock('node:child_process', () => ({
-      execFileSync: execFileSyncMock,
-      spawn: spawnMock
-    }))
+    vi.doMock('node:child_process', () => ({ spawn: spawnMock }))
     vi.doMock('../wsl/wsl-runner', () => ({ runWslProcess: runWslProcessMock }))
     vi.doMock('../../shared/wsl-paths', () => ({
       parseWslUncPath: (path: string) =>
@@ -514,14 +503,9 @@ describe('CodexAccountService config sync', () => {
       'utf-8'
     )
 
-    const execFileSyncMock = vi.fn((_command: string, args: string[]) => {
-      const script = decodeEncodedWslBashCommand(String(args.at(-1)))
-      if (script.includes('readlink -f')) {
-        return `${wslLinuxHomePath}\n`
-      }
-      return ''
-    })
-    const runWslProcessMock = vi.fn(async () => wslOk())
+    const runWslProcessMock = vi.fn(async (spec: WslSpec) =>
+      isOwnershipCheck(spec) ? wslOk(`${wslLinuxHomePath}\n`) : wslOk()
+    )
     let clearSelectionDuringLogin = (): void => {}
     const spawnMock = vi.fn((command: string, args: string[]) => {
       expect(command).toBe('wsl.exe')
@@ -550,10 +534,7 @@ describe('CodexAccountService config sync', () => {
       return child
     })
 
-    vi.doMock('node:child_process', () => ({
-      execFileSync: execFileSyncMock,
-      spawn: spawnMock
-    }))
+    vi.doMock('node:child_process', () => ({ spawn: spawnMock }))
     vi.doMock('../wsl/wsl-runner', () => ({ runWslProcess: runWslProcessMock }))
     vi.doMock('../../shared/wsl-paths', () => ({
       parseWslUncPath: (path: string) =>
@@ -647,15 +628,11 @@ describe('CodexAccountService config sync', () => {
     const wslManagedHomePath = join(testState.userDataDir, 'wsl-account', 'home')
     const wslLinuxHomePath = '/home/alice/.local/share/dolphin/codex-accounts/account-1/home'
 
-    const execFileSyncMock = vi.fn((_command: string, args: string[]) => {
-      const script = decodeEncodedWslBashCommand(String(args.at(-1)))
-      if (script.includes('readlink -f')) {
-        return `${wslLinuxHomePath}\n`
-      }
-      return ''
-    })
     const runWslProcessMock = vi.fn(async (spec: WslSpec) => {
       const script = String(spec.script)
+      if (isOwnershipCheck(spec)) {
+        return wslOk(`${wslLinuxHomePath}\n`)
+      }
       if (script.includes('mkdir -p -- "$candidate"')) {
         expect(spec.shell).toBe('bash')
         mkdirSync(wslManagedHomePath, { recursive: true })
@@ -686,10 +663,7 @@ describe('CodexAccountService config sync', () => {
       return child
     })
 
-    vi.doMock('node:child_process', () => ({
-      execFileSync: execFileSyncMock,
-      spawn: spawnMock
-    }))
+    vi.doMock('node:child_process', () => ({ spawn: spawnMock }))
     vi.doMock('../wsl/wsl-runner', () => ({ runWslProcess: runWslProcessMock }))
     vi.doMock('../../shared/wsl-paths', () => ({
       parseWslUncPath: (path: string) =>
@@ -763,24 +737,23 @@ describe('CodexAccountService config sync', () => {
     mkdirSync(wslManagedHomePath, { recursive: true })
     writeFileSync(join(wslManagedHomePath, '.dolphin-managed-home'), 'account-1\n', 'utf-8')
 
-    vi.doMock('node:child_process', () => ({
-      execFileSync: vi.fn((_command: string, args: string[]) => {
-        const script = decodeEncodedWslBashCommand(String(args.at(-1)))
-        if (script.includes('readlink -f')) {
-          expect(script).toContain("expected_marker='account-1'")
-          expect(script).toContain(
-            'test "$candidate_real" = "$managed_root_real/$expected_marker/home"'
-          )
-          expect(script).toContain(
-            'test "$(cat "$candidate_real/.dolphin-managed-home")" = "$expected_marker"'
-          )
-          return `${wslLinuxHomePath}\n`
+    vi.doMock('node:child_process', () => ({ spawn: vi.fn() }))
+    vi.doMock('../wsl/wsl-runner', () => ({
+      runWslProcess: vi.fn(async (spec: WslSpec) => {
+        if (!isOwnershipCheck(spec)) {
+          return wslOk()
         }
-        return ''
-      }),
-      spawn: vi.fn()
+        const script = String(spec.script)
+        expect(script).toContain("expected_marker='account-1'")
+        expect(script).toContain(
+          'test "$candidate_real" = "$managed_root_real/$expected_marker/home"'
+        )
+        expect(script).toContain(
+          'test "$(cat "$candidate_real/.dolphin-managed-home")" = "$expected_marker"'
+        )
+        return wslOk(`${wslLinuxHomePath}\n`)
+      })
     }))
-    vi.doMock('../wsl/wsl-runner', () => ({ runWslProcess: vi.fn(async () => wslOk()) }))
     vi.doMock('../../shared/wsl-paths', () => ({
       parseWslUncPath: (path: string) =>
         path === wslManagedHomePath ? { distro: 'Ubuntu', linuxPath: wslLinuxHomePath } : null

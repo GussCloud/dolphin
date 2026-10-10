@@ -139,11 +139,7 @@ describe('CodexAccountService config sync', () => {
 
       let thrown: Error | null = null
       try {
-        ;(
-          service as unknown as {
-            readIdentityFromHome(managedHomePath: string, expectedAccountId: string): unknown
-          }
-        ).readIdentityFromHome(managedHomePath, 'account-1')
+        await service['readIdentityFromHome'](managedHomePath, 'account-1')
       } catch (error) {
         thrown = error as Error
       }
