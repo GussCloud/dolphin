@@ -24,6 +24,7 @@ import {
   submittedReportIds
 } from './crash-reporting-sendable-reports'
 import { buildUncapturedCrashReportText, submitCrashReport } from './crash-reporting-submission'
+import { readGpuProcessMemory } from '../crash-reporting/gpu-process-memory-reader'
 
 export function _resetRendererErrorReportDedupeForTests(): void {
   recentRendererErrorReportKeys.clear()
@@ -112,4 +113,7 @@ export function registerCrashReportingHandlers(store: CrashReportStore): void {
   ipcMain.handle('crashReports:submit', async (_event, args: CrashReportSubmitArgs) =>
     submitCrashReport(store, args)
   )
+
+  ipcMain.removeHandler('crashReports:readGpuProcessMemory')
+  ipcMain.handle('crashReports:readGpuProcessMemory', () => readGpuProcessMemory())
 }

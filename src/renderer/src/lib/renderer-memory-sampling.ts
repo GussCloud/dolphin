@@ -5,6 +5,7 @@
  */
 import type { CrashReportDetailValue } from '../../../shared/crash-reporting'
 import type { RendererProcessMemory } from '../../../shared/renderer-process-memory'
+import type { GpuProcessMemory } from '../../../shared/gpu-process-memory'
 import {
   getBrowserWebviewMemoryProfile,
   type BrowserWebviewMemoryProfile
@@ -51,6 +52,8 @@ const emittedPrivateHighwaterMarks = new Set<number>()
 let lastProcessFootprint: RendererProcessMemory | null = null
 let processFootprintReadGeneration = 0
 let processFootprintReadInFlight = false
+let lastGpuFootprint: GpuProcessMemory | null = null
+let gpuFootprintReadInFlight = false
 let rendererSurface: RendererSurface = 'main'
 
 export function setRendererMemorySamplingSurface(surface: RendererSurface): void {
@@ -63,6 +66,8 @@ export function resetRendererMemorySampling(): void {
   lastProcessFootprint = null
   processFootprintReadGeneration += 1
   processFootprintReadInFlight = false
+  lastGpuFootprint = null
+  gpuFootprintReadInFlight = false
   rendererSurface = 'main'
 }
 
@@ -78,7 +83,9 @@ export function recordRendererMemorySample(reason: string): void {
   // of staleness is irrelevant to a footprint trend, and the first sample of a
   // session simply carries no footprint.
   const footprint = lastProcessFootprint
+  const gpuFootprint = lastGpuFootprint
   refreshProcessFootprint()
+  refreshGpuFootprint()
 
   recordRendererCrashBreadcrumb(
     'renderer_memory',
@@ -92,19 +99,25 @@ export function recordRendererMemorySample(reason: string): void {
       blinkAllocatedMB: toMegabytes(memory.blinkAllocatedBytes),
       ...describeProcessFootprint(memory, footprint),
       browserWebviews: browserWebviews.browserWebviewCount,
-      registeredBrowserGuests: browserWebviews.registeredBrowserGuestCount
+      registeredBrowserGuests: browserWebviews.registeredBrowserGuestCount,
+      gpuPrivateMB: gpuPrivateMegabytes(gpuFootprint) ?? undefined
     })
   )
   recordRendererMemoryHighwater(memory, browserWebviews, footprint)
-  noteRendererMemoryPressure(memory, footprint)
+  noteRendererMemoryPressure(memory, footprint, gpuFootprint)
 }
 
 // Why after the highwater crumb: the census it records describes the renderer before shedding.
 function noteRendererMemoryPressure(
   memory: HeapMetrics,
-  footprint: RendererProcessMemory | null
+  footprint: RendererProcessMemory | null,
+  gpuFootprint: GpuProcessMemory | null
 ): void {
-  const sample = readPressureSample(memory, footprint)
+  const gpuPrivateMB = gpuPrivateMegabytes(gpuFootprint)
+  const sample = {
+    ...readPressureSample(memory, footprint),
+    ...(gpuPrivateMB === null ? {} : { gpuPrivateMB })
+  }
   const signal = noteRendererMemoryPressureSample(sample, Date.now())
   if (signal) {
     recordRendererCrashBreadcrumb(
@@ -113,7 +126,8 @@ function noteRendererMemoryPressure(
         rendererSurface,
         trigger: signal.trigger,
         heapPct: signal.heapRatio === null ? undefined : Math.round(signal.heapRatio * 100),
-        privateMB: signal.privateMB ?? undefined
+        privateMB: signal.privateMB ?? undefined,
+        gpuPrivateMB: signal.gpuPrivateMB ?? undefined
       })
     )
   }
@@ -131,6 +145,37 @@ function readPressureSample(
   const privateMB =
     footprint === null ? null : (toMegabytes(footprint.privateKB * BYTES_PER_KILOBYTE) ?? null)
   return { heapRatio, privateMB }
+}
+
+function gpuPrivateMegabytes(gpuFootprint: GpuProcessMemory | null): number | null {
+  return gpuFootprint === null
+    ? null
+    : (toMegabytes(gpuFootprint.privateKB * BYTES_PER_KILOBYTE) ?? null)
+}
+
+/** Same staleness contract as the renderer footprint; null on web and where only Windows reports it. */
+function refreshGpuFootprint(): void {
+  const read = window.api?.crashReports?.readGpuProcessMemory
+  if (!read || gpuFootprintReadInFlight) {
+    return
+  }
+  const generation = processFootprintReadGeneration
+  gpuFootprintReadInFlight = true
+  const settle = (gpuFootprint: GpuProcessMemory | null): void => {
+    if (generation !== processFootprintReadGeneration) {
+      return
+    }
+    lastGpuFootprint = gpuFootprint
+    gpuFootprintReadInFlight = false
+  }
+  try {
+    void read().then(
+      (gpuFootprint) => settle(gpuFootprint ?? null),
+      () => settle(null)
+    )
+  } catch {
+    settle(null)
+  }
 }
 
 /** Stays null on shells without the bridge, or when the runtime withholds it. */

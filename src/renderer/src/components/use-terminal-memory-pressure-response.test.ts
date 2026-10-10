@@ -41,4 +41,18 @@ describe('useTerminalMemoryPressureResponse', () => {
     noteRendererMemoryPressureSample({ heapRatio: 0.85, privateMB: null }, 10 * 60_000)
     expect(mocks.releaseAllRetainedHiddenWebgl).toHaveBeenCalledTimes(1)
   })
+
+  it('answers GPU-process pressure by dropping WebGL only, without a parking pass', () => {
+    const setRevision = vi.fn()
+    const { result, unmount } = renderHook(() => useTerminalMemoryPressureResponse(setRevision))
+
+    act(() => {
+      noteRendererMemoryPressureSample({ heapRatio: 0.1, privateMB: 100, gpuPrivateMB: 500 }, 0)
+    })
+
+    expect(mocks.releaseAllRetainedHiddenWebgl).toHaveBeenCalledTimes(1)
+    expect(result.current.current).toBe(false)
+    expect(setRevision).not.toHaveBeenCalled()
+    unmount()
+  })
 })

@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ManagedPaneInternal, PaneManagerOptions } from './pane-manager-types'
 import { resumePaneRendering, suspendPaneRendering } from './pane-rendering-control'
 import { PaneManager } from './pane-manager'
 import {
+  RETAINED_HIDDEN_WEBGL_EXPIRY_MS,
   releaseAllRetainedHiddenWebgl,
   releaseHiddenWebglRetention,
   resetHiddenWebglRetentionForTest,
@@ -199,5 +200,91 @@ describe('terminal-webgl-hidden-retention', () => {
     const panesB = Array.from({ length: 6 }, () => createPane())
     suspendPaneRendering(panesB, retentionFor(ownerB, panesB))
     expect(panesB.every((pane) => pane.webglAddon != null)).toBe(true)
+  })
+})
+
+describe('terminal-webgl-hidden-retention expiry', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    resetHiddenWebglRetentionForTest()
+  })
+
+  afterEach(() => {
+    resetHiddenWebglRetentionForTest()
+    vi.useRealTimers()
+  })
+
+  it('keeps a recently hidden owner live and disposes it once hidden for the expiry window', () => {
+    const owner = {}
+    const panes = [createPane(), createPane()]
+    const addons = panes.map((pane) => pane.webglAddon)
+    suspendPaneRendering(panes, retentionFor(owner, panes))
+
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS - 1)
+    expect(panes.every((pane) => pane.webglAddon != null)).toBe(true)
+    expect(retainedHiddenWebglOwnerCountForTest()).toBe(1)
+
+    vi.advanceTimersByTime(1)
+    expect(panes.every((pane) => pane.webglAddon === null)).toBe(true)
+    expect(addons.every((addon) => vi.mocked(addon!.dispose).mock.calls.length === 1)).toBe(true)
+    expect(retainedHiddenWebglOwnerCountForTest()).toBe(0)
+    // Reveal after expiry reattaches like an over-cap eviction: attachment is still deferred.
+    expect(panes.every((pane) => pane.webglAttachmentDeferred)).toBe(true)
+  })
+
+  it('reveal before the window cancels the expiry', () => {
+    const owner = {}
+    const panes = [createPane()]
+    const addon = panes[0].webglAddon
+    suspendPaneRendering(panes, retentionFor(owner, panes))
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS / 2)
+    resumePaneRendering(panes, owner)
+
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS * 2)
+    expect(panes[0].webglAddon).toBe(addon)
+    expect(addon?.dispose).not.toHaveBeenCalled()
+  })
+
+  it('hiding the owner again restarts its window', () => {
+    const owner = {}
+    const panes = [createPane()]
+    suspendPaneRendering(panes, retentionFor(owner, panes))
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS - 1_000)
+    resumePaneRendering(panes, owner)
+    suspendPaneRendering(panes, retentionFor(owner, panes))
+
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS - 1)
+    expect(panes[0].webglAddon).not.toBeNull()
+    vi.advanceTimersByTime(1)
+    expect(panes[0].webglAddon).toBeNull()
+  })
+
+  it('expires each owner on its own clock', () => {
+    const early = {}
+    const earlyPanes = [createPane()]
+    suspendPaneRendering(earlyPanes, retentionFor(early, earlyPanes))
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS / 2)
+    const late = {}
+    const latePanes = [createPane()]
+    suspendPaneRendering(latePanes, retentionFor(late, latePanes))
+
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS / 2)
+    expect(earlyPanes[0].webglAddon).toBeNull()
+    expect(latePanes[0].webglAddon).not.toBeNull()
+    expect(retainedHiddenWebglOwnerCountForTest()).toBe(1)
+  })
+
+  it('evicted or pressure-released owners leave no timer that disposes twice', () => {
+    const owners = [{}, {}]
+    const panes = owners.map((owner) => {
+      const ownerPanes = [createPane()]
+      suspendPaneRendering(ownerPanes, retentionFor(owner, ownerPanes))
+      return ownerPanes
+    })
+    const addons = panes.flat().map((pane) => pane.webglAddon)
+    releaseAllRetainedHiddenWebgl()
+    expect(vi.getTimerCount()).toBe(0)
+    vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS)
+    expect(addons.every((addon) => vi.mocked(addon!.dispose).mock.calls.length === 1)).toBe(true)
   })
 })
