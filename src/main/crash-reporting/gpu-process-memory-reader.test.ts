@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { setAppEnvironment, type AppProcessMetric } from '../../shared/app-environment'
 import { readGpuProcessMemory } from './gpu-process-memory-reader'
 
-const SLOT = Symbol.for('dolphin.host.appEnvironment')
+const SLOT: unique symbol = Symbol.for('dolphin.host.appEnvironment')
+/** The realm slot app-environment installs into; saved and restored so other suites keep theirs. */
+type AppEnvironmentSlot = typeof globalThis & { [SLOT]?: unknown }
+const environmentSlot: AppEnvironmentSlot = globalThis
 let previousEnvironment: unknown
 
 function installMetrics(metrics: AppProcessMetric[]): void {
@@ -19,11 +22,11 @@ function installMetrics(metrics: AppProcessMetric[]): void {
 
 describe('readGpuProcessMemory', () => {
   beforeEach(() => {
-    previousEnvironment = Reflect.get(globalThis, SLOT)
+    previousEnvironment = environmentSlot[SLOT]
   })
 
   afterEach(() => {
-    Reflect.set(globalThis, SLOT, previousEnvironment)
+    environmentSlot[SLOT] = previousEnvironment
   })
 
   it("reports the GPU process's private bytes", () => {
@@ -42,7 +45,7 @@ describe('readGpuProcessMemory', () => {
   it('stays null without a GPU process or an app environment', () => {
     installMetrics([{ pid: 1, type: 'Browser', memory: { privateBytes: 200_000 } }])
     expect(readGpuProcessMemory()).toBeNull()
-    Reflect.set(globalThis, SLOT, null)
+    environmentSlot[SLOT] = null
     expect(readGpuProcessMemory()).toBeNull()
   })
 })
