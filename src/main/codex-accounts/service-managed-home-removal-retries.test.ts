@@ -49,11 +49,7 @@ describe('CodexAccountService config sync', () => {
         runtimeHome as never
       )
 
-      ;(
-        service as unknown as {
-          safeRemoveManagedHome(candidatePath: string, expectedAccountId: string): void
-        }
-      ).safeRemoveManagedHome(managedHomePath, 'account-1')
+      await service['safeRemoveManagedHome'](managedHomePath, 'account-1')
 
       expect(existsSync(managedHomePath)).toBe(false)
       const homeRemoval = rmSyncSpy.mock.calls.find(([target]) => target === managedHomePath)
@@ -96,13 +92,9 @@ describe('CodexAccountService config sync', () => {
         runtimeHome as never
       )
 
-      expect(() =>
-        (
-          service as unknown as {
-            safeRemoveManagedHome(candidatePath: string, expectedAccountId: string): void
-          }
-        ).safeRemoveManagedHome(managedHomePath, 'account-1')
-      ).not.toThrow()
+      await expect(
+        service['safeRemoveManagedHome'](managedHomePath, 'account-1')
+      ).resolves.toBeUndefined()
       expect(warnSpy).toHaveBeenCalledWith(
         '[codex-accounts] Failed to remove managed home:',
         lockedError

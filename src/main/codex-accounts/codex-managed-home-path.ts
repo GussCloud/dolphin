@@ -12,8 +12,6 @@ import { assertOwnedHostCodexManagedHomePath } from './host-codex-managed-home-o
 const WSL_MANAGED_HOME_TIMEOUT_MS = 5_000
 
 export class CodexManagedHomePath {
-  constructor(private readonly validateWslPath: (distro: string, script: string) => string) {}
-
   getRoot(): string {
     const root = join(app.getPath('userData'), 'codex-accounts')
     mkdirSync(root, { recursive: true })
@@ -37,7 +35,7 @@ export class CodexManagedHomePath {
     }
 
     try {
-      return this.assert(account.managedHomePath, account.id)
+      return await this.assert(account.managedHomePath, account.id)
     } catch (error) {
       if (!this.isMissingHomeError(error)) {
         throw error
@@ -46,7 +44,7 @@ export class CodexManagedHomePath {
     }
   }
 
-  assert(candidatePath: string, expectedAccountId?: string): string {
+  async assert(candidatePath: string, expectedAccountId?: string): Promise<string> {
     const wslInfo = parseWslUncPath(candidatePath)
     if (!wslInfo) {
       return assertOwnedHostCodexManagedHomePath({
@@ -74,7 +72,10 @@ export class CodexManagedHomePath {
     return this.assertMountedWslPath(candidatePath, wslInfo.linuxPath, expectedAccountId)
   }
 
-  private recreateExpectedHostHome(account: CodexManagedAccount, originalError: unknown): string {
+  private async recreateExpectedHostHome(
+    account: CodexManagedAccount,
+    originalError: unknown
+  ): Promise<string> {
     const expectedPath = join(this.getRoot(), account.id, 'home')
     if (!this.pathsEqual(account.managedHomePath, expectedPath)) {
       throw originalError
@@ -122,14 +123,15 @@ export class CodexManagedHomePath {
     }
   }
 
-  private assertWindowsWslPath(
+  private async assertWindowsWslPath(
     wslInfo: { distro: string; linuxPath: string },
     expectedAccountId?: string
-  ): string {
+  ): Promise<string> {
     try {
-      const canonicalLinuxPath = this.validateWslPath(
-        wslInfo.distro,
-        [
+      const result = await runWslProcess({
+        distro: wslInfo.distro,
+        loginPath: 'none',
+        script: [
           'set -euo pipefail',
           `candidate=${quotePosixShell(wslInfo.linuxPath)}`,
           'managed_root="${HOME%/}/.local/share/dolphin/codex-accounts"',
@@ -146,8 +148,16 @@ export class CodexManagedHomePath {
                 'test "$(cat "$candidate_real/.dolphin-managed-home")" = "$expected_marker"',
                 'printf "%s\\n" "$candidate_real"'
               ])
-        ].join('\n')
-      ).trim()
+        ].join('\n'),
+        shell: 'bash',
+        timeoutMs: WSL_MANAGED_HOME_TIMEOUT_MS
+      })
+      if (result.code !== 0 || result.timedOut) {
+        throw new Error(
+          `WSL ownership check exited with ${result.timedOut ? 'a timeout' : result.code}`
+        )
+      }
+      const canonicalLinuxPath = result.stdout.trim()
       if (!canonicalLinuxPath) {
         throw new Error('Managed Codex home directory does not exist on disk.')
       }
