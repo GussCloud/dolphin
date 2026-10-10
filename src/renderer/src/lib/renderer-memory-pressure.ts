@@ -8,47 +8,73 @@
  */
 export const RENDERER_MEMORY_PRESSURE_HEAP_RATIO = 0.8
 export const RENDERER_MEMORY_PRESSURE_PRIVATE_MB = 1000
+/**
+ * GPU-process commit that sheds retained hidden WebGL. Measured on Windows: idle ~95 MB, three
+ * worktrees with five live terminal contexts ~210 MB, each retained context ~30-40 MB, so the
+ * six-context cap alone tops out near 320 MB. Past 400 MB something else is also drawing on the
+ * GPU, and the retained contexts are the part that can be rebuilt on reveal.
+ */
+export const RENDERER_MEMORY_PRESSURE_GPU_PRIVATE_MB = 400
 // Why: shedding remounts nothing by itself, but each pass costs a capture and a GC; one per five
 // minutes keeps a renderer pinned above the mark from turning into a park loop.
 export const RENDERER_MEMORY_PRESSURE_COOLDOWN_MS = 5 * 60_000
 
 export type RendererMemoryPressureSignal = {
-  trigger: 'heap' | 'private'
+  trigger: 'heap' | 'private' | 'gpu'
   heapRatio: number | null
   privateMB: number | null
+  gpuPrivateMB?: number | null
+}
+
+export type RendererMemoryPressureSample = {
+  heapRatio: number | null
+  privateMB: number | null
+  /** Absent or null where the host cannot report GPU-process commit (web, macOS, Linux). */
+  gpuPrivateMB?: number | null
 }
 
 type Listener = (signal: RendererMemoryPressureSignal) => void
 
 const listeners = new Set<Listener>()
-let lastSignalAtMs: number | null = null
+// Why separate: a GPU signal sheds only WebGL, so it must not hold back a renderer-heap shed.
+const lastSignalAtMsByKind = new Map<'renderer' | 'gpu', number>()
 
-export function readRendererMemoryPressure(sample: {
-  heapRatio: number | null
-  privateMB: number | null
-}): RendererMemoryPressureSignal | null {
+export function readRendererMemoryPressure(
+  sample: RendererMemoryPressureSample
+): RendererMemoryPressureSignal | null {
   if (sample.heapRatio !== null && sample.heapRatio >= RENDERER_MEMORY_PRESSURE_HEAP_RATIO) {
     return { trigger: 'heap', ...sample }
   }
   if (sample.privateMB !== null && sample.privateMB >= RENDERER_MEMORY_PRESSURE_PRIVATE_MB) {
     return { trigger: 'private', ...sample }
   }
+  if (
+    typeof sample.gpuPrivateMB === 'number' &&
+    sample.gpuPrivateMB >= RENDERER_MEMORY_PRESSURE_GPU_PRIVATE_MB
+  ) {
+    return { trigger: 'gpu', ...sample }
+  }
   return null
 }
 
 /** Emits a pressure signal for a sample above the marks, at most once per cool-down. */
 export function noteRendererMemoryPressureSample(
-  sample: { heapRatio: number | null; privateMB: number | null },
+  sample: RendererMemoryPressureSample,
   nowMs: number
 ): RendererMemoryPressureSignal | null {
   const signal = readRendererMemoryPressure(sample)
+  if (signal === null) {
+    return null
+  }
+  const kind = signal.trigger === 'gpu' ? 'gpu' : 'renderer'
+  const lastSignalAtMs = lastSignalAtMsByKind.get(kind)
   if (
-    signal === null ||
-    (lastSignalAtMs !== null && nowMs - lastSignalAtMs < RENDERER_MEMORY_PRESSURE_COOLDOWN_MS)
+    lastSignalAtMs !== undefined &&
+    nowMs - lastSignalAtMs < RENDERER_MEMORY_PRESSURE_COOLDOWN_MS
   ) {
     return null
   }
-  lastSignalAtMs = nowMs
+  lastSignalAtMsByKind.set(kind, nowMs)
   for (const listener of listeners) {
     try {
       listener(signal)
@@ -68,5 +94,5 @@ export function subscribeRendererMemoryPressure(listener: Listener): () => void 
 
 export function resetRendererMemoryPressureForTest(): void {
   listeners.clear()
-  lastSignalAtMs = null
+  lastSignalAtMsByKind.clear()
 }

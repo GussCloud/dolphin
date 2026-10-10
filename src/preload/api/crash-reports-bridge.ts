@@ -9,6 +9,7 @@ import type {
 } from '../../shared/crash-reporting'
 import type { RendererHeapStatistics } from '../../shared/renderer-heap-statistics'
 import type { RendererProcessMemory } from '../../shared/renderer-process-memory'
+import type { GpuProcessMemory } from '../../shared/gpu-process-memory'
 import { readRendererHeapStatistics } from '../renderer-heap-statistics-reader'
 import { readRendererProcessMemory } from '../renderer-process-memory-reader'
 import type { PreloadApi } from '../api-types'
@@ -28,5 +29,7 @@ export const crashReportsApi = {
   copyLatestDiagnostics: (args?: CrashReportCopyDiagnosticsArgs) =>
     ipcRenderer.invoke('crashReports:copyLatestDiagnostics', args),
   readHeapStatistics: (): RendererHeapStatistics | null => readRendererHeapStatistics(),
-  readProcessMemory: (): Promise<RendererProcessMemory | null> => readRendererProcessMemory()
+  readProcessMemory: (): Promise<RendererProcessMemory | null> => readRendererProcessMemory(),
+  readGpuProcessMemory: (): Promise<GpuProcessMemory | null> =>
+    ipcRenderer.invoke('crashReports:readGpuProcessMemory')
 } satisfies PreloadApi['crashReports']

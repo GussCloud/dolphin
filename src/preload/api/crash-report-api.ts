@@ -13,6 +13,7 @@ import type {
 } from '../../shared/feedback-submit-contract'
 import type { RendererHeapStatistics } from '../../shared/renderer-heap-statistics'
 import type { RendererProcessMemory } from '../../shared/renderer-process-memory'
+import type { GpuProcessMemory } from '../../shared/gpu-process-memory'
 
 export type CrashReportsApi = {
   getLatestPending: () => Promise<CrashReportRecord | null>
@@ -30,6 +31,8 @@ export type CrashReportsApi = {
   readHeapStatistics: () => RendererHeapStatistics | null
   /** This renderer's OS-level footprint, which the heap counters never include. */
   readProcessMemory?: () => Promise<RendererProcessMemory | null>
+  /** The local GPU process's commit, where terminal WebGL contexts live; absent on web. */
+  readGpuProcessMemory?: () => Promise<GpuProcessMemory | null>
 }
 
 export type FeedbackApi = {
