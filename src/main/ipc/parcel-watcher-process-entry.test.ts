@@ -545,6 +545,78 @@ describe('parcel watcher process canary', () => {
     expect(statMock).toHaveBeenCalledTimes(1)
   })
 
+  describe('canary probe backoff', () => {
+    let canaryDelivers: boolean
+    let exitSpy: ReturnType<typeof vi.spyOn>
+
+    async function startWithLiveRoot(): Promise<void> {
+      canaryDelivers = true
+      let canaryCallback: ((err: Error | null) => void) | undefined
+      subscribeMock
+        .mockImplementationOnce(async (_dir, callback) => {
+          canaryCallback = callback
+          return { unsubscribe: vi.fn() }
+        })
+        .mockResolvedValue({ unsubscribe: vi.fn() })
+      writeFileSyncMock.mockImplementation(() => {
+        if (canaryDelivers) {
+          canaryCallback?.(null)
+        }
+      })
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: a never-returning exit stub cannot be typed; the test only records the call.
+      exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never)
+      await import('./parcel-watcher-process-entry')
+      await vi.advanceTimersByTimeAsync(0)
+      process.emit('message', { op: 'subscribe', id: 1, dir: '/repo', opts: {} })
+      await vi.advanceTimersByTimeAsync(0)
+    }
+
+    it('stretches probes on a healthy process up to one per minute', async () => {
+      await startWithLiveRoot()
+
+      // Probes at 10, 30, 70, 130, 190 s.
+      await vi.advanceTimersByTimeAsync(10_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(1)
+      await vi.advanceTimersByTimeAsync(20_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(2)
+      await vi.advanceTimersByTimeAsync(40_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(3)
+      await vi.advanceTimersByTimeAsync(59_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(3)
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(4)
+      await vi.advanceTimersByTimeAsync(60_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(5)
+      expect(exitSpy).not.toHaveBeenCalled()
+    })
+
+    it('drops back to 10 s after a miss and still restarts on the second miss', async () => {
+      await startWithLiveRoot()
+      await vi.advanceTimersByTimeAsync(130_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(4)
+
+      canaryDelivers = false
+      // Next probe is a full minute out; its miss must not wait another minute.
+      await vi.advanceTimersByTimeAsync(65_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(5)
+      expect(exitSpy).not.toHaveBeenCalled()
+      await vi.advanceTimersByTimeAsync(10_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(6)
+      expect(exitSpy).toHaveBeenCalledWith(2)
+    })
+
+    it('returns to 10 s probes when the subscription set changes', async () => {
+      await startWithLiveRoot()
+      await vi.advanceTimersByTimeAsync(130_000)
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(4)
+
+      process.emit('message', { op: 'subscribe', id: 2, dir: '/other-repo', opts: {} })
+      await vi.advanceTimersByTimeAsync(10_000)
+
+      expect(writeFileSyncMock).toHaveBeenCalledTimes(5)
+    })
+  })
+
   it('drops queued event work when the subscription is removed', async () => {
     let callback:
       | ((err: Error | null, events: { type: string; path: string }[]) => void)
