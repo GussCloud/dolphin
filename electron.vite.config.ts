@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { createBootstrapFatalExitBanner } from './config/build-plugins/bootstrap-fatal-exit-banner'
 import { createPdfjsViewerAssetsPlugin } from './config/build-plugins/pdfjs-viewer-assets'
+import { createRendererBootChunkGroups } from './config/build-plugins/renderer-boot-chunk-groups'
 import {
   CLI_MAIN_ENTRY_NAMES,
   createPlainNodeEntryGuardPlugin
@@ -347,6 +348,13 @@ export const electronViteConfig: UserConfig = {
           index: resolve('src/renderer/index.html'),
           popout: resolve('src/renderer/popout.html'),
           web: resolve('src/renderer/web-index.html')
+        },
+        output: {
+          advancedChunks: createRendererBootChunkGroups([
+            { name: 'index', moduleId: resolve('src/renderer/src/main.tsx') },
+            { name: 'popout', moduleId: resolve('src/renderer/src/popout.tsx') },
+            { name: 'web', moduleId: resolve('src/renderer/src/web/main.tsx') }
+          ])
         }
       }
     }
