@@ -4,6 +4,7 @@ import { defineConfig, type UserConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { createBootstrapFatalExitBanner } from './config/build-plugins/bootstrap-fatal-exit-banner'
+import { createDaemonHostChunkManifestPlugin } from './config/build-plugins/daemon-host-chunk-manifest'
 import { createPdfjsViewerAssetsPlugin } from './config/build-plugins/pdfjs-viewer-assets'
 import {
   CLI_MAIN_ENTRY_NAMES,
@@ -286,7 +287,11 @@ export const electronViteConfig: UserConfig = {
           entryFileNames: '[name].js',
           chunkFileNames: 'chunks/[name]-[hash].js'
         },
-        plugins: [createMainBootstrapPlugin(), createPlainNodeEntryGuardPlugin()]
+        plugins: [
+          createMainBootstrapPlugin(),
+          createPlainNodeEntryGuardPlugin(),
+          createDaemonHostChunkManifestPlugin()
+        ]
       }
     },
     // Why: compile-time substitution for the telemetry gate. See the block

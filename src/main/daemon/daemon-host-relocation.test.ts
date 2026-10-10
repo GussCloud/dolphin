@@ -40,6 +40,7 @@ function installHostApp(): void {
   } as AppEnvironment)
 }
 
+import { serializeDaemonHostChunkManifest } from './daemon-host-chunk-manifest'
 import { buildDaemonHostManifest } from './daemon-host-manifest'
 import {
   collectPinnedDaemonVersions,
@@ -170,7 +171,8 @@ describe('buildDaemonHostManifest', () => {
       resourcesPath: 'C:\\app\\resources',
       entrySourcePath: 'C:\\app\\resources\\app.asar.unpacked\\out\\main\\daemon-entry.js',
       entryRelPath: 'resources/app.asar.unpacked/out/main/daemon-entry.js',
-      windowsProcessTreeDir: 'C:\\app\\resources\\node_modules\\@vscode\\windows-process-tree'
+      windowsProcessTreeDir: 'C:\\app\\resources\\node_modules\\@vscode\\windows-process-tree',
+      daemonChunkFiles: null
     })
     const byDest = new Map(ops.map((op) => [op.destRel, op]))
     // The host exe keeps the source basename: a verbatim, signature-preserving copy with no
@@ -196,6 +198,74 @@ describe('buildDaemonHostManifest', () => {
     expect(nodePtyOp?.filter?.('node-pty/build/Release/conpty.pdb')).toBe(false)
     expect(nodePtyOp?.filter?.(`node-pty/prebuilds/${HOST_PREBUILD}/pty.node`)).toBe(true)
     expect(nodePtyOp?.filter?.(`node-pty/prebuilds/${OTHER_PREBUILD}/pty.node`)).toBe(false)
+  })
+})
+
+describe('daemon chunk trimming', () => {
+  const mainRel = join('resources', 'app.asar.unpacked', 'out', 'main')
+  const hostDest = (): string =>
+    join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
+
+  function writeChunkManifest(chunks: string[]): void {
+    writeFileSync(
+      join(installDir, mainRel, 'daemon-entry.host-chunks.json'),
+      serializeDaemonHostChunkManifest(chunks)
+    )
+  }
+
+  beforeEach(() => {
+    writeFileSync(join(installDir, mainRel, 'chunks', 'main-only.js'), 'main chunk')
+  })
+
+  it('plans one required file op per listed chunk instead of the whole chunks dir', () => {
+    const ops = buildDaemonHostManifest({
+      appDir: 'C:\\app',
+      execPath: 'C:\\app\\Dolphin.exe',
+      resourcesPath: 'C:\\app\\resources',
+      entrySourcePath: 'C:\\app\\resources\\app.asar.unpacked\\out\\main\\daemon-entry.js',
+      entryRelPath: 'resources/app.asar.unpacked/out/main/daemon-entry.js',
+      windowsProcessTreeDir: 'C:\\app\\resources\\node_modules\\@vscode\\windows-process-tree',
+      daemonChunkFiles: ['chunks/a.js']
+    })
+    const byDest = new Map(ops.map((op) => [op.destRel, op]))
+    expect(byDest.has('resources/app.asar.unpacked/out/main/chunks')).toBe(false)
+    const chunkOp = byDest.get('resources/app.asar.unpacked/out/main/chunks/a.js')
+    expect(chunkOp?.kind).toBe('file')
+    expect(chunkOp?.optional).toBeUndefined()
+  })
+
+  it('copies only the chunks the build listed for daemon-entry', () => {
+    writeChunkManifest(['chunks/a.js'])
+    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    expect(readdirSync(join(hostDest(), mainRel, 'chunks'))).toEqual(['a.js'])
+    // A build input, not something the daemon reads.
+    expect(existsSync(join(hostDest(), mainRel, 'daemon-entry.host-chunks.json'))).toBe(false)
+  })
+
+  it('copies every chunk when the manifest is unreadable', () => {
+    writeFileSync(join(installDir, mainRel, 'daemon-entry.host-chunks.json'), '{"chunks":')
+    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    expect(readdirSync(join(hostDest(), mainRel, 'chunks')).sort()).toEqual([
+      'a.js',
+      'main-only.js'
+    ])
+  })
+
+  it('fails open rather than publish a host missing a listed chunk', () => {
+    writeChunkManifest(['chunks/a.js', 'chunks/gone.js'])
+    expect(materializeRelocatedDaemonHost()).toBeNull()
+    const hostRoot = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
+    expect(existsSync(hostRoot) ? readdirSync(hostRoot) : []).toEqual([])
+  })
+
+  it('keeps using a same-version host materialized before trimming', () => {
+    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    writeChunkManifest(['chunks/a.js'])
+    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    expect(readdirSync(join(hostDest(), mainRel, 'chunks')).sort()).toEqual([
+      'a.js',
+      'main-only.js'
+    ])
   })
 })
 

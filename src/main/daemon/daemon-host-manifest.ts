@@ -52,6 +52,8 @@ export type DaemonHostSources = {
   entryRelPath: string
   /** The addon's package; without it the daemon forks a shell per poll (#16905). */
   windowsProcessTreeDir: string
+  /** Chunks daemon-entry can load (daemon-host-chunk-manifest.ts); null copies every chunk. */
+  daemonChunkFiles: readonly string[] | null
 }
 
 /** A required file, a directory on the way to one, or anything in lib/ (index.js requires its siblings). */
@@ -101,15 +103,24 @@ export function buildDaemonHostManifest(sources: DaemonHostSources): CopyOp[] {
     ops.push({ sourcePath: join(appDir, name), destRel: name, kind: 'file', optional: true })
   }
 
-  // Daemon bundle: entry + sibling chunks/ + out/package.json (CJS/ESM loader resolution), mirrored verbatim.
+  // Daemon bundle: entry + its chunks + out/package.json (CJS/ESM loader resolution), mirrored verbatim.
   ops.push({ sourcePath: entrySourcePath, destRel: entryRelPath, kind: 'file' })
-  const chunksDir = join(winPath.dirname(entrySourcePath), 'chunks')
-  ops.push({
-    sourcePath: chunksDir,
-    destRel: toPosixRelative(appDir, chunksDir),
-    kind: 'dir',
-    optional: true
-  })
+  const entryDir = winPath.dirname(entrySourcePath)
+  if (sources.daemonChunkFiles) {
+    // Each listed chunk is required: a host missing one would fail to load a terminal module after the install dir is gone.
+    for (const chunkRel of sources.daemonChunkFiles) {
+      const chunkPath = join(entryDir, ...chunkRel.split('/'))
+      ops.push({ sourcePath: chunkPath, destRel: toPosixRelative(appDir, chunkPath), kind: 'file' })
+    }
+  } else {
+    const chunksDir = join(entryDir, 'chunks')
+    ops.push({
+      sourcePath: chunksDir,
+      destRel: toPosixRelative(appDir, chunksDir),
+      kind: 'dir',
+      optional: true
+    })
+  }
   const pkgJson = join(resourcesPath, 'app.asar.unpacked', 'out', 'package.json')
   ops.push({
     sourcePath: pkgJson,

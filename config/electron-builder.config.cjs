@@ -4,7 +4,9 @@ const { join, resolve } = require('node:path')
 const electronBuilderNativeRebuild = require('./scripts/electron-builder-native-rebuild.cjs')
 const {
   assertPackagedDaemonEntryExists,
-  verifyPackagedDaemonEntryBoots
+  readPackagedDaemonHostChunks,
+  verifyPackagedDaemonEntryBoots,
+  verifyPackagedDaemonHostChunksBoot
 } = require('./scripts/verify-packaged-daemon-entry.cjs')
 const {
   assertPackagedNativeVariantsInstalled,
@@ -305,6 +307,8 @@ module.exports = {
     'out/main/persistence/profile-state/**',
     'out/main/startup/http1-compatibility-marker.js',
     'out/main/daemon-entry.js',
+    // Why: read beside the unpacked entry to copy only the daemon's chunks into the relocated Windows host.
+    'out/main/daemon-entry.host-chunks.json',
     'out/main/session-scanner-service-entry.js',
     'out/main/wsl-transcript-fs-process-entry.js',
     'out/main/session-scanner-opencode-sqlite-worker-entry.js',
@@ -404,11 +408,13 @@ module.exports = {
     }
     if (canExecuteTargetArch) {
       verifyPackagedDaemonEntryBoots(resourcesDir)
+      verifyPackagedDaemonHostChunksBoot(resourcesDir)
     } else {
       // Why: a cross-arch slice can't be booted by the host Node, but the
       // unpacked entry must still exist — its absence is a layout regression
       // regardless of arch, so only the boot is skipped, not the check.
       assertPackagedDaemonEntryExists(resourcesDir)
+      readPackagedDaemonHostChunks(resourcesDir)
       console.log(
         `[verify-packaged-daemon-entry] skipped boot on cross-arch slice (target ${context.arch}, host ${process.arch})`
       )
