@@ -12382,6 +12382,33 @@
         "claude-connection-loss-retry-copy": {
           "title": "Relancer Claude après une perte de connexion",
           "description": "Quand un tour de Claude se termine par \"Connection lost mid-response\", tape continue pour vous jusqu'à 3 fois. Vous n'êtes averti que si toutes les tentatives échouent."
+        },
+        "PowerShell7InstallPanel": {
+          "openDownloadPage": "Ouvrir la page de téléchargement",
+          "confirmTitle": "Installer PowerShell 7 ?",
+          "confirmDescription": "Dolphin va installer PowerShell 7 sur cet ordinateur avec le Gestionnaire de paquets Windows (winget) de Microsoft en exécutant :",
+          "confirmUac": "Windows peut demander l'autorisation d'administrateur (UAC) pour terminer l'installation.",
+          "confirmSize": "Le téléchargement fait environ 110 Mo et prend généralement quelques minutes.",
+          "confirmAgreements": "Cela accepte en votre nom les contrats du paquet PowerShell et de la source winget.",
+          "cancel": "Annuler",
+          "install": "Installer",
+          "installedTitle": "PowerShell 7 est installé",
+          "installedDescription": "Les nouveaux terminaux PowerShell utiliseront PowerShell 7. Les terminaux déjà ouverts conservent leur shell actuel.",
+          "installedUndetected": "Dolphin ne l'a pas encore détecté. Redémarrez Dolphin pour utiliser PowerShell 7 dans les nouveaux terminaux.",
+          "installingTitle": "Installation de PowerShell 7…",
+          "installingDescription": "Cela peut prendre quelques minutes. Si Windows demande l'autorisation d'administrateur, acceptez pour continuer.",
+          "wingetUnavailableTitle": "Le Gestionnaire de paquets Windows n'est pas disponible",
+          "wingetUnavailableDescription": "winget est introuvable sur cet ordinateur. Téléchargez plutôt le programme d'installation de PowerShell 7 depuis Microsoft.",
+          "failedTitle": "PowerShell 7 n'a pas été installé",
+          "timedOutDescription": "L'installation a duré plus de 15 minutes et a été arrêtée.",
+          "retry": "Réessayer",
+          "recommendTitle": "PowerShell 7 est recommandé",
+          "recommendDescription": "Il utilise moins de mémoire par terminal que Windows PowerShell 5.1 et exécute les mêmes commandes. Une fois installé, Dolphin l'utilise automatiquement.",
+          "installButton": "Installer PowerShell 7"
+        },
+        "TerminalWindowsShellSection": {
+          "powerShell7": "PowerShell 7",
+          "pwshRecommended": "PowerShell 7 est installé et recommandé : les nouveaux terminaux PowerShell l'utilisent."
         }
       },
       "right": {
@@ -14152,7 +14179,9 @@
           "loadingDistros": "Chargement des distributions",
           "windowsDefault": "Défaut Windows",
           "rightClickBehavior": "Comportement du clic droit",
-          "rightClickBehaviorDescription": "Choisissez le comportement souris du terminal qui correspond à vos réflexes Windows."
+          "rightClickBehaviorDescription": "Choisissez le comportement souris du terminal qui correspond à vos réflexes Windows.",
+          "powerShell7": "PowerShell 7",
+          "recommended": "Recommandé"
         },
         "mac": {
           "notification": {

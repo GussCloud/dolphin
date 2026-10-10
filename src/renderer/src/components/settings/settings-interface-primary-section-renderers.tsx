@@ -31,6 +31,8 @@ export function renderTerminalSettingsSection(context: SettingsRenderContext): R
           pwshAvailable={terminal.windowsTerminalCapabilities.pwshAvailable}
           gitBashAvailable={terminal.windowsTerminalCapabilities.gitBashAvailable}
           isWindowsTerminalHost={terminal.isWindowsTerminalHost}
+          isLocalTerminalHost={terminal.runtimeTarget.kind === 'local'}
+          pwshCapabilitiesLoading={terminal.windowsTerminalCapabilities.isLoading}
         />
       ) : null}
     </SettingsSection>

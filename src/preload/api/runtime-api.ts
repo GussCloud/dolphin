@@ -1,3 +1,4 @@
+import type { PwshInstallResult } from '../../shared/pwsh-install'
 import type { RuntimeHostStatusSnapshot } from '../../shared/runtime-host-status'
 import type {
   RuntimeBrowserDriverState,
@@ -148,6 +149,10 @@ export type RuntimeApi = {
   }
   pwsh: {
     isAvailable: () => Promise<boolean>
+    /** False where Dolphin cannot install PowerShell 7 on the local machine (non-Windows, web client). */
+    installSupported: boolean
+    install: () => Promise<PwshInstallResult>
+    cancelInstall: () => Promise<void>
   }
   gitBash: {
     isAvailable: () => Promise<boolean>

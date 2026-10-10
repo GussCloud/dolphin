@@ -130,7 +130,11 @@ function createWebPreloadApi(): Partial<PreloadApi> {
       listDistros: () => callRuntimeResult<string[]>('host.wsl.listDistros').catch(() => [])
     },
     pwsh: {
-      isAvailable: () => callRuntimeResult<boolean>('host.pwsh.isAvailable').catch(() => false)
+      isAvailable: () => callRuntimeResult<boolean>('host.pwsh.isAvailable').catch(() => false),
+      // Why: a paired web client must never install software on the host it drives.
+      installSupported: false,
+      install: () => Promise.resolve({ status: 'unsupported' as const }),
+      cancelInstall: () => Promise.resolve()
     },
     gitBash: {
       isAvailable: () => callRuntimeResult<boolean>('host.gitBash.isAvailable').catch(() => false)

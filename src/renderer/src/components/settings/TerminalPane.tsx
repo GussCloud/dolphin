@@ -48,6 +48,9 @@ type TerminalPaneProps = {
   gitBashAvailable?: boolean
   /** Whether the active terminal host is Windows, even if the client is not. */
   isWindowsTerminalHost?: boolean
+  /** Whether Settings is editing this machine rather than a remote runtime. */
+  isLocalTerminalHost?: boolean
+  pwshCapabilitiesLoading?: boolean
 }
 
 export function TerminalPane({
@@ -57,7 +60,9 @@ export function TerminalPane({
   setScrollbackMode,
   pwshAvailable,
   gitBashAvailable = false,
-  isWindowsTerminalHost
+  isWindowsTerminalHost,
+  isLocalTerminalHost = false,
+  pwshCapabilitiesLoading = false
 }: TerminalPaneProps): React.JSX.Element {
   const searchQuery = useAppStore((state) => state.settingsSearchQuery)
   const isWindows = isWindowsUserAgent()
@@ -235,6 +240,10 @@ export function TerminalPane({
         updateSettings={updateSettings}
         windowsShell={windowsShell}
         gitBashAvailable={gitBashAvailable}
+        pwshAvailable={pwshAvailable ?? false}
+        pwshCapabilitiesLoading={pwshCapabilitiesLoading}
+        powerShellImplementation={settings.terminalWindowsPowerShellImplementation}
+        isLocalTerminalHost={isLocalTerminalHost}
       />
     ) : null,
     matchesSettingsSearch(searchQuery, getTerminalRenderingSearchEntries()) ? (

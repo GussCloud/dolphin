@@ -1,4 +1,5 @@
 import { runProcess, runProcessSync } from '../shared/child-process/run-process'
+import { resolveWindowsPowerShellExecutablePath } from './providers/windows-powershell-executable'
 
 const PWSH_SYNC_PROBE_TIMEOUT_MS = 5000
 const PWSH_WARMUP_PROBE_TIMEOUT_MS = 30_000
@@ -12,6 +13,11 @@ let pwshAvailableCache: PwshAvailabilityCache | null = null
 let pwshWarmupInFlight: Promise<boolean> | null = null
 let pwshProbeInFlight: Promise<boolean> | null = null
 let pwshAvailabilityCacheGeneration = 0
+
+// Why: a fresh install updates the machine PATH but not this process's, so probe the known install dirs first.
+function pwshProbeProgram(): string {
+  return resolveWindowsPowerShellExecutablePath('pwsh.exe') ?? 'pwsh.exe'
+}
 
 function isCacheFresh(cache: PwshAvailabilityCache): boolean {
   return (
@@ -63,7 +69,7 @@ export function isPwshAvailable(): boolean {
   let probe
   try {
     probe = runProcessSync({
-      program: 'pwsh.exe',
+      program: pwshProbeProgram(),
       args: ['-Version'],
       timeoutMs: PWSH_SYNC_PROBE_TIMEOUT_MS
     })
@@ -101,7 +107,7 @@ export function isPwshAvailableAsync(): Promise<boolean> {
 
   const startedAtGeneration = pwshAvailabilityCacheGeneration
   pwshProbeInFlight = runProcess({
-    program: 'pwsh.exe',
+    program: pwshProbeProgram(),
     args: ['-Version'],
     timeoutMs: PWSH_SYNC_PROBE_TIMEOUT_MS
   })
@@ -134,7 +140,7 @@ export function warmPwshAvailabilityCache(): Promise<boolean> {
 
   const startedAtGeneration = pwshAvailabilityCacheGeneration
   pwshWarmupInFlight = runProcess({
-    program: 'pwsh.exe',
+    program: pwshProbeProgram(),
     args: ['-Version'],
     timeoutMs: PWSH_WARMUP_PROBE_TIMEOUT_MS
   })
@@ -151,4 +157,11 @@ export function warmPwshAvailabilityCache(): Promise<boolean> {
       return cachePwshProbeFailure(false, startedAtGeneration)
     })
   return pwshWarmupInFlight
+}
+
+/** Drop every cached answer (positive included) and probe again, e.g. right after an install. */
+export async function refreshPwshAvailability(): Promise<boolean> {
+  await pwshProbeInFlight?.catch(() => false)
+  writePwshAvailabilityCache(null)
+  return isPwshAvailableAsync()
 }

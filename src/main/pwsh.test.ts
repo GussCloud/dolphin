@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { runProcessMock, runProcessSyncMock } = vi.hoisted(() => ({
+const { runProcessMock, runProcessSyncMock, resolvePwshPathMock } = vi.hoisted(() => ({
   runProcessMock: vi.fn(),
-  runProcessSyncMock: vi.fn()
+  runProcessSyncMock: vi.fn(),
+  resolvePwshPathMock: vi.fn((): string | null => null)
+}))
+
+vi.mock('./providers/windows-powershell-executable', () => ({
+  resolveWindowsPowerShellExecutablePath: resolvePwshPathMock
 }))
 
 // Why mock the chokepoint: the two probe shapes this module used to reconcile
@@ -39,6 +44,8 @@ describe('isPwshAvailable', () => {
     vi.useRealTimers()
     runProcessMock.mockReset()
     runProcessSyncMock.mockReset()
+    resolvePwshPathMock.mockReset()
+    resolvePwshPathMock.mockReturnValue(null)
   })
 
   it('returns false on non-Windows platforms', async () => {
@@ -265,6 +272,75 @@ describe('isPwshAvailable', () => {
     } finally {
       restorePlatform()
       vi.useRealTimers()
+    }
+  })
+})
+
+describe('pwsh probe program and refresh', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    runProcessMock.mockReset()
+    runProcessSyncMock.mockReset()
+    resolvePwshPathMock.mockReset()
+    resolvePwshPathMock.mockReturnValue(null)
+  })
+
+  it('probes the resolved install path so a stale process PATH still finds a new install', async () => {
+    const restorePlatform = setPlatform('win32')
+    const installed = String.raw`C:\Program Files\PowerShell\7\pwsh.exe`
+    resolvePwshPathMock.mockReturnValue(installed)
+    runProcessMock.mockResolvedValue(ok)
+
+    try {
+      const { isPwshAvailableAsync } = await import('./pwsh')
+      await expect(isPwshAvailableAsync()).resolves.toBe(true)
+      expect(runProcessMock).toHaveBeenCalledWith(expect.objectContaining({ program: installed }))
+    } finally {
+      restorePlatform()
+    }
+  })
+
+  it('refreshPwshAvailability discards a cached negative answer and probes again', async () => {
+    const restorePlatform = setPlatform('win32')
+    runProcessMock.mockResolvedValueOnce(missing).mockResolvedValueOnce(ok)
+
+    try {
+      const { isPwshAvailableAsync, refreshPwshAvailability } = await import('./pwsh')
+      await expect(isPwshAvailableAsync()).resolves.toBe(false)
+      // The negative answer is cached for 30s; a plain read must not respawn.
+      await expect(isPwshAvailableAsync()).resolves.toBe(false)
+      expect(runProcessMock).toHaveBeenCalledTimes(1)
+
+      await expect(refreshPwshAvailability()).resolves.toBe(true)
+      expect(runProcessMock).toHaveBeenCalledTimes(2)
+      await expect(isPwshAvailableAsync()).resolves.toBe(true)
+    } finally {
+      restorePlatform()
+    }
+  })
+
+  it('refreshPwshAvailability waits for an in-flight probe instead of reusing its stale answer', async () => {
+    const restorePlatform = setPlatform('win32')
+    let resolveFirst: (value: typeof missing) => void = () => {}
+    runProcessMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve
+          })
+      )
+      .mockResolvedValueOnce(ok)
+
+    try {
+      const { isPwshAvailableAsync, refreshPwshAvailability } = await import('./pwsh')
+      const first = isPwshAvailableAsync()
+      const refreshed = refreshPwshAvailability()
+      resolveFirst(missing)
+      await expect(first).resolves.toBe(false)
+      await expect(refreshed).resolves.toBe(true)
+      expect(runProcessMock).toHaveBeenCalledTimes(2)
+    } finally {
+      restorePlatform()
     }
   })
 })
