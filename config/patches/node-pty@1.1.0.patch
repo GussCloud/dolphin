@@ -1216,10 +1216,34 @@ index 7b286d3d64..5239ba4e40 100644
  };
  
 diff --git a/lib/windowsPtyAgent.js b/lib/windowsPtyAgent.js
-index a358ffb177357e177661033c1b092f9c9d0e5f5a..26c2a4c58799ce649f5113131e4c52f7ed2d87ad 100644
+index a358ffb..6ee7ce1 100644
 --- a/lib/windowsPtyAgent.js
 +++ b/lib/windowsPtyAgent.js
-@@ -136,6 +136,9 @@ var WindowsPtyAgent = /** @class */ (function () {
+@@ -75,7 +75,23 @@ var WindowsPtyAgent = /** @class */ (function () {
+         this._conoutSocketWorker.onReady(function () {
+             _this._conoutSocketWorker.connectSocket(_this._outSocket);
+         });
++        // Dolphin: the shared conout worker died or this pipe failed. Output can never resume, so
++        // report the exit and kill the shell instead of leaving it behind a dead stream.
++        this._conoutSocketWorker.onWorkerLost(function () {
++            if (!_this._outSocketReady) {
++                // WindowsTerminal only wires its close->exit handler on ready_datapipe.
++                _this._outSocket.emit('ready_datapipe');
++            }
++            _this._outSocket.destroy();
++            try {
++                _this.kill();
++            }
++            catch (_a) {
++                // The shell may already be gone; the destroyed socket still reports the exit.
++            }
++        });
+         this._outSocket.on('connect', function () {
++            _this._outSocketReady = true;
+             _this._outSocket.emit('ready_datapipe');
+         });
+         var inSocketFD = fs.openSync(term.conin, 'w');
+@@ -136,6 +152,9 @@ var WindowsPtyAgent = /** @class */ (function () {
          if (this._useConpty) {
              if (!this._useConptyDll) {
                  this._inSocket.readable = false;
@@ -1229,7 +1253,7 @@ index a358ffb177357e177661033c1b092f9c9d0e5f5a..26c2a4c58799ce649f5113131e4c52f7
                  this._outSocket.readable = false;
                  this._getConsoleProcessList().then(function (consoleProcessList) {
                      consoleProcessList.forEach(function (pid) {
-@@ -154,9 +157,10 @@ var WindowsPtyAgent = /** @class */ (function () {
+@@ -154,9 +173,10 @@ var WindowsPtyAgent = /** @class */ (function () {
                  // Close the input write handle to signal the end of session.
                  this._inSocket.destroy();
                  this._ptyNative.kill(this._pty, this._useConptyDll);
@@ -1328,10 +1352,41 @@ index 3c38f89..e20b3e6 100644
 \ No newline at end of file
 +//# sourceMappingURL=windowsTerminal.js.map
 diff --git a/src/windowsPtyAgent.ts b/src/windowsPtyAgent.ts
-index d7054449516f0c9a62af351c2caa17331206d530..0c28a32e2e1db2b3f208ddde8443cd4e67bb1ad6 100644
+index d705444..d48f79a 100644
 --- a/src/windowsPtyAgent.ts
 +++ b/src/windowsPtyAgent.ts
-@@ -143,6 +143,9 @@ export class WindowsPtyAgent {
+@@ -30,6 +30,7 @@ const FLUSH_DATA_INTERVAL = 1000;
+ export class WindowsPtyAgent {
+   private _inSocket: Socket;
+   private _outSocket: Socket;
++  private _outSocketReady: boolean = false;
+   private _pid: number = 0;
+   private _innerPid: number = 0;
+   private _closeTimeout: NodeJS.Timer | undefined;
+@@ -103,7 +104,22 @@ export class WindowsPtyAgent {
+     this._conoutSocketWorker.onReady(() => {
+       this._conoutSocketWorker.connectSocket(this._outSocket);
+     });
++    // Dolphin: the shared conout worker died or this pipe failed. Output can never resume, so
++    // report the exit and kill the shell instead of leaving it behind a dead stream.
++    this._conoutSocketWorker.onWorkerLost(() => {
++      if (!this._outSocketReady) {
++        // WindowsTerminal only wires its close->exit handler on ready_datapipe.
++        this._outSocket.emit('ready_datapipe');
++      }
++      this._outSocket.destroy();
++      try {
++        this.kill();
++      } catch {
++        // The shell may already be gone; the destroyed socket still reports the exit.
++      }
++    });
+     this._outSocket.on('connect', () => {
++      this._outSocketReady = true;
+       this._outSocket.emit('ready_datapipe');
+     });
+ 
+@@ -143,6 +159,9 @@ export class WindowsPtyAgent {
      if (this._useConpty) {
        if (!this._useConptyDll) {
          this._inSocket.readable = false;
@@ -1341,7 +1396,7 @@ index d7054449516f0c9a62af351c2caa17331206d530..0c28a32e2e1db2b3f208ddde8443cd4e
          this._outSocket.readable = false;
          this._getConsoleProcessList().then(consoleProcessList => {
            consoleProcessList.forEach((pid: number) => {
-@@ -159,9 +162,10 @@ export class WindowsPtyAgent {
+@@ -159,9 +178,10 @@ export class WindowsPtyAgent {
          // Close the input write handle to signal the end of session.
          this._inSocket.destroy();
          (this._ptyNative as IConptyNative).kill(this._pty, this._useConptyDll);
@@ -1441,10 +1496,10 @@ index 13f6c6d..eda63c8 100644
      this._forwardEvents();
    }
 diff --git a/lib/windowsConoutConnection.js b/lib/windowsConoutConnection.js
-index 1be15ca..6c35bee 100644
+index 1be15ca..d44e8f7 100644
 --- a/lib/windowsConoutConnection.js
 +++ b/lib/windowsConoutConnection.js
-@@ -62,27 +62,66 @@ var FLUSH_DATA_INTERVAL = 1000;
+@@ -62,33 +62,91 @@ var FLUSH_DATA_INTERVAL = 1000;
   * - https://github.com/microsoft/terminal/issues/1810
   * - https://docs.microsoft.com/en-us/windows/console/closepseudoconsole
   */
@@ -1462,6 +1517,10 @@ index 1be15ca..6c35bee 100644
 +                connection === null || connection === void 0 ? void 0 : connection.fireReady();
 +                return;
 +            }
++            if (message && message.type === 3 /* FAILED */) {
++                connection === null || connection === void 0 ? void 0 : connection.loseWorker(true);
++                return;
++            }
 +            if (message && message.type === 2 /* CLOSED */) {
 +                // Same flush grace as dispose(): the main-side socket may still be draining.
 +                connection === null || connection === void 0 ? void 0 : connection.releaseAfterFlush();
@@ -1472,11 +1531,19 @@ index 1be15ca..6c35bee 100644
 +        worker_1.on('error', function (err) {
 +            console.warn('[node-pty] conout worker failed', err);
 +        });
++        // Unexpected death (error, OOM, crash): the conout pipes accept no second client, so each
++        // live PTY is told and killed rather than left with a dead output stream.
 +        worker_1.on('exit', function () {
-+            if (sharedWorker === worker_1) {
-+                sharedWorker = undefined;
-+                sharedWorkerUsers = 0;
++            if (sharedWorker !== worker_1) {
++                return;
 +            }
++            sharedWorker = undefined;
++            sharedWorkerUsers = 0;
++            connectionsByPipe.forEach(function (connection) {
++                if (connection._worker === worker_1) {
++                    connection.loseWorker(false);
++                }
++            });
 +        });
 +        sharedWorker = worker_1;
 +    }
@@ -1504,6 +1571,7 @@ index 1be15ca..6c35bee 100644
          this._useConptyDll = _useConptyDll;
          this._isDisposed = false;
 +        this._isReleased = false;
++        this._isClosing = false;
          this._onReady = new eventEmitter2_1.EventEmitter2();
 -        var workerData = {
 -            conoutPipeName: _conoutPipeName
@@ -1519,13 +1587,25 @@ index 1be15ca..6c35bee 100644
 -                    console.warn('Unexpected ConoutWorkerMessage', message);
 -            }
 -        });
++        this._onWorkerLost = new eventEmitter2_1.EventEmitter2();
 +        this._worker = acquireSharedWorker();
 +        connectionsByPipe.set(_conoutPipeName, this);
 +        this._worker.postMessage({ type: 'open', conoutPipeName: _conoutPipeName });
      }
      Object.defineProperty(ConoutConnection.prototype, "onReady", {
          get: function () { return this._onReady.event; },
-@@ -107,17 +146,19 @@ var ConoutConnection = /** @class */ (function () {
+         enumerable: false,
+         configurable: true
+     });
++    Object.defineProperty(ConoutConnection.prototype, "onWorkerLost", {
++        get: function () { return this._onWorkerLost.event; },
++        enumerable: false,
++        configurable: true
++    });
+     ConoutConnection.prototype.dispose = function () {
+         if (!this._useConptyDll && this._isDisposed) {
+             return;
+@@ -107,17 +165,35 @@ var ConoutConnection = /** @class */ (function () {
          }
          this._drainTimeout = setTimeout(function () { return _this._destroySocket(); }, FLUSH_DATA_INTERVAL);
      };
@@ -1533,7 +1613,23 @@ index 1be15ca..6c35bee 100644
 +        this._onReady.fire();
 +    };
 +    ConoutConnection.prototype.releaseAfterFlush = function () {
++        this._isClosing = true;
 +        this._drainDataAndClose();
++    };
++    ConoutConnection.prototype.loseWorker = function (workerAlive) {
++        // Disposed or closing connections already have a terminal outcome.
++        if (this._isReleased || this._isDisposed || this._isClosing) {
++            connectionsByPipe.delete(this._conoutPipeName);
++            return;
++        }
++        if (workerAlive) {
++            this._destroySocket();
++        }
++        else {
++            this._isReleased = true;
++            connectionsByPipe.delete(this._conoutPipeName);
++        }
++        this._onWorkerLost.fire();
 +    };
      ConoutConnection.prototype._destroySocket = function () {
 -        return __awaiter(this, void 0, void 0, function () {
@@ -1556,10 +1652,10 @@ index 1be15ca..6c35bee 100644
      return ConoutConnection;
  }());
 diff --git a/lib/worker/conoutSocketWorker.js b/lib/worker/conoutSocketWorker.js
-index 0451e2c..a850bd0 100644
+index 0451e2c..41ee8d2 100644
 --- a/lib/worker/conoutSocketWorker.js
 +++ b/lib/worker/conoutSocketWorker.js
-@@ -6,17 +6,59 @@ Object.defineProperty(exports, "__esModule", { value: true });
+@@ -6,17 +6,69 @@ Object.defineProperty(exports, "__esModule", { value: true });
  var worker_threads_1 = require("worker_threads");
  var net_1 = require("net");
  var conout_1 = require("../shared/conout");
@@ -1569,6 +1665,10 @@ index 0451e2c..a850bd0 100644
 -conoutSocket.connect(conoutPipeName, function () {
 +// Dolphin: one worker drains every conout pipe of the process; a worker per PTY cost ~13 MB each.
 +var connections = new Map();
++function failConnection(conoutPipeName) {
++    closeConnection(conoutPipeName);
++    worker_threads_1.parentPort.postMessage({ type: 3 /* FAILED */, conoutPipeName: conoutPipeName });
++}
 +function openConnection(conoutPipeName) {
 +    var accepted = new Set();
 +    var conoutSocket = new net_1.Socket();
@@ -1582,10 +1682,10 @@ index 0451e2c..a850bd0 100644
 -    server.listen(conout_1.getWorkerPipeName(conoutPipeName));
 -    if (!worker_threads_1.parentPort) {
 -        throw new Error('worker_threads parentPort is null');
-+    server.on('error', function () { closeConnection(conoutPipeName); });
++    server.on('error', function () { failConnection(conoutPipeName); });
 +    connections.set(conoutPipeName, { conoutSocket: conoutSocket, server: server, accepted: accepted });
 +    conoutSocket.setEncoding('utf8');
-+    conoutSocket.on('error', function () { closeConnection(conoutPipeName); });
++    conoutSocket.on('error', function () { failConnection(conoutPipeName); });
 +    // The pipe closes when the shell exits on its own; kill() and its dispose() never run then.
 +    conoutSocket.on('close', function () {
 +        var connection = connections.get(conoutPipeName);
@@ -1619,7 +1719,13 @@ index 0451e2c..a850bd0 100644
 +}
 +worker_threads_1.parentPort.on('message', function (message) {
 +    if (message.type === 'open') {
-+        openConnection(message.conoutPipeName);
++        // One bad pipe must fail only its own PTY, never throw out of the shared worker.
++        try {
++            openConnection(message.conoutPipeName);
++        }
++        catch (_a) {
++            failConnection(message.conoutPipeName);
++        }
 +    }
 +    else if (message.type === 'close') {
 +        closeConnection(message.conoutPipeName);
@@ -1630,30 +1736,35 @@ index 0451e2c..a850bd0 100644
 \ No newline at end of file
 +//# sourceMappingURL=conoutSocketWorker.js.map
 diff --git a/src/shared/conout.ts b/src/shared/conout.ts
-index 7a7e05f..e612d9f 100644
+index 7a7e05f..1181117 100644
 --- a/src/shared/conout.ts
 +++ b/src/shared/conout.ts
-@@ -7,9 +7,17 @@ export interface IWorkerData {
- }
+@@ -2,14 +2,19 @@
+  * Copyright (c) 2020, Microsoft Corporation (MIT License).
+  */
  
- export const enum ConoutWorkerMessage {
--  READY = 1
+-export interface IWorkerData {
+-  conoutPipeName: string;
++export const enum ConoutWorkerMessage {
 +  READY = 1,
-+  CLOSED = 2
++  CLOSED = 2,
++  FAILED = 3
  }
  
+-export const enum ConoutWorkerMessage {
+-  READY = 1
 +export interface IConoutWorkerReady {
 +  type: ConoutWorkerMessage;
 +  conoutPipeName: string;
-+}
-+
+ }
+ 
 +export type ConoutWorkerRequest = { type: 'open' | 'close', conoutPipeName: string };
 +
  export function getWorkerPipeName(conoutPipeName: string): string {
    return `${conoutPipeName}-worker`;
  }
 diff --git a/src/windowsConoutConnection.ts b/src/windowsConoutConnection.ts
-index fa2d62d..ae7c319 100644
+index fa2d62d..fb4225f 100644
 --- a/src/windowsConoutConnection.ts
 +++ b/src/windowsConoutConnection.ts
 @@ -5,7 +5,7 @@
@@ -1665,7 +1776,7 @@ index fa2d62d..ae7c319 100644
  import { join } from 'path';
  import { IEvent, EventEmitter2 } from './eventEmitter2';
  
-@@ -28,10 +28,64 @@ const FLUSH_DATA_INTERVAL = 1000;
+@@ -28,32 +28,94 @@ const FLUSH_DATA_INTERVAL = 1000;
   * - https://github.com/microsoft/terminal/issues/1810
   * - https://docs.microsoft.com/en-us/windows/console/closepseudoconsole
   */
@@ -1684,6 +1795,10 @@ index fa2d62d..ae7c319 100644
 +        connection?.fireReady();
 +        return;
 +      }
++      if (message?.type === ConoutWorkerMessage.FAILED) {
++        connection?.loseWorker(true);
++        return;
++      }
 +      if (message?.type === ConoutWorkerMessage.CLOSED) {
 +        // Same flush grace as dispose(): the main-side socket may still be draining.
 +        connection?.releaseAfterFlush();
@@ -1694,11 +1809,19 @@ index fa2d62d..ae7c319 100644
 +    worker.on('error', err => {
 +      console.warn('[node-pty] conout worker failed', err);
 +    });
++    // Unexpected death (error, OOM, crash): the conout pipes accept no second client, so each
++    // live PTY is told and killed rather than left with a dead output stream.
 +    worker.on('exit', () => {
-+      if (sharedWorker === worker) {
-+        sharedWorker = undefined;
-+        sharedWorkerUsers = 0;
++      if (sharedWorker !== worker) {
++        return;
 +      }
++      sharedWorker = undefined;
++      sharedWorkerUsers = 0;
++      connectionsByPipe.forEach(connection => {
++        if (connection.worker === worker) {
++          connection.loseWorker(false);
++        }
++      });
 +    });
 +    sharedWorker = worker;
 +  }
@@ -1727,10 +1850,17 @@ index fa2d62d..ae7c319 100644
    private _drainTimeout: NodeJS.Timeout | undefined;
    private _isDisposed: boolean = false;
 +  private _isReleased: boolean = false;
++  private _isClosing: boolean = false;
  
    private _onReady = new EventEmitter2<void>();
    public get onReady(): IEvent<void> { return this._onReady.event; }
-@@ -40,20 +94,10 @@ export class ConoutConnection implements IDisposable {
+ 
++  private _onWorkerLost = new EventEmitter2<void>();
++  public get onWorkerLost(): IEvent<void> { return this._onWorkerLost.event; }
++
++  public get worker(): Worker { return this._worker; }
++
+   constructor(
      private _conoutPipeName: string,
      private _useConptyDll: boolean
    ) {
@@ -1755,7 +1885,7 @@ index fa2d62d..ae7c319 100644
    }
  
    dispose(): void {
-@@ -76,7 +120,20 @@ export class ConoutConnection implements IDisposable {
+@@ -76,7 +138,36 @@ export class ConoutConnection implements IDisposable {
      this._drainTimeout = setTimeout(() => this._destroySocket(), FLUSH_DATA_INTERVAL);
    }
  
@@ -1764,7 +1894,23 @@ index fa2d62d..ae7c319 100644
 +  }
 +
 +  releaseAfterFlush(): void {
++    this._isClosing = true;
 +    this._drainDataAndClose();
++  }
++
++  loseWorker(workerAlive: boolean): void {
++    // Disposed or closing connections already have a terminal outcome.
++    if (this._isReleased || this._isDisposed || this._isClosing) {
++      connectionsByPipe.delete(this._conoutPipeName);
++      return;
++    }
++    if (workerAlive) {
++      void this._destroySocket();
++    } else {
++      this._isReleased = true;
++      connectionsByPipe.delete(this._conoutPipeName);
++    }
++    this._onWorkerLost.fire();
 +  }
 +
    private async _destroySocket(): Promise<void> {
@@ -1778,10 +1924,10 @@ index fa2d62d..ae7c319 100644
    }
  }
 diff --git a/src/worker/conoutSocketWorker.ts b/src/worker/conoutSocketWorker.ts
-index 79a4148..69080dd 100644
+index 79a4148..887fa2e 100644
 --- a/src/worker/conoutSocketWorker.ts
 +++ b/src/worker/conoutSocketWorker.ts
-@@ -2,21 +2,72 @@
+@@ -2,21 +2,83 @@
   * Copyright (c) 2020, Microsoft Corporation (MIT License).
   */
  
@@ -1805,6 +1951,12 @@ index 79a4148..69080dd 100644
 -conoutSocket.connect(conoutPipeName, () => {
 +const connections = new Map<string, IConoutWorkerConnection>();
 +
++function failConnection(conoutPipeName: string): void {
++  closeConnection(conoutPipeName);
++  const failed: IConoutWorkerReady = { type: ConoutWorkerMessage.FAILED, conoutPipeName };
++  parentPort!.postMessage(failed);
++}
++
 +function openConnection(conoutPipeName: string): void {
 +  const accepted = new Set<Socket>();
 +  const conoutSocket = new Socket();
@@ -1818,10 +1970,10 @@ index 79a4148..69080dd 100644
 -  server.listen(getWorkerPipeName(conoutPipeName));
 -  if (!parentPort) {
 -    throw new Error('worker_threads parentPort is null');
-+  server.on('error', () => closeConnection(conoutPipeName));
++  server.on('error', () => failConnection(conoutPipeName));
 +  connections.set(conoutPipeName, { conoutSocket, server, accepted });
 +  conoutSocket.setEncoding('utf8');
-+  conoutSocket.on('error', () => closeConnection(conoutPipeName));
++  conoutSocket.on('error', () => failConnection(conoutPipeName));
 +  // The pipe closes when the shell exits on its own; kill() and its dispose() never run then.
 +  conoutSocket.on('close', () => {
 +    const connection = connections.get(conoutPipeName);
@@ -1859,7 +2011,12 @@ index 79a4148..69080dd 100644
 +}
 +parentPort.on('message', (message: ConoutWorkerRequest) => {
 +  if (message.type === 'open') {
-+    openConnection(message.conoutPipeName);
++    // One bad pipe must fail only its own PTY, never throw out of the shared worker.
++    try {
++      openConnection(message.conoutPipeName);
++    } catch {
++      failConnection(message.conoutPipeName);
++    }
 +  } else if (message.type === 'close') {
 +    closeConnection(message.conoutPipeName);
    }
