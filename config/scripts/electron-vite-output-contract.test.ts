@@ -84,6 +84,15 @@ describe('Electron Vite output contract', () => {
     expect(electronViteConfig.renderer?.esbuild).toBeUndefined()
   })
 
+  it('targets Chromium for the renderer while the projected web client is re-lowered for browsers', () => {
+    expect(electronViteConfig.renderer?.build?.target).toMatch(/^chrome\d+$/)
+    expect(electronViteConfig.renderer?.build?.cssTarget).toBe('es2020')
+    expect(electronViteConfig.renderer?.build?.modulePreload).toEqual({ polyfill: false })
+    // Why: out/web ships renderer chunks to arbitrary browsers; this pass is what keeps them es2020.
+    const webProjection = readFileSync('config/scripts/project-renderer-web-client.mjs', 'utf8')
+    expect(webProjection).toMatch(/target: 'es2020'/)
+  })
+
   it('emits hidden main source maps that packaging strips from app.asar', () => {
     // Hidden maps decode minified crash traces without the bundle referencing
     // files that the packaged app never ships.

@@ -325,9 +325,12 @@ export const electronViteConfig: UserConfig = {
     },
     build: {
       manifest: true,
-      modulePreload: { polyfill: true },
+      // Why: Chromium has native modulepreload; browsers missing it only lose a prefetch.
+      modulePreload: { polyfill: false },
       minify: 'oxc',
-      target: 'es2020',
+      // Why: Electron 43 ships Chromium 150; the browser web client is re-lowered to es2020 in project-renderer-web-client.mjs.
+      target: 'chrome150',
+      cssTarget: 'es2020',
       // Why: the pop-out dashboard is a second top-level window with its own
       // React root. It gets its own HTML entry so it can boot independently of
       // the main window while reusing the same preload/window.api. `index` must
