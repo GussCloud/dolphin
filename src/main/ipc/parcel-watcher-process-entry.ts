@@ -40,6 +40,9 @@ type WatcherSubscription = {
 const CANARY_INTERVAL_MS = 10_000
 const CANARY_EVENT_TIMEOUT_MS = 5_000
 const CANARY_MAX_MISSES = 2
+// Probe spacing doubles per healthy probe (10 → 20 → 40 → 60 s). A wedge with no
+// lifecycle activity is caught ≤75 s after the last healthy probe (was ≤25 s).
+const CANARY_MAX_TICKS_PER_PROBE = 6
 
 async function startCanary(getStableActivityRevision: () => number | null): Promise<void> {
   const configuredCanaryDir = process.env.DOLPHIN_WATCHER_CANARY_DIR
@@ -78,6 +81,11 @@ async function startCanary(getStableActivityRevision: () => number | null): Prom
   })
 
   let misses = 0
+  // Why ticks: each probe write is AV-scanned and wakes the watcher, so a quiet
+  // healthy process probes less often; a lifecycle change or a miss restores 10 s.
+  let ticksPerProbe = 1
+  let ticksSinceProbe = 0
+  let lastProbedRevision: number | null = null
   setInterval(() => {
     // Why: Parcel holds its shared backend mutex throughout each initial tree
     // crawl, which legitimately starves canary delivery. Only apply the 5 s
@@ -85,8 +93,18 @@ async function startCanary(getStableActivityRevision: () => number | null): Prom
     const activityRevision = getStableActivityRevision()
     if (activityRevision === null) {
       misses = 0
+      ticksPerProbe = 1
       return
     }
+    if (activityRevision !== lastProbedRevision) {
+      ticksPerProbe = 1
+    }
+    ticksSinceProbe++
+    if (ticksSinceProbe < ticksPerProbe) {
+      return
+    }
+    ticksSinceProbe = 0
+    lastProbedRevision = activityRevision
     const probedAt = Date.now()
     try {
       writeFileSync(join(canaryDir, 'canary.txt'), String(probedAt))
@@ -98,13 +116,16 @@ async function startCanary(getStableActivityRevision: () => number | null): Prom
       // probe instead of misclassifying lifecycle work as a delivery deadlock.
       if (getStableActivityRevision() !== activityRevision) {
         misses = 0
+        ticksPerProbe = 1
         return
       }
       if (lastEventAt >= probedAt) {
         misses = 0
+        ticksPerProbe = Math.min(ticksPerProbe * 2, CANARY_MAX_TICKS_PER_PROBE)
         return
       }
       misses++
+      ticksPerProbe = 1
       if (misses >= CANARY_MAX_MISSES) {
         process.stderr.write(
           '[parcel-watcher-process] event delivery wedged (canary starved); restarting watcher process\n'
