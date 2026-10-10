@@ -187,7 +187,9 @@ describe('listReleaseBuilds', () => {
     )
 
     await expect(
-      listReleaseBuilds('hourly', 'win32').then((builds) => builds.map((build) => build.version))
+      listReleaseBuilds('hourly', 'win32', 'x64').then((builds) =>
+        builds.map((build) => build.version)
+      )
     ).resolves.toEqual(['1.4.163-hourly.202607312054'])
   })
 
@@ -200,7 +202,7 @@ describe('listReleaseBuilds', () => {
       ])
     )
 
-    await expect(listReleaseBuilds('hourly', 'win32')).resolves.toEqual([])
+    await expect(listReleaseBuilds('hourly', 'win32', 'x64')).resolves.toEqual([])
   })
 
   it('keeps mac builds visible on macOS regardless of the Windows leg', async () => {
@@ -220,7 +222,7 @@ describe('listReleaseBuilds', () => {
   it('resolves the platform installer download url', async () => {
     fetchMock.mockResolvedValue(jsonResponse([release('v1.4.163-hourly.202607312054')]))
 
-    const [build] = await listReleaseBuilds('hourly', 'win32')
+    const [build] = await listReleaseBuilds('hourly', 'win32', 'x64')
 
     expect(build.installerUrl).toBe(
       'https://github.com/GussCloud/dolphin-hourly/releases/download/v1.4.163-hourly.202607312054/dolphin-windows-setup.exe'
@@ -232,9 +234,32 @@ describe('listReleaseBuilds', () => {
       jsonResponse([release('v1.4.163-hourly.202607312054', { assets: [{ name: 'latest.yml' }] })])
     )
 
-    const [build] = await listReleaseBuilds('hourly', 'win32')
+    const [build] = await listReleaseBuilds('hourly', 'win32', 'x64')
 
     expect(build.installerUrl).toBeNull()
+  })
+
+  it('offers Windows arm64 only releases carrying its own manifest and installer', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse([
+        release('v1.4.163-hourly.202607312054', {
+          assets: [
+            { name: 'latest.yml' },
+            { name: 'dolphin-windows-setup.exe' },
+            { name: 'latest-arm64.yml' },
+            { name: 'dolphin-windows-setup-arm64.exe' }
+          ]
+        }),
+        release('v1.4.163-hourly.202607311933')
+      ])
+    )
+
+    const builds = await listReleaseBuilds('hourly', 'win32', 'arm64')
+
+    expect(builds.map((build) => build.version)).toEqual(['1.4.163-hourly.202607312054'])
+    expect(builds[0].installerUrl).toBe(
+      'https://github.com/GussCloud/dolphin-hourly/releases/download/v1.4.163-hourly.202607312054/dolphin-windows-setup-arm64.exe'
+    )
   })
 
   it('tolerates a release whose assets are missing or malformed', async () => {
@@ -245,7 +270,7 @@ describe('listReleaseBuilds', () => {
       ])
     )
 
-    await expect(listReleaseBuilds('hourly', 'win32')).resolves.toEqual([])
+    await expect(listReleaseBuilds('hourly', 'win32', 'x64')).resolves.toEqual([])
   })
 
   // Why: unauthenticated requests draw from a 60/hour bucket shared by every
@@ -362,7 +387,7 @@ describe('listReleaseBuilds', () => {
         )
         .mockResolvedValueOnce(jsonResponse([release('v1.4.159')]))
 
-      await listReleaseBuilds('stable', 'win32')
+      await listReleaseBuilds('stable', 'win32', 'x64')
 
       expect(recordRateLimitMock).toHaveBeenCalledExactlyOnceWith('core', 1_800_000_600_000, scope)
     }
@@ -380,7 +405,7 @@ describe('listReleaseBuilds', () => {
     )
     fetchMock.mockResolvedValue(jsonResponse([release('v1.4.159')]))
 
-    await listReleaseBuilds('stable', 'win32')
+    await listReleaseBuilds('stable', 'win32', 'x64')
 
     expect(blockedUntilMock).toHaveBeenCalledWith('core', expect.any(Number), scope)
     expect(requestHeaders().Authorization).toBe('Bearer gho_abc')
