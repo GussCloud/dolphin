@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { getConnectionId } from '@/lib/connection-context'
-import { isWindowVisible } from '@/lib/window-visibility-interval'
+import { installWindowVisibilityInterval, isWindowVisible } from '@/lib/window-visibility-interval'
 import { useAppStore } from '@/store'
 import { getRightSidebarWorktreeRuntimeSettings } from './file-explorer-runtime-owner'
 import type { FolderWorkspaceGitMember } from './folder-workspace-git-members'
@@ -66,12 +66,16 @@ export function useFolderWorkspaceMemberGitStatus(
       }
     }
     refreshNowRef.current = () => void refreshAll()
-    void refreshAll()
-    const interval = window.setInterval(() => void refreshAll(), MEMBER_STATUS_INTERVAL_MS)
+    // Why: no timer while hidden; becoming visible refreshes at once instead of waiting a tick.
+    const uninstall = installWindowVisibilityInterval({
+      run: () => void refreshAll(),
+      intervalMs: MEMBER_STATUS_INTERVAL_MS,
+      jitterOnVisible: true
+    })
     return () => {
       refreshNowRef.current = () => {}
       controller.abort()
-      window.clearInterval(interval)
+      uninstall()
     }
   }, [enabled, memberKey])
   return useCallback(() => refreshNowRef.current(), [])
