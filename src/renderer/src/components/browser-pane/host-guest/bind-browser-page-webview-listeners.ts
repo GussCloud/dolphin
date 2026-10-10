@@ -10,6 +10,7 @@ import type { AttachBrowserPageWebviewArgs } from './attach-browser-page-webview
 import { createBrowserPageWebviewGuestSession } from './browser-page-webview-guest-session'
 import { createBrowserPageWebviewLoadingHandlers } from './browser-page-webview-loading-handlers'
 import { createBrowserPageWebviewNavigationHandlers } from './browser-page-webview-navigation-handlers'
+import { createBrowserGuestWorktreeVisibility } from './browser-guest-worktree-visibility'
 
 export function bindBrowserPageWebviewListeners({
   container,
@@ -121,7 +122,8 @@ export function bindBrowserPageWebviewListeners({
     handleDidNavigateInPage,
     handleTitleUpdate,
     handleFaviconUpdate,
-    handleAnnotationViewportMessage
+    handleAnnotationViewportMessage,
+    disposeMetadataThrottles
   } = createBrowserPageWebviewNavigationHandlers({
     webview,
     browserTabId,
@@ -136,7 +138,8 @@ export function bindBrowserPageWebviewListeners({
     faviconUrlRef,
     setAddressBarValue,
     annotationViewportBridgeTokenRef,
-    setBrowserOverlayViewport
+    setBrowserOverlayViewport,
+    guestVisibility: createBrowserGuestWorktreeVisibility(worktreeId, isPaintableRef)
   })
 
   const unsubscribeSystemResumed = subscribeBrowserSystemResume(guestRecovery.validateAfterResume)
@@ -197,6 +200,7 @@ export function bindBrowserPageWebviewListeners({
     webview.removeEventListener('page-favicon-updated', handleFaviconUpdate)
     webview.removeEventListener('did-fail-load', handleFailLoad)
     webview.removeEventListener('console-message', handleAnnotationViewportMessage)
+    disposeMetadataThrottles()
     container.removeEventListener('dragover', onContainerDragOver)
     container.removeEventListener('drop', onContainerDrop)
     unsubscribeSystemResumed()

@@ -58,7 +58,7 @@ export type AttachBrowserPageWebviewArgs = {
   setBrowserOverlayViewport: Dispatch<SetStateAction<BrowserOverlayViewport>>
   setAddressBarValue: Dispatch<SetStateAction<string>>
   addBrowserHistoryEntryRef: MutableRefObject<
-    (url: string, title: string, faviconUrl?: string | null) => void
+    (url: string, title: string, faviconUrl?: string | null, options?: { bump?: boolean }) => void
   >
   annotationViewportBridgeTokenRef: MutableRefObject<string>
   initialBrowserUrlRef: MutableRefObject<string>
