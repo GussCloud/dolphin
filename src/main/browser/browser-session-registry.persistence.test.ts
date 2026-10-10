@@ -13,6 +13,32 @@ describe('BrowserSessionRegistry persistence', () => {
     vi.restoreAllMocks()
   })
 
+  // Pre-ready, Windows getPath('userData') can access-violate in Chromium (relaunch crash 0xFFFF7003).
+  it('never resolves userData at import, and loads the persisted source at init', async () => {
+    const fsState = createFsState()
+    seedMeta(fsState, {
+      defaultSource: { browserFamily: 'chrome', importedAt: 1 },
+      userAgent: null,
+      pendingCookieDbPath: null,
+      profiles: []
+    })
+
+    installModuleMocks(fsState)
+    const { app } = await import('electron')
+    const { browserSessionRegistry } = await import('./browser-session-registry')
+
+    expect(app.getPath).not.toHaveBeenCalled()
+    expect(browserSessionRegistry.getDefaultProfile().source).toBeNull()
+
+    browserSessionRegistry.initializeBrowserSessionsFromPersistedState()
+
+    expect(app.getPath).toHaveBeenCalledWith('userData')
+    expect(browserSessionRegistry.getDefaultProfile().source).toEqual({
+      browserFamily: 'chrome',
+      importedAt: 1
+    })
+  })
+
   it('migrates and consumes legacy pendingCookieDbPath into default partition replay', async () => {
     const fsState = createFsState()
     seedMeta(fsState, {
