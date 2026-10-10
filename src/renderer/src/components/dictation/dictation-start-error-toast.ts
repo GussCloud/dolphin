@@ -15,6 +15,19 @@ export function showDictationStartErrorToast(message: string): void {
         'Microphone access denied. Grant access in system settings, then restart Dolphin.'
       )
     )
+  } else if (message.includes('local_speech_unsupported')) {
+    toast(
+      'On-device speech models are not available on Windows on Arm yet. Choose a cloud model in Settings > Voice.',
+      {
+        action: {
+          label: translate(
+            'auto.components.dictation.DictationController.bb7f599ee7',
+            'Open Settings'
+          ),
+          onClick: openVoiceSettings
+        }
+      }
+    )
   } else if (message.includes('not ready')) {
     toast('Speech model not ready. Download it in Settings > Voice.')
   } else if (message.includes('Unknown model')) {

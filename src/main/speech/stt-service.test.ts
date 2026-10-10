@@ -147,6 +147,13 @@ vi.mock('./model-catalog', () => ({
         }
 }))
 
+const localSpeechRuntime = vi.hoisted(() => ({ supported: true }))
+
+vi.mock('./local-speech-runtime-support', () => ({
+  LOCAL_SPEECH_UNSUPPORTED_ERROR: 'local_speech_unsupported',
+  isLocalSpeechRuntimeSupported: () => localSpeechRuntime.supported
+}))
+
 vi.mock('./openai-api-key-store', () => ({
   readOpenAiSpeechApiKey: readOpenAiSpeechApiKeyMock
 }))
@@ -162,6 +169,23 @@ describe('SttService', () => {
     resetCloudSessions()
     resetWorkers()
     readOpenAiSpeechApiKeyMock.mockClear()
+    localSpeechRuntime.supported = true
+  })
+
+  it('refuses on-device models without starting a worker where speech has no native addon', async () => {
+    localSpeechRuntime.supported = false
+    const service = new SttService({
+      getModelState: vi.fn().mockResolvedValue({ id: 'model-a', status: 'ready' }),
+      getModelDir: vi.fn().mockReturnValue('/tmp/model-a')
+    } as never)
+
+    await expect(service.startDictation('model-a', vi.fn(), undefined, 'desktop')).rejects.toThrow(
+      'local_speech_unsupported'
+    )
+    expect(getCreatedWorkerCount()).toBe(0)
+
+    await service.startDictation('openai-model', vi.fn(), undefined, 'desktop')
+    expect(getCloudSessions()).toHaveLength(1)
   })
 
   it('reuses an idle warm worker for a second dictation with the same owner', async () => {

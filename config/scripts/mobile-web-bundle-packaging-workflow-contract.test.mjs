@@ -87,6 +87,7 @@ function packsWithBeforePack(text) {
 // workflow has to be added here deliberately, with its bundle step, rather than slipping in.
 const EXPECTED_PACKAGING_JOBS = [
   'dolphin-windows-release.yml build-win',
+  'dolphin-windows-release.yml build-win-arm64',
   'pr.yml package',
   'pr.yml package_windows',
   'win-crash-survival-e2e.yml crash-survival',

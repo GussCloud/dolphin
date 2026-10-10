@@ -14,6 +14,7 @@ import { compareVersions } from '../updater-fallback'
 import { listReleaseBuilds, resolveTargetBuild } from '../updater-release-builds'
 import { ReleaseBuildListCache, type ReleaseBuildListOptions } from '../updater-release-build-cache'
 import { UpdaterMenuChecks } from './updater-menu-checks'
+import { genericReleaseFeed } from './updater-generic-feed'
 
 /** Handles local-build selection and exact release-channel/tag jumps. */
 export abstract class UpdaterBuildSelection extends UpdaterMenuChecks {
@@ -138,7 +139,7 @@ export abstract class UpdaterBuildSelection extends UpdaterMenuChecks {
       updater.disableDifferentialDownload = true
       updater.allowPrerelease = true
       console.info(`[updater] pinned to ${channel} build ${target.tag} → ${target.feedUrl}`)
-      updater.setFeedURL({ provider: 'generic', url: target.feedUrl })
+      updater.setFeedURL(genericReleaseFeed(target.feedUrl))
       this.availableReleaseUrl = target.feedUrl
       const attemptId = this.beginUpdateCheckAttempt()
       this.markUpdateCheckLaunched(attemptId)

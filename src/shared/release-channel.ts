@@ -266,16 +266,42 @@ const PLATFORM_UPDATE_MANIFESTS: Partial<Record<NodeJS.Platform, readonly string
   linux: ['latest-linux.yml', 'latest-linux-arm64.yml']
 }
 
-export function getUpdateManifestNamesForPlatform(platform: NodeJS.Platform): readonly string[] {
+/**
+ * electron-updater's Windows channel file carries no arch suffix, so Windows arm64 builds
+ * publish and read their own channel. Mirrors WINDOWS_ARM64_UPDATE_CHANNEL in
+ * config/electron-builder.config.cjs.
+ */
+export const WINDOWS_ARM64_UPDATE_CHANNEL = 'latest-arm64'
+
+function isWindowsArm64(platform: NodeJS.Platform, arch: string | undefined): boolean {
+  return platform === 'win32' && arch === 'arm64'
+}
+
+/** The electron-updater channel this build reads, or null for the platform default. */
+export function getUpdateChannelForTarget(
+  platform: NodeJS.Platform,
+  arch: string | undefined
+): string | null {
+  return isWindowsArm64(platform, arch) ? WINDOWS_ARM64_UPDATE_CHANNEL : null
+}
+
+export function getUpdateManifestNamesForPlatform(
+  platform: NodeJS.Platform,
+  arch?: string
+): readonly string[] {
+  if (isWindowsArm64(platform, arch)) {
+    return [`${WINDOWS_ARM64_UPDATE_CHANNEL}.yml`]
+  }
   return PLATFORM_UPDATE_MANIFESTS[platform] ?? []
 }
 
 /** True when the release carries an artifact this platform's updater can install. */
 export function hasInstallableArtifactForPlatform(
   platform: NodeJS.Platform,
-  assetNames: readonly string[]
+  assetNames: readonly string[],
+  arch?: string
 ): boolean {
-  const manifests = getUpdateManifestNamesForPlatform(platform)
+  const manifests = getUpdateManifestNamesForPlatform(platform, arch)
   // Why permissive on an unknown platform: a filter that hides every build is a
   // worse failure than one that offers a build the download step will report on.
   if (manifests.length === 0) {
@@ -293,11 +319,16 @@ const PLATFORM_INSTALLER_PATTERNS: Partial<Record<NodeJS.Platform, RegExp>> = {
   linux: /\.AppImage$/i
 }
 
+const WINDOWS_ARM64_INSTALLER_PATTERN = /windows-setup-arm64\.exe$/i
+
 export function findInstallerAssetName(
   platform: NodeJS.Platform,
-  assetNames: readonly string[]
+  assetNames: readonly string[],
+  arch?: string
 ): string | null {
-  const pattern = PLATFORM_INSTALLER_PATTERNS[platform]
+  const pattern = isWindowsArm64(platform, arch)
+    ? WINDOWS_ARM64_INSTALLER_PATTERN
+    : PLATFORM_INSTALLER_PATTERNS[platform]
   if (!pattern) {
     return null
   }

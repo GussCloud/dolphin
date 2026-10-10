@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { installNetRequestFetchAdapter } from './updater-net-request.fixture'
 
 const ORIGINAL_PLATFORM = process.platform
+const ORIGINAL_ARCH = process.arch
 
 const { netFetchMock, netRequestMock } = vi.hoisted(() => ({
   netFetchMock: vi.fn(),
@@ -83,8 +84,10 @@ function respondWithAtom(
   })
 }
 
-function setPlatformForTest(platform: NodeJS.Platform): void {
+// Why arch too: CI runs on arm64 hosts, and Windows arm64 reads a different manifest.
+function setPlatformForTest(platform: NodeJS.Platform, arch: string = 'x64'): void {
   Object.defineProperty(process, 'platform', { value: platform })
+  Object.defineProperty(process, 'arch', { value: arch })
 }
 
 describe('fetchNewerReleaseTag', () => {
@@ -96,7 +99,7 @@ describe('fetchNewerReleaseTag', () => {
   })
 
   afterEach(() => {
-    setPlatformForTest(ORIGINAL_PLATFORM)
+    setPlatformForTest(ORIGINAL_PLATFORM, ORIGINAL_ARCH)
   })
 
   it('returns the newest stable tag when the user is on an RC and a newer stable exists', async () => {
@@ -118,13 +121,14 @@ describe('fetchNewerReleaseTag', () => {
   })
 
   it.each([
-    ['darwin', 'latest-mac.yml'],
-    ['linux', 'latest-linux.yml'],
-    ['win32', 'latest.yml']
-  ] satisfies [NodeJS.Platform, string][])(
-    'probes the %s platform manifest',
-    async (platform, manifestName) => {
-      setPlatformForTest(platform)
+    ['darwin', 'x64', 'latest-mac.yml'],
+    ['linux', 'x64', 'latest-linux.yml'],
+    ['win32', 'x64', 'latest.yml'],
+    ['win32', 'arm64', 'latest-arm64.yml']
+  ] satisfies [NodeJS.Platform, string, string][])(
+    'probes the %s %s platform manifest',
+    async (platform, arch, manifestName) => {
+      setPlatformForTest(platform, arch)
       const manifestUrls: string[] = []
       const assetUrls: string[] = []
 

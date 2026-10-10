@@ -417,6 +417,32 @@ describe('electron-builder config', () => {
     }
   })
 
+  it('names Windows arm64 release uploads and their update manifest apart from x64', () => {
+    const configPath = require.resolve('../electron-builder.config.cjs')
+    const original = process.env.DOLPHIN_WIN_ARM64_RELEASE
+    try {
+      delete require.cache[configPath]
+      delete process.env.DOLPHIN_WIN_ARM64_RELEASE
+      const x64Config = require('../electron-builder.config.cjs')
+      expect(x64Config.nsis.artifactName).toBe('dolphin-windows-setup.${ext}')
+      expect(x64Config.publish).not.toHaveProperty('channel')
+
+      delete require.cache[configPath]
+      process.env.DOLPHIN_WIN_ARM64_RELEASE = '1'
+      const arm64Config = require('../electron-builder.config.cjs')
+      expect(arm64Config.nsis.artifactName).toBe('dolphin-windows-setup-arm64.${ext}')
+      expect(arm64Config.publish.channel).toBe('latest-arm64')
+    } finally {
+      if (original === undefined) {
+        delete process.env.DOLPHIN_WIN_ARM64_RELEASE
+      } else {
+        process.env.DOLPHIN_WIN_ARM64_RELEASE = original
+      }
+      delete require.cache[configPath]
+      require('../electron-builder.config.cjs')
+    }
+  })
+
   it('overrides packaged semver only for local macOS builds', () => {
     const configPath = require.resolve('../electron-builder.config.cjs')
     const original = process.env.DOLPHIN_LOCAL_BUILD_VERSION

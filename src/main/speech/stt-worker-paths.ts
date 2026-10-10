@@ -10,10 +10,8 @@ export function getSttWorkerPath(): string {
 }
 
 export function getSherpaModulePath(): string {
-  const nativePackage =
-    process.platform === 'win32' && process.arch === 'x64'
-      ? 'sherpa-onnx-win-x64'
-      : `sherpa-onnx-${process.platform}-${process.arch}`
+  const platformToken = process.platform === 'win32' ? 'win' : process.platform
+  const nativePackage = `sherpa-onnx-${platformToken}-${process.arch}`
 
   if (getAppEnvironment().isPackaged()) {
     const resourcesNodeModule = join(process.resourcesPath, 'node_modules', nativePackage)

@@ -53,6 +53,12 @@ const isWinUnsigned = isWinDevChannel || process.env.DOLPHIN_WIN_SIGNPATH_SIGNED
 const isMacRelease =
   process.env.DOLPHIN_MAC_RELEASE === '1' || isMacHourly || isMacDaily || isMacAdhoc
 const isLinuxArm64Release = process.env.DOLPHIN_LINUX_ARM64_RELEASE === '1'
+// Why a flag rather than the packaged arch: NSIS artifactName and the update channel are config-wide,
+// and the x64 installer's names must stay byte-identical for installs already pointed at them.
+const isWinArm64Release = process.env.DOLPHIN_WIN_ARM64_RELEASE === '1'
+// Why its own channel: electron-updater's Windows channel file has no arch suffix, so arm64 would
+// otherwise overwrite x64's latest.yml. Mirrors WINDOWS_ARM64_UPDATE_CHANNEL in src/shared/release-channel.ts.
+const WINDOWS_ARM64_UPDATE_CHANNEL = 'latest-arm64'
 const localBuildVersion =
   isMacRelease || isWinDevChannel ? undefined : process.env.DOLPHIN_LOCAL_BUILD_VERSION
 const isHourlyChannel = isMacHourly || isWinHourly
@@ -128,9 +134,11 @@ const linuxSpeechNativeResource = {
   from: 'node_modules/sherpa-onnx-linux-${arch}',
   to: 'node_modules/sherpa-onnx-linux-${arch}'
 }
+// Why ${arch}: sherpa-onnx publishes no win-arm64 package, so an arm64 slice copies nothing and the
+// app reports on-device speech as unsupported (see stt-worker-paths.ts).
 const winSpeechNativeResource = {
-  from: 'node_modules/sherpa-onnx-win-x64',
-  to: 'node_modules/sherpa-onnx-win-x64'
+  from: 'node_modules/sherpa-onnx-win-${arch}',
+  to: 'node_modules/sherpa-onnx-win-${arch}'
 }
 // electron-builder replaces these defaults when `depends` is configured; retain
 // Electron's loader requirements alongside Dolphin's headless-host dependencies.
@@ -478,6 +486,8 @@ module.exports = {
         from: 'native/windows-cli-launcher/.build/agent-teams/tmux.exe',
         to: 'bin/agent-teams/tmux.exe'
       },
+      // Why x64 on every Windows slice: upstream ships no win32-arm64 binary, and Windows 11 on Arm
+      // runs this standalone exe under x64 emulation (resolveAgentBrowserBinary falls back to it).
       {
         from: 'node_modules/agent-browser/bin/agent-browser-win32-x64.exe',
         to: 'agent-browser-win32-x64.exe'
@@ -489,7 +499,9 @@ module.exports = {
     ]
   },
   nsis: {
-    artifactName: `${forkIdentity.installerArtifactBaseName}.\${ext}`,
+    artifactName: isWinArm64Release
+      ? `${forkIdentity.installerArtifactBaseName}-arm64.\${ext}`
+      : `${forkIdentity.installerArtifactBaseName}.\${ext}`,
     shortcutName: '${productName}',
     uninstallDisplayName: '${productName}',
     createDesktopShortcut: 'always',
@@ -697,7 +709,8 @@ module.exports = {
     // public GitHub release as soon as the first platform uploads, and
     // /releases/latest serves a missing Windows exe. release-cut undrafts
     // only after every required asset exists.
-    releaseType: devChannelRepo ? 'prerelease' : 'draft'
+    releaseType: devChannelRepo ? 'prerelease' : 'draft',
+    ...(isWinArm64Release ? { channel: WINDOWS_ARM64_UPDATE_CHANNEL } : {})
   }
 }
 

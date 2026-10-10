@@ -532,12 +532,8 @@ function assertPackagedNativeVariantsInstalled(electronPlatformName, electronArc
 
   const rootOptionalDependencies =
     JSON.parse(readFileSync(join(projectDir, 'package.json'), 'utf8')).optionalDependencies ?? {}
-  // Why win32 is always x64: winSpeechNativeResource packages sherpa-onnx-win-x64 for every
-  // Windows target (there is no sherpa-onnx-win-arm64; it runs under emulation).
-  const sherpaName =
-    electronPlatformName === 'win32'
-      ? 'sherpa-onnx-win-x64'
-      : `sherpa-onnx-${electronPlatformName}-${architecture}`
+  // Why no win-arm64 entry: sherpa-onnx publishes none, so that slice ships without on-device speech.
+  const sherpaName = `sherpa-onnx-${electronPlatformName === 'win32' ? 'win' : electronPlatformName}-${architecture}`
   if (sherpaName in rootOptionalDependencies && !isInstalled(sherpaName)) {
     missing.push(sherpaName)
   }

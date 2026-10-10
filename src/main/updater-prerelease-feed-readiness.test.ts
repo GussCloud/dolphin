@@ -3,6 +3,7 @@ import { installNetRequestFetchAdapter } from './updater-net-request.fixture'
 import { publishingIncident } from './updater-prerelease-feed-reproduction.fixture'
 
 const ORIGINAL_PLATFORM = process.platform
+const ORIGINAL_ARCH = process.arch
 
 const { netFetchMock, netRequestMock } = vi.hoisted(() => ({
   netFetchMock: vi.fn(),
@@ -37,8 +38,10 @@ function isPlatformManifestRequest(url: string): boolean {
   return /\/latest(?:-[a-z]+)?\.yml$/.test(url)
 }
 
-function setPlatformForTest(platform: NodeJS.Platform): void {
+// Why arch too: CI runs on arm64 hosts, and Windows arm64 reads a different manifest.
+function setPlatformForTest(platform: NodeJS.Platform, arch: string = 'x64'): void {
   Object.defineProperty(process, 'platform', { value: platform })
+  Object.defineProperty(process, 'arch', { value: arch })
 }
 
 function buildWindowsManifest(version: string): string {
@@ -111,7 +114,7 @@ describe('fetchNewerReleaseTagsWithReadiness', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.useRealTimers()
-    setPlatformForTest(ORIGINAL_PLATFORM)
+    setPlatformForTest(ORIGINAL_PLATFORM, ORIGINAL_ARCH)
   })
 
   it("offers a Windows release from GitHub's asset redirect without probing Azure", async () => {

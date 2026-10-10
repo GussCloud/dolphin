@@ -1,7 +1,11 @@
 import type { VoiceSettings } from '../../shared/speech-types'
 import type { RuntimeSpeechModelSummary, RuntimeSpeechSetupState } from '../../shared/runtime-types'
 import { getDefaultVoiceSettings } from '../../shared/constants'
-import { getCatalogModel, isLocalSpeechModel, SPEECH_MODEL_CATALOG } from '../speech/model-catalog'
+import {
+  getAvailableSpeechModelCatalog,
+  getCatalogModel,
+  isLocalSpeechModel
+} from '../speech/model-catalog'
 import { getSpeechModelManager, getSpeechSttService } from '../speech/speech-runtime-service'
 import {
   deleteLocalSpeechModel,
@@ -17,7 +21,7 @@ export class RuntimeMobileSpeechCatalog {
     const voice = store.getSettings().voice ?? getDefaultVoiceSettings()
     const states = await getSpeechModelManager(store).getModelStates()
     const stateById = new Map(states.map((state) => [state.id, state]))
-    const models: RuntimeSpeechModelSummary[] = SPEECH_MODEL_CATALOG.map((manifest) => {
+    const models: RuntimeSpeechModelSummary[] = getAvailableSpeechModelCatalog().map((manifest) => {
       const state = stateById.get(manifest.id)
       return {
         id: manifest.id,
