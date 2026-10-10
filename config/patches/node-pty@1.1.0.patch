@@ -1440,3 +1440,428 @@ index 13f6c6d..eda63c8 100644
 +
      this._forwardEvents();
    }
+diff --git a/lib/windowsConoutConnection.js b/lib/windowsConoutConnection.js
+index 1be15ca..6c35bee 100644
+--- a/lib/windowsConoutConnection.js
++++ b/lib/windowsConoutConnection.js
+@@ -62,27 +62,66 @@ var FLUSH_DATA_INTERVAL = 1000;
+  * - https://github.com/microsoft/terminal/issues/1810
+  * - https://docs.microsoft.com/en-us/windows/console/closepseudoconsole
+  */
++// Dolphin: every ConoutConnection shares one drain worker; it exits with the last connection.
++var sharedWorker;
++var sharedWorkerUsers = 0;
++var connectionsByPipe = new Map();
++function acquireSharedWorker() {
++    if (!sharedWorker) {
++        var scriptPath = __dirname.replace('node_modules.asar', 'node_modules.asar.unpacked');
++        var worker_1 = new worker_threads_1.Worker(path_1.join(scriptPath, 'worker/conoutSocketWorker.js'));
++        worker_1.on('message', function (message) {
++            var connection = message && connectionsByPipe.get(message.conoutPipeName);
++            if (message && message.type === 1 /* READY */) {
++                connection === null || connection === void 0 ? void 0 : connection.fireReady();
++                return;
++            }
++            if (message && message.type === 2 /* CLOSED */) {
++                // Same flush grace as dispose(): the main-side socket may still be draining.
++                connection === null || connection === void 0 ? void 0 : connection.releaseAfterFlush();
++                return;
++            }
++            console.warn('Unexpected ConoutWorkerMessage', message);
++        });
++        worker_1.on('error', function (err) {
++            console.warn('[node-pty] conout worker failed', err);
++        });
++        worker_1.on('exit', function () {
++            if (sharedWorker === worker_1) {
++                sharedWorker = undefined;
++                sharedWorkerUsers = 0;
++            }
++        });
++        sharedWorker = worker_1;
++    }
++    sharedWorkerUsers++;
++    return sharedWorker;
++}
++function releaseSharedWorker(worker, conoutPipeName) {
++    connectionsByPipe.delete(conoutPipeName);
++    // A replaced worker already exited and took this connection with it.
++    if (worker !== sharedWorker) {
++        return Promise.resolve();
++    }
++    sharedWorkerUsers--;
++    if (sharedWorkerUsers > 0) {
++        worker.postMessage({ type: 'close', conoutPipeName: conoutPipeName });
++        return Promise.resolve();
++    }
++    sharedWorker = undefined;
++    return worker.terminate().then(function () { return undefined; });
++}
+ var ConoutConnection = /** @class */ (function () {
+     function ConoutConnection(_conoutPipeName, _useConptyDll) {
+         var _this = this;
+         this._conoutPipeName = _conoutPipeName;
+         this._useConptyDll = _useConptyDll;
+         this._isDisposed = false;
++        this._isReleased = false;
+         this._onReady = new eventEmitter2_1.EventEmitter2();
+-        var workerData = {
+-            conoutPipeName: _conoutPipeName
+-        };
+-        var scriptPath = __dirname.replace('node_modules.asar', 'node_modules.asar.unpacked');
+-        this._worker = new worker_threads_1.Worker(path_1.join(scriptPath, 'worker/conoutSocketWorker.js'), { workerData: workerData });
+-        this._worker.on('message', function (message) {
+-            switch (message) {
+-                case 1 /* READY */:
+-                    _this._onReady.fire();
+-                    return;
+-                default:
+-                    console.warn('Unexpected ConoutWorkerMessage', message);
+-            }
+-        });
++        this._worker = acquireSharedWorker();
++        connectionsByPipe.set(_conoutPipeName, this);
++        this._worker.postMessage({ type: 'open', conoutPipeName: _conoutPipeName });
+     }
+     Object.defineProperty(ConoutConnection.prototype, "onReady", {
+         get: function () { return this._onReady.event; },
+@@ -107,17 +146,19 @@ var ConoutConnection = /** @class */ (function () {
+         }
+         this._drainTimeout = setTimeout(function () { return _this._destroySocket(); }, FLUSH_DATA_INTERVAL);
+     };
++    ConoutConnection.prototype.fireReady = function () {
++        this._onReady.fire();
++    };
++    ConoutConnection.prototype.releaseAfterFlush = function () {
++        this._drainDataAndClose();
++    };
+     ConoutConnection.prototype._destroySocket = function () {
+-        return __awaiter(this, void 0, void 0, function () {
+-            return __generator(this, function (_a) {
+-                switch (_a.label) {
+-                    case 0: return [4 /*yield*/, this._worker.terminate()];
+-                    case 1:
+-                        _a.sent();
+-                        return [2 /*return*/];
+-                }
+-            });
+-        });
++        // The DLL path may dispose repeatedly; the shared worker's count must drop once.
++        if (this._isReleased) {
++            return Promise.resolve();
++        }
++        this._isReleased = true;
++        return releaseSharedWorker(this._worker, this._conoutPipeName);
+     };
+     return ConoutConnection;
+ }());
+diff --git a/lib/worker/conoutSocketWorker.js b/lib/worker/conoutSocketWorker.js
+index 0451e2c..a850bd0 100644
+--- a/lib/worker/conoutSocketWorker.js
++++ b/lib/worker/conoutSocketWorker.js
+@@ -6,17 +6,59 @@ Object.defineProperty(exports, "__esModule", { value: true });
+ var worker_threads_1 = require("worker_threads");
+ var net_1 = require("net");
+ var conout_1 = require("../shared/conout");
+-var conoutPipeName = worker_threads_1.workerData.conoutPipeName;
+-var conoutSocket = new net_1.Socket();
+-conoutSocket.setEncoding('utf8');
+-conoutSocket.connect(conoutPipeName, function () {
++// Dolphin: one worker drains every conout pipe of the process; a worker per PTY cost ~13 MB each.
++var connections = new Map();
++function openConnection(conoutPipeName) {
++    var accepted = new Set();
++    var conoutSocket = new net_1.Socket();
+     var server = net_1.createServer(function (workerSocket) {
++        accepted.add(workerSocket);
++        workerSocket.on('close', function () { accepted.delete(workerSocket); });
++        // A per-PTY worker died with its socket; here one PTY's error must not kill the others.
++        workerSocket.on('error', function () { });
+         conoutSocket.pipe(workerSocket);
+     });
+-    server.listen(conout_1.getWorkerPipeName(conoutPipeName));
+-    if (!worker_threads_1.parentPort) {
+-        throw new Error('worker_threads parentPort is null');
++    server.on('error', function () { closeConnection(conoutPipeName); });
++    connections.set(conoutPipeName, { conoutSocket: conoutSocket, server: server, accepted: accepted });
++    conoutSocket.setEncoding('utf8');
++    conoutSocket.on('error', function () { closeConnection(conoutPipeName); });
++    // The pipe closes when the shell exits on its own; kill() and its dispose() never run then.
++    conoutSocket.on('close', function () {
++        var connection = connections.get(conoutPipeName);
++        if (!connection) {
++            return;
++        }
++        connections.delete(conoutPipeName);
++        connection.server.close();
++        worker_threads_1.parentPort.postMessage({ type: 2 /* CLOSED */, conoutPipeName: conoutPipeName });
++    });
++    conoutSocket.connect(conoutPipeName, function () {
++        if (!connections.has(conoutPipeName)) {
++            return;
++        }
++        server.listen(conout_1.getWorkerPipeName(conoutPipeName));
++        worker_threads_1.parentPort.postMessage({ type: 1 /* READY */, conoutPipeName: conoutPipeName });
++    });
++}
++function closeConnection(conoutPipeName) {
++    var connection = connections.get(conoutPipeName);
++    if (!connection) {
++        return;
++    }
++    connections.delete(conoutPipeName);
++    connection.conoutSocket.destroy();
++    connection.server.close();
++    connection.accepted.forEach(function (socket) { socket.destroy(); });
++}
++if (!worker_threads_1.parentPort) {
++    throw new Error('worker_threads parentPort is null');
++}
++worker_threads_1.parentPort.on('message', function (message) {
++    if (message.type === 'open') {
++        openConnection(message.conoutPipeName);
++    }
++    else if (message.type === 'close') {
++        closeConnection(message.conoutPipeName);
+     }
+-    worker_threads_1.parentPort.postMessage(1 /* READY */);
+ });
+-//# sourceMappingURL=conoutSocketWorker.js.map
+\ No newline at end of file
++//# sourceMappingURL=conoutSocketWorker.js.map
+diff --git a/src/shared/conout.ts b/src/shared/conout.ts
+index 7a7e05f..e612d9f 100644
+--- a/src/shared/conout.ts
++++ b/src/shared/conout.ts
+@@ -7,9 +7,17 @@ export interface IWorkerData {
+ }
+ 
+ export const enum ConoutWorkerMessage {
+-  READY = 1
++  READY = 1,
++  CLOSED = 2
+ }
+ 
++export interface IConoutWorkerReady {
++  type: ConoutWorkerMessage;
++  conoutPipeName: string;
++}
++
++export type ConoutWorkerRequest = { type: 'open' | 'close', conoutPipeName: string };
++
+ export function getWorkerPipeName(conoutPipeName: string): string {
+   return `${conoutPipeName}-worker`;
+ }
+diff --git a/src/windowsConoutConnection.ts b/src/windowsConoutConnection.ts
+index fa2d62d..ae7c319 100644
+--- a/src/windowsConoutConnection.ts
++++ b/src/windowsConoutConnection.ts
+@@ -5,7 +5,7 @@
+ import { Worker } from 'worker_threads';
+ import { Socket } from 'net';
+ import { IDisposable } from './types';
+-import { IWorkerData, ConoutWorkerMessage, getWorkerPipeName } from './shared/conout';
++import { ConoutWorkerMessage, ConoutWorkerRequest, IConoutWorkerReady, getWorkerPipeName } from './shared/conout';
+ import { join } from 'path';
+ import { IEvent, EventEmitter2 } from './eventEmitter2';
+ 
+@@ -28,10 +28,64 @@ const FLUSH_DATA_INTERVAL = 1000;
+  * - https://github.com/microsoft/terminal/issues/1810
+  * - https://docs.microsoft.com/en-us/windows/console/closepseudoconsole
+  */
++// Dolphin: every ConoutConnection shares one drain worker; it exits with the last connection.
++let sharedWorker: Worker | undefined;
++let sharedWorkerUsers = 0;
++const connectionsByPipe = new Map<string, ConoutConnection>();
++
++function acquireSharedWorker(): Worker {
++  if (!sharedWorker) {
++    const scriptPath = __dirname.replace('node_modules.asar', 'node_modules.asar.unpacked');
++    const worker = new Worker(join(scriptPath, 'worker/conoutSocketWorker.js'));
++    worker.on('message', (message: IConoutWorkerReady) => {
++      const connection = message && connectionsByPipe.get(message.conoutPipeName);
++      if (message?.type === ConoutWorkerMessage.READY) {
++        connection?.fireReady();
++        return;
++      }
++      if (message?.type === ConoutWorkerMessage.CLOSED) {
++        // Same flush grace as dispose(): the main-side socket may still be draining.
++        connection?.releaseAfterFlush();
++        return;
++      }
++      console.warn('Unexpected ConoutWorkerMessage', message);
++    });
++    worker.on('error', err => {
++      console.warn('[node-pty] conout worker failed', err);
++    });
++    worker.on('exit', () => {
++      if (sharedWorker === worker) {
++        sharedWorker = undefined;
++        sharedWorkerUsers = 0;
++      }
++    });
++    sharedWorker = worker;
++  }
++  sharedWorkerUsers++;
++  return sharedWorker;
++}
++
++async function releaseSharedWorker(worker: Worker, conoutPipeName: string): Promise<void> {
++  connectionsByPipe.delete(conoutPipeName);
++  // A replaced worker already exited and took this connection with it.
++  if (worker !== sharedWorker) {
++    return;
++  }
++  sharedWorkerUsers--;
++  if (sharedWorkerUsers > 0) {
++    const request: ConoutWorkerRequest = { type: 'close', conoutPipeName };
++    worker.postMessage(request);
++    return;
++  }
++  sharedWorker = undefined;
++  await worker.terminate();
++}
++
+ export class ConoutConnection implements IDisposable {
+   private _worker: Worker;
+   private _drainTimeout: NodeJS.Timeout | undefined;
+   private _isDisposed: boolean = false;
++  private _isReleased: boolean = false;
+ 
+   private _onReady = new EventEmitter2<void>();
+   public get onReady(): IEvent<void> { return this._onReady.event; }
+@@ -40,20 +94,10 @@ export class ConoutConnection implements IDisposable {
+     private _conoutPipeName: string,
+     private _useConptyDll: boolean
+   ) {
+-    const workerData: IWorkerData = {
+-      conoutPipeName: _conoutPipeName
+-    };
+-    const scriptPath = __dirname.replace('node_modules.asar', 'node_modules.asar.unpacked');
+-    this._worker = new Worker(join(scriptPath, 'worker/conoutSocketWorker.js'), { workerData });
+-    this._worker.on('message', (message: ConoutWorkerMessage) => {
+-      switch (message) {
+-        case ConoutWorkerMessage.READY:
+-          this._onReady.fire();
+-          return;
+-        default:
+-          console.warn('Unexpected ConoutWorkerMessage', message);
+-      }
+-    });
++    this._worker = acquireSharedWorker();
++    connectionsByPipe.set(_conoutPipeName, this);
++    const request: ConoutWorkerRequest = { type: 'open', conoutPipeName: _conoutPipeName };
++    this._worker.postMessage(request);
+   }
+ 
+   dispose(): void {
+@@ -76,7 +120,20 @@ export class ConoutConnection implements IDisposable {
+     this._drainTimeout = setTimeout(() => this._destroySocket(), FLUSH_DATA_INTERVAL);
+   }
+ 
++  fireReady(): void {
++    this._onReady.fire();
++  }
++
++  releaseAfterFlush(): void {
++    this._drainDataAndClose();
++  }
++
+   private async _destroySocket(): Promise<void> {
+-    await this._worker.terminate();
++    // The DLL path may dispose repeatedly; the shared worker's count must drop once.
++    if (this._isReleased) {
++      return;
++    }
++    this._isReleased = true;
++    await releaseSharedWorker(this._worker, this._conoutPipeName);
+   }
+ }
+diff --git a/src/worker/conoutSocketWorker.ts b/src/worker/conoutSocketWorker.ts
+index 79a4148..69080dd 100644
+--- a/src/worker/conoutSocketWorker.ts
++++ b/src/worker/conoutSocketWorker.ts
+@@ -2,21 +2,72 @@
+  * Copyright (c) 2020, Microsoft Corporation (MIT License).
+  */
+ 
+-import { parentPort, workerData } from 'worker_threads';
+-import { Socket, createServer } from 'net';
+-import { ConoutWorkerMessage, IWorkerData, getWorkerPipeName } from '../shared/conout';
++import { parentPort } from 'worker_threads';
++import { Socket, Server, createServer } from 'net';
++import { ConoutWorkerMessage, ConoutWorkerRequest, IConoutWorkerReady, getWorkerPipeName } from '../shared/conout';
+ 
+-const { conoutPipeName } = (workerData as IWorkerData);
++// Dolphin: one worker drains every conout pipe of the process; a worker per PTY cost ~13 MB each.
++interface IConoutWorkerConnection {
++  conoutSocket: Socket;
++  server: Server;
++  accepted: Set<Socket>;
++}
+ 
+-const conoutSocket = new Socket();
+-conoutSocket.setEncoding('utf8');
+-conoutSocket.connect(conoutPipeName, () => {
++const connections = new Map<string, IConoutWorkerConnection>();
++
++function openConnection(conoutPipeName: string): void {
++  const accepted = new Set<Socket>();
++  const conoutSocket = new Socket();
+   const server = createServer(workerSocket => {
++    accepted.add(workerSocket);
++    workerSocket.on('close', () => accepted.delete(workerSocket));
++    // A per-PTY worker died with its socket; here one PTY's error must not kill the others.
++    workerSocket.on('error', () => {});
+     conoutSocket.pipe(workerSocket);
+   });
+-  server.listen(getWorkerPipeName(conoutPipeName));
+-  if (!parentPort) {
+-    throw new Error('worker_threads parentPort is null');
++  server.on('error', () => closeConnection(conoutPipeName));
++  connections.set(conoutPipeName, { conoutSocket, server, accepted });
++  conoutSocket.setEncoding('utf8');
++  conoutSocket.on('error', () => closeConnection(conoutPipeName));
++  // The pipe closes when the shell exits on its own; kill() and its dispose() never run then.
++  conoutSocket.on('close', () => {
++    const connection = connections.get(conoutPipeName);
++    if (!connection) {
++      return;
++    }
++    connections.delete(conoutPipeName);
++    connection.server.close();
++    const closed: IConoutWorkerReady = { type: ConoutWorkerMessage.CLOSED, conoutPipeName };
++    parentPort!.postMessage(closed);
++  });
++  conoutSocket.connect(conoutPipeName, () => {
++    if (!connections.has(conoutPipeName)) {
++      return;
++    }
++    server.listen(getWorkerPipeName(conoutPipeName));
++    const ready: IConoutWorkerReady = { type: ConoutWorkerMessage.READY, conoutPipeName };
++    parentPort!.postMessage(ready);
++  });
++}
++
++function closeConnection(conoutPipeName: string): void {
++  const connection = connections.get(conoutPipeName);
++  if (!connection) {
++    return;
++  }
++  connections.delete(conoutPipeName);
++  connection.conoutSocket.destroy();
++  connection.server.close();
++  connection.accepted.forEach(socket => socket.destroy());
++}
++
++if (!parentPort) {
++  throw new Error('worker_threads parentPort is null');
++}
++parentPort.on('message', (message: ConoutWorkerRequest) => {
++  if (message.type === 'open') {
++    openConnection(message.conoutPipeName);
++  } else if (message.type === 'close') {
++    closeConnection(message.conoutPipeName);
+   }
+-  parentPort.postMessage(ConoutWorkerMessage.READY);
+ });
