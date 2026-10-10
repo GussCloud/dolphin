@@ -8,11 +8,18 @@ import {
 import { SearchableSetting } from './SearchableSetting'
 import { translate } from '@/i18n/i18n'
 import { ShellIcon } from '../tab-bar/shell-icons'
+import { PowerShell7InstallPanel } from './PowerShell7InstallPanel'
 
 type TerminalWindowsShellSectionProps = {
   updateSettings: (updates: Partial<GlobalSettings>) => void
   windowsShell: string
   gitBashAvailable: boolean
+  pwshAvailable: boolean
+  pwshCapabilitiesLoading: boolean
+  /** Explicit 'powershell.exe' pins Windows PowerShell 5.1 even when PowerShell 7 exists. */
+  powerShellImplementation: GlobalSettings['terminalWindowsPowerShellImplementation']
+  /** The install targets this machine, so it is hidden while Settings edits a remote host. */
+  isLocalTerminalHost: boolean
 }
 
 function windowsShellLabel(shell: string, label: string): React.JSX.Element {
@@ -27,8 +34,16 @@ function windowsShellLabel(shell: string, label: string): React.JSX.Element {
 export function TerminalWindowsShellSection({
   updateSettings,
   windowsShell,
-  gitBashAvailable
+  gitBashAvailable,
+  pwshAvailable,
+  pwshCapabilitiesLoading,
+  powerShellImplementation,
+  isLocalTerminalHost
 }: TerminalWindowsShellSectionProps): React.JSX.Element {
+  const usesPwsh = pwshAvailable && powerShellImplementation !== 'powershell.exe'
+  const powerShellLabel = usesPwsh
+    ? translate('auto.components.settings.TerminalWindowsShellSection.powerShell7', 'PowerShell 7')
+    : translate('auto.components.settings.TerminalPane.eb7fc4d98a', 'PowerShell')
   const showGitBashOption = gitBashAvailable || windowsShell === WINDOWS_GIT_BASH_SHELL
   // Why: selecting WSL here would omit its required distro, but an existing WSL default must stay visible.
   const showWslOption = windowsShell === 'wsl.exe'
@@ -79,14 +94,8 @@ export function TerminalWindowsShellSection({
                 options={[
                   {
                     value: 'powershell.exe',
-                    label: windowsShellLabel(
-                      'powershell.exe',
-                      translate('auto.components.settings.TerminalPane.eb7fc4d98a', 'PowerShell')
-                    ),
-                    ariaLabel: translate(
-                      'auto.components.settings.TerminalPane.eb7fc4d98a',
-                      'PowerShell'
-                    )
+                    label: windowsShellLabel('powershell.exe', powerShellLabel),
+                    ariaLabel: powerShellLabel
                   },
                   {
                     value: 'cmd.exe',
@@ -143,6 +152,20 @@ export function TerminalWindowsShellSection({
           />
         </SearchableSetting>
       </div>
+      {usesPwsh ? (
+        <p className="text-xs text-muted-foreground">
+          {translate(
+            'auto.components.settings.TerminalWindowsShellSection.pwshRecommended',
+            'PowerShell 7 is installed and recommended: new PowerShell terminals use it.'
+          )}
+        </p>
+      ) : null}
+      {isLocalTerminalHost ? (
+        <PowerShell7InstallPanel
+          pwshAvailable={pwshAvailable}
+          capabilitiesLoading={pwshCapabilitiesLoading}
+        />
+      ) : null}
     </section>
   )
 }

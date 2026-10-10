@@ -1,8 +1,41 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { WindowsTerminalCapabilities } from '@/lib/windows-terminal-capabilities'
 import { WINDOWS_GIT_BASH_SHELL } from '../../../../shared/windows-terminal-shell'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { WindowsTerminalStep } from './WindowsTerminalStep'
+
+const { capabilitiesState, installState } = vi.hoisted(() => {
+  const current: WindowsTerminalCapabilities = {
+    wslAvailable: false,
+    wslDistros: [],
+    pwshAvailable: false,
+    gitBashAvailable: false,
+    hostPlatform: null,
+    isLoading: false
+  }
+  return { capabilitiesState: { current }, installState: { supported: false } }
+})
+
+vi.mock('@/lib/windows-terminal-capabilities', () => ({
+  useWindowsTerminalCapabilities: () => capabilitiesState.current
+}))
+
+vi.mock('@/lib/pwsh-install-store', () => ({
+  isPwshInstallSupported: () => installState.supported,
+  usePwshInstallPhase: () => ({ kind: 'idle' }),
+  startPwshInstall: vi.fn(),
+  cancelPwshInstall: vi.fn()
+}))
+
+function setCapabilities(overrides: Partial<WindowsTerminalCapabilities>): void {
+  capabilitiesState.current = { ...capabilitiesState.current, ...overrides }
+}
+
+afterEach(() => {
+  setCapabilities({ pwshAvailable: false, isLoading: false })
+  installState.supported = false
+})
 
 function createSettings(overrides: Partial<GlobalSettings> = {}): GlobalSettings {
   return {
@@ -61,5 +94,38 @@ describe('WindowsTerminalStep', () => {
     expect(html).toContain('gwindows_logo.svg')
     expect(html).not.toContain('&gt;Git&lt;')
     expect(html).not.toContain('>Git<')
+  })
+
+  it('labels PowerShell 7 as recommended when it is installed, without an install prompt', () => {
+    setCapabilities({ pwshAvailable: true })
+    installState.supported = true
+    const html = renderToStaticMarkup(
+      <WindowsTerminalStep settings={createSettings()} updateSettings={vi.fn()} />
+    )
+
+    expect(html).toContain('PowerShell 7')
+    expect(html).toContain('Recommended')
+    expect(html).not.toContain('Install PowerShell 7')
+  })
+
+  it('recommends installing PowerShell 7 when it is missing', () => {
+    installState.supported = true
+    const html = renderToStaticMarkup(
+      <WindowsTerminalStep settings={createSettings()} updateSettings={vi.fn()} />
+    )
+
+    expect(html).toContain('Recommended')
+    expect(html).toContain('PowerShell 7 is recommended')
+    expect(html).toContain('Install PowerShell 7')
+    expect(html).toContain('data-pwsh-install-state="not-installed"')
+  })
+
+  it('does not flash the install prompt while capabilities are still loading', () => {
+    installState.supported = true
+    setCapabilities({ isLoading: true })
+    const html = renderToStaticMarkup(
+      <WindowsTerminalStep settings={createSettings()} updateSettings={vi.fn()} />
+    )
+    expect(html).not.toContain('Install PowerShell 7')
   })
 })

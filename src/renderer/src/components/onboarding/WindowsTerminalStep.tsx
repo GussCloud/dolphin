@@ -6,6 +6,8 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { cn } from '@/lib/utils'
 import { useWindowsTerminalCapabilities } from '@/lib/windows-terminal-capabilities'
 import { SettingsSegmentedControl } from '../settings/SettingsFormControls'
+import { PowerShell7InstallPanel } from '../settings/PowerShell7InstallPanel'
+import { Badge } from '@/components/ui/badge'
 import { ShellIcon } from '../tab-bar/shell-icons'
 import {
   Select,
@@ -26,6 +28,7 @@ type ShellOption = {
   label: string
   description: string
   disabled?: boolean
+  badge?: string
 }
 
 type RightClickOption = {
@@ -73,7 +76,10 @@ export function WindowsTerminalStep({
   const shellOptions: ShellOption[] = [
     {
       value: 'powershell.exe',
-      label: translate('auto.components.onboarding.WindowsTerminalStep.powerShell', 'PowerShell'),
+      label: capabilities.pwshAvailable
+        ? translate('auto.components.onboarding.WindowsTerminalStep.powerShell7', 'PowerShell 7')
+        : translate('auto.components.onboarding.WindowsTerminalStep.powerShell', 'PowerShell'),
+      badge: translate('auto.components.onboarding.WindowsTerminalStep.recommended', 'Recommended'),
       description: capabilities.pwshAvailable
         ? translate(
             'auto.components.onboarding.WindowsTerminalStep.powerShellPwsh',
@@ -199,12 +205,19 @@ export function WindowsTerminalStep({
               icon={<ShellIcon shell={option.value} size={18} />}
               label={option.label}
               description={option.description}
+              badge={option.badge}
               selected={windowsShell === option.value}
               disabled={option.disabled}
               onClick={() => void updateSettings({ terminalWindowsShell: option.value })}
             />
           ))}
         </div>
+
+        <PowerShell7InstallPanel
+          pwshAvailable={capabilities.pwshAvailable}
+          capabilitiesLoading={capabilities.isLoading}
+          aboveOnboarding
+        />
 
         {windowsShell === 'wsl.exe' ? (
           <div className="rounded-xl border border-border bg-muted/20 px-4 py-3">
@@ -319,6 +332,7 @@ function PreferenceCard({
   icon,
   label,
   description,
+  badge,
   selected,
   disabled,
   onClick
@@ -326,6 +340,7 @@ function PreferenceCard({
   icon: React.JSX.Element
   label: string
   description: string
+  badge?: string
   selected: boolean
   disabled?: boolean
   onClick: () => void
@@ -353,7 +368,10 @@ function PreferenceCard({
           {icon}
         </span>
         <span className="min-w-0 space-y-1">
-          <span className="block text-sm font-medium text-foreground">{label}</span>
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="text-sm font-medium text-foreground">{label}</span>
+            {badge ? <Badge variant="secondary">{badge}</Badge> : null}
+          </span>
           <span className="block text-[12px] leading-relaxed text-muted-foreground">
             {description}
           </span>

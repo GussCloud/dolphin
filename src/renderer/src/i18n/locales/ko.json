@@ -12279,6 +12279,33 @@
         "claude-connection-loss-retry-copy": {
           "title": "연결이 끊기면 Claude 다시 시도",
           "description": "Claude 턴이 \"Connection lost mid-response\"로 끝나면 최대 3번까지 대신 continue를 입력합니다. 모든 재시도가 실패한 경우에만 알립니다."
+        },
+        "PowerShell7InstallPanel": {
+          "openDownloadPage": "다운로드 페이지 열기",
+          "confirmTitle": "PowerShell 7을 설치할까요?",
+          "confirmDescription": "Dolphin이 Microsoft의 Windows 패키지 관리자(winget)로 다음 명령을 실행해 이 컴퓨터에 PowerShell 7을 설치합니다:",
+          "confirmUac": "설치를 완료하기 위해 Windows가 관리자 권한(UAC)을 요청할 수 있습니다.",
+          "confirmSize": "다운로드 크기는 약 110MB이며 보통 몇 분 정도 걸립니다.",
+          "confirmAgreements": "사용자를 대신해 PowerShell 패키지 및 winget 원본 계약에 동의합니다.",
+          "cancel": "취소",
+          "install": "설치",
+          "installedTitle": "PowerShell 7이 설치되어 있습니다",
+          "installedDescription": "새 PowerShell 터미널은 PowerShell 7을 사용합니다. 이미 열린 터미널은 현재 셸을 유지합니다.",
+          "installedUndetected": "아직 감지하지 못했습니다. 새 터미널에서 PowerShell 7을 사용하려면 Dolphin을 다시 시작하세요.",
+          "installingTitle": "PowerShell 7 설치 중…",
+          "installingDescription": "몇 분 정도 걸릴 수 있습니다. Windows가 관리자 권한을 요청하면 승인해 계속 진행하세요.",
+          "wingetUnavailableTitle": "Windows 패키지 관리자를 사용할 수 없습니다",
+          "wingetUnavailableDescription": "이 컴퓨터에서 winget을 찾을 수 없습니다. 대신 Microsoft에서 PowerShell 7 설치 프로그램을 다운로드하세요.",
+          "failedTitle": "PowerShell 7이 설치되지 않았습니다",
+          "timedOutDescription": "설치가 15분 넘게 걸려 중지되었습니다.",
+          "retry": "다시 시도",
+          "recommendTitle": "PowerShell 7을 권장합니다",
+          "recommendDescription": "Windows PowerShell 5.1보다 터미널당 메모리를 적게 사용하며 같은 명령을 실행합니다. 설치하면 Dolphin이 자동으로 사용합니다.",
+          "installButton": "PowerShell 7 설치"
+        },
+        "TerminalWindowsShellSection": {
+          "powerShell7": "PowerShell 7",
+          "pwshRecommended": "PowerShell 7이 설치되어 있으며 권장됩니다. 새 PowerShell 터미널에서 사용됩니다."
         }
       },
       "right": {
@@ -14049,7 +14076,9 @@
           "loadingDistros": "배포판을 불러오는 중",
           "windowsDefault": "Windows 기본값",
           "rightClickBehavior": "오른쪽 클릭 동작",
-          "rightClickBehaviorDescription": "Windows에서 익숙한 terminal 마우스 동작을 선택하세요."
+          "rightClickBehaviorDescription": "Windows에서 익숙한 terminal 마우스 동작을 선택하세요.",
+          "powerShell7": "PowerShell 7",
+          "recommended": "권장"
         },
         "mac": {
           "notification": {

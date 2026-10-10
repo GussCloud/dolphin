@@ -12279,6 +12279,33 @@
         "claude-connection-loss-retry-copy": {
           "title": "连接中断后重试 Claude",
           "description": "当 Claude 的回合以“Connection lost mid-response”结束时，最多替你输入 3 次 continue。只有所有重试都失败时才会通知你。"
+        },
+        "PowerShell7InstallPanel": {
+          "openDownloadPage": "打开下载页面",
+          "confirmTitle": "安装 PowerShell 7?",
+          "confirmDescription": "Dolphin 将使用 Microsoft 的 Windows 程序包管理器 (winget) 运行以下命令,在此电脑上安装 PowerShell 7:",
+          "confirmUac": "Windows 可能会请求管理员权限 (UAC) 以完成安装。",
+          "confirmSize": "下载大小约为 110 MB,通常需要几分钟。",
+          "confirmAgreements": "这将代表你接受 PowerShell 程序包和 winget 源的协议。",
+          "cancel": "取消",
+          "install": "安装",
+          "installedTitle": "已安装 PowerShell 7",
+          "installedDescription": "新的 PowerShell 终端将使用 PowerShell 7。已打开的终端保持当前 shell。",
+          "installedUndetected": "Dolphin 暂未检测到它。请重启 Dolphin,以便在新终端中使用 PowerShell 7。",
+          "installingTitle": "正在安装 PowerShell 7…",
+          "installingDescription": "这可能需要几分钟。如果 Windows 请求管理员权限,请批准以继续。",
+          "wingetUnavailableTitle": "Windows 程序包管理器不可用",
+          "wingetUnavailableDescription": "此电脑上未找到 winget。请改为从 Microsoft 下载 PowerShell 7 安装程序。",
+          "failedTitle": "未安装 PowerShell 7",
+          "timedOutDescription": "安装超过 15 分钟,已停止。",
+          "retry": "重试",
+          "recommendTitle": "推荐使用 PowerShell 7",
+          "recommendDescription": "与 Windows PowerShell 5.1 相比,它每个终端占用的内存更少,并运行相同的命令。安装后,Dolphin 会自动使用它。",
+          "installButton": "安装 PowerShell 7"
+        },
+        "TerminalWindowsShellSection": {
+          "powerShell7": "PowerShell 7",
+          "pwshRecommended": "已安装 PowerShell 7 并推荐使用:新的 PowerShell 终端会使用它。"
         }
       },
       "right": {
@@ -14049,7 +14076,9 @@
           "loadingDistros": "正在加载发行版",
           "windowsDefault": "Windows 默认值",
           "rightClickBehavior": "右键单击行为",
-          "rightClickBehaviorDescription": "选择符合你在 Windows 上使用习惯的终端鼠标行为。"
+          "rightClickBehaviorDescription": "选择符合你在 Windows 上使用习惯的终端鼠标行为。",
+          "powerShell7": "PowerShell 7",
+          "recommended": "推荐"
         },
         "mac": {
           "notification": {

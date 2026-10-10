@@ -3,6 +3,7 @@ import { readCurrentProcessMacSystemResolverHealth } from '../network/macos-syst
 import type { ConnectedDaemonClient, DaemonClientConnections } from './daemon-client-connections'
 import type { DaemonFileLog } from './daemon-file-log'
 import { readDaemonHeapUsage } from './daemon-heap-usage'
+import { refreshPwshAvailability } from '../pwsh'
 import type { DaemonPtySpawnPreparations } from './daemon-pty-spawn-preparations'
 import type { DaemonServerLifecycle } from './daemon-server-lifecycle'
 import type { DaemonSessionAttachments } from './daemon-session-attachments'
@@ -153,6 +154,8 @@ export class DaemonRequestRouter {
         return { healthy: true }
       case 'heapUsage':
         return readDaemonHeapUsage(this.options.host)
+      case 'refreshPwshAvailability':
+        return { pwshAvailable: await refreshPwshAvailability() }
       case 'shutdown':
         return this.shutdown(clientId, request.id, request.payload.killSessions)
     }

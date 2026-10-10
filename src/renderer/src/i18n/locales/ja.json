@@ -12279,6 +12279,33 @@
         "claude-connection-loss-retry-copy": {
           "title": "接続が切れたら Claude を再試行",
           "description": "Claude のターンが「Connection lost mid-response」で終わったとき、最大 3 回まで代わりに continue を入力します。すべての再試行が失敗した場合のみ通知します。"
+        },
+        "PowerShell7InstallPanel": {
+          "openDownloadPage": "ダウンロードページを開く",
+          "confirmTitle": "PowerShell 7 をインストールしますか?",
+          "confirmDescription": "Dolphin は Microsoft の Windows パッケージ マネージャー (winget) を使い、次のコマンドでこのコンピューターに PowerShell 7 をインストールします:",
+          "confirmUac": "インストールを完了するために、Windows が管理者権限 (UAC) を求める場合があります。",
+          "confirmSize": "ダウンロードサイズは約 110 MB で、通常は数分かかります。",
+          "confirmAgreements": "PowerShell パッケージと winget ソースの使用許諾に、あなたに代わって同意します。",
+          "cancel": "キャンセル",
+          "install": "インストール",
+          "installedTitle": "PowerShell 7 はインストール済みです",
+          "installedDescription": "新しい PowerShell ターミナルでは PowerShell 7 が使われます。すでに開いているターミナルは現在のシェルのままです。",
+          "installedUndetected": "まだ検出できていません。新しいターミナルで PowerShell 7 を使うには Dolphin を再起動してください。",
+          "installingTitle": "PowerShell 7 をインストールしています…",
+          "installingDescription": "数分かかる場合があります。Windows が管理者権限を求めたら、許可して続行してください。",
+          "wingetUnavailableTitle": "Windows パッケージ マネージャーを利用できません",
+          "wingetUnavailableDescription": "このコンピューターに winget が見つかりません。代わりに Microsoft から PowerShell 7 のインストーラーをダウンロードしてください。",
+          "failedTitle": "PowerShell 7 はインストールされませんでした",
+          "timedOutDescription": "インストールが 15 分を超えたため中止しました。",
+          "retry": "再試行",
+          "recommendTitle": "PowerShell 7 をおすすめします",
+          "recommendDescription": "Windows PowerShell 5.1 よりターミナルごとのメモリ使用量が少なく、同じコマンドを実行できます。インストールすると Dolphin が自動的に使用します。",
+          "installButton": "PowerShell 7 をインストール"
+        },
+        "TerminalWindowsShellSection": {
+          "powerShell7": "PowerShell 7",
+          "pwshRecommended": "PowerShell 7 はインストール済みで推奨です。新しい PowerShell ターミナルで使用されます。"
         }
       },
       "right": {
@@ -14049,7 +14076,9 @@
           "loadingDistros": "ディストリビューションを読み込んでいます",
           "windowsDefault": "Windows のデフォルト",
           "rightClickBehavior": "右クリックの動作",
-          "rightClickBehaviorDescription": "Windows で慣れたターミナルのマウス操作に合うものを選びます。"
+          "rightClickBehaviorDescription": "Windows で慣れたターミナルのマウス操作に合うものを選びます。",
+          "powerShell7": "PowerShell 7",
+          "recommended": "おすすめ"
         },
         "mac": {
           "notification": {

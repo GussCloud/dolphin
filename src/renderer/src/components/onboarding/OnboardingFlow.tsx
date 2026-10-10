@@ -186,6 +186,10 @@ export default function OnboardingFlow({
       if (event.key !== 'Escape' || skipConfirmOpen) {
         return
       }
+      // Why: a step's own dialog (e.g. the PowerShell 7 install confirmation) owns Escape while open.
+      if (event.target instanceof Element && event.target.closest('[data-slot="dialog-content"]')) {
+        return
+      }
       event.preventDefault()
       requestSkipConfirmation('keyboard')
     }
