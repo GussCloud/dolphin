@@ -18,6 +18,8 @@ import { PtyProcessListAdmission } from '../providers/pty-process-list-admission
 import type { PtyProcessInfo } from '../providers/types'
 
 const HEAP_USAGE_REQUEST_TIMEOUT_MS = 5_000
+// Why above the pwsh probe's own 5s: a cold .NET start can take most of it.
+const PWSH_REFRESH_REQUEST_TIMEOUT_MS = 10_000
 
 export abstract class DaemonPtySessionInventory extends DaemonPtyProcessInspection {
   async listProcesses(opts?: { deadlineMs?: number }): Promise<PtyProcessInfo[]> {
@@ -141,6 +143,22 @@ export abstract class DaemonPtySessionInventory extends DaemonPtyProcessInspecti
       return parseDaemonHeapUsage(
         await this.client.request('heapUsage', undefined, HEAP_USAGE_REQUEST_TIMEOUT_MS)
       )
+    } catch {
+      return null
+    }
+  }
+
+  // Why null on any failure: daemons older than `refreshPwshAvailability` reject it; their
+  // negative cache still expires on its own.
+  async refreshPwshAvailability(): Promise<boolean | null> {
+    try {
+      await this.ensureConnected()
+      const reply = await this.client.request<{ pwshAvailable?: unknown }>(
+        'refreshPwshAvailability',
+        undefined,
+        PWSH_REFRESH_REQUEST_TIMEOUT_MS
+      )
+      return typeof reply?.pwshAvailable === 'boolean' ? reply.pwshAvailable : null
     } catch {
       return null
     }

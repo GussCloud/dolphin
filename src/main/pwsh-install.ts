@@ -3,6 +3,7 @@ import { win32 as pathWin32 } from 'node:path'
 import { runProcess } from '../shared/child-process/run-process'
 import { PWSH_WINGET_INSTALL_ARGS, type PwshInstallResult } from '../shared/pwsh-install'
 import { refreshPwshAvailability } from './pwsh'
+import { refreshDaemonPwshAvailability } from './daemon/daemon-session-inventory'
 
 const WINGET_PROBE_TIMEOUT_MS = 15_000
 // Why: the MSI download is ~100 MB and waits on a UAC prompt the user may leave open.
@@ -15,6 +16,7 @@ type PwshInstallDeps = {
   wingetAliasExists?: (path: string) => boolean
   run?: typeof runProcess
   refresh?: () => Promise<boolean>
+  refreshDaemon?: () => Promise<void>
 }
 
 let installInFlight: { promise: Promise<PwshInstallResult>; controller: AbortController } | null =
@@ -53,6 +55,7 @@ export function summarizeWingetFailure(
 async function runInstall(signal: AbortSignal, deps: PwshInstallDeps): Promise<PwshInstallResult> {
   const run = deps.run ?? runProcess
   const refresh = deps.refresh ?? refreshPwshAvailability
+  const refreshDaemon = deps.refreshDaemon ?? refreshDaemonPwshAvailability
   const program = resolveWingetProgram(deps.env ?? process.env, deps.wingetAliasExists)
 
   try {
@@ -84,6 +87,8 @@ async function runInstall(signal: AbortSignal, deps: PwshInstallDeps): Promise<P
 
   const pwshAvailable = await refresh().catch(() => false)
   if (result.code === 0 || pwshAvailable) {
+    // Why: the daemon spawns terminals with its own cached probe; without this it keeps 5.1 for up to 30s.
+    await refreshDaemon().catch(() => undefined)
     // Why: winget exits non-zero for "already installed", which is still the outcome the user wanted.
     return { status: 'installed', pwshAvailable }
   }

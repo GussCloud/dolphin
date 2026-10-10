@@ -198,6 +198,12 @@ export type HeapUsageRequest = {
   type: 'heapUsage'
 }
 
+// Why optional for clients: an installer just added pwsh.exe, so drop the daemon's cached answer.
+export type RefreshPwshAvailabilityRequest = {
+  id: string
+  type: 'refreshPwshAvailability'
+}
+
 export type GetSnapshotRequest = {
   id: string
   type: 'getSnapshot'
@@ -288,6 +294,7 @@ export type DaemonRequest =
   | SystemResolverHealthRequest
   | PtySpawnHealthRequest
   | HeapUsageRequest
+  | RefreshPwshAvailabilityRequest
   | GetSnapshotRequest
   | GetSizeRequest
   | TakePendingOutputRequest

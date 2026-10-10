@@ -40,6 +40,11 @@ export async function readCurrentDaemonHeapUsage(): Promise<DaemonHeapUsage | nu
   return provider ? await getCurrentDaemonAdapter(provider).readHeapUsage() : null
 }
 
+/** Every daemon adapter re-probes pwsh.exe so the next spawn sees a fresh install. */
+export async function refreshDaemonPwshAvailability(): Promise<void> {
+  await Promise.all(getDaemonAdapters().map((adapter) => adapter.refreshPwshAvailability()))
+}
+
 export type DaemonSessionInventory = { sessions: DaemonSessionInfo[]; complete: boolean }
 
 /** Null when no daemon provider exists; `complete` is false when any adapter failed to answer. */

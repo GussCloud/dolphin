@@ -3,6 +3,7 @@ import type { ProcessResult } from '../shared/child-process/run-process'
 import { PWSH_WINGET_INSTALL_ARGS } from '../shared/pwsh-install'
 
 vi.mock('./pwsh', () => ({ refreshPwshAvailability: vi.fn() }))
+vi.mock('./daemon/daemon-session-inventory', () => ({ refreshDaemonPwshAvailability: vi.fn() }))
 
 const ok: ProcessResult = { code: 0, signal: null, stdout: 'v1.9.0', stderr: '', timedOut: false }
 
@@ -21,17 +22,21 @@ async function loadInstaller() {
 describe('installPwshWithWinget', () => {
   const run = vi.fn()
   const refresh = vi.fn()
+  const refreshDaemon = vi.fn()
   const deps = {
     platform: 'win32' as const,
     env,
     wingetAliasExists: () => true,
     run,
-    refresh
+    refresh,
+    refreshDaemon
   }
 
   beforeEach(() => {
     run.mockReset()
     refresh.mockReset()
+    refreshDaemon.mockReset()
+    refreshDaemon.mockResolvedValue(undefined)
   })
 
   it('never runs anything off Windows', async () => {
@@ -65,6 +70,19 @@ describe('installPwshWithWinget', () => {
       })
     )
     expect(refresh).toHaveBeenCalledTimes(1)
+    // New terminals spawn in the daemon, so its pwsh cache must be refreshed before success shows.
+    expect(refreshDaemon).toHaveBeenCalledTimes(1)
+  })
+
+  it('still reports success when the daemon cannot be refreshed', async () => {
+    run.mockResolvedValueOnce(ok).mockResolvedValueOnce(ok)
+    refresh.mockResolvedValue(true)
+    refreshDaemon.mockRejectedValue(new Error('daemon down'))
+    const { installPwshWithWinget } = await loadInstaller()
+    await expect(installPwshWithWinget(deps)).resolves.toEqual({
+      status: 'installed',
+      pwshAvailable: true
+    })
   })
 
   it('reports winget as unavailable when it is not on this machine', async () => {
@@ -101,6 +119,7 @@ describe('installPwshWithWinget', () => {
       status: 'failed',
       message: 'No package found matching input criteria. (exit code 0x8A150014)'
     })
+    expect(refreshDaemon).not.toHaveBeenCalled()
   })
 
   it('treats a non-zero exit as success when pwsh is now present (already installed)', async () => {

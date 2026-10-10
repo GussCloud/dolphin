@@ -38,13 +38,19 @@ function setApi(installSupported: boolean): void {
   })
 }
 
+function expectCommandShown(): void {
+  expect(screen.getByRole('dialog').querySelector('code')?.textContent).toBe(
+    PWSH_WINGET_INSTALL_COMMAND
+  )
+}
+
 function clickButton(name: RegExp): void {
   fireEvent.click(screen.getByRole('button', { name }))
 }
 
 async function confirmInstall(): Promise<void> {
   clickButton(/Install PowerShell 7/)
-  expect(screen.getByText(PWSH_WINGET_INSTALL_COMMAND)).toBeTruthy()
+  expectCommandShown()
   expect(screen.getByText(/administrator permission \(UAC\)/)).toBeTruthy()
   clickButton(/^Install$/)
   await act(async () => {})
@@ -134,7 +140,7 @@ describe('PowerShell7InstallPanel', () => {
     clickButton(/Open download page/)
     expect(openUrlMock).toHaveBeenCalledWith(PWSH_DOWNLOAD_URL)
     clickButton(/Try again/)
-    expect(screen.getByText(PWSH_WINGET_INSTALL_COMMAND)).toBeTruthy()
+    expectCommandShown()
   })
 
   it('explains a timeout', async () => {

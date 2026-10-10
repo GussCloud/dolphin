@@ -25,6 +25,13 @@ type PowerShell7InstallPanelProps = {
   aboveOnboarding?: boolean
 }
 
+// Static list: the command never changes, so position is a stable identity.
+const COMMAND_TOKENS = PWSH_WINGET_INSTALL_COMMAND.split(' ').map((text, position) => ({
+  id: `${position}:${text}`,
+  text,
+  leadingSpace: position > 0
+}))
+
 function openDownloadPage(): void {
   void window.api.shell.openUrl(PWSH_DOWNLOAD_URL)
 }
@@ -72,8 +79,14 @@ function InstallConfirmDialog({
             )}
           </DialogDescription>
         </DialogHeader>
-        <code className="block rounded-md border border-border/70 bg-muted/35 px-3 py-2 font-mono text-xs break-all text-foreground">
-          {PWSH_WINGET_INSTALL_COMMAND}
+        <code className="block rounded-md border border-border/70 bg-muted/35 px-3 py-2 font-mono text-xs break-words text-foreground">
+          {/* Why per-token spans: browsers also wrap after hyphens, splitting "--accept-…" flags. */}
+          {COMMAND_TOKENS.map((token) => (
+            <span key={token.id}>
+              {token.leadingSpace ? ' ' : null}
+              <span className="whitespace-nowrap">{token.text}</span>
+            </span>
+          ))}
         </code>
         <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
           <li>
