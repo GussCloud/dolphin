@@ -295,7 +295,14 @@ async function createWorkspaceFromSeededRepo(page, timeoutMs) {
   }
 }
 
-const OVERLAY_DISMISS_LABELS = ['Got it', 'Dismiss setup scripts', 'Dismiss tip', 'Dismiss update']
+// 'Maybe Later' is the shared feature-tip skip button: a fallback for tips the seeded profile missed.
+const OVERLAY_DISMISS_LABELS = [
+  'Got it',
+  'Dismiss setup scripts',
+  'Dismiss tip',
+  'Dismiss update',
+  'Maybe Later'
+]
 const FEATURE_TIP_DIALOG_TITLES = [
   'Let agents drive Dolphin with the Dolphin CLI',
   'Search every agent session'

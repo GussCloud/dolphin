@@ -26,6 +26,24 @@ import { execFileSync } from 'node:child_process'
 const ONBOARDING_FLOW_VERSION = 4
 const ONBOARDING_FINAL_STEP = 5
 
+// Why: a first-run feature-tip modal (e.g. Telegram) covers the sidebar and blocks every click.
+// Mirrors the e2e completed-user profile; onboarding-profile.test.mjs fails when a tip is added.
+export const SEEN_FEATURE_TIP_IDS = [
+  'telegram-integration',
+  'claude-agent-teams-windows',
+  'agent-session-search',
+  'dolphin-cli',
+  'cmd-j-palette',
+  'voice-dictation'
+]
+export const SEEN_CONTEXTUAL_TOUR_IDS = [
+  'workspace-board',
+  'browser',
+  'tasks',
+  'automations',
+  'workspace-creation'
+]
+
 /**
  * Create a throwaway git repo under `dir` and return a persisted `Repo` entry
  * for it. A real checkout (init + one commit) is required — Dolphin treats a
@@ -66,6 +84,14 @@ export function buildFreshProfile({ repo = null } = {}) {
       closedAt: 1,
       outcome: 'completed',
       lastCompletedStep: ONBOARDING_FINAL_STEP
+    },
+    ui: {
+      featureTipsSeenIds: [...SEEN_FEATURE_TIP_IDS],
+      contextualToursSeenIds: [...SEEN_CONTEXTUAL_TOUR_IDS],
+      contextualToursAutoEligible: false,
+      projectOrderManualDefaultNoticeDismissed: true,
+      browserImportHintHidden: true,
+      usagePercentageDisplayChangeNoticeDismissed: true
     },
     repos: repo ? [repo] : []
   }
