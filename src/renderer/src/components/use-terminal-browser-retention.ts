@@ -2,14 +2,20 @@ import { useEffect } from 'react'
 import { useAppStore } from '../store'
 import { onBrowserGuestPaintRetentionChange } from './browser-pane/host-guest/browser-guest-paint-retention'
 import {
+  browserPageVetoesGuestDiscard,
   browserTabsVetoGuestEviction,
   selectBrowserGuestEvictionWorktreeIds,
+  selectHiddenWorktreeBrowserGuestDiscards,
   touchBrowserGuestWorktreeRecency,
   worktreeHoldsLiveBrowserGuests
 } from './browser-pane/host-guest/browser-guest-worktree-retention'
 import { installBrowserPageDownloadActivityTracking } from './browser-pane/navigate/browser-page-download-activity'
 import { hasLiveBrowserGuest } from './browser-pane/host-guest/webview-registry'
-import { destroyWorktreeBrowserGuests } from '../store/slices/browser-webview-cleanup'
+import {
+  destroyWorktreeBrowserGuests,
+  discardBrowserGuests
+} from '../store/slices/browser-webview-cleanup'
+import { selectWorktreeAgentActivitySummary } from './sidebar/worktree-agent-activity-summary'
 import type { TerminalParkingFoundation } from './use-terminal-parking-foundation'
 
 export function useTerminalBrowserRetention(controller: TerminalParkingFoundation): void {
@@ -79,6 +85,24 @@ export function useTerminalBrowserRetention(controller: TerminalParkingFoundatio
         worktreeId
       )
     }
+    const evicted = new Set(evictedWorktreeIds)
+    discardBrowserGuests(
+      selectHiddenWorktreeBrowserGuestDiscards({
+        worktreeIds: orderedWorktreeIds,
+        activeWorktreeId: renderedActiveWorktreeId,
+        isRetained: (worktreeId) =>
+          !evicted.has(worktreeId) && mountedWorktreeIdsRef.current.has(worktreeId),
+        isAgentActive: (worktreeId) => {
+          const agents = selectWorktreeAgentActivitySummary(state, worktreeId)
+          return agents.hasLiveWorking || agents.hasPermission || agents.hasLiveMonitoring
+        },
+        browserTabsByWorktree: state.browserTabsByWorktree,
+        browserPagesByWorkspace: state.browserPagesByWorkspace,
+        activeBrowserTabIdByWorktree: state.activeBrowserTabIdByWorktree,
+        hasLiveGuest: hasLiveBrowserGuest,
+        vetoesDiscard: browserPageVetoesGuestDiscard
+      })
+    )
     // oxlint-disable-next-line react-hooks/exhaustive-deps -- controller refs preserve their original stable identities.
   }, [
     renderedActiveWorktreeId,

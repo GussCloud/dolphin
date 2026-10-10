@@ -4,6 +4,8 @@ import {
   BROWSER_GUEST_HIDDEN_WORKTREE_RETENTION_LIMIT,
   browserTabVisibilityPageIds,
   selectBrowserGuestEvictionWorktreeIds,
+  selectHiddenWorktreeBrowserGuestDiscards,
+  selectHiddenWorktreeDiscardableBrowserGuestIds,
   touchBrowserGuestWorktreeRecency,
   worktreeHoldsLiveBrowserGuests
 } from './browser-guest-worktree-retention'
@@ -173,5 +175,103 @@ describe('touchBrowserGuestWorktreeRecency', () => {
 
     touchBrowserGuestWorktreeRecency(recency, 'wt-3')
     expect(recency).toEqual(['wt-3', 'wt-1', 'wt-2'])
+  })
+})
+
+describe('selectHiddenWorktreeDiscardableBrowserGuestIds', () => {
+  const tabs = [
+    browserTab('tab-a', ['a1', 'a2'], 'a2'),
+    browserTab('tab-b', ['b1'], 'b1'),
+    browserTab('legacy')
+  ]
+  const pages = {
+    'tab-a': [page('a1', 'tab-a'), page('a2', 'tab-a')],
+    'tab-b': [page('b1', 'tab-b')]
+  }
+  const select = (
+    overrides: Partial<Parameters<typeof selectHiddenWorktreeDiscardableBrowserGuestIds>[0]>
+  ): string[] =>
+    selectHiddenWorktreeDiscardableBrowserGuestIds({
+      browserTabs: tabs,
+      browserPagesByWorkspace: pages,
+      activeBrowserTabId: 'tab-a',
+      hasLiveGuest: () => true,
+      vetoesDiscard: () => false,
+      ...overrides
+    })
+
+  it("keeps only the active tab's active page", () => {
+    expect(select({})).toEqual(['a1', 'b1', 'legacy'])
+  })
+
+  it('keeps the selected page of whichever browser tab is active', () => {
+    expect(select({ activeBrowserTabId: 'tab-b' })).toEqual(['a1', 'a2', 'legacy'])
+    expect(select({ activeBrowserTabId: 'legacy' })).toEqual(['a1', 'a2', 'b1'])
+  })
+
+  it('falls back to the first tab when none is recorded as active', () => {
+    expect(select({ activeBrowserTabId: null })).toEqual(['a1', 'b1', 'legacy'])
+  })
+
+  it('skips pages without a live guest and pages that veto discard', () => {
+    expect(
+      select({
+        hasLiveGuest: (id) => id !== 'b1',
+        vetoesDiscard: (id) => id === 'legacy'
+      })
+    ).toEqual(['a1'])
+  })
+
+  it('never discards a document preview page', () => {
+    const docPages = {
+      ...pages,
+      'tab-b': [
+        {
+          ...page('b1', 'tab-b'),
+          docLocation: { kind: 'workspace-doc' as const, worktreeId: 'wt-1', filePath: 'a.html' }
+        }
+      ]
+    }
+    expect(select({ browserPagesByWorkspace: docPages })).toEqual(['a1', 'legacy'])
+  })
+})
+
+describe('selectHiddenWorktreeBrowserGuestDiscards', () => {
+  const tabsByWorktree = {
+    'wt-active': [browserTab('active-tab', ['act1', 'act2'], 'act1')],
+    'wt-hidden': [browserTab('hidden-tab', ['hid1', 'hid2'], 'hid2')],
+    'wt-agent': [browserTab('agent-tab', ['ag1', 'ag2'], 'ag1')]
+  }
+  const pagesByWorkspace = {
+    'active-tab': [page('act1', 'active-tab'), page('act2', 'active-tab')],
+    'hidden-tab': [page('hid1', 'hidden-tab'), page('hid2', 'hidden-tab')],
+    'agent-tab': [page('ag1', 'agent-tab'), page('ag2', 'agent-tab')]
+  }
+  const select = (
+    overrides: Partial<Parameters<typeof selectHiddenWorktreeBrowserGuestDiscards>[0]>
+  ): string[] =>
+    selectHiddenWorktreeBrowserGuestDiscards({
+      worktreeIds: ['wt-active', 'wt-hidden', 'wt-agent'],
+      activeWorktreeId: 'wt-active',
+      isRetained: () => true,
+      isAgentActive: (worktreeId) => worktreeId === 'wt-agent',
+      browserTabsByWorktree: tabsByWorktree,
+      browserPagesByWorkspace: pagesByWorkspace,
+      activeBrowserTabIdByWorktree: {},
+      hasLiveGuest: () => true,
+      vetoesDiscard: () => false,
+      ...overrides
+    })
+
+  it('keeps every page of the active worktree and of a worktree with a running agent', () => {
+    expect(select({})).toEqual(['hid1'])
+  })
+
+  it('caps the agent worktree once its agent is done', () => {
+    expect(select({ isAgentActive: () => false })).toEqual(['hid1', 'ag2'])
+  })
+
+  it('leaves worktrees that are not retained (or already evicted whole) alone', () => {
+    expect(select({ isRetained: (worktreeId) => worktreeId !== 'wt-hidden' })).toEqual([])
   })
 })

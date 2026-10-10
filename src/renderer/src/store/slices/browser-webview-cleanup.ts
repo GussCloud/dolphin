@@ -50,13 +50,17 @@ export function destroyWorktreeBrowserGuests(
     const pages = browserPagesByWorkspace[tab.id] ?? []
     // Legacy sessions persisted before pages existed key their webview by the
     // workspace tab id (same fallback as collectBrowserWebviewIds).
-    const guestIds = pages.length === 0 ? [tab.id] : pages.map((page) => page.id)
-    for (const guestId of guestIds) {
-      const explicitZoomLevel = getExplicitBrowserPageZoomLevel(guestId)
-      destroyRemovedBrowserWebview(guestId)
-      if (explicitZoomLevel !== null) {
-        rememberExplicitBrowserPageZoomLevel(guestId, explicitZoomLevel)
-      }
+    discardBrowserGuests(pages.length === 0 ? [tab.id] : pages.map((page) => page.id))
+  }
+}
+
+/** Destroys guests whose pages stay open in the UI, keeping each one's user zoom for the rebuild. */
+export function discardBrowserGuests(guestIds: readonly string[]): void {
+  for (const guestId of guestIds) {
+    const explicitZoomLevel = getExplicitBrowserPageZoomLevel(guestId)
+    destroyRemovedBrowserWebview(guestId)
+    if (explicitZoomLevel !== null) {
+      rememberExplicitBrowserPageZoomLevel(guestId, explicitZoomLevel)
     }
   }
 }
