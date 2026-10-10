@@ -226,7 +226,10 @@ export const electronViteConfig: UserConfig = {
         // while the unpacked daemon needs its pure-JS xterm graph bundled.
         external: isExternalMainModule,
         input: {
-          index: resolve('src/main/index.ts'),
+          // Why: `index` stays the stable entry path but only enables the V8 compile
+          // cache before loading the real main bundle, which must be its own file.
+          index: resolve('src/main/main-compile-cache-bootstrap.ts'),
+          'main-app': resolve('src/main/index.ts'),
           // Why: sandboxed webview preloads cannot load Rollup helper chunks.
           'browser-window-close-preload': resolve('src/preload/browser-window-close.ts'),
           'doc-preview-link-preload': resolve('src/preload/doc-preview-link.ts'),
