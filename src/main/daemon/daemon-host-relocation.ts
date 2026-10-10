@@ -20,6 +20,10 @@ import {
   WINDOWS_PROCESS_TREE_REQUIRED,
   type DaemonHostSources
 } from './daemon-host-manifest'
+import {
+  DAEMON_HOST_CHUNK_MANIFEST_NAME,
+  parseDaemonHostChunkManifest
+} from './daemon-host-chunk-manifest'
 import type { ProcessLivenessVerdict } from './daemon-incarnation-evidence-types'
 import { parseDaemonPidFile } from './daemon-pid-file-parse'
 import { quarantineCorruptDaemonPidRecord } from './daemon-pid-record-quarantine'
@@ -85,6 +89,17 @@ function isPackagedElectronWin32(): boolean {
   )
 }
 
+// Missing or unreadable (older layout, dev build) copies every chunk: slower, never broken.
+function readDaemonChunkFiles(entrySourcePath: string): readonly string[] | null {
+  try {
+    return parseDaemonHostChunkManifest(
+      readFileSync(join(winPath.dirname(entrySourcePath), DAEMON_HOST_CHUNK_MANIFEST_NAME), 'utf8')
+    )
+  } catch {
+    return null
+  }
+}
+
 // Relocation inputs from the live packaged process, or null when it doesn't apply (non-win32, dev, or missing resourcesPath).
 function collectDaemonHostSources(): DaemonHostSources | null {
   if (!isPackagedElectronWin32()) {
@@ -103,7 +118,8 @@ function collectDaemonHostSources(): DaemonHostSources | null {
     resourcesPath,
     entrySourcePath,
     entryRelPath: toPosixRelative(appDir, entrySourcePath),
-    windowsProcessTreeDir: join(resourcesPath, 'node_modules', '@vscode', 'windows-process-tree')
+    windowsProcessTreeDir: join(resourcesPath, 'node_modules', '@vscode', 'windows-process-tree'),
+    daemonChunkFiles: readDaemonChunkFiles(entrySourcePath)
   }
 }
 

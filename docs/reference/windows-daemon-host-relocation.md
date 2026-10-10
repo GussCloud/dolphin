@@ -113,6 +113,15 @@ stop being scored.
   `powershell.exe` CIM scan (#16905). A host missing the addon's runtime files counts as
   unmaterialized, so hosts built before it was copied get rebuilt.
 
+- The host copies only the main-bundle chunks `daemon-entry` can reach, listed at build time in
+  `out/main/daemon-entry.host-chunks.json` from Rollup's chunk graph
+  (`config/build-plugins/daemon-host-chunk-manifest.ts`). The build fails if a reachable chunk has a
+  non-literal `import()`, because the graph cannot list its target; a missing or unreadable list
+  makes the copy fall back to every chunk. Files the daemon loads by computed path beside its
+  bundle (`path.join(__dirname, ...)`, a computed `require`) are invisible to that list — add them
+  to the copy plan explicitly. Packaging boots `daemon-entry` from a copy holding only the listed
+  chunks (`verifyPackagedDaemonHostChunksBoot`).
+
 ## Verifying a change
 
 Unit coverage lives in `src/main/daemon/daemon-host-relocation.test.ts` (copy plan, native-addon mirror, verbatim
