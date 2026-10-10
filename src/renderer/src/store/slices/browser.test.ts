@@ -318,6 +318,30 @@ describe('createBrowserSlice annotations', () => {
     expect(store.getState().browserTabsByWorktree).toBe(browserTabsByWorktree)
   })
 
+  it('refreshes a history title without counting a visit or rewriting unchanged history', () => {
+    const store = createTestStore()
+    store.getState().addBrowserHistoryEntry('https://example.com', 'Clock 1')
+    store.getState().addBrowserHistoryEntry('https://example.com', 'Clock 2', undefined, {
+      bump: false
+    })
+    expect(store.getState().browserUrlHistory[0]).toMatchObject({
+      title: 'Clock 2',
+      visitCount: 1
+    })
+
+    const unchanged = store.getState().browserUrlHistory
+    store.getState().addBrowserHistoryEntry('https://example.com', 'Clock 2', undefined, {
+      bump: false
+    })
+    expect(store.getState().browserUrlHistory).toBe(unchanged)
+
+    store.getState().clearBrowserHistory()
+    store.getState().addBrowserHistoryEntry('https://example.com', 'Clock 3', undefined, {
+      bump: false
+    })
+    expect(store.getState().browserUrlHistory).toEqual([])
+  })
+
   it('persists a captured favicon with history and refreshes it with the page state', () => {
     const store = createTestStore()
     const tab = store.getState().createBrowserTab('wt-1', 'https://example.com', {

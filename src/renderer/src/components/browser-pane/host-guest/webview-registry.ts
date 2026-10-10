@@ -30,15 +30,24 @@ let dragListenersAttached = false
 let nativeDragPassthroughRelease: (() => void) | null = null
 const dragPassthroughPreviousPointerEvents = new Map<Electron.WebviewTag, string>()
 const rendererRecoveryPendingPageIds = new Set<string>()
-const webviewLifecycleListeners = new Map<
-  string,
-  {
-    webview: Electron.WebviewTag
-    onRendererGone: EventListener
-    onRendererReady: EventListener
-    onGuestDestroyed: EventListener
-  }
->()
+const devToolsOpenPageIds = new Set<string>()
+type WebviewLifecycleListeners = {
+  webview: Electron.WebviewTag
+  onRendererGone: EventListener
+  onRendererReady: EventListener
+  onGuestDestroyed: EventListener
+  onDevToolsOpened: EventListener
+  onDevToolsClosed: EventListener
+}
+const webviewLifecycleListeners = new Map<string, WebviewLifecycleListeners>()
+
+function removeWebviewLifecycleListeners(listeners: WebviewLifecycleListeners): void {
+  listeners.webview.removeEventListener('render-process-gone', listeners.onRendererGone)
+  listeners.webview.removeEventListener('dom-ready', listeners.onRendererReady)
+  listeners.webview.removeEventListener('destroyed', listeners.onGuestDestroyed)
+  listeners.webview.removeEventListener('devtools-opened', listeners.onDevToolsOpened)
+  listeners.webview.removeEventListener('devtools-closed', listeners.onDevToolsClosed)
+}
 
 type DragListenerRegistry = {
   dragstart: () => void
@@ -150,12 +159,7 @@ export function registerPersistentWebview(
 ): void {
   const previousListeners = webviewLifecycleListeners.get(browserTabId)
   if (previousListeners) {
-    previousListeners.webview.removeEventListener(
-      'render-process-gone',
-      previousListeners.onRendererGone
-    )
-    previousListeners.webview.removeEventListener('dom-ready', previousListeners.onRendererReady)
-    previousListeners.webview.removeEventListener('destroyed', previousListeners.onGuestDestroyed)
+    removeWebviewLifecycleListeners(previousListeners)
   }
   const onRendererGone = (): void => {
     rendererRecoveryPendingPageIds.add(browserTabId)
@@ -170,14 +174,24 @@ export function registerPersistentWebview(
       rendererRecoveryPendingPageIds.add(browserTabId)
     }
   }
+  const onDevToolsOpened = (): void => {
+    devToolsOpenPageIds.add(browserTabId)
+  }
+  const onDevToolsClosed = (): void => {
+    devToolsOpenPageIds.delete(browserTabId)
+  }
   webview.addEventListener('render-process-gone', onRendererGone)
   webview.addEventListener('dom-ready', onRendererReady)
   webview.addEventListener('destroyed', onGuestDestroyed)
+  webview.addEventListener('devtools-opened', onDevToolsOpened)
+  webview.addEventListener('devtools-closed', onDevToolsClosed)
   webviewLifecycleListeners.set(browserTabId, {
     webview,
     onRendererGone,
     onRendererReady,
-    onGuestDestroyed
+    onGuestDestroyed,
+    onDevToolsOpened,
+    onDevToolsClosed
   })
   webviewRegistry.set(browserTabId, webview)
   applyCurrentDragPassthroughToWebview(webview)
@@ -188,15 +202,11 @@ export function unregisterPersistentWebview(browserTabId: string): void {
   const webview = webviewRegistry.get(browserTabId)
   const lifecycleListeners = webviewLifecycleListeners.get(browserTabId)
   if (lifecycleListeners) {
-    lifecycleListeners.webview.removeEventListener(
-      'render-process-gone',
-      lifecycleListeners.onRendererGone
-    )
-    lifecycleListeners.webview.removeEventListener('dom-ready', lifecycleListeners.onRendererReady)
-    lifecycleListeners.webview.removeEventListener('destroyed', lifecycleListeners.onGuestDestroyed)
+    removeWebviewLifecycleListeners(lifecycleListeners)
     webviewLifecycleListeners.delete(browserTabId)
   }
   rendererRecoveryPendingPageIds.delete(browserTabId)
+  devToolsOpenPageIds.delete(browserTabId)
   if (webview) {
     dragPassthroughPreviousPointerEvents.delete(webview)
   }
@@ -204,6 +214,11 @@ export function unregisterPersistentWebview(browserTabId: string): void {
   if (webviewRegistry.size === 0) {
     removeDragListeners()
   }
+}
+
+/** A discarded guest closes its DevTools window, so retention budgets leave such pages alone. */
+export function isBrowserPageDevToolsOpen(browserPageId: string): boolean {
+  return devToolsOpenPageIds.has(browserPageId)
 }
 
 export function isBrowserPageRendererRecoveryPending(browserTabId: string): boolean {

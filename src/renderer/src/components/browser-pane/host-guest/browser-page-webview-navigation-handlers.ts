@@ -6,6 +6,11 @@ import {
 } from '../../../../../shared/browser-url'
 import type { BrowserLoadError } from '../../../../../shared/browser-workspace-types'
 import { BROWSER_GUEST_RECOVERY_ERROR_CODE } from './browser-page-guest-recovery'
+import {
+  ALWAYS_VISIBLE_BROWSER_GUEST,
+  createBrowserGuestChurnThrottle,
+  type BrowserGuestVisibility
+} from './browser-guest-churn-throttle'
 import { rememberLiveBrowserUrl } from '../describe-page/live-browser-url-registry'
 import type { BrowserOverlayViewport } from '../describe-page/browser-annotation-geometry'
 import {
@@ -35,12 +40,13 @@ export type BrowserPageWebviewNavigationHandlersArgs = {
   onSetUrlRef: MutableRefObject<BrowserPageUrlSetter>
   onUpdatePageStateRef: MutableRefObject<(tabId: string, updates: BrowserTabPageState) => void>
   addBrowserHistoryEntryRef: MutableRefObject<
-    (url: string, title: string, faviconUrl?: string | null) => void
+    (url: string, title: string, faviconUrl?: string | null, options?: { bump?: boolean }) => void
   >
   faviconUrlRef: MutableRefObject<string | null>
   setAddressBarValue: Dispatch<SetStateAction<string>>
   annotationViewportBridgeTokenRef: MutableRefObject<string>
   setBrowserOverlayViewport: Dispatch<SetStateAction<BrowserOverlayViewport>>
+  guestVisibility?: BrowserGuestVisibility
 }
 
 export type BrowserPageWebviewNavigationHandlers = {
@@ -48,9 +54,11 @@ export type BrowserPageWebviewNavigationHandlers = {
   handleDidRedirectNavigation: (event: Electron.DidRedirectNavigationEvent) => void
   handleFullDidNavigate: (event: BrowserPageNavigateEvent) => void
   handleDidNavigateInPage: (event: BrowserPageNavigateEvent) => void
-  handleTitleUpdate: (event: { title?: string }) => void
+  handleTitleUpdate: () => void
   handleFaviconUpdate: (event: { favicons?: string[] }) => void
   handleAnnotationViewportMessage: (event: { message?: string }) => void
+  /** Applies pending title/favicon changes and stops the throttles. */
+  disposeMetadataThrottles: () => void
 }
 
 export function createBrowserPageWebviewNavigationHandlers({
@@ -67,8 +75,42 @@ export function createBrowserPageWebviewNavigationHandlers({
   faviconUrlRef,
   setAddressBarValue,
   annotationViewportBridgeTokenRef,
-  setBrowserOverlayViewport
+  setBrowserOverlayViewport,
+  guestVisibility = ALWAYS_VISIBLE_BROWSER_GUEST
 }: BrowserPageWebviewNavigationHandlersArgs): BrowserPageWebviewNavigationHandlers {
+  let appliedTitle: string | null = null
+  let appliedTitleUrl: string | null = null
+  // Why: a visit is one committed navigation; later title changes on it only refresh the entry.
+  let historyVisitRecorded = false
+
+  const applyLatestTitle = (): void => {
+    try {
+      // Why read the guest, not the event: a pending title may predate a navigation that committed since.
+      const currentUrl = webview.getURL() || browserTabUrl
+      const browserModelUrl = redactKagiSessionToken(currentUrl)
+      const title = getBrowserDisplayTitle(webview.getTitle(), browserModelUrl)
+      if (historyVisitRecorded && title === appliedTitle && browserModelUrl === appliedTitleUrl) {
+        return
+      }
+      const bump = !historyVisitRecorded || browserModelUrl !== appliedTitleUrl
+      appliedTitle = title
+      appliedTitleUrl = browserModelUrl
+      historyVisitRecorded = true
+      onUpdatePageStateRef.current(browserTabId, { title })
+      addBrowserHistoryEntryRef.current(browserModelUrl, title, faviconUrlRef.current, { bump })
+    } catch {
+      // Why: title-updated can fire before dom-ready, making getURL() throw.
+    }
+  }
+  const titleThrottle = createBrowserGuestChurnThrottle({
+    run: applyLatestTitle,
+    visibility: guestVisibility
+  })
+  const faviconThrottle = createBrowserGuestChurnThrottle({
+    run: () => onUpdatePageStateRef.current(browserTabId, { faviconUrl: faviconUrlRef.current }),
+    visibility: guestVisibility
+  })
+
   const clearFaviconIfOriginChanges = (
     event: Electron.DidStartNavigationEvent | Electron.DidRedirectNavigationEvent
   ): void => {
@@ -86,6 +128,7 @@ export function createBrowserPageWebviewNavigationHandlers({
       // Why: a guest that hasn't attached yet rejects getURL(); an unknown origin keeps the icon.
     }
     if (browserNavigationLeavesFaviconOrigin(committedUrl, startedUrl)) {
+      faviconThrottle.cancel()
       faviconUrlRef.current = null
       onUpdatePageStateRef.current(browserTabId, { faviconUrl: null })
     }
@@ -147,6 +190,9 @@ export function createBrowserPageWebviewNavigationHandlers({
     if (event.isMainFrame !== false && pendingRecoveryNavigation?.started) {
       pendingRecoveryNavigation.committed = true
     }
+    if (event.isMainFrame !== false) {
+      historyVisitRecorded = false
+    }
     const preserveRecoveryError =
       activeLoadFailureRef.current?.code === BROWSER_GUEST_RECOVERY_ERROR_CODE
     handleDidNavigate(event, true, preserveRecoveryError)
@@ -158,21 +204,18 @@ export function createBrowserPageWebviewNavigationHandlers({
     handleDidNavigate(event, !preserveRecoveryError)
   }
 
-  const handleTitleUpdate = (event: { title?: string }): void => {
-    try {
-      const currentUrl = webview.getURL() || browserTabUrl
-      const browserModelUrl = redactKagiSessionToken(currentUrl)
-      const title = getBrowserDisplayTitle(event.title, browserModelUrl)
-      onUpdatePageStateRef.current(browserTabId, { title })
-      addBrowserHistoryEntryRef.current(browserModelUrl, title, faviconUrlRef.current)
-    } catch {
-      // Why: title-updated can fire before dom-ready, making getURL() throw.
-    }
+  const handleTitleUpdate = (): void => {
+    titleThrottle.mark()
   }
 
   const handleFaviconUpdate = (event: { favicons?: string[] }): void => {
     faviconUrlRef.current = pickDisplayableFaviconUrl(event.favicons)
-    onUpdatePageStateRef.current(browserTabId, { faviconUrl: faviconUrlRef.current })
+    faviconThrottle.mark()
+  }
+
+  const disposeMetadataThrottles = (): void => {
+    titleThrottle.flush()
+    faviconThrottle.flush()
   }
 
   const handleAnnotationViewportMessage = (event: { message?: string }): void => {
@@ -208,6 +251,7 @@ export function createBrowserPageWebviewNavigationHandlers({
     handleDidNavigateInPage,
     handleTitleUpdate,
     handleFaviconUpdate,
-    handleAnnotationViewportMessage
+    handleAnnotationViewportMessage,
+    disposeMetadataThrottles
   }
 }

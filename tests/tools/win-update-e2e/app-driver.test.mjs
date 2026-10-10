@@ -280,6 +280,26 @@ describe('dismissOverlays', () => {
     expect(createWorktree.click).toHaveBeenCalledTimes(2)
   })
 
+  it('skips an unlisted feature tip through its shared Maybe Later button', async () => {
+    const maybeLater = {
+      first: vi.fn(),
+      isVisible: vi.fn().mockResolvedValue(true),
+      click: vi.fn().mockResolvedValue(undefined)
+    }
+    maybeLater.first.mockReturnValue(maybeLater)
+    const page = {
+      getByRole: vi.fn((role, { name }) =>
+        role === 'button' && name === 'Maybe Later' ? maybeLater : hiddenButton()
+      ),
+      keyboard: { press: vi.fn().mockResolvedValue(undefined) },
+      waitForTimeout: vi.fn().mockResolvedValue(undefined)
+    }
+
+    await dismissOverlays(page, 1)
+
+    expect(maybeLater.click).toHaveBeenCalledOnce()
+  })
+
   it('pins fresh harness profiles to a blank terminal', () => {
     expect(buildFreshProfile().settings.defaultTuiAgent).toBe('blank')
   })

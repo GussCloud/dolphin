@@ -104,6 +104,44 @@ export function findForbiddenBootPayloads(rendererDir, payloads) {
   return violations
 }
 
+/**
+ * Chunks a window would only load lazily but that are another window's boot
+ * group (see config/build-plugins/renderer-boot-chunk-groups.ts). Loading one
+ * evaluates every module of that group in the wrong window.
+ */
+export function findForeignBootGroupLoads(manifest) {
+  const walk = (key, includeDynamic, seen = new Set()) => {
+    if (seen.has(key) || !manifest[key]) {
+      return seen
+    }
+    seen.add(key)
+    const chunk = manifest[key]
+    for (const next of [
+      ...(chunk.imports ?? []),
+      ...(includeDynamic ? (chunk.dynamicImports ?? []) : [])
+    ]) {
+      walk(next, includeDynamic, seen)
+    }
+    return seen
+  }
+  const violations = []
+  for (const [entryKey, entry] of Object.entries(manifest)) {
+    if (!entry.isEntry) {
+      continue
+    }
+    const eager = walk(entryKey, false)
+    for (const key of walk(entryKey, true)) {
+      const chunk = manifest[key]
+      const foreignEntry = key !== entryKey && chunk.isEntry
+      const lazyBootGroup = !eager.has(key) && chunk.name?.startsWith('boot-')
+      if (foreignEntry || lazyBootGroup) {
+        violations.push({ entry: entryKey, chunk: chunk.file })
+      }
+    }
+  }
+  return violations
+}
+
 export function verifyRendererBootGraph(root = process.cwd()) {
   const rendererDir = path.join(root, RENDERER_BUILD_DIR)
   const { chunks, totalBytes } = readRendererBootGraph(rendererDir)
@@ -111,6 +149,17 @@ export function verifyRendererBootGraph(root = process.cwd()) {
   console.log(
     `Renderer boot graph: ${chunks.length} chunks, ${(totalBytes / 1024).toFixed(1)} KB minified.`
   )
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(rendererDir, '.vite', 'manifest.json'), 'utf8')
+  )
+  const foreignLoads = findForeignBootGroupLoads(manifest)
+  if (foreignLoads.length > 0) {
+    console.error('Renderer windows can lazily load chunks that boot a different window:')
+    for (const load of foreignLoads) {
+      console.error(`  ${load.entry} -> ${load.chunk}`)
+    }
+    return 1
+  }
   if (violations.length === 0) {
     return 0
   }

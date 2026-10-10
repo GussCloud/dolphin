@@ -70,14 +70,32 @@ export function createBrowserHistoryActions(
       })
     },
 
-    addBrowserHistoryEntry: (url, title, faviconUrl) => {
+    addBrowserHistoryEntry: (url, title, faviconUrl, options) => {
       const safeUrl = redactKagiSessionToken(url)
       if (safeUrl === DOLPHIN_BROWSER_BLANK_URL || safeUrl === 'about:blank' || !safeUrl) {
         return
       }
+      const bump = options?.bump ?? true
       const normalized = normalizeBrowserHistoryUrl(safeUrl)
       set((s) => {
         const existing = s.browserUrlHistory.find((entry) => entry.normalizedUrl === normalized)
+        if (!bump) {
+          // Why: a title refresh must neither resurrect a cleared entry nor wake session persistence when unchanged.
+          if (
+            !existing ||
+            (existing.title === title &&
+              (faviconUrl === undefined || existing.faviconUrl === faviconUrl))
+          ) {
+            return s
+          }
+          return {
+            browserUrlHistory: s.browserUrlHistory.map((entry) =>
+              entry === existing
+                ? { ...entry, title, ...(faviconUrl !== undefined ? { faviconUrl } : {}) }
+                : entry
+            )
+          }
+        }
         let next: BrowserHistoryEntry[] = existing
           ? s.browserUrlHistory.map((entry) =>
               entry === existing
