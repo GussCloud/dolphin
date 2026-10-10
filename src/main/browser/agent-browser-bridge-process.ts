@@ -7,9 +7,16 @@ import { BrowserError } from './cdp-bridge'
 import { DOLPHIN_TAB_SESSION_PREFIX } from './agent-browser-orphan-sweep'
 import { EMBEDDED_NAVIGATION_TIMEOUT_MS } from './agent-browser-bridge-types'
 
-export function agentBrowserNativeName(): string {
-  const ext = process.platform === 'win32' ? '.exe' : ''
-  return `agent-browser-${platform()}-${arch()}${ext}`
+export function agentBrowserNativeNames(
+  platformName: NodeJS.Platform = platform(),
+  architecture: string = arch()
+): string[] {
+  const ext = platformName === 'win32' ? '.exe' : ''
+  const native = `agent-browser-${platformName}-${architecture}${ext}`
+  // Why: upstream ships no win32-arm64 binary; Windows 11 on Arm runs the x64 exe under emulation.
+  return platformName === 'win32' && architecture === 'arm64'
+    ? [native, 'agent-browser-win32-x64.exe']
+    : [native]
 }
 
 export function resolveAgentBrowserBinary(): string {
@@ -19,20 +26,20 @@ export function resolveAgentBrowserBinary(): string {
     (process.platform === 'darwin'
       ? join(app.getPath('exe'), '..', '..', 'Resources')
       : join(app.getPath('exe'), '..', 'resources'))
-  const bundled = join(bundledResourcesPath, agentBrowserNativeName())
-  if (existsSync(bundled)) {
-    return bundled
+  const nativeNames = agentBrowserNativeNames()
+  for (const name of nativeNames) {
+    const bundled = join(bundledResourcesPath, name)
+    if (existsSync(bundled)) {
+      return bundled
+    }
   }
 
   // Why: dev mode — resolve from node_modules via app.getAppPath(); __dirname is unreliable after electron-vite bundling.
-  const nmBin = join(
-    app.getAppPath(),
-    'node_modules',
-    'agent-browser',
-    'bin',
-    agentBrowserNativeName()
-  )
-  if (existsSync(nmBin)) {
+  for (const name of nativeNames) {
+    const nmBin = join(app.getAppPath(), 'node_modules', 'agent-browser', 'bin', name)
+    if (!existsSync(nmBin)) {
+      continue
+    }
     if (process.platform !== 'win32') {
       try {
         accessSync(nmBin, constants.X_OK)

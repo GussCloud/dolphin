@@ -44,6 +44,9 @@ jobs:
     timeout-minutes: 90
     permissions:
       contents: write
+    outputs:
+      skip: ${{ steps.version.outputs.skip }}
+      tag: ${{ steps.version.outputs.tag }}
     env:
       NODE_OPTIONS: --max-old-space-size=4096
       # Why three sources: a dispatch names the version, a tag push carries it in its ref, and a
@@ -68,6 +71,7 @@ jobs:
           VERSION="${VERSION:-$packaged}"
           echo "VERSION=$VERSION" >>"$GITHUB_ENV"
           echo "TAG=v$VERSION" >>"$GITHUB_ENV"
+          echo "tag=v$VERSION" >>"$GITHUB_OUTPUT"
           # Why skip rather than fail: most main pushes that touch package.json change deps, not the
           # version, and must not error on a release that already exists.
           if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* ]] \
@@ -198,3 +202,117 @@ jobs:
             dist/dolphin-windows-setup.exe \
             dist/dolphin-windows-setup.exe.blockmap \
             dist/latest.yml
+
+  # Why a separate installer and manifest instead of one NSIS installer carrying both arches: a
+  # combined installer roughly doubles every x64 download, and electron-updater's Windows manifest
+  # (latest.yml) has no arch suffix. arm64 publishes latest-arm64.yml beside it, and only arm64
+  # builds read it, so x64 installs see exactly the assets they did before.
+  # Why after build-win rather than in parallel: it reuses that job's version check and uploads
+  # into the release build-win created, so a failed arm64 leg never blocks the x64 release.
+  build-win-arm64:
+    needs: build-win
+    if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
+    # Why a native Arm runner: afterPack boots the packaged daemon and probes node-pty, which a
+    # cross-built slice cannot execute on an x64 host.
+    runs-on: windows-11-arm
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      TAG: ${{ needs.build-win.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~\AppData\Local\electron\Cache
+            ~\AppData\Local\electron-builder\Cache
+          key: electron-builder-win-arm64-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-builder-win-arm64-
+
+      # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
+      # returns transient 504s.
+      - name: Install dependencies
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: pnpm install --frozen-lockfile
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Build Windows process-table addon for the relay
+        shell: bash
+        run: |
+          node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=x64
+          node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=arm64
+
+      - name: Build app
+        shell: bash
+        run: pnpm build:release
+        env:
+          DOLPHIN_REQUIRE_RELAY_NATIVE_ADDONS: 'x64,arm64'
+
+      - name: Package Windows arm64 installer
+        shell: pwsh
+        run: |
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --win --arm64 --publish never
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        env:
+          DOLPHIN_BUILD_COMMIT: ${{ github.sha }}
+          DOLPHIN_WIN_ARM64_RELEASE: '1'
+
+      # Why refuse latest.yml: uploading it would replace x64's manifest and move x64 users onto arm64.
+      - name: Collect release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          installer="dist/dolphin-windows-setup-arm64.exe"
+          for required in "$installer" "$installer.blockmap" dist/latest-arm64.yml; do
+            if [[ ! -f "$required" ]]; then
+              echo "::error::missing $required"
+              ls -la dist
+              exit 1
+            fi
+          done
+          if grep -q 'dolphin-windows-setup\.exe' dist/latest-arm64.yml; then
+            echo "::error::latest-arm64.yml points at the x64 installer"
+            exit 1
+          fi
+          ls -la "$installer" "$installer.blockmap" dist/latest-arm64.yml
+
+      - name: Upload to the GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" \
+            dist/dolphin-windows-setup-arm64.exe \
+            dist/dolphin-windows-setup-arm64.exe.blockmap \
+            dist/latest-arm64.yml

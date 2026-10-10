@@ -1,4 +1,5 @@
 import { FORK_RELEASES_URL } from '../shared/fork-identity'
+import { getUpdateChannelForTarget } from '../shared/release-channel'
 import { net } from 'electron'
 import { parse } from 'yaml'
 import { compareVersions, isPrereleaseVersion, isValidVersion } from './updater-fallback'
@@ -19,6 +20,10 @@ export function getReleaseDownloadUrl(tag: string): string {
 }
 
 function getPlatformManifestName(): string {
+  const channel = getUpdateChannelForTarget(process.platform, process.arch)
+  if (channel) {
+    return `${channel}.yml`
+  }
   if (process.platform === 'darwin') {
     return 'latest-mac.yml'
   }

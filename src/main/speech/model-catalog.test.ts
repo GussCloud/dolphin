@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { getCatalogModel, SPEECH_MODEL_CATALOG } from './model-catalog'
+import {
+  getAvailableSpeechModelCatalog,
+  getCatalogModel,
+  SPEECH_MODEL_CATALOG
+} from './model-catalog'
+import { isLocalSpeechRuntimeSupported } from './local-speech-runtime-support'
 
 describe('SPEECH_MODEL_CATALOG', () => {
   it('includes the Japanese Parakeet TDT-CTC model with a valid manifest', () => {
@@ -44,5 +49,19 @@ describe('SPEECH_MODEL_CATALOG', () => {
     expect(model?.sizeBytes).toBe(239_549_735)
     expect(model?.downloadFiles).toHaveLength(2)
     expect(model?.downloadFiles?.map(({ name }) => name)).toEqual(['model.int8.onnx', 'tokens.txt'])
+  })
+
+  it('offers only cloud models where no on-device speech addon exists', () => {
+    expect(getAvailableSpeechModelCatalog(true)).toBe(SPEECH_MODEL_CATALOG)
+    const cloudOnly = getAvailableSpeechModelCatalog(false)
+    expect(cloudOnly.length).toBeGreaterThan(0)
+    expect(cloudOnly.every((manifest) => manifest.provider === 'openai')).toBe(true)
+  })
+
+  it('treats only Windows arm64 as lacking on-device speech', () => {
+    expect(isLocalSpeechRuntimeSupported('win32', 'arm64')).toBe(false)
+    expect(isLocalSpeechRuntimeSupported('win32', 'x64')).toBe(true)
+    expect(isLocalSpeechRuntimeSupported('linux', 'arm64')).toBe(true)
+    expect(isLocalSpeechRuntimeSupported('darwin', 'arm64')).toBe(true)
   })
 })

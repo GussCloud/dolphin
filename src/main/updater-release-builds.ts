@@ -111,6 +111,11 @@ type GitHubReleaseEntry = {
   assets?: unknown
 }
 
+// Every field is unknown and checked by parseReleaseEntry, so an object is all this needs to prove.
+function isGitHubReleaseEntry(value: unknown): value is GitHubReleaseEntry {
+  return typeof value === 'object' && value !== null
+}
+
 function readAssetNames(assets: unknown): string[] {
   if (!Array.isArray(assets)) {
     return []
@@ -123,7 +128,8 @@ function readAssetNames(assets: unknown): string[] {
 function parseReleaseEntry(
   entry: GitHubReleaseEntry,
   repo: string,
-  platform: NodeJS.Platform
+  platform: NodeJS.Platform,
+  arch: string
 ): ReleaseBuild | null {
   if (typeof entry.tag_name !== 'string' || entry.draft === true) {
     return null
@@ -139,10 +145,10 @@ function parseReleaseEntry(
   // outright. Asking what the release actually carries covers both without the
   // picker ever offering a row whose download 404s.
   const assetNames = readAssetNames(entry.assets)
-  if (!hasInstallableArtifactForPlatform(platform, assetNames)) {
+  if (!hasInstallableArtifactForPlatform(platform, assetNames, arch)) {
     return null
   }
-  const installerAsset = findInstallerAssetName(platform, assetNames)
+  const installerAsset = findInstallerAssetName(platform, assetNames, arch)
   // Why null when it merely repeats the tag: GitHub titles an untitled release
   // with its tag name, and hourlies predating the naming change were created that
   // way too. Neither says anything the version beside it does not.
@@ -176,7 +182,8 @@ function parseReleaseEntry(
  */
 export async function listReleaseBuilds(
   channel: ReleaseChannel,
-  platform: NodeJS.Platform = process.platform
+  platform: NodeJS.Platform = process.platform,
+  arch: string = process.arch
 ): Promise<ReleaseBuild[]> {
   const repo = getReleaseRepoForChannel(channel)
   // Why: while the gh breaker has the token's core bucket marked spent, an
@@ -211,7 +218,9 @@ export async function listReleaseBuilds(
     throw new Error(`Could not read the ${channel} release list.`)
   }
   const builds = payload
-    .map((entry) => parseReleaseEntry(entry as GitHubReleaseEntry, repo, platform))
+    .map((entry) =>
+      isGitHubReleaseEntry(entry) ? parseReleaseEntry(entry, repo, platform, arch) : null
+    )
     .filter((build): build is ReleaseBuild => build !== null)
     // Why: the main repo serves both stable and rc, so filter to the asked-for channel.
     .filter((build) => build.channel === channel)

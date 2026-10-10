@@ -1,5 +1,6 @@
 import type { SpeechModelManifest } from '../../shared/speech-types'
 import { getSpeechModelDownloadMetadata } from './model-download-catalog'
+import { isLocalSpeechRuntimeSupported } from './local-speech-runtime-support'
 
 export const SPEECH_MODEL_CATALOG: SpeechModelManifest[] = [
   {
@@ -152,4 +153,13 @@ export function getCatalogModel(id: string): SpeechModelManifest | undefined {
 
 export function isLocalSpeechModel(manifest: SpeechModelManifest): boolean {
   return manifest.provider === 'local'
+}
+
+/** The models this runtime can run; on-device ones drop out where no speech addon exists. */
+export function getAvailableSpeechModelCatalog(
+  localSpeechSupported = isLocalSpeechRuntimeSupported()
+): SpeechModelManifest[] {
+  return localSpeechSupported
+    ? SPEECH_MODEL_CATALOG
+    : SPEECH_MODEL_CATALOG.filter((manifest) => !isLocalSpeechModel(manifest))
 }

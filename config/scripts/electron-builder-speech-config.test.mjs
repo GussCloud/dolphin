@@ -13,7 +13,7 @@ describe('electron-builder speech resources', () => {
     for (const [platform, packagePath] of [
       ['mac', 'node_modules/sherpa-onnx-darwin-${arch}'],
       ['linux', 'node_modules/sherpa-onnx-linux-${arch}'],
-      ['win', 'node_modules/sherpa-onnx-win-x64']
+      ['win', 'node_modules/sherpa-onnx-win-${arch}']
     ]) {
       const speechResources = electronBuilderConfig[platform].extraResources.filter(
         (resource) =>

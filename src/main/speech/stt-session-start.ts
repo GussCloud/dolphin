@@ -13,6 +13,10 @@ import {
 } from './stt-session-stop'
 import { getSherpaModulePath, getSttWorkerPath } from './stt-worker-paths'
 import {
+  isLocalSpeechRuntimeSupported,
+  LOCAL_SPEECH_UNSUPPORTED_ERROR
+} from './local-speech-runtime-support'
+import {
   attachSttWorkerLifecycle,
   initializeSttWorker,
   waitForSttWorkerReady
@@ -85,6 +89,9 @@ async function startSttSession(
     return
   }
 
+  if (!isLocalSpeechRuntimeSupported()) {
+    throw new Error(LOCAL_SPEECH_UNSUPPORTED_ERROR)
+  }
   if (state.cloudSession) {
     await stopSttDictation(state, owner, { cancelStarting: false })
   }
