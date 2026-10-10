@@ -56,7 +56,9 @@ class BrowserSessionRegistry {
   private defaultPartition = DOLPHIN_BROWSER_PARTITION
 
   constructor() {
-    this.resetDefaultProfile()
+    // Why no persisted read: this singleton is built at import, before userData is configured; on Windows
+    // app.getPath('userData') then access-violates inside Chromium (uncatchable). The post-ready init re-reads it.
+    this.setDefaultProfile(null)
   }
 
   configureForDolphinProfile(options: BrowserSessionRegistryProfileOptions): void {
@@ -68,13 +70,16 @@ class BrowserSessionRegistry {
   }
 
   private resetDefaultProfile(): void {
-    const persisted = this.loadPersistedSource()
+    this.setDefaultProfile(this.loadPersistedSource())
+  }
+
+  private setDefaultProfile(source: BrowserSessionProfile['source']): void {
     this.profiles.set('default', {
       id: 'default',
       scope: 'default',
       partition: this.defaultPartition,
       label: 'Default',
-      source: persisted
+      source
     })
   }
 
