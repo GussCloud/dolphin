@@ -147,6 +147,7 @@ border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);backgroun
 .office-stats{font-variant-numeric:tabular-nums;color:var(--muted-foreground)}.office-stats b{color:var(--foreground)}
 .office-tools{display:flex;gap:4px;margin-left:auto}.office-tools button{padding:6px 10px}
 .office-tools button[aria-pressed=true]{background:var(--accent);color:var(--primary)}
+.office-back{padding:6px 10px}.office-bar [hidden]{display:none!important}.office-tools button:disabled{opacity:.45;cursor:default}
 .office-conn{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted-foreground)}
 .office-conn::before{content:"";width:8px;height:8px;border-radius:50%;background:#9aa6b0}
 .office-conn[data-conn=live]::before{background:#45d16b}.office-conn[data-conn=retrying]::before{background:#f2a93b}

@@ -52,3 +52,39 @@ describe('pickFitScale', () => {
     expect(tall).toBeLessThan(short)
   })
 })
+
+describe('pickDoorGrid', () => {
+  type DoorGrid = { scale: number; cols: number; rows: number }
+  type PickDoorGrid = (vw: number, vh: number, count: number, cell: { w: number; h: number; gap: number }) => DoorGrid
+  const CELL = { w: 80, h: 96, gap: 8 }
+  const pick = (): PickDoorGrid => Reflect.get(Reflect.get(globalThis, 'DolphinOfficeFit'), 'pickDoorGrid')
+
+  it('uses the default zoom with no doors', () => {
+    expect(pick()(1920, 1080, 0, CELL)).toEqual({ scale: 3, cols: 1, rows: 1 })
+    expect(pick()(800, 600, 0, CELL)).toEqual({ scale: 2, cols: 1, rows: 1 })
+  })
+
+  it('caps a lone door at 3x', () => {
+    expect(pick()(1920, 1080, 1, CELL)).toEqual({ scale: 3, cols: 1, rows: 1 })
+  })
+
+  it('balances columns over the fewest rows', () => {
+    // 3x fits 7 columns, so 8 doors need 2 rows of 4 and 2 rows of cells (624 px) fit 1080 px.
+    expect(pick()(1920, 1080, 8, CELL)).toEqual({ scale: 3, cols: 4, rows: 2 })
+  })
+
+  it('shrinks until every door is visible', () => {
+    const g = pick()(1920, 1080, 25, CELL)
+    expect(g.scale).toBeLessThan(3)
+    expect(g.cols * g.rows).toBeGreaterThanOrEqual(25)
+    expect((g.rows * (CELL.h + CELL.gap) + CELL.gap) * g.scale).toBeLessThanOrEqual(1080)
+    expect((g.cols * (CELL.w + CELL.gap) + CELL.gap) * g.scale).toBeLessThanOrEqual(1920)
+  })
+
+  it('stops at 1x and scrolls when there are too many doors', () => {
+    const g = pick()(400, 300, 60, CELL)
+    expect(g.scale).toBe(1)
+    expect(g.cols).toBeLessThanOrEqual(4)
+    expect(g.cols * g.rows).toBeGreaterThanOrEqual(60)
+  })
+})

@@ -20,6 +20,13 @@
  *   office.zoom(+1 | -1), office.setScale(s), office.setAutoFit(on), office.stats(), office.destroy()
  *   opts.autoFit: pick the largest scale that shows every room without scrolling (wall displays)
  *
+ * Two views over the same live state: 'doors' (default; one door per dev, always fitted to the viewport)
+ * and 'room' (one dev's room). Every room keeps simulating while doors are shown, so opening one finds
+ * its agents already seated.
+ *   office.openRoom(devId), office.showDoors(), office.view() -> { mode, devId }
+ *   office.devSummaries() -> [{ id, offline, agents, working, permission }]
+ *   opts.onView(view): called when the view changes; opts.clickable (default true): doors open on click
+ *
  * Speech bubbles only report real transitions; the scene never invents what an agent is doing.
  */
 ;(function (root) {
@@ -29,8 +36,8 @@
   const { T, ROOM_W, PLATE_H, GAP, FW, FH, FIRST_PROJECT_ROW, LOUNGE_Y, COL_X, DOOR_X, DEV_X, DEV_SPRITE_Y, DD, CORRIDOR } = S0
   const { PROJECT_COLORS, STATUS_COLOR, STATUS_LABEL, SPOTS } = S0
   const { hash, pick, mkCanvas, lookFor, themeFor, buildSprites } = S0
-  const { drawCorridor, floorTile, devDeskSlice, drawRoom, projectRows, seatGeom } = S0
-  const { pickFitScale } = root.DolphinOfficeFit
+  const { drawCorridor, floorTile, devDeskSlice, drawRoom, projectRows, seatGeom, DOOR_CELL, drawDoor, drawDoorWalls, drawDoorPlate, onTilesReady } = S0
+  const { pickFitScale, pickDoorGrid } = root.DolphinOfficeFit
   const FIT_GEOMETRY = { roomW: ROOM_W, gap: GAP, plateH: PLATE_H }
 
   const SPEED = 34
@@ -61,6 +68,12 @@
     function hasAgents(d) { for (const _ of agentsOf(d)) return true; return false }
     let order = []
     let S = opts.scale || 0
+    let eff = S // scale in use: S in a room, the door grid's own scale in doors mode
+    let mode = 'doors'
+    let openId = null
+    let doorHits = []
+    let lastStamp = ''
+    const clickable = opts.clickable !== false
     let autoFit = !!opts.autoFit
     let dpr = 1
     let vw = 0
@@ -69,6 +82,8 @@
     let worldH = 0
     let staticCanvas = mkCanvas(1, 1)
     let dirty = true
+    // The tileset can arrive after the first frame: rebuild the cached static scene once it has.
+    onTilesReady(() => { dirty = true })
     let now = 0
     let hover = null
     let raf = 0
@@ -116,7 +131,36 @@
       for (const p of dev.projects) projects.delete(p.id)
       devs.delete(id)
       order = order.filter((x) => x !== id)
+      if (openId === id) showDoors()
       dirty = true
+    }
+
+    /* ---- views ---- */
+    function setView(m, id) {
+      mode = m
+      openId = id
+      hover = null
+      scroller.style.cursor = ''
+      scroller.scrollLeft = 0
+      scroller.scrollTop = 0
+      dirty = true
+      lastStamp = ''
+      if (opts.onView) opts.onView({ mode, devId: openId })
+    }
+    function openRoom(id) { if (devs.has(id) && !(mode === 'room' && openId === id)) setView('room', id) }
+    function showDoors() { if (mode !== 'doors') setView('doors', null) }
+
+    function summarize(d) {
+      let agents = 0
+      let working = 0
+      let permission = 0
+      for (const a of agentsOf(d)) {
+        if (a.leaving) continue
+        agents++
+        if (a.status === 'permission') permission++
+        else if (a.status === 'working') working++
+      }
+      return { id: d.id, offline: d.offline, agents, working, permission }
     }
 
     function removeDev(id) {
@@ -290,13 +334,16 @@
     /* ---- layout: rooms flow in a grid that fits the available width ---- */
     function layout() {
       for (const id of order) placeProjects(devs.get(id))
-      if (autoFit) S = pickFitScale(vw, vh, order.map((id) => devs.get(id).h), FIT_GEOMETRY)
+      if (mode === 'doors') return layoutDoors()
+      const vis = order.filter((id) => id === openId)
+      if (autoFit) S = pickFitScale(vw, vh, vis.map((id) => devs.get(id).h), FIT_GEOMETRY)
+      eff = S
       const cols = Math.max(1, Math.floor((vw / S - GAP) / (ROOM_W + GAP)))
-      const used = Math.min(cols, order.length || 1) * (ROOM_W + GAP) + GAP
+      const used = Math.min(cols, vis.length || 1) * (ROOM_W + GAP) + GAP
       const ox = Math.max(0, Math.floor((vw / S - used) / 2))
       let rowTop = GAP / 2
       let rowH = 0
-      order.forEach((id, i) => {
+      vis.forEach((id, i) => {
         const dev = devs.get(id)
         const col = i % cols
         if (col === 0 && i > 0) { rowTop += PLATE_H + rowH + GAP; rowH = 0 }
@@ -313,7 +360,28 @@
       staticCanvas = mkCanvas(worldW, worldH)
       const g = staticCanvas.getContext('2d')
       drawCorridor(g, worldW, worldH)
-      for (const id of order) drawRoom(g, devs.get(id))
+      for (const id of vis) drawRoom(g, devs.get(id))
+      dirty = false
+    }
+
+    // Hallway of doors: a balanced grid fitted to the viewport; only the hit areas and wall are static.
+    function layoutDoors() {
+      const { w, h, gap } = DOOR_CELL
+      const fit = pickDoorGrid(vw, vh, order.length, DOOR_CELL)
+      eff = fit.scale
+      const used = fit.cols * (w + gap) + gap
+      const contentH = fit.rows * (h + gap) + gap
+      const ox = Math.max(0, Math.floor((vw / eff - used) / 2))
+      const oy = Math.max(0, Math.floor((vh / eff - contentH) / 2))
+      doorHits = order.map((id, i) => ({ dev: devs.get(id), x: ox + gap + (i % fit.cols) * (w + gap), y: oy + gap + Math.floor(i / fit.cols) * (h + gap) }))
+      worldW = Math.max(used + ox, Math.ceil(vw / eff))
+      worldH = Math.max(oy + contentH, Math.ceil(vh / eff))
+      spacer.style.width = Math.floor((used + ox) * eff) + 'px'
+      spacer.style.height = Math.floor((oy + contentH) * eff) + 'px'
+      staticCanvas = mkCanvas(worldW, worldH)
+      const g = staticCanvas.getContext('2d')
+      drawCorridor(g, worldW, worldH)
+      drawDoorWalls(g, worldW, [...new Set(doorHits.map((d) => d.y))])
       dirty = false
     }
 
@@ -352,6 +420,7 @@
       if (!S) S = vw >= 900 ? 3 : 2
       canvas.width = Math.round(vw * dpr)
       canvas.height = Math.round(vh * dpr)
+      lastStamp = ''
       dirty = true
     }
 
@@ -516,20 +585,27 @@
       if (dirty) layout()
       const sx = scroller.scrollLeft
       const sy = scroller.scrollTop
-      const k = S * dpr
+      const k = eff * dpr
       ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.imageSmoothingEnabled = false
       ctx.setTransform(k, 0, 0, k, -Math.round(sx * dpr), -Math.round(sy * dpr))
       ctx.drawImage(staticCanvas, 0, 0)
-      const vx0 = sx / S - 24
-      const vy0 = sy / S - 40
-      const vx1 = (sx + vw) / S + 24
-      const vy1 = (sy + vh) / S + 40
+      const vx0 = sx / eff - 24
+      const vy0 = sy / eff - 40
+      const vx1 = (sx + vw) / eff + 24
+      const vy1 = (sy + vh) / eff + 40
       const tick = Math.floor(now * 6)
       ctx.textBaseline = 'middle'
+      if (mode === 'doors') {
+        drawDoors(tick, vx0, vy0, vx1, vy1)
+        emptyNote(sx, sy)
+        drawMs = drawMs * 0.9 + (performance.now() - t0) * 0.1
+        return
+      }
 
       const visibleDevs = []
       for (const id of order) {
+        if (id !== openId) continue
         const d = devs.get(id)
         if (d.x + ROOM_W < vx0 || d.x > vx1 || d.y + d.h < vy0 || d.y - PLATE_H > vy1) continue
         visibleDevs.push(d)
@@ -550,7 +626,7 @@
       // agents, sorted by depth
       const list = []
       for (const a of agents.values()) {
-        if (now < a.enterAt) continue
+        if (now < a.enterAt || a.dev.id !== openId) continue
         const wx = a.dev.x + a.x
         const wy = a.dev.y + a.y
         a.wx = wx; a.wy = wy
@@ -619,12 +695,50 @@
         if (text) bubble(x, seated ? y - 52 : ty - 14, text, hovered ? '#eaf8f5' : '#ffffff')
       }
 
-      if (!order.length) {
-        ctx.font = '600 8px ' + FONT; ctx.fillStyle = '#8a7a62'; ctx.textAlign = 'center'
-        ctx.fillText('Nenhum dev conectado agora', (sx + vw / 2) / S, (sy + vh / 2) / S)
+      emptyNote(sx, sy)
+      drawMs = drawMs * 0.9 + (performance.now() - t0) * 0.1
+    }
+
+    function emptyNote(sx, sy) {
+      if (order.length) return
+      ctx.font = '600 8px ' + FONT; ctx.fillStyle = '#8a7a62'; ctx.textAlign = 'center'
+      ctx.fillText('Nenhum dev conectado agora', (sx + vw / 2) / eff, (sy + vh / 2) / eff)
+      ctx.textAlign = 'start'
+    }
+
+    function fitText(font, s, maxW) {
+      if (textW(font, s) <= maxW) return s
+      let n = s.length
+      while (n > 1 && textW(font, s.slice(0, n) + '…') > maxW) n--
+      return s.slice(0, n) + '…'
+    }
+
+    function drawDoors(tick, vx0, vy0, vx1, vy1) {
+      const nameFont = '700 6.5px ' + FONT
+      const subFont = '500 6px ' + FONT
+      const { w, h } = DOOR_CELL
+      for (const hit of doorHits) {
+        const d = hit.dev
+        if (hit.x + w < vx0 || hit.x > vx1 || hit.y + h < vy0 || hit.y > vy1) continue
+        const s = summarize(d)
+        const lamp = d.offline ? 'off' : s.permission ? 'permission' : s.working ? 'working' : 'idle'
+        drawDoor(ctx, hit.x, hit.y, { color: d.theme.wall, lamp, offline: d.offline, blink: tick % 2 === 0 })
+        // Plate sits at 74..96 of the 96px cell so two text lines clear the brass border.
+        const py = hit.y + 74
+        const hovered = hover && hover.door === d
+        const ink = drawDoorPlate(ctx, hit.x + 2, py, w - 4, 22, hovered, d.offline)
+        if (!ink) pill(hit.x + 2, py + 2, w - 4, 18, hovered ? 'rgba(255,255,255,.98)' : 'rgba(255,255,255,.82)')
+        ctx.textAlign = 'center'
+        ctx.font = nameFont; ctx.fillStyle = ink ? ink.name : d.offline ? '#8a838f' : '#3b3743'
+        ctx.fillText(fitText(nameFont, d.name, w - 14), hit.x + w / 2, py + (ink ? 7.5 : 8))
+        let sub = s.agents + (s.agents === 1 ? ' agente' : ' agentes')
+        let col = ink ? ink.sub : '#8a838f'
+        if (d.offline) sub = 'sem sinal'
+        else if (s.permission) { sub = 'aguarda aprovação'; col = ink ? ink.permission : '#b86f0c' }
+        ctx.font = subFont; ctx.fillStyle = col
+        ctx.fillText(sub, hit.x + w / 2, py + 15.5)
         ctx.textAlign = 'start'
       }
-      drawMs = drawMs * 0.9 + (performance.now() - t0) * 0.1
     }
 
     function frame(t) {
@@ -635,7 +749,9 @@
       now += dt
       if (dirty) layout()
       update(dt)
-      draw()
+      // Doors only change on the lamp blink or hover, so most frames skip the redraw.
+      const stamp = mode === 'doors' ? Math.floor(now * 6) + '|' + (hover && hover.door ? hover.door.id : '') + '|' + scroller.scrollLeft + '|' + scroller.scrollTop + '|' + vw + 'x' + vh : ''
+      if (mode !== 'doors' || stamp !== lastStamp) { lastStamp = stamp; draw() }
       frames++
       if (t - fpsT >= 1000) { fpsVal = Math.round((frames * 1000) / (t - fpsT)); frames = 0; fpsT = t }
     }
@@ -651,32 +767,49 @@
 
     function hitTest(ev) {
       const r = host.getBoundingClientRect()
-      const wx = (ev.clientX - r.left + scroller.scrollLeft) / S
-      const wy = (ev.clientY - r.top + scroller.scrollTop) / S
+      const wx = (ev.clientX - r.left + scroller.scrollLeft) / eff
+      const wy = (ev.clientY - r.top + scroller.scrollTop) / eff
+      if (mode === 'doors') {
+        for (const hit of doorHits) {
+          if (wx >= hit.x && wx < hit.x + DOOR_CELL.w && wy >= hit.y && wy < hit.y + DOOR_CELL.h) return { door: hit.dev }
+        }
+        return null
+      }
       let best = null
       for (const a of agents.values()) {
-        if (a.wx === undefined || now < a.enterAt) continue
+        if (a.wx === undefined || now < a.enterAt || a.dev.id !== openId) continue
         const top = a.at === 'seat' ? a.wy - 24 : a.wy - 34
         const bottom = a.at === 'seat' ? a.wy + 10 : a.wy + 1
         if (wx > a.wx - 9 && wx < a.wx + 9 && wy > top && wy < bottom && (!best || a.wy > best.wy)) best = a
       }
       if (best) return { agent: best }
       for (const d of devs.values()) {
+        if (d.id !== openId) continue
         const lx = wx - d.x
         const ly = wy - d.y
         if (lx > DEV_X - 12 && lx < DEV_X + 12 && ly > 20 && ly < DD.bottom) return { dev: d }
       }
       return null
     }
-    scroller.addEventListener('pointermove', (ev) => { hover = hitTest(ev) })
-    scroller.addEventListener('pointerleave', () => { hover = null })
+    scroller.addEventListener('pointermove', (ev) => {
+      hover = hitTest(ev)
+      scroller.style.cursor = mode === 'doors' && clickable && hover ? 'pointer' : ''
+    })
+    scroller.addEventListener('pointerleave', () => { hover = null; scroller.style.cursor = '' })
+    scroller.addEventListener('click', (ev) => {
+      if (mode !== 'doors' || !clickable) return
+      const hit = hitTest(ev)
+      if (hit && hit.door) openRoom(hit.door.id)
+    })
 
     if (document.fonts && document.fonts.load) document.fonts.load('600 12px "Pixelify Sans"').then(() => widthCache.clear()).catch(() => {})
     resize()
     start()
 
     return {
-      upsertDev, removeDev, upsertProject, removeProject, upsertAgent, removeAgent, say,
+      upsertDev, removeDev, upsertProject, removeProject, upsertAgent, removeAgent, say, openRoom, showDoors,
+      view: () => ({ mode, devId: openId }),
+      devSummaries: () => order.map((id) => summarize(devs.get(id))),
       /** Manual zoom; turns auto-fit off until setAutoFit(true). */
       zoom(delta) { autoFit = false; S = Math.max(1, Math.min(4, Math.round(S) + delta)); dirty = true },
       setScale(scale) { autoFit = false; S = Math.max(1, Math.min(4, scale)); dirty = true },

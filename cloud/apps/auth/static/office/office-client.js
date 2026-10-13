@@ -9,8 +9,27 @@
   if (!host || !stage || !window.createOffice) return
   // The TV page always fits the screen; the console page fits only while fullscreen.
   const tv = stage.dataset.autofit === 'on'
-  const office = window.createOffice(host, { fps: 15, autoFit: tv })
+  // The TV page rotates by itself (doors, then each room); the console page is click-through.
+  const office = window.createOffice(host, { fps: 15, autoFit: tv, clickable: !tv, onView: (v) => syncView(v) })
   const conn = stage.querySelector('.office-conn')
+  const back = stage.querySelector('[data-office-back]')
+  const tools = stage.querySelectorAll('[data-office-zoom], [data-office-fit]')
+
+  // Rotation timing (TV).
+  const DOORS_MS = 10000
+  const DOORS_GAP_MS = 2500
+  const ROOM_MS = 12000
+
+  function syncView(v) {
+    if (back) back.hidden = tv || v.mode !== 'room'
+    // Zoom only applies to a room; the doors always fit the screen.
+    tools.forEach((b) => { b.disabled = v.mode !== 'room' })
+  }
+  syncView(office.view())
+  if (back) back.addEventListener('click', () => office.showDoors())
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !tv && office.view().mode === 'room') office.showDoors()
+  })
 
   const CLI_NAMES = {
     claude: 'Claude', codex: 'Codex', opencode: 'OpenCode', gemini: 'Gemini', pi: 'Pi', cursor: 'Cursor',
@@ -18,18 +37,31 @@
   }
   const cliName = (cli) => CLI_NAMES[cli.toLowerCase()] || cli.charAt(0).toUpperCase() + cli.slice(1)
 
-  // agentId -> { devId, name }: names like "Claude 2" stay put while the agent lives.
+  // agentId -> { devId, given, name }: the visible name stays put while the agent lives. `given` is the
+  // agent's own name from the stream ('' when absent); same-dev duplicates get " 2", " 3"; with no name
+  // we fall back to "Claude 1", "Claude 2"...
   const agentNames = new Map()
+  // Cuts at 28 UTF-16 units without leaving half of a surrogate pair.
+  function clipName(s) {
+    const cut = s.slice(0, 28)
+    return /[\ud800-\udbff]$/.test(cut) ? cut.slice(0, -1).trimEnd() : cut.trimEnd()
+  }
   function nameFor(devId, agent) {
+    const given = typeof agent.name === 'string' ? clipName(agent.name.trim()) : ''
     const known = agentNames.get(agent.id)
-    if (known) return known.name
-    const base = cliName(agent.cli)
+    if (known && known.given === given) return known.name
     const used = new Set()
-    for (const info of agentNames.values()) if (info.devId === devId) used.add(info.name)
-    let n = 1
-    while (used.has(base + ' ' + n)) n++
-    const name = base + ' ' + n
-    agentNames.set(agent.id, { devId, name })
+    for (const [id, info] of agentNames) if (info.devId === devId && id !== agent.id) used.add(info.name)
+    let name = given
+    if (given) {
+      for (let n = 2; used.has(name); n++) name = given + ' ' + n
+    } else {
+      const base = cliName(agent.cli)
+      let n = 1
+      while (used.has(base + ' ' + n)) n++
+      name = base + ' ' + n
+    }
+    agentNames.set(agent.id, { devId, given, name })
     return name
   }
 
@@ -96,6 +128,30 @@
     }
   }
   connect()
+
+  // TV: doors for DOORS_MS, then each room for ROOM_MS with a short doors break in between. Rooms with an
+  // approval waiting go first; offline devs with no agents are skipped. The queue is rebuilt every cycle.
+  function rotationQueue() {
+    const rooms = office.devSummaries().filter((d) => d.agents > 0 || !d.offline)
+    return [...rooms.filter((d) => d.permission > 0 && !d.offline), ...rooms.filter((d) => !(d.permission > 0 && !d.offline))].map((d) => d.id)
+  }
+  function startRotation() {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+    ;(async function loop() {
+      for (;;) {
+        office.showDoors()
+        await wait(DOORS_MS)
+        const queue = rotationQueue()
+        for (let i = 0; i < queue.length; i++) {
+          office.openRoom(queue[i])
+          await wait(ROOM_MS)
+          office.showDoors()
+          if (i < queue.length - 1) await wait(DOORS_GAP_MS)
+        }
+      }
+    })()
+  }
+  if (tv) startRotation()
 
   const fit = stage.querySelector('[data-office-fit]')
   const syncFit = () => { if (fit) fit.setAttribute('aria-pressed', String(office.autoFit())) }
