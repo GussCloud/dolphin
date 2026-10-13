@@ -17,7 +17,7 @@ import type { OrganizationRow } from './organization-store.js'
 export const OFFICE_PATH = `${CONSOLE_PATH}/office`
 export const TV_PATH = `${CONSOLE_PATH}/tv`
 export const OFFICE_ASSETS_PATH = `${CONSOLE_PATH}/assets/office`
-export const OFFICE_SCRIPTS = ['office-scene.js', 'office-fit.js', 'office-engine.js', 'office-client.js'] as const
+export const OFFICE_SCRIPTS = ['office-tiles.js', 'office-scene.js', 'office-fit.js', 'office-engine.js', 'office-client.js'] as const
 
 const FONT_HEAD = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&display=swap" rel="stylesheet">`
@@ -28,12 +28,13 @@ const LEGEND = `<div class="office-legend"><span><i class="office-dot" style="ba
 <span><i class="office-dot" style="background:#f2a93b"></i>Aguardando aprovação</span>
 <span><i class="office-dot" style="background:#9aa6b0"></i>Ocioso</span>
 <span><i class="office-dot" style="background:#45d16b;border-radius:50%"></i>Dev conectado</span>
-<span><i class="office-dot" style="background:#9aa6b0;border-radius:50%"></i>Sem sinal</span></div>`
+<span><i class="office-dot" style="background:#9aa6b0;border-radius:50%"></i>Sem sinal</span>
+<span>Luz da porta: âmbar (aprovação pendente) tem prioridade sobre verde (trabalhando) e cinza</span></div>`
 
 function stage(params: { streamUrl: string; title?: string; tv?: boolean }): string {
   const title = params.title ? `<strong>${escapeHtml(params.title)}</strong>` : ''
   return `<section class="office-stage${params.tv ? ' tv' : ''}" id="office-stage" data-autofit="${params.tv ? 'on' : 'off'}" aria-label="Escritório virtual com os devs conectados e seus agentes">
-<div class="office-bar">${title}<span class="office-stats"><b data-stat="devs">0</b> devs · <b data-stat="projects">0</b> projetos · <b data-stat="agents">0</b> agentes</span>
+<div class="office-bar">${title}<button type="button" class="ghost office-back" data-office-back hidden title="Voltar às portas (Esc)">← Salas</button><span class="office-stats"><b data-stat="devs">0</b> devs · <b data-stat="projects">0</b> projetos · <b data-stat="agents">0</b> agentes</span>
 <span class="office-conn" data-conn="connecting" role="status">Conectando…</span>
 <span class="office-tools"><button type="button" class="ghost" data-office-zoom="-1" aria-label="Diminuir zoom">−</button>
 <button type="button" class="ghost" data-office-zoom="1" aria-label="Aumentar zoom">+</button>

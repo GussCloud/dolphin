@@ -152,6 +152,18 @@ describe('Git Bash teams (native Windows)', () => {
     expect(team.paneOrder).toEqual(['%1'])
   })
 
+  it('keeps the teammate name titled on a pending pane through respawn, without focusing', async () => {
+    const { team, api, tmux } = setup('native-windows-git-bash')
+    await tmux('split-window', ...splitHolding)
+
+    await expect(tmux('select-pane', '-t', '%2', '-T', 'impl')).resolves.toBe('')
+    expect(team.panes.get('%2')).toMatchObject({ handle: null, teammateName: 'impl' })
+
+    await tmux('respawn-pane', '-k', '-t', '%2', '--', TEAMMATE_COMMAND)
+    expect(team.panes.get('%2')).toMatchObject({ handle: 'teammate-1', teammateName: 'impl' })
+    expect(api.focusTerminal).not.toHaveBeenCalled()
+  })
+
   it('stacks later teammates in the main-vertical column', async () => {
     const { splits, tmux } = setup('native-windows-git-bash')
     await tmux('split-window', ...splitHolding)
@@ -200,6 +212,21 @@ describe('default host shell teams', () => {
     expect(splits[1]!.opts).not.toHaveProperty('shellOverride')
     expect(splits[1]!.opts).not.toHaveProperty('gitBashStartupCommandInArgs')
     expect(await readdir(scriptDir)).toEqual([])
+  })
+
+  it('names a spawned teammate pane, never the leader, and ignores unknown targets', async () => {
+    const { team, api, tmux } = setup('default')
+    await tmux('split-window', ...splitHolding)
+    await tmux('respawn-pane', '-k', '-t', '%2', '--', 'claude --agent-id a')
+
+    await tmux('select-pane', '-t', '%2', '-T', 'review')
+    await tmux('select-pane', '-T', 'team-lead')
+    await expect(tmux('select-pane', '-t', '%9', '-T', 'ghost')).resolves.toBe('')
+    await tmux('select-pane', '-t', '%2', '-P', 'bg=default')
+
+    expect(team.panes.get('%2')?.teammateName).toBe('review')
+    expect(team.panes.get('%1')?.teammateName).toBeUndefined()
+    expect(api.focusTerminal).not.toHaveBeenCalled()
   })
 
   it('marks every spawned teammate pane not resumable, never the leader', async () => {

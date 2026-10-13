@@ -1,5 +1,6 @@
 /* Dolphin Office: pixel-art geometry, palette, sprites and the static (1x) scene.
- * Plain browser script, no dependencies or assets; exposes window.DolphinOfficeScene for office-engine.js.
+ * Plain browser script; exposes window.DolphinOfficeScene for office-engine.js. Draws from the PNG tileset
+ * (office-tiles.js) when it is loaded and falls back to code-drawn pixel art otherwise.
  */
 ;(function (root) {
   'use strict'
@@ -63,11 +64,37 @@
   // Stable per dev, so a reloaded wall display keeps every room's colors.
   function themeFor(id) { return THEMES[hash('theme:' + id) % THEMES.length] }
 
+  /* ---------- tileset glue ---------- */
+  const tilesReadyCbs = []
+  // Usable only once the atlas has loaded; before that (or if it never does) every caller draws procedurally.
+  // Every sprite the room code draws; an older cached atlas missing any of them keeps the whole room procedural.
+  const ROOM_SPRITES = ['wall', 'carpet_a', 'carpet_b', 'corridor_floor', 'whiteboard', 'sticky_accent', 'sticky_yellow', 'window', 'rug',
+    'chair_dev', 'dev_monitor_back', 'dev_desk', 'plant_small', 'plant_big', 'coffee_bar', 'water_cooler', 'chair_back', 'desk', 'monitor',
+    'keyboard', 'deco_notes', 'deco_plant', 'deco_books', 'deco_duck']
+  let roomSpritesOk = null
+  function tiles() {
+    const t = root.DolphinOfficeTiles
+    if (!t || !t.has('wall')) return null
+    if (roomSpritesOk === null) roomSpritesOk = ROOM_SPRITES.every((n) => t.has(n))
+    return roomSpritesOk ? t : null
+  }
+  function spr(g, name, x, y, frame) { const t = tiles(); return !!t && t.draw(g, name, x, y, frame) }
+  function tint(g, name, color, x, y) { const t = tiles(); return !!t && t.drawTinted(g, name, color, x, y) }
+  /** cb runs once, after the atlas loaded and the character strips were repainted; never if loading failed. */
+  function onTilesReady(cb) { tilesReadyCbs.push(cb) }
+  if (root.DolphinOfficeTiles) {
+    root.DolphinOfficeTiles.ready.then((ok) => {
+      if (!ok) return
+      for (const e of spriteCache.values()) paintStrip(e)
+      for (const cb of tilesReadyCbs) cb()
+    })
+  }
+
   /* ---------- sprites ---------- */
   // 0 front idle, 1-2 front walking, 3 back idle, 4-5 back walking,
   // 6-7 seated typing (back), 8 hand raised, 9 seated idle,
   // 10-11 seated facing front (dev), 12 dev idle.
-  function buildSprites(look, headset) {
+  function buildProceduralSprites(look, headset) {
     const c = mkCanvas(FW * 13, FH)
     const g = c.getContext('2d')
     const { skin, hair, shirt, pants, style, accent } = look
@@ -131,8 +158,29 @@
     return c
   }
 
+  // Strips are shared per look and repainted in place when the atlas arrives after they were built.
+  const spriteCache = new Map()
+  function paintStrip(e) {
+    const strip = tiles() && root.DolphinOfficeTiles.character(e.look, e.headset)
+    if (!strip) return
+    const g = e.canvas.getContext('2d')
+    g.clearRect(0, 0, e.canvas.width, e.canvas.height)
+    g.drawImage(strip, 0, 0)
+  }
+  function buildSprites(look, headset) {
+    const key = [look.skin, look.hair, look.shirt, look.pants, look.style, look.accent, headset ? 1 : 0].join('|')
+    let e = spriteCache.get(key)
+    if (!e) {
+      e = { look, headset, canvas: buildProceduralSprites(look, headset) }
+      spriteCache.set(key, e)
+      paintStrip(e)
+    }
+    return e.canvas
+  }
+
   /* ---------- static scene (1x) ---------- */
   function drawCorridor(g, w, h) {
+    if (tiles()) { tiles().tile(g, 'corridor_floor', null, 0, 0, w, h); return }
     g.fillStyle = CORRIDOR; g.fillRect(0, 0, w, h)
     g.fillStyle = '#ddcbaa'
     for (let y = 0; y < h; y += 8) {
@@ -143,13 +191,18 @@
   }
 
   function floorTile(g, th, tx, ty) {
-    g.fillStyle = tx % 2 === ty % 2 ? th.carpet2 : th.carpet
+    const alt = tx % 2 === ty % 2
+    if (tint(g, alt ? 'carpet_b' : 'carpet_a', alt ? th.carpet2 : th.carpet, tx * T, ty * T)) return
+    g.fillStyle = alt ? th.carpet2 : th.carpet
     g.fillRect(tx * T, ty * T, T, T)
   }
 
   // The slice of the dev desk in front of the dev is redrawn over them every frame.
   function devDeskSlice(g, x0, x1) {
     const w = x1 - x0
+    // 16 rows: the soft shadow row below stays in the static scene so it is not re-blended every frame.
+    const t = tiles()
+    if (t && t.drawPart(g, 'dev_desk', x0 - DD.x0, 0, w, DD.bottom - DD.top, x0, DD.top)) return
     g.fillStyle = '#a97448'; g.fillRect(x0, DD.top, w, DD.front - DD.top)
     g.fillStyle = '#bf8a5c'; g.fillRect(x0, DD.top, w, 1)
     g.fillStyle = '#7a5032'; g.fillRect(x0, DD.front, w, DD.bottom - DD.front)
@@ -166,12 +219,27 @@
     return { dx, dy, seatX: (dx + 1) * T, seatY: dy * T + 30, aisleY: (dy + 1) * T + 24 }
   }
 
+  function drawDeskTiled(g, x, y, cx, r, p, agent) {
+    spr(g, 'chair_back', cx - 6, y + 19)
+    spr(g, 'desk', x, y)
+    g.fillStyle = p.color; g.fillRect(x, y + 12, 2 * T, 1)
+    if (!agent) return
+    spr(g, 'monitor', cx - 8, y - 6)
+    spr(g, 'keyboard', cx - 5, y + 8)
+    const deco = Math.floor(r() * 4)
+    if (deco === 0) spr(g, 'deco_notes', x + 2, y + 5)
+    if (deco === 1) spr(g, 'deco_plant', x + 2, y + 2)
+    if (deco === 2) spr(g, 'deco_books', x + 1, y + 5)
+    if (deco === 3) spr(g, 'deco_duck', x + 24, y + 1)
+  }
+
   function drawDesk(g, p, i, agent) {
     const { dx, dy, seatX } = seatGeom(p, i)
     const x = dx * T
     const y = dy * T
     const cx = seatX
     const r = rng(hash(String(i) + (agent ? agent.id : '')))
+    if (tiles()) { drawDeskTiled(g, x, y, cx, r, p, agent); return }
     g.fillStyle = 'rgba(0,0,0,.10)'; g.fillRect(x + 1, y + 15, 2 * T, 2)
     g.fillStyle = '#f4f1ea'; g.fillRect(x, y + 2, 2 * T, 11)
     g.fillStyle = '#c8c1b4'; g.fillRect(x, y + 12, 2 * T, 3)
@@ -197,11 +265,30 @@
     g.fillStyle = '#2a2d35'; g.fillRect(cx - 4, sy - 1, 8, 1); g.fillRect(cx - 5, sy, 2, 1); g.fillRect(cx + 3, sy, 2, 1)
   }
 
-  function drawRoom(g, room) {
+  function drawRoomTiled(g, room, t) {
     const th = room.theme
-    const H = room.h
-    g.save(); g.translate(room.x, room.y)
-    for (let ty = 2; ty < H / T; ty++) for (let tx = 0; tx < ROOM_W / T; tx++) floorTile(g, th, tx, ty)
+    for (let ty = 2; ty < room.h / T; ty++) for (let tx = 0; tx < ROOM_W / T; tx++) floorTile(g, th, tx, ty)
+    t.tile(g, 'wall', th.wall, 0, 0, ROOM_W, 2 * T)
+    g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(0, 2 * T, ROOM_W, 2)
+    t.draw(g, 'whiteboard', 6, 4)
+    t.drawTinted(g, 'sticky_accent', th.accent, 30, 8)
+    t.draw(g, 'sticky_yellow', 36, 8); t.draw(g, 'sticky_yellow', 33, 15)
+    t.draw(g, 'window', 116, 5)
+    t.drawTinted(g, 'rug', th.rug, 40, 33)
+    t.draw(g, 'chair_dev', 71, 30)
+    t.draw(g, 'dev_monitor_back', 54, 36); t.draw(g, 'dev_monitor_back', 90, 36)
+    devDeskSlice(g, DD.x0, DD.x1)
+    t.drawPart(g, 'dev_desk', 0, DD.bottom - DD.top, DD.x1 - DD.x0, 1, DD.x0, DD.bottom)
+    g.fillStyle = '#f4f1ea'; g.fillRect(56, 49, 5, 5); g.fillStyle = th.accent; g.fillRect(56, 49, 5, 1)
+    t.draw(g, 'plant_small', 98, 43)
+    t.draw(g, 'coffee_bar', 4, 27)
+    t.draw(g, 'plant_big', 29, 40)
+    t.draw(g, 'water_cooler', 142, 31)
+  }
+
+  function drawRoomProcedural(g, room) {
+    const th = room.theme
+    for (let ty = 2; ty < room.h / T; ty++) for (let tx = 0; tx < ROOM_W / T; tx++) floorTile(g, th, tx, ty)
     // wall
     g.fillStyle = th.wall; g.fillRect(0, 0, ROOM_W, 2 * T)
     g.fillStyle = th.wallD; g.fillRect(0, 0, ROOM_W, 3); g.fillRect(0, 2 * T - 3, ROOM_W, 3)
@@ -248,6 +335,15 @@
     g.fillStyle = '#a9d8f0'; g.fillRect(143, 31, 8, 11)
     g.fillStyle = '#cbe9f7'; g.fillRect(144, 32, 2, 8)
     g.fillStyle = '#4f7cc9'; g.fillRect(146, 47, 2, 2)
+  }
+
+  function drawRoom(g, room) {
+    const th = room.theme
+    const H = room.h
+    g.save(); g.translate(room.x, room.y)
+    const t = tiles()
+    if (t) drawRoomTiled(g, room, t)
+    else drawRoomProcedural(g, room)
     // project blocks: floor stripe + desks in the project's color
     for (const p of room.projects) {
       const y = p.row * T + 5
@@ -268,7 +364,133 @@
   root.DolphinOfficeScene = {
     T, ROOM_W, PLATE_H, GAP, FW, FH, FIRST_PROJECT_ROW, LOUNGE_Y, COL_X, DOOR_X, DEV_X, DEV_SPRITE_Y, DD, CORRIDOR,
     PROJECT_COLORS, STATUS_COLOR, STATUS_LABEL, SPOTS,
-    hash, pick, mkCanvas, lookFor, themeFor, buildSprites,
+    hash, pick, mkCanvas, lookFor, themeFor, buildSprites, onTilesReady,
     drawCorridor, floorTile, devDeskSlice, drawRoom, projectRows, seatGeom
   }
+})(typeof window !== 'undefined' ? window : globalThis)
+
+/* ---------- doors view (tileset art at 2x, procedural fallback) ---------- */
+;(function (root) {
+  'use strict'
+
+  const S0 = root.DolphinOfficeScene
+  // Each door element checks its own sprites, so an older cached atlas degrades per element instead of throwing.
+  const art = (...names) => { const t = root.DolphinOfficeTiles; return t && names.every((n) => t.has(n)) ? t : null }
+  // One door of the hallway: lamp on top, door, nameplate area below (the engine draws the text).
+  const DOOR_CELL = { w: 80, h: 96, gap: 8 }
+  const LAMP_COLOR = { permission: '#f2a93b', working: '#3fc9a8', idle: '#9aa6b0', off: '#9aa6b0' }
+
+  /** Wall band behind each row of doors; rows are the y of each cell row. */
+  function drawDoorWallsTiled(g, t, w, rowYs) {
+    const plaster = 22
+    for (const y of rowYs) {
+      // cornice (3 rows), plaster rows repeated to fill, then dado rail, wainscot and baseboard (7 rows)
+      for (let x = 0; x < w; x += 16) {
+        const cw = Math.min(16, w - x)
+        t.drawPart(g, 'corridor_wall', 0, 0, cw, 3, x, y)
+        for (let py = 3; py < 65; py += plaster) t.drawPart(g, 'corridor_wall', 0, 3, cw, Math.min(plaster, 65 - py), x, y + py)
+        t.drawPart(g, 'corridor_wall', 0, 25, cw, 7, x, y + 65)
+      }
+      g.fillStyle = 'rgba(0,0,0,.10)'; g.fillRect(0, y + 72, w, 2)
+    }
+  }
+
+  function drawDoorWalls(g, w, rowYs) {
+    const t = art('corridor_wall')
+    if (t) { drawDoorWallsTiled(g, t, w, rowYs); return }
+    for (const y of rowYs) {
+      g.fillStyle = '#8791a3'; g.fillRect(0, y, w, 72)
+      g.fillStyle = '#9aa4b5'; g.fillRect(0, y, w, 2)
+      g.fillStyle = '#6a7385'; g.fillRect(0, y + 66, w, 6)
+      g.fillStyle = 'rgba(0,0,0,.10)'; g.fillRect(0, y + 72, w, 2)
+    }
+  }
+
+  // Door body at 2x (48x64) centred in the cell with its base on the wall's baseboard.
+  function drawDoorBodyTiled(g, t, x, y, door) {
+    const perm = door.lamp === 'permission'
+    const scaled = (name, dx, dy, w, h) => {
+      const r = t.atlas.sprites[name]
+      const leaf = name === 'door_leaf' ? t.tinted(name, door.color) : null
+      if (leaf) g.drawImage(leaf, 0, 0, w, h, dx, dy, w * 2, h * 2)
+      else g.drawImage(t.image(), r.x, r.y, r.w, r.h, dx, dy, r.w * 2, r.h * 2)
+    }
+    const prev = g.imageSmoothingEnabled
+    g.imageSmoothingEnabled = false
+    // 2px amber halo around the door while an approval waits: bright in the lit phase, deep amber in the dim one
+    if (perm) { g.fillStyle = door.blink ? '#ffb02e' : '#b8741c'; g.fillRect(x + 14, y + 6, 52, 68) }
+    scaled('door_frame', x + 16, y + 8, 24, 32)
+    scaled('door_leaf', x + 16 + 8, y + 8 + 8, 16, 28)
+    scaled('door_hw', x + 16, y + 8, 24, 32)
+    g.imageSmoothingEnabled = prev
+    if (door.offline) { g.fillStyle = 'rgba(96,104,112,.6)'; g.fillRect(x + 15, y + 7, 50, 66) }
+  }
+
+  // Lamp at 2x on the lintel; amber blinks between bright and a deeper amber, never grey.
+  function drawLampTiled(g, t, x, y, door) {
+    const perm = door.lamp === 'permission'
+    const frame = door.lamp === 'working' ? 0 : perm ? (door.blink ? 1 : 3) : 2
+    const lr = t.atlas.sprites.lamp
+    const prev = g.imageSmoothingEnabled
+    g.imageSmoothingEnabled = false
+    g.drawImage(t.image(), lr.x + frame * lr.fw, lr.y, lr.fw, lr.h, x + 31, y - 2, lr.fw * 2, lr.h * 2)
+    g.imageSmoothingEnabled = prev
+  }
+
+  /** Brass plate behind the room name; returns the text colors, or null to let the caller draw its plain pill. */
+  function drawDoorPlate(g, x, y, w, h, hover, offline) {
+    const t = art('nameplate')
+    if (!t) return null
+    const prev = g.imageSmoothingEnabled
+    g.imageSmoothingEnabled = false
+    const r = t.atlas.sprites.nameplate
+    const img = t.image()
+    const ex = 4 // corner width; 2px top/bottom rows keep their 1x pixels so the face stays tall enough for two lines
+    const ey = 2
+    const mw = r.w - 2 * ex
+    const mh = r.h - 2 * ey
+    for (const [sx, sw, dx, dw] of [[0, ex, x, ex], [ex, mw, x + ex, w - 2 * ex], [r.w - ex, ex, x + w - ex, ex]]) {
+      g.drawImage(img, r.x + sx, r.y, sw, ey, dx, y, dw, ey)
+      g.drawImage(img, r.x + sx, r.y + ey, sw, mh, dx, y + ey, dw, h - 2 * ey)
+      g.drawImage(img, r.x + sx, r.y + r.h - ey, sw, ey, dx, y + h - ey, dw, ey)
+    }
+    g.imageSmoothingEnabled = prev
+    if (hover) { g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(x + 2, y + 2, w - 4, h - 4) }
+    if (offline) { g.fillStyle = 'rgba(96,104,112,.5)'; g.fillRect(x + 1, y + 1, w - 2, h - 2) }
+    return { name: offline ? '#4a4a4a' : '#3a2a0c', sub: offline ? '#4a4a4a' : '#5a4310', permission: '#8a2a00' }
+  }
+
+  function drawDoorBodyProcedural(g, x, y, door) {
+    const perm = door.lamp === 'permission'
+    g.fillStyle = perm && door.blink ? '#f2a93b' : '#4a4352'
+    g.fillRect(x + 15, y + 11, 50, 62)
+    g.fillStyle = '#2f2b37'; g.fillRect(x + 17, y + 13, 46, 60)
+    g.fillStyle = door.color; g.fillRect(x + 19, y + 15, 42, 57)
+    g.fillStyle = 'rgba(0,0,0,.14)'; g.fillRect(x + 24, y + 21, 14, 20); g.fillRect(x + 42, y + 21, 14, 20)
+    g.fillRect(x + 24, y + 46, 14, 20); g.fillRect(x + 42, y + 46, 14, 20)
+    g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x + 19, y + 15, 42, 1); g.fillRect(x + 19, y + 15, 1, 57)
+    g.fillStyle = '#e0b84a'; g.fillRect(x + 54, y + 44, 3, 3)
+    if (door.offline) { g.fillStyle = 'rgba(96,104,112,.6)'; g.fillRect(x + 15, y + 11, 50, 62) }
+  }
+
+  function drawLampProcedural(g, x, y, door) {
+    const perm = door.lamp === 'permission'
+    g.fillStyle = '#2b2733'; g.fillRect(x + 33, y + 1, 14, 9)
+    const lit = perm ? door.blink : door.lamp === 'working'
+    g.fillStyle = perm && !door.blink ? '#8a5f22' : LAMP_COLOR[door.lamp]
+    g.fillRect(x + 36, y + 3, 8, 5)
+    if (lit) { g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(x + 37, y + 4, 2, 1) }
+  }
+
+  /** door: { color, lamp: 'permission'|'working'|'idle'|'off', offline, blink } at the cell's top-left. */
+  function drawDoor(g, x, y, door) {
+    const body = art('door_frame', 'door_leaf', 'door_hw')
+    if (body) drawDoorBodyTiled(g, body, x, y, door)
+    else drawDoorBodyProcedural(g, x, y, door)
+    const lamp = art('lamp')
+    if (lamp) drawLampTiled(g, lamp, x, y, door)
+    else drawLampProcedural(g, x, y, door)
+  }
+
+  Object.assign(S0, { DOOR_CELL, drawDoor, drawDoorWalls, drawDoorPlate })
 })(typeof window !== 'undefined' ? window : globalThis)

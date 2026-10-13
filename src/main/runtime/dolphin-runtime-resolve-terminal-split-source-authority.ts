@@ -125,6 +125,18 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     })
   }
 
+  /** Teammate pane names keyed like `worktree ps` agent rows; same handle→paneKey mapping as markTeammatePaneNotResumable. */
+  getClaudeAgentTeammateNamesByPaneKey(): Map<string, string> {
+    const names = new Map<string, string>()
+    for (const [handle, name] of this.claudeAgentTeams.listTeammateNamesByHandle()) {
+      const paneKey = this.getPaneKeyForTerminalHandle(handle)
+      if (paneKey) {
+        names.set(paneKey, name)
+      }
+    }
+    return names
+  }
+
   setClaudeAgentTeamsPipeEndpoint(endpoint: string | null): void {
     this.claudeAgentTeams.setPipeEndpoint(endpoint)
   }

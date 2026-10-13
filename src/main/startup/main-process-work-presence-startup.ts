@@ -1,4 +1,6 @@
+import type { TerminalTab } from '../../shared/terminal-tab-types'
 import { agentHookServer } from '../agent-hooks/server'
+import type { Store } from '../persistence'
 import {
   getDolphinCloudAuthConfig,
   isDolphinCloudDevAuthEnabled
@@ -14,6 +16,19 @@ const WORK_PRESENCE_QUIT_DEADLINE_MS = 3_000
 
 let stopWorkPresence: (() => Promise<void>) | null = null
 
+// Why every host partition: SSH workspaces keep their tabs in their own session partition.
+function collectTerminalTabsById(store: Store | null): Map<string, TerminalTab> {
+  const tabsById = new Map<string, TerminalTab>()
+  for (const hostId of store?.getWorkspaceSessionHostIds() ?? []) {
+    for (const tabs of Object.values(store?.getWorkspaceSession(hostId).tabsByWorktree ?? {})) {
+      for (const tab of tabs) {
+        tabsById.set(tab.id, tab)
+      }
+    }
+  }
+  return tabsById
+}
+
 /** Publishes this machine's agents to the console work view while a cloud session exists. */
 export function startWorkPresencePublishing(): void {
   const runtime = state.runtime
@@ -28,6 +43,10 @@ export function startWorkPresencePublishing(): void {
       userDataPath: getProfileUserDataPath(),
       getInstallId: () => (state.store ? readInstallId(state.store) : undefined),
       getWorktreePs: (limit) => runtime.getWorktreePs(limit),
+      getAgentNameSources: () => ({
+        teammateNamesByPaneKey: runtime.getClaudeAgentTeammateNamesByPaneKey(),
+        tabsById: collectTerminalTabsById(state.store)
+      }),
       subscribeStatusChanges: (listener) => agentHookServer.subscribeStatusChanges(listener)
     }).stop
   } catch (error) {

@@ -26,6 +26,18 @@ const OFFICE_ASSETS = new Map<string, string>(
   OFFICE_SCRIPTS.map((name) => [name, readFileSync(new URL(`../static/office/${name}`, import.meta.url), 'utf8')])
 )
 
+// Tileset atlas: served under a flat name (the route param cannot contain a slash), read from static/office/tiles/.
+const OFFICE_TILE_ASSETS = new Map<string, { body: Uint8Array<ArrayBuffer>; type: string }>([
+  ['office-tiles.png', { body: new Uint8Array(readFileSync(new URL('../static/office/tiles/office-tiles.png', import.meta.url))), type: 'image/png' }],
+  [
+    'office-tiles.json',
+    {
+      body: new Uint8Array(readFileSync(new URL('../static/office/tiles/office-tiles.json', import.meta.url))),
+      type: 'application/json; charset=utf-8'
+    }
+  ]
+])
+
 /** Work view ("Escritório dos agentes"): any member watches their org; the owner manages TV links. */
 export function registerOfficeRoutes(
   app: Hono<ConsoleEnv>,
@@ -157,12 +169,21 @@ export function registerOfficeRoutes(
   })
 
   app.get(`${OFFICE_ASSETS_PATH}/:name`, (c) => {
-    const body = OFFICE_ASSETS.get(c.req.param('name'))
+    const name = c.req.param('name')
+    const tile = OFFICE_TILE_ASSETS.get(name)
+    if (tile) {
+      c.header('content-type', tile.type)
+      c.header('cache-control', 'public, max-age=300')
+      c.header('x-content-type-options', 'nosniff')
+      return c.body(tile.body)
+    }
+    const body = OFFICE_ASSETS.get(name)
     if (body === undefined) {
       return c.text('not found', 404)
     }
     c.header('content-type', 'text/javascript; charset=utf-8')
     c.header('cache-control', 'public, max-age=300')
+    c.header('x-content-type-options', 'nosniff')
     return c.body(body)
   })
 }

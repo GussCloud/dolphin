@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { afterEach, describe, expect, it } from 'vitest'
 import { issueSession } from './session-service.js'
 import { ConsoleBrowser } from './test-fixtures/console-browser.js'
@@ -208,11 +209,30 @@ describe('console work view', () => {
 
   it('serves the office scripts', async () => {
     await setup()
-    for (const name of ['office-scene.js', 'office-fit.js', 'office-engine.js', 'office-client.js']) {
+    for (const name of ['office-tiles.js', 'office-scene.js', 'office-fit.js', 'office-engine.js', 'office-client.js']) {
       const res = await ctx.app.request(`/console/assets/office/${name}`)
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toContain('javascript')
     }
     expect((await ctx.app.request('/console/assets/office/..%2Fapp.js')).status).toBe(404)
+  })
+
+  it('serves the tileset atlas as an image plus its map, and nothing else', async () => {
+    await setup()
+    const png = await ctx.app.request('/console/assets/office/office-tiles.png')
+    expect(png.status).toBe(200)
+    expect(png.headers.get('content-type')).toBe('image/png')
+    expect(png.headers.get('cache-control')).toContain('max-age')
+    expect(png.headers.get('x-content-type-options')).toBe('nosniff')
+    const bytes = new Uint8Array(await png.arrayBuffer())
+    expect([...bytes.subarray(1, 4)]).toEqual([80, 78, 71])
+    const json = await ctx.app.request('/console/assets/office/office-tiles.json')
+    expect(json.status).toBe(200)
+    expect(json.headers.get('content-type')).toContain('application/json')
+    const atlas = z.object({ sprites: z.record(z.unknown()) }).parse(await json.json())
+    expect(Object.keys(atlas.sprites)).toContain('door_frame')
+    for (const name of ['tiles%2Foffice-tiles.png', '..%2Foffice-tiles.png', 'office-tiles.gif', 'office-tiles.png%00']) {
+      expect((await ctx.app.request(`/console/assets/office/${name}`)).status).toBe(404)
+    }
   })
 })

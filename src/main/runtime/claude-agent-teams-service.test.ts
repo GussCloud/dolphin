@@ -231,6 +231,20 @@ describe('ClaudeAgentTeamsService', () => {
     expect(api.closeTerminal).toHaveBeenLastCalledWith('teammate-2')
   })
 
+  it('lists titled teammate names by their current terminal handle, dropping killed panes', async () => {
+    const setup = createServiceWithLeader()
+    const { service, teamId, token, leaderPane, api } = setup
+    const request = (argv: string[]) =>
+      service.handleTmuxCompat({ teamId, token, envPane: leaderPane, argv }, api)
+    await runPlaceholderThenRespawn(setup)
+    await request(['select-pane', '-t', '%2', '-T', 'impl'])
+
+    expect([...service.listTeammateNamesByHandle()]).toEqual([['teammate-2', 'impl']])
+
+    await request(['kill-pane', '-t', '%2'])
+    expect(service.listTeammateNamesByHandle().size).toBe(0)
+  })
+
   it('removes the pane when replacement split fails after a confirmed placeholder stop', async () => {
     const { service, teamId, token, leaderPane, api } = createServiceWithLeader()
     const request = (argv: string[], envPane = leaderPane) =>

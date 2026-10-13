@@ -4,6 +4,7 @@ import type {
   RuntimeWorktreePsSummary
 } from '../../shared/runtime-worktree-contracts'
 import { AGENT_STATUS_STALE_AFTER_MS } from '../../shared/agent-status-types'
+import type { TerminalTab } from '../../shared/terminal-tab-types'
 import {
   WORK_PRESENCE_MAX_AGENTS,
   buildWorkPresenceSnapshot,
@@ -202,5 +203,80 @@ describe('work presence privacy boundary', () => {
       return value
     })
     expect([...keys].filter((key) => !allowedKeys.has(key))).toEqual([])
+  })
+})
+
+describe('agent names', () => {
+  const LEADER_LEAF = '11111111-1111-4111-8111-111111111111'
+  const TEAMMATE_LEAF = '22222222-2222-4222-8222-222222222222'
+  const leaderKey = `tab-team:${LEADER_LEAF}`
+  const teammateKey = `tab-team:${TEAMMATE_LEAF}`
+
+  function tab(overrides: Partial<TerminalTab> = {}): TerminalTab {
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Names read only the title fields; the rest is fixture noise.
+    return {
+      id: 'tab-team',
+      customTitle: null,
+      title: `${SECRET} live title`,
+      generatedTitle: `${SECRET} generated`,
+      aiVaultTitle: { title: `${SECRET} vault` },
+      ...overrides
+    } as TerminalTab
+  }
+
+  function namesOf(
+    paneKeys: string[],
+    sources: { teammates?: [string, string][]; tabs?: TerminalTab[] }
+  ): (string | undefined)[] {
+    const snapshot = buildWorkPresenceSnapshot({
+      machineId: 'machine-1',
+      machineLabel: 'host',
+      summaries: [summary({ agents: paneKeys.map((paneKey) => agentRow(paneKey)) })],
+      now: NOW,
+      nameSources: {
+        teammateNamesByPaneKey: new Map(sources.teammates ?? []),
+        tabsById: new Map((sources.tabs ?? []).map((entry) => [entry.id, entry]))
+      }
+    })
+    const agents = snapshot.projects[0]?.agents ?? []
+    return paneKeys.map(
+      (paneKey) =>
+        agents.find((agent) => agent.id === hashWorkPresenceId('machine-1', paneKey))?.name
+    )
+  }
+
+  it('prefers the teammate name per pane, then the tab rename, then the quick command', () => {
+    const tabs = [tab({ customTitle: '  Backend  ', quickCommandLabel: 'npm test' })]
+    expect(namesOf([leaderKey, teammateKey], { teammates: [[teammateKey, 'impl']], tabs })).toEqual(
+      ['Backend', 'impl']
+    )
+    expect(namesOf([leaderKey], { tabs: [tab({ quickCommandLabel: 'npm test' })] })).toEqual([
+      'npm test'
+    ])
+  })
+
+  it('omits the name rather than sending generated, AI-vault or live titles', () => {
+    const snapshot = buildWorkPresenceSnapshot({
+      machineId: 'machine-1',
+      machineLabel: 'host',
+      summaries: [summary({ agents: [agentRow(leaderKey)] })],
+      now: NOW,
+      nameSources: { teammateNamesByPaneKey: new Map(), tabsById: new Map([['tab-team', tab()]]) }
+    })
+    const json = JSON.stringify(snapshot)
+    expect(json).not.toContain(SECRET)
+    expect(snapshot.projects[0]?.agents[0]).not.toHaveProperty('name')
+    expect(namesOf([leaderKey], { tabs: [tab({ customTitle: '   ' })] })).toEqual([undefined])
+  })
+
+  it('caps names at 60 characters without splitting a surrogate pair, and strips control characters', () => {
+    const [long] = namesOf([leaderKey], { tabs: [tab({ customTitle: `${'a'.repeat(59)}😀tail` })] })
+    expect(long).toBe('a'.repeat(59))
+    const [exact] = namesOf([teammateKey], { teammates: [[teammateKey, 'n'.repeat(80)]] })
+    expect(exact).toBe('n'.repeat(60))
+    const [clean] = namesOf([teammateKey], { teammates: [[teammateKey, 'rev\u001b[31miew\n']] })
+    expect(clean).toBe('rev [31miew')
+    const [bidi] = namesOf([teammateKey], { teammates: [[teammateKey, '\u202eimpl\u2066x\u2069']] })
+    expect(bidi).toBe('impl x')
   })
 })
