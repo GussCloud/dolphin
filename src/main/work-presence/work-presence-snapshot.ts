@@ -4,6 +4,9 @@ import type {
   RuntimeWorktreeAgentRow,
   RuntimeWorktreePsSummary
 } from '../../shared/runtime-worktree-contracts'
+import { parsePaneKey } from '../../shared/stable-pane-id'
+import { resolveTerminalTabTitle } from '../../shared/tab-title-resolution'
+import type { TerminalTab } from '../../shared/terminal-tab-types'
 import { normalizeLocalBranchName } from '../runtime/runtime-worktree-selection'
 
 // Contract: docs/reference/work-view-presence.md. Only these fields may leave the machine.
@@ -14,6 +17,14 @@ export type WorkPresenceAgent = {
   cli: string
   state: WorkPresenceState
   branch: string | null
+  /** Omitted when no allowed name source names the pane; the console then numbers it. */
+  name?: string
+}
+
+/** Names set by the user, agents or automation; never generated, AI-vault or live terminal titles. */
+export type WorkPresenceAgentNameSources = {
+  teammateNamesByPaneKey: ReadonlyMap<string, string>
+  tabsById: ReadonlyMap<string, Pick<TerminalTab, 'customTitle' | 'quickCommandLabel'>>
 }
 
 export type WorkPresenceProject = {
@@ -35,6 +46,7 @@ const MAX_MACHINE_LABEL = 64
 const MAX_PROJECT_NAME = 80
 const MAX_BRANCH = 120
 const MAX_CLI = 40
+export const WORK_PRESENCE_MAX_AGENT_NAME = 60
 
 // Why salted: an unsalted hash of a repo path or pane key can be confirmed by guessing.
 export function hashWorkPresenceId(machineId: string, localId: string): string {
@@ -69,6 +81,48 @@ function presenceBranch(summary: RuntimeWorktreePsSummary): string | null {
   return branch ? branch.slice(0, MAX_BRANCH) : null
 }
 
+function boundedAgentName(raw: string): string | undefined {
+  // Why bidi too: override/isolate marks can visually reorder the name on the console.
+  // oxlint-disable-next-line no-control-regex -- strips terminal control characters from a pane title.
+  let name = raw.replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, ' ').trim()
+  if (name.length > WORK_PRESENCE_MAX_AGENT_NAME) {
+    name = name.slice(0, WORK_PRESENCE_MAX_AGENT_NAME)
+    // Why: a cut surrogate pair would serialize as an unpaired code unit.
+    if (/[\ud800-\udbff]$/.test(name)) {
+      name = name.slice(0, -1)
+    }
+    name = name.trimEnd()
+  }
+  return name || undefined
+}
+
+// Why teammate first: teammate panes are splits inside the leader's tab, whose tab-level
+// label would otherwise name every pane of the team alike.
+export function resolveWorkPresenceAgentName(
+  paneKey: string,
+  sources: WorkPresenceAgentNameSources | undefined
+): string | undefined {
+  if (!sources) {
+    return undefined
+  }
+  const teammateName = boundedAgentName(sources.teammateNamesByPaneKey.get(paneKey) ?? '')
+  if (teammateName) {
+    return teammateName
+  }
+  const tabId = parsePaneKey(paneKey)?.tabId
+  const tab = tabId ? sources.tabsById.get(tabId) : undefined
+  if (!tab) {
+    return undefined
+  }
+  // Why only these two fields: the resolver would otherwise fall through to prompt-derived titles.
+  return boundedAgentName(
+    resolveTerminalTabTitle(
+      { customTitle: tab.customTitle, quickCommandLabel: tab.quickCommandLabel, title: '' },
+      false
+    )
+  )
+}
+
 function byId<T extends { id: string }>(a: T, b: T): number {
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
 }
@@ -77,7 +131,8 @@ function byId<T extends { id: string }>(a: T, b: T): number {
 export function buildWorkPresenceProjects(
   machineId: string,
   summaries: readonly RuntimeWorktreePsSummary[],
-  now: number
+  now: number,
+  nameSources?: WorkPresenceAgentNameSources
 ): WorkPresenceProject[] {
   const projectsByRepoId = new Map<string, WorkPresenceProject>()
   for (const summary of summaries) {
@@ -95,11 +150,13 @@ export function buildWorkPresenceProjects(
         }
         projectsByRepoId.set(summary.repoId, project)
       }
+      const name = resolveWorkPresenceAgentName(row.paneKey, nameSources)
       project.agents.push({
         id: hashWorkPresenceId(machineId, row.paneKey),
         cli: (row.agentType || 'unknown').slice(0, MAX_CLI),
         state: mapAgentStatusToWorkPresenceState(row.state),
-        branch
+        branch,
+        ...(name ? { name } : {})
       })
     }
   }
@@ -121,11 +178,13 @@ export function buildWorkPresenceSnapshot(args: {
   machineLabel: string
   summaries: readonly RuntimeWorktreePsSummary[]
   now: number
+  nameSources?: WorkPresenceAgentNameSources
 }): WorkPresenceSnapshot {
   return {
+    // Why still 1: `name` is optional and absence already means "unnamed", so v1 readers lose nothing.
     schemaVersion: 1,
     machineId: args.machineId,
     machineLabel: args.machineLabel.slice(0, MAX_MACHINE_LABEL) || 'dolphin',
-    projects: buildWorkPresenceProjects(args.machineId, args.summaries, args.now)
+    projects: buildWorkPresenceProjects(args.machineId, args.summaries, args.now, args.nameSources)
   }
 }

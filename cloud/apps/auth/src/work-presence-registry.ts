@@ -5,6 +5,8 @@ export const WORK_PRESENCE_HEARTBEAT_MS = 20_000
 const OFFLINE_AFTER_MS = 60_000
 const DROP_AFTER_OFFLINE_MS = 120_000
 
+const MAX_AGENT_NAME = 60
+
 const OpaqueId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/)
 
 const WORK_VIEW_AGENT_STATES = ['working', 'permission', 'idle'] as const
@@ -19,6 +21,21 @@ const WorkViewAgentStateSchema = z
   .string()
   .max(40)
   .transform((state): WorkViewAgentState => (isWorkViewAgentState(state) ? state : 'idle'))
+
+// Why truncate past 60 (only > 200 rejects): a newer desktop's longer cap must not grey the room.
+function boundedAgentName(raw: string | undefined): string | undefined {
+  // Why bidi too: override/isolate marks can visually reorder the name on the console.
+  // oxlint-disable-next-line no-control-regex -- strips control characters from a display name.
+  let name = (raw ?? '').replace(/[\u0000-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g, ' ').trim()
+  if (name.length > MAX_AGENT_NAME) {
+    name = name.slice(0, MAX_AGENT_NAME)
+    if (/[\ud800-\udbff]$/.test(name)) {
+      name = name.slice(0, -1)
+    }
+    name = name.trimEnd()
+  }
+  return name || undefined
+}
 
 export const WorkPresenceSnapshot = z.object({
   // Why any version >= 1: later versions only add fields, which are stripped here.
@@ -36,7 +53,9 @@ export const WorkPresenceSnapshot = z.object({
               id: OpaqueId,
               cli: z.string().trim().min(1).max(40),
               state: WorkViewAgentStateSchema,
-              branch: z.string().max(120).nullable()
+              branch: z.string().max(120).nullable(),
+              // Why optional: older desktops never send it, and the browser then numbers the agent.
+              name: z.string().max(200).optional().transform(boundedAgentName)
             })
           )
           .max(100)

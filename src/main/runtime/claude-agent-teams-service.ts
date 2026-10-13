@@ -114,6 +114,19 @@ export class ClaudeAgentTeamsService {
     return this.teams.size
   }
 
+  /** Spawned teammate panes Claude titled; pending panes have no terminal to name yet. */
+  listTeammateNamesByHandle(): Map<string, string> {
+    const names = new Map<string, string>()
+    for (const team of this.teams.values()) {
+      for (const pane of team.panes.values()) {
+        if (pane.handle !== null && pane.teammateName) {
+          names.set(pane.handle, pane.teammateName)
+        }
+      }
+    }
+    return names
+  }
+
   async handleTmuxCompat(
     request: AgentTeamsTmuxCompatRequest,
     api: AgentTeamsTerminalApi

@@ -13,7 +13,10 @@ import {
 import { deleteDolphinCloudWorkPresence, putDolphinCloudWorkPresence } from './work-presence-client'
 import { workPresenceMachineId, workPresenceMachineLabel } from './work-presence-machine-id'
 import { WorkPresencePublisher, type WorkPresenceSendOutcome } from './work-presence-publisher'
-import { buildWorkPresenceSnapshot } from './work-presence-snapshot'
+import {
+  buildWorkPresenceSnapshot,
+  type WorkPresenceAgentNameSources
+} from './work-presence-snapshot'
 
 // Why above the ps default: the snapshot is capped by agent count, not workspace count.
 const WORK_PRESENCE_PS_LIMIT = 1_000
@@ -23,6 +26,7 @@ export type WorkPresenceServiceDeps = {
   userDataPath: string
   getInstallId: () => string | undefined
   getWorktreePs: (limit: number) => Promise<RuntimeWorktreePsResult>
+  getAgentNameSources?: () => WorkPresenceAgentNameSources
   subscribeStatusChanges: (listener: () => void) => () => void
 }
 
@@ -59,7 +63,8 @@ export function startWorkPresenceService(deps: WorkPresenceServiceDeps): WorkPre
         machineId: workPresenceMachineId(deps.getInstallId() ?? 'no-install-id', processProfileId),
         machineLabel: workPresenceMachineLabel(),
         summaries: (await deps.getWorktreePs(WORK_PRESENCE_PS_LIMIT)).worktrees,
-        now: Date.now()
+        now: Date.now(),
+        nameSources: deps.getAgentNameSources?.()
       }),
     send: async (snapshot) => {
       const profile = processProfile()

@@ -115,6 +115,37 @@ describe('WorkPresenceSnapshot', () => {
     expect(WorkPresenceSnapshot.safeParse(raw(42)).success).toBe(false)
   })
 
+  it('accepts an optional agent name, cleans and truncates it, and drops a blank one', () => {
+    const withName = (name: unknown) => {
+      const input = raw('working')
+      return { ...input, projects: [{ ...input.projects[0], agents: [{ ...input.projects[0]!.agents[0], name }] }] }
+    }
+    const nameOf = (input: unknown) => WorkPresenceSnapshot.parse(input).projects[0]?.agents[0]?.name
+    expect(nameOf(raw('working'))).toBeUndefined()
+    expect(nameOf(withName('  impl  '))).toBe('impl')
+    expect(nameOf(withName('   '))).toBeUndefined()
+    expect(nameOf(withName('x'.repeat(60)))).toBe('x'.repeat(60))
+    expect(nameOf(withName('x'.repeat(80)))).toBe('x'.repeat(60))
+    expect(nameOf(withName(`${'x'.repeat(59)}😀tail`))).toBe('x'.repeat(59))
+    expect(nameOf(withName('\u202erev\u001b[0m\u2066iew\u2069'))).toBe('rev [0m iew')
+    expect(WorkPresenceSnapshot.safeParse(withName('x'.repeat(201))).success).toBe(false)
+    expect(WorkPresenceSnapshot.safeParse(withName(42)).success).toBe(false)
+  })
+
+  it('passes the agent name through to the view as JSON', () => {
+    const registry = new WorkPresenceRegistry()
+    const named = WorkPresenceSnapshot.parse({
+      ...snapshot('m1'),
+      projects: [{ ...dolphin(), agents: [{ ...dolphin().agents[0], name: 'review' }, { id: 'a2', cli: 'codex', state: 'idle', branch: null }] }]
+    })
+    registry.put('usr_a', named)
+    const view = JSON.parse(JSON.stringify(registry.view(MEMBERS)))
+    expect(view.devs[0].projects[0].agents).toEqual([
+      { id: 'm1:a1', cli: 'claude', state: 'working', branch: 'feat/pix', name: 'review' },
+      { id: 'm1:a2', cli: 'codex', state: 'idle', branch: null }
+    ])
+  })
+
   it('accepts forward schema versions and rejects invalid ones', () => {
     expect(stateOf(raw('working', 3))).toBe('working')
     expect(WorkPresenceSnapshot.safeParse(raw('working', 0)).success).toBe(false)

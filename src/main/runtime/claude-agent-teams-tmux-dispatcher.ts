@@ -218,7 +218,16 @@ export class ClaudeAgentTeamsTmuxDispatcher {
     api: AgentTeamsTerminalApi
   ): Promise<string> {
     const parsed = parseTmuxArgs(args, ['-P', '-T', '-t'], [])
-    if (tmuxValue(parsed, '-P') || tmuxValue(parsed, '-T')) {
+    const title = tmuxValue(parsed, '-T')
+    if (title !== undefined) {
+      // Why no resolvePane: titling an unknown pane always succeeded silently, and it never focuses.
+      const titled = team.panes.get(tmuxValue(parsed, '-t') ?? envPane)
+      if (titled && titled.fakePaneId !== team.leaderPane) {
+        titled.teammateName = title.trim() || undefined
+      }
+      return ''
+    }
+    if (tmuxValue(parsed, '-P')) {
       return ''
     }
     const pane = this.resolvePane(team, tmuxValue(parsed, '-t') ?? envPane)

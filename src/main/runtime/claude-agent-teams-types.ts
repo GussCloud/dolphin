@@ -72,6 +72,8 @@ export type TeamPane = {
   respawnBlockedReason?: string
   /** Git Bash teams: the one-shot script the pane was told to source; removed if it never ran. */
   commandScriptPath?: string
+  /** Claude's `select-pane -T <name>`; may arrive while pending and survives respawn on the same record. */
+  teammateName?: string
 }
 
 export type AgentTeam = {
