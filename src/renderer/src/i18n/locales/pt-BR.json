@@ -243,7 +243,8 @@
     "help": "Ajuda",
     "paste": "Colar",
     "copy": "Copiar",
-    "selectAll": "Selecionar tudo"
+    "selectAll": "Selecionar tudo",
+    "showAzurePrsButton": "Mostrar botão Azure (PRs)"
   },
   "tray": {
     "openDolphin": "Abrir Dolphin",
@@ -6897,7 +6898,8 @@
           "showPinnedWorktreesInGroups": {
             "title": "Também mostrar worktrees fixadas em suas listas originais",
             "description": "worktrees fixadas permanecem em Fixadas e também aparecem em Todos, Projeto, Status e PR."
-          }
+          },
+          "showAzurePrsButton": "Mostrar botão Azure (PRs)"
         },
         "AutoRenameBranchFromWorkSetting": {
           "1626524572": "Nautilus",
@@ -9423,6 +9425,12 @@
               "kw": {
                 "cursor": "cursor"
               }
+            },
+            "showAzurePrsButton": {
+              "title": "Mostrar botão Azure (PRs)",
+              "description": "Mostrar o botão Azure (PRs) na barra lateral esquerda quando o Azure DevOps estiver configurado.",
+              "azure": "azure",
+              "pullRequests": "pull requests"
             }
           }
         },
@@ -17842,7 +17850,27 @@
         },
         "reviewer": {
           "group": "(grupo)",
-          "required": "obrigatório"
+          "required": "obrigatório",
+          "viewComments": "Clique para ver os comentários"
+        },
+        "thread": {
+          "open": "aberta",
+          "resolved": "resolvida",
+          "wontFix": "não será corrigida",
+          "byDesign": "por design",
+          "closed": "fechada"
+        },
+        "comments": {
+          "thread": "Thread {{value0}}",
+          "reply": "resposta",
+          "group": "grupo",
+          "openPr": "Abrir o PR no Azure DevOps",
+          "reviewer": "Revisor:",
+          "loading": "Carregando comentários…",
+          "error": "Não consegui ler os comentários",
+          "emptyGroup": "Grupo não comenta — quem escreve é a pessoa. Veja o avatar redondo de cada uma.",
+          "empty": "{{value0}} não comentou neste PR.",
+          "count": "{{value0}} comentário(s), do mais recente para o mais antigo."
         }
       }
     },

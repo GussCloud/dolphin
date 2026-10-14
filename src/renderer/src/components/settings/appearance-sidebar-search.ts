@@ -170,6 +170,30 @@ export const getSidebarEntries = createLocalizedCatalog((): SettingsSearchEntry[
   },
   {
     title: translate(
+      'auto.components.settings.appearance.search.showAzurePrsButton.title',
+      'Show Azure (PRs) Button'
+    ),
+    description: translate(
+      'auto.components.settings.appearance.search.showAzurePrsButton.description',
+      'Show the Azure (PRs) button in the left sidebar when Azure DevOps is configured.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.showAzurePrsButton.azure',
+        'azure'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.appearance.search.showAzurePrsButton.pullRequests',
+        'pull requests'
+      ),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.5bff6a2ef0', 'sidebar'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.6cf5f54ce1', 'button'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.648eeada79', 'hide'),
+      ...translateSearchKeyword('auto.components.settings.appearance.search.ac79fe4a04', 'show')
+    ]
+  },
+  {
+    title: translate(
       'auto.components.settings.appearance.search.1de96ec8a6',
       'Show Dolphin Mobile Button'
     ),

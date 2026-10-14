@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   ArrowRight,
   Check,
@@ -10,9 +11,13 @@ import {
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import type { AzureDevOpsBoardPullRequest } from '../../../../shared/azure-devops-pull-request-board'
+import type {
+  AzureDevOpsBoardPullRequest,
+  AzureDevOpsPullRequestReviewer
+} from '../../../../shared/azure-devops-pull-request-board'
 import { AzurePullRequestChip } from './AzurePullRequestChip'
 import { AzureReviewerAvatars } from './AzureReviewerAvatars'
+import { AzureReviewerCommentsDialog } from './AzureReviewerCommentsDialog'
 import { ageLabel, policyLabel, signalText, situationLabel } from './azure-pr-labels'
 import { isUrgentSituation, policyToneClass, situationStyleOf } from './azure-pr-tones'
 
@@ -32,6 +37,9 @@ export function AzurePullRequestCard({
 }): React.JSX.Element {
   const style = situationStyleOf(pr.situation)
   const label = situationLabel(pr.situation)
+  const [commentsReviewer, setCommentsReviewer] = useState<AzureDevOpsPullRequestReviewer | null>(
+    null
+  )
   const openPullRequest = (): void => void window.api.shell.openUrl(pr.url)
 
   return (
@@ -177,7 +185,10 @@ export function AzurePullRequestCard({
       ) : null}
 
       <div className="mt-auto flex items-center gap-2 pt-0.5">
-        <AzureReviewerAvatars reviewers={pr.reviewers} />
+        <AzureReviewerAvatars
+          reviewers={pr.reviewers}
+          onSelect={selecting ? undefined : setCommentsReviewer}
+        />
         <span
           className="ml-auto truncate text-[10px] text-muted-foreground"
           title={
@@ -200,6 +211,14 @@ export function AzurePullRequestCard({
           !{pr.id} · {ageLabel(pr.ageDays)}
         </span>
       </div>
+      {commentsReviewer ? (
+        <AzureReviewerCommentsDialog
+          pr={pr}
+          reviewer={commentsReviewer}
+          onReviewerChange={setCommentsReviewer}
+          onClose={() => setCommentsReviewer(null)}
+        />
+      ) : null}
     </div>
   )
 }

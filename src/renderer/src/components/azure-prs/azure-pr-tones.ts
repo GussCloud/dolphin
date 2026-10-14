@@ -122,3 +122,15 @@ export function workItemTypeToneClass(type: string): string {
       return 'border-border text-muted-foreground'
   }
 }
+
+export function threadStatusToneClass(status: string): string {
+  switch (status) {
+    case 'active':
+    case 'pending':
+      return 'border-status-warning-border text-status-warning'
+    case 'fixed':
+      return 'border-status-success-border text-status-success'
+    default:
+      return 'border-border text-muted-foreground'
+  }
+}

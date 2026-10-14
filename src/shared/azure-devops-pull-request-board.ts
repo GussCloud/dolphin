@@ -18,6 +18,8 @@ export type AzureDevOpsPullRequestReviewer = {
   id: string
   displayName: string
   uniqueName: string
+  // Avatar URL as Azure DevOps returns it; fetched through the host, never directly.
+  imageUrl: string
   vote: AzureDevOpsPullRequestVote
   isRequired: boolean
   // True for groups/teams, which are the ones that release the merge when present.
@@ -105,4 +107,36 @@ export type AzureDevOpsPullRequestBoard = {
 
 export type AzureDevOpsPullRequestBoardResult =
   | { ok: true; board: AzureDevOpsPullRequestBoard }
+  | { ok: false; error: string }
+
+// A human comment on a pull request thread (system and deleted ones are dropped).
+export type AzureDevOpsPullRequestComment = {
+  id: number
+  threadId: number
+  authorId: string
+  authorName: string
+  authorEmail: string
+  content: string
+  // ISO timestamp as Azure DevOps returned it; may be unparseable.
+  published: string
+  // Thread status: active, fixed, wontFix, byDesign, closed, pending or unknown.
+  threadStatus: string
+  filePath: string | null
+  line: number | null
+  isReply: boolean
+}
+
+export type AzureDevOpsPullRequestCommentsArgs = {
+  project: string
+  repositoryId: string
+  pullRequestId: number
+}
+
+// Newest first.
+export type AzureDevOpsPullRequestCommentsResult =
+  | { ok: true; comments: AzureDevOpsPullRequestComment[] }
+  | { ok: false; error: string }
+
+export type AzureDevOpsReviewerAvatarResult =
+  | { ok: true; dataUri: string }
   | { ok: false; error: string }

@@ -122,7 +122,8 @@
     "help": "ヘルプ",
     "paste": "貼り付け",
     "copy": "コピー",
-    "selectAll": "すべて選択"
+    "selectAll": "すべて選択",
+    "showAzurePrsButton": "Azure (PRs) ボタンを表示"
   },
   "tray": {
     "openDolphin": "Dolphin を開く",
@@ -5290,7 +5291,8 @@
           "fee535205b": "タスク",
           "d599269755": "サイドバーから非表示",
           "artifacts": "アーティファクト",
-          "skills": "スキル"
+          "skills": "スキル",
+          "azurePrs": "Azure (PRs)"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "クリア",
@@ -6720,7 +6722,8 @@
           "showPinnedWorktreesInGroups": {
             "title": "ピン留めしたワークツリーを元のリストにも表示",
             "description": "ピン留めしたワークツリーを Pinned に残したまま、すべて、プロジェクト、ステータス、PR にも表示します。"
-          }
+          },
+          "showAzurePrsButton": "Azure (PRs) ボタンを表示"
         },
         "AutoRenameBranchFromWorkSetting": {
           "1626524572": "Nautilus",
@@ -9236,6 +9239,12 @@
                 "cursor": "cursor"
               },
               "title": "Cursor の使用状況"
+            },
+            "showAzurePrsButton": {
+              "title": "Azure (PRs) ボタンを表示",
+              "description": "Azure DevOps が設定されている場合、左サイドバーに Azure (PRs) ボタンを表示します。",
+              "azure": "azure",
+              "pullRequests": "pull requests"
             }
           }
         },
@@ -17602,6 +17611,146 @@
           "noDescription": "説明はありません。",
           "comments": "コメント"
         }
+      },
+      "azurePrs": {
+        "situation": {
+          "conflicts": "ターゲットとコンフリクト",
+          "conflictsShort": "コンフリクト",
+          "rejected": "レビュアーが却下",
+          "rejectedShort": "却下",
+          "buildFailed": "Policy 不合格",
+          "buildFailedShort": "Policy",
+          "waitingAuthor": "自分の番",
+          "waitingAuthorShort": "自分",
+          "approved": "承認済み",
+          "draft": "下書き",
+          "draftShort": "Draft",
+          "pending": "保留中 — まだマージ可能になっていません",
+          "pendingShort": "保留中"
+        },
+        "vote": {
+          "approved": "承認済み",
+          "approvedWithSuggestions": "提案付きで承認",
+          "waitingAuthor": "作成者の対応待ち",
+          "rejected": "却下",
+          "none": "投票なし"
+        },
+        "policy": {
+          "approved": "ok",
+          "rejected": "失敗",
+          "broken": "破損",
+          "running": "実行中",
+          "queued": "待機中",
+          "notApplicable": "n/a"
+        },
+        "age": {
+          "today": "今日",
+          "oneDay": "1日",
+          "days": "{{value0}}日"
+        },
+        "signal": {
+          "conflicts": "ターゲットブランチとコンフリクト",
+          "rejected": "レビュアーの却下 {{value0}} 件",
+          "waitingAuthor": "作成者の対応待ちのレビュアー {{value0}} 人",
+          "policyFailed": "Policy 不合格: {{value0}}",
+          "unresolvedThreads": "未解決のコメント {{value0}} 件",
+          "validationRunning": "検証がまだ実行中",
+          "approvals": "承認 {{value0}} 件",
+          "personApprovalsMissingGroup": "個人の承認 {{value0}} 件 — レビュアーグループがまだ足りません",
+          "nothingPending": "保留事項なし — レビュー待ち"
+        },
+        "reviewRequest": {
+          "headOne": "お疲れさまです！この PR のレビューをお願いできますか？",
+          "headMany": "お疲れさまです！この {{value0}} 件の PR のレビューをお願いできますか？",
+          "thanks": "よろしくお願いします！",
+          "copyFailed": "コピーできませんでした。テキストを選択して Ctrl+C を押してください。",
+          "copiedOne": "テキストをコピーしました — Teams に貼り付けるだけです",
+          "copiedMany": "{{value0}} 件の PR を含むテキストをコピーしました — Teams に貼り付けるだけです",
+          "title": "レビュー依頼",
+          "description": "Teams に貼り付けられるプレーンテキストです。コピー前に編集できます。",
+          "close": "閉じる",
+          "copy": "テキストをコピー"
+        },
+        "card": {
+          "openInAzure": "Azure DevOps で開く",
+          "alsoLinked": "この PR は項目 #{{value0}} にもリンクされています",
+          "item": "項目 #{{value0}}",
+          "threads": "{{value1}} 件中 {{value0}} 件のスレッドが未解決",
+          "age": "!{{value0}} · {{value1}}前にオープン",
+          "ageBy": "!{{value0}} · {{value1}}前にオープン · 作成者: {{value2}}"
+        },
+        "group": {
+          "noItem": "リンクされた項目なし",
+          "typeNotLoaded": "種類が未読み込み",
+          "item": "項目",
+          "noItemTitle": "PBI・Bug・Task にリンクされていない PR",
+          "titleNotLoaded": "タイトル未読み込み",
+          "prCountOne": "1 件の PR",
+          "prCountMany": "{{value0}} 件の PR",
+          "openItem": "Azure DevOps で #{{value0}} を開く ({{value1}})"
+        },
+        "selection": {
+          "count": "{{value1}} 件中 {{value0}} 件を選択",
+          "selectAll": "すべて選択",
+          "clear": "選択を解除",
+          "cancel": "キャンセル",
+          "generate": "テキストを生成"
+        },
+        "title": "Azure (PRs)",
+        "loadingOverlay": "pull request を読み込み中…",
+        "error": {
+          "title": "pull request を読み込めませんでした"
+        },
+        "empty": {
+          "mine": "あなたの PR にオープン中のものはありません。",
+          "other": "今は何もありません。"
+        },
+        "repeatedNote": "{{value0}} 件の PR は複数の項目を参照しているため、複数のグループに表示されます — グループの合計は PR の総数を超えます。",
+        "tile": {
+          "conflicts": "コンフリクト",
+          "rejected": "却下",
+          "policy": "Policy",
+          "waitingAuthor": "自分の番",
+          "pending": "保留中",
+          "approved": "承認済み"
+        },
+        "filter": {
+          "mine": "自分の PR",
+          "reviewing": "レビュー中",
+          "all": "すべて"
+        },
+        "toolbar": {
+          "ungroupHint": "フラットなリストに戻る",
+          "groupHint": "カードを PBI/Bug でグループ化",
+          "group": "グループ化",
+          "requestReviewHint": "Teams で送るレビュー依頼のテキストを作成",
+          "requestReview": "レビューを依頼",
+          "refresh": "更新"
+        },
+        "reviewer": {
+          "group": "(グループ)",
+          "required": "必須",
+          "viewComments": "クリックしてコメントを表示"
+        },
+        "thread": {
+          "open": "未解決",
+          "resolved": "解決済み",
+          "wontFix": "対応しない",
+          "byDesign": "仕様どおり",
+          "closed": "クローズ"
+        },
+        "comments": {
+          "thread": "スレッド {{value0}}",
+          "reply": "返信",
+          "group": "グループ",
+          "openPr": "Azure DevOps で PR を開く",
+          "reviewer": "レビュアー:",
+          "loading": "コメントを読み込み中…",
+          "error": "コメントを読み込めませんでした",
+          "emptyGroup": "グループはコメントしません — コメントするのは個人です。それぞれの丸いアバターを確認してください。",
+          "empty": "{{value0}} はこの PR にコメントしていません。",
+          "count": "{{value0}} 件のコメント（新しい順）。"
+        }
       }
     },
     "i18n": {
@@ -18966,5 +19115,22 @@
       "no": "いいえ",
       "approveInChannel": "この許可には Claude チャンネルのメッセージで回答してください。"
     }
+  },
+  "whatsNew": {
+    "azurePrs": {
+      "bullet": {
+        "grouping": "オープン中の pull request を PBI・Bug・Task ごとにグループ化",
+        "situation": "各 PR の状況: コンフリクト、却下、policy、あなたの対応待ち、保留中、承認済み",
+        "details": "Policy、コメント、レビュアーとその投票",
+        "refresh": "30 秒ごとに自動更新",
+        "menu": "az login または PAT で Azure DevOps を設定すると、サイドバーに表示されます"
+      },
+      "title": "Azure (PRs)",
+      "open": "Azure (PRs) を開く",
+      "configure": "Azure DevOps を設定"
+    },
+    "title": "{{version}} の新機能",
+    "description": "Azure DevOps の pull request を見守る新しい方法です。",
+    "dismiss": "了解"
   }
 }

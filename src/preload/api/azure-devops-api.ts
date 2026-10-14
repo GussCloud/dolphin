@@ -4,7 +4,12 @@ import type {
   AzureDevOpsConfigureDefaultsResult,
   AzureDevOpsRepositoriesResult
 } from '../../shared/azure-devops-auth'
-import type { AzureDevOpsPullRequestBoardResult } from '../../shared/azure-devops-pull-request-board'
+import type {
+  AzureDevOpsPullRequestBoardResult,
+  AzureDevOpsPullRequestCommentsArgs,
+  AzureDevOpsPullRequestCommentsResult,
+  AzureDevOpsReviewerAvatarResult
+} from '../../shared/azure-devops-pull-request-board'
 import type {
   AzureDevOpsOrgLinkArgs,
   AzureDevOpsOrgLinkStatus
@@ -20,5 +25,9 @@ export type AzureDevOpsApi = {
   refreshCliSession: () => Promise<void>
   listRepositories: () => Promise<AzureDevOpsRepositoriesResult>
   pullRequestBoard: () => Promise<AzureDevOpsPullRequestBoardResult>
+  pullRequestComments: (
+    args: AzureDevOpsPullRequestCommentsArgs
+  ) => Promise<AzureDevOpsPullRequestCommentsResult>
+  reviewerAvatar: (url: string) => Promise<AzureDevOpsReviewerAvatarResult>
   orgLink: (args?: AzureDevOpsOrgLinkArgs) => Promise<AzureDevOpsOrgLinkStatus>
 }

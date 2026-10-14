@@ -39,6 +39,13 @@ export function shouldShowAutomationsButton(
   return settings?.showAutomationsButton !== false
 }
 
+export function shouldShowAzurePrsButton(
+  settings: Partial<Pick<GlobalSettings, 'showAzurePrsButton'>> | null | undefined,
+  azureDevOpsAvailable: boolean
+): boolean {
+  return azureDevOpsAvailable && settings?.showAzurePrsButton !== false
+}
+
 export function shouldShowArtifactsButton(
   settings: Partial<Pick<GlobalSettings, 'showArtifactsButton'>> | null | undefined
 ): boolean {
@@ -77,7 +84,10 @@ const SidebarNav = React.memo(function SidebarNav() {
   const showMobileButton = useAppStore((s) => shouldShowMobileButton(s.settings))
   const showArtifactsButton = useAppStore((s) => shouldShowArtifactsButton(s.settings))
   const showSkillsButton = useAppStore((s) => shouldShowSkillsButton(s.settings))
-  const showAzurePrsButton = useAzureDevOpsPullRequestsAvailable()
+  const azureDevOpsAvailable = useAzureDevOpsPullRequestsAvailable()
+  const showAzurePrsButton = useAppStore((s) =>
+    shouldShowAzurePrsButton(s.settings, azureDevOpsAvailable)
+  )
   const automationsActive = activeView === 'automations'
   const azurePrsActive = activeView === 'azure-prs'
   const mobileActive = activeView === 'mobile'
@@ -86,6 +96,9 @@ const SidebarNav = React.memo(function SidebarNav() {
   const mobileOnboardingBadge = useMobileSidebarOnboardingBadge(showMobileButton)
   const hideAutomationsButton = React.useCallback(() => {
     void updateSettings({ showAutomationsButton: false })
+  }, [updateSettings])
+  const hideAzurePrsButton = React.useCallback(() => {
+    void updateSettings({ showAzurePrsButton: false })
   }, [updateSettings])
   const hideMobileButton = React.useCallback(() => {
     void updateSettings({ showMobileButton: false })
@@ -221,28 +234,33 @@ const SidebarNav = React.memo(function SidebarNav() {
         </ContextMenu>
       ) : null}
       {showAzurePrsButton ? (
-        <button
-          type="button"
-          onClick={openAzurePrsPage}
-          aria-current={azurePrsActive ? 'page' : undefined}
-          className={cn(
-            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
-            azurePrsActive
-              ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-              : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
-          )}
-        >
-          <GitPullRequest
-            className={cn(
-              'size-4 shrink-0',
-              !azurePrsActive && 'text-worktree-sidebar-foreground/30'
-            )}
-            strokeWidth={azurePrsActive ? 2.25 : 1.75}
-          />
-          <span className="flex-1">
-            {translate('auto.components.sidebar.SidebarNav.azurePrs', 'Azure (PRs)')}
-          </span>
-        </button>
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <button
+              type="button"
+              onClick={openAzurePrsPage}
+              aria-current={azurePrsActive ? 'page' : undefined}
+              className={cn(
+                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+                azurePrsActive
+                  ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
+                  : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+              )}
+            >
+              <GitPullRequest
+                className={cn(
+                  'size-4 shrink-0',
+                  !azurePrsActive && 'text-worktree-sidebar-foreground/30'
+                )}
+                strokeWidth={azurePrsActive ? 2.25 : 1.75}
+              />
+              <span className="flex-1">
+                {translate('auto.components.sidebar.SidebarNav.azurePrs', 'Azure (PRs)')}
+              </span>
+            </button>
+          </ContextMenuTrigger>
+          <HideSidebarMenu onHide={hideAzurePrsButton} />
+        </ContextMenu>
       ) : null}
       {showAgentDashboardButton ? (
         <React.Suspense fallback={null}>

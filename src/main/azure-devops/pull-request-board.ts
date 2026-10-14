@@ -84,6 +84,7 @@ function mapReviewers(raw: unknown): AzureDevOpsPullRequestReviewer[] {
           id: text(reviewer?.id),
           displayName: text(reviewer?.displayName),
           uniqueName: text(reviewer?.uniqueName),
+          imageUrl: text(reviewer?.imageUrl),
           vote: typeof reviewer?.vote === 'number' ? reviewer.vote : 0,
           isRequired: reviewer?.isRequired === true,
           isContainer: reviewer?.isContainer === true

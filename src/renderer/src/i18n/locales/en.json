@@ -243,7 +243,8 @@
     "help": "Help",
     "paste": "Paste",
     "copy": "Copy",
-    "selectAll": "Select All"
+    "selectAll": "Select All",
+    "showAzurePrsButton": "Show Azure (PRs) Button"
   },
   "tray": {
     "openDolphin": "Open Dolphin",
@@ -6897,7 +6898,8 @@
           "showPinnedWorktreesInGroups": {
             "title": "Also show pinned worktrees in their original lists",
             "description": "Pinned worktrees stay in Pinned and also appear in All, Project, Status, and PR."
-          }
+          },
+          "showAzurePrsButton": "Show Azure (PRs) Button"
         },
         "AutoRenameBranchFromWorkSetting": {
           "1626524572": "Nautilus",
@@ -9423,6 +9425,12 @@
               "kw": {
                 "cursor": "cursor"
               }
+            },
+            "showAzurePrsButton": {
+              "title": "Show Azure (PRs) Button",
+              "description": "Show the Azure (PRs) button in the left sidebar when Azure DevOps is configured.",
+              "azure": "azure",
+              "pullRequests": "pull requests"
             }
           }
         },
@@ -17842,7 +17850,27 @@
         },
         "reviewer": {
           "group": "(group)",
-          "required": "required"
+          "required": "required",
+          "viewComments": "Click to see comments"
+        },
+        "thread": {
+          "open": "open",
+          "resolved": "resolved",
+          "wontFix": "won't fix",
+          "byDesign": "by design",
+          "closed": "closed"
+        },
+        "comments": {
+          "thread": "Thread {{value0}}",
+          "reply": "reply",
+          "group": "group",
+          "openPr": "Open the PR in Azure DevOps",
+          "reviewer": "Reviewer:",
+          "loading": "Loading comments…",
+          "error": "Could not read the comments",
+          "emptyGroup": "A group does not comment — a person does. Check each round avatar.",
+          "empty": "{{value0}} has not commented on this PR.",
+          "count": "{{value0}} comment(s), newest first."
         }
       }
     },

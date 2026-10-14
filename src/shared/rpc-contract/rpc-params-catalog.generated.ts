@@ -60,6 +60,8 @@ import {
 } from './azure-boards-params'
 import {
   AzureDevOpsConfigureCliDefaults,
+  AzureDevOpsPullRequestComments,
+  AzureDevOpsReviewerAvatar,
   AzureDevOpsSetAuthMethod,
   AzureDevOpsSetCliAutoRenew
 } from './azure-devops-params'
@@ -647,7 +649,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'azureDevOps.configureCliDefaults': AzureDevOpsConfigureCliDefaults,
   'azureDevOps.listRepositories': null,
   'azureDevOps.pullRequestBoard': null,
+  'azureDevOps.pullRequestComments': AzureDevOpsPullRequestComments,
   'azureDevOps.refreshCliSession': null,
+  'azureDevOps.reviewerAvatar': AzureDevOpsReviewerAvatar,
   'azureDevOps.setAuthMethod': AzureDevOpsSetAuthMethod,
   'azureDevOps.setCliAutoRenew': AzureDevOpsSetCliAutoRenew,
   'browser.back': BrowserTarget,

@@ -16,6 +16,7 @@ function reviewer(vote: number, isContainer: boolean): AzureDevOpsPullRequestRev
     id: `id-${vote}-${isContainer}`,
     displayName: 'R',
     uniqueName: 'r@evup.com.br',
+    imageUrl: '',
     vote,
     isRequired: true,
     isContainer

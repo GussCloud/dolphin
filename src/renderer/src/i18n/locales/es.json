@@ -72,7 +72,8 @@
     "help": "Ayuda",
     "paste": "Pegar",
     "copy": "Copiar",
-    "selectAll": "Seleccionar todo"
+    "selectAll": "Seleccionar todo",
+    "showAzurePrsButton": "Mostrar botón Azure (PRs)"
   },
   "tray": {
     "openDolphin": "Abrir Dolphin",
@@ -4536,7 +4537,8 @@
           "196c1b5362": "Abrir tareas de GitLab",
           "0ccba862b8": "Abrir tareas de GitHub",
           "fee535205b": "Tareas",
-          "d599269755": "Ocultar de la barra lateral"
+          "d599269755": "Ocultar de la barra lateral",
+          "azurePrs": "Azure (PRs)"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Limpiar",
@@ -5761,7 +5763,8 @@
           "showPinnedWorktreesInGroups": {
             "title": "Mostrar también los worktrees fijados en sus listas originales",
             "description": "Los worktrees fijados permanecen en Fijados y también aparecen en Todos, Proyecto, Estado y PR."
-          }
+          },
+          "showAzurePrsButton": "Mostrar botón Azure (PRs)"
         },
         "AutoRenameBranchFromWorkSetting": {
           "1626524572": "Nautilus",
@@ -8121,6 +8124,12 @@
                 "cursor": "cursor"
               },
               "title": "Uso de Cursor"
+            },
+            "showAzurePrsButton": {
+              "title": "Mostrar botón Azure (PRs)",
+              "description": "Muestra el botón Azure (PRs) en la barra lateral izquierda cuando Azure DevOps está configurado.",
+              "azure": "azure",
+              "pullRequests": "pull requests"
             }
           }
         },
@@ -15224,6 +15233,146 @@
           "noDescription": "Sin descripción.",
           "comments": "Comentarios"
         }
+      },
+      "azurePrs": {
+        "situation": {
+          "conflicts": "Conflicto con el destino",
+          "conflictsShort": "Conflicto",
+          "rejected": "Rechazado por un revisor",
+          "rejectedShort": "Rechazado",
+          "buildFailed": "Policy fallida",
+          "buildFailedShort": "Policy",
+          "waitingAuthor": "La pelota está en mi cancha",
+          "waitingAuthorShort": "Mío",
+          "approved": "Aprobado",
+          "draft": "Borrador",
+          "draftShort": "Draft",
+          "pending": "Pendiente — aún no liberado para merge",
+          "pendingShort": "Pendiente"
+        },
+        "vote": {
+          "approved": "Aprobado",
+          "approvedWithSuggestions": "Aprobado con sugerencias",
+          "waitingAuthor": "Esperando al autor",
+          "rejected": "Rechazado",
+          "none": "Sin voto"
+        },
+        "policy": {
+          "approved": "ok",
+          "rejected": "fallida",
+          "broken": "rota",
+          "running": "en ejecución",
+          "queued": "en cola",
+          "notApplicable": "n/d"
+        },
+        "age": {
+          "today": "hoy",
+          "oneDay": "1 día",
+          "days": "{{value0}} días"
+        },
+        "signal": {
+          "conflicts": "Conflicto con la rama de destino",
+          "rejected": "{{value0}} rechazo(s) de revisor",
+          "waitingAuthor": "{{value0}} revisor(es) esperando al autor",
+          "policyFailed": "Policy fallida: {{value0}}",
+          "unresolvedThreads": "{{value0}} comentario(s) sin resolver",
+          "validationRunning": "Validación aún en ejecución",
+          "approvals": "{{value0}} aprobación(es)",
+          "personApprovalsMissingGroup": "{{value0}} aprobación(es) de personas — falta el grupo revisor",
+          "nothingPending": "Sin pendientes registrados — esperando revisión"
+        },
+        "reviewRequest": {
+          "headOne": "¡Hola! ¿Puedes revisar este PR, por favor?",
+          "headMany": "¡Hola! ¿Puedes revisar estos {{value0}} PRs, por favor?",
+          "thanks": "¡Gracias!",
+          "copyFailed": "No pude copiar. Selecciona el texto y usa Ctrl+C.",
+          "copiedOne": "Texto copiado — solo pégalo en Teams",
+          "copiedMany": "Texto con {{value0}} PRs copiado — solo pégalo en Teams",
+          "title": "Solicitud de revisión",
+          "description": "Texto plano, como lo pega Teams. Puedes editarlo antes de copiar.",
+          "close": "Cerrar",
+          "copy": "Copiar texto"
+        },
+        "card": {
+          "openInAzure": "Abrir en Azure DevOps",
+          "alsoLinked": "Este PR también está vinculado al ítem #{{value0}}",
+          "item": "Ítem #{{value0}}",
+          "threads": "{{value0}} de {{value1}} threads sin resolver",
+          "age": "!{{value0}} · abierto hace {{value1}}",
+          "ageBy": "!{{value0}} · abierto hace {{value1}} · por {{value2}}"
+        },
+        "group": {
+          "noItem": "Sin ítem vinculado",
+          "typeNotLoaded": "Tipo no cargado",
+          "item": "Ítem",
+          "noItemTitle": "PRs sin PBI, Bug o Task vinculado",
+          "titleNotLoaded": "título no cargado",
+          "prCountOne": "1 PR",
+          "prCountMany": "{{value0}} PRs",
+          "openItem": "Abrir #{{value0}} en Azure DevOps ({{value1}})"
+        },
+        "selection": {
+          "count": "{{value0}} de {{value1}} seleccionados",
+          "selectAll": "Seleccionar todos",
+          "clear": "Deseleccionar todos",
+          "cancel": "Cancelar",
+          "generate": "Generar texto"
+        },
+        "title": "Azure (PRs)",
+        "loadingOverlay": "Leyendo los pull requests…",
+        "error": {
+          "title": "No pude leer los pull requests"
+        },
+        "empty": {
+          "mine": "Ningún PR tuyo está abierto.",
+          "other": "No hay nada aquí por ahora."
+        },
+        "repeatedNote": "{{value0}} PR(s) aparecen en más de un grupo porque citan varios ítems — la suma de los grupos supera el total.",
+        "tile": {
+          "conflicts": "Conflicto",
+          "rejected": "Rechazado",
+          "policy": "Policy",
+          "waitingAuthor": "La pelota está en mi cancha",
+          "pending": "Pendiente",
+          "approved": "Aprobado"
+        },
+        "filter": {
+          "mine": "Mis PRs",
+          "reviewing": "Revisando",
+          "all": "Todos"
+        },
+        "toolbar": {
+          "ungroupHint": "Volver a la lista plana",
+          "groupHint": "Agrupar las tarjetas por PBI/Bug",
+          "group": "Agrupar",
+          "requestReviewHint": "Armar el texto de solicitud de revisión para enviar por Teams",
+          "requestReview": "Pedir revisión",
+          "refresh": "Actualizar"
+        },
+        "reviewer": {
+          "group": "(grupo)",
+          "required": "obligatorio",
+          "viewComments": "Haz clic para ver los comentarios"
+        },
+        "thread": {
+          "open": "abierto",
+          "resolved": "resuelto",
+          "wontFix": "no se corregirá",
+          "byDesign": "por diseño",
+          "closed": "cerrado"
+        },
+        "comments": {
+          "thread": "Thread {{value0}}",
+          "reply": "respuesta",
+          "group": "grupo",
+          "openPr": "Abrir el PR en Azure DevOps",
+          "reviewer": "Revisor:",
+          "loading": "Cargando comentarios…",
+          "error": "No pude leer los comentarios",
+          "emptyGroup": "Un grupo no comenta — comenta la persona. Mira el avatar redondo de cada una.",
+          "empty": "{{value0}} no comentó en este PR.",
+          "count": "{{value0}} comentario(s), del más reciente al más antiguo."
+        }
       }
     },
     "i18n": {
@@ -15855,5 +16004,22 @@
       "no": "No",
       "approveInChannel": "Responde a este permiso en el mensaje del canal de Claude."
     }
+  },
+  "whatsNew": {
+    "azurePrs": {
+      "bullet": {
+        "grouping": "Pull requests abiertos agrupados por PBI, Bug o Task",
+        "situation": "Situación de cada PR: conflicto, rechazado, policy, esperando tu acción, pendiente o aprobado",
+        "details": "Policies, comentarios y revisores con sus votos",
+        "refresh": "Se actualiza automáticamente cada 30 segundos",
+        "menu": "Aparece en la barra lateral al configurar Azure DevOps con az login o PAT"
+      },
+      "title": "Azure (PRs)",
+      "open": "Abrir Azure (PRs)",
+      "configure": "Configurar Azure DevOps"
+    },
+    "title": "Novedades de la versión {{version}}",
+    "description": "Una nueva forma de seguir tus pull requests de Azure DevOps.",
+    "dismiss": "Entendido"
   }
 }

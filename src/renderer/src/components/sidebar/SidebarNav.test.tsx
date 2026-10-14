@@ -91,6 +91,7 @@ vi.mock('@/components/ui/context-menu', () => ({
 import SidebarNav, {
   getSetupGuideSidebarEntryReady,
   shouldShowAutomationsButton,
+  shouldShowAzurePrsButton,
   shouldShowArtifactsButton,
   shouldShowMobileButton,
   shouldShowSetupGuideEntry
@@ -373,6 +374,40 @@ describe('SidebarNav', () => {
 
     expect(mocks.updateSettings).toHaveBeenCalledWith({ showMobileButton: false })
     expect(mocks.openMobilePage).not.toHaveBeenCalled()
+  })
+
+  it('shows the Azure PRs entry by default only when Azure DevOps is available', () => {
+    expect(shouldShowAzurePrsButton(null, true)).toBe(true)
+    expect(shouldShowAzurePrsButton({}, true)).toBe(true)
+    expect(shouldShowAzurePrsButton({}, false)).toBe(false)
+    expect(shouldShowAzurePrsButton({ showAzurePrsButton: false }, true)).toBe(false)
+  })
+
+  it('omits the Azure PRs row when the sidebar setting is off', async () => {
+    setSidebarState({
+      azureDevOps: { configured: true, baseUrl: 'https://dev.azure.com/acme' },
+      settings: { ...getDefaultSettings('/tmp'), showAzurePrsButton: false }
+    })
+
+    const container = await renderSidebarNav()
+
+    expect(queryButtonByText(container, 'Azure (PRs)')).toBeNull()
+  })
+
+  it('hides Azure PRs from its sidebar context menu', async () => {
+    setSidebarState({ azureDevOps: { configured: true, baseUrl: 'https://dev.azure.com/acme' } })
+    const container = await renderSidebarNav()
+
+    const azureMenu = getButtonByText(container, 'Azure (PRs)').closest(
+      '[data-testid="context-menu"]'
+    )
+    if (!azureMenu) {
+      throw new Error('Azure PRs context menu not found')
+    }
+
+    await clickButton(getHideButton(azureMenu))
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith({ showAzurePrsButton: false })
   })
 
   it('shows the Automations entry by default for older settings', () => {

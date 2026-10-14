@@ -167,3 +167,28 @@ export function workItemTypeLabel(type: string): string {
       return type
   }
 }
+
+export function threadStatusLabel(status: string): string {
+  switch (status) {
+    case 'active':
+    case 'pending':
+      return translate('auto.components.azurePrs.thread.open', 'open')
+    case 'fixed':
+      return translate('auto.components.azurePrs.thread.resolved', 'resolved')
+    case 'wontFix':
+      return translate('auto.components.azurePrs.thread.wontFix', "won't fix")
+    case 'byDesign':
+      return translate('auto.components.azurePrs.thread.byDesign', 'by design')
+    case 'closed':
+      return translate('auto.components.azurePrs.thread.closed', 'closed')
+    default:
+      return status
+  }
+}
+
+export function commentDateLabel(iso: string): string {
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : date.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
+}

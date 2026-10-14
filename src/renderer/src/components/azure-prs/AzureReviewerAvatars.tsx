@@ -5,11 +5,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { AzureDevOpsPullRequestReviewer } from '../../../../shared/azure-devops-pull-request-board'
 import { voteLabel } from './azure-pr-labels'
 import { voteRingClass } from './azure-pr-tones'
+import { useAzureReviewerAvatar } from './azure-reviewer-avatar-image'
 
 const MAX_VISIBLE = 6
 
 // `[TEAM FOUNDATION]\SETUP - Approvers` -> `SETUP - Approvers`.
-function reviewerName(name: string): string {
+export function reviewerName(name: string): string {
   return name.includes('\\') ? (name.split('\\').pop() ?? name) : name
 }
 
@@ -27,25 +28,50 @@ function initials(name: string): string {
 }
 
 function ReviewerAvatar({
-  reviewer
+  reviewer,
+  onSelect
 }: {
   reviewer: AzureDevOpsPullRequestReviewer
+  onSelect?: (reviewer: AzureDevOpsPullRequestReviewer) => void
 }): React.JSX.Element {
   const name = reviewerName(reviewer.displayName)
   const group = reviewer.isContainer
+  const photo = useAzureReviewerAvatar(reviewer.imageUrl)
+  const face = photo ? (
+    <img src={photo} alt={name} className="size-full object-cover" />
+  ) : group ? (
+    <Users className="size-3" />
+  ) : (
+    initials(name)
+  )
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         {/* Why: a square group, a round person — the shape tells them apart without a legend. */}
-        <span
-          className={cn(
-            'inline-flex size-6 cursor-default items-center justify-center bg-muted text-[9px] font-medium text-muted-foreground ring-2 ring-offset-1 ring-offset-card',
-            voteRingClass(reviewer.vote),
-            group ? 'rounded-md' : 'rounded-full'
-          )}
-        >
-          {group ? <Users className="size-3" /> : initials(name)}
-        </span>
+        {onSelect ? (
+          <button
+            type="button"
+            onClick={() => onSelect(reviewer)}
+            className={cn(
+              'inline-flex size-6 cursor-pointer items-center justify-center overflow-hidden bg-muted text-[9px] font-medium text-muted-foreground outline-none ring-2 ring-offset-1 ring-offset-card hover:z-10 focus-visible:z-10 focus-visible:ring-ring',
+              voteRingClass(reviewer.vote),
+              group ? 'rounded-md' : 'rounded-full'
+            )}
+          >
+            {face}
+          </button>
+        ) : (
+          // Why: without a handler the click passes through to the card, which selects the PR in selection mode.
+          <span
+            className={cn(
+              'inline-flex size-6 cursor-default items-center justify-center overflow-hidden bg-muted text-[9px] font-medium text-muted-foreground ring-2 ring-offset-1 ring-offset-card',
+              voteRingClass(reviewer.vote),
+              group ? 'rounded-md' : 'rounded-full'
+            )}
+          >
+            {face}
+          </span>
+        )}
       </TooltipTrigger>
       <TooltipContent>
         <span className="font-medium">{name}</span>
@@ -54,15 +80,23 @@ function ReviewerAvatar({
         {reviewer.isRequired
           ? ` · ${translate('auto.components.azurePrs.reviewer.required', 'required')}`
           : ''}
+        {onSelect ? (
+          <span className="block">
+            {translate('auto.components.azurePrs.reviewer.viewComments', 'Click to see comments')}
+          </span>
+        ) : null}
       </TooltipContent>
     </Tooltip>
   )
 }
 
 export function AzureReviewerAvatars({
-  reviewers
+  reviewers,
+  onSelect
 }: {
   reviewers: AzureDevOpsPullRequestReviewer[]
+  // When set, each avatar becomes a button.
+  onSelect?: (reviewer: AzureDevOpsPullRequestReviewer) => void
 }): React.JSX.Element | null {
   if (reviewers.length === 0) {
     return null
@@ -79,6 +113,7 @@ export function AzureReviewerAvatars({
           <ReviewerAvatar
             key={reviewer.id || reviewer.uniqueName || reviewer.displayName}
             reviewer={reviewer}
+            onSelect={onSelect}
           />
         ))}
       </div>

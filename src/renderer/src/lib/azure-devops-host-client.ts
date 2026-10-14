@@ -8,7 +8,12 @@ import type {
   AzureDevOpsOrgLinkArgs,
   AzureDevOpsOrgLinkStatus
 } from '../../../shared/azure-devops-org-link'
-import type { AzureDevOpsPullRequestBoardResult } from '../../../shared/azure-devops-pull-request-board'
+import type {
+  AzureDevOpsPullRequestBoardResult,
+  AzureDevOpsPullRequestCommentsArgs,
+  AzureDevOpsPullRequestCommentsResult,
+  AzureDevOpsReviewerAvatarResult
+} from '../../../shared/azure-devops-pull-request-board'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import { callRuntimeRpc, getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 
@@ -73,6 +78,50 @@ export async function getAzureDevOpsPullRequestBoard(
     return {
       ok: false,
       error: error instanceof Error ? error.message : 'Could not load Azure DevOps pull requests.'
+    }
+  }
+}
+
+export async function getAzureDevOpsPullRequestComments(
+  settings: RuntimeSettings,
+  args: AzureDevOpsPullRequestCommentsArgs
+): Promise<AzureDevOpsPullRequestCommentsResult> {
+  try {
+    const target = getActiveRuntimeTarget(settings)
+    return target.kind === 'environment'
+      ? await callRuntimeRpc<AzureDevOpsPullRequestCommentsResult>(
+          target,
+          'azureDevOps.pullRequestComments',
+          args
+        )
+      : await desktopApi().pullRequestComments(args)
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Could not load the pull request comments.'
+    }
+  }
+}
+
+export async function getAzureDevOpsReviewerAvatar(
+  settings: RuntimeSettings,
+  url: string
+): Promise<AzureDevOpsReviewerAvatarResult> {
+  try {
+    const target = getActiveRuntimeTarget(settings)
+    return target.kind === 'environment'
+      ? await callRuntimeRpc<AzureDevOpsReviewerAvatarResult>(
+          target,
+          'azureDevOps.reviewerAvatar',
+          {
+            url
+          }
+        )
+      : await desktopApi().reviewerAvatar(url)
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Could not load the reviewer avatar.'
     }
   }
 }
