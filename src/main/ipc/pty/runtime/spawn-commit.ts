@@ -285,7 +285,8 @@ export async function commitRuntimePtySpawn(ctx: RuntimePtySpawnState) {
           }
         }
       : {}),
-    ...(ctx.result.agentSessionEnsure ? { agentSessionEnsure: ctx.result.agentSessionEnsure } : {})
+    ...(ctx.result.agentSessionEnsure ? { agentSessionEnsure: ctx.result.agentSessionEnsure } : {}),
+    ...(ctx.result.isReattach === true ? { reattachedLiveSession: true as const } : {})
   }
   resolvePaneSpawnReservation(ctx.paneSpawnReservationKey, ctx.paneSpawnReservation, {
     ...ctx.result,

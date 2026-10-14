@@ -140,6 +140,21 @@ describe('createMainWindow', () => {
       ])
     })
 
+    it('flushes the persistence store when Windows queries session end', () => {
+      setPlatform('win32')
+      const { windowHandlers } = setupCloseWindow()
+      const store = {
+        ...makeStore(false, true),
+        flushPendingOrThrowAsync: vi.fn(() => Promise.resolve())
+      }
+
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: fake store implements the reads window creation and the session-end flush make.
+      createMainWindow(store as never)
+      windowHandlers['query-session-end']?.({ preventDefault: vi.fn() })
+
+      expect(store.flushPendingOrThrowAsync).toHaveBeenCalledTimes(1)
+    })
+
     it.each(['darwin', 'linux'] as const)(
       'does not mark session teardown state on %s',
       (platform) => {

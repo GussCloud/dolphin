@@ -283,6 +283,8 @@ export type RuntimeTerminalCreate = {
   warning?: string
   agentSessionDisposition?: 'created' | 'adopted'
   isReattach?: true
+  /** The provider attached an already-running session, so no startup command ran. */
+  reattachedLiveSession?: true
   /** Spawn process identity for host-internal ownership proof. */
   processId?: number
 }

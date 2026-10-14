@@ -18,3 +18,14 @@ export function admitStablePaneAdoption(
   }
   return Boolean(result.stablePaneOwner)
 }
+
+/** Create-result flags telling callers the spawn attached something already running. */
+export function terminalReattachResultFields(
+  adoptedStablePane: boolean,
+  result: { reattachedLiveSession?: true }
+): { isReattach?: true; reattachedLiveSession?: true } {
+  return {
+    ...(adoptedStablePane ? { isReattach: true as const } : {}),
+    ...(result.reattachedLiveSession ? { reattachedLiveSession: true as const } : {})
+  }
+}
