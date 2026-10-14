@@ -116,11 +116,40 @@ an extensionless script is ignored.
   `%NAME%` in the arguments, so values containing `%` can be corrupted; packaged builds put
   `tmux.exe` ahead of it on PATH.
 
+## Non-ASCII user profiles
+
+Claude Code on Windows refuses a `tmux` found under a PATH entry with non-ASCII text (e.g.
+`C:\Users\João\...`) or an 8.3 `~` name: it exits 127 with `Command 'tmux' not found or is in an
+unsafe location` without spawning anything, and the leader reports `Could not determine current
+tmux pane/window`. The string of the PATH entry is what counts; a junction with an ASCII name that
+points at the same dir works. Both shim dirs live under the profile, so on such a machine Claude
+never reaches the shim.
+
+`resolveClaudeAgentTeamsLaunchShimPathDirs` (used by both leader entry points) passes native
+Windows shim dirs through `claude-agent-teams-ascii-path-junction.ts`: each unsafe dir is replaced
+by a junction `%ProgramData%\Dolphin\agent-teams-path\u-<random>\bin` (fallback
+`%SystemDrive%\DolphinAgentTeamsPath`), created with `fs.symlink(..., 'junction')`, no admin and no
+`cmd.exe`. The same dirs feed `DOLPHIN_AGENT_TEAMS_SHIM_PATH_DIRS`, so teammate panes get them too.
+`tmux.exe` needs nothing install-relative (its CLI fallback uses `DOLPHIN_AGENT_TEAMS_SHIM_BIN`),
+so the junction points at the shim dir itself.
+
+Those roots grant every account create/write-data, which a junction inherits, so another user
+could retarget it mid-session and put their `tmux.exe` first on PATH with the team token. The
+protection is the holder's ACL: the random `u-<random>` holder gets a protected DACL (current
+user, SYSTEM, Administrators; `bestEffortRestrictWindowsPath`, verified by readback) before the
+junction is created inside it, and a holder that cannot be restricted is discarded. The chosen
+link is kept in `~/.dolphin/claude-agent-teams-ascii-path.json`; each launch re-checks it is still a
+junction to the expected dir, which only catches a lost or tampered record.
+
+If no junction can be created, the leader degrades to in-process teammates (logged, no UI notice).
+WSL leaders skip all of this: their Linux `claude` never searches the Windows shim dirs.
+
 ## In-process fallback
 
 Native panes degrade to Claude's in-process teammates (one terminal) instead of failing
-when the leader is native Windows and Git Bash does not resolve, or when no absolute
-Dolphin CLI can back the shim. WSL leaders do not need Git Bash or the Windows shim CLI
+when the leader is native Windows and Git Bash does not resolve, when no absolute
+Dolphin CLI can back the shim, or when the shim dirs cannot be exposed on a Claude-safe
+PATH (see above). WSL leaders do not need Git Bash or the Windows shim CLI
 (`canLaunchAgentTeamPanes` `leaderIsWsl`): their guest tmux shim calls the guest launcher
 directly. A WSL leader whose team cannot be prepared starts
 `claude --teammate-mode in-process` with a one-line notice instead of failing.

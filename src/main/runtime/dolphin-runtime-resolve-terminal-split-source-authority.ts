@@ -12,8 +12,8 @@ import type {
 } from './claude-agent-teams-service'
 import {
   ensureClaudeAgentTeamsShimDir,
-  resolveClaudeAgentTeamsShimBin,
-  resolveClaudeAgentTeamsShimPathDirs
+  resolveClaudeAgentTeamsLaunchShimPathDirs,
+  resolveClaudeAgentTeamsShimBin
 } from './claude-agent-teams-shim-env'
 import { applyClaudeEnvPatch } from '../claude-accounts/environment'
 import {
@@ -186,27 +186,36 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       : undefined
     const shimBin = resolveClaudeAgentTeamsShimBin(baseEnv)
     const hostShell = this.resolveClaudeAgentTeamsHostShell(args.handle)
+    const leaderIsWsl = this.isClaudeAgentTeamsWslLeader(args.handle)
+    // Why: agreed degrade — no team is registered, so Claude keeps teammates in-process.
+    const inProcess = {
+      env: { ...auth?.envPatch, ...IN_PROCESS_AGENT_TEAMS_ENV },
+      envToDelete: [...(envToDelete ?? []), ...IN_PROCESS_AGENT_TEAMS_ENV_TO_DELETE]
+    }
     if (
       !canLaunchAgentTeamPanes({
         hostShell,
-        leaderIsWsl: this.isClaudeAgentTeamsWslLeader(args.handle),
+        leaderIsWsl,
         shimBin,
         resolveGitBash: () => this.resolveClaudeAgentTeamsGitBash()
       })
     ) {
-      // Why: agreed degrade — no team is registered, so Claude keeps teammates in-process.
-      return {
-        env: { ...auth?.envPatch, ...IN_PROCESS_AGENT_TEAMS_ENV },
-        envToDelete: [...(envToDelete ?? []), ...IN_PROCESS_AGENT_TEAMS_ENV_TO_DELETE]
-      }
+      return inProcess
     }
     const shimDir = await ensureClaudeAgentTeamsShimDir()
+    const shimPathDirs = await resolveClaudeAgentTeamsLaunchShimPathDirs({
+      shimDir,
+      nativeWindowsLeader: process.platform === 'win32' && !leaderIsWsl && hostShell !== 'default'
+    })
+    if (!shimPathDirs) {
+      return inProcess
+    }
     const launch = this.claudeAgentTeams.createLaunchEnv({
       leaderHandle: args.handle,
       baseEnv,
       shimDir,
       shimBin,
-      shimPathDirs: resolveClaudeAgentTeamsShimPathDirs(shimDir),
+      shimPathDirs,
       hostShell: hostShell ?? undefined
     })
     const env = auth ? { ...auth.envPatch, ...launch.env } : launch.env
