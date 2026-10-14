@@ -1,6 +1,7 @@
 import type { AzureDevOpsReviewerAvatarResult } from '../../shared/azure-devops-pull-request-board'
 import { getAzureBoardsOrganizationUrl } from '../azure-boards/azure-boards-scope'
 import { resolveAzureDevOpsAuthHeaders } from './azure-devops-credential'
+import { cancelUnreadResponseBody } from '../lib/unread-response-body'
 
 const AVATAR_TIMEOUT_MS = 15_000
 const MAX_AVATAR_BYTES = 512 * 1024
@@ -48,18 +49,18 @@ async function fetchAvatar(url: string): Promise<string> {
     signal: AbortSignal.timeout(AVATAR_TIMEOUT_MS)
   })
   if (!response.ok) {
-    await response.body?.cancel()
+    await cancelUnreadResponseBody(response)
     throw new Error(`Avatar request failed: HTTP ${response.status}`)
   }
   // Why: a sign-in that no longer works ends in 200 with the login HTML; the content type tells it from an image.
   const contentType = (response.headers.get('content-type') ?? '').split(';')[0].trim()
   if (!contentType.startsWith('image/')) {
-    await response.body?.cancel()
+    await cancelUnreadResponseBody(response)
     throw new Error(`Avatar response is not an image (${contentType || 'unknown'}).`)
   }
   const declared = Number(response.headers.get('content-length'))
   if (Number.isFinite(declared) && declared > MAX_AVATAR_BYTES) {
-    await response.body?.cancel()
+    await cancelUnreadResponseBody(response)
     throw new Error('Avatar is too large.')
   }
   const bytes = Buffer.from(await response.arrayBuffer())
