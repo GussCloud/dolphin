@@ -1,4 +1,3 @@
-import type { AgentSessionClaimedSpawnResult } from '../../../../shared/agent-session-host-authority'
 import { isTerminalLeafId, makePaneKey } from '../../../../shared/stable-pane-id'
 import { isValidTerminalTabId } from '../../../../shared/terminal-tab-id'
 import {
@@ -20,22 +19,7 @@ import {
   commitRuntimeSpawnHiddenDelivery,
   releaseRuntimeSpawnPreSpawnHiddenMark
 } from './spawn-hidden-delivery'
-
-function toRuntimeSpawnReply(result: {
-  id: string
-  incarnationId?: string
-  wslDistro?: string | null
-  stablePaneOwner?: { handle: string; tabId: string; leafId: string }
-  agentSessionEnsure?: AgentSessionClaimedSpawnResult
-}) {
-  return {
-    id: result.id,
-    ...(result.incarnationId ? { incarnationId: result.incarnationId } : {}),
-    ...(typeof result.wslDistro === 'string' ? { wslDistro: result.wslDistro } : {}),
-    ...(result.stablePaneOwner ? { stablePaneOwner: result.stablePaneOwner } : {}),
-    ...(result.agentSessionEnsure ? { agentSessionEnsure: result.agentSessionEnsure } : {})
-  }
-}
+import { toRuntimeSpawnReply } from './spawn-reply'
 
 function restoreProvisionalPtySize(ctx: ReturnType<typeof createRuntimePtySpawnState>): void {
   if (ctx.sessionId === undefined) {
