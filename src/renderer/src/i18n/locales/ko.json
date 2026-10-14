@@ -122,7 +122,8 @@
     "help": "도움말",
     "paste": "붙여넣기",
     "copy": "복사",
-    "selectAll": "모두 선택"
+    "selectAll": "모두 선택",
+    "showAzurePrsButton": "Azure (PRs) 버튼 표시"
   },
   "tray": {
     "openDolphin": "Dolphin 열기",
@@ -5290,7 +5291,8 @@
           "fee535205b": "작업",
           "d599269755": "사이드바에서 숨기기",
           "artifacts": "아티팩트",
-          "skills": "스킬"
+          "skills": "스킬",
+          "azurePrs": "Azure (PRs)"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "지우기",
@@ -6720,7 +6722,8 @@
           "showPinnedWorktreesInGroups": {
             "title": "고정된 워크트리를 원래 목록에도 표시",
             "description": "고정된 워크트리는 Pinned에 유지하면서 전체, 프로젝트, 상태 및 PR에도 표시합니다."
-          }
+          },
+          "showAzurePrsButton": "Azure (PRs) 버튼 표시"
         },
         "AutoRenameBranchFromWorkSetting": {
           "1626524572": "Nautilus",
@@ -9199,6 +9202,12 @@
                 "cursor": "cursor"
               },
               "title": "Cursor 사용량"
+            },
+            "showAzurePrsButton": {
+              "title": "Azure (PRs) 버튼 표시",
+              "description": "Azure DevOps가 설정되어 있으면 왼쪽 사이드바에 Azure (PRs) 버튼을 표시합니다.",
+              "azure": "azure",
+              "pullRequests": "pull requests"
             }
           }
         },
@@ -17602,6 +17611,146 @@
           "noDescription": "설명이 없습니다.",
           "comments": "댓글"
         }
+      },
+      "azurePrs": {
+        "situation": {
+          "conflicts": "대상과 충돌",
+          "conflictsShort": "충돌",
+          "rejected": "리뷰어가 거부함",
+          "rejectedShort": "거부됨",
+          "buildFailed": "Policy 실패",
+          "buildFailedShort": "Policy",
+          "waitingAuthor": "내 차례",
+          "waitingAuthorShort": "내 차례",
+          "approved": "승인됨",
+          "draft": "초안",
+          "draftShort": "Draft",
+          "pending": "대기 중 — 아직 머지할 수 없음",
+          "pendingShort": "대기 중"
+        },
+        "vote": {
+          "approved": "승인됨",
+          "approvedWithSuggestions": "제안과 함께 승인",
+          "waitingAuthor": "작성자 대기 중",
+          "rejected": "거부됨",
+          "none": "투표 없음"
+        },
+        "policy": {
+          "approved": "ok",
+          "rejected": "실패",
+          "broken": "손상됨",
+          "running": "실행 중",
+          "queued": "대기열",
+          "notApplicable": "n/a"
+        },
+        "age": {
+          "today": "오늘",
+          "oneDay": "1일",
+          "days": "{{value0}}일"
+        },
+        "signal": {
+          "conflicts": "대상 브랜치와 충돌",
+          "rejected": "리뷰어 거부 {{value0}}건",
+          "waitingAuthor": "작성자를 기다리는 리뷰어 {{value0}}명",
+          "policyFailed": "Policy 실패: {{value0}}",
+          "unresolvedThreads": "해결되지 않은 댓글 {{value0}}개",
+          "validationRunning": "검증이 아직 실행 중",
+          "approvals": "승인 {{value0}}건",
+          "personApprovalsMissingGroup": "사람의 승인 {{value0}}건 — 리뷰어 그룹이 아직 없음",
+          "nothingPending": "대기 중인 항목 없음 — 리뷰 대기 중"
+        },
+        "reviewRequest": {
+          "headOne": "안녕하세요! 이 PR 리뷰 부탁드려도 될까요?",
+          "headMany": "안녕하세요! 이 PR {{value0}}개 리뷰 부탁드려도 될까요?",
+          "thanks": "감사합니다!",
+          "copyFailed": "복사하지 못했습니다. 텍스트를 선택하고 Ctrl+C를 누르세요.",
+          "copiedOne": "텍스트를 복사했습니다 — Teams에 붙여넣기만 하면 됩니다",
+          "copiedMany": "PR {{value0}}개가 담긴 텍스트를 복사했습니다 — Teams에 붙여넣기만 하면 됩니다",
+          "title": "리뷰 요청",
+          "description": "Teams에서 붙여넣는 방식의 일반 텍스트입니다. 복사하기 전에 수정할 수 있습니다.",
+          "close": "닫기",
+          "copy": "텍스트 복사"
+        },
+        "card": {
+          "openInAzure": "Azure DevOps에서 열기",
+          "alsoLinked": "이 PR은 항목 #{{value0}}에도 연결되어 있습니다",
+          "item": "항목 #{{value0}}",
+          "threads": "스레드 {{value1}}개 중 {{value0}}개 미해결",
+          "age": "!{{value0}} · {{value1}} 전에 열림",
+          "ageBy": "!{{value0}} · {{value1}} 전에 열림 · 작성자 {{value2}}"
+        },
+        "group": {
+          "noItem": "연결된 항목 없음",
+          "typeNotLoaded": "유형을 불러오지 못함",
+          "item": "항목",
+          "noItemTitle": "PBI, Bug, Task가 연결되지 않은 PR",
+          "titleNotLoaded": "제목을 불러오지 못함",
+          "prCountOne": "PR 1개",
+          "prCountMany": "PR {{value0}}개",
+          "openItem": "Azure DevOps에서 #{{value0}} 열기 ({{value1}})"
+        },
+        "selection": {
+          "count": "{{value1}}개 중 {{value0}}개 선택됨",
+          "selectAll": "모두 선택",
+          "clear": "선택 해제",
+          "cancel": "취소",
+          "generate": "텍스트 생성"
+        },
+        "title": "Azure (PRs)",
+        "loadingOverlay": "pull request를 읽는 중…",
+        "error": {
+          "title": "pull request를 읽지 못했습니다"
+        },
+        "empty": {
+          "mine": "열려 있는 내 PR이 없습니다.",
+          "other": "지금은 아무것도 없습니다."
+        },
+        "repeatedNote": "PR {{value0}}개는 여러 항목을 참조하므로 둘 이상의 그룹에 나타납니다 — 그룹 합계가 PR 총수보다 클 수 있습니다.",
+        "tile": {
+          "conflicts": "충돌",
+          "rejected": "거부됨",
+          "policy": "Policy",
+          "waitingAuthor": "내 차례",
+          "pending": "대기 중",
+          "approved": "승인됨"
+        },
+        "filter": {
+          "mine": "내 PR",
+          "reviewing": "리뷰 중",
+          "all": "전체"
+        },
+        "toolbar": {
+          "ungroupHint": "평면 목록으로 돌아가기",
+          "groupHint": "카드를 PBI/Bug별로 그룹화",
+          "group": "그룹화",
+          "requestReviewHint": "Teams로 보낼 리뷰 요청 텍스트 만들기",
+          "requestReview": "리뷰 요청",
+          "refresh": "새로 고침"
+        },
+        "reviewer": {
+          "group": "(그룹)",
+          "required": "필수",
+          "viewComments": "클릭하여 댓글 보기"
+        },
+        "thread": {
+          "open": "열림",
+          "resolved": "해결됨",
+          "wontFix": "수정 안 함",
+          "byDesign": "의도된 동작",
+          "closed": "닫힘"
+        },
+        "comments": {
+          "thread": "스레드 {{value0}}",
+          "reply": "답글",
+          "group": "그룹",
+          "openPr": "Azure DevOps에서 PR 열기",
+          "reviewer": "리뷰어:",
+          "loading": "댓글을 불러오는 중…",
+          "error": "댓글을 읽지 못했습니다",
+          "emptyGroup": "그룹은 댓글을 달지 않습니다 — 댓글은 사람이 답니다. 각자의 둥근 아바타를 확인하세요.",
+          "empty": "{{value0}}님은 이 PR에 댓글을 달지 않았습니다.",
+          "count": "댓글 {{value0}}개, 최신순."
+        }
       }
     },
     "i18n": {
@@ -18966,5 +19115,22 @@
       "no": "아니요",
       "approveInChannel": "이 권한은 Claude 채널 메시지에서 응답하세요."
     }
+  },
+  "whatsNew": {
+    "azurePrs": {
+      "bullet": {
+        "grouping": "열려 있는 pull request를 PBI, Bug, Task별로 그룹화",
+        "situation": "각 PR의 상태: 충돌, 거부됨, policy, 내 차례, 대기 중, 승인됨",
+        "details": "Policy, 댓글, 리뷰어와 투표",
+        "refresh": "30초마다 자동으로 새로 고침",
+        "menu": "az login 또는 PAT로 Azure DevOps를 설정하면 사이드바에 표시됩니다"
+      },
+      "title": "Azure (PRs)",
+      "open": "Azure (PRs) 열기",
+      "configure": "Azure DevOps 설정"
+    },
+    "title": "{{version}} 새로운 기능",
+    "description": "Azure DevOps pull request를 살펴보는 새로운 방법입니다.",
+    "dismiss": "확인"
   }
 }

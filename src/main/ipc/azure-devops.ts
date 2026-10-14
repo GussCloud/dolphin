@@ -10,6 +10,9 @@ import {
   setAzureCliAutoRenew,
   setAzureDevOpsCliDefaults
 } from '../azure-devops/azure-devops-auth-commands'
+import { getAzureDevOpsPullRequestBoard } from '../azure-devops/pull-request-board'
+import { getAzureDevOpsPullRequestComments } from '../azure-devops/pull-request-comments'
+import { getAzureDevOpsReviewerAvatar } from '../azure-devops/reviewer-avatar'
 import type {
   AzureDevOpsOrgLinkArgs,
   AzureDevOpsOrgLinkStatus
@@ -74,6 +77,16 @@ export function registerAzureDevOpsHandlers(
   ipcMain.handle('azureDevOps:refreshCliSession', (): void => refreshAzureCliSession())
 
   ipcMain.handle('azureDevOps:listRepositories', () => listAzureDevOpsRepositoriesResult())
+
+  ipcMain.handle('azureDevOps:pullRequestBoard', () => getAzureDevOpsPullRequestBoard())
+
+  ipcMain.handle('azureDevOps:pullRequestComments', (_event, args: unknown) =>
+    getAzureDevOpsPullRequestComments(args)
+  )
+
+  ipcMain.handle('azureDevOps:reviewerAvatar', (_event, url: unknown) =>
+    getAzureDevOpsReviewerAvatar(url)
+  )
 
   ipcMain.handle(
     'azureDevOps:orgLink',

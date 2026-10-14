@@ -122,7 +122,8 @@
     "help": "帮助",
     "paste": "粘贴",
     "copy": "复制",
-    "selectAll": "全选"
+    "selectAll": "全选",
+    "showAzurePrsButton": "显示 Azure (PRs) 按钮"
   },
   "tray": {
     "openDolphin": "打开 Dolphin",
@@ -5290,7 +5291,8 @@
           "fee535205b": "任务",
           "d599269755": "从侧边栏隐藏",
           "artifacts": "工件",
-          "skills": "技能"
+          "skills": "技能",
+          "azurePrs": "Azure (PRs)"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "清除",
@@ -6720,7 +6722,8 @@
           "showPinnedWorktreesInGroups": {
             "title": "也在原来的列表中显示已固定的工作树",
             "description": "已固定的工作树会保留在 Pinned 中，同时也显示在全部、项目、状态和 PR 中。"
-          }
+          },
+          "showAzurePrsButton": "显示 Azure (PRs) 按钮"
         },
         "AutoRenameBranchFromWorkSetting": {
           "1626524572": "Nautilus",
@@ -9199,6 +9202,12 @@
                 "cursor": "cursor"
               },
               "title": "Cursor 用量"
+            },
+            "showAzurePrsButton": {
+              "title": "显示 Azure (PRs) 按钮",
+              "description": "配置 Azure DevOps 后，在左侧边栏显示 Azure (PRs) 按钮。",
+              "azure": "azure",
+              "pullRequests": "pull requests"
             }
           }
         },
@@ -17602,6 +17611,146 @@
           "noDescription": "无描述。",
           "comments": "评论"
         }
+      },
+      "azurePrs": {
+        "situation": {
+          "conflicts": "与目标分支冲突",
+          "conflictsShort": "冲突",
+          "rejected": "被评审者拒绝",
+          "rejectedShort": "已拒绝",
+          "buildFailed": "Policy 未通过",
+          "buildFailedShort": "Policy",
+          "waitingAuthor": "轮到我了",
+          "waitingAuthorShort": "我的",
+          "approved": "已批准",
+          "draft": "草稿",
+          "draftShort": "Draft",
+          "pending": "待处理 — 尚未放行合并",
+          "pendingShort": "待处理"
+        },
+        "vote": {
+          "approved": "已批准",
+          "approvedWithSuggestions": "批准并附建议",
+          "waitingAuthor": "等待作者",
+          "rejected": "已拒绝",
+          "none": "未投票"
+        },
+        "policy": {
+          "approved": "ok",
+          "rejected": "失败",
+          "broken": "已损坏",
+          "running": "运行中",
+          "queued": "排队中",
+          "notApplicable": "n/a"
+        },
+        "age": {
+          "today": "今天",
+          "oneDay": "1 天",
+          "days": "{{value0}} 天"
+        },
+        "signal": {
+          "conflicts": "与目标分支冲突",
+          "rejected": "{{value0}} 个评审者拒绝",
+          "waitingAuthor": "{{value0}} 位评审者在等待作者",
+          "policyFailed": "Policy 未通过：{{value0}}",
+          "unresolvedThreads": "{{value0}} 条未解决的评论",
+          "validationRunning": "验证仍在运行",
+          "approvals": "{{value0}} 个批准",
+          "personApprovalsMissingGroup": "{{value0}} 个个人批准 — 仍缺评审者组",
+          "nothingPending": "没有待处理事项 — 等待评审"
+        },
+        "reviewRequest": {
+          "headOne": "你好！能帮忙评审一下这个 PR 吗？",
+          "headMany": "你好！能帮忙评审一下这 {{value0}} 个 PR 吗？",
+          "thanks": "谢谢！",
+          "copyFailed": "复制失败。请选中文本后按 Ctrl+C。",
+          "copiedOne": "文本已复制 — 直接粘贴到 Teams 即可",
+          "copiedMany": "包含 {{value0}} 个 PR 的文本已复制 — 直接粘贴到 Teams 即可",
+          "title": "评审请求",
+          "description": "纯文本，与 Teams 粘贴的效果一致。复制前可以编辑。",
+          "close": "关闭",
+          "copy": "复制文本"
+        },
+        "card": {
+          "openInAzure": "在 Azure DevOps 中打开",
+          "alsoLinked": "此 PR 还关联了工作项 #{{value0}}",
+          "item": "工作项 #{{value0}}",
+          "threads": "{{value1}} 个线程中有 {{value0}} 个未解决",
+          "age": "!{{value0}} · 已打开 {{value1}}",
+          "ageBy": "!{{value0}} · 已打开 {{value1}} · 作者 {{value2}}"
+        },
+        "group": {
+          "noItem": "无关联工作项",
+          "typeNotLoaded": "类型未加载",
+          "item": "工作项",
+          "noItemTitle": "未关联 PBI、Bug 或 Task 的 PR",
+          "titleNotLoaded": "标题未加载",
+          "prCountOne": "1 个 PR",
+          "prCountMany": "{{value0}} 个 PR",
+          "openItem": "在 Azure DevOps 中打开 #{{value0}}（{{value1}}）"
+        },
+        "selection": {
+          "count": "已选 {{value0}} / {{value1}}",
+          "selectAll": "全选",
+          "clear": "取消全选",
+          "cancel": "取消",
+          "generate": "生成文本"
+        },
+        "title": "Azure (PRs)",
+        "loadingOverlay": "正在读取 pull request…",
+        "error": {
+          "title": "无法读取 pull request"
+        },
+        "empty": {
+          "mine": "你没有处于打开状态的 PR。",
+          "other": "目前这里没有内容。"
+        },
+        "repeatedNote": "{{value0}} 个 PR 因引用了多个工作项而出现在多个分组中 — 各分组之和会超过 PR 总数。",
+        "tile": {
+          "conflicts": "冲突",
+          "rejected": "已拒绝",
+          "policy": "Policy",
+          "waitingAuthor": "轮到我了",
+          "pending": "待处理",
+          "approved": "已批准"
+        },
+        "filter": {
+          "mine": "我的 PR",
+          "reviewing": "评审中",
+          "all": "全部"
+        },
+        "toolbar": {
+          "ungroupHint": "返回平铺列表",
+          "groupHint": "按 PBI/Bug 对卡片分组",
+          "group": "分组",
+          "requestReviewHint": "生成要在 Teams 上发送的评审请求文本",
+          "requestReview": "请求评审",
+          "refresh": "刷新"
+        },
+        "reviewer": {
+          "group": "（组）",
+          "required": "必需",
+          "viewComments": "点击查看评论"
+        },
+        "thread": {
+          "open": "未解决",
+          "resolved": "已解决",
+          "wontFix": "不予修复",
+          "byDesign": "设计如此",
+          "closed": "已关闭"
+        },
+        "comments": {
+          "thread": "线程 {{value0}}",
+          "reply": "回复",
+          "group": "组",
+          "openPr": "在 Azure DevOps 中打开 PR",
+          "reviewer": "评审者：",
+          "loading": "正在加载评论…",
+          "error": "无法读取评论",
+          "emptyGroup": "组不会发表评论 — 发表评论的是个人。请查看每个人的圆形头像。",
+          "empty": "{{value0}} 尚未评论此 PR。",
+          "count": "{{value0}} 条评论，最新的在前。"
+        }
       }
     },
     "i18n": {
@@ -18966,5 +19115,22 @@
       "no": "否",
       "approveInChannel": "请在 Claude 频道消息中答复此权限。"
     }
+  },
+  "whatsNew": {
+    "azurePrs": {
+      "bullet": {
+        "grouping": "已打开的 pull request 按 PBI、Bug 或 Task 分组",
+        "situation": "每个 PR 的状态：冲突、已拒绝、policy、等你处理、待处理或已批准",
+        "details": "Policy、评论，以及评审者及其投票",
+        "refresh": "每 30 秒自动刷新",
+        "menu": "使用 az login 或 PAT 配置 Azure DevOps 后，会显示在侧边栏"
+      },
+      "title": "Azure (PRs)",
+      "open": "打开 Azure (PRs)",
+      "configure": "配置 Azure DevOps"
+    },
+    "title": "{{version}} 版本新功能",
+    "description": "跟踪 Azure DevOps pull request 的新方式。",
+    "dismiss": "知道了"
   }
 }

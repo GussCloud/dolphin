@@ -7,5 +7,8 @@ export const azureDevOpsApi = {
   setCliAutoRenew: (enabled) => ipcRenderer.invoke('azureDevOps:setCliAutoRenew', enabled),
   refreshCliSession: () => ipcRenderer.invoke('azureDevOps:refreshCliSession'),
   listRepositories: () => ipcRenderer.invoke('azureDevOps:listRepositories'),
+  pullRequestBoard: () => ipcRenderer.invoke('azureDevOps:pullRequestBoard'),
+  pullRequestComments: (args) => ipcRenderer.invoke('azureDevOps:pullRequestComments', args),
+  reviewerAvatar: (url) => ipcRenderer.invoke('azureDevOps:reviewerAvatar', url),
   orgLink: (args) => ipcRenderer.invoke('azureDevOps:orgLink', args)
 } satisfies PreloadApi['azureDevOps']

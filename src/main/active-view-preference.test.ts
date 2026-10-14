@@ -53,6 +53,19 @@ describe('ActiveViewPreference', () => {
     })
   })
 
+  it('persists the Azure PRs view', async () => {
+    vi.useFakeTimers()
+    const preference = new ActiveViewPreference(dataFile, 'terminal')
+
+    preference.set('azure-prs')
+    vi.advanceTimersByTime(100)
+    await preference.waitForPendingWrite()
+
+    expect(JSON.parse(readFileSync(getActiveViewPreferenceFile(dataFile), 'utf-8'))).toEqual({
+      activeView: 'azure-prs'
+    })
+  })
+
   it('flushes synchronously for an immediate graceful exit', () => {
     vi.useFakeTimers()
     const preference = new ActiveViewPreference(dataFile, 'terminal')

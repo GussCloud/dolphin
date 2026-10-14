@@ -18,6 +18,7 @@ import { shouldRenderPetOverlay } from '../components/pet/pet-overlay-visibility
 import { useAppStore } from '../store'
 import type { UpdateStatus } from '../../../shared/update-status-types'
 import { useLazyModalMounts } from './use-lazy-modal-mounts'
+import { useWhatsNew } from './use-whats-new'
 import {
   selectAppRootSurfacePetEnabled,
   selectAppRootSurfaceTelemetryOptedIn,
@@ -37,6 +38,7 @@ const StatusBar = lazy(() =>
 const SetupGuideModal = lazy(() => import('../components/setup-guide/SetupGuideModal'))
 const FeatureWallModal = lazy(() => import('../components/feature-wall/FeatureWallModal'))
 const FeatureTipsModal = lazy(() => import('../components/feature-tips/FeatureTipsModal'))
+const WhatsNewModal = lazy(() => import('../components/whats-new/WhatsNewModal'))
 const AddRepoDialog = lazy(() => import('../components/sidebar/AddRepoDialog'))
 const NonGitFolderDialog = lazy(() => import('../components/sidebar/NonGitFolderDialog'))
 const AddProjectFromFolderDialog = lazy(
@@ -132,6 +134,7 @@ export function AppRootSurfaces(props: {
 }): React.JSX.Element {
   const { floatingWorkspace, onboardingGate } = props
   const { mountedLazyModalIds, shouldMountAddRepoDialog } = useLazyModalMounts()
+  useWhatsNew(onboardingGate.onboarding)
   const activeView = useAppStore((s) => s.activeView)
   const activeModal = useAppStore((s) => s.activeModal)
   // Keep this always-mounted surface subscribed only to the settings fields it reads. A
@@ -259,6 +262,11 @@ export function AppRootSurfaces(props: {
         {mountedLazyModalIds.has('feature-tips') ? (
           <ModalBoundary boundaryId="modal.feature-tips" resetKey={activeModal === 'feature-tips'}>
             <FeatureTipsModal />
+          </ModalBoundary>
+        ) : null}
+        {mountedLazyModalIds.has('whats-new') ? (
+          <ModalBoundary boundaryId="modal.whats-new" resetKey={activeModal === 'whats-new'}>
+            <WhatsNewModal />
           </ModalBoundary>
         ) : null}
       </Suspense>

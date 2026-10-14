@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   openActivityPage: vi.fn(),
   openMobilePage: vi.fn(),
   openArtifactsPage: vi.fn(),
+  openAzurePrsPage: vi.fn(),
   openModal: vi.fn(),
   updateSettings: vi.fn(),
   refreshPreflightStatus: vi.fn(),
@@ -90,6 +91,7 @@ vi.mock('@/components/ui/context-menu', () => ({
 import SidebarNav, {
   getSetupGuideSidebarEntryReady,
   shouldShowAutomationsButton,
+  shouldShowAzurePrsButton,
   shouldShowArtifactsButton,
   shouldShowMobileButton,
   shouldShowSetupGuideEntry
@@ -119,10 +121,12 @@ function folderRepo(): Repo {
 
 function setSidebarState({
   settings = getDefaultSettings('/tmp'),
-  repos = [gitRepo()]
+  repos = [gitRepo()],
+  azureDevOps
 }: {
   settings?: GlobalSettings
   repos?: Repo[]
+  azureDevOps?: { configured: boolean; baseUrl?: string }
 } = {}): void {
   mocks.state = {
     settings,
@@ -133,10 +137,13 @@ function setSidebarState({
     openActivityPage: mocks.openActivityPage,
     openMobilePage: mocks.openMobilePage,
     openArtifactsPage: mocks.openArtifactsPage,
+    openAzurePrsPage: mocks.openAzurePrsPage,
     openModal: mocks.openModal,
     updateSettings: mocks.updateSettings,
-    preflightStatus: { glab: { installed: false } },
+    preflightStatus: { glab: { installed: false }, azureDevOps },
     preflightStatusChecked: true,
+    preflightStatusError: null,
+    preflightStatusContextKey: 'host',
     refreshPreflightStatus: mocks.refreshPreflightStatus,
     linearStatus: { connected: false },
     linearStatusChecked: true,
@@ -301,6 +308,24 @@ describe('SidebarNav', () => {
     expect(mocks.updateSettings).toHaveBeenCalledWith({ showArtifactsButton: false })
   })
 
+  it('hides the Azure PRs entry until Azure DevOps is configured', async () => {
+    setSidebarState({ azureDevOps: { configured: false } })
+    const container = await renderSidebarNav()
+
+    expect(queryButtonByText(container, 'Azure (PRs)')).toBeNull()
+  })
+
+  it('opens Azure PRs from the sidebar when Azure DevOps is configured', async () => {
+    setSidebarState({
+      azureDevOps: { configured: true, baseUrl: 'https://dev.azure.com/acme' }
+    })
+    const container = await renderSidebarNav()
+
+    await clickButton(getButtonByText(container, 'Azure (PRs)'))
+
+    expect(mocks.openAzurePrsPage).toHaveBeenCalledOnce()
+  })
+
   it('hides the Mobile entry when the sidebar setting is off', () => {
     expect(shouldShowMobileButton({ showMobileButton: false })).toBe(false)
   })
@@ -349,6 +374,40 @@ describe('SidebarNav', () => {
 
     expect(mocks.updateSettings).toHaveBeenCalledWith({ showMobileButton: false })
     expect(mocks.openMobilePage).not.toHaveBeenCalled()
+  })
+
+  it('shows the Azure PRs entry by default only when Azure DevOps is available', () => {
+    expect(shouldShowAzurePrsButton(null, true)).toBe(true)
+    expect(shouldShowAzurePrsButton({}, true)).toBe(true)
+    expect(shouldShowAzurePrsButton({}, false)).toBe(false)
+    expect(shouldShowAzurePrsButton({ showAzurePrsButton: false }, true)).toBe(false)
+  })
+
+  it('omits the Azure PRs row when the sidebar setting is off', async () => {
+    setSidebarState({
+      azureDevOps: { configured: true, baseUrl: 'https://dev.azure.com/acme' },
+      settings: { ...getDefaultSettings('/tmp'), showAzurePrsButton: false }
+    })
+
+    const container = await renderSidebarNav()
+
+    expect(queryButtonByText(container, 'Azure (PRs)')).toBeNull()
+  })
+
+  it('hides Azure PRs from its sidebar context menu', async () => {
+    setSidebarState({ azureDevOps: { configured: true, baseUrl: 'https://dev.azure.com/acme' } })
+    const container = await renderSidebarNav()
+
+    const azureMenu = getButtonByText(container, 'Azure (PRs)').closest(
+      '[data-testid="context-menu"]'
+    )
+    if (!azureMenu) {
+      throw new Error('Azure PRs context menu not found')
+    }
+
+    await clickButton(getHideButton(azureMenu))
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith({ showAzurePrsButton: false })
   })
 
   it('shows the Automations entry by default for older settings', () => {

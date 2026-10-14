@@ -92,6 +92,19 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         activeView: state.previousViewBeforeArtifacts,
         worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'artifacts')
       })),
+    openAzurePrsPage: () => {
+      get().recordViewVisit('azure-prs')
+      set((state) => ({
+        activeView: 'azure-prs',
+        previousViewBeforeAzurePrs:
+          state.activeView === 'azure-prs' ? state.previousViewBeforeAzurePrs : state.activeView
+      }))
+    },
+    closeAzurePrsPage: () =>
+      set((state) => ({
+        activeView: state.previousViewBeforeAzurePrs,
+        worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'azure-prs')
+      })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

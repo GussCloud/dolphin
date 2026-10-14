@@ -257,6 +257,8 @@ export type GlobalSettings = {
   showTasksButton: boolean
   /** Only toggles the sidebar shortcut; Automations stay reachable from Settings/View menu. */
   showAutomationsButton?: boolean
+  /** Only toggles the sidebar shortcut; the entry also needs Azure DevOps configured. */
+  showAzurePrsButton?: boolean
   /** Deprecated: Artifacts are always available. Use showArtifactsButton for sidebar visibility. */
   artifactsEnabled?: boolean
   /** Capability gate for agent-driven publishing; off until granted, enforced in main, not just the UI. */
@@ -474,6 +476,8 @@ export type GlobalSettings = {
   experimentalAgentDashboardPopout?: boolean
   /** Set after the one-time legacy Agents tab introduction has been acknowledged. */
   agentsSidebarIntroShown?: boolean
+  /** Newest What's new release already announced to this profile; set when the dialog is shown. */
+  lastSeenWhatsNewVersion?: string
   /** True when the profile previously opted into the legacy Agents view. */
   agentsSidebarMigratedFromExperimental?: boolean
   /** How the Agent Dashboard opens: an in-window companion board or a separate pop-out window. Defaults to in-window. */
