@@ -133,11 +133,13 @@ by a junction `%ProgramData%\Dolphin\agent-teams-path\u-<random>\bin` (fallback
 `tmux.exe` needs nothing install-relative (its CLI fallback uses `DOLPHIN_AGENT_TEAMS_SHIM_BIN`),
 so the junction points at the shim dir itself.
 
-Those roots are writable by every account, so the holder name is random, the chosen link is kept in
-`~/.dolphin/claude-agent-teams-ascii-path.json`, and every launch re-checks it is still a junction
-to the expected dir before reusing it; otherwise a fresh one is created. Residual risk: an account
-that pre-created `%ProgramData%\Dolphin` owns that parent and could swap a link between the check
-and Claude's lookup on a shared machine.
+Those roots grant every account create/write-data, which a junction inherits, so another user
+could retarget it mid-session and put their `tmux.exe` first on PATH with the team token. The
+protection is the holder's ACL: the random `u-<random>` holder gets a protected DACL (current
+user, SYSTEM, Administrators; `bestEffortRestrictWindowsPath`, verified by readback) before the
+junction is created inside it, and a holder that cannot be restricted is discarded. The chosen
+link is kept in `~/.dolphin/claude-agent-teams-ascii-path.json`; each launch re-checks it is still a
+junction to the expected dir, which only catches a lost or tampered record.
 
 If no junction can be created, the leader degrades to in-process teammates (logged, no UI notice).
 WSL leaders skip all of this: their Linux `claude` never searches the Windows shim dirs.

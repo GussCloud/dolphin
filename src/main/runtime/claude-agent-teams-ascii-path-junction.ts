@@ -6,11 +6,13 @@ import {
   readlink,
   rename,
   rm,
+  rmdir,
   symlink,
   writeFile
 } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
+import { bestEffortRestrictWindowsPath } from '../../shared/secure-path-windows-acl'
 
 // Why: Claude Code on Windows refuses to run `tmux` found under a PATH entry with non-ASCII text or an
 // 8.3 `~` name (exit 127 "not found or is in an unsafe location"); an ASCII junction to the same dir works.
@@ -32,6 +34,8 @@ export type ClaudeSafeShimPathOptions = {
   /** Private record of the junctions this user created, so a launch reuses instead of minting one. */
   registryPath?: string
   junctionRoots?: string[]
+  /** Resolves true once the holder's DACL is verified private to this user (plus SYSTEM and Administrators). */
+  restrictHolder?: (holder: string) => Promise<boolean>
 }
 
 /** Replaces each unsafe Windows shim dir with an ASCII junction to it, keeping the order. */
@@ -61,7 +65,7 @@ export async function exposeShimDirsOnClaudeSafePath(
       mapped.push(recorded)
       continue
     }
-    const created = await createJunction(dir, roots)
+    const created = await createJunction(dir, roots, options.restrictHolder ?? restrictHolderDacl)
     if (!created) {
       allSafe = false
       mapped.push(dir)
@@ -92,15 +96,27 @@ function defaultJunctionRoots(env: Record<string, string | undefined>): string[]
   return roots
 }
 
-// Why: these roots are shared by every account, so the holder name is random and never adopted unless we
-// recorded it, and every reuse re-checks that the link still points at our dir.
-async function createJunction(target: string, roots: string[]): Promise<string | null> {
+function restrictHolderDacl(holder: string): Promise<boolean> {
+  return new Promise((settle) => bestEffortRestrictWindowsPath(holder, true, settle))
+}
+
+// Why: these roots grant every account create/write-data, which inherits onto a junction and would let
+// another user retarget it mid-session; the holder gets a protected private DACL before the link exists.
+async function createJunction(
+  target: string,
+  roots: string[],
+  restrictHolder: (holder: string) => Promise<boolean>
+): Promise<string | null> {
   for (const root of roots) {
     let holder: string | null = null
+    let link: string | null = null
     try {
       await mkdir(root, { recursive: true })
       holder = await mkdtemp(join(root, 'u-'))
-      const link = join(holder, 'bin')
+      if (!(await restrictHolder(holder))) {
+        throw new Error('holder ACL not restricted')
+      }
+      link = join(holder, 'bin')
       await symlink(target, link, 'junction')
       if (await isJunctionTo(link, target)) {
         return link
@@ -108,8 +124,12 @@ async function createJunction(target: string, roots: string[]): Promise<string |
     } catch {
       // try the next root
     }
+    // Why non-recursive: a recursive delete must never walk through the junction into the shim dir.
+    if (link) {
+      await rmdir(link).catch(() => undefined)
+    }
     if (holder) {
-      await rm(holder, { recursive: true, force: true }).catch(() => undefined)
+      await rmdir(holder).catch(() => undefined)
     }
   }
   return null

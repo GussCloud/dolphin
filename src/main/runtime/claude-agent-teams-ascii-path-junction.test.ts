@@ -1,8 +1,10 @@
-import { existsSync, realpathSync } from 'node:fs'
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises'
+import { existsSync, readFileSync, realpathSync } from 'node:fs'
+import { mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { runProcessSync } from '../../shared/child-process/run-process'
+import { windowsSystem32Binary } from '../../shared/child-process/windows-system-binary'
 import {
   exposeShimDirsOnClaudeSafePath,
   isClaudeSafePathEntry
@@ -20,6 +22,17 @@ async function makeBase(): Promise<string> {
   const base = await mkdtemp(join(realpathSync.native(tmpdir()), 'dolphin-ascii-junction-'))
   roots.push(base)
   return base
+}
+
+function savedSddl(path: string, scratch: string): string {
+  const savePath = join(scratch, 'acl.sddl')
+  const result = runProcessSync({
+    program: windowsSystem32Binary('icacls.exe'),
+    args: [path, '/save', savePath, '/q']
+  })
+  expect(result.code).toBe(0)
+  // icacls writes the descriptor as UTF-16LE.
+  return readFileSync(savePath, 'utf16le')
 }
 
 describe('isClaudeSafePathEntry', () => {
@@ -58,6 +71,26 @@ describe('exposeShimDirsOnClaudeSafePath', () => {
   })
 
   it.runIf(process.platform === 'win32')(
+    'never links through a holder whose ACL could not be restricted',
+    async () => {
+      const base = await makeBase()
+      const target = join(base, 'perfil-João')
+      await mkdir(target)
+      const junctions = join(base, 'junctions')
+
+      await expect(
+        exposeShimDirsOnClaudeSafePath([target], {
+          platform: 'win32',
+          registryPath: join(base, 'registry.json'),
+          junctionRoots: [junctions],
+          restrictHolder: async () => false
+        })
+      ).resolves.toEqual({ dirs: [target], allSafe: false })
+      await expect(readdir(junctions)).resolves.toEqual([])
+    }
+  )
+
+  it.runIf(process.platform === 'win32')(
     'exposes a non-ASCII dir through an ASCII junction, reuses it, and replaces a tampered one',
     async () => {
       const base = await makeBase()
@@ -78,6 +111,11 @@ describe('exposeShimDirsOnClaudeSafePath', () => {
       expect(isClaudeSafePathEntry(link)).toBe(true)
       expect(link.startsWith(join(base, 'junctions'))).toBe(true)
       await expect(readFile(join(link, 'tmux.cmd'), 'utf8')).resolves.toBe('@echo tmux 3.4\r\n')
+      // Protected DACL with no Users / Authenticated Users / Everyone rule, so nobody else can retarget it.
+      const sddl = savedSddl(dirname(link), base)
+      expect(sddl).toMatch(/D:P/)
+      expect(sddl).not.toMatch(/;;;(BU|AU|WD)\)/)
+      expect(savedSddl(link, base)).not.toMatch(/;;;(BU|AU|WD)\)/)
 
       await expect(exposeShimDirsOnClaudeSafePath([target], options)).resolves.toEqual({
         dirs: [link],
