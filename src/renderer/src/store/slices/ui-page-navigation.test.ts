@@ -689,6 +689,20 @@ describe('createUISlice space navigation', () => {
     expect(store.getState().worktreeNavHistoryIndex).toBe(0)
   })
 
+  it('records and rewinds Azure PRs visits on close', () => {
+    const store = createUIStore()
+    store.setState({ worktreesByRepo: { 'repo-1': [makeWorktree('a')] } })
+
+    store.getState().recordWorktreeVisit('a')
+    store.getState().openAzurePrsPage()
+    expect(store.getState().activeView).toBe('azure-prs')
+    expect(store.getState().worktreeNavHistory).toEqual(['a', 'azure-prs'])
+
+    store.getState().closeAzurePrsPage()
+    expect(store.getState().activeView).toBe('terminal')
+    expect(store.getState().worktreeNavHistoryIndex).toBe(0)
+  })
+
   it('records and rewinds Skills visits on close', () => {
     const store = createUIStore()
     store.setState({ worktreesByRepo: { 'repo-1': [makeWorktree('a')] } })

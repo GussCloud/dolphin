@@ -646,6 +646,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'azureBoards.updateState': AzureBoardsUpdateState,
   'azureDevOps.configureCliDefaults': AzureDevOpsConfigureCliDefaults,
   'azureDevOps.listRepositories': null,
+  'azureDevOps.pullRequestBoard': null,
   'azureDevOps.refreshCliSession': null,
   'azureDevOps.setAuthMethod': AzureDevOpsSetAuthMethod,
   'azureDevOps.setCliAutoRenew': AzureDevOpsSetCliAutoRenew,

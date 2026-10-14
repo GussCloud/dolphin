@@ -6,6 +6,7 @@ import {
   setAzureCliAutoRenew,
   setAzureDevOpsCliDefaults
 } from '../../../azure-devops/azure-devops-auth-commands'
+import { getAzureDevOpsPullRequestBoard } from '../../../azure-devops/pull-request-board'
 import {
   AzureDevOpsConfigureCliDefaults,
   AzureDevOpsSetAuthMethod,
@@ -37,5 +38,10 @@ export const AZURE_DEVOPS_METHODS = [
     name: 'azureDevOps.listRepositories',
     params: null,
     handler: async () => listAzureDevOpsRepositoriesResult()
+  }),
+  defineMethod({
+    name: 'azureDevOps.pullRequestBoard',
+    params: null,
+    handler: async () => getAzureDevOpsPullRequestBoard()
   })
 ]

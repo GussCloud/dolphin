@@ -8,6 +8,7 @@ import type {
   AzureDevOpsOrgLinkArgs,
   AzureDevOpsOrgLinkStatus
 } from '../../../shared/azure-devops-org-link'
+import type { AzureDevOpsPullRequestBoardResult } from '../../../shared/azure-devops-pull-request-board'
 import type { GlobalSettings } from '../../../shared/global-settings-types'
 import { callRuntimeRpc, getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 
@@ -54,6 +55,26 @@ export function listAzureDevOpsRepositories(
   return target.kind === 'environment'
     ? callRuntimeRpc<AzureDevOpsRepositoriesResult>(target, 'azureDevOps.listRepositories')
     : desktopApi().listRepositories()
+}
+
+// Why: an older remote server or preload without the method must read as an error card, not a crash.
+export async function getAzureDevOpsPullRequestBoard(
+  settings: RuntimeSettings
+): Promise<AzureDevOpsPullRequestBoardResult> {
+  try {
+    const target = getActiveRuntimeTarget(settings)
+    return target.kind === 'environment'
+      ? await callRuntimeRpc<AzureDevOpsPullRequestBoardResult>(
+          target,
+          'azureDevOps.pullRequestBoard'
+        )
+      : await desktopApi().pullRequestBoard()
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : 'Could not load Azure DevOps pull requests.'
+    }
+  }
 }
 
 export function setAzureCliAutoRenew(

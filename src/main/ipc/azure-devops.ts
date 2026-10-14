@@ -10,6 +10,7 @@ import {
   setAzureCliAutoRenew,
   setAzureDevOpsCliDefaults
 } from '../azure-devops/azure-devops-auth-commands'
+import { getAzureDevOpsPullRequestBoard } from '../azure-devops/pull-request-board'
 import type {
   AzureDevOpsOrgLinkArgs,
   AzureDevOpsOrgLinkStatus
@@ -74,6 +75,8 @@ export function registerAzureDevOpsHandlers(
   ipcMain.handle('azureDevOps:refreshCliSession', (): void => refreshAzureCliSession())
 
   ipcMain.handle('azureDevOps:listRepositories', () => listAzureDevOpsRepositoriesResult())
+
+  ipcMain.handle('azureDevOps:pullRequestBoard', () => getAzureDevOpsPullRequestBoard())
 
   ipcMain.handle(
     'azureDevOps:orgLink',

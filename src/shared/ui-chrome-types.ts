@@ -120,4 +120,5 @@ export type TopLevelView =
   | 'space'
   | 'skills'
   | 'artifacts'
+  | 'azure-prs'
   | 'mobile'

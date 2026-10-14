@@ -1,3 +1,5 @@
+import type { AzureDevOpsBoardWorkItem } from '../../shared/azure-devops-pull-request-board'
+import { mapWithConcurrency } from '../../shared/map-with-concurrency'
 import type {
   AzureBoardsComment,
   AzureBoardsListFilter,
@@ -128,6 +130,56 @@ export async function listAzureBoardsWorkItems(
   )
   // Why: the batch endpoint does not preserve the WIQL ordering.
   return ids.flatMap((id) => byId.get(id) ?? [])
+}
+
+const BOARD_WORK_ITEM_CHUNK = 200
+const BOARD_WORK_ITEM_FIELDS = 'System.Title,System.WorkItemType,System.State,System.TeamProject'
+
+/** Org-level batch read of work items by id; a failed chunk only leaves its items out. */
+export async function fetchAzureBoardWorkItemsByIds(
+  organizationUrl: string,
+  ids: readonly number[]
+): Promise<Map<number, AzureDevOpsBoardWorkItem>> {
+  const chunks: number[][] = []
+  for (let index = 0; index < ids.length; index += BOARD_WORK_ITEM_CHUNK) {
+    chunks.push(ids.slice(index, index + BOARD_WORK_ITEM_CHUNK))
+  }
+  const out = new Map<number, AzureDevOpsBoardWorkItem>()
+  const payloads = await mapWithConcurrency(chunks, chunks.length, async (chunk) => {
+    try {
+      // errorPolicy=omit keeps one deleted id from failing the whole chunk.
+      return await sendAzureDevOpsRequest(organizationUrl, '/_apis/wit/workitems', {
+        method: 'GET',
+        searchParams: {
+          ids: chunk.join(','),
+          fields: BOARD_WORK_ITEM_FIELDS,
+          errorPolicy: 'omit'
+        }
+      })
+    } catch {
+      return null
+    }
+  })
+  for (const payload of payloads) {
+    for (const raw of listOf(payload, 'value')) {
+      const item = asRecord(raw)
+      const fields = asRecord(item?.fields)
+      const id = item?.id
+      if (typeof id !== 'number' || !fields) {
+        continue
+      }
+      const project = text(fields['System.TeamProject'])
+      out.set(id, {
+        id,
+        title: text(fields['System.Title']),
+        workItemType: text(fields['System.WorkItemType']) || 'Work Item',
+        state: text(fields['System.State']),
+        project,
+        url: `${organizationUrl}/${encodeURIComponent(project)}/_workitems/edit/${id}`
+      })
+    }
+  }
+  return out
 }
 
 function mapComment(raw: unknown): AzureBoardsComment | null {

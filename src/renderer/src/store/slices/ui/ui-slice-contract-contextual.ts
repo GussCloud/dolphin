@@ -50,6 +50,7 @@ export type UISliceContextual = {
     | 'setup-guide'
     | 'feature-wall'
     | 'feature-tips'
+    | 'whats-new'
     | 'new-workspace-composer'
     | 'confirm-dolphin-yaml-hooks'
   modalData: Record<string, unknown>

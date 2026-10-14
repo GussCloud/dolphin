@@ -474,6 +474,8 @@ export type GlobalSettings = {
   experimentalAgentDashboardPopout?: boolean
   /** Set after the one-time legacy Agents tab introduction has been acknowledged. */
   agentsSidebarIntroShown?: boolean
+  /** Newest What's new release already announced to this profile; set when the dialog is shown. */
+  lastSeenWhatsNewVersion?: string
   /** True when the profile previously opted into the legacy Agents view. */
   agentsSidebarMigratedFromExperimental?: boolean
   /** How the Agent Dashboard opens: an in-window companion board or a separate pop-out window. Defaults to in-window. */

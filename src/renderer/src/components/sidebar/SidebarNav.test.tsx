@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   openActivityPage: vi.fn(),
   openMobilePage: vi.fn(),
   openArtifactsPage: vi.fn(),
+  openAzurePrsPage: vi.fn(),
   openModal: vi.fn(),
   updateSettings: vi.fn(),
   refreshPreflightStatus: vi.fn(),
@@ -119,10 +120,12 @@ function folderRepo(): Repo {
 
 function setSidebarState({
   settings = getDefaultSettings('/tmp'),
-  repos = [gitRepo()]
+  repos = [gitRepo()],
+  azureDevOps
 }: {
   settings?: GlobalSettings
   repos?: Repo[]
+  azureDevOps?: { configured: boolean; baseUrl?: string }
 } = {}): void {
   mocks.state = {
     settings,
@@ -133,10 +136,13 @@ function setSidebarState({
     openActivityPage: mocks.openActivityPage,
     openMobilePage: mocks.openMobilePage,
     openArtifactsPage: mocks.openArtifactsPage,
+    openAzurePrsPage: mocks.openAzurePrsPage,
     openModal: mocks.openModal,
     updateSettings: mocks.updateSettings,
-    preflightStatus: { glab: { installed: false } },
+    preflightStatus: { glab: { installed: false }, azureDevOps },
     preflightStatusChecked: true,
+    preflightStatusError: null,
+    preflightStatusContextKey: 'host',
     refreshPreflightStatus: mocks.refreshPreflightStatus,
     linearStatus: { connected: false },
     linearStatusChecked: true,
@@ -299,6 +305,24 @@ describe('SidebarNav', () => {
     await clickButton(getHideButton(menu as Element))
 
     expect(mocks.updateSettings).toHaveBeenCalledWith({ showArtifactsButton: false })
+  })
+
+  it('hides the Azure PRs entry until Azure DevOps is configured', async () => {
+    setSidebarState({ azureDevOps: { configured: false } })
+    const container = await renderSidebarNav()
+
+    expect(queryButtonByText(container, 'Azure (PRs)')).toBeNull()
+  })
+
+  it('opens Azure PRs from the sidebar when Azure DevOps is configured', async () => {
+    setSidebarState({
+      azureDevOps: { configured: true, baseUrl: 'https://dev.azure.com/acme' }
+    })
+    const container = await renderSidebarNav()
+
+    await clickButton(getButtonByText(container, 'Azure (PRs)'))
+
+    expect(mocks.openAzurePrsPage).toHaveBeenCalledOnce()
   })
 
   it('hides the Mobile entry when the sidebar setting is off', () => {
