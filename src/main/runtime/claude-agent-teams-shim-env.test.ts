@@ -293,6 +293,39 @@ describe('claude agent teams shim env', () => {
     expect(captured).toHaveLength(2)
   })
 
+  it('degrades a native Windows leader to in-process when the tmux dir has no Claude-safe path', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-agent-teams-cli-'))
+    roots.push(root)
+    const cliName = process.platform === 'win32' ? 'dolphin-dev.cmd' : 'dolphin-dev'
+    await writeFile(join(root, cliName), '#!/usr/bin/env sh\n', 'utf8')
+    if (process.platform !== 'win32') {
+      await chmod(join(root, cliName), 0o755)
+    }
+    const createTeamEnv = vi.fn(() => ({ TMUX_PANE: '%1' }))
+    const build = (hostShell: 'default' | null) =>
+      buildClaudeAgentTeamsLaunchPlan({
+        command: 'claude',
+        mode: 'native-panes-shim',
+        baseEnv: { PATH: root },
+        platform: 'win32',
+        hostShell,
+        resolveGitBash: () => GIT_BASH,
+        bundledTmuxDir:
+          'C:\\Users\\João\\AppData\\Local\\Programs\\dolphin\\resources\\bin\\agent-teams',
+        safePathOptions: { registryPath: join(root, 'registry.json'), junctionRoots: [] },
+        createTeamEnv
+      })
+
+    await expect(build(null)).resolves.toEqual({
+      command: 'claude --teammate-mode in-process',
+      env: { CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1' },
+      teammateMode: 'in-process'
+    })
+    expect(createTeamEnv).not.toHaveBeenCalled()
+    // Why: a WSL leader runs a Linux claude that never searches the Windows shim dirs.
+    await expect(build('default')).resolves.toMatchObject({ teammateMode: 'auto' })
+  })
+
   it('writes tmux.cmd only on Windows', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dolphin-agent-teams-shim-'))
     roots.push(root)
