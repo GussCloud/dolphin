@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { compareReleaseVersions, getWhatsNewDecision } from './whats-new-decision'
 
-const base = { appVersion: '0.2.9', lastSeenVersion: undefined, onboardingVisible: false }
+const base = { appVersion: '0.2.10', lastSeenVersion: undefined, onboardingVisible: false }
 
 describe('getWhatsNewDecision', () => {
   it('shows to an upgrader with no recorded version', () => {
     expect(getWhatsNewDecision(base)).toEqual({
       kind: 'show',
-      release: { version: '0.2.9', id: 'azure-prs' }
+      release: { version: '0.2.10', id: 'azure-prs' }
     })
   })
 
@@ -16,24 +16,26 @@ describe('getWhatsNewDecision', () => {
   })
 
   it('skips when already seen', () => {
-    expect(getWhatsNewDecision({ ...base, lastSeenVersion: '0.2.9' })).toEqual({ kind: 'skip' })
+    expect(getWhatsNewDecision({ ...base, lastSeenVersion: '0.2.10' })).toEqual({ kind: 'skip' })
   })
 
   it('records and does not show on a fresh install with onboarding', () => {
     expect(getWhatsNewDecision({ ...base, onboardingVisible: true })).toEqual({
       kind: 'record',
-      version: '0.2.9'
+      version: '0.2.10'
     })
   })
 
   it('skips on a build older than the first entry', () => {
     expect(getWhatsNewDecision({ ...base, appVersion: '0.2.8' })).toEqual({ kind: 'skip' })
+    // 0.2.9 shipped before this release, so its users must still see the 0.2.10 entry later.
+    expect(getWhatsNewDecision({ ...base, appVersion: '0.2.9' })).toEqual({ kind: 'skip' })
   })
 
   it('skips when no newer entry exists', () => {
-    expect(getWhatsNewDecision({ ...base, appVersion: '0.3.0', lastSeenVersion: '0.2.9' })).toEqual(
-      { kind: 'skip' }
-    )
+    expect(
+      getWhatsNewDecision({ ...base, appVersion: '0.3.0', lastSeenVersion: '0.2.10' })
+    ).toEqual({ kind: 'skip' })
   })
 
   it('skips while the app version is unknown', () => {
@@ -41,16 +43,16 @@ describe('getWhatsNewDecision', () => {
   })
 
   it('treats prerelease builds by their numeric version', () => {
-    expect(getWhatsNewDecision({ ...base, appVersion: '0.2.9-rc.1' }).kind).toBe('show')
+    expect(getWhatsNewDecision({ ...base, appVersion: '0.2.10-rc.1' }).kind).toBe('show')
   })
 
   it('picks the newest unseen entry', () => {
     const releases = [
-      { version: '0.2.9', id: 'azure-prs' as const },
+      { version: '0.2.10', id: 'azure-prs' as const },
       { version: '0.3.0', id: 'azure-prs' as const }
     ]
     expect(
-      getWhatsNewDecision({ ...base, appVersion: '0.3.1', lastSeenVersion: '0.2.9', releases })
+      getWhatsNewDecision({ ...base, appVersion: '0.3.1', lastSeenVersion: '0.2.10', releases })
     ).toEqual({ kind: 'show', release: releases[1] })
   })
 })
@@ -58,6 +60,7 @@ describe('getWhatsNewDecision', () => {
 describe('compareReleaseVersions', () => {
   it('orders numerically, not lexically', () => {
     expect(compareReleaseVersions('0.10.0', '0.9.0')).toBe(1)
-    expect(compareReleaseVersions('0.2.9', '0.2.9')).toBe(0)
+    expect(compareReleaseVersions('0.2.10', '0.2.9')).toBe(1)
+    expect(compareReleaseVersions('0.2.10', '0.2.10')).toBe(0)
   })
 })
