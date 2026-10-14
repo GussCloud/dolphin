@@ -15,6 +15,14 @@ import { parseWorkspaceKey } from '../../shared/workspace-scope'
 import { navigationTargetsHost } from '../../shared/runtime-navigation'
 import { isAutomaticTabActivation } from '../../shared/tab-activation-intent'
 import { parseAppSshPtyId } from '../../shared/ssh-pty-id'
+import { makePaneKey, parsePaneKey } from '../../shared/stable-pane-id'
+import type { AgentProviderSessionMetadata } from '../../shared/agent-session-resume'
+import {
+  hasLegacySleepingRecordForTab,
+  omitSleepingRecord,
+  resolveSleepingPaneMaterializeStartup,
+  type SleepingPaneMaterializeStartup
+} from './runtime-agent-resume-startup'
 
 export class DolphinRuntimeWithPerformMobileSessionPtyRecordsRefresh extends DolphinRuntimeWithBuildHeadlessMobileSessionBrowserTabs {
   protected async performMobileSessionPtyRecordsRefresh(
@@ -65,6 +73,50 @@ export class DolphinRuntimeWithPerformMobileSessionPtyRecordsRefresh extends Dol
       false,
       { includeForegroundProcessEvidence: false }
     )
+  }
+
+  protected async resolveSleepingPaneMaterializeStartup(
+    worktreeId: string,
+    paneKey: string
+  ): Promise<SleepingPaneMaterializeStartup> {
+    const sleeping = this.getWorkspaceSessionForWorktree(worktreeId)?.sleepingAgentSessionsByPaneKey
+    const record = sleeping?.[paneKey]
+    if (!record) {
+      return hasLegacySleepingRecordForTab(sleeping, parsePaneKey(paneKey)?.tabId, worktreeId)
+        ? { kind: 'plain-shell' }
+        : { kind: 'no-record' }
+    }
+    try {
+      const workspace = await this.resolveTerminalWorkspaceLaunchScope(`id:${worktreeId}`)
+      const startup = resolveSleepingPaneMaterializeStartup({
+        record,
+        worktreeId,
+        workspaceConnectionId: workspace.connectionId,
+        settings: this.store?.getSettings() ?? {},
+        platform: this.getAgentLaunchPlatformForWorkspace(workspace)
+      })
+      if (startup.kind === 'resume') {
+        await this.markWorkspaceTrustedForAgent(
+          startup.agent,
+          workspace.connectionId,
+          workspace.path
+        )
+      }
+      return startup
+    } catch {
+      return { kind: 'plain-shell' }
+    }
+  }
+
+  // Why: mirrors the renderer's post-spawn clear; the resumed PTY now owns the session.
+  protected clearSleepingPaneRecord(worktreeId: string, paneKey: string): void {
+    const next = omitSleepingRecord(this.getWorkspaceSessionForWorktree(worktreeId), paneKey)
+    if (next) {
+      this.setWorkspaceSessionForWorktree(worktreeId, next)
+    }
+    // Why: the renderer patches its whole sleeping map back, so its copy must drop the record too.
+    // 'adopted' is the channel's resolution the renderer maps to clearSleepingAgentSession.
+    this.notifier?.resolveLegacyWorkerTerminalRecovery?.(paneKey, 'adopted')
   }
 
   /** Targeted mobile opens must not wait for an unrelated SSH/Git worktree scan. */
@@ -156,12 +208,27 @@ export class DolphinRuntimeWithPerformMobileSessionPtyRecordsRefresh extends Dol
         // Why: a pending agent tab may exist without its startup command ever
         // having been delivered (the create's renderer stalled, #7587), so a
         // bare materialize would put a plain shell under the agent icon.
-        // Re-resolve the launch like the create path; providers skip startup
-        // commands when attaching to live sessions, so this cannot double-launch.
+        // A dead daemon session runs whatever command we send, so a pane with a
+        // sleeping record must resume it, never relaunch tab.launchAgent fresh.
         let agentStartup: Awaited<
           ReturnType<DolphinRuntimeService['resolveMobileSessionTerminalCommand']>
         > = {}
-        if (tab.launchAgent) {
+        let resumeProviderSession: AgentProviderSessionMetadata | undefined
+        const sleepingPaneKey = makePaneKey(tab.parentTabId, tab.leafId)
+        const sleepingStartup = await this.resolveSleepingPaneMaterializeStartup(
+          worktreeId,
+          sleepingPaneKey
+        )
+        if (sleepingStartup.kind === 'resume') {
+          agentStartup = {
+            command: sleepingStartup.plan.launchCommand,
+            env: sleepingStartup.plan.env,
+            launchConfig: sleepingStartup.plan.launchConfig,
+            launchAgent: sleepingStartup.agent,
+            startupCommandDelivery: sleepingStartup.plan.startupCommandDelivery
+          }
+          resumeProviderSession = sleepingStartup.providerSession
+        } else if (sleepingStartup.kind === 'no-record' && tab.launchAgent) {
           try {
             const workspace = await this.resolveTerminalWorkspaceLaunchScope(`id:${worktreeId}`)
             agentStartup = await this.resolveMobileSessionTerminalCommand(workspace, {
@@ -184,10 +251,26 @@ export class DolphinRuntimeWithPerformMobileSessionPtyRecordsRefresh extends Dol
             env: agentStartup.env,
             startupCommandDelivery: agentStartup.startupCommandDelivery,
             launchConfig: agentStartup.launchConfig,
-            launchAgent: tab.launchAgent,
+            // Why: launchAgent tags the PTY as an agent launch; a shell kept for the record is not one.
+            launchAgent:
+              sleepingStartup.kind === 'plain-shell'
+                ? undefined
+                : (agentStartup.launchAgent ?? tab.launchAgent),
+            ...(resumeProviderSession ? { resumeProviderSession } : {}),
+            // Why: clear once the PTY exists; a live session ignores the startup command, so nothing resumed.
+            onTerminalCreated: (terminal) => {
+              if (
+                resumeProviderSession &&
+                !terminal.isReattach &&
+                !terminal.reattachedLiveSession
+              ) {
+                this.clearSleepingPaneRecord(worktreeId, sleepingPaneKey)
+              }
+            },
             targetGroupId
           })
         } catch (err) {
+          // A dead SSH relay session throws here, so its sleeping record is kept for a later resume.
           if (sessionId && parseAppSshPtyId(sessionId)) {
             // Why: an expired SSH reattach clears durable bindings in the store,
             // but this in-memory headless snapshot can still carry the old id.

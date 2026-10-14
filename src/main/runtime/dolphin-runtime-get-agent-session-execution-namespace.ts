@@ -1,5 +1,4 @@
 // @ts-nocheck -- mechanically split from DolphinRuntimeService; behavior is covered by AST equivalence and characterization tests.
-import { resolveTuiAgentSessionInstructions } from '../../shared/tui-agent-session-instructions'
 import { DolphinRuntimeWithResolveWorktreeRemovalTarget } from './dolphin-runtime-resolve-worktree-removal-target'
 import type { TerminalWorkspaceLaunchScope } from './runtime-legacy-worker-terminal-recovery-types'
 import type { TuiAgent } from '../../shared/tui-agent'
@@ -12,12 +11,7 @@ import type {
 } from '../../shared/agent-session-host-authority'
 import { canonicalizeAgentSessionIdentity } from './agent-session-claim-identity'
 import { isTuiAgentEnabled } from '../../shared/tui-agent-selection'
-import { resolveLocalWindowsAgentStartupShell } from '../../shared/windows-terminal-shell'
-import { buildAgentResumeStartupPlan } from '../../shared/tui-agent-startup'
-import {
-  resolveTuiAgentLaunchArgs,
-  resolveTuiAgentLaunchEnv
-} from '../../shared/tui-agent-launch-defaults'
+import { buildRuntimeAgentResumeStartupPlan } from './runtime-agent-resume-startup'
 
 export class DolphinRuntimeWithGetAgentSessionExecutionNamespace extends DolphinRuntimeWithResolveWorktreeRemovalTarget {
   protected getAgentSessionExecutionNamespace(
@@ -120,31 +114,16 @@ export class DolphinRuntimeWithGetAgentSessionExecutionNamespace extends Dolphin
     const platform = this.getAgentLaunchPlatformForWorkspace(workspace)
     // Why: `workspace.repo` is display metadata and may be a row from another host; the launch
     // shape must match the PTY route this scope already resolved.
-    const isRemote = Boolean(workspace.connectionId)
-    const shell = resolveLocalWindowsAgentStartupShell({
-      platform,
-      isRemote,
-      terminalWindowsShell: settings.terminalWindowsShell
-    })
-    const startup = buildAgentResumeStartupPlan({
+    const startup = buildRuntimeAgentResumeStartupPlan({
       agent: request.agent,
       providerSession: identity.providerSession,
-      cmdOverrides: settings.agentCmdOverrides ?? {},
-      agentArgs:
-        request.agentArgs !== undefined
-          ? request.agentArgs
-          : resolveTuiAgentLaunchArgs(request.agent, settings.agentDefaultArgs),
-      agentEnv: resolveTuiAgentLaunchEnv(request.agent, settings.agentDefaultEnv),
-      sessionInstructions: resolveTuiAgentSessionInstructions(
-        request.agent,
-        settings.agentSessionInstructions
-      ),
+      settings,
+      platform,
+      isRemote: Boolean(workspace.connectionId),
+      agentArgs: request.agentArgs,
       ompResumeFilePath: request.ompResumeFilePath,
       sessionOptions: this.toAgentSessionOptions(request.launchPreferences),
-      sessionOptionsOverrideAgentArgs: Boolean(request.launchPreferences),
-      platform,
-      shell,
-      isRemote
+      sessionOptionsOverrideAgentArgs: Boolean(request.launchPreferences)
     })
     if (!startup) {
       throw new Error('agent_session_identity_required')

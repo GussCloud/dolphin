@@ -2,12 +2,16 @@
 import { DolphinRuntimeWithResolveMobileSessionTerminalCommand } from './dolphin-runtime-resolve-mobile-session-terminal-command'
 import type { WorktreeStartupLaunch } from '../../shared/worktree/launch-types'
 import type { TuiAgent } from '../../shared/tui-agent'
-import type { SleepingAgentLaunchConfig } from '../../shared/agent-session-resume'
+import type {
+  AgentProviderSessionMetadata,
+  SleepingAgentLaunchConfig
+} from '../../shared/agent-session-resume'
 import type {
   RuntimeMobileSessionCreateTerminalResult,
   RuntimeMobileSessionTabsSnapshot,
   RuntimeMobileSessionTerminalTab
 } from '../../shared/runtime-types'
+import type { RuntimeTerminalCreate } from '../../shared/runtime-terminal-contracts'
 import { randomUUID } from 'node:crypto'
 import { parsePaneKey } from '../../shared/stable-pane-id'
 import { placeCreatedSessionTab } from '../../shared/session-tab-placement'
@@ -34,6 +38,8 @@ export class DolphinRuntimeWithCreateRuntimeOwnedMobileSessionTerminal extends D
       targetGroupId?: string
       supportsSplitGroupPlacement?: boolean
       launchConfig?: SleepingAgentLaunchConfig
+      resumeProviderSession?: AgentProviderSessionMetadata
+      onTerminalCreated?: (terminal: RuntimeTerminalCreate) => void
       signal?: AbortSignal
     } = {}
   ): Promise<RuntimeMobileSessionCreateTerminalResult> {
@@ -50,6 +56,7 @@ export class DolphinRuntimeWithCreateRuntimeOwnedMobileSessionTerminal extends D
       env: opts.env,
       envToDelete: opts.envToDelete,
       ...(opts.launchConfig ? { launchConfig: opts.launchConfig } : {}),
+      ...(opts.resumeProviderSession ? { resumeProviderSession: opts.resumeProviderSession } : {}),
       ...(opts.launchAgent ? { launchAgent: opts.launchAgent } : {}),
       ...(opts.viewMode ? { viewMode: opts.viewMode } : {}),
       startupCommandDelivery: opts.startupCommandDelivery,
@@ -72,6 +79,7 @@ export class DolphinRuntimeWithCreateRuntimeOwnedMobileSessionTerminal extends D
     if (!livePty) {
       throw new Error('terminal_handle_stale')
     }
+    opts.onTerminalCreated?.(terminal)
     const parentTabId = livePty.pty.tabId ?? `pty:${livePty.pty.ptyId}`
     const leafId = parsePaneKey(livePty.pty.paneKey ?? '')?.leafId ?? randomUUID()
     if (opts.viewMode) {

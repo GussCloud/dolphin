@@ -291,7 +291,7 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
           ...(result.agentSessionEnsure
             ? { agentSessionDisposition: result.agentSessionEnsure.disposition }
             : {}),
-          ...(adoptedStablePane ? { isReattach: true as const } : {}),
+          ...dependencies.terminalReattachResultFields(adoptedStablePane, result),
           ...(warning ? { warning } : {})
         }
       } finally {

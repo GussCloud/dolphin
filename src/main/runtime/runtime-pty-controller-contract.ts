@@ -94,6 +94,8 @@ export type RuntimePtyController = {
     wslDistro?: string
     stablePaneOwner?: { handle: string; tabId: string; leafId: string }
     agentSessionEnsure?: AgentSessionClaimedSpawnResult
+    /** The provider attached an already-running session, so no startup command ran. */
+    reattachedLiveSession?: true
   }>
   write(ptyId: string, data: string): boolean
   /** Three-valued settlement; local providers settle synchronously. */
