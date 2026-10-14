@@ -16,6 +16,10 @@ import { getBundledLauncherPath } from '../cli/bundled-cli-launcher-path'
 import { resolveGitBashPath } from '../git-bash'
 import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
 import { resolvePathEnvKey } from '../pty/windows-path-segment-merge'
+import {
+  exposeShimDirsOnClaudeSafePath,
+  type ClaudeSafeShimPathOptions
+} from './claude-agent-teams-ascii-path-junction'
 
 export type ClaudeAgentTeamsLaunchPlan = {
   command: string
@@ -58,6 +62,40 @@ export function resolveClaudeAgentTeamsShimPathDirs(
   return bundledTmuxDir ? [bundledTmuxDir, shimDir] : [shimDir]
 }
 
+/**
+ * Leader shim PATH dirs, or null when a native Windows leader's dirs cannot be put on a path Claude
+ * will search (non-ASCII profile and no junction); callers then degrade to in-process teammates.
+ */
+export async function resolveClaudeAgentTeamsLaunchShimPathDirs(args: {
+  shimDir: string
+  bundledTmuxDir?: string | null
+  /** WSL/SSH leaders run a POSIX claude that never searches these Windows dirs. */
+  nativeWindowsLeader: boolean
+  platform?: NodeJS.Platform
+  safePathOptions?: ClaudeSafeShimPathOptions
+}): Promise<string[] | null> {
+  const dirs = resolveClaudeAgentTeamsShimPathDirs(
+    args.shimDir,
+    args.bundledTmuxDir === undefined
+      ? resolveBundledAgentTeamsTmuxDir(args.platform)
+      : args.bundledTmuxDir
+  )
+  if (!args.nativeWindowsLeader) {
+    return dirs
+  }
+  const exposed = await exposeShimDirsOnClaudeSafePath(dirs, {
+    platform: args.platform,
+    ...args.safePathOptions
+  })
+  if (!exposed.allSafe) {
+    console.warn(
+      '[agent-teams] tmux shim dir has non-ASCII text and no ASCII junction could be created; teammates will run in-process.'
+    )
+    return null
+  }
+  return exposed.dirs
+}
+
 export async function buildClaudeAgentTeamsLaunchPlan(args: {
   command: string | undefined
   mode: ClaudeAgentTeamsMode | undefined
@@ -74,6 +112,7 @@ export async function buildClaudeAgentTeamsLaunchPlan(args: {
   sshLeader?: boolean
   resolveGitBash?: () => string | null
   bundledTmuxDir?: string | null
+  safePathOptions?: ClaudeSafeShimPathOptions
 }): Promise<ClaudeAgentTeamsLaunchPlan | null> {
   const mode = args.mode ?? 'off'
   if (!args.command || mode === 'off' || !isDirectClaudeCommand(args.command)) {
@@ -97,15 +136,17 @@ export async function buildClaudeAgentTeamsLaunchPlan(args: {
     return inProcessPlan(args.command)
   }
   const shimDir = await ensureClaudeAgentTeamsShimDir(undefined, platform)
-  const bundledTmuxDir =
-    args.bundledTmuxDir === undefined
-      ? resolveBundledAgentTeamsTmuxDir(platform)
-      : args.bundledTmuxDir
-  const env = args.createTeamEnv(
+  const shimPathDirs = await resolveClaudeAgentTeamsLaunchShimPathDirs({
     shimDir,
-    shimBin,
-    resolveClaudeAgentTeamsShimPathDirs(shimDir, bundledTmuxDir)
-  )
+    bundledTmuxDir: args.bundledTmuxDir,
+    nativeWindowsLeader: platform === 'win32' && args.hostShell !== 'default',
+    platform,
+    safePathOptions: args.safePathOptions
+  })
+  if (!shimPathDirs) {
+    return inProcessPlan(args.command)
+  }
+  const env = args.createTeamEnv(shimDir, shimBin, shimPathDirs)
   return {
     command: addClaudeTeammateModeAuto(args.command),
     env,

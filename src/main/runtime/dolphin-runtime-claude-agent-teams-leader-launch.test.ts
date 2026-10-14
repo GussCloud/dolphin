@@ -5,7 +5,10 @@ import type * as ShimEnvModule from './claude-agent-teams-shim-env'
 import { DolphinRuntimeService } from './dolphin-runtime'
 
 const shimEnv = vi.hoisted(() => {
-  const state: { shimBin: string | null } = { shimBin: 'C:\\dolphin\\dolphin.exe' }
+  const state: { shimBin: string | null; claudeSafePath: boolean } = {
+    shimBin: 'C:\\dolphin\\dolphin.exe',
+    claudeSafePath: true
+  }
   return state
 })
 
@@ -13,7 +16,9 @@ vi.mock('./claude-agent-teams-shim-env', async (importOriginal) => ({
   ...(await importOriginal<typeof ShimEnvModule>()),
   ensureClaudeAgentTeamsShimDir: vi.fn(async () => 'C:\\shim'),
   resolveClaudeAgentTeamsShimBin: vi.fn(() => shimEnv.shimBin),
-  resolveClaudeAgentTeamsShimPathDirs: vi.fn((shimDir: string) => ['C:\\bundled-tmux', shimDir])
+  resolveClaudeAgentTeamsLaunchShimPathDirs: vi.fn(async (args: { shimDir: string }) =>
+    shimEnv.claudeSafePath ? ['C:\\bundled-tmux', args.shimDir] : null
+  )
 }))
 
 type RuntimeInternals = {
@@ -55,6 +60,7 @@ describe('prepareClaudeAgentTeamsLeaderForHandle', () => {
   beforeEach(() => {
     Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
     shimEnv.shimBin = 'C:\\dolphin\\dolphin.exe'
+    shimEnv.claudeSafePath = true
   })
 
   afterEach(() => {
@@ -100,6 +106,17 @@ describe('prepareClaudeAgentTeamsLeaderForHandle', () => {
     const launch = await runtime.prepareClaudeAgentTeamsLeaderForHandle({ handle, baseEnv: {} })
 
     expect(launch.env).not.toHaveProperty('TMUX')
+    expect(activeTeams()).toBe(0)
+  })
+
+  it('falls back to in-process teammates when the shim dirs cannot reach a Claude-safe PATH', async () => {
+    shimEnv.claudeSafePath = false
+    const { runtime, handle, activeTeams } = createLeader({ gitBash: 'C:\\Git\\bin\\bash.exe' })
+
+    const launch = await runtime.prepareClaudeAgentTeamsLeaderForHandle({ handle, baseEnv: {} })
+
+    expect(launch.env).not.toHaveProperty('TMUX')
+    expect(launch.envToDelete).toEqual(['TMUX', 'TMUX_PANE'])
     expect(activeTeams()).toBe(0)
   })
 
