@@ -116,7 +116,8 @@ describe('mobile activation of a dead agent pane with a sleeping record', () => 
     expect(spawnArgs.sessionId).toBe(DEAD_SESSION_ID)
     expect(spawnArgs.command).toContain('--resume')
     expect(spawnArgs.command).toContain(PROVIDER_SESSION_ID)
-    expect(spawnArgs.command).not.toContain('--teammate-mode')
+    // Agent Teams launch shape is platform-specific: win32 `--teammate-mode`, posix `claude-teams` shim.
+    expect(spawnArgs.command).not.toMatch(/--teammate-mode|claude-teams/)
     expect(spawnArgs.resumeProviderSession).toEqual({
       key: 'session_id',
       id: PROVIDER_SESSION_ID
@@ -167,7 +168,7 @@ describe('mobile activation of a dead agent pane with a sleeping record', () => 
   it('keeps the fresh launchAgent launch when the pane has no sleeping record', async () => {
     const { spawnArgs } = await activateDeadAgentPane(null)
 
-    expect(spawnArgs.command).toContain('--teammate-mode')
+    expect(spawnArgs.command).toMatch(/--teammate-mode|claude-teams/)
     expect(spawnArgs.command).not.toContain('--resume')
   })
 })

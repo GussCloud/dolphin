@@ -15,6 +15,7 @@ const MIGRATED_HOST_LAUNCH_MODULES = [
   'src/main/runtime/dolphin-runtime-create-agent-session.ts',
   'src/main/runtime/dolphin-runtime-resolve-mobile-session-terminal-command.ts',
   'src/main/runtime/dolphin-runtime-resolve-worktree-removal-target.ts',
+  'src/main/runtime/runtime-agent-resume-startup.ts',
   'src/main/runtime/runtime-worktree-agent-startup.ts'
 ]
 
@@ -48,9 +49,7 @@ describe('host agent-startup input assembly census', () => {
   it('detects hand assembly when it is present', () => {
     // Positive control: the markers are real names, so an empty result above is a true negative
     // rather than a typo that can never match.
-    const resumeSite = read(
-      'src/main/runtime/dolphin-runtime-get-agent-session-execution-namespace.ts'
-    )
-    expect(HAND_ASSEMBLY_MARKERS.some((marker) => resumeSite.includes(marker))).toBe(true)
+    const sharedResolver = read('src/shared/agent-startup-plan-inputs.ts')
+    expect(HAND_ASSEMBLY_MARKERS.some((marker) => sharedResolver.includes(marker))).toBe(true)
   })
 })
