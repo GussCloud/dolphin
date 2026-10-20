@@ -19151,6 +19151,26 @@
     },
     "title": "What's new in {{version}}",
     "description": "A new way to keep an eye on your Azure DevOps pull requests.",
-    "dismiss": "Got it"
+    "dismiss": "Got it",
+    "agentTeams": {
+      "description": "The Agent Dashboard has a new team view: every lead with its teammates in orbit.",
+      "open": "Open the team view",
+      "enable": "Turn on the Agent Dashboard",
+      "bullet": {
+        "leads": "One avatar per running task; its ring shows each teammate's state",
+        "orbit": "Select a lead to open its team in orbit, with each teammate's current task",
+        "lineage": "Claude Agent Teams teammates now nest under their lead, with their own names",
+        "focus": "Large teams split into two rings, and the team waiting on you opens first"
+      },
+      "sample": {
+        "lead": "Build the release",
+        "research": "research",
+        "tests": "tests",
+        "docs": "docs",
+        "review": "review",
+        "build": "build",
+        "i18n": "i18n"
+      }
+    }
   }
 }

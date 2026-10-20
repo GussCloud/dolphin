@@ -19151,6 +19151,26 @@
     },
     "title": "{{version}} 새로운 기능",
     "description": "Azure DevOps pull request를 살펴보는 새로운 방법입니다.",
-    "dismiss": "확인"
+    "dismiss": "확인",
+    "agentTeams": {
+      "description": "Agent Dashboard에 팀 보기가 추가되었습니다. 각 리더와 팀원을 궤도로 보여줍니다.",
+      "open": "팀 보기 열기",
+      "enable": "Agent Dashboard 켜기",
+      "bullet": {
+        "leads": "실행 중인 작업마다 아바타 하나, 링은 각 팀원의 상태를 보여줍니다",
+        "orbit": "리더를 선택하면 각 팀원의 현재 작업과 함께 팀이 궤도로 열립니다",
+        "lineage": "Claude Agent Teams 팀원이 이제 자기 이름으로 리더 아래에 표시됩니다",
+        "focus": "큰 팀은 두 개의 링으로 나뉘고, 확인이 필요한 팀이 먼저 열립니다"
+      },
+      "sample": {
+        "lead": "릴리스 준비",
+        "research": "조사",
+        "tests": "테스트",
+        "docs": "문서",
+        "review": "리뷰",
+        "build": "빌드",
+        "i18n": "i18n"
+      }
+    }
   }
 }
