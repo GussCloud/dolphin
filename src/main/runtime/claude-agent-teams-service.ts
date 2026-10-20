@@ -127,6 +127,22 @@ export class ClaudeAgentTeamsService {
     return names
   }
 
+  /** Spawned teammate panes and the leader terminal that owns them. */
+  listTeammateLineageByHandle(): Map<string, { leaderHandle: string; teammateName?: string }> {
+    const lineage = new Map<string, { leaderHandle: string; teammateName?: string }>()
+    for (const team of this.teams.values()) {
+      for (const pane of team.panes.values()) {
+        if (pane.handle !== null && pane.handle !== team.leaderHandle) {
+          lineage.set(pane.handle, {
+            leaderHandle: team.leaderHandle,
+            ...(pane.teammateName ? { teammateName: pane.teammateName } : {})
+          })
+        }
+      }
+    }
+    return lineage
+  }
+
   async handleTmuxCompat(
     request: AgentTeamsTmuxCompatRequest,
     api: AgentTeamsTerminalApi

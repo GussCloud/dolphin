@@ -18609,6 +18609,19 @@
     },
     "graph": {
       "empty": "표시할 에이전트가 없습니다"
+    },
+    "orbit": {
+      "back": "모든 작업",
+      "hint": "리더를 선택하면 팀이 열립니다",
+      "summary": "작업 중 {{working}} · 완료 {{done}}",
+      "needsYou": "{{count}}개 확인 필요",
+      "solo": "단독 에이전트",
+      "openTeam": "팀 열기: {{name}}",
+      "openLeadTerminal": "리더 터미널 열기: {{name}}",
+      "openTerminal": "터미널 열기",
+      "subagent": "프로세스 내 하위 에이전트",
+      "selectMember": "팀원을 선택하면 작업이 표시됩니다",
+      "openAgentTerminal": "터미널 열기: {{name}}"
     }
   },
   "dashboard": {

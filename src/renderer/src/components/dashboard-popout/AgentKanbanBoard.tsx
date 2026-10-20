@@ -13,7 +13,7 @@ import { installWindowVisibilityInterval } from '@/lib/window-visibility-interva
 import { AgentKanbanCard } from './AgentKanbanCard'
 import { AgentDashboardToolbar } from './AgentDashboardToolbar'
 import { AgentTerminalDialog, type AgentRevealArgs } from './AgentTerminalDialog'
-import { AgentGraphView } from './AgentGraphView'
+import { AgentTeamOrbitView } from './AgentTeamOrbitView'
 import { AgentDashboardViewToggle } from './AgentDashboardViewToggle'
 import {
   readAgentDashboardView,
@@ -293,7 +293,7 @@ export function AgentKanbanBoard({
         />
         {view === 'graph' ? (
           <div className="scrollbar-sleek flex min-h-0 flex-1 overflow-auto p-4">
-            <AgentGraphView cards={filteredCards} onOpenTerminal={handleOpenTerminal} />
+            <AgentTeamOrbitView cards={filteredCards} onOpenTerminal={handleOpenTerminal} />
           </div>
         ) : (
           <div className="scrollbar-sleek flex min-h-0 flex-1 overflow-x-auto p-3">

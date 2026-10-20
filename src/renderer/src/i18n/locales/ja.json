@@ -18609,6 +18609,19 @@
     },
     "graph": {
       "empty": "表示する Agent はありません"
+    },
+    "orbit": {
+      "back": "すべてのタスク",
+      "hint": "リーダーを選ぶとチームを表示します",
+      "summary": "作業中 {{working}} · 完了 {{done}}",
+      "needsYou": "{{count}} 件が対応待ち",
+      "solo": "単独の Agent",
+      "openTeam": "チームを開く: {{name}}",
+      "openLeadTerminal": "リーダーのターミナルを開く: {{name}}",
+      "openTerminal": "ターミナルを開く",
+      "subagent": "プロセス内のサブ Agent",
+      "selectMember": "チームメイトを選ぶとタスクを表示します",
+      "openAgentTerminal": "ターミナルを開く: {{name}}"
     }
   },
   "dashboard": {

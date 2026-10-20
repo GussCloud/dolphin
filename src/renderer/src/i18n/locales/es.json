@@ -15701,6 +15701,19 @@
     },
     "graph": {
       "empty": "No hay agentes para mostrar"
+    },
+    "orbit": {
+      "back": "Todas las tareas",
+      "hint": "Selecciona un líder para abrir su equipo",
+      "summary": "{{working}} trabajando · {{done}} listos",
+      "needsYou": "{{count}} te necesita",
+      "solo": "Agente solo",
+      "openTeam": "Abrir equipo: {{name}}",
+      "openLeadTerminal": "Abrir terminal del líder: {{name}}",
+      "openTerminal": "Abrir terminal",
+      "subagent": "Subagente en proceso",
+      "selectMember": "Selecciona un compañero para ver su tarea",
+      "openAgentTerminal": "Abrir terminal: {{name}}"
     }
   },
   "dashboard": {

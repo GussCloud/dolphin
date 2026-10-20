@@ -18609,6 +18609,19 @@
     },
     "graph": {
       "empty": "没有可显示的智能体"
+    },
+    "orbit": {
+      "back": "所有任务",
+      "hint": "选择一个负责人以展开其团队",
+      "summary": "{{working}} 个工作中 · {{done}} 个已完成",
+      "needsYou": "{{count}} 个需要你",
+      "solo": "单独的智能体",
+      "openTeam": "打开团队：{{name}}",
+      "openLeadTerminal": "打开负责人终端：{{name}}",
+      "openTerminal": "打开终端",
+      "subagent": "进程内子智能体",
+      "selectMember": "选择一个队友以查看其任务",
+      "openAgentTerminal": "打开终端：{{name}}"
     }
   },
   "dashboard": {

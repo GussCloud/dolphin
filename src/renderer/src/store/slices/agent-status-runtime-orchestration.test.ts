@@ -396,4 +396,26 @@ describe('agent status runtime orchestration metadata', () => {
       parentPaneKey
     })
   })
+
+  it('keeps the team lineage map identity when a sync republishes the same teams', () => {
+    const store = createTestStore()
+    store.getState().setRuntimeAgentTeamLineageByPaneKey({
+      'tab:mate': { leaderPaneKey: 'tab:lead', teammateName: 'primos' }
+    })
+    const first = store.getState().runtimeAgentTeamLineageByPaneKey
+
+    store.getState().setRuntimeAgentTeamLineageByPaneKey({
+      'tab:mate': { leaderPaneKey: 'tab:lead', teammateName: 'primos' }
+    })
+    expect(store.getState().runtimeAgentTeamLineageByPaneKey).toBe(first)
+
+    store.getState().setRuntimeAgentTeamLineageByPaneKey({
+      'tab:mate': { leaderPaneKey: 'tab:lead', teammateName: 'tradutor' }
+    })
+    expect(store.getState().runtimeAgentTeamLineageByPaneKey['tab:mate'].teammateName).toBe(
+      'tradutor'
+    )
+    store.getState().setRuntimeAgentTeamLineageByPaneKey({})
+    expect(store.getState().runtimeAgentTeamLineageByPaneKey).toEqual({})
+  })
 })

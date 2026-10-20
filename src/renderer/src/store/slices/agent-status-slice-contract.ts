@@ -23,6 +23,7 @@ import type {
   AgentStatusOrchestrationContext,
   MigrationUnsupportedPtyEntry
 } from '../../../../shared/agent-status-types'
+import type { RuntimeAgentTeamLineage } from '../../../../shared/runtime-session-contracts'
 import type {
   ResumableTuiAgent,
   SleepingAgentLaunchConfig,
@@ -34,6 +35,8 @@ export type AgentStatusSlice = {
   agentStatusByPaneKey: Record<string, AgentStatusEntry>
   /** Main-synced dispatch metadata for live panes that may only have title-derived status in the renderer. */
   runtimeAgentOrchestrationByPaneKey: Record<string, AgentStatusOrchestrationContext>
+  /** Main-synced Claude Agent Teams teammate → leader panes; replaced whole on every graph sync. */
+  runtimeAgentTeamLineageByPaneKey: Record<string, RuntimeAgentTeamLineage>
   /** PTYs still reporting legacy numeric pane keys but with registry-backed UUID proof; stored separately from normal hook-reported status. */
   migrationUnsupportedByPtyId: Record<string, MigrationUnsupportedPtyEntry>
   /** Monotonic tick that advances when agent-status freshness boundaries pass. */
@@ -116,6 +119,7 @@ export type AgentStatusSlice = {
   setRuntimeAgentOrchestrationByPaneKey: (
     entries: Record<string, AgentStatusOrchestrationContext>
   ) => void
+  setRuntimeAgentTeamLineageByPaneKey: (entries: Record<string, RuntimeAgentTeamLineage>) => void
 
   setMigrationUnsupportedPty: (entry: MigrationUnsupportedPtyEntry) => void
   clearMigrationUnsupportedPty: (ptyId: string) => void

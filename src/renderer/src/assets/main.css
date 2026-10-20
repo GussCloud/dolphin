@@ -1607,6 +1607,75 @@ html.native-shell .app-layout {
   }
 }
 
+/* Dashboard team orbit. Loops step at ~12fps like the agent spinner; reduced motion keeps the final frame. */
+@keyframes agent-orbit-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes agent-orbit-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes agent-orbit-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes agent-orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes agent-orbit-breathe {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.agent-orbit-flow {
+  stroke-dasharray: 4 8;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .agent-orbit-pop {
+    animation: agent-orbit-pop 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  }
+
+  .agent-orbit-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: agent-orbit-draw 480ms ease-out forwards;
+  }
+
+  .agent-orbit-flow {
+    animation: agent-orbit-flow 1s steps(12, end) infinite;
+  }
+
+  .agent-orbit-spin {
+    animation: agent-orbit-spin 1.5s steps(18, end) infinite;
+  }
+
+  .agent-orbit-breathe {
+    animation: agent-orbit-breathe 2.5s steps(30, end) infinite;
+  }
+}
+
 /* Why: keyframes run when the content mounts already in its final state. */
 @keyframes compact-agent-expansion-reveal {
   from {

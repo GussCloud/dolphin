@@ -315,6 +315,7 @@ export class DolphinRuntimeWithSyncWindowGraph extends DolphinRuntimeWithAttachW
     }
 
     const agentOrchestrationByPaneKey = this.agentOrchestrationProjection.buildByPaneKey()
+    const agentTeamLineageByPaneKey = this.getClaudeAgentTeamLineageByPaneKey?.()
     const nativeChatLaunchDraftResolutions =
       this.getNativeChatLaunchDraftResolutionClientEventSnapshot().map(
         ({ tabId, text, createdAt }) => ({ tabId, text, createdAt })
@@ -322,6 +323,9 @@ export class DolphinRuntimeWithSyncWindowGraph extends DolphinRuntimeWithAttachW
     return {
       ...this.getStatus(),
       ...(agentOrchestrationByPaneKey ? { agentOrchestrationByPaneKey } : {}),
+      ...(agentTeamLineageByPaneKey && Object.keys(agentTeamLineageByPaneKey).length > 0
+        ? { agentTeamLineageByPaneKey }
+        : {}),
       ...(nativeChatLaunchDraftResolutions.length > 0 ? { nativeChatLaunchDraftResolutions } : {}),
       ...(mobileSessionResyncWorktrees.size > 0
         ? { mobileSessionResyncWorktrees: [...mobileSessionResyncWorktrees] }

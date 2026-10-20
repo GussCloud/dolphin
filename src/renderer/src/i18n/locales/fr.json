@@ -18708,6 +18708,19 @@
     },
     "graph": {
       "empty": "Aucun agent à afficher"
+    },
+    "orbit": {
+      "back": "Toutes les tâches",
+      "hint": "Sélectionnez un responsable pour ouvrir son équipe",
+      "summary": "{{working}} en activité · {{done}} terminés",
+      "needsYou": "{{count}} vous concerne",
+      "solo": "Agent seul",
+      "openTeam": "Ouvrir l’équipe : {{name}}",
+      "openLeadTerminal": "Ouvrir le terminal du responsable : {{name}}",
+      "openTerminal": "Ouvrir le terminal",
+      "subagent": "Sous-agent intégré",
+      "selectMember": "Sélectionnez un coéquipier pour voir sa tâche",
+      "openAgentTerminal": "Ouvrir le terminal : {{name}}"
     }
   },
   "dashboard": {

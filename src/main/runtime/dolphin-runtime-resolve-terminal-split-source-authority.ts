@@ -5,6 +5,7 @@ import {
   runtimeWorktreeIdsEqual
 } from './runtime-worktree-path-identity'
 import { makePaneKey } from '../../shared/stable-pane-id'
+import type { RuntimeAgentTeamLineage } from '../../shared/runtime-session-contracts'
 import { terminalLayoutContainsLeaf } from './headless-terminal-split-layout'
 import type {
   AgentTeamsTmuxCompatRequest,
@@ -135,6 +136,22 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       }
     }
     return names
+  }
+
+  /** Teammate pane → leader pane, for the renderer's agent lineage; both ends must resolve to panes. */
+  getClaudeAgentTeamLineageByPaneKey(): Record<string, RuntimeAgentTeamLineage> {
+    const lineage: Record<string, RuntimeAgentTeamLineage> = {}
+    for (const [handle, entry] of this.claudeAgentTeams.listTeammateLineageByHandle()) {
+      const paneKey = this.getPaneKeyForTerminalHandle(handle)
+      const leaderPaneKey = this.getPaneKeyForTerminalHandle(entry.leaderHandle)
+      if (paneKey && leaderPaneKey && paneKey !== leaderPaneKey) {
+        lineage[paneKey] = {
+          leaderPaneKey,
+          ...(entry.teammateName ? { teammateName: entry.teammateName } : {})
+        }
+      }
+    }
+    return lineage
   }
 
   setClaudeAgentTeamsPipeEndpoint(endpoint: string | null): void {

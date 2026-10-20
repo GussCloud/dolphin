@@ -18730,6 +18730,19 @@
     },
     "graph": {
       "empty": "No agents to show"
+    },
+    "orbit": {
+      "back": "All tasks",
+      "hint": "Select a lead to open its team",
+      "summary": "{{working}} working · {{done}} done",
+      "needsYou": "{{count}} needs you",
+      "solo": "Solo agent",
+      "openTeam": "Open team: {{name}}",
+      "openLeadTerminal": "Open lead terminal: {{name}}",
+      "openTerminal": "Open terminal",
+      "subagent": "In-process subagent",
+      "selectMember": "Select a teammate to see its task",
+      "openAgentTerminal": "Open terminal: {{name}}"
     }
   },
   "dashboard": {
