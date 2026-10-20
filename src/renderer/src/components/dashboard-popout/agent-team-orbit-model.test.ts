@@ -139,6 +139,41 @@ describe('layoutTeamOrbit', () => {
   })
 })
 
+describe('layoutTeamOrbit with large teams', () => {
+  it('splits a 24-member team across two rings with action members inside', () => {
+    const cards = [card('lead')]
+    for (let index = 0; index < 24; index += 1) {
+      const done = index % 3 !== 0
+      cards.push(
+        card(`m${index}`, {
+          parentPaneKey: 'lead',
+          startedAt: index,
+          ...(done ? { dotState: 'done', bucket: 'done' } : {})
+        })
+      )
+    }
+    const [team] = buildAgentTeams(cards)
+    const layout = layoutTeamOrbit(team.members)
+    expect(layout.rings).toHaveLength(2)
+    const distance = (id: string): number => {
+      const point = layout.members.find((p) => p.id === id)
+      return point ? Math.hypot(point.x - layout.center.x, point.y - layout.center.y) : -1
+    }
+    expect(distance('m0')).toBeLessThan(distance('m1'))
+    const labelHeight = 40
+    for (const a of layout.members) {
+      for (const b of layout.members) {
+        if (a !== b) {
+          const apart =
+            Math.abs(a.x - b.x) >= ORBIT_MEMBER_BOX_WIDTH ||
+            Math.abs(a.y - b.y) >= ORBIT_MEMBER_SIZE + labelHeight
+          expect(apart).toBe(true)
+        }
+      }
+    }
+  })
+})
+
 describe('memberInitials', () => {
   it('uses the first two letters, ignoring punctuation', () => {
     expect(memberInitials('package-json')).toBe('PA')

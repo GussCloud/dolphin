@@ -1,5 +1,5 @@
 import type { DashboardAgentRow } from './useDashboardData'
-import { buildAgentRowLineageTree } from './agent-row-lineage-model'
+import { buildAgentRowLineageTree, type AgentTeamLeaderByPaneKey } from './agent-row-lineage-model'
 
 export type AgentRowLineagePresentation = {
   depth: 0 | 1
@@ -20,12 +20,18 @@ const ROOT_LINEAGE: AgentRowLineagePresentation = {
   childCount: 0
 }
 
-export function applyAgentRowLineage(rows: DashboardAgentRow[]): DashboardAgentRowWithLineage[] {
+export function applyAgentRowLineage(
+  rows: DashboardAgentRow[],
+  teamLeaderByPaneKey?: AgentTeamLeaderByPaneKey
+): DashboardAgentRowWithLineage[] {
   if (rows.length <= 1) {
     return rows.map((row) => ({ ...row, lineage: ROOT_LINEAGE }))
   }
 
-  const { rootRows, childrenByParentPaneKey, childPaneKeys } = buildAgentRowLineageTree(rows)
+  const { rootRows, childrenByParentPaneKey, childPaneKeys } = buildAgentRowLineageTree(
+    rows,
+    teamLeaderByPaneKey
+  )
 
   if (childPaneKeys.size === 0) {
     return rows.map((row) => ({ ...row, lineage: ROOT_LINEAGE }))

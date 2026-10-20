@@ -126,6 +126,7 @@ function TeamStage({
   const layout = useMemo(() => layoutTeamOrbit(team.members), [team.members])
   const stateById = new Map(team.members.map((member) => [member.id, member.state]))
   const selectedEdge = layout.edges.find((edge) => edge.id === selectedId)
+  const pointById = new Map(layout.members.map((point) => [point.id, point]))
   return (
     <div
       data-testid="agent-team-stage"
@@ -138,6 +139,18 @@ function TeamStage({
         width={layout.width}
         height={layout.height}
       >
+        {layout.rings.map((ring, index) => (
+          <ellipse
+            key={index}
+            cx={layout.center.x}
+            cy={layout.center.y}
+            rx={ring.rx}
+            ry={ring.ry}
+            fill="none"
+            strokeDasharray="2 7"
+            className="stroke-border"
+          />
+        ))}
         {layout.edges.map((edge, index) => {
           const state = stateById.get(edge.id) ?? 'idle'
           return (
@@ -198,7 +211,10 @@ function TeamStage({
         />
       </div>
       {team.members.map((member, index) => {
-        const point = layout.members[index]
+        const point = pointById.get(member.id)
+        if (!point) {
+          return null
+        }
         return (
           <button
             key={member.id}
@@ -315,8 +331,15 @@ export function AgentTeamOrbitView({
   onOpenTerminal: (card: DashboardCard) => void
 }): React.JSX.Element {
   const teams = useMemo(() => buildAgentTeams(cards), [cards])
-  const [openTeamId, setOpenTeamId] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  // Why: opening the view lands on the team waiting on you; Back keeps the overview after that.
+  const [openTeamId, setOpenTeamId] = useState<string | null>(
+    () => teams.find((team) => team.needsYou && team.members.length > 0)?.id ?? null
+  )
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () =>
+      teams.find((team) => team.id === openTeamId)?.members.find((member) => member.state === 'ask')
+        ?.id ?? null
+  )
   const openTeam = teams.find((team) => team.id === openTeamId && team.members.length > 0)
   const selected = openTeam?.members.find((member) => member.id === selectedId) ?? null
 

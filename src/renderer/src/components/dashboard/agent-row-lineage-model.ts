@@ -7,6 +7,9 @@ export type AgentLineageSourceRow = {
   entry: Pick<AgentStatusEntry, 'terminalHandle' | 'orchestration'>
 }
 
+/** Teammate pane → its Claude Agent Teams leader pane, as the runtime publishes it. */
+export type AgentTeamLeaderByPaneKey = Readonly<Record<string, { leaderPaneKey: string }>>
+
 export type AgentRowLineageTree<T extends AgentLineageSourceRow> = {
   rootRows: T[]
   childrenByParentPaneKey: Map<string, T[]>
@@ -28,7 +31,8 @@ function buildPaneKeyByTerminalHandle<T extends AgentLineageSourceRow>(
 export function resolveAgentRowParentPaneKey<T extends AgentLineageSourceRow>(
   row: T,
   rowsByPaneKey: ReadonlyMap<string, T>,
-  paneKeyByTerminalHandle: ReadonlyMap<string, string>
+  paneKeyByTerminalHandle: ReadonlyMap<string, string>,
+  teamLeaderByPaneKey?: AgentTeamLeaderByPaneKey
 ): string | undefined {
   const explicitParentPaneKey = row.entry.orchestration?.parentPaneKey
   if (
@@ -52,11 +56,22 @@ export function resolveAgentRowParentPaneKey<T extends AgentLineageSourceRow>(
     }
   }
 
+  // Why: Agent Teams teammates carry no orchestration context; their leader comes from the runtime.
+  const teamLeaderPaneKey = teamLeaderByPaneKey?.[row.paneKey]?.leaderPaneKey
+  if (
+    teamLeaderPaneKey &&
+    teamLeaderPaneKey !== row.paneKey &&
+    rowsByPaneKey.has(teamLeaderPaneKey)
+  ) {
+    return teamLeaderPaneKey
+  }
+
   return undefined
 }
 
 export function buildAgentRowLineageTree<T extends AgentLineageSourceRow>(
-  rows: readonly T[]
+  rows: readonly T[],
+  teamLeaderByPaneKey?: AgentTeamLeaderByPaneKey
 ): AgentRowLineageTree<T> {
   const rowsByPaneKey = new Map<string, T>()
   for (const row of rows) {
@@ -69,7 +84,12 @@ export function buildAgentRowLineageTree<T extends AgentLineageSourceRow>(
   const childPaneKeys = new Set<string>()
 
   for (const row of rows) {
-    const parentPaneKey = resolveAgentRowParentPaneKey(row, rowsByPaneKey, paneKeyByTerminalHandle)
+    const parentPaneKey = resolveAgentRowParentPaneKey(
+      row,
+      rowsByPaneKey,
+      paneKeyByTerminalHandle,
+      teamLeaderByPaneKey
+    )
     if (!parentPaneKey) {
       continue
     }

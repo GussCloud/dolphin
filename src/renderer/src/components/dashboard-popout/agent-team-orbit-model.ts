@@ -174,33 +174,80 @@ export type AgentTeamOrbitLayout = {
   width: number
   height: number
   center: { x: number; y: number }
+  rings: { rx: number; ry: number }[]
   members: { id: string; x: number; y: number }[]
   edges: { id: string; d: string }[]
 }
 
-/** Members sit on an ellipse that grows with the team so labels never collide. */
+/** Above this a single ellipse crowds its labels, so members split across two rings. */
+export const ORBIT_SINGLE_RING_MAX = 14
+
+const MEMBER_PRIORITY: Record<AgentTeamMemberState, number> = {
+  ask: 0,
+  working: 1,
+  idle: 2,
+  done: 3
+}
+
+type OrbitRing = { rx: number; ry: number; ids: string[]; offset: number }
+
+// Why: neighbours on an ellipse sit ~rx·2π/n apart at the top and ~ry·2π/n at the sides; this keeps both above a label box.
+function minOrbitRx(count: number): number {
+  return Math.ceil((count * (ORBIT_MEMBER_BOX_WIDTH + 24)) / (2 * Math.PI) / 0.8)
+}
+
+function planRings(members: readonly AgentTeamMember[]): OrbitRing[] {
+  if (members.length <= ORBIT_SINGLE_RING_MAX) {
+    const rx = Math.max(230, Math.min(440, 170 + members.length * 22), minOrbitRx(members.length))
+    return [{ rx, ry: Math.round(rx * 0.66), ids: members.map((m) => m.id), offset: 0 }]
+  }
+  // Why: members that need action sit on the inner ring, closest to their lead.
+  const ordered = members
+    .map((member, index) => ({ member, index }))
+    .sort(
+      (a, b) =>
+        MEMBER_PRIORITY[a.member.state] - MEMBER_PRIORITY[b.member.state] || a.index - b.index
+    )
+    .map(({ member }) => member.id)
+  const innerCount = Math.round(ordered.length * 0.4)
+  const outerCount = ordered.length - innerCount
+  const innerRx = Math.max(240, minOrbitRx(innerCount))
+  const innerRy = Math.round(innerRx * 0.66)
+  const outerRx = Math.max(innerRx + 220, minOrbitRx(outerCount))
+  const outerRy = Math.max(innerRy + 150, Math.round(outerRx * 0.66))
+  return [
+    { rx: innerRx, ry: innerRy, ids: ordered.slice(0, innerCount), offset: 0 },
+    // Half-step offset keeps outer spokes between inner avatars.
+    { rx: outerRx, ry: outerRy, ids: ordered.slice(innerCount), offset: Math.PI / outerCount }
+  ]
+}
+
+/** Members sit on one ellipse (two for large teams) that grows with the team so labels never collide. */
 export function layoutTeamOrbit(members: readonly AgentTeamMember[]): AgentTeamOrbitLayout {
-  const count = Math.max(1, members.length)
-  const rx = Math.min(440, Math.max(230, 170 + count * 22))
-  const ry = Math.round(rx * 0.66)
-  const width = rx * 2 + ORBIT_MEMBER_BOX_WIDTH + 24
-  const height = ry * 2 + ORBIT_MEMBER_SIZE + 72
-  const center = { x: width / 2, y: ry + ORBIT_MEMBER_SIZE / 2 + 8 }
+  const rings = planRings(members)
+  const outer = rings.at(-1) ?? rings[0]
+  const width = outer.rx * 2 + ORBIT_MEMBER_BOX_WIDTH + 24
+  const height = outer.ry * 2 + ORBIT_MEMBER_SIZE + 72
+  const center = { x: width / 2, y: outer.ry + ORBIT_MEMBER_SIZE / 2 + 8 }
   const leaderRadius = ORBIT_LEADER_SIZE / 2 + 6
   const memberRadius = ORBIT_MEMBER_SIZE / 2 + 6
-  const placed = members.map((member, index) => {
-    const angle = -Math.PI / 2 + (index * 2 * Math.PI) / count
-    return {
-      id: member.id,
-      angle,
-      x: center.x + rx * Math.cos(angle),
-      y: center.y + ry * Math.sin(angle)
-    }
-  })
+  const placed = rings.flatMap((ring) =>
+    ring.ids.map((id, index) => {
+      const angle =
+        -Math.PI / 2 + ring.offset + (index * 2 * Math.PI) / Math.max(1, ring.ids.length)
+      return {
+        id,
+        angle,
+        x: center.x + ring.rx * Math.cos(angle),
+        y: center.y + ring.ry * Math.sin(angle)
+      }
+    })
+  )
   return {
     width,
     height,
     center,
+    rings: rings.map(({ rx, ry }) => ({ rx, ry })),
     members: placed.map(({ id, x, y }) => ({ id, x, y })),
     edges: placed.map(({ id, angle, x, y }) => {
       const x1 = center.x + leaderRadius * Math.cos(angle)

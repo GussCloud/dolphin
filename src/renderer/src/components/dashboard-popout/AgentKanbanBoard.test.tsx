@@ -407,4 +407,28 @@ describe('AgentKanbanBoard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open terminal' }))
     expect(screen.getByTestId('terminal-dialog')).toHaveAttribute('data-pty-id', 'pty-mate')
   })
+
+  it('lands on the team that needs you and stays on the overview after Back', () => {
+    localStorage.setItem('dolphin.agent-dashboard.view.v1', 'graph')
+    renderBoard([
+      card({ paneKey: 'calm', conversationName: 'calma' }),
+      card({ paneKey: 'calm-mate', conversationName: 'ok', parentPaneKey: 'calm' }),
+      card({ paneKey: 'lead', conversationName: 'time', startedAt: 1 }),
+      card({
+        paneKey: 'mate',
+        conversationName: 'tradutor',
+        parentPaneKey: 'lead',
+        bucket: 'attention',
+        dotState: 'blocked',
+        askSummary: 'Japonês ou inglês?'
+      })
+    ])
+
+    expect(screen.getByTestId('agent-team-stage')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'tradutor' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getAllByText('Japonês ou inglês?').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'All tasks' }))
+    expect(screen.queryByTestId('agent-team-stage')).not.toBeInTheDocument()
+  })
 })

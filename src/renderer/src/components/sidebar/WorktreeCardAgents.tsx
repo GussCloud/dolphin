@@ -195,9 +195,10 @@ const WorktreeCardAgentsBody = React.memo(function WorktreeCardAgentsBody({
 
   // Why: one 30s tick per non-empty inline list; zero-agent cards never mount this (see WorktreeCardAgents), so idle worktrees pay no timer cost.
   const now = useNow(30_000)
+  const teamLeaderByPaneKey = useAppStore((s) => s.runtimeAgentTeamLineageByPaneKey)
   const { rootRows: rootAgents, childrenByParentPaneKey } = useMemo(
-    () => buildAgentRowLineageTree(agents),
-    [agents]
+    () => buildAgentRowLineageTree(agents, teamLeaderByPaneKey),
+    [agents, teamLeaderByPaneKey]
   )
   const hasLineage = childrenByParentPaneKey.size > 0
   // Why: keep disclosure state out of local useState so a WorktreeCard remount (virtualizer recycle / sibling toggle) doesn't reset it.

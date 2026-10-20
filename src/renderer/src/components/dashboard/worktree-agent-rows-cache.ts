@@ -28,6 +28,7 @@ type WorktreeAgentRowsCacheEntry = {
   retained: RetainedAgentEntry[]
   tabs: TerminalTab[] | undefined
   orchestration: Record<string, AgentStatusOrchestrationContext>
+  teamLeaderByPaneKey: AppState['runtimeAgentTeamLineageByPaneKey'] | undefined
   terminalLayoutsByTabId: Record<string, TerminalLayoutSnapshot | undefined>
   paneTitlesByTabId: Record<string, Record<number, string>>
   ptyIdsByTabId: Record<string, string[]>
@@ -88,7 +89,7 @@ export type WorktreeAgentRowsState = Pick<
   | 'ptyIdsByTabId'
   | 'runtimePaneTitlesByTabId'
 > &
-  Partial<Pick<AppState, 'unifiedTabsByWorktree'>>
+  Partial<Pick<AppState, 'unifiedTabsByWorktree' | 'runtimeAgentTeamLineageByPaneKey'>>
 
 // Why not identity: the per-worktree layout/title/ptyId selectors build a fresh top-level
 // record per call while preserving per-tab value references, so shallow equality is the
@@ -132,6 +133,7 @@ export function selectWorktreeAgentRowsCached(args: {
     cached.retained === retained &&
     cached.tabs === tabs &&
     cached.orchestration === orchestration &&
+    cached.teamLeaderByPaneKey === state.runtimeAgentTeamLineageByPaneKey &&
     shallowRecordEqual(cached.terminalLayoutsByTabId, terminalLayoutsByTabId) &&
     shallowRecordEqual(cached.paneTitlesByTabId, paneTitlesByTabId) &&
     shallowRecordEqual(cached.ptyIdsByTabId, ptyIdsByTabId)
@@ -159,7 +161,8 @@ export function selectWorktreeAgentRowsCached(args: {
       terminalLayoutsByTabId,
       runtimeAgentOrchestrationByPaneKey: orchestration,
       now
-    })
+    }),
+    state.runtimeAgentTeamLineageByPaneKey
   )
   if (cache) {
     cache.computeCount += 1
@@ -171,6 +174,7 @@ export function selectWorktreeAgentRowsCached(args: {
       retained,
       tabs,
       orchestration,
+      teamLeaderByPaneKey: state.runtimeAgentTeamLineageByPaneKey,
       terminalLayoutsByTabId,
       paneTitlesByTabId,
       ptyIdsByTabId,
