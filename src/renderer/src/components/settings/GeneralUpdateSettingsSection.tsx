@@ -168,15 +168,20 @@ export function GeneralUpdateSettingsSection(): React.JSX.Element {
                 'Version'
               )}{' '}
               {updateStatus.version}{' '}
-              {updateStatus.externallyManaged
+              {updateStatus.unsignedMacRelease
                 ? translate(
-                    'auto.components.settings.GeneralUpdateSettingsSection.e3b9d21c07',
-                    'is available. Update Dolphin through your system package manager — Dolphin cannot install this release itself.'
+                    'auto.components.settings.GeneralUpdateSettingsSection.5c0d9a8e41',
+                    'is available. This build is not signed by Apple, so download the new .dmg from the release notes and drag Dolphin to Applications.'
                   )
-                : translate(
-                    'auto.components.settings.GeneralUpdateSettingsSection.8311da27ba',
-                    'is available. Click "Download Update" to download it.'
-                  )}{' '}
+                : updateStatus.externallyManaged
+                  ? translate(
+                      'auto.components.settings.GeneralUpdateSettingsSection.e3b9d21c07',
+                      'is available. Update Dolphin through your system package manager — Dolphin cannot install this release itself.'
+                    )
+                  : translate(
+                      'auto.components.settings.GeneralUpdateSettingsSection.8311da27ba',
+                      'is available. Click "Download Update" to download it.'
+                    )}{' '}
               {updateStatus.source !== 'local' && (
                 <a
                   href={

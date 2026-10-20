@@ -2422,7 +2422,8 @@
         "b1e390250d": "Could not complete the local build switch.",
         "d29740d175": "The selected build could not be used.",
         "37d45c9ec1": "Choose Another Build",
-        "7f1a4c9e02": "Your system package manager installed Dolphin, so update it from there — Dolphin cannot install this release itself."
+        "7f1a4c9e02": "Your system package manager installed Dolphin, so update it from there — Dolphin cannot install this release itself.",
+        "b4e82d17c3": "This Dolphin build is not signed by Apple, so it cannot update itself — download the new .dmg from the release notes and drag Dolphin to Applications."
       },
       "WorktreeJumpPalette": {
         "ac037cfac2": "Move",
@@ -7436,7 +7437,8 @@
           "3394d1f663": "checking",
           "d69a09b672": "Updates are checked automatically on launch.",
           "7173352632": "idle",
-          "e3b9d21c07": "is available. Update Dolphin through your system package manager — Dolphin cannot install this release itself."
+          "e3b9d21c07": "is available. Update Dolphin through your system package manager — Dolphin cannot install this release itself.",
+          "5c0d9a8e41": "is available. This build is not signed by Apple, so download the new .dmg from the release notes and drag Dolphin to Applications."
         },
         "GeneralWorkspaceSettingsSection": {
           "3d538a98f7": "Choose apps available from a workspace's Open in menu.",

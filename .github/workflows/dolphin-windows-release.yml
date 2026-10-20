@@ -4,6 +4,7 @@ name: Dolphin Windows Release
 # have, so this is the only release path. It builds an unsigned NSIS installer
 # under the Dolphin identity (docs/reference/fork-identity.md) and publishes it with the repo's
 # own GITHUB_TOKEN, so the in-app updater (pointed at this repo) finds latest.yml beside it.
+# The build-mac job adds unsigned macOS dmg/zip builds and latest-mac.yml to the same release.
 #
 # Cut a release: bump package.json "version" and merge to main. A main push that lands a version
 # with no release yet builds and publishes it; a push tag v<version> or a manual dispatch do too.
@@ -316,3 +317,110 @@ jobs:
             dist/dolphin-windows-setup-arm64.exe \
             dist/dolphin-windows-setup-arm64.exe.blockmap \
             dist/latest-arm64.yml
+
+  # Why unsigned and ad-hoc: the fork has no Apple Developer ID, so there is nothing to sign or
+  # notarize with. Gatekeeper blocks the first launch, and Squirrel.Mac refuses unsigned updates, so
+  # the packaged marker makes the in-app updater send users to the .dmg instead of downloading.
+  # Why after build-win: it reuses that job's version check and uploads into the release build-win
+  # created, so a failed macOS leg never blocks the Windows release.
+  build-mac:
+    needs: build-win
+    if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
+    # Why an Arm runner: it packages both slices, and afterPack boots the daemon on the host-arch one.
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      TAG: ${{ needs.build-win.outputs.tag }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+          key: electron-builder-mac-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-builder-mac-
+
+      # Why install:release: the x64 slice needs x64 optional native packages an arm64 host skips.
+      # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
+      # returns transient 504s.
+      - name: Install dependencies
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: pnpm install:release
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      # Why no DOLPHIN_REQUIRE_RELAY_NATIVE_ADDONS: the Windows relay addon only builds on Windows, so
+      # this app's relay falls back to the PowerShell scan on Windows SSH hosts.
+      - name: Build app
+        run: pnpm build:release
+
+      - name: Package macOS dmg and zip
+        run: |
+          set -euo pipefail
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac --publish never
+        env:
+          DOLPHIN_BUILD_COMMIT: ${{ github.sha }}
+          DOLPHIN_MAC_UNSIGNED_RELEASE: '1'
+
+      # Why the zips and latest-mac.yml too: the updater reads the manifest to offer the release.
+      - name: Verify and upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for required in dist/dolphin-macos-x64.dmg dist/dolphin-macos-arm64.dmg dist/latest-mac.yml; do
+            if [[ ! -f "$required" ]]; then
+              echo "::error::missing $required"
+              ls -la dist
+              exit 1
+            fi
+          done
+          zips=(dist/*-mac.zip)
+          apps=(dist/mac/*.app dist/mac-arm64/*.app)
+          if (( ${#zips[@]} != 2 || ${#apps[@]} != 2 )); then
+            echo "::error::expected x64 and arm64 builds, found ${#zips[@]} zips and ${#apps[@]} apps"
+            ls -la dist
+            exit 1
+          fi
+          for app in "${apps[@]}"; do
+            codesign --verify --deep --strict "$app"
+            if [[ ! -f "$app/Contents/Resources/dolphin-unsigned-mac-release" ]]; then
+              echo "::error::$app is missing the unsigned-release marker"
+              exit 1
+            fi
+          done
+          files=(dist/dolphin-macos-x64.dmg dist/dolphin-macos-arm64.dmg dist/latest-mac.yml "${zips[@]}" dist/*.blockmap)
+          ls -la "${files[@]}"
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "${files[@]}"

@@ -12,6 +12,7 @@ The identity is defined in `src/shared/fork-identity.ts`. The CommonJS electron-
 | Markdown ProgID            | `Dolphin.Markdown`                   | NSIS `${PRODUCT_NAME}`                                                                                               |
 | Update feed                | `GussCloud/dolphin`                  | `release-channel.ts`, `updater-setup.ts`, `updater-release-feed.ts`, `updater-prerelease-feed.ts`, builder `publish` |
 | Installer                  | `dolphin-windows-setup.exe`          | builder `nsis.artifactName`                                                                                          |
+| macOS disk images          | `dolphin-macos-{x64,arm64}.dmg`      | builder `dmg.artifactName`                                                                                           |
 
 ## CLI
 
@@ -25,6 +26,8 @@ The command is `dolphin` on macOS and Windows and `dolphin-ide` on Linux and WSL
 ## Signing
 
 Dolphin's Windows installers are unsigned: there is no SignPath certificate. Unless `DOLPHIN_WIN_SIGNPATH_SIGNED=1` is set, the builder omits `publisherName` and sets `verifyUpdateCodeSignature: false`. Without that, every update would fail Authenticode verification. Windows SmartScreen warns on first run.
+
+The macOS builds are unsigned too: there is no Apple Developer ID. The `build-mac` job in `dolphin-windows-release.yml` sets `DOLPHIN_MAC_UNSIGNED_RELEASE=1`, which ad-hoc signs the app and writes a `dolphin-unsigned-mac-release` marker into `Contents/Resources`. Squirrel.Mac rejects an update whose signature does not match the running app, which no ad-hoc build ever does, so the marker makes the updater announce the release and point the user at the new `.dmg` instead of downloading it (`src/main/mac-unsigned-release.ts`). Gatekeeper blocks the first launch: right-click the app and choose Open, or run `xattr -dr com.apple.quarantine /Applications/Dolphin.app`. With a Developer ID, use `pnpm build:mac:release` instead and drop the flag.
 
 ## Endpoints
 

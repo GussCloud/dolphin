@@ -10,6 +10,7 @@ const MUTABLE_BUILD_ENV = [
   'DOLPHIN_MAC_DAILY',
   'DOLPHIN_MAC_ADHOC',
   'DOLPHIN_MAC_RELEASE',
+  'DOLPHIN_MAC_UNSIGNED_RELEASE',
   'DOLPHIN_HOURLY_BUILD_VERSION',
   'DOLPHIN_DAILY_BUILD_VERSION',
   'DOLPHIN_ADHOC_BUILD_VERSION',
@@ -157,6 +158,20 @@ describe('electron-builder mac channel config', () => {
           )
         })
       })
+    })
+  })
+
+  it('ad-hoc signs the unsigned CI release without hardened runtime or notarization', () => {
+    withEnv({ DOLPHIN_MAC_UNSIGNED_RELEASE: '1' }, (config) => {
+      expect(config.mac).toMatchObject({ identity: '-', hardenedRuntime: false, notarize: false })
+      expect(config.forceCodeSigning).toBe(false)
+    })
+    expect(electronBuilderConfig.mac.identity).toBeUndefined()
+  })
+
+  it('lets a signed release win over the unsigned flag', () => {
+    withEnv({ DOLPHIN_MAC_RELEASE: '1', DOLPHIN_MAC_UNSIGNED_RELEASE: '1' }, (config) => {
+      expect(config.mac.identity).toBeUndefined()
     })
   })
 })

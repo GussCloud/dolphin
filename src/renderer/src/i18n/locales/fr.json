@@ -2364,7 +2364,8 @@
         "b1e390250d": "Impossible de finaliser le basculement vers le build local.",
         "d29740d175": "Le build sélectionné n'a pas pu être utilisé.",
         "37d45c9ec1": "Choisir un autre build",
-        "7f1a4c9e02": "Votre gestionnaire de packages système a installé Dolphin, alors mettez-le à jour à partir de là – Dolphin ne peut pas installer cette version lui-même."
+        "7f1a4c9e02": "Votre gestionnaire de packages système a installé Dolphin, alors mettez-le à jour à partir de là – Dolphin ne peut pas installer cette version lui-même.",
+        "b4e82d17c3": "Cette version de Dolphin n'est pas signée par Apple, elle ne peut donc pas se mettre à jour elle-même — téléchargez le nouveau .dmg depuis les notes de version et faites glisser Dolphin dans Applications."
       },
       "WorktreeJumpPalette": {
         "ac037cfac2": "Déplacer",
@@ -7378,7 +7379,8 @@
           "3394d1f663": "vérification",
           "d69a09b672": "Les mises à jour sont vérifiées automatiquement au lancement.",
           "7173352632": "idle",
-          "e3b9d21c07": "est disponible. Mettez à jour Dolphin via votre gestionnaire de packages système – Dolphin ne peut pas installer cette version lui-même."
+          "e3b9d21c07": "est disponible. Mettez à jour Dolphin via votre gestionnaire de packages système – Dolphin ne peut pas installer cette version lui-même.",
+          "5c0d9a8e41": "est disponible. Cette version n'est pas signée par Apple : téléchargez le nouveau .dmg depuis les notes de version et faites glisser Dolphin dans Applications."
         },
         "GeneralWorkspaceSettingsSection": {
           "3d538a98f7": "Choisissez les applications proposées dans le menu « Ouvrir dans » d'un espace de travail.",

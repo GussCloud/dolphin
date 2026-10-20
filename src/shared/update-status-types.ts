@@ -77,6 +77,8 @@ export type UpdateStatus = (
       /** Linux only: a package manager owns this install, so Dolphin cannot apply the update itself.
        *  Additive and optional — older clients simply keep offering their own download. */
       externallyManaged?: boolean
+      /** macOS only, set with externallyManaged: an unsigned build that must be updated from the .dmg by hand. */
+      unsignedMacRelease?: boolean
     }
   | { state: 'not-available'; userInitiated?: boolean }
   | { state: 'downloading'; percent: number; version: string; activeNudgeId?: string }
