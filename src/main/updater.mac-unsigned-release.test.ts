@@ -57,6 +57,7 @@ describe('updater on an unsigned macOS release', () => {
     })
     const send = vi.fn()
     const updater = await loadUpdaterModule()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the updater only calls webContents.send on this window stub.
     updater.setupAutoUpdater({ webContents: { send } } as never, {
       getLastUpdateCheckAt: () => Date.now(),
       installMode: 'interactive'
