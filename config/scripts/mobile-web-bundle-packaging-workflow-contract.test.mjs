@@ -86,6 +86,7 @@ function packsWithBeforePack(text) {
 // Every job that packs an app and therefore runs beforePack. Listed so that a new packaging
 // workflow has to be added here deliberately, with its bundle step, rather than slipping in.
 const EXPECTED_PACKAGING_JOBS = [
+  'dolphin-windows-release.yml build-mac',
   'dolphin-windows-release.yml build-win',
   'dolphin-windows-release.yml build-win-arm64',
   'pr.yml package',
