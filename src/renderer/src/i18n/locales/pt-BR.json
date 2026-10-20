@@ -2422,7 +2422,8 @@
         "b1e390250d": "Não foi possível concluir o comutador de compilação local.",
         "d29740d175": "A compilação selecionada não pôde ser usada.",
         "37d45c9ec1": "Escolher Outra Compilação",
-        "7f1a4c9e02": "Seu gerenciador de pacotes do sistema instalou o Dolphin, então atualize-o de lá — o Dolphin não pode instalar esta release por conta própria."
+        "7f1a4c9e02": "Seu gerenciador de pacotes do sistema instalou o Dolphin, então atualize-o de lá — o Dolphin não pode instalar esta release por conta própria.",
+        "b4e82d17c3": "Esta build do Dolphin não é assinada pela Apple, então não consegue se atualizar sozinha — baixe o novo .dmg nas notas da release e arraste o Dolphin para Aplicativos."
       },
       "WorktreeJumpPalette": {
         "ac037cfac2": "Mover",
@@ -7436,7 +7437,8 @@
           "3394d1f663": "verificando",
           "d69a09b672": "Atualizações são verificadas automaticamente no lançamento.",
           "7173352632": "idle",
-          "e3b9d21c07": "está disponível. Atualize o Dolphin através do seu gerenciador de pacotes do sistema — o Dolphin não pode instalar este lançamento por conta própria."
+          "e3b9d21c07": "está disponível. Atualize o Dolphin através do seu gerenciador de pacotes do sistema — o Dolphin não pode instalar este lançamento por conta própria.",
+          "5c0d9a8e41": "está disponível. Esta build não é assinada pela Apple, então baixe o novo .dmg nas notas da release e arraste o Dolphin para Aplicativos."
         },
         "GeneralWorkspaceSettingsSection": {
           "3d538a98f7": "Escolha apps disponíveis no menu Abrir em de um workspace.",

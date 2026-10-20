@@ -15,6 +15,7 @@ import {
   shouldIgnoreDownloadedUpdateEvent
 } from './linux-package-downloaded-status'
 import { isExternallyManagedLinuxInstall } from './linux-update-package-type'
+import { isUnsignedMacRelease } from './mac-unsigned-release'
 import * as linuxPackageRecovery from './linux-package-update-recovery'
 
 const AUTO_UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
@@ -205,7 +206,8 @@ export function registerAutoUpdaterHandlers({
             version: info.version,
             changelog,
             // Why: the offer is real, but this host can never apply it — say so before a download is offered.
-            ...(isExternallyManagedLinuxInstall() ? { externallyManaged: true } : {})
+            ...(isExternallyManagedLinuxInstall() ? { externallyManaged: true } : {}),
+            ...(isUnsignedMacRelease() ? { externallyManaged: true, unsignedMacRelease: true } : {})
           }
         )
       } finally {

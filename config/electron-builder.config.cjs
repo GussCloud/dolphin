@@ -54,6 +54,10 @@ const isWinDevChannel = isWinHourly || isWinDaily || isWinAdhoc
 const isWinUnsigned = isWinDevChannel || process.env.DOLPHIN_WIN_SIGNPATH_SIGNED !== '1'
 const isMacRelease =
   process.env.DOLPHIN_MAC_RELEASE === '1' || isMacHourly || isMacDaily || isMacAdhoc
+// Why: the fork has no Developer ID certificate, so its CI macOS release ships ad-hoc signed.
+const isMacUnsignedRelease = !isMacRelease && process.env.DOLPHIN_MAC_UNSIGNED_RELEASE === '1'
+// Mirrors MAC_UNSIGNED_RELEASE_MARKER in src/main/mac-unsigned-release.ts.
+const MAC_UNSIGNED_RELEASE_MARKER = 'dolphin-unsigned-mac-release'
 const isLinuxArm64Release = process.env.DOLPHIN_LINUX_ARM64_RELEASE === '1'
 // Why a flag rather than the packaged arch: NSIS artifactName and the update channel are config-wide,
 // and the x64 installer's names must stay byte-identical for installs already pointed at them.
@@ -370,6 +374,10 @@ module.exports = {
         }
       }
       writeMacBuildCompatibility(resourcesDir, { version, commit, architecture })
+      // Why: an unsigned build cannot pass Squirrel.Mac's signature check, so the updater sends users to the .dmg.
+      if (isMacUnsignedRelease) {
+        writeFileSync(join(resourcesDir, MAC_UNSIGNED_RELEASE_MARKER), '')
+      }
     }
     stampPackagedCliVersion(resourcesDir, context.packager.appInfo.version)
     prunePackagedRuntimeNodeModules(resourcesDir, context.electronPlatformName, context.arch)
@@ -564,6 +572,8 @@ module.exports = {
     // explicit release path so production artifacts remain strict while dev
     // artifacts do not fail with broken ad-hoc launch behavior.
     hardenedRuntime: isMacRelease,
+    // Why ad-hoc rather than none: an arm64 bundle whose seal no longer matches its contents is reported as "damaged".
+    ...(isMacUnsignedRelease ? { identity: '-' } : {}),
     // Why dev builds notarize too, despite the ~10min notary round trip: TCC
     // anchors a notarized Developer ID app's permission grants on identifier +
     // team, which is cdhash-independent and so survives an update. Without a
