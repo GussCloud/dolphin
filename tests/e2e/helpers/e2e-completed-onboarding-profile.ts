@@ -18,7 +18,9 @@ export function getE2ECompletedOnboardingProfile() {
         optedIn: true,
         installId: '00000000-0000-4000-8000-000000000000',
         existedBeforeTelemetryRelease: false
-      }
+      },
+      // Why: the "What's new" dialog covers the UI for every release at or below the app version.
+      lastSeenWhatsNewVersion: '9999.0.0'
     },
     onboarding: {
       flowVersion: ONBOARDING_FLOW_VERSION,
