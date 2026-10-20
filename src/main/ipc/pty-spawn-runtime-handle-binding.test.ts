@@ -218,6 +218,7 @@ describe('registerPtyHandlers', () => {
     const spawnOptions = spawnMock.mock.calls.at(-1)?.[2] as { env: Record<string, string> }
     expect(runtime.prepareClaudeAgentTeamsLeaderForHandle).toHaveBeenCalledWith({
       handle: 'term_agent_teams',
+      paneKey: expect.any(String),
       baseEnv: expect.objectContaining({
         CLAUDE_PROFILE: 'captured',
         DOLPHIN_AGENT_TEAMS_TEAM_ID: 'team-stale'
@@ -462,6 +463,7 @@ describe('registerPtyHandlers', () => {
 
     expect(runtime.prepareClaudeAgentTeamsLeaderForHandle).toHaveBeenCalledWith({
       handle: 'term_agent_teams',
+      paneKey: expect.any(String),
       baseEnv: expect.any(Object)
     })
   })

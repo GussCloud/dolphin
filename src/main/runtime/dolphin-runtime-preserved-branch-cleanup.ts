@@ -42,6 +42,9 @@ import { RuntimeRepositoryForkBackfill } from './runtime-repository-fork-backfil
 import { RuntimeWorkspaceSessionController } from './runtime-workspace-session-controller'
 import { RuntimeAiVaultCommands } from './runtime-ai-vault-commands'
 import { ClaudeAgentTeamsService } from './claude-agent-teams-service'
+import { ClaudeAgentTeamsLeaderRegistry } from './claude-agent-teams-leader-registry'
+import { join } from 'node:path'
+import { getAppEnvironment } from '../../shared/app-environment'
 import { teardownFolderWorkspacePtys } from './folder-workspace-pty-teardown'
 
 export class DolphinRuntimeWithPreservedBranchCleanup extends DolphinRuntimeWithTerminalDrivers {
@@ -309,7 +312,12 @@ export class DolphinRuntimeWithPreservedBranchCleanup extends DolphinRuntimeWith
 
   protected readonly aiVault = new RuntimeAiVaultCommands(() => this.prepareAiVaultSessionResumeFn)
 
-  protected readonly claudeAgentTeams = new ClaudeAgentTeamsService()
+  protected readonly claudeAgentTeams = new ClaudeAgentTeamsService(
+    process.platform,
+    new ClaudeAgentTeamsLeaderRegistry(() =>
+      join(getAppEnvironment().getPath('userData'), 'claude-agent-teams-leaders.json')
+    )
+  )
 
   getNativeChatLaunchDraftResolutionClientEventSnapshot =
     this.nativeChatDraftResolutions.snapshot.bind(this.nativeChatDraftResolutions)

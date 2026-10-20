@@ -44,6 +44,8 @@ export type AgentTeamsTerminalApi = {
       gitBashStartupCommandInArgs?: boolean
     }
   ): Promise<RuntimeTerminalSplit>
+  /** Handle of the pane's live PTY; lets a team persisted before a main restart find its leader again. */
+  resolveLiveLeaderHandle?(paneKey: string): string | null
   /** Null when the leader's PTY is unknown on a host where the answer matters. */
   resolveHostShell(leaderHandle: string): AgentTeamHostShell | null
   /** A resumed teammate would come back as a plain session outside its team. */
