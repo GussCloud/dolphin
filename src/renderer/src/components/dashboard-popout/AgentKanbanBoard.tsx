@@ -13,6 +13,13 @@ import { installWindowVisibilityInterval } from '@/lib/window-visibility-interva
 import { AgentKanbanCard } from './AgentKanbanCard'
 import { AgentDashboardToolbar } from './AgentDashboardToolbar'
 import { AgentTerminalDialog, type AgentRevealArgs } from './AgentTerminalDialog'
+import { AgentGraphView } from './AgentGraphView'
+import { AgentDashboardViewToggle } from './AgentDashboardViewToggle'
+import {
+  readAgentDashboardView,
+  writeAgentDashboardView,
+  type AgentDashboardView
+} from './agent-dashboard-view-storage'
 import {
   EMPTY_DASHBOARD_FILTERS,
   filterDashboardCards,
@@ -158,6 +165,11 @@ export function AgentKanbanBoard({
     () => filterDashboardCards(visibleCards, query, filters),
     [visibleCards, filters, query]
   )
+  const [view, setView] = useState<AgentDashboardView>(readAgentDashboardView)
+  const handleViewChange = useCallback((next: AgentDashboardView) => {
+    setView(next)
+    writeAgentDashboardView(next)
+  }, [])
   const grouped = useMemo(() => groupByBucket(filteredCards), [filteredCards])
   const hasRelativeTimestamps = useMemo(
     () => snapshot.cards.some((card) => (card.finishedAt ?? card.startedAt) > 0),
@@ -254,21 +266,20 @@ export function AgentKanbanBoard({
               count: visibleCards.length
             })}
           </span>
-          {headerActions || onClose ? (
-            <div className="ml-auto flex items-center gap-1">
-              {headerActions}
-              {onClose ? (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label={translate('dashboardPopout.close', 'Close dashboard')}
-                  className="rounded-sm p-1 text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  <XIcon className="size-4" />
-                </button>
-              ) : null}
-            </div>
-          ) : null}
+          <div className="ml-auto flex items-center gap-1">
+            <AgentDashboardViewToggle view={view} onChange={handleViewChange} />
+            {headerActions}
+            {onClose ? (
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label={translate('dashboardPopout.close', 'Close dashboard')}
+                className="rounded-sm p-1 text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                <XIcon className="size-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
         <AgentDashboardToolbar
           cards={visibleCards}
@@ -280,21 +291,27 @@ export function AgentKanbanBoard({
           onFiltersChange={setFilters}
           searchInputRef={searchInputRef}
         />
-        <div className="scrollbar-sleek flex min-h-0 flex-1 overflow-x-auto p-3">
-          {/* Auto margins center the capped board and collapse during horizontal overflow. */}
-          <div className="mx-auto flex w-full max-w-[1280px] gap-3">
-            {visibleBuckets.map((bucket) => (
-              <KanbanColumn
-                key={bucket}
-                bucket={bucket}
-                cards={grouped[bucket]}
-                repoIconsByRepoId={snapshot.repoIconsByRepoId}
-                now={now}
-                onOpenTerminal={handleOpenTerminal}
-              />
-            ))}
+        {view === 'graph' ? (
+          <div className="scrollbar-sleek flex min-h-0 flex-1 overflow-auto p-4">
+            <AgentGraphView cards={filteredCards} onOpenTerminal={handleOpenTerminal} />
           </div>
-        </div>
+        ) : (
+          <div className="scrollbar-sleek flex min-h-0 flex-1 overflow-x-auto p-3">
+            {/* Auto margins center the capped board and collapse during horizontal overflow. */}
+            <div className="mx-auto flex w-full max-w-[1280px] gap-3">
+              {visibleBuckets.map((bucket) => (
+                <KanbanColumn
+                  key={bucket}
+                  bucket={bucket}
+                  cards={grouped[bucket]}
+                  repoIconsByRepoId={snapshot.repoIconsByRepoId}
+                  now={now}
+                  onOpenTerminal={handleOpenTerminal}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         <AgentTerminalDialog
           card={dialogCard}
           onOpenChange={handleDialogOpenChange}

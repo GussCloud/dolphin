@@ -349,4 +349,38 @@ describe('AgentKanbanBoard', () => {
     )
     expect(ackAgent).toHaveBeenCalledWith('pk-ack')
   })
+
+  it('switches to the graph view, links children to parents, and remembers the choice', () => {
+    renderBoard([
+      card({ paneKey: 'lead', worktreeName: 'lead-wt' }),
+      card({ paneKey: 'mate', worktreeName: 'mate-wt', parentPaneKey: 'lead' })
+    ])
+    expect(screen.queryByTestId('agent-graph')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Graph view' }))
+
+    expect(screen.getByRole('button', { name: 'Graph view' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    expect(screen.queryByText('Needs You')).not.toBeInTheDocument()
+    const graph = screen.getByTestId('agent-graph')
+    expect(within(graph).getAllByTestId('agent-graph-node')).toHaveLength(2)
+    expect(within(graph).getAllByTestId('agent-graph-edge')).toHaveLength(1)
+    expect(localStorage.getItem('dolphin.agent-dashboard.view.v1')).toBe('graph')
+
+    cleanup()
+    renderBoard([card({ paneKey: 'lead' })])
+    expect(screen.getByTestId('agent-graph')).toBeInTheDocument()
+  })
+
+  it('opens the terminal dialog from a graph node', () => {
+    localStorage.setItem('dolphin.agent-dashboard.view.v1', 'graph')
+    renderBoard([card({ paneKey: 'solo', ptyId: 'pty-solo' })])
+
+    fireEvent.click(screen.getByTestId('agent-graph-node'))
+
+    expect(screen.getByTestId('terminal-dialog')).toHaveAttribute('data-open', 'true')
+    expect(screen.getByTestId('terminal-dialog')).toHaveAttribute('data-pty-id', 'pty-solo')
+  })
 })

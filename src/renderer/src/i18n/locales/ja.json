@@ -18602,6 +18602,13 @@
       "ssh": "SSH ホスト",
       "remoteNamed": "リモート Dolphin ホスト · {{host}}",
       "remote": "リモート Dolphin ホスト"
+    },
+    "view": {
+      "board": "ボード表示",
+      "graph": "グラフ表示"
+    },
+    "graph": {
+      "empty": "表示する Agent はありません"
     }
   },
   "dashboard": {
