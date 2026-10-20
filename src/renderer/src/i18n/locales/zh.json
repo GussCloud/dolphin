@@ -18602,6 +18602,13 @@
       "ssh": "SSH 主机",
       "remoteNamed": "远程 Dolphin 主机 · {{host}}",
       "remote": "远程 Dolphin 主机"
+    },
+    "view": {
+      "board": "看板视图",
+      "graph": "图形视图"
+    },
+    "graph": {
+      "empty": "没有可显示的智能体"
     }
   },
   "dashboard": {

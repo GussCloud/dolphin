@@ -18723,6 +18723,13 @@
       "ssh": "Host SSH",
       "remoteNamed": "Host Dolphin Remoto · {{host}}",
       "remote": "Host Dolphin Remoto"
+    },
+    "view": {
+      "board": "Visão em quadro",
+      "graph": "Visão em grafo"
+    },
+    "graph": {
+      "empty": "Nenhum agente para mostrar"
     }
   },
   "dashboard": {

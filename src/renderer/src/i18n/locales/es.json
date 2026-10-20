@@ -15694,6 +15694,13 @@
     "settings": {
       "showIdle": "Mostrar agentes inactivos",
       "showIdleCopy": "Incluye agentes que han permanecido inactivos durante 30 minutos sin informar que finalizaron. Ocultos de forma predeterminada."
+    },
+    "view": {
+      "board": "Vista de tablero",
+      "graph": "Vista de grafo"
+    },
+    "graph": {
+      "empty": "No hay agentes para mostrar"
     }
   },
   "dashboard": {

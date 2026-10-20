@@ -18602,6 +18602,13 @@
       "ssh": "SSH 호스트",
       "remoteNamed": "원격 Dolphin 호스트 · {{host}}",
       "remote": "원격 Dolphin 호스트"
+    },
+    "view": {
+      "board": "보드 보기",
+      "graph": "그래프 보기"
+    },
+    "graph": {
+      "empty": "표시할 에이전트가 없습니다"
     }
   },
   "dashboard": {
