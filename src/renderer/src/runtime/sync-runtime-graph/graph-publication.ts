@@ -190,6 +190,7 @@ export async function syncRuntimeGraph(): Promise<void> {
     commitMobileSessionPublication(mobileSessionTabs, result?.mobileSessionResyncWorktrees)
     const currentState = graphState.getStoreState()
     currentState?.setRuntimeAgentOrchestrationByPaneKey?.(result?.agentOrchestrationByPaneKey ?? {})
+    currentState?.setRuntimeAgentTeamLineageByPaneKey?.(result?.agentTeamLineageByPaneKey ?? {})
     for (const resolution of result?.nativeChatLaunchDraftResolutions ?? []) {
       if (currentState) {
         applyNativeChatLaunchDraftResolved(currentState, {

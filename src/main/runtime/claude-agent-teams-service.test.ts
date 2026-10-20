@@ -240,9 +240,13 @@ describe('ClaudeAgentTeamsService', () => {
     await request(['select-pane', '-t', '%2', '-T', 'impl'])
 
     expect([...service.listTeammateNamesByHandle()]).toEqual([['teammate-2', 'impl']])
+    expect([...service.listTeammateLineageByHandle()]).toEqual([
+      ['teammate-2', { leaderHandle: 'leader-handle', teammateName: 'impl' }]
+    ])
 
     await request(['kill-pane', '-t', '%2'])
     expect(service.listTeammateNamesByHandle().size).toBe(0)
+    expect(service.listTeammateLineageByHandle().size).toBe(0)
   })
 
   it('removes the pane when replacement split fails after a confirmed placeholder stop', async () => {

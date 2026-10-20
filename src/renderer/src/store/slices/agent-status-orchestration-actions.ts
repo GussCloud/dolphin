@@ -2,6 +2,7 @@ import type {
   AgentStatusEntry,
   AgentStatusOrchestrationContext
 } from '../../../../shared/agent-status-types'
+import type { RuntimeAgentTeamLineage } from '../../../../shared/runtime-session-contracts'
 import type { AgentStatusSlice } from './agent-status-slice-contract'
 import type { AgentStatusRuntime } from './agent-status-runtime'
 import {
@@ -15,9 +16,19 @@ import {
 
 export function createAgentStatusOrchestrationActions(
   runtime: AgentStatusRuntime
-): Pick<AgentStatusSlice, 'setRuntimeAgentOrchestrationByPaneKey'> {
+): Pick<
+  AgentStatusSlice,
+  'setRuntimeAgentOrchestrationByPaneKey' | 'setRuntimeAgentTeamLineageByPaneKey'
+> {
   const { get, set } = runtime
   return {
+    setRuntimeAgentTeamLineageByPaneKey: (entries: Record<string, RuntimeAgentTeamLineage>) => {
+      set((s) =>
+        teamLineageMapsEqual(s.runtimeAgentTeamLineageByPaneKey, entries)
+          ? s
+          : { runtimeAgentTeamLineageByPaneKey: entries }
+      )
+    },
     setRuntimeAgentOrchestrationByPaneKey: (
       entries: Record<string, AgentStatusOrchestrationContext>
     ) => {
@@ -100,4 +111,21 @@ export function createAgentStatusOrchestrationActions(
       }
     }
   }
+}
+
+// Why: the graph sync republishes often; keep identity so dashboard selectors don't rebuild.
+function teamLineageMapsEqual(
+  a: Record<string, RuntimeAgentTeamLineage>,
+  b: Record<string, RuntimeAgentTeamLineage>
+): boolean {
+  const keys = Object.keys(a)
+  if (keys.length !== Object.keys(b).length) {
+    return false
+  }
+  return keys.every(
+    (key) =>
+      b[key] !== undefined &&
+      a[key].leaderPaneKey === b[key].leaderPaneKey &&
+      a[key].teammateName === b[key].teammateName
+  )
 }

@@ -249,4 +249,22 @@ describe('unreachable lineage cleanup', () => {
     expect([...tree.childrenByParentPaneKey]).toEqual([['root', [child]]])
     expect([...tree.childPaneKeys]).toEqual(['child'])
   })
+
+  it('nests Agent Teams teammates under their lead when no orchestration parent exists', () => {
+    const lead = makeRow('lead')
+    const mate = makeRow('mate')
+    const worker = makeRow('worker', { parentPaneKey: 'mate' })
+    const tree = buildAgentRowLineageTree([lead, mate, worker], {
+      mate: { leaderPaneKey: 'lead' },
+      // Orchestration lineage wins over a team link.
+      worker: { leaderPaneKey: 'lead' },
+      lead: { leaderPaneKey: 'lead' }
+    })
+
+    expect(tree.rootRows).toEqual([lead])
+    expect([...tree.childrenByParentPaneKey]).toEqual([
+      ['lead', [mate]],
+      ['mate', [worker]]
+    ])
+  })
 })

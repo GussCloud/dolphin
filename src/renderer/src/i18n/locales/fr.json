@@ -18708,6 +18708,19 @@
     },
     "graph": {
       "empty": "Aucun agent à afficher"
+    },
+    "orbit": {
+      "back": "Toutes les tâches",
+      "hint": "Sélectionnez un responsable pour ouvrir son équipe",
+      "summary": "{{working}} en activité · {{done}} terminés",
+      "needsYou": "{{count}} vous concerne",
+      "solo": "Agent seul",
+      "openTeam": "Ouvrir l’équipe : {{name}}",
+      "openLeadTerminal": "Ouvrir le terminal du responsable : {{name}}",
+      "openTerminal": "Ouvrir le terminal",
+      "subagent": "Sous-agent intégré",
+      "selectMember": "Sélectionnez un coéquipier pour voir sa tâche",
+      "openAgentTerminal": "Ouvrir le terminal : {{name}}"
     }
   },
   "dashboard": {
@@ -19138,6 +19151,26 @@
     },
     "title": "Nouveautés de la version {{version}}",
     "description": "Une nouvelle façon de suivre tes pull requests Azure DevOps.",
-    "dismiss": "Compris"
+    "dismiss": "Compris",
+    "agentTeams": {
+      "description": "L’Agent Dashboard propose une vue équipes : chaque responsable avec ses coéquipiers en orbite.",
+      "open": "Ouvrir la vue équipes",
+      "enable": "Activer l’Agent Dashboard",
+      "bullet": {
+        "leads": "Un avatar par tâche en cours ; son anneau montre l’état de chaque coéquipier",
+        "orbit": "Sélectionnez un responsable pour ouvrir son équipe en orbite, avec la tâche de chaque coéquipier",
+        "lineage": "Les coéquipiers Claude Agent Teams apparaissent sous leur responsable, avec leur propre nom",
+        "focus": "Les grandes équipes se répartissent sur deux anneaux et l’équipe qui vous attend s’ouvre en premier"
+      },
+      "sample": {
+        "lead": "Préparer la version",
+        "research": "recherche",
+        "tests": "tests",
+        "docs": "docs",
+        "review": "relecture",
+        "build": "build",
+        "i18n": "i18n"
+      }
+    }
   }
 }

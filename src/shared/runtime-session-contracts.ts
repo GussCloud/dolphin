@@ -177,8 +177,16 @@ export type RuntimeNativeChatLaunchDraftResolution = {
   createdAt: number
 }
 
+/** A Claude Agent Teams teammate pane's leader, published so readers can nest it. */
+export type RuntimeAgentTeamLineage = {
+  leaderPaneKey: string
+  teammateName?: string
+}
+
 export type RuntimeSyncWindowGraphResult = RuntimeStatus & {
   agentOrchestrationByPaneKey?: Record<string, AgentStatusOrchestrationContext>
+  /** Optional: older runtimes omit it and teammates stay un-nested. */
+  agentTeamLineageByPaneKey?: Record<string, RuntimeAgentTeamLineage>
   nativeChatLaunchDraftResolutions?: RuntimeNativeChatLaunchDraftResolution[]
   mobileSessionResyncWorktrees?: string[]
 }

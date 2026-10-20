@@ -18609,6 +18609,19 @@
     },
     "graph": {
       "empty": "表示する Agent はありません"
+    },
+    "orbit": {
+      "back": "すべてのタスク",
+      "hint": "リーダーを選ぶとチームを表示します",
+      "summary": "作業中 {{working}} · 完了 {{done}}",
+      "needsYou": "{{count}} 件が対応待ち",
+      "solo": "単独の Agent",
+      "openTeam": "チームを開く: {{name}}",
+      "openLeadTerminal": "リーダーのターミナルを開く: {{name}}",
+      "openTerminal": "ターミナルを開く",
+      "subagent": "プロセス内のサブ Agent",
+      "selectMember": "チームメイトを選ぶとタスクを表示します",
+      "openAgentTerminal": "ターミナルを開く: {{name}}"
     }
   },
   "dashboard": {
@@ -19138,6 +19151,26 @@
     },
     "title": "{{version}} の新機能",
     "description": "Azure DevOps の pull request を見守る新しい方法です。",
-    "dismiss": "了解"
+    "dismiss": "了解",
+    "agentTeams": {
+      "description": "Agent Dashboard にチーム表示が加わりました。各リーダーとチームメイトを軌道上に表示します。",
+      "open": "チーム表示を開く",
+      "enable": "Agent Dashboard を有効にする",
+      "bullet": {
+        "leads": "実行中のタスクごとにアバターを表示し、リングで各チームメイトの状態を示します",
+        "orbit": "リーダーを選ぶと、各チームメイトの現在のタスクとともにチームを軌道表示します",
+        "lineage": "Claude Agent Teams のチームメイトがリーダーの下に、それぞれの名前で表示されます",
+        "focus": "大きなチームは 2 つのリングに分かれ、対応待ちのチームが最初に開きます"
+      },
+      "sample": {
+        "lead": "リリースを準備",
+        "research": "調査",
+        "tests": "テスト",
+        "docs": "ドキュメント",
+        "review": "レビュー",
+        "build": "ビルド",
+        "i18n": "i18n"
+      }
+    }
   }
 }

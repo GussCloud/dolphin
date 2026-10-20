@@ -350,12 +350,18 @@ describe('AgentKanbanBoard', () => {
     expect(ackAgent).toHaveBeenCalledWith('pk-ack')
   })
 
-  it('switches to the graph view, links children to parents, and remembers the choice', () => {
+  it('switches to the team view, opens a lead into its orbit, and remembers the choice', () => {
     renderBoard([
-      card({ paneKey: 'lead', worktreeName: 'lead-wt' }),
-      card({ paneKey: 'mate', worktreeName: 'mate-wt', parentPaneKey: 'lead' })
+      card({ paneKey: 'lead', worktreeName: 'lead-wt', conversationName: 'Crie um time' }),
+      card({
+        paneKey: 'mate',
+        worktreeName: 'lead-wt',
+        conversationName: 'primos',
+        parentPaneKey: 'lead'
+      }),
+      card({ paneKey: 'solo', worktreeName: 'solo-wt' })
     ])
-    expect(screen.queryByTestId('agent-graph')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('agent-team-leader')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Graph view' }))
 
@@ -364,23 +370,65 @@ describe('AgentKanbanBoard', () => {
       'true'
     )
     expect(screen.queryByText('Needs You')).not.toBeInTheDocument()
-    const graph = screen.getByTestId('agent-graph')
-    expect(within(graph).getAllByTestId('agent-graph-node')).toHaveLength(2)
-    expect(within(graph).getAllByTestId('agent-graph-edge')).toHaveLength(1)
+    expect(screen.getAllByTestId('agent-team-leader')).toHaveLength(2)
     expect(localStorage.getItem('dolphin.agent-dashboard.view.v1')).toBe('graph')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open team: Crie um time' }))
+
+    const stage = screen.getByTestId('agent-team-stage')
+    expect(within(stage).getAllByTestId('agent-team-member')).toHaveLength(1)
+    expect(within(stage).getAllByTestId('agent-team-edge')).toHaveLength(1)
+    fireEvent.click(screen.getByRole('button', { name: 'All tasks' }))
+    expect(screen.queryByTestId('agent-team-stage')).not.toBeInTheDocument()
 
     cleanup()
     renderBoard([card({ paneKey: 'lead' })])
-    expect(screen.getByTestId('agent-graph')).toBeInTheDocument()
+    expect(screen.getByTestId('agent-team-leader')).toBeInTheDocument()
   })
 
-  it('opens the terminal dialog from a graph node', () => {
+  it('opens a solo agent and a selected teammate straight into the terminal dialog', () => {
     localStorage.setItem('dolphin.agent-dashboard.view.v1', 'graph')
-    renderBoard([card({ paneKey: 'solo', ptyId: 'pty-solo' })])
+    renderBoard([
+      card({ paneKey: 'solo', ptyId: 'pty-solo', worktreeName: 'solo-wt' }),
+      card({ paneKey: 'lead', ptyId: 'pty-lead', conversationName: 'time', startedAt: 1 }),
+      card({
+        paneKey: 'mate',
+        ptyId: 'pty-mate',
+        conversationName: 'primos',
+        parentPaneKey: 'lead'
+      })
+    ])
 
-    fireEvent.click(screen.getByTestId('agent-graph-node'))
-
-    expect(screen.getByTestId('terminal-dialog')).toHaveAttribute('data-open', 'true')
+    fireEvent.click(screen.getByRole('button', { name: 'Open terminal: solo-wt' }))
     expect(screen.getByTestId('terminal-dialog')).toHaveAttribute('data-pty-id', 'pty-solo')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open team: time' }))
+    fireEvent.click(screen.getByRole('button', { name: 'primos' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open terminal' }))
+    expect(screen.getByTestId('terminal-dialog')).toHaveAttribute('data-pty-id', 'pty-mate')
+  })
+
+  it('lands on the team that needs you and stays on the overview after Back', () => {
+    localStorage.setItem('dolphin.agent-dashboard.view.v1', 'graph')
+    renderBoard([
+      card({ paneKey: 'calm', conversationName: 'calma' }),
+      card({ paneKey: 'calm-mate', conversationName: 'ok', parentPaneKey: 'calm' }),
+      card({ paneKey: 'lead', conversationName: 'time', startedAt: 1 }),
+      card({
+        paneKey: 'mate',
+        conversationName: 'tradutor',
+        parentPaneKey: 'lead',
+        bucket: 'attention',
+        dotState: 'blocked',
+        askSummary: 'Japonês ou inglês?'
+      })
+    ])
+
+    expect(screen.getByTestId('agent-team-stage')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'tradutor' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getAllByText('Japonês ou inglês?').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'All tasks' }))
+    expect(screen.queryByTestId('agent-team-stage')).not.toBeInTheDocument()
   })
 })

@@ -94,6 +94,7 @@ export function useWorktreeAgentRows(worktreeId: string, active = true): Dashboa
       active ? selectTerminalLayoutsForWorktree(s, worktreeId) : EMPTY_TERMINAL_LAYOUTS
     )
   )
+  const teamLeaderByPaneKey = useAppStore((s) => s.runtimeAgentTeamLineageByPaneKey)
   const runtimeAgentOrchestrationByPaneKey = useAppStore(
     useShallow((s) =>
       active
@@ -132,7 +133,8 @@ export function useWorktreeAgentRows(worktreeId: string, active = true): Dashboa
         terminalLayoutsByTabId,
         runtimeAgentOrchestrationByPaneKey,
         now
-      })
+      }),
+      teamLeaderByPaneKey
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -145,6 +147,7 @@ export function useWorktreeAgentRows(worktreeId: string, active = true): Dashboa
     ptyIdsByTabId,
     terminalLayoutsByTabId,
     runtimeAgentOrchestrationByPaneKey,
+    teamLeaderByPaneKey,
     agentFreshnessSignature
   ])
 }

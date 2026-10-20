@@ -15701,6 +15701,19 @@
     },
     "graph": {
       "empty": "No hay agentes para mostrar"
+    },
+    "orbit": {
+      "back": "Todas las tareas",
+      "hint": "Selecciona un líder para abrir su equipo",
+      "summary": "{{working}} trabajando · {{done}} listos",
+      "needsYou": "{{count}} te necesita",
+      "solo": "Agente solo",
+      "openTeam": "Abrir equipo: {{name}}",
+      "openLeadTerminal": "Abrir terminal del líder: {{name}}",
+      "openTerminal": "Abrir terminal",
+      "subagent": "Subagente en proceso",
+      "selectMember": "Selecciona un compañero para ver su tarea",
+      "openAgentTerminal": "Abrir terminal: {{name}}"
     }
   },
   "dashboard": {
@@ -16027,6 +16040,26 @@
     },
     "title": "Novedades de la versión {{version}}",
     "description": "Una nueva forma de seguir tus pull requests de Azure DevOps.",
-    "dismiss": "Entendido"
+    "dismiss": "Entendido",
+    "agentTeams": {
+      "description": "El Agent Dashboard tiene una nueva vista de equipos: cada líder con sus compañeros en órbita.",
+      "open": "Abrir la vista de equipos",
+      "enable": "Activar el Agent Dashboard",
+      "bullet": {
+        "leads": "Un avatar por tarea en curso; su anillo muestra el estado de cada compañero",
+        "orbit": "Selecciona un líder para abrir su equipo en órbita, con la tarea actual de cada compañero",
+        "lineage": "Los compañeros de Claude Agent Teams ahora aparecen bajo su líder, con sus propios nombres",
+        "focus": "Los equipos grandes se dividen en dos anillos y el equipo que te espera se abre primero"
+      },
+      "sample": {
+        "lead": "Preparar la versión",
+        "research": "investigación",
+        "tests": "pruebas",
+        "docs": "docs",
+        "review": "revisión",
+        "build": "build",
+        "i18n": "i18n"
+      }
+    }
   }
 }

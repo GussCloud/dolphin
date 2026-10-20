@@ -18609,6 +18609,19 @@
     },
     "graph": {
       "empty": "没有可显示的智能体"
+    },
+    "orbit": {
+      "back": "所有任务",
+      "hint": "选择一个负责人以展开其团队",
+      "summary": "{{working}} 个工作中 · {{done}} 个已完成",
+      "needsYou": "{{count}} 个需要你",
+      "solo": "单独的智能体",
+      "openTeam": "打开团队：{{name}}",
+      "openLeadTerminal": "打开负责人终端：{{name}}",
+      "openTerminal": "打开终端",
+      "subagent": "进程内子智能体",
+      "selectMember": "选择一个队友以查看其任务",
+      "openAgentTerminal": "打开终端：{{name}}"
     }
   },
   "dashboard": {
@@ -19138,6 +19151,26 @@
     },
     "title": "{{version}} 版本新功能",
     "description": "跟踪 Azure DevOps pull request 的新方式。",
-    "dismiss": "知道了"
+    "dismiss": "知道了",
+    "agentTeams": {
+      "description": "Agent Dashboard 新增团队视图：每位负责人及其队友环绕显示。",
+      "open": "打开团队视图",
+      "enable": "开启 Agent Dashboard",
+      "bullet": {
+        "leads": "每个运行中的任务一个头像，圆环显示每位队友的状态",
+        "orbit": "选择负责人即可在环形视图中打开其团队，并查看每位队友的当前任务",
+        "lineage": "Claude Agent Teams 的队友现在以各自的名称显示在负责人之下",
+        "focus": "大型团队分为两个圆环，等待你处理的团队会最先打开"
+      },
+      "sample": {
+        "lead": "准备发布",
+        "research": "调研",
+        "tests": "测试",
+        "docs": "文档",
+        "review": "评审",
+        "build": "构建",
+        "i18n": "i18n"
+      }
+    }
   }
 }

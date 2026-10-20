@@ -68,7 +68,13 @@ export type DashboardSnapshotState = Pick<
   Partial<
     DashboardCardTerminalInputState &
       DashboardLaunchDetectionState &
-      Pick<AppState, 'runtimeEnvironments' | 'sshTargetLabels' | 'unifiedTabsByWorktree'>
+      Pick<
+        AppState,
+        | 'runtimeEnvironments'
+        | 'sshTargetLabels'
+        | 'unifiedTabsByWorktree'
+        | 'runtimeAgentTeamLineageByPaneKey'
+      >
   >
 
 /**
@@ -208,6 +214,12 @@ export function buildDashboardSnapshot(
             clientHost.platform
           )
         : undefined
+      // Why: Agent Teams teammates carry no orchestration context; the runtime names their leader.
+      const teamLineage = state.runtimeAgentTeamLineageByPaneKey?.[row.paneKey]
+      const teamLeaderPaneKey =
+        teamLineage && teamLineage.leaderPaneKey !== row.paneKey
+          ? teamLineage.leaderPaneKey
+          : undefined
       // Only repos that actually contribute a card ship their icon.
       repoIconsByRepoId[workspace.projectId] = workspace.repoIcon
 
@@ -227,7 +239,7 @@ export function buildDashboardSnapshot(
         worktreeName: boundedLabel(worktree.displayName),
         ...(includeCardDetails
           ? {
-              parentPaneKey: dashboardCardParentPaneKey(row),
+              parentPaneKey: dashboardCardParentPaneKey(row) ?? teamLeaderPaneKey,
               ...(parentWorktreeId ? { parentWorktreeId } : {}),
               ...hostMetadata
             }
@@ -249,12 +261,13 @@ export function buildDashboardSnapshot(
         unseen,
         askSummary: bucket === 'attention' ? (row.entry.interactivePrompt ?? undefined) : undefined,
         conversationName: boundedLabelOrUndefined(
-          rowConversationName(
-            row,
-            generatedTitlesEnabled,
-            terminalLayoutsByTabId[row.tab.id],
-            paneTitlesByTabId[row.tab.id]
-          )
+          teamLineage?.teammateName ??
+            rowConversationName(
+              row,
+              generatedTitlesEnabled,
+              terminalLayoutsByTabId[row.tab.id],
+              paneTitlesByTabId[row.tab.id]
+            )
         ),
         ...(terminalInput ? { terminalInput } : {})
       })

@@ -34,8 +34,17 @@ describe('getWhatsNewDecision', () => {
 
   it('skips when no newer entry exists', () => {
     expect(
-      getWhatsNewDecision({ ...base, appVersion: '0.3.0', lastSeenVersion: '0.2.10' })
+      getWhatsNewDecision({ ...base, appVersion: '0.3.0', lastSeenVersion: '0.2.12' })
     ).toEqual({ kind: 'skip' })
+  })
+
+  it('announces the agent team view from 0.2.12, even to users who saw the Azure entry', () => {
+    expect(
+      getWhatsNewDecision({ ...base, appVersion: '0.2.11', lastSeenVersion: '0.2.10' })
+    ).toEqual({ kind: 'skip' })
+    expect(
+      getWhatsNewDecision({ ...base, appVersion: '0.2.12', lastSeenVersion: '0.2.10' })
+    ).toEqual({ kind: 'show', release: { version: '0.2.12', id: 'agent-teams-orbit' } })
   })
 
   it('skips while the app version is unknown', () => {
