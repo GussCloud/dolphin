@@ -4,6 +4,7 @@ import { ClaudeAgentTeamsTmuxDispatcher } from './claude-agent-teams-tmux-dispat
 import { resolvePathEnvKey } from '../pty/windows-environment-path'
 import { AGENT_TEAMS_SHIM_PATH_DIRS_ENV } from '../claude-agent-teams-path-restore'
 import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
+import type { ClaudeAgentTeamsLeaderRegistry } from './claude-agent-teams-leader-registry'
 import type {
   AgentTeam,
   AgentTeamsLaunchEnv,
@@ -24,8 +25,13 @@ export class ClaudeAgentTeamsService {
   private readonly teams = new Map<string, AgentTeam>()
   private readonly dispatcher = new ClaudeAgentTeamsTmuxDispatcher()
   private pipeEndpoint: string | null = null
+  /** Teams written to `leaderRegistry`, by team id. */
+  private readonly persistedLeaderPaneKeys = new Map<string, string>()
 
-  constructor(private readonly platform: NodeJS.Platform = process.platform) {}
+  constructor(
+    private readonly platform: NodeJS.Platform = process.platform,
+    private readonly leaderRegistry: ClaudeAgentTeamsLeaderRegistry | null = null
+  ) {}
 
   /** Agent-teams-only named pipe that tmux.exe calls directly; null when no listener is up. */
   setPipeEndpoint(endpoint: string | null): void {
@@ -42,6 +48,8 @@ export class ClaudeAgentTeamsService {
     shimPathDirs?: string[]
     /** Omitted when the leader PTY is not spawned yet; resolved on the first teammate split. */
     hostShell?: AgentTeamHostShell
+    /** Lets the team be re-admitted after a main restart; omitted, the team dies with this process. */
+    paneKey?: string
   }): AgentTeamsLaunchEnv {
     const teamId = `team-${randomUUID()}`
     const token = randomBytes(32).toString('base64url')
@@ -51,7 +59,7 @@ export class ClaudeAgentTeamsService {
     const pathDelimiter = process.platform === 'win32' ? ';' : ':'
     const shimPathDirs = (args.shimPathDirs ?? [args.shimDir]).filter(Boolean)
     const pathValue = [...shimPathDirs, args.baseEnv[pathKey]].filter(Boolean).join(pathDelimiter)
-    const tmuxValue = `/tmp/dolphin-claude-agent-teams/${teamId},0,1`
+    const tmuxValue = agentTeamTmuxValue(teamId)
     const env: Record<string, string> = {
       CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: '1',
       [pathKey]: pathValue,
@@ -81,23 +89,18 @@ export class ClaudeAgentTeamsService {
       env.DOLPHIN_AGENT_TEAMS_ENDPOINT = this.pipeEndpoint
     }
 
-    const leader: TeamPane = { fakePaneId: leaderPane, handle: args.leaderHandle, index: 0 }
-    this.teams.set(teamId, {
+    const team = this.registerTeam({
       teamId,
       token,
-      leaderPane,
       leaderHandle: args.leaderHandle,
-      sessionName: 'dolphin',
-      windowIndex: '0',
-      tmuxValue,
-      baseEnv: env,
+      env,
       hostShell: args.hostShell ?? null,
-      panes: new Map([[leaderPane, leader]]),
-      paneOrder: [leaderPane],
-      nextPaneNumber: 2,
-      mainVertical: null,
-      previouslyFocusedPane: null
+      nextPaneNumber: 2
     })
+    if (args.paneKey) {
+      this.persistedLeaderPaneKeys.set(teamId, args.paneKey)
+      this.persistTeam(team)
+    }
     return { teamId, token, leaderPane, env }
   }
 
@@ -106,6 +109,9 @@ export class ClaudeAgentTeamsService {
       if (team.leaderHandle === handle) {
         this.teams.delete(teamId)
         void this.dispatcher.releaseTeam(team)
+        if (this.persistedLeaderPaneKeys.delete(teamId)) {
+          this.withRegistry((registry) => registry.delete(teamId))
+        }
       }
     }
   }
@@ -147,19 +153,31 @@ export class ClaudeAgentTeamsService {
     request: AgentTeamsTmuxCompatRequest,
     api: AgentTeamsTerminalApi
   ): Promise<AgentTeamsTmuxCompatResponse> {
+    let team: AgentTeam | null = null
+    let paneNumberBefore = 0
     try {
-      const team = this.resolveTeam(request)
+      team = this.resolveTeam(request, api)
+      paneNumberBefore = team.nextPaneNumber
       const { command, args } = splitTmuxCommand(request.argv)
       const stdout = await this.dispatcher.dispatch(team, command, args, request.envPane, api)
       return { ok: true, stdout, stderr: '', exitCode: 0 }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       return { ok: false, stdout: '', stderr: `tmux: ${message}\n`, exitCode: 1 }
+    } finally {
+      // Why: a restored team must not re-issue a pane id the leader's Claude still remembers.
+      if (
+        team &&
+        team.nextPaneNumber !== paneNumberBefore &&
+        this.teams.get(team.teamId) === team
+      ) {
+        this.persistTeam(team)
+      }
     }
   }
 
-  private resolveTeam(request: AgentTeamsTmuxCompatRequest): AgentTeam {
-    const team = this.teams.get(request.teamId)
+  private resolveTeam(request: AgentTeamsTmuxCompatRequest, api: AgentTeamsTerminalApi): AgentTeam {
+    const team = this.teams.get(request.teamId) ?? this.restoreTeam(request, api)
     if (!team || !tokensMatch(team.token, request.token)) {
       throw new Error('stale or unauthorized agent team')
     }
@@ -168,6 +186,93 @@ export class ClaudeAgentTeamsService {
     }
     return team
   }
+
+  // Why: an auto-update restarts main with `teams` empty while the daemon keeps leader PTYs holding the old id/token.
+  private restoreTeam(
+    request: AgentTeamsTmuxCompatRequest,
+    api: AgentTeamsTerminalApi
+  ): AgentTeam | null {
+    const persisted = this.withRegistry((registry) => registry.get(request.teamId))
+    if (!persisted || !tokensMatch(persisted.token, request.token)) {
+      return null
+    }
+    // Why: not-yet-reattached is indistinguishable from dead here, so the record is kept for a later call.
+    const leaderHandle = api.resolveLiveLeaderHandle?.(persisted.paneKey) ?? null
+    if (!leaderHandle) {
+      return null
+    }
+    this.persistedLeaderPaneKeys.set(persisted.teamId, persisted.paneKey)
+    return this.registerTeam({
+      teamId: persisted.teamId,
+      token: persisted.token,
+      leaderHandle,
+      env: persisted.env,
+      hostShell: null,
+      nextPaneNumber: persisted.nextPaneNumber
+    })
+  }
+
+  private registerTeam(args: {
+    teamId: string
+    token: string
+    leaderHandle: string
+    env: Record<string, string>
+    hostShell: AgentTeamHostShell | null
+    nextPaneNumber: number
+  }): AgentTeam {
+    const leaderPane = '%1'
+    const leader: TeamPane = { fakePaneId: leaderPane, handle: args.leaderHandle, index: 0 }
+    const team: AgentTeam = {
+      teamId: args.teamId,
+      token: args.token,
+      leaderPane,
+      leaderHandle: args.leaderHandle,
+      sessionName: 'dolphin',
+      windowIndex: '0',
+      tmuxValue: agentTeamTmuxValue(args.teamId),
+      baseEnv: args.env,
+      hostShell: args.hostShell,
+      panes: new Map([[leaderPane, leader]]),
+      paneOrder: [leaderPane],
+      nextPaneNumber: args.nextPaneNumber,
+      mainVertical: null,
+      previouslyFocusedPane: null
+    }
+    this.teams.set(args.teamId, team)
+    return team
+  }
+
+  private persistTeam(team: AgentTeam): void {
+    const paneKey = this.persistedLeaderPaneKeys.get(team.teamId)
+    if (!paneKey) {
+      return
+    }
+    this.withRegistry((registry) =>
+      registry.save({
+        teamId: team.teamId,
+        token: team.token,
+        paneKey,
+        env: team.baseEnv,
+        nextPaneNumber: team.nextPaneNumber
+      })
+    )
+  }
+
+  // Why: persistence only adds restart survival; a disk failure must not break the live team.
+  private withRegistry<T>(run: (registry: ClaudeAgentTeamsLeaderRegistry) => T): T | null {
+    if (!this.leaderRegistry) {
+      return null
+    }
+    try {
+      return run(this.leaderRegistry)
+    } catch {
+      return null
+    }
+  }
+}
+
+function agentTeamTmuxValue(teamId: string): string {
+  return `/tmp/dolphin-claude-agent-teams/${teamId},0,1`
 }
 
 function tokensMatch(expected: string, actual: string): boolean {

@@ -116,6 +116,7 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       focusTerminal: (handle) => this.focusTerminal(handle),
       closeTerminal: (handle) => this.closeTerminal(handle),
       showTerminal: (handle) => this.showTerminal(handle),
+      resolveLiveLeaderHandle: (paneKey) => this.getLiveTerminalHandleForPaneKey(paneKey),
       resolveHostShell: (leaderHandle) => this.resolveClaudeAgentTeamsHostShell(leaderHandle),
       markTeammatePaneNotResumable: (handle) => {
         const paneKey = this.getPaneKeyForTerminalHandle(handle)
@@ -181,6 +182,7 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     }
     return await this.prepareClaudeAgentTeamsLeaderForHandle({
       handle,
+      paneKey: args.paneKey,
       baseEnv: args.baseEnv,
       prepareAuth: args.prepareAuth
     })
@@ -188,6 +190,8 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
 
   async prepareClaudeAgentTeamsLeaderForHandle(args: {
     handle: string
+    /** Pre-allocated handles have no pane mapping yet, so spawn passes its stable pane key. */
+    paneKey?: string
     baseEnv?: Record<string, string>
     prepareAuth?: boolean
   }): Promise<{ env: Record<string, string>; envToDelete?: string[] }> {
@@ -233,7 +237,8 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       shimDir,
       shimBin,
       shimPathDirs,
-      hostShell: hostShell ?? undefined
+      hostShell: hostShell ?? undefined,
+      paneKey: args.paneKey ?? this.getPaneKeyForTerminalHandle(args.handle) ?? undefined
     })
     const env = auth ? { ...auth.envPatch, ...launch.env } : launch.env
     return envToDelete ? { env, envToDelete } : { env }
