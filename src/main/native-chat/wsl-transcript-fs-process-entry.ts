@@ -5,6 +5,9 @@ import type {
   WslTranscriptFsProcessResponse
 } from './wsl-transcript-fs-process-protocol'
 import { WslTranscriptFsProcessOperations } from './wsl-transcript-fs-process-operations'
+import { adoptInheritedCompileCache } from '../startup/child-compile-cache'
+
+adoptInheritedCompileCache()
 
 const operations = new WslTranscriptFsProcessOperations()
 
