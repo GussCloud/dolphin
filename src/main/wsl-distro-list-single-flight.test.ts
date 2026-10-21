@@ -204,12 +204,17 @@ describe('WSL distro list single-flight', () => {
       failProbe?.()
       await expect(pending).resolves.toEqual([])
 
+      execFileMock.mockImplementation((_command, _args, _options, callback) => {
+        callback(null, '')
+      })
       vi.advanceTimersByTime(7_500)
       expect(listWslDistros()).toEqual([])
+      expect(execFileMock).toHaveBeenCalledTimes(1)
+      vi.advanceTimersByTime(7_500)
+      expect(listWslDistros()).toEqual([])
+      // Past the base window the refresh runs off-thread; only the cold read blocked.
+      expect(execFileMock).toHaveBeenCalledTimes(2)
       expect(execFileSyncMock).toHaveBeenCalledTimes(1)
-      vi.advanceTimersByTime(7_500)
-      expect(listWslDistros()).toEqual([])
-      expect(execFileSyncMock).toHaveBeenCalledTimes(2)
     } finally {
       vi.useRealTimers()
     }

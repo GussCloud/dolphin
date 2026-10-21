@@ -45,7 +45,6 @@ main/startup/windows-install-dir-acl-probe.ts
 main/win32-utils.ts
 main/window/clipboard-ipc-handlers.ts
 main/workspace-space-analysis.ts
-main/wsl-availability.ts
 main/wsl-unc-delete.ts
 main/wsl.ts
 main/zsh-startup-hook-pty-harness.ts
