@@ -1,4 +1,8 @@
 import type { GlobalSettings } from '../../../shared/global-settings-types'
+import {
+  normalizeAgentInteractionSettings,
+  persistedAgentInteractionSettingsRepaired
+} from '../../../shared/agent-interaction-settings'
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import type { ProjectGroup } from '../../../shared/project-group-types'
 import { deriveGlobalWindowsRuntimeDefaultFromLegacySettings } from '../../../shared/project-execution-runtime'
@@ -50,6 +54,7 @@ export type PreparedLoadedProfileSettings = {
   mobilePairingCustomAddress: GlobalSettings['mobilePairingCustomAddress']
   mobilePairingCustomAddresses: GlobalSettings['mobilePairingCustomAddresses']
   normalizedNotifications: GlobalSettings['notifications']
+  normalizedAgentInteraction: GlobalSettings['agentInteraction']
   normalizedSourceControlGroupOrder: GlobalSettings['sourceControlGroupOrder']
   normalizedOnboarding: PersistedState['onboarding']
   normalizedProjectGroups: ProjectGroup[]
@@ -222,6 +227,17 @@ export function prepareLoadedProfileSettings(
   ) {
     markNeedsSave()
   }
+  const normalizedAgentInteraction = normalizeAgentInteractionSettings(
+    parsed.settings?.agentInteraction
+  )
+  if (
+    persistedAgentInteractionSettingsRepaired(
+      parsed.settings?.agentInteraction,
+      normalizedAgentInteraction
+    )
+  ) {
+    markNeedsSave()
+  }
   const normalizedSourceControlGroupOrder = normalizeSourceControlGroupOrder(
     parsed.settings?.sourceControlGroupOrder
   )
@@ -250,6 +266,7 @@ export function prepareLoadedProfileSettings(
     mobilePairingCustomAddress,
     mobilePairingCustomAddresses,
     normalizedNotifications,
+    normalizedAgentInteraction,
     normalizedSourceControlGroupOrder,
     normalizedOnboarding,
     normalizedProjectGroups

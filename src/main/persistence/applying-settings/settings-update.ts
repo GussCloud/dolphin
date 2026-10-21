@@ -36,6 +36,7 @@ import {
   type ProtectedSecretPersistence
 } from '../../protected-secret-persistence'
 import { normalizeNotificationSettings } from './onboarding-normalization'
+import { mergeAgentInteractionSettings } from '../../../shared/agent-interaction-settings'
 import { retireLegacyInstructionsForClearedTextActionRecipes } from './source-control-settings'
 import {
   buildWorkspaceDirHistoryForUpdate,
@@ -178,6 +179,12 @@ export function updateSettings(
   if ('sourceControlGroupOrder' in updates) {
     sanitizedUpdates.sourceControlGroupOrder = normalizeSourceControlGroupOrder(
       updates.sourceControlGroupOrder
+    )
+  }
+  if ('agentInteraction' in updates) {
+    sanitizedUpdates.agentInteraction = mergeAgentInteractionSettings(
+      operations.state.settings.agentInteraction,
+      updates.agentInteraction
     )
   }
   if ('appIcon' in updates) {
