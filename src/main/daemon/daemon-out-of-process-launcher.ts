@@ -118,7 +118,7 @@ export function createOutOfProcessLauncher(
 
       const userDataPath = getAppEnvironment().getPath('userData')
       // Why: on win32 packaged, stage a daemon-host copy in userData so its image escapes the NSIS updater's kill zone; lazy so it's off first-paint. Fail-open: null → in-dir host.
-      const relocatedHost = materializeRelocatedDaemonHost()
+      const relocatedHost = await materializeRelocatedDaemonHost()
       // Fork the relocated entry when available; otherwise the install-dir entry.
       const forkEntryPath = relocatedHost ? relocatedHost.entryPath : entryPath
       let launched

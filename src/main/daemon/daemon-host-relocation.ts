@@ -1,14 +1,7 @@
 import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { randomBytes } from 'node:crypto'
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  readdirSync,
-  renameSync,
-  rmSync,
-  writeFileSync
-} from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { mkdir, rename, rm, writeFile } from 'node:fs/promises'
 import { join, win32 as winPath } from 'node:path'
 import { getAppEnvironment } from '../../shared/app-environment'
 import {
@@ -24,10 +17,6 @@ import {
   DAEMON_HOST_CHUNK_MANIFEST_NAME,
   parseDaemonHostChunkManifest
 } from './daemon-host-chunk-manifest'
-import type { ProcessLivenessVerdict } from './daemon-incarnation-evidence-types'
-import { parseDaemonPidFile } from './daemon-pid-file-parse'
-import { quarantineCorruptDaemonPidRecord } from './daemon-pid-record-quarantine'
-import { inspectProcessLiveness, mergeProcessLivenessVerdict } from './daemon-process-inspection'
 
 /**
  * Relocate the terminal daemon's process image out of the app install dir into LOCAL userData so it
@@ -50,6 +39,8 @@ export type RelocatedDaemonHost = {
 
 const HOST_SUBDIR = 'daemon-host'
 const MARKER_NAME = '.materialized.json'
+/** Staging dirs are `<version>.staging-<hex>`; pruning recognises in-flight copies by this. */
+export const STAGING_INFIX = '.staging-'
 
 // LOCAL appData (not roaming) so OneDrive/roaming never syncs this ~260MB runtime. Shared with NSIS uninstall (config/nsis/dolphin-installer-hooks.nsh) — keep in sync.
 // Why productName: matches the NSIS `${PRODUCT_NAME}` dir, and keeps a fork's copies apart from Dolphin's.
@@ -80,7 +71,7 @@ function resolveEntrySourcePath(resourcesPath: string): string {
  * whether the app root is an asar archive is the same honesty fix the watcher path uses, and
  * it keeps a Node host from staging a copy of an Electron tree it does not have.
  */
-function isPackagedElectronWin32(): boolean {
+export function isPackagedElectronWin32(): boolean {
   const environment = getAppEnvironment()
   return (
     process.platform === 'win32' &&
@@ -152,7 +143,7 @@ function missingProcessTreeFiles(packageDir: string): boolean {
   )
 }
 
-function hostRootDir(): string {
+export function hostRootDir(): string {
   // Prefer LOCAL appData (see LOCAL_HOST_ROOT_NAME); fall back to userData only if LOCALAPPDATA is unset.
   const localAppData = process.env.LOCALAPPDATA
   const base =
@@ -192,11 +183,31 @@ export function getRelocatedDaemonHost(): RelocatedDaemonHost | null {
   return { execPath, entryPath }
 }
 
+// Why shared: a respawn racing the startup launch must neither stage a second ~250MB copy nor
+// remove the dest the first one just published.
+let materializationInFlight: Promise<RelocatedDaemonHost | null> | null = null
+
 /**
- * Materialize the current version's daemon host, returning its fork paths or null (fail-open). Idempotent
- * via marker; stages into a temp sibling and publishes by atomic rename, so a crash mid-copy never leaves a half-populated dest.
+ * Materialize the current version's daemon host, resolving its fork paths or null (fail-open). Idempotent
+ * via marker; stages into a temp sibling and publishes by atomic rename, so a crash mid-copy never leaves a
+ * half-populated dest. Async so the ~250MB copy runs on the libuv threadpool, not the Electron main thread.
  */
-export function materializeRelocatedDaemonHost(): RelocatedDaemonHost | null {
+export function materializeRelocatedDaemonHost(): Promise<RelocatedDaemonHost | null> {
+  materializationInFlight ??= materializeOnce().finally(() => {
+    materializationInFlight = null
+  })
+  return materializationInFlight
+}
+
+async function discardStaging(staging: string): Promise<void> {
+  try {
+    await rm(staging, { recursive: true, force: true })
+  } catch {
+    // Best-effort staging cleanup.
+  }
+}
+
+async function materializeOnce(): Promise<RelocatedDaemonHost | null> {
   const existing = getRelocatedDaemonHost()
   if (existing) {
     return existing
@@ -214,135 +225,37 @@ export function materializeRelocatedDaemonHost(): RelocatedDaemonHost | null {
   const version = getAppEnvironment().getVersion()
   const root = hostRootDir()
   const dest = join(root, version)
-  const staging = join(root, `${version}.staging-${randomBytes(6).toString('hex')}`)
+  const staging = join(root, `${version}${STAGING_INFIX}${randomBytes(6).toString('hex')}`)
   try {
-    mkdirSync(root, { recursive: true })
-    rmSync(staging, { recursive: true, force: true })
-    executeManifest(buildDaemonHostManifest(sources), staging)
-    // Marker written LAST so an interrupted copy leaves a marker-less staging dir the next launch discards.
+    await mkdir(root, { recursive: true })
+    await executeManifest(buildDaemonHostManifest(sources), staging)
+    // Marker written LAST so an interrupted copy leaves a marker-less staging dir that pruning reclaims.
     const marker: MaterializeMarker = {
       version,
       completedAt: new Date().toISOString(),
       entryRelPath: sources.entryRelPath
     }
-    writeFileSync(join(staging, MARKER_NAME), JSON.stringify(marker))
+    await writeFile(join(staging, MARKER_NAME), JSON.stringify(marker))
+    // Why: another app instance may have published this version while we copied. Its host is
+    // identical, and removing it could pull files from under a daemon it is forking right now.
+    const published = getRelocatedDaemonHost()
+    if (published) {
+      await discardStaging(staging)
+      return published
+    }
     // Replace any stale/partial dest, then publish atomically. Windows refuses to delete a running
     // image, so a live daemon already hosted in THIS version's dir (same-version reinstall, or a dev
     // channel reusing a version) throws here and materialization fails open to the install-dir host.
-    rmSync(dest, { recursive: true, force: true })
-    renameSync(staging, dest)
+    await rm(dest, { recursive: true, force: true })
   } catch {
-    try {
-      rmSync(staging, { recursive: true, force: true })
-    } catch {
-      // Best-effort staging cleanup.
-    }
+    await discardStaging(staging)
     return null
   }
+  try {
+    await rename(staging, dest)
+  } catch {
+    // A peer published between our rm and rename; its rename is atomic, so a valid dest is whole.
+    await discardStaging(staging)
+  }
   return getRelocatedDaemonHost()
-}
-
-export type PinnedDaemonVersionsEvidence =
-  | { status: 'complete'; versionLiveness: ReadonlyMap<string, ProcessLivenessVerdict> }
-  | { status: 'unverifiable'; reason: string }
-
-/**
- * App versions still pinned by a live daemon (from daemon-v<N>.pid files under `runtimeDir`), whose
- * host dir must not be reclaimed while alive. On win32 start-time can't verify, so a matching pid pins conservatively.
- */
-export function collectPinnedDaemonVersions(runtimeDir: string): PinnedDaemonVersionsEvidence {
-  const versionLiveness = new Map<string, ProcessLivenessVerdict>()
-  let entries
-  try {
-    entries = readdirSync(runtimeDir, { withFileTypes: true })
-  } catch {
-    return { status: 'unverifiable', reason: 'the daemon runtime directory could not be read' }
-  }
-  for (const entry of entries) {
-    if (!entry.isFile() || !/^daemon-v\d+\.pid$/.test(entry.name)) {
-      continue
-    }
-    let contents
-    try {
-      contents = readFileSync(join(runtimeDir, entry.name), 'utf8')
-    } catch {
-      // Read failures (AV lock, vanished file) are transient; the veto re-evaluates next launch.
-      return {
-        status: 'unverifiable',
-        reason: `the daemon pid file could not be read: ${entry.name}`
-      }
-    }
-    const parsed = parseDaemonPidFile(contents)
-    // Why not just `!parsed`: the parser's legacy bare-integer fallback coerces an empty or
-    // whitespace-only record to pid 0 (Number('') === 0), which is the exact shape a concurrent
-    // read sees while a live daemon publishes its record — writeFileSync 'wx' creates the file
-    // before writing it. Such a record would otherwise pass as a valid pre-relocation daemon,
-    // skip on appVersion === null, and leave its version unpinned, so the prune below would
-    // reclaim a running daemon's host image. A pid that is not a positive integer names no
-    // process — process.kill(0, 0) probes the caller's own process group, never a daemon — so
-    // it is not liveness evidence and must veto rather than be skipped.
-    if (!parsed || !Number.isInteger(parsed.pid) || parsed.pid <= 0) {
-      return {
-        status: 'unverifiable',
-        reason: quarantineCorruptDaemonPidRecord(runtimeDir, entry.name, contents)
-      }
-    }
-    // appVersion null => pre-relocation daemon forked from the install dir; pins no host dir here.
-    if (parsed.appVersion === null) {
-      continue
-    }
-    const verdict = inspectProcessLiveness(parsed.pid)
-    versionLiveness.set(
-      parsed.appVersion,
-      mergeProcessLivenessVerdict(versionLiveness.get(parsed.appVersion), verdict)
-    )
-  }
-  return { status: 'complete', versionLiveness }
-}
-
-// Why: deletion is the destructive direction and this is a statement position the compiler does
-// not police for exhaustiveness — reclaim must be opted into by a positively matched 'exited',
-// so any future unhandled verdict status preserves the host dir instead of deleting it.
-export function reclaimUnownedDaemonHostDir(
-  verdict: ProcessLivenessVerdict,
-  hostDir: string
-): void {
-  if (verdict.status !== 'exited') {
-    return
-  }
-  try {
-    rmSync(hostDir, { recursive: true, force: true })
-  } catch {
-    // Still locked or already gone — retry on a future launch.
-  }
-}
-
-/**
- * Reclaim daemon-host/<ver> dirs that are neither the current version nor pinned by a live daemon.
- * Best-effort — never throws; a locked/staging dir is retried on a future launch.
- */
-export function pruneOldDaemonHosts(evidence: PinnedDaemonVersionsEvidence): void {
-  if (!isPackagedElectronWin32()) {
-    return
-  }
-  if (evidence.status === 'unverifiable') {
-    console.warn(`[daemon] Skipping daemon-host prune: ${evidence.reason}`)
-    return
-  }
-  const version = getAppEnvironment().getVersion()
-  const root = hostRootDir()
-  let entries
-  try {
-    entries = readdirSync(root, { withFileTypes: true })
-  } catch {
-    return
-  }
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name === version) {
-      continue
-    }
-    // A complete runtime-dir listing with no pid record for this version proves it is unowned.
-    const verdict = evidence.versionLiveness.get(entry.name) ?? { status: 'exited' }
-    reclaimUnownedDaemonHostDir(verdict, join(root, entry.name))
-  }
 }
