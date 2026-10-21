@@ -16061,5 +16061,23 @@
         "i18n": "i18n"
       }
     }
+  },
+  "agentInteraction": {
+    "kind": {
+      "needsPermission": "Necesita tu permiso",
+      "needsInput": "Esperando tu respuesta",
+      "taskDone": "Tarea terminada",
+      "taskFailed": "La tarea falló",
+      "taskInterrupted": "Tarea interrumpida",
+      "retryExhausted": "Conexión perdida, reintentos agotados",
+      "subagentAttention": "Un subagente te necesita",
+      "subagentDone": "Subagente terminado",
+      "taskStarted": "Tarea iniciada"
+    },
+    "avatar": {
+      "open": "Abrir agente",
+      "pending": "+{{count}}",
+      "dismiss": "Descartar"
+    }
   }
 }

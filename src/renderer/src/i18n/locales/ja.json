@@ -19174,5 +19174,23 @@
         "i18n": "i18n"
       }
     }
+  },
+  "agentInteraction": {
+    "kind": {
+      "needsPermission": "許可が必要です",
+      "needsInput": "回答を待っています",
+      "taskDone": "タスクが完了しました",
+      "taskFailed": "タスクが失敗しました",
+      "taskInterrupted": "タスクが中断されました",
+      "retryExhausted": "接続が切れ、再試行の上限に達しました",
+      "subagentAttention": "サブエージェントが対応を求めています",
+      "subagentDone": "サブエージェントが完了しました",
+      "taskStarted": "タスクを開始しました"
+    },
+    "avatar": {
+      "open": "エージェントを開く",
+      "pending": "+{{count}}",
+      "dismiss": "閉じる"
+    }
   }
 }

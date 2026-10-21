@@ -352,12 +352,14 @@ export const electronViteConfig: UserConfig = {
         input: {
           index: resolve('src/renderer/index.html'),
           popout: resolve('src/renderer/popout.html'),
+          'agent-avatar': resolve('src/renderer/agent-avatar.html'),
           web: resolve('src/renderer/web-index.html')
         },
         output: {
           advancedChunks: createRendererBootChunkGroups([
             { name: 'index', moduleId: resolve('src/renderer/src/main.tsx') },
             { name: 'popout', moduleId: resolve('src/renderer/src/popout.tsx') },
+            { name: 'agent-avatar', moduleId: resolve('src/renderer/src/agent-avatar.tsx') },
             { name: 'web', moduleId: resolve('src/renderer/src/web/main.tsx') }
           ])
         }

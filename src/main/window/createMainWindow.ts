@@ -1,3 +1,4 @@
+import { closeAgentInteractionAvatar } from './agent-interaction-avatar-window'
 import { FORK_IDENTITY } from '../../shared/fork-identity'
 import { BrowserWindow, nativeTheme, powerMonitor, screen } from 'electron'
 import { is } from '@electron-toolkit/utils'
@@ -207,6 +208,7 @@ export function createMainWindow(
 
   mainWindow.on('closed', () => {
     closeDashboardPopout()
+    closeAgentInteractionAvatar()
     state.clearInitialRevealFallbackTimer()
     closeLifecycle.dispose()
     focus.dispose()

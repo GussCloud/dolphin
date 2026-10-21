@@ -19174,5 +19174,23 @@
         "i18n": "i18n"
       }
     }
+  },
+  "agentInteraction": {
+    "kind": {
+      "needsPermission": "A besoin de votre autorisation",
+      "needsInput": "En attente de votre réponse",
+      "taskDone": "Tâche terminée",
+      "taskFailed": "La tâche a échoué",
+      "taskInterrupted": "Tâche interrompue",
+      "retryExhausted": "Connexion perdue, tentatives épuisées",
+      "subagentAttention": "Un sous-agent a besoin de vous",
+      "subagentDone": "Sous-agent terminé",
+      "taskStarted": "Tâche démarrée"
+    },
+    "avatar": {
+      "open": "Ouvrir l'agent",
+      "pending": "+{{count}}",
+      "dismiss": "Ignorer"
+    }
   }
 }

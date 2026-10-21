@@ -25,6 +25,10 @@ const BUNDLED_AGENT_INTERACTION_SOUNDS: Readonly<Record<AgentInteractionKind, st
   'task-started': taskStartedSoundPath
 }
 
+export function getBundledAgentInteractionSoundPath(kind: AgentInteractionKind): string {
+  return BUNDLED_AGENT_INTERACTION_SOUNDS[kind]
+}
+
 export type AgentInteractionSoundSelection =
   | { path: string }
   | { path: null; reason: 'silent' | 'missing-path' | 'invalid-path' | 'unsupported-type' }
@@ -39,7 +43,7 @@ export function getSelectedAgentInteractionSoundPath(
     return { path: null, reason: 'silent' }
   }
   if (event.soundSource === 'default') {
-    return { path: BUNDLED_AGENT_INTERACTION_SOUNDS[kind] }
+    return { path: getBundledAgentInteractionSoundPath(kind) }
   }
   const custom = validateCustomSoundPath(event.customSoundPath)
   return custom.path

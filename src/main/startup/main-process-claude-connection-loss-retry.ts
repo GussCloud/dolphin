@@ -16,13 +16,14 @@ import type { Store } from '../persistence'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
 import type { TelegramBridgeService } from '../telegram/telegram-bridge-service'
-import { resolveTelegramWorktreeName } from './main-process-telegram'
+import { resolveWorkspaceDisplayName } from '../workspace-display-name'
 
 /** Starts connection-loss auto-retry beside the Telegram bridge, which it also notifies. */
 export function startMainProcessClaudeConnectionLossRetry(
   store: Store,
   runtime: DolphinRuntimeService,
-  bridge: TelegramBridgeService | null
+  bridge: TelegramBridgeService | null,
+  onExhausted?: (event: ClaudeConnectionLossExhaustedEvent) => void
 ): () => void {
   const isEnabled = (): boolean => store.getSettings().claudeAutoRetryOnConnectionLoss !== false
   const dispatcher = new RpcDispatcher({ runtime })
@@ -39,7 +40,8 @@ export function startMainProcessClaudeConnectionLossRetry(
     worktreeId,
     attempts
   }: ClaudeConnectionLossExhaustedEvent) => {
-    const worktreeLabel = worktreeId ? resolveTelegramWorktreeName(store, worktreeId) : null
+    onExhausted?.({ paneKey, worktreeId, attempts })
+    const worktreeLabel = worktreeId ? resolveWorkspaceDisplayName(store, worktreeId) : null
     void Promise.resolve(
       dispatchMainProcessNotification({
         source: 'agent-auto-retry-exhausted',
