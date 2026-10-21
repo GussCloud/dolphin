@@ -661,6 +661,56 @@ describe('served relay URL', () => {
     expect(result.reason).not.toContain('http')
   })
 
+  it('admits a combined host at the epoch a dormant re-placement stored', async () => {
+    const keyPair = nacl.box.keyPair()
+    const hostId = createHash('sha256').update(keyPair.publicKey).digest('base64url').slice(0, 16)
+    const assigned = await fetch(`${relayUrl}/v1/assign`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${await relayToken('dolphin-relay', hostId)}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ v: 1, relayHostId: hostId })
+    })
+    expect(await assigned.json()).toMatchObject({ assignmentEpoch: 1 })
+    // Stands in for the >24h dormant re-placement, which bumps the epoch in place.
+    const database = await openRelayDatabase({ dataDir: relayDataDirectory })
+    try {
+      await database.query(
+        `UPDATE relay_assignments SET assignment_epoch = 2 WHERE relay_host_id = ?`,
+        [hostId]
+      )
+    } finally {
+      await database.close()
+    }
+
+    const current = await openHostControl({ keyPair, assignmentEpoch: 2 })
+    expect(current.ack).toMatchObject({ type: 'host-hello-ack', v: 1 })
+    current.socket.close()
+
+    const stale = new WebSocket(`${relayUrl.replace('http:', 'ws:')}/v1/host/control`, {
+      headers: { authorization: `Bearer ${await relayToken('dolphin-relay', hostId)}` }
+    })
+    await new Promise<void>((resolveOpen, reject) => {
+      stale.once('open', resolveOpen)
+      stale.once('error', reject)
+    })
+    const staleClose = new Promise<number>((resolveClose) =>
+      stale.once('close', (code) => resolveClose(code))
+    )
+    stale.send(
+      JSON.stringify({
+        type: 'host-hello',
+        v: 1,
+        relayHostId: hostId,
+        assignmentEpoch: 1,
+        hostPublicKeyB64: Buffer.from(keyPair.publicKey).toString('base64'),
+        appVersion: 'test'
+      })
+    )
+    expect(await staleClose).toBe(4409)
+  })
+
   it('restates a pending connection to the rebound control, detailed only when advertised', async () => {
     // The one link the unit tests cannot reach: an upgrade that really carries
     // x-dolphin-host-capabilities must reach acceptControl and change the ack. A

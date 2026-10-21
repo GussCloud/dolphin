@@ -1829,6 +1829,39 @@ describe('RelayAssignmentStore', () => {
     ).resolves.toBeNull()
   })
 
+  it('verifies a single-cell host against its re-placed epoch, not the first one', async () => {
+    let now = 100
+    const store = await setup(() => now, [
+      { id: 'combined', url: 'https://relay.example.com', capacityRequests: 10 }
+    ])
+    const identity = { userId: 'user-a', relayHostId: 'host000000000001' }
+    const first = await store.assign(identity)
+    await store.changeActivity(identity, 'control', -1)
+    now += ASSIGNMENT_LIMITS.activityLeaseMs + 1
+    await store.releaseExpiredActivityLeases()
+    await store.releaseExpiredActivity()
+    now += ASSIGNMENT_LIMITS.dormantTtlMs
+    const replaced = await store.assign(identity)
+    expect(replaced).toMatchObject({
+      cellId: 'combined',
+      assignmentEpoch: first.assignmentEpoch + 1
+    })
+
+    const verify = (relayHostId: string, assignmentEpoch: number, admit: boolean) =>
+      store.verifyCellAssignment({
+        userId: identity.userId,
+        relayHostId,
+        cellId: 'combined',
+        assignmentEpoch,
+        admitUnassignedFirstEpoch: admit
+      })
+    await expect(verify(identity.relayHostId, replaced.assignmentEpoch, true)).resolves.toBe(true)
+    await expect(verify(identity.relayHostId, 1, true)).resolves.toBe(false)
+    await expect(verify('host000000000002', 1, true)).resolves.toBe(true)
+    await expect(verify('host000000000002', 2, true)).resolves.toBe(false)
+    await expect(verify('host000000000002', 1, false)).resolves.toBe(false)
+  })
+
   it('converts the director reservation into an idempotent active-control lease', async () => {
     const store = await setup(() => 100)
     const identity = { userId: 'user-a', relayHostId: 'host000000000001' }

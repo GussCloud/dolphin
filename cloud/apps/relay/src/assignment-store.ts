@@ -3371,12 +3371,15 @@ export class RelayAssignmentStore {
   async verifyCellAssignment(input: AssignmentIdentity & {
     cellId: string
     assignmentEpoch: number
+    // Combined admits a host that never took a director assignment at the first epoch.
+    admitUnassignedFirstEpoch?: boolean
   }): Promise<boolean> {
     const rows = await this.database.query(
       `SELECT cell_id, assignment_epoch FROM relay_assignments
        WHERE user_id = ? AND relay_host_id = ?`,
       [input.userId, input.relayHostId]
     )
+    if (!rows[0] && input.admitUnassignedFirstEpoch) return input.assignmentEpoch === 1
     return Boolean(
       rows[0] &&
         text(rows[0], 'cell_id') === input.cellId &&
