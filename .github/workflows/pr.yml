@@ -553,6 +553,14 @@ jobs:
           # The update is already tolerant by design (see above), so bounding it just caps
           # what a dead mirror can cost before the install runs against whatever index exists.
           timeout 120 sudo apt-get update || true
+          # Why re-update on the candidate: a Launchpad 503 makes apt drop the PPA index with
+          # only a warning, and the archive's fish 3.7 then installs and fails the gate below.
+          for attempt in 2 3; do
+            apt-cache policy fish | grep -q 'Candidate: 4' && break
+            echo "fish 4 PPA index missing; apt-get update attempt ${attempt}" >&2
+            sleep 15
+            timeout 120 sudo apt-get update || true
+          done
           # Why both shells on one line: pr-workflow-parallelism.test.mjs parses only the
           # first install command in this step to prove the lane really installs them.
           timeout 300 sudo apt-get install -y zsh fish
