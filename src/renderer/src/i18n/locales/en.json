@@ -3735,7 +3735,9 @@
             "b8f4a2c1d0e3": "{{value0}} orphans",
             "c7e3b1a0d9f2": "End {{value0}} orphan terminal",
             "d8f4c2b1e0a3": "End {{value0}} orphan terminals",
-            "e9a5d3c2b1f0": "Kill {{value0}}?"
+            "e9a5d3c2b1f0": "Kill {{value0}}?",
+            "wslMemorySuggestion": "Optimize WSL memory ({{value0}} suggestion)",
+            "wslMemorySuggestions": "Optimize WSL memory ({{value0}} suggestions)"
           },
           "SshStatusSegment": {
             "3ad70e0365": "Manage Remote Hosts…",

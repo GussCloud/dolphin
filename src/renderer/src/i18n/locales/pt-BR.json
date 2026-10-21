@@ -3735,7 +3735,9 @@
             "b8f4a2c1d0e3": "{{value0}} órfãos",
             "c7e3b1a0d9f2": "Encerrar {{value0}} terminal órfão",
             "d8f4c2b1e0a3": "Encerrar {{value0}} terminais órfãos",
-            "e9a5d3c2b1f0": "Encerrar {{value0}}?"
+            "e9a5d3c2b1f0": "Encerrar {{value0}}?",
+            "wslMemorySuggestion": "Otimizar memória do WSL ({{value0}} sugestão)",
+            "wslMemorySuggestions": "Otimizar memória do WSL ({{value0}} sugestões)"
           },
           "SshStatusSegment": {
             "3ad70e0365": "Gerenciar Hosts Remotos…",

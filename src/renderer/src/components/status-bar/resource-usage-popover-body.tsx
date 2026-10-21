@@ -159,11 +159,15 @@ export function renderResourceUsagePopoverBody({
 export function renderResourceUsagePopoverFooter({
   handleOpenWorkspaceCleanup,
   orphanCount,
-  handleKillOrphans
+  handleKillOrphans,
+  wslSuggestionCount,
+  handleOpenWslMemorySettings
 }: {
   handleOpenWorkspaceCleanup: () => void
   orphanCount: number
   handleKillOrphans: () => Promise<void>
+  wslSuggestionCount: number
+  handleOpenWslMemorySettings: () => void
 }): React.JSX.Element {
   return (
     <div className="border-t border-border/50 px-3 py-2 shrink-0">
@@ -180,6 +184,28 @@ export function renderResourceUsagePopoverFooter({
         </span>
         <ChevronRight className="absolute right-2.5 size-3.5 text-muted-foreground" aria-hidden />
       </button>
+      {wslSuggestionCount > 0 ? (
+        <button
+          type="button"
+          onClick={handleOpenWslMemorySettings}
+          className="relative mt-2 inline-flex w-full items-center justify-center rounded-md border border-border/70 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent/60"
+        >
+          <span className="min-w-0 truncate px-4 text-center">
+            {wslSuggestionCount === 1
+              ? translate(
+                  'auto.components.status.bar.ResourceUsageStatusSegment.wslMemorySuggestion',
+                  'Optimize WSL memory ({{value0}} suggestion)',
+                  { value0: wslSuggestionCount }
+                )
+              : translate(
+                  'auto.components.status.bar.ResourceUsageStatusSegment.wslMemorySuggestions',
+                  'Optimize WSL memory ({{value0}} suggestions)',
+                  { value0: wslSuggestionCount }
+                )}
+          </span>
+          <ChevronRight className="absolute right-2.5 size-3.5 text-muted-foreground" aria-hidden />
+        </button>
+      ) : null}
       {orphanCount > 0 ? (
         <button
           type="button"
