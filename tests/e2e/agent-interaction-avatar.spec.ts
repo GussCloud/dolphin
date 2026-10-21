@@ -15,6 +15,12 @@ async function useEnglishUi(appPage: Page): Promise<void> {
   await appPage.evaluate(() => window.__store?.getState().updateSettings({ uiLanguage: 'en' }))
 }
 
+// Why: a focused window showing the agent's workspace suppresses its cue by design, and CI
+// windows can hold focus; Settings puts no workspace on screen.
+async function showSettingsPage(appPage: Page): Promise<void> {
+  await appPage.evaluate(() => window.__store?.getState().openSettingsPage())
+}
+
 function findAvatarPage(electronApp: ElectronApplication): Page | undefined {
   return electronApp.windows().find((page) => page.url().includes('agent-avatar.html'))
 }
@@ -63,6 +69,7 @@ test.describe('Agent interaction avatar', () => {
 
     const { paneKey, worktreeId } = await waitForActivePaneHookDescriptor(appPage)
     const prompt = `agent-avatar-${Date.now()}`
+    await showSettingsPage(appPage)
     await emitCodexHookStatus(endpoint, { paneKey, worktreeId, state: 'working', prompt })
     await emitCodexHookStatus(endpoint, {
       paneKey,
@@ -87,6 +94,7 @@ test.describe('Agent interaction avatar', () => {
     await expect(card).toHaveCount(0)
 
     // A second turn raises it again; opening its workspace in the main window answers it.
+    await showSettingsPage(appPage)
     await emitCodexHookStatus(endpoint, { paneKey, worktreeId, state: 'working', prompt })
     await emitCodexHookStatus(endpoint, {
       paneKey,
@@ -103,5 +111,6 @@ test.describe('Agent interaction avatar', () => {
       worktreeId
     )
     await expect(card).toHaveCount(0)
+    await appPage.evaluate(() => window.__store?.getState().closeSettingsPage())
   })
 })
