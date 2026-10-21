@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   getDefaultAgentInteractionSettings,
   mergeAgentInteractionSettings,
+  type AgentInteractionEventSettings,
+  type AgentInteractionKind,
   type AgentInteractionSettings
 } from '../../shared/agent-interaction-settings'
 import type { AgentStatusIpcPayload } from '../../shared/agent-status-types'
@@ -37,8 +39,10 @@ function setup(agentInteraction: AgentInteractionSettings = enabledSettings()) {
   return { controller, presenter, settings }
 }
 
-function enabledSettings(patch: object = {}): AgentInteractionSettings {
-  return mergeAgentInteractionSettings(undefined, { enabled: true, ...patch })
+function enabledSettings(
+  events: Partial<Record<AgentInteractionKind, Partial<AgentInteractionEventSettings>>> = {}
+): AgentInteractionSettings {
+  return mergeAgentInteractionSettings(undefined, { enabled: true, events })
 }
 
 describe('AgentInteractionController', () => {
@@ -69,7 +73,7 @@ describe('AgentInteractionController', () => {
     off.controller.onStatus(event('done'))
     expect(off.presenter.present).not.toHaveBeenCalled()
 
-    const eventOff = setup(enabledSettings({ events: { 'task-done': { enabled: false } } }))
+    const eventOff = setup(enabledSettings({ 'task-done': { enabled: false } }))
     eventOff.controller.onStatus(event('working'))
     eventOff.controller.onStatus(event('done'))
     expect(eventOff.presenter.present).not.toHaveBeenCalled()
