@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { AdvancedPane } from './AdvancedPane'
 import { ExperimentalPane } from './ExperimentalPane'
+import { PerformancePane } from './PerformancePane'
 import { PluginsSettingsSection } from './PluginsSettingsSection'
 import { SettingsSection } from './SettingsSection'
 import { translate } from '@/i18n/i18n'
@@ -27,6 +28,26 @@ export function renderAdvancedSettingsSection(
       {view.isSectionMounted('advanced') ? (
         <AdvancedPane settings={model.settings} updateSettings={model.updateSettings} />
       ) : null}
+    </SettingsSection>
+  ) : null
+}
+
+// Why: visibility follows the nav metadata so the pane and sidebar row cannot drift.
+export function renderPerformanceSettingsSection(
+  context: SettingsRenderContext
+): React.JSX.Element | null {
+  const { navigation, view } = context
+  return navigation.navSections.some((section) => section.id === 'performance') ? (
+    <SettingsSection
+      id="performance"
+      title={translate('auto.components.settings.Settings.performance', 'Performance')}
+      description={translate(
+        'auto.components.settings.Settings.performanceDescription',
+        'Analyze this machine and suggest settings that keep it responsive.'
+      )}
+      searchEntries={navigation.getSectionSearchEntries('performance')}
+    >
+      {view.isSectionMounted('performance') ? <PerformancePane /> : null}
     </SettingsSection>
   ) : null
 }

@@ -23,7 +23,6 @@ import { SearchableSetting } from './SearchableSetting'
 import { SettingsSubsectionHeader, SettingsSwitchRow } from './SettingsFormControls'
 import { translate } from '@/i18n/i18n'
 import { DefaultWindowsProjectRuntimeSetting } from './DefaultWindowsProjectRuntimeSetting'
-import { WslConfigTuningSetting } from './WslConfigTuningSetting'
 import { getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 
 export {
@@ -252,7 +251,6 @@ export function GeneralPane({
           wslDistros={wslDistros}
           wslCapabilitiesLoading={Boolean(wslCapabilitiesLoading)}
         />
-        <WslConfigTuningSetting wslSupportedPlatform={Boolean(wslSupportedPlatform)} />
       </section>
     ) : null,
     matchesSettingsSearch(searchQuery, getGeneralEditorSearchEntries()) ? (

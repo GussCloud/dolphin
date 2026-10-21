@@ -1,6 +1,7 @@
 import { getAdvancedPaneSearchEntries } from '@/components/settings/advanced-search'
 import { getDeveloperPermissionsPaneSearchEntries } from '@/components/settings/developer-permissions-search'
 import { getExperimentalPaneSearchEntries } from '@/components/settings/experimental-search'
+import { getPerformancePaneSearchEntries } from '@/components/settings/performance-search'
 import { getPluginsPaneSearchEntries } from '@/components/settings/plugins-search'
 import { getPrivacyPaneSearchEntries } from '@/components/settings/privacy-search'
 import { getRepositoryPaneSearchEntries } from '@/components/settings/repository-search'
@@ -15,6 +16,7 @@ import {
   Bug,
   Cable,
   FlaskConical,
+  Gauge,
   Lock,
   Server,
   ShieldCheck,
@@ -24,7 +26,14 @@ import {
 import type { SettingsNavigationBuildOptions } from './settings-navigation-build-options'
 
 export function buildRemoteSettingsSections(
-  { isMac, isWindowsTerminalHost, isWebClient, isDev, repos }: SettingsNavigationBuildOptions,
+  {
+    isMac,
+    isLocalWindowsHost,
+    isWindowsTerminalHost,
+    isWebClient,
+    isDev,
+    repos
+  }: SettingsNavigationBuildOptions,
   runtimeEnvironmentsSearchEntry: SettingsNavSection['searchEntries'][number],
   reposById: ReadonlyMap<string, Repo>
 ): SettingsNavSection[] {
@@ -102,6 +111,22 @@ export function buildRemoteSettingsSections(
             ),
             icon: Wrench,
             searchEntries: getAdvancedPaneSearchEntries(),
+            group: 'advanced'
+          }
+        ]
+      : []),
+    // Why: today's only check tunes the local Windows host's .wslconfig, so the pane would be empty elsewhere.
+    ...(showDesktopOnlySettings && isLocalWindowsHost
+      ? [
+          {
+            id: 'performance',
+            title: translate('auto.hooks.useSettingsNavigationMetadata.performance', 'Performance'),
+            description: translate(
+              'auto.hooks.useSettingsNavigationMetadata.performanceDescription',
+              'Analyze this machine and suggest settings that keep it responsive.'
+            ),
+            icon: Gauge,
+            searchEntries: getPerformancePaneSearchEntries(),
             group: 'advanced'
           }
         ]

@@ -1160,7 +1160,9 @@
         "automationsDescription": "Schedule agent work and choose whether Automations appears in the sidebar.",
         "shareSkillsTitle": "Share Skills",
         "shareSkillsDescription": "Share your skills with an unlisted link. Anyone who has it can install them.",
-        "floatingWorkspaceWebDescription": "Global terminal and markdown tabs."
+        "floatingWorkspaceWebDescription": "Global terminal and markdown tabs.",
+        "performance": "Performance",
+        "performanceDescription": "Analyze this machine and suggest settings that keep it responsive."
       },
       "useAppMenuPaste": {
         "pasteTooLarge": "Paste is too large."
@@ -8487,7 +8489,9 @@
           "devDescription": "Dev-only tools for exercising UI states.",
           "linearTitle": "Linear",
           "linearDescription": "How Linear works in Dolphin, setup checklist, agent skill, and example prompts.",
-          "tasksDescription": "Connect providers, install the Linear skill, and choose what appears in Tasks."
+          "tasksDescription": "Connect providers, install the Linear skill, and choose what appears in Tasks.",
+          "performance": "Performance",
+          "performanceDescription": "Analyze this machine and suggest settings that keep it responsive."
         },
         "SettingsFormControls": {
           "42a4d15a30": "No matching fonts.",
@@ -9988,12 +9992,7 @@
             "command": "command",
             "confirm": "confirm",
             "close": "close",
-            "omp": "OMP",
-            "wslMemoryTuning": "WSL Memory Tuning",
-            "wslMemoryTuningDescription": "Suggest .wslconfig settings that return idle WSL and Docker memory to Windows.",
-            "wslconfig": "wslconfig",
-            "memory": "memory",
-            "docker": "docker"
+            "omp": "OMP"
           }
         },
         "git": {
@@ -12494,6 +12493,17 @@
           "applied": "Saved. Run \"wsl --shutdown\" when convenient to apply it — that stops every running distro and Docker container.",
           "applyFailed": "Could not update .wslconfig. Nothing was changed.",
           "apply": "Apply to .wslconfig"
+        },
+        "performance": {
+          "search": {
+            "wslMemory": "WSL Memory",
+            "wslMemoryDescription": "Suggest .wslconfig settings that return idle WSL and Docker memory to Windows.",
+            "wslconfig": "wslconfig",
+            "wsl": "wsl",
+            "memory": "memory",
+            "docker": "docker",
+            "slow": "slow"
+          }
         }
       },
       "right": {

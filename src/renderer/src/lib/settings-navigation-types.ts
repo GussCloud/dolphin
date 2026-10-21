@@ -29,6 +29,7 @@ const SETTINGS_NAV_TARGETS = [
   'developer-permissions',
   'privacy',
   'advanced',
+  'performance',
   'dev',
   'voice',
   'shortcuts',

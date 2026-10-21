@@ -7,12 +7,8 @@ import type {
 import { Button } from '../ui/button'
 import { SearchableSetting } from './SearchableSetting'
 import { SettingsRow } from './SettingsFormControls'
-import { getWslConfigTuningSearchEntry } from './general-project-runtime-search'
+import { getWslConfigTuningSearchEntry } from './performance-search'
 import { translate } from '@/i18n/i18n'
-
-type WslConfigTuningSettingProps = {
-  wslSupportedPlatform: boolean
-}
 
 function suggestionReason(suggestion: WslConfigSuggestion, totalMemoryGb: number): string {
   if (suggestion.id === 'auto-memory-reclaim') {
@@ -71,17 +67,12 @@ function applyResultMessage(result: WslConfigApplyResult): string {
   )
 }
 
-export function WslConfigTuningSetting({
-  wslSupportedPlatform
-}: WslConfigTuningSettingProps): React.JSX.Element | null {
+export function WslConfigTuningSetting(): React.JSX.Element | null {
   const [analysis, setAnalysis] = useState<WslConfigAnalysis | null>(null)
   const [applying, setApplying] = useState(false)
   const [applyResult, setApplyResult] = useState<WslConfigApplyResult | null>(null)
 
   useEffect(() => {
-    if (!wslSupportedPlatform) {
-      return
-    }
     let cancelled = false
     void window.api.wslConfigTuning
       .analyze()
@@ -98,7 +89,7 @@ export function WslConfigTuningSetting({
     return () => {
       cancelled = true
     }
-  }, [wslSupportedPlatform])
+  }, [])
 
   const handleApply = useCallback(async (): Promise<void> => {
     if (analysis?.state !== 'ready') {
@@ -118,7 +109,7 @@ export function WslConfigTuningSetting({
     }
   }, [analysis])
 
-  if (!wslSupportedPlatform || !analysis || analysis.state === 'unsupported') {
+  if (!analysis || analysis.state === 'unsupported') {
     return null
   }
   const suggestions = analysis.state === 'ready' ? analysis.suggestions : []

@@ -35,15 +35,9 @@ afterEach(() => {
 })
 
 describe('WslConfigTuningSetting', () => {
-  it('does not ask main for an analysis off Windows', () => {
-    const { container } = render(<WslConfigTuningSetting wslSupportedPlatform={false} />)
-    expect(container.innerHTML).toBe('')
-    expect(analyze).not.toHaveBeenCalled()
-  })
-
   it('stays hidden when main reports the host unsupported', async () => {
     analyze.mockResolvedValue({ state: 'unsupported' })
-    const { container } = render(<WslConfigTuningSetting wslSupportedPlatform />)
+    const { container } = render(<WslConfigTuningSetting />)
     await waitFor(() => expect(analyze).toHaveBeenCalled())
     expect(container.innerHTML).toBe('')
   })
@@ -61,7 +55,7 @@ describe('WslConfigTuningSetting', () => {
       backupPath: null,
       appliedIds: ['auto-memory-reclaim']
     })
-    render(<WslConfigTuningSetting wslSupportedPlatform />)
+    render(<WslConfigTuningSetting />)
 
     const button = await screen.findByRole('button', { name: 'Apply to .wslconfig' })
     expect(

@@ -1160,7 +1160,9 @@
         "automationsDescription": "Agende trabalho de agente e escolha se Automações aparecem na barra lateral.",
         "shareSkillsTitle": "Compartilhar skills",
         "shareSkillsDescription": "Compartilhe seus skills com um link não listado. Qualquer pessoa que o tiver consegue instalá-los.",
-        "floatingWorkspaceWebDescription": "Abas de terminal global e markdown."
+        "floatingWorkspaceWebDescription": "Abas de terminal global e markdown.",
+        "performance": "Desempenho",
+        "performanceDescription": "Analisa esta máquina e sugere configurações que a mantêm responsiva."
       },
       "useAppMenuPaste": {
         "pasteTooLarge": "Cola é muito grande."
@@ -8487,7 +8489,9 @@
           "devDescription": "Ferramentas somente dev para exercitar estados de UI.",
           "linearTitle": "Linear",
           "linearDescription": "Como Linear funciona em Dolphin, lista de verificação de configuração, skill de agente e prompts de exemplo.",
-          "tasksDescription": "Conecte provedores, instale o skill Linear e escolha o que aparece em Tarefas."
+          "tasksDescription": "Conecte provedores, instale o skill Linear e escolha o que aparece em Tarefas.",
+          "performance": "Desempenho",
+          "performanceDescription": "Analisa esta máquina e sugere configurações que a mantêm responsiva."
         },
         "SettingsFormControls": {
           "42a4d15a30": "Nenhuma fonte encontrada.",
@@ -9988,12 +9992,7 @@
             "command": "comando",
             "confirm": "confirmar",
             "close": "fechar",
-            "omp": "OMP",
-            "wslMemoryTuning": "Ajuste de memória do WSL",
-            "wslMemoryTuningDescription": "Sugere configurações do .wslconfig que devolvem ao Windows a memória ociosa do WSL e do Docker.",
-            "wslconfig": "wslconfig",
-            "memory": "memória",
-            "docker": "docker"
+            "omp": "OMP"
           }
         },
         "git": {
@@ -12494,6 +12493,17 @@
           "applied": "Salvo. Execute \"wsl --shutdown\" quando for conveniente para aplicar — isso encerra todas as distros e containers Docker em execução.",
           "applyFailed": "Não foi possível atualizar o .wslconfig. Nada foi alterado.",
           "apply": "Aplicar ao .wslconfig"
+        },
+        "performance": {
+          "search": {
+            "wslMemory": "Memória do WSL",
+            "wslMemoryDescription": "Sugere configurações do .wslconfig que devolvem ao Windows a memória ociosa do WSL e do Docker.",
+            "wslconfig": "wslconfig",
+            "wsl": "wsl",
+            "memory": "memória",
+            "docker": "docker",
+            "slow": "lento"
+          }
         }
       },
       "right": {
