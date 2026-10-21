@@ -34,6 +34,8 @@ import { isNativePtyException } from './daemon-native-pty-exception'
 import { startDaemonScopeDeathWatch } from './daemon-scope-death-watch'
 import { isWindowsProcessTableAvailable } from '../windows/windows-process-table'
 import { parseArgs } from './daemon-entry-args'
+// Why re-export: build-dolphind's load check calls parseArgs off the bundled entry.
+export { parseArgs }
 import { adoptInheritedCompileCache } from '../startup/child-compile-cache'
 
 adoptInheritedCompileCache()
