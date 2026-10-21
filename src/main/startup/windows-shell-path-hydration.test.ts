@@ -211,4 +211,86 @@ describe('Windows shell PATH hydration coordination', () => {
 
     expect(configure).toHaveBeenCalledWith('C:\\Windows\\System32\\cmd.exe', null, null)
   })
+
+  describe('persisted PATH cache', () => {
+    const powerShell = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+    const shellKey = JSON.stringify([powerShell, null, null])
+
+    function createCoordinator(cached: string[] | null) {
+      const probe = deferred<HydrationResult>()
+      const hydrate = vi.fn<(options?: { keepAppliedPath?: boolean }) => Promise<HydrationResult>>(
+        () => probe.promise
+      )
+      const merge = vi.fn<(segments: string[]) => string[]>(() => [])
+      const persistedPath = {
+        load: vi.fn<(key: string) => string[] | null>(() => cached),
+        save: vi.fn<(key: string, segments: string[]) => void>()
+      }
+      const coordinator = createWindowsShellPathHydration({
+        configure: vi.fn(),
+        hydrate,
+        merge,
+        persistedPath,
+        resolvePowerShellChain: () => [powerShell]
+      })
+      return { coordinator, hydrate, merge, persistedPath, probe }
+    }
+
+    it('applies the cached PATH and releases waiters before the probe finishes', async () => {
+      const { coordinator, hydrate, merge, persistedPath, probe } = createCoordinator([
+        'C:\\cached-profile'
+      ])
+
+      const refreshed = coordinator.hydrate('powershell.exe', 'powershell.exe')
+      await coordinator.whenReady()
+
+      expect(persistedPath.load).toHaveBeenCalledWith(shellKey)
+      expect(merge).toHaveBeenCalledExactlyOnceWith(['C:\\cached-profile'])
+      await vi.waitFor(() => expect(hydrate).toHaveBeenCalledWith({ keepAppliedPath: true }))
+
+      probe.resolve(success('C:\\fresh-profile'))
+      await refreshed
+      expect(merge).toHaveBeenLastCalledWith(['C:\\fresh-profile'])
+      expect(persistedPath.save).toHaveBeenCalledWith(shellKey, ['C:\\fresh-profile'])
+    })
+
+    it('waits for the probe and seeds the cache when nothing is persisted', async () => {
+      const { coordinator, hydrate, merge, persistedPath, probe } = createCoordinator(null)
+      let ready = false
+
+      void coordinator.hydrate('powershell.exe', 'powershell.exe')
+      const waiting = coordinator.whenReady().then(() => {
+        ready = true
+      })
+      await vi.waitFor(() => expect(hydrate).toHaveBeenCalledWith(undefined))
+      expect(ready).toBe(false)
+      expect(merge).not.toHaveBeenCalled()
+
+      probe.resolve(success('C:\\fresh-profile'))
+      await waiting
+      expect(merge).toHaveBeenCalledExactlyOnceWith(['C:\\fresh-profile'])
+      expect(persistedPath.save).toHaveBeenCalledWith(shellKey, ['C:\\fresh-profile'])
+    })
+
+    it('keeps the cached file when the refresh probe fails', async () => {
+      const { coordinator, merge, persistedPath, probe } = createCoordinator(['C:\\cached'])
+
+      const refreshed = coordinator.hydrate('powershell.exe', 'powershell.exe')
+      probe.resolve({ segments: [], ok: false, failureReason: 'timeout' })
+      await refreshed
+
+      expect(merge).toHaveBeenCalledExactlyOnceWith(['C:\\cached'])
+      expect(persistedPath.save).not.toHaveBeenCalled()
+    })
+
+    it('reads the cache only for the launch probe', async () => {
+      const { coordinator, persistedPath, probe } = createCoordinator(['C:\\cached'])
+      probe.resolve(success('C:\\fresh'))
+
+      await coordinator.hydrate('powershell.exe', 'powershell.exe')
+      await coordinator.hydrate('powershell.exe', 'powershell.exe')
+
+      expect(persistedPath.load).toHaveBeenCalledOnce()
+    })
+  })
 })
