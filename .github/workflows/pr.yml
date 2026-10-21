@@ -563,7 +563,13 @@ jobs:
           done
           # Why both shells on one line: pr-workflow-parallelism.test.mjs parses only the
           # first install command in this step to prove the lane really installs them.
-          timeout 300 sudo apt-get install -y zsh fish
+          # Why retried: Launchpad also 503s single .deb downloads; the job timeout above
+          # stays the hard bound on how long the retry can add.
+          for attempt in 1 2; do
+            timeout 300 sudo apt-get install -y zsh fish && break
+            [ "${attempt}" = 2 ] && exit 1
+            sleep 15
+          done
 
       - uses: ./.github/actions/install-node-dependencies
         with:
