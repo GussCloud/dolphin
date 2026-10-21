@@ -17,11 +17,15 @@ export type AgentInteractionAvatarImageResult =
   | { ok: true; data: Uint8Array; mimeType: string }
   | { ok: false; reason: 'default' | 'invalid-path' | 'unsupported-type' | 'too-large' | 'read-failed' }
 
+/** Bounds what the main window may claim to be showing at once; it shows one or two. */
+export const AGENT_INTERACTION_VIEWED_WORKTREES_MAX = 8
+
 export const AGENT_INTERACTION_AVATAR_CHANNELS = {
   frame: 'agentInteractionAvatar:frame',
   getFrame: 'agentInteractionAvatar:getFrame',
   loadSound: 'agentInteractionAvatar:loadSound',
   loadImage: 'agentInteractionAvatar:loadImage',
   activate: 'agentInteractionAvatar:activate',
-  dismiss: 'agentInteractionAvatar:dismiss'
+  dismiss: 'agentInteractionAvatar:dismiss',
+  viewed: 'agentInteractionAvatar:viewed'
 } as const

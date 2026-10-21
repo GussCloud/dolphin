@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import {
   AGENT_INTERACTION_AVATAR_CHANNELS,
+  AGENT_INTERACTION_VIEWED_WORKTREES_MAX,
   type AgentInteractionAvatarFrame,
   type AgentInteractionAvatarImageResult,
   type AgentInteractionAvatarSoundResult
@@ -20,6 +21,14 @@ import { resolveAgentPaneReveal } from '../window/reveal-agent-pane'
 import { readNotificationSoundFile } from './notification-sound-file'
 import { isTrustedUIRenderer } from './ui'
 import { readAgentInteractionAvatarImage } from '../agent-interaction/agent-interaction-avatar-image'
+
+function isViewedWorktreeList(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= AGENT_INTERACTION_VIEWED_WORKTREES_MAX &&
+    value.every((item) => typeof item === 'string' && item.length > 0 && item.length <= 4096)
+  )
+}
 
 /** Handlers answer the avatar window (and the settings page for previews); paths are chosen here, never sent in. */
 export function registerAgentInteractionAvatarHandlers(
@@ -79,6 +88,14 @@ export function registerAgentInteractionAvatarHandlers(
     }
     controller.dismiss(cue.paneKey)
     resolveAgentPaneReveal(cue)?.()
+  })
+
+  ipcMain.removeAllListeners(AGENT_INTERACTION_AVATAR_CHANNELS.viewed)
+  ipcMain.on(AGENT_INTERACTION_AVATAR_CHANNELS.viewed, (event, worktreeIds: unknown) => {
+    if (!isTrustedUIRenderer(event.sender) || !isViewedWorktreeList(worktreeIds)) {
+      return
+    }
+    controller.setViewedWorktrees(worktreeIds)
   })
 
   ipcMain.removeAllListeners(AGENT_INTERACTION_AVATAR_CHANNELS.dismiss)

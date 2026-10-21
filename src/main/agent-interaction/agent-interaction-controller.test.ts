@@ -30,13 +30,15 @@ function event(
 function setup(agentInteraction: AgentInteractionSettings = enabledSettings()) {
   const presenter = { present: vi.fn(), hide: vi.fn() }
   const settings = { agentInteraction }
+  const focus = { mainWindow: false }
   const controller = new AgentInteractionController({
     getSettings: () => settings,
     resolveWorkspaceLabel: () => 'w1',
+    isMainWindowFocused: () => focus.mainWindow,
     presenter,
     now: () => 42
   })
-  return { controller, presenter, settings }
+  return { controller, presenter, settings, focus }
 }
 
 function enabledSettings(
@@ -120,6 +122,32 @@ describe('AgentInteractionController', () => {
     })
     controller.onPaneCleared(PANE)
     expect(presenter.hide).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides the cues of a workspace once the user opens it', () => {
+    const { controller, presenter } = setup()
+    controller.onStatus(event('working'))
+    controller.onStatus(event('done'))
+    controller.setViewedWorktrees(['repo::/other'])
+    expect(presenter.hide).not.toHaveBeenCalled()
+    controller.setViewedWorktrees(['repo::/w1'])
+    expect(presenter.hide).toHaveBeenCalledTimes(1)
+    expect(controller.current()).toBeNull()
+  })
+
+  it('skips a cue for the workspace the focused main window already shows', () => {
+    const { controller, presenter, focus } = setup()
+    controller.setViewedWorktrees(['repo::/w1'])
+    focus.mainWindow = true
+    controller.onStatus(event('working'))
+    controller.onStatus(event('done'))
+    expect(presenter.present).not.toHaveBeenCalled()
+
+    // Same workspace on screen but Dolphin in the background: the user is not looking at it.
+    focus.mainWindow = false
+    controller.onStatus(event('working', { stateStartedAt: 5 }))
+    controller.onStatus(event('done', { stateStartedAt: 6 }))
+    expect(presenter.present).toHaveBeenCalledTimes(1)
   })
 
   it('announces an exhausted auto-retry and clears everything when disabled', () => {

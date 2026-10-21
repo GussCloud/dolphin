@@ -85,5 +85,23 @@ test.describe('Agent interaction avatar', () => {
 
     await avatarPage.getByRole('button', { name: 'Open agent' }).click()
     await expect(card).toHaveCount(0)
+
+    // A second turn raises it again; opening its workspace in the main window answers it.
+    await emitCodexHookStatus(endpoint, { paneKey, worktreeId, state: 'working', prompt })
+    await emitCodexHookStatus(endpoint, {
+      paneKey,
+      worktreeId,
+      state: 'done',
+      prompt,
+      lastAssistantMessage: 'done again'
+    })
+    await expect(card).toContainText('Task finished', { timeout: 30_000 })
+    // Why direct: a background launch never holds OS focus, so the auto-ack scan reports
+    // nothing on screen; this is the report it sends when the user opens the workspace.
+    await appPage.evaluate(
+      (id) => window.api.agentInteractionAvatar.reportViewedWorktrees([id]),
+      worktreeId
+    )
+    await expect(card).toHaveCount(0)
   })
 })
