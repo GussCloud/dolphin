@@ -9988,7 +9988,12 @@
             "command": "comando",
             "confirm": "confirmar",
             "close": "fechar",
-            "omp": "OMP"
+            "omp": "OMP",
+            "wslMemoryTuning": "Ajuste de memória do WSL",
+            "wslMemoryTuningDescription": "Sugere configurações do .wslconfig que devolvem ao Windows a memória ociosa do WSL e do Docker.",
+            "wslconfig": "wslconfig",
+            "memory": "memória",
+            "docker": "docker"
           }
         },
         "git": {
@@ -12478,6 +12483,17 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "O PowerShell 7 está instalado e é recomendado: novos terminais PowerShell o usam."
+        },
+        "WslConfigTuningSetting": {
+          "autoMemoryReclaimReason": "Devolve ao Windows a memória de cache ociosa do WSL e do Docker, em vez de retê-la até o desligamento.",
+          "sparseVhdReason": "Novos discos do WSL devolvem ao Windows o espaço liberado. Discos existentes não são alterados.",
+          "memoryCapReason": "O limite atual ({{value0}}) permite que o WSL ocupe a maior parte dos {{value1}} GB desta máquina, deixando os apps do Windows sem memória.",
+          "unreadable": "O Dolphin não conseguiu ler {{value0}} com segurança, então não vai alterá-lo. Edite-o manualmente.",
+          "upToDate": "{{value0}} já usa as configurações de memória recomendadas.",
+          "hasSuggestions": "Alterações sugeridas para {{value0}}. Suas outras configurações e comentários são mantidos, e o arquivo atual é salvo como backup antes.",
+          "applied": "Salvo. Execute \"wsl --shutdown\" quando for conveniente para aplicar — isso encerra todas as distros e containers Docker em execução.",
+          "applyFailed": "Não foi possível atualizar o .wslconfig. Nada foi alterado.",
+          "apply": "Aplicar ao .wslconfig"
         }
       },
       "right": {

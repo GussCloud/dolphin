@@ -61,6 +61,7 @@ describe('web preload API composition', () => {
       'cli',
       'macosTccPrompts',
       'codexConfigSync',
+      'wslConfigTuning',
       'developerPermissions',
       'computerUsePermissions',
       'updater',

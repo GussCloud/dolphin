@@ -9988,7 +9988,12 @@
             "command": "command",
             "confirm": "confirm",
             "close": "close",
-            "omp": "OMP"
+            "omp": "OMP",
+            "wslMemoryTuning": "WSL Memory Tuning",
+            "wslMemoryTuningDescription": "Suggest .wslconfig settings that return idle WSL and Docker memory to Windows.",
+            "wslconfig": "wslconfig",
+            "memory": "memory",
+            "docker": "docker"
           }
         },
         "git": {
@@ -12478,6 +12483,17 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "PowerShell 7 is installed and recommended: new PowerShell terminals use it."
+        },
+        "WslConfigTuningSetting": {
+          "autoMemoryReclaimReason": "Returns idle WSL and Docker cache memory to Windows instead of holding it until shutdown.",
+          "sparseVhdReason": "New WSL disks give freed space back to Windows. Existing disks are not changed.",
+          "memoryCapReason": "The current limit ({{value0}}) lets WSL take most of this machine’s {{value1}} GB, starving Windows apps.",
+          "unreadable": "Dolphin could not safely read {{value0}}, so it will not change it. Edit it by hand.",
+          "upToDate": "{{value0}} already uses the recommended memory settings.",
+          "hasSuggestions": "Suggested changes for {{value0}}. Your other settings and comments are kept, and the current file is backed up first.",
+          "applied": "Saved. Run \"wsl --shutdown\" when convenient to apply it — that stops every running distro and Docker container.",
+          "applyFailed": "Could not update .wslconfig. Nothing was changed.",
+          "apply": "Apply to .wslconfig"
         }
       },
       "right": {

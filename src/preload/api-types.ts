@@ -7,6 +7,7 @@ import type {
   MinimaxCredentialsApi
 } from './api/agent-account-api'
 import type { HooksApi } from './api/agent-hook-api'
+import type { WslConfigTuningApi } from './api/wslconfig-tuning-api'
 import type { SkillsApi } from './api/agent-skill-api'
 import type { AgentAwakeApi, AgentStatusApi, AgentTrustApi } from './api/agent-status-api'
 import type {
@@ -114,6 +115,7 @@ export type PreloadApi = {
   claudeAccounts: ClaudeAccountsApi
   cli: CliApi
   codexConfigSync: CodexConfigSyncApi
+  wslConfigTuning: WslConfigTuningApi
   agentTrust: AgentTrustApi
   preflight: PreflightApi
   notifications: NotificationsApi

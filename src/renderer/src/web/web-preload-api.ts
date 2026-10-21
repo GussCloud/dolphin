@@ -118,6 +118,11 @@ function createWebPreloadApi(): Partial<PreloadApi> {
       status: () =>
         Promise.resolve({ state: 'synced', reason: null, systemConfigPath: '' } as const)
     },
+    // Why: .wslconfig belongs to the machine running the desktop app, never a web client.
+    wslConfigTuning: {
+      analyze: () => Promise.resolve({ state: 'unsupported' } as const),
+      apply: () => Promise.resolve({ ok: false, reason: 'unsupported', configPath: null } as const)
+    },
     developerPermissions: createDeveloperPermissionsApi(),
     computerUsePermissions: createComputerUsePermissionsApi(),
     updater: createUpdaterApi(),
