@@ -19183,12 +19183,12 @@
       "taskFailed": "タスクが失敗しました",
       "taskInterrupted": "タスクが中断されました",
       "retryExhausted": "接続が切れ、再試行の上限に達しました",
-      "subagentAttention": "サブエージェントが対応を求めています",
-      "subagentDone": "サブエージェントが完了しました",
+      "subagentAttention": "サブ Agent が対応を求めています",
+      "subagentDone": "サブ Agent が完了しました",
       "taskStarted": "タスクを開始しました"
     },
     "avatar": {
-      "open": "エージェントを開く",
+      "open": "Agent を開く",
       "pending": "+{{count}}",
       "dismiss": "閉じる"
     }
