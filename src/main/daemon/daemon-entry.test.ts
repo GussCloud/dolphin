@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseArgs } from './daemon-entry'
+import { parseArgs } from './daemon-entry-args'
 
 describe('daemon-entry parseArgs', () => {
   it('only enables scope cleanup with the fresh launch flag', () => {

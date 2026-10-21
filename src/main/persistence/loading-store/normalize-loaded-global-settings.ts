@@ -51,6 +51,7 @@ export function normalizeLoadedGlobalSettings(
     mobilePairingCustomAddress,
     mobilePairingCustomAddresses,
     normalizedNotifications,
+    normalizedAgentInteraction,
     normalizedSourceControlGroupOrder
   } = profile
 
@@ -135,6 +136,7 @@ export function normalizeLoadedGlobalSettings(
       seedDefaults: true
     }),
     notifications: normalizedNotifications,
+    agentInteraction: normalizedAgentInteraction,
     sourceControlAi: migratedSourceControlAi,
     sourceControlGroupOrder: normalizedSourceControlGroupOrder,
     // Why: rollback builds still read commitMessageAi, so refresh the legacy projection from sourceControlAi for compat.

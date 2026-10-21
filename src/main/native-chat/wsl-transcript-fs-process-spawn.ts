@@ -2,6 +2,7 @@ import { fork, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { pickAllowedEnv, RUNTIME_ENV_ALLOWLIST } from '../ai-vault/session-scanner-service-env'
+import { withInheritedCompileCache } from '../startup/child-compile-cache'
 
 const PROCESS_ENTRY_FILENAME = 'wsl-transcript-fs-process-entry.js'
 
@@ -49,7 +50,7 @@ export function forkWslTranscriptFsProcess(): ChildProcess {
     throw new Error(`WSL transcript filesystem process entry not found: ${entryPath}`)
   }
   return fork(entryPath, [], {
-    env: wslTranscriptFsProcessForkEnv(),
+    env: withInheritedCompileCache(wslTranscriptFsProcessForkEnv()),
     execArgv: [],
     serialization: 'advanced',
     stdio: ['ignore', 'ignore', 'ignore', 'ipc'],

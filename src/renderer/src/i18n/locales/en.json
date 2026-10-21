@@ -19202,5 +19202,23 @@
         "i18n": "i18n"
       }
     }
+  },
+  "agentInteraction": {
+    "kind": {
+      "needsPermission": "Needs your permission",
+      "needsInput": "Waiting for your answer",
+      "taskDone": "Task finished",
+      "taskFailed": "Task failed",
+      "taskInterrupted": "Task interrupted",
+      "retryExhausted": "Connection lost, retries used up",
+      "subagentAttention": "A subagent needs you",
+      "subagentDone": "Subagent finished",
+      "taskStarted": "Task started"
+    },
+    "avatar": {
+      "open": "Open agent",
+      "pending": "+{{count}}",
+      "dismiss": "Dismiss"
+    }
   }
 }

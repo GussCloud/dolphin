@@ -186,7 +186,12 @@ export async function resolveRuntimeLocalWorktreeCreateCandidate(args: {
       }
     }
     worktreePath = ensurePathWithinWorkspace(
-      computeWorktreePath(effectiveSanitizedName, args.repo.path, args.worktreePathSettings),
+      computeWorktreePath(
+        effectiveSanitizedName,
+        args.repo.path,
+        args.worktreePathSettings,
+        args.workspaceRoot
+      ),
       args.workspaceRoot
     )
     if (!(await runtimePathExists(worktreePath))) {

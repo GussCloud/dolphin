@@ -19174,5 +19174,23 @@
         "i18n": "i18n"
       }
     }
+  },
+  "agentInteraction": {
+    "kind": {
+      "needsPermission": "需要你的授权",
+      "needsInput": "正在等待你的回复",
+      "taskDone": "任务已完成",
+      "taskFailed": "任务失败",
+      "taskInterrupted": "任务已中断",
+      "retryExhausted": "连接已断开，重试次数已用完",
+      "subagentAttention": "有子代理需要你处理",
+      "subagentDone": "子代理已完成",
+      "taskStarted": "任务已开始"
+    },
+    "avatar": {
+      "open": "打开代理",
+      "pending": "+{{count}}",
+      "dismiss": "关闭"
+    }
   }
 }

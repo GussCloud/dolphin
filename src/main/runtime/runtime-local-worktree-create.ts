@@ -10,7 +10,7 @@ import {
 import { resolveDefaultBaseRefWithLocalGit } from '../git/repo'
 import type { LocalGitExecOptions } from '../git/repo-default-base-ref'
 import { resolveLocalGitUsername } from '../git/git-username'
-import { computeWorkspaceRoot, getWorktreePathSettings } from '../ipc/worktree-logic'
+import { computeWorkspaceRootAsync, getWorktreePathSettings } from '../ipc/worktree-logic'
 import { resolveWorktreeCreateBase } from '../worktree-create-base'
 import type { RuntimeManagedWorktreeCreateArgs } from './runtime-managed-worktree-create-types'
 import type { RemoteFetchResult, RemoteTrackingBase } from './runtime-remote-fetch-controller'
@@ -90,12 +90,13 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
       'Could not resolve a default base ref for this repo. Pass an explicit --base and try again.'
     )
   }
+  const workspaceRoot = await computeWorkspaceRootAsync(repo.path, pathSettings)
   const candidate = await resolveRuntimeLocalWorktreeCreateCandidate({
     request,
     repo,
     settings,
     worktreePathSettings: pathSettings,
-    workspaceRoot: computeWorkspaceRoot(repo.path, pathSettings),
+    workspaceRoot,
     username,
     store,
     baseBranch,
@@ -108,7 +109,7 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
     store,
     settings,
     baseBranch,
-    workspaceRoot: computeWorkspaceRoot(repo.path, pathSettings),
+    workspaceRoot,
     branchName: candidate.branchName,
     worktreePath: candidate.worktreePath,
     effectiveSanitizedName: candidate.effectiveSanitizedName,

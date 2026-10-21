@@ -275,6 +275,8 @@ type HydrateOptions = {
   spawner?: (shell: string) => Promise<HydrationResult>
   /** Override for tests — defaults to `pickShell()`. */
   shellOverride?: string | null
+  /** Keep the applied Windows PATH live while probing; set when it came from the persisted cache. */
+  keepAppliedPath?: boolean
 }
 
 /**
@@ -298,7 +300,7 @@ export function hydrateShellPath(options: HydrateOptions = {}): Promise<Hydratio
   const spawner = options.spawner ?? spawnShellAndReadPath
   const fallbackShell = options.shellOverride === undefined ? configuredWindowsFallbackShell : null
   const probe = probeQueue.then(async () => {
-    if (platform === 'win32') {
+    if (platform === 'win32' && !options.keepAppliedPath) {
       windowsPathOwnership.restore(process.env)
     }
     const result = await spawner(shell)

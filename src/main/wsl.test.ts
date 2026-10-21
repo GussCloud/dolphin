@@ -23,7 +23,6 @@ import {
   getWslHome,
   hasCachedWslAvailability,
   hasCachedWslDistros,
-  isWslAvailable,
   isWslAvailableAsync,
   listWslDistros,
   listWslDistrosAsync,
@@ -42,6 +41,23 @@ function withPlatform<T>(value: NodeJS.Platform, fn: () => T): T {
   } finally {
     Object.defineProperty(process, 'platform', { configurable: true, value: original })
   }
+}
+
+/** Lets an off-thread refresh kicked by a sync read settle into the cache. */
+async function flushMicrotasks(): Promise<void> {
+  for (let index = 0; index < 10; index += 1) {
+    await Promise.resolve()
+  }
+}
+
+function answerAsyncProbesWith(stdout: string | Error): void {
+  execFileMock.mockImplementation((_command, _args, _options, callback) => {
+    if (stdout instanceof Error) {
+      callback(stdout, '')
+    } else {
+      callback(null, stdout)
+    }
+  })
 }
 
 async function withPlatformAsync<T>(value: NodeJS.Platform, fn: () => Promise<T>): Promise<T> {
@@ -86,21 +102,24 @@ describe('WSL distro discovery cache', () => {
     }
   })
 
-  it('retries synchronous discovery after a transient wsl.exe failure', () => {
+  it('retries synchronous discovery off-thread after a transient wsl.exe failure', async () => {
     vi.useFakeTimers()
     execFileSyncMock.mockImplementationOnce(() => {
       throw new Error('transient failure')
     })
-    execFileSyncMock.mockReturnValueOnce('Ubuntu\n')
+    answerAsyncProbesWith('Ubuntu\n')
 
     try {
-      withPlatform('win32', () => {
+      await withPlatformAsync('win32', async () => {
         expect(listWslDistros()).toEqual([])
         expect(getCachedWslDistros()).toBeNull()
         expect(listWslDistros()).toEqual([])
         expect(execFileSyncMock).toHaveBeenCalledTimes(1)
         vi.advanceTimersByTime(15_000)
+        expect(listWslDistros()).toEqual([])
+        await flushMicrotasks()
         expect(listWslDistros()).toEqual(['Ubuntu'])
+        expect(execFileSyncMock).toHaveBeenCalledTimes(1)
       })
     } finally {
       vi.useRealTimers()
@@ -132,16 +151,21 @@ describe('WSL distro discovery cache', () => {
     }
   })
 
-  it('retries synchronous discovery after wsl.exe reports no distros yet', () => {
+  // Why: only the cold read may block the main thread; later refreshes run off-thread.
+  it('refreshes synchronous discovery off-thread after wsl.exe reports no distros yet', async () => {
     vi.useFakeTimers()
     execFileSyncMock.mockReturnValueOnce('')
-    execFileSyncMock.mockReturnValueOnce('Ubuntu\n')
+    answerAsyncProbesWith('Ubuntu\n')
 
     try {
-      withPlatform('win32', () => {
+      await withPlatformAsync('win32', async () => {
         expect(listWslDistros()).toEqual([])
         vi.advanceTimersByTime(15_000)
+        expect(listWslDistros()).toEqual([])
+        await flushMicrotasks()
         expect(listWslDistros()).toEqual(['Ubuntu'])
+        expect(execFileSyncMock).toHaveBeenCalledTimes(1)
+        expect(execFileMock).toHaveBeenCalledTimes(1)
       })
     } finally {
       vi.useRealTimers()
@@ -186,18 +210,20 @@ describe('WSL distro discovery cache', () => {
   // "nothing installed yet" state as an empty list — a distro installed later
   // must still appear. The answer stays readable as [] so a missing distro is
   // still visible to `isKnownMissingDistro`.
-  it('re-probes a docker-desktop-only machine once a user distro can appear', () => {
+  it('re-probes a docker-desktop-only machine once a user distro can appear', async () => {
     vi.useFakeTimers()
     execFileSyncMock.mockReturnValueOnce('docker-desktop\ndocker-desktop-data\n')
-    execFileSyncMock.mockReturnValueOnce('docker-desktop\nUbuntu\n')
+    answerAsyncProbesWith('docker-desktop\nUbuntu\n')
 
     try {
-      withPlatform('win32', () => {
+      await withPlatformAsync('win32', async () => {
         expect(listWslDistros()).toEqual([])
         expect(getCachedWslDistros()).toEqual([])
         expect(listWslDistros()).toEqual([])
         expect(execFileSyncMock).toHaveBeenCalledTimes(1)
         vi.advanceTimersByTime(15_000)
+        listWslDistros()
+        await flushMicrotasks()
         expect(listWslDistros()).toEqual(['Ubuntu'])
       })
     } finally {
@@ -207,44 +233,54 @@ describe('WSL distro discovery cache', () => {
 
   // Why: a docker-desktop-only machine filters to empty on every probe, so a flat
   // window would re-spawn wsl.exe every 15s for the whole session.
-  it('backs off while the list keeps coming back empty', () => {
+  it('backs off while the list keeps coming back empty', async () => {
     vi.useFakeTimers()
     execFileSyncMock.mockReturnValue('')
+    answerAsyncProbesWith('')
 
     try {
-      withPlatform('win32', () => {
+      await withPlatformAsync('win32', async () => {
         expect(listWslDistros()).toEqual([])
         vi.advanceTimersByTime(15_000)
         expect(listWslDistros()).toEqual([])
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
+        await flushMicrotasks()
+        expect(execFileMock).toHaveBeenCalledTimes(1)
         // Second empty result doubles the window, so 15s more is not enough.
         vi.advanceTimersByTime(15_000)
         expect(listWslDistros()).toEqual([])
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
+        await flushMicrotasks()
+        expect(execFileMock).toHaveBeenCalledTimes(1)
         vi.advanceTimersByTime(15_000)
         expect(listWslDistros()).toEqual([])
-        expect(execFileSyncMock).toHaveBeenCalledTimes(3)
+        await flushMicrotasks()
+        expect(execFileMock).toHaveBeenCalledTimes(2)
+        expect(execFileSyncMock).toHaveBeenCalledTimes(1)
       })
     } finally {
       vi.useRealTimers()
     }
   })
 
-  it('backs off after repeated distro-list failures', () => {
+  it('backs off after repeated distro-list failures', async () => {
     vi.useFakeTimers()
     execFileSyncMock.mockImplementation(() => {
       throw new Error('transient failure')
     })
+    answerAsyncProbesWith(new Error('transient failure'))
 
     try {
-      withPlatform('win32', () => {
+      await withPlatformAsync('win32', async () => {
         expect(listWslDistros()).toEqual([])
         vi.advanceTimersByTime(15_000)
         expect(listWslDistros()).toEqual([])
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
+        await flushMicrotasks()
+        expect(execFileMock).toHaveBeenCalledTimes(1)
         vi.advanceTimersByTime(15_000)
         expect(listWslDistros()).toEqual([])
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
+        await flushMicrotasks()
+        expect(execFileMock).toHaveBeenCalledTimes(1)
+        // A failed cold probe still never blocks the main thread twice.
+        expect(execFileSyncMock).toHaveBeenCalledTimes(1)
       })
     } finally {
       vi.useRealTimers()
@@ -253,21 +289,26 @@ describe('WSL distro discovery cache', () => {
 
   // Why: the cap is the only bound on how long a distro installed mid-session stays
   // invisible, so pin it rather than letting the doubling run away.
-  it('caps the empty-list backoff at five minutes', () => {
+  it('caps the empty-list backoff at five minutes', async () => {
     vi.useFakeTimers()
     execFileSyncMock.mockReturnValue('')
+    answerAsyncProbesWith('')
+    const probeCount = (): number =>
+      execFileSyncMock.mock.calls.length + execFileMock.mock.calls.length
 
     try {
-      withPlatform('win32', () => {
+      await withPlatformAsync('win32', async () => {
         // Windows double to 15/30/60/120/240s, so the 6th would be 480s uncapped.
         for (const delayMs of [0, 15_000, 30_000, 60_000, 120_000, 240_000]) {
           vi.advanceTimersByTime(delayMs)
           listWslDistros()
+          await flushMicrotasks()
         }
-        expect(execFileSyncMock).toHaveBeenCalledTimes(6)
+        expect(probeCount()).toBe(6)
         vi.advanceTimersByTime(300_000)
         listWslDistros()
-        expect(execFileSyncMock).toHaveBeenCalledTimes(7)
+        await flushMicrotasks()
+        expect(probeCount()).toBe(7)
       })
     } finally {
       vi.useRealTimers()
@@ -312,25 +353,25 @@ describe('WSL distro discovery cache', () => {
   })
 })
 
-describe('WSL home cache', () => {
+describe('WSL home sync probe', () => {
   afterEach(() => {
-    execFileMock.mockReset()
     execFileSyncMock.mockReset()
     _resetWslCachesForTests()
   })
 
-  it('bounds cached homes while retaining the most recently used distros', () => {
-    execFileSyncMock.mockImplementation((_command, args) => `/home/${args[1]}\n`)
+  it('probes a cold distro once with --exec, then serves the cache', () => {
+    execFileSyncMock.mockReturnValue('/home/me\n')
 
     withPlatform('win32', () => {
-      for (let index = 0; index < 68; index += 1) {
-        expect(getWslHome(`Distro-${index}`)).toContain(`Distro-${index}`)
-      }
-      expect(getWslHome('Distro-4')).toContain('Distro-4')
-      expect(execFileSyncMock).toHaveBeenCalledTimes(68)
-      expect(getWslHome('Distro-0')).toContain('Distro-0')
-      expect(execFileSyncMock).toHaveBeenCalledTimes(69)
+      expect(getWslHome('Ubuntu')).toBe('\\\\wsl.localhost\\Ubuntu\\home\\me')
+      expect(getWslHome('Ubuntu')).toBe('\\\\wsl.localhost\\Ubuntu\\home\\me')
     })
+    expect(execFileSyncMock).toHaveBeenCalledTimes(1)
+    expect(execFileSyncMock).toHaveBeenCalledWith(
+      'wsl.exe',
+      ['-d', 'Ubuntu', '--exec', 'bash', '-c', 'echo $HOME'],
+      expect.objectContaining({ timeout: 5000, cwd: expect.any(String) })
+    )
   })
 })
 
@@ -341,67 +382,66 @@ describe('WSL availability cache', () => {
     _resetWslCachesForTests()
   })
 
+  // Real execFile timeout shape on Windows: killed, no exit code, SIGTERM.
+  const timeoutError = (): Error =>
+    Object.assign(new Error('Command failed: wsl.exe --status'), {
+      killed: true,
+      code: null,
+      signal: 'SIGTERM'
+    })
+
+  /** Each `--status` probe settles with the next outcome; null is success. */
+  function queueStatusOutcomes(...outcomes: (Error | null)[]): void {
+    for (const outcome of outcomes) {
+      execFileMock.mockImplementationOnce((_command, _args, _options, callback) => {
+        callback(outcome, '', '')
+      })
+    }
+  }
+
   // Why: a cold WSL2 utility-VM boot on a just-installed or just-rebooted
   // machine routinely exceeds the 5s probe timeout. Latching false for the
   // process lifetime is what makes WSL vanish from the picker after setup.
-  it('retries availability after a probe timeout instead of latching false', () => {
+  it('retries availability after a probe timeout instead of latching false', async () => {
     vi.useFakeTimers()
-    execFileSyncMock.mockImplementationOnce(() => {
-      // Real execFileSync timeout shape on Windows: status null, signal SIGTERM.
-      throw Object.assign(new Error('spawnSync ETIMEDOUT'), {
-        code: 'ETIMEDOUT',
-        status: null,
-        signal: 'SIGTERM'
-      })
-    })
-    execFileSyncMock.mockReturnValueOnce('')
+    queueStatusOutcomes(timeoutError(), null)
 
     try {
-      withPlatform('win32', () => {
-        expect(isWslAvailable()).toBe(false)
+      await withPlatformAsync('win32', async () => {
+        await expect(isWslAvailableAsync()).resolves.toBe(false)
         vi.advanceTimersByTime(45_000)
-        expect(isWslAvailable()).toBe(true)
+        await expect(isWslAvailableAsync()).resolves.toBe(true)
       })
     } finally {
       vi.useRealTimers()
     }
   })
 
-  // Why: the probe blocks the main process for up to 5s, so a timeout must not
-  // let every caller re-spawn it immediately.
-  it('bounds the probe rate while the failure window is open', () => {
-    execFileSyncMock.mockImplementation(() => {
-      // Real execFileSync timeout shape on Windows: status null, signal SIGTERM.
-      throw Object.assign(new Error('spawnSync ETIMEDOUT'), {
-        code: 'ETIMEDOUT',
-        status: null,
-        signal: 'SIGTERM'
-      })
-    })
+  // Why: a timeout must not let every caller re-spawn the probe immediately.
+  it('bounds the probe rate while the failure window is open', async () => {
+    queueStatusOutcomes(timeoutError())
 
-    withPlatform('win32', () => {
-      expect(isWslAvailable()).toBe(false)
-      expect(isWslAvailable()).toBe(false)
-      expect(execFileSyncMock).toHaveBeenCalledTimes(1)
+    await withPlatformAsync('win32', async () => {
+      await expect(isWslAvailableAsync()).resolves.toBe(false)
+      await expect(isWslAvailableAsync()).resolves.toBe(false)
+      expect(execFileMock).toHaveBeenCalledTimes(1)
     })
   })
 
-  it('caches a successful probe for the process lifetime', () => {
-    execFileSyncMock.mockReturnValueOnce('')
+  it('caches a successful probe for the process lifetime', async () => {
+    queueStatusOutcomes(null)
 
-    withPlatform('win32', () => {
-      expect(isWslAvailable()).toBe(true)
-      expect(isWslAvailable()).toBe(true)
-      expect(execFileSyncMock).toHaveBeenCalledTimes(1)
+    await withPlatformAsync('win32', async () => {
+      await expect(isWslAvailableAsync()).resolves.toBe(true)
+      await expect(isWslAvailableAsync()).resolves.toBe(true)
+      expect(execFileMock).toHaveBeenCalledTimes(1)
     })
   })
 
   // Why: the renderer's capability read reaches this over IPC; a blocking spawn there
   // stalls every PTY message and window IPC for as long as wsl.exe takes to answer.
-  it('probes availability for IPC callers without blocking the main thread', async () => {
-    execFileMock.mockImplementation((_command, _args, _options, callback) => {
-      callback(null, '', '')
-    })
+  it('probes availability without blocking the main thread', async () => {
+    queueStatusOutcomes(null)
 
     await withPlatformAsync('win32', async () => {
       await expect(isWslAvailableAsync()).resolves.toBe(true)
@@ -421,23 +461,9 @@ describe('WSL availability cache', () => {
   // 10-minute definitive TTL with exponential backoff. Git kept working and Dolphin
   // reported WSL unavailable -- a worse state than the bug being fixed. Naming
   // the directory is what keeps ENOENT meaning "wsl.exe is not on PATH".
-  it('names an explicit spawn directory on both probes, so no deleted cwd can read as ENOENT', async () => {
-    execFileSyncMock.mockReturnValueOnce('')
-    execFileMock.mockImplementation((_command, _args, _options, callback) => {
-      callback(null, '', '')
-    })
+  it('names an explicit spawn directory, so no deleted cwd can read as ENOENT', async () => {
+    queueStatusOutcomes(null)
 
-    withPlatform('win32', () => {
-      expect(isWslAvailable()).toBe(true)
-    })
-    expect(execFileSyncMock).toHaveBeenCalledWith(
-      'wsl.exe',
-      ['--status'],
-      expect.objectContaining({ cwd: expect.any(String) })
-    )
-
-    // The two probes share one cache, so a false ENOENT from either poisons both.
-    _resetWslCachesForTests()
     await withPlatformAsync('win32', async () => {
       await expect(isWslAvailableAsync()).resolves.toBe(true)
     })
@@ -458,24 +484,6 @@ describe('WSL availability cache', () => {
       const results = await Promise.all([isWslAvailableAsync(), isWslAvailableAsync()])
       expect(results).toEqual([true, true])
       expect(execFileMock).toHaveBeenCalledTimes(1)
-    })
-  })
-
-  it('does not let an older async failure overwrite a newer sync success', async () => {
-    let finishAsyncProbe: ((error: Error | null) => void) | null = null
-    execFileMock.mockImplementation((_command, _args, _options, callback) => {
-      finishAsyncProbe = (error) => callback(error, '', '')
-    })
-    execFileSyncMock.mockReturnValue('')
-
-    await withPlatformAsync('win32', async () => {
-      const staleProbe = isWslAvailableAsync()
-      expect(isWslAvailable()).toBe(true)
-
-      finishAsyncProbe?.(Object.assign(new Error('older failure'), { code: 1 }))
-
-      await expect(staleProbe).resolves.toBe(true)
-      expect(getCachedWslAvailability()).toBe(true)
     })
   })
 
@@ -501,60 +509,16 @@ describe('WSL availability cache', () => {
     })
   })
 
-  it('shares the failure backoff between the async and sync probes', async () => {
-    execFileMock.mockImplementation((_command, _args, _options, callback) => {
-      callback(Object.assign(new Error('not installed'), { code: 'ENOENT' }), '', '')
-    })
-
-    await withPlatformAsync('win32', async () => {
-      await expect(isWslAvailableAsync()).resolves.toBe(false)
-      expect(isWslAvailable()).toBe(false)
-      expect(execFileSyncMock).not.toHaveBeenCalled()
-    })
-  })
-
-  // Why: wsl.exe ships in System32 on every modern Windows, so a host without WSL answers
-  // with a non-zero exit, not ENOENT — and execFile reports that as a numeric `code`, not the
-  // `status` execFileSync uses. Misreading it as retryable would shrink the shared cache window
-  // to 45s and make the sync callers pay their blocking spawn ~13x more often.
-  it('treats a non-zero async exit as definitive, so the sync probe keeps the long window', async () => {
+  // Why: the resolver reads the cached getter, not the probe. Reporting the last
+  // observed answer keeps the `wsl-unavailable` repair prompt reachable; going null
+  // on staleness would let git and PTY silently resolve to a WSL that just failed.
+  it('keeps reporting the last observed answer after it goes stale', async () => {
     vi.useFakeTimers()
-    execFileMock.mockImplementation((_command, _args, _options, callback) => {
-      callback(Object.assign(new Error('wsl.exe exited 1'), { code: 1 }), '', '')
-    })
-    execFileSyncMock.mockReturnValue('')
+    queueStatusOutcomes(timeoutError())
 
     try {
       await withPlatformAsync('win32', async () => {
         await expect(isWslAvailableAsync()).resolves.toBe(false)
-        vi.advanceTimersByTime(45_000)
-        expect(isWslAvailable()).toBe(false)
-        expect(execFileSyncMock).not.toHaveBeenCalled()
-        vi.advanceTimersByTime(10 * 60_000)
-        expect(isWslAvailable()).toBe(true)
-      })
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  // Why: the resolver reads the cached getter, not the probe. Reporting the last
-  // observed answer keeps the `wsl-unavailable` repair prompt reachable; going null
-  // on staleness would let git and PTY silently resolve to a WSL that just failed.
-  it('keeps reporting the last observed answer after it goes stale', () => {
-    vi.useFakeTimers()
-    execFileSyncMock.mockImplementation(() => {
-      // Real execFileSync timeout shape on Windows: status null, signal SIGTERM.
-      throw Object.assign(new Error('spawnSync ETIMEDOUT'), {
-        code: 'ETIMEDOUT',
-        status: null,
-        signal: 'SIGTERM'
-      })
-    })
-
-    try {
-      withPlatform('win32', () => {
-        expect(isWslAvailable()).toBe(false)
         vi.advanceTimersByTime(45_000)
         expect(getCachedWslAvailability()).toBe(false)
         expect(hasCachedWslAvailability()).toBe(true)
@@ -566,54 +530,48 @@ describe('WSL availability cache', () => {
 
   // Why: an answer-shaped failure earns a long window, not a session-long latch —
   // wsl.exe also exits non-zero while the WSL package is servicing or LxssManager is
-  // still starting, which is transient.
+  // still starting, which is transient. wsl.exe ships in System32 on every modern
+  // Windows, so a host without WSL answers with a non-zero exit, not ENOENT.
   it.each([
-    ['wsl.exe reports WSL unusable', { status: 1 }],
+    ['wsl.exe reports WSL unusable', { code: 1 }],
     ['wsl.exe is not installed', { code: 'ENOENT' }]
-  ])('holds a definitive failure far longer than a timeout when %s', (_label, errorFields) => {
+  ])('holds a definitive failure far longer than a timeout when %s', async (_label, fields) => {
     vi.useFakeTimers()
-    execFileSyncMock.mockImplementationOnce(() => {
-      throw Object.assign(new Error('definitive failure'), errorFields)
-    })
-    execFileSyncMock.mockReturnValueOnce('')
+    queueStatusOutcomes(Object.assign(new Error('definitive failure'), fields), null)
 
     try {
-      withPlatform('win32', () => {
-        expect(isWslAvailable()).toBe(false)
+      await withPlatformAsync('win32', async () => {
+        await expect(isWslAvailableAsync()).resolves.toBe(false)
         vi.advanceTimersByTime(45_000)
-        expect(isWslAvailable()).toBe(false)
+        await expect(isWslAvailableAsync()).resolves.toBe(false)
         expect(getCachedWslAvailability()).toBe(false)
-        expect(execFileSyncMock).toHaveBeenCalledTimes(1)
+        expect(execFileMock).toHaveBeenCalledTimes(1)
         vi.advanceTimersByTime(10 * 60_000)
-        expect(isWslAvailable()).toBe(true)
+        await expect(isWslAvailableAsync()).resolves.toBe(true)
       })
     } finally {
       vi.useRealTimers()
     }
   })
 
-  // Why: the probe blocks the main process for up to 5s, so a wedged wsl.exe must not
-  // be re-probed on every window boundary for the rest of the session.
-  it('backs off after repeated probe failures', () => {
+  // Why: a wedged wsl.exe must not be re-probed on every window boundary for the
+  // rest of the session.
+  it('backs off after repeated probe failures', async () => {
     vi.useFakeTimers()
-    execFileSyncMock.mockImplementation(() => {
-      throw Object.assign(new Error('spawnSync ETIMEDOUT'), {
-        code: 'ETIMEDOUT',
-        status: null,
-        signal: 'SIGTERM'
-      })
+    execFileMock.mockImplementation((_command, _args, _options, callback) => {
+      callback(timeoutError(), '', '')
     })
 
     try {
-      withPlatform('win32', () => {
-        expect(isWslAvailable()).toBe(false)
+      await withPlatformAsync('win32', async () => {
+        await expect(isWslAvailableAsync()).resolves.toBe(false)
         vi.advanceTimersByTime(45_000)
-        expect(isWslAvailable()).toBe(false)
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
+        await expect(isWslAvailableAsync()).resolves.toBe(false)
+        expect(execFileMock).toHaveBeenCalledTimes(2)
         // Second failure doubles the window, so the next boundary is not enough.
         vi.advanceTimersByTime(45_000)
-        expect(isWslAvailable()).toBe(false)
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
+        await expect(isWslAvailableAsync()).resolves.toBe(false)
+        expect(execFileMock).toHaveBeenCalledTimes(2)
       })
     } finally {
       vi.useRealTimers()
@@ -622,16 +580,16 @@ describe('WSL availability cache', () => {
 
   // Why: a seeded retryable failure must re-probe once its window lapses, the same
   // as one observed live — otherwise test setup can hide the latch this fixes.
-  it('re-probes a seeded retryable failure once its window lapses', () => {
+  it('re-probes a seeded retryable failure once its window lapses', async () => {
     vi.useFakeTimers()
-    execFileSyncMock.mockReturnValueOnce('')
+    queueStatusOutcomes(null)
 
     try {
-      withPlatform('win32', () => {
+      await withPlatformAsync('win32', async () => {
         _setWslCachesForTests({ available: false, availabilityRetryable: true })
-        expect(isWslAvailable()).toBe(false)
+        await expect(isWslAvailableAsync()).resolves.toBe(false)
         vi.advanceTimersByTime(45_000)
-        expect(isWslAvailable()).toBe(true)
+        await expect(isWslAvailableAsync()).resolves.toBe(true)
       })
     } finally {
       vi.useRealTimers()
@@ -642,60 +600,45 @@ describe('WSL availability cache', () => {
   // first, so a definitive failure held for 10min would report `wsl-unavailable` over a
   // WSL that just listed a distro. Finding a distro must drop the stale failure.
   it.each([
-    ['a definitive failure', { status: 1 }],
-    ['a timeout', { code: 'ETIMEDOUT', status: null, signal: 'SIGTERM' }]
-  ])('re-probes availability once a distro list succeeds after %s', (_label, errorFields) => {
-    vi.useFakeTimers()
-    execFileSyncMock.mockImplementationOnce(() => {
-      throw Object.assign(new Error('probe failed'), errorFields)
+    ['a definitive failure', { code: 1 }],
+    ['a timeout', { killed: true, code: null, signal: 'SIGTERM' }]
+  ])('re-probes availability once a distro list succeeds after %s', async (_label, fields) => {
+    queueStatusOutcomes(Object.assign(new Error('probe failed'), fields))
+
+    await withPlatformAsync('win32', async () => {
+      await expect(isWslAvailableAsync()).resolves.toBe(false)
+
+      // A distro turns up (WSL finished provisioning / was repaired mid-session).
+      execFileSyncMock.mockReturnValueOnce('Ubuntu\n')
+      expect(listWslDistros()).toEqual(['Ubuntu'])
+
+      // Without dropping the stale failure this would stay false for 10min.
+      queueStatusOutcomes(null)
+      await expect(isWslAvailableAsync()).resolves.toBe(true)
     })
-
-    try {
-      withPlatform('win32', () => {
-        expect(isWslAvailable()).toBe(false)
-
-        // A distro turns up (WSL finished provisioning / was repaired mid-session).
-        execFileSyncMock.mockReturnValueOnce('Ubuntu\n')
-        expect(listWslDistros()).toEqual(['Ubuntu'])
-
-        // Without dropping the stale failure this would stay false for 10min.
-        execFileSyncMock.mockReturnValueOnce('')
-        expect(isWslAvailable()).toBe(true)
-      })
-    } finally {
-      vi.useRealTimers()
-    }
   })
 
   // Why: an empty list re-probes on a 15s-to-5min schedule, so clearing the availability
-  // failure on every empty probe would re-spawn the blocking 5s probe far too often.
-  it('does not drop an availability failure for an empty distro list', () => {
-    vi.useFakeTimers()
-    execFileSyncMock.mockImplementationOnce(() => {
-      throw Object.assign(new Error('probe failed'), { status: 1 })
-    })
+  // failure on every empty probe would re-spawn the probe far too often.
+  it('does not drop an availability failure for an empty distro list', async () => {
+    queueStatusOutcomes(Object.assign(new Error('probe failed'), { code: 1 }))
 
-    try {
-      withPlatform('win32', () => {
-        expect(isWslAvailable()).toBe(false)
-        execFileSyncMock.mockReturnValueOnce('')
-        expect(listWslDistros()).toEqual([])
-        expect(getCachedWslAvailability()).toBe(false)
-        // Still inside the definitive window, so no re-probe was paid.
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
-        expect(isWslAvailable()).toBe(false)
-        expect(execFileSyncMock).toHaveBeenCalledTimes(2)
-      })
-    } finally {
-      vi.useRealTimers()
-    }
+    await withPlatformAsync('win32', async () => {
+      await expect(isWslAvailableAsync()).resolves.toBe(false)
+      execFileSyncMock.mockReturnValueOnce('')
+      expect(listWslDistros()).toEqual([])
+      expect(getCachedWslAvailability()).toBe(false)
+      // Still inside the definitive window, so no re-probe was paid.
+      await expect(isWslAvailableAsync()).resolves.toBe(false)
+      expect(execFileMock).toHaveBeenCalledTimes(1)
+    })
   })
 
-  it('keeps reporting unavailable off Windows without probing', () => {
-    withPlatform('darwin', () => {
-      expect(isWslAvailable()).toBe(false)
+  it('keeps reporting unavailable off Windows without probing', async () => {
+    await withPlatformAsync('darwin', async () => {
+      await expect(isWslAvailableAsync()).resolves.toBe(false)
       expect(getCachedWslAvailability()).toBe(false)
-      expect(execFileSyncMock).not.toHaveBeenCalled()
+      expect(execFileMock).not.toHaveBeenCalled()
     })
   })
 })

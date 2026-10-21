@@ -142,11 +142,15 @@ export function writeSecureFile(
       fsyncFileSync(tmpFile)
     }
     // Why: writeFileSync mode is a no-op on Windows, so restrict the credential's ACL synchronously before the rename publishes it under inherited ACLs.
-    const stagedOutcome = applySecurePathRestriction(tmpFile, false, process.platform, true)
+    const stagedOutcome = restrictStagedSecureFile(tmpFile)
     renameSync(tmpFile, targetPath)
     // Why: these hold auth credentials, so the published path must stay current-user only; cache only on confirmed success so failures retry.
-    // The staged file's protected DACL survives the rename, so this pass usually just verifies it.
-    const publishedOutcome = applySecurePathRestriction(targetPath, false, process.platform, true)
+    let publishedOutcome = stagedOutcome
+    if (stagedOutcome === 'applied') {
+      adoptStagedRestriction(targetPath)
+    } else {
+      publishedOutcome = applySecurePathRestriction(targetPath, false, process.platform, true)
+    }
     if (publishedOutcome === 'applied') {
       rememberHardenedPath(targetPath, false)
     }
@@ -157,6 +161,24 @@ export function writeSecureFile(
   } catch (error) {
     rmSync(tmpFile, { force: true })
     throw error
+  }
+}
+
+function restrictStagedSecureFile(tmpFile: string): HardeningOutcome {
+  if (process.platform !== 'win32') {
+    return applySecurePathRestriction(tmpFile, false, process.platform, true)
+  }
+  return restrictWindowsPathSync(tmpFile, false, { freshlyCreated: true }) ? 'applied' : 'failed'
+}
+
+/**
+ * A same-directory rename moves the file's own security descriptor (and POSIX mode) with it, so a
+ * staged file whose restriction was verified is already restricted under its published name.
+ */
+export function adoptStagedRestriction(targetPath: string): void {
+  if (process.platform === 'win32') {
+    // What the published-path pass used to record: a success here clears the read path's backoff.
+    recordHardeningOutcome(targetPath, true)
   }
 }
 

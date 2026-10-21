@@ -1,6 +1,5 @@
 import { FORK_IDENTITY } from '../../shared/fork-identity'
 import {
-  chmodSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -9,7 +8,6 @@ import {
   realpathSync,
   renameSync,
   rmSync,
-  utimesSync,
   writeFileSync
 } from 'node:fs'
 import os from 'node:os'
@@ -17,7 +15,37 @@ import { createRequire } from 'node:module'
 import { basename, dirname, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { setAppEnvironment, type AppEnvironment } from '../../shared/app-environment'
+import type * as FsPromises from 'node:fs/promises'
+import { setAppEnvironment } from '../../shared/app-environment'
+import type * as RelocationModule from './daemon-host-relocation'
+
+type RaceHook = (() => Promise<void>) | null
+// Lets a test run a peer instance at an exact point of this launch's publish sequence.
+const raceHooks = vi.hoisted((): { beforeMarker: RaceHook; beforeRename: RaceHook } => ({
+  beforeMarker: null,
+  beforeRename: null
+}))
+
+async function runRaceHook(name: keyof typeof raceHooks): Promise<void> {
+  const hook = raceHooks[name]
+  raceHooks[name] = null
+  await hook?.()
+}
+
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof FsPromises>()
+  return {
+    ...actual,
+    writeFile: async (...args: Parameters<typeof actual.writeFile>) => {
+      await runRaceHook('beforeMarker')
+      return actual.writeFile(...args)
+    },
+    rename: async (...args: Parameters<typeof actual.rename>) => {
+      await runRaceHook('beforeRename')
+      return actual.rename(...args)
+    }
+  }
+})
 
 // Mutable host stub. Relocation now reads the AppEnvironment port rather than electron's
 // `app`, so dolphind's daemon launch path can resolve without Electron in the graph.
@@ -28,8 +56,8 @@ const hostApp = {
   version: '9.9.9'
 }
 
-function installHostApp(): void {
-  setAppEnvironment({
+function installHostApp(install: typeof setAppEnvironment = setAppEnvironment): void {
+  install({
     getPath: () => hostApp.userDataPath,
     getAppPath: () => hostApp.appPath,
     getVersion: () => hostApp.version,
@@ -37,19 +65,12 @@ function installHostApp(): void {
     onWillQuit: () => {},
     exit: () => {},
     getAppMetrics: () => []
-  } as AppEnvironment)
+  })
 }
 
 import { serializeDaemonHostChunkManifest } from './daemon-host-chunk-manifest'
 import { buildDaemonHostManifest } from './daemon-host-manifest'
-import {
-  collectPinnedDaemonVersions,
-  getRelocatedDaemonHost,
-  materializeRelocatedDaemonHost,
-  pruneOldDaemonHosts,
-  reclaimUnownedDaemonHostDir
-} from './daemon-host-relocation'
-import type { ProcessLivenessVerdict } from './daemon-incarnation-evidence-types'
+import { getRelocatedDaemonHost, materializeRelocatedDaemonHost } from './daemon-host-relocation'
 
 let tempDir: string
 let installDir: string
@@ -147,6 +168,8 @@ beforeEach(() => {
 afterEach(() => {
   // A test that fails between spyOn and mockRestore must not leak its mock into later tests.
   vi.restoreAllMocks()
+  raceHooks.beforeMarker = null
+  raceHooks.beforeRename = null
   setProcessProp('platform', originalPlatform)
   setProcessProp('execPath', originalExecPath)
   setProcessProp('resourcesPath', originalResourcesPath)
@@ -163,7 +186,7 @@ afterEach(() => {
 })
 
 describe('buildDaemonHostManifest', () => {
-  it('mirrors the win-unpacked layout: exe + data blobs + resources tree, no GPU DLLs', () => {
+  it('mirrors the win-unpacked layout: exe + data blobs + resources tree, no GPU DLLs', async () => {
     const appDir = 'C:\\app'
     const ops = buildDaemonHostManifest({
       appDir,
@@ -217,7 +240,7 @@ describe('daemon chunk trimming', () => {
     writeFileSync(join(installDir, mainRel, 'chunks', 'main-only.js'), 'main chunk')
   })
 
-  it('plans one required file op per listed chunk instead of the whole chunks dir', () => {
+  it('plans one required file op per listed chunk instead of the whole chunks dir', async () => {
     const ops = buildDaemonHostManifest({
       appDir: 'C:\\app',
       execPath: 'C:\\app\\Dolphin.exe',
@@ -234,34 +257,34 @@ describe('daemon chunk trimming', () => {
     expect(chunkOp?.optional).toBeUndefined()
   })
 
-  it('copies only the chunks the build listed for daemon-entry', () => {
+  it('copies only the chunks the build listed for daemon-entry', async () => {
     writeChunkManifest(['chunks/a.js'])
-    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    expect(await materializeRelocatedDaemonHost()).not.toBeNull()
     expect(readdirSync(join(hostDest(), mainRel, 'chunks'))).toEqual(['a.js'])
     // A build input, not something the daemon reads.
     expect(existsSync(join(hostDest(), mainRel, 'daemon-entry.host-chunks.json'))).toBe(false)
   })
 
-  it('copies every chunk when the manifest is unreadable', () => {
+  it('copies every chunk when the manifest is unreadable', async () => {
     writeFileSync(join(installDir, mainRel, 'daemon-entry.host-chunks.json'), '{"chunks":')
-    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    expect(await materializeRelocatedDaemonHost()).not.toBeNull()
     expect(readdirSync(join(hostDest(), mainRel, 'chunks')).sort()).toEqual([
       'a.js',
       'main-only.js'
     ])
   })
 
-  it('fails open rather than publish a host missing a listed chunk', () => {
+  it('fails open rather than publish a host missing a listed chunk', async () => {
     writeChunkManifest(['chunks/a.js', 'chunks/gone.js'])
-    expect(materializeRelocatedDaemonHost()).toBeNull()
+    expect(await materializeRelocatedDaemonHost()).toBeNull()
     const hostRoot = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
     expect(existsSync(hostRoot) ? readdirSync(hostRoot) : []).toEqual([])
   })
 
-  it('keeps using a same-version host materialized before trimming', () => {
-    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+  it('keeps using a same-version host materialized before trimming', async () => {
+    expect(await materializeRelocatedDaemonHost()).not.toBeNull()
     writeChunkManifest(['chunks/a.js'])
-    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    expect(await materializeRelocatedDaemonHost()).not.toBeNull()
     expect(readdirSync(join(hostDest(), mainRel, 'chunks')).sort()).toEqual([
       'a.js',
       'main-only.js'
@@ -270,8 +293,8 @@ describe('daemon chunk trimming', () => {
 })
 
 describe('materializeRelocatedDaemonHost', () => {
-  it('copies the tree, writes the marker, and returns mirrored fork paths', () => {
-    const result = materializeRelocatedDaemonHost()
+  it('copies the tree, writes the marker, and returns mirrored fork paths', async () => {
+    const result = await materializeRelocatedDaemonHost()
     expect(result).not.toBeNull()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     expect(result?.execPath).toBe(join(dest, 'Dolphin.exe'))
@@ -335,8 +358,8 @@ describe('materializeRelocatedDaemonHost', () => {
     ).toBe(realpathSync(join(processTreeDest, 'lib', 'index.js')))
   })
 
-  it('copies the exe verbatim: same file name and same bytes as the install-dir exe', () => {
-    const result = materializeRelocatedDaemonHost()
+  it('copies the exe verbatim: same file name and same bytes as the install-dir exe', async () => {
+    const result = await materializeRelocatedDaemonHost()
     const sourceExe = join(installDir, 'Dolphin.exe')
     // Byte-for-byte under the same name is what preserves the Authenticode signature and leaves
     // no renamed-image signal for endpoint detection to read as masquerading.
@@ -344,12 +367,12 @@ describe('materializeRelocatedDaemonHost', () => {
     expect(readFileSync(result!.execPath)).toEqual(readFileSync(sourceExe))
   })
 
-  it('tracks a differently-named app exe rather than pinning an image name of its own', () => {
+  it('tracks a differently-named app exe rather than pinning an image name of its own', async () => {
     // A dev-channel or rebranded build ships a different executableName; the host copy must follow
     // it, which is what keeps the copy verbatim instead of reintroducing a name mismatch.
     renameSync(join(installDir, 'Dolphin.exe'), join(installDir, 'Dolphin Nightly.exe'))
     setProcessProp('execPath', join(installDir, 'Dolphin Nightly.exe'))
-    const result = materializeRelocatedDaemonHost()
+    const result = await materializeRelocatedDaemonHost()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     expect(result?.execPath).toBe(join(dest, 'Dolphin Nightly.exe'))
     expect(existsSync(join(dest, 'dolphin-terminal-daemon.exe'))).toBe(false)
@@ -361,10 +384,10 @@ describe('materializeRelocatedDaemonHost', () => {
     ['the binary', PROCESS_TREE_ADDON_REL],
     ['package.json', join(PROCESS_TREE_DIR_REL, 'package.json')],
     ['lib/index.js', join(PROCESS_TREE_DIR_REL, 'lib', 'index.js')]
-  ])('refuses a mirror that lost %s', (_label, relativePath) => {
+  ])('refuses a mirror that lost %s', async (_label, relativePath) => {
     // Any one of them missing means require() cannot reach the addon, and a host
     // that cannot load it runs anyway -- forking a shell per snapshot (#16905).
-    materializeRelocatedDaemonHost()
+    await materializeRelocatedDaemonHost()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     expect(getRelocatedDaemonHost()).not.toBeNull()
 
@@ -373,8 +396,8 @@ describe('materializeRelocatedDaemonHost', () => {
     expect(getRelocatedDaemonHost()).toBeNull()
   })
 
-  it('rematerializes a host whose copied addon went missing', () => {
-    materializeRelocatedDaemonHost()
+  it('rematerializes a host whose copied addon went missing', async () => {
+    await materializeRelocatedDaemonHost()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     const relocatedAddon = join(dest, PROCESS_TREE_ADDON_REL)
 
@@ -383,17 +406,17 @@ describe('materializeRelocatedDaemonHost', () => {
     const sentinel = join(dest, 'sentinel.txt')
     writeFileSync(sentinel, 'remove')
 
-    expect(materializeRelocatedDaemonHost()).not.toBeNull()
+    expect(await materializeRelocatedDaemonHost()).not.toBeNull()
     expect(readFileSync(relocatedAddon, 'utf8')).toBe('process-tree-native')
     expect(existsSync(sentinel)).toBe(false)
   })
 
-  it('does not read the install dir to decide an existing host is still good', () => {
+  it('does not read the install dir to decide an existing host is still good', async () => {
     // Relocation exists to outlive the install dir, so validity cannot depend on
     // it: an updater mid-copy would otherwise condemn an intact host. A real
     // upgrade changes the version keying this directory, which already forces a
     // rebuild, and nothing else in the mirror is source-verified either.
-    materializeRelocatedDaemonHost()
+    await materializeRelocatedDaemonHost()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     const sentinel = join(dest, 'sentinel.txt')
     writeFileSync(sentinel, 'keep')
@@ -411,34 +434,34 @@ describe('materializeRelocatedDaemonHost', () => {
     ['the binary', PROCESS_TREE_ADDON_REL],
     ['package.json', join(PROCESS_TREE_DIR_REL, 'package.json')],
     ['lib/index.js', join(PROCESS_TREE_DIR_REL, 'lib', 'index.js')]
-  ])('refuses to copy anything when the install lost %s', (_label, relativePath) => {
+  ])('refuses to copy anything when the install lost %s', async (_label, relativePath) => {
     // Each of these would be accepted by the copy plan and then refused by the
     // mirror check, which is a ~260MB copy per launch to reach a verdict the
     // source could have given for free. Sharing one list is what prevents that.
     rmSync(join(installDir, relativePath))
 
-    expect(materializeRelocatedDaemonHost()).toBeNull()
+    expect(await materializeRelocatedDaemonHost()).toBeNull()
     // Not even the host root: the source is checked before any directory is made.
     expect(existsSync(join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host'))).toBe(false)
   })
 
-  it('is idempotent: a valid marker short-circuits without recopying', () => {
-    materializeRelocatedDaemonHost()
+  it('is idempotent: a valid marker short-circuits without recopying', async () => {
+    await materializeRelocatedDaemonHost()
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     // A recopy would rm the dest; a sentinel inside it must survive the 2nd call.
     const sentinel = join(dest, 'sentinel.txt')
     writeFileSync(sentinel, 'keep')
-    const result = materializeRelocatedDaemonHost()
+    const result = await materializeRelocatedDaemonHost()
     expect(result?.execPath).toBe(join(dest, 'Dolphin.exe'))
     expect(existsSync(sentinel)).toBe(true)
   })
 
-  it('fails open on a missing required input, leaving no dest or staging dir', () => {
+  it('fails open on a missing required input, leaving no dest or staging dir', async () => {
     rmSync(join(installDir, 'resources', 'node_modules', 'node-pty'), {
       recursive: true,
       force: true
     })
-    const result = materializeRelocatedDaemonHost()
+    const result = await materializeRelocatedDaemonHost()
     expect(result).toBeNull()
     const hostRoot = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
     // Neither the published dest nor any leftover staging dir remains.
@@ -446,27 +469,27 @@ describe('materializeRelocatedDaemonHost', () => {
     expect(remaining).toEqual([])
   })
 
-  it('returns null off win32', () => {
+  it('returns null off win32', async () => {
     setProcessProp('platform', 'darwin')
-    expect(materializeRelocatedDaemonHost()).toBeNull()
+    expect(await materializeRelocatedDaemonHost()).toBeNull()
     expect(existsSync(join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host'))).toBe(false)
   })
 
-  it('does nothing for a packaged host with no asar root (dolphind on win32)', () => {
+  it('does nothing for a packaged host with no asar root (dolphind on win32)', async () => {
     // dolphind answers isPackaged() true — it is a shipped build — but it is plain Node: no
     // asar, no resourcesPath, and no NSIS updater to escape. Relocation staging a copy of
     // an Electron tree that is not there is the isPackaged-honesty defect, and it would
     // silently produce a null host on a path whose failures are meant to be visible.
     hostApp.appPath = join(installDir, 'resources', 'app')
     installHostApp()
-    expect(materializeRelocatedDaemonHost()).toBeNull()
+    expect(await materializeRelocatedDaemonHost()).toBeNull()
     expect(getRelocatedDaemonHost()).toBeNull()
     expect(existsSync(join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host'))).toBe(false)
   })
 })
 
 describe('getRelocatedDaemonHost', () => {
-  it('returns null when the marker version does not match the current version', () => {
+  it('returns null when the marker version does not match the current version', async () => {
     const dest = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host', '9.9.9')
     mkdirSync(dirname(join(dest, 'x')), { recursive: true })
     writeFileSync(join(dest, 'Dolphin.exe'), 'exe')
@@ -494,405 +517,67 @@ describe('getRelocatedDaemonHost', () => {
   })
 })
 
-// Why: quarantine refuses records written in the last minute, because an in-flight publish is
-// indistinguishable from a torn one. Age a record so it stands for a settled corrupt record.
-function ageRecordPastQuarantineFloor(recordPath: string): void {
-  const aged = new Date(Date.now() - 5 * 60_000)
-  utimesSync(recordPath, aged, aged)
-}
+describe('materializeRelocatedDaemonHost concurrency', () => {
+  const hostRoot = (): string => join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
 
-describe('pruneOldDaemonHosts', () => {
-  it('removes unpinned non-current version dirs, keeping current and pinned', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    for (const v of ['9.9.9', '1.0.0', '2.0.0']) {
-      mkdirSync(join(root, v), { recursive: true })
+  // A second app instance shares the LOCALAPPDATA root but not this module's in-flight promise.
+  async function importPeerInstance(): Promise<typeof RelocationModule> {
+    vi.resetModules()
+    installHostApp((await import('../../shared/app-environment')).setAppEnvironment)
+    return import('./daemon-host-relocation')
+  }
+
+  it('yields the event loop while copying instead of blocking it', async () => {
+    let loopTurned = false
+    setImmediate(() => {
+      loopTurned = true
+    })
+    const pending = materializeRelocatedDaemonHost()
+    expect(loopTurned).toBe(false)
+    expect(await pending).not.toBeNull()
+    expect(loopTurned).toBe(true)
+  })
+
+  it('shares one copy between concurrent launches in the same process', async () => {
+    const first = materializeRelocatedDaemonHost()
+    const second = materializeRelocatedDaemonHost()
+    expect(second).toBe(first)
+    expect(await first).not.toBeNull()
+    expect(readdirSync(hostRoot())).toEqual(['9.9.9'])
+  })
+
+  it('leaves one valid host and no staging dirs when two instances race', async () => {
+    const peer = await importPeerInstance()
+    const [ours, theirs] = await Promise.all([
+      materializeRelocatedDaemonHost(),
+      peer.materializeRelocatedDaemonHost()
+    ])
+    expect(ours?.execPath).toBe(join(hostRoot(), '9.9.9', 'Dolphin.exe'))
+    expect(theirs).toEqual(ours)
+    expect(readdirSync(hostRoot())).toEqual(['9.9.9'])
+    expect(getRelocatedDaemonHost()).toEqual(ours)
+  })
+
+  it('never replaces a host a peer published while this launch was copying', async () => {
+    const peer = await importPeerInstance()
+    const sentinel = join(hostRoot(), '9.9.9', 'sentinel.txt')
+    raceHooks.beforeMarker = async () => {
+      expect(await peer.materializeRelocatedDaemonHost()).not.toBeNull()
+      writeFileSync(sentinel, 'keep')
     }
-    pruneOldDaemonHosts({
-      status: 'complete',
-      versionLiveness: new Map([['2.0.0', { status: 'live' }]])
-    })
-    expect(existsSync(join(root, '9.9.9'))).toBe(true)
-    expect(existsSync(join(root, '2.0.0'))).toBe(true)
-    expect(existsSync(join(root, '1.0.0'))).toBe(false)
+    expect(await materializeRelocatedDaemonHost()).toEqual(getRelocatedDaemonHost())
+    // Removing the published dir could pull files from under the daemon the peer is forking.
+    expect(existsSync(sentinel)).toBe(true)
+    expect(readdirSync(hostRoot())).toEqual(['9.9.9'])
   })
 
-  it('keeps a host when its pid liveness query is permission denied', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '8.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    writeFileSync(
-      join(runtimeDir, 'daemon-v8.pid'),
-      JSON.stringify({ pid: 4242, startedAtMs: null, appVersion: '8.0.0' })
-    )
-    const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => {
-      throw Object.assign(new Error('access denied'), { code: 'EPERM' })
-    })
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-    expect(evidence).toEqual({
-      status: 'complete',
-      versionLiveness: new Map([['8.0.0', { status: 'live' }]])
-    })
-    pruneOldDaemonHosts(evidence)
-
-    expect(existsSync(join(root, '8.0.0'))).toBe(true)
-    killSpy.mockRestore()
-  })
-
-  it('keeps a host when its pid liveness query is unavailable', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '7.0.0'), { recursive: true })
-    mkdirSync(join(root, '6.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    writeFileSync(
-      join(runtimeDir, 'daemon-v7.pid'),
-      JSON.stringify({ pid: 4242, startedAtMs: null, appVersion: '7.0.0' })
-    )
-    const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => {
-      throw Object.assign(new Error('timed out'), { code: 'ETIMEDOUT' })
-    })
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-    expect(evidence).toEqual({
-      status: 'complete',
-      versionLiveness: new Map([
-        ['7.0.0', { status: 'unverifiable', reason: 'the daemon process could not be queried' }]
-      ])
-    })
-    pruneOldDaemonHosts(evidence)
-
-    expect(existsSync(join(root, '7.0.0'))).toBe(true)
-    expect(existsSync(join(root, '6.0.0'))).toBe(false)
-    killSpy.mockRestore()
-  })
-
-  it('prunes nothing and never throws when the evidence is unverifiable', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    for (const v of ['1.0.0', '2.0.0']) {
-      mkdirSync(join(root, v), { recursive: true })
+  it('adopts a peer host published between removing the stale dest and renaming', async () => {
+    const peer = await importPeerInstance()
+    raceHooks.beforeRename = async () => {
+      expect(await peer.materializeRelocatedDaemonHost()).not.toBeNull()
     }
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    expect(() =>
-      pruneOldDaemonHosts({
-        status: 'unverifiable',
-        reason: 'the daemon runtime directory could not be read'
-      })
-    ).not.toThrow()
-
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-    expect(existsSync(join(root, '2.0.0'))).toBe(true)
-    // The reason must reach the field log — an unobservable no-op is undiagnosable.
-    expect(warnSpy).toHaveBeenCalledWith(
-      '[daemon] Skipping daemon-host prune: the daemon runtime directory could not be read'
-    )
-    warnSpy.mockRestore()
-  })
-
-  it('skips pruning when the runtime directory cannot be read', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-
-    const evidence = collectPinnedDaemonVersions(join(userDataDir, 'daemon-never-created'))
-
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason: 'the daemon runtime directory could not be read'
-    })
-    pruneOldDaemonHosts(evidence)
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-  })
-
-  it('keeps a version live when any of its pid records is live', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '7.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    // Two protocol generations of the same app version: one daemon live, one exited. The live
-    // record must win the merged verdict whichever order the directory scan visits them.
-    writeFileSync(
-      join(runtimeDir, 'daemon-v7.pid'),
-      JSON.stringify({ pid: 5001, startedAtMs: null, appVersion: '7.0.0' })
-    )
-    writeFileSync(
-      join(runtimeDir, 'daemon-v8.pid'),
-      JSON.stringify({ pid: 5002, startedAtMs: null, appVersion: '7.0.0' })
-    )
-    const killSpy = vi.spyOn(process, 'kill').mockImplementation((pid: number) => {
-      if (pid === 5001) {
-        return true
-      }
-      throw Object.assign(new Error('no such process'), { code: 'ESRCH' })
-    })
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-    expect(evidence).toEqual({
-      status: 'complete',
-      versionLiveness: new Map([['7.0.0', { status: 'live' }]])
-    })
-    pruneOldDaemonHosts(evidence)
-
-    expect(existsSync(join(root, '7.0.0'))).toBe(true)
-    killSpy.mockRestore()
-  })
-
-  it('preserves a host dir for any verdict that is not positively exited', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    // Why: deliberate out-of-contract cast — deletion must require a positive 'exited' match,
-    // so a future verdict status the prune does not know preserves the host dir, not deletes it.
-    const futureVerdict = {
-      status: 'suspended',
-      reason: 'hypothetical future verdict'
-    } as unknown as ProcessLivenessVerdict
-
-    pruneOldDaemonHosts({
-      status: 'complete',
-      versionLiveness: new Map([['1.0.0', futureVerdict]])
-    })
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-
-    reclaimUnownedDaemonHostDir(futureVerdict, join(root, '1.0.0'))
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-
-    reclaimUnownedDaemonHostDir({ status: 'exited' }, join(root, '1.0.0'))
-    expect(existsSync(join(root, '1.0.0'))).toBe(false)
-  })
-
-  it('quarantines a record torn inside the pid digits without probing the truncated prefix', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    // A tear inside the digits of pid 12345 leaves the prefix 123 — a DIFFERENT pid. Probing
-    // it would attribute an unrelated (here: dead) process's verdict to this record; the
-    // writer of a mid-digits tear died mid-write, so quarantine must not consult any probe.
-    const pidPath = join(runtimeDir, 'daemon-v7.pid')
-    writeFileSync(pidPath, '{"pid":123')
-    ageRecordPastQuarantineFloor(pidPath)
-    const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => {
-      throw Object.assign(new Error('no such process'), { code: 'ESRCH' })
-    })
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason: 'the daemon pid file could not be parsed and was quarantined: daemon-v7.pid'
-    })
-    expect(killSpy).not.toHaveBeenCalled()
-    expect(existsSync(pidPath)).toBe(false)
-    expect(readFileSync(join(runtimeDir, 'daemon-v7.pid.corrupt'), 'utf8')).toBe('{"pid":123')
-    warnSpy.mockRestore()
-    killSpy.mockRestore()
-  })
-
-  it('never lets an immortal-pid prefix turn a torn record into a permanent prune veto', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    // Pid 41234 torn to the prefix 4 — the Windows System pid, which answers probes forever.
-    // Trusting it would re-create for this one record the eternal veto pruning must not have.
-    const pidPath = join(runtimeDir, 'daemon-v7.pid')
-    writeFileSync(pidPath, '{"pid":4')
-    ageRecordPastQuarantineFloor(pidPath)
-    const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => {
-      throw Object.assign(new Error('access denied'), { code: 'EPERM' })
-    })
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason: 'the daemon pid file could not be parsed and was quarantined: daemon-v7.pid'
-    })
-    expect(killSpy).not.toHaveBeenCalled()
-    expect(readFileSync(join(runtimeDir, 'daemon-v7.pid.corrupt'), 'utf8')).toBe('{"pid":4')
-
-    // Next launch: the listing is complete again and the unowned host is reclaimed.
-    pruneOldDaemonHosts(collectPinnedDaemonVersions(runtimeDir))
-    expect(existsSync(join(root, '1.0.0'))).toBe(false)
-    warnSpy.mockRestore()
-    killSpy.mockRestore()
-  })
-
-  it('never quarantines a corrupt record that was just written', () => {
-    // A live daemon's record is created before it is written (writeFileSync 'wx'), so a
-    // concurrent launch can read it as empty. Quarantining it would strand the running daemon's
-    // record and let the NEXT launch reclaim its host image.
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    const pidPath = join(runtimeDir, 'daemon-v7.pid')
-    writeFileSync(pidPath, '')
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason:
-        'the daemon pid file could not be parsed and was written too recently to quarantine: daemon-v7.pid'
-    })
-    expect(existsSync(pidPath)).toBe(true)
-    expect(existsSync(join(runtimeDir, 'daemon-v7.pid.corrupt'))).toBe(false)
-    pruneOldDaemonHosts(evidence)
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-    warnSpy.mockRestore()
-  })
-
-  it('never treats a settled empty record as a valid pre-relocation daemon', () => {
-    // Number('') === 0, so the parser's legacy bare-integer fallback accepts an empty record as
-    // pid 0 with appVersion null. Skipping it as "pins no host dir" would leave the version
-    // unpinned and let the prune below reclaim a live daemon's host image. Aged past the
-    // quarantine floor so this pins the pid guard rather than the freshness guard.
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    const pidPath = join(runtimeDir, 'daemon-v7.pid')
-    writeFileSync(pidPath, '   ')
-    ageRecordPastQuarantineFloor(pidPath)
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason: 'the daemon pid file could not be parsed and was quarantined: daemon-v7.pid'
-    })
-    pruneOldDaemonHosts(evidence)
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-    warnSpy.mockRestore()
-  })
-
-  it('vetoes pruning while a pid salvaged from a corrupt record still answers', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    // A torn write preserves the pid prefix; the process behind it still answers, so the
-    // record may belong to a live daemon of unknown version and must keep its veto un-quarantined.
-    const pidPath = join(runtimeDir, 'daemon-v7.pid')
-    writeFileSync(pidPath, '{"pid": 4242, "startedAtMs": 17')
-    const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => true)
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason:
-        'the daemon pid file could not be parsed and salvaged pid 4242 may still be running: daemon-v7.pid'
-    })
-    expect(existsSync(pidPath)).toBe(true)
-    pruneOldDaemonHosts(evidence)
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-    warnSpy.mockRestore()
-    killSpy.mockRestore()
-  })
-
-  it('quarantines a corrupt record naming no live pid so pruning resumes next launch', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    const pidPath = join(runtimeDir, 'daemon-v7.pid')
-    writeFileSync(pidPath, 'not a daemon record')
-    ageRecordPastQuarantineFloor(pidPath)
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    // Launch with the corrupt record: prune skips once, and the record is quarantined in place
-    // (bytes preserved) instead of vetoing every future launch.
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason: 'the daemon pid file could not be parsed and was quarantined: daemon-v7.pid'
-    })
-    pruneOldDaemonHosts(evidence)
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-    expect(existsSync(pidPath)).toBe(false)
-    expect(readFileSync(join(runtimeDir, 'daemon-v7.pid.corrupt'), 'utf8')).toBe(
-      'not a daemon record'
-    )
-
-    // Next launch: the listing is complete again and the unowned host is reclaimed.
-    const nextEvidence = collectPinnedDaemonVersions(runtimeDir)
-    expect(nextEvidence).toEqual({ status: 'complete', versionLiveness: new Map() })
-    pruneOldDaemonHosts(nextEvidence)
-    expect(existsSync(join(root, '1.0.0'))).toBe(false)
-    warnSpy.mockRestore()
-  })
-
-  it('vetoes pruning without quarantine when a pid record cannot be read', (ctx) => {
-    // The suite mocks process.platform; the chmod trick needs the REAL host to be POSIX.
-    if (originalPlatform === 'win32') {
-      return ctx.skip()
-    }
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    mkdirSync(runtimeDir, { recursive: true })
-    const pidPath = join(runtimeDir, 'daemon-v7.pid')
-    writeFileSync(pidPath, JSON.stringify({ pid: 4242, startedAtMs: null, appVersion: '1.0.0' }))
-    chmodSync(pidPath, 0o000)
-    try {
-      readFileSync(pidPath)
-      return ctx.skip() // Running as root: the permission bit cannot make the read fail.
-    } catch {
-      // The read fails as intended.
-    }
-
-    const evidence = collectPinnedDaemonVersions(runtimeDir)
-
-    // A read failure is transient (AV lock, vanished file): veto this launch, but leave the
-    // record alone so a launch that can read it re-evaluates from the real bytes.
-    expect(evidence).toEqual({
-      status: 'unverifiable',
-      reason: 'the daemon pid file could not be read: daemon-v7.pid'
-    })
-    expect(existsSync(pidPath)).toBe(true)
-    pruneOldDaemonHosts(evidence)
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-  })
-
-  it('reclaims nothing for a packaged host with no asar root (dolphind on win32)', () => {
-    const root = join(localAppDataDir, FORK_IDENTITY.productName, 'daemon-host')
-    mkdirSync(join(root, '1.0.0'), { recursive: true })
-    hostApp.appPath = join(installDir, 'resources', 'app')
-    installHostApp()
-    pruneOldDaemonHosts({ status: 'complete', versionLiveness: new Map() })
-    // A Node host owns no daemon-host tree, so deleting under it would be reaching into a
-    // directory layout it never created.
-    expect(existsSync(join(root, '1.0.0'))).toBe(true)
-  })
-})
-
-describe('collectPinnedDaemonVersions', () => {
-  it('pins the app version of a live daemon pid file and skips dead ones', () => {
-    const runtimeDir = join(userDataDir, 'daemon')
-    mkdirSync(runtimeDir, { recursive: true })
-    writeFileSync(
-      join(runtimeDir, 'daemon-v4.pid'),
-      JSON.stringify({ pid: process.pid, startedAtMs: null, appVersion: '7.0.0' })
-    )
-    writeFileSync(
-      join(runtimeDir, 'daemon-v3.pid'),
-      JSON.stringify({ pid: 2147483646, startedAtMs: null, appVersion: '6.0.0' })
-    )
-    const pinned = collectPinnedDaemonVersions(runtimeDir)
-    expect(pinned).toEqual({
-      status: 'complete',
-      versionLiveness: new Map([
-        ['7.0.0', { status: 'live' }],
-        ['6.0.0', { status: 'exited' }]
-      ])
-    })
+    const ours = await materializeRelocatedDaemonHost()
+    expect(ours?.execPath).toBe(join(hostRoot(), '9.9.9', 'Dolphin.exe'))
+    expect(readdirSync(hostRoot())).toEqual(['9.9.9'])
   })
 })

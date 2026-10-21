@@ -49,10 +49,18 @@ export function getSelectedNotificationSoundPath(settings: NotificationSettings)
     const builtInPath = BUILT_IN_NOTIFICATION_SOUNDS.get(customSoundId)
     return builtInPath ? { path: builtInPath } : { path: null, reason: 'missing-path' }
   }
-  if (!settings.customSoundPath) {
+  return validateCustomSoundPath(settings.customSoundPath)
+}
+
+/** A user-picked sound file: absolute and of a type the renderer can decode. */
+export function validateCustomSoundPath(customSoundPath: string | null): {
+  path: string | null
+  reason?: 'missing-path' | 'invalid-path' | 'unsupported-type'
+} {
+  if (!customSoundPath) {
     return { path: null, reason: 'missing-path' }
   }
-  const normalizedPath = normalize(settings.customSoundPath)
+  const normalizedPath = normalize(customSoundPath)
   if (!isAbsolute(normalizedPath)) {
     return { path: null, reason: 'invalid-path' }
   }

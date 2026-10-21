@@ -11,6 +11,10 @@ vi.mock('child_process', async (importOriginal) => ({
   ...(await importOriginal<typeof childProcess>()),
   execFile: execFileMock
 }))
+// Why: the home probe goes through runWslProcess; spawn-count assertions must still see it.
+vi.mock('../wsl/wsl-runner', async () =>
+  (await import('../wsl/wsl-runner-exec-file-test-double')).createExecFileWslRunner(execFileMock)
+)
 vi.mock('./session-scanner-worker-spawn', () => ({
   scanAiVaultSessionsInWorker,
   resetAiVaultScannerWorkerForTests: vi.fn()

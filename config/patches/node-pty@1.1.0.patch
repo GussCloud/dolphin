@@ -118,24 +118,47 @@ index 1ac5758bedd8cf54f32280dea4e4aeb5afdee30d..e619813759c6f14694838bdfbd0ea5f8
                  # Specify this setting here to override a setting from somewhere
                  # else, such as node's common.gypi.
 diff --git a/lib/conpty_console_list_agent.js b/lib/conpty_console_list_agent.js
-index 8c4fca9022a6d6f015bca87f61625cde2278f428..0a01730616488119aa21ef441cf3c441e02a974c 100644
+index 8c4fca9022a6d6f015bca87f61625cde2278f428..c8390d3a0bee0f3e50e8b7e959ce63831caafe83 100644
 --- a/lib/conpty_console_list_agent.js
 +++ b/lib/conpty_console_list_agent.js
-@@ -10,7 +10,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
+@@ -9,8 +9,34 @@
+ Object.defineProperty(exports, "__esModule", { value: true });
  var utils_1 = require("./utils");
  var getConsoleProcessList = utils_1.loadNativeModule('conpty_console_list').module.getConsoleProcessList;
- var shellPid = parseInt(process.argv[2], 10);
+-var shellPid = parseInt(process.argv[2], 10);
 -var consoleProcessList = getConsoleProcessList(shellPid);
-+var consoleProcessList;
-+try {
-+    consoleProcessList = getConsoleProcessList(shellPid);
+-process.send({ consoleProcessList: consoleProcessList });
+-process.exit(0);
++function readConsoleProcessList(shellPid) {
++    try {
++        return getConsoleProcessList(shellPid);
++    }
++    catch (_a) {
++        // Why: AttachConsole can fail after the shell exits; parent already has this fallback.
++        return [shellPid];
++    }
 +}
-+catch (_a) {
-+    // Why: AttachConsole can fail after the shell exits; parent already has this fallback.
-+    consoleProcessList = [shellPid];
++if (process.argv[2] === '--serve') {
++    // Dolphin: long-lived mode so pollers reuse one helper; requests are serialized by
++    // this thread, and each attaches and frees the console within one native call.
++    // Why: Ctrl+C/Ctrl+Break in a pane reach this helper while it is attached there.
++    process.on('SIGINT', function () { });
++    process.on('SIGBREAK', function () { });
++    process.on('message', function (message) {
++        var id = message && message.id;
++        var shellPid = message && message.shellPid;
++        if (typeof id !== 'number' || typeof shellPid !== 'number') {
++            return;
++        }
++        process.send({ id: id, consoleProcessList: readConsoleProcessList(shellPid) });
++    });
++    // Why: the parent closing the channel (exit or crash) is the only shutdown signal needed.
++    process.on('disconnect', function () { process.exit(0); });
 +}
- process.send({ consoleProcessList: consoleProcessList });
- process.exit(0);
++else {
++    process.send({ consoleProcessList: readConsoleProcessList(parseInt(process.argv[2], 10)) });
++    process.exit(0);
++}
  //# sourceMappingURL=conpty_console_list_agent.js.map
 \ No newline at end of file
 diff --git a/lib/terminal.js b/lib/terminal.js
@@ -264,23 +287,46 @@ index 1ec12f796a822c78fba9ad7f6448c3987e325c23..1779098c54ff4be8c0d4dc9a93e96e71
                  else {
                      // Stop processing immediately on unexpected error and log
 diff --git a/src/conpty_console_list_agent.ts b/src/conpty_console_list_agent.ts
-index 181ccabbbe9c4948a9725fb1db907a68e9de01fc..67f31facf85562b67adbfbd04ce28ddd8eeb4a79 100644
+index 181ccabbbe9c4948a9725fb1db907a68e9de01fc..6ce2951d80c7a621ee17c9627f6b874b232b07fb 100644
 --- a/src/conpty_console_list_agent.ts
 +++ b/src/conpty_console_list_agent.ts
-@@ -10,6 +10,12 @@ import { loadNativeModule } from './utils';
+@@ -9,7 +9,32 @@
+ import { loadNativeModule } from './utils';
  
  const getConsoleProcessList = loadNativeModule('conpty_console_list').module.getConsoleProcessList;
- const shellPid = parseInt(process.argv[2], 10);
+-const shellPid = parseInt(process.argv[2], 10);
 -const consoleProcessList = getConsoleProcessList(shellPid);
-+let consoleProcessList: number[];
-+try {
-+  consoleProcessList = getConsoleProcessList(shellPid);
-+} catch {
-+  // Why: AttachConsole can fail after the shell exits; parent already has this fallback.
-+  consoleProcessList = [shellPid];
+-process.send!({ consoleProcessList });
+-process.exit(0);
++function readConsoleProcessList(shellPid: number): number[] {
++  try {
++    return getConsoleProcessList(shellPid);
++  } catch {
++    // Why: AttachConsole can fail after the shell exits; parent already has this fallback.
++    return [shellPid];
++  }
 +}
- process.send!({ consoleProcessList });
- process.exit(0);
++
++if (process.argv[2] === '--serve') {
++  // Dolphin: long-lived mode so pollers reuse one helper; requests are serialized by
++  // this thread, and each attaches and frees the console within one native call.
++  // Why: Ctrl+C/Ctrl+Break in a pane reach this helper while it is attached there.
++  process.on('SIGINT', () => {});
++  process.on('SIGBREAK', () => {});
++  process.on('message', (message: { id?: unknown, shellPid?: unknown } | undefined) => {
++    const id = message?.id;
++    const shellPid = message?.shellPid;
++    if (typeof id !== 'number' || typeof shellPid !== 'number') {
++      return;
++    }
++    process.send!({ id, consoleProcessList: readConsoleProcessList(shellPid) });
++  });
++  // Why: the parent closing the channel (exit or crash) is the only shutdown signal needed.
++  process.on('disconnect', () => process.exit(0));
++} else {
++  process.send!({ consoleProcessList: readConsoleProcessList(parseInt(process.argv[2], 10)) });
++  process.exit(0);
++}
 diff --git a/src/unix/pty.cc b/src/unix/pty.cc
 index 7b4b9e1f990fbf95b51528bb56dc9717f5b87532..2ae787c5bd4f3eba470584dc658a01a52c690e0a 100644
 --- a/src/unix/pty.cc

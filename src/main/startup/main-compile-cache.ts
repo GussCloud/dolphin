@@ -47,19 +47,26 @@ export function startMainCompileCache(
   } catch {
     return () => {}
   }
+  return () => {
+    flushCompileCacheNowAndLater(moduleApi)
+    void pruneStaleMainCompileCacheVersions(moduleApi.getCompileCacheDir())
+  }
+}
+
+/** Persists the cache now and once more after late-loaded modules; write failures are swallowed. */
+export function flushCompileCacheNowAndLater(
+  moduleApi: Pick<MainCompileCacheModuleApi, 'flushCompileCache'>
+): void {
   const flush = (): void => {
     try {
-      // Why: app.exit() skips Node's exit-time flush, so an unflushed cache never reaches disk.
+      // Why: app.exit() and killed children skip Node's exit-time flush, so an unflushed cache never reaches disk.
       moduleApi.flushCompileCache()
     } catch {
       // A cache write failure only costs the next launch its warm start.
     }
   }
-  return () => {
-    flush()
-    setTimeout(flush, LATE_FLUSH_DELAY_MS).unref()
-    void pruneStaleMainCompileCacheVersions(moduleApi.getCompileCacheDir())
-  }
+  flush()
+  setTimeout(flush, LATE_FLUSH_DELAY_MS).unref()
 }
 
 /** Node keys the cache by a per-runtime subdirectory; an Electron update leaves the old one orphaned. */

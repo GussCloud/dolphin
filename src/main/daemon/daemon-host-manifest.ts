@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync } from 'node:fs'
+import { access, cp, mkdir } from 'node:fs/promises'
 import { dirname, join, win32 as winPath } from 'node:path'
 
 // What the relocated host is made of: which files are mirrored, where each lands,
@@ -151,19 +151,28 @@ export function buildDaemonHostManifest(sources: DaemonHostSources): CopyOp[] {
   return ops
 }
 
-export function executeManifest(ops: CopyOp[], stagingRoot: string): void {
+async function sourceExists(sourcePath: string): Promise<boolean> {
+  try {
+    await access(sourcePath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function executeManifest(ops: CopyOp[], stagingRoot: string): Promise<void> {
   for (const op of ops) {
-    if (!existsSync(op.sourcePath)) {
+    if (!(await sourceExists(op.sourcePath))) {
       if (op.optional) {
         continue
       }
       throw new Error(`daemon-host relocation: missing required input ${op.sourcePath}`)
     }
     const dest = destPath(stagingRoot, op.destRel)
-    mkdirSync(dirname(dest), { recursive: true })
+    await mkdir(dirname(dest), { recursive: true })
     const { filter } = op
     // Dereference symlinks so the copy holds no link back into the install dir.
-    cpSync(op.sourcePath, dest, {
+    await cp(op.sourcePath, dest, {
       recursive: op.kind === 'dir',
       dereference: true,
       force: true,

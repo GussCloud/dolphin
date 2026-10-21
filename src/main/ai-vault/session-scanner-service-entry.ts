@@ -21,6 +21,9 @@ import {
 import { readAiVaultSessionTitlesFromFiles } from './session-title-file-reader'
 import { resolveHostReadableAiVaultTitleRequests } from './session-title-request-paths'
 import { listLocalAiVaultSubagentSessions } from './session-subagent-reader'
+import { adoptInheritedCompileCache } from '../startup/child-compile-cache'
+
+adoptInheritedCompileCache()
 
 if (!process.send) {
   throw new Error('AI Vault service requires a parent IPC channel.')

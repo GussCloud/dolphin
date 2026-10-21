@@ -161,6 +161,20 @@ export async function computeWorkspaceRootAsync(
   )
 }
 
+/** Resolves the WSL mirror homes off-thread so a sync computeWorkspaceRoot reads them from cache. */
+export async function warmWorkspaceRootWslHomes(
+  roots: readonly {
+    repoPath: string
+    settings: { workspaceDir: string; wslMirrorDistro?: string }
+  }[]
+): Promise<void> {
+  const distros = roots.flatMap(({ repoPath, settings }) => {
+    const distro = mirrorDistroForWorkspaceRoot(repoPath, settings)
+    return distro ? [distro] : []
+  })
+  await Promise.all(distros.map((distro) => getWslHomeAsync(distro)))
+}
+
 export function computeWorkspaceRoot(
   repoPath: string,
   settings: { workspaceDir: string; wslMirrorDistro?: string }

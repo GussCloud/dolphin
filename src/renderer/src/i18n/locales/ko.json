@@ -19174,5 +19174,23 @@
         "i18n": "i18n"
       }
     }
+  },
+  "agentInteraction": {
+    "kind": {
+      "needsPermission": "권한이 필요합니다",
+      "needsInput": "답변을 기다리는 중",
+      "taskDone": "작업 완료",
+      "taskFailed": "작업 실패",
+      "taskInterrupted": "작업 중단됨",
+      "retryExhausted": "연결이 끊겼고 재시도 횟수를 모두 사용했습니다",
+      "subagentAttention": "하위 에이전트가 확인을 기다립니다",
+      "subagentDone": "하위 에이전트 완료",
+      "taskStarted": "작업 시작됨"
+    },
+    "avatar": {
+      "open": "에이전트 열기",
+      "pending": "+{{count}}",
+      "dismiss": "닫기"
+    }
   }
 }

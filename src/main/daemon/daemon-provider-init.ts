@@ -5,7 +5,7 @@ import {
 } from '../claude-accounts/live-pty-gate'
 import { isStartupDiagnosticsEnabled, logStartupDiagnostic } from '../startup/startup-diagnostics'
 import { checkDaemonHealth } from './daemon-health'
-import { collectPinnedDaemonVersions, pruneOldDaemonHosts } from './daemon-host-relocation'
+import { scheduleOldDaemonHostPrune } from './daemon-host-prune'
 import {
   cleanupFailedDaemonAdoption,
   releaseDaemonAdoptionLease,
@@ -63,8 +63,9 @@ export async function initDaemonPtyProvider(
 
   // Why: assign the module-level spawner/adapter only after both succeed, so a failed ensureRunning() leaves no stale spawner.
   const info = await newSpawner.ensureRunning()
-  // Why: reclaim superseded daemon-host copies on EVERY launch (spawns are rare), keeping current + live-daemon-pinned versions.
-  pruneOldDaemonHosts(collectPinnedDaemonVersions(runtimeDir))
+  // Why: reclaim superseded daemon-host copies on EVERY launch (spawns are rare), keeping current + live-daemon-pinned
+  // versions — deferred, since a recursive delete of old ~250MB copies competes with the first window.
+  scheduleOldDaemonHostPrune(runtimeDir)
   const launchMode = newSpawner.getHandle()?.mode
   logDaemonMilestone('daemon-current-ready')
   if (signal?.aborted) {

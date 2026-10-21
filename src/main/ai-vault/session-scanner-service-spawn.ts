@@ -20,6 +20,7 @@ import type {
 import { sessionSearchServiceInit } from '../ai-vault-search/session-search-service-init'
 import { getSessionParseCachePersistenceOptions } from './session-parse-cache-persistence'
 import { buildAiVaultServiceEnv } from './session-scanner-service-env'
+import { withInheritedCompileCache } from '../startup/child-compile-cache'
 import { AiVaultScannerServiceClient } from './session-scanner-service-client'
 import { getAiVaultServiceEntryPath } from './session-scanner-service-entry-path'
 import { lowerAiVaultServicePriority } from './session-scanner-service-priority'
@@ -37,7 +38,7 @@ export function spawnAiVaultServiceProcess(): ChildProcess {
   const child = fork(entryPath, [], {
     stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
     execArgv: ['--max-old-space-size=384'],
-    env: buildAiVaultServiceEnv(),
+    env: withInheritedCompileCache(buildAiVaultServiceEnv()),
     ...(process.platform === 'win32' ? { windowsHide: true } : {})
   })
   lowerAiVaultServicePriority(child.pid)
