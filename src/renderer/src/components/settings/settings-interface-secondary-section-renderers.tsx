@@ -2,6 +2,7 @@ import { StatsPane } from '../stats/StatsPane'
 import { AppearancePane } from './AppearancePane'
 import { InputPane } from './InputPane'
 import { NotificationsPane } from './NotificationsPane'
+import { AgentInteractionPane } from './AgentInteractionPane'
 import { ShortcutsPane } from './ShortcutsPane'
 import { SettingsSection } from './SettingsSection'
 import { translate } from '@/i18n/i18n'
@@ -69,6 +70,27 @@ export function renderNotificationsSettingsSection(
     >
       {view.isSectionMounted('notifications') ? (
         <NotificationsPane settings={model.settings} updateSettings={model.updateSettings} />
+      ) : null}
+    </SettingsSection>
+  ) : null
+}
+
+export function renderAgentIntegrationSettingsSection(
+  context: SettingsRenderContext
+): React.JSX.Element | null {
+  const { model, navigation, view } = context
+  return model.showDesktopOnlySettings ? (
+    <SettingsSection
+      id="agent-integration"
+      title={translate('agentInteraction.settings.title', 'Agent Integration')}
+      description={translate(
+        'agentInteraction.settings.description',
+        'Floating avatar and per-status sounds when an agent needs you or finishes.'
+      )}
+      searchEntries={navigation.getSectionSearchEntries('agent-integration')}
+    >
+      {view.isSectionMounted('agent-integration') ? (
+        <AgentInteractionPane settings={model.settings} updateSettings={model.updateSettings} />
       ) : null}
     </SettingsSection>
   ) : null

@@ -10,11 +10,39 @@ import {
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { emitCodexHookStatus, readHookEndpoint } from './helpers/agent-hook-endpoint'
 
+// Why: assertions match English copy; the runner's OS locale would otherwise pick the language.
+async function useEnglishUi(appPage: Page): Promise<void> {
+  await appPage.evaluate(() => window.__store?.getState().updateSettings({ uiLanguage: 'en' }))
+}
+
 function findAvatarPage(electronApp: ElectronApplication): Page | undefined {
   return electronApp.windows().find((page) => page.url().includes('agent-avatar.html'))
 }
 
 test.describe('Agent interaction avatar', () => {
+  test('the Agent Integration settings page turns the feature on', async ({
+    appPage
+  }, testInfo) => {
+    await waitForSessionReady(appPage)
+    await useEnglishUi(appPage)
+    await appPage.evaluate(() => {
+      const state = window.__store?.getState()
+      state?.openSettingsTarget({ pane: 'agent-integration', repoId: null })
+      state?.openSettingsPage()
+    })
+    const masterSwitch = appPage.getByRole('switch', { name: 'Enable Agent Integration' })
+    await expect(masterSwitch).toBeVisible({ timeout: 30_000 })
+    await expect(appPage.getByRole('switch', { name: 'Task finished' })).toBeDisabled()
+    await appPage.screenshot({ path: testInfo.outputPath('agent-integration-settings.png') })
+
+    await masterSwitch.click()
+    await expect
+      .poll(() => appPage.evaluate(async () => (await window.api.settings.get()).agentInteraction))
+      .toMatchObject({ enabled: true })
+    await expect(appPage.getByRole('switch', { name: 'Task finished' })).toBeEnabled()
+    await appPage.evaluate(() => window.__store?.getState().closeSettingsPage())
+  })
+
   test('a finished agent turn raises the floating avatar, and opening it dismisses it', async ({
     appPage,
     electronApp
@@ -23,6 +51,7 @@ test.describe('Agent interaction avatar', () => {
     await waitForActiveWorktree(appPage)
     await ensureTerminalVisible(appPage)
     await waitForActiveTerminalManager(appPage, 30_000)
+    await useEnglishUi(appPage)
     await appPage.evaluate(() => window.api.settings.set({ agentInteraction: { enabled: true } }))
     const endpoint = await readHookEndpoint(electronApp)
 

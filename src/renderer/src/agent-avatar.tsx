@@ -7,10 +7,11 @@ import { I18nProvider } from './i18n/I18nProvider'
 import { applyDocumentTheme } from './lib/document-theme'
 import { buildAppFontFamily } from './lib/app-font-family'
 import { getOrCreateRendererRoot } from './lib/react-renderer-root'
+import { useAppStore } from './store'
 import type { GlobalSettings } from '../../shared/global-settings-types'
 
-// Why its own entry: the avatar is a separate always-on-top window; it shares the preload but
-// keeps no app store and no periodic diagnostics, so an idle avatar costs nothing.
+// Why its own entry: the avatar is a separate always-on-top window; it shares the preload and
+// runs no periodic diagnostics, so an idle avatar costs nothing.
 
 function applyAvatarAppearance(settings: Pick<GlobalSettings, 'theme' | 'appFontFamily'> | null): void {
   applyDocumentTheme(settings?.theme ?? 'system', { disableTransitions: true })
@@ -26,15 +27,23 @@ try {
 } catch {
   // The theme falls back to the OS until the first settings change arrives.
 }
+if (startupSettings) {
+  // Why: I18nProvider reads the UI language from the app store.
+  useAppStore.setState({ settings: startupSettings })
+}
 applyAvatarAppearance(startupSettings)
 
 function AvatarAppearanceSync(): null {
   useEffect(() => {
-    let current = startupSettings
     return window.api.settings.onChanged((updates) => {
-      if (current && ('theme' in updates || 'appFontFamily' in updates)) {
-        current = { ...current, ...updates }
-        applyAvatarAppearance(current)
+      const current = useAppStore.getState().settings
+      if (!current) {
+        return
+      }
+      const next = { ...current, ...updates }
+      useAppStore.setState({ settings: next })
+      if ('theme' in updates || 'appFontFamily' in updates) {
+        applyAvatarAppearance(next)
       }
     })
   }, [])
