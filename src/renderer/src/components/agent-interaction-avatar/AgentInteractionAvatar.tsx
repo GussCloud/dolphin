@@ -50,7 +50,7 @@ export function AgentInteractionAvatar(): React.JSX.Element | null {
           aria-label={translate('agentInteraction.avatar.open', 'Open agent')}
         >
           <span className="relative shrink-0">
-            <img src={logo} alt="" className="size-12 rounded-full" />
+            <img src={logo} alt="" className="size-12 object-contain" />
             <span
               data-tone={presentation.tone}
               className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border border-border bg-popover text-muted-foreground data-[tone=attention]:text-status-warning data-[tone=failure]:text-destructive data-[tone=success]:text-status-success"
