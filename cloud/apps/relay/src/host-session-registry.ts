@@ -976,16 +976,14 @@ export class HostSessionRegistry {
       socket.close(RELAY_CLOSE_CODE.BAD_OUTER_CREDENTIAL, 'host key binding mismatch')
       return
     }
-    // Combined is staging-only compatibility; stamped cells require the durable director epoch.
-    const assignmentValid =
-      this.config.role === 'combined'
-        ? hello.data.assignmentEpoch === 1
-        : await this.assignments.verifyCellAssignment({
-            userId: identity.sub,
-            relayHostId: identity.relayHostId,
-            cellId: this.config.cellId,
-            assignmentEpoch: hello.data.assignmentEpoch
-          })
+    // Combined must follow the stored epoch too: a dormant re-placement bumps it past 1.
+    const assignmentValid = await this.assignments.verifyCellAssignment({
+      userId: identity.sub,
+      relayHostId: identity.relayHostId,
+      cellId: this.config.cellId,
+      assignmentEpoch: hello.data.assignmentEpoch,
+      admitUnassignedFirstEpoch: this.config.role === 'combined'
+    })
     if (!assignmentValid) {
       this.observer.recordAuth(false)
       socket.close(RELAY_CLOSE_CODE.WRONG_CELL, 'wrong assignment epoch')
