@@ -18,6 +18,7 @@ import { scheduleSecretProtectionGapReport } from '../host/deferred-secret-prote
 import { initSshHostKeyStoreFile } from '../ssh/ssh-host-key-store'
 import { neutralizeLegacyTerminalShimDir } from '../pty/legacy-terminal-shim-dir'
 import { createWindowsShellPathHydration } from './windows-shell-path-hydration'
+import { createWindowsShellPathCache } from './windows-shell-path-cache'
 import {
   configureWindowsHostGitEnvironmentReadiness,
   setDefaultWslDistroOverride
@@ -186,7 +187,12 @@ export async function initializeReadyFoundation(): Promise<void> {
   initSshHostKeyStoreFile(profile.dataFile)
   // Why: must precede PTY handler registration and run in headless serve too, which returns before openMainWindow.
   neutralizeLegacyTerminalShimDir(app.getPath('userData'))
-  const windowsShellPathHydration = createWindowsShellPathHydration()
+  const windowsShellPathHydration = createWindowsShellPathHydration({
+    persistedPath:
+      process.platform === 'win32' && app.isPackaged
+        ? createWindowsShellPathCache(canonicalUserDataPath, app.getVersion())
+        : null
+  })
   state.windowsShellPathHydration = windowsShellPathHydration
   configureWindowsHostGitEnvironmentReadiness(
     process.platform === 'win32' ? windowsShellPathHydration.whenReady : null
