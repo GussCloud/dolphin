@@ -532,10 +532,13 @@ jobs:
           # them. Retries are 1, not 3: a first attempt at these bounds already multiplied
           # 30s x 3 retries across every index file into a ~15 minute stall on a dead
           # mirror, which is worse than failing once and moving on.
+          # Why no translations: a Launchpad 503 on the PPA's Translation-en made apt drop
+          # the whole PPA index and install Ubuntu's fish 3.7, failing the gate below.
           sudo tee /etc/apt/apt.conf.d/99-dolphin-shell-contracts >/dev/null <<'APTCONF'
           Acquire::http::Timeout "15";
           Acquire::https::Timeout "15";
           Acquire::Retries "1";
+          Acquire::Languages "none";
           APTCONF
           for attempt in 1 2 3; do
             sudo add-apt-repository -y -n ppa:fish-shell/release-4 && break
