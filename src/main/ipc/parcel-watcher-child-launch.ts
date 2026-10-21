@@ -7,6 +7,7 @@ import {
 import { reserveWatcherChild, WatcherChildCapacityError } from './parcel-watcher-child-registry'
 import { registerWatcherChildPhysicalExit } from './parcel-watcher-child-termination'
 import type { WatcherToHostMessage } from './parcel-watcher-process-protocol'
+import { withInheritedCompileCache } from '../startup/child-compile-cache'
 
 export type LaunchedWatcherChild = {
   child: ChildProcess
@@ -31,11 +32,11 @@ export function launchWatcherChild(
   try {
     child = fork(entryPath, [], {
       stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
-      env: {
+      env: withInheritedCompileCache({
         ...process.env,
         ELECTRON_RUN_AS_NODE: '1',
         ...(canaryDir ? { DOLPHIN_WATCHER_CANARY_DIR: canaryDir } : {})
-      },
+      }),
       ...(process.platform === 'win32' ? { windowsHide: true } : {})
     })
   } catch (error) {

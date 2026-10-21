@@ -11,6 +11,7 @@ import type { PluginCapabilityKind } from '../../shared/plugins/plugin-capabilit
 import type { PluginEventName } from '../../shared/plugins/plugin-manifest'
 import type { PluginPanelActionOutcome } from '../../shared/plugins/plugin-panel-bridge'
 import { buildPluginWorkerEnv } from './plugin-worker-env'
+import { withInheritedCompileCache } from '../startup/child-compile-cache'
 import { pipePluginWorkerOutput } from './plugin-worker-output-buffer'
 
 // Grace between the shutdown message and SIGKILL: long enough for plugin
@@ -89,7 +90,7 @@ export async function startPluginWorker(
     // Why: ELECTRON_RUN_AS_NODE makes the forked Electron binary behave as
     // plain Node. The env is a scrubbed allowlist — never ...process.env,
     // which can carry shell-exported secrets into third-party code.
-    env: buildPluginWorkerEnv(),
+    env: withInheritedCompileCache(buildPluginWorkerEnv()),
     // Why: inspector/loader flags from Dolphin's own launch must never execute
     // inside third-party plugin workers.
     execArgv: [],
