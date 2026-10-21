@@ -37,6 +37,7 @@ import {
   renderAppearanceSettingsSection,
   renderInputSettingsSection,
   renderNotificationsSettingsSection,
+  renderAgentIntegrationSettingsSection,
   renderShortcutsSettingsSection,
   renderStatsSettingsSection
 } from './settings-interface-secondary-section-renderers'
@@ -139,6 +140,7 @@ export function renderSettingsPage(context: SettingsRenderContext): React.JSX.El
                 {renderAppearanceSettingsSection(context)}
                 {renderInputSettingsSection(context)}
                 {renderNotificationsSettingsSection(context)}
+                {renderAgentIntegrationSettingsSection(context)}
                 {renderShortcutsSettingsSection(context)}
                 {renderStatsSettingsSection(context)}
                 {renderServersSettingsSection(context)}

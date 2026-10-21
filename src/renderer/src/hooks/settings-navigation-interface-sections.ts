@@ -1,11 +1,12 @@
 import { getAppearancePaneSearchEntries } from '@/components/settings/appearance-search'
 import { getInputPaneSearchEntries } from '@/components/settings/input-search'
 import { getNotificationsPaneSearchEntries } from '@/components/settings/notifications-search'
+import { getAgentInteractionPaneSearchEntries } from '@/components/settings/agent-interaction-search'
 import { getShortcutsPaneSearchEntries } from '@/components/settings/shortcuts-search'
 import { getStatsPaneSearchEntries } from '@/components/stats/stats-search'
 import { translate } from '@/i18n/i18n'
 import type { SettingsNavSection } from '@/lib/settings-navigation-types'
-import { BarChart3, Bell, Keyboard, Palette, TextCursorInput } from 'lucide-react'
+import { BarChart3, Bell, BellRing, Keyboard, Palette, TextCursorInput } from 'lucide-react'
 import type { SettingsNavigationBuildOptions } from './settings-navigation-build-options'
 
 export function buildInterfaceSettingsSections({
@@ -57,6 +58,17 @@ export function buildInterfaceSettingsSections({
             ),
             icon: Bell,
             searchEntries: getNotificationsPaneSearchEntries(),
+            group: 'interface'
+          },
+          {
+            id: 'agent-integration',
+            title: translate('agentInteraction.settings.title', 'Agent Integration'),
+            description: translate(
+              'agentInteraction.settings.description',
+              'Floating avatar and per-status sounds when an agent needs you or finishes.'
+            ),
+            icon: BellRing,
+            searchEntries: getAgentInteractionPaneSearchEntries(),
             group: 'interface'
           }
         ]

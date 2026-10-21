@@ -19191,6 +19191,59 @@
       "open": "Agent を開く",
       "pending": "+{{count}}",
       "dismiss": "閉じる"
+    },
+    "settings": {
+      "title": "Agent 連携",
+      "description": "Agent が対応を求めたときや完了したときに、フローティングアバターと状態ごとのサウンドで知らせます。",
+      "enable": {
+        "title": "Agent 連携を有効にする",
+        "description": "Agent が対応を求めたときや完了したときに、画面の隅にフローティングアバターを表示してサウンドを再生します。Dolphin が最小化されていても動作します。"
+      },
+      "volume": "音量",
+      "soundFor": "{{event}} のサウンド",
+      "sound": {
+        "default": "Dolphin のサウンド",
+        "custom": "カスタムファイル",
+        "none": "サウンドなし",
+        "change": "カスタムファイルを変更",
+        "choose": "カスタムファイルを選択"
+      },
+      "preview": "{{event}} のサウンドを再生",
+      "avatar": {
+        "title": "アバター",
+        "description": "フローティングカードに表示する画像。5 MB までの PNG、JPG、GIF、WebP、SVG。",
+        "unreadable": "選択した画像を読み込めないため、Dolphin のロゴを表示しています。",
+        "reset": "Dolphin のロゴを使う",
+        "choose": "画像を選択"
+      },
+      "event": {
+        "needsPermission": "Agent がツールやコマンドの承認を求めて停止しました。",
+        "needsInput": "Agent が質問しているか、判断を待っています。",
+        "taskDone": "Agent がターンを終えて待機中です。",
+        "taskFailed": "利用上限や請求の問題など、プロバイダーのエラーでターンが終了しました。",
+        "taskInterrupted": "ターンが完了前にキャンセルされました。",
+        "retryExhausted": "接続が切れた後の自動再試行が上限に達しました。",
+        "subagentAttention": "サブ Agent またはチームメイトが承認や回答を求めています。",
+        "subagentDone": "メインの Agent の作業中に、サブ Agent またはチームメイトが完了しました。",
+        "taskStarted": "Agent が新しいプロンプトで作業を始めました。"
+      }
+    },
+    "search": {
+      "enable": "Agent が対応を求めたときや完了したときのフローティングアバターとサウンド。",
+      "avatar": "フローティングカードに表示する画像。",
+      "sounds": "イベントのサウンド",
+      "soundsDescription": "Agent の状態ごとに異なるサウンド、または独自の音声ファイル。",
+      "keyword": {
+        "avatar": "アバター",
+        "floating": "フローティング",
+        "alert": "アラート",
+        "permission": "承認",
+        "image": "画像",
+        "picture": "写真",
+        "sound": "サウンド",
+        "audio": "音声",
+        "volume": "音量"
+      }
     }
   }
 }

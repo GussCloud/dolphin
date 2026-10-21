@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import {
   AGENT_INTERACTION_AVATAR_CHANNELS,
   type AgentInteractionAvatarFrame,
+  type AgentInteractionAvatarImageResult,
   type AgentInteractionAvatarSoundResult
 } from '../../shared/agent-interaction-avatar-ipc'
 import { isAgentInteractionKind } from '../../shared/agent-interaction-settings'
@@ -17,8 +18,10 @@ import {
 } from '../window/agent-interaction-avatar-window'
 import { resolveAgentPaneReveal } from '../window/reveal-agent-pane'
 import { readNotificationSoundFile } from './notification-sound-file'
+import { isTrustedUIRenderer } from './ui'
+import { readAgentInteractionAvatarImage } from '../agent-interaction/agent-interaction-avatar-image'
 
-/** Every handler answers only the avatar window; its sound path is chosen here, never sent in. */
+/** Handlers answer the avatar window (and the settings page for previews); paths are chosen here, never sent in. */
 export function registerAgentInteractionAvatarHandlers(
   store: Store,
   controller: AgentInteractionController
@@ -35,11 +38,13 @@ export function registerAgentInteractionAvatarHandlers(
   ipcMain.handle(
     AGENT_INTERACTION_AVATAR_CHANNELS.loadSound,
     async (event, kind: unknown): Promise<AgentInteractionAvatarSoundResult> => {
-      if (!isAgentInteractionAvatarRenderer(event.sender) || !isAgentInteractionKind(kind)) {
+      const fromAvatar = isAgentInteractionAvatarRenderer(event.sender)
+      if (!(fromAvatar || isTrustedUIRenderer(event.sender)) || !isAgentInteractionKind(kind)) {
         return { ok: false, reason: 'invalid-path' }
       }
       const settings = store.getSettings().agentInteraction
-      if (!settings.enabled) {
+      // Why: the settings page previews sounds before the feature is switched on.
+      if (fromAvatar && !settings.enabled) {
         return { ok: false, reason: 'disabled' }
       }
       const selected = getSelectedAgentInteractionSoundPath(settings, kind)
@@ -52,6 +57,17 @@ export function registerAgentInteractionAvatarHandlers(
       }
       // Why: a custom file that was moved, deleted or mistyped must not turn the event silent.
       return readNotificationSoundFile(getBundledAgentInteractionSoundPath(kind))
+    }
+  )
+
+  ipcMain.removeHandler(AGENT_INTERACTION_AVATAR_CHANNELS.loadImage)
+  ipcMain.handle(
+    AGENT_INTERACTION_AVATAR_CHANNELS.loadImage,
+    async (event): Promise<AgentInteractionAvatarImageResult> => {
+      if (!isAgentInteractionAvatarRenderer(event.sender) && !isTrustedUIRenderer(event.sender)) {
+        return { ok: false, reason: 'invalid-path' }
+      }
+      return readAgentInteractionAvatarImage(store.getSettings().agentInteraction)
     }
   )
 

@@ -19191,6 +19191,59 @@
       "open": "Abrir agente",
       "pending": "+{{count}}",
       "dismiss": "Dispensar"
+    },
+    "settings": {
+      "title": "Integração de Agentes",
+      "description": "Avatar flutuante e sons por status quando um agente precisa de você ou termina.",
+      "enable": {
+        "title": "Ativar Integração de Agentes",
+        "description": "Mostra um avatar flutuante no canto da tela e toca um som quando um agente precisa de você ou termina, mesmo com o Dolphin minimizado."
+      },
+      "volume": "Volume",
+      "soundFor": "Som de {{event}}",
+      "sound": {
+        "default": "Som do Dolphin",
+        "custom": "Arquivo personalizado",
+        "none": "Sem som",
+        "change": "Trocar arquivo personalizado",
+        "choose": "Escolher arquivo personalizado"
+      },
+      "preview": "Tocar o som de {{event}}",
+      "avatar": {
+        "title": "Avatar",
+        "description": "A imagem do card flutuante. PNG, JPG, GIF, WebP ou SVG de até 5 MB.",
+        "unreadable": "Não foi possível ler a imagem escolhida; o logo do Dolphin é exibido no lugar.",
+        "reset": "Usar logo do Dolphin",
+        "choose": "Escolher imagem"
+      },
+      "event": {
+        "needsPermission": "Um agente para e pede aprovação para uma ferramenta ou comando.",
+        "needsInput": "Um agente faz uma pergunta ou aguarda uma decisão sua.",
+        "taskDone": "Um agente termina o turno e fica ocioso.",
+        "taskFailed": "Um turno termina com erro do provedor, como limite de uso ou cobrança.",
+        "taskInterrupted": "Um turno é cancelado antes de terminar.",
+        "retryExhausted": "As tentativas automáticas após uma queda de conexão foram esgotadas.",
+        "subagentAttention": "Um subagente ou teammate precisa de permissão ou de uma resposta.",
+        "subagentDone": "Um subagente ou teammate termina enquanto o agente principal continua trabalhando.",
+        "taskStarted": "Um agente começa a trabalhar em um novo prompt."
+      }
+    },
+    "search": {
+      "enable": "Avatar flutuante e som quando um agente precisa de você ou termina.",
+      "avatar": "Imagem exibida no card flutuante.",
+      "sounds": "Sons dos eventos",
+      "soundsDescription": "Um som diferente para cada status do agente, ou seu próprio arquivo de áudio.",
+      "keyword": {
+        "avatar": "avatar",
+        "floating": "flutuante",
+        "alert": "alerta",
+        "permission": "permissão",
+        "image": "imagem",
+        "picture": "foto",
+        "sound": "som",
+        "audio": "áudio",
+        "volume": "volume"
+      }
     }
   }
 }

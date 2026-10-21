@@ -16078,6 +16078,59 @@
       "open": "Abrir agente",
       "pending": "+{{count}}",
       "dismiss": "Descartar"
+    },
+    "settings": {
+      "title": "Integración de agentes",
+      "description": "Avatar flotante y sonidos por estado cuando un agente te necesita o termina.",
+      "enable": {
+        "title": "Activar integración de agentes",
+        "description": "Muestra un avatar flotante en la esquina de la pantalla y reproduce un sonido cuando un agente te necesita o termina, incluso con Dolphin minimizado."
+      },
+      "volume": "Volumen",
+      "soundFor": "Sonido de {{event}}",
+      "sound": {
+        "default": "Sonido de Dolphin",
+        "custom": "Archivo personalizado",
+        "none": "Sin sonido",
+        "change": "Cambiar archivo personalizado",
+        "choose": "Elegir archivo personalizado"
+      },
+      "preview": "Reproducir el sonido de {{event}}",
+      "avatar": {
+        "title": "Avatar",
+        "description": "La imagen de la tarjeta flotante. PNG, JPG, GIF, WebP o SVG de hasta 5 MB.",
+        "unreadable": "No se pudo leer la imagen elegida; se muestra el logo de Dolphin.",
+        "reset": "Usar logo de Dolphin",
+        "choose": "Elegir imagen"
+      },
+      "event": {
+        "needsPermission": "Un agente se detiene para pedir aprobación para una herramienta o comando.",
+        "needsInput": "Un agente te hace una pregunta o espera una decisión.",
+        "taskDone": "Un agente termina su turno y queda inactivo.",
+        "taskFailed": "Un turno termina con un error del proveedor, como un límite de uso o un problema de facturación.",
+        "taskInterrupted": "Un turno se cancela antes de terminar.",
+        "retryExhausted": "Se agotaron los reintentos automáticos tras perder la conexión.",
+        "subagentAttention": "Un subagente o compañero necesita permiso o una respuesta.",
+        "subagentDone": "Un subagente o compañero termina mientras el agente principal sigue trabajando.",
+        "taskStarted": "Un agente empieza a trabajar en un nuevo prompt."
+      }
+    },
+    "search": {
+      "enable": "Avatar flotante y sonido cuando un agente te necesita o termina.",
+      "avatar": "Imagen que se muestra en la tarjeta flotante.",
+      "sounds": "Sonidos de eventos",
+      "soundsDescription": "Un sonido distinto para cada estado del agente, o tu propio archivo de audio.",
+      "keyword": {
+        "avatar": "avatar",
+        "floating": "flotante",
+        "alert": "alerta",
+        "permission": "permiso",
+        "image": "imagen",
+        "picture": "foto",
+        "sound": "sonido",
+        "audio": "audio",
+        "volume": "volumen"
+      }
     }
   }
 }

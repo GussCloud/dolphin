@@ -15,6 +15,27 @@ function findAvatarPage(electronApp: ElectronApplication): Page | undefined {
 }
 
 test.describe('Agent interaction avatar', () => {
+  test('the Agent Integration settings page turns the feature on', async ({
+    appPage
+  }, testInfo) => {
+    await waitForSessionReady(appPage)
+    await appPage.evaluate(() => {
+      const state = window.__store?.getState()
+      state?.openSettingsTarget({ pane: 'agent-integration', repoId: null })
+      state?.openSettingsPage()
+    })
+    const masterSwitch = appPage.getByRole('switch', { name: 'Enable Agent Integration' })
+    await expect(masterSwitch).toBeVisible({ timeout: 30_000 })
+    await expect(appPage.getByRole('switch', { name: 'Task finished' })).toBeDisabled()
+    await appPage.screenshot({ path: testInfo.outputPath('agent-integration-settings.png') })
+
+    await masterSwitch.click()
+    await expect
+      .poll(() => appPage.evaluate(async () => (await window.api.settings.get()).agentInteraction))
+      .toMatchObject({ enabled: true })
+    await expect(appPage.getByRole('switch', { name: 'Task finished' })).toBeEnabled()
+  })
+
   test('a finished agent turn raises the floating avatar, and opening it dismisses it', async ({
     appPage,
     electronApp
