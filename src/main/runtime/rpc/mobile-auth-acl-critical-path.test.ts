@@ -27,11 +27,10 @@ const INJECTED_SPAWN_LATENCY_MS = 5
 const USER_SID = 'S-1-5-21-1000'
 const OK: ProcessResult = { code: 0, signal: null, stdout: '', stderr: '', timedOut: false }
 /**
- * One secure write hardens two paths: the staged temp file, fresh and still on the inherited DACL,
- * costs the full verify/reset/grant/verify pass; the published file, whose protected DACL came
- * along with the rename, costs only its verify.
+ * One secure write hardens only the staged temp file: fresh, its inherited DACL never verifies, so
+ * it costs reset/grant/verify; the published file takes that verified DACL along with the rename.
  */
-const BLOCKING_SPAWNS_PER_WRITE = 5
+const BLOCKING_SPAWNS_PER_WRITE = 3
 
 /** Paths the fake icacls has granted a protected DACL, keyed to the ACE flags the grant used. */
 const hardenedByFake = new Map<string, string>()
@@ -200,7 +199,7 @@ describe('mobile auth critical path', () => {
     expect(timeline.indexOf('acl-spawn')).toBe(-1)
 
     registry.flushPendingLastSeen()
-    // Hardening is deferred, never dropped: tmp file + published file, exactly as the inline path did.
+    // Hardening is deferred, never dropped: the same staged-file pass the inline path runs.
     expect(timeline.filter((entry) => entry === 'acl-spawn')).toHaveLength(
       BLOCKING_SPAWNS_PER_WRITE
     )

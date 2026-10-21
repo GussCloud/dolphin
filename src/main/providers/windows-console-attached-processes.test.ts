@@ -1,53 +1,82 @@
 /*
- * Coverage for the FORKING console-attachment reader.
+ * Coverage for the pooled console-attachment reader.
  *
- * These assertions moved here with the code when the job-object reader took
- * over the polling path (#16419). They cover the module that caused #10857 --
- * the bounded timeout, the single kill, spawn errors, malformed messages and
- * helper-pid removal -- so none of it is left untested just because the file
- * it used to live in now answers a different question.
+ * The forking reader caused #10857; these assertions keep its contract -- the
+ * bounded timeout, spawn errors, malformed messages and helper-pid removal --
+ * and add the pool's: one helper reused across requests, serialized requests,
+ * restart with backoff after a crash, and idle shutdown.
  */
 import { EventEmitter } from 'node:events'
-import { describe, expect, it, vi } from 'vitest'
-import { readWindowsConsoleAttachedProcessIds } from './windows-console-attached-processes'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  createWindowsConsoleListClient,
+  type WindowsConsoleListClientDeps
+} from './windows-console-attached-processes'
 
-function forkWith(event: 'message' | 'error' | 'none', value?: unknown, pid?: number) {
-  const child = new EventEmitter() as EventEmitter & {
-    kill: ReturnType<typeof vi.fn>
-    pid?: number
-  }
-  child.kill = vi.fn()
-  if (pid !== undefined) {
-    child.pid = pid
-  }
-  const forkProcess = vi.fn(() => {
-    queueMicrotask(() => {
-      if (event === 'message') {
-        child.emit('message', { consoleProcessList: value })
-      } else if (event === 'error') {
-        child.emit('error', new Error('spawn failed'))
-      }
-    })
-    return child
+type Request = { id: number; shellPid: number }
+
+class FakeHelper extends EventEmitter {
+  connected = true
+  readonly sent: Request[] = []
+  readonly kill = vi.fn(() => {
+    this.connected = false
+    return true
   })
-  return { child, forkProcess: forkProcess as never }
+  readonly unref = vi.fn()
+  constructor(readonly pid: number | undefined) {
+    super()
+  }
+  send(message: Request): boolean {
+    this.sent.push(message)
+    return true
+  }
+  reply(list: unknown, id = this.sent.at(-1)?.id): void {
+    this.emit('message', { id, consoleProcessList: list })
+  }
+  crash(): void {
+    this.connected = false
+    this.emit('exit', 1, null)
+  }
 }
 
-describe('readWindowsConsoleAttachedProcessIds', () => {
-  it('returns exact console membership from the fixed node-pty helper', async () => {
-    const { forkProcess } = forkWith('message', [999, 101, 202, 303], 999)
+function setup(overrides: WindowsConsoleListClientDeps = {}, pids: (number | undefined)[] = []) {
+  const helpers: FakeHelper[] = []
+  let nextPid = 999
+  const forkHelper = vi.fn((_path: string, _args: readonly string[]) => {
+    const helper = new FakeHelper(pids.length > 0 ? pids.shift() : nextPid++)
+    helpers.push(helper)
+    return helper
+  })
+  const client = createWindowsConsoleListClient({
+    forkHelper,
+    resolveAgentPath: () => '/fixed/node-pty/conpty_console_list_agent.js',
+    timeoutMs: 100,
+    idleMs: 1_000,
+    restartBackoffMs: 50,
+    ...overrides
+  })
+  return { client, forkHelper, helpers }
+}
 
-    await expect(
-      readWindowsConsoleAttachedProcessIds(101, {
-        forkProcess,
-        resolveAgentPath: () => '/fixed/node-pty/conpty_console_list_agent.js'
-      })
-    ).resolves.toEqual(new Set([101, 202, 303]))
-    expect(forkProcess).toHaveBeenCalledWith(
-      '/fixed/node-pty/conpty_console_list_agent.js',
-      ['101'],
-      { silent: true }
-    )
+describe('createWindowsConsoleListClient', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('returns exact console membership from the node-pty helper in serve mode', async () => {
+    const { client, forkHelper, helpers } = setup()
+    const result = client.read(101)
+    expect(forkHelper).toHaveBeenCalledWith('/fixed/node-pty/conpty_console_list_agent.js', [
+      '--serve'
+    ])
+    expect(helpers[0].sent).toEqual([{ id: 1, shellPid: 101 }])
+    helpers[0].reply([999, 101, 202, 303])
+    await expect(result).resolves.toEqual(new Set([101, 202, 303]))
+    expect(helpers[0].unref).toHaveBeenCalled()
+    client.dispose()
   })
 
   it.each([
@@ -57,55 +86,142 @@ describe('readWindowsConsoleAttachedProcessIds', () => {
     ['missing helper pid', [101, 202], 999],
     ['unavailable helper pid', [101, 202], undefined]
   ])('fails closed for %s', async (_label, processIds, helperPid) => {
-    const { forkProcess } = forkWith('message', processIds, helperPid)
-    await expect(readWindowsConsoleAttachedProcessIds(101, { forkProcess })).resolves.toBeNull()
+    const { client, helpers } = setup({}, [helperPid])
+    const result = client.read(101)
+    helpers[0].reply(processIds)
+    await expect(result).resolves.toBeNull()
+    client.dispose()
   })
 
   it('returns root-only membership when only the helper and shell are attached', async () => {
-    const { forkProcess } = forkWith('message', [999, 101], 999)
-    await expect(readWindowsConsoleAttachedProcessIds(101, { forkProcess })).resolves.toEqual(
-      new Set([101])
-    )
+    const { client, helpers } = setup()
+    const result = client.read(101)
+    helpers[0].reply([999, 101])
+    await expect(result).resolves.toEqual(new Set([101]))
+    client.dispose()
   })
 
-  it('reports membership excluding the helper when a real child is attached', async () => {
-    const { forkProcess } = forkWith('message', [999, 101, 202], 999)
-    await expect(readWindowsConsoleAttachedProcessIds(101, { forkProcess })).resolves.toEqual(
-      new Set([101, 202])
-    )
+  it('rejects invalid root pids without starting a helper', async () => {
+    const { client, forkHelper } = setup()
+    await expect(client.read(0)).resolves.toBeNull()
+    await expect(client.read(Number.NaN)).resolves.toBeNull()
+    expect(forkHelper).not.toHaveBeenCalled()
+  })
+
+  it('reuses one helper and serializes concurrent requests', async () => {
+    const { client, forkHelper, helpers } = setup()
+    const first = client.read(101)
+    const second = client.read(202)
+    expect(helpers[0].sent).toEqual([{ id: 1, shellPid: 101 }])
+
+    helpers[0].reply([999, 101, 111])
+    await expect(first).resolves.toEqual(new Set([101, 111]))
+    expect(helpers[0].sent).toEqual([
+      { id: 1, shellPid: 101 },
+      { id: 2, shellPid: 202 }
+    ])
+    // A stale id must not settle the in-flight request.
+    helpers[0].reply([999, 101], 1)
+    helpers[0].reply([999, 202])
+    await expect(second).resolves.toEqual(new Set([202]))
+    expect(forkHelper).toHaveBeenCalledTimes(1)
+    client.dispose()
+  })
+
+  it('kills a silent helper at the timeout and drops queued requests past their deadline', async () => {
+    const { client, forkHelper, helpers } = setup()
+    const first = client.read(101)
+    const second = client.read(202)
+    await vi.advanceTimersByTimeAsync(100)
+    await expect(first).resolves.toBeNull()
+    await expect(second).resolves.toBeNull()
+    expect(helpers[0].kill).toHaveBeenCalledTimes(1)
+    // The queued request fails closed during restart backoff instead of forking again.
+    expect(forkHelper).toHaveBeenCalledTimes(1)
+    client.dispose()
+  })
+
+  it('restarts after a crash, failing closed while backing off', async () => {
+    const { client, forkHelper, helpers } = setup()
+    const first = client.read(101)
+    helpers[0].crash()
+    await expect(first).resolves.toBeNull()
+
+    await expect(client.read(101)).resolves.toBeNull()
+    expect(forkHelper).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(50)
+    const retried = client.read(101)
+    expect(forkHelper).toHaveBeenCalledTimes(2)
+    helpers[1].reply([1000, 101])
+    await expect(retried).resolves.toEqual(new Set([101]))
+    client.dispose()
+  })
+
+  it('doubles the restart backoff on repeated crashes', async () => {
+    const { client, forkHelper, helpers } = setup()
+    const first = client.read(101)
+    helpers[0].crash()
+    await first
+    await vi.advanceTimersByTimeAsync(50)
+    const second = client.read(101)
+    helpers[1].crash()
+    await second
+
+    await vi.advanceTimersByTimeAsync(50)
+    await expect(client.read(101)).resolves.toBeNull()
+    expect(forkHelper).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(50)
+    void client.read(101)
+    expect(forkHelper).toHaveBeenCalledTimes(3)
+    client.dispose()
   })
 
   it('handles helper spawn errors without an unhandled child error', async () => {
-    const { forkProcess } = forkWith('error')
-    await expect(readWindowsConsoleAttachedProcessIds(101, { forkProcess })).resolves.toBeNull()
+    const { client, helpers } = setup()
+    const result = client.read(101)
+    helpers[0].emit('error', new Error('spawn failed'))
+    await expect(result).resolves.toBeNull()
+    // Late teardown errors from the dead helper are absorbed.
+    expect(() => helpers[0].emit('error', new Error('kill failed'))).not.toThrow()
+    client.dispose()
   })
 
-  it('kills a silent helper at the bounded timeout', async () => {
-    vi.useFakeTimers()
-    try {
-      const { child, forkProcess } = forkWith('none')
-      const result = readWindowsConsoleAttachedProcessIds(101, { forkProcess, timeoutMs: 10 })
-      await vi.advanceTimersByTimeAsync(10)
-      await expect(result).resolves.toBeNull()
-      expect(child.kill).toHaveBeenCalledTimes(1)
-    } finally {
-      vi.useRealTimers()
-    }
+  it('fails closed when the fork itself throws', async () => {
+    const { client } = setup({
+      forkHelper: () => {
+        throw new Error('EAGAIN')
+      }
+    })
+    await expect(client.read(101)).resolves.toBeNull()
   })
 
-  it('absorbs an asynchronous kill error after timeout settlement', async () => {
-    vi.useFakeTimers()
-    try {
-      const { child, forkProcess } = forkWith('none')
-      child.kill.mockImplementation(() => {
-        queueMicrotask(() => child.emit('error', new Error('kill failed')))
-      })
-      const result = readWindowsConsoleAttachedProcessIds(101, { forkProcess, timeoutMs: 10 })
-      await vi.advanceTimersByTimeAsync(10)
-      await expect(result).resolves.toBeNull()
-      expect(child.listenerCount('error')).toBe(0)
-    } finally {
-      vi.useRealTimers()
-    }
+  it('shuts an idle helper down and starts a fresh one on the next request', async () => {
+    const { client, forkHelper, helpers } = setup()
+    const first = client.read(101)
+    helpers[0].reply([999, 101])
+    await first
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(helpers[0].kill).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(helpers[0].kill).toHaveBeenCalledTimes(1)
+
+    // Idle shutdown is not a failure, so no backoff applies.
+    const next = client.read(101)
+    expect(forkHelper).toHaveBeenCalledTimes(2)
+    helpers[1].reply([1000, 101])
+    await expect(next).resolves.toEqual(new Set([101]))
+    client.dispose()
+  })
+
+  it('settles pending requests and kills the helper on dispose', async () => {
+    const { client, helpers } = setup()
+    const first = client.read(101)
+    const second = client.read(202)
+    client.dispose()
+    await expect(first).resolves.toBeNull()
+    await expect(second).resolves.toBeNull()
+    expect(helpers[0].kill).toHaveBeenCalledTimes(1)
   })
 })

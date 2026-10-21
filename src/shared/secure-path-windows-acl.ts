@@ -18,6 +18,15 @@ const BUILTIN_ADMINISTRATORS_SID = 'S-1-5-32-544'
 
 const WINDOWS_SID_PATTERN = /^S-1-\d+(?:-\d+)+$/
 
+export type RestrictWindowsPathOptions = {
+  /**
+   * The path is a file this process just created. Its DACL is then the inherited (unprotected)
+   * one, which the opening verify always rejects, so that spawn is skipped. The rewrite and the
+   * closing verify still run, so this only drops a shortcut, never a check.
+   */
+  freshlyCreated?: boolean
+}
+
 type AclPlan = {
   program: string
   /** The path as icacls must receive it, already extended-length prefixed when needed. */
@@ -166,7 +175,8 @@ function report(
 export function bestEffortRestrictWindowsPath(
   targetPath: string,
   isDirectory: boolean,
-  onSettled?: (restricted: boolean) => void
+  onSettled?: (restricted: boolean) => void,
+  options: RestrictWindowsPathOptions = {}
 ): void {
   const plan = planFor(targetPath, isDirectory)
   if (!plan) {
@@ -178,7 +188,7 @@ export function bestEffortRestrictWindowsPath(
   // *and* a throw from `onSettled` itself an unhandled rejection, which Node's default turns into
   // a main-process crash — the exact opposite of what the reporter hook exists for. `false` is the
   // right value on the error arm: it drops the path from the caller's cache and leaves it retryable.
-  void restrictAsync(targetPath, plan)
+  void restrictAsync(targetPath, plan, options)
     .then(onSettled, () => onSettled?.(false))
     .catch((error: unknown) => reportSettlementThrow(targetPath, error))
 }
@@ -195,10 +205,14 @@ function reportSettlementThrow(targetPath: string, error: unknown): void {
   }
 }
 
-async function restrictAsync(targetPath: string, plan: AclPlan): Promise<boolean> {
+async function restrictAsync(
+  targetPath: string,
+  plan: AclPlan,
+  options: RestrictWindowsPathOptions
+): Promise<boolean> {
   // Verify first: a path that already reads back correct needs no write at all. Re-running
   // `/reset` on a correct DACL would briefly restore the inherited (broader) one for no gain.
-  if ((await verifyAsync(plan)) === null) {
+  if (!options.freshlyCreated && (await verifyAsync(plan)) === null) {
     return true
   }
   for (const [stage, args] of [
@@ -240,13 +254,17 @@ async function verifyAsync(plan: AclPlan): Promise<string | null> {
   }
 }
 
-export function restrictWindowsPathSync(targetPath: string, isDirectory: boolean): boolean {
+export function restrictWindowsPathSync(
+  targetPath: string,
+  isDirectory: boolean,
+  options: RestrictWindowsPathOptions = {}
+): boolean {
   const plan = planFor(targetPath, isDirectory)
   if (!plan) {
     return false
   }
   // Why sync: the file must not be published until its ACL is actually restricted (read path stays async, #4901).
-  if (verifySync(plan) === null) {
+  if (!options.freshlyCreated && verifySync(plan) === null) {
     return true
   }
   for (const [stage, args] of [

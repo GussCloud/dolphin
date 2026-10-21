@@ -25,7 +25,7 @@ export type RawListeningPort = {
   port: number
   pid?: number
   processName?: string
-  /** Kernel socket identity from `lsof -F d`; a new socket on the same pid:port gets a new one. */
+  /** Kernel socket identity from `lsof -F d` (on Windows, the owner's start time); new socket, new id. */
   socketId?: string
   commandLine?: string
   cwd?: string
@@ -125,7 +125,10 @@ export function rememberListenerMetadata(ports: readonly RawListeningPort[]): vo
  */
 export function partitionListenersNeedingMetadata(
   ports: readonly RawListeningPort[],
-  options: WorkspacePortScanOptions = {}
+  options: WorkspacePortScanOptions = {},
+  // Why: netstat lists no process name, so on Windows the name is metadata and socketId carries
+  // the process-identity token instead.
+  { processNameFromMetadata = false }: { processNameFromMetadata?: boolean } = {}
 ): { hydrated: RawListeningPort[]; pidsNeedingMetadata: Set<number> } {
   metadataScanSequence += 1
   reusedListenerKeys = new Set()
@@ -145,7 +148,7 @@ export function partitionListenersNeedingMetadata(
     // Why require commandLine: a probe that returned nothing must not be cached as an answer.
     if (
       remembered?.commandLine !== undefined &&
-      remembered.processName === port.processName &&
+      (processNameFromMetadata || remembered.processName === port.processName) &&
       remembered.socketId === port.socketId &&
       metadataScanSequence - remembered.probedAtScan < METADATA_REPROBE_INTERVAL_SCANS &&
       port.pid !== undefined
@@ -169,6 +172,7 @@ export function partitionListenersNeedingMetadata(
       reusedListenerKeys.add(listenerMetadataKey(port))
       hydrated.push({
         ...port,
+        processName: port.processName ?? remembered.processName,
         commandLine: port.commandLine ?? remembered.commandLine,
         cwd: port.cwd ?? remembered.cwd
       })

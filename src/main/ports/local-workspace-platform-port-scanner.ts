@@ -1,7 +1,10 @@
 import { readFile, readdir, readlink } from 'node:fs/promises'
 import { getProcessOutputFields } from '../../shared/process-output-field-scanner'
-import { readWindowsProcessTable } from '../windows/windows-process-table'
 import { runPortScanCommand } from './port-scan-command-client'
+import {
+  loadWindowsProcessMetadata,
+  partitionWindowsListenersNeedingMetadata
+} from './local-workspace-windows-listener-metadata'
 import {
   partitionListenersNeedingMetadata,
   recallListenerMetadata,
@@ -150,11 +153,15 @@ async function scanWindowsNetstatPorts(
   if (shouldSkipMetadataCommands(spawnMs, options)) {
     return { ports, metadataAvailable: false }
   }
-  const metadata = await loadWindowsProcessMetadata(
-    new Set(ports.flatMap((p) => (p.pid ? [p.pid] : [])))
-  )
+  // Why: the same servers usually keep listening, so the detailed table read (one OpenProcess per
+  // process on the host) would re-derive command lines the last scan already has.
+  const { hydrated, pidsNeedingMetadata } = partitionWindowsListenersNeedingMetadata(ports, options)
+  if (pidsNeedingMetadata.size === 0) {
+    return { ports: hydrated, metadataAvailable: true }
+  }
+  const metadata = await loadWindowsProcessMetadata(pidsNeedingMetadata)
   return {
-    ports: ports.map((port) => ({ ...metadata.get(port.pid ?? -1), ...port })),
+    ports: hydrated.map((port) => ({ ...metadata.get(port.pid ?? -1), ...port })),
     metadataAvailable: true
   }
 }
@@ -293,32 +300,6 @@ async function loadDarwinProcessMetadata(pids: Set<number>): Promise<Map<number,
     result.set(pid, { ...result.get(pid), commandLine: match[2].trim() || undefined })
   }
 
-  return result
-}
-
-async function loadWindowsProcessMetadata(
-  pids: Set<number>
-): Promise<Map<number, ProcessMetadata>> {
-  const result = new Map<number, ProcessMetadata>()
-  if (pids.size === 0) {
-    return result
-  }
-  try {
-    // Why the native snapshot: attributing ports used to fork a powershell.exe
-    // per scan just to turn PIDs into names. That is a ~700ms cold start, a
-    // conhost window, and one more thing a Group Policy can block -- for data
-    // the panel treats as optional anyway.
-    for (const row of await readWindowsProcessTable()) {
-      if (pids.has(row.pid)) {
-        result.set(row.pid, {
-          processName: row.name,
-          commandLine: row.command || undefined
-        })
-      }
-    }
-  } catch {
-    // Process metadata is optional; port rows still render without attribution.
-  }
   return result
 }
 

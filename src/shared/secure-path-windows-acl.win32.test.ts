@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { runProcessSync } from './child-process/run-process'
 import { windowsSystem32Binary } from './child-process/windows-system-binary'
+import { writeSecureFile } from './secure-file'
 import {
   setSecurePathHardeningReporter,
   type SecurePathHardeningReport
@@ -279,6 +280,38 @@ describeOnWindows('restrictWindowsPathSync against a real filesystem', () => {
     const child = join(dir, 'child.json')
     expect(() => writeFileSync(child, '{}')).not.toThrow()
     expect(readAclEntries(child).every((entry) => entry.includes('(I)'))).toBe(true)
+  })
+
+  it('still purges planted rules when the opening verify is skipped for a fresh file', () => {
+    const file = join(root, 'fresh.json')
+    writeFileSync(file, '{"token":"secret"}')
+    expect(icacls(file, '/grant', `*${EVERYONE_SID}:(R)`).code).toBe(0)
+
+    expect(restrictWindowsPathSync(file, false, { freshlyCreated: true })).toBe(true)
+
+    const after = readAclEntries(file)
+    expect(after, listed(after)).toHaveLength(3)
+    expect(after.every((entry) => entry.endsWith(':(F)'))).toBe(true)
+    expect(after.some((entry) => entry.startsWith('Everyone:'))).toBe(false)
+  })
+
+  /**
+   * writeSecureFile restricts only the staged file and relies on the rename carrying its DACL
+   * onto the published name — including over an existing file whose own DACL is broader.
+   */
+  it('publishes a credential that keeps the staged DACL across the rename', () => {
+    const dir = join(root, 'publish')
+    mkdirSync(dir)
+    const target = join(dir, 'credential.json')
+    writeFileSync(target, '{}')
+    expect(icacls(target, '/grant', `*${EVERYONE_SID}:(F)`).code).toBe(0)
+
+    expect(writeSecureFile(target, '{"token":"secret"}')).toBe(true)
+
+    const after = readAclEntries(target)
+    expect(after, listed(after)).toHaveLength(3)
+    expect(after.every((entry) => entry.endsWith(':(F)') && !entry.includes('(I)'))).toBe(true)
+    expect(after.some((entry) => entry.startsWith('Everyone:'))).toBe(false)
   })
 
   it('is idempotent: a second harden leaves the same DACL', () => {

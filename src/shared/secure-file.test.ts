@@ -1,5 +1,6 @@
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -13,6 +14,7 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { runProcess, runProcessSync } from './child-process/run-process'
 import { mayAttemptHardening } from './secure-path-hardening-retry-budget'
+import { restrictWindowsPathSync } from './secure-path-windows-acl'
 import {
   __getSecureFileHardeningCacheStateForTests,
   __resetSecureFileHardenedPathsForTests,
@@ -570,26 +572,105 @@ describe('hardenSecurePath', () => {
     expect(getHardenAclCalls().map(getAclTarget)).toEqual([userDataPath, targetPath, targetPath])
   })
 
-  it('keeps post-rename target hardening on every write while caching the directory', () => {
+  it('restricts the staged file of every write synchronously while caching the directory', () => {
     Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
     const userDataPath = mkdtempSync(join(tmpdir(), 'dolphin-secure-file-'))
     tempDirs.push(userDataPath)
     const targetPath = join(userDataPath, 'secret.json')
 
-    writeSecureFile(targetPath, 'first')
-    writeSecureFile(targetPath, 'second')
+    expect(writeSecureFile(targetPath, 'first')).toBe(true)
+    expect(writeSecureFile(targetPath, 'second')).toBe(true)
 
     // The DIRECTORY is hardened async + path-cached: exactly once across both writes.
     const asyncTargets = getHardenAclCalls().map(getAclTarget)
     expect(asyncTargets).toEqual([userDataPath])
 
-    // The credential FILES (tmpFile + renamed target) are hardened SYNCHRONOUSLY on each write.
-    // write 1: tmpFile(1) + targetFile(1) = 2; write 2: tmpFile(1) + targetFile(1) = 2; total 4.
+    // One synchronous harden per write, on the staged file: the rename carries its DACL.
     const syncTargets = getSyncHardenAclCalls().map(getAclTarget)
-    expect(syncTargets).toHaveLength(4)
-    expect(syncTargets.filter((entry) => entry === targetPath)).toHaveLength(2)
-    // No directory should be hardened via the synchronous path.
-    expect(syncTargets.filter((entry) => entry === userDataPath)).toHaveLength(0)
+    expect(syncTargets).toHaveLength(2)
+    expect(new Set(syncTargets).size).toBe(2)
+    for (const entry of syncTargets) {
+      expect(entry).toMatch(/secret\.json\.\d+\.\d+\.[0-9a-f]+\.tmp$/)
+    }
+    expect(__getSecureFileHardeningCacheStateForTests().paths.paths).toContain(targetPath)
+  })
+
+  // Perf guard: this lane blocks the main thread, so each spawn counts. A fresh staged file's
+  // inherited DACL never verifies (skip the opening /save), and the rename keeps the verified DACL
+  // (skip the published pass) — leaving reset, grant and exactly one verify, all before publishing.
+  it('spends exactly three synchronous icacls spawns per write, all before the file is published', () => {
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
+    const userDataPath = mkdtempSync(join(tmpdir(), 'dolphin-secure-file-'))
+    tempDirs.push(userDataPath)
+    const targetPath = join(userDataPath, 'secret.json')
+    const observed: { verb: string; path: string; published: boolean; staged: string }[] = []
+    vi.mocked(runProcessSync).mockImplementation((spec) => {
+      if (spec.program === 'C:\\Windows\\System32\\whoami.exe') {
+        return { ...OK, stdout: `"USER","${USER_SID}"` }
+      }
+      const path = spec.args?.[0] ?? ''
+      observed.push({
+        verb: spec.args?.find((arg) => ['/reset', '/inheritance:r', '/save'].includes(arg)) ?? '',
+        path,
+        published: existsSync(targetPath),
+        staged: readFileSync(path, 'utf8')
+      })
+      return fakeIcacls(spec)
+    })
+
+    expect(writeSecureFile(targetPath, 'credential')).toBe(true)
+
+    expect(observed.map((entry) => entry.verb)).toEqual(['/reset', '/inheritance:r', '/save'])
+    expect(new Set(observed.map((entry) => entry.path)).size).toBe(1)
+    expect(observed[0]!.path).not.toBe(targetPath)
+    // The secret sits only in the staged file until its restriction has been verified.
+    expect(observed.every((entry) => !entry.published && entry.staged === 'credential')).toBe(true)
+    expect(readFileSync(targetPath, 'utf8')).toBe('credential')
+  })
+
+  it('re-restricts the published path when the staged restriction fails', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
+    const userDataPath = mkdtempSync(join(tmpdir(), 'dolphin-secure-file-'))
+    tempDirs.push(userDataPath)
+    const targetPath = join(userDataPath, 'secret.json')
+    vi.mocked(runProcessSync).mockImplementation((spec) => {
+      if (spec.program === 'C:\\Windows\\System32\\whoami.exe') {
+        return { ...OK, stdout: `"USER","${USER_SID}"` }
+      }
+      const failsOnStagedFile = spec.args?.[0]?.endsWith('.tmp') && spec.args.includes('/grant:r')
+      return failsOnStagedFile ? { ...OK, code: 5, stderr: 'Access is denied.' } : fakeIcacls(spec)
+    })
+
+    // Still false: the secret was published before any restriction held.
+    expect(writeSecureFile(targetPath, 'credential')).toBe(false)
+
+    expect(getSyncHardenAclCalls().map(getAclTarget)).toEqual([
+      expect.stringMatching(/\.tmp$/),
+      targetPath
+    ])
+    expect(__getSecureFileHardeningCacheStateForTests().paths.paths).toContain(targetPath)
+    warn.mockRestore()
+  })
+
+  it('skips only the opening verify for a freshly created file, never the closing one', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const target = 'C:\\Users\\me\\.dolphin\\secret.json.tmp'
+    forcedBadSddl.set(target, 'D:PAI(A;;FA;;;BA)(A;;FA;;;SY)(A;;FA;;;WD)')
+
+    expect(restrictWindowsPathSync(target, false, { freshlyCreated: true })).toBe(false)
+
+    const verbs = vi
+      .mocked(runProcessSync)
+      .mock.calls.map(([spec]) => spec)
+      .filter((spec) => spec.program.endsWith('icacls.exe'))
+      .map((spec) => spec.args?.find((arg) => ['/reset', '/grant:r', '/save'].includes(arg)))
+    expect(verbs).toEqual(['/reset', '/grant:r', '/save'])
+    expect(warn).toHaveBeenCalledWith(
+      '[secure-path.windows-acl] failed to restrict path',
+      expect.objectContaining({ stage: 'verify', detail: expect.stringContaining('S-1-1-0') })
+    )
+    warn.mockRestore()
   })
 
   it('async writes restrict the staged file before publishing it, without a sync icacls spawn', async () => {
@@ -601,10 +682,17 @@ describe('hardenSecurePath', () => {
     await expect(writeSecureJsonFileAsync(targetPath, ['entry'])).resolves.toBe(true)
 
     expect(getSyncHardenAclCalls()).toHaveLength(0)
-    const [dirTarget, stagedTarget, publishedTarget] = getHardenAclCalls().map(getAclTarget)
+    // The rename carries the staged DACL, so the published path needs no pass of its own.
+    const [dirTarget, stagedTarget, ...rest] = getHardenAclCalls().map(getAclTarget)
     expect(dirTarget).toBe(userDataPath)
     expect(stagedTarget).toMatch(/dismissals\.json\.\d+\.\d+\.[0-9a-f]+\.tmp$/)
-    expect(publishedTarget).toBe(targetPath)
+    expect(rest).toEqual([])
+    const stagedVerbs = vi
+      .mocked(runProcess)
+      .mock.calls.map(([spec]) => spec.args ?? [])
+      .filter((args) => args[0] === stagedTarget)
+      .map((args) => args.find((arg) => ['/reset', '/grant:r', '/save'].includes(arg)))
+    expect(stagedVerbs).toEqual(['/reset', '/grant:r', '/save'])
     expect(JSON.parse(readFileSync(targetPath, 'utf8'))).toEqual(['entry'])
     expect(readdirSync(userDataPath)).toEqual(['dismissals.json'])
   })
@@ -713,10 +801,9 @@ describe('hardenSecurePath', () => {
 
     // Directory: async only.
     expect(getHardenAclCalls().map(getAclTarget)).toEqual([userDataPath])
-    // File (tmpFile + renamed target): synchronous only — no async file ACL window.
+    // File (the staged tmpFile, whose DACL the rename carries): synchronous only — no async window.
     const syncTargets = getSyncHardenAclCalls().map(getAclTarget)
-    expect(syncTargets).toContain(targetPath)
-    expect(syncTargets.filter((entry) => entry === userDataPath)).toHaveLength(0)
+    expect(syncTargets).toEqual([expect.stringMatching(/secret\.json\..*\.tmp$/)])
     // The final published target's ACL must have been applied via the synchronous path.
     expect(getHardenAclCalls().map(getAclTarget)).not.toContain(targetPath)
   })
@@ -743,19 +830,19 @@ describe('hardenSecurePath', () => {
       .filter((entry) => entry === targetPath)
     expect(firstWriteTargetCalls).toHaveLength(1)
 
+    expect(__getSecureFileHardeningCacheStateForTests().paths.paths).not.toContain(targetPath)
+
     // Second write: ACL apply now succeeds. Because the failed apply was NOT cached, the
-    // target file is hardened again rather than skipped.
+    // credential is restricted again (through its staged file) rather than skipped.
     vi.mocked(runProcessSync).mockImplementation((spec) => {
       if (spec.program === 'C:\\Windows\\System32\\whoami.exe') {
         return { ...OK, stdout: '"USER","S-1-5-21-1000"' }
       }
-      return OK
+      return fakeIcacls(spec)
     })
-    writeSecureFile(targetPath, 'second')
-    const allTargetCalls = getSyncHardenAclCalls()
-      .map(getAclTarget)
-      .filter((entry) => entry === targetPath)
-    expect(allTargetCalls).toHaveLength(2)
+    expect(writeSecureFile(targetPath, 'second')).toBe(true)
+    expect(getSyncHardenAclCalls().map(getAclTarget)).toHaveLength(3)
+    expect(__getSecureFileHardeningCacheStateForTests().paths.paths).toContain(targetPath)
   })
 
   // Nit #2 (review) / hardening: the process-lifetime directory cache hardens a directory
@@ -836,13 +923,14 @@ describe('hardenSecurePath', () => {
 })
 
 /**
- * Every harden opens with a `/save` verify; one that has work to do then runs `/reset`, `/grant:r`
- * and a closing `/save`. Counting only the *opening* verify keeps "one harden = one entry"
- * regardless of which of the two shapes it took.
+ * A harden opens with a `/save` verify, then — when it has work to do — runs `/reset`, `/grant:r`
+ * and a closing `/save`; a freshly created file skips the opening verify and starts at `/reset`.
+ * Counting only the opening step keeps "one harden = one entry" whichever shape it took.
  */
 function hardenInitiations(specs: FakeSpec[]): { args?: readonly string[] }[] {
   const initiations: { args?: readonly string[] }[] = []
   const awaitingClosingVerify = new Set<string>()
+  const openedByVerify = new Set<string>()
   for (const spec of specs) {
     if (!spec.program.endsWith('icacls.exe')) {
       continue
@@ -850,12 +938,16 @@ function hardenInitiations(specs: FakeSpec[]): { args?: readonly string[] }[] {
     const path = spec.args?.[0] ?? ''
     if (spec.args?.includes('/grant:r')) {
       awaitingClosingVerify.add(path)
-    } else if (spec.args?.includes('/save')) {
-      if (awaitingClosingVerify.has(path)) {
-        awaitingClosingVerify.delete(path)
-      } else {
+    } else if (spec.args?.includes('/reset')) {
+      if (!openedByVerify.delete(path)) {
         initiations.push(spec)
       }
+    } else if (spec.args?.includes('/save')) {
+      if (awaitingClosingVerify.delete(path)) {
+        continue
+      }
+      initiations.push(spec)
+      openedByVerify.add(path)
     }
   }
   return initiations

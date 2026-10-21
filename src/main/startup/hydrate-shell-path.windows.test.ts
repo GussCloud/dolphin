@@ -262,6 +262,24 @@ describe('Windows shell PATH hydration', () => {
     expect(spawner).toHaveBeenCalledOnce()
   })
 
+  it.each([
+    [true, 'C:\\cached-profile;C:\\Windows'],
+    [false, 'C:\\Windows']
+  ])('keepAppliedPath=%s controls the PATH visible during a probe', async (keep, during) => {
+    process.env.PATH = 'C:\\Windows'
+    mergePathSegments(['C:\\cached-profile'])
+    const probe = deferred<HydrationResult>()
+    const spawner = vi.fn<HydrationSpawner>(() => probe.promise)
+
+    const ready = hydrateShellPath({ spawner, force: true, keepAppliedPath: keep })
+    await vi.waitFor(() => expect(spawner).toHaveBeenCalledOnce())
+    expect(process.env.PATH).toBe(during)
+
+    probe.resolve({ segments: ['C:\\fresh-profile'], ok: true, failureReason: 'none' })
+    mergePathSegments((await ready).segments)
+    expect(process.env.PATH).toBe('C:\\fresh-profile;C:\\Windows')
+  })
+
   it('deduplicates PATH entries case-insensitively', () => {
     process.env.PATH = 'C:\\Tools;C:\\Windows'
 

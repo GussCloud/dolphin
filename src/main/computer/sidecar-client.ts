@@ -12,6 +12,7 @@ import { normalizeComputerActionResult } from './computer-action-verification-no
 import { isComputerSidecarDiagnostic, logComputerDiagnostic } from './computer-sidecar-diagnostics'
 import { validateComputerSidecarPasteText } from './computer-sidecar-paste-validation'
 import { RuntimeClientError } from './runtime-client-error'
+import { withInheritedCompileCache } from '../startup/child-compile-cache'
 
 type ComputerSidecarMethod =
   | 'capabilities'
@@ -214,11 +215,11 @@ class ComputerSidecarProcess {
 
     const child = fork(this.entryPath, [], {
       stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-      env: {
+      env: withInheritedCompileCache({
         ...process.env,
         ELECTRON_RUN_AS_NODE: '1',
         DOLPHIN_COMPUTER_SIDECAR: '1'
-      },
+      }),
       ...(process.platform === 'win32' ? { windowsHide: true } : {})
     })
 

@@ -1,6 +1,9 @@
 import { computerProviderUnavailableMessage } from './computer-provider-unavailable-message'
 import { currentComputerProvider, shutdownComputerProviders } from './computer-provider-lifecycle'
 import { RuntimeClientError } from './runtime-client-error'
+import { adoptInheritedCompileCache } from '../startup/child-compile-cache'
+
+adoptInheritedCompileCache()
 
 type SidecarRequest = {
   id: number
