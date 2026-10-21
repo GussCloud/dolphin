@@ -1,6 +1,7 @@
 import type { ExecutionHostId } from './execution-host'
 import type { GitHubProjectSettings } from './github/project-types'
 import type { VoiceSettings } from './speech-types'
+import type { AgentInteractionSettings } from './agent-interaction-settings'
 import type { AiVaultSearchSettings } from './ai-vault-search-settings'
 import type { GitLabProjectSettings } from './gitlab-types'
 import type { TaskProvider } from './task-providers'
@@ -312,6 +313,8 @@ export type GlobalSettings = {
   /** Bot-marked comment-author logins (stored lowercased); escape hatch for review bots on regular accounts that defeat provider metadata/heuristics. */
   prBotAuthorOverrides: string[]
   notifications: NotificationSettings
+  /** Floating avatar + per-event sound when an agent needs the user or finishes. */
+  agentInteraction: AgentInteractionSettings
   /** Countdown after a Claude agent goes idle showing time left before the prompt cache expires. */
   promptCacheTimerEnabled: boolean
   /** Prompt-cache TTL (ms); only 300000 (5 min standard) or 3600000 (1 hr, extended-TTL plans). */

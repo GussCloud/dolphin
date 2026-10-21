@@ -1,6 +1,7 @@
 import type { GlobalSettings } from './global-settings-types'
 import type { NotificationSettings } from './notification-settings-types'
 import type { VoiceSettings } from './speech-types'
+import { getDefaultAgentInteractionSettings } from './agent-interaction-settings'
 import { DEFAULT_TERMINAL_FONT_WEIGHT, DEFAULT_TERMINAL_FONT_WEIGHT_BOLD } from './terminal-fonts'
 import { getDefaultTerminalQuickCommands } from './terminal-quick-commands'
 import { TASK_PROVIDERS } from './task-providers'
@@ -168,6 +169,7 @@ export function buildDefaultSettings(args: {
     floatingTerminalCwdMigratedToAppWorkspace: true,
     floatingTerminalTriggerLocation: 'floating-button',
     notifications: args.notifications,
+    agentInteraction: getDefaultAgentInteractionSettings(),
     diffDefaultView: 'inline',
     diffWordWrap: false,
     diffShowWhitespace: false,
