@@ -1,10 +1,11 @@
 import type { WslResult } from './wsl-runner'
 
 type ExecFileCallback = (error: Error | null, stdout: string) => void
+type ExecFileDoubleOptions = { readonly windowsHide?: boolean }
 type ExecFileDouble = (
   command: string,
   args: string[],
-  options: object,
+  options: ExecFileDoubleOptions,
   callback: ExecFileCallback
 ) => unknown
 
