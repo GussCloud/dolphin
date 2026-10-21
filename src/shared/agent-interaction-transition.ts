@@ -17,7 +17,7 @@ export type AgentInteractionStatusRow = Pick<
 >
 
 export type AgentInteractionTransitionOptions = {
-  /** The `agentAutoRetry` preference; `undefined` means its default (on). */
+  /** `claudeAutoRetryOnConnectionLoss`; `undefined` means its default (on). */
   autoRetryEnabled?: boolean
 }
 

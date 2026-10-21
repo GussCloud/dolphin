@@ -13,10 +13,13 @@
 import { playDesktopNotificationSound } from '@/lib/desktop-notification-sound'
 import { showBlockedNotificationFallbackToast } from '@/lib/blocked-notification-fallback'
 import type { NotificationDispatchRequest } from '../../../shared/notification-settings-types'
+import type { AgentInteractionSettings } from '../../../shared/agent-interaction-settings'
+import { isNotificationSoundOwnedByAgentInteraction } from '../../../shared/agent-interaction-notification-sound'
 
 export type AgentAttentionNotificationSound = {
   customSoundId: string
   customSoundVolume: number | null
+  agentInteraction?: AgentInteractionSettings
 }
 
 export function deliverAgentAttentionNotification(
@@ -27,7 +30,10 @@ export function deliverAgentAttentionNotification(
     .dispatch(request)
     .then((result) => {
       if (result.delivered) {
-        void playDesktopNotificationSound(sound.customSoundId, sound.customSoundVolume)
+        // Why: the floating avatar plays this event's own sound; a second one would overlap it.
+        if (!isNotificationSoundOwnedByAgentInteraction(sound.agentInteraction, request)) {
+          void playDesktopNotificationSound(sound.customSoundId, sound.customSoundVolume)
+        }
         return
       }
       // Why: macOS is silently swallowing notifications (permission off or prompt unanswered) —
@@ -44,9 +50,11 @@ export function deliverAgentAttentionNotification(
 /** The sound preferences one delivery reads, defaulted the way the dispatch path always has. */
 export function readAgentAttentionNotificationSound(settings: {
   notifications?: { customSoundId?: string; customSoundVolume?: number | null } | undefined
+  agentInteraction?: AgentInteractionSettings | undefined
 }): AgentAttentionNotificationSound {
   return {
     customSoundId: settings.notifications?.customSoundId ?? 'system',
-    customSoundVolume: settings.notifications?.customSoundVolume ?? null
+    customSoundVolume: settings.notifications?.customSoundVolume ?? null,
+    ...(settings.agentInteraction ? { agentInteraction: settings.agentInteraction } : {})
   }
 }

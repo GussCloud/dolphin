@@ -49,6 +49,7 @@ import { preflightApi } from './api/preflight-bridge'
 import { notificationsApi } from './api/notifications-bridge'
 import { onboardingApi } from './api/onboarding-bridge'
 import { dashboardApi } from './api/dashboard-bridge'
+import { agentInteractionAvatarApi } from './api/agent-interaction-avatar-bridge'
 import { terminalPreviewApi } from './api/terminal-preview-bridge'
 import { macosTccPromptsApi } from './api/macos-tcc-prompts-bridge'
 import { developerPermissionsApi } from './api/developer-permissions-bridge'
@@ -153,6 +154,7 @@ const api = {
   notifications: notificationsApi,
   onboarding: onboardingApi,
   dashboard: dashboardApi,
+  agentInteractionAvatar: agentInteractionAvatarApi,
   terminalPreview: terminalPreviewApi,
   macosTccPrompts: macosTccPromptsApi,
   developerPermissions: developerPermissionsApi,

@@ -1,3 +1,4 @@
+import { isNotificationSoundOwnedByAgentInteraction } from '../../shared/agent-interaction-notification-sound'
 import { BrowserWindow, Notification, ipcMain, powerMonitor } from 'electron'
 import { readDesktopAwayState } from '../notifications/desktop-away-state'
 import type { Store } from '../persistence'
@@ -142,7 +143,13 @@ export function registerNotificationHandlers(store: Store, runtime?: DolphinRunt
       : null,
     readAuthorizationStatus: readNotificationAuthorizationStatus,
     recordDeliveryOutcome: recordNotificationDeliveryOutcome,
-    deliverNative: deliverNativeNotification,
+    deliverNative: (request, options, settings) =>
+      deliverNativeNotification(request, options, settings, {
+        soundOwnedElsewhere: isNotificationSoundOwnedByAgentInteraction(
+          store.getSettings().agentInteraction,
+          request
+        )
+      }),
     platform: process.platform,
     now: () => Date.now(),
     recordAnnounced: (request) => {
