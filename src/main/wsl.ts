@@ -1,5 +1,5 @@
 import { execFile, execFileSync } from 'node:child_process'
-import { parseWslUncPath, toWindowsWslPath } from '../shared/wsl-paths'
+import { parseWslUncPath } from '../shared/wsl-paths'
 import { filterUserWslDistros, parseWslDistros } from './wsl-distro-list-output'
 import { wslDistroListRetryDelayMs } from './wsl-distro-retry'
 import {
@@ -16,15 +16,22 @@ import {
   getWslDirectoryProbeArgs,
   parseWslDirectoryProbeOutput
 } from './wsl-directory-probe-command'
-import { clearWslHomeCache, getCachedWslHome, rememberWslHome } from './wsl-home-cache'
+import {
+  _resetWslHomeProbesForTests,
+  getWslHomeAsync,
+  readWslHomeSync,
+  WSL_HOME_GUEST_ARGV,
+  WSL_HOME_PROBE_TIMEOUT_MS
+} from './wsl-home-probe'
+import { buildWslExecArgs } from '../shared/wsl-login-shell-command'
 export { hasCachedWslHome } from './wsl-home-cache'
+export { getWslHomeAsync } from './wsl-home-probe'
 // Why re-exported rather than defined here: the relay bundle needs the path
 // conversion without this module's distro-probing subprocess graph.
 export { toLinuxPath, toWindowsWslPath } from '../shared/wsl-paths'
 export {
   getCachedWslAvailability,
   hasCachedWslAvailability,
-  isWslAvailable,
   isWslAvailableAsync
 } from './wsl-availability'
 export type WslPathInfo = {
@@ -94,7 +101,6 @@ export function wslUncDirectoryExistsAsync(uncPath: string): Promise<boolean | n
   })
 }
 
-const wslHomeProbeCache = new Map<string, Promise<string | null>>()
 let wslDistroCache: string[] | null = null
 let wslDistroListInFlight: Promise<string[]> | null = null
 // Why: a wsl.exe failure must stay retryable (a transient error would
@@ -165,6 +171,13 @@ export function listWslDistros(): string[] {
   }
 
   if (Date.now() < wslDistroListRetryAfterMs) {
+    return wslDistroCache ?? []
+  }
+
+  // Why: only a cold cache may block the main thread; once a probe has answered or failed,
+  // sync callers keep the last answer and the refresh runs off-thread.
+  if (wslDistroCache !== null || wslDistroListEmptyStreak > 0) {
+    void listWslDistrosAsync()
     return wslDistroCache ?? []
   }
 
@@ -265,65 +278,21 @@ export function getDefaultWslDistro(): string | null {
 
 /**
  * Get the home directory for a WSL distro, returned as a Windows UNC path.
- * Result is cached per distro for the process lifetime.
  *
  * Why: worktrees for WSL repos are created under ~/dolphin/workspaces inside
  * the WSL filesystem, mirroring the Windows workspace layout. We need the
  * WSL user's $HOME to compute that path.
  */
 export function getWslHome(distro: string): string | null {
-  const cachedHome = getCachedWslHome(distro)
-  if (cachedHome !== undefined) {
-    return cachedHome
-  }
-
-  try {
-    const home = execFileSync('wsl.exe', ['-d', distro, '--exec', 'bash', '-c', 'echo $HOME'], {
+  // Why here: the runner is async-only, so the one cold sync probe lives in this allowlisted file.
+  return readWslHomeSync(distro, () =>
+    execFileSync('wsl.exe', buildWslExecArgs(distro, [...WSL_HOME_GUEST_ARGV]), {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
-      timeout: 5000,
+      timeout: WSL_HOME_PROBE_TIMEOUT_MS,
       cwd: resolveWslInteropSpawnCwd()
-    }).trim()
-
-    if (!home || !home.startsWith('/')) {
-      return null
-    }
-
-    const uncPath = toWindowsWslPath(home, distro)
-    return rememberWslHome(distro, uncPath)
-  } catch {
-    return null
-  }
-}
-
-/** Pure cache lookup — never probes. */
-export async function getWslHomeAsync(distro: string): Promise<string | null> {
-  const cachedHome = getCachedWslHome(distro)
-  if (cachedHome !== undefined) {
-    return cachedHome
-  }
-  const inflight = wslHomeProbeCache.get(distro)
-  if (inflight) {
-    return inflight
-  }
-
-  const probe = execFileUtf8('wsl.exe', ['-d', distro, '--exec', 'bash', '-c', 'echo $HOME'])
-    .then((output) => {
-      const home = output.trim()
-      if (!home || !home.startsWith('/')) {
-        return null
-      }
-      const uncPath = toWindowsWslPath(home, distro)
-      return rememberWslHome(distro, uncPath)
     })
-    .catch(() => null)
-    .finally(() => {
-      if (wslHomeProbeCache.get(distro) === probe) {
-        wslHomeProbeCache.delete(distro)
-      }
-    })
-  wslHomeProbeCache.set(distro, probe)
-  return probe
+  )
 }
 
 /** UNC home roots for distros that are running at discovery time. */
@@ -346,8 +315,7 @@ function resetWslDistroListState(): void {
 }
 
 export function _resetWslCachesForTests(): void {
-  clearWslHomeCache()
-  wslHomeProbeCache.clear()
+  _resetWslHomeProbesForTests()
   resetWslDistroListState()
   _resetRunningWslDistroCacheForTests()
   _resetWslAvailabilityCacheForTests()

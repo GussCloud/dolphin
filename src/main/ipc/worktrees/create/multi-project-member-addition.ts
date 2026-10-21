@@ -9,7 +9,8 @@ import {
   computeWorkspaceRoot,
   getWorktreePathSettings,
   hasRepoWorktreeBasePath,
-  sanitizeWorktreeName
+  sanitizeWorktreeName,
+  warmWorkspaceRootWslHomes
 } from '../../worktree-logic'
 import { createLocalWorktree } from '../../worktree-remote'
 import type { WorktreeIpcContext } from '../worktree-ipc-context'
@@ -34,11 +35,18 @@ export async function addMultiProjectWorkspaceMember(
       : []
   })
   const settings = store.getSettings()
+  const repos = store.getRepos()
+  // Why: the planner resolves roots synchronously; probe WSL homes off-thread first.
+  await warmWorkspaceRootWslHomes(
+    repos
+      .filter((repo) => repo.id === args.repoId)
+      .map((repo) => ({ repoPath: repo.path, settings: getWorktreePathSettings(repo, settings) }))
+  )
   const member = planMultiProjectMemberAddition({
     containerPath: workspace.folderPath,
     repoId: args.repoId,
     existingMembers,
-    repos: store.getRepos(),
+    repos,
     resolveWorkspaceRoot: (repo) =>
       computeWorkspaceRoot(repo.path, getWorktreePathSettings(repo, settings)),
     hasPinnedWorktreeLocation: (repo) =>
