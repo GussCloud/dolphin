@@ -51,4 +51,25 @@ describe('wslconfig ini document', () => {
     const next = setWslConfigValue(parseWslConfigDocument(''), 'experimental', 'sparseVhd', 'true')
     expect(serializeWslConfigDocument(next)).toBe('[experimental]\nsparseVhd=true\n')
   })
+
+  it('keeps indentation and an inline comment when rewriting a value', () => {
+    const next = setWslConfigValue(
+      parseWslConfigDocument('[wsl2]\n  memory=48GB # docker\n'),
+      'wsl2',
+      'memory',
+      '16GB'
+    )
+    expect(serializeWslConfigDocument(next)).toBe('[wsl2]\n  memory=16GB # docker\n')
+  })
+
+  it('reads and edits the last value across repeated sections', () => {
+    const document = parseWslConfigDocument(
+      '[wsl2]\nmemory=8GB\n[boot]\nsystemd=true\n[wsl2]\nmemory=48GB\n'
+    )
+    expect(readWslConfigValue(document, 'wsl2', 'memory')).toBe('48GB')
+    const next = setWslConfigValue(document, 'wsl2', 'swap', '0')
+    expect(serializeWslConfigDocument(next)).toBe(
+      '[wsl2]\nmemory=8GB\n[boot]\nsystemd=true\n[wsl2]\nmemory=48GB\nswap=0\n'
+    )
+  })
 })

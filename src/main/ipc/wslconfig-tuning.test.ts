@@ -3,14 +3,19 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type * as NodeOs from 'node:os'
+import type * as DurableFileWrite from '../durable-file-write'
 
 const GB = 1024 ** 3
 
-const { handleMock, removeHandlerMock, homedirMock } = vi.hoisted(() => ({
-  handleMock: vi.fn(),
-  removeHandlerMock: vi.fn(),
-  homedirMock: vi.fn<() => string>()
-}))
+const { handleMock, removeHandlerMock, homedirMock, beforeDurableWrite } = vi.hoisted(() => {
+  const hook: { run: (() => void) | null } = { run: null }
+  return {
+    handleMock: vi.fn(),
+    removeHandlerMock: vi.fn(),
+    homedirMock: vi.fn<() => string>(),
+    beforeDurableWrite: hook
+  }
+})
 
 vi.mock('electron', () => ({
   ipcMain: { handle: handleMock, removeHandler: removeHandlerMock }
@@ -19,6 +24,17 @@ vi.mock('electron', () => ({
 vi.mock('node:os', async (importOriginal) => {
   const actual = await importOriginal<typeof NodeOs>()
   return { ...actual, homedir: homedirMock, totalmem: () => 32 * GB }
+})
+
+vi.mock('../durable-file-write', async (importOriginal) => {
+  const actual = await importOriginal<typeof DurableFileWrite>()
+  return {
+    ...actual,
+    writeFileDurableIfCurrent: (...args: Parameters<typeof actual.writeFileDurableIfCurrent>) => {
+      beforeDurableWrite.run?.()
+      return actual.writeFileDurableIfCurrent(...args)
+    }
+  }
 })
 
 import {
@@ -43,6 +59,7 @@ beforeEach(() => {
 afterEach(() => {
   setPlatform(originalPlatform)
   rmSync(root, { recursive: true, force: true })
+  beforeDurableWrite.run = null
   vi.clearAllMocks()
 })
 
@@ -89,5 +106,24 @@ describe('wslConfigTuning handlers', () => {
     writeFileSync(path, Buffer.from('\uFEFF[wsl2]\n', 'utf16le'))
     expect(await analyzeWslConfig()).toEqual({ state: 'unreadable', configPath: path })
     expect(await applyWslConfig(['sparse-vhd'])).toMatchObject({ ok: false, reason: 'unreadable' })
+  })
+
+  it('keeps the first backup across repeated applies', async () => {
+    const path = join(root, '.wslconfig')
+    writeFileSync(path, '[wsl2]\nmemory=30GB\n', 'utf-8')
+    await applyWslConfig(['memory-cap'])
+    await applyWslConfig(['sparse-vhd'])
+    expect(readFileSync(`${path}.dolphin-backup`, 'utf-8')).toBe('[wsl2]\nmemory=30GB\n')
+  })
+
+  it('does not overwrite a save made between the read and the write', async () => {
+    const path = join(root, '.wslconfig')
+    writeFileSync(path, '[wsl2]\nmemory=30GB\n', 'utf-8')
+    beforeDurableWrite.run = () => writeFileSync(path, '[wsl2]\nmemory=20GB\n', 'utf-8')
+    expect(await applyWslConfig(['memory-cap'])).toMatchObject({
+      ok: false,
+      reason: 'write-failed'
+    })
+    expect(readFileSync(path, 'utf-8')).toBe('[wsl2]\nmemory=20GB\n')
   })
 })

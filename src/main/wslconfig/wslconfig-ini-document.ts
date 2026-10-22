@@ -45,13 +45,11 @@ function locateKey(document: WslConfigDocument, section: string, key: string): K
   let lastContentLine = -1
   let keyLine: number | null = null
   let found = false
+  // Why: a hand-merged file can repeat a section; WSL reads every block, so scan them all.
   for (let index = 0; index < document.lines.length; index += 1) {
     const line = document.lines[index]
     const name = sectionNameAt(line)
     if (name !== null) {
-      if (inSection) {
-        break
-      }
       inSection = name === wanted
       if (inSection) {
         found = true
@@ -95,7 +93,10 @@ export function setWslConfigValue(
   const entry = `${key}=${value}`
   const location = locateKey(document, section, key)
   if (location && location.keyLine !== null) {
-    lines[location.keyLine] = entry
+    const current = lines[location.keyLine]
+    const indent = /^\s*/.exec(current)?.[0] ?? ''
+    const comment = /\s[#;].*$/.exec(current.slice(current.indexOf('=')))?.[0] ?? ''
+    lines[location.keyLine] = `${indent}${entry}${comment}`
   } else if (location) {
     lines.splice(location.sectionEnd + 1, 0, entry)
   } else {

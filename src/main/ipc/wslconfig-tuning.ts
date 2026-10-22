@@ -1,8 +1,13 @@
 import { ipcMain } from 'electron'
+import { existsSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { homedir, totalmem } from 'node:os'
 import { join } from 'node:path'
-import { copyFileDurable, durableWriteTempPath, writeFileDurable } from '../durable-file-write'
+import {
+  copyFileDurable,
+  durableWriteTempPath,
+  writeFileDurableIfCurrent
+} from '../durable-file-write'
 import {
   parseWslConfigDocument,
   serializeWslConfigDocument,
@@ -30,8 +35,22 @@ export function wslConfigPath(): string {
 }
 
 type LoadedWslConfig =
-  | { kind: 'loaded'; document: WslConfigDocument; fileExists: boolean }
+  | {
+      kind: 'loaded'
+      document: WslConfigDocument
+      fileExists: boolean
+      /** Raw file text, or null when absent; compared again right before the rename. */
+      text: string | null
+    }
   | { kind: 'unreadable' }
+
+function currentWslConfigText(path: string): string | null {
+  try {
+    return readFileSync(path, 'latin1')
+  } catch {
+    return null
+  }
+}
 
 async function loadWslConfig(path: string): Promise<LoadedWslConfig> {
   let raw: Buffer
@@ -39,7 +58,7 @@ async function loadWslConfig(path: string): Promise<LoadedWslConfig> {
     raw = await readFile(path)
   } catch (error) {
     if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
-      return { kind: 'loaded', document: parseWslConfigDocument(''), fileExists: false }
+      return { kind: 'loaded', document: parseWslConfigDocument(''), fileExists: false, text: null }
     }
     return { kind: 'unreadable' }
   }
@@ -50,7 +69,12 @@ async function loadWslConfig(path: string): Promise<LoadedWslConfig> {
     return { kind: 'unreadable' }
   }
   const text = raw.toString('utf-8').replace(/^\uFEFF/, '')
-  return { kind: 'loaded', document: parseWslConfigDocument(text), fileExists: true }
+  return {
+    kind: 'loaded',
+    document: parseWslConfigDocument(text),
+    fileExists: true,
+    text: raw.toString('latin1')
+  }
 }
 
 export async function analyzeWslConfig(): Promise<WslConfigAnalysis> {
@@ -101,12 +125,20 @@ export async function applyWslConfig(ids: unknown): Promise<WslConfigApplyResult
   }
   try {
     const backupPath = `${configPath}.dolphin-backup`
-    const backedUp = loaded.fileExists ? await copyFileDurable(configPath, backupPath) : false
-    await writeFileDurable(
+    // Why: keep the first backup so a later apply can't replace the user's original file.
+    const backedUp =
+      existsSync(backupPath) ||
+      (loaded.fileExists ? await copyFileDurable(configPath, backupPath) : false)
+    // Why: a save by an editor or WSL Settings since the re-read must win over our rewrite.
+    const written = await writeFileDurableIfCurrent(
       durableWriteTempPath(configPath),
       configPath,
-      serializeWslConfigDocument(document)
+      serializeWslConfigDocument(document),
+      () => currentWslConfigText(configPath) === loaded.text
     )
+    if (!written) {
+      return { ok: false, reason: 'write-failed', configPath }
+    }
     return { ok: true, configPath, backupPath: backedUp ? backupPath : null, appliedIds }
   } catch {
     return { ok: false, reason: 'write-failed', configPath }
