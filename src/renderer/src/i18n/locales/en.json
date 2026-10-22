@@ -19219,6 +19219,59 @@
       "open": "Open agent",
       "pending": "+{{count}}",
       "dismiss": "Dismiss"
+    },
+    "settings": {
+      "title": "Agent Integration",
+      "description": "Floating avatar and per-status sounds when an agent needs you or finishes.",
+      "enable": {
+        "title": "Enable Agent Integration",
+        "description": "Show a floating avatar in the corner of the screen and play a sound when an agent needs you or finishes, even while Dolphin is minimized."
+      },
+      "volume": "Volume",
+      "soundFor": "Sound for {{event}}",
+      "sound": {
+        "default": "Dolphin sound",
+        "custom": "Custom file",
+        "none": "No sound",
+        "change": "Change custom file",
+        "choose": "Choose custom file"
+      },
+      "preview": "Play {{event}} sound",
+      "avatar": {
+        "title": "Avatar",
+        "description": "The picture on the floating card. PNG, JPG, GIF, WebP or SVG up to 5 MB.",
+        "unreadable": "The chosen image could not be read; the Dolphin logo is shown instead.",
+        "reset": "Use Dolphin logo",
+        "choose": "Choose image"
+      },
+      "event": {
+        "needsPermission": "An agent stops to ask approval for a tool or command.",
+        "needsInput": "An agent asks you a question or waits for a decision.",
+        "taskDone": "An agent finishes its turn and is idle.",
+        "taskFailed": "A turn ends with a provider error such as a rate limit or billing problem.",
+        "taskInterrupted": "A turn is cancelled before it finishes.",
+        "retryExhausted": "Automatic retries after a lost connection gave up.",
+        "subagentAttention": "A subagent or teammate needs permission or input.",
+        "subagentDone": "A subagent or teammate finishes while the main agent keeps working.",
+        "taskStarted": "An agent starts working on a new prompt."
+      }
+    },
+    "search": {
+      "enable": "Floating avatar and sound when an agent needs you or finishes.",
+      "avatar": "Picture shown on the floating card.",
+      "sounds": "Event sounds",
+      "soundsDescription": "A different sound for each agent status, or your own audio file.",
+      "keyword": {
+        "avatar": "avatar",
+        "floating": "floating",
+        "alert": "alert",
+        "permission": "permission",
+        "image": "image",
+        "picture": "picture",
+        "sound": "sound",
+        "audio": "audio",
+        "volume": "volume"
+      }
     }
   }
 }

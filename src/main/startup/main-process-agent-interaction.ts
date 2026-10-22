@@ -16,6 +16,7 @@ export function startMainProcessAgentInteraction(store: Store): AgentInteraction
   const controller = new AgentInteractionController({
     getSettings: () => store.getSettings(),
     resolveWorkspaceLabel: (worktreeId) => resolveWorkspaceDisplayName(store, worktreeId),
+    isMainWindowFocused: () => Boolean(hasDesktopWindow() && state.mainWindow?.isFocused()),
     presenter: {
       present: ({ view, soundKind }) => {
         if (!hasDesktopWindow()) {

@@ -19191,6 +19191,59 @@
       "open": "에이전트 열기",
       "pending": "+{{count}}",
       "dismiss": "닫기"
+    },
+    "settings": {
+      "title": "에이전트 연동",
+      "description": "에이전트가 확인을 기다리거나 작업을 마치면 떠 있는 아바타와 상태별 소리로 알려줍니다.",
+      "enable": {
+        "title": "에이전트 연동 사용",
+        "description": "에이전트가 확인을 기다리거나 작업을 마치면 화면 구석에 떠 있는 아바타를 표시하고 소리를 재생합니다. Dolphin이 최소화되어 있어도 동작합니다."
+      },
+      "volume": "볼륨",
+      "soundFor": "{{event}} 소리",
+      "sound": {
+        "default": "Dolphin 소리",
+        "custom": "사용자 지정 파일",
+        "none": "소리 없음",
+        "change": "사용자 지정 파일 변경",
+        "choose": "사용자 지정 파일 선택"
+      },
+      "preview": "{{event}} 소리 재생",
+      "avatar": {
+        "title": "아바타",
+        "description": "떠 있는 카드에 표시할 이미지입니다. 최대 5MB의 PNG, JPG, GIF, WebP, SVG.",
+        "unreadable": "선택한 이미지를 읽을 수 없어 Dolphin 로고를 대신 표시합니다.",
+        "reset": "Dolphin 로고 사용",
+        "choose": "이미지 선택"
+      },
+      "event": {
+        "needsPermission": "에이전트가 도구나 명령 실행 승인을 요청하며 멈췄습니다.",
+        "needsInput": "에이전트가 질문하거나 결정을 기다리고 있습니다.",
+        "taskDone": "에이전트가 턴을 마치고 대기 중입니다.",
+        "taskFailed": "사용량 한도나 결제 문제 같은 제공자 오류로 턴이 끝났습니다.",
+        "taskInterrupted": "턴이 끝나기 전에 취소되었습니다.",
+        "retryExhausted": "연결이 끊긴 뒤 자동 재시도 횟수를 모두 사용했습니다.",
+        "subagentAttention": "하위 에이전트나 팀원이 승인 또는 답변을 기다립니다.",
+        "subagentDone": "주 에이전트가 계속 작업하는 동안 하위 에이전트나 팀원이 작업을 마쳤습니다.",
+        "taskStarted": "에이전트가 새 프롬프트로 작업을 시작했습니다."
+      }
+    },
+    "search": {
+      "enable": "에이전트가 확인을 기다리거나 작업을 마칠 때의 떠 있는 아바타와 소리.",
+      "avatar": "떠 있는 카드에 표시되는 이미지.",
+      "sounds": "이벤트 소리",
+      "soundsDescription": "에이전트 상태마다 다른 소리 또는 직접 고른 오디오 파일.",
+      "keyword": {
+        "avatar": "아바타",
+        "floating": "플로팅",
+        "alert": "알림",
+        "permission": "권한",
+        "image": "이미지",
+        "picture": "사진",
+        "sound": "소리",
+        "audio": "오디오",
+        "volume": "볼륨"
+      }
     }
   }
 }

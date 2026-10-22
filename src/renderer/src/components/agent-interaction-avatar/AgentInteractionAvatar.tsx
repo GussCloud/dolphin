@@ -7,6 +7,7 @@ import type { AgentInteractionAvatarFrame } from '../../../../shared/agent-inter
 import type { AgentInteractionCueView } from '../../../../shared/agent-interaction-cue-queue'
 import { AGENT_INTERACTION_KIND_PRESENTATION } from './agent-interaction-kind-presentation'
 import { playAgentInteractionSound } from './agent-interaction-avatar-sound'
+import { useAgentInteractionAvatarImage } from './use-agent-interaction-avatar-image'
 
 function applyFrame(
   frame: AgentInteractionAvatarFrame,
@@ -20,6 +21,18 @@ function applyFrame(
 
 export function AgentInteractionAvatar(): React.JSX.Element | null {
   const [view, setView] = useState<AgentInteractionCueView | null>(null)
+  const [avatarRevision, setAvatarRevision] = useState(0)
+  const customImage = useAgentInteractionAvatarImage(avatarRevision)
+
+  useEffect(
+    () =>
+      window.api.settings.onChanged((updates) => {
+        if ('agentInteraction' in updates) {
+          setAvatarRevision((revision) => revision + 1)
+        }
+      }),
+    []
+  )
 
   useEffect(() => {
     const api = window.api.agentInteractionAvatar
@@ -50,7 +63,7 @@ export function AgentInteractionAvatar(): React.JSX.Element | null {
           aria-label={translate('agentInteraction.avatar.open', 'Open agent')}
         >
           <span className="relative shrink-0">
-            <img src={logo} alt="" className="size-12 object-contain" />
+            <img src={customImage ?? logo} alt="" className="size-12 rounded-lg object-cover" />
             <span
               data-tone={presentation.tone}
               className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full border border-border bg-popover text-muted-foreground data-[tone=attention]:text-status-warning data-[tone=failure]:text-destructive data-[tone=success]:text-status-success"

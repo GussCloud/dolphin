@@ -36,6 +36,8 @@ export type AgentInteractionControllerDeps = {
     claudeAutoRetryOnConnectionLoss?: boolean
   }
   resolveWorkspaceLabel: (worktreeId: string) => string | null
+  /** Whether the main window has focus, so a workspace it shows is actually being looked at. */
+  isMainWindowFocused: () => boolean
   presenter: AgentInteractionPresenter
   now?: () => number
 }
@@ -80,6 +82,7 @@ export class AgentInteractionController {
   private readonly mirror = new Map<string, MirroredRow>()
   private readonly queue = new AgentInteractionCueQueue()
   private readonly now: () => number
+  private viewedWorktreeIds: ReadonlySet<string> = new Set()
 
   constructor(private readonly deps: AgentInteractionControllerDeps) {
     this.now = deps.now ?? Date.now
@@ -157,6 +160,18 @@ export class AgentInteractionController {
     }
   }
 
+  /** The main window now shows these workspaces; opening one answers the cues it raised. */
+  setViewedWorktrees(worktreeIds: readonly string[]): void {
+    this.viewedWorktreeIds = new Set(worktreeIds)
+    let changed = false
+    for (const worktreeId of worktreeIds) {
+      changed = this.queue.acknowledge({ worktreeId }) || changed
+    }
+    if (changed) {
+      this.render()
+    }
+  }
+
   onSettingsChanged(): void {
     if (!this.deps.getSettings().agentInteraction.enabled && this.queue.clear()) {
       this.render()
@@ -168,6 +183,14 @@ export class AgentInteractionController {
   }
 
   private announce(fields: Omit<AgentInteractionCue, 'createdAt' | 'workspaceLabel'>): void {
+    // Why: the user is already looking at this workspace; a corner card would only repeat it.
+    if (
+      fields.worktreeId !== undefined &&
+      this.viewedWorktreeIds.has(fields.worktreeId) &&
+      this.deps.isMainWindowFocused()
+    ) {
+      return
+    }
     const workspaceLabel = fields.worktreeId
       ? this.deps.resolveWorkspaceLabel(fields.worktreeId)
       : null

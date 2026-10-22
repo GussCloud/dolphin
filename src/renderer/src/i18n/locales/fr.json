@@ -19191,6 +19191,59 @@
       "open": "Ouvrir l'agent",
       "pending": "+{{count}}",
       "dismiss": "Ignorer"
+    },
+    "settings": {
+      "title": "Intégration des agents",
+      "description": "Avatar flottant et sons par statut quand un agent a besoin de vous ou termine.",
+      "enable": {
+        "title": "Activer l'intégration des agents",
+        "description": "Affiche un avatar flottant dans le coin de l'écran et joue un son quand un agent a besoin de vous ou termine, même quand Dolphin est réduit."
+      },
+      "volume": "Volume",
+      "soundFor": "Son pour {{event}}",
+      "sound": {
+        "default": "Son Dolphin",
+        "custom": "Fichier personnalisé",
+        "none": "Aucun son",
+        "change": "Changer le fichier personnalisé",
+        "choose": "Choisir un fichier personnalisé"
+      },
+      "preview": "Écouter le son de {{event}}",
+      "avatar": {
+        "title": "Avatar",
+        "description": "L'image de la carte flottante. PNG, JPG, GIF, WebP ou SVG jusqu'à 5 Mo.",
+        "unreadable": "L'image choisie est illisible ; le logo Dolphin est affiché à la place.",
+        "reset": "Utiliser le logo Dolphin",
+        "choose": "Choisir une image"
+      },
+      "event": {
+        "needsPermission": "Un agent s'arrête pour demander l'autorisation d'utiliser un outil ou une commande.",
+        "needsInput": "Un agent vous pose une question ou attend une décision.",
+        "taskDone": "Un agent termine son tour et devient inactif.",
+        "taskFailed": "Un tour se termine par une erreur du fournisseur, comme une limite d'usage ou un problème de facturation.",
+        "taskInterrupted": "Un tour est annulé avant la fin.",
+        "retryExhausted": "Les nouvelles tentatives automatiques après une perte de connexion ont échoué.",
+        "subagentAttention": "Un sous-agent ou coéquipier a besoin d'une autorisation ou d'une réponse.",
+        "subagentDone": "Un sous-agent ou coéquipier termine pendant que l'agent principal continue.",
+        "taskStarted": "Un agent commence à travailler sur un nouveau prompt."
+      }
+    },
+    "search": {
+      "enable": "Avatar flottant et son quand un agent a besoin de vous ou termine.",
+      "avatar": "Image affichée sur la carte flottante.",
+      "sounds": "Sons des événements",
+      "soundsDescription": "Un son différent pour chaque statut d'agent, ou votre propre fichier audio.",
+      "keyword": {
+        "avatar": "avatar",
+        "floating": "flottant",
+        "alert": "alerte",
+        "permission": "autorisation",
+        "image": "image",
+        "picture": "photo",
+        "sound": "son",
+        "audio": "audio",
+        "volume": "volume"
+      }
     }
   }
 }

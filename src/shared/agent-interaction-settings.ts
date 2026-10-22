@@ -46,6 +46,12 @@ export type AgentInteractionSettings = {
   events: Record<AgentInteractionKind, AgentInteractionEventSettings>
 }
 
+/** A partial update as `mergeAgentInteractionSettings` applies it: nested objects merge. */
+export type AgentInteractionSettingsPatch = Partial<Pick<AgentInteractionSettings, 'enabled' | 'volume'>> & {
+  avatar?: Partial<AgentInteractionAvatarSettings>
+  events?: Partial<Record<AgentInteractionKind, Partial<AgentInteractionEventSettings>>>
+}
+
 // Why off: these fire often enough to become noise; the user opts in per event.
 const EVENTS_OFF_BY_DEFAULT: ReadonlySet<AgentInteractionKind> = new Set([
   'task-interrupted',
