@@ -1160,7 +1160,9 @@
         "automationsDescription": "Agende trabalho de agente e escolha se Automações aparecem na barra lateral.",
         "shareSkillsTitle": "Compartilhar skills",
         "shareSkillsDescription": "Compartilhe seus skills com um link não listado. Qualquer pessoa que o tiver consegue instalá-los.",
-        "floatingWorkspaceWebDescription": "Abas de terminal global e markdown."
+        "floatingWorkspaceWebDescription": "Abas de terminal global e markdown.",
+        "performance": "Desempenho",
+        "performanceDescription": "Analisa esta máquina e sugere configurações que a mantêm responsiva."
       },
       "useAppMenuPaste": {
         "pasteTooLarge": "Cola é muito grande."
@@ -3733,7 +3735,9 @@
             "b8f4a2c1d0e3": "{{value0}} órfãos",
             "c7e3b1a0d9f2": "Encerrar {{value0}} terminal órfão",
             "d8f4c2b1e0a3": "Encerrar {{value0}} terminais órfãos",
-            "e9a5d3c2b1f0": "Encerrar {{value0}}?"
+            "e9a5d3c2b1f0": "Encerrar {{value0}}?",
+            "wslMemorySuggestion": "Otimizar memória do WSL ({{value0}} sugestão)",
+            "wslMemorySuggestions": "Otimizar memória do WSL ({{value0}} sugestões)"
           },
           "SshStatusSegment": {
             "3ad70e0365": "Gerenciar Hosts Remotos…",
@@ -8487,7 +8491,9 @@
           "devDescription": "Ferramentas somente dev para exercitar estados de UI.",
           "linearTitle": "Linear",
           "linearDescription": "Como Linear funciona em Dolphin, lista de verificação de configuração, skill de agente e prompts de exemplo.",
-          "tasksDescription": "Conecte provedores, instale o skill Linear e escolha o que aparece em Tarefas."
+          "tasksDescription": "Conecte provedores, instale o skill Linear e escolha o que aparece em Tarefas.",
+          "performance": "Desempenho",
+          "performanceDescription": "Analisa esta máquina e sugere configurações que a mantêm responsiva."
         },
         "SettingsFormControls": {
           "42a4d15a30": "Nenhuma fonte encontrada.",
@@ -12478,6 +12484,28 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "O PowerShell 7 está instalado e é recomendado: novos terminais PowerShell o usam."
+        },
+        "WslConfigTuningSetting": {
+          "autoMemoryReclaimReason": "Devolve ao Windows a memória de cache ociosa do WSL e do Docker, em vez de retê-la até o desligamento.",
+          "sparseVhdReason": "Novos discos do WSL devolvem ao Windows o espaço liberado. Discos existentes não são alterados.",
+          "memoryCapReason": "O limite atual ({{value0}}) permite que o WSL ocupe a maior parte dos {{value1}} GB desta máquina, deixando os apps do Windows sem memória.",
+          "unreadable": "O Dolphin não conseguiu ler {{value0}} com segurança, então não vai alterá-lo. Edite-o manualmente.",
+          "upToDate": "{{value0}} já usa as configurações de memória recomendadas.",
+          "hasSuggestions": "Alterações sugeridas para {{value0}}. Suas outras configurações e comentários são mantidos, e o arquivo atual é salvo como backup antes.",
+          "applied": "Salvo. Execute \"wsl --shutdown\" quando for conveniente para aplicar — isso encerra todas as distros e containers Docker em execução.",
+          "applyFailed": "Não foi possível atualizar o .wslconfig. Nada foi alterado.",
+          "apply": "Aplicar ao .wslconfig"
+        },
+        "performance": {
+          "search": {
+            "wslMemory": "Memória do WSL",
+            "wslMemoryDescription": "Sugere configurações do .wslconfig que devolvem ao Windows a memória ociosa do WSL e do Docker.",
+            "wslconfig": "wslconfig",
+            "wsl": "wsl",
+            "memory": "memória",
+            "docker": "docker",
+            "slow": "lento"
+          }
         }
       },
       "right": {

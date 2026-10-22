@@ -56,6 +56,7 @@ const {
   registerHostedReviewHandlersMock,
   registerExportHandlersMock,
   registerCodexConfigSyncHandlersMock,
+  registerWslConfigTuningHandlersMock,
   registerOnboardingHandlersMock,
   registerDashboardPopoutHandlersMock,
   isDashboardPopoutRendererMock,
@@ -126,6 +127,7 @@ const {
   registerHostedReviewHandlersMock: vi.fn(),
   registerExportHandlersMock: vi.fn(),
   registerCodexConfigSyncHandlersMock: vi.fn(),
+  registerWslConfigTuningHandlersMock: vi.fn(),
   registerOnboardingHandlersMock: vi.fn(),
   registerDashboardPopoutHandlersMock: vi.fn(),
   isDashboardPopoutRendererMock: vi.fn(),
@@ -159,6 +161,10 @@ vi.mock('../runtime-environment-transport-routing', () => ({
 
 vi.mock('../codex-config-sync', () => ({
   registerCodexConfigSyncHandlers: registerCodexConfigSyncHandlersMock
+}))
+
+vi.mock('../wslconfig-tuning', () => ({
+  registerWslConfigTuningHandlers: registerWslConfigTuningHandlersMock
 }))
 
 vi.mock('../onboarding', () => ({
@@ -553,6 +559,7 @@ describe('registerCoreHandlers', () => {
     expect(registerAgentHookHandlersMock).toHaveBeenCalledWith(runtime, {
       getPtyIdForPaneKey: expect.any(Function)
     })
+    expect(registerWslConfigTuningHandlersMock).toHaveBeenCalledTimes(1)
     expect(registerCodexConfigSyncHandlersMock).toHaveBeenCalledWith(
       codexAccounts.runtimeHomeService
     )

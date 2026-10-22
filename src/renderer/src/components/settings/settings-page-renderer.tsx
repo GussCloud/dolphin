@@ -51,6 +51,7 @@ import {
   renderAdvancedSettingsSection,
   renderDevSettingsSection,
   renderExperimentalSettingsSection,
+  renderPerformanceSettingsSection,
   renderPluginsSettingsSection
 } from './settings-advanced-section-renderers'
 import { renderProjectSettingsSections } from './settings-project-section-renderer'
@@ -148,6 +149,7 @@ export function renderSettingsPage(context: SettingsRenderContext): React.JSX.El
                 {renderDeveloperPermissionsSettingsSection(context)}
                 {renderPrivacySettingsSection(context)}
                 {renderAdvancedSettingsSection(context)}
+                {renderPerformanceSettingsSection(context)}
                 {renderDevSettingsSection(context)}
                 {renderExperimentalSettingsSection(context)}
                 {renderPluginsSettingsSection(context)}

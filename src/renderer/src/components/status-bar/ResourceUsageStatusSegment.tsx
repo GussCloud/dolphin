@@ -3,6 +3,7 @@ import { Popover, PopoverContent } from '@/components/ui/popover'
 import { DaemonActionDialog } from '../shared/useDaemonActions'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from './status-bar-context-menu-policy'
 import { useResourceUsageStatusController } from './use-resource-usage-status-controller'
+import { useWslMemorySuggestionsEntry } from './use-wsl-memory-suggestions-entry'
 import { renderResourceUsageStatusTrigger } from './resource-usage-status-trigger'
 import {
   renderDaemonUnreachableBanner,
@@ -72,6 +73,7 @@ export function ResourceUsageStatusSegment({
     runKillConfirmed,
     openSpaceResults
   } = controller
+  const wslMemory = useWslMemorySuggestionsEntry(open, setOpen)
 
   return (
     <Popover
@@ -143,7 +145,9 @@ export function ResourceUsageStatusSegment({
         {renderResourceUsagePopoverFooter({
           handleOpenWorkspaceCleanup,
           orphanCount,
-          handleKillOrphans
+          handleKillOrphans,
+          wslSuggestionCount: wslMemory.suggestionCount,
+          handleOpenWslMemorySettings: wslMemory.openPerformanceSettings
         })}
         <WorkspaceSpaceCompactPanel onOpenFullPage={openSpaceResults} />
       </PopoverContent>

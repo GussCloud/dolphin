@@ -406,6 +406,12 @@ describe('settings navigation metadata', () => {
     expect(ids({ isMac: true })).toContain('developer-permissions')
   })
 
+  it('shows Performance only for a local Windows desktop host', () => {
+    expect(ids({ isWindows: false })).not.toContain('performance')
+    expect(ids({ isWindows: true, isWebClient: true })).not.toContain('performance')
+    expect(ids({ isWindows: true })).toContain('performance')
+  })
+
   it('does not import Settings page or pane UI modules from the metadata hook', () => {
     const testDir = import.meta.dirname
     // Why: the section tables live in sibling settings-navigation-* modules, so reading only the
