@@ -15,6 +15,8 @@ export type AgentInteractionAvatarApi = {
   loadImage: () => Promise<AgentInteractionAvatarImageResult>
   activate: () => void
   dismiss: () => void
+  /** Main window only: the workspaces it currently shows to a present, focused user. */
+  reportViewedWorktrees: (worktreeIds: string[]) => void
 }
 
 export const agentInteractionAvatarApi: AgentInteractionAvatarApi = {
@@ -28,5 +30,7 @@ export const agentInteractionAvatarApi: AgentInteractionAvatarApi = {
   loadSound: (kind) => ipcRenderer.invoke(AGENT_INTERACTION_AVATAR_CHANNELS.loadSound, kind),
   loadImage: () => ipcRenderer.invoke(AGENT_INTERACTION_AVATAR_CHANNELS.loadImage),
   activate: () => ipcRenderer.send(AGENT_INTERACTION_AVATAR_CHANNELS.activate),
-  dismiss: () => ipcRenderer.send(AGENT_INTERACTION_AVATAR_CHANNELS.dismiss)
+  dismiss: () => ipcRenderer.send(AGENT_INTERACTION_AVATAR_CHANNELS.dismiss),
+  reportViewedWorktrees: (worktreeIds) =>
+    ipcRenderer.send(AGENT_INTERACTION_AVATAR_CHANNELS.viewed, worktreeIds)
 }

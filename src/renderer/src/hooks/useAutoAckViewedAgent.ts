@@ -6,6 +6,7 @@ import {
   subscribeAutoAckPresenceSignals
 } from './agent-auto-ack-presence'
 import { useAppStore } from '@/store'
+import { createAgentInteractionViewedReporter } from './agent-interaction-viewed-report'
 import { isWebClientLocation } from '@/lib/web-client-location'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import {
@@ -44,6 +45,9 @@ export function useAutoAckViewedAgent(floatingPanelVisible: boolean): void {
     let lastLayouts: unknown = undefined
     let lastUnreadAgentCompletionPanes: unknown = undefined
 
+    const reportViewed = createAgentInteractionViewedReporter((worktreeIds) =>
+      window.api?.agentInteractionAvatar?.reportViewedWorktrees(worktreeIds)
+    )
     // `force` re-scans after a signal the store never sees: panel open/closed is React-local state.
     const presence = createAutoAckPresenceCheck(
       async () => window.api?.notifications?.getDesktopAwayState?.(),
@@ -99,10 +103,8 @@ export function useAutoAckViewedAgent(floatingPanelVisible: boolean): void {
 
       // Why: tab-active only proxies "seen"; gate on window visible+focused so away-time transitions don't silently clear the bold signal.
       if (typeof document !== 'undefined') {
-        if (document.visibilityState !== 'visible') {
-          return
-        }
-        if (!document.hasFocus()) {
+        if (document.visibilityState !== 'visible' || !document.hasFocus()) {
+          reportViewed([])
           return
         }
       }
@@ -113,6 +115,7 @@ export function useAutoAckViewedAgent(floatingPanelVisible: boolean): void {
       // (Settings, browser, an overlay) — a transient view switch must not lapse an
       // explicit mark-unread the user just made.
       if (targets.length === 0) {
+        reportViewed([])
         return
       }
       // Browsers have no native idle capability; their visible/focused gates still apply.
@@ -154,6 +157,10 @@ export function useAutoAckViewedAgent(floatingPanelVisible: boolean): void {
         s.clearManuallyUnreadTurns(lapsedProtections)
       }
 
+      reportViewed(
+        targets.map((target) => target.worktreeId),
+        { force: options?.force }
+      )
       for (const target of targets) {
         // Why re-read: acking target[0] writes to the store, which re-enters this scan synchronously
         // and may already have handled target[1]; `s` is a pre-write snapshot that would re-ack it.
