@@ -8,8 +8,8 @@ import {
 import { isBackgroundLaunch, isWindowlessLaunch } from './foreground-activation-policy'
 import { installPrivilegedWindowNavigationPolicy } from './privileged-window-navigation'
 
-/** Card plus the margin its floating shadow needs inside a transparent window. */
-export const AGENT_INTERACTION_AVATAR_SIZE = { width: 380, height: 136 } as const
+/** Round avatar plus room for its buzz, close badge and floating shadow in a transparent window. */
+export const AGENT_INTERACTION_AVATAR_SIZE = { width: 120, height: 120 } as const
 const SCREEN_EDGE_GAP = 8
 const AVATAR_PARTITION = 'dolphin-agent-interaction-avatar'
 
@@ -25,12 +25,12 @@ export function isAgentInteractionAvatarRenderer(sender: WebContents): boolean {
   return liveAvatarWindow()?.webContents === sender
 }
 
-/** Bottom-right of the primary display's work area, clear of the taskbar/dock. */
+/** Right edge of the primary display's work area, vertically centered. */
 export function resolveAgentInteractionAvatarBounds(workArea: Electron.Rectangle): Electron.Rectangle {
   const { width, height } = AGENT_INTERACTION_AVATAR_SIZE
   return {
     x: workArea.x + workArea.width - width - SCREEN_EDGE_GAP,
-    y: workArea.y + workArea.height - height - SCREEN_EDGE_GAP,
+    y: workArea.y + Math.round((workArea.height - height) / 2),
     width,
     height
   }

@@ -19188,8 +19188,6 @@
       "taskStarted": "Tâche démarrée"
     },
     "avatar": {
-      "open": "Ouvrir l'agent",
-      "pending": "+{{count}}",
       "dismiss": "Ignorer"
     },
     "settings": {

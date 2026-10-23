@@ -87,12 +87,12 @@ describe('agent interaction avatar window', () => {
     vi.unstubAllEnvs()
   })
 
-  it('places the card at the bottom-right of the work area', async () => {
+  it('places the avatar on the right edge, vertically centered in the work area', async () => {
     const { resolveAgentInteractionAvatarBounds, AGENT_INTERACTION_AVATAR_SIZE } =
       await loadModule()
-    const bounds = resolveAgentInteractionAvatarBounds({ x: 0, y: 0, width: 1920, height: 1040 })
+    const bounds = resolveAgentInteractionAvatarBounds({ x: 0, y: 40, width: 1920, height: 1000 })
     expect(bounds.x + bounds.width).toBe(1912)
-    expect(bounds.y + bounds.height).toBe(1032)
+    expect(bounds.y + bounds.height / 2).toBe(540)
     expect(bounds.width).toBe(AGENT_INTERACTION_AVATAR_SIZE.width)
   })
 

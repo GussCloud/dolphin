@@ -19188,8 +19188,6 @@
       "taskStarted": "작업 시작됨"
     },
     "avatar": {
-      "open": "에이전트 열기",
-      "pending": "+{{count}}",
       "dismiss": "닫기"
     },
     "settings": {

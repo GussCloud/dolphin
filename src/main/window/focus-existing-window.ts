@@ -101,6 +101,15 @@ function activateWindow(
   }
 }
 
+/**
+ * Brings a window to the foreground from a click in another of our windows. On Windows a
+ * background process may not take the foreground with a plain focus(), so this reuses the
+ * second-instance reinforcement (moveTop, always-on-top pulse, focus retry).
+ */
+export function activateWindowInForeground(window: BrowserWindow, app: Pick<App, 'focus'>): void {
+  activateWindow(window, app, process.platform, setTimeout)
+}
+
 // Why: a second-instance/activate reopen can race transient startup pressure
 // (e.g. GPU/process churn right after another launch attempt exits); one
 // swallowed throw would otherwise strand the app with no window until some

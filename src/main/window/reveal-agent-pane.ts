@@ -2,7 +2,7 @@ import { app } from 'electron'
 import { parsePaneKey } from '../../shared/stable-pane-id'
 import { getRepoIdFromWorktreeId } from '../../shared/worktree/id'
 import { getTrustedUIRendererWindow } from '../ipc/ui'
-import { safelyRevealWindow } from './focus-existing-window'
+import { activateWindowInForeground, safelyRevealWindow } from './focus-existing-window'
 import { isBackgroundLaunch } from './foreground-activation-policy'
 
 export type AgentPaneRevealTarget = {
@@ -16,7 +16,10 @@ export type AgentPaneRevealTarget = {
  * Brings the main window forward and opens the agent's pane, or returns null when the target
  * cannot be addressed (a click on it would do nothing, so callers should not bind one).
  */
-export function resolveAgentPaneReveal(target: AgentPaneRevealTarget): (() => void) | null {
+export function resolveAgentPaneReveal(
+  target: AgentPaneRevealTarget,
+  options: { reinforceForeground?: boolean } = {}
+): (() => void) | null {
   const { worktreeId, paneKey } = target
   const paneTarget = paneKey ? parsePaneKey(paneKey) : null
   // Why: a structured chat has no PTY pane. Its pane key's leaf is a synthetic id minted from
@@ -35,10 +38,16 @@ export function resolveAgentPaneReveal(target: AgentPaneRevealTarget): (() => vo
     if (!win || win.isDestroyed()) {
       return
     }
-    if (process.platform === 'darwin' && !isBackgroundLaunch()) {
-      app.focus({ steal: true })
+    if (options.reinforceForeground) {
+      // Why: the click landed in the never-focused avatar window, which gives Dolphin no
+      // foreground rights on Windows; a plain focus() then only flashes the taskbar.
+      activateWindowInForeground(win, app)
+    } else {
+      if (process.platform === 'darwin' && !isBackgroundLaunch()) {
+        app.focus({ steal: true })
+      }
+      safelyRevealWindow(win)
     }
-    safelyRevealWindow(win)
     if (repoId !== null) {
       win.webContents.send('ui:activateWorktree', { repoId, worktreeId })
     }

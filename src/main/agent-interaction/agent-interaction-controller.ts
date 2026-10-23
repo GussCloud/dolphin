@@ -172,6 +172,12 @@ export class AgentInteractionController {
     }
   }
 
+  dismissAll(): void {
+    if (this.queue.clear()) {
+      this.render()
+    }
+  }
+
   onSettingsChanged(): void {
     if (!this.deps.getSettings().agentInteraction.enabled && this.queue.clear()) {
       this.render()
