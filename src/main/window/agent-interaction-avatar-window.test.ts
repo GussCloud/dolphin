@@ -96,7 +96,7 @@ describe('agent interaction avatar window', () => {
     expect(bounds.width).toBe(AGENT_INTERACTION_AVATAR_SIZE.width)
   })
 
-  it('creates a non-focusable, always-on-top window lazily and never for an empty frame', async () => {
+  it('creates a clickable, always-on-top window lazily and never for an empty frame', async () => {
     const avatar = await loadModule()
     avatar.presentAgentInteractionAvatar({ view: null })
     expect(instances).toHaveLength(0)
@@ -106,10 +106,11 @@ describe('agent interaction avatar window', () => {
       show: false,
       frame: false,
       transparent: true,
-      focusable: false,
       skipTaskbar: true,
       alwaysOnTop: true
     })
+    // Why: a non-focusable window never receives real clicks on Windows.
+    expect(instances[0].options.focusable).not.toBe(false)
     expect(instances[0].setAlwaysOnTop).toHaveBeenCalledWith(true, 'screen-saver')
   })
 
