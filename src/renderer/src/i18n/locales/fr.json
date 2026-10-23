@@ -4330,7 +4330,8 @@
           "c760c481c5": "Vue d'ensemble de l'utilisation",
           "55c910f4f1": "- certains prix de modèles sont indisponibles",
           "enableMuse": "Activer Muse",
-          "noLocalUsageYet": "Aucune utilisation locale de Claude, Codex, OpenCode ou Muse trouvée pour l'instant. L'aperçu se remplira dès que la prochaine session d'agent écrira des journaux de tokens."
+          "noLocalUsageYetWithDeepSeek": "Aucune utilisation locale de Claude, DeepSeek, Codex, OpenCode ou Muse trouvée pour l'instant. L'aperçu se remplira dès que la prochaine session d'agent écrira des journaux de tokens.",
+          "enableDeepSeek": "Activer DeepSeek"
         },
         "share": {
           "card": {
@@ -4368,7 +4369,8 @@
             "d6e9f0a1b2": "crédits",
             "a3b6c7d8e9": "utilisation grok",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -4402,7 +4404,7 @@
               "statusScanning": "Analyse en cours",
               "statusEnabled": "Activé",
               "statusOff": "Désactivé",
-              "recentCombinedActivity": "Activité récente combinée des tokens Claude, Codex, OpenCode et Muse."
+              "recentCombinedActivityWithDeepSeek": "Activité récente combinée des tokens Claude, DeepSeek, Codex, OpenCode et Muse."
             }
           }
         },
@@ -4446,6 +4448,15 @@
           "emptyMessage": "Aucune utilisation locale de Muse trouvée pour l'instant dans cette portée.",
           "noCostNote": "Les journaux de session Muse enregistrent les tokens mais pas le coût, aucune estimation de coût n'est donc affichée.",
           "recentSessionsDescription": "Sessions Muse locales les plus récentes dans cette portée."
+        },
+        "DeepSeekUsagePane": {
+          "title": "Suivi de l'utilisation DeepSeek",
+          "enable": "Activer les statistiques d'utilisation DeepSeek",
+          "disabledDescription": "Lit les journaux locaux d'utilisation de DeepSeek pour afficher les statistiques de tokens, de modèles et de sessions. Le coût n'est pas estimé.",
+          "allScope": "Toute l'utilisation locale de DeepSeek",
+          "options": "Options d'utilisation DeepSeek",
+          "refresh": "Actualiser l'utilisation DeepSeek",
+          "empty": "Aucune utilisation locale de DeepSeek trouvée pour l'instant dans ce périmètre."
         }
       },
       "sparse": {

@@ -4227,7 +4227,8 @@
           "c760c481c5": "使用方法の概要",
           "55c910f4f1": "- 一部のモデルの価格は利用できません",
           "enableMuse": "Muse を有効にする",
-          "noLocalUsageYet": "ローカルの Claude、Codex、OpenCode、Muse の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。"
+          "noLocalUsageYetWithDeepSeek": "ローカルの Claude、DeepSeek、Codex、OpenCode、Muse の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。",
+          "enableDeepSeek": "DeepSeek を有効にする"
         },
         "share": {
           "card": {
@@ -4265,7 +4266,8 @@
             "d6e9f0a1b2": "クレジット",
             "a3b6c7d8e9": "grok の使用状況",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -4296,10 +4298,10 @@
               "a7f937fb29": "{{value0}} セッション - {{value1}} {{value2}}",
               "c8f3a2d1e0b4": "ターン",
               "d9a4b3e2f1c5": "イベント",
-              "recentCombinedActivity": "最近の Claude、Codex、OpenCode、Muse のトークンアクティビティの組み合わせ。",
               "statusScanning": "走査",
               "statusEnabled": "有効",
-              "statusOff": "オフ"
+              "statusOff": "オフ",
+              "recentCombinedActivityWithDeepSeek": "最近の Claude、DeepSeek、Codex、OpenCode、Muse のトークンアクティビティの組み合わせ。"
             }
           }
         },
@@ -4343,6 +4345,15 @@
           "emptyMessage": "このスコープではローカルの Muse 使用状況がまだ見つかりません。",
           "noCostNote": "Muse のセッションログにはトークンは記録されますがコストは記録されないため、コストの見積もりは表示されません。",
           "recentSessionsDescription": "このスコープ内の最新のローカル Muse セッション。"
+        },
+        "DeepSeekUsagePane": {
+          "title": "DeepSeek の使用状況追跡",
+          "enable": "DeepSeek の使用状況分析を有効にする",
+          "disabledDescription": "ローカルの DeepSeek 使用ログを読み取り、トークン、モデル、セッションの統計を表示します。コストは推定されません。",
+          "allScope": "すべてのローカル DeepSeek の使用法",
+          "options": "DeepSeek の使用オプション",
+          "refresh": "リフレッシュ DeepSeek の使用法",
+          "empty": "このスコープに対するローカル DeepSeek の使用法はまだ見つかりません。"
         }
       },
       "sparse": {

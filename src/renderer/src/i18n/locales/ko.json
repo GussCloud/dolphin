@@ -4227,7 +4227,8 @@
           "c760c481c5": "사용량 개요",
           "55c910f4f1": "- 일부 모델 가격 확인 불가",
           "enableMuse": "Muse 사용",
-          "noLocalUsageYet": "아직 로컬 Claude, Codex, OpenCode 또는 Muse 사용량을 찾지 못했습니다. 다음 에이전트 세션이 토큰 로그를 기록하면 개요가 채워집니다."
+          "noLocalUsageYetWithDeepSeek": "아직 로컬 Claude, DeepSeek, Codex, OpenCode 또는 Muse 사용량을 찾지 못했습니다. 다음 에이전트 세션이 토큰 로그를 기록하면 개요가 채워집니다.",
+          "enableDeepSeek": "DeepSeek 사용"
         },
         "share": {
           "card": {
@@ -4265,7 +4266,8 @@
             "d6e9f0a1b2": "크레딧",
             "a3b6c7d8e9": "grok 사용량",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -4296,10 +4298,10 @@
               "a7f937fb29": "{{value0}}개 세션 - {{value1}} {{value2}}",
               "c8f3a2d1e0b4": "턴",
               "d9a4b3e2f1c5": "이벤트",
-              "recentCombinedActivity": "최근 Claude, Codex, OpenCode, Muse의 통합 토큰 활동입니다.",
               "statusScanning": "스캐닝",
               "statusEnabled": "활성화됨",
-              "statusOff": "끄다"
+              "statusOff": "끄다",
+              "recentCombinedActivityWithDeepSeek": "최근 Claude, DeepSeek, Codex, OpenCode, Muse의 통합 토큰 활동입니다."
             }
           }
         },
@@ -4343,6 +4345,15 @@
           "emptyMessage": "이 범위에서 아직 로컬 Muse 사용량을 찾지 못했습니다.",
           "noCostNote": "Muse 세션 로그에는 토큰만 기록되고 비용은 기록되지 않으므로 비용 추정치를 표시하지 않습니다.",
           "recentSessionsDescription": "이 범위에서 가장 최근의 로컬 Muse 세션입니다."
+        },
+        "DeepSeekUsagePane": {
+          "title": "DeepSeek 사용량 추적",
+          "enable": "DeepSeek 사용량 분석 활성화",
+          "disabledDescription": "토큰, 모델 및 세션 통계를 표시하기 위해 로컬 DeepSeek 사용 로그를 읽습니다. 비용은 추정되지 않습니다.",
+          "allScope": "모든 로컬 DeepSeek 사용",
+          "options": "DeepSeek 사용 옵션",
+          "refresh": "DeepSeek 사용량 새로고침",
+          "empty": "이 범위에 대한 로컬 DeepSeek 사용량이 아직 없습니다."
         }
       },
       "sparse": {

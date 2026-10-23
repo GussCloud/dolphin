@@ -50,7 +50,10 @@ function resumableStateFactoryFor(
 ): ((messages: TranscriptMessageSink) => ResumableSessionParseState) | null {
   switch (candidate.agent) {
     case 'claude':
-      return (messages) => createClaudeSessionResumeState(candidate.file, messages)
+    case 'deepseek': {
+      const agent = candidate.agent
+      return (messages) => createClaudeSessionResumeState(candidate.file, messages, agent)
+    }
     case 'codex':
       return (messages) =>
         createCodexSessionResumeState(candidate.file, candidate.codexHome, messages)
@@ -252,7 +255,7 @@ async function reuseCachedSession(
   // cheap directory count on reuse.
   if (entry.session && entry.session.messageCount === 0) {
     const subagentTranscriptCount =
-      candidate.agent === 'claude'
+      candidate.agent === 'claude' || candidate.agent === 'deepseek'
         ? await countSubagentTranscripts(candidate.file.path)
         : candidate.agent === 'omp'
           ? await countOmpSubagentTranscripts(candidate.file.path)

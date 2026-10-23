@@ -1,9 +1,18 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { readdir } from 'node:fs/promises'
+import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
 
-const CLAUDE_PROJECTS_DIR = join(homedir(), '.claude', 'projects')
-const CLAUDE_TRANSCRIPTS_DIR = join(homedir(), '.claude', 'transcripts')
+/**
+ * Who wrote a Claude-format transcript corpus. DeepSeek runs the Claude Code CLI under its own
+ * config dir, so its transcripts share the parser but must never land in Claude's report.
+ */
+export type ClaudeTranscriptUsageSource = 'claude' | 'deepseek'
+
+const CONFIG_DIR_NAME_BY_SOURCE: Record<ClaudeTranscriptUsageSource, string> = {
+  claude: '.claude',
+  deepseek: DEEPSEEK_CLAUDE_CONFIG_DIR_NAME
+}
 
 async function walkJsonlFiles(dirPath: string): Promise<string[]> {
   const entries = await readdir(dirPath, { withFileTypes: true })
@@ -31,10 +40,20 @@ function appendDiscoveredFiles(target: string[], source: readonly string[]): voi
   }
 }
 
-export async function listClaudeTranscriptFiles(): Promise<string[]> {
-  const roots = [CLAUDE_PROJECTS_DIR, CLAUDE_TRANSCRIPTS_DIR]
+export function getClaudeTranscriptRoots(
+  source: ClaudeTranscriptUsageSource,
+  home: string = homedir()
+): string[] {
+  const configDir = join(home, CONFIG_DIR_NAME_BY_SOURCE[source])
+  return [join(configDir, 'projects'), join(configDir, 'transcripts')]
+}
+
+// Why local home only: Claude usage never scanned WSL homes, and DeepSeek is refused over SSH.
+export async function listClaudeTranscriptFiles(
+  source: ClaudeTranscriptUsageSource = 'claude'
+): Promise<string[]> {
   const files = await Promise.all(
-    roots.map(async (root) => {
+    getClaudeTranscriptRoots(source).map(async (root) => {
       try {
         return await walkJsonlFiles(root)
       } catch {

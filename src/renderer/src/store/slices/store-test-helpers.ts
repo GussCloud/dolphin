@@ -21,6 +21,7 @@ import { createEditorSlice } from './editor'
 import { createStatsSlice } from './stats'
 import { createMemorySlice } from './memory'
 import { createWorkspaceSpaceSlice } from './workspace-space'
+import { createDeepSeekUsageSlice } from './deepseek-usage-slice'
 import {
   createClaudeUsageSlice,
   createCodexUsageSlice,
@@ -81,6 +82,7 @@ export function createTestStore() {
     ...createMemorySlice(...a),
     ...createWorkspaceSpaceSlice(...a),
     ...createClaudeUsageSlice(...a),
+    ...createDeepSeekUsageSlice(...a),
     ...createCodexUsageSlice(...a),
     ...createOpenCodeUsageSlice(...a),
     ...createMuseUsageSlice(...a),

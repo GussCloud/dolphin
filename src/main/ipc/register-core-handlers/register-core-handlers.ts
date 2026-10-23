@@ -80,6 +80,7 @@ import {
 } from '../../window/clipboard-ipc-handlers'
 import { isDashboardPopoutRenderer } from '../../window/dashboard-popout-window'
 import type { ClaudeUsageStore } from '../../claude-usage/store'
+import type { DeepSeekUsageStore } from '../../deepseek-usage/store'
 import type { CodexUsageStore } from '../../codex-usage/store'
 import type { OpenCodeUsageStore } from '../../opencode-usage/store'
 import type { MuseUsageStore } from '../../muse-usage/store'
@@ -121,6 +122,7 @@ export function registerCoreHandlers(
   runtime: DolphinRuntimeService,
   stats: StatsCollector,
   claudeUsage: ClaudeUsageStore,
+  deepSeekUsage: DeepSeekUsageStore,
   codexUsage: CodexUsageStore,
   openCodeUsage: OpenCodeUsageStore,
   museUsage: MuseUsageStore,
@@ -153,7 +155,13 @@ export function registerCoreHandlers(
   registerAppHandlers(store, { onBeforeRelaunch: lifecycleOptions.onBeforeRelaunch })
   registerCliHandlers()
   registerPreflightHandlers()
-  registerUsageProviderHandlers({ claudeUsage, codexUsage, openCodeUsage, museUsage })
+  registerUsageProviderHandlers({
+    claudeUsage,
+    deepSeekUsage,
+    codexUsage,
+    openCodeUsage,
+    museUsage
+  })
   registerCodexAccountHandlers(codexAccounts, () => store.getSettings())
   registerAgentHookHandlers(runtime, { getPtyIdForPaneKey })
   registerCodexConfigSyncHandlers(codexAccounts.runtimeHomeService)

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { spawnMock } from './pty-ipc-mock-registry'
 import { makeDisposable } from './pty-ipc-test-constants'
 import { setupPtyIpcSuite } from './pty-ipc-test-harness'
@@ -95,8 +96,7 @@ describe('DeepSeek PTY spawn', () => {
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the shared pty IPC harness window implements only the webContents calls spawn uses.
     registerPtyHandlers(mainWindow as never, undefined, undefined, undefined, prepareClaudeAuth)
     const result: unknown = await handlers.get('pty:spawn')?.(null, { cols: 80, rows: 24, ...args })
-    const id: unknown =
-      typeof result === 'object' && result !== null ? Reflect.get(result, 'id') : null
+    const id = z.object({ id: z.string() }).safeParse(result).data?.id
     if (typeof id !== 'string') {
       throw new Error('spawn returned no pty id')
     }

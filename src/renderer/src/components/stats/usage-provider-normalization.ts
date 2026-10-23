@@ -27,13 +27,39 @@ function getOpenCodeNewInputTokens(summary: OpenCodeUsageSummary | null): number
 }
 
 export function createClaudeProvider(input: UsageOverviewInput['claude']): UsageProviderOverview {
+  return createClaudeTranscriptProvider(
+    'claude',
+    translate('auto.components.stats.usage.overview.model.544d6d4c16', 'Claude'),
+    input
+  )
+}
+
+export function createDeepSeekProvider(
+  input: UsageOverviewInput['deepseek']
+): UsageProviderOverview {
+  return {
+    ...createClaudeTranscriptProvider(
+      'deepseek',
+      translate('auto.lib.agent.catalog.deepseek_label', 'DeepSeek'),
+      input
+    ),
+    // No DeepSeek pricing table; never let a stray value reach the cost total.
+    estimatedCostUsd: null
+  }
+}
+
+function createClaudeTranscriptProvider(
+  id: 'claude' | 'deepseek',
+  label: string,
+  input: UsageOverviewInput['claude']
+): UsageProviderOverview {
   const summary = input.summary
   const dailyActiveDays = input.daily
     .filter((entry) => getClaudeDailyTotal(entry) > 0)
     .map((entry) => entry.day)
   return {
-    id: 'claude',
-    label: translate('auto.components.stats.usage.overview.model.544d6d4c16', 'Claude'),
+    id,
+    label,
     enabled: input.scanState?.enabled ?? false,
     isScanning: input.scanState?.isScanning ?? false,
     hasData: summary?.hasAnyClaudeData ?? input.scanState?.hasAnyClaudeData ?? false,

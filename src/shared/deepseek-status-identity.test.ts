@@ -5,8 +5,10 @@ import {
   isClaudeHookAgentType,
   isClaudeTitleOfDeepSeekPane,
   isDeepSeekClaudeTranscriptPath,
+  resolveDeepSeekDisplayAgentType,
   toHookHostAgentType
 } from './deepseek-status-identity'
+import { normalizeAgentStatusPayload, pickParsedAgentStatusPayload } from './agent-status-types'
 import { TUI_AGENT_CONFIG } from './tui-agent-config'
 import {
   getTuiAgentDefaultSessionInstructions,
@@ -29,6 +31,62 @@ describe('isDeepSeekClaudeTranscriptPath', () => {
       false
     )
     expect(isDeepSeekClaudeTranscriptPath(undefined)).toBe(false)
+  })
+})
+
+describe('resolveDeepSeekDisplayAgentType', () => {
+  const deepseekPath = '/home/me/.claude-deepseek/projects/x/s.jsonl'
+  const claudePath = '/home/me/.claude/projects/x/s.jsonl'
+
+  it('decides from the event transcript path when there is one', () => {
+    expect(
+      resolveDeepSeekDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: deepseekPath,
+        previousDisplayAgentType: undefined
+      })
+    ).toBe('deepseek')
+    expect(
+      resolveDeepSeekDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: claudePath,
+        previousDisplayAgentType: 'deepseek'
+      })
+    ).toBeUndefined()
+  })
+
+  it('keeps the previous stamp only for a transcript-less Claude Code event', () => {
+    expect(
+      resolveDeepSeekDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: undefined,
+        previousDisplayAgentType: 'deepseek'
+      })
+    ).toBe('deepseek')
+    expect(
+      resolveDeepSeekDisplayAgentType({
+        agentType: 'codex',
+        transcriptPath: deepseekPath,
+        previousDisplayAgentType: 'deepseek'
+      })
+    ).toBeUndefined()
+  })
+})
+
+describe('displayAgentType on the status wire', () => {
+  it('admits deepseek, drops unknown values, and survives the client projection', () => {
+    const row = normalizeAgentStatusPayload({
+      state: 'working',
+      agentType: 'claude',
+      displayAgentType: 'deepseek'
+    })
+    expect(row?.displayAgentType).toBe('deepseek')
+    expect(row && pickParsedAgentStatusPayload(row).displayAgentType).toBe('deepseek')
+    expect(
+      normalizeAgentStatusPayload({ state: 'working', displayAgentType: 'gpt' })
+    ).not.toHaveProperty('displayAgentType')
+    // An old host sends no field; the row is still admitted.
+    expect(normalizeAgentStatusPayload({ state: 'done' })).not.toHaveProperty('displayAgentType')
   })
 })
 

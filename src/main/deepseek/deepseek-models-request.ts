@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import {
   DEEPSEEK_MODELS_URL,
   type DeepSeekListModelsResult,
@@ -7,43 +8,39 @@ import {
 const DEEPSEEK_MODELS_TIMEOUT_MS = 15_000
 
 // Why: DeepSeek's `/models` is OpenAI-shaped and documents no context field; these are read only if present.
-const CONTEXT_WINDOW_FIELDS = ['context_window', 'context_length', 'max_context_length'] as const
+const positiveNumber = z.number().finite().positive()
+const modelEntrySchema = z.object({
+  id: z.string(),
+  context_window: positiveNumber.optional().catch(undefined),
+  context_length: positiveNumber.optional().catch(undefined),
+  max_context_length: positiveNumber.optional().catch(undefined)
+})
+const modelsResponseSchema = z.object({ data: z.array(z.unknown()) })
 
 type FetchLike = (
   url: string,
   init: { headers: Record<string, string>; signal: AbortSignal }
 ) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>
 
-function readContextWindow(entry: object): number | null {
-  for (const field of CONTEXT_WINDOW_FIELDS) {
-    const value: unknown = Reflect.get(entry, field)
-    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
-      return value
-    }
-  }
-  return null
-}
-
 export function parseDeepSeekModelsResponse(body: unknown): DeepSeekModelOption[] | null {
-  if (typeof body !== 'object' || body === null) {
-    return null
-  }
-  const data: unknown = Reflect.get(body, 'data')
-  if (!Array.isArray(data)) {
+  const response = modelsResponseSchema.safeParse(body)
+  if (!response.success) {
     return null
   }
   const models: DeepSeekModelOption[] = []
   const seen = new Set<string>()
-  for (const entry of data) {
-    if (typeof entry !== 'object' || entry === null) {
+  for (const raw of response.data.data) {
+    const entry = modelEntrySchema.safeParse(raw)
+    const id = entry.success ? entry.data.id.trim() : ''
+    if (!entry.success || !id || seen.has(id)) {
       continue
     }
-    const id: unknown = Reflect.get(entry, 'id')
-    if (typeof id !== 'string' || !id.trim() || seen.has(id.trim())) {
-      continue
-    }
-    seen.add(id.trim())
-    models.push({ id: id.trim(), contextWindow: readContextWindow(entry) })
+    seen.add(id)
+    const { context_window, context_length, max_context_length } = entry.data
+    models.push({
+      id,
+      contextWindow: context_window ?? context_length ?? max_context_length ?? null
+    })
   }
   return models
 }

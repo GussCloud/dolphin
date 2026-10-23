@@ -16,6 +16,7 @@ import { resolveMuseSessionsDir } from './session-scanner-muse-paths'
 import { OMP_SESSION_ARTIFACT_DIR_PATTERN } from './session-scanner-omp-subagent-transcripts'
 import {
   claudeProjectsRootDirs,
+  deepSeekProjectsRootDirs,
   ompSessionsRootDirs,
   sessionRootDirs
 } from './session-scanner-roots'
@@ -112,6 +113,17 @@ export const AI_VAULT_AGENT_SOURCES: AiVaultAgentSourceTable = {
     // sessionId and aren't independently resumable, so they'd just duplicate the
     // parent as untitled rows; prune the subtree and read them on demand under
     // their parent instead.
+    directoryPredicate: (name) => name !== SUBAGENT_DIR_NAME
+  },
+  // Same Claude Code layout under the isolated DeepSeek config dir; its own entry so
+  // a DeepSeek transcript is never attributed to Claude.
+  deepseek: {
+    rootDirs: (options, wslHomeDirs) =>
+      deepSeekProjectsRootDirs({
+        deepSeekProjectsDir: options.deepSeekProjectsDir,
+        wslHomeDirs
+      }),
+    extensions: ['.jsonl'],
     directoryPredicate: (name) => name !== SUBAGENT_DIR_NAME
   },
   codex: {

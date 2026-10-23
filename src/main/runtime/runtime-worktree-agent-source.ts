@@ -1,5 +1,6 @@
 import type { StructuredHostStatus } from '../../shared/agent-hook-listener/listener-event'
 import type {
+  AgentStatusDisplayAgentType,
   AgentSubagentSnapshot,
   ParsedAgentStatusPayload
 } from '../../shared/agent-status-types'
@@ -13,6 +14,7 @@ export type RuntimeWorktreeAgentSource = {
   state: ParsedAgentStatusPayload['state']
   workingMode?: ParsedAgentStatusPayload['workingMode']
   agentType: string | null
+  displayAgentType?: AgentStatusDisplayAgentType
   prompt: string
   lastAssistantMessage: string | null
   toolName: string | null

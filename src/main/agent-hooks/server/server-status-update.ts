@@ -18,6 +18,7 @@ import {
 import { isStaleGrokTurnEnd } from './server-grok-status-rules'
 import { resolveCancelVerdictLatch } from './server-cancel-verdict-latch'
 import { AgentHookServerStatusApplication } from './server-status-application'
+import { withHostDisplayAgentType } from './server-display-agent-type'
 
 export abstract class AgentHookServerStatusUpdate extends AgentHookServerStatusApplication {
   protected applyNormalizedStatus(
@@ -68,9 +69,10 @@ export abstract class AgentHookServerStatusUpdate extends AgentHookServerStatusA
     if (terminalOwnedPayload.providerSessionOnly) {
       // Why: identity-only rows survive replay but must not emit prompt telemetry or a fabricated status.
       onAccepted?.()
+      const identityOnlyPayload = withHostDisplayAgentType(previous, terminalOwnedPayload)
       const enriched = {
-        ...this.attachStatusTiming(terminalOwnedPayload, now),
-        observation: this.stampObservation(terminalOwnedPayload, origin, now)
+        ...this.attachStatusTiming(identityOnlyPayload, now),
+        observation: this.stampObservation(identityOnlyPayload, origin, now)
       }
       this.clearAssistantMessageRetry(enriched.paneKey)
       this.runtimeObservedStatusPaneKeys.delete(enriched.paneKey)
@@ -144,13 +146,15 @@ export abstract class AgentHookServerStatusUpdate extends AgentHookServerStatusA
       this.commitStatusRowMutation(rowBefore, previous)
       return previous
     }
-    const identityResolvedPayload =
+    const identityResolvedPayload = withHostDisplayAgentType(
+      previous,
       identity.agentType === rootContextPreservingPayload.payload.agentType
         ? rootContextPreservingPayload
         : {
             ...rootContextPreservingPayload,
             payload: { ...rootContextPreservingPayload.payload, agentType: identity.agentType }
           }
+    )
     const attachedPayload = attachClaudePermissionToolUseId(previous, identityResolvedPayload)
     // Why before the permission hold: that hold adopts the event's `mainAgent`, and a relay's
     // restatement of a main agent the desktop cancelled must not replace the cancel.

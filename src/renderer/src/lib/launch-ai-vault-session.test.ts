@@ -94,6 +94,19 @@ describe('launchAiVaultSessionInNewTab', () => {
     expect(result).toEqual({ tabId: 'tab-1', groupId: 'group-1' })
   })
 
+  it('always tags a DeepSeek resume with its launch agent, even without a launch config', () => {
+    launchAiVaultSessionInNewTab({
+      agent: 'deepseek',
+      worktreeId: 'wt-1',
+      command: 'claude --resume session-1'
+    })
+
+    expect(mockQueueTabStartupCommand).toHaveBeenCalledWith(
+      'tab-1',
+      expect.objectContaining({ launchAgent: 'deepseek' })
+    )
+  })
+
   it('queues configured resume startup details for agent history resumes', () => {
     launchAiVaultSessionInNewTab({
       agent: 'claude',

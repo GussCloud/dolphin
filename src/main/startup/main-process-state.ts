@@ -3,6 +3,7 @@ import { app } from 'electron'
 import type { Store } from '../persistence'
 import type { StatsCollector } from '../stats/collector'
 import type { ClaudeUsageStore } from '../claude-usage/store'
+import type { DeepSeekUsageStore } from '../deepseek-usage/store'
 import type { CodexUsageStore } from '../codex-usage/store'
 import type { OpenCodeUsageStore } from '../opencode-usage/store'
 import type { MuseUsageStore } from '../muse-usage/store'
@@ -73,6 +74,8 @@ export const mainProcessState = {
   profileStateAdmission: createInitialProfileStateAdmission(),
   stats: null as StatsCollector | null,
   claudeUsage: null as ClaudeUsageStore | null,
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: widens the null slot to the store type assigned by main-process-observers.
+  deepSeekUsage: null as DeepSeekUsageStore | null,
   codexUsage: null as CodexUsageStore | null,
   openCodeUsage: null as OpenCodeUsageStore | null,
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: widens the null slot to the store type assigned by main-process-observers.

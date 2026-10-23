@@ -31,6 +31,7 @@ export function initializeMainProcessAccountServices(): void {
   if (
     !store ||
     !state.claudeUsage ||
+    !state.deepSeekUsage ||
     !state.codexUsage ||
     !state.openCodeUsage ||
     !state.museUsage

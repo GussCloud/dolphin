@@ -1,7 +1,7 @@
 import { resolve } from 'node:path'
 import { getAiVaultWslHomeDirs } from '../ai-vault/cached-session-list'
 import { listAiVaultSubagentSessionsInBackground } from '../ai-vault/session-scanner-background'
-import { claudeProjectsRootDirs, ompSessionsRootDirs } from '../ai-vault/session-scanner-roots'
+import { claudeTranscriptRootDirs, ompSessionsRootDirs } from '../ai-vault/session-scanner-roots'
 import { isPathInsideOrEqual } from '../../shared/cross-platform-path'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import type {
@@ -9,7 +9,7 @@ import type {
   AiVaultSubagentListResult
 } from '../../shared/ai-vault-types'
 
-// Provider-gated: only Claude and OMP materialize Task subagent transcripts as
+// Provider-gated: only Claude (and DeepSeek, the same CLI) and OMP materialize Task subagent transcripts as
 // sibling files today; other agents resolve to an empty list.
 export async function listAiVaultSubagentSessions(
   args?: AiVaultSubagentListArgs
@@ -18,7 +18,7 @@ export async function listAiVaultSubagentSessions(
   // every other rejected input instead of throwing.
   if (
     !args ||
-    (args.agent !== 'claude' && args.agent !== 'omp') ||
+    (args.agent !== 'claude' && args.agent !== 'deepseek' && args.agent !== 'omp') ||
     typeof args.parentFilePath !== 'string' ||
     !args.parentFilePath.trim()
   ) {
@@ -37,10 +37,11 @@ export async function listAiVaultSubagentSessions(
   // textually and would otherwise pass `<root>/../../etc/x.jsonl`.
   const parentFilePath = resolve(args.parentFilePath)
   const wslHomeDirs = await getAiVaultWslHomeDirs()
+  // Each agent only reads under its own roots: a DeepSeek row never lists a `~/.claude` path.
   const roots =
-    args.agent === 'claude'
-      ? claudeProjectsRootDirs({ wslHomeDirs })
-      : ompSessionsRootDirs({ wslHomeDirs })
+    args.agent === 'omp'
+      ? ompSessionsRootDirs({ wslHomeDirs })
+      : claudeTranscriptRootDirs(args.agent, wslHomeDirs)
   if (!roots.some((root) => isPathInsideOrEqual(resolve(root), parentFilePath))) {
     return { sessions: [], issues: [] }
   }

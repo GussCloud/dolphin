@@ -27,6 +27,7 @@ export type {
   MigrationUnsupportedPtyEntry
 } from './agent-status-ipc-payload'
 export { mainAgentStatusEqual, type AgentMainAgentStatus } from './main-agent-status'
+export { pickParsedAgentStatusPayload } from './agent-status-payload-pick'
 export { AGENT_STATE_HISTORY_MAX, type AgentStateHistoryEntry } from './agent-state-history'
 
 export const AGENT_STATUS_STATES = ['working', 'blocked', 'waiting', 'done'] as const
@@ -190,7 +191,14 @@ export type AgentStatusPayload = {
   /** The main agent's own state and last-turn verdict. See AgentMainAgentStatus. Producers publish it
    *  beside the combined `state`; a reader that predates it keeps reading `state`. */
   mainAgent?: AgentMainAgentStatus
+  /** Presentation identity the execution host stamps on a row whose `agentType` stays the
+   *  harness it runs (a DeepSeek pane runs `claude`). Status rules keep keying on `agentType`;
+   *  readers show this when set. Old hosts never send it. */
+  displayAgentType?: AgentStatusDisplayAgentType
 }
+
+/** Presentation identities a host may stamp over `agentType`; unknown values normalize to absent. */
+export type AgentStatusDisplayAgentType = 'deepseek'
 
 /**
  * Result of `parseAgentStatusPayload`: prompt is always a string (empty when omitted) so
@@ -198,39 +206,6 @@ export type AgentStatusPayload = {
  * absence ("no new info") from an explicit empty string.
  */
 export type ParsedAgentStatusPayload = Omit<AgentStatusPayload, 'prompt'> & { prompt: string }
-
-/**
- * Narrow an `AgentStatusIpcPayload` (or any superset) down to the status fields alone.
- * Why: the IPC shape is flattened, so a spread cannot be narrowed structurally — copying
- * a hook row into a client-visible projection would otherwise ship `launchToken`,
- * `connectionId`, `promptInteractionKey` and `providerSessionOnly` to every paired client.
- */
-export function pickParsedAgentStatusPayload(
-  row: ParsedAgentStatusPayload
-): ParsedAgentStatusPayload {
-  return {
-    state: row.state,
-    ...(row.workingMode !== undefined ? { workingMode: row.workingMode } : {}),
-    prompt: row.prompt,
-    ...(row.agentType !== undefined ? { agentType: row.agentType } : {}),
-    ...(row.model !== undefined ? { model: row.model } : {}),
-    ...(row.modelSwitchCommand ? { modelSwitchCommand: row.modelSwitchCommand } : {}),
-    ...(row.toolName !== undefined ? { toolName: row.toolName } : {}),
-    ...(row.toolInput !== undefined ? { toolInput: row.toolInput } : {}),
-    ...(row.interactivePrompt !== undefined ? { interactivePrompt: row.interactivePrompt } : {}),
-    ...(row.lastAssistantMessage !== undefined
-      ? { lastAssistantMessage: row.lastAssistantMessage }
-      : {}),
-    ...(row.lastAssistantMessageIsToolOutput !== undefined
-      ? { lastAssistantMessageIsToolOutput: row.lastAssistantMessageIsToolOutput }
-      : {}),
-    ...(row.interrupted !== undefined ? { interrupted: row.interrupted } : {}),
-    ...(row.sessionBoundary !== undefined ? { sessionBoundary: row.sessionBoundary } : {}),
-    ...(row.turnCompletedAt !== undefined ? { turnCompletedAt: row.turnCompletedAt } : {}),
-    ...(row.subagents !== undefined ? { subagents: row.subagents } : {}),
-    ...(row.mainAgent !== undefined ? { mainAgent: row.mainAgent } : {})
-  }
-}
 
 /**
  * Wire shape for agent-status IPC. Both `agentStatus:set` and `agentStatus:getSnapshot`
@@ -425,7 +400,8 @@ function normalizeAgentStatusObject(parsed: unknown): ParsedAgentStatusPayload |
     sessionBoundary: obj.sessionBoundary === true && state === 'done' ? true : undefined,
     turnCompletedAt: normalizeTurnCompletedAtField(obj.turnCompletedAt, state),
     subagents: normalizeSubagentsField(obj.subagents),
-    mainAgent: normalizeMainAgentStatusField(obj.mainAgent)
+    mainAgent: normalizeMainAgentStatusField(obj.mainAgent),
+    ...(obj.displayAgentType === 'deepseek' ? { displayAgentType: 'deepseek' as const } : {})
   }
 }
 

@@ -27,6 +27,21 @@ describe('resolveHookPayloadAgentType for DeepSeek panes', () => {
     expect(resolveHookPayloadAgentType(claudeRow, undefined).agentType).toBe('claude')
   })
 
+  it('follows the host stamp when the host sends one', () => {
+    // A transcript-less OSC row from a current host: the stamp alone carries the identity.
+    expect(
+      resolveHookPayloadAgentType({ ...claudeRow, displayAgentType: 'deepseek' }, 'Claude Code')
+        .agentType
+    ).toBe('deepseek')
+    // A stamp never re-labels a row whose harness is not Claude Code.
+    expect(
+      resolveHookPayloadAgentType(
+        { ...claudeRow, agentType: 'codex', displayAgentType: 'deepseek' },
+        undefined
+      ).agentType
+    ).toBe('codex')
+  })
+
   it('still routes OpenClaude by title', () => {
     expect(resolveHookPayloadAgentType(claudeRow, 'OpenClaude').agentType).toBe('openclaude')
   })

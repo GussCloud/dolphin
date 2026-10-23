@@ -4392,7 +4392,8 @@
           "c760c481c5": "Usage Overview",
           "55c910f4f1": "- some model prices are unavailable",
           "enableMuse": "Enable Muse",
-          "noLocalUsageYet": "No local Claude, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs."
+          "noLocalUsageYetWithDeepSeek": "No local Claude, DeepSeek, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs.",
+          "enableDeepSeek": "Enable DeepSeek"
         },
         "share": {
           "card": {
@@ -4430,7 +4431,8 @@
             "d6e9f0a1b2": "credits",
             "a3b6c7d8e9": "grok usage",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -4464,7 +4466,7 @@
               "statusScanning": "Scanning",
               "statusEnabled": "Enabled",
               "statusOff": "Off",
-              "recentCombinedActivity": "Recent combined Claude, Codex, OpenCode, and Muse token activity."
+              "recentCombinedActivityWithDeepSeek": "Recent combined Claude, DeepSeek, Codex, OpenCode, and Muse token activity."
             }
           }
         },
@@ -4508,6 +4510,15 @@
           "emptyMessage": "No local Muse usage found yet for this scope.",
           "noCostNote": "Muse session logs record tokens but not cost, so no cost estimate is shown.",
           "recentSessionsDescription": "Most recent local Muse sessions in this scope."
+        },
+        "DeepSeekUsagePane": {
+          "title": "DeepSeek Usage Tracking",
+          "enable": "Enable DeepSeek usage analytics",
+          "disabledDescription": "Reads local DeepSeek usage logs to show token, model, and session stats. Cost is not estimated.",
+          "allScope": "All local DeepSeek usage",
+          "options": "DeepSeek usage options",
+          "refresh": "Refresh DeepSeek usage",
+          "empty": "No local DeepSeek usage found yet for this scope."
         }
       },
       "sparse": {

@@ -3,15 +3,23 @@ import { encodeClaudeProjectPaths, isClaudeProjectDirInScope } from './claude-pr
 
 /** An agent that keeps one directory per cwd, named by a lossy encoding of that cwd. */
 export type CwdBucketLayout = {
-  agent: Extract<AiVaultAgent, 'claude' | 'pi'>
+  agent: Extract<AiVaultAgent, 'claude' | 'deepseek' | 'pi'>
   encodeScopePrefixes: (scopePath: string) => string[]
   isDirInScope: (dirName: string, prefixes: ReadonlySet<string>) => boolean
+  /** True when one transcript's cwd stands for its whole bucket (Claude Code); false re-checks each file. */
+  bucketSharesCwd: boolean
 }
 
 export const CLAUDE_CWD_BUCKET_LAYOUT: CwdBucketLayout = {
   agent: 'claude',
   encodeScopePrefixes: encodeClaudeProjectPaths,
-  isDirInScope: isClaudeProjectDirInScope
+  isDirInScope: isClaudeProjectDirInScope,
+  bucketSharesCwd: true
+}
+
+export const DEEPSEEK_CWD_BUCKET_LAYOUT: CwdBucketLayout = {
+  ...CLAUDE_CWD_BUCKET_LAYOUT,
+  agent: 'deepseek'
 }
 
 // Pi names each bucket `--<cwd without leading slash, with / \ : as ->--`;
@@ -23,6 +31,7 @@ function encodePiSessionDirPrefix(pathValue: string): string {
 
 export const PI_CWD_BUCKET_LAYOUT: CwdBucketLayout = {
   agent: 'pi',
+  bucketSharesCwd: false,
   encodeScopePrefixes: (pathValue) => {
     const raw = encodePiSessionDirPrefix(pathValue)
     const composed = encodePiSessionDirPrefix(pathValue.normalize('NFC'))

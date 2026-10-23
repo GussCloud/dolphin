@@ -100,7 +100,7 @@ export async function discoverInScopeCwdBucketFiles(
       scopeProjectPrefixes,
       args.issues
     )) {
-      if (layout.agent === 'claude') {
+      if (layout.bucketSharesCwd) {
         const cwd = await cachedProjectDirCwd(projectDir, args.issues, layout.agent)
         if (!cwd || !args.scopePaths.some((scopePath) => isCwdInsideScopePath(scopePath, cwd))) {
           continue
@@ -108,7 +108,7 @@ export async function discoverInScopeCwdBucketFiles(
       }
       await collectBucketFiles({
         agent: layout.agent,
-        scopePaths: layout.agent === 'pi' ? args.scopePaths : undefined,
+        scopePaths: layout.bucketSharesCwd ? undefined : args.scopePaths,
         projectDir,
         issues: args.issues,
         collected,

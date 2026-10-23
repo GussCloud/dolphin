@@ -101,6 +101,10 @@ export function buildRuntimeMobileAgentStatus(
     const liveStatus = normalizeCompatibleAgentStatusEntryForOwner(
       {
         ...liveRow.payload,
+        // Why: matches a desktop host, whose renderer publishes tab.agentStatus already re-labelled.
+        ...(liveRow.payload.displayAgentType
+          ? { agentType: liveRow.payload.displayAgentType }
+          : {}),
         paneKey,
         updatedAt: liveRow.updatedAt,
         ...(liveRow.evidenceObservedAt !== undefined

@@ -25,6 +25,7 @@ import type { UsageScanWorktreeRef } from './usage-provider-contract'
 import {
   scanClaudeUsageOnWorker,
   scanCodexUsageOnWorker,
+  scanDeepSeekUsageOnWorker,
   scanMuseUsageOnWorker,
   scanOpenCodeUsageOnWorker,
   UsageScanWorkerClient
@@ -72,6 +73,34 @@ export async function scanClaudeUsageFilesViaWorker(
   unchanged?: boolean
 }> {
   const value = await scanClaudeUsageOnWorker(
+    (body) => getSharedClient().scan(body),
+    worktrees,
+    previous
+  )
+  return {
+    processedFiles: value.source,
+    sessions: value.sessions,
+    dailyAggregates: value.dailyAggregates,
+    ...(value.unchanged ? { unchanged: true } : {})
+  }
+}
+
+/**
+ * Scan DeepSeek's Claude-format transcripts through the shared worker client.
+ * @param worktrees - Worktree refs used to attribute usage.
+ * @param previous - Last scan's per-file cache.
+ * @returns The same projection `scanClaudeUsageFiles(..., 'deepseek')` returns, off the main thread.
+ */
+export async function scanDeepSeekUsageFilesViaWorker(
+  worktrees: UsageScanWorktreeRef[],
+  previous: ClaudeUsagePersistedFile[] = []
+): Promise<{
+  processedFiles: ClaudeUsagePersistedFile[]
+  sessions: ClaudeUsageSession[]
+  dailyAggregates: ClaudeUsageDailyAggregate[]
+  unchanged?: boolean
+}> {
+  const value = await scanDeepSeekUsageOnWorker(
     (body) => getSharedClient().scan(body),
     worktrees,
     previous

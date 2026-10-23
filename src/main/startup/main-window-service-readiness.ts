@@ -7,6 +7,7 @@ const MAIN_WINDOW_SERVICE_REQUIREMENTS = [
   ['runtime', 'Runtime must be initialized before opening the main window'],
   ['stats', 'Stats must be initialized before opening the main window'],
   ['claudeUsage', 'Claude usage store must be initialized before opening the main window'],
+  ['deepSeekUsage', 'DeepSeek usage store must be initialized before opening the main window'],
   ['codexUsage', 'Codex usage store must be initialized before opening the main window'],
   ['openCodeUsage', 'OpenCode usage store must be initialized before opening the main window'],
   ['museUsage', 'Muse usage store must be initialized before opening the main window'],

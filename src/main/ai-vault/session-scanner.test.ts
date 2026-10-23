@@ -400,7 +400,8 @@ describe('scanAiVaultSessions', () => {
       await writeEveryAgentVault(root)
     await writeMuseScannerFixture(roots.museSessionsDir)
 
-    const result = await scanAiVaultSessions({ ...roots, platform: 'darwin', limit: 20 })
+    // Above AI_VAULT_AGENTS.length, so the recency cap never drops an agent's only session.
+    const result = await scanAiVaultSessions({ ...roots, platform: 'darwin', limit: 40 })
 
     expect(result.issues).toEqual([])
     expect(new Set(result.sessions.map((session) => session.agent))).toEqual(
@@ -413,6 +414,8 @@ describe('scanAiVaultSessions', () => {
     expect(commandByAgent.get('claude')).toBe(
       "cd '/tmp/claude' && claude --resume 'claude-session'"
     )
+    // No runnable line: a bare `claude --resume` would resume on the Claude login.
+    expect(commandByAgent.get('deepseek')).toBe('')
     expect(commandByAgent.get('codex')).toBe(
       `cd '/tmp/codex' && CODEX_HOME='${root}' codex resume 'codex-session'`
     )

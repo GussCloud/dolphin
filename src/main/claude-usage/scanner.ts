@@ -6,7 +6,10 @@ import type {
   ClaudeUsageProcessedFile,
   ClaudeUsageSession
 } from './types'
-import { listClaudeTranscriptFiles } from './transcript-file-discovery'
+import {
+  listClaudeTranscriptFiles,
+  type ClaudeTranscriptUsageSource
+} from './transcript-file-discovery'
 import { readClaudeUsageScanFile, stripClaudeSourceMetadata } from './transcript-record-parser'
 import {
   attributeClaudeUsageTurns,
@@ -51,14 +54,15 @@ function withCompactOwnership(file: ClaudeUsagePersistedFile): ClaudeUsagePersis
 export async function scanClaudeUsageFiles(
   worktrees: ClaudeUsageWorktreeRef[],
   cachedProcessedFiles: ClaudeUsagePersistedFile[] = [],
-  onFilesScanned?: (count: number) => void
+  onFilesScanned?: (count: number) => void,
+  source: ClaudeTranscriptUsageSource = 'claude'
 ): Promise<{
   processedFiles: ClaudeUsagePersistedFile[]
   sessions: ClaudeUsageSession[]
   dailyAggregates: ClaudeUsageDailyAggregate[]
   unchanged: boolean
 }> {
-  const files = await listClaudeTranscriptFiles()
+  const files = await listClaudeTranscriptFiles(source)
   const previousProcessedFiles = cachedProcessedFiles.map(withCompactOwnership)
   const previousByPath = new Map(previousProcessedFiles.map((file) => [file.path, file]))
   const worktreeLookup = await buildWorktreeLookup(worktrees)

@@ -1,7 +1,7 @@
 import { resolveAgentPaneAuthorityKey } from '@/store/slices/agent-pane-authority'
 import type { AppState } from '../../store/types'
 import { titleHasAgentName } from '../../../../shared/agent-detection'
-import { isDeepSeekClaudeTranscriptPath } from '../../../../shared/deepseek-status-identity'
+import { resolveDeepSeekDisplayAgentType } from '../../../../shared/deepseek-status-identity'
 import type {
   AgentStatusIpcPayload,
   ParsedAgentStatusPayload
@@ -106,13 +106,17 @@ export function resolveHookPayloadAgentType(
   if (payload.agentType !== 'claude') {
     return payload
   }
-  const transcriptPath = claudeSession?.transcriptPath
-  if (
-    transcriptPath
-      ? isDeepSeekClaudeTranscriptPath(transcriptPath)
-      : claudeSession?.existingAgentType === 'deepseek'
-  ) {
-    // Why: the transcript path is per-event host evidence; the tab's launch agent can be stale.
+  // Why: the host's stamp decides; the shared rule only runs here for old hosts that send none.
+  // The transcript path is per-event host evidence; the tab's launch agent can be stale.
+  const displayAgentType =
+    payload.displayAgentType ??
+    resolveDeepSeekDisplayAgentType({
+      agentType: payload.agentType,
+      transcriptPath: claudeSession?.transcriptPath,
+      previousDisplayAgentType:
+        claudeSession?.existingAgentType === 'deepseek' ? 'deepseek' : undefined
+    })
+  if (displayAgentType === 'deepseek') {
     return { ...payload, agentType: 'deepseek' }
   }
   if (!terminalTitle || !titleHasAgentName(terminalTitle, 'openclaude')) {

@@ -80,6 +80,14 @@ export function agentDisplayLabel(row: RuntimeWorktreeAgentRow, now: number): st
   return agentStateLabel(agentDotState(row, now))
 }
 
+// The agent a row shows: the host's presentation stamp (a DeepSeek pane runs 'claude'),
+// else the harness. Old hosts send no stamp.
+export function agentRowIdentity(
+  row: Pick<RuntimeWorktreeAgentRow, 'agentType' | 'displayAgentType'>
+): string | null {
+  return row.displayAgentType ?? row.agentType
+}
+
 // Short agent identity label by type (Claude/Codex/Gemini/…), used when no
 // identity icon is available on mobile. Falls back to the first two letters.
 export function agentIdentityLabel(agentType: string | null): string {

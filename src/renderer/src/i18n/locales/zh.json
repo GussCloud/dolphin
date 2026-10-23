@@ -4227,7 +4227,8 @@
           "c760c481c5": "使用概述",
           "55c910f4f1": "- 部分型号价格不详",
           "enableMuse": "启用 Muse",
-          "noLocalUsageYet": "尚未找到本地 Claude、Codex、OpenCode 或 Muse 使用情况。概览将在下一个智能体会话写入token日志后填充。"
+          "noLocalUsageYetWithDeepSeek": "尚未找到本地 Claude、DeepSeek、Codex、OpenCode 或 Muse 使用情况。概览将在下一个智能体会话写入token日志后填充。",
+          "enableDeepSeek": "启用 DeepSeek"
         },
         "share": {
           "card": {
@@ -4265,7 +4266,8 @@
             "d6e9f0a1b2": "额度",
             "a3b6c7d8e9": "grok 使用量",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -4296,10 +4298,10 @@
               "a7f937fb29": "{{value0}} 个会话 - {{value1}} {{value2}}",
               "c8f3a2d1e0b4": "轮次",
               "d9a4b3e2f1c5": "事件",
-              "recentCombinedActivity": "近期 Claude、Codex、OpenCode 和 Muse 的综合token活动。",
               "statusScanning": "扫描",
               "statusEnabled": "启用",
-              "statusOff": "关闭"
+              "statusOff": "关闭",
+              "recentCombinedActivityWithDeepSeek": "近期 Claude、DeepSeek、Codex、OpenCode 和 Muse 的综合token活动。"
             }
           }
         },
@@ -4343,6 +4345,15 @@
           "emptyMessage": "尚未找到此范围内的本地 Muse 使用情况。",
           "noCostNote": "Muse 会话日志只记录token而不记录费用，因此不显示费用估算。",
           "recentSessionsDescription": "此范围内最近的本地 Muse 会话。"
+        },
+        "DeepSeekUsagePane": {
+          "title": "DeepSeek 使用量跟踪",
+          "enable": "启用 DeepSeek 使用量分析",
+          "disabledDescription": "读取本地 DeepSeek 使用日志，显示token、模型和会话统计。不估算费用。",
+          "allScope": "所有本地 DeepSeek 使用情况",
+          "options": "DeepSeek 使用量选项",
+          "refresh": "刷新 DeepSeek 使用量",
+          "empty": "此范围内尚无本地 DeepSeek 使用记录。"
         }
       },
       "sparse": {

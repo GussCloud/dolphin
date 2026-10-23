@@ -1,4 +1,5 @@
 import type {
+  AgentStatusDisplayAgentType,
   AgentStatusState,
   AgentSubagentSnapshot,
   AgentType,
@@ -20,6 +21,9 @@ export type RuntimeWorktreeAgentRow = {
   state: AgentStatusState
   workingMode?: AgentWorkingMode
   agentType: AgentType | null
+  /** Agent to show when it differs from the harness in `agentType` (a DeepSeek pane runs
+   *  `claude`). Optional on the wire: old hosts never send it and old clients show `agentType`. */
+  displayAgentType?: AgentStatusDisplayAgentType
   prompt: string
   taskTitle: string | null
   displayName: string | null

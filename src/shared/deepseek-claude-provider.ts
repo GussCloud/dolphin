@@ -1,7 +1,11 @@
+import { z } from 'zod'
 import type { TuiAgent } from './tui-agent'
 
 /** DeepSeek has no harness of its own; these agents run the Claude Code CLI against DeepSeek's Anthropic-compatible API. */
-export const DEEPSEEK_TUI_AGENTS = ['deepseek', 'deepseek-agent-teams'] as const satisfies readonly TuiAgent[]
+export const DEEPSEEK_TUI_AGENTS = [
+  'deepseek',
+  'deepseek-agent-teams'
+] as const satisfies readonly TuiAgent[]
 
 export type DeepSeekTuiAgent = (typeof DEEPSEEK_TUI_AGENTS)[number]
 
@@ -70,14 +74,29 @@ export const DEEPSEEK_CLAUDE_ENV_KEYS: readonly string[] = [
   DEEPSEEK_PROVIDER_ENV_KEY
 ]
 
+const modelSlotValue = z
+  .string()
+  .transform((value) => value.trim())
+  .pipe(z.string().min(1))
+  .optional()
+  .catch(undefined)
+const modelSlotsSchema = z.object({
+  main: modelSlotValue,
+  opus: modelSlotValue,
+  sonnet: modelSlotValue,
+  haiku: modelSlotValue,
+  subagent: modelSlotValue
+})
+
+/** Persisted slots with every missing, blank or malformed value replaced by its default. */
 export function normalizeDeepSeekModelSlots(value: unknown): DeepSeekModelSlots {
-  const source = typeof value === 'object' && value !== null ? value : {}
+  const parsed = modelSlotsSchema.safeParse(value)
   const slots = { ...DEFAULT_DEEPSEEK_MODEL_SLOTS }
+  if (!parsed.success) {
+    return slots
+  }
   for (const key of DEEPSEEK_MODEL_SLOT_KEYS) {
-    const candidate: unknown = Reflect.get(source, key)
-    if (typeof candidate === 'string' && candidate.trim()) {
-      slots[key] = candidate.trim()
-    }
+    slots[key] = parsed.data[key] ?? slots[key]
   }
   return slots
 }
@@ -103,7 +122,9 @@ export function buildDeepSeekClaudeEnv(args: {
   return env
 }
 
-export function isDeepSeekProviderEnv(env: Record<string, string | undefined> | undefined): boolean {
+export function isDeepSeekProviderEnv(
+  env: Record<string, string | undefined> | undefined
+): boolean {
   return env?.[DEEPSEEK_PROVIDER_ENV_KEY] === DEEPSEEK_PROVIDER_ENV_VALUE
 }
 

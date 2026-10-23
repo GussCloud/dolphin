@@ -81,7 +81,11 @@ describe('listClaudeSubagentSessions', () => {
       })
     )
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result.issues).toEqual([])
     expect(result.sessions.map((session) => session.title)).toEqual([
@@ -95,6 +99,27 @@ describe('listClaudeSubagentSessions', () => {
       { parentSessionId: 'parent-session', agentType: 'Explore', status: 'running' }
     ])
     expect(result.sessions.map((session) => session.messageCount)).toEqual([1, 1])
+  })
+
+  it('attributes the subagents of a DeepSeek session to deepseek, never claude', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dolphin-ai-vault-subagent-deepseek-'))
+    tempRoots.push(root)
+    const parentFilePath = join(root, '.claude-deepseek', 'projects', 'p', 'parent-session.jsonl')
+    await writeSubagentTranscript({
+      subagentsDir: join(dirname(parentFilePath), 'parent-session', 'subagents'),
+      agentId: 'worker',
+      taskPrompt: 'DeepSeek task prompt',
+      timestamp: '2026-07-05T10:01:00.000Z'
+    })
+
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'deepseek',
+      platform: 'darwin'
+    })
+
+    expect(result.sessions.map((session) => session.agent)).toEqual(['deepseek'])
+    expect(result.sessions[0]?.resumeCommand).toBe('')
   })
 
   it('falls back to the Task prompt title when the meta sidecar is missing or corrupt', async () => {
@@ -117,7 +142,11 @@ describe('listClaudeSubagentSessions', () => {
     })
     await writeFile(join(subagentsDir, 'agent-badmeta.meta.json'), '{not json')
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result.issues).toEqual([])
     expect(result.sessions.map((session) => session.title)).toEqual([
@@ -196,7 +225,11 @@ describe('listClaudeSubagentSessions', () => {
     const staleTime = new Date(Date.now() - 60 * 60_000)
     await utimes(join(subagentsDir, 'agent-stale.jsonl'), staleTime, staleTime)
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result.issues).toEqual([])
     const statusByTitle = Object.fromEntries(
@@ -254,7 +287,11 @@ describe('listClaudeSubagentSessions', () => {
       timestamp: '2026-07-05T10:00:10.000Z'
     })
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result.issues).toEqual([])
     expect(result.sessions.map((session) => session.subagent?.status)).toEqual(['completed'])
@@ -299,7 +336,11 @@ describe('listClaudeSubagentSessions', () => {
     })
     await utimes(join(subagentsDir, 'agent-quoted.jsonl'), staleTime, staleTime)
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result.issues).toEqual([])
     expect(result.sessions.map((session) => session.subagent?.status)).toEqual(['completed'])
@@ -342,7 +383,11 @@ describe('listClaudeSubagentSessions', () => {
     })
     await utimes(join(subagentsDir, 'agent-reporter.jsonl'), staleTime, staleTime)
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result.issues).toEqual([])
     expect(result.sessions.map((session) => session.subagent?.status)).toEqual(['completed'])
@@ -367,7 +412,11 @@ describe('listClaudeSubagentSessions', () => {
       }
     ])
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result.issues).toEqual([])
     expect(result.sessions.map((session) => session.subagent?.parentSessionId)).toEqual([
@@ -389,7 +438,11 @@ describe('listClaudeSubagentSessions', () => {
       }
     ])
 
-    const result = await listClaudeSubagentSessions({ parentFilePath, platform: 'darwin' })
+    const result = await listClaudeSubagentSessions({
+      parentFilePath,
+      agent: 'claude',
+      platform: 'darwin'
+    })
 
     expect(result).toEqual({ sessions: [], issues: [] })
   })

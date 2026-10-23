@@ -16,7 +16,7 @@ const secureFileMock = vi.hoisted(() => ({
   writeSecureFile: vi.fn()
 }))
 
-vi.mock('electron', () => ({ safeStorage: safeStorageMock }))
+vi.mock('../../shared/secret-store', () => ({ getSecretStore: () => safeStorageMock }))
 vi.mock('node:fs', () => fsMock)
 vi.mock('node:os', () => ({ homedir: () => '/home/test' }))
 vi.mock('node:path', () => ({ join: (...parts: string[]) => parts.join('/') }))

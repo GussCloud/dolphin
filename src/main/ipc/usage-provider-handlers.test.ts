@@ -19,18 +19,21 @@ describe('usage provider IPC handlers', () => {
       getRecentSessions: vi.fn()
     })
     const claudeUsage = createUsage()
+    const deepSeekUsage = createUsage()
     const codexUsage = createUsage()
     const openCodeUsage = createUsage()
     const museUsage = createUsage()
     registerUsageProviderHandlers({
       claudeUsage: claudeUsage as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mock implements every method the registrar calls on a usage store.
+      deepSeekUsage: deepSeekUsage as never,
       codexUsage: codexUsage as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mock implements every method the registrar calls on a usage store.
       museUsage: museUsage as never,
       openCodeUsage: openCodeUsage as never
     })
 
-    const prefixes = ['claudeUsage', 'codexUsage', 'openCodeUsage', 'museUsage']
+    const prefixes = ['claudeUsage', 'deepSeekUsage', 'codexUsage', 'openCodeUsage', 'museUsage']
     const suffixes = Object.keys(claudeUsage)
     expect(handle.mock.calls.map(([channel]) => channel)).toEqual(
       prefixes.flatMap((prefix) => suffixes.map((suffix) => `${prefix}:${suffix}`))
@@ -43,6 +46,7 @@ describe('usage provider IPC handlers', () => {
       return handler?.({}, args)
     }
     call('claudeUsage', 'getScanState')
+    call('deepSeekUsage', 'getScanState')
     call('codexUsage', 'getScanState')
     call('openCodeUsage', 'getScanState')
     call('museUsage', 'getScanState')
@@ -56,6 +60,8 @@ describe('usage provider IPC handlers', () => {
     call('claudeUsage', 'getRecentSessions', { scope: 'dolphin', range: '30d', limit: 4 })
 
     expect(claudeUsage.getScanState).toHaveBeenCalledWith()
+    expect(deepSeekUsage.getScanState).toHaveBeenCalledWith()
+    expect(claudeUsage.getScanState).toHaveBeenCalledTimes(1)
     expect(codexUsage.getScanState).toHaveBeenCalledWith()
     expect(openCodeUsage.getScanState).toHaveBeenCalledWith()
     expect(museUsage.getScanState).toHaveBeenCalledWith()

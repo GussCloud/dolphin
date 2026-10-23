@@ -1,5 +1,5 @@
 import { FORK_HOME_STATE_DIR_NAME } from '../../shared/fork-identity'
-import { safeStorage } from 'electron'
+import { getSecretStore } from '../../shared/secret-store'
 import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -45,10 +45,10 @@ function decodeApiKeyEnvelope(raw: Buffer): DeepSeekApiKeyEnvelope {
 
 function readEnvelope(envelope: DeepSeekApiKeyEnvelope): string {
   // Why: the key may only ever live encrypted; a plaintext envelope is never trusted.
-  if (envelope.kind !== 'encrypted' || !safeStorage.isEncryptionAvailable()) {
+  if (envelope.kind !== 'encrypted' || !getSecretStore().isEncryptionAvailable()) {
     throw new Error(DECRYPT_ERROR_MESSAGE)
   }
-  return safeStorage.decryptString(envelope.payload)
+  return getSecretStore().decryptString(envelope.payload)
 }
 
 function hardenKeyFile(keyPath: string): void {
@@ -60,7 +60,7 @@ function hardenKeyFile(keyPath: string): void {
 }
 
 export function isDeepSeekKeyEncryptionAvailable(): boolean {
-  return safeStorage.isEncryptionAvailable()
+  return getSecretStore().isEncryptionAvailable()
 }
 
 export function hasDeepSeekApiKey(): boolean {
@@ -77,12 +77,12 @@ export function saveDeepSeekApiKey(key: string): void {
   if (!trimmed) {
     throw new Error('DeepSeek API key is required')
   }
-  if (!safeStorage.isEncryptionAvailable()) {
+  if (!getSecretStore().isEncryptionAvailable()) {
     throw new Error(DEEPSEEK_SECURE_STORAGE_UNAVAILABLE_MESSAGE)
   }
   writeSecureFile(
     getDeepSeekApiKeyPath(),
-    encodeApiKeyEnvelope('encrypted', safeStorage.encryptString(trimmed))
+    encodeApiKeyEnvelope('encrypted', getSecretStore().encryptString(trimmed))
   )
   cachedDeepSeekApiKey = trimmed
 }

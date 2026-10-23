@@ -146,9 +146,9 @@ export function selectRuntimeHookAgentRowForPane(
   }
   return {
     providerSession: session?.providerSession ?? null,
-    providerSessionAgentType: session?.agentType ?? null,
+    providerSessionAgentType: session ? resumeAgentType(session) : null,
     providerSessionReceivedAt: session?.receivedAt ?? null,
-    agentType: agent?.agentType ?? null,
+    agentType: agent ? resumeAgentType(agent) : null,
     agentIsLive: agent != null && agent.state !== 'done',
     live: live
       ? {
@@ -162,6 +162,11 @@ export function selectRuntimeHookAgentRowForPane(
         }
       : null
   }
+}
+
+/** A DeepSeek row runs `claude`; publishing it as `claude` would resume it on the Claude account. */
+function resumeAgentType(row: AgentStatusIpcPayload): string | null {
+  return row.displayAgentType ?? row.agentType ?? null
 }
 
 export function resolveRuntimeHookLiveAgentRow(

@@ -70,6 +70,15 @@ describe('areWorktreeListsEqual', () => {
     expect(areWorktreeListsEqual(first, renamed)).toBe(false)
   })
 
+  it('detects a host display identity change on an agent row', () => {
+    expect(
+      areWorktreeListsEqual(
+        [worktree({ agents: [agent({ agentType: 'claude' })] })],
+        [worktree({ agents: [agent({ agentType: 'claude', displayAgentType: 'deepseek' })] })]
+      )
+    ).toBe(false)
+  })
+
   it('detects host visibility field changes', () => {
     expect(areWorktreeListsEqual([worktree()], [worktree({ isArchived: true })])).toBe(false)
     expect(areWorktreeListsEqual([worktree()], [worktree({ isMainWorktree: true })])).toBe(false)

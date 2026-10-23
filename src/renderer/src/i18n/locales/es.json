@@ -3873,7 +3873,8 @@
           "c760c481c5": "Resumen de uso",
           "55c910f4f1": "- algunos precios de modelos no están disponibles",
           "enableMuse": "Activar Muse",
-          "noLocalUsageYet": "Aún no se encontró uso local de Claude, Codex, OpenCode ni Muse. El resumen se completará después de que la próxima sesión de agente escriba registros de tokens."
+          "noLocalUsageYetWithDeepSeek": "Aún no se encontró uso local de Claude, DeepSeek, Codex, OpenCode ni Muse. El resumen se completará después de que la próxima sesión de agente escriba registros de tokens.",
+          "enableDeepSeek": "Activar DeepSeek"
         },
         "share": {
           "card": {
@@ -3911,7 +3912,8 @@
             "d6e9f0a1b2": "créditos",
             "a3b6c7d8e9": "uso de grok",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -3942,7 +3944,7 @@
               "a7f937fb29": "{{value0}} sesiones - {{value1}} {{value2}}",
               "c8f3a2d1e0b4": "turnos",
               "d9a4b3e2f1c5": "eventos",
-              "recentCombinedActivity": "Actividad combinada reciente de tokens de Claude, Codex, OpenCode y Muse."
+              "recentCombinedActivityWithDeepSeek": "Actividad combinada reciente de tokens de Claude, DeepSeek, Codex, OpenCode y Muse."
             }
           }
         },
@@ -3983,6 +3985,15 @@
           "emptyMessage": "Aún no se encontró uso local de Muse para este ámbito.",
           "noCostNote": "Los registros de sesión de Muse registran tokens pero no el costo, por lo que no se muestra una estimación de costo.",
           "recentSessionsDescription": "Sesiones locales de Muse más recientes en este ámbito."
+        },
+        "DeepSeekUsagePane": {
+          "title": "Seguimiento de uso de DeepSeek",
+          "enable": "Habilitar análisis de uso de DeepSeek",
+          "disabledDescription": "Lee los registros locales de uso de DeepSeek para mostrar estadísticas de tokens, modelo y sesión. El costo no se estima.",
+          "allScope": "Todo el uso local de DeepSeek",
+          "options": "Opciones de uso de DeepSeek",
+          "refresh": "Actualizar uso de DeepSeek",
+          "empty": "Aún no se ha encontrado ningún uso local de DeepSeek para este ámbito."
         }
       },
       "sparse": {

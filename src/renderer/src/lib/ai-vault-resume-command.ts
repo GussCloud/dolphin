@@ -132,6 +132,9 @@ function buildAiVaultResumeForWorktree(
     args.session.executionHostId !== LOCAL_EXECUTION_HOST_ID &&
     args.session.resumeCommand &&
     args.session.agent !== 'omp' &&
+    // Why: the host's prebuilt `claude --resume` carries no launch agent, so the spawn would
+    // skip the DeepSeek env and run on the host's Claude login. The plan below keeps it.
+    args.session.agent !== 'deepseek' &&
     !(args.session.agent === 'codex' && args.session.codexHome === null) &&
     !args.commandOverride?.trim()
   ) {

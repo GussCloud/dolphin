@@ -4392,7 +4392,8 @@
           "c760c481c5": "Visão geral de uso",
           "55c910f4f1": "- alguns preços de modelo não estão disponíveis",
           "enableMuse": "Ativar Muse",
-          "noLocalUsageYet": "Nenhum uso local de Claude, Codex, OpenCode ou Muse encontrado ainda. A visão geral será preenchida após a próxima sessão do agente escrever logs de tokens."
+          "noLocalUsageYetWithDeepSeek": "Nenhum uso local de Claude, DeepSeek, Codex, OpenCode ou Muse encontrado ainda. A visão geral será preenchida após a próxima sessão do agente escrever logs de tokens.",
+          "enableDeepSeek": "Ativar DeepSeek"
         },
         "share": {
           "card": {
@@ -4430,7 +4431,8 @@
             "d6e9f0a1b2": "créditos",
             "a3b6c7d8e9": "uso do grok",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -4464,7 +4466,7 @@
               "statusScanning": "Escaneando",
               "statusEnabled": "Ativado",
               "statusOff": "Desativado",
-              "recentCombinedActivity": "Atividade de tokens Claude, Codex, OpenCode e Muse combinada recente."
+              "recentCombinedActivityWithDeepSeek": "Atividade de tokens Claude, DeepSeek, Codex, OpenCode e Muse combinada recente."
             }
           }
         },
@@ -4508,6 +4510,15 @@
           "emptyMessage": "Nenhum uso local do Muse encontrado ainda para este escopo.",
           "noCostNote": "Logs de sessão do Muse registram tokens, mas não custo, então nenhuma estimativa de custo é mostrada.",
           "recentSessionsDescription": "Sessões do Muse locais mais recentes neste escopo."
+        },
+        "DeepSeekUsagePane": {
+          "title": "Rastreamento de Uso do DeepSeek",
+          "enable": "Ativar análise de uso do DeepSeek",
+          "disabledDescription": "Lê logs de uso local do DeepSeek para mostrar estatísticas de token, modelo e sessão. O custo não é estimado.",
+          "allScope": "Todo uso local do DeepSeek",
+          "options": "Opções de uso do DeepSeek",
+          "refresh": "Atualizar uso do DeepSeek",
+          "empty": "Nenhum uso local do DeepSeek encontrado ainda para este escopo."
         }
       },
       "sparse": {

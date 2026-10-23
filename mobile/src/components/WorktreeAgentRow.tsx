@@ -2,7 +2,12 @@ import { memo } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
 import { colors, spacing } from '../theme/mobile-theme'
-import { agentDisplayLabel, agentDotState, formatTimeAgo } from '../worktree/agent-row-display'
+import {
+  agentDisplayLabel,
+  agentDotState,
+  agentRowIdentity,
+  formatTimeAgo
+} from '../worktree/agent-row-display'
 import type { AgentRowSubagent } from '../worktree/agent-row-subagents'
 import { AgentStateDot } from './AgentStateDot'
 import { MobileAgentIcon } from './MobileAgentIcon'
@@ -26,13 +31,14 @@ function WorktreeAgentRowComponent({ agent, depth, now, unvisited }: Props) {
   const dotState = agentDotState(agent, now)
   const label = agentDisplayLabel(agent, now)
   const ts = formatTimeAgo(agent.stateStartedAt, now)
+  const identity = agentRowIdentity(agent)
 
   return (
     <View style={[styles.row, { paddingLeft: depth * INDENT_PER_DEPTH }]}>
       <AgentStateDot state={dotState} />
       {/* Agent identity logo (Claude/Codex/…), matching the desktop sidebar's
           agent icons instead of a two-letter text code. */}
-      {agent.agentType ? <MobileAgentIcon agentId={agent.agentType} size={13} /> : null}
+      {identity ? <MobileAgentIcon agentId={identity} size={13} /> : null}
       <Text style={[styles.label, unvisited && styles.labelUnvisited]} numberOfLines={1}>
         {label}
       </Text>

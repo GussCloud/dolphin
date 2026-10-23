@@ -78,6 +78,7 @@ import { getProfileUserDataPath } from '../dolphin-profiles/profile-storage-path
 import { recoverPendingProfileProjectMoves } from '../dolphin-profiles/profile-project-move-intent'
 import { initStatsPath } from '../stats/collector'
 import { initClaudeUsagePath } from '../claude-usage/store'
+import { initDeepSeekUsagePath } from '../deepseek-usage/store'
 import { initCodexUsagePath } from '../codex-usage/store'
 import { initOpenCodeUsagePath } from '../opencode-usage/store'
 import { initMuseUsagePath } from '../muse-usage/store'
@@ -325,6 +326,7 @@ function initializeMainProcessPreflight(options: MainProcessPreflightOptions): b
   // Why: same timing as initDataPath — capture userData before app.setName changes it. See persistence.ts:20-28.
   initStatsPath()
   initClaudeUsagePath()
+  initDeepSeekUsagePath()
   initCodexUsagePath()
   initOpenCodeUsagePath()
   initMuseUsagePath()

@@ -57,13 +57,59 @@ would create the folder for every Claude user. A failed install is logged and re
 launch; the launch proceeds without status. DeepSeek gets the claude-version-gated events
 (`SessionEnd`) but not Claude's usage statusline.
 
-Hooks reach the hook server as `claude` and keep every Claude status rule. The desktop renderer
-re-labels a row `deepseek` when its transcript path contains `.claude-deepseek`. Mobile and
-`worktree ps` still show those rows as Claude.
+Hooks reach the hook server as `claude` and keep every Claude status rule: `agentType` stays
+`claude` on the stored row. The execution host decides the presentation identity once, at write
+time (`withHostDisplayAgentType` in `src/main/agent-hooks/server/`), and stamps
+`displayAgentType: 'deepseek'` on the row payload when the event's transcript path has a
+`.claude-deepseek` segment. An event with no transcript path (OSC, inferred rows) keeps the
+row's stamp; a plain Claude transcript or a different `agentType` clears it. The event's own
+stamp is never trusted. The rule is `resolveDeepSeekDisplayAgentType` in
+`src/shared/deepseek-status-identity.ts`.
+
+The stamp is persisted with the row and travels as one optional field (rule 1 of
+[`remote-wire-compatibility.md`](./remote-wire-compatibility.md)); unknown values normalize to
+absent. Readers:
+
+- desktop renderer: re-labels the row `deepseek` from the stamp, and runs the same rule over the
+  transcript path for old hosts that send no stamp;
+- `worktree ps` and mobile worktree rows: `displayAgentType` beside `agentType`; mobile shows the
+  stamp, old mobile builds keep showing Claude;
+- mobile session tabs from a headless host: `agentType: 'deepseek'`, the same value a desktop
+  host's renderer already publishes;
+- work presence: `cli: 'deepseek'`;
+- the agent dashboard reads the renderer store, so it follows the renderer.
 
 The first launch seeds `.claude.json` with `hasCompletedOnboarding: true` when the file is absent:
 a fresh config dir opens Claude Code's theme picker, which would swallow Dolphin's prompt injection.
 The per-folder trust prompt still appears once per project.
+
+## Usage analytics
+
+Settings > Stats has its own DeepSeek provider. `DeepSeekUsageStore` scans
+`~/.claude-deepseek/{projects,transcripts}` with Claude's transcript parser
+(`scanClaudeUsageFiles(..., 'deepseek')`, worker provider `deepseek`) into its own cache,
+`dolphin-deepseek-usage.json`; Claude's scan only reads `~/.claude`. Cost is never estimated:
+Dolphin has no DeepSeek pricing table and Claude rates would misprice every turn. Like Claude usage,
+only the local home is scanned (no WSL homes, no SSH). The Overview tab counts DeepSeek tokens
+as a separate provider and adds nothing to its cost total.
+
+## Session history and search
+
+`deepseek` is its own AI Vault agent (`AI_VAULT_AGENTS`). Its source scans
+`~/.claude-deepseek/projects` on the host and in each WSL home, with Claude's JSONL parser stamped
+`deepseek`; Claude's source only scans `~/.claude/projects`, so a transcript belongs to exactly one.
+Subagent listing, scoped (cwd-bucket) discovery, delete and the search index all key on the same
+roots, and the by-path guards accept a DeepSeek path only for a DeepSeek row. No SSH source: DeepSeek
+never runs over SSH.
+
+Resume always goes through the startup plan, so the tab spawns with `launchAgent: 'deepseek'` and
+gets the DeepSeek env; a runtime host's prebuilt `claude --resume` is never reused. There is no
+"Copy Resume Command" and `dolphin search` prints no resume line for DeepSeek: pasted outside Dolphin,
+that line runs on the Claude login. Resume in a native chat is not offered (Claude SDK only).
+
+Remote clients that do not advertise `ai-vault.deepseek-sessions.v1` get no DeepSeek rows or hits
+from `aiVault.listSessions` / `aiVault.searchSessions`: an older client's search schema is a closed
+agent enum and would refuse the whole page.
 
 ## Claude Code updates
 
