@@ -57,7 +57,7 @@ function createProgressReporter(id: number): (count: number) => void {
 
 // Why: the cache is the whole transcript history; cloning it back to main on every
 // unchanged refresh only to replace an identical copy is the dominant scan cost there.
-function unchangedScanValue(providerId: 'claude' | 'codex'): UsageScanWorkerValue {
+function unchangedScanValue(providerId: 'claude' | 'deepseek' | 'codex'): UsageScanWorkerValue {
   return { providerId, source: [], sessions: [], dailyAggregates: [], unchanged: true }
 }
 
@@ -68,13 +68,19 @@ async function runScan(
   // Switched, not table-driven: each branch narrows `previous` to that
   // provider's own record type, so nothing here needs a type assertion.
   switch (request.providerId) {
-    case 'claude': {
-      const result = await scanClaudeUsageFiles(request.worktrees, request.previous, onFilesScanned)
+    case 'claude':
+    case 'deepseek': {
+      const result = await scanClaudeUsageFiles(
+        request.worktrees,
+        request.previous,
+        onFilesScanned,
+        request.providerId
+      )
       if (result.unchanged) {
-        return unchangedScanValue('claude')
+        return unchangedScanValue(request.providerId)
       }
       return {
-        providerId: 'claude',
+        providerId: request.providerId,
         source: result.processedFiles,
         sessions: result.sessions,
         dailyAggregates: result.dailyAggregates

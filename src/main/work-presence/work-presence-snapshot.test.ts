@@ -120,6 +120,13 @@ describe('buildWorkPresenceSnapshot', () => {
     ])
   })
 
+  it('names a DeepSeek row by the host display stamp, not the claude harness', () => {
+    const snapshot = snapshotOf([
+      summary({ agents: [agentRow('tab-1:leaf-a', { displayAgentType: 'deepseek' })] })
+    ])
+    expect(snapshot.projects[0]?.agents[0]?.cli).toBe('deepseek')
+  })
+
   it('leaves out rows the store would not display', () => {
     const stale = NOW - AGENT_STATUS_STALE_AFTER_MS - 1
     const snapshot = snapshotOf([

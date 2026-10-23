@@ -153,7 +153,7 @@ export function buildWorkPresenceProjects(
       const name = resolveWorkPresenceAgentName(row.paneKey, nameSources)
       project.agents.push({
         id: hashWorkPresenceId(machineId, row.paneKey),
-        cli: (row.agentType || 'unknown').slice(0, MAX_CLI),
+        cli: (row.displayAgentType || row.agentType || 'unknown').slice(0, MAX_CLI),
         state: mapAgentStatusToWorkPresenceState(row.state),
         branch,
         ...(name ? { name } : {})

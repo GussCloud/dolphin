@@ -17,6 +17,7 @@ import {
   resolveExplicitTerminalTitleAgentType
 } from '../../../shared/terminal-title-agent-type'
 import { resolveCompatibleAgentTypeForOwner } from '../../../shared/agent-title-owner'
+import { isClaudeTitleOfDeepSeekPane } from '../../../shared/deepseek-status-identity'
 import { isOpenCodeNativeTitle } from '../../../shared/opencode-terminal-title'
 import { resolvePaneAgentOwner } from '../../../shared/pane-agent-owner'
 import type { TerminalTab } from '../../../shared/terminal-tab-types'
@@ -128,6 +129,7 @@ export function resolveTabAgentFromSignals(args: {
     priorIdentity !== null &&
     explicitTitleAgent !== null &&
     explicitTitleAgent !== priorIdentity &&
+    !isClaudeTitleOfDeepSeekPane(explicitTitleAgent, priorIdentity) &&
     titleClaimsIdentity &&
     (args.hasObservedAgentSignal || hasCompletedHook || nativeOpenCodeTitle)
   // Why: native OpenCode titles lack a provider generation and cannot displace durable ownership.

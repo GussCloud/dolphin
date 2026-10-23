@@ -3,6 +3,7 @@ import type {
   CodexAccountsApi,
   CodexConfigSyncApi,
   CursorAccountsApi,
+  DeepSeekCredentialsApi,
   GrokAccountsApi,
   MinimaxCredentialsApi
 } from './api/agent-account-api'
@@ -12,6 +13,7 @@ import type { SkillsApi } from './api/agent-skill-api'
 import type { AgentAwakeApi, AgentStatusApi, AgentTrustApi } from './api/agent-status-api'
 import type {
   ClaudeUsageApi,
+  DeepSeekUsageApi,
   CodexUsageApi,
   MuseUsageApi,
   OpenCodeUsageApi,
@@ -143,6 +145,7 @@ export type PreloadApi = {
   stats: StatsApi
   memory: MemoryApi
   claudeUsage: ClaudeUsageApi
+  deepSeekUsage: DeepSeekUsageApi
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi
   museUsage: MuseUsageApi
@@ -155,6 +158,7 @@ export type PreloadApi = {
   runtimeEnvironments: RuntimeApi['runtimeEnvironments']
   rateLimits: RateLimitsApi
   minimaxCredentials: MinimaxCredentialsApi
+  deepseekCredentials: DeepSeekCredentialsApi
   grokAccounts: GrokAccountsApi
   cursorAccounts: CursorAccountsApi
   ssh: SshApi
@@ -170,6 +174,7 @@ export type PreloadApi = {
 
 export type {
   ClaudeUsageApi,
+  DeepSeekUsageApi,
   CodexUsageApi,
   MuseUsageApi,
   OpenCodeUsageApi

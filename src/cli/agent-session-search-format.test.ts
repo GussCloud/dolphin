@@ -83,6 +83,14 @@ describe('formatSessionSearchResponse: results', () => {
     )
   })
 
+  it('labels a DeepSeek hit DeepSeek and prints no resume line to paste', () => {
+    const output = formatSessionSearchResponse(
+      results({ hits: [{ ...localHit, agent: 'deepseek' }] })
+    )
+    expect(output).toContain('DeepSeek  2026-09-12T18:04:11.000Z')
+    expect(output).not.toContain('resume:')
+  })
+
   it('says so when a hit matched with no text evidence', () => {
     expect(formatSessionSearchResponse(results({ hits: [evidencelessHit] }))).toContain(
       'Codex  unknown time  Index sweep budget\n    no text evidence for this match'

@@ -23,6 +23,7 @@ const {
       runtime: {},
       stats: {},
       claudeUsage: {},
+      deepSeekUsage: {},
       codexUsage: {},
       openCodeUsage: {},
       museUsage: {},

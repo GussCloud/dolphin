@@ -6,6 +6,25 @@ import {
 } from './ai-vault-resume-command'
 
 describe('buildAiVaultResumeCommand', () => {
+  it('builds no runnable line for DeepSeek on any platform, shell or override', () => {
+    // Why: rows, search hits and `dolphin search --json` carry this string to consumers that
+    // would run it bare, and a bare `claude --resume` resumes on the Claude login.
+    for (const platform of ['darwin', 'linux', 'win32'] as const) {
+      for (const shell of [undefined, 'posix', 'powershell', 'cmd'] as const) {
+        expect(
+          buildAiVaultResumeCommand({
+            agent: 'deepseek',
+            sessionId: 'deepseek-session',
+            cwd: '/repo',
+            platform,
+            shell,
+            commandOverride: 'claude'
+          })
+        ).toBe('')
+      }
+    }
+  })
+
   it('uses Antigravity conversation ids instead of Gemini resume flags', () => {
     expect(
       buildAiVaultResumeCommand({

@@ -9,6 +9,10 @@ import {
 } from '../../../ai-vault-search/session-search-service-registry'
 import { defineMethod } from '../core'
 import { restampAiVaultListResult } from '../../../ai-vault/session-list-results'
+import {
+  projectDeepSeekAiVaultListResult,
+  projectDeepSeekAiVaultSearchResponse
+} from '../../../ai-vault/deepseek-client-projection'
 import type { AiVaultPrepareSessionResumeArgs } from '../../../../shared/ai-vault-resume-preparation'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import { describeAiVaultScanError } from '../../../../shared/ai-vault-scan-error-message'
@@ -28,8 +32,11 @@ export const AI_VAULT_METHODS = [
   defineMethod({
     name: 'aiVault.searchSessions',
     params: AiVaultSearchRequestSchema,
-    handler: (params, { clientKind }) =>
-      searchSessionService(params, clientKind ? 'relay' : 'runtime')
+    handler: async (params, { clientKind, clientCapabilities }) =>
+      projectDeepSeekAiVaultSearchResponse(
+        await searchSessionService(params, clientKind ? 'relay' : 'runtime'),
+        { clientKind, clientCapabilities }
+      )
   }),
   defineMethod({
     name: 'aiVault.searchStatus',
@@ -84,9 +91,10 @@ export const AI_VAULT_METHODS = [
       }
       // Why: web clients consume this response directly (no parent-side retag),
       // so sessions must come back stamped as the runtime host they addressed.
-      const stamped = params.executionHostId
-        ? restampAiVaultListResult(result, params.executionHostId)
-        : result
+      const stamped = projectDeepSeekAiVaultListResult(
+        params.executionHostId ? restampAiVaultListResult(result, params.executionHostId) : result,
+        { clientKind, clientCapabilities }
+      )
       return projectStructuredAiVaultSessions(
         stamped,
         clientKind === undefined ||

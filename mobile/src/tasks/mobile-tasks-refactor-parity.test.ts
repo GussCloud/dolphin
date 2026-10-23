@@ -114,10 +114,12 @@ const hash = (parts: string[] | string): string =>
 // builders and two English-only helpers were folded. No RPC call or method literal moved.
 // Statements 421 -> 424 and semantics 3533 -> 3529: the create-target label reads typed repo/team
 // selections instead of casting one union value.
+// DeepSeek moves the hook and statement hashes and no count: the workspace-create picker hides
+// DeepSeek agents while host agent detection is unknown (isWorkspaceAgentOfferable).
 
-const SCREEN_RPC_SCREEN_HOOKS = '664a805e6318ed5112f177eefba9704604146a378cb046a062783d85e5e42df5'
+const SCREEN_RPC_SCREEN_HOOKS = '6a81bb3280a8ba4bb893a6ae3d9061f9ff303df050183c1339afa1d83c1cf948'
 const PRE_REFACTOR_DIFF_HOOKS = '93c7189b32bed8456cc51814fffa8ce80cf62011ef968a9d53ddec2b9686f58f'
-const SCREEN_RPC_STATEMENTS = 'c40945005936ea9dddbe66554393cb4df43209eff8b5401a4b6b8709ca8231d4'
+const SCREEN_RPC_STATEMENTS = '7d26121d428a1d4db47b2ade1b909958f2622c866b32c1dc3a02b5de1e5f5acc'
 // Saved Linear selections now accept unknown persisted values; reconciliation tests cover them.
 const MAIN_REBASED_DECLARATIONS = '912b1b52450690526cb4a7e00971cad18aceb617ef38df10e0ac808e20e5eee3'
 const SCREEN_RPC_SEMANTICS = '56be9e93b9767aa8d3512f365a0bcd1ebbdf07ec77770971f824ec9168608b33'

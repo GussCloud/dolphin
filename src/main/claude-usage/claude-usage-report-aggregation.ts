@@ -11,10 +11,14 @@ import type { ClaudeUsagePersistedState } from './types'
 import { estimateCostUsd } from './claude-model-pricing'
 import { getFilteredDaily, getFilteredSessions } from './claude-usage-scope-filters'
 
+/** Prices a Claude-format row; a provider without a pricing table returns null so no cost is shown. */
+export type ClaudeUsageCostEstimator = typeof estimateCostUsd
+
 export function buildSummary(
   state: ClaudeUsagePersistedState,
   scope: ClaudeUsageScope,
-  range: ClaudeUsageRange
+  range: ClaudeUsageRange,
+  estimateCost: ClaudeUsageCostEstimator = estimateCostUsd
 ): ClaudeUsageSummary {
   const filteredDaily = getFilteredDaily(state, scope, range)
   const filteredSessions = getFilteredSessions(state, scope, range)
@@ -43,7 +47,7 @@ export function buildSummary(
       row.projectLabel,
       (byProject.get(row.projectLabel) ?? 0) + row.inputTokens + row.outputTokens
     )
-    const cost = estimateCostUsd(
+    const cost = estimateCost(
       row.model,
       row.inputTokens,
       row.outputTokens,
@@ -109,7 +113,8 @@ export function buildBreakdown(
   state: ClaudeUsagePersistedState,
   scope: ClaudeUsageScope,
   range: ClaudeUsageRange,
-  kind: ClaudeUsageBreakdownKind
+  kind: ClaudeUsageBreakdownKind,
+  estimateCost: ClaudeUsageCostEstimator = estimateCostUsd
 ): ClaudeUsageBreakdownRow[] {
   const rows = new Map<string, ClaudeUsageBreakdownRow>()
   // Why: the 1h cache-write split only feeds pricing, so it stays off the renderer row type.
@@ -170,7 +175,7 @@ export function buildBreakdown(
 
   for (const row of rows.values()) {
     if (kind === 'model') {
-      row.estimatedCostUsd = estimateCostUsd(
+      row.estimatedCostUsd = estimateCost(
         row.key,
         row.inputTokens,
         row.outputTokens,

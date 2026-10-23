@@ -6,6 +6,7 @@ import {
   createCodexAccountsApi,
   createCursorAccountsApi,
   createGrokAccountsApi,
+  createDeepSeekCredentialsApi,
   createMiniMaxCredentialsApi
 } from './preload-api/web-agent-accounts-api'
 import { createWebAgentStatusApi } from './preload-api/web-agent-status-api'
@@ -108,6 +109,7 @@ function createWebPreloadApi(): Partial<PreloadApi> {
     notifications: createNotificationsApi(),
     rateLimits: createRateLimitsApi(),
     minimaxCredentials: createMiniMaxCredentialsApi(),
+    deepseekCredentials: createDeepSeekCredentialsApi(),
     grokAccounts: createGrokAccountsApi(),
     cursorAccounts: createCursorAccountsApi(),
     codexAccounts: createCodexAccountsApi(),

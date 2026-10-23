@@ -69,7 +69,9 @@ describe('agent picker search', () => {
 
   it('resolves every catalog command alias to its agent first', () => {
     for (const agent of AGENT_CATALOG) {
-      expect(searchAgentPickerEntries(AGENT_CATALOG, agent.cmd)[0]?.id).toBe(agent.id)
+      // Why: DeepSeek reuses Claude's commands, so a shared command resolves to its first owner.
+      const owner = AGENT_CATALOG.find((entry) => entry.cmd === agent.cmd)
+      expect(searchAgentPickerEntries(AGENT_CATALOG, agent.cmd)[0]?.id).toBe(owner?.id)
     }
   })
 

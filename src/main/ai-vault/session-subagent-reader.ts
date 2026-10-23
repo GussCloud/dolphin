@@ -6,7 +6,7 @@ import type { AiVaultServiceSubagentRequest } from './session-scanner-service-pr
 export function listLocalAiVaultSubagentSessions(
   request: AiVaultServiceSubagentRequest
 ): Promise<AiVaultSubagentListResult> {
-  return request.agent === 'claude'
-    ? listClaudeSubagentSessions({ parentFilePath: request.parentFilePath })
-    : listOmpSubagentSessions({ parentFilePath: request.parentFilePath })
+  return request.agent === 'omp'
+    ? listOmpSubagentSessions({ parentFilePath: request.parentFilePath })
+    : listClaudeSubagentSessions({ parentFilePath: request.parentFilePath, agent: request.agent })
 }

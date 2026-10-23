@@ -27,6 +27,8 @@ import {
 } from './claude-agent-teams-host-shell'
 import { resolveGitBashPath } from '../git-bash'
 import { overlayPlatformEnv } from '../../shared/platform-env-overlay'
+import { isDeepSeekProviderEnv } from '../../shared/deepseek-claude-provider'
+import { routesAgentTeamToRemoteRuntime } from './claude-agent-teams-service'
 
 export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends DolphinRuntimeWithSplitPtyBackedTerminal {
   protected resolveTerminalSplitSourceAuthority(
@@ -198,7 +200,12 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     // Why overlay: the pane's `PATH` must replace main's `Path`, or the launch PATH is built from Electron's.
     const baseEnv = overlayPlatformEnv<string | undefined>(process.env, args.baseEnv ?? {})
     const inheritedEnvKeys = new Set(Object.keys(baseEnv))
-    const auth = args.prepareAuth && this.prepareClaudeAuth ? await this.prepareClaudeAuth() : null
+    // Why the pane env, not the overlay: a DeepSeek marker in main's own env must not reclassify Claude.
+    const deepSeekProvider = isDeepSeekProviderEnv(args.baseEnv)
+    const auth =
+      args.prepareAuth && !deepSeekProvider && this.prepareClaudeAuth
+        ? await this.prepareClaudeAuth()
+        : null
     if (auth) {
       applyClaudeEnvPatch(baseEnv, auth.envPatch, { stripAuthEnv: auth.stripAuthEnv })
     }
@@ -214,6 +221,7 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       envToDelete: [...(envToDelete ?? []), ...IN_PROCESS_AGENT_TEAMS_ENV_TO_DELETE]
     }
     if (
+      (deepSeekProvider && routesAgentTeamToRemoteRuntime(baseEnv)) ||
       !canLaunchAgentTeamPanes({
         hostShell,
         leaderIsWsl,
@@ -238,7 +246,8 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       shimBin,
       shimPathDirs,
       hostShell: hostShell ?? undefined,
-      paneKey: args.paneKey ?? this.getPaneKeyForTerminalHandle(args.handle) ?? undefined
+      paneKey: args.paneKey ?? this.getPaneKeyForTerminalHandle(args.handle) ?? undefined,
+      deepSeekProvider
     })
     const env = auth ? { ...auth.envPatch, ...launch.env } : launch.env
     return envToDelete ? { env, envToDelete } : { env }

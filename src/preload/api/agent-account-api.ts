@@ -4,6 +4,10 @@ import type {
 } from '../../shared/managed-account-types'
 import type { CodexConfigSyncStatus } from '../../shared/codex-config-sync-types'
 import type { CursorAccountStatus, GrokAccountStatus } from '../../shared/rate-limit-types'
+import type {
+  DeepSeekCredentialsStatus,
+  DeepSeekListModelsResult
+} from '../../shared/deepseek-claude-provider'
 
 export type CodexAccountsApi = {
   list: () => Promise<CodexRateLimitAccountsState>
@@ -79,6 +83,14 @@ export type MinimaxCredentialsApi = {
   clearCookie: () => Promise<{ cookieConfigured: boolean }>
   saveApiKey: (key: string) => Promise<{ apiKeyConfigured: boolean }>
   clearApiKey: () => Promise<{ apiKeyConfigured: boolean }>
+}
+
+export type DeepSeekCredentialsApi = {
+  // The renderer only learns whether a key exists; the key itself never leaves main.
+  getStatus: () => Promise<DeepSeekCredentialsStatus>
+  saveApiKey: (key: string) => Promise<DeepSeekCredentialsStatus>
+  clearApiKey: () => Promise<DeepSeekCredentialsStatus>
+  listModels: () => Promise<DeepSeekListModelsResult>
 }
 
 export type CodexConfigSyncApi = {

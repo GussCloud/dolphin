@@ -42,6 +42,47 @@
         "title": "Mostrar icono en la barra de menús",
         "description": "Mantén un acceso directo de Dolphin e indicador de actividad en la barra de menús de macOS."
       }
+    },
+    "agents": {
+      "deepseek": {
+        "slotPickerAria": "Modelo {{value0}}",
+        "searchModels": "Buscar modelos...",
+        "noModelMatch": "Ningún modelo coincide.",
+        "notListed": "No listado por DeepSeek",
+        "slot": {
+          "main": "Principal",
+          "opus": "Opus",
+          "sonnet": "Sonnet",
+          "haiku": "Haiku",
+          "subagent": "Subagente"
+        },
+        "error": {
+          "noApiKey": "No se pudo leer la clave de API de DeepSeek guardada. Vuelve a guardarla.",
+          "unauthorized": "DeepSeek rechazó la clave de API guardada. Reemplázala e inténtalo de nuevo.",
+          "network": "No se pudo conectar con DeepSeek. Revisa tu conexión e inténtalo de nuevo.",
+          "invalidResponse": "DeepSeek devolvió una lista de modelos que Dolphin no pudo leer.",
+          "failed": "No se pudieron cargar los modelos de DeepSeek."
+        },
+        "apiKey": "Clave de API de DeepSeek",
+        "configured": "Configurada",
+        "notConfigured": "Sin configurar",
+        "apiKeyReplacePlaceholder": "Pega una clave nueva para reemplazar la guardada",
+        "apiKeyPlaceholder": "Pega tu clave de API de DeepSeek",
+        "replace": "Reemplazar",
+        "save": "Guardar",
+        "clear": "Borrar",
+        "apiKeyHelp": "Se guarda cifrada en este dispositivo y solo se envía a DeepSeek. Crea una clave en platform.deepseek.com.",
+        "loadingModels": "Cargando modelos de DeepSeek…",
+        "retry": "Reintentar",
+        "models": "Modelos",
+        "modelsHelp": "Claude Code envía cada función al modelo elegido aquí. Los cambios se aplican a las sesiones de DeepSeek iniciadas después.",
+        "keyNotSaved": "No se guardó la clave de API de DeepSeek.",
+        "keySaved": "Clave de API de DeepSeek guardada.",
+        "keyUpdateFailed": "No se pudo actualizar la clave de API de DeepSeek.",
+        "isolationNote": "DeepSeek ejecuta Claude Code con su propia carpeta de configuración ({{value0}}). Tu configuración, tus skills y tu CLAUDE.md de Claude no se comparten.",
+        "oneMillionContext": "Contexto de 1M",
+        "encryptionUnavailable": "El almacenamiento seguro no está disponible en este sistema, así que Dolphin no puede guardar aquí una clave de DeepSeek."
+      }
     }
   },
   "menu": {
@@ -387,7 +428,9 @@
           "d443a47995": "Prime Agent",
           "mimo_code_label": "MiMo Code",
           "muse_label": "Muse",
-          "zcode_label": "ZCode"
+          "zcode_label": "ZCode",
+          "deepseek_label": "DeepSeek",
+          "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },
         "skill": {
           "cli": {
@@ -3830,7 +3873,8 @@
           "c760c481c5": "Resumen de uso",
           "55c910f4f1": "- algunos precios de modelos no están disponibles",
           "enableMuse": "Activar Muse",
-          "noLocalUsageYet": "Aún no se encontró uso local de Claude, Codex, OpenCode ni Muse. El resumen se completará después de que la próxima sesión de agente escriba registros de tokens."
+          "noLocalUsageYetWithDeepSeek": "Aún no se encontró uso local de Claude, DeepSeek, Codex, OpenCode ni Muse. El resumen se completará después de que la próxima sesión de agente escriba registros de tokens.",
+          "enableDeepSeek": "Activar DeepSeek"
         },
         "share": {
           "card": {
@@ -3868,7 +3912,8 @@
             "d6e9f0a1b2": "créditos",
             "a3b6c7d8e9": "uso de grok",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -3899,7 +3944,7 @@
               "a7f937fb29": "{{value0}} sesiones - {{value1}} {{value2}}",
               "c8f3a2d1e0b4": "turnos",
               "d9a4b3e2f1c5": "eventos",
-              "recentCombinedActivity": "Actividad combinada reciente de tokens de Claude, Codex, OpenCode y Muse."
+              "recentCombinedActivityWithDeepSeek": "Actividad combinada reciente de tokens de Claude, DeepSeek, Codex, OpenCode y Muse."
             }
           }
         },
@@ -3940,6 +3985,15 @@
           "emptyMessage": "Aún no se encontró uso local de Muse para este ámbito.",
           "noCostNote": "Los registros de sesión de Muse registran tokens pero no el costo, por lo que no se muestra una estimación de costo.",
           "recentSessionsDescription": "Sesiones locales de Muse más recientes en este ámbito."
+        },
+        "DeepSeekUsagePane": {
+          "title": "Seguimiento de uso de DeepSeek",
+          "enable": "Habilitar análisis de uso de DeepSeek",
+          "disabledDescription": "Lee los registros locales de uso de DeepSeek para mostrar estadísticas de tokens, modelo y sesión. El costo no se estima.",
+          "allScope": "Todo el uso local de DeepSeek",
+          "options": "Opciones de uso de DeepSeek",
+          "refresh": "Actualizar uso de DeepSeek",
+          "empty": "Aún no se ha encontrado ningún uso local de DeepSeek para este ámbito."
         }
       },
       "sparse": {

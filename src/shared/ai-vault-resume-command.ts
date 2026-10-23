@@ -25,6 +25,11 @@ export function buildAiVaultResumeCommand(args: {
 }): string {
   const { agent, sessionId, cwd, platform, commandOverride, codexHome, resumeFilePath, shell } =
     args
+  // Why: no runnable line exists for DeepSeek. A bare `claude --resume` resumes on the Claude
+  // login; only a Dolphin spawn with launchAgent 'deepseek' gets the DeepSeek env (startup plan).
+  if (agent === 'deepseek') {
+    return ''
+  }
   const baseCommand = commandOverride?.trim() || defaultAiVaultResumeCommandBase(agent)
   // Why: OMP's and Prime Agent's `--resume` accept an absolute transcript path,
   // which resolves regardless of which session-dir root (custom
@@ -219,6 +224,9 @@ function buildAgentResumeInvocation(
     case 'cline':
       return `${baseCommand} --id ${sessionArg}`
     case 'claude':
+    // Why: listed for exhaustiveness only; buildAiVaultResumeCommand returns '' for DeepSeek first.
+    // falls through
+    case 'deepseek':
     case 'cursor':
     case 'gemini':
     case 'grok':

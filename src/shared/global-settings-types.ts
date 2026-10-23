@@ -1,4 +1,5 @@
 import type { ExecutionHostId } from './execution-host'
+import type { DeepSeekModelSlots } from './deepseek-claude-provider'
 import type { GitHubProjectSettings } from './github/project-types'
 import type { VoiceSettings } from './speech-types'
 import type { AgentInteractionSettings } from './agent-interaction-settings'
@@ -38,23 +39,10 @@ import type {
   TaskViewPresetId
 } from './ui-chrome-types'
 import type { SetupScriptLaunchMode } from './worktree/launch-types'
-import type {
-  CustomWorktreeVisibilitySource,
-  ExternalWorktreeVisibility,
-  WorktreeVisibilitySourcePreferences
-} from './repo-types'
+import type { WorktreeVisibilityDefaults } from './worktree-visibility-defaults'
 
 /** MiniMax account region used to select the quota endpoint. */
 export type MiniMaxEndpoint = 'overseas' | 'cn'
-
-export type WorktreeVisibilityDefaults = {
-  /** Default for worktrees outside a recognized source. */
-  external?: ExternalWorktreeVisibility
-  /** Host-owned roots applied to every repository on that host. */
-  customSources?: CustomWorktreeVisibilitySource[]
-  /** Defaults for built-in and host-owned custom sources. */
-  sourcePreferences?: WorktreeVisibilitySourcePreferences
-}
 
 export type GlobalSettings = {
   workspaceDir: string
@@ -402,6 +390,8 @@ export type GlobalSettings = {
   minimaxUsageModels: string
   /** MiniMax account region; defaults to overseas for existing users. */
   minimaxEndpoint: MiniMaxEndpoint
+  /** DeepSeek models mapped onto Claude Code's model slots. The API key lives in a safeStorage file, never here. */
+  deepseekModelSlots: DeepSeekModelSlots
   /** Extract OAuth credentials from the local Gemini CLI for rate-limit fetching. Off by default (explicit opt-in). */
   geminiCliOAuthEnabled: boolean
   /** Per-agent CLI command overrides. A missing key means use the catalog default binary name. */
@@ -541,3 +531,4 @@ export type DolphinWorkspaceLayout = {
 // Re-exported so existing importers keep one entry point; the shape lives in its
 // own file because this one is at the max-lines ceiling.
 export type { GhosttyImportPreview } from './ghostty-import-preview'
+export type { WorktreeVisibilityDefaults } from './worktree-visibility-defaults'

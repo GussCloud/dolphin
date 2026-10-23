@@ -328,6 +328,18 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     cmd: 'openclaw',
     faviconDomain: 'openclaw.ai',
     homepageUrl: 'https://github.com/openclaw/openclaw'
+  },
+  {
+    id: 'deepseek',
+    label: translate('auto.lib.agent.catalog.deepseek_label', 'DeepSeek'),
+    cmd: 'claude',
+    homepageUrl: 'https://api-docs.deepseek.com/quick_start/agent_integrations/claude_code/'
+  },
+  {
+    id: 'deepseek-agent-teams',
+    label: translate('auto.lib.agent.catalog.deepseek_agent_teams_label', 'DeepSeek Agent Teams'),
+    cmd: getTuiAgentLaunchCommand(TUI_AGENT_CONFIG['deepseek-agent-teams'], getCatalogPlatform()),
+    homepageUrl: 'https://api-docs.deepseek.com/quick_start/agent_integrations/claude_code/'
   }
 ])
 

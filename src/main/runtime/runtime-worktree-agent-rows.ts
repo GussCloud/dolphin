@@ -53,6 +53,7 @@ export function attachRuntimeWorktreeAgentRows(args: {
       state: source.state,
       ...(source.workingMode ? { workingMode: source.workingMode } : {}),
       agentType: source.agentType,
+      ...(source.displayAgentType ? { displayAgentType: source.displayAgentType } : {}),
       prompt: source.prompt,
       taskTitle: orchestration?.taskTitle ?? null,
       displayName: orchestration?.displayName ?? null,

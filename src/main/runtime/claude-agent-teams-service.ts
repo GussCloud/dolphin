@@ -4,6 +4,11 @@ import { ClaudeAgentTeamsTmuxDispatcher } from './claude-agent-teams-tmux-dispat
 import { resolvePathEnvKey } from '../pty/windows-environment-path'
 import { AGENT_TEAMS_SHIM_PATH_DIRS_ENV } from '../claude-agent-teams-path-restore'
 import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
+import {
+  DEEPSEEK_PROVIDER_ENV_KEY,
+  DEEPSEEK_PROVIDER_ENV_VALUE,
+  isDeepSeekTuiAgent
+} from '../../shared/deepseek-claude-provider'
 import type { ClaudeAgentTeamsLeaderRegistry } from './claude-agent-teams-leader-registry'
 import type {
   AgentTeam,
@@ -50,6 +55,8 @@ export class ClaudeAgentTeamsService {
     hostShell?: AgentTeamHostShell
     /** Lets the team be re-admitted after a main restart; omitted, the team dies with this process. */
     paneKey?: string
+    /** DeepSeek leader: teammates get the non-secret marker; spawn resolves the key fresh. */
+    deepSeekProvider?: boolean
   }): AgentTeamsLaunchEnv {
     const teamId = `team-${randomUUID()}`
     const token = randomBytes(32).toString('base64url')
@@ -77,6 +84,9 @@ export class ClaudeAgentTeamsService {
     if (args.shimBin) {
       env.DOLPHIN_AGENT_TEAMS_SHIM_BIN = args.shimBin
     }
+    if (args.deepSeekProvider) {
+      env[DEEPSEEK_PROVIDER_ENV_KEY] = DEEPSEEK_PROVIDER_ENV_VALUE
+    }
     if (args.baseEnv.DOLPHIN_PAIRING_CODE) {
       env.DOLPHIN_PAIRING_CODE = args.baseEnv.DOLPHIN_PAIRING_CODE
     }
@@ -84,7 +94,7 @@ export class ClaudeAgentTeamsService {
       env.DOLPHIN_ENVIRONMENT = args.baseEnv.DOLPHIN_ENVIRONMENT
     }
     // Why: pairing/environment routes the shim to a remote runtime; this local pipe would bypass it.
-    const routesRemote = Boolean(env.DOLPHIN_PAIRING_CODE || env.DOLPHIN_ENVIRONMENT)
+    const routesRemote = routesAgentTeamToRemoteRuntime(env)
     if (this.platform === 'win32' && this.pipeEndpoint && !routesRemote) {
       env.DOLPHIN_AGENT_TEAMS_ENDPOINT = this.pipeEndpoint
     }
@@ -102,6 +112,30 @@ export class ClaudeAgentTeamsService {
       this.persistTeam(team)
     }
     return { teamId, token, leaderPane, env }
+  }
+
+  /** Runtime-created leaders learn their shim dirs inside the launch plan. */
+  createLaunchEnvFactory(args: {
+    leaderHandle: string
+    baseEnv: Record<string, string | undefined>
+    launchAgent?: unknown
+  }): (
+    shimDir: string,
+    shimBin: string | null,
+    shimPathDirs: string[]
+  ) => Record<string, string> | null {
+    const deepSeekProvider = isDeepSeekTuiAgent(args.launchAgent)
+    return (shimDir, shimBin, shimPathDirs) =>
+      deepSeekProvider && routesAgentTeamToRemoteRuntime(args.baseEnv)
+        ? null
+        : this.createLaunchEnv({
+            leaderHandle: args.leaderHandle,
+            baseEnv: args.baseEnv,
+            shimDir,
+            shimBin,
+            shimPathDirs,
+            deepSeekProvider
+          }).env
   }
 
   removeTeamForLeaderHandle(handle: string): void {
@@ -269,6 +303,15 @@ export class ClaudeAgentTeamsService {
       return null
     }
   }
+}
+
+/**
+ * True when the team's tmux shim would create teammate panes on another Dolphin runtime. A DeepSeek
+ * team must not: that host may not know the marker and would start plain `claude` on the user's
+ * Anthropic account, so DeepSeek leaders keep teammates in-process instead.
+ */
+export function routesAgentTeamToRemoteRuntime(env: Record<string, string | undefined>): boolean {
+  return Boolean(env.DOLPHIN_PAIRING_CODE || env.DOLPHIN_ENVIRONMENT)
 }
 
 function agentTeamTmuxValue(teamId: string): string {

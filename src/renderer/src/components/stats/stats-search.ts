@@ -17,6 +17,7 @@ export const getStatsPaneSearchEntries = createLocalizedCatalog(() => [
       translate('auto.components.stats.stats.search.5acbe1fdf2', 'time'),
       translate('auto.components.stats.stats.search.8efeae0b22', 'tracking'),
       translate('auto.components.stats.stats.search.e9dc37d889', 'claude'),
+      translate('auto.components.stats.stats.search.deepseekKeyword', 'deepseek'),
       translate('auto.components.stats.stats.search.b77826fca3', 'codex'),
       translate('auto.components.stats.stats.search.6953af58e6', 'opencode'),
       translate('auto.components.stats.stats.search.museKeyword', 'muse'),

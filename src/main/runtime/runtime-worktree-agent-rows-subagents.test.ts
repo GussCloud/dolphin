@@ -116,3 +116,14 @@ describe('worktree ps agent row subagents', () => {
     expect(row?.subagents).toEqual(TEAMMATES)
   })
 })
+
+describe('worktree ps agent row display identity', () => {
+  it('publishes the host stamp beside the harness agentType', () => {
+    const [row] = rowsFor(hookRow({ displayAgentType: 'deepseek' }))
+    expect(row).toMatchObject({ agentType: 'claude', displayAgentType: 'deepseek' })
+  })
+
+  it('omits the field for a row the host did not stamp', () => {
+    expect(rowsFor(hookRow())[0]).not.toHaveProperty('displayAgentType')
+  })
+})

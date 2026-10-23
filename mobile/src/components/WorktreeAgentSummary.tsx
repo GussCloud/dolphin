@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
 import { colors, radii, spacing } from '../theme/mobile-theme'
-import { agentDotState } from '../worktree/agent-row-display'
+import { agentDotState, agentRowIdentity } from '../worktree/agent-row-display'
 import { AgentStateDot } from './AgentStateDot'
 import { MobileAgentIcon } from './MobileAgentIcon'
 import { componentsCatalog } from '../i18n/catalogs/components'
@@ -46,12 +46,15 @@ export function WorktreeAgentSummary({ agents, expanded, now, onToggle }: Props)
         <Text style={styles.expandedLabel}>{subject}</Text>
       ) : (
         <View style={styles.agentIcons}>
-          {visibleAgents.map((agent) => (
-            <View key={agent.paneKey} style={styles.agentStatus}>
-              <AgentStateDot state={agentDotState(agent, now)} />
-              {agent.agentType ? <MobileAgentIcon agentId={agent.agentType} size={13} /> : null}
-            </View>
-          ))}
+          {visibleAgents.map((agent) => {
+            const identity = agentRowIdentity(agent)
+            return (
+              <View key={agent.paneKey} style={styles.agentStatus}>
+                <AgentStateDot state={agentDotState(agent, now)} />
+                {identity ? <MobileAgentIcon agentId={identity} size={13} /> : null}
+              </View>
+            )
+          })}
           {hiddenCount > 0 ? <Text style={styles.hiddenCount}>+{hiddenCount}</Text> : null}
         </View>
       )}

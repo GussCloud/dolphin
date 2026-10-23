@@ -37,6 +37,7 @@ const {
   registerAgentTrustHandlersMock,
   registerClaudeAccountHandlersMock,
   registerMiniMaxCredentialsHandlersMock,
+  registerDeepSeekCredentialsHandlersMock,
   registerTelegramBridgeHandlersMock,
   registerGrokAccountHandlersMock,
   registerCursorAccountHandlersMock,
@@ -108,6 +109,7 @@ const {
   registerAgentTrustHandlersMock: vi.fn(),
   registerClaudeAccountHandlersMock: vi.fn(),
   registerMiniMaxCredentialsHandlersMock: vi.fn(),
+  registerDeepSeekCredentialsHandlersMock: vi.fn(),
   registerTelegramBridgeHandlersMock: vi.fn(),
   registerGrokAccountHandlersMock: vi.fn(),
   registerCursorAccountHandlersMock: vi.fn(),
@@ -356,6 +358,10 @@ vi.mock('../minimax-credentials', () => ({
   registerMiniMaxCredentialsHandlers: registerMiniMaxCredentialsHandlersMock
 }))
 
+vi.mock('../deepseek-credentials', () => ({
+  registerDeepSeekCredentialsHandlers: registerDeepSeekCredentialsHandlersMock
+}))
+
 vi.mock('../telegram-bridge', () => ({
   registerTelegramBridgeHandlers: registerTelegramBridgeHandlersMock
 }))
@@ -471,6 +477,7 @@ describe('registerCoreHandlers', () => {
     registerAgentTrustHandlersMock.mockReset()
     registerClaudeAccountHandlersMock.mockReset()
     registerMiniMaxCredentialsHandlersMock.mockReset()
+    registerDeepSeekCredentialsHandlersMock.mockReset()
     registerTelegramBridgeHandlersMock.mockReset()
     registerClipboardHandlersMock.mockReset()
     setTrustedClipboardRendererWebContentsIdMock.mockReset()
@@ -506,6 +513,7 @@ describe('registerCoreHandlers', () => {
     const runtime = { marker: 'runtime', getAgentBrowserBridge: () => null }
     const stats = { marker: 'stats' }
     const claudeUsage = { marker: 'claudeUsage' }
+    const deepSeekUsage = { marker: 'deepSeekUsage' }
     const codexUsage = { marker: 'codexUsage' }
     const openCodeUsage = { marker: 'openCodeUsage' }
     const museUsage = { marker: 'museUsage' }
@@ -521,6 +529,8 @@ describe('registerCoreHandlers', () => {
       runtime as never,
       stats as never,
       claudeUsage as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
+      deepSeekUsage as never,
       codexUsage as never,
       openCodeUsage as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
@@ -547,6 +557,7 @@ describe('registerCoreHandlers', () => {
 
     expect(registerUsageProviderHandlersMock).toHaveBeenCalledWith({
       claudeUsage,
+      deepSeekUsage,
       codexUsage,
       openCodeUsage,
       museUsage
@@ -566,6 +577,7 @@ describe('registerCoreHandlers', () => {
     expect(registerPetHandlersMock).toHaveBeenCalled()
     expect(registerClaudeAccountHandlersMock).toHaveBeenCalledWith(claudeAccounts)
     expect(registerMiniMaxCredentialsHandlersMock).toHaveBeenCalledWith(rateLimits)
+    expect(registerDeepSeekCredentialsHandlersMock).toHaveBeenCalledTimes(1)
     expect(registerTelegramBridgeHandlersMock).toHaveBeenCalled()
     expect(registerGrokAccountHandlersMock).toHaveBeenCalled()
     expect(registerCursorAccountHandlersMock).toHaveBeenCalled()
@@ -688,6 +700,7 @@ describe('registerCoreHandlers', () => {
     const runtime2 = { marker: 'runtime2', getAgentBrowserBridge: () => null }
     const stats2 = { marker: 'stats2' }
     const claudeUsage2 = { marker: 'claudeUsage2' }
+    const deepSeekUsage2 = { marker: 'deepSeekUsage2' }
     const codexUsage2 = { marker: 'codexUsage2' }
     const openCodeUsage2 = { marker: 'openCodeUsage2' }
     const museUsage2 = { marker: 'museUsage2' }
@@ -700,6 +713,8 @@ describe('registerCoreHandlers', () => {
       runtime2 as never,
       stats2 as never,
       claudeUsage2 as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
+      deepSeekUsage2 as never,
       codexUsage2 as never,
       openCodeUsage2 as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.

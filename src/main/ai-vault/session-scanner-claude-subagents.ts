@@ -15,7 +15,10 @@ import {
 import { WslTranscriptFsError } from '../native-chat/wsl-transcript-fs-gate'
 import { recordSessionScanIssue } from './session-scan-issues'
 import { sessionIdFromFileName, sessionSortTime } from './session-scanner-accumulator'
-import { parseClaudeSessionFile } from './session-scanner-primary-parsers'
+import {
+  parseClaudeSessionFile,
+  type ClaudeTranscriptAgent
+} from './session-scanner-primary-parsers'
 import {
   isSubagentTranscriptFileName,
   subagentTranscriptsDirFor,
@@ -71,9 +74,11 @@ type ClaudeSubagentMeta = {
  */
 export async function listClaudeSubagentSessions(args: {
   parentFilePath: string
+  agent: ClaudeTranscriptAgent
   platform?: NodeJS.Platform
   now?: number
 }): Promise<AiVaultSubagentListResult> {
+  const { agent } = args
   const platform = args.platform ?? process.platform
   const now = args.now ?? Date.now()
   const issues: AiVaultScanIssue[] = []
@@ -86,7 +91,7 @@ export async function listClaudeSubagentSessions(args: {
     // A gate refusal is a stalled distro, not a session without subagents —
     // report it so the panel offers a retry instead of showing an empty list.
     if (err instanceof WslTranscriptFsError) {
-      recordSessionScanIssue(issues, { agent: 'claude', path: subagentsDir, message: err.message })
+      recordSessionScanIssue(issues, { agent, path: subagentsDir, message: err.message })
     }
     return { sessions: [], issues }
   }
@@ -116,6 +121,7 @@ export async function listClaudeSubagentSessions(args: {
           statusByAgentId,
           now,
           platform,
+          agent,
           issues
         })
       )
@@ -142,6 +148,7 @@ async function parseSubagentTranscript(args: {
   statusByAgentId: ReadonlyMap<string, string>
   now: number
   platform: NodeJS.Platform
+  agent: ClaudeTranscriptAgent
   issues: AiVaultScanIssue[]
 }): Promise<AiVaultSession | null> {
   try {
@@ -152,7 +159,9 @@ async function parseSubagentTranscript(args: {
         mtimeMs: fileStat.mtimeMs,
         modifiedAt: fileStat.mtime.toISOString()
       },
-      args.platform
+      args.platform,
+      undefined,
+      args.agent
     )
     if (!session) {
       return null
@@ -177,7 +186,7 @@ async function parseSubagentTranscript(args: {
     }
   } catch (err) {
     recordSessionScanIssue(args.issues, {
-      agent: 'claude',
+      agent: args.agent,
       path: args.filePath,
       message: errorMessage(err)
     })

@@ -32,6 +32,20 @@ export async function writeLogAgentFixtures(
     ])
   )
 
+  await mkdir(join(roots.deepSeekProjectsDir, 'project'), { recursive: true })
+  await writeFile(
+    join(roots.deepSeekProjectsDir, 'project', 'deepseek-session.jsonl'),
+    jsonlBody([
+      {
+        type: 'user',
+        sessionId: 'deepseek-session',
+        timestamp: '2026-05-01T10:00:30.000Z',
+        cwd: '/tmp/deepseek',
+        message: { role: 'user', content: 'DeepSeek title' }
+      }
+    ])
+  )
+
   await mkdir(join(roots.codexSessionsDir, '2026', '05', '01'), { recursive: true })
   await writeFile(
     join(roots.codexSessionsDir, '2026', '05', '01', 'rollout-2026-codex-session.jsonl'),

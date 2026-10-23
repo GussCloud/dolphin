@@ -11,7 +11,10 @@ import { prepareAiVaultSessionForResume } from '@/lib/ai-vault-session-resume-pr
 import type { Worktree } from '../../../../shared/worktree/types'
 import { translate } from '@/i18n/i18n'
 import { agentLabel } from './ai-vault-session-filters'
-import type { AiVaultSessionResumeTargetState } from './ai-vault-session-resume'
+import {
+  canCopyAiVaultResumeCommand,
+  type AiVaultSessionResumeTargetState
+} from './ai-vault-session-resume'
 import { prepareAiVaultSessionContinuation } from './ai-vault-session-continuation'
 import type { AgentSessionContinuationRequest } from '@/lib/agent-session-continuation'
 import { activateAiVaultStructuredSession } from '@/lib/activate-ai-vault-structured-session'
@@ -64,7 +67,7 @@ export function useAiVaultSessionLaunchActions({
 
   const copyResumeCommand = useCallback(
     async (session: AiVaultSession, worktreeId?: string | null): Promise<void> => {
-      if (session.structuredSession) {
+      if (session.structuredSession || !canCopyAiVaultResumeCommand(session)) {
         return
       }
       try {

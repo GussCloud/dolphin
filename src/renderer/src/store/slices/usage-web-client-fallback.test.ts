@@ -7,6 +7,7 @@ import {
   createMuseUsageSlice,
   createOpenCodeUsageSlice
 } from './usage-provider-slices'
+import { createDeepSeekUsageSlice } from './deepseek-usage-slice'
 
 // Paired web clients resolve unbridged desktop usage calls to undefined.
 
@@ -25,6 +26,7 @@ function stubWebClientFallback(): void {
   vi.stubGlobal('window', {
     api: {
       claudeUsage: provider,
+      deepSeekUsage: provider,
       codexUsage: provider,
       openCodeUsage: provider,
       museUsage: provider
@@ -73,5 +75,17 @@ describe('usage slices in the web client (preload fallback -> undefined)', () =>
     await expect(store.getState().enableMuseUsage()).resolves.toBeUndefined()
     expect(store.getState().museUsageScanState).toBeNull()
     expect(store.getState().museUsageSummary).toBeNull()
+  })
+})
+
+describe('deepseek usage slice in the web client', () => {
+  it('fetch and enable no-op without throwing', async () => {
+    stubWebClientFallback()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the test reads only this slice's own fields and actions.
+    const store = create<AppState>()((...args) => createDeepSeekUsageSlice(...args) as AppState)
+    await expect(store.getState().fetchDeepSeekUsage()).resolves.toBeUndefined()
+    await expect(store.getState().enableDeepSeekUsage()).resolves.toBeUndefined()
+    expect(store.getState().deepSeekUsageScanState).toBeNull()
+    expect(store.getState().deepSeekUsageSummary).toBeNull()
   })
 })

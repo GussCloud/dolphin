@@ -17,18 +17,11 @@ import {
 } from '../host-env/codex-home'
 import { promoteAgentTeamsShimPath } from '../host-env/path'
 import {
-  isClaudeLaunchCommand,
   recoverFreshSpawnProviderRouting,
   routesFreshSpawnsToLocalProvider
 } from '../host-env/fresh-spawn-routing'
 import { stripRemotePaneEnvWhenHooksDisabled } from '../provider/liveness'
 import { isTuiAgent } from '../../../../shared/tui-agent-config'
-import { isClaudeAuthSwitchInProgress } from '../../../claude-accounts/live-pty-gate'
-import {
-  CLAUDE_AUTH_ENV_CONFLICT_MESSAGE,
-  CLAUDE_AUTH_SWITCH_IN_PROGRESS_MESSAGE,
-  hasClaudeAuthEnvConflict
-} from '../../../claude-accounts/environment'
 import {
   isSafePtySessionId,
   mintPtySessionId,
@@ -44,6 +37,11 @@ import { ensureCodexStateDbBackfillRecoveryStarted } from '../../../codex/codex-
 import { clearProviderPtyState } from '../provider/state-cleanup'
 import { awaitExplicitPiOmpGuestReadiness } from '../../../agent-hooks/wsl-pi-omp-guest-readiness'
 import type { RuntimePtySpawnState } from './spawn-state'
+import {
+  applyRuntimeSpawnAuthEnv,
+  classifyRuntimeSpawnClaudeLaunch,
+  prepareRuntimeSpawnAuth
+} from './spawn-preflight-auth'
 
 export async function prepareRuntimePtySpawn(
   ctx: RuntimePtySpawnState
@@ -68,11 +66,7 @@ export async function prepareRuntimePtySpawn(
   if (freshSpawnRecovery) {
     await freshSpawnRecovery
   }
-  ctx.isClaudeLaunch =
-    !ctx.preAdoptedStablePane && !args.connectionId && isClaudeLaunchCommand(args.command)
-  if (ctx.isClaudeLaunch && isClaudeAuthSwitchInProgress()) {
-    throw new Error(CLAUDE_AUTH_SWITCH_IN_PROGRESS_MESSAGE)
-  }
+  classifyRuntimeSpawnClaudeLaunch(ctx)
   // Why: runtime-created terminals carry no renderer-computed projectRuntime; resolve from worktreeId to honor the project's Windows runtime.
   // `args.shellOverride` is the per-request pick (`terminal create --shell`), read here the way
   // the renderer twin (ipc/spawn-preflight.ts) reads a tab's override. Without it a runtime create
@@ -147,16 +141,7 @@ export async function prepareRuntimePtySpawn(
   // Why: the drop still applies here, but this controller's result has no field for
   // notifyResumeUnavailable — runtime/relay panes start fresh without the notice.
   ctx.launchCommand = codexResumeLaunch.command
-  ctx.claudeAuth =
-    ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
-      ? await ctx.deps.prepareClaudeAuth(ctx.codexSelectionTarget)
-      : null
-  if (ctx.isClaudeLaunch && isClaudeAuthSwitchInProgress()) {
-    throw new Error(CLAUDE_AUTH_SWITCH_IN_PROGRESS_MESSAGE)
-  }
-  if (ctx.claudeAuth?.stripAuthEnv && hasClaudeAuthEnvConflict(args.env)) {
-    throw new Error(CLAUDE_AUTH_ENV_CONFLICT_MESSAGE)
-  }
+  await prepareRuntimeSpawnAuth(ctx)
 
   ctx.shouldPersistHostSessionBinding = args.persistHostSessionBinding === true
   if (ctx.shouldPersistHostSessionBinding) {
@@ -179,7 +164,7 @@ export async function prepareRuntimePtySpawn(
     }
   }
   const sshScopedEnv = stripRemotePaneEnvWhenHooksDisabled(args.connectionId, args.env)
-  ctx.env = ctx.claudeAuth ? { ...sshScopedEnv, ...ctx.claudeAuth.envPatch } : sshScopedEnv
+  ctx.env = applyRuntimeSpawnAuthEnv(ctx, sshScopedEnv)
   ctx.requestedAgentTeamsPath = ctx.env?.DOLPHIN_AGENT_TEAMS_TEAM_ID
     ? ctx.env[resolvePathEnvKey(ctx.env, process.platform)]
     : undefined

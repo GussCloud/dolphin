@@ -80,36 +80,43 @@ function resolveTuiAgentConfig(source: TuiAgentConfigSource): TuiAgentConfig {
   }
 }
 
+const CLAUDE_CONFIG_SOURCE: TuiAgentConfigSource = {
+  detectCmd: 'claude',
+  promptInjectionMode: 'argv',
+  pasteNeedsTypedRequest: true,
+  // Why: `claude --prefill <text>` seeds the input without submitting, avoiding the paste-after-ready race (PR upstream PR 926).
+  draftPromptFlag: '--prefill'
+}
+
+const CLAUDE_AGENT_TEAMS_CONFIG_SOURCE: TuiAgentConfigSource = {
+  // Why: a Dolphin-provided launch mode, not a separate binary; detection follows the Dolphin CLI.
+  detectCmd: CLI_COMMAND_NAME,
+  detectCmdAliases: [DEV_CLI_COMMAND_NAME, LINUX_CLI_COMMAND_NAME],
+  // Why: require Claude too so fresh installs (Dolphin shim always present) don't report Agent Teams without an agent CLI.
+  detectRequiredCommands: ['claude'],
+  // Why: every Dolphin WSL terminal carries the managed CLI, which a distro PATH probe never sees; only claude must be installed there.
+  detectProvidedRuntimes: ['wsl'],
+  launchCmd: `${CLI_COMMAND_NAME} claude-teams`,
+  launchCmdByPlatform: {
+    linux: `${getCliCommandFileNameForPlatform('linux')} claude-teams`,
+    // Why direct claude: a claude child of the Electron-as-Node CLI never paints its TUI on Windows;
+    // PTY spawn sees `--teammate-mode auto` and injects the team env itself.
+    win32: 'claude --teammate-mode auto'
+  },
+  // Why: `dolphin claude-teams` is refused by the SSH relay bridge and the tmux shim is host-local,
+  // so SSH leaders run Claude's own in-process teammates; PTY spawn adds the teams env.
+  remoteLaunchCmd: 'claude --teammate-mode in-process',
+  expectedProcess: 'claude',
+  promptInjectionMode: 'stdin-after-start',
+  pasteNeedsTypedRequest: true
+}
+
 const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
-  claude: {
-    detectCmd: 'claude',
-    promptInjectionMode: 'argv',
-    pasteNeedsTypedRequest: true,
-    // Why: `claude --prefill <text>` seeds the input without submitting, avoiding the paste-after-ready race (PR upstream PR 926).
-    draftPromptFlag: '--prefill'
-  },
-  'claude-agent-teams': {
-    // Why: a Dolphin-provided launch mode, not a separate binary; detection follows the Dolphin CLI.
-    detectCmd: CLI_COMMAND_NAME,
-    detectCmdAliases: [DEV_CLI_COMMAND_NAME, LINUX_CLI_COMMAND_NAME],
-    // Why: require Claude too so fresh installs (Dolphin shim always present) don't report Agent Teams without an agent CLI.
-    detectRequiredCommands: ['claude'],
-    // Why: every Dolphin WSL terminal carries the managed CLI, which a distro PATH probe never sees; only claude must be installed there.
-    detectProvidedRuntimes: ['wsl'],
-    launchCmd: `${CLI_COMMAND_NAME} claude-teams`,
-    launchCmdByPlatform: {
-      linux: `${getCliCommandFileNameForPlatform('linux')} claude-teams`,
-      // Why direct claude: a claude child of the Electron-as-Node CLI never paints its TUI on Windows;
-      // PTY spawn sees `--teammate-mode auto` and injects the team env itself.
-      win32: 'claude --teammate-mode auto'
-    },
-    // Why: `dolphin claude-teams` is refused by the SSH relay bridge and the tmux shim is host-local,
-    // so SSH leaders run Claude's own in-process teammates; PTY spawn adds the teams env.
-    remoteLaunchCmd: 'claude --teammate-mode in-process',
-    expectedProcess: 'claude',
-    promptInjectionMode: 'stdin-after-start',
-    pasteNeedsTypedRequest: true
-  },
+  claude: CLAUDE_CONFIG_SOURCE,
+  'claude-agent-teams': CLAUDE_AGENT_TEAMS_CONFIG_SOURCE,
+  // Why: DeepSeek is the Claude Code CLI pointed at another API; PTY spawn injects the provider env.
+  deepseek: CLAUDE_CONFIG_SOURCE,
+  'deepseek-agent-teams': CLAUDE_AGENT_TEAMS_CONFIG_SOURCE,
   openclaude: {
     detectCmd: 'openclaude',
     promptInjectionMode: 'argv',

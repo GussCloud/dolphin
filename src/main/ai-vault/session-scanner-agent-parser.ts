@@ -82,7 +82,8 @@ export async function parseAgentSessionFile(
 ): Promise<AiVaultSession | null> {
   switch (candidate.agent) {
     case 'claude':
-      return parseClaudeSessionFile(candidate.file, platform, messages)
+    case 'deepseek':
+      return parseClaudeSessionFile(candidate.file, platform, messages, candidate.agent)
     case 'codex':
       return parseCodexSessionFile(
         candidate.file,

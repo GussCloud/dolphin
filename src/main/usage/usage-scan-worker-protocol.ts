@@ -31,12 +31,18 @@ import type { UsageScanWorktreeRef } from './usage-provider-contract'
  * than `UsageProviderId`: a `plugin:` provider supplies its own scan function,
  * which is not in this bundle and cannot be named on the wire.
  */
-export type UsageScanWorkerProviderId = 'claude' | 'codex' | 'opencode' | 'muse'
+export type UsageScanWorkerProviderId = 'claude' | 'deepseek' | 'codex' | 'opencode' | 'muse'
 
 /** Request body per provider; `previous` is that provider's own per-source cache. */
 export type UsageScanWorkerRequestBody =
   | {
       providerId: 'claude'
+      worktrees: UsageScanWorktreeRef[]
+      previous: ClaudeUsagePersistedFile[]
+    }
+  | {
+      // DeepSeek transcripts are Claude Code's format under `~/.claude-deepseek`.
+      providerId: 'deepseek'
       worktrees: UsageScanWorktreeRef[]
       previous: ClaudeUsagePersistedFile[]
     }
@@ -57,7 +63,7 @@ export type UsageScanWorkerRequest = UsageScanWorkerRequestBody & { id: number }
  */
 export type UsageScanWorkerValue =
   | {
-      providerId: 'claude'
+      providerId: 'claude' | 'deepseek'
       source: ClaudeUsagePersistedFile[]
       sessions: ClaudeUsageSession[]
       dailyAggregates: ClaudeUsageDailyAggregate[]

@@ -570,9 +570,19 @@ describe('aiVaultSessionResumeLabel', () => {
 })
 
 describe('aiVaultSessionRowResumeGating', () => {
-  const zeroTurnSession = { messageCount: 0, previewMessages: [] }
-  const sessionWithTurns = { messageCount: 3, previewMessages: [] }
+  const zeroTurnSession = { agent: 'claude' as const, messageCount: 0, previewMessages: [] }
+  const sessionWithTurns = { agent: 'claude' as const, messageCount: 3, previewMessages: [] }
   const unblocked = { blocked: false }
+
+  it('withholds copy-resume from a DeepSeek session but keeps in-Dolphin resume', () => {
+    // Why: the pasted `claude --resume` would run outside Dolphin's DeepSeek env, on the Claude login.
+    expect(
+      aiVaultSessionRowResumeGating({ ...sessionWithTurns, agent: 'deepseek' }, unblocked)
+    ).toEqual({
+      resumeDisabled: false,
+      canCopyResumeCommand: false
+    })
+  })
 
   it('withholds every resume affordance for a zero-turn session', () => {
     expect(aiVaultSessionRowResumeGating(zeroTurnSession, unblocked)).toEqual({
@@ -609,6 +619,7 @@ describe('aiVaultSessionRowResumeGating', () => {
 
   it('treats user/assistant previews as resumable content when the turn count is unknown', () => {
     const previewOnlySession = {
+      agent: 'claude' as const,
       messageCount: 0,
       previewMessages: [{ role: 'user' as const, text: 'hello', timestamp: null }]
     }

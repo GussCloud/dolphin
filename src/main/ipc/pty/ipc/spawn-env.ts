@@ -37,7 +37,9 @@ export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<voi
   const sshSourceEnv = stripRemotePaneEnvWhenHooksDisabled(args.connectionId, args.env)
   const baseEnvWithAuth = ctx.claudeAuth
     ? { ...sshSourceEnv, ...ctx.claudeAuth.envPatch }
-    : sshSourceEnv
+    : ctx.deepSeekEnvPatch
+      ? overlayPlatformEnv(sshSourceEnv ?? {}, ctx.deepSeekEnvPatch)
+      : sshSourceEnv
   const spawnPaneKey = baseEnvWithAuth?.DOLPHIN_PANE_KEY
   const parsedSpawnPaneKey = parseValidPaneKey(spawnPaneKey)
   const verifiedPaneKey =
@@ -114,7 +116,10 @@ export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<voi
     agentTeamsEnvToDelete = prepared.envToDelete ?? []
   }
   const sshAgentTeamsEnv = args.connectionId
-    ? resolveSshClaudeAgentTeamsLeaderEnv({ command: args.command, launchConfig: args.launchConfig })
+    ? resolveSshClaudeAgentTeamsLeaderEnv({
+        command: args.command,
+        launchConfig: args.launchConfig
+      })
     : null
   if (sshAgentTeamsEnv) {
     // Why: SSH leaders run in-process teammates; the host-local tmux shim cannot reach them.

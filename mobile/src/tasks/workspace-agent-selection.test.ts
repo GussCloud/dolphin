@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  isWorkspaceAgentOfferable,
   normalizeWorkspaceAgent,
   pickWorkspaceAgent,
   resolveWorkspaceAgentSelection,
@@ -102,5 +103,42 @@ describe('workspace agent selection', () => {
         overridden: false
       })
     ).toEqual({ agent: null, overridden: false })
+  })
+  describe('DeepSeek on a host whose agents are unknown', () => {
+    it('is not offerable until the host reports it', () => {
+      expect(isWorkspaceAgentOfferable('deepseek', null)).toBe(false)
+      expect(isWorkspaceAgentOfferable('deepseek-agent-teams', null)).toBe(false)
+      expect(isWorkspaceAgentOfferable('claude', null)).toBe(true)
+      expect(isWorkspaceAgentOfferable('deepseek', new Set(['deepseek']))).toBe(true)
+      expect(isWorkspaceAgentOfferable('deepseek', new Set(['claude']))).toBe(false)
+    })
+
+    it('does not auto-pick a DeepSeek default when detection is unknown', () => {
+      expect(pickWorkspaceAgent({ defaultTuiAgent: 'deepseek' }, null)).toBe('claude')
+      expect(pickWorkspaceAgent({ defaultTuiAgent: 'deepseek' }, new Set(['deepseek']))).toBe(
+        'deepseek'
+      )
+    })
+
+    it('drops a DeepSeek override once detection becomes unknown', () => {
+      expect(
+        resolveWorkspaceAgentSelection({
+          selectionActive: true,
+          settings: { defaultTuiAgent: null },
+          detectedAgentIds: null,
+          agent: 'deepseek',
+          overridden: true
+        })
+      ).toEqual({ agent: 'claude', overridden: false })
+      expect(
+        resolveWorkspaceAgentSelection({
+          selectionActive: true,
+          settings: { defaultTuiAgent: null },
+          detectedAgentIds: null,
+          agent: 'codex',
+          overridden: true
+        })
+      ).toEqual({ agent: 'codex', overridden: true })
+    })
   })
 })

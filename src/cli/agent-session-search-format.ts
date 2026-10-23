@@ -44,7 +44,11 @@ function formatHit(hit: AiVaultSearchHit): string {
     ? `    ${hit.evidence.role}: ${oneLine(hit.evidence.snippet)}`
     : '    no text evidence for this match'
   // Withheld for paired callers by the contract, so its absence is not a failure.
-  const resume = hit.resumeCommand ? [`    resume: ${oneLine(hit.resumeCommand)}`] : []
+  // DeepSeek's is a bare `claude --resume`: pasted outside Dolphin it runs on the Claude login.
+  const resume =
+    hit.resumeCommand && hit.agent !== 'deepseek'
+      ? [`    resume: ${oneLine(hit.resumeCommand)}`]
+      : []
   return [header, evidence, ...resume].join('\n')
 }
 

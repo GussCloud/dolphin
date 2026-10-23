@@ -160,6 +160,7 @@ describe('usage overview model', () => {
         summary: openCodeSummary,
         daily: openCodeDaily
       },
+      deepseek: { scanState: null, summary: null, daily: [] },
       muse: { scanState: null, summary: null, daily: [] }
     })
 
@@ -179,6 +180,7 @@ describe('usage overview model', () => {
       claudeTokens: 2_500,
       codexTokens: 2_000,
       openCodeTokens: 0,
+      deepSeekTokens: 0,
       museTokens: 0,
       intensity: 4
     })
@@ -216,6 +218,7 @@ describe('usage overview model', () => {
         claude: { scanState: null, summary: null, daily: [] },
         codex: { scanState: enabledCodexScanState(), summary: codexSummary, daily: [] },
         opencode: { scanState: null, summary: null, daily: [] },
+        deepseek: { scanState: null, summary: null, daily: [] },
         muse: { scanState: null, summary: null, daily: [] }
       })
     }
@@ -231,6 +234,7 @@ describe('usage overview model', () => {
       claude: { scanState: null, summary: null, daily: [] },
       codex: { scanState: null, summary: null, daily: [] },
       opencode: { scanState: null, summary: null, daily: [] },
+      deepseek: { scanState: null, summary: null, daily: [] },
       muse: {
         scanState: {
           enabled: true,
@@ -287,6 +291,7 @@ describe('usage overview model', () => {
           claudeTokens: 2_500,
           codexTokens: 2_000,
           openCodeTokens: 0,
+          deepSeekTokens: 0,
           museTokens: 0,
           intensity: 4
         }
@@ -302,6 +307,7 @@ describe('usage overview model', () => {
         claudeTokens: 0,
         codexTokens: 0,
         openCodeTokens: 0,
+        deepSeekTokens: 0,
         museTokens: 0,
         intensity: 0
       },
@@ -311,6 +317,7 @@ describe('usage overview model', () => {
         claudeTokens: 2_500,
         codexTokens: 2_000,
         openCodeTokens: 0,
+        deepSeekTokens: 0,
         museTokens: 0,
         intensity: 4
       },
@@ -320,6 +327,7 @@ describe('usage overview model', () => {
         claudeTokens: 0,
         codexTokens: 0,
         openCodeTokens: 0,
+        deepSeekTokens: 0,
         museTokens: 0,
         intensity: 0
       }
@@ -331,6 +339,7 @@ describe('usage overview model', () => {
       claude: { scanState: null, summary: null, daily: [] },
       codex: { scanState: null, summary: null, daily: [] },
       opencode: { scanState: null, summary: null, daily: [] },
+      deepseek: { scanState: null, summary: null, daily: [] },
       muse: { scanState: null, summary: null, daily: [] }
     })
 
@@ -362,12 +371,62 @@ describe('usage overview model', () => {
         daily: codexDaily
       },
       opencode: { scanState: null, summary: null, daily: [] },
+      deepseek: { scanState: null, summary: null, daily: [] },
       muse: { scanState: null, summary: null, daily: [] }
     })
 
     expect(overview.daily).toHaveLength(130_000)
     expect(overview.bestDay?.totalTokens).toBe(130_000)
     expect(overview.daily.at(-1)?.intensity).toBe(4)
+  })
+
+  it('folds DeepSeek tokens in as their own provider without adding to the cost total', () => {
+    const summary = (estimatedCostUsd: number | null): ClaudeUsageSummary => ({
+      scope: 'dolphin',
+      range: '30d',
+      sessions: 1,
+      turns: 2,
+      zeroCacheReadTurns: 0,
+      inputTokens: 1_000,
+      outputTokens: 500,
+      cacheReadTokens: 300,
+      cacheWriteTokens: 200,
+      cacheReuseRate: null,
+      estimatedCostUsd,
+      topModel: null,
+      topProject: null,
+      hasAnyClaudeData: true
+    })
+    const daily: ClaudeUsageDailyPoint[] = [
+      {
+        day: '2026-10-20',
+        inputTokens: 1_000,
+        outputTokens: 500,
+        cacheReadTokens: 300,
+        cacheWriteTokens: 200
+      }
+    ]
+    const overview = buildUsageOverview({
+      claude: { scanState: enabledClaudeScanState(), summary: summary(0.05), daily },
+      // A stray cost on the DeepSeek summary must never be counted.
+      deepseek: { scanState: enabledClaudeScanState(), summary: summary(9), daily },
+      codex: { scanState: null, summary: null, daily: [] },
+      opencode: { scanState: null, summary: null, daily: [] },
+      muse: { scanState: null, summary: null, daily: [] }
+    })
+
+    expect(overview.providers.find((provider) => provider.id === 'deepseek')).toMatchObject({
+      label: 'DeepSeek',
+      enabled: true,
+      hasData: true,
+      totalTokens: 2_000,
+      estimatedCostUsd: null
+    })
+    expect(overview.providers.find((provider) => provider.id === 'claude')?.totalTokens).toBe(2_000)
+    expect(overview.totalTokens).toBe(4_000)
+    expect(overview.estimatedCostUsd).toBeCloseTo(0.05)
+    expect(overview.hasPartialCost).toBe(true)
+    expect(overview.bestDay).toMatchObject({ claudeTokens: 2_000, deepSeekTokens: 2_000 })
   })
 
   it('formats token and cost values for compact UI labels', () => {

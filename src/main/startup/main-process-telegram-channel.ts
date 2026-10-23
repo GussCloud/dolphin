@@ -1,11 +1,9 @@
 import { app } from 'electron'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { getManagedAgentHookTarget } from '../../shared/managed-agent-hook-targets'
 import { agentHookServer } from '../agent-hooks/server'
-import { detectLocalManagedAgentCliPresence } from '../agent-hooks/local-agent-cli-presence'
 import { isAgentStatusHooksEnabled } from '../agent-hooks/managed-agent-hook-controls'
-import { probeClaudeCliVersion } from '../claude/claude-session-end-hook-capability'
+import { probeLocalClaudeVersion } from '../claude/local-claude-version'
 import {
   broadcastTelegramBridgeState,
   setTelegramChannelAvailabilityReader
@@ -25,18 +23,6 @@ import { TelegramChannelGateway } from '../telegram/telegram-channel-gateway'
 import { createChannelApprovalButtonStripper } from '../telegram/telegram-channel-approval-fallback'
 import { chainTelegramChannelInbound } from '../telegram/telegram-channel-inbound'
 import type { TelegramInboundHandler } from '../telegram/telegram-inbound'
-
-async function probeLocalClaudeVersion(store: Store): Promise<string | null> {
-  const target = getManagedAgentHookTarget('claude')
-  if (!target) {
-    return null
-  }
-  const presence = await detectLocalManagedAgentCliPresence([target], store.getSettings())
-  const found = presence.claude
-  return found?.state === 'found' && found.executablePath
-    ? probeClaudeCliVersion(found.executablePath)
-    : null
-}
 
 function writeMcpConfig(): string | null {
   return writeClaudeChannelMcpConfig(
@@ -87,7 +73,7 @@ export function startMainProcessTelegramChannel(
   }
   const policy = createClaudeChannelLaunchPolicy({
     isEnabled,
-    probeClaudeVersion: () => probeLocalClaudeVersion(store),
+    probeClaudeVersion: () => probeLocalClaudeVersion(store.getSettings()),
     writeMcpConfig
   })
   setClaudeChannelLaunchPolicy(policy)

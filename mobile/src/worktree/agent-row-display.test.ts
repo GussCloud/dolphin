@@ -5,6 +5,7 @@ import {
   agentDisplayLabel,
   agentDotState,
   agentIdentityLabel,
+  agentRowIdentity,
   formatTimeAgo
 } from './agent-row-display'
 
@@ -83,6 +84,14 @@ describe('agentDisplayLabel', () => {
         AGENT_STATUS_STALE_AFTER_MS + 1
       )
     ).toBe('Idle')
+  })
+})
+
+describe('agentRowIdentity', () => {
+  it('shows the host display stamp over the harness, and the harness from old hosts', () => {
+    expect(agentRowIdentity(row({ displayAgentType: 'deepseek' }))).toBe('deepseek')
+    expect(agentRowIdentity(row())).toBe('claude')
+    expect(agentRowIdentity(row({ agentType: null }))).toBeNull()
   })
 })
 

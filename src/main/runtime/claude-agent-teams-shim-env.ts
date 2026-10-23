@@ -104,7 +104,8 @@ export async function buildClaudeAgentTeamsLaunchPlan(args: {
     shimDir: string,
     shimBin: string,
     shimPathDirs: string[]
-  ) => Record<string, string>
+    /** null keeps teammates in-process (e.g. a DeepSeek team that would route to a remote runtime). */
+  ) => Record<string, string> | null
   platform?: NodeJS.Platform
   /** 'default' (WSL, SSH) runs teammates in the pane's own POSIX shell; unknown or native Windows needs Git Bash. */
   hostShell?: AgentTeamHostShell | null
@@ -147,6 +148,9 @@ export async function buildClaudeAgentTeamsLaunchPlan(args: {
     return inProcessPlan(args.command)
   }
   const env = args.createTeamEnv(shimDir, shimBin, shimPathDirs)
+  if (!env) {
+    return inProcessPlan(args.command)
+  }
   return {
     command: addClaudeTeammateModeAuto(args.command),
     env,

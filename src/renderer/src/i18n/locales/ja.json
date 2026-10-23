@@ -92,6 +92,47 @@
         "restartRequired": "再起動が必要です",
         "unavailable": "ブラウザ ID が利用できません。"
       }
+    },
+    "agents": {
+      "deepseek": {
+        "slotPickerAria": "{{value0}} モデル",
+        "searchModels": "モデルを検索...",
+        "noModelMatch": "一致するモデルはありません。",
+        "notListed": "DeepSeek の一覧にありません",
+        "slot": {
+          "main": "メイン",
+          "opus": "Opus",
+          "sonnet": "Sonnet",
+          "haiku": "Haiku",
+          "subagent": "サブ Agent"
+        },
+        "error": {
+          "noApiKey": "保存済みの DeepSeek API キーを読み取れませんでした。もう一度保存してください。",
+          "unauthorized": "DeepSeek が保存済みの API キーを拒否しました。キーを置き換えて再試行してください。",
+          "network": "DeepSeek に接続できませんでした。接続を確認して再試行してください。",
+          "invalidResponse": "DeepSeek から Dolphin が読み取れないモデル一覧が返されました。",
+          "failed": "DeepSeek のモデルを読み込めませんでした。"
+        },
+        "apiKey": "DeepSeek API キー",
+        "configured": "設定済み",
+        "notConfigured": "未設定",
+        "apiKeyReplacePlaceholder": "保存済みのキーを置き換える新しいキーを貼り付け",
+        "apiKeyPlaceholder": "DeepSeek API キーを貼り付け",
+        "replace": "置き換え",
+        "save": "保存",
+        "clear": "クリア",
+        "apiKeyHelp": "このデバイスに暗号化して保存され、DeepSeek にのみ送信されます。キーは platform.deepseek.com で作成できます。",
+        "loadingModels": "DeepSeek のモデルを読み込み中…",
+        "retry": "再試行",
+        "models": "モデル",
+        "modelsHelp": "Claude Code は各ロールをここで選んだモデルに送信します。変更は以降に開始する DeepSeek セッションに適用されます。",
+        "keyNotSaved": "DeepSeek API キーは保存されませんでした。",
+        "keySaved": "DeepSeek API キーを保存しました。",
+        "keyUpdateFailed": "DeepSeek API キーの更新に失敗しました。",
+        "isolationNote": "DeepSeek は専用の設定フォルダー ({{value0}}) で Claude Code を実行します。Claude の設定、スキル、CLAUDE.md は共有されません。",
+        "oneMillionContext": "1M コンテキスト",
+        "encryptionUnavailable": "このシステムではセキュアストレージを利用できないため、Dolphin はここに DeepSeek キーを保存できません。"
+      }
     }
   },
   "menu": {
@@ -498,7 +539,9 @@
           "mimo_code_label": "MiMo Code",
           "muse_label": "Muse",
           "opencode2_label": "OpenCode 2",
-          "zcode_label": "ZCode"
+          "zcode_label": "ZCode",
+          "deepseek_label": "DeepSeek",
+          "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },
         "skill": {
           "cli": {
@@ -4184,7 +4227,8 @@
           "c760c481c5": "使用方法の概要",
           "55c910f4f1": "- 一部のモデルの価格は利用できません",
           "enableMuse": "Muse を有効にする",
-          "noLocalUsageYet": "ローカルの Claude、Codex、OpenCode、Muse の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。"
+          "noLocalUsageYetWithDeepSeek": "ローカルの Claude、DeepSeek、Codex、OpenCode、Muse の使用状況はまだ見つかりません。次の Agent セッションがトークンログを書き込むと、概要に反映されます。",
+          "enableDeepSeek": "DeepSeek を有効にする"
         },
         "share": {
           "card": {
@@ -4222,7 +4266,8 @@
             "d6e9f0a1b2": "クレジット",
             "a3b6c7d8e9": "grok の使用状況",
             "9f2a3b4c5d": "xai",
-            "museKeyword": "muse"
+            "museKeyword": "muse",
+            "deepseekKeyword": "deepseek"
           }
         },
         "usage": {
@@ -4253,10 +4298,10 @@
               "a7f937fb29": "{{value0}} セッション - {{value1}} {{value2}}",
               "c8f3a2d1e0b4": "ターン",
               "d9a4b3e2f1c5": "イベント",
-              "recentCombinedActivity": "最近の Claude、Codex、OpenCode、Muse のトークンアクティビティの組み合わせ。",
               "statusScanning": "走査",
               "statusEnabled": "有効",
-              "statusOff": "オフ"
+              "statusOff": "オフ",
+              "recentCombinedActivityWithDeepSeek": "最近の Claude、DeepSeek、Codex、OpenCode、Muse のトークンアクティビティの組み合わせ。"
             }
           }
         },
@@ -4300,6 +4345,15 @@
           "emptyMessage": "このスコープではローカルの Muse 使用状況がまだ見つかりません。",
           "noCostNote": "Muse のセッションログにはトークンは記録されますがコストは記録されないため、コストの見積もりは表示されません。",
           "recentSessionsDescription": "このスコープ内の最新のローカル Muse セッション。"
+        },
+        "DeepSeekUsagePane": {
+          "title": "DeepSeek の使用状況追跡",
+          "enable": "DeepSeek の使用状況分析を有効にする",
+          "disabledDescription": "ローカルの DeepSeek 使用ログを読み取り、トークン、モデル、セッションの統計を表示します。コストは推定されません。",
+          "allScope": "すべてのローカル DeepSeek の使用法",
+          "options": "DeepSeek の使用オプション",
+          "refresh": "リフレッシュ DeepSeek の使用法",
+          "empty": "このスコープに対するローカル DeepSeek の使用法はまだ見つかりません。"
         }
       },
       "sparse": {

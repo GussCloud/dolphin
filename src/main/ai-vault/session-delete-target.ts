@@ -117,7 +117,8 @@ function sessionDeleteRemovals(args: {
     return [{ path: sessionDir, kind: 'directory', roots }]
   }
 
-  if (agent === 'claude') {
+  // DeepSeek shares Claude Code's layout; matchedRoot keeps its companions in `~/.claude-deepseek`.
+  if (agent === 'claude' || agent === 'deepseek') {
     const sessionId = basename(resolvedPath, extname(resolvedPath))
     // A degenerate stem ('.' from `..jsonl`, or empty) would resolve the session
     // dir to the project dir and trash every session in it.

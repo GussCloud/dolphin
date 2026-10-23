@@ -234,14 +234,20 @@ function resolveAiVaultResumeTargetState(args: {
 // into an empty session. Copy stays available for blocked CLI sessions, while a
 // structured owner reopens natively and must never expose a legacy command.
 export function aiVaultSessionRowResumeGating(
-  session: Pick<AiVaultSession, 'messageCount' | 'previewMessages' | 'structuredSession'>,
+  session: Pick<AiVaultSession, 'agent' | 'messageCount' | 'previewMessages' | 'structuredSession'>,
   state: Pick<AiVaultSessionResumeState, 'blocked'> | null
 ): { resumeDisabled: boolean; canCopyResumeCommand: boolean } {
   const hasResumableContent = isAiVaultSessionResumableContent(session)
   return {
     resumeDisabled: (state?.blocked ?? true) || !hasResumableContent,
-    canCopyResumeCommand: hasResumableContent && !session.structuredSession
+    canCopyResumeCommand:
+      hasResumableContent && !session.structuredSession && canCopyAiVaultResumeCommand(session)
   }
+}
+
+/** A pasted DeepSeek line is a bare `claude --resume`: outside Dolphin it lacks the DeepSeek env and runs on the Claude login. */
+export function canCopyAiVaultResumeCommand(session: Pick<AiVaultSession, 'agent'>): boolean {
+  return session.agent !== 'deepseek'
 }
 
 export function aiVaultSessionResumeLabel(

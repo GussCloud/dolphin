@@ -65,6 +65,8 @@ export function remoteSessionSources(
       // top-level sessions carrying the parent's sessionId.
       partitionSubagentTranscripts: partitionSubagentTranscriptPaths
     },
+    // No `~/.claude-deepseek` source: DeepSeek launches are refused over SSH, so
+    // a remote home holds no DeepSeek transcripts Dolphin wrote.
     remoteAntigravitySource(remoteHome, hostPlatform),
     source(
       'gemini',

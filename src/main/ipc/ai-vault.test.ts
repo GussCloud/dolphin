@@ -661,13 +661,10 @@ describe('listAiVaultSubagentSessions gating', () => {
   it('lists subagents for a local Claude session inside the projects root', async () => {
     const parentFilePath = join(claudeRoot, 'proj', 'sess.jsonl')
 
-    await _internals.listAiVaultSubagentSessions({
-      agent: 'claude',
-      parentFilePath,
-      executionHostId: 'local'
-    })
+    const request = { agent: 'claude' as const, parentFilePath }
+    await _internals.listAiVaultSubagentSessions({ ...request, executionHostId: 'local' })
 
-    expect(mocks.listClaudeSubagentSessions).toHaveBeenCalledWith({ parentFilePath })
+    expect(mocks.listClaudeSubagentSessions).toHaveBeenCalledWith(request)
   })
 
   it('returns empty for a remote Claude session without reading the filesystem', async () => {

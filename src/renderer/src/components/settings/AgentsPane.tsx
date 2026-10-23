@@ -51,6 +51,11 @@ import {
 import { AgentAvailabilityControl, type AgentCatalogRowProps } from './AgentCatalogRow'
 import { AgentDefaultSetting } from './AgentDefaultSetting'
 import { AgentDetectionCatalog } from './AgentDetectionCatalog'
+import { DeepSeekProviderSettings } from './DeepSeekProviderSettings'
+import {
+  isDeepSeekTuiAgent,
+  normalizeDeepSeekModelSlots
+} from '../../../../shared/deepseek-claude-provider'
 
 export {
   buildAgentAvailabilitySettingsUpdate,
@@ -249,7 +254,13 @@ export function AgentsPane({
               agentSessionInstructions: { ...agentSessionInstructions, [agent.id]: value }
             })
         }
-      : undefined
+      : undefined,
+    providerSettings: isDeepSeekTuiAgent(agent.id) ? (
+      <DeepSeekProviderSettings
+        slots={normalizeDeepSeekModelSlots(settings.deepseekModelSlots)}
+        onSaveSlots={(deepseekModelSlots) => updateSettings({ deepseekModelSlots })}
+      />
+    ) : undefined
   })
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { Activity, CalendarDays, Coins, DatabaseZap, RefreshCw, Sparkles } from 'lucide-react'
 import { useAppStore } from '../../store'
 import { Badge } from '../ui/badge'
@@ -8,6 +8,8 @@ import { StatCard } from './StatCard'
 import { getRecentUsageDays } from './usage-overview-daily-series'
 import { buildUsageOverview, formatUsageCost, formatUsageTokens } from './usage-overview-model'
 import { DailyIntensityGrid, ProviderUsageRow, TokenMixBar } from './usage-overview-sections'
+import { useUsageOverviewProviders } from './use-usage-overview-providers'
+import type { UsageProviderId } from './usage-overview-types'
 import { translate } from '@/i18n/i18n'
 
 const RECENT_DAY_COUNT = 42
@@ -27,78 +29,9 @@ function formatUpdatedAt(timestamp: number | null): string {
 }
 
 export function UsageOverviewPane(): React.JSX.Element {
-  const claudeScanState = useAppStore((state) => state.claudeUsageScanState)
-  const claudeSummary = useAppStore((state) => state.claudeUsageSummary)
-  const claudeDaily = useAppStore((state) => state.claudeUsageDaily)
-  const codexScanState = useAppStore((state) => state.codexUsageScanState)
-  const codexSummary = useAppStore((state) => state.codexUsageSummary)
-  const codexDaily = useAppStore((state) => state.codexUsageDaily)
-  const openCodeScanState = useAppStore((state) => state.openCodeUsageScanState)
-  const openCodeSummary = useAppStore((state) => state.openCodeUsageSummary)
-  const openCodeDaily = useAppStore((state) => state.openCodeUsageDaily)
-  const museScanState = useAppStore((state) => state.museUsageScanState)
-  const museSummary = useAppStore((state) => state.museUsageSummary)
-  const museDaily = useAppStore((state) => state.museUsageDaily)
-  const fetchClaudeUsage = useAppStore((state) => state.fetchClaudeUsage)
-  const fetchCodexUsage = useAppStore((state) => state.fetchCodexUsage)
-  const fetchOpenCodeUsage = useAppStore((state) => state.fetchOpenCodeUsage)
-  const fetchMuseUsage = useAppStore((state) => state.fetchMuseUsage)
-  const refreshClaudeUsage = useAppStore((state) => state.refreshClaudeUsage)
-  const refreshCodexUsage = useAppStore((state) => state.refreshCodexUsage)
-  const refreshOpenCodeUsage = useAppStore((state) => state.refreshOpenCodeUsage)
-  const refreshMuseUsage = useAppStore((state) => state.refreshMuseUsage)
-  const enableClaudeUsage = useAppStore((state) => state.enableClaudeUsage)
-  const enableCodexUsage = useAppStore((state) => state.enableCodexUsage)
-  const enableOpenCodeUsage = useAppStore((state) => state.enableOpenCodeUsage)
-  const enableMuseUsage = useAppStore((state) => state.enableMuseUsage)
+  const { input, refreshEnabled, enable } = useUsageOverviewProviders()
   const recordFeatureInteraction = useAppStore((state) => state.recordFeatureInteraction)
-
-  useEffect(() => {
-    void fetchClaudeUsage()
-    void fetchCodexUsage()
-    void fetchOpenCodeUsage()
-    void fetchMuseUsage()
-  }, [fetchClaudeUsage, fetchCodexUsage, fetchOpenCodeUsage, fetchMuseUsage])
-
-  const overview = useMemo(
-    () =>
-      buildUsageOverview({
-        claude: {
-          scanState: claudeScanState,
-          summary: claudeSummary,
-          daily: claudeDaily
-        },
-        codex: {
-          scanState: codexScanState,
-          summary: codexSummary,
-          daily: codexDaily
-        },
-        opencode: {
-          scanState: openCodeScanState,
-          summary: openCodeSummary,
-          daily: openCodeDaily
-        },
-        muse: {
-          scanState: museScanState,
-          summary: museSummary,
-          daily: museDaily
-        }
-      }),
-    [
-      claudeDaily,
-      claudeScanState,
-      claudeSummary,
-      codexDaily,
-      codexScanState,
-      codexSummary,
-      museDaily,
-      museScanState,
-      museSummary,
-      openCodeDaily,
-      openCodeScanState,
-      openCodeSummary
-    ]
-  )
+  const overview = useMemo(() => buildUsageOverview(input), [input])
   const recentDays = useMemo(
     () => getRecentUsageDays(overview.daily, RECENT_DAY_COUNT),
     [overview.daily]
@@ -106,12 +39,12 @@ export function UsageOverviewPane(): React.JSX.Element {
   const isScanning = overview.providers.some((provider) => provider.isScanning)
 
   const handleRefresh = (): void => {
-    void Promise.all([
-      claudeScanState?.enabled ? refreshClaudeUsage() : Promise.resolve(),
-      codexScanState?.enabled ? refreshCodexUsage() : Promise.resolve(),
-      openCodeScanState?.enabled ? refreshOpenCodeUsage() : Promise.resolve(),
-      museScanState?.enabled ? refreshMuseUsage() : Promise.resolve()
-    ])
+    void refreshEnabled()
+  }
+
+  const handleEnable = (id: UsageProviderId): void => {
+    recordFeatureInteraction('usage-tracking')
+    void enable(id)
   }
 
   return (
@@ -171,47 +104,26 @@ export function UsageOverviewPane(): React.JSX.Element {
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    recordFeatureInteraction('usage-tracking')
-                    void enableClaudeUsage()
-                  }}
-                >
+                <Button size="sm" onClick={() => handleEnable('claude')}>
                   {translate('auto.components.stats.UsageOverviewPane.0ea0cae435', 'Enable Claude')}
                 </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    recordFeatureInteraction('usage-tracking')
-                    void enableCodexUsage()
-                  }}
-                >
+                <Button variant="secondary" size="sm" onClick={() => handleEnable('codex')}>
                   {translate('auto.components.stats.UsageOverviewPane.2f1ee2878b', 'Enable Codex')}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    recordFeatureInteraction('usage-tracking')
-                    void enableOpenCodeUsage()
-                  }}
-                >
+                <Button variant="outline" size="sm" onClick={() => handleEnable('opencode')}>
                   {translate(
                     'auto.components.stats.UsageOverviewPane.2d13e57f72',
                     'Enable OpenCode'
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    recordFeatureInteraction('usage-tracking')
-                    void enableMuseUsage()
-                  }}
-                >
+                <Button variant="outline" size="sm" onClick={() => handleEnable('muse')}>
                   {translate('auto.components.stats.UsageOverviewPane.enableMuse', 'Enable Muse')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => handleEnable('deepseek')}>
+                  {translate(
+                    'auto.components.stats.UsageOverviewPane.enableDeepSeek',
+                    'Enable DeepSeek'
+                  )}
                 </Button>
               </div>
             </div>
@@ -253,8 +165,8 @@ export function UsageOverviewPane(): React.JSX.Element {
             {!overview.hasAnyData ? (
               <div className="mt-4 rounded-lg border border-dashed border-border/60 bg-card/30 px-4 py-5 text-sm text-muted-foreground">
                 {translate(
-                  'auto.components.stats.UsageOverviewPane.noLocalUsageYet',
-                  'No local Claude, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs.'
+                  'auto.components.stats.UsageOverviewPane.noLocalUsageYetWithDeepSeek',
+                  'No local Claude, DeepSeek, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs.'
                 )}
               </div>
             ) : (
@@ -292,18 +204,7 @@ export function UsageOverviewPane(): React.JSX.Element {
               key={provider.id}
               provider={provider}
               totalTokens={overview.totalTokens}
-              onEnable={() => {
-                recordFeatureInteraction('usage-tracking')
-                if (provider.id === 'claude') {
-                  void enableClaudeUsage()
-                } else if (provider.id === 'codex') {
-                  void enableCodexUsage()
-                } else if (provider.id === 'opencode') {
-                  void enableOpenCodeUsage()
-                } else {
-                  void enableMuseUsage()
-                }
-              }}
+              onEnable={() => handleEnable(provider.id)}
             />
           ))}
         </div>

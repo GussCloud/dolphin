@@ -15,6 +15,21 @@ export function createMiniMaxCredentialsApi(): NonNullable<
   }
 }
 
+export function createDeepSeekCredentialsApi(): NonNullable<
+  Partial<PreloadApi>['deepseekCredentials']
+> {
+  const notConfigured = { apiKeyConfigured: false, encryptionAvailable: false }
+  const unsupportedError = new Error(
+    'DeepSeek API key storage is only available in the desktop app.'
+  )
+  return {
+    getStatus: () => Promise.resolve(notConfigured),
+    saveApiKey: () => Promise.reject(unsupportedError),
+    clearApiKey: () => Promise.resolve(notConfigured),
+    listModels: () => Promise.resolve({ ok: false, reason: 'no-api-key' })
+  }
+}
+
 export function createCursorAccountsApi(): NonNullable<Partial<PreloadApi>['cursorAccounts']> {
   // Why an explanation and not a bare `signedIn: false`: Cursor's session lives on
   // the machine running Dolphin, and this bridge cannot read it. The host may well be

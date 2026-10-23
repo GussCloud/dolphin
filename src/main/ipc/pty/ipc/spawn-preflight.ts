@@ -12,12 +12,14 @@ import { normalizeWindowsTerminalCwd } from '../../../providers/windows-shell-ar
 import { wslUncDirectoryExistsAsync } from '../../../wsl'
 import { getCodexSelectionTargetForPty } from '../host-env/codex-home'
 import {
-  isClaudeLaunchCommand,
+  isManagedClaudeAuthLaunch,
   recoverFreshSpawnProviderRouting,
   routesFreshSpawnsToLocalProvider
 } from '../host-env/fresh-spawn-routing'
 import { getAppPtyId, getProvider, getRelayPtyId } from '../provider/registry'
 import type { PtyIpcSpawnState } from './spawn-state'
+import { isDeepSeekLaunchRequest } from '../../../deepseek/deepseek-launch-request'
+import { prepareDeepSeekLaunch } from '../../../deepseek/deepseek-config-home-setup'
 
 export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promise<void> {
   const args = ctx.args
@@ -191,8 +193,13 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
       }
     }
   }
-  ctx.isClaudeLaunch =
-    !ctx.preAdoptedStablePane && !args.connectionId && isClaudeLaunchCommand(args.command)
+  ctx.isClaudeLaunch = isManagedClaudeAuthLaunch({
+    command: args.command,
+    launchAgent: args.launchAgent,
+    env: args.env,
+    connectionId: args.connectionId,
+    preAdoptedStablePane: Boolean(ctx.preAdoptedStablePane)
+  })
   if (ctx.isClaudeLaunch && isClaudeAuthSwitchInProgress()) {
     throw new Error(CLAUDE_AUTH_SWITCH_IN_PROGRESS_MESSAGE)
   }
@@ -230,6 +237,15 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
   ctx.claudeAuth =
     ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
       ? await ctx.deps.prepareClaudeAuth(initialSelectionTarget)
+      : null
+  ctx.deepSeekEnvPatch =
+    !ctx.preAdoptedStablePane &&
+    isDeepSeekLaunchRequest({ launchAgent: args.launchAgent, env: args.env })
+      ? await prepareDeepSeekLaunch({
+          connectionId: args.connectionId,
+          target: initialSelectionTarget,
+          settings: ctx.deps.getSettings?.()
+        })
       : null
   ctx.spawnTiming.mark('auth')
 }

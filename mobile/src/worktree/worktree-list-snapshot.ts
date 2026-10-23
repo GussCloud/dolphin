@@ -106,6 +106,7 @@ function areAgentRowsEqual(
       a.state !== b.state ||
       a.workingMode !== b.workingMode ||
       a.agentType !== b.agentType ||
+      a.displayAgentType !== b.displayAgentType ||
       a.prompt !== b.prompt ||
       a.lastAssistantMessage !== b.lastAssistantMessage ||
       a.toolName !== b.toolName ||

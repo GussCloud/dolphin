@@ -7,6 +7,7 @@ import type {
 import {
   createClaudeProvider,
   createCodexProvider,
+  createDeepSeekProvider,
   createMuseProvider,
   createOpenCodeProvider
 } from './usage-provider-normalization'
@@ -14,6 +15,7 @@ import {
 export function buildUsageOverview(input: UsageOverviewInput): UsageOverviewModel {
   const providers = [
     createClaudeProvider(input.claude),
+    createDeepSeekProvider(input.deepseek),
     createCodexProvider(input.codex),
     createOpenCodeProvider(input.opencode),
     createMuseProvider(input.muse)

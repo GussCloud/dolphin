@@ -145,7 +145,7 @@ export class ClaudeHookService {
       config,
       hook,
       getManagedScriptFileName(this.options.settings),
-      this.options.agent === 'claude' ? options : undefined
+      this.options.settings.claudeVersionGatedEvents ? options : undefined
     )
     writeManagedScript(
       scriptPath,
@@ -215,7 +215,7 @@ export class ClaudeHookService {
         config,
         hook,
         remoteScriptFileName,
-        this.options.agent === 'claude' ? options : undefined
+        this.options.settings.claudeVersionGatedEvents ? options : undefined
       )
 
       // Why: write scripts before settings to avoid settings pointing to missing scripts.

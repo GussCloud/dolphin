@@ -1,9 +1,13 @@
 import { parseExecutionHostId, toRuntimeExecutionHostId } from '../../../../shared/execution-host'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import type { Repo } from '../../../../shared/repo-types'
-import type { RuntimeRpcResponse } from '../../../../shared/runtime-rpc-envelope'
+import type { RuntimeRpcFailure, RuntimeRpcResponse } from '../../../../shared/runtime-rpc-envelope'
 import type { RuntimeStatus } from '../../../../shared/runtime-types'
 import type { Worktree } from '../../../../shared/worktree/types'
+import {
+  refuseDeepSeekLaunchWithoutHostSupport,
+  runtimeParamsLaunchDeepSeek
+} from '../../../../shared/deepseek-runtime-launch-gate'
 import {
   getClientForEnvironment,
   manuallyDisconnectedEnvironmentIds,
@@ -26,6 +30,24 @@ export type WebRuntimeEnvelopeCaller = <TResult>(
   timeoutMs?: number
 ) => Promise<RuntimeRpcResponse<TResult>>
 
+// Why sync null for non-DeepSeek calls: an await on every call would defer the enqueue and reorder callers.
+function refuseDeepSeekLaunchOnEnvironment(
+  environment: ReturnType<typeof resolveEnvironment>,
+  method: string,
+  params: unknown,
+  timeoutMs: number | undefined
+): Promise<RuntimeRpcFailure | null> | null {
+  if (!runtimeParamsLaunchDeepSeek(params)) {
+    return null
+  }
+  return refuseDeepSeekLaunchWithoutHostSupport({
+    method,
+    params,
+    readStatus: () =>
+      getClientForEnvironment(environment).call('status.get', undefined, { timeoutMs })
+  })
+}
+
 export async function callRuntimeEnvelope<TResult = unknown>(
   method: string,
   params?: unknown,
@@ -34,6 +56,11 @@ export async function callRuntimeEnvelope<TResult = unknown>(
   const environment = requireActiveEnvironment()
   if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
     return manuallyDisconnectedResponse(environment)
+  }
+  const deepSeekGate = refuseDeepSeekLaunchOnEnvironment(environment, method, params, timeoutMs)
+  const deepSeekRefusal = deepSeekGate ? await deepSeekGate : null
+  if (deepSeekRefusal) {
+    return deepSeekRefusal
   }
   const response = await runtimeCallQueuePool.enqueue(environment.id, method, () => {
     if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
@@ -57,6 +84,11 @@ export async function callEnvironmentEnvelope<TResult = unknown>(
   const environment = resolveEnvironment(selector)
   if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
     return manuallyDisconnectedResponse(environment)
+  }
+  const deepSeekGate = refuseDeepSeekLaunchOnEnvironment(environment, method, params, timeoutMs)
+  const deepSeekRefusal = deepSeekGate ? await deepSeekGate : null
+  if (deepSeekRefusal) {
+    return deepSeekRefusal
   }
   const response = await runtimeCallQueuePool.enqueue(environment.id, method, () => {
     if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {

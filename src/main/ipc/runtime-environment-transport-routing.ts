@@ -13,6 +13,10 @@ import {
   type RemoteRuntimeSubscription
 } from '../../shared/remote-runtime-client'
 import { withRemoteRuntimeTailscaleHint } from '../../shared/remote-runtime-tailscale-hint'
+import {
+  refuseDeepSeekLaunchWithoutHostSupport,
+  runtimeParamsLaunchDeepSeek
+} from '../../shared/deepseek-runtime-launch-gate'
 import { enqueueRuntimeCall } from './runtime-environment-call-queue'
 import { getRuntimeEnvironmentStatusOwner } from './runtime-environment-request-connections'
 import {
@@ -83,6 +87,24 @@ export async function callRuntimeEnvironment(
     return failure ?? getRuntimeEnvironmentStatus(userDataPath, selector, timeoutMs, options)
   }
   const environment = resolveEnvironment(userDataPath, selector)
+  // Every desktop call to a paired host passes here; the web client runs the same gate.
+  // Why sync check first: awaiting for every call would defer the enqueue and reorder callers.
+  const deepSeekRefusal = runtimeParamsLaunchDeepSeek(params)
+    ? await refuseDeepSeekLaunchWithoutHostSupport({
+        method,
+        params,
+        readStatus: () =>
+          getRuntimeEnvironmentStatus(
+            userDataPath,
+            environment.id,
+            timeoutMs,
+            options?.signal ? { signal: options.signal } : undefined
+          )
+      })
+    : null
+  if (deepSeekRefusal) {
+    return deepSeekRefusal
+  }
   // Why: connection failures reject (they don't resolve as ok:false), so the
   // Tailscale hint is applied to the thrown error here — wrapping the resolved
   // value would miss the in-use connect/timeout case the toast surfaces.

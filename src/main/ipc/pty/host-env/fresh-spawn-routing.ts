@@ -2,6 +2,7 @@ import { normalizeRuntimePathForComparison } from '../../../../shared/cross-plat
 import { splitWorktreeIdForFilesystem } from '../../../../shared/worktree/id'
 import type { IPtyProvider } from '../../../providers/types'
 import { beginTerminalInstall } from '../../watcher-removal-gate'
+import { isDeepSeekLaunchRequest } from '../../../deepseek/deepseek-launch-request'
 
 export function isClaudeLaunchCommand(command: string | undefined): boolean {
   if (!command) {
@@ -9,6 +10,23 @@ export function isClaudeLaunchCommand(command: string | undefined): boolean {
   }
   return /(^|[\s;&|('"`])(?:[^\s;&|('"`]*[\\/])?claude(?:\.cmd|\.exe)?($|[\s;&|)'"`])/i.test(
     command
+  )
+}
+
+/** Fresh local spawns that go through the managed Claude account gate (auth patch, switch lock).
+ *  DeepSeek panes run the same `claude` binary against another API, so they are never gated. */
+export function isManagedClaudeAuthLaunch(args: {
+  command: string | undefined
+  launchAgent: unknown
+  env: Record<string, string | undefined> | undefined
+  connectionId: string | null | undefined
+  preAdoptedStablePane: boolean
+}): boolean {
+  return (
+    !args.preAdoptedStablePane &&
+    !args.connectionId &&
+    !isDeepSeekLaunchRequest({ launchAgent: args.launchAgent, env: args.env }) &&
+    isClaudeLaunchCommand(args.command)
   )
 }
 
