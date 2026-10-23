@@ -70,9 +70,12 @@ function createAvatarWindow(): BrowserWindow {
     fullscreenable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    // Why: the avatar must never take focus from whatever the user is typing into.
-    focusable: false,
+    // Why focusable: a never-activating window (focusable: false) drops real clicks on Windows,
+    // so neither open nor close worked; appearing via showInactive() still steals nothing, and
+    // the click's activation is what lets Dolphin take the foreground afterwards.
+    // Why toolbar: a tool window stays out of the taskbar and Alt+Tab once it can be activated.
     ...(process.platform === 'darwin' ? { type: 'panel' as const } : {}),
+    ...(process.platform === 'win32' ? { type: 'toolbar' as const } : {}),
     title: 'Dolphin',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
