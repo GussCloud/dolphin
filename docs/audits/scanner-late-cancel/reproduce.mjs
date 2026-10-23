@@ -12,7 +12,11 @@ if (process.env.DOLPHIN_BACKGROUND_LAUNCH !== '1') {
 }
 
 const sourcePath = 'src/main/ai-vault/session-scanner-service-entry.ts'
-const source = readFileSync(new URL(`../../../${sourcePath}`, import.meta.url), 'utf8')
+// Why normalize: a Windows checkout has CRLF, which the LF guard below would never match.
+const source = readFileSync(new URL(`../../../${sourcePath}`, import.meta.url), 'utf8').replace(
+  /\r\n/g,
+  '\n'
+)
 const guard = '    if (!pending.has(raw.id)) {\n      return\n    }\n'
 const requestCount = 1000
 assert.equal(source.split(guard).length, 2, 'Review changed baseline transform')
@@ -34,6 +38,7 @@ async function run(version) {
     process: processStub,
     performance,
     AbortController,
+    adoptInheritedCompileCache: () => undefined,
     requestSessionSearchRoots: () => undefined,
     SessionScannerServiceSearch: class {
       handles() {
