@@ -69,6 +69,7 @@ import { getPtyIdForPaneKey } from '../pty'
 import { registerAgentTrustHandlers } from '../agent-trust'
 import { registerClaudeAccountHandlers } from '../claude-accounts'
 import { registerMiniMaxCredentialsHandlers } from '../minimax-credentials'
+import { registerDeepSeekCredentialsHandlers } from '../deepseek-credentials'
 import { registerTelegramBridgeHandlers } from '../telegram-bridge'
 import { registerGrokAccountHandlers } from '../grok-accounts'
 import { registerCursorAccountHandlers } from '../cursor-accounts'
@@ -160,6 +161,7 @@ export function registerCoreHandlers(
   registerAgentTrustHandlers()
   registerClaudeAccountHandlers(claudeAccounts)
   registerMiniMaxCredentialsHandlers(rateLimits)
+  registerDeepSeekCredentialsHandlers()
   registerTelegramBridgeHandlers()
   registerGrokAccountHandlers()
   registerCursorAccountHandlers()

@@ -100,6 +100,8 @@ export { formatAgentTypeLabel } from '../../../shared/agent-type-label'
 const ICONABLE_AGENT_TYPES: Record<TuiAgent, true> = {
   claude: true,
   'claude-agent-teams': true,
+  deepseek: true,
+  'deepseek-agent-teams': true,
   openclaude: true,
   codex: true,
   autohand: true,

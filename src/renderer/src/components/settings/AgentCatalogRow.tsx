@@ -76,6 +76,8 @@ export type AgentCatalogRowProps = {
   onSaveEnv: (value: Record<string, string>) => void
   sessionSourceHome?: AgentSessionSourceHomeControl
   sessionInstructions?: AgentSessionInstructionsControl
+  /** Provider setup (e.g. API key, models) shown first in the expanded section; opens it by default. */
+  providerSettings?: React.ReactNode
 }
 
 export type AgentSessionInstructionsControl = {
@@ -103,12 +105,14 @@ export function AgentCatalogRow({
   onSaveArgs,
   onSaveEnv,
   sessionSourceHome,
-  sessionInstructions
+  sessionInstructions,
+  providerSettings
 }: AgentCatalogRowProps): React.JSX.Element {
   const envSummary = stringifyAgentDefaultEnvDraft(envOverride)
   const defaultEnvSummary = stringifyAgentDefaultEnvDraft(defaultEnv)
   const [cmdOpen, setCmdOpen] = useState(
-    Boolean(cmdOverride) ||
+    providerSettings !== undefined ||
+      Boolean(cmdOverride) ||
       argsOverride !== defaultArgs ||
       envSummary !== defaultEnvSummary ||
       (sessionInstructions !== undefined &&
@@ -215,6 +219,7 @@ export function AgentCatalogRow({
 
       {isDetected && cmdOpen && (
         <div className="mt-3 pl-10">
+          {providerSettings && <div className="mb-3">{providerSettings}</div>}
           <AgentCommandOverrideInput
             key={cmdOverride ?? defaultCmd}
             defaultCmd={defaultCmd}

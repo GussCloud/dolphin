@@ -94,14 +94,11 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
             adoptedBeforeLaunch,
             hostShell: resolveWorkspaceAgentTeamHostShell(workspace),
             sshLeader: Boolean(workspace.connectionId),
-            createTeamEnv: (shimDir, shimBin, shimPathDirs) =>
-              this.claudeAgentTeams.createLaunchEnv({
-                leaderHandle: preAllocatedHandle,
-                baseEnv: teamBaseEnv,
-                shimDir,
-                shimBin,
-                shimPathDirs
-              }).env
+            createTeamEnv: this.claudeAgentTeams.createLaunchEnvFactory({
+              leaderHandle: preAllocatedHandle,
+              baseEnv: teamBaseEnv,
+              launchAgent: launchOpts.launchAgent
+            })
           })
           agentTeamsPlan = agentTeams.plan
           sequencedStartupCommand = agentTeams.sequencedStartupCommand

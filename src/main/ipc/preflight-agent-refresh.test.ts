@@ -164,7 +164,7 @@ describe('preflight', () => {
     }
 
     expect(result).toEqual({
-      agents: ['claude', 'claude-agent-teams'],
+      agents: ['claude', 'claude-agent-teams', 'deepseek', 'deepseek-agent-teams'],
       addedPathSegments: [],
       shellHydrationOk: true,
       pathSource: 'sync_seed_only',
@@ -254,7 +254,7 @@ describe('preflight', () => {
 
     expect(result.shellHydrationOk).toBe(false)
     expect(result.addedPathSegments).toEqual([])
-    expect(result.agents).toEqual(['claude'])
+    expect(result.agents).toEqual(['claude', 'deepseek'])
     // Why: drives the agent_picks `on_path:false` triage in dashboard 1562016.
     // Without these fields we cannot distinguish "hydration failed" from
     // "user genuinely doesn't have the binary."

@@ -8,6 +8,10 @@ import {
   isQuestionAnsweredSubmitInput,
   type AgentQuestionAnsweredInferenceRequest
 } from '../../../../shared/agent-question-answered-intent'
+import {
+  isClaudeHookAgentType,
+  toHookHostAgentType
+} from '../../../../shared/deepseek-status-identity'
 import { isExplicitAgentStatusFresh } from '@/lib/agent-status'
 
 export type AgentQuestionAnsweredInference = {
@@ -31,7 +35,7 @@ function inferQuestionAnsweredFromEntry(
   if (
     !entry ||
     entry.state !== 'waiting' ||
-    entry.agentType !== 'claude' ||
+    !isClaudeHookAgentType(entry.agentType) ||
     !isAskUserQuestionTool(entry.toolName) ||
     !isExplicitAgentStatusFresh(entry, now(), AGENT_STATUS_STALE_AFTER_MS)
   ) {
@@ -42,7 +46,7 @@ function inferQuestionAnsweredFromEntry(
     baselineUpdatedAt: entry.updatedAt,
     baselineStateStartedAt: entry.stateStartedAt,
     baselinePrompt: entry.prompt,
-    baselineAgentType: entry.agentType
+    baselineAgentType: toHookHostAgentType(entry.agentType)
   })
   return true
 }

@@ -9,6 +9,7 @@ import {
   deriveWorkspaceSshGate,
   filterWorkspaceAgents,
   isWorkspaceAgentEnabled,
+  isWorkspaceAgentOfferable,
   parseSparsePresetDirectories,
   resolveComposerBranchSelection,
   useCallback,
@@ -145,15 +146,14 @@ export function useMobileTasksWorkspaceCreateProjection(model: ProjectMetadataLo
       MOBILE_TUI_AGENT_AUTO_PICK_ORDER,
       runtimeTaskSettings.disabledTuiAgents
     )
-    const availableAgents =
-      workspaceDetectedAgentIds === null
-        ? new Set<TuiAgent>(enabledAgents)
-        : new Set<TuiAgent>(enabledAgents.filter((agent) => workspaceDetectedAgentIds.has(agent)))
+    const availableAgents = new Set<TuiAgent>(
+      enabledAgents.filter((agent) => isWorkspaceAgentOfferable(agent, workspaceDetectedAgentIds))
+    )
     if (
       workspaceAgent &&
       workspaceAgent !== 'blank' &&
       isWorkspaceAgentEnabled(workspaceAgent, runtimeTaskSettings.disabledTuiAgents) &&
-      (workspaceDetectedAgentIds === null || workspaceDetectedAgentIds.has(workspaceAgent))
+      isWorkspaceAgentOfferable(workspaceAgent, workspaceDetectedAgentIds)
     ) {
       availableAgents.add(workspaceAgent)
     }

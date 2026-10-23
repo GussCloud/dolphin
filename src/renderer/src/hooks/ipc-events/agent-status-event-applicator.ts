@@ -181,7 +181,10 @@ export function createAgentStatusEventApplicator(args: {
       )
       return 'applied'
     }
-    const resolvedPayload = resolveHookPayloadAgentType(payload, identityTitle ?? title)
+    const resolvedPayload = resolveHookPayloadAgentType(payload, identityTitle ?? title, {
+      transcriptPath: data.providerSession?.transcriptPath,
+      existingAgentType: existingStatus?.agentType
+    })
     const statusPayload = data.orchestration
       ? { ...resolvedPayload, orchestration: data.orchestration }
       : resolvedPayload

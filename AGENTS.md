@@ -106,6 +106,10 @@ All changes must consider the SSH use case. Don't assume local-only execution. B
 
 All changes must consider folder workspaces as well as git worktrees. Don't assume every workspace is a git worktree.
 
+## DeepSeek Agent
+
+`deepseek` / `deepseek-agent-teams` run the `claude` CLI against DeepSeek with an isolated `~/.claude-deepseek` config and a safeStorage-only key. A DeepSeek launch must never degrade to a plain Claude launch on the user's Anthropic account. Before touching the Claude account gate, Agent Teams env, or adding a `=== 'claude'` check, read [`docs/reference/deepseek-agent.md`](./docs/reference/deepseek-agent.md).
+
 ## Agent Status
 
 The execution host owns agent status in one store, the hook server's, and every reader (sidebar, `worktree ps`, mobile, dashboard) subscribes to it. Before adding a producer, a cache, or a reader-side precedence rule, read [`docs/reference/agent-status-store.md`](./docs/reference/agent-status-store.md): new producers write into that store, and readers keep only presentation policy.

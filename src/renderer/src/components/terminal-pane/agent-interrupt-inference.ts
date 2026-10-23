@@ -10,6 +10,10 @@ import {
   type AgentInterruptInputIntent
 } from '../../../../shared/agent-interrupt-intent'
 import { isAskUserQuestionTool } from '../../../../shared/agent-question-answered-intent'
+import {
+  isClaudeHookAgentType,
+  toHookHostAgentType
+} from '../../../../shared/deepseek-status-identity'
 import { isExplicitAgentStatusFresh } from '@/lib/agent-status'
 
 export type AgentInterruptInference = {
@@ -64,7 +68,7 @@ function isIgnorableNavigationEscape(
   intent: AgentInterruptInputIntent,
   state: AgentStatusEntry['state']
 ): boolean {
-  return state === 'working' && isNavigationEscapeIntent(agentType, intent)
+  return state === 'working' && isNavigationEscapeIntent(toHookHostAgentType(agentType), intent)
 }
 
 function canInferInterrupt(entry: AgentStatusEntry, intent: AgentInterruptInputIntent): boolean {
@@ -72,7 +76,7 @@ function canInferInterrupt(entry: AgentStatusEntry, intent: AgentInterruptInputI
     entry.state === 'working' ||
     (intent === 'plain-escape' &&
       entry.state === 'waiting' &&
-      entry.agentType === 'claude' &&
+      isClaudeHookAgentType(entry.agentType) &&
       isAskUserQuestionTool(entry.toolName))
   )
 }
@@ -202,7 +206,7 @@ export function createAgentInterruptInference({
       baselineUpdatedAt: baseline.updatedAt,
       baselineStateStartedAt: baseline.stateStartedAt,
       baselinePrompt: baseline.prompt,
-      baselineAgentType: baseline.agentType,
+      baselineAgentType: toHookHostAgentType(baseline.agentType),
       intent: baseline.intent,
       ...(baseline.inputCount !== undefined ? { inputCount: baseline.inputCount } : {})
     })

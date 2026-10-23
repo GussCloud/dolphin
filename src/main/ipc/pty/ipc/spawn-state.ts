@@ -39,6 +39,8 @@ export type PtyIpcSpawnState = {
   preAdoptedStablePane: AdoptStablePaneResult | null
   isClaudeLaunch: boolean
   claudeAuth: ClaudeRuntimeAuthPreparation | null
+  /** DeepSeek provider env (holds the API key); null for every other launch. */
+  deepSeekEnvPatch: Record<string, string> | null
   terminalRuntimeOptions: {
     shellOverride?: string
     terminalWindowsWslDistro?: string | null
@@ -117,6 +119,7 @@ export function createPtyIpcSpawnState(
     preAdoptedStablePane: null,
     isClaudeLaunch: false,
     claudeAuth: null,
+    deepSeekEnvPatch: null,
     terminalRuntimeOptions: {},
     isDaemonHostSpawn: false,
     isMintedSessionId: false,

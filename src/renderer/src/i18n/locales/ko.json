@@ -92,6 +92,47 @@
         "restartRequired": "다시 시작해야 함",
         "unavailable": "브라우저 ID를 사용할 수 없습니다."
       }
+    },
+    "agents": {
+      "deepseek": {
+        "slotPickerAria": "{{value0}} 모델",
+        "searchModels": "모델 검색...",
+        "noModelMatch": "일치하는 모델이 없습니다.",
+        "notListed": "DeepSeek 목록에 없음",
+        "slot": {
+          "main": "기본",
+          "opus": "Opus",
+          "sonnet": "Sonnet",
+          "haiku": "Haiku",
+          "subagent": "서브에이전트"
+        },
+        "error": {
+          "noApiKey": "저장된 DeepSeek API 키를 읽을 수 없습니다. 다시 저장하세요.",
+          "unauthorized": "DeepSeek가 저장된 API 키를 거부했습니다. 키를 교체한 뒤 다시 시도하세요.",
+          "network": "DeepSeek에 연결할 수 없습니다. 연결을 확인하고 다시 시도하세요.",
+          "invalidResponse": "DeepSeek가 Dolphin이 읽을 수 없는 모델 목록을 반환했습니다.",
+          "failed": "DeepSeek 모델을 불러올 수 없습니다."
+        },
+        "apiKey": "DeepSeek API 키",
+        "configured": "구성됨",
+        "notConfigured": "구성되지 않음",
+        "apiKeyReplacePlaceholder": "저장된 키를 교체할 새 키 붙여넣기",
+        "apiKeyPlaceholder": "DeepSeek API 키 붙여넣기",
+        "replace": "교체",
+        "save": "저장",
+        "clear": "지우기",
+        "apiKeyHelp": "이 기기에 암호화되어 저장되며 DeepSeek에만 전송됩니다. platform.deepseek.com에서 키를 만드세요.",
+        "loadingModels": "DeepSeek 모델 불러오는 중…",
+        "retry": "다시 시도",
+        "models": "모델",
+        "modelsHelp": "Claude Code는 각 역할을 여기서 선택한 모델로 보냅니다. 변경 사항은 이후 시작하는 DeepSeek 세션에 적용됩니다.",
+        "keyNotSaved": "DeepSeek API 키가 저장되지 않았습니다.",
+        "keySaved": "DeepSeek API 키를 저장했습니다.",
+        "keyUpdateFailed": "DeepSeek API 키 업데이트에 실패했습니다.",
+        "isolationNote": "DeepSeek은 별도의 설정 폴더({{value0}})로 Claude Code를 실행합니다. Claude 설정, 스킬, CLAUDE.md는 공유되지 않습니다.",
+        "oneMillionContext": "1M 컨텍스트",
+        "encryptionUnavailable": "이 시스템에서는 보안 저장소를 사용할 수 없어 Dolphin이 여기에 DeepSeek 키를 저장할 수 없습니다."
+      }
     }
   },
   "menu": {
@@ -498,7 +539,9 @@
           "mimo_code_label": "MiMo Code",
           "muse_label": "Muse",
           "opencode2_label": "OpenCode 2",
-          "zcode_label": "ZCode"
+          "zcode_label": "ZCode",
+          "deepseek_label": "DeepSeek",
+          "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },
         "skill": {
           "cli": {

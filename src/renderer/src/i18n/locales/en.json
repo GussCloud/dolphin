@@ -213,6 +213,47 @@
         "restartRequired": "Restart required",
         "unavailable": "Browser identity is unavailable."
       }
+    },
+    "agents": {
+      "deepseek": {
+        "slotPickerAria": "{{value0}} model",
+        "searchModels": "Search models...",
+        "noModelMatch": "No models match.",
+        "notListed": "Not listed by DeepSeek",
+        "slot": {
+          "main": "Main",
+          "opus": "Opus",
+          "sonnet": "Sonnet",
+          "haiku": "Haiku",
+          "subagent": "Subagent"
+        },
+        "error": {
+          "noApiKey": "The saved DeepSeek API key could not be read. Save it again.",
+          "unauthorized": "DeepSeek rejected the saved API key. Replace it and try again.",
+          "network": "Couldn't reach DeepSeek. Check your connection and try again.",
+          "invalidResponse": "DeepSeek returned a model list Dolphin could not read.",
+          "failed": "Couldn't load DeepSeek models."
+        },
+        "apiKey": "DeepSeek API key",
+        "configured": "Configured",
+        "notConfigured": "Not configured",
+        "apiKeyReplacePlaceholder": "Paste a new key to replace the saved one",
+        "apiKeyPlaceholder": "Paste your DeepSeek API key",
+        "replace": "Replace",
+        "save": "Save",
+        "clear": "Clear",
+        "apiKeyHelp": "Stored encrypted on this device and sent only to DeepSeek. Create a key at platform.deepseek.com.",
+        "loadingModels": "Loading DeepSeek models…",
+        "retry": "Retry",
+        "models": "Models",
+        "modelsHelp": "Claude Code sends each role to the model picked here. Changes apply to DeepSeek sessions started afterwards.",
+        "keyNotSaved": "DeepSeek API key was not saved.",
+        "keySaved": "DeepSeek API key saved.",
+        "keyUpdateFailed": "DeepSeek API key update failed.",
+        "isolationNote": "DeepSeek runs Claude Code with its own config folder ({{value0}}). Your Claude settings, skills, and CLAUDE.md are not shared.",
+        "oneMillionContext": "1M context",
+        "encryptionUnavailable": "Secure storage is unavailable on this system, so Dolphin can't save a DeepSeek key here."
+      }
     }
   },
   "menu": {
@@ -617,6 +658,8 @@
           "060d152fb5": "Trae",
           "muse_label": "Muse",
           "zcode_label": "ZCode",
+          "deepseek_label": "DeepSeek",
+          "deepseek_agent_teams_label": "DeepSeek Agent Teams",
           "d443a47995": "Prime Agent",
           "mimo_code_label": "MiMo Code",
           "opencode2_label": "OpenCode 2"

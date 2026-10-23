@@ -93,6 +93,7 @@ export { MOBILE_TASKS_CAPABILITY } from './mobile-tasks-capability'
 export {
   filterWorkspaceAgents,
   isWorkspaceAgentEnabled,
+  isWorkspaceAgentOfferable,
   pickWorkspaceAgent,
   resolveWorkspaceAgentSelection,
   workspaceAgentLabel

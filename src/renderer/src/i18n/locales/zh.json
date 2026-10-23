@@ -92,6 +92,47 @@
         "restartRequired": "需要重新启动",
         "unavailable": "浏览器身份不可用。"
       }
+    },
+    "agents": {
+      "deepseek": {
+        "slotPickerAria": "{{value0}} 模型",
+        "searchModels": "搜索模型...",
+        "noModelMatch": "没有匹配的模型。",
+        "notListed": "DeepSeek 未列出",
+        "slot": {
+          "main": "主模型",
+          "opus": "Opus",
+          "sonnet": "Sonnet",
+          "haiku": "Haiku",
+          "subagent": "子代理"
+        },
+        "error": {
+          "noApiKey": "无法读取已保存的 DeepSeek API 密钥。请重新保存。",
+          "unauthorized": "DeepSeek 拒绝了已保存的 API 密钥。请替换后重试。",
+          "network": "无法连接 DeepSeek。请检查网络连接后重试。",
+          "invalidResponse": "DeepSeek 返回的模型列表 Dolphin 无法读取。",
+          "failed": "无法加载 DeepSeek 模型。"
+        },
+        "apiKey": "DeepSeek API 密钥",
+        "configured": "已配置",
+        "notConfigured": "未配置",
+        "apiKeyReplacePlaceholder": "粘贴新密钥以替换已保存的密钥",
+        "apiKeyPlaceholder": "粘贴你的 DeepSeek API 密钥",
+        "replace": "替换",
+        "save": "保存",
+        "clear": "清除",
+        "apiKeyHelp": "加密保存在此设备上，且只发送给 DeepSeek。可在 platform.deepseek.com 创建密钥。",
+        "loadingModels": "正在加载 DeepSeek 模型…",
+        "retry": "重试",
+        "models": "模型",
+        "modelsHelp": "Claude Code 会把每个角色发送到这里选择的模型。更改对之后启动的 DeepSeek 会话生效。",
+        "keyNotSaved": "DeepSeek API 密钥未保存。",
+        "keySaved": "DeepSeek API 密钥已保存。",
+        "keyUpdateFailed": "DeepSeek API 密钥更新失败。",
+        "isolationNote": "DeepSeek 使用独立的配置文件夹（{{value0}}）运行 Claude Code。你的 Claude 设置、技能和 CLAUDE.md 不会共享。",
+        "oneMillionContext": "1M 上下文",
+        "encryptionUnavailable": "此系统上没有可用的安全存储，因此 Dolphin 无法在此保存 DeepSeek 密钥。"
+      }
     }
   },
   "menu": {
@@ -498,7 +539,9 @@
           "mimo_code_label": "MiMo Code",
           "muse_label": "Muse",
           "opencode2_label": "OpenCode 2",
-          "zcode_label": "ZCode"
+          "zcode_label": "ZCode",
+          "deepseek_label": "DeepSeek",
+          "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },
         "skill": {
           "cli": {

@@ -1,6 +1,7 @@
 import { resolveAgentPaneAuthorityKey } from '@/store/slices/agent-pane-authority'
 import type { AppState } from '../../store/types'
 import { titleHasAgentName } from '../../../../shared/agent-detection'
+import { isDeepSeekClaudeTranscriptPath } from '../../../../shared/deepseek-status-identity'
 import type {
   AgentStatusIpcPayload,
   ParsedAgentStatusPayload
@@ -94,13 +95,27 @@ export function shouldApplyResolvedAgentTerminalTitleToTab(
 
 export function resolveHookPayloadAgentType(
   payload: ParsedAgentStatusPayload,
-  terminalTitle: string | undefined
+  terminalTitle: string | undefined,
+  claudeSession?: {
+    /** The hook's transcript path; Claude Code writes it under the pane's CLAUDE_CONFIG_DIR. */
+    transcriptPath?: string
+    /** The pane's current row, for events that carry no transcript path. */
+    existingAgentType?: string
+  }
 ): ParsedAgentStatusPayload {
+  if (payload.agentType !== 'claude') {
+    return payload
+  }
+  const transcriptPath = claudeSession?.transcriptPath
   if (
-    payload.agentType !== 'claude' ||
-    !terminalTitle ||
-    !titleHasAgentName(terminalTitle, 'openclaude')
+    transcriptPath
+      ? isDeepSeekClaudeTranscriptPath(transcriptPath)
+      : claudeSession?.existingAgentType === 'deepseek'
   ) {
+    // Why: the transcript path is per-event host evidence; the tab's launch agent can be stale.
+    return { ...payload, agentType: 'deepseek' }
+  }
+  if (!terminalTitle || !titleHasAgentName(terminalTitle, 'openclaude')) {
     return payload
   }
   // Why: OpenClaude emits Claude-compatible hooks; the title is the last renderer signal to keep it out of Claude-only status paths.

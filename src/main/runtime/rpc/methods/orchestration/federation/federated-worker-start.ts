@@ -1,7 +1,10 @@
 import type { OrchestrationSessionCaller } from '../../../../orchestration/orchestration-caller-identity'
 import { isTuiAgent } from '../../../../../../shared/tui-agent-config'
+import { isDeepSeekTuiAgent } from '../../../../../../shared/deepseek-claude-provider'
+import { runtimeCapabilitiesSupportDeepSeek } from '../../../../../../shared/deepseek-runtime-launch-gate'
 import type { RuntimeStatus } from '../../../../../../shared/runtime-types'
 import {
+  DEEPSEEK_HOST_UPDATE_REQUIRED_MESSAGE,
   ORCHESTRATION_CONTRACT_RUNTIME_CAPABILITY,
   ORCHESTRATION_FEDERATION_CONTROL_MAIL_PROTOCOL_VERSION,
   ORCHESTRATION_FEDERATION_CONTROL_MAIL_RUNTIME_CAPABILITY,
@@ -107,6 +110,13 @@ export async function startFederatedWorker(args: {
     capabilities: status.capabilities,
     serverName: server.name
   })
+  // Why: refuse before the dispatch is recorded; the transport gate would leave it outcome_unknown.
+  if (
+    isDeepSeekTuiAgent(params.agent) &&
+    !runtimeCapabilitiesSupportDeepSeek(status.capabilities)
+  ) {
+    throw new OrchestrationError('capability_unsupported', DEEPSEEK_HOST_UPDATE_REQUIRED_MESSAGE)
+  }
   const supportsControlMail = status.capabilities?.includes(
     ORCHESTRATION_FEDERATION_CONTROL_MAIL_RUNTIME_CAPABILITY
   )

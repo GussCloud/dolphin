@@ -164,7 +164,7 @@ describe('preflight', () => {
       throw new Error('not found')
     })
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'cursor'])
+    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'deepseek', 'cursor'])
   })
 
   it('does not report Claude Agent Teams when only the Dolphin shim is present', async () => {
@@ -213,7 +213,12 @@ describe('preflight', () => {
       throw new Error('not found')
     })
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'claude-agent-teams'])
+    await expect(detectInstalledAgents()).resolves.toEqual([
+      'claude',
+      'claude-agent-teams',
+      'deepseek',
+      'deepseek-agent-teams'
+    ])
   })
 
   it('reports Claude Agent Teams on native Windows when Dolphin and Claude are present', async () => {
@@ -246,7 +251,12 @@ describe('preflight', () => {
       throw new Error('not found')
     })
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'claude-agent-teams'])
+    await expect(detectInstalledAgents()).resolves.toEqual([
+      'claude',
+      'claude-agent-teams',
+      'deepseek',
+      'deepseek-agent-teams'
+    ])
   })
 
   it('detects agents via the install-dir resolver when which fails (stripped GUI PATH)', async () => {
@@ -276,7 +286,12 @@ describe('preflight', () => {
         )
     )
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'codex', 'opencode'])
+    await expect(detectInstalledAgents()).resolves.toEqual([
+      'claude',
+      'deepseek',
+      'codex',
+      'opencode'
+    ])
     expect(resolveCliCommandsMock).toHaveBeenCalledTimes(1)
   })
 
@@ -301,7 +316,7 @@ describe('preflight', () => {
       (commands: string[]) => new Map(commands.map((cmd) => [cmd, cmd]))
     )
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude'])
+    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'deepseek'])
     expect(resolveCliCommandsMock).toHaveBeenCalledTimes(1)
     expect(resolveCliCommandsMock).toHaveBeenCalledWith(expect.not.arrayContaining(['claude']))
   })
@@ -413,7 +428,7 @@ describe('preflight', () => {
 
     await expect(
       detectInstalledAgentsWithShellPathHydration({ wslDistro: 'Ubuntu' })
-    ).resolves.toEqual(['claude', 'claude-agent-teams'])
+    ).resolves.toEqual(['claude', 'claude-agent-teams', 'deepseek', 'deepseek-agent-teams'])
     expect(hydrateShellPathMock).not.toHaveBeenCalled()
   })
 
@@ -440,7 +455,9 @@ describe('preflight', () => {
 
     await expect(detectInstalledAgents({ wslDistro: 'Ubuntu' })).resolves.toEqual([
       'claude',
-      'claude-agent-teams'
+      'claude-agent-teams',
+      'deepseek',
+      'deepseek-agent-teams'
     ])
   })
 
@@ -498,7 +515,9 @@ describe('preflight', () => {
 
     await expect(detectInstalledAgents({ wslDistro: 'Ubuntu' })).resolves.toEqual([
       'claude',
-      'claude-agent-teams'
+      'claude-agent-teams',
+      'deepseek',
+      'deepseek-agent-teams'
     ])
     expect(runWslProcessMock).toHaveBeenCalledTimes(1)
     // Why: the local fallback must not report host binaries as WSL binaries.

@@ -10,6 +10,7 @@ import {
   resolveWindowsShellLaunchArgs
 } from './windows-shell-args'
 import type { PtySpawnOptions } from './types'
+import { forwardDeepSeekEnvToWsl } from '../deepseek/deepseek-wsl-env'
 
 export function finalizeWindowsLocalPtySpawnEnvironment(args: {
   spawn: PtySpawnOptions
@@ -56,6 +57,7 @@ export function finalizeWindowsLocalPtySpawnEnvironment(args: {
       // Why: managed WSL Claude passes a Linux CLAUDE_CONFIG_DIR through wsl.exe; non-default vars need WSLENV import.
       addWslEnvKeys(env, ['CLAUDE_CONFIG_DIR'])
     }
+    forwardDeepSeekEnvToWsl(env)
     if (env[DOLPHIN_HERMES_STARTUP_QUERY_ENV] !== undefined) {
       // Why: wsl.exe drops custom Windows env vars; the startup wrapper needs this imported inside WSL.
       addWslEnvKeys(env, [DOLPHIN_HERMES_STARTUP_QUERY_ENV])

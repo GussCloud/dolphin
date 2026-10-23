@@ -37,6 +37,7 @@ const {
   registerAgentTrustHandlersMock,
   registerClaudeAccountHandlersMock,
   registerMiniMaxCredentialsHandlersMock,
+  registerDeepSeekCredentialsHandlersMock,
   registerTelegramBridgeHandlersMock,
   registerGrokAccountHandlersMock,
   registerCursorAccountHandlersMock,
@@ -108,6 +109,7 @@ const {
   registerAgentTrustHandlersMock: vi.fn(),
   registerClaudeAccountHandlersMock: vi.fn(),
   registerMiniMaxCredentialsHandlersMock: vi.fn(),
+  registerDeepSeekCredentialsHandlersMock: vi.fn(),
   registerTelegramBridgeHandlersMock: vi.fn(),
   registerGrokAccountHandlersMock: vi.fn(),
   registerCursorAccountHandlersMock: vi.fn(),
@@ -356,6 +358,10 @@ vi.mock('../minimax-credentials', () => ({
   registerMiniMaxCredentialsHandlers: registerMiniMaxCredentialsHandlersMock
 }))
 
+vi.mock('../deepseek-credentials', () => ({
+  registerDeepSeekCredentialsHandlers: registerDeepSeekCredentialsHandlersMock
+}))
+
 vi.mock('../telegram-bridge', () => ({
   registerTelegramBridgeHandlers: registerTelegramBridgeHandlersMock
 }))
@@ -471,6 +477,7 @@ describe('registerCoreHandlers', () => {
     registerAgentTrustHandlersMock.mockReset()
     registerClaudeAccountHandlersMock.mockReset()
     registerMiniMaxCredentialsHandlersMock.mockReset()
+    registerDeepSeekCredentialsHandlersMock.mockReset()
     registerTelegramBridgeHandlersMock.mockReset()
     registerClipboardHandlersMock.mockReset()
     setTrustedClipboardRendererWebContentsIdMock.mockReset()
@@ -566,6 +573,7 @@ describe('registerCoreHandlers', () => {
     expect(registerPetHandlersMock).toHaveBeenCalled()
     expect(registerClaudeAccountHandlersMock).toHaveBeenCalledWith(claudeAccounts)
     expect(registerMiniMaxCredentialsHandlersMock).toHaveBeenCalledWith(rateLimits)
+    expect(registerDeepSeekCredentialsHandlersMock).toHaveBeenCalledTimes(1)
     expect(registerTelegramBridgeHandlersMock).toHaveBeenCalled()
     expect(registerGrokAccountHandlersMock).toHaveBeenCalled()
     expect(registerCursorAccountHandlersMock).toHaveBeenCalled()

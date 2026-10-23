@@ -30,6 +30,7 @@ import { POWERSHELL_BOOTSTRAP_ENV } from '../../powershell-osc133-bootstrap'
 import { selectShellStartupFeatures } from '../../shell-startup-features'
 import { parseWslPath } from '../../wsl'
 import { addWslEnvKeys } from '../../wsl-env'
+import { forwardDeepSeekEnvToWsl } from '../../deepseek/deepseek-wsl-env'
 import {
   recognizeAgentProcessFromCommandLine,
   type RecognizedAgentProcess
@@ -177,6 +178,7 @@ export function createPtyShellLaunchPlan(
       if (env.CLAUDE_CONFIG_DIR) {
         addWslEnvKeys(env, ['CLAUDE_CONFIG_DIR'])
       }
+      forwardDeepSeekEnvToWsl(env)
       if (env[DOLPHIN_HERMES_STARTUP_QUERY_ENV] !== undefined) {
         addWslEnvKeys(env, [DOLPHIN_HERMES_STARTUP_QUERY_ENV])
       }

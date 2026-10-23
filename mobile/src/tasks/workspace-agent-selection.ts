@@ -1,4 +1,5 @@
 import type { TuiAgent } from '../../../src/shared/tui-agent'
+import { isDeepSeekTuiAgent } from '../../../src/shared/deepseek-claude-provider'
 import {
   filterEnabledMobileTuiAgents,
   isMobileTuiAgent,
@@ -38,6 +39,18 @@ export function normalizeWorkspaceAgent(value: unknown): WorkspaceAgentChoice | 
   return isMobileTuiAgent(value) ? value : null
 }
 
+/**
+ * Whether the composer may offer `agent` for a host whose detected agents are known (a Set) or
+ * unknown (null). Why: with detection unknown the host may predate DeepSeek, and an older host
+ * drops worktree.create's unknown agent and starts its own default agent instead.
+ */
+export function isWorkspaceAgentOfferable(
+  agent: TuiAgent,
+  detectedAgentIds: Set<string> | null
+): boolean {
+  return detectedAgentIds === null ? !isDeepSeekTuiAgent(agent) : detectedAgentIds.has(agent)
+}
+
 export function pickWorkspaceAgent(
   settings: WorkspaceAgentSettings,
   detectedAgentIds: Set<string> | null
@@ -50,14 +63,15 @@ export function pickWorkspaceAgent(
   const enabledAutoPickOrder = filterEnabledMobileTuiAgents(
     MOBILE_TUI_AGENT_AUTO_PICK_ORDER,
     disabled
-  )
+  ).filter((agent) => isWorkspaceAgentOfferable(agent, detectedAgentIds))
   if (detectedAgentIds === null) {
-    return preferred && isMobileTuiAgentEnabled(preferred, disabled)
+    return preferred &&
+      isMobileTuiAgentEnabled(preferred, disabled) &&
+      isWorkspaceAgentOfferable(preferred, null)
       ? preferred
       : (enabledAutoPickOrder[0] ?? 'blank')
   }
-  const detectedAgents = enabledAutoPickOrder.filter((agent) => detectedAgentIds.has(agent))
-  return pickMobileTuiAgent(preferred, detectedAgents, disabled) ?? 'blank'
+  return pickMobileTuiAgent(preferred, enabledAutoPickOrder, disabled) ?? 'blank'
 }
 
 export function filterWorkspaceAgents(agents: readonly TuiAgent[], disabled?: unknown): TuiAgent[] {
@@ -86,10 +100,10 @@ export function resolveWorkspaceAgentSelection({
   }
 
   if (
-    detectedAgentIds === null ||
     !agent ||
     agent === 'blank' ||
-    (detectedAgentIds.has(agent) && isWorkspaceAgentEnabled(agent, settings.disabledTuiAgents))
+    (isWorkspaceAgentOfferable(agent, detectedAgentIds) &&
+      (detectedAgentIds === null || isWorkspaceAgentEnabled(agent, settings.disabledTuiAgents)))
   ) {
     return current
   }

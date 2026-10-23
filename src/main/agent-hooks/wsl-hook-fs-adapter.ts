@@ -14,6 +14,7 @@ import {
 import type { SshChannelMultiplexer } from '../ssh/ssh-channel-multiplexer'
 import { WSL_HOOK_FS_METHODS, type WslFsResult } from '../../shared/wsl-hook-relay-contract'
 import type { AgentHookInstallStatus } from '../../shared/agent-hook-types'
+import { rememberWslClaudeVersion } from './wsl-claude-version-cache'
 
 /** Run the shared remote hook installers against a WSL guest over the relay's fs bridge. */
 export async function installWslGuestHooks(options: {
@@ -39,6 +40,7 @@ export async function installWslGuestHooks(options: {
     )
     agents = detected.agents
     claudeVersion = detected.claudeVersion
+    rememberWslClaudeVersion(distro, claudeVersion)
   } catch (error) {
     warn(
       `[agent-hooks] WSL agent detection for '${distro}' failed: ${

@@ -8,6 +8,7 @@ import {
 } from './synthetic-agent-title'
 import { isLegacyPiCompatibleTitle } from './pi-compatible-synthetic-title'
 import { getWrapperTitleSegments } from './terminal-title-wrapper-segments'
+import { isClaudeTitleOfDeepSeekPane } from './deepseek-status-identity'
 
 /** The π brand a Pi/OMP title leads with; the owner's label replaces it in place. */
 const LEGACY_PI_BRAND = 'π'
@@ -229,7 +230,7 @@ export function shareCompatibleTitleIdentityGroup(
   if (!left || !right) {
     return false
   }
-  if (left === right) {
+  if (left === right || isClaudeTitleOfDeepSeekPane(left, right)) {
     return true
   }
   const leftGroup = getSyntheticAgentTitleProfile(left)?.titleIdentityGroup

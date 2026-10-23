@@ -42,6 +42,47 @@
         "title": "Mostrar icono en la barra de menús",
         "description": "Mantén un acceso directo de Dolphin e indicador de actividad en la barra de menús de macOS."
       }
+    },
+    "agents": {
+      "deepseek": {
+        "slotPickerAria": "Modelo {{value0}}",
+        "searchModels": "Buscar modelos...",
+        "noModelMatch": "Ningún modelo coincide.",
+        "notListed": "No listado por DeepSeek",
+        "slot": {
+          "main": "Principal",
+          "opus": "Opus",
+          "sonnet": "Sonnet",
+          "haiku": "Haiku",
+          "subagent": "Subagente"
+        },
+        "error": {
+          "noApiKey": "No se pudo leer la clave de API de DeepSeek guardada. Vuelve a guardarla.",
+          "unauthorized": "DeepSeek rechazó la clave de API guardada. Reemplázala e inténtalo de nuevo.",
+          "network": "No se pudo conectar con DeepSeek. Revisa tu conexión e inténtalo de nuevo.",
+          "invalidResponse": "DeepSeek devolvió una lista de modelos que Dolphin no pudo leer.",
+          "failed": "No se pudieron cargar los modelos de DeepSeek."
+        },
+        "apiKey": "Clave de API de DeepSeek",
+        "configured": "Configurada",
+        "notConfigured": "Sin configurar",
+        "apiKeyReplacePlaceholder": "Pega una clave nueva para reemplazar la guardada",
+        "apiKeyPlaceholder": "Pega tu clave de API de DeepSeek",
+        "replace": "Reemplazar",
+        "save": "Guardar",
+        "clear": "Borrar",
+        "apiKeyHelp": "Se guarda cifrada en este dispositivo y solo se envía a DeepSeek. Crea una clave en platform.deepseek.com.",
+        "loadingModels": "Cargando modelos de DeepSeek…",
+        "retry": "Reintentar",
+        "models": "Modelos",
+        "modelsHelp": "Claude Code envía cada función al modelo elegido aquí. Los cambios se aplican a las sesiones de DeepSeek iniciadas después.",
+        "keyNotSaved": "No se guardó la clave de API de DeepSeek.",
+        "keySaved": "Clave de API de DeepSeek guardada.",
+        "keyUpdateFailed": "No se pudo actualizar la clave de API de DeepSeek.",
+        "isolationNote": "DeepSeek ejecuta Claude Code con su propia carpeta de configuración ({{value0}}). Tu configuración, tus skills y tu CLAUDE.md de Claude no se comparten.",
+        "oneMillionContext": "Contexto de 1M",
+        "encryptionUnavailable": "El almacenamiento seguro no está disponible en este sistema, así que Dolphin no puede guardar aquí una clave de DeepSeek."
+      }
     }
   },
   "menu": {
@@ -387,7 +428,9 @@
           "d443a47995": "Prime Agent",
           "mimo_code_label": "MiMo Code",
           "muse_label": "Muse",
-          "zcode_label": "ZCode"
+          "zcode_label": "ZCode",
+          "deepseek_label": "DeepSeek",
+          "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },
         "skill": {
           "cli": {

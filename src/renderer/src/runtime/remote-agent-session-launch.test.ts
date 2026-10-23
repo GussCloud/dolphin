@@ -190,4 +190,23 @@ describe('remote agent-session launch routing', () => {
     )
     expect(mocks.supportsCapability).not.toHaveBeenCalled()
   })
+  it('never retries a DeepSeek launch the host refused for being too old', async () => {
+    const legacy = vi.fn().mockResolvedValue('legacy')
+    mocks.supportsCapability.mockResolvedValue(true)
+    const refused = new RuntimeRpcCallError({
+      id: 'request-1',
+      ok: false,
+      error: { code: 'deepseek_host_update_required', message: 'DeepSeek needs a newer Dolphin' }
+    })
+
+    // Why: a legacy retry is the plain-claude path; the refusal must reach the pane as-is.
+    await expect(
+      runRemoteAgentSessionLaunch({
+        environmentId: 'env-1',
+        hostAuthority: vi.fn().mockRejectedValue(refused),
+        legacy
+      })
+    ).rejects.toBe(refused)
+    expect(legacy).not.toHaveBeenCalled()
+  })
 })

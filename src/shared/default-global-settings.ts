@@ -1,4 +1,5 @@
 import type { GlobalSettings } from './global-settings-types'
+import { DEFAULT_DEEPSEEK_MODEL_SLOTS } from './deepseek-claude-provider'
 import type { NotificationSettings } from './notification-settings-types'
 import type { VoiceSettings } from './speech-types'
 import { getDefaultAgentInteractionSettings } from './agent-interaction-settings'
@@ -217,6 +218,7 @@ export function buildDefaultSettings(args: {
     minimaxGroupId: '',
     minimaxUsageModels: 'general',
     minimaxEndpoint: 'overseas',
+    deepseekModelSlots: { ...DEFAULT_DEEPSEEK_MODEL_SLOTS },
     geminiCliOAuthEnabled: false,
     agentCmdOverrides: {},
     agentDefaultArgs: { ...DEFAULT_TUI_AGENT_ARGS },

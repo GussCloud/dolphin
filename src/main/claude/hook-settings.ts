@@ -17,23 +17,37 @@ import { wrapRuntimeHomeHookCommand } from '../agent-hooks/runtime-home-hook-com
 import { wrapWindowsDirectCmdHookCommand } from '../agent-hooks/windows-direct-cmd-hook-command'
 import { isGitBashAvailable } from '../git-bash'
 import { claudeVersionSupportsSessionEnd } from './claude-session-end-hook-capability'
+import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
 
 export type ClaudeCompatibleHookSettings = {
-  configDirName: '.claude' | '.openclaude'
-  scriptBaseName: 'claude-hook' | 'openclaude-hook'
+  configDirName: '.claude' | '.openclaude' | typeof DEEPSEEK_CLAUDE_CONFIG_DIR_NAME
+  scriptBaseName: 'claude-hook' | 'openclaude-hook' | 'deepseek-hook'
   usesWindowsCompatLauncher: boolean
+  /** The real Claude CLI reads these settings, so version-gated events (SessionEnd) apply. */
+  claudeVersionGatedEvents: boolean
 }
 
 export const CLAUDE_HOOK_SETTINGS: ClaudeCompatibleHookSettings = {
   configDirName: '.claude',
   scriptBaseName: 'claude-hook',
-  usesWindowsCompatLauncher: true
+  usesWindowsCompatLauncher: true,
+  claudeVersionGatedEvents: true
 }
 
 export const OPENCLAUDE_HOOK_SETTINGS: ClaudeCompatibleHookSettings = {
   configDirName: '.openclaude',
   scriptBaseName: 'openclaude-hook',
-  usesWindowsCompatLauncher: false
+  usesWindowsCompatLauncher: false,
+  claudeVersionGatedEvents: false
+}
+
+// Why: DeepSeek runs the real Claude CLI, so it keeps the Windows compat launcher; its own script name
+// keeps install/remove from touching the Claude entry, which carries Claude-only guards.
+export const DEEPSEEK_HOOK_SETTINGS: ClaudeCompatibleHookSettings = {
+  configDirName: DEEPSEEK_CLAUDE_CONFIG_DIR_NAME,
+  scriptBaseName: 'deepseek-hook',
+  usesWindowsCompatLauncher: true,
+  claudeVersionGatedEvents: true
 }
 
 export const CLAUDE_EVENTS = [

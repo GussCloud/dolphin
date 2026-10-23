@@ -3,6 +3,8 @@
 export type TuiAgent =
   | 'claude' // Claude Code
   | 'claude-agent-teams' // Claude Code Agent Teams via Dolphin native panes
+  | 'deepseek' // Claude Code against DeepSeek's Anthropic-compatible API
+  | 'deepseek-agent-teams' // DeepSeek variant of Claude Code Agent Teams
   | 'openclaude' // OpenClaude
   | 'codex' // OpenAI Codex
   | 'autohand' // Autohand Code CLI
