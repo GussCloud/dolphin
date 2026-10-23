@@ -27,6 +27,7 @@ import museUrl from '../../../shared/agent-icons/muse.png?url'
 import zcodeUrl from '../../../shared/agent-icons/zcode.png?url'
 import openclawUrl from '../../../shared/agent-icons/openclaw.png?url'
 import deepseekUrl from '../../../shared/agent-icons/deepseek.png?url'
+import deepseekAgentTeamsUrl from '../../../shared/agent-icons/deepseek-agent-teams.png?url'
 
 // Why: these agents have no hand-authored SVG glyph, so previously their icons
 // loaded live from Google's favicon service. That service is unreachable in some
@@ -64,5 +65,5 @@ export const AGENT_FAVICON_ASSETS: Partial<Record<TuiAgent, string>> = {
   zcode: zcodeUrl,
   openclaw: openclawUrl,
   deepseek: deepseekUrl,
-  'deepseek-agent-teams': deepseekUrl
+  'deepseek-agent-teams': deepseekAgentTeamsUrl
 }
