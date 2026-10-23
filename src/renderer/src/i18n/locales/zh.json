@@ -19188,8 +19188,6 @@
       "taskStarted": "任务已开始"
     },
     "avatar": {
-      "open": "打开代理",
-      "pending": "+{{count}}",
       "dismiss": "关闭"
     },
     "settings": {

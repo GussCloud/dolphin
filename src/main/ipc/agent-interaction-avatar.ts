@@ -87,7 +87,7 @@ export function registerAgentInteractionAvatarHandlers(
       return
     }
     controller.dismiss(cue.paneKey)
-    resolveAgentPaneReveal(cue)?.()
+    resolveAgentPaneReveal(cue, { reinforceForeground: true })?.()
   })
 
   ipcMain.removeAllListeners(AGENT_INTERACTION_AVATAR_CHANNELS.viewed)
@@ -99,10 +99,11 @@ export function registerAgentInteractionAvatarHandlers(
   })
 
   ipcMain.removeAllListeners(AGENT_INTERACTION_AVATAR_CHANNELS.dismiss)
+  // Why all: the avatar shows no text, so the user cannot tell queued cues apart; closing it
+  // means "not now" for every one of them.
   ipcMain.on(AGENT_INTERACTION_AVATAR_CHANNELS.dismiss, (event) => {
-    const cue = isAgentInteractionAvatarRenderer(event.sender) ? controller.current()?.cue : null
-    if (cue) {
-      controller.dismiss(cue.paneKey)
+    if (isAgentInteractionAvatarRenderer(event.sender)) {
+      controller.dismissAll()
     }
   })
 }

@@ -19188,8 +19188,6 @@
       "taskStarted": "タスクを開始しました"
     },
     "avatar": {
-      "open": "Agent を開く",
-      "pending": "+{{count}}",
       "dismiss": "閉じる"
     },
     "settings": {

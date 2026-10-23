@@ -86,11 +86,11 @@ test.describe('Agent interaction avatar', () => {
       })
       .toBe(true)
     const avatarPage = findAvatarPage(electronApp)!
-    const card = avatarPage.getByRole('alert')
-    await expect(card).toContainText('Task finished')
+    const card = avatarPage.getByRole('button', { name: /^Task finished/ })
+    await expect(card).toBeVisible()
     await avatarPage.screenshot({ path: testInfo.outputPath('agent-avatar.png') })
 
-    await avatarPage.getByRole('button', { name: 'Open agent' }).click()
+    await card.click()
     await expect(card).toHaveCount(0)
 
     // A second turn raises it again; opening its workspace in the main window answers it.
@@ -103,7 +103,7 @@ test.describe('Agent interaction avatar', () => {
       prompt,
       lastAssistantMessage: 'done again'
     })
-    await expect(card).toContainText('Task finished', { timeout: 30_000 })
+    await expect(card).toBeVisible({ timeout: 30_000 })
     // Why direct: a background launch never holds OS focus, so the auto-ack scan reports
     // nothing on screen; this is the report it sends when the user opens the workspace.
     await appPage.evaluate(
