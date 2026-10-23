@@ -40,14 +40,17 @@ Avoid vague names like `test`, `misc`, or `changes`.
 
 ## Before Opening a PR
 
-Run the same checks that CI runs:
+Run the pre-PR gate once on the final tree:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
+pnpm verify:pr-local            # or: node config/scripts/verify-pr-local.mjs
+pnpm verify:pr-local --dry-run  # list the gates and tests it would run
 ```
+
+It runs the PR-CI gates that apply to your diff (typecheck, changed-code quality, ratchets,
+localization, React Doctor, RPC catalog) plus the tests next to the files you changed, and prints
+only failures. The full unit suite, e2e and packaging run in CI on every PR; running them locally
+is optional (`pnpm test`, `pnpm build`) and on Windows mostly re-reports environment failures.
 
 Add high-quality tests for behavior changes and bug fixes. Prefer tests that would actually catch a regression, not shallow coverage that only exercises the happy path.
 

@@ -52,4 +52,4 @@ Ensure no issues in: Security, Cross-platoform support (Linux, Windows, Mac), Re
 - [ ] Before/after screenshots or videos attached for UI changes, or `N/A` with reason
 - [ ] Self-reviewed for correctness, security, and performance
 - [ ] Cross-platform, SSH/remote, and path/shortcut impact considered (or N/A)
-- [ ] `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` pass (or CI will cover; local preferred)
+- [ ] `pnpm verify:pr-local` passes; the full suite, e2e and packaging are covered by CI

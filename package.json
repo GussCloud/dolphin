@@ -39,6 +39,7 @@
     "check:ts-nocheck-ratchet": "node config/scripts/check-ts-nocheck-ratchet.mjs",
     "check:runtime-electron-ratchet": "node config/scripts/check-runtime-electron-ratchet.mjs",
     "check:readme-local-links": "node config/scripts/check-readme-local-links.mjs",
+    "verify:pr-local": "node config/scripts/verify-pr-local.mjs",
     "build:dolphind": "node config/scripts/build-dolphind-bun.mjs",
     "build:dolphind-template": "node config/scripts/build-dolphind-template.mjs",
     "build:dolphind-prebuilds": "node config/scripts/build-dolphind-prebuilds.mjs",

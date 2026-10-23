@@ -57,6 +57,7 @@ When asked to compare Dolphin with another project and suggest what to adopt, ju
 - **Test**: `pnpm test [path/to/file.test.ts]`
 - **Lint**: `oxlint`, or `pnpm run check:code-quality:changed` for changed files (full `pnpm lint` is slow); format with `pnpm format`
 - **Design system**: `pnpm run lint:design-system` for the full renderer report (not a gate); the changed-lines gate above is what CI enforces
+- **Before a PR**: run `node config/scripts/verify-pr-local.mjs` once (`--dry-run` lists the plan). It runs the PR-CI gates that apply to the diff plus the tests colocated with changed files, prints only failures, and leaves the full unit suite, e2e and packaging to CI. Do not run the whole suite or `vitest related` locally as a pre-PR gate: on Windows it mostly re-reports environment failures at many times the cost, and a `src/shared` change reaches thousands of files. Implementers run only their focused tests; the lead runs this script once on the final tree.
 
 # Writing Pull Requests
 
