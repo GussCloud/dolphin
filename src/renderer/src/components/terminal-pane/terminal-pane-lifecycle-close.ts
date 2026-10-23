@@ -6,7 +6,7 @@ type TerminalPaneCloseManager = {
   detachPaneForExternalMove: (paneId: number) => boolean
   retirePanePreservingPty: (paneId: number) => boolean
   getNumericIdForLeaf: (leafId: string) => number | null
-  getPanes: () => unknown[]
+  getPanes: () => readonly { id: number }[]
 }
 
 export function applyTerminalPaneCloseRequest(args: {
@@ -29,7 +29,12 @@ export function applyTerminalPaneCloseRequest(args: {
   if (paneRuntimeId === null || paneRuntimeId === undefined) {
     return 'ignored'
   }
-  if (args.manager.getPanes().length <= 1) {
+  const panes = args.manager.getPanes()
+  // Why: a pane that already closed itself must not turn into a close of the tab and its siblings.
+  if (!panes.some((pane) => pane.id === paneRuntimeId)) {
+    return 'ignored'
+  }
+  if (panes.length <= 1) {
     if (args.detail.preservePty) {
       args.closeTabPreservingPty()
     } else {

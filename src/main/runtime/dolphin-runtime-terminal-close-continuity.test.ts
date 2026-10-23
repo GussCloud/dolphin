@@ -221,6 +221,24 @@ describe('terminal close and handle incarnation continuity', () => {
     expect(harness.closeTerminal).toHaveBeenCalledWith(TAB_ID, undefined, LEAF_ID)
   })
 
+  // Agent Teams: a teammate exits after approving shutdown, then the leader's kill-pane lands.
+  it('closes an unconfirmed split pane stop by its leaf, never the tab with its siblings', async () => {
+    const harness = createHarness({ registerPtyBacked: true })
+    harness.syncSplitFixtureGraph()
+    harness.setVerifiedStopResult(false)
+    const terminal = (await harness.runtime.listTerminals(`id:${WORKTREE_ID}`)).terminals.find(
+      (candidate) => candidate.ptyId === PTY_ID
+    )!
+
+    await expect(harness.runtime.closeTerminal(terminal.handle)).resolves.toMatchObject({
+      ptyKilled: false
+    })
+
+    expect(harness.closeTerminalTab).not.toHaveBeenCalled()
+    expect(harness.closeTerminal).toHaveBeenCalledTimes(1)
+    expect(harness.closeTerminal).toHaveBeenCalledWith(TAB_ID, undefined, LEAF_ID)
+  })
+
   it('fences final-pane exit ordering until exact retirement commits', async () => {
     const harness = createHarness({
       includeCanary: true,
