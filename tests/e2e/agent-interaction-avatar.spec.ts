@@ -111,6 +111,21 @@ test.describe('Agent interaction avatar', () => {
       worktreeId
     )
     await expect(card).toHaveCount(0)
+
+    // A third turn: the close badge dismisses it without opening anything.
+    await showSettingsPage(appPage)
+    await emitCodexHookStatus(endpoint, { paneKey, worktreeId, state: 'working', prompt })
+    await emitCodexHookStatus(endpoint, {
+      paneKey,
+      worktreeId,
+      state: 'done',
+      prompt,
+      lastAssistantMessage: 'done a third time'
+    })
+    await expect(card).toBeVisible({ timeout: 30_000 })
+    await card.hover()
+    await avatarPage.getByRole('button', { name: 'Dismiss' }).click()
+    await expect(card).toHaveCount(0)
     await appPage.evaluate(() => window.__store?.getState().closeSettingsPage())
   })
 })
