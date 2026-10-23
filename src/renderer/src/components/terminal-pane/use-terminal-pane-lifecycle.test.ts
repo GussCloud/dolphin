@@ -20,6 +20,28 @@ import {
 } from './use-terminal-pane-lifecycle'
 
 describe('applyTerminalPaneCloseRequest', () => {
+  it('ignores a pane id that already closed instead of closing the tab', () => {
+    const manager = {
+      getPanes: vi.fn(() => [{ id: 1 }]),
+      getNumericIdForLeaf: vi.fn(() => null),
+      closePane: vi.fn(),
+      detachPaneForExternalMove: vi.fn(() => true),
+      retirePanePreservingPty: vi.fn(() => true)
+    }
+    const closeTab = vi.fn()
+
+    expect(
+      applyTerminalPaneCloseRequest({
+        detail: { tabId: 'team-leader-tab', paneRuntimeId: 2 },
+        manager,
+        closeTab,
+        closeTabPreservingPty: vi.fn()
+      })
+    ).toBe('ignored')
+    expect(closeTab).not.toHaveBeenCalled()
+    expect(manager.closePane).not.toHaveBeenCalled()
+  })
+
   it('detaches a rolled-back split surface without closing its PTY', () => {
     const manager = {
       getPanes: vi.fn(() => [{ id: 1 }, { id: 2 }]),

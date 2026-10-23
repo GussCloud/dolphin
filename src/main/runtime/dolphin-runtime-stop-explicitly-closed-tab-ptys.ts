@@ -156,7 +156,11 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
         return this.describeTerminalClose(handle, tabId, pty.pty.ptyId, ptyKilled)
       }
       const ptyKilled = await this.stopExplicitlyClosedTabPtys([pty.pty.ptyId], pty.pty.ptyId)
-      if (!ptyKilled || siblingCount <= 1) {
+      const splitPaneKey = siblingCount > 1 ? parsePaneKey(pty.pty.paneKey ?? '') : null
+      if (splitPaneKey) {
+        // Why: same as the leaf path below — an unconfirmed split stop must not close live siblings.
+        this.closeKilledSplitLeaf(splitPaneKey.tabId, splitPaneKey.leafId)
+      } else if (siblingCount <= 1) {
         if (surface) {
           // Why: paired viewers keep ended streams mounted until the HUB publishes removal, so explicit close uses the durable host-tab transaction instead of viewer-local exit handling.
           try {
@@ -171,11 +175,6 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
           }
         } else {
           this.notifier?.closeTerminal(tabId)
-        }
-      } else {
-        const paneKey = parsePaneKey(pty.pty.paneKey ?? '')
-        if (paneKey) {
-          this.closeKilledSplitLeaf(paneKey.tabId, paneKey.leafId)
         }
       }
       return this.describeTerminalClose(handle, tabId, pty.pty.ptyId, ptyKilled)
@@ -195,9 +194,11 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
     const ptyKilled = leaf.ptyId
       ? await this.stopExplicitlyClosedTabPtys(ptyIdsToKill, leaf.ptyId)
       : false
-    if (siblingCount > 1 && ptyKilled) {
+    // Why: an unconfirmed stop is usually a pane that already exited (an Agent Teams teammate
+    // after shutdown); a pane-id close of a gone pane closed the whole tab, leader included.
+    if (siblingCount > 1) {
       this.closeKilledSplitLeaf(leaf.tabId, leaf.leafId)
-    } else if (siblingCount > 1 || !this.notifier?.closeTerminalTab) {
+    } else if (!this.notifier?.closeTerminalTab) {
       this.notifier?.closeTerminal(leaf.tabId, leaf.paneRuntimeId)
     }
     return this.describeTerminalClose(handle, leaf.tabId, leaf.ptyId ?? null, ptyKilled)
