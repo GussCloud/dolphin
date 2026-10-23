@@ -3,6 +3,7 @@
 // runs them on clean Linux runners; repeating them on a developer machine mostly re-reports
 // environment failures (symlinks, ACLs, timeouts under load) at many times the cost.
 import { spawn, execFileSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
@@ -48,6 +49,18 @@ export function selectTestsForChanges(changedFiles, allTestFiles) {
     }
   }
   return [...selected].sort()
+}
+
+/**
+ * Top-level entries the diff adds that the base tree lacks; CI's root-directory guard rejects them.
+ * Why here too: tools run inside the worktree (PowerShell module caches, e2e profiles) can drop a
+ * folder at the root that a broad `git add` then commits.
+ */
+export function findNewRootEntries(changedFiles, baseRootEntries) {
+  const known = new Set(baseRootEntries)
+  return [...new Set(changedFiles.map((file) => file.split('/')[0]))].filter(
+    (entry) => !known.has(entry)
+  )
 }
 
 /** The PR-CI gates (.github/workflows/pr.yml) worth running locally for this set of changes. */
@@ -115,8 +128,11 @@ function git(args) {
   return execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
 }
 
-function listChangedFiles(base) {
-  const mergeBase = git(['merge-base', base, 'HEAD']).trim()
+function resolveMergeBase(base) {
+  return git(['merge-base', base, 'HEAD']).trim()
+}
+
+function listChangedFiles(mergeBase) {
   const tracked = git(['diff', '--name-only', '--diff-filter=ACMRTUB', mergeBase, '--'])
   const untracked = git(['ls-files', '--others', '--exclude-standard'])
   return [...new Set(`${tracked}\n${untracked}`.split('\n').filter(Boolean))]
@@ -151,7 +167,7 @@ function gateCommands(gate) {
   return [scriptCommand(gate.script, gate.args)]
 }
 
-function vitestCommand(testFiles) {
+function vitestCommand(testFiles, { cwd = repoRoot, config = 'config/vitest.config.ts' } = {}) {
   const requireFromRoot = createRequire(path.join(repoRoot, 'package.json'))
   const manifestPath = requireFromRoot.resolve('vitest/package.json')
   const binField = requireFromRoot('vitest/package.json').bin
@@ -162,18 +178,19 @@ function vitestCommand(testFiles) {
       path.resolve(path.dirname(manifestPath), binEntry),
       'run',
       '--config',
-      'config/vitest.config.ts',
+      config,
       '--reporter=dot',
       ...testFiles
-    ]
+    ],
+    cwd
   }
 }
 
 // Why buffered: a passing gate's output is noise; only failures are printed, in full.
-function runCommand({ command, args }) {
+function runCommand({ command, args, cwd = repoRoot }) {
   return new Promise((resolve) => {
     let output = ''
-    const child = spawn(command, args, { cwd: repoRoot, windowsHide: true })
+    const child = spawn(command, args, { cwd, windowsHide: true })
     child.stdout.on('data', (chunk) => (output += chunk))
     child.stderr.on('data', (chunk) => (output += chunk))
     child.on('error', (error) => resolve({ ok: false, output: String(error) }))
@@ -215,14 +232,25 @@ async function main() {
   const argv = process.argv.slice(2)
   const base = argv.find((arg) => !arg.startsWith('--')) ?? 'origin/main'
   const dryRun = argv.includes('--dry-run')
-  const changedFiles = listChangedFiles(base)
+  const mergeBase = resolveMergeBase(base)
+  const changedFiles = listChangedFiles(mergeBase)
+  const newRootEntries = findNewRootEntries(
+    changedFiles,
+    git(['ls-tree', '--name-only', mergeBase]).split('\n').filter(Boolean)
+  )
   const allTests = git(['ls-files', '--', '*.test.*'])
     .split('\n')
     .concat(changedFiles)
     .filter((file) => TEST_FILE.test(file))
-  const testFiles = selectTestsForChanges(changedFiles, [...new Set(allTests)]).filter(
+  const selectedTests = selectTestsForChanges(changedFiles, [...new Set(allTests)])
+  const testFiles = selectedTests.filter(
     (file) => file.startsWith('src/') || file.startsWith('config/')
   )
+  // Why mobile's own config: mobile/ resolves its tsconfig from expo, which the root config lacks.
+  const mobileTests = selectedTests
+    .filter((file) => file.startsWith('mobile/'))
+    .map((file) => file.slice('mobile/'.length))
+  const mobileDepsInstalled = existsSync(path.join(repoRoot, 'mobile/node_modules/expo'))
   const gates = planGates(changedFiles)
   console.log(
     `${changedFiles.length} changed files vs ${base}; ${gates.length} gates; ${testFiles.length} test files`
@@ -231,7 +259,7 @@ async function main() {
     for (const gate of gates) {
       console.log(`gate  ${gate.label}`)
     }
-    for (const file of testFiles) {
+    for (const file of [...testFiles, ...mobileTests.map((test) => `mobile/${test}`)]) {
       console.log(`test  ${file}`)
     }
     return
@@ -244,7 +272,32 @@ async function main() {
       ? [{ label: `tests (${testFiles.length} files)`, invocation: [vitestCommand(testFiles)] }]
       : [])
   ]
+  if (mobileTests.length > 0 && mobileDepsInstalled) {
+    steps.push({
+      label: `mobile tests (${mobileTests.length} files)`,
+      invocation: [
+        vitestCommand(mobileTests, {
+          cwd: path.join(repoRoot, 'mobile'),
+          config: 'vitest.config.ts'
+        })
+      ]
+    })
+  }
   const results = await runAll(steps, 3)
+  if (newRootEntries.length > 0) {
+    console.log('FAIL  root directory guard')
+    results.push({
+      label: 'root directory guard',
+      ok: false,
+      output: `New root-level entries are rejected by CI: ${newRootEntries.join(', ')}`,
+      ms: 0
+    })
+  }
+  if (mobileTests.length > 0 && !mobileDepsInstalled) {
+    console.log(
+      `SKIP  mobile tests (${mobileTests.length} files): run 'pnpm --dir mobile install' to check them before CI does`
+    )
+  }
   const failures = results.filter((result) => !result.ok)
   for (const failure of failures) {
     console.log(`\n===== ${failure.label} =====\n${failure.output.trim()}`)

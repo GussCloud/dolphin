@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planGates, selectTestsForChanges } from './verify-pr-local.mjs'
+import { findNewRootEntries, planGates, selectTestsForChanges } from './verify-pr-local.mjs'
 
 describe('selectTestsForChanges', () => {
   const allTests = [
@@ -53,5 +53,25 @@ describe('planGates', () => {
     expect(planGates(['src/shared/x.ts']).map((gate) => gate.label)).not.toContain(
       'RPC params catalog'
     )
+  })
+})
+
+describe('findNewRootEntries', () => {
+  it('flags a top-level entry the base tree lacks, once', () => {
+    expect(
+      findNewRootEntries(
+        [
+          'Microsoft/Windows/PowerShell/ModuleAnalysisCache',
+          'Microsoft/x',
+          'src/a.ts',
+          'AGENTS.md'
+        ],
+        ['src', 'AGENTS.md']
+      )
+    ).toEqual(['Microsoft'])
+  })
+
+  it('accepts changes under existing entries', () => {
+    expect(findNewRootEntries(['src/a.ts', 'docs/x.md'], ['src', 'docs'])).toEqual([])
   })
 })
