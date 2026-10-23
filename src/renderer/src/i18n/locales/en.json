@@ -19259,8 +19259,6 @@
       "taskStarted": "Task started"
     },
     "avatar": {
-      "open": "Open agent",
-      "pending": "+{{count}}",
       "dismiss": "Dismiss"
     },
     "settings": {

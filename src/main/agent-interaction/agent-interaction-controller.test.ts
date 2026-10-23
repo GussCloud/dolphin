@@ -124,6 +124,18 @@ describe('AgentInteractionController', () => {
     expect(presenter.hide).toHaveBeenCalledTimes(1)
   })
 
+  it('closes every queued cue at once', () => {
+    const { controller, presenter } = setup()
+    const other = 'tab-2:22222222-2222-4222-8222-222222222222'
+    controller.onStatus(event('working'))
+    controller.onStatus(event('done'))
+    controller.onStatus(event('working', { paneKey: other, worktreeId: 'repo::/w2' }))
+    controller.onStatus(event('done', { paneKey: other, worktreeId: 'repo::/w2' }))
+    controller.dismissAll()
+    expect(controller.current()).toBeNull()
+    expect(presenter.hide).toHaveBeenCalledTimes(1)
+  })
+
   it('hides the cues of a workspace once the user opens it', () => {
     const { controller, presenter } = setup()
     controller.onStatus(event('working'))

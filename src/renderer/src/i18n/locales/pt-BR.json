@@ -19259,8 +19259,6 @@
       "taskStarted": "Tarefa iniciada"
     },
     "avatar": {
-      "open": "Abrir agente",
-      "pending": "+{{count}}",
       "dismiss": "Dispensar"
     },
     "settings": {

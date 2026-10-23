@@ -72,6 +72,9 @@ The renderer keeps a local pane whose process exits non-zero as a "Terminal exit
 and a killed process on Windows exits 1. So `closeTerminal` on a PTY-backed split pane with
 siblings also sends the renderer a leaf-addressed close (`ui:closeTerminal` with `leafId`);
 a pane that already closed itself is ignored rather than falling through to a tab close.
+That holds when the stop cannot be confirmed too: a teammate that exits 0 after approving
+shutdown is often gone before the leader's `kill-pane` lands, and a pane-id close of that
+gone pane used to close the whole tab, leader included.
 A teammate that exits 0 closes its pane through the normal exit path.
 
 When the leader's tab is not mounted (another worktree is active), no pane manager hears

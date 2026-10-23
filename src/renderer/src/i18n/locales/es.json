@@ -16118,8 +16118,6 @@
       "taskStarted": "Tarea iniciada"
     },
     "avatar": {
-      "open": "Abrir agente",
-      "pending": "+{{count}}",
       "dismiss": "Descartar"
     },
     "settings": {

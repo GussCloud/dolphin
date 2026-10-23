@@ -1607,6 +1607,30 @@ html.native-shell .app-layout {
   }
 }
 
+/* Floating agent avatar: a short phone-like buzz, then a rest, repeated while it waits. */
+@keyframes agent-avatar-buzz {
+  0%,
+  36%,
+  100% {
+    transform: rotate(0deg);
+  }
+  6%,
+  18%,
+  30% {
+    transform: rotate(-9deg);
+  }
+  12%,
+  24% {
+    transform: rotate(9deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .agent-avatar-buzz {
+    animation: agent-avatar-buzz 1.6s ease-in-out infinite;
+  }
+}
+
 /* Dashboard team orbit. Loops step at ~12fps like the agent spinner; reduced motion keeps the final frame. */
 @keyframes agent-orbit-pop {
   from {
