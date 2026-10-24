@@ -1,3 +1,4 @@
+import type { DolphinRuntimeService } from '../dolphin-runtime'
 import {
   DOLPHIN_DISPATCH_STATUS_PREAMBLE_PREFIX,
   DOLPHIN_DISPATCH_STATUS_TASK_MARKER
@@ -32,10 +33,10 @@ export class WorkerBriefStore {
   }
 }
 
-const stores = new WeakMap<object, WorkerBriefStore>()
+const stores = new WeakMap<DolphinRuntimeService, WorkerBriefStore>()
 
 /** One store per runtime instance, so tests and multiple runtimes never share briefs. */
-export function getWorkerBriefStore(runtime: object): WorkerBriefStore {
+export function getWorkerBriefStore(runtime: DolphinRuntimeService): WorkerBriefStore {
   let store = stores.get(runtime)
   if (!store) {
     store = new WorkerBriefStore()

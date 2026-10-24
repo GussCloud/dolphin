@@ -3,17 +3,9 @@ import { dispatchPreambleSendOptions } from './preamble'
 import { buildWorkerBriefPointer, getWorkerBriefStore } from './worker-brief-store'
 import { DEV_CLI_COMMAND_NAME } from '../../../shared/cli-command-names'
 
-type BriefDeliveryRuntime = Pick<
-  DolphinRuntimeService,
-  | 'sendTerminalAgentPrompt'
-  | 'getOrchestrationDispatchAuthority'
-  | 'getTerminalPaneKey'
-  | 'getTerminalOrchestrationCliCommand'
->
-
 /** Types a one-line pointer into a worker's agent; the multi-line brief is fetched by `worker-brief`. */
 export async function sendWorkerBriefPointer(
-  runtime: BriefDeliveryRuntime,
+  runtime: DolphinRuntimeService,
   args: {
     terminalHandle: string
     dispatchId: string

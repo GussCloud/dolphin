@@ -3,6 +3,7 @@ import {
   compactDispatchPromptForStatus,
   DOLPHIN_WORKER_BRIEF_LEAD_LINE
 } from '../../../shared/dolphin-dispatch-status-prompt'
+import { DolphinRuntimeService } from '../dolphin-runtime'
 import { buildWorkerBriefPointer, getWorkerBriefStore } from './worker-brief-store'
 
 const keepLine = (value: string, max: number) => value.slice(0, max)
@@ -42,13 +43,13 @@ describe('buildWorkerBriefPointer', () => {
 
 describe('getWorkerBriefStore', () => {
   it('keeps briefs per runtime and evicts the oldest past the cap', () => {
-    const runtime = {}
+    const runtime = new DolphinRuntimeService()
     const store = getWorkerBriefStore(runtime)
     for (let i = 0; i < 201; i += 1) {
       store.hold(`ctx_${i}`, { brief: `b${i}`, paneKey: 'p', taskId: 't' })
     }
     expect(store.read('ctx_0')).toBeUndefined()
     expect(store.read('ctx_200')?.brief).toBe('b200')
-    expect(getWorkerBriefStore({}).read('ctx_200')).toBeUndefined()
+    expect(getWorkerBriefStore(new DolphinRuntimeService()).read('ctx_200')).toBeUndefined()
   })
 })

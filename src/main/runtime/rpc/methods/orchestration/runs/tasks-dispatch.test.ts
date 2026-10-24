@@ -413,23 +413,22 @@ describe('orchestration RPC methods', () => {
         accepted: true,
         bytesWritten: 1
       })
-      const { dispatch } = (await call('orchestration.dispatch', {
-        task: task.id,
-        to: 'term_a',
-        inject: true
-      })) as { dispatch: { id: string } }
+      await call('orchestration.dispatch', { task: task.id, to: 'term_a', inject: true })
+      const dispatchId = db.getDispatchContext(task.id)?.id ?? ''
 
-      const brief = (await call('orchestration.workerBrief', {
-        dispatch: dispatch.id,
-        from: 'term_a'
-      })) as { taskId: string; brief: string }
-      expect(brief.taskId).toBe(task.id)
-      expect(brief.brief).toContain('line one\nline two')
-      expect(brief.brief).toMatch(/--dispatch-capability dcap_/)
+      expect(
+        await call('orchestration.workerBrief', { dispatch: dispatchId, from: 'term_a' })
+      ).toMatchObject({
+        taskId: task.id,
+        brief: expect.stringContaining('line one\nline two')
+      })
+      expect(
+        await call('orchestration.workerBrief', { dispatch: dispatchId, from: 'term_a' })
+      ).toMatchObject({ brief: expect.stringContaining('--dispatch-capability dcap_') })
 
       // Why: the brief carries the Dispatch capability, so no other pane may read it.
       await expect(
-        call('orchestration.workerBrief', { dispatch: dispatch.id, from: 'term_coord' })
+        call('orchestration.workerBrief', { dispatch: dispatchId, from: 'term_coord' })
       ).rejects.toMatchObject({ code: 'worker_brief_not_found' })
       await expect(
         call('orchestration.workerBrief', { dispatch: 'ctx_missing', from: 'term_a' })
