@@ -1,4 +1,5 @@
 import { paneIdentity } from './runtime-terminal-pane-identity'
+import { markAutonomousGoalClaudeFolderTrusted } from '../autonomous-goals/autonomous-goal-claude-trust'
 import type { CreateWorktreeResult } from '../../shared/worktree/create-types'
 import type { Repo } from '../../shared/repo-types'
 import type { TuiAgent } from '../../shared/tui-agent'
@@ -97,6 +98,9 @@ export async function startRuntimeLocalWorktreeTerminals(args: {
       const trustAgent = args.draftPaste?.agent ?? args.createdWithAgent
       if (trustAgent) {
         await ports.markTrusted(trustAgent, worktree.path)
+        if (request.autonomousGoalWorkspace === true) {
+          await markAutonomousGoalClaudeFolderTrusted(trustAgent, worktree.path)
+        }
       }
       const terminal = await ports.createTerminal(`id:${worktree.id}`, {
         command: sequencedStartup.command,

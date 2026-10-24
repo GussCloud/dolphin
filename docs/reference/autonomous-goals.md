@@ -45,6 +45,26 @@ objective travels as `--objective-b64` so no shell's quoting can mangle it.
 
 A pane drives at most one open goal; repeating `goal start` returns it.
 
+## Claude's folder trust dialog
+
+Claude Code asks once per folder whether to trust it, and a new worktree is a new
+folder. Two things keep that dialog from stalling a goal:
+
+- The coordinator's prompt goes in the launch command (argv), never typed after
+  start: Claude reads argv after the dialog is answered, while typed text lands in
+  the dialog and is lost. Claude Agent Teams uses argv for every launch for the
+  same reason.
+- For goal worktrees only, the host pre-accepts the dialog before the agent
+  starts (`autonomous-goal-claude-trust.ts`): it sets
+  `projects[<path>].hasTrustDialogAccepted` in the config the agent reads (the
+  Claude config, or `~/.claude-deepseek/.claude.json` for DeepSeek), under the same
+  `<config>.lock` Claude itself takes. The composer marks the coordinator's create
+  (`autonomousGoalWorkspace`); `worker-start` marks a worker's create when its Run
+  belongs to an open goal. Every other worktree still shows the dialog.
+
+Not covered: SSH and WSL worktrees, whose agent reads a config on another host;
+there the dialog still appears.
+
 ## Notes
 
 `dolphin goal note --kind decision|handoff|blocker --text …` is the coordinator's

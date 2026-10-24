@@ -29,6 +29,7 @@ import { tearDownFailedWorkerStart } from './failed-worker-start-teardown'
 import { requireWorkerAuthority, type WorkerEffect } from './worker-topology'
 import { prepareLocalWorkerStart } from './worker-start-validation'
 import { deliverAndSettleWorkerStartReadiness } from './worker-start-readiness-settlement'
+import { getAutonomousGoalStore } from '../../../../../autonomous-goals/autonomous-goal-store-instance'
 
 type WorkerStartMutation = {
   callerFingerprint: string
@@ -150,6 +151,7 @@ export async function startLocalWorker(args: {
       mode,
       agent,
       launchPreferences: launch.preferences,
+      autonomousGoalWorkspace: getAutonomousGoalStore().findOpenByRun(run.id) !== null,
       effects,
       onStage: (stage) => {
         failedStage = stage

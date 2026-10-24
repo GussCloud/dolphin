@@ -162,6 +162,7 @@ import {
   markCopilotFolderTrusted,
   markCursorWorkspaceTrusted
 } from '../agent-trust-presets'
+import { markAutonomousGoalClaudeFolderTrusted } from '../autonomous-goals/autonomous-goal-claude-trust'
 import { awaitAgentTrustWriteWithinDeadline } from '../agent-trust-write-deadline'
 import {
   getLocalProjectGitExecOptions,
@@ -3123,6 +3124,10 @@ async function performLocalWorktreeCreate(
     }
   })
 
+  // Why before startup: the renderer may spawn the coordinator itself once this returns.
+  if (args.autonomousGoalWorkspace === true && isTuiAgent(args.createdWithAgent)) {
+    await markAutonomousGoalClaudeFolderTrusted(args.createdWithAgent, worktree.path)
+  }
   // Startup resolves the new id before lifecycle notifications invalidate runtime caches.
   runtime?.invalidateWorktreeCatalog?.(repo.id)
   const stagedStartup = await timing.time('spawn_startup_terminal', () =>

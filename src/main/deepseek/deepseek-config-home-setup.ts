@@ -14,7 +14,8 @@ const CLAUDE_STATE_FILE_NAME = '.claude.json'
 /**
  * Marks Claude Code's first-run onboarding done in the DeepSeek config home. Verified with
  * claude 2.1.309: a fresh CLAUDE_CONFIG_DIR opens the theme picker, which would swallow the
- * prompt Dolphin types after start. The per-folder trust dialog is left to the user.
+ * prompt Dolphin types after start. The per-folder trust dialog is left to the user outside
+ * autonomous goals (see autonomous-goal-claude-trust.ts).
  */
 export function seedDeepSeekClaudeOnboarding(configDir: string): void {
   mkdirSync(configDir, { recursive: true })

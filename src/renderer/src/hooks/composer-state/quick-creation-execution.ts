@@ -260,7 +260,8 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         launchDraftPrompt: quickDraftPrompt,
         promptDelivery,
         quickTelemetry,
-        suppressTerminalFocusOnCompletion: createMultiple
+        suppressTerminalFocusOnCompletion: createMultiple,
+        autonomousGoalWorkspace: launchPromptOverride !== undefined
       })
 
       if (isSubmissionCancelled()) {
