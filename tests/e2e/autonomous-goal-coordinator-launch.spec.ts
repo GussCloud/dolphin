@@ -6,6 +6,7 @@ import { test as base, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { buildAutonomousCoordinatorLaunchPrompt } from '../../src/shared/autonomous-coordinator-prompt'
 import { AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT } from '../../src/shared/autonomous-goal-types'
+import { YOLO_TUI_AGENT_ARGS } from '../../src/shared/tui-agent-permissions'
 import {
   buildFakeAgentCommandOverride,
   FAKE_AGENT_WINDOWS_SHELL
@@ -107,5 +108,7 @@ test('autonomous work launches the coordinator with its goal prompt in a new wor
       maxConcurrent: AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT
     })
   )
+  // Why: autonomous mode keeps the permission posture the user configured for normal launches.
+  expect(launch.argv).toContain(YOLO_TUI_AGENT_ARGS.claude)
   expect(path.basename(launch.cwd)).toContain('autonomous-goal')
 })
