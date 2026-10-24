@@ -7,6 +7,16 @@ Mensagens enviadas pelo app durante uma execução podem chegar atrasadas à ses
 - Ao receber uma mensagem do usuário no meio do trabalho, confirme o recebimento na hora, em uma linha, dizendo o que ela pede.
 - Se uma resposta do usuário parecer não fazer sentido para a pergunta feita, considere que ele pode estar se referindo a um pedido que ainda não chegou e pergunte qual é antes de seguir.
 
+# Exploração de Arquitetura Antes de Implementar
+
+Toda demanda começa por uma exploração de arquitetura em nível sênior. Nenhum código é escrito antes de ela estar completa e apresentada ao usuário.
+
+- **Siga cada fluxo de ponta a ponta no código**, etapa por etapa, do gatilho do usuário (clique, comando, evento) até o efeito final (processo iniciado, prompt recebido, arquivo gravado). Não suponha que um caminho existente "simplesmente funciona" com a sua entrada: leia o que ele faz com ela.
+- **Mapeie todos os caminhos paralelos** que o mesmo fluxo pode tomar: desktop IPC e runtime RPC, main e renderer (quem inicia o processo e quando), local, SSH e WSL, git worktree e folder workspace, cada agente suportado e o seu modo de entrega de prompt.
+- **Pergunte o que o ambiente real faz** em cada etapa: telas da CLI do agente (confiança de pasta, onboarding, login), timing de prontidão, estado já existente do usuário. Sinais no código (ex.: presets existentes para um problema) indicam riscos conhecidos: investigue-os.
+- **Liste os pontos onde o fluxo pode falhar em silêncio** e como cada um será verificado: teste, execução no app (`AGENTS.md` → Electron UI Validation) ou captura real.
+- **Apresente o mapa ao usuário** (etapas com `arquivo:linha`, riscos, plano de verificação) antes de propor a implementação. Ao corrigir um bug, o mapa deve apontar a etapa exata da falha com evidência, não uma hipótese.
+
 # Encerramento de Demanda
 
 Ao concluir cada demanda, nesta ordem:
