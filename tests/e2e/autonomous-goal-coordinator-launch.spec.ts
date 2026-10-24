@@ -1,6 +1,7 @@
 import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { z } from 'zod'
 import { test as base, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { buildAutonomousCoordinatorLaunchPrompt } from '../../src/shared/autonomous-coordinator-prompt'
@@ -23,7 +24,8 @@ process.stdout.write('E2E_CLAUDE_STARTED\\n')
 setInterval(() => {}, 60_000)
 `
 
-type Launch = { argv: string[]; cwd: string }
+const launchSchema = z.object({ argv: z.array(z.string()), cwd: z.string() })
+type Launch = z.infer<typeof launchSchema>
 
 function readLaunches(): Launch[] {
   if (!existsSync(argvLog)) {
@@ -32,7 +34,7 @@ function readLaunches(): Launch[] {
   return readFileSync(argvLog, 'utf-8')
     .split('\n')
     .filter(Boolean)
-    .map((line) => JSON.parse(line) as Launch)
+    .map((line) => launchSchema.parse(JSON.parse(line)))
 }
 
 function coordinatorLaunch(): Launch | undefined {
