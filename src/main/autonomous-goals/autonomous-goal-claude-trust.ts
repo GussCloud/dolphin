@@ -7,7 +7,7 @@ import { lock } from 'proper-lockfile'
 import { z } from 'zod'
 import { writeFileAtomically } from '../codex-accounts/fs-utils'
 import { ClaudeRuntimePathResolver } from '../claude-accounts/runtime-paths'
-import { seedDeepSeekClaudeOnboarding } from '../deepseek/deepseek-config-home-setup'
+import { seedDeepSeekClaudeOnboarding } from '../deepseek/deepseek-claude-onboarding-seed'
 import { parseWslUncPath } from '../../shared/wsl-paths'
 import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
 import {
