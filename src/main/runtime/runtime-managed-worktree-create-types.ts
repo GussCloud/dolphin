@@ -64,6 +64,8 @@ export type RuntimeManagedWorktreeCreateArgs = {
   startup?: WorktreeStartupLaunch
   startupDraft?: string
   startupDraftPaste?: WorktreeStartupDraftPaste
+  /** An autonomous goal's worktree: Claude Code's folder trust is pre-accepted before launch. */
+  autonomousGoalWorkspace?: boolean
   lineage?: {
     parentWorkspace?: string
     parentWorkspaceOrigin?: 'manual'

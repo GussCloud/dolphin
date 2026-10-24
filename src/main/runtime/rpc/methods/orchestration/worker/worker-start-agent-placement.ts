@@ -59,6 +59,8 @@ type WorkerAgentPlacementArgs = {
   mode: WorkerStartModeReceipt
   agent: TuiAgent | undefined
   launchPreferences: AgentLaunchPreferences | undefined
+  /** The Run drives an autonomous goal: a created worktree pre-accepts Claude's folder trust. */
+  autonomousGoalWorkspace: boolean
   effects: WorkerEffect[]
   /** Attributes a throw to the step that was running, the way the caller's own stages do. */
   onStage: (stage: string) => void
@@ -120,6 +122,7 @@ async function placeInCreatedWorktree(
     agent: args.agent as TuiAgent,
     withAgentTerminal: args.mode.mode !== 'structured',
     ...(args.launchPreferences ? { launchPreferences: args.launchPreferences } : {}),
+    autonomousGoalWorkspace: args.autonomousGoalWorkspace,
     effects: args.effects
   })
   const worktree = requireWorktree(created.worktree)

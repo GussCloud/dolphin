@@ -16,6 +16,7 @@ export type CreateWorktreeCallOptions = {
   displayNameKind?: CreateWorktreeArgs['displayNameKind']
   /** Parent picked in the composer. Sets sidebar nesting only; ignored if it no longer exists. */
   parentWorktreeId?: string
+  autonomousGoalWorkspace?: boolean
   provisionedRoot?: {
     runtimeId: string
     executionHostId: ExecutionHostId
@@ -94,7 +95,8 @@ function sharedCreateFields(
       : {}),
     ...(options?.automationProvenanceRequest
       ? { automationProvenanceRequest: options.automationProvenanceRequest }
-      : {})
+      : {}),
+    ...(options?.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {})
   }
 }
 

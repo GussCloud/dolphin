@@ -50,6 +50,7 @@ export type QuickCreationRequestInput = {
   promptDelivery: 'draft' | 'auto-submit'
   quickTelemetry: AgentStartedTelemetry | null
   suppressTerminalFocusOnCompletion: boolean
+  autonomousGoalWorkspace?: boolean
 }
 
 export function buildQuickCreationRequest(
@@ -111,6 +112,7 @@ export function buildQuickCreationRequest(
     ...(input.launchDraftPrompt ? { launchDraftPrompt: input.launchDraftPrompt } : {}),
     promptDelivery: input.promptDelivery,
     quickTelemetry: input.quickTelemetry,
-    ...(input.suppressTerminalFocusOnCompletion ? { suppressTerminalFocusOnCompletion: true } : {})
+    ...(input.suppressTerminalFocusOnCompletion ? { suppressTerminalFocusOnCompletion: true } : {}),
+    ...(input.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {})
   }
 }

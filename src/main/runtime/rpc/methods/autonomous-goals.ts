@@ -1,5 +1,6 @@
 // `goal.*` — the coordinator side of an autonomous goal. The coordinator agent calls these from its
 // own terminal, so the host that runs it owns the goal, the same way it owns the goal's Run.
+import { buildAutonomousCoordinatorInstructions } from '../../../../shared/autonomous-coordinator-prompt'
 import { defineMethod, type RpcContext } from '../core'
 import { resolveOrchestrationCaller } from './orchestration/runs/run-scope'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
@@ -72,7 +73,11 @@ export const AUTONOMOUS_GOAL_METHODS = [
       // Why: a retried or repeated start must not fork a second Run under the same coordinator.
       const existing = store.findOpenByPane(caller.paneKey)
       if (existing) {
-        return { goal: existing, created: false }
+        return {
+          goal: existing,
+          created: false,
+          instructions: buildAutonomousCoordinatorInstructions(existing)
+        }
       }
       const db = context.runtime.getOrchestrationDb()
       const run = db.createRun({
@@ -91,7 +96,7 @@ export const AUTONOMOUS_GOAL_METHODS = [
         worktreeId: await terminalWorktreeId(context.runtime, caller.terminalHandle),
         runId: run.id
       })
-      return { goal, created: true }
+      return { goal, created: true, instructions: buildAutonomousCoordinatorInstructions(goal) }
     }
   }),
   defineMethod({

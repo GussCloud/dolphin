@@ -152,6 +152,8 @@ export type CreateWorktreeArgs = {
   creationId?: string
   /** Authorizes the host to mint system-owned automation provenance. */
   automationProvenanceRequest?: AutomationWorkspaceProvenanceRequest
+  /** An autonomous goal's worktree: the host pre-accepts Claude Code's folder trust dialog. */
+  autonomousGoalWorkspace?: boolean
 }
 
 export type AdoptProvisionedRootArgs = CreateWorktreeArgs & {
