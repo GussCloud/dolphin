@@ -8,8 +8,6 @@ import {
   type DeepSeekLaunchTarget
 } from './deepseek-launch-env'
 
-export { seedDeepSeekClaudeOnboarding }
-
 type DeepSeekLaunchSettings = Partial<
   Pick<GlobalSettings, 'deepseekModelSlots' | 'agentStatusHooksEnabled' | 'agentCmdOverrides'>
 >
