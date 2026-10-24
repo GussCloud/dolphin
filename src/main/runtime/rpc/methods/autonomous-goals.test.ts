@@ -63,6 +63,12 @@ describe('goal.* RPC methods', () => {
     expect(store.list()).toHaveLength(1)
   })
 
+  it('returns the coordinator rules on every start, since the launch prompt carries none', async () => {
+    const instructions = expect.stringContaining('Goal:\nBuild the docs site')
+    expect(await call('goal.start', start)).toMatchObject({ instructions })
+    expect(await call('goal.start', start)).toMatchObject({ created: false, instructions })
+  })
+
   it('tracks blockers, decisions and completion for the calling coordinator', async () => {
     await call('goal.start', start)
     expect(

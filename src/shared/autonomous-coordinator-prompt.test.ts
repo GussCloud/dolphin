@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { AUTONOMOUS_GOAL_AGENT_CLI, type AutonomousGoal } from './autonomous-goal-types'
 import {
   AUTONOMOUS_COORDINATOR_RESET_COMMAND,
+  buildAutonomousCoordinatorInstructions,
   buildAutonomousCoordinatorLaunchPrompt,
   buildAutonomousCoordinatorResumePrompt,
   decodeAutonomousGoalObjective,
@@ -22,7 +23,7 @@ describe('autonomous goal objective encoding', () => {
 })
 
 describe('buildAutonomousCoordinatorLaunchPrompt', () => {
-  it('binds the goal first and carries the worker policy', () => {
+  it('only binds the goal, so the rules never cross a shell', () => {
     const prompt = buildAutonomousCoordinatorLaunchPrompt({
       objective: '  Build the app  ',
       agent: 'claude',
@@ -33,10 +34,36 @@ describe('buildAutonomousCoordinatorLaunchPrompt', () => {
     expect(prompt).toContain(
       `dolphin goal start --agent claude --worker-agent codex --max-concurrent 3 --objective-b64 ${encoded} --json`
     )
-    expect(prompt).toContain('--agent codex --json`. Keep at most 3 workers running.')
-    expect(prompt).toContain('enable auto-merge')
-    expect(prompt).toContain('dolphin goal complete')
-    expect(prompt.indexOf('dolphin goal start')).toBeLessThan(prompt.indexOf('Rules:'))
+    expect(prompt).toContain('instructions field')
+    expect(prompt).not.toContain('Rules:')
+  })
+
+  it('stays one line of characters no shell quotes or splits differently', () => {
+    // Why: PowerShell 5.1 drops embedded double quotes for native commands and cmd.exe ends a
+    // command at a newline; a prompt with either never reached the coordinator on Windows.
+    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+      objective: 'Analise "docs/" & siga <passo> | 100% \'pronto\'\nlinha 2 ✓ `x` $(y)',
+      agent: 'deepseek-agent-teams',
+      workerAgent: 'claude-agent-teams',
+      maxConcurrent: 6
+    })
+    expect(prompt).toMatch(/^[A-Za-z0-9 .,:+/=-]+$/)
+  })
+})
+
+describe('buildAutonomousCoordinatorInstructions', () => {
+  it('restates the goal and carries the worker policy', () => {
+    const instructions = buildAutonomousCoordinatorInstructions({
+      objective: 'Build the app',
+      agent: 'claude',
+      workerAgent: 'codex',
+      maxConcurrent: 3
+    })
+    expect(instructions).toContain('Goal:\nBuild the app')
+    expect(instructions).toContain('--agent codex --json`. Keep at most 3 workers running.')
+    expect(instructions).toContain('enable auto-merge')
+    expect(instructions).toContain('dolphin goal complete')
+    expect(instructions).not.toContain('--objective-b64')
   })
 })
 
@@ -88,31 +115,29 @@ describe('buildAutonomousCoordinatorResumePrompt', () => {
 
 describe('Claude Agent Teams goals', () => {
   it('keeps a Teams coordinator off teammates and lets Teams workers use them', () => {
-    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+    const prompt = buildAutonomousCoordinatorInstructions({
       objective: 'Ship',
       agent: 'claude-agent-teams',
       workerAgent: 'claude-agent-teams',
       maxConcurrent: 2
     })
-    expect(prompt).toContain('--agent claude-agent-teams --worker-agent claude-agent-teams')
     expect(prompt).toContain('Do not spawn Agent Teams teammates from this coordinator')
     expect(prompt).toContain('Workers run Agent Teams')
   })
 
   it('applies the same Teams rules to DeepSeek Agent Teams', () => {
-    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+    const prompt = buildAutonomousCoordinatorInstructions({
       objective: 'Ship',
       agent: 'deepseek-agent-teams',
       workerAgent: 'deepseek-agent-teams',
       maxConcurrent: 2
     })
-    expect(prompt).toContain('--agent deepseek-agent-teams --worker-agent deepseek-agent-teams')
     expect(prompt).toContain('Do not spawn Agent Teams teammates from this coordinator')
     expect(prompt).toContain('Workers run Agent Teams')
   })
 
   it('omits the Teams rules for other agents', () => {
-    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+    const prompt = buildAutonomousCoordinatorInstructions({
       objective: 'Ship',
       agent: 'claude',
       workerAgent: 'codex',

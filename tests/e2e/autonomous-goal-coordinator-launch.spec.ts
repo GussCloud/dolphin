@@ -3,6 +3,8 @@ import os from 'node:os'
 import path from 'node:path'
 import { test as base, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
+import { buildAutonomousCoordinatorLaunchPrompt } from '../../src/shared/autonomous-coordinator-prompt'
+import { AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT } from '../../src/shared/autonomous-goal-types'
 import {
   buildFakeAgentCommandOverride,
   FAKE_AGENT_WINDOWS_SHELL
@@ -94,9 +96,14 @@ test('autonomous work launches the coordinator with its goal prompt in a new wor
     })
     .toBe(true)
   const launch = coordinatorLaunch()!
-  const prompt = launch.argv.at(-1) ?? ''
-  expect(prompt).toContain('You are the autonomous coordinator of this goal.')
-  expect(prompt).toContain(OBJECTIVE)
-  expect(prompt).toContain('dolphin goal start --agent claude')
+  // Why exact: on Windows a shell that splits or strips the prompt still leaves a substring behind.
+  expect(launch.argv.at(-1)).toBe(
+    buildAutonomousCoordinatorLaunchPrompt({
+      objective: OBJECTIVE,
+      agent: 'claude',
+      workerAgent: 'claude',
+      maxConcurrent: AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT
+    })
+  )
   expect(path.basename(launch.cwd)).toContain('autonomous-goal')
 })
