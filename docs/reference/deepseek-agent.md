@@ -81,7 +81,9 @@ absent. Readers:
 
 The first launch seeds `.claude.json` with `hasCompletedOnboarding: true` when the file is absent:
 a fresh config dir opens Claude Code's theme picker, which would swallow Dolphin's prompt injection.
-The per-folder trust prompt still appears once per project.
+The per-folder trust prompt still appears once per project, except in an
+autonomous goal's worktrees, where the host pre-accepts it (see
+[`autonomous-goals.md`](./autonomous-goals.md)).
 
 ## Usage analytics
 

@@ -7,6 +7,38 @@ Mensagens enviadas pelo app durante uma execução podem chegar atrasadas à ses
 - Ao receber uma mensagem do usuário no meio do trabalho, confirme o recebimento na hora, em uma linha, dizendo o que ela pede.
 - Se uma resposta do usuário parecer não fazer sentido para a pergunta feita, considere que ele pode estar se referindo a um pedido que ainda não chegou e pergunte qual é antes de seguir.
 
+# Exploração de Arquitetura Antes de Implementar
+
+Toda demanda começa por uma exploração de arquitetura em nível sênior. Nenhum código é escrito antes de ela estar completa e apresentada ao usuário.
+
+- **Siga cada fluxo de ponta a ponta no código**, etapa por etapa, do gatilho do usuário (clique, comando, evento) até o efeito final (processo iniciado, prompt recebido, arquivo gravado). Não suponha que um caminho existente "simplesmente funciona" com a sua entrada: leia o que ele faz com ela.
+- **Mapeie todos os caminhos paralelos** que o mesmo fluxo pode tomar: desktop IPC e runtime RPC, main e renderer (quem inicia o processo e quando), local, SSH e WSL, git worktree e folder workspace, cada agente suportado e o seu modo de entrega de prompt.
+- **Pergunte o que o ambiente real faz** em cada etapa: telas da CLI do agente (confiança de pasta, onboarding, login), timing de prontidão, estado já existente do usuário. Sinais no código (ex.: presets existentes para um problema) indicam riscos conhecidos: investigue-os.
+- **Liste os pontos onde o fluxo pode falhar em silêncio** e como cada um será verificado: teste, execução no app (`AGENTS.md` → Electron UI Validation) ou captura real.
+- **Apresente o mapa ao usuário** (etapas com `arquivo:linha`, riscos, plano de verificação) antes de propor a implementação. Ao corrigir um bug, o mapa deve apontar a etapa exata da falha com evidência, não uma hipótese.
+
+# Valor e Validação
+
+Antes de implementar uma demanda, identifique:
+
+- **Valor:** qual problema resolve e qual resultado deve gerar.
+- **Consumidor:** quem ou o que utilizará esse resultado.
+- **Evidência:** como comprovar que o valor foi entregue.
+
+A evidência deve ser adequada ao tipo de demanda — não presuma que toda demanda precisa de UI. Exemplos:
+
+- **UI/UX** → fluxo e comportamento visível ao usuário.
+- **API/backend** → contrato, comportamento e testes.
+- **Infraestrutura** → health checks, métricas e comportamento operacional.
+- **Performance** → benchmark ou métricas antes/depois.
+- **Bug fix** → reprodução do problema + teste de regressão.
+- **Refatoração** → comportamento preservado + testes.
+- **Integração** → comunicação real entre os componentes + tratamento de falhas.
+
+**Regra:** código implementado não significa demanda concluída. Considere concluída somente quando houver evidência adequada de que o resultado esperado foi entregue.
+
+Ao identificar que uma capacidade criada não possui uma forma adequada de ser consumida, observada ou validada, trate a demanda como incompleta e inclua o mecanismo necessário na solução.
+
 # Encerramento de Demanda
 
 Ao concluir cada demanda, nesta ordem:

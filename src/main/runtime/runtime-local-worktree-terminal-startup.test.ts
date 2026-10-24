@@ -2,6 +2,11 @@ import { describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../../shared/repo-types'
 import type { Worktree } from '../../shared/worktree/types'
 import { startRuntimeLocalWorktreeTerminals } from './runtime-local-worktree-terminal-startup'
+import { markAutonomousGoalClaudeFolderTrusted } from '../autonomous-goals/autonomous-goal-claude-trust'
+
+vi.mock('../autonomous-goals/autonomous-goal-claude-trust', () => ({
+  markAutonomousGoalClaudeFolderTrusted: vi.fn().mockResolvedValue(undefined)
+}))
 
 const repo: Repo = {
   id: 'repo-1',
@@ -108,4 +113,37 @@ describe('startRuntimeLocalWorktreeTerminals default shell seeding', () => {
       expect(createTerminal).toHaveBeenCalledWith(`id:${worktree.id}`, { surfaceOwner: false })
     }
   })
+})
+
+describe('startRuntimeLocalWorktreeTerminals autonomous goal trust', () => {
+  it.each([
+    [true, 1],
+    [false, 0]
+  ])(
+    'pre-accepts Claude folder trust before spawn when autonomous is %s',
+    async (autonomous, calls) => {
+      vi.mocked(markAutonomousGoalClaudeFolderTrusted).mockClear()
+      const { createTerminal, ports } = createPorts()
+      await startRuntimeLocalWorktreeTerminals({
+        request: {
+          repoSelector: `id:${repo.id}`,
+          name: worktree.displayName,
+          ...(autonomous ? { autonomousGoalWorkspace: true } : {})
+        },
+        repo,
+        worktree,
+        createdWithAgent: 'claude-agent-teams',
+        startup: { command: 'claude' },
+        ports
+      })
+      const trust = vi.mocked(markAutonomousGoalClaudeFolderTrusted)
+      expect(trust).toHaveBeenCalledTimes(calls)
+      if (calls > 0) {
+        expect(trust).toHaveBeenCalledWith('claude-agent-teams', worktree.path)
+        expect(trust.mock.invocationCallOrder[0]).toBeLessThan(
+          createTerminal.mock.invocationCallOrder[0]!
+        )
+      }
+    }
+  )
 })

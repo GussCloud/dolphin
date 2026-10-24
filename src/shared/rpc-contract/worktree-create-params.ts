@@ -113,6 +113,8 @@ export const WorktreeCreate = z
     // Why: task-driven mobile creates need desktop parity: the host chooses
     // the same default/detected agent and drafts the linked issue/PR URL into it.
     startupDraft: OptionalString,
+    // Why optional: older hosts ignore it and the trust dialog simply appears.
+    autonomousGoalWorkspace: OptionalBoolean,
     createdWithAgent: z
       .unknown()
       .transform((value) => (isTuiAgent(value) ? value : undefined))

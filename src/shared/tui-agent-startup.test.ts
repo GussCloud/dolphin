@@ -316,6 +316,27 @@ describe('tui agent startup plans', () => {
     expect(plan?.launchCommand).toBe('dolphin-ide claude-teams')
   })
 
+  it.each([
+    ['linux', false, "dolphin-ide claude-teams 'fix it'"],
+    ['win32', false, "claude --teammate-mode auto 'fix it'"],
+    ['darwin', true, "claude --teammate-mode in-process 'fix it'"]
+  ] as const)(
+    'passes the Claude Agent Teams prompt as an argument on %s (remote: %s)',
+    (platform, isRemote, launchCommand) => {
+      // Why: a prompt typed after start is swallowed by Claude's per-folder trust dialog.
+      const plan = buildAgentStartupPlan({
+        agent: 'claude-agent-teams',
+        prompt: 'fix it',
+        cmdOverrides: {},
+        platform,
+        isRemote
+      })
+
+      expect(plan?.launchCommand).toBe(launchCommand)
+      expect(plan?.followupPrompt).toBeNull()
+    }
+  )
+
   it('launches OpenClaude as a distinct argv agent', () => {
     const plan = buildAgentStartupPlan({
       agent: 'openclaude',

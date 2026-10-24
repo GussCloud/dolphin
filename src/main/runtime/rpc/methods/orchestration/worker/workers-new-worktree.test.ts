@@ -9,6 +9,14 @@ import { RpcDispatcher } from '../../../dispatcher'
 import type { RpcRequest } from '../../../core'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
 
+const goalRunIds = vi.hoisted(() => new Set<string>())
+vi.mock('../../../../../autonomous-goals/autonomous-goal-store-instance', () => ({
+  getAutonomousGoalStore: () => ({
+    findOpenByRun: (runId: string) =>
+      goalRunIds.has(runId) ? { id: 'goal-1', runId, agent: 'claude', workerAgent: 'claude' } : null
+  })
+}))
+
 describe('orchestration new-worktree workers', () => {
   type CreateWorktreeResult = Awaited<ReturnType<DolphinRuntimeService['createManagedWorktree']>>
   const coordinatorPaneKey = 'tab_coord:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -75,6 +83,7 @@ describe('orchestration new-worktree workers', () => {
   })
 
   afterEach(() => {
+    goalRunIds.clear()
     db.close()
     for (const path of paths.splice(0)) {
       rmSync(path, { recursive: true, force: true })
@@ -163,6 +172,20 @@ describe('orchestration new-worktree workers', () => {
       ])
     )
     expect(runtime.createTerminal).not.toHaveBeenCalled()
+  })
+
+  it('asks the host to pre-accept Claude folder trust only for an autonomous goal Run', async () => {
+    mockCreatedWorktree()
+    await startWorker({ worktree: 'new-top-level' })
+    expect(vi.mocked(runtime.createManagedWorktree).mock.calls[0]?.[0]).not.toHaveProperty(
+      'autonomousGoalWorkspace'
+    )
+
+    goalRunIds.add(runId)
+    await startWorker({ worktree: 'new-top-level', name: 'goal-worker' })
+    expect(runtime.createManagedWorktree).toHaveBeenLastCalledWith(
+      expect.objectContaining({ autonomousGoalWorkspace: true })
+    )
   })
 
   it('passes launch preferences into agent-first worktree creation', async () => {

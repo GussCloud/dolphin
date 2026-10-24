@@ -59,19 +59,24 @@ function formatGoal(goal: AutonomousGoal): string {
 export const GOAL_HANDLERS: Record<string, CommandHandler> = {
   'goal start': async ({ flags, client, cwd, json }) => {
     const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
-    const result = await client.call<GoalResult & { created: boolean }>('goal.start', {
-      from,
-      objective: readObjective(flags),
-      agent: requireGoalAgent(flags, 'agent'),
-      workerAgent: requireGoalAgent(flags, 'worker-agent'),
-      maxConcurrent: clampAutonomousGoalMaxConcurrent(
-        getOptionalPositiveIntegerFlag(flags, 'max-concurrent')
-      )
-    })
+    const result = await client.call<GoalResult & { created: boolean; instructions?: string }>(
+      'goal.start',
+      {
+        from,
+        objective: readObjective(flags),
+        agent: requireGoalAgent(flags, 'agent'),
+        workerAgent: requireGoalAgent(flags, 'worker-agent'),
+        maxConcurrent: clampAutonomousGoalMaxConcurrent(
+          getOptionalPositiveIntegerFlag(flags, 'max-concurrent')
+        )
+      }
+    )
     printResult(result, json, (r) =>
-      r.created
-        ? `Goal started.\n${formatGoal(r.goal)}`
-        : `Goal already open.\n${formatGoal(r.goal)}`
+      [
+        r.created ? 'Goal started.' : 'Goal already open.',
+        formatGoal(r.goal),
+        ...(r.instructions ? ['', r.instructions] : [])
+      ].join('\n')
     )
   },
 

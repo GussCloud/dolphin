@@ -107,8 +107,11 @@ const CLAUDE_AGENT_TEAMS_CONFIG_SOURCE: TuiAgentConfigSource = {
   // so SSH leaders run Claude's own in-process teammates; PTY spawn adds the teams env.
   remoteLaunchCmd: 'claude --teammate-mode in-process',
   expectedProcess: 'claude',
-  promptInjectionMode: 'stdin-after-start',
-  pasteNeedsTypedRequest: true
+  // Why argv: `claude-teams` passes its args through to claude, and a typed prompt is swallowed by
+  // Claude's per-folder trust dialog in a new worktree; argv is processed after the dialog.
+  promptInjectionMode: 'argv',
+  pasteNeedsTypedRequest: true,
+  draftPromptFlag: '--prefill'
 }
 
 const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {

@@ -40,10 +40,39 @@ The composer launches the coordinator through the normal quick-create path with
 the coordinator prompt as its first message, pinned to the terminal surface. The
 prompt's first command is `dolphin goal start`, which runs inside the coordinator's
 own terminal: the caller's pane identifies the coordinator, and the goal and its Run
-are created on the host that runs it, so SSH and local behave the same. The
-objective travels as `--objective-b64` so no shell's quoting can mangle it.
+are created on the host that runs it, so SSH and local behave the same.
+
+The launch prompt is typed into the terminal's shell as an argv argument, so it is
+one line of shell-inert characters: it only says to run `goal start` (the objective
+travels as `--objective-b64`). The rules come back in `goal start`'s `instructions`
+field and reach the model as tool output. Windows PowerShell 5.1, the default
+Windows terminal shell, drops embedded double quotes when it calls a native program,
+and cmd.exe ends a command at a newline, so the first versions, which put the
+multi-line rules in argv, launched Claude on Windows without a usable prompt.
+`autonomous-coordinator-launch.win32.test.ts` runs the real launch line through
+both shells on the Windows CI lane.
 
 A pane drives at most one open goal; repeating `goal start` returns it.
+
+## Claude's folder trust dialog
+
+Claude Code asks once per folder whether to trust it, and a new worktree is a new
+folder. Two things keep that dialog from stalling a goal:
+
+- The coordinator's prompt goes in the launch command (argv), never typed after
+  start: Claude reads argv after the dialog is answered, while typed text lands in
+  the dialog and is lost. Claude Agent Teams uses argv for every launch for the
+  same reason.
+- For goal worktrees only, the host pre-accepts the dialog before the agent
+  starts (`autonomous-goal-claude-trust.ts`): it sets
+  `projects[<path>].hasTrustDialogAccepted` in the config the agent reads (the
+  Claude config, or `~/.claude-deepseek/.claude.json` for DeepSeek), under the same
+  `<config>.lock` Claude itself takes. The composer marks the coordinator's create
+  (`autonomousGoalWorkspace`); `worker-start` marks a worker's create when its Run
+  belongs to an open goal. Every other worktree still shows the dialog.
+
+Not covered: SSH and WSL worktrees, whose agent reads a config on another host;
+there the dialog still appears.
 
 ## Notes
 

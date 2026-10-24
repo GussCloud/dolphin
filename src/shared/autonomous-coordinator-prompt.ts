@@ -62,21 +62,35 @@ function coordinatorRules(
   ]
 }
 
+/**
+ * The coordinator's argv prompt: one line of shell-inert characters, because it is typed into
+ * whatever shell the terminal runs. Windows PowerShell 5.1 drops embedded double quotes when it
+ * builds a native command line and cmd.exe ends a command at a newline, so the rules travel in
+ * `goal start`'s output instead (see buildAutonomousCoordinatorInstructions).
+ */
 export function buildAutonomousCoordinatorLaunchPrompt(
   launch: AutonomousCoordinatorLaunch
 ): string {
-  const objective = launch.objective.trim()
   return [
-    'You are the autonomous coordinator of this goal. Work until it is complete; do not stop to ask for confirmation.',
+    'You are the autonomous coordinator of a Dolphin goal.',
+    `First run: dolphin goal start --agent ${launch.agent} --worker-agent ${launch.workerAgent} --max-concurrent ${launch.maxConcurrent} --objective-b64 ${encodeAutonomousGoalObjective(launch.objective.trim())} --json`,
+    'Then follow the instructions field it returns and work until the goal is complete, without stopping to ask for confirmation.'
+  ].join(' ')
+}
+
+/** Returned by `goal start`, so the rules reach the model as tool output, never through a shell. */
+export function buildAutonomousCoordinatorInstructions(
+  goal: Pick<AutonomousGoal, 'objective' | 'agent' | 'workerAgent' | 'maxConcurrent'>
+): string {
+  return [
+    'This terminal is now bound to the goal and its orchestration Run.',
     '',
     'Goal:',
-    objective,
+    goal.objective,
     '',
-    'First, bind this terminal to the goal (it also creates the orchestration Run):',
-    `\`dolphin goal start --agent ${launch.agent} --worker-agent ${launch.workerAgent} --max-concurrent ${launch.maxConcurrent} --objective-b64 ${encodeAutonomousGoalObjective(objective)} --json\``,
-    'Then load the coordination contract once: `dolphin skills get orchestration`.',
+    'Load the coordination contract once: `dolphin skills get orchestration`.',
     '',
-    ...coordinatorRules(launch.agent, launch.workerAgent, launch.maxConcurrent)
+    ...coordinatorRules(goal.agent, goal.workerAgent, goal.maxConcurrent)
   ].join('\n')
 }
 

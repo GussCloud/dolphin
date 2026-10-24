@@ -97,7 +97,8 @@ export async function executeWorktreeCreation(
           ...(provisionedRoot ? { provisionedRoot } : {}),
           ...(preparedRequest.parentWorktreeId
             ? { parentWorktreeId: preparedRequest.parentWorktreeId }
-            : {})
+            : {}),
+          ...(preparedRequest.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {})
         }
       )
   } catch (error) {

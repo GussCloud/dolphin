@@ -36,6 +36,7 @@ export async function createWorkerWorktree(args: {
    *  bracketed paste. The renderer's own structured worktree create skips both the same way. */
   withAgentTerminal: boolean
   launchPreferences?: AgentLaunchPreferences
+  autonomousGoalWorkspace?: boolean
   effects: WorkerEffect[]
 }): Promise<{
   worktree: Awaited<ReturnType<DolphinRuntimeService['showManagedWorktree']>>
@@ -58,6 +59,7 @@ export async function createWorkerWorktree(args: {
     awaitTerminalProvisioning: true,
     observeSetupCompletion: true,
     createdWithAgent: args.agent,
+    ...(args.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
     ...(args.withAgentTerminal
       ? {
           startupAgent: args.agent,

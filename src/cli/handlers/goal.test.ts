@@ -1,0 +1,80 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { HandlerContext } from '../dispatch'
+import type { RuntimeClient } from '../runtime-client'
+import { GOAL_HANDLERS } from './goal'
+import { encodeAutonomousGoalObjective } from '../../shared/autonomous-coordinator-prompt'
+import type { AutonomousGoal } from '../../shared/autonomous-goal-types'
+
+vi.mock('./orchestration/terminal-identity', () => ({
+  resolveCoordinatorTerminalHandle: vi.fn().mockResolvedValue('term_coord')
+}))
+
+const goal: AutonomousGoal = {
+  id: 'goal_1',
+  objective: 'Build the app',
+  agent: 'claude',
+  workerAgent: 'codex',
+  maxConcurrent: 2,
+  status: 'active',
+  paneKey: 'p',
+  worktreeId: null,
+  runId: 'run_1',
+  notes: [],
+  rotations: 0,
+  createdAt: 1,
+  updatedAt: 1
+}
+
+function context(json: boolean, call: ReturnType<typeof vi.fn>): HandlerContext {
+  return {
+    flags: new Map<string, string | boolean>([
+      ['agent', 'claude'],
+      ['worker-agent', 'codex'],
+      ['objective-b64', encodeAutonomousGoalObjective('Build the app')]
+    ]),
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler only calls `call`.
+    client: { call } as unknown as RuntimeClient,
+    cwd: '/repo',
+    json
+  }
+}
+
+describe('goal start', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  // Why: the launch prompt carries no rules, so a text-mode start must still print them.
+  it('prints the coordinator instructions in text mode', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const call = vi.fn().mockResolvedValue({
+      id: '1',
+      ok: true,
+      result: { goal, created: true, instructions: 'Rules:\n- coordinate' },
+      _meta: { runtimeId: 'r' }
+    })
+
+    await GOAL_HANDLERS['goal start']!(context(false, call))
+
+    expect(call).toHaveBeenCalledWith(
+      'goal.start',
+      expect.objectContaining({ from: 'term_coord', objective: 'Build the app' })
+    )
+    expect(log.mock.calls[0]?.[0]).toMatch(/^Goal started\.\n[\s\S]*\n\nRules:\n- coordinate$/)
+  })
+
+  it('keeps working against a host that returns no instructions', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const call = vi.fn().mockResolvedValue({
+      id: '1',
+      ok: true,
+      result: { goal, created: false },
+      _meta: { runtimeId: 'r' }
+    })
+
+    await GOAL_HANDLERS['goal start']!(context(false, call))
+
+    expect(log.mock.calls[0]?.[0]).toMatch(/^Goal already open\./)
+    expect(log.mock.calls[0]?.[0]).not.toContain('Rules:')
+  })
+})
