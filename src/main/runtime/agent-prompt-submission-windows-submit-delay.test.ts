@@ -6,6 +6,8 @@ import {
 } from '../../shared/agent-prompt-injection'
 import { setSshTargetRegistryHandlers } from '../ssh/ssh-target-registry'
 import { DolphinRuntimeService } from './dolphin-runtime'
+import { TUI_AGENT_CONFIG } from '../../shared/tui-agent-config'
+import { lastInputAtByPty } from '../ipc/pty/delivery/visibility-state'
 import { makeStore } from './runtime-rpc-worktree-store-fixtures'
 
 const WORKTREE_PATH = '/tmp/worktree-a'
@@ -290,6 +292,12 @@ describe('agent prompt submit delay follows the execution host', () => {
   })
 })
 
+/** The pane never starts a turn, so the first Enter is followed by exactly one verified retry. */
+function expectOneVerifiedSubmitRetry(submitTimes: number[]): void {
+  expect(submitTimes).toHaveLength(2)
+  expect(submitTimes[1]! - submitTimes[0]!).toBe(TUI_AGENT_CONFIG.claude.verifiedSubmitRetryMs)
+}
+
 describe('agent prompt render gate on a ConPTY host', () => {
   afterEach(() => {
     vi.useRealTimers()
@@ -351,7 +359,7 @@ describe('agent prompt render gate on a ConPTY host', () => {
     expect(countSubmits(writes)).toBe(0)
 
     await vi.runAllTimersAsync()
-    expect(submitTimes).toHaveLength(1)
+    expectOneVerifiedSubmitRetry(submitTimes)
     expect(submitTimes[0]).toBeGreaterThan(3_342)
     await stalled
   })
@@ -377,7 +385,7 @@ describe('agent prompt render gate on a ConPTY host', () => {
     expect(countSubmits(writes)).toBe(0)
 
     await vi.runAllTimersAsync()
-    expect(submitTimes).toHaveLength(1)
+    expectOneVerifiedSubmitRetry(submitTimes)
     expect(submitTimes[0]).toBeGreaterThanOrEqual(ingestMs + 8_000)
     expect(submitTimes[0]).toBeLessThan(ingestMs + 8_500)
     await stalled
@@ -391,11 +399,46 @@ describe('agent prompt render gate on a ConPTY host', () => {
     const stalled = expect(submission).rejects.toThrow('agent_prompt_stalled')
 
     await vi.runAllTimersAsync()
-    expect(submitTimes).toHaveLength(1)
+    expectOneVerifiedSubmitRetry(submitTimes)
     // 100 ms marker + 1_500 ms quiet: a sub-chunk paste adds no measurable ingest.
     expect(submitTimes[0]).toBeGreaterThanOrEqual(1_600)
     expect(submitTimes[0]).toBeLessThan(1_700)
     await stalled
+  })
+
+  it('skips the Enter retry once the user typed into the pane', async () => {
+    useHostPlatform('win32')
+    vi.useFakeTimers()
+    const { runtime, handle, submitTimes } = await createSettlementRuntime()
+    const submission = runtime.sendTerminalAgentPrompt(handle, 'review this')
+    const stalled = expect(submission).rejects.toThrow('agent_prompt_stalled')
+
+    await vi.advanceTimersByTimeAsync(2_000)
+    lastInputAtByPty.set(PTY_ID, performance.now())
+    try {
+      await vi.runAllTimersAsync()
+      expect(submitTimes).toHaveLength(1)
+      await stalled
+    } finally {
+      lastInputAtByPty.delete(PTY_ID)
+    }
+  })
+
+  it('records the Enter retry on a queued dispatch receipt', async () => {
+    useHostPlatform('win32')
+    vi.useFakeTimers()
+    const { runtime, handle, submitTimes } = await createSettlementRuntime()
+    const submission = runtime.sendTerminalAgentPrompt(handle, 'review this', {
+      acceptQueued: true,
+      requestId: 'request-1'
+    })
+
+    await vi.runAllTimersAsync()
+    expectOneVerifiedSubmitRetry(submitTimes)
+    expect((await submission).prompt).toMatchObject({
+      stages: ['input_accepted'],
+      submitRetried: true
+    })
   })
 })
 

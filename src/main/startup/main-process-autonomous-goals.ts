@@ -13,8 +13,7 @@ import { dispatchMainProcessNotification } from '../ipc/notifications'
 import type { Store } from '../persistence'
 import { resolveWorkspaceDisplayName } from '../workspace-display-name'
 import { getAutonomousGoalStore } from '../autonomous-goals/autonomous-goal-store-instance'
-import { lastInputAtByPty } from '../ipc/pty/delivery/visibility-state'
-import { readClientTerminalInputAt } from '../terminal-client-input-clock'
+import { readLatestTerminalInputAt } from '../terminal-client-input-clock'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
 
@@ -65,9 +64,7 @@ export function startMainProcessAutonomousGoals(
       if (!ptyId) {
         return undefined
       }
-      const local = lastInputAtByPty.get(ptyId)
-      const client = readClientTerminalInputAt(ptyId)
-      return local === undefined ? client : client === undefined ? local : Math.max(local, client)
+      return readLatestTerminalInputAt(ptyId)
     },
     sendPrompt: (terminal, text) =>
       deliverAgentPanePlainText({ sendTerminal, wait }, terminal, text),

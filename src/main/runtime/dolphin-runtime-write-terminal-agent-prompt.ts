@@ -18,8 +18,10 @@ import type { AgentPromptWaitTextCache } from './agent-prompt-submission-verific
 import {
   isTerminalSendSettlementAgent,
   resolveAgentPromptEffectTimeoutMs,
-  verifyAgentPromptSubmission
+  verifyAgentPromptSubmissionWithRetry
 } from './agent-prompt-submission-verification'
+import { TUI_AGENT_CONFIG } from '../../shared/tui-agent-config'
+import { readLatestTerminalInputAt } from '../terminal-client-input-clock'
 
 export class DolphinRuntimeWithWriteTerminalAgentPrompt extends DolphinRuntimeWithResolveAuthoritativeTerminalWaitPermission {
   protected async writeTerminalAgentPrompt(
@@ -33,6 +35,7 @@ export class DolphinRuntimeWithWriteTerminalAgentPrompt extends DolphinRuntimeWi
     this.assertAgentPromptGeneration(ptyId, generation)
     const permissionBaseline = this.getAgentPromptActivity(handle, ptyId)
     this.assertAgentPromptPermissionSafe(permissionBaseline, permissionBaseline)
+    const userInputBeforePaste = readLatestTerminalInputAt(ptyId)
     const writeHostPlatform = this.getPtyWriteHostPlatform(ptyId)
     const pty = this.ptysById.get(ptyId)
     // OMP treats a large bracketed paste as a menu unless submit arrives in the same PTY write.
@@ -108,14 +111,37 @@ export class DolphinRuntimeWithWriteTerminalAgentPrompt extends DolphinRuntimeWi
       }
     }
     const effectTimeoutMs = resolveAgentPromptEffectTimeoutMs(this.getPtyAgent(ptyId))
+    const retryAgent = this.getPtyAgent(ptyId)
+    const retryAfterMs = submitWithPaste
+      ? undefined
+      : retryAgent
+        ? TUI_AGENT_CONFIG[retryAgent]?.verifiedSubmitRetryMs
+        : undefined
+    let submitRetried = false
+    // Why the guards: never retry into a replaced process, a permission prompt, or the user's own typing.
+    const resubmit = (): boolean => {
+      if (
+        options.signal?.aborted ||
+        this.getPtyLifecycleGeneration(ptyId) !== generation ||
+        this.getAgentPromptActivity(handle, ptyId).status === 'permission' ||
+        readLatestTerminalInputAt(ptyId) !== userInputBeforePaste ||
+        !this.ptyController?.write(ptyId, AGENT_PROMPT_SUBMIT)
+      ) {
+        return false
+      }
+      submitRetried = true
+      return true
+    }
     if (!options.acceptQueued || !options.requestId) {
-      await verifyAgentPromptSubmission({
+      await verifyAgentPromptSubmissionWithRetry({
         baseline,
         readActivity: () => this.getAgentPromptActivity(handle, ptyId, waitTextCache),
         timeoutMs: effectTimeoutMs,
-        signal: options.signal
+        signal: options.signal,
+        retryAfterMs,
+        resubmit
       })
-      return { submits: 1 }
+      return { submits: submitRetried ? 2 : 1 }
     }
     const binding = this.getTerminalPromptRequestBinding(handle)
     const foregroundAgent = this.ptysById.get(ptyId)?.foregroundAgent
@@ -157,7 +183,9 @@ export class DolphinRuntimeWithWriteTerminalAgentPrompt extends DolphinRuntimeWi
       baseline.explicitWorkingStartedAt
     )
     try {
-      await verifyAgentPromptSubmission({
+      await verifyAgentPromptSubmissionWithRetry({
+        retryAfterMs,
+        resubmit,
         baseline,
         readActivity: () => this.getAgentPromptActivity(handle, ptyId, waitTextCache),
         acceptTurnStart: (evidence) =>
@@ -175,21 +203,23 @@ export class DolphinRuntimeWithWriteTerminalAgentPrompt extends DolphinRuntimeWi
       })
       this.forgetAgentPromptRequest(ptyId, generation, options.requestId)
       return {
-        submits: 1,
+        submits: submitRetried ? 2 : 1,
         prompt: {
           ...inputAccepted,
-          stages: ['input_accepted', 'turn_started']
+          stages: ['input_accepted', 'turn_started'],
+          ...(submitRetried ? { submitRetried: true } : {})
         }
       }
     } catch (error) {
+      const retried = submitRetried ? { submitRetried: true as const } : {}
       if (error instanceof Error && error.message === 'agent_prompt_stalled') {
-        return { submits: 1, prompt: inputAccepted }
+        return { submits: submitRetried ? 2 : 1, prompt: { ...inputAccepted, ...retried } }
       }
       if (error instanceof Error && error.message === 'agent_prompt_blocked') {
         this.forgetAgentPromptRequest(ptyId, generation, options.requestId)
         return {
-          submits: 1,
-          prompt: { ...inputAccepted, observation: 'permission' }
+          submits: submitRetried ? 2 : 1,
+          prompt: { ...inputAccepted, ...retried, observation: 'permission' }
         }
       }
       throw error
