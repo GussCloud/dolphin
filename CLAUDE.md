@@ -17,6 +17,28 @@ Toda demanda começa por uma exploração de arquitetura em nível sênior. Nenh
 - **Liste os pontos onde o fluxo pode falhar em silêncio** e como cada um será verificado: teste, execução no app (`AGENTS.md` → Electron UI Validation) ou captura real.
 - **Apresente o mapa ao usuário** (etapas com `arquivo:linha`, riscos, plano de verificação) antes de propor a implementação. Ao corrigir um bug, o mapa deve apontar a etapa exata da falha com evidência, não uma hipótese.
 
+# Valor e Validação
+
+Antes de implementar uma demanda, identifique:
+
+- **Valor:** qual problema resolve e qual resultado deve gerar.
+- **Consumidor:** quem ou o que utilizará esse resultado.
+- **Evidência:** como comprovar que o valor foi entregue.
+
+A evidência deve ser adequada ao tipo de demanda — não presuma que toda demanda precisa de UI. Exemplos:
+
+- **UI/UX** → fluxo e comportamento visível ao usuário.
+- **API/backend** → contrato, comportamento e testes.
+- **Infraestrutura** → health checks, métricas e comportamento operacional.
+- **Performance** → benchmark ou métricas antes/depois.
+- **Bug fix** → reprodução do problema + teste de regressão.
+- **Refatoração** → comportamento preservado + testes.
+- **Integração** → comunicação real entre os componentes + tratamento de falhas.
+
+**Regra:** código implementado não significa demanda concluída. Considere concluída somente quando houver evidência adequada de que o resultado esperado foi entregue.
+
+Ao identificar que uma capacidade criada não possui uma forma adequada de ser consumida, observada ou validada, trate a demanda como incompleta e inclua o mecanismo necessário na solução.
+
 # Encerramento de Demanda
 
 Ao concluir cada demanda, nesta ordem:
