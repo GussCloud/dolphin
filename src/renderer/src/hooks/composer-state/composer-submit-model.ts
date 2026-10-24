@@ -88,7 +88,8 @@ export type ComposerSubmitModel = {
     workspaceNameSeed: string,
     workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
     repoId: string,
-    selectedRepo: Repo
+    selectedRepo: Repo,
+    launchPromptOverride?: string
   ) => Promise<void>
   prepareFullSubmit: (
     resolution: PendingSmartGitHubSubmitResolution
@@ -108,7 +109,8 @@ export type ComposerSubmitModel = {
   ) => QuickSubmitSource | null
   resetForNextCreate: () => void
   submit: () => Promise<void>
-  submitQuick: (agent: TuiAgent | null) => Promise<void>
+  /** `launchPromptOverride` replaces the composed prompt and pins the terminal surface (autonomous goals). */
+  submitQuick: (agent: TuiAgent | null, launchPromptOverride?: string) => Promise<void>
   submitFolderTarget: (requestedAgent: TuiAgent | null) => Promise<void>
   submitMultiProjectTarget: (
     requestedAgent: TuiAgent | null,

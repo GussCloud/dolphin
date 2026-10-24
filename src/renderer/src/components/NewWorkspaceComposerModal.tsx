@@ -29,6 +29,12 @@ import { getWorkspaceComposerInitialFocusTarget } from '@/lib/workspace-composer
 import { getFolderWorkspacePrimaryActionLabel } from '@/components/sidebar/folder-workspace-composer-helpers'
 import { useMultiProjectMemberRepoIds } from '@/components/new-workspace/use-multi-project-members'
 import { useMultiProjectComposerSelectionStore } from '@/store/multi-project-composer-selection'
+import {
+  autonomousGoalDraftBlocksCreate,
+  createAutonomousGoalDraft,
+  resolveAutonomousGoalLaunchPrompt,
+  type AutonomousGoalDraft
+} from '@/lib/autonomous-goal-draft'
 
 // Why: match App-level AddRepoDialog loading — the add flow is off the hot
 // path for the composer, so keep its clone/SSH machinery out of the entry render.
@@ -131,7 +137,7 @@ function QuickTabBody({
     onComposerNodeChange,
     nameInputRef,
     submitQuick,
-    createDisabled,
+    createDisabled: composerCreateDisabled,
     selectAddedProjectRepo
   } = useComposerState({
     initialName: modalData.prefilledName ?? '',
@@ -191,9 +197,6 @@ function QuickTabBody({
     setQuickAgentOverride(agent)
   }, [])
 
-  const handleCreate = useCallback(async (): Promise<void> => {
-    await submitQuick(quickAgent)
-  }, [quickAgent, submitQuick])
   // Why: Add Project layers over the composer as a nested dialog instead of
   // replacing it in the activeModal slot — closing the composer mid-flow (and
   // losing the typed name/prompt) was the old, abrupt behavior. Once opened it
@@ -239,6 +242,32 @@ function QuickTabBody({
   const isFolderWorkspaceTarget = selectedProjectOption?.kind === 'project-group'
   const isMultiProjectTarget =
     useMultiProjectMemberRepoIds(cardProps.repoId || null, isFolderWorkspaceTarget) !== null
+  const [autonomousGoalDraft, setAutonomousGoalDraft] = useState<AutonomousGoalDraft>(() =>
+    createAutonomousGoalDraft(quickAgent)
+  )
+  // Why: a coordinator binds one worktree's terminal; folder and multi-project targets have none.
+  const effectiveAutonomousGoalDraft = useMemo(
+    () =>
+      isFolderWorkspaceTarget || isMultiProjectTarget
+        ? { ...autonomousGoalDraft, enabled: false }
+        : autonomousGoalDraft,
+    [autonomousGoalDraft, isFolderWorkspaceTarget, isMultiProjectTarget]
+  )
+  const autonomousBlocksCreate = autonomousGoalDraftBlocksCreate(
+    effectiveAutonomousGoalDraft,
+    quickAgent
+  )
+  const createDisabled = composerCreateDisabled || autonomousBlocksCreate
+
+  const handleCreate = useCallback(async (): Promise<void> => {
+    if (autonomousGoalDraftBlocksCreate(effectiveAutonomousGoalDraft, quickAgent)) {
+      return
+    }
+    await submitQuick(
+      quickAgent,
+      resolveAutonomousGoalLaunchPrompt(effectiveAutonomousGoalDraft, quickAgent) ?? undefined
+    )
+  }, [effectiveAutonomousGoalDraft, quickAgent, submitQuick])
   const primaryActionLabel = isFolderWorkspaceTarget
     ? getFolderWorkspacePrimaryActionLabel()
     : isMultiProjectTarget
@@ -315,6 +344,13 @@ function QuickTabBody({
         quickAgent={quickAgent}
         onQuickAgentChange={handleQuickAgentChange}
         {...cardProps}
+        createDisabled={createDisabled}
+        {...(isFolderWorkspaceTarget || isMultiProjectTarget
+          ? {}
+          : {
+              autonomousGoalDraft,
+              onAutonomousGoalDraftChange: setAutonomousGoalDraft
+            })}
         primaryActionLabel={primaryActionLabel}
         onOpenAgentSettings={() => setAgentSettingsOpen(true)}
         onCreate={() => void handleCreate()}

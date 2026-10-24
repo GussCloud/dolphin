@@ -22,6 +22,7 @@ import type { SshConnectionStatus } from '../../../../shared/ssh-types'
 import type { TaskSourceContext } from '../../../../shared/task-source-context'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
+import type { AutonomousGoalDraft } from '@/lib/autonomous-goal-draft'
 
 export type RepoOption = React.ComponentProps<typeof RepoCombobox>['repos'][number]
 export type EphemeralVmRecipeOption = NonNullable<DolphinHooks['environmentRecipes']>[number]
@@ -39,6 +40,9 @@ export type NewWorkspaceComposerCardProps = {
   nameInputRef?: React.RefObject<HTMLInputElement | null>
   quickAgent: TuiAgent | null
   onQuickAgentChange: (agent: TuiAgent | null) => void
+  /** Present only where a single-repo quick create can launch an autonomous coordinator. */
+  autonomousGoalDraft?: AutonomousGoalDraft
+  onAutonomousGoalDraftChange?: (next: AutonomousGoalDraft) => void
   eligibleRepos: readonly RepoOption[]
   repoId: string
   projectOptions?: NewWorkspaceProjectOption[]

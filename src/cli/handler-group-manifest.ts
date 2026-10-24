@@ -137,6 +137,11 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
     load: async () => (await import('./handlers/orchestration.js')).ORCHESTRATION_HANDLERS
   },
   {
+    name: 'goal',
+    keys: ['goal start', 'goal note', 'goal complete', 'goal show', 'goal list', 'goal stop'],
+    load: async () => (await import('./handlers/goal.js')).GOAL_HANDLERS
+  },
+  {
     name: 'emulator',
     keys: [
       'emulator list',
