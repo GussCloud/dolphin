@@ -53,6 +53,14 @@ function formatGoal(goal: AutonomousGoal): string {
   if (goal.summary) {
     lines.push(`summary: ${goal.summary}`)
   }
+  if (goal.cleanup) {
+    lines.push(
+      `cleanup: removed ${goal.cleanup.removedWorktreeIds.length} worktree(s)${goal.cleanup.finishedAt === undefined ? ', in progress' : ''}`
+    )
+    for (const kept of goal.cleanup.retained) {
+      lines.push(`  kept ${kept.worktreeId}: ${kept.reason}`)
+    }
+  }
   return lines.join('\n')
 }
 

@@ -12,9 +12,11 @@ drive them to green.
 The feature exists to run for hours on a subscription plan, so every recurring cost
 is designed out:
 
-- **No polling and no timers.** After dispatching, the coordinator ends its turn
+- **The agent never polls.** After dispatching, the coordinator ends its turn
   and idles. Run mail reaches it through mailbox pointer delivery (Dolphin types a
-  notice into its terminal), so an idle goal costs nothing. `check --wait` is
+  notice into its terminal), so an idle goal costs no tokens. The host's own
+  timers (stranded mail, cleanup) only read local state and type nothing unless
+  something is stuck. `check --wait` is
   deliberately not used: a 15-minute wait loop re-sends the whole context on every
   timeout, and a turn that never ends leaves no safe point to rotate.
 - **The coordinator never implements and never reads diffs or transcripts.** Workers
@@ -111,6 +113,42 @@ each completed lead turn of a goal's coordinator pane:
 Rotation backs off if the user typed into the pane, never fires twice inside 10
 minutes, and skips a usage-limited goal.
 
+## Stranded Run mail
+
+The coordinator never polls, so the mailbox pointer is its only wake signal, and
+the pointer path has two silent holes: it types nothing while a delivery is
+checked but unacked (`mailbox-pointer-delivery.ts`), and it never re-sends a
+pointer whose single Enter was dropped. Two things close them:
+
+- The coordinator rules say an ack response can carry the next batch, which
+  must be handled and acked too. An unhandled batch was the usual trigger: two
+  workers finishing close together left the second batch pending forever.
+- `autonomous-goal-mail-watchdog.ts` reads the Run mailbox every 30 s (a local
+  DB read, no model call). Mail unread for 60 s while the coordinator is idle
+  gets one short nudge, typed through the verified prompt path (Enter re-sent
+  once if no turn starts). It waits again if the user typed into the pane,
+  re-nudges at most every 5 minutes, skips usage-limited goals, and after 3
+  unanswered nudges marks the goal blocked so the user is notified.
+
+## Cleanup
+
+`autonomous-goal-cleanup.ts` leaves nothing running or on disk once the work is
+done. It reuses the existing verbs, never forced:
+
+- A worker that settles (succeeded or failed) has its terminal and agent
+  process released at once (`orchestration.workerRelease`).
+- A succeeded worker's worktree is removed (`worktree.rm`) once its PR/MR is
+  merged, checked through `hostedReview.forBranch` at most every 5 minutes per
+  worktree. Until then the worker may still be driving CI.
+- When the goal closes, every settled worker's worktree goes, failed ones too.
+  On `complete` the coordinator's own worktree follows 30 s later, so its
+  closing reply is not cut off; on `stop` it is kept. The sweep survives a
+  restart (`cleanup.finishedAt`).
+- Removal is never forced: uncommitted changes keep a worktree, and a branch
+  whose work is not integrated is kept by `worktree.rm`. What was removed and
+  what was kept, with the reason, is stored on the goal (`cleanup`) and shown
+  by `dolphin goal show`.
+
 ## Plan quota
 
 Budgets in money do not protect a subscription plan, so the guard reads the
@@ -144,7 +182,8 @@ A host with no usage data (headless, signed out) never blocks.
 ## Statuses
 
 `active`, `usageLimited`, `blocked` are open; `complete` and `stopped` are closed.
-Stopping a goal leaves its Run, Tasks and workers untouched.
+Stopping a goal leaves its Run and Tasks untouched; settled workers are cleaned up
+(see Cleanup) and running ones keep running.
 
 ## Supported agents
 

@@ -117,7 +117,7 @@ The execution host owns agent status in one store, the hook server's, and every 
 
 ## Autonomous Goals
 
-An autonomous goal's coordinator keeps no state in its context window: the Run, its Tasks and `dolphin goal note` are its memory, so nothing may poll, add fixed per-session context, or depend on the agent's own auto-compaction. Read [`docs/reference/autonomous-goals.md`](./docs/reference/autonomous-goals.md) before changing the coordinator prompt, the goal store or how a goal's session is driven.
+An autonomous goal's coordinator keeps no state in its context window: the Run, its Tasks and `dolphin goal note` are its memory, so the agent may not poll, nothing may add fixed per-session context or depend on the agent's own auto-compaction, and host-side checks read local state only, typing nothing unless work is stuck. Read [`docs/reference/autonomous-goals.md`](./docs/reference/autonomous-goals.md) before changing the coordinator prompt, the goal store or how a goal's session is driven.
 
 ## Agent Terminal Screens
 

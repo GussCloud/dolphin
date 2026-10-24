@@ -78,3 +78,32 @@ describe('goal start', () => {
     expect(log.mock.calls[0]?.[0]).not.toContain('Rules:')
   })
 })
+
+describe('goal show', () => {
+  it('reports what the closing sweep removed and kept', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const call = vi.fn().mockResolvedValue({
+      id: '1',
+      ok: true,
+      result: {
+        goal: {
+          ...goal,
+          status: 'complete',
+          cleanup: {
+            removedWorktreeIds: ['wt-1', 'wt-2'],
+            retained: [{ worktreeId: 'wt-3', reason: 'worktree has uncommitted changes' }],
+            finishedAt: 5
+          }
+        }
+      },
+      _meta: { runtimeId: 'r' }
+    })
+
+    await GOAL_HANDLERS['goal show']!(context(false, call))
+
+    expect(log.mock.calls[0]?.[0]).toContain(
+      'cleanup: removed 2 worktree(s)\n  kept wt-3: worktree has uncommitted changes'
+    )
+    log.mockRestore()
+  })
+})
