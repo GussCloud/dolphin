@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { AutonomousGoal } from './autonomous-goal-types'
+import { AUTONOMOUS_GOAL_AGENT_CLI, type AutonomousGoal } from './autonomous-goal-types'
 import {
+  AUTONOMOUS_COORDINATOR_RESET_COMMAND,
   buildAutonomousCoordinatorLaunchPrompt,
   buildAutonomousCoordinatorResumePrompt,
   decodeAutonomousGoalObjective,
@@ -82,5 +83,35 @@ describe('buildAutonomousCoordinatorResumePrompt', () => {
     const prompt = buildAutonomousCoordinatorResumePrompt(goal, tasks)
     expect(prompt).toContain('- … 15 more')
     expect(prompt).not.toContain('task_54')
+  })
+})
+
+describe('Claude Agent Teams goals', () => {
+  it('keeps a Teams coordinator off teammates and lets Teams workers use them', () => {
+    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+      objective: 'Ship',
+      agent: 'claude-agent-teams',
+      workerAgent: 'claude-agent-teams',
+      maxConcurrent: 2
+    })
+    expect(prompt).toContain('--agent claude-agent-teams --worker-agent claude-agent-teams')
+    expect(prompt).toContain('Do not spawn Agent Teams teammates from this coordinator')
+    expect(prompt).toContain('Workers run Claude Agent Teams')
+  })
+
+  it('omits the Teams rules for other agents', () => {
+    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+      objective: 'Ship',
+      agent: 'claude',
+      workerAgent: 'codex',
+      maxConcurrent: 2
+    })
+    expect(prompt).not.toContain('Agent Teams')
+  })
+
+  it('resets a Teams coordinator with the Claude command', () => {
+    expect(
+      AUTONOMOUS_COORDINATOR_RESET_COMMAND[AUTONOMOUS_GOAL_AGENT_CLI['claude-agent-teams']]
+    ).toBe('/clear')
   })
 })

@@ -1,8 +1,22 @@
 // An autonomous goal: one coordinator agent pane driving an orchestration Run until the objective is met.
 // The coordinator's memory lives here and in the Run, never in its context window, so the session can be rotated.
 
-export const AUTONOMOUS_GOAL_AGENTS = ['claude', 'codex'] as const
+export const AUTONOMOUS_GOAL_AGENTS = ['claude', 'claude-agent-teams', 'codex'] as const
 export type AutonomousGoalAgent = (typeof AUTONOMOUS_GOAL_AGENTS)[number]
+
+export const AUTONOMOUS_GOAL_CLIS = ['claude', 'codex'] as const
+export type AutonomousGoalCli = (typeof AUTONOMOUS_GOAL_CLIS)[number]
+
+/** The CLI a goal agent runs: its transcript format, hook source, reset command and plan follow it. */
+export const AUTONOMOUS_GOAL_AGENT_CLI: Record<AutonomousGoalAgent, AutonomousGoalCli> = {
+  claude: 'claude',
+  'claude-agent-teams': 'claude',
+  codex: 'codex'
+}
+
+export function isAutonomousGoalCli(value: unknown): value is AutonomousGoalCli {
+  return AUTONOMOUS_GOAL_CLIS.some((cli) => cli === value)
+}
 
 // Why DeepSeek is absent: its launch gate and isolated config are not wired into goal workers yet.
 export function isAutonomousGoalAgent(value: unknown): value is AutonomousGoalAgent {

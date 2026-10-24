@@ -6,7 +6,7 @@ export const GOAL_COMMAND_SPECS: CommandSpec[] = [
     path: ['goal', 'start'],
     summary: 'Bind this coordinator terminal to a new autonomous goal and create its Run',
     usage:
-      'dolphin goal start (--objective <text> | --objective-b64 <base64>) --agent <claude|codex> --worker-agent <claude|codex> [--max-concurrent <n>] [--from <handle>] [--json]',
+      'dolphin goal start (--objective <text> | --objective-b64 <base64>) --agent <claude|claude-agent-teams|codex> --worker-agent <claude|claude-agent-teams|codex> [--max-concurrent <n>] [--from <handle>] [--json]',
     allowedFlags: [
       ...GLOBAL_FLAGS,
       'objective',

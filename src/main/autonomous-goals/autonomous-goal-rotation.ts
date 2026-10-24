@@ -6,7 +6,8 @@ import { isChildAttributedHookEvent } from '../agent-hooks/server/server-child-a
 import type { AgentStatusClearIpcPayload } from '../../shared/agent-status-types'
 import type { AgentPaneTextResult } from '../agent-pane-text-delivery'
 import {
-  isAutonomousGoalAgent,
+  AUTONOMOUS_GOAL_AGENT_CLI,
+  isAutonomousGoalCli,
   type AutonomousGoal,
   type AutonomousGoalAgent
 } from '../../shared/autonomous-goal-types'
@@ -180,7 +181,10 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
     }
     state.phase = 'resetting'
     const cleared = await ports
-      .sendCommand(terminal, AUTONOMOUS_COORDINATOR_RESET_COMMAND[goal.agent])
+      .sendCommand(
+        terminal,
+        AUTONOMOUS_COORDINATOR_RESET_COMMAND[AUTONOMOUS_GOAL_AGENT_CLI[goal.agent]]
+      )
       .catch((): AgentPaneTextResult => 'unknown')
     if (cleared !== 'accepted') {
       abort(state)
@@ -239,7 +243,8 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
     if (
       enriched.isReplay === true ||
       enriched.providerSessionOnly === true ||
-      !isAutonomousGoalAgent(enriched.source) ||
+      // Why: an Agent Teams leader reports as `claude`; the goal lookup by pane decides the rest.
+      !isAutonomousGoalCli(enriched.source) ||
       isChildAttributedHookEvent(enriched) ||
       !isCompletedLeadTurn(enriched)
     ) {

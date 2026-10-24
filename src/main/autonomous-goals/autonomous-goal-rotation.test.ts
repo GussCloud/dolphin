@@ -126,6 +126,14 @@ describe('autonomous goal session rotation', () => {
     expect(h.ctx.sent.at(-1)).toEqual({ kind: 'command', text: '/new' })
   })
 
+  it('rotates a Claude Agent Teams leader with /clear', async () => {
+    const h = harness()
+    h.ctx.goal = { ...GOAL, agent: 'claude-agent-teams' }
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_HANDOFF_TIMEOUT_MS)
+    expect(h.ctx.sent.at(-1)).toEqual({ kind: 'command', text: '/clear' })
+  })
+
   it('leaves a small context alone', async () => {
     const h = harness({ contextTokens: 20_000 })
     h.turnEnds()

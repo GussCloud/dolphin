@@ -9,6 +9,7 @@ import { RuntimeClientError } from '../runtime-client'
 import { resolveCoordinatorTerminalHandle } from './orchestration/terminal-identity'
 import { decodeAutonomousGoalObjective } from '../../shared/autonomous-coordinator-prompt'
 import {
+  AUTONOMOUS_GOAL_AGENTS,
   clampAutonomousGoalMaxConcurrent,
   isAutonomousGoalAgent,
   type AutonomousGoal,
@@ -20,7 +21,10 @@ type GoalResult = { goal: AutonomousGoal }
 function requireGoalAgent(flags: Map<string, string | boolean>, name: string): AutonomousGoalAgent {
   const value = getRequiredStringFlag(flags, name)
   if (!isAutonomousGoalAgent(value)) {
-    throw new RuntimeClientError('invalid_argument', `--${name} must be claude or codex`)
+    throw new RuntimeClientError(
+      'invalid_argument',
+      `--${name} must be one of ${AUTONOMOUS_GOAL_AGENTS.join(', ')}`
+    )
   }
   return value
 }

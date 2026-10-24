@@ -71,6 +71,9 @@ describe('coordinator context probe', () => {
     const file = join(dir, 't.jsonl')
     writeFileSync(file, `${'x'.repeat(600 * 1024)}\n${claudeAssistant(1, 50_000)}\n`)
     expect(await readCoordinatorContext('claude', file)).toEqual({ contextTokens: 50_001 })
+    expect(await readCoordinatorContext('claude-agent-teams', file)).toEqual({
+      contextTokens: 50_001
+    })
     expect(await readCoordinatorContext('claude', join(dir, 'missing.jsonl'))).toBeNull()
   })
 })

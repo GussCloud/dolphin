@@ -17811,7 +17811,7 @@
       "NewWorkspaceComposerAutonomousSection": {
         "title": "자율 작업",
         "description": "에이전트가 목표를 계획하고 worktree를 병렬로 시작해 모든 PR이 병합될 때까지 조정합니다.",
-        "unsupportedAgent": "자율 작업을 조정하려면 Claude 또는 Codex를 선택하세요.",
+        "unsupportedAgent": "자율 작업을 조정하려면 Claude, Claude Agent Teams 또는 Codex를 선택하세요.",
         "objective": "목표",
         "objectivePlaceholder": "예: docs 폴더를 읽고 명시된 내용을 구현",
         "workerAgent": "워커 에이전트",

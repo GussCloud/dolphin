@@ -3,6 +3,7 @@
 import type {
   AutonomousGoal,
   AutonomousGoalAgent,
+  AutonomousGoalCli,
   AutonomousGoalNote
 } from './autonomous-goal-types'
 
@@ -29,12 +30,28 @@ export function decodeAutonomousGoalObjective(encoded: string): string {
   return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
 }
 
-function coordinatorRules(workerAgent: AutonomousGoalAgent, maxConcurrent: number): string[] {
+const TEAMS_AGENT: AutonomousGoalAgent = 'claude-agent-teams'
+
+function coordinatorRules(
+  agent: AutonomousGoalAgent,
+  workerAgent: AutonomousGoalAgent,
+  maxConcurrent: number
+): string[] {
   return [
     'Rules:',
+    ...(agent === TEAMS_AGENT
+      ? [
+          '- Do not spawn Agent Teams teammates from this coordinator: parallel work goes through orchestration workers, which survive a session reset.'
+        ]
+      : []),
     '- You coordinate; you do not implement. Read the repository docs once, then split the goal into Tasks with only real dependencies (`dolphin orchestration task-create --spec "..." --deps \'["<task_id>"]\' --json`).',
     `- Start each ready Task in its own worktree: \`dolphin orchestration worker-start --task <task_id> --worktree new-top-level --name <short-slug> --agent ${workerAgent} --json\`. Keep at most ${maxConcurrent} workers running.`,
     "- Each worker spec must say: implement the task, run the repo's checks, open a PR (or MR), drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.",
+    ...(workerAgent === TEAMS_AGENT
+      ? [
+          '- Workers run Claude Agent Teams: each spec may let the worker split its own Task across teammates, but the worker alone opens the PR and reports worker_done.'
+        ]
+      : []),
     "- A Task that depends on another starts only after the dependency's PR is merged; its worktree must branch from the updated base.",
     '- After starting or answering workers, end your turn and stay idle: Dolphin types a notice into this terminal when Run mail arrives. Never use `check --wait` or poll. On each notice, read with `dolphin orchestration check --json`, act, then acknowledge with `dolphin orchestration check --ack <delivery_id> --json`.',
     '- Do not read diffs or worker transcripts; act only on the reports. Keep your own replies short.',
@@ -60,7 +77,7 @@ export function buildAutonomousCoordinatorLaunchPrompt(
     `\`dolphin goal start --agent ${launch.agent} --worker-agent ${launch.workerAgent} --max-concurrent ${launch.maxConcurrent} --objective-b64 ${encodeAutonomousGoalObjective(objective)} --json\``,
     'Then load the coordination contract once: `dolphin skills get orchestration`.',
     '',
-    ...coordinatorRules(launch.workerAgent, launch.maxConcurrent)
+    ...coordinatorRules(launch.agent, launch.workerAgent, launch.maxConcurrent)
   ].join('\n')
 }
 
@@ -118,12 +135,12 @@ export function buildAutonomousCoordinatorResumePrompt(
     '',
     'Load the coordination contract once: `dolphin skills get orchestration`. Then read unread mail with `dolphin orchestration check --json` and continue; if there is none, end your turn and wait idle.',
     '',
-    ...coordinatorRules(goal.workerAgent, goal.maxConcurrent)
+    ...coordinatorRules(goal.agent, goal.workerAgent, goal.maxConcurrent)
   ].join('\n')
 }
 
 /** In-place session reset: the pane, its terminal binding and its Run survive; the conversation does not. */
-export const AUTONOMOUS_COORDINATOR_RESET_COMMAND: Record<AutonomousGoalAgent, string> = {
+export const AUTONOMOUS_COORDINATOR_RESET_COMMAND: Record<AutonomousGoalCli, string> = {
   claude: '/clear',
   codex: '/new'
 }
