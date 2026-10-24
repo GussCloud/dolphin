@@ -4,8 +4,9 @@
 export const AUTONOMOUS_GOAL_AGENTS = ['claude', 'codex'] as const
 export type AutonomousGoalAgent = (typeof AUTONOMOUS_GOAL_AGENTS)[number]
 
+// Why DeepSeek is absent: its launch gate and isolated config are not wired into goal workers yet.
 export function isAutonomousGoalAgent(value: unknown): value is AutonomousGoalAgent {
-  return value === 'claude' || value === 'codex'
+  return AUTONOMOUS_GOAL_AGENTS.some((agent) => agent === value)
 }
 
 export const AUTONOMOUS_GOAL_STATUSES = [
