@@ -22,6 +22,7 @@ import { agentHookServer } from '../agent-hooks/server'
 import { emitPluginWorktreeLifecycle } from './main-process-pty-startup'
 import { startMainProcessTelegramBridge } from './main-process-telegram'
 import { startMainProcessAgentInteraction } from './main-process-agent-interaction'
+import { startMainProcessAutonomousGoalRotation } from './main-process-autonomous-goal-rotation'
 import { startMainProcessClaudeConnectionLossRetry } from './main-process-claude-connection-loss-retry'
 import { startMainProcessTelegramAnswers } from './main-process-telegram-answers'
 import { startMainProcessTelegramChannel } from './main-process-telegram-channel'
@@ -174,4 +175,5 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   startMainProcessClaudeConnectionLossRetry(store, runtime, telegramBridge, (event) =>
     agentInteraction.onRetryExhausted(event)
   )
+  startMainProcessAutonomousGoalRotation(runtime)
 }

@@ -12,8 +12,11 @@ drive them to green.
 The feature exists to run for hours on a subscription plan, so every recurring cost
 is designed out:
 
-- **No polling and no timers.** The coordinator blocks in
-  `dolphin orchestration check --wait`; an idle goal costs nothing.
+- **No polling and no timers.** After dispatching, the coordinator ends its turn
+  and idles. Run mail reaches it through mailbox pointer delivery (Dolphin types a
+  notice into its terminal), so an idle goal costs nothing. `check --wait` is
+  deliberately not used: a 15-minute wait loop re-sends the whole context on every
+  timeout, and a turn that never ends leaves no safe point to rotate.
 - **The coordinator never implements and never reads diffs or transcripts.** Workers
   report one or two lines plus a PR URL. CI and review traffic stay with the worker
   that owns the PR.
@@ -21,7 +24,7 @@ is designed out:
   not a large skill re-read every session.
 - **Memory lives outside the context window.** The Run, its Tasks and the goal's
   notes are the only state that matters, so the session can be replaced at any turn
-  end.
+  end (see Rotation).
 
 ## Pieces
 
@@ -48,6 +51,27 @@ A pane drives at most one open goal; repeating `goal start` returns it.
 durable memory. Decisions accumulate up to `AUTONOMOUS_GOAL_MAX_DECISIONS`; a handoff
 or a blocker replaces its predecessor. A blocker moves the goal to `blocked`; the
 next decision or handoff moves it back to `active`.
+
+## Rotation
+
+`src/main/autonomous-goals/autonomous-goal-rotation.ts` replaces the agent's own
+auto-compaction, which summarizes lossily and at an arbitrary point mid-task. On
+each completed lead turn of a goal's coordinator pane:
+
+1. Measure the context from the tail of the coordinator's own transcript
+   (`autonomous-goal-context-probe.ts`): the newest Claude main-thread `usage`, or
+   Codex's `token_count` with its stated window. No model call; at most 512 KB read.
+   Rotate at `min(120k, 60% of a stated window)`. When the transcript lives on
+   another host (SSH, WSL), rotate every 40 turns instead.
+2. Paste a handoff request; the coordinator writes one `goal note --kind handoff`.
+3. On its next turn end (or after 3 minutes), type `/clear` (Claude) or `/new`
+   (Codex). The pane, its terminal handle and its Run binding survive; only the
+   conversation is reset.
+4. Paste a resume prompt built by code from the goal, its notes and the Run's
+   Task table, never from a model summary, so nothing is lost or invented.
+
+Rotation backs off if the user typed into the pane, never fires twice inside 10
+minutes, and skips a usage-limited goal.
 
 ## Statuses
 
