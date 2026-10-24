@@ -57,12 +57,43 @@ export function buildNotificationOptions(args: NotificationDispatchRequest): {
     }
   }
 
+  if (args.source === 'autonomous-goal') {
+    return buildAutonomousGoalNotificationOptions(args)
+  }
+
   const richOptions = buildAgentTaskCompleteNotificationOptions(args)
   if (richOptions) {
     return richOptions
   }
 
   return buildAgentTaskCompleteFallbackNotificationOptions(args)
+}
+
+function buildAutonomousGoalNotificationOptions(args: NotificationDispatchRequest): {
+  title: string
+  body: string
+} {
+  const context = formatNotificationWorktreeContext(args)
+  const title =
+    args.goalEvent === 'complete'
+      ? translateMain('notifications.autonomousGoal.complete', 'Goal complete')
+      : args.goalEvent === 'blocked'
+        ? translateMain('notifications.autonomousGoal.blocked', 'Goal needs your decision')
+        : translateMain('notifications.autonomousGoal.usageLimited', 'Goal paused on plan usage')
+  const fallback =
+    args.goalEvent === 'usageLimited'
+      ? translateMain(
+          'notifications.autonomousGoal.usageLimitedBody',
+          'No new workers until the usage window resets; Dolphin resumes it then.'
+        )
+      : ''
+  return {
+    title: `${context} - ${title}`,
+    body: normalizeNotificationText(
+      args.goalDetail || fallback,
+      NOTIFICATION_BODY_PREVIEW_MAX_LENGTH
+    )
+  }
 }
 
 function buildAgentTaskCompleteNotificationOptions(

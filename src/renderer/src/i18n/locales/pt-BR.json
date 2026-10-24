@@ -17965,6 +17965,14 @@
         "objectivePlaceholder": "ex.: Analise a pasta docs e implemente o que ela especifica",
         "workerAgent": "Agente dos workers",
         "maxConcurrent": "Worktrees em paralelo"
+      },
+      "AutonomousGoalStrip": {
+        "active": "Trabalhando",
+        "blocked": "Precisa da sua decisão",
+        "usageLimited": "Pausado pelo uso do plano",
+        "stop": "Parar objetivo",
+        "stopFailed": "Não foi possível parar o objetivo.",
+        "rotations": "Rodízios: {{value}}"
       }
     },
     "i18n": {
@@ -19069,6 +19077,12 @@
       "telegram": "O Claude perdeu a conexão com a API{{where}} e {{attempts}} tentativas automáticas não a recuperaram. Responda \"continue\" para retomar.",
       "bodyNoRetry": "O Dolphin não conseguiu repetir automaticamente. Digite continue para retomar.",
       "telegramNoRetry": "O Claude perdeu a conexão com a API{{where}} e o Dolphin não conseguiu repetir automaticamente. Responda \"continue\" para retomar."
+    },
+    "autonomousGoal": {
+      "complete": "Objetivo concluído",
+      "blocked": "O objetivo precisa da sua decisão",
+      "usageLimited": "Objetivo pausado pelo uso do plano",
+      "usageLimitedBody": "Nenhum novo worker até a janela de uso renovar; o Dolphin retoma depois."
     }
   },
   "sessionSearch": {

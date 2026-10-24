@@ -8,6 +8,10 @@ import { buildAutonomousCoordinatorResumePrompt } from '../../shared/autonomous-
 import { readCoordinatorContext } from '../autonomous-goals/autonomous-goal-context-probe'
 import { startAutonomousGoalRotation } from '../autonomous-goals/autonomous-goal-rotation'
 import { startAutonomousGoalUsageResume } from '../autonomous-goals/autonomous-goal-usage-resume'
+import { startAutonomousGoalNotifier } from '../autonomous-goals/autonomous-goal-notifier'
+import { dispatchMainProcessNotification } from '../ipc/notifications'
+import type { Store } from '../persistence'
+import { resolveWorkspaceDisplayName } from '../workspace-display-name'
 import { getAutonomousGoalStore } from '../autonomous-goals/autonomous-goal-store-instance'
 import { lastInputAtByPty } from '../ipc/pty/delivery/visibility-state'
 import { readClientTerminalInputAt } from '../terminal-client-input-clock'
@@ -15,7 +19,10 @@ import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
 
 /** Starts session rotation and usage-window resume for this host's open autonomous goals. */
-export function startMainProcessAutonomousGoals(runtime: DolphinRuntimeService): () => void {
+export function startMainProcessAutonomousGoals(
+  appStore: Store,
+  runtime: DolphinRuntimeService
+): () => void {
   const dispatcher = new RpcDispatcher({ runtime })
   const sendTerminal = createRpcAgentPaneTerminalSend(
     (request) => dispatcher.dispatch(request),
@@ -34,6 +41,18 @@ export function startMainProcessAutonomousGoals(runtime: DolphinRuntimeService):
     markActive: (goalId) => store.update(goalId, { status: 'active', usageResumeAt: undefined }),
     resolveTerminalHandle,
     sendPrompt
+  })
+  const stopNotifier = startAutonomousGoalNotifier({
+    listGoals: () => store.list(),
+    subscribe: (listener) => store.subscribe(listener),
+    notify: (request) => {
+      const worktreeLabel = request.worktreeId
+        ? resolveWorkspaceDisplayName(appStore, request.worktreeId)
+        : null
+      void Promise.resolve(
+        dispatchMainProcessNotification({ ...request, ...(worktreeLabel ? { worktreeLabel } : {}) })
+      ).catch((error: unknown) => console.warn('[autonomous-goals] notification failed', error))
+    }
   })
   const stopRotation = startAutonomousGoalRotation({
     subscribeEnrichedStatus: (listener) => agentHookServer.subscribeEnrichedStatus(listener),
@@ -87,5 +106,6 @@ export function startMainProcessAutonomousGoals(runtime: DolphinRuntimeService):
   return () => {
     stopRotation()
     stopUsageResume()
+    stopNotifier()
   }
 }

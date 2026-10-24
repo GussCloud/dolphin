@@ -27,6 +27,8 @@ export type NotificationEventSource =
   | 'test'
   /** Raised by main when connection-loss auto-retry gave up; gated like agent-task-complete. */
   | 'agent-auto-retry-exhausted'
+  /** An autonomous goal finished, needs a human decision, or paused on plan usage. */
+  | 'autonomous-goal'
 
 export type NotificationDispatchRequest = {
   source: NotificationEventSource
@@ -56,6 +58,10 @@ export type NotificationDispatchRequest = {
   surface?: 'terminal' | 'agent-session'
   /** `agent-auto-retry-exhausted` only: retries typed before giving up (0 = none could be sent). */
   autoRetryAttempts?: number
+  /** `autonomous-goal` only. */
+  goalEvent?: 'complete' | 'blocked' | 'usageLimited'
+  /** `autonomous-goal` only: the completion summary or blocker note, one line. */
+  goalDetail?: string
 }
 
 export type NotificationDispatchResult = {

@@ -91,6 +91,18 @@ plan windows Dolphin already tracks (`RateLimitService`, no extra polling):
 
 A host with no usage data (headless, signed out) never blocks.
 
+## Visibility
+
+- `AutonomousGoalStrip` shows one line above the worktree's panes while its
+  coordinator drives an open goal: status, objective (or the open blocker),
+  rotation count and a Stop button. It refreshes every 30 seconds only while a
+  goal is shown and the window is visible.
+- `autonomous-goal-notifier.ts` raises an `autonomous-goal` notification on each
+  transition into `complete`, `blocked` or `usageLimited`. It goes through the
+  normal delivery service (desktop and paired mobile), gated by the
+  agent-task-complete setting, and is seeded from stored state so a restart does
+  not re-announce old outcomes.
+
 ## Statuses
 
 `active`, `usageLimited`, `blocked` are open; `complete` and `stopped` are closed.

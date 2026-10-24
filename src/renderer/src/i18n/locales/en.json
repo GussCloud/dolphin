@@ -17965,6 +17965,14 @@
         "objectivePlaceholder": "e.g. Read the docs folder and implement what it specifies",
         "workerAgent": "Worker agent",
         "maxConcurrent": "Parallel worktrees"
+      },
+      "AutonomousGoalStrip": {
+        "active": "Working",
+        "blocked": "Needs your decision",
+        "usageLimited": "Paused on plan usage",
+        "stop": "Stop goal",
+        "stopFailed": "Could not stop the goal.",
+        "rotations": "Rotations: {{value}}"
       }
     },
     "i18n": {
@@ -19069,6 +19077,12 @@
       "telegram": "Claude lost its API connection{{where}} and {{attempts}} automatic retries did not recover it. Reply \"continue\" to resume.",
       "bodyNoRetry": "Dolphin could not retry automatically. Type continue to resume.",
       "telegramNoRetry": "Claude lost its API connection{{where}} and Dolphin could not retry automatically. Reply \"continue\" to resume."
+    },
+    "autonomousGoal": {
+      "complete": "Goal complete",
+      "blocked": "Goal needs your decision",
+      "usageLimited": "Goal paused on plan usage",
+      "usageLimitedBody": "No new workers until the usage window resets; Dolphin resumes it then."
     }
   },
   "sessionSearch": {
