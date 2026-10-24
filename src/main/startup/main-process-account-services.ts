@@ -1,3 +1,4 @@
+import { setAutonomousGoalRateLimitReader } from '../autonomous-goals/autonomous-goal-usage'
 import { app } from 'electron'
 import { RateLimitService } from '../rate-limits/service'
 import { CodexRuntimeHomeService } from '../codex-accounts/runtime-home-service'
@@ -39,6 +40,7 @@ export function initializeMainProcessAccountServices(): void {
     throw new Error('Usage stores must be initialized before account services')
   }
   state.rateLimits = new RateLimitService()
+  setAutonomousGoalRateLimitReader(() => state.rateLimits?.getState() ?? null)
   state.codexRuntimeHome = new CodexRuntimeHomeService(store)
   void startCodexStateDbBackfillRecoveryInBackground(getDolphinManagedCodexHomePath())
   // Why: an incapable trust-grant host must fall back to the managed home for

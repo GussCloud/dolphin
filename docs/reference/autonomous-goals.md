@@ -73,6 +73,24 @@ each completed lead turn of a goal's coordinator pane:
 Rotation backs off if the user typed into the pane, never fires twice inside 10
 minutes, and skips a usage-limited goal.
 
+## Plan quota
+
+Budgets in money do not protect a subscription plan, so the guard reads the
+plan windows Dolphin already tracks (`RateLimitService`, no extra polling):
+
+- `orchestration.workerStart` for a Run that belongs to an open goal is refused
+  with `goal_usage_limited` when the coordinator's or the workers' plan is at
+  85% of its 5-hour window or 95% of its weekly window. The goal moves to
+  `usageLimited` with `usageResumeAt` = the window's reset (or 30 minutes when
+  no reset time is known). Workers already running are left alone.
+- `autonomous-goal-usage-resume.ts` arms a timer per usage-limited goal from the
+  stored `usageResumeAt`, so it survives an app restart. A minute after the reset
+  it marks the goal `active` and pastes one notice into the coordinator pane.
+- Rotation skips a usage-limited goal: waking it to rotate would spend the quota
+  the pause is saving.
+
+A host with no usage data (headless, signed out) never blocks.
+
 ## Statuses
 
 `active`, `usageLimited`, `blocked` are open; `complete` and `stopped` are closed.

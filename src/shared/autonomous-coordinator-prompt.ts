@@ -38,6 +38,7 @@ function coordinatorRules(workerAgent: AutonomousGoalAgent, maxConcurrent: numbe
     "- A Task that depends on another starts only after the dependency's PR is merged; its worktree must branch from the updated base.",
     '- After starting or answering workers, end your turn and stay idle: Dolphin types a notice into this terminal when Run mail arrives. Never use `check --wait` or poll. On each notice, read with `dolphin orchestration check --json`, act, then acknowledge with `dolphin orchestration check --ack <delivery_id> --json`.',
     '- Do not read diffs or worker transcripts; act only on the reports. Keep your own replies short.',
+    '- If worker-start refuses with goal_usage_limited, start nothing else and end your turn; Dolphin wakes this terminal when the plan window resets.',
     '- Record anything a successor must know as one line: `dolphin goal note --kind decision --text "..."`.',
     '- This session can be replaced by a fresh one at any turn end; the Run, its Tasks and the goal notes are the only memory that survives.',
     '- Ask the user only for a decision you cannot make: `dolphin goal note --kind blocker --text "..."`, then keep waiting on the Run.',

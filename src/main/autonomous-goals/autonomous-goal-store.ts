@@ -47,6 +47,10 @@ export class AutonomousGoalStore {
     )
   }
 
+  findOpenByRun(runId: string): AutonomousGoal | null {
+    return this.read().find((goal) => goal.runId === runId && isAutonomousGoalOpen(goal)) ?? null
+  }
+
   create(input: AutonomousGoalCreate): AutonomousGoal {
     const at = this.now()
     const goal: AutonomousGoal = {
