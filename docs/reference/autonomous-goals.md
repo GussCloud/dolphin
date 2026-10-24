@@ -71,6 +71,15 @@ folder. Two things keep that dialog from stalling a goal:
   (`autonomousGoalWorkspace`); `worker-start` marks a worker's create when its Run
   belongs to an open goal. Every other worktree still shows the dialog.
 
+A worker's task brief is pasted into its terminal and submitted with Enter. A
+composer drawn before Enter is live can drop that first Enter (seen with Claude on
+Windows: the brief sat in the composer). When no turn has started
+`verifiedSubmitRetryMs` (3 s for every Claude Code agent) after the Enter, the
+main-process prompt writer sends one more Enter and records `submitRetried` on the
+dispatch receipt. It skips the retry if the user typed into the pane, the agent is
+asking for permission, or the process changed; an extra Enter on Claude's empty
+composer is a no-op. This applies to every main-process prompt send, not only goals.
+
 Not covered: SSH and WSL worktrees, whose agent reads a config on another host;
 there the dialog still appears.
 

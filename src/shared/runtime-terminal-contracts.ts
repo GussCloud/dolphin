@@ -226,6 +226,8 @@ export type RuntimeTerminalPromptDelivery = {
   baselineExplicitWorkingStartedAt?: number | null
   /** Permission observations seen before this prompt was accepted. */
   baselinePermissionSequence?: number
+  /** Enter was re-sent once because no turn had started after the first. */
+  submitRetried?: true
 }
 
 export type RuntimeTerminalAgentStatusState = 'working' | 'permission' | 'idle' | null

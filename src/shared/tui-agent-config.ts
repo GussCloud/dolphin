@@ -56,6 +56,9 @@ export type TuiAgentConfig = {
   draftPasteReadyTimeoutMs?: number
   /** Delay before one extra blind submit Enter, for agents that render their composer before Enter is live (codex); a no-op if the first Enter landed. */
   submitRetryDelayMs?: number
+  /** Main-process prompt delivery re-sends Enter once when no turn has started this long after it
+   *  (a composer drawn before Enter is live drops the first). Verified, unlike `submitRetryDelayMs`. */
+  verifiedSubmitRetryMs?: number
   /** Extra ms per logical prompt line before Enter, for TUIs that expand multiline paste slowly (antigravity). */
   submitLineSettleMsPerLine?: number
   /** Windows Shift+Enter encoding override; omitted agents keep the legacy Esc+CR path. */
@@ -84,6 +87,8 @@ const CLAUDE_CONFIG_SOURCE: TuiAgentConfigSource = {
   detectCmd: 'claude',
   promptInjectionMode: 'argv',
   pasteNeedsTypedRequest: true,
+  // Why: a worker brief pasted at first idle on Windows sat in the composer; Enter on an empty composer is a no-op.
+  verifiedSubmitRetryMs: 3000,
   // Why: `claude --prefill <text>` seeds the input without submitting, avoiding the paste-after-ready race (PR upstream PR 926).
   draftPromptFlag: '--prefill'
 }
@@ -111,6 +116,7 @@ const CLAUDE_AGENT_TEAMS_CONFIG_SOURCE: TuiAgentConfigSource = {
   // Claude's per-folder trust dialog in a new worktree; argv is processed after the dialog.
   promptInjectionMode: 'argv',
   pasteNeedsTypedRequest: true,
+  verifiedSubmitRetryMs: 3000,
   draftPromptFlag: '--prefill'
 }
 

@@ -215,3 +215,34 @@ async function waitForAgentPromptPoll(signal?: AbortSignal): Promise<void> {
     }
   })
 }
+
+/**
+ * Verifies a submitted prompt, re-sending Enter once when no turn has started after `retryAfterMs`:
+ * a composer drawn before Enter is live drops the first one. `resubmit` returns false to skip the
+ * retry (e.g. the user typed meanwhile); the overall deadline stays `timeoutMs`.
+ */
+export async function verifyAgentPromptSubmissionWithRetry(
+  options: AgentPromptVerificationOptions & {
+    retryAfterMs: number | undefined
+    resubmit: () => boolean
+  }
+): Promise<void> {
+  const totalMs = options.timeoutMs ?? AGENT_PROMPT_EFFECT_TIMEOUT_MS
+  if (options.retryAfterMs === undefined || options.retryAfterMs >= totalMs) {
+    await verifyAgentPromptSubmission(options)
+    return
+  }
+  const startedAt = Date.now()
+  try {
+    await verifyAgentPromptSubmission({ ...options, timeoutMs: options.retryAfterMs })
+    return
+  } catch (error) {
+    if (!isAgentPromptStalledError(error) || !options.resubmit()) {
+      throw error
+    }
+  }
+  await verifyAgentPromptSubmission({
+    ...options,
+    timeoutMs: Math.max(0, totalMs - (Date.now() - startedAt))
+  })
+}
