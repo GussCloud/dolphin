@@ -14,12 +14,8 @@ import {
   AUTONOMOUS_GOAL_MAX_CONCURRENT_LIMIT,
   isAutonomousGoalAgent
 } from '../../../../shared/autonomous-goal-types'
+import { TUI_AGENT_DISPLAY_NAMES } from '../../../../shared/tui-agent-display-names'
 import type { AutonomousGoalDraft } from '@/lib/autonomous-goal-draft'
-
-const AGENT_LABELS: Record<(typeof AUTONOMOUS_GOAL_AGENTS)[number], string> = {
-  claude: 'Claude',
-  codex: 'Codex'
-}
 
 const CONCURRENCY_OPTIONS = Array.from(
   { length: AUTONOMOUS_GOAL_MAX_CONCURRENT_LIMIT },
@@ -33,7 +29,7 @@ export function NewWorkspaceComposerAutonomousSection({
 }: {
   draft: AutonomousGoalDraft
   onDraftChange: (next: AutonomousGoalDraft) => void
-  /** Only Claude and Codex can coordinate: rotation relies on their in-place session reset. */
+  /** Only goal agents can coordinate: rotation relies on their CLI's in-place session reset. */
   coordinatorSupported: boolean
 }): React.JSX.Element {
   const switchId = React.useId()
@@ -56,7 +52,7 @@ export function NewWorkspaceComposerAutonomousSection({
                 )
               : translate(
                   'auto.components.NewWorkspaceComposerAutonomousSection.unsupportedAgent',
-                  'Pick Claude or Codex to coordinate autonomous work.'
+                  'Pick Claude, Codex or DeepSeek (Agent Teams works too) to coordinate autonomous work.'
                 )}
           </p>
         </div>
@@ -104,7 +100,7 @@ export function NewWorkspaceComposerAutonomousSection({
                 <SelectContent>
                   {AUTONOMOUS_GOAL_AGENTS.map((agent) => (
                     <SelectItem key={agent} value={agent}>
-                      {AGENT_LABELS[agent]}
+                      {TUI_AGENT_DISPLAY_NAMES[agent]}
                     </SelectItem>
                   ))}
                 </SelectContent>

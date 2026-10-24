@@ -6,7 +6,11 @@ import {
   contextTokensFromUsage,
   type AgentSessionTokenUsage
 } from '../../shared/agent-session-context-usage'
-import type { AutonomousGoalAgent } from '../../shared/autonomous-goal-types'
+import {
+  AUTONOMOUS_GOAL_AGENT_CLI,
+  type AutonomousGoalAgent,
+  type AutonomousGoalCli
+} from '../../shared/autonomous-goal-types'
 import { normalizeRawUsage } from '../codex-usage/codex-usage-token-delta'
 
 const TAIL_BYTES = 512 * 1024
@@ -104,7 +108,7 @@ export function readCodexContextFromLines(
 }
 
 const CONTEXT_READERS: Record<
-  AutonomousGoalAgent,
+  AutonomousGoalCli,
   (lines: readonly string[]) => CoordinatorContextReading | null
 > = {
   claude: readClaudeContextFromLines,
@@ -123,5 +127,5 @@ export async function readCoordinatorContext(
   }
   // Why: the first line of a mid-file tail is usually cut; parseLine drops it.
   const lines = tail.split('\n').filter((line) => line.trim().length > 0)
-  return CONTEXT_READERS[agent](lines)
+  return CONTEXT_READERS[AUTONOMOUS_GOAL_AGENT_CLI[agent]](lines)
 }

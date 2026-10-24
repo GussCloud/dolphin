@@ -1,7 +1,11 @@
 // Plan-quota guard for autonomous goals. Subscription plans meter usage in windows, not money, so
 // the guard pauses new workers near a window's end and resumes the goal when the window resets.
 import type { ProviderRateLimits, RateLimitState } from '../../shared/rate-limit-types'
-import type { AutonomousGoal, AutonomousGoalAgent } from '../../shared/autonomous-goal-types'
+import {
+  AUTONOMOUS_GOAL_AGENT_PLAN,
+  type AutonomousGoal,
+  type AutonomousGoalCli
+} from '../../shared/autonomous-goal-types'
 import { OrchestrationError } from '../runtime/orchestration/orchestration-error'
 import type { AutonomousGoalStore } from './autonomous-goal-store'
 
@@ -12,19 +16,19 @@ export const AUTONOMOUS_GOAL_UNKNOWN_RESET_RETRY_MS = 30 * 60_000
 
 export type AutonomousGoalUsageVerdict =
   | { limited: false }
-  | { limited: true; agent: AutonomousGoalAgent; usedPercent: number; resumeAt: number }
+  | { limited: true; cli: AutonomousGoalCli; usedPercent: number; resumeAt: number }
 
-let readRateLimits: (() => Pick<RateLimitState, AutonomousGoalAgent> | null) | null = null
+let readRateLimits: (() => Pick<RateLimitState, AutonomousGoalCli> | null) | null = null
 
 /** Wired at startup; until then (and on hosts without usage data) the guard never blocks. */
 export function setAutonomousGoalRateLimitReader(
-  reader: (() => Pick<RateLimitState, AutonomousGoalAgent> | null) | null
+  reader: (() => Pick<RateLimitState, AutonomousGoalCli> | null) | null
 ): void {
   readRateLimits = reader
 }
 
 function windowVerdict(
-  agent: AutonomousGoalAgent,
+  cli: AutonomousGoalCli,
   limits: ProviderRateLimits | null,
   now: number
 ): AutonomousGoalUsageVerdict {
@@ -38,7 +42,7 @@ function windowVerdict(
         window.resetsAt !== null && window.resetsAt > now
           ? window.resetsAt
           : now + AUTONOMOUS_GOAL_UNKNOWN_RESET_RETRY_MS
-      return { limited: true, agent, usedPercent: window.usedPercent, resumeAt }
+      return { limited: true, cli, usedPercent: window.usedPercent, resumeAt }
     }
   }
   return { limited: false }
@@ -47,15 +51,23 @@ function windowVerdict(
 /** Both the coordinator and its workers draw on a plan, so either one near its limit pauses. */
 export function evaluateAutonomousGoalUsage(
   goal: Pick<AutonomousGoal, 'agent' | 'workerAgent'>,
-  state: Pick<RateLimitState, AutonomousGoalAgent> | null,
+  state: Pick<RateLimitState, AutonomousGoalCli> | null,
   now: number
 ): AutonomousGoalUsageVerdict {
   if (!state) {
     return { limited: false }
   }
   let latest: AutonomousGoalUsageVerdict = { limited: false }
-  for (const agent of new Set([goal.agent, goal.workerAgent])) {
-    const verdict = windowVerdict(agent, state[agent], now)
+  // Why: the plan, not the agent, runs out: Agent Teams draws on Claude's, DeepSeek on none.
+  const plans = new Set([
+    AUTONOMOUS_GOAL_AGENT_PLAN[goal.agent],
+    AUTONOMOUS_GOAL_AGENT_PLAN[goal.workerAgent]
+  ])
+  for (const cli of plans) {
+    if (cli === null) {
+      continue
+    }
+    const verdict = windowVerdict(cli, state[cli], now)
     if (verdict.limited && (!latest.limited || verdict.resumeAt > latest.resumeAt)) {
       latest = verdict
     }
@@ -88,7 +100,7 @@ export function assertAutonomousGoalWithinUsage(
   store.update(goal.id, { status: 'usageLimited', usageResumeAt: verdict.resumeAt })
   throw new OrchestrationError(
     'goal_usage_limited',
-    `The ${verdict.agent} plan is at ${Math.round(verdict.usedPercent)}% of its usage window. No new workers until ${new Date(verdict.resumeAt).toISOString()}; Dolphin will notify this terminal then. Finish handling current mail and end your turn.`,
+    `The ${verdict.cli} plan is at ${Math.round(verdict.usedPercent)}% of its usage window. No new workers until ${new Date(verdict.resumeAt).toISOString()}; Dolphin will notify this terminal then. Finish handling current mail and end your turn.`,
     { effectsApplied: false, resumeAt: verdict.resumeAt }
   )
 }

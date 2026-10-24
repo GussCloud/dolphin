@@ -17960,7 +17960,7 @@
       "NewWorkspaceComposerAutonomousSection": {
         "title": "Autonomous work",
         "description": "The agent plans the goal, starts worktrees in parallel and coordinates them until every PR is merged.",
-        "unsupportedAgent": "Pick Claude or Codex to coordinate autonomous work.",
+        "unsupportedAgent": "Pick Claude, Codex or DeepSeek (Agent Teams works too) to coordinate autonomous work.",
         "objective": "Goal",
         "objectivePlaceholder": "e.g. Read the docs folder and implement what it specifies",
         "workerAgent": "Worker agent",

@@ -56,7 +56,22 @@ describe('autonomous goal usage guard', () => {
     })
     expect(
       evaluateAutonomousGoalUsage(goal, state(limits('claude', 50), limits('codex', 90)), NOW)
-    ).toMatchObject({ limited: true, agent: 'codex', resumeAt: NOW + 3_600_000 })
+    ).toMatchObject({ limited: true, cli: 'codex', resumeAt: NOW + 3_600_000 })
+    expect(
+      evaluateAutonomousGoalUsage(
+        { agent: 'claude-agent-teams', workerAgent: 'claude-agent-teams' },
+        state(limits('claude', 90), limits('codex', 99)),
+        NOW
+      )
+    ).toMatchObject({ limited: true, cli: 'claude' })
+    // DeepSeek is API-billed: no plan window to guard.
+    expect(
+      evaluateAutonomousGoalUsage(
+        { agent: 'deepseek', workerAgent: 'deepseek-agent-teams' },
+        state(limits('claude', 99), limits('codex', 99)),
+        NOW
+      )
+    ).toEqual({ limited: false })
     expect(
       evaluateAutonomousGoalUsage(goal, state(limits('claude', 10, 96, null), null), NOW)
     ).toMatchObject({ limited: true, resumeAt: NOW + AUTONOMOUS_GOAL_UNKNOWN_RESET_RETRY_MS })
