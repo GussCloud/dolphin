@@ -17956,6 +17956,15 @@
           "empty": "{{value0}} não comentou neste PR.",
           "count": "{{value0}} comentário(s), do mais recente para o mais antigo."
         }
+      },
+      "NewWorkspaceComposerAutonomousSection": {
+        "title": "Trabalho autônomo",
+        "description": "O agente planeja o objetivo, inicia worktrees em paralelo e as coordena até todos os PRs serem mesclados.",
+        "unsupportedAgent": "Escolha Claude ou Codex para coordenar o trabalho autônomo.",
+        "objective": "Objetivo",
+        "objectivePlaceholder": "ex.: Analise a pasta docs e implemente o que ela especifica",
+        "workerAgent": "Agente dos workers",
+        "maxConcurrent": "Worktrees em paralelo"
       }
     },
     "i18n": {

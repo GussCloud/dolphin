@@ -17807,6 +17807,15 @@
           "empty": "{{value0}} 尚未评论此 PR。",
           "count": "{{value0}} 条评论，最新的在前。"
         }
+      },
+      "NewWorkspaceComposerAutonomousSection": {
+        "title": "自主工作",
+        "description": "代理会规划目标、并行启动 worktree 并协调它们，直到所有 PR 合并。",
+        "unsupportedAgent": "请选择 Claude 或 Codex 来协调自主工作。",
+        "objective": "目标",
+        "objectivePlaceholder": "例如：阅读 docs 文件夹并实现其中的要求",
+        "workerAgent": "工作代理",
+        "maxConcurrent": "并行 worktree 数"
       }
     },
     "i18n": {

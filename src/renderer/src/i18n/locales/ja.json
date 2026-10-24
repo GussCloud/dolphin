@@ -17807,6 +17807,15 @@
           "empty": "{{value0}} はこの PR にコメントしていません。",
           "count": "{{value0}} 件のコメント（新しい順）。"
         }
+      },
+      "NewWorkspaceComposerAutonomousSection": {
+        "title": "自律作業",
+        "description": "Agent が目標を計画し、ワークツリーを並行して開始し、すべての PR がマージされるまで調整します。",
+        "unsupportedAgent": "自律作業を調整するには Claude または Codex を選択してください。",
+        "objective": "目標",
+        "objectivePlaceholder": "例: docs フォルダーを読み、記載された内容を実装する",
+        "workerAgent": "ワーカーの Agent",
+        "maxConcurrent": "並行ワークツリー数"
       }
     },
     "i18n": {

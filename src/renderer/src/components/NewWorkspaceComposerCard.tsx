@@ -25,6 +25,8 @@ import type { RuntimeStatus } from '../../../shared/runtime-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { NewWorkspaceComposerAdvancedSection } from './new-workspace/NewWorkspaceComposerAdvancedSection'
 import { NewWorkspaceComposerAgentSection } from './new-workspace/NewWorkspaceComposerAgentSection'
+import { NewWorkspaceComposerAutonomousSection } from './new-workspace/NewWorkspaceComposerAutonomousSection'
+import { isAutonomousGoalAgent } from '../../../shared/autonomous-goal-types'
 import { NewWorkspaceComposerFooter } from './new-workspace/NewWorkspaceComposerFooter'
 import { NewWorkspaceComposerNameSection } from './new-workspace/NewWorkspaceComposerNameSection'
 import { NewWorkspaceComposerProjectSection } from './new-workspace/NewWorkspaceComposerProjectSection'
@@ -322,6 +324,13 @@ export default function NewWorkspaceComposerCard(
           defaultTuiAgent={defaultTuiAgent}
           handleSetDefaultAgent={handleSetDefaultAgent}
         />
+        {props.autonomousGoalDraft && props.onAutonomousGoalDraftChange ? (
+          <NewWorkspaceComposerAutonomousSection
+            draft={props.autonomousGoalDraft}
+            onDraftChange={props.onAutonomousGoalDraftChange}
+            coordinatorSupported={isAutonomousGoalAgent(props.quickAgent)}
+          />
+        ) : null}
         <NewWorkspaceComposerAdvancedSection
           {...props}
           branchNameInputId={branchNameInputId}

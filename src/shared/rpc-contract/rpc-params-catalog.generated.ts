@@ -51,6 +51,14 @@ import {
   AutomationUpdate
 } from './automation-params'
 import {
+  GoalCompleteParams,
+  GoalListParams,
+  GoalNoteParams,
+  GoalShowParams,
+  GoalStartParams,
+  GoalStopParams
+} from './autonomous-goal-params'
+import {
   AzureBoardsAddComment,
   AzureBoardsCreate,
   AzureBoardsGet,
@@ -930,6 +938,12 @@ export const RPC_PARAMS_BY_METHOD = {
   'gitlab.updateMRState': UpdateMrState,
   'gitlab.workItemByPath': WorkItemByPath,
   'gitlab.workItemDetails': WorkItemDetails,
+  'goal.complete': GoalCompleteParams,
+  'goal.list': GoalListParams,
+  'goal.note': GoalNoteParams,
+  'goal.show': GoalShowParams,
+  'goal.start': GoalStartParams,
+  'goal.stop': GoalStopParams,
   'host.gitBash.isAvailable': null,
   'host.platform': null,
   'host.pwsh.isAvailable': null,

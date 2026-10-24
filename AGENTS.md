@@ -115,6 +115,10 @@ All changes must consider folder workspaces as well as git worktrees. Don't assu
 
 The execution host owns agent status in one store, the hook server's, and every reader (sidebar, `worktree ps`, mobile, dashboard) subscribes to it. Before adding a producer, a cache, or a reader-side precedence rule, read [`docs/reference/agent-status-store.md`](./docs/reference/agent-status-store.md): new producers write into that store, and readers keep only presentation policy.
 
+## Autonomous Goals
+
+An autonomous goal's coordinator keeps no state in its context window: the Run, its Tasks and `dolphin goal note` are its memory, so nothing may poll, add fixed per-session context, or depend on the agent's own auto-compaction. Read [`docs/reference/autonomous-goals.md`](./docs/reference/autonomous-goals.md) before changing the coordinator prompt, the goal store or how a goal's session is driven.
+
 ## Agent Terminal Screens
 
 A rule that reads what an agent CLI paints on a terminal — readiness, blocked prompts, idle — must be written against a captured transcript, not a remembered screen. Record one with [`docs/reference/agent-pty-transcript-capture.md`](./docs/reference/agent-pty-transcript-capture.md), which keeps escapes and wrapping intact and scrubs account identifiers before they reach git. Antigravity readiness has no transcript yet and five failed attempts without one; before touching it, read [`docs/reference/antigravity-readiness-evidence.md`](./docs/reference/antigravity-readiness-evidence.md).

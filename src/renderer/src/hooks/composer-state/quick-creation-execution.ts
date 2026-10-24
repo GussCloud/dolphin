@@ -87,7 +87,8 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
       workspaceNameSeed: string,
       workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
       repoId: string,
-      selectedRepo: Repo
+      selectedRepo: Repo,
+      launchPromptOverride?: string
     ): Promise<void> => {
       const prepared = await prepareQuickSubmit(
         smartGitHubResolution,
@@ -123,8 +124,9 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
 
       const promptLinkedWorkItem = agent === null ? null : submitLinkedWorkItem
 
-      const { prompt: quickPrompt, draftPrompt: quickDraftPrompt } =
-        resolveQuickCreateLinkedWorkItemPrompt(promptLinkedWorkItem, trimmedNote)
+      const linkedPrompt = resolveQuickCreateLinkedWorkItemPrompt(promptLinkedWorkItem, trimmedNote)
+      const quickPrompt = launchPromptOverride ?? linkedPrompt.prompt
+      const quickDraftPrompt = launchPromptOverride === undefined ? linkedPrompt.draftPrompt : null
 
       const {
         startupPlan,
@@ -196,21 +198,23 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
 
       const promptDelivery = quickDraftPrompt ? 'draft' : 'auto-submit'
       // Why: the verdict is persisted on the request as data and re-entered once the worktree exists.
-      const agentLaunchRoute = agent
-        ? planAgentSessionLaunch(useAppStore.getState(), {
-            agent,
-            workspace: {
-              kind: selectedRepoIsGit ? 'git-worktree' : 'folder',
-              repoId,
-              executionHostId: ephemeralVmRecipe
-                ? 'runtime:pending-ephemeral-vm'
-                : (workspaceRunContext?.hostId ?? selectedRepoExecutionHostId ?? undefined)
-            },
-            prompt: quickDraftPrompt ?? quickPrompt,
-            promptDelivery,
-            initialSessionOptions: startupPlan?.sessionOptions
-          }).route
-        : 'terminal-tui'
+      // Why: an autonomous coordinator is rotated by resetting its TUI session in place.
+      const agentLaunchRoute =
+        agent && launchPromptOverride === undefined
+          ? planAgentSessionLaunch(useAppStore.getState(), {
+              agent,
+              workspace: {
+                kind: selectedRepoIsGit ? 'git-worktree' : 'folder',
+                repoId,
+                executionHostId: ephemeralVmRecipe
+                  ? 'runtime:pending-ephemeral-vm'
+                  : (workspaceRunContext?.hostId ?? selectedRepoExecutionHostId ?? undefined)
+              },
+              prompt: quickDraftPrompt ?? quickPrompt,
+              promptDelivery,
+              initialSessionOptions: startupPlan?.sessionOptions
+            }).route
+          : 'terminal-tui'
       const structuredLaunch = agentLaunchRoute === 'structured-native-chat'
 
       const request = buildQuickCreationRequest({
