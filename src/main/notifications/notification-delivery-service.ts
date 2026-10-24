@@ -46,7 +46,11 @@ export type NotificationDeliveryService = {
 }
 
 function isAgentCompletionSource(source: NotificationDispatchRequest['source']): boolean {
-  return source === 'agent-task-complete' || source === 'agent-auto-retry-exhausted'
+  return (
+    source === 'agent-task-complete' ||
+    source === 'agent-auto-retry-exhausted' ||
+    source === 'autonomous-goal'
+  )
 }
 
 export function createNotificationDeliveryService(

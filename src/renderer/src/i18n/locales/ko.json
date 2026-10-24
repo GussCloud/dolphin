@@ -17816,6 +17816,14 @@
         "objectivePlaceholder": "예: docs 폴더를 읽고 명시된 내용을 구현",
         "workerAgent": "워커 에이전트",
         "maxConcurrent": "병렬 worktree 수"
+      },
+      "AutonomousGoalStrip": {
+        "active": "작업 중",
+        "blocked": "결정이 필요합니다",
+        "usageLimited": "플랜 사용량으로 일시 중지됨",
+        "stop": "목표 중지",
+        "stopFailed": "목표를 중지할 수 없습니다.",
+        "rotations": "교체 횟수: {{value}}"
       }
     },
     "i18n": {
@@ -18842,6 +18850,12 @@
       "telegram": "Claude의 API 연결이 끊겼고{{where}} 자동 재시도 {{attempts}}회로도 복구되지 않았습니다. 다시 시작하려면 \"continue\"라고 답장하세요.",
       "bodyNoRetry": "Dolphin이 자동으로 다시 시도하지 못했습니다. 다시 시작하려면 continue를 입력하세요.",
       "telegramNoRetry": "Claude의 API 연결이 끊겼고{{where}} Dolphin이 자동으로 다시 시도하지 못했습니다. 다시 시작하려면 \"continue\"라고 답장하세요."
+    },
+    "autonomousGoal": {
+      "complete": "목표 완료",
+      "blocked": "목표에 결정이 필요합니다",
+      "usageLimited": "플랜 사용량으로 목표 일시 중지",
+      "usageLimitedBody": "사용량 창이 초기화될 때까지 새 워커를 시작하지 않으며, 이후 Dolphin이 재개합니다."
     }
   },
   "sidebar": {

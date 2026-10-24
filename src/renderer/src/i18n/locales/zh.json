@@ -17816,6 +17816,14 @@
         "objectivePlaceholder": "例如：阅读 docs 文件夹并实现其中的要求",
         "workerAgent": "工作代理",
         "maxConcurrent": "并行 worktree 数"
+      },
+      "AutonomousGoalStrip": {
+        "active": "进行中",
+        "blocked": "需要你的决定",
+        "usageLimited": "因套餐用量暂停",
+        "stop": "停止目标",
+        "stopFailed": "无法停止目标。",
+        "rotations": "轮换次数：{{value}}"
       }
     },
     "i18n": {
@@ -18842,6 +18850,12 @@
       "telegram": "Claude 的 API 连接已中断{{where}}，{{attempts}} 次自动重试均未恢复。回复 \"continue\" 以继续。",
       "bodyNoRetry": "Dolphin 无法自动重试。输入 continue 以继续。",
       "telegramNoRetry": "Claude 的 API 连接已中断{{where}}，Dolphin 无法自动重试。回复 \"continue\" 以继续。"
+    },
+    "autonomousGoal": {
+      "complete": "目标已完成",
+      "blocked": "目标需要你的决定",
+      "usageLimited": "因套餐用量暂停目标",
+      "usageLimitedBody": "在用量窗口重置前不会启动新的工作代理；重置后 Dolphin 会继续。"
     }
   },
   "sidebar": {

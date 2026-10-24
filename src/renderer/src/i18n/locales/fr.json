@@ -17915,6 +17915,14 @@
         "objectivePlaceholder": "ex. Lis le dossier docs et implémente ce qu’il décrit",
         "workerAgent": "Agent des workers",
         "maxConcurrent": "Worktrees en parallèle"
+      },
+      "AutonomousGoalStrip": {
+        "active": "En cours",
+        "blocked": "Attend votre décision",
+        "usageLimited": "En pause : usage du forfait",
+        "stop": "Arrêter l’objectif",
+        "stopFailed": "Impossible d’arrêter l’objectif.",
+        "rotations": "Rotations : {{value}}"
       }
     },
     "i18n": {
@@ -18929,6 +18937,12 @@
       "telegram": "Claude a perdu sa connexion à l'API{{where}} et {{attempts}} tentatives automatiques ne l'ont pas récupérée. Répondez \"continue\" pour reprendre.",
       "bodyNoRetry": "Dolphin n'a pas pu relancer automatiquement. Tapez continue pour reprendre.",
       "telegramNoRetry": "Claude a perdu sa connexion à l'API{{where}} et Dolphin n'a pas pu relancer automatiquement. Répondez \"continue\" pour reprendre."
+    },
+    "autonomousGoal": {
+      "complete": "Objectif atteint",
+      "blocked": "L’objectif attend votre décision",
+      "usageLimited": "Objectif en pause : usage du forfait",
+      "usageLimitedBody": "Aucun nouveau worker avant le renouvellement de la fenêtre d’usage ; Dolphin reprendra ensuite."
     }
   },
   "sidebar": {

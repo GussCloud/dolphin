@@ -4,6 +4,7 @@ import { TerminalTitlebarTabs } from './TerminalTitlebarTabs'
 import { TerminalSplitWorkspaceSurfaces } from './TerminalSplitWorkspaceSurfaces'
 import { TerminalLegacyWorkspaceSurface } from './TerminalLegacyWorkspaceSurface'
 import { TerminalWorkspaceDialogs } from './TerminalWorkspaceDialogs'
+import { AutonomousGoalStrip } from './autonomous-goal/AutonomousGoalStrip'
 import type { TerminalController } from './use-terminal-controller'
 
 export function TerminalSurface({
@@ -28,6 +29,7 @@ export function TerminalSurface({
     >
       <EditorAutosaveController />
       <TerminalTitlebarTabs controller={controller} />
+      <AutonomousGoalStrip worktreeId={renderedActiveWorktreeId ?? null} />
       <TerminalSplitWorkspaceSurfaces controller={controller} />
       <TerminalLegacyWorkspaceSurface controller={controller} />
       <TerminalWorkspaceDialogs controller={controller} />

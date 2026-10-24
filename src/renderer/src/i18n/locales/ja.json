@@ -17816,6 +17816,14 @@
         "objectivePlaceholder": "例: docs フォルダーを読み、記載された内容を実装する",
         "workerAgent": "ワーカーの Agent",
         "maxConcurrent": "並行ワークツリー数"
+      },
+      "AutonomousGoalStrip": {
+        "active": "作業中",
+        "blocked": "判断が必要です",
+        "usageLimited": "プランの使用量で一時停止中",
+        "stop": "目標を停止",
+        "stopFailed": "目標を停止できませんでした。",
+        "rotations": "ローテーション: {{value}}"
       }
     },
     "i18n": {
@@ -18842,6 +18850,12 @@
       "telegram": "Claude の API 接続が切れました{{where}}。{{attempts}} 回の自動再試行でも回復しませんでした。再開するには \"continue\" と返信してください。",
       "bodyNoRetry": "Dolphin は自動で再試行できませんでした。continue と入力して再開してください。",
       "telegramNoRetry": "Claude の API 接続が切れました{{where}}。Dolphin は自動で再試行できませんでした。再開するには \"continue\" と返信してください。"
+    },
+    "autonomousGoal": {
+      "complete": "目標を達成しました",
+      "blocked": "目標にあなたの判断が必要です",
+      "usageLimited": "プランの使用量により目標を一時停止しました",
+      "usageLimitedBody": "使用量のウィンドウがリセットされるまで新しいワーカーは開始されません。リセット後に Dolphin が再開します。"
     }
   },
   "sidebar": {

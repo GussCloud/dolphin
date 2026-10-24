@@ -175,5 +175,5 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   startMainProcessClaudeConnectionLossRetry(store, runtime, telegramBridge, (event) =>
     agentInteraction.onRetryExhausted(event)
   )
-  startMainProcessAutonomousGoals(runtime)
+  startMainProcessAutonomousGoals(store, runtime)
 }

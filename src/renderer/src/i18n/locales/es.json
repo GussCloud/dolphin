@@ -15436,6 +15436,14 @@
         "objectivePlaceholder": "p. ej. Lee la carpeta docs e implementa lo que especifica",
         "workerAgent": "Agente de los workers",
         "maxConcurrent": "Worktrees en paralelo"
+      },
+      "AutonomousGoalStrip": {
+        "active": "Trabajando",
+        "blocked": "Necesita tu decisión",
+        "usageLimited": "En pausa por el uso del plan",
+        "stop": "Detener objetivo",
+        "stopFailed": "No se pudo detener el objetivo.",
+        "rotations": "Rotaciones: {{value}}"
       }
     },
     "i18n": {
@@ -15919,6 +15927,12 @@
       "telegram": "Claude perdió la conexión con la API{{where}} y {{attempts}} reintentos automáticos no la recuperaron. Responde \"continue\" para reanudar.",
       "bodyNoRetry": "Dolphin no pudo reintentar automáticamente. Escribe continue para reanudar.",
       "telegramNoRetry": "Claude perdió la conexión con la API{{where}} y Dolphin no pudo reintentar automáticamente. Responde \"continue\" para reanudar."
+    },
+    "autonomousGoal": {
+      "complete": "Objetivo completado",
+      "blocked": "El objetivo necesita tu decisión",
+      "usageLimited": "Objetivo en pausa por el uso del plan",
+      "usageLimitedBody": "No habrá nuevos workers hasta que se renueve la ventana de uso; Dolphin lo reanudará entonces."
     }
   },
   "featureTips": {
