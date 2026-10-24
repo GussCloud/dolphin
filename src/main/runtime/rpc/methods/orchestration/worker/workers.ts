@@ -13,6 +13,8 @@ import {
   resolveWorkerStartReadinessTimeoutMs
 } from '../../../../../../shared/orchestration-timing-budgets'
 import { assertWorkerStartTaskSpecWithinPromptBudget } from './worker-start-prompt-budget'
+import { assertAutonomousGoalWithinUsage } from '../../../../../autonomous-goals/autonomous-goal-usage'
+import { getAutonomousGoalStore } from '../../../../../autonomous-goals/autonomous-goal-store-instance'
 
 export const ORCHESTRATION_WORKER_START_METHODS = [
   defineMethod({
@@ -42,6 +44,7 @@ export const ORCHESTRATION_WORKER_START_METHODS = [
           'worker-start requires the coordinator terminal currently bound to the Task Run.'
         )
       }
+      assertAutonomousGoalWithinUsage(getAutonomousGoalStore, run.id)
       const existingTask = params.task ? db.getTask(params.task) : undefined
       if (params.task && (!existingTask || existingTask.run_id !== run.id)) {
         throw new OrchestrationError(

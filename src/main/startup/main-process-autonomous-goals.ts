@@ -7,14 +7,15 @@ import { getAgentPromptSubmitDelayMs } from '../../shared/agent-prompt-injection
 import { buildAutonomousCoordinatorResumePrompt } from '../../shared/autonomous-coordinator-prompt'
 import { readCoordinatorContext } from '../autonomous-goals/autonomous-goal-context-probe'
 import { startAutonomousGoalRotation } from '../autonomous-goals/autonomous-goal-rotation'
+import { startAutonomousGoalUsageResume } from '../autonomous-goals/autonomous-goal-usage-resume'
 import { getAutonomousGoalStore } from '../autonomous-goals/autonomous-goal-store-instance'
 import { lastInputAtByPty } from '../ipc/pty/delivery/visibility-state'
 import { readClientTerminalInputAt } from '../terminal-client-input-clock'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
 
-/** Starts coordinator session rotation for this host's open autonomous goals. */
-export function startMainProcessAutonomousGoalRotation(runtime: DolphinRuntimeService): () => void {
+/** Starts session rotation and usage-window resume for this host's open autonomous goals. */
+export function startMainProcessAutonomousGoals(runtime: DolphinRuntimeService): () => void {
   const dispatcher = new RpcDispatcher({ runtime })
   const sendTerminal = createRpcAgentPaneTerminalSend(
     (request) => dispatcher.dispatch(request),
@@ -22,13 +23,24 @@ export function startMainProcessAutonomousGoalRotation(runtime: DolphinRuntimeSe
   )
   const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
   const store = getAutonomousGoalStore()
-  return startAutonomousGoalRotation({
+  const sendPrompt = (terminal: string, text: string) =>
+    deliverAgentPanePlainText({ sendTerminal, wait }, terminal, text)
+  // Why: no stale row-handle fallback — a pane the runtime no longer has live must not be typed into.
+  const resolveTerminalHandle = (paneKey: string): string | null =>
+    runtime.getLiveTerminalHandleForPaneKey(paneKey)
+  const stopUsageResume = startAutonomousGoalUsageResume({
+    listGoals: () => store.list(),
+    subscribe: (listener) => store.subscribe(listener),
+    markActive: (goalId) => store.update(goalId, { status: 'active', usageResumeAt: undefined }),
+    resolveTerminalHandle,
+    sendPrompt
+  })
+  const stopRotation = startAutonomousGoalRotation({
     subscribeEnrichedStatus: (listener) => agentHookServer.subscribeEnrichedStatus(listener),
     subscribePaneStatusClear: (listener) => agentHookServer.subscribePaneStatusClear(listener),
     findOpenGoalByPane: (paneKey) => store.findOpenByPane(paneKey),
     readContext: readCoordinatorContext,
-    // Why: no stale row-handle fallback — a pane the runtime no longer has live must not be typed into.
-    resolveTerminalHandle: (paneKey) => runtime.getLiveTerminalHandleForPaneKey(paneKey),
+    resolveTerminalHandle,
     readLastInputAt: (terminal) => {
       const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
       if (!ptyId) {
@@ -72,4 +84,8 @@ export function startMainProcessAutonomousGoalRotation(runtime: DolphinRuntimeSe
       }
     }
   })
+  return () => {
+    stopRotation()
+    stopUsageResume()
+  }
 }
