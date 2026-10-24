@@ -6,6 +6,7 @@ import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { buildInjectRejectionMessage } from '../../../../../../shared/orchestration-dispatch-refusal-contract'
 import { createRootDispatch } from '../../../../orchestration/db/root-dispatch-test-fixture'
 import { dispatchPreambleSendOptions } from '../../../../orchestration/preamble'
+import { deliveredWorkerBrief } from '../../../../orchestration/worker-brief.test-support'
 
 describe('orchestration RPC methods', () => {
   const h = createOrchestrationRpcHarness()
@@ -348,8 +349,11 @@ describe('orchestration RPC methods', () => {
 
       expect(send).toHaveBeenCalledWith(
         'term_a',
-        expect.stringContaining('dolphin-dev orchestration send'),
-        expect.objectContaining(dispatchPreambleSendOptions(expect.any(String)))
+        expect.stringContaining('dolphin-dev orchestration worker-brief'),
+        expect.objectContaining(dispatchPreambleSendOptions(expect.any(String), 'brief-pointer'))
+      )
+      expect(deliveredWorkerBrief(runtime, send.mock.calls[0]?.[1])).toContain(
+        'dolphin-dev orchestration send'
       )
     })
 
@@ -390,10 +394,46 @@ describe('orchestration RPC methods', () => {
 
       expect(agentPrompt).toHaveBeenCalledWith(
         'term_a',
-        expect.stringContaining('line one\nline two'),
-        expect.objectContaining(dispatchPreambleSendOptions(expect.any(String)))
+        expect.not.stringContaining('\n'),
+        expect.objectContaining(dispatchPreambleSendOptions(expect.any(String), 'brief-pointer'))
+      )
+      expect(deliveredWorkerBrief(runtime, agentPrompt.mock.calls[0]?.[1])).toContain(
+        'line one\nline two'
       )
       expect(rawSend).not.toHaveBeenCalled()
+    })
+
+    it('hands the full brief only to the worker pane through worker-brief', async () => {
+      setup()
+      provideInjectIdentity()
+      const task = db.createTask({ spec: 'line one\nline two' })
+      vi.spyOn(runtime, 'isTerminalRunningAgent').mockResolvedValue(true)
+      vi.spyOn(runtime, 'sendTerminalAgentPrompt').mockResolvedValue({
+        handle: 'term_a',
+        accepted: true,
+        bytesWritten: 1
+      })
+      const { dispatch } = (await call('orchestration.dispatch', {
+        task: task.id,
+        to: 'term_a',
+        inject: true
+      })) as { dispatch: { id: string } }
+
+      const brief = (await call('orchestration.workerBrief', {
+        dispatch: dispatch.id,
+        from: 'term_a'
+      })) as { taskId: string; brief: string }
+      expect(brief.taskId).toBe(task.id)
+      expect(brief.brief).toContain('line one\nline two')
+      expect(brief.brief).toMatch(/--dispatch-capability dcap_/)
+
+      // Why: the brief carries the Dispatch capability, so no other pane may read it.
+      await expect(
+        call('orchestration.workerBrief', { dispatch: dispatch.id, from: 'term_coord' })
+      ).rejects.toMatchObject({ code: 'worker_brief_not_found' })
+      await expect(
+        call('orchestration.workerBrief', { dispatch: 'ctx_missing', from: 'term_a' })
+      ).rejects.toMatchObject({ code: 'worker_brief_not_found' })
     })
 
     it('rejects inject to terminal without recognized agent', async () => {

@@ -111,6 +111,7 @@ export const ROOT_HELP_TEXT_PRIMARY = [
   '  orchestration task-update Update a task status',
   '  orchestration dispatch    Dispatch a task to a terminal',
   '  orchestration dispatch-show Show dispatch context for a task',
+  '  orchestration worker-brief Print the brief dispatched to this worker terminal',
   '  orchestration worker-start Start a supervised worker locally or on a connected Dolphin server',
   '  orchestration worker-show Inspect one supervised worker',
   '  orchestration worker-read Read bounded output from one supervised worker',

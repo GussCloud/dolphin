@@ -114,7 +114,7 @@ describe('buildAutonomousCoordinatorResumePrompt', () => {
 })
 
 describe('Claude Agent Teams goals', () => {
-  it('keeps a Teams coordinator off teammates and lets Teams workers use them', () => {
+  it('keeps a Teams coordinator off teammates and has every Teams worker spec require them', () => {
     const prompt = buildAutonomousCoordinatorInstructions({
       objective: 'Ship',
       agent: 'claude-agent-teams',
@@ -122,7 +122,7 @@ describe('Claude Agent Teams goals', () => {
       maxConcurrent: 2
     })
     expect(prompt).toContain('Do not spawn Agent Teams teammates from this coordinator')
-    expect(prompt).toContain('Workers run Agent Teams')
+    expect(prompt).toContain('each spec must tell the worker to split its Task across teammates')
   })
 
   it('applies the same Teams rules to DeepSeek Agent Teams', () => {

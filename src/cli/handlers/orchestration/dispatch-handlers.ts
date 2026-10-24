@@ -5,7 +5,10 @@ import { RuntimeClientError } from '../../runtime-client'
 import { orchestrationMigrationData } from '../../../shared/orchestration-rpc-contract'
 import { callOrchestrationMutation } from './mutation-request'
 import { isDevCliInvocation } from './runtime-compatibility'
-import { resolveCoordinatorTerminalHandle } from './terminal-identity'
+import {
+  resolveCoordinatorTerminalHandle,
+  resolveOrchestrationTerminalHandle
+} from './terminal-identity'
 
 export const ORCHESTRATION_DISPATCH_HANDLER: Record<string, CommandHandler> = {
   'orchestration dispatch': async ({ flags, client, cwd, json }) => {
@@ -64,6 +67,17 @@ export const ORCHESTRATION_DISPATCH_INSPECTION_HANDLERS: Record<string, CommandH
       }
       return `${value.dispatch.id} task=${value.dispatch.task_id} [${value.dispatch.status}]`
     })
+  },
+
+  'orchestration worker-brief': async ({ flags, client, cwd, json }) => {
+    const result = await client.call<{ dispatchId: string; taskId: string; brief: string }>(
+      'orchestration.workerBrief',
+      {
+        dispatch: getRequiredStringFlag(flags, 'dispatch'),
+        from: await resolveOrchestrationTerminalHandle(flags, cwd, client, 'from')
+      }
+    )
+    printResult(result, json, (value) => value.brief)
   },
 
   'orchestration coordinator-start': async () => {

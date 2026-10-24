@@ -59,6 +59,33 @@ function launchCliNameFor(repo: Repo): string {
   }).startup.command.split(' ')[0]!
 }
 
+// Why: orchestration workers in new worktrees launch through this builder, not the renderer, so
+// the Agent Teams session instructions from Settings must ride on this command too.
+describe('buildWorktreeStartupForAgent Agent Teams session instructions', () => {
+  const commandFor = (repo: Repo, agentSessionInstructions?: Record<string, string>) =>
+    buildWorktreeStartupForAgent({
+      repo,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the builder reads only these settings fields.
+      settings: { ...(settings as object), agentSessionInstructions } as never,
+      agent: 'claude-agent-teams',
+      getLaunchPlatform: () => 'linux',
+      toSessionOptions: () => undefined
+    }).startup.command
+
+  it('appends the default teammate instructions on local and SSH workers', () => {
+    for (const repo of [makeRepo({}), makeRepo({ connectionId: 'm4air' })]) {
+      const command = commandFor(repo)
+      expect(command).toContain('--append-system-prompt')
+      expect(command).toContain('split the work across a team of teammates')
+    }
+  })
+
+  it('appends the instructions the user configured in Settings', () => {
+    const command = commandFor(makeRepo({}), { 'claude-agent-teams': 'Use three teammates.' })
+    expect(command).toContain("--append-system-prompt 'Use three teammates.'")
+  })
+})
+
 describe('buildWorktreeStartupForAgent host resolution', () => {
   // Why two hosts: one SSH fixture passes even when the launch shape is resolved off another
   // host's row, which is the shape of the `ssh:m4air` -> openclaw leak.

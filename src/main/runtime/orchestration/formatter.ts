@@ -119,5 +119,6 @@ export function formatMessagePointer(
   const runFlag = mailboxHandle?.startsWith('run:')
     ? ` --run ${mailboxHandle.slice('run:'.length)}`
     : ''
-  return `\nYou have ${count} orchestration ${noun}. Run \`${cliCommand} orchestration check${runFlag}\`.\n`
+  // Why one line: under Windows ConPTY a line feed in Claude's composer left the pointer unsubmitted.
+  return `You have ${count} orchestration ${noun}. Run \`${cliCommand} orchestration check${runFlag}\`.`
 }

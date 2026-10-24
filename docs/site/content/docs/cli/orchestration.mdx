@@ -130,7 +130,7 @@ While a wait is active, the CLI emits small JSON heartbeat lines to stderr every
 
 ## Worker contract
 
-Dispatched workers receive a preamble that tells them how to communicate with the coordinator:
+Dispatched workers receive a preamble that tells them how to communicate with the coordinator. A worker running in a terminal gets one line naming `dolphin orchestration worker-brief --dispatch <dispatchId> --json`, which prints the full preamble. Only that worker's terminal can read it, and it can be read again after a compaction:
 
 - Send `worker_done` exactly once, even on failure, with `--outcome`.
 - Include a short `--body` summary: what was done, what was found, and what remains.

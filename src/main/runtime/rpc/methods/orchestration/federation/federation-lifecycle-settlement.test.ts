@@ -12,6 +12,7 @@ import { waitForFederatedLifecycleSettlement } from '../../../../orchestration/f
 import { RpcDispatcher } from '../../../dispatcher'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
 import { createFederationWorkerStartRequest as startRequest } from './federation-request.test-support'
+import { deliveredWorkerBrief } from '../../../../orchestration/worker-brief.test-support'
 
 describe('orchestration federation lifecycle settlement', () => {
   let homeDb: OrchestrationDb
@@ -155,7 +156,10 @@ describe('orchestration federation lifecycle settlement', () => {
     await homeDispatcher.dispatch(startRequest(taskId))
     homeRuntime.stopOrchestrationFederationRelay()
     const dispatch = homeDb.getDispatchContext(taskId)!
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     const sent = workerDispatcher.dispatch({
       id: 'rpc_waiting_worker_done',
@@ -192,7 +196,10 @@ describe('orchestration federation lifecycle settlement', () => {
     signal?: AbortSignal,
     outcome: 'succeeded' | 'failed' = 'succeeded'
   ) {
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     return workerDispatcher.dispatch(
       {
@@ -662,7 +669,10 @@ describe('orchestration federation lifecycle settlement', () => {
     await homeDispatcher.dispatch(startRequest(task.id))
     homeRuntime.stopOrchestrationFederationRelay()
     const dispatch = homeDb.getDispatchContext(task.id)!
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     const controller = new AbortController()
     const sent = workerDispatcher.dispatch(

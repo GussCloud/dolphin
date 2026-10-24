@@ -419,7 +419,11 @@ import {
   RunShowParams,
   RunUseParams
 } from './orchestration-runs-params'
-import { WorkerDispatchParams, WorkerReadParams } from './orchestration-worker-control-params'
+import {
+  WorkerBriefParams,
+  WorkerDispatchParams,
+  WorkerReadParams
+} from './orchestration-worker-control-params'
 import { OrchestrationWorkerTerminalUserInputParams } from './orchestration-worker-release-params'
 import {
   WorkerDispatchParams as WorkerDispatchParamsOfOrchestrationWorkerReleaseSchemasParams,
@@ -1070,6 +1074,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'orchestration.taskCreate': TaskCreateParams,
   'orchestration.taskList': TaskListParams,
   'orchestration.workerAbandon': WorkerDispatchParams,
+  'orchestration.workerBrief': WorkerBriefParams,
   'orchestration.workerList': WorkerListParams,
   'orchestration.workerRead': WorkerReadParams,
   'orchestration.workerRelease': WorkerDispatchParamsOfOrchestrationWorkerReleaseSchemasParams,

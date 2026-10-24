@@ -5,6 +5,7 @@ import type { OrchestrationDb } from '../../../../orchestration/db'
 import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../../../shared/constants'
 import { dispatchPreambleSendOptions } from '../../../../orchestration/preamble'
+import { deliveredWorkerBrief } from '../../../../orchestration/worker-brief.test-support'
 
 describe('orchestration RPC methods', () => {
   const h = createOrchestrationRpcHarness()
@@ -158,11 +159,15 @@ describe('orchestration RPC methods', () => {
         title: `worker-${task.id}`,
         surfaceOwner: false
       })
+      // Why: the capability stays out of the pane; only the held brief carries it.
       expect(runtime.sendTerminalAgentPrompt).toHaveBeenCalledWith(
         'term_worker',
-        expect.stringContaining('--dispatch-capability dcap_'),
-        expect.objectContaining(dispatchPreambleSendOptions(expect.any(String)))
+        expect.not.stringContaining('dcap_'),
+        expect.objectContaining(dispatchPreambleSendOptions(expect.any(String), 'brief-pointer'))
       )
+      expect(
+        deliveredWorkerBrief(runtime, vi.mocked(runtime.sendTerminalAgentPrompt).mock.calls[0]?.[1])
+      ).toContain('--dispatch-capability dcap_')
     })
 
     it('applies and reports opaque per-invocation model preferences', async () => {
