@@ -62,7 +62,7 @@ describe('DolphinRuntimeService', () => {
         .map(([, data]) => data)
         .filter((data): data is string => typeof data === 'string')
       expect(payloads).toContain(
-        '\nYou have 1 orchestration message. Run `dolphin-dev orchestration check --run run_test`.\n'
+        'You have 1 orchestration message. Run `dolphin-dev orchestration check --run run_test`.'
       )
       expect(payloads.some((data) => data.includes('reserved completion'))).toBe(false)
       expect(status.delivered_at).toEqual(expect.any(String))

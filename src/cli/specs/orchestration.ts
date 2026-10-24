@@ -199,6 +199,16 @@ export const ORCHESTRATION_COMMAND_SPECS: CommandSpec[] = [
     allowedFlags: [...GLOBAL_FLAGS, 'task', 'preamble', 'from']
   },
   {
+    path: ['orchestration', 'worker-brief'],
+    summary: 'Print the full brief Dolphin dispatched to this worker terminal',
+    usage: 'dolphin orchestration worker-brief --dispatch <dispatch_id> [--from <handle>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'dispatch', 'from'],
+    notes: [
+      'Run it from the worker terminal named in the one-line dispatch notice; other terminals are refused.',
+      'Read-only and repeatable: run it again after a compaction to re-read the brief.'
+    ]
+  },
+  {
     path: ['orchestration', 'ask'],
     summary: 'Ask the coordinator a question and block until answered',
     usage:

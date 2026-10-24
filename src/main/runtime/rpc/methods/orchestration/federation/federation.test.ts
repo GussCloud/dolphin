@@ -13,6 +13,7 @@ import { createFederationWorkerStartRequest as startRequest } from './federation
 import { configureFederationWorkerRuntime } from './federation-runtime.test-support'
 import { syncFederationBarrier } from './federation-sync-barrier.test-support'
 import { dispatchPreambleSendOptions } from '../../../../orchestration/preamble'
+import { deliveredWorkerBrief } from '../../../../orchestration/worker-brief.test-support'
 
 describe('orchestration federation', () => {
   const databases: OrchestrationDb[] = []
@@ -152,7 +153,7 @@ describe('orchestration federation', () => {
     expect(workerRuntime.sendTerminalAgentPrompt).toHaveBeenCalledWith(
       'term_windows_worker',
       expect.stringContaining(`Your task ID is: ${task.id}`),
-      expect.objectContaining(dispatchPreambleSendOptions(expect.any(String)))
+      expect.objectContaining(dispatchPreambleSendOptions(expect.any(String), 'brief-pointer'))
     )
   })
 
@@ -281,7 +282,10 @@ describe('orchestration federation', () => {
     const started = await homeDispatcher.dispatch(startRequest(task.id))
     expect(started.ok).toBe(true)
     const dispatch = homeDb.getDispatchContext(task.id)!
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     expect(capability).toBeTruthy()
 
@@ -334,7 +338,10 @@ describe('orchestration federation', () => {
     const task = createHomeTask()
     await homeDispatcher.dispatch(startRequest(task.id))
     const dispatch = homeDb.getDispatchContext(task.id)!
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     const ask = workerDispatcher.dispatch({
       id: 'rpc_remote_ask',
@@ -403,7 +410,10 @@ describe('orchestration federation', () => {
   it('keeps a timed-out remote question resumable', async () => {
     const task = createHomeTask()
     await homeDispatcher.dispatch(startRequest(task.id))
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     const timedOut = await workerDispatcher.dispatch({
       id: 'rpc_remote_ask_timeout',
@@ -457,7 +467,10 @@ describe('orchestration federation', () => {
     const task = createHomeTask()
     await homeDispatcher.dispatch(startRequest(task.id))
     homeRuntime.stopOrchestrationFederationRelay()
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     await workerDispatcher.dispatch({
       id: 'rpc_remote_status',
@@ -575,7 +588,10 @@ describe('orchestration federation', () => {
     const task = createHomeTask()
     await homeDispatcher.dispatch(startRequest(task.id))
     const dispatch = homeDb.getDispatchContext(task.id)!
-    const prompt = vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const prompt = deliveredWorkerBrief(
+      workerRuntime,
+      vi.mocked(workerRuntime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    )
     const capability = prompt.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
     homeRuntime.stopOrchestrationFederationRelay()
     await workerDispatcher.dispatch({

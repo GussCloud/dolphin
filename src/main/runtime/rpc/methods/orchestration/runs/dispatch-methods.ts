@@ -1,9 +1,7 @@
 import { defineMethod } from '../../../core'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
-import {
-  buildDispatchPreamble,
-  dispatchPreambleSendOptions
-} from '../../../../orchestration/preamble'
+import { buildDispatchPreamble } from '../../../../orchestration/preamble'
+import { sendWorkerBriefPointer } from '../../../../orchestration/worker-brief-delivery'
 import { resolveDispatchCreator } from './dispatch-creator'
 import {
   injectRejectedError,
@@ -161,11 +159,15 @@ export const ORCHESTRATION_DISPATCH_METHODS = [
       let prompt
       if (params.inject) {
         try {
-          prompt = await runtime.sendTerminalAgentPrompt(
-            to,
+          prompt = await sendWorkerBriefPointer(runtime, {
+            terminalHandle: to,
+            dispatchId: ctx.id,
+            taskId: task.id,
+            taskSpec: task.spec,
             preamble,
-            dispatchPreambleSendOptions(orchestrationMutation?.requestId ?? ctx.id)
-          )
+            devMode: params.devMode,
+            requestId: orchestrationMutation?.requestId ?? ctx.id
+          })
           injected = true
         } catch (err) {
           db.failDispatch(ctx.id, err instanceof Error ? err.message : String(err))

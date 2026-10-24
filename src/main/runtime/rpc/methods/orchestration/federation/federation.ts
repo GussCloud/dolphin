@@ -1,9 +1,7 @@
 import type { TuiAgent } from '../../../../../../shared/tui-agent'
 import { describeTerminalWaitBlockedReason } from '../../../../../../shared/terminal-wait-blocked-reason-legacy-alias'
-import {
-  buildDispatchPreamble,
-  dispatchPreambleSendOptions
-} from '../../../../orchestration/preamble'
+import { buildDispatchPreamble } from '../../../../orchestration/preamble'
+import { sendWorkerBriefPointer } from '../../../../orchestration/worker-brief-delivery'
 import { OrchestrationError } from '../../../../orchestration/orchestration-error'
 import { defineMethod } from '../../../core'
 import { assertOrchestrationWorktreeCreationSupported } from '../worker/folder-worktree-placement'
@@ -249,9 +247,12 @@ export const ORCHESTRATION_FEDERATION_ATTACH_METHODS = [
           terminalOwnership: params.terminal ? 'external' : 'created'
         })
         failedStage = 'dispatch_input'
-        const prompt = await runtime.sendTerminalAgentPrompt(
+        const prompt = await sendWorkerBriefPointer(runtime, {
           terminalHandle,
-          buildDispatchPreamble({
+          dispatchId: params.dispatchId,
+          taskId: params.taskId,
+          taskSpec: params.taskSpec,
+          preamble: buildDispatchPreamble({
             taskId: params.taskId,
             dispatchId: params.dispatchId,
             taskSpec: params.taskSpec,
@@ -264,8 +265,9 @@ export const ORCHESTRATION_FEDERATION_ATTACH_METHODS = [
             canDispatchSubWorkers: (params.depth ?? 1) < runtime.getNestedWorkerMaxDepth(),
             cliCommand: runtime.getTerminalOrchestrationCliCommand(terminalHandle)
           }),
-          dispatchPreambleSendOptions(orchestrationMutation.requestId)
-        )
+          devMode: params.devMode,
+          requestId: orchestrationMutation.requestId
+        })
         effects.push({
           kind: 'dispatch_input',
           role: 'agent',

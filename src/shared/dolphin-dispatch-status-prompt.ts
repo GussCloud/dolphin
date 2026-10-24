@@ -12,6 +12,10 @@ export const DOLPHIN_DISPATCH_STATUS_TASK_MARKER = '=== TASK ==='
 // only where the user's own words ask it to, and refused bare pasted briefs (STA-8200).
 export const DOLPHIN_DISPATCH_PROMPT_LEAD_LINE =
   'Please carry out this task from my Dolphin coordinator by following the brief I pasted below.'
+// Why: the PTY dispatch now pastes one line pointing at `worker-brief`; the user's own words
+// must ask for the returned brief to be followed, or Claude treats it as untrusted tool output.
+export const DOLPHIN_WORKER_BRIEF_LEAD_LINE =
+  'Please carry out the task my Dolphin coordinator assigned to this terminal: run the worker-brief command below and follow the brief it returns.'
 const DOLPHIN_DISPATCH_STATUS_TASK_ID_MARKER = 'Your task ID is:'
 // Why: real preambles put === TASK === near the end (~4KB+). Scan past the
 // normal single-line budget so the task body is still reachable for compacting.
@@ -30,8 +34,11 @@ export function findDolphinDispatchPreambleStart(value: string): number {
   // bounded too, or leading whitespace can bypass the normalizer's scan cap.
   const scanEnd = Math.min(value.length, DOLPHIN_DISPATCH_STATUS_SOURCE_SCAN_LIMIT)
   let start = skipTrimWhitespace(value, 0, scanEnd)
-  if (value.startsWith(DOLPHIN_DISPATCH_PROMPT_LEAD_LINE, start)) {
-    start = skipTrimWhitespace(value, start + DOLPHIN_DISPATCH_PROMPT_LEAD_LINE.length, scanEnd)
+  for (const leadLine of [DOLPHIN_DISPATCH_PROMPT_LEAD_LINE, DOLPHIN_WORKER_BRIEF_LEAD_LINE]) {
+    if (value.startsWith(leadLine, start)) {
+      start = skipTrimWhitespace(value, start + leadLine.length, scanEnd)
+      break
+    }
   }
   if (value.startsWith(PASTED_CONTENT_OPEN_TAG, start)) {
     const tagLength = value.slice(start, start + PASTED_CONTENT_OPEN_TAG_MAX_LENGTH).indexOf('>')

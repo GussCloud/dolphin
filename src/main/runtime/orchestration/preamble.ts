@@ -1,7 +1,10 @@
 import { CLI_COMMAND_NAME, DEV_CLI_COMMAND_NAME } from '../../../shared/cli-command-names'
 import type { OrchestrationCliCommand } from './cli-command'
 import type { RuntimeAgentPromptWriteOptions } from '../runtime-terminal-contracts'
-import { DOLPHIN_DISPATCH_PROMPT_LEAD_LINE } from '../../../shared/dolphin-dispatch-status-prompt'
+import {
+  DOLPHIN_DISPATCH_PROMPT_LEAD_LINE,
+  DOLPHIN_WORKER_BRIEF_LEAD_LINE
+} from '../../../shared/dolphin-dispatch-status-prompt'
 
 export type PreambleParams = {
   taskId: string
@@ -151,10 +154,16 @@ export type DispatchPreambleSendOptions = Pick<
   'leadLine' | 'acceptQueued' | 'observationTimeoutMs' | 'requestId'
 >
 
-export function dispatchPreambleSendOptions(requestId: string): DispatchPreambleSendOptions {
+export function dispatchPreambleSendOptions(
+  requestId: string,
+  delivery: 'preamble' | 'brief-pointer' = 'preamble'
+): DispatchPreambleSendOptions {
   // Why: a delayed provider hook must not revoke an accepted Dispatch.
   return {
-    leadLine: DOLPHIN_DISPATCH_PROMPT_LEAD_LINE,
+    leadLine:
+      delivery === 'brief-pointer'
+        ? DOLPHIN_WORKER_BRIEF_LEAD_LINE
+        : DOLPHIN_DISPATCH_PROMPT_LEAD_LINE,
     acceptQueued: true,
     observationTimeoutMs: 0,
     requestId

@@ -8,6 +8,7 @@ import { OrchestrationDb } from '../../../../orchestration/db'
 import { RpcDispatcher } from '../../../dispatcher'
 import type { RpcRequest } from '../../../core'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
+import { deliveredWorkerBrief } from '../../../../orchestration/worker-brief.test-support'
 
 const goalRunIds = vi.hoisted(() => new Set<string>())
 vi.mock('../../../../../autonomous-goals/autonomous-goal-store-instance', () => ({
@@ -252,7 +253,9 @@ describe('orchestration new-worktree workers', () => {
 
     await startWorker({ worktree: 'new-top-level' })
 
-    const prompt = vi.mocked(runtime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    const pointer = vi.mocked(runtime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
+    expect(pointer).toContain('dolphin-ide orchestration worker-brief')
+    const prompt = deliveredWorkerBrief(runtime, pointer)
     expect(prompt).toContain('dolphin-ide orchestration send')
     expect(prompt).toMatch(/--dispatch-capability dcap_[A-Za-z0-9_-]+/)
     expect(prompt).not.toMatch(/(^|\s)dolphin orchestration send/)

@@ -48,7 +48,7 @@ function coordinatorRules(
     "- Each worker spec must say: implement the task, run the repo's checks, open a PR (or MR), drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.",
     ...(isAutonomousGoalTeamsAgent(workerAgent)
       ? [
-          '- Workers run Agent Teams: each spec may let the worker split its own Task across teammates, but the worker alone opens the PR and reports worker_done.'
+          '- Workers run Agent Teams: each spec must tell the worker to split its Task across teammates as its session instructions describe; the worker alone opens the PR and reports worker_done.'
         ]
       : []),
     "- A Task that depends on another starts only after the dependency's PR is merged; its worktree must branch from the updated base.",

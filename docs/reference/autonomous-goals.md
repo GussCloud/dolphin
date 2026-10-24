@@ -130,6 +130,22 @@ pointer whose single Enter was dropped. Two things close them:
   re-nudges at most every 5 minutes, skips usage-limited goals, and after 3
   unanswered nudges marks the goal blocked so the user is notified.
 
+## One-line terminal input
+
+Under Windows ConPTY, Claude Code left multi-line pasted input unsubmitted in its
+composer however many times Enter was sent, while single-line input submitted
+on the same path. So nothing Dolphin types into an agent pane spans lines:
+
+- A terminal worker's brief stays on the host (`worker-brief-store.ts`). The pane
+  gets a typed lead line plus one pasted line naming
+  `dolphin orchestration worker-brief --dispatch <id> --json`, which returns the
+  brief only to the pane it was sent to. The line keeps the compact
+  `Your task ID is: ... === TASK === ...` form, so the sidebar label still works,
+  and the dispatch capability never shows up in the pane's scrollback. The brief
+  lives in memory: after a host restart the worker gets `worker_brief_not_found`
+  and the coordinator dispatches it again.
+- The mailbox pointer is one line, with no leading or trailing line feed.
+
 ## Cleanup
 
 `autonomous-goal-cleanup.ts` leaves nothing running or on disk once the work is
@@ -204,7 +220,10 @@ instead of 120k.
   parallel work goes through orchestration workers, whose state survives a session
   reset, while a teammate's context would be lost on `/clear`. Rotation never fires
   while teammates are still working, because the leader's row then reads `working`.
-- An Agent Teams worker may split its own Task across teammates; it alone opens
-  the PR and reports `worker_done`.
+- An Agent Teams worker is launched with the Agent Teams session instructions
+  from Settings (`--append-system-prompt`, through the same startup builder as a
+  normal launch). The coordinator's rules make every worker spec tell it to split
+  the Task across teammates; the worker alone opens the PR and reports
+  `worker_done`.
 - DeepSeek never runs over SSH (its key would cross the relay), so a DeepSeek goal
   on an SSH workspace fails at launch like any DeepSeek launch there.

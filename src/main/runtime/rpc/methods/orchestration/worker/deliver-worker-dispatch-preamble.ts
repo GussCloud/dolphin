@@ -1,9 +1,7 @@
 import type { RuntimeTerminalSend } from '../../../../../../shared/runtime-terminal-contracts'
 import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
-import {
-  buildDispatchPreamble,
-  dispatchPreambleSendOptions
-} from '../../../../orchestration/preamble'
+import { buildDispatchPreamble } from '../../../../orchestration/preamble'
+import { sendWorkerBriefPointer } from '../../../../orchestration/worker-brief-delivery'
 import { sendStructuredWorkerPreamble } from '../../orchestration-structured-worker-session'
 import type { createStructuredWorkerSessionForWorktree } from './worker-topology'
 
@@ -13,8 +11,8 @@ type StructuredSession = Awaited<ReturnType<typeof createStructuredWorkerSession
  * Hands a started worker the dispatch preamble, over whichever transport it has.
  *
  * The preamble itself is identical for both: a worker is taught the same verbs whichever mode it
- * runs in, and only the delivery differs — a PTY write returns a queued/accepted receipt, while a
- * structured turn either is acknowledged or throws.
+ * runs in, and only the delivery differs — a PTY pane gets a one-line pointer to `worker-brief`
+ * and returns a queued/accepted receipt, while a structured turn either is acknowledged or throws.
  */
 export async function deliverWorkerDispatchPreamble(args: {
   runtime: DolphinRuntimeService
@@ -54,10 +52,14 @@ export async function deliverWorkerDispatchPreamble(args: {
     return undefined
   }
   return (
-    await runtime.sendTerminalAgentPrompt(
+    await sendWorkerBriefPointer(runtime, {
       terminalHandle,
+      dispatchId: args.dispatchId,
+      taskId: args.taskId,
+      taskSpec: args.taskSpec,
       preamble,
-      dispatchPreambleSendOptions(args.requestId)
-    )
+      devMode: args.devMode,
+      requestId: args.requestId
+    })
   ).prompt
 }

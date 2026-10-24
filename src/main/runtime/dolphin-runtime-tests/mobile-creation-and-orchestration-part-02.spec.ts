@@ -94,7 +94,7 @@ describe('DolphinRuntimeService', () => {
       runtime.onPtyData('pty-1', '\x1b]0;Codex done\x07', 101)
       expect(write).toHaveBeenCalledWith(
         'pty-1',
-        '\nYou have 1 orchestration message. Run `dolphin-dev orchestration check --run run_mailbox`.\n'
+        'You have 1 orchestration message. Run `dolphin-dev orchestration check --run run_mailbox`.'
       )
       expect(write).not.toHaveBeenCalledWith(
         'pty-1',
@@ -472,7 +472,7 @@ describe('DolphinRuntimeService', () => {
     await vi.waitFor(() => {
       expect(write).toHaveBeenCalledWith(
         'pty-1',
-        '\nYou have 1 orchestration message. Run `dolphin-dev orchestration check --run run_codex_native_title`.\n'
+        'You have 1 orchestration message. Run `dolphin-dev orchestration check --run run_codex_native_title`.'
       )
     })
     db.close()
