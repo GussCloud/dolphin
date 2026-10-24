@@ -9,6 +9,9 @@ import { readCoordinatorContext } from '../autonomous-goals/autonomous-goal-cont
 import { startAutonomousGoalRotation } from '../autonomous-goals/autonomous-goal-rotation'
 import { startAutonomousGoalUsageResume } from '../autonomous-goals/autonomous-goal-usage-resume'
 import { startAutonomousGoalNotifier } from '../autonomous-goals/autonomous-goal-notifier'
+import { startAutonomousGoalMailWatchdog } from '../autonomous-goals/autonomous-goal-mail-watchdog'
+import { startAutonomousGoalCleanup } from '../autonomous-goals/autonomous-goal-cleanup'
+import { createAutonomousGoalCleanupRpcPorts } from '../autonomous-goals/autonomous-goal-cleanup-ports'
 import { dispatchMainProcessNotification } from '../ipc/notifications'
 import type { Store } from '../persistence'
 import { resolveWorkspaceDisplayName } from '../workspace-display-name'
@@ -16,6 +19,7 @@ import { getAutonomousGoalStore } from '../autonomous-goals/autonomous-goal-stor
 import { readLatestTerminalInputAt } from '../terminal-client-input-clock'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
+import { isAgentPromptStalledError } from '../runtime/agent-prompt-submission-verification'
 
 /** Starts session rotation and usage-window resume for this host's open autonomous goals. */
 export function startMainProcessAutonomousGoals(
@@ -34,6 +38,10 @@ export function startMainProcessAutonomousGoals(
   // Why: no stale row-handle fallback — a pane the runtime no longer has live must not be typed into.
   const resolveTerminalHandle = (paneKey: string): string | null =>
     runtime.getLiveTerminalHandleForPaneKey(paneKey)
+  const readLastInputAt = (terminal: string): number | undefined => {
+    const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
+    return ptyId ? readLatestTerminalInputAt(ptyId) : undefined
+  }
   const stopUsageResume = startAutonomousGoalUsageResume({
     listGoals: () => store.list(),
     subscribe: (listener) => store.subscribe(listener),
@@ -59,13 +67,7 @@ export function startMainProcessAutonomousGoals(
     findOpenGoalByPane: (paneKey) => store.findOpenByPane(paneKey),
     readContext: readCoordinatorContext,
     resolveTerminalHandle,
-    readLastInputAt: (terminal) => {
-      const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
-      if (!ptyId) {
-        return undefined
-      }
-      return readLatestTerminalInputAt(ptyId)
-    },
+    readLastInputAt,
     sendPrompt: (terminal, text) =>
       deliverAgentPanePlainText({ sendTerminal, wait }, terminal, text),
     sendCommand: async (terminal, command) => {
@@ -100,7 +102,41 @@ export function startMainProcessAutonomousGoals(
       }
     }
   })
+  const mailWatchdog = startAutonomousGoalMailWatchdog({
+    listGoals: () => store.list(),
+    oldestUnreadRunMessageId: (runId) =>
+      runtime.getOrchestrationDb().getUnreadRunMailbox(runId, 1)[0]?.id ?? null,
+    resolveTerminalHandle,
+    readAgentStatus: async (terminal) => (await runtime.getTerminalAgentStatus(terminal)).status,
+    readLastInputAt,
+    sendNudge: async (terminal, text) => {
+      try {
+        await runtime.sendTerminalAgentPrompt(terminal, text)
+        return true
+      } catch (error) {
+        // Why: a stalled verdict still wrote the nudge; only an unwritable pane counts as unsent.
+        return isAgentPromptStalledError(error)
+      }
+    },
+    markBlocked: (goalId, text) => {
+      store.addNote(goalId, 'blocker', text)
+      store.update(goalId, { status: 'blocked' })
+    }
+  })
+  const cleanup = startAutonomousGoalCleanup({
+    listGoals: () => store.list(),
+    subscribe: (listener) => store.subscribe(listener),
+    ...createAutonomousGoalCleanupRpcPorts({
+      dispatch: (request) => dispatcher.dispatch(request),
+      runtime
+    }),
+    recordCleanup: (goalId, record) => {
+      store.update(goalId, { cleanup: record })
+    }
+  })
   return () => {
+    cleanup.stop()
+    mailWatchdog.stop()
     stopRotation()
     stopUsageResume()
     stopNotifier()

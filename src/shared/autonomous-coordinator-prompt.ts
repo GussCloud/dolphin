@@ -52,7 +52,7 @@ function coordinatorRules(
         ]
       : []),
     "- A Task that depends on another starts only after the dependency's PR is merged; its worktree must branch from the updated base.",
-    '- After starting or answering workers, end your turn and stay idle: Dolphin types a notice into this terminal when Run mail arrives. Never use `check --wait` or poll. On each notice, read with `dolphin orchestration check --json`, act, then acknowledge with `dolphin orchestration check --ack <delivery_id> --json`.',
+    '- After starting or answering workers, end your turn and stay idle: Dolphin types a notice into this terminal when Run mail arrives. Never use `check --wait` or poll. On each notice, read with `dolphin orchestration check --json`, act, then acknowledge with `dolphin orchestration check --ack <delivery_id> --json`. An ack response can carry the next batch (a new deliveryId): handle and ack it too, until a response has no messages; an unacked batch silences every later notice.',
     '- Do not read diffs or worker transcripts; act only on the reports. Keep your own replies short.',
     '- If worker-start refuses with goal_usage_limited, start nothing else and end your turn; Dolphin wakes this terminal when the plan window resets.',
     '- Record anything a successor must know as one line: `dolphin goal note --kind decision --text "..."`.',
@@ -160,3 +160,7 @@ export const AUTONOMOUS_COORDINATOR_RESET_COMMAND: Record<AutonomousGoalCli, str
 
 export const AUTONOMOUS_COORDINATOR_HANDOFF_REQUEST =
   'Dolphin is about to replace this session with a fresh one to keep the context small. In one command, save what the next session needs that is not already in the Run, Tasks or goal notes (open threads, what you were about to do): `dolphin goal note --kind handoff --text "<at most 1200 characters>"`. Reply with nothing else and do not start new work.'
+
+/** Typed by the host when Run mail sits unread while the coordinator is idle. */
+export const AUTONOMOUS_COORDINATOR_MAIL_NUDGE =
+  'Dolphin: Run mail is waiting and has not been handled. Run `dolphin orchestration check --json`, act on it, and ack each delivery; an ack response can carry the next batch, so repeat until none remain.'

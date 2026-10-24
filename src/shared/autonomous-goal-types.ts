@@ -83,6 +83,14 @@ export const AUTONOMOUS_GOAL_MAX_DECISIONS = 20
 export const AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT = 2
 export const AUTONOMOUS_GOAL_MAX_CONCURRENT_LIMIT = 6
 
+/** What the host removed once the goal's workers were done, and what it left and why. */
+export type AutonomousGoalCleanup = {
+  removedWorktreeIds: string[]
+  retained: { worktreeId: string; reason: string }[]
+  /** Set once the closing sweep ran, so a restart does not repeat it. */
+  finishedAt?: number
+}
+
 export type AutonomousGoal = {
   id: string
   objective: string
@@ -101,6 +109,7 @@ export type AutonomousGoal = {
   summary?: string
   /** Set while usage-limited: when the plan window resets. */
   usageResumeAt?: number
+  cleanup?: AutonomousGoalCleanup
   createdAt: number
   updatedAt: number
 }
