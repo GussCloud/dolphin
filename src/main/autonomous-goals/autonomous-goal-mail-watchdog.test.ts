@@ -27,12 +27,12 @@ const goal: AutonomousGoal = {
 
 function harness(overrides: Partial<AutonomousGoalMailWatchdogPorts> = {}) {
   let clock = 0
-  const state = {
-    unread: 'msg_1' as string | null,
-    status: 'idle' as 'working' | 'permission' | 'idle' | null,
-    inputAt: undefined as number | undefined,
-    goalStatus: goal.status
-  }
+  const state: {
+    unread: string | null
+    status: 'working' | 'permission' | 'idle' | null
+    inputAt: number | undefined
+    goalStatus: AutonomousGoal['status']
+  } = { unread: 'msg_1', status: 'idle', inputAt: undefined, goalStatus: goal.status }
   const sendNudge = vi.fn(async () => true)
   const markBlocked = vi.fn()
   const watchdog = startAutonomousGoalMailWatchdog({

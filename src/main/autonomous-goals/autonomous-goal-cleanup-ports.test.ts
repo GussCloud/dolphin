@@ -26,12 +26,14 @@ describe('autonomous goal cleanup RPC ports', () => {
       dispatch: (request) => dispatcher.dispatch(request),
       runtime
     })
-    vi.spyOn(runtime, 'showManagedWorktree').mockResolvedValue({
+    const worktree = {
       id: 'repo::wt-1',
       repoId: 'repo',
       branch: 'refs/heads/feature/x',
       hostId: 'local'
-    } as never)
+    }
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the ports read only the fields this stub sets.
+    vi.spyOn(runtime, 'showManagedWorktree').mockResolvedValue(worktree as never)
   })
 
   afterEach(() => {
@@ -40,6 +42,7 @@ describe('autonomous goal cleanup RPC ports', () => {
   })
 
   it('removes a worktree through worktree.rm without forcing it', async () => {
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the RPC verb reads only the fields this stub sets.
     const remove = vi.spyOn(runtime, 'removeManagedWorktree').mockResolvedValue({} as never)
     expect(await ports.removeWorktree('repo::wt-1')).toEqual({ removed: true })
     expect(remove).toHaveBeenCalledWith(
@@ -61,7 +64,9 @@ describe('autonomous goal cleanup RPC ports', () => {
   it('reads the merge state of the worktree branch through hostedReview.forBranch', async () => {
     const review = vi
       .spyOn(runtime, 'getHostedReviewForBranch')
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the RPC verb reads only the fields this stub sets.
       .mockResolvedValueOnce({ state: 'merged' } as never)
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the RPC verb reads only the fields this stub sets.
       .mockResolvedValueOnce({ state: 'open' } as never)
     expect(await ports.isWorktreeReviewMerged('repo::wt-1')).toBe(true)
     expect(await ports.isWorktreeReviewMerged('repo::wt-1')).toBe(false)
