@@ -2,7 +2,7 @@
 // the guard pauses new workers near a window's end and resumes the goal when the window resets.
 import type { ProviderRateLimits, RateLimitState } from '../../shared/rate-limit-types'
 import {
-  AUTONOMOUS_GOAL_AGENT_CLI,
+  AUTONOMOUS_GOAL_AGENT_PLAN,
   type AutonomousGoal,
   type AutonomousGoalCli
 } from '../../shared/autonomous-goal-types'
@@ -58,12 +58,15 @@ export function evaluateAutonomousGoalUsage(
     return { limited: false }
   }
   let latest: AutonomousGoalUsageVerdict = { limited: false }
-  // Why: an Agent Teams goal draws on the Claude plan; the plan, not the agent, is what runs out.
-  const clis = new Set([
-    AUTONOMOUS_GOAL_AGENT_CLI[goal.agent],
-    AUTONOMOUS_GOAL_AGENT_CLI[goal.workerAgent]
+  // Why: the plan, not the agent, runs out: Agent Teams draws on Claude's, DeepSeek on none.
+  const plans = new Set([
+    AUTONOMOUS_GOAL_AGENT_PLAN[goal.agent],
+    AUTONOMOUS_GOAL_AGENT_PLAN[goal.workerAgent]
   ])
-  for (const cli of clis) {
+  for (const cli of plans) {
+    if (cli === null) {
+      continue
+    }
     const verdict = windowVerdict(cli, state[cli], now)
     if (verdict.limited && (!latest.limited || verdict.resumeAt > latest.resumeAt)) {
       latest = verdict

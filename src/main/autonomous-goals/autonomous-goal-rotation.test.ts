@@ -134,6 +134,14 @@ describe('autonomous goal session rotation', () => {
     expect(h.ctx.sent.at(-1)).toEqual({ kind: 'command', text: '/clear' })
   })
 
+  it('rotates a DeepSeek coordinator earlier, with the Claude Code reset', async () => {
+    const h = harness({ contextTokens: 70_000 })
+    h.ctx.goal = { ...GOAL, agent: 'deepseek' }
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_HANDOFF_TIMEOUT_MS)
+    expect(h.ctx.sent.at(-1)).toEqual({ kind: 'command', text: '/clear' })
+  })
+
   it('leaves a small context alone', async () => {
     const h = harness({ contextTokens: 20_000 })
     h.turnEnds()
@@ -195,8 +203,9 @@ describe('autonomous goal session rotation', () => {
   })
 
   it('rotates at the smaller of the absolute bound and a share of a stated window', () => {
-    expect(rotationThreshold({ contextTokens: 0 })).toBe(120_000)
-    expect(rotationThreshold({ contextTokens: 0, windowTokens: 1_000_000 })).toBe(120_000)
-    expect(rotationThreshold({ contextTokens: 0, windowTokens: 128_000 })).toBe(76_800)
+    expect(rotationThreshold({ contextTokens: 0 }, 'claude')).toBe(120_000)
+    expect(rotationThreshold({ contextTokens: 0, windowTokens: 1_000_000 }, 'codex')).toBe(120_000)
+    expect(rotationThreshold({ contextTokens: 0, windowTokens: 128_000 }, 'codex')).toBe(76_800)
+    expect(rotationThreshold({ contextTokens: 0 }, 'deepseek-agent-teams')).toBe(64_000)
   })
 })

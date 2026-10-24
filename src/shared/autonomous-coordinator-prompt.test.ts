@@ -96,7 +96,19 @@ describe('Claude Agent Teams goals', () => {
     })
     expect(prompt).toContain('--agent claude-agent-teams --worker-agent claude-agent-teams')
     expect(prompt).toContain('Do not spawn Agent Teams teammates from this coordinator')
-    expect(prompt).toContain('Workers run Claude Agent Teams')
+    expect(prompt).toContain('Workers run Agent Teams')
+  })
+
+  it('applies the same Teams rules to DeepSeek Agent Teams', () => {
+    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+      objective: 'Ship',
+      agent: 'deepseek-agent-teams',
+      workerAgent: 'deepseek-agent-teams',
+      maxConcurrent: 2
+    })
+    expect(prompt).toContain('--agent deepseek-agent-teams --worker-agent deepseek-agent-teams')
+    expect(prompt).toContain('Do not spawn Agent Teams teammates from this coordinator')
+    expect(prompt).toContain('Workers run Agent Teams')
   })
 
   it('omits the Teams rules for other agents', () => {

@@ -15431,7 +15431,7 @@
       "NewWorkspaceComposerAutonomousSection": {
         "title": "Trabajo autónomo",
         "description": "El agente planifica el objetivo, inicia worktrees en paralelo y los coordina hasta fusionar todos los PR.",
-        "unsupportedAgent": "Elige Claude, Claude Agent Teams o Codex para coordinar el trabajo autónomo.",
+        "unsupportedAgent": "Elige Claude, Codex o DeepSeek (también con Agent Teams) para coordinar el trabajo autónomo.",
         "objective": "Objetivo",
         "objectivePlaceholder": "p. ej. Lee la carpeta docs e implementa lo que especifica",
         "workerAgent": "Agente de los workers",

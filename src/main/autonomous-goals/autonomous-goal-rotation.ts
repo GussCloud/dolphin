@@ -65,13 +65,26 @@ function defaultSchedule(run: () => void, ms: number): () => void {
   return () => clearTimeout(timer)
 }
 
-export function rotationThreshold(reading: CoordinatorContextReading): number {
+/** DeepSeek's chat models have a 128k window and its Claude-format transcript states none. */
+export const AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS_BY_AGENT: Record<
+  AutonomousGoalAgent,
+  number
+> = {
+  claude: AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS,
+  'claude-agent-teams': AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS,
+  codex: AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS,
+  deepseek: 64_000,
+  'deepseek-agent-teams': 64_000
+}
+
+export function rotationThreshold(
+  reading: CoordinatorContextReading,
+  agent: AutonomousGoalAgent
+): number {
+  const ceiling = AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS_BY_AGENT[agent]
   return reading.windowTokens
-    ? Math.min(
-        AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS,
-        Math.floor(reading.windowTokens * AUTONOMOUS_GOAL_ROTATE_AT_WINDOW_SHARE)
-      )
-    : AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS
+    ? Math.min(ceiling, Math.floor(reading.windowTokens * AUTONOMOUS_GOAL_ROTATE_AT_WINDOW_SHARE))
+    : ceiling
 }
 
 function isCompletedLeadTurn(enriched: EnrichedAgentHookEventPayload): boolean {
@@ -134,7 +147,7 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
     if (enriched.connectionId === null && transcriptPath) {
       const reading = await ports.readContext(goal.agent, transcriptPath)
       if (reading) {
-        return reading.contextTokens >= rotationThreshold(reading)
+        return reading.contextTokens >= rotationThreshold(reading, goal.agent)
       }
     }
     return state.turnsSinceRotation >= AUTONOMOUS_GOAL_ROTATE_FALLBACK_TURNS

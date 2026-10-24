@@ -1,10 +1,11 @@
 // Prompts that drive an autonomous goal's coordinator. Kept terse: every line is paid for again
 // each time the session is rotated, so rules live here once instead of in a large skill.
-import type {
-  AutonomousGoal,
-  AutonomousGoalAgent,
-  AutonomousGoalCli,
-  AutonomousGoalNote
+import {
+  isAutonomousGoalTeamsAgent,
+  type AutonomousGoal,
+  type AutonomousGoalAgent,
+  type AutonomousGoalCli,
+  type AutonomousGoalNote
 } from './autonomous-goal-types'
 
 export type AutonomousCoordinatorLaunch = {
@@ -30,8 +31,6 @@ export function decodeAutonomousGoalObjective(encoded: string): string {
   return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
 }
 
-const TEAMS_AGENT: AutonomousGoalAgent = 'claude-agent-teams'
-
 function coordinatorRules(
   agent: AutonomousGoalAgent,
   workerAgent: AutonomousGoalAgent,
@@ -39,7 +38,7 @@ function coordinatorRules(
 ): string[] {
   return [
     'Rules:',
-    ...(agent === TEAMS_AGENT
+    ...(isAutonomousGoalTeamsAgent(agent)
       ? [
           '- Do not spawn Agent Teams teammates from this coordinator: parallel work goes through orchestration workers, which survive a session reset.'
         ]
@@ -47,9 +46,9 @@ function coordinatorRules(
     '- You coordinate; you do not implement. Read the repository docs once, then split the goal into Tasks with only real dependencies (`dolphin orchestration task-create --spec "..." --deps \'["<task_id>"]\' --json`).',
     `- Start each ready Task in its own worktree: \`dolphin orchestration worker-start --task <task_id> --worktree new-top-level --name <short-slug> --agent ${workerAgent} --json\`. Keep at most ${maxConcurrent} workers running.`,
     "- Each worker spec must say: implement the task, run the repo's checks, open a PR (or MR), drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.",
-    ...(workerAgent === TEAMS_AGENT
+    ...(isAutonomousGoalTeamsAgent(workerAgent)
       ? [
-          '- Workers run Claude Agent Teams: each spec may let the worker split its own Task across teammates, but the worker alone opens the PR and reports worker_done.'
+          '- Workers run Agent Teams: each spec may let the worker split its own Task across teammates, but the worker alone opens the PR and reports worker_done.'
         ]
       : []),
     "- A Task that depends on another starts only after the dependency's PR is merged; its worktree must branch from the updated base.",

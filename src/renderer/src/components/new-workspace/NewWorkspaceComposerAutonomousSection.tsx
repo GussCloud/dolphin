@@ -29,7 +29,7 @@ export function NewWorkspaceComposerAutonomousSection({
 }: {
   draft: AutonomousGoalDraft
   onDraftChange: (next: AutonomousGoalDraft) => void
-  /** Only Claude, Claude Agent Teams and Codex can coordinate: rotation relies on their in-place session reset. */
+  /** Only goal agents can coordinate: rotation relies on their CLI's in-place session reset. */
   coordinatorSupported: boolean
 }): React.JSX.Element {
   const switchId = React.useId()
@@ -52,7 +52,7 @@ export function NewWorkspaceComposerAutonomousSection({
                 )
               : translate(
                   'auto.components.NewWorkspaceComposerAutonomousSection.unsupportedAgent',
-                  'Pick Claude, Claude Agent Teams or Codex to coordinate autonomous work.'
+                  'Pick Claude, Codex or DeepSeek (Agent Teams works too) to coordinate autonomous work.'
                 )}
           </p>
         </div>

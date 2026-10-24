@@ -110,18 +110,24 @@ Stopping a goal leaves its Run, Tasks and workers untouched.
 
 ## Supported agents
 
-Coordinators and workers are Claude, Claude Agent Teams or Codex
-(`AUTONOMOUS_GOAL_AGENTS`). Each maps to the CLI it runs
-(`AUTONOMOUS_GOAL_AGENT_CLI`), and that CLI decides the transcript format the
-context probe reads, the hook source rotation listens to, the in-place reset
-(`/clear` for Claude and Agent Teams, `/new` for Codex) and the plan the usage guard
-checks: an Agent Teams goal draws on the Claude plan.
+Coordinators and workers are Claude, Claude Agent Teams, Codex, DeepSeek or
+DeepSeek Agent Teams (`AUTONOMOUS_GOAL_AGENTS`). Each maps to the CLI it runs
+(`AUTONOMOUS_GOAL_AGENT_CLI`): DeepSeek runs the Claude Code CLI against DeepSeek's
+API (see [`deepseek-agent.md`](./deepseek-agent.md)). The CLI decides the transcript
+format the context probe reads, the hook source rotation listens to and the in-place
+reset (`/clear` for every Claude Code agent, `/new` for Codex).
 
-- An Agent Teams coordinator is told not to spawn teammates: parallel work goes
-  through orchestration workers, whose state survives a session reset, while a
-  teammate's context would be lost on `/clear`. Rotation never fires while
-  teammates are still working, because the leader's row then reads `working`.
+The plan the usage guard checks is separate (`AUTONOMOUS_GOAL_AGENT_PLAN`): Agent
+Teams draws on the Claude plan; DeepSeek is API-billed, has no window, and is never
+paused by the guard. DeepSeek's Claude-format transcript states no context window,
+so its coordinator rotates at 64k tokens (its chat models have a 128k window)
+instead of 120k.
+
+- An Agent Teams coordinator (Claude or DeepSeek) is told not to spawn teammates:
+  parallel work goes through orchestration workers, whose state survives a session
+  reset, while a teammate's context would be lost on `/clear`. Rotation never fires
+  while teammates are still working, because the leader's row then reads `working`.
 - An Agent Teams worker may split its own Task across teammates; it alone opens
   the PR and reports `worker_done`.
-- DeepSeek is not offered yet: its launch gate and isolated config are not wired
-  into goal workers.
+- DeepSeek never runs over SSH (its key would cross the relay), so a DeepSeek goal
+  on an SSH workspace fails at launch like any DeepSeek launch there.

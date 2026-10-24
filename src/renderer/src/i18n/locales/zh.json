@@ -17811,7 +17811,7 @@
       "NewWorkspaceComposerAutonomousSection": {
         "title": "自主工作",
         "description": "代理会规划目标、并行启动 worktree 并协调它们，直到所有 PR 合并。",
-        "unsupportedAgent": "请选择 Claude、Claude Agent Teams 或 Codex 来协调自主工作。",
+        "unsupportedAgent": "请选择 Claude、Codex 或 DeepSeek（也支持 Agent Teams）来协调自主工作。",
         "objective": "目标",
         "objectivePlaceholder": "例如：阅读 docs 文件夹并实现其中的要求",
         "workerAgent": "工作代理",
