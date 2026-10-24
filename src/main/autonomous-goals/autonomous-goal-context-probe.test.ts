@@ -8,7 +8,11 @@ import {
   readCoordinatorContext
 } from './autonomous-goal-context-probe'
 
-const claudeAssistant = (input: number, cacheRead: number, extra: object = {}): string =>
+const claudeAssistant = (
+  input: number,
+  cacheRead: number,
+  extra: { isSidechain?: boolean } = {}
+): string =>
   JSON.stringify({
     type: 'assistant',
     message: {

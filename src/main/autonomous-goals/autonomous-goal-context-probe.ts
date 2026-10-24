@@ -1,6 +1,7 @@
 // Reads how full a coordinator's context window is from the tail of its own transcript, at turn end
 // only: no model call, no polling, and a bounded read however long the session has run.
 import { open } from 'node:fs/promises'
+import { z } from 'zod'
 import {
   contextTokensFromUsage,
   type AgentSessionTokenUsage
@@ -29,6 +30,31 @@ async function readTail(path: string): Promise<string> {
   }
 }
 
+const TokenCount = z.number().finite().nonnegative().catch(0).default(0)
+
+const ClaudeAssistantLine = z.object({
+  type: z.literal('assistant'),
+  isSidechain: z.boolean().optional(),
+  message: z.object({
+    usage: z.object({
+      input_tokens: TokenCount,
+      cache_creation_input_tokens: TokenCount,
+      cache_read_input_tokens: TokenCount,
+      output_tokens: TokenCount
+    })
+  })
+})
+
+const CodexTokenCountLine = z.object({
+  payload: z.object({
+    type: z.literal('token_count'),
+    info: z.object({
+      last_token_usage: z.unknown(),
+      model_context_window: TokenCount
+    })
+  })
+})
+
 function parseLine(line: string): unknown {
   try {
     return JSON.parse(line)
@@ -37,42 +63,21 @@ function parseLine(line: string): unknown {
   }
 }
 
-function numberField(record: object, key: string): number {
-  const value = key in record ? Reflect.get(record, key) : undefined
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0
-}
-
-function objectField(record: unknown, key: string): object | null {
-  if (typeof record !== 'object' || record === null || !(key in record)) {
-    return null
-  }
-  const value: unknown = Reflect.get(record, key)
-  return typeof value === 'object' && value !== null ? value : null
-}
-
 /** The newest main-thread assistant response's input is the live context size. */
 export function readClaudeContextFromLines(
   lines: readonly string[]
 ): CoordinatorContextReading | null {
   for (let index = lines.length - 1; index >= 0; index -= 1) {
-    const entry = parseLine(lines[index])
-    if (
-      typeof entry !== 'object' ||
-      entry === null ||
-      Reflect.get(entry, 'type') !== 'assistant' ||
-      Reflect.get(entry, 'isSidechain') === true
-    ) {
+    const entry = ClaudeAssistantLine.safeParse(parseLine(lines[index]))
+    if (!entry.success || entry.data.isSidechain === true) {
       continue
     }
-    const usage = objectField(objectField(entry, 'message'), 'usage')
-    if (!usage) {
-      continue
-    }
+    const usage = entry.data.message.usage
     const tokens: AgentSessionTokenUsage = {
-      inputTokens: numberField(usage, 'input_tokens'),
-      cacheCreationInputTokens: numberField(usage, 'cache_creation_input_tokens'),
-      cacheReadInputTokens: numberField(usage, 'cache_read_input_tokens'),
-      outputTokens: numberField(usage, 'output_tokens')
+      inputTokens: usage.input_tokens,
+      cacheCreationInputTokens: usage.cache_creation_input_tokens,
+      cacheReadInputTokens: usage.cache_read_input_tokens,
+      outputTokens: usage.output_tokens
     }
     return { contextTokens: contextTokensFromUsage(tokens) }
   }
@@ -84,16 +89,12 @@ export function readCodexContextFromLines(
   lines: readonly string[]
 ): CoordinatorContextReading | null {
   for (let index = lines.length - 1; index >= 0; index -= 1) {
-    const payload = objectField(parseLine(lines[index]), 'payload')
-    if (!payload || Reflect.get(payload, 'type') !== 'token_count') {
+    const entry = CodexTokenCountLine.safeParse(parseLine(lines[index]))
+    const last = entry.success ? normalizeRawUsage(entry.data.payload.info.last_token_usage) : null
+    if (!entry.success || !last) {
       continue
     }
-    const info = objectField(payload, 'info')
-    const last = normalizeRawUsage(info ? Reflect.get(info, 'last_token_usage') : null)
-    if (!info || !last) {
-      continue
-    }
-    const window = numberField(info, 'model_context_window')
+    const window = entry.data.payload.info.model_context_window
     return {
       contextTokens: last.inputTokens + last.outputTokens,
       ...(window > 0 ? { windowTokens: window } : {})
