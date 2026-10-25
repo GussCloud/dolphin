@@ -22,6 +22,7 @@ import {
   buildFakeAgentCommandOverride,
   FAKE_AGENT_WINDOWS_SHELL
 } from './helpers/fake-agent-command-override'
+import { FAKE_AGENT_WORKER_BRIEF_SOURCE } from './helpers/fake-agent-worker-brief'
 
 type TranscriptProvider = 'claude' | 'grok' | 'omp'
 
@@ -140,14 +141,17 @@ async function sendProviderHook() {
   })
 }
 process.stdout.write('\\u001b]0;${title.replaceAll("'", "\\'")}\\u0007')
-process.stdin.on('data', (chunk) => {
-  const input = chunk.toString()
+${FAKE_AGENT_WORKER_BRIEF_SOURCE}
+function onInput(input) {
   const capability = input.match(/--dispatch-capability (dcap_[A-Za-z0-9_-]+)/)?.[1]
   if (capability) {
     appendFileSync(ledger, JSON.stringify({ agent: '${agent}', capability }) + '\\n')
     void sendProviderHook()
   }
-})
+}
+process.stdin.on('data', (chunk) => onInput(chunk.toString()))
+const launchBriefInput = fakeAgentLaunchBriefInput()
+if (launchBriefInput) onInput(launchBriefInput)
 process.stdin.resume()
 setInterval(() => {}, 60_000)
 `

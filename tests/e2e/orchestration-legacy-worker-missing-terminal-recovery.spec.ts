@@ -24,6 +24,7 @@ import {
   FAKE_AGENT_WINDOWS_SHELL
 } from './helpers/fake-agent-command-override'
 import { FAKE_AGENT_PASTE_END_SCANNER_SOURCE } from './helpers/fake-agent-paste-end-scanner'
+import { FAKE_AGENT_WORKER_BRIEF_SOURCE } from './helpers/fake-agent-worker-brief'
 
 const PROVIDER_SESSION_ID = 'e2e-missing-legacy-worker'
 const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-missing-legacy-worker-'))
@@ -49,8 +50,8 @@ appendLedger('DOLPHIN_E2E_SPAWN_LEDGER', { event: 'spawn' })
 process.stdout.write('\\u001b]0;Codex Ready\\u0007OpenAI Codex\\nmodel: e2e\\ndirectory: e2e\\n')
 let acknowledged = false
 ${FAKE_AGENT_PASTE_END_SCANNER_SOURCE}
-process.stdin.on('data', (chunk) => {
-  const input = chunk.toString()
+${FAKE_AGENT_WORKER_BRIEF_SOURCE}
+function onInput(input) {
   const pasteEndScan = scanFakeAgentPasteEnd(fakeAgentPasteEndTail, input)
   fakeAgentPasteEndTail = pasteEndScan.tail
   if (pasteEndScan.pasteEndOffset !== null) {
@@ -67,7 +68,10 @@ process.stdin.on('data', (chunk) => {
       setTimeout(() => process.stdout.write('\\u001b]0;Codex Ready\\u0007'), 10)
     })
   }
-})
+}
+process.stdin.on('data', (chunk) => onInput(chunk.toString()))
+const launchBriefInput = fakeAgentLaunchBriefInput()
+if (launchBriefInput) onInput(launchBriefInput)
 process.stdin.setRawMode?.(true)
 for (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) {
   process.on(signal, () => {

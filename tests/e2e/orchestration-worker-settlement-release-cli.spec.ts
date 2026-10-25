@@ -13,6 +13,7 @@ import {
   FAKE_AGENT_WINDOWS_SHELL
 } from './helpers/fake-agent-command-override'
 import { FAKE_AGENT_PASTE_END_SCANNER_SOURCE } from './helpers/fake-agent-paste-end-scanner'
+import { FAKE_AGENT_WORKER_BRIEF_SOURCE } from './helpers/fake-agent-worker-brief'
 
 const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-settlement-release-'))
 const cliLedgerPath = path.join(fakeCliDir, 'cli.jsonl')
@@ -30,9 +31,9 @@ if (process.argv.slice(2).includes('app-server')) {
 let capability = null
 let acknowledged = false
 ${FAKE_AGENT_PASTE_END_SCANNER_SOURCE}
+${FAKE_AGENT_WORKER_BRIEF_SOURCE}
 process.stdout.write('\\u001b]0;Codex Ready\\u0007OpenAI Codex\\nmodel: e2e\\ndirectory: e2e\\n')
-process.stdin.on('data', (chunk) => {
-  const input = chunk.toString()
+function onInput(input) {
   const pasteEndScan = scanFakeAgentPasteEnd(fakeAgentPasteEndTail, input)
   fakeAgentPasteEndTail = pasteEndScan.tail
   if (pasteEndScan.pasteEndOffset !== null) {
@@ -71,7 +72,10 @@ process.stdin.on('data', (chunk) => {
     process.env.DOLPHIN_E2E_CLI_LEDGER,
     JSON.stringify({ mismatch: request.mismatch, args, status: result.status, stdout: result.stdout, stderr: result.stderr }) + '\\n'
   )
-})
+}
+process.stdin.on('data', (chunk) => onInput(chunk.toString()))
+const launchBriefInput = fakeAgentLaunchBriefInput()
+if (launchBriefInput) onInput(launchBriefInput)
 process.stdin.setRawMode?.(true)
 process.stdin.resume()
 setInterval(() => {}, 60_000)
