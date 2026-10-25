@@ -25,13 +25,16 @@ export function NewWorkspaceComposerAutonomousSection({
   draft,
   onDraftChange,
   coordinatorSupported,
-  workerAgents
+  workerAgents,
+  localOnlyBase
 }: {
   draft: AutonomousGoalDraft
   onDraftChange: (next: AutonomousGoalDraft) => void
   /** Only goal agents can coordinate: rotation relies on their CLI's in-place session reset. */
   coordinatorSupported: boolean
   workerAgents: React.ComponentProps<typeof AgentCombobox>['agents']
+  /** The picked base when it exists only on this machine. */
+  localOnlyBase?: string
 }): React.JSX.Element {
   const objectiveId = React.useId()
   const removeWorktreesId = React.useId()
@@ -49,6 +52,18 @@ export function NewWorkspaceComposerAutonomousSection({
               'Pick Claude, Codex or DeepSeek (Agent Teams works too) to coordinate autonomous work.'
             )}
       </p>
+      {draft.enabled && coordinatorSupported && localOnlyBase ? (
+        <p
+          role="status"
+          className="rounded-md border border-status-warning-border bg-status-warning-background px-3 py-2 text-xs"
+        >
+          {translate(
+            'auto.components.NewWorkspaceComposerAutonomousSection.localOnlyBase',
+            '{{branch}} exists only on this machine. Push it before starting, or the workers cannot open PRs against it.',
+            { branch: localOnlyBase }
+          )}
+        </p>
+      ) : null}
       {draft.enabled && coordinatorSupported ? (
         <div className="space-y-2">
           <label htmlFor={objectiveId} className="text-xs font-medium text-muted-foreground">

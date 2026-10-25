@@ -5,6 +5,7 @@ import type AgentCombobox from '@/components/agent/AgentCombobox'
 import { isAutonomousGoalAgent } from '../../../../shared/autonomous-goal-types'
 import type { NewWorkspaceComposerCardProps } from './new-workspace-composer-card-props'
 import { NewWorkspaceComposerAutonomousSection } from './NewWorkspaceComposerAutonomousSection'
+import { useLocalOnlyGoalBase } from './use-local-only-goal-base'
 
 type AgentEntries = React.ComponentProps<typeof AgentCombobox>['agents']
 
@@ -15,7 +16,12 @@ type AgentEntries = React.ComponentProps<typeof AgentCombobox>['agents']
 export function useComposerGoalMode(
   props: Pick<
     NewWorkspaceComposerCardProps,
-    'autonomousGoalDraft' | 'onAutonomousGoalDraftChange' | 'quickAgent' | 'onQuickAgentChange'
+    | 'autonomousGoalDraft'
+    | 'onAutonomousGoalDraftChange'
+    | 'quickAgent'
+    | 'onQuickAgentChange'
+    | 'repoId'
+    | 'baseBranch'
   >,
   visibleQuickAgents: AgentEntries
 ): {
@@ -28,6 +34,11 @@ export function useComposerGoalMode(
   const goalAgents = React.useMemo(
     () => visibleQuickAgents.filter((entry) => isAutonomousGoalAgent(entry.id)),
     [visibleQuickAgents]
+  )
+  const localOnlyBase = useLocalOnlyGoalBase(
+    props.repoId,
+    props.baseBranch,
+    draft?.enabled === true && onDraftChange !== undefined
   )
   if (!draft || !onDraftChange) {
     return { tabs: null, goalSection: null, agents: visibleQuickAgents }
@@ -71,6 +82,7 @@ export function useComposerGoalMode(
         onDraftChange={onDraftChange}
         coordinatorSupported={isAutonomousGoalAgent(props.quickAgent)}
         workerAgents={goalAgents}
+        localOnlyBase={localOnlyBase ? props.baseBranch : undefined}
       />
     )
   }

@@ -17967,7 +17967,8 @@
         "removeWorktrees": "Remove worktrees when done",
         "removeWorktreesDescription": "Finished workers close their terminal, and their worktree is removed once its PR merges. When off, everything stays open.",
         "keepCoordinatorWorktree": "Keep main worktree",
-        "keepCoordinatorWorktreeDescription": "The coordinator's worktree stays after the goal completes."
+        "keepCoordinatorWorktreeDescription": "The coordinator's worktree stays after the goal completes.",
+        "localOnlyBase": "{{branch}} exists only on this machine. Push it before starting, or the workers cannot open PRs against it."
       },
       "AutonomousGoalStrip": {
         "active": "Working",
@@ -17980,7 +17981,8 @@
       "NewWorkspaceComposerGoalMode": {
         "worktreeTab": "Worktree",
         "autonomousTab": "Autonomous work",
-        "coordinatorAgent": "Coordinator agent"
+        "coordinatorAgent": "Coordinator agent",
+        "startGoal": "Start goal"
       }
     },
     "i18n": {

@@ -268,16 +268,21 @@ function QuickTabBody({
       resolveAutonomousGoalLaunchPrompt(effectiveAutonomousGoalDraft, quickAgent) ?? undefined
     )
   }, [effectiveAutonomousGoalDraft, quickAgent, submitQuick])
-  const primaryActionLabel = isFolderWorkspaceTarget
-    ? getFolderWorkspacePrimaryActionLabel()
-    : isMultiProjectTarget
-      ? translate(
-          'auto.components.NewWorkspaceComposerModal.createMultiProjectWorkspace',
-          'Create multi-project workspace'
-        )
-      : cardProps.selectedRepoIsGit
-        ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
-        : translate('auto.components.NewWorkspaceComposerModal.createWorkspace', 'Create workspace')
+  const primaryActionLabel = effectiveAutonomousGoalDraft.enabled
+    ? translate('auto.components.NewWorkspaceComposerGoalMode.startGoal', 'Start goal')
+    : isFolderWorkspaceTarget
+      ? getFolderWorkspacePrimaryActionLabel()
+      : isMultiProjectTarget
+        ? translate(
+            'auto.components.NewWorkspaceComposerModal.createMultiProjectWorkspace',
+            'Create multi-project workspace'
+          )
+        : cardProps.selectedRepoIsGit
+          ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
+          : translate(
+              'auto.components.NewWorkspaceComposerModal.createWorkspace',
+              'Create workspace'
+            )
 
   // Cmd/Ctrl+Enter submits. Escape belongs to the dialog's dismissable layer:
   // the page-style "blur the focused field first" rule assumes the user chose

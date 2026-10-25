@@ -17967,7 +17967,8 @@
         "removeWorktrees": "Remover worktrees ao terminar",
         "removeWorktreesDescription": "Workers que terminam fecham o terminal, e a worktree é removida quando o PR é mesclado. Desligado, tudo fica aberto.",
         "keepCoordinatorWorktree": "Manter worktree principal",
-        "keepCoordinatorWorktreeDescription": "A worktree do coordenador permanece depois que o objetivo é concluído."
+        "keepCoordinatorWorktreeDescription": "A worktree do coordenador permanece depois que o objetivo é concluído.",
+        "localOnlyBase": "{{branch}} existe só nesta máquina. Envie-a para o remoto antes de iniciar, ou os workers não conseguem abrir PRs para ela."
       },
       "AutonomousGoalStrip": {
         "active": "Trabalhando",
@@ -17980,7 +17981,8 @@
       "NewWorkspaceComposerGoalMode": {
         "worktreeTab": "Worktree",
         "autonomousTab": "Trabalho autônomo",
-        "coordinatorAgent": "Agente coordenador"
+        "coordinatorAgent": "Agente coordenador",
+        "startGoal": "Iniciar objetivo"
       }
     },
     "i18n": {
