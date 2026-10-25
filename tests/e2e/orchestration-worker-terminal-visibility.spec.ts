@@ -6,6 +6,7 @@ import {
   buildFakeAgentCommandOverride,
   FAKE_AGENT_WINDOWS_SHELL
 } from './helpers/fake-agent-command-override'
+import { FAKE_AGENT_WORKER_BRIEF_SOURCE } from './helpers/fake-agent-worker-brief'
 import {
   ensureTerminalVisible,
   getActiveTabId,
@@ -39,8 +40,8 @@ if (process.argv.slice(2).includes('app-server')) {
 appendLedger('DOLPHIN_E2E_SPAWN_LEDGER', { event: 'spawn', startedAt: Date.now() })
 process.stdout.write('\\u001b]0;Codex Ready\\u0007OpenAI Codex\\nmodel: e2e\\ndirectory: e2e\\n')
 let acknowledged = false
-process.stdin.on('data', (chunk) => {
-  const input = chunk.toString()
+${FAKE_AGENT_WORKER_BRIEF_SOURCE}
+function onInput(input) {
   if (input.includes('\\x03')) {
     appendLedger('DOLPHIN_E2E_INTERRUPTION_LEDGER', { event: 'stdin-ctrl-c' })
   }
@@ -48,7 +49,10 @@ process.stdin.on('data', (chunk) => {
     acknowledged = true
     process.stdout.write('ACK\\n')
   }
-})
+}
+process.stdin.on('data', (chunk) => onInput(chunk.toString()))
+const launchBriefInput = fakeAgentLaunchBriefInput()
+if (launchBriefInput) onInput(launchBriefInput)
 for (const signal of ['SIGINT', 'SIGHUP', 'SIGTERM']) {
   process.on(signal, () => {
     appendLedger('DOLPHIN_E2E_INTERRUPTION_LEDGER', { event: 'signal', signal })
