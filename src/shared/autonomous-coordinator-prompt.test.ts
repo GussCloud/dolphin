@@ -38,6 +38,34 @@ describe('buildAutonomousCoordinatorLaunchPrompt', () => {
     expect(prompt).not.toContain('Rules:')
   })
 
+  it('adds a cleanup flag only for a choice that differs from the defaults', () => {
+    const launch = {
+      objective: 'Ship',
+      agent: 'claude' as const,
+      workerAgent: 'claude' as const,
+      maxConcurrent: 2
+    }
+    // Why: a host without these flags must still accept the default launch.
+    expect(buildAutonomousCoordinatorLaunchPrompt(launch)).not.toContain('worktree')
+    expect(
+      buildAutonomousCoordinatorLaunchPrompt({
+        ...launch,
+        removeWorktrees: true,
+        keepCoordinatorWorktree: true
+      })
+    ).not.toContain('worktree')
+    expect(
+      buildAutonomousCoordinatorLaunchPrompt({ ...launch, keepCoordinatorWorktree: false })
+    ).toContain(' --remove-coordinator-worktree --json')
+    expect(
+      buildAutonomousCoordinatorLaunchPrompt({
+        ...launch,
+        removeWorktrees: false,
+        keepCoordinatorWorktree: false
+      })
+    ).toContain(' --keep-worktrees --json')
+  })
+
   it('stays one line of characters no shell quotes or splits differently', () => {
     // Why: PowerShell 5.1 drops embedded double quotes for native commands and cmd.exe ends a
     // command at a newline; a prompt with either never reached the coordinator on Windows.

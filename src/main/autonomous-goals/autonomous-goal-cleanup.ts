@@ -2,6 +2,8 @@
 // agent processes or worktrees. Settled workers lose their terminal at once; a worker's worktree
 // goes once its PR merged (the worker drives CI until then), and the closing sweep takes the rest.
 import {
+  autonomousGoalRemovesCoordinatorWorktree,
+  autonomousGoalRemovesWorktrees,
   isAutonomousGoalOpen,
   type AutonomousGoal,
   type AutonomousGoalCleanup
@@ -104,6 +106,10 @@ export function startAutonomousGoalCleanup(ports: AutonomousGoalCleanupPorts): {
 
   /** While the goal runs: free terminals at settlement, worktrees once their PR merged. */
   async function tendOpenGoal(goal: AutonomousGoal): Promise<void> {
+    // Why: a goal started with "keep worktrees" leaves every terminal and worktree to the user.
+    if (!autonomousGoalRemovesWorktrees(goal)) {
+      return
+    }
     for (const worker of ports.listWorkers(goal.runId)) {
       await releaseSettled(worker)
       const { worktreeId } = worker
@@ -126,13 +132,14 @@ export function startAutonomousGoalCleanup(ports: AutonomousGoalCleanupPorts): {
     }
   }
 
-  /** Once the goal closes: every settled worker's worktree, and the coordinator's on completion. */
+  /** Once the goal closes: every settled worker's worktree, and the coordinator's if the goal asked. */
   async function sweep(goalId: string): Promise<void> {
     const goal = currentGoal(goalId)
     if (
       !goal ||
       isAutonomousGoalOpen(goal) ||
       goal.cleanup?.finishedAt !== undefined ||
+      !autonomousGoalRemovesWorktrees(goal) ||
       sweeping.has(goalId) ||
       coordinatorRemovalScheduled.has(goalId)
     ) {
@@ -155,7 +162,10 @@ export function startAutonomousGoalCleanup(ports: AutonomousGoalCleanupPorts): {
           })
         }
       }
-      const coordinatorWorktreeId = goal.status === 'complete' ? goal.worktreeId : null
+      const coordinatorWorktreeId =
+        goal.status === 'complete' && autonomousGoalRemovesCoordinatorWorktree(goal)
+          ? goal.worktreeId
+          : null
       if (!coordinatorWorktreeId) {
         record(goal.id, (cleanup) => {
           cleanup.finishedAt = now()

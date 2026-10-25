@@ -17815,7 +17815,11 @@
         "objective": "目标",
         "objectivePlaceholder": "例如：阅读 docs 文件夹并实现其中的要求",
         "workerAgent": "工作代理",
-        "maxConcurrent": "并行 worktree 数"
+        "maxConcurrent": "并行 worktree 数",
+        "removeWorktrees": "完成后移除工作树",
+        "removeWorktreesDescription": "完成的 worker 会关闭终端，其 PR 合并后移除工作树。关闭此项则全部保持打开。",
+        "keepCoordinatorWorktree": "保留主工作树",
+        "keepCoordinatorWorktreeDescription": "目标完成后保留协调者的工作树。"
       },
       "AutonomousGoalStrip": {
         "active": "进行中",

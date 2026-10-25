@@ -17914,7 +17914,11 @@
         "objective": "Objectif",
         "objectivePlaceholder": "ex. Lis le dossier docs et implémente ce qu’il décrit",
         "workerAgent": "Agent des workers",
-        "maxConcurrent": "Worktrees en parallèle"
+        "maxConcurrent": "Worktrees en parallèle",
+        "removeWorktrees": "Supprimer les worktrees à la fin",
+        "removeWorktreesDescription": "Les workers terminés ferment leur terminal et leur worktree est supprimé une fois sa PR fusionnée. Désactivé, tout reste ouvert.",
+        "keepCoordinatorWorktree": "Conserver le worktree principal",
+        "keepCoordinatorWorktreeDescription": "Le worktree du coordinateur est conservé une fois l’objectif terminé."
       },
       "AutonomousGoalStrip": {
         "active": "En cours",

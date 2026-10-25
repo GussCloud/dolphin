@@ -17815,7 +17815,11 @@
         "objective": "목표",
         "objectivePlaceholder": "예: docs 폴더를 읽고 명시된 내용을 구현",
         "workerAgent": "워커 에이전트",
-        "maxConcurrent": "병렬 worktree 수"
+        "maxConcurrent": "병렬 worktree 수",
+        "removeWorktrees": "완료 시 워크트리 제거",
+        "removeWorktreesDescription": "완료된 워커는 터미널을 닫고, PR이 병합되면 워크트리를 제거합니다. 끄면 모두 열린 상태로 유지됩니다.",
+        "keepCoordinatorWorktree": "메인 워크트리 유지",
+        "keepCoordinatorWorktreeDescription": "목표가 완료된 후에도 코디네이터의 워크트리를 유지합니다."
       },
       "AutonomousGoalStrip": {
         "active": "작업 중",

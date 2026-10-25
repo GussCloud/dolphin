@@ -63,6 +63,18 @@ describe('goal.* RPC methods', () => {
     expect(store.list()).toHaveLength(1)
   })
 
+  it('stores the cleanup choices only when the coordinator passed them', async () => {
+    await call('goal.start', start)
+    expect(store.list()[0]).not.toHaveProperty('removeWorktrees')
+    expect(store.list()[0]).not.toHaveProperty('keepCoordinatorWorktree')
+    store.update(store.list()[0]!.id, { status: 'complete' })
+    await call('goal.start', { ...start, removeWorktrees: false, keepCoordinatorWorktree: false })
+    expect(store.list()[1]).toMatchObject({
+      removeWorktrees: false,
+      keepCoordinatorWorktree: false
+    })
+  })
+
   it('returns the coordinator rules on every start, since the launch prompt carries none', async () => {
     const instructions = expect.stringContaining('Goal:\nBuild the docs site')
     expect(await call('goal.start', start)).toMatchObject({ instructions })

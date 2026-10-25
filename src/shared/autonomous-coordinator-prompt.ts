@@ -13,6 +13,18 @@ export type AutonomousCoordinatorLaunch = {
   agent: AutonomousGoalAgent
   workerAgent: AutonomousGoalAgent
   maxConcurrent: number
+  /** Default true: settled workers are released and their worktrees removed. */
+  removeWorktrees?: boolean
+  /** Default true: the coordinator's own worktree survives a completed goal. */
+  keepCoordinatorWorktree?: boolean
+}
+
+/** Only non-default choices become flags, so a host without them still accepts the default. */
+function cleanupFlags(launch: AutonomousCoordinatorLaunch): string {
+  if (launch.removeWorktrees === false) {
+    return ' --keep-worktrees'
+  }
+  return launch.keepCoordinatorWorktree === false ? ' --remove-coordinator-worktree' : ''
 }
 
 /** UTF-8 base64 that works in both Node and the renderer, so the objective survives any shell quoting. */
@@ -73,7 +85,7 @@ export function buildAutonomousCoordinatorLaunchPrompt(
 ): string {
   return [
     'You are the autonomous coordinator of a Dolphin goal.',
-    `First run: dolphin goal start --agent ${launch.agent} --worker-agent ${launch.workerAgent} --max-concurrent ${launch.maxConcurrent} --objective-b64 ${encodeAutonomousGoalObjective(launch.objective.trim())} --json`,
+    `First run: dolphin goal start --agent ${launch.agent} --worker-agent ${launch.workerAgent} --max-concurrent ${launch.maxConcurrent} --objective-b64 ${encodeAutonomousGoalObjective(launch.objective.trim())}${cleanupFlags(launch)} --json`,
     'Then follow the instructions field it returns and work until the goal is complete, without stopping to ask for confirmation.'
   ].join(' ')
 }

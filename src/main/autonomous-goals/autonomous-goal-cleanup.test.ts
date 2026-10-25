@@ -120,7 +120,7 @@ describe('autonomous goal closing sweep', () => {
       settled('d1', 'wt-1'),
       { dispatchId: 'd2', workerState: 'failed', worktreeId: 'wt-2', terminalState: 'reclaimable' }
     ])
-    h.setGoal({ status: 'complete' })
+    h.setGoal({ status: 'complete', keepCoordinatorWorktree: false })
     await vi.waitFor(() => expect(h.removeWorktree).toHaveBeenCalledTimes(2))
     expect(h.removeWorktree).not.toHaveBeenCalledWith('wt-coord')
     expect(h.scheduledDelays).toEqual([AUTONOMOUS_GOAL_COORDINATOR_REMOVAL_DELAY_MS])
@@ -152,7 +152,7 @@ describe('autonomous goal closing sweep', () => {
 
   it('runs the closing sweep once, even across repeated store updates and checks', async () => {
     const h = harness([settled('d1', 'wt-1')])
-    h.setGoal({ status: 'complete' })
+    h.setGoal({ status: 'complete', keepCoordinatorWorktree: false })
     await vi.waitFor(() => expect(h.scheduled).toHaveLength(1))
     await h.cleanup.check()
     h.scheduled[0]!()
@@ -160,5 +160,28 @@ describe('autonomous goal closing sweep', () => {
     await h.cleanup.check()
     expect(h.scheduled).toHaveLength(1)
     expect(h.removeWorktree.mock.calls.map(([id]) => id)).toEqual(['wt-1', 'wt-coord'])
+  })
+})
+
+describe('autonomous goal cleanup choices from the composer', () => {
+  it('keeps the coordinator worktree by default when the goal completes', async () => {
+    const h = harness([settled('d1', 'wt-1')])
+    h.setGoal({ status: 'complete' })
+    await vi.waitFor(() => expect(h.goal().cleanup?.finishedAt).toBeDefined())
+    expect(h.removeWorktree).toHaveBeenCalledExactlyOnceWith('wt-1')
+    expect(h.scheduled).toHaveLength(0)
+  })
+
+  it('leaves every terminal and worktree alone when removal is off', async () => {
+    const h = harness([settled('d1', 'wt-1')])
+    h.setGoal({ removeWorktrees: false, keepCoordinatorWorktree: false })
+    h.merged.add('wt-1')
+    await h.cleanup.check()
+    h.setGoal({ status: 'complete' })
+    await h.cleanup.check()
+    expect(h.releaseWorker).not.toHaveBeenCalled()
+    expect(h.removeWorktree).not.toHaveBeenCalled()
+    expect(h.scheduled).toHaveLength(0)
+    expect(h.goal().cleanup).toBeUndefined()
   })
 })

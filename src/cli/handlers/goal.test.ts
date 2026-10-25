@@ -25,12 +25,17 @@ const goal: AutonomousGoal = {
   updatedAt: 1
 }
 
-function context(json: boolean, call: ReturnType<typeof vi.fn>): HandlerContext {
+function context(
+  json: boolean,
+  call: ReturnType<typeof vi.fn>,
+  extraFlags: [string, string | boolean][] = []
+): HandlerContext {
   return {
     flags: new Map<string, string | boolean>([
       ['agent', 'claude'],
       ['worker-agent', 'codex'],
-      ['objective-b64', encodeAutonomousGoalObjective('Build the app')]
+      ['objective-b64', encodeAutonomousGoalObjective('Build the app')],
+      ...extraFlags
     ]),
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler only calls `call`.
     client: { call } as unknown as RuntimeClient,
@@ -61,6 +66,26 @@ describe('goal start', () => {
       expect.objectContaining({ from: 'term_coord', objective: 'Build the app' })
     )
     expect(log.mock.calls[0]?.[0]).toMatch(/^Goal started\.\n[\s\S]*\n\nRules:\n- coordinate$/)
+  })
+
+  it('sends cleanup choices only for the flags given, so older hosts keep their defaults', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const call = vi.fn().mockResolvedValue({ id: '1', ok: true, result: { goal, created: true } })
+
+    await GOAL_HANDLERS['goal start']!(context(false, call))
+    expect(call.mock.calls[0]?.[1]).not.toHaveProperty('removeWorktrees')
+    expect(call.mock.calls[0]?.[1]).not.toHaveProperty('keepCoordinatorWorktree')
+
+    await GOAL_HANDLERS['goal start']!(
+      context(false, call, [
+        ['keep-worktrees', true],
+        ['remove-coordinator-worktree', true]
+      ])
+    )
+    expect(call.mock.calls[1]?.[1]).toMatchObject({
+      removeWorktrees: false,
+      keepCoordinatorWorktree: false
+    })
   })
 
   it('keeps working against a host that returns no instructions', async () => {

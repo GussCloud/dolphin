@@ -17964,7 +17964,11 @@
         "objective": "Objetivo",
         "objectivePlaceholder": "ex.: Analise a pasta docs e implemente o que ela especifica",
         "workerAgent": "Agente dos workers",
-        "maxConcurrent": "Worktrees em paralelo"
+        "maxConcurrent": "Worktrees em paralelo",
+        "removeWorktrees": "Remover worktrees ao terminar",
+        "removeWorktreesDescription": "Workers que terminam fecham o terminal, e a worktree é removida quando o PR é mesclado. Desligado, tudo fica aberto.",
+        "keepCoordinatorWorktree": "Manter worktree principal",
+        "keepCoordinatorWorktreeDescription": "A worktree do coordenador permanece depois que o objetivo é concluído."
       },
       "AutonomousGoalStrip": {
         "active": "Trabalhando",

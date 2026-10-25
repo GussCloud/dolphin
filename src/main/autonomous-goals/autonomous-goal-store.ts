@@ -18,7 +18,8 @@ const MAX_GOALS = 100
 export type AutonomousGoalCreate = Pick<
   AutonomousGoal,
   'objective' | 'agent' | 'workerAgent' | 'maxConcurrent' | 'paneKey' | 'worktreeId' | 'runId'
->
+> &
+  Partial<Pick<AutonomousGoal, 'removeWorktrees' | 'keepCoordinatorWorktree'>>
 
 type GoalListener = (goal: AutonomousGoal) => void
 
