@@ -29,8 +29,8 @@ import { tearDownFailedWorkerStart } from './failed-worker-start-teardown'
 import { requireWorkerAuthority, type WorkerEffect } from './worker-topology'
 import { prepareLocalWorkerStart } from './worker-start-validation'
 import { deliverAndSettleWorkerStartReadiness } from './worker-start-readiness-settlement'
-import { resolveWorkerBriefLaunchPrompt, waitForWorkerAuthority } from './worker-brief-launch'
-import { AGENT_PROMPT_EFFECT_TIMEOUT_MS } from '../../../../../../shared/orchestration-timing-budgets'
+import { resolveWorkerBriefLaunchPrompt } from './worker-brief-launch'
+import { settleLaunchedWorkerStart } from './worker-brief-launch-readiness'
 import { getAutonomousGoalStore } from '../../../../../autonomous-goals/autonomous-goal-store-instance'
 
 type WorkerStartMutation = {
@@ -143,17 +143,11 @@ export async function startLocalWorker(args: {
   const startupPrompt = resolveWorkerBriefLaunchPrompt({
     runtime,
     agent,
-    reusesTerminal: Boolean(params.terminal),
-    // A created worktree lands in the coordinator's repo unless --repo names another one.
-    cliWorktreeId:
-      resolvedWorktree?.id ??
-      (creationWorktree && (params.repo === undefined || params.repo === creationWorktree.repoId)
-        ? creationWorktree.id
-        : undefined),
-    devMode: params.devMode,
+    params,
+    placement: resolvedWorktree ?? creationWorktree,
+    createsWorktree,
     dispatchId: started.dispatch.id,
-    taskId: task.id,
-    taskSpec: task.spec
+    task
   })
   try {
     placed = await placeWorkerAgent({
@@ -197,52 +191,35 @@ export async function startLocalWorker(args: {
     }
     persistWorkerReadinessStage(setupStage)
 
+    const settleArgs = {
+      runtime,
+      db,
+      run,
+      task,
+      dispatchId: started.dispatch.id,
+      dispatchDepth: started.dispatch.depth,
+      structuredSession,
+      terminalHandle,
+      coordinatorHandle: params.from,
+      devMode: params.devMode,
+      requestId: orchestrationMutation?.requestId ?? started.dispatch.id,
+      agent: agent ?? null,
+      setupReceipt,
+      launchReceipt: launch.receipt,
+      mode,
+      timeoutMs: params.timeoutMs ?? 60_000,
+      effects,
+      terminalRevealWarning: placed.warning,
+      onStage: (stage: string) => {
+        failedStage = stage
+      }
+    }
     if (placed.briefRidesLaunch) {
-      // The agent is already working on its launch prompt, so it never reaches the idle prompt a
-      // paste would wait for. Readiness is the worker fetching its brief, settled below.
       failedStage = 'agent_readiness'
-      const readinessTimeoutMs = params.timeoutMs ?? 60_000
-      const startedAt = Date.now()
-      const authority = await waitForWorkerAuthority(runtime, terminalHandle, readinessTimeoutMs)
-      const capability = db.prepareStartingWorkerAuthority({
-        dispatchId: started.dispatch.id,
-        handle: terminalHandle,
-        ...authority,
+      return await settleLaunchedWorkerStart({
+        ...settleArgs,
         worktreeId: resolvedWorktree.id,
-        effects,
-        setupState: setupReceipt.state,
-        terminalOwnership: 'created'
-      })
-      return await deliverAndSettleWorkerStartReadiness({
-        runtime,
-        db,
-        run,
-        task,
-        dispatchId: started.dispatch.id,
-        dispatchDepth: started.dispatch.depth,
-        structuredSession: null,
-        terminalHandle,
-        coordinatorHandle: params.from,
-        dispatchCapability: capability,
-        devMode: params.devMode,
-        requestId: orchestrationMutation?.requestId ?? started.dispatch.id,
-        agent: agent ?? null,
-        setupReceipt,
-        launchReceipt: launch.receipt,
-        mode,
-        timeoutMs: readinessTimeoutMs,
-        effects,
-        terminalRevealWarning: placed.warning,
-        briefRidesLaunch: {
-          paneKey: authority.paneKey,
-          fetchTimeoutMs: Math.max(
-            0,
-            readinessTimeoutMs + AGENT_PROMPT_EFFECT_TIMEOUT_MS - (Date.now() - startedAt)
-          )
-        },
-        onStage: (stage) => {
-          failedStage = stage
-        }
+        setupStage
       })
     }
 
@@ -288,28 +265,8 @@ export async function startLocalWorker(args: {
     })
 
     return await deliverAndSettleWorkerStartReadiness({
-      runtime,
-      db,
-      run,
-      task,
-      dispatchId: started.dispatch.id,
-      dispatchDepth: started.dispatch.depth,
-      structuredSession,
-      terminalHandle,
-      coordinatorHandle: params.from,
-      dispatchCapability: capability,
-      devMode: params.devMode,
-      requestId: orchestrationMutation?.requestId ?? started.dispatch.id,
-      agent: agent ?? null,
-      setupReceipt,
-      launchReceipt: launch.receipt,
-      mode,
-      timeoutMs: params.timeoutMs ?? 60_000,
-      effects,
-      terminalRevealWarning: placed.warning,
-      onStage: (stage) => {
-        failedStage = stage
-      }
+      ...settleArgs,
+      dispatchCapability: capability
     })
   } catch (error) {
     await tearDownFailedWorkerStart({

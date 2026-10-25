@@ -158,7 +158,10 @@ async function createWorkerAgentSurface(
   worktreeId: string,
   mode: WorkerStartModeReceipt
 ): Promise<
-  Pick<WorkerAgentPlacement, 'terminalHandle' | 'structuredSession' | 'warning' | 'briefRidesLaunch'>
+  Pick<
+    WorkerAgentPlacement,
+    'terminalHandle' | 'structuredSession' | 'warning' | 'briefRidesLaunch'
+  >
 > {
   args.db.recordWorkerStage({
     dispatchId: args.dispatchId,

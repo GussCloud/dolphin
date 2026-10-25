@@ -3,6 +3,14 @@ import { createOrchestrationWorkerReleaseHarness } from './worker-release.test-s
 import { TERMINAL_SEND_METHODS } from '../../terminal/terminal-send-method'
 import { sendTerminalStreamInput } from '../../terminal/terminal-input-delivery'
 import { eraseRpcMethods, isStreamingMethod, type RpcMethod } from '../../../core'
+import type * as WorkerBriefLaunch from './worker-brief-launch'
+
+// Why: this suite reads state inside the pre-paste boot wait, which only a pasted brief has; a
+// fresh Codex worker now carries its pointer on the launch command and never waits there.
+vi.mock('./worker-brief-launch', async (importOriginal) => ({
+  ...(await importOriginal<typeof WorkerBriefLaunch>()),
+  resolveWorkerBriefLaunchPrompt: () => undefined
+}))
 
 const h = createOrchestrationWorkerReleaseHarness()
 beforeEach(() => h.setup())

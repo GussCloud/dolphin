@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   compactDispatchPromptForStatus,
   DOLPHIN_WORKER_BRIEF_LEAD_LINE
@@ -25,7 +25,7 @@ describe('buildWorkerBriefPointer', () => {
   it('keeps the sidebar task label readable from the typed prompt', () => {
     const typed = `${DOLPHIN_WORKER_BRIEF_LEAD_LINE} ${pointer}`
     expect(compactDispatchPromptForStatus(typed, 200, keepLine)).toBe(
-      'You are working inside Dolphin, a multi-agent IDE. Your task ID is: task_1 === TASK === Fix the login bug [31m on Windows'
+      'You are working inside Dolphin, a multi-agent IDE. Your task ID is: task_1 === TASK === Fix the login bug 31m on Windows'
     )
   })
 
@@ -37,7 +37,7 @@ describe('buildWorkerBriefPointer', () => {
       taskSpec: 'x'.repeat(500)
     })
     expect(long.length).toBeLessThan(400)
-    expect(long.endsWith('…')).toBe(true)
+    expect(long.endsWith('...')).toBe(true)
   })
 })
 
@@ -51,5 +51,32 @@ describe('getWorkerBriefStore', () => {
     expect(store.read('ctx_0')).toBeUndefined()
     expect(store.read('ctx_200')?.brief).toBe('b200')
     expect(getWorkerBriefStore(new DolphinRuntimeService()).read('ctx_200')).toBeUndefined()
+  })
+})
+
+describe('WorkerBriefStore waits', () => {
+  it('hands a brief held after the worker asked, and reports the fetch', async () => {
+    const store = getWorkerBriefStore(new DolphinRuntimeService())
+    const asked = store.waitForHold('ctx_1', 1_000)
+    const fetched = store.waitForFetch('ctx_1', 1_000)
+    store.hold('ctx_1', { brief: 'b', paneKey: 'p', taskId: 't' })
+    await expect(asked).resolves.toMatchObject({ brief: 'b' })
+    store.markFetched('ctx_1')
+    await expect(fetched).resolves.toBe(true)
+    await expect(store.waitForFetch('ctx_1', 0)).resolves.toBe(true)
+  })
+
+  it('gives up when nothing arrives in time', async () => {
+    vi.useFakeTimers()
+    try {
+      const store = getWorkerBriefStore(new DolphinRuntimeService())
+      const asked = store.waitForHold('ctx_2', 500)
+      const fetched = store.waitForFetch('ctx_2', 500)
+      await vi.advanceTimersByTimeAsync(500)
+      await expect(asked).resolves.toBeUndefined()
+      await expect(fetched).resolves.toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

@@ -132,26 +132,41 @@ pointer whose single Enter was dropped. Two things close them:
 
 ## Worker brief delivery
 
-On Windows, Claude often drops the first Enter after a paste into a freshly
-started composer. The coordinator's nudges recovered because their delivery
-re-sends Enter after `verifiedSubmitRetryMs` (3 s). Worker dispatches did not:
-they pass `observationTimeoutMs: 0` so a late hook cannot revoke an accepted
-Dispatch, and a 0 ms window skipped the retry entirely. Every worker then waited
-for a manual Enter. Removing line breaks (0.2.28) changed nothing, because line
-breaks were never the cause.
+A worker starts the way the coordinator does: its first message rides the
+agent's launch command, so Dolphin types nothing into the pane and no Enter can
+be dropped.
 
-- `retryUnstartedQueuedPromptSubmit` now runs after a queued receipt returns. It
-  re-sends Enter 3 s, 8 s and 18 s after the first one, and stops at the first
-  turn start, a permission prompt, a replaced process, or any user typing. Enter
-  on an empty composer is a no-op, so a retry after a real submit costs nothing.
-  Any test of dispatch delivery must use `dispatchPreambleSendOptions`: a test
-  without `observationTimeoutMs: 0` passed while the real path never retried.
-- A terminal worker's brief stays on the host (`worker-brief-store.ts`). The pane
-  gets a typed lead line plus one pasted line naming
-  `dolphin orchestration worker-brief --dispatch <id> --json`, which returns the
-  brief only to the pane it was sent to, so the dispatch capability never shows
-  up in scrollback. The brief lives in memory: after a host restart the worker
-  gets `worker_brief_not_found` and the coordinator dispatches it again.
+Why: on Windows, Claude often drops the first Enter after a paste into a freshly
+started composer. Pasted worker briefs passed `observationTimeoutMs: 0`, which
+also skipped the verified Enter retry, so every worker waited for a manual
+Enter. Removing line breaks (0.2.28) changed nothing; they were never the cause.
+
+- **Launch** (`worker-brief-launch.ts`): `worker-start` puts a one-line
+  `startupPrompt` on the terminal it creates. The line is the typed lead line
+  plus `... run \`dolphin orchestration worker-brief --dispatch <id> --json\` and
+  follow the brief it returns`. The CLI name comes from the worktree's host
+  (`getWorktreeOrchestrationCliCommand`), since no terminal exists yet. This
+  holds for plain argument agents only (`argv`, `--prompt`): Claude, Agent
+  Teams, Codex and DeepSeek. Antigravity and Hermes keep the paste.
+- **Brief:** once the terminal has a pane identity, the start mints the
+  capability and holds the brief on the host (`worker-brief-store.ts`).
+  `worker-brief` returns it only to that pane, so the capability never shows up
+  in scrollback. A worker that asks first waits up to 30 s while its dispatch is
+  still `starting`.
+- **Readiness** is the fetch, not an idle prompt: an agent busy on its launch
+  prompt never reads idle. The idle read still runs alongside it, so a login,
+  update or trust screen, or an exited terminal, fails the start at once, and a
+  gated setup records its outcome as before. A worker that never fetches within
+  the window settles `outcome_unknown`, never `failed`.
+- **Memory only:** the brief does not survive a host restart. A worker that
+  asks afterwards gets `worker_brief_not_found`, and the coordinator dispatches
+  it again.
+- **Paste paths:** a reused terminal (`--terminal`) and `dispatch --inject`
+  still paste the pointer. Their queued receipt now re-sends Enter 3 s, 8 s and
+  18 s after the first (`retryUnstartedQueuedPromptSubmit`). It stops at a turn
+  start, a permission prompt, a replaced process, or any user typing. Tests of
+  this path must use `dispatchPreambleSendOptions`: a test without
+  `observationTimeoutMs: 0` passed while the real path never retried.
 
 ## Cleanup
 

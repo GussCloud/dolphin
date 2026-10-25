@@ -5,6 +5,7 @@ import { eraseRpcMethods, type RpcContext } from '../../../core'
 import { OrchestrationDb } from '../../../../orchestration/db'
 import { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import type { TuiAgent } from '../../../../../../shared/tui-agent'
+import { autoFetchHeldWorkerBriefs } from '../../../../orchestration/worker-brief.test-support'
 
 type WorkerStartOptions = { terminal?: string; agent?: TuiAgent }
 
@@ -114,6 +115,7 @@ export function createOrchestrationWorkerReleaseHarness(): OrchestrationWorkerRe
       bytesWritten: 1
     })
     vi.spyOn(runtime, 'isTerminalRunningAgent').mockResolvedValue(true)
+    autoFetchHeldWorkerBriefs(runtime)
     vi.spyOn(runtime, 'getExactWorkerProviderSession').mockReturnValue(null)
     vi.spyOn(runtime, 'readTerminal').mockResolvedValue({
       handle: 'term_worker',

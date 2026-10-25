@@ -7,6 +7,7 @@ import {
   deliverWorkerDispatchPreamble
 } from './deliver-worker-dispatch-preamble'
 import { getWorkerBriefStore } from '../../../../orchestration/worker-brief-store'
+import type { WorkerStartupBlock } from './worker-brief-launch'
 import type { OrchestrationWorkerLaunchReceipt } from './worker-launch-preferences'
 import {
   describeUnfetchedWorkerBrief,
@@ -47,9 +48,15 @@ export async function deliverAndSettleWorkerStartReadiness(args: {
   effects: WorkerEffect[]
   terminalRevealWarning: string | undefined
   /** The agent was launched with the `worker-brief` pointer: hold the brief, then await the fetch. */
-  briefRidesLaunch?: { paneKey: string; fetchTimeoutMs: number }
+  briefRidesLaunch?: {
+    paneKey: string
+    fetchTimeoutMs: number
+    /** Resolves when a startup screen or exit holds the agent; the start then fails at once. */
+    startupBlocked: Promise<WorkerStartupBlock | null>
+    onFetched: () => void
+  }
   /** Keeps the caller's failure receipt naming the stage that actually failed. */
-  onStage: (stage: 'dispatch_input' | 'turn_observation') => void
+  onStage: (stage: 'agent_readiness' | 'setup_wait' | 'dispatch_input' | 'turn_observation') => void
 }): Promise<unknown> {
   const { runtime, db, run, task, structuredSession, terminalHandle, effects } = args
 
@@ -96,12 +103,12 @@ export async function deliverAndSettleWorkerStartReadiness(args: {
   // positive evidence; a launch-carried pointer is proven by the worker fetching its brief.
   const turnStart: WorkerTurnStartObservation = args.briefRidesLaunch
     ? {
-        verdict: (await getWorkerBriefStore(runtime).waitForFetch(
+        verdict: await awaitLaunchedBriefFetch(
+          runtime,
           args.dispatchId,
-          args.briefRidesLaunch.fetchTimeoutMs
-        ))
-          ? 'observed'
-          : 'unobserved'
+          args.briefRidesLaunch,
+          args.onStage
+        )
       }
     : structuredSession
       ? { verdict: 'observed' }
@@ -185,4 +192,28 @@ export async function deliverAndSettleWorkerStartReadiness(args: {
     residualResources: [],
     ...(args.terminalRevealWarning ? { warning: args.terminalRevealWarning } : {})
   }
+}
+
+/** The fetch proves the launch prompt ran; a startup screen seen first fails the start instead. */
+async function awaitLaunchedBriefFetch(
+  runtime: DolphinRuntimeService,
+  dispatchId: string,
+  launch: NonNullable<
+    Parameters<typeof deliverAndSettleWorkerStartReadiness>[0]['briefRidesLaunch']
+  >,
+  onStage: (stage: WorkerStartupBlock['stage']) => void
+): Promise<'observed' | 'unobserved'> {
+  const fetched = getWorkerBriefStore(runtime).waitForFetch(dispatchId, launch.fetchTimeoutMs)
+  const blocked = launch.startupBlocked.then(
+    (block) => block ?? new Promise<never>(() => undefined)
+  )
+  const outcome = await Promise.race([fetched, blocked])
+  if (typeof outcome !== 'boolean') {
+    onStage(outcome.stage)
+    throw outcome.error
+  }
+  if (outcome) {
+    launch.onFetched()
+  }
+  return outcome ? 'observed' : 'unobserved'
 }

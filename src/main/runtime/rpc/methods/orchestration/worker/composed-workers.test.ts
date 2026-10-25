@@ -4,8 +4,8 @@ import { createOrchestrationRpcHarness } from '../rpc-test-harness'
 import type { OrchestrationDb } from '../../../../orchestration/db'
 import type { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../../../shared/constants'
-import { dispatchPreambleSendOptions } from '../../../../orchestration/preamble'
-import { deliveredWorkerBrief } from '../../../../orchestration/worker-brief.test-support'
+import { getWorkerBriefStore } from '../../../../orchestration/worker-brief-store'
+import { autoFetchHeldWorkerBriefs } from '../../../../orchestration/worker-brief.test-support'
 
 describe('orchestration RPC methods', () => {
   const h = createOrchestrationRpcHarness()
@@ -27,7 +27,7 @@ describe('orchestration RPC methods', () => {
   }
 
   describe('composed workers', () => {
-    function mockCurrentWorkerStart(options?: { ready?: boolean }): void {
+    function mockCurrentWorkerStart(options?: { ready?: boolean; fetchesBrief?: boolean }): void {
       vi.mocked(runtime.getTerminalPaneKey).mockImplementation((handle) =>
         handle === 'term_coord'
           ? coordinatorPaneKey
@@ -66,6 +66,9 @@ describe('orchestration RPC methods', () => {
         accepted: true,
         bytesWritten: 1
       })
+      if (options?.ready !== false && options?.fetchesBrief !== false) {
+        autoFetchHeldWorkerBriefs(runtime)
+      }
     }
 
     it('rejects a declared caller that disagrees with complete attested evidence', async () => {
@@ -154,20 +157,69 @@ describe('orchestration RPC methods', () => {
       expect(db.getWorkerDispatch(result.dispatchId)?.state).toBe('ready')
       // Why: dispatching a worker is background work — surfaceOwner:false adopts
       // the tab without scrolling the sidebar to the worker's workspace.
+      // Why: the task rides the agent's launch command like the coordinator's, so nothing is typed
+      // into the pane; the capability stays in the brief the worker fetches.
       expect(runtime.createTerminal).toHaveBeenCalledWith('id:repo::worktree', {
         startupAgent: 'codex',
+        startupPrompt: expect.stringContaining(
+          `orchestration worker-brief --dispatch ${result.dispatchId} --json`
+        ),
         title: `worker-${task.id}`,
         surfaceOwner: false
       })
-      // Why: the capability stays out of the pane; only the held brief carries it.
-      expect(runtime.sendTerminalAgentPrompt).toHaveBeenCalledWith(
-        'term_worker',
-        expect.not.stringContaining('dcap_'),
-        expect.objectContaining(dispatchPreambleSendOptions(expect.any(String), 'brief-pointer'))
+      expect(vi.mocked(runtime.createTerminal).mock.calls[0]?.[1]?.startupPrompt).not.toContain(
+        'dcap_'
       )
-      expect(
-        deliveredWorkerBrief(runtime, vi.mocked(runtime.sendTerminalAgentPrompt).mock.calls[0]?.[1])
-      ).toContain('--dispatch-capability dcap_')
+      expect(runtime.sendTerminalAgentPrompt).not.toHaveBeenCalled()
+      expect(getWorkerBriefStore(runtime).read(result.dispatchId)?.brief).toContain(
+        '--dispatch-capability dcap_'
+      )
+    })
+
+    it('is ready only once the launched worker fetches its brief through worker-brief', async () => {
+      setup()
+      mockCurrentWorkerStart({ fetchesBrief: false })
+      const task = db.createTask({ spec: 'fetch then work' })
+
+      const start = call('orchestration.workerStart', {
+        task: task.id,
+        from: 'term_coord',
+        agent: 'claude'
+      })
+      const dispatchId = await vi.waitFor(() => {
+        const id = db.getDispatchContext(task.id)?.id
+        expect(id).toBeDefined()
+        return id!
+      })
+      // The worker runs the command its launch prompt names, possibly before the brief is held.
+      await expect(
+        call('orchestration.workerBrief', { dispatch: dispatchId, from: 'term_worker' })
+      ).resolves.toMatchObject({ brief: expect.stringContaining('--dispatch-capability dcap_') })
+      await expect(start).resolves.toMatchObject({ state: 'ready', turnStart: 'observed' })
+      expect(runtime.sendTerminalAgentPrompt).not.toHaveBeenCalled()
+    })
+
+    it('reports a launched worker that never fetches its brief as unknown, never failed', async () => {
+      setup()
+      mockCurrentWorkerStart({ fetchesBrief: false })
+      const task = db.createTask({ spec: 'never fetches' })
+      vi.useFakeTimers()
+      try {
+        const start = call('orchestration.workerStart', {
+          task: task.id,
+          from: 'term_coord',
+          agent: 'claude',
+          timeoutMs: 1_000
+        })
+        await vi.advanceTimersByTimeAsync(40_000)
+        await expect(start).resolves.toMatchObject({
+          state: 'outcome_unknown',
+          turnStart: 'unobserved',
+          lastError: expect.stringContaining('did not fetch its brief')
+        })
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     it('applies and reports opaque per-invocation model preferences', async () => {
@@ -307,7 +359,9 @@ describe('orchestration RPC methods', () => {
           warning: 'Terminal term_worker is running but could not be revealed.'
         })
       )
-      expect(runtime.sendTerminalAgentPrompt).toHaveBeenCalled()
+      expect(vi.mocked(runtime.createTerminal).mock.calls[0]?.[1]?.startupPrompt).toContain(
+        'orchestration worker-brief'
+      )
     })
 
     it('starts in an exact existing worktree from a floating coordinator', async () => {
@@ -422,10 +476,12 @@ describe('orchestration RPC methods', () => {
       mockCurrentWorkerStart({ ready: false })
       const task = db.createTask({ spec: 'worker timeout' })
 
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the RPC result is the worker-start receipt; this test reads only these fields.
       const result = (await call('orchestration.workerStart', {
         task: task.id,
         from: 'term_coord',
-        agent: 'codex'
+        // Why aider: its prompt cannot ride the launch command, so this start still pastes.
+        agent: 'aider'
       })) as { state: string; failedStage: string; residualResources: { id: string }[] }
 
       expect(result).toMatchObject({ state: 'failed', failedStage: 'agent_readiness' })
@@ -462,10 +518,12 @@ describe('orchestration RPC methods', () => {
       )
       const task = db.createTask({ spec: 'input failure' })
 
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the RPC result is the worker-start receipt; this test reads only these fields.
       const result = (await call('orchestration.workerStart', {
         task: task.id,
         from: 'term_coord',
-        agent: 'codex'
+        // Why aider: its prompt cannot ride the launch command, so this start still pastes.
+        agent: 'aider'
       })) as {
         state: string
         failedStage: string
@@ -488,7 +546,8 @@ describe('orchestration RPC methods', () => {
       'returns a truthful readiness failure for %s',
       async (blockedReason, expectedReason) => {
         setup()
-        mockCurrentWorkerStart()
+        // A startup screen holds the agent, so it never fetches its brief.
+        mockCurrentWorkerStart({ fetchesBrief: false })
         vi.mocked(runtime.waitForTerminal).mockResolvedValueOnce({
           handle: 'term_worker',
           condition: 'tui-idle',
