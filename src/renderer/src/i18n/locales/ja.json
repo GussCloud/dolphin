@@ -17818,7 +17818,8 @@
         "removeWorktrees": "完了時にワークツリーを削除",
         "removeWorktreesDescription": "完了したワーカーはターミナルを閉じ、PR がマージされるとワークツリーを削除します。オフにするとすべて開いたままになります。",
         "keepCoordinatorWorktree": "メインのワークツリーを保持",
-        "keepCoordinatorWorktreeDescription": "目標の完了後もコーディネーターのワークツリーを残します。"
+        "keepCoordinatorWorktreeDescription": "目標の完了後もコーディネーターのワークツリーを残します。",
+        "localOnlyBase": "{{branch}} はこのマシンにのみ存在します。開始前にプッシュしないと、ワーカーはこのブランチ宛ての PR を作成できません。"
       },
       "AutonomousGoalStrip": {
         "active": "作業中",
@@ -17831,7 +17832,8 @@
       "NewWorkspaceComposerGoalMode": {
         "worktreeTab": "ワークツリー",
         "autonomousTab": "自律作業",
-        "coordinatorAgent": "コーディネーター Agent"
+        "coordinatorAgent": "コーディネーター Agent",
+        "startGoal": "目標を開始"
       }
     },
     "i18n": {

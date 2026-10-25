@@ -83,13 +83,16 @@ test('autonomous work launches the coordinator with its goal prompt in a new wor
     { command: fakeClaudeCommand, windowsShell: FAKE_AGENT_WINDOWS_SHELL }
   )
 
-  const composer = appPage.getByRole('dialog', { name: /Create (workspace|worktree)/i })
+  // Why not by name: the dialog title follows the active tab.
+  const composer = appPage
+    .getByRole('dialog')
+    .filter({ has: appPage.getByRole('tab', { name: 'Autonomous work' }) })
   await expect(composer).toBeVisible({ timeout: 15_000 })
-  await composer.getByRole('switch', { name: 'Autonomous work' }).click()
+  await composer.getByRole('tab', { name: 'Autonomous work' }).click()
   await composer.getByPlaceholder(/Read the docs folder/).fill(OBJECTIVE)
-  const create = composer.getByRole('button', { name: /Create (workspace|worktree)/i })
-  await expect(create).toBeEnabled({ timeout: 15_000 })
-  await create.click()
+  const start = composer.getByRole('button', { name: /Start goal/i })
+  await expect(start).toBeEnabled({ timeout: 15_000 })
+  await start.click()
   await expect(composer).toBeHidden({ timeout: 20_000 })
 
   await expect

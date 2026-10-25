@@ -209,6 +209,12 @@ The coordinator rules tell each worker to target that branch with its PR, with
 the remote prefix stripped (`autonomousGoalReviewTarget`). Goals recorded
 before this change have no `baseRef` and keep the repo default.
 
+Because worker PRs target that branch, the goal tab warns when the picked base
+is a local branch with no remote ref of the same name
+(`use-local-only-goal-base.ts`). It is a warning, not a block: the user may push
+the branch before workers open their PRs. An unknown base or the project default
+never warns.
+
 ## Plan quota
 
 Budgets in money do not protect a subscription plan, so the guard reads the

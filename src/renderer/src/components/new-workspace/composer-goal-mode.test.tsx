@@ -10,6 +10,11 @@ vi.mock('@/i18n/i18n', async (importOriginal) => ({
   translate: (_key: string, fallback: string) => fallback
 }))
 
+const localOnlyGoalBase = vi.hoisted(() => ({ value: false }))
+vi.mock('./use-local-only-goal-base', () => ({
+  useLocalOnlyGoalBase: () => localOnlyGoalBase.value
+}))
+
 import { useComposerGoalMode } from './composer-goal-mode'
 import { createAutonomousGoalDraft, type AutonomousGoalDraft } from '@/lib/autonomous-goal-draft'
 import { AGENT_CATALOG } from '@/lib/agent-catalog'
@@ -26,7 +31,9 @@ function Harness(props: {
       autonomousGoalDraft: props.draft,
       onAutonomousGoalDraftChange: props.onDraftChange,
       quickAgent: props.quickAgent,
-      onQuickAgentChange: props.onQuickAgentChange
+      onQuickAgentChange: props.onQuickAgentChange,
+      repoId: 'repo-1',
+      baseBranch: 'feature/local'
     },
     AGENT_CATALOG
   )
@@ -56,7 +63,10 @@ function renderHarness(enabled: boolean, quickAgent: TuiAgent | null) {
 }
 
 describe('composer goal mode tabs', () => {
-  afterEach(() => cleanup())
+  afterEach(() => {
+    cleanup()
+    localOnlyGoalBase.value = false
+  })
 
   it('starts on the worktree tab with every agent and no goal fields', () => {
     renderHarness(false, 'gemini')
@@ -78,5 +88,16 @@ describe('composer goal mode tabs', () => {
     expect(screen.getByTestId('label').textContent).toBe('Coordinator agent')
     expect(screen.getByTestId('agents').textContent).not.toContain('gemini')
     expect(screen.getByText('Goal')).toBeTruthy()
+  })
+
+  it('warns on the goal tab when the picked base exists only locally', () => {
+    localOnlyGoalBase.value = true
+    renderHarness(true, 'claude')
+    expect(screen.getByRole('status').textContent).toContain('exists only on this machine')
+  })
+
+  it('shows no base warning when the base is on the remote', () => {
+    renderHarness(true, 'claude')
+    expect(screen.queryByRole('status')).toBeNull()
   })
 })

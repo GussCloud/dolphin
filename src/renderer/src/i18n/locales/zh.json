@@ -17818,7 +17818,8 @@
         "removeWorktrees": "完成后移除工作树",
         "removeWorktreesDescription": "完成的 worker 会关闭终端，其 PR 合并后移除工作树。关闭此项则全部保持打开。",
         "keepCoordinatorWorktree": "保留主工作树",
-        "keepCoordinatorWorktreeDescription": "目标完成后保留协调者的工作树。"
+        "keepCoordinatorWorktreeDescription": "目标完成后保留协调者的工作树。",
+        "localOnlyBase": "{{branch}} 仅存在于本机。请在开始前推送，否则工作者无法向它发起 PR。"
       },
       "AutonomousGoalStrip": {
         "active": "进行中",
@@ -17831,7 +17832,8 @@
       "NewWorkspaceComposerGoalMode": {
         "worktreeTab": "工作树",
         "autonomousTab": "自主工作",
-        "coordinatorAgent": "协调者代理"
+        "coordinatorAgent": "协调者代理",
+        "startGoal": "开始目标"
       }
     },
     "i18n": {
