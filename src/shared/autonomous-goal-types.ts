@@ -110,6 +110,8 @@ export type AutonomousGoal = {
   /** Set while usage-limited: when the plan window resets. */
   usageResumeAt?: number
   cleanup?: AutonomousGoalCleanup
+  /** The coordinator worktree's create base; workers branch from it and their PRs target it. */
+  baseRef?: string
   /** Absent means true: settled workers are released and their worktrees removed. */
   removeWorktrees?: boolean
   /** Absent means true: the coordinator's own worktree survives a completed goal. */

@@ -12,10 +12,19 @@ import { autoFetchHeldWorkerBriefs } from '../../../../orchestration/worker-brie
 import { getWorkerBriefStore } from '../../../../orchestration/worker-brief-store'
 
 const goalRunIds = vi.hoisted(() => new Set<string>())
+const goalBaseRef = vi.hoisted((): { value: string | undefined } => ({ value: undefined }))
 vi.mock('../../../../../autonomous-goals/autonomous-goal-store-instance', () => ({
   getAutonomousGoalStore: () => ({
     findOpenByRun: (runId: string) =>
-      goalRunIds.has(runId) ? { id: 'goal-1', runId, agent: 'claude', workerAgent: 'claude' } : null
+      goalRunIds.has(runId)
+        ? {
+            id: 'goal-1',
+            runId,
+            agent: 'claude',
+            workerAgent: 'claude',
+            baseRef: goalBaseRef.value
+          }
+        : null
   })
 }))
 
@@ -88,6 +97,7 @@ describe('orchestration new-worktree workers', () => {
 
   afterEach(() => {
     goalRunIds.clear()
+    goalBaseRef.value = undefined
     db.close()
     for (const path of paths.splice(0)) {
       rmSync(path, { recursive: true, force: true })
@@ -189,6 +199,24 @@ describe('orchestration new-worktree workers', () => {
     await startWorker({ worktree: 'new-top-level', name: 'goal-worker' })
     expect(runtime.createManagedWorktree).toHaveBeenLastCalledWith(
       expect.objectContaining({ autonomousGoalWorkspace: true })
+    )
+  })
+
+  it('branches a goal worker from the base the goal started on unless one is named', async () => {
+    mockCreatedWorktree()
+    goalRunIds.add(runId)
+    goalBaseRef.value = 'origin/develop'
+    await startWorker({ worktree: 'new-top-level', name: 'goal-base' })
+    expect(runtime.createManagedWorktree).toHaveBeenLastCalledWith(
+      expect.objectContaining({ baseBranch: 'origin/develop' })
+    )
+    await startWorker({
+      worktree: 'new-top-level',
+      name: 'named-base',
+      baseBranch: 'origin/hotfix'
+    })
+    expect(runtime.createManagedWorktree).toHaveBeenLastCalledWith(
+      expect.objectContaining({ baseBranch: 'origin/hotfix' })
     )
   })
 

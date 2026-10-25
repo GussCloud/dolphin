@@ -6,7 +6,8 @@ import {
   buildAutonomousCoordinatorLaunchPrompt,
   buildAutonomousCoordinatorResumePrompt,
   decodeAutonomousGoalObjective,
-  encodeAutonomousGoalObjective
+  encodeAutonomousGoalObjective,
+  autonomousGoalReviewTarget
 } from './autonomous-coordinator-prompt'
 
 describe('autonomous goal objective encoding', () => {
@@ -76,6 +77,26 @@ describe('buildAutonomousCoordinatorLaunchPrompt', () => {
       maxConcurrent: 6
     })
     expect(prompt).toMatch(/^[A-Za-z0-9 .,:+/=-]+$/)
+  })
+})
+
+describe('autonomousGoalReviewTarget', () => {
+  it('names the branch a PR targets, without the remote', () => {
+    expect(autonomousGoalReviewTarget('origin/develop')).toBe('develop')
+    expect(autonomousGoalReviewTarget('refs/remotes/origin/release/2.0')).toBe('release/2.0')
+    expect(autonomousGoalReviewTarget('main')).toBe('main')
+    expect(autonomousGoalReviewTarget(undefined)).toBeUndefined()
+  })
+
+  it('keeps the provider default when the goal has no recorded base', () => {
+    const rules = buildAutonomousCoordinatorInstructions({
+      objective: 'Ship',
+      agent: 'claude',
+      workerAgent: 'claude',
+      maxConcurrent: 2
+    })
+    expect(rules).toContain('open a PR (or MR), drive')
+    expect(rules).not.toContain('--base-branch')
   })
 })
 

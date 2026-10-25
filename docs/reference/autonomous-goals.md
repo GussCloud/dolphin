@@ -183,6 +183,9 @@ done. It reuses the existing verbs, never forced:
   then it follows 30 s after `complete`, so its closing reply is not cut off.
   It is always kept on `stop`. The sweep survives a restart
   (`cleanup.finishedAt`).
+- The composer has a "Worktree" / "Autonomous work" tab pair; the goal fields
+  apply only while the goal tab is active, and its agent pickers list only the
+  agents that can coordinate (`composer-goal-mode.tsx`).
 - The composer sets both choices: "Remove worktrees when done" (on by default)
   and, while it is on, "Keep main worktree" (on by default). They ride the
   coordinator's launch prompt as `goal start --keep-worktrees` and
@@ -195,6 +198,16 @@ done. It reuses the existing verbs, never forced:
   whose work is not integrated is kept by `worktree.rm`. What was removed and
   what was kept, with the reason, is stored on the goal (`cleanup`) and shown
   by `dolphin goal show`.
+
+## Base branch
+
+`goal start` records the base the composer created the coordinator's worktree
+from (`baseRef` in its worktree metadata) on the goal. Every `worker-start` of
+that goal that creates a worktree and names no `--base-branch` branches from it
+(`local-worker-start.ts`), so workers follow the base picked in the composer.
+The coordinator rules tell each worker to target that branch with its PR, with
+the remote prefix stripped (`autonomousGoalReviewTarget`). Goals recorded
+before this change have no `baseRef` and keep the repo default.
 
 ## Plan quota
 

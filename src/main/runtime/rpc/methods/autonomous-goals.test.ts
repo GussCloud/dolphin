@@ -75,6 +75,24 @@ describe('goal.* RPC methods', () => {
     })
   })
 
+  it('records the base the coordinator worktree was created from, and points PRs at it', async () => {
+    const { runtime } = ctx
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: goal.start reads only worktreeId.
+    vi.mocked(runtime.showTerminal).mockResolvedValue({ worktreeId: 'repo::wt-coord' } as never)
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: goal.start reads only baseRef.
+    vi.spyOn(runtime, 'showManagedWorktree').mockResolvedValue({
+      id: 'repo::wt-coord',
+      baseRef: 'origin/develop'
+    } as never)
+    await expect(call('goal.start', start)).resolves.toMatchObject({
+      instructions: expect.stringContaining('targeting the `develop` branch')
+    })
+    expect(store.list()[0]).toMatchObject({
+      worktreeId: 'repo::wt-coord',
+      baseRef: 'origin/develop'
+    })
+  })
+
   it('returns the coordinator rules on every start, since the launch prompt carries none', async () => {
     const instructions = expect.stringContaining('Goal:\nBuild the docs site')
     expect(await call('goal.start', start)).toMatchObject({ instructions })

@@ -27,6 +27,15 @@ function cleanupFlags(launch: AutonomousCoordinatorLaunch): string {
   return launch.keepCoordinatorWorktree === false ? ' --remove-coordinator-worktree' : ''
 }
 
+/**
+ * The branch a worker's PR targets: the goal's base without its remote prefix, since
+ * `gh pr create --base` and GitLab take a branch name. Undefined keeps the provider default.
+ */
+export function autonomousGoalReviewTarget(baseRef: string | undefined): string | undefined {
+  const branch = baseRef?.replace(/^refs\/remotes\//, '').replace(/^(origin|upstream)\//, '')
+  return branch || undefined
+}
+
 /** UTF-8 base64 that works in both Node and the renderer, so the objective survives any shell quoting. */
 export function encodeAutonomousGoalObjective(objective: string): string {
   const bytes = new TextEncoder().encode(objective)
@@ -44,10 +53,10 @@ export function decodeAutonomousGoalObjective(encoded: string): string {
 }
 
 function coordinatorRules(
-  agent: AutonomousGoalAgent,
-  workerAgent: AutonomousGoalAgent,
-  maxConcurrent: number
+  goal: Pick<AutonomousGoal, 'agent' | 'workerAgent' | 'maxConcurrent' | 'baseRef'>
 ): string[] {
+  const { agent, workerAgent, maxConcurrent } = goal
+  const reviewTarget = autonomousGoalReviewTarget(goal.baseRef)
   return [
     'Rules:',
     ...(isAutonomousGoalTeamsAgent(agent)
@@ -57,7 +66,12 @@ function coordinatorRules(
       : []),
     '- You coordinate; you do not implement. Read the repository docs once, then split the goal into Tasks with only real dependencies (`dolphin orchestration task-create --spec "..." --deps \'["<task_id>"]\' --json`).',
     `- Start each ready Task in its own worktree: \`dolphin orchestration worker-start --task <task_id> --worktree new-top-level --name <short-slug> --agent ${workerAgent} --json\`. Keep at most ${maxConcurrent} workers running.`,
-    "- Each worker spec must say: implement the task, run the repo's checks, open a PR (or MR), drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.",
+    `- Each worker spec must say: implement the task, run the repo's checks, open a PR (or MR)${reviewTarget ? ` targeting the \`${reviewTarget}\` branch` : ''}, drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.`,
+    ...(reviewTarget
+      ? [
+          `- Workers branch from \`${goal.baseRef}\`, the base this goal started on; Dolphin applies it, so never pass --base-branch.`
+        ]
+      : []),
     ...(isAutonomousGoalTeamsAgent(workerAgent)
       ? [
           '- Workers run Agent Teams: each spec must tell the worker to split its Task across teammates as its session instructions describe; the worker alone opens the PR and reports worker_done.'
@@ -92,7 +106,7 @@ export function buildAutonomousCoordinatorLaunchPrompt(
 
 /** Returned by `goal start`, so the rules reach the model as tool output, never through a shell. */
 export function buildAutonomousCoordinatorInstructions(
-  goal: Pick<AutonomousGoal, 'objective' | 'agent' | 'workerAgent' | 'maxConcurrent'>
+  goal: Pick<AutonomousGoal, 'objective' | 'agent' | 'workerAgent' | 'maxConcurrent' | 'baseRef'>
 ): string {
   return [
     'This terminal is now bound to the goal and its orchestration Run.',
@@ -102,7 +116,7 @@ export function buildAutonomousCoordinatorInstructions(
     '',
     'Load the coordination contract once: `dolphin skills get orchestration`.',
     '',
-    ...coordinatorRules(goal.agent, goal.workerAgent, goal.maxConcurrent)
+    ...coordinatorRules(goal)
   ].join('\n')
 }
 
@@ -160,7 +174,7 @@ export function buildAutonomousCoordinatorResumePrompt(
     '',
     'Load the coordination contract once: `dolphin skills get orchestration`. Then read unread mail with `dolphin orchestration check --json` and continue; if there is none, end your turn and wait idle.',
     '',
-    ...coordinatorRules(goal.agent, goal.workerAgent, goal.maxConcurrent)
+    ...coordinatorRules(goal)
   ].join('\n')
 }
 

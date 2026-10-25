@@ -25,8 +25,7 @@ import type { RuntimeStatus } from '../../../shared/runtime-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { NewWorkspaceComposerAdvancedSection } from './new-workspace/NewWorkspaceComposerAdvancedSection'
 import { NewWorkspaceComposerAgentSection } from './new-workspace/NewWorkspaceComposerAgentSection'
-import { NewWorkspaceComposerAutonomousSection } from './new-workspace/NewWorkspaceComposerAutonomousSection'
-import { isAutonomousGoalAgent } from '../../../shared/autonomous-goal-types'
+import { useComposerGoalMode } from './new-workspace/composer-goal-mode'
 import { NewWorkspaceComposerFooter } from './new-workspace/NewWorkspaceComposerFooter'
 import { NewWorkspaceComposerNameSection } from './new-workspace/NewWorkspaceComposerNameSection'
 import { NewWorkspaceComposerProjectSection } from './new-workspace/NewWorkspaceComposerProjectSection'
@@ -263,6 +262,7 @@ export default function NewWorkspaceComposerCard(
     },
     []
   )
+  const goalMode = useComposerGoalMode(props, visibleQuickAgents)
   const handleSetDefaultAgent = React.useCallback(
     (next: TuiAgent | 'blank' | null): void => {
       void updateSettings({ defaultTuiAgent: next })
@@ -299,6 +299,7 @@ export default function NewWorkspaceComposerCard(
       )}
     >
       <div className={cn('min-h-0 min-w-0 space-y-4 pt-3', contentClassName)}>
+        {goalMode.tabs}
         <NewWorkspaceComposerProjectSection
           {...props}
           projectOptions={projectOptions}
@@ -320,17 +321,12 @@ export default function NewWorkspaceComposerCard(
         <NewWorkspaceComposerNameSection {...props} onNamePlainEnter={handleNamePlainEnter} />
         <NewWorkspaceComposerAgentSection
           {...props}
-          visibleQuickAgents={visibleQuickAgents}
+          visibleQuickAgents={goalMode.agents}
+          agentLabel={goalMode.agentLabel}
+          beforeAdvanced={goalMode.goalSection}
           defaultTuiAgent={defaultTuiAgent}
           handleSetDefaultAgent={handleSetDefaultAgent}
         />
-        {props.autonomousGoalDraft && props.onAutonomousGoalDraftChange ? (
-          <NewWorkspaceComposerAutonomousSection
-            draft={props.autonomousGoalDraft}
-            onDraftChange={props.onAutonomousGoalDraftChange}
-            coordinatorSupported={isAutonomousGoalAgent(props.quickAgent)}
-          />
-        ) : null}
         <NewWorkspaceComposerAdvancedSection
           {...props}
           branchNameInputId={branchNameInputId}

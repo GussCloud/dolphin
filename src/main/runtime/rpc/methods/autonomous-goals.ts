@@ -63,6 +63,21 @@ async function terminalWorktreeId(
   }
 }
 
+/** The base the composer created the coordinator's worktree from, which its workers inherit. */
+async function worktreeBaseRef(
+  runtime: RpcContext['runtime'],
+  worktreeId: string | null
+): Promise<string | undefined> {
+  if (!worktreeId) {
+    return undefined
+  }
+  try {
+    return (await runtime.showManagedWorktree(`id:${worktreeId}`)).baseRef || undefined
+  } catch {
+    return undefined
+  }
+}
+
 export const AUTONOMOUS_GOAL_METHODS = [
   defineMethod({
     name: 'goal.start',
@@ -87,14 +102,17 @@ export const AUTONOMOUS_GOAL_METHODS = [
         coordinatorDolphinSessionId: caller.dolphinSessionId
       })
       context.runtime.cancelMessageWaiters(params.from)
+      const worktreeId = await terminalWorktreeId(context.runtime, caller.terminalHandle)
+      const baseRef = await worktreeBaseRef(context.runtime, worktreeId)
       const goal = store.create({
         objective: params.objective,
         agent: params.agent,
         workerAgent: params.workerAgent,
         maxConcurrent: params.maxConcurrent,
         paneKey: caller.paneKey,
-        worktreeId: await terminalWorktreeId(context.runtime, caller.terminalHandle),
+        worktreeId,
         runId: run.id,
+        ...(baseRef ? { baseRef } : {}),
         ...(params.removeWorktrees === undefined
           ? {}
           : { removeWorktrees: params.removeWorktrees }),

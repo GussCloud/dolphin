@@ -19,7 +19,7 @@ export type AutonomousGoalCreate = Pick<
   AutonomousGoal,
   'objective' | 'agent' | 'workerAgent' | 'maxConcurrent' | 'paneKey' | 'worktreeId' | 'runId'
 > &
-  Partial<Pick<AutonomousGoal, 'removeWorktrees' | 'keepCoordinatorWorktree'>>
+  Partial<Pick<AutonomousGoal, 'removeWorktrees' | 'keepCoordinatorWorktree' | 'baseRef'>>
 
 type GoalListener = (goal: AutonomousGoal) => void
 
