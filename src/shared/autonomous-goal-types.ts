@@ -110,6 +110,10 @@ export type AutonomousGoal = {
   /** Set while usage-limited: when the plan window resets. */
   usageResumeAt?: number
   cleanup?: AutonomousGoalCleanup
+  /** Absent means true: settled workers are released and their worktrees removed. */
+  removeWorktrees?: boolean
+  /** Absent means true: the coordinator's own worktree survives a completed goal. */
+  keepCoordinatorWorktree?: boolean
   createdAt: number
   updatedAt: number
 }
@@ -123,4 +127,16 @@ export function clampAutonomousGoalMaxConcurrent(value: number | undefined): num
 
 export function isAutonomousGoalOpen(goal: Pick<AutonomousGoal, 'status'>): boolean {
   return goal.status === 'active' || goal.status === 'usageLimited' || goal.status === 'blocked'
+}
+
+/** Whether this goal's host-side cleanup releases and removes anything at all. */
+export function autonomousGoalRemovesWorktrees(goal: Pick<AutonomousGoal, 'removeWorktrees'>) {
+  return goal.removeWorktrees !== false
+}
+
+/** Whether a completed goal also removes the coordinator's own worktree. */
+export function autonomousGoalRemovesCoordinatorWorktree(
+  goal: Pick<AutonomousGoal, 'removeWorktrees' | 'keepCoordinatorWorktree'>
+) {
+  return autonomousGoalRemovesWorktrees(goal) && goal.keepCoordinatorWorktree === false
 }

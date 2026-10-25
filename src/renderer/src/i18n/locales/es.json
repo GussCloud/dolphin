@@ -15435,7 +15435,11 @@
         "objective": "Objetivo",
         "objectivePlaceholder": "p. ej. Lee la carpeta docs e implementa lo que especifica",
         "workerAgent": "Agente de los workers",
-        "maxConcurrent": "Worktrees en paralelo"
+        "maxConcurrent": "Worktrees en paralelo",
+        "removeWorktrees": "Eliminar worktrees al terminar",
+        "removeWorktreesDescription": "Los workers que terminan cierran su terminal y su worktree se elimina cuando se fusiona su PR. Desactivado, todo queda abierto.",
+        "keepCoordinatorWorktree": "Mantener worktree principal",
+        "keepCoordinatorWorktreeDescription": "El worktree del coordinador se conserva al completar el objetivo."
       },
       "AutonomousGoalStrip": {
         "active": "Trabajando",

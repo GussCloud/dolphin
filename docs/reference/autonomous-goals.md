@@ -179,9 +179,18 @@ done. It reuses the existing verbs, never forced:
   merged, checked through `hostedReview.forBranch` at most every 5 minutes per
   worktree. Until then the worker may still be driving CI.
 - When the goal closes, every settled worker's worktree goes, failed ones too.
-  On `complete` the coordinator's own worktree follows 30 s later, so its
-  closing reply is not cut off; on `stop` it is kept. The sweep survives a
-  restart (`cleanup.finishedAt`).
+  The coordinator's own worktree is kept unless the goal asked to remove it;
+  then it follows 30 s after `complete`, so its closing reply is not cut off.
+  It is always kept on `stop`. The sweep survives a restart
+  (`cleanup.finishedAt`).
+- The composer sets both choices: "Remove worktrees when done" (on by default)
+  and, while it is on, "Keep main worktree" (on by default). They ride the
+  coordinator's launch prompt as `goal start --keep-worktrees` and
+  `--remove-coordinator-worktree`, and only when they differ from the defaults,
+  so a host without the flags still accepts a default launch. The goal stores
+  them as `removeWorktrees` / `keepCoordinatorWorktree`, and an absent field
+  means the default. With removal off, nothing is released or removed: worker
+  terminals, agents and worktrees all stay for the user.
 - Removal is never forced: uncommitted changes keep a worktree, and a branch
   whose work is not integrated is kept by `worktree.rm`. What was removed and
   what was kept, with the reason, is stored on the goal (`cleanup`) and shown

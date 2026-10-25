@@ -94,7 +94,13 @@ export const AUTONOMOUS_GOAL_METHODS = [
         maxConcurrent: params.maxConcurrent,
         paneKey: caller.paneKey,
         worktreeId: await terminalWorktreeId(context.runtime, caller.terminalHandle),
-        runId: run.id
+        runId: run.id,
+        ...(params.removeWorktrees === undefined
+          ? {}
+          : { removeWorktrees: params.removeWorktrees }),
+        ...(params.keepCoordinatorWorktree === undefined
+          ? {}
+          : { keepCoordinatorWorktree: params.keepCoordinatorWorktree })
       })
       return { goal, created: true, instructions: buildAutonomousCoordinatorInstructions(goal) }
     }

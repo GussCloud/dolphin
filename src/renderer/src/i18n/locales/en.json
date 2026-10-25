@@ -17964,7 +17964,11 @@
         "objective": "Goal",
         "objectivePlaceholder": "e.g. Read the docs folder and implement what it specifies",
         "workerAgent": "Worker agent",
-        "maxConcurrent": "Parallel worktrees"
+        "maxConcurrent": "Parallel worktrees",
+        "removeWorktrees": "Remove worktrees when done",
+        "removeWorktreesDescription": "Finished workers close their terminal, and their worktree is removed once its PR merges. When off, everything stays open.",
+        "keepCoordinatorWorktree": "Keep main worktree",
+        "keepCoordinatorWorktreeDescription": "The coordinator's worktree stays after the goal completes."
       },
       "AutonomousGoalStrip": {
         "active": "Working",

@@ -10,6 +10,8 @@ import { resolveCoordinatorTerminalHandle } from './orchestration/terminal-ident
 import { decodeAutonomousGoalObjective } from '../../shared/autonomous-coordinator-prompt'
 import {
   AUTONOMOUS_GOAL_AGENTS,
+  autonomousGoalRemovesCoordinatorWorktree,
+  autonomousGoalRemovesWorktrees,
   clampAutonomousGoalMaxConcurrent,
   isAutonomousGoalAgent,
   type AutonomousGoal,
@@ -45,7 +47,14 @@ function formatGoal(goal: AutonomousGoal): string {
   const lines = [
     `${goal.id} [${goal.status}] run ${goal.runId}`,
     goal.objective,
-    `coordinator ${goal.agent}, workers ${goal.workerAgent} (max ${goal.maxConcurrent}), rotations ${goal.rotations}`
+    `coordinator ${goal.agent}, workers ${goal.workerAgent} (max ${goal.maxConcurrent}), rotations ${goal.rotations}`,
+    `worktrees: ${
+      autonomousGoalRemovesWorktrees(goal)
+        ? autonomousGoalRemovesCoordinatorWorktree(goal)
+          ? 'removed when done, coordinator included'
+          : 'removed when done, coordinator kept'
+        : 'kept'
+    }`
   ]
   for (const note of goal.notes) {
     lines.push(`${note.kind}: ${note.text}`)
@@ -76,7 +85,10 @@ export const GOAL_HANDLERS: Record<string, CommandHandler> = {
         workerAgent: requireGoalAgent(flags, 'worker-agent'),
         maxConcurrent: clampAutonomousGoalMaxConcurrent(
           getOptionalPositiveIntegerFlag(flags, 'max-concurrent')
-        )
+        ),
+        // Why only when set: an older host's schema strips unknown params, keeping its defaults.
+        ...(flags.has('keep-worktrees') ? { removeWorktrees: false } : {}),
+        ...(flags.has('remove-coordinator-worktree') ? { keepCoordinatorWorktree: false } : {})
       }
     )
     printResult(result, json, (r) =>

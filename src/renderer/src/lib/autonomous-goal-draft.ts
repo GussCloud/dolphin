@@ -13,6 +13,9 @@ export type AutonomousGoalDraft = {
   objective: string
   workerAgent: AutonomousGoalAgent
   maxConcurrent: number
+  removeWorktrees: boolean
+  /** Shown only while removeWorktrees is on. */
+  keepCoordinatorWorktree: boolean
 }
 
 export function createAutonomousGoalDraft(agent: TuiAgent | null): AutonomousGoalDraft {
@@ -20,7 +23,9 @@ export function createAutonomousGoalDraft(agent: TuiAgent | null): AutonomousGoa
     enabled: false,
     objective: '',
     workerAgent: isAutonomousGoalAgent(agent) ? agent : 'claude',
-    maxConcurrent: AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT
+    maxConcurrent: AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT,
+    removeWorktrees: true,
+    keepCoordinatorWorktree: true
   }
 }
 
@@ -56,6 +61,8 @@ export function resolveAutonomousGoalLaunchPrompt(
     objective: draft.objective,
     agent,
     workerAgent: draft.workerAgent,
-    maxConcurrent: clampAutonomousGoalMaxConcurrent(draft.maxConcurrent)
+    maxConcurrent: clampAutonomousGoalMaxConcurrent(draft.maxConcurrent),
+    removeWorktrees: draft.removeWorktrees,
+    keepCoordinatorWorktree: draft.keepCoordinatorWorktree
   })
 }

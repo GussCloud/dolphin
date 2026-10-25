@@ -34,6 +34,8 @@ export function NewWorkspaceComposerAutonomousSection({
 }): React.JSX.Element {
   const switchId = React.useId()
   const objectiveId = React.useId()
+  const removeWorktreesId = React.useId()
+  const keepCoordinatorId = React.useId()
   return (
     <div className="min-w-0 space-y-2">
       <div className="flex items-start justify-between gap-3">
@@ -132,8 +134,64 @@ export function NewWorkspaceComposerAutonomousSection({
               </Select>
             </div>
           </div>
+          <AutonomousCleanupSwitch
+            id={removeWorktreesId}
+            checked={draft.removeWorktrees}
+            onCheckedChange={(removeWorktrees) => onDraftChange({ ...draft, removeWorktrees })}
+            label={translate(
+              'auto.components.NewWorkspaceComposerAutonomousSection.removeWorktrees',
+              'Remove worktrees when done'
+            )}
+            description={translate(
+              'auto.components.NewWorkspaceComposerAutonomousSection.removeWorktreesDescription',
+              'Finished workers close their terminal, and their worktree is removed once its PR merges. When off, everything stays open.'
+            )}
+          />
+          {draft.removeWorktrees ? (
+            <AutonomousCleanupSwitch
+              id={keepCoordinatorId}
+              checked={draft.keepCoordinatorWorktree}
+              onCheckedChange={(keepCoordinatorWorktree) =>
+                onDraftChange({ ...draft, keepCoordinatorWorktree })
+              }
+              label={translate(
+                'auto.components.NewWorkspaceComposerAutonomousSection.keepCoordinatorWorktree',
+                'Keep main worktree'
+              )}
+              description={translate(
+                'auto.components.NewWorkspaceComposerAutonomousSection.keepCoordinatorWorktreeDescription',
+                "The coordinator's worktree stays after the goal completes."
+              )}
+            />
+          ) : null}
         </div>
       ) : null}
+    </div>
+  )
+}
+
+function AutonomousCleanupSwitch({
+  id,
+  checked,
+  onCheckedChange,
+  label,
+  description
+}: {
+  id: string
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+  label: string
+  description: string
+}): React.JSX.Element {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0 space-y-0.5">
+        <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+          {label}
+        </label>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   )
 }

@@ -17,7 +17,10 @@ export const GoalStartParams = z.object({
   ),
   agent: GoalAgent,
   workerAgent: GoalAgent,
-  maxConcurrent: z.number().int().min(1).max(AUTONOMOUS_GOAL_MAX_CONCURRENT_LIMIT)
+  maxConcurrent: z.number().int().min(1).max(AUTONOMOUS_GOAL_MAX_CONCURRENT_LIMIT),
+  // Why optional: older clients omit them, and absence keeps the defaults (remove, keep own).
+  removeWorktrees: z.boolean().optional(),
+  keepCoordinatorWorktree: z.boolean().optional()
 })
 
 export const GoalNoteParams = z.object({
