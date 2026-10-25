@@ -52,11 +52,17 @@ export async function startLocalWorker(args: {
   /** Settings-driven; the executing host still gets to refuse below. */
   mode: WorkerStartModeReceipt
 }): Promise<unknown> {
-  const { params, runtime, db, run, coordinator, callerSession, existingTask } = args
+  const { runtime, db, run, coordinator, callerSession, existingTask } = args
   const { orchestrationMutation } = args
   const coordinatorPane = coordinator?.paneKey ?? null
-  const requestedWorktree = params.worktree ?? 'current'
+  const requestedWorktree = args.params.worktree ?? 'current'
   const createsWorktree = requestedWorktree === 'new-child' || requestedWorktree === 'new-top-level'
+  const goal = getAutonomousGoalStore().findOpenByRun(args.run.id)
+  // Why: a goal's workers branch from the base its coordinator was created on, not the repo default.
+  const params =
+    createsWorktree && args.params.baseBranch === undefined && goal?.baseRef
+      ? { ...args.params, baseBranch: goal.baseRef }
+      : args.params
   const { agent, launch } = prepareLocalWorkerStart({ params, createsWorktree, runtime })
 
   const coordinatorWorktreeId = await resolveDispatchCallerWorktreeId(
@@ -162,7 +168,7 @@ export async function startLocalWorker(args: {
       mode,
       agent,
       launchPreferences: launch.preferences,
-      autonomousGoalWorkspace: getAutonomousGoalStore().findOpenByRun(run.id) !== null,
+      autonomousGoalWorkspace: goal !== null,
       startupPrompt,
       effects,
       onStage: (stage) => {

@@ -17809,7 +17809,6 @@
         }
       },
       "NewWorkspaceComposerAutonomousSection": {
-        "title": "自律作業",
         "description": "Agent が目標を計画し、ワークツリーを並行して開始し、すべての PR がマージされるまで調整します。",
         "unsupportedAgent": "自律作業を調整するには Claude、Codex、または DeepSeek（Agent Teams も可）を選択してください。",
         "objective": "目標",
@@ -17828,6 +17827,11 @@
         "stop": "目標を停止",
         "stopFailed": "目標を停止できませんでした。",
         "rotations": "ローテーション: {{value}}"
+      },
+      "NewWorkspaceComposerGoalMode": {
+        "worktreeTab": "ワークツリー",
+        "autonomousTab": "自律作業",
+        "coordinatorAgent": "コーディネーター Agent"
       }
     },
     "i18n": {

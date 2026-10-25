@@ -17809,7 +17809,6 @@
         }
       },
       "NewWorkspaceComposerAutonomousSection": {
-        "title": "자율 작업",
         "description": "에이전트가 목표를 계획하고 worktree를 병렬로 시작해 모든 PR이 병합될 때까지 조정합니다.",
         "unsupportedAgent": "자율 작업을 조정하려면 Claude, Codex 또는 DeepSeek(Agent Teams 포함)를 선택하세요.",
         "objective": "목표",
@@ -17828,6 +17827,11 @@
         "stop": "목표 중지",
         "stopFailed": "목표를 중지할 수 없습니다.",
         "rotations": "교체 횟수: {{value}}"
+      },
+      "NewWorkspaceComposerGoalMode": {
+        "worktreeTab": "워크트리",
+        "autonomousTab": "자율 작업",
+        "coordinatorAgent": "코디네이터 에이전트"
       }
     },
     "i18n": {

@@ -17908,7 +17908,6 @@
         }
       },
       "NewWorkspaceComposerAutonomousSection": {
-        "title": "Travail autonome",
         "description": "L'agent planifie l'objectif, lance des worktrees en parallèle et les coordonne jusqu'à la fusion de toutes les PR.",
         "unsupportedAgent": "Choisissez Claude, Codex ou DeepSeek (Agent Teams fonctionne aussi) pour coordonner le travail autonome.",
         "objective": "Objectif",
@@ -17927,6 +17926,11 @@
         "stop": "Arrêter l’objectif",
         "stopFailed": "Impossible d’arrêter l’objectif.",
         "rotations": "Rotations : {{value}}"
+      },
+      "NewWorkspaceComposerGoalMode": {
+        "worktreeTab": "Worktree",
+        "autonomousTab": "Travail autonome",
+        "coordinatorAgent": "Agent coordinateur"
       }
     },
     "i18n": {

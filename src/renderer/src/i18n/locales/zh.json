@@ -17809,7 +17809,6 @@
         }
       },
       "NewWorkspaceComposerAutonomousSection": {
-        "title": "自主工作",
         "description": "代理会规划目标、并行启动 worktree 并协调它们，直到所有 PR 合并。",
         "unsupportedAgent": "请选择 Claude、Codex 或 DeepSeek（也支持 Agent Teams）来协调自主工作。",
         "objective": "目标",
@@ -17828,6 +17827,11 @@
         "stop": "停止目标",
         "stopFailed": "无法停止目标。",
         "rotations": "轮换次数：{{value}}"
+      },
+      "NewWorkspaceComposerGoalMode": {
+        "worktreeTab": "工作树",
+        "autonomousTab": "自主工作",
+        "coordinatorAgent": "协调者代理"
       }
     },
     "i18n": {
