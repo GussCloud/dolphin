@@ -9,6 +9,7 @@ import { OrchestrationDb } from '../../src/main/runtime/orchestration/db'
 import { DolphinRuntimeService } from '../../src/main/runtime/dolphin-runtime'
 import type { RpcContext } from '../../src/main/runtime/rpc/core'
 import { ORCHESTRATION_METHODS } from '../../src/main/runtime/rpc/methods/orchestration'
+import { autoFetchHeldWorkerBriefs } from '../../src/main/runtime/orchestration/worker-brief.test-support'
 import { closeTerminalTab } from '@/components/terminal/terminal-tab-actions'
 import {
   resolveLegacyWorkerTerminalRecoveryAction,
@@ -287,6 +288,7 @@ async function releaseCompletedWorker(terminalState: 'running' | 'exited'): Prom
     accepted: true,
     bytesWritten: 1
   })
+  autoFetchHeldWorkerBriefs(runtime)
   vi.spyOn(runtime, 'isTerminalRunningAgent').mockResolvedValue(true)
   vi.spyOn(runtime, 'getExactWorkerProviderSession').mockReturnValue(null)
   vi.spyOn(runtime, 'showTerminal').mockResolvedValue({
