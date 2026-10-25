@@ -8,7 +8,8 @@ import { OrchestrationDb } from '../../../../orchestration/db'
 import { RpcDispatcher } from '../../../dispatcher'
 import type { RpcRequest } from '../../../core'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
-import { deliveredWorkerBrief } from '../../../../orchestration/worker-brief.test-support'
+import { autoFetchHeldWorkerBriefs } from '../../../../orchestration/worker-brief.test-support'
+import { getWorkerBriefStore } from '../../../../orchestration/worker-brief-store'
 
 const goalRunIds = vi.hoisted(() => new Set<string>())
 vi.mock('../../../../../autonomous-goals/autonomous-goal-store-instance', () => ({
@@ -24,6 +25,7 @@ describe('orchestration new-worktree workers', () => {
   let db: OrchestrationDb
   let runtime: DolphinRuntimeService
   let runId: string
+  let stopAutoFetch: () => void
   const paths: string[] = []
 
   beforeEach(() => {
@@ -81,6 +83,7 @@ describe('orchestration new-worktree workers', () => {
       accepted: true,
       bytesWritten: 1
     })
+    stopAutoFetch = autoFetchHeldWorkerBriefs(runtime)
   })
 
   afterEach(() => {
@@ -250,12 +253,17 @@ describe('orchestration new-worktree workers', () => {
   it('injects the execution host CLI command and Dispatch capability together', async () => {
     mockCreatedWorktree()
     vi.mocked(runtime.getTerminalOrchestrationCliCommand).mockReturnValue('dolphin-ide')
+    vi.spyOn(runtime, 'getWorktreeOrchestrationCliCommand').mockReturnValue('dolphin-ide')
 
-    await startWorker({ worktree: 'new-top-level' })
+    const { task } = await startWorker({ worktree: 'new-top-level' })
 
-    const pointer = vi.mocked(runtime.sendTerminalAgentPrompt).mock.calls[0]?.[1] ?? ''
-    expect(pointer).toContain('dolphin-ide orchestration worker-brief')
-    const prompt = deliveredWorkerBrief(runtime, pointer)
+    // Why the launch command: the worker starts like the coordinator, with nothing typed in.
+    expect(vi.mocked(runtime.createManagedWorktree).mock.calls[0]?.[0].startupPrompt).toContain(
+      'dolphin-ide orchestration worker-brief'
+    )
+    expect(runtime.sendTerminalAgentPrompt).not.toHaveBeenCalled()
+    const prompt =
+      getWorkerBriefStore(runtime).read(db.getDispatchContext(task.id)?.id ?? '')?.brief ?? ''
     expect(prompt).toContain('dolphin-ide orchestration send')
     expect(prompt).toMatch(/--dispatch-capability dcap_[A-Za-z0-9_-]+/)
     expect(prompt).not.toMatch(/(^|\s)dolphin orchestration send/)
@@ -361,7 +369,9 @@ describe('orchestration new-worktree workers', () => {
         expect.objectContaining({ kind: 'dispatch_input', state: 'accepted' })
       ])
     )
-    expect(runtime.sendTerminalAgentPrompt).toHaveBeenCalledOnce()
+    expect(vi.mocked(runtime.createManagedWorktree).mock.calls[0]?.[0].startupPrompt).toContain(
+      'orchestration worker-brief'
+    )
     expect(db.getInbox(10).filter((message) => message.run_id === runId)).toEqual(
       expect.arrayContaining([expect.objectContaining({ type: 'status', priority: 'high' })])
     )
@@ -406,9 +416,8 @@ describe('orchestration new-worktree workers', () => {
         expect.objectContaining({ kind: 'dispatch_input', state: 'accepted' })
       ])
     })
-    expect(vi.mocked(runtime.waitForTerminal).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(runtime.sendTerminalAgentPrompt).mock.invocationCallOrder[0]!
-    )
+    // Why succeeded: a gated agent launches only after setup, so its brief fetch proves setup.
+    expect(runtime.sendTerminalAgentPrompt).not.toHaveBeenCalled()
     expect(JSON.parse(db.getWorkerDispatch(dispatchId)?.effects ?? '[]')).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: 'dispatch_input', state: 'accepted' })
@@ -418,6 +427,7 @@ describe('orchestration new-worktree workers', () => {
 
   it('does not inject task input when the gated setup terminal fails to start', async () => {
     mockCreatedWorktree({ startupPolicy: 'wait-for-setup', state: 'spawn_failed' })
+    stopAutoFetch()
     vi.mocked(runtime.waitForTerminal).mockResolvedValue({
       handle: 'term_worker',
       condition: 'tui-idle',
@@ -442,6 +452,7 @@ describe('orchestration new-worktree workers', () => {
 
   it('does not inject task input when the gated setup script fails', async () => {
     mockCreatedWorktree({ startupPolicy: 'wait-for-setup', state: 'running' })
+    stopAutoFetch()
     vi.mocked(runtime.waitForTerminal).mockResolvedValue({
       handle: 'term_worker',
       condition: 'tui-idle',
@@ -471,7 +482,8 @@ describe('orchestration new-worktree workers', () => {
       exitCode: null
     })
 
-    const { result } = await startWorker()
+    // Why aider: a launch-carried worker is busy, not idle, so only a pasted start times out here.
+    const { result } = await startWorker({ agent: 'aider' })
 
     expect(result).toMatchObject({
       state: 'failed',
@@ -507,6 +519,7 @@ describe('orchestration new-worktree workers', () => {
     })
 
     mockCreatedWorktree()
+    stopAutoFetch()
     vi.mocked(runtime.waitForTerminal).mockResolvedValueOnce({
       handle: 'term_worker',
       condition: 'tui-idle',
@@ -637,7 +650,8 @@ describe('orchestration new-worktree workers', () => {
         from: 'term_coord',
         worktree: 'new-child',
         name: 'recover-input-worker',
-        agent: 'codex'
+        // Why aider: only a pasted start has a dispatch-input step to fail.
+        agent: 'aider'
       }
     }
 
@@ -725,7 +739,8 @@ describe('orchestration new-worktree workers', () => {
         })
     )
 
-    const pending = startWorker({ name: 'staged-worker' })
+    // Why aider: the post-input stage exists only for a start that pastes its brief.
+    const pending = startWorker({ name: 'staged-worker', agent: 'aider' })
     await vi.waitFor(() => {
       const task = db.listTasks()[0]
       const dispatch = task ? db.getDispatchContext(task.id) : undefined

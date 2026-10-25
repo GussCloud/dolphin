@@ -12,6 +12,14 @@ import { OrchestrationDb } from '../../../../orchestration/db'
 import type { RpcRequest } from '../../../core'
 import { RpcDispatcher } from '../../../dispatcher'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
+import type * as WorkerBriefLaunch from './worker-brief-launch'
+
+// Why: this suite pins the pasted-brief contract that reused terminals and `dispatch --inject`
+// still use; a fresh Codex worker now carries its pointer on the launch command instead.
+vi.mock('./worker-brief-launch', async (importOriginal) => ({
+  ...(await importOriginal<typeof WorkerBriefLaunch>()),
+  resolveWorkerBriefLaunchPrompt: () => undefined
+}))
 
 vi.mock('../../../../../git/worktree', () => ({
   listWorktrees: vi.fn().mockResolvedValue([

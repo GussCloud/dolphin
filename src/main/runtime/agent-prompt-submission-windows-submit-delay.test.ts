@@ -9,6 +9,7 @@ import { DolphinRuntimeService } from './dolphin-runtime'
 import { TUI_AGENT_CONFIG } from '../../shared/tui-agent-config'
 import { lastInputAtByPty } from '../ipc/pty/delivery/visibility-state'
 import { makeStore } from './runtime-rpc-worktree-store-fixtures'
+import { dispatchPreambleSendOptions } from './orchestration/preamble'
 
 const WORKTREE_PATH = '/tmp/worktree-a'
 const PTY_ID = 'pty-prompt'
@@ -439,6 +440,49 @@ describe('agent prompt render gate on a ConPTY host', () => {
       stages: ['input_accepted'],
       submitRetried: true
     })
+  })
+
+  // Why the real options: the dispatch sends observationTimeoutMs 0, which skipped every retry
+  // while the test above (without it) passed, and Windows workers sat until a manual Enter.
+  it('keeps re-sending Enter after the receipt returns until a turn starts', async () => {
+    useHostPlatform('win32')
+    vi.useFakeTimers()
+    const { runtime, handle, submitTimes } = await createSettlementRuntime()
+    const receipt = await (async () => {
+      const submission = runtime.sendTerminalAgentPrompt(
+        handle,
+        'one line',
+        dispatchPreambleSendOptions('request-1', 'brief-pointer')
+      )
+      await vi.advanceTimersByTimeAsync(2_000)
+      return submission
+    })()
+    expect(receipt.prompt?.stages).toEqual(['input_accepted'])
+    expect(submitTimes).toHaveLength(1)
+
+    await vi.runAllTimersAsync()
+    const offsets = submitTimes.map((at) => at - submitTimes[0]!)
+    expect(offsets).toEqual([0, 3_000, 8_000, 18_000])
+  })
+
+  it('stops re-sending once the user types into the pane', async () => {
+    useHostPlatform('win32')
+    vi.useFakeTimers()
+    const { runtime, handle, submitTimes } = await createSettlementRuntime()
+    const submission = runtime.sendTerminalAgentPrompt(
+      handle,
+      'one line',
+      dispatchPreambleSendOptions('request-1', 'brief-pointer')
+    )
+    await vi.advanceTimersByTimeAsync(2_000)
+    await submission
+    lastInputAtByPty.set(PTY_ID, performance.now())
+    try {
+      await vi.runAllTimersAsync()
+      expect(submitTimes).toHaveLength(1)
+    } finally {
+      lastInputAtByPty.delete(PTY_ID)
+    }
   })
 })
 

@@ -18,6 +18,7 @@ import type { AgentPromptWaitTextCache } from './agent-prompt-submission-verific
 import {
   isTerminalSendSettlementAgent,
   resolveAgentPromptEffectTimeoutMs,
+  retryUnstartedQueuedPromptSubmit,
   verifyAgentPromptSubmissionWithRetry
 } from './agent-prompt-submission-verification'
 import { TUI_AGENT_CONFIG } from '../../shared/tui-agent-config'
@@ -213,6 +214,16 @@ export class DolphinRuntimeWithWriteTerminalAgentPrompt extends DolphinRuntimeWi
     } catch (error) {
       const retried = submitRetried ? { submitRetried: true as const } : {}
       if (error instanceof Error && error.message === 'agent_prompt_stalled') {
+        // Why: an observation window shorter than the retry delay never re-sent Enter, so a
+        // dropped first Enter stranded the brief; keep retrying after the receipt returns.
+        if (retryAfterMs !== undefined && !submitRetried) {
+          void retryUnstartedQueuedPromptSubmit({
+            baseline,
+            readActivity: () => this.getAgentPromptActivity(handle, ptyId),
+            resubmit,
+            firstDelayMs: retryAfterMs
+          }).catch(() => undefined)
+        }
         return { submits: submitRetried ? 2 : 1, prompt: { ...inputAccepted, ...retried } }
       }
       if (error instanceof Error && error.message === 'agent_prompt_blocked') {

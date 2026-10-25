@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DolphinRuntimeService } from '../../dolphin-runtime'
 import { OrchestrationDb } from '../../orchestration/db'
 import { ORCHESTRATION_METHODS } from './orchestration'
+import { autoFetchHeldWorkerBriefs } from '../../orchestration/worker-brief.test-support'
 
 const STRUCTURED_HANDLE = 'structworker_abc'
 const TERMINAL_HANDLE = 'term_worker'
@@ -91,6 +92,7 @@ describe('worker-start honours the settings default', () => {
       accepted: true,
       bytesWritten: 1
     })
+    autoFetchHeldWorkerBriefs(runtime)
   })
 
   afterEach(() => {

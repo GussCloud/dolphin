@@ -84,3 +84,13 @@ export function describeUnobservedWorkerTurnStart(agent: string | null): string 
     'reports, this Dispatch settles normally.'
   )
 }
+
+export function describeUnfetchedWorkerBrief(agent: string | null): string {
+  const name = agent ?? 'the agent'
+  return (
+    `${name} was launched with its task pointer but did not fetch its brief during observation. ` +
+    'This is unverifiable, not proof the worker is dead: the agent may still be starting, may be ' +
+    'held by a login, update or trust screen, or may be waiting on network. If it fetches the ' +
+    'brief and reports, this Dispatch settles normally.'
+  )
+}

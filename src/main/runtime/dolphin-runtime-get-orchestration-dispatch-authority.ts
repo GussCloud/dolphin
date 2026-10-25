@@ -10,6 +10,7 @@ import {
   parsePaneKey
 } from '../../shared/stable-pane-id'
 import { isValidTerminalTabId } from '../../shared/terminal-tab-id'
+import { splitWorktreeIdForFilesystem } from '../../shared/worktree/id'
 import { RECENT_PTY_OUTPUT_LIMIT, RecentPtyOutputBuffer } from './recent-pty-output-buffer'
 import { appendRecentPtyPathCandidates } from './terminal-output-path-candidates'
 import type { ProjectExecutionRuntimeResolution } from '../../shared/project-execution-runtime'
@@ -268,6 +269,21 @@ export class DolphinRuntimeWithGetOrchestrationDispatchAuthority extends Dolphin
       runtimeCliCommand: getAppEnvironment().isPackaged() ? undefined : DEV_CLI_COMMAND_NAME,
       projectRuntime: this.store
         ? resolveLocalProjectRuntimeForWorktreeId(this.requireStore(), pty.worktreeId)
+        : undefined
+    })
+  }
+
+  /** The CLI name a terminal in this worktree will have, before that terminal exists. */
+  getWorktreeOrchestrationCliCommand(worktreeId: string): OrchestrationCliCommand {
+    const repoId = splitWorktreeIdForFilesystem(worktreeId)?.repoId
+    const repo = repoId ? this.store?.getRepo(repoId) : undefined
+    return resolveTerminalOrchestrationCliCommand({
+      connectionId: repo?.connectionId ?? null,
+      isWsl: undefined,
+      worktreeId,
+      runtimeCliCommand: getAppEnvironment().isPackaged() ? undefined : DEV_CLI_COMMAND_NAME,
+      projectRuntime: this.store
+        ? resolveLocalProjectRuntimeForWorktreeId(this.requireStore(), worktreeId)
         : undefined
     })
   }

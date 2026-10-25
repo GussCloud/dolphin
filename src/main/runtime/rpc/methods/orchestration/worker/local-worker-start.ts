@@ -29,6 +29,8 @@ import { tearDownFailedWorkerStart } from './failed-worker-start-teardown'
 import { requireWorkerAuthority, type WorkerEffect } from './worker-topology'
 import { prepareLocalWorkerStart } from './worker-start-validation'
 import { deliverAndSettleWorkerStartReadiness } from './worker-start-readiness-settlement'
+import { resolveWorkerBriefLaunchPrompt } from './worker-brief-launch'
+import { settleLaunchedWorkerStart } from './worker-brief-launch-readiness'
 import { getAutonomousGoalStore } from '../../../../../autonomous-goals/autonomous-goal-store-instance'
 
 type WorkerStartMutation = {
@@ -138,6 +140,15 @@ export async function startLocalWorker(args: {
   let terminalHandle = params.terminal
   let placed: Awaited<ReturnType<typeof placeWorkerAgent>> | undefined
   let failedStage = 'terminal_create'
+  const startupPrompt = resolveWorkerBriefLaunchPrompt({
+    runtime,
+    agent,
+    params,
+    placement: resolvedWorktree ?? creationWorktree,
+    createsWorktree,
+    dispatchId: started.dispatch.id,
+    task
+  })
   try {
     placed = await placeWorkerAgent({
       runtime,
@@ -152,6 +163,7 @@ export async function startLocalWorker(args: {
       agent,
       launchPreferences: launch.preferences,
       autonomousGoalWorkspace: getAutonomousGoalStore().findOpenByRun(run.id) !== null,
+      startupPrompt,
       effects,
       onStage: (stage) => {
         failedStage = stage
@@ -178,6 +190,38 @@ export async function startLocalWorker(args: {
       throw new Error('Setup terminal failed to start before the gated agent launch.')
     }
     persistWorkerReadinessStage(setupStage)
+
+    const settleArgs = {
+      runtime,
+      db,
+      run,
+      task,
+      dispatchId: started.dispatch.id,
+      dispatchDepth: started.dispatch.depth,
+      structuredSession,
+      terminalHandle,
+      coordinatorHandle: params.from,
+      devMode: params.devMode,
+      requestId: orchestrationMutation?.requestId ?? started.dispatch.id,
+      agent: agent ?? null,
+      setupReceipt,
+      launchReceipt: launch.receipt,
+      mode,
+      timeoutMs: params.timeoutMs ?? 60_000,
+      effects,
+      terminalRevealWarning: placed.warning,
+      onStage: (stage: string) => {
+        failedStage = stage
+      }
+    }
+    if (placed.briefRidesLaunch) {
+      failedStage = 'agent_readiness'
+      return await settleLaunchedWorkerStart({
+        ...settleArgs,
+        worktreeId: resolvedWorktree.id,
+        setupStage
+      })
+    }
 
     failedStage = 'agent_readiness'
     // A structured session is ready the moment its attach returns ok: there is no boot-to-idle
@@ -221,28 +265,8 @@ export async function startLocalWorker(args: {
     })
 
     return await deliverAndSettleWorkerStartReadiness({
-      runtime,
-      db,
-      run,
-      task,
-      dispatchId: started.dispatch.id,
-      dispatchDepth: started.dispatch.depth,
-      structuredSession,
-      terminalHandle,
-      coordinatorHandle: params.from,
-      dispatchCapability: capability,
-      devMode: params.devMode,
-      requestId: orchestrationMutation?.requestId ?? started.dispatch.id,
-      agent: agent ?? null,
-      setupReceipt,
-      launchReceipt: launch.receipt,
-      mode,
-      timeoutMs: params.timeoutMs ?? 60_000,
-      effects,
-      terminalRevealWarning: placed.warning,
-      onStage: (stage) => {
-        failedStage = stage
-      }
+      ...settleArgs,
+      dispatchCapability: capability
     })
   } catch (error) {
     await tearDownFailedWorkerStart({

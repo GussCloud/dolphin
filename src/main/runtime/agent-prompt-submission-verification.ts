@@ -246,3 +246,43 @@ export async function verifyAgentPromptSubmissionWithRetry(
     timeoutMs: Math.max(0, totalMs - (Date.now() - startedAt))
   })
 }
+
+/** Offsets after the first Enter, matching the 3 s per-agent retry and then backing off. */
+export const QUEUED_PROMPT_SUBMIT_RETRY_DELAYS_MS = [3_000, 5_000, 10_000] as const
+
+/**
+ * Re-sends Enter for a queued prompt whose receipt returned before any turn could start.
+ * Why: a Dispatch accepts its receipt at once (observation timeout 0), so the bounded retry in
+ * `verifyAgentPromptSubmissionWithRetry` never ran and a dropped first Enter left the brief in the
+ * composer until the user pressed Enter. Stops at the first turn start, a permission prompt or a
+ * replaced process; `resubmit` refuses after user typing. Resolves whether a turn started.
+ */
+export async function retryUnstartedQueuedPromptSubmit(options: {
+  baseline: AgentPromptActivity
+  readActivity: () => AgentPromptActivity
+  resubmit: () => boolean
+  firstDelayMs: number
+  sleep?: (ms: number) => Promise<void>
+}): Promise<boolean> {
+  const sleep =
+    options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)))
+  const scale = options.firstDelayMs / QUEUED_PROMPT_SUBMIT_RETRY_DELAYS_MS[0]
+  for (const delayMs of QUEUED_PROMPT_SUBMIT_RETRY_DELAYS_MS) {
+    await sleep(Math.round(delayMs * scale))
+    const current = options.readActivity()
+    if (
+      current.generation !== options.baseline.generation ||
+      current.status === 'permission' ||
+      current.permissionSequence > options.baseline.permissionSequence
+    ) {
+      return false
+    }
+    if (agentPromptEffectAccepted(options.baseline, current, undefined, true, false)) {
+      return true
+    }
+    if (!options.resubmit()) {
+      return false
+    }
+  }
+  return false
+}

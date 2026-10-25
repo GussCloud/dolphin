@@ -11,6 +11,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { OrchestrationDb } from '../../../../orchestration/db'
 import { createOrchestrationWorkerReleaseHarness } from './worker-release.test-support'
+import type * as WorkerBriefLaunch from './worker-brief-launch'
+
+// Why: this suite reads state inside the pre-paste boot wait, which only a pasted brief has; a
+// fresh Codex worker now carries its pointer on the launch command and never waits there.
+vi.mock('./worker-brief-launch', async (importOriginal) => ({
+  ...(await importOriginal<typeof WorkerBriefLaunch>()),
+  resolveWorkerBriefLaunchPrompt: () => undefined
+}))
 
 const READY_WAIT = {
   handle: 'term_worker',

@@ -4,6 +4,7 @@ import { reconcileRequestedWorkerTerminalReleases } from '../../../../orchestrat
 import { DolphinRuntimeService } from '../../../../dolphin-runtime'
 import { eraseRpcMethods, type RpcContext } from '../../../core'
 import { ORCHESTRATION_METHODS } from '../../orchestration'
+import { autoFetchHeldWorkerBriefs } from '../../../../orchestration/worker-brief.test-support'
 
 function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
   let resolve!: (value: T) => void
@@ -69,6 +70,7 @@ describe('orchestration worker release recovery', () => {
       accepted: true,
       bytesWritten: 1
     })
+    autoFetchHeldWorkerBriefs(runtime)
     vi.spyOn(runtime, 'isTerminalRunningAgent').mockResolvedValue(true)
     vi.spyOn(runtime, 'getExactWorkerProviderSession').mockReturnValue(null)
     vi.spyOn(runtime, 'readTerminal').mockResolvedValue({

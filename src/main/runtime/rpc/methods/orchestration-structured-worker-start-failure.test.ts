@@ -85,6 +85,7 @@ function installHost() {
 
 function fakes() {
   const retireStructuredAgentSessionTabFromSnapshot = vi.fn(() => true)
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the start reads only the runtime members this fake defines.
   const runtime = {
     showTerminal: async () => ({ worktreeId: WORKTREE }),
     showManagedTerminalWorkspace: async () => ({ id: WORKTREE }),
@@ -92,6 +93,7 @@ function fakes() {
     getRuntimeId: () => 'epoch-1',
     ensureStructuredAgentSessionHost: async () => {},
     getTerminalOrchestrationCliCommand: () => 'dolphin',
+    getWorktreeOrchestrationCliCommand: () => 'dolphin',
     getStructuredAgentSessionCreateSupport: async () => ({ supported: true }),
     getOrchestrationDispatchAuthority: () => ({
       paneKey: 'pane',

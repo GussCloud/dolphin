@@ -23,7 +23,8 @@ import {
 import { ORCHESTRATION_METHODS } from './orchestration'
 import { readStructuredWorkerOutput } from './orchestration-structured-worker-lifecycle'
 import { inspectWorkerTerminal } from './orchestration/worker/worker-observation'
-import { deliveredWorkerBrief } from '../../orchestration/worker-brief.test-support'
+import { autoFetchHeldWorkerBriefs } from '../../orchestration/worker-brief.test-support'
+import { getWorkerBriefStore } from '../../orchestration/worker-brief-store'
 
 const WORKTREE = 'repo::wt'
 const STRUCTURED_HANDLE = 'structworker_worker'
@@ -146,6 +147,7 @@ describe('a worker cannot tell which mode it is running in', () => {
       accepted: true,
       bytesWritten: 1
     })
+    autoFetchHeldWorkerBriefs(runtime)
   })
 
   afterEach(() => {
@@ -203,11 +205,8 @@ describe('a worker cannot tell which mode it is running in', () => {
     expect(structured.mode.mode).toBe('structured')
     expect(terminal.mode.mode).toBe('terminal')
     const structuredPreamble = structuredPreambles[0] as string
-    // Why the held brief: a PTY worker reads it through worker-brief; the pasted line only points there.
-    const terminalPreamble = deliveredWorkerBrief(
-      runtime,
-      vi.mocked(runtime.sendTerminalAgentPrompt).mock.calls[0]?.[1]
-    )
+    // Why the held brief: a PTY worker reads it through worker-brief; its launch only points there.
+    const terminalPreamble = getWorkerBriefStore(runtime).read(terminal.dispatchId)?.brief ?? ''
     expect(normalizePreamble(structuredPreamble, STRUCTURED_HANDLE, structured.dispatchId)).toBe(
       normalizePreamble(terminalPreamble, TERMINAL_HANDLE, terminal.dispatchId)
     )
@@ -231,9 +230,9 @@ describe('a worker cannot tell which mode it is running in', () => {
 
     expect(result).toMatchObject({ state: 'ready' })
     expect(showTerminal).not.toHaveBeenCalled()
-    expect(
-      deliveredWorkerBrief(runtime, vi.mocked(runtime.sendTerminalAgentPrompt).mock.calls[0]?.[1])
-    ).toContain('=== SUB-DISPATCH ===')
+    expect(getWorkerBriefStore(runtime).read(result.dispatchId)?.brief).toContain(
+      '=== SUB-DISPATCH ==='
+    )
   })
 
   it('refuses an unavailable output source without disclosing the mode', async () => {
