@@ -130,21 +130,28 @@ pointer whose single Enter was dropped. Two things close them:
   re-nudges at most every 5 minutes, skips usage-limited goals, and after 3
   unanswered nudges marks the goal blocked so the user is notified.
 
-## One-line terminal input
+## Worker brief delivery
 
-Under Windows ConPTY, Claude Code left multi-line pasted input unsubmitted in its
-composer however many times Enter was sent, while single-line input submitted
-on the same path. So nothing Dolphin types into an agent pane spans lines:
+On Windows, Claude often drops the first Enter after a paste into a freshly
+started composer. The coordinator's nudges recovered because their delivery
+re-sends Enter after `verifiedSubmitRetryMs` (3 s). Worker dispatches did not:
+they pass `observationTimeoutMs: 0` so a late hook cannot revoke an accepted
+Dispatch, and a 0 ms window skipped the retry entirely. Every worker then waited
+for a manual Enter. Removing line breaks (0.2.28) changed nothing, because line
+breaks were never the cause.
 
+- `retryUnstartedQueuedPromptSubmit` now runs after a queued receipt returns. It
+  re-sends Enter 3 s, 8 s and 18 s after the first one, and stops at the first
+  turn start, a permission prompt, a replaced process, or any user typing. Enter
+  on an empty composer is a no-op, so a retry after a real submit costs nothing.
+  Any test of dispatch delivery must use `dispatchPreambleSendOptions`: a test
+  without `observationTimeoutMs: 0` passed while the real path never retried.
 - A terminal worker's brief stays on the host (`worker-brief-store.ts`). The pane
   gets a typed lead line plus one pasted line naming
   `dolphin orchestration worker-brief --dispatch <id> --json`, which returns the
-  brief only to the pane it was sent to. The line keeps the compact
-  `Your task ID is: ... === TASK === ...` form, so the sidebar label still works,
-  and the dispatch capability never shows up in the pane's scrollback. The brief
-  lives in memory: after a host restart the worker gets `worker_brief_not_found`
-  and the coordinator dispatches it again.
-- The mailbox pointer is one line, with no leading or trailing line feed.
+  brief only to the pane it was sent to, so the dispatch capability never shows
+  up in scrollback. The brief lives in memory: after a host restart the worker
+  gets `worker_brief_not_found` and the coordinator dispatches it again.
 
 ## Cleanup
 

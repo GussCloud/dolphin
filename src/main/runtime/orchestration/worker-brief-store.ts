@@ -1,7 +1,8 @@
 import type { DolphinRuntimeService } from '../dolphin-runtime'
 import {
   DOLPHIN_DISPATCH_STATUS_PREAMBLE_PREFIX,
-  DOLPHIN_DISPATCH_STATUS_TASK_MARKER
+  DOLPHIN_DISPATCH_STATUS_TASK_MARKER,
+  DOLPHIN_WORKER_BRIEF_LEAD_LINE
 } from '../../../shared/dolphin-dispatch-status-prompt'
 
 // A worker's full dispatch brief, held on the host so the terminal only receives one short line.
@@ -14,6 +15,9 @@ export type HeldWorkerBrief = { brief: string; paneKey: string; taskId: string }
 
 export class WorkerBriefStore {
   private readonly briefs = new Map<string, HeldWorkerBrief>()
+  private readonly holdWaiters = new Map<string, Set<(brief: HeldWorkerBrief) => void>>()
+  private readonly fetchWaiters = new Map<string, Set<() => void>>()
+  private readonly fetched = new Set<string>()
 
   hold(dispatchId: string, entry: HeldWorkerBrief): void {
     this.briefs.delete(dispatchId)
@@ -25,11 +29,65 @@ export class WorkerBriefStore {
         break
       }
       this.briefs.delete(oldest)
+      this.fetched.delete(oldest)
     }
+    for (const resolve of this.holdWaiters.get(dispatchId) ?? []) {
+      resolve(entry)
+    }
+    this.holdWaiters.delete(dispatchId)
   }
 
   read(dispatchId: string): HeldWorkerBrief | undefined {
     return this.briefs.get(dispatchId)
+  }
+
+  /** A worker launched with the pointer can ask before its start has minted the brief. */
+  async waitForHold(dispatchId: string, timeoutMs: number): Promise<HeldWorkerBrief | undefined> {
+    const held = this.briefs.get(dispatchId)
+    if (held || timeoutMs <= 0) {
+      return held
+    }
+    return await new Promise((resolve) => {
+      const waiters = this.holdWaiters.get(dispatchId) ?? new Set()
+      const done = (brief: HeldWorkerBrief | undefined): void => {
+        clearTimeout(timer)
+        waiters.delete(done)
+        resolve(brief)
+      }
+      const timer = setTimeout(() => done(undefined), timeoutMs)
+      waiters.add(done)
+      this.holdWaiters.set(dispatchId, waiters)
+    })
+  }
+
+  markFetched(dispatchId: string): void {
+    this.fetched.add(dispatchId)
+    for (const resolve of this.fetchWaiters.get(dispatchId) ?? []) {
+      resolve()
+    }
+    this.fetchWaiters.delete(dispatchId)
+  }
+
+  /** Resolves true once the worker read its brief: the proof a launch-carried pointer ran. */
+  async waitForFetch(dispatchId: string, timeoutMs: number): Promise<boolean> {
+    if (this.fetched.has(dispatchId)) {
+      return true
+    }
+    if (timeoutMs <= 0) {
+      return false
+    }
+    return await new Promise((resolve) => {
+      const waiters = this.fetchWaiters.get(dispatchId) ?? new Set()
+      const done = (fetched: boolean): void => {
+        clearTimeout(timer)
+        waiters.delete(onFetch)
+        resolve(fetched)
+      }
+      const onFetch = (): void => done(true)
+      const timer = setTimeout(() => done(false), timeoutMs)
+      waiters.add(onFetch)
+      this.fetchWaiters.set(dispatchId, waiters)
+    })
   }
 }
 
@@ -68,4 +126,9 @@ export function buildWorkerBriefPointer(args: {
       ? `${preview.slice(0, POINTER_TASK_PREVIEW_MAX - 1)}…`
       : preview
   return `${DOLPHIN_DISPATCH_STATUS_PREAMBLE_PREFIX} Your task ID is: ${args.taskId} (run \`${args.cli} orchestration worker-brief --dispatch ${args.dispatchId} --json\` and follow the brief it returns) ${DOLPHIN_DISPATCH_STATUS_TASK_MARKER} ${clipped}`.trimEnd()
+}
+
+/** The worker's first message when it rides the agent's launch command, like the coordinator's. */
+export function buildWorkerBriefLaunchPrompt(args: Parameters<typeof buildWorkerBriefPointer>[0]) {
+  return `${DOLPHIN_WORKER_BRIEF_LEAD_LINE} ${buildWorkerBriefPointer(args)}`
 }

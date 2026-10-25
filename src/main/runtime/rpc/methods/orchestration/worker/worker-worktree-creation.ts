@@ -37,6 +37,8 @@ export async function createWorkerWorktree(args: {
   withAgentTerminal: boolean
   launchPreferences?: AgentLaunchPreferences
   autonomousGoalWorkspace?: boolean
+  /** Rides the startup agent's launch command, so the worker starts without typed input. */
+  startupPrompt?: string
   effects: WorkerEffect[]
 }): Promise<{
   worktree: Awaited<ReturnType<DolphinRuntimeService['showManagedWorktree']>>
@@ -63,7 +65,8 @@ export async function createWorkerWorktree(args: {
     ...(args.withAgentTerminal
       ? {
           startupAgent: args.agent,
-          ...(args.launchPreferences ? { startupLaunchPreferences: args.launchPreferences } : {})
+          ...(args.launchPreferences ? { startupLaunchPreferences: args.launchPreferences } : {}),
+          ...(args.startupPrompt ? { startupPrompt: args.startupPrompt } : {})
         }
       : {}),
     activate: false,

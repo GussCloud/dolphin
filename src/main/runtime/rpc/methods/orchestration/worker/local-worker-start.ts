@@ -29,6 +29,8 @@ import { tearDownFailedWorkerStart } from './failed-worker-start-teardown'
 import { requireWorkerAuthority, type WorkerEffect } from './worker-topology'
 import { prepareLocalWorkerStart } from './worker-start-validation'
 import { deliverAndSettleWorkerStartReadiness } from './worker-start-readiness-settlement'
+import { resolveWorkerBriefLaunchPrompt, waitForWorkerAuthority } from './worker-brief-launch'
+import { AGENT_PROMPT_EFFECT_TIMEOUT_MS } from '../../../../../../shared/orchestration-timing-budgets'
 import { getAutonomousGoalStore } from '../../../../../autonomous-goals/autonomous-goal-store-instance'
 
 type WorkerStartMutation = {
@@ -138,6 +140,21 @@ export async function startLocalWorker(args: {
   let terminalHandle = params.terminal
   let placed: Awaited<ReturnType<typeof placeWorkerAgent>> | undefined
   let failedStage = 'terminal_create'
+  const startupPrompt = resolveWorkerBriefLaunchPrompt({
+    runtime,
+    agent,
+    reusesTerminal: Boolean(params.terminal),
+    // A created worktree lands in the coordinator's repo unless --repo names another one.
+    cliWorktreeId:
+      resolvedWorktree?.id ??
+      (creationWorktree && (params.repo === undefined || params.repo === creationWorktree.repoId)
+        ? creationWorktree.id
+        : undefined),
+    devMode: params.devMode,
+    dispatchId: started.dispatch.id,
+    taskId: task.id,
+    taskSpec: task.spec
+  })
   try {
     placed = await placeWorkerAgent({
       runtime,
@@ -152,6 +169,7 @@ export async function startLocalWorker(args: {
       agent,
       launchPreferences: launch.preferences,
       autonomousGoalWorkspace: getAutonomousGoalStore().findOpenByRun(run.id) !== null,
+      startupPrompt,
       effects,
       onStage: (stage) => {
         failedStage = stage
@@ -178,6 +196,55 @@ export async function startLocalWorker(args: {
       throw new Error('Setup terminal failed to start before the gated agent launch.')
     }
     persistWorkerReadinessStage(setupStage)
+
+    if (placed.briefRidesLaunch) {
+      // The agent is already working on its launch prompt, so it never reaches the idle prompt a
+      // paste would wait for. Readiness is the worker fetching its brief, settled below.
+      failedStage = 'agent_readiness'
+      const readinessTimeoutMs = params.timeoutMs ?? 60_000
+      const startedAt = Date.now()
+      const authority = await waitForWorkerAuthority(runtime, terminalHandle, readinessTimeoutMs)
+      const capability = db.prepareStartingWorkerAuthority({
+        dispatchId: started.dispatch.id,
+        handle: terminalHandle,
+        ...authority,
+        worktreeId: resolvedWorktree.id,
+        effects,
+        setupState: setupReceipt.state,
+        terminalOwnership: 'created'
+      })
+      return await deliverAndSettleWorkerStartReadiness({
+        runtime,
+        db,
+        run,
+        task,
+        dispatchId: started.dispatch.id,
+        dispatchDepth: started.dispatch.depth,
+        structuredSession: null,
+        terminalHandle,
+        coordinatorHandle: params.from,
+        dispatchCapability: capability,
+        devMode: params.devMode,
+        requestId: orchestrationMutation?.requestId ?? started.dispatch.id,
+        agent: agent ?? null,
+        setupReceipt,
+        launchReceipt: launch.receipt,
+        mode,
+        timeoutMs: readinessTimeoutMs,
+        effects,
+        terminalRevealWarning: placed.warning,
+        briefRidesLaunch: {
+          paneKey: authority.paneKey,
+          fetchTimeoutMs: Math.max(
+            0,
+            readinessTimeoutMs + AGENT_PROMPT_EFFECT_TIMEOUT_MS - (Date.now() - startedAt)
+          )
+        },
+        onStage: (stage) => {
+          failedStage = stage
+        }
+      })
+    }
 
     failedStage = 'agent_readiness'
     // A structured session is ready the moment its attach returns ok: there is no boot-to-idle
