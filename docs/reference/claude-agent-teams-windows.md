@@ -66,6 +66,15 @@ Git Bash echoes typed input slowly: a ~400-character teammate command took ~55s 
 macOS, Linux and WSL teams keep the placeholder split and type the command as-is. SSH leaders
 have no panes (see below).
 
+### Closing the leader closes its teammates
+
+`closeTerminal` on a leader handle closes every teammate pane of its team first, then the
+leader. Before this, the close forgot the team and stopped only the leader's split: a killed
+leader cannot shut its teammates down, so the teammates of a released worker kept running,
+and kept posting hooks, with no leader and no team. Closing them first also leaves the leader
+as the last leaf, so its close ends the tab. A teammate that still survives its pane is
+handled by [`closed-pane-agent-reaper.md`](./closed-pane-agent-reaper.md).
+
 ### Closed panes leave no dead pane
 
 The renderer keeps a local pane whose process exits non-zero as a "Terminal exited" pane,

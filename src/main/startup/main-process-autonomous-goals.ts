@@ -10,6 +10,8 @@ import { startAutonomousGoalRotation } from '../autonomous-goals/autonomous-goal
 import { startAutonomousGoalUsageResume } from '../autonomous-goals/autonomous-goal-usage-resume'
 import { startAutonomousGoalNotifier } from '../autonomous-goals/autonomous-goal-notifier'
 import { startAutonomousGoalMailWatchdog } from '../autonomous-goals/autonomous-goal-mail-watchdog'
+import { startAutonomousGoalWorkerStallWatchdog } from '../autonomous-goals/autonomous-goal-worker-stall-watchdog'
+import { createAutonomousGoalWorkerStallPorts } from '../autonomous-goals/autonomous-goal-worker-stall-ports'
 import { startAutonomousGoalCleanup } from '../autonomous-goals/autonomous-goal-cleanup'
 import { createAutonomousGoalCleanupRpcPorts } from '../autonomous-goals/autonomous-goal-cleanup-ports'
 import { startAutonomousGoalRendererBroadcast } from '../autonomous-goals/autonomous-goal-renderer-broadcast'
@@ -104,6 +106,10 @@ export function startMainProcessAutonomousGoals(
       }
     }
   })
+  const markBlocked = (goalId: string, text: string): void => {
+    store.addNote(goalId, 'blocker', text)
+    store.update(goalId, { status: 'blocked' })
+  }
   const mailWatchdog = startAutonomousGoalMailWatchdog({
     listGoals: () => store.list(),
     oldestUnreadRunMessageId: (runId) =>
@@ -120,10 +126,16 @@ export function startMainProcessAutonomousGoals(
         return isAgentPromptStalledError(error)
       }
     },
-    markBlocked: (goalId, text) => {
-      store.addNote(goalId, 'blocker', text)
-      store.update(goalId, { status: 'blocked' })
-    }
+    markBlocked
+  })
+  const stallWatchdog = startAutonomousGoalWorkerStallWatchdog({
+    listGoals: () => store.list(),
+    ...createAutonomousGoalWorkerStallPorts({
+      dispatch: (request) => dispatcher.dispatch(request),
+      runtime,
+      readPaneStatus: (paneKey) => agentHookServer.getStatusSnapshotForPane(paneKey)[0]
+    }),
+    markBlocked
   })
   const cleanup = startAutonomousGoalCleanup({
     listGoals: () => store.list(),
@@ -153,6 +165,7 @@ export function startMainProcessAutonomousGoals(
     stopBroadcast()
     cleanup.stop()
     mailWatchdog.stop()
+    stallWatchdog.stop()
     stopRotation()
     stopUsageResume()
     stopNotifier()

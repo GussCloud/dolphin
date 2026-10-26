@@ -133,6 +133,30 @@ pointer whose single Enter was dropped. Two things close them:
   re-nudges at most every 5 minutes, skips usage-limited goals, and after 3
   unanswered nudges marks the goal blocked so the user is notified.
 
+## Stalled workers
+
+A worker's heartbeat mail is self-reported, so a looping agent keeps sending it,
+and `worker-list` gives a live worker `nextAction: none` however long it sits.
+`autonomous-goal-worker-stall-watchdog.ts` reads local state every 60 s (Run DB
+rows and the hook server's status row, no model call) and tracks, per running
+worker, the last time something moved: its Task status, a non-heartbeat
+message it sent, or a change of agent state.
+
+- **Waiting on input** (`waiting`/`blocked`, e.g. a permission prompt) for 30
+  minutes: the goal is marked blocked, which notifies the user. The worker is
+  not stopped, since a retry would ask the same question.
+- **Idle without reporting** (`done` with no `worker_done`) for 30 minutes, or
+  **no progress** for 2 hours: Dolphin stops the worker through
+  `orchestration.workerStop` and puts a high-priority `Worker stalled`
+  escalation in the Run mailbox. The rules tell the coordinator to start the
+  Task again once with `--retry-of`. A second stall of the same Task blocks the
+  goal instead.
+- A worker with a pending question, approval or guidance is left alone: it
+  waits on someone else. A worker with no fresh status row (older than 30
+  minutes, e.g. an unreachable SSH host) is `unverifiable` and never acted on.
+- Usage-limited goals are skipped. The stall count lives in memory, so a host
+  restart forgets earlier stalls.
+
 ## Worker brief delivery
 
 A worker starts the way the coordinator does: its first message rides the
