@@ -2,9 +2,15 @@ import type {
   AutonomousGoalProgress,
   AutonomousGoalWorkerProgress
 } from '../../shared/autonomous-goal-types'
-import type { OrchestrationDb } from '../runtime/orchestration/db/orchestration-db'
+import type { TaskStatus } from '../runtime/orchestration/types'
 
-type ProgressDb = Pick<OrchestrationDb, 'listTasks' | 'listWorkerTerminalResources'>
+/** The two run-scoped reads the progress needs; the orchestration DB satisfies it. */
+type ProgressDb = {
+  listTasks(filter: { runId: string }): { id: string; status: TaskStatus }[]
+  listWorkerTerminalResources(params: {
+    runId: string
+  }): { taskId: string; worktreeId: string | null }[]
+}
 
 /** Tasks done/total and each worker worktree's Task, read from local DB rows only. */
 export function buildAutonomousGoalProgress(db: ProgressDb, runId: string): AutonomousGoalProgress {

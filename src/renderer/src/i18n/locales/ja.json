@@ -17845,7 +17845,7 @@
         "rotations": "ローテーション: {{value}}",
         "stop": "目標を停止",
         "stopFailed": "目標を停止できませんでした。",
-        "workerTask": "タスク {{ordinal}}"
+        "workerTask": "タスク {{number}}"
       }
     },
     "i18n": {

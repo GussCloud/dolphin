@@ -17845,7 +17845,7 @@
         "rotations": "轮换：{{value}}",
         "stop": "停止目标",
         "stopFailed": "无法停止目标。",
-        "workerTask": "任务 {{ordinal}}"
+        "workerTask": "任务 {{number}}"
       }
     },
     "i18n": {

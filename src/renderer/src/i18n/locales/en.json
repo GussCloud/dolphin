@@ -17994,7 +17994,7 @@
         "rotations": "Rotations: {{value}}",
         "stop": "Stop goal",
         "stopFailed": "Could not stop the goal.",
-        "workerTask": "Task {{ordinal}}"
+        "workerTask": "Task {{number}}"
       }
     },
     "i18n": {

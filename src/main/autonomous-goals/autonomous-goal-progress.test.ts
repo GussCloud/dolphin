@@ -1,19 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { buildAutonomousGoalProgress } from './autonomous-goal-progress'
+import type { TaskStatus } from '../runtime/orchestration/types'
 
 type Db = Parameters<typeof buildAutonomousGoalProgress>[0]
 
 function fakeDb(
-  tasks: { id: string; status: string }[],
+  tasks: { id: string; status: TaskStatus }[],
   workers: { taskId: string; worktreeId: string | null }[]
 ): Db {
-  return {
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the builder reads only id and status from task rows.
-    listTasks: () => tasks as unknown as ReturnType<Db['listTasks']>,
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the builder reads only taskId and worktreeId from worker rows.
-    listWorkerTerminalResources: () =>
-      workers as unknown as ReturnType<Db['listWorkerTerminalResources']>
-  }
+  return { listTasks: () => tasks, listWorkerTerminalResources: () => workers }
 }
 
 describe('buildAutonomousGoalProgress', () => {

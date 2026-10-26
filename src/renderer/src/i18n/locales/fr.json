@@ -17944,7 +17944,7 @@
         "rotations": "Rotations : {{value}}",
         "stop": "Arrêter l'objectif",
         "stopFailed": "Impossible d'arrêter l'objectif.",
-        "workerTask": "Tâche {{ordinal}}"
+        "workerTask": "Tâche {{number}}"
       }
     },
     "i18n": {

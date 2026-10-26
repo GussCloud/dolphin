@@ -133,8 +133,8 @@ export function WorktreeCardGoalRow({
   if (workerTask) {
     return (
       <span className="truncate text-xs text-muted-foreground">
-        {translate('auto.components.WorktreeCardAutonomousGoal.workerTask', 'Task {{ordinal}}', {
-          ordinal: workerTask.taskOrdinal
+        {translate('auto.components.WorktreeCardAutonomousGoal.workerTask', 'Task {{number}}', {
+          number: workerTask.taskOrdinal
         })}
       </span>
     )
