@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { makePaneKey } from '../../shared/stable-pane-id'
+import { ClaudeAgentTeamsService } from './claude-agent-teams-service'
 import {
   CANARY_INCARNATION_ID,
   CANARY_LEAF_ID,
@@ -237,6 +238,25 @@ describe('terminal close and handle incarnation continuity', () => {
     expect(harness.closeTerminalTab).not.toHaveBeenCalled()
     expect(harness.closeTerminal).toHaveBeenCalledTimes(1)
     expect(harness.closeTerminal).toHaveBeenCalledWith(TAB_ID, undefined, LEAF_ID)
+  })
+
+  it('closes the teammate panes of an Agent Teams leader before the leader itself', async () => {
+    const harness = createHarness({ registerPtyBacked: true })
+    harness.syncSplitFixtureGraph()
+    harness.setVerifiedStopResult(true)
+    const terminals = (await harness.runtime.listTerminals(`id:${WORKTREE_ID}`)).terminals
+    const leader = terminals.find((candidate) => candidate.ptyId === PTY_ID)!
+    const teammate = terminals.find((candidate) => candidate.ptyId === SIBLING_PTY_ID)!
+    vi.spyOn(ClaudeAgentTeamsService.prototype, 'listTeammateLineageByHandle').mockReturnValue(
+      new Map([[teammate.handle, { leaderHandle: leader.handle }]])
+    )
+
+    await harness.runtime.closeTerminal(leader.handle)
+
+    expect(harness.stopAndWait.mock.calls.map(([ptyId]) => ptyId)).toEqual([
+      SIBLING_PTY_ID,
+      PTY_ID
+    ])
   })
 
   it('fences final-pane exit ordering until exact retirement commits', async () => {
