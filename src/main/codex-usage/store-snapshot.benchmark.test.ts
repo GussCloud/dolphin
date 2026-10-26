@@ -138,11 +138,11 @@ describe('CodexUsageStore snapshot benchmark', () => {
     vi.setSystemTime(new Date('2026-04-30T12:00:00.000Z'))
   })
 
-  it('builds a cached dashboard snapshot without waiting for refresh', () => {
+  it('builds a cached dashboard snapshot without waiting for refresh', async () => {
     const store = createStoreWithState(createLargeState())
     const startedAt = performance.now()
 
-    const snapshot = store.getSnapshot('dolphin', '30d', 10)
+    const snapshot = await store.getSnapshot('dolphin', '30d', 10)
 
     const snapshotMs = performance.now() - startedAt
     expect(snapshot.summary.totalTokens).toBe(18_000_000)

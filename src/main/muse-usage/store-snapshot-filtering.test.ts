@@ -56,11 +56,11 @@ afterEach(() => {
   rmSync(fake.directory, { recursive: true, force: true })
 })
 
-it('filters each accumulated projection once per snapshot', () => {
+it('filters each accumulated projection once per snapshot', async () => {
   const store = new FixtureStore(20_000)
   const daily = vi.spyOn(filters, 'filterUsageDaily')
   const sessions = vi.spyOn(filters, 'filterUsageSessions')
-  const result = store.getSnapshot('dolphin', '30d')
+  const result = await store.getSnapshot('dolphin', '30d')
   expect(result.summary.sessions).toBeGreaterThan(0)
   expect(result.recentSessions).toHaveLength(10)
   expect(sessions.mock.calls[0]?.[0]).toHaveLength(20_000)
@@ -76,9 +76,9 @@ it.each(['dolphin', 'all'] as const)(
     const store = new FixtureStore(30)
     for (const range of ['7d', '30d', '90d', 'all'] as const) {
       for (const limit of [0, 1, 10]) {
-        const snapshot = store.getSnapshot(scope, range, limit)
+        const snapshot = await store.getSnapshot(scope, range, limit)
         expect(snapshot).toEqual({
-          scanState: store.getScanState(),
+          scanState: await store.getScanState(),
           summary: await store.getSummary(scope, range),
           daily: await store.getDaily(scope, range),
           modelBreakdown: await store.getBreakdown(scope, range, 'model'),
@@ -90,10 +90,10 @@ it.each(['dolphin', 'all'] as const)(
   }
 )
 
-it('keeps empty snapshots and later calls independent', () => {
+it('keeps empty snapshots and later calls independent', async () => {
   const store = new FixtureStore(0)
-  const first = store.getSnapshot('all', 'all')
-  const next = store.getSnapshot('dolphin', '7d', 0)
+  const first = await store.getSnapshot('all', 'all')
+  const next = await store.getSnapshot('dolphin', '7d', 0)
   expect(first.daily).toEqual([])
   expect(first.recentSessions).toEqual([])
   expect(next.summary).toMatchObject({

@@ -212,7 +212,7 @@ describe('UsageProviderStoreLifecycle', () => {
     const secondRefresh = store.refresh(true)
     await vi.waitFor(() => expect(scan).toHaveBeenCalledTimes(1))
 
-    expect(store.getScanState()).toMatchObject({
+    expect(await store.getScanState()).toMatchObject({
       isScanning: true,
       lastScanStartedAt: NOW,
       lastScanError: null
@@ -226,7 +226,7 @@ describe('UsageProviderStoreLifecycle', () => {
     })
     await Promise.all([firstRefresh, secondRefresh])
 
-    expect(store.getScanState()).toMatchObject({
+    expect(await store.getScanState()).toMatchObject({
       isScanning: false,
       lastScanCompletedAt: NOW,
       hasAnyTestData: true

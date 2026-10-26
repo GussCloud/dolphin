@@ -32,10 +32,11 @@ export class ClaudeUsageStore extends ClaudeTranscriptUsageStore {
   }
 
   async getAutomationRunUsage(input: AutomationUsageLookupInput): Promise<AutomationRunUsage> {
+    await this.ensureLoaded()
     return resolveAutomationRunUsage(input, {
       getState: () => this.state,
       refresh: (force) => this.refresh(force),
-      isScanning: () => this.getScanState().isScanning
+      isScanning: () => this.currentScanState().isScanning
     })
   }
 }

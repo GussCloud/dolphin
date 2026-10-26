@@ -1,4 +1,8 @@
+import { writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
+import { CodexUsageStore } from './store'
+import { CODEX_USAGE_SCHEMA_VERSION } from './codex-usage-provider'
 import type { CodexUsagePersistedState } from './types'
 import { scanCodexUsageFilesViaWorker } from '../usage/usage-scan-worker-spawn'
 import {
@@ -22,7 +26,38 @@ vi.mock('../usage/usage-scan-worker-spawn', () => ({
 }))
 
 describe('CodexUsageStore', () => {
-  setupCodexUsageStoreEnv(getPathMock)
+  const env = setupCodexUsageStoreEnv(getPathMock)
+
+  it('attributes a run from the persisted cache before anything else has read it', async () => {
+    const worktreeId = 'repo-1::/workspace/repo'
+    writeFileSync(
+      join(env.tempUserData, 'dolphin-codex-usage.json'),
+      JSON.stringify({
+        schemaVersion: CODEX_USAGE_SCHEMA_VERSION,
+        worktreeFingerprint: '[]',
+        processedFiles: [],
+        sessions: [createWorktreeUsageSession(worktreeId)],
+        dailyAggregates: [],
+        scanState: {
+          enabled: true,
+          lastScanStartedAt: Date.now(),
+          lastScanCompletedAt: Date.now(),
+          lastScanError: null
+        }
+      })
+    )
+    const store = new CodexUsageStore({ getRepos: () => [], getAllWorktreeMeta: () => ({}) })
+
+    const usage = await store.getAutomationRunUsage({
+      worktreeId,
+      terminalSessionId: 'tab-1',
+      startedAt: new Date('2026-04-10T14:59:00.000Z').getTime(),
+      completedAt: new Date('2026-04-10T15:06:00.000Z').getTime()
+    })
+
+    expect(usage.status).toBe('known')
+    expect(scanCodexUsageFilesViaWorker).not.toHaveBeenCalled()
+  })
 
   it('returns automation usage for a single matching worktree session', async () => {
     const worktreeId = 'repo-1::/workspace/repo'
