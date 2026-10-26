@@ -48,6 +48,14 @@ const getAllOrchestrationPaneSearchEntries = createLocalizedCatalog(() => [
         'auto.components.settings.orchestration.search.eee028ae14',
         'dispatch'
       ),
+      ...translateSearchKeyword(
+        'auto.components.settings.orchestration.search.orchestrationAgents',
+        'orchestration agents'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.orchestration.search.coordinatorStrategy',
+        'coordinator strategy'
+      ),
       ...translateSearchKeyword('auto.components.settings.orchestration.search.7ad948b714', 'task'),
       ...translateSearchKeyword('auto.components.settings.orchestration.search.ca54c69806', 'DAG'),
       ...translateSearchKeyword(

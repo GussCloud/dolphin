@@ -11,6 +11,7 @@ import {
 import { assertRuntimeStatusCompatible } from '@/runtime/runtime-protocol-compat'
 import type { RuntimeStatus } from '../../../../shared/runtime-types'
 import { normalizeTerminalQuickCommands } from '../../../../shared/terminal-quick-commands'
+import { normalizeOrchestrationAgents } from '../../../../shared/orchestration-agent-profiles'
 import { normalizeTerminalCustomThemes } from '../../../../shared/terminal-custom-themes'
 import { normalizeTaskProviderSettings } from '../../../../shared/task-providers'
 import { normalizeOpenInApplications } from '../../../../shared/open-in-applications'
@@ -66,6 +67,9 @@ function normalizeSettingsUpdates(
   const { terminalScrollbackBytes: _legacyScrollbackBytes, ...sanitizedUpdates } =
     updates as LegacyTerminalScrollbackSettingsUpdate
   void _legacyScrollbackBytes
+  if ('orchestrationAgents' in updates) {
+    sanitizedUpdates.orchestrationAgents = normalizeOrchestrationAgents(updates.orchestrationAgents)
+  }
   if ('terminalQuickCommands' in updates) {
     sanitizedUpdates.terminalQuickCommands = normalizeTerminalQuickCommands(
       updates.terminalQuickCommands

@@ -29,6 +29,7 @@ import {
 import { OrchestrationSkillAgentCoverage } from './OrchestrationSkillAgentCoverage'
 import { SkillUsageExamplesSection } from './SkillUsageExamplesSection'
 import { OrchestrationSkillPromptDialog } from './OrchestrationSkillPromptDialog'
+import { OrchestrationAgentsSection } from './OrchestrationAgentsSection'
 import { translate } from '@/i18n/i18n'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { resolveNestedWorkerMaxDepth } from '../../../../shared/nested-worker-depth'
@@ -182,6 +183,8 @@ export function OrchestrationPane({
           activeSkillRuntime.canUseLocalSkillFreshness ? ORCHESTRATION_SKILL_NAME : undefined
         }
       />
+
+      <OrchestrationAgentsSection settings={settings} updateSettings={updateSettings} />
 
       {showNestedWorkerDepth ? (
         <NumberField
