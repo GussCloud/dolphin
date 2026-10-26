@@ -17,6 +17,7 @@ import { dispatchMainProcessNotification } from '../ipc/notifications'
 import type { Store } from '../persistence'
 import { resolveWorkspaceDisplayName } from '../workspace-display-name'
 import { getAutonomousGoalStore } from '../autonomous-goals/autonomous-goal-store-instance'
+import { isAutonomousGoalOpen } from '../../shared/autonomous-goal-types'
 import { readLatestTerminalInputAt } from '../terminal-client-input-clock'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 import { RpcDispatcher } from '../runtime/rpc/dispatcher'
@@ -135,9 +136,16 @@ export function startMainProcessAutonomousGoals(
       store.update(goalId, { cleanup: record })
     }
   })
-  const stopBroadcast = startAutonomousGoalRendererBroadcast((listener) =>
-    store.subscribe(listener)
-  )
+  const stopBroadcast = startAutonomousGoalRendererBroadcast([
+    (notify) => store.subscribe(notify),
+    // Why: a worker_done settles its Task in the Run DB, which the goal store never sees.
+    (notify) =>
+      runtime.subscribeMessageArrived((_handle, messageType) => {
+        if (messageType === 'worker_done' && store.list().some(isAutonomousGoalOpen)) {
+          notify()
+        }
+      })
+  ])
   return () => {
     stopBroadcast()
     cleanup.stop()

@@ -17994,7 +17994,8 @@
         "rotations": "Rotações: {{value}}",
         "stop": "Parar objetivo",
         "stopFailed": "Não foi possível parar o objetivo.",
-        "workerTask": "Task {{number}}"
+        "workerTask": "Task {{number}}",
+        "completedBadge": "objetivo concluído"
       }
     },
     "i18n": {

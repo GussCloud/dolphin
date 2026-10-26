@@ -244,11 +244,14 @@ A host with no usage data (headless, signed out) never blocks.
 - In the sidebar, workers are `new-child` worktrees, so they nest under the
   coordinator through ordinary worktree lineage. The coordinator's card carries a
   `goal` badge and a block with status, Tasks done/total, rotations and Stop;
-  each worker card shows its `Task N` (`worktree-card-autonomous-goal.tsx`).
+  each worker card shows its `Task N` (`worktree-card-autonomous-goal.tsx`). A coordinator kept after
+  its goal completed shows `goal done`, with the summary on hover, until it
+  starts another goal.
 - Both read one shared snapshot (`autonomous-goal-index.ts`): `goal.list` adds an
   optional `progress` (Tasks done/total, worker worktree → Task number) for open
   goals, read from the Run's DB rows. The renderer re-reads on the host's
-  `autonomousGoals:changed` event, and every 30 seconds only while an open goal
+  `autonomousGoals:changed` event (goal store changes, and each `worker_done`
+  while a goal is open, via `runtime.subscribeMessageArrived`), and every 30 seconds only while an open goal
   is known and the window is visible. An older host sends no `progress`: the
   badge and status still show.
 - `autonomous-goal-notifier.ts` raises an `autonomous-goal` notification on each

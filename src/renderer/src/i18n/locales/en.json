@@ -17994,7 +17994,8 @@
         "rotations": "Rotations: {{value}}",
         "stop": "Stop goal",
         "stopFailed": "Could not stop the goal.",
-        "workerTask": "Task {{number}}"
+        "workerTask": "Task {{number}}",
+        "completedBadge": "goal done"
       }
     },
     "i18n": {

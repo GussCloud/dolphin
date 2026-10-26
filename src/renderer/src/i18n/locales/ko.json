@@ -17845,7 +17845,8 @@
         "rotations": "교체: {{value}}",
         "stop": "목표 중지",
         "stopFailed": "목표를 중지할 수 없습니다.",
-        "workerTask": "작업 {{number}}"
+        "workerTask": "작업 {{number}}",
+        "completedBadge": "목표 완료"
       }
     },
     "i18n": {

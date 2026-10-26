@@ -18,11 +18,13 @@ vi.mock('@/i18n/i18n', async (importOriginal) => ({
 const index = vi.hoisted(
   (): {
     goal: AutonomousGoalListEntry | null
+    completed: AutonomousGoalListEntry | null
     worker: AutonomousGoalWorkerProgress | null
-  } => ({ goal: null, worker: null })
+  } => ({ goal: null, completed: null, worker: null })
 )
 vi.mock('@/components/autonomous-goal/autonomous-goal-index', () => ({
   useCoordinatedAutonomousGoal: () => index.goal,
+  useCompletedAutonomousGoal: () => index.completed,
   useAutonomousGoalWorkerTask: () => index.worker,
   stopAutonomousGoal: vi.fn(async () => {})
 }))
@@ -59,6 +61,7 @@ describe('worktree card goal views', () => {
   afterEach(() => {
     cleanup()
     index.goal = null
+    index.completed = null
     index.worker = null
   })
 
@@ -96,5 +99,13 @@ describe('worktree card goal views', () => {
     renderCard('wt-worker')
     expect(screen.getByText('Task 2')).toBeTruthy()
     expect(screen.queryByText('goal')).toBeNull()
+  })
+
+  it('keeps a done badge, without progress, on a coordinator kept after its goal completed', () => {
+    index.completed = { ...GOAL, status: 'complete', summary: 'Shipped Pix checkout' }
+    renderCard('wt-coord')
+    expect(screen.getByText('goal done')).toBeTruthy()
+    expect(screen.queryByText('Working')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Stop goal' })).toBeNull()
   })
 })

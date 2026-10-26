@@ -86,6 +86,14 @@ export function useCoordinatedAutonomousGoal(
   )
 }
 
+/** This worktree's newest goal when it completed and nothing newer is open: the kept coordinator. */
+export function useCompletedAutonomousGoal(worktreeId: string): AutonomousGoalListEntry | null {
+  return useStore(goalIndexStore, (state) => {
+    const latest = state.goals.findLast((goal) => goal.worktreeId === worktreeId)
+    return latest?.status === 'complete' ? latest : null
+  })
+}
+
 /** This worktree's Task within an open goal, when a goal worker runs in it. */
 export function useAutonomousGoalWorkerTask(
   worktreeId: string
