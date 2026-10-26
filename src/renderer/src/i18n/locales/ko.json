@@ -18879,6 +18879,10 @@
       "blocked": "목표에 결정이 필요합니다",
       "usageLimited": "플랜 사용량으로 목표 일시 중지",
       "usageLimitedBody": "사용량 창이 초기화될 때까지 새 워커를 시작하지 않으며, 이후 Dolphin이 재개합니다."
+    },
+    "orphanAgentStopped": {
+      "title": "닫힌 터미널의 에이전트를 중지했습니다",
+      "body": "{{label}}이(가) 터미널이 닫힌 후에도 계속 보고했습니다."
     }
   },
   "sidebar": {

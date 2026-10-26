@@ -141,4 +141,8 @@ export type NormalizedLocalHook = {
 }
 
 export type ServerStatusLineListener = ((event: ClaudeStatusLineRateLimits) => void) | null
+/** A hook from a pane Dolphin already closed; resolving releases the held request. */
+export type ClosedPaneHookListener =
+  | ((event: { paneKey: string; clientPort?: number; serverPort: number }) => Promise<void>)
+  | null
 export type ServerAgentStatusListener = ((payload: EnrichedAgentHookEventPayload) => void) | null

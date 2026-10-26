@@ -18879,6 +18879,10 @@
       "blocked": "目标需要你的决定",
       "usageLimited": "因套餐用量暂停目标",
       "usageLimitedBody": "在用量窗口重置前不会启动新的工作代理；重置后 Dolphin 会继续。"
+    },
+    "orphanAgentStopped": {
+      "title": "已停止来自已关闭终端的代理",
+      "body": "{{label}} 在其终端关闭后仍在上报。"
     }
   },
   "sidebar": {

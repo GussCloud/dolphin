@@ -13,6 +13,7 @@ import type {
   AgentHookProviderSessionIdentity,
   AgentHookStatusChangeEntry,
   AgentHookStatusFreshnessObservation,
+  ClosedPaneHookListener,
   EnrichedAgentHookEventPayload,
   StatusDropListener
 } from './server-types'
@@ -101,6 +102,10 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
     listener: ((event: ClaudeStatusLineRateLimits) => void) | null
   ): void {
     this.onClaudeStatusLine = listener
+  }
+
+  setClosedPaneHookListener(listener: ClosedPaneHookListener): void {
+    this.onClosedPaneHook = listener
   }
 
   /** `authorizePane` adds a pane proof besides the pane's committed hook launch token. */

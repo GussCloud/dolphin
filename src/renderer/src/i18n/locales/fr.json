@@ -18966,6 +18966,10 @@
       "blocked": "L’objectif attend votre décision",
       "usageLimited": "Objectif en pause : usage du forfait",
       "usageLimitedBody": "Aucun nouveau worker avant le renouvellement de la fenêtre d’usage ; Dolphin reprendra ensuite."
+    },
+    "orphanAgentStopped": {
+      "title": "Agent d’un terminal fermé arrêté",
+      "body": "{{label}} continuait d’envoyer des signaux après la fermeture de son terminal."
     }
   },
   "sidebar": {

@@ -49,7 +49,8 @@ function isAgentCompletionSource(source: NotificationDispatchRequest['source']):
   return (
     source === 'agent-task-complete' ||
     source === 'agent-auto-retry-exhausted' ||
-    source === 'autonomous-goal'
+    source === 'autonomous-goal' ||
+    source === 'orphan-agent-stopped'
   )
 }
 

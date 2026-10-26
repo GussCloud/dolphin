@@ -19106,6 +19106,10 @@
       "blocked": "Goal needs your decision",
       "usageLimited": "Goal paused on plan usage",
       "usageLimitedBody": "No new workers until the usage window resets; Dolphin resumes it then."
+    },
+    "orphanAgentStopped": {
+      "title": "Stopped an agent from a closed terminal",
+      "body": "{{label}} kept reporting after its terminal closed."
     }
   },
   "sessionSearch": {

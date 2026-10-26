@@ -35,6 +35,7 @@ import type {
   AgentHookStatusChangeEntry,
   AgentHookStatusFreshnessObservation,
   AgentPromptSentDedupeEntry,
+  ClosedPaneHookListener,
   EnrichedAgentHookEventPayload,
   NormalizedLocalHook,
   PaneKeyAliasEntry,
@@ -92,6 +93,7 @@ export abstract class AgentHookServerState {
   protected env = 'production'
   protected onAgentStatus: ServerAgentStatusListener = null
   protected onClaudeStatusLine: ServerStatusLineListener = null
+  protected onClosedPaneHook: ClosedPaneHookListener = null
   // Why not reset on stop(): the owner registers once at startup and must survive a listener restart.
   protected channelRouteHandler: AgentHookChannelRouteHandler | null = null
   protected channelPaneAuthorizer: AgentHookChannelPaneAuthorizer | null = null
