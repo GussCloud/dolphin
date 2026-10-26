@@ -1,4 +1,4 @@
-import { Goal, Square } from 'lucide-react'
+import { CircleCheck, Goal, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,7 @@ import type { AutonomousGoalStatus } from '../../../../shared/autonomous-goal-ty
 import {
   stopAutonomousGoal,
   useAutonomousGoalWorkerTask,
+  useCompletedAutonomousGoal,
   useCoordinatedAutonomousGoal
 } from '@/components/autonomous-goal/autonomous-goal-index'
 
@@ -25,13 +26,15 @@ function goalStatusLabel(status: AutonomousGoalStatus): string {
   }
 }
 
-/** Marks the worktree whose agent coordinates an open autonomous goal. */
+/** Marks the worktree whose agent coordinates an open goal, or coordinated one that completed. */
 export function WorktreeCardGoalBadge({
   worktreeId
 }: {
   worktreeId: string
 }): React.JSX.Element | null {
-  const goal = useCoordinatedAutonomousGoal(worktreeId)
+  const openGoal = useCoordinatedAutonomousGoal(worktreeId)
+  const completedGoal = useCompletedAutonomousGoal(worktreeId)
+  const goal = openGoal ?? completedGoal
   if (!goal) {
     return null
   }
@@ -42,12 +45,18 @@ export function WorktreeCardGoalBadge({
           variant="outline"
           className="h-[16px] px-1.5 text-[10px] font-medium rounded shrink-0 leading-none text-foreground/70 border-foreground/20 bg-foreground/[0.06]"
         >
-          <Goal aria-hidden className="size-2.5" />
-          {translate('auto.components.WorktreeCardAutonomousGoal.badge', 'goal')}
+          {openGoal ? (
+            <Goal aria-hidden className="size-2.5" />
+          ) : (
+            <CircleCheck aria-hidden className="size-2.5" />
+          )}
+          {openGoal
+            ? translate('auto.components.WorktreeCardAutonomousGoal.badge', 'goal')
+            : translate('auto.components.WorktreeCardAutonomousGoal.completedBadge', 'goal done')}
         </Badge>
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={8} className="max-w-72 whitespace-pre-wrap">
-        {goal.objective}
+        {openGoal ? goal.objective : (goal.summary ?? goal.objective)}
       </TooltipContent>
     </Tooltip>
   )

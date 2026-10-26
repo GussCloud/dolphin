@@ -1,14 +1,13 @@
 import { BrowserWindow } from 'electron'
-import type { AutonomousGoal } from '../../shared/autonomous-goal-types'
 
 const BROADCAST_DEBOUNCE_MS = 250
 
+type ChangeSource = (notify: () => void) => () => void
+
 /** Tells open windows that goals changed, so the sidebar re-reads `goal.list` instead of polling for new goals. */
-export function startAutonomousGoalRendererBroadcast(
-  subscribe: (listener: (goal: AutonomousGoal) => void) => () => void
-): () => void {
+export function startAutonomousGoalRendererBroadcast(sources: ChangeSource[]): () => void {
   let timer: NodeJS.Timeout | null = null
-  const unsubscribe = subscribe(() => {
+  const notify = (): void => {
     if (timer) {
       return
     }
@@ -20,9 +19,12 @@ export function startAutonomousGoalRendererBroadcast(
         }
       }
     }, BROADCAST_DEBOUNCE_MS)
-  })
+  }
+  const unsubscribes = sources.map((subscribe) => subscribe(notify))
   return () => {
-    unsubscribe()
+    for (const unsubscribe of unsubscribes) {
+      unsubscribe()
+    }
     if (timer) {
       clearTimeout(timer)
     }

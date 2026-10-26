@@ -200,5 +200,24 @@ export class DolphinRuntimeWithRefreshFloatingWorkspacePtyLiveness extends Dolph
       this.mailPointerRepointScheduler.schedule(handle)
     }
     this.orchestrationMailboxNotifications.notifyMessageArrived(handle, messageType)
+    for (const listener of this.messageArrivedListeners) {
+      try {
+        listener(handle, messageType)
+      } catch (error) {
+        console.error('[runtime] message-arrived listener threw', error)
+      }
+    }
+  }
+
+  private readonly messageArrivedListeners = new Set<
+    (handle: string, messageType?: string) => void
+  >()
+
+  /** Observers only (goal progress); they never claim, read or deliver the message. */
+  subscribeMessageArrived(listener: (handle: string, messageType?: string) => void): () => void {
+    this.messageArrivedListeners.add(listener)
+    return () => {
+      this.messageArrivedListeners.delete(listener)
+    }
   }
 }
