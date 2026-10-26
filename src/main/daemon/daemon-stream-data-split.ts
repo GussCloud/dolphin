@@ -135,12 +135,16 @@ export function writeStreamDataEvents(
     }
     chunks = splitOversizedStreamDataForNdjson(sessionId, data, maxLineBytes)
   } else {
-    chunks = splitStreamDataForNdjson(
-      sessionId,
-      data,
-      Math.max(1, maxLineBytes - 96),
-      explicitRawLength
-    )
+    const budget = Math.max(1, maxLineBytes - 96)
+    if (explicitRawLength === undefined) {
+      // Why: the written line only adds metadata to the sized one, so fitting it proves no split; encode once.
+      const line = encodeStreamDataEvent(sessionId, data, data.length, seq)
+      if (Buffer.byteLength(line, 'utf8') <= budget) {
+        streamSocket.write(line)
+        return
+      }
+    }
+    chunks = splitStreamDataForNdjson(sessionId, data, budget, explicitRawLength)
   }
   let consumed = 0
   for (const chunk of chunks) {

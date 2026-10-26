@@ -76,6 +76,23 @@ describe('writeStreamDataEvents serialization budget', () => {
     }
   )
 
+  it.each(['', 'x', '\x1b[2K\rredraw', '"\\\n\t\u0000', 'é中🐙', '\ud800x\udc00'])(
+    'encodes an unsplit sequenced frame once with the previous bytes: %j',
+    (data) => {
+      const expected = previousWrites(data, 4096, data.length, 9000)
+      vi.mocked(encodeNdjson).mockClear()
+      expect(write(data, 4096, data.length, 9000)).toEqual(expected)
+      expect(encodeNdjson).toHaveBeenCalledTimes(1)
+    }
+  )
+
+  it('falls back to sized splitting when the sequenced frame exceeds the metadata budget', () => {
+    const data = '🐙\x1b[0m'.repeat(100)
+    const expected = previousWrites(data, 400, data.length, 9000)
+    expect(expected.length).toBeGreaterThan(1)
+    expect(write(data, 400, data.length, 9000)).toEqual(expected)
+  })
+
   it('reuses the encoded frame exactly at the inclusive byte cap', () => {
     const data = 'é🐙\x1b[0m'
     const line = encodeStreamDataEvent('session-1', data)
