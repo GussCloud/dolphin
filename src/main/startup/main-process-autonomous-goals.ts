@@ -136,16 +136,19 @@ export function startMainProcessAutonomousGoals(
       store.update(goalId, { cleanup: record })
     }
   })
-  const stopBroadcast = startAutonomousGoalRendererBroadcast([
-    (notify) => store.subscribe(notify),
-    // Why: a worker_done settles its Task in the Run DB, which the goal store never sees.
-    (notify) =>
-      runtime.subscribeMessageArrived((_handle, messageType) => {
-        if (messageType === 'worker_done' && store.list().some(isAutonomousGoalOpen)) {
-          notify()
-        }
-      })
-  ])
+  const stopBroadcast = startAutonomousGoalRendererBroadcast(
+    [
+      (notify) => store.subscribe(notify),
+      // Why: Tasks and workers live in the Run DB, which the goal store never sees.
+      (notify) =>
+        runtime.subscribeOrchestrationProgress(() => {
+          if (store.list().some(isAutonomousGoalOpen)) {
+            notify()
+          }
+        })
+    ],
+    () => runtime.notifyAutonomousGoalsChanged()
+  )
   return () => {
     stopBroadcast()
     cleanup.stop()

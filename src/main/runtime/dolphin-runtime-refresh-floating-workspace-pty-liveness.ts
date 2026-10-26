@@ -200,24 +200,33 @@ export class DolphinRuntimeWithRefreshFloatingWorkspacePtyLiveness extends Dolph
       this.mailPointerRepointScheduler.schedule(handle)
     }
     this.orchestrationMailboxNotifications.notifyMessageArrived(handle, messageType)
-    for (const listener of this.messageArrivedListeners) {
+    if (messageType === 'worker_done') {
+      this.notifyOrchestrationProgress()
+    }
+  }
+
+  private readonly orchestrationProgressListeners = new Set<() => void>()
+
+  /** A Task or worker changed (created, started, settled, stopped); observers only, e.g. goal progress. */
+  notifyOrchestrationProgress(): void {
+    for (const listener of this.orchestrationProgressListeners) {
       try {
-        listener(handle, messageType)
+        listener()
       } catch (error) {
-        console.error('[runtime] message-arrived listener threw', error)
+        console.error('[runtime] orchestration progress listener threw', error)
       }
     }
   }
 
-  private readonly messageArrivedListeners = new Set<
-    (handle: string, messageType?: string) => void
-  >()
-
-  /** Observers only (goal progress); they never claim, read or deliver the message. */
-  subscribeMessageArrived(listener: (handle: string, messageType?: string) => void): () => void {
-    this.messageArrivedListeners.add(listener)
+  subscribeOrchestrationProgress(listener: () => void): () => void {
+    this.orchestrationProgressListeners.add(listener)
     return () => {
-      this.messageArrivedListeners.delete(listener)
+      this.orchestrationProgressListeners.delete(listener)
     }
+  }
+
+  // Why: paired clients have no IPC channel; old clients drop the unknown event and keep polling.
+  notifyAutonomousGoalsChanged(): void {
+    this.emitClientEvent({ type: 'autonomousGoalsChanged' })
   }
 }

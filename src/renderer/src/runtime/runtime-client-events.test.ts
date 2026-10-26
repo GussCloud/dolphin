@@ -102,11 +102,13 @@ describe('subscribeRuntimeClientEvents', () => {
     }
 
     capturedOnResponse({ ok: true, result: { type: 'automationsChanged', reason: 'run' } })
+    capturedOnResponse({ ok: true, result: { type: 'autonomousGoalsChanged' } })
     // Why: the same allowlist is what makes this event additive for old clients.
     capturedOnResponse({ ok: true, result: { type: 'automationsFromTheFuture' } })
 
-    expect(onEvent).toHaveBeenCalledTimes(1)
+    expect(onEvent).toHaveBeenCalledTimes(2)
     expect(onEvent).toHaveBeenCalledWith({ type: 'automationsChanged', reason: 'run' })
+    expect(onEvent).toHaveBeenCalledWith({ type: 'autonomousGoalsChanged' })
     expect(onError).not.toHaveBeenCalled()
   })
 

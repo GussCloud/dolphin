@@ -179,7 +179,7 @@ done. It reuses the existing verbs, never forced:
 - A worker that settles (succeeded or failed) has its terminal and agent
   process released at once (`orchestration.workerRelease`).
 - A succeeded worker's worktree is removed (`worktree.rm`) once its PR/MR is
-  merged, checked through `hostedReview.forBranch` at most every 5 minutes per
+  merged, checked through `hostedReview.forBranch` at most every 2 minutes per
   worktree. Until then the worker may still be driving CI.
 - When the goal closes, every settled worker's worktree goes, failed ones too.
   The coordinator's own worktree is kept unless the goal asked to remove it;
@@ -250,9 +250,16 @@ A host with no usage data (headless, signed out) never blocks.
 - Both read one shared snapshot (`autonomous-goal-index.ts`): `goal.list` adds an
   optional `progress` (Tasks done/total, worker worktree → Task number) for open
   goals, read from the Run's DB rows. The renderer re-reads on the host's
-  `autonomousGoals:changed` event (goal store changes, and each `worker_done`
-  while a goal is open, via `runtime.subscribeMessageArrived`), and every 30 seconds only while an open goal
-  is known and the window is visible. An older host sends no `progress`: the
+  `autonomousGoals:changed` event, sent on goal store changes and, while a goal
+  is open, on Run progress (`runtime.notifyOrchestrationProgress`: each
+  `worker_done`, and each successful `taskCreate`, `taskUpdate`, `workerStart`,
+  `workerStop` or `workerAbandon` through the RPC dispatcher). Paired clients get
+  the same signal as the `autonomousGoalsChanged` client event; an older client
+  or host lacks it and falls back to the 30-second refresh, which runs only while
+  an open goal is known and the window is visible. When a refresh shows a worker's
+  Task newly completed or failed, that worker card's PR status is force-refreshed
+  (`autonomous-goal-worker-review-refresh.ts`) instead of waiting for the 60-second
+  card poll. An older host sends no `progress`: the
   badge and status still show.
 - `autonomous-goal-notifier.ts` raises an `autonomous-goal` notification on each
   transition into `complete`, `blocked` or `usageLimited`. It goes through the
