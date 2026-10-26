@@ -19,7 +19,17 @@ export type AutonomousGoalCreate = Pick<
   AutonomousGoal,
   'objective' | 'agent' | 'workerAgent' | 'maxConcurrent' | 'paneKey' | 'worktreeId' | 'runId'
 > &
-  Partial<Pick<AutonomousGoal, 'removeWorktrees' | 'keepCoordinatorWorktree' | 'baseRef'>>
+  Partial<
+    Pick<
+      AutonomousGoal,
+      | 'removeWorktrees'
+      | 'keepCoordinatorWorktree'
+      | 'baseRef'
+      | 'agentName'
+      | 'strategy'
+      | 'instructions'
+    >
+  >
 
 type GoalListener = (goal: AutonomousGoal) => void
 
@@ -46,6 +56,13 @@ export class AutonomousGoalStore {
     return (
       this.read().find((goal) => goal.paneKey === paneKey && isAutonomousGoalOpen(goal)) ?? null
     )
+  }
+
+  /** The pane's most recently created goal that is closed, for a follow-up goal to inherit from. */
+  latestClosedByPane(paneKey: string): AutonomousGoal | undefined {
+    return this.read()
+      .filter((goal) => goal.paneKey === paneKey && !isAutonomousGoalOpen(goal))
+      .toSorted((a, b) => b.createdAt - a.createdAt)[0]
   }
 
   findOpenByRun(runId: string): AutonomousGoal | null {

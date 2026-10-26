@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { OptionalString, requiredString } from './rpc-param-primitives'
 import {
   AUTONOMOUS_GOAL_AGENTS,
+  AUTONOMOUS_GOAL_AGENT_NAME_MAX_CHARS,
+  AUTONOMOUS_GOAL_GUIDANCE_MAX_CHARS,
   AUTONOMOUS_GOAL_MAX_CONCURRENT_LIMIT,
   AUTONOMOUS_GOAL_NOTE_KINDS,
   AUTONOMOUS_GOAL_NOTE_MAX_CHARS,
@@ -20,7 +22,18 @@ export const GoalStartParams = z.object({
   maxConcurrent: z.number().int().min(1).max(AUTONOMOUS_GOAL_MAX_CONCURRENT_LIMIT),
   // Why optional: older clients omit them, and absence keeps the defaults (remove, keep own).
   removeWorktrees: z.boolean().optional(),
-  keepCoordinatorWorktree: z.boolean().optional()
+  keepCoordinatorWorktree: z.boolean().optional(),
+  agentName: z.string().trim().max(AUTONOMOUS_GOAL_AGENT_NAME_MAX_CHARS).optional(),
+  strategy: z
+    .string()
+    .trim()
+    .max(AUTONOMOUS_GOAL_GUIDANCE_MAX_CHARS, 'Strategy is too long')
+    .optional(),
+  instructions: z
+    .string()
+    .trim()
+    .max(AUTONOMOUS_GOAL_GUIDANCE_MAX_CHARS, 'Instructions are too long')
+    .optional()
 })
 
 export const GoalNoteParams = z.object({

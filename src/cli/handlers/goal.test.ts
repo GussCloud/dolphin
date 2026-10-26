@@ -88,6 +88,27 @@ describe('goal start', () => {
     })
   })
 
+  it('decodes the agent guidance flags and sends only the ones given', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const call = vi.fn().mockResolvedValue({ id: '1', ok: true, result: { goal, created: true } })
+
+    await GOAL_HANDLERS['goal start']!(
+      context(false, call, [
+        ['agent-name-b64', encodeAutonomousGoalObjective('Revisor')],
+        ['instructions-b64', encodeAutonomousGoalObjective('Não executar testes locais')]
+      ])
+    )
+    expect(call.mock.calls[0]?.[1]).toMatchObject({
+      agentName: 'Revisor',
+      instructions: 'Não executar testes locais'
+    })
+    expect(call.mock.calls[0]?.[1]).not.toHaveProperty('strategy')
+
+    await expect(
+      GOAL_HANDLERS['goal start']!(context(false, call, [['strategy-b64', '%%%']]))
+    ).rejects.toThrow('--strategy-b64 is not valid base64 UTF-8')
+  })
+
   it('keeps working against a host that returns no instructions', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     const call = vi.fn().mockResolvedValue({

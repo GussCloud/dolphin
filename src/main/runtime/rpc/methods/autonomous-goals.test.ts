@@ -130,6 +130,41 @@ describe('goal.* RPC methods', () => {
     expect(second?.runId).not.toBe(first?.runId)
   })
 
+  it('stores the agent guidance, returns it after the rules, and a follow-up goal inherits it', async () => {
+    const guided = {
+      ...start,
+      agentName: 'Strict reviewer',
+      strategy: 'Split the goal into Tasks of at most one day.',
+      instructions: 'Do not run tests locally.'
+    }
+    const result = await call('goal.start', guided)
+    expect(result).toMatchObject({
+      goal: { agentName: 'Strict reviewer', instructions: 'Do not run tests locally.' }
+    })
+    const instructions = (result as { instructions: string }).instructions
+    expect(
+      instructions.indexOf('Strategy of the orchestration agent "Strict reviewer"')
+    ).toBeGreaterThan(instructions.indexOf('Rules:'))
+    expect(instructions).toContain(
+      'Additional instructions from the user (follow them, and copy them into every worker spec):\nDo not run tests locally.'
+    )
+
+    await call('goal.complete', { from: 'term_coord', summary: 'Shipped' })
+    await call('goal.start', { ...start, objective: 'Add dark mode' })
+    expect(store.list().at(-1)).toMatchObject({
+      objective: 'Add dark mode',
+      agentName: 'Strict reviewer',
+      strategy: 'Split the goal into Tasks of at most one day.',
+      instructions: 'Do not run tests locally.'
+    })
+  })
+
+  it('stores no guidance when the launch carried none', async () => {
+    await call('goal.start', { ...start, instructions: '   ' })
+    expect(store.list()[0]).not.toHaveProperty('instructions')
+    expect(store.list()[0]).not.toHaveProperty('strategy')
+  })
+
   it('refuses a caller without a stable terminal pane', async () => {
     await expect(call('goal.start', { ...start, from: 'term_other' })).rejects.toThrow()
   })

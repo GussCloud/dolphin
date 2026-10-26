@@ -67,6 +67,30 @@ describe('buildAutonomousCoordinatorLaunchPrompt', () => {
     ).toContain(' --keep-worktrees --json')
   })
 
+  it('carries the agent name, strategy and instructions as base64 flags only when set', () => {
+    const launch = {
+      objective: 'Ship',
+      agent: 'claude' as const,
+      workerAgent: 'claude' as const,
+      maxConcurrent: 2
+    }
+    expect(buildAutonomousCoordinatorLaunchPrompt({ ...launch, instructions: '  ' })).not.toContain(
+      'instructions-b64'
+    )
+    const prompt = buildAutonomousCoordinatorLaunchPrompt({
+      ...launch,
+      agentName: 'Revisor',
+      strategy: 'Tasks pequenas',
+      instructions: 'Não executar testes locais'
+    })
+    expect(prompt).toContain(` --agent-name-b64 ${encodeAutonomousGoalObjective('Revisor')}`)
+    expect(prompt).toContain(` --strategy-b64 ${encodeAutonomousGoalObjective('Tasks pequenas')}`)
+    expect(prompt).toContain(
+      ` --instructions-b64 ${encodeAutonomousGoalObjective('Não executar testes locais')} --json`
+    )
+    expect(prompt).toMatch(/^[A-Za-z0-9 .,:+/=-]+$/)
+  })
+
   it('stays one line of characters no shell quotes or splits differently', () => {
     // Why: PowerShell 5.1 drops embedded double quotes for native commands and cmd.exe ends a
     // command at a newline; a prompt with either never reached the coordinator on Windows.
@@ -178,6 +202,15 @@ describe('buildAutonomousCoordinatorResumePrompt', () => {
     expect(prompt).toContain('- Was about to start task_3')
     expect(prompt).toContain('do not run `dolphin goal start`')
     expect(prompt).not.toContain('--objective-b64')
+  })
+
+  it('keeps the user instructions after a rotation', () => {
+    const prompt = buildAutonomousCoordinatorResumePrompt(
+      { ...goal, instructions: 'Do not run tests locally.' },
+      []
+    )
+    expect(prompt).toContain('Additional instructions from the user')
+    expect(prompt).toContain('Do not run tests locally.')
   })
 
   it('caps the task table so a large plan keeps the prompt bounded', () => {
