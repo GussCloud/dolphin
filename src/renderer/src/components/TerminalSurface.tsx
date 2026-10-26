@@ -29,9 +29,10 @@ export function TerminalSurface({
     >
       <EditorAutosaveController />
       <TerminalTitlebarTabs controller={controller} />
-      <AutonomousGoalStrip worktreeId={renderedActiveWorktreeId ?? null} />
       <TerminalSplitWorkspaceSurfaces controller={controller} />
       <TerminalLegacyWorkspaceSurface controller={controller} />
+      {/* Why below the panes: the top row is the tab strip, which owns window drag and the window-controls inset. */}
+      <AutonomousGoalStrip worktreeId={renderedActiveWorktreeId ?? null} />
       <TerminalWorkspaceDialogs controller={controller} />
     </div>
   )

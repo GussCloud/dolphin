@@ -238,7 +238,7 @@ A host with no usage data (headless, signed out) never blocks.
 
 ## Visibility
 
-- `AutonomousGoalStrip` shows one line above the worktree's panes while its
+- `AutonomousGoalStrip` shows one line under the worktree's panes while its
   coordinator drives an open goal: status, objective (or the open blocker),
   rotation count and a Stop button.
 - In the sidebar, workers are `new-child` worktrees, so they nest under the

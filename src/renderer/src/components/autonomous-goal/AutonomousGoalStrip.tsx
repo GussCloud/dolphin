@@ -19,7 +19,7 @@ function statusLabel(status: AutonomousGoalStatus): string {
   }
 }
 
-/** One line above the workspace while its coordinator drives an autonomous goal. */
+/** One line under the workspace while its coordinator drives an autonomous goal. */
 export function AutonomousGoalStrip({
   worktreeId
 }: {
@@ -33,7 +33,7 @@ export function AutonomousGoalStrip({
   const stopLabel = translate('auto.components.AutonomousGoalStrip.stop', 'Stop goal')
   return (
     <div
-      className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/30 py-1 pr-1 pl-3 text-xs text-muted-foreground"
+      className="flex shrink-0 items-center gap-2 border-t border-border bg-muted/30 py-1 pr-1 pl-3 text-xs text-muted-foreground"
       data-autonomous-goal-status={goal.status}
     >
       <Goal aria-hidden className="size-3.5 shrink-0" />

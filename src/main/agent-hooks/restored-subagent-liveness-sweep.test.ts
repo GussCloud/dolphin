@@ -135,7 +135,7 @@ describe('restored subagent liveness sweep', () => {
       expect(server.getStatusSnapshotForPane(PANE)[0]?.restoredUnconfirmed).toBeUndefined()
       now.mockRestore()
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -151,7 +151,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server)).toEqual({ state: 'working', subagents: [WORKING_CHILD] })
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -171,7 +171,7 @@ describe('restored subagent liveness sweep', () => {
         restoredUnconfirmed: true
       })
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -189,7 +189,7 @@ describe('restored subagent liveness sweep', () => {
       expect(probeLiveLocalPty).toHaveBeenCalledExactlyOnceWith(PTY)
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -207,7 +207,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(probeLiveLocalPty).toHaveBeenCalledExactlyOnceWith(PTY)
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -228,7 +228,7 @@ describe('restored subagent liveness sweep', () => {
       expect(probeLiveLocalPty).toHaveBeenCalled()
       expect(paneStatus(server).state).toBe('missing')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -244,7 +244,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -260,7 +260,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -277,7 +277,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server)).toEqual({ state: 'working', subagents: [WORKING_CHILD] })
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -288,7 +288,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -307,7 +307,7 @@ describe('restored subagent liveness sweep', () => {
       expect(probeLiveLocalPty).not.toHaveBeenCalled()
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -323,7 +323,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -336,7 +336,7 @@ describe('restored subagent liveness sweep', () => {
       expect(probeLiveLocalPty).not.toHaveBeenCalled()
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -358,7 +358,7 @@ describe('restored subagent liveness sweep', () => {
       expect(await sweepWith(server)).toBe(0)
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -393,7 +393,7 @@ describe('restored subagent liveness sweep', () => {
       expect(await sweep).toBe(0)
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -416,7 +416,7 @@ describe('restored subagent liveness sweep', () => {
       expect(await sweep).toBe(0)
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -443,7 +443,7 @@ describe('restored subagent liveness sweep', () => {
       expect(await sweep).toBe(0)
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -474,7 +474,7 @@ describe('restored subagent liveness sweep', () => {
       expect(paneStatus(server).state).toBe('working')
       expect(paneStatus(server, otherPane).state).toBe('done')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -494,7 +494,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server, makePaneKey('tab-2', LEAF)).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 
@@ -513,7 +513,7 @@ describe('restored subagent liveness sweep', () => {
 
       expect(paneStatus(server).state).toBe('working')
     } finally {
-      server.stop()
+      await server.stop()
     }
   })
 })
