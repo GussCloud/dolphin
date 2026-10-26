@@ -113,6 +113,26 @@ describe('goal.* RPC methods', () => {
     await expect(call('goal.show', { from: 'term_coord' })).rejects.toThrow(/No open goal/)
   })
 
+  it('turns a request after completion into a new goal with the same settings and a new Run', async () => {
+    const first = (await call('goal.start', { ...start, removeWorktrees: false })) as {
+      goal: { id: string; runId: string }
+    }
+    const completed = (await call('goal.complete', { from: 'term_coord', summary: 'Shipped' })) as {
+      instructions: string
+    }
+    expect(completed.instructions).toContain(
+      'dolphin goal start --agent claude --worker-agent codex --max-concurrent 2 --keep-worktrees --objective'
+    )
+    expect(completed.instructions).toContain('never do it yourself or with teammates')
+    const second = (await call('goal.start', { ...start, objective: 'Add dark mode' })) as {
+      created: boolean
+      goal: { id: string; runId: string }
+    }
+    expect(second.created).toBe(true)
+    expect(second.goal.id).not.toBe(first.goal.id)
+    expect(second.goal.runId).not.toBe(first.goal.runId)
+  })
+
   it('refuses a caller without a stable terminal pane', async () => {
     await expect(call('goal.start', { ...start, from: 'term_other' })).rejects.toThrow()
   })

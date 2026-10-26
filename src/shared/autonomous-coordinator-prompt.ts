@@ -52,9 +52,21 @@ export function decodeAutonomousGoalObjective(encoded: string): string {
   return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
 }
 
-function coordinatorRules(
-  goal: Pick<AutonomousGoal, 'agent' | 'workerAgent' | 'maxConcurrent' | 'baseRef'>
-): string[] {
+type GoalSettings = Pick<
+  AutonomousGoal,
+  'agent' | 'workerAgent' | 'maxConcurrent' | 'removeWorktrees' | 'keepCoordinatorWorktree'
+>
+
+/**
+ * What a coordinator does with a request after its goal closed: start another goal with the same
+ * settings. Why: once closed, the goal's rules no longer bind it, and an Agent Teams coordinator
+ * then splits the request into teammates inside the coordinator's own worktree.
+ */
+export function buildAutonomousGoalFollowUpRule(goal: GoalSettings): string {
+  return `If the user asks for more work in this terminal after the goal is complete, never do it yourself or with teammates: start a new goal with \`dolphin goal start --agent ${goal.agent} --worker-agent ${goal.workerAgent} --max-concurrent ${goal.maxConcurrent}${cleanupFlags({ ...goal, objective: '' })} --objective "<their request>" --json\` and follow the instructions it returns.`
+}
+
+function coordinatorRules(goal: GoalSettings & Pick<AutonomousGoal, 'baseRef'>): string[] {
   const { agent, workerAgent, maxConcurrent } = goal
   const reviewTarget = autonomousGoalReviewTarget(goal.baseRef)
   return [
@@ -88,7 +100,8 @@ function coordinatorRules(
     '- Record anything a successor must know as one line: `dolphin goal note --kind decision --text "..."`.',
     '- This session can be replaced by a fresh one at any turn end; the Run, its Tasks and the goal notes are the only memory that survives.',
     '- Ask the user only for a decision you cannot make: `dolphin goal note --kind blocker --text "..."`, then keep waiting on the Run.',
-    '- When every Task is done, every PR is merged and the goal is met: `dolphin goal complete --summary "<one line>" --json`, then stop.'
+    '- When every Task is done, every PR is merged and the goal is met: `dolphin goal complete --summary "<one line>" --json`, then stop.',
+    `- ${buildAutonomousGoalFollowUpRule(goal)}`
   ]
 }
 
@@ -110,7 +123,7 @@ export function buildAutonomousCoordinatorLaunchPrompt(
 
 /** Returned by `goal start`, so the rules reach the model as tool output, never through a shell. */
 export function buildAutonomousCoordinatorInstructions(
-  goal: Pick<AutonomousGoal, 'objective' | 'agent' | 'workerAgent' | 'maxConcurrent' | 'baseRef'>
+  goal: GoalSettings & Pick<AutonomousGoal, 'objective' | 'baseRef'>
 ): string {
   return [
     'This terminal is now bound to the goal and its orchestration Run.',

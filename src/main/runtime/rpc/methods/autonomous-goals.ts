@@ -1,6 +1,9 @@
 // `goal.*` — the coordinator side of an autonomous goal. The coordinator agent calls these from its
 // own terminal, so the host that runs it owns the goal, the same way it owns the goal's Run.
-import { buildAutonomousCoordinatorInstructions } from '../../../../shared/autonomous-coordinator-prompt'
+import {
+  buildAutonomousCoordinatorInstructions,
+  buildAutonomousGoalFollowUpRule
+} from '../../../../shared/autonomous-coordinator-prompt'
 import { defineMethod, type RpcContext } from '../core'
 import { resolveOrchestrationCaller } from './orchestration/runs/run-scope'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
@@ -150,7 +153,9 @@ export const AUTONOMOUS_GOAL_METHODS = [
           status: 'complete',
           summary: params.summary.trim(),
           notes: goal.notes.filter((note) => note.kind !== 'blocker')
-        })
+        }),
+        // Why repeated here: this is the freshest tool output when a later request arrives.
+        instructions: buildAutonomousGoalFollowUpRule(goal)
       }
     }
   }),

@@ -112,11 +112,13 @@ export const GOAL_HANDLERS: Record<string, CommandHandler> = {
 
   'goal complete': async ({ flags, client, cwd, json }) => {
     const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
-    const result = await client.call<GoalResult>('goal.complete', {
+    const result = await client.call<GoalResult & { instructions?: string }>('goal.complete', {
       from,
       summary: getRequiredStringFlag(flags, 'summary')
     })
-    printResult(result, json, (r) => `Goal ${r.goal.id} complete.`)
+    printResult(result, json, (r) =>
+      [`Goal ${r.goal.id} complete.`, ...(r.instructions ? [r.instructions] : [])].join('\n')
+    )
   },
 
   'goal show': async ({ flags, client, cwd, json }) => {

@@ -260,6 +260,10 @@ A host with no usage data (headless, signed out) never blocks.
 ## Statuses
 
 `active`, `usageLimited`, `blocked` are open; `complete` and `stopped` are closed.
+A request typed into a kept coordinator after its goal completed starts a new
+goal on the same pane with the same settings (`buildAutonomousGoalFollowUpRule`,
+in the rules and in `goal complete`'s output); without it an Agent Teams
+coordinator split the request into teammates inside its own worktree.
 Stopping a goal leaves its Run and Tasks untouched; settled workers are cleaned up
 (see Cleanup) and running ones keep running.
 

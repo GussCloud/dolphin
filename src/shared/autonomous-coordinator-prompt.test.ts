@@ -130,6 +130,19 @@ describe('buildAutonomousCoordinatorInstructions', () => {
     expect(instructions).toContain('dolphin orchestration worker-list --json')
     expect(instructions.length).toBeLessThan(6_000)
   })
+
+  it('routes requests after completion to a new goal instead of teammates', () => {
+    const instructions = buildAutonomousCoordinatorInstructions({
+      objective: 'Build the app',
+      agent: 'claude-agent-teams',
+      workerAgent: 'claude',
+      maxConcurrent: 3,
+      keepCoordinatorWorktree: false
+    })
+    expect(instructions).toContain(
+      'never do it yourself or with teammates: start a new goal with `dolphin goal start --agent claude-agent-teams --worker-agent claude --max-concurrent 3 --remove-coordinator-worktree --objective "<their request>" --json`'
+    )
+  })
 })
 
 describe('buildAutonomousCoordinatorResumePrompt', () => {
