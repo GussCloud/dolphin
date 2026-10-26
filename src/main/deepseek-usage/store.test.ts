@@ -73,7 +73,7 @@ describe('DeepSeekUsageStore', () => {
     expect(existsSync(join(userData, 'dolphin-deepseek-usage.json'))).toBe(true)
     expect(existsSync(join(userData, 'dolphin-claude-usage.json'))).toBe(false)
 
-    const snapshot = store.getSnapshot('all', 'all')
+    const snapshot = await store.getSnapshot('all', 'all')
     expect(snapshot.summary).toMatchObject({
       inputTokens: 1_000,
       outputTokens: 500,
@@ -90,6 +90,6 @@ describe('DeepSeekUsageStore', () => {
     await store.refresh(true)
 
     expect(scanDeepSeekUsageFilesViaWorker).not.toHaveBeenCalled()
-    expect(store.getSnapshot('all', 'all').summary.estimatedCostUsd).toBeGreaterThan(0)
+    expect((await store.getSnapshot('all', 'all')).summary.estimatedCostUsd).toBeGreaterThan(0)
   })
 })

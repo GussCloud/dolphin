@@ -107,7 +107,7 @@ describe('ClaudeUsageStore', () => {
     rmSync(tempUserData, { recursive: true, force: true })
   })
 
-  it('defaults a null legacy opt-in while invalidating the cache', () => {
+  it('defaults a null legacy opt-in while invalidating the cache', async () => {
     writeFileSync(
       join(tempUserData, 'dolphin-claude-usage.json'),
       JSON.stringify({ schemaVersion: 4, scanState: { enabled: null } })
@@ -115,7 +115,7 @@ describe('ClaudeUsageStore', () => {
 
     const store = new ClaudeUsageStore(createBackingStore())
 
-    expect(store.getScanState().enabled).toBe(false)
+    expect((await store.getScanState()).enabled).toBe(false)
   })
 
   it('keeps a v6 cache across the compact-key upgrade and persists it as v7', async () => {

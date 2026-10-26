@@ -51,15 +51,16 @@ export class MuseUsageStore extends UsageProviderStoreLifecycle<
     })
   }
 
-  getSnapshot(
+  async getSnapshot(
     scope: MuseUsageScope,
     range: MuseUsageRange,
     recentSessionLimit = 10
-  ): MuseUsageSnapshot {
+  ): Promise<MuseUsageSnapshot> {
+    await this.ensureLoaded()
     const daily = this.getFilteredDaily(scope, range)
     const sessions = this.getFilteredSessions(scope, range)
     return {
-      scanState: this.getScanState(),
+      scanState: this.currentScanState(),
       summary: buildMuseUsageSummary(scope, range, daily, sessions),
       daily: buildMuseUsageDailyPoints(daily),
       modelBreakdown: buildMuseUsageBreakdownRows('model', scope, daily, sessions),

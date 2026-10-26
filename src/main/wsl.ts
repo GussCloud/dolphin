@@ -76,6 +76,8 @@ export function wslUncDirectoryExists(uncPath: string): boolean | null {
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 5000,
       encoding: 'utf8',
+      // Why: main is a GUI-subsystem process; an unhidden wsl.exe flashes a console that can take focus.
+      windowsHide: true,
       cwd: resolveWslInteropSpawnCwd()
     })
     return parseWslDirectoryProbeOutput(stdout)
@@ -93,7 +95,7 @@ export function wslUncDirectoryExistsAsync(uncPath: string): Promise<boolean | n
     return Promise.resolve(null)
   }
   return new Promise((resolve) => {
-    const probeOpts = { timeout: 5000, cwd: resolveWslInteropSpawnCwd() }
+    const probeOpts = { timeout: 5000, windowsHide: true, cwd: resolveWslInteropSpawnCwd() }
     execFile('wsl.exe', getWslDirectoryProbeArgs(info), probeOpts, (_error, stdout) => {
       // Why: wsl.exe uses numeric exits for both guest results and host failures; only the guest marker is authoritative.
       resolve(parseWslDirectoryProbeOutput(stdout))
@@ -187,6 +189,7 @@ export function listWslDistros(): string[] {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: 5000,
+      windowsHide: true,
       cwd: resolveWslInteropSpawnCwd()
     })
     return cacheWslDistroList(parseWslDistros(output), probeSequence)
@@ -290,6 +293,7 @@ export function getWslHome(distro: string): string | null {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
       timeout: WSL_HOME_PROBE_TIMEOUT_MS,
+      windowsHide: true,
       cwd: resolveWslInteropSpawnCwd()
     })
   )

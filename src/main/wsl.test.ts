@@ -794,3 +794,30 @@ describe('wslUncDirectoryExistsAsync', () => {
     expect(execFileMock).not.toHaveBeenCalled()
   })
 })
+
+describe('wsl.exe console visibility', () => {
+  afterEach(() => {
+    execFileMock.mockReset()
+    execFileSyncMock.mockReset()
+    _resetWslCachesForTests()
+  })
+
+  it('hides the console of every wsl.exe probe this module starts', async () => {
+    execFileSyncMock.mockReturnValue('Ubuntu\n')
+    answerAsyncProbesWith('Ubuntu\n')
+
+    await withPlatformAsync('win32', async () => {
+      wslUncDirectoryExists('\\\\wsl.localhost\\Ubuntu\\home\\jin\\repo')
+      await wslUncDirectoryExistsAsync('\\\\wsl.localhost\\Ubuntu\\home\\jin\\repo')
+      listWslDistros()
+      getWslHome('Ubuntu')
+    })
+
+    const calls = [...execFileSyncMock.mock.calls, ...execFileMock.mock.calls]
+    expect(calls.length).toBeGreaterThanOrEqual(4)
+    for (const [command, , options] of calls) {
+      expect(command).toBe('wsl.exe')
+      expect(options).toEqual(expect.objectContaining({ windowsHide: true }))
+    }
+  })
+})

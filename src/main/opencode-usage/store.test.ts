@@ -175,7 +175,7 @@ describe('OpenCodeUsageStore', () => {
     rmSync(tempUserData, { recursive: true, force: true })
   })
 
-  it('adapts OpenCode scans to pretty-printed cache persistence', async () => {
+  it('adapts OpenCode scans to compact cache persistence', async () => {
     const store = createStoreWithState({
       scanState: {
         enabled: true,
@@ -189,7 +189,7 @@ describe('OpenCodeUsageStore', () => {
 
     const persistedJson = readFileSync(join(tempUserData, 'dolphin-opencode-usage.json'), 'utf-8')
     expect(scanOpenCodeUsageDatabasesViaWorker).toHaveBeenCalledWith([], [])
-    expect(persistedJson).toContain('\n')
+    expect(persistedJson).not.toContain('\n')
   })
 
   it('reports no data for Dolphin scope when only non-Dolphin OpenCode usage exists', async () => {

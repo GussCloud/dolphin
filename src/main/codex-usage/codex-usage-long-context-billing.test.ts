@@ -185,7 +185,10 @@ describe('long-context cost across rollups', () => {
     expect(breakdown[0]?.estimatedCostUsd).toBeCloseTo(26.8, 9)
 
     store['state'].scanState.enabled = true
-    vi.spyOn(store, 'refresh').mockResolvedValue({ ...store.getScanState(), lastScanError: null })
+    vi.spyOn(store, 'refresh').mockResolvedValue({
+      ...(await store.getScanState()),
+      lastScanError: null
+    })
     const runUsage = await store.getAutomationRunUsage({
       worktreeId: 'unrelated-worktree',
       terminalSessionId: 'session-1',

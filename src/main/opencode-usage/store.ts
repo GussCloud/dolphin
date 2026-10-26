@@ -56,18 +56,18 @@ export class OpenCodeUsageStore extends UsageProviderStoreLifecycle<
       normalizeState: normalizePersistedState,
       sourceKey: 'processedDatabases',
       dataPresenceKey: 'hasAnyOpenCodeData',
-      jsonIndent: 2,
       scan: openCodeUsageProvider.scan
     })
   }
 
-  getSnapshot(
+  async getSnapshot(
     scope: OpenCodeUsageScope,
     range: OpenCodeUsageRange,
     recentSessionLimit = 10
-  ): OpenCodeUsageSnapshot {
+  ): Promise<OpenCodeUsageSnapshot> {
+    await this.ensureLoaded()
     return {
-      scanState: this.getScanState(),
+      scanState: this.currentScanState(),
       summary: this.buildSummary(scope, range),
       daily: this.buildDaily(scope, range),
       modelBreakdown: this.buildBreakdown(scope, range, 'model'),

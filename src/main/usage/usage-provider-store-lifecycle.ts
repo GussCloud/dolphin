@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { isENOENT } from '../ipc/filesystem-path-containment'
 import type { Store } from '../persistence'
 import { UsageCacheSnapshotWriter } from '../usage-cache-snapshot-writer'
 import { loadKnownUsageWorktreesByRepo } from '../usage-worktree-metadata'
@@ -37,7 +38,6 @@ type UsageProviderStoreLifecycleConfig<
   normalizeState: (state: State) => State
   sourceKey: SourceKey
   dataPresenceKey: DataPresenceKey
-  jsonIndent?: number
   scan: (
     worktrees: UsageScanWorktreeRef[],
     previous: State[SourceKey]
@@ -55,6 +55,7 @@ export abstract class UsageProviderStoreLifecycle<
 > {
   protected state: State
   private scanPromise: Promise<void> | null = null
+  private loadPromise: Promise<void> | null = null
   private readonly writer: UsageCacheSnapshotWriter
 
   constructor(
@@ -62,10 +63,16 @@ export abstract class UsageProviderStoreLifecycle<
     private readonly config: UsageProviderStoreLifecycleConfig<SourceKey, State, DataPresenceKey>
   ) {
     this.writer = new UsageCacheSnapshotWriter(config.logTag, config.resolveCacheFile)
-    this.state = this.load()
+    this.state = config.createDefaultState()
   }
 
-  getScanState(): PublicUsageProviderScanState<DataPresenceKey> {
+  async getScanState(): Promise<PublicUsageProviderScanState<DataPresenceKey>> {
+    await this.ensureLoaded()
+    return this.currentScanState()
+  }
+
+  /** Scan state as held now; callers must have awaited ensureLoaded(). */
+  protected currentScanState(): PublicUsageProviderScanState<DataPresenceKey> {
     return {
       ...this.state.scanState,
       isScanning: this.scanPromise !== null,
@@ -80,46 +87,67 @@ export abstract class UsageProviderStoreLifecycle<
   }
 
   async setEnabled(enabled: boolean): Promise<PublicUsageProviderScanState<DataPresenceKey>> {
+    // Why: writing before the load lands would replace the cached history with defaults.
+    await this.ensureLoaded()
     this.state.scanState.enabled = enabled
     await this.writeToDisk()
-    return this.getScanState()
+    return this.currentScanState()
   }
 
   async refresh(force = false): Promise<PublicUsageProviderScanState<DataPresenceKey>> {
+    await this.ensureLoaded()
     if (!this.state.scanState.enabled) {
-      return this.getScanState()
+      return this.currentScanState()
     }
     const currentWorktreeFingerprint = await this.getCurrentWorktreeFingerprint()
     if (!force && this.state.scanState.lastScanCompletedAt) {
       const ageMs = Date.now() - this.state.scanState.lastScanCompletedAt
       if (ageMs < STALE_MS && this.state.worktreeFingerprint === currentWorktreeFingerprint) {
-        return this.getScanState()
+        return this.currentScanState()
       }
     }
     await this.runScan()
-    return this.getScanState()
+    return this.currentScanState()
+  }
+
+  /**
+   * Load the persisted cache once, on first use.
+   *
+   * Why lazy: the cache grows with the whole transcript history (tens of MB) and is only read by
+   * the usage pane and automation attribution, so startup no longer pays its sync read and parse.
+   */
+  protected ensureLoaded(): Promise<void> {
+    this.loadPromise ??= this.load()
+    return this.loadPromise
   }
 
   protected writeToDisk(): Promise<void> {
-    return this.writer.write(() => JSON.stringify(this.state, null, this.config.jsonIndent))
+    return this.writer.write(() => JSON.stringify(this.state))
   }
 
-  private load(): State {
+  private async load(): Promise<void> {
     const defaults = this.config.createDefaultState()
+    let raw: string
     try {
-      const cacheFile = this.config.resolveCacheFile()
-      if (!existsSync(cacheFile)) {
-        return defaults
+      raw = await readFile(this.config.resolveCacheFile(), 'utf-8')
+    } catch (error) {
+      if (!isENOENT(error)) {
+        console.error(
+          `${this.config.logTag} Failed to read persisted state, starting fresh:`,
+          error
+        )
       }
-      const parsed = JSON.parse(readFileSync(cacheFile, 'utf-8')) as State
-      return this.config.normalizeState({
+      return
+    }
+    try {
+      const parsed: State = JSON.parse(raw)
+      this.state = this.config.normalizeState({
         ...defaults,
         ...parsed,
         scanState: { ...defaults.scanState, ...parsed.scanState }
       })
     } catch (error) {
       console.error(`${this.config.logTag} Failed to load persisted state, starting fresh:`, error)
-      return defaults
     }
   }
 

@@ -106,13 +106,14 @@ export class ClaudeTranscriptUsageStore extends UsageProviderStoreLifecycle<
     this.estimateCost = config.estimateCost
   }
 
-  getSnapshot(
+  async getSnapshot(
     scope: ClaudeUsageScope,
     range: ClaudeUsageRange,
     recentSessionLimit = 10
-  ): ClaudeUsageSnapshot {
+  ): Promise<ClaudeUsageSnapshot> {
+    await this.ensureLoaded()
     return {
-      scanState: this.getScanState(),
+      scanState: this.currentScanState(),
       summary: buildSummary(this.state, scope, range, this.estimateCost),
       daily: buildDaily(this.state, scope, range),
       modelBreakdown: buildBreakdown(this.state, scope, range, 'model', this.estimateCost),

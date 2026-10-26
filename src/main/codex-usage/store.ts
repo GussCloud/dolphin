@@ -102,13 +102,14 @@ export class CodexUsageStore extends UsageProviderStoreLifecycle<
     })
   }
 
-  getSnapshot(
+  async getSnapshot(
     scope: CodexUsageScope,
     range: CodexUsageRange,
     recentSessionLimit = 10
-  ): CodexUsageSnapshot {
+  ): Promise<CodexUsageSnapshot> {
+    await this.ensureLoaded()
     return {
-      scanState: this.getScanState(),
+      scanState: this.currentScanState(),
       summary: buildSummary(this.state, scope, range),
       daily: buildDaily(this.state, scope, range),
       modelBreakdown: buildBreakdown(this.state, scope, range, 'model'),
@@ -146,10 +147,11 @@ export class CodexUsageStore extends UsageProviderStoreLifecycle<
   }
 
   async getAutomationRunUsage(input: AutomationUsageLookupInput): Promise<AutomationRunUsage> {
+    await this.ensureLoaded()
     return resolveCodexAutomationRunUsage(input, {
       getState: () => this.state,
       refresh: (force) => this.refresh(force),
-      isScanning: () => this.getScanState().isScanning
+      isScanning: () => this.currentScanState().isScanning
     })
   }
 }
