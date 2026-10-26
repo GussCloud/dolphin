@@ -17834,6 +17834,18 @@
         "autonomousTab": "自律作業",
         "coordinatorAgent": "コーディネーター Agent",
         "startGoal": "目標を開始"
+      },
+      "WorktreeCardAutonomousGoal": {
+        "badge": "目標",
+        "active": "作業中",
+        "blocked": "判断が必要です",
+        "usageLimited": "一時停止中",
+        "tasks": "{{total}} 件中 {{completed}} 件のタスク",
+        "progress": "目標の進捗",
+        "rotations": "ローテーション: {{value}}",
+        "stop": "目標を停止",
+        "stopFailed": "目標を停止できませんでした。",
+        "workerTask": "タスク {{number}}"
       }
     },
     "i18n": {

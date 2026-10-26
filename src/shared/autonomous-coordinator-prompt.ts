@@ -52,9 +52,21 @@ export function decodeAutonomousGoalObjective(encoded: string): string {
   return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
 }
 
-function coordinatorRules(
-  goal: Pick<AutonomousGoal, 'agent' | 'workerAgent' | 'maxConcurrent' | 'baseRef'>
-): string[] {
+type GoalSettings = Pick<
+  AutonomousGoal,
+  'agent' | 'workerAgent' | 'maxConcurrent' | 'removeWorktrees' | 'keepCoordinatorWorktree'
+>
+
+/**
+ * What a coordinator does with a request after its goal closed: start another goal with the same
+ * settings. Why: once closed, the goal's rules no longer bind it, and an Agent Teams coordinator
+ * then splits the request into teammates inside the coordinator's own worktree.
+ */
+export function buildAutonomousGoalFollowUpRule(goal: GoalSettings): string {
+  return `If the user asks for more work in this terminal after the goal is complete, never do it yourself or with teammates: start a new goal with \`dolphin goal start --agent ${goal.agent} --worker-agent ${goal.workerAgent} --max-concurrent ${goal.maxConcurrent}${cleanupFlags({ ...goal, objective: '' })} --objective "<their request>" --json\` and follow the instructions it returns.`
+}
+
+function coordinatorRules(goal: GoalSettings & Pick<AutonomousGoal, 'baseRef'>): string[] {
   const { agent, workerAgent, maxConcurrent } = goal
   const reviewTarget = autonomousGoalReviewTarget(goal.baseRef)
   return [
@@ -65,7 +77,7 @@ function coordinatorRules(
         ]
       : []),
     '- You coordinate; you do not implement. Read the repository docs once, then split the goal into Tasks with only real dependencies (`dolphin orchestration task-create --spec "..." --deps \'["<task_id>"]\' --json`).',
-    `- Start each ready Task in its own worktree: \`dolphin orchestration worker-start --task <task_id> --worktree new-top-level --name <short-slug> --agent ${workerAgent} --json\`. Keep at most ${maxConcurrent} workers running.`,
+    `- Start each ready Task in its own worktree: \`dolphin orchestration worker-start --task <task_id> --worktree new-child --name <short-slug> --agent ${workerAgent} --json\`. Keep at most ${maxConcurrent} workers running.`,
     `- Each worker spec must say: implement the task, run the repo's checks, open a PR (or MR)${reviewTarget ? ` targeting the \`${reviewTarget}\` branch` : ''}, drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.`,
     ...(reviewTarget
       ? [
@@ -79,12 +91,17 @@ function coordinatorRules(
       : []),
     "- A Task that depends on another starts only after the dependency's PR is merged; its worktree must branch from the updated base.",
     '- After starting or answering workers, end your turn and stay idle: Dolphin types a notice into this terminal when Run mail arrives. Never use `check --wait` or poll. On each notice, read with `dolphin orchestration check --json`, act, then acknowledge with `dolphin orchestration check --ack <delivery_id> --json`. An ack response can carry the next batch (a new deliveryId): handle and ack it too, until a response has no messages; an unacked batch silences every later notice.',
+    '- Handle each message by type: answer a `question` with `dolphin orchestration reply --id <message_id> --body "..." --json`; a `worker_done` settles its Task; decide an `escalation` or record it as a blocker note.',
+    '- A worker_done with outcome failed, or a worker-start that exits non-zero: never relaunch blindly. Read its error and failedStage; to retry, run worker-start again with `--task <task_id> --retry-of <dispatch_id>` and the same --worktree, --name and --agent.',
+    "- If several notices pass with no progress, list the workers with `dolphin orchestration worker-list --json` and run each row's projection.nextAction; an `unverifiable` worker never justifies a stop or retry.",
+    '- Cleanup belongs to Dolphin: never run worker-release, worker-stop or terminal close yourself.',
     '- Do not read diffs or worker transcripts; act only on the reports. Keep your own replies short.',
     '- If worker-start refuses with goal_usage_limited, start nothing else and end your turn; Dolphin wakes this terminal when the plan window resets.',
     '- Record anything a successor must know as one line: `dolphin goal note --kind decision --text "..."`.',
     '- This session can be replaced by a fresh one at any turn end; the Run, its Tasks and the goal notes are the only memory that survives.',
     '- Ask the user only for a decision you cannot make: `dolphin goal note --kind blocker --text "..."`, then keep waiting on the Run.',
-    '- When every Task is done, every PR is merged and the goal is met: `dolphin goal complete --summary "<one line>" --json`, then stop.'
+    '- When every Task is done, every PR is merged and the goal is met: `dolphin goal complete --summary "<one line>" --json`, then stop.',
+    `- ${buildAutonomousGoalFollowUpRule(goal)}`
   ]
 }
 
@@ -106,15 +123,13 @@ export function buildAutonomousCoordinatorLaunchPrompt(
 
 /** Returned by `goal start`, so the rules reach the model as tool output, never through a shell. */
 export function buildAutonomousCoordinatorInstructions(
-  goal: Pick<AutonomousGoal, 'objective' | 'agent' | 'workerAgent' | 'maxConcurrent' | 'baseRef'>
+  goal: GoalSettings & Pick<AutonomousGoal, 'objective' | 'baseRef'>
 ): string {
   return [
     'This terminal is now bound to the goal and its orchestration Run.',
     '',
     'Goal:',
     goal.objective,
-    '',
-    'Load the coordination contract once: `dolphin skills get orchestration`.',
     '',
     ...coordinatorRules(goal)
   ].join('\n')
@@ -172,7 +187,7 @@ export function buildAutonomousCoordinatorResumePrompt(
     ...(handoff.length > 0 ? ['', 'Handoff from the previous session:', ...handoff] : []),
     ...(blockers.length > 0 ? ['', 'Open blockers:', ...blockers] : []),
     '',
-    'Load the coordination contract once: `dolphin skills get orchestration`. Then read unread mail with `dolphin orchestration check --json` and continue; if there is none, end your turn and wait idle.',
+    'Read unread mail with `dolphin orchestration check --json` and continue; if there is none, end your turn and wait idle.',
     '',
     ...coordinatorRules(goal)
   ].join('\n')

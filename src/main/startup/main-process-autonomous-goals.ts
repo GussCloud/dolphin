@@ -12,6 +12,7 @@ import { startAutonomousGoalNotifier } from '../autonomous-goals/autonomous-goal
 import { startAutonomousGoalMailWatchdog } from '../autonomous-goals/autonomous-goal-mail-watchdog'
 import { startAutonomousGoalCleanup } from '../autonomous-goals/autonomous-goal-cleanup'
 import { createAutonomousGoalCleanupRpcPorts } from '../autonomous-goals/autonomous-goal-cleanup-ports'
+import { startAutonomousGoalRendererBroadcast } from '../autonomous-goals/autonomous-goal-renderer-broadcast'
 import { dispatchMainProcessNotification } from '../ipc/notifications'
 import type { Store } from '../persistence'
 import { resolveWorkspaceDisplayName } from '../workspace-display-name'
@@ -134,7 +135,11 @@ export function startMainProcessAutonomousGoals(
       store.update(goalId, { cleanup: record })
     }
   })
+  const stopBroadcast = startAutonomousGoalRendererBroadcast((listener) =>
+    store.subscribe(listener)
+  )
   return () => {
+    stopBroadcast()
     cleanup.stop()
     mailWatchdog.stop()
     stopRotation()

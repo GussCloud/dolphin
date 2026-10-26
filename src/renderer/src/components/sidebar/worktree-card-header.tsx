@@ -3,6 +3,7 @@ import { AlertCircle, Server, ServerOff, Star, Trash2 } from 'lucide-react'
 
 import { RepoIconGlyph } from '@/components/repo/repo-icon'
 import { Badge } from '@/components/ui/badge'
+import { WorktreeCardGoalBadge } from './worktree-card-autonomous-goal'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -232,6 +233,8 @@ export function WorktreeCardHeader({
             </TooltipContent>
           </Tooltip>
         )}
+
+        {!compactCards && <WorktreeCardGoalBadge worktreeId={worktree.id} />}
 
         {worktree.isSparse && (
           <Tooltip>

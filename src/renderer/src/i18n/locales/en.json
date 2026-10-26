@@ -17983,6 +17983,18 @@
         "autonomousTab": "Autonomous work",
         "coordinatorAgent": "Coordinator agent",
         "startGoal": "Start goal"
+      },
+      "WorktreeCardAutonomousGoal": {
+        "badge": "goal",
+        "active": "Working",
+        "blocked": "Needs your decision",
+        "usageLimited": "Paused",
+        "tasks": "{{completed}} of {{total}} tasks",
+        "progress": "Goal progress",
+        "rotations": "Rotations: {{value}}",
+        "stop": "Stop goal",
+        "stopFailed": "Could not stop the goal.",
+        "workerTask": "Task {{number}}"
       }
     },
     "i18n": {
