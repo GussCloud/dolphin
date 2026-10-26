@@ -11,7 +11,7 @@ import {
 
 export const AUTONOMOUS_GOAL_CLEANUP_CHECK_MS = 60_000
 /** Per worktree; a hosted-review lookup costs provider API quota. */
-export const AUTONOMOUS_GOAL_MERGE_CHECK_MS = 5 * 60_000
+export const AUTONOMOUS_GOAL_MERGE_CHECK_MS = 2 * 60_000
 /** Lets the coordinator finish its closing reply before its own pane is torn down. */
 export const AUTONOMOUS_GOAL_COORDINATOR_REMOVAL_DELAY_MS = 30_000
 

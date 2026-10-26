@@ -5,7 +5,11 @@ const BROADCAST_DEBOUNCE_MS = 250
 type ChangeSource = (notify: () => void) => () => void
 
 /** Tells open windows that goals changed, so the sidebar re-reads `goal.list` instead of polling for new goals. */
-export function startAutonomousGoalRendererBroadcast(sources: ChangeSource[]): () => void {
+export function startAutonomousGoalRendererBroadcast(
+  sources: ChangeSource[],
+  /** Also told on each flush: paired clients, which have no IPC channel. */
+  publishToClients: () => void = () => {}
+): () => void {
   let timer: NodeJS.Timeout | null = null
   const notify = (): void => {
     if (timer) {
@@ -18,6 +22,7 @@ export function startAutonomousGoalRendererBroadcast(sources: ChangeSource[]): (
           window.webContents.send('autonomousGoals:changed')
         }
       }
+      publishToClients()
     }, BROADCAST_DEBOUNCE_MS)
   }
   const unsubscribes = sources.map((subscribe) => subscribe(notify))

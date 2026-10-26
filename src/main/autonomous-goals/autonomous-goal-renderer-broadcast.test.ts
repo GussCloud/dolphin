@@ -40,4 +40,17 @@ describe('startAutonomousGoalRendererBroadcast', () => {
     expect(unsubscribe).toHaveBeenCalledTimes(1)
     expect(send).not.toHaveBeenCalled()
   })
+
+  it('also publishes to paired clients on each flush', () => {
+    const publishToClients = vi.fn()
+    let notify = (): void => {}
+    startAutonomousGoalRendererBroadcast(
+      [(listener) => ((notify = listener), () => {})],
+      publishToClients
+    )
+    notify()
+    notify()
+    vi.advanceTimersByTime(300)
+    expect(publishToClients).toHaveBeenCalledTimes(1)
+  })
 })

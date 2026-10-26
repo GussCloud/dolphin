@@ -32,6 +32,8 @@ export type RuntimeClientEvent =
       selector?: { kind: 'self' } | { kind: 'ssh'; targetId: string } | { kind: 'orphan' }
       reason?: 'definition' | 'run' | 'usage'
     }
+  // Why: goal stores are host-owned like automations; clients re-read `goal.list` on it.
+  | { type: 'autonomousGoalsChanged' }
   | {
       type: 'linearLinkedIssueUpdated'
       worktreeId: string

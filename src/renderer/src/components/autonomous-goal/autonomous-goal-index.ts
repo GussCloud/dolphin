@@ -5,6 +5,10 @@ import { useAppStore } from '@/store'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
 import { getActiveRuntimeTarget } from '@/runtime/runtime-client-target'
 import {
+  newlySettledWorkerWorktreeIds,
+  refreshWorkerReviews
+} from './autonomous-goal-worker-review-refresh'
+import {
   isAutonomousGoalOpen,
   type AutonomousGoalListEntry,
   type AutonomousGoalWorkerProgress
@@ -27,7 +31,9 @@ export async function refreshAutonomousGoalIndex(): Promise<void> {
       'goal.list',
       {}
     )
+    const previous = goalIndexStore.getState().goals
     goalIndexStore.setState({ goals })
+    refreshWorkerReviews(newlySettledWorkerWorktreeIds(previous, goals))
   } catch {
     // Why: an older host has no goal.list; showing no goal is the right answer there.
     goalIndexStore.setState({ goals: [] })

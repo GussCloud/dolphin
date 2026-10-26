@@ -36,6 +36,15 @@ export type DispatcherOptions = {
 
 type DispatchCallOptions = RpcDispatchStreamingOptions
 
+// Methods that change a Run's Tasks or workers; worker_done is signalled from message arrival.
+const ORCHESTRATION_PROGRESS_METHODS = new Set([
+  'orchestration.taskCreate',
+  'orchestration.taskUpdate',
+  'orchestration.workerStart',
+  'orchestration.workerStop',
+  'orchestration.workerAbandon'
+])
+
 export class RpcDispatcher {
   private readonly runtime: DolphinRuntimeService
   private readonly registry: RpcRegistry
@@ -125,6 +134,9 @@ export class RpcDispatcher {
         orchestrationMutations: this.orchestrationMutations,
         legacyOrchestration: this.legacyOrchestration
       })
+      if (ORCHESTRATION_PROGRESS_METHODS.has(request.method)) {
+        this.runtime.notifyOrchestrationProgress()
+      }
       return successResponse(request.id, meta, result)
     } catch (error) {
       if (request.method.startsWith('emulator.')) {

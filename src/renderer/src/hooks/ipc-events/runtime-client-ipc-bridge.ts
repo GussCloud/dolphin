@@ -27,6 +27,8 @@ import {
   getRuntimeClientEventEnvironmentIds,
   invalidateRuntimeClientEventReplay
 } from './runtime-environment-subscription-selection'
+import { refreshAutonomousGoalIndex } from '@/components/autonomous-goal/autonomous-goal-index'
+import { refreshGoalsForClientEvent } from './autonomous-goals-client-event'
 import type { WorktreeEventRuntime } from './worktree-event-runtime'
 
 export function registerRuntimeClientIpcBridge(
@@ -94,6 +96,14 @@ export function registerRuntimeClientIpcBridge(
     }
     if (event.type === 'reposChanged') {
       runtimeProjectRefreshScheduler.request(environmentId)
+      return
+    }
+    if (event.type === 'autonomousGoalsChanged') {
+      refreshGoalsForClientEvent(
+        environmentId,
+        useAppStore.getState().settings?.activeRuntimeEnvironmentId,
+        refreshAutonomousGoalIndex
+      )
       return
     }
     if (event.type === 'automationsChanged') {
