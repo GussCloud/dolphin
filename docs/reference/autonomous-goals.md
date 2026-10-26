@@ -4,7 +4,7 @@ An autonomous goal is one coordinator agent driving an orchestration Run until t
 objective is met. The user turns it on in the new-worktree composer ("Autonomous
 work"), types the goal and picks the worker agent and how many worktrees may run at
 once. Everything after that is the existing orchestration stack: Tasks with
-dependencies, `worker-start --worktree new-top-level`, workers that open PRs and
+dependencies, `worker-start --worktree new-child`, workers that open PRs and
 drive them to green.
 
 ## The design constraint: tokens
@@ -23,7 +23,10 @@ is designed out:
   report one or two lines plus a PR URL. CI and review traffic stay with the worker
   that owns the PR.
 - **Rules live in one terse prompt** (`src/shared/autonomous-coordinator-prompt.ts`),
-  not a large skill re-read every session.
+  not a large skill re-read every session. The coordinator never loads
+  `skills get orchestration` (~13 KB, and its loop teaches `check --wait`); the
+  rules carry the few commands it needs instead: `reply` for questions,
+  `--retry-of` for a failed Task, `worker-list` and its `nextAction` for a stall.
 - **Memory lives outside the context window.** The Run, its Tasks and the goal's
   notes are the only state that matters, so the session can be replaced at any turn
   end (see Rotation).
@@ -145,8 +148,8 @@ Enter. Removing line breaks (0.2.28) changed nothing; they were never the cause.
   `startupPrompt` on the terminal it creates. The line is the typed lead line
   plus `... run \`dolphin orchestration worker-brief --dispatch <id> --json\` and
   follow the brief it returns`. The CLI name comes from the worktree's host
-  (`getWorktreeOrchestrationCliCommand`), since no terminal exists yet. This
-  holds for plain argument agents only (`argv`, `--prompt`): Claude, Agent
+(`getWorktreeOrchestrationCliCommand`), since no terminal exists yet. This
+holds for plain argument agents only (`argv`, `--prompt`): Claude, Agent
   Teams, Codex and DeepSeek. Antigravity and Hermes keep the paste.
 - **Brief:** once the terminal has a pane identity, the start mints the
   capability and holds the brief on the host (`worker-brief-store.ts`).
@@ -237,8 +240,17 @@ A host with no usage data (headless, signed out) never blocks.
 
 - `AutonomousGoalStrip` shows one line above the worktree's panes while its
   coordinator drives an open goal: status, objective (or the open blocker),
-  rotation count and a Stop button. It refreshes every 30 seconds only while a
-  goal is shown and the window is visible.
+  rotation count and a Stop button.
+- In the sidebar, workers are `new-child` worktrees, so they nest under the
+  coordinator through ordinary worktree lineage. The coordinator's card carries a
+  `goal` badge and a block with status, Tasks done/total, rotations and Stop;
+  each worker card shows its `Task N` (`worktree-card-autonomous-goal.tsx`).
+- Both read one shared snapshot (`autonomous-goal-index.ts`): `goal.list` adds an
+  optional `progress` (Tasks done/total, worker worktree → Task number) for open
+  goals, read from the Run's DB rows. The renderer re-reads on the host's
+  `autonomousGoals:changed` event, and every 30 seconds only while an open goal
+  is known and the window is visible. An older host sends no `progress`: the
+  badge and status still show.
 - `autonomous-goal-notifier.ts` raises an `autonomous-goal` notification on each
   transition into `complete`, `blocked` or `usageLimited`. It goes through the
   normal delivery service (desktop and paired mobile), gated by the

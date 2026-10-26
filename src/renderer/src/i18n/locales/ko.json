@@ -17834,6 +17834,18 @@
         "autonomousTab": "자율 작업",
         "coordinatorAgent": "코디네이터 에이전트",
         "startGoal": "목표 시작"
+      },
+      "WorktreeCardAutonomousGoal": {
+        "badge": "목표",
+        "active": "작업 중",
+        "blocked": "결정이 필요합니다",
+        "usageLimited": "일시 중지됨",
+        "tasks": "작업 {{total}}개 중 {{completed}}개",
+        "progress": "목표 진행률",
+        "rotations": "교체: {{value}}",
+        "stop": "목표 중지",
+        "stopFailed": "목표를 중지할 수 없습니다.",
+        "workerTask": "작업 {{ordinal}}"
       }
     },
     "i18n": {

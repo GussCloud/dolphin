@@ -5,7 +5,12 @@ import { defineMethod, type RpcContext } from '../core'
 import { resolveOrchestrationCaller } from './orchestration/runs/run-scope'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
 import { getAutonomousGoalStore } from '../../../autonomous-goals/autonomous-goal-store-instance'
-import type { AutonomousGoal } from '../../../../shared/autonomous-goal-types'
+import {
+  isAutonomousGoalOpen,
+  type AutonomousGoal,
+  type AutonomousGoalListEntry
+} from '../../../../shared/autonomous-goal-types'
+import { buildAutonomousGoalProgress } from '../../../autonomous-goals/autonomous-goal-progress'
 import {
   GoalCompleteParams,
   GoalListParams,
@@ -169,7 +174,19 @@ export const AUTONOMOUS_GOAL_METHODS = [
   defineMethod({
     name: 'goal.list',
     params: GoalListParams,
-    handler: () => ({ goals: getAutonomousGoalStore().list() })
+    handler: (_params, context): { goals: AutonomousGoalListEntry[] } => {
+      const db = context.runtime.getOrchestrationDb()
+      // Why open goals only: their sidebar rows show progress; a closed goal's Run is history.
+      return {
+        goals: getAutonomousGoalStore()
+          .list()
+          .map((goal) =>
+            isAutonomousGoalOpen(goal)
+              ? { ...goal, progress: buildAutonomousGoalProgress(db, goal.runId) }
+              : goal
+          )
+      }
+    }
   }),
   defineMethod({
     name: 'goal.stop',

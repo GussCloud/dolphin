@@ -15454,6 +15454,18 @@
         "autonomousTab": "Trabajo autónomo",
         "coordinatorAgent": "Agente coordinador",
         "startGoal": "Iniciar objetivo"
+      },
+      "WorktreeCardAutonomousGoal": {
+        "badge": "objetivo",
+        "active": "Trabajando",
+        "blocked": "Necesita tu decisión",
+        "usageLimited": "En pausa",
+        "tasks": "{{completed}} de {{total}} tareas",
+        "progress": "Progreso del objetivo",
+        "rotations": "Rotaciones: {{value}}",
+        "stop": "Detener objetivo",
+        "stopFailed": "No se pudo detener el objetivo.",
+        "workerTask": "Tarea {{ordinal}}"
       }
     },
     "i18n": {

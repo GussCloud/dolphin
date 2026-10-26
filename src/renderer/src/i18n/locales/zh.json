@@ -17834,6 +17834,18 @@
         "autonomousTab": "自主工作",
         "coordinatorAgent": "协调者代理",
         "startGoal": "开始目标"
+      },
+      "WorktreeCardAutonomousGoal": {
+        "badge": "目标",
+        "active": "进行中",
+        "blocked": "需要你的决定",
+        "usageLimited": "已暂停",
+        "tasks": "{{total}} 个任务中已完成 {{completed}} 个",
+        "progress": "目标进度",
+        "rotations": "轮换：{{value}}",
+        "stop": "停止目标",
+        "stopFailed": "无法停止目标。",
+        "workerTask": "任务 {{ordinal}}"
       }
     },
     "i18n": {

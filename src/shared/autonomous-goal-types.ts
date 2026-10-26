@@ -142,3 +142,19 @@ export function autonomousGoalRemovesCoordinatorWorktree(
 ) {
   return autonomousGoalRemovesWorktrees(goal) && goal.keepCoordinatorWorktree === false
 }
+
+/** A goal worker's worktree and its Task's 1-based position in the Run, for sidebar labels. */
+export type AutonomousGoalWorkerProgress = {
+  worktreeId: string
+  taskOrdinal: number
+  taskStatus: string
+}
+
+/** Read from the orchestration DB on `goal.list`; absent from older hosts and closed goals. */
+export type AutonomousGoalProgress = {
+  tasksTotal: number
+  tasksCompleted: number
+  workers: AutonomousGoalWorkerProgress[]
+}
+
+export type AutonomousGoalListEntry = AutonomousGoal & { progress?: AutonomousGoalProgress }

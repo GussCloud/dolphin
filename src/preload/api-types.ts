@@ -167,6 +167,8 @@ export type PreloadApi = {
   pwsh: RuntimeApi['pwsh']
   gitBash: RuntimeApi['gitBash']
   plugins: PluginsApi
+  /** Fires when this host's autonomous goal store changes; the renderer re-reads `goal.list`. */
+  autonomousGoals: { onChanged: (callback: () => void) => () => void }
   agentStatus: AgentStatusApi
   mobile: MobileApi
   speech: SpeechApi

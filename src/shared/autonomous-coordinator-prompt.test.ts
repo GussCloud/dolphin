@@ -114,6 +114,22 @@ describe('buildAutonomousCoordinatorInstructions', () => {
     expect(instructions).toContain('dolphin goal complete')
     expect(instructions).not.toContain('--objective-b64')
   })
+
+  it('carries its own short command set instead of the full orchestration guide', () => {
+    const instructions = buildAutonomousCoordinatorInstructions({
+      objective: 'Build the app',
+      agent: 'claude',
+      workerAgent: 'codex',
+      maxConcurrent: 2
+    })
+    // Why: the full guide teaches `check --wait`, which these rules forbid, and costs ~3k tokens a session.
+    expect(instructions).not.toContain('skills get orchestration')
+    expect(instructions).toContain('--worktree new-child')
+    expect(instructions).toContain('dolphin orchestration reply --id <message_id>')
+    expect(instructions).toContain('--retry-of <dispatch_id>')
+    expect(instructions).toContain('dolphin orchestration worker-list --json')
+    expect(instructions.length).toBeLessThan(6_000)
+  })
 })
 
 describe('buildAutonomousCoordinatorResumePrompt', () => {

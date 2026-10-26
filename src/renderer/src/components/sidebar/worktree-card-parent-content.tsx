@@ -7,6 +7,7 @@ import { WorktreeCardDetailsHover } from './WorktreeCardMeta'
 import { WorktreeCardPortsDetails } from './WorktreeCardPorts'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSecondaryRows } from './worktree-card-secondary-rows'
+import { WorktreeCardGoalRow } from './worktree-card-autonomous-goal'
 import { WorktreeCardStatusSlot } from './WorktreeCardStatusSlot'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
@@ -71,6 +72,7 @@ export function WorktreeCardParentContent({
     >
       <WorktreeCardHeader card={card} presentation={presentation} />
       {presentation.hasMetaRow && <WorktreeCardMetaRow card={card} presentation={presentation} />}
+      <WorktreeCardGoalRow worktreeId={worktree.id} />
     </div>
   )
   // Why: status glyphs and agent rows own their tooltips; only identity content should open the larger details card.
