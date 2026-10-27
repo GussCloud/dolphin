@@ -10396,7 +10396,9 @@
             "d86705ba77": "multi-agent",
             "a7f76b4ca7": "orchestration",
             "e05ff36753": "Coordinate multiple coding agents via messaging, task DAGs, dispatch, and decision gates.",
-            "c34045764e": "Agent Orchestration"
+            "c34045764e": "Agent Orchestration",
+            "orchestrationAgents": "orchestration agents",
+            "coordinatorStrategy": "coordinator strategy"
           }
         },
         "privacy": {
@@ -12560,6 +12562,25 @@
             "docker": "docker",
             "slow": "slow"
           }
+        },
+        "OrchestrationAgents": {
+          "name": "Name",
+          "description": "Description",
+          "coordinatorAgent": "Coordinator CLI",
+          "workerAgent": "Worker agent",
+          "maxConcurrent": "Parallel worktrees",
+          "strategy": "Strategy (the agent prompt)",
+          "strategyPlaceholder": "e.g. Split the goal into Tasks of at most one day, each with a clear acceptance check.",
+          "duplicate": "Duplicate",
+          "delete": "Delete",
+          "summary": "{{coordinator}} · workers {{worker}} · {{parallel}} in parallel",
+          "title": "Orchestration agents",
+          "sectionDescription": "Offered by the Orchestration mode of a new worktree. Each one presets the coordinator, its workers and their parallelism, and adds a strategy on top of Dolphin rules.",
+          "newName": "New agent",
+          "add": "New agent",
+          "default": "default",
+          "builtIn": "Built into Dolphin and kept up to date with it. Duplicate it to change the coordinator, workers, parallelism or add a strategy.",
+          "rules": "Dolphin rules always apply and cannot be edited: one worker per Task in a child worktree, idle between notices, every batch acknowledged, a stalled worker retried once, a blocker only for real decisions, and goal complete at the end."
         }
       },
       "right": {
@@ -17979,10 +18000,8 @@
         "rotations": "Rotations: {{value}}"
       },
       "NewWorkspaceComposerGoalMode": {
-        "worktreeTab": "Worktree",
-        "autonomousTab": "Autonomous work",
         "coordinatorAgent": "Coordinator agent",
-        "startGoal": "Start goal"
+        "startOrchestration": "Start orchestration"
       },
       "WorktreeCardAutonomousGoal": {
         "badge": "goal",
@@ -17996,6 +18015,26 @@
         "stopFailed": "Could not stop the goal.",
         "workerTask": "Task {{number}}",
         "completedBadge": "goal done"
+      },
+      "ComposerWizard": {
+        "back": "Back",
+        "next": "Next",
+        "summary": "{{agent}} · {{coordinator}} coordinates · {{parallel}} {{worker}} workers",
+        "stepBasics": "Basics",
+        "stepMode": "Mode",
+        "stepAgent": "Agent",
+        "stepInstructions": "Instructions",
+        "steps": "Steps",
+        "modeQuestion": "How should this worktree work?",
+        "worktreeMode": "Worktree",
+        "worktreeModeDescription": "One agent works in this worktree, as usual.",
+        "orchestrationMode": "Orchestration",
+        "orchestrationUnavailable": "Needs a single Git project; folder and multi-project workspaces cannot coordinate workers.",
+        "orchestrationModeDescription": "An orchestration agent plans the goal, starts worktrees in parallel and follows the workers until every PR is merged.",
+        "orchestrationAgent": "Orchestration agent",
+        "instructions": "Additional instructions (optional)",
+        "instructionsPlaceholder": "e.g. Do not run tests locally; leave validation to CI.",
+        "instructionsHint": "The coordinator passes them to every worker and keeps them across session rotations."
       }
     },
     "i18n": {

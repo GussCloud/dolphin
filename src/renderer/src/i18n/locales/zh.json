@@ -17830,10 +17830,7 @@
         "rotations": "轮换次数：{{value}}"
       },
       "NewWorkspaceComposerGoalMode": {
-        "worktreeTab": "工作树",
-        "autonomousTab": "自主工作",
-        "coordinatorAgent": "协调者代理",
-        "startGoal": "开始目标"
+        "coordinatorAgent": "协调者代理"
       },
       "WorktreeCardAutonomousGoal": {
         "badge": "目标",

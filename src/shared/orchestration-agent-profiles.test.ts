@@ -11,8 +11,8 @@ const custom = {
   id: 'reviewer',
   name: '  Strict reviewer ',
   description: 'Small Tasks',
-  coordinatorAgent: 'codex',
-  workerAgent: 'claude-agent-teams',
+  coordinatorAgent: 'codex' as const,
+  workerAgent: 'claude-agent-teams' as const,
   maxConcurrent: 3,
   strategy: 'Every PR needs tests.'
 }

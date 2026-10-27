@@ -24,11 +24,11 @@ function newAgentId(): string {
 function agentSummary(agent: OrchestrationAgentProfile): string {
   return translate(
     'auto.components.settings.OrchestrationAgents.summary',
-    '{{coordinator}} · workers {{worker}} · {{count}} in parallel',
+    '{{coordinator}} · workers {{worker}} · {{parallel}} in parallel',
     {
       coordinator: agent.coordinatorAgent,
       worker: agent.workerAgent,
-      count: agent.maxConcurrent
+      parallel: agent.maxConcurrent
     }
   )
 }

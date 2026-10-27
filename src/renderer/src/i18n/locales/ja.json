@@ -17830,10 +17830,7 @@
         "rotations": "ローテーション: {{value}}"
       },
       "NewWorkspaceComposerGoalMode": {
-        "worktreeTab": "ワークツリー",
-        "autonomousTab": "自律作業",
-        "coordinatorAgent": "コーディネーター Agent",
-        "startGoal": "目標を開始"
+        "coordinatorAgent": "コーディネーター Agent"
       },
       "WorktreeCardAutonomousGoal": {
         "badge": "目標",

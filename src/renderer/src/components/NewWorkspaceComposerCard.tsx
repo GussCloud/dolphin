@@ -269,12 +269,18 @@ export default function NewWorkspaceComposerCard(
     },
     [updateSettings]
   )
+  const advanceFromName = goalMode.showAgentSection ? undefined : goalMode.nav?.onNext
   const handleNamePlainEnter = React.useCallback((): void => {
+    // Why: on the steps' first page the agent picker is a page away, so Enter moves on.
+    if (advanceFromName) {
+      advanceFromName()
+      return
+    }
     const agentTrigger = composerRef?.current?.querySelector<HTMLElement>(
       '[data-agent-combobox-root="true"][role="combobox"]'
     )
     agentTrigger?.focus()
-  }, [composerRef])
+  }, [advanceFromName, composerRef])
 
   useContextualTour(
     'workspace-creation',
@@ -299,54 +305,65 @@ export default function NewWorkspaceComposerCard(
       )}
     >
       <div className={cn('min-h-0 min-w-0 space-y-4 pt-3', contentClassName)}>
-        {goalMode.tabs}
-        <NewWorkspaceComposerProjectSection
-          {...props}
-          projectOptions={projectOptions}
-          projectHostSetupOptions={projectHostSetupOptions}
-          ephemeralVmRecipes={ephemeralVmRecipes}
-          projectDescriptionId={projectDescriptionId}
-          onAddProject={handleAddProject}
-          focusNameInput={focusNameInput}
-          shouldShowRunTargetPicker={shouldShowRunTargetPicker}
-          handleProjectHostSetupChange={(setupId) => onProjectHostSetupChange?.(setupId)}
-          handleAddSshHost={() => setAddRemoteHostMode('ssh')}
-          handleAddRemoteServer={() => setAddRemoteHostMode('server')}
-          handleConnectRunTargetHost={handleConnectRunTargetHost}
-          handleSetLocation={handleSetLocation}
-          sshStatusLabel={sshStatusLabel}
-          connectButtonLabel={connectButtonLabel}
-          selectedProjectName={selectedProjectName}
-        />
-        <NewWorkspaceComposerNameSection {...props} onNamePlainEnter={handleNamePlainEnter} />
-        <NewWorkspaceComposerAgentSection
-          {...props}
-          visibleQuickAgents={goalMode.agents}
-          agentLabel={goalMode.agentLabel}
-          beforeAdvanced={goalMode.goalSection}
-          defaultTuiAgent={defaultTuiAgent}
-          handleSetDefaultAgent={handleSetDefaultAgent}
-        />
-        <NewWorkspaceComposerAdvancedSection
-          {...props}
-          branchNameInputId={branchNameInputId}
-          setupConfigLabel={setupConfigLabel}
-          setupRunLabel={setupRunLabel}
-          setupAskLabel={setupAskLabel}
-          setupRunButtonLabel={setupRunButtonLabel}
-          setupSkipButtonLabel={setupSkipButtonLabel}
-          showSetupAgentStartupPolicy={showSetupAgentStartupPolicy}
-          parentWorktreeId={parentWorktreeId}
-          onParentWorktreeIdChange={onParentWorktreeIdChange}
-          selectedRepoExecutionHostId={selectedRepoExecutionHostId}
-          selectedRepoProjectId={selectedRepoProjectId}
-          activeFolderWorkspaceId={activeFolderWorkspaceId}
-        />
+        {goalMode.stepper}
+        {goalMode.showBasics ? (
+          <>
+            <NewWorkspaceComposerProjectSection
+              {...props}
+              projectOptions={projectOptions}
+              projectHostSetupOptions={projectHostSetupOptions}
+              ephemeralVmRecipes={ephemeralVmRecipes}
+              projectDescriptionId={projectDescriptionId}
+              onAddProject={handleAddProject}
+              focusNameInput={focusNameInput}
+              shouldShowRunTargetPicker={shouldShowRunTargetPicker}
+              handleProjectHostSetupChange={(setupId) => onProjectHostSetupChange?.(setupId)}
+              handleAddSshHost={() => setAddRemoteHostMode('ssh')}
+              handleAddRemoteServer={() => setAddRemoteHostMode('server')}
+              handleConnectRunTargetHost={handleConnectRunTargetHost}
+              handleSetLocation={handleSetLocation}
+              sshStatusLabel={sshStatusLabel}
+              connectButtonLabel={connectButtonLabel}
+              selectedProjectName={selectedProjectName}
+            />
+            <NewWorkspaceComposerNameSection {...props} onNamePlainEnter={handleNamePlainEnter} />
+          </>
+        ) : null}
+        {goalMode.beforeAgent}
+        {goalMode.showAgentSection ? (
+          <NewWorkspaceComposerAgentSection
+            {...props}
+            visibleQuickAgents={goalMode.agents}
+            agentLabel={goalMode.agentLabel}
+            beforeAdvanced={goalMode.goalSection}
+            defaultTuiAgent={defaultTuiAgent}
+            handleSetDefaultAgent={handleSetDefaultAgent}
+          />
+        ) : null}
+        {goalMode.afterAgent}
+        {goalMode.showBasics ? (
+          <NewWorkspaceComposerAdvancedSection
+            {...props}
+            branchNameInputId={branchNameInputId}
+            setupConfigLabel={setupConfigLabel}
+            setupRunLabel={setupRunLabel}
+            setupAskLabel={setupAskLabel}
+            setupRunButtonLabel={setupRunButtonLabel}
+            setupSkipButtonLabel={setupSkipButtonLabel}
+            showSetupAgentStartupPolicy={showSetupAgentStartupPolicy}
+            parentWorktreeId={parentWorktreeId}
+            onParentWorktreeIdChange={onParentWorktreeIdChange}
+            selectedRepoExecutionHostId={selectedRepoExecutionHostId}
+            selectedRepoProjectId={selectedRepoProjectId}
+            activeFolderWorkspaceId={activeFolderWorkspaceId}
+          />
+        ) : null}
       </div>
       <div className="shrink-0 space-y-1">
         <NewWorkspaceComposerFooter
           {...props}
           submitShortcutModifierLabel={getScreenSubmitModifierLabel()}
+          {...goalMode.nav}
         />
       </div>
       <AddRemoteHostDialog mode={addRemoteHostMode} onOpenChange={setAddRemoteHostMode} />

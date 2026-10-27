@@ -1,5 +1,6 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
+import { findOrchestrationAgent } from '../../../shared/orchestration-agent-profiles'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import {
   Dialog,
@@ -259,17 +260,25 @@ function QuickTabBody({
   )
   const createDisabled = composerCreateDisabled || autonomousBlocksCreate
 
+  const customOrchestrationAgents = useAppStore((state) => state.settings?.orchestrationAgents)
   const handleCreate = useCallback(async (): Promise<void> => {
     if (autonomousGoalDraftBlocksCreate(effectiveAutonomousGoalDraft, quickAgent)) {
       return
     }
     await submitQuick(
       quickAgent,
-      resolveAutonomousGoalLaunchPrompt(effectiveAutonomousGoalDraft, quickAgent) ?? undefined
+      resolveAutonomousGoalLaunchPrompt(
+        effectiveAutonomousGoalDraft,
+        quickAgent,
+        findOrchestrationAgent(customOrchestrationAgents, effectiveAutonomousGoalDraft.agentId)
+      ) ?? undefined
     )
-  }, [effectiveAutonomousGoalDraft, quickAgent, submitQuick])
+  }, [customOrchestrationAgents, effectiveAutonomousGoalDraft, quickAgent, submitQuick])
   const primaryActionLabel = effectiveAutonomousGoalDraft.enabled
-    ? translate('auto.components.NewWorkspaceComposerGoalMode.startGoal', 'Start goal')
+    ? translate(
+        'auto.components.NewWorkspaceComposerGoalMode.startOrchestration',
+        'Start orchestration'
+      )
     : isFolderWorkspaceTarget
       ? getFolderWorkspacePrimaryActionLabel()
       : isMultiProjectTarget
@@ -350,12 +359,9 @@ function QuickTabBody({
         onQuickAgentChange={handleQuickAgentChange}
         {...cardProps}
         createDisabled={createDisabled}
-        {...(isFolderWorkspaceTarget || isMultiProjectTarget
-          ? {}
-          : {
-              autonomousGoalDraft,
-              onAutonomousGoalDraftChange: setAutonomousGoalDraft
-            })}
+        autonomousGoalDraft={effectiveAutonomousGoalDraft}
+        onAutonomousGoalDraftChange={setAutonomousGoalDraft}
+        orchestrationUnavailable={isFolderWorkspaceTarget || isMultiProjectTarget}
         primaryActionLabel={primaryActionLabel}
         onOpenAgentSettings={() => setAgentSettingsOpen(true)}
         onCreate={() => void handleCreate()}
