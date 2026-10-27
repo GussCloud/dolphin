@@ -64,7 +64,7 @@ export function NewWorkspaceComposerFooter({
         )}
       >
         {onBack ? (
-          <Button type="button" variant="outline" size="sm" className="text-xs" onClick={onBack}>
+          <Button type="button" variant="outline" size="sm" onClick={onBack}>
             {translate('auto.components.ComposerWizard.back', 'Back')}
           </Button>
         ) : null}
@@ -88,7 +88,6 @@ export function NewWorkspaceComposerFooter({
             onClick={onNext}
             disabled={nextDisabled}
             size="sm"
-            className="text-xs"
             data-composer-wizard-next
           >
             {translate('auto.components.ComposerWizard.next', 'Next')}

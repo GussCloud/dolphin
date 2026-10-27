@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { eraseRpcMethods, type RpcContext } from '../core'
 import { OrchestrationDb } from '../../orchestration/db'
 import { DolphinRuntimeService } from '../../dolphin-runtime'
@@ -137,11 +138,14 @@ describe('goal.* RPC methods', () => {
       strategy: 'Split the goal into Tasks of at most one day.',
       instructions: 'Do not run tests locally.'
     }
-    const result = await call('goal.start', guided)
-    expect(result).toMatchObject({
-      goal: { agentName: 'Strict reviewer', instructions: 'Do not run tests locally.' }
+    const result = z
+      .object({ goal: z.unknown(), instructions: z.string() })
+      .parse(await call('goal.start', guided))
+    expect(result.goal).toMatchObject({
+      agentName: 'Strict reviewer',
+      instructions: 'Do not run tests locally.'
     })
-    const instructions = (result as { instructions: string }).instructions
+    const { instructions } = result
     expect(
       instructions.indexOf('Strategy of the orchestration agent "Strict reviewer"')
     ).toBeGreaterThan(instructions.indexOf('Rules:'))

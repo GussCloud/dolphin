@@ -123,14 +123,14 @@ export function useComposerGoalMode(
   const step = draft.step
   const coordinatorSupported = isAutonomousGoalAgent(props.quickAgent)
   const stepper = <ComposerWizardStepper step={step} orchestration={orchestration} />
-  const base = {
+  const base: Omit<ComposerWizard, 'showAgentSection' | 'nav'> = {
     active: true,
     step,
     stepper,
     showBasics: step === 1,
-    beforeAgent: null as React.ReactNode,
-    goalSection: null as React.ReactNode,
-    afterAgent: null as React.ReactNode,
+    beforeAgent: null,
+    goalSection: null,
+    afterAgent: null,
     agents: visibleQuickAgents
   }
   if (step === 1) {
