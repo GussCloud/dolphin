@@ -143,6 +143,14 @@ describe('composer steps', () => {
     expect(lastNav?.nextDisabled).toBe(false)
   })
 
+  it('says so when the coordinator in use is not the one the agent prefers', () => {
+    renderHarness({ step: 3, enabled: true }, 'codex')
+    expect(document.querySelector('[data-composer-coordinator-differs]')).not.toBeNull()
+    cleanup()
+    renderHarness({ step: 3, enabled: true }, 'claude')
+    expect(document.querySelector('[data-composer-coordinator-differs]')).toBeNull()
+  })
+
   it('warns on step 3 when the picked base exists only locally', () => {
     localOnlyGoalBase.value = true
     renderHarness({ step: 3, enabled: true })

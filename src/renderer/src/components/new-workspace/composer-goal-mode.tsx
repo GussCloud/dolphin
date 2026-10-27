@@ -2,6 +2,7 @@ import React from 'react'
 import type AgentCombobox from '@/components/agent/AgentCombobox'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
+import { getAgentCatalog } from '@/lib/agent-catalog'
 import { isAutonomousGoalAgent } from '../../../../shared/autonomous-goal-types'
 import {
   findOrchestrationAgent,
@@ -76,6 +77,12 @@ export function useComposerGoalMode(
   const goalAgents = React.useMemo(
     () => visibleQuickAgents.filter((entry) => isAutonomousGoalAgent(entry.id)),
     [visibleQuickAgents]
+  )
+  // Why the whole catalog: workers start on the goal's host, which may have agents this machine
+  // does not, and a picked agent's worker must show instead of a blank entry.
+  const workerAgents = React.useMemo(
+    () => getAgentCatalog().filter((entry) => isAutonomousGoalAgent(entry.id)),
+    []
   )
   const orchestration = draft?.enabled === true && props.orchestrationUnavailable !== true
   const localOnlyBase = useLocalOnlyGoalBase(
@@ -167,6 +174,7 @@ export function useComposerGoalMode(
         <ComposerOrchestrationAgentPicker
           agents={orchestrationAgents}
           value={selectedAgent.id}
+          coordinatorAgent={props.quickAgent}
           onChange={(agent) => applyAgent(draft, agent.id)}
         />
       ),
@@ -175,7 +183,7 @@ export function useComposerGoalMode(
           draft={draft}
           onDraftChange={onDraftChange}
           coordinatorSupported={coordinatorSupported}
-          workerAgents={goalAgents}
+          workerAgents={workerAgents}
           localOnlyBase={localOnlyBase ? props.baseBranch : undefined}
         />
       ),

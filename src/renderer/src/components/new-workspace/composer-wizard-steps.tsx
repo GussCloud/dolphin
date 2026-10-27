@@ -134,10 +134,13 @@ export function ComposerModePicker({
 export function ComposerOrchestrationAgentPicker({
   agents,
   value,
+  coordinatorAgent,
   onChange
 }: {
   agents: OrchestrationAgentProfile[]
   value: string
+  /** The coordinator in use; differs from the agent's when that one is not available here. */
+  coordinatorAgent: string | null
   onChange: (agent: OrchestrationAgentProfile) => void
 }): React.JSX.Element {
   const selected = agents.find((agent) => agent.id === value) ?? agents[0]
@@ -173,6 +176,15 @@ export function ComposerOrchestrationAgentPicker({
       </Select>
       {selected?.description ? (
         <p className="text-xs text-muted-foreground">{selected.description}</p>
+      ) : null}
+      {selected && coordinatorAgent && selected.coordinatorAgent !== coordinatorAgent ? (
+        <p className="text-xs text-muted-foreground" data-composer-coordinator-differs>
+          {translate(
+            'auto.components.ComposerWizard.coordinatorDiffers',
+            'This agent prefers {{preferred}} as coordinator; {{current}} coordinates this one.',
+            { preferred: selected.coordinatorAgent, current: coordinatorAgent }
+          )}
+        </p>
       ) : null}
     </div>
   )

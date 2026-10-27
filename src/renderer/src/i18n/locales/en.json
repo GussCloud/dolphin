@@ -18034,7 +18034,8 @@
         "orchestrationAgent": "Orchestration agent",
         "instructions": "Additional instructions (optional)",
         "instructionsPlaceholder": "e.g. Do not run tests locally; leave validation to CI.",
-        "instructionsHint": "The coordinator passes them to every worker and keeps them across session rotations."
+        "instructionsHint": "The coordinator passes them to every worker and keeps them across session rotations.",
+        "coordinatorDiffers": "This agent prefers {{preferred}} as coordinator; {{current}} coordinates this one."
       }
     },
     "i18n": {
