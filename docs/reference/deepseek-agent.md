@@ -41,6 +41,19 @@ so a `<id>[1m]` variant is offered whenever the window is unknown.
   launch must never degrade to a plain Claude launch. Mobile hides DeepSeek when host agent
   detection is unknown.
 
+## Source Control AI
+
+Commit messages, PR fields, branch names and workspace titles can generate with DeepSeek: the
+`deepseek` spec runs `claude -p` with no `--model`, so the main DeepSeek slot answers. A default
+agent of `deepseek` or `deepseek-agent-teams` resolves to it, and `claude-agent-teams` resolves
+to `claude`, when Source Control AI is left on the default agent.
+
+The env (key, `~/.claude-deepseek`, model slots) comes from `prepareDeepSeekLaunch`, the same
+preparation as a pane. `executeGenerationPlan` refuses a DeepSeek plan before anything runs when
+the target is SSH, when it is WSL (`wsl.exe` forwards only launcher keys, so the key would ride
+argv), or when the env lacks the provider marker. A DeepSeek generation therefore never runs the
+plain `claude` binary on the Anthropic login.
+
 ## Agent Teams
 
 Teammate panes do not inherit the leader env, and Claude Code does not forward

@@ -36,6 +36,7 @@ describe('COMMIT_MESSAGE_AGENT_SPECS', () => {
       'codex',
       'copilot',
       'cursor',
+      'deepseek',
       'kimi',
       'muse',
       'omp',
@@ -148,6 +149,12 @@ describe('COMMIT_MESSAGE_AGENT_SPECS', () => {
     expect(resolveCommitMessageAgentChoice(null, 'codex', ['codex'])).toBe('claude')
     expect(resolveCommitMessageAgentChoice(null, null, ['claude'])).toBeNull()
     expect(resolveCommitMessageAgentChoice('codex', null, ['codex'])).toBe('codex')
+  })
+
+  it('generates with the base agent of a launch variant set as default', () => {
+    expect(resolveCommitMessageAgentChoice(null, 'claude-agent-teams', [])).toBe('claude')
+    expect(resolveCommitMessageAgentChoice(null, 'deepseek', [])).toBe('deepseek')
+    expect(resolveCommitMessageAgentChoice(null, 'deepseek-agent-teams', [])).toBe('deepseek')
   })
 
   it('gives every model with thinking levels a valid default', () => {

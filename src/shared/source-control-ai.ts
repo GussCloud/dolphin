@@ -136,9 +136,10 @@ export function resolveSourceControlAiForOperation(
     input.settings.disabledTuiAgents
   )
   if (!agentChoice) {
+    const fallback = preferredAgent ? null : input.settings.defaultTuiAgent
     return {
       ok: false,
-      error: `Choose a supported Source Control AI agent for this action in Settings -> Git -> Source Control AI. ${supportedAgentSummary()}`
+      error: `${fallback && fallback !== 'blank' ? `No Source Control AI agent is set and the default agent (${fallback}) has no text generation. ` : ''}Choose a supported Source Control AI agent for this action in Settings -> Git -> Source Control AI. ${supportedAgentSummary()}`
     }
   }
 

@@ -10,6 +10,10 @@ export type CommitMessageAgentEnvironmentResolvers = {
   prepareForClaudeLaunch?: (
     target?: CommitMessageAgentRuntimeTarget
   ) => Promise<ClaudeRuntimeAuthPreparation>
+  /** DeepSeek's key, config dir and model slots; throws a user-facing error when unavailable. */
+  prepareForDeepSeekLaunch?: (
+    target?: CommitMessageAgentRuntimeTarget
+  ) => Promise<Record<string, string>>
 }
 
 export type CommitMessageAgentRuntimeTarget = {
@@ -85,6 +89,24 @@ function prepareShellConfigDirEnv(agentId: string): { ok: true; env?: NodeJS.Pro
   return { ok: true, env: { ...cloneProcessEnv(), [configVar]: value } }
 }
 
+// Why: DeepSeek runs the claude binary, so a missing env would generate on the Anthropic login.
+async function prepareDeepSeekCommitMessageEnv(
+  resolvers: CommitMessageAgentEnvironmentResolvers | undefined,
+  target: CommitMessageAgentRuntimeTarget | undefined
+): Promise<{ ok: true; env: NodeJS.ProcessEnv } | { ok: false; error: string }> {
+  if (!resolvers?.prepareForDeepSeekLaunch) {
+    return { ok: false, error: 'DeepSeek text generation is not available in this process.' }
+  }
+  try {
+    return {
+      ok: true,
+      env: { ...cloneProcessEnv(), ...(await resolvers.prepareForDeepSeekLaunch(target)) }
+    }
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) }
+  }
+}
+
 export async function prepareLocalCommitMessageAgentEnv(
   agentId: string,
   resolvers: CommitMessageAgentEnvironmentResolvers | undefined,
@@ -95,6 +117,9 @@ export async function prepareLocalCommitMessageAgentEnv(
   const shellConfigEnv = target?.runtime === 'wsl' ? null : prepareShellConfigDirEnv(agentId)
   if (shellConfigEnv) {
     return shellConfigEnv
+  }
+  if (agentId === 'deepseek') {
+    return prepareDeepSeekCommitMessageEnv(resolvers, target)
   }
   if (!resolvers) {
     return { ok: true }
