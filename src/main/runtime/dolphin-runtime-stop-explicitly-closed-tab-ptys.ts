@@ -87,8 +87,18 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
   }
 
   async closeTerminal(handle: string): Promise<RuntimeTerminalClose> {
-    const pty = this.getLivePtyForHandle(handle)
+    const teammateHandles = [...this.claudeAgentTeams.listTeammateLineageByHandle()].flatMap(
+      ([teammateHandle, lineage]) => (lineage.leaderHandle === handle ? [teammateHandle] : [])
+    )
     this.claudeAgentTeams.removeTeamForLeaderHandle(handle)
+    // Why: a killed leader cannot shut its teammates down, and the forgotten team left them
+    // running in their panes; closing them first also lets the leader's close end the tab.
+    for (const teammateHandle of teammateHandles) {
+      await this.closeTerminal(teammateHandle).catch((error) => {
+        console.warn('[agent-teams] failed to close a teammate with its leader', error)
+      })
+    }
+    const pty = this.getLivePtyForHandle(handle)
     if (pty) {
       const closeAuthority: RuntimePtyTabCloseAuthority = {
         handle,

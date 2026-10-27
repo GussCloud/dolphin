@@ -61,6 +61,20 @@ export function buildNotificationOptions(args: NotificationDispatchRequest): {
     return buildAutonomousGoalNotificationOptions(args)
   }
 
+  if (args.source === 'orphan-agent-stopped') {
+    return {
+      title: translateMain(
+        'notifications.orphanAgentStopped.title',
+        'Stopped an agent from a closed terminal'
+      ),
+      body: translateMain(
+        'notifications.orphanAgentStopped.body',
+        '{{label}} kept reporting after its terminal closed.',
+        { label: args.stoppedProcessLabel ?? 'An agent' }
+      )
+    }
+  }
+
   const richOptions = buildAgentTaskCompleteNotificationOptions(args)
   if (richOptions) {
     return richOptions

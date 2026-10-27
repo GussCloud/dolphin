@@ -23,6 +23,7 @@ import { emitPluginWorktreeLifecycle } from './main-process-pty-startup'
 import { startMainProcessTelegramBridge } from './main-process-telegram'
 import { startMainProcessAgentInteraction } from './main-process-agent-interaction'
 import { startMainProcessAutonomousGoals } from './main-process-autonomous-goals'
+import { startMainProcessClosedPaneAgentReaper } from './main-process-closed-pane-agent-reaper'
 import { startMainProcessClaudeConnectionLossRetry } from './main-process-claude-connection-loss-retry'
 import { startMainProcessTelegramAnswers } from './main-process-telegram-answers'
 import { startMainProcessTelegramChannel } from './main-process-telegram-channel'
@@ -176,4 +177,5 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
     agentInteraction.onRetryExhausted(event)
   )
   startMainProcessAutonomousGoals(store, runtime)
+  startMainProcessClosedPaneAgentReaper()
 }

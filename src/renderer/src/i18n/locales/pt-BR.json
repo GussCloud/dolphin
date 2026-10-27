@@ -19106,6 +19106,10 @@
       "blocked": "O objetivo precisa da sua decisão",
       "usageLimited": "Objetivo pausado pelo uso do plano",
       "usageLimitedBody": "Nenhum novo worker até a janela de uso renovar; o Dolphin retoma depois."
+    },
+    "orphanAgentStopped": {
+      "title": "Agente de um terminal fechado encerrado",
+      "body": "{{label}} continuava enviando sinais depois que o terminal foi fechado."
     }
   },
   "sessionSearch": {

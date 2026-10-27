@@ -94,6 +94,7 @@ function coordinatorRules(goal: GoalSettings & Pick<AutonomousGoal, 'baseRef'>):
     '- Handle each message by type: answer a `question` with `dolphin orchestration reply --id <message_id> --body "..." --json`; a `worker_done` settles its Task; decide an `escalation` or record it as a blocker note.',
     '- A worker_done with outcome failed, or a worker-start that exits non-zero: never relaunch blindly. Read its error and failedStage; to retry, run worker-start again with `--task <task_id> --retry-of <dispatch_id>` and the same --worktree, --name and --agent.',
     "- If several notices pass with no progress, list the workers with `dolphin orchestration worker-list --json` and run each row's projection.nextAction; an `unverifiable` worker never justifies a stop or retry.",
+    '- A `Worker stalled` escalation means Dolphin already stopped that worker: start its Task again once as the escalation says; a second stall blocks the goal for the user.',
     '- Cleanup belongs to Dolphin: never run worker-release, worker-stop or terminal close yourself.',
     '- Do not read diffs or worker transcripts; act only on the reports. Keep your own replies short.',
     '- If worker-start refuses with goal_usage_limited, start nothing else and end your turn; Dolphin wakes this terminal when the plan window resets.',

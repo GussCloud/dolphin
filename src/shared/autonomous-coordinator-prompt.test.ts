@@ -128,6 +128,7 @@ describe('buildAutonomousCoordinatorInstructions', () => {
     expect(instructions).toContain('dolphin orchestration reply --id <message_id>')
     expect(instructions).toContain('--retry-of <dispatch_id>')
     expect(instructions).toContain('dolphin orchestration worker-list --json')
+    expect(instructions).toContain('A `Worker stalled` escalation means Dolphin already stopped')
     expect(instructions.length).toBeLessThan(6_000)
   })
 

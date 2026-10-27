@@ -29,6 +29,8 @@ export type NotificationEventSource =
   | 'agent-auto-retry-exhausted'
   /** An autonomous goal finished, needs a human decision, or paused on plan usage. */
   | 'autonomous-goal'
+  /** Dolphin stopped an agent that kept reporting for a terminal it had already closed. */
+  | 'orphan-agent-stopped'
 
 export type NotificationDispatchRequest = {
   source: NotificationEventSource
@@ -58,6 +60,8 @@ export type NotificationDispatchRequest = {
   surface?: 'terminal' | 'agent-session'
   /** `agent-auto-retry-exhausted` only: retries typed before giving up (0 = none could be sent). */
   autoRetryAttempts?: number
+  /** `orphan-agent-stopped` only: the stopped process, e.g. `node.exe (PID 4120)`. */
+  stoppedProcessLabel?: string
   /** `autonomous-goal` only. */
   goalEvent?: 'complete' | 'blocked' | 'usageLimited'
   /** `autonomous-goal` only: the completion summary or blocker note, one line. */

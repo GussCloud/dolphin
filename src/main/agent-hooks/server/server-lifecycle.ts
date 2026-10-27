@@ -127,6 +127,18 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeEnv
               launchToken: normalized.event.launchToken
             })
           : 'suppress'
+        if (
+          normalized.event &&
+          statusDisposition === 'suppress' &&
+          this.onClosedPaneHook &&
+          this.isClosedStatusPane(normalized.event.paneKey)
+        ) {
+          await this.onClosedPaneHook({
+            paneKey: normalized.event.paneKey,
+            clientPort: req.socket.remotePort,
+            serverPort: this.port
+          }).catch((error: unknown) => console.warn('[agent-hooks] closed-pane hook failed', error))
+        }
         if (normalized.event && statusDisposition !== 'suppress') {
           const restartedAuthority =
             statusDisposition === 'restart' && source === 'omp'

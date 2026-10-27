@@ -18879,6 +18879,10 @@
       "blocked": "目標にあなたの判断が必要です",
       "usageLimited": "プランの使用量により目標を一時停止しました",
       "usageLimitedBody": "使用量のウィンドウがリセットされるまで新しいワーカーは開始されません。リセット後に Dolphin が再開します。"
+    },
+    "orphanAgentStopped": {
+      "title": "閉じたターミナルの Agent を停止しました",
+      "body": "{{label}} はターミナルを閉じた後もレポートを送り続けていました。"
     }
   },
   "sidebar": {

@@ -229,6 +229,52 @@ describe('AgentHookServer listener replay', () => {
     }
   })
 
+  it('hands the late hook of a closed tab to the closed-pane listener while the request is open', async () => {
+    const server = new AgentHookServer()
+    let releaseHeld = (): void => {}
+    const listener = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          releaseHeld = resolve
+        })
+    )
+    server.setClosedPaneHookListener(listener)
+    await server.start({ env: 'production' })
+    try {
+      const env = server.buildPtyEnv()
+      const postHook = (prompt: string): Promise<Response> =>
+        fetch(`http://127.0.0.1:${env.DOLPHIN_AGENT_HOOK_PORT}/hook/claude`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Dolphin-Agent-Hook-Token': env.DOLPHIN_AGENT_HOOK_TOKEN
+          },
+          body: JSON.stringify(buildBody({ hook_event_name: 'UserPromptSubmit', prompt }))
+        })
+
+      await expect(postHook('open pane')).resolves.toMatchObject({ status: 204 })
+      expect(listener).not.toHaveBeenCalled()
+
+      server.dropStatusEntriesByTabPrefix('tab-1')
+      let settled = false
+      const late = postHook('late local').then((response) => {
+        settled = true
+        return response
+      })
+      await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(1))
+      expect(listener).toHaveBeenCalledWith({
+        paneKey: PANE,
+        clientPort: expect.any(Number),
+        serverPort: Number(env.DOLPHIN_AGENT_HOOK_PORT)
+      })
+      expect(settled).toBe(false)
+      releaseHeld()
+      await expect(late).resolves.toMatchObject({ status: 204 })
+    } finally {
+      await server.stop()
+    }
+  })
+
   it('accepts a new local prompt after launch authority retires in a reusable pane', async () => {
     const server = new AgentHookServer()
     await server.start({ env: 'production' })

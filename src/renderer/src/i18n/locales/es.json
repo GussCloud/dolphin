@@ -15956,6 +15956,10 @@
       "blocked": "El objetivo necesita tu decisión",
       "usageLimited": "Objetivo en pausa por el uso del plan",
       "usageLimitedBody": "No habrá nuevos workers hasta que se renueve la ventana de uso; Dolphin lo reanudará entonces."
+    },
+    "orphanAgentStopped": {
+      "title": "Se detuvo un agente de un terminal cerrado",
+      "body": "{{label}} seguía informando después de cerrarse su terminal."
     }
   },
   "featureTips": {

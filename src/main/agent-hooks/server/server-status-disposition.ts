@@ -40,6 +40,17 @@ export abstract class AgentHookServerStatusDisposition extends AgentHookServerSt
     }
   }
 
+  /** The pane's tab was closed, or its fence closed it: nothing may report for it again. */
+  protected isClosedStatusPane(paneKey: string): boolean {
+    const ownerPaneKey = this.resolvePaneKeyAlias(paneKey)
+    const tabId =
+      parsePaneKey(ownerPaneKey)?.tabId ?? parseLegacyNumericPaneKey(ownerPaneKey)?.tabId
+    return Boolean(
+      (tabId && this.closedAgentStatusTabIds.has(tabId)) ||
+      this.retiredPaneFencesByKey.get(ownerPaneKey)?.closed
+    )
+  }
+
   protected getAgentStatusDisposition(
     paneKey: string,
     event?: {
@@ -56,12 +67,7 @@ export abstract class AgentHookServerStatusDisposition extends AgentHookServerSt
     const paneRetired =
       this.closedAgentStatusPaneKeys.has(paneKey) ||
       this.closedAgentStatusPaneKeys.has(ownerPaneKey)
-    const tabId =
-      parsePaneKey(ownerPaneKey)?.tabId ?? parseLegacyNumericPaneKey(ownerPaneKey)?.tabId
-    if (
-      (tabId && this.closedAgentStatusTabIds.has(tabId)) ||
-      this.retiredPaneFencesByKey.get(ownerPaneKey)?.closed
-    ) {
+    if (this.isClosedStatusPane(paneKey)) {
       return 'suppress'
     }
     const retirementFence = this.retiredPaneFencesByKey.get(ownerPaneKey)
