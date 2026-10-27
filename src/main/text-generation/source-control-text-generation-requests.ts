@@ -21,7 +21,6 @@ import {
 } from '../../shared/commit-message-plan'
 import type { ResolvedSourceControlAiGenerationParams } from '../../shared/source-control-ai'
 import { isDeepSeekProviderEnv, isDeepSeekTuiAgent } from '../../shared/deepseek-claude-provider'
-import { DEEPSEEK_SSH_UNSUPPORTED_MESSAGE } from '../deepseek/deepseek-launch-env'
 import { formatLinkedIssueTemplateValue } from '../../shared/source-control-ai-action-variables'
 import { renderSourceControlActionCommandTemplate } from '../../shared/source-control-ai-actions'
 import { captureAgentGenerationFailureOutput } from './agent-failure-output'
@@ -61,7 +60,10 @@ async function executeGenerationPlan(input: {
   // Why: DeepSeek runs the claude binary; without its env it would answer on the Anthropic login.
   if (isDeepSeekTuiAgent(input.params.agentId)) {
     if (input.target.kind === 'remote') {
-      return { success: false, error: DEEPSEEK_SSH_UNSUPPORTED_MESSAGE }
+      return {
+        success: false,
+        error: 'DeepSeek text generation runs only on this computer, not on an SSH host.'
+      }
     }
     // Why: wsl.exe forwards only a few launcher keys, so the key would have to ride argv.
     if (input.target.wslDistro) {
