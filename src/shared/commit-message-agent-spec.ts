@@ -126,7 +126,25 @@ export const COMMIT_MESSAGE_AGENT_SPECS: Partial<Record<TuiAgent, CommitMessageA
     OPENAI_THINKING_LEVELS,
     parseCursorModels,
     parseAntigravityModels
-  })
+  }),
+  // Why: DeepSeek is the Claude Code CLI on DeepSeek's API; the env (key, config dir, model
+  // slots) is injected locally, so no --model: the main DeepSeek slot answers.
+  deepseek: {
+    id: 'deepseek',
+    label: 'DeepSeek',
+    binary: 'claude',
+    promptDelivery: 'stdin',
+    buildArgs: () => ['-p', '--output-format', 'text', '--permission-mode', 'plan'],
+    modelSource: 'static',
+    models: [{ id: 'default', label: 'DeepSeek main model' }],
+    defaultModelId: 'default'
+  }
+}
+
+/** Launch variants with no generation spec of their own run their base agent's CLI. */
+const SOURCE_CONTROL_AGENT_BASE: Partial<Record<TuiAgent, TuiAgent>> = {
+  'claude-agent-teams': 'claude',
+  'deepseek-agent-teams': 'deepseek'
 }
 
 export const DEFAULT_COMMIT_MESSAGE_AGENT_ID: TuiAgent = 'claude'
@@ -162,7 +180,8 @@ export function resolveCommitMessageAgentChoice(
     defaultTuiAgent !== 'blank' &&
     isTuiAgentEnabled(defaultTuiAgent, disabledTuiAgents)
   ) {
-    return getCommitMessageAgentSpec(defaultTuiAgent) ? defaultTuiAgent : null
+    const agent = SOURCE_CONTROL_AGENT_BASE[defaultTuiAgent] ?? defaultTuiAgent
+    return getCommitMessageAgentSpec(agent) ? agent : null
   }
   return isTuiAgentEnabled(DEFAULT_COMMIT_MESSAGE_AGENT_ID, disabledTuiAgents)
     ? DEFAULT_COMMIT_MESSAGE_AGENT_ID

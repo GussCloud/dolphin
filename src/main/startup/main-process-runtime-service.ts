@@ -2,6 +2,7 @@ import {
   applySessionSearchSettingsChange,
   installChildSessionSearchService
 } from '../ai-vault-search/session-search-enablement'
+import { prepareDeepSeekLaunch } from '../deepseek/deepseek-config-home-setup'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import { sessionSearchScopeCatalogFromStore } from '../ai-vault-search/session-search-store-scope-catalog'
 import { getCanonicalUserDataPath } from '../persistence/loading-store/user-data-path'
@@ -196,6 +197,12 @@ export function configureRuntimeServices(runtime: DolphinRuntimeService): void {
   runtime.setCommitMessageAgentEnvironmentResolvers({
     // Why: Codex hooks/auth live in Dolphin's managed runtime home even for the default path, so every launch must resolve CODEX_HOME via runtime-home.
     prepareForCodexLaunch: prepareCodexRuntimeHomeForLaunch,
-    prepareForClaudeLaunch: (target) => state.claudeRuntimeAuth!.prepareForClaudeLaunch(target)
+    prepareForClaudeLaunch: (target) => state.claudeRuntimeAuth!.prepareForClaudeLaunch(target),
+    prepareForDeepSeekLaunch: (target) =>
+      prepareDeepSeekLaunch({
+        connectionId: null,
+        target: target ?? {},
+        settings: store.getSettings()
+      })
   })
 }

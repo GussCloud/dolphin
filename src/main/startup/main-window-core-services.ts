@@ -1,4 +1,5 @@
 import type { BrowserWindow } from 'electron'
+import { prepareDeepSeekLaunch } from '../deepseek/deepseek-config-home-setup'
 import { registerCoreHandlers } from '../ipc/register-core-handlers/register-core-handlers'
 import { attachMainWindowServices } from '../window/attach-main-window-services'
 import { initTccPromptNotice } from '../macos-tcc-prompt-notice'
@@ -74,7 +75,13 @@ export function attachMainWindowCoreServices(
     automations,
     {
       prepareForCodexLaunch: prepareCodexRuntimeHomeForLaunch,
-      prepareForClaudeLaunch: (target) => claudeRuntimeAuth.prepareForClaudeLaunch(target)
+      prepareForClaudeLaunch: (target) => claudeRuntimeAuth.prepareForClaudeLaunch(target),
+      prepareForDeepSeekLaunch: (target) =>
+        prepareDeepSeekLaunch({
+          connectionId: null,
+          target: target ?? {},
+          settings: store.getSettings()
+        })
     },
     state.agentAwakeService ?? undefined,
     state.crashReports ?? undefined,

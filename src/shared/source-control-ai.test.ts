@@ -60,6 +60,44 @@ function resolve(operation: SourceControlAiOperation, overrides?: RepoSourceCont
 }
 
 describe('source-control AI resolution', () => {
+  // The branch auto-rename failed for users whose default agent is a launch variant.
+  it.each([
+    ['claude-agent-teams', 'claude'],
+    ['deepseek', 'deepseek'],
+    ['deepseek-agent-teams', 'deepseek']
+  ] as const)('generates for a default %s agent with %s', (defaultTuiAgent, agentId) => {
+    const base = settings()
+    const result = resolveSourceControlAiForOperation({
+      settings: {
+        ...base,
+        defaultTuiAgent,
+        disabledTuiAgents: [],
+        sourceControlAi: { ...base.sourceControlAi!, agentId: null }
+      },
+      operation: 'branchName',
+      discoveryHostKey: 'local'
+    })
+    expect(result).toMatchObject({ ok: true, value: { params: { agentId } } })
+  })
+
+  it('names the default agent when it cannot generate', () => {
+    const base = settings()
+    const result = resolveSourceControlAiForOperation({
+      settings: {
+        ...base,
+        defaultTuiAgent: 'aider',
+        disabledTuiAgents: [],
+        sourceControlAi: { ...base.sourceControlAi!, agentId: null }
+      },
+      operation: 'branchName',
+      discoveryHostKey: 'local'
+    })
+    expect(result).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('the default agent (aider) has no text generation')
+    })
+  })
+
   it('uses the global default model for every operation', () => {
     expect(resolve('commitMessage').params.model).toBe('gpt-5.5')
     expect(resolve('pullRequest').params.model).toBe('gpt-5.5')
