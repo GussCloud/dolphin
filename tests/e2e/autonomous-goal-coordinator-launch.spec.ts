@@ -13,6 +13,7 @@ import {
 } from './helpers/fake-agent-command-override'
 
 const OBJECTIVE = 'Read the docs folder and implement what it specifies'
+const INSTRUCTIONS = 'Do not run tests locally; leave validation to CI.'
 const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-autonomous-goal-'))
 const argvLog = path.join(fakeCliDir, 'claude-launches.jsonl')
 
@@ -83,14 +84,20 @@ test('autonomous work launches the coordinator with its goal prompt in a new wor
     { command: fakeClaudeCommand, windowsShell: FAKE_AGENT_WINDOWS_SHELL }
   )
 
-  // Why not by name: the dialog title follows the active tab.
+  // Why not by name: the dialog title follows the mode.
   const composer = appPage
     .getByRole('dialog')
-    .filter({ has: appPage.getByRole('tab', { name: 'Autonomous work' }) })
+    .filter({ has: appPage.getByRole('list', { name: 'Steps' }) })
   await expect(composer).toBeVisible({ timeout: 15_000 })
-  await composer.getByRole('tab', { name: 'Autonomous work' }).click()
+  const next = composer.getByRole('button', { name: 'Next', exact: true })
+  await next.click()
+  await composer.getByRole('button', { name: /^Orchestration/ }).click()
+  await next.click()
   await composer.getByPlaceholder(/Read the docs folder/).fill(OBJECTIVE)
-  const start = composer.getByRole('button', { name: /Start goal/i })
+  await expect(next).toBeEnabled({ timeout: 15_000 })
+  await next.click()
+  await composer.getByLabel('Additional instructions (optional)').fill(INSTRUCTIONS)
+  const start = composer.getByRole('button', { name: /Start orchestration/i })
   await expect(start).toBeEnabled({ timeout: 15_000 })
   await start.click()
   await expect(composer).toBeHidden({ timeout: 20_000 })
@@ -108,7 +115,8 @@ test('autonomous work launches the coordinator with its goal prompt in a new wor
       objective: OBJECTIVE,
       agent: 'claude',
       workerAgent: 'claude',
-      maxConcurrent: AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT
+      maxConcurrent: AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT,
+      instructions: INSTRUCTIONS
     })
   )
   // Why: autonomous mode keeps the permission posture the user configured for normal launches.

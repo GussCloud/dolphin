@@ -40,9 +40,11 @@ export type NewWorkspaceComposerCardProps = {
   nameInputRef?: React.RefObject<HTMLInputElement | null>
   quickAgent: TuiAgent | null
   onQuickAgentChange: (agent: TuiAgent | null) => void
-  /** Present only where a single-repo quick create can launch an autonomous coordinator. */
+  /** Present where the composer runs as steps; its Orchestration mode launches a coordinator. */
   autonomousGoalDraft?: AutonomousGoalDraft
   onAutonomousGoalDraftChange?: (next: AutonomousGoalDraft) => void
+  /** Folder and multi-project targets: the steps stay, the Orchestration mode is disabled. */
+  orchestrationUnavailable?: boolean
   eligibleRepos: readonly RepoOption[]
   repoId: string
   projectOptions?: NewWorkspaceProjectOption[]

@@ -86,6 +86,24 @@ async function worktreeBaseRef(
   }
 }
 
+/**
+ * A follow-up goal in the same terminal is started by the agent, which cannot retype the agent's
+ * strategy or the user's instructions, so it inherits whichever ones the call omits.
+ */
+function resolveGoalGuidance(
+  params: { agentName?: string; strategy?: string; instructions?: string },
+  previous: AutonomousGoal | undefined
+): Pick<AutonomousGoal, 'agentName' | 'strategy' | 'instructions'> {
+  const agentName = params.agentName || previous?.agentName
+  const strategy = params.strategy || previous?.strategy
+  const instructions = params.instructions || previous?.instructions
+  return {
+    ...(agentName ? { agentName } : {}),
+    ...(strategy ? { strategy } : {}),
+    ...(instructions ? { instructions } : {})
+  }
+}
+
 export const AUTONOMOUS_GOAL_METHODS = [
   defineMethod({
     name: 'goal.start',
@@ -126,7 +144,8 @@ export const AUTONOMOUS_GOAL_METHODS = [
           : { removeWorktrees: params.removeWorktrees }),
         ...(params.keepCoordinatorWorktree === undefined
           ? {}
-          : { keepCoordinatorWorktree: params.keepCoordinatorWorktree })
+          : { keepCoordinatorWorktree: params.keepCoordinatorWorktree }),
+        ...resolveGoalGuidance(params, store.latestClosedByPane(caller.paneKey))
       })
       return { goal, created: true, instructions: buildAutonomousCoordinatorInstructions(goal) }
     }

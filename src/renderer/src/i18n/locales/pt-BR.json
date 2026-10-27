@@ -10396,7 +10396,9 @@
             "d86705ba77": "multi-agente",
             "a7f76b4ca7": "orquestração",
             "e05ff36753": "Coordenar múltiplos agentes de código via mensagens, DAGs de tarefas, despacho e gates de decisão.",
-            "c34045764e": "Orquestração de Agente"
+            "c34045764e": "Orquestração de Agente",
+            "orchestrationAgents": "agentes de orquestração",
+            "coordinatorStrategy": "estratégia do coordenador"
           }
         },
         "privacy": {
@@ -12560,6 +12562,25 @@
             "docker": "docker",
             "slow": "lento"
           }
+        },
+        "OrchestrationAgents": {
+          "name": "Nome",
+          "description": "Descrição",
+          "coordinatorAgent": "CLI do coordenador",
+          "workerAgent": "Agente dos workers",
+          "maxConcurrent": "Worktrees em paralelo",
+          "strategy": "Estratégia (prompt do agente)",
+          "strategyPlaceholder": "ex.: Quebre o objetivo em Tasks de no máximo um dia, cada uma com critério de aceite claro.",
+          "duplicate": "Duplicar",
+          "delete": "Excluir",
+          "summary": "{{coordinator}} · workers {{worker}} · {{parallel}} em paralelo",
+          "title": "Agentes de orquestração",
+          "sectionDescription": "Oferecidos pelo modo Orquestração de uma nova worktree. Cada um define o coordenador, os workers e o paralelismo, e soma uma estratégia às regras do Dolphin.",
+          "newName": "Novo agente",
+          "add": "Novo agente",
+          "default": "padrão",
+          "builtIn": "Vem com o Dolphin e é atualizado junto com ele. Duplique-o para mudar o coordenador, os workers, o paralelismo ou adicionar uma estratégia.",
+          "rules": "As regras do Dolphin sempre se aplicam e não podem ser editadas: um worker por Task numa worktree filha, ocioso entre avisos, todo lote confirmado, worker travado re-tentado uma vez, bloqueio só para decisões reais e goal complete no final."
         }
       },
       "right": {
@@ -17979,10 +18000,8 @@
         "rotations": "Rodízios: {{value}}"
       },
       "NewWorkspaceComposerGoalMode": {
-        "worktreeTab": "Worktree",
-        "autonomousTab": "Trabalho autônomo",
         "coordinatorAgent": "Agente coordenador",
-        "startGoal": "Iniciar objetivo"
+        "startOrchestration": "Iniciar orquestração"
       },
       "WorktreeCardAutonomousGoal": {
         "badge": "objetivo",
@@ -17996,6 +18015,27 @@
         "stopFailed": "Não foi possível parar o objetivo.",
         "workerTask": "Task {{number}}",
         "completedBadge": "objetivo concluído"
+      },
+      "ComposerWizard": {
+        "back": "Voltar",
+        "next": "Avançar",
+        "summary": "{{agent}} · {{coordinator}} coordena · {{parallel}} workers {{worker}}",
+        "stepBasics": "Básico",
+        "stepMode": "Modo",
+        "stepAgent": "Agente",
+        "stepInstructions": "Instruções",
+        "steps": "Passos",
+        "modeQuestion": "Como esta worktree vai trabalhar?",
+        "worktreeMode": "Worktree",
+        "worktreeModeDescription": "Um agente trabalha nesta worktree, como sempre.",
+        "orchestrationMode": "Orquestração",
+        "orchestrationUnavailable": "Precisa de um único projeto Git; workspaces de pasta e multiprojeto não coordenam workers.",
+        "orchestrationModeDescription": "Um agente de orquestração planeja o objetivo, abre worktrees em paralelo e acompanha os workers até todos os PRs entrarem.",
+        "orchestrationAgent": "Agente de orquestração",
+        "instructions": "Instruções adicionais (opcional)",
+        "instructionsPlaceholder": "ex.: Não executar testes locais; deixar a validação para o CI.",
+        "instructionsHint": "O coordenador repassa estas instruções a cada worker e as mantém depois de cada rotação de sessão.",
+        "coordinatorDiffers": "Este agente prefere {{preferred}} como coordenador; {{current}} coordena esta."
       }
     },
     "i18n": {

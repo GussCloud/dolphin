@@ -1,9 +1,9 @@
 # Autonomous goals
 
 An autonomous goal is one coordinator agent driving an orchestration Run until the
-objective is met. The user turns it on in the new-worktree composer ("Autonomous
-work"), types the goal and picks the worker agent and how many worktrees may run at
-once. Everything after that is the existing orchestration stack: Tasks with
+objective is met. The user starts it from the new-worktree composer's Orchestration
+mode (see Composer steps), types the goal and picks the orchestration agent, the
+worker agent and how many worktrees may run at once. Everything after that is the existing orchestration stack: Tasks with
 dependencies, `worker-start --worktree new-child`, workers that open PRs and
 drive them to green.
 
@@ -33,13 +33,14 @@ is designed out:
 
 ## Pieces
 
-| Piece                                         | Where                                                                                        |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Goal record, statuses, notes                  | `src/shared/autonomous-goal-types.ts`                                                        |
-| Per-host JSON store                           | `src/main/autonomous-goals/autonomous-goal-store.ts` (`userData/autonomous-goals.json`)      |
-| `goal.start/note/complete/show/list/stop` RPC | `src/main/runtime/rpc/methods/autonomous-goals.ts`                                           |
-| `dolphin goal …` CLI                          | `src/cli/specs/goal.ts`, `src/cli/handlers/goal.ts`                                          |
-| Composer toggle                               | `NewWorkspaceComposerAutonomousSection.tsx`, `src/renderer/src/lib/autonomous-goal-draft.ts` |
+| Piece                                         | Where                                                                                                  |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Goal record, statuses, notes                  | `src/shared/autonomous-goal-types.ts`                                                                  |
+| Per-host JSON store                           | `src/main/autonomous-goals/autonomous-goal-store.ts` (`userData/autonomous-goals.json`)                |
+| `goal.start/note/complete/show/list/stop` RPC | `src/main/runtime/rpc/methods/autonomous-goals.ts`                                                     |
+| `dolphin goal …` CLI                          | `src/cli/specs/goal.ts`, `src/cli/handlers/goal.ts`                                                    |
+| Composer steps                                | `composer-goal-mode.tsx`, `composer-wizard-steps.tsx`, `src/renderer/src/lib/autonomous-goal-draft.ts` |
+| Orchestration agents                          | `src/shared/orchestration-agent-profiles.ts`, `OrchestrationAgentsSection.tsx` (Settings)              |
 
 The composer launches the coordinator through the normal quick-create path with
 the coordinator prompt as its first message, pinned to the terminal surface. The
@@ -58,6 +59,42 @@ multi-line rules in argv, launched Claude on Windows without a usable prompt.
 both shells on the Windows CI lane.
 
 A pane drives at most one open goal; repeating `goal start` returns it.
+
+## Composer steps
+
+Where the composer runs in the modal it is four steps; the inline page keeps its single
+layout. The step lives in the goal draft, so the modal can refuse to start a goal from
+any step but the last, Cmd/Ctrl+Enter included.
+
+1. **Basics**, shared by both modes: project, name, Advanced (base branch, parent, setup).
+   Enter in the name moves on.
+2. **Mode**: Worktree creates right here, with the usual agent picker, so a plain worktree
+   is still two clicks. Orchestration is disabled for folder and multi-project targets,
+   which have no single worktree terminal to coordinate from. "Create more" shows only on
+   a plain worktree's create step: it would start one coordinator per copy.
+3. **Agent**: the orchestration agent, then the coordinator CLI, the goal, the worker
+   agent, the parallelism and the cleanup switches. Picking an agent presets the
+   coordinator, workers and parallelism; a coordinator the machine cannot run falls back
+   to an available one, and the step says so. Worker choices list every goal agent,
+   since workers run on the goal's host.
+4. **Instructions**: optional extra instructions (up to 2,000 characters), with a summary
+   and Start orchestration.
+
+## Orchestration agents and instructions
+
+An orchestration agent presets a goal (coordinator CLI, worker agent, parallelism) and
+adds a strategy. Dolphin Orchestrator is built in, read-only and never stored: its strategy
+is the rules themselves. Users create, duplicate, edit and delete their own agents under
+Settings › Orchestration; they are stored as `orchestrationAgents` in global settings,
+normalized on load and on every update (malformed rows and the built-in id are dropped).
+
+An agent's strategy never replaces the rules: `goal start` returns the rules first, then
+the strategy ("the Rules above win any conflict"), then the user's instructions, which the
+coordinator must copy into every worker spec. All three ride the launch line as optional
+base64 flags (`--agent-name-b64`, `--strategy-b64`, `--instructions-b64`), sent only when
+set, so the default agent with no instructions launches exactly as before. The goal stores
+them, the resume prompt after each rotation repeats them, and a follow-up goal started in
+the same terminal inherits the ones it omits, since the agent cannot retype them.
 
 ## Claude's folder trust dialog
 

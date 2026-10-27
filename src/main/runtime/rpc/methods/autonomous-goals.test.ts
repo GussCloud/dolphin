@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { eraseRpcMethods, type RpcContext } from '../core'
 import { OrchestrationDb } from '../../orchestration/db'
 import { DolphinRuntimeService } from '../../dolphin-runtime'
@@ -128,6 +129,44 @@ describe('goal.* RPC methods', () => {
     const second = store.list().at(-1)
     expect(second?.id).not.toBe(first?.id)
     expect(second?.runId).not.toBe(first?.runId)
+  })
+
+  it('stores the agent guidance, returns it after the rules, and a follow-up goal inherits it', async () => {
+    const guided = {
+      ...start,
+      agentName: 'Strict reviewer',
+      strategy: 'Split the goal into Tasks of at most one day.',
+      instructions: 'Do not run tests locally.'
+    }
+    const result = z
+      .object({ goal: z.unknown(), instructions: z.string() })
+      .parse(await call('goal.start', guided))
+    expect(result.goal).toMatchObject({
+      agentName: 'Strict reviewer',
+      instructions: 'Do not run tests locally.'
+    })
+    const { instructions } = result
+    expect(
+      instructions.indexOf('Strategy of the orchestration agent "Strict reviewer"')
+    ).toBeGreaterThan(instructions.indexOf('Rules:'))
+    expect(instructions).toContain(
+      'Additional instructions from the user (follow them, and copy them into every worker spec):\nDo not run tests locally.'
+    )
+
+    await call('goal.complete', { from: 'term_coord', summary: 'Shipped' })
+    await call('goal.start', { ...start, objective: 'Add dark mode' })
+    expect(store.list().at(-1)).toMatchObject({
+      objective: 'Add dark mode',
+      agentName: 'Strict reviewer',
+      strategy: 'Split the goal into Tasks of at most one day.',
+      instructions: 'Do not run tests locally.'
+    })
+  })
+
+  it('stores no guidance when the launch carried none', async () => {
+    await call('goal.start', { ...start, instructions: '   ' })
+    expect(store.list()[0]).not.toHaveProperty('instructions')
+    expect(store.list()[0]).not.toHaveProperty('strategy')
   })
 
   it('refuses a caller without a stable terminal pane', async () => {

@@ -17830,10 +17830,7 @@
         "rotations": "교체 횟수: {{value}}"
       },
       "NewWorkspaceComposerGoalMode": {
-        "worktreeTab": "워크트리",
-        "autonomousTab": "자율 작업",
-        "coordinatorAgent": "코디네이터 에이전트",
-        "startGoal": "목표 시작"
+        "coordinatorAgent": "코디네이터 에이전트"
       },
       "WorktreeCardAutonomousGoal": {
         "badge": "목표",

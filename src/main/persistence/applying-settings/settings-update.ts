@@ -7,6 +7,7 @@ import {
   normalizeTuiAgentEnvRecord
 } from '../../../shared/tui-agent-launch-defaults'
 import { normalizeTerminalQuickCommands } from '../../../shared/terminal-quick-commands'
+import { normalizeOrchestrationAgents } from '../../../shared/orchestration-agent-profiles'
 import { normalizeTerminalCustomThemes } from '../../../shared/terminal-custom-themes'
 import { normalizeTerminalCursorStyleDefault } from '../../../shared/terminal-cursor-style-settings'
 import { normalizeDesktopTerminalScrollbackRows } from '../../../shared/terminal-scrollback-policy'
@@ -110,6 +111,9 @@ export function updateSettings(
     sanitizedUpdates.agentSessionInstructions = normalizeTuiAgentSessionInstructionsRecord(
       updates.agentSessionInstructions
     )
+  }
+  if ('orchestrationAgents' in updates) {
+    sanitizedUpdates.orchestrationAgents = normalizeOrchestrationAgents(updates.orchestrationAgents)
   }
   if ('terminalQuickCommands' in updates) {
     sanitizedUpdates.terminalQuickCommands = normalizeTerminalQuickCommands(

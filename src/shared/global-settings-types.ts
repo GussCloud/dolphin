@@ -1,3 +1,4 @@
+import type { OrchestrationAgentProfile } from './orchestration-agent-profiles'
 import type { ExecutionHostId } from './execution-host'
 import type { DeepSeekModelSlots } from './deepseek-claude-provider'
 import type { GitHubProjectSettings } from './github/project-types'
@@ -258,6 +259,8 @@ export type GlobalSettings = {
    *  Renderer-writable only: omitted from the SettingsUpdate RPC schema so a worker
    *  cannot raise its own cap via `dolphin settings update`. */
   nestedWorkerMaxDepth?: number
+  /** User-made orchestration agents; Dolphin's default agent is built in and never stored. */
+  orchestrationAgents?: OrchestrationAgentProfile[]
   /** Only toggles the sidebar shortcut; Artifacts stay reachable from Settings. */
   showArtifactsButton?: boolean
   /** Only toggles the sidebar shortcut; Skills stay reachable from Settings. */

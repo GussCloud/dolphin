@@ -17,6 +17,10 @@ export type AutonomousCoordinatorLaunch = {
   removeWorktrees?: boolean
   /** Default true: the coordinator's own worktree survives a completed goal. */
   keepCoordinatorWorktree?: boolean
+  /** The orchestration agent picked in the composer; absent for Dolphin's default. */
+  agentName?: string
+  strategy?: string
+  instructions?: string
 }
 
 /** Only non-default choices become flags, so a host without them still accepts the default. */
@@ -25,6 +29,21 @@ function cleanupFlags(launch: AutonomousCoordinatorLaunch): string {
     return ' --keep-worktrees'
   }
   return launch.keepCoordinatorWorktree === false ? ' --remove-coordinator-worktree' : ''
+}
+
+/** Optional text rides base64 too, and only when set, so a host without the flags accepts the rest. */
+function guidanceFlags(launch: AutonomousCoordinatorLaunch): string {
+  const flags = [
+    ['agent-name-b64', launch.agentName],
+    ['strategy-b64', launch.strategy],
+    ['instructions-b64', launch.instructions]
+  ] as const
+  return flags
+    .map(([flag, value]) => {
+      const text = value?.trim()
+      return text ? ` --${flag} ${encodeAutonomousGoalObjective(text)}` : ''
+    })
+    .join('')
 }
 
 /**
@@ -117,14 +136,36 @@ export function buildAutonomousCoordinatorLaunchPrompt(
 ): string {
   return [
     'You are the autonomous coordinator of a Dolphin goal.',
-    `First run: dolphin goal start --agent ${launch.agent} --worker-agent ${launch.workerAgent} --max-concurrent ${launch.maxConcurrent} --objective-b64 ${encodeAutonomousGoalObjective(launch.objective.trim())}${cleanupFlags(launch)} --json`,
+    `First run: dolphin goal start --agent ${launch.agent} --worker-agent ${launch.workerAgent} --max-concurrent ${launch.maxConcurrent} --objective-b64 ${encodeAutonomousGoalObjective(launch.objective.trim())}${cleanupFlags(launch)}${guidanceFlags(launch)} --json`,
     'Then follow the instructions field it returns and work until the goal is complete, without stopping to ask for confirmation.'
   ].join(' ')
 }
 
+type GoalGuidance = Pick<AutonomousGoal, 'agentName' | 'strategy' | 'instructions'>
+
+/** After the rules, so Dolphin's protocol wins any conflict with an agent's own strategy. */
+function guidanceSections(goal: GoalGuidance): string[] {
+  return [
+    ...(goal.strategy
+      ? [
+          '',
+          `Strategy of the orchestration agent${goal.agentName ? ` "${goal.agentName}"` : ''} (the Rules above win any conflict):`,
+          goal.strategy
+        ]
+      : []),
+    ...(goal.instructions
+      ? [
+          '',
+          'Additional instructions from the user (follow them, and copy them into every worker spec):',
+          goal.instructions
+        ]
+      : [])
+  ]
+}
+
 /** Returned by `goal start`, so the rules reach the model as tool output, never through a shell. */
 export function buildAutonomousCoordinatorInstructions(
-  goal: GoalSettings & Pick<AutonomousGoal, 'objective' | 'baseRef'>
+  goal: GoalSettings & GoalGuidance & Pick<AutonomousGoal, 'objective' | 'baseRef'>
 ): string {
   return [
     'This terminal is now bound to the goal and its orchestration Run.',
@@ -132,7 +173,8 @@ export function buildAutonomousCoordinatorInstructions(
     'Goal:',
     goal.objective,
     '',
-    ...coordinatorRules(goal)
+    ...coordinatorRules(goal),
+    ...guidanceSections(goal)
   ].join('\n')
 }
 
@@ -190,7 +232,8 @@ export function buildAutonomousCoordinatorResumePrompt(
     '',
     'Read unread mail with `dolphin orchestration check --json` and continue; if there is none, end your turn and wait idle.',
     '',
-    ...coordinatorRules(goal)
+    ...coordinatorRules(goal),
+    ...guidanceSections(goal)
   ].join('\n')
 }
 

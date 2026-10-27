@@ -18,6 +18,10 @@ type NewWorkspaceComposerFooterProps = Pick<
   | 'primaryActionLabel'
 > & {
   submitShortcutModifierLabel: string
+  /** Steps only: Back, and a primary action that advances instead of creating. */
+  onBack?: () => void
+  onNext?: () => void
+  nextDisabled?: boolean
 }
 
 export function NewWorkspaceComposerFooter({
@@ -29,7 +33,10 @@ export function NewWorkspaceComposerFooter({
   createDisabled,
   creating,
   primaryActionLabel,
-  submitShortcutModifierLabel
+  submitShortcutModifierLabel,
+  onBack,
+  onNext,
+  nextDisabled = false
 }: NewWorkspaceComposerFooterProps): React.JSX.Element {
   return (
     <>
@@ -53,9 +60,14 @@ export function NewWorkspaceComposerFooter({
       <div
         className={cn(
           'flex items-center gap-3',
-          showCreateMultiple ? 'justify-between' : 'justify-end'
+          showCreateMultiple || onBack ? 'justify-between' : 'justify-end'
         )}
       >
+        {onBack ? (
+          <Button type="button" variant="outline" size="sm" onClick={onBack}>
+            {translate('auto.components.ComposerWizard.back', 'Back')}
+          </Button>
+        ) : null}
         {showCreateMultiple ? (
           <button
             type="button"
@@ -70,19 +82,31 @@ export function NewWorkspaceComposerFooter({
             </span>
           </button>
         ) : null}
-        <Button
-          onClick={() => void onCreate()}
-          disabled={createDisabled}
-          size="sm"
-          className="text-xs"
-        >
-          {creating ? <LoaderCircle className="size-4 animate-spin" /> : null}
-          {primaryActionLabel}
-          <span className="ml-1 inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 py-0.5 text-[10px] font-medium leading-none text-current/80">
-            <span>{submitShortcutModifierLabel}</span>
-            <CornerDownLeft className="size-3" />
-          </span>
-        </Button>
+        {onNext ? (
+          <Button
+            type="button"
+            onClick={onNext}
+            disabled={nextDisabled}
+            size="sm"
+            data-composer-wizard-next
+          >
+            {translate('auto.components.ComposerWizard.next', 'Next')}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => void onCreate()}
+            disabled={createDisabled}
+            size="sm"
+            className="text-xs"
+          >
+            {creating ? <LoaderCircle className="size-4 animate-spin" /> : null}
+            {primaryActionLabel}
+            <span className="ml-1 inline-flex items-center gap-0.5 rounded border border-white/20 px-1.5 py-0.5 text-[10px] font-medium leading-none text-current/80">
+              <span>{submitShortcutModifierLabel}</span>
+              <CornerDownLeft className="size-3" />
+            </span>
+          </Button>
+        )}
       </div>
     </>
   )

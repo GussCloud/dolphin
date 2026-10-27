@@ -78,6 +78,9 @@ export type AutonomousGoalNote = {
 
 export const AUTONOMOUS_GOAL_OBJECTIVE_MAX_CHARS = 8_000
 export const AUTONOMOUS_GOAL_NOTE_MAX_CHARS = 1_500
+/** The orchestration agent's strategy and the user's extra instructions ride the argv launch line. */
+export const AUTONOMOUS_GOAL_GUIDANCE_MAX_CHARS = 2_000
+export const AUTONOMOUS_GOAL_AGENT_NAME_MAX_CHARS = 80
 /** Decisions kept for the resume prompt; older ones age out so the prompt stays bounded. */
 export const AUTONOMOUS_GOAL_MAX_DECISIONS = 20
 export const AUTONOMOUS_GOAL_DEFAULT_MAX_CONCURRENT = 2
@@ -116,6 +119,12 @@ export type AutonomousGoal = {
   removeWorktrees?: boolean
   /** Absent means true: the coordinator's own worktree survives a completed goal. */
   keepCoordinatorWorktree?: boolean
+  /** The orchestration agent that launched it; absent means Dolphin's default. */
+  agentName?: string
+  /** That agent's strategy, applied after Dolphin's rules. */
+  strategy?: string
+  /** The user's extra instructions for this goal, passed on to every worker. */
+  instructions?: string
   createdAt: number
   updatedAt: number
 }

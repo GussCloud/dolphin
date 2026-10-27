@@ -17929,10 +17929,7 @@
         "rotations": "Rotations : {{value}}"
       },
       "NewWorkspaceComposerGoalMode": {
-        "worktreeTab": "Worktree",
-        "autonomousTab": "Travail autonome",
-        "coordinatorAgent": "Agent coordinateur",
-        "startGoal": "Lancer l'objectif"
+        "coordinatorAgent": "Agent coordinateur"
       },
       "WorktreeCardAutonomousGoal": {
         "badge": "objectif",

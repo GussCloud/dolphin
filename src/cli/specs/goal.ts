@@ -6,7 +6,7 @@ export const GOAL_COMMAND_SPECS: CommandSpec[] = [
     path: ['goal', 'start'],
     summary: 'Bind this coordinator terminal to a new autonomous goal and create its Run',
     usage:
-      'dolphin goal start (--objective <text> | --objective-b64 <base64>) --agent <goal-agent> --worker-agent <goal-agent> [--max-concurrent <n>] [--keep-worktrees] [--remove-coordinator-worktree] [--from <handle>] [--json]',
+      'dolphin goal start (--objective <text> | --objective-b64 <base64>) --agent <goal-agent> --worker-agent <goal-agent> [--max-concurrent <n>] [--keep-worktrees] [--remove-coordinator-worktree] [--agent-name-b64 <base64>] [--strategy-b64 <base64>] [--instructions-b64 <base64>] [--from <handle>] [--json]',
     allowedFlags: [
       ...GLOBAL_FLAGS,
       'objective',
@@ -16,11 +16,15 @@ export const GOAL_COMMAND_SPECS: CommandSpec[] = [
       'max-concurrent',
       'keep-worktrees',
       'remove-coordinator-worktree',
+      'agent-name-b64',
+      'strategy-b64',
+      'instructions-b64',
       'from'
     ],
     notes: [
       'Goal agents: claude, claude-agent-teams, codex, deepseek, deepseek-agent-teams.',
       'Repeating it in the same terminal returns the open goal instead of creating another.',
+      'The orchestration agent name, its strategy and the user instructions are optional base64 UTF-8; a new goal in a terminal whose last goal closed inherits the ones it omits.',
       'By default settled workers are released and their worktrees removed, while the coordinator keeps its own worktree. --keep-worktrees keeps every worktree and terminal; --remove-coordinator-worktree also removes the coordinator worktree once the goal completes.'
     ]
   },

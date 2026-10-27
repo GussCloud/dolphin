@@ -43,11 +43,41 @@ function readObjective(flags: Map<string, string | boolean>): string {
   return getRequiredStringFlag(flags, 'objective')
 }
 
+function readOptionalBase64(
+  flags: Map<string, string | boolean>,
+  name: string
+): string | undefined {
+  const encoded = getOptionalStringFlag(flags, name)
+  if (!encoded) {
+    return undefined
+  }
+  try {
+    return decodeAutonomousGoalObjective(encoded)
+  } catch {
+    throw new RuntimeClientError('invalid_argument', `--${name} is not valid base64 UTF-8`)
+  }
+}
+
+function optionalGuidance(flags: Map<string, string | boolean>): {
+  agentName?: string
+  strategy?: string
+  instructions?: string
+} {
+  const agentName = readOptionalBase64(flags, 'agent-name-b64')
+  const strategy = readOptionalBase64(flags, 'strategy-b64')
+  const instructions = readOptionalBase64(flags, 'instructions-b64')
+  return {
+    ...(agentName ? { agentName } : {}),
+    ...(strategy ? { strategy } : {}),
+    ...(instructions ? { instructions } : {})
+  }
+}
+
 function formatGoal(goal: AutonomousGoal): string {
   const lines = [
     `${goal.id} [${goal.status}] run ${goal.runId}`,
     goal.objective,
-    `coordinator ${goal.agent}, workers ${goal.workerAgent} (max ${goal.maxConcurrent}), rotations ${goal.rotations}`,
+    `coordinator ${goal.agent}${goal.agentName ? ` as "${goal.agentName}"` : ''}, workers ${goal.workerAgent} (max ${goal.maxConcurrent}), rotations ${goal.rotations}`,
     `worktrees: ${
       autonomousGoalRemovesWorktrees(goal)
         ? autonomousGoalRemovesCoordinatorWorktree(goal)
@@ -88,7 +118,8 @@ export const GOAL_HANDLERS: Record<string, CommandHandler> = {
         ),
         // Why only when set: an older host's schema strips unknown params, keeping its defaults.
         ...(flags.has('keep-worktrees') ? { removeWorktrees: false } : {}),
-        ...(flags.has('remove-coordinator-worktree') ? { keepCoordinatorWorktree: false } : {})
+        ...(flags.has('remove-coordinator-worktree') ? { keepCoordinatorWorktree: false } : {}),
+        ...optionalGuidance(flags)
       }
     )
     printResult(result, json, (r) =>
