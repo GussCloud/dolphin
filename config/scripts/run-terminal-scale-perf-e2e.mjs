@@ -1,6 +1,8 @@
 import { spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
 
-const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+// Why node + cli.js: Node refuses to spawn a .cmd shim without a shell (EINVAL on Windows).
+const playwrightCli = createRequire(import.meta.url).resolve('@playwright/test/cli')
 
 const env = {
   ...process.env,
@@ -19,9 +21,9 @@ if (extraArgs[0] === '--') {
 }
 
 const child = spawn(
-  npxCommand,
+  process.execPath,
   [
-    'playwright',
+    playwrightCli,
     'test',
     'tests/e2e/artificial-opencode-terminal-load.spec.ts',
     '--config',

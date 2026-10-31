@@ -12,8 +12,10 @@
  * totalMs/inputHalfMs/echoHalfMs percentiles.
  */
 import { spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
 
-const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
+// Why node + cli.js: Node refuses to spawn a .cmd shim without a shell (EINVAL on Windows).
+const playwrightCli = createRequire(import.meta.url).resolve('@playwright/test/cli')
 
 const knobByFlag = {
   '--visited-workspaces': 'DOLPHIN_TYPING_BENCH_VISITED_WORKSPACES',
@@ -36,6 +38,7 @@ const knobByFlag = {
   '--title-change-ms': 'DOLPHIN_TYPING_BENCH_TITLE_CHANGE_MS',
   '--lifecycle-ms': 'DOLPHIN_TYPING_BENCH_LIFECYCLE_MS',
   '--cpu-profile': 'DOLPHIN_TYPING_BENCH_CPU_PROFILE',
+  '--main-cpu-profile': 'DOLPHIN_TYPING_BENCH_MAIN_CPU_PROFILE',
   '--pty-metadata': 'DOLPHIN_TYPING_BENCH_PTY_METADATA',
   '--metadata-status': 'DOLPHIN_TYPING_BENCH_METADATA_STATUS',
   '--metadata-titles': 'DOLPHIN_TYPING_BENCH_METADATA_TITLES',
@@ -61,9 +64,9 @@ for (let i = 0; i < argv.length; i++) {
 }
 
 const child = spawn(
-  npxCommand,
+  process.execPath,
   [
-    'playwright',
+    playwrightCli,
     'test',
     'tests/e2e/terminal-multi-workspace-typing-latency.spec.ts',
     '--config',
