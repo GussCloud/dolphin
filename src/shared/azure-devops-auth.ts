@@ -41,8 +41,29 @@ export type AzureDevOpsAuthStatus = {
 
 export type AzureDevOpsAuthPreference = {
   method: AzureDevOpsAuthMethod
-  // Re-runs `az login` in the background when the CLI can no longer issue a token.
+  // Shows the sign-in notice when the CLI can no longer issue a token; the stored name
+  // predates the notice, when Dolphin ran `az login` on its own. Defaults on.
   autoRenewCliSession: boolean
+}
+
+// Desktop-only sign-in notice for a lapsed Azure CLI session. `az login` runs only
+// after the user clicks it, never in the background.
+export type AzureCliSignInState =
+  | { kind: 'idle' }
+  | { kind: 'required' }
+  | { kind: 'signing-in'; mode: AzureCliSignInMode }
+  | { kind: 'failed'; error: string }
+
+// 'in-app' captures the sign-in URL into a Dolphin window; 'system-browser' lets `az`
+// open the default browser, for tenants that block embedded sign-in.
+export type AzureCliSignInMode = 'in-app' | 'system-browser'
+
+export type AzureCliSignInResult = { ok: true } | { ok: false; error: string }
+
+export const AZURE_CLI_SIGN_IN_STATE_CHANNEL = 'azureDevOps:cliSignInStateChanged'
+
+export function isAzureCliSignInMode(value: unknown): value is AzureCliSignInMode {
+  return value === 'in-app' || value === 'system-browser'
 }
 
 export type AzureDevOpsRepository = {

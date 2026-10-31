@@ -1,7 +1,11 @@
 import { AZURE_DEVOPS_ENTRA_RESOURCE_ID } from '../../shared/azure-devops-auth'
 import { AzureCliCommandError, runAzureCliJson } from './azure-cli-runner'
 import { recordAzureCliTokenExpiry } from './azure-cli-session-store'
-import { renewAzureCliSession, shouldRenewAzureCliSession } from './azure-cli-session-renewal'
+import {
+  isAzureCliSignInNoticeEnabled,
+  noticeAzureCliSessionLapsed,
+  noticeAzureCliSessionWorking
+} from './azure-cli-sign-in-notice'
 
 // Refresh this long before expiry so an in-flight request never carries a dead token.
 const EXPIRY_SAFETY_MARGIN_MS = 5 * 60_000
@@ -39,7 +43,7 @@ function scheduleProactiveRefresh(expiresAtMs: number): void {
   const delayMs = Math.max(60_000, expiresAtMs - EXPIRY_SAFETY_MARGIN_MS - Date.now())
   proactiveRefreshTimer = setTimeout(() => {
     proactiveRefreshTimer = null
-    if (shouldRenewAzureCliSession(Date.now())) {
+    if (isAzureCliSignInNoticeEnabled()) {
       void getAzureCliAccessToken().catch(() => undefined)
     }
   }, delayMs)
@@ -56,10 +60,9 @@ async function acquire(): Promise<CachedToken> {
       AZURE_DEVOPS_ENTRA_RESOURCE_ID
     ])
   } catch (error) {
-    // Why not awaited: sign-in waits on the user, and callers (status probes, API
-    // requests) must fail fast; the renewal listener refreshes caches once it lands.
+    // Why only the notice: `az login` opens a browser, so it runs after the user clicks.
     if (error instanceof AzureCliCommandError && !error.result.timedOut) {
-      void renewAzureCliSession()
+      noticeAzureCliSessionLapsed()
     }
     throw error
   }
@@ -68,7 +71,8 @@ async function acquire(): Promise<CachedToken> {
     throw new Error('Azure CLI returned no access token')
   }
   recordAzureCliTokenExpiry(token.expiresAtMs)
-  if (shouldRenewAzureCliSession(Date.now())) {
+  noticeAzureCliSessionWorking()
+  if (isAzureCliSignInNoticeEnabled()) {
     scheduleProactiveRefresh(token.expiresAtMs)
   }
   return token

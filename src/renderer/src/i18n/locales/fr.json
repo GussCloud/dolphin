@@ -12310,10 +12310,11 @@
         "azureCliAutoRenewControl": {
           "validUntil": "Jeton valide jusqu'au {{value0}}.",
           "expiredAt": "Jeton expiré le {{value0}}.",
-          "changeFailed": "Impossible de modifier le renouvellement automatique d'Azure CLI : {{value0}}",
-          "label": "Renouveler automatiquement à l'expiration ?",
-          "help": "Dolphin exécute az login en arrière-plan quand la connexion expire ; confirmez-la dans la fenêtre du navigateur qui s'ouvre.",
-          "unavailableHelp": "Indisponible sur cet hôte : il n'a pas d'écran pour ouvrir la connexion dans le navigateur. Exécutez az login sur l'hôte quand la connexion expire."
+          "changeFailed": "Impossible de modifier l’avis de connexion d’Azure CLI : {{value0}}",
+          "label": "Afficher un avis visuel quand la connexion expire",
+          "help": "Dolphin affiche l’icône Azure DevOps et n’ouvre jamais le navigateur de lui-même. Cliquez sur l’icône pour vous connecter.",
+          "unavailableHelp": "Indisponible sur cet hôte : il n’a pas d’écran pour afficher la connexion. Exécutez az login sur l’hôte quand la connexion expire.",
+          "remoteHelp": "L’avis de connexion ne fonctionne qu’avec Azure CLI sur cet ordinateur ; sur un serveur distant, exécutez az login dans le terminal de ce serveur."
         },
         "openObserveContextForm": {
           "invalidName": "Utilisez des lettres, chiffres, points, tirets ou tirets bas pour le nom du profil.",
@@ -17943,6 +17944,16 @@
         "stopFailed": "Impossible d'arrêter l'objectif.",
         "workerTask": "Tâche {{number}}",
         "completedBadge": "objectif atteint"
+      },
+      "azureDevOpsSignInNotice": {
+        "signingInApp": "Connexion à Azure DevOps dans une fenêtre Dolphin…",
+        "signingInBrowser": "Connexion à Azure DevOps dans votre navigateur…",
+        "failed": "Échec de la connexion à Azure DevOps : {{value0}}. Cliquez pour réessayer.",
+        "required": "La connexion à Azure DevOps a expiré. Cliquez pour vous connecter.",
+        "toastFailed": "Échec de la connexion à Azure DevOps : {{value0}}",
+        "toastHint": "Si votre organisation bloque la connexion dans Dolphin, faites un clic droit sur l’icône Azure DevOps et choisissez Ouvrir dans le navigateur du système.",
+        "cancel": "Annuler la connexion",
+        "systemBrowser": "Ouvrir dans le navigateur du système"
       }
     },
     "i18n": {

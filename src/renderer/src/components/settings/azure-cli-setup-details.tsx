@@ -150,7 +150,7 @@ export function AzureCliSetupDetails(props: {
   const azureCli = props.status?.azureCli
   const signedIn = state === 'connected' || state === 'no-access'
   const autoRenew = props.status?.autoRenewCliSession
-  // Why: an older remote host omits the field and has no auto-renew to toggle.
+  // Why: an older remote host omits the field and has no sign-in notice to toggle.
   const showAutoRenew = autoRenew !== undefined && (signedIn || state === 'not-authenticated')
   const message = stateMessage(state, props.status?.account ?? azureCli?.account ?? null)
 

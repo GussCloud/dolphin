@@ -12207,10 +12207,11 @@
         "azureCliAutoRenewControl": {
           "validUntil": "토큰 유효 기한: {{value0}}.",
           "expiredAt": "토큰이 {{value0}}에 만료되었습니다.",
-          "changeFailed": "Azure CLI 자동 갱신을 변경하지 못했습니다: {{value0}}",
-          "label": "만료되면 자동으로 갱신할까요?",
-          "help": "로그인이 만료되면 Dolphin이 백그라운드에서 az login을 실행합니다. 열리는 브라우저 창에서 확인하세요.",
-          "unavailableHelp": "이 호스트에서는 사용할 수 없습니다. 브라우저 로그인을 열 디스플레이가 없습니다. 로그인이 만료되면 호스트에서 az login을 실행하세요."
+          "changeFailed": "Azure CLI 로그인 알림을 변경하지 못했습니다: {{value0}}",
+          "label": "로그인이 만료되면 시각적 알림 표시",
+          "help": "Dolphin은 Azure DevOps 아이콘을 표시하며 브라우저를 스스로 열지 않습니다. 아이콘을 클릭해 로그인하세요.",
+          "unavailableHelp": "이 호스트에서는 사용할 수 없습니다: 로그인을 표시할 디스플레이가 없습니다. 로그인이 만료되면 호스트에서 az login을 실행하세요.",
+          "remoteHelp": "로그인 알림은 이 컴퓨터의 Azure CLI에서만 작동합니다. 원격 서버에서는 해당 서버의 터미널에서 az login을 실행하세요."
         },
         "openObserveContextForm": {
           "invalidName": "프로필 이름에는 영문자, 숫자, 점, 하이픈, 밑줄만 사용하세요.",
@@ -17844,6 +17845,16 @@
         "stopFailed": "목표를 중지할 수 없습니다.",
         "workerTask": "작업 {{number}}",
         "completedBadge": "목표 완료"
+      },
+      "azureDevOpsSignInNotice": {
+        "signingInApp": "Dolphin 창에서 Azure DevOps에 로그인하는 중…",
+        "signingInBrowser": "브라우저에서 Azure DevOps에 로그인하는 중…",
+        "failed": "Azure DevOps 로그인 실패: {{value0}}. 클릭해 다시 시도하세요.",
+        "required": "Azure DevOps 로그인이 만료되었습니다. 클릭해 로그인하세요.",
+        "toastFailed": "Azure DevOps 로그인 실패: {{value0}}",
+        "toastHint": "조직에서 Dolphin 내부 로그인을 차단하는 경우 Azure DevOps 아이콘을 마우스 오른쪽 버튼으로 클릭하고 시스템 브라우저에서 열기를 선택하세요.",
+        "cancel": "로그인 취소",
+        "systemBrowser": "시스템 브라우저에서 열기"
       }
     },
     "i18n": {

@@ -9,8 +9,11 @@ import {
 } from '../../shared/azure-devops-auth'
 import { writeCredentialFileAtomic } from '../integration-credential-file'
 
+// v2: `autoRenewCliSession` became "show the sign-in notice" and defaults on.
+const STORED_VERSION = 2
+
 type StoredPreference = {
-  version: 1
+  version: typeof STORED_VERSION
   method: AzureDevOpsAuthMethod
   autoRenewCliSession?: boolean
 }
@@ -18,7 +21,7 @@ type StoredPreference = {
 // Why 'token' default: profiles from before the Azure CLI option keep their env-var behavior.
 const DEFAULT_PREFERENCE: AzureDevOpsAuthPreference = {
   method: 'token',
-  autoRenewCliSession: false
+  autoRenewCliSession: true
 }
 
 let cached: AzureDevOpsAuthPreference | null = null
@@ -36,9 +39,15 @@ function readFromDisk(): AzureDevOpsAuthPreference {
     const parsed: unknown = JSON.parse(readFileSync(path, 'utf-8'))
     if (parsed && typeof parsed === 'object' && 'method' in parsed) {
       const { method } = parsed
-      const autoRenew = 'autoRenewCliSession' in parsed ? parsed.autoRenewCliSession : false
+      const version = 'version' in parsed ? parsed.version : undefined
+      const autoRenew = 'autoRenewCliSession' in parsed ? parsed.autoRenewCliSession : undefined
       if (isAzureDevOpsAuthMethod(method)) {
-        return { method, autoRenewCliSession: autoRenew === true }
+        // Why ignore v1: it always stored `false`, even for users who never chose it.
+        const honored = version === STORED_VERSION && typeof autoRenew === 'boolean'
+        return {
+          method,
+          autoRenewCliSession: honored ? autoRenew : DEFAULT_PREFERENCE.autoRenewCliSession
+        }
       }
     }
   } catch (error) {
@@ -58,7 +67,7 @@ export function setAzureDevOpsAuthPreference(
   const next = { ...getAzureDevOpsAuthPreference(), ...update }
   const dir = join(homedir(), FORK_HOME_STATE_DIR_NAME)
   mkdirSync(dir, { recursive: true })
-  const stored: StoredPreference = { version: 1, ...next }
+  const stored: StoredPreference = { version: STORED_VERSION, ...next }
   writeCredentialFileAtomic(preferencePath(), Buffer.from(JSON.stringify(stored), 'utf-8'))
   cached = next
   return cached

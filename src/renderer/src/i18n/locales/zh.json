@@ -12207,10 +12207,11 @@
         "azureCliAutoRenewControl": {
           "validUntil": "令牌有效期至 {{value0}}。",
           "expiredAt": "令牌已于 {{value0}} 过期。",
-          "changeFailed": "无法更改 Azure CLI 自动续期：{{value0}}",
-          "label": "过期时自动续期？",
-          "help": "登录过期时，Dolphin 会在后台运行 az login；请在打开的浏览器窗口中确认。",
-          "unavailableHelp": "此主机不可用：它没有可打开浏览器登录的显示器。登录过期后，请在主机上运行 az login。"
+          "changeFailed": "无法更改 Azure CLI 登录提醒：{{value0}}",
+          "label": "登录过期时显示可视提醒",
+          "help": "Dolphin 会显示 Azure DevOps 图标，绝不会自行打开浏览器。点击图标即可登录。",
+          "unavailableHelp": "此主机不可用：它没有用于显示登录的显示器。登录过期时，请在主机上运行 az login。",
+          "remoteHelp": "登录提醒仅适用于此计算机上的 Azure CLI；在远程服务器上，请在该服务器的终端中运行 az login。"
         },
         "openObserveContextForm": {
           "invalidName": "配置文件名称只能使用字母、数字、点、短横线或下划线。",
@@ -17844,6 +17845,16 @@
         "stopFailed": "无法停止目标。",
         "workerTask": "任务 {{number}}",
         "completedBadge": "目标已完成"
+      },
+      "azureDevOpsSignInNotice": {
+        "signingInApp": "正在 Dolphin 窗口中登录 Azure DevOps…",
+        "signingInBrowser": "正在浏览器中登录 Azure DevOps…",
+        "failed": "Azure DevOps 登录失败：{{value0}}。点击重试。",
+        "required": "Azure DevOps 登录已过期。点击登录。",
+        "toastFailed": "Azure DevOps 登录失败：{{value0}}",
+        "toastHint": "如果你的组织阻止在 Dolphin 内登录，请右键点击 Azure DevOps 图标并选择“在系统浏览器中打开”。",
+        "cancel": "取消登录",
+        "systemBrowser": "在系统浏览器中打开"
       }
     },
     "i18n": {

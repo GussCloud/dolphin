@@ -8,13 +8,17 @@ const mocks = vi.hoisted(() => ({
   token: vi.fn(),
   expiresAt: vi.fn(),
   forget: vi.fn(),
-  canOpenBrowser: vi.fn()
+  canOpenBrowser: vi.fn(),
+  dismissNotice: vi.fn()
 }))
 
 vi.mock('./azure-devops-auth-preference-store', () => ({
   getAzureDevOpsAuthPreference: mocks.preference
 }))
-vi.mock('./azure-cli-session-renewal', () => ({ hostCanOpenSignInBrowser: mocks.canOpenBrowser }))
+vi.mock('./azure-cli-sign-in-notice', () => ({
+  hostCanOpenSignInBrowser: mocks.canOpenBrowser,
+  dismissAzureCliSignInNotice: mocks.dismissNotice
+}))
 vi.mock('./azure-cli-status', () => ({ getAzureCliStatus: mocks.cliStatus }))
 vi.mock('./azure-cli-access-token', () => ({ getAzureCliAccessToken: mocks.token }))
 vi.mock('./azure-cli-session-store', () => ({
@@ -68,6 +72,7 @@ describe('getAzureDevOpsAuthStatus in azure-cli mode', () => {
     mocks.cliStatus.mockResolvedValue({ ...signedIn, authenticated: false, account: null })
     await getAzureDevOpsAuthStatus()
     expect(mocks.forget).toHaveBeenCalledOnce()
+    expect(mocks.dismissNotice).toHaveBeenCalledOnce()
   })
 
   afterEach(() => {

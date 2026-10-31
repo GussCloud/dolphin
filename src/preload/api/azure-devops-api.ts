@@ -1,6 +1,9 @@
 import type {
   AzureDevOpsAuthMethod,
   AzureDevOpsAuthPreference,
+  AzureCliSignInMode,
+  AzureCliSignInResult,
+  AzureCliSignInState,
   AzureDevOpsConfigureDefaultsResult,
   AzureDevOpsRepositoriesResult
 } from '../../shared/azure-devops-auth'
@@ -30,4 +33,9 @@ export type AzureDevOpsApi = {
   ) => Promise<AzureDevOpsPullRequestCommentsResult>
   reviewerAvatar: (url: string) => Promise<AzureDevOpsReviewerAvatarResult>
   orgLink: (args?: AzureDevOpsOrgLinkArgs) => Promise<AzureDevOpsOrgLinkStatus>
+  getCliSignInState: () => Promise<AzureCliSignInState>
+  // Resolves once `az login` ends: signed in, cancelled, failed or timed out.
+  startCliSignIn: (mode: AzureCliSignInMode) => Promise<AzureCliSignInResult>
+  cancelCliSignIn: () => Promise<void>
+  onCliSignInStateChanged: (callback: (state: AzureCliSignInState) => void) => () => void
 }
