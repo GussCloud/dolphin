@@ -1,4 +1,5 @@
 import { BrowserWindow, session } from 'electron'
+import { join } from 'node:path'
 import { showWindowWithoutStealingFocus } from '../window/foreground-activation-policy'
 
 // In-memory partition: nothing from the Microsoft sign-in outlives the window.
@@ -88,6 +89,8 @@ export function openAzureDevOpsSignInWindow(
     autoHideMenuBar: true,
     webPreferences: {
       session: signInSession,
+      // Why: keeps the page from raising the Windows Hello dialog on load.
+      preload: join(__dirname, 'azure-devops-sign-in-preload.js'),
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false
