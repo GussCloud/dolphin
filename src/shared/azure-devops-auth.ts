@@ -42,7 +42,7 @@ export type AzureDevOpsAuthStatus = {
 export type AzureDevOpsAuthPreference = {
   method: AzureDevOpsAuthMethod
   // Shows the sign-in notice when the CLI can no longer issue a token; the stored name
-  // predates the notice, when Dolphin ran `az login` on its own.
+  // predates the notice, when Dolphin ran `az login` on its own. Defaults on.
   autoRenewCliSession: boolean
 }
 
