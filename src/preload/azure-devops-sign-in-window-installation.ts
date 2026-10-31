@@ -2,33 +2,40 @@
 // Why: Electron on Windows turns a conditional (autofill) passkey request into the modal
 // Windows Hello dialog on page load; an explicit security-key choice must keep working.
 export function installConditionalMediationGuard(): void {
-  const define = (target: object, key: string, value: unknown): void => {
+  if (typeof PublicKeyCredential !== 'undefined') {
     try {
-      Object.defineProperty(target, key, { configurable: false, writable: false, value })
+      Object.defineProperty(PublicKeyCredential, 'isConditionalMediationAvailable', {
+        configurable: false,
+        writable: false,
+        value: (): Promise<boolean> => Promise.resolve(false)
+      })
     } catch {}
   }
-
-  if (typeof PublicKeyCredential !== 'undefined') {
-    define(PublicKeyCredential, 'isConditionalMediationAvailable', () => Promise.resolve(false))
-  }
-
-  const credentials = typeof navigator === 'undefined' ? undefined : navigator.credentials
   // Why the prototype: the page can also reach `get` through CredentialsContainer.prototype.
-  const container: object | null = credentials ? Object.getPrototypeOf(credentials) : null
-  const originalGet: unknown = container ? Reflect.get(container, 'get') : undefined
-  if (!container || typeof originalGet !== 'function') {
+  if (typeof CredentialsContainer === 'undefined') {
     return
   }
-  define(
-    container,
-    'get',
-    function guardedGet(this: unknown, options?: CredentialRequestOptions): Promise<unknown> {
-      if (options && typeof options === 'object' && options.mediation === 'conditional') {
-        return Promise.reject(
-          new DOMException('Conditional mediation is disabled in this window', 'NotAllowedError')
-        )
-      }
-      return Reflect.apply(originalGet, this, [options])
+  const container = CredentialsContainer.prototype
+  const originalGet = container.get
+  if (typeof originalGet !== 'function') {
+    return
+  }
+  function guardedGet(
+    this: CredentialsContainer,
+    options?: CredentialRequestOptions
+  ): Promise<Credential | null> {
+    if (options?.mediation === 'conditional') {
+      return Promise.reject(
+        new DOMException('Conditional mediation is disabled in this window', 'NotAllowedError')
+      )
     }
-  )
+    return originalGet.call(this, options)
+  }
+  try {
+    Object.defineProperty(container, 'get', {
+      configurable: false,
+      writable: false,
+      value: guardedGet
+    })
+  } catch {}
 }

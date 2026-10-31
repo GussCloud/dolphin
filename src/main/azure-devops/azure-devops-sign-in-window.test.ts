@@ -12,12 +12,12 @@ const fakeSession = vi.hoisted(() => ({
   clearStorageData: vi.fn(),
   clearCache: vi.fn()
 }))
+const createdWindowOptions = vi.hoisted((): unknown[] => [])
 
 vi.mock('electron', () => {
   class FakeBrowserWindow {
-    static created: unknown[] = []
     constructor(options: unknown) {
-      FakeBrowserWindow.created.push(options)
+      createdWindowOptions.push(options)
     }
     webContents = { on: vi.fn(), once: vi.fn(), setWindowOpenHandler: vi.fn(), getURL: vi.fn() }
     on = vi.fn()
@@ -29,7 +29,6 @@ vi.mock('electron', () => {
   }
   return { BrowserWindow: FakeBrowserWindow, session: { fromPartition: () => fakeSession } }
 })
-const { BrowserWindow: CreatedWindows } = await import('electron')
 vi.mock('../window/foreground-activation-policy', () => ({
   showWindowWithoutStealingFocus: vi.fn()
 }))
@@ -56,9 +55,7 @@ describe('openAzureDevOpsSignInWindow', () => {
       parent: null,
       onClosedByUser: vi.fn()
     }).close()
-    const created: unknown = Reflect.get(CreatedWindows, 'created')
-    const last = Array.isArray(created) ? created.at(-1) : null
-    expect(last).toMatchObject({
+    expect(createdWindowOptions.at(-1)).toMatchObject({
       webPreferences: {
         preload: expect.stringMatching(/azure-devops-sign-in-preload\.js$/),
         sandbox: true,
