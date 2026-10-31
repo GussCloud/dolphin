@@ -12207,10 +12207,11 @@
         "azureCliAutoRenewControl": {
           "validUntil": "トークンの有効期限: {{value0}}。",
           "expiredAt": "トークンは {{value0}} に期限切れになりました。",
-          "changeFailed": "Azure CLI の自動更新を変更できませんでした: {{value0}}",
-          "label": "期限切れ時に自動で更新しますか?",
-          "help": "サインインの期限が切れると、Dolphin がバックグラウンドで az login を実行します。開いたブラウザウィンドウで確認してください。",
-          "unavailableHelp": "このホストでは利用できません: ブラウザでのサインインを開くディスプレイがありません。サインインの期限が切れたら、ホストで az login を実行してください。"
+          "changeFailed": "Azure CLI のサインイン通知を変更できませんでした: {{value0}}",
+          "label": "サインインの有効期限が切れたら通知を表示する",
+          "help": "Dolphin は Azure DevOps アイコンを表示し、ブラウザーを自動で開くことはありません。アイコンをクリックしてサインインします。",
+          "unavailableHelp": "このホストでは利用できません: サインインを表示するディスプレイがありません。サインインの有効期限が切れたら、ホストで az login を実行してください。",
+          "remoteHelp": "サインイン通知はこのコンピューターの Azure CLI でのみ機能します。リモート サーバーでは、そのサーバーのターミナルで az login を実行してください。"
         },
         "openObserveContextForm": {
           "invalidName": "プロファイル名には英字、数字、ドット、ハイフン、アンダースコアを使用してください。",
@@ -17844,6 +17845,16 @@
         "stopFailed": "目標を停止できませんでした。",
         "workerTask": "タスク {{number}}",
         "completedBadge": "目標完了"
+      },
+      "azureDevOpsSignInNotice": {
+        "signingInApp": "Dolphin のウィンドウで Azure DevOps にサインインしています…",
+        "signingInBrowser": "ブラウザーで Azure DevOps にサインインしています…",
+        "failed": "Azure DevOps へのサインインに失敗しました: {{value0}}。クリックして再試行します。",
+        "required": "Azure DevOps のサインインの有効期限が切れました。クリックしてサインインします。",
+        "toastFailed": "Azure DevOps へのサインインに失敗しました: {{value0}}",
+        "toastHint": "組織が Dolphin 内でのサインインをブロックしている場合は、Azure DevOps アイコンを右クリックして「システムのブラウザーで開く」を選択してください。",
+        "cancel": "サインインをキャンセル",
+        "systemBrowser": "システムのブラウザーで開く"
       }
     },
     "i18n": {

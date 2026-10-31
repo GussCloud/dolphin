@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { setAzureCliAutoRenew } from '@/lib/azure-devops-host-client'
+import { getActiveRuntimeTarget } from '@/runtime/runtime-client-target'
 
 const VALIDITY_FORMAT = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'short',
@@ -31,16 +32,37 @@ export function azureCliTokenValidityMessage(
       )
 }
 
+function noticeHelp(available: boolean, remote: boolean): string {
+  if (remote) {
+    return translate(
+      'auto.components.settings.azureCliAutoRenewControl.remoteHelp',
+      "The sign-in notice only works for the Azure CLI on this computer; on a remote server, run az login in that server's terminal."
+    )
+  }
+  return available
+    ? translate(
+        'auto.components.settings.azureCliAutoRenewControl.help',
+        'Dolphin shows the Azure DevOps icon and never opens the browser on its own. Click the icon to sign in.'
+      )
+    : translate(
+        'auto.components.settings.azureCliAutoRenewControl.unavailableHelp',
+        'Not available on this host: it has no display to show the sign-in. Run az login on the host when the sign-in expires.'
+      )
+}
+
 export function AzureCliAutoRenewControl(props: {
   enabled: boolean
-  // False when the host has no display for the browser sign-in, so renewal never runs.
+  // False when the host has no display for the sign-in, so the notice never shows.
   available: boolean
   tokenExpiresAt: number | null | undefined
   onChanged: () => void
 }): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
   const [pending, setPending] = useState<boolean | null>(null)
-  const checked = props.available && (pending ?? props.enabled)
+  // Why: the notice is desktop-local; a remote host's az login cannot finish in this window.
+  const remote = getActiveRuntimeTarget(settings).kind === 'environment'
+  const usable = props.available && !remote
+  const checked = usable && (pending ?? props.enabled)
   // Why lazy state: render must stay pure; a stale clock only delays the "expired" wording.
   const [nowMs] = useState(Date.now)
   const validity = azureCliTokenValidityMessage(props.tokenExpiresAt, nowMs)
@@ -53,7 +75,7 @@ export function AzureCliAutoRenewControl(props: {
         toast.error(
           translate(
             'auto.components.settings.azureCliAutoRenewControl.changeFailed',
-            'Could not change Azure CLI auto-renew: {{value0}}',
+            'Could not change the Azure CLI sign-in notice: {{value0}}',
             { value0: error instanceof Error ? error.message : String(error) }
           )
         )
@@ -67,27 +89,17 @@ export function AzureCliAutoRenewControl(props: {
       <label className="flex items-start gap-2 text-xs">
         <Checkbox
           checked={checked}
-          disabled={!props.available || pending !== null}
+          disabled={!usable || pending !== null}
           onCheckedChange={(value) => change(value === true)}
         />
         <span className="space-y-0.5">
           <span className="block text-foreground">
             {translate(
               'auto.components.settings.azureCliAutoRenewControl.label',
-              'Renew automatically when it expires?'
+              'Show a visual notice when the sign-in expires'
             )}
           </span>
-          <span className="block text-muted-foreground">
-            {props.available
-              ? translate(
-                  'auto.components.settings.azureCliAutoRenewControl.help',
-                  'Dolphin runs az login in the background when the sign-in expires; confirm it in the browser window that opens.'
-                )
-              : translate(
-                  'auto.components.settings.azureCliAutoRenewControl.unavailableHelp',
-                  'Not available on this host: it has no display to open the browser sign-in. Run az login on the host when the sign-in expires.'
-                )}
-          </span>
+          <span className="block text-muted-foreground">{noticeHelp(props.available, remote)}</span>
         </span>
       </label>
     </div>

@@ -8,7 +8,7 @@ import { getAzureDevOpsAuthPreference } from './azure-devops-auth-preference-sto
 import { getAzureCliAccessToken } from './azure-cli-access-token'
 import { getAzureCliStatus } from './azure-cli-status'
 import { forgetAzureCliSession, getAzureCliTokenExpiresAt } from './azure-cli-session-store'
-import { hostCanOpenSignInBrowser } from './azure-cli-session-renewal'
+import { dismissAzureCliSignInNotice, hostCanOpenSignInBrowser } from './azure-cli-sign-in-notice'
 
 export type { AzureDevOpsAuthStatus }
 
@@ -63,6 +63,7 @@ async function getAzureCliAuthStatus(): Promise<AzureDevOpsAuthStatus> {
   if (probed.installed && !probed.authenticated) {
     // No account at all means the user signed out; auto-renew must not undo that.
     forgetAzureCliSession()
+    dismissAzureCliSignInNotice()
   }
   // Why: `az account show` answers from the cached account even when conditional access
   // has expired the refresh token, so only a fresh token proves the sign-in still works.

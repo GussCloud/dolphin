@@ -5,10 +5,16 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AzureCliAutoRenewControl } from './azure-cli-auto-renew-control'
 
-const mocks = vi.hoisted(() => ({ setAutoRenew: vi.fn() }))
+const mocks = vi.hoisted(() => {
+  const settings: { activeRuntimeEnvironmentId: string | null } = {
+    activeRuntimeEnvironmentId: null
+  }
+  return { setAutoRenew: vi.fn(), settings }
+})
 
 vi.mock('@/store', () => ({
-  useAppStore: (selector: (state: { settings: object }) => unknown) => selector({ settings: {} })
+  useAppStore: (selector: (state: { settings: typeof mocks.settings }) => unknown) =>
+    selector({ settings: mocks.settings })
 }))
 vi.mock('@/lib/azure-devops-host-client', () => ({ setAzureCliAutoRenew: mocks.setAutoRenew }))
 
@@ -36,6 +42,7 @@ describe('AzureCliAutoRenewControl', () => {
     container?.remove()
     container = null
     mocks.setAutoRenew.mockReset()
+    mocks.settings.activeRuntimeEnvironmentId = null
   })
 
   it('toggles auto-renew on a host that can open the browser sign-in', async () => {
@@ -45,7 +52,7 @@ describe('AzureCliAutoRenewControl', () => {
     await act(async () => {
       checkbox(rendered)?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     })
-    expect(mocks.setAutoRenew).toHaveBeenCalledWith({}, true)
+    expect(mocks.setAutoRenew).toHaveBeenCalledWith(mocks.settings, true)
   })
 
   it('shows the control disabled and unchecked with an explanation on a headless host', async () => {
@@ -53,5 +60,13 @@ describe('AzureCliAutoRenewControl', () => {
     expect(checkbox(rendered)?.disabled).toBe(true)
     expect(checkbox(rendered)?.getAttribute('data-state')).toBe('unchecked')
     expect(rendered.textContent).toContain('Not available on this host')
+  })
+
+  it('disables the control on a remote runtime, where the notice cannot show', async () => {
+    mocks.settings.activeRuntimeEnvironmentId = 'env-1'
+    const rendered = await render({ enabled: true, available: true })
+    expect(checkbox(rendered)?.disabled).toBe(true)
+    expect(checkbox(rendered)?.getAttribute('data-state')).toBe('unchecked')
+    expect(rendered.textContent).toContain('only works for the Azure CLI on this computer')
   })
 })

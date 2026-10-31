@@ -10644,10 +10644,11 @@
         "azureCliAutoRenewControl": {
           "validUntil": "Token válido hasta {{value0}}.",
           "expiredAt": "El token caducó el {{value0}}.",
-          "changeFailed": "No se pudo cambiar la renovación automática de Azure CLI: {{value0}}",
-          "label": "¿Renovar automáticamente cuando caduque?",
-          "help": "Dolphin ejecuta az login en segundo plano cuando caduca el inicio de sesión; confírmalo en la ventana del navegador que se abre.",
-          "unavailableHelp": "No disponible en este host: no tiene pantalla para abrir el inicio de sesión en el navegador. Ejecuta az login en el host cuando caduque la sesión."
+          "changeFailed": "No se pudo cambiar el aviso de inicio de sesión de Azure CLI: {{value0}}",
+          "label": "Mostrar un aviso visual cuando caduque la sesión",
+          "help": "Dolphin muestra el icono de Azure DevOps y nunca abre el navegador por sí solo. Haz clic en el icono para iniciar sesión.",
+          "unavailableHelp": "No disponible en este host: no tiene pantalla para mostrar el inicio de sesión. Ejecuta az login en el host cuando caduque la sesión.",
+          "remoteHelp": "El aviso de inicio de sesión solo funciona con Azure CLI en este equipo; en un servidor remoto, ejecuta az login en la terminal de ese servidor."
         },
         "openObserveContextForm": {
           "invalidName": "Usa letras, números, puntos, guiones o guiones bajos para el nombre del perfil.",
@@ -15464,6 +15465,16 @@
         "stopFailed": "No se pudo detener el objetivo.",
         "workerTask": "Tarea {{number}}",
         "completedBadge": "objetivo cumplido"
+      },
+      "azureDevOpsSignInNotice": {
+        "signingInApp": "Iniciando sesión en Azure DevOps en una ventana de Dolphin…",
+        "signingInBrowser": "Iniciando sesión en Azure DevOps en tu navegador…",
+        "failed": "Error al iniciar sesión en Azure DevOps: {{value0}}. Haz clic para reintentar.",
+        "required": "La sesión de Azure DevOps caducó. Haz clic para iniciar sesión.",
+        "toastFailed": "Error al iniciar sesión en Azure DevOps: {{value0}}",
+        "toastHint": "Si tu organización bloquea el inicio de sesión dentro de Dolphin, haz clic derecho en el icono de Azure DevOps y elige Abrir en el navegador del sistema.",
+        "cancel": "Cancelar inicio de sesión",
+        "systemBrowser": "Abrir en el navegador del sistema"
       }
     },
     "i18n": {

@@ -9,8 +9,9 @@ import {
 const runAzureCliJsonMock = vi.hoisted(() => vi.fn())
 const sessionMocks = vi.hoisted(() => ({
   record: vi.fn(),
-  renew: vi.fn(),
-  shouldRenew: vi.fn()
+  lapsed: vi.fn(),
+  working: vi.fn(),
+  enabled: vi.fn()
 }))
 
 vi.mock('./azure-cli-runner', async () => {
@@ -18,9 +19,10 @@ vi.mock('./azure-cli-runner', async () => {
   return { AzureCliCommandError: actual.AzureCliCommandError, runAzureCliJson: runAzureCliJsonMock }
 })
 vi.mock('./azure-cli-session-store', () => ({ recordAzureCliTokenExpiry: sessionMocks.record }))
-vi.mock('./azure-cli-session-renewal', () => ({
-  renewAzureCliSession: sessionMocks.renew,
-  shouldRenewAzureCliSession: sessionMocks.shouldRenew
+vi.mock('./azure-cli-sign-in-notice', () => ({
+  isAzureCliSignInNoticeEnabled: sessionMocks.enabled,
+  noticeAzureCliSessionLapsed: sessionMocks.lapsed,
+  noticeAzureCliSessionWorking: sessionMocks.working
 }))
 
 const inSeconds = (seconds: number): number => Math.floor(Date.now() / 1000) + seconds
@@ -46,17 +48,17 @@ describe('getAzureCliAccessToken', () => {
     clearAzureCliAccessTokenCache()
     runAzureCliJsonMock.mockReset()
     vi.clearAllMocks()
-    sessionMocks.renew.mockResolvedValue(false)
-    sessionMocks.shouldRenew.mockReturnValue(false)
+    sessionMocks.enabled.mockReturnValue(false)
   })
 
   it('persists the validity of each issued token', async () => {
     runAzureCliJsonMock.mockResolvedValue({ accessToken: 'tok', expires_on: 1_900_000_000 })
     await getAzureCliAccessToken()
     expect(sessionMocks.record).toHaveBeenCalledWith(1_900_000_000_000)
+    expect(sessionMocks.working).toHaveBeenCalledOnce()
   })
 
-  it('starts a session renewal when the CLI refuses to issue a token', async () => {
+  it('raises the sign-in notice when the CLI refuses to issue a token', async () => {
     const { AzureCliCommandError } = await import('./azure-cli-runner')
     runAzureCliJsonMock.mockRejectedValue(
       new AzureCliCommandError(['account'], {
@@ -68,7 +70,8 @@ describe('getAzureCliAccessToken', () => {
       })
     )
     await expect(getAzureCliAccessToken()).rejects.toThrow('AADSTS700082')
-    expect(sessionMocks.renew).toHaveBeenCalledOnce()
+    expect(sessionMocks.lapsed).toHaveBeenCalledOnce()
+    expect(sessionMocks.working).not.toHaveBeenCalled()
   })
 
   it('requests the Azure DevOps resource once and reuses the unexpired token', async () => {
@@ -95,5 +98,20 @@ describe('getAzureCliAccessToken', () => {
   it('propagates a signed-out CLI as a rejection', async () => {
     runAzureCliJsonMock.mockRejectedValue(new Error('Please run az login'))
     await expect(getAzureCliAccessToken()).rejects.toThrow('az login')
+  })
+
+  it('keeps a timed-out az call from raising the notice', async () => {
+    const { AzureCliCommandError } = await import('./azure-cli-runner')
+    runAzureCliJsonMock.mockRejectedValue(
+      new AzureCliCommandError(['account'], {
+        code: null,
+        signal: null,
+        timedOut: true,
+        stdout: '',
+        stderr: ''
+      })
+    )
+    await expect(getAzureCliAccessToken()).rejects.toThrow('timed out')
+    expect(sessionMocks.lapsed).not.toHaveBeenCalled()
   })
 })

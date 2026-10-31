@@ -12376,10 +12376,11 @@
         "azureCliAutoRenewControl": {
           "validUntil": "Token válido até {{value0}}.",
           "expiredAt": "Token expirado em {{value0}}.",
-          "changeFailed": "Não foi possível alterar a renovação automática do CLI do Azure: {{value0}}",
-          "label": "Renovar automaticamente quando expirar?",
-          "help": "O Dolphin executa az login em segundo plano quando a entrada expira; confirme-a na janela do navegador que se abre.",
-          "unavailableHelp": "Indisponível neste host: ele não tem tela para abrir o login no navegador. Execute az login no host quando o login expirar."
+          "changeFailed": "Não foi possível alterar o aviso de login do CLI do Azure: {{value0}}",
+          "label": "Mostrar um aviso visual quando o login expirar",
+          "help": "O Dolphin mostra o ícone do Azure DevOps e nunca abre o navegador sozinho. Clique no ícone para entrar.",
+          "unavailableHelp": "Indisponível neste host: ele não tem tela para mostrar o login. Execute az login no host quando o login expirar.",
+          "remoteHelp": "O aviso de login só funciona para o CLI do Azure neste computador; em um servidor remoto, execute az login no terminal desse servidor."
         },
         "openObserveContextForm": {
           "invalidName": "Use letras, números, pontos, hifens ou sublinhados no nome do perfil.",
@@ -18036,6 +18037,16 @@
         "instructionsPlaceholder": "ex.: Não executar testes locais; deixar a validação para o CI.",
         "instructionsHint": "O coordenador repassa estas instruções a cada worker e as mantém depois de cada rotação de sessão.",
         "coordinatorDiffers": "Este agente prefere {{preferred}} como coordenador; {{current}} coordena esta."
+      },
+      "azureDevOpsSignInNotice": {
+        "signingInApp": "Entrando no Azure DevOps em uma janela do Dolphin…",
+        "signingInBrowser": "Entrando no Azure DevOps no seu navegador…",
+        "failed": "Falha ao entrar no Azure DevOps: {{value0}}. Clique para tentar de novo.",
+        "required": "O login do Azure DevOps expirou. Clique para entrar.",
+        "toastFailed": "Falha ao entrar no Azure DevOps: {{value0}}",
+        "toastHint": "Se a sua organização bloqueia o login dentro do Dolphin, clique com o botão direito no ícone do Azure DevOps e escolha Abrir no navegador do sistema.",
+        "cancel": "Cancelar login",
+        "systemBrowser": "Abrir no navegador do sistema"
       }
     },
     "i18n": {

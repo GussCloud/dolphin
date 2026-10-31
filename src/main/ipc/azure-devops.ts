@@ -1,8 +1,20 @@
-import { ipcMain } from 'electron'
-import type {
-  AzureDevOpsAuthPreference,
-  AzureDevOpsConfigureDefaultsResult
+import { BrowserWindow, ipcMain } from 'electron'
+import {
+  isAzureCliSignInMode,
+  type AzureCliSignInResult,
+  type AzureCliSignInState,
+  type AzureDevOpsAuthPreference,
+  type AzureDevOpsConfigureDefaultsResult
 } from '../../shared/azure-devops-auth'
+import {
+  getAzureCliSignInState,
+  onAzureCliSignInStateChanged
+} from '../azure-devops/azure-cli-sign-in-notice'
+import {
+  cancelAzureCliSignIn,
+  startAzureCliSignIn
+} from '../azure-devops/azure-cli-interactive-sign-in'
+import { broadcastAzureCliSignInState } from './azure-cli-sign-in-state-broadcast'
 import {
   changeAzureDevOpsAuthMethod,
   listAzureDevOpsRepositoriesResult,
@@ -52,6 +64,24 @@ export function registerAzureDevOpsHandlers(
   orgLinkOptions: AzureDevOpsOrgLinkAutoCheckOptions = {}
 ): void {
   startAzureDevOpsOrgLinkAutoCheck(orgLinkOptions)
+  // Why desktop-only: a remote host's `az login` redirect cannot reach this desktop's window.
+  onAzureCliSignInStateChanged(broadcastAzureCliSignInState)
+
+  ipcMain.handle('azureDevOps:getCliSignInState', (): AzureCliSignInState =>
+    getAzureCliSignInState()
+  )
+
+  ipcMain.handle(
+    'azureDevOps:startCliSignIn',
+    (event, mode: unknown): Promise<AzureCliSignInResult> => {
+      if (!isAzureCliSignInMode(mode)) {
+        return Promise.resolve({ ok: false, error: 'Invalid Azure CLI sign-in mode' })
+      }
+      return startAzureCliSignIn(mode, { parent: BrowserWindow.fromWebContents(event.sender) })
+    }
+  )
+
+  ipcMain.handle('azureDevOps:cancelCliSignIn', (): void => cancelAzureCliSignIn())
 
   ipcMain.handle(
     'azureDevOps:setAuthMethod',

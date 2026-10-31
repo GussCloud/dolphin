@@ -12376,10 +12376,11 @@
         "azureCliAutoRenewControl": {
           "validUntil": "Token valid until {{value0}}.",
           "expiredAt": "Token expired at {{value0}}.",
-          "changeFailed": "Could not change Azure CLI auto-renew: {{value0}}",
-          "label": "Renew automatically when it expires?",
-          "help": "Dolphin runs az login in the background when the sign-in expires; confirm it in the browser window that opens.",
-          "unavailableHelp": "Not available on this host: it has no display to open the browser sign-in. Run az login on the host when the sign-in expires."
+          "changeFailed": "Could not change the Azure CLI sign-in notice: {{value0}}",
+          "label": "Show a visual notice when the sign-in expires",
+          "help": "Dolphin shows the Azure DevOps icon and never opens the browser on its own. Click the icon to sign in.",
+          "unavailableHelp": "Not available on this host: it has no display to show the sign-in. Run az login on the host when the sign-in expires.",
+          "remoteHelp": "The sign-in notice only works for the Azure CLI on this computer; on a remote server, run az login in that server's terminal."
         },
         "openObserveContextForm": {
           "invalidName": "Use letters, numbers, dots, dashes or underscores for the profile name.",
@@ -18036,6 +18037,16 @@
         "instructionsPlaceholder": "e.g. Do not run tests locally; leave validation to CI.",
         "instructionsHint": "The coordinator passes them to every worker and keeps them across session rotations.",
         "coordinatorDiffers": "This agent prefers {{preferred}} as coordinator; {{current}} coordinates this one."
+      },
+      "azureDevOpsSignInNotice": {
+        "signingInApp": "Signing in to Azure DevOps in a Dolphin window…",
+        "signingInBrowser": "Signing in to Azure DevOps in your browser…",
+        "failed": "Azure DevOps sign-in failed: {{value0}}. Click to retry.",
+        "required": "Azure DevOps sign-in expired. Click to sign in.",
+        "toastFailed": "Azure DevOps sign-in failed: {{value0}}",
+        "toastHint": "If your organization blocks sign-in inside Dolphin, right-click the Azure DevOps icon and choose Open in system browser.",
+        "cancel": "Cancel sign-in",
+        "systemBrowser": "Open in system browser"
       }
     },
     "i18n": {
