@@ -36,6 +36,7 @@ import { test, expect } from './helpers/dolphin-app'
 import { createTypingLoadWorkspaces, removeTypingLoadWorkspaces } from './typing-load-workspaces'
 import { readTypingScaleCensus } from './typing-scale-census'
 import { withTypingRendererCpuProfile } from './typing-renderer-cpu-profile'
+import { withTypingMainCpuProfile } from './typing-main-cpu-profile'
 import {
   measurePacedTyping,
   type LatencyStats,
@@ -535,7 +536,11 @@ test.describe('Multi-workspace sustained typing latency bench', () => {
           .toBe(LOAD_PANES)
       }
       await startTypingProbe(appPage, typingPtyId, probePath, runId)
-      const measured = await measureTypingWindow(appPage, runId, sidecarPath)
+      const measured = await withTypingMainCpuProfile(
+        electronApp,
+        process.env.DOLPHIN_TYPING_BENCH_MAIN_CPU_PROFILE,
+        () => measureTypingWindow(appPage, runId, sidecarPath)
+      )
       const { measurement } = measured
       const statusWorkload = statusTrafficStarted
         ? await stopAccumulatedStatusTraffic(electronApp, appPage)
