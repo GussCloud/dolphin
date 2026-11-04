@@ -141,8 +141,13 @@ each completed lead turn of a goal's coordinator pane:
 1. Measure the context from the tail of the coordinator's own transcript
    (`autonomous-goal-context-probe.ts`): the newest Claude main-thread `usage`, or
    Codex's `token_count` with its stated window. No model call; at most 512 KB read.
-   Rotate at `min(120k, 60% of a stated window)`. When the transcript lives on
-   another host (SSH, WSL), rotate every 40 turns instead.
+   Rotate at 90% of the current model's window (`autonomous-goal-context-window.ts`):
+   the window Codex states, else 1M for a `[1m]` model, else 200k. The model is
+   the pane's Claude `SessionStart` `model` in the agent-status row (the
+   transcript drops `[1m]`); a newest response naming another base model means a
+   mid-session `/model` and resolves from that name. DeepSeek resolves to its
+   guide's 786,432-token window. When the transcript lives on another host (SSH,
+   WSL), rotate every 40 turns instead.
 2. Paste a handoff request; the coordinator writes one `goal note --kind handoff`.
 3. On its next turn end (or after 3 minutes), type `/clear` (Claude) or `/new`
    (Codex). The pane, its terminal handle and its Run binding survive; only the
@@ -152,6 +157,24 @@ each completed lead turn of a goal's coordinator pane:
 
 Rotation backs off if the user typed into the pane, never fires twice inside 10
 minutes, and skips a usage-limited goal.
+
+A coordinator launched from the composer on this host runs with
+`DISABLE_AUTO_COMPACT=1` (Claude Code coordinators only; manual `/compact` still
+works), so this rotation is the only compaction, and a DeepSeek coordinator drops
+`CLAUDE_CODE_AUTO_COMPACT_WINDOW`. SSH and WSL coordinators keep the CLI's
+auto-compaction: their rotation counts turns blind. One rule decides both sides,
+`isCoordinatorContextMeasurable` (`src/shared/autonomous-coordinator-launch-env.ts`):
+not remote and launched on the host's own platform. The composer applies it to the
+launch target; rotation applies it to the hook's connection and the transcript
+path (a POSIX path on Windows is WSL). A goal started with `goal
+start` in a pane launched otherwise keeps whatever compaction it has.
+
+Safety net: at 95% of the window, a rotation that has not landed (handoff timed out
+or taken over, cooldown, reset refused) is forced on the next turn end: `/clear`
+and the resume prompt from the Run's Tasks and saved notes, no handoff note, no
+cooldown. It still defers while the user is composing (the same composing guard
+as below) and retries when that guard's wait ends, logging each deferred or failed
+attempt, and ignores readings of the transcript the last rotation left.
 
 ## Stranded Run mail
 
@@ -357,8 +380,8 @@ reset (`/clear` for every Claude Code agent, `/new` for Codex).
 The plan the usage guard checks is separate (`AUTONOMOUS_GOAL_AGENT_PLAN`): Agent
 Teams draws on the Claude plan; DeepSeek is API-billed, has no window, and is never
 paused by the guard. DeepSeek's Claude-format transcript states no context window,
-so its coordinator rotates at 64k tokens (its chat models have a 128k window)
-instead of 120k.
+so its coordinator rotates against the 786,432-token window DeepSeek's Claude Code
+guide sets (200k for a slot without `[1m]`).
 
 - An Agent Teams coordinator (Claude or DeepSeek) is told not to spawn teammates:
   parallel work goes through orchestration workers, whose state survives a session

@@ -244,7 +244,8 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
       ? await prepareDeepSeekLaunch({
           connectionId: args.connectionId,
           target: initialSelectionTarget,
-          settings: ctx.deps.getSettings?.()
+          settings: ctx.deps.getSettings?.(),
+          launchEnv: args.env
         })
       : null
   ctx.spawnTiming.mark('auth')

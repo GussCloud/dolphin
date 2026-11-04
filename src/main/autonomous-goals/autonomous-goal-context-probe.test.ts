@@ -44,6 +44,20 @@ describe('coordinator context probe', () => {
     ).toEqual({ contextTokens: 90_010 })
   })
 
+  it('reports the model the newest Claude response names', () => {
+    const line = JSON.stringify({
+      type: 'assistant',
+      message: {
+        model: 'claude-sonnet-5',
+        usage: { input_tokens: 1, cache_read_input_tokens: 99 }
+      }
+    })
+    expect(readClaudeContextFromLines([line])).toEqual({
+      contextTokens: 100,
+      responseModel: 'claude-sonnet-5'
+    })
+  })
+
   it('reads the Codex token_count event and its stated window', () => {
     const line = JSON.stringify({
       type: 'event_msg',

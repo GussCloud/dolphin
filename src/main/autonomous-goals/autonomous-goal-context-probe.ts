@@ -19,6 +19,8 @@ export type CoordinatorContextReading = {
   contextTokens: number
   /** The provider's window when the transcript states it (Codex does; Claude does not). */
   windowTokens?: number
+  /** Model of the newest response (Claude; `[1m]` dropped), which follows a mid-session `/model`. */
+  responseModel?: string
 }
 
 async function readTail(path: string): Promise<string> {
@@ -40,6 +42,7 @@ const ClaudeAssistantLine = z.object({
   type: z.literal('assistant'),
   isSidechain: z.boolean().optional(),
   message: z.object({
+    model: z.string().optional().catch(undefined),
     usage: z.object({
       input_tokens: TokenCount,
       cache_creation_input_tokens: TokenCount,
@@ -83,7 +86,11 @@ export function readClaudeContextFromLines(
       cacheReadInputTokens: usage.cache_read_input_tokens,
       outputTokens: usage.output_tokens
     }
-    return { contextTokens: contextTokensFromUsage(tokens) }
+    const responseModel = entry.data.message.model?.trim()
+    return {
+      contextTokens: contextTokensFromUsage(tokens),
+      ...(responseModel ? { responseModel } : {})
+    }
   }
   return null
 }

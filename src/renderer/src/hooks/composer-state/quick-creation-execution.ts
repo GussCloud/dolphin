@@ -141,7 +141,8 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         platform: selectedRepoAgentLaunchPlatform,
         shell: selectedRepoStartupShell,
         isRemote: selectedRepoIsRemote,
-        telemetrySource
+        telemetrySource,
+        autonomousCoordinator: launchPromptOverride !== undefined
       })
 
       const startupPolicySettlement = await settleComposerSubmit(

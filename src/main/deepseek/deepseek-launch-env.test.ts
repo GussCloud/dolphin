@@ -51,6 +51,15 @@ describe('resolveDeepSeekLaunchEnv', () => {
     })
   })
 
+  it('sets the guide compact window unless the pane runs without auto-compaction', () => {
+    expect(resolveDeepSeekLaunchEnv(hostArgs, deps()).env.CLAUDE_CODE_AUTO_COMPACT_WINDOW).toBe(
+      '786432'
+    )
+    const { env } = resolveDeepSeekLaunchEnv({ ...hostArgs, autoCompact: false }, deps())
+    expect(env).not.toHaveProperty('CLAUDE_CODE_AUTO_COMPACT_WINDOW')
+    expect(env.ANTHROPIC_BASE_URL).toBe(DEEPSEEK_ANTHROPIC_BASE_URL)
+  })
+
   it('gives a WSL process the Linux config dir and main the UNC one', () => {
     const { env, configHome } = resolveDeepSeekLaunchEnv(
       { ...hostArgs, target: { runtime: 'wsl', wslDistro: 'Debian' } },

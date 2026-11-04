@@ -59,10 +59,14 @@ export const DEEPSEEK_MODEL_SLOT_ENV: Record<keyof DeepSeekModelSlots, string> =
   subagent: 'CLAUDE_CODE_SUBAGENT_MODEL'
 }
 
+/** The auto-compact window DeepSeek's Claude Code guide sets; also the usable window rotation assumes. */
+export const DEEPSEEK_AUTO_COMPACT_WINDOW_TOKENS = 786_432
+const DEEPSEEK_AUTO_COMPACT_WINDOW_ENV = 'CLAUDE_CODE_AUTO_COMPACT_WINDOW'
+
 const DEEPSEEK_STATIC_ENV: Record<string, string> = {
   ANTHROPIC_BASE_URL: DEEPSEEK_ANTHROPIC_BASE_URL,
   CLAUDE_CODE_EFFORT_LEVEL: 'max',
-  CLAUDE_CODE_AUTO_COMPACT_WINDOW: '786432'
+  [DEEPSEEK_AUTO_COMPACT_WINDOW_ENV]: String(DEEPSEEK_AUTO_COMPACT_WINDOW_TOKENS)
 }
 
 /** Every key `buildDeepSeekClaudeEnv` can emit; WSL forwarding and env cleanup read this list. */
@@ -109,6 +113,8 @@ export function buildDeepSeekClaudeEnv(args: {
   apiKey: string
   slots: DeepSeekModelSlots
   configDir: string
+  /** False for a goal coordinator, whose pane runs with auto-compaction off. */
+  autoCompact?: boolean
 }): Record<string, string> {
   const env: Record<string, string> = {
     ...DEEPSEEK_STATIC_ENV,
@@ -118,6 +124,9 @@ export function buildDeepSeekClaudeEnv(args: {
   }
   for (const key of DEEPSEEK_MODEL_SLOT_KEYS) {
     env[DEEPSEEK_MODEL_SLOT_ENV[key]] = args.slots[key]
+  }
+  if (args.autoCompact === false) {
+    delete env[DEEPSEEK_AUTO_COMPACT_WINDOW_ENV]
   }
   return env
 }

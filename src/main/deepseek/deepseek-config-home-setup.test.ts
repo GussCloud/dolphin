@@ -39,6 +39,24 @@ describe('prepareDeepSeekLaunch', () => {
     expect(installHooksMock).toHaveBeenCalledTimes(1)
   })
 
+  it('drops the compact window for a pane launched with auto-compaction off', async () => {
+    const configDir = makeConfigDir()
+    launchEnvMock.resolveDeepSeekLaunchEnv.mockClear()
+    launchEnvMock.resolveDeepSeekLaunchEnv.mockReturnValue({
+      env: {},
+      configHome: { processConfigDir: configDir, hostConfigDir: configDir, wslDistro: null }
+    })
+    await prepareDeepSeekLaunch({
+      connectionId: null,
+      target: { runtime: 'host' },
+      settings: { agentStatusHooksEnabled: false },
+      launchEnv: { DISABLE_AUTO_COMPACT: '1' }
+    })
+    expect(launchEnvMock.resolveDeepSeekLaunchEnv).toHaveBeenCalledWith(
+      expect.objectContaining({ autoCompact: false })
+    )
+  })
+
   it('skips the hook install when status hooks are off', async () => {
     installHooksMock.mockClear()
     const configDir = makeConfigDir()

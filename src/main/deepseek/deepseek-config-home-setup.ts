@@ -2,6 +2,7 @@ import type { GlobalSettings } from '../../shared/global-settings-types'
 import { isAgentStatusHooksEnabled } from '../agent-hooks/managed-agent-hook-controls'
 import { installDeepSeekHooks } from './deepseek-hook-service'
 import { seedDeepSeekClaudeOnboarding } from './deepseek-claude-onboarding-seed'
+import { isClaudeAutoCompactDisabledEnv } from '../../shared/autonomous-coordinator-launch-env'
 import {
   resolveDeepSeekLaunchEnv,
   type DeepSeekConfigHome,
@@ -37,11 +38,15 @@ export async function prepareDeepSeekLaunch(args: {
   connectionId: string | null | undefined
   target: DeepSeekLaunchTarget
   settings: DeepSeekLaunchSettings | undefined
+  /** The pane's own launch env; a goal coordinator's disables auto-compaction. */
+  launchEnv?: Record<string, string | undefined>
 }): Promise<Record<string, string>> {
   const { env, configHome } = resolveDeepSeekLaunchEnv({
     connectionId: args.connectionId,
     target: args.target,
-    modelSlots: args.settings?.deepseekModelSlots
+    modelSlots: args.settings?.deepseekModelSlots,
+    // Why: the overlay would otherwise re-add a compact window the coordinator never uses.
+    ...(isClaudeAutoCompactDisabledEnv(args.launchEnv) ? { autoCompact: false } : {})
   })
   await prepareDeepSeekConfigHome(configHome, args.settings)
   return env
