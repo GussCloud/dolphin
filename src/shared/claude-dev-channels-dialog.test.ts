@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  createClaudeDevChannelsAutoConfirm,
   createClaudeDevChannelsDialogTracker,
   shouldExtendTimeoutForClaudeDevChannelsDialog
 } from './claude-dev-channels-dialog'
@@ -102,5 +103,42 @@ describe('shouldExtendTimeoutForClaudeDevChannelsDialog', () => {
     expect(shouldExtendTimeoutForClaudeDevChannelsDialog(true, 0, 299_999)).toBe(true)
     expect(shouldExtendTimeoutForClaudeDevChannelsDialog(true, 0, 300_000)).toBe(false)
     expect(shouldExtendTimeoutForClaudeDevChannelsDialog(false, 0, 1)).toBe(false)
+  })
+})
+
+describe('createClaudeDevChannelsAutoConfirm', () => {
+  const twoServers = readFileSync(join(FIXTURES, 'claude-dev-channels-two-servers.txt'), 'utf8')
+  const DOLPHIN = ['dolphin-orchestration', 'dolphin-telegram']
+  const confirmCount = (text: string, size: number, allowed = DOLPHIN): number => {
+    const autoConfirm = createClaudeDevChannelsAutoConfirm(allowed)
+    return chunks(text, size).filter((chunk) => autoConfirm.observe(chunk)).length
+  }
+
+  it('presses Enter exactly once on the captured dialogs, however the output is chunked', () => {
+    for (const size of [7, 64, 100_000]) {
+      expect(confirmCount(dialog, size)).toBe(1)
+      expect(confirmCount(twoServers, size)).toBe(1)
+    }
+  })
+
+  it('never confirms a dialog that lists a channel Dolphin does not own', () => {
+    expect(confirmCount(twoServers, 64, ['dolphin-telegram'])).toBe(0)
+    expect(confirmCount(dialog.replace('server:dolphin-telegram', 'server:evil'), 64)).toBe(0)
+  })
+
+  it('never confirms another screen, and stops once the session is up', () => {
+    // The captured session after confirmation, without the dialog that preceded it.
+    const sessionUp = confirmed.slice(confirmed.indexOf('✳'))
+    expect(sessionUp.length).toBeGreaterThan(100)
+    expect(confirmCount(sessionUp, 64)).toBe(0)
+    const autoConfirm = createClaudeDevChannelsAutoConfirm(DOLPHIN)
+    autoConfirm.observe(`${String.fromCharCode(27)}]0;✳ Claude Code${String.fromCharCode(7)}`)
+    expect(autoConfirm.done()).toBe(true)
+    expect(autoConfirm.observe(dialog)).toBe(false)
+  })
+
+  it('does not press when option 2 is the highlighted choice', () => {
+    const moved = dialog.replace('❯', ' ')
+    expect(confirmCount(moved, 64)).toBe(0)
   })
 })

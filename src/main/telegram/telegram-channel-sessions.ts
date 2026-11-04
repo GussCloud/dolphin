@@ -6,7 +6,9 @@
 import {
   TELEGRAM_CHANNEL_MAX_TEXT_CHARS,
   TELEGRAM_CHANNEL_STALE_AFTER_MS,
+  TELEGRAM_CHANNEL_SUPERSEDED_STATUS,
   type TelegramChannelInboundEvent,
+  type TelegramChannelPollRequest,
   type TelegramChannelSessionRef
 } from './telegram-channel-protocol'
 
@@ -165,6 +167,31 @@ export class TelegramChannelSessions {
       queued.handedOut = true
     }
     return session.queue.map((queued) => queued.event)
+  }
+
+  /** One long-poll from a channel server: claims the pane, acks, then holds until events exist. */
+  async servePoll(
+    request: TelegramChannelPollRequest,
+    signal: AbortSignal,
+    holdMs: number
+  ): Promise<{ status: number; json?: unknown }> {
+    const session = this.claim(request)
+    if (!session) {
+      return { status: TELEGRAM_CHANNEL_SUPERSEDED_STATUS }
+    }
+    session.lastPollAt = this.now()
+    session.wake?.()
+    this.acknowledge(session, request.ack)
+    if (session.queue.length === 0 && (await this.hold(session, holdMs, signal)) === 'aborted') {
+      // Why disconnect now: a healthy channel never drops its own poll; its process is gone.
+      session.lastPollAt = 0
+      return { status: 204 }
+    }
+    if (this.current(request) !== session) {
+      return { status: TELEGRAM_CHANNEL_SUPERSEDED_STATUS }
+    }
+    session.lastPollAt = this.now()
+    return { status: 200, json: { events: this.handOut(session) } }
   }
 
   /** Holds until an event is queued, the hold elapses, or the client drops the request. */

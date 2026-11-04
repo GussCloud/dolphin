@@ -9,6 +9,12 @@ import {
   resolveTelegramChannelEndpoint
 } from './telegram-channel-host-client'
 import { createTelegramChannelMcpServer } from './telegram-channel-mcp-server'
+import { OrchestrationChannelGateway } from '../orchestration-channel/orchestration-channel-gateway'
+import {
+  ORCHESTRATION_CHANNEL_DISCONNECT_PATH,
+  ORCHESTRATION_CHANNEL_PATH_PREFIX,
+  ORCHESTRATION_CHANNEL_POLL_PATH
+} from '../orchestration-channel/orchestration-channel-protocol'
 
 vi.mock('../telemetry/client', () => ({ track: vi.fn() }))
 vi.mock('../telemetry/cohort-classifier', () => ({ getCohortAtEmit: vi.fn(() => ({})) }))
@@ -51,6 +57,7 @@ function channelHost(server: AgentHookServer, session: Record<string, string>) {
 afterEach(async () => {
   for (const server of servers.splice(0)) {
     server.setChannelRouteHandler(null)
+    server.setChannelRouteHandler(null, null, ORCHESTRATION_CHANNEL_PATH_PREFIX)
     await server.stop()
   }
 })
@@ -114,6 +121,34 @@ describe('telegram channel over the agent-hook listener', () => {
     )
     await expect(host.poll(signal, 0)).resolves.toEqual([])
     expect(gateway.isConnected(GOOD_PANE)).toBe(true)
+  })
+
+  it('serves the Telegram and orchestration channels of one pane side by side', async () => {
+    const server = await startHookServer()
+    const telegram = new TelegramChannelGateway(createBridge(), { pollHoldMs: 100 })
+    const orchestration = new OrchestrationChannelGateway({ pollHoldMs: 100 })
+    server.setChannelRouteHandler(telegram.handleRoute)
+    server.setChannelRouteHandler(
+      orchestration.handleRoute,
+      null,
+      ORCHESTRATION_CHANNEL_PATH_PREFIX
+    )
+    const signal = new AbortController().signal
+    const orchestrationHost = createTelegramChannelHttpHost({
+      session: { paneKey: PANE, sessionId: 'orch-1', launchToken: LAUNCH_TOKEN },
+      resolveEndpoint: () => resolveTelegramChannelEndpoint(server.buildPtyEnv()),
+      paths: {
+        poll: ORCHESTRATION_CHANNEL_POLL_PATH,
+        disconnect: ORCHESTRATION_CHANNEL_DISCONNECT_PATH
+      }
+    })
+    await expect(channelHost(server, {}).poll(signal, 0)).resolves.toEqual([])
+    await expect(orchestrationHost.poll(signal, 0)).resolves.toEqual([])
+    expect(telegram.isConnected(PANE)).toBe(true)
+    expect(orchestration.connectedSessionId(PANE)).toBe('orch-1')
+    server.setChannelRouteHandler(null, null, ORCHESTRATION_CHANNEL_PATH_PREFIX)
+    await expect(orchestrationHost.poll(signal, 0)).rejects.toThrow('404')
+    await expect(channelHost(server, {}).poll(signal, 0)).resolves.toEqual([])
   })
 
   it('holds a long-poll past the 5s slowloris cap of the listener', async () => {

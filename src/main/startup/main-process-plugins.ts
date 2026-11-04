@@ -27,6 +27,7 @@ import { startMainProcessClosedPaneAgentReaper } from './main-process-closed-pan
 import { startMainProcessClaudeConnectionLossRetry } from './main-process-claude-connection-loss-retry'
 import { startMainProcessTelegramAnswers } from './main-process-telegram-answers'
 import { startMainProcessTelegramChannel } from './main-process-telegram-channel'
+import { startMainProcessOrchestrationChannel } from './main-process-orchestration-channel'
 import { mainProcessState as state } from './main-process-state'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 
@@ -176,6 +177,7 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   startMainProcessClaudeConnectionLossRetry(store, runtime, telegramBridge, (event) =>
     agentInteraction.onRetryExhausted(event)
   )
+  startMainProcessOrchestrationChannel(store)
   startMainProcessAutonomousGoals(store, runtime)
   startMainProcessClosedPaneAgentReaper()
 }

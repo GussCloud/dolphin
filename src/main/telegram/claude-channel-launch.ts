@@ -1,14 +1,16 @@
 /**
- * Opts a local Claude Code launch into the Dolphin Telegram channel by splicing
- * `--mcp-config=<file> --dangerously-load-development-channels=server:dolphin-telegram` after the
- * `claude` token. Anything this cannot do safely leaves the command untouched, which keeps the pane
- * on the terminal.send fallback.
+ * Opts a local Claude Code launch into Dolphin's channels (Telegram, and the orchestration channel
+ * for goal coordinators) by splicing `--mcp-config=<file>` plus one
+ * `--dangerously-load-development-channels=server:<name>` per channel after the `claude` token.
+ * Anything this cannot do safely leaves the command untouched, which keeps the pane on its
+ * terminal-typing fallback.
  */
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { hasReachedAppVersion } from '../../shared/app-version'
 import { SETUP_AGENT_SEQUENCE_STARTUP_COMMAND_ENV } from '../../shared/setup-agent-sequencing'
 import type { TelegramChannelAvailability } from '../../shared/telegram-bridge-state'
+import { AUTONOMOUS_COORDINATOR_CHANNEL_ENV } from '../../shared/autonomous-coordinator-launch-env'
 import { grantClaudeChannelPane } from './claude-channel-panes'
 import { DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME } from './telegram-channel-protocol'
 
@@ -33,20 +35,25 @@ export type ClaudeChannelMcpConfig = {
   >
 }
 
+export type ClaudeChannelServerEntry = { name: string; entryPath: string }
+
 export function buildClaudeChannelMcpConfig(args: {
   execPath: string
-  entryPath: string
+  servers: readonly ClaudeChannelServerEntry[]
 }): ClaudeChannelMcpConfig {
   return {
-    mcpServers: {
-      [DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME]: {
-        type: 'stdio',
-        command: args.execPath,
-        args: [args.entryPath],
-        // Why: Dolphin's own Electron binary is the only Node runtime guaranteed on this host.
-        env: { ELECTRON_RUN_AS_NODE: '1' }
-      }
-    }
+    mcpServers: Object.fromEntries(
+      args.servers.map((server) => [
+        server.name,
+        {
+          type: 'stdio' as const,
+          command: args.execPath,
+          args: [server.entryPath],
+          // Why: Dolphin's own Electron binary is the only Node runtime guaranteed on this host.
+          env: { ELECTRON_RUN_AS_NODE: '1' }
+        }
+      ])
+    )
   }
 }
 
@@ -59,11 +66,21 @@ export function shellLiteralConfigPath(path: string): string | null {
   return DOUBLE_QUOTE_UNSAFE_RE.test(portable) ? null : `"${portable}"`
 }
 
-/** The argument suffix, or null when the config path cannot be written literally. */
-export function buildClaudeChannelLaunchArgs(mcpConfigPath: string): string | null {
+/**
+ * The argument suffix, or null when the config path cannot be written literally. One flag per
+ * server: Claude Code accumulates repeated `=` occurrences into one channel list
+ * (src/main/runtime/__fixtures__/claude-dev-channels-two-servers.txt).
+ */
+export function buildClaudeChannelLaunchArgs(
+  mcpConfigPath: string,
+  serverNames: readonly string[] = [DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME]
+): string | null {
   const literal = shellLiteralConfigPath(mcpConfigPath)
-  return literal
-    ? `--mcp-config=${literal} --dangerously-load-development-channels=server:${DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME}`
+  return literal && serverNames.length > 0
+    ? [
+        `--mcp-config=${literal}`,
+        ...serverNames.map((name) => `--dangerously-load-development-channels=server:${name}`)
+      ].join(' ')
     : null
 }
 
@@ -96,10 +113,49 @@ export type ClaudeChannelLaunchPolicy = {
   launchArgs(): string | null
 }
 
+/** Launch args for a goal coordinator: its channel alone, or together with Telegram's. */
+export type CoordinatorChannelLaunchArgs = { alone: string; withTelegram: string | null }
+
+export type CoordinatorChannelLaunchPolicy = {
+  launchArgs(): CoordinatorChannelLaunchArgs | null
+}
+
 let activePolicy: ClaudeChannelLaunchPolicy | null = null
+let activeCoordinatorPolicy: CoordinatorChannelLaunchPolicy | null = null
 
 export function setClaudeChannelLaunchPolicy(policy: ClaudeChannelLaunchPolicy | null): void {
   activePolicy = policy
+}
+
+export function setCoordinatorChannelLaunchPolicy(
+  policy: CoordinatorChannelLaunchPolicy | null
+): void {
+  activeCoordinatorPolicy = policy
+}
+
+/** The renderer marks a local goal coordinator launch; `claude` only, see deepseek-agent.md. */
+function isCoordinatorChannelLaunch(target: ClaudeChannelLaunchTarget): boolean {
+  // Why not DeepSeek: Dolphin auto-accepts this launch's dialog, never on a third-party account.
+  return target.launchAgent === 'claude' && target.env?.[AUTONOMOUS_COORDINATOR_CHANNEL_ENV] === '1'
+}
+
+function resolveLaunchArgs(
+  target: ClaudeChannelLaunchTarget,
+  policy: ClaudeChannelLaunchPolicy | null,
+  coordinatorPolicy: CoordinatorChannelLaunchPolicy | null
+): { launchArgs: string; coordinator: boolean } | null {
+  const telegramArgs = policy?.launchArgs() ?? null
+  const coordinatorArgs = isCoordinatorChannelLaunch(target)
+    ? (coordinatorPolicy?.launchArgs() ?? null)
+    : null
+  if (coordinatorArgs) {
+    // Why alone when the combined config is missing: Telegram then keeps its terminal fallback.
+    const launchArgs = telegramArgs
+      ? (coordinatorArgs.withTelegram ?? coordinatorArgs.alone)
+      : coordinatorArgs.alone
+    return { launchArgs, coordinator: true }
+  }
+  return telegramArgs ? { launchArgs: telegramArgs, coordinator: false } : null
 }
 
 /**
@@ -108,22 +164,26 @@ export function setClaudeChannelLaunchPolicy(policy: ClaudeChannelLaunchPolicy |
  */
 export function applyClaudeChannelLaunch(
   target: ClaudeChannelLaunchTarget,
-  policy: ClaudeChannelLaunchPolicy | null = activePolicy
+  policy: ClaudeChannelLaunchPolicy | null = activePolicy,
+  coordinatorPolicy: CoordinatorChannelLaunchPolicy | null = activeCoordinatorPolicy
 ): { command: string | undefined; env: Record<string, string> | undefined } {
   const unchanged = { command: target.command, env: target.env }
-  if (target.launchAgent !== 'claude' || target.connectionId || target.isWsl || !policy) {
+  if (target.launchAgent !== 'claude' || target.connectionId || target.isWsl) {
     return unchanged
   }
-  const launchArgs = policy.launchArgs()
-  if (!launchArgs) {
+  const resolved = resolveLaunchArgs(target, policy, coordinatorPolicy)
+  if (!resolved) {
     return unchanged
   }
+  const { launchArgs } = resolved
+  // Why only coordinators: their launch is unattended, and every listed server is Dolphin's own.
+  const grant = { autoConfirmDevChannelsDialog: resolved.coordinator }
   const sequenced = target.env?.[SETUP_AGENT_SEQUENCE_STARTUP_COMMAND_ENV]
   if (target.env && sequenced) {
     // Why: the setup runner evals this env value, so the claude line lives here, not in command.
     const spliced = spliceClaudeChannelArgs(sequenced, launchArgs)
     if (spliced) {
-      grantClaudeChannelPane(target.env)
+      grantClaudeChannelPane(target.env, grant)
     }
     return spliced
       ? {
@@ -134,7 +194,7 @@ export function applyClaudeChannelLaunch(
   }
   const spliced = target.command ? spliceClaudeChannelArgs(target.command, launchArgs) : null
   if (spliced) {
-    grantClaudeChannelPane(target.env)
+    grantClaudeChannelPane(target.env, grant)
   }
   return spliced ? { command: spliced, env: target.env } : unchanged
 }
@@ -150,19 +210,19 @@ export type ClaudeChannelLaunchPolicyHandle = ClaudeChannelLaunchPolicy & {
 type ProbedAvailability = Exclude<ClaudeChannelAvailability, 'off'>
 
 /** Settings + version gate + materialized MCP config, cached so spawns stay synchronous. */
-export function createClaudeChannelLaunchPolicy(deps: {
+export function createClaudeChannelLaunchPolicy<TArgs = string>(deps: {
   isEnabled: () => boolean
   /** Null when no local `claude` was found. */
   probeClaudeVersion: () => Promise<string | null>
   /** Writes the MCP config where its path is shell-literal and returns the launch args, or null. */
-  writeMcpConfig: () => string | null
+  writeMcpConfig: () => TArgs | null
   now?: () => number
   reprobeAfterMs?: number
-}): ClaudeChannelLaunchPolicyHandle {
+}): Omit<ClaudeChannelLaunchPolicyHandle, 'launchArgs'> & { launchArgs(): TArgs | null } {
   const now = deps.now ?? Date.now
   const reprobeAfterMs = deps.reprobeAfterMs ?? 10 * 60_000
   let verdict: ProbedAvailability = 'checking'
-  let configArgs: string | null = null
+  let configArgs: TArgs | null = null
   let probedAt: number | null = null
   let inFlight: Promise<void> | null = null
   const listeners = new Set<() => void>()
@@ -227,11 +287,12 @@ export function createClaudeChannelLaunchPolicy(deps: {
  */
 export function writeClaudeChannelMcpConfig(
   candidateDirs: readonly string[],
-  config: ClaudeChannelMcpConfig
+  config: ClaudeChannelMcpConfig,
+  fileName = 'claude-channel-mcp.json'
 ): string | null {
   for (const dir of candidateDirs) {
-    const filePath = join(dir, 'claude-channel-mcp.json')
-    const launchArgs = buildClaudeChannelLaunchArgs(filePath)
+    const filePath = join(dir, fileName)
+    const launchArgs = buildClaudeChannelLaunchArgs(filePath, Object.keys(config.mcpServers))
     if (!launchArgs) {
       continue
     }

@@ -42,6 +42,7 @@ const PLAIN_NODE_ENTRY_NAMES = [
   'daemon-entry',
   'parcel-watcher-process-entry',
   'telegram-channel-mcp-entry',
+  'orchestration-channel-mcp-entry',
   'computer-sidecar',
   'wsl-transcript-fs-process-entry',
   ...CLI_MAIN_ENTRY_NAMES

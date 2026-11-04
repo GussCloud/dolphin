@@ -28,6 +28,9 @@ import type { OrchestrationDb } from './orchestration/db'
 import { OrchestrationMailboxOwner } from './orchestration/mailbox-owner'
 import { OrchestrationMailboxDeliveryTarget } from './orchestration/mailbox-delivery-target'
 import { OrchestrationMailboxPointerDelivery } from './orchestration/mailbox-pointer-delivery'
+import { OrchestrationChannelPointerLane } from './orchestration/channel-mailbox-pointer-lane'
+import { orchestrationChannelGateway } from '../orchestration-channel/orchestration-channel-gateway'
+import { getPaneKeyForPty } from '../ipc/pty/pane/key-state'
 import { OrchestrationMailboxNotificationCoordinator } from './orchestration/mailbox-notification-coordinator'
 import type { RuntimeMessageWaiter } from './runtime-message-waiters'
 import { RuntimeMessageWaiters } from './runtime-message-waiters'
@@ -212,7 +215,13 @@ export class DolphinRuntimeWithStopRequestedPtyIds extends DolphinRuntimeWithRun
     isLeafPtyProvenAbsent: (ptyId) => this.isLeafPtyProvenAbsent(ptyId),
     redriveMailbox: (mailboxHandle, reservedTypes) =>
       this.deliverPendingMessagesForHandle(mailboxHandle, reservedTypes),
-    writePty: (ptyId, data) => this.writeOrchestrationPointerPty(ptyId, data)
+    writePty: (ptyId, data) => this.writeOrchestrationPointerPty(ptyId, data),
+    channelLane: new OrchestrationChannelPointerLane({
+      channel: orchestrationChannelGateway,
+      getDb: () => this._orchestrationDb,
+      resolvePaneKey: (leaf) => (leaf.ptyId ? getPaneKeyForPty(leaf.ptyId) : null),
+      redrive: (mailboxHandle) => this.deliverPendingMessagesForHandle(mailboxHandle)
+    })
   })
 
   protected readonly orchestrationStructuredMailboxPointerDelivery =

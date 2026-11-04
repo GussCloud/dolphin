@@ -9,6 +9,10 @@ export function getPtyIdForPaneKey(paneKey: string): string | undefined {
   return paneKeyPtyId.get(paneKey)
 }
 
+export function getPaneKeyForPty(ptyId: string): string | undefined {
+  return ptyPaneKey.get(ptyId)
+}
+
 // Why: let consumers tear down paneKey-scoped state on PTY exit so their timers can't leak; a callback registry keeps the cross-module dependency narrow.
 export type PaneKeyTeardownListener = (paneKey: string) => void
 export const paneKeyTeardownListeners = new Set<PaneKeyTeardownListener>()

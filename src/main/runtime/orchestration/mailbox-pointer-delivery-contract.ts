@@ -5,6 +5,7 @@ import type { OrchestrationMailboxLeaf, OrchestrationMailboxOwner } from './mail
 import type { OrchestrationMailboxPointerSubmitTarget } from './mailbox-pointer-submit'
 import type { OrchestrationCliCommand } from './cli-command'
 import type { WriteSettlement } from '../../../shared/pty-write-settlement'
+import type { OrchestrationChannelPointerLane } from './channel-mailbox-pointer-lane'
 
 export type OrchestrationMailboxPointerMessage = {
   id: string
@@ -35,4 +36,6 @@ export type PointerDeliveryDependencies<TWaiter extends OrchestrationMessageWait
   isLeafPtyProvenAbsent: (ptyId: string) => Promise<boolean>
   redriveMailbox: (mailboxHandle: string, reservedTypes?: ReadonlySet<string>) => void
   writePty: (ptyId: string, data: string) => WriteSettlement | Promise<WriteSettlement>
+  /** Pushes the pointer through the pane's Claude Code channel when one is proven or on trial. */
+  channelLane?: OrchestrationChannelPointerLane
 }

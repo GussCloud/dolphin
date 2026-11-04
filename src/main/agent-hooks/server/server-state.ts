@@ -1,8 +1,5 @@
 import type { createServer } from 'node:http'
-import type {
-  AgentHookChannelPaneAuthorizer,
-  AgentHookChannelRouteHandler
-} from './server-channel-route'
+import type { AgentHookChannelRoute } from './server-channel-route'
 import { randomBytes, randomUUID } from 'node:crypto'
 
 import {
@@ -95,8 +92,7 @@ export abstract class AgentHookServerState {
   protected onClaudeStatusLine: ServerStatusLineListener = null
   protected onClosedPaneHook: ClosedPaneHookListener = null
   // Why not reset on stop(): the owner registers once at startup and must survive a listener restart.
-  protected channelRouteHandler: AgentHookChannelRouteHandler | null = null
-  protected channelPaneAuthorizer: AgentHookChannelPaneAuthorizer | null = null
+  protected readonly channelRoutes = new Map<string, AgentHookChannelRoute>()
   protected onPaneStatusCleared: PaneStatusClearListener | null = null
   protected paneStatusClearListeners = new Set<PaneStatusClearListener>()
   protected statusDropListeners = new Set<StatusDropListener>()

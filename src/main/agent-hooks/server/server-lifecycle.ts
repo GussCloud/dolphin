@@ -14,7 +14,11 @@ import { isHookRequestTruncatedError } from '../../../shared/agent-hook-transpor
 import { drainAgentHookSpool, type SpoolRecord } from '../../../shared/agent-hook-spool'
 import { clearAllListenerCaches } from '../../../shared/agent-hook-listener/listener-state'
 import { trackEmptyPaneKeyHook } from './server-transport-rules'
-import { isAgentHookChannelPath, serveAgentHookChannelRoute } from './server-channel-route'
+import {
+  isAgentHookChannelPath,
+  selectAgentHookChannelRoute,
+  serveAgentHookChannelRoute
+} from './server-channel-route'
 import { AgentHookServerRuntimeEnv } from './server-runtime-env'
 
 type AgentHookServerStartOptions = {
@@ -88,11 +92,12 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeEnv
       })
       const pathname = new URL(req.url ?? '/', 'http://127.0.0.1').pathname
       if (isAgentHookChannelPath(pathname)) {
+        const route = selectAgentHookChannelRoute(this.channelRoutes, pathname)
         await serveAgentHookChannelRoute(req, res, pathname, {
-          handler: this.channelRouteHandler,
+          handler: route?.handler ?? null,
           authorize: (paneKey, launchToken) =>
             this.verifyLocalPaneLaunchToken(paneKey, launchToken) ||
-            this.channelPaneAuthorizer?.(paneKey, launchToken) === true
+            route?.authorize?.(paneKey, launchToken) === true
         })
         return
       }
