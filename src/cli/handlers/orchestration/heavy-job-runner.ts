@@ -2,7 +2,7 @@ import { createWriteStream, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { spawnProcess } from '../../../shared/child-process/run-process'
-import { resolveCommandOnLocalPath } from '../../../main/ipc/command-path-resolver'
+import { resolveCommandOnLocalPath } from '../../../shared/child-process/command-path-resolution'
 
 const TAIL_BYTES = 4096
 const TAIL_LINES = 15
