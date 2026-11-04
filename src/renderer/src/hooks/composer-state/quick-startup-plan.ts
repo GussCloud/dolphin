@@ -13,6 +13,11 @@ import {
 import { resolveInitialNativeChatSessionOptions } from '@/components/native-chat/native-chat-launch-session-options'
 import { isNativeChatTranscriptLocalReadable } from '@/lib/native-chat-transcript-readability'
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
+import { CLIENT_PLATFORM } from '@/lib/new-workspace'
+import {
+  buildAutonomousCoordinatorLaunchEnv,
+  isCoordinatorContextMeasurable
+} from '../../../../shared/autonomous-coordinator-launch-env'
 
 export type QuickComposerStartupInput = {
   agent: TuiAgent | null
@@ -24,6 +29,8 @@ export type QuickComposerStartupInput = {
   shell: AgentStartupShell | null | undefined
   isRemote: boolean
   telemetrySource: WorktreeCreationRequest['telemetrySource']
+  /** The pane will coordinate an autonomous goal. */
+  autonomousCoordinator?: boolean
 }
 
 export type QuickComposerStartup = {
@@ -34,6 +41,22 @@ export type QuickComposerStartup = {
 
 export function buildQuickComposerStartup(input: QuickComposerStartupInput): QuickComposerStartup {
   const { agent, draftPrompt, prompt, settings } = input
+  const agentEnv =
+    agent === null
+      ? {}
+      : {
+          ...resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
+          ...(input.autonomousCoordinator
+            ? buildAutonomousCoordinatorLaunchEnv({
+                agent,
+                transcriptReadableOnHost: isCoordinatorContextMeasurable({
+                  remote: input.isRemote,
+                  launchPlatform: input.platform,
+                  hostPlatform: CLIENT_PLATFORM
+                })
+              })
+            : {})
+        }
   const sessionOptions =
     agent === null
       ? undefined
@@ -61,7 +84,7 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
           draft: draftPrompt,
           cmdOverrides: settings?.agentCmdOverrides ?? {},
           agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
-          agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
+          agentEnv,
           sessionInstructions: resolveTuiAgentSessionInstructions(
             agent,
             settings?.agentSessionInstructions
@@ -91,7 +114,7 @@ export function buildQuickComposerStartup(input: QuickComposerStartupInput): Qui
       prompt,
       cmdOverrides: settings?.agentCmdOverrides ?? {},
       agentArgs: resolveTuiAgentLaunchArgs(agent, settings?.agentDefaultArgs),
-      agentEnv: resolveTuiAgentLaunchEnv(agent, settings?.agentDefaultEnv),
+      agentEnv,
       sessionInstructions: resolveTuiAgentSessionInstructions(
         agent,
         settings?.agentSessionInstructions

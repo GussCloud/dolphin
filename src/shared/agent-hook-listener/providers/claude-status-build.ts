@@ -1,4 +1,5 @@
 import {
+  AGENT_MODEL_MAX_LENGTH,
   normalizeAgentStatusPayload,
   type AgentStatusState,
   type AgentWorkingMode,
@@ -10,6 +11,21 @@ import { extractToolFields, isNewTurnEvent } from '../provider-event-routing'
 import type { HookListenerState } from '../listener-state'
 import { mainAgentTurnInterrupted } from '../../agent-lead-status-fold'
 import { claudeMainAgentStatusForPayload } from './claude-roster-state'
+import { normalizeOptionalField } from '../../agent-status-field-normalization'
+
+/** Only SessionStart names the model; a session without one (older CLI) publishes none. */
+export function recordClaudeSessionModel(
+  state: HookListenerState,
+  paneKey: string,
+  hookPayload: Record<string, unknown>
+): void {
+  const model = normalizeOptionalField(hookPayload['model'], AGENT_MODEL_MAX_LENGTH)
+  if (model) {
+    state.claudeModelByPaneKey.set(paneKey, model)
+  } else {
+    state.claudeModelByPaneKey.delete(paneKey)
+  }
+}
 
 export function buildClaudeStatusPayload(
   state: HookListenerState,
@@ -45,6 +61,7 @@ export function buildClaudeStatusPayload(
       resetOnNewTurn: options.updateToolSnapshot && isNewTurnEvent('claude', eventName)
     }),
     agentType: 'claude',
+    model: state.claudeModelByPaneKey.get(paneKey),
     toolName: snapshot.toolName,
     toolInput: snapshot.toolInput,
     interactivePrompt: snapshot.interactivePrompt,

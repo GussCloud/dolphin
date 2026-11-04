@@ -7,11 +7,14 @@ import type { CoordinatorContextReading } from './autonomous-goal-context-probe'
 import {
   AUTONOMOUS_GOAL_HANDOFF_TIMEOUT_MS,
   AUTONOMOUS_GOAL_RESET_SETTLE_MS,
-  AUTONOMOUS_GOAL_ROTATE_FALLBACK_TURNS,
   AUTONOMOUS_GOAL_ROTATION_COOLDOWN_MS,
-  rotationThreshold,
   startAutonomousGoalRotation
 } from './autonomous-goal-rotation'
+import {
+  AUTONOMOUS_GOAL_ROTATE_FALLBACK_TURNS,
+  forcedRotationThreshold,
+  rotationThreshold
+} from './autonomous-goal-context-pressure'
 
 const PANE = 'tab-1:11111111-1111-4111-8111-111111111111'
 
@@ -31,7 +34,13 @@ const GOAL: AutonomousGoal = {
   updatedAt: 1
 }
 
-function harness(options: { contextTokens?: number | null; connectionId?: string | null } = {}) {
+function harness(
+  options: {
+    contextTokens?: number | null
+    connectionId?: string | null
+    hostPlatform?: NodeJS.Platform
+  } = {}
+) {
   let statusListener: (payload: EnrichedAgentHookEventPayload) => void = () => {}
   let clearListener: (clear: AgentStatusClearIpcPayload) => void = () => {}
   const ctx: {
@@ -48,7 +57,7 @@ function harness(options: { contextTokens?: number | null; connectionId?: string
     sent: [],
     rotations: 0,
     reading:
-      options.contextTokens === null ? null : { contextTokens: options.contextTokens ?? 150_000 }
+      options.contextTokens === null ? null : { contextTokens: options.contextTokens ?? 185_000 }
   }
   const dispose = startAutonomousGoalRotation({
     subscribeEnrichedStatus: (listener) => {
@@ -76,7 +85,8 @@ function harness(options: { contextTokens?: number | null; connectionId?: string
     recordRotation: () => {
       ctx.rotations += 1
     },
-    now: () => Date.now()
+    now: () => Date.now(),
+    hostPlatform: options.hostPlatform ?? 'linux'
   })
   let clock = 1_000
   const turnEnds = (overrides: Partial<EnrichedAgentHookEventPayload> = {}): void => {
@@ -137,8 +147,8 @@ describe('autonomous goal session rotation', () => {
     expect(h.ctx.sent.at(-1)).toEqual({ kind: 'command', text: '/clear' })
   })
 
-  it('rotates a DeepSeek coordinator earlier, with the Claude Code reset', async () => {
-    const h = harness({ contextTokens: 70_000 })
+  it('rotates a DeepSeek coordinator at 90% of its guide window, with the Claude Code reset', async () => {
+    const h = harness({ contextTokens: 710_000 })
     h.ctx.goal = { ...GOAL, agent: 'deepseek' }
     h.turnEnds()
     await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_HANDOFF_TIMEOUT_MS)
@@ -187,6 +197,22 @@ describe('autonomous goal session rotation', () => {
     expect(h.ctx.sent).toHaveLength(1)
   })
 
+  it('counts turns for a WSL transcript on Windows and reads a Windows one', async () => {
+    const wsl = harness({ hostPlatform: 'win32' })
+    wsl.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(wsl.ctx.sent).toEqual([])
+
+    const native = harness({ hostPlatform: 'win32' })
+    native.turnEnds({
+      providerSession: { key: 'session_id', id: 's1', transcriptPath: 'C:\\Users\\me\\t.jsonl' }
+    })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(native.ctx.sent).toEqual([
+      { kind: 'prompt', text: AUTONOMOUS_COORDINATOR_HANDOFF_REQUEST }
+    ])
+  })
+
   it('does not rotate twice inside the cooldown, nor a usage-limited goal', async () => {
     const h = harness()
     h.turnEnds()
@@ -217,10 +243,102 @@ describe('autonomous goal session rotation', () => {
     expect(h.ctx.sent).toEqual([])
   })
 
-  it('rotates at the smaller of the absolute bound and a share of a stated window', () => {
-    expect(rotationThreshold({ contextTokens: 0 }, 'claude')).toBe(120_000)
-    expect(rotationThreshold({ contextTokens: 0, windowTokens: 1_000_000 }, 'codex')).toBe(120_000)
-    expect(rotationThreshold({ contextTokens: 0, windowTokens: 128_000 }, 'codex')).toBe(76_800)
-    expect(rotationThreshold({ contextTokens: 0 }, 'deepseek-agent-teams')).toBe(64_000)
+  it('rotates at 90% of the window and forces at 95%', () => {
+    expect(rotationThreshold(200_000)).toBe(180_000)
+    expect(forcedRotationThreshold(200_000)).toBe(190_000)
+    expect(rotationThreshold(272_000)).toBe(244_800)
+  })
+
+  it('rotates against the window the session model names', async () => {
+    const h = harness({ contextTokens: 850_000 })
+    const withModel = {
+      payload: {
+        state: 'done' as const,
+        prompt: 'p',
+        agentType: 'claude' as const,
+        model: 'claude-opus-5[1m]'
+      }
+    }
+    h.turnEnds(withModel)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.ctx.sent).toEqual([])
+    h.ctx.reading = { contextTokens: 905_000 }
+    h.turnEnds(withModel)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.ctx.sent).toEqual([{ kind: 'prompt', text: AUTONOMOUS_COORDINATOR_HANDOFF_REQUEST }])
+  })
+
+  it('forces a reset with no handoff note past 95%, even inside the cooldown', async () => {
+    const h = harness()
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_RESET_SETTLE_MS)
+    expect(h.ctx.rotations).toBe(1)
+    const sentAfterRotation = h.ctx.sent.length
+
+    h.ctx.reading = { contextTokens: 195_000 }
+    h.turnEnds({
+      providerSession: { key: 'session_id', id: 's2', transcriptPath: '/tmp/t2.jsonl' }
+    })
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_RESET_SETTLE_MS)
+    expect(h.ctx.sent.slice(sentAfterRotation)).toEqual([
+      { kind: 'command', text: '/clear' },
+      { kind: 'prompt', text: 'resume goal_1' }
+    ])
+    expect(h.ctx.rotations).toBe(2)
+  })
+
+  it('does not force on a reading of the transcript the last rotation left', async () => {
+    const h = harness()
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_RESET_SETTLE_MS)
+    const sentAfterRotation = h.ctx.sent.length
+    h.ctx.reading = { contextTokens: 195_000 }
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_RESET_SETTLE_MS)
+    expect(h.ctx.sent).toHaveLength(sentAfterRotation)
+  })
+
+  it('defers a forced reset while the user composes, then lands once they go quiet', async () => {
+    const h = harness({ contextTokens: 195_000 })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    h.ctx.composingWaitMs = 8_000
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.ctx.sent).toEqual([])
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('user is composing); attempt 1'))
+
+    // Still composing at the retry: deferred again, never sent over the draft.
+    await vi.advanceTimersByTimeAsync(8_000)
+    expect(h.ctx.sent).toEqual([])
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('attempt 2'))
+
+    h.ctx.composingWaitMs = null
+    await vi.advanceTimersByTimeAsync(8_000 + AUTONOMOUS_GOAL_RESET_SETTLE_MS)
+    expect(h.ctx.sent.map((entry) => entry.text)).toEqual(['/clear', 'resume goal_1'])
+    expect(h.ctx.rotations).toBe(1)
+    warn.mockRestore()
+  })
+
+  it('forces a reset after a handoff the user took over', async () => {
+    const h = harness()
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    h.ctx.reading = { contextTokens: 195_000 }
+    h.ctx.lastInputAt = 42
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.ctx.sent.map((entry) => entry.kind)).toEqual(['prompt'])
+
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_RESET_SETTLE_MS)
+    expect(h.ctx.sent.map((entry) => entry.text)).toEqual([
+      AUTONOMOUS_COORDINATOR_HANDOFF_REQUEST,
+      '/clear',
+      'resume goal_1'
+    ])
   })
 })

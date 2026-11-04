@@ -16,13 +16,8 @@ import {
   AUTONOMOUS_COORDINATOR_RESET_COMMAND
 } from '../../shared/autonomous-coordinator-prompt'
 import type { CoordinatorContextReading } from './autonomous-goal-context-probe'
+import { assessCoordinatorContextPressure } from './autonomous-goal-context-pressure'
 
-/** Below every supported window and well below where the CLIs auto-compact. */
-export const AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS = 120_000
-/** Share of a stated window to rotate at when it is smaller than the absolute bound. */
-export const AUTONOMOUS_GOAL_ROTATE_AT_WINDOW_SHARE = 0.6
-/** Without a readable transcript (SSH, WSL), rotate on turn count instead. */
-export const AUTONOMOUS_GOAL_ROTATE_FALLBACK_TURNS = 40
 export const AUTONOMOUS_GOAL_ROTATION_COOLDOWN_MS = 10 * 60_000
 export const AUTONOMOUS_GOAL_HANDOFF_TIMEOUT_MS = 3 * 60_000
 /** Time for the CLI to finish its reset before the resume prompt is typed. */
@@ -50,6 +45,7 @@ export type AutonomousGoalRotationPorts = {
   buildResumePrompt: (goal: AutonomousGoal) => string
   recordRotation: (goalId: string) => void
   now?: () => number
+  hostPlatform?: NodeJS.Platform
   schedule?: (run: () => void, ms: number) => () => void
 }
 
@@ -60,33 +56,16 @@ type PaneRotationState = {
   phase: 'idle' | 'handoff' | 'resetting'
   inputSnapshot?: number
   cancelTimer?: () => void
+  /** Consecutive turns a forced rotation was due but did not land. */
+  forcedAttempts: number
+  lastTranscriptPath?: string
+  /** The transcript the last rotation left; a reading of it is the old session's size. */
+  rotatedFromTranscriptPath?: string
 }
 
 function defaultSchedule(run: () => void, ms: number): () => void {
   const timer = setTimeout(run, ms)
   return () => clearTimeout(timer)
-}
-
-/** DeepSeek's chat models have a 128k window and its Claude-format transcript states none. */
-export const AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS_BY_AGENT: Record<
-  AutonomousGoalAgent,
-  number
-> = {
-  claude: AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS,
-  'claude-agent-teams': AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS,
-  codex: AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS,
-  deepseek: 64_000,
-  'deepseek-agent-teams': 64_000
-}
-
-export function rotationThreshold(
-  reading: CoordinatorContextReading,
-  agent: AutonomousGoalAgent
-): number {
-  const ceiling = AUTONOMOUS_GOAL_ROTATE_AT_CONTEXT_TOKENS_BY_AGENT[agent]
-  return reading.windowTokens
-    ? Math.min(ceiling, Math.floor(reading.windowTokens * AUTONOMOUS_GOAL_ROTATE_AT_WINDOW_SHARE))
-    : ceiling
 }
 
 function isCompletedLeadTurn(enriched: EnrichedAgentHookEventPayload): boolean {
@@ -102,12 +81,13 @@ function isCompletedLeadTurn(enriched: EnrichedAgentHookEventPayload): boolean {
 export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts): () => void {
   const schedule = ports.schedule ?? defaultSchedule
   const now = ports.now ?? Date.now
+  const hostPlatform = ports.hostPlatform ?? process.platform
   const panes = new Map<string, PaneRotationState>()
 
   function paneState(paneKey: string): PaneRotationState {
     let state = panes.get(paneKey)
     if (!state) {
-      state = { turnsSinceRotation: 0, phase: 'idle' }
+      state = { turnsSinceRotation: 0, phase: 'idle', forcedAttempts: 0 }
       panes.set(paneKey, state)
     }
     return state
@@ -133,26 +113,11 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
     return ports.readLastInputAt(terminal) !== state.inputSnapshot
   }
 
-  async function shouldRotate(
-    goal: AutonomousGoal,
-    enriched: EnrichedAgentHookEventPayload,
-    state: PaneRotationState
-  ): Promise<boolean> {
-    if (
+  function inCooldown(state: PaneRotationState): boolean {
+    return (
       state.lastRotatedAt !== undefined &&
       now() - state.lastRotatedAt < AUTONOMOUS_GOAL_ROTATION_COOLDOWN_MS
-    ) {
-      return false
-    }
-    const transcriptPath = enriched.providerSession?.transcriptPath
-    // Why: an SSH or WSL transcript lives on the other host; its turns still count.
-    if (enriched.connectionId === null && transcriptPath) {
-      const reading = await ports.readContext(goal.agent, transcriptPath)
-      if (reading) {
-        return reading.contextTokens >= rotationThreshold(reading, goal.agent)
-      }
-    }
-    return state.turnsSinceRotation >= AUTONOMOUS_GOAL_ROTATE_FALLBACK_TURNS
+    )
   }
 
   async function beginHandoff(paneKey: string, state: PaneRotationState): Promise<void> {
@@ -179,7 +144,8 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
     )
   }
 
-  async function reset(paneKey: string, state: PaneRotationState): Promise<void> {
+  /** True once the reset command landed and the resume is scheduled. */
+  async function reset(paneKey: string, state: PaneRotationState): Promise<boolean> {
     state.cancelTimer?.()
     state.cancelTimer = undefined
     const goal = ports.findOpenGoalByPane(paneKey)
@@ -192,7 +158,7 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
       userTookOver(terminal, state)
     ) {
       abort(state)
-      return
+      return false
     }
     state.phase = 'resetting'
     const cleared = await ports
@@ -203,9 +169,10 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
       .catch((): AgentPaneTextResult => 'unknown')
     if (cleared !== 'accepted') {
       abort(state)
-      return
+      return false
     }
     state.cancelTimer = schedule(() => void resume(paneKey, state), AUTONOMOUS_GOAL_RESET_SETTLE_MS)
+    return true
   }
 
   async function resume(paneKey: string, state: PaneRotationState): Promise<void> {
@@ -223,8 +190,45 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
     abort(state)
     if (resumed === 'accepted') {
       state.turnsSinceRotation = 0
+      state.forcedAttempts = 0
+      state.rotatedFromTranscriptPath = state.lastTranscriptPath
       state.lastRotatedAt = now()
       ports.recordRotation(goal.id)
+    } else {
+      console.warn(`[autonomous-goals] resume prompt not delivered after reset (${resumed})`)
+    }
+  }
+
+  /** Context nearly full with no rotation landed: reset now on the Run's stored state alone. */
+  async function forceRotation(paneKey: string, state: PaneRotationState): Promise<void> {
+    state.cancelTimer?.()
+    state.cancelTimer = undefined
+    if (panes.get(paneKey) !== state || state.phase !== 'idle') {
+      return
+    }
+    state.forcedAttempts += 1
+    const terminal = ports.resolveTerminalHandle(paneKey)
+    if (!terminal) {
+      console.warn(
+        `[autonomous-goals] forced rotation deferred (pane not live); attempt ${state.forcedAttempts}`
+      )
+      return
+    }
+    // Why: /clear would wipe a draft; retry once the user goes quiet, not only on the next turn.
+    const waitMs = ports.readUserComposingWaitMs(terminal)
+    if (waitMs !== null) {
+      console.warn(
+        `[autonomous-goals] forced rotation deferred (user is composing); attempt ${state.forcedAttempts}`
+      )
+      state.cancelTimer = schedule(() => void forceRotation(paneKey, state), waitMs)
+      return
+    }
+    state.phase = 'handoff'
+    state.inputSnapshot = ports.readLastInputAt(terminal)
+    if (!(await reset(paneKey, state))) {
+      console.warn(
+        `[autonomous-goals] forced rotation could not reset; retrying next turn (attempt ${state.forcedAttempts})`
+      )
     }
   }
 
@@ -245,11 +249,30 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
       return
     }
     state.turnsSinceRotation += 1
+    state.lastTranscriptPath = enriched.providerSession?.transcriptPath
     // Why: a usage-limited goal is paused on purpose; rotating it would spend quota to wake it.
-    if (goal.status === 'usageLimited' || !(await shouldRotate(goal, enriched, state))) {
+    if (goal.status === 'usageLimited') {
       return
     }
-    if (state.phase === 'idle' && panes.get(enriched.paneKey) === state) {
+    const pressure = await assessCoordinatorContextPressure({
+      agent: goal.agent,
+      transcriptPath: enriched.providerSession?.transcriptPath,
+      staleTranscriptPath: state.rotatedFromTranscriptPath,
+      connectionId: enriched.connectionId,
+      sessionModel: enriched.payload.model,
+      turnsSinceRotation: state.turnsSinceRotation,
+      hostPlatform,
+      readContext: ports.readContext
+    })
+    if (state.phase !== 'idle' || panes.get(enriched.paneKey) !== state) {
+      return
+    }
+    // Why: a forced retry still waiting on the user was decided on an older reading.
+    state.cancelTimer?.()
+    state.cancelTimer = undefined
+    if (pressure === 'force') {
+      await forceRotation(enriched.paneKey, state)
+    } else if (pressure === 'rotate' && !inCooldown(state)) {
       await beginHandoff(enriched.paneKey, state)
     }
   }

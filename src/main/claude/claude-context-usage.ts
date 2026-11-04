@@ -53,7 +53,7 @@ function modelId(value: unknown): string | null {
 }
 
 /** `claude-opus-5[1m]` and `Claude-Opus-5` name the same model; the suffix picks a window, not a model. */
-function contextBaseModelId(model: string): string {
+export function contextBaseModelId(model: string): string {
   return model
     .replace(/\[[^\]]*\]$/u, '')
     .trim()

@@ -70,6 +70,7 @@ export function resolveDeepSeekLaunchEnv(
     connectionId: string | null | undefined
     target: DeepSeekLaunchTarget
     modelSlots: unknown
+    autoCompact?: boolean
   },
   deps: DeepSeekLaunchEnvDeps = defaultDeps
 ): { env: Record<string, string>; configHome: DeepSeekConfigHome } {
@@ -91,7 +92,8 @@ export function resolveDeepSeekLaunchEnv(
     env: buildDeepSeekClaudeEnv({
       apiKey,
       slots: normalizeDeepSeekModelSlots(args.modelSlots),
-      configDir: configHome.processConfigDir
+      configDir: configHome.processConfigDir,
+      ...(args.autoCompact === false ? { autoCompact: false } : {})
     }),
     configHome
   }

@@ -44,7 +44,8 @@ export async function prepareRuntimeSpawnAuth(ctx: RuntimePtySpawnState): Promis
       ? await prepareDeepSeekLaunch({
           connectionId: args.connectionId,
           target: ctx.codexSelectionTarget,
-          settings: ctx.deps.getSettings?.()
+          settings: ctx.deps.getSettings?.(),
+          launchEnv: args.env
         })
       : null
 }

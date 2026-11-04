@@ -26,7 +26,7 @@ import {
   updateClaudeRunningNonAgentTask,
   voidClaimsOfReplacedClaudeSession
 } from './claude-roster-state'
-import { buildClaudeStatusPayload } from './claude-status-build'
+import { buildClaudeStatusPayload, recordClaudeSessionModel } from './claude-status-build'
 
 export function normalizeClaudeEvent(
   state: HookListenerState,
@@ -66,6 +66,7 @@ export function normalizeClaudeEvent(
     state.claudeSubagentRosterByPaneKey.delete(paneKey)
     state.claudeRunningNonAgentTaskPaneKeys.delete(paneKey)
     state.claudeActiveSessionCronPaneKeys.delete(paneKey)
+    recordClaudeSessionModel(state, paneKey, hookPayload)
     // Why: a new session's main agent starts its own clock, not the old session's last Stop.
     setClaudeMainAgentTurnState(state, paneKey, { state: 'done', stateStartedAt: Date.now() })
     return buildClaudeStatusPayload(state, eventName, promptText, paneKey, hookPayload, {
