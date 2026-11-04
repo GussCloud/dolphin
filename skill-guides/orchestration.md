@@ -86,6 +86,9 @@ The injected preamble is authoritative. A dispatched worker must:
 5. Append `--files-modified` and `--report-path` only with real values when
    applicable. After `worker_done`, end the dispatched turn and idle; do not poll
    or start new work.
+6. Run focused tests directly; queue builds, full suites, e2e and packaging with
+   `DOLPHIN orchestration exec -- <command>`. Exit 75: nothing ran, retry. If exec
+   says to run the command directly (SSH, WSL), do so.
 
 A direct user instruction after completion starts new user-owned work and takes
 precedence over the idle rule. Do not reuse the settled lifecycle IDs.

@@ -88,12 +88,13 @@ describe('buildDispatchPreamble', () => {
       .split('\n')
       .filter((line) => line.trimStart().startsWith('dolphin orchestration'))
 
-    expect(commandLines).toHaveLength(5)
+    expect(commandLines).toHaveLength(6)
     expect(result).not.toContain('\\\n')
     expect(commandLines.filter((line) => line.includes('--type worker_done'))).toHaveLength(1)
     expect(commandLines.filter((line) => line.includes('--type heartbeat'))).toHaveLength(1)
     expect(commandLines.filter((line) => line.includes('orchestration ask'))).toHaveLength(1)
     expect(commandLines.filter((line) => line.includes('--type escalation'))).toHaveLength(1)
+    expect(commandLines.filter((line) => line.includes('orchestration exec --'))).toHaveLength(1)
   })
 
   it('fences shell comments so Markdown does not promote them to headings', () => {

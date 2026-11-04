@@ -13,6 +13,8 @@ export type CommandSpec = {
   // and is single-valued for `worktree create`, which one global set cannot say.
   repeatableFlags?: string[]
   positionalArgs?: string[]
+  /** Accepts `-- <command> [args...]`, handed to the handler unparsed as rawArgs. */
+  trailingCommand?: boolean
   examples?: string[]
   notes?: string[]
 }

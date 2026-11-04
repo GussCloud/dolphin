@@ -708,6 +708,21 @@ describe('runRemoteDolphinCli', () => {
     expect(spawn).toHaveBeenCalledOnce()
   })
 
+  it('refuses orchestration exec so a build never runs on the client', async () => {
+    const { runtime } = createRuntime()
+    const spawn = vi.fn(() => createFakeChild())
+
+    const result = await runRemoteDolphinCli(
+      runtime,
+      { argv: ['orchestration', 'exec', '--', 'pnpm', 'build'], cwd: '/home/alice', env: {} },
+      { ...LEGACY_FALLBACK_OPTIONS, spawn: spawn as never }
+    )
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain('Run the command directly on this host')
+    expect(spawn).not.toHaveBeenCalled()
+  })
+
   it('bridges account add help because it does not start an interactive login', async () => {
     const { runtime } = createRuntime()
     const child = createFakeChild()

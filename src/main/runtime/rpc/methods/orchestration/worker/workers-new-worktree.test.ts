@@ -22,6 +22,7 @@ vi.mock('../../../../../autonomous-goals/autonomous-goal-store-instance', () => 
             runId,
             agent: 'claude',
             workerAgent: 'claude',
+            maxConcurrent: 3,
             baseRef: goalBaseRef.value
           }
         : null

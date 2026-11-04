@@ -1,6 +1,7 @@
 import type { CommandSpec } from '../args'
 import { GLOBAL_FLAGS } from '../args'
 import { ORCHESTRATION_WORKER_COMMAND_SPECS } from './orchestration-worker-specs'
+import { ORCHESTRATION_HEAVY_JOB_COMMAND_SPECS } from './orchestration-heavy-job-specs'
 
 export const ORCHESTRATION_COMMAND_SPECS: CommandSpec[] = [
   {
@@ -163,6 +164,7 @@ export const ORCHESTRATION_COMMAND_SPECS: CommandSpec[] = [
     notes: ['Valid --status values: pending, ready, dispatched, completed, failed, blocked.']
   },
   ...ORCHESTRATION_WORKER_COMMAND_SPECS,
+  ...ORCHESTRATION_HEAVY_JOB_COMMAND_SPECS,
   {
     path: ['orchestration', 'dispatch'],
     summary: 'Dispatch a task to a terminal',

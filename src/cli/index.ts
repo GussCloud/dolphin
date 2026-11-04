@@ -10,6 +10,7 @@ import {
 } from './args'
 import { readDolphinCliVersion } from './cli-version'
 import { dispatch } from './dispatch'
+import { RuntimeClientError } from './runtime/types'
 import {
   assertEnvironmentSelectorResolvable,
   resolveHostFlagEnvironmentId
@@ -89,9 +90,16 @@ export async function main(
     await runAgentTeamsWslEnv(cwd)
     return
   }
+  // Why: everything after `--` is a command for a trailingCommand spec, never Dolphin flags.
+  const separatorIndex = argv.indexOf('--')
+  const trailingArgs = separatorIndex === -1 ? undefined : argv.slice(separatorIndex + 1)
   const parsed = normalizeCommandPositionals(
     COMMAND_SPECS,
-    parseArgs(argv, COMMAND_PATHS, COMMAND_SPECS)
+    parseArgs(
+      separatorIndex === -1 ? argv : argv.slice(0, separatorIndex),
+      COMMAND_PATHS,
+      COMMAND_SPECS
+    )
   )
   const helpPath = resolveHelpPath(parsed)
   if (helpPath !== null) {
@@ -116,6 +124,12 @@ export async function main(
     // lookup so users do not get misleading "Dolphin is not running" failures for
     // simple command typos or unsupported flags.
     validateCommandAndFlags(COMMAND_SPECS, parsed)
+    if (trailingArgs && !findCommandSpec(COMMAND_SPECS, parsed.commandPath)?.trailingCommand) {
+      throw new RuntimeClientError(
+        'invalid_argument',
+        `Command ${parsed.commandPath.join(' ')} does not accept -- <command>.`
+      )
+    }
     const RuntimeClientClass = await loadRuntimeClientClass()
     const ignoreRemoteSelection = shouldIgnoreRemoteSelection(parsed.commandPath)
     const pairingCode = ignoreRemoteSelection ? null : parsed.flags.get('pairing-code')
@@ -182,7 +196,8 @@ export async function main(
         return client
       },
       cwd,
-      json
+      json,
+      ...(trailingArgs ? { rawArgs: trailingArgs } : {})
     })
   } catch (error) {
     const worktreeSelector = parsed.flags.get('worktree')

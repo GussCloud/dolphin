@@ -127,6 +127,34 @@ describe('dolphin cli worktree awareness', () => {
     expect(process.exitCode).toBe(1)
   })
 
+  it('hands everything after -- to orchestration exec as the command, flags included', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    callMock.mockResolvedValue({ result: { ticket: 'hjob_1', granted: false, ahead: 1 } })
+
+    await main(
+      ['orchestration', 'exec', '--max-wait-ms', '1', '--', 'pnpm', 'test', '--json'],
+      '/tmp/repo'
+    )
+
+    expect(callMock.mock.calls[0][0]).toBe('orchestration.heavyJobAcquire')
+    expect(callMock.mock.calls[0][1]).toMatchObject({
+      holder: expect.stringMatching(/: pnpm test --json$/)
+    })
+    expect(process.exitCode).toBe(75)
+    process.exitCode = undefined
+    stderrSpy.mockRestore()
+  })
+
+  it('rejects -- <command> on commands that do not take one', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    await main(['orchestration', 'task-list', '--', 'pnpm', 'build'], '/tmp/repo')
+
+    expect(callMock).not.toHaveBeenCalled()
+    expect(process.exitCode).toBe(1)
+    process.exitCode = undefined
+    errSpy.mockRestore()
+  })
+
   it('rejects unknown task-update status with an enum-aware error', async () => {
     process.env.DOLPHIN_TERMINAL_HANDLE = 'term_coord'
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
