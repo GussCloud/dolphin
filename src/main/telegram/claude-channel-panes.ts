@@ -7,8 +7,11 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 
 const MAX_ENTRIES = 512
 
-const grantsByPaneKey = new Map<string, Buffer>()
+type ChannelGrant = { tokenHash: Buffer; autoConfirmDevChannelsDialog: boolean }
+
+const grantsByPaneKey = new Map<string, ChannelGrant>()
 const channelPtyIds = new Set<string>()
+const autoConfirmPtyIds = new Set<string>()
 
 function hashLaunchToken(token: string): Buffer {
   return createHash('sha256').update(token.trim()).digest()
@@ -32,14 +35,26 @@ function evictOldest<T>(entries: Map<string, T> | Set<string>): void {
 }
 
 /** Recorded where the flags are spliced, from the spawn env's validated pane key and token. */
-export function grantClaudeChannelPane(env: Record<string, string> | undefined): void {
+export function grantClaudeChannelPane(
+  env: Record<string, string> | undefined,
+  options: { autoConfirmDevChannelsDialog?: boolean } = {}
+): void {
   const launch = readPaneLaunch(env)
   if (!launch) {
     return
   }
   grantsByPaneKey.delete(launch.paneKey)
-  grantsByPaneKey.set(launch.paneKey, hashLaunchToken(launch.launchToken))
+  grantsByPaneKey.set(launch.paneKey, {
+    tokenHash: hashLaunchToken(launch.launchToken),
+    autoConfirmDevChannelsDialog: options.autoConfirmDevChannelsDialog === true
+  })
   evictOldest(grantsByPaneKey)
+}
+
+function grantFor(paneKey: string, launchToken: string): ChannelGrant | null {
+  const grant = grantsByPaneKey.get(paneKey)
+  const actual = launchToken.trim() ? hashLaunchToken(launchToken) : null
+  return grant && actual && timingSafeEqual(grant.tokenHash, actual) ? grant : null
 }
 
 /**
@@ -48,18 +63,31 @@ export function grantClaudeChannelPane(env: Record<string, string> | undefined):
  * must work in a pane the user opened and walked away from.
  */
 export function isClaudeChannelLaunchGranted(paneKey: string, launchToken: string): boolean {
-  const expected = grantsByPaneKey.get(paneKey)
-  const actual = launchToken.trim() ? hashLaunchToken(launchToken) : null
-  return Boolean(expected && actual && timingSafeEqual(expected, actual))
+  return grantFor(paneKey, launchToken) !== null
 }
 
 /** At spawn commit: marks the PTY when its env carries the very launch the grant was minted for. */
 export function markClaudeChannelPty(ptyId: string, env: Record<string, string> | undefined): void {
   const launch = readPaneLaunch(env)
-  if (launch && isClaudeChannelLaunchGranted(launch.paneKey, launch.launchToken)) {
+  const grant = launch ? grantFor(launch.paneKey, launch.launchToken) : null
+  if (grant) {
     channelPtyIds.add(ptyId)
     evictOldest(channelPtyIds)
+    if (grant.autoConfirmDevChannelsDialog) {
+      autoConfirmPtyIds.add(ptyId)
+      evictOldest(autoConfirmPtyIds)
+    }
   }
+}
+
+/** PTYs whose development-channels confirmation Dolphin answers itself (goal coordinators). */
+export function isClaudeChannelAutoConfirmPty(ptyId: string): boolean {
+  return autoConfirmPtyIds.has(ptyId)
+}
+
+/** Once answered (or the PTY is gone) the confirmation cannot come back for this spawn. */
+export function releaseClaudeChannelAutoConfirmPty(ptyId: string): void {
+  autoConfirmPtyIds.delete(ptyId)
 }
 
 /** Only these PTYs can show Claude's development-channels confirmation. */

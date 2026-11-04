@@ -106,13 +106,23 @@ export const postLoopbackJson: TelegramChannelPostJson = (endpoint, path, body, 
     req.end(payload)
   })
 
+/** Where a channel's server long-polls and says goodbye; each channel owns its own paths. */
+export type ClaudeChannelHostPaths = { poll: string; disconnect: string }
+
+const TELEGRAM_CHANNEL_HOST_PATHS: ClaudeChannelHostPaths = {
+  poll: TELEGRAM_CHANNEL_POLL_PATH,
+  disconnect: TELEGRAM_CHANNEL_DISCONNECT_PATH
+}
+
 export function createTelegramChannelHttpHost(args: {
   /** `launchToken` proves the pane to main (DOLPHIN_AGENT_LAUNCH_TOKEN, as hook scripts send it). */
   session: TelegramChannelSessionRef & { launchToken: string }
   resolveEndpoint: () => TelegramChannelEndpoint | null
   postJson?: TelegramChannelPostJson
+  paths?: ClaudeChannelHostPaths
 }): TelegramChannelHost {
   const postJson = args.postJson ?? postLoopbackJson
+  const paths = args.paths ?? TELEGRAM_CHANNEL_HOST_PATHS
   const post = async (
     path: string,
     body: Record<string, unknown>,
@@ -132,7 +142,7 @@ export function createTelegramChannelHttpHost(args: {
   return {
     async poll(signal, ack) {
       const result = await post(
-        TELEGRAM_CHANNEL_POLL_PATH,
+        paths.poll,
         { ack },
         { timeoutMs: TELEGRAM_CHANNEL_POLL_HOLD_MS + REQUEST_TIMEOUT_MS, signal }
       )
@@ -153,7 +163,7 @@ export function createTelegramChannelHttpHost(args: {
       )
     },
     async disconnect() {
-      await post(TELEGRAM_CHANNEL_DISCONNECT_PATH, {}, { timeoutMs: 2_000 })
+      await post(paths.disconnect, {}, { timeoutMs: 2_000 })
     }
   }
 }

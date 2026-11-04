@@ -15,6 +15,7 @@ import {
 } from './db/messages/mailbox-pointer-enter-state'
 import { resumePendingOrchestrationMailboxPointer } from './mailbox-pointer-resume'
 import { stageOrchestrationMailboxPointer } from './mailbox-pointer-stage'
+import { formatMessagePointer } from './formatter'
 
 export type { OrchestrationMessageWaiter } from './mailbox-pointer-eligibility'
 
@@ -68,6 +69,11 @@ export class OrchestrationMailboxPointerDelivery<TWaiter extends OrchestrationMe
       return
     }
     if (db.hasOutstandingMailboxDelivery?.(mailboxHandle)) {
+      return
+    }
+    // Why before the settle gate: nothing is typed, so a draft the user is composing is safe, and
+    // Claude queues a channel message that arrives mid-turn until the turn ends.
+    if (this.offerToChannel(leaf, mailboxHandle, options.reservedTypes)) {
       return
     }
     // Why the gate lives HERE and not at each caller: this method is the single point at
@@ -163,6 +169,40 @@ export class OrchestrationMailboxPointerDelivery<TWaiter extends OrchestrationMe
       leafKey: this.leafKey(leaf),
       settle: (ptyId, flight) => this.settle(ptyId, flight),
       redrive: (redriveMailbox, force) => this.redrive(redriveMailbox, force)
+    })
+  }
+
+  private offerToChannel(
+    leaf: OrchestrationMailboxLeaf,
+    mailboxHandle: string,
+    reservedTypes: ReadonlySet<string> | undefined
+  ): boolean {
+    const lane = this.deps.channelLane
+    const db = this.deps.getDb()
+    // Why: a typed flight already in progress (or awaiting crash recovery) finishes on its own path.
+    if (
+      !lane ||
+      !db ||
+      (leaf.ptyId && this.state.hasFlight(leaf.ptyId)) ||
+      this.state.hasActiveWatermark(mailboxHandle) ||
+      db.getPendingMailboxPointerMessages(mailboxHandle).length > 0
+    ) {
+      return false
+    }
+    return lane.offer(leaf, mailboxHandle, () => {
+      const waiters = this.deps.getMessageWaiters(mailboxHandle)
+      const unread = selectOrchestrationPointerBatch({ db, mailboxHandle, waiters, reservedTypes })
+      const terminalHandle = this.deps.getTerminalHandleForLeafKey(this.leafKey(leaf))
+      return unread.length > 0 && terminalHandle
+        ? {
+            messageIds: unread.map((message) => message.id),
+            text: formatMessagePointer(
+              unread.length,
+              mailboxHandle,
+              this.deps.getCliCommand(terminalHandle)
+            )
+          }
+        : null
     })
   }
 

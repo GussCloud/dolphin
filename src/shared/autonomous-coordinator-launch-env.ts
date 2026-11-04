@@ -37,8 +37,15 @@ export function coordinatorTranscriptPlatform(
 }
 
 /**
+ * Asks main to load the orchestration channel into this launch, so mailbox pointers arrive as
+ * channel messages instead of typed text. Main still gates on agent, host and Claude version.
+ */
+export const AUTONOMOUS_COORDINATOR_CHANNEL_ENV = 'DOLPHIN_AUTONOMOUS_COORDINATOR_CHANNEL'
+
+/**
  * Only where the context is measurable (`isCoordinatorContextMeasurable`): elsewhere rotation is a
- * blind turn count, so the CLI's auto-compaction stays on as the backstop.
+ * blind turn count, so the CLI's auto-compaction stays on as the backstop. The channel server is
+ * Dolphin's local binary, so the same local-native rule gates it.
  */
 export function buildAutonomousCoordinatorLaunchEnv(args: {
   agent: unknown
@@ -51,5 +58,10 @@ export function buildAutonomousCoordinatorLaunchEnv(args: {
   ) {
     return {}
   }
-  return { [CLAUDE_DISABLE_AUTO_COMPACT_ENV]: '1' }
+  return {
+    [CLAUDE_DISABLE_AUTO_COMPACT_ENV]: '1',
+    // Why plain `claude` only: DeepSeek must never auto-accept a dialog on its account, and Agent
+    // Teams launches through a wrapper the flags cannot be spliced into.
+    ...(args.agent === 'claude' ? { [AUTONOMOUS_COORDINATOR_CHANNEL_ENV]: '1' } : {})
+  }
 }

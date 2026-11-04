@@ -200,6 +200,28 @@ and the delivery recheck retries after the quiet window; the watchdog nudge wait
 without counting toward the 3, the usage-resume notice retries, and a rotation
 handoff waits for a later turn. Unknown evidence never blocks.
 
+## Pointer through a Claude Code channel
+
+A local plain-`claude` coordinator (not SSH, WSL, DeepSeek or Agent Teams, the
+same local-native rule as context measurement) launches with Dolphin's
+`dolphin-orchestration` development channel (`orchestration-channel/`, Claude
+Code ≥ 2.1.234). If Telegram channels are on, both servers go in one config,
+with one `--dangerously-load-development-channels=server:…` flag each. Claude
+merges the flags into one confirmation dialog, which Dolphin answers with a
+single Enter. It does so only on coordinator PTYs, and only when the screen
+matches the captured transcript (`claude-dev-channels-{dialog,two-servers}.txt`),
+option 1 is highlighted, and every listed channel is Dolphin's own. Other
+Telegram panes still confirm by hand.
+
+With the channel polling, the mailbox pointer is pushed as a
+`notifications/claude/channel` message instead of being typed. Claude queues it
+as a prompt, so the composing gate does not apply. Claude can also drop a channel
+without saying so (org policy, a provider other than Anthropic's API), so a push
+counts as proven only once the coordinator reads the mail it announced. Until
+then the rows stay undelivered. A push left unread for 60 s switches that
+`claude` session back to typed pointers (`channel-mailbox-pointer-lane.ts`). The
+watchdog nudge above is always typed: it is the safety net for a silent drop.
+
 ## Stalled workers
 
 A worker's heartbeat mail is self-reported, so a looping agent keeps sending it,

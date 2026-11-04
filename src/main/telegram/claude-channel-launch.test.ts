@@ -12,6 +12,7 @@ import {
   writeClaudeChannelMcpConfig
 } from './claude-channel-launch'
 import {
+  isClaudeChannelAutoConfirmPty,
   isClaudeChannelLaunchGranted,
   isClaudeChannelPty,
   markClaudeChannelPty
@@ -136,6 +137,82 @@ describe('applyClaudeChannelLaunch', () => {
   })
 })
 
+describe('applyClaudeChannelLaunch for goal coordinators', () => {
+  const COORDINATOR = { alone: '--coord', withTelegram: '--coord-and-telegram' }
+  const coordinatorPolicy = { launchArgs: () => COORDINATOR }
+  const coordinatorEnv = {
+    DOLPHIN_AUTONOMOUS_COORDINATOR_CHANNEL: '1',
+    DOLPHIN_PANE_KEY: 'tab-c:leaf-c',
+    DOLPHIN_AGENT_LAUNCH_TOKEN: 'token-c'
+  }
+  const launch = (
+    target: {
+      env?: Record<string, string>
+      connectionId?: string
+      isWsl?: boolean
+      launchAgent?: string
+    },
+    telegram: { launchArgs: () => string | null } | null
+  ): string | undefined =>
+    applyClaudeChannelLaunch(
+      {
+        command: 'claude',
+        env: target.env,
+        connectionId: target.connectionId ?? null,
+        isWsl: target.isWsl ?? false,
+        launchAgent: target.launchAgent ?? 'claude'
+      },
+      telegram,
+      coordinatorPolicy
+    ).command
+
+  it('loads the orchestration channel alone, or with Telegram when Telegram is on', () => {
+    expect(launch({ env: coordinatorEnv }, null)).toBe('claude --coord')
+    expect(launch({ env: coordinatorEnv }, { launchArgs: () => null })).toBe('claude --coord')
+    expect(launch({ env: coordinatorEnv }, policy)).toBe('claude --coord-and-telegram')
+  })
+
+  it('falls back to the orchestration channel alone when the combined config is missing', () => {
+    expect(
+      applyClaudeChannelLaunch(
+        {
+          command: 'claude',
+          env: coordinatorEnv,
+          connectionId: null,
+          isWsl: false,
+          launchAgent: 'claude'
+        },
+        policy,
+        { launchArgs: () => ({ alone: '--coord', withTelegram: null }) }
+      ).command
+    ).toBe('claude --coord')
+  })
+
+  it('keeps unmarked panes on Telegram only, and never loads it over SSH, WSL or other agents', () => {
+    expect(launch({}, policy)).toBe(`claude ${ARGS}`)
+    expect(launch({}, null)).toBe('claude')
+    for (const target of [
+      { env: coordinatorEnv, connectionId: 'ssh-1' },
+      { env: coordinatorEnv, isWsl: true },
+      { env: coordinatorEnv, launchAgent: 'deepseek' },
+      { env: coordinatorEnv, launchAgent: 'claude-agent-teams' }
+    ]) {
+      expect(launch(target, policy)).toBe('claude')
+    }
+  })
+
+  it('marks only coordinator PTYs for the dialog auto-confirm', () => {
+    launch({ env: coordinatorEnv }, policy)
+    markClaudeChannelPty('pty-coord', coordinatorEnv)
+    expect(isClaudeChannelAutoConfirmPty('pty-coord')).toBe(true)
+    const telegramEnv = { DOLPHIN_PANE_KEY: 'tab-t:leaf-t', DOLPHIN_AGENT_LAUNCH_TOKEN: 'token-t' }
+    launch({ env: telegramEnv }, policy)
+    markClaudeChannelPty('pty-telegram', telegramEnv)
+    expect(isClaudeChannelPty('pty-telegram')).toBe(true)
+    expect(isClaudeChannelAutoConfirmPty('pty-telegram')).toBe(false)
+  })
+})
+
 describe('createClaudeChannelLaunchPolicy', () => {
   it('gates on the minimum Claude version and reports why', async () => {
     for (const [version, availability] of [
@@ -204,7 +281,28 @@ describe('createClaudeChannelLaunchPolicy', () => {
 describe('writeClaudeChannelMcpConfig', () => {
   const config = buildClaudeChannelMcpConfig({
     execPath: '/opt/Dolphin/dolphin',
-    entryPath: '/e.js'
+    servers: [{ name: 'dolphin-telegram', entryPath: '/e.js' }]
+  })
+
+  it('lists every server of a combined config as its own development channel', () => {
+    const combined = buildClaudeChannelMcpConfig({
+      execPath: '/opt/Dolphin/dolphin',
+      servers: [
+        { name: 'dolphin-orchestration', entryPath: '/o.js' },
+        { name: 'dolphin-telegram', entryPath: '/e.js' }
+      ]
+    })
+    const root = mkdtempSync(join(tmpdir(), 'channel-combined-'))
+    try {
+      const args = writeClaudeChannelMcpConfig([root], combined, 'both.json')
+      expect(args).toBe(
+        `--mcp-config=${join(root, 'both.json').replace(/\\/g, '/')} ` +
+          '--dangerously-load-development-channels=server:dolphin-orchestration ' +
+          '--dangerously-load-development-channels=server:dolphin-telegram'
+      )
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 
   it('writes to the first candidate whose path can be typed literally', () => {

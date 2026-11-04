@@ -320,6 +320,7 @@ module.exports = {
     'out/main/computer-sidecar.js',
     'out/main/parcel-watcher-process-entry.js',
     'out/main/telegram-channel-mcp-entry.js',
+    'out/main/orchestration-channel-mcp-entry.js',
     'out/main/chunks/**',
     'resources/**',
     'node_modules/ws/**',

@@ -8,11 +8,20 @@ import {
 
 describe('autonomous coordinator launch env', () => {
   it('turns auto-compaction off for every Claude Code coordinator on a readable host', () => {
-    for (const agent of ['claude', 'claude-agent-teams', 'deepseek', 'deepseek-agent-teams']) {
+    for (const agent of ['claude-agent-teams', 'deepseek', 'deepseek-agent-teams']) {
       expect(
         buildAutonomousCoordinatorLaunchEnv({ agent, transcriptReadableOnHost: true })
       ).toEqual({ DISABLE_AUTO_COMPACT: '1' })
     }
+  })
+
+  it('asks for the orchestration channel only for a plain Claude coordinator', () => {
+    expect(
+      buildAutonomousCoordinatorLaunchEnv({ agent: 'claude', transcriptReadableOnHost: true })
+    ).toEqual({ DISABLE_AUTO_COMPACT: '1', DOLPHIN_AUTONOMOUS_COORDINATOR_CHANNEL: '1' })
+    expect(
+      buildAutonomousCoordinatorLaunchEnv({ agent: 'claude', transcriptReadableOnHost: false })
+    ).toEqual({})
   })
 
   it('leaves Codex, other agents and SSH/WSL hosts alone', () => {

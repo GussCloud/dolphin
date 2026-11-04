@@ -14,6 +14,7 @@ import {
   tailGainedNewerBlockedReason
 } from './terminal-wait-tail-state'
 import { extractOscTitleScanTail } from '../../shared/osc-title-scan-tail'
+import { observeClaudeChannelDialogOutput } from '../telegram/claude-channel-dialog-auto-confirm'
 
 export class DolphinRuntimeWithOnPtyData extends DolphinRuntimeWithPreparePtyExecutionContext {
   onPtyData(
@@ -25,6 +26,7 @@ export class DolphinRuntimeWithOnPtyData extends DolphinRuntimeWithPreparePtyExe
     captureModelReceipt?: (completion: Promise<void>) => void,
     sourceRanges?: readonly TerminalOutputSourceRange[]
   ): number {
+    observeClaudeChannelDialogOutput(ptyId, data, () => this.ptyController?.write(ptyId, '\r'))
     const outputSequence = (this.ptyOutputSequenceById.get(ptyId) ?? 0) + sequenceChars
     this.ptyOutputSequenceById.set(ptyId, outputSequence)
     this.providerModeTrackersByPtyId.get(ptyId)?.scan(data)

@@ -23,6 +23,7 @@ import { TelegramChannelGateway } from '../telegram/telegram-channel-gateway'
 import { createChannelApprovalButtonStripper } from '../telegram/telegram-channel-approval-fallback'
 import { chainTelegramChannelInbound } from '../telegram/telegram-channel-inbound'
 import type { TelegramInboundHandler } from '../telegram/telegram-inbound'
+import { DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME } from '../telegram/telegram-channel-protocol'
 
 function writeMcpConfig(): string | null {
   return writeClaudeChannelMcpConfig(
@@ -34,11 +35,16 @@ function writeMcpConfig(): string | null {
     ],
     buildClaudeChannelMcpConfig({
       execPath: process.execPath,
-      entryPath: resolveUnpackedMainEntryPath(
-        app.getAppPath(),
-        app.isPackaged,
-        TELEGRAM_CHANNEL_ENTRY_FILE_NAME
-      )
+      servers: [
+        {
+          name: DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME,
+          entryPath: resolveUnpackedMainEntryPath(
+            app.getAppPath(),
+            app.isPackaged,
+            TELEGRAM_CHANNEL_ENTRY_FILE_NAME
+          )
+        }
+      ]
     })
   )
 }

@@ -196,26 +196,7 @@ export class TelegramChannelGateway {
     if (!request) {
       return { status: 400 }
     }
-    const session = this.sessions.claim(request)
-    if (!session) {
-      return { status: TELEGRAM_CHANNEL_SUPERSEDED_STATUS }
-    }
-    session.lastPollAt = this.now()
-    session.wake?.()
-    this.sessions.acknowledge(session, request.ack)
-    if (
-      session.queue.length === 0 &&
-      (await this.sessions.hold(session, this.pollHoldMs, signal)) === 'aborted'
-    ) {
-      // Why disconnect now: a healthy channel never drops its own poll; its process is gone.
-      session.lastPollAt = 0
-      return { status: 204 }
-    }
-    if (this.sessions.current(request) !== session) {
-      return { status: TELEGRAM_CHANNEL_SUPERSEDED_STATUS }
-    }
-    session.lastPollAt = this.now()
-    return { status: 200, json: { events: this.sessions.handOut(session) } }
+    return this.sessions.servePoll(request, signal, this.pollHoldMs)
   }
 
   private async handleReply(body: unknown): Promise<RouteResult> {

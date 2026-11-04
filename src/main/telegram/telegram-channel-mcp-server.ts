@@ -73,6 +73,23 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
+/** Which channel this server is: Telegram chats, or Dolphin's own orchestration pointers. */
+export type ClaudeChannelServerProfile = {
+  name: string
+  instructions: string
+  /** Offers the `reply` tool, which posts through `host.reply`. */
+  replyTool: boolean
+  /** Declares permission relay, so Claude forwards its permission prompts to `host.requestPermission`. */
+  relayPermissions: boolean
+}
+
+export const TELEGRAM_CHANNEL_PROFILE: ClaudeChannelServerProfile = {
+  name: DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME,
+  instructions: TELEGRAM_CHANNEL_INSTRUCTIONS,
+  replyTool: true,
+  relayPermissions: true
+}
+
 export type TelegramChannelMcpServer = {
   handleMessage(message: unknown): void
   close(): Promise<void>
@@ -83,8 +100,11 @@ export function createTelegramChannelMcpServer(args: {
   send: (message: Record<string, unknown>) => void
   version: string
   sleep?: (ms: number, signal: AbortSignal) => Promise<void>
+  profile?: ClaudeChannelServerProfile
 }): TelegramChannelMcpServer {
   const { host, send } = args
+  const profile = args.profile ?? TELEGRAM_CHANNEL_PROFILE
+  const tools = profile.replyTool ? [REPLY_TOOL] : []
   const sleep = args.sleep ?? abortableSleep
   const lifetime = new AbortController()
   let pollLoop: Promise<void> | null = null
@@ -174,11 +194,13 @@ export function createTelegramChannelMcpServer(args: {
               ? requested
               : FALLBACK_PROTOCOL_VERSION,
           capabilities: {
-            experimental: { 'claude/channel': {}, 'claude/channel/permission': {} },
+            experimental: profile.relayPermissions
+              ? { 'claude/channel': {}, 'claude/channel/permission': {} }
+              : { 'claude/channel': {} },
             tools: {}
           },
-          serverInfo: { name: DOLPHIN_TELEGRAM_CHANNEL_SERVER_NAME, version: args.version },
-          instructions: TELEGRAM_CHANNEL_INSTRUCTIONS
+          serverInfo: { name: profile.name, version: args.version },
+          instructions: profile.instructions
         })
         return
       }
@@ -186,10 +208,10 @@ export function createTelegramChannelMcpServer(args: {
         respond(id, {})
         return
       case 'tools/list':
-        respond(id, { tools: [REPLY_TOOL] })
+        respond(id, { tools })
         return
       case 'tools/call': {
-        if (params?.name !== REPLY_TOOL.name) {
+        if (!profile.replyTool || params?.name !== REPLY_TOOL.name) {
           respondError(id, -32602, `unknown tool: ${String(params?.name)}`)
           return
         }
@@ -206,7 +228,11 @@ export function createTelegramChannelMcpServer(args: {
       pollLoop ??= runPollLoop()
       return
     }
-    if (method === 'notifications/claude/channel/permission_request' && params) {
+    if (
+      profile.relayPermissions &&
+      method === 'notifications/claude/channel/permission_request' &&
+      params
+    ) {
       const requestId = params.request_id
       const toolName = params.tool_name
       if (

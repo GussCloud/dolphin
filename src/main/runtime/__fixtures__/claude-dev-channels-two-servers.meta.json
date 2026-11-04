@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-11-04T10:49:45.309Z",
+  "platform": "win32",
+  "command": [
+    "claude",
+    "--mcp-config=<scratch>/cfg.json",
+    "--dangerously-load-development-channels=server:dolphin-orchestration",
+    "--dangerously-load-development-channels=server:dolphin-telegram"
+  ],
+  "cols": 120,
+  "rows": 36,
+  "note": "Claude Code 2.1.318 (Max plan), Windows 11. Two dev-channel servers via repeated = flags; one Enter sent at 10s (--send \"10000:\\r\") confirms option 1 and the session title becomes ✳ Claude Code. cwd scrubbed to ~\\project; the dummy config had no servers Claude could load.",
+  "exitCode": 1
+}

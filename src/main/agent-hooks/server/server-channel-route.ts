@@ -19,6 +19,25 @@ export function isAgentHookChannelPath(pathname: string): boolean {
   return pathname.startsWith(AGENT_HOOK_CHANNEL_PATH_PREFIX)
 }
 
+export type AgentHookChannelRoute = {
+  handler: AgentHookChannelRouteHandler
+  authorize: AgentHookChannelPaneAuthorizer | null
+}
+
+/** Each channel owns a path prefix under `/channel/`; the longest matching prefix serves. */
+export function selectAgentHookChannelRoute(
+  routes: ReadonlyMap<string, AgentHookChannelRoute>,
+  pathname: string
+): AgentHookChannelRoute | null {
+  let best: { prefix: string; route: AgentHookChannelRoute } | null = null
+  for (const [prefix, route] of routes) {
+    if (pathname.startsWith(prefix) && (!best || prefix.length > best.prefix.length)) {
+      best = { prefix, route }
+    }
+  }
+  return best?.route ?? null
+}
+
 // Why: the hook token is in every PTY's env, so it alone would let any pane act as any other.
 function isAuthorizedForPane(body: unknown, authorize: AgentHookChannelPaneAuthorizer): boolean {
   if (!body || typeof body !== 'object' || !('paneKey' in body) || !('launchToken' in body)) {

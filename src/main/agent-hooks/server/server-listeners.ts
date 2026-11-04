@@ -19,9 +19,10 @@ import type {
 } from './server-types'
 import { toAgentStatusIpcPayload } from './server-status-identity'
 import { AgentHookServerState } from './server-state'
-import type {
-  AgentHookChannelPaneAuthorizer,
-  AgentHookChannelRouteHandler
+import {
+  AGENT_HOOK_CHANNEL_PATH_PREFIX,
+  type AgentHookChannelPaneAuthorizer,
+  type AgentHookChannelRouteHandler
 } from './server-channel-route'
 import { serializeAgentStatusSubject } from '../../../shared/agent-status-subject'
 import { structuredStatusLegacyEvent } from './server-structured-status-row'
@@ -108,13 +109,20 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
     this.onClosedPaneHook = listener
   }
 
-  /** `authorizePane` adds a pane proof besides the pane's committed hook launch token. */
+  /**
+   * `authorizePane` adds a pane proof besides the pane's committed hook launch token. `pathPrefix`
+   * lets several channels (Telegram, orchestration) share the listener.
+   */
   setChannelRouteHandler(
     handler: AgentHookChannelRouteHandler | null,
-    authorizePane: AgentHookChannelPaneAuthorizer | null = null
+    authorizePane: AgentHookChannelPaneAuthorizer | null = null,
+    pathPrefix: string = AGENT_HOOK_CHANNEL_PATH_PREFIX
   ): void {
-    this.channelRouteHandler = handler
-    this.channelPaneAuthorizer = authorizePane
+    if (handler) {
+      this.channelRoutes.set(pathPrefix, { handler, authorize: authorizePane })
+    } else {
+      this.channelRoutes.delete(pathPrefix)
+    }
   }
 
   subscribeStatusChanges(listener: (statuses: AgentHookStatusChangeEntry[]) => void): () => void {
