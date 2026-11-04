@@ -14,37 +14,4 @@
 [K
 [K
 [K
-[K[120C[?2004h[?2031h[?1004h[<u[>5u[>4;2m]0;✳ Claude Code[?1049h[2J[<u[>5u[>4;2m[?1000h[?1002h[?1003h[?1006h[H[K
- ▐▛███▛█   Claude Code v2.1.318[K
-▝▜██████▀  Opus 5.5 with medium effort · Claude Max[K
- ▝▝   ▝▝   ~\project[K
-[K
-▎ Channels (experimental) messages from server:dolphin-orchestration, server:dolphin-telegram inject directly in this   
-▎ session · restart without --dangerously-load-development-channels to stop[K
-▎ server:dolphin-orchestration · no MCP server configured with that name[K
-▎ server:dolphin-telegram · no MCP server configured with that name[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-[K
-                                                                                                    ◐ medium · /effort  
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────❯ Try "create a util logging.py that..."[K
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────  ⚠ Transcript saving is off — inherited CLAUDE_CODE_CHILD_SESSION marker · restart with CLAUDE_CODE_FORCE_SESSION_PE…  
-[K
-  ⏵⏵ auto mode on (shift+tab to cycle)[K[32;3H[?25h[>0q[?25l[30;101H[K[32;3H[?25h
+[K[120C[?2004h[?2031h[?1004h[<u[>5u[>4;2m]0;✳ Claude Code

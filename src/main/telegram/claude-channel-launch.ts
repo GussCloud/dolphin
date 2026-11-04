@@ -135,6 +135,7 @@ export function setCoordinatorChannelLaunchPolicy(
 
 /** The renderer marks a local goal coordinator launch; `claude` only, see deepseek-agent.md. */
 function isCoordinatorChannelLaunch(target: ClaudeChannelLaunchTarget): boolean {
+  // Why not DeepSeek: Dolphin auto-accepts this launch's dialog, never on a third-party account.
   return target.launchAgent === 'claude' && target.env?.[AUTONOMOUS_COORDINATOR_CHANNEL_ENV] === '1'
 }
 

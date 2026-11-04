@@ -68,7 +68,7 @@ src/main/runtime/saved-structured-agent-session-restoration.ts 1
 src/main/runtime/structured-agent-session-create-adoption.ts 2
 src/main/skills/skill-placement-recovery-journal.ts 1
 src/main/skills/skill-wsl-provider-detection.ts 1
-src/main/telegram/claude-channel-launch.ts 1
+src/main/telegram/claude-channel-launch.ts 2
 src/main/text-generation/commit-message-agent-environment.ts 1
 src/main/usage/usage-scan-worker-client.ts 1
 src/main/usage/usage-scan-worker-entry.ts 1
@@ -113,7 +113,7 @@ src/shared/agent-session-record.ts 1
 src/shared/agent-session-resume.ts 2
 src/shared/ai-vault-resume-command.ts 1
 src/shared/ai-vault-session-title.ts 1
-src/shared/autonomous-coordinator-launch-env.ts 1
+src/shared/autonomous-coordinator-launch-env.ts 2
 src/shared/claude-agent-teams-tmux-compat.ts 1
 src/shared/claude-compact-completion.ts 3
 src/shared/deepseek-status-identity.ts 4
