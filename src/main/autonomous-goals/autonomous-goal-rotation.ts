@@ -41,6 +41,8 @@ export type AutonomousGoalRotationPorts = {
   resolveTerminalHandle: (paneKey: string) => string | null
   /** Last user input on the terminal from any surface; undefined when unknown. */
   readLastInputAt: (terminal: string) => number | undefined
+  /** Non-null while the user has a draft or is typing; the handoff waits for a later turn. */
+  readUserComposingWaitMs: (terminal: string) => number | null
   /** Paste then Enter, refused when no agent is in the foreground. */
   sendPrompt: (terminal: string, text: string) => Promise<AgentPaneTextResult>
   /** Typed (not pasted) so the CLI reads it as a slash command. */
@@ -155,7 +157,7 @@ export function startAutonomousGoalRotation(ports: AutonomousGoalRotationPorts):
 
   async function beginHandoff(paneKey: string, state: PaneRotationState): Promise<void> {
     const terminal = ports.resolveTerminalHandle(paneKey)
-    if (!terminal) {
+    if (!terminal || ports.readUserComposingWaitMs(terminal) !== null) {
       return
     }
     state.phase = 'handoff'

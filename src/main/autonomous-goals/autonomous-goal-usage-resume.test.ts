@@ -26,7 +26,10 @@ describe('usage-window resume', () => {
   beforeEach(() => vi.useFakeTimers({ now: 1_000 }))
   afterEach(() => vi.useRealTimers())
 
-  function harness(initial: AutonomousGoal) {
+  function harness(
+    initial: AutonomousGoal,
+    composing: { waitMs: number | null } = { waitMs: null }
+  ) {
     let goal = initial
     let listener: (goal: AutonomousGoal) => void = () => {}
     const sent: string[] = []
@@ -43,7 +46,8 @@ describe('usage-window resume', () => {
       sendPrompt: async (_terminal, text) => {
         sent.push(text)
         return 'accepted'
-      }
+      },
+      readUserComposingWaitMs: () => composing.waitMs
     })
     return {
       sent,
@@ -63,6 +67,18 @@ describe('usage-window resume', () => {
     await vi.advanceTimersByTimeAsync(60_000)
     expect(h.sent).toEqual([])
     await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_USAGE_RESUME_GRACE_MS)
+    expect(h.goal.status).toBe('active')
+    expect(h.sent).toEqual([AUTONOMOUS_GOAL_USAGE_RESUME_NOTICE])
+  })
+
+  it('waits for the user to finish a draft before typing the notice', async () => {
+    const composing: { waitMs: number | null } = { waitMs: 8_000 }
+    const h = harness({ ...BASE, usageResumeAt: 1_000 }, composing)
+    await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_USAGE_RESUME_GRACE_MS)
+    expect(h.sent).toEqual([])
+    expect(h.goal.status).toBe('usageLimited')
+    composing.waitMs = null
+    await vi.advanceTimersByTimeAsync(8_000)
     expect(h.goal.status).toBe('active')
     expect(h.sent).toEqual([AUTONOMOUS_GOAL_USAGE_RESUME_NOTICE])
   })

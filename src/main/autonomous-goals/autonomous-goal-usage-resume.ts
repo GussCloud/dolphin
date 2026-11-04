@@ -16,6 +16,8 @@ export type AutonomousGoalUsageResumePorts = {
   markActive: (goalId: string) => void
   resolveTerminalHandle: (paneKey: string) => string | null
   sendPrompt: (terminal: string, text: string) => Promise<AgentPaneTextResult>
+  /** Non-null while the user has a draft or is typing: retry after that many ms. */
+  readUserComposingWaitMs: (terminal: string) => number | null
   now?: () => number
   schedule?: (run: () => void, ms: number) => () => void
 }
@@ -45,8 +47,17 @@ export function startAutonomousGoalUsageResume(ports: AutonomousGoalUsageResumeP
       arm(goal)
       return
     }
-    ports.markActive(goal.id)
     const terminal = ports.resolveTerminalHandle(goal.paneKey)
+    const composingWaitMs = terminal ? ports.readUserComposingWaitMs(terminal) : null
+    if (composingWaitMs !== null) {
+      // Why: still usageLimited, so `arm` keeps this retry instead of firing a new one.
+      timers.set(goalId, {
+        resumeAt: goal.usageResumeAt + AUTONOMOUS_GOAL_USAGE_RESUME_GRACE_MS,
+        cancel: schedule(() => void resume(goalId), composingWaitMs)
+      })
+      return
+    }
+    ports.markActive(goal.id)
     if (terminal) {
       // Why: best effort; if the pane is gone the next Run mail or the user restarts it.
       await ports.sendPrompt(terminal, AUTONOMOUS_GOAL_USAGE_RESUME_NOTICE).catch(() => 'unknown')

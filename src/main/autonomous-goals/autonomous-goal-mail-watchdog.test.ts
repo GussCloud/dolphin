@@ -32,7 +32,14 @@ function harness(overrides: Partial<AutonomousGoalMailWatchdogPorts> = {}) {
     status: 'working' | 'permission' | 'idle' | null
     inputAt: number | undefined
     goalStatus: AutonomousGoal['status']
-  } = { unread: 'msg_1', status: 'idle', inputAt: undefined, goalStatus: goal.status }
+    composingWaitMs: number | null
+  } = {
+    unread: 'msg_1',
+    status: 'idle',
+    inputAt: undefined,
+    goalStatus: goal.status,
+    composingWaitMs: null
+  }
   const sendNudge = vi.fn(async () => true)
   const markBlocked = vi.fn()
   const watchdog = startAutonomousGoalMailWatchdog({
@@ -41,6 +48,7 @@ function harness(overrides: Partial<AutonomousGoalMailWatchdogPorts> = {}) {
     resolveTerminalHandle: () => 'term_coord',
     readAgentStatus: async () => state.status,
     readLastInputAt: () => state.inputAt,
+    readUserComposingWaitMs: () => state.composingWaitMs,
     sendNudge,
     markBlocked,
     now: () => clock,
@@ -107,6 +115,21 @@ describe('autonomous goal mail watchdog', () => {
     }
     expect(sendNudge).toHaveBeenCalledTimes(AUTONOMOUS_GOAL_MAIL_MAX_NUDGES)
     expect(markBlocked).toHaveBeenCalledOnce()
+  })
+
+  // Why: a draft left in the composer reads idle; the nudge would join it and submit it.
+  it('defers while the user has a draft, without spending a nudge toward blocked', async () => {
+    const { state, sendNudge, markBlocked, watchdog, advance } = harness()
+    await watchdog.check()
+    state.composingWaitMs = 8_000
+    for (let i = 0; i < AUTONOMOUS_GOAL_MAIL_MAX_NUDGES + 2; i += 1) {
+      await advance(AUTONOMOUS_GOAL_MAIL_RENUDGE_MS)
+    }
+    expect(sendNudge).not.toHaveBeenCalled()
+    expect(markBlocked).not.toHaveBeenCalled()
+    state.composingWaitMs = null
+    await advance(1)
+    expect(sendNudge).toHaveBeenCalledOnce()
   })
 
   it('does not wake a usage-limited goal', async () => {

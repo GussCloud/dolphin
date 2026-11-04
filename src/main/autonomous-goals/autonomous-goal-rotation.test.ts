@@ -37,12 +37,14 @@ function harness(options: { contextTokens?: number | null; connectionId?: string
   const ctx: {
     goal: AutonomousGoal | null
     lastInputAt: number | undefined
+    composingWaitMs: number | null
     sent: { kind: 'prompt' | 'command'; text: string }[]
     rotations: number
     reading: CoordinatorContextReading | null
   } = {
     goal: { ...GOAL },
     lastInputAt: undefined,
+    composingWaitMs: null,
     sent: [],
     rotations: 0,
     reading:
@@ -61,6 +63,7 @@ function harness(options: { contextTokens?: number | null; connectionId?: string
     readContext: async () => ctx.reading,
     resolveTerminalHandle: () => 'term-1',
     readLastInputAt: () => ctx.lastInputAt,
+    readUserComposingWaitMs: () => ctx.composingWaitMs,
     sendPrompt: async (_terminal, text) => {
       ctx.sent.push({ kind: 'prompt', text })
       return 'accepted'
@@ -158,6 +161,18 @@ describe('autonomous goal session rotation', () => {
     await vi.advanceTimersByTimeAsync(AUTONOMOUS_GOAL_RESET_SETTLE_MS)
     expect(h.ctx.sent.map((entry) => entry.kind)).toEqual(['prompt'])
     expect(h.ctx.rotations).toBe(0)
+  })
+
+  it('postpones the handoff to a later turn while the user has a draft', async () => {
+    const h = harness()
+    h.ctx.composingWaitMs = 8_000
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.ctx.sent).toEqual([])
+    h.ctx.composingWaitMs = null
+    h.turnEnds()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(h.ctx.sent).toEqual([{ kind: 'prompt', text: AUTONOMOUS_COORDINATOR_HANDOFF_REQUEST }])
   })
 
   it('falls back to a turn count when the transcript is on another host', async () => {
