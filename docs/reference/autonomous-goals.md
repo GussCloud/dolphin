@@ -170,6 +170,13 @@ pointer whose single Enter was dropped. Two things close them:
   re-nudges at most every 5 minutes, skips usage-limited goals, and after 3
   unanswered nudges marks the goal blocked so the user is notified.
 
+An agent reads idle while the user drafts in its composer, so nothing is typed
+while the user is composing (`terminal-user-composing-guard.ts`: a keystroke in
+the last 8 s or a draft on the screen model). The mailbox pointer stays parked
+and the delivery recheck retries after the quiet window; the watchdog nudge waits
+without counting toward the 3, the usage-resume notice retries, and a rotation
+handoff waits for a later turn. Unknown evidence never blocks.
+
 ## Stalled workers
 
 A worker's heartbeat mail is self-reported, so a looping agent keeps sending it,

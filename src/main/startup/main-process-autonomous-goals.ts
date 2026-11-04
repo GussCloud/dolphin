@@ -46,12 +46,15 @@ export function startMainProcessAutonomousGoals(
     const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
     return ptyId ? readLatestTerminalInputAt(ptyId) : undefined
   }
+  const readUserComposingWaitMs = (terminal: string): number | null =>
+    runtime.readTerminalUserComposingWaitMs(terminal)
   const stopUsageResume = startAutonomousGoalUsageResume({
     listGoals: () => store.list(),
     subscribe: (listener) => store.subscribe(listener),
     markActive: (goalId) => store.update(goalId, { status: 'active', usageResumeAt: undefined }),
     resolveTerminalHandle,
-    sendPrompt
+    sendPrompt,
+    readUserComposingWaitMs
   })
   const stopNotifier = startAutonomousGoalNotifier({
     listGoals: () => store.list(),
@@ -72,6 +75,7 @@ export function startMainProcessAutonomousGoals(
     readContext: readCoordinatorContext,
     resolveTerminalHandle,
     readLastInputAt,
+    readUserComposingWaitMs,
     sendPrompt: (terminal, text) =>
       deliverAgentPanePlainText({ sendTerminal, wait }, terminal, text),
     sendCommand: async (terminal, command) => {
@@ -117,6 +121,7 @@ export function startMainProcessAutonomousGoals(
     resolveTerminalHandle,
     readAgentStatus: async (terminal) => (await runtime.getTerminalAgentStatus(terminal)).status,
     readLastInputAt,
+    readUserComposingWaitMs,
     sendNudge: async (terminal, text) => {
       try {
         await runtime.sendTerminalAgentPrompt(terminal, text)

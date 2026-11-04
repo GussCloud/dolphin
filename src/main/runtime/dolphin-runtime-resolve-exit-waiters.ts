@@ -12,6 +12,7 @@ import {
 import { buildTerminalWaitText } from './terminal-wait-tail-state'
 import { isTuiIdleSatisfied } from './tui-idle-evidence'
 import { TUI_IDLE_QUIESCENCE_MS } from './dolphin-runtime-postlude'
+import { readPtyUserComposingWaitMs } from '../terminal-user-composing-guard'
 
 export class DolphinRuntimeWithResolveExitWaiters extends DolphinRuntimeWithBindPtyIncarnationHandle {
   protected resolveExitWaiters(leaf: RuntimeLeafRecord): void {
@@ -135,12 +136,29 @@ export class DolphinRuntimeWithResolveExitWaiters extends DolphinRuntimeWithBind
    */
   protected checkDeliverySettledAndArmRecheck(leaf: { tabId: string; leafId: string }): boolean {
     const leafKey = this.getLeafKey(leaf.tabId, leaf.leafId)
-    if (this.isAgentSettledForDelivery(leaf)) {
+    // Why: agents read idle while the user drafts, so typing now would append to and submit it.
+    const composingWaitMs = this.readUserComposingWaitMs(leafKey)
+    if (composingWaitMs === null && this.isAgentSettledForDelivery(leaf)) {
       this.clearDeliveryRecheck(leafKey)
       return true
     }
-    this.armDeliveryRecheck(leafKey)
+    this.armDeliveryRecheck(leafKey, composingWaitMs ?? 0)
     return false
+  }
+
+  private readUserComposingWaitMs(leafKey: string): number | null {
+    return this.readPtyUserComposingWaitMs(this.leaves.get(leafKey)?.ptyId)
+  }
+
+  /** Non-null while the user is drafting in this terminal; see terminal-user-composing-guard. */
+  readTerminalUserComposingWaitMs(handle: string): number | null {
+    return this.readPtyUserComposingWaitMs(this.resolveLiveLeafForHandle(handle)?.ptyId)
+  }
+
+  private readPtyUserComposingWaitMs(ptyId: string | null | undefined): number | null {
+    return ptyId
+      ? readPtyUserComposingWaitMs(ptyId, this.headlessTerminals.get(ptyId)?.emulator)
+      : null
   }
 
   protected clearDeliveryRecheck(leafKey: string): void {
@@ -151,7 +169,7 @@ export class DolphinRuntimeWithResolveExitWaiters extends DolphinRuntimeWithBind
     }
   }
 
-  private armDeliveryRecheck(leafKey: string): void {
+  private armDeliveryRecheck(leafKey: string, minimumDelayMs: number): void {
     if (this.deliveryRecheckTimersByLeafKey.has(leafKey)) {
       return
     }
@@ -160,7 +178,7 @@ export class DolphinRuntimeWithResolveExitWaiters extends DolphinRuntimeWithBind
     // stream to go quiet, so wake just after the window could have elapsed. A pane that is
     // still producing output re-arms from its own fresher timestamp rather than spinning.
     const elapsed = live?.lastOutputAt ? Date.now() - live.lastOutputAt : 0
-    const delay = Math.max(TUI_IDLE_QUIESCENCE_MS - elapsed, 0) + 50
+    const delay = Math.max(TUI_IDLE_QUIESCENCE_MS - elapsed, minimumDelayMs, 0) + 50
     const timer = setTimeout(() => {
       this.deliveryRecheckTimersByLeafKey.delete(leafKey)
       const current = this.leaves.get(leafKey)

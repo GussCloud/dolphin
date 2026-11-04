@@ -20,6 +20,8 @@ export type AutonomousGoalMailWatchdogPorts = {
   readAgentStatus: (terminal: string) => Promise<'working' | 'permission' | 'idle' | null>
   /** Last user input on the terminal from any surface; compared for equality only. */
   readLastInputAt: (terminal: string) => number | undefined
+  /** Non-null while the user has a draft or is typing; the nudge then waits and is not counted. */
+  readUserComposingWaitMs: (terminal: string) => number | null
   /** Types the nudge and submits it; false when it could not be written. */
   sendNudge: (terminal: string, text: string) => Promise<boolean>
   markBlocked: (goalId: string, text: string) => void
@@ -83,7 +85,10 @@ export function startAutonomousGoalMailWatchdog(ports: AutonomousGoalMailWatchdo
       }
       return
     }
-    if ((await ports.readAgentStatus(terminal)) !== 'idle') {
+    if (
+      (await ports.readAgentStatus(terminal)) !== 'idle' ||
+      ports.readUserComposingWaitMs(terminal) !== null
+    ) {
       return
     }
     if (await ports.sendNudge(terminal, AUTONOMOUS_COORDINATOR_MAIL_NUDGE)) {

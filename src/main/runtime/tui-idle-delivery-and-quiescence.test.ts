@@ -3,6 +3,8 @@ import { makeTuiIdleRuntime } from './tui-idle-wait-test-harness'
 import type { RuntimeSyncWindowGraph } from '../../shared/runtime-types'
 import type { DolphinRuntimeService } from './dolphin-runtime'
 import type { TuiAgent } from '../../shared/tui-agent'
+import { lastInputAtByPty } from '../ipc/pty/delivery/visibility-state'
+import { TERMINAL_USER_COMPOSING_QUIET_MS } from '../terminal-user-composing-guard'
 
 // Follow-ons to #6011. The evidence ranking that fixed the wait path did not reach two
 // other consumers of the same signal: mailbox delivery, which TYPES INTO the pane, and
@@ -187,4 +189,51 @@ describe('quiescence treats a missing output clock as quiet', () => {
       runtime.waitForTerminal(handle, { condition: 'tui-idle', timeoutMs: 8_000 })
     ).resolves.toMatchObject({ condition: 'tui-idle', satisfied: true })
   }, 20_000)
+})
+
+// The pointer path's only gate was "agent idle", and an agent reads idle while the user drafts:
+// the pointer joined the draft and its Enter submitted both.
+describe('mailbox delivery waits for the user to finish composing', () => {
+  const CLAUDE_DRAFT = `${'─'.repeat(20)}\r\n❯ half-written question`
+  beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date', 'performance']
+    })
+  })
+  afterEach(() => {
+    lastInputAtByPty.delete(PTY_ID)
+    vi.useRealTimers()
+  })
+
+  it('defers past a recent keystroke, then delivers once the user is quiet', async () => {
+    const { runtime } = await makeRuntime('codex')
+    const deliver = watchDelivery(runtime)
+    lastInputAtByPty.set(PTY_ID, performance.now())
+    runtime.onPtyData(PTY_ID, `${osc('Codex ready')}done\n`, Date.now())
+    expect(deliver).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(TERMINAL_USER_COMPOSING_QUIET_MS + 100)
+    expect(deliver).toHaveBeenCalledOnce()
+  })
+
+  it('holds the pointer while a draft is on screen and delivers after it is cleared', async () => {
+    const { runtime } = await makeRuntime('codex')
+    const deliver = watchDelivery(runtime)
+    runtime.onPtyData(PTY_ID, CLAUDE_DRAFT, Date.now())
+    await vi.advanceTimersByTimeAsync(0)
+    runtime.onPtyData(PTY_ID, osc('Codex ready'), Date.now())
+    await vi.advanceTimersByTimeAsync(TERMINAL_USER_COMPOSING_QUIET_MS * 2)
+    expect(deliver).not.toHaveBeenCalled()
+
+    runtime.onPtyData(PTY_ID, `\r${ESC}[2K❯ `, Date.now())
+    await vi.advanceTimersByTimeAsync(TERMINAL_USER_COMPOSING_QUIET_MS + 100)
+    expect(deliver).toHaveBeenCalled()
+  })
+
+  it('delivers immediately when no input was ever seen', async () => {
+    const { runtime } = await makeRuntime('codex')
+    const deliver = watchDelivery(runtime)
+    runtime.onPtyData(PTY_ID, `${osc('Codex ready')}done\n`, Date.now())
+    expect(deliver).toHaveBeenCalled()
+  })
 })
