@@ -308,6 +308,7 @@ import {
   WorkItemDetails,
   WorkItemsList as WorkItemsListOfGitlabParams
 } from './gitlab-params'
+import { HeavyJobAcquireParams, HeavyJobTicketParams } from './heavy-job-queue-params'
 import {
   HostedReviewActionParams,
   HostedReviewDetailsParams,
@@ -1060,6 +1061,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'orchestration.gateCreate': GateCreateParams,
   'orchestration.gateList': GateListParams,
   'orchestration.gateResolve': GateResolveParams,
+  'orchestration.heavyJobAcquire': HeavyJobAcquireParams,
+  'orchestration.heavyJobHeartbeat': HeavyJobTicketParams,
+  'orchestration.heavyJobRelease': HeavyJobTicketParams,
   'orchestration.inbox': InboxParams,
   'orchestration.reply': ReplyParams,
   'orchestration.requestShow': RequestShowParams,

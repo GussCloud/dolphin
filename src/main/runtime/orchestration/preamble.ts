@@ -129,6 +129,13 @@ Don't post to Slack, GitHub, or other channels during the run; report through th
   # start a new file and after a test run — and once more immediately before
   # you send worker_done, so a redirect lands before the task settles.
   ${cli} orchestration check --terminal ${params.workerHandle} --json
+
+  # Other workers share this machine. Run only focused tests for the files you
+  # changed. Run builds, the full suite, whole-project typecheck, e2e and
+  # packaging through the host queue, as below with your own command: it blocks
+  # until a slot frees, then prints the exit code, a tail and the log path.
+  # Exit 75 means nothing ran: retry. If it says to run directly, do so.
+  ${cli} orchestration exec -- npm run build
 \`\`\`
 
 ${postDoneInstructions}`

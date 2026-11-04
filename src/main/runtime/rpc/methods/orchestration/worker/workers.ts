@@ -15,6 +15,7 @@ import {
 import { assertWorkerStartTaskSpecWithinPromptBudget } from './worker-start-prompt-budget'
 import { assertAutonomousGoalWithinUsage } from '../../../../../autonomous-goals/autonomous-goal-usage'
 import { getAutonomousGoalStore } from '../../../../../autonomous-goals/autonomous-goal-store-instance'
+import { assertAutonomousGoalWorkerSlot } from '../../../../../autonomous-goals/autonomous-goal-worker-concurrency'
 
 export const ORCHESTRATION_WORKER_START_METHODS = [
   defineMethod({
@@ -45,6 +46,8 @@ export const ORCHESTRATION_WORKER_START_METHODS = [
         )
       }
       assertAutonomousGoalWithinUsage(getAutonomousGoalStore, run.id)
+      // A retry replaces its failed Dispatch, which no longer counts as running.
+      assertAutonomousGoalWorkerSlot(getAutonomousGoalStore, db.db, run.id)
       const existingTask = params.task ? db.getTask(params.task) : undefined
       if (params.task && (!existingTask || existingTask.run_id !== run.id)) {
         throw new OrchestrationError(

@@ -327,6 +327,35 @@ plan windows Dolphin already tracks (`RateLimitService`, no extra polling):
 
 A host with no usage data (headless, signed out) never blocks.
 
+## Machine load
+
+Workers share one machine, so two guards keep them from saturating it:
+
+- **Worker cap.** `orchestration.workerStart` refuses with `goal_worker_limit`
+  (`effectsApplied: false`) when the goal's Run already has `maxConcurrent`
+  running workers: a Dispatch still `pending`/`dispatched` whose worker is not
+  `failed`, `succeeded`, `stopped` or `abandoned`. The coordinator starts that
+  Task after the next `worker_done`. The goal file is read only from the second
+  worker on (`autonomous-goal-worker-concurrency.ts`).
+- **Heavy-job queue.** Workers run focused tests directly and send builds, full
+  suites, whole-project typecheck, e2e and packaging through
+  `dolphin orchestration exec -- <command>`. The CLI takes a lease from the
+  runtime (`heavy_job_leases` in the orchestration DB, created with the core
+  tables so no migration is needed), keyed by host name plus git common dir, or
+  the folder path for a folder workspace. `HEAVY_JOB_DEFAULT_CONCURRENCY` (1) jobs
+  run per key; the rest wait FIFO. The CLI long-polls (`heavyJobAcquire`, at most
+  20 s per call, woken early by a release), so waiting costs no agent tokens. A
+  running job heartbeats every 15 s; a lease or waiter not refreshed for 60 s is
+  reclaimed, so a killed CLI frees its slot. Full output goes to a log under the
+  OS temp dir; the agent sees the exit code, a 15-line tail and the log path.
+  - Exit 75: the queue stayed busy past `--max-wait-ms` (default 8 min, under the
+    agent Bash timeout) and nothing ran; the agent retries.
+  - A runtime without the methods (`method_not_found`) or unreachable: the command
+    runs directly with a warning.
+  - SSH and WSL panes bridge the CLI to the Dolphin client, so the command would
+    run on the wrong machine: `exec` refuses there (exit 69 from WSL, 1 over the
+    SSH bridge) and nothing runs. A guest-side runner is follow-up work.
+
 ## Visibility
 
 - `AutonomousGoalStrip` shows one line under the worktree's panes while its

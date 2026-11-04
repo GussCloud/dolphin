@@ -49,6 +49,8 @@ const HOST_INTERACTIVE_COMMANDS: Record<string, string> = {
     'dolphin claude-teams starts an interactive Claude Code session and cannot run through the SSH relay bridge. Start Claude Agent Teams from the Dolphin agent picker instead; on SSH hosts its teammates run in-process.',
   'agent-teams-tmux':
     'dolphin agent-teams-tmux is a tmux pane shim for the Dolphin host machine and cannot run through the SSH relay bridge.',
+  'orchestration exec':
+    'dolphin orchestration exec cannot run from an SSH terminal yet; nothing ran. Run the command directly on this host.',
   'account add':
     'dolphin account add runs an interactive agent login and cannot run through the buffered SSH relay bridge. Run it directly in a terminal on the Dolphin host machine.'
 }
@@ -62,8 +64,10 @@ export async function runRemoteDolphinCli(
   const json = parsed.flags.has('json')
   const command = parsed.commandPath.join(' ')
 
+  // Why: two words, not the whole path, so `orchestration exec -- <cmd>` words still match.
   const interactiveMessage =
-    HOST_INTERACTIVE_COMMANDS[command] ?? HOST_INTERACTIVE_COMMANDS[parsed.commandPath[0] ?? '']
+    HOST_INTERACTIVE_COMMANDS[parsed.commandPath.slice(0, 2).join(' ')] ??
+    HOST_INTERACTIVE_COMMANDS[parsed.commandPath[0] ?? '']
   if (interactiveMessage && !parsed.flags.has('help')) {
     if (json) {
       return {

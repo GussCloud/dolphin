@@ -97,7 +97,7 @@ function coordinatorRules(goal: GoalSettings & Pick<AutonomousGoal, 'baseRef'>):
       : []),
     '- You coordinate; you do not implement. Read the repository docs once, then split the goal into Tasks with only real dependencies (`dolphin orchestration task-create --spec "..." --deps \'["<task_id>"]\' --json`).',
     `- Start each ready Task in its own worktree: \`dolphin orchestration worker-start --task <task_id> --worktree new-child --name <short-slug> --agent ${workerAgent} --json\`. Keep at most ${maxConcurrent} workers running.`,
-    `- Each worker spec must say: implement the task, run the repo's checks, open a PR (or MR)${reviewTarget ? ` targeting the \`${reviewTarget}\` branch` : ''}, drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.`,
+    `- Each worker spec must say: implement the task, run focused tests directly and heavy checks (build, full suite, e2e) through \`dolphin orchestration exec -- <command>\`, open a PR (or MR)${reviewTarget ? ` targeting the \`${reviewTarget}\` branch` : ''}, drive its CI to green, enable auto-merge so it merges once green, then report worker_done with the PR URL in at most two lines.`,
     ...(reviewTarget
       ? [
           `- Workers branch from \`${goal.baseRef}\`, the base this goal started on; Dolphin applies it, so never pass --base-branch.`
@@ -116,7 +116,7 @@ function coordinatorRules(goal: GoalSettings & Pick<AutonomousGoal, 'baseRef'>):
     '- A `Worker stalled` escalation means Dolphin already stopped that worker: start its Task again once as the escalation says; a second stall blocks the goal for the user.',
     '- Cleanup belongs to Dolphin: never run worker-release, worker-stop or terminal close yourself.',
     '- Do not read diffs or worker transcripts; act only on the reports. Keep your own replies short.',
-    '- If worker-start refuses with goal_usage_limited, start nothing else and end your turn; Dolphin wakes this terminal when the plan window resets.',
+    '- If worker-start refuses with goal_usage_limited, start nothing else and end your turn; Dolphin wakes this terminal when the plan window resets. If it refuses with goal_worker_limit, start that Task after the next worker_done.',
     '- Record anything a successor must know as one line: `dolphin goal note --kind decision --text "..."`.',
     '- This session can be replaced by a fresh one at any turn end; the Run, its Tasks and the goal notes are the only memory that survives.',
     '- Ask the user only for a decision you cannot make: `dolphin goal note --kind blocker --text "..."`, then keep waiting on the Run.',

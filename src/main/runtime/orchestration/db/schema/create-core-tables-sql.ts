@@ -221,5 +221,19 @@ CREATE TABLE IF NOT EXISTS worker_terminal_archives (
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Host-wide heavy-command queue (orchestration exec). Rows expire unless their holder refreshes
+-- them, so a crashed CLI frees its slot; created here, not in a migration, because older builds
+-- simply never read it.
+CREATE TABLE IF NOT EXISTS heavy_job_leases (
+  ticket        TEXT PRIMARY KEY,
+  queue_key     TEXT NOT NULL,
+  state         TEXT NOT NULL CHECK(state IN ('waiting', 'running')),
+  holder        TEXT NOT NULL,
+  enqueued_ms   INTEGER NOT NULL,
+  expires_ms    INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_heavy_job_leases_queue
+  ON heavy_job_leases(queue_key, state, enqueued_ms);
+
   `
 }
