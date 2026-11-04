@@ -113,6 +113,7 @@ src/shared/agent-session-record.ts 1
 src/shared/agent-session-resume.ts 2
 src/shared/ai-vault-resume-command.ts 1
 src/shared/ai-vault-session-title.ts 1
+src/shared/autonomous-coordinator-launch-env.ts 1
 src/shared/claude-agent-teams-tmux-compat.ts 1
 src/shared/claude-compact-completion.ts 3
 src/shared/deepseek-status-identity.ts 4
