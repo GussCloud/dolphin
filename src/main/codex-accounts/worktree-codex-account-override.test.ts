@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { CodexManagedAccount } from '../../shared/managed-account-types'
 import type { WorktreeMeta } from '../../shared/worktree/meta-types'
 import { resolveCodexLaunchAccountOverride } from './worktree-codex-account-override'
@@ -15,18 +14,17 @@ function account(id: string): CodexManagedAccount {
   }
 }
 
-function settings(activeHost: string | null): GlobalSettings {
+function settings(activeHost: string | null) {
   return {
     activeCodexManagedAccountId: activeHost,
     activeCodexManagedAccountIdsByRuntime: { host: activeHost, wsl: {} },
     codexManagedAccounts: [account('acct-active'), account('acct-pinned')],
     claudeManagedAccounts: []
-  } as unknown as GlobalSettings
+  }
 }
 
-function source(metaById: Record<string, Partial<WorktreeMeta>>) {
-  const all = metaById as Record<string, WorktreeMeta>
-  return { getWorktreeMeta: (id: string) => all[id], getAllWorktreeMeta: () => all }
+function source(metaById: Record<string, Pick<WorktreeMeta, 'agentAccountId'>>) {
+  return { getWorktreeMeta: (id: string) => metaById[id], getAllWorktreeMeta: () => metaById }
 }
 
 const PINNED_ID = 'repo-1::/repos/app-worktrees/feature'

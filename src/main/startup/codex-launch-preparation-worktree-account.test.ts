@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { CodexManagedAccount } from '../../shared/managed-account-types'
 
-const mocks = vi.hoisted(() => ({
-  state: {} as Record<string, unknown>,
-  prepareRuntimeHooks: vi.fn(async () => ({ state: 'ok' }))
-}))
+const mocks = vi.hoisted(() => {
+  const state: Record<string, unknown> = {}
+  return { state, prepareRuntimeHooks: vi.fn(async () => ({ state: 'ok' })) }
+})
 
 vi.mock('electron', () => ({ app: { getPath: () => '/tmp/dolphin-test' } }))
 vi.mock('./main-process-state', () => ({ mainProcessState: mocks.state }))
@@ -40,8 +39,10 @@ function install(agentAccountId: string | undefined) {
     activeCodexManagedAccountIdsByRuntime: { host: 'acct-active', wsl: {} },
     codexManagedAccounts: [account('acct-active'), account('acct-pinned')],
     claudeManagedAccounts: []
-  } as unknown as GlobalSettings
-  const meta = { [WORKTREE_ID]: agentAccountId ? { agentAccountId } : {} }
+  }
+  const meta: Record<string, { agentAccountId?: string }> = {
+    [WORKTREE_ID]: agentAccountId ? { agentAccountId } : {}
+  }
   const runtimeHome = {
     isHostSystemDefaultRealHomeSelected: () => false,
     prepareForCodexLaunchAsync: vi.fn(async () => '/data/codex-accounts/acct-active/home'),
@@ -50,7 +51,7 @@ function install(agentAccountId: string | undefined) {
   mocks.state.codexRuntimeHome = runtimeHome
   mocks.state.store = {
     getSettings: () => settings,
-    getWorktreeMeta: (id: string) => meta[id as keyof typeof meta],
+    getWorktreeMeta: (id: string) => meta[id],
     getAllWorktreeMeta: () => meta
   }
   return runtimeHome

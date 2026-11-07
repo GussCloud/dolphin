@@ -250,6 +250,7 @@ describe('worker-start honours the settings default', () => {
 
   it('creates a child worktree on the account its coordinator worktree pinned', async () => {
     const created = mockWorktreeCreation()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: worker creation reads only id, repoId and agentAccountId.
     vi.mocked(runtime.showManagedWorktree).mockResolvedValue({
       id: 'repo::wt',
       repoId: 'repo',

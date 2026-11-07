@@ -78,6 +78,7 @@ describe('materializeRuntimeLocalWorktree', () => {
       setWorktreeMeta: vi.fn((_id, updates) => ({ ...updates, hostId: 'local' }))
     }
 
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: materialization reads only the fields supplied here.
     await materializeRuntimeLocalWorktree({
       request: { agentAccountId: 'acct-pinned' },
       repo: {

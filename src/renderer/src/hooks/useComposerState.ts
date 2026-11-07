@@ -1,3 +1,4 @@
+import type { QuickSubmitOptions } from './composer-state/composer-submit-model'
 import type { RefObject } from 'react'
 import {
   getLinkedWorkItemSuggestedName,
@@ -59,7 +60,11 @@ export type UseComposerStateResult = {
   promptTextareaRef: RefObject<HTMLTextAreaElement | null>
   nameInputRef: RefObject<HTMLInputElement | null>
   submit: () => Promise<void>
-  submitQuick: (agent: TuiAgent | null, launchPromptOverride?: string) => Promise<void>
+  submitQuick: (
+    agent: TuiAgent | null,
+    launchPromptOverride?: string,
+    options?: QuickSubmitOptions
+  ) => Promise<void>
   createDisabled: boolean
   selectAddedProjectRepo: (repoId: string) => void
 }

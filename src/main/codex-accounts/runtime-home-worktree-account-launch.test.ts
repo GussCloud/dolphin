@@ -60,6 +60,7 @@ describe('CodexRuntimeHomeService.prepareForCodexLaunchWithAccount', () => {
       })
     )
     const { CodexRuntimeHomeService } = await import('./runtime-home-service')
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the harness store implements the getSettings/updateSettings surface the service reads.
     const service = new CodexRuntimeHomeService(store as never)
 
     expect(service.prepareForCodexLaunchWithAccount(account('acct-pinned', pinnedHome))).toBe(
@@ -80,6 +81,7 @@ describe('CodexRuntimeHomeService.prepareForCodexLaunchWithAccount', () => {
       })
     )
     const { CodexRuntimeHomeService } = await import('./runtime-home-service')
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the harness store implements the getSettings/updateSettings surface the service reads.
     const service = new CodexRuntimeHomeService(store as never)
 
     expect(

@@ -1,3 +1,4 @@
+import type { QuickSubmitOptions } from './composer-submit-model'
 import { useCallback } from 'react'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { WorktreeCreationRequest } from '@/lib/pending-worktree-creation'
@@ -70,7 +71,11 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
   } = input
 
   const submitQuick = useCallback(
-    async (requestedAgent: TuiAgent | null, launchPromptOverride?: string): Promise<void> => {
+    async (
+      requestedAgent: TuiAgent | null,
+      launchPromptOverride?: string,
+      options?: QuickSubmitOptions
+    ): Promise<void> => {
       if (isProjectGroupTarget) {
         await submitFolderTarget(requestedAgent)
         return
@@ -161,7 +166,8 @@ export function useQuickSubmitAction(input: QuickSubmitActionInput) {
           workspaceRunContext,
           repoId,
           selectedRepo,
-          launchPromptOverride
+          launchPromptOverride,
+          options
         )
       } catch (error) {
         if (isSubmissionCancelled()) {

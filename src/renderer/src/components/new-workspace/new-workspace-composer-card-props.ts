@@ -40,6 +40,10 @@ export type NewWorkspaceComposerCardProps = {
   nameInputRef?: React.RefObject<HTMLInputElement | null>
   quickAgent: TuiAgent | null
   onQuickAgentChange: (agent: TuiAgent | null) => void
+  /** Pinned managed account for the agent; null keeps the active account. */
+  agentAccountId?: string | null
+  /** Omitted where the create path cannot persist a pin (folder, multi-project). */
+  onAgentAccountIdChange?: (accountId: string | null) => void
   /** Present where the composer runs as steps; its Orchestration mode launches a coordinator. */
   autonomousGoalDraft?: AutonomousGoalDraft
   onAutonomousGoalDraftChange?: (next: AutonomousGoalDraft) => void

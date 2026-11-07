@@ -125,7 +125,9 @@ describe('worktree-pinned Codex account on spawn', () => {
       onPtyData: vi.fn()
     }
     handlers.clear()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the suite's window and runtime stubs cover what registration calls.
     registerPtyHandlers(mainWindow as never, runtime as never, resolveHomeByWorktree)
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration hands setPtyController the runtime spawn controller.
     const controller = runtime.setPtyController.mock.calls[0]?.[0] as RuntimeSpawnController
 
     await controller.spawn({
@@ -137,6 +139,7 @@ describe('worktree-pinned Codex account on spawn', () => {
       launchAgent: 'codex'
     })
 
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the daemon adapter mock records DaemonSpawnCall arguments.
     const spawnOptions = daemonSpawn.mock.calls.at(-1)?.[0] as DaemonSpawnCall
     expect(spawnOptions.env.CODEX_HOME).toBe(PINNED_HOME)
   })

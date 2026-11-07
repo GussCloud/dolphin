@@ -9,10 +9,20 @@ import {
   type CodexAccountSelectionTarget
 } from './runtime-selection'
 
+type PinnedMeta = Pick<WorktreeMeta, 'agentAccountId'>
+
 export type WorktreeAccountMetaSource = {
-  getWorktreeMeta: (worktreeId: string) => WorktreeMeta | undefined
-  getAllWorktreeMeta: () => Record<string, WorktreeMeta>
+  getWorktreeMeta: (worktreeId: string) => PinnedMeta | undefined
+  getAllWorktreeMeta: () => Record<string, PinnedMeta>
 }
+
+type LaunchAccountSettings = Pick<
+  GlobalSettings,
+  | 'activeCodexManagedAccountId'
+  | 'activeCodexManagedAccountIdsByRuntime'
+  | 'codexManagedAccounts'
+  | 'claudeManagedAccounts'
+>
 
 export type CodexLaunchAccountOverride =
   | { kind: 'none' }
@@ -27,7 +37,7 @@ function isSameOrDescendantPath(candidate: string, root: string): boolean {
 function findLaunchWorktree(
   source: WorktreeAccountMetaSource,
   launch: { worktreeId?: string; workspacePath?: string }
-): { worktreeId: string; meta: WorktreeMeta } | null {
+): { worktreeId: string; meta: PinnedMeta } | null {
   if (launch.worktreeId) {
     const meta = source.getWorktreeMeta(launch.worktreeId)
     return meta ? { worktreeId: launch.worktreeId, meta } : null
@@ -38,7 +48,7 @@ function findLaunchWorktree(
   // Why: structured and local-provider launches carry only a cwd; separators are folded so
   // Windows and WSL UNC spellings compare like POSIX ones.
   const cwd = normalizeRuntimePathForComparison(launch.workspacePath).replace(/\\/g, '/')
-  let best: { worktreeId: string; meta: WorktreeMeta; length: number } | null = null
+  let best: { worktreeId: string; meta: PinnedMeta; length: number } | null = null
   for (const [worktreeId, meta] of Object.entries(source.getAllWorktreeMeta())) {
     if (!meta.agentAccountId) {
       continue
@@ -61,7 +71,7 @@ function findLaunchWorktree(
  */
 export function resolveCodexLaunchAccountOverride(args: {
   source: WorktreeAccountMetaSource | null | undefined
-  settings: GlobalSettings | undefined
+  settings: LaunchAccountSettings | undefined
   target?: CodexAccountSelectionTarget
   worktreeId?: string
   workspacePath?: string
