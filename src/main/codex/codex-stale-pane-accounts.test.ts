@@ -618,3 +618,28 @@ describe('listStaleCodexPanes', () => {
     ])
   })
 })
+
+describe('worktree-pinned codex panes', () => {
+  it('survives a registry reload and is never prompted as stale after a global switch', () => {
+    recordCodexPaneAccount('pty-pinned', {
+      selectionKey: 'host',
+      accountId: 'acct-pinned',
+      homeRoute: 'account-home',
+      worktreeAccountPinned: true
+    })
+    recordCodexPaneAccount('pty-global', {
+      selectionKey: 'host',
+      accountId: 'acct-old',
+      homeRoute: 'account-home'
+    })
+    _internals.resetCache()
+
+    expect(getCodexPaneAccount('pty-pinned')?.worktreeAccountPinned).toBe(true)
+    expect(
+      listStaleCodexPanes({
+        ptyIds: ['pty-pinned', 'pty-global'],
+        settings: settingsWithSelection('acct-new')
+      }).map((pane) => pane.ptyId)
+    ).toEqual(['pty-global'])
+  })
+})

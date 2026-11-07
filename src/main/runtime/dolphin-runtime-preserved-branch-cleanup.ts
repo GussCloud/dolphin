@@ -115,6 +115,7 @@ export class DolphinRuntimeWithPreservedBranchCleanup extends DolphinRuntimeWith
     | ((input: {
         workspacePath: string
         launchEnv: NodeJS.ProcessEnv
+        worktreeId?: string
       }) => string | null | Promise<string | null>)
     | null
 

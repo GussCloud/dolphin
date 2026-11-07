@@ -100,6 +100,7 @@ export class DolphinRuntimeWithStateFields extends DolphinRuntimeWithLinearComma
       prepareCodexStructuredLaunch?: (input: {
         workspacePath: string
         launchEnv: NodeJS.ProcessEnv
+        worktreeId?: string
       }) => string | null | Promise<string | null>
       // Why a sibling of prepare: record-less catalog reads must resolve the
       // same launch home with none of launch prep's side effects (no sync, no

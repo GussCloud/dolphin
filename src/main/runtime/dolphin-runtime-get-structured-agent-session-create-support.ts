@@ -92,12 +92,15 @@ export class DolphinRuntimeWithGetStructuredAgentSessionCreateSupport extends Do
         })
       )
     }
-    return this.resolveStructuredAgentSessionIntent(input, ({ workspacePath, launchEnv }) =>
-      resolveStructuredCodexAccountHomePath({
-        launchEnv,
-        resolveLaunchHome: this.prepareCodexStructuredLaunchFn,
-        workspacePath
-      })
+    return this.resolveStructuredAgentSessionIntent(
+      input,
+      ({ workspacePath, launchEnv, location }) =>
+        resolveStructuredCodexAccountHomePath({
+          launchEnv,
+          resolveLaunchHome: this.prepareCodexStructuredLaunchFn,
+          workspacePath,
+          worktreeId: location.workspaceId
+        })
     )
   }
 

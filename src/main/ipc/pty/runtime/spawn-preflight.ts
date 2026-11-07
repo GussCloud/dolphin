@@ -175,6 +175,7 @@ export async function prepareRuntimePtySpawn(
   const selectLaunchCodexHome = async (): Promise<string | null> =>
     (await ctx.deps.getSelectedCodexHomePath?.(ctx.codexSelectionTarget, ctx.env, {
       workspacePath: ctx.cwd,
+      worktreeId: args.worktreeId,
       launchAgent: isTuiAgent(args.launchAgent) ? args.launchAgent : undefined
     })) ?? null
   ctx.selectedCodexHomePath =
@@ -206,6 +207,7 @@ export async function prepareRuntimePtySpawn(
           ctx.codexSelectionTarget,
           (await ctx.deps.getSelectedCodexHomePath?.(ctx.codexSelectionTarget, ctx.env, {
             workspacePath: ctx.cwd,
+            worktreeId: args.worktreeId,
             launchAgent: 'codex'
           })) ?? null
         ),
@@ -214,6 +216,7 @@ export async function prepareRuntimePtySpawn(
           ctx.codexSelectionTarget,
           (await ctx.deps.getSelectedCodexHomePath?.(ctx.codexSelectionTarget, ctx.env, {
             workspacePath: ctx.cwd,
+            worktreeId: args.worktreeId,
             launchAgent: 'codex',
             unavailableManagedHomePath
           })) ?? null

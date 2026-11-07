@@ -61,6 +61,10 @@ export async function createWorkerWorktree(args: {
     awaitTerminalProvisioning: true,
     observeSetupCompletion: true,
     createdWithAgent: args.agent,
+    // Why: a worker spends the same account as the worktree that dispatched it.
+    ...(coordinatorWorktree.agentAccountId
+      ? { agentAccountId: coordinatorWorktree.agentAccountId }
+      : {}),
     ...(args.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
     ...(args.withAgentTerminal
       ? {

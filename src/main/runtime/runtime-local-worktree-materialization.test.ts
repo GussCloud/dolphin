@@ -71,4 +71,46 @@ describe('materializeRuntimeLocalWorktree', () => {
 
     expect(order).toEqual(['metadata', 'filesystem'])
   })
+
+  it('persists the pinned agent account with the worktree metadata', async () => {
+    const store = {
+      getProjectHostSetups: () => [],
+      setWorktreeMeta: vi.fn((_id, updates) => ({ ...updates, hostId: 'local' }))
+    }
+
+    await materializeRuntimeLocalWorktree({
+      request: { agentAccountId: 'acct-pinned' },
+      repo: {
+        id: 'repo-1',
+        path: '/repo',
+        displayName: 'Repo',
+        badgeColor: '#000000',
+        addedAt: 1
+      },
+      store,
+      settings: { workspaceDir: '/worktrees', nestWorkspaces: true },
+      created: {
+        path: '/worktrees/app',
+        head: 'abc123',
+        branch: 'feature/app',
+        isBare: false,
+        isMainWorktree: false
+      },
+      remoteTrackingBase: null,
+      sparseDirectories: [],
+      checkoutExistingBranch: false,
+      baseBranch: 'main',
+      branchName: 'feature/app',
+      effectiveRequestedName: 'app',
+      effectiveSanitizedName: 'app',
+      effectiveCreatedWithAgent: 'codex',
+      localWorktreeGitOptions: {},
+      onMetadataPersisted: () => null
+    } as never)
+
+    expect(store.setWorktreeMeta).toHaveBeenCalledWith(
+      'repo-1::/worktrees/app',
+      expect.objectContaining({ createdWithAgent: 'codex', agentAccountId: 'acct-pinned' })
+    )
+  })
 })
