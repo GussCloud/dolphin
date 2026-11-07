@@ -246,3 +246,26 @@ describe('resolveCodexPaneLaunchAccount', () => {
     ).toBeNull()
   })
 })
+
+describe('resolveCodexPaneLaunchAccount with a worktree-pinned account', () => {
+  it('records the account owning the launch home and marks the pane pinned', () => {
+    const accounts = [
+      managedAccount({ id: 'account-a' }),
+      managedAccount({ id: 'account-b', managedHomePath: '/data/codex-accounts/account-b/home' })
+    ]
+    expect(
+      resolveCodexPaneLaunchAccount({
+        pinnedByResume: false,
+        launchCodexHomePath: '/data/codex-accounts/account-a/home',
+        systemCodexHomePath: SYSTEM_HOME,
+        settings: settings({ host: 'account-b', accounts }),
+        target: { runtime: 'host' }
+      })
+    ).toEqual({
+      selectionKey: 'host',
+      accountId: 'account-a',
+      homeRoute: 'account-home',
+      worktreeAccountPinned: true
+    })
+  })
+})

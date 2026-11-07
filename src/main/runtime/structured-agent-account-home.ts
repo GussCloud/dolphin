@@ -41,10 +41,13 @@ export type StructuredCodexAccountHomeDeps = {
     | ((input: {
         workspacePath: string
         launchEnv: NodeJS.ProcessEnv
+        worktreeId?: string
       }) => string | null | Promise<string | null>)
     | null
   /** Empty for a record-less read; only launch preparation consumes it. */
   workspacePath: string
+  /** Owning worktree, so a pinned account wins over the global selection. */
+  worktreeId?: string
 }
 
 export async function resolveStructuredCodexAccountHomePath(
@@ -53,7 +56,8 @@ export async function resolveStructuredCodexAccountHomePath(
   // A create has no process yet, so the current selection is what it must follow.
   const resolvedHome = await deps.resolveLaunchHome?.({
     workspacePath: deps.workspacePath,
-    launchEnv: deps.launchEnv
+    launchEnv: deps.launchEnv,
+    ...(deps.worktreeId ? { worktreeId: deps.worktreeId } : {})
   })
   const configuredHome = deps.launchEnv.CODEX_HOME
   return (

@@ -65,6 +65,7 @@ export function buildManagedWorktreeCreateArgs(
     }),
     setupDecision: params.setupDecision,
     createdWithAgent: params.createdWithAgent ?? params.startupAgent,
+    ...(params.agentAccountId ? { agentAccountId: params.agentAccountId } : {}),
     ...provenance,
     startup: params.startupCommand
       ? {

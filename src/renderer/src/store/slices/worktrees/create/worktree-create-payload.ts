@@ -17,6 +17,8 @@ export type CreateWorktreeCallOptions = {
   /** Parent picked in the composer. Sets sidebar nesting only; ignored if it no longer exists. */
   parentWorktreeId?: string
   autonomousGoalWorkspace?: boolean
+  /** Managed account the created agent launches with; omitted keeps the active account. */
+  agentAccountId?: string
   provisionedRoot?: {
     runtimeId: string
     executionHostId: ExecutionHostId
@@ -96,7 +98,8 @@ function sharedCreateFields(
     ...(options?.automationProvenanceRequest
       ? { automationProvenanceRequest: options.automationProvenanceRequest }
       : {}),
-    ...(options?.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {})
+    ...(options?.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
+    ...(options?.agentAccountId ? { agentAccountId: options.agentAccountId } : {})
   }
 }
 

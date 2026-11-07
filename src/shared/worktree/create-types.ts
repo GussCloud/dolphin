@@ -131,6 +131,8 @@ export type CreateWorktreeArgs = {
   parentWorkspace?: WorkspaceKey
   /** Agent selected in the create surface. Omitted for blank-shell creates. */
   createdWithAgent?: TuiAgent
+  /** Managed account pinned for the created agent; omitted keeps the active account. */
+  agentAccountId?: string
   /** Set when the renderer knows this auto-generated branch should be renamed
    *  from the first agent message. */
   pendingFirstAgentMessageRename?: boolean

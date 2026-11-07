@@ -111,6 +111,7 @@ export const ORCHESTRATION_FEDERATION_ATTACH_METHODS = [
             awaitTerminalProvisioning: true,
             observeSetupCompletion: true,
             createdWithAgent: agent as TuiAgent,
+            // Why no agentAccountId: a federated host owns its own accounts.
             startupAgent: agent as TuiAgent,
             ...(launch.preferences ? { startupLaunchPreferences: launch.preferences } : {}),
             activate: false,

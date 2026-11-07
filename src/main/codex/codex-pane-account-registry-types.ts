@@ -21,6 +21,8 @@ export type CodexPaneAccountRecord = {
   shellStartupHomeOverride?: CodexShellStartupHomeOverride
   /** Rechecked after restart when CODEX_HOME came from the process environment. */
   environmentHomeOverride?: CodexEnvironmentHomeOverride
+  /** Launched on its worktree's pinned account, so a global switch does not make it stale. */
+  worktreeAccountPinned?: true
 }
 
 export type CodexPaneAccountRegistryFile = {

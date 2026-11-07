@@ -139,3 +139,14 @@ describe('quick composer creation request', () => {
     expect(request).not.toHaveProperty('linkedGitLabIssue')
   })
 })
+
+describe('quick composer pinned agent account', () => {
+  it('carries the pin only when an agent will launch', () => {
+    expect(
+      buildQuickCreationRequest(createInput({ agent: 'codex', agentAccountId: 'acct-pinned' }))
+    ).toMatchObject({ agentAccountId: 'acct-pinned' })
+    expect(
+      buildQuickCreationRequest(createInput({ agent: null, agentAccountId: 'acct-pinned' }))
+    ).not.toHaveProperty('agentAccountId')
+  })
+})
