@@ -39,6 +39,7 @@ describe('web GitHub preload API', () => {
         'listAssignableUsers',
         'listAssignableUsersBySlug',
         'listBindableAccounts',
+        'listHostAccounts',
         'listIssueTypesBySlug',
         'listIssues',
         'listLabels',
@@ -377,6 +378,12 @@ describe('web GitHub preload API', () => {
         args: { repoPath, refreshCapability: true },
         expectedMethod: 'github.listBindableAccounts',
         expectedParams: withRepo({ repoPath, refreshCapability: true })
+      },
+      {
+        key: 'listHostAccounts',
+        args: { host: 'github.com' },
+        expectedMethod: 'github.listHostAccounts',
+        expectedParams: { host: 'github.com' }
       },
       {
         key: 'validateAccountBinding',

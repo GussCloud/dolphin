@@ -6,6 +6,12 @@ import { Input } from '@/components/ui/input'
 import { translate } from '@/i18n/i18n'
 import { RemoteFileBrowser } from './RemoteFileBrowser'
 import { AzureReposClonePicker } from './AzureReposClonePicker'
+import { NewProjectAccountFields } from '../project-accounts/NewProjectAccountFields'
+import { parseWslUncPath } from '../../../../shared/wsl-paths'
+import {
+  resolveNewProjectAccountSettings,
+  type useNewProjectAccountDraft
+} from '../project-accounts/new-project-account-settings'
 
 type CloneStepProps = {
   cloneUrl: string
@@ -21,6 +27,7 @@ type CloneStepProps = {
   onDestChange: (value: string) => void
   onPickDestination: () => void
   onClone: () => void
+  projectAccounts?: ReturnType<typeof useNewProjectAccountDraft>
 }
 
 export function CloneStep({
@@ -36,12 +43,19 @@ export function CloneStep({
   onUrlChange,
   onDestChange,
   onPickDestination,
-  onClone
+  onClone,
+  projectAccounts
 }: CloneStepProps): React.JSX.Element {
   const [browsingDestination, setBrowsingDestination] = useState(false)
   const isRemoteClone = Boolean(runtimeEnvironmentId || sshTargetId)
   const canBrowseRemoteDestination = isRemoteClone
-  const canClone = !!cloneUrl.trim() && !!cloneDestination.trim() && !isCloning
+  // Why: SSH clones run git on the remote host, where per-project accounts are not applied.
+  const showAccountFields = Boolean(projectAccounts) && !sshTargetId
+  const accountsValid =
+    !showAccountFields ||
+    !projectAccounts ||
+    resolveNewProjectAccountSettings(projectAccounts.draft) !== null
+  const canClone = !!cloneUrl.trim() && !!cloneDestination.trim() && !isCloning && accountsValid
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -187,13 +201,21 @@ export function CloneStep({
           </div>
         </div>
 
+        {showAccountFields && projectAccounts ? (
+          <NewProjectAccountFields
+            remoteUrl={cloneUrl}
+            runtimeEnvironmentId={runtimeEnvironmentId}
+            wslDistro={parseWslUncPath(cloneDestination.trim())?.distro ?? null}
+            draft={projectAccounts.draft}
+            onSelectionChange={projectAccounts.setSelection}
+            onIdentityChange={projectAccounts.setIdentity}
+            disabled={isCloning}
+          />
+        ) : null}
+
         {cloneError && <p className="text-[11px] text-destructive">{cloneError}</p>}
 
-        <Button
-          onClick={onClone}
-          disabled={!cloneUrl.trim() || !cloneDestination.trim() || isCloning}
-          className="w-full"
-        >
+        <Button onClick={onClone} disabled={!canClone} className="w-full">
           {isCloning
             ? translate('auto.components.sidebar.AddRepoSteps.69f5b5380d', 'Cloning...')
             : translate('auto.components.sidebar.AddRepoSteps.32a7256d85', 'Clone')}

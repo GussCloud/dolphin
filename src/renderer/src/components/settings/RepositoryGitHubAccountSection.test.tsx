@@ -286,7 +286,7 @@ describe('RepositoryGitHubAccountSection', () => {
     })
 
     expect(findOption('alice @ github.com').disabled).toBe(true)
-    expect(findOption('Default (ambient gh login)').disabled).toBe(false)
+    expect(findOption('Default account (gh’s active login)').disabled).toBe(false)
     expect(container.textContent).toContain('Binding is unavailable until')
   })
 
