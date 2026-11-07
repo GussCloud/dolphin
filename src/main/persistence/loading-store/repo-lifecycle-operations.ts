@@ -1,6 +1,7 @@
 import type { ProjectHostSetup, ProjectHostSetupUpdateArgs } from '../../../shared/project-types'
 import type { Repo } from '../../../shared/repo-types'
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
+import type { CommitIdentity } from '../../../shared/source-control-account-types'
 import {
   removeRepoFromHostWorkspaceSessions,
   removeRepoFromWorkspaceSession
@@ -192,6 +193,8 @@ export class RepoLifecycleOperations {
       sourceControlAi?: Repo['sourceControlAi'] | null
       externalWorktreeDiscoverySuppressedAt?: Repo['externalWorktreeDiscoverySuppressedAt'] | null
       ghAccount?: GhAccountBinding | null
+      azureDevOpsAccountId?: string | null
+      commitIdentity?: CommitIdentity | null
     },
     hostId?: ExecutionHostId
   ): Repo | null {

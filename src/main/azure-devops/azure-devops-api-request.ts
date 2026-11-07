@@ -1,6 +1,7 @@
 import type { AzureDevOpsRepoRef } from './repository-ref'
 import { cancelUnreadResponseBody } from '../lib/unread-response-body'
 import { resolveAzureDevOpsAuthHeaders } from './azure-devops-credential'
+import type { AzureDevOpsCredentialScope } from './azure-devops-account-scope'
 import { getAzureDevOpsAuthConfig } from './azure-devops-env-config'
 
 export { azureDevOpsTokenConfigured, getAzureDevOpsAuthConfig } from './azure-devops-env-config'
@@ -120,18 +121,20 @@ export async function requestAzureDevOpsJsonAtBase<T>(
   // Why: the existing-review lookup behind Create must distinguish a real
   // transport/auth failure from an accepted "no PR". When true, a failed request
   // throws instead of collapsing to null so callers never report false not_found.
-  throwOnFailure = false
+  throwOnFailure = false,
+  credentialScope?: AzureDevOpsCredentialScope
 ): Promise<T | null> {
-  const auth = await resolveAzureDevOpsAuthHeaders()
-  const doFetch = (url: URL): Promise<Response> =>
-    fetch(url, {
-      headers: {
-        Accept: 'application/json',
-        ...auth
-      },
-      signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS)
-    })
   try {
+    // Why inside try: an unusable project account fails like a 401 (null), or throws when asked to.
+    const auth = await resolveAzureDevOpsAuthHeaders(credentialScope)
+    const doFetch = (url: URL): Promise<Response> =>
+      fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          ...auth
+        },
+        signal: AbortSignal.timeout(options.timeoutMs ?? REQUEST_TIMEOUT_MS)
+      })
     const url = apiUrl(baseUrl, path, options.searchParams)
     let response = await doFetch(url)
     if (await shouldRetryWithPreviewApiVersion(url, response)) {
@@ -164,6 +167,7 @@ export function requestAzureDevOpsJson<T>(
     resolveAzureDevOpsGitApiBaseUrl(repo),
     path,
     options,
-    throwOnFailure
+    throwOnFailure,
+    repo.credentialScope
   )
 }

@@ -237,7 +237,11 @@ import {
   GitTargetedRemote,
   WorktreeSelector as WorktreeSelectorOfGitParams
 } from './git-params'
-import { BindableAccounts, ValidateAccountBinding } from './github-account-binding-params'
+import {
+  BindableAccounts,
+  HostAccounts,
+  ValidateAccountBinding
+} from './github-account-binding-params'
 import { CreateIssue, Issue, IssueComment, UpdateIssue } from './github-issue-params'
 import {
   ClearProjectItemField,
@@ -878,6 +882,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'github.issue': Issue,
   'github.listAssignableUsers': RepoSelector,
   'github.listBindableAccounts': BindableAccounts,
+  'github.listHostAccounts': HostAccounts,
   'github.listIssues': IssuesList,
   'github.listLabels': RepoSelector,
   'github.listWorkItems': WorkItemsList,

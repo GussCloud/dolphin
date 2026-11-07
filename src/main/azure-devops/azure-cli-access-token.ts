@@ -93,3 +93,46 @@ export async function getAzureCliAccessToken(): Promise<string> {
 export function clearAzureCliAccessTokenCache(): void {
   cachedToken = null
 }
+
+const managedTokens = new Map<string, CachedToken>()
+const managedInFlight = new Map<string, Promise<CachedToken>>()
+
+async function acquireForConfigDir(configDir: string): Promise<CachedToken> {
+  const raw = await runAzureCliJson(
+    ['account', 'get-access-token', '--resource', AZURE_DEVOPS_ENTRA_RESOURCE_ID],
+    { configDir }
+  )
+  const token = parseAzureCliAccessToken(raw, Date.now())
+  if (!token) {
+    throw new Error('Azure CLI returned no access token')
+  }
+  return token
+}
+
+/**
+ * Token for a Dolphin-managed account, read from its isolated Azure CLI config dir.
+ * Why no notice/refresh timer: those track the user's own az session, not these.
+ */
+export async function getAzureCliAccessTokenForConfigDir(configDir: string): Promise<string> {
+  const cached = managedTokens.get(configDir)
+  if (cached && cached.expiresAtMs - EXPIRY_SAFETY_MARGIN_MS > Date.now()) {
+    return cached.accessToken
+  }
+  let pending = managedInFlight.get(configDir)
+  if (!pending) {
+    pending = acquireForConfigDir(configDir).finally(() => managedInFlight.delete(configDir))
+    managedInFlight.set(configDir, pending)
+  }
+  const token = await pending
+  managedTokens.set(configDir, token)
+  return token.accessToken
+}
+
+/** Drops one managed account's cached token, or all of them when omitted. */
+export function clearManagedAzureCliAccessTokenCache(configDir?: string): void {
+  if (configDir === undefined) {
+    managedTokens.clear()
+    return
+  }
+  managedTokens.delete(configDir)
+}

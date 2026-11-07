@@ -77,7 +77,7 @@ export async function getAzureDevOpsCurrentUserId(
   const connection = await sendAzureDevOpsRequest(
     azureDevOpsCollectionBaseUrl(repo),
     '/_apis/connectionData',
-    { method: 'GET' }
+    { method: 'GET', credentialScope: repo.credentialScope }
   )
   if (connection && typeof connection === 'object' && 'authenticatedUser' in connection) {
     const user = connection.authenticatedUser
@@ -186,8 +186,11 @@ export async function fetchAzureDevOpsPullRequestDetails(
   const baseUrl = resolveAzureDevOpsGitApiBaseUrl(repo)
   const path = pullRequestPath(repo, number)
   const [pullRequest, threads, currentUserId] = await Promise.all([
-    sendAzureDevOpsRequest(baseUrl, path, { method: 'GET' }),
-    sendAzureDevOpsRequest(baseUrl, `${path}/threads`, { method: 'GET' }),
+    sendAzureDevOpsRequest(baseUrl, path, { method: 'GET', credentialScope: repo.credentialScope }),
+    sendAzureDevOpsRequest(baseUrl, `${path}/threads`, {
+      method: 'GET',
+      credentialScope: repo.credentialScope
+    }),
     // A failed identity lookup only hides the vote buttons.
     getAzureDevOpsCurrentUserId(repo).catch(() => null)
   ])

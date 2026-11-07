@@ -24,11 +24,17 @@ import {
 } from './azure-devops-credential'
 import { mapAzureDevOpsPullRequest, type RawAzureDevOpsPullRequest } from './pull-request-mappers'
 import { getAzureDevOpsRepoRef, type AzureDevOpsRepoRef } from './repository-ref'
+import { resolveAzureDevOpsCredentialScopeForRepoPath } from './azure-devops-account-scope'
 
 const CREATE_REQUEST_TIMEOUT_MS = 60_000
 
-export function isAzureDevOpsReviewCreationAuthenticated(): Promise<boolean> {
-  return hasAzureDevOpsCredential()
+export function isAzureDevOpsReviewCreationAuthenticated(
+  repoPath?: string,
+  connectionId?: string | null
+): Promise<boolean> {
+  return hasAzureDevOpsCredential(
+    repoPath ? resolveAzureDevOpsCredentialScopeForRepoPath(repoPath, connectionId) : undefined
+  )
 }
 
 function apiUrl(repo: AzureDevOpsRepoRef, path: string): URL {
@@ -204,7 +210,7 @@ export async function createAzureDevOpsPullRequest(
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-          ...(await resolveAzureDevOpsAuthHeaders())
+          ...(await resolveAzureDevOpsAuthHeaders(repo.credentialScope))
         },
         body: JSON.stringify(requestBody)
       }
