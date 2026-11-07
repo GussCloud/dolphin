@@ -92,6 +92,7 @@ jobs:
         include:
           - { runner: ubuntu-latest, native-runtime: node, node-version: '' }
           - { runner: ubuntu-latest, native-runtime: electron, node-version: '' }
+          - { runner: ubuntu-24.04, native-runtime: electron, node-version: '' }
           - { runner: ubuntu-24.04-arm, native-runtime: node, node-version: '24' }
           - { runner: windows-2022, native-runtime: node, node-version: '' }
           - { runner: windows-2022, native-runtime: electron, node-version: '' }

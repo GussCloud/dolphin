@@ -795,7 +795,9 @@ jobs:
     name: package
     needs: [code_paths]
     if: needs.code_paths.outputs.package == 'true'
-    runs-on: ubuntu-latest
+    # Why pinned: node-pty compiles from source here, and ubuntu-latest (26.04, glibc 2.42)
+    # emits symbol versions the 20.04 floor lacks; see docs/reference/linux-glibc-compatibility.md.
+    runs-on: ubuntu-24.04
     # Let the serial Docker gates reach their own deadlines and report cleanup failures.
     timeout-minutes: 90
 
