@@ -1,3 +1,7 @@
+import {
+  applyRepoAccountBindingToNewRepo,
+  prepareCloneGitInvocation
+} from '../../repo-account-binding'
 import type { BrowserWindow } from 'electron'
 import { ipcMain } from 'electron'
 import type { ChildProcess } from 'node:child_process'
@@ -115,7 +119,10 @@ export function registerRepoCloneHandlers(mainWindow: BrowserWindow, store: Stor
 
   ipcMain.handle(
     'repos:clone',
-    async (_event, args: { url: string; destination: string }): Promise<Repo> => {
+    async (
+      _event,
+      args: { url: string; destination: string; accountBinding?: unknown }
+    ): Promise<Repo> => {
       // Why: derive the repo folder name from the URL's last segment, matching default git clone behavior.
       const clonePath = deriveValidatedClonePath(args)
       const clonePathKey = getClonePathComparisonKey(clonePath)
@@ -142,17 +149,23 @@ export function registerRepoCloneHandlers(mainWindow: BrowserWindow, store: Stor
         try {
           // Why: use the parent destination as cwd so the runner detects a WSL path and routes through wsl.exe.
           // Why: '--' isolates the URL so a malicious URL can't be read as git flags (command injection).
-          proc = await gitSpawnAfterWindowsEnvironmentReady(
+          // Why: the row does not exist yet, so the clone authenticates as the requested account.
+          const invocation = await prepareCloneGitInvocation(
             ['clone', '--progress', '--', args.url, clonePath],
             {
               cwd: args.destination,
-              admissionTier: 'interactive',
               // Why: without this, an auth-needing clone pops Git Credential Manager's OAuth window on Windows, unclosable in a restricted env (issue #7652).
               env: nonInteractiveGitEnv(),
-              signal: pendingController.signal,
-              stdio: ['ignore', 'ignore', 'pipe']
+              binding: args.accountBinding
             }
           )
+          proc = await gitSpawnAfterWindowsEnvironmentReady(invocation.args, {
+            cwd: args.destination,
+            admissionTier: 'interactive',
+            env: invocation.env,
+            signal: pendingController.signal,
+            stdio: ['ignore', 'ignore', 'pipe']
+          })
         } catch (err) {
           await cleanupClaimedCloneTarget(clonePath, claimedTarget)
           const message = err instanceof Error ? err.message : String(err)
@@ -276,11 +289,12 @@ export function registerRepoCloneHandlers(mainWindow: BrowserWindow, store: Stor
           }
 
           store.addRepo(repo)
-          await prepareLocalWorktreeRootForRepo(store, repo)
+          const bound = applyRepoAccountBindingToNewRepo(store, repo, args.accountBinding)
+          await prepareLocalWorktreeRootForRepo(store, bound)
           invalidateAuthorizedRootsCache()
           notifyReposChanged(mainWindow)
           emitRepoAdded('clone_url', false, true)
-          return repo
+          return bound
         } finally {
           const metadata = cloneMetadataRef.current
           if (metadata?.abortRequested) {
@@ -295,7 +309,7 @@ export function registerRepoCloneHandlers(mainWindow: BrowserWindow, store: Stor
     'repos:cloneRemote',
     async (
       _event,
-      args: { connectionId: string; url: string; destination: string }
+      args: { connectionId: string; url: string; destination: string; accountBinding?: unknown }
     ): Promise<Repo> => {
       const repo = await cloneRemoteRepo(store, mainWindow, args)
       notifyReposChanged(mainWindow)

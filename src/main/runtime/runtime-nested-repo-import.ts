@@ -8,6 +8,8 @@ import type {
   ProjectGroupImportResult
 } from '../../shared/project-group-types'
 import type { Repo } from '../../shared/repo-types'
+import type { RepoAccountBinding } from '../../shared/source-control-account-types'
+import { applyRepoAccountBindingToNewRepo } from '../repo-account-binding'
 import { awaitWindowsHostGitEnvironmentReady } from '../git/runner'
 import { getRepoName, isGitRepo } from '../git/repo'
 import { scanNestedRepos } from '../project-groups/nested-repo-discovery'
@@ -46,6 +48,7 @@ export class RuntimeNestedRepoImport {
     groupName: string
     projectPaths: string[]
     mode: ProjectGroupImportMode
+    accountBinding?: RepoAccountBinding
   }): Promise<ProjectGroupImportResult> {
     await awaitWindowsHostGitEnvironmentReady({ cwd: args.parentPath })
     const store = this.deps.getStore()
@@ -115,6 +118,7 @@ export class RuntimeNestedRepoImport {
           ...(group ? { projectGroupId: group.id, projectGroupOrder } : {})
         }
         store.addRepo(repo)
+        applyRepoAccountBindingToNewRepo(store, repo, args.accountBinding)
         importedProjectIdsByRepoPath.set(normalizedImportRepoPath, repo.id)
         results.push({ path: repoPath, projectId: repo.id, status: 'imported' })
       } catch (error) {

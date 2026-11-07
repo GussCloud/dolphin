@@ -11,6 +11,7 @@ import { getRepoOwnerRoutedSettings } from '@/lib/repo-runtime-owner'
 import { getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 import { translate } from '@/i18n/i18n'
 import { searchKeywords } from './settings-search-keywords'
+import { defaultAccountLabel } from '../project-accounts/project-account-labels'
 import {
   isGhAccountBindingEnforced,
   listRepositoryGhBindableAccounts,
@@ -253,12 +254,7 @@ export function RepositoryGitHubAccountSection({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={AMBIENT_VALUE}>
-              {translate(
-                'auto.components.settings.RepositoryGitHubAccountSection.ambient',
-                'Default (ambient gh login)'
-              )}
-            </SelectItem>
+            <SelectItem value={AMBIENT_VALUE}>{defaultAccountLabel('github')}</SelectItem>
             {repo.ghAccount && !selectedInInventory ? (
               // Why: keep the bound account's key as the item value so the trigger shows it; disabled so it cannot be re-picked.
               <SelectItem value={selectedKey} disabled>

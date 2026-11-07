@@ -1,4 +1,10 @@
 import { randomUUID } from 'node:crypto'
+import {
+  normalizeRepoAccountBinding,
+  type CommitIdentity,
+  type RepoAccountBinding
+} from '../../shared/source-control-account-types'
+import { applyRepoAccountBindingToNewRepo } from '../repo-account-binding'
 import { mkdir, readdir, rm, stat } from 'node:fs/promises'
 import { isAbsolute, join } from 'node:path'
 import { DEFAULT_REPO_BADGE_COLOR } from '../../shared/constants'
@@ -31,7 +37,8 @@ export class RuntimeRepositoryRegistrationController {
     path: string,
     kind: 'git' | 'folder' = 'git',
     executionHostId?: ExecutionHostId | null,
-    displayName?: string
+    displayName?: string,
+    accountBinding?: RepoAccountBinding
   ): Promise<Repo> {
     const store = this.requireStore()
     if (!isAbsolute(path)) {
@@ -81,6 +88,7 @@ export class RuntimeRepositoryRegistrationController {
       ...(kind === 'git' ? { externalWorktreeVisibilityLegacy: false } : {})
     }
     store.addRepo(repo)
+    applyRepoAccountBindingToNewRepo(store, repo, accountBinding)
     await prepareLocalWorktreeRootForRepo(store, repo)
     this.invalidate(repo.id)
     return store.getRepo(repo.id) ?? repo
@@ -89,7 +97,8 @@ export class RuntimeRepositoryRegistrationController {
   async create(
     parentPath: string,
     name: string,
-    kind: 'git' | 'folder' = 'git'
+    kind: 'git' | 'folder' = 'git',
+    accountBinding?: RepoAccountBinding
   ): Promise<{ repo: Repo } | { error: string }> {
     const store = this.requireStore()
     const trimmedName = name.trim()
@@ -139,7 +148,11 @@ export class RuntimeRepositoryRegistrationController {
     }
 
     if (repoKind === 'git') {
-      const error = await this.initializeGitRepo(targetPath, createdDir)
+      const error = await this.initializeGitRepo(
+        targetPath,
+        createdDir,
+        normalizeRepoAccountBinding(accountBinding)?.commitIdentity
+      )
       if (error) {
         return { error }
       }
@@ -164,19 +177,25 @@ export class RuntimeRepositoryRegistrationController {
       ...(repoKind === 'git' ? { externalWorktreeVisibilityLegacy: false } : {})
     }
     store.addRepo(repo)
+    applyRepoAccountBindingToNewRepo(store, repo, accountBinding)
     await prepareLocalWorktreeRootForRepo(store, repo)
     invalidateAuthorizedRootsCache()
     this.invalidate(repo.id)
     return { repo: store.getRepo(repo.id) ?? repo }
   }
 
-  private async initializeGitRepo(targetPath: string, createdDir: boolean): Promise<string | null> {
+  private async initializeGitRepo(
+    targetPath: string,
+    createdDir: boolean,
+    commitIdentity?: CommitIdentity
+  ): Promise<string | null> {
     let step: 'init' | 'commit' = 'init'
     try {
       await gitExecFileAsync(['init'], { cwd: targetPath })
       step = 'commit'
       await gitExecFileAsync(['commit', '--allow-empty', '-m', 'Initial commit'], {
-        cwd: targetPath
+        cwd: targetPath,
+        ...(commitIdentity ? { repoAccount: { commitIdentity } } : {})
       })
       return null
     } catch (error) {

@@ -6,6 +6,7 @@ import type { ForkSyncMode } from './git-fork-sync'
 import type { GitRemoteIdentity } from './git-remote-identity'
 import type { RepoSourceControlAiOverrides } from './source-control-ai-types'
 import type { RepoProjectHostSetupMethod } from './project-types'
+import type { CommitIdentity } from './source-control-account-types'
 
 // ─── Repo ────────────────────────────────────────────────────────────
 export type RepoKind = 'git' | 'folder'
@@ -77,6 +78,10 @@ export type Repo = {
    * and injects it into that child env only.
    */
   ghAccount?: GhAccountBinding
+  /** Dolphin-managed Azure DevOps account id (`AzureDevOpsManagedAccount.id`); absent = global credential. */
+  azureDevOpsAccountId?: string
+  /** Author/committer for commits Dolphin creates in this repo; absent = git config. */
+  commitIdentity?: CommitIdentity
   /** Controls Dolphin's fork-default-branch sync offer for repos with upstream metadata. */
   forkSyncMode?: ForkSyncMode
   /** Canonical identity for the repo remote Dolphin should use for provider-level grouping. */

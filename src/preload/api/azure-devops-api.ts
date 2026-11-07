@@ -17,6 +17,7 @@ import type {
   AzureDevOpsOrgLinkArgs,
   AzureDevOpsOrgLinkStatus
 } from '../../shared/azure-devops-org-link'
+import type { AzureDevOpsManagedAccount } from '../../shared/source-control-account-types'
 
 export type AzureDevOpsApi = {
   setAuthMethod: (method: AzureDevOpsAuthMethod) => Promise<AzureDevOpsAuthPreference>
@@ -38,4 +39,12 @@ export type AzureDevOpsApi = {
   startCliSignIn: (mode: AzureCliSignInMode) => Promise<AzureCliSignInResult>
   cancelCliSignIn: () => Promise<void>
   onCliSignInStateChanged: (callback: (state: AzureCliSignInState) => void) => () => void
+  /** Per-project accounts, each signed in through its own isolated Azure CLI config dir. */
+  listManagedAccounts: () => Promise<AzureDevOpsManagedAccount[]>
+  // Resolves once the isolated `az login` ends; cancel with cancelCliSignIn.
+  addManagedAccount: (
+    mode: AzureCliSignInMode
+  ) => Promise<{ ok: true; account: AzureDevOpsManagedAccount } | { ok: false; error: string }>
+  /** Also unbinds every project that used the account. */
+  removeManagedAccount: (id: string) => Promise<{ ok: true } | { ok: false; error: string }>
 }

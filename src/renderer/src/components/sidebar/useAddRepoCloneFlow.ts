@@ -11,6 +11,12 @@ import { extractIpcErrorMessage } from '@/lib/ipc-error'
 import { upsertAddedRepoWithProjectHostSetup } from './add-repo-store-upsert'
 import { worktreeRefreshOptions } from './add-repo-runtime-owner'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
+import {
+  accountBindingArg,
+  isAccountBindingEchoed,
+  resolveNewProjectAccountSettings,
+  useNewProjectAccountDraft
+} from '../project-accounts/new-project-account-settings'
 
 export function useAddRepoCloneFlow({
   step,
@@ -45,6 +51,7 @@ export function useAddRepoCloneFlow({
   resetCloneFlow: () => void
   handlePickDestination: () => Promise<void>
   handleClone: () => Promise<void>
+  projectAccounts: ReturnType<typeof useNewProjectAccountDraft>
 } {
   const [cloneUrl, setCloneUrl] = useState('')
   const [cloneDestination, setCloneDestination] = useState('')
@@ -61,6 +68,8 @@ export function useAddRepoCloneFlow({
   // Why: track whether we've already auto-filled for this entry into the clone step,
   // so a late settings hydration still gets a chance to set the default.
   const cloneStepAutoFilledRef = useRef(false)
+  const projectAccounts = useNewProjectAccountDraft()
+  const resetProjectAccounts = projectAccounts.reset
 
   useEffect(() => {
     if (!isCloning) {
@@ -93,7 +102,8 @@ export function useAddRepoCloneFlow({
     setIsCloning(false)
     setCloneError(null)
     setCloneProgress(null)
-  }, [])
+    resetProjectAccounts()
+  }, [resetProjectAccounts])
 
   const handlePickDestination = useCallback(async (): Promise<void> => {
     if (activeRuntimeEnvironmentId?.trim() || sshTargetId?.trim()) {
@@ -117,7 +127,11 @@ export function useAddRepoCloneFlow({
 
   const handleClone = useCallback(async (): Promise<void> => {
     const trimmedUrl = cloneUrl.trim()
-    if (!trimmedUrl || !cloneDestination.trim()) {
+    // Why: SSH clones run git on the remote, where per-project accounts are not applied.
+    const accountSettings = sshTargetId?.trim()
+      ? {}
+      : resolveNewProjectAccountSettings(projectAccounts.draft)
+    if (!trimmedUrl || !cloneDestination.trim() || !accountSettings) {
       return
     }
     const requestHostToken = hostTokenRef.current
@@ -136,7 +150,8 @@ export function useAddRepoCloneFlow({
         ? await window.api.repos.cloneRemote({
             connectionId: sshTargetId.trim(),
             url: trimmedUrl,
-            destination: cloneDestination.trim()
+            destination: cloneDestination.trim(),
+            ...accountBindingArg(accountSettings)
           })
         : target.kind === 'environment'
           ? (
@@ -145,15 +160,17 @@ export function useAddRepoCloneFlow({
                 'repo.clone',
                 {
                   url: trimmedUrl,
-                  destination: cloneDestination.trim()
+                  destination: cloneDestination.trim(),
+                  ...accountBindingArg(accountSettings)
                 },
                 { timeoutMs: 10 * 60_000 }
               )
             ).repo
-          : ((await window.api.repos.clone({
+          : await window.api.repos.clone({
               url: trimmedUrl,
-              destination: cloneDestination.trim()
-            })) as Repo)
+              destination: cloneDestination.trim(),
+              ...accountBindingArg(accountSettings)
+            })
       if (gen !== cloneGenRef.current || requestHostToken !== hostTokenRef.current) {
         return
       }
@@ -168,6 +185,14 @@ export function useAddRepoCloneFlow({
       // Why: once the repo exists, a transient non-authoritative refresh
       // should fall through to project reveal instead of leaving the add flow open.
       const ownerOptions = worktreeRefreshOptions(activeRuntimeEnvironmentId, sshTargetId)
+      if (!isAccountBindingEchoed(repo, accountSettings)) {
+        toast.warning(
+          translate(
+            'auto.components.sidebar.useAddRepoCloneFlow.accountsNotEnforced',
+            'Cloned, but this host did not keep the account and commit author (older version).'
+          )
+        )
+      }
       await fetchWorktrees(ownedRepo.id, ownerOptions)
       if (gen !== cloneGenRef.current || requestHostToken !== hostTokenRef.current) {
         return
@@ -190,6 +215,7 @@ export function useAddRepoCloneFlow({
     cloneDestination,
     fetchWorktrees,
     onGitRepoReady,
+    projectAccounts.draft,
     sshTargetId
   ])
 
@@ -204,6 +230,7 @@ export function useAddRepoCloneFlow({
     setCloneError,
     resetCloneFlow,
     handlePickDestination,
-    handleClone
+    handleClone,
+    projectAccounts
   }
 }

@@ -1,3 +1,4 @@
+import { RepoAccountBindingParam } from './repo-account-binding-params'
 import { z } from 'zod'
 import { OptionalFiniteNumber, OptionalString, requiredString } from './rpc-param-primitives'
 import { createRepoUpdateSchema } from './repo-update-params'
@@ -6,18 +7,21 @@ import { RepoSelector } from './github-repo-target-params'
 export const RepoPath = z.object({
   path: requiredString('Missing repo path'),
   kind: z.enum(['git', 'folder']).optional(),
-  displayName: OptionalString
+  displayName: OptionalString,
+  accountBinding: RepoAccountBindingParam
 })
 
 export const RepoCreate = z.object({
   parentPath: requiredString('Missing parent path'),
   name: requiredString('Missing repo name'),
-  kind: z.enum(['git', 'folder']).optional()
+  kind: z.enum(['git', 'folder']).optional(),
+  accountBinding: RepoAccountBindingParam
 })
 
 export const RepoClone = z.object({
   url: requiredString('Missing clone URL'),
-  destination: requiredString('Missing clone destination')
+  destination: requiredString('Missing clone destination'),
+  accountBinding: RepoAccountBindingParam
 })
 
 export const RepoSetBaseRef = z.object({
@@ -77,6 +81,7 @@ export const ProjectGroupImportNested = z.discriminatedUnion('mode', [
     parentPath: requiredString('Missing parent path'),
     groupName: z.string().optional().default(''),
     projectPaths: z.array(z.string()),
+    accountBinding: RepoAccountBindingParam,
     mode: z.literal('group')
   }),
   z.object({
@@ -85,6 +90,7 @@ export const ProjectGroupImportNested = z.discriminatedUnion('mode', [
     // imports do not create a group but share the same renderer payload shape.
     groupName: z.string().optional().default(''),
     projectPaths: z.array(z.string()),
+    accountBinding: RepoAccountBindingParam,
     mode: z.literal('separate')
   })
 ])

@@ -8,6 +8,11 @@ import { normalizeRepoBadgeColor } from '../../../shared/repo-badge-color'
 import { sanitizeRepoIcon } from '../../../shared/repo-icon'
 import { normalizeGhAccountBinding } from '../../../shared/github/account-binding'
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
+import {
+  normalizeAzureDevOpsAccountId,
+  normalizeCommitIdentity,
+  type CommitIdentity
+} from '../../../shared/source-control-account-types'
 import { normalizeRepoSourceControlAiOverrides } from '../../../shared/source-control-ai'
 import {
   normalizeCustomWorktreeVisibilitySources,
@@ -55,6 +60,8 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
             | Repo['externalWorktreeDiscoverySuppressedAt']
             | null
           ghAccount?: GhAccountBinding | null
+          azureDevOpsAccountId?: string | null
+          commitIdentity?: CommitIdentity | null
         }
       }
     ) => {
@@ -89,6 +96,26 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           } else {
             updates.ghAccount = normalized
           }
+        }
+      }
+      if ('azureDevOpsAccountId' in updates) {
+        const accountId =
+          updates.azureDevOpsAccountId === null
+            ? null
+            : normalizeAzureDevOpsAccountId(updates.azureDevOpsAccountId)
+        if (accountId === null && updates.azureDevOpsAccountId !== null) {
+          delete updates.azureDevOpsAccountId
+        } else {
+          updates.azureDevOpsAccountId = accountId
+        }
+      }
+      if ('commitIdentity' in updates) {
+        const identity =
+          updates.commitIdentity === null ? null : normalizeCommitIdentity(updates.commitIdentity)
+        if (identity === null && updates.commitIdentity !== null) {
+          delete updates.commitIdentity
+        } else {
+          updates.commitIdentity = identity
         }
       }
       // Why: worktree materialization calls .trim() per entry, so strip non-string[] at the boundary to avoid a silent throw later.

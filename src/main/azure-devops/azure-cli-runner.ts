@@ -59,9 +59,15 @@ export async function resolveAzureCliProgram(): Promise<AzureCliProgram | null> 
   return msiPythonProgram(normalized, env) ?? { program: normalized, prefixArgs: [], env }
 }
 
+export type AzureCliRunOptions = {
+  timeoutMs?: number
+  /** Isolated Azure CLI config dir of a Dolphin-managed account; absent = the user's own az login. */
+  configDir?: string
+}
+
 export async function runAzureCli(
   args: readonly string[],
-  options: { timeoutMs?: number } = {}
+  options: AzureCliRunOptions = {}
 ): Promise<ProcessResult> {
   const cli = await resolveAzureCliProgram()
   if (!cli) {
@@ -70,7 +76,7 @@ export async function runAzureCli(
   return runProcess({
     program: cli.program,
     args: [...cli.prefixArgs, ...args],
-    env: cli.env,
+    env: options.configDir ? { ...cli.env, AZURE_CONFIG_DIR: options.configDir } : cli.env,
     timeoutMs: options.timeoutMs ?? AZ_COMMAND_TIMEOUT_MS
   })
 }
@@ -92,7 +98,7 @@ export class AzureCliCommandError extends Error {
 /** Runs `az <args> --output json` and parses stdout; throws on a non-zero exit. */
 export async function runAzureCliJson(
   args: readonly string[],
-  options: { timeoutMs?: number } = {}
+  options: AzureCliRunOptions = {}
 ): Promise<unknown> {
   const fullArgs = [...args, '--output', 'json']
   const result = await runAzureCli(fullArgs, options)

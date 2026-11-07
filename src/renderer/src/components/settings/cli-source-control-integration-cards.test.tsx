@@ -44,6 +44,9 @@ vi.mock('@/store', () => ({
   }
 }))
 
+// Why: the account list has its own tests; this file covers the card's scope rows.
+vi.mock('./github-accounts-list', () => ({ GitHubAccountsList: () => null }))
+
 vi.mock('./source-control-preflight-card-status', () => ({
   usePreflightCardStatuses: () => mocks.preflight
 }))

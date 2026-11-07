@@ -19,6 +19,7 @@ export async function createRemoteRepo(
     parentPath: string
     name: string
     kind: 'git' | 'folder'
+    accountBinding?: unknown
   }
 ): Promise<{ repo: Repo } | { error: string }> {
   const name = args.name?.trim() ?? ''
@@ -142,7 +143,8 @@ export async function createRemoteRepo(
     connectionId: args.connectionId,
     remotePath: targetPath,
     kind: repoKind,
-    displayName: name
+    displayName: name,
+    accountBinding: args.accountBinding
   })
   if ('error' in result) {
     return result

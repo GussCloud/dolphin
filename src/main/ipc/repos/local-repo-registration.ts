@@ -1,3 +1,4 @@
+import { applyRepoAccountBindingToNewRepo } from '../../repo-account-binding'
 import { randomUUID } from 'node:crypto'
 import type { Store } from '../../persistence'
 import type { Repo } from '../../../shared/repo-types'
@@ -19,7 +20,8 @@ export async function addLocalRepoFromPath(
   store: Store,
   path: string,
   kind: 'git' | 'folder' = 'git',
-  displayName?: string
+  displayName?: string,
+  accountBinding?: unknown
 ): Promise<{ repo: Repo; alreadyExisted: boolean } | { error: string }> {
   const repoKind = kind === 'folder' ? 'folder' : 'git'
   if (repoKind === 'git') {
@@ -97,6 +99,7 @@ export async function addLocalRepoFromPath(
   }
 
   store.addRepo(repo)
-  await prepareLocalWorktreeRootForRepo(store, repo)
-  return { repo, alreadyExisted: false }
+  const bound = applyRepoAccountBindingToNewRepo(store, repo, accountBinding)
+  await prepareLocalWorktreeRootForRepo(store, bound)
+  return { repo: bound, alreadyExisted: false }
 }

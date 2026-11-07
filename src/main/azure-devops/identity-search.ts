@@ -70,7 +70,8 @@ export async function resolveAzureDevOpsIdentityId(
     '/_apis/identities',
     {
       method: 'GET',
-      searchParams: { searchFilter: 'General', filterValue: trimmed, queryMembership: 'None' }
+      searchParams: { searchFilter: 'General', filterValue: trimmed, queryMembership: 'None' },
+      credentialScope: repo.credentialScope
     }
   )
   const matches = parseIdentityMatches(payload)

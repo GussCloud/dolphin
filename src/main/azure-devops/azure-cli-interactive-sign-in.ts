@@ -109,7 +109,8 @@ function finish(result: AzureCliSignInResult, attempt: Attempt): AzureCliSignInR
 async function runSignIn(
   mode: AzureCliSignInMode,
   attempt: Attempt,
-  parent: BrowserWindow | null
+  parent: BrowserWindow | null,
+  configDir?: string
 ): Promise<AzureCliSignInResult> {
   let capture: SignInUrlCapture | null = null
   try {
@@ -118,7 +119,8 @@ async function runSignIn(
       return { ok: false, error: 'Azure CLI (az) is not installed or not on PATH' }
     }
     // Why tenant: keeps the renewed session on the directory the user originally chose.
-    const tenant = await readTenantId()
+    // A managed account starts from an empty config dir, so it has none to keep.
+    const tenant = configDir ? null : await readTenantId()
     if (attempt.cancelled) {
       return { ok: false, error: SIGN_IN_CANCELLED }
     }
@@ -129,10 +131,12 @@ async function runSignIn(
         ...cli.prefixArgs,
         'login',
         ...(tenant ? ['--tenant', tenant] : []),
+        // Why: Azure DevOps-only users often have no Azure subscription, which fails a plain login.
+        ...(configDir ? ['--allow-no-subscriptions'] : []),
         '--output',
         'none'
       ],
-      env: { ...cli.env, ...capture?.env },
+      env: { ...cli.env, ...capture?.env, ...(configDir ? { AZURE_CONFIG_DIR: configDir } : {}) },
       timeoutMs: LOGIN_TIMEOUT_MS,
       signal: attempt.controller.signal,
       // Why: az keeps its loopback listener alive until killed, so cancel must end the tree.
@@ -184,9 +188,40 @@ export function startAzureCliSignIn(
   return inFlight
 }
 
+let managedAttempt: Attempt | null = null
+
+/**
+ * `az login` into an isolated config dir for a Dolphin-managed account. Separate from the
+ * single-flight above: it must neither join nor change the user's own az session state.
+ */
+export async function runAzureCliManagedSignIn(
+  mode: AzureCliSignInMode,
+  configDir: string,
+  options: { parent?: BrowserWindow | null } = {}
+): Promise<AzureCliSignInResult> {
+  if (managedAttempt) {
+    return { ok: false, error: 'Another Azure DevOps account sign-in is already in progress.' }
+  }
+  const attempt: Attempt = {
+    controller: new AbortController(),
+    cancelled: false,
+    captureFailure: null,
+    window: null
+  }
+  managedAttempt = attempt
+  try {
+    return await runSignIn(mode, attempt, options.parent ?? null, configDir)
+  } finally {
+    managedAttempt = null
+  }
+}
+
 export function cancelAzureCliSignIn(): void {
   if (activeAttempt) {
     cancelAttempt(activeAttempt)
+  }
+  if (managedAttempt) {
+    cancelAttempt(managedAttempt)
   }
 }
 
@@ -194,4 +229,5 @@ export function cancelAzureCliSignIn(): void {
 export function _resetAzureCliInteractiveSignIn(): void {
   inFlight = null
   activeAttempt = null
+  managedAttempt = null
 }

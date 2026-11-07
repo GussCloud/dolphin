@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { DolphinHooks, RepoHookSettings } from '../../../../shared/dolphin-yaml-hook-types'
 import type { Project, ProjectUpdateArgs } from '../../../../shared/project-types'
 import type { Repo } from '../../../../shared/repo-types'
+import type { CommitIdentity } from '../../../../shared/source-control-account-types'
 import { getRepoKindLabel, isFolderRepo } from '../../../../shared/repo-kind'
 import { getRepoExecutionHostId, type ExecutionHostId } from '../../../../shared/execution-host'
 import { Button } from '../ui/button'
@@ -25,7 +26,7 @@ import { getRepositoryPaneSearchEntries } from './repository-search'
 import { RepositoryHostSetupsSection } from './RepositoryHostSetupsSection'
 import { RepoSettingsDraftInput } from './RepositorySettingsDraftInput'
 import { RepositoryForkSyncSection } from './RepositoryForkSyncSection'
-import { RepositoryGitHubAccountSection } from './RepositoryGitHubAccountSection'
+import { RepositoryAccountSections } from './RepositoryAccountSections'
 import { translate } from '@/i18n/i18n'
 import { RepositoryWindowsRuntimeSection } from './RepositoryWindowsRuntimeSection'
 import { matchesRepositoryIdentitySearch } from './repository-identity-search'
@@ -37,11 +38,17 @@ export { matchesRepositoryIdentitySearch } from './repository-identity-search'
 
 type RepositoryPaneRepoUpdate = Omit<
   Partial<Repo>,
-  'sourceControlAi' | 'externalWorktreeVisibility' | 'ghAccount'
+  | 'sourceControlAi'
+  | 'externalWorktreeVisibility'
+  | 'ghAccount'
+  | 'azureDevOpsAccountId'
+  | 'commitIdentity'
 > & {
   sourceControlAi?: Repo['sourceControlAi'] | null
   externalWorktreeVisibility?: Repo['externalWorktreeVisibility'] | null
   ghAccount?: GhAccountBinding | null
+  azureDevOpsAccountId?: string | null
+  commitIdentity?: CommitIdentity | null
 }
 
 const EMPTY_WSL_DISTROS: string[] = []
@@ -369,7 +376,7 @@ export function RepositoryPane({
               forceVisible={forceFullPaneForRepoMatch}
             />
 
-            <RepositoryGitHubAccountSection
+            <RepositoryAccountSections
               repo={repo}
               updateRepo={updateSelectedRepo}
               forceVisible={forceFullPaneForRepoMatch}

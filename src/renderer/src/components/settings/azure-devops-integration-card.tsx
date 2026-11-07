@@ -15,6 +15,7 @@ import { usePreflightCardStatuses } from './source-control-preflight-card-status
 import { tokenProviderStatusLabel, type TokenProviderStatus } from './token-source-control-status'
 import { AzureCliSetupDetails } from './azure-cli-setup-details'
 import { AzureDevOpsOrgLinkRow } from './azure-devops-org-link-row'
+import { AzureDevOpsManagedAccountsList } from './azure-devops-managed-accounts-list'
 
 function AzureDevOpsTokenDetails(props: {
   status: TokenProviderStatus
@@ -215,6 +216,13 @@ export function AzureDevOpsIntegrationCard(): React.JSX.Element {
           <AzureDevOpsOrgLinkRow key={statuses.azureDevOpsBaseUrl ?? ''} />
         </IntegrationCardDetails>
       ) : null}
+      {unavailable ? null : (
+        <IntegrationCardDetails>
+          <AzureDevOpsManagedAccountsList
+            defaultAccountLogin={configured ? (statuses.azureDevOpsAccount ?? null) : null}
+          />
+        </IntegrationCardDetails>
+      )}
       {method === 'azure-cli' ? (
         <AzureCliSetupDetails status={azureDevOps} checking={checking} refresh={refresh} />
       ) : status !== 'checking' && !configured ? (
