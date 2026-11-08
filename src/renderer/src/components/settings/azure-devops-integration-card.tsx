@@ -11,6 +11,7 @@ import {
   type AzureDevOpsAuthMethod
 } from '../../../../shared/azure-devops-auth'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
+import { useIntegrationCardPresentation } from './integration-card-presentation'
 import { usePreflightCardStatuses } from './source-control-preflight-card-status'
 import { tokenProviderStatusLabel, type TokenProviderStatus } from './token-source-control-status'
 import { AzureCliSetupDetails } from './azure-cli-setup-details'
@@ -168,6 +169,8 @@ export function AzureDevOpsIntegrationCard(): React.JSX.Element {
   }
 
   const target = statuses.azureDevOpsAccount ?? statuses.azureDevOpsBaseUrl
+  // Why: the onboarding review step reuses this card; managing extra accounts belongs to Settings.
+  const manageAccounts = useIntegrationCardPresentation() === 'default'
   return (
     <IntegrationCardShell
       icon={<GitPullRequestArrow className="size-5" />}
@@ -216,7 +219,7 @@ export function AzureDevOpsIntegrationCard(): React.JSX.Element {
           <AzureDevOpsOrgLinkRow key={statuses.azureDevOpsBaseUrl ?? ''} />
         </IntegrationCardDetails>
       ) : null}
-      {unavailable ? null : (
+      {unavailable || !manageAccounts ? null : (
         <IntegrationCardDetails>
           <AzureDevOpsManagedAccountsList
             defaultAccountLogin={configured ? (statuses.azureDevOpsAccount ?? null) : null}
