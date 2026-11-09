@@ -17,8 +17,10 @@ requirement.
 ## Why this needs attention
 
 A native module (`.node`) links against the glibc of the machine that compiled
-it. Our release CI compiles node-pty from source on GitHub's `ubuntu-latest`
-runner, whose glibc rises over time as the image is bumped. A binary compiled on
+it. CI compiles node-pty from source on a GitHub Ubuntu runner, whose glibc rises
+over time as the image is bumped. The `package` job is pinned to `ubuntu-24.04`
+because `ubuntu-latest` moved to 26.04 (glibc 2.42), whose node-pty build needs
+`GLIBC_2.42`. A binary compiled on
 a newer glibc can reference symbol versions that do not exist on an older target,
 and the dynamic loader then refuses to load it:
 
