@@ -8,11 +8,15 @@ import {
   type WorktreeAgentAccountChoice
 } from '../../../../shared/worktree-agent-account'
 
-// Why codex only: Claude launches still read the global selection; it joins in phase 4.
-const PICKABLE_ACCOUNT_AGENTS: readonly WorktreeAccountAgent[] = ['codex']
+// Why not DeepSeek: it runs `claude` on its own isolated home and never takes a managed account.
+const PICKABLE_ACCOUNT_AGENTS: Partial<Record<TuiAgent, WorktreeAccountAgent>> = {
+  codex: 'codex',
+  claude: 'claude',
+  'claude-agent-teams': 'claude'
+}
 
 function toPickableAccountAgent(agent: TuiAgent | null): WorktreeAccountAgent | null {
-  return PICKABLE_ACCOUNT_AGENTS.find((candidate) => candidate === agent) ?? null
+  return agent ? (PICKABLE_ACCOUNT_AGENTS[agent] ?? null) : null
 }
 
 /**

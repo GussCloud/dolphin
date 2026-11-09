@@ -75,7 +75,12 @@ export function initializeMainProcessRuntime(): DolphinRuntimeService {
   // `dolphin serve`, which never opens one, and the fleet path runs there too.
   const observedPaneIdentities = new AgentStatusObservedPaneIdentities()
   const runtime = new DolphinRuntimeService(store, stats, {
-    prepareClaudeAuth: (target) => state.claudeRuntimeAuth!.prepareForClaudeLaunch(target),
+    prepareClaudeAuth: (target, launch) =>
+      state.claudeRuntimeAuth!.prepareForClaudeLaunch(target, launch),
+    prepareClaudeWorktreeAccountHome: (launch) =>
+      state.claudeRuntimeAuth!.preparePinnedConfigDirForLaunch(launch),
+    prepareClaudePinnedAccountHome: (configDir) =>
+      state.claudeRuntimeAuth!.preparePinnedConfigDirForStructuredLaunch(configDir),
     agentSessionClaimSigner: loadAgentSessionClaimSigner(
       getProfileUserDataPath(),
       getProfileUserDataPath()

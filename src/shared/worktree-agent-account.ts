@@ -5,7 +5,7 @@ import {
 } from './codex-selection-lane'
 import { parseWslUncPath } from './wsl-paths'
 
-/** Agents whose launch account a worktree can pin. Claude lands in a later phase. */
+/** Agents whose launch account a worktree can pin. */
 export type WorktreeAccountAgent = 'codex' | 'claude'
 
 export type WorktreeAgentAccountSettings = Partial<

@@ -9,6 +9,17 @@ export function getClaudeManagedAccountsRoot(): string {
   return join(app.getPath('userData'), 'claude-accounts')
 }
 
+/** CLAUDE_CONFIG_DIR of a worktree-pinned launch; beside the account's `auth` store. */
+export function getClaudePinnedConfigDir(accountId: string): string {
+  return join(getClaudeManagedAccountsRoot(), accountId, 'config')
+}
+
+/** Whether `configDir` has the shape of a pinned config dir, account known or not. */
+export function isClaudePinnedConfigDirPath(configDir: string): boolean {
+  const parts = relative(getClaudeManagedAccountsRoot(), resolve(configDir)).split(sep)
+  return parts.length === 2 && parts[0] !== '..' && parts[1] === 'config'
+}
+
 export function resolveOwnedClaudeManagedAuthPath(
   accountId: string,
   candidatePath: string,

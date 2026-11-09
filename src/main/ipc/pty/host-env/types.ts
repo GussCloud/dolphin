@@ -1,3 +1,4 @@
+import type { WorktreeLaunchLocation } from '../../../worktree-launch-owner'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { AgentProviderSessionMetadata } from '../../../../shared/agent-session-resume'
 import type { NetworkProxySettings } from '../../../../shared/network-proxy'
@@ -78,5 +79,7 @@ export function allocatePtyLifecycleSequence(): number {
 }
 
 export type PrepareClaudeAuth = (
-  target?: ClaudeAccountSelectionTarget
+  target?: ClaudeAccountSelectionTarget,
+  /** Where the launch runs; a worktree that pinned a Claude account overrides the global one. */
+  launch?: WorktreeLaunchLocation
 ) => Promise<ClaudeRuntimeAuthPreparation>

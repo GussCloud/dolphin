@@ -16,7 +16,19 @@ const storeState = vi.hoisted(() => ({
         lastAuthenticatedAt: 0
       }
     ],
-    claudeManagedAccounts: []
+    claudeManagedAccounts: [
+      {
+        id: 'claude-pinned',
+        email: 'claude-pinned@example.test',
+        managedAuthPath: '/data/claude-accounts/claude-pinned/auth',
+        authMethod: 'subscription-oauth',
+        organizationUuid: null,
+        organizationName: null,
+        createdAt: 0,
+        updatedAt: 0,
+        lastAuthenticatedAt: 0
+      }
+    ]
   }
 }))
 
@@ -59,5 +71,14 @@ describe('WorktreeAgentAccountBadge', () => {
   it('renders nothing for a worktree without a pin', () => {
     const { container } = render(<WorktreeAgentAccountBadge worktree={{ path: '/repos/a' }} />)
     expect(container.innerHTML).toBe('')
+  })
+
+  it('names a pinned Claude account as Claude', () => {
+    const { container } = render(
+      <WorktreeAgentAccountBadge worktree={{ agentAccountId: 'claude-pinned', path: '/repos/a' }} />
+    )
+    const badge = container.querySelector('[data-worktree-agent-account]')
+    expect(badge?.textContent).toBe('claude-pinned@example.test')
+    expect(badge?.getAttribute('aria-label')).toBe('Claude account: claude-pinned@example.test')
   })
 })

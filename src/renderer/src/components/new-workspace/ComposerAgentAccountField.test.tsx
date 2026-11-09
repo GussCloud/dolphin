@@ -3,7 +3,28 @@
 import React from 'react'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { CodexManagedAccount } from '../../../../shared/managed-account-types'
+import type {
+  ClaudeManagedAccount,
+  CodexManagedAccount
+} from '../../../../shared/managed-account-types'
+
+function claudeAccount(
+  id: string,
+  overrides: Partial<ClaudeManagedAccount> = {}
+): ClaudeManagedAccount {
+  return {
+    id,
+    email: `${id}@example.test`,
+    managedAuthPath: `/data/claude-accounts/${id}/auth`,
+    authMethod: 'subscription-oauth',
+    organizationUuid: null,
+    organizationName: null,
+    createdAt: 0,
+    updatedAt: 0,
+    lastAuthenticatedAt: 0,
+    ...overrides
+  }
+}
 
 function account(id: string): CodexManagedAccount {
   return {
@@ -18,7 +39,7 @@ function account(id: string): CodexManagedAccount {
 
 type FakeSettings = {
   codexManagedAccounts: CodexManagedAccount[]
-  claudeManagedAccounts: never[]
+  claudeManagedAccounts: ClaudeManagedAccount[]
   activeRuntimeEnvironmentId: string | null
 }
 
@@ -98,6 +119,7 @@ function renderField(overrides: Partial<React.ComponentProps<typeof ComposerAgen
 afterEach(() => {
   cleanup()
   storeState.settings.codexManagedAccounts = []
+  storeState.settings.claudeManagedAccounts = []
   storeState.settings.activeRuntimeEnvironmentId = null
 })
 
@@ -124,7 +146,8 @@ describe('ComposerAgentAccountField', () => {
   })
 
   it.each([
-    ['a non-Codex agent', { agent: 'claude' as const }],
+    ['a Codex-less Claude lane', { agent: 'claude' as const }],
+    ['DeepSeek, which never takes a managed account', { agent: 'deepseek' as const }],
     ['an SSH project', { executionHostId: 'ssh:box' }],
     ['no agent', { agent: null }]
   ])('stays hidden for %s', (_label, overrides) => {
@@ -141,4 +164,28 @@ describe('ComposerAgentAccountField', () => {
     storeState.settings.activeRuntimeEnvironmentId = 'env-1'
     expect(renderField({}).container.innerHTML).toBe('')
   })
+
+  it.each([['claude' as const], ['claude-agent-teams' as const]])(
+    'offers the host Claude accounts for %s and leaves WSL ones out',
+    (agent) => {
+      storeState.settings.claudeManagedAccounts = [
+        claudeAccount('claude-a'),
+        claudeAccount('claude-b'),
+        claudeAccount('claude-wsl', { managedAuthRuntime: 'wsl', wslDistro: 'Ubuntu' })
+      ]
+      const { getByLabelText, onValueChange } = renderField({ agent })
+
+      const select = getByLabelText('account')
+      if (!(select instanceof HTMLSelectElement)) {
+        throw new Error('expected the native select stand-in')
+      }
+      expect(Array.from(select.options).map((option) => option.value)).toEqual([
+        '__active-account__',
+        'claude-a',
+        'claude-b'
+      ])
+      fireEvent.change(select, { target: { value: 'claude-b' } })
+      expect(onValueChange).toHaveBeenLastCalledWith('claude-b')
+    }
+  )
 })

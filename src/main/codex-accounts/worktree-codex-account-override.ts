@@ -1,20 +1,11 @@
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { CodexManagedAccount } from '../../shared/managed-account-types'
-import type { WorktreeMeta } from '../../shared/worktree/meta-types'
-import { splitWorktreeId } from '../../shared/worktree/id'
-import { normalizeRuntimePathForComparison } from '../../shared/cross-platform-path'
+import { findLaunchWorktree, type WorktreeAccountMetaSource } from '../worktree-launch-owner'
 import { resolveWorktreeAgentAccount } from '../../shared/worktree-agent-account'
 import {
   getSelectedCodexAccountIdForTarget,
   type CodexAccountSelectionTarget
 } from './runtime-selection'
-
-type PinnedMeta = Pick<WorktreeMeta, 'agentAccountId'>
-
-export type WorktreeAccountMetaSource = {
-  getWorktreeMeta: (worktreeId: string) => PinnedMeta | undefined
-  getAllWorktreeMeta: () => Record<string, PinnedMeta>
-}
 
 type LaunchAccountSettings = Pick<
   GlobalSettings,
@@ -28,42 +19,6 @@ export type CodexLaunchAccountOverride =
   | { kind: 'none' }
   | { kind: 'override'; account: CodexManagedAccount; worktreeId: string }
   | { kind: 'unavailable'; accountId: string; worktreeId: string; reason: string }
-
-function isSameOrDescendantPath(candidate: string, root: string): boolean {
-  return candidate === root || candidate.startsWith(root.endsWith('/') ? root : `${root}/`)
-}
-
-/** The worktree owning a launch: the explicit id, else the deepest worktree containing the cwd. */
-function findLaunchWorktree(
-  source: WorktreeAccountMetaSource,
-  launch: { worktreeId?: string; workspacePath?: string }
-): { worktreeId: string; meta: PinnedMeta } | null {
-  if (launch.worktreeId) {
-    const meta = source.getWorktreeMeta(launch.worktreeId)
-    return meta ? { worktreeId: launch.worktreeId, meta } : null
-  }
-  if (!launch.workspacePath) {
-    return null
-  }
-  // Why: structured and local-provider launches carry only a cwd; separators are folded so
-  // Windows and WSL UNC spellings compare like POSIX ones.
-  const cwd = normalizeRuntimePathForComparison(launch.workspacePath).replace(/\\/g, '/')
-  let best: { worktreeId: string; meta: PinnedMeta; length: number } | null = null
-  for (const [worktreeId, meta] of Object.entries(source.getAllWorktreeMeta())) {
-    if (!meta.agentAccountId) {
-      continue
-    }
-    const parsed = splitWorktreeId(worktreeId)
-    if (!parsed) {
-      continue
-    }
-    const root = normalizeRuntimePathForComparison(parsed.worktreePath).replace(/\\/g, '/')
-    if (isSameOrDescendantPath(cwd, root) && (!best || root.length > best.length)) {
-      best = { worktreeId, meta, length: root.length }
-    }
-  }
-  return best ? { worktreeId: best.worktreeId, meta: best.meta } : null
-}
 
 /**
  * Which Codex account a launch must use because its worktree pinned one.

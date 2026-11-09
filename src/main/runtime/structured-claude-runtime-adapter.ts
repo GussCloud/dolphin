@@ -31,6 +31,7 @@ export type StructuredClaudeRuntimeAdapterDeps = {
   /** The user's Agent Permissions setting for Claude; absent means prompting. */
   resolveClaudePermissionMode?: () => Promise<PermissionMode> | PermissionMode
   readClaudeManagedAccountGate?: () => ClaudeManagedAccountGateSettings | null
+  prepareClaudePinnedAccountHome?: (configDir: string) => Promise<boolean>
   openClaudeConnection?: ClaudeStructuredSessionAdapterDeps['openConnection']
   readProcessStartTime?: ClaudeStructuredSessionAdapterDeps['readProcessStartTime']
   modelCatalog?: ClaudeStructuredSessionAdapterDeps['modelCatalog']
@@ -88,6 +89,9 @@ export function createStructuredClaudeRuntimeAdapter(
         : {}),
       ...(deps.readClaudeManagedAccountGate
         ? { readManagedAccountGate: deps.readClaudeManagedAccountGate }
+        : {}),
+      ...(deps.prepareClaudePinnedAccountHome
+        ? { preparePinnedAccountHome: deps.prepareClaudePinnedAccountHome }
         : {})
     }),
     persistHandle: async ({ sessionId, providerSessionId, leafUuid, fence }) => {

@@ -94,6 +94,8 @@ export type StructuredAgentSessionRuntimeDeps = {
   resolveCodexPermissionPolicy?: () => CodexStructuredPermissionPolicy
   /** Raw settings getter; the reader that fails closed around it is built here, in checked code. */
   getClaudeManagedAccountGateSettings?: () => ClaudeManagedAccountGateSettings
+  /** Re-materializes a worktree-pinned Claude home before each acquisition. */
+  prepareClaudePinnedAccountHome?: (configDir: string) => Promise<boolean>
   resolveEnvironment?: () => Promise<NodeJS.ProcessEnv>
   /** Which login-shell variables Codex and Claude children inherit; absent inherits all. */
   resolveShellEnvironmentPolicy?: () => NativeChatShellEnvironmentPolicy
@@ -280,6 +282,9 @@ async function install(deps: StructuredAgentSessionRuntimeDeps): Promise<Install
           readClaudeManagedAccountGate: () =>
             readClaudeManagedAccountGateSettings(deps.getClaudeManagedAccountGateSettings!)
         }
+      : {}),
+    ...(deps.prepareClaudePinnedAccountHome
+      ? { prepareClaudePinnedAccountHome: deps.prepareClaudePinnedAccountHome }
       : {}),
     onLifecycleEvent: (event) => lifecycle.deliver(event),
     onBackgroundTasksChanged: (sessionId, state) =>

@@ -20,7 +20,9 @@ export const testState = {
   throwLegacyRuntimeKeychainWrite: false,
   throwScopedKeychainWrite: false,
   runtimeWriteConfigDir: null as string | null,
-  managedKeychainCredentials: new Map<string, string>()
+  managedKeychainCredentials: new Map<string, string>(),
+  /** Scoped Keychain items of worktree-pinned config dirs, keyed by config dir. */
+  pinnedKeychainCredentials: new Map<string, string>()
 }
 
 export function expectedRuntimeConfigDir(): string {
@@ -95,7 +97,7 @@ export function createKeychainMock() {
             }
             return configDir === expectedRuntimeConfigDir()
               ? testState.scopedKeychainCredentials
-              : null
+              : (testState.pinnedKeychainCredentials.get(configDir) ?? null)
           })()
         : (() => {
             if (testState.throwLegacyKeychainRead) {
@@ -119,6 +121,14 @@ export function createKeychainMock() {
         }
         testState.legacyKeychainCredentials = contents
         testState.activeKeychainCredentials = contents
+      }
+    ),
+    writeClaudeKeychainCredentialsForConfigDir: vi.fn(
+      async (contents: string, configDir: string) => {
+        if (configDir === expectedRuntimeConfigDir()) {
+          throw new Error('A pinned launch must not write the global config dir item')
+        }
+        testState.pinnedKeychainCredentials.set(configDir, contents)
       }
     ),
     readManagedClaudeKeychainCredentials: vi.fn(
@@ -152,6 +162,7 @@ export function resetRuntimeAuthTestState(): void {
   testState.throwScopedKeychainWrite = false
   testState.runtimeWriteConfigDir = null
   testState.managedKeychainCredentials.clear()
+  testState.pinnedKeychainCredentials.clear()
   testState.userDataDir = mkdtempSync(join(tmpdir(), 'dolphin-claude-runtime-'))
   testState.fakeHomeDir = mkdtempSync(join(tmpdir(), 'dolphin-claude-home-'))
   mkdirSync(join(testState.fakeHomeDir, '.claude'), { recursive: true })
