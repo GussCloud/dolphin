@@ -65,11 +65,15 @@ export async function listTerminalGitAccountWarnings(
   runtimeTarget: RuntimeTarget,
   repoId: string
 ): Promise<string[]> {
-  const read = window.api.repos.getTerminalGitAccountWarnings
-  if (runtimeTarget.kind === 'environment' || !read) {
+  if (runtimeTarget.kind === 'environment') {
     return []
   }
   try {
+    // Why the whole chain: a web client or test env may expose no `api.repos` at all.
+    const read = window.api?.repos?.getTerminalGitAccountWarnings
+    if (!read) {
+      return []
+    }
     const warnings = await read({ repoId })
     return Array.isArray(warnings) ? warnings.filter((entry) => typeof entry === 'string') : []
   } catch {

@@ -13,6 +13,10 @@ let container: HTMLDivElement
 let root: Root
 const getWarnings = vi.fn()
 
+function installApiWithoutRepos(): void {
+  vi.stubGlobal('api', {})
+}
+
 function installApi(read: typeof getWarnings | undefined): void {
   vi.stubGlobal('api', { repos: read ? { getTerminalGitAccountWarnings: read } : {} })
 }
@@ -72,5 +76,19 @@ describe('TerminalGitAccountWarnings', () => {
     getWarnings.mockRejectedValue(new Error('boom'))
     await render({ kind: 'local' }, 'c')
     expect(container.textContent).toBe('')
+  })
+
+  it('renders nothing when the host exposes no repos API at all', async () => {
+    const unhandled = vi.fn()
+    process.on('unhandledRejection', unhandled)
+    try {
+      installApiWithoutRepos()
+      await render({ kind: 'local' })
+      await act(async () => {})
+      expect(container.textContent).toBe('')
+      expect(unhandled).not.toHaveBeenCalled()
+    } finally {
+      process.off('unhandledRejection', unhandled)
+    }
   })
 })

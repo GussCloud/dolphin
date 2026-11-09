@@ -20,11 +20,13 @@ export function TerminalGitAccountWarnings({
 
   useEffect(() => {
     let cancelled = false
-    void listTerminalGitAccountWarnings(runtimeTarget, repoId).then((next) => {
-      if (!cancelled) {
-        setWarnings(next)
-      }
-    })
+    void listTerminalGitAccountWarnings(runtimeTarget, repoId)
+      .catch(() => [])
+      .then((next) => {
+        if (!cancelled) {
+          setWarnings(next)
+        }
+      })
     return () => {
       cancelled = true
     }
