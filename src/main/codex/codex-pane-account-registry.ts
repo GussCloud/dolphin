@@ -138,7 +138,8 @@ function parseRegistry(parsed: unknown): CodexPaneAccountRegistryFile {
           : {}),
         ...(isEnvironmentHomeOverride(record.environmentHomeOverride)
           ? { environmentHomeOverride: record.environmentHomeOverride }
-          : {})
+          : {}),
+        ...(record.worktreeAccountPinned === true ? { worktreeAccountPinned: true as const } : {})
       }
     }
   }

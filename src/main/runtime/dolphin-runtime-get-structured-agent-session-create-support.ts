@@ -92,12 +92,15 @@ export class DolphinRuntimeWithGetStructuredAgentSessionCreateSupport extends Do
         })
       )
     }
-    return this.resolveStructuredAgentSessionIntent(input, ({ workspacePath, launchEnv }) =>
-      resolveStructuredCodexAccountHomePath({
-        launchEnv,
-        resolveLaunchHome: this.prepareCodexStructuredLaunchFn,
-        workspacePath
-      })
+    return this.resolveStructuredAgentSessionIntent(
+      input,
+      ({ workspacePath, launchEnv, location }) =>
+        resolveStructuredCodexAccountHomePath({
+          launchEnv,
+          resolveLaunchHome: this.prepareCodexStructuredLaunchFn,
+          workspacePath,
+          worktreeId: location.workspaceId
+        })
     )
   }
 
@@ -127,6 +130,7 @@ export class DolphinRuntimeWithGetStructuredAgentSessionCreateSupport extends Do
       variable: 'CODEX_HOME',
       // Read-only resolver, never launch prep: a picker mount or discovery read
       // must not sync homes, start bridges, or clear an account selection.
+      // No worktree here, so a worktree pin is not applied to this catalog read.
       path: await resolveStructuredCodexAccountHomePath({
         launchEnv,
         resolveLaunchHome: this.resolveCodexStructuredLaunchHomeFn,

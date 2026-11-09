@@ -25,6 +25,7 @@ import type { RuntimeStatus } from '../../../shared/runtime-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import { NewWorkspaceComposerAdvancedSection } from './new-workspace/NewWorkspaceComposerAdvancedSection'
 import { NewWorkspaceComposerAgentSection } from './new-workspace/NewWorkspaceComposerAgentSection'
+import { ComposerAgentAccountField } from './new-workspace/ComposerAgentAccountField'
 import { useComposerGoalMode } from './new-workspace/composer-goal-mode'
 import { NewWorkspaceComposerFooter } from './new-workspace/NewWorkspaceComposerFooter'
 import { NewWorkspaceComposerNameSection } from './new-workspace/NewWorkspaceComposerNameSection'
@@ -335,7 +336,20 @@ export default function NewWorkspaceComposerCard(
             {...props}
             visibleQuickAgents={goalMode.agents}
             agentLabel={goalMode.agentLabel}
-            beforeAdvanced={goalMode.goalSection}
+            beforeAdvanced={
+              <>
+                {props.onAgentAccountIdChange ? (
+                  <ComposerAgentAccountField
+                    agent={props.quickAgent}
+                    repoId={repoId}
+                    executionHostId={selectedRepoExecutionHostId}
+                    value={props.agentAccountId ?? null}
+                    onValueChange={props.onAgentAccountIdChange}
+                  />
+                ) : null}
+                {goalMode.goalSection}
+              </>
+            }
             defaultTuiAgent={defaultTuiAgent}
             handleSetDefaultAgent={handleSetDefaultAgent}
           />

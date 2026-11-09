@@ -6,6 +6,7 @@ import { codexHookService } from '../codex/hook-service'
 import { getDefaultWslDistro } from '../wsl'
 import { isAgentStatusHooksEnabled } from '../agent-hooks/managed-agent-hook-controls'
 import { ensureRealHomeCodexHookState } from '../codex/codex-real-home-hook-install'
+import { resolveCodexLaunchAccountOverride } from '../codex-accounts/worktree-codex-account-override'
 import { mainProcessState as state } from './main-process-state'
 
 export async function prepareCodexRuntimeHomeForLaunch(
@@ -28,6 +29,32 @@ export async function prepareCodexRuntimeHomeForLaunch(
     } catch (error) {
       console.warn('[codex-project-trust] failed to pre-mark launch workspace:', error)
     }
+  }
+  const accountOverride = resolveCodexLaunchAccountOverride({
+    source: state.store,
+    settings: state.store?.getSettings(),
+    target,
+    worktreeId: launchContext?.worktreeId,
+    workspacePath: launchContext?.workspacePath
+  })
+  if (accountOverride.kind === 'unavailable') {
+    // Why: the worktree card shows the same fallback; the log ties it to this launch.
+    console.warn(
+      `[codex-worktree-account] worktree ${accountOverride.worktreeId} pins an unavailable account (${accountOverride.reason}); using the active account`
+    )
+  }
+  if (accountOverride.kind === 'override') {
+    const overrideHomePath = runtimeHome.prepareForCodexLaunchWithAccount(
+      accountOverride.account,
+      target
+    )
+    if (overrideHomePath) {
+      await refreshCodexRuntimeHooksForLaunch(overrideHomePath, target)
+      return overrideHomePath
+    }
+    console.warn(
+      `[codex-worktree-account] worktree ${accountOverride.worktreeId} account home is unusable for this runtime; using the active account`
+    )
   }
   const ensureRealHomeHooksIfSelected = async (): Promise<boolean> => {
     if (target?.runtime === 'wsl' || !runtimeHome.isHostSystemDefaultRealHomeSelected(launchEnv)) {
@@ -66,6 +93,14 @@ export async function prepareCodexRuntimeHomeForLaunch(
     // install below would target a home Codex never reads on this lane.
     return null
   }
+  await refreshCodexRuntimeHooksForLaunch(runtimeHomePath, target)
+  return runtimeHomePath
+}
+
+async function refreshCodexRuntimeHooksForLaunch(
+  runtimeHomePath: string | null,
+  target?: CodexAccountSelectionTarget
+): Promise<void> {
   const hookTarget =
     target?.runtime === 'wsl'
       ? { runtime: 'wsl' as const, wslDistro: target.wslDistro?.trim() || getDefaultWslDistro() }
@@ -91,5 +126,4 @@ export async function prepareCodexRuntimeHomeForLaunch(
       error
     )
   }
-  return runtimeHomePath
 }

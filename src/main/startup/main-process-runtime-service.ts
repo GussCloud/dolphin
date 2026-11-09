@@ -134,10 +134,11 @@ export function initializeMainProcessRuntime(): DolphinRuntimeService {
         runtimeHome: state.codexRuntimeHome,
         systemCodexHomePath: resolveHostCodexSessionSourceHome(store.getSettings())
       }),
-    prepareCodexStructuredLaunch: ({ workspacePath, launchEnv }) =>
+    prepareCodexStructuredLaunch: ({ workspacePath, launchEnv, worktreeId }) =>
       prepareCodexRuntimeHomeForLaunch(undefined, launchEnv, {
         launchAgent: 'codex',
-        workspacePath
+        workspacePath,
+        ...(worktreeId ? { worktreeId } : {})
       }),
     // Why throw like prepare does: a null from an uninitialized service would
     // map to the system home and key a catalog read to the wrong account.

@@ -68,6 +68,7 @@ export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promis
   const selectLaunchCodexHome = async (): Promise<string | null> =>
     (await ctx.deps.getSelectedCodexHomePath?.(ctx.codexSelectionTarget, ctx.baseEnv, {
       workspacePath: ctx.cwd,
+      worktreeId: args.worktreeId,
       launchAgent: isTuiAgent(args.launchAgent) ? args.launchAgent : undefined
     })) ?? null
   ctx.selectedCodexHomePath =
@@ -95,6 +96,7 @@ export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promis
           ctx.codexSelectionTarget,
           (await ctx.deps.getSelectedCodexHomePath?.(ctx.codexSelectionTarget, ctx.baseEnv, {
             workspacePath: ctx.cwd,
+            worktreeId: args.worktreeId,
             launchAgent: 'codex'
           })) ?? null
         ),
@@ -103,6 +105,7 @@ export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promis
           ctx.codexSelectionTarget,
           (await ctx.deps.getSelectedCodexHomePath?.(ctx.codexSelectionTarget, ctx.baseEnv, {
             workspacePath: ctx.cwd,
+            worktreeId: args.worktreeId,
             launchAgent: 'codex',
             unavailableManagedHomePath
           })) ?? null
