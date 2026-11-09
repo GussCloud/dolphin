@@ -1,4 +1,8 @@
 import { createRemoteRefProbeCache } from '../git/remote-ref-probe-cache'
+import {
+  resolveAzureDevOpsCredentialScopeForRepoPath,
+  type AzureDevOpsCredentialScope
+} from './azure-devops-account-scope'
 
 export type AzureDevOpsRepoRef = {
   host: string
@@ -7,6 +11,8 @@ export type AzureDevOpsRepoRef = {
   apiBaseUrl: string
   webBaseUrl: string
   organization?: string | null
+  /** The owning project's managed account; absent = global credential. Never cached. */
+  credentialScope?: AzureDevOpsCredentialScope
 }
 
 type LocalGitExecOptions = {
@@ -198,7 +204,13 @@ export async function getAzureDevOpsRepoRefForRemote(
   connectionId?: string | null,
   localGitOptions: LocalGitExecOptions = {}
 ): Promise<AzureDevOpsRepoRef | null> {
-  return repoRefProbeCache.get(repoPath, remoteName, connectionId, localGitOptions)
+  const ref = await repoRefProbeCache.get(repoPath, remoteName, connectionId, localGitOptions)
+  if (!ref) {
+    return null
+  }
+  // Why after the cache: the remote parse is cacheable, the project's account binding is not.
+  const credentialScope = resolveAzureDevOpsCredentialScopeForRepoPath(repoPath, connectionId)
+  return credentialScope ? { ...ref, credentialScope } : ref
 }
 
 export async function getAzureDevOpsRepoRef(

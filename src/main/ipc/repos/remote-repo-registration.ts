@@ -1,3 +1,4 @@
+import { applyRepoAccountBindingToNewRepo } from '../../repo-account-binding'
 import { randomUUID } from 'node:crypto'
 import type { Store } from '../../persistence'
 import type { Repo } from '../../../shared/repo-types'
@@ -17,6 +18,7 @@ export async function addRemoteRepoFromPath(
     displayName?: string
     kind?: 'git' | 'folder'
     setupMethod?: Repo['projectHostSetupMethod']
+    accountBinding?: unknown
   }
 ): Promise<{ repo: Repo; alreadyExisted: boolean } | { error: string }> {
   const gitProvider = getSshGitProvider(args.connectionId)
@@ -112,7 +114,10 @@ export async function addRemoteRepoFromPath(
     mux.notify('session.registerRoot', { rootPath: resolvedPath })
   }
 
-  return { repo, alreadyExisted: false }
+  return {
+    repo: applyRepoAccountBindingToNewRepo(store, repo, args.accountBinding),
+    alreadyExisted: false
+  }
 }
 
 function getRemoteRepoFolderName(remotePath: string): string {

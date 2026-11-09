@@ -1,3 +1,4 @@
+import { registerAzureDevOpsManagedAccountHandlers } from './repos/azure-devops-account-handlers'
 import type { BrowserWindow } from 'electron'
 import { ipcMain } from 'electron'
 import type { Store } from '../persistence'
@@ -75,6 +76,7 @@ export function registerRepoHandlers(
   registerFolderWorkspaceHandlers(mainWindow, store, runtime)
   registerNestedRepoImportHandler(mainWindow, store)
   registerRepoUpdateHandler(mainWindow, store)
+  registerAzureDevOpsManagedAccountHandlers(mainWindow, store)
   registerSparsePresetHandlers(mainWindow, store)
   registerRepoFolderPickerHandlers(mainWindow)
   registerRepoCloneHandlers(mainWindow, store)

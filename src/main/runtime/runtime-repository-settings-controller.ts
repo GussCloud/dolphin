@@ -2,6 +2,7 @@ import { getRepoExecutionHostId } from '../../shared/execution-host'
 import { isFolderRepo } from '../../shared/repo-kind'
 import type { Repo } from '../../shared/repo-types'
 import type { GhAccountBinding } from '../../shared/github/account-binding'
+import type { CommitIdentity } from '../../shared/source-control-account-types'
 import { invalidateAuthorizedRootsCache } from '../ipc/filesystem-auth'
 import { prepareLocalWorktreeRootForRepo } from '../worktree-root-preparation'
 import type { RuntimeStore } from './runtime-store-contract'
@@ -41,6 +42,8 @@ type RepositoryUpdates = Partial<
   externalWorktreeDiscoverySuppressedAt?: Repo['externalWorktreeDiscoverySuppressedAt'] | null
   /** Only `null` clears; `omitUndefined` drops a stripped (undefined) field so it never unbinds. */
   ghAccount?: GhAccountBinding | null
+  azureDevOpsAccountId?: string | null
+  commitIdentity?: CommitIdentity | null
 }
 
 function omitUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {

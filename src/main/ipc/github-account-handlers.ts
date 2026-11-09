@@ -13,6 +13,8 @@ import { getCohortAtEmit } from '../telemetry/cohort-classifier'
 import { track } from '../telemetry/client'
 import { assertRegisteredGitHubRepo, getGitHubLocalGitOptionArgs } from './github-repo-routing'
 
+const WSL_DISTRO_NAME_RE = /^[A-Za-z0-9._-]{1,64}$/
+
 export function registerGitHubAccountHandlers(store: Store): void {
   ipcMain.handle('gh:viewer', () => getAuthenticatedViewer())
   ipcMain.handle('gh:checkDolphinStarred', () => checkDolphinStarred())
@@ -44,6 +46,27 @@ export function registerGitHubAccountHandlers(store: Store): void {
       return listGhAccountBindingInventory(getGitHubLocalGitOptionArgs(store, repo)[0] ?? {}, {
         refreshCapability: args.refreshCapability === true,
         ...(requiredHost ? { requiredHost } : {})
+      })
+    }
+  )
+
+  // Why no repo: add/clone dialogs choose an account before the project row exists.
+  ipcMain.handle(
+    'gh:listHostAccounts',
+    (_event, args?: { host?: unknown; refreshCapability?: unknown; wslDistro?: unknown }) => {
+      const host = typeof args?.host === 'string' ? args.host.trim() : ''
+      // Why: a WSL project's push resolves its token with the distro's gh, so list that gh's logins.
+      const wslDistro = args?.wslDistro
+      if (
+        wslDistro !== undefined &&
+        (typeof wslDistro !== 'string' || !WSL_DISTRO_NAME_RE.test(wslDistro))
+      ) {
+        // Why reject, not fall back: the host's gh would list a different set of logins.
+        return Promise.reject(new Error(`Invalid WSL distro name: ${String(wslDistro)}`))
+      }
+      return listGhAccountBindingInventory(wslDistro ? { wslDistro } : {}, {
+        refreshCapability: args?.refreshCapability === true,
+        ...(host ? { requiredHost: host } : {})
       })
     }
   )

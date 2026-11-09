@@ -6,6 +6,11 @@ import { sanitizeRepoIcon } from '../../../shared/repo-icon'
 import { normalizeGhAccountBinding } from '../../../shared/github/account-binding'
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
 import {
+  normalizeAzureDevOpsAccountId,
+  normalizeCommitIdentity,
+  type CommitIdentity
+} from '../../../shared/source-control-account-types'
+import {
   normalizeCustomWorktreeVisibilitySources,
   normalizeWorktreeVisibilitySourcePreferences
 } from '../../../shared/worktree/visibility-sources'
@@ -83,6 +88,8 @@ export function sanitizeRepoUpdatesForPersistence<
     >
   > & {
     ghAccount?: GhAccountBinding | null
+    azureDevOpsAccountId?: string | null
+    commitIdentity?: CommitIdentity | null
   }
 >(updates: T): T {
   const sanitized = { ...updates }
@@ -149,6 +156,22 @@ export function sanitizeRepoUpdatesForPersistence<
       delete sanitized.ghAccount
     } else {
       sanitized.ghAccount = ghAccount
+    }
+  }
+  if ('azureDevOpsAccountId' in sanitized && sanitized.azureDevOpsAccountId != null) {
+    const accountId = normalizeAzureDevOpsAccountId(sanitized.azureDevOpsAccountId)
+    if (!accountId) {
+      delete sanitized.azureDevOpsAccountId
+    } else {
+      sanitized.azureDevOpsAccountId = accountId
+    }
+  }
+  if ('commitIdentity' in sanitized && sanitized.commitIdentity != null) {
+    const identity = normalizeCommitIdentity(sanitized.commitIdentity)
+    if (!identity) {
+      delete sanitized.commitIdentity
+    } else {
+      sanitized.commitIdentity = identity
     }
   }
   if ('customWorktreeVisibilitySources' in sanitized) {

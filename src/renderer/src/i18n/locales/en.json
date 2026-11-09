@@ -5197,7 +5197,9 @@
           "875dda0995": "Enter a host parent path.",
           "ssh_parent_manual": "Enter an SSH parent path.",
           "45b7c26034": "Create project",
-          "85085d74d2": "Creating…"
+          "85085d74d2": "Creating…",
+          "authorNeedsFix": "The commit author is incomplete or invalid.",
+          "showAuthor": "Show it"
         },
         "AddRepoHostSelector": {
           "host": "Host",
@@ -6080,7 +6082,8 @@
         },
         "useAddRepoCloneFlow": {
           "4d0013cc93": "Repository cloned",
-          "0dc4d1b657": "Enter a host path for the clone destination."
+          "0dc4d1b657": "Enter a host path for the clone destination.",
+          "accountsNotEnforced": "Cloned, but this host did not keep the account and commit author (older version)."
         },
         "useAddRepoLocalFolderFlow": {
           "7ab10e4974": "Use a host path to add projects from a remote host.",
@@ -6538,6 +6541,15 @@
           "browse": "Browse Azure DevOps",
           "filter": "Filter repositories",
           "empty": "No repositories found."
+        },
+        "AddRepoAccountStep": {
+          "title": "Account and commit author",
+          "description": "Choose how Dolphin signs in and who authors commits for {{project}}.",
+          "skip": "Use defaults",
+          "continue": "Continue"
+        },
+        "useAddRepoAccountStep": {
+          "notKept": "Project added, but the account and commit author were not kept. Set them in project settings."
         },
         "WorktreeAgentAccountBadge": {
           "unavailable": "Account missing",
@@ -11081,7 +11093,8 @@
                   "statusConnected": "Connected",
                   "statusUnavailable": "Unavailable",
                   "statusNotInstalled": "Not installed",
-                  "statusNotAuthenticated": "Not authenticated"
+                  "statusNotAuthenticated": "Not authenticated",
+                  "githubNotAuthenticated": "The GitHub CLI is installed but not signed in. Add an account to sign in."
                 }
               }
             }
@@ -12587,6 +12600,45 @@
           "default": "default",
           "builtIn": "Built into Dolphin and kept up to date with it. Duplicate it to change the coordinator, workers, parallelism or add a strategy.",
           "rules": "Dolphin rules always apply and cannot be edited: one worker per Task in a child worktree, idle between notices, every batch acknowledged, a stalled worker retried once, a blocker only for real decisions, and goal complete at the end."
+        },
+        "RepositoryAccountIdentitySection": {
+          "saveFailed": "Could not save the project account settings.",
+          "title": "Account and Commit Author",
+          "description": "Choose the account and the commit author this project uses.",
+          "longDescription": "Commits Dolphin and this project’s terminals create use the author below. Blank keeps your git config.",
+          "save": "Save author",
+          "notEnforced": "Saved, but not enforced by this runtime (mixed-version host).",
+          "authorTitle": "Commit Author"
+        },
+        "azureDevOpsManagedAccounts": {
+          "added": "Account added",
+          "removeTitle": "Remove Azure DevOps account?",
+          "removeDescription": "Signs {{login}} out of Dolphin. Projects bound to it fall back to the default account.",
+          "remove": "Remove",
+          "title": "Accounts",
+          "defaultUnset": "Not signed in",
+          "defaultTag": "Default account",
+          "removeAria": "Remove {{login}}",
+          "adding": "Finish sign-in in the Microsoft window…",
+          "add": "Add account",
+          "cancel": "Cancel",
+          "desktopOnly": "Extra Azure DevOps accounts are managed on the desktop app’s own machine, not on a remote runtime."
+        },
+        "githubAccountsList": {
+          "removeTitle": "Remove GitHub account?",
+          "removeDescription": "Runs gh auth logout for {{user}} on {{host}}. Projects bound to it fall back to the default account.",
+          "removeConfirm": "Remove",
+          "empty": "No GitHub accounts signed in.",
+          "active": "Active",
+          "removeAria": "Remove {{user}} on {{host}}",
+          "hostLabel": "GitHub host",
+          "signIn": "Sign in",
+          "cancel": "Cancel",
+          "add": "Add account",
+          "terminalTitle": "GitHub CLI",
+          "terminalAria": "GitHub account command",
+          "terminalDescription": "Press Enter to run the command. Dolphin re-checks accounts when it ends.",
+          "envToken": "Environment token"
         }
       },
       "right": {
@@ -18056,6 +18108,28 @@
         "toastHint": "If your organization blocks sign-in inside Dolphin, right-click the Azure DevOps icon and choose Open in system browser.",
         "cancel": "Cancel sign-in",
         "systemBrowser": "Open in system browser"
+      },
+      "projectAccounts": {
+        "commitAuthor": {
+          "label": "Commit author",
+          "namePlaceholder": "Name",
+          "name": "Author name",
+          "emailPlaceholder": "Email",
+          "email": "Author email",
+          "incomplete": "Fill in both name and email, or leave both blank.",
+          "invalid": "Enter a valid email address.",
+          "hint": "Leave blank to use your git config identity."
+        },
+        "account": {
+          "label": "{{provider}} account",
+          "refresh": "Refresh accounts",
+          "default": "Default account",
+          "unavailable": "Unavailable account",
+          "githubHostHint": "Logins on {{host}}. Default uses the active gh login.",
+          "azureHint": "Default uses the sign-in configured in Settings → Integrations.",
+          "githubDefault": "Default account (gh’s active login)",
+          "azureDefault": "Default sign-in"
+        }
       }
     },
     "i18n": {

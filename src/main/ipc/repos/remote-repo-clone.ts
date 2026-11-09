@@ -33,6 +33,7 @@ export async function cloneRemoteRepo(
     connectionId: string
     url: string
     destination: string
+    accountBinding?: unknown
   }
 ): Promise<Repo> {
   const gitProvider = getSshGitProvider(args.connectionId)
@@ -129,7 +130,8 @@ export async function cloneRemoteRepo(
     connectionId: args.connectionId,
     remotePath: clonePath,
     kind: 'git',
-    setupMethod: 'cloned'
+    setupMethod: 'cloned',
+    accountBinding: args.accountBinding
   })
   if ('error' in result) {
     throw new Error(result.error)

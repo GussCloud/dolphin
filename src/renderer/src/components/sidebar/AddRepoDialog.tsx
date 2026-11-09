@@ -19,6 +19,7 @@ import {
   type AddRepoDialogHostedController
 } from './use-add-repo-hosted-controller'
 import { routeAddRepoBrowse } from './add-repo-browse-authority'
+import { useAddRepoAccountStep } from './use-add-repo-account-step'
 
 export default React.memo(function AddRepoDialog({
   hosted
@@ -118,6 +119,7 @@ export default React.memo(function AddRepoDialog({
     setCreateName,
     setCreateParent,
     setCreateError,
+    createIdentity,
     resetCreateState,
     handlePickParent,
     handleCreate
@@ -158,7 +160,8 @@ export default React.memo(function AddRepoDialog({
     setCloneError,
     resetCloneFlow,
     handlePickDestination,
-    handleClone
+    handleClone,
+    projectAccounts: cloneProjectAccounts
   } = useAddRepoCloneFlow({
     step,
     activeRuntimeEnvironmentId: selectedRuntimeEnvironmentId,
@@ -168,6 +171,8 @@ export default React.memo(function AddRepoDialog({
     onGitRepoReady: completeGitRepoAdd
   })
 
+  const accounts = useAddRepoAccountStep(selectedRuntimeEnvironmentId, setStep, completeGitRepoAdd)
+  const resetAccountStep = accounts.reset
   const isRuntimeEnvironmentActive = Boolean(selectedRuntimeEnvironmentId)
   const selectedHostKind = hostSelection.selectedParsedHost?.kind
   const { handleBrowse, resetLocalFolderFlow } = useAddRepoLocalFolderFlow({
@@ -183,6 +188,7 @@ export default React.memo(function AddRepoDialog({
     setNestedScanInProgress,
     showNestedRepoReview,
     onGitRepoReady: completeGitRepoAdd,
+    offerAccountStep: accounts.offer,
     setIsAdding,
     setAddProjectBusyLabel
   })
@@ -203,7 +209,7 @@ export default React.memo(function AddRepoDialog({
     setActiveNestedScanId,
     setNestedScanInProgress,
     showNestedRepoReview,
-    onGitRepoReady: completeGitRepoAdd,
+    onGitRepoReady: accounts.offer,
     setAddProjectBusyLabel
   })
 
@@ -217,12 +223,14 @@ export default React.memo(function AddRepoDialog({
     setAddProjectBusyLabel(null)
     resetServerPathFlow()
     resetCloneFlow()
+    resetAccountStep()
     resetNestedImportFlow()
     resetNestedRepoReviewState()
     resetCreateDefaultState()
     resetCreateState()
     resetRemoteState()
   }, [
+    resetAccountStep,
     resetCloneFlow,
     resetLocalFolderFlow,
     resetNestedRepoReviewState,
@@ -379,6 +387,9 @@ export default React.memo(function AddRepoDialog({
         }}
         onPickCloneDestination={handlePickDestination}
         onClone={handleClone}
+        cloneProjectAccounts={cloneProjectAccounts}
+        accountStep={accounts.state}
+        createIdentity={createIdentity}
         onNestedGroupNameChange={setNestedGroupName}
         onNestedSelectedPathsChange={setNestedSelectedPaths}
         onImportNestedRepos={(mode) => void handleImportNestedRepos(mode)}

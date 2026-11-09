@@ -4,6 +4,8 @@ export const DEFAULT_GIT_MAX_BUFFER = 10 * 1024 * 1024
 // Why: the admission tier is a wire value, so it is declared with its params schema.
 import type { GitAdmissionTier } from '../../../shared/rpc-contract/git-admission-tier-params'
 
+import type { RepoGitAccountContext } from './repo-git-account-config'
+
 export type { GitAdmissionTier }
 
 export type GitExecOptions = {
@@ -23,4 +25,6 @@ export type GitExecOptions = {
   captureWslLoginShellOutput?: boolean
   /** Scheduler priority for this child; status is the safe default. */
   admissionTier?: GitAdmissionTier
+  /** Project account/identity; the runner adds credential and author config where the subcommand needs it. */
+  repoAccount?: RepoGitAccountContext
 }

@@ -4,6 +4,10 @@ import { normalizeRepoBadgeColor } from '../repo-badge-color'
 import { sanitizeRepoIcon } from '../repo-icon'
 import { normalizeGhAccountBinding } from '../github/account-binding'
 import {
+  normalizeAzureDevOpsAccountId,
+  normalizeCommitIdentity
+} from '../source-control-account-types'
+import {
   normalizeCustomWorktreeVisibilitySources,
   normalizeWorktreeVisibilitySourcePreferences
 } from '../worktree/visibility-sources'
@@ -70,6 +74,27 @@ export function createRepoUpdateSchema<T extends Readonly<Record<string, z.ZodTy
           // Why: malformed bindings must omit the key (IPC deletes); never clear via undefined.
           return normalizeGhAccountBinding(value) ?? undefined
         }),
+      // Why: optional + null-clears keeps older clients and hosts wire-compatible.
+      azureDevOpsAccountId: z
+        .unknown()
+        .optional()
+        .transform((value) =>
+          value === undefined
+            ? undefined
+            : value === null
+              ? null
+              : (normalizeAzureDevOpsAccountId(value) ?? undefined)
+        ),
+      commitIdentity: z
+        .unknown()
+        .optional()
+        .transform((value) =>
+          value === undefined
+            ? undefined
+            : value === null
+              ? null
+              : (normalizeCommitIdentity(value) ?? undefined)
+        ),
       forkSyncMode: z.enum(['ask', 'safe-auto', 'off']).optional(),
       externalWorktreeVisibility: z.enum(['hide', 'show']).nullable().optional(),
       externalWorktreeVisibilityPromptDismissedAt: z.number().finite().optional(),

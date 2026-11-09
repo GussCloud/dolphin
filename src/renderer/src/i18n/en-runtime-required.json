@@ -687,6 +687,11 @@
           }
         }
       },
+      "projectAccounts": {
+        "account": {
+          "default": "Default account"
+        }
+      },
       "right": {
         "sidebar": {
           "AiVaultPanel": {
@@ -1401,6 +1406,7 @@
           "updating": "Updating servers…"
         },
         "RepositoryGitHubAccountSection": {
+          "ambient": "Default (ambient gh login)",
           "retry": "Retry"
         },
         "RepositoryHooksSection": {
@@ -1638,10 +1644,25 @@
             }
           }
         },
+        "azureDevOpsManagedAccounts": {
+          "defaultTag": "Default account"
+        },
         "bitbucket": {
           "credentials": {
             "dialog": {
               "remoteRuntime": "Bitbucket credentials saved here are stored on this local machine only. Set DOLPHIN_BITBUCKET_* environment variables on the remote runtime instead."
+            }
+          }
+        },
+        "cli": {
+          "source": {
+            "control": {
+              "integration": {
+                "cards": {
+                  "2e44dda68a": "The GitHub CLI is installed but not authenticated. Run this command in a terminal:",
+                  "8d90249d22": "gh auth login"
+                }
+              }
             }
           }
         },

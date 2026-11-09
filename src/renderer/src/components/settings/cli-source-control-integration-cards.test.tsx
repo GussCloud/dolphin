@@ -8,6 +8,7 @@ import {
   GitHubIntegrationCard,
   GitLabIntegrationCard
 } from './cli-source-control-integration-cards'
+import { IntegrationCardPresentationProvider } from './integration-card-presentation'
 
 const LOCAL_HOST_LABEL = getExecutionHostLabel('local')
 
@@ -42,6 +43,11 @@ vi.mock('@/store', () => ({
     }
     return selector(mocks.store.current)
   }
+}))
+
+// Why: the account list has its own tests; this file covers the card's scope rows.
+vi.mock('./github-accounts-list', () => ({
+  GitHubAccountsList: () => <div data-testid="github-accounts-list" />
 }))
 
 vi.mock('./source-control-preflight-card-status', () => ({
@@ -125,5 +131,29 @@ describe('CLI source-control integration card account scope', () => {
       'Credentials and account checks for this provider are owned by this remote server. Use Settings > Remote Dolphin Servers > Advanced to edit another default runtime scope.'
     )
     expect(rendered.textContent).toContain('glab auth login')
+  })
+
+  it('manages GitHub accounts in Settings but stays text-only in the onboarding review', async () => {
+    mocks.store.current = {
+      settings: { activeRuntimeEnvironmentId: null },
+      openSettingsPage: vi.fn(),
+      openSettingsTarget: vi.fn()
+    }
+    mocks.preflight.statuses.ghStatus = 'not-authenticated'
+
+    const settings = await renderCard(<GitHubIntegrationCard />)
+    expect(settings.querySelector('[data-testid="github-accounts-list"]')).not.toBeNull()
+    await act(async () => root?.unmount())
+    root = null
+    container?.remove()
+
+    const onboarding = await renderCard(
+      <IntegrationCardPresentationProvider value="setup-guide">
+        <GitHubIntegrationCard />
+      </IntegrationCardPresentationProvider>
+    )
+    expect(onboarding.querySelector('[data-testid="github-accounts-list"]')).toBeNull()
+    expect(onboarding.textContent).toContain('Run this command in a terminal:')
+    expect(onboarding.textContent).toContain('gh auth login')
   })
 })

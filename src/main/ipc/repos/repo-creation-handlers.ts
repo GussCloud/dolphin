@@ -1,3 +1,5 @@
+import { normalizeRepoAccountBinding } from '../../../shared/source-control-account-types'
+import { applyRepoAccountBindingToNewRepo } from '../../repo-account-binding'
 import type { BrowserWindow } from 'electron'
 import { ipcMain } from 'electron'
 import { randomUUID } from 'node:crypto'
@@ -67,9 +69,20 @@ export function registerRepoCreationHandlers(mainWindow: BrowserWindow, store: S
     'repos:add',
     async (
       _event,
-      args: { path: string; kind?: 'git' | 'folder'; displayName?: string }
+      args: {
+        path: string
+        kind?: 'git' | 'folder'
+        displayName?: string
+        accountBinding?: unknown
+      }
     ): Promise<{ repo: Repo } | { error: string }> => {
-      const result = await addLocalRepoFromPath(store, args.path, args.kind, args.displayName)
+      const result = await addLocalRepoFromPath(
+        store,
+        args.path,
+        args.kind,
+        args.displayName,
+        args.accountBinding
+      )
       if ('error' in result) {
         return result
       }
@@ -92,6 +105,7 @@ export function registerRepoCreationHandlers(mainWindow: BrowserWindow, store: S
         remotePath: string
         displayName?: string
         kind?: 'git' | 'folder'
+        accountBinding?: unknown
       }
     ): Promise<{ repo: Repo } | { error: string }> => {
       const result = await addRemoteRepoFromPath(store, args)
@@ -113,6 +127,7 @@ export function registerRepoCreationHandlers(mainWindow: BrowserWindow, store: S
         parentPath: string
         name: string
         kind: 'git' | 'folder'
+        accountBinding?: unknown
       }
     ): Promise<{ repo: Repo } | { error: string }> => {
       const result = await createRemoteRepo(store, args)
@@ -129,8 +144,9 @@ export function registerRepoCreationHandlers(mainWindow: BrowserWindow, store: S
     'repos:create',
     async (
       _event,
-      args: { parentPath: string; name: string; kind: 'git' | 'folder' }
+      args: { parentPath: string; name: string; kind: 'git' | 'folder'; accountBinding?: unknown }
     ): Promise<{ repo: Repo } | { error: string }> => {
+      const accountBinding = normalizeRepoAccountBinding(args.accountBinding)
       const name = args.name?.trim() ?? ''
       const parentPath = args.parentPath?.trim() ?? ''
       // Why: IPC input is untrusted — coerce to the narrow union so a bogus kind can't skip git init yet persist in the store.
@@ -226,7 +242,10 @@ export function registerRepoCreationHandlers(mainWindow: BrowserWindow, store: S
           await gitExecFileAsync(['init'], { cwd: targetPath })
           step = 'commit'
           await gitExecFileAsync(['commit', '--allow-empty', '-m', 'Initial commit'], {
-            cwd: targetPath
+            cwd: targetPath,
+            ...(accountBinding?.commitIdentity
+              ? { repoAccount: { commitIdentity: accountBinding.commitIdentity } }
+              : {})
           })
         } catch (err) {
           // Only rm the dir if we made it (pre-existing folders must survive retry); otherwise strip just the .git/ that git init created.
@@ -283,12 +302,13 @@ export function registerRepoCreationHandlers(mainWindow: BrowserWindow, store: S
       }
 
       store.addRepo(repo)
-      await prepareLocalWorktreeRootForRepo(store, repo)
+      const bound = applyRepoAccountBindingToNewRepo(store, repo, accountBinding)
+      await prepareLocalWorktreeRootForRepo(store, bound)
       invalidateAuthorizedRootsCache()
       notifyReposChanged(mainWindow)
       // Why: repos:create git-inits when kind is 'git', so repoKind is the true git-vs-folder signal.
       emitRepoAdded('folder_picker', false, repoKind === 'git')
-      return { repo }
+      return { repo: bound }
     }
   )
 }

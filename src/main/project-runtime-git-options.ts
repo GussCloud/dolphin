@@ -6,6 +6,7 @@ import {
   type ProjectRuntimeResolutionStore
 } from './local-project-runtime-resolution'
 import type { ProjectExecutionRuntimeResolution } from '../shared/project-execution-runtime'
+import type { RepoGitAccountContext } from './git/command-runner/repo-git-account-config'
 
 export {
   resolveLocalProjectRuntimeForRepo,
@@ -19,6 +20,36 @@ export type LocalProjectGitExecOptions = {
 
 export type LocalProjectWorktreeGitOptions = {
   wslDistro?: string
+  repoAccount?: RepoGitAccountContext
+}
+
+/**
+ * The repo's git account/identity bindings, or undefined when it has none.
+ *
+ * Why not for SSH repos: their git runs in the relay on the remote host, which this
+ * phase does not inject into; the settings UI hides the pickers for them.
+ */
+export function getRepoGitAccountContext(repo: Repo): RepoGitAccountContext | undefined {
+  if (repo.connectionId) {
+    return undefined
+  }
+  const context: RepoGitAccountContext = {
+    ...(repo.ghAccount ? { ghAccount: repo.ghAccount } : {}),
+    ...(repo.azureDevOpsAccountId ? { azureDevOpsAccountId: repo.azureDevOpsAccountId } : {}),
+    ...(repo.commitIdentity ? { commitIdentity: repo.commitIdentity } : {})
+  }
+  return Object.keys(context).length > 0 ? context : undefined
+}
+
+function withRepoAccount(
+  repo: Repo,
+  options: { wslDistro?: string }
+): LocalProjectWorktreeGitOptions {
+  const repoAccount = getRepoGitAccountContext(repo)
+  return {
+    ...(options.wslDistro ? { wslDistro: options.wslDistro } : {}),
+    ...(repoAccount ? { repoAccount } : {})
+  }
 }
 
 export type LocalProjectGhExecOptions = LocalProjectWorktreeGitOptions & {
@@ -59,8 +90,7 @@ export function getLocalProjectWorktreeGitOptions(
   store: Store,
   repo: Repo
 ): LocalProjectWorktreeGitOptions {
-  const { wslDistro } = getLocalProjectGitExecOptions(store, repo)
-  return wslDistro ? { wslDistro } : {}
+  return withRepoAccount(repo, getLocalProjectGitExecOptions(store, repo))
 }
 
 /**
@@ -104,8 +134,7 @@ export function getLocalProjectWorktreeGitOptionsForRuntime(
 ): LocalProjectWorktreeGitOptions {
   // Why: callers that already batch-resolved project runtimes must not rescan
   // every project once per repo on a polling path.
-  const { wslDistro } = getLocalProjectGitExecOptionsForRuntime(repo, projectRuntime)
-  return wslDistro ? { wslDistro } : {}
+  return withRepoAccount(repo, getLocalProjectGitExecOptionsForRuntime(repo, projectRuntime))
 }
 
 /**

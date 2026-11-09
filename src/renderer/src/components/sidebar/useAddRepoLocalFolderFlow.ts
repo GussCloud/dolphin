@@ -15,7 +15,7 @@ import type { RepoSlice } from '@/store/repos/repo-state'
 import { createNestedRepoScanId } from './add-repo-dialog-types'
 import { translate } from '@/i18n/i18n'
 import { worktreeRefreshOptions } from './add-repo-runtime-owner'
-import type { ExecutionHostId } from '../../../../shared/execution-host'
+import type { GitRepoReady } from './use-add-repo-account-step'
 
 type ShowNestedRepoReview = (args: {
   scan: NestedRepoScanResult
@@ -46,6 +46,7 @@ export function useAddRepoLocalFolderFlow({
   setNestedScanInProgress,
   showNestedRepoReview,
   onGitRepoReady,
+  offerAccountStep,
   setIsAdding,
   setAddProjectBusyLabel
 }: {
@@ -59,11 +60,9 @@ export function useAddRepoLocalFolderFlow({
   setActiveNestedScanId: (scanId: string | null, runtimeEnvironmentId?: string | null) => void
   setNestedScanInProgress: (inProgress: boolean) => void
   showNestedRepoReview: ShowNestedRepoReview
-  onGitRepoReady: (
-    repoId: string,
-    source: AddRepoExistingWorkspaceSource,
-    executionHostId?: ExecutionHostId
-  ) => Promise<void>
+  onGitRepoReady: GitRepoReady
+  /** Single-folder adds only: a batch has no one project to bind. */
+  offerAccountStep?: GitRepoReady
   setIsAdding: (isAdding: boolean) => void
   setAddProjectBusyLabel: (label: string | null) => void
 }): {
@@ -180,7 +179,7 @@ export function useAddRepoLocalFolderFlow({
           if (mode === 'batch') {
             return { status: 'completed', repo }
           }
-          await onGitRepoReady(repo.id, source, ownerOptions.executionHostId)
+          await (offerAccountStep ?? onGitRepoReady)(repo.id, source, ownerOptions.executionHostId)
         } else {
           // Why: folder repos skip the Git default-checkout handoff and activate
           // their synthetic root workspace in the folder add flow.
@@ -199,6 +198,7 @@ export function useAddRepoLocalFolderFlow({
       clearNestedScanState,
       closeModal,
       fetchWorktrees,
+      offerAccountStep,
       onGitRepoReady,
       scanNestedRepos,
       setActiveNestedScanId,

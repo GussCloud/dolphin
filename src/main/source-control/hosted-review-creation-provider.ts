@@ -127,7 +127,10 @@ export async function isProviderAuthenticated(
   options: HostedReviewExecutionOptions = {}
 ): Promise<boolean> {
   if (provider === 'azure-devops') {
-    return isAzureDevOpsReviewCreationAuthenticated()
+    return isAzureDevOpsReviewCreationAuthenticated(
+      repoPath,
+      hostedReviewSshConnectionId(executionHostId)
+    )
   }
   if (provider === 'gitea') {
     return isGiteaReviewCreationAuthenticated()

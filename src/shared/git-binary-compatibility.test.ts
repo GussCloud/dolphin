@@ -18,6 +18,12 @@ import {
 import { gitCredentialPromptGuardEnv } from './git-credential-prompt-env'
 import { buildGitGrepArgs } from './text-search'
 import { parseGitRemoteFetchUrls } from './git-remote-url-index'
+import {
+  azureDevOpsGitUrls,
+  buildScopedCredentialHelperConfig,
+  GIT_REMOTE_URL_CONFIG_PATTERN,
+  remoteUrlCandidatesFromGitConfig
+} from './git-scoped-credential-helper'
 import { GIT_HISTORY_COMMIT_FORMAT, parseGitHistoryLog } from './git-history-log-parser'
 import {
   githubPullRequestHeadLocalRef,
@@ -37,39 +43,49 @@ describeBinaryCompatibility('real Git binary compatibility', () => {
   let repoPath = ''
   let version = { major: 0, minor: 0 }
 
-  async function runGit(args: string[], env?: NodeJS.ProcessEnv): Promise<GitResult> {
-    if (image) {
-      const dockerUser =
-        typeof process.getuid === 'function' && typeof process.getgid === 'function'
-          ? ['--user', `${process.getuid()}:${process.getgid()}`]
-          : []
-      return execFileAsync(
-        'docker',
-        [
-          'run',
-          '--rm',
-          '--network=none',
-          ...dockerUser,
-          ...Object.entries(env ?? {}).flatMap(([key, value]) =>
-            value === undefined ? [] : ['--env', `${key}=${value}`]
-          ),
-          '-v',
-          `${repoPath}:/repo`,
-          '-w',
-          '/repo',
-          image,
-          '-c',
-          'safe.directory=/repo',
-          ...args
-        ],
-        { maxBuffer: 2 * 1024 * 1024 }
-      )
+  async function runGit(
+    args: string[],
+    env?: NodeJS.ProcessEnv,
+    input?: string
+  ): Promise<GitResult> {
+    const pending = image
+      ? execFileAsync(
+          'docker',
+          [
+            'run',
+            '--rm',
+            ...(input !== undefined ? ['-i'] : []),
+            '--network=none',
+            ...dockerUserArgs(),
+            ...Object.entries(env ?? {}).flatMap(([key, value]) =>
+              value === undefined ? [] : ['--env', `${key}=${value}`]
+            ),
+            '-v',
+            `${repoPath}:/repo`,
+            '-w',
+            '/repo',
+            image,
+            '-c',
+            'safe.directory=/repo',
+            ...args
+          ],
+          { maxBuffer: 2 * 1024 * 1024 }
+        )
+      : execFileAsync(binary!, args, {
+          cwd: repoPath,
+          env: env ? { ...process.env, ...env } : undefined,
+          maxBuffer: 2 * 1024 * 1024
+        })
+    if (input !== undefined) {
+      pending.child.stdin?.end(input)
     }
-    return execFileAsync(binary!, args, {
-      cwd: repoPath,
-      env: env ? { ...process.env, ...env } : undefined,
-      maxBuffer: 2 * 1024 * 1024
-    })
+    return pending
+  }
+
+  function dockerUserArgs(): string[] {
+    return typeof process.getuid === 'function' && typeof process.getgid === 'function'
+      ? ['--user', `${process.getuid()}:${process.getgid()}`]
+      : []
   }
 
   function supports(major: number, minor: number): boolean {
@@ -593,5 +609,136 @@ describeBinaryCompatibility('real Git binary compatibility', () => {
 
     const included = await listFiles({ includePattern: 'vendored' })
     expect(included).toEqual(['vendored/inner.txt'])
+  })
+
+  describe('project-scoped credential helper', () => {
+    // Inside .git so later `add -A` fixtures never pick it up; the path is the same in both lanes.
+    const homeFor = (root: string): string => join(root, '.git', 'credential-home')
+    const credentialEnv = (): NodeJS.ProcessEnv => {
+      const home = homeFor(image ? '/repo' : repoPath)
+      return {
+        HOME: home,
+        XDG_CONFIG_HOME: join(home, '.config'),
+        GIT_CONFIG_NOSYSTEM: '1',
+        GIT_TERMINAL_PROMPT: '0'
+      }
+    }
+
+    /** Stands in for osxkeychain/GCM: answers for every host and records each call. */
+    async function installGlobalHelper(): Promise<void> {
+      const home = homeFor(repoPath)
+      await mkdir(home, { recursive: true })
+      await rm(join(home, 'global-called'), { force: true })
+      await writeFile(
+        join(home, '.gitconfig'),
+        '[credential]\n\thelper = "!f() { echo called >> \\"$HOME/global-called\\"; echo username=global; echo password=global-secret; }; f"\n'
+      )
+    }
+
+    async function globalHelperCalled(): Promise<boolean> {
+      return readFile(join(homeFor(repoPath), 'global-called'), 'utf8').then(
+        () => true,
+        () => false
+      )
+    }
+
+    async function fill(host: string, leadingArgs: string[], env: Record<string, string>) {
+      return runGit(
+        [...leadingArgs, 'credential', 'fill'],
+        { ...credentialEnv(), ...env },
+        `protocol=https\nhost=${host}\n\n`
+      )
+    }
+
+    it('answers for the concrete bound host without consulting the global helper', async () => {
+      await installGlobalHelper()
+      const config = buildScopedCredentialHelperConfig([
+        { kind: 'token', urls: ['https://github.com'], username: 'alice', token: 'project-token' }
+      ])
+      const { stdout } = await fill('github.com', config.leadingArgs, config.env)
+      expect(stdout).toContain('password=project-token')
+      expect(await globalHelperCalled()).toBe(false)
+    })
+
+    it('scopes visualstudio.com to the concrete host, which a 2.25 wildcard would miss', async () => {
+      await installGlobalHelper()
+      const config = buildScopedCredentialHelperConfig([
+        {
+          kind: 'token',
+          urls: azureDevOpsGitUrls(['https://myorg@myorg.visualstudio.com/Project/_git/app']),
+          username: 'dolphin',
+          token: 'project-token'
+        }
+      ])
+      const { stdout } = await fill('myorg.visualstudio.com', config.leadingArgs, config.env)
+      expect(stdout).toContain('password=project-token')
+      expect(stdout).not.toContain('global-secret')
+      expect(await globalHelperCalled()).toBe(false)
+    })
+
+    it('scopes a remote reached through insteadOf, in the host spelling git sends', async () => {
+      await installGlobalHelper()
+      await runGit(['remote', 'add', 'ado-compat', 'ado:Project/_git/app'])
+      await runGit([
+        'config',
+        'url.https://MyOrg.visualstudio.com/DefaultCollection/.insteadOf',
+        'ado:'
+      ])
+      try {
+        const { stdout: config } = await runGit([
+          'config',
+          '--get-regexp',
+          GIT_REMOTE_URL_CONFIG_PATTERN
+        ])
+        const { stdout: resolved } = await runGit(['remote', 'get-url', 'ado-compat'])
+        const host = /^https:\/\/([^/]+)\//.exec(resolved.trim())?.[1]
+        expect(host).toBe('MyOrg.visualstudio.com')
+        const helper = buildScopedCredentialHelperConfig([
+          {
+            kind: 'token',
+            urls: azureDevOpsGitUrls(remoteUrlCandidatesFromGitConfig(config)),
+            username: 'dolphin',
+            token: 'project-token'
+          }
+        ])
+        const { stdout } = await fill(host!, helper.leadingArgs, helper.env)
+        expect(stdout).toContain('password=project-token')
+        expect(await globalHelperCalled()).toBe(false)
+      } finally {
+        await runGit(['remote', 'remove', 'ado-compat'])
+        await runGit([
+          'config',
+          '--unset',
+          'url.https://MyOrg.visualstudio.com/DefaultCollection/.insteadOf'
+        ])
+      }
+    })
+
+    it('leaves hosts outside the binding on the global helper', async () => {
+      await installGlobalHelper()
+      const config = buildScopedCredentialHelperConfig([
+        { kind: 'token', urls: ['https://github.com'], username: 'alice', token: 'project-token' }
+      ])
+      const { stdout } = await fill('dev.azure.com', config.leadingArgs, config.env)
+      expect(stdout).toContain('password=global-secret')
+      expect(await globalHelperCalled()).toBe(true)
+    })
+
+    it('fails closed through quit=1 when the project account is unavailable', async () => {
+      await installGlobalHelper()
+      const config = buildScopedCredentialHelperConfig([
+        {
+          kind: 'unavailable',
+          urls: ['https://dev.azure.com'],
+          message: 'Dolphin: account removed'
+        }
+      ])
+      await expect(fill('dev.azure.com', config.leadingArgs, config.env)).rejects.toMatchObject({
+        code: 128,
+        stderr: expect.stringContaining('Dolphin: account removed'),
+        stdout: expect.not.stringContaining('global-secret')
+      })
+      expect(await globalHelperCalled()).toBe(false)
+    })
   })
 })

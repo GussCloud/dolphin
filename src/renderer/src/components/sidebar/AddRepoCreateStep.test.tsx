@@ -9,12 +9,18 @@ function renderCreateStep({
   createName = '',
   gitAvailability = 'available',
   createParent = '/Users/alice/dolphin/projects',
-  parentDefaultPending = false
+  parentDefaultPending = false,
+  identity,
+  sshTargetId = null,
+  advancedOpen = identity !== undefined
 }: {
   createName?: string
   gitAvailability?: GitAvailability
   createParent?: string
   parentDefaultPending?: boolean
+  identity?: { name: string; email: string }
+  sshTargetId?: string | null
+  advancedOpen?: boolean
 } = {}): string {
   return renderToStaticMarkup(
     <TooltipProvider>
@@ -32,10 +38,18 @@ function renderCreateStep({
           onParentChange={vi.fn()}
           onPickParent={vi.fn()}
           onCreate={vi.fn()}
+          manualParentEntry={advancedOpen}
+          sshTargetId={sshTargetId}
+          commitIdentity={identity ? { draft: identity, onChange: vi.fn() } : undefined}
         />
       </Dialog>
     </TooltipProvider>
   )
+}
+
+function createButtonDisabled(html: string): boolean {
+  const end = html.indexOf('>Create project</button>')
+  return html.slice(html.lastIndexOf('<button', end), end).includes('disabled=""')
 }
 
 describe('CreateStep', () => {
@@ -70,5 +84,41 @@ describe('CreateStep', () => {
     })
 
     expect(html).toContain('disabled=""')
+  })
+
+  it('offers the commit author with the advanced settings and blocks a half-filled one', () => {
+    const blank = renderCreateStep({ createName: 'demo', identity: { name: '', email: '' } })
+    expect(blank).toContain('Commit author')
+    expect(createButtonDisabled(blank)).toBe(false)
+
+    const half = renderCreateStep({ createName: 'demo', identity: { name: 'Dev', email: '' } })
+    expect(half).toContain('Fill in both name and email')
+    expect(createButtonDisabled(half)).toBe(true)
+  })
+
+  it('hides the commit author for SSH hosts', () => {
+    const html = renderCreateStep({
+      createName: 'demo',
+      identity: { name: 'Dev', email: '' },
+      sshTargetId: 'ssh-1'
+    })
+    expect(html).not.toContain('Commit author')
+  })
+
+  it('names a half-filled author next to the disabled button while settings are collapsed', () => {
+    const collapsed = renderCreateStep({
+      createName: 'demo',
+      identity: { name: 'Dev', email: '' },
+      advancedOpen: false
+    })
+    expect(collapsed).toContain('The commit author is incomplete or invalid.')
+    expect(createButtonDisabled(collapsed)).toBe(true)
+
+    const valid = renderCreateStep({
+      createName: 'demo',
+      identity: { name: 'Dev', email: 'dev@example.test' },
+      advancedOpen: false
+    })
+    expect(valid).not.toContain('The commit author is incomplete or invalid.')
   })
 })

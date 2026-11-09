@@ -53,6 +53,25 @@ in one record and pick at parse time.
 | --------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `%(decorate:…)` | Git 2.43 separates commit decorations with `\x1f`, so ref names containing commas survive | The same record also carries `%D` (Git 2.10); an unexpanded `%(decorate` placeholder selects it, at the cost of comma-splitting |
 
+### Config That Fails Open
+
+Some config is accepted by every Git but means nothing on an older one, so there is no error
+to cache either. The fix is to emit only the form the baseline understands.
+
+| Config                    | Baseline behavior                                                                                                                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `credential.<url>.helper` | Per-project accounts (`src/shared/git-scoped-credential-helper.ts`) scope the helper to concrete `https://<host>` URLs. Host wildcards such as `https://*.visualstudio.com` match only from Git 2.26; on 2.25 they match nothing and git silently uses the global login. |
+| `quit=1` from a helper    | Honored on 2.25.5. The fail-closed outcome does not depend on it: the empty `helper=` reset leaves no other helper, so git stops at "could not read Username" without the global login.                                                                                  |
+
+Git 2.25 also compares the credential host case-sensitively, so a remote written
+`https://MyOrg.visualstudio.com/...` misses a `https://myorg.visualstudio.com` key. Keys are
+emitted in each spelling a reachable URL uses, and the reachable URLs include every
+`url.<base>.insteadOf`/`pushInsteadOf` base, so a rewritten remote is scoped too.
+
+The real-binary contract below exercises the reset, the scoped helper, a concrete
+`visualstudio.com` host, an `insteadOf` rewrite to a mixed-case host, and the fail-closed
+path on every lane.
+
 ## Why Not `simple-git`
 
 `simple-git` is a process wrapper around the installed Git binary. Its custom

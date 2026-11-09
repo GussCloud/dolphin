@@ -26,6 +26,7 @@ import { buildNetworkSshPolicyEnv } from './git-ssh-policy-env'
 import { nonInteractiveGitEnv, untranslatedGitOutputEnv } from './git-process-env'
 import { acquireGitAdmission } from './git-subprocess-admission'
 import { GitCommandTimeoutError, gitCommandTimeoutMs } from './git-command-timeout'
+import { prepareRepoGitAccountInvocation } from './repo-git-account-env'
 
 /**
  * Async git command execution. Drop-in replacement for
@@ -166,6 +167,13 @@ export function gitExecFileAsync(
   args: string[],
   options: GitExecOptions
 ): Promise<{ stdout: string; stderr: string }> {
+  if (options.repoAccount) {
+    // Why branch: unbound calls keep spawning in the same microtask as before.
+    const rest: GitExecOptions = { ...options, repoAccount: undefined }
+    return prepareRepoGitAccountInvocation(args, options).then((prepared) =>
+      gitExecFileAsync(prepared?.args ?? args, prepared ? { ...rest, env: prepared.env } : rest)
+    )
+  }
   const command = resolveGitFetchHeadCommand(args, options.cwd)
   return command.needsLock
     ? runWithGitFetchHeadLock(
