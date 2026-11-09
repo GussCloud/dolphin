@@ -6542,7 +6542,10 @@
         "WorktreeAgentAccountBadge": {
           "unavailable": "Account missing",
           "unavailableDetail": "The Codex account this workspace was created with is no longer available. Codex launches here use the active account.",
-          "pinned": "Codex account: {{value0}}"
+          "pinned": "Codex account: {{value0}}",
+          "claudeUnavailableDetail": "The Claude account this workspace was created with is no longer available. Claude launches here use the active account.",
+          "missingDetail": "The account this workspace was created with is no longer available. Launches here use the active account.",
+          "claudePinned": "Claude account: {{value0}}"
         }
       },
       "shared": {
