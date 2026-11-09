@@ -111,7 +111,7 @@ export async function buildTerminalGitAccountEnv(input: {
     } else {
       warnings.push(
         storage === 'file'
-          ? `GitHub account ${ghAccount.user} is stored without the system keyring, so terminals in this project use your default gh login. Run \`gh auth login --secure-storage\` to enable it.`
+          ? `GitHub account ${ghAccount.user} on ${ghAccount.host} stores its token in a file instead of the system keyring, so terminals in this project use your default gh login. Run \`gh auth login --hostname ${ghAccount.host}\` again (without --insecure-storage) to move it to the keyring.`
           : `GitHub account ${ghAccount.user}@${ghAccount.host} is not signed in to gh where this project's terminals run, so they use your default gh login.`
       )
     }

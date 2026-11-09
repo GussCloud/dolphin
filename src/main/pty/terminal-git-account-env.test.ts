@@ -82,7 +82,9 @@ describe('buildTerminalGitAccountEnv', () => {
       cwd: '/work/app'
     })
     expect(patch?.env).toEqual({})
-    expect(patch?.warnings[0]).toContain('without the system keyring')
+    expect(patch?.warnings[0]).toContain('instead of the system keyring')
+    expect(patch?.warnings[0]).toContain('gh auth login --hostname github.com')
+    expect(patch?.warnings[0]).not.toContain('--secure-storage')
     expect(mocks.ensureGhTerminalConfigDir).not.toHaveBeenCalled()
   })
 
