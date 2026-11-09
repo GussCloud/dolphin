@@ -14,9 +14,13 @@ import {
   type ClaudeStructuredSessionEvent
 } from './claude-structured-session-adapter'
 
+// Why opt-in: these run the developer's real, signed-in `claude` against their ~/.claude
+// (prompts, quota, token refresh), so a broad local test run must never reach them by default.
+const realClaudeOptedIn = process.env.DOLPHIN_RUN_REAL_CLAUDE_TEST === '1'
 const command = resolveClaudeCommand()
 const versionLaunch = getSpawnArgsForWindows(command, ['--version'])
 const realClaudeAvailable =
+  realClaudeOptedIn &&
   spawnSync(versionLaunch.spawnCmd, versionLaunch.spawnArgs, {
     stdio: 'ignore',
     windowsHide: true,
