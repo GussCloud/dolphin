@@ -20,6 +20,8 @@ export type InactiveClaudeAccount = {
   managedAuthRuntime?: 'host' | 'wsl'
   wslDistro?: string | null
   wslLinuxAuthPath?: string | null
+  /** CLAUDE_CONFIG_DIR of this account's worktree-pinned launches; their live usage lands here. */
+  pinnedConfigDir?: string | null
 }
 
 export type ClaudeManagedCredentialsLocation =

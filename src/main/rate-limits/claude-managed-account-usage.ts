@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs'
+import { hasLiveClaudePtys } from '../claude-accounts/live-pty-gate'
 import type { ProviderRateLimits } from '../../shared/rate-limit-types'
 import {
   isOauthTokenExpiring,
@@ -48,7 +50,11 @@ export async function fetchInactiveClaudeAccountUsage(
   }
 
   let token = parseClaudeOAuthCredentialsJson(credentialsJson, 'credentials-file').token
-  if (isOauthTokenExpiring(credentialsJson)) {
+  // Why: a live worktree-pinned pane holds this refresh token; rotating it here would log it out.
+  // The pane's own statusline keeps this account's usage current meanwhile.
+  const pinnedPaneMayHoldToken =
+    Boolean(account.pinnedConfigDir && existsSync(account.pinnedConfigDir)) && hasLiveClaudePtys()
+  if (isOauthTokenExpiring(credentialsJson) && !pinnedPaneMayHoldToken) {
     const refreshed = await refreshClaudeOauthCredentials(credentialsJson)
     if (options.signal?.aborted) {
       return abortedClaudeRateLimitResult()

@@ -45,13 +45,13 @@ describe('structured Claude on a worktree-pinned account home', () => {
 
     expect(prepare).toHaveBeenCalledWith(PINNED_HOME)
     expect(launch.claudeConfigDir).toBe(PINNED_HOME)
-    expect(launch.env.ANTHROPIC_API_KEY).toBeUndefined()
+    expect(launch.env?.ANTHROPIC_API_KEY).toBeUndefined()
   })
 
   it('keeps the global policy for a home that is not pinned', async () => {
     const launch = await resolverFor(async () => false)({ identity: IDENTITY })
 
-    expect(launch.env.ANTHROPIC_API_KEY).toBe('sk-ant-AMBIENT')
+    expect(launch.env?.ANTHROPIC_API_KEY).toBe('sk-ant-AMBIENT')
   })
 
   it('refuses to spawn when the pinned account is gone', async () => {

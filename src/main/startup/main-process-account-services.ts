@@ -1,3 +1,4 @@
+import { getClaudePinnedConfigDir } from '../claude-accounts/managed-auth-path'
 import { setAutonomousGoalRateLimitReader } from '../autonomous-goals/autonomous-goal-usage'
 import { app } from 'electron'
 import { RateLimitService } from '../rate-limits/service'
@@ -163,7 +164,9 @@ export function initializeMainProcessAccountServices(): void {
         managedAuthPath: account.managedAuthPath,
         managedAuthRuntime: account.managedAuthRuntime,
         wslDistro: account.wslDistro,
-        wslLinuxAuthPath: account.wslLinuxAuthPath
+        wslLinuxAuthPath: account.wslLinuxAuthPath,
+        pinnedConfigDir:
+          account.managedAuthRuntime === 'wsl' ? null : getClaudePinnedConfigDir(account.id)
       }))
   })
   state.rateLimits.setInactiveCodexAccountsResolver(() => {

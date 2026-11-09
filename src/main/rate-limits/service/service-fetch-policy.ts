@@ -85,6 +85,9 @@ export abstract class RateLimitServiceFetchPolicy extends RateLimitServiceFetchT
 
   /** Live usage windows forwarded from a Claude session's statusLine command. */
   ingestLiveClaudeRateLimits(event: ClaudeStatusLineRateLimits): void {
+    if (this.ingestPinnedClaudeRateLimits(event)) {
+      return
+    }
     // Why: attribution needs the selected account's config dir; until a fetch cycle captures it, drop posts rather than guess the account.
     const snapshot = this.lastClaudeAuthSnapshot
     if (!snapshot) {
@@ -142,5 +145,43 @@ export abstract class RateLimitServiceFetchPolicy extends RateLimitServiceFetchT
         }
       }
     })
+  }
+
+  /** A post from a worktree-pinned config dir reports that inactive account's quota, not the bar's. */
+  private ingestPinnedClaudeRateLimits(event: ClaudeStatusLineRateLimits): boolean {
+    const eventConfigDir = normalizeClaudeConfigDir(event.configDir)
+    if (!eventConfigDir) {
+      return false
+    }
+    const account = (this.inactiveClaudeAccountsResolver?.() ?? []).find(
+      (candidate) => normalizeClaudeConfigDir(candidate.pinnedConfigDir) === eventConfigDir
+    )
+    if (!account) {
+      return false
+    }
+    const freshSession = mapClaudeUsageWindow(event.fiveHour ?? undefined, 300)
+    const freshWeekly = mapClaudeUsageWindow(event.sevenDay ?? undefined, 10080)
+    if (!freshSession && !freshWeekly) {
+      return true
+    }
+    const previous = this.inactiveClaudeCache.get(account.id) ?? null
+    this.inactiveClaudeCache.set(account.id, {
+      provider: 'claude',
+      session: freshSession ?? previous?.session ?? null,
+      weekly: freshWeekly ?? previous?.weekly ?? null,
+      fableWeekly: previous?.fableWeekly ?? null,
+      updatedAt: Date.now(),
+      error: null,
+      status: 'ok',
+      usageMetadata: {
+        source: 'live-session',
+        lastSuccessfulSource: 'live-session',
+        credentialSource: previous?.usageMetadata?.credentialSource,
+        retryAtMs: previous?.usageMetadata?.retryAtMs,
+        authProvenance: `managed:${account.id}:pinned`
+      }
+    })
+    this.pushToRenderer()
+    return true
   }
 }
