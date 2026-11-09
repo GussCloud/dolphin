@@ -1,6 +1,7 @@
 import { resolveHostCodexSessionSourceHome } from '../codex/codex-session-source-home'
 import { startSystemCodexSessionBridgeInBackground } from '../codex/codex-session-bridge'
 import {
+  getSystemCodexHomePath,
   resolveDolphinManagedCodexHomePath,
   syncSystemCodexResourcesIntoManagedHome
 } from '../codex/codex-home-paths'
@@ -17,6 +18,7 @@ import { resolveCodexSessionBackfillPaths } from '../codex/codex-session-backfil
 import type { CodexSessionBackfillDate } from '../codex/codex-session-backfill-types'
 import { ManagedCodexHomeTemporarilyUnavailableError } from './host-codex-managed-home-ownership'
 import { CodexRuntimeHomeRouting } from './runtime-home-service-home-routing'
+import type { CodexManagedAccount } from '../../shared/managed-account-types'
 
 export abstract class CodexRuntimeHomeLaunch extends CodexRuntimeHomeRouting {
   protected initializeLastSyncedState(): void {
@@ -126,6 +128,44 @@ export abstract class CodexRuntimeHomeLaunch extends CodexRuntimeHomeRouting {
     await this.startLegacyWslAuthDrain(wslTarget, { throwOnFailure: true })
     this.finishWslLaunchPreparation(wslTarget, homePath)
     return homePath
+  }
+
+  /**
+   * Launch home for an account a worktree pinned, independent of the global
+   * selection: it never clears or records a selection. Null means the account
+   * cannot serve this target (other lane, untrusted home) and the caller falls
+   * back to the global selection.
+   */
+  prepareForCodexLaunchWithAccount(
+    account: CodexManagedAccount,
+    target?: CodexAccountSelectionTarget
+  ): string | null {
+    if (target?.runtime === 'wsl') {
+      const wslTarget = this.resolveWslDefaultTarget(target)
+      const homePath = this.getWslLaunchCodexHomePath(account, wslTarget.wslDistro?.trim())
+      if (homePath) {
+        this.finishWslLaunchPreparation(wslTarget, homePath)
+      }
+      return homePath
+    }
+    if (this.getWslManagedHomePath(account)) {
+      return null
+    }
+    const resolved = this.resolveSelfContainedManagedHome(account)
+    if (resolved.kind === 'indeterminate') {
+      // Why: same refusal as the global path; a fallback would run another account.
+      throw new ManagedCodexHomeTemporarilyUnavailableError()
+    }
+    if (resolved.kind === 'untrusted') {
+      return null
+    }
+    syncSystemCodexResourcesIntoManagedHome(resolved.homePath)
+    syncSystemConfigIntoManagedCodexHome({
+      runtimeHomePath: resolved.homePath,
+      systemHomePath: getSystemCodexHomePath()
+    })
+    this.startSelfContainedSessionBridgeForLaunch(resolved.homePath)
+    return resolved.homePath
   }
 
   beginHostSystemDefaultSessionMigrationLaunch(

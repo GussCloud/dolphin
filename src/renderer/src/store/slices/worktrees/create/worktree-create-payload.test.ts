@@ -25,3 +25,16 @@ describe('worktree create payload autonomous goal flag', () => {
     )
   })
 })
+
+describe('worktree create payload pinned agent account', () => {
+  it('carries the pinned account on both transports and omits it when unset', () => {
+    const pinned = { ...request, options: { agentAccountId: 'acct-pinned' } }
+    expect(buildLocalWorktreeCreateArgs(pinned, attempt)).toMatchObject({
+      agentAccountId: 'acct-pinned'
+    })
+    expect(buildRuntimeWorktreeCreateParams(pinned, attempt)).toMatchObject({
+      agentAccountId: 'acct-pinned'
+    })
+    expect(buildRuntimeWorktreeCreateParams(request, attempt)).not.toHaveProperty('agentAccountId')
+  })
+})

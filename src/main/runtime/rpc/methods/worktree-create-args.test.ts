@@ -54,4 +54,11 @@ describe('buildManagedWorktreeCreateArgs', () => {
       }).lineage
     ).toMatchObject({ parentWorkspaceOrigin: 'manual' })
   })
+
+  it('forwards a pinned agent account and omits it when absent', () => {
+    expect(
+      build({ repo: 'id:repo-1', name: 'pinned', agentAccountId: 'acct-pinned' })
+    ).toMatchObject({ agentAccountId: 'acct-pinned' })
+    expect(build({ repo: 'id:repo-1', name: 'plain' })).not.toHaveProperty('agentAccountId')
+  })
 })

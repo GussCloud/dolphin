@@ -117,6 +117,8 @@ export type WorktreeCreationRequest = {
   suppressTerminalFocusOnCompletion?: boolean
   /** Launches an autonomous goal's coordinator; the host pre-accepts Claude's folder trust. */
   autonomousGoalWorkspace?: boolean
+  /** Managed account the created agent launches with; omitted keeps the active account. */
+  agentAccountId?: string
 }
 
 /** Renderer-only, session-ephemeral record of an in-flight (or failed) worktree

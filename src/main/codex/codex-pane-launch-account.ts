@@ -47,9 +47,16 @@ export function resolveCodexPaneLaunchAccount(args: {
       ? 'custom-home'
       : resolvedHomeRoute
   if (!args.pinnedByResume) {
+    const selectedAccountId = getSelectedCodexAccountIdForTarget(args.settings, args.target)
+    const homeOwnerAccountId =
+      homeRoute === 'account-home' ? resolveCodexHomeOwnerAccountId(args) : undefined
+    // Why: a fresh launch on another account's home came from a worktree pin, not the selection.
+    const worktreeAccountPinned =
+      typeof homeOwnerAccountId === 'string' && homeOwnerAccountId !== selectedAccountId
     return {
       selectionKey,
-      accountId: getSelectedCodexAccountIdForTarget(args.settings, args.target),
+      accountId: worktreeAccountPinned ? homeOwnerAccountId : selectedAccountId,
+      ...(worktreeAccountPinned ? { worktreeAccountPinned: true as const } : {}),
       ...(homeRoute ? { homeRoute } : {}),
       ...(args.shellStartupHomeOverride
         ? { shellStartupHomeOverride: args.shellStartupHomeOverride }

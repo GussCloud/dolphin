@@ -51,6 +51,7 @@ export type QuickCreationRequestInput = {
   quickTelemetry: AgentStartedTelemetry | null
   suppressTerminalFocusOnCompletion: boolean
   autonomousGoalWorkspace?: boolean
+  agentAccountId?: string
 }
 
 export function buildQuickCreationRequest(
@@ -113,6 +114,7 @@ export function buildQuickCreationRequest(
     promptDelivery: input.promptDelivery,
     quickTelemetry: input.quickTelemetry,
     ...(input.suppressTerminalFocusOnCompletion ? { suppressTerminalFocusOnCompletion: true } : {}),
-    ...(input.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {})
+    ...(input.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
+    ...(input.agent && input.agentAccountId ? { agentAccountId: input.agentAccountId } : {})
   }
 }

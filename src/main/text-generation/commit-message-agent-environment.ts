@@ -127,6 +127,7 @@ export async function prepareLocalCommitMessageAgentEnv(
 
   try {
     if (agentId === 'codex' && resolvers.prepareForCodexLaunch) {
+      // Why no worktree: commit messages are a one-shot app task billed to the active account.
       const codexHomePath = await resolvers.prepareForCodexLaunch(target)
       const wslCodexHome = codexHomePath ? parseWslUncPath(codexHomePath) : null
       if (target?.runtime === 'wsl') {

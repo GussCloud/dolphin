@@ -6538,6 +6538,11 @@
           "browse": "Browse Azure DevOps",
           "filter": "Filter repositories",
           "empty": "No repositories found."
+        },
+        "WorktreeAgentAccountBadge": {
+          "unavailable": "Account missing",
+          "unavailableDetail": "The Codex account this workspace was created with is no longer available. Codex launches here use the active account.",
+          "pinned": "Codex account: {{value0}}"
         }
       },
       "shared": {
@@ -17062,6 +17067,10 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "Manage AI agents, set a default, and customize commands.",
           "fc0268e4ed": "Agents"
+        },
+        "AgentAccountPicker": {
+          "label": "Account",
+          "active": "Active account"
         }
       },
       "activity": {
