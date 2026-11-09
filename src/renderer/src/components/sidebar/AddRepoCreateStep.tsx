@@ -15,6 +15,11 @@ import {
   joinCreateProjectPath,
   type GitAvailability
 } from './create-project-defaults'
+import { CommitIdentityFields } from '../project-accounts/CommitIdentityFields'
+import {
+  evaluateCommitIdentityDraft,
+  type CommitIdentityDraft
+} from '../project-accounts/commit-identity-draft'
 
 // ── UI helpers ───────────────────────────────────────────────────────
 
@@ -36,6 +41,7 @@ type CreateStepProps = {
   onParentChange: (value: string) => void
   onPickParent: () => void
   onCreate: () => void
+  commitIdentity?: { draft: CommitIdentityDraft; onChange: (draft: CommitIdentityDraft) => void }
 }
 
 export function CreateStep({
@@ -53,12 +59,18 @@ export function CreateStep({
   onNameChange,
   onParentChange,
   onPickParent,
-  onCreate
+  onCreate,
+  commitIdentity
 }: CreateStepProps): React.JSX.Element {
   const [browsingParent, setBrowsingParent] = useState(false)
   // Why: SSH hosts need a typed remote path; hiding that field behind the
   // collapsed defaults makes the create flow look impossible.
   const [advancedOpen, setAdvancedOpen] = useState(manualParentEntry)
+  // Why: SSH hosts run git remotely, where per-project identity is not applied.
+  const identityEditor = sshTargetId ? null : commitIdentity
+  const identityStatus = identityEditor
+    ? evaluateCommitIdentityDraft(identityEditor.draft).status
+    : 'empty'
 
   // Why: SSH hosts report "unknown"; only a confirmed Git miss should block
   // Git-only creation.
@@ -68,7 +80,9 @@ export function CreateStep({
     gitAvailability !== 'checking' &&
     gitAvailability !== 'unavailable' &&
     !parentDefaultPending &&
-    !isCreating
+    !isCreating &&
+    identityStatus !== 'incomplete' &&
+    identityStatus !== 'invalid'
   const missingLocationLabel = translate(
     'auto.components.sidebar.AddRepoCreateStep.3a13f6e88b',
     'location not selected'
@@ -250,9 +264,33 @@ export function CreateStep({
                   {targetPathPreview}
                 </p>
               )}
+              {identityEditor ? (
+                <CommitIdentityFields
+                  draft={identityEditor.draft}
+                  onChange={identityEditor.onChange}
+                  disabled={isCreating}
+                />
+              ) : null}
             </div>
           )}
         </div>
+
+        {!advancedOpen && (identityStatus === 'incomplete' || identityStatus === 'invalid') ? (
+          // Why: the author lives in the collapsed section; name the reason Create is disabled.
+          <p className="text-[11px] text-destructive" role="alert">
+            {translate(
+              'auto.components.sidebar.AddRepoCreateStep.authorNeedsFix',
+              'The commit author is incomplete or invalid.'
+            )}{' '}
+            <button
+              type="button"
+              className="cursor-pointer underline underline-offset-2"
+              onClick={() => setAdvancedOpen(true)}
+            >
+              {translate('auto.components.sidebar.AddRepoCreateStep.showAuthor', 'Show it')}
+            </button>
+          </p>
+        ) : null}
 
         {createError && (
           <p className="text-[11px] text-destructive" role="alert">

@@ -18,6 +18,9 @@ export const azureDevOpsApi = {
   getCliSignInState: () => ipcRenderer.invoke('azureDevOps:getCliSignInState'),
   startCliSignIn: (mode) => ipcRenderer.invoke('azureDevOps:startCliSignIn', mode),
   cancelCliSignIn: () => ipcRenderer.invoke('azureDevOps:cancelCliSignIn'),
+  listManagedAccounts: () => ipcRenderer.invoke('azureDevOps:listManagedAccounts'),
+  addManagedAccount: (mode) => ipcRenderer.invoke('azureDevOps:addManagedAccount', mode),
+  removeManagedAccount: (id) => ipcRenderer.invoke('azureDevOps:removeManagedAccount', id),
   onCliSignInStateChanged: (callback) => {
     const listener = (_event: Electron.IpcRendererEvent, state: AzureCliSignInState): void =>
       callback(state)

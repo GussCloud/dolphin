@@ -184,6 +184,9 @@ async function startDolphindRuntime(
   // Why: dolphind IS the runtime authority — loading as 'desktop' would classify its
   // own runtime-scheduled automations as ambiguous mirrors and orphan them.
   profileStoreForShutdown = profileStore
+  const { installAzureDevOpsRepoAccountLookup } =
+    await import('../azure-devops/azure-devops-repo-account-lookup')
+  installAzureDevOpsRepoAccountLookup(profileStore)
   // Why: every SSH connect consults this sidecar. Left unbound it reports nothing trusted,
   // which is safe but silently discards accept records on every launch.
 

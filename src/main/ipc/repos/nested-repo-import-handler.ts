@@ -16,6 +16,7 @@ import { createNestedRepoImportTargetResolver } from '../../project-groups/neste
 import { getSshGitProvider } from '../../providers/ssh-git-dispatch'
 import { LOCAL_EXECUTION_HOST_ID, toSshExecutionHostId } from '../../../shared/execution-host'
 import { detectRepoIconAndUpstream } from '../../repo-icon-autodetect'
+import { applyRepoAccountBindingToNewRepo } from '../../repo-account-binding'
 import { prepareLocalWorktreeRootForRepo } from '../../worktree-root-preparation'
 import { getActiveMultiplexer } from '../ssh'
 import { invalidateAuthorizedRootsCache } from '../registered-worktree-roots-cache'
@@ -146,6 +147,7 @@ export function registerNestedRepoImportHandler(mainWindow: BrowserWindow, store
               : {})
           }
           store.addRepo(repo)
+          applyRepoAccountBindingToNewRepo(store, repo, args.accountBinding)
           await prepareLocalWorktreeRootForRepo(store, repo)
           if (args.connectionId) {
             getActiveMultiplexer(args.connectionId)?.notify('session.registerRoot', {

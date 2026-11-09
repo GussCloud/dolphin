@@ -146,7 +146,8 @@ describe('repo RPC methods', () => {
       })
     )
 
-    expect(runtime.createRepo).toHaveBeenCalledWith('/srv/projects', 'new-app', 'git')
+    // Why undefined: no account binding was sent, so none reaches the runtime.
+    expect(runtime.createRepo).toHaveBeenCalledWith('/srv/projects', 'new-app', 'git', undefined)
     expect(response).toMatchObject({
       ok: true,
       result: { repo: { id: 'repo-1', path: '/srv/projects/new-app' } }
@@ -183,13 +184,20 @@ describe('repo RPC methods', () => {
     const response = await dispatcher.dispatch(
       makeRequest('repo.clone', {
         url: 'https://github.com/example/dolphin.git',
-        destination: '/srv/projects'
+        destination: '/srv/projects',
+        accountBinding: {
+          azureDevOpsAccountId: 'acct_1',
+          commitIdentity: { name: 'Ana', email: 'not-an-email' }
+        }
       })
     )
 
+    // Why: the invalid identity is dropped at the wire boundary; the valid account still arrives.
     expect(runtime.cloneRepo).toHaveBeenCalledWith(
       'https://github.com/example/dolphin.git',
-      '/srv/projects'
+      '/srv/projects',
+      undefined,
+      { azureDevOpsAccountId: 'acct_1' }
     )
     expect(response).toMatchObject({
       ok: true,

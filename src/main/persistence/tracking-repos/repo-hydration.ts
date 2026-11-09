@@ -4,6 +4,10 @@ import { getDefaultRepoHookSettings } from '../../../shared/constants'
 import { isFolderRepo } from '../../../shared/repo-kind'
 import { sanitizeRepoIcon } from '../../../shared/repo-icon'
 import { normalizeGhAccountBinding } from '../../../shared/github/account-binding'
+import {
+  normalizeAzureDevOpsAccountId,
+  normalizeCommitIdentity
+} from '../../../shared/source-control-account-types'
 import { normalizeRepoSourceControlAiOverrides } from '../../../shared/source-control-ai'
 import {
   sanitizeForkSyncMode,
@@ -37,6 +41,8 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     projectHostSetupMethod: rawProjectHostSetupMethod,
     forkSyncMode: rawForkSyncMode,
     ghAccount: rawGhAccount,
+    azureDevOpsAccountId: rawAzureDevOpsAccountId,
+    commitIdentity: rawCommitIdentity,
     customWorktreeVisibilitySources: rawCustomWorktreeVisibilitySources,
     worktreeVisibilitySourcePreferences: rawWorktreeVisibilitySourcePreferences,
     ...repoWithoutIcon
@@ -48,6 +54,8 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
   const projectHostSetupMethod = sanitizeRepoProjectHostSetupMethod(rawProjectHostSetupMethod)
   const forkSyncMode = sanitizeForkSyncMode(rawForkSyncMode)
   const ghAccount = normalizeGhAccountBinding(rawGhAccount)
+  const azureDevOpsAccountId = normalizeAzureDevOpsAccountId(rawAzureDevOpsAccountId)
+  const commitIdentity = normalizeCommitIdentity(rawCommitIdentity)
   const customWorktreeVisibilitySources = normalizeCustomWorktreeVisibilitySources(
     rawCustomWorktreeVisibilitySources
   )
@@ -71,6 +79,8 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     ...(projectHostSetupMethod !== undefined ? { projectHostSetupMethod } : {}),
     ...(forkSyncMode !== undefined ? { forkSyncMode } : {}),
     ...(ghAccount ? { ghAccount } : {}),
+    ...(azureDevOpsAccountId ? { azureDevOpsAccountId } : {}),
+    ...(commitIdentity ? { commitIdentity } : {}),
     ...(customWorktreeVisibilitySources !== undefined ? { customWorktreeVisibilitySources } : {}),
     ...(worktreeVisibilitySourcePreferences !== undefined
       ? { worktreeVisibilitySourcePreferences }

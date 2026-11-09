@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/store'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
 import {
+  useIntegrationCardPresentation,
   useIntegrationCommandRowClass,
   useIntegrationSubordinateRowClass
 } from './integration-card-presentation'
@@ -10,6 +11,7 @@ import { getProviderAccountScope } from './provider-account-scope'
 import { ProviderHostScopeControl } from './ProviderHostScopeControl'
 import { usePreflightCardStatuses } from './source-control-preflight-card-status'
 import { translate } from '@/i18n/i18n'
+import { GitHubAccountsList } from './github-accounts-list'
 
 function integrationStatusLabel(
   status: 'connected' | 'unavailable' | 'not-installed' | 'not-authenticated' | 'checking'
@@ -69,6 +71,8 @@ export function GitHubIntegrationCard(): React.JSX.Element {
   const status = unavailable ? 'unavailable' : statuses.ghStatus
   const connected = status === 'connected'
   const commandRowClass = useIntegrationCommandRowClass()
+  // Why: the onboarding review step reuses this card and must stay text-only (no inline terminal).
+  const manageAccounts = useIntegrationCardPresentation() === 'default'
 
   return (
     <IntegrationCardShell
@@ -97,6 +101,7 @@ export function GitHubIntegrationCard(): React.JSX.Element {
       statusLabel={integrationStatusLabel(status)}
     >
       <ProviderAccountScopeDetails>
+        {connected && manageAccounts ? <GitHubAccountsList onAccountsChanged={refresh} /> : null}
         {status !== 'checking' && !connected ? (
           status === 'unavailable' ? (
             <>
@@ -143,19 +148,33 @@ export function GitHubIntegrationCard(): React.JSX.Element {
             </>
           ) : (
             <>
-              <p className="text-xs text-muted-foreground">
-                {translate(
-                  'auto.components.settings.cli.source.control.integration.cards.2e44dda68a',
-                  'The GitHub CLI is installed but not authenticated. Run this command in a terminal:'
-                )}
-              </p>
-              <div className={commandRowClass}>
-                <Terminal className="size-3.5 shrink-0 text-muted-foreground" />
-                {translate(
-                  'auto.components.settings.cli.source.control.integration.cards.8d90249d22',
-                  'gh auth login'
-                )}
-              </div>
+              {manageAccounts ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    {translate(
+                      'auto.components.settings.cli.source.control.integration.cards.githubNotAuthenticated',
+                      'The GitHub CLI is installed but not signed in. Add an account to sign in.'
+                    )}
+                  </p>
+                  <GitHubAccountsList onAccountsChanged={refresh} />
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    {translate(
+                      'auto.components.settings.cli.source.control.integration.cards.2e44dda68a',
+                      'The GitHub CLI is installed but not authenticated. Run this command in a terminal:'
+                    )}
+                  </p>
+                  <div className={commandRowClass}>
+                    <Terminal className="size-3.5 shrink-0 text-muted-foreground" />
+                    {translate(
+                      'auto.components.settings.cli.source.control.integration.cards.8d90249d22',
+                      'gh auth login'
+                    )}
+                  </div>
+                </>
+              )}
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"

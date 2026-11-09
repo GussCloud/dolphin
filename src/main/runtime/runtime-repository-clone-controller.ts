@@ -1,4 +1,9 @@
 import { randomUUID } from 'node:crypto'
+import type { RepoAccountBinding } from '../../shared/source-control-account-types'
+import {
+  applyRepoAccountBindingToNewRepo,
+  prepareCloneGitInvocation
+} from '../repo-account-binding'
 import { mkdir } from 'node:fs/promises'
 import { DEFAULT_REPO_BADGE_COLOR } from '../../shared/constants'
 import { LOCAL_EXECUTION_HOST_ID, type ExecutionHostId } from '../../shared/execution-host'
@@ -35,7 +40,8 @@ export class RuntimeRepositoryCloneController {
   async clone(
     url: string,
     destination: string,
-    executionHostId?: ExecutionHostId | null
+    executionHostId?: ExecutionHostId | null,
+    accountBinding?: RepoAccountBinding
   ): Promise<Repo> {
     if (!this.deps.getStore()) {
       throw new Error('runtime_unavailable')
@@ -65,7 +71,8 @@ export class RuntimeRepositoryCloneController {
           trimmedDestination,
           clonePath,
           clonePathKey,
-          executionHostId
+          executionHostId,
+          accountBinding
         )
       )
     } finally {
@@ -81,7 +88,8 @@ export class RuntimeRepositoryCloneController {
     trimmedDestination: string,
     clonePath: string,
     clonePathKey: string,
-    executionHostId?: ExecutionHostId | null
+    executionHostId?: ExecutionHostId | null,
+    accountBinding?: RepoAccountBinding
   ): Promise<Repo> {
     const store = this.deps.getStore()
     if (!store) {
@@ -101,15 +109,17 @@ export class RuntimeRepositoryCloneController {
     const claimedTarget = await claimCloneTarget(clonePath)
     let proc: Awaited<ReturnType<typeof gitSpawnAfterWindowsEnvironmentReady>>
     try {
-      proc = await gitSpawnAfterWindowsEnvironmentReady(
+      // Why: the row does not exist yet, so the clone authenticates as the requested account.
+      const invocation = await prepareCloneGitInvocation(
         ['clone', '--progress', '--', trimmedUrl, clonePath],
-        {
-          cwd: trimmedDestination,
-          admissionTier: 'interactive',
-          env: nonInteractiveGitEnv(),
-          stdio: ['ignore', 'ignore', 'pipe']
-        }
+        { cwd: trimmedDestination, env: nonInteractiveGitEnv(), binding: accountBinding }
       )
+      proc = await gitSpawnAfterWindowsEnvironmentReady(invocation.args, {
+        cwd: trimmedDestination,
+        admissionTier: 'interactive',
+        env: invocation.env,
+        stdio: ['ignore', 'ignore', 'pipe']
+      })
     } catch (error) {
       await cleanupClaimedCloneTarget(clonePath, claimedTarget)
       const message = error instanceof Error ? error.message : String(error)
@@ -180,6 +190,7 @@ export class RuntimeRepositoryCloneController {
       externalWorktreeVisibilityLegacy: false
     }
     store.addRepo(repo)
+    applyRepoAccountBindingToNewRepo(store, repo, accountBinding)
     await prepareLocalWorktreeRootForRepo(store, repo)
     invalidateAuthorizedRootsCache()
     this.invalidate(repo.id)

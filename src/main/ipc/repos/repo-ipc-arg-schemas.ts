@@ -1,3 +1,4 @@
+import { RepoAccountBindingParam } from '../../../shared/rpc-contract/repo-account-binding-params'
 import { z } from 'zod'
 import { isTuiAgent } from '../../../shared/tui-agent-config'
 import { TaskSourceContextSchema } from '../../../shared/task-source-context-schema'
@@ -220,6 +221,7 @@ export const ProjectGroupImportNestedArgs = z.discriminatedUnion('mode', [
     projectPaths: z.array(z.string()),
     connectionId: z.string().min(1).optional(),
     scanId: z.string().min(1).optional(),
+    accountBinding: RepoAccountBindingParam,
     mode: z.literal('group')
   }),
   z.object({
@@ -228,6 +230,7 @@ export const ProjectGroupImportNestedArgs = z.discriminatedUnion('mode', [
     projectPaths: z.array(z.string()),
     connectionId: z.string().min(1).optional(),
     scanId: z.string().min(1).optional(),
+    accountBinding: RepoAccountBindingParam,
     mode: z.literal('separate')
   })
 ])

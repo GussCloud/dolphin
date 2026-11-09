@@ -6,6 +6,7 @@ import { isLegacyRepoForExternalWorktreeVisibility } from '../../../shared/exter
 import { normalizeRepoSourceControlAiOverrides } from '../../../shared/source-control-ai'
 import { normalizeWorktreeVisibilitySourcePreferences } from '../../../shared/worktree/visibility-sources'
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
+import type { CommitIdentity } from '../../../shared/source-control-account-types'
 import { invalidateGhAccountTokenCache } from '../../github/gh-account-token'
 import { sanitizeRepoUpdatesForPersistence } from './repo-sanitization'
 
@@ -107,6 +108,8 @@ export class RepoUpdatePersistenceOperations {
       sourceControlAi?: Repo['sourceControlAi'] | null
       externalWorktreeDiscoverySuppressedAt?: Repo['externalWorktreeDiscoverySuppressedAt'] | null
       ghAccount?: GhAccountBinding | null
+      azureDevOpsAccountId?: string | null
+      commitIdentity?: CommitIdentity | null
     },
     hostId?: ExecutionHostId
   ): Repo | null {
@@ -175,6 +178,22 @@ export class RepoUpdatePersistenceOperations {
     if ('ghAccount' in sanitizedUpdates && sanitizedUpdates.ghAccount == null) {
       delete repo.ghAccount
       delete sanitizedUpdates.ghAccount
+    }
+    // Why: only `null` clears; an `undefined` key (malformed value dropped upstream) is a no-op.
+    if (
+      'azureDevOpsAccountId' in sanitizedUpdates &&
+      sanitizedUpdates.azureDevOpsAccountId == null
+    ) {
+      if (sanitizedUpdates.azureDevOpsAccountId === null) {
+        delete repo.azureDevOpsAccountId
+      }
+      delete sanitizedUpdates.azureDevOpsAccountId
+    }
+    if ('commitIdentity' in sanitizedUpdates && sanitizedUpdates.commitIdentity == null) {
+      if (sanitizedUpdates.commitIdentity === null) {
+        delete repo.commitIdentity
+      }
+      delete sanitizedUpdates.commitIdentity
     }
     if ('worktreeBasePath' in sanitizedUpdates && sanitizedUpdates.worktreeBasePath === undefined) {
       delete repo.worktreeBasePath

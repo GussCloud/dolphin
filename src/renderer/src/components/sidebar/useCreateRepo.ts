@@ -14,6 +14,11 @@ import { extractIpcErrorMessage } from '@/lib/ipc-error'
 import { upsertAddedRepoWithProjectHostSetup } from './add-repo-store-upsert'
 import { worktreeRefreshOptions } from './add-repo-runtime-owner'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
+import {
+  EMPTY_COMMIT_IDENTITY_DRAFT,
+  evaluateCommitIdentityDraft,
+  type CommitIdentityDraft
+} from '../project-accounts/commit-identity-draft'
 
 export function useCreateRepo(
   fetchWorktrees: (
@@ -32,6 +37,9 @@ export function useCreateRepo(
   const [createParent, setCreateParent] = useState('')
   const [createError, setCreateError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [createIdentity, setCreateIdentity] = useState<CommitIdentityDraft>(
+    EMPTY_COMMIT_IDENTITY_DRAFT
+  )
   const mountedRef = useMountedRef()
   const hostToken = options.hostId ?? options.sshTargetId ?? ''
   const hostTokenRef = useRef(hostToken)
@@ -48,6 +56,7 @@ export function useCreateRepo(
     setCreateParent('')
     setCreateError(null)
     setIsCreating(false)
+    setCreateIdentity(EMPTY_COMMIT_IDENTITY_DRAFT)
   }, [])
 
   const handlePickParent = useCallback(async (): Promise<string | null> => {
@@ -86,9 +95,19 @@ export function useCreateRepo(
   const handleCreate = useCallback(async () => {
     const name = createName.trim()
     const parentPath = createParent.trim()
-    if (!name || !parentPath) {
+    // Why: SSH hosts run git remotely, where per-project identity is not applied.
+    const identity = options.sshTargetId ? null : evaluateCommitIdentityDraft(createIdentity)
+    if (
+      !name ||
+      !parentPath ||
+      identity?.status === 'incomplete' ||
+      identity?.status === 'invalid'
+    ) {
       return
     }
+    // Why: the host makes the initial commit during create, so the author must travel with it.
+    const accountBinding =
+      identity?.status === 'valid' ? { accountBinding: { commitIdentity: identity.identity } } : {}
     const requestHostToken = hostTokenRef.current
     const gen = ++createGenRef.current
     setIsCreating(true)
@@ -117,14 +136,16 @@ export function useCreateRepo(
               {
                 parentPath,
                 name,
-                kind: createKind
+                kind: createKind,
+                ...accountBinding
               },
               { timeoutMs: 60_000 }
             )
           : await window.api.repos.create({
               parentPath,
               name,
-              kind: createKind
+              kind: createKind,
+              ...accountBinding
             })
       // Why: if the user closed the dialog or clicked Back mid-create,
       // createGenRef was bumped by resetCreateState. Ignore stale results.
@@ -245,6 +266,7 @@ export function useCreateRepo(
   }, [
     createName,
     createParent,
+    createIdentity,
     fetchWorktrees,
     mountedRef,
     closeModal,
@@ -261,6 +283,7 @@ export function useCreateRepo(
     setCreateName,
     setCreateParent,
     setCreateError,
+    createIdentity: { draft: createIdentity, onChange: setCreateIdentity },
     resetCreateState,
     handlePickParent,
     handleCreate

@@ -165,6 +165,11 @@ export const ghMutationsAndProjectsApi = {
     repoId?: string
     refreshCapability?: boolean
   }): Promise<GhAccountBindingInventory> => ipcRenderer.invoke('gh:listBindableAccounts', args),
+  listHostAccounts: (args?: {
+    host?: string
+    refreshCapability?: boolean
+    wslDistro?: string
+  }): Promise<GhAccountBindingInventory> => ipcRenderer.invoke('gh:listHostAccounts', args),
   validateAccountBinding: (args: {
     repoPath: string
     repoId?: string

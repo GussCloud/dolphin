@@ -139,7 +139,11 @@ export async function performAzureDevOpsPullRequestAction(
 ): Promise<HostedReviewActionResult> {
   const baseUrl = resolveAzureDevOpsGitApiBaseUrl(repo)
   const request: Request = (path, method, body) =>
-    sendAzureDevOpsRequest(baseUrl, path, { method, ...(body !== undefined ? { body } : {}) })
+    sendAzureDevOpsRequest(baseUrl, path, {
+      method,
+      credentialScope: repo.credentialScope,
+      ...(body !== undefined ? { body } : {})
+    })
   try {
     await dispatch(repo, request, pullRequestPath(repo, number), action)
     return { ok: true }

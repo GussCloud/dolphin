@@ -6,9 +6,13 @@ import { AddRepoLocalStartStep } from './AddRepoStartSteps'
 import { AddRepoServerPathStartStep } from './AddRepoServerStartStep'
 import { AddRepoNestedImportStep } from './AddRepoNestedImportStep'
 import type { AddRepoDialogStep } from './add-repo-dialog-types'
+import { AddRepoAccountStep } from './AddRepoAccountStep'
+import type { AddRepoAccountStepState } from './use-add-repo-account-step'
 import type { NestedRepoScanResult } from '../../../../shared/project-group-types'
 import type { SshConnectionState, SshTarget } from '../../../../shared/ssh-types'
 import type { GitAvailability } from './create-project-defaults'
+import type { useNewProjectAccountDraft } from '../project-accounts/new-project-account-settings'
+import type { CommitIdentityDraft } from '../project-accounts/commit-identity-draft'
 
 type AddRepoDialogStepContentProps = {
   step: AddRepoDialogStep
@@ -70,6 +74,9 @@ type AddRepoDialogStepContentProps = {
   onCloneDestinationChange: (destination: string) => void
   onPickCloneDestination: () => void
   onClone: () => void
+  cloneProjectAccounts?: ReturnType<typeof useNewProjectAccountDraft>
+  accountStep?: AddRepoAccountStepState | null
+  createIdentity?: { draft: CommitIdentityDraft; onChange: (draft: CommitIdentityDraft) => void }
   onNestedGroupNameChange: (name: string) => void
   onNestedSelectedPathsChange: Dispatch<SetStateAction<Set<string>>>
   onImportNestedRepos: (mode: 'group' | 'separate') => void
@@ -140,6 +147,9 @@ export function AddRepoDialogStepContent({
   onCloneDestinationChange,
   onPickCloneDestination,
   onClone,
+  cloneProjectAccounts,
+  accountStep,
+  createIdentity,
   onNestedGroupNameChange,
   onNestedSelectedPathsChange,
   onImportNestedRepos,
@@ -227,8 +237,13 @@ export function AddRepoDialogStepContent({
         onDestChange={onCloneDestinationChange}
         onPickDestination={onPickCloneDestination}
         onClone={onClone}
+        projectAccounts={cloneProjectAccounts}
       />
     )
+  }
+
+  if (step === 'account' && accountStep) {
+    return <AddRepoAccountStep state={accountStep} />
   }
 
   if (step === 'nested' && nestedScan) {
@@ -266,6 +281,7 @@ export function AddRepoDialogStepContent({
         onParentChange={onCreateParentChange}
         onPickParent={onPickCreateParent}
         onCreate={onCreate}
+        commitIdentity={createIdentity}
       />
     )
   }

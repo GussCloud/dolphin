@@ -5,6 +5,7 @@ import {
   markAzureDevOpsPreviewApiVersionOrigin
 } from './azure-devops-api-request'
 import { resolveAzureDevOpsAuthHeaders } from './azure-devops-credential'
+import type { AzureDevOpsCredentialScope } from './azure-devops-account-scope'
 
 const MUTATION_TIMEOUT_MS = 30_000
 
@@ -15,6 +16,8 @@ type AzureDevOpsSendOptions = {
   apiVersion?: string
   // Work item updates require application/json-patch+json.
   contentType?: string
+  /** The owning project's managed account; absent = global credential. */
+  credentialScope?: AzureDevOpsCredentialScope
 }
 
 function buildUrl(baseUrl: string, path: string, options: AzureDevOpsSendOptions): URL {
@@ -40,7 +43,7 @@ async function send(url: URL, options: AzureDevOpsSendOptions): Promise<Response
       ...(options.body !== undefined
         ? { 'Content-Type': options.contentType ?? 'application/json' }
         : {}),
-      ...(await resolveAzureDevOpsAuthHeaders())
+      ...(await resolveAzureDevOpsAuthHeaders(options.credentialScope))
     },
     ...(options.body !== undefined ? { body: JSON.stringify(options.body) } : {}),
     signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS)

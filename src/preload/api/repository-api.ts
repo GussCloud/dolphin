@@ -1,5 +1,6 @@
 import type { ExecutionHostId } from '../../shared/execution-host'
 import type { GhAccountBinding } from '../../shared/github/account-binding'
+import type { CommitIdentity, RepoAccountBinding } from '../../shared/source-control-account-types'
 import type {
   HostRepoCatalogSnapshot,
   ListReposForExecutionHostArgs
@@ -33,6 +34,7 @@ export type RepositoryApi = {
     path: string
     kind?: 'git' | 'folder'
     displayName?: string
+    accountBinding?: RepoAccountBinding
   }) => Promise<{ repo: Repo } | { error: string }>
   remove: (args: { repoId: string }) => Promise<void>
   // Forget a project on one execution host only, leaving the same repo id on other hosts intact.
@@ -72,18 +74,30 @@ export type RepositoryApi = {
       sourceControlAi?: Repo['sourceControlAi'] | null
       externalWorktreeDiscoverySuppressedAt?: Repo['externalWorktreeDiscoverySuppressedAt'] | null
       ghAccount?: GhAccountBinding | null
+      azureDevOpsAccountId?: string | null
+      commitIdentity?: CommitIdentity | null
     }
   }) => Promise<Repo>
   pickFolder: () => Promise<string | null>
   pickFolders: () => Promise<string[]>
   pickDirectory: () => Promise<string | null>
-  clone: (args: { url: string; destination: string }) => Promise<Repo>
-  cloneRemote: (args: { connectionId: string; url: string; destination: string }) => Promise<Repo>
+  clone: (args: {
+    url: string
+    destination: string
+    accountBinding?: RepoAccountBinding
+  }) => Promise<Repo>
+  cloneRemote: (args: {
+    connectionId: string
+    url: string
+    destination: string
+    accountBinding?: RepoAccountBinding
+  }) => Promise<Repo>
   createRemote: (args: {
     connectionId: string
     parentPath: string
     name: string
     kind: 'git' | 'folder'
+    accountBinding?: RepoAccountBinding
   }) => Promise<{ repo: Repo } | { error: string }>
   cloneAbort: () => Promise<void>
   // Why: error union matches the IPC handler's return shape; renderer callers branch on `'error' in result`.
@@ -92,12 +106,14 @@ export type RepositoryApi = {
     remotePath: string
     displayName?: string
     kind?: 'git' | 'folder'
+    accountBinding?: RepoAccountBinding
   }) => Promise<{ repo: Repo } | { error: string }>
   // Why: error union matches the IPC handler's return shape; renderer callers branch on `'error' in result`.
   create: (args: {
     parentPath: string
     name: string
     kind: 'git' | 'folder'
+    accountBinding?: RepoAccountBinding
   }) => Promise<{ repo: Repo } | { error: string }>
   isGitAvailable: () => Promise<boolean>
   getDefaultCreateProjectParent: () => Promise<string>
@@ -168,5 +184,7 @@ export type ProjectGroupsApi = {
     connectionId?: string
     scanId?: string
     mode: ProjectGroupImportMode
+    /** Applied to every newly imported project. */
+    accountBinding?: RepoAccountBinding
   }) => Promise<ProjectGroupImportResult>
 }
