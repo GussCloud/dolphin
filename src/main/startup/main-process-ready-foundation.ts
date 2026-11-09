@@ -17,6 +17,7 @@ import { initializeBrowserClientHostId } from '../browser/browser-client-host-id
 import { scheduleSecretProtectionGapReport } from '../host/deferred-secret-protection-report'
 import { initSshHostKeyStoreFile } from '../ssh/ssh-host-key-store'
 import { installAzureDevOpsRepoAccountLookup } from '../azure-devops/azure-devops-repo-account-lookup'
+import { installTerminalGitAccountRepoLookup } from '../pty/terminal-git-account-env'
 import { neutralizeLegacyTerminalShimDir } from '../pty/legacy-terminal-shim-dir'
 import { createWindowsShellPathHydration } from './windows-shell-path-hydration'
 import { createWindowsShellPathCache } from './windows-shell-path-cache'
@@ -155,6 +156,7 @@ export async function initializeReadyFoundation(): Promise<void> {
   const store = profileState.store
   state.store = store
   installAzureDevOpsRepoAccountLookup(store)
+  installTerminalGitAccountRepoLookup(store)
   // Why: create pending readiness before the guard can observe the default session.
   // Why parked on state instead of awaited here: Dock/Launchpad launches don't inherit shell
   // proxy env vars, so the persisted proxy must land before any app-owned network fetcher runs —

@@ -1,4 +1,5 @@
 import { inheritOmpLaunchEnvironment } from '../host-env/omp-launch-environment'
+import { applyTerminalGitAccountForSpawn } from '../../../pty/terminal-git-account-env'
 import { getAppEnvironment } from '../../../../shared/app-environment'
 import type { DolphinRuntimeService } from '../../../runtime/dolphin-runtime'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
@@ -70,6 +71,12 @@ export function configureLocalPtyProvider(args: {
         codexHomePath: selectedCodexHomePath,
         launchAgent: ctx?.launchAgent,
         launchCommand: ctx?.command
+      })
+      // Why worktree id from env: LocalPtyProvider's context carries only cwd/WSL routing.
+      await applyTerminalGitAccountForSpawn(baseEnv, {
+        cwd: ctx?.cwd,
+        isWsl: ctx?.isWsl,
+        wslDistro: ctx?.wslDistro ?? null
       })
       const env = buildPtyHostEnv(id, baseEnv, {
         isPackaged: getAppEnvironment().isPackaged(),

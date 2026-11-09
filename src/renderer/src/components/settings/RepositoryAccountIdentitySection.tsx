@@ -19,6 +19,7 @@ import {
 } from '../project-accounts/project-account-options'
 import { ProjectAccountSelect } from '../project-accounts/ProjectAccountSelect'
 import { CommitIdentityFields } from '../project-accounts/CommitIdentityFields'
+import { TerminalGitAccountWarnings } from '../project-accounts/TerminalGitAccountWarnings'
 import {
   commitIdentityDraftFrom,
   evaluateCommitIdentityDraft,
@@ -190,6 +191,16 @@ export function RepositoryAccountIdentitySection({
           }}
         />
       ) : null}
+
+      <TerminalGitAccountWarnings
+        repoId={repo.id}
+        runtimeTarget={runtimeTarget}
+        bindingKey={JSON.stringify([
+          repo.ghAccount ?? null,
+          repo.azureDevOpsAccountId ?? null,
+          repo.commitIdentity ?? null
+        ])}
+      />
 
       <CommitIdentityFields draft={draft} onChange={setDraft} disabled={saving} />
       <div className="flex items-center gap-2">

@@ -41,6 +41,8 @@ export const reposApi = {
   pickDirectory: () => ipcRenderer.invoke('repos:pickDirectory'),
 
   clone: (args) => ipcRenderer.invoke('repos:clone', args),
+  getTerminalGitAccountWarnings: (args) =>
+    ipcRenderer.invoke('repos:getTerminalGitAccountWarnings', args),
 
   cloneRemote: (args) => ipcRenderer.invoke('repos:cloneRemote', args),
 

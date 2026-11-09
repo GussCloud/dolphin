@@ -68,6 +68,12 @@ Git 2.25 also compares the credential host case-sensitively, so a remote written
 emitted in each spelling a reachable URL uses, and the reachable URLs include every
 `url.<base>.insteadOf`/`pushInsteadOf` base, so a rewritten remote is scoped too.
 
+Terminals receive the same config through the environment. `GIT_CONFIG_COUNT`/`KEY_n`/`VALUE_n`
+needs Git 2.31 and is silently ignored by 2.25, so project accounts use `GIT_CONFIG_PARAMETERS`
+in the classic `'key=value'` form, which every supported Git parses. Inherited `GIT_CONFIG_COUNT`
+entries are applied before it, so the project's entries stay last
+(`src/shared/git-config-parameters.ts`).
+
 The real-binary contract below exercises the reset, the scoped helper, a concrete
 `visualstudio.com` host, an `insteadOf` rewrite to a mixed-case host, and the fail-closed
 path on every lane.
