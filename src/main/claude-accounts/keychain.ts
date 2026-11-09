@@ -58,6 +58,20 @@ export async function writeActiveClaudeKeychainCredentialsForRuntime(
   }
 }
 
+/**
+ * Writes only the items Claude Code derives from `configDir` (literal and canonical spellings),
+ * never the unsuffixed legacy item: that one belongs to the globally selected account.
+ */
+export async function writeClaudeKeychainCredentialsForConfigDir(
+  contents: string,
+  configDir: string
+): Promise<void> {
+  const user = getKeychainUser()
+  for (const dir of claudeConfigDirKeychainAliases(configDir)) {
+    await writeKeychainPassword(getActiveClaudeService(dir), user, contents)
+  }
+}
+
 export async function deleteActiveClaudeKeychainCredentials(configDir?: string): Promise<void> {
   for (const service of getActiveClaudeServices(configDir)) {
     for (const account of getKeychainUsersForCleanup()) {

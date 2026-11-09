@@ -9,9 +9,9 @@ import {
 import { hasLiveClaudePtys } from '../live-pty-gate'
 import { isOauthTokenExpiring } from '../oauth-refresh'
 import { writeActiveClaudeKeychainCredentialsForRuntime } from '../keychain'
-import { ClaudeRuntimeAuthPreparationService } from './runtime-auth-preparation'
+import { ClaudeRuntimeAuthPinnedConfigDir } from './runtime-auth-pinned-config-dir'
 
-export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPreparationService {
+export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPinnedConfigDir {
   protected async doSyncForCurrentSelection(target?: ClaudeAccountSelectionTarget): Promise<void> {
     const settings = this.store.getSettings()
     const effectiveTarget = this.resolveWslDefaultTarget(target)
@@ -156,6 +156,11 @@ export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPreparationService {
       return
     }
 
+    if (this.lastSyncedAccountId !== activeAccount.id) {
+      // Why: a worktree pin may have rotated this account's token; materializing the stale
+      // managed copy into ~/.claude would hand the global session a spent refresh token.
+      await this.readBackPinnedConfigDirCredentials(activeAccount)
+    }
     let credentialsJson = await this.readManagedCredentials(activeAccount)
     if (!credentialsJson || !this.isValidCredentialsJsonObject(credentialsJson)) {
       console.warn(

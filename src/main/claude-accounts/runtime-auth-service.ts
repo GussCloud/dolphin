@@ -4,6 +4,8 @@ import {
   type ClaudeAccountSelectionTarget
 } from './runtime-selection'
 import { ClaudeRuntimeAuthSync } from './runtime-auth/runtime-auth-sync'
+import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
+import { resolveClaudeLaunchAccountOverride } from './worktree-claude-account-override'
 import type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
 
 export type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
@@ -16,11 +18,47 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
   }
 
   async prepareForClaudeLaunch(
-    target?: ClaudeAccountSelectionTarget
+    target?: ClaudeAccountSelectionTarget,
+    launch?: WorktreeLaunchLocation
   ): Promise<ClaudeRuntimeAuthPreparation> {
     const effectiveTarget = target ?? this.getDefaultAccountSelectionTarget()
+    const pinned = await this.preparePinnedLaunchIfAny(effectiveTarget, launch)
+    if (pinned) {
+      return pinned
+    }
     await this.syncForCurrentSelection(effectiveTarget)
     return this.getPreparation(effectiveTarget)
+  }
+
+  private async preparePinnedLaunchIfAny(
+    target: ClaudeAccountSelectionTarget,
+    launch: WorktreeLaunchLocation | undefined
+  ): Promise<ClaudeRuntimeAuthPreparation | null> {
+    const override = resolveClaudeLaunchAccountOverride({
+      source: this.store,
+      settings: this.store.getSettings(),
+      target: this.resolveWslDefaultTarget(target),
+      launch
+    })
+    if (override.kind === 'unavailable') {
+      // Why: the worktree card shows the same fallback; the log ties it to this launch.
+      console.warn(
+        `[claude-worktree-account] worktree ${override.worktreeId} pins an unavailable account (${override.reason}); using the active account`
+      )
+      return null
+    }
+    if (override.kind !== 'override') {
+      return null
+    }
+    const prepared = await this.serializeMutation(() =>
+      this.preparePinnedAccountLaunch(override.account)
+    )
+    if (!prepared) {
+      console.warn(
+        `[claude-worktree-account] worktree ${override.worktreeId} account credentials are unusable; using the active account`
+      )
+    }
+    return prepared
   }
 
   async prepareForRateLimitFetch(
