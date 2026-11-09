@@ -27,7 +27,7 @@ function errorMessage(error: unknown): string {
  * Throws when unreadable: without the concrete hosts the helper cannot be scoped, and the call
  * must not run on the global login.
  */
-async function readReachableUrls(
+export async function readReachableUrls(
   args: readonly string[],
   target: { cwd?: string; wslDistro?: string; env?: NodeJS.ProcessEnv }
 ): Promise<string[]> {

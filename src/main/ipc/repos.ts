@@ -1,3 +1,4 @@
+import { registerTerminalGitAccountHandlers } from './repos/terminal-git-account-handlers'
 import { registerAzureDevOpsManagedAccountHandlers } from './repos/azure-devops-account-handlers'
 import type { BrowserWindow } from 'electron'
 import { ipcMain } from 'electron'
@@ -77,6 +78,7 @@ export function registerRepoHandlers(
   registerNestedRepoImportHandler(mainWindow, store)
   registerRepoUpdateHandler(mainWindow, store)
   registerAzureDevOpsManagedAccountHandlers(mainWindow, store)
+  registerTerminalGitAccountHandlers(store)
   registerSparsePresetHandlers(mainWindow, store)
   registerRepoFolderPickerHandlers(mainWindow)
   registerRepoCloneHandlers(mainWindow, store)

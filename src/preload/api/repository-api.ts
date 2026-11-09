@@ -119,6 +119,8 @@ export type RepositoryApi = {
   getDefaultCreateProjectParent: () => Promise<string>
   onCloneProgress: (callback: (data: { phase: string; percent: number }) => void) => () => void
   getGitUsername: (args: { repoId: string }) => Promise<string>
+  /** Why the project's terminals do not fully use its git accounts; empty when they all apply. Desktop only. */
+  getTerminalGitAccountWarnings?: (args: { repoId: string }) => Promise<string[]>
   getBaseRefDefault: (args: {
     repoId: string
     hostId?: ExecutionHostId
