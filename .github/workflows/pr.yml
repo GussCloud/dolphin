@@ -478,7 +478,9 @@ jobs:
     name: shell contracts
     needs: [code_paths]
     if: needs.code_paths.outputs.shell_contracts == 'true'
-    runs-on: ubuntu-latest
+    # Why pinned: fish 4.2.1 on ubuntu-latest (26.04) fails the #9993/#13892 stdin contracts;
+    # tracked in #171 — unpin once Dolphin is verified against fish 4.2.
+    runs-on: ubuntu-24.04
     # Why: this job's cost is almost entirely package download, and a stalled mirror has
     # no wall-clock bound of its own. A successful run finishes in ~4.5 minutes, so this
     # is generous; it exists so a wedge fails the job instead of holding the whole run
