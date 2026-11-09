@@ -51,9 +51,11 @@ describe('structured agent-session create intent', () => {
       agent: 'codex'
     })
 
+    // The workspace id lets launch prep honor an account the worktree pinned.
     expect(prepareCodexStructuredLaunch).toHaveBeenCalledWith({
       workspacePath: '/repos/workspace-1',
-      launchEnv: expect.objectContaining({ CODEX_HOME: '/configured/home' })
+      launchEnv: expect.objectContaining({ CODEX_HOME: '/configured/home' }),
+      worktreeId: 'workspace-1'
     })
     expect(intent.accountHome).toEqual({
       variable: 'CODEX_HOME',

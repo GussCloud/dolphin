@@ -98,7 +98,10 @@ export async function executeWorktreeCreation(
           ...(preparedRequest.parentWorktreeId
             ? { parentWorktreeId: preparedRequest.parentWorktreeId }
             : {}),
-          ...(preparedRequest.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {})
+          ...(preparedRequest.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
+          ...(preparedRequest.agentAccountId
+            ? { agentAccountId: preparedRequest.agentAccountId }
+            : {})
         }
       )
   } catch (error) {

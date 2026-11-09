@@ -398,7 +398,7 @@ describe('registerWorktreeHandlers', () => {
     })
   })
 
-  it('persists the selected creation agent during local create', async () => {
+  it('persists the selected creation agent and its pinned account during local create', async () => {
     listWorktreesMock.mockResolvedValue([
       {
         path: '/workspace/improve-dashboard',
@@ -413,18 +413,21 @@ describe('registerWorktreeHandlers', () => {
     const result = await handlers['worktrees:create'](null, {
       repoId: 'repo-1',
       name: 'improve-dashboard',
-      createdWithAgent: 'codex'
+      createdWithAgent: 'codex',
+      agentAccountId: 'acct-pinned'
     })
 
     expect(store.setWorktreeMeta).toHaveBeenCalledWith(
       'repo-1::/workspace/improve-dashboard',
       expect.objectContaining({
-        createdWithAgent: 'codex'
+        createdWithAgent: 'codex',
+        agentAccountId: 'acct-pinned'
       })
     )
     expect(result).toMatchObject({
       worktree: expect.objectContaining({
-        createdWithAgent: 'codex'
+        createdWithAgent: 'codex',
+        agentAccountId: 'acct-pinned'
       })
     })
   })

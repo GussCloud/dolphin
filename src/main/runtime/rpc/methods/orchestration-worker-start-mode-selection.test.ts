@@ -248,6 +248,23 @@ describe('worker-start honours the settings default', () => {
     expect(createStructuredWorkerSessionForWorktree).not.toHaveBeenCalled()
   })
 
+  it('creates a child worktree on the account its coordinator worktree pinned', async () => {
+    const created = mockWorktreeCreation()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: worker creation reads only id, repoId and agentAccountId.
+    vi.mocked(runtime.showManagedWorktree).mockResolvedValue({
+      id: 'repo::wt',
+      repoId: 'repo',
+      agentAccountId: 'acct-pinned'
+    } as never)
+
+    await startWorker(
+      { ...STRUCTURED_DEFAULT, experimentalStructuredNativeChat: false },
+      { worktree: 'new-child', name: 'worker-child' }
+    )
+
+    expect(created).toHaveBeenCalledWith(expect.objectContaining({ agentAccountId: 'acct-pinned' }))
+  })
+
   it('falls back to a terminal agent in the worktree it just created when the host refuses', async () => {
     // The host can only answer for a workspace that exists, so a created worktree settles its mode
     // after creation — and a refusal must not fail a routine dispatch.

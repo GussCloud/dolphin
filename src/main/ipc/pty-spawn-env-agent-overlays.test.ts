@@ -66,7 +66,7 @@ describe('registerPtyHandlers', () => {
         (
           _target?: { runtime?: 'host' | 'wsl'; wslDistro?: string | null },
           _launchEnv?: NodeJS.ProcessEnv,
-          _launchContext?: { workspacePath?: string; launchAgent?: TuiAgent }
+          _launchContext?: { workspacePath?: string; launchAgent?: TuiAgent; worktreeId?: string }
         ) => null
       )
 
@@ -82,7 +82,11 @@ describe('registerPtyHandlers', () => {
       )
 
       expect(resolveHome.mock.calls[0]?.[0]).toEqual({ runtime: 'host' })
-      expect(resolveHome.mock.calls[0]?.[2]).toEqual({ workspacePath, launchAgent: 'codex' })
+      expect(resolveHome.mock.calls[0]?.[2]).toEqual({
+        workspacePath,
+        launchAgent: 'codex',
+        worktreeId: `repo-id::${workspacePath}`
+      })
       expect(resolveHome.mock.invocationCallOrder[0]).toBeLessThan(
         spawnMock.mock.invocationCallOrder[0]!
       )

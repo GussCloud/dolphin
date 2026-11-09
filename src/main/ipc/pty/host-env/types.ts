@@ -39,6 +39,8 @@ export type BuildPtyHostEnvOptions = {
 
 export type CodexHomeLaunchContext = {
   workspacePath?: string
+  /** Owning worktree; its pinned account overrides the global selection. */
+  worktreeId?: string
   launchAgent?: TuiAgent
   unavailableManagedHomePath?: string
 }

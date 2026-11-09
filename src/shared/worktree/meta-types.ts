@@ -61,6 +61,8 @@ export type WorktreeMeta = {
   createdAt?: number
   /** See {@link Worktree.createdWithAgent}. Persisted to dolphin-data.json. */
   createdWithAgent?: TuiAgent
+  /** See {@link Worktree.agentAccountId}. Persisted to dolphin-data.json. */
+  agentAccountId?: string
   /** See {@link Worktree.pendingFirstAgentMessageRename}. */
   pendingFirstAgentMessageRename?: boolean
   /** See {@link Worktree.firstAgentMessageRenameError}. */

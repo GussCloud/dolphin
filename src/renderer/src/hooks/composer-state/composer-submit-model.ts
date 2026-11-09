@@ -77,6 +77,12 @@ export type PreparedQuickSubmit = QuickSubmitSource & {
   trimmedNote: string
 }
 
+/** Per-submit choices made outside the composer's own state. */
+export type QuickSubmitOptions = {
+  /** Managed account the created agent launches with; omitted keeps the active account. */
+  agentAccountId?: string
+}
+
 export type ComposerSubmitModel = {
   executeFullCreation: (
     resolution: PendingSmartGitHubSubmitResolution,
@@ -89,7 +95,8 @@ export type ComposerSubmitModel = {
     workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
     repoId: string,
     selectedRepo: Repo,
-    launchPromptOverride?: string
+    launchPromptOverride?: string,
+    options?: QuickSubmitOptions
   ) => Promise<void>
   prepareFullSubmit: (
     resolution: PendingSmartGitHubSubmitResolution
@@ -110,7 +117,11 @@ export type ComposerSubmitModel = {
   resetForNextCreate: () => void
   submit: () => Promise<void>
   /** `launchPromptOverride` replaces the composed prompt and pins the terminal surface (autonomous goals). */
-  submitQuick: (agent: TuiAgent | null, launchPromptOverride?: string) => Promise<void>
+  submitQuick: (
+    agent: TuiAgent | null,
+    launchPromptOverride?: string,
+    options?: QuickSubmitOptions
+  ) => Promise<void>
   submitFolderTarget: (requestedAgent: TuiAgent | null) => Promise<void>
   submitMultiProjectTarget: (
     requestedAgent: TuiAgent | null,

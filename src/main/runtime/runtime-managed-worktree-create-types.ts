@@ -48,6 +48,8 @@ export type RuntimeManagedWorktreeCreateArgs = {
   awaitTerminalProvisioning?: boolean
   observeSetupCompletion?: boolean
   createdWithAgent?: TuiAgent
+  /** See CreateWorktreeArgs.agentAccountId. */
+  agentAccountId?: string
   startupAgent?: TuiAgent
   startupLaunchPreferences?: AgentLaunchPreferences
   startupPrompt?: string

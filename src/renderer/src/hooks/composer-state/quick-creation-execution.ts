@@ -1,3 +1,4 @@
+import type { QuickSubmitOptions } from './composer-submit-model'
 import type { ComposerModel } from './composer-model'
 
 type QuickCreationExecutionInput = Pick<
@@ -88,7 +89,8 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
       workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
       repoId: string,
       selectedRepo: Repo,
-      launchPromptOverride?: string
+      launchPromptOverride?: string,
+      options?: QuickSubmitOptions
     ): Promise<void> => {
       const prepared = await prepareQuickSubmit(
         smartGitHubResolution,
@@ -262,7 +264,8 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         promptDelivery,
         quickTelemetry,
         suppressTerminalFocusOnCompletion: createMultiple,
-        autonomousGoalWorkspace: launchPromptOverride !== undefined
+        autonomousGoalWorkspace: launchPromptOverride !== undefined,
+        agentAccountId: options?.agentAccountId
       })
 
       if (isSubmissionCancelled()) {
