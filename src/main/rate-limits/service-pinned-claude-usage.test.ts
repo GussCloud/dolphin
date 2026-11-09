@@ -90,7 +90,8 @@ describe('RateLimitService pinned Claude usage', () => {
 
     service.ingestLiveClaudeRateLimits({
       configDir: '/somewhere/else',
-      fiveHour: { used_percentage: 61 }
+      fiveHour: { used_percentage: 61 },
+      sevenDay: null
     })
 
     expect(service.getState().claude).toBeNull()
