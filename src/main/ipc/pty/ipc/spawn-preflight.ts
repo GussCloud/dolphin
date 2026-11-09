@@ -236,7 +236,10 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
   )
   ctx.claudeAuth =
     ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
-      ? await ctx.deps.prepareClaudeAuth(initialSelectionTarget)
+      ? await ctx.deps.prepareClaudeAuth(initialSelectionTarget, {
+          worktreeId: args.worktreeId,
+          workspacePath: ctx.cwd
+        })
       : null
   ctx.deepSeekEnvPatch =
     !ctx.preAdoptedStablePane &&

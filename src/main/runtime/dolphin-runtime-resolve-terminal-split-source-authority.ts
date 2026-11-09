@@ -204,7 +204,9 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     const deepSeekProvider = isDeepSeekProviderEnv(args.baseEnv)
     const auth =
       args.prepareAuth && !deepSeekProvider && this.prepareClaudeAuth
-        ? await this.prepareClaudeAuth()
+        ? await this.prepareClaudeAuth(undefined, {
+            worktreeId: this.handles.get(args.handle)?.worktreeId
+          })
         : null
     if (auth) {
       applyClaudeEnvPatch(baseEnv, auth.envPatch, { stripAuthEnv: auth.stripAuthEnv })

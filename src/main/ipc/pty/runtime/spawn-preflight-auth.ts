@@ -30,7 +30,10 @@ export async function prepareRuntimeSpawnAuth(ctx: RuntimePtySpawnState): Promis
   const args = ctx.args
   ctx.claudeAuth =
     ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
-      ? await ctx.deps.prepareClaudeAuth(ctx.codexSelectionTarget)
+      ? await ctx.deps.prepareClaudeAuth(ctx.codexSelectionTarget, {
+          worktreeId: args.worktreeId,
+          workspacePath: ctx.cwd
+        })
       : null
   if (ctx.isClaudeLaunch && isClaudeAuthSwitchInProgress()) {
     throw new Error(CLAUDE_AUTH_SWITCH_IN_PROGRESS_MESSAGE)
