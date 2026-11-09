@@ -12608,10 +12608,10 @@
           "saveFailed": "Could not save the project account settings.",
           "title": "Account and Commit Author",
           "description": "Choose the account and the commit author this project uses.",
-          "longDescription": "Commits Dolphin and this project’s terminals create use the author below. Blank keeps your git config.",
           "save": "Save author",
           "notEnforced": "Saved, but not enforced by this runtime (mixed-version host).",
-          "authorTitle": "Commit Author"
+          "authorTitle": "Commit Author",
+          "pickerDescription": "Commits Dolphin and this project’s terminals create use the author below."
         },
         "azureDevOpsManagedAccounts": {
           "added": "Account added",
@@ -18119,9 +18119,13 @@
           "name": "Author name",
           "emailPlaceholder": "Email",
           "email": "Author email",
-          "incomplete": "Fill in both name and email, or leave both blank.",
           "invalid": "Enter a valid email address.",
-          "hint": "Leave blank to use your git config identity."
+          "gitConfig": "Git config identity (default)",
+          "add": "New author",
+          "pickerHint": "The default keeps your git config identity.",
+          "newIncomplete": "Fill in both name and email.",
+          "cancel": "Cancel",
+          "addConfirm": "Add author"
         },
         "account": {
           "label": "{{provider}} account",

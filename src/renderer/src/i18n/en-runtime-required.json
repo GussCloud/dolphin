@@ -1654,18 +1654,6 @@
             }
           }
         },
-        "cli": {
-          "source": {
-            "control": {
-              "integration": {
-                "cards": {
-                  "2e44dda68a": "The GitHub CLI is installed but not authenticated. Run this command in a terminal:",
-                  "8d90249d22": "gh auth login"
-                }
-              }
-            }
-          }
-        },
         "computerUseSkillRuntime": {
           "thisDevice": "This device"
         },

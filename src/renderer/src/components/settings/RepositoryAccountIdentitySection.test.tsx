@@ -1,18 +1,25 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../../../../shared/repo-types'
 import { RepositoryAccountIdentitySection } from './RepositoryAccountIdentitySection'
 
+type Author = { name: string; email: string }
+
 const { storeState, listAzureMock, warningsMock } = vi.hoisted(() => {
   const repos: Repo[] = []
-  return {
-    storeState: { settings: null, repos, settingsSearchQuery: '' },
-    listAzureMock: vi.fn(),
-    warningsMock: vi.fn()
+  const commitAuthors: Author[] = []
+  const storeState = {
+    settings: { commitAuthors },
+    repos,
+    settingsSearchQuery: '',
+    updateSettingsOrThrow: vi.fn(async (updates: { commitAuthors?: Author[] }) => {
+      storeState.settings = { ...storeState.settings, ...updates }
+    })
   }
+  return { storeState, listAzureMock: vi.fn(), warningsMock: vi.fn() }
 })
 
 vi.mock('../../store', () => {
@@ -25,6 +32,28 @@ vi.mock('@/lib/repo-runtime-owner', () => ({
 }))
 vi.mock('@/runtime/runtime-rpc-client', () => ({
   getActiveRuntimeTarget: () => ({ kind: 'local' })
+}))
+// Why: Radix Select needs layout APIs happy-dom lacks; a native select keeps value testable.
+vi.mock('@/components/ui/select', () => ({
+  Select: ({
+    value,
+    onValueChange,
+    children
+  }: {
+    value: string
+    onValueChange: (value: string) => void
+    children: React.ReactNode
+  }) => (
+    <select value={value} onChange={(event) => onValueChange(event.currentTarget.value)}>
+      {children}
+    </select>
+  ),
+  SelectTrigger: () => null,
+  SelectValue: () => null,
+  SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
+    <option value={value}>{children}</option>
+  )
 }))
 vi.mock('../project-accounts/project-account-client', () => ({
   listAzureDevOpsManagedAccounts: listAzureMock,
@@ -50,6 +79,8 @@ beforeEach(() => {
   listAzureMock.mockReset().mockResolvedValue([])
   warningsMock.mockReset().mockResolvedValue([])
   storeState.repos = [REPO]
+  storeState.settings = { commitAuthors: [{ name: 'Dev', email: 'dev@example.test' }] }
+  storeState.updateSettingsOrThrow.mockClear()
 })
 
 afterEach(() => {
@@ -81,44 +112,98 @@ async function type(label: string, value: string) {
   })
 }
 
-function saveButton(): HTMLButtonElement {
-  return Array.from(container.querySelectorAll('button')).find(
-    (button) => button.textContent === 'Save author'
+function button(text: string): HTMLButtonElement {
+  return Array.from(container.querySelectorAll('button')).find((entry) =>
+    entry.textContent?.includes(text)
   )!
 }
 
+function saveButton(): HTMLButtonElement {
+  return button('Save author')
+}
+
+function authorSelect(): HTMLSelectElement {
+  return container.querySelector('select')!
+}
+
+async function pickAuthor(label: string) {
+  const select = authorSelect()
+  await act(async () => {
+    select.value = Array.from(select.options).find((o) => o.textContent === label)!.value
+    select.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+}
+
+async function click(text: string) {
+  await act(async () => button(text).click())
+}
+
 describe('RepositoryAccountIdentitySection', () => {
-  it('saves a valid author and confirms the host kept it', async () => {
+  it('saves an author picked from the registered list and confirms the host kept it', async () => {
     const updateRepo = vi.fn(async (_id: string, update: Update) => {
       storeState.repos = [{ ...REPO, commitIdentity: update.commitIdentity ?? undefined }]
       return true
     })
     await render(updateRepo)
-    await type('Author name', 'Dev')
+    expect(container.querySelectorAll('input')).toHaveLength(0)
     expect(saveButton().disabled).toBe(true)
-    await type('Author email', 'dev@example.test')
+    await pickAuthor('Dev <dev@example.test>')
     expect(saveButton().disabled).toBe(false)
-    await act(async () => saveButton().click())
+    await click('Save author')
     expect(updateRepo).toHaveBeenCalledWith('repo-1', {
       commitIdentity: { name: 'Dev', email: 'dev@example.test' }
     })
     expect(container.textContent).not.toContain('not enforced')
   })
 
+  it('offers authors other projects already use', async () => {
+    storeState.settings = { commitAuthors: [] }
+    storeState.repos = [
+      REPO,
+      { ...REPO, id: 'repo-2', commitIdentity: { name: 'Ops', email: 'ops@example.test' } }
+    ]
+    await render(vi.fn())
+    expect(Array.from(authorSelect().options).map((o) => o.textContent)).toEqual([
+      'Git config identity (default)',
+      'Ops <ops@example.test>'
+    ])
+  })
+
+  it('registers a new author in Dolphin and selects it', async () => {
+    const updateRepo = vi.fn(async () => true)
+    await render(updateRepo)
+    await click('New author')
+    await type('Author name', 'Second')
+    await type('Author email', 'second@example.test')
+    await click('Add author')
+    expect(storeState.updateSettingsOrThrow).toHaveBeenCalledWith({
+      commitAuthors: [
+        { name: 'Dev', email: 'dev@example.test' },
+        { name: 'Second', email: 'second@example.test' }
+      ]
+    })
+    expect(container.querySelectorAll('input')).toHaveLength(0)
+    await click('Save author')
+    expect(updateRepo).toHaveBeenCalledWith('repo-1', {
+      commitIdentity: { name: 'Second', email: 'second@example.test' }
+    })
+  })
+
   it('reports "not enforced" when an older host drops the field', async () => {
     await render(vi.fn(async () => true))
-    await type('Author name', 'Dev')
-    await type('Author email', 'dev@example.test')
-    await act(async () => saveButton().click())
+    await pickAuthor('Dev <dev@example.test>')
+    await click('Save author')
     expect(container.textContent).toContain('Saved, but not enforced by this runtime')
   })
 
-  it('rejects a malformed email', async () => {
+  it('rejects a malformed email for a new author', async () => {
     await render(vi.fn())
+    await click('New author')
     await type('Author name', 'Dev')
     await type('Author email', 'not-an-email')
-    expect(saveButton().disabled).toBe(true)
+    expect(button('Add author').disabled).toBe(true)
     expect(container.textContent).toContain('Enter a valid email address.')
+    expect(storeState.updateSettingsOrThrow).not.toHaveBeenCalled()
   })
 
   it("shows where the binding does not reach this project's terminals", async () => {

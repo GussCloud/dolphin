@@ -165,8 +165,8 @@ export function RepositoryAccountIdentitySection({
         <div className="text-sm font-semibold">{sectionTitle}</div>
         <p className="text-xs text-muted-foreground">
           {translate(
-            'auto.components.settings.RepositoryAccountIdentitySection.longDescription',
-            'Commits Dolphin and this project’s terminals create use the author below. Blank keeps your git config.'
+            'auto.components.settings.RepositoryAccountIdentitySection.pickerDescription',
+            'Commits Dolphin and this project’s terminals create use the author below.'
           )}
         </p>
       </div>
