@@ -77,6 +77,10 @@ export function initializeMainProcessRuntime(): DolphinRuntimeService {
   const runtime = new DolphinRuntimeService(store, stats, {
     prepareClaudeAuth: (target, launch) =>
       state.claudeRuntimeAuth!.prepareForClaudeLaunch(target, launch),
+    prepareClaudeWorktreeAccountHome: (launch) =>
+      state.claudeRuntimeAuth!.preparePinnedConfigDirForLaunch(launch),
+    prepareClaudePinnedAccountHome: (configDir) =>
+      state.claudeRuntimeAuth!.preparePinnedConfigDirForStructuredLaunch(configDir),
     agentSessionClaimSigner: loadAgentSessionClaimSigner(
       getProfileUserDataPath(),
       getProfileUserDataPath()

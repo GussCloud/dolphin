@@ -6,6 +6,7 @@ import {
 import { ClaudeRuntimeAuthSync } from './runtime-auth/runtime-auth-sync'
 import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
 import { resolveClaudeLaunchAccountOverride } from './worktree-claude-account-override'
+import { getClaudePinnedConfigDir, isClaudePinnedConfigDirPath } from './managed-auth-path'
 import type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
 
 export type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
@@ -28,6 +29,38 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     }
     await this.syncForCurrentSelection(effectiveTarget)
     return this.getPreparation(effectiveTarget)
+  }
+
+  /** The config dir a structured create in `launch` pins, materialized; null keeps the global home. */
+  async preparePinnedConfigDirForLaunch(launch: WorktreeLaunchLocation): Promise<string | null> {
+    const prepared = await this.preparePinnedLaunchIfAny({ runtime: 'host' }, launch)
+    return prepared?.runtime === 'host' ? (prepared.envPatch.CLAUDE_CONFIG_DIR ?? null) : null
+  }
+
+  /**
+   * Re-materializes a structured session's pinned home before each acquisition, so a restart or
+   * reacquire never runs on credentials the global sync or another pane has since rotated.
+   * False: not a pinned home. Throws when the pinned account can no longer serve it.
+   */
+  async preparePinnedConfigDirForStructuredLaunch(configDir: string): Promise<boolean> {
+    const account = this.store
+      .getSettings()
+      .claudeManagedAccounts.find(
+        (candidate) =>
+          candidate.managedAuthRuntime !== 'wsl' &&
+          getClaudePinnedConfigDir(candidate.id) === configDir
+      )
+    if (!account) {
+      if (isClaudePinnedConfigDirPath(configDir)) {
+        throw new Error('The Claude account this chat was pinned to is no longer available.')
+      }
+      return false
+    }
+    const prepared = await this.serializeMutation(() => this.preparePinnedAccountLaunch(account))
+    if (!prepared) {
+      throw new Error('The Claude account this chat was pinned to has unusable credentials.')
+    }
+    return true
   }
 
   private async preparePinnedLaunchIfAny(

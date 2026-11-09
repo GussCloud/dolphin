@@ -158,14 +158,17 @@ describe('worktree-pinned Claude account on spawn', () => {
     handlers.clear()
     registerPtyHandlers(mainWindow as never, undefined, undefined, undefined, prepareClaudeAuth)
 
-    await handlers.get('pty:spawn')!(null, {
-      cols: 80,
-      rows: 24,
-      cwd: WORKSPACE,
-      worktreeId: PINNED_WORKTREE_ID,
-      command: 'claude',
-      launchAgent: 'deepseek'
-    }).catch(() => {})
+    // A DeepSeek spawn may still fail later on its missing key; only the gate matters here.
+    await Promise.resolve(
+      handlers.get('pty:spawn')!(null, {
+        cols: 80,
+        rows: 24,
+        cwd: WORKSPACE,
+        worktreeId: PINNED_WORKTREE_ID,
+        command: 'claude',
+        launchAgent: 'deepseek'
+      })
+    ).catch(() => {})
 
     expect(prepareClaudeAuth).not.toHaveBeenCalled()
   })

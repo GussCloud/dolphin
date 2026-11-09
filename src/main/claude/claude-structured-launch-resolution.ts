@@ -127,6 +127,11 @@ export type ClaudeStructuredLaunchResolverDeps = {
   authSwitchSettleTimeoutMs?: number
   /** Account state for the managed-account gate; null when it cannot be read, which refuses. */
   readManagedAccountGate?: () => ClaudeManagedAccountGateSettings | null
+  /**
+   * Re-materializes a worktree-pinned account home; true means the record's home is one, so the
+   * pinned credential is the only auth this launch may use. Throws when that account is gone.
+   */
+  preparePinnedAccountHome?: (configDir: string) => Promise<boolean>
   /** Whether Claude wrote a transcript for this id; defaults to the transcript resolver. */
   hasTranscript?: (input: {
     providerSessionId: string
@@ -282,7 +287,11 @@ export function createClaudeStructuredLaunchResolver(
     const permission = claudeStructuredPermissionOptions(
       (await deps.resolvePermissionMode?.()) ?? 'default'
     )
-    const { command, env } = await resolveClaudeStructuredInvocation(deps, (base) =>
+    const pinnedHome = (await deps.preparePinnedAccountHome?.(record.accountHome.path)) === true
+    const invocationDeps = pinnedHome
+      ? { ...deps, resolveAuthPolicy: () => ({ stripAuthEnv: true }) }
+      : deps
+    const { command, env } = await resolveClaudeStructuredInvocation(invocationDeps, (base) =>
       // Only a dispatched structured worker gets the orchestration identity and the Dolphin CLI on
       // PATH; an ordinary chat session's env passes through untouched.
       structuredWorkerChildIdentityEnv(record.sessionId, {

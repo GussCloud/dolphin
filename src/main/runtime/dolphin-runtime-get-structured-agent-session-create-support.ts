@@ -84,12 +84,21 @@ export class DolphinRuntimeWithGetStructuredAgentSessionCreateSupport extends Do
     resumeFrom?: { providerSessionId: string }
   }): Promise<AgentSessionAttachParams> {
     if (input.agent === 'claude') {
-      return this.resolveStructuredAgentSessionIntent(input, async ({ launchEnv, location }) =>
-        resolveStructuredClaudeAccountHomePath({
-          launchEnv,
-          wslDistro: location.wslDistro,
-          getClaudeConfigDirectory: (target) => this.accounts.getClaudeConfigDirectory(target)
-        })
+      return this.resolveStructuredAgentSessionIntent(
+        input,
+        async ({ workspacePath, launchEnv, location }) =>
+          // Why: a worktree-pinned account owns the chat's home for its whole life; the record
+          // keeps this path and every acquisition re-materializes it.
+          (!location.wslDistro &&
+            (await this.prepareClaudeWorktreeAccountHomeFn?.({
+              worktreeId: location.workspaceId,
+              workspacePath
+            }))) ||
+          resolveStructuredClaudeAccountHomePath({
+            launchEnv,
+            wslDistro: location.wslDistro,
+            getClaudeConfigDirectory: (target) => this.accounts.getClaudeConfigDirectory(target)
+          })
       )
     }
     return this.resolveStructuredAgentSessionIntent(

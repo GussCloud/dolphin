@@ -4,6 +4,7 @@ import type { RuntimeStore } from './runtime-store-contract'
 import type { StatsCollector } from '../stats/collector'
 import type { IPtyProvider } from '../providers/types'
 import type { PrepareClaudeAuth } from '../ipc/pty/host-env/types'
+import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
 import type { RuntimeTerminalAgentStatusEvent } from './runtime-terminal-contracts'
 import type { TerminalSideEffectBatch } from '../../shared/terminal-side-effect-facts'
 import type { AgentStatusIpcPayload } from '../../shared/agent-status-types'
@@ -44,6 +45,12 @@ import { RuntimeMachineName } from './runtime-machine-name'
 
 export class DolphinRuntimeWithStateFields extends DolphinRuntimeWithLinearCommands {
   protected readonly prepareClaudeAuth?: PrepareClaudeAuth
+  /** Materializes a worktree-pinned Claude account for a structured create; null keeps global. */
+  protected readonly prepareClaudeWorktreeAccountHomeFn?: (
+    launch: WorktreeLaunchLocation
+  ) => Promise<string | null>
+  /** Re-materializes a structured session's pinned Claude home; false when it is not one. */
+  protected readonly prepareClaudePinnedAccountHomeFn?: (configDir: string) => Promise<boolean>
 
   protected readonly machineName = new RuntimeMachineName(
     () => this.store?.getSettings?.().machineName
@@ -56,6 +63,8 @@ export class DolphinRuntimeWithStateFields extends DolphinRuntimeWithLinearComma
       getLocalProvider?: () => IPtyProvider
       getSshProvider?: (connectionId: string) => IPtyProvider | undefined
       prepareClaudeAuth?: PrepareClaudeAuth
+      prepareClaudeWorktreeAccountHome?: (launch: WorktreeLaunchLocation) => Promise<string | null>
+      prepareClaudePinnedAccountHome?: (configDir: string) => Promise<boolean>
       onPtyStopped?: (ptyId: string) => void
       onTerminalAgentStatus?: (event: RuntimeTerminalAgentStatusEvent) => void
       onTerminalSideEffects?: (batch: TerminalSideEffectBatch) => void
@@ -124,6 +133,8 @@ export class DolphinRuntimeWithStateFields extends DolphinRuntimeWithLinearComma
     this.store = store
     this.machineName.start()
     this.prepareClaudeAuth = deps?.prepareClaudeAuth
+    this.prepareClaudeWorktreeAccountHomeFn = deps?.prepareClaudeWorktreeAccountHome
+    this.prepareClaudePinnedAccountHomeFn = deps?.prepareClaudePinnedAccountHome
     store?.onSettingsChanged?.((updates) => {
       if ('experimentalStructuredNativeChat' in updates) {
         this.notifyMobileSessionTabsChanged()

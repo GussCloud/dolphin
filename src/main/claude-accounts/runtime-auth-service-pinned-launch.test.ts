@@ -190,4 +190,36 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
 
     expect(readFileSync(join(pinnedDir('pinned'), 'CLAUDE.md'), 'utf-8')).toBe('# shared rules\n')
   })
+
+  it('structured create pins the worktree account home; unpinned keeps the global one', async () => {
+    const { store } = setup()
+    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
+    const service = new ClaudeRuntimeAuthService(store as never)
+
+    expect(await service.preparePinnedConfigDirForLaunch({ worktreeId: WORKTREE_ID })).toBe(
+      pinnedDir('pinned')
+    )
+    expect(
+      await service.preparePinnedConfigDirForLaunch({ workspacePath: '/elsewhere' })
+    ).toBeNull()
+  })
+
+  it('structured reacquire re-materializes a pinned home and refuses a removed account', async () => {
+    const { store, pinnedCredentials } = setup()
+    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
+    const service = new ClaudeRuntimeAuthService(store as never)
+
+    expect(await service.preparePinnedConfigDirForStructuredLaunch(pinnedDir('pinned'))).toBe(true)
+    expect(readFileSync(join(pinnedDir('pinned'), '.credentials.json'), 'utf-8')).toBe(
+      pinnedCredentials
+    )
+    expect(
+      await service.preparePinnedConfigDirForStructuredLaunch(
+        join(testState.fakeHomeDir, '.claude')
+      )
+    ).toBe(false)
+    await expect(
+      service.preparePinnedConfigDirForStructuredLaunch(pinnedDir('removed'))
+    ).rejects.toThrow('no longer available')
+  })
 })
