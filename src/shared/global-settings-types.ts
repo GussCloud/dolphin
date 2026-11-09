@@ -41,6 +41,7 @@ import type {
 } from './ui-chrome-types'
 import type { SetupScriptLaunchMode } from './worktree/launch-types'
 import type { WorktreeVisibilityDefaults } from './worktree-visibility-defaults'
+import type { CommitIdentity } from './source-control-account-types'
 
 /** MiniMax account region used to select the quota endpoint. */
 export type MiniMaxEndpoint = 'overseas' | 'cn'
@@ -303,6 +304,8 @@ export type GlobalSettings = {
   combinedDiffFileTreeVisibleByDefault: boolean
   /** Bot-marked comment-author logins (stored lowercased); escape hatch for review bots on regular accounts that defeat provider metadata/heuristics. */
   prBotAuthorOverrides: string[]
+  /** Commit authors offered by the per-project author picker; optional for legacy settings. */
+  commitAuthors?: CommitIdentity[]
   notifications: NotificationSettings
   /** Floating avatar + per-event sound when an agent needs the user or finishes. */
   agentInteraction: AgentInteractionSettings

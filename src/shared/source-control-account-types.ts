@@ -43,6 +43,34 @@ export function normalizeCommitIdentity(value: unknown): CommitIdentity | null {
   return { name, email }
 }
 
+export const MAX_COMMIT_AUTHORS = 50
+
+/** Same author when the name matches exactly and the email matches ignoring case. */
+export function commitAuthorKey(identity: CommitIdentity): string {
+  return `${identity.name}\0${identity.email.toLowerCase()}`
+}
+
+/** Valid, de-duplicated, bounded list for the `commitAuthors` setting; order is kept. */
+export function normalizeCommitAuthors(value: unknown): CommitIdentity[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  const seen = new Set<string>()
+  const authors: CommitIdentity[] = []
+  for (const entry of value) {
+    const identity = normalizeCommitIdentity(entry)
+    if (!identity || seen.has(commitAuthorKey(identity))) {
+      continue
+    }
+    seen.add(commitAuthorKey(identity))
+    authors.push(identity)
+    if (authors.length >= MAX_COMMIT_AUTHORS) {
+      break
+    }
+  }
+  return authors
+}
+
 const ACCOUNT_ID_RE = /^[A-Za-z0-9_-]{1,64}$/
 
 /** Account ids double as directory names, so only path-safe tokens are accepted. */

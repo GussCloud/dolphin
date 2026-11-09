@@ -5197,7 +5197,9 @@
           "875dda0995": "Digite um caminho pai do host.",
           "ssh_parent_manual": "Digite um caminho pai SSH.",
           "45b7c26034": "Criar projeto",
-          "85085d74d2": "Criando…"
+          "85085d74d2": "Criando…",
+          "authorNeedsFix": "O autor do commit está incompleto ou inválido.",
+          "showAuthor": "Mostrar"
         },
         "AddRepoHostSelector": {
           "host": "Host",
@@ -6080,7 +6082,8 @@
         },
         "useAddRepoCloneFlow": {
           "4d0013cc93": "Repositório clonado",
-          "0dc4d1b657": "Digite um caminho do host para o destino do clone."
+          "0dc4d1b657": "Digite um caminho do host para o destino do clone.",
+          "accountsNotEnforced": "Clonado, mas este host não manteve a conta e o autor do commit (versão antiga)."
         },
         "useAddRepoLocalFolderFlow": {
           "7ab10e4974": "Use um caminho do host para adicionar projetos de um host remoto.",
@@ -6546,6 +6549,15 @@
           "claudeUnavailableDetail": "A conta do Claude com que este workspace foi criado não está mais disponível. O Claude aqui usa a conta ativa.",
           "missingDetail": "A conta com que este workspace foi criado não está mais disponível. Os lançamentos aqui usam a conta ativa.",
           "claudePinned": "Conta do Claude: {{value0}}"
+        },
+        "AddRepoAccountStep": {
+          "title": "Conta e autor do commit",
+          "description": "Escolha como o Dolphin se autentica e quem é o autor dos commits de {{project}}.",
+          "skip": "Usar padrões",
+          "continue": "Continuar"
+        },
+        "useAddRepoAccountStep": {
+          "notKept": "Projeto adicionado, mas a conta e o autor do commit não foram mantidos. Defina-os nas configurações do projeto."
         }
       },
       "shared": {
@@ -11084,7 +11096,8 @@
                   "statusConnected": "Conectado",
                   "statusUnavailable": "Indisponível",
                   "statusNotInstalled": "Não instalada",
-                  "statusNotAuthenticated": "Não autenticado"
+                  "statusNotAuthenticated": "Não autenticado",
+                  "githubNotAuthenticated": "O GitHub CLI está instalado, mas sem login. Adicione uma conta para entrar."
                 }
               }
             }
@@ -12590,6 +12603,45 @@
           "default": "padrão",
           "builtIn": "Vem com o Dolphin e é atualizado junto com ele. Duplique-o para mudar o coordenador, os workers, o paralelismo ou adicionar uma estratégia.",
           "rules": "As regras do Dolphin sempre se aplicam e não podem ser editadas: um worker por Task numa worktree filha, ocioso entre avisos, todo lote confirmado, worker travado re-tentado uma vez, bloqueio só para decisões reais e goal complete no final."
+        },
+        "RepositoryAccountIdentitySection": {
+          "saveFailed": "Não foi possível salvar as configurações de conta do projeto.",
+          "title": "Conta e Autor do Commit",
+          "description": "Escolha a conta e o autor do commit que este projeto usa.",
+          "save": "Salvar autor",
+          "notEnforced": "Salvo, mas não aplicado por este runtime (host com versão diferente).",
+          "authorTitle": "Autor do Commit",
+          "pickerDescription": "Os commits que o Dolphin e os terminais deste projeto criam usam o autor abaixo."
+        },
+        "azureDevOpsManagedAccounts": {
+          "added": "Conta adicionada",
+          "removeTitle": "Remover conta do Azure DevOps?",
+          "removeDescription": "Desconecta {{login}} do Dolphin. Projetos vinculados a ela voltam para a conta padrão.",
+          "remove": "Remover",
+          "title": "Contas",
+          "defaultUnset": "Sem login",
+          "defaultTag": "Conta padrão",
+          "removeAria": "Remover {{login}}",
+          "adding": "Conclua o login na janela da Microsoft…",
+          "add": "Adicionar conta",
+          "cancel": "Cancelar",
+          "desktopOnly": "Contas extras do Azure DevOps são gerenciadas na máquina do app desktop, não em um runtime remoto."
+        },
+        "githubAccountsList": {
+          "removeTitle": "Remover conta do GitHub?",
+          "removeDescription": "Executa gh auth logout para {{user}} em {{host}}. Projetos vinculados a ela voltam para a conta padrão.",
+          "removeConfirm": "Remover",
+          "empty": "Nenhuma conta do GitHub conectada.",
+          "active": "Ativa",
+          "removeAria": "Remover {{user}} em {{host}}",
+          "hostLabel": "Host do GitHub",
+          "signIn": "Entrar",
+          "cancel": "Cancelar",
+          "add": "Adicionar conta",
+          "terminalTitle": "GitHub CLI",
+          "terminalAria": "Comando de conta do GitHub",
+          "terminalDescription": "Pressione Enter para executar o comando. O Dolphin verifica as contas de novo quando ele terminar.",
+          "envToken": "Token de ambiente"
         }
       },
       "right": {
@@ -18059,6 +18111,34 @@
         "toastHint": "Se a sua organização bloqueia o login dentro do Dolphin, clique com o botão direito no ícone do Azure DevOps e escolha Abrir no navegador do sistema.",
         "cancel": "Cancelar login",
         "systemBrowser": "Abrir no navegador do sistema"
+      },
+      "projectAccounts": {
+        "commitAuthor": {
+          "label": "Autor do commit",
+          "namePlaceholder": "Nome",
+          "name": "Nome do autor",
+          "emailPlaceholder": "E-mail",
+          "email": "E-mail do autor",
+          "invalid": "Informe um e-mail válido.",
+          "gitConfig": "Identidade do git config (padrão)",
+          "add": "Novo autor",
+          "pickerHint": "O padrão mantém a identidade do seu git config.",
+          "newIncomplete": "Preencha nome e e-mail.",
+          "cancel": "Cancelar",
+          "addConfirm": "Adicionar autor",
+          "remove": "Remover",
+          "update": "Salvar alterações"
+        },
+        "account": {
+          "label": "Conta do {{provider}}",
+          "refresh": "Atualizar contas",
+          "default": "Conta padrão",
+          "unavailable": "Conta indisponível",
+          "githubHostHint": "Logins em {{host}}. O padrão usa o login ativo do gh.",
+          "azureHint": "O padrão usa o login configurado em Configurações → Integrações.",
+          "githubDefault": "Conta padrão (login ativo do gh)",
+          "azureDefault": "Login padrão"
+        }
       }
     },
     "i18n": {

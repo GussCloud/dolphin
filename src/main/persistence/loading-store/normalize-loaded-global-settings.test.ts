@@ -76,3 +76,14 @@ describe('machine name setting', () => {
     expect(normalizeLegacyProfile({ machineName: 'x'.repeat(300) }).machineName).toHaveLength(255)
   })
 })
+
+describe('commit authors setting', () => {
+  it('loads a missing list as empty and drops malformed hand-edited entries', () => {
+    expect(normalizeLegacyProfile({}).commitAuthors).toEqual([])
+    expect(
+      normalizeLegacyProfile({
+        commitAuthors: [{ name: 'Dev', email: 'dev@example.test' }, { name: 'x' }, 'junk']
+      }).commitAuthors
+    ).toEqual([{ name: 'Dev', email: 'dev@example.test' }])
+  })
+})

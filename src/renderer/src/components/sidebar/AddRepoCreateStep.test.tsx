@@ -92,7 +92,6 @@ describe('CreateStep', () => {
     expect(createButtonDisabled(blank)).toBe(false)
 
     const half = renderCreateStep({ createName: 'demo', identity: { name: 'Dev', email: '' } })
-    expect(half).toContain('Fill in both name and email')
     expect(createButtonDisabled(half)).toBe(true)
   })
 

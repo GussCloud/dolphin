@@ -115,8 +115,11 @@ async function render(
   return { onSelectionChange, onIdentityChange }
 }
 
-function optionLabels(): string[] {
-  return Array.from(container.querySelectorAll('option')).map((option) => option.textContent ?? '')
+// The account picker renders first; the commit author picker is the last select.
+function optionLabels(select = container.querySelector('select')): string[] {
+  return Array.from(select?.querySelectorAll('option') ?? []).map(
+    (option) => option.textContent ?? ''
+  )
 }
 
 describe('NewProjectAccountFields', () => {
@@ -142,9 +145,10 @@ describe('NewProjectAccountFields', () => {
 
   it('shows no account picker for providers without binding support', async () => {
     await render('https://gitlab.com/acme/app.git')
-    expect(container.querySelector('select')).toBeNull()
-    // The commit author fields stay available.
-    expect(container.querySelectorAll('input')).toHaveLength(2)
+    // Only the commit author picker remains.
+    const selects = container.querySelectorAll('select')
+    expect(selects).toHaveLength(1)
+    expect(optionLabels(selects[0])).toEqual(['Git config identity (default)'])
   })
 
   it('reports the picked login as a binding', async () => {
