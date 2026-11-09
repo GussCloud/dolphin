@@ -1,4 +1,5 @@
 import { inheritOmpLaunchEnvironment } from '../host-env/omp-launch-environment'
+import { applyTerminalGitAccountForSpawn } from '../../../pty/terminal-git-account-env'
 import { getAppEnvironment } from '../../../../shared/app-environment'
 import { isTuiAgent } from '../../../../shared/tui-agent-config'
 import { isAgentStatusHooksEnabled } from '../../../agent-hooks/managed-agent-hook-controls'
@@ -149,6 +150,14 @@ export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promis
         isWsl: shouldSkipCodexHomeEnvForWindowsShell(ctx.effectiveShellOverride, ctx.cwd),
         launchAgent: args.launchAgent,
         launchCommand: ctx.launchCommand
+      })
+      // Why here: one of the three host-local env paths (with runtime spawn-preflight and local-configure).
+      await applyTerminalGitAccountForSpawn(ctx.env, {
+        connectionId: args.connectionId,
+        worktreeId: args.worktreeId,
+        cwd: ctx.cwd,
+        isWsl: shouldSkipCodexHomeEnvForWindowsShell(ctx.effectiveShellOverride, ctx.cwd),
+        wslDistro: ctx.codexSelectionTarget.runtime === 'wsl' ? ctx.expectedWslDistro : null
       })
       buildPtyHostEnv(sessionIdForEnv, ctx.env, {
         isPackaged: getAppEnvironment().isPackaged(),

@@ -1,4 +1,5 @@
 import { inheritOmpLaunchEnvironment } from '../host-env/omp-launch-environment'
+import { applyTerminalGitAccountForSpawn } from '../../../pty/terminal-git-account-env'
 import { getAppEnvironment } from '../../../../shared/app-environment'
 import type { PtySpawnResult } from '../../../providers/types'
 import { LocalPtyProvider } from '../../../providers/local-pty-provider'
@@ -260,6 +261,13 @@ export async function prepareRuntimePtySpawn(
         codexHomePath: ctx.selectedCodexHomePath,
         launchAgent: isTuiAgent(args.launchAgent) ? args.launchAgent : undefined,
         launchCommand: ctx.launchCommand
+      })
+      await applyTerminalGitAccountForSpawn(ctx.env, {
+        connectionId: args.connectionId,
+        worktreeId: args.worktreeId,
+        cwd: ctx.cwd,
+        isWsl: shouldSkipCodexHomeEnvForWindowsShell(ctx.daemonShellOverride, ctx.cwd),
+        wslDistro: ctx.codexSelectionTarget.runtime === 'wsl' ? ctx.expectedWslDistro : null
       })
       ctx.env = buildPtyHostEnv(ctx.sessionId, ctx.env ?? {}, {
         isPackaged: getAppEnvironment().isPackaged(),

@@ -187,6 +187,8 @@ async function startDolphindRuntime(
   const { installAzureDevOpsRepoAccountLookup } =
     await import('../azure-devops/azure-devops-repo-account-lookup')
   installAzureDevOpsRepoAccountLookup(profileStore)
+  const { installTerminalGitAccountRepoLookup } = await import('../pty/terminal-git-account-env')
+  installTerminalGitAccountRepoLookup(profileStore)
   // Why: every SSH connect consults this sidecar. Left unbound it reports nothing trusted,
   // which is safe but silently discards accept records on every launch.
 

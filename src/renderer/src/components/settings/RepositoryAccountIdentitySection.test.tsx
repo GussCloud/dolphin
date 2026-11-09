@@ -6,9 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../../../../shared/repo-types'
 import { RepositoryAccountIdentitySection } from './RepositoryAccountIdentitySection'
 
-const { storeState, listAzureMock } = vi.hoisted(() => {
+const { storeState, listAzureMock, warningsMock } = vi.hoisted(() => {
   const repos: Repo[] = []
-  return { storeState: { settings: null, repos, settingsSearchQuery: '' }, listAzureMock: vi.fn() }
+  return {
+    storeState: { settings: null, repos, settingsSearchQuery: '' },
+    listAzureMock: vi.fn(),
+    warningsMock: vi.fn()
+  }
 })
 
 vi.mock('../../store', () => {
@@ -24,7 +28,8 @@ vi.mock('@/runtime/runtime-rpc-client', () => ({
 }))
 vi.mock('../project-accounts/project-account-client', () => ({
   listAzureDevOpsManagedAccounts: listAzureMock,
-  listGhHostAccounts: vi.fn()
+  listGhHostAccounts: vi.fn(),
+  listTerminalGitAccountWarnings: warningsMock
 }))
 
 const REPO: Repo = {
@@ -43,6 +48,7 @@ beforeEach(() => {
   document.body.appendChild(container)
   root = createRoot(container)
   listAzureMock.mockReset().mockResolvedValue([])
+  warningsMock.mockReset().mockResolvedValue([])
   storeState.repos = [REPO]
 })
 
@@ -113,5 +119,15 @@ describe('RepositoryAccountIdentitySection', () => {
     await type('Author email', 'not-an-email')
     expect(saveButton().disabled).toBe(true)
     expect(container.textContent).toContain('Enter a valid email address.')
+  })
+
+  it("shows where the binding does not reach this project's terminals", async () => {
+    warningsMock.mockResolvedValue([
+      "This project's Azure DevOps account was removed; git in its terminals refuses Azure DevOps until you choose another."
+    ])
+    await render(vi.fn())
+    await act(async () => {})
+    expect(warningsMock).toHaveBeenCalledWith({ kind: 'local' }, 'repo-1')
+    expect(container.textContent).toContain("This project's Azure DevOps account was removed")
   })
 })
