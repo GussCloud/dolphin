@@ -69,6 +69,12 @@ function setup(options: { pin: string | null; active?: string } = { pin: 'pinned
   return { store, activeCredentials, pinnedCredentials, pinnedPath }
 }
 
+async function newService(store: ReturnType<typeof setup>['store']) {
+  const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the fake store implements every Store method the auth service and the worktree resolver call.
+  return new ClaudeRuntimeAuthService(store as never)
+}
+
 describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
   beforeEach(() => {
     resetRuntimeAuthTestState()
@@ -80,8 +86,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
 
   it('launches a pinned worktree on its own config dir without touching the global account', async () => {
     const { store, activeCredentials, pinnedCredentials } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
     await service.syncForCurrentSelection()
 
     const preparation = await service.prepareForClaudeLaunch(undefined, {
@@ -108,8 +113,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
     for (const options of [{ pin: null }, { pin: 'pinned', active: 'pinned' }]) {
       resetRuntimeAuthTestState()
       const { store } = setup(options)
-      const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-      const service = new ClaudeRuntimeAuthService(store as never)
+      const service = await newService(store)
       const preparation = await service.prepareForClaudeLaunch(undefined, {
         worktreeId: WORKTREE_ID
       })
@@ -120,8 +124,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
 
   it('reads a token the CLI rotated in the pinned dir back into the managed store', async () => {
     const { store, pinnedPath } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
     await service.prepareForClaudeLaunch(undefined, { worktreeId: WORKTREE_ID })
     const rotatedCredentials = rotated('pinned@example.test', 'pinned-rotated')
     testState.pinnedKeychainCredentials.set(pinnedDir('pinned'), rotatedCredentials)
@@ -136,8 +139,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
 
   it('refuses to adopt another identity logged in inside the pinned dir', async () => {
     const { store, pinnedPath, pinnedCredentials } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
     await service.prepareForClaudeLaunch(undefined, { worktreeId: WORKTREE_ID })
     testState.pinnedKeychainCredentials.set(
       pinnedDir('pinned'),
@@ -152,8 +154,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
 
   it('reads the pinned rotation back before making that account global', async () => {
     const { store, pinnedPath } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
     await service.syncForCurrentSelection()
     await service.prepareForClaudeLaunch(undefined, { worktreeId: WORKTREE_ID })
     const rotatedCredentials = rotated('pinned@example.test', 'pinned-rotated')
@@ -169,8 +170,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
   it('materializes only the credentials file where Claude does not use the Keychain', async () => {
     setPlatform('linux')
     const { store, pinnedCredentials } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
 
     await service.prepareForClaudeLaunch(undefined, { worktreeId: WORKTREE_ID })
 
@@ -183,8 +183,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
   it('links the user instructions so the pinned launch keeps them', async () => {
     writeFileSync(join(testState.fakeHomeDir, '.claude', 'CLAUDE.md'), '# shared rules\n')
     const { store } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
 
     await service.prepareForClaudeLaunch(undefined, { worktreeId: WORKTREE_ID })
 
@@ -193,8 +192,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
 
   it('structured create pins the worktree account home; unpinned keeps the global one', async () => {
     const { store } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
 
     expect(await service.preparePinnedConfigDirForLaunch({ worktreeId: WORKTREE_ID })).toBe(
       pinnedDir('pinned')
@@ -206,8 +204,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
 
   it('structured reacquire re-materializes a pinned home and refuses a removed account', async () => {
     const { store, pinnedCredentials } = setup()
-    const { ClaudeRuntimeAuthService } = await import('./runtime-auth-service')
-    const service = new ClaudeRuntimeAuthService(store as never)
+    const service = await newService(store)
 
     expect(await service.preparePinnedConfigDirForStructuredLaunch(pinnedDir('pinned'))).toBe(true)
     expect(readFileSync(join(pinnedDir('pinned'), '.credentials.json'), 'utf-8')).toBe(

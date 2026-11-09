@@ -5,11 +5,13 @@ import type { AgentSessionRecordStore } from '../runtime/agent-session-record-st
 import { createClaudeStructuredLaunchResolver } from './claude-structured-launch-resolution'
 
 const PINNED_HOME = '/data/claude-accounts/acct-pinned/config'
+// oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the resolver reads only the session id of the identity.
 const IDENTITY = { sessionId: 'dolphin-session-pinned' } as Parameters<
   ReturnType<typeof createClaudeStructuredLaunchResolver>
 >[0]['identity']
 
 function record(): AgentSessionRecord {
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the resolver reads only location, accountHome and providerHandleChain.
   return {
     sessionId: 'dolphin-session-pinned',
     provider: 'claude',
@@ -26,6 +28,7 @@ function record(): AgentSessionRecord {
 
 function resolverFor(preparePinnedAccountHome: (configDir: string) => Promise<boolean>) {
   return createClaudeStructuredLaunchResolver({
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the resolver only calls getRecord.
     store: { getRecord: () => record() } as unknown as AgentSessionRecordStore,
     resolveWorkspacePath: async (id) => `/repos/${id}`,
     resolveCommand: () => '/usr/local/bin/claude',

@@ -82,6 +82,7 @@ describe('worktree-pinned Claude account on spawn', () => {
   it('renderer IPC spawn launches Claude on the pinned account config dir', async () => {
     const daemonSpawn = setupDaemonAdapter()
     handlers.clear()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the suite's window and runtime stubs cover what registration calls.
     registerPtyHandlers(mainWindow as never, undefined, undefined, undefined, prepareClaudeAuth)
 
     await handlers.get('pty:spawn')!(null, {
@@ -123,9 +124,10 @@ describe('worktree-pinned Claude account on spawn', () => {
       onPtyData: vi.fn()
     }
     handlers.clear()
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the suite's window and runtime stubs cover what registration calls.
     registerPtyHandlers(
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the suite's window and runtime stubs cover what registration calls.
       mainWindow as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the suite's window and runtime stubs cover what registration calls.
       runtime as never,
       undefined,
       undefined,
@@ -156,6 +158,7 @@ describe('worktree-pinned Claude account on spawn', () => {
     setupDaemonAdapter()
     prepareClaudeAuth.mockClear()
     handlers.clear()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the suite's window and runtime stubs cover what registration calls.
     registerPtyHandlers(mainWindow as never, undefined, undefined, undefined, prepareClaudeAuth)
 
     // A DeepSeek spawn may still fail later on its missing key; only the gate matters here.
