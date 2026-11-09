@@ -24,6 +24,7 @@ import {
   GIT_REMOTE_URL_CONFIG_PATTERN,
   remoteUrlCandidatesFromGitConfig
 } from './git-scoped-credential-helper'
+import { appendGitConfigParameters, scopedCredentialHelperEntries } from './git-config-parameters'
 import { GIT_HISTORY_COMMIT_FORMAT, parseGitHistoryLog } from './git-history-log-parser'
 import {
   githubPullRequestHeadLocalRef,
@@ -712,6 +713,37 @@ describeBinaryCompatibility('real Git binary compatibility', () => {
           'url.https://MyOrg.visualstudio.com/DefaultCollection/.insteadOf'
         ])
       }
+    })
+
+    describe('terminal env form (GIT_CONFIG_PARAMETERS)', () => {
+      const terminalParameters = appendGitConfigParameters(undefined, [
+        ...scopedCredentialHelperEntries(
+          ['https://github.com'],
+          '!f() { test "$1" = get || exit 0; echo username=alice; echo password=terminal-token; }; f'
+        ),
+        ['user.name', "Ana O'Dev"],
+        ['user.email', 'ana@corp.example']
+      ])
+
+      it('answers with the project helper and skips the global one', async () => {
+        await installGlobalHelper()
+        const { stdout } = await fill('github.com', [], {
+          GIT_CONFIG_PARAMETERS: terminalParameters
+        })
+        expect(stdout).toContain('password=terminal-token')
+        expect(await globalHelperCalled()).toBe(false)
+      })
+
+      it('authors as the project identity even over an inherited GIT_CONFIG_COUNT', async () => {
+        const { stdout } = await runGit(['var', 'GIT_AUTHOR_IDENT'], {
+          ...credentialEnv(),
+          GIT_CONFIG_PARAMETERS: terminalParameters,
+          GIT_CONFIG_COUNT: '1',
+          GIT_CONFIG_KEY_0: 'user.email',
+          GIT_CONFIG_VALUE_0: 'inherited@example.invalid'
+        })
+        expect(stdout).toMatch(/^Ana O'Dev <ana@corp\.example> /)
+      })
     })
 
     it('leaves hosts outside the binding on the global helper', async () => {
