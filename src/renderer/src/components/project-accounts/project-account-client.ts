@@ -56,3 +56,23 @@ export async function removeAzureDevOpsManagedAccount(id: string): Promise<void>
     throw new Error(result.error)
   }
 }
+
+/**
+ * Why a binding is not applied in this project's terminals. Desktop-only: a remote runtime or
+ * an older host without the call reports nothing rather than a guess.
+ */
+export async function listTerminalGitAccountWarnings(
+  runtimeTarget: RuntimeTarget,
+  repoId: string
+): Promise<string[]> {
+  const read = window.api.repos.getTerminalGitAccountWarnings
+  if (runtimeTarget.kind === 'environment' || !read) {
+    return []
+  }
+  try {
+    const warnings = await read({ repoId })
+    return Array.isArray(warnings) ? warnings.filter((entry) => typeof entry === 'string') : []
+  } catch {
+    return []
+  }
+}
