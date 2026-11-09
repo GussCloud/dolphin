@@ -18125,7 +18125,9 @@
           "pickerHint": "O padrão mantém a identidade do seu git config.",
           "newIncomplete": "Preencha nome e e-mail.",
           "cancel": "Cancelar",
-          "addConfirm": "Adicionar autor"
+          "addConfirm": "Adicionar autor",
+          "remove": "Remover",
+          "update": "Salvar alterações"
         },
         "account": {
           "label": "Conta do {{provider}}",

@@ -47,3 +47,34 @@ export function withCommitAuthor(
 ): CommitIdentity[] {
   return normalizeCommitAuthors([...(saved ?? []), identity])
 }
+
+export function isSavedCommitAuthor(
+  saved: readonly unknown[] | null | undefined,
+  identity: CommitIdentity
+): boolean {
+  const key = commitAuthorKey(identity)
+  return normalizeCommitAuthors(saved ?? []).some((entry) => commitAuthorKey(entry) === key)
+}
+
+/** Edits `previous` in place (keeps its position); appends when it was not saved yet. */
+export function replaceCommitAuthor(
+  saved: readonly unknown[] | null | undefined,
+  previous: CommitIdentity,
+  next: CommitIdentity
+): CommitIdentity[] {
+  const previousKey = commitAuthorKey(previous)
+  const authors = normalizeCommitAuthors(saved ?? [])
+  const index = authors.findIndex((entry) => commitAuthorKey(entry) === previousKey)
+  if (index === -1) {
+    return withCommitAuthor(authors, next)
+  }
+  return normalizeCommitAuthors([...authors.slice(0, index), next, ...authors.slice(index + 1)])
+}
+
+export function withoutCommitAuthor(
+  saved: readonly unknown[] | null | undefined,
+  identity: CommitIdentity
+): CommitIdentity[] {
+  const key = commitAuthorKey(identity)
+  return normalizeCommitAuthors(saved ?? []).filter((entry) => commitAuthorKey(entry) !== key)
+}

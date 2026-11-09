@@ -54,7 +54,8 @@ test.describe('Commit author picker', () => {
     await repoSection.getByRole('button', { name: 'Adicionar autor' }).click()
 
     await expect(authorPicker).toContainText(AUTHOR_LABEL)
-    await expect(repoSection.getByLabel('Nome do autor')).toHaveCount(0)
+    // The picked author stays editable, for corrections.
+    await expect(repoSection.getByLabel('Nome do autor')).toHaveValue('Pessoa Teste')
     await repoSection.getByRole('button', { name: 'Salvar autor' }).click()
     await expect(repoSection.getByRole('button', { name: 'Salvar autor' })).toBeDisabled()
     await attachScreenshot(appPage, testInfo, 'commit-author-saved-pt-br')

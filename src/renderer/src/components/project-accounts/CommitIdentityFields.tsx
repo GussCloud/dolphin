@@ -1,7 +1,6 @@
 import { useId, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -12,16 +11,23 @@ import {
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import {
+  commitAuthorKey,
+  type CommitIdentity
+} from '../../../../shared/source-control-account-types'
+import {
   EMPTY_COMMIT_IDENTITY_DRAFT,
   evaluateCommitIdentityDraft,
   type CommitIdentityDraft
 } from './commit-identity-draft'
-import { commitAuthorKey } from '../../../../shared/source-control-account-types'
 import {
   GIT_CONFIG_AUTHOR_VALUE,
   commitAuthorOptions,
-  withCommitAuthor
+  isSavedCommitAuthor,
+  replaceCommitAuthor,
+  withCommitAuthor,
+  withoutCommitAuthor
 } from './commit-author-options'
+import { CommitAuthorForm } from './CommitAuthorForm'
 
 type CommitIdentityFieldsProps = {
   draft: CommitIdentityDraft
@@ -29,7 +35,7 @@ type CommitIdentityFieldsProps = {
   disabled?: boolean
 }
 
-/** Picks the commit author from the authors registered in Dolphin, or registers a new one. */
+/** Picks the commit author from the authors registered in Dolphin; registers or corrects one. */
 export function CommitIdentityFields({
   draft,
   onChange,
@@ -50,6 +56,10 @@ export function CommitIdentityFields({
   )
   const value = current ? commitAuthorKey(current) : GIT_CONFIG_AUTHOR_VALUE
 
+  // Why getState: a save in flight may have changed the list since this render.
+  const saveAuthors = (next: (saved: CommitIdentity[] | undefined) => CommitIdentity[]) =>
+    updateSettingsOrThrow({ commitAuthors: next(useAppStore.getState().settings?.commitAuthors) })
+
   return (
     <div className="space-y-1.5">
       <span id={labelId} className="text-[11px] font-medium text-muted-foreground">
@@ -61,6 +71,7 @@ export function CommitIdentityFields({
           disabled={disabled}
           onValueChange={(next) => {
             const picked = options.find((option) => option.value === next)
+            setAdding(false)
             onChange(picked ? { ...picked.identity } : EMPTY_COMMIT_IDENTITY_DRAFT)
           }}
         >
@@ -93,19 +104,43 @@ export function CommitIdentityFields({
         </Button>
       </div>
       {adding ? (
-        <NewCommitAuthorForm
+        <CommitAuthorForm
+          initial={null}
+          confirmLabel={translate(
+            'auto.components.projectAccounts.commitAuthor.addConfirm',
+            'Add author'
+          )}
           disabled={disabled}
           onCancel={() => setAdding(false)}
-          onSave={async (identity) => {
-            await updateSettingsOrThrow({
-              commitAuthors: withCommitAuthor(
-                useAppStore.getState().settings?.commitAuthors,
-                identity
-              )
-            })
+          onConfirm={async (identity) => {
+            await saveAuthors((saved) => withCommitAuthor(saved, identity))
             onChange({ ...identity })
             setAdding(false)
           }}
+        />
+      ) : current ? (
+        <CommitAuthorForm
+          // Why key: picking another author must reset the fields to that author.
+          key={value}
+          initial={current}
+          confirmLabel={translate(
+            'auto.components.projectAccounts.commitAuthor.update',
+            'Save changes'
+          )}
+          disabled={disabled}
+          onConfirm={async (identity) => {
+            await saveAuthors((saved) => replaceCommitAuthor(saved, current, identity))
+            onChange({ ...identity })
+          }}
+          // Only saved entries can be removed; authors other projects use stay listed anyway.
+          onRemove={
+            isSavedCommitAuthor(savedAuthors, current)
+              ? async () => {
+                  await saveAuthors((saved) => withoutCommitAuthor(saved, current))
+                  onChange(EMPTY_COMMIT_IDENTITY_DRAFT)
+                }
+              : undefined
+          }
         />
       ) : (
         <p className="text-[11px] text-muted-foreground">
@@ -115,110 +150,6 @@ export function CommitIdentityFields({
           )}
         </p>
       )}
-    </div>
-  )
-}
-
-function NewCommitAuthorForm({
-  disabled,
-  onCancel,
-  onSave
-}: {
-  disabled?: boolean
-  onCancel: () => void
-  onSave: (identity: { name: string; email: string }) => Promise<void>
-}): React.JSX.Element {
-  const [draft, setDraft] = useState<CommitIdentityDraft>(EMPTY_COMMIT_IDENTITY_DRAFT)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const result = evaluateCommitIdentityDraft(draft)
-  // Why: flag fields only once typed in, so a fresh form is not painted red.
-  const touched = draft.name.trim() !== '' || draft.email.trim() !== ''
-  const nameInvalid = touched && result.status === 'incomplete' && !draft.name.trim()
-  const emailInvalid =
-    result.status === 'invalid' ||
-    (touched && result.status === 'incomplete' && !draft.email.trim())
-
-  const save = async (): Promise<void> => {
-    if (result.status !== 'valid') {
-      return
-    }
-    setSaving(true)
-    setError(null)
-    try {
-      await onSave(result.identity)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="space-y-2 rounded-md border border-border p-2">
-      <div className="flex gap-2">
-        <Input
-          value={draft.name}
-          onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-          placeholder={translate(
-            'auto.components.projectAccounts.commitAuthor.namePlaceholder',
-            'Name'
-          )}
-          aria-label={translate('auto.components.projectAccounts.commitAuthor.name', 'Author name')}
-          aria-invalid={nameInvalid || undefined}
-          className="h-8 flex-1"
-          disabled={disabled || saving}
-          autoFocus
-        />
-        <Input
-          type="email"
-          value={draft.email}
-          onChange={(event) => setDraft({ ...draft, email: event.target.value })}
-          placeholder={translate(
-            'auto.components.projectAccounts.commitAuthor.emailPlaceholder',
-            'Email'
-          )}
-          aria-label={translate(
-            'auto.components.projectAccounts.commitAuthor.email',
-            'Author email'
-          )}
-          aria-invalid={emailInvalid || undefined}
-          className="h-8 flex-1"
-          disabled={disabled || saving}
-        />
-      </div>
-      {result.status === 'invalid' ? (
-        <p className="text-[11px] text-destructive">
-          {translate(
-            'auto.components.projectAccounts.commitAuthor.invalid',
-            'Enter a valid email address.'
-          )}
-        </p>
-      ) : touched && result.status === 'incomplete' ? (
-        <p className="text-[11px] text-muted-foreground">
-          {translate(
-            'auto.components.projectAccounts.commitAuthor.newIncomplete',
-            'Fill in both name and email.'
-          )}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="text-[11px] text-destructive" role="alert">
-          {error}
-        </p>
-      ) : null}
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" disabled={saving} onClick={onCancel}>
-          {translate('auto.components.projectAccounts.commitAuthor.cancel', 'Cancel')}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={disabled || saving || result.status !== 'valid'}
-          onClick={() => void save()}
-        >
-          {translate('auto.components.projectAccounts.commitAuthor.addConfirm', 'Add author')}
-        </Button>
-      </div>
     </div>
   )
 }

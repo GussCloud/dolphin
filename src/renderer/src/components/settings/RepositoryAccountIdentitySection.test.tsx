@@ -122,6 +122,10 @@ function saveButton(): HTMLButtonElement {
   return button('Save author')
 }
 
+function inputValues(): string[] {
+  return Array.from(container.querySelectorAll('input')).map((input) => input.value)
+}
+
 function authorSelect(): HTMLSelectElement {
   return container.querySelector('select')!
 }
@@ -148,6 +152,7 @@ describe('RepositoryAccountIdentitySection', () => {
     expect(container.querySelectorAll('input')).toHaveLength(0)
     expect(saveButton().disabled).toBe(true)
     await pickAuthor('Dev <dev@example.test>')
+    expect(inputValues()).toEqual(['Dev', 'dev@example.test'])
     expect(saveButton().disabled).toBe(false)
     await click('Save author')
     expect(updateRepo).toHaveBeenCalledWith('repo-1', {
@@ -182,11 +187,49 @@ describe('RepositoryAccountIdentitySection', () => {
         { name: 'Second', email: 'second@example.test' }
       ]
     })
-    expect(container.querySelectorAll('input')).toHaveLength(0)
+    expect(inputValues()).toEqual(['Second', 'second@example.test'])
     await click('Save author')
     expect(updateRepo).toHaveBeenCalledWith('repo-1', {
       commitIdentity: { name: 'Second', email: 'second@example.test' }
     })
+  })
+
+  it('corrects the picked author in the registered list', async () => {
+    const updateRepo = vi.fn(async () => true)
+    await render(updateRepo)
+    await pickAuthor('Dev <dev@example.test>')
+    expect(button('Save changes').disabled).toBe(true)
+    await type('Author name', 'Dev Fixed')
+    await click('Save changes')
+    expect(storeState.updateSettingsOrThrow).toHaveBeenCalledWith({
+      commitAuthors: [{ name: 'Dev Fixed', email: 'dev@example.test' }]
+    })
+    expect(authorSelect().selectedOptions[0]?.textContent).toBe('Dev Fixed <dev@example.test>')
+    await click('Save author')
+    expect(updateRepo).toHaveBeenCalledWith('repo-1', {
+      commitIdentity: { name: 'Dev Fixed', email: 'dev@example.test' }
+    })
+  })
+
+  it('removes the picked author and falls back to the git config identity', async () => {
+    await render(vi.fn())
+    await pickAuthor('Dev <dev@example.test>')
+    await click('Remove')
+    expect(storeState.updateSettingsOrThrow).toHaveBeenCalledWith({ commitAuthors: [] })
+    expect(authorSelect().selectedOptions[0]?.textContent).toBe('Git config identity (default)')
+    expect(container.querySelectorAll('input')).toHaveLength(0)
+  })
+
+  it('offers no remove for an author only another project uses', async () => {
+    storeState.settings = { commitAuthors: [] }
+    storeState.repos = [
+      REPO,
+      { ...REPO, id: 'repo-2', commitIdentity: { name: 'Ops', email: 'ops@example.test' } }
+    ]
+    await render(vi.fn())
+    await pickAuthor('Ops <ops@example.test>')
+    expect(inputValues()).toEqual(['Ops', 'ops@example.test'])
+    expect(button('Remove')).toBeUndefined()
   })
 
   it('reports "not enforced" when an older host drops the field', async () => {
