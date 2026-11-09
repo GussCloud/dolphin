@@ -15,8 +15,8 @@ import {
   normalizeGhAccountBinding,
   type GhAccountBinding
 } from '../../shared/github/account-binding'
-import { runProcess } from '../../shared/child-process/run-process'
-import { buildWslExecArgs } from '../../shared/wsl-login-shell-command'
+import { buildWslCapturedLoginShellCommand } from '../../shared/wsl-login-shell-command'
+import { runWslProcess } from '../wsl/wsl-runner'
 
 const ACCOUNTS_DIR_NAME = 'gh-accounts'
 const WSL_PROBE_TIMEOUT_MS = 10_000
@@ -115,6 +115,18 @@ const WSL_STORAGE_PROBE = [
   'grep -q "oauth_token:" "$f" && echo file || echo keyring'
 ].join('\n')
 
+/** Anything but a clean, fenced answer is `unknown`, which keeps the binding off terminals. */
+export function parseWslGhStorageProbe(
+  code: number | null,
+  payload: string | null
+): GhTokenStorage {
+  if (code !== 0 || payload === null) {
+    return 'unknown'
+  }
+  const answer = payload.trim()
+  return answer === 'keyring' || answer === 'file' || answer === 'missing' ? answer : 'unknown'
+}
+
 /**
  * Where the gh that a terminal will run keeps this login's token. WSL is conservative: any token
  * stored in the guest's hosts.yml counts as `file`.
@@ -124,18 +136,16 @@ export async function detectGhTokenStorage(
   target: { wsl?: { distro: string | null } } = {}
 ): Promise<GhTokenStorage> {
   if (target.wsl) {
+    // Why the login shell: terminals read GH_CONFIG_DIR/XDG_CONFIG_HOME from rc files; the fence drops rc banners.
+    const captured = buildWslCapturedLoginShellCommand(WSL_STORAGE_PROBE)
     try {
-      const result = await runProcess({
-        program: 'wsl.exe',
-        args: buildWslExecArgs(target.wsl.distro ?? undefined, [
-          '/bin/sh',
-          '-c',
-          WSL_STORAGE_PROBE
-        ]),
-        timeoutMs: WSL_PROBE_TIMEOUT_MS
+      const result = await runWslProcess({
+        script: captured.command,
+        loginPath: 'none',
+        timeoutMs: WSL_PROBE_TIMEOUT_MS,
+        ...(target.wsl.distro ? { distro: target.wsl.distro } : {})
       })
-      const answer = result.stdout.trim()
-      return answer === 'keyring' || answer === 'file' || answer === 'missing' ? answer : 'unknown'
+      return parseWslGhStorageProbe(result.code, captured.readStdout(result.stdout))
     } catch {
       return 'unknown'
     }
