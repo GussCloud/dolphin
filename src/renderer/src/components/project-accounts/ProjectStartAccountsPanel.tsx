@@ -109,7 +109,7 @@ export function ProjectStartAccountsPanel({
   const [inventory, setInventory] = useState<GhAccountBindingInventory | null>(null)
   const [azureAccounts, setAzureAccounts] = useState<AzureDevOpsManagedAccount[]>([])
   const [signingInGitHub, setSigningInGitHub] = useState(false)
-  const [adding, setAdding] = useState<'azure' | 'claude' | null>(null)
+  const [adding, setAdding] = useState<'azure-account' | 'claude-account' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { accounts, setGhAccount, setAzureDevOpsAccount, setAgentAccountId, setCommitIdentity } =
     state
@@ -125,7 +125,7 @@ export function ProjectStartAccountsPanel({
   }, [reloadGitHub])
 
   const addAzure = async (): Promise<void> => {
-    setAdding('azure')
+    setAdding('azure-account')
     setError(null)
     const result = await addAzureDevOpsManagedAccount('in-app')
     setAdding(null)
@@ -139,7 +139,7 @@ export function ProjectStartAccountsPanel({
 
   const addClaude = async (): Promise<void> => {
     const before = new Set((settings?.claudeManagedAccounts ?? []).map((account) => account.id))
-    setAdding('claude')
+    setAdding('claude-account')
     setError(null)
     try {
       await window.api.claudeAccounts.add({ runtime: 'host', wslDistro: null })
@@ -208,7 +208,7 @@ export function ProjectStartAccountsPanel({
         )}
         options={azureStartOptions(azureAccounts)}
         value={accounts.azureDevOpsAccountId}
-        busy={adding === 'azure'}
+        busy={adding === 'azure-account'}
         addLabel={translate(
           'auto.components.projectAccounts.startAccounts.addAzure',
           'Add Azure DevOps account'
@@ -227,7 +227,7 @@ export function ProjectStartAccountsPanel({
         )}
         options={claudeStartOptions(settings)}
         value={accounts.agentAccountId}
-        busy={adding === 'claude'}
+        busy={adding === 'claude-account'}
         addLabel={translate(
           'auto.components.projectAccounts.startAccounts.addClaude',
           'Add Claude account'
