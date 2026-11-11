@@ -12,7 +12,7 @@ const COMPANY: ProjectStartAccounts = {
   ghAccount: { host: 'github.com', user: 'ana-corp' },
   azureDevOpsAccountId: 'ado-corp',
   agentAccountId: 'claude-corp',
-  suggestedIdentity: { name: 'Ana Dev', email: 'ana@corp.example' }
+  commitIdentity: { name: 'Ana Dev', email: 'ana@corp.example' }
 }
 
 describe('projectStartBinding', () => {
@@ -20,7 +20,7 @@ describe('projectStartBinding', () => {
     expect(projectStartBinding(COMPANY, { provider: 'github', host: 'github.com' })).toEqual({
       ghAccount: COMPANY.ghAccount,
       agentAccountId: 'claude-corp',
-      commitIdentity: COMPANY.suggestedIdentity
+      commitIdentity: COMPANY.commitIdentity
     })
   })
 
@@ -42,7 +42,7 @@ describe('projectStartBinding', () => {
   it('keeps the agent account and author even for an unsupported or missing remote', () => {
     expect(projectStartBinding(COMPANY, null)).toEqual({
       agentAccountId: 'claude-corp',
-      commitIdentity: COMPANY.suggestedIdentity
+      commitIdentity: COMPANY.commitIdentity
     })
   })
 })

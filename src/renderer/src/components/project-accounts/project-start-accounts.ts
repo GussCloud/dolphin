@@ -15,14 +15,14 @@ export type ProjectStartAccounts = {
   /** Managed Claude account; null keeps the active account. */
   agentAccountId: string | null
   /** Author suggested from the chosen GitHub account; editable later in each flow. */
-  suggestedIdentity: CommitIdentity | null
+  commitIdentity: CommitIdentity | null
 }
 
 export const EMPTY_PROJECT_START_ACCOUNTS: ProjectStartAccounts = {
   ghAccount: null,
   azureDevOpsAccountId: null,
   agentAccountId: null,
-  suggestedIdentity: null
+  commitIdentity: null
 }
 
 export function hasProjectStartChoice(accounts: ProjectStartAccounts): boolean {
@@ -30,7 +30,7 @@ export function hasProjectStartChoice(accounts: ProjectStartAccounts): boolean {
     accounts.ghAccount ||
     accounts.azureDevOpsAccountId ||
     accounts.agentAccountId ||
-    accounts.suggestedIdentity
+    accounts.commitIdentity
   )
 }
 
@@ -58,7 +58,7 @@ export function projectStartBinding(
       ? { azureDevOpsAccountId: accounts.azureDevOpsAccountId }
       : {}),
     ...(accounts.agentAccountId ? { agentAccountId: accounts.agentAccountId } : {}),
-    ...(accounts.suggestedIdentity ? { commitIdentity: accounts.suggestedIdentity } : {})
+    ...(accounts.commitIdentity ? { commitIdentity: accounts.commitIdentity } : {})
   }
 }
 
@@ -86,7 +86,7 @@ export function createProjectBinding(
   identity: CommitIdentity | null
 ): RepoAccountBinding {
   const binding = accounts
-    ? projectStartBinding({ ...accounts, suggestedIdentity: null }, 'no-remote')
+    ? projectStartBinding({ ...accounts, commitIdentity: null }, 'no-remote')
     : {}
   return identity ? { ...binding, commitIdentity: identity } : binding
 }

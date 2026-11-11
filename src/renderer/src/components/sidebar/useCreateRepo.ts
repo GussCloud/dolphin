@@ -45,7 +45,7 @@ export function useCreateRepo(
   const [typedIdentity, setTypedIdentity] = useState<CommitIdentityDraft | null>(null)
   // Why: until the user edits it, the author follows the account picked on the first screen.
   const createIdentity =
-    typedIdentity ?? commitIdentityDraftFrom(options.startAccounts?.suggestedIdentity)
+    typedIdentity ?? commitIdentityDraftFrom(options.startAccounts?.commitIdentity)
   const mountedRef = useMountedRef()
   const hostToken = options.hostId ?? options.sshTargetId ?? ''
   const hostTokenRef = useRef(hostToken)

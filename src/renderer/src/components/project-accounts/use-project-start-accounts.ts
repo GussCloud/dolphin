@@ -12,6 +12,8 @@ export type ProjectStartAccountsState = {
   setGhAccount: (binding: GhAccountBinding | null) => void
   setAzureDevOpsAccount: (account: { id: string; login: string } | null) => void
   setAgentAccountId: (accountId: string | null) => void
+  /** A pick by the user; account changes stop replacing the author after it. */
+  setCommitIdentity: (identity: CommitIdentity | null) => void
 }
 
 function savedAuthorWithEmail(email: string): CommitIdentity | null {
@@ -35,13 +37,22 @@ async function suggestForGhAccount(binding: GhAccountBinding): Promise<CommitIde
 export function useProjectStartAccounts(enabled: boolean): ProjectStartAccountsState {
   const [accounts, setAccounts] = useState<ProjectStartAccounts>(EMPTY_PROJECT_START_ACCOUNTS)
   const accountsRef = useRef(accounts)
-  accountsRef.current = accounts
-  const suggestionGenerationRef = useRef(0)
+  // Why refs written only in handlers: suggestions read the latest picks without re-rendering.
+  const ghAccountRef = useRef<GhAccountBinding | null>(null)
   const azureLoginRef = useRef('')
+  const identityPickedRef = useRef(false)
+  const suggestionGenerationRef = useRef(0)
+
+  useEffect(() => {
+    accountsRef.current = accounts
+  }, [accounts])
 
   useEffect(() => {
     if (!enabled) {
       suggestionGenerationRef.current++
+      ghAccountRef.current = null
+      azureLoginRef.current = ''
+      identityPickedRef.current = false
       setAccounts(EMPTY_PROJECT_START_ACCOUNTS)
     }
   }, [enabled])
@@ -51,22 +62,26 @@ export function useProjectStartAccounts(enabled: boolean): ProjectStartAccountsS
     [enabled]
   )
 
-  const applySuggestion = useCallback(async (load: () => Promise<CommitIdentity | null>) => {
+  const applySuggestion = useCallback(async () => {
+    if (identityPickedRef.current) {
+      return
+    }
     const generation = ++suggestionGenerationRef.current
-    setAccounts((prev) => ({ ...prev, suggestedIdentity: null }))
-    const suggestion = await load()
-    if (generation === suggestionGenerationRef.current) {
-      setAccounts((prev) => ({ ...prev, suggestedIdentity: suggestion }))
+    // Why: GitHub knows the account's name and email; Azure only matches a saved author's email.
+    const binding = ghAccountRef.current
+    const suggestion = binding
+      ? await suggestForGhAccount(binding)
+      : savedAuthorWithEmail(azureLoginRef.current)
+    if (generation === suggestionGenerationRef.current && !identityPickedRef.current) {
+      setAccounts((prev) => ({ ...prev, commitIdentity: suggestion }))
     }
   }, [])
 
   const setGhAccount = useCallback(
     (binding: GhAccountBinding | null) => {
+      ghAccountRef.current = binding
       setAccounts((prev) => ({ ...prev, ghAccount: binding }))
-      const azureLogin = accountsRef.current.azureDevOpsAccountId ? azureLoginRef.current : ''
-      void applySuggestion(async () =>
-        binding ? suggestForGhAccount(binding) : savedAuthorWithEmail(azureLogin)
-      )
+      void applySuggestion()
     },
     [applySuggestion]
   )
@@ -75,10 +90,7 @@ export function useProjectStartAccounts(enabled: boolean): ProjectStartAccountsS
     (account: { id: string; login: string } | null) => {
       azureLoginRef.current = account?.login ?? ''
       setAccounts((prev) => ({ ...prev, azureDevOpsAccountId: account?.id ?? null }))
-      // Why: a GitHub pick already suggested an author; Azure only fills in when none did.
-      if (!accountsRef.current.ghAccount) {
-        void applySuggestion(async () => (account ? savedAuthorWithEmail(account.login) : null))
-      }
+      void applySuggestion()
     },
     [applySuggestion]
   )
@@ -87,11 +99,18 @@ export function useProjectStartAccounts(enabled: boolean): ProjectStartAccountsS
     setAccounts((prev) => ({ ...prev, agentAccountId }))
   }, [])
 
+  const setCommitIdentity = useCallback((commitIdentity: CommitIdentity | null) => {
+    identityPickedRef.current = true
+    suggestionGenerationRef.current++
+    setAccounts((prev) => ({ ...prev, commitIdentity }))
+  }, [])
+
   return {
     accounts: enabled ? accounts : EMPTY_PROJECT_START_ACCOUNTS,
     get,
     setGhAccount,
     setAzureDevOpsAccount,
-    setAgentAccountId
+    setAgentAccountId,
+    setCommitIdentity
   }
 }

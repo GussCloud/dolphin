@@ -19,10 +19,7 @@ import {
   type CloneProjectAccounts
 } from '../project-accounts/new-project-account-settings'
 import type { ProjectStartAccounts } from '../project-accounts/project-start-accounts'
-import {
-  commitIdentityDraftFrom,
-  evaluateCommitIdentityDraft
-} from '../project-accounts/commit-identity-draft'
+import { commitIdentityDraftFrom } from '../project-accounts/commit-identity-draft'
 
 export function useAddRepoCloneFlow({
   step,
@@ -83,16 +80,14 @@ export function useAddRepoCloneFlow({
     ...accountDraft,
     preferred: startAccounts ?? null
   }
-  const cloneStepSeededRef = useRef(false)
-  if (step !== 'clone') {
-    cloneStepSeededRef.current = false
-  } else if (!cloneStepSeededRef.current) {
-    cloneStepSeededRef.current = true
-    const suggested = startAccounts?.suggestedIdentity
-    if (suggested && evaluateCommitIdentityDraft(accountDraft.draft.identity).status === 'empty') {
-      accountDraft.setIdentity(commitIdentityDraftFrom(suggested))
+  const seedIdentity = accountDraft.seedIdentity
+  const startIdentity = startAccounts?.commitIdentity ?? null
+  useEffect(() => {
+    // Why seed, not set: an author already typed in the clone form wins over the first screen.
+    if (step === 'clone' && startIdentity) {
+      seedIdentity(commitIdentityDraftFrom(startIdentity))
     }
-  }
+  }, [seedIdentity, startIdentity, step])
 
   useEffect(() => {
     if (!isCloning) {

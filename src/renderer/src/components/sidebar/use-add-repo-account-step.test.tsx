@@ -121,7 +121,7 @@ describe('useAddRepoAccountStep', () => {
       ghAccount: { host: 'github.com', user: 'ana-corp' },
       azureDevOpsAccountId: 'ado-corp',
       agentAccountId: 'claude-corp',
-      suggestedIdentity: { name: 'Ana', email: 'ana@corp.example' }
+      commitIdentity: { name: 'Ana', email: 'ana@corp.example' }
     }
     await act(async () => hook.offer('repo-1', 'local_folder_picker'))
     expect(planMock).not.toHaveBeenCalled()

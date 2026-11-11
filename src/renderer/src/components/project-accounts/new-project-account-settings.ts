@@ -75,6 +75,8 @@ export function useNewProjectAccountDraft(): {
   draft: NewProjectAccountDraft
   setSelection: (selection: ProjectAccountSelection | null) => void
   setIdentity: (identity: CommitIdentityDraft) => void
+  /** Sets the author only while the form's author is still empty. */
+  seedIdentity: (identity: CommitIdentityDraft) => void
   reset: () => void
 } {
   const [draft, setDraft] = useState<NewProjectAccountDraft>(EMPTY_NEW_PROJECT_ACCOUNT_DRAFT)
@@ -86,6 +88,13 @@ export function useNewProjectAccountDraft(): {
     (identity: CommitIdentityDraft) => setDraft((prev) => ({ ...prev, identity })),
     []
   )
+  const seedIdentity = useCallback(
+    (identity: CommitIdentityDraft) =>
+      setDraft((prev) =>
+        evaluateCommitIdentityDraft(prev.identity).status === 'empty' ? { ...prev, identity } : prev
+      ),
+    []
+  )
   const reset = useCallback(() => setDraft(EMPTY_NEW_PROJECT_ACCOUNT_DRAFT), [])
-  return { draft, setSelection, setIdentity, reset }
+  return { draft, setSelection, setIdentity, seedIdentity, reset }
 }

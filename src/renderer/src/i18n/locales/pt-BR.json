@@ -18154,14 +18154,16 @@
           "addGitHub": "Adicionar conta do GitHub",
           "addAzure": "Adicionar conta do Azure DevOps",
           "addClaude": "Adicionar conta do Claude",
-          "suggestedAuthor": "Autor dos commits: {{value0}} <{{value1}}>",
           "githubHost": "Servidor do GitHub",
           "signIn": "Entrar",
           "cancel": "Cancelar",
           "terminalTitle": "GitHub CLI",
           "terminalAria": "Comando de conta do GitHub",
           "restoreDescription": "O gh tornou a nova conta ativa. Pressione Enter para manter a conta anterior como padrão deste PC.",
-          "loginDescription": "Pressione Enter para entrar. A conta padrão atual continua sendo a padrão."
+          "loginDescription": "Pressione Enter para entrar. A conta padrão atual continua sendo a padrão.",
+          "githubLabel": "GitHub",
+          "azureDevOpsLabel": "Azure DevOps",
+          "claudeLabel": "Claude"
         }
       }
     },

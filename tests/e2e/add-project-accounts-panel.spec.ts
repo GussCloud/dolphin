@@ -3,7 +3,7 @@ import { test, expect } from './helpers/dolphin-app'
 import { waitForSessionReady } from './helpers/store'
 
 test.describe('Add project accounts panel', () => {
-  test('shows this PC’s default GitHub, Azure DevOps and Claude accounts on the first screen', async ({
+  test('shows this PC’s defaults and the registered commit authors on the first screen', async ({
     appPage
   }, testInfo) => {
     await waitForSessionReady(appPage)
@@ -21,6 +21,18 @@ test.describe('Add project accounts panel', () => {
     for (const label of ['Add GitHub account', 'Add Azure DevOps account', 'Add Claude account']) {
       await expect(addDialog.getByRole('button', { name: label })).toBeVisible()
     }
+    // Why: registered authors must be visible by name and email before the project exists.
+    const author = addDialog.getByRole('combobox', { name: 'Commit author' })
+    await expect(author).toContainText('Git config identity (default)')
+    await addDialog.getByRole('button', { name: 'New author' }).click()
+    await addDialog.getByRole('textbox', { name: 'Author name' }).fill('Ana Corp')
+    await addDialog.getByRole('textbox', { name: 'Author email' }).fill('ana@corp.example')
+    await addDialog.getByRole('button', { name: 'Add author' }).click()
+    await expect(author).toContainText('Ana Corp <ana@corp.example>')
+    await expect(addDialog.getByRole('textbox', { name: 'Author email' })).toHaveValue(
+      'ana@corp.example'
+    )
+
     // The entry actions stay reachable under the panel.
     await expect(addDialog.getByRole('button', { name: /Clone from URL/i })).toBeVisible()
 

@@ -30,6 +30,8 @@ import {
   type StartAccountOption
 } from './start-account-options'
 import { StartGitHubSignIn } from './StartGitHubSignIn'
+import { CommitIdentityFields } from './CommitIdentityFields'
+import { commitIdentityDraftFrom, evaluateCommitIdentityDraft } from './commit-identity-draft'
 import type { ProjectStartAccountsState } from './use-project-start-accounts'
 
 const LOCAL_TARGET = getActiveRuntimeTarget({ activeRuntimeEnvironmentId: null })
@@ -109,7 +111,8 @@ export function ProjectStartAccountsPanel({
   const [signingInGitHub, setSigningInGitHub] = useState(false)
   const [adding, setAdding] = useState<'azure' | 'claude' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { accounts, setGhAccount, setAzureDevOpsAccount, setAgentAccountId } = state
+  const { accounts, setGhAccount, setAzureDevOpsAccount, setAgentAccountId, setCommitIdentity } =
+    state
 
   const reloadGitHub = useCallback(async () => {
     const next = await listGhHostAccounts(LOCAL_TARGET).catch(() => null)
@@ -168,7 +171,7 @@ export function ProjectStartAccountsPanel({
         )}
       </p>
       <StartAccountRow
-        label="GitHub"
+        label={translate('auto.components.projectAccounts.startAccounts.githubLabel', 'GitHub')}
         defaultLabel={pcDefault(
           githubPcDefaultLogin(inventory),
           translate(
@@ -195,7 +198,10 @@ export function ProjectStartAccountsPanel({
         />
       ) : null}
       <StartAccountRow
-        label="Azure DevOps"
+        label={translate(
+          'auto.components.projectAccounts.startAccounts.azureDevOpsLabel',
+          'Azure DevOps'
+        )}
         defaultLabel={translate(
           'auto.components.projectAccounts.startAccounts.azureDefault',
           'Azure CLI sign-in (this PC’s default)'
@@ -211,7 +217,7 @@ export function ProjectStartAccountsPanel({
         onAdd={() => void addAzure()}
       />
       <StartAccountRow
-        label="Claude"
+        label={translate('auto.components.projectAccounts.startAccounts.claudeLabel', 'Claude')}
         defaultLabel={pcDefault(
           claudePcDefaultEmail(settings),
           translate(
@@ -229,15 +235,16 @@ export function ProjectStartAccountsPanel({
         onChange={setAgentAccountId}
         onAdd={() => void addClaude()}
       />
-      {accounts.suggestedIdentity ? (
-        <p className="truncate text-[11px] text-muted-foreground" data-add-project-suggested-author>
-          {translate(
-            'auto.components.projectAccounts.startAccounts.suggestedAuthor',
-            'Commit author: {{value0}} <{{value1}}>',
-            { value0: accounts.suggestedIdentity.name, value1: accounts.suggestedIdentity.email }
-          )}
-        </p>
-      ) : null}
+      {/* Why the shared picker: it lists every registered author as "Name <email>" and edits them. */}
+      <div data-add-project-commit-author>
+        <CommitIdentityFields
+          draft={commitIdentityDraftFrom(accounts.commitIdentity)}
+          onChange={(draft) => {
+            const result = evaluateCommitIdentityDraft(draft)
+            setCommitIdentity(result.status === 'valid' ? result.identity : null)
+          }}
+        />
+      </div>
       {error ? (
         <p className="text-[11px] text-destructive" role="alert">
           {error}

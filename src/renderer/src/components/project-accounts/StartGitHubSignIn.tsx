@@ -42,10 +42,9 @@ export function StartGitHubSignIn({
 
   const finishLogin = async (current: Extract<Phase, { kind: 'login' }>): Promise<void> => {
     const fresh = await reload()
+    const known = new Set(current.known)
     const added =
-      fresh?.accounts.find(
-        (entry) => entry.host === current.host && !current.known.includes(entry.user)
-      ) ?? null
+      fresh?.accounts.find((entry) => entry.host === current.host && !known.has(entry.user)) ?? null
     const binding = added ? { host: added.host, user: added.user } : null
     const nowActive = activeLogin(fresh, current.host)
     const restore =
