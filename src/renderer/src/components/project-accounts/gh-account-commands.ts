@@ -22,3 +22,11 @@ export function ghAuthLogoutCommand(host: string, user: string): string | null {
     ? `gh auth logout --hostname ${normalized} --user ${user}`
     : null
 }
+
+/** Restores gh's active login after `gh auth login` made the new account active. */
+export function ghAuthSwitchCommand(host: string, user: string): string | null {
+  const normalized = normalizeGhHostInput(host)
+  return normalized && GH_LOGIN_RE.test(user)
+    ? `gh auth switch --hostname ${normalized} --user ${user}`
+    : null
+}

@@ -12642,6 +12642,13 @@
           "terminalAria": "GitHub account command",
           "terminalDescription": "Press Enter to run the command. Dolphin re-checks accounts when it ends.",
           "envToken": "Environment token"
+        },
+        "RepositoryAgentAccountSection": {
+          "title": "Claude account",
+          "description": "Claude agents in this project use this account’s quota.",
+          "hint": "Applies to agents started after the change. A worktree that picked its own account keeps it.",
+          "codexTitle": "Codex account",
+          "codexDescription": "Codex agents in this project use this account’s quota."
         }
       },
       "right": {
@@ -17125,7 +17132,8 @@
         },
         "AgentAccountPicker": {
           "label": "Account",
-          "active": "Active account"
+          "active": "Active account",
+          "projectDefault": "Project account ({{value0}})"
         }
       },
       "activity": {
@@ -18138,6 +18146,30 @@
           "azureHint": "Default uses the sign-in configured in Settings → Integrations.",
           "githubDefault": "Default account (gh’s active login)",
           "azureDefault": "Default sign-in"
+        },
+        "startAccounts": {
+          "title": "Accounts for this project",
+          "pcDefault": "{{value0}} (this PC’s default)",
+          "ghDefault": "Active gh login (this PC’s default)",
+          "azureDefault": "Azure CLI sign-in (this PC’s default)",
+          "claudeDefault": "System Claude login (this PC’s default)",
+          "addGitHub": "Add GitHub account",
+          "addAzure": "Add Azure DevOps account",
+          "addClaude": "Add Claude account",
+          "githubHost": "GitHub host",
+          "signIn": "Sign in",
+          "cancel": "Cancel",
+          "terminalTitle": "GitHub CLI",
+          "terminalAria": "GitHub account command",
+          "restoreDescription": "Dolphin could not switch gh back to your previous account. Press Enter to keep it as this PC’s default.",
+          "loginDescription": "Press Enter to sign in. Your current default account stays the default.",
+          "githubLabel": "GitHub",
+          "azureDevOpsLabel": "Azure DevOps",
+          "claudeLabel": "Claude",
+          "cancelSignIn": "Cancel sign-in",
+          "codexLabel": "Codex",
+          "codexDefault": "System Codex login (this PC’s default)",
+          "addCodex": "Add Codex account"
         }
       }
     },

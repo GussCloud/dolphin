@@ -7,6 +7,7 @@ import { normalizeGhAccountBinding } from '../../../shared/github/account-bindin
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
 import {
   normalizeAzureDevOpsAccountId,
+  normalizeAgentAccountId,
   normalizeCommitIdentity,
   type CommitIdentity
 } from '../../../shared/source-control-account-types'
@@ -90,6 +91,8 @@ export function sanitizeRepoUpdatesForPersistence<
     ghAccount?: GhAccountBinding | null
     azureDevOpsAccountId?: string | null
     commitIdentity?: CommitIdentity | null
+    claudeAccountId?: string | null
+    codexAccountId?: string | null
   }
 >(updates: T): T {
   const sanitized = { ...updates }
@@ -164,6 +167,22 @@ export function sanitizeRepoUpdatesForPersistence<
       delete sanitized.azureDevOpsAccountId
     } else {
       sanitized.azureDevOpsAccountId = accountId
+    }
+  }
+  if ('claudeAccountId' in sanitized && sanitized.claudeAccountId != null) {
+    const accountId = normalizeAgentAccountId(sanitized.claudeAccountId)
+    if (!accountId) {
+      delete sanitized.claudeAccountId
+    } else {
+      sanitized.claudeAccountId = accountId
+    }
+  }
+  if ('codexAccountId' in sanitized && sanitized.codexAccountId != null) {
+    const accountId = normalizeAgentAccountId(sanitized.codexAccountId)
+    if (!accountId) {
+      delete sanitized.codexAccountId
+    } else {
+      sanitized.codexAccountId = accountId
     }
   }
   if ('commitIdentity' in sanitized && sanitized.commitIdentity != null) {

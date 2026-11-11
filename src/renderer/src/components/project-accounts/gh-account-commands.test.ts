@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ghAuthLoginCommand,
   ghAuthLogoutCommand,
+  ghAuthSwitchCommand,
   normalizeGhHostInput
 } from './gh-account-commands'
 
@@ -14,6 +15,13 @@ describe('gh account commands', () => {
     expect(ghAuthLogoutCommand('github.com', 'octo-cat')).toBe(
       'gh auth logout --hostname github.com --user octo-cat'
     )
+  })
+
+  it('builds the switch-back command and refuses unsafe logins', () => {
+    expect(ghAuthSwitchCommand('github.com', 'ana-personal')).toBe(
+      'gh auth switch --hostname github.com --user ana-personal'
+    )
+    expect(ghAuthSwitchCommand('github.com', 'a;b')).toBeNull()
   })
 
   it('refuses anything a shell could interpret', () => {

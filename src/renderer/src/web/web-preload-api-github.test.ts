@@ -22,6 +22,7 @@ describe('web GitHub preload API', () => {
 
     expect(Object.keys(api.gh).sort()).toEqual(
       [
+        'accountProfile',
         'addIssueComment',
         'addIssueCommentBySlug',
         'addPRReviewComment',
@@ -63,14 +64,15 @@ describe('web GitHub preload API', () => {
         'repoSlug',
         'repoUpstream',
         'reportVisiblePRRefreshCandidates',
-        'rerunPRChecks',
         'requestPRReviewers',
+        'rerunPRChecks',
         'resolveProjectRef',
         'resolveReviewThread',
         'setPRAutoMerge',
         'setPRCommentReaction',
         'setPRFileViewed',
         'starDolphin',
+        'switchAccount',
         'updateIssue',
         'updateIssueBySlug',
         'updateIssueCommentBySlug',

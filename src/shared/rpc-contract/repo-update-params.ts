@@ -4,6 +4,7 @@ import { normalizeRepoBadgeColor } from '../repo-badge-color'
 import { sanitizeRepoIcon } from '../repo-icon'
 import { normalizeGhAccountBinding } from '../github/account-binding'
 import {
+  normalizeAgentAccountId,
   normalizeAzureDevOpsAccountId,
   normalizeCommitIdentity
 } from '../source-control-account-types'
@@ -94,6 +95,26 @@ export function createRepoUpdateSchema<T extends Readonly<Record<string, z.ZodTy
             : value === null
               ? null
               : (normalizeCommitIdentity(value) ?? undefined)
+        ),
+      claudeAccountId: z
+        .unknown()
+        .optional()
+        .transform((value) =>
+          value === undefined
+            ? undefined
+            : value === null
+              ? null
+              : (normalizeAgentAccountId(value) ?? undefined)
+        ),
+      codexAccountId: z
+        .unknown()
+        .optional()
+        .transform((value) =>
+          value === undefined
+            ? undefined
+            : value === null
+              ? null
+              : (normalizeAgentAccountId(value) ?? undefined)
         ),
       forkSyncMode: z.enum(['ask', 'safe-auto', 'off']).optional(),
       externalWorktreeVisibility: z.enum(['hide', 'show']).nullable().optional(),

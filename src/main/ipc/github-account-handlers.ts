@@ -7,6 +7,7 @@ import {
   listGhAccountBindingInventory,
   validateGhAccountBinding
 } from '../github/gh-account-binding-inventory'
+import { getGhAccountProfile, switchGhActiveAccount } from '../github/gh-account-profile'
 import { getRateLimit } from '../github/rate-limit'
 import type { Store } from '../persistence'
 import { getCohortAtEmit } from '../telemetry/cohort-classifier'
@@ -70,6 +71,11 @@ export function registerGitHubAccountHandlers(store: Store): void {
       })
     }
   )
+
+  // Why: suggests the commit author for an account picked before the project exists.
+  ipcMain.handle('gh:accountProfile', (_event, binding: unknown) => getGhAccountProfile(binding))
+  // Why: adding an account from the add-project panel must not change gh's default for the PC.
+  ipcMain.handle('gh:switchAccount', (_event, binding: unknown) => switchGhActiveAccount(binding))
 
   ipcMain.handle(
     'gh:validateAccountBinding',

@@ -15,6 +15,7 @@ import { projectRemoteTargetFromUrl } from './project-account-provider'
 import type { NewProjectAccountDraft } from './new-project-account-settings'
 import type { CommitIdentityDraft } from './commit-identity-draft'
 import type { ProjectAccountSelection } from './project-account-options'
+import { preferredCloneSelection, type ProjectStartAccounts } from './project-start-accounts'
 
 type NewProjectAccountFieldsProps = {
   /** Clone URL or the picked folder's remote; empty when the project has no remote yet. */
@@ -26,6 +27,8 @@ type NewProjectAccountFieldsProps = {
   onSelectionChange: (selection: ProjectAccountSelection | null) => void
   onIdentityChange: (identity: CommitIdentityDraft) => void
   disabled?: boolean
+  /** First-screen picks; the matching provider's account is preselected once per remote. */
+  preferred?: ProjectStartAccounts | null
 }
 
 export function NewProjectAccountFields({
@@ -35,7 +38,8 @@ export function NewProjectAccountFields({
   draft,
   onSelectionChange,
   onIdentityChange,
-  disabled
+  disabled,
+  preferred
 }: NewProjectAccountFieldsProps): React.JSX.Element {
   const runtimeTarget = useMemo(
     () => getActiveRuntimeTarget({ activeRuntimeEnvironmentId: runtimeEnvironmentId ?? null }),
@@ -104,6 +108,24 @@ export function NewProjectAccountFields({
     : target.provider === 'github'
       ? githubAccountOptions(inventory, target.host)
       : azureDevOpsAccountOptions(azureAccounts)
+
+  const preferredSelection = preferred ? preferredCloneSelection(preferred, target) : null
+  const preferredValue = preferredSelection ? selectionValue(preferredSelection) : null
+  const preferredOffered =
+    preferredValue !== null &&
+    options.some((option) => option.value === preferredValue && !option.disabled)
+  const targetKey = target ? `${target.provider}:${target.host}` : null
+  const preselectedForRef = useRef<string | null>(null)
+  useEffect(() => {
+    // Why once per remote: a later pick of the default account must not be overridden.
+    if (!preferredSelection || !preferredOffered || selection !== null) {
+      return
+    }
+    if (preselectedForRef.current !== targetKey) {
+      preselectedForRef.current = targetKey
+      onSelectionChange(preferredSelection)
+    }
+  }, [onSelectionChange, preferredOffered, preferredSelection, selection, targetKey])
 
   return (
     <div className="space-y-3">

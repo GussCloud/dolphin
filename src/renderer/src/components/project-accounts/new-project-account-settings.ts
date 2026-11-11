@@ -7,6 +7,7 @@ import {
   type CommitIdentityDraft
 } from './commit-identity-draft'
 import type { ProjectAccountSelection } from './project-account-options'
+import type { ProjectStartAccounts } from './project-start-accounts'
 
 /** Only non-default choices; an empty object reproduces today's add flow exactly. */
 export type NewProjectAccountSettings = RepoAccountBinding
@@ -61,13 +62,23 @@ export function isAccountBindingEchoed(repo: Repo, settings: NewProjectAccountSe
     !settings.commitIdentity ||
     (repo.commitIdentity?.name === settings.commitIdentity.name &&
       repo.commitIdentity?.email === settings.commitIdentity.email)
-  return ghOk && azureOk && identityOk
+  const agentOk =
+    (!settings.claudeAccountId || repo.claudeAccountId === settings.claudeAccountId) &&
+    (!settings.codexAccountId || repo.codexAccountId === settings.codexAccountId)
+  return ghOk && azureOk && identityOk && agentOk
+}
+
+/** The clone form's draft plus the first-screen picks it preselects from. */
+export type CloneProjectAccounts = ReturnType<typeof useNewProjectAccountDraft> & {
+  preferred: ProjectStartAccounts | null
 }
 
 export function useNewProjectAccountDraft(): {
   draft: NewProjectAccountDraft
   setSelection: (selection: ProjectAccountSelection | null) => void
   setIdentity: (identity: CommitIdentityDraft) => void
+  /** Sets the author only while the form's author is still empty. */
+  seedIdentity: (identity: CommitIdentityDraft) => void
   reset: () => void
 } {
   const [draft, setDraft] = useState<NewProjectAccountDraft>(EMPTY_NEW_PROJECT_ACCOUNT_DRAFT)
@@ -79,6 +90,13 @@ export function useNewProjectAccountDraft(): {
     (identity: CommitIdentityDraft) => setDraft((prev) => ({ ...prev, identity })),
     []
   )
+  const seedIdentity = useCallback(
+    (identity: CommitIdentityDraft) =>
+      setDraft((prev) =>
+        evaluateCommitIdentityDraft(prev.identity).status === 'empty' ? { ...prev, identity } : prev
+      ),
+    []
+  )
   const reset = useCallback(() => setDraft(EMPTY_NEW_PROJECT_ACCOUNT_DRAFT), [])
-  return { draft, setSelection, setIdentity, reset }
+  return { draft, setSelection, setIdentity, seedIdentity, reset }
 }

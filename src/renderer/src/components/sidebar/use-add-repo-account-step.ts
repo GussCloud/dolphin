@@ -16,6 +16,15 @@ import {
   resolveNewProjectAccountSettings,
   useNewProjectAccountDraft
 } from '../project-accounts/new-project-account-settings'
+import type { RepoAccountBinding } from '../../../../shared/source-control-account-types'
+import { isGitRepoKind } from '../../../../shared/repo-kind'
+import {
+  hasProjectStartChoice,
+  projectStartBinding,
+  startAgentAccounts,
+  type ProjectStartAccounts
+} from '../project-accounts/project-start-accounts'
+import { projectRemoteTargetFromIdentityKey } from '../project-accounts/project-account-provider'
 
 export type GitRepoReady = (
   repoId: string,
@@ -50,13 +59,58 @@ function findAddedRepo(repoId: string, executionHostId?: ExecutionHostId): Repo 
   )
 }
 
+/** Saves a binding on a just-added repo; false when the host did not keep it (older host). */
+async function saveAddedRepoBinding(
+  repo: Repo,
+  executionHostId: ExecutionHostId | undefined,
+  settings: RepoAccountBinding
+): Promise<void> {
+  if (Object.keys(settings).length === 0) {
+    return
+  }
+  const saved = await useAppStore
+    .getState()
+    .updateRepo(repo.id, settings, { hostId: getRepoExecutionHostId(repo) })
+  const echoed = findAddedRepo(repo.id, executionHostId)
+  if (saved === false || !echoed || !isAccountBindingEchoed(echoed, settings)) {
+    toast.warning(
+      translate(
+        'auto.components.sidebar.useAddRepoAccountStep.notKept',
+        'Project added, but the account and commit author were not kept. Set them in project settings.'
+      )
+    )
+  }
+}
+
+/** The first-screen picks for this repo's remote; null when they do not apply (SSH, folder, rebind). */
+function startBindingForAddedRepo(
+  repo: Repo,
+  start: ProjectStartAccounts | undefined
+): RepoAccountBinding | null {
+  if (!start || !hasProjectStartChoice(start) || repo.connectionId || !isGitRepoKind(repo)) {
+    return null
+  }
+  // Why: re-adding an existing project must not silently rebind it.
+  if (repo.ghAccount || repo.azureDevOpsAccountId || repo.commitIdentity || repo.claudeAccountId) {
+    return null
+  }
+  const target = projectRemoteTargetFromIdentityKey(
+    repo.gitRemoteIdentity?.canonicalKey,
+    start.ghAccount ? [start.ghAccount.host] : []
+  )
+  return projectStartBinding(start, target)
+}
+
 /** After an existing folder registers, offers the account + author step only when there is a choice. */
 export function useAddRepoAccountStep(
   runtimeEnvironmentId: string | null,
   setStep: (step: AddRepoDialogStep) => void,
-  onGitRepoReady: GitRepoReady
+  onGitRepoReady: GitRepoReady,
+  options: { getStartAccounts?: () => ProjectStartAccounts } = {}
 ): {
   offer: GitRepoReady
+  /** Folder projects have no Git account; only the agent accounts apply. */
+  applyStartToFolder: (repo: Repo) => Promise<void>
   state: AddRepoAccountStepState | null
   reset: () => void
 } {
@@ -64,6 +118,7 @@ export function useAddRepoAccountStep(
     () => getActiveRuntimeTarget({ activeRuntimeEnvironmentId: runtimeEnvironmentId }),
     [runtimeEnvironmentId]
   )
+  const { getStartAccounts } = options
   const draft = useNewProjectAccountDraft()
   const resetDraft = draft.reset
   const [pending, setPending] = useState<Pending | null>(null)
@@ -76,6 +131,13 @@ export function useAddRepoAccountStep(
     async (repoId, source, executionHostId) => {
       const generation = ++generationRef.current
       const repo = findAddedRepo(repoId, executionHostId)
+      // Why: accounts already picked on the first screen are applied without asking again.
+      const startBinding = repo ? startBindingForAddedRepo(repo, getStartAccounts?.()) : null
+      if (repo && startBinding) {
+        await saveAddedRepoBinding(repo, executionHostId, startBinding)
+        await onGitRepoReady(repoId, source, executionHostId)
+        return
+      }
       const plan = repo ? await planAddedRepoAccountStep(repo, runtimeTarget) : null
       if (generation !== generationRef.current) {
         return
@@ -89,7 +151,7 @@ export function useAddRepoAccountStep(
       setPending(pendingRef.current)
       setStep('account')
     },
-    [onGitRepoReady, resetDraft, runtimeTarget, setStep]
+    [getStartAccounts, onGitRepoReady, resetDraft, runtimeTarget, setStep]
   )
 
   const resetAccountStep = useCallback(() => {
@@ -114,20 +176,7 @@ export function useAddRepoAccountStep(
     pendingRef.current = null
     setSaving(true)
     try {
-      if (Object.keys(settings).length > 0) {
-        const saved = await useAppStore
-          .getState()
-          .updateRepo(current.repo.id, settings, { hostId: getRepoExecutionHostId(current.repo) })
-        const echoed = findAddedRepo(current.repo.id, current.executionHostId)
-        if (saved === false || !echoed || !isAccountBindingEchoed(echoed, settings)) {
-          toast.warning(
-            translate(
-              'auto.components.sidebar.useAddRepoAccountStep.notKept',
-              'Project added, but the account and commit author were not kept. Set them in project settings.'
-            )
-          )
-        }
-      }
+      await saveAddedRepoBinding(current.repo, current.executionHostId, settings)
       await onGitRepoReady(current.repo.id, current.source, current.executionHostId)
     } finally {
       setSaving(false)
@@ -146,5 +195,20 @@ export function useAddRepoAccountStep(
       }
     : null
 
-  return { offer: offerAccountStep, state: accountStep, reset: resetAccountStep }
+  const applyStartToFolder = useCallback(
+    async (repo: Repo) => {
+      const binding = startAgentAccounts(getStartAccounts?.())
+      if (!repo.connectionId && Object.keys(binding).length > 0) {
+        await saveAddedRepoBinding(repo, getRepoExecutionHostId(repo), binding)
+      }
+    },
+    [getStartAccounts]
+  )
+
+  return {
+    offer: offerAccountStep,
+    applyStartToFolder,
+    state: accountStep,
+    reset: resetAccountStep
+  }
 }

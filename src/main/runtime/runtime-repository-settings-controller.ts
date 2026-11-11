@@ -44,6 +44,8 @@ type RepositoryUpdates = Partial<
   ghAccount?: GhAccountBinding | null
   azureDevOpsAccountId?: string | null
   commitIdentity?: CommitIdentity | null
+  claudeAccountId?: string | null
+  codexAccountId?: string | null
 }
 
 function omitUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {

@@ -1,6 +1,9 @@
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { CodexManagedAccount } from '../../shared/managed-account-types'
-import { findLaunchWorktree, type WorktreeAccountMetaSource } from '../worktree-launch-owner'
+import {
+  findLaunchAccountCandidates,
+  type WorktreeAccountMetaSource
+} from '../worktree-launch-owner'
 import { resolveWorktreeAgentAccount } from '../../shared/worktree-agent-account'
 import {
   getSelectedCodexAccountIdForTarget,
@@ -34,32 +37,34 @@ export function resolveCodexLaunchAccountOverride(args: {
   if (!args.source || !args.settings) {
     return { kind: 'none' }
   }
-  const owner = findLaunchWorktree(args.source, args)
-  if (!owner?.meta.agentAccountId) {
-    return { kind: 'none' }
-  }
-  const resolution = resolveWorktreeAgentAccount({
-    agentAccountId: owner.meta.agentAccountId,
-    agent: 'codex',
-    target: args.target,
-    settings: args.settings
-  })
-  if (resolution.kind === 'global') {
-    return { kind: 'none' }
-  }
-  if (resolution.kind === 'unavailable') {
-    return {
-      kind: 'unavailable',
-      accountId: resolution.accountId,
-      worktreeId: owner.worktreeId,
-      reason: resolution.reason
+  for (const candidate of findLaunchAccountCandidates(args.source, args, 'codex')) {
+    const resolution = resolveWorktreeAgentAccount({
+      agentAccountId: candidate.accountId,
+      agent: 'codex',
+      target: args.target,
+      settings: args.settings
+    })
+    // Why: a pin for the other agent is not this launch's; the project default may still apply.
+    if (resolution.kind === 'global') {
+      continue
     }
+    if (resolution.kind === 'unavailable') {
+      return {
+        kind: 'unavailable',
+        accountId: resolution.accountId,
+        worktreeId: candidate.worktreeId,
+        reason: resolution.reason
+      }
+    }
+    if (getSelectedCodexAccountIdForTarget(args.settings, args.target) === resolution.accountId) {
+      return { kind: 'none' }
+    }
+    const account = args.settings.codexManagedAccounts.find(
+      (entry) => entry.id === resolution.accountId
+    )
+    return account
+      ? { kind: 'override', account, worktreeId: candidate.worktreeId }
+      : { kind: 'none' }
   }
-  if (getSelectedCodexAccountIdForTarget(args.settings, args.target) === resolution.accountId) {
-    return { kind: 'none' }
-  }
-  const account = args.settings.codexManagedAccounts.find(
-    (entry) => entry.id === resolution.accountId
-  )
-  return account ? { kind: 'override', account, worktreeId: owner.worktreeId } : { kind: 'none' }
+  return { kind: 'none' }
 }

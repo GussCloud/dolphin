@@ -10,6 +10,7 @@ import { normalizeGhAccountBinding } from '../../../shared/github/account-bindin
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
 import {
   normalizeAzureDevOpsAccountId,
+  normalizeAgentAccountId,
   normalizeCommitIdentity,
   type CommitIdentity
 } from '../../../shared/source-control-account-types'
@@ -62,6 +63,8 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           ghAccount?: GhAccountBinding | null
           azureDevOpsAccountId?: string | null
           commitIdentity?: CommitIdentity | null
+          claudeAccountId?: string | null
+          codexAccountId?: string | null
         }
       }
     ) => {
@@ -107,6 +110,24 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           delete updates.azureDevOpsAccountId
         } else {
           updates.azureDevOpsAccountId = accountId
+        }
+      }
+      if ('claudeAccountId' in updates) {
+        const accountId =
+          updates.claudeAccountId === null ? null : normalizeAgentAccountId(updates.claudeAccountId)
+        if (accountId === null && updates.claudeAccountId !== null) {
+          delete updates.claudeAccountId
+        } else {
+          updates.claudeAccountId = accountId
+        }
+      }
+      if ('codexAccountId' in updates) {
+        const accountId =
+          updates.codexAccountId === null ? null : normalizeAgentAccountId(updates.codexAccountId)
+        if (accountId === null && updates.codexAccountId !== null) {
+          delete updates.codexAccountId
+        } else {
+          updates.codexAccountId = accountId
         }
       }
       if ('commitIdentity' in updates) {

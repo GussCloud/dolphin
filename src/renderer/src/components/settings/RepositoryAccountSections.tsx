@@ -13,6 +13,7 @@ type RepositoryAccountSectionsProps = {
       ghAccount?: GhAccountBinding | null
       azureDevOpsAccountId?: string | null
       commitIdentity?: CommitIdentity | null
+      claudeAccountId?: string | null
     }
   ) => unknown
   forceVisible?: boolean

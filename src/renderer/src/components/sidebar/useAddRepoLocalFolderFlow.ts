@@ -47,6 +47,7 @@ export function useAddRepoLocalFolderFlow({
   showNestedRepoReview,
   onGitRepoReady,
   offerAccountStep,
+  onFolderRepoAdded,
   setIsAdding,
   setAddProjectBusyLabel
 }: {
@@ -63,6 +64,8 @@ export function useAddRepoLocalFolderFlow({
   onGitRepoReady: GitRepoReady
   /** Single-folder adds only: a batch has no one project to bind. */
   offerAccountStep?: GitRepoReady
+  /** Saves first-screen agent accounts on a just-added folder (non-git) project. */
+  onFolderRepoAdded?: (repo: Repo) => Promise<void>
   setIsAdding: (isAdding: boolean) => void
   setAddProjectBusyLabel: (label: string | null) => void
 }): {
@@ -183,6 +186,7 @@ export function useAddRepoLocalFolderFlow({
         } else {
           // Why: folder repos skip the Git default-checkout handoff and activate
           // their synthetic root workspace in the folder add flow.
+          await onFolderRepoAdded?.(repo)
           closeModal()
         }
         return { status: 'completed', repo }
@@ -199,6 +203,7 @@ export function useAddRepoLocalFolderFlow({
       closeModal,
       fetchWorktrees,
       offerAccountStep,
+      onFolderRepoAdded,
       onGitRepoReady,
       scanNestedRepos,
       setActiveNestedScanId,
@@ -281,10 +286,7 @@ export function useAddRepoLocalFolderFlow({
   )
 
   useEffect(() => {
-    if (!isOpen || !droppedLocalPath) {
-      return
-    }
-    if (droppedLocalPathHandledRef.current === droppedLocalPath) {
+    if (!isOpen || !droppedLocalPath || droppedLocalPathHandledRef.current === droppedLocalPath) {
       return
     }
     droppedLocalPathHandledRef.current = droppedLocalPath

@@ -12642,6 +12642,13 @@
           "terminalAria": "Comando de conta do GitHub",
           "terminalDescription": "Pressione Enter para executar o comando. O Dolphin verifica as contas de novo quando ele terminar.",
           "envToken": "Token de ambiente"
+        },
+        "RepositoryAgentAccountSection": {
+          "title": "Conta do Claude",
+          "description": "Os agentes Claude deste projeto usam a cota desta conta.",
+          "hint": "Vale para agentes iniciados depois da mudança. Um worktree que escolheu a própria conta continua com ela.",
+          "codexTitle": "Conta do Codex",
+          "codexDescription": "Os agentes Codex deste projeto usam a cota desta conta."
         }
       },
       "right": {
@@ -17125,7 +17132,8 @@
         },
         "AgentAccountPicker": {
           "label": "Conta",
-          "active": "Conta ativa"
+          "active": "Conta ativa",
+          "projectDefault": "Conta do projeto ({{value0}})"
         }
       },
       "activity": {
@@ -18138,6 +18146,30 @@
           "azureHint": "O padrão usa o login configurado em Configurações → Integrações.",
           "githubDefault": "Conta padrão (login ativo do gh)",
           "azureDefault": "Login padrão"
+        },
+        "startAccounts": {
+          "title": "Contas deste projeto",
+          "pcDefault": "{{value0}} (padrão deste PC)",
+          "ghDefault": "Login ativo do gh (padrão deste PC)",
+          "azureDefault": "Login do Azure CLI (padrão deste PC)",
+          "claudeDefault": "Login do Claude no sistema (padrão deste PC)",
+          "addGitHub": "Adicionar conta do GitHub",
+          "addAzure": "Adicionar conta do Azure DevOps",
+          "addClaude": "Adicionar conta do Claude",
+          "githubHost": "Servidor do GitHub",
+          "signIn": "Entrar",
+          "cancel": "Cancelar",
+          "terminalTitle": "GitHub CLI",
+          "terminalAria": "Comando de conta do GitHub",
+          "restoreDescription": "O Dolphin não conseguiu voltar o gh para a conta anterior. Pressione Enter para mantê-la como padrão deste PC.",
+          "loginDescription": "Pressione Enter para entrar. A conta padrão atual continua sendo a padrão.",
+          "githubLabel": "GitHub",
+          "azureDevOpsLabel": "Azure DevOps",
+          "claudeLabel": "Claude",
+          "cancelSignIn": "Cancelar login",
+          "codexLabel": "Codex",
+          "codexDefault": "Login do Codex no sistema (padrão deste PC)",
+          "addCodex": "Adicionar conta do Codex"
         }
       }
     },

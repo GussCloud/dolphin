@@ -22,7 +22,8 @@ function toPickableAccountAgent(agent: TuiAgent | null): WorktreeAccountAgent | 
 /**
  * Accounts a new worktree may pin, or null when the picker must stay hidden:
  * an agent without pinning, a non-local host (SSH or paired runtime own their
- * own accounts), or a lane with fewer than two managed accounts.
+ * own accounts), or a lane with no managed account. One is enough: the system login
+ * is the other choice, and it is not a managed account.
  */
 export function resolveAgentAccountPickerChoices(args: {
   agent: TuiAgent | null
@@ -51,7 +52,7 @@ export function resolveAgentAccountPickerChoices(args: {
     target: wslRepo ? { runtime: 'wsl', wslDistro: wslRepo.distro } : { runtime: 'host' },
     settings: args.settings
   })
-  return choices.length > 1 ? { agent, choices } : null
+  return choices.length > 0 ? { agent, choices } : null
 }
 
 /** The pin to submit: only one the picker would offer right now for the chosen agent. */

@@ -110,6 +110,8 @@ export class RepoUpdatePersistenceOperations {
       ghAccount?: GhAccountBinding | null
       azureDevOpsAccountId?: string | null
       commitIdentity?: CommitIdentity | null
+      claudeAccountId?: string | null
+      codexAccountId?: string | null
     },
     hostId?: ExecutionHostId
   ): Repo | null {
@@ -188,6 +190,18 @@ export class RepoUpdatePersistenceOperations {
         delete repo.azureDevOpsAccountId
       }
       delete sanitizedUpdates.azureDevOpsAccountId
+    }
+    if ('claudeAccountId' in sanitizedUpdates && sanitizedUpdates.claudeAccountId == null) {
+      if (sanitizedUpdates.claudeAccountId === null) {
+        delete repo.claudeAccountId
+      }
+      delete sanitizedUpdates.claudeAccountId
+    }
+    if ('codexAccountId' in sanitizedUpdates && sanitizedUpdates.codexAccountId == null) {
+      if (sanitizedUpdates.codexAccountId === null) {
+        delete repo.codexAccountId
+      }
+      delete sanitizedUpdates.codexAccountId
     }
     if ('commitIdentity' in sanitizedUpdates && sanitizedUpdates.commitIdentity == null) {
       if (sanitizedUpdates.commitIdentity === null) {

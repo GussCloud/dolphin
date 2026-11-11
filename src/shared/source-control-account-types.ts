@@ -112,11 +112,26 @@ export function normalizeAzureDevOpsManagedAccounts(value: unknown): AzureDevOps
   return accounts
 }
 
+const AGENT_ACCOUNT_ID_RE = /^[A-Za-z0-9_.:-]{1,256}$/
+
+/** A managed Claude/Codex account id (`randomUUID()` today); same bound as the worktree pin. */
+export function normalizeAgentAccountId(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+  const id = value.trim()
+  return AGENT_ACCOUNT_ID_RE.test(id) ? id : null
+}
+
 /** Account choices a project can receive when it is added, cloned, created, or imported. */
 export type RepoAccountBinding = {
   ghAccount?: GhAccountBinding
   azureDevOpsAccountId?: string
   commitIdentity?: CommitIdentity
+  /** Default managed Claude account for the project's launches; a worktree pin wins over it. */
+  claudeAccountId?: string
+  /** Default managed Codex account for the project's launches; a worktree pin wins over it. */
+  codexAccountId?: string
 }
 
 /** Keeps only valid fields; returns undefined when nothing usable remains. */
@@ -131,10 +146,18 @@ export function normalizeRepoAccountBinding(value: unknown): RepoAccountBinding 
   const commitIdentity = normalizeCommitIdentity(
     'commitIdentity' in value ? value.commitIdentity : undefined
   )
+  const claudeAccountId = normalizeAgentAccountId(
+    'claudeAccountId' in value ? value.claudeAccountId : undefined
+  )
+  const codexAccountId = normalizeAgentAccountId(
+    'codexAccountId' in value ? value.codexAccountId : undefined
+  )
   const binding: RepoAccountBinding = {
     ...(ghAccount ? { ghAccount } : {}),
     ...(azureDevOpsAccountId ? { azureDevOpsAccountId } : {}),
-    ...(commitIdentity ? { commitIdentity } : {})
+    ...(commitIdentity ? { commitIdentity } : {}),
+    ...(claudeAccountId ? { claudeAccountId } : {}),
+    ...(codexAccountId ? { codexAccountId } : {})
   }
   return Object.keys(binding).length > 0 ? binding : undefined
 }

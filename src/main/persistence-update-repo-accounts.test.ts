@@ -66,6 +66,22 @@ describe('Store per-project accounts', () => {
     expect(updated!.commitIdentity).toEqual({ name: 'Ana', email: 'ana@corp.example' })
   })
 
+  it('persists the project agent account across a reload, rejects malformed ids, and null clears it', async () => {
+    const store = await createStore()
+    store.addRepo(makeRepo())
+
+    expect(store.updateRepo('r1', { claudeAccountId: ' acct-company ' })!.claudeAccountId).toBe(
+      'acct-company'
+    )
+    expect(store.updateRepo('r1', { claudeAccountId: 'bad id\n' })!.claudeAccountId).toBe(
+      'acct-company'
+    )
+    store.flush()
+    const reloaded = await createStore()
+    expect(reloaded.getRepo('r1')!.claudeAccountId).toBe('acct-company')
+    expect(reloaded.updateRepo('r1', { claudeAccountId: null })!.claudeAccountId).toBeUndefined()
+  })
+
   it('drops a corrupt persisted identity on hydration', async () => {
     const store = await createStore()
     store.addRepo(makeRepo({ commitIdentity: { name: 'Ana', email: 'not-an-email' } }))

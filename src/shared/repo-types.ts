@@ -82,6 +82,10 @@ export type Repo = {
   azureDevOpsAccountId?: string
   /** Author/committer for commits Dolphin creates in this repo; absent = git config. */
   commitIdentity?: CommitIdentity
+  /** Default managed Claude account for this project's agent launches; absent = active account. */
+  claudeAccountId?: string
+  /** Default managed Codex account for this project's agent launches; absent = active account. */
+  codexAccountId?: string
   /** Controls Dolphin's fork-default-branch sync offer for repos with upstream metadata. */
   forkSyncMode?: ForkSyncMode
   /** Canonical identity for the repo remote Dolphin should use for provider-level grouping. */
