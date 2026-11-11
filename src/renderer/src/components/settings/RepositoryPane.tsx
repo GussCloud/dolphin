@@ -43,12 +43,14 @@ type RepositoryPaneRepoUpdate = Omit<
   | 'ghAccount'
   | 'azureDevOpsAccountId'
   | 'commitIdentity'
+  | 'agentAccountId'
 > & {
   sourceControlAi?: Repo['sourceControlAi'] | null
   externalWorktreeVisibility?: Repo['externalWorktreeVisibility'] | null
   ghAccount?: GhAccountBinding | null
   azureDevOpsAccountId?: string | null
   commitIdentity?: CommitIdentity | null
+  agentAccountId?: string | null
 }
 
 const EMPTY_WSL_DISTROS: string[] = []

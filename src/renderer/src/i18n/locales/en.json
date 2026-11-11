@@ -12642,6 +12642,11 @@
           "terminalAria": "GitHub account command",
           "terminalDescription": "Press Enter to run the command. Dolphin re-checks accounts when it ends.",
           "envToken": "Environment token"
+        },
+        "RepositoryAgentAccountSection": {
+          "title": "Claude account",
+          "description": "Claude agents in this project use this account’s quota.",
+          "hint": "Applies to agents started after the change. A worktree that picked its own account keeps it."
         }
       },
       "right": {

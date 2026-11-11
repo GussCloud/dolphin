@@ -4,6 +4,8 @@ import type { CommitIdentity } from '../../../../shared/source-control-account-t
 import { projectRemoteTargetFromIdentityKey } from '../project-accounts/project-account-provider'
 import { RepositoryGitHubAccountSection } from './RepositoryGitHubAccountSection'
 import { RepositoryAccountIdentitySection } from './RepositoryAccountIdentitySection'
+import { RepositoryAgentAccountSection } from './RepositoryAgentAccountSection'
+import { isWebClientLocation } from '@/lib/web-client-location'
 
 type RepositoryAccountSectionsProps = {
   repo: Repo
@@ -13,6 +15,7 @@ type RepositoryAccountSectionsProps = {
       ghAccount?: GhAccountBinding | null
       azureDevOpsAccountId?: string | null
       commitIdentity?: CommitIdentity | null
+      agentAccountId?: string | null
     }
   ) => unknown
   forceVisible?: boolean
@@ -44,6 +47,14 @@ export function RepositoryAccountSections({
           key={repo.id}
           repo={repo}
           azureDevOpsRemote={azureDevOpsRemote}
+          updateRepo={updateRepo}
+          forceVisible={forceVisible}
+        />
+      )}
+      {/* Why local desktop only: SSH projects launch on the remote host, which owns its accounts. */}
+      {remoteSsh || isWebClientLocation() ? null : (
+        <RepositoryAgentAccountSection
+          repo={repo}
           updateRepo={updateRepo}
           forceVisible={forceVisible}
         />

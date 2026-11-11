@@ -12642,6 +12642,11 @@
           "terminalAria": "Comando de conta do GitHub",
           "terminalDescription": "Pressione Enter para executar o comando. O Dolphin verifica as contas de novo quando ele terminar.",
           "envToken": "Token de ambiente"
+        },
+        "RepositoryAgentAccountSection": {
+          "title": "Conta do Claude",
+          "description": "Os agentes Claude deste projeto usam a cota desta conta.",
+          "hint": "Vale para agentes iniciados depois da mudança. Um worktree que escolheu a própria conta continua com ela."
         }
       },
       "right": {
