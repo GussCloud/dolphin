@@ -11,7 +11,7 @@ import type { AddRepoAccountStepState } from './use-add-repo-account-step'
 import type { NestedRepoScanResult } from '../../../../shared/project-group-types'
 import type { SshConnectionState, SshTarget } from '../../../../shared/ssh-types'
 import type { GitAvailability } from './create-project-defaults'
-import type { useNewProjectAccountDraft } from '../project-accounts/new-project-account-settings'
+import type { CloneProjectAccounts } from '../project-accounts/new-project-account-settings'
 import type { CommitIdentityDraft } from '../project-accounts/commit-identity-draft'
 
 type AddRepoDialogStepContentProps = {
@@ -74,7 +74,7 @@ type AddRepoDialogStepContentProps = {
   onCloneDestinationChange: (destination: string) => void
   onPickCloneDestination: () => void
   onClone: () => void
-  cloneProjectAccounts?: ReturnType<typeof useNewProjectAccountDraft>
+  cloneProjectAccounts?: CloneProjectAccounts
   accountStep?: AddRepoAccountStepState | null
   createIdentity?: { draft: CommitIdentityDraft; onChange: (draft: CommitIdentityDraft) => void }
   onNestedGroupNameChange: (name: string) => void

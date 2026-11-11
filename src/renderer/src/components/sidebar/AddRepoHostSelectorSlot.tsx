@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { AddRepoHostSelector } from './AddRepoHostSelector'
 import type { useAddRepoHostSelection } from './use-add-repo-host-selection'
 import { AddRemoteHostDialog, type AddRemoteHostMode } from './AddRemoteHostDialog'
 
 export function AddRepoHostSelectorSlot({
-  hostSelection
+  hostSelection,
+  accounts
 }: {
   hostSelection: ReturnType<typeof useAddRepoHostSelection>
+  /** Project accounts panel, shown under the host it applies to. */
+  accounts?: ReactNode
 }) {
   const [addRemoteHostMode, setAddRemoteHostMode] = useState<AddRemoteHostMode | null>(null)
 
@@ -22,6 +25,7 @@ export function AddRepoHostSelectorSlot({
         onAddSshHost={() => setAddRemoteHostMode('ssh')}
         onAddRemoteServer={() => setAddRemoteHostMode('server')}
       />
+      {accounts}
       <AddRemoteHostDialog mode={addRemoteHostMode} onOpenChange={setAddRemoteHostMode} />
     </>
   )

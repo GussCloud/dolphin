@@ -10,7 +10,7 @@ import { NewProjectAccountFields } from '../project-accounts/NewProjectAccountFi
 import { parseWslUncPath } from '../../../../shared/wsl-paths'
 import {
   resolveNewProjectAccountSettings,
-  type useNewProjectAccountDraft
+  type CloneProjectAccounts
 } from '../project-accounts/new-project-account-settings'
 
 type CloneStepProps = {
@@ -27,7 +27,7 @@ type CloneStepProps = {
   onDestChange: (value: string) => void
   onPickDestination: () => void
   onClone: () => void
-  projectAccounts?: ReturnType<typeof useNewProjectAccountDraft>
+  projectAccounts?: CloneProjectAccounts
 }
 
 export function CloneStep({
@@ -209,6 +209,7 @@ export function CloneStep({
             draft={projectAccounts.draft}
             onSelectionChange={projectAccounts.setSelection}
             onIdentityChange={projectAccounts.setIdentity}
+            preferred={projectAccounts.preferred}
             disabled={isCloning}
           />
         ) : null}

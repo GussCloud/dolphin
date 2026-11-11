@@ -5,6 +5,10 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../../../../shared/repo-types'
 import { useAddRepoAccountStep } from './use-add-repo-account-step'
+import {
+  EMPTY_PROJECT_START_ACCOUNTS,
+  type ProjectStartAccounts
+} from '../project-accounts/project-start-accounts'
 
 const { storeState, planMock } = vi.hoisted(() => {
   const repos: Repo[] = []
@@ -39,9 +43,12 @@ let root: Root
 let hook: ReturnType<typeof useAddRepoAccountStep>
 const setStep = vi.fn()
 const onGitRepoReady = vi.fn(async () => {})
+let startAccounts: ProjectStartAccounts = EMPTY_PROJECT_START_ACCOUNTS
 
 function Harness(): null {
-  hook = useAddRepoAccountStep(null, setStep, onGitRepoReady)
+  hook = useAddRepoAccountStep(null, setStep, onGitRepoReady, {
+    getStartAccounts: () => startAccounts
+  })
   return null
 }
 
@@ -56,6 +63,7 @@ beforeEach(async () => {
       return true
     })
   planMock.mockReset()
+  startAccounts = EMPTY_PROJECT_START_ACCOUNTS
   setStep.mockReset()
   onGitRepoReady.mockClear()
   await act(async () => root.render(<Harness />))
@@ -96,6 +104,46 @@ describe('useAddRepoAccountStep', () => {
       { hostId: 'local' }
     )
     expect(onGitRepoReady).toHaveBeenCalledTimes(1)
+  })
+
+  it('saves the first-screen accounts without asking again, matched to the remote', async () => {
+    storeState.repos = [
+      {
+        ...REPO,
+        gitRemoteIdentity: {
+          canonicalKey: 'github.com/corp/app',
+          remoteName: 'origin',
+          remoteUrl: 'https://github.com/corp/app.git'
+        }
+      }
+    ]
+    startAccounts = {
+      ghAccount: { host: 'github.com', user: 'ana-corp' },
+      azureDevOpsAccountId: 'ado-corp',
+      agentAccountId: 'claude-corp',
+      suggestedIdentity: { name: 'Ana', email: 'ana@corp.example' }
+    }
+    await act(async () => hook.offer('repo-1', 'local_folder_picker'))
+    expect(planMock).not.toHaveBeenCalled()
+    expect(setStep).not.toHaveBeenCalled()
+    expect(storeState.updateRepo).toHaveBeenCalledWith(
+      'repo-1',
+      {
+        ghAccount: { host: 'github.com', user: 'ana-corp' },
+        agentAccountId: 'claude-corp',
+        commitIdentity: { name: 'Ana', email: 'ana@corp.example' }
+      },
+      { hostId: 'local' }
+    )
+    expect(onGitRepoReady).toHaveBeenCalledTimes(1)
+  })
+
+  it('never rebinds a project that already had accounts', async () => {
+    storeState.repos = [{ ...REPO, agentAccountId: 'claude-old' }]
+    startAccounts = { ...EMPTY_PROJECT_START_ACCOUNTS, agentAccountId: 'claude-corp' }
+    planMock.mockResolvedValueOnce(null)
+    await act(async () => hook.offer('repo-1', 'local_folder_picker'))
+    expect(storeState.updateRepo).not.toHaveBeenCalled()
   })
 
   it('"Use defaults" finishes without saving anything', async () => {

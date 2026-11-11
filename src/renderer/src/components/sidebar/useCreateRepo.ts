@@ -15,10 +15,14 @@ import { upsertAddedRepoWithProjectHostSetup } from './add-repo-store-upsert'
 import { worktreeRefreshOptions } from './add-repo-runtime-owner'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import {
-  EMPTY_COMMIT_IDENTITY_DRAFT,
+  commitIdentityDraftFrom,
   evaluateCommitIdentityDraft,
   type CommitIdentityDraft
 } from '../project-accounts/commit-identity-draft'
+import {
+  createProjectBinding,
+  type ProjectStartAccounts
+} from '../project-accounts/project-start-accounts'
 
 export function useCreateRepo(
   fetchWorktrees: (
@@ -31,15 +35,17 @@ export function useCreateRepo(
     hostId?: string | null
     runtimeEnvironmentId?: string | null
     sshTargetId?: string | null
+    startAccounts?: ProjectStartAccounts
   } = {}
 ) {
   const [createName, setCreateName] = useState('')
   const [createParent, setCreateParent] = useState('')
   const [createError, setCreateError] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
-  const [createIdentity, setCreateIdentity] = useState<CommitIdentityDraft>(
-    EMPTY_COMMIT_IDENTITY_DRAFT
-  )
+  const [typedIdentity, setTypedIdentity] = useState<CommitIdentityDraft | null>(null)
+  // Why: until the user edits it, the author follows the account picked on the first screen.
+  const createIdentity =
+    typedIdentity ?? commitIdentityDraftFrom(options.startAccounts?.suggestedIdentity)
   const mountedRef = useMountedRef()
   const hostToken = options.hostId ?? options.sshTargetId ?? ''
   const hostTokenRef = useRef(hostToken)
@@ -56,7 +62,7 @@ export function useCreateRepo(
     setCreateParent('')
     setCreateError(null)
     setIsCreating(false)
-    setCreateIdentity(EMPTY_COMMIT_IDENTITY_DRAFT)
+    setTypedIdentity(null)
   }, [])
 
   const handlePickParent = useCallback(async (): Promise<string | null> => {
@@ -106,8 +112,13 @@ export function useCreateRepo(
       return
     }
     // Why: the host makes the initial commit during create, so the author must travel with it.
-    const accountBinding =
-      identity?.status === 'valid' ? { accountBinding: { commitIdentity: identity.identity } } : {}
+    const binding = options.sshTargetId
+      ? {}
+      : createProjectBinding(
+          options.startAccounts,
+          identity?.status === 'valid' ? identity.identity : null
+        )
+    const accountBinding = Object.keys(binding).length > 0 ? { accountBinding: binding } : {}
     const requestHostToken = hostTokenRef.current
     const gen = ++createGenRef.current
     setIsCreating(true)
@@ -272,7 +283,8 @@ export function useCreateRepo(
     closeModal,
     onGitRepoReady,
     options.runtimeEnvironmentId,
-    options.sshTargetId
+    options.sshTargetId,
+    options.startAccounts
   ])
 
   return {
@@ -283,7 +295,7 @@ export function useCreateRepo(
     setCreateName,
     setCreateParent,
     setCreateError,
-    createIdentity: { draft: createIdentity, onChange: setCreateIdentity },
+    createIdentity: { draft: createIdentity, onChange: setTypedIdentity },
     resetCreateState,
     handlePickParent,
     handleCreate

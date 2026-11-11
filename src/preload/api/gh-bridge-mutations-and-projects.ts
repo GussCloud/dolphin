@@ -39,6 +39,7 @@ import type {
   UpdateProjectItemFieldArgs
 } from '../../shared/github/project-request-types'
 import type { AppStarSource } from '../../shared/gh-star-source'
+import type { GhAccountProfile } from '../../shared/github/account-commit-identity'
 import type { PreloadApi } from '../api-types'
 
 export const ghMutationsAndProjectsApi = {
@@ -170,6 +171,8 @@ export const ghMutationsAndProjectsApi = {
     refreshCapability?: boolean
     wslDistro?: string
   }): Promise<GhAccountBindingInventory> => ipcRenderer.invoke('gh:listHostAccounts', args),
+  accountProfile: (binding: { host: string; user: string }): Promise<GhAccountProfile | null> =>
+    ipcRenderer.invoke('gh:accountProfile', binding),
   validateAccountBinding: (args: {
     repoPath: string
     repoId?: string

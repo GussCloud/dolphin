@@ -10,7 +10,7 @@ import { useAddRepoServerPathFlow } from './useAddRepoServerPathFlow'
 import { useAddRepoHostSelection } from './use-add-repo-host-selection'
 import { useCompleteGitRepoAdd } from './use-complete-git-repo-add'
 import { useCreateProjectDefaults } from './useCreateProjectDefaults'
-import { useAddRepoHostChangeReset } from './use-add-repo-host-change-reset'
+import { useAddRepoDialogReset } from './use-add-repo-dialog-reset'
 import { AddRepoDialogChrome } from './AddRepoDialogChrome'
 import { AddRepoHostSelectorSlot } from './AddRepoHostSelectorSlot'
 import { useAddRepoNestedReviewController } from './useAddRepoNestedReviewController'
@@ -20,6 +20,9 @@ import {
 } from './use-add-repo-hosted-controller'
 import { routeAddRepoBrowse } from './add-repo-browse-authority'
 import { useAddRepoAccountStep } from './use-add-repo-account-step'
+import { useProjectStartAccounts } from '../project-accounts/use-project-start-accounts'
+import { ProjectStartAccountsPanel } from '../project-accounts/ProjectStartAccountsPanel'
+import { isWebClientLocation } from '@/lib/web-client-location'
 
 export default React.memo(function AddRepoDialog({
   hosted
@@ -55,6 +58,10 @@ export default React.memo(function AddRepoDialog({
     hostSelection.selectedParsedHost?.kind === 'runtime'
       ? hostSelection.selectedParsedHost.environmentId
       : null
+  // Why desktop only: the panel signs in on this PC's gh, az and Claude, which a web client is not.
+  const isLocalHost =
+    isOpen && hostSelection.selectedParsedHost?.kind === 'local' && !isWebClientLocation()
+  const startAccounts = useProjectStartAccounts(isLocalHost)
   const {
     nestedScan,
     nestedSelectedPaths,
@@ -130,7 +137,8 @@ export default React.memo(function AddRepoDialog({
     {
       hostId: hostSelection.selectedHostId,
       runtimeEnvironmentId: selectedRuntimeEnvironmentId,
-      sshTargetId: hostSelection.selectedSshTargetId
+      sshTargetId: hostSelection.selectedSshTargetId,
+      startAccounts: startAccounts.accounts
     }
   )
 
@@ -168,11 +176,18 @@ export default React.memo(function AddRepoDialog({
     sshTargetId: hostSelection.selectedSshTargetId,
     workspaceDir: settings?.workspaceDir,
     fetchWorktrees,
-    onGitRepoReady: completeGitRepoAdd
+    onGitRepoReady: completeGitRepoAdd,
+    startAccounts: startAccounts.accounts
   })
 
-  const accounts = useAddRepoAccountStep(selectedRuntimeEnvironmentId, setStep, completeGitRepoAdd)
-  const resetAccountStep = accounts.reset
+  const accounts = useAddRepoAccountStep(
+    selectedRuntimeEnvironmentId,
+    setStep,
+    completeGitRepoAdd,
+    {
+      getStartAccounts: startAccounts.get
+    }
+  )
   const isRuntimeEnvironmentActive = Boolean(selectedRuntimeEnvironmentId)
   const selectedHostKind = hostSelection.selectedParsedHost?.kind
   const { handleBrowse, resetLocalFolderFlow } = useAddRepoLocalFolderFlow({
@@ -213,57 +228,23 @@ export default React.memo(function AddRepoDialog({
     setAddProjectBusyLabel
   })
 
-  const resetState = useCallback(() => {
-    // Why: kill the git clone process if one is running, so backing out
-    // or closing the dialog doesn't leave a clone running on disk.
-    void window.api.repos.cloneAbort()
-    resetLocalFolderFlow()
-    setStep('add')
-    setIsAdding(false)
-    setAddProjectBusyLabel(null)
-    resetServerPathFlow()
-    resetCloneFlow()
-    resetAccountStep()
-    resetNestedImportFlow()
-    resetNestedRepoReviewState()
-    resetCreateDefaultState()
-    resetCreateState()
-    resetRemoteState()
-  }, [
-    resetAccountStep,
-    resetCloneFlow,
-    resetLocalFolderFlow,
-    resetNestedRepoReviewState,
-    resetCreateDefaultState,
-    resetServerPathFlow,
-    resetNestedImportFlow,
-    resetRemoteState,
-    resetCreateState
-  ])
-
-  const resetHostScopedState = useCallback(() => {
-    setIsAdding(false)
-    setAddProjectBusyLabel(null)
-    resetLocalFolderFlow()
-    resetServerPathFlow()
-    resetCloneFlow()
-    resetCreateDefaultState()
-    resetCreateState()
-    resetRemoteState()
-  }, [
-    resetCloneFlow,
-    resetCreateDefaultState,
-    resetCreateState,
-    resetRemoteState,
-    resetLocalFolderFlow,
-    resetServerPathFlow
-  ])
-
-  useAddRepoHostChangeReset({
+  const resetState = useAddRepoDialogReset({
     isOpen,
     selectedHostId: hostSelection.selectedHostId,
-    onResetClosed: resetState,
-    onResetHostScopedState: resetHostScopedState
+    setStep,
+    setIsAdding,
+    setAddProjectBusyLabel,
+    resets: {
+      resetLocalFolderFlow,
+      resetServerPathFlow,
+      resetCloneFlow,
+      resetAccountStep: accounts.reset,
+      resetNestedImportFlow,
+      resetNestedRepoReviewState,
+      resetCreateDefaultState,
+      resetCreateState,
+      resetRemoteState
+    }
   })
 
   const handleBack = useCallback(() => {
@@ -331,7 +312,12 @@ export default React.memo(function AddRepoDialog({
         createParent={createParent}
         createError={createError}
         isCreating={isCreating}
-        hostSelector={<AddRepoHostSelectorSlot hostSelection={hostSelection} />}
+        hostSelector={
+          <AddRepoHostSelectorSlot
+            hostSelection={hostSelection}
+            accounts={isLocalHost ? <ProjectStartAccountsPanel state={startAccounts} /> : null}
+          />
+        }
         showRemoteAction={false}
         actionsDisabled={!hostSelection.selectedHostId}
         browseHostKind={selectedHostKind ?? 'runtime'}

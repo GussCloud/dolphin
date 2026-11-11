@@ -18139,6 +18139,24 @@
           "azureHint": "Default uses the sign-in configured in Settings → Integrations.",
           "githubDefault": "Default account (gh’s active login)",
           "azureDefault": "Default sign-in"
+        },
+        "startAccounts": {
+          "title": "Accounts for this project",
+          "pcDefault": "{{value0}} (this PC’s default)",
+          "ghDefault": "Active gh login (this PC’s default)",
+          "azureDefault": "Azure CLI sign-in (this PC’s default)",
+          "claudeDefault": "System Claude login (this PC’s default)",
+          "addGitHub": "Add GitHub account",
+          "addAzure": "Add Azure DevOps account",
+          "addClaude": "Add Claude account",
+          "suggestedAuthor": "Commit author: {{value0}} <{{value1}}>",
+          "githubHost": "GitHub host",
+          "signIn": "Sign in",
+          "cancel": "Cancel",
+          "terminalTitle": "GitHub CLI",
+          "terminalAria": "GitHub account command",
+          "restoreDescription": "gh made the new account active. Press Enter to keep your previous account as this PC’s default.",
+          "loginDescription": "Press Enter to sign in. Your current default account stays the default."
         }
       }
     },

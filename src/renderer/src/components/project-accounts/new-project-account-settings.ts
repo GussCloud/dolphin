@@ -7,6 +7,7 @@ import {
   type CommitIdentityDraft
 } from './commit-identity-draft'
 import type { ProjectAccountSelection } from './project-account-options'
+import type { ProjectStartAccounts } from './project-start-accounts'
 
 /** Only non-default choices; an empty object reproduces today's add flow exactly. */
 export type NewProjectAccountSettings = RepoAccountBinding
@@ -61,7 +62,13 @@ export function isAccountBindingEchoed(repo: Repo, settings: NewProjectAccountSe
     !settings.commitIdentity ||
     (repo.commitIdentity?.name === settings.commitIdentity.name &&
       repo.commitIdentity?.email === settings.commitIdentity.email)
-  return ghOk && azureOk && identityOk
+  const agentOk = !settings.agentAccountId || repo.agentAccountId === settings.agentAccountId
+  return ghOk && azureOk && identityOk && agentOk
+}
+
+/** The clone form's draft plus the first-screen picks it preselects from. */
+export type CloneProjectAccounts = ReturnType<typeof useNewProjectAccountDraft> & {
+  preferred: ProjectStartAccounts | null
 }
 
 export function useNewProjectAccountDraft(): {

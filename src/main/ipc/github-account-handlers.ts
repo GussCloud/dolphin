@@ -7,6 +7,7 @@ import {
   listGhAccountBindingInventory,
   validateGhAccountBinding
 } from '../github/gh-account-binding-inventory'
+import { getGhAccountProfile } from '../github/gh-account-profile'
 import { getRateLimit } from '../github/rate-limit'
 import type { Store } from '../persistence'
 import { getCohortAtEmit } from '../telemetry/cohort-classifier'
@@ -70,6 +71,9 @@ export function registerGitHubAccountHandlers(store: Store): void {
       })
     }
   )
+
+  // Why: suggests the commit author for an account picked before the project exists.
+  ipcMain.handle('gh:accountProfile', (_event, binding: unknown) => getGhAccountProfile(binding))
 
   ipcMain.handle(
     'gh:validateAccountBinding',

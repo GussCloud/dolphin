@@ -37,7 +37,7 @@ afterEach(() => {
 })
 
 function projectAccounts(draft: NewProjectAccountDraft) {
-  return { draft, setSelection: vi.fn(), setIdentity: vi.fn(), reset: vi.fn() }
+  return { draft, setSelection: vi.fn(), setIdentity: vi.fn(), reset: vi.fn(), preferred: null }
 }
 
 async function render(props: {

@@ -15,8 +15,14 @@ import {
   accountBindingArg,
   isAccountBindingEchoed,
   resolveNewProjectAccountSettings,
-  useNewProjectAccountDraft
+  useNewProjectAccountDraft,
+  type CloneProjectAccounts
 } from '../project-accounts/new-project-account-settings'
+import type { ProjectStartAccounts } from '../project-accounts/project-start-accounts'
+import {
+  commitIdentityDraftFrom,
+  evaluateCommitIdentityDraft
+} from '../project-accounts/commit-identity-draft'
 
 export function useAddRepoCloneFlow({
   step,
@@ -24,7 +30,8 @@ export function useAddRepoCloneFlow({
   sshTargetId,
   workspaceDir,
   fetchWorktrees,
-  onGitRepoReady
+  onGitRepoReady,
+  startAccounts
 }: {
   step: AddRepoDialogStep
   activeRuntimeEnvironmentId: string | null | undefined
@@ -39,6 +46,8 @@ export function useAddRepoCloneFlow({
     source: AddRepoExistingWorkspaceSource,
     executionHostId?: ExecutionHostId
   ) => Promise<void>
+  /** First-screen picks: preselect the clone account and author, and carry the agent account. */
+  startAccounts?: ProjectStartAccounts
 }): {
   cloneUrl: string
   cloneDestination: string
@@ -51,7 +60,7 @@ export function useAddRepoCloneFlow({
   resetCloneFlow: () => void
   handlePickDestination: () => Promise<void>
   handleClone: () => Promise<void>
-  projectAccounts: ReturnType<typeof useNewProjectAccountDraft>
+  projectAccounts: CloneProjectAccounts
 } {
   const [cloneUrl, setCloneUrl] = useState('')
   const [cloneDestination, setCloneDestination] = useState('')
@@ -68,8 +77,22 @@ export function useAddRepoCloneFlow({
   // Why: track whether we've already auto-filled for this entry into the clone step,
   // so a late settings hydration still gets a chance to set the default.
   const cloneStepAutoFilledRef = useRef(false)
-  const projectAccounts = useNewProjectAccountDraft()
-  const resetProjectAccounts = projectAccounts.reset
+  const accountDraft = useNewProjectAccountDraft()
+  const resetProjectAccounts = accountDraft.reset
+  const projectAccounts: CloneProjectAccounts = {
+    ...accountDraft,
+    preferred: startAccounts ?? null
+  }
+  const cloneStepSeededRef = useRef(false)
+  if (step !== 'clone') {
+    cloneStepSeededRef.current = false
+  } else if (!cloneStepSeededRef.current) {
+    cloneStepSeededRef.current = true
+    const suggested = startAccounts?.suggestedIdentity
+    if (suggested && evaluateCommitIdentityDraft(accountDraft.draft.identity).status === 'empty') {
+      accountDraft.setIdentity(commitIdentityDraftFrom(suggested))
+    }
+  }
 
   useEffect(() => {
     if (!isCloning) {
@@ -128,9 +151,14 @@ export function useAddRepoCloneFlow({
   const handleClone = useCallback(async (): Promise<void> => {
     const trimmedUrl = cloneUrl.trim()
     // Why: SSH clones run git on the remote, where per-project accounts are not applied.
-    const accountSettings = sshTargetId?.trim()
+    const resolvedAccounts = sshTargetId?.trim()
       ? {}
       : resolveNewProjectAccountSettings(projectAccounts.draft)
+    const agentAccountId = sshTargetId?.trim() ? null : startAccounts?.agentAccountId
+    const accountSettings =
+      resolvedAccounts && agentAccountId
+        ? { ...resolvedAccounts, agentAccountId }
+        : resolvedAccounts
     if (!trimmedUrl || !cloneDestination.trim() || !accountSettings) {
       return
     }
@@ -216,7 +244,8 @@ export function useAddRepoCloneFlow({
     fetchWorktrees,
     onGitRepoReady,
     projectAccounts.draft,
-    sshTargetId
+    sshTargetId,
+    startAccounts?.agentAccountId
   ])
 
   return {

@@ -11,6 +11,7 @@ import {
   type NewProjectAccountDraft
 } from './new-project-account-settings'
 import { DEFAULT_ACCOUNT_VALUE } from './project-account-options'
+import { EMPTY_PROJECT_START_ACCOUNTS, type ProjectStartAccounts } from './project-start-accounts'
 
 const { listGhMock, listAzureMock } = vi.hoisted(() => ({
   listGhMock: vi.fn(),
@@ -95,7 +96,8 @@ afterEach(() => {
 async function render(
   remoteUrl: string,
   draft: NewProjectAccountDraft = EMPTY_NEW_PROJECT_ACCOUNT_DRAFT,
-  wslDistro: string | null = null
+  wslDistro: string | null = null,
+  preferred: ProjectStartAccounts | null = null
 ) {
   const onSelectionChange = vi.fn()
   const onIdentityChange = vi.fn()
@@ -108,6 +110,7 @@ async function render(
         draft={draft}
         onSelectionChange={onSelectionChange}
         onIdentityChange={onIdentityChange}
+        preferred={preferred}
       />
     )
   })
@@ -220,5 +223,38 @@ describe('resolveNewProjectAccountSettings', () => {
       azureDevOpsAccountId: 'ado-1',
       commitIdentity: { name: 'Dev', email: 'dev@example.test' }
     })
+  })
+
+  it('preselects the account picked on the first screen for that remote', async () => {
+    const preferred = {
+      ...EMPTY_PROJECT_START_ACCOUNTS,
+      ghAccount: { host: 'github.com', user: 'work-login' }
+    }
+    const { onSelectionChange } = await render(
+      'https://github.com/corp/app.git',
+      EMPTY_NEW_PROJECT_ACCOUNT_DRAFT,
+      null,
+      preferred
+    )
+    expect(onSelectionChange).toHaveBeenCalledWith({
+      provider: 'github',
+      ghAccount: { host: 'github.com', user: 'work-login' }
+    })
+  })
+
+  it('does not preselect a first-screen account of another host', async () => {
+    const preferred = {
+      ...EMPTY_PROJECT_START_ACCOUNTS,
+      ghAccount: { host: 'github.com', user: 'work-login' }
+    }
+    const { onSelectionChange } = await render(
+      'https://git.example.test/corp/app.git',
+      EMPTY_NEW_PROJECT_ACCOUNT_DRAFT,
+      null,
+      preferred
+    )
+    expect(onSelectionChange).not.toHaveBeenCalledWith(
+      expect.objectContaining({ provider: 'github', ghAccount: expect.anything() })
+    )
   })
 })
