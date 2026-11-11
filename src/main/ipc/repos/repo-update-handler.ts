@@ -10,6 +10,7 @@ import { normalizeGhAccountBinding } from '../../../shared/github/account-bindin
 import type { GhAccountBinding } from '../../../shared/github/account-binding'
 import {
   normalizeAzureDevOpsAccountId,
+  normalizeAgentAccountId,
   normalizeCommitIdentity,
   type CommitIdentity
 } from '../../../shared/source-control-account-types'
@@ -62,6 +63,7 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           ghAccount?: GhAccountBinding | null
           azureDevOpsAccountId?: string | null
           commitIdentity?: CommitIdentity | null
+          agentAccountId?: string | null
         }
       }
     ) => {
@@ -107,6 +109,15 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           delete updates.azureDevOpsAccountId
         } else {
           updates.azureDevOpsAccountId = accountId
+        }
+      }
+      if ('agentAccountId' in updates) {
+        const accountId =
+          updates.agentAccountId === null ? null : normalizeAgentAccountId(updates.agentAccountId)
+        if (accountId === null && updates.agentAccountId !== null) {
+          delete updates.agentAccountId
+        } else {
+          updates.agentAccountId = accountId
         }
       }
       if ('commitIdentity' in updates) {

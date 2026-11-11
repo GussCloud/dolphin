@@ -52,6 +52,12 @@ describe('applyRepoAccountBindingToNewRepo', () => {
     expect(updateRepo).toHaveBeenCalledWith('r1', { commitIdentity: identity }, 'local')
   })
 
+  it('stores the project agent account chosen at add time', () => {
+    const updateRepo = vi.fn(() => repo({ agentAccountId: 'acct-company' }))
+    applyRepoAccountBindingToNewRepo({ updateRepo }, repo(), { agentAccountId: 'acct-company' })
+    expect(updateRepo).toHaveBeenCalledWith('r1', { agentAccountId: 'acct-company' }, 'local')
+  })
+
   it('does not touch the row when nothing usable was chosen', () => {
     const updateRepo = vi.fn()
     const created = repo()

@@ -49,7 +49,10 @@ const storeState = vi.hoisted(() => {
     claudeManagedAccounts: [],
     activeRuntimeEnvironmentId: null
   }
-  return { settings, repos: [{ id: 'repo-1', path: '/repos/app' }] }
+  const repos: { id: string; path: string; agentAccountId?: string }[] = [
+    { id: 'repo-1', path: '/repos/app' }
+  ]
+  return { settings, repos }
 })
 
 vi.mock('@/i18n/i18n', () => ({
@@ -156,8 +159,31 @@ describe('ComposerAgentAccountField', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('stays hidden with a single managed account or a paired remote runtime', () => {
-    storeState.settings.codexManagedAccounts = [account('acct-a')]
+  it('offers a single managed account next to the system login', () => {
+    // Why: personal system login + one company account is the common two-account setup.
+    storeState.settings.claudeManagedAccounts = [claudeAccount('claude-company')]
+    const select = renderField({ agent: 'claude' }).getByLabelText('account')
+    if (!(select instanceof HTMLSelectElement)) {
+      throw new Error('expected the native select stand-in')
+    }
+    expect(Array.from(select.options).map((option) => option.value)).toEqual([
+      '__active-account__',
+      'claude-company'
+    ])
+  })
+
+  it("labels the unpinned choice with the project's default account", () => {
+    storeState.settings.claudeManagedAccounts = [claudeAccount('claude-company')]
+    storeState.repos[0].agentAccountId = 'claude-company'
+    const select = renderField({ agent: 'claude' }).getByLabelText('account')
+    if (!(select instanceof HTMLSelectElement)) {
+      throw new Error('expected the native select stand-in')
+    }
+    expect(select.options[0]?.textContent).toBe('Project account ({{value0}})')
+    delete storeState.repos[0].agentAccountId
+  })
+
+  it('stays hidden without a managed account or on a paired remote runtime', () => {
     expect(renderField({}).container.innerHTML).toBe('')
     cleanup()
     storeState.settings.codexManagedAccounts = [account('acct-a'), account('acct-b')]

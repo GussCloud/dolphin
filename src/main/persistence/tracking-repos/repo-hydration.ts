@@ -6,6 +6,7 @@ import { sanitizeRepoIcon } from '../../../shared/repo-icon'
 import { normalizeGhAccountBinding } from '../../../shared/github/account-binding'
 import {
   normalizeAzureDevOpsAccountId,
+  normalizeAgentAccountId,
   normalizeCommitIdentity
 } from '../../../shared/source-control-account-types'
 import { normalizeRepoSourceControlAiOverrides } from '../../../shared/source-control-ai'
@@ -43,6 +44,7 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     ghAccount: rawGhAccount,
     azureDevOpsAccountId: rawAzureDevOpsAccountId,
     commitIdentity: rawCommitIdentity,
+    agentAccountId: rawAgentAccountId,
     customWorktreeVisibilitySources: rawCustomWorktreeVisibilitySources,
     worktreeVisibilitySourcePreferences: rawWorktreeVisibilitySourcePreferences,
     ...repoWithoutIcon
@@ -56,6 +58,7 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
   const ghAccount = normalizeGhAccountBinding(rawGhAccount)
   const azureDevOpsAccountId = normalizeAzureDevOpsAccountId(rawAzureDevOpsAccountId)
   const commitIdentity = normalizeCommitIdentity(rawCommitIdentity)
+  const agentAccountId = normalizeAgentAccountId(rawAgentAccountId)
   const customWorktreeVisibilitySources = normalizeCustomWorktreeVisibilitySources(
     rawCustomWorktreeVisibilitySources
   )
@@ -81,6 +84,7 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     ...(ghAccount ? { ghAccount } : {}),
     ...(azureDevOpsAccountId ? { azureDevOpsAccountId } : {}),
     ...(commitIdentity ? { commitIdentity } : {}),
+    ...(agentAccountId ? { agentAccountId } : {}),
     ...(customWorktreeVisibilitySources !== undefined ? { customWorktreeVisibilitySources } : {}),
     ...(worktreeVisibilitySourcePreferences !== undefined
       ? { worktreeVisibilitySourcePreferences }

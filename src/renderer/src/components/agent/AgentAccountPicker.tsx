@@ -18,8 +18,10 @@ const ACTIVE_ACCOUNT_VALUE = '__active-account__'
 export type AgentAccountPickerProps = {
   agent: WorktreeAccountAgent
   choices: readonly WorktreeAgentAccountChoice[]
-  /** Null keeps the runtime's active account. */
+  /** Null keeps the runtime's active account, or the project's default when one is set. */
   value: string | null
+  /** The project's default account, which a null value inherits. */
+  inheritedChoice?: WorktreeAgentAccountChoice | null
   onValueChange: (accountId: string | null) => void
 }
 
@@ -27,7 +29,8 @@ export function AgentAccountPicker({
   agent,
   choices,
   value,
-  onValueChange
+  onValueChange,
+  inheritedChoice
 }: AgentAccountPickerProps): React.JSX.Element {
   // Why: a pick that vanished (account removed while open) must not submit a stale id.
   const selectedValue =
@@ -46,7 +49,13 @@ export function AgentAccountPicker({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ACTIVE_ACCOUNT_VALUE}>
-            {translate('auto.components.agent.AgentAccountPicker.active', 'Active account')}
+            {inheritedChoice
+              ? translate(
+                  'auto.components.agent.AgentAccountPicker.projectDefault',
+                  'Project account ({{value0}})',
+                  { value0: inheritedChoice.email }
+                )
+              : translate('auto.components.agent.AgentAccountPicker.active', 'Active account')}
           </SelectItem>
           {choices.map((choice) => (
             <SelectItem key={choice.id} value={choice.id}>

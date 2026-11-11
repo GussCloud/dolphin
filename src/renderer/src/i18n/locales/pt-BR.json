@@ -17125,7 +17125,8 @@
         },
         "AgentAccountPicker": {
           "label": "Conta",
-          "active": "Conta ativa"
+          "active": "Conta ativa",
+          "projectDefault": "Conta do projeto ({{value0}})"
         }
       },
       "activity": {
