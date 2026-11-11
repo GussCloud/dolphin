@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { suggestCommitIdentityForGhProfile } from './account-commit-identity'
+import { parseGhAccountProfile, suggestCommitIdentityForGhProfile } from './account-commit-identity'
 
 describe('suggestCommitIdentityForGhProfile', () => {
   it('prefers the public email and the profile name', () => {
@@ -36,5 +36,28 @@ describe('suggestCommitIdentityForGhProfile', () => {
         host: 'ghe.corp.example'
       })
     ).toBeNull()
+  })
+})
+
+describe('parseGhAccountProfile', () => {
+  it('reads the fields gh prints and trims them', () => {
+    expect(
+      parseGhAccountProfile(
+        '{"login":"ana-corp","name":" Ana Dev ","email":"","id":42}\n',
+        'github.com'
+      )
+    ).toEqual({ login: 'ana-corp', name: 'Ana Dev', email: null, id: 42, host: 'github.com' })
+  })
+
+  it('returns null for output that is not a usable profile', () => {
+    expect(parseGhAccountProfile('not json', 'github.com')).toBeNull()
+    expect(parseGhAccountProfile('null', 'github.com')).toBeNull()
+    expect(parseGhAccountProfile('{"login":"  ","id":1}', 'github.com')).toBeNull()
+    expect(parseGhAccountProfile('{"name":"Ana"}', 'github.com')).toBeNull()
+  })
+
+  it('drops an id that cannot form a noreply address', () => {
+    expect(parseGhAccountProfile('{"login":"ana","id":-1}', 'github.com')?.id).toBeNull()
+    expect(parseGhAccountProfile('{"login":"ana","id":"42"}', 'github.com')?.id).toBeNull()
   })
 })
