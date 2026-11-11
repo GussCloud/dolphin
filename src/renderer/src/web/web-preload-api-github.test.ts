@@ -22,6 +22,7 @@ describe('web GitHub preload API', () => {
 
     expect(Object.keys(api.gh).sort()).toEqual(
       [
+        'accountProfile',
         'addIssueComment',
         'addIssueCommentBySlug',
         'addPRReviewComment',
