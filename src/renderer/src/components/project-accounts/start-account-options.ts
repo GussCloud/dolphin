@@ -3,6 +3,10 @@ import type { GhAccountBindingInventory } from '../../../../shared/github/auth-t
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { AzureDevOpsManagedAccount } from '../../../../shared/source-control-account-types'
 import {
+  listWorktreeAgentAccountChoices,
+  type WorktreeAccountAgent
+} from '../../../../shared/worktree-agent-account'
+import {
   DEFAULT_ACCOUNT_VALUE,
   githubAccountOptions,
   githubAccountValue
@@ -50,34 +54,57 @@ export function azureStartOptions(
   }))
 }
 
-type ClaudeSettings = Pick<
+type AgentSettings = Pick<
   GlobalSettings,
   | 'claudeManagedAccounts'
   | 'activeClaudeManagedAccountId'
   | 'activeClaudeManagedAccountIdsByRuntime'
+  | 'codexManagedAccounts'
+  | 'activeCodexManagedAccountId'
+  | 'activeCodexManagedAccountIdsByRuntime'
 >
 
-/** Managed Claude accounts a local (host-runtime) project can launch with. */
-export function claudeStartOptions(
-  settings: ClaudeSettings | null | undefined
+/** Managed accounts of `agent` a local (host-runtime) project can launch with. */
+export function agentStartOptions(
+  agent: WorktreeAccountAgent,
+  settings: AgentSettings | null | undefined
 ): StartAccountOption[] {
-  return (settings?.claudeManagedAccounts ?? [])
-    .filter((account) => account.managedAuthRuntime !== 'wsl')
-    .map((account) => ({
-      value: account.id,
-      label: account.organizationName
-        ? `${account.email} · ${account.organizationName}`
-        : account.email,
+  if (!settings) {
+    return []
+  }
+  return listWorktreeAgentAccountChoices({ agent, target: { runtime: 'host' }, settings }).map(
+    (choice) => ({
+      value: choice.id,
+      label: choice.workspaceLabel ? `${choice.email} · ${choice.workspaceLabel}` : choice.email,
       disabled: false
-    }))
+    })
+  )
 }
 
-/** Email of the managed account active on this PC, or null when the system Claude login is used. */
-export function claudePcDefaultEmail(settings: ClaudeSettings | null | undefined): string | null {
+/** The host-active managed account of `agent` (e.g. to restore it), or null for the system login. */
+export function agentPcDefaultAccountId(
+  agent: WorktreeAccountAgent,
+  settings: AgentSettings | null | undefined
+): string | null {
   if (!settings) {
     return null
   }
-  const activeId =
-    settings.activeClaudeManagedAccountIdsByRuntime?.host ?? settings.activeClaudeManagedAccountId
-  return settings.claudeManagedAccounts.find((account) => account.id === activeId)?.email ?? null
+  return agent === 'codex'
+    ? (settings.activeCodexManagedAccountIdsByRuntime?.host ??
+        settings.activeCodexManagedAccountId ??
+        null)
+    : (settings.activeClaudeManagedAccountIdsByRuntime?.host ??
+        settings.activeClaudeManagedAccountId ??
+        null)
+}
+
+/** Email of the managed account active on this PC, or null when the system login is used. */
+export function agentPcDefaultEmail(
+  agent: WorktreeAccountAgent,
+  settings: AgentSettings | null | undefined
+): string | null {
+  const activeId = agentPcDefaultAccountId(agent, settings)
+  const accounts =
+    agent === 'codex' ? settings?.codexManagedAccounts : settings?.claudeManagedAccounts
+  return accounts?.find((account) => account.id === activeId)?.email ?? null
 }

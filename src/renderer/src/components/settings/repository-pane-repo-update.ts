@@ -10,12 +10,14 @@ export type RepositoryPaneRepoUpdate = Omit<
   | 'ghAccount'
   | 'azureDevOpsAccountId'
   | 'commitIdentity'
-  | 'agentAccountId'
+  | 'claudeAccountId'
+  | 'codexAccountId'
 > & {
   sourceControlAi?: Repo['sourceControlAi'] | null
   externalWorktreeVisibility?: Repo['externalWorktreeVisibility'] | null
   ghAccount?: GhAccountBinding | null
   azureDevOpsAccountId?: string | null
   commitIdentity?: CommitIdentity | null
-  agentAccountId?: string | null
+  claudeAccountId?: string | null
+  codexAccountId?: string | null
 }

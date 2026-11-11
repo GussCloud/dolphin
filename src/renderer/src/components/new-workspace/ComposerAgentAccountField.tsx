@@ -3,6 +3,7 @@ import { useAppStore } from '@/store'
 import { AgentAccountPicker } from '@/components/agent/AgentAccountPicker'
 import { resolveAgentAccountPickerChoices } from '@/components/agent/agent-account-picker-choices'
 import type { TuiAgent } from '../../../../shared/tui-agent'
+import { projectAgentAccountId } from '../../../../shared/worktree-agent-account'
 
 export function ComposerAgentAccountField({
   agent,
@@ -19,14 +20,13 @@ export function ComposerAgentAccountField({
 }): React.JSX.Element | null {
   const settings = useAppStore((s) => s.settings)
   const repoPath = useAppStore((s) => s.repos.find((repo) => repo.id === repoId)?.path ?? null)
-  const projectAccountId = useAppStore(
-    (s) => s.repos.find((repo) => repo.id === repoId)?.agentAccountId ?? null
-  )
+  const repo = useAppStore((s) => s.repos.find((entry) => entry.id === repoId))
   const picker = resolveAgentAccountPickerChoices({ agent, executionHostId, repoPath, settings })
   if (!picker) {
     return null
   }
   // Why: an unpinned worktree launches with the project's default (main: worktree-launch-owner).
+  const projectAccountId = projectAgentAccountId(repo, picker.agent)
   const inheritedChoice = picker.choices.find((choice) => choice.id === projectAccountId) ?? null
   return (
     <AgentAccountPicker

@@ -21,6 +21,7 @@ import { isGitRepoKind } from '../../../../shared/repo-kind'
 import {
   hasProjectStartChoice,
   projectStartBinding,
+  startAgentAccounts,
   type ProjectStartAccounts
 } from '../project-accounts/project-start-accounts'
 import { projectRemoteTargetFromIdentityKey } from '../project-accounts/project-account-provider'
@@ -90,7 +91,7 @@ function startBindingForAddedRepo(
     return null
   }
   // Why: re-adding an existing project must not silently rebind it.
-  if (repo.ghAccount || repo.azureDevOpsAccountId || repo.commitIdentity || repo.agentAccountId) {
+  if (repo.ghAccount || repo.azureDevOpsAccountId || repo.commitIdentity || repo.claudeAccountId) {
     return null
   }
   const target = projectRemoteTargetFromIdentityKey(
@@ -108,6 +109,8 @@ export function useAddRepoAccountStep(
   options: { getStartAccounts?: () => ProjectStartAccounts } = {}
 ): {
   offer: GitRepoReady
+  /** Folder projects have no Git account; only the agent accounts apply. */
+  applyStartToFolder: (repo: Repo) => Promise<void>
   state: AddRepoAccountStepState | null
   reset: () => void
 } {
@@ -192,5 +195,20 @@ export function useAddRepoAccountStep(
       }
     : null
 
-  return { offer: offerAccountStep, state: accountStep, reset: resetAccountStep }
+  const applyStartToFolder = useCallback(
+    async (repo: Repo) => {
+      const binding = startAgentAccounts(getStartAccounts?.())
+      if (!repo.connectionId && Object.keys(binding).length > 0) {
+        await saveAddedRepoBinding(repo, getRepoExecutionHostId(repo), binding)
+      }
+    },
+    [getStartAccounts]
+  )
+
+  return {
+    offer: offerAccountStep,
+    applyStartToFolder,
+    state: accountStep,
+    reset: resetAccountStep
+  }
 }

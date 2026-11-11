@@ -64,10 +64,10 @@ describe('useProjectStartAccounts', () => {
   })
 
   it('forgets every pick when the panel no longer applies (dialog closed or another host)', async () => {
-    await act(async () => state.setAgentAccountId('claude-corp'))
+    await act(async () => state.setAgentAccount('claude', 'claude-corp'))
     await act(async () => root.render(<Harness enabled={false} />))
-    expect(state.get().agentAccountId).toBeNull()
+    expect(state.get().claudeAccountId).toBeNull()
     await act(async () => root.render(<Harness enabled />))
-    expect(state.accounts.agentAccountId).toBeNull()
+    expect(state.accounts.claudeAccountId).toBeNull()
   })
 })

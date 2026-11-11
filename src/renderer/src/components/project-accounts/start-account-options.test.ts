@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { GhAccountBindingInventory, GhAuthAccount } from '../../../../shared/github/auth-types'
 import type { ClaudeManagedAccount } from '../../../../shared/managed-account-types'
 import {
-  claudePcDefaultEmail,
-  claudeStartOptions,
+  agentPcDefaultEmail,
+  agentStartOptions,
   githubBindingFromValue,
   githubPcDefaultLogin,
   githubStartOptions
@@ -65,21 +65,37 @@ describe('start account options', () => {
     })
   })
 
-  it('offers only host-runtime Claude accounts and names the active one as PC default', () => {
+  it('offers only host-runtime accounts per agent and names the active one as PC default', () => {
     const settings = {
       claudeManagedAccounts: [
         claude('corp', { organizationName: 'Corp' }),
         claude('wsl', { managedAuthRuntime: 'wsl', wslDistro: 'Ubuntu' })
       ],
       activeClaudeManagedAccountId: null,
-      activeClaudeManagedAccountIdsByRuntime: { host: null, wsl: {} }
+      activeClaudeManagedAccountIdsByRuntime: { host: null, wsl: {} },
+      codexManagedAccounts: [
+        {
+          id: 'codex-corp',
+          email: 'codex@corp.example',
+          managedHomePath: '/data/codex-corp',
+          createdAt: 0,
+          updatedAt: 0,
+          lastAuthenticatedAt: 0
+        }
+      ],
+      activeCodexManagedAccountId: 'codex-corp',
+      activeCodexManagedAccountIdsByRuntime: { host: 'codex-corp', wsl: {} }
     }
-    expect(claudeStartOptions(settings).map((option) => option.label)).toEqual([
+    expect(agentStartOptions('claude', settings).map((option) => option.label)).toEqual([
       'corp@example.test · Corp'
     ])
-    expect(claudePcDefaultEmail(settings)).toBeNull()
+    expect(agentStartOptions('codex', settings).map((option) => option.value)).toEqual([
+      'codex-corp'
+    ])
+    expect(agentPcDefaultEmail('claude', settings)).toBeNull()
+    expect(agentPcDefaultEmail('codex', settings)).toBe('codex@corp.example')
     expect(
-      claudePcDefaultEmail({
+      agentPcDefaultEmail('claude', {
         ...settings,
         activeClaudeManagedAccountIdsByRuntime: { host: 'corp', wsl: {} }
       })

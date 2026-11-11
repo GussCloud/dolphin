@@ -128,6 +128,7 @@ export function createGitHubApi(): WebGitHubApi {
     checkDolphinStarred: () => Promise.resolve(null),
     starDolphin: () => Promise.resolve(false),
     accountProfile: () => Promise.resolve(null),
+    switchAccount: () => Promise.resolve(false),
     rateLimit: (args) =>
       route<WebGitHubResult<'rateLimit'>>(GITHUB_WEB_RPC_METHODS.rateLimit, args),
     listBindableAccounts: (args) =>

@@ -2,10 +2,14 @@ import type { WorktreeMeta } from '../shared/worktree/meta-types'
 import type { Repo } from '../shared/repo-types'
 import { splitWorktreeId } from '../shared/worktree/id'
 import { normalizeRuntimePathForComparison } from '../shared/cross-platform-path'
+import { projectAgentAccountId, type WorktreeAccountAgent } from '../shared/worktree-agent-account'
 
 export type PinnedMeta = Pick<WorktreeMeta, 'agentAccountId'>
 
-export type LaunchOwnerRepo = Pick<Repo, 'id' | 'path' | 'agentAccountId' | 'connectionId'>
+export type LaunchOwnerRepo = Pick<
+  Repo,
+  'id' | 'path' | 'claudeAccountId' | 'codexAccountId' | 'connectionId'
+>
 
 export type WorktreeAccountMetaSource = {
   getWorktreeMeta: (worktreeId: string) => PinnedMeta | undefined
@@ -80,32 +84,41 @@ function findLaunchRepo(
   return best?.repo ?? null
 }
 
-/**
- * The account owner of a launch: the worktree's own pin (explicit id, else the deepest pinned
- * worktree containing the cwd), else the default of the project that owns the launch.
- */
+/** The worktree pin of a launch: the explicit id, else the deepest pinned worktree containing the cwd. */
 export function findLaunchWorktree(
   source: WorktreeAccountMetaSource,
   launch: WorktreeLaunchLocation
 ): { worktreeId: string; meta: PinnedMeta } | null {
   const cwd = launch.workspacePath ? comparablePath(launch.workspacePath) : null
-  const pinned = launch.worktreeId
-    ? (() => {
-        const meta = source.getWorktreeMeta(launch.worktreeId)
-        return meta?.agentAccountId ? { worktreeId: launch.worktreeId, meta } : null
-      })()
-    : cwd
-      ? deepestWorktreeForPath(source, cwd, (meta) => Boolean(meta.agentAccountId))
-      : null
-  if (pinned) {
-    return pinned
+  if (launch.worktreeId) {
+    const meta = source.getWorktreeMeta(launch.worktreeId)
+    return meta?.agentAccountId ? { worktreeId: launch.worktreeId, meta } : null
   }
+  return cwd ? deepestWorktreeForPath(source, cwd, (meta) => Boolean(meta.agentAccountId)) : null
+}
+
+export type LaunchAccountCandidate = { worktreeId: string; accountId: string }
+
+/**
+ * Accounts a launch of `agent` may use, most specific first: the worktree's pin, then the
+ * project's default for that agent. Callers take the first one that belongs to `agent`,
+ * so a worktree pinned to a Claude account still gets the project's Codex default.
+ */
+export function findLaunchAccountCandidates(
+  source: WorktreeAccountMetaSource,
+  launch: WorktreeLaunchLocation,
+  agent: WorktreeAccountAgent
+): LaunchAccountCandidate[] {
+  const candidates: LaunchAccountCandidate[] = []
+  const pinned = findLaunchWorktree(source, launch)
+  if (pinned?.meta.agentAccountId) {
+    candidates.push({ worktreeId: pinned.worktreeId, accountId: pinned.meta.agentAccountId })
+  }
+  const cwd = launch.workspacePath ? comparablePath(launch.workspacePath) : null
   const repo = findLaunchRepo(source, launch, cwd)
-  if (!repo?.agentAccountId) {
-    return null
+  const projectAccountId = projectAgentAccountId(repo, agent)
+  if (repo && projectAccountId) {
+    candidates.push({ worktreeId: launch.worktreeId ?? repo.id, accountId: projectAccountId })
   }
-  return {
-    worktreeId: launch.worktreeId ?? repo.id,
-    meta: { agentAccountId: repo.agentAccountId }
-  }
+  return candidates
 }

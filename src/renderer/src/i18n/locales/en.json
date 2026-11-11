@@ -12646,7 +12646,9 @@
         "RepositoryAgentAccountSection": {
           "title": "Claude account",
           "description": "Claude agents in this project use this account’s quota.",
-          "hint": "Applies to agents started after the change. A worktree that picked its own account keeps it."
+          "hint": "Applies to agents started after the change. A worktree that picked its own account keeps it.",
+          "codexTitle": "Codex account",
+          "codexDescription": "Codex agents in this project use this account’s quota."
         }
       },
       "right": {
@@ -18159,11 +18161,15 @@
           "cancel": "Cancel",
           "terminalTitle": "GitHub CLI",
           "terminalAria": "GitHub account command",
-          "restoreDescription": "gh made the new account active. Press Enter to keep your previous account as this PC’s default.",
+          "restoreDescription": "Dolphin could not switch gh back to your previous account. Press Enter to keep it as this PC’s default.",
           "loginDescription": "Press Enter to sign in. Your current default account stays the default.",
           "githubLabel": "GitHub",
           "azureDevOpsLabel": "Azure DevOps",
-          "claudeLabel": "Claude"
+          "claudeLabel": "Claude",
+          "cancelSignIn": "Cancel sign-in",
+          "codexLabel": "Codex",
+          "codexDefault": "System Codex login (this PC’s default)",
+          "addCodex": "Add Codex account"
         }
       }
     },

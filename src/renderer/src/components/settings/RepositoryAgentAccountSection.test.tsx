@@ -105,7 +105,9 @@ describe('RepositoryAgentAccountSection', () => {
   it('saves the picked account and clears it back to the PC default', async () => {
     const updateRepo = vi.fn()
     await act(async () =>
-      root.render(<RepositoryAgentAccountSection repo={REPO} updateRepo={updateRepo} />)
+      root.render(
+        <RepositoryAgentAccountSection repo={REPO} agent="claude" updateRepo={updateRepo} />
+      )
     )
     expect(select().options[0]?.textContent).toBe('System Claude login (this PC’s default)')
 
@@ -113,12 +115,13 @@ describe('RepositoryAgentAccountSection', () => {
       select().value = 'company'
       select().dispatchEvent(new Event('change', { bubbles: true }))
     })
-    expect(updateRepo).toHaveBeenLastCalledWith('r1', { agentAccountId: 'company' })
+    expect(updateRepo).toHaveBeenLastCalledWith('r1', { claudeAccountId: 'company' })
 
     await act(async () =>
       root.render(
         <RepositoryAgentAccountSection
-          repo={{ ...REPO, agentAccountId: 'company' }}
+          agent="claude"
+          repo={{ ...REPO, claudeAccountId: 'company' }}
           updateRepo={updateRepo}
         />
       )
@@ -127,14 +130,15 @@ describe('RepositoryAgentAccountSection', () => {
       select().value = select().options[0]!.value
       select().dispatchEvent(new Event('change', { bubbles: true }))
     })
-    expect(updateRepo).toHaveBeenLastCalledWith('r1', { agentAccountId: null })
+    expect(updateRepo).toHaveBeenLastCalledWith('r1', { claudeAccountId: null })
   })
 
   it('keeps a removed account visible as unavailable instead of showing the default', async () => {
     await act(async () =>
       root.render(
         <RepositoryAgentAccountSection
-          repo={{ ...REPO, agentAccountId: 'removed' }}
+          agent="claude"
+          repo={{ ...REPO, claudeAccountId: 'removed' }}
           updateRepo={vi.fn()}
         />
       )

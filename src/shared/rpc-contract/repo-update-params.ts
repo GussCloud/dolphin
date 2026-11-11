@@ -96,7 +96,17 @@ export function createRepoUpdateSchema<T extends Readonly<Record<string, z.ZodTy
               ? null
               : (normalizeCommitIdentity(value) ?? undefined)
         ),
-      agentAccountId: z
+      claudeAccountId: z
+        .unknown()
+        .optional()
+        .transform((value) =>
+          value === undefined
+            ? undefined
+            : value === null
+              ? null
+              : (normalizeAgentAccountId(value) ?? undefined)
+        ),
+      codexAccountId: z
         .unknown()
         .optional()
         .transform((value) =>

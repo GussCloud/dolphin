@@ -126,3 +126,23 @@ export function resolveWorktreeAgentAccount(args: {
   }
   return { kind: 'override', accountId }
 }
+
+type ProjectAgentAccounts = { claudeAccountId?: string | null; codexAccountId?: string | null }
+
+// Why compare against 'codex': these pick a managed-account kind, never the launched agent, so
+// DeepSeek (which never takes a managed account) is not a case here.
+/** The project's default account for `agent`'s launches, if it set one. */
+export function projectAgentAccountId(
+  project: ProjectAgentAccounts | null | undefined,
+  agent: WorktreeAccountAgent
+): string | undefined {
+  return (agent === 'codex' ? project?.codexAccountId : project?.claudeAccountId) ?? undefined
+}
+
+/** The repo update that sets (or, with null, clears) the project's default for `agent`. */
+export function projectAgentAccountUpdate(
+  agent: WorktreeAccountAgent,
+  accountId: string | null
+): { claudeAccountId: string | null } | { codexAccountId: string | null } {
+  return agent === 'codex' ? { codexAccountId: accountId } : { claudeAccountId: accountId }
+}

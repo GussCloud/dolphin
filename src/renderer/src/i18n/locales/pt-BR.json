@@ -12646,7 +12646,9 @@
         "RepositoryAgentAccountSection": {
           "title": "Conta do Claude",
           "description": "Os agentes Claude deste projeto usam a cota desta conta.",
-          "hint": "Vale para agentes iniciados depois da mudança. Um worktree que escolheu a própria conta continua com ela."
+          "hint": "Vale para agentes iniciados depois da mudança. Um worktree que escolheu a própria conta continua com ela.",
+          "codexTitle": "Conta do Codex",
+          "codexDescription": "Os agentes Codex deste projeto usam a cota desta conta."
         }
       },
       "right": {
@@ -18159,11 +18161,15 @@
           "cancel": "Cancelar",
           "terminalTitle": "GitHub CLI",
           "terminalAria": "Comando de conta do GitHub",
-          "restoreDescription": "O gh tornou a nova conta ativa. Pressione Enter para manter a conta anterior como padrão deste PC.",
+          "restoreDescription": "O Dolphin não conseguiu voltar o gh para a conta anterior. Pressione Enter para mantê-la como padrão deste PC.",
           "loginDescription": "Pressione Enter para entrar. A conta padrão atual continua sendo a padrão.",
           "githubLabel": "GitHub",
           "azureDevOpsLabel": "Azure DevOps",
-          "claudeLabel": "Claude"
+          "claudeLabel": "Claude",
+          "cancelSignIn": "Cancelar login",
+          "codexLabel": "Codex",
+          "codexDefault": "Login do Codex no sistema (padrão deste PC)",
+          "addCodex": "Adicionar conta do Codex"
         }
       }
     },

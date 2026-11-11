@@ -49,7 +49,7 @@ const storeState = vi.hoisted(() => {
     claudeManagedAccounts: [],
     activeRuntimeEnvironmentId: null
   }
-  const repos: { id: string; path: string; agentAccountId?: string }[] = [
+  const repos: { id: string; path: string; claudeAccountId?: string; codexAccountId?: string }[] = [
     { id: 'repo-1', path: '/repos/app' }
   ]
   return { settings, repos }
@@ -174,13 +174,26 @@ describe('ComposerAgentAccountField', () => {
 
   it("labels the unpinned choice with the project's default account", () => {
     storeState.settings.claudeManagedAccounts = [claudeAccount('claude-company')]
-    storeState.repos[0].agentAccountId = 'claude-company'
+    storeState.repos[0].claudeAccountId = 'claude-company'
     const select = renderField({ agent: 'claude' }).getByLabelText('account')
     if (!(select instanceof HTMLSelectElement)) {
       throw new Error('expected the native select stand-in')
     }
     expect(select.options[0]?.textContent).toBe('Project account ({{value0}})')
-    delete storeState.repos[0].agentAccountId
+    delete storeState.repos[0].claudeAccountId
+  })
+
+  it("labels a Codex launch with the project's Codex default, not its Claude one", () => {
+    storeState.settings.codexManagedAccounts = [account('codex-company')]
+    storeState.repos[0].claudeAccountId = 'claude-company'
+    storeState.repos[0].codexAccountId = 'codex-company'
+    const select = renderField({ agent: 'codex' }).getByLabelText('account')
+    if (!(select instanceof HTMLSelectElement)) {
+      throw new Error('expected the native select stand-in')
+    }
+    expect(select.options[0]?.textContent).toBe('Project account ({{value0}})')
+    delete storeState.repos[0].claudeAccountId
+    delete storeState.repos[0].codexAccountId
   })
 
   it('stays hidden without a managed account or on a paired remote runtime', () => {

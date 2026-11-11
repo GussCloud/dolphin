@@ -18,7 +18,10 @@ import {
   useNewProjectAccountDraft,
   type CloneProjectAccounts
 } from '../project-accounts/new-project-account-settings'
-import type { ProjectStartAccounts } from '../project-accounts/project-start-accounts'
+import {
+  startAgentAccounts,
+  type ProjectStartAccounts
+} from '../project-accounts/project-start-accounts'
 import { commitIdentityDraftFrom } from '../project-accounts/commit-identity-draft'
 
 export function useAddRepoCloneFlow({
@@ -149,11 +152,9 @@ export function useAddRepoCloneFlow({
     const resolvedAccounts = sshTargetId?.trim()
       ? {}
       : resolveNewProjectAccountSettings(projectAccounts.draft)
-    const agentAccountId = sshTargetId?.trim() ? null : startAccounts?.agentAccountId
-    const accountSettings =
-      resolvedAccounts && agentAccountId
-        ? { ...resolvedAccounts, agentAccountId }
-        : resolvedAccounts
+    // Why: the clone form owns the Git account; the first screen still decides the agents.
+    const agentAccounts = sshTargetId?.trim() ? {} : startAgentAccounts(startAccounts)
+    const accountSettings = resolvedAccounts ? { ...resolvedAccounts, ...agentAccounts } : null
     if (!trimmedUrl || !cloneDestination.trim() || !accountSettings) {
       return
     }
@@ -240,7 +241,7 @@ export function useAddRepoCloneFlow({
     onGitRepoReady,
     projectAccounts.draft,
     sshTargetId,
-    startAccounts?.agentAccountId
+    startAccounts
   ])
 
   return {

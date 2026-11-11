@@ -13,7 +13,9 @@ export type ProjectStartAccounts = {
   /** Null keeps the default Azure DevOps sign-in. */
   azureDevOpsAccountId: string | null
   /** Managed Claude account; null keeps the active account. */
-  agentAccountId: string | null
+  claudeAccountId: string | null
+  /** Managed Codex account; null keeps the active account. */
+  codexAccountId: string | null
   /** Author suggested from the chosen GitHub account; editable later in each flow. */
   commitIdentity: CommitIdentity | null
 }
@@ -21,7 +23,8 @@ export type ProjectStartAccounts = {
 export const EMPTY_PROJECT_START_ACCOUNTS: ProjectStartAccounts = {
   ghAccount: null,
   azureDevOpsAccountId: null,
-  agentAccountId: null,
+  claudeAccountId: null,
+  codexAccountId: null,
   commitIdentity: null
 }
 
@@ -29,7 +32,8 @@ export function hasProjectStartChoice(accounts: ProjectStartAccounts): boolean {
   return Boolean(
     accounts.ghAccount ||
     accounts.azureDevOpsAccountId ||
-    accounts.agentAccountId ||
+    accounts.claudeAccountId ||
+    accounts.codexAccountId ||
     accounts.commitIdentity
   )
 }
@@ -57,7 +61,8 @@ export function projectStartBinding(
     ...(azureMatches && accounts.azureDevOpsAccountId
       ? { azureDevOpsAccountId: accounts.azureDevOpsAccountId }
       : {}),
-    ...(accounts.agentAccountId ? { agentAccountId: accounts.agentAccountId } : {}),
+    ...(accounts.claudeAccountId ? { claudeAccountId: accounts.claudeAccountId } : {}),
+    ...(accounts.codexAccountId ? { codexAccountId: accounts.codexAccountId } : {}),
     ...(accounts.commitIdentity ? { commitIdentity: accounts.commitIdentity } : {})
   }
 }
@@ -89,4 +94,16 @@ export function createProjectBinding(
     ? projectStartBinding({ ...accounts, commitIdentity: null }, 'no-remote')
     : {}
   return identity ? { ...binding, commitIdentity: identity } : binding
+}
+
+export type StartAgent = 'claude' | 'codex'
+
+/** Only the agent accounts, for flows whose Git account comes from their own form (clone). */
+export function startAgentAccounts(
+  accounts: ProjectStartAccounts | undefined
+): Pick<RepoAccountBinding, 'claudeAccountId' | 'codexAccountId'> {
+  return {
+    ...(accounts?.claudeAccountId ? { claudeAccountId: accounts.claudeAccountId } : {}),
+    ...(accounts?.codexAccountId ? { codexAccountId: accounts.codexAccountId } : {})
+  }
 }

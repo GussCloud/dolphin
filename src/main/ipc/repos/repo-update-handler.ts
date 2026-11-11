@@ -63,7 +63,8 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           ghAccount?: GhAccountBinding | null
           azureDevOpsAccountId?: string | null
           commitIdentity?: CommitIdentity | null
-          agentAccountId?: string | null
+          claudeAccountId?: string | null
+          codexAccountId?: string | null
         }
       }
     ) => {
@@ -111,13 +112,22 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           updates.azureDevOpsAccountId = accountId
         }
       }
-      if ('agentAccountId' in updates) {
+      if ('claudeAccountId' in updates) {
         const accountId =
-          updates.agentAccountId === null ? null : normalizeAgentAccountId(updates.agentAccountId)
-        if (accountId === null && updates.agentAccountId !== null) {
-          delete updates.agentAccountId
+          updates.claudeAccountId === null ? null : normalizeAgentAccountId(updates.claudeAccountId)
+        if (accountId === null && updates.claudeAccountId !== null) {
+          delete updates.claudeAccountId
         } else {
-          updates.agentAccountId = accountId
+          updates.claudeAccountId = accountId
+        }
+      }
+      if ('codexAccountId' in updates) {
+        const accountId =
+          updates.codexAccountId === null ? null : normalizeAgentAccountId(updates.codexAccountId)
+        if (accountId === null && updates.codexAccountId !== null) {
+          delete updates.codexAccountId
+        } else {
+          updates.codexAccountId = accountId
         }
       }
       if ('commitIdentity' in updates) {

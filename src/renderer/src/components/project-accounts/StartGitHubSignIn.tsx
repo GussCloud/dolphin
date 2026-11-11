@@ -41,15 +41,22 @@ export function StartGitHubSignIn({
   const host = normalizeGhHostInput(hostDraft)
 
   const finishLogin = async (current: Extract<Phase, { kind: 'login' }>): Promise<void> => {
-    const fresh = await reload()
+    let fresh = await reload()
     const known = new Set(current.known)
     const added =
       fresh?.accounts.find((entry) => entry.host === current.host && !known.has(entry.user)) ?? null
     const binding = added ? { host: added.host, user: added.user } : null
-    const nowActive = activeLogin(fresh, current.host)
+    const previous = current.previousActive
+    if (previous && activeLogin(fresh, current.host) !== previous) {
+      // Why: gh activates the new login; switch back silently, keeping the typed command as fallback.
+      const switched = await window.api.gh
+        .switchAccount({ host: current.host, user: previous })
+        .catch(() => false)
+      fresh = switched ? await reload() : fresh
+    }
     const restore =
-      current.previousActive && nowActive !== current.previousActive
-        ? ghAuthSwitchCommand(current.host, current.previousActive)
+      previous && activeLogin(fresh, current.host) !== previous
+        ? ghAuthSwitchCommand(current.host, previous)
         : null
     if (restore) {
       setPhase({ kind: 'restore', command: restore, added: binding })
@@ -117,7 +124,7 @@ export function StartGitHubSignIn({
         restoring
           ? translate(
               'auto.components.projectAccounts.startAccounts.restoreDescription',
-              'gh made the new account active. Press Enter to keep your previous account as this PC’s default.'
+              'Dolphin could not switch gh back to your previous account. Press Enter to keep it as this PC’s default.'
             )
           : translate(
               'auto.components.projectAccounts.startAccounts.loginDescription',

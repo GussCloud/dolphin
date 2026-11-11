@@ -26,7 +26,9 @@ const CHOOSE_CUSTOM_SOUND = 'choose-custom-file'
 type SoundSelectValue = AgentInteractionEventSettings['soundSource'] | typeof CHOOSE_CUSTOM_SOUND
 
 function isSoundSelectValue(value: string): value is SoundSelectValue {
-  return value === 'default' || value === 'custom' || value === 'none' || value === CHOOSE_CUSTOM_SOUND
+  return (
+    value === 'default' || value === 'custom' || value === 'none' || value === CHOOSE_CUSTOM_SOUND
+  )
 }
 
 type AgentInteractionEventRowProps = {

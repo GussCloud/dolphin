@@ -25,6 +25,7 @@ import { RepositoryHostSetupsSection } from './RepositoryHostSetupsSection'
 import { RepoSettingsDraftInput } from './RepositorySettingsDraftInput'
 import { RepositoryForkSyncSection } from './RepositoryForkSyncSection'
 import { RepositoryAccountSections } from './RepositoryAccountSections'
+import { RepositoryAgentAccountSections } from './RepositoryAgentAccountSection'
 import type { RepositoryPaneRepoUpdate } from './repository-pane-repo-update'
 import { translate } from '@/i18n/i18n'
 import { RepositoryWindowsRuntimeSection } from './RepositoryWindowsRuntimeSection'
@@ -380,6 +381,12 @@ export function RepositoryPane({
             />
           </>
         ) : null}
+
+        <RepositoryAgentAccountSections
+          repo={repo}
+          updateRepo={updateSelectedRepo}
+          forceVisible={forceFullPaneForRepoMatch}
+        />
       </section>
     ) : null,
     hooksSection,

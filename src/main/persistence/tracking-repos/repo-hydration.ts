@@ -44,7 +44,8 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     ghAccount: rawGhAccount,
     azureDevOpsAccountId: rawAzureDevOpsAccountId,
     commitIdentity: rawCommitIdentity,
-    agentAccountId: rawAgentAccountId,
+    claudeAccountId: rawClaudeAccountId,
+    codexAccountId: rawCodexAccountId,
     customWorktreeVisibilitySources: rawCustomWorktreeVisibilitySources,
     worktreeVisibilitySourcePreferences: rawWorktreeVisibilitySourcePreferences,
     ...repoWithoutIcon
@@ -58,7 +59,8 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
   const ghAccount = normalizeGhAccountBinding(rawGhAccount)
   const azureDevOpsAccountId = normalizeAzureDevOpsAccountId(rawAzureDevOpsAccountId)
   const commitIdentity = normalizeCommitIdentity(rawCommitIdentity)
-  const agentAccountId = normalizeAgentAccountId(rawAgentAccountId)
+  const claudeAccountId = normalizeAgentAccountId(rawClaudeAccountId)
+  const codexAccountId = normalizeAgentAccountId(rawCodexAccountId)
   const customWorktreeVisibilitySources = normalizeCustomWorktreeVisibilitySources(
     rawCustomWorktreeVisibilitySources
   )
@@ -84,7 +86,8 @@ export function hydrateRepo(repo: Repo, gitUsernameCache: ReadonlyMap<string, st
     ...(ghAccount ? { ghAccount } : {}),
     ...(azureDevOpsAccountId ? { azureDevOpsAccountId } : {}),
     ...(commitIdentity ? { commitIdentity } : {}),
-    ...(agentAccountId ? { agentAccountId } : {}),
+    ...(claudeAccountId ? { claudeAccountId } : {}),
+    ...(codexAccountId ? { codexAccountId } : {}),
     ...(customWorktreeVisibilitySources !== undefined ? { customWorktreeVisibilitySources } : {}),
     ...(worktreeVisibilitySourcePreferences !== undefined
       ? { worktreeVisibilitySourcePreferences }

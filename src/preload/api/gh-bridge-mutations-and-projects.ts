@@ -173,6 +173,8 @@ export const ghMutationsAndProjectsApi = {
   }): Promise<GhAccountBindingInventory> => ipcRenderer.invoke('gh:listHostAccounts', args),
   accountProfile: (binding: { host: string; user: string }): Promise<GhAccountProfile | null> =>
     ipcRenderer.invoke('gh:accountProfile', binding),
+  switchAccount: (binding: { host: string; user: string }): Promise<boolean> =>
+    ipcRenderer.invoke('gh:switchAccount', binding),
   validateAccountBinding: (args: {
     repoPath: string
     repoId?: string

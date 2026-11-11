@@ -11,7 +11,8 @@ import {
 const COMPANY: ProjectStartAccounts = {
   ghAccount: { host: 'github.com', user: 'ana-corp' },
   azureDevOpsAccountId: 'ado-corp',
-  agentAccountId: 'claude-corp',
+  claudeAccountId: 'claude-corp',
+  codexAccountId: 'codex-corp',
   commitIdentity: { name: 'Ana Dev', email: 'ana@corp.example' }
 }
 
@@ -19,7 +20,8 @@ describe('projectStartBinding', () => {
   it('keeps only the GitHub account for a GitHub remote on the same host', () => {
     expect(projectStartBinding(COMPANY, { provider: 'github', host: 'github.com' })).toEqual({
       ghAccount: COMPANY.ghAccount,
-      agentAccountId: 'claude-corp',
+      claudeAccountId: 'claude-corp',
+      codexAccountId: 'codex-corp',
       commitIdentity: COMPANY.commitIdentity
     })
   })
@@ -41,7 +43,8 @@ describe('projectStartBinding', () => {
 
   it('keeps the agent account and author even for an unsupported or missing remote', () => {
     expect(projectStartBinding(COMPANY, null)).toEqual({
-      agentAccountId: 'claude-corp',
+      claudeAccountId: 'claude-corp',
+      codexAccountId: 'codex-corp',
       commitIdentity: COMPANY.commitIdentity
     })
   })
@@ -53,7 +56,8 @@ describe('createProjectBinding', () => {
       {
         ghAccount: COMPANY.ghAccount,
         azureDevOpsAccountId: 'ado-corp',
-        agentAccountId: 'claude-corp',
+        claudeAccountId: 'claude-corp',
+        codexAccountId: 'codex-corp',
         commitIdentity: { name: 'Edited', email: 'edited@corp.example' }
       }
     )
@@ -76,7 +80,7 @@ describe('preferredCloneSelection and hasProjectStartChoice', () => {
 
   it('treats the all-defaults state as no choice, so the add flow stays as before', () => {
     expect(hasProjectStartChoice(EMPTY_PROJECT_START_ACCOUNTS)).toBe(false)
-    expect(hasProjectStartChoice({ ...EMPTY_PROJECT_START_ACCOUNTS, agentAccountId: 'x' })).toBe(
+    expect(hasProjectStartChoice({ ...EMPTY_PROJECT_START_ACCOUNTS, claudeAccountId: 'x' })).toBe(
       true
     )
   })

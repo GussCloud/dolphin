@@ -76,7 +76,8 @@ export type RepositoryApi = {
       ghAccount?: GhAccountBinding | null
       azureDevOpsAccountId?: string | null
       commitIdentity?: CommitIdentity | null
-      agentAccountId?: string | null
+      claudeAccountId?: string | null
+      codexAccountId?: string | null
     }
   }) => Promise<Repo>
   pickFolder: () => Promise<string | null>

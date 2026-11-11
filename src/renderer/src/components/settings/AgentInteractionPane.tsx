@@ -44,8 +44,9 @@ export function AgentInteractionPane({
     configRef.current = next
     await updateSettings({ agentInteraction: next })
   }
-  const updateEvent = (kind: AgentInteractionKind) => (patch: Partial<AgentInteractionEventSettings>) =>
-    update({ events: { [kind]: patch } })
+  const updateEvent =
+    (kind: AgentInteractionKind) => (patch: Partial<AgentInteractionEventSettings>) =>
+      update({ events: { [kind]: patch } })
   const updateAvatar = (avatar: AgentInteractionAvatarSettings) => update({ avatar })
   const disabled = !config.enabled
 

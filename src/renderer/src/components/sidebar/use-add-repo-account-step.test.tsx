@@ -120,7 +120,8 @@ describe('useAddRepoAccountStep', () => {
     startAccounts = {
       ghAccount: { host: 'github.com', user: 'ana-corp' },
       azureDevOpsAccountId: 'ado-corp',
-      agentAccountId: 'claude-corp',
+      claudeAccountId: 'claude-corp',
+      codexAccountId: null,
       commitIdentity: { name: 'Ana', email: 'ana@corp.example' }
     }
     await act(async () => hook.offer('repo-1', 'local_folder_picker'))
@@ -130,7 +131,7 @@ describe('useAddRepoAccountStep', () => {
       'repo-1',
       {
         ghAccount: { host: 'github.com', user: 'ana-corp' },
-        agentAccountId: 'claude-corp',
+        claudeAccountId: 'claude-corp',
         commitIdentity: { name: 'Ana', email: 'ana@corp.example' }
       },
       { hostId: 'local' }
@@ -138,9 +139,24 @@ describe('useAddRepoAccountStep', () => {
     expect(onGitRepoReady).toHaveBeenCalledTimes(1)
   })
 
+  it('saves only the agent accounts on a folder project', async () => {
+    startAccounts = {
+      ...EMPTY_PROJECT_START_ACCOUNTS,
+      ghAccount: { host: 'github.com', user: 'ana-corp' },
+      claudeAccountId: 'claude-corp',
+      codexAccountId: 'codex-corp'
+    }
+    await act(async () => hook.applyStartToFolder({ ...REPO, kind: 'folder' }))
+    expect(storeState.updateRepo).toHaveBeenCalledWith(
+      'repo-1',
+      { claudeAccountId: 'claude-corp', codexAccountId: 'codex-corp' },
+      { hostId: 'local' }
+    )
+  })
+
   it('never rebinds a project that already had accounts', async () => {
-    storeState.repos = [{ ...REPO, agentAccountId: 'claude-old' }]
-    startAccounts = { ...EMPTY_PROJECT_START_ACCOUNTS, agentAccountId: 'claude-corp' }
+    storeState.repos = [{ ...REPO, claudeAccountId: 'claude-old' }]
+    startAccounts = { ...EMPTY_PROJECT_START_ACCOUNTS, claudeAccountId: 'claude-corp' }
     planMock.mockResolvedValueOnce(null)
     await act(async () => hook.offer('repo-1', 'local_folder_picker'))
     expect(storeState.updateRepo).not.toHaveBeenCalled()

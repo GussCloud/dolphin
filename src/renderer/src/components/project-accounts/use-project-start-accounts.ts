@@ -2,8 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store'
 import type { GhAccountBinding } from '../../../../shared/github/account-binding'
 import { suggestCommitIdentityForGhProfile } from '../../../../shared/github/account-commit-identity'
+import { projectAgentAccountUpdate } from '../../../../shared/worktree-agent-account'
 import type { CommitIdentity } from '../../../../shared/source-control-account-types'
-import { EMPTY_PROJECT_START_ACCOUNTS, type ProjectStartAccounts } from './project-start-accounts'
+import {
+  EMPTY_PROJECT_START_ACCOUNTS,
+  type ProjectStartAccounts,
+  type StartAgent
+} from './project-start-accounts'
 
 export type ProjectStartAccountsState = {
   accounts: ProjectStartAccounts
@@ -11,7 +16,7 @@ export type ProjectStartAccountsState = {
   get: () => ProjectStartAccounts
   setGhAccount: (binding: GhAccountBinding | null) => void
   setAzureDevOpsAccount: (account: { id: string; login: string } | null) => void
-  setAgentAccountId: (accountId: string | null) => void
+  setAgentAccount: (agent: StartAgent, accountId: string | null) => void
   /** A pick by the user; account changes stop replacing the author after it. */
   setCommitIdentity: (identity: CommitIdentity | null) => void
 }
@@ -95,8 +100,8 @@ export function useProjectStartAccounts(enabled: boolean): ProjectStartAccountsS
     [applySuggestion]
   )
 
-  const setAgentAccountId = useCallback((agentAccountId: string | null) => {
-    setAccounts((prev) => ({ ...prev, agentAccountId }))
+  const setAgentAccount = useCallback((agent: StartAgent, accountId: string | null) => {
+    setAccounts((prev) => ({ ...prev, ...projectAgentAccountUpdate(agent, accountId) }))
   }, [])
 
   const setCommitIdentity = useCallback((commitIdentity: CommitIdentity | null) => {
@@ -110,7 +115,7 @@ export function useProjectStartAccounts(enabled: boolean): ProjectStartAccountsS
     get,
     setGhAccount,
     setAzureDevOpsAccount,
-    setAgentAccountId,
+    setAgentAccount,
     setCommitIdentity
   }
 }

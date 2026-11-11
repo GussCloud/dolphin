@@ -24,3 +24,26 @@ export async function getGhAccountProfile(binding: unknown): Promise<GhAccountPr
     release()
   }
 }
+
+/**
+ * Makes `binding` gh's active login on its host again, e.g. after `gh auth login` activated a
+ * newly added account. Argv only (no shell), and `--flag=value` so a login starting with `-`
+ * is never read as a flag. False when gh refuses or the login is unknown.
+ */
+export async function switchGhActiveAccount(binding: unknown): Promise<boolean> {
+  const account = normalizeGhAccountBinding(binding)
+  if (!account) {
+    return false
+  }
+  try {
+    await ghExecFileAsync(
+      ['auth', 'switch', `--hostname=${account.host}`, `--user=${account.user}`],
+      {
+        encoding: 'utf-8'
+      }
+    )
+    return true
+  } catch {
+    return false
+  }
+}

@@ -62,6 +62,7 @@ const EXPECTED_GITHUB_IPC_CHANNELS = [
   'gh:listBindableAccounts',
   'gh:listHostAccounts',
   'gh:accountProfile',
+  'gh:switchAccount',
   'gh:validateAccountBinding',
   'gh:listAccessibleProjects',
   'gh:resolveProjectRef',

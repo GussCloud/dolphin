@@ -62,7 +62,9 @@ export function isAccountBindingEchoed(repo: Repo, settings: NewProjectAccountSe
     !settings.commitIdentity ||
     (repo.commitIdentity?.name === settings.commitIdentity.name &&
       repo.commitIdentity?.email === settings.commitIdentity.email)
-  const agentOk = !settings.agentAccountId || repo.agentAccountId === settings.agentAccountId
+  const agentOk =
+    (!settings.claudeAccountId || repo.claudeAccountId === settings.claudeAccountId) &&
+    (!settings.codexAccountId || repo.codexAccountId === settings.codexAccountId)
   return ghOk && azureOk && identityOk && agentOk
 }
 

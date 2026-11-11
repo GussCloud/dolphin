@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useState } from 'react'
-import { Loader2, Plus } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -13,17 +13,13 @@ import { useAppStore } from '@/store'
 import { getActiveRuntimeTarget } from '@/runtime/runtime-rpc-client'
 import type { GhAccountBindingInventory } from '../../../../shared/github/auth-types'
 import type { AzureDevOpsManagedAccount } from '../../../../shared/source-control-account-types'
-import {
-  addAzureDevOpsManagedAccount,
-  listAzureDevOpsManagedAccounts,
-  listGhHostAccounts
-} from './project-account-client'
+import { listAzureDevOpsManagedAccounts, listGhHostAccounts } from './project-account-client'
 import { githubAccountValue } from './project-account-options'
 import {
   PC_DEFAULT_VALUE,
   azureStartOptions,
-  claudePcDefaultEmail,
-  claudeStartOptions,
+  agentPcDefaultEmail,
+  agentStartOptions,
   githubBindingFromValue,
   githubPcDefaultLogin,
   githubStartOptions,
@@ -32,7 +28,12 @@ import {
 import { StartGitHubSignIn } from './StartGitHubSignIn'
 import { CommitIdentityFields } from './CommitIdentityFields'
 import { commitIdentityDraftFrom, evaluateCommitIdentityDraft } from './commit-identity-draft'
+import {
+  projectAgentAccountId,
+  type WorktreeAccountAgent
+} from '../../../../shared/worktree-agent-account'
 import type { ProjectStartAccountsState } from './use-project-start-accounts'
+import { useStartAccountAdds } from './use-start-account-adds'
 
 const LOCAL_TARGET = getActiveRuntimeTarget({ activeRuntimeEnvironmentId: null })
 
@@ -45,6 +46,8 @@ type StartAccountRowProps = {
   addLabel: string
   onChange: (value: string | null) => void
   onAdd: () => void
+  /** While busy, the add button becomes a cancel button. */
+  onCancel?: () => void
 }
 
 function StartAccountRow(props: StartAccountRowProps): React.JSX.Element {
@@ -71,17 +74,36 @@ function StartAccountRow(props: StartAccountRowProps): React.JSX.Element {
           ))}
         </SelectContent>
       </Select>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        disabled={props.busy}
-        onClick={props.onAdd}
-        aria-label={props.addLabel}
-        title={props.addLabel}
-      >
-        {props.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />}
-      </Button>
+      {props.busy ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          disabled={!props.onCancel}
+          onClick={props.onCancel}
+          aria-label={translate(
+            'auto.components.projectAccounts.startAccounts.cancelSignIn',
+            'Cancel sign-in'
+          )}
+          title={translate(
+            'auto.components.projectAccounts.startAccounts.cancelSignIn',
+            'Cancel sign-in'
+          )}
+        >
+          <X className="size-3.5" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          onClick={props.onAdd}
+          aria-label={props.addLabel}
+          title={props.addLabel}
+        >
+          <Plus className="size-3.5" />
+        </Button>
+      )}
     </div>
   )
 }
@@ -98,6 +120,30 @@ function pcDefault(name: string | null, fallback: string): string {
     : fallback
 }
 
+const START_AGENTS: readonly WorktreeAccountAgent[] = ['claude', 'codex']
+
+const AGENT_ROW_COPY: Record<
+  WorktreeAccountAgent,
+  () => { label: string; systemDefault: string; add: string }
+> = {
+  claude: () => ({
+    label: translate('auto.components.projectAccounts.startAccounts.claudeLabel', 'Claude'),
+    systemDefault: translate(
+      'auto.components.projectAccounts.startAccounts.claudeDefault',
+      'System Claude login (this PC’s default)'
+    ),
+    add: translate('auto.components.projectAccounts.startAccounts.addClaude', 'Add Claude account')
+  }),
+  codex: () => ({
+    label: translate('auto.components.projectAccounts.startAccounts.codexLabel', 'Codex'),
+    systemDefault: translate(
+      'auto.components.projectAccounts.startAccounts.codexDefault',
+      'System Codex login (this PC’s default)'
+    ),
+    add: translate('auto.components.projectAccounts.startAccounts.addCodex', 'Add Codex account')
+  })
+}
+
 /** First-screen account picks for a project added on this PC; each later step inherits them. */
 export function ProjectStartAccountsPanel({
   state
@@ -105,14 +151,18 @@ export function ProjectStartAccountsPanel({
   state: ProjectStartAccountsState
 }): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
-  const fetchSettings = useAppStore((s) => s.fetchSettings)
   const [inventory, setInventory] = useState<GhAccountBindingInventory | null>(null)
   const [azureAccounts, setAzureAccounts] = useState<AzureDevOpsManagedAccount[]>([])
   const [signingInGitHub, setSigningInGitHub] = useState(false)
-  const [adding, setAdding] = useState<'azure-account' | 'claude-account' | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const { accounts, setGhAccount, setAzureDevOpsAccount, setAgentAccountId, setCommitIdentity } =
+  const { accounts, setGhAccount, setAzureDevOpsAccount, setAgentAccount, setCommitIdentity } =
     state
+  const adds = useStartAccountAdds({
+    onAzureAdded: (account) => {
+      setAzureAccounts((prev) => [...prev.filter((a) => a.id !== account.id), account])
+      setAzureDevOpsAccount({ id: account.id, login: account.login })
+    },
+    onAgentAdded: setAgentAccount
+  })
 
   const reloadGitHub = useCallback(async () => {
     const next = await listGhHostAccounts(LOCAL_TARGET).catch(() => null)
@@ -123,41 +173,6 @@ export function ProjectStartAccountsPanel({
     void reloadGitHub()
     void listAzureDevOpsManagedAccounts(LOCAL_TARGET).then(setAzureAccounts, () => undefined)
   }, [reloadGitHub])
-
-  const addAzure = async (): Promise<void> => {
-    setAdding('azure-account')
-    setError(null)
-    const result = await addAzureDevOpsManagedAccount('in-app')
-    setAdding(null)
-    if (!result.ok) {
-      setError(result.error)
-      return
-    }
-    setAzureAccounts((prev) => [...prev.filter((a) => a.id !== result.account.id), result.account])
-    setAzureDevOpsAccount({ id: result.account.id, login: result.account.login })
-  }
-
-  const addClaude = async (): Promise<void> => {
-    const before = new Set((settings?.claudeManagedAccounts ?? []).map((account) => account.id))
-    setAdding('claude-account')
-    setError(null)
-    try {
-      await window.api.claudeAccounts.add({ runtime: 'host', wslDistro: null })
-      await fetchSettings()
-      const added = useAppStore
-        .getState()
-        .settings?.claudeManagedAccounts.find(
-          (account) => !before.has(account.id) && account.managedAuthRuntime !== 'wsl'
-        )
-      if (added) {
-        setAgentAccountId(added.id)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setAdding(null)
-    }
-  }
 
   const azureLogin = (id: string): string =>
     azureAccounts.find((account) => account.id === id)?.login ?? ''
@@ -208,33 +223,32 @@ export function ProjectStartAccountsPanel({
         )}
         options={azureStartOptions(azureAccounts)}
         value={accounts.azureDevOpsAccountId}
-        busy={adding === 'azure-account'}
+        busy={adds.adding === 'azure'}
+        onCancel={adds.cancel}
         addLabel={translate(
           'auto.components.projectAccounts.startAccounts.addAzure',
           'Add Azure DevOps account'
         )}
         onChange={(id) => setAzureDevOpsAccount(id ? { id, login: azureLogin(id) } : null)}
-        onAdd={() => void addAzure()}
+        onAdd={() => void adds.addAzure()}
       />
-      <StartAccountRow
-        label={translate('auto.components.projectAccounts.startAccounts.claudeLabel', 'Claude')}
-        defaultLabel={pcDefault(
-          claudePcDefaultEmail(settings),
-          translate(
-            'auto.components.projectAccounts.startAccounts.claudeDefault',
-            'System Claude login (this PC’s default)'
-          )
-        )}
-        options={claudeStartOptions(settings)}
-        value={accounts.agentAccountId}
-        busy={adding === 'claude-account'}
-        addLabel={translate(
-          'auto.components.projectAccounts.startAccounts.addClaude',
-          'Add Claude account'
-        )}
-        onChange={setAgentAccountId}
-        onAdd={() => void addClaude()}
-      />
+      {START_AGENTS.map((agent) => (
+        <StartAccountRow
+          key={agent}
+          label={AGENT_ROW_COPY[agent]().label}
+          defaultLabel={pcDefault(
+            agentPcDefaultEmail(agent, settings),
+            AGENT_ROW_COPY[agent]().systemDefault
+          )}
+          options={agentStartOptions(agent, settings)}
+          value={projectAgentAccountId(accounts, agent) ?? null}
+          busy={adds.adding === agent}
+          addLabel={AGENT_ROW_COPY[agent]().add}
+          onChange={(id) => setAgentAccount(agent, id)}
+          onAdd={() => void adds.addAgent(agent)}
+          onCancel={adds.cancel}
+        />
+      ))}
       {/* Why the shared picker: it lists every registered author as "Name <email>" and edits them. */}
       <div data-add-project-commit-author>
         <CommitIdentityFields
@@ -245,9 +259,9 @@ export function ProjectStartAccountsPanel({
           }}
         />
       </div>
-      {error ? (
+      {adds.error ? (
         <p className="text-[11px] text-destructive" role="alert">
-          {error}
+          {adds.error}
         </p>
       ) : null}
     </section>

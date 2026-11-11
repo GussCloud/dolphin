@@ -204,6 +204,7 @@ export default React.memo(function AddRepoDialog({
     showNestedRepoReview,
     onGitRepoReady: completeGitRepoAdd,
     offerAccountStep: accounts.offer,
+    onFolderRepoAdded: accounts.applyStartToFolder,
     setIsAdding,
     setAddProjectBusyLabel
   })

@@ -70,16 +70,16 @@ describe('Store per-project accounts', () => {
     const store = await createStore()
     store.addRepo(makeRepo())
 
-    expect(store.updateRepo('r1', { agentAccountId: ' acct-company ' })!.agentAccountId).toBe(
+    expect(store.updateRepo('r1', { claudeAccountId: ' acct-company ' })!.claudeAccountId).toBe(
       'acct-company'
     )
-    expect(store.updateRepo('r1', { agentAccountId: 'bad id\n' })!.agentAccountId).toBe(
+    expect(store.updateRepo('r1', { claudeAccountId: 'bad id\n' })!.claudeAccountId).toBe(
       'acct-company'
     )
     store.flush()
     const reloaded = await createStore()
-    expect(reloaded.getRepo('r1')!.agentAccountId).toBe('acct-company')
-    expect(reloaded.updateRepo('r1', { agentAccountId: null })!.agentAccountId).toBeUndefined()
+    expect(reloaded.getRepo('r1')!.claudeAccountId).toBe('acct-company')
+    expect(reloaded.updateRepo('r1', { claudeAccountId: null })!.claudeAccountId).toBeUndefined()
   })
 
   it('drops a corrupt persisted identity on hydration', async () => {

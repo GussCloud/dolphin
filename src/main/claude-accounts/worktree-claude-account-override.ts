@@ -2,7 +2,7 @@ import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
 import { resolveWorktreeAgentAccount } from '../../shared/worktree-agent-account'
 import {
-  findLaunchWorktree,
+  findLaunchAccountCandidates,
   type WorktreeAccountMetaSource,
   type WorktreeLaunchLocation
 } from '../worktree-launch-owner'
@@ -37,32 +37,34 @@ export function resolveClaudeLaunchAccountOverride(args: {
   if (!args.source || !args.settings || !args.launch) {
     return { kind: 'none' }
   }
-  const owner = findLaunchWorktree(args.source, args.launch)
-  if (!owner?.meta.agentAccountId) {
-    return { kind: 'none' }
-  }
-  const resolution = resolveWorktreeAgentAccount({
-    agentAccountId: owner.meta.agentAccountId,
-    agent: 'claude',
-    target: args.target,
-    settings: args.settings
-  })
-  if (resolution.kind === 'global') {
-    return { kind: 'none' }
-  }
-  if (resolution.kind === 'unavailable') {
-    return {
-      kind: 'unavailable',
-      accountId: resolution.accountId,
-      worktreeId: owner.worktreeId,
-      reason: resolution.reason
+  for (const candidate of findLaunchAccountCandidates(args.source, args.launch, 'claude')) {
+    const resolution = resolveWorktreeAgentAccount({
+      agentAccountId: candidate.accountId,
+      agent: 'claude',
+      target: args.target,
+      settings: args.settings
+    })
+    // Why: a pin for the other agent is not this launch's; the project default may still apply.
+    if (resolution.kind === 'global') {
+      continue
     }
+    if (resolution.kind === 'unavailable') {
+      return {
+        kind: 'unavailable',
+        accountId: resolution.accountId,
+        worktreeId: candidate.worktreeId,
+        reason: resolution.reason
+      }
+    }
+    if (getSelectedClaudeAccountIdForTarget(args.settings, args.target) === resolution.accountId) {
+      return { kind: 'none' }
+    }
+    const account = args.settings.claudeManagedAccounts.find(
+      (entry) => entry.id === resolution.accountId
+    )
+    return account
+      ? { kind: 'override', account, worktreeId: candidate.worktreeId }
+      : { kind: 'none' }
   }
-  if (getSelectedClaudeAccountIdForTarget(args.settings, args.target) === resolution.accountId) {
-    return { kind: 'none' }
-  }
-  const account = args.settings.claudeManagedAccounts.find(
-    (entry) => entry.id === resolution.accountId
-  )
-  return account ? { kind: 'override', account, worktreeId: owner.worktreeId } : { kind: 'none' }
+  return { kind: 'none' }
 }

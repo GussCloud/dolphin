@@ -92,4 +92,32 @@ describe('resolveCodexLaunchAccountOverride', () => {
       reason: 'missing'
     })
   })
+
+  it("uses the project's Codex default when the worktree pins a Claude account", () => {
+    const result = resolveCodexLaunchAccountOverride({
+      source: {
+        ...source({ [PINNED_ID]: { agentAccountId: 'claude-pinned' } }),
+        getRepos: () => [{ id: 'repo-1', path: '/repos/app', codexAccountId: 'acct-pinned' }]
+      },
+      settings: {
+        ...settings('acct-active'),
+        claudeManagedAccounts: [
+          {
+            id: 'claude-pinned',
+            email: 'claude@example.test',
+            managedAuthPath: '/data/claude',
+            authMethod: 'subscription-oauth' as const,
+            organizationUuid: null,
+            organizationName: null,
+            createdAt: 0,
+            updatedAt: 0,
+            lastAuthenticatedAt: 0
+          }
+        ]
+      },
+      target: { runtime: 'host' },
+      worktreeId: PINNED_ID
+    })
+    expect(result).toMatchObject({ kind: 'override', account: { id: 'acct-pinned' } })
+  })
 })

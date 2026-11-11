@@ -19,6 +19,8 @@ export type GithubAccountApi = {
   }) => Promise<GhAccountBindingInventory>
   /** One login's profile, read with its own token; web clients (no local gh) resolve null. */
   accountProfile: (binding: { host: string; user: string }) => Promise<GhAccountProfile | null>
+  /** Restores gh's active login on a host; web clients (no local gh) resolve false. */
+  switchAccount: (binding: { host: string; user: string }) => Promise<boolean>
   validateAccountBinding: (args: {
     repoPath: string
     repoId?: string
