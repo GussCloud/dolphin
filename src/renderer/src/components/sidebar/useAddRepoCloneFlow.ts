@@ -16,13 +16,37 @@ import {
   isAccountBindingEchoed,
   resolveNewProjectAccountSettings,
   useNewProjectAccountDraft,
-  type CloneProjectAccounts
+  type CloneProjectAccounts,
+  type NewProjectAccountDraft
 } from '../project-accounts/new-project-account-settings'
 import {
+  projectStartBinding,
   startAgentAccounts,
   type ProjectStartAccounts
 } from '../project-accounts/project-start-accounts'
+import { projectRemoteTargetFromUrl } from '../project-accounts/project-account-provider'
+import type { RepoAccountBinding } from '../../../../shared/source-control-account-types'
+import { parseWslUncPath } from '../../../../shared/wsl-paths'
 import { commitIdentityDraftFrom } from '../project-accounts/commit-identity-draft'
+
+/**
+ * The binding a clone request carries. On this PC the accounts panel decides it, matched to the
+ * URL's provider and host; a WSL destination or a remote host uses the per-remote form instead,
+ * because its gh logins are not the ones the panel lists. Null while that form is invalid.
+ */
+function cloneAccountSettings(
+  url: string,
+  destination: string,
+  startAccounts: ProjectStartAccounts | undefined,
+  formDraft: NewProjectAccountDraft
+): RepoAccountBinding | null {
+  if (startAccounts && !parseWslUncPath(destination)) {
+    const knownHosts = startAccounts.ghAccount ? [startAccounts.ghAccount.host] : []
+    return projectStartBinding(startAccounts, projectRemoteTargetFromUrl(url, knownHosts))
+  }
+  const fromForm = resolveNewProjectAccountSettings(formDraft)
+  return fromForm ? { ...fromForm, ...startAgentAccounts(startAccounts) } : null
+}
 
 export function useAddRepoCloneFlow({
   step,
@@ -149,12 +173,14 @@ export function useAddRepoCloneFlow({
   const handleClone = useCallback(async (): Promise<void> => {
     const trimmedUrl = cloneUrl.trim()
     // Why: SSH clones run git on the remote, where per-project accounts are not applied.
-    const resolvedAccounts = sshTargetId?.trim()
+    const accountSettings = sshTargetId?.trim()
       ? {}
-      : resolveNewProjectAccountSettings(projectAccounts.draft)
-    // Why: the clone form owns the Git account; the first screen still decides the agents.
-    const agentAccounts = sshTargetId?.trim() ? {} : startAgentAccounts(startAccounts)
-    const accountSettings = resolvedAccounts ? { ...resolvedAccounts, ...agentAccounts } : null
+      : cloneAccountSettings(
+          trimmedUrl,
+          cloneDestination.trim(),
+          startAccounts,
+          projectAccounts.draft
+        )
     if (!trimmedUrl || !cloneDestination.trim() || !accountSettings) {
       return
     }
