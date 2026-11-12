@@ -12,7 +12,8 @@ function renderCreateStep({
   parentDefaultPending = false,
   identity,
   sshTargetId = null,
-  advancedOpen = identity !== undefined
+  advancedOpen = identity !== undefined,
+  withPanel = false
 }: {
   createName?: string
   gitAvailability?: GitAvailability
@@ -21,6 +22,7 @@ function renderCreateStep({
   identity?: { name: string; email: string }
   sshTargetId?: string | null
   advancedOpen?: boolean
+  withPanel?: boolean
 } = {}): string {
   return renderToStaticMarkup(
     <TooltipProvider>
@@ -41,6 +43,7 @@ function renderCreateStep({
           manualParentEntry={advancedOpen}
           sshTargetId={sshTargetId}
           commitIdentity={identity ? { draft: identity, onChange: vi.fn() } : undefined}
+          accountsPanel={withPanel ? <section data-accounts-panel /> : undefined}
         />
       </Dialog>
     </TooltipProvider>
@@ -93,6 +96,18 @@ describe('CreateStep', () => {
 
     const half = renderCreateStep({ createName: 'demo', identity: { name: 'Dev', email: '' } })
     expect(createButtonDisabled(half)).toBe(true)
+  })
+
+  it('shows the add-project accounts panel in place of its own author field', () => {
+    const html = renderCreateStep({
+      createName: 'demo',
+      identity: { name: 'Dev', email: '' },
+      withPanel: true
+    })
+    expect(html).toContain('data-accounts-panel')
+    expect(html).not.toContain('Commit author')
+    // Why: the panel's author picker only yields a valid author or none, so it never blocks Create.
+    expect(createButtonDisabled(html)).toBe(false)
   })
 
   it('hides the commit author for SSH hosts', () => {

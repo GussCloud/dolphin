@@ -75,6 +75,8 @@ type AddRepoDialogStepContentProps = {
   onPickCloneDestination: () => void
   onClone: () => void
   cloneProjectAccounts?: CloneProjectAccounts
+  /** The add-project accounts panel; clone and create show it in place of their own fields. */
+  accountsPanel?: ReactNode
   accountStep?: AddRepoAccountStepState | null
   createIdentity?: { draft: CommitIdentityDraft; onChange: (draft: CommitIdentityDraft) => void }
   onNestedGroupNameChange: (name: string) => void
@@ -148,6 +150,7 @@ export function AddRepoDialogStepContent({
   onPickCloneDestination,
   onClone,
   cloneProjectAccounts,
+  accountsPanel,
   accountStep,
   createIdentity,
   onNestedGroupNameChange,
@@ -238,6 +241,7 @@ export function AddRepoDialogStepContent({
         onPickDestination={onPickCloneDestination}
         onClone={onClone}
         projectAccounts={cloneProjectAccounts}
+        accountsPanel={accountsPanel}
       />
     )
   }
@@ -282,6 +286,7 @@ export function AddRepoDialogStepContent({
         onPickParent={onPickCreateParent}
         onCreate={onCreate}
         commitIdentity={createIdentity}
+        accountsPanel={accountsPanel}
       />
     )
   }

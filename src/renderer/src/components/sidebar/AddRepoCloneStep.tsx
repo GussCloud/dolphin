@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, type ReactNode } from 'react'
 import { Folder } from 'lucide-react'
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,8 @@ type CloneStepProps = {
   onPickDestination: () => void
   onClone: () => void
   projectAccounts?: CloneProjectAccounts
+  /** The add-project accounts panel; replaces the per-remote fields on this PC's host. */
+  accountsPanel?: ReactNode
 }
 
 export function CloneStep({
@@ -44,13 +46,17 @@ export function CloneStep({
   onDestChange,
   onPickDestination,
   onClone,
-  projectAccounts
+  projectAccounts,
+  accountsPanel
 }: CloneStepProps): React.JSX.Element {
   const [browsingDestination, setBrowsingDestination] = useState(false)
   const isRemoteClone = Boolean(runtimeEnvironmentId || sshTargetId)
   const canBrowseRemoteDestination = isRemoteClone
   // Why: SSH clones run git on the remote host, where per-project accounts are not applied.
-  const showAccountFields = Boolean(projectAccounts) && !sshTargetId
+  const wslDestination = parseWslUncPath(cloneDestination.trim())
+  // Why not for WSL: that clone authenticates with the distro's gh, whose logins the panel does not list.
+  const showPanel = Boolean(accountsPanel) && !sshTargetId && !wslDestination
+  const showAccountFields = Boolean(projectAccounts) && !sshTargetId && !showPanel
   const accountsValid =
     !showAccountFields ||
     !projectAccounts ||
@@ -201,15 +207,15 @@ export function CloneStep({
           </div>
         </div>
 
+        {showPanel ? accountsPanel : null}
         {showAccountFields && projectAccounts ? (
           <NewProjectAccountFields
             remoteUrl={cloneUrl}
             runtimeEnvironmentId={runtimeEnvironmentId}
-            wslDistro={parseWslUncPath(cloneDestination.trim())?.distro ?? null}
+            wslDistro={wslDestination?.distro ?? null}
             draft={projectAccounts.draft}
             onSelectionChange={projectAccounts.setSelection}
             onIdentityChange={projectAccounts.setIdentity}
-            preferred={projectAccounts.preferred}
             disabled={isCloning}
           />
         ) : null}

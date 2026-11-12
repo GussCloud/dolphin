@@ -62,6 +62,8 @@ export default React.memo(function AddRepoDialog({
   const isLocalHost =
     isOpen && hostSelection.selectedParsedHost?.kind === 'local' && !isWebClientLocation()
   const startAccounts = useProjectStartAccounts(isLocalHost)
+  // Why one element: every step shows the same picks, so switching steps keeps them.
+  const accountsPanel = isLocalHost ? <ProjectStartAccountsPanel state={startAccounts} /> : null
   const {
     nestedScan,
     nestedSelectedPaths,
@@ -177,7 +179,7 @@ export default React.memo(function AddRepoDialog({
     workspaceDir: settings?.workspaceDir,
     fetchWorktrees,
     onGitRepoReady: completeGitRepoAdd,
-    startAccounts: startAccounts.accounts
+    startAccounts: isLocalHost ? startAccounts.accounts : undefined
   })
 
   const accounts = useAddRepoAccountStep(
@@ -314,10 +316,7 @@ export default React.memo(function AddRepoDialog({
         createError={createError}
         isCreating={isCreating}
         hostSelector={
-          <AddRepoHostSelectorSlot
-            hostSelection={hostSelection}
-            accounts={isLocalHost ? <ProjectStartAccountsPanel state={startAccounts} /> : null}
-          />
+          <AddRepoHostSelectorSlot hostSelection={hostSelection} accounts={accountsPanel} />
         }
         showRemoteAction={false}
         actionsDisabled={!hostSelection.selectedHostId}
@@ -375,6 +374,7 @@ export default React.memo(function AddRepoDialog({
         onPickCloneDestination={handlePickDestination}
         onClone={handleClone}
         cloneProjectAccounts={cloneProjectAccounts}
+        accountsPanel={accountsPanel}
         accountStep={accounts.state}
         createIdentity={createIdentity}
         onNestedGroupNameChange={setNestedGroupName}

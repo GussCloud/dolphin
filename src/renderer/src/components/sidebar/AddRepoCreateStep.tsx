@@ -1,5 +1,5 @@
 // Step for AddRepoDialog (dolphin#763), split out so create-project state stays scoped.
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, type ReactNode } from 'react'
 import { ChevronDown, GitBranch, Loader2 } from 'lucide-react'
 import { DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -42,6 +42,8 @@ type CreateStepProps = {
   onPickParent: () => void
   onCreate: () => void
   commitIdentity?: { draft: CommitIdentityDraft; onChange: (draft: CommitIdentityDraft) => void }
+  /** The add-project accounts panel (with its author picker); replaces the author field here. */
+  accountsPanel?: ReactNode
 }
 
 export function CreateStep({
@@ -60,14 +62,16 @@ export function CreateStep({
   onParentChange,
   onPickParent,
   onCreate,
-  commitIdentity
+  commitIdentity,
+  accountsPanel
 }: CreateStepProps): React.JSX.Element {
   const [browsingParent, setBrowsingParent] = useState(false)
   // Why: SSH hosts need a typed remote path; hiding that field behind the
   // collapsed defaults makes the create flow look impossible.
   const [advancedOpen, setAdvancedOpen] = useState(manualParentEntry)
   // Why: SSH hosts run git remotely, where per-project identity is not applied.
-  const identityEditor = sshTargetId ? null : commitIdentity
+  const showPanel = Boolean(accountsPanel) && !sshTargetId
+  const identityEditor = sshTargetId || showPanel ? null : commitIdentity
   const identityStatus = identityEditor
     ? evaluateCommitIdentityDraft(identityEditor.draft).status
     : 'empty'
@@ -274,6 +278,8 @@ export function CreateStep({
             </div>
           )}
         </div>
+
+        {showPanel ? accountsPanel : null}
 
         {!advancedOpen && (identityStatus === 'incomplete' || identityStatus === 'invalid') ? (
           // Why: the author lives in the collapsed section; name the reason Create is disabled.

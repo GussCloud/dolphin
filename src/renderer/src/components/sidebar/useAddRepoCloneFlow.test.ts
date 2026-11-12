@@ -152,6 +152,48 @@ describe('useAddRepoCloneFlow', () => {
     expect(mocks.onGitRepoReady).toHaveBeenCalledWith(repo.id, 'clone_url', 'ssh:ssh-1')
   })
 
+  it("clones on this PC with the accounts panel's picks matched to the URL's provider", async () => {
+    const repo = makeRepo()
+    mocks.cloneLocal.mockResolvedValue({
+      ...repo,
+      ghAccount: { host: 'github.com', user: 'ana-corp' },
+      claudeAccountId: 'claude-corp',
+      codexAccountId: 'codex-corp',
+      commitIdentity: { name: 'Ana', email: 'ana@corp.example' }
+    })
+    mocks.fetchWorktrees.mockResolvedValue(true)
+    const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+
+    const result = useAddRepoCloneFlow({
+      step: 'clone',
+      activeRuntimeEnvironmentId: null,
+      sshTargetId: null,
+      workspaceDir: '/local/workspace',
+      fetchWorktrees: mocks.fetchWorktrees,
+      onGitRepoReady: mocks.onGitRepoReady,
+      startAccounts: {
+        ghAccount: { host: 'github.com', user: 'ana-corp' },
+        azureDevOpsAccountId: 'ado-corp',
+        claudeAccountId: 'claude-corp',
+        codexAccountId: 'codex-corp',
+        commitIdentity: { name: 'Ana', email: 'ana@corp.example' }
+      }
+    })
+    await result.handleClone()
+
+    // Why no Azure account: the URL is a GitHub remote, which that account never authenticates.
+    expect(mocks.cloneLocal).toHaveBeenCalledWith({
+      url: 'https://github.com/gusscloud/dolphin.git',
+      destination: '/srv',
+      accountBinding: {
+        ghAccount: { host: 'github.com', user: 'ana-corp' },
+        claudeAccountId: 'claude-corp',
+        codexAccountId: 'codex-corp',
+        commitIdentity: { name: 'Ana', email: 'ana@corp.example' }
+      }
+    })
+  })
+
   it('does not prefill SSH clone destinations from the local workspace directory', async () => {
     mocks.stateValues = ['https://github.com/gusscloud/dolphin.git', '', false, null, null]
     const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')

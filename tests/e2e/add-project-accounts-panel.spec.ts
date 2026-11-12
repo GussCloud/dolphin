@@ -11,7 +11,7 @@ test.describe('Add project accounts panel', () => {
     const addDialog = appPage.getByRole('dialog', { name: /Add a project/i })
 
     await expect(addDialog.getByText('Accounts for this project')).toBeVisible()
-    for (const provider of ['GitHub', 'Azure DevOps', 'Claude']) {
+    for (const provider of ['GitHub', 'Azure DevOps', 'Claude', 'Codex']) {
       await expect(addDialog.getByRole('combobox', { name: provider, exact: true })).toBeVisible()
     }
     // Why: a profile with no managed Claude account must say which login a launch would use.
@@ -37,5 +37,39 @@ test.describe('Add project accounts panel', () => {
     await expect(addDialog.getByRole('button', { name: /Clone from URL/i })).toBeVisible()
 
     await addDialog.screenshot({ path: testInfo.outputPath('add-project-accounts.png') })
+  })
+
+  test('keeps the same accounts and author when switching to Clone from URL and Create', async ({
+    appPage
+  }, testInfo) => {
+    await waitForSessionReady(appPage)
+    await openSidebarProjectDialog(appPage)
+    const dialog = appPage.getByRole('dialog')
+
+    // Why: the pick made on the first screen must still be the one shown on the next step.
+    await dialog.getByRole('button', { name: 'New author' }).click()
+    await dialog.getByRole('textbox', { name: 'Author name' }).fill('Bia Corp')
+    await dialog.getByRole('textbox', { name: 'Author email' }).fill('bia@corp.example')
+    await dialog.getByRole('button', { name: 'Add author' }).click()
+
+    const expectSamePanel = async (): Promise<void> => {
+      await expect(dialog.getByText('Accounts for this project')).toBeVisible()
+      for (const provider of ['GitHub', 'Azure DevOps', 'Claude', 'Codex']) {
+        await expect(dialog.getByRole('combobox', { name: provider, exact: true })).toBeVisible()
+      }
+      await expect(dialog.getByRole('combobox', { name: 'Commit author' })).toContainText(
+        'Bia Corp <bia@corp.example>'
+      )
+    }
+
+    await dialog.getByRole('button', { name: /Clone from URL/i }).click()
+    await expect(dialog.getByPlaceholder('https://github.com/user/repo.git')).toBeVisible()
+    await expectSamePanel()
+    await dialog.screenshot({ path: testInfo.outputPath('clone-accounts.png') })
+
+    await dialog.getByRole('button', { name: 'Back' }).click()
+    await dialog.getByRole('button', { name: /Create new project/i }).click()
+    await expectSamePanel()
+    await dialog.screenshot({ path: testInfo.outputPath('create-accounts.png') })
   })
 })

@@ -51,6 +51,7 @@ async function render(props: {
   sshTargetId?: string | null
   draft?: NewProjectAccountDraft
   destination?: string
+  withPanel?: boolean
 }) {
   await act(async () => {
     root.render(
@@ -66,6 +67,7 @@ async function render(props: {
         onPickDestination={vi.fn()}
         onClone={vi.fn()}
         projectAccounts={projectAccounts(props.draft ?? EMPTY_NEW_PROJECT_ACCOUNT_DRAFT)}
+        accountsPanel={props.withPanel ? <section data-accounts-panel /> : undefined}
       />
     )
   })
@@ -86,6 +88,19 @@ describe('CloneStep account fields', () => {
     await render({})
     expect(container.querySelector('[data-testid="account-fields"]')).not.toBeNull()
     expect(cloneButton().disabled).toBe(false)
+  })
+
+  it('shows the same accounts panel as the first screen on this PC', async () => {
+    await render({ withPanel: true })
+    expect(container.querySelector('[data-accounts-panel]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="account-fields"]')).toBeNull()
+    expect(cloneButton().disabled).toBe(false)
+  })
+
+  it("keeps the per-remote fields for a WSL destination, whose gh the panel doesn't list", async () => {
+    await render({ withPanel: true, destination: '\\\\wsl.localhost\\Ubuntu\\home\\dev' })
+    expect(container.querySelector('[data-accounts-panel]')).toBeNull()
+    expect(container.querySelector('[data-testid="account-fields"]')).not.toBeNull()
   })
 
   it('hides them for SSH targets and keeps Clone enabled', async () => {
