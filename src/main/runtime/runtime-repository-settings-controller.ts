@@ -31,6 +31,7 @@ type RepositoryUpdates = Partial<
     | 'issueSourcePreference'
     | 'externalWorktreeVisibility'
     | 'externalWorktreeVisibilityPromptDismissedAt'
+    | 'accountSetupReviewedAt'
     | 'externalWorktreeInboxBaselinePaths'
     | 'importedExternalWorktreePaths'
     | 'agentWorktreeVisibility'

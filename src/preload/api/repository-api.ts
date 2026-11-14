@@ -60,6 +60,7 @@ export type RepositoryApi = {
         | 'kind'
         | 'issueSourcePreference'
         | 'externalWorktreeVisibilityPromptDismissedAt'
+        | 'accountSetupReviewedAt'
         | 'externalWorktreeInboxBaselinePaths'
         | 'importedExternalWorktreePaths'
         | 'customWorktreeVisibilitySources'

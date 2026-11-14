@@ -82,6 +82,8 @@ export type Repo = {
   azureDevOpsAccountId?: string
   /** Author/committer for commits Dolphin creates in this repo; absent = git config. */
   commitIdentity?: CommitIdentity
+  /** When the user reviewed this project's accounts; absent on projects older than per-project accounts. */
+  accountSetupReviewedAt?: number
   /** Default managed Claude account for this project's agent launches; absent = active account. */
   claudeAccountId?: string
   /** Default managed Codex account for this project's agent launches; absent = active account. */

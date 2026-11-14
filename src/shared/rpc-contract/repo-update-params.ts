@@ -119,6 +119,7 @@ export function createRepoUpdateSchema<T extends Readonly<Record<string, z.ZodTy
       forkSyncMode: z.enum(['ask', 'safe-auto', 'off']).optional(),
       externalWorktreeVisibility: z.enum(['hide', 'show']).nullable().optional(),
       externalWorktreeVisibilityPromptDismissedAt: z.number().finite().optional(),
+      accountSetupReviewedAt: z.number().finite().optional(),
       externalWorktreeInboxBaselinePaths: z.array(z.string()).optional(),
       importedExternalWorktreePaths: z.array(z.string()).optional(),
       agentWorktreeVisibility: z.enum(['hide', 'show']).nullable().optional(),

@@ -49,22 +49,34 @@ describe('applyRepoAccountBindingToNewRepo', () => {
       commitIdentity: { name: ' Ana Dev ', email: 'ana@corp.example' },
       azureDevOpsAccountId: '../escape'
     })
-    expect(updateRepo).toHaveBeenCalledWith('r1', { commitIdentity: identity }, 'local')
+    expect(updateRepo).toHaveBeenCalledWith(
+      'r1',
+      { commitIdentity: identity, accountSetupReviewedAt: expect.any(Number) },
+      'local'
+    )
   })
 
   it('stores the project agent account chosen at add time', () => {
     const updateRepo = vi.fn(() => repo({ claudeAccountId: 'acct-company' }))
     applyRepoAccountBindingToNewRepo({ updateRepo }, repo(), { claudeAccountId: 'acct-company' })
-    expect(updateRepo).toHaveBeenCalledWith('r1', { claudeAccountId: 'acct-company' }, 'local')
+    expect(updateRepo).toHaveBeenCalledWith(
+      'r1',
+      { claudeAccountId: 'acct-company', accountSetupReviewedAt: expect.any(Number) },
+      'local'
+    )
   })
 
-  it('does not touch the row when nothing usable was chosen', () => {
-    const updateRepo = vi.fn()
+  it('only marks the accounts reviewed when nothing usable was chosen', () => {
+    const updateRepo = vi.fn(() => null)
     const created = repo()
     expect(applyRepoAccountBindingToNewRepo({ updateRepo }, created, { commitIdentity: {} })).toBe(
       created
     )
-    expect(updateRepo).not.toHaveBeenCalled()
+    expect(updateRepo).toHaveBeenCalledWith(
+      'r1',
+      { accountSetupReviewedAt: expect.any(Number) },
+      'local'
+    )
   })
 })
 

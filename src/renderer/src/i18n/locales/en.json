@@ -4183,6 +4183,10 @@
             "checkAriaOne": "1 chat to check after resuming. Click for details.",
             "checkAria": "{{value0}} chats to check after resuming. Click for details.",
             "checkTooltip": "Chats Dolphin couldn’t resume, or couldn’t confirm it resumed, after the restart. Click for details."
+          },
+          "footerClaudeAccount": {
+            "project": "Claude account of this project: {{value0}}",
+            "active": "Active Claude account: {{value0}}"
           }
         }
       },
@@ -18181,6 +18185,13 @@
           "codexLabel": "Codex",
           "codexDefault": "System Codex login (this PC’s default)",
           "addCodex": "Add Codex account"
+        },
+        "legacySetup": {
+          "title": "Choose the accounts for {{value0}}",
+          "description": "This project was added before Dolphin could keep accounts per project. Pick which GitHub, Azure DevOps, Claude and Codex accounts and which commit author it uses, or keep this PC’s defaults.",
+          "later": "Later",
+          "keepDefaults": "Keep this PC’s defaults",
+          "save": "Save accounts"
         }
       }
     },

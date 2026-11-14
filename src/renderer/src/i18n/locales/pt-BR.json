@@ -4183,6 +4183,10 @@
             "checkAriaOne": "1 chat para verificar após retomar. Clique para detalhes.",
             "checkAria": "{{value0}} chats para verificar após retomar. Clique para detalhes.",
             "checkTooltip": "Chats que o Dolphin não conseguiu retomar ou não conseguiu confirmar que retomou após o reinício. Clique para detalhes."
+          },
+          "footerClaudeAccount": {
+            "project": "Conta Claude deste projeto: {{value0}}",
+            "active": "Conta Claude ativa: {{value0}}"
           }
         }
       },
@@ -18181,6 +18185,13 @@
           "codexLabel": "Codex",
           "codexDefault": "Login do Codex no sistema (padrão deste PC)",
           "addCodex": "Adicionar conta do Codex"
+        },
+        "legacySetup": {
+          "title": "Escolha as contas de {{value0}}",
+          "description": "Este projeto foi adicionado antes de o Dolphin guardar contas por projeto. Escolha quais contas de GitHub, Azure DevOps, Claude e Codex e qual autor de commit ele usa, ou mantenha os padrões deste PC.",
+          "later": "Depois",
+          "keepDefaults": "Manter padrões deste PC",
+          "save": "Salvar contas"
         }
       }
     },
