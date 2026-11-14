@@ -11,6 +11,7 @@ import type { AiVaultScanOptions } from './session-scanner-types'
 import { prepareOpenCodeWslReaders } from './opencode-wsl-runtime-preparation'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import { AiVaultScanCoordinator } from './ai-vault-scan-coordinator'
+import { listClaudeProfileProjectsDirs } from '../claude-accounts/profile/claude-profile-roots'
 import {
   aiVaultSessionDepthCovers,
   requestedAiVaultSessionDepth,
@@ -57,7 +58,12 @@ export function configureAiVaultSessionSources(next: AiVaultSessionSources): voi
  * exactly what the session list walks.
  */
 export async function localAiVaultScanRoots(): Promise<
-  Required<Pick<AiVaultScanOptions, 'additionalCodexSessionsDirs' | 'wslHomeDirs'>> &
+  Required<
+    Pick<
+      AiVaultScanOptions,
+      'additionalCodexSessionsDirs' | 'additionalClaudeProjectsDirs' | 'wslHomeDirs'
+    >
+  > &
     Pick<AiVaultScanOptions, 'executionHostId' | 'wslOpenCodeReaders'>
 > {
   const [additionalCodexHomes, wslHomeDirs] = await Promise.all([
@@ -66,6 +72,7 @@ export async function localAiVaultScanRoots(): Promise<
   ])
   return {
     additionalCodexSessionsDirs: additionalCodexHomes.map((homePath) => join(homePath, 'sessions')),
+    additionalClaudeProjectsDirs: listClaudeProfileProjectsDirs(),
     wslHomeDirs,
     wslOpenCodeReaders: await prepareOpenCodeWslReaders(wslHomeDirs),
     // Why: this scan is always host-local; callers addressing this host by a

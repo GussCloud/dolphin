@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { ompSessionsRootDirs } from './session-scanner-roots'
+import { claudeTranscriptRootDirs, ompSessionsRootDirs } from './session-scanner-roots'
 
 describe('ompSessionsRootDirs', () => {
   it('drops a degenerate root that would resolve to the process cwd', () => {
@@ -20,5 +20,16 @@ describe('ompSessionsRootDirs', () => {
       '/home/ada/.omp/agent/sessions',
       join('/wsl/ubuntu/home/ada', '.omp', 'agent', 'sessions')
     ])
+  })
+})
+
+describe('claudeTranscriptRootDirs', () => {
+  const profileProjects = join('/data', 'claude-accounts', 'work', 'config', 'projects')
+
+  it('admits Claude account profile histories for Claude only', () => {
+    expect(claudeTranscriptRootDirs('claude', [], [profileProjects])).toContain(profileProjects)
+    expect(claudeTranscriptRootDirs('deepseek', [], [profileProjects])).not.toContain(
+      profileProjects
+    )
   })
 })

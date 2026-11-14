@@ -96,7 +96,8 @@ describe('worktree-pinned Claude account on spawn', () => {
 
     expect(prepareClaudeAuth).toHaveBeenLastCalledWith(expect.anything(), {
       worktreeId: PINNED_WORKTREE_ID,
-      workspacePath: WORKSPACE
+      workspacePath: WORKSPACE,
+      resumeSessionId: null
     })
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the daemon adapter mock records DaemonSpawnCall arguments.
     const spawnOptions = daemonSpawn.mock.calls.at(-1)?.[0] as DaemonSpawnCall
@@ -147,11 +148,34 @@ describe('worktree-pinned Claude account on spawn', () => {
 
     expect(prepareClaudeAuth).toHaveBeenLastCalledWith(expect.anything(), {
       worktreeId: PINNED_WORKTREE_ID,
-      workspacePath: WORKSPACE
+      workspacePath: WORKSPACE,
+      resumeSessionId: null
     })
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the daemon adapter mock records DaemonSpawnCall arguments.
     const spawnOptions = daemonSpawn.mock.calls.at(-1)?.[0] as DaemonSpawnCall
     expect(spawnOptions.env.CLAUDE_CONFIG_DIR).toBe(PINNED_CONFIG_DIR)
+  })
+
+  it('a resume names its session so the launch can run in the profile that holds it', async () => {
+    setupDaemonAdapter()
+    handlers.clear()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the suite's window and runtime stubs cover what registration calls.
+    registerPtyHandlers(mainWindow as never, undefined, undefined, undefined, prepareClaudeAuth)
+
+    await handlers.get('pty:spawn')!(null, {
+      cols: 80,
+      rows: 24,
+      cwd: WORKSPACE,
+      worktreeId: PINNED_WORKTREE_ID,
+      command: 'claude --resume 3f2a9c1e-7b4d-4e8a-9c2f-1a2b3c4d5e6f',
+      launchAgent: 'claude'
+    })
+
+    expect(prepareClaudeAuth).toHaveBeenLastCalledWith(expect.anything(), {
+      worktreeId: PINNED_WORKTREE_ID,
+      workspacePath: WORKSPACE,
+      resumeSessionId: '3f2a9c1e-7b4d-4e8a-9c2f-1a2b3c4d5e6f'
+    })
   })
 
   it('a DeepSeek launch never goes through the Claude account gate', async () => {

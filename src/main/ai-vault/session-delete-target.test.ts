@@ -323,6 +323,32 @@ describe('validateAiVaultSessionDeleteTarget', () => {
 
 // The directory-shaped agents. Their delete unit is a path set derived from the
 // one file discovery surfaced, not that file alone.
+describe('Claude account profiles', () => {
+  const PROFILE_PROJECTS = join(HOME, 'userData', 'claude-accounts', 'work', 'config', 'projects')
+
+  it('deletes a transcript from an account profile only when that profile is a known root', () => {
+    const filePath = join(PROFILE_PROJECTS, '-repo', 'session-1.jsonl')
+    const known = validateAiVaultSessionDeleteTarget({
+      agent: 'claude',
+      filePath,
+      executionHostId: 'local',
+      rootOptions: {
+        claudeProjectsDir: CLAUDE_ROOT,
+        additionalClaudeProjectsDirs: [PROFILE_PROJECTS]
+      }
+    })
+    const unknown = validateAiVaultSessionDeleteTarget({
+      agent: 'claude',
+      filePath,
+      executionHostId: 'local',
+      rootOptions: { claudeProjectsDir: CLAUDE_ROOT }
+    })
+
+    expect(known).toMatchObject({ allowed: true, agent: 'claude' })
+    expect(unknown).toMatchObject({ allowed: false, reason: 'path-outside-known-roots' })
+  })
+})
+
 describe('directory-shaped agents', () => {
   it('plans claude companions before the transcript, so a failure keeps the row', () => {
     const filePath = join(CLAUDE_ROOT, '-proj', 'sess-1.jsonl')

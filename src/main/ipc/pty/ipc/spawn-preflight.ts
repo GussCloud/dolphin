@@ -20,6 +20,7 @@ import { getAppPtyId, getProvider, getRelayPtyId } from '../provider/registry'
 import type { PtyIpcSpawnState } from './spawn-state'
 import { isDeepSeekLaunchRequest } from '../../../deepseek/deepseek-launch-request'
 import { prepareDeepSeekLaunch } from '../../../deepseek/deepseek-config-home-setup'
+import { readClaudeSpawnResumeSessionId } from '../../../claude-accounts/profile/claude-session-profile'
 
 export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promise<void> {
   const args = ctx.args
@@ -238,7 +239,8 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
     ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
       ? await ctx.deps.prepareClaudeAuth(initialSelectionTarget, {
           worktreeId: args.worktreeId,
-          workspacePath: ctx.cwd
+          workspacePath: ctx.cwd,
+          resumeSessionId: readClaudeSpawnResumeSessionId(args.command)
         })
       : null
   ctx.deepSeekEnvPatch =

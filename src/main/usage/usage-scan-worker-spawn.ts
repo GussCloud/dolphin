@@ -30,6 +30,7 @@ import {
   scanOpenCodeUsageOnWorker,
   UsageScanWorkerClient
 } from './usage-scan-worker-client'
+import { listClaudeProfileConfigDirs } from '../claude-accounts/profile/claude-profile-roots'
 
 // Why: resolve the built worker entry and own the process-wide shared client, so
 // the client class stays free of runtime-layout concerns and each usage store
@@ -75,7 +76,8 @@ export async function scanClaudeUsageFilesViaWorker(
   const value = await scanClaudeUsageOnWorker(
     (body) => getSharedClient().scan(body),
     worktrees,
-    previous
+    previous,
+    listClaudeProfileConfigDirs()
   )
   return {
     processedFiles: value.source,

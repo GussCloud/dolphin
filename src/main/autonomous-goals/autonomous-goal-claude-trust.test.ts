@@ -9,12 +9,15 @@ import {
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   claudeProjectKeys,
   resolveClaudeTrustConfigTarget,
   writeClaudeFolderTrust
 } from './autonomous-goal-claude-trust'
+
+const electronState = { userData: '' }
+vi.mock('electron', () => ({ app: { getPath: () => electronState.userData } }))
 
 function readJson(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(path, 'utf-8'))
@@ -98,5 +101,38 @@ describe('autonomous goal Claude folder trust', () => {
       hasCompletedOnboarding: true,
       projects: { [root]: { hasTrustDialogAccepted: true } }
     })
+  })
+})
+
+describe('autonomous goal Claude folder trust in an account profile', () => {
+  let root: string
+
+  beforeEach(() => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'goal-claude-profile-trust-')))
+    electronState.userData = join(root, 'userData')
+  })
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it("writes trust into the launch profile, creating it, and never into the user's file", async () => {
+    const profileDir = join(electronState.userData, 'claude-accounts', 'work', 'config')
+    const worktree = join(root, 'wt')
+    mkdirSync(worktree)
+
+    const target = resolveClaudeTrustConfigTarget('claude', root, profileDir)
+    await writeClaudeFolderTrust(target, worktree)
+
+    expect(target.configPath).toBe(join(profileDir, '.claude.json'))
+    expect(readJson(target.configPath)).toEqual({
+      projects: { [worktree]: { hasTrustDialogAccepted: true } }
+    })
+  })
+
+  it('keeps the system config when the launch runs outside a profile', () => {
+    const target = resolveClaudeTrustConfigTarget('claude', root, join(root, '.claude'))
+    expect(target.requireExisting).toBe(true)
+    expect(target.configPath).not.toContain('claude-accounts')
   })
 })

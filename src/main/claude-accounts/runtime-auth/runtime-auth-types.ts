@@ -1,5 +1,6 @@
 import type { ClaudeManagedAccount } from '../../../shared/managed-account-types'
 import type { ClaudeEnvPatch } from '../environment'
+import type { WorktreeLaunchLocation } from '../../worktree-launch-owner'
 
 export type ClaudeRuntimeAuthPreparation = {
   configDir: string
@@ -11,6 +12,9 @@ export type ClaudeRuntimeAuthPreparation = {
   managedRefreshDeferredByLivePty?: boolean
   provenance: string
 }
+
+/** Where a Claude launch runs; a resume also names the session, which ties it to one profile. */
+export type ClaudeLaunchLocation = WorktreeLaunchLocation & { resumeSessionId?: string | null }
 
 export type ClaudeSystemDefaultSnapshot = {
   credentialsJson: string | null

@@ -311,6 +311,89 @@ describe('ClaudeRuntimeAuthService account profiles', () => {
     }
   })
 
+  describe('resuming a conversation', () => {
+    const SESSION = '3f2a9c1e-7b4d-4e8a-9c2f-1a2b3c4d5e6f'
+
+    function writeTranscript(configDir: string): void {
+      mkdirSync(join(configDir, 'projects', '-repo'), { recursive: true })
+      writeFileSync(join(configDir, 'projects', '-repo', `${SESSION}.jsonl`), '{}\n')
+    }
+
+    async function twoAccounts() {
+      const { store } = setup(
+        [
+          {
+            id: 'one',
+            email: 'one@example.test',
+            credentials: createClaudeCredentialsJson('one@example.test', 'one')
+          },
+          {
+            id: 'two',
+            email: 'two@example.test',
+            credentials: createClaudeCredentialsJson('two@example.test', 'two')
+          }
+        ],
+        'one'
+      )
+      return { store, service: await newService(store) }
+    }
+
+    it('runs in the profile of the account that wrote the transcript', async () => {
+      const { service } = await twoAccounts()
+      writeTranscript(profileDir('two'))
+
+      const preparation = await service.prepareForClaudeLaunch(undefined, {
+        resumeSessionId: SESSION
+      })
+
+      expect(preparation.envPatch).toEqual({ CLAUDE_CONFIG_DIR: profileDir('two') })
+    })
+
+    it('keeps the usual profile when it holds the transcript or no profile does', async () => {
+      const { service } = await twoAccounts()
+      expect(
+        (await service.prepareForClaudeLaunch(undefined, { resumeSessionId: SESSION })).envPatch
+      ).toEqual({ CLAUDE_CONFIG_DIR: profileDir('one') })
+      writeTranscript(profileDir('one'))
+      writeTranscript(profileDir('two'))
+      expect(
+        (await service.prepareForClaudeLaunch(undefined, { resumeSessionId: SESSION })).envPatch
+      ).toEqual({ CLAUDE_CONFIG_DIR: profileDir('one') })
+    })
+
+    it("runs a conversation from the user's own login in the system profile", async () => {
+      const { service } = await twoAccounts()
+      writeTranscript(join(testState.fakeHomeDir, '.claude'))
+
+      const preparation = await service.prepareForClaudeLaunch(undefined, {
+        resumeSessionId: SESSION
+      })
+
+      expect(preparation.envPatch).toEqual({})
+      expect(preparation.stripAuthEnv).toBe(false)
+    })
+
+    it('refuses when the owning account can no longer sign in', async () => {
+      const { store } = setup(
+        [
+          {
+            id: 'one',
+            email: 'one@example.test',
+            credentials: createClaudeCredentialsJson('one@example.test', 'one')
+          },
+          { id: 'two', email: 'two@example.test', credentials: '{not-json' }
+        ],
+        'one'
+      )
+      const service = await newService(store)
+      writeTranscript(profileDir('two'))
+
+      await expect(
+        service.prepareForClaudeLaunch(undefined, { resumeSessionId: SESSION })
+      ).rejects.toThrow('belongs to the Claude account two@example.test')
+    })
+  })
+
   describe('releasing ~/.claude from the earlier shared layout', () => {
     function writeSnapshot(systemCredentials: string): void {
       mkdirSync(join(testState.userDataDir, 'claude-runtime-auth'), { recursive: true })

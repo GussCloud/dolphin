@@ -167,3 +167,34 @@ export function buildClaudeResumeLaunchCommand(
   }
   return terminatorStart !== null ? result : `${result} ${quotedResume}`
 }
+
+/** The session a `claude --resume <id>` / `-r <id>` / `--resume=<id>` launch resumes, else null. */
+export function readClaudeResumeSessionId(
+  command: string | undefined,
+  shell: AgentStartupShell
+): string | null {
+  if (!command) {
+    return null
+  }
+  const tokenized = tokenizeStartupCommand(command, shell)
+  if (!tokenized.ok) {
+    return null
+  }
+  const { tokens } = tokenized
+  const claudeIndex = findClaudeExecutableIndex(tokens, shell)
+  if (claudeIndex === -1) {
+    return null
+  }
+  for (let i = claudeIndex + 1; i < tokens.length; i += 1) {
+    const token = tokens[i]
+    const joined = /^(?:--resume|-r)=(.+)$/.exec(token)?.[1]
+    const id =
+      joined ??
+      ((token === '--resume' || token === '-r') && i + 1 < tokens.length ? tokens[i + 1] : null)
+    if (id !== null) {
+      // Why strict: the id becomes a file name looked up in every profile's projects dir.
+      return /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(id) ? id : null
+    }
+  }
+  return null
+}

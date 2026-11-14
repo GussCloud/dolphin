@@ -7,6 +7,7 @@ import {
 } from '../../shared/native-chat-agent-support'
 import { isWslUncPath } from '../../shared/wsl-paths'
 import { walkSessionFiles } from '../ai-vault/session-scanner-discovery'
+import { listClaudeProfileProjectsDirs } from '../claude-accounts/profile/claude-profile-roots'
 import { OMP_SESSION_ARTIFACT_DIR_PATTERN } from '../ai-vault/session-scanner-omp-subagent-transcripts'
 import { resolveOmpSessionsDir } from '../ai-vault/omp-session-root'
 import { resolveDolphinManagedCodexHomePath } from '../codex/codex-home-paths'
@@ -38,7 +39,9 @@ import { wslTranscriptFsRefusal, type WslTranscriptFsError } from './wsl-transcr
 function claudeProjectsDirs(): string[] {
   const candidates = [
     join(process.env.CLAUDE_CONFIG_DIR?.trim() || join(homedir(), '.claude'), 'projects'),
-    join(homedir(), '.claude', 'projects')
+    join(homedir(), '.claude', 'projects'),
+    // Why: Dolphin-managed accounts write their transcripts in their own isolated profiles.
+    ...listClaudeProfileProjectsDirs()
   ]
   return candidates.filter((dir, index) => candidates.indexOf(dir) === index)
 }

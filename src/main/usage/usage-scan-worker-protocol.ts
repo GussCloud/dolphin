@@ -39,6 +39,8 @@ export type UsageScanWorkerRequestBody =
       providerId: 'claude'
       worktrees: UsageScanWorktreeRef[]
       previous: ClaudeUsagePersistedFile[]
+      /** Isolated account profiles; the worker has no Electron to find them itself. */
+      profileConfigDirs?: string[]
     }
   | {
       // DeepSeek transcripts are Claude Code's format under `~/.claude-deepseek`.

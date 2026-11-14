@@ -7,7 +7,12 @@ import { ClaudeRuntimeAuthSync } from './runtime-auth/runtime-auth-sync'
 import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
 import { resolveClaudeLaunchAccountOverride } from './worktree-claude-account-override'
 import { getClaudePinnedConfigDir, isClaudePinnedConfigDirPath } from './managed-auth-path'
-import type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
+import type {
+  ClaudeLaunchLocation,
+  ClaudeRuntimeAuthPreparation
+} from './runtime-auth/runtime-auth-types'
+import { claudeConfigDirHoldsSession } from './profile/claude-session-profile'
+import { registerClaudeLaunchConfigDirResolver } from './profile/claude-launch-config-dir'
 import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
 
 export type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
@@ -16,14 +21,38 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
   constructor(store: Store) {
     super(store)
     this.initializeLastSyncedState()
+    registerClaudeLaunchConfigDirResolver((launch) => this.resolveLaunchConfigDir(launch))
     void this.safeSyncForCurrentSelection()
+  }
+
+  /** The host config dir a launch in `launch` uses, with no side effects; null when refused. */
+  resolveLaunchConfigDir(launch: WorktreeLaunchLocation): string | null {
+    const override = resolveClaudeLaunchAccountOverride({
+      source: this.store,
+      settings: this.store.getSettings(),
+      target: { runtime: 'host' },
+      launch
+    })
+    if (override.kind === 'unavailable') {
+      return null
+    }
+    if (override.kind === 'override') {
+      return override.account.managedAuthRuntime === 'wsl'
+        ? null
+        : getClaudePinnedConfigDir(override.account.id)
+    }
+    return this.getRuntimeConfigDir({ runtime: 'host' })
   }
 
   async prepareForClaudeLaunch(
     target?: ClaudeAccountSelectionTarget,
-    launch?: WorktreeLaunchLocation
+    launch?: ClaudeLaunchLocation
   ): Promise<ClaudeRuntimeAuthPreparation> {
     const effectiveTarget = target ?? this.getDefaultAccountSelectionTarget()
+    const resumed = await this.prepareResumeOwnerLaunchIfAny(effectiveTarget, launch)
+    if (resumed) {
+      return resumed
+    }
     const pinned = await this.preparePinnedLaunchIfAny(effectiveTarget, launch)
     if (pinned) {
       return pinned
@@ -100,6 +129,63 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       )
     }
     return prepared
+  }
+
+  /**
+   * A resume runs in the profile that holds the transcript: the CLI finds sessions only under its
+   * own config dir, and copying one across would hand one account's conversation to another.
+   * Null when the session is in the profile this launch would use anyway, or in none.
+   */
+  private async prepareResumeOwnerLaunchIfAny(
+    target: ClaudeAccountSelectionTarget,
+    launch: ClaudeLaunchLocation | undefined
+  ): Promise<ClaudeRuntimeAuthPreparation | null> {
+    const sessionId = launch?.resumeSessionId
+    if (!sessionId || this.resolveWslDefaultTarget(target).runtime !== 'host') {
+      return null
+    }
+    const override = resolveClaudeLaunchAccountOverride({
+      source: this.store,
+      settings: this.store.getSettings(),
+      target: this.resolveWslDefaultTarget(target),
+      launch
+    })
+    const intended =
+      override.kind === 'override' ? override.account : this.getActiveHostProfileAccount(target)
+    const systemDir = this.getPreparation({ runtime: 'host' }).configDir
+    const intendedDir = intended ? getClaudePinnedConfigDir(intended.id) : systemDir
+    if (claudeConfigDirHoldsSession(intendedDir, sessionId)) {
+      return null
+    }
+    const owner = this.store
+      .getSettings()
+      .claudeManagedAccounts.find(
+        (account) =>
+          account.managedAuthRuntime !== 'wsl' &&
+          account.id !== intended?.id &&
+          claudeConfigDirHoldsSession(getClaudePinnedConfigDir(account.id), sessionId)
+      )
+    if (owner) {
+      const prepared = await this.serializeMutation(() => this.preparePinnedAccountLaunch(owner))
+      if (!prepared) {
+        throw new Error(
+          `This conversation belongs to the Claude account ${owner.email}, whose credentials are invalid. Sign in again in Settings > Accounts.`
+        )
+      }
+      return prepared
+    }
+    if (intended && claudeConfigDirHoldsSession(systemDir, sessionId)) {
+      return {
+        configDir: systemDir,
+        runtime: 'host',
+        wslDistro: null,
+        wslLinuxConfigDir: null,
+        envPatch: {},
+        stripAuthEnv: false,
+        provenance: 'system'
+      }
+    }
+    return null
   }
 
   /** The active host-managed account's profile; null when the system login (~/.claude) is active. */

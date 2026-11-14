@@ -9,6 +9,7 @@ import { wslGatedReaddir, wslGatedStat } from './native-chat/wsl-transcript-fs-a
 import type { RetirementScanResult } from './worktree-retirement-backfill-scan'
 import { normalizeRetirableGeneratedName } from './worktree-name-retirement'
 import { getWslHomeAsync } from './wsl'
+import { listClaudeProfileProjectsDirs } from './claude-accounts/profile/claude-profile-roots'
 
 /** Why: over-retiring costs one name from a 552-entry pool; under-retiring reissues a path whose
  *  agent history is still on disk. So this matches generously and never tries to be exact. */
@@ -161,6 +162,7 @@ async function claudeProjectsSources(args: {
   home?: string
   env?: NodeJS.ProcessEnv
   resolveWslHome?: (distro: string) => Promise<string | null>
+  profileProjectsDirs?: readonly string[]
 }): Promise<{ sources: ClaudeProjectsSource[]; complete: boolean }> {
   const sources: ClaudeProjectsSource[] = []
   let complete = true
@@ -170,6 +172,10 @@ async function claudeProjectsSources(args: {
       projectsDir: getClaudeProjectsDir(args.home ?? homedir(), args.env ?? process.env),
       encodedParents: hostParents
     })
+    // Why: each Claude account profile buckets its own conversations, outside ~/.claude.
+    for (const projectsDir of args.profileProjectsDirs ?? listClaudeProfileProjectsDirs()) {
+      sources.push({ projectsDir, encodedParents: hostParents })
+    }
   }
   const linuxRootsByDistro = new Map<string, string[]>()
   for (const root of args.workspaceRoots) {

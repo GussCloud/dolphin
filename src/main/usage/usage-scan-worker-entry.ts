@@ -74,7 +74,8 @@ async function runScan(
         request.worktrees,
         request.previous,
         onFilesScanned,
-        request.providerId
+        request.providerId,
+        request.providerId === 'claude' ? request.profileConfigDirs : undefined
       )
       if (result.unchanged) {
         return unchangedScanValue(request.providerId)
