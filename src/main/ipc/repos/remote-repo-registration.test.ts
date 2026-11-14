@@ -30,6 +30,11 @@ function makeStore(repos: Repo[]) {
     getSshTarget: () => undefined,
     addRepo: (repo: Repo) => {
       repos.push(repo)
+    },
+    updateRepo: (id: string, updates: Partial<Repo>) => {
+      const index = repos.findIndex((repo) => repo.id === id)
+      repos[index] = { ...repos[index], ...updates }
+      return repos[index]
     }
   }
 }

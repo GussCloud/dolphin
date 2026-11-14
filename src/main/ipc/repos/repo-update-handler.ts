@@ -46,6 +46,7 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
             | 'issueSourcePreference'
             | 'forkSyncMode'
             | 'externalWorktreeVisibilityPromptDismissedAt'
+            | 'accountSetupReviewedAt'
             | 'externalWorktreeInboxBaselinePaths'
             | 'importedExternalWorktreePaths'
             | 'customWorktreeVisibilitySources'
@@ -216,6 +217,14 @@ export function registerRepoUpdateHandler(mainWindow: BrowserWindow, store: Stor
           !Number.isFinite(updates.externalWorktreeVisibilityPromptDismissedAt))
       ) {
         delete updates.externalWorktreeVisibilityPromptDismissedAt
+      }
+      if (
+        'accountSetupReviewedAt' in updates &&
+        updates.accountSetupReviewedAt !== undefined &&
+        (typeof updates.accountSetupReviewedAt !== 'number' ||
+          !Number.isFinite(updates.accountSetupReviewedAt))
+      ) {
+        delete updates.accountSetupReviewedAt
       }
       // Why: null is the transport sentinel for clearing discovery suppression.
       if (

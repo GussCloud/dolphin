@@ -76,6 +76,7 @@ export function StatusBarSurface({
     isRefreshing,
     petEnabled,
     rosterProviders,
+    footerClaudeAccount,
     setMenuOpen,
     setMenuPoint,
     setStatusBarUsageMode,
@@ -136,13 +137,37 @@ export function StatusBarSurface({
                         <ProviderLetterBadge p={p} />
                       </span>
                     ) : (
-                      <ProviderSegment
-                        key={p.provider}
-                        p={p}
-                        compact={compact}
-                        display={usagePercentageDisplay}
-                        mode={statusBarUsageMode}
-                      />
+                      <span key={p.provider} className="inline-flex items-center gap-1.5">
+                        <ProviderSegment
+                          p={p}
+                          compact={compact}
+                          display={usagePercentageDisplay}
+                          mode={statusBarUsageMode}
+                        />
+                        {p.provider === 'claude' && footerClaudeAccount.email && !compact ? (
+                          <span
+                            className="max-w-[12rem] truncate text-muted-foreground"
+                            data-footer-claude-account={
+                              footerClaudeAccount.fromProject ? 'project' : 'active'
+                            }
+                            title={
+                              footerClaudeAccount.fromProject
+                                ? translate(
+                                    'auto.components.status.bar.footerClaudeAccount.project',
+                                    'Claude account of this project: {{value0}}',
+                                    { value0: footerClaudeAccount.email }
+                                  )
+                                : translate(
+                                    'auto.components.status.bar.footerClaudeAccount.active',
+                                    'Active Claude account: {{value0}}',
+                                    { value0: footerClaudeAccount.email }
+                                  )
+                            }
+                          >
+                            {footerClaudeAccount.email}
+                          </span>
+                        ) : null}
+                      </span>
                     )
                   )}
                 </button>

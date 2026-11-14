@@ -10,6 +10,8 @@ import { getVisibleUsageProvider, isUsageEmptyState } from './status-bar-provide
 import { getUsageProviderAccountsSectionId } from './usage-provider-settings-target'
 import { CLOSE_ALL_CONTEXT_MENUS_EVENT, useStatusBarMenuFocusHandoff } from './ProviderDetailsMenu'
 import { observeStatusBarContainer } from './status-bar-container-observer'
+import { useFooterClaudeAccount } from './use-footer-claude-account'
+import { projectAccountUsage } from './footer-claude-account'
 
 export function useStatusBarController(floatingTerminalOpen: boolean) {
   const floatingTerminalShortcut = useShortcutLabel('floatingTerminal.toggle')
@@ -38,6 +40,7 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
   const ensureDetectedAgents = useAppStore((s) => s.ensureDetectedAgents)
   // Why: pet segment is driven purely by experimentalPet, not statusBarItems, to avoid double-toggling the surface (see design doc).
   const petEnabled = useAppStore((s) => s.settings?.experimentalPet === true)
+  const footerClaudeAccount = useFooterClaudeAccount()
   const toggleStatusBarItem = useAppStore((s) => s.toggleStatusBarItem)
   const usageEmptyStateDismissed = useAppStore((s) => s.usageEmptyStateDismissed)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -117,7 +120,12 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
     grokAuthConfigured: rateLimits.grokAuthConfigured,
     cursorAuthConfigured: rateLimits.cursorAuthConfigured
   }
-  const visibleClaude = getVisibleUsageProvider('claude', claude, usageSettings)
+  // Why: the selected project's account, so its quota shows while you work in it.
+  const visibleClaude = getVisibleUsageProvider(
+    'claude',
+    projectAccountUsage(claude, rateLimits.inactiveClaudeAccounts, footerClaudeAccount),
+    usageSettings
+  )
   const visibleCodex = getVisibleUsageProvider('codex', codex, usageSettings)
   const visibleGemini = getVisibleUsageProvider('gemini', gemini, usageSettings)
   const visibleKimi = getVisibleUsageProvider('kimi', kimi, usageSettings)
@@ -247,6 +255,7 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
     containerRefCallback,
     detectedAgentIds,
     floatingTerminalActionLabel,
+    footerClaudeAccount,
     floatingTerminalShortcut,
     handleManageAccounts,
     handleOpenProviderAccounts,

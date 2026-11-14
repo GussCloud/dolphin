@@ -9,7 +9,7 @@ import { prepareRepoGitAccountInvocation } from './git/command-runner/repo-git-a
 type RepoBindingStore = {
   updateRepo: (
     id: string,
-    updates: RepoAccountBinding,
+    updates: RepoAccountBinding & Pick<Repo, 'accountSetupReviewedAt'>,
     hostId?: ReturnType<typeof getRepoExecutionHostId>
   ) => Repo | null
 }
@@ -24,11 +24,9 @@ export function applyRepoAccountBindingToNewRepo(
   repo: Repo,
   binding: unknown
 ): Repo {
-  const normalized = normalizeRepoAccountBinding(binding)
-  if (!normalized) {
-    return repo
-  }
-  return store.updateRepo(repo.id, normalized, getRepoExecutionHostId(repo)) ?? repo
+  // Why reviewed: the add flow already offered every account, so the legacy-project prompt never fires.
+  const updates = { ...normalizeRepoAccountBinding(binding), accountSetupReviewedAt: Date.now() }
+  return store.updateRepo(repo.id, updates, getRepoExecutionHostId(repo)) ?? repo
 }
 
 /** `git clone` args/env that authenticate as the account chosen in the clone request. */
