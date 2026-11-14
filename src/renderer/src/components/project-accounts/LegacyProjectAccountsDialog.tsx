@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,15 +11,11 @@ import {
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { isGitRepoKind } from '../../../../shared/repo-kind'
-import { needsProjectAccountSetup } from '../../../../shared/project-account-setup'
 import type { Repo } from '../../../../shared/repo-types'
 import { ProjectStartAccountsPanel } from './ProjectStartAccountsPanel'
 import { projectRemoteTargetFromIdentityKey } from './project-account-provider'
 import { projectStartBinding, startAgentAccounts } from './project-start-accounts'
 import { useProjectStartAccounts } from './use-project-start-accounts'
-
-// Why session-only: "Later" asks again next launch; only Save or Keep defaults end the prompt.
-const postponedThisSession = new Set<string>()
 
 function accountUpdates(repo: Repo, accounts: ReturnType<typeof useProjectStartAccounts>) {
   const picks = accounts.get()
@@ -33,32 +29,17 @@ function accountUpdates(repo: Repo, accounts: ReturnType<typeof useProjectStartA
   return projectStartBinding(picks, target)
 }
 
-/** Asks once, when a project from before per-project accounts is selected, which accounts it uses. */
-export function LegacyProjectAccountsDialog(): React.JSX.Element | null {
-  const activeRepoId = useAppStore((s) => s.activeRepoId)
-  const repo = useAppStore((s) => s.repos.find((entry) => entry.id === s.activeRepoId) ?? null)
-  const activeModal = useAppStore((s) => s.activeModal)
+/** Body of the older-project accounts prompt; loaded only when that prompt opens. */
+export default function LegacyProjectAccountsDialog({
+  repo,
+  onLater
+}: {
+  repo: Repo
+  onLater: () => void
+}): React.JSX.Element {
   const updateRepo = useAppStore((s) => s.updateRepo)
-  const settings = useAppStore((s) => s.settings)
-  const [postponed, setPostponed] = useState(0)
   const [saving, setSaving] = useState(false)
-  const open = Boolean(
-    repo &&
-    activeRepoId &&
-    activeModal === 'none' &&
-    !settings?.activeRuntimeEnvironmentId?.trim() &&
-    needsProjectAccountSetup(repo) &&
-    !postponedThisSession.has(repo.id)
-  )
-  const accounts = useProjectStartAccounts(open)
-
-  useEffect(() => {
-    setSaving(false)
-  }, [activeRepoId])
-
-  if (!repo) {
-    return null
-  }
+  const accounts = useProjectStartAccounts(true)
 
   const finish = async (updates: Partial<Repo>): Promise<void> => {
     setSaving(true)
@@ -68,13 +49,9 @@ export function LegacyProjectAccountsDialog(): React.JSX.Element | null {
       setSaving(false)
     }
   }
-  const later = (): void => {
-    postponedThisSession.add(repo.id)
-    setPostponed(postponed + 1)
-  }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => (isOpen ? undefined : later())}>
+    <Dialog open onOpenChange={(isOpen) => (isOpen ? undefined : onLater())}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
@@ -93,7 +70,7 @@ export function LegacyProjectAccountsDialog(): React.JSX.Element | null {
         </DialogHeader>
         <ProjectStartAccountsPanel state={accounts} />
         <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={later} disabled={saving}>
+          <Button variant="ghost" size="sm" onClick={onLater} disabled={saving}>
             {translate('auto.components.projectAccounts.legacySetup.later', 'Later')}
           </Button>
           <Button variant="outline" size="sm" onClick={() => void finish({})} disabled={saving}>
