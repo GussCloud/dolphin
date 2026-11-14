@@ -70,7 +70,10 @@ test.describe('Accounts for projects from before per-project accounts', () => {
         repos: state.repos.map((entry) =>
           entry.id === repo.id ? { ...entry, claudeAccountId: 'work' } : entry
         ),
-        activeRepoId: repo.id
+        activeRepoId: repo.id,
+        // Why: the Claude meter shows only where the CLI is on PATH; CI runners have none.
+        detectedAgentIds: [...new Set([...(state.detectedAgentIds ?? []), 'claude' as const])],
+        statusBarItems: [...new Set([...state.statusBarItems, 'claude' as const])]
       })
     })
 
