@@ -6,15 +6,18 @@ import {
 import { ClaudeRuntimeAuthSync } from './runtime-auth/runtime-auth-sync'
 import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
 import { resolveClaudeLaunchAccountOverride } from './worktree-claude-account-override'
-import { isClaudePinnedConfigDirPath } from './managed-auth-path'
+import { getClaudeManagedAccountsRoot, isClaudePinnedConfigDirPath } from './managed-auth-path'
 import { getClaudeAccountConfigDir, isDefaultClaudeConfigDir } from './claude-account-config-dir'
-import { registerClaudeLinkedConfigDirs } from './profile/claude-profile-roots'
+import { registerClaudeProfileRootSources } from './profile/claude-profile-roots'
 import type {
   ClaudeLaunchLocation,
   ClaudeRuntimeAuthPreparation
 } from './runtime-auth/runtime-auth-types'
 import { claudeConfigDirHoldsSession } from './profile/claude-session-profile'
-import { registerClaudeLaunchConfigDirResolver } from './profile/claude-launch-config-dir'
+import {
+  registerClaudeLaunchConfigDirResolver,
+  type ClaudeLaunchConfigDir
+} from './profile/claude-launch-config-dir'
 import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
 
 export type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
@@ -24,21 +27,23 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     super(store)
     this.initializeLastSyncedState()
     registerClaudeLaunchConfigDirResolver((launch) => this.resolveLaunchConfigDir(launch))
-    // Why default excluded: readers already scan ~/.claude as the system profile.
-    registerClaudeLinkedConfigDirs(() =>
-      this.store
-        .getSettings()
-        .claudeManagedAccounts.flatMap((account) =>
-          account.linkedConfigDir && !isDefaultClaudeConfigDir(account.linkedConfigDir)
-            ? [account.linkedConfigDir]
-            : []
-        )
-    )
+    registerClaudeProfileRootSources({
+      managedAccountsRoot: getClaudeManagedAccountsRoot,
+      // Why default excluded: readers already scan ~/.claude as the system profile.
+      linkedConfigDirs: () =>
+        this.store
+          .getSettings()
+          .claudeManagedAccounts.flatMap((account) =>
+            account.linkedConfigDir && !isDefaultClaudeConfigDir(account.linkedConfigDir)
+              ? [account.linkedConfigDir]
+              : []
+          )
+    })
     void this.safeSyncForCurrentSelection()
   }
 
   /** The host config dir a launch in `launch` uses, with no side effects; null when refused. */
-  resolveLaunchConfigDir(launch: WorktreeLaunchLocation): string | null {
+  resolveLaunchConfigDir(launch: WorktreeLaunchLocation): ClaudeLaunchConfigDir | null {
     const override = resolveClaudeLaunchAccountOverride({
       source: this.store,
       settings: this.store.getSettings(),
@@ -48,12 +53,20 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     if (override.kind === 'unavailable') {
       return null
     }
-    if (override.kind === 'override') {
-      return override.account.managedAuthRuntime === 'wsl'
-        ? null
-        : getClaudeAccountConfigDir(override.account)
+    const account =
+      override.kind === 'override'
+        ? override.account
+        : this.getActiveHostProfileAccount({ runtime: 'host' })
+    if (!account) {
+      return { configDir: this.getRuntimeConfigDir({ runtime: 'host' }), kind: 'system' }
     }
-    return this.getRuntimeConfigDir({ runtime: 'host' })
+    if (account.managedAuthRuntime === 'wsl') {
+      return null
+    }
+    return {
+      configDir: getClaudeAccountConfigDir(account),
+      kind: account.linkedConfigDir ? 'linked' : 'profile'
+    }
   }
 
   async prepareForClaudeLaunch(

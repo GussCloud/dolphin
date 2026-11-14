@@ -34,7 +34,7 @@ export function resolveEnvironmentSkillProviderRoots(
   // Why: with a managed account active, Claude launches read skills from its isolated profile.
   const claudeConfig =
     normalizedRoot(env.CLAUDE_CONFIG_DIR) ??
-    (env === process.env ? normalizedRoot(resolveClaudeLaunchConfigDir({}) ?? undefined) : null)
+    (env === process.env ? normalizedRoot(resolveClaudeLaunchConfigDir({})?.configDir) : null)
   const grokHome = normalizedRoot(env.GROK_HOME)
   return {
     ...(claudeConfig ? { claude: join(claudeConfig, 'skills') } : {}),

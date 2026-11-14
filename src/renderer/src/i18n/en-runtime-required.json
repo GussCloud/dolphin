@@ -1158,6 +1158,16 @@
         "BrowserUsePane": {
           "e44c5d681e": "From"
         },
+        "ClaudeLinkedFolders": {
+          "choose": "Choose folder",
+          "default": "Default folder",
+          "found": "Your terminal picks a Claude account in {{value0}}. Link its folders so Dolphin uses the same login, instructions and MCP servers, without asking.",
+          "link": "Link",
+          "linked": "Linked",
+          "noLogin": "No login yet",
+          "notFound": "If you keep Claude accounts in your own folders (CLAUDE_CONFIG_DIR), choose one to link it. Dolphin uses it as is and never changes its login.",
+          "title": "Account folders you already use"
+        },
         "CliSection": {
           "4c7e3e4c5f": "install",
           "5d432fe44d": "installed",

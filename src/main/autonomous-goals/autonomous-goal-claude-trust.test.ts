@@ -9,7 +9,7 @@ import {
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   claudeProjectKeys,
   resolveClaudeTrustConfigTarget,
@@ -17,7 +17,6 @@ import {
 } from './autonomous-goal-claude-trust'
 
 const electronState = { userData: '' }
-vi.mock('electron', () => ({ app: { getPath: () => electronState.userData } }))
 
 function readJson(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(path, 'utf-8'))
@@ -121,7 +120,10 @@ describe('autonomous goal Claude folder trust in an account profile', () => {
     const worktree = join(root, 'wt')
     mkdirSync(worktree)
 
-    const target = resolveClaudeTrustConfigTarget('claude', root, profileDir)
+    const target = resolveClaudeTrustConfigTarget('claude', root, {
+      configDir: profileDir,
+      kind: 'profile'
+    })
     await writeClaudeFolderTrust(target, worktree)
 
     expect(target.configPath).toBe(join(profileDir, '.claude.json'))
@@ -131,10 +133,16 @@ describe('autonomous goal Claude folder trust in an account profile', () => {
   })
 
   it("uses the launch folder's own state file, never creating one in a linked folder", () => {
-    const system = resolveClaudeTrustConfigTarget('claude', root, join(root, '.claude'))
+    const system = resolveClaudeTrustConfigTarget('claude', root, {
+      configDir: join(root, '.claude'),
+      kind: 'system'
+    })
     expect(system).toEqual({ configPath: join(root, '.claude.json'), requireExisting: true })
 
-    const linked = resolveClaudeTrustConfigTarget('claude', root, join(root, '.claude-empresa'))
+    const linked = resolveClaudeTrustConfigTarget('claude', root, {
+      configDir: join(root, '.claude-empresa'),
+      kind: 'linked'
+    })
     expect(linked).toEqual({
       configPath: join(root, '.claude-empresa', '.claude.json'),
       requireExisting: true
