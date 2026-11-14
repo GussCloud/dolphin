@@ -125,11 +125,12 @@ function wrongProvider(expected: UsageScanWorkerProviderId, actual: string): Err
 export async function scanClaudeUsageOnWorker(
   scan: (body: UsageScanWorkerRequestBody) => Promise<UsageScanWorkerValue>,
   worktrees: UsageScanWorktreeRef[],
-  previous: ClaudeUsagePersistedFile[]
+  previous: ClaudeUsagePersistedFile[],
+  profileConfigDirs: string[] = []
 ): Promise<
   ProviderScanResult<ClaudeUsagePersistedFile, ClaudeUsageSession, ClaudeUsageDailyAggregate>
 > {
-  const value = await scan({ providerId: 'claude', worktrees, previous })
+  const value = await scan({ providerId: 'claude', worktrees, previous, profileConfigDirs })
   if (value.providerId !== 'claude') {
     throw wrongProvider('claude', value.providerId)
   }

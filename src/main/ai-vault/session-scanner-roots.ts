@@ -14,10 +14,12 @@ const DEEPSEEK_PROJECTS_DIR = join(homedir(), DEEPSEEK_CLAUDE_CONFIG_DIR_NAME, '
 export function claudeProjectsRootDirs(args: {
   claudeProjectsDir?: string
   wslHomeDirs?: readonly string[]
+  profileProjectsDirs?: readonly string[]
 }): string[] {
   return [
     args.claudeProjectsDir ?? CLAUDE_PROJECTS_DIR,
-    ...(args.wslHomeDirs ?? []).map((homeDir) => join(homeDir, '.claude', 'projects'))
+    ...(args.wslHomeDirs ?? []).map((homeDir) => join(homeDir, '.claude', 'projects')),
+    ...(args.profileProjectsDirs ?? [])
   ]
 }
 
@@ -38,11 +40,12 @@ export function deepSeekProjectsRootDirs(args: {
 /** Roots that hold Claude Code JSONL transcripts for `agent`, for by-path read guards. */
 export function claudeTranscriptRootDirs(
   agent: 'claude' | 'deepseek',
-  wslHomeDirs: readonly string[]
+  wslHomeDirs: readonly string[],
+  profileProjectsDirs: readonly string[] = []
 ): string[] {
   return agent === 'deepseek'
     ? deepSeekProjectsRootDirs({ wslHomeDirs })
-    : claudeProjectsRootDirs({ wslHomeDirs })
+    : claudeProjectsRootDirs({ wslHomeDirs, profileProjectsDirs })
 }
 
 // The local host and each WSL distro's OMP sessions root. Callers reading OMP

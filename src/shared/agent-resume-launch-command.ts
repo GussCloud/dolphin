@@ -167,3 +167,53 @@ export function buildClaudeResumeLaunchCommand(
   }
   return terminatorStart !== null ? result : `${result} ${quotedResume}`
 }
+
+/** The session a `claude --resume <id>` / `-r <id>` / `--resume=<id>` launch resumes, else null. */
+export function readClaudeResumeSessionId(
+  command: string | undefined,
+  shell: AgentStartupShell
+): string | null {
+  if (!command) {
+    return null
+  }
+  const tokenized = tokenizeStartupCommand(command, shell)
+  if (!tokenized.ok) {
+    return null
+  }
+  const { tokens } = tokenized
+  const claudeIndex = findClaudeExecutableIndex(tokens, shell)
+  if (claudeIndex === -1) {
+    return null
+  }
+  for (let i = claudeIndex + 1; i < tokens.length; i += 1) {
+    const token = tokens[i]
+    const joined = /^(?:--resume|-r)=(.+)$/.exec(token)?.[1]
+    const id =
+      joined ??
+      ((token === '--resume' || token === '-r') && i + 1 < tokens.length ? tokens[i + 1] : null)
+    if (id !== null) {
+      // Why strict: the id becomes a file name looked up in every profile's projects dir.
+      return /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(id) ? id : null
+    }
+  }
+  return null
+}
+
+/** Replaces a bare `claude` in command position with `executablePath`; null when there is none. */
+export function replaceBareClaudeExecutable(
+  command: string,
+  executablePath: string,
+  shell: AgentStartupShell
+): string | null {
+  const tokenized = tokenizeStartupCommand(command, shell)
+  if (!tokenized.ok) {
+    return null
+  }
+  const index = findClaudeExecutableIndex(tokenized.tokens, shell)
+  // Why bare only: a path (or `claude.exe`) already skips shell function lookup.
+  if (index === -1 || /[\\/.]/.test(tokenized.tokens[index])) {
+    return null
+  }
+  const span = tokenized.spans[index]
+  return `${command.slice(0, span.start)}${quoteStartupArg(executablePath, shell)}${command.slice(span.end)}`
+}

@@ -1,4 +1,7 @@
-import type { ClaudeRateLimitAccountsState } from '../../shared/managed-account-types'
+import type {
+  ClaudeConfigFolderDiscovery,
+  ClaudeRateLimitAccountsState
+} from '../../shared/managed-account-types'
 import type { Store } from '../persistence'
 import type { RateLimitService } from '../rate-limits/service'
 import { ClaudeAccountRegistration } from './claude-account-registration'
@@ -15,6 +18,7 @@ import {
   type ClaudeCommandOptions
 } from './claude-command-process'
 import { runClaudeLoginSession } from './claude-login-session'
+import { createLinkedClaudeAccount, discoverClaudeConfigFolders } from './claude-folder-link'
 import {
   ClaudeManagedAuthStorage,
   type ClaudeManagedAuthLocation
@@ -39,7 +43,7 @@ export class ClaudeAccountService {
   private readonly registration: ClaudeAccountRegistration
 
   constructor(
-    store: Store,
+    private readonly store: Store,
     rateLimits: RateLimitService,
     private readonly runtimeAuth: ClaudeRuntimeAuthService
   ) {
@@ -85,6 +89,24 @@ export class ClaudeAccountService {
     options?: ClaudeAccountImportOptions
   ): Promise<ClaudeRateLimitAccountsState> {
     return this.serializeMutation(() => this.registration.addFromConfigDir(configDir, options))
+  }
+
+  /** Folders the user's terminal account menu already manages. Read-only. */
+  discoverConfigFolders(): ClaudeConfigFolderDiscovery {
+    return discoverClaudeConfigFolders(this.store.getSettings())
+  }
+
+  /** Links a folder the user already manages as an account; Dolphin launches in it as is. */
+  async linkConfigFolder(configDir: string): Promise<ClaudeRateLimitAccountsState> {
+    this.supersedePendingLogin()
+    return this.serializeMutation(async () => {
+      const settings = this.store.getSettings()
+      const account = createLinkedClaudeAccount(settings, configDir)
+      this.store.updateSettings({
+        claudeManagedAccounts: [...settings.claudeManagedAccounts, account]
+      })
+      return this.selection.list()
+    })
   }
 
   async reauthenticateAccount(accountId: string): Promise<ClaudeRateLimitAccountsState> {

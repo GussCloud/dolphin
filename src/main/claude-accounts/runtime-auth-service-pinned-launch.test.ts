@@ -84,8 +84,8 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
     cleanupRuntimeAuthTestState()
   })
 
-  it('launches a pinned worktree on its own config dir without touching the global account', async () => {
-    const { store, activeCredentials, pinnedCredentials } = setup()
+  it('launches a pinned worktree on its own profile and never writes into ~/.claude', async () => {
+    const { store, pinnedCredentials } = setup()
     const service = await newService(store)
     await service.syncForCurrentSelection()
 
@@ -102,24 +102,46 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
     expect(
       JSON.parse(readFileSync(join(pinnedDir('pinned'), '.claude.json'), 'utf-8'))
     ).toMatchObject({ hasCompletedOnboarding: true, oauthAccount: { accountUuid: 'pinned' } })
-    // The global runtime still serves the active account.
-    expect(readFileSync(join(testState.fakeHomeDir, '.claude', '.credentials.json'), 'utf-8')).toBe(
-      activeCredentials
-    )
-    expect(testState.legacyKeychainCredentials).toBe(activeCredentials)
+    // ~/.claude is the user's own system profile; no managed account is materialized there.
+    expect(existsSync(join(testState.fakeHomeDir, '.claude', '.credentials.json'))).toBe(false)
+    expect(testState.legacyKeychainCredentials).toBeNull()
   })
 
-  it('keeps the global launch when the worktree has no pin or pins the active account', async () => {
-    for (const options of [{ pin: null }, { pin: 'pinned', active: 'pinned' }]) {
+  it('launches an unpinned worktree in the active account profile', async () => {
+    for (const options of [
+      { pin: null, expected: 'active' },
+      { pin: 'pinned', active: 'pinned', expected: 'pinned' }
+    ]) {
       resetRuntimeAuthTestState()
       const { store } = setup(options)
       const service = await newService(store)
       const preparation = await service.prepareForClaudeLaunch(undefined, {
         worktreeId: WORKTREE_ID
       })
-      expect(preparation.envPatch).toEqual({})
-      expect(existsSync(pinnedDir('pinned'))).toBe(false)
+      expect(preparation.envPatch).toEqual({ CLAUDE_CONFIG_DIR: pinnedDir(options.expected) })
     }
+  })
+
+  it('launches in the system profile only when no managed account is active', async () => {
+    const { store } = setup({ pin: null })
+    store.updateSettings({ activeClaudeManagedAccountId: null })
+    const service = await newService(store)
+
+    const preparation = await service.prepareForClaudeLaunch(undefined, {
+      worktreeId: WORKTREE_ID
+    })
+
+    expect(preparation.envPatch).toEqual({})
+    expect(existsSync(pinnedDir('active'))).toBe(false)
+  })
+
+  it('refuses a pin to a removed account instead of running on another one', async () => {
+    const { store } = setup({ pin: 'removed' })
+    const service = await newService(store)
+
+    await expect(
+      service.prepareForClaudeLaunch(undefined, { worktreeId: WORKTREE_ID })
+    ).rejects.toThrow('was removed')
   })
 
   it('reads a token the CLI rotated in the pinned dir back into the managed store', async () => {
@@ -152,7 +174,7 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
     expect(testState.pinnedKeychainCredentials.get(pinnedDir('pinned'))).toBe(pinnedCredentials)
   })
 
-  it('reads the pinned rotation back before making that account global', async () => {
+  it('keeps the pinned rotation when that account becomes the active one', async () => {
     const { store, pinnedPath } = setup()
     const service = await newService(store)
     await service.syncForCurrentSelection()
@@ -161,10 +183,11 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
     testState.pinnedKeychainCredentials.set(pinnedDir('pinned'), rotatedCredentials)
 
     store.updateSettings({ activeClaudeManagedAccountId: 'pinned' })
-    await service.syncForCurrentSelection()
+    const preparation = await service.prepareForClaudeLaunch()
 
+    expect(preparation.envPatch).toEqual({ CLAUDE_CONFIG_DIR: pinnedDir('pinned') })
     expect(readManagedCredentialsForTest('pinned', pinnedPath)).toBe(rotatedCredentials)
-    expect(testState.legacyKeychainCredentials).toBe(rotatedCredentials)
+    expect(testState.legacyKeychainCredentials).toBeNull()
   })
 
   it('materializes only the credentials file where Claude does not use the Keychain', async () => {
@@ -180,23 +203,34 @@ describe('ClaudeRuntimeAuthService pinned worktree launches', () => {
     expect(testState.pinnedKeychainCredentials.size).toBe(0)
   })
 
-  it('links the user instructions so the pinned launch keeps them', async () => {
-    writeFileSync(join(testState.fakeHomeDir, '.claude', 'CLAUDE.md'), '# shared rules\n')
+  it("keeps the user's instructions and MCP servers out of an account profile", async () => {
+    writeFileSync(join(testState.fakeHomeDir, '.claude', 'CLAUDE.md'), '# personal rules\n')
+    writeFileSync(
+      join(testState.fakeHomeDir, '.claude.json'),
+      JSON.stringify({ mcpServers: { vps: { command: 'ssh-mcp' } } })
+    )
     const { store } = setup()
     const service = await newService(store)
 
     await service.prepareForClaudeLaunch(undefined, { worktreeId: WORKTREE_ID })
 
-    expect(readFileSync(join(pinnedDir('pinned'), 'CLAUDE.md'), 'utf-8')).toBe('# shared rules\n')
+    expect(existsSync(join(pinnedDir('pinned'), 'CLAUDE.md'))).toBe(false)
+    expect(
+      JSON.parse(readFileSync(join(pinnedDir('pinned'), '.claude.json'), 'utf-8')).mcpServers
+    ).toBeUndefined()
   })
 
-  it('structured create pins the worktree account home; unpinned keeps the global one', async () => {
+  it('structured create uses the pinned profile, else the active one', async () => {
     const { store } = setup()
     const service = await newService(store)
 
     expect(await service.preparePinnedConfigDirForLaunch({ worktreeId: WORKTREE_ID })).toBe(
       pinnedDir('pinned')
     )
+    expect(await service.preparePinnedConfigDirForLaunch({ workspacePath: '/elsewhere' })).toBe(
+      pinnedDir('active')
+    )
+    store.updateSettings({ activeClaudeManagedAccountId: null })
     expect(
       await service.preparePinnedConfigDirForLaunch({ workspacePath: '/elsewhere' })
     ).toBeNull()

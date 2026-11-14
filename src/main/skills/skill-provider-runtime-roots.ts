@@ -3,6 +3,7 @@ import { isAbsolute, join, resolve } from 'node:path'
 import { toWindowsWslPath } from '../../shared/wsl-paths'
 import { runWslProcess } from '../wsl/wsl-runner'
 import type { SkillProviderRootOverrides } from './skill-provider-destinations'
+import { resolveClaudeLaunchConfigDir } from '../claude-accounts/profile/claude-launch-config-dir'
 
 const PROVIDER_ROOT_MAX_LENGTH = 32_768
 const WSL_ENV_PROBE_TIMEOUT_MS = 8_000
@@ -30,7 +31,10 @@ function normalizedRoot(value: string | undefined): string | null {
 export function resolveEnvironmentSkillProviderRoots(
   env: NodeJS.ProcessEnv = process.env
 ): SkillProviderRootOverrides {
-  const claudeConfig = normalizedRoot(env.CLAUDE_CONFIG_DIR)
+  // Why: with a managed account active, Claude launches read skills from its isolated profile.
+  const claudeConfig =
+    normalizedRoot(env.CLAUDE_CONFIG_DIR) ??
+    (env === process.env ? normalizedRoot(resolveClaudeLaunchConfigDir({})?.configDir) : null)
   const grokHome = normalizedRoot(env.GROK_HOME)
   return {
     ...(claudeConfig ? { claude: join(claudeConfig, 'skills') } : {}),

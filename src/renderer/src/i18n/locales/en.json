@@ -12649,6 +12649,17 @@
           "hint": "Applies to agents started after the change. A worktree that picked its own account keeps it.",
           "codexTitle": "Codex account",
           "codexDescription": "Codex agents in this project use this account’s quota."
+        },
+        "ClaudeLinkedFolders": {
+          "title": "Account folders you already use",
+          "found": "Your terminal picks a Claude account in {{value0}}. Link its folders so Dolphin uses the same login, instructions and MCP servers, without asking.",
+          "notFound": "If you keep Claude accounts in your own folders (CLAUDE_CONFIG_DIR), choose one to link it. Dolphin uses it as is and never changes its login.",
+          "choose": "Choose folder",
+          "noLogin": "No login yet",
+          "default": "Default folder",
+          "linked": "Linked",
+          "link": "Link",
+          "linkedRow": "Linked folder {{value0}}"
         }
       },
       "right": {

@@ -12649,6 +12649,17 @@
           "hint": "Vale para agentes iniciados depois da mudança. Um worktree que escolheu a própria conta continua com ela.",
           "codexTitle": "Conta do Codex",
           "codexDescription": "Os agentes Codex deste projeto usam a cota desta conta."
+        },
+        "ClaudeLinkedFolders": {
+          "title": "Pastas de conta que você já usa",
+          "found": "Seu terminal escolhe a conta do Claude em {{value0}}. Vincule as pastas para o Dolphin usar o mesmo login, instruções e MCPs, sem perguntar.",
+          "notFound": "Se você guarda contas do Claude em pastas suas (CLAUDE_CONFIG_DIR), escolha uma para vincular. O Dolphin usa a pasta como está e nunca altera o login dela.",
+          "choose": "Escolher pasta",
+          "noLogin": "Ainda sem login",
+          "default": "Pasta padrão",
+          "linked": "Vinculada",
+          "link": "Vincular",
+          "linkedRow": "Pasta vinculada {{value0}}"
         }
       },
       "right": {

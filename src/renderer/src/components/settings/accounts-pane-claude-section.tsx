@@ -12,6 +12,7 @@ import {
 } from './provider-account-visibility'
 import { formatAccountTimestamp, getClaudeAccountRuntimeLabel } from './accounts-pane-runtime'
 import type { AccountsPaneSectionModel } from './accounts-pane-types'
+import { ClaudeLinkedFolders } from './ClaudeLinkedFolders'
 
 export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): React.JSX.Element {
   const {
@@ -116,6 +117,15 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
           </div>
         </div>
         {remoteAccountScopeNotice}
+        {!isRemoteAccountScope && accountRuntime.runtime === 'host' ? (
+          <ClaudeLinkedFolders
+            claudeAction={claudeAction}
+            runClaudeAccountAction={runClaudeAccountAction}
+            linkedAccountCount={
+              claudeAccounts.accounts.filter((account) => account.linkedConfigDir).length
+            }
+          />
+        ) : null}
 
         <div className="space-y-2">
           <button
@@ -232,9 +242,15 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                         ) : null}
                       </div>
                       <span className="truncate text-[11px] text-muted-foreground">
-                        {account.organizationName
-                          ? `${account.organizationName} · ${formatAccountTimestamp(account.lastAuthenticatedAt)}`
-                          : formatAccountTimestamp(account.lastAuthenticatedAt)}
+                        {account.linkedConfigDir
+                          ? translate(
+                              'auto.components.settings.ClaudeLinkedFolders.linkedRow',
+                              'Linked folder {{value0}}',
+                              { value0: account.linkedConfigDir }
+                            )
+                          : account.organizationName
+                            ? `${account.organizationName} · ${formatAccountTimestamp(account.lastAuthenticatedAt)}`
+                            : formatAccountTimestamp(account.lastAuthenticatedAt)}
                       </span>
                     </button>
                     <div className="flex shrink-0 items-center justify-end gap-1 max-md:w-full max-md:flex-wrap">
@@ -252,7 +268,10 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                             getProviderAccountRuntime(account)
                           )
                         }}
-                        disabled={isRemoteAccountScope || isBusy}
+                        // Why: a linked folder's login is renewed from the terminal that owns it.
+                        disabled={
+                          isRemoteAccountScope || isBusy || Boolean(account.linkedConfigDir)
+                        }
                         className="h-6 px-2 text-muted-foreground hover:text-foreground"
                       >
                         {isReauthing ? (

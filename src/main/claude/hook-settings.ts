@@ -25,6 +25,8 @@ export type ClaudeCompatibleHookSettings = {
   usesWindowsCompatLauncher: boolean
   /** The real Claude CLI reads these settings, so version-gated events (SessionEnd) apply. */
   claudeVersionGatedEvents: boolean
+  /** An absolute CLAUDE_CONFIG_DIR (an account profile) that replaces `~/<configDirName>`. */
+  configDirPath?: string
 }
 
 export const CLAUDE_HOOK_SETTINGS: ClaudeCompatibleHookSettings = {
@@ -126,7 +128,7 @@ export type ApplyManagedClaudeHooksOptions = {
 }
 
 export function getConfigPath(settings = CLAUDE_HOOK_SETTINGS): string {
-  return join(homedir(), settings.configDirName, 'settings.json')
+  return join(settings.configDirPath ?? join(homedir(), settings.configDirName), 'settings.json')
 }
 
 export function getStatusLineScriptBaseName(settings = CLAUDE_HOOK_SETTINGS): string {
@@ -287,7 +289,10 @@ export function getStatusLineSlotState(
 
 // Why: records that the managed statusline was installed once, so a later empty slot reads as user opt-out.
 export function getStatusLineInstallMarkerPath(settings = CLAUDE_HOOK_SETTINGS): string {
-  return getSharedManagedScriptPath(`${getStatusLineScriptBaseName(settings)}.installed`)
+  // Why inside the profile: an opt-out (deleting the statusline) belongs to that profile only.
+  return settings.configDirPath
+    ? join(settings.configDirPath, '.dolphin-statusline.installed')
+    : getSharedManagedScriptPath(`${getStatusLineScriptBaseName(settings)}.installed`)
 }
 
 // Why: statusLine is a single settings slot, not a hooks array — never overwrite a

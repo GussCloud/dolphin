@@ -78,4 +78,24 @@ describe('Claude-format usage scan sources', () => {
       true
     )
   })
+
+  it("counts each Claude account profile's transcripts in Claude usage only", async () => {
+    const home = await makeHomeWithBothCorpora()
+    const profile = join(home, 'userData', 'claude-accounts', 'work', 'config')
+    await mkdir(join(profile, 'projects', 'repo-a'), { recursive: true })
+    await writeFile(
+      join(profile, 'projects', 'repo-a', 'work.jsonl'),
+      assistantTurn('work-1', 'claude-opus-4-6', 40)
+    )
+    const { scanClaudeUsageFiles } = await loadScannerWithHome(home)
+
+    const claude = await scanClaudeUsageFiles([], [], undefined, 'claude', [profile])
+    const deepSeek = await scanClaudeUsageFiles([], [], undefined, 'deepseek', [profile])
+
+    expect(claude.sessions.map((session) => session.sessionId).sort()).toEqual([
+      'claude-1',
+      'work-1'
+    ])
+    expect(deepSeek.sessions.map((session) => session.sessionId)).toEqual(['deepseek-1'])
+  })
 })

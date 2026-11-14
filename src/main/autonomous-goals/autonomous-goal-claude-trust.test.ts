@@ -16,6 +16,8 @@ import {
   writeClaudeFolderTrust
 } from './autonomous-goal-claude-trust'
 
+const electronState = { userData: '' }
+
 function readJson(path: string): Record<string, unknown> {
   return JSON.parse(readFileSync(path, 'utf-8'))
 }
@@ -97,6 +99,53 @@ describe('autonomous goal Claude folder trust', () => {
     expect(readJson(target.configPath)).toMatchObject({
       hasCompletedOnboarding: true,
       projects: { [root]: { hasTrustDialogAccepted: true } }
+    })
+  })
+})
+
+describe('autonomous goal Claude folder trust in an account profile', () => {
+  let root: string
+
+  beforeEach(() => {
+    root = realpathSync(mkdtempSync(join(tmpdir(), 'goal-claude-profile-trust-')))
+    electronState.userData = join(root, 'userData')
+  })
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it("writes trust into the launch profile, creating it, and never into the user's file", async () => {
+    const profileDir = join(electronState.userData, 'claude-accounts', 'work', 'config')
+    const worktree = join(root, 'wt')
+    mkdirSync(worktree)
+
+    const target = resolveClaudeTrustConfigTarget('claude', root, {
+      configDir: profileDir,
+      kind: 'profile'
+    })
+    await writeClaudeFolderTrust(target, worktree)
+
+    expect(target.configPath).toBe(join(profileDir, '.claude.json'))
+    expect(readJson(target.configPath)).toEqual({
+      projects: { [worktree]: { hasTrustDialogAccepted: true } }
+    })
+  })
+
+  it("uses the launch folder's own state file, never creating one in a linked folder", () => {
+    const system = resolveClaudeTrustConfigTarget('claude', root, {
+      configDir: join(root, '.claude'),
+      kind: 'system'
+    })
+    expect(system).toEqual({ configPath: join(root, '.claude.json'), requireExisting: true })
+
+    const linked = resolveClaudeTrustConfigTarget('claude', root, {
+      configDir: join(root, '.claude-empresa'),
+      kind: 'linked'
+    })
+    expect(linked).toEqual({
+      configPath: join(root, '.claude-empresa', '.claude.json'),
+      requireExisting: true
     })
   })
 })

@@ -50,10 +50,16 @@ export function getClaudeTranscriptRoots(
 
 // Why local home only: Claude usage never scanned WSL homes, and DeepSeek is refused over SSH.
 export async function listClaudeTranscriptFiles(
-  source: ClaudeTranscriptUsageSource = 'claude'
+  source: ClaudeTranscriptUsageSource = 'claude',
+  profileConfigDirs: readonly string[] = []
 ): Promise<string[]> {
+  // Why: managed Claude accounts write into their isolated profiles, never DeepSeek's corpus.
+  const profileRoots =
+    source === 'deepseek'
+      ? []
+      : profileConfigDirs.flatMap((dir) => [join(dir, 'projects'), join(dir, 'transcripts')])
   const files = await Promise.all(
-    getClaudeTranscriptRoots(source).map(async (root) => {
+    [...getClaudeTranscriptRoots(source), ...profileRoots].map(async (root) => {
       try {
         return await walkJsonlFiles(root)
       } catch {

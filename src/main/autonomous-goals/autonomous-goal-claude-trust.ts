@@ -1,12 +1,17 @@
 // Pre-accepts Claude Code's per-folder trust dialog for an autonomous goal's worktrees: no one is
 // watching a worker pane to answer it, and the dialog holds the agent before its first prompt.
-import { existsSync, readFileSync, realpathSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { lock } from 'proper-lockfile'
 import { z } from 'zod'
 import { writeFileAtomically } from '../codex-accounts/fs-utils'
 import { ClaudeRuntimePathResolver } from '../claude-accounts/runtime-paths'
+import {
+  resolveClaudeLaunchConfigDir,
+  type ClaudeLaunchConfigDir
+} from '../claude-accounts/profile/claude-launch-config-dir'
+import { claudeConfigStatePath } from '../claude-accounts/profile/claude-shell-selector-discovery'
 import { seedDeepSeekClaudeOnboarding } from '../deepseek/deepseek-claude-onboarding-seed'
 import { parseWslUncPath } from '../../shared/wsl-paths'
 import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
@@ -42,7 +47,8 @@ export type ClaudeTrustConfigTarget = {
 
 export function resolveClaudeTrustConfigTarget(
   agent: AutonomousGoalAgent,
-  home: string = homedir()
+  home: string = homedir(),
+  launch: ClaudeLaunchConfigDir | null = null
 ): ClaudeTrustConfigTarget {
   if (DEEPSEEK_AGENTS.includes(agent)) {
     const configDir = join(home, DEEPSEEK_CLAUDE_CONFIG_DIR_NAME)
@@ -52,10 +58,21 @@ export function resolveClaudeTrustConfigTarget(
       requireExisting: false
     }
   }
-  return {
-    configPath: new ClaudeRuntimePathResolver().getRuntimePaths().configPath,
-    requireExisting: true
+  const systemConfigPath = new ClaudeRuntimePathResolver().getRuntimePaths().configPath
+  // Why: an account profile's trust lives in that profile; the launch seeds the rest of the file.
+  if (launch?.kind === 'profile') {
+    const launchConfigDir = launch.configDir
+    return {
+      configPath: join(launchConfigDir, '.claude.json'),
+      prepare: () => mkdirSync(launchConfigDir, { recursive: true, mode: 0o700 }),
+      requireExisting: false
+    }
   }
+  if (launch) {
+    // Why requireExisting: a linked folder is the user's; never create its state file for them.
+    return { configPath: claudeConfigStatePath(launch.configDir, home), requireExisting: true }
+  }
+  return { configPath: systemConfigPath, requireExisting: true }
 }
 
 /** Claude keys projects by the resolved path; also write the realpath and its `/` form on Windows. */
@@ -116,7 +133,15 @@ export async function markAutonomousGoalClaudeFolderTrusted(
     return
   }
   try {
-    await writeClaudeFolderTrust(resolveClaudeTrustConfigTarget(agent), workspacePath)
+    if (DEEPSEEK_AGENTS.includes(agent)) {
+      await writeClaudeFolderTrust(resolveClaudeTrustConfigTarget(agent), workspacePath)
+      return
+    }
+    const launch = resolveClaudeLaunchConfigDir({ workspacePath })
+    await writeClaudeFolderTrust(
+      resolveClaudeTrustConfigTarget(agent, homedir(), launch),
+      workspacePath
+    )
   } catch (error) {
     console.warn('[autonomous-goals] could not pre-accept Claude folder trust', error)
   }

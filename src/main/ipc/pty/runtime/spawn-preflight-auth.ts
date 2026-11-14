@@ -9,6 +9,7 @@ import { prepareDeepSeekLaunch } from '../../../deepseek/deepseek-config-home-se
 import { isDeepSeekLaunchRequest } from '../../../deepseek/deepseek-launch-request'
 import { isManagedClaudeAuthLaunch } from '../host-env/fresh-spawn-routing'
 import type { RuntimePtySpawnState } from './spawn-state'
+import { readClaudeSpawnResumeSessionId } from '../../../claude-accounts/profile/claude-session-profile'
 
 /** Classifies the spawn for the managed Claude account gate; refuses it mid account switch. */
 export function classifyRuntimeSpawnClaudeLaunch(ctx: RuntimePtySpawnState): void {
@@ -32,7 +33,8 @@ export async function prepareRuntimeSpawnAuth(ctx: RuntimePtySpawnState): Promis
     ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
       ? await ctx.deps.prepareClaudeAuth(ctx.codexSelectionTarget, {
           worktreeId: args.worktreeId,
-          workspacePath: ctx.cwd
+          workspacePath: ctx.cwd,
+          resumeSessionId: readClaudeSpawnResumeSessionId(args.command)
         })
       : null
   if (ctx.isClaudeLaunch && isClaudeAuthSwitchInProgress()) {

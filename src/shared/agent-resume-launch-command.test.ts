@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildClaudeResumeLaunchCommand } from './agent-resume-launch-command'
+import {
+  buildClaudeResumeLaunchCommand,
+  readClaudeResumeSessionId
+} from './agent-resume-launch-command'
 import { buildAgentResumeStartupPlan, buildAgentStartupPlan } from './tui-agent-startup'
 import { tokenizeStartupCommand, type AgentStartupShell } from './tui-agent-startup-shell'
 
@@ -576,5 +579,27 @@ describe('buildAgentResumeStartupPlan claude selector guard', () => {
       platform: 'linux'
     })
     expect(restored?.launchConfig.agentCommand).toBe("claude '--resume'")
+  })
+})
+
+describe('readClaudeResumeSessionId', () => {
+  it.each([
+    ['claude --resume abc-123', 'abc-123'],
+    ['claude -r abc-123', 'abc-123'],
+    ['claude --resume=abc-123 --model opus', 'abc-123'],
+    ['FOO=1 claude --model opus --resume abc-123', 'abc-123']
+  ])('reads the session from %s', (command, expected) => {
+    expect(readClaudeResumeSessionId(command, 'posix')).toBe(expected)
+  })
+
+  it.each([
+    'claude',
+    'claude --continue',
+    'claude --resume',
+    'echo --resume abc-123',
+    'claude --resume ../../etc/passwd',
+    undefined
+  ])('reads nothing from %s', (command) => {
+    expect(readClaudeResumeSessionId(command, 'posix')).toBeNull()
   })
 })

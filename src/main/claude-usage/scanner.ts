@@ -55,14 +55,15 @@ export async function scanClaudeUsageFiles(
   worktrees: ClaudeUsageWorktreeRef[],
   cachedProcessedFiles: ClaudeUsagePersistedFile[] = [],
   onFilesScanned?: (count: number) => void,
-  source: ClaudeTranscriptUsageSource = 'claude'
+  source: ClaudeTranscriptUsageSource = 'claude',
+  profileConfigDirs: readonly string[] = []
 ): Promise<{
   processedFiles: ClaudeUsagePersistedFile[]
   sessions: ClaudeUsageSession[]
   dailyAggregates: ClaudeUsageDailyAggregate[]
   unchanged: boolean
 }> {
-  const files = await listClaudeTranscriptFiles(source)
+  const files = await listClaudeTranscriptFiles(source, profileConfigDirs)
   const previousProcessedFiles = cachedProcessedFiles.map(withCompactOwnership)
   const previousByPath = new Map(previousProcessedFiles.map((file) => [file.path, file]))
   const worktreeLookup = await buildWorktreeLookup(worktrees)

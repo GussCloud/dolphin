@@ -107,6 +107,10 @@ All changes must consider the SSH use case. Don't assume local-only execution. B
 
 All changes must consider folder workspaces as well as git worktrees. Don't assume every workspace is a git worktree.
 
+## Claude Account Profiles
+
+Every Dolphin-managed Claude account runs in its own isolated `CLAUDE_CONFIG_DIR` (instructions, MCP servers, skills, history, login); `~/.claude` is the user's system profile and Dolphin never writes managed credentials there. A launch that cannot use its account is refused, never degraded to another profile. Before touching account launches, profile layout, or anything that reads `~/.claude` (sessions, skills, trust, usage), read [`docs/reference/claude-account-profiles.md`](./docs/reference/claude-account-profiles.md).
+
 ## DeepSeek Agent
 
 `deepseek` / `deepseek-agent-teams` run the `claude` CLI against DeepSeek with an isolated `~/.claude-deepseek` config and a safeStorage-only key. A DeepSeek launch must never degrade to a plain Claude launch on the user's Anthropic account. Before touching the Claude account gate, Agent Teams env, or adding a `=== 'claude'` check, read [`docs/reference/deepseek-agent.md`](./docs/reference/deepseek-agent.md).

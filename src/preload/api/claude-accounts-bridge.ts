@@ -5,6 +5,10 @@ export const claudeAccountsApi = {
   list: () => ipcRenderer.invoke('claudeAccounts:list'),
   add: (args?: { runtime?: 'host' | 'wsl'; wslDistro?: string | null }) =>
     ipcRenderer.invoke('claudeAccounts:add', args),
+  discoverFolders: () => ipcRenderer.invoke('claudeAccounts:discoverFolders'),
+  linkFolder: (args: { configDir: string }) =>
+    ipcRenderer.invoke('claudeAccounts:linkFolder', args),
+  pickFolder: (): Promise<string | null> => ipcRenderer.invoke('claudeAccounts:pickFolder'),
   cancelPendingLogin: (): Promise<boolean> =>
     ipcRenderer.invoke('claudeAccounts:cancelPendingLogin'),
   reauthenticate: (args: { accountId: string }) =>

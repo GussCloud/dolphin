@@ -3,34 +3,31 @@ import { join } from 'node:path'
 import type { ClaudeManagedAccount } from '../../../shared/managed-account-types'
 import { writeFileAtomically } from '../../codex-accounts/fs-utils'
 import { hasLiveClaudePtys } from '../live-pty-gate'
+import { isOauthTokenExpiring } from '../oauth-refresh'
 import { getClaudePinnedConfigDir } from '../managed-auth-path'
 import { writeClaudeKeychainCredentialsForConfigDir } from '../keychain'
 import {
-  linkSharedClaudeConfig,
-  seedPinnedClaudeState
+  isolateClaudeProfileDir,
+  seedClaudeProfileState
 } from '../pinned-config-dir/claude-pinned-config-layout'
 import { ClaudeRuntimeAuthPreparationService } from './runtime-auth-preparation'
+import { installClaudeProfileHooks } from '../profile/claude-profile-hooks'
+import { isDefaultClaudeConfigDir } from '../claude-account-config-dir'
 import type { ClaudeRuntimeAuthPreparation } from './runtime-auth-types'
 
 /**
- * A worktree-pinned account runs with its own CLAUDE_CONFIG_DIR while another account is
- * global. The managed store stays the single source of truth: every pinned launch first reads
- * back what the CLI rotated there, then re-materializes the store, and the global sync reads a
- * pinned dir back before it materializes that account into ~/.claude.
- *
- * Remaining race: the same account live in two config dirs at once (a pinned pane started
- * before the user made that account global, still running). Each CLI coordinates refreshes
- * only inside its own config dir, so whichever rotates first spends the refresh token the
- * other holds; that pane must re-login. Dolphin narrows it by never refreshing an account
- * itself while Claude PTYs are live, and by routing new launches of a now-global pin to the
- * global dir (the pin equals the active account).
+ * Every host-managed account launches in its own isolated profile (its CLAUDE_CONFIG_DIR), whether
+ * it is pinned or the active account. The managed store stays the single source of truth for
+ * credentials: every launch first reads back what the CLI rotated in the profile, then
+ * re-materializes the store there. Dolphin never refreshes an account itself while Claude PTYs
+ * are live, so a running pane keeps the refresh token it holds.
  */
 export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparationService {
   /** Persists credentials the CLI rotated inside the pinned dir; returns them when adopted. */
   protected async readBackPinnedConfigDirCredentials(
     account: ClaudeManagedAccount
   ): Promise<string | null> {
-    if (account.managedAuthRuntime === 'wsl') {
+    if (account.managedAuthRuntime === 'wsl' || account.linkedConfigDir) {
       return null
     }
     const configDir = getClaudePinnedConfigDir(account.id)
@@ -75,7 +72,7 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
     return freshest
   }
 
-  /** Materializes `account` into its pinned config dir; null means "use the global account". */
+  /** Materializes `account` into its isolated profile; null means its credentials are unusable. */
   protected async preparePinnedAccountLaunch(
     account: ClaudeManagedAccount
   ): Promise<ClaudeRuntimeAuthPreparation | null> {
@@ -93,6 +90,9 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
           }
         : null
     }
+    if (account.linkedConfigDir) {
+      return this.prepareLinkedFolderLaunch(account, account.linkedConfigDir)
+    }
     if (!(await this.getOwnedManagedAuthPath(account))) {
       return null
     }
@@ -101,20 +101,20 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
     if (!credentialsJson || !this.isValidCredentialsJsonObject(credentialsJson)) {
       return null
     }
-    // Why: same rule as the global sync — a refresh while Claude runs could spend the token a
-    // live pane (pinned or global) still holds.
+    // Why: a refresh while Claude runs could spend the single-use token a live pane still holds.
+    const refreshDeferredByLivePty = hasLiveClaudePtys() && isOauthTokenExpiring(credentialsJson)
     if (!hasLiveClaudePtys()) {
       credentialsJson =
         (await this.refreshManagedAccountTokenIfNeeded(account, credentialsJson)) ?? credentialsJson
     }
     const configDir = getClaudePinnedConfigDir(account.id)
     mkdirSync(configDir, { recursive: true, mode: 0o700 })
-    try {
-      linkSharedClaudeConfig(configDir, this.pathResolver.getRuntimePaths().configDir)
-    } catch (error) {
-      // Why: a missing link degrades history sharing, not authentication; keep the launch.
-      console.warn('[claude-runtime-auth] Failed to link shared Claude config:', error)
-    }
+    // Why no catch: a profile that failed to isolate could still hold another account's
+    // instructions and accesses; the launch must fail rather than run on a half-shared dir.
+    const isolation = isolateClaudeProfileDir(
+      configDir,
+      this.pathResolver.getRuntimePaths().configDir
+    )
     const credentialsPath = join(configDir, '.credentials.json')
     if (!this.fileContentsEqual(credentialsPath, credentialsJson)) {
       writeFileAtomically(credentialsPath, credentialsJson, { mode: 0o600 })
@@ -122,11 +122,18 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
     if (process.platform === 'darwin') {
       await writeClaudeKeychainCredentialsForConfigDir(credentialsJson, configDir)
     }
-    await seedPinnedClaudeState({
-      pinnedConfigPath: join(configDir, '.claude.json'),
+    await seedClaudeProfileState({
+      profileConfigPath: join(configDir, '.claude.json'),
       userConfigPath: this.pathResolver.getRuntimePaths().configPath,
-      oauthAccount: await this.readManagedOauthAccount(account)
+      oauthAccount: await this.readManagedOauthAccount(account),
+      dropInheritedSharedState: isolation.firstIsolation
     })
+    try {
+      await installClaudeProfileHooks(configDir, this.store.getSettings())
+    } catch (error) {
+      // Why keep the launch: missing hooks cost the status row, not isolation or authentication.
+      console.warn('[claude-runtime-auth] Failed to install hooks in Claude profile:', error)
+    }
     return {
       configDir,
       runtime: 'host',
@@ -135,7 +142,45 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
       // Why: the CLI keys its Keychain item on this literal string; never re-spell it.
       envPatch: { CLAUDE_CONFIG_DIR: configDir },
       stripAuthEnv: true,
+      ...(refreshDeferredByLivePty ? { managedRefreshDeferredByLivePty: true } : {}),
       provenance: `managed:${account.id}:pinned`
+    }
+  }
+
+  /**
+   * A folder the user already manages: the CLI's own login there is used as is. Dolphin never
+   * writes credentials, copies, isolates or refreshes anything in it.
+   */
+  private async prepareLinkedFolderLaunch(
+    account: ClaudeManagedAccount,
+    configDir: string
+  ): Promise<ClaudeRuntimeAuthPreparation> {
+    if (!existsSync(configDir)) {
+      throw new Error(
+        `The folder linked to the Claude account ${account.email} (${configDir}) no longer exists. Link it again in Settings > Accounts.`
+      )
+    }
+    const isDefault = isDefaultClaudeConfigDir(configDir)
+    if (!isDefault) {
+      try {
+        await installClaudeProfileHooks(configDir, this.store.getSettings())
+      } catch (error) {
+        console.warn(
+          '[claude-runtime-auth] Failed to install hooks in linked Claude folder:',
+          error
+        )
+      }
+    }
+    return {
+      configDir,
+      runtime: 'host',
+      wslDistro: null,
+      wslLinuxConfigDir: null,
+      // Why: the default dir must launch without CLAUDE_CONFIG_DIR, or the CLI looks for its state
+      // and Keychain item elsewhere and the user's login appears lost.
+      envPatch: isDefault ? {} : { CLAUDE_CONFIG_DIR: configDir },
+      stripAuthEnv: true,
+      provenance: `managed:${account.id}:linked`
     }
   }
 

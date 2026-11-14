@@ -62,6 +62,9 @@ export type ClaudeManagedAccount = {
   managedAuthRuntime?: 'host' | 'wsl'
   wslDistro?: string | null
   wslLinuxAuthPath?: string | null
+  /** A config dir the user already manages (e.g. from a terminal menu); Dolphin launches in it
+   *  and never writes credentials there. Absent: an isolated profile Dolphin manages. */
+  linkedConfigDir?: string | null
   authMethod: 'subscription-oauth' | 'unknown'
   organizationUuid?: string | null
   organizationName?: string | null
@@ -75,12 +78,30 @@ export type ClaudeManagedAccountSummary = {
   email: string
   managedAuthRuntime?: 'host' | 'wsl'
   wslDistro?: string | null
+  linkedConfigDir?: string | null
   authMethod: 'subscription-oauth' | 'unknown'
   organizationUuid?: string | null
   organizationName?: string | null
   createdAt: number
   updatedAt: number
   lastAuthenticatedAt: number
+}
+
+/** A Claude config folder the user's terminal account menu uses, found by Dolphin read-only. */
+export type ClaudeConfigFolderCandidate = {
+  configDir: string
+  /** `~/.claude`, which Claude runs without CLAUDE_CONFIG_DIR. */
+  isDefault: boolean
+  email: string | null
+  organizationName: string | null
+  organizationUuid: string | null
+  linkedAccountId: string | null
+}
+
+export type ClaudeConfigFolderDiscovery = {
+  /** The zsh file defining the `claude` menu; null when there is none. */
+  selectorFile: string | null
+  folders: ClaudeConfigFolderCandidate[]
 }
 
 export type ClaudeRateLimitAccountsState = {

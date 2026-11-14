@@ -106,7 +106,8 @@ export const AI_VAULT_AGENT_SOURCES: AiVaultAgentSourceTable = {
     rootDirs: (options, wslHomeDirs) =>
       claudeProjectsRootDirs({
         claudeProjectsDir: options.claudeProjectsDir,
-        wslHomeDirs
+        wslHomeDirs,
+        profileProjectsDirs: options.additionalClaudeProjectsDirs
       }),
     extensions: ['.jsonl'],
     // Why: Task subagent transcripts under `<session>/subagents/` share the parent
