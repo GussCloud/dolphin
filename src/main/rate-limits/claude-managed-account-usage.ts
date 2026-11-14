@@ -12,6 +12,7 @@ import {
   type InactiveClaudeAccount
 } from './claude-managed-account-credentials'
 import { fetchClaudeManagedUsagePanelSupplement } from './claude-managed-usage-panel'
+import { fetchLinkedFolderClaudeUsage } from './claude-linked-folder-usage'
 import { parseClaudeOAuthCredentialsJson } from './claude-oauth-credentials'
 import { fetchClaudeOAuthUsage } from './claude-oauth-usage-request'
 import type { ClaudeManagedAccountUsageOptions } from './claude-usage-fetch-options'
@@ -39,6 +40,9 @@ export async function fetchInactiveClaudeAccountUsage(
 ): Promise<ProviderRateLimits> {
   if (options.signal?.aborted) {
     return abortedClaudeRateLimitResult()
+  }
+  if (account.linkedConfigDir) {
+    return fetchLinkedFolderClaudeUsage(account.linkedConfigDir, options)
   }
   const location = resolveClaudeManagedCredentialsLocation(account)
   let credentialsJson = location ? await readClaudeManagedCredentialsJson(location) : null
