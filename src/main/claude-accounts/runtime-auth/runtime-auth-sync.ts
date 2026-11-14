@@ -145,6 +145,11 @@ export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPinnedConfigDir {
     if (this.lastSyncedAccountId === null) {
       return
     }
+    if (account.linkedConfigDir) {
+      // Why: no Dolphin version ever materialized a linked folder's login into ~/.claude.
+      this.lastSyncedAccountId = null
+      return
+    }
     const managedCredentialsJson = await this.readManagedCredentials(account)
     if (managedCredentialsJson) {
       await this.readBackRefreshedTokens(managedCredentialsJson, {

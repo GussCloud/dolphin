@@ -198,3 +198,21 @@ export function readClaudeResumeSessionId(
   }
   return null
 }
+
+/** Replaces a bare `claude` in command position with `executablePath`; null when there is none. */
+export function replaceBareClaudeExecutable(
+  command: string,
+  executablePath: string,
+  shell: AgentStartupShell
+): string | null {
+  const tokenized = tokenizeStartupCommand(command, shell)
+  if (!tokenized.ok) {
+    return null
+  }
+  const index = findClaudeExecutableIndex(tokenized.tokens, shell)
+  if (index === -1 || tokenized.tokens[index] !== 'claude') {
+    return null
+  }
+  const span = tokenized.spans[index]
+  return `${command.slice(0, span.start)}${quoteStartupArg(executablePath, shell)}${command.slice(span.end)}`
+}

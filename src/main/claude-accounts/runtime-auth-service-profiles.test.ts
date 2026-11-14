@@ -394,6 +394,57 @@ describe('ClaudeRuntimeAuthService account profiles', () => {
     })
   })
 
+  describe('a folder the user already manages', () => {
+    function linkedSettings(configDir: string) {
+      const settings = createSettings({
+        claudeManagedAccounts: [
+          createClaudeAccount('linked', configDir, {
+            email: 'me@corp.test',
+            linkedConfigDir: configDir
+          })
+        ],
+        activeClaudeManagedAccountId: 'linked'
+      })
+      return createStore(settings)
+    }
+
+    it('launches in the folder itself and never writes a login or copies anything there', async () => {
+      const folder = join(testState.fakeHomeDir, '.claude-empresa')
+      mkdirSync(folder, { recursive: true })
+      writeFileSync(
+        join(folder, '.claude.json'),
+        '{"oauthAccount":{"emailAddress":"me@corp.test"}}'
+      )
+      const service = await newService(linkedSettings(folder))
+
+      const preparation = await service.prepareForClaudeLaunch()
+
+      expect(preparation.envPatch).toEqual({ CLAUDE_CONFIG_DIR: folder })
+      expect(service.getRuntimeConfigDir()).toBe(folder)
+      expect(existsSync(join(folder, '.credentials.json'))).toBe(false)
+      expect(existsSync(join(folder, '.dolphin-claude-profile.json'))).toBe(false)
+      expect(testState.pinnedKeychainCredentials.size).toBe(0)
+      expect(readFileSync(join(folder, '.claude.json'), 'utf-8')).toBe(
+        '{"oauthAccount":{"emailAddress":"me@corp.test"}}'
+      )
+    })
+
+    it("launches Claude's default folder without CLAUDE_CONFIG_DIR, keeping its login where it is", async () => {
+      const service = await newService(linkedSettings(join(testState.fakeHomeDir, '.claude')))
+
+      const preparation = await service.prepareForClaudeLaunch()
+
+      expect(preparation.envPatch).toEqual({})
+      expect(preparation.provenance).toBe('managed:linked:linked')
+    })
+
+    it('refuses when the linked folder is gone', async () => {
+      const service = await newService(linkedSettings(join(testState.fakeHomeDir, '.claude-gone')))
+
+      await expect(service.prepareForClaudeLaunch()).rejects.toThrow('no longer exists')
+    })
+  })
+
   describe('releasing ~/.claude from the earlier shared layout', () => {
     function writeSnapshot(systemCredentials: string): void {
       mkdirSync(join(testState.userDataDir, 'claude-runtime-auth'), { recursive: true })

@@ -1,4 +1,5 @@
 import type {
+  ClaudeConfigFolderDiscovery,
   ClaudeRateLimitAccountsState,
   CodexRateLimitAccountsState
 } from '../../shared/managed-account-types'
@@ -52,6 +53,9 @@ export type ClaudeAccountsApi = {
     runtime?: 'host' | 'wsl'
     wslDistro?: string | null
   }) => Promise<ClaudeRateLimitAccountsState>
+  discoverFolders: () => Promise<ClaudeConfigFolderDiscovery>
+  linkFolder: (args: { configDir: string }) => Promise<ClaudeRateLimitAccountsState>
+  pickFolder: () => Promise<string | null>
   cancelPendingLogin: () => Promise<boolean>
   reauthenticate: (args: { accountId: string }) => Promise<ClaudeRateLimitAccountsState>
   remove: (args: { accountId: string }) => Promise<ClaudeRateLimitAccountsState>

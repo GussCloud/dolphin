@@ -9,6 +9,7 @@ import { writeFileAtomically } from '../codex-accounts/fs-utils'
 import { ClaudeRuntimePathResolver } from '../claude-accounts/runtime-paths'
 import { isClaudePinnedConfigDirPath } from '../claude-accounts/managed-auth-path'
 import { resolveClaudeLaunchConfigDir } from '../claude-accounts/profile/claude-launch-config-dir'
+import { claudeConfigStatePath } from '../claude-accounts/profile/claude-shell-selector-discovery'
 import { seedDeepSeekClaudeOnboarding } from '../deepseek/deepseek-claude-onboarding-seed'
 import { parseWslUncPath } from '../../shared/wsl-paths'
 import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
@@ -63,6 +64,10 @@ export function resolveClaudeTrustConfigTarget(
       prepare: () => mkdirSync(launchConfigDir, { recursive: true, mode: 0o700 }),
       requireExisting: false
     }
+  }
+  if (launchConfigDir) {
+    // Why requireExisting: a linked folder is the user's; never create its state file for them.
+    return { configPath: claudeConfigStatePath(launchConfigDir, home), requireExisting: true }
   }
   return { configPath: systemConfigPath, requireExisting: true }
 }

@@ -82,6 +82,10 @@ export function createClaudeAccountsApi(): PreloadApi['claudeAccounts'] {
   return {
     list: () => Promise.resolve(empty),
     add: () => Promise.resolve(empty),
+    // Why: linked folders live on the desktop that runs the terminal menu, never a web client.
+    discoverFolders: () => Promise.resolve({ selectorFile: null, folders: [] }),
+    linkFolder: () => Promise.resolve(empty),
+    pickFolder: () => Promise.resolve(null),
     cancelPendingLogin: () => Promise.resolve(false),
     reauthenticate: () => Promise.resolve(empty),
     remove: () => Promise.resolve(empty),

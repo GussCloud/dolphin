@@ -59,7 +59,10 @@ export class ClaudeAccountSelection {
         })
         await this.syncRuntimeAuth(target)
       }
-      await this.removeManagedAuth(accountId, account.managedAuthPath)
+      // Why: a linked folder is the user's own; unlinking must never touch it.
+      if (!account.linkedConfigDir) {
+        await this.removeManagedAuth(accountId, account.managedAuthPath)
+      }
       this.rateLimits.evictInactiveClaudeCache(accountId)
       await this.rateLimits.refreshForClaudeAccountChange(
         wasSelected ? accountId : undefined,
@@ -181,6 +184,7 @@ function toClaudeAccountSummary(account: ClaudeManagedAccount): ClaudeManagedAcc
     email: account.email,
     managedAuthRuntime: account.managedAuthRuntime ?? 'host',
     wslDistro: account.wslDistro ?? null,
+    linkedConfigDir: account.linkedConfigDir ?? null,
     authMethod: account.authMethod ?? 'unknown',
     organizationUuid: account.organizationUuid ?? null,
     organizationName: account.organizationName ?? null,

@@ -12,6 +12,7 @@ import {
 } from '../pinned-config-dir/claude-pinned-config-layout'
 import { ClaudeRuntimeAuthPreparationService } from './runtime-auth-preparation'
 import { installClaudeProfileHooks } from '../profile/claude-profile-hooks'
+import { isDefaultClaudeConfigDir } from '../claude-account-config-dir'
 import type { ClaudeRuntimeAuthPreparation } from './runtime-auth-types'
 
 /**
@@ -26,7 +27,7 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
   protected async readBackPinnedConfigDirCredentials(
     account: ClaudeManagedAccount
   ): Promise<string | null> {
-    if (account.managedAuthRuntime === 'wsl') {
+    if (account.managedAuthRuntime === 'wsl' || account.linkedConfigDir) {
       return null
     }
     const configDir = getClaudePinnedConfigDir(account.id)
@@ -89,6 +90,9 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
           }
         : null
     }
+    if (account.linkedConfigDir) {
+      return this.prepareLinkedFolderLaunch(account, account.linkedConfigDir)
+    }
     if (!(await this.getOwnedManagedAuthPath(account))) {
       return null
     }
@@ -140,6 +144,43 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
       stripAuthEnv: true,
       ...(refreshDeferredByLivePty ? { managedRefreshDeferredByLivePty: true } : {}),
       provenance: `managed:${account.id}:pinned`
+    }
+  }
+
+  /**
+   * A folder the user already manages: the CLI's own login there is used as is. Dolphin never
+   * writes credentials, copies, isolates or refreshes anything in it.
+   */
+  private async prepareLinkedFolderLaunch(
+    account: ClaudeManagedAccount,
+    configDir: string
+  ): Promise<ClaudeRuntimeAuthPreparation> {
+    if (!existsSync(configDir)) {
+      throw new Error(
+        `The folder linked to the Claude account ${account.email} (${configDir}) no longer exists. Link it again in Settings > Accounts.`
+      )
+    }
+    const isDefault = isDefaultClaudeConfigDir(configDir)
+    if (!isDefault) {
+      try {
+        await installClaudeProfileHooks(configDir, this.store.getSettings())
+      } catch (error) {
+        console.warn(
+          '[claude-runtime-auth] Failed to install hooks in linked Claude folder:',
+          error
+        )
+      }
+    }
+    return {
+      configDir,
+      runtime: 'host',
+      wslDistro: null,
+      wslLinuxConfigDir: null,
+      // Why: the default dir must launch without CLAUDE_CONFIG_DIR, or the CLI looks for its state
+      // and Keychain item elsewhere and the user's login appears lost.
+      envPatch: isDefault ? {} : { CLAUDE_CONFIG_DIR: configDir },
+      stripAuthEnv: true,
+      provenance: `managed:${account.id}:linked`
     }
   }
 

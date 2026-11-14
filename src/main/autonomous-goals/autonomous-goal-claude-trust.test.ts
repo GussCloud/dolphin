@@ -130,9 +130,14 @@ describe('autonomous goal Claude folder trust in an account profile', () => {
     })
   })
 
-  it('keeps the system config when the launch runs outside a profile', () => {
-    const target = resolveClaudeTrustConfigTarget('claude', root, join(root, '.claude'))
-    expect(target.requireExisting).toBe(true)
-    expect(target.configPath).not.toContain('claude-accounts')
+  it("uses the launch folder's own state file, never creating one in a linked folder", () => {
+    const system = resolveClaudeTrustConfigTarget('claude', root, join(root, '.claude'))
+    expect(system).toEqual({ configPath: join(root, '.claude.json'), requireExisting: true })
+
+    const linked = resolveClaudeTrustConfigTarget('claude', root, join(root, '.claude-empresa'))
+    expect(linked).toEqual({
+      configPath: join(root, '.claude-empresa', '.claude.json'),
+      requireExisting: true
+    })
   })
 })

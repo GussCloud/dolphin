@@ -6,7 +6,9 @@ import {
 import { ClaudeRuntimeAuthSync } from './runtime-auth/runtime-auth-sync'
 import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
 import { resolveClaudeLaunchAccountOverride } from './worktree-claude-account-override'
-import { getClaudePinnedConfigDir, isClaudePinnedConfigDirPath } from './managed-auth-path'
+import { isClaudePinnedConfigDirPath } from './managed-auth-path'
+import { getClaudeAccountConfigDir, isDefaultClaudeConfigDir } from './claude-account-config-dir'
+import { registerClaudeLinkedConfigDirs } from './profile/claude-profile-roots'
 import type {
   ClaudeLaunchLocation,
   ClaudeRuntimeAuthPreparation
@@ -22,6 +24,16 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     super(store)
     this.initializeLastSyncedState()
     registerClaudeLaunchConfigDirResolver((launch) => this.resolveLaunchConfigDir(launch))
+    // Why default excluded: readers already scan ~/.claude as the system profile.
+    registerClaudeLinkedConfigDirs(() =>
+      this.store
+        .getSettings()
+        .claudeManagedAccounts.flatMap((account) =>
+          account.linkedConfigDir && !isDefaultClaudeConfigDir(account.linkedConfigDir)
+            ? [account.linkedConfigDir]
+            : []
+        )
+    )
     void this.safeSyncForCurrentSelection()
   }
 
@@ -39,7 +51,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     if (override.kind === 'override') {
       return override.account.managedAuthRuntime === 'wsl'
         ? null
-        : getClaudePinnedConfigDir(override.account.id)
+        : getClaudeAccountConfigDir(override.account)
     }
     return this.getRuntimeConfigDir({ runtime: 'host' })
   }
@@ -83,7 +95,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       .claudeManagedAccounts.find(
         (candidate) =>
           candidate.managedAuthRuntime !== 'wsl' &&
-          getClaudePinnedConfigDir(candidate.id) === configDir
+          getClaudeAccountConfigDir(candidate) === configDir
       )
     if (!account) {
       if (isClaudePinnedConfigDirPath(configDir)) {
@@ -153,7 +165,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     const intended =
       override.kind === 'override' ? override.account : this.getActiveHostProfileAccount(target)
     const systemDir = this.getPreparation({ runtime: 'host' }).configDir
-    const intendedDir = intended ? getClaudePinnedConfigDir(intended.id) : systemDir
+    const intendedDir = intended ? getClaudeAccountConfigDir(intended) : systemDir
     if (claudeConfigDirHoldsSession(intendedDir, sessionId)) {
       return null
     }
@@ -163,7 +175,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
         (account) =>
           account.managedAuthRuntime !== 'wsl' &&
           account.id !== intended?.id &&
-          claudeConfigDirHoldsSession(getClaudePinnedConfigDir(account.id), sessionId)
+          claudeConfigDirHoldsSession(getClaudeAccountConfigDir(account), sessionId)
       )
     if (owner) {
       const prepared = await this.serializeMutation(() => this.preparePinnedAccountLaunch(owner))
@@ -261,7 +273,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     const account = this.getActiveHostProfileAccount(
       target ?? this.getDefaultAccountSelectionTarget()
     )
-    return account ? getClaudePinnedConfigDir(account.id) : this.getPreparation(target).configDir
+    return account ? getClaudeAccountConfigDir(account) : this.getPreparation(target).configDir
   }
 
   private initializeLastSyncedState(): void {

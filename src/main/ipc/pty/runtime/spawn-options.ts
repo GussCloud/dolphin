@@ -30,6 +30,7 @@ import {
 } from '../pane/spawn-reservation'
 import type { RuntimePtySpawnState } from './spawn-state'
 import { applyClaudeChannelLaunch } from '../../../telegram/claude-channel-launch'
+import { bypassClaudeShellFunction } from '../../../claude-accounts/profile/claude-shell-function-bypass'
 
 /** Headless spawns need the same host-side environment isolation as desktop spawns. */
 export async function buildRuntimePtySpawnOptions(
@@ -45,6 +46,7 @@ export async function buildRuntimePtySpawnOptions(
     connectionId: args.connectionId,
     isWsl: ctx.expectedWslDistro !== null
   }))
+  ctx.launchCommand = bypassClaudeShellFunction(ctx.launchCommand, ctx.claudeAuth, ctx.env)
 
   const authEnvToDelete = ctx.claudeAuth?.stripAuthEnv
     ? [...CLAUDE_AUTH_ENV_VARS, 'ANTHROPIC_CUSTOM_HEADERS']

@@ -21,6 +21,7 @@ import { promoteAgentTeamsShimPath } from '../host-env/path'
 import { clearProviderPtyState } from '../provider/state-cleanup'
 import type { PtyIpcSpawnState } from './spawn-state'
 import { applyClaudeChannelLaunch } from '../../../telegram/claude-channel-launch'
+import { bypassClaudeShellFunction } from '../../../claude-accounts/profile/claude-shell-function-bypass'
 
 export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promise<void> {
   const args = ctx.args
@@ -62,6 +63,7 @@ export async function assemblePtyIpcSpawnCodexEnv(ctx: PtyIpcSpawnState): Promis
     connectionId: args.connectionId,
     isWsl: ctx.expectedWslDistro !== null
   }))
+  ctx.launchCommand = bypassClaudeShellFunction(ctx.launchCommand, ctx.claudeAuth, ctx.baseEnv)
   // Why: declared after the strip so a local-provider spawn cannot capture the
   // pre-strip env — only the daemon branch below re-derives this from baseEnv.
   ctx.env = ctx.baseEnv
