@@ -210,7 +210,8 @@ export function replaceBareClaudeExecutable(
     return null
   }
   const index = findClaudeExecutableIndex(tokenized.tokens, shell)
-  if (index === -1 || tokenized.tokens[index] !== 'claude') {
+  // Why bare only: a path (or `claude.exe`) already skips shell function lookup.
+  if (index === -1 || /[\\/.]/.test(tokenized.tokens[index])) {
     return null
   }
   const span = tokenized.spans[index]

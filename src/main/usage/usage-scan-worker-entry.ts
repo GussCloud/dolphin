@@ -75,7 +75,7 @@ async function runScan(
         request.previous,
         onFilesScanned,
         request.providerId,
-        request.providerId === 'claude' ? request.profileConfigDirs : undefined
+        request.providerId !== 'deepseek' ? request.profileConfigDirs : undefined
       )
       if (result.unchanged) {
         return unchangedScanValue(request.providerId)

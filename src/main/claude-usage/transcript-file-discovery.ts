@@ -55,9 +55,9 @@ export async function listClaudeTranscriptFiles(
 ): Promise<string[]> {
   // Why: managed Claude accounts write into their isolated profiles, never DeepSeek's corpus.
   const profileRoots =
-    source === 'claude'
-      ? profileConfigDirs.flatMap((dir) => [join(dir, 'projects'), join(dir, 'transcripts')])
-      : []
+    source === 'deepseek'
+      ? []
+      : profileConfigDirs.flatMap((dir) => [join(dir, 'projects'), join(dir, 'transcripts')])
   const files = await Promise.all(
     [...getClaudeTranscriptRoots(source), ...profileRoots].map(async (root) => {
       try {
