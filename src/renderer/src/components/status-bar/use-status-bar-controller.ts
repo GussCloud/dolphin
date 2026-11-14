@@ -256,6 +256,8 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
     detectedAgentIds,
     floatingTerminalActionLabel,
     footerClaudeAccount,
+    // Why the object: the email belongs beside this exact roster entry.
+    claudeRosterProvider: showClaude ? visibleClaude : null,
     floatingTerminalShortcut,
     handleManageAccounts,
     handleOpenProviderAccounts,

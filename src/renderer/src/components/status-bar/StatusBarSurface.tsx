@@ -77,6 +77,7 @@ export function StatusBarSurface({
     petEnabled,
     rosterProviders,
     footerClaudeAccount,
+    claudeRosterProvider,
     setMenuOpen,
     setMenuPoint,
     setStatusBarUsageMode,
@@ -144,7 +145,7 @@ export function StatusBarSurface({
                           display={usagePercentageDisplay}
                           mode={statusBarUsageMode}
                         />
-                        {p.provider === 'claude' && footerClaudeAccount.email && !compact ? (
+                        {p === claudeRosterProvider && footerClaudeAccount.email && !compact ? (
                           <span
                             className="max-w-[12rem] truncate text-muted-foreground"
                             data-footer-claude-account={
