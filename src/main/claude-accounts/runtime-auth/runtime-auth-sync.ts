@@ -1,4 +1,3 @@
-import { existsSync, readFileSync } from 'node:fs'
 import {
   getSelectedClaudeAccountIdForTarget,
   normalizeClaudeAccountSelectionTarget,
@@ -7,9 +6,8 @@ import {
   type ClaudeAccountSelectionTarget
 } from '../runtime-selection'
 import { hasLiveClaudePtys } from '../live-pty-gate'
-import { isOauthTokenExpiring } from '../oauth-refresh'
-import { writeActiveClaudeKeychainCredentialsForRuntime } from '../keychain'
 import { ClaudeRuntimeAuthPinnedConfigDir } from './runtime-auth-pinned-config-dir'
+import type { ClaudeManagedAccount } from '../../../shared/managed-account-types'
 
 export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPinnedConfigDir {
   protected async doSyncForCurrentSelection(target?: ClaudeAccountSelectionTarget): Promise<void> {
@@ -132,158 +130,31 @@ export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPinnedConfigDir {
       return
     }
 
-    if (!(await this.getOwnedManagedAuthPath(activeAccount))) {
-      console.warn(
-        '[claude-runtime-auth] Active managed account is not owned by Dolphin, restoring system default'
-      )
-      if (this.lastSyncedAccountId !== null) {
-        if (
-          previousAccount &&
-          (previousAccount.id !== activeAccount.id ||
-            this.hasMaterializedRuntimeAuth ||
-            this.runtimeOauthAccountMatches(await this.readManagedOauthAccount(previousAccount)))
-        ) {
-          await this.restoreSystemDefaultSnapshotForMissingManagedCredentials(
-            previousAccount,
-            previousManagedOauthAccount
-          )
-        } else if (!previousAccount && this.hasMaterializedRuntimeAuth) {
-          await this.restoreSystemDefaultSnapshot(this.lastWrittenCredentialsJson, undefined)
-        }
-      }
-      this.store.updateSettings({ activeClaudeManagedAccountId: null })
-      this.lastSyncedAccountId = null
-      return
-    }
+    // Why: the active account launches in its own profile (prepareActiveProfileLaunchIfAny), so
+    // ~/.claude stays the user's own login. An invalid account is refused at launch, never swapped
+    // for the system login, which would run with the user's personal instructions and accesses.
+    await this.releaseLegacyRuntimeMaterialization(previousAccount ?? activeAccount)
+  }
 
-    if (this.lastSyncedAccountId !== activeAccount.id) {
-      // Why: a worktree pin may have rotated this account's token; materializing the stale
-      // managed copy into ~/.claude would hand the global session a spent refresh token.
-      await this.readBackPinnedConfigDirCredentials(activeAccount)
-    }
-    let credentialsJson = await this.readManagedCredentials(activeAccount)
-    if (!credentialsJson || !this.isValidCredentialsJsonObject(credentialsJson)) {
-      console.warn(
-        '[claude-runtime-auth] Active managed account is missing or has invalid credentials, restoring system default'
-      )
-      if (this.lastSyncedAccountId !== null) {
-        if (
-          previousAccount &&
-          (previousAccount.id !== activeAccount.id ||
-            this.hasMaterializedRuntimeAuth ||
-            this.runtimeOauthAccountMatches(previousManagedOauthAccount))
-        ) {
-          await this.restoreSystemDefaultSnapshotForMissingManagedCredentials(
-            previousAccount,
-            previousManagedOauthAccount
-          )
-        } else if (!previousAccount && this.hasMaterializedRuntimeAuth) {
-          await this.restoreSystemDefaultSnapshot(this.lastWrittenCredentialsJson, undefined)
-        }
-      }
-      this.store.updateSettings({ activeClaudeManagedAccountId: null })
-      this.lastSyncedAccountId = null
-      return
-    }
-
+  /**
+   * Hands ~/.claude back to the user when an earlier version materialized a managed account there:
+   * tokens the CLI rotated are read back into the managed store first, so the restore can prove
+   * Dolphin wrote what it replaces. A login the user made there themselves is never touched.
+   */
+  private async releaseLegacyRuntimeMaterialization(account: ClaudeManagedAccount): Promise<void> {
     if (this.lastSyncedAccountId === null) {
-      const paths = this.pathResolver.getRuntimePaths()
-      const runtimeCredentialsJson = existsSync(paths.credentialsPath)
-        ? readFileSync(paths.credentialsPath, 'utf-8')
-        : null
-      await this.captureSystemDefaultSnapshotForManagedEntry(
-        runtimeCredentialsJson,
-        credentialsJson
-      )
+      return
     }
-
-    // Why: the CLI writes refreshed tokens to .credentials.json; if runtime differs from our last write, preserve them to managed storage before overwriting.
-    if (this.lastSyncedAccountId === activeAccount.id) {
-      if (this.skipNextReadBackForAccountId === activeAccount.id) {
-        this.skipNextReadBackForAccountId = null
-      } else {
-        const readBackResult = await this.readBackRefreshedTokens(credentialsJson, {
-          updateLastWrittenCredentialsJson: true
-        })
-        if (readBackResult.status === 'persisted') {
-          const updatedCredentialsJson = await this.readManagedCredentials(activeAccount)
-          if (updatedCredentialsJson && this.isValidCredentialsJsonObject(updatedCredentialsJson)) {
-            credentialsJson = updatedCredentialsJson
-          }
-        } else if (
-          readBackResult.status === 'rejected' &&
-          readBackResult.runtimeCredentialsChanged &&
-          // Why: a live Claude that lost a refresh race can wipe its runtime blob (empty tokens); preserving that would log out every new session.
-          readBackResult.hasValidChangedRuntimeCredentials &&
-          hasLiveClaudePtys()
-        ) {
-          if (
-            readBackResult.runtimeCredentialsJson &&
-            this.liveRuntimeCredentialsCanUpdateActiveAccount(
-              readBackResult.runtimeCredentialsJson,
-              activeAccount,
-              credentialsJson,
-              await this.readManagedOauthAccount(activeAccount)
-            )
-          ) {
-            // Why: this Claude launched under the active managed account, but persistence still needs positive account proof.
-            await this.writeManagedCredentials(activeAccount, readBackResult.runtimeCredentialsJson)
-            credentialsJson = readBackResult.runtimeCredentialsJson
-          } else {
-            // Why: while Claude runs, an unknown refresh may belong to a live session; rewriting stale managed auth logs it out.
-            console.warn(
-              '[claude-runtime-auth] Preserving changed Claude runtime credentials while live Claude terminals are running'
-            )
-            this.lastSyncedAccountId = activeAccount.id
-            this.hasMaterializedRuntimeAuth = true
-            return
-          }
-        }
-      }
+    const managedCredentialsJson = await this.readManagedCredentials(account)
+    if (managedCredentialsJson) {
+      await this.readBackRefreshedTokens(managedCredentialsJson, {
+        updateLastWrittenCredentialsJson: true
+      })
     }
-
-    if (this.lastSyncedAccountId !== activeAccount.id) {
-      this.skipNextReadBackForAccountId = null
-    }
-
-    // Why: rotate+persist the single-use token to managed storage before materializing (else runtime gets a stale token that fails invalid_grant); skip while a live PTY owns the creds since refreshing would double-rotate it (invalidating one copy) — read-back preserves its refresh instead.
-    const liveClaudePtys = hasLiveClaudePtys()
-    if (liveClaudePtys && isOauthTokenExpiring(credentialsJson)) {
-      this.managedRefreshDeferredByLivePtyAccountId = activeAccount.id
-    }
-    if (!liveClaudePtys) {
-      const refreshed = await this.refreshManagedAccountTokenIfNeeded(
-        activeAccount,
-        credentialsJson
-      )
-      if (refreshed) {
-        credentialsJson = refreshed
-      }
-    }
-
-    const paths = this.pathResolver.getRuntimePaths()
-    this.writeRuntimeCredentials(credentialsJson)
-    if (process.platform === 'darwin') {
-      // Why: Claude Code 2.1+ reads the scoped service, older builds the legacy unsuffixed one; runtime switching must satisfy both.
-      try {
-        await writeActiveClaudeKeychainCredentialsForRuntime(credentialsJson, paths.configDir)
-      } catch (error) {
-        await this.restoreSystemDefaultSnapshot(
-          credentialsJson,
-          await this.readManagedOauthAccount(activeAccount)
-        )
-        throw error
-      }
-    }
-    const managedOauthAccount = await this.readManagedOauthAccount(activeAccount)
-    if (this.writeRuntimeOauthAccount(managedOauthAccount)) {
-      this.lastWrittenOauthAccount = managedOauthAccount
-      this.hasLastWrittenOauthAccount = true
-    } else {
-      this.lastWrittenOauthAccount = null
-      this.hasLastWrittenOauthAccount = false
-    }
-    this.lastSyncedAccountId = activeAccount.id
-    this.hasMaterializedRuntimeAuth = true
+    await this.restoreSystemDefaultSnapshot(
+      await this.readManagedCredentials(account),
+      await this.readManagedOauthAccount(account)
+    )
+    this.lastSyncedAccountId = null
   }
 }

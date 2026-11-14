@@ -8,6 +8,7 @@ import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
 import { resolveClaudeLaunchAccountOverride } from './worktree-claude-account-override'
 import { getClaudePinnedConfigDir, isClaudePinnedConfigDirPath } from './managed-auth-path'
 import type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
+import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
 
 export type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
 
@@ -28,12 +29,17 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       return pinned
     }
     await this.syncForCurrentSelection(effectiveTarget)
-    return this.getPreparation(effectiveTarget)
+    return (
+      (await this.prepareActiveProfileLaunchIfAny(effectiveTarget)) ??
+      this.getPreparation(effectiveTarget)
+    )
   }
 
-  /** The config dir a structured create in `launch` pins, materialized; null keeps the global home. */
+  /** The profile a structured create in `launch` runs in, materialized; null keeps ~/.claude. */
   async preparePinnedConfigDirForLaunch(launch: WorktreeLaunchLocation): Promise<string | null> {
-    const prepared = await this.preparePinnedLaunchIfAny({ runtime: 'host' }, launch)
+    const prepared =
+      (await this.preparePinnedLaunchIfAny({ runtime: 'host' }, launch)) ??
+      (await this.prepareActiveProfileLaunchIfAny({ runtime: 'host' }))
     return prepared?.runtime === 'host' ? (prepared.envPatch.CLAUDE_CONFIG_DIR ?? null) : null
   }
 
@@ -73,12 +79,14 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       target: this.resolveWslDefaultTarget(target),
       launch
     })
+    // Why refuse: each account is an isolated profile, so falling back would silently run this
+    // workspace with another account's instructions and accesses.
     if (override.kind === 'unavailable') {
-      // Why: the worktree card shows the same fallback; the log ties it to this launch.
-      console.warn(
-        `[claude-worktree-account] worktree ${override.worktreeId} pins an unavailable account (${override.reason}); using the active account`
+      throw new Error(
+        override.reason === 'other-runtime'
+          ? 'The Claude account chosen for this project belongs to another runtime. Choose another account in the project settings.'
+          : 'The Claude account chosen for this project was removed. Choose another account in the project settings.'
       )
-      return null
     }
     if (override.kind !== 'override') {
       return null
@@ -87,11 +95,43 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       this.preparePinnedAccountLaunch(override.account)
     )
     if (!prepared) {
-      console.warn(
-        `[claude-worktree-account] worktree ${override.worktreeId} account credentials are unusable; using the active account`
+      throw new Error(
+        `The Claude account ${override.account.email} has invalid credentials. Sign in again in Settings > Accounts.`
       )
     }
     return prepared
+  }
+
+  /** The active host-managed account's profile; null when the system login (~/.claude) is active. */
+  private async prepareActiveProfileLaunchIfAny(
+    target: ClaudeAccountSelectionTarget
+  ): Promise<ClaudeRuntimeAuthPreparation | null> {
+    const account = this.getActiveHostProfileAccount(target)
+    if (!account) {
+      return null
+    }
+    const prepared = await this.serializeMutation(() => this.preparePinnedAccountLaunch(account))
+    if (!prepared) {
+      throw new Error(
+        `The active Claude account ${account.email} has invalid credentials. Sign in again in Settings > Accounts, or switch to another account.`
+      )
+    }
+    return prepared
+  }
+
+  private getActiveHostProfileAccount(
+    target: ClaudeAccountSelectionTarget
+  ): ClaudeManagedAccount | null {
+    const normalized = this.resolveWslDefaultTarget(target)
+    if (normalized.runtime !== 'host') {
+      return null
+    }
+    const settings = this.store.getSettings()
+    const account = this.getActiveAccount(
+      settings.claudeManagedAccounts,
+      getSelectedClaudeAccountIdForTarget(settings, normalized)
+    )
+    return account && account.managedAuthRuntime !== 'wsl' ? account : null
   }
 
   async prepareForRateLimitFetch(
@@ -99,7 +139,10 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
   ): Promise<ClaudeRuntimeAuthPreparation> {
     const effectiveTarget = target ?? this.getDefaultAccountSelectionTarget()
     await this.syncForCurrentSelection(effectiveTarget)
-    return this.getPreparation(effectiveTarget)
+    return (
+      (await this.prepareActiveProfileLaunchIfAny(effectiveTarget)) ??
+      this.getPreparation(effectiveTarget)
+    )
   }
 
   async syncForCurrentSelection(target?: ClaudeAccountSelectionTarget): Promise<void> {
@@ -127,8 +170,12 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     })
   }
 
+  /** The config dir launches of `target` use: the active account's profile, else the system one. */
   getRuntimeConfigDir(target?: ClaudeAccountSelectionTarget): string {
-    return this.getPreparation(target).configDir
+    const account = this.getActiveHostProfileAccount(
+      target ?? this.getDefaultAccountSelectionTarget()
+    )
+    return account ? getClaudePinnedConfigDir(account.id) : this.getPreparation(target).configDir
   }
 
   private initializeLastSyncedState(): void {
