@@ -22,6 +22,7 @@ import type { LegacyWorkerTerminalRecoveryPlan } from './orchestration/orchestra
 import type { LegacyWorkerTerminalRecoveryResult } from './runtime-legacy-worker-terminal-recovery-types'
 import { makePaneKey } from '../../shared/stable-pane-id'
 import { runtimeWorktreeIdsEqual } from './runtime-worktree-path-identity'
+import { pruneFinishedOrchestrationRunsSafely } from './orchestration/db/retention/finished-run-retention'
 
 export class DolphinRuntimeWithAutomationOperations extends DolphinRuntimeWithPtyForegroundProcessReads {
   protected fenceAutomationOwner(
@@ -154,6 +155,7 @@ export class DolphinRuntimeWithAutomationOperations extends DolphinRuntimeWithPt
     if (!this._orchestrationDb) {
       const dbPath = join(getAppEnvironment().getPath('userData'), 'orchestration.db')
       this._orchestrationDb = new OrchestrationDb(dbPath)
+      pruneFinishedOrchestrationRunsSafely(this._orchestrationDb)
       this.ensureOrchestrationFederationRelay()
       this.scheduleRestoredMessageRepoints()
     }
