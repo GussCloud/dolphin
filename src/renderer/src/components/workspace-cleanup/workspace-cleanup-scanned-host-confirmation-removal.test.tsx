@@ -215,7 +215,12 @@ describe('workspace cleanup scanned host confirmation removal', () => {
     )
 
     act(() => removal.result.current.openConfirmRemove([hostBCandidate!]))
-    expect(removal.result.current.confirmCandidates[0]).toBe(hostBCandidate)
+    // The broad scan deferred git for this active row; confirming waits for that read.
+    await waitFor(() => expect(removal.result.current.confirmChecking).toBe(false))
+    expect(removal.result.current.confirmCandidates[0]).toMatchObject({
+      worktreeId,
+      executionHostId: HOST_B_ID
+    })
     act(() => removal.result.current.confirmRemove())
     await waitFor(() => expect(removal.result.current.removalInFlight).toBe(false))
 
@@ -223,8 +228,9 @@ describe('workspace cleanup scanned host confirmation removal', () => {
     expect(fs.existsSync(hostBMarker), 'host B marker must be deleted').toBe(false)
     expect(routedHostIds).toEqual([HOST_B_ID])
     expect(remove).toHaveBeenCalledTimes(1)
-    expect(scan).toHaveBeenCalledTimes(2)
-    expect(scan.mock.calls[1]?.[0]).toEqual(
+    expect(scan).toHaveBeenCalledTimes(3)
+    expect(scan.mock.calls[1]?.[0]).toEqual(expect.objectContaining({ worktreeIds: [worktreeId] }))
+    expect(scan.mock.calls[2]?.[0]).toEqual(
       expect.objectContaining({ worktreeIds: [worktreeId], refreshActivity: true })
     )
     expect(onDeselect).toHaveBeenCalledWith([getWorkspaceCleanupCandidateIdentity(hostBCandidate!)])

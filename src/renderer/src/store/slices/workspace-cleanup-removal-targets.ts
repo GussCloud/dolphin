@@ -29,10 +29,12 @@ import { translate } from '@/i18n/i18n'
 import type { WorkspaceCleanupFailure } from './workspace-cleanup'
 import {
   getWorkspaceCleanupGitUnavailableFailure,
+  getWorkspaceCleanupUncheckedRiskFailure,
   getWorkspaceCleanupMissingFailure,
   getWorkspaceCleanupRepoScanFailure,
   hasValidWorkspaceCleanupUnverifiedConsent,
-  hasWorkspaceCleanupRiskEscalated
+  hasWorkspaceCleanupRiskEscalated,
+  isWorkspaceCleanupDeferredGitRisk
 } from './workspace-cleanup-preflight-failures'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 
@@ -314,7 +316,11 @@ export function evaluateWorkspaceCleanupPreflight(
   }
   const approvedCandidate = target.approvedCandidate
   if (approvedCandidate) {
-    if (hasWorkspaceCleanupRiskEscalated(candidate, approvedCandidate)) {
+    if (isWorkspaceCleanupDeferredGitRisk(candidate, approvedCandidate)) {
+      if (!hasUnverifiedRemovalConsent) {
+        return { ok: false, failure: getWorkspaceCleanupUncheckedRiskFailure(target, candidate) }
+      }
+    } else if (hasWorkspaceCleanupRiskEscalated(candidate, approvedCandidate)) {
       return failure(
         translate(
           'auto.store.slices.workspace.cleanup.changedSinceConfirmation',

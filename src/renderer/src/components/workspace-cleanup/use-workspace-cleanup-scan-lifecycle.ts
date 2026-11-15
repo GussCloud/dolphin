@@ -20,14 +20,12 @@ export function useWorkspaceCleanupScanLifecycle({
   loading,
   removalInFlight,
   removalInFlightRef,
-  resetRowFailures,
   onFreshOpen
 }: {
   open: boolean
   loading: boolean
   removalInFlight: boolean
   removalInFlightRef: { current: boolean }
-  resetRowFailures: () => void
   onFreshOpen: () => void
 }): WorkspaceCleanupScanLifecycle {
   const scanWorkspaceCleanup = useAppStore((s) => s.scanWorkspaceCleanup)
@@ -46,7 +44,8 @@ export function useWorkspaceCleanupScanLifecycle({
 
   const startWorkspaceCleanupScan = useCallback(
     (options: { notifyWhenReady?: boolean } = {}) => {
-      resetRowFailures()
+      // Why no reset: a rescan must not erase why a row was not deleted; the next deletion
+      // attempt (or reopening the dialog) clears the failures.
       void scanWorkspaceCleanup()
         .then((result) => {
           if (!mountedRef.current || !options.notifyWhenReady || openRef.current) {
@@ -85,7 +84,7 @@ export function useWorkspaceCleanupScanLifecycle({
           }
         })
     },
-    [mountedRef, openModal, resetRowFailures, scanWorkspaceCleanup]
+    [mountedRef, openModal, scanWorkspaceCleanup]
   )
 
   const hydrateThenScan = useCallback(() => {

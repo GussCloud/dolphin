@@ -417,6 +417,7 @@ function WorkspaceCleanupDialogContent({
         ) : (
           <WorkspaceCleanupConfirmRemove
             candidates={removal.confirmCandidates}
+            checking={removal.confirmChecking}
             now={facetNow}
             reviewInfoByWorktreeId={facetRows.reviewInfoByWorktreeId}
             progress={removal.removalProgress}

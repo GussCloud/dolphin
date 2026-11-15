@@ -497,7 +497,10 @@
             "hostUnresolved": "Dolphin cannot tell which host owns this workspace. Refresh projects and review it again.",
             "gitStatusUnavailable": "Dolphin couldn't check this workspace's git status. Try again, or delete it from its host-specific sidebar or project list.",
             "gitStatusUnavailableOlderPeer": "Dolphin couldn't match this git-status failure to a host. Update the older connected peer, or delete the workspace from its host-specific sidebar or project list.",
-            "forceNeedsApproval": "Review and confirm this workspace before force deleting it."
+            "forceNeedsApproval": "Review and confirm this workspace before force deleting it.",
+            "uncheckedDirtyUnpushed": "This workspace has uncommitted changes and unpushed commits. Delete it anyway?",
+            "uncheckedDirty": "This workspace has uncommitted changes. Delete it anyway?",
+            "uncheckedUnpushed": "This workspace has unpushed commits. Delete it anyway?"
           }
         },
         "worktrees": {
@@ -3118,7 +3121,9 @@
                 }
               }
             }
-          }
+          },
+          "alreadyDeleting": "{{value0}} selected workspace(s) are already being deleted.",
+          "checkingGit": "Checking uncommitted changes…"
         }
       },
       "ui": {

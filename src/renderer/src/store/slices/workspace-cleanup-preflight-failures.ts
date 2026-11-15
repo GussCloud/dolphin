@@ -43,6 +43,22 @@ export function hasWorkspaceCleanupRiskEscalated(
   )
 }
 
+/**
+ * A row approved before git was ever read for it did not "change": its risk is only being seen
+ * now, so its own "Delete anyway" consent may let it through. A git-status-error approval is not
+ * this case: that consent covered "unknown", not the concrete risk found later.
+ */
+export function isWorkspaceCleanupDeferredGitRisk(
+  candidate: WorkspaceCleanupCandidate,
+  approvedCandidate: WorkspaceCleanupCandidate
+): boolean {
+  return (
+    approvedCandidate.git.checkedAt === null &&
+    !approvedCandidate.blockers.includes('git-status-error') &&
+    hasWorkspaceCleanupRiskEscalated(candidate, approvedCandidate)
+  )
+}
+
 export function hasValidWorkspaceCleanupUnverifiedConsent(
   candidateIdentity: string,
   consent: WorkspaceCleanupUnverifiedRemovalConsent | undefined,
@@ -98,6 +114,39 @@ export function getWorkspaceCleanupGitUnavailableFailure(
       'auto.store.slices.workspace.cleanup.gitStatusUnavailable',
       "Dolphin couldn't check this workspace's git status. Try again, or delete it from its host-specific sidebar or project list."
     ),
+    canDeleteAnyway: true
+  }
+}
+
+/**
+ * The deletion's own git read found uncommitted or unpushed work on a row approved before git was
+ * read for it. Not "changed after confirmation": the risk was never shown, so ask for it now.
+ */
+export function getWorkspaceCleanupUncheckedRiskFailure(
+  target: PreflightFailureTarget,
+  candidate: WorkspaceCleanupCandidate
+): WorkspaceCleanupFailure {
+  const dirty = candidate.blockers.includes('dirty-files')
+  const unpushed = candidate.blockers.includes('unpushed-commits')
+  return {
+    worktreeId: target.worktreeId,
+    ...(target.executionHostId ? { executionHostId: target.executionHostId } : {}),
+    displayName: candidate.displayName,
+    message:
+      dirty && unpushed
+        ? translate(
+            'auto.store.slices.workspace.cleanup.uncheckedDirtyUnpushed',
+            'This workspace has uncommitted changes and unpushed commits. Delete it anyway?'
+          )
+        : dirty
+          ? translate(
+              'auto.store.slices.workspace.cleanup.uncheckedDirty',
+              'This workspace has uncommitted changes. Delete it anyway?'
+            )
+          : translate(
+              'auto.store.slices.workspace.cleanup.uncheckedUnpushed',
+              'This workspace has unpushed commits. Delete it anyway?'
+            ),
     canDeleteAnyway: true
   }
 }

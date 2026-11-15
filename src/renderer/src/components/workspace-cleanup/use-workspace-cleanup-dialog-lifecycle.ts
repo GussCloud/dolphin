@@ -44,7 +44,7 @@ export function useWorkspaceCleanupDialogLifecycle(): WorkspaceCleanupDialogLife
     onDeselect: deselectRemovedIdentities,
     closeModal
   })
-  const { removalInFlightRef, resetForReopen, resetRowFailures } = removal
+  const { removalInFlightRef, resetForReopen } = removal
 
   const onFreshOpen = useCallback(() => {
     if (!removalInFlightRef.current) {
@@ -58,7 +58,6 @@ export function useWorkspaceCleanupDialogLifecycle(): WorkspaceCleanupDialogLife
     loading,
     removalInFlight: removal.removalInFlight,
     removalInFlightRef,
-    resetRowFailures,
     onFreshOpen
   })
   const [mountedContent, setMountedContent] = useState(open)

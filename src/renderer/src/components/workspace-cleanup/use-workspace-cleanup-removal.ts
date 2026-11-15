@@ -16,10 +16,15 @@ import {
 import { filterWorkspaceCleanupRemovalCandidates } from './workspace-cleanup-removal-candidates'
 import { createWorkspaceCleanupSnapshotPruneBatch } from './workspace-cleanup-snapshot-prune-batch'
 import { useWorkspaceCleanupUnverifiedRemoval } from './use-workspace-cleanup-unverified-removal'
+import { hasUncheckedGit, refreshUncheckedGitEvidence } from './workspace-cleanup-confirm-git-check'
+import { toast } from 'sonner'
+import { translate } from '@/i18n/i18n'
 
 export type WorkspaceCleanupRemovalController = {
   confirming: boolean
   confirmCandidates: WorkspaceCleanupCandidate[]
+  /** Reading git for rows the broad scan never checked; confirming waits for it. */
+  confirmChecking: boolean
   removalProgress: WorkspaceCleanupRemovalProgress | null
   removalInFlight: boolean
   deletionPhaseByIdentity: Record<string, 'queued' | 'deleting'>
@@ -27,7 +32,6 @@ export type WorkspaceCleanupRemovalController = {
   removalInFlightRef: { current: boolean }
   /** Keyed by host-qualified identity so a failure marks only the confirmed host's row. */
   rowFailures: Record<string, WorkspaceCleanupFailure>
-  resetRowFailures: () => void
   resetForReopen: () => void
   openConfirmRemove: (candidates: readonly WorkspaceCleanupCandidate[]) => void
   confirmRemove: () => void
@@ -54,6 +58,8 @@ export function useWorkspaceCleanupRemoval({
 
   const [confirming, setConfirming] = useState(false)
   const [confirmCandidates, setConfirmCandidates] = useState<WorkspaceCleanupCandidate[]>([])
+  const [confirmChecking, setConfirmChecking] = useState(false)
+  const confirmCheckRef = useRef(0)
   const [removalProgress, setRemovalProgress] = useState<WorkspaceCleanupRemovalProgress | null>(
     null
   )
@@ -68,8 +74,6 @@ export function useWorkspaceCleanupRemoval({
   // Why: the dialog stays mounted across cleanup runs, so late settlements from
   // an earlier batch must not mutate a newer batch's row state.
   const removalBatchIdRef = useRef(0)
-
-  const resetRowFailures = useCallback(() => setRowFailures({}), [])
 
   const resetForReopen = useCallback(() => {
     if (removalInFlightRef.current) {
@@ -103,19 +107,51 @@ export function useWorkspaceCleanupRemoval({
     onDeselect
   })
 
-  const openConfirmRemove = useCallback((candidates: readonly WorkspaceCleanupCandidate[]) => {
-    const nextCandidates = filterWorkspaceCleanupRemovalCandidates(
-      candidates,
-      useAppStore.getState().deleteStateByWorktreeId
-    )
-    if (nextCandidates.length === 0) {
-      return
-    }
-    setConfirmCandidates(nextCandidates)
-    setConfirming(true)
-  }, [])
+  const openConfirmRemove = useCallback(
+    (candidates: readonly WorkspaceCleanupCandidate[]) => {
+      const nextCandidates = filterWorkspaceCleanupRemovalCandidates(
+        candidates,
+        useAppStore.getState().deleteStateByWorktreeId
+      )
+      const alreadyDeleting = candidates.length - nextCandidates.length
+      if (alreadyDeleting > 0) {
+        // Why: these rows leave the selection here; say so instead of dropping them silently.
+        toast.info(
+          translate(
+            'auto.components.workspace.cleanup.alreadyDeleting',
+            '{{value0}} selected workspace(s) are already being deleted.',
+            { value0: alreadyDeleting }
+          )
+        )
+      }
+      if (nextCandidates.length === 0) {
+        return
+      }
+      setConfirmCandidates(nextCandidates)
+      setConfirming(true)
+      if (!nextCandidates.some(hasUncheckedGit)) {
+        return
+      }
+      const check = ++confirmCheckRef.current
+      setConfirmChecking(true)
+      void refreshUncheckedGitEvidence(nextCandidates)
+        .then((refreshed) => {
+          if (mountedRef.current && check === confirmCheckRef.current) {
+            setConfirmCandidates(refreshed)
+          }
+        })
+        .finally(() => {
+          if (mountedRef.current && check === confirmCheckRef.current) {
+            setConfirmChecking(false)
+          }
+        })
+    },
+    [mountedRef]
+  )
 
   const cancelConfirmRemove = useCallback(() => {
+    confirmCheckRef.current += 1
+    setConfirmChecking(false)
     if (removalProgress) {
       closeModal()
       return
@@ -129,6 +165,8 @@ export function useWorkspaceCleanupRemoval({
   // Diverges from cancelConfirmRemove, which closes the dialog mid-batch: here
   // removalProgress stays set until the batch settles, so re-entry stays blocked.
   const backToList = useCallback(() => {
+    confirmCheckRef.current += 1
+    setConfirmChecking(false)
     setConfirming(false)
     setConfirmCandidates([])
   }, [])
@@ -142,7 +180,7 @@ export function useWorkspaceCleanupRemoval({
   }, [])
 
   const confirmRemove = useCallback(() => {
-    if (confirmCandidates.length === 0 || removalInFlightRef.current) {
+    if (confirmCandidates.length === 0 || removalInFlightRef.current || confirmChecking) {
       return
     }
     const removableCandidates = filterWorkspaceCleanupRemovalCandidates(
@@ -253,6 +291,7 @@ export function useWorkspaceCleanupRemoval({
     clearQueuedDeleteState,
     clearWorktreeDeleteState,
     confirmCandidates,
+    confirmChecking,
     markWorktreesQueuedForDeletion,
     mountedRef,
     onDeselect,
@@ -263,12 +302,12 @@ export function useWorkspaceCleanupRemoval({
   return {
     confirming,
     confirmCandidates,
+    confirmChecking,
     removalProgress,
     removalInFlight,
     deletionPhaseByIdentity,
     removalInFlightRef,
     rowFailures,
-    resetRowFailures,
     resetForReopen,
     openConfirmRemove,
     confirmRemove,
