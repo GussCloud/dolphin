@@ -22,6 +22,7 @@ import { resolveBareAgentLaunchCommand } from './runtime-agent-launch-resolution
 import { buildAgentStartupPlan } from '../../shared/tui-agent-startup'
 import { resolveAgentStartupPlanInputs } from '../../shared/agent-startup-plan-inputs'
 import { timeTerminalSpawnStep } from '../worktree-create-terminal-spawn-timing'
+import { revokeLocalWorktreeAgentTrust } from '../agent-trust-revocation'
 
 export class DolphinRuntimeWithResolveWorktreeRemovalTarget extends DolphinRuntimeWithRemoveManagedWorktree {
   protected async resolveWorktreeRemovalTarget(
@@ -84,6 +85,7 @@ export class DolphinRuntimeWithResolveWorktreeRemovalTarget extends DolphinRunti
       this.notifyMobileSessionTabsRemoved(worktreeId)
       advertisedUrlWatcher.forgetWorktree(worktreeId)
       deleteWorktreeHistoryDir(worktreeId)
+      revokeLocalWorktreeAgentTrust(worktreeId, hostId)
       this.closeHeadlessBrowserPagesForWorktree(worktreeId)
       closeClientHostedBrowserPagesForWorktree(this, worktreeId)
     }
