@@ -20,6 +20,25 @@ export function registerClaudeAccountHandlers(claudeAccounts: ClaudeAccountServi
     })
     return result.canceled ? null : (result.filePaths[0] ?? null)
   })
+  ipcMain.handle('claudeAccounts:profile', (_event, args: { accountId: string }) =>
+    claudeAccounts.describeProfile(args.accountId)
+  )
+  ipcMain.handle(
+    'claudeAccounts:saveProfileInstructions',
+    (_event, args: { accountId: string; content: string }) =>
+      claudeAccounts.saveProfileInstructions(args.accountId, String(args.content))
+  )
+  ipcMain.handle('claudeAccounts:markProfileReviewed', (_event, args: { accountId: string }) =>
+    claudeAccounts.markProfileReviewed(args.accountId)
+  )
+  ipcMain.handle(
+    'claudeAccounts:importIntoProfile',
+    (_event, args: { accountId: string; ids: string[] }) =>
+      claudeAccounts.importIntoProfile(
+        args.accountId,
+        Array.isArray(args.ids) ? args.ids.filter((id) => typeof id === 'string') : []
+      )
+  )
   ipcMain.handle('claudeAccounts:cancelPendingLogin', () => claudeAccounts.cancelPendingLogin())
   ipcMain.handle('claudeAccounts:reauthenticate', (_event, args: { accountId: string }) =>
     claudeAccounts.reauthenticateAccount(args.accountId)

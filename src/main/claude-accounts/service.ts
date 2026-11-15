@@ -18,6 +18,19 @@ import {
   type ClaudeCommandOptions
 } from './claude-command-process'
 import { runClaudeLoginSession } from './claude-login-session'
+import { getClaudeAccountConfigDir } from './claude-account-config-dir'
+import { ClaudeRuntimePathResolver } from './runtime-paths'
+import {
+  describeClaudeProfile,
+  importIntoClaudeProfileTarget,
+  markClaudeProfileReviewed,
+  saveClaudeProfileInstructions,
+  type ClaudeProfileTarget
+} from './profile/claude-profile-editor'
+import type {
+  ClaudeProfileDetails,
+  ClaudeProfileImportResult
+} from '../../shared/claude-profile-types'
 import { createLinkedClaudeAccount, discoverClaudeConfigFolders } from './claude-folder-link'
 import {
   ClaudeManagedAuthStorage,
@@ -89,6 +102,40 @@ export class ClaudeAccountService {
     options?: ClaudeAccountImportOptions
   ): Promise<ClaudeRateLimitAccountsState> {
     return this.serializeMutation(() => this.registration.addFromConfigDir(configDir, options))
+  }
+
+  describeProfile(accountId: string): Promise<ClaudeProfileDetails> {
+    return describeClaudeProfile(this.profileTarget(accountId))
+  }
+
+  saveProfileInstructions(accountId: string, content: string): Promise<void> {
+    return saveClaudeProfileInstructions(this.profileTarget(accountId), content)
+  }
+
+  markProfileReviewed(accountId: string): void {
+    markClaudeProfileReviewed(this.profileTarget(accountId))
+  }
+
+  importIntoProfile(accountId: string, ids: readonly string[]): Promise<ClaudeProfileImportResult> {
+    return importIntoClaudeProfileTarget(this.profileTarget(accountId), ids)
+  }
+
+  private profileTarget(accountId: string): ClaudeProfileTarget {
+    const account = this.store
+      .getSettings()
+      .claudeManagedAccounts.find((candidate) => candidate.id === accountId)
+    if (!account || account.managedAuthRuntime === 'wsl') {
+      throw new Error('This Claude account has no profile on this PC.')
+    }
+    // Why the runtime paths: the user's own Claude dir is whatever plain `claude` uses here.
+    const userPaths = new ClaudeRuntimePathResolver().getRuntimePaths()
+    return {
+      accountId,
+      configDir: getClaudeAccountConfigDir(account),
+      linked: Boolean(account.linkedConfigDir),
+      userConfigDir: userPaths.configDir,
+      userStatePath: userPaths.configPath
+    }
   }
 
   /** Folders the user's terminal account menu already manages. Read-only. */

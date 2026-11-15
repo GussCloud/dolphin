@@ -4,6 +4,10 @@ import type {
   CodexRateLimitAccountsState
 } from '../../shared/managed-account-types'
 import type { CodexConfigSyncStatus } from '../../shared/codex-config-sync-types'
+import type {
+  ClaudeProfileDetails,
+  ClaudeProfileImportResult
+} from '../../shared/claude-profile-types'
 import type { CursorAccountStatus, GrokAccountStatus } from '../../shared/rate-limit-types'
 import type {
   DeepSeekCredentialsStatus,
@@ -56,6 +60,13 @@ export type ClaudeAccountsApi = {
   discoverFolders: () => Promise<ClaudeConfigFolderDiscovery>
   linkFolder: (args: { configDir: string }) => Promise<ClaudeRateLimitAccountsState>
   pickFolder: () => Promise<string | null>
+  profile: (args: { accountId: string }) => Promise<ClaudeProfileDetails>
+  saveProfileInstructions: (args: { accountId: string; content: string }) => Promise<void>
+  markProfileReviewed: (args: { accountId: string }) => Promise<void>
+  importIntoProfile: (args: {
+    accountId: string
+    ids: string[]
+  }) => Promise<ClaudeProfileImportResult>
   cancelPendingLogin: () => Promise<boolean>
   reauthenticate: (args: { accountId: string }) => Promise<ClaudeRateLimitAccountsState>
   remove: (args: { accountId: string }) => Promise<ClaudeRateLimitAccountsState>
