@@ -49,6 +49,7 @@ export function WorkspaceCleanupConfirmRemove({
   now,
   reviewInfoByWorktreeId,
   progress,
+  checking = false,
   onBack,
   onCancel,
   onConfirm
@@ -58,6 +59,8 @@ export function WorkspaceCleanupConfirmRemove({
   now: number
   reviewInfoByWorktreeId: ReadonlyMap<string, WorkspaceCleanupReviewInfo>
   progress: WorkspaceCleanupRemovalProgress | null
+  /** Git is still being read for rows the scan never checked. */
+  checking?: boolean
   onBack: () => void
   onCancel: () => void
   onConfirm: () => void
@@ -197,13 +200,18 @@ export function WorkspaceCleanupConfirmRemove({
               )}
         </Button>
         {!deleting ? (
-          <Button variant="destructive" onClick={onConfirm} disabled={count === 0}>
-            <Trash2 className="size-4" />
-            {translate(
-              'auto.components.workspace.cleanup.WorkspaceCleanupDialog.deleteButtonCount',
-              'Delete {{value0}}',
-              { value0: count }
-            )}
+          <Button variant="destructive" onClick={onConfirm} disabled={count === 0 || checking}>
+            {checking ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+            {checking
+              ? translate(
+                  'auto.components.workspace.cleanup.checkingGit',
+                  'Checking uncommitted changes…'
+                )
+              : translate(
+                  'auto.components.workspace.cleanup.WorkspaceCleanupDialog.deleteButtonCount',
+                  'Delete {{value0}}',
+                  { value0: count }
+                )}
           </Button>
         ) : null}
       </DialogFooter>

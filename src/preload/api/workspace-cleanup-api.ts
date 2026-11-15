@@ -6,6 +6,7 @@ import type {
   WorkspaceCleanupSnapshotPruneBatchArgs,
   WorkspaceCleanupSnapshotPruneRecordArgs
 } from '../../shared/workspace-cleanup'
+import type { PreservedBranchListing } from '../../shared/preserved-branch-registry-types'
 import type {
   WorkspaceSpaceAnalysis,
   WorkspaceSpaceAnalyzeResult,
@@ -25,6 +26,9 @@ export type WorkspaceCleanupApi = {
   beginRemovalSnapshotPruneBatch?: (args: WorkspaceCleanupSnapshotPruneBatchArgs) => Promise<void>
   recordRemovalSnapshotPrune?: (args: WorkspaceCleanupSnapshotPruneRecordArgs) => Promise<void>
   finishRemovalSnapshotPruneBatch?: (args: WorkspaceCleanupSnapshotPruneBatchArgs) => Promise<void>
+  /** Unmerged branches kept by earlier local removals; absent on web clients. */
+  listPreservedBranches?: () => Promise<PreservedBranchListing[]>
+  deletePreservedBranch?: (args: { repoId: string; branchName: string }) => Promise<void>
 }
 
 export type WorkspaceSpaceApi = {

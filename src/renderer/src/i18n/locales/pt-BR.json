@@ -497,7 +497,10 @@
             "hostUnresolved": "Dolphin não consegue dizer qual host possui este workspace. Atualize projetos e o revise novamente.",
             "gitStatusUnavailable": "Dolphin não conseguiu verificar o status git deste workspace. Tente novamente, ou delete-o da barra lateral específica do host ou lista de projetos.",
             "gitStatusUnavailableOlderPeer": "Dolphin não conseguiu combinar esta falha de status git com um host. Atualize o par conectado mais antigo, ou delete o workspace da barra lateral específica do host ou lista de projetos.",
-            "forceNeedsApproval": "Revise e confirme este workspace antes de forçar sua exclusão."
+            "forceNeedsApproval": "Revise e confirme este workspace antes de forçar sua exclusão.",
+            "uncheckedDirtyUnpushed": "Este workspace tem mudanças não commitadas e commits não enviados. Excluir mesmo assim?",
+            "uncheckedDirty": "Este workspace tem mudanças não commitadas. Excluir mesmo assim?",
+            "uncheckedUnpushed": "Este workspace tem commits não enviados. Excluir mesmo assim?"
           }
         },
         "worktrees": {
@@ -3118,6 +3121,15 @@
                 }
               }
             }
+          },
+          "alreadyDeleting": "{{value0}} workspace(s) selecionado(s) já estão sendo excluídos.",
+          "checkingGit": "Verificando mudanças não salvas…",
+          "preservedBranches": {
+            "title": "Branches mantidos com trabalho não mesclado ({{value0}})",
+            "note": "Ao excluir um workspace, estes branches foram mantidos porque têm commits que não foram mesclados em lugar nenhum. Excluir um branch aqui descarta esses commits.",
+            "delete": "Excluir",
+            "confirm": "Descartar commits",
+            "deleted": "Branch {{value0}} excluído."
           }
         }
       },

@@ -511,6 +511,54 @@ describe('workspace cleanup removal and protection', () => {
     expect(removeWorktree).not.toHaveBeenCalled()
   })
 
+  it('asks to delete anyway when a row approved before git was read turns out dirty', async () => {
+    const deferredGit = { clean: null, upstreamAhead: null, upstreamBehind: null, checkedAt: null }
+    const approvedCandidate = makeCandidate({ executionHostId: 'local', git: deferredGit })
+    const nowDirty = makeCandidate({
+      executionHostId: 'local',
+      tier: 'review',
+      blockers: ['dirty-files'],
+      git: { clean: false, upstreamAhead: 0, upstreamBehind: 0, checkedAt: NOW }
+    })
+    installWorkspaceCleanupApi(
+      vi.fn().mockResolvedValue({
+        scannedAt: NOW,
+        candidates: [nowDirty],
+        errors: []
+      } satisfies WorkspaceCleanupScanResult)
+    )
+    const removeWorktree = vi.fn().mockResolvedValue({ ok: true })
+    const store = createCleanupTestStore(removeWorktree)
+
+    const refused = await store.getState().removeWorkspaceCleanupCandidates([WORKTREE_ID], {
+      approvedCandidates: [approvedCandidate]
+    })
+    expect(refused.failures).toEqual([
+      {
+        worktreeId: WORKTREE_ID,
+        executionHostId: 'local',
+        displayName: 'old-workspace',
+        message: 'This workspace has uncommitted changes. Delete it anyway?',
+        canDeleteAnyway: true
+      }
+    ])
+    expect(removeWorktree).not.toHaveBeenCalled()
+
+    const identity = getWorkspaceCleanupCandidateIdentity(approvedCandidate)
+    const attemptId = store.getState().beginUnverifiedRemovalConsent(identity)
+    expect(attemptId).toBeTruthy()
+    const removed = await store.getState().removeWorkspaceCleanupCandidates([WORKTREE_ID], {
+      approvedCandidates: [approvedCandidate],
+      unverifiedRemovalConsent: { identity, attemptId: attemptId ?? '' }
+    })
+    expect(removed.failures).toEqual([])
+    expect(removeWorktree).toHaveBeenCalledWith(
+      { id: WORKTREE_ID, executionHostId: 'local' },
+      true,
+      { suppressPreservedBranchToast: true }
+    )
+  })
+
   it('protects old workspaces when an agent process is still foregrounded', async () => {
     ;(globalThis as { window: unknown }).window = {
       api: {

@@ -22,8 +22,10 @@ export type AgentInteractionAvatarApi = {
 export const agentInteractionAvatarApi: AgentInteractionAvatarApi = {
   getFrame: () => ipcRenderer.invoke(AGENT_INTERACTION_AVATAR_CHANNELS.getFrame),
   onFrame: (callback) => {
-    const listener = (_event: Electron.IpcRendererEvent, frame: AgentInteractionAvatarFrame): void =>
-      callback(frame)
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      frame: AgentInteractionAvatarFrame
+    ): void => callback(frame)
     ipcRenderer.on(AGENT_INTERACTION_AVATAR_CHANNELS.frame, listener)
     return () => ipcRenderer.removeListener(AGENT_INTERACTION_AVATAR_CHANNELS.frame, listener)
   },

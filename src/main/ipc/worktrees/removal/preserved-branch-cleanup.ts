@@ -2,6 +2,7 @@ import type { RemoveWorktreeResult } from '../../../../shared/worktree/create-ty
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import type { GitPushTarget } from '../../../../shared/worktree/types'
 import { preservedBranchCleanupScopeKey } from '../../../../shared/preserved-branch-cleanup'
+import { recordPreservedBranch } from '../../../git/preserved-branch-registry'
 
 export type PreservedBranchCleanupTarget = {
   worktreeId: string
@@ -27,6 +28,12 @@ export function rememberPreservedBranchCleanupTarget(
         `Cannot safely offer force-delete for preserved branch "${result.preservedBranch.branchName}" without its saved commit.`
       )
     }
+    recordPreservedBranch({
+      worktreeId,
+      hostId,
+      branchName: result.preservedBranch.branchName,
+      head
+    })
     preservedBranchCleanupByScope.set(preservedBranchCleanupScopeKey({ worktreeId, hostId }), {
       worktreeId,
       hostId,

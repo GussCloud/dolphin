@@ -2618,6 +2618,13 @@
           },
           "candidateRow": {
             "contextCount": "Context: {{value0}}"
+          },
+          "preservedBranches": {
+            "confirm": "Discard commits",
+            "delete": "Delete",
+            "deleted": "Branch {{value0}} deleted.",
+            "note": "Deleting a workspace kept these branches because they hold commits not merged anywhere. Deleting a branch here discards those commits.",
+            "title": "Kept branches with unmerged work ({{value0}})"
           }
         }
       }
