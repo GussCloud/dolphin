@@ -12664,6 +12664,43 @@
           "linked": "Vinculada",
           "link": "Vincular",
           "linkedRow": "Pasta vinculada {{value0}}"
+        },
+        "ClaudeProfileDialog": {
+          "open": "Perfil",
+          "title": "Perfil de {{value0}}",
+          "description": "Esta conta tem suas próprias instruções, MCPs, skills e histórico. Nada daqui chega às suas outras contas.",
+          "openFolder": "Abrir pasta",
+          "review": {
+            "title": "Revise esta conta",
+            "body": "O Dolphin converteu esta conta do formato antigo e copiou do seu ~/.claude: {{value0}}. Essas cópias agora são só desta conta, e os MCPs dela foram removidos. Confira se servem para esta conta.",
+            "done": "Revisado"
+          },
+          "instructions": "Instruções (CLAUDE.md)",
+          "save": "Salvar instruções",
+          "saved": "Instruções salvas.",
+          "mcp": "MCPs desta conta",
+          "mcpNone": "Nenhum.",
+          "linkedNote": "Esta é uma pasta que você mesmo gerencia, então o Dolphin não importa nada para ela.",
+          "import": "Trazer do seu ~/.claude",
+          "importNote": "Nada vem marcado. MCPs e plugins dão acessos: marque só os que esta conta deve ter.",
+          "importNone": "Nada para trazer.",
+          "exists": "(já existe)",
+          "sensitive": "(dá acesso)",
+          "importAction": "Importar selecionados",
+          "kind": {
+            "instructions": "Instruções",
+            "settings": "Configurações",
+            "keybindings": "Atalhos",
+            "skill": "Skill",
+            "agent": "Agente",
+            "command": "Comando",
+            "outputStyle": "Estilo de saída",
+            "mcp": "MCP",
+            "plugin": "Plugin"
+          },
+          "removeMcp": "Remover {{value0}}",
+          "remove": "Remover",
+          "importDone": "Importação concluída."
         }
       },
       "right": {

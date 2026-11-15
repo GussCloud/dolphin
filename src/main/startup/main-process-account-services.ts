@@ -157,20 +157,18 @@ export function initializeMainProcessAccountServices(): void {
         ...Object.values(normalizeClaudeRuntimeSelection(settings).wsl)
       ].filter(Boolean)
     )
-    return (
-      settings.claudeManagedAccounts
-        // Why: a linked folder's login belongs to its terminal; Dolphin only reads it when launching.
-        .filter((account) => !activeIds.has(account.id) && !account.linkedConfigDir)
-        .map((account) => ({
-          id: account.id,
-          managedAuthPath: account.managedAuthPath,
-          managedAuthRuntime: account.managedAuthRuntime,
-          wslDistro: account.wslDistro,
-          wslLinuxAuthPath: account.wslLinuxAuthPath,
-          pinnedConfigDir:
-            account.managedAuthRuntime === 'wsl' ? null : getClaudePinnedConfigDir(account.id)
-        }))
-    )
+    return settings.claudeManagedAccounts
+      .filter((account) => !activeIds.has(account.id))
+      .map((account) => ({
+        id: account.id,
+        managedAuthPath: account.managedAuthPath,
+        managedAuthRuntime: account.managedAuthRuntime,
+        wslDistro: account.wslDistro,
+        wslLinuxAuthPath: account.wslLinuxAuthPath,
+        linkedConfigDir: account.linkedConfigDir ?? null,
+        pinnedConfigDir:
+          account.managedAuthRuntime === 'wsl' ? null : getClaudePinnedConfigDir(account.id)
+      }))
   })
   state.rateLimits.setInactiveCodexAccountsResolver(() => {
     const settings = store.getSettings()

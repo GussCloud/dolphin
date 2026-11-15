@@ -12664,6 +12664,43 @@
           "linked": "Linked",
           "link": "Link",
           "linkedRow": "Linked folder {{value0}}"
+        },
+        "ClaudeProfileDialog": {
+          "open": "Profile",
+          "title": "Profile of {{value0}}",
+          "description": "This account keeps its own instructions, MCP servers, skills and history. Nothing here reaches your other accounts.",
+          "openFolder": "Open folder",
+          "review": {
+            "title": "Review this account",
+            "body": "Dolphin converted this account from the old shared layout and copied from your ~/.claude: {{value0}}. These copies now belong to this account only, and its MCP servers were removed. Check that they fit this account.",
+            "done": "Reviewed"
+          },
+          "instructions": "Instructions (CLAUDE.md)",
+          "save": "Save instructions",
+          "saved": "Instructions saved.",
+          "mcp": "MCP servers of this account",
+          "mcpNone": "None.",
+          "linkedNote": "This is a folder you manage yourself, so Dolphin does not import anything into it.",
+          "import": "Bring from your ~/.claude",
+          "importNote": "Nothing is selected for you. MCP servers and plugins carry accesses: pick only the ones this account should have.",
+          "importNone": "Nothing to bring.",
+          "exists": "(already here)",
+          "sensitive": "(gives access)",
+          "importAction": "Import selected",
+          "kind": {
+            "instructions": "Instructions",
+            "settings": "Settings",
+            "keybindings": "Keybindings",
+            "skill": "Skill",
+            "agent": "Agent",
+            "command": "Command",
+            "outputStyle": "Output style",
+            "mcp": "MCP server",
+            "plugin": "Plugin"
+          },
+          "removeMcp": "Remove {{value0}}",
+          "remove": "Remove",
+          "importDone": "Import finished."
         }
       },
       "right": {

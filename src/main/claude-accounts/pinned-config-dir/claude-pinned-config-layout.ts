@@ -51,7 +51,7 @@ const SAFE_DEFAULT_STATE_KEYS = [
 ] as const
 
 /** Keys earlier layouts copied from the user's file on every launch; a migration removes them. */
-const INHERITED_SHARED_STATE_KEYS = ['mcpServers', 'bypassPermissionsModeAccepted'] as const
+export const INHERITED_SHARED_STATE_KEYS = ['mcpServers', 'bypassPermissionsModeAccepted'] as const
 
 const LOCK_RETRIES = { retries: 20, factor: 1.3, minTimeout: 10, maxTimeout: 250, randomize: true }
 

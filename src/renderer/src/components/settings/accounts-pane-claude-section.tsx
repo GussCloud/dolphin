@@ -13,6 +13,7 @@ import {
 import { formatAccountTimestamp, getClaudeAccountRuntimeLabel } from './accounts-pane-runtime'
 import type { AccountsPaneSectionModel } from './accounts-pane-types'
 import { ClaudeLinkedFolders } from './ClaudeLinkedFolders'
+import { ClaudeProfileButton } from './ClaudeProfileButton'
 
 export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): React.JSX.Element {
   const {
@@ -254,6 +255,14 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                       </span>
                     </button>
                     <div className="flex shrink-0 items-center justify-end gap-1 max-md:w-full max-md:flex-wrap">
+                      {getProviderAccountRuntime(account).runtime === 'host' &&
+                      !isRemoteAccountScope ? (
+                        <ClaudeProfileButton
+                          accountId={account.id}
+                          email={account.email}
+                          disabled={isBusy}
+                        />
+                      ) : null}
                       <Button
                         variant="ghost"
                         size="xs"

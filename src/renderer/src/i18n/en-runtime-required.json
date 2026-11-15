@@ -1168,6 +1168,42 @@
           "notFound": "If you keep Claude accounts in your own folders (CLAUDE_CONFIG_DIR), choose one to link it. Dolphin uses it as is and never changes its login.",
           "title": "Account folders you already use"
         },
+        "ClaudeProfileDialog": {
+          "description": "This account keeps its own instructions, MCP servers, skills and history. Nothing here reaches your other accounts.",
+          "exists": "(already here)",
+          "import": "Bring from your ~/.claude",
+          "importAction": "Import selected",
+          "importDone": "Import finished.",
+          "importNone": "Nothing to bring.",
+          "importNote": "Nothing is selected for you. MCP servers and plugins carry accesses: pick only the ones this account should have.",
+          "instructions": "Instructions (CLAUDE.md)",
+          "kind": {
+            "agent": "Agent",
+            "command": "Command",
+            "instructions": "Instructions",
+            "keybindings": "Keybindings",
+            "mcp": "MCP server",
+            "outputStyle": "Output style",
+            "plugin": "Plugin",
+            "settings": "Settings",
+            "skill": "Skill"
+          },
+          "linkedNote": "This is a folder you manage yourself, so Dolphin does not import anything into it.",
+          "mcp": "MCP servers of this account",
+          "mcpNone": "None.",
+          "openFolder": "Open folder",
+          "remove": "Remove",
+          "removeMcp": "Remove {{value0}}",
+          "review": {
+            "body": "Dolphin converted this account from the old shared layout and copied from your ~/.claude: {{value0}}. These copies now belong to this account only, and its MCP servers were removed. Check that they fit this account.",
+            "done": "Reviewed",
+            "title": "Review this account"
+          },
+          "save": "Save instructions",
+          "saved": "Instructions saved.",
+          "sensitive": "(gives access)",
+          "title": "Profile of {{value0}}"
+        },
         "CliSection": {
           "4c7e3e4c5f": "install",
           "5d432fe44d": "installed",

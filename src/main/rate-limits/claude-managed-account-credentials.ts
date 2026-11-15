@@ -22,6 +22,8 @@ export type InactiveClaudeAccount = {
   wslLinuxAuthPath?: string | null
   /** CLAUDE_CONFIG_DIR of this account's worktree-pinned launches; their live usage lands here. */
   pinnedConfigDir?: string | null
+  /** A folder the user manages; its usage is read there and never refreshed. */
+  linkedConfigDir?: string | null
 }
 
 export type ClaudeManagedCredentialsLocation =
