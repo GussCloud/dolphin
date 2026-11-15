@@ -1173,9 +1173,9 @@
           "exists": "(already here)",
           "import": "Bring from your ~/.claude",
           "importAction": "Import selected",
+          "importDone": "Import finished.",
           "importNone": "Nothing to bring.",
           "importNote": "Nothing is selected for you. MCP servers and plugins carry accesses: pick only the ones this account should have.",
-          "imported": "Imported {{value0}} item(s).",
           "instructions": "Instructions (CLAUDE.md)",
           "kind": {
             "agent": "Agent",

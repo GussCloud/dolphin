@@ -65,10 +65,13 @@ export default function ClaudeProfileDialog(props: {
     void load()
   }, [load])
 
-  const run = async (action: () => Promise<void>): Promise<void> => {
+  const run = async (action: () => Promise<unknown>, successMessage?: string): Promise<void> => {
     setBusy(true)
     try {
       await action()
+      if (successMessage) {
+        toast.success(successMessage)
+      }
       await load()
     } catch (cause) {
       toast.error(cause instanceof Error ? cause.message : String(cause))
@@ -161,13 +164,14 @@ export default function ClaudeProfileDialog(props: {
                 size="xs"
                 disabled={busy || instructions === (details.instructions ?? '')}
                 onClick={() =>
-                  void run(async () => {
-                    await window.api.claudeAccounts.saveProfileInstructions({
-                      accountId,
-                      content: instructions
-                    })
-                    toast.success(translate(`${T}.saved`, 'Instructions saved.'))
-                  })
+                  void run(
+                    () =>
+                      window.api.claudeAccounts.saveProfileInstructions({
+                        accountId,
+                        content: instructions
+                      }),
+                    translate(`${T}.saved`, 'Instructions saved.')
+                  )
                 }
               >
                 {translate(`${T}.save`, 'Save instructions')}
@@ -254,17 +258,14 @@ export default function ClaudeProfileDialog(props: {
                   size="xs"
                   disabled={busy || selected.size === 0}
                   onClick={() =>
-                    void run(async () => {
-                      const result = await window.api.claudeAccounts.importIntoProfile({
-                        accountId,
-                        ids: [...selected]
-                      })
-                      toast.success(
-                        translate(`${T}.imported`, 'Imported {{value0}} item(s).', {
-                          value0: result.imported.length
-                        })
-                      )
-                    })
+                    void run(
+                      () =>
+                        window.api.claudeAccounts.importIntoProfile({
+                          accountId,
+                          ids: [...selected]
+                        }),
+                      translate(`${T}.importDone`, 'Import finished.')
+                    )
                   }
                 >
                   {translate(`${T}.importAction`, 'Import selected')}

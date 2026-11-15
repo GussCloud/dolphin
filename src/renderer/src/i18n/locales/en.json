@@ -12686,7 +12686,6 @@
           "importNone": "Nothing to bring.",
           "exists": "(already here)",
           "sensitive": "(gives access)",
-          "imported": "Imported {{value0}} item(s).",
           "importAction": "Import selected",
           "kind": {
             "instructions": "Instructions",
@@ -12700,7 +12699,8 @@
             "plugin": "Plugin"
           },
           "removeMcp": "Remove {{value0}}",
-          "remove": "Remove"
+          "remove": "Remove",
+          "importDone": "Import finished."
         }
       },
       "right": {
