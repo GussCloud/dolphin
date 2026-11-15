@@ -36,6 +36,7 @@ import type {
   AutomationsChangedPayload,
   PublishAutomationsChanged
 } from '../../shared/runtime-client-events'
+import { scheduleRunWorkspaceRetirement, type RemoveRunWorkspace } from './run-workspace-retirement'
 
 const DEFAULT_TICK_MS = 60 * 1000
 
@@ -55,6 +56,7 @@ export class AutomationService {
   private readonly publish: PublishAutomationsChanged | null
   private readonly runs: AutomationRunWriter
   private readonly completionWatcher: AutomationRunCompletionWatcher | null
+  private readonly removeRunWorkspace: RemoveRunWorkspace | null
   /** Installed by desktop IPC registration, where external probes live; null on
    *  runtime servers. Dolphin's own automation traffic parks queued external
    *  probes behind this lease, whichever transport carried it. */
@@ -70,8 +72,11 @@ export class AutomationService {
       headlessDispatcher?: HeadlessAutomationDispatcher
       terminalObserver?: AutomationRunTerminalObserver
       onAutomationsChanged?: PublishAutomationsChanged
+      /** Removes a completed per-run workspace (never forced); absent where runs own none. */
+      removeRunWorkspace?: RemoveRunWorkspace
     } = {}
   ) {
+    this.removeRunWorkspace = opts.removeRunWorkspace ?? null
     this.store = store
     this.tickMs = opts.tickMs ?? DEFAULT_TICK_MS
     this.claudeUsage = opts.claudeUsage ?? null
@@ -218,13 +223,16 @@ export class AutomationService {
     if (run.usage) {
       return run
     }
-    return await writeAutomationRunUsage({
+    const withUsage = await writeAutomationRunUsage({
       store: this.store,
       runs: this.runs,
       run,
       claudeUsage: this.claudeUsage,
       codexUsage: this.codexUsage
     })
+    // Why after usage: usage reads the run's transcripts by workspace.
+    scheduleRunWorkspaceRetirement(this.store.listAutomations(), withUsage, this.removeRunWorkspace)
+    return withUsage
   }
 
   private async evaluateDueRuns(): Promise<void> {
