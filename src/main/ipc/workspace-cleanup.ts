@@ -21,7 +21,11 @@ import {
   finishWorkspaceCleanupRemovalSnapshotPruneBatch,
   recordWorkspaceCleanupRemovalSnapshotPrune
 } from '../workspace-cleanup-removal-snapshot-prune'
-import { deletePreservedBranch, listPreservedBranches } from '../git/preserved-branch-listing'
+import {
+  deletePreservedBranch,
+  listPreservedBranches,
+  repoRunGit
+} from '../git/preserved-branch-listing'
 
 export { scanWorkspaceCleanup }
 
@@ -50,14 +54,21 @@ export function registerWorkspaceCleanupHandlers(store: Store): void {
   ipcMain.removeHandler('workspaceCleanup:listPreservedBranches')
   ipcMain.removeHandler('workspaceCleanup:deletePreservedBranch')
 
-  ipcMain.handle('workspaceCleanup:listPreservedBranches', () => listPreservedBranches(store))
+  const preservedBranchDeps = { runGit: repoRunGit(store) }
+  ipcMain.handle('workspaceCleanup:listPreservedBranches', () =>
+    listPreservedBranches(store, preservedBranchDeps)
+  )
   ipcMain.handle(
     'workspaceCleanup:deletePreservedBranch',
     (_event, args: { repoId?: unknown; branchName?: unknown }) => {
       if (typeof args?.repoId !== 'string' || typeof args?.branchName !== 'string') {
         throw new Error('Invalid preserved branch')
       }
-      return deletePreservedBranch(store, { repoId: args.repoId, branchName: args.branchName })
+      return deletePreservedBranch(
+        store,
+        { repoId: args.repoId, branchName: args.branchName },
+        preservedBranchDeps
+      )
     }
   )
 

@@ -16,7 +16,7 @@ describe('preserved branch registry', () => {
   let root: string
   let repoPath: string
   let dir: string
-  let store: Store
+  let store: Pick<Store, 'getRepos'>
 
   beforeEach(() => {
     root = mkdtempSync(path.join(tmpdir(), 'preserved-branches-'))
@@ -38,10 +38,15 @@ describe('preserved branch registry', () => {
     )
     git(repoPath, 'branch', 'kept')
     git(repoPath, 'branch', 'moved')
-    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: listing reads only getRepos.
-    store = {
-      getRepos: () => [{ id: 'repo-1', path: repoPath, displayName: 'Repo', kind: 'git' } as Repo]
-    } as unknown as Store
+    const repo: Repo = {
+      id: 'repo-1',
+      path: repoPath,
+      displayName: 'Repo',
+      badgeColor: '',
+      addedAt: 0,
+      kind: 'git'
+    }
+    store = { getRepos: () => [repo] }
   })
 
   afterEach(() => rmSync(root, { recursive: true, force: true }))

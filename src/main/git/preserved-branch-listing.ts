@@ -22,10 +22,12 @@ type RunGit = (args: string[], cwd: string) => Promise<{ stdout: string; stderr:
 
 type ListingDeps = {
   dir?: string
-  runGit?: (repo: Repo) => RunGit
+  runGit: (repo: Repo) => RunGit
 }
 
-function localGitRepo(store: Pick<Store, 'getRepos'>, repoId: string): Repo | undefined {
+type RepoSource = Pick<Store, 'getRepos'>
+
+function localGitRepo(store: RepoSource, repoId: string): Repo | undefined {
   return store
     .getRepos()
     .find(
@@ -36,7 +38,8 @@ function localGitRepo(store: Pick<Store, 'getRepos'>, repoId: string): Repo | un
     )
 }
 
-function repoRunGit(store: Store): (repo: Repo) => RunGit {
+/** Runs git in a project with its WSL routing and account binding. */
+export function repoRunGit(store: Store): (repo: Repo) => RunGit {
   return (repo) => {
     const options = getLocalProjectWorktreeGitOptions(store, repo)
     return (args, cwd) => gitExecFileAsync(args, { cwd, ...options })
@@ -56,11 +59,11 @@ async function branchHead(runGit: RunGit, repo: Repo, branchName: string): Promi
 }
 
 export async function listPreservedBranches(
-  store: Store,
-  deps: ListingDeps = {}
+  store: RepoSource,
+  deps: ListingDeps
 ): Promise<PreservedBranchListing[]> {
   const records = readPreservedBranchRecords(deps.dir)
-  const runGitFor = deps.runGit ?? repoRunGit(store)
+  const runGitFor = deps.runGit
   const kept: PreservedBranchRecord[] = []
   const listed: PreservedBranchListing[] = []
   for (const record of records) {
@@ -82,9 +85,9 @@ export async function listPreservedBranches(
 
 /** Deletes a listed branch only while it still points at the commit Dolphin kept. */
 export async function deletePreservedBranch(
-  store: Store,
+  store: RepoSource,
   branch: Pick<PreservedBranchRecord, 'repoId' | 'branchName'>,
-  deps: ListingDeps = {}
+  deps: ListingDeps
 ): Promise<void> {
   const record = readPreservedBranchRecords(deps.dir).find(
     (entry) => entry.repoId === branch.repoId && entry.branchName === branch.branchName
@@ -97,11 +100,6 @@ export async function deletePreservedBranch(
     forgetPreservedBranch(record, deps.dir)
     throw new Error('The project of this branch is no longer in Dolphin.')
   }
-  await forceDeleteLocalBranch(
-    repo.path,
-    record.branchName,
-    record.head,
-    (deps.runGit ?? repoRunGit(store))(repo)
-  )
+  await forceDeleteLocalBranch(repo.path, record.branchName, record.head, deps.runGit(repo))
   forgetPreservedBranch(record, deps.dir)
 }

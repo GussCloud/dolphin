@@ -22,7 +22,7 @@ describe('WorkspaceCleanupPreservedBranches', () => {
   const remove = vi.fn()
 
   beforeEach(() => {
-    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true
     list.mockReset().mockResolvedValueOnce([branch]).mockResolvedValue([])
     remove.mockReset().mockResolvedValue(undefined)
     Object.defineProperty(window, 'api', {
