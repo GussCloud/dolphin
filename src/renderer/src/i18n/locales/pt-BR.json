@@ -12698,7 +12698,9 @@
             "outputStyle": "Estilo de saída",
             "mcp": "MCP",
             "plugin": "Plugin"
-          }
+          },
+          "removeMcp": "Remover {{value0}}",
+          "remove": "Remover"
         }
       },
       "right": {

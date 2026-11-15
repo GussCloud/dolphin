@@ -88,6 +88,7 @@ export function createClaudeAccountsApi(): PreloadApi['claudeAccounts'] {
     pickFolder: () => Promise.resolve(null),
     profile: () => Promise.reject(new Error('Account profiles live on the desktop host.')),
     saveProfileInstructions: () => Promise.resolve(),
+    removeProfileMcpServer: () => Promise.resolve(),
     markProfileReviewed: () => Promise.resolve(),
     importIntoProfile: () => Promise.resolve({ imported: [], skipped: [] }),
     cancelPendingLogin: () => Promise.resolve(false),

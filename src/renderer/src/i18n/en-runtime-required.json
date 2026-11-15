@@ -1192,6 +1192,8 @@
           "mcp": "MCP servers of this account",
           "mcpNone": "None.",
           "openFolder": "Open folder",
+          "remove": "Remove",
+          "removeMcp": "Remove {{value0}}",
           "review": {
             "body": "Dolphin converted this account from the old shared layout and copied from your ~/.claude: {{value0}}. These copies now belong to this account only, and its MCP servers were removed. Check that they fit this account.",
             "done": "Reviewed",

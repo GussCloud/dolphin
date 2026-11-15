@@ -62,6 +62,7 @@ export type ClaudeAccountsApi = {
   pickFolder: () => Promise<string | null>
   profile: (args: { accountId: string }) => Promise<ClaudeProfileDetails>
   saveProfileInstructions: (args: { accountId: string; content: string }) => Promise<void>
+  removeProfileMcpServer: (args: { accountId: string; name: string }) => Promise<void>
   markProfileReviewed: (args: { accountId: string }) => Promise<void>
   importIntoProfile: (args: {
     accountId: string

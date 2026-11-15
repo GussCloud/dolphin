@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { FolderOpen, Loader2 } from 'lucide-react'
+import { FolderOpen, Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import type {
@@ -176,11 +176,33 @@ export default function ClaudeProfileDialog(props: {
 
             <div className="space-y-1">
               <Label>{translate(`${T}.mcp`, 'MCP servers of this account')}</Label>
-              <p className="text-xs text-muted-foreground">
-                {details.mcpServers.length > 0
-                  ? details.mcpServers.join(', ')
-                  : translate(`${T}.mcpNone`, 'None.')}
-              </p>
+              {details.mcpServers.length > 0 ? (
+                details.mcpServers.map((name) => (
+                  <div key={name} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate font-mono">{name}</span>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      disabled={busy}
+                      aria-label={translate(`${T}.removeMcp`, 'Remove {{value0}}', {
+                        value0: name
+                      })}
+                      onClick={() =>
+                        void run(() =>
+                          window.api.claudeAccounts.removeProfileMcpServer({ accountId, name })
+                        )
+                      }
+                    >
+                      <Trash2 className="size-3" />
+                      {translate(`${T}.remove`, 'Remove')}
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {translate(`${T}.mcpNone`, 'None.')}
+                </p>
+              )}
             </div>
 
             {details.linked ? (

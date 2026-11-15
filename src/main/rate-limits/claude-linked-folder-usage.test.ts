@@ -3,10 +3,13 @@ import type { ProviderRateLimits } from '../../shared/rate-limit-types'
 import { fetchLinkedFolderClaudeUsage } from './claude-linked-folder-usage'
 
 vi.mock('../claude-accounts/oauth-refresh', () => ({
-  isOauthTokenExpiring: (json: string) => JSON.parse(json).claudeAiOauth.expiresAt < Date.now()
+  isOauthTokenExpiring: (json: string) => JSON.parse(json).claudeAiOauth.expiresAt < Date.now(),
+  refreshClaudeOauthCredentials: vi.fn()
 }))
 vi.mock('../claude-accounts/keychain', () => ({
-  readActiveClaudeKeychainCredentialsStrict: vi.fn()
+  readActiveClaudeKeychainCredentialsStrict: vi.fn(),
+  writeActiveClaudeKeychainCredentials: vi.fn(),
+  writeClaudeKeychainCredentialsForConfigDir: vi.fn()
 }))
 
 const usage: ProviderRateLimits = {
@@ -49,16 +52,62 @@ describe('fetchLinkedFolderClaudeUsage', () => {
     expect(result.status).toBe('ok')
   })
 
-  it('never refreshes an expired login: it says to renew it from the terminal', async () => {
+  it('renews an expired login and writes it back where the CLI keeps it', async () => {
+    const renewed = credentials(Date.now() + 60_000)
+    const writeFile = vi.fn()
     const fetchUsage = vi.fn(async () => usage)
     const result = await fetchLinkedFolderClaudeUsage(
       '/home/me/.claude-empresa',
       {},
-      { platform: 'linux', readFile: () => credentials(1), fetchUsage }
+      {
+        platform: 'linux',
+        readFile: () => credentials(1),
+        refresh: async () => renewed,
+        writeFile,
+        hasLivePtys: () => false,
+        fetchUsage
+      }
     )
-    expect(result.status).toBe('error')
+    expect(writeFile).toHaveBeenCalledWith('/home/me/.claude-empresa/.credentials.json', renewed)
+    expect(result.status).toBe('ok')
+  })
+
+  it('renews into the folder Keychain item on macOS, the unsuffixed one for ~/.claude', async () => {
+    const writeKeychain = vi.fn(async (_contents: string, _configDir?: string) => {})
+    const deps = {
+      platform: 'darwin' as const,
+      home: '/Users/me',
+      readKeychain: async () => credentials(1),
+      refresh: async () => credentials(Date.now() + 60_000),
+      writeKeychain,
+      hasLivePtys: () => false,
+      fetchUsage: async () => usage
+    }
+    await fetchLinkedFolderClaudeUsage('/Users/me/.claude-empresa', {}, deps)
+    await fetchLinkedFolderClaudeUsage('/Users/me/.claude', {}, deps)
+    expect(writeKeychain.mock.calls.map((call) => call[1])).toEqual([
+      '/Users/me/.claude-empresa',
+      undefined
+    ])
+  })
+
+  it('does not renew while a Claude terminal runs in Dolphin, and never writes then', async () => {
+    const refresh = vi.fn()
+    const writeFile = vi.fn()
+    const result = await fetchLinkedFolderClaudeUsage(
+      '/home/me/.claude-empresa',
+      {},
+      {
+        platform: 'linux',
+        readFile: () => credentials(1),
+        refresh,
+        writeFile,
+        hasLivePtys: () => true
+      }
+    )
+    expect(refresh).not.toHaveBeenCalled()
+    expect(writeFile).not.toHaveBeenCalled()
     expect(result.error).toContain('terminal')
-    expect(fetchUsage).not.toHaveBeenCalled()
   })
 
   it('reports missing credentials without touching anything', async () => {

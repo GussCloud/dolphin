@@ -28,6 +28,11 @@ export function registerClaudeAccountHandlers(claudeAccounts: ClaudeAccountServi
     (_event, args: { accountId: string; content: string }) =>
       claudeAccounts.saveProfileInstructions(args.accountId, String(args.content))
   )
+  ipcMain.handle(
+    'claudeAccounts:removeProfileMcpServer',
+    (_event, args: { accountId: string; name: string }) =>
+      claudeAccounts.removeProfileMcpServer(args.accountId, String(args.name))
+  )
   ipcMain.handle('claudeAccounts:markProfileReviewed', (_event, args: { accountId: string }) =>
     claudeAccounts.markProfileReviewed(args.accountId)
   )

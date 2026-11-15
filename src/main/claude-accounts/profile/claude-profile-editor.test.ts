@@ -7,6 +7,7 @@ import {
   describeClaudeProfile,
   importIntoClaudeProfileTarget,
   markClaudeProfileReviewed,
+  removeClaudeProfileMcpServer,
   saveClaudeProfileInstructions,
   type ClaudeProfileTarget
 } from './claude-profile-editor'
@@ -82,5 +83,16 @@ describe('account profile screen', () => {
     await expect(importIntoClaudeProfileTarget(linked, ['instructions:CLAUDE.md'])).rejects.toThrow(
       'linked folder'
     )
+  })
+
+  it('removes one MCP server from this account only', async () => {
+    mkdirSync(target.configDir, { recursive: true })
+    await describeClaudeProfile(target)
+    writeFileSync(
+      join(target.configDir, '.claude.json'),
+      JSON.stringify({ mcpServers: { vps: { command: 'a' }, github: { command: 'b' } } })
+    )
+    await removeClaudeProfileMcpServer(target, 'vps')
+    expect((await describeClaudeProfile(target)).mcpServers).toEqual(['github'])
   })
 })

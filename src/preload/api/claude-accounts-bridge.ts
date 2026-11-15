@@ -12,6 +12,8 @@ export const claudeAccountsApi = {
   profile: (args: { accountId: string }) => ipcRenderer.invoke('claudeAccounts:profile', args),
   saveProfileInstructions: (args: { accountId: string; content: string }) =>
     ipcRenderer.invoke('claudeAccounts:saveProfileInstructions', args),
+  removeProfileMcpServer: (args: { accountId: string; name: string }) =>
+    ipcRenderer.invoke('claudeAccounts:removeProfileMcpServer', args),
   markProfileReviewed: (args: { accountId: string }) =>
     ipcRenderer.invoke('claudeAccounts:markProfileReviewed', args),
   importIntoProfile: (args: { accountId: string; ids: string[] }) =>

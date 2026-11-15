@@ -91,6 +91,23 @@ export async function saveClaudeProfileInstructions(
   writeFileAtomically(join(target.configDir, 'CLAUDE.md'), content, { mode: 0o600 })
 }
 
+/** Removes one MCP server from this account's own state; other accounts are untouched. */
+export async function removeClaudeProfileMcpServer(
+  target: ClaudeProfileTarget,
+  name: string
+): Promise<void> {
+  await ensureIsolatedProfile(target)
+  const statePath = claudeConfigStatePath(target.configDir)
+  if (!existsSync(statePath)) {
+    return
+  }
+  await updateJsonObjectFile(statePath, (current) => {
+    const mcpServers = { ...asJsonObject(current.mcpServers) }
+    delete mcpServers[name]
+    return { ...current, mcpServers }
+  })
+}
+
 export function markClaudeProfileReviewed(target: ClaudeProfileTarget): void {
   const marker = target.linked ? null : readClaudeProfileMarker(target.configDir)
   if (!marker?.reviewPending) {

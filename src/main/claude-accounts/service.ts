@@ -24,6 +24,7 @@ import {
   describeClaudeProfile,
   importIntoClaudeProfileTarget,
   markClaudeProfileReviewed,
+  removeClaudeProfileMcpServer,
   saveClaudeProfileInstructions,
   type ClaudeProfileTarget
 } from './profile/claude-profile-editor'
@@ -110,6 +111,10 @@ export class ClaudeAccountService {
 
   saveProfileInstructions(accountId: string, content: string): Promise<void> {
     return saveClaudeProfileInstructions(this.profileTarget(accountId), content)
+  }
+
+  removeProfileMcpServer(accountId: string, name: string): Promise<void> {
+    return removeClaudeProfileMcpServer(this.profileTarget(accountId), name)
   }
 
   markProfileReviewed(accountId: string): void {
