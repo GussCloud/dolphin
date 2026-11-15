@@ -17,6 +17,7 @@ import { requireSshGitProvider } from '../providers/ssh-git-dispatch'
 import type { Store } from '../persistence'
 import { resolveWorktreeRemovalRepoOwner } from '../worktree-removal-repo-owner'
 import { parseExactWorktreeIdSelector } from './runtime-worktree-selection'
+import { recordPreservedBranch } from '../git/preserved-branch-registry'
 
 type PreservedBranchCleanupTarget = {
   worktreeId: string
@@ -45,6 +46,12 @@ export class RuntimePreservedBranchCleanup {
           `Cannot safely offer force-delete for preserved branch "${result.preservedBranch.branchName}" without its saved commit.`
         )
       }
+      recordPreservedBranch({
+        worktreeId,
+        hostId,
+        branchName: result.preservedBranch.branchName,
+        head
+      })
       this.targets.set(preservedBranchCleanupScopeKey({ worktreeId, hostId }), {
         worktreeId,
         ...(hostId ? { hostId } : {}),

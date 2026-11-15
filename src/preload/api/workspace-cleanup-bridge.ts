@@ -30,5 +30,8 @@ export const workspaceCleanupApi = {
   recordRemovalSnapshotPrune: (args) =>
     ipcRenderer.invoke('workspaceCleanup:recordRemovalSnapshotPrune', args),
   finishRemovalSnapshotPruneBatch: (args) =>
-    ipcRenderer.invoke('workspaceCleanup:finishRemovalSnapshotPruneBatch', args)
+    ipcRenderer.invoke('workspaceCleanup:finishRemovalSnapshotPruneBatch', args),
+  listPreservedBranches: () => ipcRenderer.invoke('workspaceCleanup:listPreservedBranches'),
+  deletePreservedBranch: (args) =>
+    ipcRenderer.invoke('workspaceCleanup:deletePreservedBranch', args)
 } satisfies PreloadApi['workspaceCleanup']

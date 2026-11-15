@@ -28,6 +28,7 @@ import {
   WorkspaceCleanupSkeletonRows
 } from './workspace-cleanup-dialog-notices'
 import { WorkspaceCleanupRowList } from './workspace-cleanup-row-list'
+import { WorkspaceCleanupPreservedBranches } from './workspace-cleanup-preserved-branches'
 import { formatWorkspaceCleanupScanNotice } from './workspace-cleanup-scan-notice'
 import { applyWorkspaceCleanupGitEvidence } from './workspace-cleanup-git-evidence'
 import { useWorkspaceCleanupBrowseState } from './use-workspace-cleanup-browse-state'
@@ -413,6 +414,8 @@ function WorkspaceCleanupDialogContent({
                 />
               </div>
             </ScrollArea>
+            {/* Why keyed: a rescan follows each removal, which may have kept a new branch. */}
+            <WorkspaceCleanupPreservedBranches key={scan?.scannedAt ?? 0} now={facetNow} />
           </>
         ) : (
           <WorkspaceCleanupConfirmRemove
