@@ -1,6 +1,8 @@
+import { FORK_CLOUD_ORIGINS } from '../../../src/shared/fork-identity'
 import { clampUtf8TextPrefix } from '../../../src/shared/utf8-byte-limits'
 
-const CONNECTION_DIAGNOSTICS_ENDPOINT = 'https://dolphin.guss.dev.br/v1/feedback'
+// Why the api host: Caddy routes /v1/feedback only there; the bare domain serves the static site.
+const CONNECTION_DIAGNOSTICS_ENDPOINT = `${FORK_CLOUD_ORIGINS.api}/v1/feedback`
 const SUBMISSION_TIMEOUT_MS = 10_000
 const MAX_SUBMISSION_BYTES = 64 * 1024
 
