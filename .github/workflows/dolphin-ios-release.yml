@@ -1,0 +1,181 @@
+name: Dolphin iOS Release
+
+# Builds Dolphin Mobile for iOS and uploads it to TestFlight, the iOS twin of
+# dolphin-android-release.yml. The internal group "dolphin-internal" has access to all builds, so
+# a build reaches its testers as soon as App Store Connect finishes processing it; no beta review.
+#
+# Cut a release: bump mobile/app.json "version" and merge to main. A main push that lands a version
+# with no TestFlight build yet uploads build 1 of it; a push tag mobile-ios-v<version> or a manual
+# dispatch upload the next build number of that version.
+#
+# Signing: IOS_DIST_CERT_P12 is the team's Apple Distribution certificate; fastlane fetches the App
+# Store provisioning profile with the App Store Connect API key (ASC_*). See mobile/fastlane/Fastfile.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - mobile/app.json
+      - .github/workflows/dolphin-ios-release.yml
+    tags:
+      - 'mobile-ios-v*'
+  workflow_dispatch:
+    inputs:
+      bump_patch_version:
+        description: 'Use the first open iOS patch version after the checked-in version, skipping versions already closed on the App Store.'
+        required: false
+        default: false
+        type: boolean
+      release_version:
+        description: 'Optional exact iOS marketing version override, e.g. 0.0.15'
+        required: false
+        type: string
+      shell:
+        description: 'Which shell the binary mounts: native screens, or the web page delivered over the air.'
+        required: false
+        default: native
+        type: choice
+        options:
+          - native
+          - ota
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dolphin-ios-release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  ios-build:
+    if: github.repository == 'GussCloud/dolphin'
+    # Why macos-26: Expo SDK 55's expo-modules-core needs the Swift 6 toolchain in Xcode 26.
+    runs-on: macos-26
+    timeout-minutes: 90
+
+    env:
+      BUNDLE_FROZEN: 'true'
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_HIDE_CHANGELOG: '1'
+
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.5'
+
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: mobile/pnpm-lock.yaml
+
+      - name: Setup Ruby and fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Resolve release version and build number
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          MOBILE_IOS_RELEASE_VERSION: ${{ inputs.release_version }}
+          MOBILE_IOS_BUMP_PATCH_VERSION: ${{ inputs.bump_patch_version }}
+        run: bundle exec fastlane ios prepare_release_version version:"$MOBILE_IOS_RELEASE_VERSION" bump_patch:"$MOBILE_IOS_BUMP_PATCH_VERSION"
+
+      # Why skip on branch pushes past build 1: most main pushes that touch app.json change config
+      # or the Android versionCode, not the iOS version, and must not upload a duplicate build.
+      - name: Skip versions already on TestFlight
+        id: gate
+        run: |
+          set -euo pipefail
+          read -r version build_number < <(node -p 'const { expo } = require("./app.json"); `${expo.version} ${expo.ios.buildNumber}`')
+          echo "Dolphin Mobile iOS $version ($build_number)"
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* && "$build_number" != "1" ]]; then
+            echo "$version already has a TestFlight build; nothing to do."
+            echo "skip=true" >>"$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >>"$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.gate.outputs.skip != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Expo prebuild
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          # Why: app.config.js writes this into aps-environment; release builds register production tokens.
+          DOLPHIN_IOS_APS_ENVIRONMENT: production
+        run: npx expo prebuild --platform ios --no-install
+
+      - name: Install CocoaPods
+        if: steps.gate.outputs.skip != 'true'
+        run: npx pod-install ios
+
+      # Why a throwaway keychain: the API key can fetch provisioning profiles but not the
+      # certificate's private key, which only the .p12 carries.
+      - name: Import distribution certificate
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          IOS_DIST_CERT_P12: ${{ secrets.IOS_DIST_CERT_P12 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN_PATH="$RUNNER_TEMP/dolphin-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          CERT_PATH="$RUNNER_TEMP/dolphin-dist-cert.p12"
+          umask 077
+          printf '%s' "$IOS_DIST_CERT_P12" | base64 --decode >"$CERT_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$IOS_DIST_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+          rm -f "$CERT_PATH"
+          if ! security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep -q 'Apple Distribution:'; then
+            echo "::error::IOS_DIST_CERT_P12 holds no valid Apple Distribution identity"
+            exit 1
+          fi
+
+      - name: Build and upload to TestFlight
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Pushes and tags carry no inputs, so they build the native shell.
+          EXPO_PUBLIC_MOBILE_SHELL: ${{ inputs.shell || 'native' }}
+        run: |
+          set -euo pipefail
+          echo "Mobile shell: $EXPO_PUBLIC_MOBILE_SHELL"
+          bundle exec fastlane ios build_and_upload
+
+      - name: Upload .ipa artifact
+        if: always() && steps.gate.outputs.skip != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: dolphin-mobile-ipa
+          path: mobile/build/*.ipa
+          if-no-files-found: ignore

@@ -40,6 +40,16 @@ The macOS builds are signed with the team's Developer ID Application certificate
 
 Releases up to 0.2.45 were ad-hoc signed with `DOLPHIN_MAC_UNSIGNED_RELEASE=1`, which writes a `dolphin-unsigned-mac-release` marker into `Contents/Resources`. The marker makes those installs announce a release and point the user at the new `.dmg` instead of downloading it (`src/main/mac-unsigned-release.ts`), because no ad-hoc signature ever matches the next build. Those users install one signed `.dmg` by hand; from then on updates are automatic. The flag still exists as a fallback for a build without the Developer ID secrets.
 
+Dolphin Mobile for iOS ships through TestFlight as the App Store Connect app "Dolphin for Agents" (bundle `com.gusscloud.dolphin.mobile`, app id `6835496344`). `dolphin-ios-release.yml` runs `mobile/fastlane` on a `mobile/app.json` version bump and uploads the build; the internal group `dolphin-internal` has access to every build, so testers get it once Apple finishes processing, with no beta review. It reads these repository secrets:
+
+| Secret                                          | Content                                                                                      |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`   | the Apple Distribution `.p12` (with the WWDR G3 intermediate), base64, and its password      |
+| `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8` | the App Store Connect API key (`.p8` base64); fastlane fetches the App Store profile with it |
+| `APPLE_TEAM_ID`                                 | `Z2KZSCJ22L`                                                                                 |
+
+The distribution certificate expires in November 2027. iOS push needs an APNs key configured on the push gateway, which is not done yet.
+
 ## Endpoints
 
 Every link and service the app reaches is defined in `src/shared/fork-identity.ts`.
