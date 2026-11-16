@@ -28,7 +28,7 @@ describe('bypassClaudeShellFunction', () => {
     expect(bypassClaudeShellFunction('claude', null, {}, deps)).toBe('claude')
   })
 
-  it('changes nothing without a `claude` function, on Windows, or when the CLI is not found', () => {
+  it('changes nothing without a `claude` function or on Windows', () => {
     expect(
       bypassClaudeShellFunction(
         'claude',
@@ -40,9 +40,25 @@ describe('bypassClaudeShellFunction', () => {
     expect(bypassClaudeShellFunction('claude', managed, {}, { ...deps, platform: 'win32' })).toBe(
       'claude'
     )
+  })
+
+  it('falls back to the `command` builtin when the CLI is not on PATH', () => {
     expect(
-      bypassClaudeShellFunction('claude', managed, {}, { ...deps, resolveClaude: () => 'claude' })
-    ).toBe('claude')
+      bypassClaudeShellFunction(
+        "A=1 claude '--x' --resume abc",
+        managed,
+        {},
+        { ...deps, resolveClaude: () => 'claude' }
+      )
+    ).toBe("A=1 command claude '--x' --resume abc")
+  })
+
+  it('skips the menu for a resume Dolphin routed to the folder holding the conversation', () => {
+    for (const provenance of ['system:resume-owner', 'menu-folder:resume-owner']) {
+      expect(
+        bypassClaudeShellFunction('claude --resume abc', { ...managed, provenance }, {}, deps)
+      ).toBe("'/Users/me/.local/bin/claude' --resume abc")
+    }
   })
 
   it('quotes a path with spaces and keeps an already explicit executable', () => {
