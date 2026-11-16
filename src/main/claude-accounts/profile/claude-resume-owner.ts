@@ -6,9 +6,6 @@ import type { ClaudeManagedAccount } from '../../../shared/managed-account-types
 import { getClaudeAccountConfigDir } from '../claude-account-config-dir'
 import { claudeConfigDirSessionMtime } from './claude-session-profile'
 
-/** Marks a launch whose config dir was chosen because it holds the resumed transcript. */
-export const RESUME_OWNER_PROVENANCE_SUFFIX = ':resume-owner'
-
 export type ClaudeResumeOwner =
   | { kind: 'none' }
   | { kind: 'account'; account: ClaudeManagedAccount }

@@ -5,7 +5,7 @@ import {
 } from '../../../shared/agent-resume-launch-command'
 import { resolveClaudeCommand } from '../../../shared/node-cli-command-resolution'
 import type { ClaudeRuntimeAuthPreparation } from '../runtime-auth/runtime-auth-types'
-import { RESUME_OWNER_PROVENANCE_SUFFIX } from './claude-resume-owner'
+import { RESUME_OWNER_PROVENANCE_SUFFIX } from './claude-resume-provenance'
 import { discoverClaudeShellSelector } from './claude-shell-selector-discovery'
 
 type BypassDeps = {

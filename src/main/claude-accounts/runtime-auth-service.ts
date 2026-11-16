@@ -13,10 +13,8 @@ import type {
   ClaudeLaunchLocation,
   ClaudeRuntimeAuthPreparation
 } from './runtime-auth/runtime-auth-types'
-import {
-  RESUME_OWNER_PROVENANCE_SUFFIX,
-  resolveClaudeResumeOwner
-} from './profile/claude-resume-owner'
+import { resolveClaudeResumeOwner } from './profile/claude-resume-owner'
+import { RESUME_OWNER_PROVENANCE_SUFFIX } from './profile/claude-resume-provenance'
 import { discoverClaudeShellSelector } from './profile/claude-shell-selector-discovery'
 import {
   registerClaudeLaunchConfigDirResolver,
