@@ -12,6 +12,7 @@ pnpm --ignore-workspace start
 
 - `/` — landing page
 - `/download` — Windows installer and Android companion links (GitHub Releases)
+- `/privacy`, `/support` — mobile app privacy policy and support (App Store listing URLs); Portuguese at `/pt-br/privacy`, `/pt-br/support`. Copy lives in `src/content/privacy-policy.ts` and `src/content/support-page.ts`
 
 Brand assets in `public/` (`logo.svg`, `favicon.png`, `apple-icon.png`) come from the Dolphin brand kit; agent icons in `public/agents/` are copied from `src/shared/agent-icons/`. Product visuals are HTML/CSS illustrations (`src/components/product-illustrations.tsx`) rather than screen recordings.
 
