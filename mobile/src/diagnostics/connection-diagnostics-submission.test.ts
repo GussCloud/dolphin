@@ -44,7 +44,7 @@ describe('submitConnectionDiagnostics', () => {
 
     expect(result).toEqual({ ok: true })
     expect(fetchImpl).toHaveBeenCalledWith(
-      'https://dolphin.guss.dev.br/v1/feedback',
+      'https://api.dolphin.guss.dev.br/v1/feedback',
       expect.objectContaining({ method: 'POST' })
     )
     const request = fetchImpl.mock.calls[0]?.[1]

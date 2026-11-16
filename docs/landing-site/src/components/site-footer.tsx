@@ -20,7 +20,11 @@ const footerColumns = [
   },
   {
     heading: 'Legal',
-    links: [{ label: 'MIT License', href: LICENSE_URL }]
+    links: [
+      { label: 'Privacy', href: '/privacy' },
+      { label: 'Support', href: '/support' },
+      { label: 'MIT License', href: LICENSE_URL }
+    ]
   }
 ]
 
