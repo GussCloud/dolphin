@@ -27,7 +27,18 @@ The command is `dolphin` on macOS and Windows and `dolphin-ide` on Linux and WSL
 
 Dolphin's Windows installers are unsigned: there is no SignPath certificate. Unless `DOLPHIN_WIN_SIGNPATH_SIGNED=1` is set, the builder omits `publisherName` and sets `verifyUpdateCodeSignature: false`. Without that, every update would fail Authenticode verification. Windows SmartScreen warns on first run.
 
-The macOS builds are unsigned too: there is no Apple Developer ID. The `build-mac` job in `dolphin-windows-release.yml` sets `DOLPHIN_MAC_UNSIGNED_RELEASE=1`, which ad-hoc signs the app and writes a `dolphin-unsigned-mac-release` marker into `Contents/Resources`. Squirrel.Mac rejects an update whose signature does not match the running app, which no ad-hoc build ever does, so the marker makes the updater announce the release and point the user at the new `.dmg` instead of downloading it (`src/main/mac-unsigned-release.ts`). Gatekeeper blocks the first launch: right-click the app and choose Open, or run `xattr -dr com.apple.quarantine /Applications/Dolphin.app`. With a Developer ID, use `pnpm build:mac:release` instead and drop the flag.
+The macOS builds are signed with the team's Developer ID Application certificate (team `Z2KZSCJ22L`) and notarized, so they open without a Gatekeeper warning and update themselves: Squirrel.Mac installs an update only when its signature satisfies the running app's designated requirement, which every build signed by the same team does. The `build-mac` job in `dolphin-windows-release.yml` sets `DOLPHIN_MAC_RELEASE=1` and reads these repository secrets:
+
+| Secret                                 | Content                                                                                                     |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `CSC_LINK`                             | the Developer ID Application `.p12` (certificate, private key and the Developer ID G2 intermediate), base64 |
+| `CSC_KEY_PASSWORD`                     | the `.p12` password                                                                                         |
+| `APPLE_API_KEY`                        | the App Store Connect API key (`.p8` contents); the job writes it to a file for notarytool                  |
+| `APPLE_API_KEY_ID`, `APPLE_API_ISSUER` | that key's ID and issuer                                                                                    |
+
+`config/scripts/verify-macos-release-env.mjs` fails the job before packaging if any of these is missing, because electron-builder skips notarization with only a warning. After packaging, the job requires a Developer ID authority, a stapled ticket and a passing `spctl` assessment on both slices. The certificate expires in December 2027; renew it before then and replace `CSC_LINK` and `CSC_KEY_PASSWORD`.
+
+Releases up to 0.2.45 were ad-hoc signed with `DOLPHIN_MAC_UNSIGNED_RELEASE=1`, which writes a `dolphin-unsigned-mac-release` marker into `Contents/Resources`. The marker makes those installs announce a release and point the user at the new `.dmg` instead of downloading it (`src/main/mac-unsigned-release.ts`), because no ad-hoc signature ever matches the next build. Those users install one signed `.dmg` by hand; from then on updates are automatic. The flag still exists as a fallback for a build without the Developer ID secrets.
 
 ## Endpoints
 
