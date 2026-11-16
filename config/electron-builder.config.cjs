@@ -54,7 +54,7 @@ const isWinDevChannel = isWinHourly || isWinDaily || isWinAdhoc
 const isWinUnsigned = isWinDevChannel || process.env.DOLPHIN_WIN_SIGNPATH_SIGNED !== '1'
 const isMacRelease =
   process.env.DOLPHIN_MAC_RELEASE === '1' || isMacHourly || isMacDaily || isMacAdhoc
-// Why: the fork has no Developer ID certificate, so its CI macOS release ships ad-hoc signed.
+// Why kept: ad-hoc fallback for a release without the Developer ID secrets; CI ships DOLPHIN_MAC_RELEASE.
 const isMacUnsignedRelease = !isMacRelease && process.env.DOLPHIN_MAC_UNSIGNED_RELEASE === '1'
 // Mirrors MAC_UNSIGNED_RELEASE_MARKER in src/main/mac-unsigned-release.ts.
 const MAC_UNSIGNED_RELEASE_MARKER = 'dolphin-unsigned-mac-release'
