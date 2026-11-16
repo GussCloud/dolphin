@@ -18,6 +18,16 @@ export function policyDocumentMetadata(document: PolicyDocument, path: string): 
   }
 }
 
+// Why content as key: blocks have no ids, and their text is unique within a section.
+function policyBlockKey(block: PolicyBlock): string {
+  if (block.kind === 'paragraph') {
+    return block.text
+  }
+  return block.kind === 'list'
+    ? block.items.join('\n')
+    : block.items.map((link) => link.href).join('\n')
+}
+
 function PolicyBlockView({ block }: { block: PolicyBlock }) {
   if (block.kind === 'paragraph') {
     return <p className="text-[16px] leading-7 text-body">{block.text}</p>
@@ -68,8 +78,8 @@ export function PolicyDocumentPage({ document }: { document: PolicyDocument }) {
           {document.sections.map((section) => (
             <section key={section.heading} className="mt-12 space-y-4">
               <h2 className="text-[22px] font-medium text-foreground">{section.heading}</h2>
-              {section.blocks.map((block, index) => (
-                <PolicyBlockView key={index} block={block} />
+              {section.blocks.map((block) => (
+                <PolicyBlockView key={policyBlockKey(block)} block={block} />
               ))}
             </section>
           ))}
