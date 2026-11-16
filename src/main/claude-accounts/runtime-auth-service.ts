@@ -13,7 +13,9 @@ import type {
   ClaudeLaunchLocation,
   ClaudeRuntimeAuthPreparation
 } from './runtime-auth/runtime-auth-types'
-import { claudeConfigDirHoldsSession } from './profile/claude-session-profile'
+import { resolveClaudeResumeOwner } from './profile/claude-resume-owner'
+import { RESUME_OWNER_PROVENANCE_SUFFIX } from './profile/claude-resume-provenance'
+import { discoverClaudeShellSelector } from './profile/claude-shell-selector-discovery'
 import {
   registerClaudeLaunchConfigDirResolver,
   type ClaudeLaunchConfigDir
@@ -175,42 +177,40 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       target: this.resolveWslDefaultTarget(target),
       launch
     })
-    const intended =
-      override.kind === 'override' ? override.account : this.getActiveHostProfileAccount(target)
-    const systemDir = this.getPreparation({ runtime: 'host' }).configDir
-    const intendedDir = intended ? getClaudeAccountConfigDir(intended) : systemDir
-    if (claudeConfigDirHoldsSession(intendedDir, sessionId)) {
+    const owner = resolveClaudeResumeOwner({
+      sessionId,
+      intended:
+        override.kind === 'override' ? override.account : this.getActiveHostProfileAccount(target),
+      accounts: this.store.getSettings().claudeManagedAccounts,
+      systemDir: this.getPreparation({ runtime: 'host' }).configDir,
+      menuFolders: () => discoverClaudeShellSelector().folders.map((folder) => folder.configDir)
+    })
+    if (owner.kind === 'none') {
       return null
     }
-    const owner = this.store
-      .getSettings()
-      .claudeManagedAccounts.find(
-        (account) =>
-          account.managedAuthRuntime !== 'wsl' &&
-          account.id !== intended?.id &&
-          claudeConfigDirHoldsSession(getClaudeAccountConfigDir(account), sessionId)
-      )
-    if (owner) {
-      const prepared = await this.serializeMutation(() => this.preparePinnedAccountLaunch(owner))
-      if (!prepared) {
-        throw new Error(
-          `This conversation belongs to the Claude account ${owner.email}, whose credentials are invalid. Sign in again in Settings > Accounts.`
-        )
-      }
-      return prepared
-    }
-    if (intended && claudeConfigDirHoldsSession(systemDir, sessionId)) {
+    if (owner.kind === 'folder') {
       return {
-        configDir: systemDir,
+        configDir: owner.configDir,
         runtime: 'host',
         wslDistro: null,
         wslLinuxConfigDir: null,
-        envPatch: {},
+        // Why no variable for ~/.claude: setting it moves the state file and the Keychain item.
+        envPatch: isDefaultClaudeConfigDir(owner.configDir)
+          ? {}
+          : { CLAUDE_CONFIG_DIR: owner.configDir },
         stripAuthEnv: false,
-        provenance: 'system'
+        provenance: `${owner.isSystem ? 'system' : 'menu-folder'}${RESUME_OWNER_PROVENANCE_SUFFIX}`
       }
     }
-    return null
+    const prepared = await this.serializeMutation(() =>
+      this.preparePinnedAccountLaunch(owner.account)
+    )
+    if (!prepared) {
+      throw new Error(
+        `This conversation belongs to the Claude account ${owner.account.email}, whose credentials are invalid. Sign in again in Settings > Accounts.`
+      )
+    }
+    return prepared
   }
 
   /** The active host-managed account's profile; null when the system login (~/.claude) is active. */

@@ -199,6 +199,20 @@ export function readClaudeResumeSessionId(
   return null
 }
 
+/** Prefixes a bare `claude` in command position with the `command` builtin, which skips shell functions. */
+export function prefixBareClaudeWithCommandBuiltin(command: string): string | null {
+  const tokenized = tokenizeStartupCommand(command, 'posix')
+  if (!tokenized.ok) {
+    return null
+  }
+  const index = findClaudeExecutableIndex(tokenized.tokens, 'posix')
+  if (index === -1 || /[\\/.]/.test(tokenized.tokens[index])) {
+    return null
+  }
+  const start = tokenized.spans[index].start
+  return `${command.slice(0, start)}command ${command.slice(start)}`
+}
+
 /** Replaces a bare `claude` in command position with `executablePath`; null when there is none. */
 export function replaceBareClaudeExecutable(
   command: string,

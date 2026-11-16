@@ -371,6 +371,34 @@ describe('ClaudeRuntimeAuthService account profiles', () => {
 
       expect(preparation.envPatch).toEqual({})
       expect(preparation.stripAuthEnv).toBe(false)
+      // Why asserted: this provenance is what lets the launch skip the user's account menu.
+      expect(preparation.provenance).toBe('system:resume-owner')
+    })
+
+    it('resumes in the linked account on ~/.claude when Dolphin uses the system default', async () => {
+      const systemDir = join(testState.fakeHomeDir, '.claude')
+      mkdirSync(systemDir, { recursive: true })
+      writeTranscript(systemDir)
+      const service = await newService(
+        createStore(
+          createSettings({
+            claudeManagedAccounts: [
+              createClaudeAccount('pessoal', systemDir, {
+                email: 'me@home.test',
+                linkedConfigDir: systemDir
+              })
+            ],
+            activeClaudeManagedAccountId: null
+          })
+        )
+      )
+
+      const preparation = await service.prepareForClaudeLaunch(undefined, {
+        resumeSessionId: SESSION
+      })
+
+      expect(preparation.envPatch).toEqual({})
+      expect(preparation.provenance).toBe('managed:pessoal:linked')
     })
 
     it('refuses when the owning account can no longer sign in', async () => {
