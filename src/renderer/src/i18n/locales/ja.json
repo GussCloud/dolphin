@@ -17859,7 +17859,8 @@
         "toastFailed": "Azure DevOps へのサインインに失敗しました: {{value0}}",
         "toastHint": "組織が Dolphin 内でのサインインをブロックしている場合は、Azure DevOps アイコンを右クリックして「システムのブラウザーで開く」を選択してください。",
         "cancel": "サインインをキャンセル",
-        "systemBrowser": "システムのブラウザーで開く"
+        "systemBrowser": "システムのブラウザーで開く",
+        "inAppWindow": "Dolphin のウィンドウでサインイン"
       }
     },
     "i18n": {

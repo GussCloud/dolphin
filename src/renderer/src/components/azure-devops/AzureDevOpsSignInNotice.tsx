@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Globe, Loader2, X } from 'lucide-react'
+import { AppWindow, Globe, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { AzureCliSignInMode, AzureCliSignInState } from '../../../../shared/azure-devops-auth'
 import { Button } from '@/components/ui/button'
@@ -118,11 +118,18 @@ function SignInNoticeButton({
   const [menuOpen, setMenuOpen] = useState(false)
   // Why the code, not a boolean: a later attempt's code must not inherit an open popover.
   const [openedCode, setOpenedCode] = useState<string | null>(null)
+  // Why: a click asked for the code, so it opens as soon as it arrives.
+  const [showCodeOnArrival, setShowCodeOnArrival] = useState(false)
   const [menuPoint, setMenuPoint] = useState({ x: 0, y: 0 })
   const reopenFrameRef = useRef<number | null>(null)
   const signingIn = state.kind === 'signing-in'
   const deviceCode = state.kind === 'signing-in' ? state.deviceCode : undefined
   const label = noticeLabel(state)
+  // Why during render: opens exactly the first code after the click, and no later one.
+  if (showCodeOnArrival && deviceCode) {
+    setShowCodeOnArrival(false)
+    setOpenedCode(deviceCode.userCode)
+  }
 
   useEffect(
     () => () => {
@@ -173,7 +180,8 @@ function SignInNoticeButton({
                   aria-busy={signingIn}
                   onClick={() => {
                     if (!signingIn) {
-                      startSignIn('in-app')
+                      setShowCodeOnArrival(true)
+                      startSignIn('device-code')
                     }
                   }}
                 >
@@ -229,16 +237,28 @@ function SignInNoticeButton({
               {translate('auto.components.azureDevOpsSignInNotice.cancel', 'Cancel sign-in')}
             </DropdownMenuItem>
           ) : (
-            <DropdownMenuItem
-              className="whitespace-nowrap"
-              onSelect={() => startSignIn('system-browser')}
-            >
-              <Globe className="size-3.5" />
-              {translate(
-                'auto.components.azureDevOpsSignInNotice.systemBrowser',
-                'Open in system browser'
-              )}
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuItem
+                className="whitespace-nowrap"
+                onSelect={() => startSignIn('in-app')}
+              >
+                <AppWindow className="size-3.5" />
+                {translate(
+                  'auto.components.azureDevOpsSignInNotice.inAppWindow',
+                  'Sign in in a Dolphin window'
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="whitespace-nowrap"
+                onSelect={() => startSignIn('system-browser')}
+              >
+                <Globe className="size-3.5" />
+                {translate(
+                  'auto.components.azureDevOpsSignInNotice.systemBrowser',
+                  'Open in system browser'
+                )}
+              </DropdownMenuItem>
+            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

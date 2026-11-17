@@ -17859,7 +17859,8 @@
         "toastFailed": "Azure DevOps 登录失败：{{value0}}",
         "toastHint": "如果你的组织阻止在 Dolphin 内登录，请右键点击 Azure DevOps 图标并选择“在系统浏览器中打开”。",
         "cancel": "取消登录",
-        "systemBrowser": "在系统浏览器中打开"
+        "systemBrowser": "在系统浏览器中打开",
+        "inAppWindow": "在 Dolphin 窗口中登录"
       }
     },
     "i18n": {

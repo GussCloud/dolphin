@@ -18187,7 +18187,8 @@
         "toastFailed": "Azure DevOps sign-in failed: {{value0}}",
         "toastHint": "If your organization blocks sign-in inside Dolphin, right-click the Azure DevOps icon and choose Open in system browser.",
         "cancel": "Cancel sign-in",
-        "systemBrowser": "Open in system browser"
+        "systemBrowser": "Open in system browser",
+        "inAppWindow": "Sign in in a Dolphin window"
       },
       "projectAccounts": {
         "commitAuthor": {
