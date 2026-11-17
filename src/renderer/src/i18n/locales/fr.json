@@ -17948,6 +17948,11 @@
       "azureDevOpsSignInNotice": {
         "signingInApp": "Connexion à Azure DevOps dans une fenêtre Dolphin…",
         "signingInBrowser": "Connexion à Azure DevOps dans votre navigateur…",
+        "signingInDeviceCode": "En attente de la saisie du code de connexion Azure DevOps…",
+        "deviceCodeReady": "Code de connexion Azure DevOps prêt. Cliquez pour l’afficher.",
+        "deviceCodeIntro": "Ouvrez cette page sur n’importe quel appareil et saisissez le code pour renouveler votre connexion Azure DevOps.",
+        "deviceCodeLabel": "Code",
+        "deviceCodeValidUntil": "Valable jusqu’à {{value0}}",
         "failed": "Échec de la connexion à Azure DevOps : {{value0}}. Cliquez pour réessayer.",
         "required": "La connexion à Azure DevOps a expiré. Cliquez pour vous connecter.",
         "toastFailed": "Échec de la connexion à Azure DevOps : {{value0}}",
@@ -19354,6 +19359,29 @@
         "audio": "audio",
         "volume": "volume"
       }
+    }
+  },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "title": "Connexion à Azure requise",
+      "host": "Ordinateur : {{host}}",
+      "open": "1. Ouvrez {{url}}",
+      "enter": "2. Saisissez le code {{code}}",
+      "expires": "Le code est valable jusqu’à {{time}}.",
+      "renewed": "Session Azure renouvelée",
+      "expired": "Le code de connexion Azure a expiré",
+      "expiredDetail": "Personne n’a saisi le code à temps. Touchez Nouveau code pour réessayer.",
+      "failed": "Échec de la connexion à Azure",
+      "failedDetail": "Touchez Nouveau code pour réessayer.",
+      "cancelled": "Connexion à Azure annulée",
+      "newCode": "Nouveau code",
+      "newCodeAck": "Demande d’un nouveau code…",
+      "noLongerNeeded": "Plus nécessaire.",
+      "newCodeFailed": "Impossible d’obtenir un nouveau code."
+    },
+    "push": {
+      "title": "Connexion à Azure",
+      "body": "Ouvrez {{url}} et saisissez {{code}}"
     }
   }
 }

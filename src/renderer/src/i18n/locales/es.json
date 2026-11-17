@@ -15469,6 +15469,11 @@
       "azureDevOpsSignInNotice": {
         "signingInApp": "Iniciando sesión en Azure DevOps en una ventana de Dolphin…",
         "signingInBrowser": "Iniciando sesión en Azure DevOps en tu navegador…",
+        "signingInDeviceCode": "Esperando a que se introduzca el código de inicio de sesión de Azure DevOps…",
+        "deviceCodeReady": "Código de inicio de sesión de Azure DevOps listo. Haz clic para verlo.",
+        "deviceCodeIntro": "Abre esta página en cualquier dispositivo e introduce el código para renovar tu sesión de Azure DevOps.",
+        "deviceCodeLabel": "Código",
+        "deviceCodeValidUntil": "Válido hasta las {{value0}}",
         "failed": "Error al iniciar sesión en Azure DevOps: {{value0}}. Haz clic para reintentar.",
         "required": "La sesión de Azure DevOps caducó. Haz clic para iniciar sesión.",
         "toastFailed": "Error al iniciar sesión en Azure DevOps: {{value0}}",
@@ -16241,6 +16246,29 @@
         "audio": "audio",
         "volume": "volumen"
       }
+    }
+  },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "title": "Se necesita iniciar sesión en Azure",
+      "host": "Equipo: {{host}}",
+      "open": "1. Abre {{url}}",
+      "enter": "2. Escribe el código {{code}}",
+      "expires": "El código es válido hasta las {{time}}.",
+      "renewed": "Sesión de Azure renovada",
+      "expired": "El código de inicio de sesión de Azure caducó",
+      "expiredDetail": "Nadie escribió el código a tiempo. Toca Nuevo código para reintentar.",
+      "failed": "Error al iniciar sesión en Azure",
+      "failedDetail": "Toca Nuevo código para reintentar.",
+      "cancelled": "Inicio de sesión de Azure cancelado",
+      "newCode": "Nuevo código",
+      "newCodeAck": "Solicitando un nuevo código…",
+      "noLongerNeeded": "Ya no hace falta.",
+      "newCodeFailed": "No se pudo obtener un código nuevo."
+    },
+    "push": {
+      "title": "Inicio de sesión en Azure",
+      "body": "Abre {{url}} y escribe {{code}}"
     }
   }
 }

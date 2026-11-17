@@ -21,8 +21,10 @@ vi.mock('./azure-cli-runner', async () => {
 vi.mock('./azure-cli-session-store', () => ({ recordAzureCliTokenExpiry: sessionMocks.record }))
 vi.mock('./azure-cli-sign-in-notice', () => ({
   isAzureCliSignInNoticeEnabled: sessionMocks.enabled,
-  noticeAzureCliSessionLapsed: sessionMocks.lapsed,
   noticeAzureCliSessionWorking: sessionMocks.working
+}))
+vi.mock('./azure-cli-interactive-sign-in', () => ({
+  handleAzureCliSessionLapsed: sessionMocks.lapsed
 }))
 
 const inSeconds = (seconds: number): number => Math.floor(Date.now() / 1000) + seconds

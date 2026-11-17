@@ -9,8 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { AzureDevOpsDeviceCodeDetails } from './AzureDevOpsDeviceCodeDetails'
 import { AzureDevOpsLogo } from './AzureDevOpsLogo'
 import { resolveAzureDevOpsSignInNoticePosition } from './azure-devops-sign-in-notice-position'
 import { useAzureCliSignInState } from './use-azure-cli-sign-in-notice'
@@ -18,6 +20,18 @@ import { useAzureCliSignInState } from './use-azure-cli-sign-in-notice'
 function noticeLabel(state: AzureCliSignInState): string {
   switch (state.kind) {
     case 'signing-in':
+      if (state.deviceCode) {
+        return translate(
+          'auto.components.azureDevOpsSignInNotice.deviceCodeReady',
+          'Azure DevOps sign-in code ready. Click to see it.'
+        )
+      }
+      if (state.mode === 'device-code') {
+        return translate(
+          'auto.components.azureDevOpsSignInNotice.signingInDeviceCode',
+          'Waiting for the Azure DevOps sign-in code to be entered…'
+        )
+      }
       return state.mode === 'in-app'
         ? translate(
             'auto.components.azureDevOpsSignInNotice.signingInApp',
@@ -102,9 +116,12 @@ function SignInNoticeButton({
 }): React.JSX.Element {
   const position = useNoticePosition(floatingToggleShown)
   const [menuOpen, setMenuOpen] = useState(false)
+  // Why the code, not a boolean: a later attempt's code must not inherit an open popover.
+  const [openedCode, setOpenedCode] = useState<string | null>(null)
   const [menuPoint, setMenuPoint] = useState({ x: 0, y: 0 })
   const reopenFrameRef = useRef<number | null>(null)
   const signingIn = state.kind === 'signing-in'
+  const deviceCode = state.kind === 'signing-in' ? state.deviceCode : undefined
   const label = noticeLabel(state)
 
   useEffect(
@@ -138,46 +155,58 @@ function SignInNoticeButton({
           })
         }}
       >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="launcher"
-              size="icon"
-              className="relative aria-disabled:cursor-progress"
-              aria-label={label}
-              // Why aria-disabled, not disabled: a disabled button swallows the right-click that offers Cancel.
-              aria-disabled={signingIn}
-              aria-busy={signingIn}
-              onClick={() => {
-                if (!signingIn) {
-                  startSignIn('in-app')
-                }
-              }}
-            >
-              {signingIn ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <AzureDevOpsLogo className="size-4" />
-              )}
-              {state.kind === 'required' ? (
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute right-1 top-1 size-2 rounded-full bg-status-warning ring-2 ring-card dark:ring-accent"
-                />
-              ) : null}
-              {state.kind === 'failed' ? (
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute right-1 top-1 size-2 rounded-full bg-destructive ring-2 ring-card dark:ring-accent"
-                />
-              ) : null}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left" sideOffset={6}>
-            {label}
-          </TooltipContent>
-        </Tooltip>
+        <Popover
+          open={Boolean(deviceCode) && openedCode === deviceCode?.userCode}
+          onOpenChange={(open) => setOpenedCode(open ? (deviceCode?.userCode ?? null) : null)}
+        >
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="launcher"
+                  size="icon"
+                  className="relative aria-disabled:cursor-progress"
+                  aria-label={label}
+                  // Why aria-disabled, not disabled: a disabled button swallows the right-click that offers Cancel.
+                  aria-disabled={signingIn && !deviceCode}
+                  aria-busy={signingIn}
+                  onClick={() => {
+                    if (!signingIn) {
+                      startSignIn('in-app')
+                    }
+                  }}
+                >
+                  {signingIn ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <AzureDevOpsLogo className="size-4" />
+                  )}
+                  {state.kind === 'required' ? (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute right-1 top-1 size-2 rounded-full bg-status-warning ring-2 ring-card dark:ring-accent"
+                    />
+                  ) : null}
+                  {state.kind === 'failed' ? (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute right-1 top-1 size-2 rounded-full bg-destructive ring-2 ring-card dark:ring-accent"
+                    />
+                  ) : null}
+                </Button>
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent side="left" sideOffset={6}>
+              {label}
+            </TooltipContent>
+          </Tooltip>
+          {deviceCode ? (
+            <PopoverContent side="left" align="start" className="w-72">
+              <AzureDevOpsDeviceCodeDetails deviceCode={deviceCode} />
+            </PopoverContent>
+          ) : null}
+        </Popover>
       </span>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
         <DropdownMenuTrigger asChild>

@@ -1,8 +1,29 @@
 import type { BrowserWindow } from 'electron'
 import type { AzureCliSignInMode, AzureCliSignInResult } from '../../shared/azure-devops-auth'
 import { runProcess, type ProcessResult } from '../../shared/child-process/run-process'
-import { resolveAzureCliProgram, runAzureCliJson } from './azure-cli-runner'
-import { notifyAzureCliSessionRenewed, setAzureCliSignInState } from './azure-cli-sign-in-notice'
+import { hasAzureCliDeviceCodeChannel } from './azure-cli-device-code-events'
+import {
+  DEVICE_CODE_LOGIN_TIMEOUT_MS,
+  isAzureCliSignInLapse,
+  isDeviceCodeExpiry,
+  redactDeviceCode,
+  reportAzureCliDeviceCodeOutcome,
+  watchAzureCliDeviceCodePrompt,
+  type DeviceCodeWatch
+} from './azure-cli-device-code-sign-in'
+import {
+  readCurrentAzureCliAccount,
+  readKnownAzureCliUsers,
+  rejectDifferentAzureCliUser,
+  restoreDefaultAzureCliSubscription
+} from './azure-cli-account-continuity'
+import { resolveAzureCliProgram } from './azure-cli-runner'
+import {
+  claimAzureCliAutomaticSignIn,
+  noticeAzureCliSessionLapsed,
+  notifyAzureCliSessionRenewed,
+  setAzureCliSignInState
+} from './azure-cli-sign-in-notice'
 import {
   parseMicrosoftSignInUrl,
   prepareSignInUrlCapture,
@@ -26,18 +47,21 @@ type Attempt = {
   cancelled: boolean
   captureFailure: string | null
   window: AzureDevOpsSignInWindow | null
+  deviceCode: DeviceCodeWatch | null
+  deviceCodeExpired: boolean
 }
 
 let inFlight: Promise<AzureCliSignInResult> | null = null
 let activeAttempt: Attempt | null = null
 
-async function readTenantId(): Promise<string | null> {
-  try {
-    const raw = await runAzureCliJson(['account', 'show'])
-    const tenant = raw && typeof raw === 'object' && 'tenantId' in raw ? raw.tenantId : null
-    return typeof tenant === 'string' && tenant ? tenant : null
-  } catch {
-    return null
+function newAttempt(): Attempt {
+  return {
+    controller: new AbortController(),
+    cancelled: false,
+    captureFailure: null,
+    window: null,
+    deviceCode: null,
+    deviceCodeExpired: false
   }
 }
 
@@ -86,12 +110,20 @@ async function openCapturedSignIn(
   })
 }
 
-function describeExitFailure(result: ProcessResult): string {
+function describeExitFailure(result: ProcessResult, attempt: Attempt): string {
+  if (attempt.deviceCodeExpired) {
+    return 'The Azure sign-in code expired before it was used.'
+  }
   if (result.timedOut) {
     return 'Azure sign-in timed out.'
   }
-  const lastLine = result.stderr.trim().split(/\r?\n/).at(-1)?.trim()
-  return (lastLine || `az login exited with code ${result.code}`).slice(0, MAX_ERROR_LENGTH)
+  const lines = result.stderr
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+  // Why: az ends an error with recommendation lines whose last one is a bare `az login`.
+  const reason = lines.findLast((line) => line.startsWith('ERROR:')) ?? lines.at(-1)
+  return (reason || `az login exited with code ${result.code}`).slice(0, MAX_ERROR_LENGTH)
 }
 
 function finish(result: AzureCliSignInResult, attempt: Attempt): AzureCliSignInResult {
@@ -120,27 +152,50 @@ async function runSignIn(
     }
     // Why tenant: keeps the renewed session on the directory the user originally chose.
     // A managed account starts from an empty config dir, so it has none to keep.
-    const tenant = configDir ? null : await readTenantId()
+    const account = configDir ? null : await readCurrentAzureCliAccount()
     if (attempt.cancelled) {
       return { ok: false, error: SIGN_IN_CANCELLED }
     }
     capture = mode === 'in-app' ? await prepareSignInUrlCapture(process.execPath) : null
+    const deviceCode = mode === 'device-code'
+    // Why device-code only: a browser sign-in is chosen at the desk and may switch accounts.
+    const identity =
+      deviceCode && account?.user
+        ? { user: account.user, knownUsers: await readKnownAzureCliUsers() }
+        : null
+    if (deviceCode) {
+      attempt.deviceCode = watchAzureCliDeviceCodePrompt({
+        // Why also on the desktop: a phone push can be delayed or suppressed.
+        onPrompt: ({ verificationUrl, userCode, expiresAtMs }) =>
+          setAzureCliSignInState({
+            kind: 'signing-in',
+            mode,
+            deviceCode: { verificationUrl, userCode, expiresAtMs }
+          }),
+        onMissing: () => {
+          attempt.captureFailure = 'Azure CLI did not show a sign-in code in time.'
+          attempt.controller.abort()
+        }
+      })
+    }
     const exit = runProcess({
       program: cli.program,
       args: [
         ...cli.prefixArgs,
         'login',
-        ...(tenant ? ['--tenant', tenant] : []),
+        ...(account?.tenantId ? ['--tenant', account.tenantId] : []),
+        ...(deviceCode ? ['--use-device-code'] : []),
         // Why: Azure DevOps-only users often have no Azure subscription, which fails a plain login.
         ...(configDir ? ['--allow-no-subscriptions'] : []),
         '--output',
         'none'
       ],
       env: { ...cli.env, ...capture?.env, ...(configDir ? { AZURE_CONFIG_DIR: configDir } : {}) },
-      timeoutMs: LOGIN_TIMEOUT_MS,
+      timeoutMs: deviceCode ? DEVICE_CODE_LOGIN_TIMEOUT_MS : LOGIN_TIMEOUT_MS,
       signal: attempt.controller.signal,
       // Why: az keeps its loopback listener alive until killed, so cancel must end the tree.
-      terminationBarrier: true
+      terminationBarrier: true,
+      onStderr: attempt.deviceCode?.onStderr
     })
     if (capture) {
       await openCapturedSignIn(attempt, capture, exit, parent)
@@ -152,18 +207,39 @@ async function runSignIn(
     if (attempt.captureFailure) {
       return { ok: false, error: attempt.captureFailure }
     }
-    return result.code === 0 && !result.timedOut
-      ? { ok: true }
-      : { ok: false, error: describeExitFailure(result) }
+    if (result.code !== 0 || result.timedOut) {
+      attempt.deviceCodeExpired = deviceCode && isDeviceCodeExpiry(result.stderr, result.timedOut)
+      return { ok: false, error: describeExitFailure(result, attempt) }
+    }
+    const identityError = identity
+      ? await rejectDifferentAzureCliUser(identity.user, identity.knownUsers)
+      : null
+    if (identityError) {
+      return { ok: false, error: identityError }
+    }
+    if (account?.subscriptionId) {
+      await restoreDefaultAzureCliSubscription(account.subscriptionId)
+    }
+    return { ok: true }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
   } finally {
+    attempt.deviceCode?.dispose()
     attempt.window?.close()
     await capture?.dispose().catch(() => undefined)
   }
 }
 
-/** Runs `az login` after the user asked for it. Single-flight: a second call joins the first. */
+// Why one place: the desktop notice, the IPC caller and the phone relays all show this error.
+function redactAttemptResult(result: AzureCliSignInResult, attempt: Attempt): AzureCliSignInResult {
+  if (result.ok || !attempt.deviceCode) {
+    return result
+  }
+  const userCode = attempt.deviceCode.publishedPrompt()?.userCode ?? null
+  return { ok: false, error: redactDeviceCode(result.error, userCode) }
+}
+
+/** Runs `az login` for the user's own session. Single-flight: a second call joins the first. */
 export function startAzureCliSignIn(
   mode: AzureCliSignInMode,
   options: { parent?: BrowserWindow | null } = {}
@@ -171,21 +247,51 @@ export function startAzureCliSignIn(
   if (inFlight) {
     return inFlight
   }
-  const attempt: Attempt = {
-    controller: new AbortController(),
-    cancelled: false,
-    captureFailure: null,
-    window: null
-  }
+  const attempt = newAttempt()
   activeAttempt = attempt
   setAzureCliSignInState({ kind: 'signing-in', mode })
   inFlight = runSignIn(mode, attempt, options.parent ?? null)
-    .then((result) => finish(result, attempt))
+    .then((raw) => {
+      const result = redactAttemptResult(raw, attempt)
+      finish(result, attempt)
+      if (attempt.deviceCode) {
+        reportAzureCliDeviceCodeOutcome(attempt.deviceCode, result, {
+          cancelled: attempt.cancelled,
+          expired: attempt.deviceCodeExpired
+        })
+      }
+      return result
+    })
     .finally(() => {
       inFlight = null
       activeAttempt = null
     })
   return inFlight
+}
+
+async function startAutomaticDeviceCodeSignIn(): Promise<void> {
+  // Why: after `az logout` there is no session to renew, only one the user chose to end.
+  if (!(await readCurrentAzureCliAccount())) {
+    return
+  }
+  console.info('[azure-devops] starting an automatic device-code sign-in')
+  await startAzureCliSignIn('device-code')
+}
+
+/**
+ * Raises the notice for a refused token and, once per lapse, starts a device-code sign-in
+ * when the refusal is a lapsed sign-in and a phone channel can deliver the code.
+ */
+export function handleAzureCliSessionLapsed(stderr: string): void {
+  noticeAzureCliSessionLapsed()
+  if (
+    !isAzureCliSignInLapse(stderr) ||
+    !hasAzureCliDeviceCodeChannel() ||
+    !claimAzureCliAutomaticSignIn()
+  ) {
+    return
+  }
+  void startAutomaticDeviceCodeSignIn()
 }
 
 let managedAttempt: Attempt | null = null
@@ -202,12 +308,11 @@ export async function runAzureCliManagedSignIn(
   if (managedAttempt) {
     return { ok: false, error: 'Another Azure DevOps account sign-in is already in progress.' }
   }
-  const attempt: Attempt = {
-    controller: new AbortController(),
-    cancelled: false,
-    captureFailure: null,
-    window: null
+  // Why: the relays present a code as renewing the user's own session, not adding an account.
+  if (mode === 'device-code') {
+    return { ok: false, error: 'Device-code sign-in is not available for added accounts.' }
   }
+  const attempt = newAttempt()
   managedAttempt = attempt
   try {
     return await runSignIn(mode, attempt, options.parent ?? null, configDir)

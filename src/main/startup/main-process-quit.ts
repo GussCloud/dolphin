@@ -28,6 +28,7 @@ import { stopTccPromptNotice } from '../macos-tcc-prompt-notice'
 import { cancelHistoryGc } from '../terminal-history-gc'
 import { shouldQuitWhenAllWindowsClosed } from './window-all-closed-quit-policy'
 import { mainProcessState as state } from './main-process-state'
+import { runTelegramQuitShutdown } from './telegram-quit-shutdown'
 import { stopWorkPresencePublishing } from './main-process-work-presence-startup'
 import { isDevParentShutdownRequested } from './configure-process'
 import { getCanonicalUserDataPath } from '../persistence'
@@ -260,6 +261,7 @@ function installWillQuitHandler(): void {
       { name: 'local-ssh-browser-routes', promise: localSshRouteShutdown },
       { name: 'ssh', promise: sshShutdown },
       { name: 'plugin-hosts', promise: pluginHostShutdown },
+      { name: 'telegram', promise: runTelegramQuitShutdown() },
       { name: 'agent-hooks', promise: agentHookShutdown },
       { name: 'work-presence', promise: stopWorkPresencePublishing() },
       { name: 'skill-uploads', promise: skillUploadShutdown },

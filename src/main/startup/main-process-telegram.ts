@@ -7,10 +7,14 @@ import { resolveWorkspaceDisplayName } from '../workspace-display-name'
 import { subscribeTelegramBridgeBroadcasts } from '../ipc/telegram-bridge'
 import { setTelegramBridge, TelegramBridgeService } from '../telegram/telegram-bridge-service'
 import { TelegramSettingsStore } from '../telegram/telegram-settings'
+import {
+  registerTelegramBridgeQuitFallback,
+  runTelegramQuitShutdown
+} from './telegram-quit-shutdown'
 
 const TELEGRAM_SETTINGS_FILE = 'telegram-bridge.json'
 
-/** Starts the bridge beside the plugin status tap; it stays idle until enabled with a token. */
+/** Starts the bridge beside the plugin status tap; it stays idle until enabled with a token. Disposed at quit via runTelegramQuitShutdown. */
 export function startMainProcessTelegramBridge(store: Store): TelegramBridgeService {
   const settings = new TelegramSettingsStore({
     filePath: join(app.getPath('userData'), TELEGRAM_SETTINGS_FILE),
@@ -24,6 +28,7 @@ export function startMainProcessTelegramBridge(store: Store): TelegramBridgeServ
   setTelegramBridge(bridge)
   subscribeTelegramBridgeBroadcasts()
   bridge.start()
-  app.once('will-quit', () => bridge.dispose())
+  registerTelegramBridgeQuitFallback(bridge)
+  app.once('will-quit', () => void runTelegramQuitShutdown())
   return bridge
 }

@@ -17849,6 +17849,11 @@
       "azureDevOpsSignInNotice": {
         "signingInApp": "Dolphin 창에서 Azure DevOps에 로그인하는 중…",
         "signingInBrowser": "브라우저에서 Azure DevOps에 로그인하는 중…",
+        "signingInDeviceCode": "Azure DevOps 로그인 코드 입력을 기다리는 중…",
+        "deviceCodeReady": "Azure DevOps 로그인 코드가 준비되었습니다. 클릭하여 확인하세요.",
+        "deviceCodeIntro": "아무 기기에서나 이 페이지를 열고 코드를 입력해 Azure DevOps 로그인을 갱신하세요.",
+        "deviceCodeLabel": "코드",
+        "deviceCodeValidUntil": "{{value0}}까지 유효",
         "failed": "Azure DevOps 로그인 실패: {{value0}}. 클릭해 다시 시도하세요.",
         "required": "Azure DevOps 로그인이 만료되었습니다. 클릭해 로그인하세요.",
         "toastFailed": "Azure DevOps 로그인 실패: {{value0}}",
@@ -19354,6 +19359,29 @@
         "audio": "오디오",
         "volume": "볼륨"
       }
+    }
+  },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "title": "Azure 로그인이 필요합니다",
+      "host": "컴퓨터: {{host}}",
+      "open": "1. {{url}} 열기",
+      "enter": "2. 코드 {{code}} 입력",
+      "expires": "코드는 {{time}}까지 유효합니다.",
+      "renewed": "Azure 세션이 갱신되었습니다",
+      "expired": "Azure 로그인 코드가 만료되었습니다",
+      "expiredDetail": "제한 시간 안에 코드가 입력되지 않았습니다. 다시 시도하려면 새 코드를 누르세요.",
+      "failed": "Azure 로그인에 실패했습니다",
+      "failedDetail": "다시 시도하려면 새 코드를 누르세요.",
+      "cancelled": "Azure 로그인이 취소되었습니다",
+      "newCode": "새 코드",
+      "newCodeAck": "새 코드를 요청하는 중…",
+      "noLongerNeeded": "더 이상 필요하지 않습니다.",
+      "newCodeFailed": "새 코드를 받지 못했습니다."
+    },
+    "push": {
+      "title": "Azure 로그인",
+      "body": "{{url}}을(를) 열고 {{code}} 입력"
     }
   }
 }

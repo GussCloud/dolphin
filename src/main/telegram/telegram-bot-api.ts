@@ -215,13 +215,20 @@ export class TelegramBotApi {
     return messageId
   }
 
-  async editMessageText(chatId: number, messageId: number, html: string): Promise<void> {
+  /** Omitting `buttons` clears the message's inline keyboard. */
+  async editMessageText(
+    chatId: number,
+    messageId: number,
+    html: string,
+    buttons?: TelegramInlineButton[][]
+  ): Promise<void> {
     await this.call('editMessageText', {
       chat_id: chatId,
       message_id: messageId,
       text: html,
       parse_mode: 'HTML',
-      link_preview_options: { is_disabled: true }
+      link_preview_options: { is_disabled: true },
+      reply_markup: toReplyMarkup(buttons)
     })
   }
 

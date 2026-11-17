@@ -41,29 +41,38 @@ export type AzureDevOpsAuthStatus = {
 
 export type AzureDevOpsAuthPreference = {
   method: AzureDevOpsAuthMethod
-  // Shows the sign-in notice when the CLI can no longer issue a token; the stored name
-  // predates the notice, when Dolphin ran `az login` on its own. Defaults on.
+  // Shows the sign-in notice, and allows the automatic device-code sign-in, when the CLI
+  // can no longer issue a token. Defaults on.
   autoRenewCliSession: boolean
 }
 
-// Desktop-only sign-in notice for a lapsed Azure CLI session. `az login` runs only
-// after the user clicks it, never in the background.
+// What the user types on another device; set once az printed it in 'device-code' mode.
+export type AzureCliDeviceCodeDisplay = {
+  verificationUrl: string
+  userCode: string
+  expiresAtMs: number
+}
+
+// Desktop sign-in notice for a lapsed Azure CLI session. `az login` runs after the user
+// clicks it, except for one automatic device-code attempt per lapse whose code is relayed to
+// the user's phone (see azure-cli-device-code-events.ts).
 export type AzureCliSignInState =
   | { kind: 'idle' }
   | { kind: 'required' }
-  | { kind: 'signing-in'; mode: AzureCliSignInMode }
+  | { kind: 'signing-in'; mode: AzureCliSignInMode; deviceCode?: AzureCliDeviceCodeDisplay }
   | { kind: 'failed'; error: string }
 
 // 'in-app' captures the sign-in URL into a Dolphin window; 'system-browser' lets `az`
-// open the default browser, for tenants that block embedded sign-in.
-export type AzureCliSignInMode = 'in-app' | 'system-browser'
+// open the default browser, for tenants that block embedded sign-in; 'device-code' opens
+// no browser and publishes a code for the user to enter on another device.
+export type AzureCliSignInMode = 'in-app' | 'system-browser' | 'device-code'
 
 export type AzureCliSignInResult = { ok: true } | { ok: false; error: string }
 
 export const AZURE_CLI_SIGN_IN_STATE_CHANNEL = 'azureDevOps:cliSignInStateChanged'
 
 export function isAzureCliSignInMode(value: unknown): value is AzureCliSignInMode {
-  return value === 'in-app' || value === 'system-browser'
+  return value === 'in-app' || value === 'system-browser' || value === 'device-code'
 }
 
 export type AzureDevOpsRepository = {

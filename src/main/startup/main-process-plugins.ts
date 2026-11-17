@@ -21,6 +21,8 @@ import { logStartupMilestone } from './startup-diagnostics'
 import { agentHookServer } from '../agent-hooks/server'
 import { emitPluginWorktreeLifecycle } from './main-process-pty-startup'
 import { startMainProcessTelegramBridge } from './main-process-telegram'
+import { startMainProcessAzureCliDeviceCodeRelay } from './main-process-azure-cli-device-code-relay'
+import { setTelegramQuitShutdown } from './telegram-quit-shutdown'
 import { startMainProcessAgentInteraction } from './main-process-agent-interaction'
 import { startMainProcessAutonomousGoals } from './main-process-autonomous-goals'
 import { startMainProcessClosedPaneAgentReaper } from './main-process-closed-pane-agent-reaper'
@@ -177,6 +179,9 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   startMainProcessClaudeConnectionLossRetry(store, runtime, telegramBridge, (event) =>
     agentInteraction.onRetryExhausted(event)
   )
+  const deviceCodeRelay = startMainProcessAzureCliDeviceCodeRelay(runtime, telegramBridge)
+  // Why ordered: the relay's last edit (removing a live code) needs the bridge's session.
+  setTelegramQuitShutdown(() => deviceCodeRelay.shutdown().finally(() => telegramBridge.dispose()))
   startMainProcessOrchestrationChannel(store)
   startMainProcessAutonomousGoals(store, runtime)
   startMainProcessClosedPaneAgentReaper()
