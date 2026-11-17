@@ -112,15 +112,28 @@ describe('AzureDevOpsSignInNotice', () => {
     expect(noticeButton(rendered)).toBeNull()
   })
 
-  it('appears when sign-in is required and signs in inside Dolphin on click', async () => {
-    const { api } = installApi({ kind: 'required' })
+  it('appears when sign-in is required and starts a device-code sign-in on click', async () => {
+    const { api, emit } = installApi({ kind: 'required' })
     const rendered = await render()
     const button = noticeButton(rendered)
     expect(button?.getAttribute('aria-label')).toBe(
       'Azure DevOps sign-in expired. Click to sign in.'
     )
     await act(async () => button?.click())
-    expect(api.startCliSignIn).toHaveBeenCalledWith('in-app')
+    expect(api.startCliSignIn).toHaveBeenCalledWith('device-code')
+    await act(async () => emit({ kind: 'signing-in', mode: 'device-code' }))
+    await act(async () =>
+      emit({
+        kind: 'signing-in',
+        mode: 'device-code',
+        deviceCode: {
+          verificationUrl: 'https://login.microsoft.com/device',
+          userCode: 'CLICKCODE1',
+          expiresAtMs: Date.now() + 60_000
+        }
+      })
+    )
+    expect(document.body.textContent).toContain('CLICKCODE1')
   })
 
   it('follows pushed state changes and ignores clicks while signing in', async () => {
@@ -134,13 +147,18 @@ describe('AzureDevOpsSignInNotice', () => {
     expect(api.startCliSignIn).not.toHaveBeenCalled()
   })
 
-  it('offers the system browser from the context menu', async () => {
+  it('offers the browser sign-ins from the context menu', async () => {
     const { api } = installApi({ kind: 'failed', error: 'AADSTS50058' })
     const rendered = await render()
     expect(noticeButton(rendered)?.getAttribute('aria-label')).toContain('AADSTS50058')
     const items = menuItems(rendered)
-    expect(items.map((item) => item.textContent)).toEqual(['Open in system browser'])
+    expect(items.map((item) => item.textContent)).toEqual([
+      'Sign in in a Dolphin window',
+      'Open in system browser'
+    ])
     await act(async () => items[0]?.click())
+    expect(api.startCliSignIn).toHaveBeenCalledWith('in-app')
+    await act(async () => items[1]?.click())
     expect(api.startCliSignIn).toHaveBeenCalledWith('system-browser')
   })
 

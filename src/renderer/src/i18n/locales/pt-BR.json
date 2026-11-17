@@ -18187,7 +18187,8 @@
         "toastFailed": "Falha ao entrar no Azure DevOps: {{value0}}",
         "toastHint": "Se a sua organização bloqueia o login dentro do Dolphin, clique com o botão direito no ícone do Azure DevOps e escolha Abrir no navegador do sistema.",
         "cancel": "Cancelar login",
-        "systemBrowser": "Abrir no navegador do sistema"
+        "systemBrowser": "Abrir no navegador do sistema",
+        "inAppWindow": "Entrar em uma janela do Dolphin"
       },
       "projectAccounts": {
         "commitAuthor": {

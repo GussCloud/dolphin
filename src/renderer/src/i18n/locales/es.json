@@ -15479,7 +15479,8 @@
         "toastFailed": "Error al iniciar sesión en Azure DevOps: {{value0}}",
         "toastHint": "Si tu organización bloquea el inicio de sesión dentro de Dolphin, haz clic derecho en el icono de Azure DevOps y elige Abrir en el navegador del sistema.",
         "cancel": "Cancelar inicio de sesión",
-        "systemBrowser": "Abrir en el navegador del sistema"
+        "systemBrowser": "Abrir en el navegador del sistema",
+        "inAppWindow": "Iniciar sesión en una ventana de Dolphin"
       }
     },
     "i18n": {

@@ -87,6 +87,8 @@ export function createMobileDeviceCodePort(
         type: 'notification',
         // Why: 'plugin' is a push source phones already accept, so no mobile release is needed.
         source: 'plugin',
+        // Why: the user may be at the desk with "only when away" set; the code is still needed.
+        ignoreDesktopAwayFilter: true,
         title,
         body,
         notificationId

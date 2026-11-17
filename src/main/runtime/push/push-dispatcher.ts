@@ -59,7 +59,9 @@ function allowsPushDelivery(
   return (
     event.type === 'notification' &&
     event.desktopAllowed !== false &&
-    (!registration.filter.onlyWhenDesktopAway || event.desktopAway !== false)
+    (!registration.filter.onlyWhenDesktopAway ||
+      event.ignoreDesktopAwayFilter === true ||
+      event.desktopAway !== false)
   )
 }
 

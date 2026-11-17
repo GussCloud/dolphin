@@ -227,6 +227,7 @@ describe('createMobileDeviceCodePort', () => {
     expect(host.dispatchMobileNotification).toHaveBeenCalledWith({
       type: 'notification',
       source: 'plugin',
+      ignoreDesktopAwayFilter: true,
       title: 'Azure sign-in',
       body: 'Open x and enter y',
       notificationId: 'n1'

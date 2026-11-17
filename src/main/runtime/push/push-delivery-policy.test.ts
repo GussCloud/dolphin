@@ -16,6 +16,17 @@ it('does not send or consume cooldown while the desktop is active', async () => 
   expect(sends).toHaveLength(1)
 })
 
+it('sends an event that ignores the desktop-away filter while the desktop is active', async () => {
+  const reg = registration()
+  reg.filter = { ...reg.filter, onlyWhenDesktopAway: true }
+  const { dispatcher, sends } = createHarness({
+    devices: [{ deviceId: 'phone', pushRegistration: reg }]
+  })
+  dispatcher.enqueue(notification({ desktopAway: false, ignoreDesktopAwayFilter: true }))
+  await flush()
+  expect(sends).toHaveLength(1)
+})
+
 it('expires per phone at the boundary, preserves leases across persistence, and permits renewal', async () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(50_000)

@@ -18,6 +18,9 @@ export type MobileNotificationDispatchEvent = {
   legacySocketAllowed?: boolean
   desktopAllowed?: boolean
   desktopAway?: boolean
+  // Why: an action only the phone can complete (an Azure sign-in code) must reach it even
+  // when the phone asked for alerts only while the desktop is away.
+  ignoreDesktopAwayFilter?: boolean
   emittedAt?: number
   source: 'agent-task-complete' | 'terminal-bell' | 'test' | 'plugin'
   title: string

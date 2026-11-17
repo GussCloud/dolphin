@@ -17958,7 +17958,8 @@
         "toastFailed": "Échec de la connexion à Azure DevOps : {{value0}}",
         "toastHint": "Si votre organisation bloque la connexion dans Dolphin, faites un clic droit sur l’icône Azure DevOps et choisissez Ouvrir dans le navigateur du système.",
         "cancel": "Annuler la connexion",
-        "systemBrowser": "Ouvrir dans le navigateur du système"
+        "systemBrowser": "Ouvrir dans le navigateur du système",
+        "inAppWindow": "Se connecter dans une fenêtre Dolphin"
       }
     },
     "i18n": {
