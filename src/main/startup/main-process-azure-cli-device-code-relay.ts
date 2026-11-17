@@ -2,8 +2,10 @@ import { hostname } from 'node:os'
 import type { AzureCliSignInState } from '../../shared/azure-devops-auth'
 import {
   cancelAzureCliSignIn,
+  startAutomaticDeviceCodeSignIn,
   startAzureCliSignIn
 } from '../azure-devops/azure-cli-interactive-sign-in'
+import { registerAzureCliAutomaticSignIn } from '../azure-devops/azure-cli-session-lapse'
 import {
   shutdownAzureCliDeviceCodeRelay,
   startAzureCliDeviceCodeRelay
@@ -92,9 +94,11 @@ export function startMainProcessAzureCliDeviceCodeRelay(
         minute: '2-digit'
       })
   })
+  const unregisterAutomaticSignIn = registerAzureCliAutomaticSignIn(startAutomaticDeviceCodeSignIn)
   let shutdown: Promise<void> | null = null
   return {
     shutdown: () => {
+      unregisterAutomaticSignIn()
       shutdown ??= shutdownAzureCliDeviceCodeRelay(
         relay,
         cancelAzureCliSignIn,

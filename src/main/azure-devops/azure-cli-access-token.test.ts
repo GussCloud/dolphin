@@ -23,7 +23,7 @@ vi.mock('./azure-cli-sign-in-notice', () => ({
   isAzureCliSignInNoticeEnabled: sessionMocks.enabled,
   noticeAzureCliSessionWorking: sessionMocks.working
 }))
-vi.mock('./azure-cli-interactive-sign-in', () => ({
+vi.mock('./azure-cli-session-lapse', () => ({
   handleAzureCliSessionLapsed: sessionMocks.lapsed
 }))
 

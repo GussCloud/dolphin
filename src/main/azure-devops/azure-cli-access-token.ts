@@ -1,6 +1,6 @@
 import { AZURE_DEVOPS_ENTRA_RESOURCE_ID } from '../../shared/azure-devops-auth'
 import { AzureCliCommandError, runAzureCliJson } from './azure-cli-runner'
-import { handleAzureCliSessionLapsed } from './azure-cli-interactive-sign-in'
+import { handleAzureCliSessionLapsed } from './azure-cli-session-lapse'
 import { recordAzureCliTokenExpiry } from './azure-cli-session-store'
 import {
   isAzureCliSignInNoticeEnabled,

@@ -1,10 +1,8 @@
 import type { BrowserWindow } from 'electron'
 import type { AzureCliSignInMode, AzureCliSignInResult } from '../../shared/azure-devops-auth'
 import { runProcess, type ProcessResult } from '../../shared/child-process/run-process'
-import { hasAzureCliDeviceCodeChannel } from './azure-cli-device-code-events'
 import {
   DEVICE_CODE_LOGIN_TIMEOUT_MS,
-  isAzureCliSignInLapse,
   isDeviceCodeExpiry,
   redactDeviceCode,
   reportAzureCliDeviceCodeOutcome,
@@ -18,12 +16,7 @@ import {
   restoreDefaultAzureCliSubscription
 } from './azure-cli-account-continuity'
 import { resolveAzureCliProgram } from './azure-cli-runner'
-import {
-  claimAzureCliAutomaticSignIn,
-  noticeAzureCliSessionLapsed,
-  notifyAzureCliSessionRenewed,
-  setAzureCliSignInState
-} from './azure-cli-sign-in-notice'
+import { notifyAzureCliSessionRenewed, setAzureCliSignInState } from './azure-cli-sign-in-notice'
 import {
   parseMicrosoftSignInUrl,
   prepareSignInUrlCapture,
@@ -269,29 +262,14 @@ export function startAzureCliSignIn(
   return inFlight
 }
 
-async function startAutomaticDeviceCodeSignIn(): Promise<void> {
+/** Registered with the lapse handler by main startup; skipped after `az logout`. */
+export async function startAutomaticDeviceCodeSignIn(): Promise<void> {
   // Why: after `az logout` there is no session to renew, only one the user chose to end.
   if (!(await readCurrentAzureCliAccount())) {
     return
   }
   console.info('[azure-devops] starting an automatic device-code sign-in')
   await startAzureCliSignIn('device-code')
-}
-
-/**
- * Raises the notice for a refused token and, once per lapse, starts a device-code sign-in
- * when the refusal is a lapsed sign-in and a phone channel can deliver the code.
- */
-export function handleAzureCliSessionLapsed(stderr: string): void {
-  noticeAzureCliSessionLapsed()
-  if (
-    !isAzureCliSignInLapse(stderr) ||
-    !hasAzureCliDeviceCodeChannel() ||
-    !claimAzureCliAutomaticSignIn()
-  ) {
-    return
-  }
-  void startAutomaticDeviceCodeSignIn()
 }
 
 let managedAttempt: Attempt | null = null

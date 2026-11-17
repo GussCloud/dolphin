@@ -9,8 +9,12 @@ export type CurrentAccount = {
   user: AccountUser | null
 }
 
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 function readField(value: unknown, key: string): unknown {
-  return value && typeof value === 'object' && key in value ? Reflect.get(value, key) : null
+  return isJsonObject(value) ? value[key] : null
 }
 
 function readStringField(value: unknown, key: string): string | null {

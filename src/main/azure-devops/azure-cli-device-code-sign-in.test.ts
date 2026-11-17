@@ -12,10 +12,14 @@ import { isAzureCliSignInLapse, redactDeviceCode } from './azure-cli-device-code
 import {
   _resetAzureCliInteractiveSignIn,
   cancelAzureCliSignIn,
-  handleAzureCliSessionLapsed,
   runAzureCliManagedSignIn,
+  startAutomaticDeviceCodeSignIn,
   startAzureCliSignIn
 } from './azure-cli-interactive-sign-in'
+import {
+  handleAzureCliSessionLapsed,
+  registerAzureCliAutomaticSignIn
+} from './azure-cli-session-lapse'
 import {
   _resetAzureCliSignInNotice,
   getAzureCliSignInState,
@@ -59,7 +63,11 @@ function result(partial: Partial<ProcessResult>): ProcessResult {
   return { code: 0, signal: null, stdout: '', stderr: '', timedOut: false, ...partial }
 }
 
+let unregisterAutomaticSignIn: () => void = () => undefined
+
 beforeEach(() => {
+  unregisterAutomaticSignIn()
+  unregisterAutomaticSignIn = registerAzureCliAutomaticSignIn(startAutomaticDeviceCodeSignIn)
   _resetAzureCliInteractiveSignIn()
   _resetAzureCliSignInNotice()
   _resetAzureCliDeviceCodeEvents()
@@ -363,6 +371,14 @@ describe('identity check', () => {
 })
 
 describe('handleAzureCliSessionLapsed', () => {
+  it('only raises the notice on a host that registered no automatic sign-in', async () => {
+    unregisterAutomaticSignIn()
+    registerAzureCliDeviceCodeChannel(() => true)
+    handleAzureCliSessionLapsed(LAPSE)
+    expect(getAzureCliSignInState()).toEqual({ kind: 'required' })
+    expect(mocks.runAzureCliJson).not.toHaveBeenCalled()
+  })
+
   it('starts one device-code sign-in per lapse when a phone channel is up', async () => {
     registerAzureCliDeviceCodeChannel(() => true)
     handleAzureCliSessionLapsed(LAPSE)
