@@ -5,8 +5,10 @@ const {
   setApplicationMenuMock,
   getFocusedWindowMock,
   getFocusedWebContentsMock,
-  sendActionToFirstResponderMock
+  sendActionToFirstResponderMock,
+  isAzureDevOpsSignInWindowMock
 } = vi.hoisted(() => ({
+  isAzureDevOpsSignInWindowMock: vi.fn((_window: unknown) => false),
   buildFromTemplateMock: vi.fn(),
   setApplicationMenuMock: vi.fn(),
   getFocusedWindowMock: vi.fn(),
@@ -29,6 +31,10 @@ vi.mock('electron', () => ({
   webContents: {
     getFocusedWebContents: getFocusedWebContentsMock
   }
+}))
+
+vi.mock('../azure-devops/azure-devops-sign-in-window', () => ({
+  isAzureDevOpsSignInWindow: isAzureDevOpsSignInWindowMock
 }))
 
 import { getNextDefaultOnAppearanceSettingValue, registerAppMenu } from './register-app-menu'
@@ -99,6 +105,8 @@ describe('registerAppMenu', () => {
     getFocusedWindowMock.mockReset()
     getFocusedWebContentsMock.mockReset()
     sendActionToFirstResponderMock.mockReset()
+    isAzureDevOpsSignInWindowMock.mockReset()
+    isAzureDevOpsSignInWindowMock.mockImplementation(() => false)
     buildFromTemplateMock.mockImplementation((template) => ({ template }))
   })
 
@@ -293,6 +301,28 @@ describe('registerAppMenu', () => {
       expect(redoItem?.registerAccelerator).toBe(expectedRegistration)
     }
   )
+
+  it('pastes, copies and selects natively in the Azure sign-in window', () => {
+    const send = vi.fn()
+    const signInContents = { send, paste: vi.fn(), copy: vi.fn(), selectAll: vi.fn() }
+    const signInWindow = { webContents: signInContents }
+    getFocusedWindowMock.mockReturnValue(signInWindow)
+    getFocusedWebContentsMock.mockReturnValue(signInContents)
+    isAzureDevOpsSignInWindowMock.mockImplementation((window) => window === signInWindow)
+    registerAppMenu(buildMenuOptions())
+
+    const editSubmenu = getSubmenu(getTemplate(), 'Edit')
+    for (const label of ['Paste', 'Copy', 'Select All']) {
+      editSubmenu
+        .find((item) => item.label === label)
+        ?.click?.({} as never, {} as never, {} as never)
+    }
+
+    expect(signInContents.paste).toHaveBeenCalledOnce()
+    expect(signInContents.copy).toHaveBeenCalledOnce()
+    expect(signInContents.selectAll).toHaveBeenCalledOnce()
+    expect(send).not.toHaveBeenCalled()
+  })
 
   it('keeps selection actions native in a focused guest webview', () => {
     const send = vi.fn()

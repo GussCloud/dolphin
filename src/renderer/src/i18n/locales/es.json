@@ -112,6 +112,7 @@
     "window": "Ventana",
     "help": "Ayuda",
     "paste": "Pegar",
+    "cut": "Cortar",
     "copy": "Copiar",
     "selectAll": "Seleccionar todo",
     "showAzurePrsButton": "Mostrar botón Azure (PRs)"
@@ -15473,6 +15474,9 @@
         "deviceCodeReady": "Código de inicio de sesión de Azure DevOps listo. Haz clic para verlo.",
         "deviceCodeIntro": "Abre esta página en cualquier dispositivo e introduce el código para renovar tu sesión de Azure DevOps.",
         "deviceCodeLabel": "Código",
+        "deviceCodeCopyAndOpen": "Copiar código y abrir",
+        "deviceCodeCopied": "Código copiado. Pégalo en la página de inicio de sesión.",
+        "deviceCodeCopyFailed": "No se pudo copiar el código. Escríbelo en la página de inicio de sesión.",
         "deviceCodeValidUntil": "Válido hasta las {{value0}}",
         "failed": "Error al iniciar sesión en Azure DevOps: {{value0}}. Haz clic para reintentar.",
         "required": "La sesión de Azure DevOps caducó. Haz clic para iniciar sesión.",

@@ -4,6 +4,7 @@ import type { ProcessResult, ProcessSpec } from '../../shared/child-process/run-
 import {
   _resetAzureCliInteractiveSignIn,
   cancelAzureCliSignIn,
+  runAzureCliManagedSignIn,
   startAzureCliSignIn
 } from './azure-cli-interactive-sign-in'
 import {
@@ -102,6 +103,40 @@ describe('startAzureCliSignIn in-app', () => {
     expect(renewed).toHaveBeenCalledOnce()
     expect(mocks.closeWindow).toHaveBeenCalledOnce()
     expect(mocks.dispose).toHaveBeenCalledOnce()
+  })
+
+  it('prefills the previous user account on the captured page', async () => {
+    mocks.runAzureCliJson.mockResolvedValue({
+      tenantId: 'tenant-1',
+      user: { name: 'ana@contoso.com', type: 'user' }
+    })
+    const pending = startAzureCliSignIn('in-app')
+    await vi.waitFor(() => expect(mocks.openWindow).toHaveBeenCalledOnce())
+    const opened = new URL(mocks.openWindow.mock.calls[0]?.[0].url)
+    expect(opened.searchParams.get('login_hint')).toBe('ana@contoso.com')
+    expect(mocks.openWindow.mock.calls[0]?.[0]).toMatchObject({ redirectPort: 50123 })
+    ;(await untilAzStarted()).exit({ code: 0 })
+    await pending
+  })
+
+  it('gives no hint for a service principal or an added account', async () => {
+    mocks.runAzureCliJson.mockResolvedValue({
+      tenantId: 'tenant-1',
+      user: { name: 'app-id', type: 'servicePrincipal' }
+    })
+    const pending = startAzureCliSignIn('in-app')
+    await vi.waitFor(() => expect(mocks.openWindow).toHaveBeenCalledOnce())
+    expect(mocks.openWindow.mock.calls[0]?.[0].url).toBe(SIGN_IN_URL)
+    ;(await untilAzStarted()).exit({ code: 0 })
+    await pending
+
+    az = null
+    mocks.runAzureCliJson.mockResolvedValue({ user: { name: 'ana@contoso.com', type: 'user' } })
+    const managed = runAzureCliManagedSignIn('in-app', '/tmp/managed')
+    await vi.waitFor(() => expect(mocks.openWindow).toHaveBeenCalledTimes(2))
+    expect(mocks.openWindow.mock.calls[1]?.[0].url).toBe(SIGN_IN_URL)
+    ;(await untilAzStarted()).exit({ code: 0 })
+    await managed
   })
 
   it('treats a window closed by the user as a cancel and kills az', async () => {

@@ -8,6 +8,8 @@ import {
   type AzureCliDeviceCodeOutcome
 } from './azure-cli-device-code-events'
 import {
+  AZURE_CLI_DEVICE_CODE_NOTIFICATION_PREFIX,
+  azureCliDeviceCodeNotificationId,
   type AzureCliNewCodeRequest,
   shutdownAzureCliDeviceCodeRelay,
   startAzureCliDeviceCodeRelay,
@@ -107,13 +109,28 @@ async function expireWithButton(harness: ReturnType<typeof makeRelay>) {
 
 afterEach(() => _resetAzureCliDeviceCodeEvents())
 
+describe('azureCliDeviceCodeNotificationId', () => {
+  it('carries the code after the attempt so the phone can read it', () => {
+    const id = azureCliDeviceCodeNotificationId('5c9e9a1e-0000-4000-8000-000000000000', 'FU3HPB3RT')
+    expect(id).toBe(
+      `${AZURE_CLI_DEVICE_CODE_NOTIFICATION_PREFIX}5c9e9a1e-0000-4000-8000-000000000000:FU3HPB3RT`
+    )
+    expect(id.slice(AZURE_CLI_DEVICE_CODE_NOTIFICATION_PREFIX.length).split(':')).toEqual([
+      '5c9e9a1e-0000-4000-8000-000000000000',
+      'FU3HPB3RT'
+    ])
+    // Why: the push gateway rejects ids outside printable ASCII or over 2048 chars.
+    expect(id).toMatch(/^[\x20-\x7e]{1,2048}$/)
+  })
+})
+
 describe('startAzureCliDeviceCodeRelay', () => {
   it('sends the code to Telegram and pushes it to the phone', () => {
     const { telegram, mobile } = makeRelay()
     emitAzureCliDeviceCodePrompt(PROMPT)
     expect(telegram.send).toHaveBeenCalledWith(expect.stringContaining('<code>FU3HPB3RT</code>'))
     expect(mobile.notify).toHaveBeenCalledWith({
-      notificationId: 'azure-cli-device-code:a1',
+      notificationId: 'azure-cli-device-code:a1:FU3HPB3RT',
       title: 'Azure sign-in',
       body: 'Open https://login.microsoft.com/device and enter FU3HPB3RT'
     })
@@ -143,7 +160,7 @@ describe('startAzureCliDeviceCodeRelay', () => {
     emitAzureCliDeviceCodePrompt(PROMPT)
     emitAzureCliDeviceCodeOutcome(outcome('renewed'))
     await flush()
-    expect(mobile.dismiss).toHaveBeenCalledWith('azure-cli-device-code:a1')
+    expect(mobile.dismiss).toHaveBeenCalledWith('azure-cli-device-code:a1:FU3HPB3RT')
     expect(telegram.offerButton).not.toHaveBeenCalled()
     const [messages, html] = telegram.edit.mock.calls[0]
     expect(messages).toEqual(SENT)

@@ -1,7 +1,29 @@
-import { ExternalLink } from 'lucide-react'
+import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 import type { AzureCliDeviceCodeDisplay } from '../../../../shared/azure-devops-auth'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
+
+async function copyCodeAndOpen(deviceCode: AzureCliDeviceCodeDisplay): Promise<void> {
+  try {
+    await window.api.ui.writeClipboardText(deviceCode.userCode)
+    toast.success(
+      translate(
+        'auto.components.azureDevOpsSignInNotice.deviceCodeCopied',
+        'Code copied. Paste it on the sign-in page.'
+      )
+    )
+  } catch {
+    toast.error(
+      translate(
+        'auto.components.azureDevOpsSignInNotice.deviceCodeCopyFailed',
+        'Could not copy the code. Type it on the sign-in page.'
+      )
+    )
+  }
+  // Why open even after a failed copy: the code stays on screen to be typed.
+  await window.api?.shell?.openUrl(deviceCode.verificationUrl)
+}
 
 /** The device-code sign-in as az printed it, so the desktop works even when no push arrived. */
 export function AzureDevOpsDeviceCodeDetails({
@@ -21,21 +43,22 @@ export function AzureDevOpsDeviceCodeDetails({
           'Open this page on any device and enter the code to renew your Azure DevOps sign-in.'
         )}
       </p>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => void window.api?.shell?.openUrl(deviceCode.verificationUrl)}
-      >
-        <ExternalLink className="size-3.5" />
-        {deviceCode.verificationUrl}
-      </Button>
       <code
         className="select-all text-center font-mono text-lg tracking-widest"
         aria-label={translate('auto.components.azureDevOpsSignInNotice.deviceCodeLabel', 'Code')}
       >
         {deviceCode.userCode}
       </code>
+      <Button type="button" size="sm" onClick={() => void copyCodeAndOpen(deviceCode)}>
+        <Copy className="size-3.5" />
+        {translate(
+          'auto.components.azureDevOpsSignInNotice.deviceCodeCopyAndOpen',
+          'Copy code and open'
+        )}
+      </Button>
+      <p className="select-all break-all text-center text-xs text-muted-foreground">
+        {deviceCode.verificationUrl}
+      </p>
       <p className="text-xs text-muted-foreground">
         {translate(
           'auto.components.azureDevOpsSignInNotice.deviceCodeValidUntil',

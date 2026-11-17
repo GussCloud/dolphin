@@ -283,6 +283,7 @@
     "window": "Janela",
     "help": "Ajuda",
     "paste": "Colar",
+    "cut": "Recortar",
     "copy": "Copiar",
     "selectAll": "Selecionar tudo",
     "showAzurePrsButton": "Mostrar botão Azure (PRs)"
@@ -18181,6 +18182,9 @@
         "deviceCodeReady": "Código de acesso do Azure DevOps pronto. Clique para vê-lo.",
         "deviceCodeIntro": "Abra esta página em qualquer dispositivo e digite o código para renovar seu acesso ao Azure DevOps.",
         "deviceCodeLabel": "Código",
+        "deviceCodeCopyAndOpen": "Copiar código e abrir",
+        "deviceCodeCopied": "Código copiado. Cole-o na página de entrada.",
+        "deviceCodeCopyFailed": "Não foi possível copiar o código. Digite-o na página de entrada.",
         "deviceCodeValidUntil": "Válido até {{value0}}",
         "failed": "Falha ao entrar no Azure DevOps: {{value0}}. Clique para tentar de novo.",
         "required": "O login do Azure DevOps expirou. Clique para entrar.",

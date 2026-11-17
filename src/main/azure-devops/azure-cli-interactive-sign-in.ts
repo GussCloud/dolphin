@@ -22,6 +22,7 @@ import {
   prepareSignInUrlCapture,
   readLoopbackRedirectPort,
   SYSTEM_BROWSER_HINT,
+  withLoginHint,
   type SignInUrlCapture
 } from './azure-cli-sign-in-url-capture'
 import {
@@ -72,7 +73,8 @@ async function openCapturedSignIn(
   attempt: Attempt,
   capture: SignInUrlCapture,
   exit: Promise<ProcessResult>,
-  parent: BrowserWindow | null
+  parent: BrowserWindow | null,
+  loginHint: string | null
 ): Promise<void> {
   const stopPolling = new AbortController()
   let exited = false
@@ -96,7 +98,7 @@ async function openCapturedSignIn(
     return
   }
   attempt.window = openAzureDevOpsSignInWindow({
-    url: url.href,
+    url: withLoginHint(url, loginHint).href,
     redirectPort: readLoopbackRedirectPort(url),
     parent,
     onClosedByUser: () => cancelAttempt(attempt)
@@ -191,7 +193,9 @@ async function runSignIn(
       onStderr: attempt.deviceCode?.onStderr
     })
     if (capture) {
-      await openCapturedSignIn(attempt, capture, exit, parent)
+      // Why user only: a service principal or managed identity has no account to pick.
+      const loginHint = account?.user?.type === 'user' ? account.user.name : null
+      await openCapturedSignIn(attempt, capture, exit, parent, loginHint)
     }
     const result = await exit
     if (attempt.cancelled) {

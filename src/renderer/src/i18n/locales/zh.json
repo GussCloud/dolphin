@@ -162,6 +162,7 @@
     "window": "窗口",
     "help": "帮助",
     "paste": "粘贴",
+    "cut": "剪切",
     "copy": "复制",
     "selectAll": "全选",
     "showAzurePrsButton": "显示 Azure (PRs) 按钮"
@@ -17853,6 +17854,9 @@
         "deviceCodeReady": "Azure DevOps 登录代码已就绪。点击查看。",
         "deviceCodeIntro": "在任意设备上打开此页面并输入代码，以续订 Azure DevOps 登录。",
         "deviceCodeLabel": "代码",
+        "deviceCodeCopyAndOpen": "复制代码并打开",
+        "deviceCodeCopied": "代码已复制。请将其粘贴到登录页面。",
+        "deviceCodeCopyFailed": "无法复制代码。请在登录页面中手动输入。",
         "deviceCodeValidUntil": "有效期至 {{value0}}",
         "failed": "Azure DevOps 登录失败：{{value0}}。点击重试。",
         "required": "Azure DevOps 登录已过期。点击登录。",

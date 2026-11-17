@@ -76,8 +76,15 @@ type OfferedButton = {
   release: () => void
 }
 
-export function azureCliDeviceCodeNotificationId(attemptId: string): string {
-  return `azure-cli-device-code:${attemptId}`
+/**
+ * Published contract: the phone parses the code out of this id, so the format must stay
+ * `azure-cli-device-code:<attemptId>:<userCode>` (see docs/reference/remote-wire-compatibility.md).
+ * Both parts are printable ASCII (UUID, `[A-Z0-9]`), as the push gateway requires.
+ */
+export const AZURE_CLI_DEVICE_CODE_NOTIFICATION_PREFIX = 'azure-cli-device-code:'
+
+export function azureCliDeviceCodeNotificationId(attemptId: string, userCode: string): string {
+  return `${AZURE_CLI_DEVICE_CODE_NOTIFICATION_PREFIX}${attemptId}:${userCode}`
 }
 
 export function startAzureCliDeviceCodeRelay(
@@ -136,7 +143,7 @@ export function startAzureCliDeviceCodeRelay(
       : Promise.resolve([])
     let notificationId: string | null = null
     if (mobile?.canDeliver()) {
-      notificationId = azureCliDeviceCodeNotificationId(prompt.attemptId)
+      notificationId = azureCliDeviceCodeNotificationId(prompt.attemptId, prompt.userCode)
       mobile.notify({ notificationId, ...azureCliDeviceCodePush(prompt) })
     }
     attempts.set(prompt.attemptId, { telegram: sent, notificationId })

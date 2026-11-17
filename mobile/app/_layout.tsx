@@ -1,7 +1,6 @@
 import { startAndroidForegroundPushPresentation } from '../src/notifications/android-foreground-push'
 import { registerPushDismissalTask } from '../src/notifications/push-background-dismissal'
 import { startBackgroundRelayService } from '../src/platform/background-relay-service'
-import { readNativeNotificationData } from '../src/notifications/native-notification-data'
 import { setNotificationViewingWorkspace } from '../src/notifications/notification-viewing-policy'
 import { useCallback, useEffect, useRef } from 'react'
 import { AppState, View, StyleSheet } from 'react-native'
@@ -10,22 +9,20 @@ import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import * as Notifications from 'expo-notifications'
 import * as Linking from 'expo-linking'
+import * as Clipboard from 'expo-clipboard'
 import { colors } from '../src/theme/mobile-theme'
 import { DolphinLogo } from '../src/components/DolphinLogo'
 import { MobileRootErrorBoundary } from '../src/components/MobileRootErrorBoundary'
 import { PreviousCrashSessionLaunchNotice } from '../src/components/PreviousCrashSessionLaunchNotice'
 import { RpcClientProvider } from '../src/transport/client-context'
 import { MobileLocaleProvider } from '../src/i18n/mobile-locale-provider'
-import { getNotificationNavigationTarget } from '../src/notifications/notification-routing'
 import { useOpenNotificationRoute } from '../src/notifications/use-open-notification-route'
-import {
-  isRemotePushTrigger,
-  pushNotificationRouteData,
-  foregroundNotificationBehavior
-} from '../src/notifications/push-receive'
+import { foregroundNotificationBehavior } from '../src/notifications/push-receive'
 import { startPushTokenSync } from '../src/notifications/push-registration'
 import { ensureDesktopNotificationChannel } from '../src/notifications/desktop-notification-channel'
 import { loadHostCatalog } from '../src/transport/host-store'
+import { handleNotificationTap } from '../src/notifications/notification-tap'
+import { openExternalLink } from '../src/platform/external-link'
 import { extractPairingCodeFromUrl } from '../src/transport/pairing'
 import { recoverMobileRelayPairing } from '../src/transport/mobile-relay-pairing-recovery'
 import {
@@ -147,25 +144,6 @@ function RootLayoutContents() {
       }
     }
 
-    async function getNavigationTarget(notification: Notifications.Notification) {
-      const hosts = await loadHostCatalog().catch(() => null)
-      const data = readNativeNotificationData(notification.request)
-      // A gateway push names its host by key fingerprint, not by this device's hostId.
-      // With no catalog to resolve against, such a push stays unrouted instead of
-      // falling back to whatever hostId its raw data carries.
-      const routeData = pushNotificationRouteData(
-        data,
-        hosts ?? [],
-        isRemotePushTrigger(notification.request.trigger)
-      )
-      return getNotificationNavigationTarget(routeData, {
-        knownHostIds: hosts ? new Set(hosts.map((host) => host.id)) : undefined,
-        credentialStatusByHostId: hosts
-          ? new Map(hosts.map((host) => [host.id, host.credentialStatus]))
-          : undefined
-      })
-    }
-
     async function handleNotificationResponse(response: Notifications.NotificationResponse) {
       if (response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) {
         clearLastNotificationResponse()
@@ -186,14 +164,14 @@ function RootLayoutContents() {
         }
       }
 
-      const target = await getNavigationTarget(response.notification)
-      clearLastNotificationResponse()
-      if (disposed) {
-        return
-      }
-      if (target) {
-        openNotificationRoute(target)
-      }
+      await handleNotificationTap(response.notification.request, {
+        loadHosts: loadHostCatalog,
+        isDisposed: () => disposed,
+        clearLastResponse: clearLastNotificationResponse,
+        openRoute: openNotificationRoute,
+        writeClipboard: Clipboard.setStringAsync,
+        openUrl: openExternalLink
+      })
     }
 
     const initialResponse = getInitialNotificationResponse()

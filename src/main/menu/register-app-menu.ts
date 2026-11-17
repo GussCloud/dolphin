@@ -6,6 +6,7 @@ import {
   type KeybindingOverrides
 } from '../../shared/keybindings'
 import type { UpdateCheckOptions } from '../../shared/update-status-types'
+import { isAzureDevOpsSignInWindow } from '../azure-devops/azure-devops-sign-in-window'
 import { translateMain } from '../i18n/main-i18n'
 import { buildAppearanceSubmenu } from './app-menu-appearance-submenu'
 import { createAppMenuSelectionItem } from './app-menu-selection-item'
@@ -200,6 +201,11 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
           // Why: a focused terminal/native-chat pane is not a native editable
           // control, so raw Electron paste cannot know which Dolphin surface owns it.
           const focusedWindow = BrowserWindow.getFocusedWindow()
+          if (focusedWindow && isAzureDevOpsSignInWindow(focusedWindow)) {
+            // Why: the Azure sign-in page is a plain web page with no Dolphin paste listener.
+            focusedWindow.webContents.paste()
+            return
+          }
           if (focusedWindow) {
             focusedWindow.webContents.send('ui:appMenuPaste')
             return

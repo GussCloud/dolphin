@@ -4,7 +4,8 @@ import {
   findUnsafeBrowserArgument,
   parseMicrosoftSignInUrl,
   quoteForPythonShlex,
-  readLoopbackRedirectPort
+  readLoopbackRedirectPort,
+  withLoginHint
 } from './azure-cli-sign-in-url-capture'
 
 // Mirrors Python shlex.split(posix=True) for a double-quoted token, which webbrowser uses.
@@ -63,5 +64,26 @@ describe('parseMicrosoftSignInUrl', () => {
   it('ignores a redirect that is not az loopback', () => {
     const url = new URL('https://login.microsoftonline.com/?redirect_uri=https%3A%2F%2Fx.example')
     expect(readLoopbackRedirectPort(url)).toBeNull()
+  })
+})
+
+describe('withLoginHint', () => {
+  const authorize = new URL(
+    'https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize?client_id=c&redirect_uri=http%3A%2F%2Flocalhost%3A50123'
+  )
+
+  it('adds the username and keeps every other parameter', () => {
+    const hinted = withLoginHint(authorize, 'ana+dev@contoso.com')
+    expect(hinted.searchParams.get('login_hint')).toBe('ana+dev@contoso.com')
+    expect(hinted.searchParams.get('redirect_uri')).toBe('http://localhost:50123')
+    expect(authorize.searchParams.has('login_hint')).toBe(false)
+  })
+
+  it('keeps a hint az already set and adds none without a username', () => {
+    const preset = new URL(`${authorize.href}&login_hint=bob%40contoso.com`)
+    expect(withLoginHint(preset, 'ana@contoso.com').searchParams.get('login_hint')).toBe(
+      'bob@contoso.com'
+    )
+    expect(withLoginHint(authorize, null).href).toBe(authorize.href)
   })
 })
