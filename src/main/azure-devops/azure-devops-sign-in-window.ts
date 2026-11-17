@@ -1,5 +1,6 @@
-import { BrowserWindow, session } from 'electron'
+import { BrowserWindow, Menu, session } from 'electron'
 import { join } from 'node:path'
+import { translateMain } from '../i18n/main-i18n'
 import { showWindowWithoutStealingFocus } from '../window/foreground-activation-policy'
 
 // In-memory partition: nothing from the Microsoft sign-in outlives the window.
@@ -51,6 +52,38 @@ export function signInWindowTitle(rawUrl: string): string {
   }
 }
 
+type SignInContextMenuParams = Pick<
+  Electron.ContextMenuParams,
+  'isEditable' | 'selectionText' | 'editFlags'
+>
+
+/** Native edit roles for the right-clicked field or selection; empty when none applies. */
+export function buildSignInContextMenuTemplate(
+  params: SignInContextMenuParams
+): Electron.MenuItemConstructorOptions[] {
+  const { editFlags } = params
+  const copy: Electron.MenuItemConstructorOptions = {
+    role: 'copy',
+    label: translateMain('menu.copy', 'Copy'),
+    enabled: editFlags.canCopy
+  }
+  const selectAll: Electron.MenuItemConstructorOptions = {
+    role: 'selectAll',
+    label: translateMain('menu.selectAll', 'Select All'),
+    enabled: editFlags.canSelectAll
+  }
+  if (params.isEditable) {
+    return [
+      { role: 'cut', label: translateMain('menu.cut', 'Cut'), enabled: editFlags.canCut },
+      copy,
+      { role: 'paste', label: translateMain('menu.paste', 'Paste'), enabled: editFlags.canPaste },
+      { type: 'separator' },
+      selectAll
+    ]
+  }
+  return params.selectionText ? [copy, selectAll] : []
+}
+
 // Why: the partition outlives each window, so its handlers must be installed once.
 const lockedDownSessions = new WeakSet<Electron.Session>()
 
@@ -73,6 +106,14 @@ async function clearSession(signInSession: Electron.Session): Promise<void> {
   } catch (error) {
     console.warn('[azure-devops] could not clear the sign-in window session', error)
   }
+}
+
+// Why code only: Electron's load error message embeds the URL, which carries the login_hint.
+function describeLoadError(error: unknown): string {
+  if (!(error instanceof Error)) {
+    return 'unknown'
+  }
+  return 'code' in error && typeof error.code === 'string' ? error.code : error.name
 }
 
 export function openAzureDevOpsSignInWindow(
@@ -127,6 +168,13 @@ export function openAzureDevOpsSignInWindow(
       window.setTitle(signInWindowTitle(contents.getURL()))
     }
   }
+  // Why: the page is a plain web page, so Electron shows no edit menu unless one is built here.
+  contents.on('context-menu', (_event, params) => {
+    const template = buildSignInContextMenuTemplate(params)
+    if (template.length > 0 && !window.isDestroyed()) {
+      Menu.buildFromTemplate(template).popup({ window })
+    }
+  })
   contents.on('did-navigate', showOrigin)
   contents.on('did-navigate-in-page', showOrigin)
   window.once('ready-to-show', () => showWindowWithoutStealingFocus(window))
@@ -141,7 +189,7 @@ export function openAzureDevOpsSignInWindow(
     }
   })
   void window.loadURL(options.url).catch((error: unknown) => {
-    console.warn('[azure-devops] sign-in window failed to load', error)
+    console.warn('[azure-devops] sign-in window failed to load', describeLoadError(error))
   })
 
   return {

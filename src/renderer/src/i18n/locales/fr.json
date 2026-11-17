@@ -261,6 +261,7 @@
     "window": "Fenêtre",
     "help": "Aide",
     "paste": "Coller",
+    "cut": "Couper",
     "copy": "Copier",
     "selectAll": "Tout sélectionner",
     "showAzurePrsButton": "Afficher le bouton Azure (PRs)"
@@ -17952,6 +17953,9 @@
         "deviceCodeReady": "Code de connexion Azure DevOps prêt. Cliquez pour l’afficher.",
         "deviceCodeIntro": "Ouvrez cette page sur n’importe quel appareil et saisissez le code pour renouveler votre connexion Azure DevOps.",
         "deviceCodeLabel": "Code",
+        "deviceCodeCopyAndOpen": "Copier le code et ouvrir",
+        "deviceCodeCopied": "Code copié. Collez-le sur la page de connexion.",
+        "deviceCodeCopyFailed": "Impossible de copier le code. Saisissez-le sur la page de connexion.",
         "deviceCodeValidUntil": "Valable jusqu’à {{value0}}",
         "failed": "Échec de la connexion à Azure DevOps : {{value0}}. Cliquez pour réessayer.",
         "required": "La connexion à Azure DevOps a expiré. Cliquez pour vous connecter.",

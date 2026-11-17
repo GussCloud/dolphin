@@ -66,6 +66,7 @@ vi.mock('expo-linking', () => ({
   addEventListener: () => ({ remove: vi.fn() }),
   getInitialURL: vi.fn().mockResolvedValue(null)
 }))
+vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn().mockResolvedValue(true) }))
 vi.mock('./DolphinLogo', () => ({ DolphinLogo: 'DolphinLogo' }))
 vi.mock('../transport/client-context', () => ({
   RpcClientProvider: ({ children }: { children: ReactNode }) => children

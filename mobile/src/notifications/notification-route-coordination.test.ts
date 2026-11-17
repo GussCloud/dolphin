@@ -8,6 +8,10 @@ import {
 } from '../navigation/host-stack-navigation'
 
 const rootLayoutSource = readFileSync(new URL('../../app/_layout.tsx', import.meta.url), 'utf8')
+const notificationTapSource = readFileSync(
+  new URL('./notification-tap.ts', import.meta.url),
+  'utf8'
+)
 
 function navigationHarness(initialState: HostStackNavigationState | undefined) {
   const stateListeners = new Set<() => void>()
@@ -111,8 +115,11 @@ describe('notification route coordination', () => {
     expect(end).toBeGreaterThan(start)
 
     const notificationEffect = rootLayoutSource.slice(start, end)
-    expect(notificationEffect).toContain('openNotificationRoute(target)')
+    // The tap decision lives in notification-tap.ts; the layout hands it the coordinated opener.
+    expect(notificationEffect).toContain('openRoute: openNotificationRoute')
     expect(notificationEffect).not.toContain('router.push(')
+    expect(notificationTapSource).toContain('effects.openRoute(target)')
+    expect(notificationTapSource).not.toContain('router.push(')
   })
 })
 

@@ -75,6 +75,12 @@ Treat these as wire changes even though nothing in the codec moves:
 If old clients cannot interpret the new projection correctly, gate it behind a
 runtime capability the same way Rule 2 gates an opcode.
 
+A string a client parses is content under this rule. The Azure device-code push id,
+`azure-cli-device-code:<attemptId>:<userCode>` (`azureCliDeviceCodeNotificationId` in
+`src/main/azure-devops/azure-cli-device-code-relay.ts`), is read by the phone to get
+the code, so its prefix and field order are frozen. Older phones only compare the id for
+dismissal, so the added field was safe. Any later change must keep these fields in place.
+
 ## Rule 4 — an enum arm set is a wire surface; unknown arms must degrade, never reject
 
 A closed `z.enum` in a client-side reply schema is a version claim: it asserts the host

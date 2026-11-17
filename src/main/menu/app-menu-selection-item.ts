@@ -1,4 +1,5 @@
 import { BrowserWindow, Menu, webContents } from 'electron'
+import { isAzureDevOpsSignInWindow } from '../azure-devops/azure-devops-sign-in-window'
 
 export type AppMenuSelectionAction = 'copy' | 'select-all'
 
@@ -18,11 +19,17 @@ export function createAppMenuSelectionItem({
       const focusedWindow = BrowserWindow.getFocusedWindow()
       if (focusedWindow) {
         const focusedContents = webContents.getFocusedWebContents()
-        if (focusedContents && focusedContents !== focusedWindow.webContents) {
+        // Why: the Azure sign-in page has no Dolphin listener for the selection IPC.
+        const nativeTarget = isAzureDevOpsSignInWindow(focusedWindow)
+          ? focusedWindow.webContents
+          : focusedContents && focusedContents !== focusedWindow.webContents
+            ? focusedContents
+            : null
+        if (nativeTarget) {
           if (action === 'copy') {
-            focusedContents.copy()
+            nativeTarget.copy()
           } else {
-            focusedContents.selectAll()
+            nativeTarget.selectAll()
           }
           return
         }

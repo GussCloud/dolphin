@@ -162,6 +162,7 @@
     "window": "ウィンドウ",
     "help": "ヘルプ",
     "paste": "貼り付け",
+    "cut": "切り取り",
     "copy": "コピー",
     "selectAll": "すべて選択",
     "showAzurePrsButton": "Azure (PRs) ボタンを表示"
@@ -17853,6 +17854,9 @@
         "deviceCodeReady": "Azure DevOps のサインイン コードの準備ができました。クリックして表示します。",
         "deviceCodeIntro": "任意のデバイスでこのページを開き、コードを入力して Azure DevOps のサインインを更新してください。",
         "deviceCodeLabel": "コード",
+        "deviceCodeCopyAndOpen": "コードをコピーして開く",
+        "deviceCodeCopied": "コードをコピーしました。サインイン ページに貼り付けてください。",
+        "deviceCodeCopyFailed": "コードをコピーできませんでした。サインイン ページで入力してください。",
         "deviceCodeValidUntil": "{{value0}} まで有効",
         "failed": "Azure DevOps へのサインインに失敗しました: {{value0}}。クリックして再試行します。",
         "required": "Azure DevOps のサインインの有効期限が切れました。クリックしてサインインします。",

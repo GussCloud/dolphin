@@ -91,6 +91,20 @@ describe('send schemas', () => {
     ).toBe(true)
   })
 
+  it('accepts the Azure device-code id the phone reads the code from', () => {
+    expect(
+      PushSendRequestSchema.safeParse({
+        v: 1,
+        registrationIds: ['reg-1'],
+        notification: {
+          ...notification(),
+          source: 'plugin',
+          notificationId: 'azure-cli-device-code:5c9e9a1e-0000-4000-8000-000000000000:FU3HPB3RT'
+        }
+      }).success
+    ).toBe(true)
+  })
+
   it('dedupes repeated registration ids and keeps the first-seen order', () => {
     const parsed = PushSendRequestSchema.safeParse({
       v: 1,

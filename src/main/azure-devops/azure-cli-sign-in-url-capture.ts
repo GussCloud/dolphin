@@ -78,6 +78,16 @@ export function parseMicrosoftSignInUrl(raw: string): URL | null {
   }
 }
 
+/** Prefills the account picker with `username`; a hint az already set is kept. */
+export function withLoginHint(signInUrl: URL, username: string | null): URL {
+  if (!username || signInUrl.searchParams.has('login_hint')) {
+    return signInUrl
+  }
+  const hinted = new URL(signInUrl.href)
+  hinted.searchParams.set('login_hint', username)
+  return hinted
+}
+
 /** Port of the `http://localhost:<port>` redirect `az login` listens on, if any. */
 export function readLoopbackRedirectPort(signInUrl: URL): number | null {
   try {
