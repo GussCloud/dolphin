@@ -36,7 +36,9 @@ export class TelegramReplyRoutes {
 
   constructor(
     private readonly capacity = DEFAULT_ROUTE_CAPACITY,
-    private readonly nextRouteId: () => string = generateRouteId
+    private readonly nextRouteId: () => string = generateRouteId,
+    /** Runs for every route that leaves the registry, evicted or removed. */
+    private readonly onForget?: (routeId: string) => void
   ) {}
 
   register(route: Omit<TelegramPaneRoute, 'routeId'>): TelegramPaneRoute {
@@ -101,8 +103,15 @@ export class TelegramReplyRoutes {
     return route ? { route, action: data.slice(separator + 1) } : null
   }
 
+  remove(routeId: string): void {
+    if (this.routes.has(routeId)) {
+      this.forget(routeId)
+    }
+  }
+
   private forget(routeId: string): void {
     this.routes.delete(routeId)
+    this.onForget?.(routeId)
     for (const [key, value] of this.routeByMessage) {
       if (value === routeId) {
         this.routeByMessage.delete(key)

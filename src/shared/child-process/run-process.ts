@@ -118,6 +118,12 @@ export function runProcess(spec: ProcessSpec): Promise<ProcessResult> {
     child.stdout?.on('data', (chunk: Buffer | string) => stdout.write(chunk))
     child.stderr?.on('data', (chunk: Buffer | string) => {
       stderr.write(chunk)
+      try {
+        spec.onStderr?.(typeof chunk === 'string' ? chunk : chunk.toString('utf8'))
+      } catch (error) {
+        // Why caught: a throw from a stream handler is uncaught and takes the main process down.
+        console.error('[run-process] onStderr threw', error)
+      }
       if (typeof spec.terminationBarrier === 'object') {
         spec.terminationBarrier.observeStderr?.(chunk)
       }

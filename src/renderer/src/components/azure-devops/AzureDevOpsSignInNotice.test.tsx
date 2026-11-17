@@ -169,6 +169,29 @@ describe('AzureDevOpsSignInNotice', () => {
     frame.mockRestore()
   })
 
+  it('shows the device code on click and keeps a later attempt closed', async () => {
+    const code = (userCode: string): AzureCliSignInState => ({
+      kind: 'signing-in',
+      mode: 'device-code',
+      deviceCode: {
+        verificationUrl: 'https://login.microsoft.com/device',
+        userCode,
+        expiresAtMs: Date.now() + 60_000
+      }
+    })
+    const { emit } = installApi({ kind: 'signing-in', mode: 'device-code' })
+    const rendered = await render()
+    await act(async () => emit(code('FIRSTCODE1')))
+    const button = noticeButton(rendered)
+    expect(button?.getAttribute('aria-disabled')).toBe('false')
+    await act(async () => button?.click())
+    expect(document.body.textContent).toContain('FIRSTCODE1')
+    await act(async () => emit({ kind: 'failed', error: 'expired' }))
+    expect(document.body.textContent).not.toContain('FIRSTCODE1')
+    await act(async () => emit(code('SECONDCODE')))
+    expect(document.body.textContent).not.toContain('SECONDCODE')
+  })
+
   it('toasts a failed sign-in but not a cancelled one', async () => {
     const { api } = installApi({ kind: 'required' })
     const rendered = await render()

@@ -50,6 +50,8 @@ export type ProcessSpec = {
   terminationBarrier?: boolean | ProcessTerminationBarrier
   /** Called once when the child exits or tree termination is verified. */
   onChildTerminated?: () => void
+  /** `runProcess` only: sees each stderr chunk as it arrives, for prompts printed before exit. */
+  onStderr?: (chunk: string) => void
 }
 
 export type ProcessTerminationBarrier = {

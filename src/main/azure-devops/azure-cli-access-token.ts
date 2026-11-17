@@ -1,9 +1,9 @@
 import { AZURE_DEVOPS_ENTRA_RESOURCE_ID } from '../../shared/azure-devops-auth'
 import { AzureCliCommandError, runAzureCliJson } from './azure-cli-runner'
+import { handleAzureCliSessionLapsed } from './azure-cli-session-lapse'
 import { recordAzureCliTokenExpiry } from './azure-cli-session-store'
 import {
   isAzureCliSignInNoticeEnabled,
-  noticeAzureCliSessionLapsed,
   noticeAzureCliSessionWorking
 } from './azure-cli-sign-in-notice'
 
@@ -60,9 +60,9 @@ async function acquire(): Promise<CachedToken> {
       AZURE_DEVOPS_ENTRA_RESOURCE_ID
     ])
   } catch (error) {
-    // Why only the notice: `az login` opens a browser, so it runs after the user clicks.
+    // Why not on a timeout: a slow az is not a lapsed session.
     if (error instanceof AzureCliCommandError && !error.result.timedOut) {
-      noticeAzureCliSessionLapsed()
+      handleAzureCliSessionLapsed(error.result.stderr)
     }
     throw error
   }

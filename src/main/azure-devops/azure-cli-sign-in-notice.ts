@@ -2,13 +2,15 @@ import type { AzureCliSignInState } from '../../shared/azure-devops-auth'
 import { getAzureDevOpsAuthPreference } from './azure-devops-auth-preference-store'
 import { getAzureCliTokenExpiresAt } from './azure-cli-session-store'
 
-// Owns the desktop sign-in notice for a lapsed Azure CLI session. Dolphin never runs
-// `az login` on its own: it raises the notice and waits for the user to click it.
+// Owns the desktop sign-in notice for a lapsed Azure CLI session. The only `az login` Dolphin
+// starts on its own is one device-code attempt per lapse, and only while a phone channel can
+// deliver the code; every other sign-in waits for the user to ask.
 
 type StateListener = (state: AzureCliSignInState) => void
 type RenewalListener = () => void
 
 let state: AzureCliSignInState = { kind: 'idle' }
+let automaticSignInClaimed = false
 const stateListeners = new Set<StateListener>()
 const renewalListeners = new Set<RenewalListener>()
 
@@ -62,8 +64,18 @@ export function noticeAzureCliSessionLapsed(): void {
   setAzureCliSignInState({ kind: 'required' })
 }
 
+/** True once per lapse, while the notice is up: the caller may start one automatic sign-in. */
+export function claimAzureCliAutomaticSignIn(): boolean {
+  if (state.kind !== 'required' || automaticSignInClaimed) {
+    return false
+  }
+  automaticSignInClaimed = true
+  return true
+}
+
 /** A token was issued again, so any pending notice is stale. */
 export function noticeAzureCliSessionWorking(): void {
+  automaticSignInClaimed = false
   if (state.kind === 'required' || state.kind === 'failed') {
     setAzureCliSignInState({ kind: 'idle' })
   }
@@ -77,6 +89,7 @@ export function dismissAzureCliSignInNotice(): void {
 }
 
 export function notifyAzureCliSessionRenewed(): void {
+  automaticSignInClaimed = false
   for (const listener of renewalListeners) {
     listener()
   }
@@ -90,6 +103,7 @@ export function onAzureCliSessionRenewed(listener: RenewalListener): () => void 
 /** @internal - tests need a clean notice state between cases. */
 export function _resetAzureCliSignInNotice(): void {
   state = { kind: 'idle' }
+  automaticSignInClaimed = false
   stateListeners.clear()
   renewalListeners.clear()
 }

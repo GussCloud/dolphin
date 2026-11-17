@@ -206,3 +206,21 @@ export async function resolveTelegramNotice(
     }
   }
 }
+
+/** Rewrites each sent copy; buttons need a route, and an edit without them clears the old ones. */
+export async function editTelegramMessages(
+  deps: Pick<TelegramNoticeDeliveryDeps, 'api'>,
+  messages: readonly TelegramSentMessage[],
+  html: string,
+  opts: { route?: TelegramPaneRoute; buttons?: readonly TelegramNoticeButton[][] } = {}
+): Promise<void> {
+  const buttons =
+    opts.route && opts.buttons ? toTelegramInlineButtons(opts.buttons, opts.route) : []
+  for (const message of messages) {
+    try {
+      await deps.api.editMessageText(message.chatId, message.messageId, html, buttons)
+    } catch (error) {
+      console.warn('[telegram] message edit failed', error)
+    }
+  }
+}

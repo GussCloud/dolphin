@@ -99,6 +99,19 @@ describe('runProcessSync', () => {
   })
 })
 
+describe('runProcess onStderr', () => {
+  it('streams stderr before the child exits', async () => {
+    const chunks: string[] = []
+    const result = await runProcess({
+      program: process.execPath,
+      args: ['-e', 'process.stderr.write("prompt"); setTimeout(() => process.exit(0), 50)'],
+      onStderr: (chunk) => chunks.push(chunk)
+    })
+    expect(chunks.join('')).toBe('prompt')
+    expect(result.stderr).toBe('prompt')
+  })
+})
+
 describe('bounded output', () => {
   it('reports a clipped answer instead of passing it off as the whole one', async () => {
     const result = await runProcess({

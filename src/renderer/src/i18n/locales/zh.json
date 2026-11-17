@@ -17849,6 +17849,11 @@
       "azureDevOpsSignInNotice": {
         "signingInApp": "正在 Dolphin 窗口中登录 Azure DevOps…",
         "signingInBrowser": "正在浏览器中登录 Azure DevOps…",
+        "signingInDeviceCode": "正在等待输入 Azure DevOps 登录代码…",
+        "deviceCodeReady": "Azure DevOps 登录代码已就绪。点击查看。",
+        "deviceCodeIntro": "在任意设备上打开此页面并输入代码，以续订 Azure DevOps 登录。",
+        "deviceCodeLabel": "代码",
+        "deviceCodeValidUntil": "有效期至 {{value0}}",
         "failed": "Azure DevOps 登录失败：{{value0}}。点击重试。",
         "required": "Azure DevOps 登录已过期。点击登录。",
         "toastFailed": "Azure DevOps 登录失败：{{value0}}",
@@ -19354,6 +19359,29 @@
         "audio": "音频",
         "volume": "音量"
       }
+    }
+  },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "title": "需要登录 Azure",
+      "host": "计算机：{{host}}",
+      "open": "1. 打开 {{url}}",
+      "enter": "2. 输入代码 {{code}}",
+      "expires": "代码有效期至 {{time}}。",
+      "renewed": "Azure 会话已续期",
+      "expired": "Azure 登录代码已过期",
+      "expiredDetail": "未在时限内输入代码。点按“新代码”重试。",
+      "failed": "Azure 登录失败",
+      "failedDetail": "点按“新代码”重试。",
+      "cancelled": "Azure 登录已取消",
+      "newCode": "新代码",
+      "newCodeAck": "正在请求新代码…",
+      "noLongerNeeded": "已不再需要。",
+      "newCodeFailed": "无法获取新代码。"
+    },
+    "push": {
+      "title": "Azure 登录",
+      "body": "打开 {{url}} 并输入 {{code}}"
     }
   }
 }

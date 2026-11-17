@@ -2709,6 +2709,22 @@
       }
     }
   },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "cancelled": "Azure sign-in cancelled",
+      "enter": "2. Enter the code {{code}}",
+      "expired": "Azure sign-in code expired",
+      "expiredDetail": "Nobody entered the code in time. Tap New code to try again.",
+      "expires": "The code is valid until {{time}}.",
+      "failed": "Azure sign-in failed",
+      "failedDetail": "Tap New code to try again.",
+      "host": "Computer: {{host}}",
+      "newCodeFailed": "Could not get a new code.",
+      "open": "1. Open {{url}}",
+      "renewed": "Azure session renewed",
+      "title": "Azure sign-in needed"
+    }
+  },
   "browser": {
     "clientHosted": {
       "popupBlocked": "Popup blocked: {{origin}}"

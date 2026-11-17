@@ -5,6 +5,7 @@ import type { EnrichedAgentHookEventPayload } from '../agent-hooks/server/server
 import type { AgentStatusClearIpcPayload } from '../../shared/agent-status-types'
 import type { TelegramConnectionStatus } from '../../shared/telegram-bridge-state'
 import { escapeTelegramHtml } from './telegram-agent-notice'
+import { TelegramActionRoutes, type TelegramActionHandler } from './telegram-action-routes'
 import { TelegramBotApi } from './telegram-bot-api'
 import type {
   TelegramInboundHandler,
@@ -56,7 +57,10 @@ type ActiveSession = { token: string; api: TelegramBridgeApi; poller: TelegramUp
 
 export class TelegramBridgeService {
   private session: ActiveSession | null = null
-  private readonly routes = new TelegramReplyRoutes()
+  private readonly actionRoutes = new TelegramActionRoutes(() => this.routes)
+  private readonly routes = new TelegramReplyRoutes(undefined, undefined, (routeId) =>
+    this.actionRoutes.forget(routeId)
+  )
   private readonly transitions = new TelegramNoticeTransitions()
   private readonly handlers: TelegramInboundHandler[] = []
   private readonly decorators: TelegramNoticeDecorator[] = []
@@ -77,6 +81,7 @@ export class TelegramBridgeService {
       consumePairingCode: (code, chat) => deps.settings.consumePairingCode(code, chat),
       getInboundHandler: (method) =>
         this.handlers.findLast((handler) => handler[method] !== undefined),
+      getRouteCallbackHandler: (routeId) => this.actionRoutes.handlerFor(routeId),
       describeStatus: () =>
         formatTelegramStatusList(deps.statusSource.getStatusSnapshot(), deps.resolveWorktreeName),
       reply: async (chatId, html, replyToMessageId) => {
@@ -155,6 +160,26 @@ export class TelegramBridgeService {
   createRoute(paneKey: string): TelegramPaneRoute {
     const row = this.deps.statusSource.getStatusSnapshotForPane(paneKey)[0]
     return registerTelegramPaneRoute(this.routes, row ?? { paneKey })
+  }
+
+  /** A route whose button taps reach `handler` instead of the pane-answer handler. */
+  createActionRoute(handler: TelegramActionHandler): {
+    route: TelegramPaneRoute
+    dispose: () => void
+  } {
+    return this.actionRoutes.create(handler)
+  }
+
+  /** Runs `task` against the live session, ordered behind queued notices; `fallback` without one. */
+  runInOutbox<T>(fallback: T, task: (deps: TelegramNoticeDeliveryDeps) => Promise<T>): Promise<T> {
+    let result = fallback
+    this.enqueue(async () => {
+      const api = this.session?.api
+      if (api) {
+        result = await task(this.deliveryDeps(api))
+      }
+    })
+    return this.outbox.then(() => result)
   }
 
   registerNoticeFilter(filter: TelegramNoticeFilter): () => void {

@@ -29,6 +29,7 @@ vi.mock('./azure-devops-auth-preference-store', () => ({
 vi.mock('./azure-cli-session-store', () => ({ getAzureCliTokenExpiresAt: () => 1 }))
 vi.mock('./azure-cli-runner', () => ({
   resolveAzureCliProgram: mocks.resolveProgram,
+  runAzureCli: vi.fn(),
   runAzureCliJson: mocks.runAzureCliJson
 }))
 vi.mock('../../shared/child-process/run-process', () => ({ runProcess: mocks.runProcess }))

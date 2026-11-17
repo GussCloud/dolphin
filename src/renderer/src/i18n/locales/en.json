@@ -18177,6 +18177,11 @@
       "azureDevOpsSignInNotice": {
         "signingInApp": "Signing in to Azure DevOps in a Dolphin window…",
         "signingInBrowser": "Signing in to Azure DevOps in your browser…",
+        "signingInDeviceCode": "Waiting for the Azure DevOps sign-in code to be entered…",
+        "deviceCodeReady": "Azure DevOps sign-in code ready. Click to see it.",
+        "deviceCodeIntro": "Open this page on any device and enter the code to renew your Azure DevOps sign-in.",
+        "deviceCodeLabel": "Code",
+        "deviceCodeValidUntil": "Valid until {{value0}}",
         "failed": "Azure DevOps sign-in failed: {{value0}}. Click to retry.",
         "required": "Azure DevOps sign-in expired. Click to sign in.",
         "toastFailed": "Azure DevOps sign-in failed: {{value0}}",
@@ -19620,6 +19625,29 @@
         "audio": "audio",
         "volume": "volume"
       }
+    }
+  },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "title": "Azure sign-in needed",
+      "host": "Computer: {{host}}",
+      "open": "1. Open {{url}}",
+      "enter": "2. Enter the code {{code}}",
+      "expires": "The code is valid until {{time}}.",
+      "renewed": "Azure session renewed",
+      "expired": "Azure sign-in code expired",
+      "expiredDetail": "Nobody entered the code in time. Tap New code to try again.",
+      "failed": "Azure sign-in failed",
+      "failedDetail": "Tap New code to try again.",
+      "cancelled": "Azure sign-in cancelled",
+      "newCode": "New code",
+      "newCodeAck": "Requesting a new code…",
+      "noLongerNeeded": "No longer needed.",
+      "newCodeFailed": "Could not get a new code."
+    },
+    "push": {
+      "title": "Azure sign-in",
+      "body": "Open {{url}} and enter {{code}}"
     }
   }
 }

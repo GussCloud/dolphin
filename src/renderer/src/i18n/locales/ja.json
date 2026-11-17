@@ -17849,6 +17849,11 @@
       "azureDevOpsSignInNotice": {
         "signingInApp": "Dolphin のウィンドウで Azure DevOps にサインインしています…",
         "signingInBrowser": "ブラウザーで Azure DevOps にサインインしています…",
+        "signingInDeviceCode": "Azure DevOps のサインイン コードの入力を待っています…",
+        "deviceCodeReady": "Azure DevOps のサインイン コードの準備ができました。クリックして表示します。",
+        "deviceCodeIntro": "任意のデバイスでこのページを開き、コードを入力して Azure DevOps のサインインを更新してください。",
+        "deviceCodeLabel": "コード",
+        "deviceCodeValidUntil": "{{value0}} まで有効",
         "failed": "Azure DevOps へのサインインに失敗しました: {{value0}}。クリックして再試行します。",
         "required": "Azure DevOps のサインインの有効期限が切れました。クリックしてサインインします。",
         "toastFailed": "Azure DevOps へのサインインに失敗しました: {{value0}}",
@@ -19354,6 +19359,29 @@
         "audio": "音声",
         "volume": "音量"
       }
+    }
+  },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "title": "Azure へのサインインが必要です",
+      "host": "コンピューター: {{host}}",
+      "open": "1. {{url}} を開く",
+      "enter": "2. コード {{code}} を入力",
+      "expires": "コードの有効期限は {{time}} です。",
+      "renewed": "Azure セッションを更新しました",
+      "expired": "Azure のサインインコードの有効期限が切れました",
+      "expiredDetail": "時間内にコードが入力されませんでした。再試行するには「新しいコード」をタップしてください。",
+      "failed": "Azure へのサインインに失敗しました",
+      "failedDetail": "再試行するには「新しいコード」をタップしてください。",
+      "cancelled": "Azure へのサインインをキャンセルしました",
+      "newCode": "新しいコード",
+      "newCodeAck": "新しいコードを要求しています…",
+      "noLongerNeeded": "不要になりました。",
+      "newCodeFailed": "新しいコードを取得できませんでした。"
+    },
+    "push": {
+      "title": "Azure サインイン",
+      "body": "{{url}} を開いて {{code}} を入力"
     }
   }
 }

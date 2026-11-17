@@ -46,6 +46,8 @@ export type TelegramUpdateRouterDeps = {
   isChatAllowed: (chatId: number) => boolean
   consumePairingCode: (code: string, chat: { chatId: number; label: string }) => boolean
   getInboundHandler: (method: keyof TelegramInboundHandler) => TelegramInboundHandler | undefined
+  /** A route that owns its taps (not a pane); it answers them ahead of the inbound handler. */
+  getRouteCallbackHandler?: (routeId: string) => TelegramInboundHandler | undefined
   /** Already-HTML status listing for `/status`. */
   describeStatus: () => string
   reply: (chatId: number, html: string, replyToMessageId?: number) => Promise<void>
@@ -178,7 +180,9 @@ export class TelegramUpdateRouter {
       return
     }
     const parsed = callback.data ? this.deps.routes.parseCallbackData(callback.data) : null
-    const handler = this.deps.getInboundHandler('handleCallback')
+    const handler =
+      (parsed && this.deps.getRouteCallbackHandler?.(parsed.route.routeId)) ??
+      this.deps.getInboundHandler('handleCallback')
     if (callback.data && !parsed) {
       // Why: routes are in-memory and bounded, so a restart or eviction orphans old buttons.
       await this.deps.answerCallback(

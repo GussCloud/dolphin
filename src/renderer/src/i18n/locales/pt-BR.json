@@ -18177,6 +18177,11 @@
       "azureDevOpsSignInNotice": {
         "signingInApp": "Entrando no Azure DevOps em uma janela do Dolphin…",
         "signingInBrowser": "Entrando no Azure DevOps no seu navegador…",
+        "signingInDeviceCode": "Aguardando o código de acesso do Azure DevOps ser digitado…",
+        "deviceCodeReady": "Código de acesso do Azure DevOps pronto. Clique para vê-lo.",
+        "deviceCodeIntro": "Abra esta página em qualquer dispositivo e digite o código para renovar seu acesso ao Azure DevOps.",
+        "deviceCodeLabel": "Código",
+        "deviceCodeValidUntil": "Válido até {{value0}}",
         "failed": "Falha ao entrar no Azure DevOps: {{value0}}. Clique para tentar de novo.",
         "required": "O login do Azure DevOps expirou. Clique para entrar.",
         "toastFailed": "Falha ao entrar no Azure DevOps: {{value0}}",
@@ -19620,6 +19625,29 @@
         "audio": "áudio",
         "volume": "volume"
       }
+    }
+  },
+  "azureCliDeviceCode": {
+    "telegram": {
+      "title": "Login no Azure necessário",
+      "host": "Computador: {{host}}",
+      "open": "1. Abra {{url}}",
+      "enter": "2. Digite o código {{code}}",
+      "expires": "O código vale até {{time}}.",
+      "renewed": "Sessão do Azure renovada",
+      "expired": "O código de login do Azure expirou",
+      "expiredDetail": "Ninguém digitou o código a tempo. Toque em Novo código para tentar de novo.",
+      "failed": "Falha no login do Azure",
+      "failedDetail": "Toque em Novo código para tentar de novo.",
+      "cancelled": "Login do Azure cancelado",
+      "newCode": "Novo código",
+      "newCodeAck": "Pedindo um novo código…",
+      "noLongerNeeded": "Não é mais necessário.",
+      "newCodeFailed": "Não foi possível obter um novo código."
+    },
+    "push": {
+      "title": "Login no Azure",
+      "body": "Abra {{url}} e digite {{code}}"
     }
   }
 }
