@@ -189,7 +189,7 @@ export function computeWorkspaceRoot(
 
 /** Distro to mirror the workspace root into, or undefined when the configured root is used as-is.
  *  Shared by both resolvers so the sync and async paths can never disagree on placement. */
-function mirrorDistroForWorkspaceRoot(
+export function mirrorDistroForWorkspaceRoot(
   repoPath: string,
   settings: { workspaceDir: string; wslMirrorDistro?: string }
 ): string | undefined {

@@ -21,7 +21,8 @@ import { getWorktreeMirrorDistro } from '../project-runtime-git-options'
 import {
   computeWorkspaceRoot,
   getWorktreePathSettings,
-  hasRepoWorktreeBasePath
+  hasRepoWorktreeBasePath,
+  mirrorDistroForWorkspaceRoot
 } from './worktree-logic'
 import { shouldEmitBoundedWarning } from './bounded-warning-dedupe'
 import { resolveWorktreeCommonGitDirectory } from './worktree-common-git-directory'
@@ -109,7 +110,7 @@ function getBaseWatchLayout(
   repo: Repo,
   pathSettings: Pick<GlobalSettings, 'workspaceDir' | 'nestWorkspaces'>,
   connectionId: string | undefined
-): { workspaceRoot: string; nestWorkspaces: boolean } {
+): { workspaceRoot: string | null; nestWorkspaces: boolean } {
   if (
     connectionId &&
     !hasRepoWorktreeBasePath(repo) &&
@@ -120,8 +121,12 @@ function getBaseWatchLayout(
     return { workspaceRoot: resolveRuntimePath(repo.path, '..'), nestWorkspaces: false }
   }
 
+  // A root mirrored into WSL is a UNC path either way; probing the distro's home (which can kill a
+  // booting distro) would only lead to the same skip, so keep just the Git-common watch.
   return {
-    workspaceRoot: computeWorkspaceRoot(repo.path, pathSettings),
+    workspaceRoot: mirrorDistroForWorkspaceRoot(repo.path, pathSettings)
+      ? null
+      : computeWorkspaceRoot(repo.path, pathSettings),
     nestWorkspaces: pathSettings.nestWorkspaces
   }
 }
@@ -139,6 +144,13 @@ async function maybeAddBaseTarget(
   mirrorDistro: string | undefined,
   connectionId?: string
 ): Promise<void> {
+  // Why: WSL UNC paths are unreliable for native watching. A repo inside the
+  // distro has nothing watchable at all, and is skipped before its root resolves:
+  // that probes the distro's home, which boots a stopped distro.
+  if (isWslUncPath(repo.path)) {
+    warnSkippedWslRoot(repo.id, repo.path)
+    return
+  }
   const pathSettings = getWorktreePathSettings(repo, settings, mirrorDistro)
   const { workspaceRoot, nestWorkspaces } = getBaseWatchLayout(repo, pathSettings, connectionId)
   const config = {
@@ -150,15 +162,9 @@ async function maybeAddBaseTarget(
   if (connectionId && !remoteProvider) {
     return
   }
-  // Why: WSL UNC paths are unreliable for native watching. A repo inside the
-  // distro has nothing watchable at all; a Windows-drive repo whose worktrees
-  // are mirrored into the distro still has its gitdir on the Windows side.
-  if (isWslUncPath(repo.path)) {
-    warnSkippedWslRoot(repo.id, workspaceRoot)
-    return
-  }
-  if (isWslUncPath(workspaceRoot)) {
-    warnSkippedWslRoot(repo.id, workspaceRoot)
+  // A Windows-drive repo whose worktrees are mirrored into the distro still has its gitdir on the Windows side.
+  if (workspaceRoot === null || isWslUncPath(workspaceRoot)) {
+    warnSkippedWslRoot(repo.id, workspaceRoot ?? repo.path)
   } else {
     try {
       const rootStat = remoteProvider
