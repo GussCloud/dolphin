@@ -7,6 +7,8 @@ import {
 } from './local-project-runtime-resolution'
 import type { ProjectExecutionRuntimeResolution } from '../shared/project-execution-runtime'
 import type { RepoGitAccountContext } from './git/command-runner/repo-git-account-config'
+import { hasAzureDevOpsHttpsUrl } from '../shared/git-scoped-credential-helper'
+import { getAzureDevOpsAuthPreference } from './azure-devops/azure-devops-auth-preference-store'
 
 export {
   resolveLocalProjectRuntimeForRepo,
@@ -36,9 +38,23 @@ export function getRepoGitAccountContext(repo: Repo): RepoGitAccountContext | un
   const context: RepoGitAccountContext = {
     ...(repo.ghAccount ? { ghAccount: repo.ghAccount } : {}),
     ...(repo.azureDevOpsAccountId ? { azureDevOpsAccountId: repo.azureDevOpsAccountId } : {}),
-    ...(repo.commitIdentity ? { commitIdentity: repo.commitIdentity } : {})
+    ...(repo.commitIdentity ? { commitIdentity: repo.commitIdentity } : {}),
+    ...(usesDefaultAzureCliSignIn(repo) ? { azureDevOpsDefaultCliSignIn: true as const } : {})
   }
   return Object.keys(context).length > 0 ? context : undefined
+}
+
+/** "Default sign-in" on an Azure DevOps https remote while Azure DevOps auth uses the Azure CLI. */
+function usesDefaultAzureCliSignIn(repo: Repo): boolean {
+  if (repo.azureDevOpsAccountId || isFolderRepo(repo)) {
+    return false
+  }
+  // Why only a known non-Azure remote skips: the recorded identity can be missing or stale.
+  const remoteUrl = repo.gitRemoteIdentity?.remoteUrl
+  if (remoteUrl && !hasAzureDevOpsHttpsUrl([remoteUrl])) {
+    return false
+  }
+  return getAzureDevOpsAuthPreference().method === 'azure-cli'
 }
 
 function withRepoAccount(

@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../shared/repo-types'
+
+const preference = vi.hoisted(() => ({ method: 'token' as 'token' | 'azure-cli' }))
+vi.mock('./azure-devops/azure-devops-auth-preference-store', () => ({
+  getAzureDevOpsAuthPreference: () => ({ method: preference.method, autoRenewCliSession: true })
+}))
 import { RepoClone, RepoUpdate } from '../shared/rpc-contract/repo-params'
 import { getRepoGitAccountContext } from './project-runtime-git-options'
 import { applyRepoAccountBindingToNewRepo } from './repo-account-binding'
@@ -18,6 +23,10 @@ function repo(overrides: Partial<Repo> = {}): Repo {
 }
 
 describe('getRepoGitAccountContext', () => {
+  beforeEach(() => {
+    preference.method = 'token'
+  })
+
   it('carries every binding of a local repo', () => {
     expect(
       getRepoGitAccountContext(
@@ -33,6 +42,34 @@ describe('getRepoGitAccountContext', () => {
       commitIdentity: identity
     })
     expect(getRepoGitAccountContext(repo())).toBeUndefined()
+  })
+
+  it('marks "Default sign-in" for the global az login only when Azure DevOps auth uses the CLI', () => {
+    const azureRemote = {
+      canonicalKey: 'dev.azure.com/evup/p/app',
+      remoteName: 'origin',
+      remoteUrl: 'https://evup@dev.azure.com/evup/P/_git/app'
+    }
+    expect(getRepoGitAccountContext(repo({ gitRemoteIdentity: azureRemote }))).toBeUndefined()
+
+    preference.method = 'azure-cli'
+    expect(getRepoGitAccountContext(repo({ gitRemoteIdentity: azureRemote }))).toEqual({
+      azureDevOpsDefaultCliSignIn: true
+    })
+    // Unknown remote: decided per git call from the remotes git reads.
+    expect(getRepoGitAccountContext(repo())).toEqual({ azureDevOpsDefaultCliSignIn: true })
+    expect(
+      getRepoGitAccountContext(
+        repo({
+          gitRemoteIdentity: { ...azureRemote, remoteUrl: 'https://github.com/acme/app.git' }
+        })
+      )
+    ).toBeUndefined()
+    expect(getRepoGitAccountContext(repo({ azureDevOpsAccountId: 'acct' }))).toEqual({
+      azureDevOpsAccountId: 'acct'
+    })
+    expect(getRepoGitAccountContext(repo({ kind: 'folder' }))).toBeUndefined()
+    expect(getRepoGitAccountContext(repo({ connectionId: 'box' }))).toBeUndefined()
   })
 
   it('injects nothing for SSH repos, whose git runs in the remote relay', () => {

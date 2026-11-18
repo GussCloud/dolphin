@@ -1,4 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+// Why: the real preference lives in the developer's home dir and would add the az default flag.
+vi.mock('./azure-devops/azure-devops-auth-preference-store', () => ({
+  getAzureDevOpsAuthPreference: () => ({ method: 'token', autoRenewCliSession: true })
+}))
 import type { Store } from './persistence'
 import type { Project } from '../shared/project-types'
 import type { Repo } from '../shared/repo-types'

@@ -74,6 +74,14 @@ in the classic `'key=value'` form, which every supported Git parses. Inherited `
 entries are applied before it, so the project's entries stay last
 (`src/shared/git-config-parameters.ts`).
 
+A project on Azure DevOps "Default sign-in" (no managed account) while Azure DevOps auth uses
+the Azure CLI gets the same scoped reset, pointing at the user's own `az` login: Dolphin's git
+uses the token the PR views use (`getAzureCliAccessToken`), and terminals get a helper that asks
+`az` at credential time. Without an `az` login that helper hands the request to git's other
+helpers through a nested `GIT_CONFIG_PARAMETERS= git credential fill` (only for `get`; `store`
+and `erase` never reach them, so an `az` token is never written to a keychain); a signed-in `az`
+that cannot issue a token stops with a renewal hint instead of opening another sign-in.
+
 The real-binary contract below exercises the reset, the scoped helper, a concrete
 `visualstudio.com` host, an `insteadOf` rewrite to a mixed-case host, and the fail-closed
 path on every lane.

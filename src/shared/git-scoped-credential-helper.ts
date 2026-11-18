@@ -62,14 +62,21 @@ function credentialUrlsFor(
   return [...urls]
 }
 
+function isAzureDevOpsAuthority(authority: string): boolean {
+  return authority === 'dev.azure.com' || VISUALSTUDIO_HOST_RE.test(authority.replace(/:\d+$/, ''))
+}
+
 /** dev.azure.com plus each concrete visualstudio.com host the call can reach; never a wildcard. */
 export function azureDevOpsGitUrls(candidates: readonly string[]): string[] {
-  return credentialUrlsFor(
-    candidates,
-    (authority) =>
-      authority === 'dev.azure.com' || VISUALSTUDIO_HOST_RE.test(authority.replace(/:\d+$/, '')),
-    [AZURE_DEVOPS_CLOUD_GIT_URL]
-  )
+  return credentialUrlsFor(candidates, isAzureDevOpsAuthority, [AZURE_DEVOPS_CLOUD_GIT_URL])
+}
+
+/** Whether any candidate is an https Azure DevOps URL (ssh remotes never consult credential helpers). */
+export function hasAzureDevOpsHttpsUrl(candidates: readonly string[]): boolean {
+  return candidates.some((candidate) => {
+    const match = HTTPS_AUTHORITY_RE.exec(candidate.trim())
+    return Boolean(match && isAzureDevOpsAuthority(`${match[1]}${match[2] ?? ''}`.toLowerCase()))
+  })
 }
 
 /** The bound GitHub host plus each differently cased spelling of it the call can reach. */
