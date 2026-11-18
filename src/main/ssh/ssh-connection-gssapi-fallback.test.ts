@@ -53,7 +53,8 @@ describe('SshConnection', () => {
       'echo DOLPHIN-SYSTEM-SSH-OK',
       {
         gssapiOnly: true,
-        wrapCommand: false
+        wrapCommand: false,
+        closeStdin: true
       }
     )
     expect(spawnSystemSshCommandMock).toHaveBeenNthCalledWith(
@@ -106,7 +107,8 @@ describe('SshConnection', () => {
       'echo DOLPHIN-SYSTEM-SSH-OK',
       {
         gssapiOnly: true,
-        wrapCommand: false
+        wrapCommand: false,
+        closeStdin: true
       }
     )
   })

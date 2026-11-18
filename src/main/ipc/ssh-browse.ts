@@ -115,7 +115,9 @@ async function runBrowseCommand(
   pathFlavor: FilesystemPathFlavor,
   options?: SshExecOptions
 ): Promise<RemoteBrowseResult> {
-  const channel = options ? await conn.exec(command, options) : await conn.exec(command)
+  const channel = options
+    ? await conn.execWithClosedStdin(command, options)
+    : await conn.execWithClosedStdin(command)
 
   return new Promise((resolve, reject) => {
     let stdout = ''
