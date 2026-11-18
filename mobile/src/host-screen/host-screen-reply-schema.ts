@@ -58,23 +58,42 @@ const repoIconBranches = {
  * `getRepoExecutionHostId` — which is what every read of them goes through — already answers `local`
  * for a spelling it cannot parse. Narrowing them here would refuse a newer host's own rows.
  */
-export const hostRepoCatalogSchema = z
-  .looseObject({
-    repos: salvagingArray(
-      z.looseObject({
-        id: z.string(),
-        displayName: z.string(),
-        badgeColor: salvagedOptional('badgeColor', z.string()),
-        repoIcon: salvagedOptional(
-          'repoIcon',
-          z.union([repoIconBranches.lucide, repoIconBranches.emoji, repoIconBranches.image])
-        ),
-        connectionId: salvagedOptional('connectionId', z.string().nullable()),
-        executionHostId: salvagedOptional('executionHostId', z.string().nullable())
-      })
-    )
+const hostRepoCatalogRepos = salvagingArray(
+  z.looseObject({
+    id: z.string(),
+    displayName: z.string(),
+    badgeColor: salvagedOptional('badgeColor', z.string()),
+    repoIcon: salvagedOptional(
+      'repoIcon',
+      z.union([repoIconBranches.lucide, repoIconBranches.emoji, repoIconBranches.image])
+    ),
+    connectionId: salvagedOptional('connectionId', z.string().nullable()),
+    executionHostId: salvagedOptional('executionHostId', z.string().nullable())
   })
+)
+
+export const hostRepoCatalogSchema = z
+  .looseObject({ repos: hostRepoCatalogRepos })
   .transform((reply) => reply.repos)
+
+export type HostRepoCatalog = z.output<typeof hostRepoCatalogSchema>
+
+// Snapshot reads: `unchanged` names the catalog the caller holds; older hosts always answer repos.
+export const hostRepoCatalogSnapshotSchema = z.union([
+  z
+    .looseObject({ unchanged: z.literal(true), snapshotId: z.string() })
+    .transform(({ snapshotId }) => ({ kind: 'unchanged' as const, snapshotId })),
+  z
+    .looseObject({
+      repos: hostRepoCatalogRepos,
+      snapshotId: salvagedOptional('snapshotId', z.string().min(1).max(128))
+    })
+    .transform(({ repos, snapshotId }) => ({
+      kind: 'catalog' as const,
+      repos,
+      snapshotId: snapshotId ?? null
+    }))
+])
 
 /**
  * The SSH target labels a mixed-host catalog names its rows with.

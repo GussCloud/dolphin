@@ -2,6 +2,7 @@ import { AppState } from 'react-native'
 import type { RuntimeClientEventStreamMessage } from '../../../src/shared/runtime-client-events'
 import type { RpcClient } from '../transport/rpc-client'
 
+// Also the floor between change-driven reads, which arrive per agent step.
 const WORKTREE_REFRESH_MS = 3000
 
 type WorktreeRefreshOptions = { allowDuringModal?: boolean }
@@ -20,12 +21,49 @@ export function startHostWorktreeRefresh({
 }: HostWorktreeRefreshArgs): () => void {
   let stale = false
   let eventStreamReady = false
+  // Set when a backgrounded page skips notices; coming back then re-reads both snapshots once.
+  let owed = false
+  let lastWorktreeReadAt = 0
+  let trailingRead: ReturnType<typeof setTimeout> | undefined
+  const hidden = (): boolean => AppState.currentState !== 'active'
 
-  const refreshOnForeground = (): void => {
-    if (AppState.currentState !== 'active') {
+  const readWorktrees = (options?: WorktreeRefreshOptions): void => {
+    lastWorktreeReadAt = Date.now()
+    void fetchWorktrees(options)
+  }
+  const readEverything = (worktreeOptions?: WorktreeRefreshOptions): void => {
+    readWorktrees(worktreeOptions)
+    void fetchRepoMetadata({ force: true, queueIfInFlight: true })
+  }
+  const refreshWorktreesOnChange = (): void => {
+    if (trailingRead) {
       return
     }
-    void fetchWorktrees({ allowDuringModal: true })
+    const wait = lastWorktreeReadAt + WORKTREE_REFRESH_MS - Date.now()
+    if (wait <= 0) {
+      readWorktrees()
+      return
+    }
+    trailingRead = setTimeout(() => {
+      trailingRead = undefined
+      if (!hidden()) {
+        readWorktrees()
+      }
+    }, wait)
+  }
+
+  const refreshOnForeground = (): void => {
+    if (hidden()) {
+      return
+    }
+    clearTimeout(trailingRead)
+    trailingRead = undefined
+    if (owed) {
+      owed = false
+      readEverything({ allowDuringModal: true })
+      return
+    }
+    readWorktrees({ allowDuringModal: true })
     void fetchRepoMetadata({ queueIfInFlight: true })
   }
 
@@ -35,7 +73,7 @@ export function startHostWorktreeRefresh({
     }
   })
   const interval = setInterval(() => {
-    if (AppState.currentState !== 'active') {
+    if (hidden()) {
       return
     }
     void fetchWorktrees()
@@ -59,8 +97,11 @@ export function startHostWorktreeRefresh({
         eventStreamReady = true
         if (replayedAfterReconnect) {
           // Why: client events are not queued while disconnected, so re-read both snapshots after replay.
-          void fetchWorktrees()
-          void fetchRepoMetadata({ force: true, queueIfInFlight: true })
+          if (hidden()) {
+            owed = true
+          } else {
+            readEverything()
+          }
         }
         return
       }
@@ -68,12 +109,17 @@ export function startHostWorktreeRefresh({
         eventStreamReady = false
         return
       }
+      // Why: notices arrive per agent step; a backgrounded page reads nothing and catches up on return.
+      if (hidden()) {
+        owed = true
+        return
+      }
       if (event.type === 'reposChanged') {
         // Why: folder workspace mutations publish reposChanged, and worktree.ps owns this catalog.
-        void fetchWorktrees()
+        refreshWorktreesOnChange()
         void fetchRepoMetadata({ force: true, queueIfInFlight: true })
       } else if (event.type === 'worktreesChanged') {
-        void fetchWorktrees()
+        refreshWorktreesOnChange()
       }
     }
   )
@@ -83,6 +129,7 @@ export function startHostWorktreeRefresh({
 
   return () => {
     stale = true
+    clearTimeout(trailingRead)
     clearInterval(interval)
     appStateSubscription.remove()
     unsubscribe()

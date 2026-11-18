@@ -157,6 +157,9 @@ export type MobileWebShellSessionEffect =
    *  it was armed in, and nothing cancels it: a `ready` that lands first makes the expiry a no-op,
    *  so the runner owns a timer and none of the decision. */
   | { readonly kind: 'await-page-ready' }
+  /** Start the clock on the view finishing a document. Expiry arrives as `document-load-deadline`;
+   *  a load the native view refuses or never commits reports nothing, so only a clock ends it. */
+  | { readonly kind: 'await-document-load' }
   /** Write down why an update read failed, on the device, for Troubleshoot to show: a release
    *  build forwards no console output, so without it the banner is the only evidence. */
   | { readonly kind: 'record-update-failure'; readonly failure: MobileWebShellUpdateFailureFacts }
@@ -229,6 +232,7 @@ export type MobileWebShellSessionEvent =
    *  for every way a document ends, so this never has to be inferred from silence. */
   | { readonly type: 'page-back-claim'; readonly claimed: boolean }
   | { readonly type: 'page-ready-deadline'; readonly flow: number }
+  | { readonly type: 'document-load-deadline'; readonly flow: number }
 
 /** Latches live beside the state because both outlive the state they were set in: `retriedOnce`
  *  spans the delete-and-refetch that puts the state back to `checking`, and `remountedOnce` spans a
@@ -256,6 +260,8 @@ export type MobileWebShellSession = {
   readonly pageReportsPaint: boolean
   /** Whether this document has reported a frame on screen. Cleared with `pageReady`. */
   readonly pagePainted: boolean
+  /** Whether the view finished this document. Cleared with `pageReady`. */
+  readonly documentLoaded: boolean
   /**
    * Whether the document on screen is holding the device Back key.
    *

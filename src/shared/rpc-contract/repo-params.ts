@@ -104,3 +104,8 @@ export const RepoSparsePresetSave = RepoSelector.extend({
   name: requiredString('Missing preset name'),
   directories: z.array(z.string())
 })
+
+// Opt-in: a caller holding afterSnapshotId's repos gets `unchanged`; older hosts take no params and ignore it.
+export const RepoList = z.object({
+  afterSnapshotId: z.string().min(1).max(128).nullable().optional()
+})

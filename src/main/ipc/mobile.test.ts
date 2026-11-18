@@ -140,7 +140,7 @@ describe('registerMobileHandlers', () => {
     networkInterfacesMock.mockReturnValue({
       docker0: [{ family: 'IPv4', internal: false, address: '172.17.0.1' }],
       'vEthernet (Default Switch)': [{ family: 'IPv4', internal: false, address: '172.28.80.1' }],
-      bridge0: [{ family: 'IPv4', internal: false, address: '169.254.60.1' }],
+      bridge0: [{ family: 'IPv4', internal: false, address: '192.168.64.1' }],
       en0: [
         { family: 'IPv6', internal: false, address: '2605:340:cd51:2a01:0:2b13:f279:c096' },
         { family: 'IPv4', internal: false, address: '192.168.1.24' }
@@ -156,7 +156,7 @@ describe('registerMobileHandlers', () => {
         { name: 'en0', address: '2605:340:cd51:2a01:0:2b13:f279:c096' },
         { name: 'docker0', address: '172.17.0.1' },
         { name: 'vEthernet (Default Switch)', address: '172.28.80.1' },
-        { name: 'bridge0', address: '169.254.60.1' }
+        { name: 'bridge0', address: '192.168.64.1' }
       ]
     })
   })

@@ -114,6 +114,20 @@ export class MobileNotificationDismissalStore {
     }
   }
 
+  /** Unreadable history cannot rule a delivery out. */
+  hasLiveDelivery(notificationId: string): boolean {
+    const now = Date.now()
+    return (
+      this.unreadable ||
+      this.entries.some(
+        (entry) =>
+          entry.notificationId === notificationId &&
+          entry.expiresAt > now &&
+          entry.dismissedThrough < entry.notificationSeq
+      )
+    )
+  }
+
   reconcile(delivered: readonly DeliveredNotificationIdentity[]): DeliveredNotificationIdentity[] {
     const now = Date.now()
     return delivered.filter((item) =>

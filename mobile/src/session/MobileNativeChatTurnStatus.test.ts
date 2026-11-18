@@ -1,12 +1,31 @@
 import { createElement } from 'react'
 import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { AppStateStatus } from 'react-native'
+
+const appState = vi.hoisted(() => ({
+  current: 'active',
+  listeners: new Set<(state: AppStateStatus) => void>()
+}))
 
 vi.mock('react-native', async () => {
   const React = await import('react')
   const Text = ({ children, ...props }: { children?: unknown }): unknown =>
     React.createElement('Text', props, children)
   return {
+    AppState: {
+      get currentState() {
+        return appState.current
+      },
+      addEventListener: (_event: string, listener: (state: AppStateStatus) => void) => {
+        appState.listeners.add(listener)
+        return {
+          remove: () => {
+            appState.listeners.delete(listener)
+          }
+        }
+      }
+    },
     ActivityIndicator: (props: Record<string, unknown>) =>
       React.createElement('ActivityIndicator', props),
     Pressable: ({ children, ...props }: { children?: unknown }) =>
@@ -27,13 +46,25 @@ describe('MobileNativeChatTurnStatus', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-04T00:00:00Z'))
+    appState.current = 'active'
+    appState.listeners.clear()
   })
 
   afterEach(() => {
     act(() => renderer?.unmount())
     renderer = null
+    vi.restoreAllMocks()
     vi.useRealTimers()
   })
+
+  function changeAppState(state: AppStateStatus) {
+    act(() => {
+      appState.current = state
+      for (const listener of appState.listeners) {
+        listener(state)
+      }
+    })
+  }
 
   function render(props: {
     startedAt: number | null
@@ -117,5 +148,43 @@ describe('MobileNativeChatTurnStatus', () => {
     const row = tree.root.findByType('View' as never)
     expect(row.props.accessibilityLiveRegion).toBe('polite')
     expect(row.props.accessibilityLabel).toBe('Agent is responding')
+  })
+
+  it('stops clock callbacks in the background and catches up immediately on resume', () => {
+    const tree = render({ startedAt: Date.now(), thinking: false })
+    act(() => {
+      vi.advanceTimersByTime(2_000)
+    })
+    expect(labels(tree.root)).toEqual(['Working for 2s'])
+
+    changeAppState('background')
+    const clockReads = vi.spyOn(Date, 'now')
+    act(() => {
+      vi.advanceTimersByTime(60_000)
+    })
+    expect(clockReads).not.toHaveBeenCalled()
+    expect(vi.getTimerCount()).toBe(0)
+    expect(labels(tree.root)).toEqual(['Working for 2s'])
+
+    changeAppState('active')
+    expect(labels(tree.root)).toEqual(['Working for 1m 2s'])
+    expect(vi.getTimerCount()).toBe(1)
+    act(() => {
+      vi.advanceTimersByTime(1_000)
+    })
+    expect(labels(tree.root)).toEqual(['Working for 1m 3s'])
+  })
+
+  it('creates no clock while initially backgrounded and uses a supplied start time on resume', () => {
+    appState.current = 'background'
+    const startedAt = Date.now() - 5_000
+    const tree = render({ startedAt, thinking: false })
+    expect(vi.getTimerCount()).toBe(0)
+    act(() => {
+      vi.advanceTimersByTime(15_000)
+    })
+    changeAppState('active')
+    expect(labels(tree.root)).toEqual(['Working for 20s'])
+    expect(vi.getTimerCount()).toBe(1)
   })
 })

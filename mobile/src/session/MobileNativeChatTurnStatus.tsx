@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 import { ChevronRight } from 'lucide-react-native'
 import {
@@ -10,21 +10,15 @@ import { sessionChatCatalog, type sessionChatEn } from '../i18n/catalogs/session
 import type { MobileTranslate } from '../i18n/mobile-i18n-catalog'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { colors, spacing, typography } from '../theme/mobile-theme'
+import { useNow } from '../hooks/use-now'
 
-/** Seconds tick only while a turn is actually counting, so a settled transcript
- *  holds no timers. */
+/** Seconds tick only while a turn is actually counting and the app is foregrounded, so a
+ *  settled or backgrounded transcript holds no timers. */
 function useElapsedSeconds(startedAt: number | null, counting: boolean): number {
   // Preserves the pre-stamp epoch for the frame before the turn's startedAt lands.
   const [mountedAt] = useState(() => Date.now())
-  const [now, setNow] = useState(() => Date.now())
-  useEffect(() => {
-    if (!counting) {
-      return
-    }
-    setNow(Date.now())
-    const timer = setInterval(() => setNow(Date.now()), 1_000)
-    return () => clearInterval(timer)
-  }, [counting])
+  // Why: paused while backgrounded so a hidden transcript stops re-rendering every second.
+  const now = useNow(1_000, counting)
   return counting ? nativeChatElapsedSeconds(startedAt, mountedAt, now) : 0
 }
 

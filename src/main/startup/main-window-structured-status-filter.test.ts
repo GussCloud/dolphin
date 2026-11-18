@@ -94,3 +94,11 @@ it('forwards retirement acknowledgement only on live status delivery', () => {
   expect(sent[0].event).toHaveProperty('authorityRestartId', 'retirement-id')
   expect(sent[1].event).not.toHaveProperty('authorityRestartId')
 })
+
+// Without the flag the renderer sees a reconnect replay as a fresh completion and re-notifies.
+it('marks replayed rows so the renderer can skip their completion notification', () => {
+  hooks.listener!(statusPayload({ payload: { state: 'done', prompt: 'ship it' } }))
+  hooks.listener!(statusPayload({ payload: { state: 'done', prompt: 'ship it' }, isReplay: true }))
+  expect(sent[0].event).not.toHaveProperty('isReplay')
+  expect(sent[1].event).toHaveProperty('isReplay', true)
+})

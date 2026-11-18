@@ -2,7 +2,7 @@ import { bindDeferredRpcOperation, defineRpcOperation } from '../transport/rpc-o
 import { rpcResultVariant } from '../transport/rpc-operation-result-reader'
 import {
   hostPlatformSchema,
-  hostRepoCatalogSchema,
+  hostRepoCatalogSnapshotSchema,
   hostScreenUnreadReplySchema,
   hostSshTargetSummariesSchema,
   hostViewSettingsSchema
@@ -17,13 +17,14 @@ import {
 // try/catch, which already treats a failed refresh as "retry on the next one"; the four writes read
 // no reply body at all. host-screen-reply-schema.ts says which members each screen actually reads.
 
+// The host screen's repo poll: repeats of an unchanged catalog cost a snapshot id, not every icon.
 export const hostRepoCatalogRead = bindDeferredRpcOperation(
   defineRpcOperation({
     name: 'repo.host-catalog-or-skip',
     method: 'repo.list',
     acceptance: 'success-result-or-skip',
     barrier: 'after-caller-barrier',
-    read: rpcResultVariant('repo-catalog', hostRepoCatalogSchema)
+    read: rpcResultVariant('repo-catalog', hostRepoCatalogSnapshotSchema)
   })
 )
 

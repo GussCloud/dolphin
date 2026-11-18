@@ -3,6 +3,7 @@ import {
   isVirtualBridgeInterface,
   selectAutoAdvertisedPairingAddress
 } from '../../shared/pairing-address-auto-selection'
+import { isLinkLocalAddress } from '../../shared/network/link-local-address'
 import { isTailnetIPv4Address } from '../../shared/tailnet-address'
 import { getWindowsDefaultRouteInterfaceNames } from './windows-default-route-interfaces'
 
@@ -13,11 +14,6 @@ export type NetworkInterface = {
 }
 
 export type DefaultRouteInterfaceLookup = () => Promise<ReadonlySet<string> | null>
-
-function isUsableIPv6Address(address: string): boolean {
-  // Why: link-local IPv6 needs an unadvertised scope id, so a QR hostname cannot connect to it.
-  return !/^fe[89ab][0-9a-f]:/i.test(address)
-}
 
 function isProxyFakeIpIPv4Address(address: string): boolean {
   return /^198\.(?:18|19)\./.test(address)
@@ -40,12 +36,12 @@ export async function getPairingNetworkInterfaces(
 
   for (const [name, addrs] of Object.entries(interfaces)) {
     for (const addr of addrs ?? []) {
-      if (addr.internal || (addr.family === 'IPv4' && isProxyFakeIpIPv4Address(addr.address))) {
-        continue
-      }
       if (
-        addr.family !== 'IPv4' &&
-        !(addr.family === 'IPv6' && isUsableIPv6Address(addr.address))
+        addr.internal ||
+        (addr.family !== 'IPv4' && addr.family !== 'IPv6') ||
+        (addr.family === 'IPv4' && isProxyFakeIpIPv4Address(addr.address)) ||
+        // Why: an APIPA/idle adapter's 169.254 or fe80 address is never dialable from the phone.
+        isLinkLocalAddress(addr.address)
       ) {
         continue
       }

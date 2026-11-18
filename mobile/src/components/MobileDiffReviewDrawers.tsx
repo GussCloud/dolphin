@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native'
 import { Check, Copy, FileText, Plus, Send, Trash2, X } from 'lucide-react-native'
 import type { DiffComment } from '../../../src/shared/diff-comment-types'
@@ -123,7 +123,8 @@ function useOverflowActions(
         label: t('sendUnsentNotes'),
         icon: Send,
         disabled: controller.unsentComments.length === 0,
-        skipAutoClose: true,
+        // Why: iOS cannot present Send Notes while this sheet is still on screen.
+        closeBeforePress: true,
         onPress: () => void controller.openSendSheet()
       },
       {
@@ -283,10 +284,21 @@ function CompletionDrawer({ controller }: Props) {
   const t = useMobileTranslation(componentsDiffReviewCatalog)
   const noteCount =
     controller.screenState.kind === 'ready' ? controller.screenState.comments.length : 0
+  const sendAfterCloseRef = useRef(false)
   return (
     <BottomDrawer
       visible={controller.showCompletion}
-      onClose={() => controller.setShowCompletion(false)}
+      onClose={() => {
+        sendAfterCloseRef.current = false
+        controller.setShowCompletion(false)
+      }}
+      onAfterClose={() => {
+        // Why: iOS freezes the screen if Send Notes opens before this drawer unmounts.
+        if (sendAfterCloseRef.current) {
+          sendAfterCloseRef.current = false
+          void controller.openSendSheet()
+        }
+      }}
     >
       <Text style={styles.drawerTitle}>{t('reviewComplete')}</Text>
       <Text style={styles.drawerSubtitle}>
@@ -309,7 +321,10 @@ function CompletionDrawer({ controller }: Props) {
         <Pressable
           style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
           disabled={controller.unsentComments.length === 0}
-          onPress={() => void controller.openSendSheet()}
+          onPress={() => {
+            sendAfterCloseRef.current = true
+            controller.setShowCompletion(false)
+          }}
           accessibilityRole="button"
           accessibilityLabel={t('sendNotesToAgent')}
         >
