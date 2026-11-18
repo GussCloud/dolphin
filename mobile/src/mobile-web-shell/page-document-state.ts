@@ -10,6 +10,7 @@ export const CLEAR_PAGE_DOCUMENT_STATE = {
   pageReady: false,
   pageReportsPaint: false,
   pagePainted: false,
+  documentLoaded: false,
   pageBackClaimed: false,
   pageOwnsSafeArea: false
 } as const

@@ -91,7 +91,7 @@ vi.mock('../transport/mobile-web-bundle-fetch', () => ({
 }))
 
 import { BRIDGE_READY_RETRY_MAX_MS } from './bridge/bridge-client-init-handshake'
-import { PAGE_READY_DEADLINE_MS } from './mobile-web-shell-runtime'
+import { DOCUMENT_LOAD_DEADLINE_MS, PAGE_READY_DEADLINE_MS } from './mobile-web-shell-runtime'
 import { useMobileWebShellSession } from './use-mobile-web-shell-session'
 
 const HOST_ID = 'host-1'
@@ -209,6 +209,7 @@ type Mounted = {
   states: () => readonly MobileWebShellSessionState[]
   /** Whether the page had spoken, as every render of the hook reported it. */
   handshakes: () => readonly boolean[]
+  documentStarted: () => void
   documentLoaded: () => void
   pageReady: (reports?: readonly string[]) => void
   timers: ReturnType<typeof createTimerSeam>
@@ -218,12 +219,14 @@ async function mount(store: GenerationStore): Promise<Mounted> {
   const timers = createTimerSeam()
   const handle: {
     retry: () => void
+    documentStarted: () => void
     documentLoaded: () => void
     pageReady: (ready: { reports: readonly string[]; accepts: readonly string[] }) => void
     states: MobileWebShellSessionState[]
     handshakes: boolean[]
   } = {
     retry: () => {},
+    documentStarted: () => {},
     documentLoaded: () => {},
     pageReady: () => {},
     states: [],
@@ -241,6 +244,7 @@ async function mount(store: GenerationStore): Promise<Mounted> {
       }
     })
     handle.retry = session.retry
+    handle.documentStarted = session.reportDocumentStarted
     handle.documentLoaded = session.reportDocumentLoaded
     handle.pageReady = session.reportPageReady
     handle.states.push(session.state)
@@ -261,6 +265,7 @@ async function mount(store: GenerationStore): Promise<Mounted> {
     rerender: () => tree.update(createElement(Probe)),
     states: () => handle.states,
     handshakes: () => handle.handshakes,
+    documentStarted: () => handle.documentStarted(),
     documentLoaded: () => handle.documentLoaded(),
     pageReady: (reports: readonly string[] = []) => handle.pageReady({ reports, accepts: [] }),
     timers
@@ -468,12 +473,36 @@ describe('the wait for the page to speak', () => {
     await act(async () => {
       mounted.documentLoaded()
     })
-    expect(mounted.timers.armed.map((timer) => timer.delayMs)).toEqual([PAGE_READY_DEADLINE_MS])
+    // The first is the activation's load wait, which this load already spent.
+    expect(mounted.timers.armed.map((timer) => timer.delayMs)).toEqual([
+      DOCUMENT_LOAD_DEADLINE_MS,
+      PAGE_READY_DEADLINE_MS
+    ])
     await act(async () => {
       mounted.timers.fire()
     })
     // Not the failure screen: `document-load-failed` on a session that has not retried deletes the
     // host's cache and runs the flow once more, which is the recovery a republished bundle needs.
+    expect(mounted.states().at(-1)?.kind).toBe('checking')
+    await act(async () => {
+      mounted.tree.unmount()
+    })
+  })
+
+  it('fails a generation whose document the view never finished, instead of spinning forever', async () => {
+    // A load the WebView refuses or never commits reports nothing at all.
+    const mounted = await ready()
+    await act(async () => {
+      mounted.documentStarted()
+    })
+    expect(
+      mounted.timers.armed.filter(
+        (timer) => !timer.cancelled && timer.delayMs === DOCUMENT_LOAD_DEADLINE_MS
+      )
+    ).toHaveLength(2)
+    await act(async () => {
+      mounted.timers.fire()
+    })
     expect(mounted.states().at(-1)?.kind).toBe('checking')
     await act(async () => {
       mounted.tree.unmount()
@@ -520,7 +549,7 @@ describe('the wait for the page to speak', () => {
     })
     // The race is real on a device: the page's first frame crosses the bridge while the WebView's
     // own load callback is still in the native queue.
-    expect(mounted.timers.armed).toHaveLength(0)
+    expect(mounted.timers.armed.map((timer) => timer.delayMs)).toEqual([DOCUMENT_LOAD_DEADLINE_MS])
     await act(async () => {
       mounted.tree.unmount()
     })
