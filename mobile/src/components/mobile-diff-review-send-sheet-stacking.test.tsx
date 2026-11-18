@@ -78,14 +78,14 @@ function render(controller: ReturnType<typeof fakeController>): ReactTestRendere
 }
 
 function shownDrawer(renderer: ReactTestRenderer): DrawerProps {
-  const drawers = renderer.root.findAllByType('Drawer')
+  const drawers = renderer.root.findAll((node) => String(node.type) === 'Drawer')
   expect(drawers).toHaveLength(1)
   return drawers[0].props.drawer
 }
 
 function pressByText(renderer: ReactTestRenderer, label: string): void {
   const pressable = renderer.root
-    .findAllByType('Pressable')
+    .findAll((node) => String(node.type) === 'Pressable')
     .find(
       (node: ReactTestInstance) =>
         node.findAll((child) => child.children.includes(label)).length > 0
