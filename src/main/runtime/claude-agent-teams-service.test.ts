@@ -214,11 +214,10 @@ describe('ClaudeAgentTeamsService', () => {
       request(['respawn-pane', '-k', '-t', '%2', '--', teammateCommand])
     ).resolves.toMatchObject({ stdout: '', exitCode: 0 })
 
-    // the placeholder terminal is closed and the pane is recreated, from the same
-    // origin/direction, with the real teammate command.
-    expect(api.closeTerminal).toHaveBeenCalledWith('teammate-1')
+    // the `cat` placeholder never spawns a terminal; respawn makes the one real pane
+    // from the recorded origin/direction.
+    expect(api.closeTerminal).not.toHaveBeenCalled()
     expect(splitCalls).toEqual([
-      { handle: 'leader-handle', direction: 'vertical', command: 'cat', envPane: '%2' },
       { handle: 'leader-handle', direction: 'vertical', command: teammateCommand, envPane: '%2' }
     ])
 
@@ -228,7 +227,7 @@ describe('ClaudeAgentTeamsService', () => {
     ).resolves.toMatchObject({ stdout: '%1\n%2\n' })
 
     await request(['kill-pane', '-t', '%2'])
-    expect(api.closeTerminal).toHaveBeenLastCalledWith('teammate-2')
+    expect(api.closeTerminal).toHaveBeenLastCalledWith('teammate-1')
   })
 
   it('lists titled teammate names by their current terminal handle, dropping killed panes', async () => {
@@ -239,9 +238,9 @@ describe('ClaudeAgentTeamsService', () => {
     await runPlaceholderThenRespawn(setup)
     await request(['select-pane', '-t', '%2', '-T', 'impl'])
 
-    expect([...service.listTeammateNamesByHandle()]).toEqual([['teammate-2', 'impl']])
+    expect([...service.listTeammateNamesByHandle()]).toEqual([['teammate-1', 'impl']])
     expect([...service.listTeammateLineageByHandle()]).toEqual([
-      ['teammate-2', { leaderHandle: 'leader-handle', teammateName: 'impl' }]
+      ['teammate-1', { leaderHandle: 'leader-handle', teammateName: 'impl' }]
     ])
 
     await request(['kill-pane', '-t', '%2'])
@@ -249,7 +248,7 @@ describe('ClaudeAgentTeamsService', () => {
     expect(service.listTeammateLineageByHandle().size).toBe(0)
   })
 
-  it('removes the pane when replacement split fails after a confirmed placeholder stop', async () => {
+  it('removes a pending pane when its teammate split fails', async () => {
     const { service, teamId, token, leaderPane, api } = createServiceWithLeader()
     const request = (argv: string[], envPane = leaderPane) =>
       service.handleTmuxCompat({ teamId, token, envPane, argv }, api)
@@ -272,7 +271,7 @@ describe('ClaudeAgentTeamsService', () => {
       request(['respawn-pane', '-k', '-t', '%2', '--', 'claude --agent-id a'])
     ).resolves.toMatchObject({ ok: false, exitCode: 1 })
 
-    expect(api.closeTerminal).toHaveBeenCalledWith('teammate-1')
+    expect(api.closeTerminal).not.toHaveBeenCalled()
     await expect(
       request(['list-panes', '-t', 'dolphin:0', '-F', '#{pane_id}'])
     ).resolves.toMatchObject({ stdout: '%1\n' })
@@ -299,12 +298,12 @@ describe('ClaudeAgentTeamsService', () => {
     ).resolves.toMatchObject({ stdout: '%1\n%2\n' })
   })
 
-  it('does not launch a replacement when the placeholder stop is unconfirmed', async () => {
+  it('does not launch a replacement when a spawned pane stop is unconfirmed', async () => {
     const { service, teamId, token, leaderPane, api, splitCalls } = createServiceWithLeader()
     const request = (argv: string[], envPane = leaderPane) =>
       service.handleTmuxCompat({ teamId, token, envPane, argv }, api)
 
-    await request(['split-window', '-t', leaderPane, '-h', '-P', '-F', '#{pane_id}', 'cat'])
+    await request(['split-window', '-t', leaderPane, '-h', '-P', '-F', '#{pane_id}'])
     vi.mocked(api.closeTerminal).mockResolvedValueOnce({
       handle: 'teammate-1',
       tabId: 'tab-1',
@@ -457,7 +456,7 @@ describe('ClaudeAgentTeamsService', () => {
       const setup = createServiceWithLeader({ hostShell: 'default' })
       await runPlaceholderThenRespawn(setup)
 
-      expect(setup.splitOpts).toHaveLength(2)
+      expect(setup.splitOpts).toHaveLength(1)
       for (const opts of setup.splitOpts) {
         expect(opts).not.toHaveProperty('shellOverride')
         expect(opts.env).not.toHaveProperty('MSYS2_ARG_CONV_EXCL')

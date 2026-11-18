@@ -43,10 +43,10 @@ export class ClaudeAgentTeamsPaneLifecycle {
       splitFromPane: splitTarget.pane.fakePaneId,
       splitDirection: splitTarget.direction
     }
-    // Why: a Git Bash pane costs seconds to start, so the `cat` holding pane stays pending
-    // (no PTY) until respawn-pane brings the real command; that also avoids the dead pane
-    // Windows leaves when a killed placeholder exits non-zero.
-    if (hostShell !== 'native-windows-git-bash' || command !== HOLDING_PANE_COMMAND) {
+    // Why: the `cat` holding pane stays pending (no PTY) until respawn-pane brings the real
+    // command. A spawned placeholder's close can reach the renderer before its fire-and-forget
+    // reveal mounts it, so the dead `cat` pane stayed on screen (macOS); Git Bash also starts slowly.
+    if (command !== HOLDING_PANE_COMMAND) {
       await this.spawn(team, pane, command, hostShell, api)
     }
     team.panes.set(fakePaneId, pane)
