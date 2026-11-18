@@ -4,7 +4,7 @@ import type {
   LocalBaseRefUpdateSuggestion
 } from '../../shared/worktree/base-ref-drift-types'
 import { windowsLongPathGitArgs } from '../../shared/windows-long-path-git-args'
-import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
+import { checkoutWorkersGitArgs } from './checkout-workers-git-args'
 import { withRepoRefMaintenancePaused } from './local-repo-ref-maintenance'
 import { gitExecFileAsync } from './runner'
 import { runWithGitReadCacheInvalidation } from './status'
@@ -188,13 +188,10 @@ async function performAddWorktree(
   let localBaseRefRefresh: LocalBaseRefRefreshResult | undefined
   let localBaseRefUpdateSuggestion: LocalBaseRefUpdateSuggestion | undefined
   // Why: enable long paths for this Windows checkout without changing user Git config.
-  const args = [
-    ...windowsLongPathGitArgs(repoPath),
-    ...windowsParallelCheckoutGitArgs(repoPath),
-    'worktree',
-    'add'
-  ]
+  const args = [...windowsLongPathGitArgs(repoPath), 'worktree', 'add']
   let effectiveBase: string | undefined
+  // Overlaps base resolution; never rejects.
+  const checkoutWorkersArgs = noCheckout ? [] : checkoutWorkersGitArgs(repoPath, options)
   if (noCheckout) {
     args.push('--no-checkout')
   }
@@ -218,7 +215,7 @@ async function performAddWorktree(
     }
   }
   try {
-    await gitExecFileAsync(args, {
+    await gitExecFileAsync([...(await checkoutWorkersArgs), ...args], {
       ...gitExecOptions(repoPath, options),
       // Why: resolve per call — hoisting this to a module const would freeze the override at import.
       timeout: resolveWorktreeAddTimeoutMs()

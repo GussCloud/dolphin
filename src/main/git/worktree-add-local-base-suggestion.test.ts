@@ -13,6 +13,9 @@ const {
   moveWorktreeDirectoryToTrashMock: vi.fn()
 }))
 
+// Keep the ordered runner queues; checkout-workers-real-git covers the checkout.workers read.
+vi.mock('./checkout-workers-git-args', () => ({ checkoutWorkersGitArgs: async () => [] }))
+
 vi.mock('./runner', () => ({
   gitExecFileAsync: gitExecFileAsyncMock,
   gitExecFileSync: gitExecFileSyncMock,

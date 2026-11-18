@@ -11,7 +11,7 @@ import {
   type LocalBaseRefMutationGate,
   type LocalBaseRefRefreshPlan
 } from './worktree-base-refresh-deferred-apply'
-import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
+import { checkoutWorkersGitArgs } from './checkout-workers-git-args'
 import { parseWorktreeList } from '../../shared/git-worktree-porcelain-parser'
 import type { AddWorktreeOptions, GitWorktreeExecOptions } from './worktree-operation-options'
 import { gitExecOptions } from './worktree-operation-options'
@@ -106,10 +106,10 @@ async function planLocalBaseRefRefresh(
               mutationOptions
             ),
           start: () =>
-            runWithGitReadCacheInvalidation(() =>
+            runWithGitReadCacheInvalidation(async () =>
               gitExecFileAsync(
                 [
-                  ...windowsParallelCheckoutGitArgs(currentOwner.path),
+                  ...(await checkoutWorkersGitArgs(currentOwner.path, mutationOptions)),
                   'reset',
                   '--hard',
                   evaluation.remoteOid

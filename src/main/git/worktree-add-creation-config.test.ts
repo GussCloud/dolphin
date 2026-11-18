@@ -13,6 +13,9 @@ const {
   moveWorktreeDirectoryToTrashMock: vi.fn()
 }))
 
+// Keep the ordered runner queues; checkout-workers-real-git covers the checkout.workers read.
+vi.mock('./checkout-workers-git-args', () => ({ checkoutWorkersGitArgs: async () => [] }))
+
 vi.mock('./runner', () => ({
   gitExecFileAsync: gitExecFileAsyncMock,
   gitExecFileSync: gitExecFileSyncMock,
@@ -123,16 +126,7 @@ describe('addWorktree', () => {
     )
 
     expect(gitExecFileAsyncMock).toHaveBeenCalledWith(
-      [
-        '-c',
-        'core.longpaths=true',
-        '-c',
-        'checkout.workers=0',
-        'worktree',
-        'add',
-        'C:\\repo-feature',
-        'feature/test'
-      ],
+      ['-c', 'core.longpaths=true', 'worktree', 'add', 'C:\\repo-feature', 'feature/test'],
       { cwd: 'C:\\repo', timeout: WORKTREE_ADD_TIMEOUT_MS }
     )
   })
@@ -154,16 +148,7 @@ describe('addWorktree', () => {
     )
 
     expect(gitExecFileAsyncMock).toHaveBeenCalledWith(
-      [
-        '-c',
-        'core.longpaths=true',
-        '-c',
-        'checkout.workers=0',
-        'worktree',
-        'add',
-        'C:\\repo-feature',
-        'feature/test'
-      ],
+      ['-c', 'core.longpaths=true', 'worktree', 'add', 'C:\\repo-feature', 'feature/test'],
       { cwd: 'C:\\repo', wslDistro: 'Ubuntu', timeout: WORKTREE_ADD_TIMEOUT_MS }
     )
   })

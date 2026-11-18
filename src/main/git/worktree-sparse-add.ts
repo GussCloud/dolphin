@@ -1,5 +1,5 @@
 import { windowsLongPathGitArgs } from '../../shared/windows-long-path-git-args'
-import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
+import { checkoutWorkersGitArgs } from './checkout-workers-git-args'
 import { gitExecFileAsync } from './runner'
 import { addWorktree, unsetWorktreeCreationBase } from './worktree-add'
 import type {
@@ -35,16 +35,16 @@ export async function addSparseWorktree(
     // Why: `worktree add --no-checkout` writes no files, so these are the calls that
     // actually materialize the deep path and need the long-path escape hatch.
     const longPathArgs = windowsLongPathGitArgs(worktreePath)
-    await gitExecFileAsync(
-      ['sparse-checkout', 'init', '--cone'],
-      gitExecOptions(worktreePath, options)
-    )
+    const [checkoutWorkersArgs] = await Promise.all([
+      checkoutWorkersGitArgs(worktreePath, options),
+      gitExecFileAsync(['sparse-checkout', 'init', '--cone'], gitExecOptions(worktreePath, options))
+    ])
     await gitExecFileAsync(
       [...longPathArgs, 'sparse-checkout', 'set', '--', ...directories],
       gitExecOptions(worktreePath, options)
     )
     await gitExecFileAsync(
-      [...longPathArgs, ...windowsParallelCheckoutGitArgs(worktreePath), 'checkout', branch],
+      [...checkoutWorkersArgs, ...longPathArgs, 'checkout', branch],
       gitExecOptions(worktreePath, options)
     )
     return addResult

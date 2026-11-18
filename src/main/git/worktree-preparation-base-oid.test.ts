@@ -1,6 +1,9 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 
 const gitExec = vi.hoisted(() => vi.fn())
+// Keep the ordered runner queues; checkout-workers-real-git covers the checkout.workers read.
+vi.mock('./checkout-workers-git-args', () => ({ checkoutWorkersGitArgs: async () => [] }))
+
 vi.mock('./runner', () => ({ gitExecFileAsync: gitExec }))
 vi.mock('./worktree-base-refresh', () => ({
   refreshLocalBaseRefForWorktreeCreate: vi.fn(),
