@@ -75,6 +75,16 @@ describe('host-stamped remote foreground resolver', () => {
     expect(evidence).toMatchObject({ verdict: 'unverifiable', reason })
   })
 
+  it.each(['??', '?', '-'])('refuses a root with no controlling terminal (tty=%s)', (tty) => {
+    expect(
+      resolveRemoteForegroundEvidence(
+        { rootPid: 100, fallbackProcess: 'zsh' },
+        { ...metadata, platform: 'darwin' },
+        rowsFor(['node /opt/codex'], { tty })
+      )
+    ).toMatchObject({ verdict: 'unverifiable', reason: 'fence_incomplete' })
+  })
+
   it('always degrades SSH-to-Windows without a job/console foreground primitive', () => {
     expect(
       resolveRemoteForegroundEvidence(
