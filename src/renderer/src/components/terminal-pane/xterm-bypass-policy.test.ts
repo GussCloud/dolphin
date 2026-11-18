@@ -97,6 +97,28 @@ describe('shouldBypassXtermKeyboardEvent — macOS', () => {
     ).toBe(false)
   })
 
+  it.each([
+    ['Hide (Cmd+H)', { key: 'h', code: 'KeyH', metaKey: true }],
+    ['Hide Others (Cmd+Option+H)', { key: '˙', code: 'KeyH', metaKey: true, altKey: true }],
+    ['Minimize (Cmd+M)', { key: 'm', code: 'KeyM', metaKey: true }],
+    ['Quit (Cmd+Q)', { key: 'q', code: 'KeyQ', metaKey: true }],
+    ['Full Screen (Cmd+Ctrl+F)', { key: 'f', code: 'KeyF', metaKey: true, ctrlKey: true }],
+    ['DevTools (Cmd+Option+I)', { key: 'ˆ', code: 'KeyI', metaKey: true, altKey: true }]
+  ])('bubbles the native menu chord %s so kitty encoding cannot cancel it', (_name, init) => {
+    expect(shouldBypassXtermKeyboardEvent(event(init), { ...noSel, kittyKeyboardFlags: 1 })).toBe(
+      true
+    )
+  })
+
+  it('leaves native menu chords to xterm on iPadOS web, which has no app menu', () => {
+    expect(
+      shouldBypassXtermKeyboardEvent(event({ key: 'q', code: 'KeyQ', metaKey: true }), {
+        ...noSel,
+        isIosWeb: true
+      })
+    ).toBe(false)
+  })
+
   it('does not bubble Cmd+Ctrl combos (unusual; defer to xterm)', () => {
     expect(
       shouldBypassXtermKeyboardEvent(
