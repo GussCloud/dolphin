@@ -5,8 +5,14 @@ import {
   attachModelLifetimeView,
   createModelLifetimeFixture,
   modelLifetimeEditorModel,
+  modelLifetimeFile,
+  modelLifetimeTextModel,
   resetModelLifetimeFixtures
 } from './editor-model-lifetime-fixture'
+import {
+  getDiffViewerMonacoModelPaths,
+  rememberDiffViewerModelPaths
+} from './diff-monaco-model-disposal'
 import { scrollTopCache } from '@/lib/scroll-cache'
 
 vi.mock('sonner', () => ({ toast: { info: vi.fn(), error: vi.fn(), success: vi.fn() } }))
@@ -100,4 +106,43 @@ it('does not enumerate the global model registry for an ordinary edit close', as
   await Promise.resolve()
   expect(model.isDisposed()).toBe(true)
   expect(enumeration).not.toHaveBeenCalled()
+})
+
+it('releases tab-scoped diff models when their file closes', async () => {
+  const { store, attach } = createModelLifetimeFixture()
+  const file = modelLifetimeFile('scoped-diff', 'diff')
+  // Tab groups key diff views by `${file.id}::${tab.id}`; ownership must still follow the file.
+  const paths = getDiffViewerMonacoModelPaths({
+    modelKey: `${file.id}::tab-uuid`,
+    modelOwnerKey: file.id,
+    generationSuffix: ''
+  })
+  const original = modelLifetimeTextModel(paths.originalModelPath)
+  const modified = modelLifetimeTextModel(paths.modifiedModelPath)
+  store.setState({ openFiles: [file] })
+  attach()
+  store.getState().closeFile(file.id)
+  await Promise.resolve()
+  expect(original.isDisposed()).toBe(true)
+  expect(modified.isDisposed()).toBe(true)
+})
+
+it('releases Changes-mode diff models when their edit tab closes', async () => {
+  const { store, attach } = createModelLifetimeFixture()
+  const file = modelLifetimeFile('changes-mode', 'edit')
+  const paths = getDiffViewerMonacoModelPaths({
+    modelKey: `${file.id}::tab-uuid`,
+    modelOwnerKey: file.id,
+    originalModelKey: `${file.id}::tab-uuid:original:head`,
+    generationSuffix: ''
+  })
+  rememberDiffViewerModelPaths(file.id, `${file.id}::tab-uuid`, paths)
+  const original = modelLifetimeTextModel(paths.originalModelPath)
+  const modified = modelLifetimeTextModel(paths.modifiedModelPath)
+  store.setState({ openFiles: [file] })
+  attach()
+  store.getState().closeFile(file.id)
+  await Promise.resolve()
+  expect(original.isDisposed()).toBe(true)
+  expect(modified.isDisposed()).toBe(true)
 })

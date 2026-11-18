@@ -10,8 +10,8 @@ function readPanelThemeSnapshot(): string {
 export function usePluginPanelThemeRevision(): number {
   const [revision, setRevision] = useState(0)
   // Why: the revision keys the panel iframe, so remounting it destroys in-panel
-  // state. Root style writes fire at rAF cadence during a sidebar drag, so
-  // compare the baked values instead of counting mutations.
+  // state. Unrelated root style writes must not remount it, so compare the
+  // baked values instead of counting mutations.
   const snapshotRef = useRef<string | null>(null)
   useEffect(() => {
     snapshotRef.current ??= readPanelThemeSnapshot()

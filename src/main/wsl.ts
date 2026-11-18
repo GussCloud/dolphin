@@ -1,12 +1,23 @@
 import { execFile, execFileSync } from 'node:child_process'
 import { parseWslUncPath } from '../shared/wsl-paths'
 import { filterUserWslDistros, parseWslDistros } from './wsl-distro-list-output'
-import { wslDistroListRetryDelayMs } from './wsl-distro-retry'
 import {
   _resetWslAvailabilityCacheForTests,
-  _setWslAvailabilityCacheForTests,
-  dropStaleWslAvailabilityFailure
+  _setWslAvailabilityCacheForTests
 } from './wsl-availability'
+import {
+  armWslDistroListRetry,
+  cacheNoWslDistros,
+  cacheWslDistroList,
+  getCachedWslDistros,
+  hasWslDistroListProbed,
+  isWslDistroListRetryPending,
+  isWslInstallationKnownAbsent,
+  nextWslDistroProbeSequence,
+  rememberWslInstallationAbsent,
+  resetWslDistroListCache,
+  shouldReuseCachedWslDistros
+} from './wsl-distro-list-cache'
 import { resolveWslInteropSpawnCwd } from './wsl-interop-spawn-directory'
 import {
   _resetRunningWslDistroCacheForTests,
@@ -24,7 +35,15 @@ import {
   WSL_HOME_PROBE_TIMEOUT_MS
 } from './wsl-home-probe'
 import { buildWslExecArgs } from '../shared/wsl-login-shell-command'
+import { getCachedWslHome } from './wsl-home-cache'
+import {
+  _setWslInstallationForTests,
+  peekWslInstallation,
+  peekWslInstallationAndRefreshIfDue,
+  readWslInstallation
+} from './wsl-installation'
 export { hasCachedWslHome } from './wsl-home-cache'
+export { getCachedWslDistros } from './wsl-distro-list-cache'
 export { getWslHomeAsync } from './wsl-home-probe'
 // Why re-exported rather than defined here: the relay bundle needs the path
 // conversion without this module's distro-probing subprocess graph.
@@ -103,88 +122,40 @@ export function wslUncDirectoryExistsAsync(uncPath: string): Promise<boolean | n
   })
 }
 
-let wslDistroCache: string[] | null = null
 let wslDistroListInFlight: Promise<string[]> | null = null
-// Why: a wsl.exe failure must stay retryable (a transient error would
-// otherwise hide every distro until restart), but repeated failures cannot
-// re-spawn a blocking wsl.exe on every caller; brief negative caching bounds
-// the spawn rate on machines where WSL is absent or persistently broken.
-// Empty and failed probes back off from 15 seconds to a five-minute cap.
-let wslDistroListRetryAfterMs = 0
-let wslDistroListEmptyStreak = 0
-let wslDistroProbeSequence = 0
-let wslDistroCacheSequence = 0
-
-function armWslDistroListRetry(): void {
-  const now = Date.now()
-  // Concurrent completions belong to the retry window already armed by the first result.
-  if (now < wslDistroListRetryAfterMs) {
-    return
-  }
-  wslDistroListEmptyStreak += 1
-  wslDistroListRetryAfterMs = now + wslDistroListRetryDelayMs(wslDistroListEmptyStreak)
-}
-
-// Why: `wsl --install` reports zero distros while one is still provisioning, so an
-// empty answer is transient and must stay retryable — caching it for the process
-// lifetime is what made WSL vanish from the picker after setup. It is still cached
-// for reads, so a missing distro stays visible to `isKnownMissingDistro`.
-function cacheWslDistroList(rawDistros: string[], probeSequence: number): string[] {
-  const userDistros = filterUserWslDistros(rawDistros)
-  // An older positive result must not replace the newer lifetime-stable list.
-  if (
-    probeSequence < wslDistroCacheSequence &&
-    (userDistros.length === 0 || (wslDistroCache?.length ?? 0) > 0)
-  ) {
-    return wslDistroCache ?? []
-  }
-  // Why: probes overlap and can resolve out of order — a slow pre-registration wsl.exe
-  // can land after a fast one that already found the distro. A late empty answer must
-  // not erase that list, or provisioning reverts to "no distros" and backs off again.
-  if (userDistros.length === 0 && wslDistroCache !== null && wslDistroCache.length > 0) {
-    return wslDistroCache
-  }
-  if (userDistros.length > 0) {
-    dropStaleWslAvailabilityFailure()
-  }
-  wslDistroCacheSequence = probeSequence
-  wslDistroCache = userDistros
-  if (wslDistroCache.length === 0) {
-    armWslDistroListRetry()
-  }
-  return wslDistroCache
-}
-
-/** A non-empty list is stable; an empty one re-probes once the retry window elapses. */
-function shouldReuseCachedWslDistros(): boolean {
-  return (
-    wslDistroCache !== null && (wslDistroCache.length > 0 || Date.now() < wslDistroListRetryAfterMs)
-  )
-}
 
 export function listWslDistros(): string[] {
-  if (shouldReuseCachedWslDistros()) {
-    return wslDistroCache ?? []
+  if (isWslInstallationKnownAbsent() || shouldReuseCachedWslDistros()) {
+    return getCachedWslDistros() ?? []
   }
 
   if (process.platform !== 'win32') {
-    wslDistroCache = []
-    return wslDistroCache
+    return cacheNoWslDistros()
   }
 
-  if (Date.now() < wslDistroListRetryAfterMs) {
-    return wslDistroCache ?? []
+  if (isWslDistroListRetryPending()) {
+    return getCachedWslDistros() ?? []
   }
 
   // Why: only a cold cache may block the main thread; once a probe has answered or failed,
   // sync callers keep the last answer and the refresh runs off-thread.
-  if (wslDistroCache !== null || wslDistroListEmptyStreak > 0) {
+  if (hasWslDistroListProbed()) {
     void listWslDistrosAsync()
-    return wslDistroCache ?? []
+    return getCachedWslDistros() ?? []
+  }
+
+  const installed = peekWslInstallationAndRefreshIfDue()
+  if (installed === 'absent') {
+    return rememberWslInstallationAbsent()
+  }
+  // No registered service key and no sc.exe verdict yet: a sync wsl.exe could open the installer.
+  if (installed === null) {
+    void listWslDistrosAsync()
+    return getCachedWslDistros() ?? []
   }
 
   try {
-    const probeSequence = ++wslDistroProbeSequence
+    const probeSequence = nextWslDistroProbeSequence()
     const output = execFileSync('wsl.exe', ['--list', '--quiet'], {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -195,14 +166,15 @@ export function listWslDistros(): string[] {
     return cacheWslDistroList(parseWslDistros(output), probeSequence)
   } catch {
     armWslDistroListRetry()
-    return wslDistroCache ?? []
+    return getCachedWslDistros() ?? []
   }
 }
 
 export async function listWslDistrosAsync(): Promise<string[]> {
+  const cached = getCachedWslDistros()
   // A non-empty list is lifetime-stable, so never wait on a probe that cannot improve it.
-  if (wslDistroCache !== null && wslDistroCache.length > 0) {
-    return wslDistroCache
+  if (isWslInstallationKnownAbsent() || (cached !== null && cached.length > 0)) {
+    return cached ?? []
   }
   // Why ahead of the negative cache: a synchronous caller can land an empty result and arm
   // the retry window mid-probe, and handing this caller that [] would strand it even though
@@ -211,28 +183,33 @@ export async function listWslDistrosAsync(): Promise<string[]> {
     return wslDistroListInFlight
   }
 
-  if (shouldReuseCachedWslDistros()) {
-    return wslDistroCache ?? []
-  }
-
   if (process.platform !== 'win32') {
-    wslDistroCache = []
-    return wslDistroCache
+    return shouldReuseCachedWslDistros() ? (cached ?? []) : cacheNoWslDistros()
   }
 
-  if (Date.now() < wslDistroListRetryAfterMs) {
-    return wslDistroCache ?? []
+  if (shouldReuseCachedWslDistros() || isWslDistroListRetryPending()) {
+    return cached ?? []
   }
 
   // Capability reads, CLI reconciliation and hook startup all ask before the first result
   // lands; one host-wide answer must cost one wsl.exe spawn. `catch` sits ahead of the
   // stored promise, so joiners get the same fail-safe [] a per-caller catch returned.
-  const probeSequence = ++wslDistroProbeSequence
-  const probe = execFileUtf8('wsl.exe', ['--list', '--quiet'])
-    .then((output) => cacheWslDistroList(parseWslDistros(output), probeSequence))
+  const probeSequence = nextWslDistroProbeSequence()
+  const listDistros = (): Promise<string[]> =>
+    execFileUtf8('wsl.exe', ['--list', '--quiet']).then((output) =>
+      cacheWslDistroList(parseWslDistros(output), probeSequence)
+    )
+  // A known install spawns at once; otherwise the service verdict decides whether wsl.exe may run.
+  const probe = (
+    peekWslInstallation() === 'present'
+      ? listDistros()
+      : readWslInstallation().then((installed) =>
+          installed === 'absent' ? rememberWslInstallationAbsent() : listDistros()
+        )
+  )
     .catch(() => {
       armWslDistroListRetry()
-      return wslDistroCache ?? []
+      return getCachedWslDistros() ?? []
     })
     .finally(() => {
       // Only the probe that owns the slot may clear it; a test reset can install a newer one.
@@ -252,6 +229,11 @@ export async function listRunningWslDistrosAsync(
   if (process.platform !== 'win32') {
     return []
   }
+  // The running-list failure backoff also caps at 5 minutes and would keep launching the installer.
+  // Confirmed absence is a confirmed empty list, even under requireConfirmed.
+  if (peekWslInstallation() !== 'present' && (await readWslInstallation()) === 'absent') {
+    return []
+  }
   return resolveRunningWslDistros(
     () =>
       execFileUtf8('wsl.exe', ['--list', '--running', '--quiet'], {
@@ -263,16 +245,7 @@ export async function listRunningWslDistrosAsync(
 }
 
 export function hasCachedWslDistros(): boolean {
-  return wslDistroCache !== null
-}
-
-// Why: report the last observed answer even once it is stale. An empty list is a real
-// probe result, so it must keep driving the `wsl-distro-missing` repair prompt; going
-// null instead fails open and silently spawns `wsl.exe -d <distro>` for a distro Dolphin
-// last saw was absent. Staleness self-corrects — `listWslDistros` re-probes after the
-// retry window and a distro installed since clears the prompt on its own.
-export function getCachedWslDistros(): string[] | null {
-  return wslDistroCache
+  return getCachedWslDistros() !== null
 }
 
 export function getDefaultWslDistro(): string | null {
@@ -287,6 +260,11 @@ export function getDefaultWslDistro(): string | null {
  * WSL user's $HOME to compute that path.
  */
 export function getWslHome(distro: string): string | null {
+  // A saved distro on a host without WSL must not reach wsl.exe, before the verdict or after it.
+  const installed = process.platform === 'win32' ? peekWslInstallationAndRefreshIfDue() : 'present'
+  if (installed === 'absent' || installed === null) {
+    return getCachedWslHome(distro) ?? null
+  }
   // Why here: the runner is async-only, so the one cold sync probe lives in this allowlisted file.
   return readWslHomeSync(distro, () =>
     execFileSync('wsl.exe', buildWslExecArgs(distro, [...WSL_HOME_GUEST_ARGV]), {
@@ -310,12 +288,8 @@ export async function listRunningWslHomeDirsAsync(): Promise<string[]> {
 // Both test entry points retire the pending probe with the cache it would write into;
 // leaving it armed would let a retired probe answer the next test.
 function resetWslDistroListState(): void {
-  wslDistroCache = null
+  resetWslDistroListCache()
   wslDistroListInFlight = null
-  wslDistroListRetryAfterMs = 0
-  wslDistroListEmptyStreak = 0
-  wslDistroProbeSequence = 0
-  wslDistroCacheSequence = 0
 }
 
 export function _resetWslCachesForTests(): void {
@@ -338,8 +312,10 @@ export function _setWslCachesForTests(args: {
   // too — otherwise a seeded [] lets the next call spawn a real 5s wsl.exe.
   resetWslDistroListState()
   if (args.distros) {
-    cacheWslDistroList(args.distros, ++wslDistroProbeSequence)
+    cacheWslDistroList(args.distros, nextWslDistroProbeSequence())
   }
+  // A seeded catalog is an installed host. Don't let the service query consume a wsl.exe mock.
+  _setWslInstallationForTests('present')
 }
 
 function execFileUtf8(command: string, args: string[], env?: NodeJS.ProcessEnv): Promise<string> {

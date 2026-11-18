@@ -150,6 +150,7 @@ export function EditorDiffFileSurface({
       // Why: content refreshes via modifiedModelKey; keying off content too would remount Monaco and flash on every save.
       key={`${viewStateScopeId}:${diffReloadNonce}`}
       modelKey={diffViewStateKey}
+      modelOwnerKey={activeFile.id}
       originalModelKey={originalModelKey}
       modifiedModelKey={modifiedModelKey}
       originalContent={diffContent.originalContent}

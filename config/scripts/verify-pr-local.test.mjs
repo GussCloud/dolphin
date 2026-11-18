@@ -46,6 +46,13 @@ describe('planGates', () => {
     expect(renderer).toContain('localization catalogs')
   })
 
+  it('checks compiled :has() scope only for inputs that can change the emitted CSS', () => {
+    const label = 'compiled :has() restyle scope'
+    expect(planGates(['src/renderer/src/A.tsx']).map((gate) => gate.label)).toContain(label)
+    expect(planGates(['src/shared/theme.css']).map((gate) => gate.label)).toContain(label)
+    expect(planGates(['src/main/a.ts']).map((gate) => gate.label)).not.toContain(label)
+  })
+
   it('checks the RPC params catalog only for contract changes', () => {
     expect(planGates(['src/shared/rpc-contract/x.ts']).map((gate) => gate.label)).toContain(
       'RPC params catalog'

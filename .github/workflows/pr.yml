@@ -212,6 +212,9 @@ jobs:
       - name: Check reliability gate manifest
         run: pnpm run check:reliability-gates
 
+      - name: Check compiled CSS :has() restyle scope
+        run: pnpm run check:has-restyle-scope
+
       - name: Enforce dead design-system classes
         run: pnpm run check:dead-classes
 

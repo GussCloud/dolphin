@@ -2,6 +2,7 @@ import type { SpawnOptions as NodeSpawnOptions } from 'node:child_process'
 import { buildWindowsCmdShimCommandLine, isCmdInterpretedProgram } from './windows-command-line'
 import { resolveWindowsCmdShim } from './windows-cmd-shim-resolution'
 import type { ProcessSpec } from './process-spec'
+import { assertWslNotLatchedAbsent } from './wsl-not-installed-latch'
 
 export type ResolvedSpawn = {
   file: string
@@ -19,10 +20,12 @@ export type ResolvedSpawn = {
  * Pure except on the win32 `.cmd` branch, where shim resolution does a `stat`
  * and (on a cache miss) one bounded read of the shim itself. Both are inside
  * try/catch and any failure falls back to the cmd.exe path, so the function
- * still cannot throw or reach anything but the program path it was handed.
+ * cannot reach anything but the program path it was handed. Its one throw is an
+ * ENOENT for wsl.exe once WSL is known not to be installed.
  */
 export function resolveSpawn(spec: ProcessSpec, platform: NodeJS.Platform): ResolvedSpawn {
   const args = spec.args ?? []
+  assertWslNotLatchedAbsent(spec.program)
   const base: NodeSpawnOptions = {
     cwd: spec.cwd,
     env: spec.env,

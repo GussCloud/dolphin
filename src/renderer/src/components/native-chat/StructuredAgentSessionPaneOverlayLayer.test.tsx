@@ -100,21 +100,15 @@ describe('StructuredAgentSessionPaneOverlayLayer', () => {
 
   afterEach(cleanup)
 
-  it('keeps materialized chat surfaces mounted while activation only swaps visibility', () => {
+  it('mounts a background chat only when it is first shown, then keeps it mounted', () => {
     const view = render(
       <StructuredAgentSessionPaneOverlayLayer worktreeId={WORKTREE_ID} isWorktreeActive />
     )
     const firstBefore = chatSurface(view.container, FIRST_TAB_ID)
-    const secondBefore = chatSurface(view.container, SECOND_TAB_ID)
 
     expect(firstBefore.dataset.chatVisible).toBe('true')
-    expect(secondBefore.dataset.chatVisible).toBe('false')
-    expect(mocks.mountsByTabId).toEqual(
-      new Map([
-        [FIRST_TAB_ID, 1],
-        [SECOND_TAB_ID, 1]
-      ])
-    )
+    expect(mountedChats(view.container)).toEqual([FIRST_TAB_ID])
+    expect(mocks.mountsByTabId).toEqual(new Map([[FIRST_TAB_ID, 1]]))
 
     act(() => {
       mocks.store?.setState({
@@ -127,18 +121,45 @@ describe('StructuredAgentSessionPaneOverlayLayer', () => {
     const firstAfter = chatSurface(view.container, FIRST_TAB_ID)
     const secondAfter = chatSurface(view.container, SECOND_TAB_ID)
     expect(firstAfter).toBe(firstBefore)
-    expect(secondAfter).toBe(secondBefore)
     expect(firstAfter.dataset.chatVisible).toBe('false')
     expect(secondAfter.dataset.chatVisible).toBe('true')
     expect(mocks.mountsByTabId.get(FIRST_TAB_ID)).toBe(1)
     expect(mocks.mountsByTabId.get(SECOND_TAB_ID)).toBe(1)
     expect(mocks.unmountsByTabId.size).toBe(0)
+
+    act(() => {
+      mocks.store?.setState({ groupsByWorktree: { [WORKTREE_ID]: [createGroup(FIRST_TAB_ID)] } })
+    })
+    expect(chatSurface(view.container, SECOND_TAB_ID)).toBe(secondAfter)
+    expect(mocks.mountsByTabId.get(SECOND_TAB_ID)).toBe(1)
     expect(mocks.groupIdByTabId).toEqual(
       new Map([
         [FIRST_TAB_ID, GROUP_ID],
         [SECOND_TAB_ID, GROUP_ID]
       ])
     )
+  })
+
+  it('forgets a closed chat, so a reopened background tab waits until it is shown', () => {
+    const view = render(
+      <StructuredAgentSessionPaneOverlayLayer worktreeId={WORKTREE_ID} isWorktreeActive />
+    )
+    act(() => {
+      mocks.store?.setState({ groupsByWorktree: { [WORKTREE_ID]: [createGroup(SECOND_TAB_ID)] } })
+    })
+    act(() => {
+      mocks.store?.setState({ groupsByWorktree: { [WORKTREE_ID]: [createGroup(FIRST_TAB_ID)] } })
+    })
+    act(() => {
+      mocks.store?.setState({
+        unifiedTabsByWorktree: { [WORKTREE_ID]: [structuredTab(FIRST_TAB_ID, 'session-1', 0)] }
+      })
+    })
+    act(() => {
+      mocks.store?.setState(createState(FIRST_TAB_ID))
+    })
+
+    expect(mountedChats(view.container)).toEqual([FIRST_TAB_ID])
   })
 
   it('routes overlay interaction back to the owning split group', () => {
@@ -256,6 +277,12 @@ function structuredTab(id: string, sessionId: string, sortOrder: number): Tab {
     sortOrder,
     createdAt: sortOrder + 1
   }
+}
+
+function mountedChats(container: HTMLElement): string[] {
+  return [...container.querySelectorAll<HTMLElement>('[data-chat-tab-id]')].map(
+    (element) => element.dataset.chatTabId ?? ''
+  )
 }
 
 function chatSurface(container: HTMLElement, tabId: string): HTMLElement {

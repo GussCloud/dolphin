@@ -1,7 +1,6 @@
 import { dirname, join } from 'node:path'
 import { resolveCodexCommand } from '../codex-cli/command'
 import { isTransientSqliteContention } from '../sqlite/sqlite-read-failure'
-import { getSpawnArgsForWindows } from '../win32-utils'
 import { getCodexSessionBackfillStateDirPath } from './codex-home-paths'
 import { resolveCodexSessionBackfillPaths } from './codex-session-backfill'
 import {
@@ -259,15 +258,14 @@ function resolveHealWorkLimit(value: number | undefined, maximum: number): numbe
   return Math.min(Math.floor(value), maximum)
 }
 
-function buildNativeHealInvocation(
+export function buildNativeHealInvocation(
   systemCodexHomePath: string,
   timeoutMs: number
 ): CodexAppServerInvocation {
   const command = resolveCodexCommand()
-  const { spawnCmd, spawnArgs } = getSpawnArgsForWindows(command, ['app-server'])
   return {
-    command: spawnCmd,
-    args: spawnArgs,
+    command,
+    args: ['app-server'],
     cliPath: command,
     // Why: pin the real home explicitly — nested Dolphin launches can inherit a
     // managed CODEX_HOME from the daemon environment, which would index the
