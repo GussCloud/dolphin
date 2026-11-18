@@ -7,6 +7,7 @@ import {
 import {
   azureDevOpsGitUrls,
   buildRepoGitAccountInvocation,
+  hasAzureDevOpsHttpsUrl,
   httpsUrlsInArgs,
   mergeRepoGitAccountEnv,
   needsGitCredentialGrants,
@@ -66,7 +67,11 @@ async function resolveCredentialGrants(
   target: { cwd?: string; wslDistro?: string; env?: NodeJS.ProcessEnv }
 ): Promise<GitCredentialGrant[]> {
   const grants: GitCredentialGrant[] = []
-  const reachableUrls = await readReachableUrls(args, target)
+  const bound = Boolean(context.ghAccount || context.azureDevOpsAccountId)
+  // Why unbound calls swallow this: with no account to enforce, git keeps its own credentials.
+  const reachableUrls = bound
+    ? await readReachableUrls(args, target)
+    : await readReachableUrls(args, target).catch(() => [])
   if (context.ghAccount) {
     const binding = context.ghAccount
     const urls = githubGitUrls(binding.host, reachableUrls)
@@ -107,6 +112,19 @@ async function resolveCredentialGrants(
         urls,
         message: `Dolphin: ${errorMessage(error)}`
       })
+    }
+  } else if (context.azureDevOpsDefaultCliSignIn && hasAzureDevOpsHttpsUrl(reachableUrls)) {
+    const { getAzureCliAccessToken } = await import('../../azure-devops/azure-cli-access-token')
+    try {
+      grants.push({
+        kind: 'token',
+        urls: azureDevOpsGitUrls(reachableUrls),
+        username: AZURE_DEVOPS_GIT_USERNAME,
+        // Why this token: the one the PR views use, so a lapse raises the same renewal notice.
+        token: await getAzureCliAccessToken()
+      })
+    } catch {
+      // Why no grant: "Default sign-in" never fails closed; git falls back to its own helpers.
     }
   }
   return grants

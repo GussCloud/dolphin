@@ -4,16 +4,21 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { resolveGhAccountTokenMock, resolveAzureDevOpsAccountTokenMock } = vi.hoisted(() => ({
-  resolveGhAccountTokenMock: vi.fn(),
-  resolveAzureDevOpsAccountTokenMock: vi.fn()
-}))
+const { resolveGhAccountTokenMock, resolveAzureDevOpsAccountTokenMock, getAzureCliAccessTokenMock } =
+  vi.hoisted(() => ({
+    resolveGhAccountTokenMock: vi.fn(),
+    resolveAzureDevOpsAccountTokenMock: vi.fn(),
+    getAzureCliAccessTokenMock: vi.fn()
+  }))
 
 vi.mock('../../github/gh-account-token', () => ({
   resolveGhAccountToken: resolveGhAccountTokenMock
 }))
 vi.mock('../../azure-devops/azure-devops-account-scope', () => ({
   resolveAzureDevOpsAccountToken: resolveAzureDevOpsAccountTokenMock
+}))
+vi.mock('../../azure-devops/azure-cli-access-token', () => ({
+  getAzureCliAccessToken: getAzureCliAccessTokenMock
 }))
 
 import { prepareRepoGitAccountInvocation } from './repo-git-account-env'
@@ -24,6 +29,7 @@ describe('prepareRepoGitAccountInvocation', () => {
   beforeEach(() => {
     resolveGhAccountTokenMock.mockReset()
     resolveAzureDevOpsAccountTokenMock.mockReset()
+    getAzureCliAccessTokenMock.mockReset()
   })
   afterEach(() => {
     for (const path of repoPaths.splice(0)) {
@@ -44,6 +50,46 @@ describe('prepareRepoGitAccountInvocation', () => {
   it('returns null and resolves no token for an unbound repo', async () => {
     await expect(prepareRepoGitAccountInvocation(['push'], { cwd: '/r' })).resolves.toBeNull()
     expect(resolveGhAccountTokenMock).not.toHaveBeenCalled()
+  })
+
+  it('uses the global az token on "Default sign-in" for an Azure DevOps https remote', async () => {
+    getAzureCliAccessTokenMock.mockResolvedValue('az-token')
+    const cwd = repoWithRemotes({ origin: 'https://evup@dev.azure.com/evup/P/_git/app' })
+    const result = await prepareRepoGitAccountInvocation(['fetch', 'origin'], {
+      cwd,
+      env: { PATH: process.env.PATH },
+      repoAccount: { azureDevOpsDefaultCliSignIn: true }
+    })
+    expect(result?.args).toContain('credential.https://dev.azure.com.helper=')
+    expect(result?.args.join(' ')).not.toContain('az-token')
+    expect(Object.values(result?.env ?? {})).toContain('az-token')
+  })
+
+  it('keeps git on its own credentials when "Default sign-in" has no az token or no Azure remote', async () => {
+    getAzureCliAccessTokenMock.mockRejectedValue(new Error('az login required'))
+    const azure = repoWithRemotes({ origin: 'https://dev.azure.com/evup/P/_git/app' })
+    await expect(
+      prepareRepoGitAccountInvocation(['fetch'], {
+        cwd: azure,
+        repoAccount: { azureDevOpsDefaultCliSignIn: true }
+      })
+    ).resolves.toBeNull()
+
+    const github = repoWithRemotes({ origin: 'https://github.com/acme/app.git' })
+    await expect(
+      prepareRepoGitAccountInvocation(['fetch'], {
+        cwd: github,
+        repoAccount: { azureDevOpsDefaultCliSignIn: true }
+      })
+    ).resolves.toBeNull()
+    expect(getAzureCliAccessTokenMock).toHaveBeenCalledTimes(1)
+
+    await expect(
+      prepareRepoGitAccountInvocation(['fetch'], {
+        cwd: join(tmpdir(), 'dolphin-missing-repo-dir'),
+        repoAccount: { azureDevOpsDefaultCliSignIn: true }
+      })
+    ).resolves.toBeNull()
   })
 
   it('does not resolve tokens for commands that never reach a remote', async () => {

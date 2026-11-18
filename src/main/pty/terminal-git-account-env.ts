@@ -13,7 +13,11 @@ import {
   scopedCredentialHelperEntries,
   type GitConfigEntry
 } from '../../shared/git-config-parameters'
-import { azureDevOpsGitUrls, githubGitUrls } from '../../shared/git-scoped-credential-helper'
+import {
+  azureDevOpsGitUrls,
+  githubGitUrls,
+  hasAzureDevOpsHttpsUrl
+} from '../../shared/git-scoped-credential-helper'
 import { quotePosixShell } from '../../shared/wsl-login-shell-command'
 import { splitWorktreeId } from '../../shared/worktree/id'
 import { addWslEnvKeys } from '../wsl-env'
@@ -55,6 +59,25 @@ function azureDevOpsHelper(configDir: string, login: string): string {
   ].join(' ')
 }
 
+const DEFAULT_CLI_SIGN_IN_LAPSED =
+  "Dolphin: the Azure CLI could not issue an Azure DevOps token (session expired or offline). Renew it from Dolphin's Azure sign-in notice or run `az login`, then retry."
+
+/**
+ * "Default sign-in": the user's own `az` login. Without an `az` login it hands the request to
+ * git's other helpers (GCM, keychain); a signed-in `az` that cannot issue a token stops with a
+ * renewal hint instead of opening another sign-in.
+ */
+function defaultAzureCliHelper(): string {
+  return [
+    '!f() { test "$1" = get || exit 0; in=$(cat);',
+    `t=$(az account get-access-token --resource ${AZURE_DEVOPS_ENTRA_RESOURCE_ID} --query accessToken -o tsv 2>/dev/null);`,
+    `if [ -n "$t" ]; then printf 'username=dolphin\npassword=%s\n' "$t"; exit 0; fi;`,
+    `if az account show >/dev/null 2>&1; then echo ${quotePosixShell(DEFAULT_CLI_SIGN_IN_LAPSED)} >&2; echo quit=1; exit 0; fi;`,
+    // Why the empty GIT_CONFIG_PARAMETERS: the nested git must not reach this helper again.
+    `printf '%s\n\n' "$in" | GIT_CONFIG_PARAMETERS= git credential fill; }; f`
+  ].join(' ')
+}
+
 /**
  * Env patch for one terminal of `repo`, or null when the repo has no binding.
  * SSH repos return null: their shells run on the remote host, which this does not configure.
@@ -78,16 +101,19 @@ export async function buildTerminalGitAccountEnv(input: {
   const entries: GitConfigEntry[] = []
 
   let reachableUrls: string[] = []
-  if (context.ghAccount || context.azureDevOpsAccountId) {
+  const useDefaultAzureCli = Boolean(context.azureDevOpsDefaultCliSignIn && !input.wsl)
+  if (context.ghAccount || context.azureDevOpsAccountId || useDefaultAzureCli) {
     try {
       reachableUrls = await readReachableUrls([], {
         cwd: input.cwd,
         ...(input.wsl?.distro ? { wslDistro: input.wsl.distro } : {})
       })
     } catch {
-      warnings.push(
-        "Dolphin could not read this project's remotes; terminals cover only the account's main host."
-      )
+      if (context.ghAccount || context.azureDevOpsAccountId) {
+        warnings.push(
+          "Dolphin could not read this project's remotes; terminals cover only the account's main host."
+        )
+      }
     }
   }
 
@@ -139,6 +165,10 @@ export async function buildTerminalGitAccountEnv(input: {
       )
     }
     entries.push(...scopedCredentialHelperEntries(urls, helper))
+  } else if (useDefaultAzureCli && hasAzureDevOpsHttpsUrl(reachableUrls)) {
+    entries.push(
+      ...scopedCredentialHelperEntries(azureDevOpsGitUrls(reachableUrls), defaultAzureCliHelper())
+    )
   }
 
   if (context.commitIdentity) {

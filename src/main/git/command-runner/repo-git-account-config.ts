@@ -22,6 +22,8 @@ import { findGitSubcommandIndex } from '../wsl-direct-git-read-commands'
 export type RepoGitAccountContext = {
   ghAccount?: GhAccountBinding
   azureDevOpsAccountId?: string
+  /** No managed account and Azure DevOps auth uses the Azure CLI: git may use the global `az` login. */
+  azureDevOpsDefaultCliSignIn?: true
   commitIdentity?: CommitIdentity
 }
 
@@ -29,6 +31,7 @@ export type { GitCredentialGrant }
 export {
   AZURE_DEVOPS_CLOUD_GIT_URL,
   azureDevOpsGitUrls,
+  hasAzureDevOpsHttpsUrl,
   remoteUrlCandidatesFromGitConfig
 } from '../../../shared/git-scoped-credential-helper'
 
@@ -94,7 +97,9 @@ export function needsGitCredentialGrants(
   context: RepoGitAccountContext | undefined
 ): boolean {
   return Boolean(
-    context && (context.ghAccount || context.azureDevOpsAccountId) && isNetworkGitCommand(args)
+    context &&
+      (context.ghAccount || context.azureDevOpsAccountId || context.azureDevOpsDefaultCliSignIn) &&
+      isNetworkGitCommand(args)
   )
 }
 
