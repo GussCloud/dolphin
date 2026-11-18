@@ -6,6 +6,7 @@ import type { RemoveWorktreeResult } from '../../shared/worktree/create-types'
 import { withLocalGitCapabilityCacheForExecution } from './git-capability-state'
 import { withRepoRefMaintenancePaused } from './local-repo-ref-maintenance'
 import { gitExecFileAsync } from './runner'
+import { pruneGitWorktrees } from './worktree-prune-guard'
 import { parseWorktreeList } from '../../shared/git-worktree-porcelain-parser'
 import { isBranchCheckedOutInWorktreeError } from '../../shared/git-branch-delete-refusal'
 import type { GitWorktreeExecOptions, RemoveWorktreeOptions } from './worktree-operation-options'
@@ -81,7 +82,7 @@ async function deleteLocalBranchAfterWorktreeRemoval(
 
   try {
     // Why: only pay for `worktree prune` when a stale admin record may be blocking `branch -d`.
-    await gitExecFileAsync(['worktree', 'prune'], gitExecOptions(repoPath, options))
+    await pruneGitWorktrees(gitExecOptions(repoPath, options))
   } catch (error) {
     console.warn(`[git] Failed to prune worktrees before deleting branch "${branchName}"`, error)
     return 'checked-out'

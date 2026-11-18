@@ -204,6 +204,7 @@ describe('branchHasNoUnmergedChangesWithLazyTargetRefresh', () => {
       const stdout =
         {
           'rev-parse --verify --quiet HEAD^{commit}': 'local-target\n',
+          'merge-base local-target refs/heads/feature/test': 'base\n',
           'merge-tree --write-tree local-target refs/heads/feature/test': 'local-tree\n',
           'rev-parse --verify --quiet local-target^{tree}': 'local-tree\n'
         }[command] ?? ''

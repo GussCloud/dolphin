@@ -9,6 +9,7 @@ import { CdpPageNavigationCommands } from './cdp-page-navigation-commands'
 import { CdpDomFocusReplay } from './cdp-dom-focus-replay'
 import { CdpPageCaptureCommands } from './cdp-page-capture-commands'
 import type { CapturePaintHold } from './cdp-screenshot'
+import { parseCdpClientCommand } from './cdp-client-command'
 
 export class CdpWsProxy {
   private httpServer: Server | null = null
@@ -73,6 +74,8 @@ export class CdpWsProxy {
       this.wss.on('connection', (ws) => {
         this.closeClient()
         this.client = ws
+        // Why: an unhandled 'error' (bad UTF-8, bad opcode) crashes main; it must survive listener detach.
+        ws.on('error', () => ws.terminate())
         const onMessage = (data: WebSocket.RawData): void => {
           this.handleClientMessage(ws, data.toString())
         }
@@ -145,15 +148,20 @@ export class CdpWsProxy {
   }
 
   private handleClientMessage(client: WebSocket, raw: string): void {
-    let msg: { id?: number; method?: string; params?: Record<string, unknown>; sessionId?: string }
+    let parsed: unknown
     try {
-      msg = JSON.parse(raw)
+      parsed = JSON.parse(raw)
     } catch {
       return
     }
-    if (msg.id == null || !msg.method) {
+    const envelope = parseCdpClientCommand(parsed)
+    if (!envelope.command) {
+      if (envelope.invalidId !== null) {
+        this.responder.sendError(envelope.invalidId, 'Invalid CDP request', client)
+      }
       return
     }
+    const msg = envelope.command
     const clientId = msg.id
     this.responder.recordRequestSessionId(client, clientId, msg)
 

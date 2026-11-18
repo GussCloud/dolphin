@@ -12,7 +12,11 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import type { AzureDevOpsBoardPullRequest } from '../../../../shared/azure-devops-pull-request-board'
-import { buildAzureReviewRequest } from './azure-pr-review-request'
+import { getShortcutPlatform } from '@/lib/shortcut-platform'
+import {
+  azureReviewRequestCopyFailedMessage,
+  buildAzureReviewRequest
+} from './azure-pr-review-request'
 
 export function AzureReviewRequestDialog({
   open,
@@ -40,12 +44,7 @@ export function AzureReviewRequestDialog({
     try {
       await window.api.ui.writeClipboardText(text)
     } catch {
-      toast.error(
-        translate(
-          'auto.components.azurePrs.reviewRequest.copyFailed',
-          'Could not copy. Select the text and press Ctrl+C.'
-        )
-      )
+      toast.error(azureReviewRequestCopyFailedMessage(getShortcutPlatform()))
       return
     }
     toast.success(

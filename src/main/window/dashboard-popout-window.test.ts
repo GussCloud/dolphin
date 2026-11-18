@@ -416,6 +416,27 @@ describe('createOrFocusDashboardPopout', () => {
     expect(win.zoomLevel).toBe(0.5)
   })
 
+  it('routes macOS Cmd+V to the renderer paste owner', () => {
+    const platform = vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin')
+    try {
+      const win = createOrFocusDashboardPopout(makeStore() as never) as unknown as FakeWindow
+      const event = { preventDefault: vi.fn() }
+      win.emitWebContents('before-input-event', event, {
+        type: 'keyDown',
+        key: 'v',
+        code: 'KeyV',
+        meta: true,
+        control: false,
+        alt: false,
+        shift: false
+      })
+      expect(event.preventDefault).toHaveBeenCalledTimes(1)
+      expect(win.webContents.send).toHaveBeenCalledWith('ui:appMenuPaste')
+    } finally {
+      platform.mockRestore()
+    }
+  })
+
   it('handles mouse-wheel zoom requests outside before-input-event', () => {
     const win = createOrFocusDashboardPopout(makeStore() as never) as unknown as FakeWindow
     const event = { preventDefault: vi.fn() }

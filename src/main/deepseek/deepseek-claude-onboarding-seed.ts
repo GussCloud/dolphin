@@ -2,27 +2,30 @@
 // onboarding without importing the launch-env and hook-install graph.
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { CLAUDE_STATE_FILE_MODE } from '../claude-accounts/profile/claude-state-file-mode'
 
-const CLAUDE_STATE_FILE_NAME = '.claude.json'
+export const CLAUDE_STATE_FILE_NAME = '.claude.json'
 
 /**
  * Marks Claude Code's first-run onboarding done in the DeepSeek config home. Verified with
  * claude 2.1.309: a fresh CLAUDE_CONFIG_DIR opens the theme picker, which would swallow the
  * prompt Dolphin types after start. The per-folder trust dialog is left to the user outside
- * autonomous goals (see autonomous-goal-claude-trust.ts).
+ * autonomous goals (see autonomous-goal-claude-trust.ts). Returns whether it created the file.
  */
-export function seedDeepSeekClaudeOnboarding(configDir: string): void {
+export function seedDeepSeekClaudeOnboarding(configDir: string): boolean {
   mkdirSync(configDir, { recursive: true })
   try {
     // Why 'wx': Claude owns an existing file (and a concurrent spawn may have just written one).
     writeFileSync(
       join(configDir, CLAUDE_STATE_FILE_NAME),
       `${JSON.stringify({ hasCompletedOnboarding: true }, null, 2)}\n`,
-      { flag: 'wx' }
+      { flag: 'wx', mode: CLAUDE_STATE_FILE_MODE }
     )
+    return true
   } catch (error) {
     if (!(error instanceof Error && 'code' in error && error.code === 'EEXIST')) {
       throw error
     }
+    return false
   }
 }

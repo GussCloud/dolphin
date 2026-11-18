@@ -17820,7 +17820,7 @@
           "headOne": "Salut ! Tu peux relire cette PR, s'il te plaît ?",
           "headMany": "Salut ! Tu peux relire ces {{value0}} PRs, s'il te plaît ?",
           "thanks": "Merci !",
-          "copyFailed": "Copie impossible. Sélectionne le texte et fais Ctrl+C.",
+          "copyFailed": "Copie impossible. Sélectionne le texte et fais {{value0}}.",
           "copiedOne": "Texte copié — il suffit de le coller dans Teams",
           "copiedMany": "Texte avec {{value0}} PRs copié — il suffit de le coller dans Teams",
           "title": "Demande de review",

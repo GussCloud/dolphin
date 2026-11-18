@@ -66,8 +66,29 @@ describe('SshConnection', () => {
       'echo DOLPHIN-SYSTEM-SSH-OK',
       {
         wrapCommand: false,
+        closeStdin: true,
         resolvedConfig: expect.objectContaining({ proxyUseFdpass: true })
       }
+    )
+  })
+
+  it('closes stdin only for commands that send no input', async () => {
+    vi.mocked(resolveWithSshG).mockResolvedValueOnce(createResolvedConfig())
+    const conn = new SshConnection(createTarget({ configHost: 'fdpass-host' }), createCallbacks())
+    await conn.connect()
+
+    await conn.execWithClosedStdin('probe', { wrapCommand: false })
+    await conn.exec('cat > file')
+
+    expect(spawnSystemSshCommandMock).toHaveBeenCalledWith(
+      expect.anything(),
+      'probe',
+      expect.objectContaining({ wrapCommand: false, closeStdin: true })
+    )
+    expect(spawnSystemSshCommandMock).toHaveBeenLastCalledWith(
+      expect.anything(),
+      'cat > file',
+      expect.not.objectContaining({ closeStdin: true })
     )
   })
 
@@ -254,7 +275,7 @@ describe('SshConnection', () => {
     expect(spawnSystemSshCommandMock).toHaveBeenCalledWith(
       expect.objectContaining({ proxyCommand: 'ssh -W %h:%p bastion.example.com' }),
       'echo DOLPHIN-SYSTEM-SSH-OK',
-      { wrapCommand: false }
+      { wrapCommand: false, closeStdin: true }
     )
   })
 
@@ -319,7 +340,7 @@ describe('SshConnection', () => {
     expect(spawnSystemSshCommandMock).toHaveBeenCalledWith(
       expect.objectContaining({ host: '192.168.0.210' }),
       'echo DOLPHIN-SYSTEM-SSH-OK',
-      { wrapCommand: false }
+      { wrapCommand: false, closeStdin: true }
     )
   })
 

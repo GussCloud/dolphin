@@ -5,7 +5,7 @@ import { gateWorktreeRemovalOnArchiveHook } from '../worktree-archive-hook-gate'
 import type { Repo } from '../../shared/repo-types'
 import { assertWorktreeUnlockedForRemoval } from '../../shared/worktree/removal'
 import type { LocalProjectWorktreeGitOptions } from '../project-runtime-git-options'
-import { gitExecFileAsync } from '../git/runner'
+import { pruneGitWorktrees } from '../git/worktree-prune-guard'
 import { assertWorktreeCleanForRemoval, listWorktreesStrict, removeWorktree } from '../git/worktree'
 import { getWorktreeSharedLinkPaths } from '../git/worktree-shared-directories'
 import { runHook, getEffectiveHooks } from '../hooks'
@@ -159,9 +159,7 @@ export async function removeRuntimeRegisteredLocalWorktree(args: {
           localOptions,
           args.closeWatchers
         )
-        await gitExecFileAsync(['worktree', 'prune'], { cwd: repo.path, ...localOptions }).catch(
-          () => {}
-        )
+        await pruneGitWorktrees({ cwd: repo.path, ...localOptions }).catch(() => {})
         await cleanupPushTarget(args)
         args.finishRemoval(undefined, false, refreshed.head)
         completed = true

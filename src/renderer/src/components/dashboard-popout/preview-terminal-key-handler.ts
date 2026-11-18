@@ -14,6 +14,8 @@ import {
   type PreviewShortcutContext
 } from './preview-terminal-shortcuts'
 import { readTerminalClipboardSelection } from '@/components/terminal-pane/terminal-clipboard-selection-text'
+import { isMacNativeMenuChord } from '@/components/terminal-pane/xterm-bypass-policy'
+import { isCurrentPlatformIosWeb } from '@/lib/ios-web-platform'
 
 /**
  * Installs the preview terminal's ONE custom key handler (xterm allows a single
@@ -37,6 +39,7 @@ export function installPreviewTerminalKeyHandler(args: {
   const platform = getShortcutPlatform()
   const consumedClipboardKeys = new Set<string>()
   const nativeOnlyShortcutTracker = createTerminalNativeOnlyShortcutTracker()
+  const hasNativeMenu = platform === 'darwin' && !isCurrentPlatformIosWeb()
   const consumeEvent = (event: KeyboardEvent): false => {
     event.preventDefault()
     event.stopPropagation()
@@ -156,6 +159,11 @@ export function installPreviewTerminalKeyHandler(args: {
       optionKeyLocations: optionKeyLocations.get()
     })
     if (!action) {
+      // After the resolver: it is this surface's only shortcut layer, so user bindings win.
+      if (hasNativeMenu && isMacNativeMenuChord(event)) {
+        nativeOnlyShortcutTracker.armKeyDown(event)
+        return false
+      }
       return true
     }
     switch (action.type) {

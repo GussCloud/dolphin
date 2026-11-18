@@ -1,4 +1,5 @@
 import { translate } from '@/i18n/i18n'
+import { formatKeybindingList } from '../../../../shared/keybindings'
 import type { AzureDevOpsBoardPullRequest } from '../../../../shared/azure-devops-pull-request-board'
 
 // Plain text on purpose: Teams does not render markdown on paste, and a bare URL on its own line is linkified.
@@ -32,4 +33,13 @@ export function buildAzureReviewRequest(pullRequests: AzureDevOpsBoardPullReques
 
   const thanks = translate('auto.components.azurePrs.reviewRequest.thanks', 'Thanks!')
   return `${head}\n\n${items.join('\n\n')}\n\n${thanks}`
+}
+
+/** Manual-copy fallback naming the platform's copy chord (⌘C on macOS, Ctrl+C elsewhere). */
+export function azureReviewRequestCopyFailedMessage(platform: NodeJS.Platform): string {
+  return translate(
+    'auto.components.azurePrs.reviewRequest.copyFailed',
+    'Could not copy. Select the text and press {{value0}}.',
+    { value0: formatKeybindingList(['Mod+C'], platform) }
+  )
 }

@@ -30,6 +30,8 @@ export async function createDesktopTerminal(
     ? runtime.resolveWorkspaceTerminalStartupCwd(workspace, launchOpts.cwd)
     : launchOpts.cwd
   const requestId = dependencies.randomUUID()
+  // Why capture once: the BrowserWindow getter throws after close, and a late reply still arrives.
+  const rendererWebContents = win.webContents
   const reply = await new Promise<{ tabId: string; title: string }>((resolve, reject) => {
     const timer = setTimeout(() => {
       dependencies.getRuntimeDesktopSurface().removeIpcListener('terminal:tabCreateReply', handler)
@@ -44,7 +46,7 @@ export async function createDesktopTerminal(
         error?: string
       }
     ): void => {
-      if (event.sender !== win.webContents || response.requestId !== requestId) {
+      if (event.sender !== rendererWebContents || response.requestId !== requestId) {
         return
       }
       clearTimeout(timer)
@@ -56,7 +58,7 @@ export async function createDesktopTerminal(
       }
     }
     dependencies.getRuntimeDesktopSurface().onIpc('terminal:tabCreateReply', handler)
-    win.webContents.send('terminal:requestTabCreate', {
+    rendererWebContents.send('terminal:requestTabCreate', {
       requestId,
       worktreeId,
       command: launchOpts.command,

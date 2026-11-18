@@ -18027,7 +18027,7 @@
           "headOne": "Hi! Could you review this PR, please?",
           "headMany": "Hi! Could you review these {{value0}} PRs, please?",
           "thanks": "Thanks!",
-          "copyFailed": "Could not copy. Select the text and press Ctrl+C.",
+          "copyFailed": "Could not copy. Select the text and press {{value0}}.",
           "copiedOne": "Text copied — just paste it into Teams",
           "copiedMany": "Text with {{value0}} PRs copied — just paste it into Teams",
           "title": "Review request",

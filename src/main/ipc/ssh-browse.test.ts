@@ -50,7 +50,7 @@ describe('registerSshBrowseHandler', () => {
     const channel = createMockChannel()
     const exec = vi.fn().mockResolvedValue(channel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -82,7 +82,7 @@ describe('registerSshBrowseHandler', () => {
     const channel = createMockChannel()
     const exec = vi.fn().mockResolvedValue(channel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -105,7 +105,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -158,7 +158,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -196,7 +196,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -230,7 +230,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -264,7 +264,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -306,7 +306,7 @@ describe('registerSshBrowseHandler', () => {
       const windowsChannel = createMockChannel()
       const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
       const getConnectionManager = () => ({
-        getConnection: () => ({ exec })
+        getConnection: () => ({ execWithClosedStdin: exec })
       })
       registerSshBrowseHandler(getConnectionManager as never)
 
@@ -337,7 +337,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -366,7 +366,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -392,7 +392,7 @@ describe('registerSshBrowseHandler', () => {
     const windowsChannel = createMockChannel()
     const exec = vi.fn().mockResolvedValueOnce(posixChannel).mockResolvedValueOnce(windowsChannel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -418,7 +418,7 @@ describe('registerSshBrowseHandler', () => {
     const channel = createMockChannel()
     const exec = vi.fn().mockResolvedValue(channel)
     const getConnectionManager = () => ({
-      getConnection: () => ({ exec })
+      getConnection: () => ({ execWithClosedStdin: exec })
     })
     registerSshBrowseHandler(getConnectionManager as never)
 
@@ -444,7 +444,7 @@ describe('registerSshBrowseHandler', () => {
       const channel = createMockChannel()
       const exec = vi.fn().mockResolvedValue(channel)
       const getConnectionManager = () => ({
-        getConnection: () => ({ exec })
+        getConnection: () => ({ execWithClosedStdin: exec })
       })
       registerSshBrowseHandler(getConnectionManager as never)
 

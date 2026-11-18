@@ -7,6 +7,7 @@ import {
 import type { BrowserViewportOverride } from '../../shared/browser-workspace-types'
 import { googleAuthUserAgent, isGoogleAuthUrl } from './browser-google-auth-ua'
 import { BrowserManagerDownloadLifecycle } from './browser-manager-download-lifecycle'
+import { sendGuestCdpCommand } from './guest-cdp-command'
 import { getBrowserProcessUserAgentIdentity } from './browser-process-user-agent'
 
 export abstract class BrowserManagerViewport extends BrowserManagerDownloadLifecycle {
@@ -148,7 +149,7 @@ export abstract class BrowserManagerViewport extends BrowserManagerDownloadLifec
     const dbg = guest.debugger
     try {
       if (override) {
-        await dbg.sendCommand('Emulation.setDeviceMetricsOverride', {
+        await sendGuestCdpCommand(guest, 'Emulation.setDeviceMetricsOverride', {
           width: override.width,
           height: override.height,
           deviceScaleFactor: override.deviceScaleFactor,

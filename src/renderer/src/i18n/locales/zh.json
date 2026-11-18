@@ -17721,7 +17721,7 @@
           "headOne": "你好！能帮忙评审一下这个 PR 吗？",
           "headMany": "你好！能帮忙评审一下这 {{value0}} 个 PR 吗？",
           "thanks": "谢谢！",
-          "copyFailed": "复制失败。请选中文本后按 Ctrl+C。",
+          "copyFailed": "复制失败。请选中文本后按 {{value0}}。",
           "copiedOne": "文本已复制 — 直接粘贴到 Teams 即可",
           "copiedMany": "包含 {{value0}} 个 PR 的文本已复制 — 直接粘贴到 Teams 即可",
           "title": "评审请求",

@@ -17721,7 +17721,7 @@
           "headOne": "안녕하세요! 이 PR 리뷰 부탁드려도 될까요?",
           "headMany": "안녕하세요! 이 PR {{value0}}개 리뷰 부탁드려도 될까요?",
           "thanks": "감사합니다!",
-          "copyFailed": "복사하지 못했습니다. 텍스트를 선택하고 Ctrl+C를 누르세요.",
+          "copyFailed": "복사하지 못했습니다. 텍스트를 선택하고 {{value0}}를 누르세요.",
           "copiedOne": "텍스트를 복사했습니다 — Teams에 붙여넣기만 하면 됩니다",
           "copiedMany": "PR {{value0}}개가 담긴 텍스트를 복사했습니다 — Teams에 붙여넣기만 하면 됩니다",
           "title": "리뷰 요청",

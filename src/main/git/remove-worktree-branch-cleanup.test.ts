@@ -155,6 +155,12 @@ branch refs/heads/main
       'git rev-parse --verify --quiet refs/remotes/origin/main^{commit}': {
         stdout: 'base123\n'
       },
+      'git merge-base base123 refs/heads/feature/test': {
+        stdout: 'fork123\n'
+      },
+      'git diff --name-only fork123 refs/heads/feature/test': {
+        stdout: 'feature.txt\n'
+      },
       'git rev-parse --verify --quiet HEAD^{commit}': {
         stdout: 'base123\n'
       },
@@ -221,6 +227,9 @@ branch refs/heads/main
       },
       'git merge-base target123 refs/heads/feature/test': {
         stdout: 'base123\n'
+      },
+      'git diff --name-only base123 refs/heads/feature/test': {
+        stdout: 'feature.txt\n'
       },
       'git diff base123 refs/heads/feature/test': {
         stdout: 'branch net diff\n'
@@ -306,6 +315,12 @@ branch refs/heads/main
       'git rev-parse --verify --quiet refs/remotes/origin/main^{commit}': {
         stdout: 'base123\n'
       },
+      'git merge-base base123 refs/heads/feature/test': {
+        stdout: 'fork123\n'
+      },
+      'git diff --name-only fork123 refs/heads/feature/test': {
+        stdout: 'feature.txt\n'
+      },
       'git merge-tree --write-tree base123 refs/heads/feature/test': {
         stdout: 'tree123\n'
       },
@@ -367,6 +382,12 @@ branch refs/heads/main
       },
       'git rev-parse --verify --quiet refs/remotes/origin/main^{commit}': {
         stdout: 'base123\n'
+      },
+      'git merge-base base123 refs/heads/feature/test': {
+        stdout: 'fork123\n'
+      },
+      'git diff --name-only fork123 refs/heads/feature/test': {
+        stdout: 'feature.txt\n'
       },
       'git rev-list --right-only --merges --count base123...refs/heads/feature/test': {
         stdout: '0\n'

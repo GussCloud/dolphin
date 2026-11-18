@@ -282,6 +282,14 @@ function matchesClipboardBinding(
   return keybindingMatchesInput(binding, event, platform)
 }
 
+// Key equivalents of the native macOS menu items (src/main/menu/); no page handler claims them.
+const MAC_NATIVE_MENU_CHORDS = ['Mod+H', 'Mod+Alt+H', 'Mod+M', 'Mod+Q', 'Mod+Ctrl+F', 'Mod+Alt+I']
+
+/** Kitty encoding would cancel these keydowns, so the native menu never sees them. */
+export function isMacNativeMenuChord(event: XtermBypassEvent): boolean {
+  return MAC_NATIVE_MENU_CHORDS.some((binding) => keybindingMatchesInput(binding, event, 'darwin'))
+}
+
 /**
  * Decide whether plain Ctrl+C should bypass xterm's kitty CSI-u encoder and
  * be sent as ETX through Terminal.input() instead.
@@ -357,12 +365,12 @@ export function shouldBypassXtermKeyboardEvent(
   }
 
   if (isMac) {
-    // Why: window-level handlers already consume other Cmd chords before xterm
-    // sees them in Electron. Web clients still need paste to bubble to
-    // Chromium's native paste event instead of xterm's Kitty encoder.
+    // Why: Dolphin's own Cmd chords are claimed earlier; web paste still needs
+    // Chromium's native event, and native menu items need the uncancelled keydown.
     return (
       matchesClipboardBinding('Mod+C', event, 'darwin') ||
-      matchesClipboardBinding('Mod+V', event, 'darwin')
+      matchesClipboardBinding('Mod+V', event, 'darwin') ||
+      (options.isIosWeb !== true && isMacNativeMenuChord(event))
     )
   }
 

@@ -554,12 +554,22 @@ module.exports = {
         'Dolphin allows terminal-launched developer tools to access Bluetooth devices when you request it.',
       NSBluetoothPeripheralUsageDescription:
         'Dolphin allows terminal-launched developer tools to access Bluetooth devices when you request it.',
+      NSCalendarsUsageDescription:
+        'Dolphin allows terminal-launched developer tools to access your calendars when you request it.',
+      NSCalendarsFullAccessUsageDescription:
+        'Dolphin allows terminal-launched developer tools to access your calendars when you request it.',
       NSCameraUsageDescription: "Application requests access to the device's camera.",
+      NSContactsUsageDescription:
+        'Dolphin allows terminal-launched developer tools to access your contacts when you request it.',
       NSLocationUsageDescription:
         'Dolphin allows terminal-launched developer tools to access location when you request it.',
       NSLocalNetworkUsageDescription:
         'Dolphin allows terminal-launched developer tools to discover and connect to local development servers when you request it.',
       NSMicrophoneUsageDescription: "Application requests access to the device's microphone.",
+      NSRemindersUsageDescription:
+        'Dolphin allows terminal-launched developer tools to access your reminders when you request it.',
+      NSRemindersFullAccessUsageDescription:
+        'Dolphin allows terminal-launched developer tools to access your reminders when you request it.',
       NSAudioCaptureUsageDescription:
         'Dolphin allows terminal-launched developer tools to capture desktop audio when you request it.',
       NSBonjourServices: ['_http._tcp', '_https._tcp'],

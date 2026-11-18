@@ -74,7 +74,7 @@ describe('runAutomationPrecheck', () => {
     sshManagerState.manager = {
       getConnection: vi.fn(() => ({
         getState: () => ({ status: 'connected' }),
-        exec: vi.fn(async () => channel)
+        execWithClosedStdin: vi.fn(async () => channel)
       }))
     }
 

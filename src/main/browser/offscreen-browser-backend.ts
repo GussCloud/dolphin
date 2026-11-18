@@ -124,6 +124,7 @@ export class OffscreenBrowserBackend implements BrowserBackend {
       }
     } finally {
       if (win && !win.isDestroyed()) {
+        endDebuggerSessions(win)
         win.destroy()
       }
     }
@@ -225,5 +226,22 @@ export class OffscreenBrowserBackend implements BrowserBackend {
         // loadURL rejects on aborted navigations; did-fail-load handles the rest.
       })
     })
+  }
+}
+
+/**
+ * Why: destroy() rejects a live screencast's pending CDP command, and the snapshot it was awaiting
+ * then calls capturePage on the half-torn-down page, which segfaults Electron. Detaching first
+ * emits 'detach' synchronously, so every stream on the page is closed before that resumes.
+ */
+function endDebuggerSessions(win: BrowserWindow): void {
+  const dbg = win.webContents.debugger
+  if (!dbg.isAttached()) {
+    return
+  }
+  try {
+    dbg.detach()
+  } catch {
+    // The page is being destroyed either way; a failed detach must not keep it alive.
   }
 }
