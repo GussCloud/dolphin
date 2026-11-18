@@ -411,8 +411,9 @@
   z-index: 40 !important;
 }
 
-/* Keep errors above standard modal backdrops at the existing popover tier. */
-body:has([data-slot='dialog-overlay'], [data-slot='sheet-overlay']) [data-sonner-toaster] {
+/* Keep errors above standard modal backdrops at the existing popover tier. The attribute comes from
+   body-overlay-attributes.ts: body:has() made every DOM mutation restyle the whole app. */
+body[data-modal-overlay-open] [data-sonner-toaster] {
   z-index: 60 !important;
 }
 
