@@ -56,18 +56,13 @@ export function claudeQueryAsyncCanceller(
  * field goes through the Query's own control sender (later SDKs accept `{ detail }` directly).
  * CLIs before 2.1.257 ignore it and answer in full.
  */
-type ClaudeQueryControlSender = {
-  request?: (request: { subtype: 'get_context_usage'; detail: 'summary' }) => Promise<unknown>
-}
-
 export function readClaudeSummaryContextUsage(query: Query): Promise<unknown> {
-  const send = (query as unknown as ClaudeQueryControlSender).request
+  const send: unknown = 'request' in query ? query.request : undefined
   if (typeof send !== 'function') {
     return query.getContextUsage()
   }
-  return Promise.resolve(
-    send.call(query, { subtype: 'get_context_usage', detail: 'summary' })
-  ).then((answer: unknown) =>
+  const answer: unknown = send.call(query, { subtype: 'get_context_usage', detail: 'summary' })
+  return Promise.resolve(answer).then((answer: unknown) =>
     typeof answer === 'object' && answer !== null && 'response' in answer
       ? answer.response
       : undefined
