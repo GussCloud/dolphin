@@ -88,6 +88,14 @@ export function planGates(changedFiles) {
     },
     { label: 'reliability gates', script: 'check-reliability-gates.mjs', when: code },
     {
+      // Compiles Tailwind (~2s), so only for inputs that can change the emitted CSS.
+      label: 'compiled :has() restyle scope',
+      script: 'check-has-restyle-scope.mjs',
+      when:
+        touches(/^src\/(?:renderer\/.*\.(?:css|tsx?)|shared\/.*\.css)$/) ||
+        touches(/^electron\.vite\.config\.ts$/)
+    },
+    {
       label: 'React Doctor (changed lines)',
       script: 'check-react-doctor-changed.mjs',
       when: reactFiles

@@ -450,6 +450,22 @@ describe('Claude stream-json connection', () => {
     expect(written.response.response).toMatchObject({ behavior: 'deny', message: 'No' })
   })
 
+  it('asks for the context report without per-category token-count API calls', async () => {
+    const scenario = scriptScenario([HOLD_OPEN], {
+      get_context_usage: { totalTokens: 1200, maxTokens: 200_000 }
+    })
+    const connection = await open(launchFor(scenario))
+    await connection.initializationResult()
+
+    await expect(connection.getContextUsage()).resolves.toEqual({
+      totalTokens: 1200,
+      maxTokens: 200_000
+    })
+    expect(scenario.readReport().controlRequests).toContainEqual(
+      expect.objectContaining({ request: { subtype: 'get_context_usage', detail: 'summary' } })
+    )
+  })
+
   it('drives Dolphin control methods onto the SDK and times out with the init proof message', async () => {
     const scenario = scriptScenario([HOLD_OPEN], {
       initialize: { models: [{ value: 'sonnet' }], account: { tokenSource: 'oauth' } },

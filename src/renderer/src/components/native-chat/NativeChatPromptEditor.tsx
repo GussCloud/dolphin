@@ -22,6 +22,7 @@ import {
   promptTextOffset
 } from './native-chat-prompt-document'
 import type { NativeChatComposerInput } from './native-chat-composer-input'
+import { NativeChatUnkernedRunDecorations } from './native-chat-unkerned-run-decorations'
 
 type Props = Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'onSelect'> & {
   scopeKey?: string
@@ -68,6 +69,7 @@ export function NativeChatPromptEditor({
           trailingNode: false
         }),
         NativeChatSkill,
+        NativeChatUnkernedRunDecorations,
         Placeholder.configure({ placeholder: () => placeholderRef.current })
       ],
       content:

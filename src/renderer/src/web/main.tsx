@@ -19,6 +19,10 @@ import {
 import { installWebPreloadApi } from './web-preload-api'
 import { I18nProvider } from '../i18n/I18nProvider'
 import { translate } from '../i18n/i18n'
+import { installBodyOverlayAttributes } from '../lib/body-overlay-attributes'
+
+const disposeBodyOverlayAttributes = installBodyOverlayAttributes()
+import.meta.hot?.dispose(disposeBodyOverlayAttributes)
 
 const App = lazy(() => import('../App'))
 

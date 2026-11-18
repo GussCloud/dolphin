@@ -73,7 +73,7 @@ describe('usePluginPanelThemeRevision', () => {
     const { revisions } = renderProbe()
     const before = revisions.at(-1)
 
-    // Written every rAF while dragging the sidebar divider.
+    // Any root custom property the shell does not bake in, written at rAF cadence.
     for (const width of [240, 241, 242, 243]) {
       document.documentElement.style.setProperty('--workspace-sidebar-live-width', `${width}px`)
       await flushObserver()

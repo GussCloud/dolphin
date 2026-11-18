@@ -33,7 +33,11 @@ const DEGRADES_WITHOUT_INSTALL: Record<string, string> = {
     'patch and still caps enumeration at 1024 processes, so a busy host gets a ' +
     'truncated table missing its own pid. windows-process-table.ts falls back to a ' +
     'Get-CimInstance scan when the binding is absent. See ' +
-    'docs/reference/windows-process-enumeration.md.'
+    'docs/reference/windows-process-enumeration.md.',
+  '@dolphin/windows-registry':
+    'Windows-only workspace package, not published, so a remote host cannot install it. ' +
+    'The relay reaches it only through wsl-installation.ts, whose registry probe catches ' +
+    'the failed require and falls back to `sc.exe query` for the WSL services.'
 }
 
 /** Addons are the packages npm has to build or unpack a binary for. */

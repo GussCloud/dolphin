@@ -29,6 +29,9 @@ vi.mock('../worktree-trash', () => ({
   scheduleWorktreeTrashDeletion: scheduleWorktreeTrashDeletionMock
 }))
 
+// Keep the ordered runner queues; checkout-workers-real-git covers the checkout.workers read.
+vi.mock('./checkout-workers-git-args', () => ({ checkoutWorkersGitArgs: async () => [] }))
+
 vi.mock('./runner', () => ({
   gitExecFileAsync: gitExecFileAsyncMock,
   gitExecFileSync: gitExecFileSyncMock,
@@ -98,7 +101,7 @@ describe('addSparseWorktree', () => {
     expect(calls).toEqual(
       expect.arrayContaining([
         'git -c core.longpaths=true sparse-checkout set -- packages/web',
-        'git -c core.longpaths=true -c checkout.workers=0 checkout feature/test'
+        'git -c core.longpaths=true checkout feature/test'
       ])
     )
   })

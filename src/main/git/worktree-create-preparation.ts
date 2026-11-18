@@ -1,5 +1,5 @@
 import { windowsLongPathGitArgs } from '../../shared/windows-long-path-git-args'
-import { windowsParallelCheckoutGitArgs } from '../../shared/windows-parallel-checkout-git-args'
+import { checkoutWorkersGitArgs } from './checkout-workers-git-args'
 import { resolveWorktreeAddBaseRef } from '../../shared/worktree/base-ref'
 import type { AddWorktreeOptions, AddWorktreeResult, GitWorktreeExecOptions } from './worktree'
 import { gitExecOptions, type GitExecOptionsForWorktree } from './worktree-operation-options'
@@ -62,6 +62,8 @@ export async function prepareWorktreeCreateCheckout(
   try {
     await withRepoRefMaintenancePaused('worktree-prepare', () =>
       runWithGitReadCacheInvalidation(async () => {
+        // Overlaps preparation; never rejects.
+        const checkoutWorkersArgs = checkoutWorkersGitArgs(repoPath, options)
         const effectiveBase = await resolveWorktreeAddBaseRef(baseBranch, (qualifiedRef) =>
           hasWorktreeBaseCommitRef(repoPath, qualifiedRef, options)
         )
@@ -83,8 +85,8 @@ export async function prepareWorktreeCreateCheckout(
           // Why: reset materializes files without running user post-checkout hooks before submit.
           await gitExecFileAsync(
             [
+              ...(await checkoutWorkersArgs),
               ...windowsLongPathGitArgs(worktreePath),
-              ...windowsParallelCheckoutGitArgs(worktreePath),
               'reset',
               '--hard',
               effectiveBase
@@ -226,8 +228,8 @@ export async function finalizePreparedWorktree(
       if (preparedHeadOutput.trim() !== targetHead) {
         await gitExecFileAsync(
           [
+            ...(await checkoutWorkersGitArgs(preparedPath, finalizeGitOptions)),
             ...windowsLongPathGitArgs(preparedPath),
-            ...windowsParallelCheckoutGitArgs(preparedPath),
             'reset',
             '--hard',
             targetHead

@@ -28,6 +28,33 @@ function fixture(source = '{"automationRuns":[{"id":"a"},{"id":"b"}],"last":null
   return db
 }
 
+type ProfileStateTestDatabase = ReturnType<typeof fixture>
+
+// Why: SQLite 3.54 rejects ADD COLUMN rowid aliases, but CREATE TABLE (and older files) still allow them.
+function addRowidShadowColumns(db: ProfileStateTestDatabase, table: string): void {
+  const schema = db
+    .prepare('SELECT type, sql FROM sqlite_master WHERE tbl_name = ? AND sql IS NOT NULL')
+    .all(table)
+  const tableSql = schema.find((row) => row.type === 'table')?.sql
+  if (typeof tableSql !== 'string') {
+    throw new Error(`missing table ${table}`)
+  }
+  const shadowed = tableSql.replace(
+    /\)\s*(STRICT|WITHOUT ROWID)?\s*$/i,
+    (_end, options: string | undefined) =>
+      `, rowid TEXT DEFAULT 'shadow', _rowid_ TEXT DEFAULT 'shadow', oid TEXT DEFAULT 'shadow')${options ? ` ${options}` : ''}`
+  )
+  db.exec(`ALTER TABLE ${table} RENAME TO ${table}_unshadowed`)
+  db.exec(shadowed)
+  db.exec(`INSERT INTO ${table} SELECT *, 'shadow', 'shadow', 'shadow' FROM ${table}_unshadowed`)
+  db.exec(`DROP TABLE ${table}_unshadowed`)
+  for (const row of schema) {
+    if (row.type !== 'table' && typeof row.sql === 'string') {
+      db.exec(row.sql)
+    }
+  }
+}
+
 const readers = [
   readProfileStateSnapshot,
   readProfileStateParsedSnapshot,
@@ -55,9 +82,7 @@ describe('complete streaming profile validation', () => {
   it('accepts extra columns that shadow every SQLite rowid alias', () => {
     const db = fixture()
     const before = readProfileStateSnapshot(db)
-    db.exec("ALTER TABLE profile_state_automation_runs ADD COLUMN rowid TEXT DEFAULT 'shadow'")
-    db.exec("ALTER TABLE profile_state_automation_runs ADD COLUMN _rowid_ TEXT DEFAULT 'shadow'")
-    db.exec("ALTER TABLE profile_state_automation_runs ADD COLUMN oid TEXT DEFAULT 'shadow'")
+    addRowidShadowColumns(db, 'profile_state_automation_runs')
     verifyProfileStateSchema(db, 'stream-test')
     expect(readProfileStateSnapshot(db)).toEqual(before)
     expect(readProfileStateParsedSnapshot(db).state).toEqual(JSON.parse(before.json))

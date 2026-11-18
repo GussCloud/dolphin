@@ -26,6 +26,7 @@ import {
   readProfileStateCopySavedTimes
 } from './persistence/profile-state/profile-state-startup-recovery-dialog'
 import { profileStateDesktopRecoveryArgs } from './startup/profile-state-recovery-preflight'
+import { readWslInstallation } from './wsl-installation'
 
 function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}): BrowserWindow {
   return openMainWindowController(options)
@@ -94,6 +95,10 @@ const preflightReady = runMainProcessPreflight({
 
 // Why: when another process holds the lock we've already exited; skip file-writing side effects so this transient process never touches userData.
 if (preflightReady) {
+  if (process.platform === 'win32') {
+    // Sync WSL readers wait on this verdict instead of spawning wsl.exe; answer it early.
+    void readWslInstallation()
+  }
   app.on('open-url', (event, url) => {
     if (!parseSkillShareId(url)) {
       return
