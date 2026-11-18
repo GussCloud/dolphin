@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -27,12 +27,23 @@ describe('seedDeepSeekClaudeOnboarding', () => {
     })
   })
 
+  it.skipIf(process.platform === 'win32')('creates the state file owner-only', () => {
+    const configDir = makeConfigDir()
+    const previousUmask = process.umask(0o022)
+    try {
+      expect(seedDeepSeekClaudeOnboarding(configDir)).toBe(true)
+    } finally {
+      process.umask(previousUmask)
+    }
+    expect(statSync(join(configDir, '.claude.json')).mode & 0o777).toBe(0o600)
+  })
+
   it('never touches an existing file, even one without the flag', () => {
     const configDir = makeConfigDir()
     seedDeepSeekClaudeOnboarding(configDir)
     for (const existing of ['{"userID":"u1"}', '{ not json']) {
       writeFileSync(join(configDir, '.claude.json'), existing)
-      seedDeepSeekClaudeOnboarding(configDir)
+      expect(seedDeepSeekClaudeOnboarding(configDir)).toBe(false)
       expect(readFileSync(join(configDir, '.claude.json'), 'utf8')).toBe(existing)
     }
   })

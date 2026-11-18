@@ -89,6 +89,39 @@ describe('deferred worktree removal against the real Git binary', () => {
     expect(await git(['branch', '--list', 'feature'], repoPath)).toBe('')
   })
 
+  it('preserves a branch whose only unmerged commit is empty', async () => {
+    await git(['commit', '--allow-empty', '-qm', 'unique empty commit'], worktreePath)
+    const head = (await git(['rev-parse', 'HEAD'], worktreePath)).trim()
+
+    const result = await removeWorktree(repoPath, worktreePath, false)
+
+    expect(existsSync(worktreePath)).toBe(false)
+    expect(result).toEqual({ preservedBranch: { branchName: 'feature', head } })
+    expect((await git(['rev-parse', 'refs/heads/feature'], repoPath)).trim()).toBe(head)
+  })
+
+  it('preserves unmerged commits that cancel out their file changes', async () => {
+    await writeFile(join(worktreePath, 'seed.txt'), 'temporary change\n')
+    await git(['commit', '-qam', 'change seed'], worktreePath)
+    await git(['revert', '--no-edit', 'HEAD'], worktreePath)
+    const head = (await git(['rev-parse', 'HEAD'], worktreePath)).trim()
+
+    const result = await removeWorktree(repoPath, worktreePath, false)
+
+    expect(result).toEqual({ preservedBranch: { branchName: 'feature', head } })
+    expect((await git(['rev-parse', 'refs/heads/feature'], repoPath)).trim()).toBe(head)
+  })
+
+  it('still deletes a squash-merged branch with net file changes', async () => {
+    await writeFile(join(worktreePath, 'seed.txt'), 'feature change\n')
+    await git(['commit', '-qam', 'change seed'], worktreePath)
+    await git(['merge', '--squash', 'feature'], repoPath)
+    await git(['commit', '-qm', 'squash feature'], repoPath)
+
+    expect(await removeWorktree(repoPath, worktreePath, false)).toEqual({})
+    expect(await git(['branch', '--list', 'feature'], repoPath)).toBe('')
+  })
+
   it('refuses to move a dirty checkout aside', async () => {
     await writeFile(join(worktreePath, 'seed.txt'), 'edited\n')
 

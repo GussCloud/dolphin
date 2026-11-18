@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { lock } from 'proper-lockfile'
 import { writeFileAtomically } from '../../codex-accounts/fs-utils'
+import { CLAUDE_STATE_FILE_MODE } from './claude-state-file-mode'
 
 export type JsonObject = Record<string, unknown>
 
@@ -33,7 +34,7 @@ export async function updateJsonObjectFile(
   update: (current: JsonObject) => JsonObject
 ): Promise<boolean> {
   if (!existsSync(path)) {
-    writeFileAtomically(path, '{}\n', { mode: 0o600 })
+    writeFileAtomically(path, '{}\n', { mode: CLAUDE_STATE_FILE_MODE })
   }
   // Why: Claude Code rewrites its JSON state under proper-lockfile (`<file>.lock`).
   const release = await lock(path, { realpath: false, retries: LOCK_RETRIES })
@@ -42,7 +43,9 @@ export async function updateJsonObjectFile(
     if (!current) {
       return false
     }
-    writeFileAtomically(path, `${JSON.stringify(update(current), null, 2)}\n`, { mode: 0o600 })
+    writeFileAtomically(path, `${JSON.stringify(update(current), null, 2)}\n`, {
+      mode: CLAUDE_STATE_FILE_MODE
+    })
     return true
   } finally {
     await release()

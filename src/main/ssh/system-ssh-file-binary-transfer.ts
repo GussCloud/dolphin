@@ -56,6 +56,7 @@ export async function downloadFileViaSystemSsh(
     : `cat ${shellEscape(remotePath)}`
   const channel = spawnSystemSshCommand(target, command, {
     wrapCommand: !isWindows,
+    closeStdin: true,
     ...getSystemSshBuildArgsFromOperationOptions(options)
   })
   const output = createWriteStream(localPath, { flags: 'wx' })

@@ -20,7 +20,11 @@ export type SystemSshCommandChannel = ClientChannel & {
   _closeRequested?: boolean
 }
 
-type SystemSshCommandOptions = SshExecOptions & SystemSshBuildArgsOptions
+export type SystemSshCommandOptions = SshExecOptions &
+  SystemSshBuildArgsOptions & {
+    /** For commands that send no input: Windows OpenSSH can stay alive after remote exit while its stdin pipe is open. */
+    closeStdin?: boolean
+  }
 
 /**
  * Spawn a system ssh process connecting to the given target.
@@ -67,7 +71,11 @@ export function spawnSystemSshCommand(
     stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true
   })
-  return wrapCommandProcess(proc)
+  const channel = wrapCommandProcess(proc)
+  if (options?.closeStdin) {
+    channel.stdin.end()
+  }
+  return channel
 }
 
 function wrapChildProcess(proc: ChildProcess): SystemSshProcess {
