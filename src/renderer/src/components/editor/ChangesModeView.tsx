@@ -88,6 +88,7 @@ export function ChangesModeView({
         <DiffViewer
           key={viewStateScopeId}
           modelKey={diffViewStateKey}
+          modelOwnerKey={activeFile.id}
           originalModelKey={originalModelKey}
           originalContent={dc.originalContent}
           modifiedContent={modifiedContent}
