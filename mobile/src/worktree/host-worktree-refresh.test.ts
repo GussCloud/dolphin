@@ -126,4 +126,41 @@ describe('startHostWorktreeRefresh', () => {
     expect(fetchWorktrees).toHaveBeenCalledTimes(2)
     expect(fetchRepoMetadata).toHaveBeenCalledWith({ force: true, queueIfInFlight: true })
   })
+
+  it('reads nothing on change notices while backgrounded and catches up once on return', async () => {
+    start()
+    fetchWorktrees.mockClear()
+    fetchRepoMetadata.mockClear()
+
+    appState.currentState = 'background'
+    eventListener?.({ type: 'worktreesChanged', repoId: 'repo-1' })
+    eventListener?.({ type: 'reposChanged' })
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(fetchWorktrees).not.toHaveBeenCalled()
+    expect(fetchRepoMetadata).not.toHaveBeenCalled()
+
+    appState.currentState = 'active'
+    appState.listener?.('active')
+    expect(fetchWorktrees).toHaveBeenCalledExactlyOnceWith({ allowDuringModal: true })
+    expect(fetchRepoMetadata).toHaveBeenCalledExactlyOnceWith({
+      force: true,
+      queueIfInFlight: true
+    })
+  })
+
+  it('reads at most once per poll interval for a burst of change notices', async () => {
+    start()
+    fetchWorktrees.mockClear()
+
+    eventListener?.({ type: 'worktreesChanged', repoId: 'repo-1' })
+    eventListener?.({ type: 'worktreesChanged', repoId: 'repo-1' })
+    eventListener?.({ type: 'worktreesChanged', repoId: 'repo-1' })
+    expect(fetchWorktrees).toHaveBeenCalledTimes(1)
+
+    // One trailing read covers the burst; the interval poll at 3 s is the other read.
+    await vi.advanceTimersByTimeAsync(2_999)
+    expect(fetchWorktrees).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(fetchWorktrees).toHaveBeenCalledTimes(3)
+  })
 })
