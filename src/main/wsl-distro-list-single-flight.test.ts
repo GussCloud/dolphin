@@ -30,6 +30,8 @@ describe('WSL distro list single-flight', () => {
   const originalPlatform = process.platform
   beforeEach(() => {
     Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' })
+    // An installed host, so the first case also reaches wsl.exe without a service query.
+    _resetWslCachesForTests()
   })
 
   afterEach(() => {

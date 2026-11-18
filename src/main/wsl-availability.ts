@@ -2,11 +2,18 @@ import { execFile } from 'node:child_process'
 import { runProcess, type ProcessSpec } from '../shared/child-process/run-process'
 import { buildWslExecArgs } from '../shared/wsl-login-shell-command'
 import { resolveWslInteropSpawnCwd } from './wsl-interop-spawn-directory'
+import {
+  _setWslInstallationForTests,
+  peekWslInstallation,
+  readWslInstallation
+} from './wsl-installation'
 
 type WslAvailabilityCache =
   | { available: true }
   /** Not Windows — never re-probed. */
   | { available: false; unsupported: true }
+  /** WSL services are not registered — never re-probed: wsl.exe would open the installer. */
+  | { available: false; installationAbsent: true }
   | { available: false; cachedAt: number; retryable: boolean; failures: number }
 
 let wslAvailableCache: WslAvailabilityCache | null = null
@@ -25,8 +32,11 @@ const WSL_AVAILABILITY_DEFINITIVE_TTL_MS = 10 * 60_000
 const WSL_AVAILABILITY_MAX_RETRY_DELAY_MS = 30 * 60_000
 
 function isPermanentWslAvailabilityCache(cache: WslAvailabilityCache): boolean {
+  if (cache.available || 'installationAbsent' in cache) {
+    return true
+  }
   // Why: re-check the platform so a cache seeded off-Windows can't suppress a real probe.
-  return cache.available || ('unsupported' in cache && process.platform !== 'win32')
+  return 'unsupported' in cache && process.platform !== 'win32'
 }
 
 // Why: the probe spawns wsl.exe, so a host with a wedged wsl.exe must not pay it every
@@ -181,17 +191,29 @@ export function isWslAvailableAsync(): Promise<boolean> {
   }
 
   const startedAtGeneration = wslAvailabilityCacheGeneration
-  wslAvailabilityProbeInFlight = probeWslStatus()
-    .then(() => cacheWslAvailabilityProbeResult(null, startedAtGeneration))
-    .catch(async (error: unknown) =>
-      cacheWslAvailabilityProbeResult(
-        await wslStatusErrorAfterGuestProbeAsync(error),
-        startedAtGeneration
+  const probeStatus = (): Promise<boolean> =>
+    probeWslStatus()
+      .then(() => cacheWslAvailabilityProbeResult(null, startedAtGeneration))
+      .catch(async (error: unknown) =>
+        cacheWslAvailabilityProbeResult(
+          await wslStatusErrorAfterGuestProbeAsync(error),
+          startedAtGeneration
+        )
       )
-    )
-    .finally(() => {
-      wslAvailabilityProbeInFlight = null
-    })
+  // A known install skips the service wait, so concurrent callers share the wsl.exe spawn at once.
+  const probe =
+    peekWslInstallation() === 'present'
+      ? probeStatus()
+      : readWslInstallation().then((installed) => {
+          if (installed === 'absent') {
+            writeWslAvailabilityCache({ available: false, installationAbsent: true })
+            return false
+          }
+          return probeStatus()
+        })
+  wslAvailabilityProbeInFlight = probe.finally(() => {
+    wslAvailabilityProbeInFlight = null
+  })
   return wslAvailabilityProbeInFlight
 }
 
@@ -214,7 +236,12 @@ export function getCachedWslAvailability(): boolean | null {
 // lifetime, so this cannot re-spawn the probe more than once.
 export function dropStaleWslAvailabilityFailure(): void {
   wslAvailabilityCacheGeneration += 1
-  if (wslAvailableCache && !wslAvailableCache.available && !('unsupported' in wslAvailableCache)) {
+  if (
+    wslAvailableCache &&
+    !wslAvailableCache.available &&
+    !('unsupported' in wslAvailableCache) &&
+    !('installationAbsent' in wslAvailableCache)
+  ) {
     wslAvailableCache = null
   }
 }
@@ -223,6 +250,8 @@ export function _resetWslAvailabilityCacheForTests(): void {
   wslAvailableCache = null
   wslAvailabilityProbeInFlight = null
   wslAvailabilityCacheGeneration = 0
+  // A reset catalog is an installed host, so suites mocking wsl.exe never spawn sc.exe; absence tests seed it.
+  _setWslInstallationForTests('present')
 }
 
 export function _setWslAvailabilityCacheForTests(
