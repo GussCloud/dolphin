@@ -10,6 +10,7 @@ import { resolveWslSessionContext } from '../../../daemon/wsl-session-context'
 import { LocalPtyProvider } from '../../../providers/local-pty-provider'
 import { normalizeWindowsTerminalCwd } from '../../../providers/windows-shell-args'
 import { wslUncDirectoryExistsAsync } from '../../../wsl'
+import { resolveWithAsyncDirectoryProbes } from './spawn-startup-cwd-probes'
 import { getCodexSelectionTargetForPty } from '../host-env/codex-home'
 import {
   isManagedClaudeAuthLaunch,
@@ -114,14 +115,14 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
       const validationCwd = toWindowsWslPath(initiallyResolvedStartupCwd, startupWslContext.distro)
       wslStartupCwdExists = isWslUncPath(validationCwd)
         ? await wslUncDirectoryExistsAsync(validationCwd)
-        : ctx.deps.localStartupCwdDirectoryExists(validationCwd)
+        : await ctx.deps.localStartupCwdDirectoryExists(validationCwd)
       if (wslStartupCwdExists === true) {
         ctx.prevalidatedCwd = validationCwd
       }
       if (wslStartupCwdExists === false && startupWorkspaceCwd) {
         wslWorkspaceCwdExists = isWslUncPath(startupWorkspaceCwd)
           ? await wslUncDirectoryExistsAsync(startupWorkspaceCwd)
-          : ctx.deps.localStartupCwdDirectoryExists(startupWorkspaceCwd)
+          : await ctx.deps.localStartupCwdDirectoryExists(startupWorkspaceCwd)
         if (wslWorkspaceCwdExists === true) {
           ctx.prevalidatedCwd = startupWorkspaceCwd
         }
@@ -132,27 +133,37 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
       (!wslRuntimeOwnsStartupCwd ||
         (wslStartupCwdExists === false && wslWorkspaceCwdExists === true))
     let didFallbackToWorkspaceRootCwd = false
-    ctx.cwd = ctx.deps.resolvePtySpawnStartupCwd(
-      args.worktreeId,
-      args.cwd,
-      allowMissingCwdFallback
-        ? {
-            directoryExists: (path) =>
-              startupWslContext &&
-              wslStartupCwdExists === false &&
-              path === initiallyResolvedStartupCwd
-                ? false
-                : startupWslContext && path === startupWorkspaceCwd
-                  ? wslWorkspaceCwdExists === true
-                  : ctx.deps.localStartupCwdDirectoryExists(
-                      process.platform === 'win32' ? normalizeWindowsTerminalCwd(path) : path
-                    ),
-            onFallbackToWorkspaceRoot: () => {
-              didFallbackToWorkspaceRootCwd = true
+    const resolveStartupCwd = (localDirectoryExists?: (path: string) => boolean) => {
+      didFallbackToWorkspaceRootCwd = false
+      return ctx.deps.resolvePtySpawnStartupCwd(
+        args.worktreeId,
+        args.cwd,
+        localDirectoryExists
+          ? {
+              directoryExists: (path) =>
+                startupWslContext &&
+                wslStartupCwdExists === false &&
+                path === initiallyResolvedStartupCwd
+                  ? false
+                  : startupWslContext && path === startupWorkspaceCwd
+                    ? wslWorkspaceCwdExists === true
+                    : localDirectoryExists(
+                        process.platform === 'win32' ? normalizeWindowsTerminalCwd(path) : path
+                      ),
+              onFallbackToWorkspaceRoot: () => {
+                didFallbackToWorkspaceRootCwd = true
+              }
             }
-          }
-        : undefined
-    )
+          : undefined
+      )
+    }
+    // Why async probes: a statSync on a dead network mount would freeze the whole main process.
+    ctx.cwd = allowMissingCwdFallback
+      ? await resolveWithAsyncDirectoryProbes(
+          resolveStartupCwd,
+          ctx.deps.localStartupCwdDirectoryExists
+        )
+      : resolveStartupCwd()
     if (didFallbackToWorkspaceRootCwd && wslWorkspaceCwdExists === true && ctx.cwd) {
       ctx.prevalidatedCwd = ctx.cwd
     }

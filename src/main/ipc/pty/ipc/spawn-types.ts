@@ -97,7 +97,7 @@ export type PtySpawnIpcDeps = {
     cwd: string | undefined,
     missingDirFallback?: TerminalStartupCwdMissingDirFallback
   ) => string | undefined
-  localStartupCwdDirectoryExists: (path: string) => boolean
+  localStartupCwdDirectoryExists: (path: string) => Promise<boolean>
   prepareCodexResumeHome: (args: {
     connectionId?: string | null
     launchAgent?: TuiAgent
