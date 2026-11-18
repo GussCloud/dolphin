@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { RpcClient } from '../transport/rpc-client'
 import type { RpcFailure } from '../transport/types'
 import type { Worktree } from './workspace-list-sections'
@@ -27,52 +28,46 @@ export type WorktreeCatalogFetchResult =
   | { kind: 'response'; pending: PendingWorktreeCatalog }
   | { kind: 'request_failed'; code: string }
 
-function validSnapshotId(value: unknown): string | null {
-  return typeof value === 'string' && value.length > 0 && value.length <= 128 ? value : null
-}
+const snapshotIdSchema = z.string().min(1).max(128)
 
-export function admitWorktreeCatalogResponse<T>(
+// Rows stay opaque, as consumers validate their own projections; malformed fields read as absent.
+const catalogReplySchema = z.looseObject({
+  worktrees: z.array(z.custom<Worktree>()).optional().catch(undefined),
+  snapshotId: snapshotIdSchema.optional().catch(undefined),
+  unchanged: z.boolean().optional().catch(undefined),
+  baseSnapshotId: snapshotIdSchema.optional().catch(undefined),
+  rowsFromBase: z
+    .array(z.union([z.number(), z.custom<Worktree>()]))
+    .optional()
+    .catch(undefined)
+})
+
+export function admitWorktreeCatalogResponse(
   result: unknown,
   requestedSnapshotId: string | null
-): WorktreeCatalogAdmission<T> {
-  if (!result || typeof result !== 'object') {
+): WorktreeCatalogAdmission<Worktree> {
+  const parsed = catalogReplySchema.safeParse(result)
+  if (!parsed.success) {
     return { kind: 'invalid' }
   }
-  const response = result as {
-    snapshotId?: unknown
-    unchanged?: unknown
-    worktrees?: unknown
-    baseSnapshotId?: unknown
-    rowsFromBase?: unknown
-  }
+  const { worktrees, unchanged, baseSnapshotId, rowsFromBase } = parsed.data
+  const snapshotId = parsed.data.snapshotId ?? null
   // Why: a full response is defined by carrying rows, so discriminate on that rather
   // than on the presence of `unchanged` — the latter could collide with a future
   // catalog field and silently reclassify a full response.
-  if (Array.isArray(response.worktrees)) {
-    return {
-      kind: 'full',
-      snapshotId: validSnapshotId(response.snapshotId),
-      worktrees: response.worktrees as T[]
-    }
+  if (worktrees) {
+    return { kind: 'full', snapshotId, worktrees }
   }
-
-  const snapshotId = validSnapshotId(response.snapshotId)
-  if (response.unchanged === true && snapshotId && snapshotId === requestedSnapshotId) {
+  if (unchanged === true && snapshotId && snapshotId === requestedSnapshotId) {
     return { kind: 'unchanged', snapshotId }
   }
   if (
     snapshotId &&
     requestedSnapshotId !== null &&
-    validSnapshotId(response.baseSnapshotId) === requestedSnapshotId &&
-    Array.isArray(response.rowsFromBase)
+    baseSnapshotId === requestedSnapshotId &&
+    rowsFromBase
   ) {
-    return {
-      kind: 'delta',
-      snapshotId,
-      baseSnapshotId: requestedSnapshotId,
-      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: rows stay opaque like a full reply's; rebuildFromBase checks each entry is an index or an object.
-      rowsFromBase: response.rowsFromBase as (number | T)[]
-    }
+    return { kind: 'delta', snapshotId, baseSnapshotId, rowsFromBase }
   }
   return { kind: 'invalid' }
 }
@@ -109,7 +104,7 @@ export class WorktreeCatalogSnapshotClient {
     return {
       kind: 'response',
       pending: {
-        admission: admitWorktreeCatalogResponse<Worktree>(catalog.value, requestedSnapshotId),
+        admission: admitWorktreeCatalogResponse(catalog.value, requestedSnapshotId),
         client,
         hostId,
         requestedSnapshotId

@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { describe, expect, it, vi } from 'vitest'
 import type { DolphinRuntimeService } from '../../dolphin-runtime'
 import { RpcDispatcher } from '../dispatcher'
@@ -121,7 +122,7 @@ describe('worktree.ps row deltas', () => {
       method: 'worktree.ps',
       params
     })
-    return (response as { result: Record<string, unknown> & { snapshotId: string } }).result
+    return z.looseObject({ snapshotId: z.string() }).parse(response.ok ? response.result : null)
   }
   const a = row('repo-1::/w/a', 'a')
   const b = row('repo-1::/w/b', 'b')
