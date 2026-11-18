@@ -147,6 +147,10 @@ export class RuntimeMobileNotificationController {
   }
 
   dismiss(notificationId: string): void {
+    // Why: reads rebuild ids for alerts that never went out (chat panes, silenced workers); each would cost a silent push.
+    if (this.dismissalStore && !this.dismissalStore.hasLiveDelivery(notificationId)) {
+      return
+    }
     this.dispatch({ type: 'dismiss', notificationId })
   }
 
