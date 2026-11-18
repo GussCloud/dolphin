@@ -6,6 +6,7 @@ import { isBackgroundLaunch, showWindowWithoutStealingFocus } from './foreground
 import { rectHasVisibleAreaOnAnyDisplay } from './window-bounds-validation'
 import { sendToTrustedUIRenderer } from '../ipc/ui'
 import { installPrivilegedWindowNavigationPolicy } from './privileged-window-navigation'
+import { isMacAppPasteInput } from './mac-app-paste-input'
 import { stepUIZoomLevel, type UIZoomDirection } from '../../shared/ui-zoom-level'
 import { nativeZoomCommandMatchesKeybindings } from '../../shared/window-shortcut-policy'
 import {
@@ -210,10 +211,16 @@ export function createOrFocusDashboardPopout(
     }
   })
 
-  // Why: the pop-out has no renderer-side shortcut plumbing; resolve only the
-  // zoom chords here and let every other key fall through untouched.
+  // Why: the pop-out has no renderer-side shortcut plumbing; resolve only paste
+  // and the zoom chords here and let every other key fall through untouched.
   window.webContents.on('before-input-event', (event, input) => {
     if (input.type !== 'keyDown') {
+      return
+    }
+    if (isMacAppPasteInput(input)) {
+      // Why: kitty-mode xterm encodes Cmd+V as CSI u and consumes it, so the Edit menu accelerator never fires.
+      event.preventDefault()
+      window.webContents.send('ui:appMenuPaste')
       return
     }
     const direction = resolveZoomShortcut(input, options.getKeybindings?.())

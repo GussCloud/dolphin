@@ -15341,7 +15341,7 @@
           "headOne": "¡Hola! ¿Puedes revisar este PR, por favor?",
           "headMany": "¡Hola! ¿Puedes revisar estos {{value0}} PRs, por favor?",
           "thanks": "¡Gracias!",
-          "copyFailed": "No pude copiar. Selecciona el texto y usa Ctrl+C.",
+          "copyFailed": "No pude copiar. Selecciona el texto y usa {{value0}}.",
           "copiedOne": "Texto copiado — solo pégalo en Teams",
           "copiedMany": "Texto con {{value0}} PRs copiado — solo pégalo en Teams",
           "title": "Solicitud de revisión",

@@ -67,7 +67,8 @@ export class MacosSystemSleepAssertion {
 
     let child: CaffeinateProcess
     try {
-      child = this.spawn('/usr/bin/caffeinate', ['-i', '-s'], {
+      // Why: -w ties the assertion to Dolphin's pid so a crash or force-quit cannot leave the Mac awake.
+      child = this.spawn('/usr/bin/caffeinate', ['-i', '-s', '-w', String(process.pid)], {
         stdio: 'ignore',
         windowsHide: true
       })
