@@ -25,7 +25,6 @@ export function buildNotificationOptions(args: NotificationDispatchRequest): {
   title: string
   body: string
   silent?: boolean
-  sound?: string
 } {
   if (args.source === 'terminal-bell') {
     return {

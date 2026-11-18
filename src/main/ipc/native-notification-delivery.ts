@@ -23,10 +23,8 @@ export function deliverNativeNotification(
 ): NotificationDispatchResult | Promise<NotificationDispatchResult> {
   if (options.soundOwnedElsewhere || getEffectiveNotificationSoundId(settings) !== 'system') {
     notificationOptions.silent = true
-  } else if (process.platform === 'darwin') {
-    // Why: macOS treats an unset sound as silent, so request Electron's default when using the OS sound.
-    notificationOptions.sound = 'default'
   }
+  // Why: leave `sound` unset for the OS sound; macOS resolves sound: 'default' as a file name and plays nothing.
   const notification = new Notification(notificationOptions)
   if (args.notificationId) {
     const previous = activeNotificationsById.get(args.notificationId)

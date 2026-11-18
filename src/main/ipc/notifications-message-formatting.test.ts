@@ -26,12 +26,6 @@ vi.mock('../tray/system-tray', async () =>
 import { registerNotificationHandlers } from './notifications'
 
 describe('registerNotificationHandlers', () => {
-  function expectedNativeNotificationOptions<T extends Record<string, unknown>>(
-    options: T
-  ): T & { sound?: string } {
-    return process.platform === 'darwin' ? { ...options, sound: 'default' } : options
-  }
-
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-28T16:00:00Z'))
@@ -57,12 +51,10 @@ describe('registerNotificationHandlers', () => {
         { source: 'agent-task-complete', repoLabel: 'dolphin', worktreeLabel: 'feat/notis' }
       )
     ).toEqual({ delivered: true })
-    expect(notificationCtorMock).toHaveBeenCalledWith(
-      expectedNativeNotificationOptions({
-        title: 'Task complete in feat/notis',
-        body: 'dolphin'
-      })
-    )
+    expect(notificationCtorMock).toHaveBeenCalledWith({
+      title: 'Task complete in feat/notis',
+      body: 'dolphin'
+    })
     expect(notificationShowMock).toHaveBeenCalledTimes(1)
   })
 
@@ -96,12 +88,10 @@ describe('registerNotificationHandlers', () => {
       )
     ).toEqual({ delivered: true })
 
-    expect(notificationCtorMock).toHaveBeenCalledWith(
-      expectedNativeNotificationOptions({
-        title: 'dolphin / feat/notis - Codex finished',
-        body: 'Updated the notification body.'
-      })
-    )
+    expect(notificationCtorMock).toHaveBeenCalledWith({
+      title: 'dolphin / feat/notis - Codex finished',
+      body: 'Updated the notification body.'
+    })
   })
 
   it.each([true, false, undefined])(
@@ -135,12 +125,10 @@ describe('registerNotificationHandlers', () => {
         )
       ).toEqual({ delivered: true })
 
-      expect(notificationCtorMock).toHaveBeenCalledWith(
-        expectedNativeNotificationOptions({
-          title: 'dolphin / feat/notis - Codex finished',
-          body: 'Updated the notification body.'
-        })
-      )
+      expect(notificationCtorMock).toHaveBeenCalledWith({
+        title: 'dolphin / feat/notis - Codex finished',
+        body: 'Updated the notification body.'
+      })
     }
   )
 
@@ -173,12 +161,10 @@ describe('registerNotificationHandlers', () => {
       )
     ).toEqual({ delivered: true })
 
-    expect(notificationCtorMock).toHaveBeenCalledWith(
-      expectedNativeNotificationOptions({
-        title: 'kendall-work / main - Claude finished',
-        body: 'Claude finished.'
-      })
-    )
+    expect(notificationCtorMock).toHaveBeenCalledWith({
+      title: 'kendall-work / main - Claude finished',
+      body: 'Claude finished.'
+    })
   })
 
   it('formats blocked and interrupted agent snapshots distinctly', async () => {
@@ -223,20 +209,14 @@ describe('registerNotificationHandlers', () => {
       )
     ).toEqual({ delivered: true })
 
-    expect(notificationCtorMock).toHaveBeenNthCalledWith(
-      1,
-      expectedNativeNotificationOptions({
-        title: 'feat/notis - Claude needs input',
-        body: 'Please approve the command.'
-      })
-    )
-    expect(notificationCtorMock).toHaveBeenNthCalledWith(
-      2,
-      expectedNativeNotificationOptions({
-        title: 'feat/notis - Claude stopped',
-        body: 'Stopped by user.'
-      })
-    )
+    expect(notificationCtorMock).toHaveBeenNthCalledWith(1, {
+      title: 'feat/notis - Claude needs input',
+      body: 'Please approve the command.'
+    })
+    expect(notificationCtorMock).toHaveBeenNthCalledWith(2, {
+      title: 'feat/notis - Claude stopped',
+      body: 'Stopped by user.'
+    })
   })
 
   it('normalizes custom agent labels and re-bounds multiline assistant previews', async () => {
@@ -311,9 +291,10 @@ describe('registerNotificationHandlers', () => {
       }
     )
 
-    expect(notificationCtorMock).toHaveBeenCalledWith(
-      expectedNativeNotificationOptions({ title: scenario.expected, body: 'Ran the suite.' })
-    )
+    expect(notificationCtorMock).toHaveBeenCalledWith({
+      title: scenario.expected,
+      body: 'Ran the suite.'
+    })
   })
 
   it('reports an interrupted finish as stopped', async () => {
@@ -340,12 +321,10 @@ describe('registerNotificationHandlers', () => {
       }
     )
 
-    expect(notificationCtorMock).toHaveBeenCalledWith(
-      expectedNativeNotificationOptions({
-        title: 'feat/notis - Claude stopped',
-        body: 'Claude stopped.'
-      })
-    )
+    expect(notificationCtorMock).toHaveBeenCalledWith({
+      title: 'feat/notis - Claude stopped',
+      body: 'Claude stopped.'
+    })
   })
 
   it('uses tool context before falling back when no prompt or assistant preview exists', async () => {
@@ -376,11 +355,9 @@ describe('registerNotificationHandlers', () => {
       )
     ).toEqual({ delivered: true })
 
-    expect(notificationCtorMock).toHaveBeenCalledWith(
-      expectedNativeNotificationOptions({
-        title: 'feat/notis - Agent working',
-        body: 'Using Bash: pnpm test'
-      })
-    )
+    expect(notificationCtorMock).toHaveBeenCalledWith({
+      title: 'feat/notis - Agent working',
+      body: 'Using Bash: pnpm test'
+    })
   })
 })
