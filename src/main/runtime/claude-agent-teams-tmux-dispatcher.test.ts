@@ -199,18 +199,20 @@ describe('Git Bash teams (native Windows)', () => {
 })
 
 describe('default host shell teams', () => {
-  it('keeps the placeholder split and respawns with the command typed as-is', async () => {
+  it('keeps the cat holding pane pending and spawns the command typed as-is on respawn', async () => {
     const { api, splits, tmux } = setup('default')
-    await tmux('split-window', ...splitHolding)
+    await expect(tmux('split-window', ...splitHolding)).resolves.toBe('%2\n')
+    // Why: a spawned placeholder's close could beat its reveal and leave a dead `cat` pane on screen.
+    expect(api.splitTerminal).not.toHaveBeenCalled()
+
     await tmux('respawn-pane', '-k', '-t', '%2', '--', 'claude --agent-id a')
 
-    expect(api.closeTerminal).toHaveBeenCalledWith('teammate-1')
+    expect(api.closeTerminal).not.toHaveBeenCalled()
     expect(splits.map(({ handle, opts }) => [handle, opts.command])).toEqual([
-      ['leader-handle', 'cat'],
       ['leader-handle', 'claude --agent-id a']
     ])
-    expect(splits[1]!.opts).not.toHaveProperty('shellOverride')
-    expect(splits[1]!.opts).not.toHaveProperty('gitBashStartupCommandInArgs')
+    expect(splits[0]!.opts).not.toHaveProperty('shellOverride')
+    expect(splits[0]!.opts).not.toHaveProperty('gitBashStartupCommandInArgs')
     expect(await readdir(scriptDir)).toEqual([])
   })
 
@@ -234,7 +236,7 @@ describe('default host shell teams', () => {
     await tmux('split-window', ...splitHolding)
     await tmux('respawn-pane', '-k', '-t', '%2', '--', 'claude --agent-id a')
 
-    expect(api.markTeammatePaneNotResumable.mock.calls).toEqual([['teammate-1'], ['teammate-2']])
+    expect(api.markTeammatePaneNotResumable.mock.calls).toEqual([['teammate-1']])
     expect(api.markTeammatePaneNotResumable).not.toHaveBeenCalledWith('leader-handle')
   })
 })

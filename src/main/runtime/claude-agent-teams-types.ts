@@ -62,7 +62,7 @@ export type AgentTeamsTerminalApi = {
 
 export type TeamPane = {
   fakePaneId: string
-  // Why: null while pending — Git Bash teams defer the real split of Claude's `-- cat`
+  // Why: null while pending — every team defers the real split of Claude's `-- cat`
   // holding pane until `respawn-pane` brings the teammate command.
   handle: string | null
   index: number

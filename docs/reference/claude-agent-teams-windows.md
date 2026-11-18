@@ -63,8 +63,11 @@ Git Bash echoes typed input slowly: a ~400-character teammate command took ~55s 
   the same argv started from any process in that tree takes ~5s, most likely AV/EDR
   command-line scanning. Don't chase it in the pane or shim code.
 
-macOS, Linux and WSL teams keep the placeholder split and type the command as-is. SSH leaders
-have no panes (see below).
+macOS, Linux and WSL teams use the same pending holding pane, but type the command as-is
+(no script, no launch arg). They used to spawn the `cat` placeholder and close it on
+`respawn-pane`: the split's renderer reveal is fire-and-forget, so the close could reach the
+renderer before the pane mounted, was ignored, and the dead `cat` pane then mounted next to the
+real teammate. SSH leaders have no panes (see below).
 
 ### Closing the leader closes its teammates
 
