@@ -50,6 +50,30 @@ export function claudeQueryAsyncCanceller(
   return typeof cancel === 'function' ? cancel.bind(query) : null
 }
 
+/**
+ * The default 'full' context report makes one count_tokens API call per category on each
+ * fresh CLI; 'summary' answers locally. 0.3.251's getContextUsage() takes no options, so the
+ * field goes through the Query's own control sender (later SDKs accept `{ detail }` directly).
+ * CLIs before 2.1.257 ignore it and answer in full.
+ */
+type ClaudeQueryControlSender = {
+  request?: (request: { subtype: 'get_context_usage'; detail: 'summary' }) => Promise<unknown>
+}
+
+export function readClaudeSummaryContextUsage(query: Query): Promise<unknown> {
+  const send = (query as unknown as ClaudeQueryControlSender).request
+  if (typeof send !== 'function') {
+    return query.getContextUsage()
+  }
+  return Promise.resolve(
+    send.call(query, { subtype: 'get_context_usage', detail: 'summary' })
+  ).then((answer: unknown) =>
+    typeof answer === 'object' && answer !== null && 'response' in answer
+      ? answer.response
+      : undefined
+  )
+}
+
 export type ClaudeControlOptions = { timeoutMs?: number }
 
 /**
@@ -158,7 +182,11 @@ export function createClaudeControlSurface(query: Query): ClaudeControlSurface {
     initializationResult: () =>
       runClaudeControl('initialize', () => query.initializationResult(), null),
     getContextUsage: (options) =>
-      runClaudeControl('get_context_usage', () => query.getContextUsage(), options?.timeoutMs),
+      runClaudeControl(
+        'get_context_usage',
+        () => readClaudeSummaryContextUsage(query),
+        options?.timeoutMs
+      ),
     getSettings: (options) => {
       const read = claudeQuerySettingsReader(query)
       return read
