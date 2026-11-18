@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "baseline": "8342a59dbceb8a2e99ead409c68840f74b2dd1d6",
+  "baseline": "cafe3fe8fc60fa07254f026d14cc02a8cde1a662",
   "scenarios": [
     {
       "id": "b1",
@@ -1103,7 +1103,7 @@
         {
           "complete": "repo.list#1",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -1197,7 +1197,7 @@
         {
           "complete": "repo.list#1",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -1309,7 +1309,7 @@
         {
           "complete": "repo.list#1",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -1398,7 +1398,7 @@
         {
           "complete": "repo.list#1",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -2367,7 +2367,7 @@
         {
           "complete": "repo.list#1",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -2693,7 +2693,7 @@
         {
           "complete": "repo.list#1",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -3220,7 +3220,7 @@
         {
           "complete": "repo.list#1",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -3306,7 +3306,7 @@
         {
           "complete": "repo.list#2",
           "params": {
-            "$undefined": true
+            "afterSnapshotId": null
           },
           "reply": {
             "ok": true,
@@ -8090,7 +8090,8 @@
           "params": {
             "limit": 10000,
             "supportsWorktreeVisibilitySourceDefaults": true,
-            "afterSnapshotId": null
+            "afterSnapshotId": null,
+            "acceptRowDelta": true
           },
           "reply": {
             "ok": true,
@@ -8131,7 +8132,8 @@
           "params": {
             "limit": 10000,
             "supportsWorktreeVisibilitySourceDefaults": true,
-            "afterSnapshotId": null
+            "afterSnapshotId": null,
+            "acceptRowDelta": true
           },
           "reply": {
             "ok": true
