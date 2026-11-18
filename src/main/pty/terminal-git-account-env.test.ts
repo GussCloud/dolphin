@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../../shared/repo-types'
 
-const mocks = vi.hoisted(() => ({
-  readReachableUrls: vi.fn(),
-  detectGhTokenStorage: vi.fn(),
-  ensureGhTerminalConfigDir: vi.fn(),
-  findAccount: vi.fn(),
-  authMethod: 'token' as 'token' | 'azure-cli'
-}))
+const mocks = vi.hoisted(() => {
+  const state: { authMethod: 'token' | 'azure-cli' } = { authMethod: 'token' }
+  return {
+    readReachableUrls: vi.fn(),
+    detectGhTokenStorage: vi.fn(),
+    ensureGhTerminalConfigDir: vi.fn(),
+    findAccount: vi.fn(),
+    state
+  }
+})
 
 vi.mock('../git/command-runner/repo-git-account-env', () => ({
   readReachableUrls: mocks.readReachableUrls
@@ -23,7 +26,7 @@ vi.mock('../azure-devops/azure-devops-managed-accounts', () => ({
 }))
 
 vi.mock('../azure-devops/azure-devops-auth-preference-store', () => ({
-  getAzureDevOpsAuthPreference: () => ({ method: mocks.authMethod, autoRenewCliSession: true })
+  getAzureDevOpsAuthPreference: () => ({ method: mocks.state.authMethod, autoRenewCliSession: true })
 }))
 
 import {
@@ -53,7 +56,7 @@ describe('buildTerminalGitAccountEnv', () => {
     mocks.detectGhTokenStorage.mockReset().mockResolvedValue('keyring')
     mocks.ensureGhTerminalConfigDir.mockReset().mockReturnValue('/ud/gh-accounts/github.com/alice')
     mocks.findAccount.mockReset()
-    mocks.authMethod = 'token'
+    mocks.state.authMethod = 'token'
   })
 
   it('points gh at the token-free account dir and scopes git to it, with no token anywhere', async () => {
@@ -137,7 +140,7 @@ describe('buildTerminalGitAccountEnv', () => {
   })
 
   it('uses the global az login for an Azure DevOps remote on "Default sign-in"', async () => {
-    mocks.authMethod = 'azure-cli'
+    mocks.state.authMethod = 'azure-cli'
     mocks.readReachableUrls.mockResolvedValue(['https://evup@dev.azure.com/evup/P/_git/app'])
     const patch = await buildTerminalGitAccountEnv({ repo: repo(), cwd: '/work/app' })
     const params = patch?.env.GIT_CONFIG_PARAMETERS ?? ''
@@ -152,7 +155,7 @@ describe('buildTerminalGitAccountEnv', () => {
     mocks.readReachableUrls.mockResolvedValue(['https://dev.azure.com/evup/P/_git/app'])
     expect(await buildTerminalGitAccountEnv({ repo: repo(), cwd: '/x' })).toBeNull()
 
-    mocks.authMethod = 'azure-cli'
+    mocks.state.authMethod = 'azure-cli'
     expect(
       await buildTerminalGitAccountEnv({ repo: repo(), cwd: '/x', wsl: { distro: null } })
     ).toBeNull()

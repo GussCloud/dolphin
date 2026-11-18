@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../shared/repo-types'
 
-const preference = vi.hoisted(() => ({ method: 'token' as 'token' | 'azure-cli' }))
+const preference = vi.hoisted(() => {
+  const state: { method: 'token' | 'azure-cli' } = { method: 'token' }
+  return state
+})
 vi.mock('./azure-devops/azure-devops-auth-preference-store', () => ({
   getAzureDevOpsAuthPreference: () => ({ method: preference.method, autoRenewCliSession: true })
 }))
