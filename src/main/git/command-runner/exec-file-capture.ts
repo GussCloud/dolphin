@@ -207,9 +207,8 @@ export function execFileCapture(
     })
     child.once('close', reportChildTerminated)
 
-    if (options.stdin !== undefined) {
-      endSubprocessStdin(child.stdin, options.stdin)
-    }
+    // Why: non-interactive signers (SSH commit signing) wait on an open pipe instead of seeing EOF.
+    endSubprocessStdin(child.stdin, options.stdin ?? '')
 
     // Why: Node's timeout waits forever on signal-ignoring CLIs; enforce our own deadline with bounded tree cleanup.
     if (options.timeout && options.timeout > 0) {
