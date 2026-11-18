@@ -12,6 +12,7 @@ import {
   type ClaudeLaunchConfigDir
 } from '../claude-accounts/profile/claude-launch-config-dir'
 import { claudeConfigStatePath } from '../claude-accounts/profile/claude-shell-selector-discovery'
+import { CLAUDE_STATE_FILE_MODE } from '../claude-accounts/profile/claude-state-file-mode'
 import { seedDeepSeekClaudeOnboarding } from '../deepseek/deepseek-claude-onboarding-seed'
 import { parseWslUncPath } from '../../shared/wsl-paths'
 import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
@@ -113,7 +114,14 @@ export async function writeClaudeFolderTrust(
     for (const key of keys) {
       projects[key] = { ...projects[key], hasTrustDialogAccepted: true }
     }
-    writeFileAtomically(target.configPath, `${JSON.stringify({ ...config, projects }, null, 2)}\n`)
+    // Why the mode: the replacement file would otherwise take the umask default (0644).
+    writeFileAtomically(
+      target.configPath,
+      `${JSON.stringify({ ...config, projects }, null, 2)}\n`,
+      {
+        mode: CLAUDE_STATE_FILE_MODE
+      }
+    )
   } finally {
     await release()
   }
