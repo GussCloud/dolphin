@@ -10,6 +10,7 @@ import {
 } from '../worktree-trash'
 import { parseWslPath } from '../wsl'
 import { gitExecFileAsync } from './runner'
+import { pruneGitWorktrees } from './worktree-prune-guard'
 import { runWithGitReadCacheInvalidation } from './status'
 import { deleteBranchAfterWorktreeRemoval } from './worktree-branch-removal'
 import { listWorktreesStrict } from './worktree-listing'
@@ -172,7 +173,7 @@ async function clearGitRegistrationForMissingWorktree(
     )
   }
 
-  await gitExecFileAsync(['worktree', 'prune'], gitExecOptions(repoPath, registrationOptions))
+  await pruneGitWorktrees(gitExecOptions(repoPath, registrationOptions))
   // Strict (not the shared scan): an unreadable repo must not read as proof that the row is gone.
   const stillRegistered = (await listWorktreesStrict(repoPath, registrationOptions)).some(
     (worktree) => areWorktreePathsEqual(worktree.path, worktreePath)
