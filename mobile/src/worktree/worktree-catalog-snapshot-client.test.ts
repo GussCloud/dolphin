@@ -110,6 +110,46 @@ describe('WorktreeCatalogSnapshotClient', () => {
     expect(second).toEqual(rows)
   })
 
+  it('rebuilds a row delta from the confirmed rows and asks for a full catalog when it cannot', async () => {
+    const a = { worktreeId: 'a' }
+    const b = { worktreeId: 'b' }
+    const c = { worktreeId: 'c' }
+    const client = clientWithResults(
+      { worktrees: [a, b], snapshotId: 'snapshot-1' },
+      { snapshotId: 'snapshot-2', baseSnapshotId: 'snapshot-1', rowsFromBase: [1, c, 0] },
+      { snapshotId: 'snapshot-3', baseSnapshotId: 'snapshot-2', rowsFromBase: [7] },
+      { worktrees: [], snapshotId: 'snapshot-4' }
+    )
+    const snapshots = new WorktreeCatalogSnapshotClient()
+
+    // A caller sorting what it was given must not reorder the base the next delta indexes into.
+    admitFetched(snapshots, await snapshots.fetch(client, 'host-1'))?.reverse()
+    expect(admitFetched(snapshots, await snapshots.fetch(client, 'host-1'))).toEqual([b, c, a])
+    expect(admitFetched(snapshots, await snapshots.fetch(client, 'host-1'))).toBeNull()
+    await snapshots.fetch(client, 'host-1')
+
+    expect(client.sendRequest).toHaveBeenNthCalledWith(4, 'worktree.ps', {
+      limit: WORKTREE_PS_FULL_LIMIT,
+      afterSnapshotId: null,
+      acceptRowDelta: true
+    })
+  })
+
+  it('drops a late delta that answers a token the client has already replaced', async () => {
+    const a = { worktreeId: 'a' }
+    const client = clientWithResults(
+      { worktrees: [a], snapshotId: 'snapshot-1' },
+      { snapshotId: 'snapshot-2', baseSnapshotId: 'snapshot-1', rowsFromBase: [0, a] },
+      { worktrees: [a, a, a], snapshotId: 'snapshot-3' }
+    )
+    const snapshots = new WorktreeCatalogSnapshotClient()
+    admitFetched(snapshots, await snapshots.fetch(client, 'host-1'))
+    const late = await snapshots.fetch(client, 'host-1')
+    admitFetched(snapshots, await snapshots.fetch(client, 'host-1'))
+
+    expect(admitFetched(snapshots, late)).toBeNull()
+  })
+
   it('does not advance the token until the caller admits a response', async () => {
     const client = clientWithResults(
       { worktrees: [], snapshotId: 'snapshot-1' },
@@ -122,7 +162,8 @@ describe('WorktreeCatalogSnapshotClient', () => {
 
     expect(client.sendRequest).toHaveBeenNthCalledWith(2, 'worktree.ps', {
       limit: WORKTREE_PS_FULL_LIMIT,
-      afterSnapshotId: null
+      afterSnapshotId: null,
+      acceptRowDelta: true
     })
   })
 
@@ -142,7 +183,8 @@ describe('WorktreeCatalogSnapshotClient', () => {
 
     expect(client.sendRequest).toHaveBeenNthCalledWith(2, 'worktree.ps', {
       limit: WORKTREE_PS_FULL_LIMIT,
-      afterSnapshotId: 'snapshot-1'
+      afterSnapshotId: 'snapshot-1',
+      acceptRowDelta: true
     })
   })
 
@@ -160,7 +202,8 @@ describe('WorktreeCatalogSnapshotClient', () => {
 
     expect(client.sendRequest).toHaveBeenNthCalledWith(3, 'worktree.ps', {
       limit: WORKTREE_PS_FULL_LIMIT,
-      afterSnapshotId: null
+      afterSnapshotId: null,
+      acceptRowDelta: true
     })
   })
 
@@ -174,7 +217,8 @@ describe('WorktreeCatalogSnapshotClient', () => {
 
     expect(secondClient.sendRequest).toHaveBeenCalledWith('worktree.ps', {
       limit: WORKTREE_PS_FULL_LIMIT,
-      afterSnapshotId: null
+      afterSnapshotId: null,
+      acceptRowDelta: true
     })
   })
 
@@ -194,7 +238,8 @@ describe('WorktreeCatalogSnapshotClient', () => {
     await snapshots.fetch(secondClient, 'host-2')
     expect(secondClient.sendRequest).toHaveBeenNthCalledWith(2, 'worktree.ps', {
       limit: WORKTREE_PS_FULL_LIMIT,
-      afterSnapshotId: 'snapshot-2'
+      afterSnapshotId: 'snapshot-2',
+      acceptRowDelta: true
     })
   })
 
@@ -218,7 +263,8 @@ describe('WorktreeCatalogSnapshotClient', () => {
     await snapshots.fetch(client, 'host-1')
     expect(client.sendRequest).toHaveBeenNthCalledWith(3, 'worktree.ps', {
       limit: WORKTREE_PS_FULL_LIMIT,
-      afterSnapshotId: 'snapshot-1'
+      afterSnapshotId: 'snapshot-1',
+      acceptRowDelta: true
     })
   })
 

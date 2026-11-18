@@ -1,4 +1,5 @@
 import { defineMethod } from '../core'
+import { resolveReplySnapshot } from '../content-snapshot-id'
 import { PROJECT_RUNTIME_METHODS } from './project-runtime-rpc-methods'
 import { FOLDER_WORKSPACE_METHODS } from './folder-workspace'
 import { RepoSelector } from './github-repo-target-schemas'
@@ -16,6 +17,7 @@ import {
   RepoClone,
   RepoCreate,
   RepoIssueCommandWrite,
+  RepoList,
   RepoPath,
   RepoReorder,
   RepoSearchRefs,
@@ -27,14 +29,16 @@ import {
 export const REPO_METHODS = [
   defineMethod({
     name: 'repo.list',
-    params: null,
-    handler: (_params, context) => {
+    params: RepoList,
+    handler: (params, context) => {
       context.runtime.enrichMissingRepoGitRemoteIdentities?.()
-      return {
+      const reply = {
         repos: context.runtime
           .listRepos()
           .map((repo) => projectRepoVisibilityForClient(repo, context))
       }
+      // Why: repo icons are inline data URLs (up to 400 KB each); callers that send no id get the legacy reply.
+      return resolveReplySnapshot(reply, params.afterSnapshotId)
     }
   }),
   ...PROJECT_RUNTIME_METHODS,

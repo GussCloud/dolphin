@@ -70,6 +70,8 @@ export const WorktreeTeardownMissingTerminalsParams = WorktreeDetectedListParams
 export const WorktreePsParams = z.object({
   limit: OptionalFiniteNumber,
   afterSnapshotId: z.string().min(1).max(128).nullable().optional(),
+  // Opt-in: the caller holds afterSnapshotId's rows and can rebuild a catalog from rowsFromBase; older hosts ignore it.
+  acceptRowDelta: z.literal(true).optional(),
   supportsWorktreeVisibilitySourceDefaults: z.literal(true).optional()
 })
 

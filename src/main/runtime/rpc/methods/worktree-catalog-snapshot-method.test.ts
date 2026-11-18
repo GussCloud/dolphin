@@ -98,3 +98,68 @@ describe('worktree.ps catalog snapshots', () => {
     expect(runtime.getWorktreePs).toHaveBeenNthCalledWith(3, 10_000, true)
   })
 })
+
+describe('worktree.ps row deltas', () => {
+  const row = (id: string, displayName: string) => ({ worktreeId: id, displayName })
+  const catalog = (...worktrees: ReturnType<typeof row>[]) => ({
+    worktrees,
+    totalCount: worktrees.length,
+    truncated: false
+  })
+  function runtimeReturning(...results: ReturnType<typeof catalog>[]) {
+    const getWorktreePs = vi.fn()
+    for (const result of results) {
+      getWorktreePs.mockResolvedValueOnce(result)
+    }
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: worktree.ps reads only these runtime members.
+    return { getRuntimeId: () => 'test-runtime', getWorktreePs } as unknown as DolphinRuntimeService
+  }
+  async function poll(dispatcher: RpcDispatcher, params: Record<string, unknown>) {
+    const response = await dispatcher.dispatch({
+      id: 'poll',
+      authToken: 'token',
+      method: 'worktree.ps',
+      params
+    })
+    return (response as { result: Record<string, unknown> & { snapshotId: string } }).result
+  }
+  const a = row('repo-1::/w/a', 'a')
+  const b = row('repo-1::/w/b', 'b')
+  const c = row('repo-1::/w/c', 'c')
+
+  it('sends rows the caller holds as indexes into its base catalog', async () => {
+    const renamed = row('repo-1::/w/b', 'b2')
+    const dispatcher = new RpcDispatcher({
+      runtime: runtimeReturning(catalog(a, b, c), catalog(c, renamed, a)),
+      methods: WORKTREE_METHODS
+    })
+    const base = await poll(dispatcher, { limit: 10_000, afterSnapshotId: null })
+    const delta = await poll(dispatcher, {
+      limit: 10_000,
+      afterSnapshotId: base.snapshotId,
+      acceptRowDelta: true
+    })
+
+    expect(delta).toMatchObject({ baseSnapshotId: base.snapshotId, totalCount: 3 })
+    expect(delta.rowsFromBase).toEqual([2, renamed, 0])
+    expect(delta).not.toHaveProperty('worktrees')
+  })
+
+  it('answers a full catalog to callers that did not opt in or hold an unknown base', async () => {
+    const dispatcher = new RpcDispatcher({
+      runtime: runtimeReturning(catalog(a), catalog(a, b), catalog(a, b, c)),
+      methods: WORKTREE_METHODS
+    })
+    const base = await poll(dispatcher, { limit: 10_000, afterSnapshotId: null })
+
+    const optedOut = await poll(dispatcher, { limit: 10_000, afterSnapshotId: base.snapshotId })
+    const unknownBase = await poll(dispatcher, {
+      limit: 10_000,
+      afterSnapshotId: 'evicted',
+      acceptRowDelta: true
+    })
+
+    expect(optedOut.worktrees).toHaveLength(2)
+    expect(unknownBase.worktrees).toHaveLength(3)
+  })
+})

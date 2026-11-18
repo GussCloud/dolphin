@@ -22,7 +22,9 @@ export const WORKTREE_CATALOG_METHODS = [
       // Why: callers that never send the field get the byte-exact legacy response.
       return params.afterSnapshotId === undefined
         ? result
-        : resolveWorktreeCatalogSnapshot(result, params.afterSnapshotId)
+        : resolveWorktreeCatalogSnapshot(result, params.afterSnapshotId, {
+            acceptRowDelta: params.acceptRowDelta === true
+          })
     }
   }),
   defineMethod({
