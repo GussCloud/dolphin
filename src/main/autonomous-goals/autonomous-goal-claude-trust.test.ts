@@ -1,9 +1,11 @@
 import {
+  chmodSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   realpathSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync
 } from 'node:fs'
@@ -74,6 +76,25 @@ describe('autonomous goal Claude folder trust', () => {
       [real]: { hasTrustDialogAccepted: true }
     })
   })
+
+  it.skipIf(process.platform === 'win32')(
+    'keeps the config owner-only, as Claude writes it, instead of the umask default',
+    async () => {
+      const configPath = join(root, '.claude.json')
+      writeFileSync(configPath, '{"oauthAccount":{"id":"x"}}')
+      chmodSync(configPath, 0o600)
+      const previousUmask = process.umask(0o022)
+      try {
+        await writeClaudeFolderTrust({ configPath, requireExisting: true }, root)
+      } finally {
+        process.umask(previousUmask)
+      }
+      expect(readJson(configPath).projects).toMatchObject({
+        [root]: { hasTrustDialogAccepted: true }
+      })
+      expect(statSync(configPath).mode & 0o777).toBe(0o600)
+    }
+  )
 
   it('never creates the default Claude config', async () => {
     const configPath = join(root, '.claude.json')

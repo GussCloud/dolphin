@@ -132,6 +132,7 @@ export class DaemonClient {
     sharedBudget: boolean
   ): Promise<void> {
     const token = this.readToken()
+    // Why: a shared budget is the caller's wall-clock bound (quit, teardown, launch); a freeze mid-step still spends it.
     const deadlineMs = Date.now() + timeoutMs
     const remainingMs = (): number =>
       sharedBudget ? Math.max(1, deadlineMs - Date.now()) : timeoutMs

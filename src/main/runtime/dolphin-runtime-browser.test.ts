@@ -220,6 +220,52 @@ describe('RuntimeBrowserCommands browser screencast', () => {
     expect(bridge.tabList).toHaveBeenCalledWith(undefined)
   })
 
+  it('ignores a replacement window reply after the requesting window closed', async () => {
+    const { RuntimeBrowserCommands } = await import('./dolphin-runtime-browser')
+    const webContents = { send: vi.fn() }
+    let closed = false
+    // Electron's BrowserWindow.webContents getter throws once the native window is gone.
+    const win = {
+      get webContents() {
+        if (closed) {
+          throw new Error('Object has been destroyed')
+        }
+        return webContents
+      }
+    }
+    webContents.send = vi.fn((_channel: string, data: { requestId: string }) => {
+      const handler = ipcMainOnMock.mock.calls.find(
+        ([eventName]) => eventName === 'browser:tabCreateReply'
+      )?.[1] as
+        | ((event: unknown, reply: { requestId: string; browserPageId?: string }) => void)
+        | undefined
+      closed = true
+      handler?.({ sender: { send: vi.fn() } }, { requestId: 'other-window-request' })
+      handler?.({ sender: webContents } as never, {
+        requestId: data.requestId,
+        browserPageId: 'page-new'
+      })
+    })
+    const bridge = {
+      getRegisteredTabs: vi.fn(() => new Map([['page-new', 101]])),
+      getActivePageId: vi.fn(() => 'page-new'),
+      setActiveTab: vi.fn(),
+      tabList: vi.fn(() => ({ tabs: [] }))
+    } as unknown as AgentBrowserBridge
+    const commands = new RuntimeBrowserCommands(
+      createHost({
+        getAgentBrowserBridge: () => bridge,
+        getAvailableAuthoritativeWindow: vi.fn(() => ({}) as never),
+        // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the tab create path reads only the window's webContents.
+        getAuthoritativeWindow: vi.fn(() => win as never)
+      })
+    )
+
+    await expect(
+      commands.browserTabCreate({ worktree: 'id:wt-1', url: 'about:blank' })
+    ).resolves.toEqual({ browserPageId: 'page-new' })
+  })
+
   it('creates the first explicit-worktree browser tab without waiting for an existing registration', async () => {
     const { RuntimeBrowserCommands } = await import('./dolphin-runtime-browser')
     const webContents = { send: vi.fn() }

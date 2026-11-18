@@ -14,7 +14,7 @@ import { usesHostGitForWslLinkedWorktree } from '../wsl-linked-worktree-git-rout
 import { resolveCommand, type ResolvedCommand } from './wsl-command-resolution'
 import type { GitExecOptions } from './git-exec-options'
 
-function wslDistroForCommand(cwd: string | undefined, override?: string): string | null {
+export function wslDistroForCommand(cwd: string | undefined, override?: string): string | null {
   if (process.platform !== 'win32') {
     return null
   }

@@ -191,6 +191,12 @@ describe('removeWorktreeOp branch cleanup', () => {
       if (args[0] === 'rev-parse' && args.includes('refs/remotes/origin/main^{commit}')) {
         return { stdout: 'base123\n', stderr: '' }
       }
+      if (args[0] === 'merge-base' && args[1] === 'base123') {
+        return { stdout: 'fork123\n', stderr: '' }
+      }
+      if (args[0] === 'diff' && args[1] === '--name-only') {
+        return { stdout: 'feature.txt\n', stderr: '' }
+      }
       if (args[0] === 'rev-parse' && args.includes('HEAD^{commit}')) {
         return { stdout: 'base123\n', stderr: '' }
       }
@@ -348,6 +354,12 @@ describe('removeWorktreeOp branch cleanup', () => {
       if (args[0] === 'rev-parse' && args.includes('refs/remotes/origin/main^{commit}')) {
         return { stdout: 'base123\n', stderr: '' }
       }
+      if (args[0] === 'merge-base' && args[1] === 'base123') {
+        return { stdout: 'fork123\n', stderr: '' }
+      }
+      if (args[0] === 'diff' && args[1] === '--name-only') {
+        return { stdout: 'feature.txt\n', stderr: '' }
+      }
       if (args[0] === 'merge-tree') {
         return { stdout: 'tree123\n', stderr: '' }
       }
@@ -409,6 +421,12 @@ describe('removeWorktreeOp branch cleanup', () => {
       }
       if (args[0] === 'rev-parse' && args.includes('refs/remotes/origin/main^{commit}')) {
         return { stdout: 'base123\n', stderr: '' }
+      }
+      if (args[0] === 'merge-base' && args[1] === 'base123') {
+        return { stdout: 'fork123\n', stderr: '' }
+      }
+      if (args[0] === 'diff' && args[1] === '--name-only') {
+        return { stdout: 'feature.txt\n', stderr: '' }
       }
       if (args[0] === 'rev-list') {
         return { stdout: '0\n', stderr: '' }

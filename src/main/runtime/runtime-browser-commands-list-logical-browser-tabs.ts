@@ -106,7 +106,8 @@ export class RuntimeBrowserCommandsWithListLogicalBrowserTabs extends RuntimeBro
     activate?: boolean,
     requestedPageId?: string
   ): Promise<{ browserPageId: string }> {
-    const win = this.host.getAuthoritativeWindow()
+    // Why capture once: the BrowserWindow getter throws after close, and a late reply still arrives.
+    const rendererWebContents = this.host.getAuthoritativeWindow().webContents
     const requestId = randomUUID()
 
     const browserPageId = await new Promise<string>((resolve, reject) => {
@@ -119,7 +120,7 @@ export class RuntimeBrowserCommandsWithListLogicalBrowserTabs extends RuntimeBro
         event: Electron.IpcMainEvent,
         reply: { requestId: string; browserPageId?: string; error?: string }
       ): void => {
-        if (event.sender !== win.webContents || reply.requestId !== requestId) {
+        if (event.sender !== rendererWebContents || reply.requestId !== requestId) {
           return
         }
         clearTimeout(timer)
@@ -131,7 +132,7 @@ export class RuntimeBrowserCommandsWithListLogicalBrowserTabs extends RuntimeBro
         }
       }
       ipcMain.on('browser:tabCreateReply', handler)
-      win.webContents.send('browser:requestTabCreate', {
+      rendererWebContents.send('browser:requestTabCreate', {
         requestId,
         url,
         worktreeId,

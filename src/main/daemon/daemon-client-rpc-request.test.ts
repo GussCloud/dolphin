@@ -15,7 +15,7 @@ function addSiblingRequest(pendingRequests: DaemonPendingRequests, reject: () =>
   pendingRequests.add('sibling-1', {
     resolve: () => {},
     reject,
-    timer: setTimeout(() => {}, 60_000)
+    cancelDeadline: () => {}
   })
 }
 

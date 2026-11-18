@@ -1,7 +1,11 @@
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import { isAgentStatusHooksEnabled } from '../agent-hooks/managed-agent-hook-controls'
 import { installDeepSeekHooks } from './deepseek-hook-service'
-import { seedDeepSeekClaudeOnboarding } from './deepseek-claude-onboarding-seed'
+import {
+  CLAUDE_STATE_FILE_NAME,
+  seedDeepSeekClaudeOnboarding
+} from './deepseek-claude-onboarding-seed'
+import { runWslProcess } from '../wsl/wsl-runner'
 import { isClaudeAutoCompactDisabledEnv } from '../../shared/autonomous-coordinator-launch-env'
 import {
   resolveDeepSeekLaunchEnv,
@@ -13,13 +17,29 @@ type DeepSeekLaunchSettings = Partial<
   Pick<GlobalSettings, 'deepseekModelSlots' | 'agentStatusHooksEnabled' | 'agentCmdOverrides'>
 >
 
+// Why: a file made through \\wsl.localhost gets the guest's default 0644 whatever mode Windows
+// asks for, and Claude later keeps account state in it; only the guest can narrow its bits.
+async function restrictWslGuestClaudeState(distro: string, linuxConfigDir: string): Promise<void> {
+  const result = await runWslProcess({
+    distro,
+    loginPath: 'none',
+    program: 'chmod',
+    args: ['600', '--', `${linuxConfigDir.replace(/\/$/, '')}/${CLAUDE_STATE_FILE_NAME}`]
+  })
+  if (result.code !== 0) {
+    throw new Error(`could not restrict the WSL guest's Claude state file: ${result.stderr.trim()}`)
+  }
+}
+
 async function prepareDeepSeekConfigHome(
   configHome: DeepSeekConfigHome,
   settings: DeepSeekLaunchSettings | undefined
 ): Promise<void> {
   // Why best-effort: a missing seed or hook degrades the first run or status, not the launch.
   try {
-    seedDeepSeekClaudeOnboarding(configHome.hostConfigDir)
+    if (seedDeepSeekClaudeOnboarding(configHome.hostConfigDir) && configHome.wslDistro) {
+      await restrictWslGuestClaudeState(configHome.wslDistro, configHome.processConfigDir)
+    }
   } catch (error) {
     console.warn('[deepseek] failed to seed Claude onboarding state', error)
   }

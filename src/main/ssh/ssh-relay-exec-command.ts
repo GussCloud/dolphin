@@ -58,7 +58,7 @@ export async function execCommand(
   const openedWithSystemSsh = conn.usesSystemSshTransport?.() === true
   let channel: ClientChannel
   try {
-    channel = await conn.exec(command, execOptions)
+    channel = await conn.execWithClosedStdin(command, execOptions)
   } catch (error) {
     // Preserve identity/classifier fields while removing install-owner tokens.
     redactRelayInstallMarkerError(error)

@@ -87,6 +87,19 @@ export async function refreshBranchCleanupTargetRefs(
   }
 }
 
+async function isAncestorCommit(
+  runGit: GitBranchCleanupExec,
+  ancestor: string,
+  descendant: string
+): Promise<boolean> {
+  try {
+    await runGit(['merge-base', '--is-ancestor', ancestor, descendant])
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function resolveCommitOid(runGit: GitBranchCleanupExec, ref: string): Promise<string | null> {
   return readOptionalGitStdout(runGit, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`])
 }
@@ -179,13 +192,9 @@ async function branchNetPatchMatchesTargetSquashCommit(
   runGit: GitBranchCleanupExec,
   targetOid: string,
   branchRef: string,
+  mergeBase: string,
   capabilities: GitCapabilityCache
 ): Promise<boolean> {
-  const mergeBase = await readOptionalGitStdout(runGit, ['merge-base', targetOid, branchRef])
-  if (!mergeBase) {
-    return false
-  }
-
   const branchPatchId = await computeStablePatchId(
     runGit,
     await readOptionalGitRawStdout(runGit, ['diff', mergeBase, branchRef])
@@ -239,12 +248,33 @@ export async function branchHasNoUnmergedChangesOnAnyTarget(
     if (!targetOid) {
       continue
     }
+    // Shallow/unrelated histories cannot support a merge proof; skip the tree walk.
+    const mergeBase = await readOptionalGitStdout(runGit, ['merge-base', targetOid, branchRef])
+    if (!mergeBase) {
+      continue
+    }
+    const branchChanges = await readOptionalGitRawStdout(runGit, [
+      'diff',
+      '--name-only',
+      mergeBase,
+      branchRef
+    ])
+    // Why: an unchanged tree does not prove empty or reverted commits were merged.
+    if (!branchChanges && !(await isAncestorCommit(runGit, branchRef, targetOid))) {
+      continue
+    }
     if (await branchMergesWithoutTreeChanges(runGit, targetOid, branchRef, capabilities)) {
       return true
     }
     if (await hasBranchOnlyMergeCommits(runGit, targetOid, branchRef)) {
       if (
-        await branchNetPatchMatchesTargetSquashCommit(runGit, targetOid, branchRef, capabilities)
+        await branchNetPatchMatchesTargetSquashCommit(
+          runGit,
+          targetOid,
+          branchRef,
+          mergeBase,
+          capabilities
+        )
       ) {
         return true
       }

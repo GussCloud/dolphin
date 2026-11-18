@@ -2,7 +2,7 @@ import type { RemoveWorktreeResult } from '../shared/worktree/create-types'
 import type { GitWorktreeInfo } from '../shared/worktree/types'
 import { assertWorktreeUnlockedForRemoval } from '../shared/worktree/removal'
 import { areWorktreePathsEqual, formatWorktreeRemovalError } from './ipc/worktree-logic'
-import { gitExecFileAsync } from './git/runner'
+import { pruneGitWorktrees } from './git/worktree-prune-guard'
 import { listWorktreesStrict, type GitWorktreeExecOptions } from './git/worktree'
 import { removeLocalWorktreePath } from './local-worktree-filesystem'
 
@@ -80,10 +80,7 @@ async function removeRequiredGitWorktreeRegistration(
   let result: RemoveWorktreeResult | undefined
   let removalError: unknown
   try {
-    await gitExecFileAsync(['worktree', 'prune'], {
-      cwd: args.repoPath,
-      ...args.localWorktreeGitOptions
-    })
+    await pruneGitWorktrees({ cwd: args.repoPath, ...args.localWorktreeGitOptions })
     result = preservedBranchResult(args.registeredWorktree, args.deleteBranch)
   } catch (error) {
     removalError = error

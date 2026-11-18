@@ -89,11 +89,15 @@ import {
 import type { FileUploadSession } from '../providers/types'
 import { isSshSessionLimitError } from './ssh-session-limit-error'
 import { withTimeout } from '../../shared/promise-timeout-fallback'
+import type { SystemSshCommandOptions } from './system-ssh-command'
 import {
   createLinkedSshFileTransferSignal,
   raceSftpFileTransferWithAbort
 } from './ssh-file-transfer-abort'
 export type { SshConnectionCallbacks } from './ssh-connection-utils'
+
+/** closeStdin applies to system SSH only; ssh2 channels exit without stdin EOF. */
+export type SshExecChannelOptions = SshExecOptions & Pick<SystemSshCommandOptions, 'closeStdin'>
 
 type HostKeyTrustSources = {
   /** Whether the system-wide ssh_config could be restricting host keys; doubt reads as true. */
@@ -267,7 +271,7 @@ export class SshConnection {
     return this.cachedPassphrase != null || this.cachedPassword != null
   }
 
-  async exec(cmd: string, options?: SshExecOptions): Promise<ClientChannel> {
+  async exec(cmd: string, options?: SshExecChannelOptions): Promise<ClientChannel> {
     if (options?.signal?.aborted) {
       throw createSshOperationAbortError()
     }
@@ -293,6 +297,11 @@ export class SshConnection {
         ),
       options?.signal
     )
+  }
+
+  /** For commands that send no input, so Windows OpenSSH exits with the remote command. */
+  execWithClosedStdin(cmd: string, options?: SshExecOptions): Promise<ClientChannel> {
+    return this.exec(cmd, { ...options, closeStdin: true })
   }
 
   async sftp(options?: AbortSignal | { signal?: AbortSignal }): Promise<SFTPWrapper> {
@@ -1071,7 +1080,8 @@ export class SshConnection {
 
     // Why: this probe runs before remote platform detection; a raw echo works under POSIX shells, cmd.exe, and PowerShell, but `/bin/sh` wrapping does not.
     const channel = this.spawnTrackedSystemSshCommand('echo DOLPHIN-SYSTEM-SSH-OK', {
-      wrapCommand: false
+      wrapCommand: false,
+      closeStdin: true
     })
     try {
       await new Promise<void>((resolve, reject) => {
@@ -1305,7 +1315,10 @@ export class SshConnection {
     return createCancelledConnectAttemptError()
   }
 
-  private spawnTrackedSystemSshCommand(command: string, options?: SshExecOptions): ClientChannel {
+  private spawnTrackedSystemSshCommand(
+    command: string,
+    options?: SshExecChannelOptions
+  ): ClientChannel {
     if (options?.signal?.aborted) {
       throw createSshOperationAbortError()
     }
