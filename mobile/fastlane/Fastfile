@@ -178,8 +178,8 @@ platform :ios do
     UI.message("Prepared Dolphin Mobile iOS #{version} (#{build_number})")
   end
 
-  desc "Build, sign, and upload Dolphin Mobile to App Store Connect / TestFlight"
-  lane :build_and_upload do
+  desc "Build, sign, and upload Dolphin Mobile to App Store Connect / TestFlight (skip_upload:true only builds)"
+  lane :build_and_upload do |options|
     api_key = app_store_connect_api_key_from_env
 
     team_id = ENV.fetch("APPLE_TEAM_ID")
@@ -219,13 +219,18 @@ platform :ios do
       clean: true,
     )
 
-    upload_to_testflight(
-      api_key: api_key,
-      # Distribution runs separately so a processing timeout can be retried
-      # against this exact build without uploading another binary.
-      skip_waiting_for_build_processing: true,
-      distribute_external: false,
-    )
+    # Why `|| {}`: the release lane calls this lane without arguments.
+    if IosReleaseVersion.truthy?((options || {})[:skip_upload])
+      UI.message("skip_upload set: built and signed #{BUILD_OUTPUT_DIRECTORY}/Dolphin.ipa without uploading it.")
+    else
+      upload_to_testflight(
+        api_key: api_key,
+        # Distribution runs separately so a processing timeout can be retried
+        # against this exact build without uploading another binary.
+        skip_waiting_for_build_processing: true,
+        distribute_external: false,
+      )
+    end
   end
 
   desc "Wait for and distribute an uploaded build to external TestFlight testers"
