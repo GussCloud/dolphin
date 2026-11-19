@@ -6,6 +6,8 @@ export type DesignStatusConfirmContext = {
   /** The canvas version the move applies to; approval needs one, other moves ignore it. */
   canvasVersion: number | null
   openDecisionCount: number
+  /** User input the agent has not read; approving sends the approval after it. */
+  unreadInputCount: number
 }
 
 function approveDescription(context: DesignStatusConfirmContext): string {
@@ -14,15 +16,23 @@ function approveDescription(context: DesignStatusConfirmContext): string {
     "The agent will start implementing canvas version {{value0}} in the design's workspace.",
     { value0: context.canvasVersion }
   )
-  if (context.openDecisionCount === 0) {
-    return start
-  }
-  const openDecisions = translate(
-    'auto.components.design.confirm.approveOpenDecisions',
-    '{{value0}} open decisions will go unanswered. Answer them first so the agent builds what you chose.',
-    { value0: context.openDecisionCount }
-  )
-  return `${start}\n\n${openDecisions}`
+  const warnings = [
+    context.openDecisionCount === 0
+      ? null
+      : translate(
+          'auto.components.design.confirm.approveOpenDecisions',
+          '{{value0}} open decisions will go unanswered. Answer them first so the agent builds what you chose.',
+          { value0: context.openDecisionCount }
+        ),
+    context.unreadInputCount === 0
+      ? null
+      : translate(
+          'auto.components.design.confirm.approveUnreadInput',
+          'The agent has not read {{value0}} of your messages yet; it will receive them before the approval.',
+          { value0: context.unreadInputCount }
+        )
+  ].filter((warning) => warning !== null)
+  return [start, ...warnings].join('\n\n')
 }
 
 /** Dialog copy for a status move that needs the user's confirmation. */

@@ -7,6 +7,7 @@ import { translate } from '@/i18n/i18n'
 import { DESIGN_MESSAGE_MAX_CHARS, type DesignMessage } from '../../../../shared/design-types'
 import { designThread } from './design-conversation'
 import { formatDesignTimestamp } from './design-format'
+import { DesignProcessingInline } from './DesignProcessingIndicator'
 
 function MessageRow({
   message,
@@ -43,7 +44,8 @@ export function DesignThread({
   placeholder,
   onSend,
   autoFocus = false,
-  readOnlyHint
+  readOnlyHint,
+  processing = false
 }: {
   messages: readonly DesignMessage[]
   blockId: string | undefined
@@ -52,6 +54,8 @@ export function DesignThread({
   autoFocus?: boolean
   /** Set when the composer must not send; shown in its place. */
   readOnlyHint?: string
+  /** The agent is working on a message in this thread. */
+  processing?: boolean
 }): React.JSX.Element {
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -91,6 +95,7 @@ export function DesignThread({
           {translate('auto.components.design.thread.empty', 'No messages yet.')}
         </p>
       )}
+      {processing ? <DesignProcessingInline /> : null}
       {readOnlyHint ? (
         <p data-design-thread-read-only="" className="text-xs text-muted-foreground">
           {readOnlyHint}

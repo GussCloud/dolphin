@@ -103,6 +103,9 @@ export const DesignCanvasSetParams = z.object({
 
 export const DesignShowParams = z.object({ id: requiredString('Missing --id') })
 
+/** User side: whether the design's agent pane is live and what it is doing, for the processing indicator. */
+export const DesignAgentStatusParams = z.object({ id: requiredString('Missing --id') })
+
 export const DesignListParams = z.object({}).optional().default({})
 
 /** User side. `from` (an agent pane) is refused: the agent reports completion with `design.complete`. */

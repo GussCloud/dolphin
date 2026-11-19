@@ -5,7 +5,12 @@ import { useAppStore } from '@/store'
 import { callRuntimeRpc } from '@/runtime/runtime-rpc-client'
 import { getActiveRuntimeTarget } from '@/runtime/runtime-client-target'
 import { hasRuntimeRpcErrorCode } from '../../../../shared/runtime-rpc-error-code'
-import type { Design, DesignListEntry, DesignStatus } from '../../../../shared/design-types'
+import type {
+  Design,
+  DesignAgentStatus,
+  DesignListEntry,
+  DesignStatus
+} from '../../../../shared/design-types'
 
 export type DesignIndexState =
   | { kind: 'loading'; designs: DesignListEntry[] }
@@ -92,6 +97,11 @@ export function useDesignIndex(): DesignIndexState {
 export async function showDesign(id: string): Promise<Design> {
   const { design } = await callRuntimeRpc<{ design: Design }>(target(), 'design.show', { id })
   return design
+}
+
+/** Read-only and cheap; the processing indicator polls it while visible. */
+export function readDesignAgentStatus(id: string): Promise<DesignAgentStatus> {
+  return callRuntimeRpc<DesignAgentStatus>(target(), 'design.agentStatus', { id })
 }
 
 export async function setDesignStatus(id: string, status: DesignStatus): Promise<void> {

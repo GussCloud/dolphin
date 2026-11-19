@@ -12,6 +12,13 @@ import { DesignActivityTimeline } from './DesignActivityTimeline'
 import { DesignDecisionCard } from './DesignDecisionCard'
 import { DesignDeliveryBanner } from './DesignDeliveryBanner'
 import { DesignThread } from './DesignThread'
+import { DesignProcessingIndicator } from './DesignProcessingIndicator'
+import {
+  designItemsAwaitingAgent,
+  designProcessingTargets,
+  designSidePanelNotices,
+  type DesignProcessingState
+} from './design-processing-state'
 
 export type DesignSidePanelTab = 'decisions' | 'conversation' | 'activity'
 
@@ -22,6 +29,7 @@ function isSidePanelTab(value: string): value is DesignSidePanelTab {
 /** Decisions to answer, the general conversation and the activity log, beside the canvas. */
 export function DesignSidePanel({
   design,
+  processing,
   tab,
   onTabChange,
   onAnswer,
@@ -30,6 +38,7 @@ export function DesignSidePanel({
   onHoverBlock
 }: {
   design: Design
+  processing: DesignProcessingState
   tab: DesignSidePanelTab
   onTabChange: (tab: DesignSidePanelTab) => void
   onAnswer: (input: { decisionId: string; selected: string[]; note?: string }) => Promise<void>
@@ -39,6 +48,9 @@ export function DesignSidePanel({
 }): React.JSX.Element {
   // Why a tick: the notify-now hint appears after a delay with no design change to re-render on.
   const now = useNow(15_000, pendingDesignInbox(design).length > 0)
+  const delivery = designDeliveryState(design, now)
+  const notices = designSidePanelNotices(delivery, processing)
+  const targets = designProcessingTargets(design, processing)
   const decisions = sortDesignDecisions(design.decisions)
   const openCount = design.decisions.filter(isDesignDecisionOpen).length
   const blockTitles = new Map(
@@ -51,7 +63,13 @@ export function DesignSidePanel({
       data-design-side-panel=""
       className="flex min-h-0 w-96 shrink-0 flex-col gap-2 overflow-hidden rounded-xl border border-border bg-card p-3"
     >
-      <DesignDeliveryBanner state={designDeliveryState(design, now)} onResend={onResend} />
+      {notices.processing ? (
+        <DesignProcessingIndicator
+          state={processing}
+          answering={designItemsAwaitingAgent(design).length > 0}
+        />
+      ) : null}
+      {notices.delivery ? <DesignDeliveryBanner state={delivery} onResend={onResend} /> : null}
       <Tabs
         value={tab}
         onValueChange={(value) => isSidePanelTab(value) && onTabChange(value)}
@@ -89,6 +107,7 @@ export function DesignSidePanel({
                   blockTitle={decision.blockId ? (blockTitles.get(decision.blockId) ?? null) : null}
                   onAnswer={onAnswer}
                   onHoverChange={onHoverBlock}
+                  processing={targets.decisionIds.has(decision.id)}
                 />
               ))
             )}
@@ -103,6 +122,7 @@ export function DesignSidePanel({
                 'auto.components.design.panel.conversationPlaceholder',
                 'Ask or request a change to the whole design'
               )}
+              processing={targets.general}
               onSend={(text) => onComment({ text })}
             />
           </div>

@@ -248,3 +248,12 @@ export function latestDesignCanvas(
 ): DesignCanvasVersion | null {
   return design.canvasVersions.at(-1) ?? null
 }
+
+/**
+ * `design.agentStatus`: the bound pane as the execution host sees it. live=false when no pane is bound
+ * or the runtime has no connected PTY for it; status null is unverifiable (no hooks, SSH out of contact).
+ */
+export type DesignAgentStatus = {
+  live: boolean
+  status: 'working' | 'permission' | 'idle' | null
+}

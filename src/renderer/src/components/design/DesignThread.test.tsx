@@ -58,6 +58,27 @@ function sendButton(): HTMLButtonElement {
 }
 
 describe('DesignThread', () => {
+  it('shows the inline processing line only while the agent works on this thread', () => {
+    const render = (processing: boolean) =>
+      act(() =>
+        root.render(
+          <DesignThread
+            messages={messages}
+            blockId="b1"
+            placeholder="Ask"
+            processing={processing}
+            onSend={async () => {}}
+          />
+        )
+      )
+    render(false)
+    expect(container.querySelector('[data-design-processing-inline]')).toBeNull()
+    render(true)
+    expect(container.querySelector('[data-design-processing-inline]')?.textContent).toBe(
+      'Processing…'
+    )
+  })
+
   it("shows only the block's messages, with the agent reply nested", () => {
     act(() => {
       root.render(

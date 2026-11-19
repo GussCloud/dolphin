@@ -32,7 +32,7 @@ const RENDERER_MEMORY_HIGHWATER_RATIOS = [0.6, RENDERER_MEMORY_PRESSURE_HEAP_RAT
  */
 const RENDERER_PRIVATE_HIGHWATER_MB = [600, RENDERER_MEMORY_PRESSURE_PRIVATE_MB] as const
 
-export type RendererSurface = 'main' | 'dashboard-popout'
+export type RendererSurface = 'main' | 'dashboard-popout' | 'design-popout'
 
 type BrowserPerformanceMemory = {
   usedJSHeapSize?: number

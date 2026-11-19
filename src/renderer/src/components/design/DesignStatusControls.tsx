@@ -13,27 +13,40 @@ import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
 import {
   isDesignDecisionOpen,
+  pendingDesignInbox,
   latestDesignCanvas,
   type Design,
+  type DesignAgentStatus,
   type DesignStatus
 } from '../../../../shared/design-types'
 import { setDesignStatus } from './design-index'
 import { designStatusActions, type DesignStatusAction } from './design-status-actions'
 import { designStatusConfirmOptions } from './design-status-confirm'
+import {
+  designProcessingBlocksApproval,
+  type DesignProcessingState
+} from './design-processing-state'
 
 /** The user's status moves for a design: primary buttons, fallbacks in a menu, confirms first. */
 export function DesignStatusControls({
   design,
+  agentStatus,
+  processing,
   onMoved
 }: {
   design: Design
+  /** null while unverifiable. */
+  agentStatus: DesignAgentStatus | null
+  processing: DesignProcessingState
   onMoved: () => Promise<void>
 }): React.JSX.Element {
   const confirm = useConfirmationDialog()
   const [pendingStatus, setPendingStatus] = useState<DesignStatus | null>(null)
   const actions = designStatusActions(design.status, {
-    agentBound: design.paneKey !== null,
-    hasCanvas: latestDesignCanvas(design) !== null
+    // Why the binding when unverifiable: asking once too often beats interrupting a live agent unasked.
+    agentBound: agentStatus ? agentStatus.live : design.paneKey !== null,
+    hasCanvas: latestDesignCanvas(design) !== null,
+    agentProcessing: designProcessingBlocksApproval(processing)
   })
   const primary = actions.filter((action) => action.placement === 'primary')
   const overflow = actions.filter((action) => action.placement === 'overflow')
@@ -43,7 +56,8 @@ export function DesignStatusControls({
       const confirmed = await confirm(
         designStatusConfirmOptions(action.confirm, {
           canvasVersion: latestDesignCanvas(design)?.version ?? null,
-          openDecisionCount: design.decisions.filter(isDesignDecisionOpen).length
+          openDecisionCount: design.decisions.filter(isDesignDecisionOpen).length,
+          unreadInputCount: pendingDesignInbox(design).length
         })
       )
       if (!confirmed) {

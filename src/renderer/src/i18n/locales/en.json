@@ -18331,7 +18331,8 @@
           "markDone": "Mark as done",
           "backToPlanning": "Back to planning",
           "more": "More actions",
-          "approveNeedsCanvas": "Wait for the agent to draw the design before approving it."
+          "approveNeedsCanvas": "Wait for the agent to draw the design before approving it.",
+          "approveWhileProcessing": "Wait for the agent to finish processing before approving."
         },
         "status": {
           "draft": "Draft",
@@ -18441,6 +18442,7 @@
         "confirm": {
           "approveDescription": "The agent will start implementing canvas version {{value0}} in the design's workspace.",
           "approveOpenDecisions": "{{value0}} open decisions will go unanswered. Answer them first so the agent builds what you chose.",
+          "approveUnreadInput": "The agent has not read {{value0}} of your messages yet; it will receive them before the approval.",
           "approveTitle": "Approve this design?",
           "approveConfirm": "Approve and implement",
           "discardTitle": "Discard this design?",
@@ -18454,6 +18456,22 @@
           "decisions": "{{value0}} with open decisions",
           "blocked": "{{value0}} with an agent not responding",
           "show": "Show"
+        },
+        "processing": {
+          "answering": "The agent is processing your reply…",
+          "working": "The agent is working…",
+          "permission": "The agent asked for permission in the terminal. Open the workspace to answer it.",
+          "queued": "Your input is queued. Dolphin notifies the agent as soon as it is free.",
+          "notified": "The agent was notified and has not read your input yet.",
+          "offline": "The agent's terminal is not connected",
+          "offlineDetail": "Your input stays saved and is delivered when the agent is back.",
+          "unknown": "Dolphin cannot see what the agent is doing right now.",
+          "replied": "The agent replied",
+          "inline": "Processing…"
+        },
+        "popout": {
+          "open": "Open in new window",
+          "focus": "Show the Design window"
         }
       }
     },
@@ -19856,6 +19874,12 @@
     "push": {
       "title": "Azure sign-in",
       "body": "Open {{url}} and enter {{code}}"
+    }
+  },
+  "designPopout": {
+    "recoverableError": {
+      "title": "Dolphin Design hit an error.",
+      "description": "The Design window could not finish rendering. Retry to remount it, or reopen it."
     }
   }
 }

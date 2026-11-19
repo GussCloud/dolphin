@@ -13,8 +13,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { activateAndRevealWorktree } from '@/lib/worktree-activation'
-import { toRuntimeExecutionHostId } from '../../../../shared/execution-host'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   isDesignDecisionOpen,
@@ -32,7 +30,10 @@ import {
 import { designApprovedVersion, designCanvasView } from './design-canvas-history'
 import { isDesignAgentMissing, useDesignMinuteClock } from './design-agent-missing'
 import { designBlockActivity } from './design-conversation'
+import { useDesignAgentStatus } from './design-agent-status'
+import { designProcessingState, designProcessingTargets } from './design-processing-state'
 import { runDesignMutation } from './design-mutation'
+import { useDesignHostActions } from './design-host-actions'
 import {
   DesignCanvasInteractionContext,
   type DesignCanvasInteraction
@@ -84,6 +85,7 @@ export function DesignDetail({
     [id]
   )
   const environmentId = useAppStore((s) => s.settings?.activeRuntimeEnvironmentId ?? null)
+  const hostActions = useDesignHostActions()
   const [panelOpen, setPanelOpen] = useState(true)
   const [panelTab, setPanelTab] = useState<DesignSidePanelTab>('decisions')
   const [openBlockId, setOpenBlockId] = useState<string | null>(null)
@@ -102,6 +104,12 @@ export function DesignDetail({
   }, [id, listUpdatedAt])
 
   const design = state.kind === 'ready' ? state.design : null
+  const agentStatus = useDesignAgentStatus(id, design?.paneKey ?? null, design?.updatedAt ?? 0)
+  const processing = design ? designProcessingState(design, agentStatus) : 'idle'
+  const processingBlockIds = useMemo(
+    () => (design ? designProcessingTargets(design, processing).blockIds : new Set<string>()),
+    [design, processing]
+  )
   const canvasView = design ? designCanvasView(design.canvasVersions, selectedVersion) : null
   const historical = canvasView?.historical ?? false
   const approvedVersion = design ? designApprovedVersion(design) : null
@@ -172,27 +180,24 @@ export function DesignDetail({
                 )
               : undefined
           }
+          processing={processingBlockIds.has(block.id)}
           onSend={(text) => comment({ blockId: block.id, text })}
         />
       )
     }
-  }, [activitySource, comment, highlightedBlockId, historical, messages, openBlockId])
+  }, [
+    activitySource,
+    comment,
+    highlightedBlockId,
+    historical,
+    messages,
+    openBlockId,
+    processingBlockIds
+  ])
   const openDecisionCount = design?.decisions.filter(isDesignDecisionOpen).length ?? 0
 
-  const openWorktree = (worktreeId: string): void => {
-    const opened = activateAndRevealWorktree(
-      worktreeId,
-      environmentId ? { executionHostId: toRuntimeExecutionHostId(environmentId) } : {}
-    )
-    if (opened === false) {
-      toast.error(
-        translate(
-          'auto.components.design.detail.worktreeMissing',
-          'The workspace for this design is no longer available.'
-        )
-      )
-    }
-  }
+  const openWorktree = (worktreeId: string): void =>
+    hostActions.revealWorktree(worktreeId, environmentId)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -218,7 +223,12 @@ export function DesignDetail({
                   {translate('auto.components.design.detail.openWorktree', 'Open workspace')}
                 </Button>
               ) : null}
-              <DesignStatusControls design={design} onMoved={reload} />
+              <DesignStatusControls
+                design={design}
+                agentStatus={agentStatus}
+                processing={processing}
+                onMoved={reload}
+              />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -382,6 +392,7 @@ export function DesignDetail({
             {panelOpen ? (
               <DesignSidePanel
                 design={design}
+                processing={processing}
                 tab={panelTab}
                 onTabChange={setPanelTab}
                 onAnswer={answer}

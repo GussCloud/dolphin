@@ -162,6 +162,7 @@ import {
 } from './computer-schemas-params'
 import {
   DesignAckParams,
+  DesignAgentStatusParams,
   DesignAnswerParams,
   DesignCanvasSetParams,
   DesignCommentParams,
@@ -803,6 +804,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'computer.setValue': SetValue,
   'computer.typeText': TypeText,
   'design.ack': DesignAckParams,
+  'design.agentStatus': DesignAgentStatusParams,
   'design.answer': DesignAnswerParams,
   'design.canvasSet': DesignCanvasSetParams,
   'design.comment': DesignCommentParams,

@@ -7,7 +7,8 @@ import {
   ConfirmationDialogContext,
   type ConfirmationDialogOptions
 } from '@/components/confirmation-dialog-context'
-import type { Design, DesignStatus } from '../../../../shared/design-types'
+import type { Design, DesignAgentStatus, DesignStatus } from '../../../../shared/design-types'
+import type { DesignProcessingState } from './design-processing-state'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { DesignStatusControls } from './DesignStatusControls'
 
@@ -52,14 +53,24 @@ function design(status: DesignStatus, drawn = true): Design {
   }
 }
 
-function render(status: DesignStatus, answer: boolean, drawn = true) {
+function render(
+  status: DesignStatus,
+  answer: boolean,
+  drawn = true,
+  agent: { agentStatus?: DesignAgentStatus | null; processing?: DesignProcessingState } = {}
+) {
   const confirm = vi.fn(async (_options: ConfirmationDialogOptions) => answer)
   const onMoved = vi.fn(async () => {})
   act(() =>
     root.render(
       <ConfirmationDialogContext.Provider value={confirm}>
         <TooltipProvider>
-          <DesignStatusControls design={design(status, drawn)} onMoved={onMoved} />
+          <DesignStatusControls
+            design={design(status, drawn)}
+            agentStatus={agent.agentStatus ?? { live: true, status: 'idle' }}
+            processing={agent.processing ?? 'idle'}
+            onMoved={onMoved}
+          />
         </TooltipProvider>
       </ConfirmationDialogContext.Provider>
     )
@@ -104,6 +115,48 @@ describe('DesignStatusControls', () => {
       '[data-design-status-action="in-progress"]'
     )
     expect(approve?.disabled).toBe(true)
+  })
+
+  it.each(['queued', 'notified', 'processing', 'needs-permission'] as const)(
+    'keeps approval disabled while the agent is %s, with the reason in a tooltip wrapper',
+    (processing) => {
+      render('draft', true, true, { processing })
+      const approve = container.querySelector<HTMLButtonElement>(
+        '[data-design-status-action="in-progress"]'
+      )
+      expect(approve?.disabled).toBe(true)
+      expect(approve?.parentElement?.tabIndex).toBe(0)
+      expect(
+        container.querySelector<HTMLButtonElement>('[data-design-status-action="discarded"]')
+          ?.disabled
+      ).toBe(false)
+    }
+  )
+
+  it.each(['unknown', 'offline', 'replied'] as const)(
+    'lets the user approve when the agent is %s',
+    async (processing) => {
+      const { confirm } = render('draft', true, true, { processing })
+      await click('in-progress')
+      expect(confirm).toHaveBeenCalledOnce()
+      expect(setDesignStatus).toHaveBeenCalledWith('d1', 'in-progress')
+    }
+  )
+
+  it('discards without a confirmation when the bound pane is no longer live', async () => {
+    const { confirm } = render('draft', true, true, {
+      agentStatus: { live: false, status: null }
+    })
+    await click('discarded')
+    expect(confirm).not.toHaveBeenCalled()
+    expect(setDesignStatus).toHaveBeenCalledWith('d1', 'discarded')
+  })
+
+  it('confirms a discard when liveness cannot be read but a pane is bound', async () => {
+    const { confirm } = render('draft', false, true, { agentStatus: null })
+    await click('discarded')
+    expect(confirm).toHaveBeenCalledOnce()
+    expect(setDesignStatus).not.toHaveBeenCalled()
   })
 
   it('reopens directly', async () => {

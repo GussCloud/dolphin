@@ -60,6 +60,7 @@ const {
   registerWslConfigTuningHandlersMock,
   registerOnboardingHandlersMock,
   registerDashboardPopoutHandlersMock,
+  registerDesignPopoutHandlersMock,
   isDashboardPopoutRendererMock,
   registerTerminalPreviewHandlersMock,
   registerPwshInstallHandlersMock,
@@ -132,6 +133,7 @@ const {
   registerWslConfigTuningHandlersMock: vi.fn(),
   registerOnboardingHandlersMock: vi.fn(),
   registerDashboardPopoutHandlersMock: vi.fn(),
+  registerDesignPopoutHandlersMock: vi.fn(),
   isDashboardPopoutRendererMock: vi.fn(),
   registerTerminalPreviewHandlersMock: vi.fn(),
   registerPwshInstallHandlersMock: vi.fn(),
@@ -177,8 +179,12 @@ vi.mock('../dashboard-popout', () => ({
   registerDashboardPopoutHandlers: registerDashboardPopoutHandlersMock
 }))
 
-vi.mock('../../window/dashboard-popout-window', () => ({
-  isDashboardPopoutRenderer: isDashboardPopoutRendererMock
+vi.mock('../../window/companion-popout-renderers', () => ({
+  isCompanionPopoutRenderer: isDashboardPopoutRendererMock
+}))
+
+vi.mock('../design-popout', () => ({
+  registerDesignPopoutHandlers: registerDesignPopoutHandlersMock
 }))
 
 vi.mock('../terminal-preview', () => ({
@@ -596,6 +602,7 @@ describe('registerCoreHandlers', () => {
     expect(registerDeveloperPermissionHandlersMock).toHaveBeenCalled()
     expect(registerComputerUsePermissionHandlersMock).toHaveBeenCalled()
     expect(registerDashboardPopoutHandlersMock).toHaveBeenCalledWith(store, undefined)
+    expect(registerDesignPopoutHandlersMock).toHaveBeenCalledWith(store, undefined)
     expect(registerTerminalPreviewHandlersMock).toHaveBeenCalledWith(runtime)
     expect(registerPwshInstallHandlersMock).toHaveBeenCalled()
     expect(registerSettingsHandlersMock).toHaveBeenCalledWith(store, agentAwakeService)
@@ -608,7 +615,7 @@ describe('registerCoreHandlers', () => {
     expect(registerDolphinProfileHandlersMock).toHaveBeenCalledWith(store, { onBeforeRelaunch })
     expect(registerSessionHandlersMock).toHaveBeenCalledWith(store)
     expect(registerUIHandlersMock).toHaveBeenCalledWith(store, {
-      isDashboardPopoutRenderer: isDashboardPopoutRendererMock
+      isCompanionPopoutRenderer: isDashboardPopoutRendererMock
     })
     expect(registerEmulatorFrameStreamHandlersMock).toHaveBeenCalled()
     expect(registerEmulatorVideoStreamHandlersMock).toHaveBeenCalled()

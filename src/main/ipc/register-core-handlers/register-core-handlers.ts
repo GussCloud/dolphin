@@ -35,6 +35,7 @@ import { registerNotificationHandlers } from '../notifications'
 import { registerNotebookHandlers } from '../notebook'
 import { registerOnboardingHandlers } from '../onboarding'
 import { registerDashboardPopoutHandlers } from '../dashboard-popout'
+import { registerDesignPopoutHandlers } from '../design-popout'
 import { registerTerminalPreviewHandlers } from '../terminal-preview'
 import { registerPwshInstallHandlers } from '../pwsh-install'
 import { registerDeveloperPermissionHandlers } from '../developer-permissions'
@@ -78,7 +79,7 @@ import {
   registerClipboardHandlers,
   setTrustedClipboardRendererWebContentsId
 } from '../../window/clipboard-ipc-handlers'
-import { isDashboardPopoutRenderer } from '../../window/dashboard-popout-window'
+import { isCompanionPopoutRenderer } from '../../window/companion-popout-renderers'
 import type { ClaudeUsageStore } from '../../claude-usage/store'
 import type { DeepSeekUsageStore } from '../../deepseek-usage/store'
 import type { CodexUsageStore } from '../../codex-usage/store'
@@ -200,6 +201,7 @@ export function registerCoreHandlers(
   registerNotebookHandlers(store)
   registerOnboardingHandlers(store)
   registerDashboardPopoutHandlers(store, keybindings)
+  registerDesignPopoutHandlers(store, keybindings)
   registerTerminalPreviewHandlers(runtime)
   registerPwshInstallHandlers()
   registerDeveloperPermissionHandlers()
@@ -234,7 +236,7 @@ export function registerCoreHandlers(
   registerShellHandlers(store)
   registerPetHandlers()
   registerSessionHandlers(store)
-  registerUIHandlers(store, { isDashboardPopoutRenderer })
+  registerUIHandlers(store, { isCompanionPopoutRenderer })
   registerEmulatorFrameStreamHandlers()
   registerEmulatorVideoStreamHandlers()
   registerWorkspaceSpaceHandlers(store)

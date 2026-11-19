@@ -8,6 +8,10 @@ import { createDaemonHostChunkManifestPlugin } from './config/build-plugins/daem
 import { createPdfjsViewerAssetsPlugin } from './config/build-plugins/pdfjs-viewer-assets'
 import { createRendererBootChunkGroups } from './config/build-plugins/renderer-boot-chunk-groups'
 import {
+  rendererWindowBootEntries,
+  rendererWindowHtmlInputs
+} from './config/build-plugins/renderer-window-entries'
+import {
   CLI_MAIN_ENTRY_NAMES,
   createPlainNodeEntryGuardPlugin
 } from './config/build-plugins/plain-node-entry-guard'
@@ -342,28 +346,13 @@ export const electronViteConfig: UserConfig = {
       // Why: Electron 43 ships Chromium 150; the browser web client is re-lowered to es2020 in project-renderer-web-client.mjs.
       target: 'chrome150',
       cssTarget: 'es2020',
-      // Why: the pop-out dashboard is a second top-level window with its own
-      // React root. It gets its own HTML entry so it can boot independently of
-      // the main window while reusing the same preload/window.api. `index` must
-      // stay listed — overriding input otherwise drops electron-vite's default
-      // renderer entry.
       rollupOptions: {
         // Why: shared chunks must never import an HTML entry whose module mounts
         // a different React root.
         preserveEntrySignatures: 'strict',
-        input: {
-          index: resolve('src/renderer/index.html'),
-          popout: resolve('src/renderer/popout.html'),
-          'agent-avatar': resolve('src/renderer/agent-avatar.html'),
-          web: resolve('src/renderer/web-index.html')
-        },
+        input: rendererWindowHtmlInputs(),
         output: {
-          advancedChunks: createRendererBootChunkGroups([
-            { name: 'index', moduleId: resolve('src/renderer/src/main.tsx') },
-            { name: 'popout', moduleId: resolve('src/renderer/src/popout.tsx') },
-            { name: 'agent-avatar', moduleId: resolve('src/renderer/src/agent-avatar.tsx') },
-            { name: 'web', moduleId: resolve('src/renderer/src/web/main.tsx') }
-          ])
+          advancedChunks: createRendererBootChunkGroups(rendererWindowBootEntries())
         }
       }
     }

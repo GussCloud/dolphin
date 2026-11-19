@@ -10,6 +10,7 @@ import {
   type DesignDecision
 } from '../../../../shared/design-types'
 import { formatDesignTimestamp } from './design-format'
+import { DesignProcessingInline } from './DesignProcessingIndicator'
 
 function toggleSelection(selected: number[], index: number, multiSelect: boolean): number[] {
   if (multiSelect) {
@@ -25,13 +26,16 @@ export function DesignDecisionCard({
   decision,
   blockTitle,
   onAnswer,
-  onHoverChange
+  onHoverChange,
+  processing = false
 }: {
   decision: DesignDecision
   /** Title of the block the question is about, when it is about one. */
   blockTitle: string | null
   onAnswer: (input: { decisionId: string; selected: string[]; note?: string }) => Promise<void>
   onHoverChange: (blockId: string | null) => void
+  /** The agent is working on this answer. */
+  processing?: boolean
 }): React.JSX.Element {
   const [selected, setSelected] = useState<number[]>([])
   const [note, setNote] = useState('')
@@ -155,6 +159,7 @@ export function DesignDecisionCard({
               })}
             </p>
           ) : null}
+          {processing ? <DesignProcessingInline /> : null}
         </div>
       )}
     </div>
