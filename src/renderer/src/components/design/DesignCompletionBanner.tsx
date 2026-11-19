@@ -10,10 +10,13 @@ import { formatDesignTimestamp } from './design-format'
 /** The agent's "it is implemented" report, waiting for the user to confirm it or ask for more. */
 export function DesignCompletionBanner({
   completion,
+  approvedVersion,
   onConfirm,
   onDecline
 }: {
   completion: DesignCompletion
+  /** The version the user approved; a report on another version is flagged. */
+  approvedVersion: number | null
   onConfirm: () => Promise<void>
   /** Rejects when the host refused; the typed text is kept so the user can retry. */
   onDecline: (text: string) => Promise<void>
@@ -60,6 +63,17 @@ export function DesignCompletionBanner({
               .join(' · ')}
           </p>
         </div>
+        {approvedVersion !== null &&
+        completion.canvasVersion !== null &&
+        completion.canvasVersion !== approvedVersion ? (
+          <p data-design-completion-redrawn="" className="text-xs text-status-warning">
+            {translate(
+              'auto.components.design.completion.redrawn',
+              'The agent redrew the canvas after your approval of version {{value0}}: review version {{value1}} before confirming.',
+              { value0: approvedVersion, value1: completion.canvasVersion }
+            )}
+          </p>
+        ) : null}
         <p className="scrollbar-sleek max-h-40 overflow-y-auto whitespace-pre-wrap break-words text-sm text-foreground">
           {completion.summary}
         </p>

@@ -293,6 +293,7 @@ export function DesignDetail({
           {design.status === 'in-progress' && design.completion ? (
             <DesignCompletionBanner
               completion={design.completion}
+              approvedVersion={approvedVersion}
               onConfirm={confirmDone}
               onDecline={declineDone}
             />

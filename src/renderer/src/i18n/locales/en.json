@@ -18428,7 +18428,8 @@
           "cancel": "Cancel",
           "declineSend": "Send to the agent",
           "confirm": "Confirm as done",
-          "decline": "Ask for changes"
+          "decline": "Ask for changes",
+          "redrawn": "The agent redrew the canvas after your approval of version {{value0}}: review version {{value1}} before confirming."
         },
         "implementing": {
           "label": "Being implemented by the agent",

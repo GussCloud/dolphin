@@ -4,8 +4,8 @@ export type DesignViewport = { x: number; y: number; zoom: number }
 
 /**
  * The viewport a canvas opens at. Fits everything when that stays readable; otherwise holds the
- * readable zoom and anchors at the flow's start (left edge, first column centered vertically), so
- * the user pans right through a long flow instead of facing an unreadable overview.
+ * readable zoom and anchors at the flow's left edge, centering the whole flow vertically when it fits
+ * (else its first column), so the user pans right through a long flow instead of an unreadable one.
  */
 export function designOpeningViewport(input: {
   /** Everything a full fit frames (cards plus back-edge lanes). */
@@ -32,6 +32,11 @@ export function designOpeningViewport(input: {
     }
   }
   const zoom = readableZoom
+  const x = padding - bounds.x * zoom
+  // Why: branches run downward from a short first card; centering that card alone leaves the top empty.
+  if (bounds.height * zoom + 2 * padding <= height) {
+    return { zoom, x, y: height / 2 - (bounds.y + bounds.height / 2) * zoom }
+  }
   const startX = Math.min(...cards.map((card) => card.x))
   // Why: auto-layout columns share an x, so the first column is the cards starting at the left edge.
   const firstColumn = cards.filter((card) => card.x <= startX + 1)
@@ -43,5 +48,5 @@ export function designOpeningViewport(input: {
     columnHeight + 2 * padding > height
       ? padding - top * zoom
       : height / 2 - ((top + bottom) / 2) * zoom
-  return { zoom, x: padding - bounds.x * zoom, y }
+  return { zoom, x, y }
 }

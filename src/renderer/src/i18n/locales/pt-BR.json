@@ -18428,7 +18428,8 @@
           "cancel": "Cancelar",
           "declineSend": "Enviar ao agente",
           "confirm": "Confirmar Finalizado",
-          "decline": "Pedir ajustes"
+          "decline": "Pedir ajustes",
+          "redrawn": "O agente redesenhou o canvas depois da sua aprovação da versão {{value0}}: revise a versão {{value1}} antes de confirmar."
         },
         "implementing": {
           "label": "Em implementação pelo agente",

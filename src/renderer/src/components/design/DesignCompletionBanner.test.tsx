@@ -57,6 +57,7 @@ async function click(button: HTMLButtonElement): Promise<void> {
 }
 
 function render(props: {
+  approvedVersion?: number | null
   onConfirm?: () => Promise<void>
   onDecline?: (text: string) => Promise<void>
 }): void {
@@ -64,6 +65,7 @@ function render(props: {
     root.render(
       <DesignCompletionBanner
         completion={completion}
+        approvedVersion={props.approvedVersion ?? 3}
         onConfirm={props.onConfirm ?? (async () => {})}
         onDecline={props.onDecline ?? (async () => {})}
       />
@@ -76,6 +78,18 @@ describe('DesignCompletionBanner', () => {
     render({})
     expect(container.textContent).toContain('Built the sign-in flow.\nTests: 12 passing.')
     expect(container.textContent).toContain('Version 3')
+  })
+
+  it('flags a report on a version other than the approved one', () => {
+    render({ approvedVersion: 2 })
+    expect(container.querySelector('[data-design-completion-redrawn]')?.textContent).toContain(
+      'version 2'
+    )
+  })
+
+  it('stays quiet when the report is on the approved version', () => {
+    render({ approvedVersion: 3 })
+    expect(container.querySelector('[data-design-completion-redrawn]')).toBeNull()
   })
 
   it('confirms through the caller', async () => {
