@@ -22,7 +22,7 @@ export type DesignInboxWatchdogPorts = {
   /** Non-null while the user has a draft or is typing; the nudge then waits and is not counted. */
   readUserComposingWaitMs: (terminal: string) => number | null
   /** Types the nudge and submits it; false when it could not be written. */
-  sendNudge: (terminal: string, text: string) => Promise<boolean>
+  sendNudge: (terminal: string, text: string, designId: string) => Promise<boolean>
   recordNudge: (designId: string) => void
   markDeliveryBlocked: (designId: string) => void
   now?: () => number
@@ -69,7 +69,7 @@ export function startDesignInboxWatchdog(ports: DesignInboxWatchdogPorts): {
     if ((await ports.readAgentStatus(terminal)) !== 'idle') {
       return
     }
-    if (await ports.sendNudge(terminal, buildDesignInboxNudge(design.id))) {
+    if (await ports.sendNudge(terminal, buildDesignInboxNudge(design.id), design.id)) {
       ports.recordNudge(design.id)
     }
   }

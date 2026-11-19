@@ -1,6 +1,6 @@
 // Whether the user is mid-draft in an agent pane, so Dolphin must not type into it: an agent CLI
 // reads idle while the user composes, and injected text plus Enter would submit their draft.
-import { detectTerminalComposerDraft } from '../shared/terminal-composer-draft'
+import { hasTerminalComposerTypedDraft } from '../shared/terminal-composer-draft'
 import type { HeadlessEmulator } from './daemon/headless-emulator'
 import { readLatestTerminalInputAt } from './terminal-client-input-clock'
 
@@ -38,7 +38,7 @@ export function readPtyUserComposingWaitMs(
   return readTerminalUserComposingWaitMs({
     lastInputAt: readLatestTerminalInputAt(ptyId),
     hasComposerDraft: () =>
-      emulator ? detectTerminalComposerDraft(emulator.getCursorLineContext()) !== null : undefined,
+      emulator ? hasTerminalComposerTypedDraft(emulator.getCursorLineContext()) : undefined,
     now: performance.now()
   })
 }

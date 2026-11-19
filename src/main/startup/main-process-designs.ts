@@ -8,6 +8,16 @@ import { isAgentPromptStalledError } from '../runtime/agent-prompt-submission-ve
 /** Announces design writes to open windows and paired clients, and delivers user input to agents. */
 export function startMainProcessDesigns(runtime: DolphinRuntimeService): () => void {
   const store = getDesignStore()
+  // Why once per design and kind: the watchdog retries every tick, and one line says enough.
+  const warnedUnsent = new Set<string>()
+  const warnUnsentNudge = (designId: string, error: unknown): void => {
+    const kind = error instanceof Error ? error.message : String(error)
+    const key = `${designId}\0${kind}`
+    if (!warnedUnsent.has(key)) {
+      warnedUnsent.add(key)
+      console.warn(`[designs] inbox nudge for ${designId} was not sent: ${kind}`)
+    }
+  }
   const stopBroadcast = startDesignRendererBroadcast(
     (notify) => store.subscribe(notify),
     () => runtime.notifyDesignsChanged()
@@ -23,13 +33,17 @@ export function startMainProcessDesigns(runtime: DolphinRuntimeService): () => v
       return ptyId ? readLatestTerminalInputAt(ptyId) : undefined
     },
     readUserComposingWaitMs: (terminal) => runtime.readTerminalUserComposingWaitMs(terminal),
-    sendNudge: async (terminal, text) => {
+    sendNudge: async (terminal, text, designId) => {
       try {
         await runtime.sendTerminalAgentPrompt(terminal, text)
         return true
       } catch (error) {
         // Why: a stalled verdict still wrote the nudge; only an unwritable pane counts as unsent.
-        return isAgentPromptStalledError(error)
+        if (isAgentPromptStalledError(error)) {
+          return true
+        }
+        warnUnsentNudge(designId, error)
+        return false
       }
     },
     recordNudge: (designId) => {
