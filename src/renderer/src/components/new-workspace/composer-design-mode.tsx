@@ -4,12 +4,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { translate } from '@/i18n/i18n'
 import { DESIGN_REQUEST_MAX_CHARS } from '../../../../shared/design-types'
 import type { TuiAgent } from '../../../../shared/tui-agent'
-import {
-  designNameIsValid,
-  isDesignAgent,
-  type DesignDraft,
-  type DesignDraftStep
-} from '@/lib/design-draft'
+import { designNameIsValid, type DesignDraft, type DesignDraftStep } from '@/lib/design-draft'
 import type { ComposerWizard } from './composer-goal-mode'
 import { ComposerWizardStepper } from './composer-wizard-steps'
 
@@ -65,7 +60,6 @@ function DesignRequestField({
 /** The Design flow as two steps: basics, then the request with the agent. No mode picker. */
 export function buildComposerDesignWizard(input: ComposerDesignWizardInput): ComposerWizard {
   const { draft, onDraftChange } = input
-  const designAgents = input.visibleQuickAgents.filter((entry) => isDesignAgent(entry.id))
   const goTo = (step: DesignDraftStep): void => onDraftChange({ ...draft, step })
   const stepper = (
     <ComposerWizardStepper
@@ -83,7 +77,7 @@ export function buildComposerDesignWizard(input: ComposerDesignWizardInput): Com
     stepper,
     goalSection: null,
     afterAgent: null,
-    agents: designAgents,
+    agents: input.visibleQuickAgents,
     agentLabel: translate('auto.components.ComposerDesign.agentLabel', 'Design agent')
   }
   if (draft.step === 1) {
@@ -101,9 +95,9 @@ export function buildComposerDesignWizard(input: ComposerDesignWizardInput): Com
       ) : null,
       nav: {
         onNext: () => {
-          if (!isDesignAgent(input.quickAgent)) {
-            // Why: only design agents are listed on step 2, so never land on one that is not.
-            input.onQuickAgentChange(designAgents[0]?.id ?? null)
+          if (input.quickAgent === null) {
+            // Why: a design needs an agent; a blank-terminal default would leave Create disabled.
+            input.onQuickAgentChange(input.visibleQuickAgents[0]?.id ?? null)
           }
           goTo(2)
         },

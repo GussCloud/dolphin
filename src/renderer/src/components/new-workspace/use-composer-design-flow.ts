@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import {
   createDesignDraft,
   designDraftBlocksCreate,
-  isDesignAgent,
+  designDraftForName,
   type DesignDraft
 } from '@/lib/design-draft'
 import { submitDesignFromComposer, type SubmitDesignInput } from '@/lib/design-composer-submit'
@@ -28,17 +28,18 @@ export function useComposerDesignFlow(input: {
   initialRequest?: string
 }): ComposerDesignFlow {
   const { repoId, name, agent, submitQuick } = input
-  const [designDraft, setDesignDraft] = useState<DesignDraft>(() => ({
+  const [storedDraft, setDesignDraft] = useState<DesignDraft>(() => ({
     ...createDesignDraft(),
     request: input.initialRequest ?? ''
   }))
+  const designDraft = designDraftForName(storedDraft, name)
   const [submitting, setSubmitting] = useState(false)
   const designBlocksCreate =
     input.targetUnavailable || submitting || designDraftBlocksCreate(designDraft, { name, agent })
   const request = designDraft.request
   const submitDesign = useCallback(
     async (options: QuickSubmitOptions | undefined): Promise<void> => {
-      if (!isDesignAgent(agent)) {
+      if (agent === null) {
         return
       }
       setSubmitting(true)

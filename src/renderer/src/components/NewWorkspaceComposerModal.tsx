@@ -38,6 +38,7 @@ import {
   type AutonomousGoalDraft
 } from '@/lib/autonomous-goal-draft'
 import { useComposerDesignFlow } from '@/components/new-workspace/use-composer-design-flow'
+import { designEphemeralVmRecipes } from '@/lib/design-draft'
 
 // Why: match App-level AddRepoDialog loading — the add flow is off the hot
 // path for the composer, so keep its clone/SSH machinery out of the entry render.
@@ -437,8 +438,7 @@ function QuickTabBody({
           ? {
               designDraft,
               onDesignDraftChange: setDesignDraft,
-              // Why: a pending VM runs on a host the design record cannot follow yet.
-              ephemeralVmRecipes: []
+              ephemeralVmRecipes: designEphemeralVmRecipes(cardProps.ephemeralVmRecipes ?? [])
             }
           : {})}
         primaryActionLabel={primaryActionLabel}

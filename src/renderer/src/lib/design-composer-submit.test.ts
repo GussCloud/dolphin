@@ -78,4 +78,32 @@ describe('submitDesignFromComposer', () => {
     expect(submitQuick).not.toHaveBeenCalled()
     expect(mocks.toastError).toHaveBeenCalledOnce()
   })
+
+  it('gives each "Create more" create its own design and prompt, and skips only a failed one', async () => {
+    mocks.callRuntimeRpc
+      .mockResolvedValueOnce({ design: { id: 'd1' }, launchPrompt: 'run design d1' })
+      .mockRejectedValueOnce(new Error('disk full'))
+      .mockResolvedValueOnce({ design: { id: 'd3' }, launchPrompt: 'run design d3' })
+    const submitQuick = vi.fn().mockResolvedValue(undefined)
+    const results: boolean[] = []
+    for (const name of ['Checkout', 'Refunds', 'Invoices']) {
+      results.push(await submitDesignFromComposer({ ...input, name, submitQuick }))
+    }
+    expect(results).toEqual([true, false, true])
+    expect(
+      mocks.callRuntimeRpc.mock.calls.map(([, method, params]) => [method, params.name])
+    ).toEqual([
+      ['design.create', 'Checkout'],
+      ['design.create', 'Refunds'],
+      ['design.create', 'Invoices']
+    ])
+    expect(submitQuick.mock.calls.map(([, launch]) => launch)).toEqual([
+      { kind: 'design', prompt: 'run design d1' },
+      { kind: 'design', prompt: 'run design d3' }
+    ])
+    expect(mocks.toastError).toHaveBeenCalledOnce()
+    expect(mocks.toastError).toHaveBeenCalledWith('Could not create the design', {
+      description: 'disk full'
+    })
+  })
 })

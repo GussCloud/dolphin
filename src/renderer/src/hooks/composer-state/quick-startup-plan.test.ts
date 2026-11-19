@@ -4,6 +4,9 @@ vi.mock('@/lib/new-workspace', () => ({ CLIENT_PLATFORM: 'linux' }))
 
 import { buildQuickComposerStartup } from './quick-startup-plan'
 import { composerLaunchPolicy } from './composer-launch-override'
+import { buildDesignLaunchPrompt } from '../../../../shared/design-agent-prompt'
+import { TUI_AGENT_CONFIG } from '../../../../shared/tui-agent-config'
+import type { TuiAgent } from '../../../../shared/tui-agent'
 
 const base = {
   agent: 'claude' as const,
@@ -49,5 +52,21 @@ describe('quick composer startup for a goal coordinator', () => {
     })
     expect(startupPlan?.launchCommand).toContain('design prompt')
     expect(startupPlan?.env ?? {}).not.toHaveProperty('DISABLE_AUTO_COMPACT')
+  })
+
+  it('delivers the design prompt to every agent, at launch or as its follow-up', () => {
+    const prompt = buildDesignLaunchPrompt('design-1')
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: TUI_AGENT_CONFIG is a Record<TuiAgent, ...>, so its keys are exactly the agents.
+    for (const agent of Object.keys(TUI_AGENT_CONFIG) as TuiAgent[]) {
+      const { startupPlan, backendStartup } = buildQuickComposerStartup({ ...base, agent, prompt })
+      // Why the env: Hermes reads its startup query from an env var set on the launch command.
+      const inLaunch =
+        startupPlan?.launchCommand.includes('design start --id design-1') === true ||
+        Object.values(backendStartup?.env ?? {}).includes(prompt)
+      const delivered =
+        startupPlan?.followupPrompt === prompt ||
+        (inLaunch && backendStartup?.command === startupPlan?.launchCommand)
+      expect({ agent, delivered }).toEqual({ agent, delivered: true })
+    }
   })
 })
