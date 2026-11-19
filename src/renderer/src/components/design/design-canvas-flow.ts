@@ -24,7 +24,10 @@ export type DesignGroupNodeData = {
 
 export type DesignGroupNode = Node<DesignGroupNodeData, typeof DESIGN_GROUP_NODE_TYPE>
 
-export function designCanvasToFlow(canvas: DesignCanvas): {
+export function designCanvasToFlow(
+  canvas: DesignCanvas,
+  measuredHeights?: ReadonlyMap<string, number>
+): {
   nodes: DesignGroupNode[]
   edges: Edge[]
 } {
@@ -39,7 +42,7 @@ export function designCanvasToFlow(canvas: DesignCanvas): {
       edge.fromBlockId === undefined || from.blocks.some((block) => block.id === edge.fromBlockId)
     )
   })
-  const positions = layoutDesignCanvas(canvas)
+  const positions = layoutDesignCanvas(canvas, measuredHeights)
   const isBackEdge = (from: string, to: string): boolean =>
     (positions.get(to)?.x ?? 0) <= (positions.get(from)?.x ?? 0)
   const span = (edge: { fromGroupId: string; toGroupId: string }): number =>

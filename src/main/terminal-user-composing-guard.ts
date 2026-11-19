@@ -37,6 +37,8 @@ export function readPtyUserComposingWaitMs(
 ): number | null {
   return readTerminalUserComposingWaitMs({
     lastInputAt: readLatestTerminalInputAt(ptyId),
+    // Why typed-only, unlike terminal reads: reads count an agent's dimmed ghost suggestion as draft
+    // so they can lift it out of output, but it is not the user's text and must not block delivery.
     hasComposerDraft: () =>
       emulator ? hasTerminalComposerTypedDraft(emulator.getCursorLineContext()) : undefined,
     now: performance.now()

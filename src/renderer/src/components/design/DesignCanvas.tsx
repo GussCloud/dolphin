@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -16,10 +16,13 @@ import type { DesignCanvas as DesignCanvasModel } from '../../../../shared/desig
 import {
   designCanvasToFlow,
   DESIGN_BACK_EDGE_TYPE,
-  DESIGN_GROUP_NODE_TYPE
+  DESIGN_GROUP_NODE_TYPE,
+  type DesignGroupNode as DesignGroupFlowNode
 } from './design-canvas-flow'
+import { designHeightsApplied } from './design-canvas-layout'
 import type { DesignRect } from './design-back-edge-path'
 import { designFitBounds } from './design-fit-bounds'
+import { designOpeningViewport } from './design-opening-viewport'
 import { DesignBackEdge } from './DesignBackEdge'
 import { DesignGroupNode } from './DesignGroupNode'
 import './design-canvas.css'
@@ -29,20 +32,29 @@ const EDGE_TYPES: EdgeTypes = { [DESIGN_BACK_EDGE_TYPE]: DesignBackEdge }
 const LABEL_BG_PADDING: [number, number] = [6, 3]
 const MIN_ZOOM = 0.2
 const FIT_MAX_ZOOM = 1
+const FIT_PADDING_PX = 32
 // Why: explicit unit; xyflow 13 reads bare numbers and percentages differently from v12.
-const FIT_PADDING = '32px'
+const FIT_PADDING = `${FIT_PADDING_PX}px`
+/** Below this the block titles stop being legible, so opening a long flow anchors at its start. */
+const READABLE_ZOOM = 0.6
 
 /** Frames the cards and the back-edge lanes below them; xyflow's own fitView sees only the cards. */
 function DesignFitControls({
-  nodeIds,
+  nodes,
   backEdgeCount,
-  fitKey
+  fitKey,
+  appliedHeights,
+  onMeasuredHeights
 }: {
-  nodeIds: readonly string[]
+  nodes: readonly DesignGroupFlowNode[]
   backEdgeCount: number
   /** The canvas version: the view refits when it changes, not on every refetch. */
   fitKey: number
+  /** Card heights the current layout stacked with; null while it still uses the estimate. */
+  appliedHeights: ReadonlyMap<string, number> | null
+  onMeasuredHeights: (heights: ReadonlyMap<string, number>) => void
 }): React.JSX.Element {
+  const nodeIds = useMemo(() => nodes.map((node) => node.id), [nodes])
   const flow = useReactFlow()
   // Why: useNodesInitialized never turns true for controlled nodes; internal nodes carry the size.
   const internalNodes = useInternalNodes(nodeIds)
@@ -58,11 +70,35 @@ function DesignFitControls({
   )
   const measured =
     cards.length === nodeIds.length && cards.every((card) => card.width > 0 && card.height > 0)
+  const measuredHeights = useMemo(
+    () =>
+      new Map(measured ? internalNodes.map((node) => [node.id, node.measured.height ?? 0]) : []),
+    [internalNodes, measured]
+  )
+  const heightsApplied = measured && designHeightsApplied(measuredHeights, appliedHeights)
+  // Why: the store lags one render behind a new layout; fit only once cards sit where it put them.
+  const positionsApplied = internalNodes.every((node, index) => {
+    const expected = nodes[index]?.position
+    return (
+      expected !== undefined &&
+      node.internals.positionAbsolute.x === expected.x &&
+      node.internals.positionAbsolute.y === expected.y
+    )
+  })
+  const settled = heightsApplied && positionsApplied
+
+  // Why: the estimate only places the first paint; real heights re-stack the auto-laid columns.
+  useEffect(() => {
+    if (measured && !heightsApplied) {
+      onMeasuredHeights(measuredHeights)
+    }
+  }, [heightsApplied, measured, measuredHeights, onMeasuredHeights])
   const width = useViewportStore((state) => state.width)
   const height = useViewportStore((state) => state.height)
   const fittedKey = useRef<number | null>(null)
 
-  const fit = useCallback(async (): Promise<boolean> => {
+  /** The fit-view button: always everything, whatever the zoom. */
+  const fitAll = useCallback(async (): Promise<boolean> => {
     const bounds = designFitBounds(cards, backEdgeCount)
     if (!bounds || width === 0 || height === 0) {
       return false
@@ -72,20 +108,38 @@ function DesignFitControls({
     )
   }, [backEdgeCount, cards, flow, height, width])
 
+  const openAtStart = useCallback(async (): Promise<boolean> => {
+    const bounds = designFitBounds(cards, backEdgeCount)
+    if (!bounds || width === 0 || height === 0) {
+      return false
+    }
+    return flow.setViewport(
+      designOpeningViewport({
+        bounds,
+        cards,
+        width,
+        height,
+        padding: FIT_PADDING_PX,
+        readableZoom: READABLE_ZOOM,
+        maxZoom: FIT_MAX_ZOOM
+      })
+    )
+  }, [backEdgeCount, cards, flow, height, width])
+
   // Why: setViewport is a no-op until the pan/zoom behavior mounts, so wait for it and the sizes.
   useEffect(() => {
-    if (!measured || !flow.viewportInitialized || fittedKey.current === fitKey) {
+    if (!settled || !flow.viewportInitialized || fittedKey.current === fitKey) {
       return
     }
-    void fit().then((applied) => {
+    void openAtStart().then((applied) => {
       if (applied) {
         fittedKey.current = fitKey
       }
     })
-  }, [fit, fitKey, flow.viewportInitialized, measured])
+  }, [fitKey, flow.viewportInitialized, openAtStart, settled])
 
   // Why: bottom-right is covered by the app's floating workspace-board button.
-  return <Controls showInteractive={false} position="bottom-left" onFitView={() => void fit()} />
+  return <Controls showInteractive={false} position="bottom-left" onFitView={() => void fitAll()} />
 }
 
 /** Pan and zoom only: blocks open a thread popover, nothing drags, connects or selects. */
@@ -96,7 +150,11 @@ export default function DesignCanvas({
   canvas: DesignCanvasModel
   version: number
 }): React.JSX.Element {
-  const flow = useMemo(() => designCanvasToFlow(canvas), [canvas])
+  const [measuredHeights, setMeasuredHeights] = useState<ReadonlyMap<string, number> | null>(null)
+  const flow = useMemo(
+    () => designCanvasToFlow(canvas, measuredHeights ?? undefined),
+    [canvas, measuredHeights]
+  )
   const edges = useMemo(
     () =>
       flow.edges.map((edge) => ({
@@ -107,7 +165,6 @@ export default function DesignCanvas({
       })),
     [flow.edges]
   )
-  const nodeIds = useMemo(() => flow.nodes.map((node) => node.id), [flow.nodes])
   const backEdgeCount = flow.edges.filter((edge) => edge.type === DESIGN_BACK_EDGE_TYPE).length
   return (
     <div data-design-canvas="" className="h-full w-full">
@@ -126,7 +183,13 @@ export default function DesignCanvas({
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} />
-        <DesignFitControls nodeIds={nodeIds} backEdgeCount={backEdgeCount} fitKey={version} />
+        <DesignFitControls
+          nodes={flow.nodes}
+          backEdgeCount={backEdgeCount}
+          fitKey={version}
+          appliedHeights={measuredHeights}
+          onMeasuredHeights={setMeasuredHeights}
+        />
       </ReactFlow>
     </div>
   )
