@@ -123,4 +123,24 @@ describe('importIntoClaudeProfile', () => {
     await importIntoClaudeProfile(paths(), ['skill:shared'])
     expect(lstatSync(join(profileDir, 'skills', 'shared')).isSymbolicLink()).toBe(true)
   })
+
+  it.skipIf(process.platform === 'win32')(
+    'keeps a relative skill link pointing at the same skill after the copy',
+    async () => {
+      const canonical = join(root, 'home', '.agents', 'skills', 'orchestration')
+      mkdirSync(canonical, { recursive: true })
+      writeFileSync(join(canonical, 'SKILL.md'), 'orchestration\n')
+      // `npx skills` links ~/.claude/skills/<name> relatively on macOS and Linux.
+      symlinkSync(
+        join('..', '..', '.agents', 'skills', 'orchestration'),
+        join(userDir, 'skills', 'orchestration')
+      )
+
+      await importIntoClaudeProfile(paths(), ['skill:orchestration'])
+
+      const link = join(profileDir, 'skills', 'orchestration')
+      expect(lstatSync(link).isSymbolicLink()).toBe(true)
+      expect(readFileSync(join(link, 'SKILL.md'), 'utf-8')).toBe('orchestration\n')
+    }
+  )
 })

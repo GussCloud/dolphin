@@ -5,6 +5,8 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readlinkSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync
@@ -116,6 +118,53 @@ describe('isolateClaudeProfileDir', () => {
 
       expect(second).toEqual({ firstIsolation: false, copied: [], detached: [] })
       expect(readFileSync(join(profileDir, 'CLAUDE.md'), 'utf-8')).toBe('# company\n')
+    }
+  )
+
+  // The layout `npx skills` writes on macOS/Linux: a relative link from ~/.claude/skills.
+  function installRelativeAgentsSkill(name: string): string {
+    const canonical = join(root, 'home', '.agents', 'skills', name)
+    mkdirSync(canonical, { recursive: true })
+    writeFileSync(join(canonical, 'SKILL.md'), `${name}\n`)
+    mkdirSync(join(userDir, 'skills'), { recursive: true })
+    symlinkSync(join('..', '..', '.agents', 'skills', name), join(userDir, 'skills', name))
+    return canonical
+  }
+
+  it.skipIf(process.platform === 'win32')(
+    'keeps relative skill links working when it copies a linked skills folder',
+    () => {
+      installRelativeAgentsSkill('orchestration')
+      mkdirSync(profileDir, { recursive: true })
+      symlinkSync(join(userDir, 'skills'), join(profileDir, 'skills'))
+
+      isolateClaudeProfileDir(profileDir, userDir)
+
+      const link = join(profileDir, 'skills', 'orchestration')
+      expect(isLink(link)).toBe(true)
+      expect(readFileSync(join(link, 'SKILL.md'), 'utf-8')).toBe('orchestration\n')
+    }
+  )
+
+  it.skipIf(process.platform === 'win32')(
+    'repoints relative skill links an earlier copy left broken, and nothing else',
+    () => {
+      const canonical = installRelativeAgentsSkill('orchestration')
+      mkdirSync(join(profileDir, 'skills'), { recursive: true })
+      // What earlier versions copied: the link text, now relative to the wrong folder.
+      symlinkSync(
+        join('..', '..', '.agents', 'skills', 'orchestration'),
+        join(profileDir, 'skills', 'orchestration')
+      )
+      symlinkSync(join('..', 'gone'), join(profileDir, 'skills', 'unknown'))
+
+      const isolation = isolateClaudeProfileDir(profileDir, userDir)
+
+      const link = join(profileDir, 'skills', 'orchestration')
+      expect(readFileSync(join(link, 'SKILL.md'), 'utf-8')).toBe('orchestration\n')
+      expect(realpathSync(link)).toBe(realpathSync(canonical))
+      expect(readlinkSync(join(profileDir, 'skills', 'unknown'))).toBe(join('..', 'gone'))
+      expect(isolation.copied).toEqual([])
     }
   )
 

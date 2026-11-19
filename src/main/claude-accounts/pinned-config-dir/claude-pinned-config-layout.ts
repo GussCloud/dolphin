@@ -2,19 +2,15 @@
 // directory with its own instructions (CLAUDE.md), settings, user-scope MCP servers, skills,
 // agents, commands and session history, so one account's accesses never reach another.
 // Only credentials come from Dolphin's managed store; see docs/reference/claude-account-profiles.md.
-import {
-  cpSync,
-  existsSync,
-  lstatSync,
-  mkdirSync,
-  readFileSync,
-  statSync,
-  unlinkSync
-} from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, readFileSync, statSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import { lock } from 'proper-lockfile'
 import { writeFileAtomically } from '../../codex-accounts/fs-utils'
 import { mirrorEntry } from '../../pty/overlay-mirror'
+import {
+  copyClaudeProfileEntry,
+  repairCopiedProfileLinks
+} from '../profile/claude-profile-entry-copy'
 
 /** Records that a profile is isolated, and what a migration from the shared layout copied. */
 export const CLAUDE_PROFILE_MARKER = '.dolphin-claude-profile.json'
@@ -116,8 +112,8 @@ function copyLinkedDirectory(target: string, source: string): boolean {
   if (!existsSync(source) || !statSync(source).isDirectory()) {
     return false
   }
-  // Why verbatim: skills are often links to ~/.agents; copy the link, not what it points to.
-  cpSync(source, target, { recursive: true, verbatimSymlinks: true })
+  // Why: skills are often links to ~/.agents; copy the link, re-aimed from its new folder.
+  copyClaudeProfileEntry(source, target)
   return true
 }
 
@@ -155,6 +151,10 @@ export function isolateClaudeProfileDir(
     if (isLink(target) && copyLinkedDirectory(target, join(userConfigDir, name))) {
       copied.push(name)
     }
+  }
+  for (const name of MIGRATION_COPIED_DIRECTORIES) {
+    // Why every launch: earlier versions copied relative links verbatim, leaving them broken.
+    repairCopiedProfileLinks(join(profileDir, name), join(userConfigDir, name))
   }
   for (const name of MIGRATION_DETACHED_ENTRIES) {
     const target = join(profileDir, name)

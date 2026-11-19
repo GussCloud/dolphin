@@ -1,7 +1,8 @@
 // Claude Code records plugins with absolute paths (installed_plugins.json, known_marketplaces.json),
 // so importing one copies its files into the profile and rewrites those paths to the copies.
-import { cpSync, existsSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { isAbsolute, join, relative, resolve } from 'node:path'
+import { copyClaudeProfileEntry } from './claude-profile-entry-copy'
 import { asJsonObject, readJsonObjectFile, updateJsonObjectFile } from './claude-profile-json'
 
 type PluginInstall = Record<string, unknown> & { scope?: unknown; installPath?: unknown }
@@ -41,8 +42,8 @@ function relocate(path: string, userDir: string, profileDir: string): string {
   }
   const to = join(pluginsDir(profileDir), rel)
   if (!existsSync(to) && existsSync(from)) {
-    // Why verbatim: a plugin may link to shared tooling; copy the link, not its target.
-    cpSync(from, to, { recursive: true, verbatimSymlinks: true })
+    // Why: a plugin may link to shared tooling; copy the link, re-aimed from its new folder.
+    copyClaudeProfileEntry(from, to)
   }
   return to
 }

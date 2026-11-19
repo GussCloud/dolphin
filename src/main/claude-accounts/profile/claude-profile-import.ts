@@ -9,6 +9,7 @@ import {
   type ClaudeProfileImportKind,
   type ClaudeProfileImportResult
 } from '../../../shared/claude-profile-types'
+import { copyClaudeProfileEntry } from './claude-profile-entry-copy'
 import { asJsonObject, readJsonObjectFile, updateJsonObjectFile } from './claude-profile-json'
 import { importClaudePlugin, listUserScopePlugins, profileHasPlugin } from './claude-plugin-import'
 
@@ -96,14 +97,10 @@ async function importOne(
   }
   const folder = FOLDERS.find(({ kind }) => kind === entry.kind)
   if (folder) {
-    // Why verbatim: skills are often links into ~/.agents; copy the link, not its target.
-    cpSync(
+    // Why: skills are often links into ~/.agents; copy the link, re-aimed from its new folder.
+    copyClaudeProfileEntry(
       join(userConfigDir, folder.folder, entry.name),
-      join(profileDir, folder.folder, entry.name),
-      {
-        recursive: true,
-        verbatimSymlinks: true
-      }
+      join(profileDir, folder.folder, entry.name)
     )
     return true
   }
