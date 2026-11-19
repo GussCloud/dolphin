@@ -3,6 +3,7 @@ import { lazyWithRetry as lazy } from '@/lib/lazy-with-retry'
 import { AgentHibernationGate } from '../components/AgentHibernationGate'
 import { AiVaultTabTitleSyncGate } from '../components/AiVaultTabTitleSyncGate'
 import RetainedAgentsSyncGate from '../components/dashboard/RetainedAgentsSyncGate'
+import { DesignPopoutCommandBridge } from '../components/design/design-popout-commands'
 import { WorkspacePortScanner } from '../components/ports/WorkspacePortScanner'
 import { MacosTccPromptNoticeHost } from '../hooks/MacosTccPromptNoticeHost'
 import { useAppStore } from '../store'
@@ -35,6 +36,8 @@ export function AppBackgroundServices(): React.JSX.Element {
         </Suspense>
       ) : null}
       <AgentHibernationGate />
+      {/* Why: the Design pop-out hands composer and workspace actions to this window. */}
+      <DesignPopoutCommandBridge />
       <StructuredAgentSessionStatusBridge />
       {/* Why here and not in the chat pane: a backgrounded chat has no mounted pane, and that is
           exactly the completion the user needs the dot for. */}

@@ -28,6 +28,9 @@ vi.mock('../agent-hooks/migration-unsupported-pty-state', () => ({
 vi.mock('../window/dashboard-popout-window', () => ({
   getDashboardPopoutWindow: () => null
 }))
+vi.mock('../window/design-popout-window', () => ({
+  getDesignPopoutWindow: () => null
+}))
 vi.mock('./synthetic-title-runtime', () => ({
   driveSyntheticTitleFromHook: vi.fn(),
   stopAllSyntheticTitleSpinners: vi.fn()

@@ -10,10 +10,12 @@ import {
   DESIGN_STATUS_TRANSITIONS,
   latestDesignCanvas,
   type Design,
+  type DesignAgentStatus,
   type DesignCanvas,
   type DesignListEntry
 } from '../../../../shared/design-types'
 import {
+  DesignAgentStatusParams,
   DesignCanvasSchema,
   DesignCanvasSetParams,
   DesignCreateParams,
@@ -172,6 +174,24 @@ export const DESIGN_METHODS = [
     name: 'design.show',
     params: DesignShowParams,
     handler: (params) => ({ design: requireDesign(params.id) })
+  }),
+  defineMethod({
+    name: 'design.agentStatus',
+    params: DesignAgentStatusParams,
+    handler: async (params, context): Promise<DesignAgentStatus> => {
+      const { paneKey } = requireDesign(params.id)
+      // Why the same reads as the inbox watchdog: the indicator must agree with when nudges are typed.
+      const handle = paneKey ? context.runtime.getLiveTerminalHandleForPaneKey(paneKey) : null
+      if (!handle) {
+        return { live: false, status: null }
+      }
+      try {
+        return { live: true, status: (await context.runtime.getTerminalAgentStatus(handle)).status }
+      } catch {
+        // Why not live=false: a failed read is not evidence the pane exited.
+        return { live: true, status: null }
+      }
+    }
   }),
   defineMethod({
     name: 'design.list',

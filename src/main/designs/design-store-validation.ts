@@ -11,6 +11,7 @@ import {
   isDesignStatus,
   type Design,
   type DesignCanvasVersion,
+  type DesignDecision,
   type DesignDelivery,
   type DesignEvent,
   type DesignInboxItem,
@@ -24,8 +25,23 @@ const StoredDecisionSchema = DesignDecisionInputSchema.extend({
   askedAt: z.number(),
   answer: z
     .object({ selected: z.array(z.string()), note: z.string().optional(), at: z.number() })
+    .optional(),
+  // Why catch: a bad revision is dropped on its own; the decision and its answer survive.
+  revision: z
+    .object({ text: z.string().min(1), at: z.number() })
     .optional()
+    .catch(undefined)
 })
+
+/** A revision only exists on an answered decision. */
+function toStoredDecision(entry: unknown): DesignDecision | null {
+  const parsed = parsedOrNull(StoredDecisionSchema, entry)
+  if (!parsed) {
+    return null
+  }
+  const { revision, ...decision } = parsed
+  return revision && decision.answer ? { ...decision, revision } : decision
+}
 
 const StoredMessageSchema = z.object({
   id: z.string().min(1),
@@ -93,9 +109,7 @@ export type StoredDesignCore = Omit<
 }
 
 export function withValidHistory(design: StoredDesignCore): Design {
-  const decisions = validEntries(design.decisions, (entry) =>
-    parsedOrNull(StoredDecisionSchema, entry)
-  )
+  const decisions = validEntries(design.decisions, toStoredDecision)
   const messages: DesignMessage[] = validEntries(design.messages, (entry) =>
     parsedOrNull(StoredMessageSchema, entry)
   )

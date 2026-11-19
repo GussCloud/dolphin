@@ -216,17 +216,18 @@ describe('UI IPC', () => {
     const copy = vi.fn()
     const selectAll = vi.fn()
     const event = makeUIEvent({ id: 42 })
-    const isDashboardPopoutRenderer = vi.fn((sender: unknown) => sender === event.sender)
+    const isCompanionPopoutRenderer = vi.fn((sender: unknown) => sender === event.sender)
     fromWebContentsMock.mockReturnValue({ webContents: { copy, selectAll } })
 
-    registerUIHandlers(makeStore() as never, { isDashboardPopoutRenderer })
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the native-selection handler never touches the store stub.
+    registerUIHandlers(makeStore() as never, { isCompanionPopoutRenderer })
 
     const handler = getNativeSelectionActionHandler()
     handler?.(event, 'copy')
     handler?.(event, 'select-all')
     handler?.(makeUIEvent({ id: 43 }), 'copy')
 
-    expect(isDashboardPopoutRenderer).toHaveBeenCalledWith(event.sender)
+    expect(isCompanionPopoutRenderer).toHaveBeenCalledWith(event.sender)
     expect(copy).toHaveBeenCalledOnce()
     expect(selectAll).toHaveBeenCalledOnce()
   })

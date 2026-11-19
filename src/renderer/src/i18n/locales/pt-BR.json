@@ -18331,7 +18331,8 @@
           "markDone": "Marcar como finalizado",
           "backToPlanning": "Voltar ao planejamento",
           "more": "Mais ações",
-          "approveNeedsCanvas": "Aguarde o agente desenhar o design antes de aprová-lo."
+          "approveNeedsCanvas": "Aguarde o agente desenhar o design antes de aprová-lo.",
+          "approveWhileProcessing": "Aguarde o agente terminar de processar antes de aprovar."
         },
         "status": {
           "draft": "Rascunho",
@@ -18366,7 +18367,9 @@
           "multi": "Escolha uma ou mais",
           "notePlaceholder": "Adicione uma observação para o agente (opcional)",
           "answer": "Responder",
-          "answeredAt": "Respondida {{value0}}"
+          "answeredAt": "Respondida {{value0}}",
+          "originalAnswer": "Resposta original",
+          "revisedAt": "Atualizada depois · {{value0}}"
         },
         "delivery": {
           "blocked": "O agente não está respondendo",
@@ -18395,6 +18398,7 @@
           "renamed": "Renomeado",
           "decisionAsked": "Decisão perguntada",
           "decisionAnswered": "Decisão respondida",
+          "decisionRevised": "Agente atualizou uma resposta",
           "commentAdded": "Comentário enviado",
           "agentReplied": "Agente respondeu",
           "inboxNudged": "Agente avisado",
@@ -18441,6 +18445,7 @@
         "confirm": {
           "approveDescription": "O agente vai começar a implementar a versão {{value0}} do canvas no workspace do design.",
           "approveOpenDecisions": "{{value0}} decisões abertas ficarão sem resposta. Responda antes para o agente construir o que você escolheu.",
+          "approveUnreadInput": "O agente ainda não leu {{value0}} das suas mensagens; ele as recebe antes da aprovação.",
           "approveTitle": "Aprovar este design?",
           "approveConfirm": "Aprovar e implementar",
           "discardTitle": "Descartar este design?",
@@ -18454,6 +18459,22 @@
           "decisions": "{{value0}} com decisões abertas",
           "blocked": "{{value0}} com o agente sem responder",
           "show": "Mostrar"
+        },
+        "processing": {
+          "answering": "O agente está processando sua resposta…",
+          "working": "O agente está trabalhando…",
+          "permission": "O agente pediu permissão no terminal. Abra o workspace para responder.",
+          "queued": "Sua mensagem está na fila. O Dolphin avisa o agente assim que ele ficar livre.",
+          "notified": "O agente foi avisado e ainda não leu sua mensagem.",
+          "offline": "O terminal do agente não está conectado",
+          "offlineDetail": "Sua mensagem fica guardada e é entregue quando o agente voltar.",
+          "unknown": "O Dolphin não consegue ver o que o agente está fazendo agora.",
+          "replied": "O agente respondeu",
+          "inline": "Processando…"
+        },
+        "popout": {
+          "open": "Abrir em nova janela",
+          "focus": "Mostrar a janela do Design"
         }
       }
     },
@@ -19856,6 +19877,12 @@
     "push": {
       "title": "Login no Azure",
       "body": "Abra {{url}} e digite {{code}}"
+    }
+  },
+  "designPopout": {
+    "recoverableError": {
+      "title": "O Design do Dolphin encontrou um erro.",
+      "description": "A janela do Design não terminou de renderizar. Tente de novo para remontá-la ou reabra-a."
     }
   }
 }

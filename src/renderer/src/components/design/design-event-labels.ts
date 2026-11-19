@@ -28,6 +28,8 @@ export function designEventLabel(kind: DesignEventKind): string {
       return translate('auto.components.design.event.decisionAsked', 'Decision asked')
     case 'decision-answered':
       return translate('auto.components.design.event.decisionAnswered', 'Decision answered')
+    case 'decision-revised':
+      return translate('auto.components.design.event.decisionRevised', 'Agent updated an answer')
     case 'comment-added':
       return translate('auto.components.design.event.commentAdded', 'Comment sent')
     case 'agent-replied':

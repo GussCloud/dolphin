@@ -2,6 +2,7 @@ import type { BrowserWindow } from 'electron'
 import { agentHookServer } from '../agent-hooks/server'
 import { setMigrationUnsupportedPtyListener } from '../agent-hooks/migration-unsupported-pty-state'
 import { getDashboardPopoutWindow } from '../window/dashboard-popout-window'
+import { getDesignPopoutWindow } from '../window/design-popout-window'
 import {
   getSyntheticAgentTitleProfile,
   shouldDriveSyntheticAgentTitleFromHook
@@ -99,6 +100,8 @@ export function installMainWindowAgentStatusListeners(options: MainWindowAgentSt
       }
       state.mainWindow?.webContents.send('agentStatus:set', statusEvent)
       getDashboardPopoutWindow()?.webContents.send('agentStatus:set', statusEvent)
+      // Why: the Design window re-reads its agent's status on this signal instead of waiting for its poll.
+      getDesignPopoutWindow()?.webContents.send('agentStatus:set', statusEvent)
       options.onRecordAgentState(payload.agentType ?? 'unknown', payload.state)
       // Why: native OSC titles miss some idle/permission frames, so inject hook-derived ones to keep the renderer title tracker in sync.
       const profile = getSyntheticAgentTitleProfile(payload.agentType)
@@ -113,6 +116,7 @@ export function installMainWindowAgentStatusListeners(options: MainWindowAgentSt
     }
     state.mainWindow?.webContents.send('agentStatus:clear', clear)
     getDashboardPopoutWindow()?.webContents.send('agentStatus:clear', clear)
+    getDesignPopoutWindow()?.webContents.send('agentStatus:clear', clear)
   })
   setMigrationUnsupportedPtyListener((event) => {
     if (state.mainWindow?.isDestroyed()) {

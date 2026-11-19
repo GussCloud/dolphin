@@ -45,10 +45,10 @@ describe('prepareRemoteDesignCliInput', () => {
     })
   })
 
-  it('reads decide, reply and complete files on the SSH host too', async () => {
+  it('reads decide, reply, revise-decision and complete files on the SSH host too', async () => {
     const cwd = await remoteFolder()
     await writeFile(join(cwd, 'ask.json'), '{"decisions":[]}', 'utf8')
-    for (const command of ['decide', 'reply', 'complete']) {
+    for (const command of ['decide', 'reply', 'revise-decision', 'complete']) {
       await expect(
         prepareRemoteDesignCliInput(['design', command, '--id', 'd1', '--file', 'ask.json'], cwd)
       ).resolves.toEqual({

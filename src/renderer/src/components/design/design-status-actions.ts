@@ -16,9 +16,11 @@ export type DesignStatusAction = {
 }
 
 export type DesignStatusActionContext = {
-  /** An agent terminal is bound, so a move interrupts or redirects it. */
+  /** A live agent terminal holds the design, so a move interrupts or redirects it. */
   agentBound: boolean
   hasCanvas: boolean
+  /** The agent still holds the user's latest input (see designProcessingBlocksApproval). */
+  agentProcessing: boolean
 }
 
 type ActionSpec = Omit<DesignStatusAction, 'label' | 'confirm' | 'disabledReason'> & {
@@ -44,14 +46,21 @@ const ACTIONS: Record<DesignStatus, readonly ActionSpec[]> = {
       placement: 'primary',
       label: () => translate('auto.components.design.action.approve', 'Approve design'),
       confirm: () => 'approve',
-      // Why: approval means "implement this drawing"; with none there is nothing to approve.
-      disabledReason: (context) =>
-        context.hasCanvas
-          ? null
-          : translate(
-              'auto.components.design.action.approveNeedsCanvas',
-              'Wait for the agent to draw the design before approving it.'
+      // Why: approval means "implement this drawing"; with none, or one about to change, there is nothing settled to approve.
+      disabledReason: (context) => {
+        if (!context.hasCanvas) {
+          return translate(
+            'auto.components.design.action.approveNeedsCanvas',
+            'Wait for the agent to draw the design before approving it.'
+          )
+        }
+        return context.agentProcessing
+          ? translate(
+              'auto.components.design.action.approveWhileProcessing',
+              'Wait for the agent to finish processing before approving.'
             )
+          : null
+      }
     },
     discard
   ],

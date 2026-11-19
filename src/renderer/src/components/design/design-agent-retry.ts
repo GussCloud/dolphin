@@ -1,14 +1,13 @@
-import { useAppStore } from '@/store'
 import type { DesignListEntry } from '../../../../shared/design-types'
+import type { DesignComposerPrefill } from '../../../../shared/design-popout'
 
-/** Reopens the composer in Design mode with the stuck design's name, request and project. */
-export function retryDesignInComposer(
+/** What the composer reopens with to retry a stuck design: its name, request and project. */
+export function designRetryPrefill(
   design: Pick<DesignListEntry, 'name' | 'request' | 'repoId'>
-): void {
-  useAppStore.getState().openModal('new-workspace-composer', {
-    designMode: true,
-    prefilledName: design.name,
-    designRequest: design.request,
-    ...(design.repoId ? { initialRepoId: design.repoId } : {})
-  })
+): DesignComposerPrefill {
+  return {
+    name: design.name,
+    request: design.request,
+    ...(design.repoId ? { repoId: design.repoId } : {})
+  }
 }

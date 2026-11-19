@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import { AlertTriangle, LoaderCircle, PenTool, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { useAppStore } from '@/store'
 import { useDesignIndex, useDesignIndexSubscription } from './design-index'
 import { useDesignMinuteClock } from './design-agent-missing'
 import {
@@ -15,6 +14,8 @@ import { DesignList } from './DesignList'
 import { DesignListFilterMenu } from './DesignListFilterMenu'
 import { designListAttention, revealDesignsInFilter } from './design-list-attention'
 import { DesignListAttentionNotice } from './DesignListAttentionNotice'
+import { useDesignHostActions } from './design-host-actions'
+import { DesignPopoutButton } from './DesignPopoutButton'
 
 function EmptyState({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
@@ -28,7 +29,7 @@ function EmptyState({ children }: { children: React.ReactNode }): React.JSX.Elem
 export default function DesignPage(): React.JSX.Element {
   useDesignIndexSubscription()
   const index = useDesignIndex()
-  const openModal = useAppStore((s) => s.openModal)
+  const { surface, openComposer } = useDesignHostActions()
   const [filter, setFilter] = useState<DesignListFilter>(DEFAULT_DESIGN_LIST_FILTER)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   // Why: period presets count back from when the page opened; a pure render can't read the clock.
@@ -53,16 +54,19 @@ export default function DesignPage(): React.JSX.Element {
         <h1 className="truncate text-base font-semibold leading-8">
           {translate('auto.components.design.title', 'Design')}
         </h1>
-        <Button
-          type="button"
-          size="sm"
-          className="ml-auto"
-          disabled={index.kind === 'unsupported'}
-          onClick={() => openModal('new-workspace-composer', { designMode: true })}
-        >
-          <Plus className="size-4" />
-          {translate('auto.components.design.new', 'New design')}
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          {/* Why: the pop-out is already the detached window, so only the main window offers it. */}
+          {surface === 'main' ? <DesignPopoutButton /> : null}
+          <Button
+            type="button"
+            size="sm"
+            disabled={index.kind === 'unsupported'}
+            onClick={() => openComposer()}
+          >
+            <Plus className="size-4" />
+            {translate('auto.components.design.new', 'New design')}
+          </Button>
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4 md:px-5">

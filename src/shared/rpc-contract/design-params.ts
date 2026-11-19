@@ -103,6 +103,9 @@ export const DesignCanvasSetParams = z.object({
 
 export const DesignShowParams = z.object({ id: requiredString('Missing --id') })
 
+/** User side: whether the design's agent pane is live and what it is doing, for the processing indicator. */
+export const DesignAgentStatusParams = z.object({ id: requiredString('Missing --id') })
+
 export const DesignListParams = z.object({}).optional().default({})
 
 /** User side. `from` (an agent pane) is refused: the agent reports completion with `design.complete`. */
@@ -172,6 +175,18 @@ export const DesignAnswerParams = z.object({
   decisionId: requiredString('Missing decision id'),
   selected: z.array(z.string().trim().min(1)).min(1),
   note: z.string().trim().max(DESIGN_MESSAGE_MAX_CHARS).optional()
+})
+
+/** Agent side: a later user request changed what an answered decision says; parsed in the handler. */
+export const DesignReviseDecisionParams = z.object({
+  from: requiredString('Missing agent terminal'),
+  id: requiredString('Missing --id'),
+  revision: z.unknown()
+})
+
+export const DesignDecisionRevisionFileSchema = z.object({
+  decisionId: z.string().trim().min(1),
+  text: z.string().trim().min(1).max(DESIGN_MESSAGE_MAX_CHARS)
 })
 
 /** User side: a question or adjustment request on a block, or on the whole design without blockId. */

@@ -36,7 +36,9 @@ vi.mock('electron', () => ({
   nativeImage: { createFromBuffer: vi.fn() }
 }))
 
-vi.mock('./dashboard-popout-window', () => ({ isDashboardPopoutRenderer }))
+vi.mock('./companion-popout-renderers', () => ({
+  isCompanionPopoutRenderer: isDashboardPopoutRenderer
+}))
 vi.mock('./clipboard-remote-file-copy', () => ({
   cleanupExpiredRemoteClipboardFiles: vi.fn(async () => undefined),
   scheduleLegacyRemoteClipboardFileCleanup: vi.fn(),

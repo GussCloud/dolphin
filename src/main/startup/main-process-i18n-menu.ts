@@ -6,6 +6,7 @@ import {
   getNextDefaultOnAppearanceSettingValue
 } from '../menu/register-app-menu'
 import { zoomDashboardPopoutIfFocused } from '../window/dashboard-popout-window'
+import { zoomDesignPopoutIfFocused } from '../window/design-popout-window'
 import { recordCrashBreadcrumb } from '../crash-reporting/crash-breadcrumb-store'
 import { mainProcessState as state } from './main-process-state'
 import {
@@ -53,19 +54,19 @@ export async function initializeMainProcessI18nAndMenu(): Promise<void> {
       sendOpenFeatureTour(targetWindow instanceof BrowserWindow ? targetWindow : null)
     },
     // Why: menu zoom must act on the window the user is looking at — routing to
-    // the main window while the dashboard pop-out is focused zooms behind it.
+    // the main window while a pop-out (dashboard, Design) is focused zooms behind it.
     onZoomIn: () => {
-      if (!zoomDashboardPopoutIfFocused('in')) {
+      if (!zoomDashboardPopoutIfFocused('in') && !zoomDesignPopoutIfFocused('in')) {
         state.mainWindow?.webContents.send('terminal:zoom', 'in')
       }
     },
     onZoomOut: () => {
-      if (!zoomDashboardPopoutIfFocused('out')) {
+      if (!zoomDashboardPopoutIfFocused('out') && !zoomDesignPopoutIfFocused('out')) {
         state.mainWindow?.webContents.send('terminal:zoom', 'out')
       }
     },
     onZoomReset: () => {
-      if (!zoomDashboardPopoutIfFocused('reset')) {
+      if (!zoomDashboardPopoutIfFocused('reset') && !zoomDesignPopoutIfFocused('reset')) {
         state.mainWindow?.webContents.send('terminal:zoom', 'reset')
       }
     },

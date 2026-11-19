@@ -46,7 +46,7 @@ export function getTrustedUIRendererWindow(): BrowserWindow | null {
 
 export function registerUIHandlers(
   store: Store,
-  options: { isDashboardPopoutRenderer?: (sender: WebContents) => boolean } = {}
+  options: { isCompanionPopoutRenderer?: (sender: WebContents) => boolean } = {}
 ): void {
   // Why: UI view-state is shared between the desktop renderer and mobile (ui.set
   // RPC). Broadcast every change so the desktop re-hydrates when mobile (or
@@ -93,7 +93,7 @@ export function registerUIHandlers(
   ipcMain.on('ui:performNativeSelectionAction', (event, action: unknown) => {
     if (
       !isTrustedUIRenderer(event.sender) &&
-      options.isDashboardPopoutRenderer?.(event.sender) !== true
+      options.isCompanionPopoutRenderer?.(event.sender) !== true
     ) {
       return
     }

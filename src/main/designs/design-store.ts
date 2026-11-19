@@ -24,6 +24,7 @@ import {
   type DesignEventInput,
   type DesignPatch
 } from './design-interaction'
+import { reviseDecision } from './design-decision-revision'
 import { ackInbox, markDeliveryBlocked, recordNudge, resendDelivery } from './design-inbox'
 import {
   changeDesignStatus,
@@ -135,6 +136,10 @@ export class DesignStore {
     answer: { decisionId: string; selected: string[]; note?: string | undefined }
   ): DesignDecision {
     return this.apply(id, (design, at) => answerDecision(design, answer, at))
+  }
+
+  reviseDecision(id: string, revision: { decisionId: string; text: string }): DesignDecision {
+    return this.apply(id, (design, at) => reviseDecision(design, revision, at))
   }
 
   addComment(id: string, comment: { blockId?: string | undefined; text: string }): DesignMessage {

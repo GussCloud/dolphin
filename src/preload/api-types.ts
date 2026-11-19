@@ -26,6 +26,7 @@ import type { BrowserApi } from './api/browser-api'
 import type { CliApi } from './api/cli-install-api'
 import type { CrashReportsApi, FeedbackApi } from './api/crash-report-api'
 import type { DashboardApi, TerminalPreviewApi } from './api/dashboard-api'
+import type { DesignsApi } from './api/designs-api'
 import type { AgentInteractionAvatarApi } from './api/agent-interaction-avatar-bridge'
 import type { DocPreviewApi } from './api/doc-preview-api'
 import type { EmulatorApi } from './api/emulator-api'
@@ -169,7 +170,7 @@ export type PreloadApi = {
   plugins: PluginsApi
   /** Fires when this host's autonomous goal store changes; the renderer re-reads `goal.list`. */
   autonomousGoals: { onChanged: (callback: () => void) => () => void }
-  designs: { onChanged: (callback: () => void) => () => void }
+  designs: DesignsApi
   agentStatus: AgentStatusApi
   mobile: MobileApi
   speech: SpeechApi

@@ -163,4 +163,46 @@ describe('design.* RPC methods', () => {
     expect(listed).toHaveProperty('designs.length', 2)
     expect(listed).not.toHaveProperty('designs.0.canvasVersions')
   })
+
+  describe('design.agentStatus', () => {
+    it('is not live before an agent binds', async () => {
+      const id = await createDesign()
+      const live = vi.spyOn(ctx.runtime, 'getLiveTerminalHandleForPaneKey')
+      expect(await call('design.agentStatus', { id })).toEqual({ live: false, status: null })
+      expect(live).not.toHaveBeenCalled()
+    })
+
+    it('is not live when the bound pane has no connected terminal', async () => {
+      const id = await createDesign()
+      await call('design.start', { from: 'term_a', id })
+      vi.spyOn(ctx.runtime, 'getLiveTerminalHandleForPaneKey').mockReturnValue(null)
+      expect(await call('design.agentStatus', { id })).toEqual({ live: false, status: null })
+    })
+
+    it('reads the status of the live handle for the bound pane', async () => {
+      const id = await createDesign()
+      await call('design.start', { from: 'term_a', id })
+      const live = vi
+        .spyOn(ctx.runtime, 'getLiveTerminalHandleForPaneKey')
+        .mockReturnValue('term_live')
+      const status = vi
+        .spyOn(ctx.runtime, 'getTerminalAgentStatus')
+        .mockResolvedValue({ handle: 'term_live', isRunningAgent: true, status: 'working' })
+      expect(await call('design.agentStatus', { id })).toEqual({ live: true, status: 'working' })
+      expect(live).toHaveBeenCalledWith(PANE_A)
+      expect(status).toHaveBeenCalledWith('term_live')
+    })
+
+    it('reports an unreadable status as unverifiable, not as an exited pane', async () => {
+      const id = await createDesign()
+      await call('design.start', { from: 'term_a', id })
+      vi.spyOn(ctx.runtime, 'getLiveTerminalHandleForPaneKey').mockReturnValue('term_live')
+      vi.spyOn(ctx.runtime, 'getTerminalAgentStatus').mockRejectedValue(new Error('terminal_gone'))
+      expect(await call('design.agentStatus', { id })).toEqual({ live: true, status: null })
+    })
+
+    it('refuses an unknown design', async () => {
+      await expect(call('design.agentStatus', { id: 'nope' })).rejects.toThrow(/not found/)
+    })
+  })
 })

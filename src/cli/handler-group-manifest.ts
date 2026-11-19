@@ -152,6 +152,7 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
       'design inbox',
       'design ack',
       'design reply',
+      'design revise-decision',
       'design show',
       'design list',
       'design complete'

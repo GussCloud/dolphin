@@ -162,6 +162,7 @@ import {
 } from './computer-schemas-params'
 import {
   DesignAckParams,
+  DesignAgentStatusParams,
   DesignAnswerParams,
   DesignCanvasSetParams,
   DesignCommentParams,
@@ -175,6 +176,7 @@ import {
   DesignRenameParams,
   DesignReplyParams,
   DesignResendParams,
+  DesignReviseDecisionParams,
   DesignSetStatusParams,
   DesignShowParams,
   DesignStartParams
@@ -803,6 +805,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'computer.setValue': SetValue,
   'computer.typeText': TypeText,
   'design.ack': DesignAckParams,
+  'design.agentStatus': DesignAgentStatusParams,
   'design.answer': DesignAnswerParams,
   'design.canvasSet': DesignCanvasSetParams,
   'design.comment': DesignCommentParams,
@@ -816,6 +819,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'design.rename': DesignRenameParams,
   'design.reply': DesignReplyParams,
   'design.resend': DesignResendParams,
+  'design.reviseDecision': DesignReviseDecisionParams,
   'design.setStatus': DesignSetStatusParams,
   'design.show': DesignShowParams,
   'design.start': DesignStartParams,

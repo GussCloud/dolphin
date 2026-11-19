@@ -87,6 +87,7 @@ export const DESIGN_EVENT_KINDS = [
   'renamed',
   'decision-asked',
   'decision-answered',
+  'decision-revised',
   'comment-added',
   'agent-replied',
   'inbox-nudged',
@@ -128,6 +129,8 @@ export type DesignDecision = {
   blockId?: string
   askedAt: number
   answer?: { selected: string[]; note?: string; at: number }
+  /** The agent's record that a later request changed the answer; only on answered decisions, latest wins. */
+  revision?: { text: string; at: number }
 }
 
 /** A message in a block's thread (blockId set) or the design's general thread. */
@@ -247,4 +250,13 @@ export function latestDesignCanvas(
   design: Pick<Design, 'canvasVersions'>
 ): DesignCanvasVersion | null {
   return design.canvasVersions.at(-1) ?? null
+}
+
+/**
+ * `design.agentStatus`: the bound pane as the execution host sees it. live=false when no pane is bound
+ * or the runtime has no connected PTY for it; status null is unverifiable (no hooks, SSH out of contact).
+ */
+export type DesignAgentStatus = {
+  live: boolean
+  status: 'working' | 'permission' | 'idle' | null
 }

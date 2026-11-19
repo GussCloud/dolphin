@@ -6,7 +6,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import type { DesignListEntry } from '../../../../shared/design-types'
 import { setDesignStatus } from './design-index'
-import { retryDesignInComposer } from './design-agent-retry'
+import { designRetryPrefill } from './design-agent-retry'
+import { useDesignHostActions } from './design-host-actions'
 
 function explanation(): string {
   return translate(
@@ -45,6 +46,7 @@ export function DesignAgentMissingActions({
   withExplanation?: boolean
 }): React.JSX.Element {
   const [discarding, setDiscarding] = useState(false)
+  const { openComposer } = useDesignHostActions()
   const discard = async (): Promise<void> => {
     setDiscarding(true)
     try {
@@ -75,7 +77,7 @@ export function DesignAgentMissingActions({
         type="button"
         size="xs"
         variant="outline"
-        onClick={() => retryDesignInComposer(design)}
+        onClick={() => openComposer(designRetryPrefill(design))}
       >
         <RotateCw className="size-3" />
         {translate('auto.components.design.agentMissing.retry', 'Try again')}
