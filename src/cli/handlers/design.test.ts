@@ -127,6 +127,21 @@ describe('design conversation commands', () => {
     })
   })
 
+  it('sends the completion file from the agent terminal', async () => {
+    writeFileSync(join(dir, 'done.json'), '{"summary":"Built it"}')
+    const call = vi.fn().mockResolvedValue({ id: '1', ok: true, result: { design: { id: 'd1' } } })
+    await DESIGN_HANDLERS['design complete']!(context([['file', 'done.json']], call))
+    expect(call).toHaveBeenCalledWith('design.complete', {
+      from: 'term_agent',
+      id: 'd1',
+      completion: { summary: 'Built it' }
+    })
+  })
+
+  it('offers no agent command that moves the status', () => {
+    expect(DESIGN_HANDLERS).not.toHaveProperty(['design status'])
+  })
+
   it('prints each pending item and the ack command in text mode', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     const call = vi.fn().mockResolvedValue({
@@ -144,7 +159,8 @@ describe('design conversation commands', () => {
             note: 'cheaper',
             block: { id: 'b1', title: 'Click' }
           },
-          { id: 'i-2', kind: 'comment', createdAt: 2, messageId: 'm-1', text: 'Why?' }
+          { id: 'i-2', kind: 'comment', createdAt: 2, messageId: 'm-1', text: 'Why?' },
+          { id: 'i-3', kind: 'status', createdAt: 3, status: 'discarded', text: 'Stop now.' }
         ],
         ackCommand: 'dolphin design ack --id d1 --items i-1,i-2 --json'
       }
@@ -156,6 +172,7 @@ describe('design conversation commands', () => {
     expect(printed).toContain('selected: Pix')
     expect(printed).toContain('note: cheaper')
     expect(printed).toContain('i-2 comment m-1: Why?')
+    expect(printed).toContain('i-3 status discarded: Stop now.')
     expect(printed).toContain('When done: dolphin design ack --id d1 --items i-1,i-2 --json')
   })
 })

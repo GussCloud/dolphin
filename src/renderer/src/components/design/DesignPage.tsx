@@ -13,6 +13,8 @@ import {
 import { DesignDetail } from './DesignDetail'
 import { DesignList } from './DesignList'
 import { DesignListFilterMenu } from './DesignListFilterMenu'
+import { designListAttention, revealDesignsInFilter } from './design-list-attention'
+import { DesignListAttentionNotice } from './DesignListAttentionNotice'
 
 function EmptyState({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
@@ -34,6 +36,10 @@ export default function DesignPage(): React.JSX.Element {
   const now = useDesignMinuteClock()
   const visible = useMemo(
     () => filterDesignList(index.designs, filter, openedAt),
+    [index.designs, filter, openedAt]
+  )
+  const attention = useMemo(
+    () => designListAttention(index.designs, filter, openedAt),
     [index.designs, filter, openedAt]
   )
   const selectedEntry = selectedId
@@ -79,6 +85,13 @@ export default function DesignPage(): React.JSX.Element {
                 </span>
               ) : null}
             </div>
+
+            {attention ? (
+              <DesignListAttentionNotice
+                attention={attention}
+                onShow={() => setFilter(revealDesignsInFilter(filter, attention.hidden, openedAt))}
+              />
+            ) : null}
 
             {index.kind === 'error' ? (
               <div className="flex shrink-0 gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">

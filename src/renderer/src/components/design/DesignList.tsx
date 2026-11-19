@@ -1,4 +1,4 @@
-import { AlertTriangle, ChevronRight, CircleHelp, PenTool } from 'lucide-react'
+import { AlertTriangle, ChevronRight, CircleCheckBig, CircleHelp, PenTool } from 'lucide-react'
 import { AgentIcon } from '@/lib/agent-catalog'
 import { useRepoMap } from '@/store/selectors'
 import { translate } from '@/i18n/i18n'
@@ -39,6 +39,18 @@ export function DesignList({
                   <span className="truncate text-sm font-medium">{design.name}</span>
                   <DesignStatusBadge status={design.status} />
                   {agentMissing ? <DesignAgentMissingBadge /> : null}
+                  {design.completionPending ? (
+                    <span
+                      data-design-completion-pending=""
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full border border-status-success-border bg-status-success-background px-2 py-0.5 text-[11px] font-medium leading-4 whitespace-nowrap text-status-success"
+                    >
+                      <CircleCheckBig className="size-3" />
+                      {translate(
+                        'auto.components.design.list.completionPending',
+                        'Waiting for your confirmation'
+                      )}
+                    </span>
+                  ) : null}
                   {design.openDecisionCount > 0 ? (
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-status-warning-border bg-status-warning-background px-2 py-0.5 text-[11px] font-medium leading-4 whitespace-nowrap text-status-warning">
                       <CircleHelp className="size-3" />

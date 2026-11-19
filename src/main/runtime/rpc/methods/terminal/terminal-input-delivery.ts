@@ -10,7 +10,7 @@ import {
   isTerminalInputTooLargeWithYield
 } from '../../../../../shared/terminal-input'
 import type { TerminalViewportClient } from './terminal-stream-types'
-import { isTerminalQueryReply } from '../../../../../shared/terminal-query-reply'
+import { isOnlyAutomaticTerminalReports } from '../../../../../shared/terminal-query-reply'
 import { noteClientTerminalInput } from '../../../../terminal-client-input-clock'
 
 export function isTerminalInputLockedForClient(
@@ -97,14 +97,14 @@ export function isTerminalStreamInputRejection(error: unknown): boolean {
   return message.includes('terminal_not_writable') || message.includes('terminal_handle_stale')
 }
 
-/** Stream input always comes from a client; automatic terminal query replies are not the user typing. */
+/** Stream input always comes from a client; automatic terminal reports are not the user typing. */
 function noteStreamClientInput(
   runtime: DolphinRuntimeService,
   terminal: string,
   text: string
 ): void {
   const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
-  if (ptyId && !isTerminalQueryReply(text)) {
+  if (ptyId && !isOnlyAutomaticTerminalReports(text)) {
     noteClientTerminalInput(ptyId)
   }
 }

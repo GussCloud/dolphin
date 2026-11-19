@@ -65,11 +65,13 @@ export const DESIGN_COMMAND_SPECS: CommandSpec[] = [
     allowedFlags: [...GLOBAL_FLAGS]
   },
   {
-    path: ['design', 'status'],
-    summary: "Move a design's status",
-    usage:
-      'dolphin design status --id <design_id> --status <draft|in-progress|done|discarded> [--from <handle>] [--json]',
-    allowedFlags: [...GLOBAL_FLAGS, 'id', 'status', 'from'],
-    notes: ["Run from the bound agent terminal, the move is recorded as the agent's."]
+    path: ['design', 'complete'],
+    summary: 'Report the approved design implemented, for the user to confirm as done',
+    usage: 'dolphin design complete --id <design_id> --file <path> [--from <handle>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'id', 'file', 'from'],
+    notes: [
+      'The file holds {"summary":"<what was built, files, how it was tested>"}; pass --file - to read it from stdin.',
+      'Only while the design is in progress. Running it again replaces the summary. Only the user moves the design to done.'
+    ]
   }
 ]

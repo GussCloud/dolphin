@@ -123,3 +123,15 @@ export async function resendDesignInbox(id: string): Promise<void> {
   await callRuntimeRpc(target(), 'design.resend', { id })
   void refreshDesignIndex()
 }
+
+/** Accepts the agent's completion report; the host moves the design to Done. */
+export async function confirmDesignDone(id: string): Promise<void> {
+  await callRuntimeRpc(target(), 'design.confirmDone', { id })
+  void refreshDesignIndex()
+}
+
+/** Refuses the completion report; the host sends `text` to the agent as what is left to do. */
+export async function declineDesignDone(input: { id: string; text: string }): Promise<void> {
+  await callRuntimeRpc(target(), 'design.declineDone', input)
+  void refreshDesignIndex()
+}

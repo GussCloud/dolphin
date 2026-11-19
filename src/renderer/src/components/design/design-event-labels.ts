@@ -43,5 +43,14 @@ export function designEventLabel(kind: DesignEventKind): string {
       )
     case 'delivery-resent':
       return translate('auto.components.design.event.deliveryResent', 'Notice sent again')
+    case 'completion-requested':
+      return translate(
+        'auto.components.design.event.completionRequested',
+        'Agent reported the implementation done'
+      )
+    case 'completion-confirmed':
+      return translate('auto.components.design.event.completionConfirmed', 'You confirmed it done')
+    case 'completion-declined':
+      return translate('auto.components.design.event.completionDeclined', 'You asked for changes')
   }
 }

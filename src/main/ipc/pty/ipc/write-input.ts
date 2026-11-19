@@ -10,6 +10,7 @@ import {
 import { ptyOwnership } from '../provider/ownership-state'
 import { tryGetProviderForPty } from '../provider/registry'
 import { interactiveOutputCharsByPty, lastInputAtByPty } from '../delivery/visibility-state'
+import { isOnlyAutomaticTerminalReports } from '../../../../shared/terminal-query-reply'
 
 export function isMainWindowPtyIpcEvent(
   event: IpcMainEvent | IpcMainInvokeEvent,
@@ -126,6 +127,16 @@ export function createPtyWriteInput(deps: {
     }
   }
 
+  // Why: xterm's own replies (CPR, DSR, color-scheme, focus in/out) are not the user typing, and
+  // input-clock readers (design inbox, connection-loss retry) would hold back on them.
+  const noteRendererInput = (args: PtyWritePayload): void => {
+    if (isOnlyAutomaticTerminalReports(args.data)) {
+      return
+    }
+    lastInputAtByPty.set(args.id, performance.now())
+    interactiveOutputCharsByPty.set(args.id, 0)
+  }
+
   const isPtyWritePayload = (value: unknown): value is PtyWritePayload =>
     typeof value === 'object' &&
     value !== null &&
@@ -158,9 +169,7 @@ export function createPtyWriteInput(deps: {
       return false
     }
     try {
-      const now = performance.now()
-      lastInputAtByPty.set(args.id, now)
-      interactiveOutputCharsByPty.set(args.id, 0)
+      noteRendererInput(args)
       return writePtyProviderInput(provider, args.id, args.data)
     } catch {
       return false
@@ -180,9 +189,7 @@ export function createPtyWriteInput(deps: {
       return false
     }
     try {
-      const now = performance.now()
-      lastInputAtByPty.set(args.id, now)
-      interactiveOutputCharsByPty.set(args.id, 0)
+      noteRendererInput(args)
       return writePtyProviderInput(provider, args.id, args.data)
     } catch {
       return false

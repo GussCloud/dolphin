@@ -1,59 +1,112 @@
 import { translate } from '@/i18n/i18n'
 import { canTransitionDesign, type DesignStatus } from '../../../../shared/design-types'
 
+/** Which confirmation a move needs before it reaches the host; null moves directly. */
+export type DesignStatusConfirm = 'approve' | 'discard' | 'finish' | null
+
 export type DesignStatusAction = {
   to: DesignStatus
   label: string
   variant: 'default' | 'outline' | 'destructive'
+  /** 'overflow' actions live in the "more" menu: fallbacks, not the normal path. */
+  placement: 'primary' | 'overflow'
+  confirm: DesignStatusConfirm
+  /** Why the move cannot be made yet; null when it can. */
+  disabledReason: string | null
 }
 
-type ActionSpec = { to: DesignStatus; variant: DesignStatusAction['variant']; label: () => string }
+export type DesignStatusActionContext = {
+  /** An agent terminal is bound, so a move interrupts or redirects it. */
+  agentBound: boolean
+  hasCanvas: boolean
+}
+
+type ActionSpec = Omit<DesignStatusAction, 'label' | 'confirm' | 'disabledReason'> & {
+  label: () => string
+  confirm: (context: DesignStatusActionContext) => DesignStatusConfirm
+  disabledReason?: (context: DesignStatusActionContext) => string | null
+}
+
+const discard: ActionSpec = {
+  to: 'discarded',
+  variant: 'outline',
+  placement: 'primary',
+  label: () => translate('auto.components.design.action.discard', 'Discard'),
+  // Why: a bound agent is told to stop; with none, nothing is interrupted.
+  confirm: (context) => (context.agentBound ? 'discard' : null)
+}
 
 const ACTIONS: Record<DesignStatus, readonly ActionSpec[]> = {
   draft: [
     {
       to: 'in-progress',
       variant: 'default',
-      label: () => translate('auto.components.design.action.approve', 'Approve design')
+      placement: 'primary',
+      label: () => translate('auto.components.design.action.approve', 'Approve design'),
+      confirm: () => 'approve',
+      // Why: approval means "implement this drawing"; with none there is nothing to approve.
+      disabledReason: (context) =>
+        context.hasCanvas
+          ? null
+          : translate(
+              'auto.components.design.action.approveNeedsCanvas',
+              'Wait for the agent to draw the design before approving it.'
+            )
     },
-    {
-      to: 'discarded',
-      variant: 'outline',
-      label: () => translate('auto.components.design.action.discard', 'Discard')
-    }
+    discard
   ],
+  // Why: finishing normally goes through the agent's completion and the user's confirmation.
   'in-progress': [
+    discard,
     {
       to: 'done',
-      variant: 'default',
-      label: () => translate('auto.components.design.action.finish', 'Finish')
+      variant: 'outline',
+      placement: 'overflow',
+      label: () => translate('auto.components.design.action.markDone', 'Mark as done'),
+      confirm: () => 'finish'
     },
     {
-      to: 'discarded',
+      to: 'draft',
       variant: 'outline',
-      label: () => translate('auto.components.design.action.discard', 'Discard')
+      placement: 'overflow',
+      label: () => translate('auto.components.design.action.backToPlanning', 'Back to planning'),
+      confirm: () => null
     }
   ],
   done: [
     {
       to: 'in-progress',
       variant: 'outline',
+      placement: 'primary',
       label: () =>
-        translate('auto.components.design.action.reopenDevelopment', 'Reopen development')
+        translate('auto.components.design.action.reopenDevelopment', 'Reopen development'),
+      confirm: () => null
     }
   ],
   discarded: [
     {
       to: 'draft',
       variant: 'outline',
-      label: () => translate('auto.components.design.action.reopen', 'Reopen')
+      placement: 'primary',
+      label: () => translate('auto.components.design.action.reopen', 'Reopen'),
+      confirm: () => null
     }
   ]
 }
 
 /** Buttons offered for a status; each is re-checked against the shared transition table. */
-export function designStatusActions(status: DesignStatus): DesignStatusAction[] {
+export function designStatusActions(
+  status: DesignStatus,
+  context: DesignStatusActionContext
+): DesignStatusAction[] {
   return ACTIONS[status]
     .filter((action) => canTransitionDesign(status, action.to))
-    .map((action) => ({ to: action.to, variant: action.variant, label: action.label() }))
+    .map((action) => ({
+      to: action.to,
+      variant: action.variant,
+      placement: action.placement,
+      label: action.label(),
+      confirm: action.confirm(context),
+      disabledReason: action.disabledReason?.(context) ?? null
+    }))
 }

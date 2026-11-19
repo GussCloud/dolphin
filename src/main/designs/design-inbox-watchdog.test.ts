@@ -188,17 +188,30 @@ describe('design inbox watchdog', () => {
     expect(store.get(id)!.delivery.nudges).toBe(1)
   })
 
-  it('ignores designs with nothing pending, no agent, or discarded', async () => {
+  it('ignores designs with nothing pending, no agent, or discarded with only old input', async () => {
     const check = start()
     status = 'working'
     const unbound = store.create({ name: 'U', request: 'R', agent: 'claude', repoId: null })
     store.addComment(unbound.id, { text: 'x' })
     const discarded = boundDesign()
     store.addComment(discarded, { text: 'x' })
-    store.setStatus(discarded, 'discarded', 'user')
+    store.setStatus(discarded, 'discarded')
+    const notice = store.get(discarded)!.inbox.find((item) => item.kind === 'status')!
+    store.ack(discarded, [notice.id])
+    store.addComment(discarded, { text: 'late' })
     boundDesign()
     status = 'idle'
     await check()
     expect(sent).toEqual([])
+  })
+
+  it('delivers the discard notice of a bound design', async () => {
+    const check = start()
+    status = 'working'
+    const id = boundDesign()
+    store.setStatus(id, 'discarded')
+    status = 'idle'
+    await check()
+    expect(sent).toEqual([expect.stringContaining(`dolphin design inbox --id ${id}`)])
   })
 })

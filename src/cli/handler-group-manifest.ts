@@ -154,7 +154,7 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
       'design reply',
       'design show',
       'design list',
-      'design status'
+      'design complete'
     ],
     load: async () => (await import('./handlers/design.js')).DESIGN_HANDLERS
   },

@@ -18291,7 +18291,8 @@
           "groups": "{{value0}} steps",
           "noCanvas": "No canvas yet",
           "decisions": "{{value0}} decisions",
-          "deliveryBlocked": "Agent not responding"
+          "deliveryBlocked": "Agent not responding",
+          "completionPending": "Waiting for your confirmation"
         },
         "filter": {
           "from": "From",
@@ -18324,9 +18325,12 @@
         "action": {
           "approve": "Approve design",
           "discard": "Discard",
-          "finish": "Finish",
           "reopenDevelopment": "Reopen development",
-          "reopen": "Reopen"
+          "reopen": "Reopen",
+          "markDone": "Mark as done",
+          "backToPlanning": "Back to planning",
+          "more": "More actions",
+          "approveNeedsCanvas": "Wait for the agent to draw the design before approving it."
         },
         "status": {
           "draft": "Draft",
@@ -18393,7 +18397,10 @@
           "inboxNudged": "Agent notified",
           "inboxAcked": "Agent read the messages",
           "deliveryBlocked": "Agent stopped responding to notices",
-          "deliveryResent": "Notice sent again"
+          "deliveryResent": "Notice sent again",
+          "completionRequested": "Agent reported the implementation done",
+          "completionConfirmed": "You confirmed it done",
+          "completionDeclined": "You asked for changes"
         },
         "eventDetail": {
           "rebound": "Moved to a new terminal",
@@ -18403,7 +18410,46 @@
           "replyTo": "Reply to \"{{value0}}\"",
           "itemsRead": "Items read: {{value0}}",
           "nudge": "Notice {{value0}}",
-          "unreadNotices": "Unread notices: {{value0}}"
+          "unreadNotices": "Unread notices: {{value0}}",
+          "approvedVersion": "version {{value0}} approved",
+          "askedFor": "Asked for: \"{{value0}}\""
+        },
+        "version": {
+          "threadReadOnly": "Comments go to the current version. Return to it to send one.",
+          "viewing": "Viewing version {{value0}} (current: {{value1}})",
+          "backToCurrent": "Back to current",
+          "approved": "Approved",
+          "pick": "Canvas version",
+          "current": "(current)"
+        },
+        "completion": {
+          "title": "The agent finished the implementation",
+          "declinePlaceholder": "What is still missing or needs to change?",
+          "cancel": "Cancel",
+          "declineSend": "Send to the agent",
+          "confirm": "Confirm as done",
+          "decline": "Ask for changes"
+        },
+        "implementing": {
+          "label": "Being implemented by the agent",
+          "withVersion": "Being implemented by the agent · version {{value0}}"
+        },
+        "confirm": {
+          "approveDescription": "The agent will start implementing canvas version {{value0}} in the design's workspace.",
+          "approveOpenDecisions": "{{value0}} open decisions will go unanswered. Answer them first so the agent builds what you chose.",
+          "approveTitle": "Approve this design?",
+          "approveConfirm": "Approve and implement",
+          "discardTitle": "Discard this design?",
+          "discardDescription": "The agent will be told to stop working on it. You can reopen the design later.",
+          "finishTitle": "Mark as done?",
+          "finishDescription": "The agent has not reported that it finished. Use this when the agent is gone and you know the implementation is complete."
+        },
+        "attention": {
+          "hidden": "Hidden by the filters: {{value0}}",
+          "completion": "{{value0}} waiting for your confirmation",
+          "decisions": "{{value0}} with open decisions",
+          "blocked": "{{value0}} with an agent not responding",
+          "show": "Show"
         }
       }
     },
