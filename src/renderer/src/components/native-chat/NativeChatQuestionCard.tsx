@@ -353,3 +353,6 @@ function OptionRow({
     </button>
   )
 }
+
+// Why: the Design decisions panel renders the same pick-list rows so both question surfaces read alike.
+export { OptionRow as NativeChatQuestionOptionRow }

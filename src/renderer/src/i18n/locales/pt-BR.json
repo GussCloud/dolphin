@@ -18289,7 +18289,9 @@
         "list": {
           "updated": "Atualizado em {{value0}}",
           "groups": "{{value0}} etapas",
-          "noCanvas": "Sem canvas ainda"
+          "noCanvas": "Sem canvas ainda",
+          "decisions": "{{value0}} decisões",
+          "deliveryBlocked": "Agente não responde"
         },
         "filter": {
           "from": "De",
@@ -18315,7 +18317,9 @@
           "decision": "Decisão",
           "data": "Dados",
           "integration": "Integração",
-          "note": "Nota"
+          "note": "Nota",
+          "openDecisions": "{{value0}} decisões em aberto",
+          "messages": "{{value0}} mensagens"
         },
         "action": {
           "approve": "Aprovar desenho",
@@ -18335,6 +18339,71 @@
           "30d": "Últimos 30 dias",
           "90d": "Últimos 90 dias",
           "all": "Qualquer data"
+        },
+        "thread": {
+          "agent": "Agente",
+          "you": "Você",
+          "blockPlaceholder": "Pergunte ou peça um ajuste neste bloco",
+          "empty": "Nenhuma mensagem ainda.",
+          "send": "Enviar"
+        },
+        "activity": {
+          "dolphin": "Dolphin",
+          "empty": "Nenhuma atividade ainda."
+        },
+        "agentMissing": {
+          "explain": "Nenhum terminal de agente se conectou a este design desde que ele foi criado. A inicialização provavelmente falhou, então ninguém está desenhando.",
+          "badge": "Sem agente",
+          "retry": "Tentar de novo"
+        },
+        "decision": {
+          "aboutBlock": "Sobre: {{value0}}",
+          "multi": "Escolha uma ou mais",
+          "notePlaceholder": "Adicione uma observação para o agente (opcional)",
+          "answer": "Responder",
+          "answeredAt": "Respondida {{value0}}"
+        },
+        "delivery": {
+          "blocked": "O agente não está respondendo",
+          "blockedDetail": "O Dolphin parou de avisá-lo depois de vários avisos não lidos. Itens aguardando: {{value0}}.",
+          "resend": "Reenviar",
+          "pending": "Aguardando o agente ler. Itens: {{value0}}",
+          "read": "O agente leu tudo o que você enviou"
+        },
+        "panel": {
+          "toggle": "Decisões e atividade",
+          "openDecisions": "{{value0}} decisões aguardando você",
+          "decisionsCount": "Decisões ({{value0}})",
+          "decisions": "Decisões",
+          "conversation": "Conversa",
+          "activity": "Atividade",
+          "noDecisions": "O agente ainda não perguntou nada.",
+          "conversationPlaceholder": "Pergunte ou peça um ajuste no design inteiro"
+        },
+        "event": {
+          "created": "Design criado",
+          "agentBound": "Agente conectado",
+          "canvasSet": "Canvas desenhado",
+          "statusChanged": "Status alterado",
+          "renamed": "Renomeado",
+          "decisionAsked": "Decisão perguntada",
+          "decisionAnswered": "Decisão respondida",
+          "commentAdded": "Comentário enviado",
+          "agentReplied": "Agente respondeu",
+          "inboxNudged": "Agente avisado",
+          "inboxAcked": "Agente leu as mensagens",
+          "deliveryBlocked": "Agente parou de responder aos avisos",
+          "deliveryResent": "Aviso reenviado"
+        },
+        "eventDetail": {
+          "rebound": "Passou para um novo terminal",
+          "decisionCount": "{{value0}} decisões",
+          "wholeDesign": "No design inteiro",
+          "onBlock": "Em {{value0}}",
+          "replyTo": "Resposta a \"{{value0}}\"",
+          "itemsRead": "Itens lidos: {{value0}}",
+          "nudge": "Aviso {{value0}}",
+          "unreadNotices": "Avisos não lidos: {{value0}}"
         }
       }
     },

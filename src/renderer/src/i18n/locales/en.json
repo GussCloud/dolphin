@@ -18289,7 +18289,9 @@
         "list": {
           "updated": "Updated {{value0}}",
           "groups": "{{value0}} steps",
-          "noCanvas": "No canvas yet"
+          "noCanvas": "No canvas yet",
+          "decisions": "{{value0}} decisions",
+          "deliveryBlocked": "Agent not responding"
         },
         "filter": {
           "from": "From",
@@ -18315,7 +18317,9 @@
           "decision": "Decision",
           "data": "Data",
           "integration": "Integration",
-          "note": "Note"
+          "note": "Note",
+          "openDecisions": "{{value0}} open decisions",
+          "messages": "{{value0}} messages"
         },
         "action": {
           "approve": "Approve design",
@@ -18335,6 +18339,71 @@
           "30d": "Last 30 days",
           "90d": "Last 90 days",
           "all": "Any time"
+        },
+        "thread": {
+          "agent": "Agent",
+          "you": "You",
+          "blockPlaceholder": "Ask or request a change to this block",
+          "empty": "No messages yet.",
+          "send": "Send"
+        },
+        "activity": {
+          "dolphin": "Dolphin",
+          "empty": "No activity yet."
+        },
+        "agentMissing": {
+          "explain": "No agent terminal has connected to this design since it was created. The launch likely failed, so nothing is drawing it.",
+          "badge": "No agent",
+          "retry": "Try again"
+        },
+        "decision": {
+          "aboutBlock": "About: {{value0}}",
+          "multi": "Pick one or more",
+          "notePlaceholder": "Add a note for the agent (optional)",
+          "answer": "Answer",
+          "answeredAt": "Answered {{value0}}"
+        },
+        "delivery": {
+          "blocked": "The agent is not responding",
+          "blockedDetail": "Dolphin stopped notifying it after several unread notices. Items waiting: {{value0}}.",
+          "resend": "Resend",
+          "pending": "Waiting for the agent to read. Items: {{value0}}",
+          "read": "The agent has read everything you sent"
+        },
+        "panel": {
+          "toggle": "Decisions and activity",
+          "openDecisions": "{{value0}} decisions waiting for you",
+          "decisionsCount": "Decisions ({{value0}})",
+          "decisions": "Decisions",
+          "conversation": "Conversation",
+          "activity": "Activity",
+          "noDecisions": "The agent has not asked anything yet.",
+          "conversationPlaceholder": "Ask or request a change to the whole design"
+        },
+        "event": {
+          "created": "Design created",
+          "agentBound": "Agent connected",
+          "canvasSet": "Canvas drawn",
+          "statusChanged": "Status changed",
+          "renamed": "Renamed",
+          "decisionAsked": "Decision asked",
+          "decisionAnswered": "Decision answered",
+          "commentAdded": "Comment sent",
+          "agentReplied": "Agent replied",
+          "inboxNudged": "Agent notified",
+          "inboxAcked": "Agent read the messages",
+          "deliveryBlocked": "Agent stopped responding to notices",
+          "deliveryResent": "Notice sent again"
+        },
+        "eventDetail": {
+          "rebound": "Moved to a new terminal",
+          "decisionCount": "{{value0}} decisions",
+          "wholeDesign": "On the whole design",
+          "onBlock": "On {{value0}}",
+          "replyTo": "Reply to \"{{value0}}\"",
+          "itemsRead": "Items read: {{value0}}",
+          "nudge": "Notice {{value0}}",
+          "unreadNotices": "Unread notices: {{value0}}"
         }
       }
     },

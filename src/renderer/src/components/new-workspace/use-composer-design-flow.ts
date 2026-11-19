@@ -25,9 +25,13 @@ export function useComposerDesignFlow(input: {
   /** Folder and multi-project targets drop the argv prompt and have no single worktree pane. */
   targetUnavailable: boolean
   submitQuick: SubmitDesignInput['submitQuick']
+  initialRequest?: string
 }): ComposerDesignFlow {
   const { repoId, name, agent, submitQuick } = input
-  const [designDraft, setDesignDraft] = useState<DesignDraft>(createDesignDraft)
+  const [designDraft, setDesignDraft] = useState<DesignDraft>(() => ({
+    ...createDesignDraft(),
+    request: input.initialRequest ?? ''
+  }))
   const [submitting, setSubmitting] = useState(false)
   const designBlocksCreate =
     input.targetUnavailable || submitting || designDraftBlocksCreate(designDraft, { name, agent })

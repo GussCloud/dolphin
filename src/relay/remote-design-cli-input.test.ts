@@ -45,6 +45,25 @@ describe('prepareRemoteDesignCliInput', () => {
     })
   })
 
+  it('reads decide and reply files on the SSH host too', async () => {
+    const cwd = await remoteFolder()
+    await writeFile(join(cwd, 'ask.json'), '{"decisions":[]}', 'utf8')
+    for (const command of ['decide', 'reply']) {
+      await expect(
+        prepareRemoteDesignCliInput(['design', command, '--id', 'd1', '--file', 'ask.json'], cwd)
+      ).resolves.toEqual({
+        argv: ['design', command, '--id', 'd1', '--file', '-'],
+        stdin: '{"decisions":[]}'
+      })
+      expect(shouldReadRemoteCliStdin(['design', command, '--id', 'd1', '--file', '-'])).toBe(true)
+      expect(shouldReadRemoteCliStdin(['design', command, '--file=-'])).toBe(true)
+    }
+    await expect(
+      prepareRemoteDesignCliInput(['design', 'inbox', '--id', 'd1', '--file', 'ask.json'], cwd)
+    ).resolves.toBeNull()
+    expect(shouldReadRemoteCliStdin(['design', 'ack', '--items', 'a', '--file', '-'])).toBe(false)
+  })
+
   it('leaves other commands, help and stdin input untouched', async () => {
     const cwd = await remoteFolder()
     await expect(

@@ -5,6 +5,9 @@ import {
   DESIGN_CANVAS_MAX_BLOCKS_PER_GROUP,
   DESIGN_CANVAS_MAX_EDGES,
   DESIGN_CANVAS_MAX_GROUPS,
+  DESIGN_DECISION_MAX_OPEN,
+  DESIGN_DECISION_MAX_OPTIONS,
+  DESIGN_MESSAGE_MAX_CHARS,
   DESIGN_NAME_MAX_CHARS,
   DESIGN_REQUEST_MAX_CHARS,
   DESIGN_STATUSES,
@@ -112,3 +115,72 @@ export const DesignRenameParams = z.object({
   id: requiredString('Missing --id'),
   name: requiredString('Missing design name').pipe(z.string().trim().max(DESIGN_NAME_MAX_CHARS))
 })
+
+export const DesignDecisionInputSchema = z.object({
+  question: z.string().trim().min(1).max(DESIGN_TEXT_MAX_CHARS),
+  header: z.string().trim().max(40).optional(),
+  options: z
+    .array(
+      z.object({
+        label: z.string().trim().min(1).max(DESIGN_NAME_MAX_CHARS),
+        description: z.string().trim().max(DESIGN_TEXT_MAX_CHARS).optional()
+      })
+    )
+    .min(2)
+    .max(DESIGN_DECISION_MAX_OPTIONS),
+  multiSelect: z.boolean().optional(),
+  blockId: ElementId.optional()
+})
+
+/** Agent side; `decisions` is parsed in the handler so refusals name the field path. */
+export const DesignDecideParams = z.object({
+  from: requiredString('Missing agent terminal'),
+  id: requiredString('Missing --id'),
+  decisions: z.unknown()
+})
+
+export const DesignDecisionsFileSchema = z.object({
+  decisions: z.array(DesignDecisionInputSchema).min(1).max(DESIGN_DECISION_MAX_OPEN)
+})
+
+/** User side. A note is free text sent with the chosen options. */
+export const DesignAnswerParams = z.object({
+  id: requiredString('Missing --id'),
+  decisionId: requiredString('Missing decision id'),
+  selected: z.array(z.string().trim().min(1)).min(1),
+  note: z.string().trim().max(DESIGN_MESSAGE_MAX_CHARS).optional()
+})
+
+/** User side: a question or adjustment request on a block, or on the whole design without blockId. */
+export const DesignCommentParams = z.object({
+  id: requiredString('Missing --id'),
+  blockId: OptionalString,
+  text: requiredString('Missing comment').pipe(z.string().trim().max(DESIGN_MESSAGE_MAX_CHARS))
+})
+
+/** Agent side: the pending inbox, expanded so the agent reads question, answer and block in one call. */
+export const DesignInboxParams = z.object({
+  from: requiredString('Missing agent terminal'),
+  id: requiredString('Missing --id')
+})
+
+export const DesignAckParams = z.object({
+  from: requiredString('Missing agent terminal'),
+  id: requiredString('Missing --id'),
+  items: z.array(z.string().trim().min(1)).min(1)
+})
+
+export const DesignReplyFileSchema = z.object({
+  replyTo: z.string().trim().min(1).optional(),
+  blockId: ElementId.optional(),
+  text: z.string().trim().min(1).max(DESIGN_MESSAGE_MAX_CHARS)
+})
+
+export const DesignReplyParams = z.object({
+  from: requiredString('Missing agent terminal'),
+  id: requiredString('Missing --id'),
+  reply: z.unknown()
+})
+
+/** User side: clear a blocked delivery and nudge the agent again now. */
+export const DesignResendParams = z.object({ id: requiredString('Missing --id') })

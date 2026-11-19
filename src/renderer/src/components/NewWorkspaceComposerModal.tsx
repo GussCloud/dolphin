@@ -65,6 +65,8 @@ type ComposerModalData = {
   setupGuideTourRequestId?: string
   /** Opens the Design flow: plain name, the request and a design agent, then a Draft design. */
   designMode?: boolean
+  /** Design mode only: the request to start from, e.g. when retrying a design whose agent never started. */
+  designRequest?: string
 }
 
 export default function NewWorkspaceComposerModal(): React.JSX.Element | null {
@@ -269,7 +271,8 @@ function QuickTabBody({
     name: cardProps.name,
     agent: quickAgent,
     targetUnavailable: isFolderWorkspaceTarget || isMultiProjectTarget,
-    submitQuick
+    submitQuick,
+    initialRequest: modalData.designRequest
   })
   const createDisabled =
     composerCreateDisabled || (designMode ? designBlocksCreate : autonomousBlocksCreate)

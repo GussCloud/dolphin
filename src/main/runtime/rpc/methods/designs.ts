@@ -1,5 +1,6 @@
 // `design.*` — the renderer creates a design, then its agent binds to it and writes the canvas from
 // its own terminal, so the host that runs the agent owns the design.
+import type { z } from 'zod'
 import {
   buildDesignAgentInstructions,
   buildDesignLaunchPrompt
@@ -49,7 +50,7 @@ function callerPane(
   return { paneKey: caller.paneKey, terminalHandle: caller.terminalHandle }
 }
 
-function requireDesign(id: string): Design {
+export function requireDesign(id: string): Design {
   const design = getDesignStore().get(id)
   if (!design) {
     throw new OrchestrationError('design_not_found', `Design ${id} was not found.`)
@@ -58,7 +59,7 @@ function requireDesign(id: string): Design {
 }
 
 /** Only the pane `design.start` bound may act as the design's agent. */
-function requireBoundDesign(id: string, from: string, context: RpcContext): Design {
+export function requireBoundDesign(id: string, from: string, context: RpcContext): Design {
   const design = requireDesign(id)
   if (design.paneKey === null || design.paneKey !== callerPane(from, context).paneKey) {
     throw new OrchestrationError(
@@ -83,11 +84,16 @@ async function terminalWorktreeId(
   }
 }
 
-const CANVAS_ISSUES_SHOWN = 5
+const FILE_ISSUES_SHOWN = 5
 
 /** Path-qualified issues, so the agent can fix the exact element and retry. */
-function parseCanvas(canvas: unknown): DesignCanvas {
-  const parsed = DesignCanvasSchema.safeParse(canvas)
+export function parseDesignFile<T>(
+  schema: z.ZodType<T>,
+  value: unknown,
+  code: string,
+  label: string
+): T {
+  const parsed = schema.safeParse(value)
   if (parsed.success) {
     return parsed.data
   }
@@ -95,11 +101,15 @@ function parseCanvas(canvas: unknown): DesignCanvas {
     issue.path.length > 0 ? `${issue.path.join('.')}: ${issue.message}` : issue.message
   )
   const more =
-    issues.length > CANVAS_ISSUES_SHOWN ? ` (+${issues.length - CANVAS_ISSUES_SHOWN} more)` : ''
+    issues.length > FILE_ISSUES_SHOWN ? ` (+${issues.length - FILE_ISSUES_SHOWN} more)` : ''
   throw new OrchestrationError(
-    'design_invalid_canvas',
-    `Canvas refused: ${issues.slice(0, CANVAS_ISSUES_SHOWN).join('; ')}${more}`
+    code,
+    `${label} refused: ${issues.slice(0, FILE_ISSUES_SHOWN).join('; ')}${more}`
   )
+}
+
+function parseCanvas(canvas: unknown): DesignCanvas {
+  return parseDesignFile(DesignCanvasSchema, canvas, 'design_invalid_canvas', 'Canvas')
 }
 
 function refuseTransition(design: Design, to: Design['status']): never {

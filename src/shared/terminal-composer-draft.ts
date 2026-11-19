@@ -100,15 +100,20 @@ function isStockPlaceholder(
   )
 }
 
+/**
+ * `typedOnly` ignores dimmed cells after the cursor, so an agent's ghost suggestion (Claude paints
+ * its predicted next prompt dimmed) is not text; reads keep it so they can lift it out of output.
+ */
 function detectTerminalComposer(
-  context: TerminalCursorContext | null | undefined
+  context: TerminalCursorContext | null | undefined,
+  typedOnly = false
 ): TerminalComposerMatch | null {
   if (!context || context.cursorHidden || context.rows.length === 0) {
     return null
   }
   const cursorIndex = context.rows.length - 1
   const codexFooterIndex = findCodexFooterIndex(context)
-  let afterCursor = context.afterCursor || context.rawAfterCursor
+  let afterCursor = typedOnly ? context.afterCursor : context.afterCursor || context.rawAfterCursor
   let continuationRows = composerContinuationRows(context, afterCursor, codexFooterIndex)
   const placeholder = isStockPlaceholder(afterCursor, continuationRows)
   if (placeholder) {
@@ -192,6 +197,14 @@ export function detectTerminalComposerDraft(
     endRow: match.endRow,
     promptGlyph: match.promptGlyph
   }
+}
+
+/** Whether the user left text in the composer; a dimmed ghost suggestion or placeholder is not. */
+export function hasTerminalComposerTypedDraft(
+  context: TerminalCursorContext | null | undefined
+): boolean {
+  const match = detectTerminalComposer(context, true)
+  return match !== null && !match.placeholder
 }
 
 export function hasTerminalComposerPlaceholder(

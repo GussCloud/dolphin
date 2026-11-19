@@ -84,7 +84,15 @@ export const DESIGN_EVENT_KINDS = [
   'agent-bound',
   'canvas-set',
   'status-changed',
-  'renamed'
+  'renamed',
+  'decision-asked',
+  'decision-answered',
+  'comment-added',
+  'agent-replied',
+  'inbox-nudged',
+  'inbox-acked',
+  'delivery-blocked',
+  'delivery-resent'
 ] as const
 export type DesignEventKind = (typeof DESIGN_EVENT_KINDS)[number]
 
@@ -92,8 +100,63 @@ export type DesignEventKind = (typeof DESIGN_EVENT_KINDS)[number]
 export type DesignEvent = {
   kind: DesignEventKind
   at: number
-  actor: 'user' | 'agent'
+  /** 'dolphin' is the host itself: inbox nudges and delivery verdicts. */
+  actor: 'user' | 'agent' | 'dolphin'
   detail?: string
+}
+
+export const DESIGN_DECISION_MAX_OPTIONS = 6
+export const DESIGN_DECISION_MAX_OPEN = 10
+export const DESIGN_MAX_MESSAGES = 300
+export const DESIGN_MESSAGE_MAX_CHARS = 4_000
+/** Unacked nudges before delivery counts as blocked and the UI offers a manual resend. */
+export const DESIGN_INBOX_MAX_NUDGES = 3
+
+export type DesignDecisionOption = { label: string; description?: string }
+
+/** A question the agent needs the user to settle; shaped like Claude's AskUserQuestion. */
+export type DesignDecision = {
+  id: string
+  question: string
+  header?: string
+  options: DesignDecisionOption[]
+  multiSelect: boolean
+  /** The block the question is about, when it is about one. */
+  blockId?: string
+  askedAt: number
+  answer?: { selected: string[]; note?: string; at: number }
+}
+
+/** A message in a block's thread (blockId set) or the design's general thread. */
+export type DesignMessage = {
+  id: string
+  author: 'user' | 'agent'
+  text: string
+  blockId?: string
+  /** The user message an agent reply answers. */
+  replyTo?: string
+  at: number
+}
+
+export const DESIGN_INBOX_KINDS = ['answer', 'comment'] as const
+export type DesignInboxKind = (typeof DESIGN_INBOX_KINDS)[number]
+
+/** User input waiting for the agent: the content stays here, the agent is only nudged to read it. */
+export type DesignInboxItem = {
+  id: string
+  kind: DesignInboxKind
+  /** Decision id for 'answer', message id for 'comment'. */
+  refId: string
+  createdAt: number
+  ackedAt?: number
+}
+
+export type DesignDelivery = {
+  /** Nudges typed since the last ack. */
+  nudges: number
+  lastNudgeAt?: number
+  /** Set after DESIGN_INBOX_MAX_NUDGES unacked nudges; cleared by an ack or a manual resend. */
+  blockedAt?: number
 }
 
 export type Design = {
@@ -111,14 +174,48 @@ export type Design = {
   /** Newest last; the last entry is the canvas the UI shows. */
   canvasVersions: DesignCanvasVersion[]
   events: DesignEvent[]
+  decisions: DesignDecision[]
+  messages: DesignMessage[]
+  inbox: DesignInboxItem[]
+  delivery: DesignDelivery
   createdAt: number
   updatedAt: number
 }
 
 /** List rows skip canvas history and events so `design.list` stays small. */
-export type DesignListEntry = Omit<Design, 'canvasVersions' | 'events'> & {
+export type DesignListEntry = Omit<
+  Design,
+  'canvasVersions' | 'events' | 'decisions' | 'messages' | 'inbox' | 'delivery'
+> & {
   canvasVersion: number | null
   groupCount: number
+  openDecisionCount: number
+  deliveryBlocked: boolean
+}
+
+/** What `design.inbox` returns per pending item: the referenced content, resolved for the agent. */
+export type DesignInboxEntry = {
+  id: string
+  createdAt: number
+  /** Set when the item is about a block; `title` is absent once the latest canvas drops that block. */
+  block?: { id: string; title?: string }
+} & (
+  | {
+      kind: 'answer'
+      decisionId: string
+      question: string
+      selected: string[]
+      note?: string
+    }
+  | { kind: 'comment'; messageId: string; text: string }
+)
+
+export function isDesignDecisionOpen(decision: Pick<DesignDecision, 'answer'>): boolean {
+  return decision.answer === undefined
+}
+
+export function pendingDesignInbox(design: Pick<Design, 'inbox'>): DesignInboxItem[] {
+  return design.inbox.filter((item) => item.ackedAt === undefined)
 }
 
 export function latestDesignCanvas(

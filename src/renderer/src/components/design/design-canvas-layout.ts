@@ -64,8 +64,14 @@ export function designGroupDepths(canvas: DesignCanvas): Map<string, number> {
   return depths
 }
 
-/** Agent positions win; the rest go left-to-right by depth, stacked in input order per column. */
-export function layoutDesignCanvas(canvas: DesignCanvas): Map<string, DesignPoint> {
+/**
+ * Agent positions win; the rest go left-to-right by depth, stacked in input order per column.
+ * Stacking uses measured card heights when given (after the first render) and the estimate otherwise.
+ */
+export function layoutDesignCanvas(
+  canvas: DesignCanvas,
+  measuredHeights?: ReadonlyMap<string, number>
+): Map<string, DesignPoint> {
   const depths = designGroupDepths(canvas)
   const columnHeights = new Map<number, number>()
   const positions = new Map<string, DesignPoint>()
@@ -77,7 +83,22 @@ export function layoutDesignCanvas(canvas: DesignCanvas): Map<string, DesignPoin
     const depth = depths.get(group.id) ?? 0
     const y = columnHeights.get(depth) ?? 0
     positions.set(group.id, { x: depth * (DESIGN_GROUP_WIDTH + COLUMN_GAP), y })
-    columnHeights.set(depth, y + estimateDesignGroupHeight(group) + ROW_GAP)
+    const height = measuredHeights?.get(group.id) ?? estimateDesignGroupHeight(group)
+    columnHeights.set(depth, y + height + ROW_GAP)
   }
   return positions
+}
+
+/** Whether every measured height is already the one the layout used (sub-pixel noise ignored). */
+export function designHeightsApplied(
+  measured: ReadonlyMap<string, number>,
+  applied: ReadonlyMap<string, number> | null
+): boolean {
+  if (!applied) {
+    return measured.size === 0
+  }
+  return [...measured].every(([id, height]) => {
+    const used = applied.get(id)
+    return used !== undefined && Math.abs(used - height) < 0.5
+  })
 }

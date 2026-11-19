@@ -3,6 +3,7 @@ import type { DesignCanvas, DesignGroup } from '../../../../shared/design-types'
 import {
   DESIGN_GROUP_WIDTH,
   designGroupDepths,
+  designHeightsApplied,
   estimateDesignGroupHeight,
   layoutDesignCanvas
 } from './design-canvas-layout'
@@ -64,5 +65,40 @@ describe('layoutDesignCanvas', () => {
     const positions = layoutDesignCanvas(canvas)
     expect(positions.get('a')).toEqual({ x: 500, y: -20 })
     expect(positions.get('b')?.y).toBe(0)
+  })
+
+  it('re-stacks a column with measured heights so tall cards do not overlap', () => {
+    const canvas: DesignCanvas = {
+      groups: [group('a'), group('b'), group('c'), group('pinned', { x: 0, y: 900 })],
+      edges: [edge('a', 'b'), edge('a', 'c')]
+    }
+    const estimated = layoutDesignCanvas(canvas)
+    const measured = layoutDesignCanvas(
+      canvas,
+      new Map([
+        ['b', 400],
+        ['pinned', 999]
+      ])
+    )
+    const gap = (estimated.get('c')?.y ?? 0) - estimateDesignGroupHeight(canvas.groups[1])
+    expect(measured.get('c')?.y).toBe(400 + gap)
+    expect(measured.get('b')).toEqual(estimated.get('b'))
+    expect(measured.get('pinned')).toEqual({ x: 0, y: 900 })
+  })
+
+  it('falls back to the estimate for groups not measured yet', () => {
+    const canvas: DesignCanvas = {
+      groups: [group('a'), group('b'), group('c')],
+      edges: [edge('a', 'b'), edge('a', 'c')]
+    }
+    expect(layoutDesignCanvas(canvas, new Map())).toEqual(layoutDesignCanvas(canvas))
+  })
+
+  it('tells when the layout already used the measured heights', () => {
+    const measured = new Map([['a', 120.2]])
+    expect(designHeightsApplied(measured, null)).toBe(false)
+    expect(designHeightsApplied(measured, new Map([['a', 120]]))).toBe(true)
+    expect(designHeightsApplied(measured, new Map([['a', 90]]))).toBe(false)
+    expect(designHeightsApplied(measured, new Map([['b', 120]]))).toBe(false)
   })
 })
