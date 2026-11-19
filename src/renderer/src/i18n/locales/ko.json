@@ -165,7 +165,8 @@
     "cut": "잘라내기",
     "copy": "복사",
     "selectAll": "모두 선택",
-    "showAzurePrsButton": "Azure (PRs) 버튼 표시"
+    "showAzurePrsButton": "Azure (PRs) 버튼 표시",
+    "showDesignButton": "Design 버튼 표시"
   },
   "tray": {
     "openDolphin": "Dolphin 열기",

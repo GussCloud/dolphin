@@ -66,6 +66,19 @@ describe('ActiveViewPreference', () => {
     })
   })
 
+  it('persists the Design view', async () => {
+    vi.useFakeTimers()
+    const preference = new ActiveViewPreference(dataFile, 'terminal')
+
+    preference.set('design')
+    vi.advanceTimersByTime(100)
+    await preference.waitForPendingWrite()
+
+    expect(JSON.parse(readFileSync(getActiveViewPreferenceFile(dataFile), 'utf-8'))).toEqual({
+      activeView: 'design'
+    })
+  })
+
   it('flushes synchronously for an immediate graceful exit', () => {
     vi.useFakeTimers()
     const preference = new ActiveViewPreference(dataFile, 'terminal')

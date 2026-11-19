@@ -144,6 +144,11 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
     load: async () => (await import('./handlers/goal.js')).GOAL_HANDLERS
   },
   {
+    name: 'design',
+    keys: ['design start', 'design canvas-set', 'design show', 'design list', 'design status'],
+    load: async () => (await import('./handlers/design.js')).DESIGN_HANDLERS
+  },
+  {
     name: 'emulator',
     keys: [
       'emulator list',

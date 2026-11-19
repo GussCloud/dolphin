@@ -2,6 +2,7 @@ import { STATUS_METHODS } from './status'
 import { AI_VAULT_METHODS } from './ai-vault'
 import { AUTOMATION_METHODS } from './automations'
 import { AUTONOMOUS_GOAL_METHODS } from './autonomous-goals'
+import { DESIGN_METHODS } from './designs'
 import { REPO_METHODS } from './repo'
 import { WORKTREE_METHODS } from './worktree'
 import { TERMINAL_METHODS } from './terminal'
@@ -79,6 +80,7 @@ export const ALL_RPC_METHODS = [
   ...BROWSER_NETWORK_TUNNEL_METHODS,
   ...ORCHESTRATION_METHODS,
   ...AUTONOMOUS_GOAL_METHODS,
+  ...DESIGN_METHODS,
   ...NOTIFICATION_METHODS,
   ...STATS_METHODS,
   ...DIAGNOSTICS_METHODS,

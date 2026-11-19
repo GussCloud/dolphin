@@ -26,6 +26,7 @@ export function createUiTaskActions(set: UISliceSet, get: UISliceGet): Partial<U
     previousViewBeforeMobile: 'terminal',
     previousViewBeforeArtifacts: 'terminal',
     previousViewBeforeAzurePrs: 'terminal',
+    previousViewBeforeDesign: 'terminal',
     setActiveView: (view) => set({ activeView: view }),
     taskPageData: {},
     taskResumeState: undefined,

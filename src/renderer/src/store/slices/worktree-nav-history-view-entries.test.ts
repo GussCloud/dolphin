@@ -49,6 +49,7 @@ const viewCases: { entry: WorktreeNavHistorySimpleViewEntry; label: string }[] =
   { entry: 'automations', label: 'Automations' },
   { entry: 'artifacts', label: 'Artifacts' },
   { entry: 'azure-prs', label: 'Azure PRs' },
+  { entry: 'design', label: 'Design' },
   { entry: 'skills', label: 'Skills' }
 ]
 

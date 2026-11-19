@@ -20,12 +20,14 @@ export type WorktreeNavHistorySimpleViewEntry =
   | 'automations'
   | 'artifacts'
   | 'azure-prs'
+  | 'design'
   | 'skills'
 const SIMPLE_VIEW_ENTRIES: readonly WorktreeNavHistorySimpleViewEntry[] = [
   'tasks',
   'automations',
   'artifacts',
   'azure-prs',
+  'design',
   'skills'
 ]
 export type WorktreeNavHistoryTaskDetailEntry =

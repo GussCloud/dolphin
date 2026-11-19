@@ -229,4 +229,8 @@ export class DolphinRuntimeWithRefreshFloatingWorkspacePtyLiveness extends Dolph
   notifyAutonomousGoalsChanged(): void {
     this.emitClientEvent({ type: 'autonomousGoalsChanged' })
   }
+
+  notifyDesignsChanged(): void {
+    this.emitClientEvent({ type: 'designsChanged' })
+  }
 }

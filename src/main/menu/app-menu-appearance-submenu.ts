@@ -68,6 +68,10 @@ export function buildAppearanceSubmenu({
         translateMain('menu.showAzurePrsButton', 'Show Azure (PRs) Button')
       ),
       appearanceCheckbox(
+        'showDesignButton',
+        translateMain('menu.showDesignButton', 'Show Design Button')
+      ),
+      appearanceCheckbox(
         'showMobileButton',
         translateMain('menu.showMobileButton', 'Show Dolphin Mobile Button')
       ),

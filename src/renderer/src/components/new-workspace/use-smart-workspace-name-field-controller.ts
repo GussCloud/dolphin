@@ -134,6 +134,7 @@ export function useSmartWorkspaceNameFieldController({
     crossRepoSwitchTarget,
     disabled,
     disabledPlaceholder: props.disabledPlaceholder,
+    textPlaceholder: props.textPlaceholder,
     mode: foundation.mode
   })
 

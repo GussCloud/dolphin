@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   openMobilePage: vi.fn(),
   openArtifactsPage: vi.fn(),
   openAzurePrsPage: vi.fn(),
+  openDesignPage: vi.fn(),
   openModal: vi.fn(),
   updateSettings: vi.fn(),
   refreshPreflightStatus: vi.fn(),
@@ -93,6 +94,7 @@ import SidebarNav, {
   shouldShowAutomationsButton,
   shouldShowAzurePrsButton,
   shouldShowArtifactsButton,
+  shouldShowDesignButton,
   shouldShowMobileButton,
   shouldShowSetupGuideEntry
 } from './SidebarNav'
@@ -138,6 +140,7 @@ function setSidebarState({
     openMobilePage: mocks.openMobilePage,
     openArtifactsPage: mocks.openArtifactsPage,
     openAzurePrsPage: mocks.openAzurePrsPage,
+    openDesignPage: mocks.openDesignPage,
     openModal: mocks.openModal,
     updateSettings: mocks.updateSettings,
     preflightStatus: { glab: { installed: false }, azureDevOps },
@@ -381,6 +384,42 @@ describe('SidebarNav', () => {
     expect(shouldShowAzurePrsButton({}, true)).toBe(true)
     expect(shouldShowAzurePrsButton({}, false)).toBe(false)
     expect(shouldShowAzurePrsButton({ showAzurePrsButton: false }, true)).toBe(false)
+  })
+
+  it('shows the Design entry unless the sidebar setting is off', () => {
+    expect(shouldShowDesignButton(null)).toBe(true)
+    expect(shouldShowDesignButton({})).toBe(true)
+    expect(shouldShowDesignButton({ showDesignButton: false })).toBe(false)
+  })
+
+  it('opens Design from the sidebar', async () => {
+    setSidebarState()
+    const container = await renderSidebarNav()
+
+    await clickButton(getButtonByText(container, 'Design'))
+
+    expect(mocks.openDesignPage).toHaveBeenCalledOnce()
+  })
+
+  it('omits the Design row when the sidebar setting is off', async () => {
+    setSidebarState({ settings: { ...getDefaultSettings('/tmp'), showDesignButton: false } })
+    const container = await renderSidebarNav()
+
+    expect(queryButtonByText(container, 'Design')).toBeNull()
+  })
+
+  it('hides Design from its sidebar context menu', async () => {
+    setSidebarState()
+    const container = await renderSidebarNav()
+
+    const designMenu = getButtonByText(container, 'Design').closest('[data-testid="context-menu"]')
+    if (!designMenu) {
+      throw new Error('Design context menu not found')
+    }
+
+    await clickButton(getHideButton(designMenu))
+
+    expect(mocks.updateSettings).toHaveBeenCalledWith({ showDesignButton: false })
   })
 
   it('omits the Azure PRs row when the sidebar setting is off', async () => {

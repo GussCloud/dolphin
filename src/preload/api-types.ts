@@ -169,6 +169,7 @@ export type PreloadApi = {
   plugins: PluginsApi
   /** Fires when this host's autonomous goal store changes; the renderer re-reads `goal.list`. */
   autonomousGoals: { onChanged: (callback: () => void) => () => void }
+  designs: { onChanged: (callback: () => void) => () => void }
   agentStatus: AgentStatusApi
   mobile: MobileApi
   speech: SpeechApi

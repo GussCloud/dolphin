@@ -23,6 +23,7 @@ import type { TaskSourceContext } from '../../../../shared/task-source-context'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import type { ExecutionHostId } from '../../../../shared/execution-host'
 import type { AutonomousGoalDraft } from '@/lib/autonomous-goal-draft'
+import type { DesignDraft } from '@/lib/design-draft'
 
 export type RepoOption = React.ComponentProps<typeof RepoCombobox>['repos'][number]
 export type EphemeralVmRecipeOption = NonNullable<DolphinHooks['environmentRecipes']>[number]
@@ -49,6 +50,9 @@ export type NewWorkspaceComposerCardProps = {
   onAutonomousGoalDraftChange?: (next: AutonomousGoalDraft) => void
   /** Folder and multi-project targets: the steps stay, the Orchestration mode is disabled. */
   orchestrationUnavailable?: boolean
+  /** Present in the Design flow: replaces the mode picker and the goal draft. */
+  designDraft?: DesignDraft
+  onDesignDraftChange?: (next: DesignDraft) => void
   eligibleRepos: readonly RepoOption[]
   repoId: string
   projectOptions?: NewWorkspaceProjectOption[]

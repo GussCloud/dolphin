@@ -250,6 +250,8 @@ export type GlobalSettings = {
   showAutomationsButton?: boolean
   /** Only toggles the sidebar shortcut; the entry also needs Azure DevOps configured. */
   showAzurePrsButton?: boolean
+  /** Only toggles the sidebar shortcut for the Design page. */
+  showDesignButton?: boolean
   /** Deprecated: Artifacts are always available. Use showArtifactsButton for sidebar visibility. */
   artifactsEnabled?: boolean
   /** Capability gate for agent-driven publishing; off until granted, enforced in main, not just the UI. */

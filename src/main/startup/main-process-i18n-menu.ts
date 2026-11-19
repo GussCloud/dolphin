@@ -90,6 +90,7 @@ export async function initializeMainProcessI18nAndMenu(): Promise<void> {
         showTasksButton: settings.showTasksButton !== false,
         showAutomationsButton: settings.showAutomationsButton !== false,
         showAzurePrsButton: settings.showAzurePrsButton !== false,
+        showDesignButton: settings.showDesignButton !== false,
         showMobileButton: settings.showMobileButton !== false,
         showTitlebarAppName: settings.showTitlebarAppName !== false,
         statusBarVisible: ui.statusBarVisible !== false

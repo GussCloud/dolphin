@@ -121,4 +121,5 @@ export type TopLevelView =
   | 'skills'
   | 'artifacts'
   | 'azure-prs'
+  | 'design'
   | 'mobile'

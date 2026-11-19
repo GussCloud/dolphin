@@ -29,6 +29,7 @@ import {
 } from './runtime-environment-subscription-selection'
 import { refreshAutonomousGoalIndex } from '@/components/autonomous-goal/autonomous-goal-index'
 import { refreshGoalsForClientEvent } from './autonomous-goals-client-event'
+import { refreshDesignIndexIfSubscribed } from '@/components/design/design-index'
 import type { WorktreeEventRuntime } from './worktree-event-runtime'
 
 export function registerRuntimeClientIpcBridge(
@@ -103,6 +104,14 @@ export function registerRuntimeClientIpcBridge(
         environmentId,
         useAppStore.getState().settings?.activeRuntimeEnvironmentId,
         refreshAutonomousGoalIndex
+      )
+      return
+    }
+    if (event.type === 'designsChanged') {
+      refreshGoalsForClientEvent(
+        environmentId,
+        useAppStore.getState().settings?.activeRuntimeEnvironmentId,
+        refreshDesignIndexIfSubscribed
       )
       return
     }

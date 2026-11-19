@@ -165,7 +165,8 @@
     "cut": "切り取り",
     "copy": "コピー",
     "selectAll": "すべて選択",
-    "showAzurePrsButton": "Azure (PRs) ボタンを表示"
+    "showAzurePrsButton": "Azure (PRs) ボタンを表示",
+    "showDesignButton": "Design ボタンを表示"
   },
   "tray": {
     "openDolphin": "Dolphin を開く",

@@ -3,6 +3,7 @@ import { DispatcherClientWriter } from './dispatcher-client-writer'
 import { pickRemoteCliEnv } from './remote-cli-env'
 import { shouldReadRemoteCliStdin } from './remote-cli-stdin'
 import { prepareRemoteArtifactCliInput } from './remote-artifact-cli-input'
+import { prepareRemoteDesignCliInput } from './remote-design-cli-input'
 import {
   assertRemoteArtifactCliForwardingFits,
   type RemoteArtifactCliForwardingParams
@@ -26,8 +27,10 @@ export async function runRelayDolphinCliChannel(
 ): Promise<void> {
   const myVersion = readLaunchVersion()
   let preparedArtifact: Awaited<ReturnType<typeof prepareRemoteArtifactCliInput>>
+  let preparedDesign: Awaited<ReturnType<typeof prepareRemoteDesignCliInput>>
   try {
     preparedArtifact = await prepareRemoteArtifactCliInput(argv, process.cwd())
+    preparedDesign = await prepareRemoteDesignCliInput(argv, process.cwd())
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
     process.exitCode = 1
@@ -35,10 +38,11 @@ export async function runRelayDolphinCliChannel(
   }
   const stdin =
     preparedArtifact.stdin ??
+    preparedDesign?.stdin ??
     (shouldReadRemoteCliStdin(argv) ? await readDolphinCliStdin() : undefined)
   const env = pickRemoteCliEnv(process.env)
   const requestParams: RemoteArtifactCliForwardingParams = {
-    argv,
+    argv: preparedDesign?.argv ?? argv,
     cwd: process.cwd(),
     env,
     ...(stdin !== undefined ? { stdin } : {}),

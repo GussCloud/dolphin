@@ -7,6 +7,7 @@ export function applyWorktreeNavViewEntry(entry: WorktreeNavHistoryViewEntry): v
     entry === 'automations' ||
     entry === 'artifacts' ||
     entry === 'azure-prs' ||
+    entry === 'design' ||
     entry === 'skills'
   ) {
     useAppStore.getState().setActiveView(entry)

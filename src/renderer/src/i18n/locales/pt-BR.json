@@ -286,7 +286,8 @@
     "cut": "Recortar",
     "copy": "Copiar",
     "selectAll": "Selecionar tudo",
-    "showAzurePrsButton": "Mostrar botão Azure (PRs)"
+    "showAzurePrsButton": "Mostrar botão Azure (PRs)",
+    "showDesignButton": "Mostrar botão Design"
   },
   "tray": {
     "openDolphin": "Abrir Dolphin",
@@ -5565,7 +5566,8 @@
           "d599269755": "Ocultar da barra lateral",
           "artifacts": "Artefatos",
           "skills": "Skills",
-          "azurePrs": "Azure (PRs)"
+          "azurePrs": "Azure (PRs)",
+          "design": "Design"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Limpar",
@@ -9530,6 +9532,12 @@
               "description": "Mostrar o botão Azure (PRs) na barra lateral esquerda quando o Azure DevOps estiver configurado.",
               "azure": "azure",
               "pullRequests": "pull requests"
+            },
+            "showDesignButton": {
+              "title": "Mostrar botão Design",
+              "description": "Mostra o botão Design na barra lateral esquerda.",
+              "design": "design",
+              "canvas": "canvas"
             }
           }
         },
@@ -18175,6 +18183,21 @@
         "instructionsHint": "O coordenador repassa estas instruções a cada worker e as mantém depois de cada rotação de sessão.",
         "coordinatorDiffers": "Este agente prefere {{preferred}} como coordenador; {{current}} coordena esta."
       },
+      "ComposerDesign": {
+        "title": "Novo design",
+        "create": "Criar design",
+        "description": "Escolha o projeto e o nome, descreva o que vamos criar e escolha o agente que desenha o design.",
+        "stepRequest": "Pedido",
+        "nameLabel": "Nome do design",
+        "namePlaceholder": "Dê um nome a este design",
+        "requestLabel": "O que vamos criar hoje?",
+        "requestPlaceholder": "Descreva a funcionalidade: quem usa, o que faz e o que deve acontecer.",
+        "requestHint": "O agente estuda o projeto e desenha o fluxo; nada é construído ainda.",
+        "agentLabel": "Agente de design",
+        "targetUnavailable": "Um design precisa de um único projeto; workspaces de pasta e multiprojeto não são suportados.",
+        "createFailed": "Não foi possível criar o design",
+        "hostTooOld": "Este host ainda não suporta designs. Atualize o Dolphin nele e tente de novo."
+      },
       "azureDevOpsSignInNotice": {
         "signingInApp": "Entrando no Azure DevOps em uma janela do Dolphin…",
         "signingInBrowser": "Entrando no Azure DevOps no seu navegador…",
@@ -18251,6 +18274,67 @@
           "later": "Depois",
           "keepDefaults": "Manter padrões deste PC",
           "save": "Salvar contas"
+        }
+      },
+      "design": {
+        "detail": {
+          "worktreeMissing": "O workspace deste design não está mais disponível.",
+          "back": "Todos os designs",
+          "openWorktree": "Abrir workspace",
+          "loading": "Carregando design…",
+          "error": "Não foi possível carregar este design",
+          "version": "Versão {{value0}}",
+          "noCanvas": "O agente ainda não desenhou este design."
+        },
+        "list": {
+          "updated": "Atualizado em {{value0}}",
+          "groups": "{{value0}} etapas",
+          "noCanvas": "Sem canvas ainda"
+        },
+        "filter": {
+          "from": "De",
+          "to": "Até",
+          "trigger": "Filtros",
+          "status": "Situação",
+          "updated": "Atualizado",
+          "reset": "Restaurar filtros"
+        },
+        "title": "Design",
+        "new": "Novo design",
+        "count": "{{value0}} de {{value1}}",
+        "error": "Não foi possível ler os designs",
+        "loading": "Carregando designs…",
+        "unsupported": "Este host roda uma versão do Dolphin sem Design. Atualize-o para criar e ver designs.",
+        "empty": "Nenhum design ainda. Descreva uma funcionalidade e um agente desenha o fluxo.",
+        "noStatus": "Selecione pelo menos uma situação para ver os designs.",
+        "noMatch": "Nenhum design corresponde a estes filtros.",
+        "block": {
+          "trigger": "Gatilho",
+          "screen": "Tela",
+          "action": "Ação",
+          "decision": "Decisão",
+          "data": "Dados",
+          "integration": "Integração",
+          "note": "Nota"
+        },
+        "action": {
+          "approve": "Aprovar desenho",
+          "discard": "Descartar",
+          "finish": "Finalizar",
+          "reopenDevelopment": "Reabrir desenvolvimento",
+          "reopen": "Reabrir"
+        },
+        "status": {
+          "draft": "Rascunho",
+          "inProgress": "Em andamento",
+          "done": "Finalizado",
+          "discarded": "Descartado"
+        },
+        "period": {
+          "7d": "Últimos 7 dias",
+          "30d": "Últimos 30 dias",
+          "90d": "Últimos 90 dias",
+          "all": "Qualquer data"
         }
       }
     },

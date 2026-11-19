@@ -25,6 +25,7 @@ import { useComposerExternalSync } from './composer-state/composer-external-sync
 import { useComposerSourceState } from './composer-state/composer-source-state'
 import { useComposerSubmitOrchestration } from './composer-state/composer-submit-orchestration'
 import { assembleComposerModel } from './composer-state/assemble-composer-model'
+import type { ComposerLaunchOverride } from './composer-state/composer-launch-override'
 import type {
   ComposerCardActionProps,
   ComposerCardSourceProps
@@ -62,7 +63,7 @@ export type UseComposerStateResult = {
   submit: () => Promise<void>
   submitQuick: (
     agent: TuiAgent | null,
-    launchPromptOverride?: string,
+    launch?: ComposerLaunchOverride,
     options?: QuickSubmitOptions
   ) => Promise<void>
   createDisabled: boolean

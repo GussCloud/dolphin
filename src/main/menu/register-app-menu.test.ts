@@ -59,6 +59,7 @@ function buildMenuOptions() {
       showTasksButton: true,
       showAutomationsButton: true,
       showAzurePrsButton: true,
+      showDesignButton: true,
       showMobileButton: true,
       showTitlebarAppName: true,
       statusBarVisible: true
@@ -512,6 +513,7 @@ describe('registerAppMenu', () => {
       showTasksButton: false,
       showAutomationsButton: false,
       showAzurePrsButton: false,
+      showDesignButton: false,
       showMobileButton: true,
       showTitlebarAppName: true,
       statusBarVisible: true
@@ -537,6 +539,10 @@ describe('registerAppMenu', () => {
     const azurePrsItem = appearanceSubmenu.find((item) => item.label === 'Show Azure (PRs) Button')
     expect(azurePrsItem?.type).toBe('checkbox')
     expect(azurePrsItem?.checked).toBe(false)
+
+    const designItem = appearanceSubmenu.find((item) => item.label === 'Show Design Button')
+    expect(designItem?.type).toBe('checkbox')
+    expect(designItem?.checked).toBe(false)
 
     const mobileItem = appearanceSubmenu.find((item) => item.label === 'Show Dolphin Mobile Button')
     expect(mobileItem?.type).toBe('checkbox')
@@ -567,6 +573,9 @@ describe('registerAppMenu', () => {
       .find((item) => item.label === 'Show Azure (PRs) Button')
       ?.click?.({} as never, {} as never, {} as never)
     appearanceSubmenu
+      .find((item) => item.label === 'Show Design Button')
+      ?.click?.({} as never, {} as never, {} as never)
+    appearanceSubmenu
       .find((item) => item.label === 'Show Dolphin Mobile Button')
       ?.click?.({} as never, {} as never, {} as never)
     appearanceSubmenu
@@ -576,6 +585,7 @@ describe('registerAppMenu', () => {
     expect(options.onToggleAppearance).toHaveBeenCalledWith('showTasksButton')
     expect(options.onToggleAppearance).toHaveBeenCalledWith('showAutomationsButton')
     expect(options.onToggleAppearance).toHaveBeenCalledWith('showAzurePrsButton')
+    expect(options.onToggleAppearance).toHaveBeenCalledWith('showDesignButton')
     expect(options.onToggleAppearance).toHaveBeenCalledWith('showMobileButton')
     expect(options.onToggleAppearance).toHaveBeenCalledWith('showTitlebarAppName')
   })

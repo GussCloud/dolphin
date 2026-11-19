@@ -105,6 +105,19 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         activeView: state.previousViewBeforeAzurePrs,
         worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'azure-prs')
       })),
+    openDesignPage: () => {
+      get().recordViewVisit('design')
+      set((state) => ({
+        activeView: 'design',
+        previousViewBeforeDesign:
+          state.activeView === 'design' ? state.previousViewBeforeDesign : state.activeView
+      }))
+    },
+    closeDesignPage: () =>
+      set((state) => ({
+        activeView: state.previousViewBeforeDesign,
+        worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'design')
+      })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

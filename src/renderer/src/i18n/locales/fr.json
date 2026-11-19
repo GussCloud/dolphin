@@ -264,7 +264,8 @@
     "cut": "Couper",
     "copy": "Copier",
     "selectAll": "Tout sélectionner",
-    "showAzurePrsButton": "Afficher le bouton Azure (PRs)"
+    "showAzurePrsButton": "Afficher le bouton Azure (PRs)",
+    "showDesignButton": "Afficher le bouton Design"
   },
   "tray": {
     "openDolphin": "Ouvrir Dolphin",

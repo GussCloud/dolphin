@@ -24,6 +24,7 @@ const Settings = lazy(() => import('../components/settings/Settings'))
 const SkillsPage = lazy(() => import('../components/skills/SkillsPage'))
 const ArtifactsPage = lazy(() => import('../components/artifacts/ArtifactsPage'))
 const AzurePullRequestsPage = lazy(() => import('../components/azure-prs/AzurePullRequestsPage'))
+const DesignPage = lazy(() => import('../components/design/DesignPage'))
 const WorkspaceSpacePage = lazy(() => import('../components/workspace-space/WorkspaceSpacePage'))
 const MobilePage = lazy(() => import('../components/mobile/MobilePage'))
 const Terminal = lazy(() => import('../components/Terminal'))
@@ -74,6 +75,7 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
       {activeView === 'skills' ? <SkillsPage /> : null}
       {activeView === 'artifacts' ? <ArtifactsPage /> : null}
       {activeView === 'azure-prs' ? <AzurePullRequestsPage /> : null}
+      {activeView === 'design' ? <DesignPage /> : null}
       {activeView === 'tasks' ? <TaskPage /> : null}
       {activeView === 'automations' ? <AutomationsPage /> : null}
       {activeView === 'activity' ? <ActivityPrototypePage /> : null}
@@ -158,11 +160,12 @@ export function AppWorkspaceShell(props: {
               )
             ) : null}
             <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-              {/* Why: automations/artifacts/azure-prs own their page headers; the stacked titlebar would be an empty 36px stripe. */}
+              {/* Why: automations/artifacts/azure-prs/design own their page headers; the stacked titlebar would be an empty 36px stripe. */}
               {layout.stackedSidebarOpen &&
               layout.activeView !== 'automations' &&
               layout.activeView !== 'artifacts' &&
-              layout.activeView !== 'azure-prs' ? (
+              layout.activeView !== 'azure-prs' &&
+              layout.activeView !== 'design' ? (
                 <div className="titlebar">{titlebarMainStrip}</div>
               ) : null}
               <div className="relative flex flex-1 min-w-0 min-h-0 overflow-hidden">

@@ -25,6 +25,7 @@ import { startMainProcessAzureCliDeviceCodeRelay } from './main-process-azure-cl
 import { setTelegramQuitShutdown } from './telegram-quit-shutdown'
 import { startMainProcessAgentInteraction } from './main-process-agent-interaction'
 import { startMainProcessAutonomousGoals } from './main-process-autonomous-goals'
+import { startMainProcessDesigns } from './main-process-designs'
 import { startMainProcessClosedPaneAgentReaper } from './main-process-closed-pane-agent-reaper'
 import { startMainProcessClaudeConnectionLossRetry } from './main-process-claude-connection-loss-retry'
 import { startMainProcessTelegramAnswers } from './main-process-telegram-answers'
@@ -184,5 +185,6 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
   setTelegramQuitShutdown(() => deviceCodeRelay.shutdown().finally(() => telegramBridge.dispose()))
   startMainProcessOrchestrationChannel(store)
   startMainProcessAutonomousGoals(store, runtime)
+  startMainProcessDesigns(runtime)
   startMainProcessClosedPaneAgentReaper()
 }

@@ -43,6 +43,8 @@ type NewWorkspaceComposerNameSectionProps = Pick<
   | 'startFromResetHint'
 > & {
   onNamePlainEnter: () => void
+  /** Design flow: a required plain name, no sources and no base ref (the default base is used). */
+  designMode?: boolean
 }
 
 export function NewWorkspaceComposerNameSection({
@@ -72,6 +74,7 @@ export function NewWorkspaceComposerNameSection({
   onSmartNameModeChange,
   smartNameMode,
   onNamePlainEnter,
+  designMode = false,
   forkPushWarning,
   canReuseSelectedBranch,
   reuseSelectedBranch,
@@ -81,6 +84,7 @@ export function NewWorkspaceComposerNameSection({
   startFromResetHint
 }: NewWorkspaceComposerNameSectionProps): React.JSX.Element {
   const showBaseRefPicker =
+    !designMode &&
     Boolean(onBaseBranchChange) &&
     shouldShowComposerBaseRefPicker({
       selectedRepoIsGit,
@@ -91,17 +95,23 @@ export function NewWorkspaceComposerNameSection({
   return (
     <div className="min-w-0 space-y-1" data-contextual-tour-target="workspace-creation-name">
       <div className="flex items-center justify-between gap-2">
-        <label className="min-w-0 truncate text-xs font-medium text-muted-foreground">
-          {selectedRepoIsGit
-            ? translate('auto.components.NewWorkspaceComposerCard.ac3748dcda', 'Create From')
-            : translate(
-                'auto.components.NewWorkspaceComposerCard.0ee17638fe',
-                'Workspace name'
-              )}{' '}
-          <span className="text-muted-foreground/70">
-            {translate('auto.components.NewWorkspaceComposerCard.0c5d6a479c', '[Optional]')}
-          </span>
-        </label>
+        {designMode ? (
+          <label className="min-w-0 truncate text-xs font-medium text-muted-foreground">
+            {translate('auto.components.ComposerDesign.nameLabel', 'Design name')}
+          </label>
+        ) : (
+          <label className="min-w-0 truncate text-xs font-medium text-muted-foreground">
+            {selectedRepoIsGit
+              ? translate('auto.components.NewWorkspaceComposerCard.ac3748dcda', 'Create From')
+              : translate(
+                  'auto.components.NewWorkspaceComposerCard.0ee17638fe',
+                  'Workspace name'
+                )}{' '}
+            <span className="text-muted-foreground/70">
+              {translate('auto.components.NewWorkspaceComposerCard.0c5d6a479c', '[Optional]')}
+            </span>
+          </label>
+        )}
         {showBaseRefPicker && onBaseBranchChange ? (
           <ComposerBaseRefPicker
             repoId={repoId}
@@ -134,7 +144,12 @@ export function NewWorkspaceComposerNameSection({
           'auto.components.NewWorkspaceComposerCard.connectProjectFirst',
           'Connect this project first'
         )}
-        textOnly={!selectedRepoIsGit}
+        textOnly={designMode || !selectedRepoIsGit}
+        textPlaceholder={
+          designMode
+            ? translate('auto.components.ComposerDesign.namePlaceholder', 'Name this design')
+            : undefined
+        }
         branchesEnabled={branchesEnabled}
         repoBackedSourcesDisabled={repoBackedSourcesDisabled}
         repoBackedSearchRepos={repoBackedSearchRepos}

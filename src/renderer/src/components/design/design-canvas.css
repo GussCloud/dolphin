@@ -1,0 +1,48 @@
+@import '@xyflow/react/dist/style.css';
+
+/* Why: xyflow ships its own palette; route every variable it reads through Dolphin tokens so light/dark follow the app theme. */
+[data-design-canvas] {
+  --xy-background-color: var(--background);
+  --xy-background-pattern-dots-color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+  --xy-edge-stroke: color-mix(in srgb, var(--muted-foreground) 70%, transparent);
+  --xy-edge-stroke-selected: var(--ring);
+  --xy-edge-stroke-width: 1.5;
+  --xy-edge-label-background-color: var(--background);
+  --xy-edge-label-color: var(--muted-foreground);
+  --xy-connectionline-stroke: var(--ring);
+  --xy-node-background-color: transparent;
+  --xy-node-color: var(--card-foreground);
+  --xy-node-border: none;
+  --xy-node-boxshadow-hover: none;
+  --xy-node-boxshadow-selected: none;
+  --xy-handle-background-color: var(--background);
+  --xy-handle-border-color: var(--muted-foreground);
+  --xy-controls-box-shadow: none;
+  --xy-controls-button-background-color: var(--card);
+  --xy-controls-button-background-color-hover: var(--accent);
+  --xy-controls-button-color: var(--foreground);
+  --xy-controls-button-color-hover: var(--accent-foreground);
+  --xy-controls-button-border-color: var(--border);
+  --xy-selection-background-color: color-mix(in srgb, var(--ring) 10%, transparent);
+  --xy-selection-border: 1px dotted var(--ring);
+}
+
+[data-design-canvas] .react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+[data-design-canvas] .react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+[data-design-canvas] .react-flow__handle {
+  width: 9px;
+  height: 9px;
+  border-width: 1.5px;
+}
+
+[data-design-canvas] .react-flow__edge-text {
+  font-size: 11px;
+}

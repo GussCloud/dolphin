@@ -37,6 +37,7 @@ import {
   resolveAutonomousGoalLaunchPrompt,
   type AutonomousGoalDraft
 } from '@/lib/autonomous-goal-draft'
+import { useComposerDesignFlow } from '@/components/new-workspace/use-composer-design-flow'
 
 // Why: match App-level AddRepoDialog loading — the add flow is off the hot
 // path for the composer, so keep its clone/SSH machinery out of the entry render.
@@ -62,6 +63,8 @@ type ComposerModalData = {
   telemetrySource?: WorkspaceCreateTelemetrySource
   contextualTourSource?: string
   setupGuideTourRequestId?: string
+  /** Opens the Design flow: plain name, the request and a design agent, then a Draft design. */
+  designMode?: boolean
 }
 
 export default function NewWorkspaceComposerModal(): React.JSX.Element | null {
@@ -259,7 +262,17 @@ function QuickTabBody({
     effectiveAutonomousGoalDraft,
     quickAgent
   )
-  const createDisabled = composerCreateDisabled || autonomousBlocksCreate
+  const designMode = modalData.designMode === true
+  // Why: a single non-Git folder project is allowed; its design agent runs in that folder.
+  const { designDraft, setDesignDraft, designBlocksCreate, submitDesign } = useComposerDesignFlow({
+    repoId: cardProps.repoId,
+    name: cardProps.name,
+    agent: quickAgent,
+    targetUnavailable: isFolderWorkspaceTarget || isMultiProjectTarget,
+    submitQuick
+  })
+  const createDisabled =
+    composerCreateDisabled || (designMode ? designBlocksCreate : autonomousBlocksCreate)
 
   // Why: folder and multi-project creates do not persist a pin, so they never offer one.
   const accountPinSupported = !isFolderWorkspaceTarget && !isMultiProjectTarget
@@ -269,7 +282,10 @@ function QuickTabBody({
   )
   const customOrchestrationAgents = useAppStore((state) => state.settings?.orchestrationAgents)
   const handleCreate = useCallback(async (): Promise<void> => {
-    if (autonomousGoalDraftBlocksCreate(effectiveAutonomousGoalDraft, quickAgent)) {
+    if (designMode && (designBlocksCreate || composerCreateDisabled)) {
+      return
+    }
+    if (!designMode && autonomousGoalDraftBlocksCreate(effectiveAutonomousGoalDraft, quickAgent)) {
       return
     }
     const submittedAgentAccountId = accountPinSupported
@@ -281,43 +297,60 @@ function QuickTabBody({
           value: agentAccountId
         })
       : undefined
+    const submitOptions = submittedAgentAccountId
+      ? { agentAccountId: submittedAgentAccountId }
+      : undefined
+    if (designMode) {
+      await submitDesign(submitOptions)
+      return
+    }
+    const goalPrompt = resolveAutonomousGoalLaunchPrompt(
+      effectiveAutonomousGoalDraft,
+      quickAgent,
+      findOrchestrationAgent(customOrchestrationAgents, effectiveAutonomousGoalDraft.agentId)
+    )
     await submitQuick(
       quickAgent,
-      resolveAutonomousGoalLaunchPrompt(
-        effectiveAutonomousGoalDraft,
-        quickAgent,
-        findOrchestrationAgent(customOrchestrationAgents, effectiveAutonomousGoalDraft.agentId)
-      ) ?? undefined,
-      submittedAgentAccountId ? { agentAccountId: submittedAgentAccountId } : undefined
+      goalPrompt === null ? undefined : { kind: 'autonomous-goal', prompt: goalPrompt },
+      submitOptions
     )
   }, [
     accountPinSupported,
     agentAccountId,
     cardProps.selectedRepoExecutionHostId,
+    composerCreateDisabled,
     customOrchestrationAgents,
+    designBlocksCreate,
+    designMode,
     effectiveAutonomousGoalDraft,
     quickAgent,
     selectedRepoPath,
+    submitDesign,
     submitQuick
   ])
-  const primaryActionLabel = effectiveAutonomousGoalDraft.enabled
-    ? translate(
-        'auto.components.NewWorkspaceComposerGoalMode.startOrchestration',
-        'Start orchestration'
-      )
-    : isFolderWorkspaceTarget
-      ? getFolderWorkspacePrimaryActionLabel()
-      : isMultiProjectTarget
-        ? translate(
-            'auto.components.NewWorkspaceComposerModal.createMultiProjectWorkspace',
-            'Create multi-project workspace'
-          )
-        : cardProps.selectedRepoIsGit
-          ? translate('auto.components.NewWorkspaceComposerModal.createWorktree', 'Create worktree')
-          : translate(
-              'auto.components.NewWorkspaceComposerModal.createWorkspace',
-              'Create workspace'
+  const primaryActionLabel = designMode
+    ? translate('auto.components.ComposerDesign.create', 'Create design')
+    : effectiveAutonomousGoalDraft.enabled
+      ? translate(
+          'auto.components.NewWorkspaceComposerGoalMode.startOrchestration',
+          'Start orchestration'
+        )
+      : isFolderWorkspaceTarget
+        ? getFolderWorkspacePrimaryActionLabel()
+        : isMultiProjectTarget
+          ? translate(
+              'auto.components.NewWorkspaceComposerModal.createMultiProjectWorkspace',
+              'Create multi-project workspace'
             )
+          : cardProps.selectedRepoIsGit
+            ? translate(
+                'auto.components.NewWorkspaceComposerModal.createWorktree',
+                'Create worktree'
+              )
+            : translate(
+                'auto.components.NewWorkspaceComposerModal.createWorkspace',
+                'Create workspace'
+              )
 
   // Cmd/Ctrl+Enter submits. Escape belongs to the dialog's dismissable layer:
   // the page-style "blur the focused field first" rule assumes the user chose
@@ -359,18 +392,25 @@ function QuickTabBody({
     <>
       <DialogHeader className="gap-1">
         <DialogTitle className="text-base font-semibold">
-          {isFolderWorkspaceTarget
-            ? translate(
-                'auto.components.sidebar.FolderWorkspaceComposerDialog.title',
-                'Create Folder Workspace'
-              )
-            : primaryActionLabel}
+          {designMode
+            ? translate('auto.components.ComposerDesign.title', 'New design')
+            : isFolderWorkspaceTarget
+              ? translate(
+                  'auto.components.sidebar.FolderWorkspaceComposerDialog.title',
+                  'Create Folder Workspace'
+                )
+              : primaryActionLabel}
         </DialogTitle>
         <DialogDescription className="sr-only">
-          {translate(
-            'auto.components.NewWorkspaceComposerModal.fa90f739a5',
-            'Choose the project, workspace name, and agent before creating the workspace.'
-          )}
+          {designMode
+            ? translate(
+                'auto.components.ComposerDesign.description',
+                'Choose the project and name, describe what to build, and pick the agent that drafts the design.'
+              )
+            : translate(
+                'auto.components.NewWorkspaceComposerModal.fa90f739a5',
+                'Choose the project, workspace name, and agent before creating the workspace.'
+              )}
         </DialogDescription>
       </DialogHeader>
       <NewWorkspaceComposerCard
@@ -387,9 +427,17 @@ function QuickTabBody({
         agentAccountId={agentAccountId}
         onAgentAccountIdChange={accountPinSupported ? setAgentAccountId : undefined}
         createDisabled={createDisabled}
-        autonomousGoalDraft={effectiveAutonomousGoalDraft}
-        onAutonomousGoalDraftChange={setAutonomousGoalDraft}
+        autonomousGoalDraft={designMode ? undefined : effectiveAutonomousGoalDraft}
+        onAutonomousGoalDraftChange={designMode ? undefined : setAutonomousGoalDraft}
         orchestrationUnavailable={isFolderWorkspaceTarget || isMultiProjectTarget}
+        {...(designMode
+          ? {
+              designDraft,
+              onDesignDraftChange: setDesignDraft,
+              // Why: a pending VM runs on a host the design record cannot follow yet.
+              ephemeralVmRecipes: []
+            }
+          : {})}
         primaryActionLabel={primaryActionLabel}
         onOpenAgentSettings={() => setAgentSettingsOpen(true)}
         onCreate={() => void handleCreate()}
