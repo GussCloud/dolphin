@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/new-workspace', () => ({ CLIENT_PLATFORM: 'linux' }))
 
 import { buildQuickComposerStartup } from './quick-startup-plan'
+import { composerLaunchPolicy } from './composer-launch-override'
 
 const base = {
   agent: 'claude' as const,
@@ -37,5 +38,16 @@ describe('quick composer startup for a goal coordinator', () => {
         'DISABLE_AUTO_COMPACT'
       )
     }
+  })
+
+  it('launches a design agent with its argv prompt but without coordinator env', () => {
+    const { coordinatorEnv } = composerLaunchPolicy({ kind: 'design', prompt: 'p' })
+    const { startupPlan } = buildQuickComposerStartup({
+      ...base,
+      prompt: 'design prompt',
+      autonomousCoordinator: coordinatorEnv
+    })
+    expect(startupPlan?.launchCommand).toContain('design prompt')
+    expect(startupPlan?.env ?? {}).not.toHaveProperty('DISABLE_AUTO_COMPACT')
   })
 })

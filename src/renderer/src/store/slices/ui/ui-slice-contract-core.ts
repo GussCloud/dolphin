@@ -116,6 +116,7 @@ export type UiViewHistory =
   | 'skills'
   | 'artifacts'
   | 'azure-prs'
+  | 'design'
   | 'mobile'
 
 export type UISliceCore = {
@@ -153,6 +154,7 @@ export type UISliceCore = {
   previousViewBeforeMobile: Exclude<UiViewHistory, 'mobile'>
   previousViewBeforeArtifacts: Exclude<UiViewHistory, 'artifacts'>
   previousViewBeforeAzurePrs: Exclude<UiViewHistory, 'azure-prs'>
+  previousViewBeforeDesign: Exclude<UiViewHistory, 'design'>
   setActiveView: (view: UISliceCore['activeView']) => void
   taskPageData: TaskPageData
   taskResumeState: TaskResumeState | undefined
@@ -183,6 +185,8 @@ export type UISliceCore = {
   closeAutomationsPage: () => void
   openAzurePrsPage: () => void
   closeAzurePrsPage: () => void
+  openDesignPage: () => void
+  closeDesignPage: () => void
   openSpacePage: () => void
   closeSpacePage: () => void
   openSkillsPage: () => void

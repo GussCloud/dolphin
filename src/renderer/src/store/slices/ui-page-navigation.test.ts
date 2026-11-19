@@ -703,6 +703,20 @@ describe('createUISlice space navigation', () => {
     expect(store.getState().worktreeNavHistoryIndex).toBe(0)
   })
 
+  it('records and rewinds Design visits on close', () => {
+    const store = createUIStore()
+    store.setState({ worktreesByRepo: { 'repo-1': [makeWorktree('a')] } })
+
+    store.getState().recordWorktreeVisit('a')
+    store.getState().openDesignPage()
+    expect(store.getState().activeView).toBe('design')
+    expect(store.getState().worktreeNavHistory).toEqual(['a', 'design'])
+
+    store.getState().closeDesignPage()
+    expect(store.getState().activeView).toBe('terminal')
+    expect(store.getState().worktreeNavHistoryIndex).toBe(0)
+  })
+
   it('records and rewinds Skills visits on close', () => {
     const store = createUIStore()
     store.setState({ worktreesByRepo: { 'repo-1': [makeWorktree('a')] } })

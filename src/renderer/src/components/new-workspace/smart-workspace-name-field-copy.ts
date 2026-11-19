@@ -8,6 +8,7 @@ export function getSmartWorkspaceNameFieldCopy({
   crossRepoSwitchTarget,
   disabled,
   disabledPlaceholder,
+  textPlaceholder,
   mode
 }: {
   repoBackedSourcesDisabled: boolean
@@ -16,6 +17,7 @@ export function getSmartWorkspaceNameFieldCopy({
   crossRepoSwitchTarget: 'project' | 'task-source'
   disabled: boolean
   disabledPlaceholder?: string
+  textPlaceholder?: string
   mode: SmartNameMode
 }) {
   const smartPlaceholder = repoBackedSourcesDisabled
@@ -105,10 +107,11 @@ export function getSmartWorkspaceNameFieldCopy({
                     'auto.components.new.workspace.SmartWorkspaceNameField.searchJira',
                     'Search Jira issues or paste an issue URL'
                   )
-                : translate(
+                : (textPlaceholder ??
+                  translate(
                     'auto.components.new.workspace.SmartWorkspaceNameField.workspaceName',
                     'Workspace name'
-                  )
+                  ))
 
   return {
     crossRepoSwitchTitle,

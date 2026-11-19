@@ -115,7 +115,8 @@
     "cut": "Cortar",
     "copy": "Copiar",
     "selectAll": "Seleccionar todo",
-    "showAzurePrsButton": "Mostrar botón Azure (PRs)"
+    "showAzurePrsButton": "Mostrar botón Azure (PRs)",
+    "showDesignButton": "Mostrar botón Design"
   },
   "tray": {
     "openDolphin": "Abrir Dolphin",

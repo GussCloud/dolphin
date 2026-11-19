@@ -34,6 +34,8 @@ export type RuntimeClientEvent =
     }
   // Why: goal stores are host-owned like automations; clients re-read `goal.list` on it.
   | { type: 'autonomousGoalsChanged' }
+  // Why: design stores are host-owned like goals; clients re-read `design.list` on it.
+  | { type: 'designsChanged' }
   | {
       type: 'linearLinkedIssueUpdated'
       worktreeId: string

@@ -91,6 +91,7 @@ function isRuntimeClientEvent(
     message.type === 'sshStateChanged' ||
     message.type === 'automationsChanged' ||
     message.type === 'autonomousGoalsChanged' ||
+    message.type === 'designsChanged' ||
     message.type === 'linearLinkedIssueUpdated' ||
     message.type === 'activateWorktree' ||
     message.type === 'worktreeTerminalSleepState'

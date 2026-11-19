@@ -286,7 +286,8 @@
     "cut": "Cut",
     "copy": "Copy",
     "selectAll": "Select All",
-    "showAzurePrsButton": "Show Azure (PRs) Button"
+    "showAzurePrsButton": "Show Azure (PRs) Button",
+    "showDesignButton": "Show Design Button"
   },
   "tray": {
     "openDolphin": "Open Dolphin",
@@ -5565,7 +5566,8 @@
           "d599269755": "Hide from sidebar",
           "artifacts": "Artifacts",
           "skills": "Skills",
-          "azurePrs": "Azure (PRs)"
+          "azurePrs": "Azure (PRs)",
+          "design": "Design"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",
@@ -9530,6 +9532,12 @@
               "description": "Show the Azure (PRs) button in the left sidebar when Azure DevOps is configured.",
               "azure": "azure",
               "pullRequests": "pull requests"
+            },
+            "showDesignButton": {
+              "title": "Show Design Button",
+              "description": "Show the Design button in the left sidebar.",
+              "design": "design",
+              "canvas": "canvas"
             }
           }
         },
@@ -18175,6 +18183,21 @@
         "instructionsHint": "The coordinator passes them to every worker and keeps them across session rotations.",
         "coordinatorDiffers": "This agent prefers {{preferred}} as coordinator; {{current}} coordinates this one."
       },
+      "ComposerDesign": {
+        "title": "New design",
+        "create": "Create design",
+        "description": "Choose the project and name, describe what to build, and pick the agent that drafts the design.",
+        "stepRequest": "Request",
+        "nameLabel": "Design name",
+        "namePlaceholder": "Name this design",
+        "requestLabel": "What are we building today?",
+        "requestPlaceholder": "Describe the feature: who uses it, what they do, and what should happen.",
+        "requestHint": "The agent studies the project and draws the flow; nothing is built yet.",
+        "agentLabel": "Design agent",
+        "targetUnavailable": "A design needs a single project; folder and multi-project workspaces are not supported.",
+        "createFailed": "Could not create the design",
+        "hostTooOld": "This host does not support designs yet. Update Dolphin on it and try again."
+      },
       "azureDevOpsSignInNotice": {
         "signingInApp": "Signing in to Azure DevOps in a Dolphin window…",
         "signingInBrowser": "Signing in to Azure DevOps in your browser…",
@@ -18251,6 +18274,67 @@
           "later": "Later",
           "keepDefaults": "Keep this PC’s defaults",
           "save": "Save accounts"
+        }
+      },
+      "design": {
+        "detail": {
+          "worktreeMissing": "The workspace for this design is no longer available.",
+          "back": "All designs",
+          "openWorktree": "Open workspace",
+          "loading": "Loading design…",
+          "error": "Could not load this design",
+          "version": "Version {{value0}}",
+          "noCanvas": "The agent has not drawn this design yet."
+        },
+        "list": {
+          "updated": "Updated {{value0}}",
+          "groups": "{{value0}} steps",
+          "noCanvas": "No canvas yet"
+        },
+        "filter": {
+          "from": "From",
+          "to": "To",
+          "trigger": "Filters",
+          "status": "Status",
+          "updated": "Updated",
+          "reset": "Reset filters"
+        },
+        "title": "Design",
+        "new": "New design",
+        "count": "{{value0}} of {{value1}}",
+        "error": "Could not read the designs",
+        "loading": "Loading designs…",
+        "unsupported": "This host runs an older Dolphin without Design. Update it to create and view designs.",
+        "empty": "No designs yet. Describe a feature and an agent will draw its flow.",
+        "noStatus": "Select at least one status to see designs.",
+        "noMatch": "No design matches these filters.",
+        "block": {
+          "trigger": "Trigger",
+          "screen": "Screen",
+          "action": "Action",
+          "decision": "Decision",
+          "data": "Data",
+          "integration": "Integration",
+          "note": "Note"
+        },
+        "action": {
+          "approve": "Approve design",
+          "discard": "Discard",
+          "finish": "Finish",
+          "reopenDevelopment": "Reopen development",
+          "reopen": "Reopen"
+        },
+        "status": {
+          "draft": "Draft",
+          "inProgress": "In progress",
+          "done": "Done",
+          "discarded": "Discarded"
+        },
+        "period": {
+          "7d": "Last 7 days",
+          "30d": "Last 30 days",
+          "90d": "Last 90 days",
+          "all": "Any time"
         }
       }
     },

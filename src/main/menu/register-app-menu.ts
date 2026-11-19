@@ -15,6 +15,7 @@ export type AppearanceMenuState = {
   showTasksButton: boolean
   showAutomationsButton: boolean
   showAzurePrsButton: boolean
+  showDesignButton: boolean
   showMobileButton: boolean
   showTitlebarAppName: boolean
   statusBarVisible: boolean

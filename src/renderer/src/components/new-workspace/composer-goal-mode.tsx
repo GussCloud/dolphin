@@ -17,6 +17,7 @@ import {
 import type { NewWorkspaceComposerCardProps } from './new-workspace-composer-card-props'
 import { NewWorkspaceComposerAutonomousSection } from './NewWorkspaceComposerAutonomousSection'
 import { useLocalOnlyGoalBase } from './use-local-only-goal-base'
+import { buildComposerDesignWizard } from './composer-design-mode'
 import {
   ComposerInstructionsStep,
   ComposerModePicker,
@@ -65,6 +66,9 @@ export function useComposerGoalMode(
     | 'onQuickAgentChange'
     | 'repoId'
     | 'baseBranch'
+    | 'designDraft'
+    | 'onDesignDraftChange'
+    | 'name'
   >,
   visibleQuickAgents: AgentEntries
 ): ComposerWizard {
@@ -90,6 +94,18 @@ export function useComposerGoalMode(
     props.baseBranch,
     orchestration && draft?.step === 3
   )
+  if (props.designDraft && props.onDesignDraftChange) {
+    return buildComposerDesignWizard({
+      draft: props.designDraft,
+      onDraftChange: props.onDesignDraftChange,
+      name: props.name,
+      repoId: props.repoId,
+      quickAgent: props.quickAgent,
+      onQuickAgentChange: props.onQuickAgentChange,
+      visibleQuickAgents,
+      targetUnavailable: props.orchestrationUnavailable === true
+    })
+  }
   if (!draft || !onDraftChange) {
     return {
       active: false,

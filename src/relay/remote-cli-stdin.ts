@@ -9,14 +9,19 @@ export function shouldReadRemoteCliStdin(argv: string[]): boolean {
     return true
   }
   const commandPath = parseRemoteCliCommandPath(argv)
-  if (!isLinearBodyWriteCommand(commandPath)) {
+  const fileFlag = isLinearBodyWriteCommand(commandPath)
+    ? 'body-file'
+    : commandPath[0] === 'design' && commandPath[1] === 'canvas-set'
+      ? 'file'
+      : null
+  if (!fileFlag) {
     return false
   }
   return argv.some((part, index) => {
-    if (part === '--body-file') {
+    if (part === `--${fileFlag}`) {
       return argv[index + 1] === '-'
     }
-    return part === '--body-file=-'
+    return part === `--${fileFlag}=-`
   })
 }
 

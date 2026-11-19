@@ -32,6 +32,8 @@ export type SmartWorkspaceNameFieldProps = {
   onPlainEnter?: () => void
   disabled?: boolean
   disabledPlaceholder?: string
+  /** Replaces "Workspace name" in the plain-name mode. */
+  textPlaceholder?: string
   textOnly?: boolean
   branchesEnabled?: boolean
   repoBackedSourcesDisabled?: boolean

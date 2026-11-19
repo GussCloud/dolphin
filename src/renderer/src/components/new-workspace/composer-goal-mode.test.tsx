@@ -41,7 +41,8 @@ function Harness(props: {
       quickAgent: props.quickAgent,
       onQuickAgentChange: props.onQuickAgentChange,
       repoId: 'repo-1',
-      baseBranch: 'feature/local'
+      baseBranch: 'feature/local',
+      name: ''
     },
     AGENT_CATALOG
   )

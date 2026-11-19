@@ -29,15 +29,18 @@ function stepLabels(): string[] {
 /** Steps 3 and 4 exist only in the Orchestration mode, so the Worktree mode shows two. */
 export function ComposerWizardStepper({
   step,
-  orchestration
+  orchestration,
+  labels: labelsOverride
 }: {
   step: ComposerWizardStep
   orchestration: boolean
+  /** Replaces the mode's labels (the Design flow's two steps). */
+  labels?: string[]
 }): React.JSX.Element {
-  const labels = stepLabels().slice(0, orchestration ? 4 : 2)
+  const labels = labelsOverride ?? stepLabels().slice(0, orchestration ? 4 : 2)
   return (
     <ol
-      className={cn('grid gap-2 text-xs', orchestration ? 'grid-cols-4' : 'grid-cols-2')}
+      className={cn('grid gap-2 text-xs', labels.length === 4 ? 'grid-cols-4' : 'grid-cols-2')}
       aria-label={translate('auto.components.ComposerWizard.steps', 'Steps')}
     >
       {labels.map((label, index) => {

@@ -111,7 +111,8 @@ folder. Two things keep that dialog from stalling a goal:
   Claude config, or `~/.claude-deepseek/.claude.json` for DeepSeek), under the same
   `<config>.lock` Claude itself takes. The composer marks the coordinator's create
   (`autonomousGoalWorkspace`); `worker-start` marks a worker's create when its Run
-  belongs to an open goal. Every other worktree still shows the dialog.
+  belongs to an open goal. A Design's worktree sends the same flag, since its agent's
+  `dolphin design start` prompt also travels in argv. Every other worktree still shows the dialog.
 
 A worker's task brief is pasted into its terminal and submitted with Enter. A
 composer drawn before Enter is live can drop that first Enter (seen with Claude on

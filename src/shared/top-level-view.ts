@@ -12,6 +12,7 @@ const TOP_LEVEL_VIEW_LOOKUP: Record<TopLevelView, true> = {
   skills: true,
   artifacts: true,
   'azure-prs': true,
+  design: true,
   mobile: true
 }
 

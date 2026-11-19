@@ -151,6 +151,7 @@ export function buildDefaultSettings(args: {
     showTasksButton: true,
     showAutomationsButton: true,
     showAzurePrsButton: true,
+    showDesignButton: true,
     artifactsEnabled: true,
     artifactSharingEnabled: false,
     agentSkillSharingEnabled: false,

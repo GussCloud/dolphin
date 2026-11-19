@@ -8,6 +8,7 @@ import type { AgentStartedTelemetry } from '@/lib/worktree-startup-payload'
 import type { LinkedWorkItemSummary } from '@/lib/new-workspace'
 import type { WorktreeCreationRequest } from '@/lib/pending-worktree-creation'
 import type { PendingSmartGitHubSubmitResolution } from './source-selection-decisions'
+import type { ComposerLaunchOverride } from './composer-launch-override'
 
 type SmartCreateNames = {
   workspaceName: string
@@ -95,7 +96,7 @@ export type ComposerSubmitModel = {
     workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
     repoId: string,
     selectedRepo: Repo,
-    launchPromptOverride?: string,
+    launch?: ComposerLaunchOverride,
     options?: QuickSubmitOptions
   ) => Promise<void>
   prepareFullSubmit: (
@@ -116,10 +117,10 @@ export type ComposerSubmitModel = {
   ) => QuickSubmitSource | null
   resetForNextCreate: () => void
   submit: () => Promise<void>
-  /** `launchPromptOverride` replaces the composed prompt and pins the terminal surface (autonomous goals). */
+  /** `launch` replaces the composed prompt for goal and design launches; see ComposerLaunchOverride. */
   submitQuick: (
     agent: TuiAgent | null,
-    launchPromptOverride?: string,
+    launch?: ComposerLaunchOverride,
     options?: QuickSubmitOptions
   ) => Promise<void>
   submitFolderTarget: (requestedAgent: TuiAgent | null) => Promise<void>

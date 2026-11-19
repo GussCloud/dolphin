@@ -8,6 +8,7 @@ describe('shouldShowWorktreeHistoryControls', () => {
     expect(shouldShowWorktreeHistoryControls('automations')).toBe(true)
     expect(shouldShowWorktreeHistoryControls('artifacts')).toBe(true)
     expect(shouldShowWorktreeHistoryControls('azure-prs')).toBe(true)
+    expect(shouldShowWorktreeHistoryControls('design')).toBe(true)
     expect(shouldShowWorktreeHistoryControls('skills')).toBe(true)
   })
 

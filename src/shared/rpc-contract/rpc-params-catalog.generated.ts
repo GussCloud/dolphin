@@ -161,6 +161,15 @@ import {
   TypeText
 } from './computer-schemas-params'
 import {
+  DesignCanvasSetParams,
+  DesignCreateParams,
+  DesignListParams,
+  DesignRenameParams,
+  DesignSetStatusParams,
+  DesignShowParams,
+  DesignStartParams
+} from './design-params'
+import {
   AttachParams as AttachParamsOfEmulatorParams,
   AxParams,
   ButtonParams,
@@ -783,6 +792,13 @@ export const RPC_PARAMS_BY_METHOD = {
   'computer.scroll': ScrollOfComputerSchemasParams,
   'computer.setValue': SetValue,
   'computer.typeText': TypeText,
+  'design.canvasSet': DesignCanvasSetParams,
+  'design.create': DesignCreateParams,
+  'design.list': DesignListParams,
+  'design.rename': DesignRenameParams,
+  'design.setStatus': DesignSetStatusParams,
+  'design.show': DesignShowParams,
+  'design.start': DesignStartParams,
   'diagnostics.memory': null,
   'diagnostics.runtime': null,
   'emulator.attach': AttachParamsOfEmulatorParams,

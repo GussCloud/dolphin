@@ -264,6 +264,7 @@ export default function NewWorkspaceComposerCard(
     []
   )
   const goalMode = useComposerGoalMode(props, visibleQuickAgents)
+  const designMode = props.designDraft !== undefined
   const handleSetDefaultAgent = React.useCallback(
     (next: TuiAgent | 'blank' | null): void => {
       void updateSettings({ defaultTuiAgent: next })
@@ -327,7 +328,11 @@ export default function NewWorkspaceComposerCard(
               connectButtonLabel={connectButtonLabel}
               selectedProjectName={selectedProjectName}
             />
-            <NewWorkspaceComposerNameSection {...props} onNamePlainEnter={handleNamePlainEnter} />
+            <NewWorkspaceComposerNameSection
+              {...props}
+              onNamePlainEnter={handleNamePlainEnter}
+              designMode={designMode}
+            />
           </>
         ) : null}
         {goalMode.beforeAgent}
@@ -377,11 +382,12 @@ export default function NewWorkspaceComposerCard(
         <NewWorkspaceComposerFooter
           {...props}
           // Why: "Create more" repeats a plain worktree; it means nothing before the create step
-          // and would start one coordinator per copy in the Orchestration mode.
+          // and would start one coordinator (or one design agent) per copy otherwise.
           showCreateMultiple={
             props.showCreateMultiple === true &&
             !goalMode.nav?.onNext &&
-            props.autonomousGoalDraft?.enabled !== true
+            props.autonomousGoalDraft?.enabled !== true &&
+            !designMode
           }
           submitShortcutModifierLabel={getScreenSubmitModifierLabel()}
           {...goalMode.nav}

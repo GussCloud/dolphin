@@ -117,6 +117,7 @@ export const TopLevelViewSchema = z.enum([
   'skills',
   'artifacts',
   'azure-prs',
+  'design',
   'mobile'
 ])
 

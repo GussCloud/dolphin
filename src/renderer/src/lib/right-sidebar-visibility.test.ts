@@ -39,6 +39,7 @@ describe('right sidebar visibility helpers', () => {
       'skills',
       'artifacts',
       'azure-prs',
+      'design',
       'mobile'
     ]) {
       expect(canShowRightSidebarForView(view as AppState['activeView'])).toBe(false)

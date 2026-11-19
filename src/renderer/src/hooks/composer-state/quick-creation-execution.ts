@@ -1,4 +1,5 @@
 import type { QuickSubmitOptions } from './composer-submit-model'
+import { composerLaunchPolicy, type ComposerLaunchOverride } from './composer-launch-override'
 import type { ComposerModel } from './composer-model'
 
 type QuickCreationExecutionInput = Pick<
@@ -89,9 +90,10 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
       workspaceRunContext: WorktreeCreationRequest['workspaceRunContext'],
       repoId: string,
       selectedRepo: Repo,
-      launchPromptOverride?: string,
+      launch?: ComposerLaunchOverride,
       options?: QuickSubmitOptions
     ): Promise<void> => {
+      const launchPolicy = composerLaunchPolicy(launch)
       const prepared = await prepareQuickSubmit(
         smartGitHubResolution,
         requestedAgent,
@@ -127,8 +129,8 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
       const promptLinkedWorkItem = agent === null ? null : submitLinkedWorkItem
 
       const linkedPrompt = resolveQuickCreateLinkedWorkItemPrompt(promptLinkedWorkItem, trimmedNote)
-      const quickPrompt = launchPromptOverride ?? linkedPrompt.prompt
-      const quickDraftPrompt = launchPromptOverride === undefined ? linkedPrompt.draftPrompt : null
+      const quickPrompt = launch?.prompt ?? linkedPrompt.prompt
+      const quickDraftPrompt = launch === undefined ? linkedPrompt.draftPrompt : null
 
       const {
         startupPlan,
@@ -144,7 +146,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         shell: selectedRepoStartupShell,
         isRemote: selectedRepoIsRemote,
         telemetrySource,
-        autonomousCoordinator: launchPromptOverride !== undefined
+        autonomousCoordinator: launchPolicy.coordinatorEnv
       })
 
       const startupPolicySettlement = await settleComposerSubmit(
@@ -201,9 +203,9 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
 
       const promptDelivery = quickDraftPrompt ? 'draft' : 'auto-submit'
       // Why: the verdict is persisted on the request as data and re-entered once the worktree exists.
-      // Why: an autonomous coordinator is rotated by resetting its TUI session in place.
+      // Why: goal and design agents need the TUI pane; see ComposerLaunchPolicy.pinTerminalTui.
       const agentLaunchRoute =
-        agent && launchPromptOverride === undefined
+        agent && !launchPolicy.pinTerminalTui
           ? planAgentSessionLaunch(useAppStore.getState(), {
               agent,
               workspace: {
@@ -264,7 +266,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         promptDelivery,
         quickTelemetry,
         suppressTerminalFocusOnCompletion: createMultiple,
-        autonomousGoalWorkspace: launchPromptOverride !== undefined,
+        autonomousGoalWorkspace: launchPolicy.preAcceptFolderTrust,
         agentAccountId: options?.agentAccountId
       })
 

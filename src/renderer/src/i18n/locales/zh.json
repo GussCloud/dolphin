@@ -165,7 +165,8 @@
     "cut": "剪切",
     "copy": "复制",
     "selectAll": "全选",
-    "showAzurePrsButton": "显示 Azure (PRs) 按钮"
+    "showAzurePrsButton": "显示 Azure (PRs) 按钮",
+    "showDesignButton": "显示 Design 按钮"
   },
   "tray": {
     "openDolphin": "打开 Dolphin",
