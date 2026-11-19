@@ -71,7 +71,12 @@ function BlockRow({
           ) : null}
         </div>
       </PopoverAnchor>
-      <PopoverContent side="right" align="start" className="w-96">
+      <PopoverContent
+        side="right"
+        align="start"
+        collisionPadding={12}
+        className="w-96 max-w-[var(--radix-popover-content-available-width)]"
+      >
         <div className="scrollbar-sleek max-h-[70vh] overflow-y-auto p-4">
           <div className="mb-3 space-y-1">
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">

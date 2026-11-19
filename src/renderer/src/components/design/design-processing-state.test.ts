@@ -145,6 +145,17 @@ describe('designItemsBeingProcessed', () => {
     ])
     expect(designItemsBeingProcessed(design, 'notified')).toEqual([])
   })
+
+  it('lists a notified item the agent works on before acking it, not one sent after the notice', () => {
+    // The real agent acks only after it acted: the item stays unacked the whole time it works.
+    const design = input({
+      inbox: [item('told', 20), item('later', 40)],
+      delivery: { nudges: 1, lastNudgeAt: 25 }
+    })
+    expect(designItemsBeingProcessed(design, 'processing').map((entry) => entry.id)).toEqual([
+      'told'
+    ])
+  })
 })
 
 describe('designProcessingBlocksApproval', () => {

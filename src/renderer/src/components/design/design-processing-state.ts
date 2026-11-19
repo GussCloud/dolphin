@@ -102,14 +102,20 @@ export function designProcessingBlocksApproval(state: DesignProcessingState): bo
   )
 }
 
-/** Read items the agent is working on, for the inline "processing" line; empty unless processing. */
+/** Items the agent is working on, for the inline "processing" line; empty unless processing. */
 export function designItemsBeingProcessed(
   design: ProcessingInput,
   state: DesignProcessingState
 ): DesignInboxItem[] {
-  return state === 'processing'
-    ? designItemsAwaitingAgent(design).filter((item) => item.ackedAt !== undefined)
-    : []
+  if (state !== 'processing') {
+    return []
+  }
+  const notifiedUpTo = design.delivery.lastNudgeAt
+  // Why the notified ones: the notice says "act on it, then ack", so an agent acks only when done.
+  return designItemsAwaitingAgent(design).filter(
+    (item) =>
+      item.ackedAt !== undefined || (notifiedUpTo !== undefined && item.createdAt <= notifiedUpTo)
+  )
 }
 
 export type DesignProcessingTargets = {
