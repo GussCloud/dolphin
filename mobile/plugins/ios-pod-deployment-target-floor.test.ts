@@ -2,8 +2,21 @@ import { createRequire } from 'node:module'
 import { describe, expect, it } from 'vitest'
 
 const require = createRequire(import.meta.url)
-const { addPodDeploymentTargetFloor } = require('./ios-pod-deployment-target-floor.js') as {
-  addPodDeploymentTargetFloor: (podfile: string) => string
+const pluginModule: unknown = require('./ios-pod-deployment-target-floor.js')
+
+function addPodDeploymentTargetFloor(podfile: string): string {
+  if (
+    typeof pluginModule !== 'function' ||
+    !('addPodDeploymentTargetFloor' in pluginModule) ||
+    typeof pluginModule.addPodDeploymentTargetFloor !== 'function'
+  ) {
+    throw new Error('plugin does not export addPodDeploymentTargetFloor')
+  }
+  const result: unknown = pluginModule.addPodDeploymentTargetFloor(podfile)
+  if (typeof result !== 'string') {
+    throw new Error('addPodDeploymentTargetFloor did not return a string')
+  }
+  return result
 }
 
 const PODFILE = `platform :ios, podfile_properties['ios.deploymentTarget'] || '15.1'
