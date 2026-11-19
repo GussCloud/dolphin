@@ -71,4 +71,30 @@ describe('shouldShowComposerBaseRefPicker', () => {
       })
     ).toBe(false)
   })
+
+  it.each(['branches', 'smart'] as const)(
+    'offers a base ref to a design whatever source mode the composer last used (%s)',
+    (smartNameMode) => {
+      expect(
+        shouldShowComposerBaseRefPicker({
+          ...gitRepo,
+          smartNameMode,
+          smartNameSelectionKind: 'branch',
+          designMode: true
+        })
+      ).toBe(true)
+    }
+  )
+
+  it('still hides the base ref of a design in a non-git folder', () => {
+    expect(
+      shouldShowComposerBaseRefPicker({
+        selectedRepoIsGit: false,
+        branchesEnabled: true,
+        smartNameMode: 'smart',
+        smartNameSelectionKind: null,
+        designMode: true
+      })
+    ).toBe(false)
+  })
 })

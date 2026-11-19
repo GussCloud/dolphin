@@ -1,8 +1,10 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
 import {
   isDesignDecisionOpen,
   latestDesignCanvas,
+  pendingDesignInbox,
   type Design
 } from '../../../../shared/design-types'
 import { designDeliveryState, sortDesignDecisions } from './design-conversation'
@@ -35,6 +37,8 @@ export function DesignSidePanel({
   onResend: () => Promise<void>
   onHoverBlock: (blockId: string | null) => void
 }): React.JSX.Element {
+  // Why a tick: the notify-now hint appears after a delay with no design change to re-render on.
+  const now = useNow(15_000, pendingDesignInbox(design).length > 0)
   const decisions = sortDesignDecisions(design.decisions)
   const openCount = design.decisions.filter(isDesignDecisionOpen).length
   const blockTitles = new Map(
@@ -47,7 +51,7 @@ export function DesignSidePanel({
       data-design-side-panel=""
       className="flex min-h-0 w-96 shrink-0 flex-col gap-2 overflow-hidden rounded-xl border border-border bg-card p-3"
     >
-      <DesignDeliveryBanner state={designDeliveryState(design)} onResend={onResend} />
+      <DesignDeliveryBanner state={designDeliveryState(design, now)} onResend={onResend} />
       <Tabs
         value={tab}
         onValueChange={(value) => isSidePanelTab(value) && onTabChange(value)}

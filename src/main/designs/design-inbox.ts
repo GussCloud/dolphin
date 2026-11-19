@@ -1,6 +1,11 @@
 // The inbox side of a design conversation: what the agent reads, acks, and how its delivery is tracked.
 import { buildDesignStatusNotice } from '../../shared/design-agent-prompt'
-import { isDesignStatus, type Design, type DesignInboxEntry } from '../../shared/design-types'
+import {
+  isDesignStatus,
+  pendingDesignInbox,
+  type Design,
+  type DesignInboxEntry
+} from '../../shared/design-types'
 import { boundInbox, DesignRefusal, findBlockTitle, type DesignChange } from './design-interaction'
 
 /** Already-acked ids are accepted again so a retried ack is harmless; unknown ids are refused. */
@@ -33,10 +38,12 @@ export function ackInbox(design: Design, itemIds: string[], at: number): DesignC
   }
 }
 
+/** Any typed nudge answers a pending manual resend, so the force request is dropped. */
 export function recordNudge(design: Design, at: number): DesignChange<number> {
   const nudges = design.delivery.nudges + 1
+  const { forceRequestedAt: _force, ...delivery } = design.delivery
   return {
-    patch: { delivery: { ...design.delivery, nudges, lastNudgeAt: at } },
+    patch: { delivery: { ...delivery, nudges, lastNudgeAt: at } },
     event: { kind: 'inbox-nudged', actor: 'dolphin', detail: String(nudges) },
     result: nudges
   }
@@ -54,9 +61,11 @@ export function markDeliveryBlocked(design: Design, at: number): DesignChange<vo
   }
 }
 
-export function resendDelivery(): DesignChange<void> {
+/** Clears a block and, when items are pending, asks the watchdog for one nudge without an idle status. */
+export function resendDelivery(design: Design, at: number): DesignChange<void> {
+  const force = pendingDesignInbox(design).length > 0
   return {
-    patch: { delivery: { nudges: 0 } },
+    patch: { delivery: force ? { nudges: 0, forceRequestedAt: at } : { nudges: 0 } },
     event: { kind: 'delivery-resent', actor: 'user' },
     result: undefined
   }

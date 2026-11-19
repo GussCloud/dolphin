@@ -108,17 +108,24 @@ describe('composer Design flow', () => {
     expect(document.querySelector('[data-composer-design-unavailable]')).not.toBeNull()
   })
 
-  it('moves a non-design agent to a design agent when advancing', () => {
+  it('keeps any chosen agent when advancing', () => {
     const { onQuickAgentChange } = renderHarness({ step: 1 }, { agent: 'gemini' })
     lastNav?.onNext?.()
-    expect(onQuickAgentChange).toHaveBeenCalledWith('claude')
+    expect(onQuickAgentChange).not.toHaveBeenCalled()
   })
 
-  it('asks what to build and lists only design agents on step 2', async () => {
+  it('fills a blank-terminal choice with the first listed agent when advancing', () => {
+    const { onQuickAgentChange } = renderHarness({ step: 1 }, { agent: null })
+    lastNav?.onNext?.()
+    expect(onQuickAgentChange).toHaveBeenCalledWith(AGENT_CATALOG[0]?.id)
+  })
+
+  it('asks what to build and lists every composer agent on step 2', async () => {
     const { draft, onDraftChange } = renderHarness({ step: 2 })
     expect(screen.getByTestId('agent-section').textContent).toBe('true')
-    expect(screen.getByTestId('agents').textContent).not.toContain('gemini')
-    expect(screen.getByTestId('agents').textContent).toContain('claude')
+    expect(screen.getByTestId('agents').textContent).toBe(
+      AGENT_CATALOG.map((entry) => entry.id).join(',')
+    )
     expect(lastNav?.onNext).toBeUndefined()
     expect(lastNav?.onBack).toBeDefined()
     await userEvent.type(screen.getByLabelText('What are we building today?'), 'A')

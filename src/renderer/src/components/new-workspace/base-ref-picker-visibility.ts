@@ -13,9 +13,14 @@ export function shouldShowComposerBaseRefPicker(args: {
   branchesEnabled: boolean
   smartNameMode: SmartNameMode
   smartNameSelectionKind: SmartWorkspaceNameSelection['kind'] | null
+  /** A design is named by plain text, so a source mode left over from a worktree never hides it. */
+  designMode?: boolean
 }): boolean {
   if (!args.selectedRepoIsGit || !args.branchesEnabled) {
     return false
+  }
+  if (args.designMode) {
+    return true
   }
   if (args.smartNameMode === 'branches') {
     return false

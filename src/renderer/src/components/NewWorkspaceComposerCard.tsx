@@ -381,13 +381,12 @@ export default function NewWorkspaceComposerCard(
       <div className="shrink-0 space-y-1">
         <NewWorkspaceComposerFooter
           {...props}
-          // Why: "Create more" repeats a plain worktree; it means nothing before the create step
-          // and would start one coordinator (or one design agent) per copy otherwise.
+          // Why: "Create more" means nothing before the create step, and would start one
+          // coordinator per copy; a design records its own design per create instead.
           showCreateMultiple={
             props.showCreateMultiple === true &&
             !goalMode.nav?.onNext &&
-            props.autonomousGoalDraft?.enabled !== true &&
-            !designMode
+            props.autonomousGoalDraft?.enabled !== true
           }
           submitShortcutModifierLabel={getScreenSubmitModifierLabel()}
           {...goalMode.nav}

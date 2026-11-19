@@ -163,7 +163,12 @@ export type DesignDelivery = {
   lastNudgeAt?: number
   /** Set after DESIGN_INBOX_MAX_NUDGES unacked nudges; cleared by an ack or a manual resend. */
   blockedAt?: number
+  /** One-shot manual resend: the next nudge may be typed without an idle status. Cleared by any nudge or ack. */
+  forceRequestedAt?: number
 }
+
+/** Pending this long with no nudge typed suggests an agent that never reports idle. */
+export const DESIGN_INBOX_UNNOTIFIED_HINT_MS = 120_000
 
 export const DESIGN_COMPLETION_SUMMARY_MAX_CHARS = 4_000
 

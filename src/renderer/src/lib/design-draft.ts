@@ -1,7 +1,3 @@
-import {
-  isAutonomousGoalAgent,
-  type AutonomousGoalAgent
-} from '../../../shared/autonomous-goal-types'
 import { DESIGN_NAME_MAX_CHARS, DESIGN_REQUEST_MAX_CHARS } from '../../../shared/design-types'
 import type { TuiAgent } from '../../../shared/tui-agent'
 
@@ -20,12 +16,6 @@ export type DesignDraft = {
 
 export function createDesignDraft(): DesignDraft {
   return { step: 1, request: '' }
-}
-
-// Why the goal set: their argv prompt survives Claude's trust dialog (host pre-accepts it) and
-// they run shell commands from a terminal TUI, which `dolphin design start` needs.
-export function isDesignAgent(agent: TuiAgent | null): agent is AutonomousGoalAgent {
-  return isAutonomousGoalAgent(agent)
 }
 
 export function designNameIsValid(name: string): boolean {
@@ -47,6 +37,21 @@ export function designDraftBlocksCreate(
     draft.step !== DESIGN_DRAFT_LAST_STEP ||
     !designNameIsValid(input.name) ||
     !designRequestIsValid(draft.request) ||
-    !isDesignAgent(input.agent)
+    input.agent === null
   )
+}
+
+/** "Create more" clears the name, which lives on the basics step, so the next design starts there. */
+export function designDraftForName(draft: DesignDraft, name: string): DesignDraft {
+  return draft.step === DESIGN_DRAFT_LAST_STEP && name.trim().length === 0
+    ? { ...draft, step: 1 }
+    : draft
+}
+
+// Why: only provisioned-root recipes are guaranteed SSH, whose `dolphin` CLI bridges back to this
+// runtime; a recipe-made Dolphin server runs its own runtime, which never has the design record.
+export function designEphemeralVmRecipes<T extends { checkoutMode?: string }>(
+  recipes: readonly T[]
+): T[] {
+  return recipes.filter((recipe) => recipe.checkoutMode === 'provisioned-root')
 }

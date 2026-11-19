@@ -84,16 +84,34 @@ export function NewWorkspaceComposerNameSection({
   startFromResetHint
 }: NewWorkspaceComposerNameSectionProps): React.JSX.Element {
   const showBaseRefPicker =
-    !designMode &&
     Boolean(onBaseBranchChange) &&
     shouldShowComposerBaseRefPicker({
       selectedRepoIsGit,
       branchesEnabled,
       smartNameMode: smartNameMode ?? 'smart',
-      smartNameSelectionKind: smartNameSelection?.kind ?? null
+      smartNameSelectionKind: smartNameSelection?.kind ?? null,
+      designMode
     })
+  const baseRefPicker =
+    showBaseRefPicker && onBaseBranchChange ? (
+      <ComposerBaseRefPicker
+        repoId={repoId}
+        baseBranch={baseBranch}
+        onBaseBranchChange={onBaseBranchChange}
+        resetHint={startFromResetHint}
+        readOnly={selectedRepoRequiresConnection}
+      />
+    ) : null
   return (
     <div className="min-w-0 space-y-1" data-contextual-tour-target="workspace-creation-name">
+      {designMode && baseRefPicker ? (
+        <div className="flex items-center justify-between gap-2 pb-1">
+          <span className="min-w-0 truncate text-xs font-medium text-muted-foreground">
+            {translate('auto.components.ComposerDesign.baseLabel', 'Create from branch')}
+          </span>
+          {baseRefPicker}
+        </div>
+      ) : null}
       <div className="flex items-center justify-between gap-2">
         {designMode ? (
           <label className="min-w-0 truncate text-xs font-medium text-muted-foreground">
@@ -112,15 +130,7 @@ export function NewWorkspaceComposerNameSection({
             </span>
           </label>
         )}
-        {showBaseRefPicker && onBaseBranchChange ? (
-          <ComposerBaseRefPicker
-            repoId={repoId}
-            baseBranch={baseBranch}
-            onBaseBranchChange={onBaseBranchChange}
-            resetHint={startFromResetHint}
-            readOnly={selectedRepoRequiresConnection}
-          />
-        ) : null}
+        {designMode ? null : baseRefPicker}
       </div>
       <SmartWorkspaceNameField
         inputRef={nameInputRef}

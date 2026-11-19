@@ -127,7 +127,8 @@ export const DESIGN_CONVERSATION_METHODS = [
           `Design ${design.id} has no agent terminal to deliver to yet.`
         )
       }
-      // Why no direct send: the store change wakes the inbox watchdog, which owns the idle checks.
+      // Why no direct send: the store change wakes the inbox watchdog, which owns the composing and status
+      // checks; the recorded force request lets it nudge an agent that never reports idle. Works unblocked too.
       getDesignStore().resend(design.id)
       return { design: requireDesign(design.id) }
     }

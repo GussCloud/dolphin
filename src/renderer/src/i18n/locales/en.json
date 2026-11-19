@@ -18188,6 +18188,7 @@
         "create": "Create design",
         "description": "Choose the project and name, describe what to build, and pick the agent that drafts the design.",
         "stepRequest": "Request",
+        "baseLabel": "Create from branch",
         "nameLabel": "Design name",
         "namePlaceholder": "Name this design",
         "requestLabel": "What are we building today?",
@@ -18372,7 +18373,9 @@
           "blockedDetail": "Dolphin stopped notifying it after several unread notices. Items waiting: {{value0}}.",
           "resend": "Resend",
           "pending": "Waiting for the agent to read. Items: {{value0}}",
-          "read": "The agent has read everything you sent"
+          "read": "The agent has read everything you sent",
+          "notifyHint": "Dolphin notifies the agent when it becomes free. If this agent does not report that, notify it now.",
+          "notifyNow": "Notify now"
         },
         "panel": {
           "toggle": "Decisions and activity",
