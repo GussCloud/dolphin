@@ -1,7 +1,8 @@
 import type { DesignCanvas, DesignGroup } from '../../../../shared/design-types'
 
 export const DESIGN_GROUP_WIDTH = 280
-const COLUMN_GAP = 120
+// Why: wide enough for a branch label like "não (ou e-mail inexistente)" between columns.
+const COLUMN_GAP = 200
 const ROW_GAP = 48
 const GROUP_HEADER_HEIGHT = 44
 const BLOCK_ROW_HEIGHT = 36

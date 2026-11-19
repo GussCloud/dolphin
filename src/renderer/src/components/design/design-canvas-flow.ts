@@ -42,6 +42,15 @@ export function designCanvasToFlow(canvas: DesignCanvas): {
   const positions = layoutDesignCanvas(canvas)
   const isBackEdge = (from: string, to: string): boolean =>
     (positions.get(to)?.x ?? 0) <= (positions.get(from)?.x ?? 0)
+  const span = (edge: { fromGroupId: string; toGroupId: string }): number =>
+    (positions.get(edge.fromGroupId)?.x ?? 0) - (positions.get(edge.toGroupId)?.x ?? 0)
+  // Why: shorter back-edges take the inner lanes, so nested loops do not cross each other.
+  const backLanes = new Map(
+    edges
+      .filter((edge) => isBackEdge(edge.fromGroupId, edge.toGroupId))
+      .toSorted((a, b) => span(a) - span(b))
+      .map((edge, lane) => [edge.id, lane])
+  )
   const nodes = canvas.groups.map((group): DesignGroupNode => {
     const outgoing = edges.filter((edge) => edge.fromGroupId === group.id)
     return {
@@ -66,7 +75,9 @@ export function designCanvasToFlow(canvas: DesignCanvas): {
         : DESIGN_GROUP_SOURCE_HANDLE,
       target: edge.toGroupId,
       targetHandle: DESIGN_GROUP_TARGET_HANDLE,
-      type: isBackEdge(edge.fromGroupId, edge.toGroupId) ? DESIGN_BACK_EDGE_TYPE : 'smoothstep',
+      ...(backLanes.has(edge.id)
+        ? { type: DESIGN_BACK_EDGE_TYPE, data: { lane: backLanes.get(edge.id) } }
+        : { type: 'smoothstep' }),
       ...(edge.label ? { label: edge.label } : {})
     }))
   }

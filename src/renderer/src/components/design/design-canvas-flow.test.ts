@@ -60,4 +60,23 @@ describe('designCanvasToFlow', () => {
     expect(edges.find((edge) => edge.id === 'e1')?.type).toBe('smoothstep')
     expect(edges.find((edge) => edge.id === 'back')?.type).toBe(DESIGN_BACK_EDGE_TYPE)
   })
+
+  it('gives each back-edge its own lane, shorter spans inside', () => {
+    const { edges } = designCanvasToFlow({
+      groups: [
+        { id: 'a', title: 'A', blocks: [] },
+        { id: 'b', title: 'B', blocks: [] },
+        { id: 'c', title: 'C', blocks: [] }
+      ],
+      edges: [
+        { id: 'ab', fromGroupId: 'a', toGroupId: 'b' },
+        { id: 'bc', fromGroupId: 'b', toGroupId: 'c' },
+        { id: 'long', fromGroupId: 'c', toGroupId: 'a' },
+        { id: 'short', fromGroupId: 'c', toGroupId: 'b' }
+      ]
+    })
+    expect(edges.find((edge) => edge.id === 'short')?.data).toEqual({ lane: 0 })
+    expect(edges.find((edge) => edge.id === 'long')?.data).toEqual({ lane: 1 })
+    expect(edges.find((edge) => edge.id === 'ab')).not.toHaveProperty('data')
+  })
 })

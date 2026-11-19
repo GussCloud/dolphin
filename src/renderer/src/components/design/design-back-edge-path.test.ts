@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DESIGN_BACK_EDGE_CLEARANCE,
+  DESIGN_BACK_EDGE_LANE_GAP,
   DESIGN_BACK_EDGE_STUB,
   designBackEdgePath,
   designBackEdgeRouteY,
@@ -19,6 +20,15 @@ describe('designBackEdgeRouteY', () => {
     const target = { x: 0, y: 20 }
     expect(designBackEdgeRouteY(source, target, [entrada, validacao, erro, farAway])).toBe(
       360 + DESIGN_BACK_EDGE_CLEARANCE
+    )
+  })
+
+  it('drops each further lane by one lane gap', () => {
+    const source = { x: 1080, y: 330 }
+    const target = { x: 0, y: 20 }
+    const cards = [entrada, validacao, erro]
+    expect(designBackEdgeRouteY(source, target, cards, 2)).toBe(
+      360 + DESIGN_BACK_EDGE_CLEARANCE + 2 * DESIGN_BACK_EDGE_LANE_GAP
     )
   })
 

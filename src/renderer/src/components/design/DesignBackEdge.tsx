@@ -11,6 +11,7 @@ function DesignBackEdgeView({
   targetX,
   targetY,
   markerEnd,
+  data,
   label,
   labelStyle,
   labelShowBg,
@@ -27,7 +28,13 @@ function DesignBackEdgeView({
     width: node.measured.width ?? DESIGN_GROUP_WIDTH,
     height: node.measured.height ?? 0
   }))
-  const route = designBackEdgePath({ x: sourceX, y: sourceY }, { x: targetX, y: targetY }, cards)
+  const lane = typeof data?.lane === 'number' ? data.lane : 0
+  const route = designBackEdgePath(
+    { x: sourceX, y: sourceY },
+    { x: targetX, y: targetY },
+    cards,
+    lane
+  )
   return (
     <BaseEdge
       path={route.path}
