@@ -5,6 +5,7 @@ import {
   DESIGN_CANVAS_MAX_BLOCKS_PER_GROUP,
   DESIGN_CANVAS_MAX_EDGES,
   DESIGN_CANVAS_MAX_GROUPS,
+  DESIGN_COMPLETION_SUMMARY_MAX_CHARS,
   DESIGN_DECISION_MAX_OPEN,
   DESIGN_DECISION_MAX_OPTIONS,
   DESIGN_MESSAGE_MAX_CHARS,
@@ -104,11 +105,33 @@ export const DesignShowParams = z.object({ id: requiredString('Missing --id') })
 
 export const DesignListParams = z.object({}).optional().default({})
 
-/** `from` present means the agent asked for the move; absent means the user did. */
+/** User side. `from` (an agent pane) is refused: the agent reports completion with `design.complete`. */
 export const DesignSetStatusParams = z.object({
   id: requiredString('Missing --id'),
   status: z.enum(DESIGN_STATUSES),
   from: OptionalString
+})
+
+export const DesignCompletionFileSchema = z.object({
+  summary: z.string().trim().min(1).max(DESIGN_COMPLETION_SUMMARY_MAX_CHARS)
+})
+
+/** Agent side, only while in-progress; parsed in the handler so refusals name the field path. */
+export const DesignCompleteParams = z.object({
+  from: requiredString('Missing agent terminal'),
+  id: requiredString('Missing --id'),
+  completion: z.unknown()
+})
+
+/** User side: accept the agent's completion and move the design to done. */
+export const DesignConfirmDoneParams = z.object({ id: requiredString('Missing --id') })
+
+/** User side: refuse the completion; the text becomes a design comment the agent receives. */
+export const DesignDeclineDoneParams = z.object({
+  id: requiredString('Missing --id'),
+  text: requiredString('Missing what is left to do').pipe(
+    z.string().trim().max(DESIGN_MESSAGE_MAX_CHARS)
+  )
 })
 
 export const DesignRenameParams = z.object({

@@ -8,6 +8,7 @@ import {
 import {
   canTransitionDesign,
   DESIGN_STATUS_TRANSITIONS,
+  latestDesignCanvas,
   type Design,
   type DesignCanvas,
   type DesignListEntry
@@ -153,7 +154,10 @@ export const DESIGN_METHODS = [
         paneKey: caller.paneKey,
         worktreeId: await terminalWorktreeId(context.runtime, caller.terminalHandle)
       })
-      return { design: bound, instructions: buildDesignAgentInstructions(bound) }
+      return {
+        design: bound,
+        instructions: buildDesignAgentInstructions(bound, latestDesignCanvas(bound)?.version)
+      }
     }
   }),
   defineMethod({
@@ -182,16 +186,18 @@ export const DESIGN_METHODS = [
   defineMethod({
     name: 'design.setStatus',
     params: DesignSetStatusParams,
-    handler: (params, context) => {
-      const design = params.from
-        ? requireBoundDesign(params.id, params.from, context)
-        : requireDesign(params.id)
+    handler: (params) => {
+      if (params.from) {
+        throw new OrchestrationError(
+          'design_status_user_only',
+          `Only the user moves design ${params.id}. When the approved design is implemented, run \`dolphin design complete --id ${params.id} --file <path>\`; the user confirms it.`
+        )
+      }
+      const design = requireDesign(params.id)
       if (!canTransitionDesign(design.status, params.status)) {
         refuseTransition(design, params.status)
       }
-      return {
-        design: getDesignStore().setStatus(design.id, params.status, params.from ? 'agent' : 'user')
-      }
+      return { design: getDesignStore().setStatus(design.id, params.status) }
     }
   }),
   defineMethod({

@@ -5,6 +5,7 @@ import {
   type Design,
   type DesignEvent
 } from '../../../../shared/design-types'
+import { designVersionLabel } from './design-canvas-history'
 import { designStatusLabel } from './design-status-labels'
 
 const ID_LIST = /^[\w-]+(,[\w-]+)*$/
@@ -16,6 +17,32 @@ const EXCERPT_CHARS = 80
 
 function excerpt(text: string): string {
   return text.length > EXCERPT_CHARS ? `${text.slice(0, EXCERPT_CHARS - 1)}…` : text
+}
+
+function versionDetail(detail: string): string {
+  const match = VERSION.exec(detail)
+  return match ? designVersionLabel(Number(match[1])) : detail
+}
+
+/** "Draft → In progress"; a move into In progress also names the canvas it approved. */
+function statusMoveDetail(
+  event: DesignEvent,
+  detail: string,
+  design: Pick<Design, 'canvasVersions'>
+): string {
+  const match = STATUS_MOVE.exec(detail)
+  const [from, to] = [match?.[1], match?.[2]]
+  if (!isDesignStatus(from) || !isDesignStatus(to)) {
+    return detail
+  }
+  const move = `${designStatusLabel(from)} → ${designStatusLabel(to)}`
+  const approved =
+    to === 'in-progress'
+      ? design.canvasVersions.findLast((version) => version.at <= event.at)?.version
+      : undefined
+  return approved === undefined
+    ? move
+    : `${move} · ${translate('auto.components.design.eventDetail.approvedVersion', 'version {{value0}} approved', { value0: approved })}`
 }
 
 /**
@@ -31,19 +58,18 @@ export function designEventDetail(
     return null
   }
   switch (event.kind) {
-    case 'canvas-set': {
-      const match = VERSION.exec(detail)
-      return match
-        ? translate('auto.components.design.detail.version', 'Version {{value0}}', {
-            value0: Number(match[1])
+    case 'canvas-set':
+    case 'completion-requested':
+      return versionDetail(detail)
+    case 'status-changed':
+    case 'completion-confirmed':
+      return statusMoveDetail(event, detail, design)
+    case 'completion-declined': {
+      const text = design.messages.find((message) => message.id === detail)?.text
+      return text
+        ? translate('auto.components.design.eventDetail.askedFor', 'Asked for: "{{value0}}"', {
+            value0: excerpt(text)
           })
-        : detail
-    }
-    case 'status-changed': {
-      const match = STATUS_MOVE.exec(detail)
-      const [from, to] = [match?.[1], match?.[2]]
-      return isDesignStatus(from) && isDesignStatus(to)
-        ? `${designStatusLabel(from)} → ${designStatusLabel(to)}`
         : detail
     }
     case 'agent-bound':

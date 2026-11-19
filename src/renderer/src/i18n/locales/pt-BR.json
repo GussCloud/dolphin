@@ -18291,7 +18291,8 @@
           "groups": "{{value0}} etapas",
           "noCanvas": "Sem canvas ainda",
           "decisions": "{{value0}} decisões",
-          "deliveryBlocked": "Agente não responde"
+          "deliveryBlocked": "Agente não responde",
+          "completionPending": "Aguardando confirmação"
         },
         "filter": {
           "from": "De",
@@ -18324,9 +18325,12 @@
         "action": {
           "approve": "Aprovar desenho",
           "discard": "Descartar",
-          "finish": "Finalizar",
           "reopenDevelopment": "Reabrir desenvolvimento",
-          "reopen": "Reabrir"
+          "reopen": "Reabrir",
+          "markDone": "Marcar como finalizado",
+          "backToPlanning": "Voltar ao planejamento",
+          "more": "Mais ações",
+          "approveNeedsCanvas": "Aguarde o agente desenhar o design antes de aprová-lo."
         },
         "status": {
           "draft": "Rascunho",
@@ -18393,7 +18397,10 @@
           "inboxNudged": "Agente avisado",
           "inboxAcked": "Agente leu as mensagens",
           "deliveryBlocked": "Agente parou de responder aos avisos",
-          "deliveryResent": "Aviso reenviado"
+          "deliveryResent": "Aviso reenviado",
+          "completionRequested": "Agente informou a implementação concluída",
+          "completionConfirmed": "Você confirmou como finalizado",
+          "completionDeclined": "Você pediu ajustes"
         },
         "eventDetail": {
           "rebound": "Passou para um novo terminal",
@@ -18403,7 +18410,47 @@
           "replyTo": "Resposta a \"{{value0}}\"",
           "itemsRead": "Itens lidos: {{value0}}",
           "nudge": "Aviso {{value0}}",
-          "unreadNotices": "Avisos não lidos: {{value0}}"
+          "unreadNotices": "Avisos não lidos: {{value0}}",
+          "approvedVersion": "versão {{value0}} aprovada",
+          "askedFor": "Pedido: \"{{value0}}\""
+        },
+        "version": {
+          "threadReadOnly": "Os comentários vão para a versão atual. Volte para ela para enviar um.",
+          "viewing": "Vendo a versão {{value0}} (atual: {{value1}})",
+          "backToCurrent": "Voltar para a atual",
+          "approved": "Aprovada",
+          "pick": "Versão do canvas",
+          "current": "(atual)"
+        },
+        "completion": {
+          "title": "O agente concluiu a implementação",
+          "declinePlaceholder": "O que ainda falta ou precisa mudar?",
+          "cancel": "Cancelar",
+          "declineSend": "Enviar ao agente",
+          "confirm": "Confirmar Finalizado",
+          "decline": "Pedir ajustes",
+          "redrawn": "O agente redesenhou o canvas depois da sua aprovação da versão {{value0}}: revise a versão {{value1}} antes de confirmar."
+        },
+        "implementing": {
+          "label": "Em implementação pelo agente",
+          "withVersion": "Em implementação pelo agente · versão {{value0}}"
+        },
+        "confirm": {
+          "approveDescription": "O agente vai começar a implementar a versão {{value0}} do canvas no workspace do design.",
+          "approveOpenDecisions": "{{value0}} decisões abertas ficarão sem resposta. Responda antes para o agente construir o que você escolheu.",
+          "approveTitle": "Aprovar este design?",
+          "approveConfirm": "Aprovar e implementar",
+          "discardTitle": "Descartar este design?",
+          "discardDescription": "O agente será avisado para parar de trabalhar nele. Você pode reabrir o design depois.",
+          "finishTitle": "Marcar como finalizado?",
+          "finishDescription": "O agente não informou que terminou. Use quando o agente não estiver mais disponível e você souber que a implementação está completa."
+        },
+        "attention": {
+          "hidden": "Fora dos filtros: {{value0}}",
+          "completion": "{{value0}} aguardando sua confirmação",
+          "decisions": "{{value0}} com decisões abertas",
+          "blocked": "{{value0}} com o agente sem responder",
+          "show": "Mostrar"
         }
       }
     },

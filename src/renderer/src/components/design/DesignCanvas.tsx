@@ -44,7 +44,8 @@ function DesignFitControls({
   backEdgeCount,
   fitKey,
   appliedHeights,
-  onMeasuredHeights
+  onMeasuredHeights,
+  userMovedRef
 }: {
   nodes: readonly DesignGroupFlowNode[]
   backEdgeCount: number
@@ -53,6 +54,8 @@ function DesignFitControls({
   /** Card heights the current layout stacked with; null while it still uses the estimate. */
   appliedHeights: ReadonlyMap<string, number> | null
   onMeasuredHeights: (heights: ReadonlyMap<string, number>) => void
+  /** Set once the user pans or zooms; from then on a resize no longer refits. */
+  userMovedRef: React.RefObject<boolean>
 }): React.JSX.Element {
   const nodeIds = useMemo(() => nodes.map((node) => node.id), [nodes])
   const flow = useReactFlow()
@@ -95,7 +98,7 @@ function DesignFitControls({
   }, [heightsApplied, measured, measuredHeights, onMeasuredHeights])
   const width = useViewportStore((state) => state.width)
   const height = useViewportStore((state) => state.height)
-  const fittedKey = useRef<number | null>(null)
+  const fitted = useRef<{ key: number; width: number; height: number } | null>(null)
 
   /** The fit-view button: always everything, whatever the zoom. */
   const fitAll = useCallback(async (): Promise<boolean> => {
@@ -127,16 +130,24 @@ function DesignFitControls({
   }, [backEdgeCount, cards, flow, height, width])
 
   // Why: setViewport is a no-op until the pan/zoom behavior mounts, so wait for it and the sizes.
+  // Why: banners above the canvas mount after it and shrink it; refit until the user moves the view.
   useEffect(() => {
-    if (!settled || !flow.viewportInitialized || fittedKey.current === fitKey) {
+    if (!settled || !flow.viewportInitialized) {
+      return
+    }
+    const last = fitted.current
+    if (
+      last?.key === fitKey &&
+      (userMovedRef.current || (last.width === width && last.height === height))
+    ) {
       return
     }
     void openAtStart().then((applied) => {
       if (applied) {
-        fittedKey.current = fitKey
+        fitted.current = { key: fitKey, width, height }
       }
     })
-  }, [fitKey, flow.viewportInitialized, openAtStart, settled])
+  }, [fitKey, flow.viewportInitialized, height, openAtStart, settled, userMovedRef, width])
 
   // Why: bottom-right is covered by the app's floating workspace-board button.
   return <Controls showInteractive={false} position="bottom-left" onFitView={() => void fitAll()} />
@@ -151,6 +162,11 @@ export default function DesignCanvas({
   version: number
 }): React.JSX.Element {
   const [measuredHeights, setMeasuredHeights] = useState<ReadonlyMap<string, number> | null>(null)
+  const userMovedRef = useRef(false)
+  // Why: a new canvas version refits through its fitKey; from then on resizes may refit it again.
+  useEffect(() => {
+    userMovedRef.current = false
+  }, [version])
   const flow = useMemo(
     () => designCanvasToFlow(canvas, measuredHeights ?? undefined),
     [canvas, measuredHeights]
@@ -181,6 +197,12 @@ export default function DesignCanvas({
         edgesFocusable={false}
         nodesFocusable={false}
         proOptions={{ hideAttribution: true }}
+        onMoveStart={(event) => {
+          // Why: programmatic fits pass a null event; only a real pan or zoom pins the view.
+          if (event) {
+            userMovedRef.current = true
+          }
+        }}
       >
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.2} />
         <DesignFitControls
@@ -189,6 +211,7 @@ export default function DesignCanvas({
           fitKey={version}
           appliedHeights={measuredHeights}
           onMeasuredHeights={setMeasuredHeights}
+          userMovedRef={userMovedRef}
         />
       </ReactFlow>
     </div>

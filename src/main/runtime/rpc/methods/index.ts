@@ -4,6 +4,7 @@ import { AUTOMATION_METHODS } from './automations'
 import { AUTONOMOUS_GOAL_METHODS } from './autonomous-goals'
 import { DESIGN_METHODS } from './designs'
 import { DESIGN_CONVERSATION_METHODS } from './designs-conversation'
+import { DESIGN_COMPLETION_METHODS } from './designs-completion'
 import { REPO_METHODS } from './repo'
 import { WORKTREE_METHODS } from './worktree'
 import { TERMINAL_METHODS } from './terminal'
@@ -83,6 +84,7 @@ export const ALL_RPC_METHODS = [
   ...AUTONOMOUS_GOAL_METHODS,
   ...DESIGN_METHODS,
   ...DESIGN_CONVERSATION_METHODS,
+  ...DESIGN_COMPLETION_METHODS,
   ...NOTIFICATION_METHODS,
   ...STATS_METHODS,
   ...DIAGNOSTICS_METHODS,

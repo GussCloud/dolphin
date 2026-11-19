@@ -1,4 +1,4 @@
-// Tells a design's agent that the user answered or commented. The content stays in the inbox; the
+// Tells a design's agent that the user answered, commented or moved the design. The content stays in the inbox; the
 // agent is only typed a one-line pointer, and only while it is idle and the user is not drafting.
 import { DESIGN_INBOX_MAX_NUDGES, pendingDesignInbox, type Design } from '../../shared/design-types'
 
@@ -9,6 +9,14 @@ export const DESIGN_INBOX_ACK_WAIT_MS = 60_000
 
 export function buildDesignInboxNudge(designId: string): string {
   return `Dolphin Design: new input from the user. Run dolphin design inbox --id ${designId} --json, act on it, then ack.`
+}
+
+/** A discarded design still has its discard notice delivered; its other input no longer matters. */
+function hasDeliverableInput(design: Design): boolean {
+  const pending = pendingDesignInbox(design)
+  return design.status === 'discarded'
+    ? pending.some((item) => item.kind === 'status')
+    : pending.length > 0
 }
 
 export type DesignInboxWatchdogPorts = {
@@ -79,9 +87,8 @@ export function startDesignInboxWatchdog(ports: DesignInboxWatchdogPorts): {
     for (const design of ports.listDesigns()) {
       if (
         design.paneKey === null ||
-        design.status === 'discarded' ||
         design.delivery.blockedAt !== undefined ||
-        pendingDesignInbox(design).length === 0
+        !hasDeliverableInput(design)
       ) {
         continue
       }

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   extractOnlyCookedEchoSafeQueryReplies,
   extractOnlyTerminalQueryReplies,
+  isOnlyAutomaticTerminalReports,
   isTerminalQueryReply,
   needsCookedEchoSafeQueryReply
 } from './terminal-query-reply'
@@ -267,5 +268,36 @@ describe('writes that still bypass the ordered queue', () => {
     expect(ingress.answerLiveQueryReply('\x1b]11;rgb:00/00/00\x07')).toBe(true)
     expect(ingress.answerLiveQueryReply(data)).toBe(false)
     ingress.drainAndClose()
+  })
+})
+
+describe('isOnlyAutomaticTerminalReports', () => {
+  it('accepts replies and focus reports, alone or coalesced', () => {
+    for (const data of [
+      '\x1b[?997;1n',
+      '\x1b[?997;2n',
+      '\x1b[I',
+      '\x1b[O',
+      '\x1b[12;40R',
+      '\x1b[O\x1b[I\x1b[?997;1n\x1b[3;1R',
+      '\x1b]11;rgb:00/00/00\x07'
+    ]) {
+      expect(isOnlyAutomaticTerminalReports(data)).toBe(true)
+    }
+  })
+
+  it('rejects anything the user typed, even next to a report', () => {
+    for (const data of [
+      '',
+      'a',
+      '\r',
+      '\x1b',
+      '\x1b[A',
+      '\x1b[I\r',
+      'x\x1b[O',
+      '\x1b[200~I\x1b[201~'
+    ]) {
+      expect(isOnlyAutomaticTerminalReports(data)).toBe(false)
+    }
   })
 })

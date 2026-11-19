@@ -92,10 +92,10 @@ describe('DesignStore', () => {
   it('refuses a status move the transition table does not allow', () => {
     const designs = store()
     const { id } = designs.create(INPUT)
-    expect(() => designs.setStatus(id, 'done', 'user')).toThrow('design_invalid_transition')
-    expect(designs.setStatus(id, 'in-progress', 'agent').events.at(-1)).toMatchObject({
+    expect(() => designs.setStatus(id, 'done')).toThrow('design_invalid_transition')
+    expect(designs.setStatus(id, 'in-progress').events.at(-1)).toMatchObject({
       kind: 'status-changed',
-      actor: 'agent',
+      actor: 'user',
       detail: 'draft -> in-progress'
     })
     expect(store().get(id)?.status).toBe('in-progress')
@@ -128,9 +128,9 @@ describe('DesignStore', () => {
     const seen: string[] = []
     const dispose = designs.subscribe((design) => seen.push(design.status))
     const { id } = designs.create(INPUT)
-    designs.setStatus(id, 'discarded', 'user')
+    designs.setStatus(id, 'discarded')
     dispose()
-    designs.setStatus(id, 'draft', 'user')
+    designs.setStatus(id, 'draft')
     expect(seen).toEqual(['draft', 'discarded'])
   })
 })

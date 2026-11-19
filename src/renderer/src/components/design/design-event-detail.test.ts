@@ -38,7 +38,13 @@ function detail(kind: DesignEvent['kind'], value: string | undefined): string | 
 describe('designEventDetail', () => {
   it('turns host shapes into readable text from the design data', () => {
     expect(detail('canvas-set', 'v3')).toBe('Version 3')
-    expect(detail('status-changed', 'draft -> in-progress')).toBe('Draft → In progress')
+    expect(detail('status-changed', 'draft -> in-progress')).toBe(
+      'Draft → In progress · version 1 approved'
+    )
+    expect(detail('status-changed', 'in-progress -> discarded')).toBe('In progress → Discarded')
+    expect(detail('completion-requested', 'v4')).toBe('Version 4')
+    expect(detail('completion-confirmed', 'in-progress -> done')).toBe('In progress → Done')
+    expect(detail('completion-declined', 'm1')).toBe('Asked for: "Can devices skip the code?"')
     expect(detail('decision-asked', 'd1,d2')).toBe('How long is a code valid? · Which channels?')
     expect(detail('decision-answered', 'd2')).toBe('Which channels?')
     expect(detail('comment-added', 'b1')).toBe('On Code screen')
@@ -48,6 +54,15 @@ describe('designEventDetail', () => {
     expect(detail('inbox-nudged', '2')).toBe('Notice 2')
     expect(detail('delivery-blocked', '3 nudges unacked')).toBe('Unread notices: 3')
     expect(detail('agent-bound', 'rebound')).toBe('Moved to a new terminal')
+  })
+
+  it('names no approved version when nothing was drawn before the approval', () => {
+    expect(
+      designEventDetail(
+        { kind: 'status-changed', at: 0, actor: 'user', detail: 'draft -> in-progress' },
+        design
+      )
+    ).toBe('Draft → In progress')
   })
 
   it('counts asked decisions it can no longer find', () => {
@@ -60,6 +75,7 @@ describe('designEventDetail', () => {
     expect(detail('canvas-set', 'latest')).toBe('latest')
     expect(detail('decision-answered', 'unknown')).toBe('unknown')
     expect(detail('renamed', 'Old name')).toBe('Old name')
+    expect(detail('completion-declined', 'gone')).toBe('gone')
   })
 
   it('shows nothing without a detail', () => {

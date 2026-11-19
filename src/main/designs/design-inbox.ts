@@ -1,5 +1,6 @@
 // The inbox side of a design conversation: what the agent reads, acks, and how its delivery is tracked.
-import type { Design, DesignInboxEntry } from '../../shared/design-types'
+import { buildDesignStatusNotice } from '../../shared/design-agent-prompt'
+import { isDesignStatus, type Design, type DesignInboxEntry } from '../../shared/design-types'
 import { boundInbox, DesignRefusal, findBlockTitle, type DesignChange } from './design-interaction'
 
 /** Already-acked ids are accepted again so a retried ack is harmless; unknown ids are refused. */
@@ -78,6 +79,18 @@ export function expandDesignInbox(design: Design): DesignInboxEntry[] {
       continue
     }
     const base = { id: item.id, createdAt: item.createdAt }
+    if (item.kind === 'status') {
+      if (isDesignStatus(item.refId)) {
+        entries.push({
+          ...base,
+          kind: 'status',
+          status: item.refId,
+          ...(item.canvasVersion === undefined ? {} : { canvasVersion: item.canvasVersion }),
+          text: buildDesignStatusNotice(design, item.refId, item.canvasVersion)
+        })
+      }
+      continue
+    }
     if (item.kind === 'answer') {
       const decision = design.decisions.find((d) => d.id === item.refId)
       if (decision?.answer) {

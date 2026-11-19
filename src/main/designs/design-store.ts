@@ -4,7 +4,6 @@ import { writeFileAtomically } from '../codex-accounts/fs-utils'
 import {
   DESIGN_MAX_CANVAS_VERSIONS,
   DESIGN_MAX_EVENTS,
-  canTransitionDesign,
   isDesignDecisionOpen,
   latestDesignCanvas,
   type Design,
@@ -26,6 +25,12 @@ import {
   type DesignPatch
 } from './design-interaction'
 import { ackInbox, markDeliveryBlocked, recordNudge, resendDelivery } from './design-inbox'
+import {
+  changeDesignStatus,
+  confirmDone,
+  declineDone,
+  requestCompletion
+} from './design-completion'
 import { isStoredDesign, withValidHistory } from './design-store-validation'
 
 const MAX_DESIGNS = 200
@@ -33,7 +38,6 @@ const MAX_DESIGNS = 200
 export type DesignCreate = Pick<Design, 'name' | 'request' | 'agent' | 'repoId'>
 
 type DesignListener = (design: Design) => void
-type DesignActor = DesignEvent['actor']
 
 /** One small JSON file per host; the host that runs the design agent owns the design. */
 export class DesignStore {
@@ -96,16 +100,26 @@ export class DesignStore {
     return { design: next, version }
   }
 
-  setStatus(id: string, status: DesignStatus, actor: DesignActor): Design {
-    const design = this.require(id)
-    if (!canTransitionDesign(design.status, status)) {
-      throw new Error('design_invalid_transition')
-    }
-    return this.mutate(
-      design,
-      { status },
-      { kind: 'status-changed', actor, detail: `${design.status} -> ${status}` }
-    )
+  /** The user's move; a bound agent is told through a 'status' inbox item. */
+  setStatus(id: string, status: DesignStatus): Design {
+    this.apply(id, (design, at) => changeDesignStatus(design, status, at))
+    return this.require(id)
+  }
+
+  /** The agent reports the approved design implemented; a second report replaces the first. */
+  complete(id: string, summary: string): Design {
+    this.apply(id, (design, at) => requestCompletion(design, summary, at))
+    return this.require(id)
+  }
+
+  confirmDone(id: string): Design {
+    this.apply(id, (design, at) => confirmDone(design, at))
+    return this.require(id)
+  }
+
+  declineDone(id: string, text: string): Design {
+    this.apply(id, (design, at) => declineDone(design, text, at))
+    return this.require(id)
   }
 
   rename(id: string, name: string): Design {
@@ -181,9 +195,13 @@ export class DesignStore {
       at,
       ...(event.detail ? { detail: event.detail } : {})
     }
+    const { completion, clearCompletion, ...rest } = patch
+    const { completion: previous, ...base } = design
+    const kept = clearCompletion ? undefined : (completion ?? previous)
     const next: Design = {
-      ...design,
-      ...patch,
+      ...base,
+      ...rest,
+      ...(kept ? { completion: kept } : {}),
       events: [...design.events, logged].slice(-DESIGN_MAX_EVENTS),
       updatedAt: at
     }
@@ -240,6 +258,7 @@ export function toDesignListEntry(design: Design): DesignListEntry {
     messages: _messages,
     inbox: _inbox,
     delivery,
+    completion,
     ...entry
   } = design
   const latest = latestDesignCanvas(design)
@@ -248,6 +267,7 @@ export function toDesignListEntry(design: Design): DesignListEntry {
     canvasVersion: latest?.version ?? null,
     groupCount: latest?.canvas.groups.length ?? 0,
     openDecisionCount: decisions.filter(isDesignDecisionOpen).length,
-    deliveryBlocked: delivery.blockedAt !== undefined
+    deliveryBlocked: delivery.blockedAt !== undefined,
+    completionPending: completion !== undefined
   }
 }

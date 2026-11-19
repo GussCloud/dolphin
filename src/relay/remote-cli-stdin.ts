@@ -2,7 +2,8 @@
 export const DESIGN_FILE_SUBCOMMANDS: ReadonlySet<string> = new Set([
   'canvas-set',
   'decide',
-  'reply'
+  'reply',
+  'complete'
 ])
 
 export function shouldReadRemoteCliStdin(argv: string[]): boolean {

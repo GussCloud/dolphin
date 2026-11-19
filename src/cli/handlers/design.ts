@@ -31,7 +31,7 @@ async function readProcessStdin(): Promise<string> {
 }
 
 /**
- * Canvas, decisions and replies travel in a file, never argv: shells mangle JSON and argv length is bounded.
+ * Canvas, decisions, replies and completions travel in a file, never argv: shells mangle JSON and argv length is bounded.
  * `-` reads stdin, which is how the SSH relay forwards a file it read on the remote host.
  */
 export async function readDesignCanvasFile(
@@ -62,6 +62,9 @@ function formatInboxEntry(entry: DesignInboxEntry): string {
   const block = entry.block
     ? ` on block ${entry.block.id}${entry.block.title ? ` (${entry.block.title})` : ''}`
     : ''
+  if (entry.kind === 'status') {
+    return `${entry.id} status ${entry.status}: ${entry.text}`
+  }
   if (entry.kind === 'comment') {
     return `${entry.id} comment ${entry.messageId}${block}: ${entry.text}`
   }
@@ -162,16 +165,15 @@ export const DESIGN_HANDLERS: Record<string, CommandHandler> = {
     )
   },
 
-  'design status': async ({ flags, client, cwd, json }) => {
-    // Why only with --from: without it the move is the user's, and needs no terminal identity.
-    const from = flags.has('from')
-      ? await resolveCoordinatorTerminalHandle(flags, cwd, client)
-      : undefined
-    const result = await client.call<DesignResult>('design.setStatus', {
-      id: getRequiredStringFlag(flags, 'id'),
-      status: getRequiredStringFlag(flags, 'status'),
-      ...(from ? { from } : {})
-    })
-    printResult(result, json, (r) => `Design ${r.design.id} is ${r.design.status}.`)
+  'design complete': async ({ flags, client, cwd, json }) => {
+    const id = getRequiredStringFlag(flags, 'id')
+    const completion = await readDesignCanvasFile(getRequiredStringFlag(flags, 'file'), cwd)
+    const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
+    const result = await client.call<DesignResult>('design.complete', { from, id, completion })
+    printResult(
+      result,
+      json,
+      (r) => `Design ${r.design.id} reported complete; the user confirms it or sends what is left.`
+    )
   }
 }

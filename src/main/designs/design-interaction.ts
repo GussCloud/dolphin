@@ -42,7 +42,11 @@ export type DesignPatch = Partial<
     | 'inbox'
     | 'delivery'
   >
->
+> & {
+  completion?: Design['completion']
+  /** Removes a pending completion; the field is omitted, never stored as null. */
+  clearCompletion?: true
+}
 export type DesignEventInput = Omit<DesignEvent, 'at' | 'detail'> & {
   detail?: string | undefined
 }
@@ -68,6 +72,10 @@ function newId(prefix: string, taken: ReadonlySet<string>): string {
       return id
     }
   }
+}
+
+export function newDesignInboxId(design: Design): string {
+  return newId('i', takenIds(design))
 }
 
 function takenIds(design: Design): Set<string> {
@@ -107,14 +115,17 @@ function boundDecisions(decisions: DesignDecision[]): DesignDecision[] {
   return decisions.filter((decision) => !dropped.has(decision))
 }
 
-/** Pending items whose content aged out go too: there is nothing left for the agent to read. */
+/**
+ * Pending items whose content aged out go too: there is nothing left for the agent to read. A
+ * 'status' item carries its content itself, so it has no reference to age out.
+ */
 export function boundInbox(
   inbox: DesignInboxItem[],
   decisions: DesignDecision[],
   messages: DesignMessage[]
 ): DesignInboxItem[] {
   const refs = new Set([...decisions.map((d) => d.id), ...messages.map((m) => m.id)])
-  const live = inbox.filter((item) => refs.has(item.refId))
+  const live = inbox.filter((item) => item.kind === 'status' || refs.has(item.refId))
   const acked = live.filter((item) => item.ackedAt !== undefined)
   const dropped = new Set(acked.slice(0, Math.max(0, acked.length - DESIGN_MAX_ACKED_INBOX_ITEMS)))
   return live.filter((item) => !dropped.has(item))

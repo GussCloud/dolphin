@@ -42,13 +42,16 @@ export function DesignThread({
   blockId,
   placeholder,
   onSend,
-  autoFocus = false
+  autoFocus = false,
+  readOnlyHint
 }: {
   messages: readonly DesignMessage[]
   blockId: string | undefined
   placeholder: string
   onSend: (text: string) => Promise<void>
   autoFocus?: boolean
+  /** Set when the composer must not send; shown in its place. */
+  readOnlyHint?: string
 }): React.JSX.Element {
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
@@ -88,39 +91,45 @@ export function DesignThread({
           {translate('auto.components.design.thread.empty', 'No messages yet.')}
         </p>
       )}
-      <div className="space-y-2">
-        <Textarea
-          value={text}
-          autoFocus={autoFocus}
-          maxLength={DESIGN_MESSAGE_MAX_CHARS}
-          disabled={sending}
-          placeholder={placeholder}
-          onChange={(event) => setText(event.target.value)}
-          onKeyDown={(event) => {
-            const isMac = navigator.userAgent.includes('Mac')
-            if (event.key === 'Enter' && (isMac ? event.metaKey : event.ctrlKey)) {
-              event.preventDefault()
-              void send()
-            }
-          }}
-          className="min-h-16"
-        />
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            size="sm"
-            disabled={sending || text.trim().length === 0}
-            onClick={() => void send()}
-          >
-            {sending ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <Send className="size-4" />
-            )}
-            {translate('auto.components.design.thread.send', 'Send')}
-          </Button>
+      {readOnlyHint ? (
+        <p data-design-thread-read-only="" className="text-xs text-muted-foreground">
+          {readOnlyHint}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          <Textarea
+            value={text}
+            autoFocus={autoFocus}
+            maxLength={DESIGN_MESSAGE_MAX_CHARS}
+            disabled={sending}
+            placeholder={placeholder}
+            onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              const isMac = navigator.userAgent.includes('Mac')
+              if (event.key === 'Enter' && (isMac ? event.metaKey : event.ctrlKey)) {
+                event.preventDefault()
+                void send()
+              }
+            }}
+            className="min-h-16"
+          />
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              disabled={sending || text.trim().length === 0}
+              onClick={() => void send()}
+            >
+              {sending ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <Send className="size-4" />
+              )}
+              {translate('auto.components.design.thread.send', 'Send')}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -92,7 +92,10 @@ export const DESIGN_EVENT_KINDS = [
   'inbox-nudged',
   'inbox-acked',
   'delivery-blocked',
-  'delivery-resent'
+  'delivery-resent',
+  'completion-requested',
+  'completion-confirmed',
+  'completion-declined'
 ] as const
 export type DesignEventKind = (typeof DESIGN_EVENT_KINDS)[number]
 
@@ -138,15 +141,18 @@ export type DesignMessage = {
   at: number
 }
 
-export const DESIGN_INBOX_KINDS = ['answer', 'comment'] as const
+/** 'status' tells the agent the user moved the design (approved, discarded, reopened). */
+export const DESIGN_INBOX_KINDS = ['answer', 'comment', 'status'] as const
 export type DesignInboxKind = (typeof DESIGN_INBOX_KINDS)[number]
 
 /** User input waiting for the agent: the content stays here, the agent is only nudged to read it. */
 export type DesignInboxItem = {
   id: string
   kind: DesignInboxKind
-  /** Decision id for 'answer', message id for 'comment'. */
+  /** Decision id for 'answer', message id for 'comment', the new status for 'status'. */
   refId: string
+  /** For 'status' → in-progress: the canvas version the user approved. */
+  canvasVersion?: number
   createdAt: number
   ackedAt?: number
 }
@@ -157,6 +163,15 @@ export type DesignDelivery = {
   lastNudgeAt?: number
   /** Set after DESIGN_INBOX_MAX_NUDGES unacked nudges; cleared by an ack or a manual resend. */
   blockedAt?: number
+}
+
+export const DESIGN_COMPLETION_SUMMARY_MAX_CHARS = 4_000
+
+export type DesignCompletion = {
+  summary: string
+  at: number
+  /** The approved canvas version the agent implemented. */
+  canvasVersion: number | null
 }
 
 export type Design = {
@@ -178,6 +193,8 @@ export type Design = {
   messages: DesignMessage[]
   inbox: DesignInboxItem[]
   delivery: DesignDelivery
+  /** The agent says the approved design is implemented; the user confirms (→ done) or declines. */
+  completion?: DesignCompletion
   createdAt: number
   updatedAt: number
 }
@@ -185,12 +202,13 @@ export type Design = {
 /** List rows skip canvas history and events so `design.list` stays small. */
 export type DesignListEntry = Omit<
   Design,
-  'canvasVersions' | 'events' | 'decisions' | 'messages' | 'inbox' | 'delivery'
+  'canvasVersions' | 'events' | 'decisions' | 'messages' | 'inbox' | 'delivery' | 'completion'
 > & {
   canvasVersion: number | null
   groupCount: number
   openDecisionCount: number
   deliveryBlocked: boolean
+  completionPending: boolean
 }
 
 /** What `design.inbox` returns per pending item: the referenced content, resolved for the agent. */
@@ -208,6 +226,8 @@ export type DesignInboxEntry = {
       note?: string
     }
   | { kind: 'comment'; messageId: string; text: string }
+  /** `text` is what the agent must do now that the user moved the design. */
+  | { kind: 'status'; status: DesignStatus; canvasVersion?: number; text: string }
 )
 
 export function isDesignDecisionOpen(decision: Pick<DesignDecision, 'answer'>): boolean {

@@ -50,6 +50,14 @@ describe('client terminal input clock', () => {
     })
     expect(readClientTerminalInputAt('pty-stream-reply')).toBeUndefined()
 
+    await sendTerminalStreamInput(stubRuntime('pty-stream-focus'), {
+      terminal: 'terminal-1',
+      text: '\x1b[I\x1b[?997;2n',
+      client: { id: 'phone-1', type: 'mobile' },
+      isMobile: false
+    })
+    expect(readClientTerminalInputAt('pty-stream-focus')).toBeUndefined()
+
     await sendTerminalStreamInput(stubRuntime('pty-stream'), {
       terminal: 'terminal-1',
       text: 'c',

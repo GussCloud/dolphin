@@ -167,3 +167,22 @@ export function needsCookedEchoSafeQueryReply(data: string): boolean {
   const replies = extractOnlyCookedEchoSafeQueryReplies(data)
   return replies !== null && replies.length === 1
 }
+
+const FOCUS_REPORTS = [`${ESC}[I`, `${ESC}[O`] as const
+
+/**
+ * True when `data` is only bytes the emulator sent on its own — query replies and focus in/out
+ * reports, possibly coalesced — so it must not count as the user typing.
+ */
+export function isOnlyAutomaticTerminalReports(data: string): boolean {
+  let offset = 0
+  while (offset < data.length) {
+    const focus = FOCUS_REPORTS.find((report) => data.startsWith(report, offset))
+    const end = focus ? offset + focus.length : terminalQueryReplyEnd(data, offset)
+    if (end === -1) {
+      return false
+    }
+    offset = end
+  }
+  return data.length > 0
+}

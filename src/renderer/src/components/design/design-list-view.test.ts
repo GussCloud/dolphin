@@ -27,7 +27,8 @@ function entry(id: string, status: DesignStatus, updatedAt: number): DesignListE
     canvasVersion: null,
     groupCount: 0,
     openDecisionCount: 0,
-    deliveryBlocked: false
+    deliveryBlocked: false,
+    completionPending: false
   }
 }
 

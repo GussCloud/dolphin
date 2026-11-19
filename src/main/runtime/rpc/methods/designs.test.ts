@@ -75,15 +75,17 @@ describe('design.* RPC methods', () => {
       design: { paneKey: PANE_A, status: 'draft' },
       instructions: expect.stringContaining('Pay by card')
     })
+    expect(result).toHaveProperty('instructions', expect.stringContaining('Do not change any file'))
     expect(store.get(id)?.events.map((event) => event.kind)).toEqual(['created', 'agent-bound'])
   })
 
   it('binds a done design without reopening it', async () => {
     const id = await createDesign()
-    store.setStatus(id, 'in-progress', 'user')
-    store.setStatus(id, 'done', 'user')
+    store.setStatus(id, 'in-progress')
+    store.setStatus(id, 'done')
     expect(await call('design.start', { from: 'term_a', id })).toMatchObject({
-      design: { paneKey: PANE_A, status: 'done' }
+      design: { paneKey: PANE_A, status: 'done' },
+      instructions: expect.stringContaining('confirmed the design is done')
     })
   })
 
@@ -145,7 +147,7 @@ describe('design.* RPC methods', () => {
     )
     await expect(
       call('design.setStatus', { id, status: 'discarded', from: 'term_a' })
-    ).rejects.toThrow(/not bound/)
+    ).rejects.toThrow(/Only the user moves design .*dolphin design complete/)
     expect(await call('design.setStatus', { id, status: 'discarded' })).toMatchObject({
       design: { status: 'discarded' }
     })

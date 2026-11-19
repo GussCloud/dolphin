@@ -19,7 +19,7 @@ import { OrchestrationError } from '../../orchestration/orchestration-error'
 import { defineMethod } from '../core'
 import { parseDesignFile, requireBoundDesign, requireDesign } from './designs'
 
-function refusing<T>(run: () => T): T {
+export function refusing<T>(run: () => T): T {
   try {
     return run()
   } catch (error) {

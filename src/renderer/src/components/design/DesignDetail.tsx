@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react
 import {
   AlertTriangle,
   ArrowLeft,
+  History,
   LoaderCircle,
   PanelRightClose,
   PanelRightOpen,
@@ -17,18 +18,18 @@ import { toRuntimeExecutionHostId } from '../../../../shared/execution-host'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   isDesignDecisionOpen,
-  latestDesignCanvas,
   type Design,
-  type DesignBlock,
-  type DesignStatus
+  type DesignBlock
 } from '../../../../shared/design-types'
 import {
   answerDesignDecision,
   commentOnDesign,
+  confirmDesignDone,
+  declineDesignDone,
   resendDesignInbox,
-  setDesignStatus,
   showDesign
 } from './design-index'
+import { designApprovedVersion, designCanvasView } from './design-canvas-history'
 import { isDesignAgentMissing, useDesignMinuteClock } from './design-agent-missing'
 import { designBlockActivity } from './design-conversation'
 import { runDesignMutation } from './design-mutation'
@@ -39,8 +40,10 @@ import {
 import { DesignAgentMissingActions, DesignAgentMissingBadge } from './DesignAgentMissing'
 import { DesignSidePanel, type DesignSidePanelTab } from './DesignSidePanel'
 import { DesignThread } from './DesignThread'
-import { designStatusActions } from './design-status-actions'
 import { DesignStatusBadge } from './DesignStatusBadge'
+import { DesignStatusControls } from './DesignStatusControls'
+import { DesignCompletionBanner, DesignImplementingNotice } from './DesignCompletionBanner'
+import { DesignVersionPicker } from './DesignVersionPicker'
 import { designAgentLabel, formatDesignTimestamp } from './design-format'
 
 const DesignCanvas = lazy(() => import('./DesignCanvas'))
@@ -73,7 +76,13 @@ export function DesignDetail({
   onBack: () => void
 }): React.JSX.Element {
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
-  const [pendingStatus, setPendingStatus] = useState<DesignStatus | null>(null)
+  /** An older canvas version the user is looking at; keyed by design so another design starts current. */
+  const [picked, setPicked] = useState<{ designId: string; version: number } | null>(null)
+  const selectedVersion = picked?.designId === id ? picked.version : null
+  const setSelectedVersion = useCallback(
+    (version: number | null) => setPicked(version === null ? null : { designId: id, version }),
+    [id]
+  )
   const environmentId = useAppStore((s) => s.settings?.activeRuntimeEnvironmentId ?? null)
   const [panelOpen, setPanelOpen] = useState(true)
   const [panelTab, setPanelTab] = useState<DesignSidePanelTab>('decisions')
@@ -93,7 +102,13 @@ export function DesignDetail({
   }, [id, listUpdatedAt])
 
   const design = state.kind === 'ready' ? state.design : null
-  const canvas = design ? latestDesignCanvas(design) : null
+  const canvasView = design ? designCanvasView(design.canvasVersions, selectedVersion) : null
+  const historical = canvasView?.historical ?? false
+  const approvedVersion = design ? designApprovedVersion(design) : null
+  const reload = useCallback(
+    async () => setState({ kind: 'ready', design: await showDesign(id) }),
+    [id]
+  )
 
   // Why: a failed mutation toasts and rethrows so the composer keeps the user's text.
   const mutate = useCallback(
@@ -122,6 +137,11 @@ export function DesignDetail({
     () => mutate(() => resendDesignInbox(id)).catch(() => {}),
     [id, mutate]
   )
+  const confirmDone = useCallback(() => mutate(() => confirmDesignDone(id)), [id, mutate])
+  const declineDone = useCallback(
+    (text: string) => mutate(() => declineDesignDone({ id, text })),
+    [id, mutate]
+  )
 
   const messages = design?.messages
   const activitySource = useMemo(
@@ -144,24 +164,20 @@ export function DesignDetail({
             'auto.components.design.thread.blockPlaceholder',
             'Ask or request a change to this block'
           )}
+          readOnlyHint={
+            historical
+              ? translate(
+                  'auto.components.design.version.threadReadOnly',
+                  'Comments go to the current version. Return to it to send one.'
+                )
+              : undefined
+          }
           onSend={(text) => comment({ blockId: block.id, text })}
         />
       )
     }
-  }, [activitySource, comment, highlightedBlockId, messages, openBlockId])
+  }, [activitySource, comment, highlightedBlockId, historical, messages, openBlockId])
   const openDecisionCount = design?.decisions.filter(isDesignDecisionOpen).length ?? 0
-
-  const moveTo = async (status: DesignStatus): Promise<void> => {
-    setPendingStatus(status)
-    try {
-      await setDesignStatus(id, status)
-      setState({ kind: 'ready', design: await showDesign(id) })
-    } catch (error) {
-      toast.error(errorMessage(error))
-    } finally {
-      setPendingStatus(null)
-    }
-  }
 
   const openWorktree = (worktreeId: string): void => {
     const opened = activateAndRevealWorktree(
@@ -202,21 +218,7 @@ export function DesignDetail({
                   {translate('auto.components.design.detail.openWorktree', 'Open workspace')}
                 </Button>
               ) : null}
-              {designStatusActions(design.status).map((action) => (
-                <Button
-                  key={action.to}
-                  type="button"
-                  size="sm"
-                  variant={action.variant}
-                  disabled={pendingStatus !== null}
-                  onClick={() => void moveTo(action.to)}
-                >
-                  {pendingStatus === action.to ? (
-                    <LoaderCircle className="size-4 animate-spin" />
-                  ) : null}
-                  {action.label}
-                </Button>
-              ))}
+              <DesignStatusControls design={design} onMoved={reload} />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -265,24 +267,37 @@ export function DesignDetail({
         <>
           <div className="shrink-0 space-y-1 text-xs text-muted-foreground">
             <p className="line-clamp-3 whitespace-pre-wrap text-sm text-foreground">
-              {canvas?.canvas.summary ?? design.request}
+              {canvasView?.shown.canvas.summary ?? design.request}
             </p>
-            <p>
-              {[
-                designAgentLabel(design.agent),
-                canvas
-                  ? translate('auto.components.design.detail.version', 'Version {{value0}}', {
-                      value0: canvas.version
-                    })
-                  : null,
-                translate('auto.components.design.list.updated', 'Updated {{value0}}', {
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>{designAgentLabel(design.agent)}</span>
+              {canvasView ? (
+                <DesignVersionPicker
+                  versions={design.canvasVersions}
+                  shownVersion={canvasView.shown.version}
+                  currentVersion={canvasView.current.version}
+                  approvedVersion={approvedVersion}
+                  onSelect={setSelectedVersion}
+                />
+              ) : null}
+              <span>
+                {translate('auto.components.design.list.updated', 'Updated {{value0}}', {
                   value0: formatDesignTimestamp(design.updatedAt)
-                })
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
+                })}
+              </span>
+              {design.status === 'in-progress' && !design.completion ? (
+                <DesignImplementingNotice approvedVersion={approvedVersion} />
+              ) : null}
+            </div>
           </div>
+          {design.status === 'in-progress' && design.completion ? (
+            <DesignCompletionBanner
+              completion={design.completion}
+              approvedVersion={approvedVersion}
+              onConfirm={confirmDone}
+              onDecline={declineDone}
+            />
+          ) : null}
           {isDesignAgentMissing(design, now) ? (
             <div className="shrink-0 rounded-xl border border-status-warning-border bg-status-warning-background px-3 py-2">
               <DesignAgentMissingActions
@@ -308,35 +323,61 @@ export function DesignDetail({
               {translate(
                 'auto.components.design.panel.openDecisions',
                 '{{value0}} decisions waiting for you',
-                {
-                  value0: openDecisionCount
-                }
+                { value0: openDecisionCount }
               )}
             </Button>
           ) : null}
           <div className="flex min-h-0 flex-1 gap-3">
-            <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-border">
-              {canvas ? (
-                <Suspense
-                  fallback={
-                    <CanvasPlaceholder>
-                      <LoaderCircle className="size-4 animate-spin" />
-                    </CanvasPlaceholder>
-                  }
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border">
+              {canvasView?.historical ? (
+                <div
+                  data-design-historical=""
+                  className="flex shrink-0 items-center gap-2 border-b border-border bg-muted px-3 py-1.5 text-xs text-muted-foreground"
                 >
-                  <DesignCanvasInteractionContext.Provider value={interaction}>
-                    <DesignCanvas canvas={canvas.canvas} version={canvas.version} />
-                  </DesignCanvasInteractionContext.Provider>
-                </Suspense>
-              ) : (
-                <CanvasPlaceholder>
-                  <PenTool className="size-4" />
-                  {translate(
-                    'auto.components.design.detail.noCanvas',
-                    'The agent has not drawn this design yet.'
-                  )}
-                </CanvasPlaceholder>
-              )}
+                  <History className="size-3.5 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    {translate(
+                      'auto.components.design.version.viewing',
+                      'Viewing version {{value0}} (current: {{value1}})',
+                      { value0: canvasView.shown.version, value1: canvasView.current.version }
+                    )}
+                  </span>
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="outline"
+                    onClick={() => setSelectedVersion(null)}
+                  >
+                    {translate('auto.components.design.version.backToCurrent', 'Back to current')}
+                  </Button>
+                </div>
+              ) : null}
+              <div className="min-h-0 flex-1">
+                {canvasView ? (
+                  <Suspense
+                    fallback={
+                      <CanvasPlaceholder>
+                        <LoaderCircle className="size-4 animate-spin" />
+                      </CanvasPlaceholder>
+                    }
+                  >
+                    <DesignCanvasInteractionContext.Provider value={interaction}>
+                      <DesignCanvas
+                        canvas={canvasView.shown.canvas}
+                        version={canvasView.shown.version}
+                      />
+                    </DesignCanvasInteractionContext.Provider>
+                  </Suspense>
+                ) : (
+                  <CanvasPlaceholder>
+                    <PenTool className="size-4" />
+                    {translate(
+                      'auto.components.design.detail.noCanvas',
+                      'The agent has not drawn this design yet.'
+                    )}
+                  </CanvasPlaceholder>
+                )}
+              </div>
             </div>
             {panelOpen ? (
               <DesignSidePanel

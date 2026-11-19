@@ -24,14 +24,21 @@ describe('designOpeningViewport', () => {
     expect(viewport.zoom).toBe(1)
   })
 
-  it('holds the readable zoom and anchors a long flow at its first column', () => {
-    const cards = Array.from({ length: 13 }, (_, index) => card(index * 480, index === 0 ? 100 : 0))
-    const bounds = { x: -24, y: 0, width: 13 * 480, height: 400 }
+  it('holds the readable zoom, anchors a long flow at its left edge and centers its height', () => {
+    // The first card is short and the branches run below it: the flow's middle is at y=300, not 100.
+    const cards = Array.from({ length: 13 }, (_, index) => card(index * 480, index === 0 ? 0 : 400))
+    const bounds = { x: -24, y: 0, width: 13 * 480, height: 600 }
     const viewport = designOpeningViewport({ ...base, bounds, cards })
     expect(viewport.zoom).toBe(0.6)
     expect(viewport.x + bounds.x * viewport.zoom).toBe(32)
-    const columnCenter = viewport.y + (100 + 100) * viewport.zoom
-    expect(columnCenter).toBeCloseTo(400)
+    expect(viewport.y + 300 * viewport.zoom).toBeCloseTo(400)
+  })
+
+  it('centers the first column when the whole flow is too tall to fit', () => {
+    const cards = [card(0, 100), card(480, 0, 1600)]
+    const bounds = { x: 0, y: 0, width: 13 * 480, height: 1600 }
+    const viewport = designOpeningViewport({ ...base, bounds, cards })
+    expect(viewport.y + 200 * viewport.zoom).toBeCloseTo(400)
   })
 
   it('starts a first column taller than the screen at its top', () => {

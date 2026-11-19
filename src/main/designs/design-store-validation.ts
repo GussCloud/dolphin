@@ -36,12 +36,21 @@ const StoredMessageSchema = z.object({
   at: z.number()
 })
 
-const StoredInboxItemSchema = z.object({
-  id: z.string().min(1),
-  kind: z.enum(DESIGN_INBOX_KINDS),
-  refId: z.string().min(1),
-  createdAt: z.number(),
-  ackedAt: z.number().optional()
+const StoredInboxItemSchema = z
+  .object({
+    id: z.string().min(1),
+    kind: z.enum(DESIGN_INBOX_KINDS),
+    refId: z.string().min(1),
+    canvasVersion: z.number().int().optional(),
+    createdAt: z.number(),
+    ackedAt: z.number().optional()
+  })
+  .refine((item) => item.kind !== 'status' || isDesignStatus(item.refId))
+
+const StoredCompletionSchema = z.object({
+  summary: z.string().min(1),
+  at: z.number(),
+  canvasVersion: z.number().int().nullable()
 })
 
 const StoredDeliverySchema = z.object({
@@ -71,11 +80,15 @@ function parsedOrNull<T>(schema: z.ZodType<T>, value: unknown): T | null {
 }
 
 /** A design as phase 1 wrote it; the conversation fields are filled in by withValidHistory. */
-export type StoredDesignCore = Omit<Design, 'decisions' | 'messages' | 'inbox' | 'delivery'> & {
+export type StoredDesignCore = Omit<
+  Design,
+  'decisions' | 'messages' | 'inbox' | 'delivery' | 'completion'
+> & {
   decisions?: unknown
   messages?: unknown
   inbox?: unknown
   delivery?: unknown
+  completion?: unknown
 }
 
 export function withValidHistory(design: StoredDesignCore): Design {
@@ -91,8 +104,13 @@ export function withValidHistory(design: StoredDesignCore): Design {
   const delivery: DesignDelivery = parsedOrNull(StoredDeliverySchema, design.delivery) ?? {
     nudges: 0
   }
+  // Why the status check: a completion only exists while the design is being implemented.
+  const completion =
+    design.status === 'in-progress' ? parsedOrNull(StoredCompletionSchema, design.completion) : null
+  const { completion: _stored, ...core } = design
   return {
-    ...design,
+    ...core,
+    ...(completion ? { completion } : {}),
     canvasVersions: validEntries(design.canvasVersions, toStoredCanvasVersion),
     events: design.events.filter(isStoredEvent),
     decisions,
