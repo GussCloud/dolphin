@@ -162,4 +162,12 @@ describe('design conversation RPC methods', () => {
       code: 'design_agent_not_bound'
     })
   })
+
+  it('resend works on a delivery that is not blocked and asks for a forced nudge', async () => {
+    store.addComment(id, { text: 'Hi' })
+    const result = await call('design.resend', { id })
+    expect(result).toMatchObject({
+      design: { delivery: { nudges: 0, forceRequestedAt: expect.any(Number) } }
+    })
+  })
 })

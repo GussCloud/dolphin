@@ -214,6 +214,25 @@ describe('DesignStore conversation', () => {
     expect(design.events.at(-1)).toMatchObject({ kind: 'delivery-resent', actor: 'user' })
   })
 
+  it('resend records a one-shot force request only while items are pending, kept across a reload', () => {
+    const designs = store()
+    const id = designWithCanvas(designs)
+    designs.resend(id)
+    expect(designs.get(id)!.delivery).toEqual({ nudges: 0 })
+    designs.addComment(id, { text: 'x' })
+    designs.resend(id)
+    const forced = store().get(id)!.delivery
+    expect(forced.forceRequestedAt).toEqual(expect.any(Number))
+    designs.recordNudge(id)
+    expect(store().get(id)!.delivery.forceRequestedAt).toBeUndefined()
+    designs.resend(id)
+    designs.ack(
+      id,
+      pendingDesignInbox(designs.get(id)!).map((item) => item.id)
+    )
+    expect(store().get(id)!.delivery).toEqual({ nudges: 0 })
+  })
+
   it('bounds messages and acked inbox history but keeps pending items', () => {
     const designs = store()
     const id = designWithCanvas(designs)

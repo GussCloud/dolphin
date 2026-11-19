@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import type { DesignDecision, DesignMessage } from '../../../../shared/design-types'
+import {
+  DESIGN_INBOX_UNNOTIFIED_HINT_MS,
+  type DesignDecision,
+  type DesignMessage
+} from '../../../../shared/design-types'
 import {
   designBlockActivity,
   designDeliveryState,
   designThread,
+  shouldOfferDesignNotifyNow,
   sortDesignDecisions
 } from './design-conversation'
 
@@ -88,7 +93,9 @@ describe('designDeliveryState', () => {
   const item = { id: 'i', kind: 'comment' as const, refId: 'm', createdAt: 1 }
 
   it('reports blocked delivery over pending items', () => {
-    expect(designDeliveryState({ inbox: [item], delivery: { nudges: 3, blockedAt: 9 } })).toEqual({
+    expect(
+      designDeliveryState({ inbox: [item], delivery: { nudges: 3, blockedAt: 9 } }, 2)
+    ).toEqual({
       kind: 'blocked',
       pending: 1
     })
@@ -96,19 +103,67 @@ describe('designDeliveryState', () => {
 
   it('counts only unacked items as pending', () => {
     expect(
-      designDeliveryState({
-        inbox: [item, { ...item, id: 'j', ackedAt: 2 }],
-        delivery: { nudges: 1 }
-      })
-    ).toEqual({ kind: 'pending', pending: 1 })
+      designDeliveryState(
+        {
+          inbox: [item, { ...item, id: 'j', ackedAt: 2 }],
+          delivery: { nudges: 1 }
+        },
+        2
+      )
+    ).toEqual({ kind: 'pending', pending: 1, offerNotifyNow: false })
     expect(
-      designDeliveryState({ inbox: [{ ...item, ackedAt: 2 }], delivery: { nudges: 0 } })
+      designDeliveryState({ inbox: [{ ...item, ackedAt: 2 }], delivery: { nudges: 0 } }, 2)
     ).toEqual({
       kind: 'read'
     })
   })
 
   it('claims nothing when the user never sent anything', () => {
-    expect(designDeliveryState({ inbox: [], delivery: { nudges: 0 } })).toEqual({ kind: 'idle' })
+    expect(designDeliveryState({ inbox: [], delivery: { nudges: 0 } }, 2)).toEqual({ kind: 'idle' })
+  })
+})
+
+describe('shouldOfferDesignNotifyNow', () => {
+  const item = { id: 'i', kind: 'comment' as const, refId: 'm', createdAt: 1_000 }
+  const late = 1_000 + DESIGN_INBOX_UNNOTIFIED_HINT_MS + 1
+
+  it('offers a notice for input pending past the delay that no nudge reached', () => {
+    expect(shouldOfferDesignNotifyNow({ inbox: [item], delivery: { nudges: 0 } }, late)).toBe(true)
+    expect(designDeliveryState({ inbox: [item], delivery: { nudges: 0 } }, late)).toEqual({
+      kind: 'pending',
+      pending: 1,
+      offerNotifyNow: true
+    })
+  })
+
+  it('measures from the oldest pending item, ignoring acked ones', () => {
+    const fresh = { ...item, id: 'j', createdAt: late - 10 }
+    const acked = { ...item, id: 'k', createdAt: 0, ackedAt: 5 }
+    expect(
+      shouldOfferDesignNotifyNow({ inbox: [acked, fresh], delivery: { nudges: 0 } }, late)
+    ).toBe(false)
+    expect(
+      shouldOfferDesignNotifyNow({ inbox: [fresh, item], delivery: { nudges: 0 } }, late)
+    ).toBe(true)
+  })
+
+  it('stays quiet before the delay, after a nudge, while blocked, or once requested', () => {
+    expect(
+      shouldOfferDesignNotifyNow(
+        { inbox: [item], delivery: { nudges: 0 } },
+        1_000 + DESIGN_INBOX_UNNOTIFIED_HINT_MS
+      )
+    ).toBe(false)
+    expect(shouldOfferDesignNotifyNow({ inbox: [item], delivery: { nudges: 1 } }, late)).toBe(false)
+    expect(
+      shouldOfferDesignNotifyNow({ inbox: [item], delivery: { nudges: 0, blockedAt: 2 } }, late)
+    ).toBe(false)
+    expect(
+      shouldOfferDesignNotifyNow(
+        { inbox: [item], delivery: { nudges: 0, forceRequestedAt: 2 } },
+        late
+      )
+    ).toBe(false)
+    expect(shouldOfferDesignNotifyNow({ inbox: [], delivery: { nudges: 0 } }, late)).toBe(false)
   })
 })

@@ -173,6 +173,55 @@ describe('design inbox watchdog', () => {
     expect(sent).toHaveLength(1)
   })
 
+  it('a manual resend nudges once an agent whose status is unreadable, then clears the request', async () => {
+    const check = start()
+    const id = boundDesign()
+    status = null
+    store.addComment(id, { text: 'x' })
+    await check()
+    expect(sent).toEqual([])
+    store.resend(id)
+    await settle()
+    expect(sent).toHaveLength(1)
+    expect(store.get(id)!.delivery).toEqual({ nudges: 1, lastNudgeAt: clock })
+    expect(store.get(id)!.events.map((e) => e.kind)).toContain('delivery-resent')
+    clock += DESIGN_INBOX_ACK_WAIT_MS * 2
+    await check()
+    expect(sent).toHaveLength(1)
+  })
+
+  it('a forced resend still waits while the agent works, asks permission, or the user drafts', async () => {
+    const check = start()
+    const id = boundDesign()
+    status = 'working'
+    store.addComment(id, { text: 'x' })
+    store.resend(id)
+    await check()
+    status = 'permission'
+    await check()
+    status = null
+    composing = 500
+    await check()
+    expect(sent).toEqual([])
+    expect(store.get(id)!.delivery.forceRequestedAt).toBeDefined()
+    composing = null
+    await check()
+    expect(sent).toHaveLength(1)
+    expect(store.get(id)!.delivery.forceRequestedAt).toBeUndefined()
+  })
+
+  it('keeps the force request when the forced nudge could not be written', async () => {
+    const check = start()
+    const id = boundDesign()
+    status = null
+    sendResult = false
+    store.addComment(id, { text: 'x' })
+    store.resend(id)
+    await check()
+    expect(sent.length).toBeGreaterThan(0)
+    expect(store.get(id)!.delivery).toMatchObject({ nudges: 0, forceRequestedAt: clock })
+  })
+
   it('an ack resets the count so new input is announced without waiting', async () => {
     const check = start()
     const id = boundDesign()

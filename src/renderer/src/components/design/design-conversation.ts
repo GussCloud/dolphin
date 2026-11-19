@@ -1,4 +1,5 @@
 import {
+  DESIGN_INBOX_UNNOTIFIED_HINT_MS,
   isDesignDecisionOpen,
   pendingDesignInbox,
   type Design,
@@ -72,21 +73,43 @@ export function sortDesignDecisions(decisions: readonly DesignDecision[]): Desig
 
 export type DesignDeliveryState =
   | { kind: 'blocked'; pending: number }
-  | { kind: 'pending'; pending: number }
+  /** offerNotifyNow: no notice reached the agent yet, so the user may ask for one at once. */
+  | { kind: 'pending'; pending: number; offerNotifyNow: boolean }
   | { kind: 'read' }
   /** Nothing was ever sent, so there is nothing to claim about reading. */
   | { kind: 'idle' }
 
+/** Input pending past the hint delay with no nudge typed or requested: the agent may never report idle. */
+export function shouldOfferDesignNotifyNow(
+  design: Pick<Design, 'inbox' | 'delivery'>,
+  now: number
+): boolean {
+  const { delivery } = design
+  if (
+    delivery.blockedAt !== undefined ||
+    delivery.nudges > 0 ||
+    delivery.forceRequestedAt !== undefined
+  ) {
+    return false
+  }
+  const pending = pendingDesignInbox(design)
+  return (
+    pending.length > 0 &&
+    now - Math.min(...pending.map((item) => item.createdAt)) > DESIGN_INBOX_UNNOTIFIED_HINT_MS
+  )
+}
+
 /** What the banner says about the user's input the agent has not acknowledged yet. */
 export function designDeliveryState(
-  design: Pick<Design, 'inbox' | 'delivery'>
+  design: Pick<Design, 'inbox' | 'delivery'>,
+  now: number
 ): DesignDeliveryState {
   const pending = pendingDesignInbox(design).length
   if (design.delivery.blockedAt !== undefined) {
     return { kind: 'blocked', pending }
   }
   if (pending > 0) {
-    return { kind: 'pending', pending }
+    return { kind: 'pending', pending, offerNotifyNow: shouldOfferDesignNotifyNow(design, now) }
   }
   return design.inbox.length > 0 ? { kind: 'read' } : { kind: 'idle' }
 }

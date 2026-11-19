@@ -56,7 +56,8 @@ const StoredCompletionSchema = z.object({
 const StoredDeliverySchema = z.object({
   nudges: z.number().int().min(0),
   lastNudgeAt: z.number().optional(),
-  blockedAt: z.number().optional()
+  blockedAt: z.number().optional(),
+  forceRequestedAt: z.number().optional()
 })
 
 /** Parses each entry on its own, keeping the valid ones. */

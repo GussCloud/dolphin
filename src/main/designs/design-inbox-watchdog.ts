@@ -1,5 +1,6 @@
 // Tells a design's agent that the user answered, commented or moved the design. The content stays in the inbox; the
-// agent is only typed a one-line pointer, and only while it is idle and the user is not drafting.
+// agent is only typed a one-line pointer, and only while it is idle and the user is not drafting. A manual resend
+// allows one nudge without an idle status, for agents that never report one.
 import { DESIGN_INBOX_MAX_NUDGES, pendingDesignInbox, type Design } from '../../shared/design-types'
 
 /** Fallback cadence; new input is attempted at once through the store subscription. */
@@ -23,7 +24,7 @@ export type DesignInboxWatchdogPorts = {
   listDesigns: () => Design[]
   subscribe: (listener: () => void) => () => void
   resolveTerminalHandle: (paneKey: string) => string | null
-  /** null is "could not read" (e.g. an SSH pane out of contact): unverifiable, so nothing is sent. */
+  /** null is "could not read" (e.g. an SSH pane out of contact): unverifiable, so only a forced resend is sent. */
   readAgentStatus: (terminal: string) => Promise<'working' | 'permission' | 'idle' | null>
   /** Last user input on the terminal from any surface; compared for equality only. */
   readLastInputAt: (terminal: string) => number | undefined
@@ -74,7 +75,10 @@ export function startDesignInboxWatchdog(ports: DesignInboxWatchdogPorts): {
     if (typed || ports.readUserComposingWaitMs(terminal) !== null) {
       return
     }
-    if ((await ports.readAgentStatus(terminal)) !== 'idle') {
+    const status = await ports.readAgentStatus(terminal)
+    // Why a forced nudge accepts null: the user asked for it, so an unreadable status (no hooks, SSH) may be typed into.
+    const forced = delivery.forceRequestedAt !== undefined
+    if (forced ? status === 'working' || status === 'permission' : status !== 'idle') {
       return
     }
     if (await ports.sendNudge(terminal, buildDesignInboxNudge(design.id), design.id)) {

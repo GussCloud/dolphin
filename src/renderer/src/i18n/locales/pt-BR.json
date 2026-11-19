@@ -18373,7 +18373,9 @@
           "blockedDetail": "O Dolphin parou de avisá-lo depois de vários avisos não lidos. Itens aguardando: {{value0}}.",
           "resend": "Reenviar",
           "pending": "Aguardando o agente ler. Itens: {{value0}}",
-          "read": "O agente leu tudo o que você enviou"
+          "read": "O agente leu tudo o que você enviou",
+          "notifyHint": "O Dolphin avisa o agente quando ele fica livre. Se este agente não informa isso, avise agora.",
+          "notifyNow": "Avisar agora"
         },
         "panel": {
           "toggle": "Decisões e atividade",

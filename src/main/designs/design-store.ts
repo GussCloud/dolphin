@@ -162,7 +162,7 @@ export class DesignStore {
   }
 
   resend(id: string): void {
-    this.apply(id, () => resendDelivery())
+    this.apply(id, (design, at) => resendDelivery(design, at))
   }
 
   subscribe(listener: DesignListener): () => void {
