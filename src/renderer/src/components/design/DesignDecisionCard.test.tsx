@@ -125,6 +125,25 @@ describe('DesignDecisionCard', () => {
     expect(container.textContent).toContain('Answered')
   })
 
+  it('marks the original answer superseded and shows the later revision', () => {
+    render({
+      ...base,
+      answer: { selected: ['Google'], at: 5 },
+      revision: { text: 'Google and SSO', at: 9 }
+    })
+    expect(container.querySelector('[data-design-decision-superseded]')?.textContent).toBe('Google')
+    const revision = container.querySelector('[data-design-decision-revision]')
+    expect(revision?.textContent).toContain('Updated later')
+    expect(revision?.textContent).toContain('Google and SSO')
+    expect(container.textContent).toContain('Original answer')
+  })
+
+  it('shows no revision block on a decision that was never revised', () => {
+    render({ ...base, answer: { selected: ['Google'], at: 5 } })
+    expect(container.querySelector('[data-design-decision-revision]')).toBeNull()
+    expect(container.querySelector('[data-design-decision-superseded]')).toBeNull()
+  })
+
   it('reports the block it is about while hovered', () => {
     const onHoverChange = vi.fn()
     render(

@@ -31,7 +31,7 @@ async function readProcessStdin(): Promise<string> {
 }
 
 /**
- * Canvas, decisions, replies and completions travel in a file, never argv: shells mangle JSON and argv length is bounded.
+ * Canvas, decisions, replies, revisions and completions travel in a file, never argv: shells mangle JSON and argv length is bounded.
  * `-` reads stdin, which is how the SSH relay forwards a file it read on the remote host.
  */
 export async function readDesignCanvasFile(
@@ -147,6 +147,18 @@ export const DESIGN_HANDLERS: Record<string, CommandHandler> = {
       reply
     })
     printResult(result, json, (r) => `Reply ${r.message.id} posted on ${id}.`)
+  },
+
+  'design revise-decision': async ({ flags, client, cwd, json }) => {
+    const id = getRequiredStringFlag(flags, 'id')
+    const revision = await readDesignCanvasFile(getRequiredStringFlag(flags, 'file'), cwd)
+    const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
+    const result = await client.call<{ decision: DesignDecision }>('design.reviseDecision', {
+      from,
+      id,
+      revision
+    })
+    printResult(result, json, (r) => `Decision ${r.decision.id} marked as updated on ${id}.`)
   },
 
   'design show': async ({ flags, client, json }) => {

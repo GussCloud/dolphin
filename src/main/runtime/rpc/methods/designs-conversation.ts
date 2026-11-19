@@ -5,11 +5,13 @@ import {
   DesignAnswerParams,
   DesignCommentParams,
   DesignDecideParams,
+  DesignDecisionRevisionFileSchema,
   DesignDecisionsFileSchema,
   DesignInboxParams,
   DesignReplyFileSchema,
   DesignReplyParams,
-  DesignResendParams
+  DesignResendParams,
+  DesignReviseDecisionParams
 } from '../../../../shared/rpc-contract/design-params'
 import type { DesignInboxEntry } from '../../../../shared/design-types'
 import { DesignRefusal } from '../../../designs/design-interaction'
@@ -61,6 +63,20 @@ export const DESIGN_CONVERSATION_METHODS = [
           })
         )
       }
+    }
+  }),
+  defineMethod({
+    name: 'design.reviseDecision',
+    params: DesignReviseDecisionParams,
+    handler: (params, context) => {
+      const design = requireBoundDesign(params.id, params.from, context)
+      const revision = parseDesignFile(
+        DesignDecisionRevisionFileSchema,
+        params.revision,
+        'design_invalid_revision',
+        'Revision'
+      )
+      return { decision: refusing(() => getDesignStore().reviseDecision(design.id, revision)) }
     }
   }),
   defineMethod({

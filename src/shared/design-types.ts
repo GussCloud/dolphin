@@ -87,6 +87,7 @@ export const DESIGN_EVENT_KINDS = [
   'renamed',
   'decision-asked',
   'decision-answered',
+  'decision-revised',
   'comment-added',
   'agent-replied',
   'inbox-nudged',
@@ -128,6 +129,8 @@ export type DesignDecision = {
   blockId?: string
   askedAt: number
   answer?: { selected: string[]; note?: string; at: number }
+  /** The agent's record that a later request changed the answer; only on answered decisions, latest wins. */
+  revision?: { text: string; at: number }
 }
 
 /** A message in a block's thread (blockId set) or the design's general thread. */

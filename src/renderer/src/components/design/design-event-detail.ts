@@ -91,7 +91,8 @@ export function designEventDetail(
             value0: ids.length
           })
     }
-    case 'decision-answered': {
+    case 'decision-answered':
+    case 'decision-revised': {
       const question = design.decisions.find((decision) => decision.id === detail)?.question
       return question ? excerpt(question) : detail
     }

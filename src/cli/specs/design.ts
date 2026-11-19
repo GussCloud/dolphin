@@ -53,6 +53,17 @@ export const DESIGN_COMMAND_SPECS: CommandSpec[] = [
     ]
   },
   {
+    path: ['design', 'revise-decision'],
+    summary: "Record that a later user request changed an answered decision's answer",
+    usage:
+      'dolphin design revise-decision --id <design_id> --file <path> [--from <handle>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'id', 'file', 'from'],
+    notes: [
+      'The file holds {"decisionId":"<decision_id>","text":"<what the answer is now>"}; pass --file - to read it from stdin.',
+      'Only answered decisions; the Design screen shows the text as the updated answer. Running it again replaces it.'
+    ]
+  },
+  {
     path: ['design', 'show'],
     summary: 'Show a design with its canvas versions and event log',
     usage: 'dolphin design show --id <design_id> [--json]',

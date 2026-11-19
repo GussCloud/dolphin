@@ -18367,7 +18367,9 @@
           "multi": "Pick one or more",
           "notePlaceholder": "Add a note for the agent (optional)",
           "answer": "Answer",
-          "answeredAt": "Answered {{value0}}"
+          "answeredAt": "Answered {{value0}}",
+          "originalAnswer": "Original answer",
+          "revisedAt": "Updated later · {{value0}}"
         },
         "delivery": {
           "blocked": "The agent is not responding",
@@ -18396,6 +18398,7 @@
           "renamed": "Renamed",
           "decisionAsked": "Decision asked",
           "decisionAnswered": "Decision answered",
+          "decisionRevised": "Agent updated an answer",
           "commentAdded": "Comment sent",
           "agentReplied": "Agent replied",
           "inboxNudged": "Agent notified",

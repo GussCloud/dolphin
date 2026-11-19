@@ -47,6 +47,7 @@ describe('designEventDetail', () => {
     expect(detail('completion-declined', 'm1')).toBe('Asked for: "Can devices skip the code?"')
     expect(detail('decision-asked', 'd1,d2')).toBe('How long is a code valid? · Which channels?')
     expect(detail('decision-answered', 'd2')).toBe('Which channels?')
+    expect(detail('decision-revised', 'd2')).toBe('Which channels?')
     expect(detail('comment-added', 'b1')).toBe('On Code screen')
     expect(detail('comment-added', 'design')).toBe('On the whole design')
     expect(detail('agent-replied', 'm1')).toBe('Reply to "Can devices skip the code?"')

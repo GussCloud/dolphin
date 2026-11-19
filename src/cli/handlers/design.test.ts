@@ -127,6 +127,19 @@ describe('design conversation commands', () => {
     })
   })
 
+  it('sends the decision revision file from the agent terminal', async () => {
+    writeFileSync(join(dir, 'revise.json'), '{"decisionId":"d-1","text":"Add pending"}')
+    const call = vi
+      .fn()
+      .mockResolvedValue({ id: '1', ok: true, result: { decision: { id: 'd-1' } } })
+    await DESIGN_HANDLERS['design revise-decision']!(context([['file', 'revise.json']], call))
+    expect(call).toHaveBeenCalledWith('design.reviseDecision', {
+      from: 'term_agent',
+      id: 'd1',
+      revision: { decisionId: 'd-1', text: 'Add pending' }
+    })
+  })
+
   it('sends the completion file from the agent terminal', async () => {
     writeFileSync(join(dir, 'done.json'), '{"summary":"Built it"}')
     const call = vi.fn().mockResolvedValue({ id: '1', ok: true, result: { design: { id: 'd1' } } })

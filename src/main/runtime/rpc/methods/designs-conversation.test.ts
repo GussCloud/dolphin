@@ -144,6 +144,25 @@ describe('design conversation RPC methods', () => {
     ).toMatchObject({ message: { author: 'agent', blockId: 'b1', replyTo: message.id } })
   })
 
+  it('revises an answered decision from the bound pane and names bad field paths', async () => {
+    const [decision] = store.addDecisions(id, [DECISION])
+    const revision = { decisionId: decision!.id, text: 'Card and Pix' }
+    await expect(call('design.reviseDecision', { from: 'term_b', id, revision })).rejects.toThrow(
+      /not bound/
+    )
+    await expect(
+      call('design.reviseDecision', { from: 'term_a', id, revision: { decisionId: 'x' } })
+    ).rejects.toThrow(/Revision refused: text: /)
+    await expect(
+      call('design.reviseDecision', { from: 'term_a', id, revision })
+    ).rejects.toMatchObject({ code: 'design_decision_not_answered' })
+    store.answerDecision(id, { decisionId: decision!.id, selected: ['Card'] })
+    expect(await call('design.reviseDecision', { from: 'term_a', id, revision })).toMatchObject({
+      decision: { id: decision!.id, revision: { text: 'Card and Pix' } }
+    })
+    expect(store.get(id)!.events.at(-1)).toMatchObject({ kind: 'decision-revised' })
+  })
+
   it('refuses a comment on a block that is not on the canvas', async () => {
     await expect(
       call('design.comment', { id, blockId: 'ghost', text: 'Hi' })

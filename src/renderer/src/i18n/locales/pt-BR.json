@@ -18367,7 +18367,9 @@
           "multi": "Escolha uma ou mais",
           "notePlaceholder": "Adicione uma observação para o agente (opcional)",
           "answer": "Responder",
-          "answeredAt": "Respondida {{value0}}"
+          "answeredAt": "Respondida {{value0}}",
+          "originalAnswer": "Resposta original",
+          "revisedAt": "Atualizada depois · {{value0}}"
         },
         "delivery": {
           "blocked": "O agente não está respondendo",
@@ -18396,6 +18398,7 @@
           "renamed": "Renomeado",
           "decisionAsked": "Decisão perguntada",
           "decisionAnswered": "Decisão respondida",
+          "decisionRevised": "Agente atualizou uma resposta",
           "commentAdded": "Comentário enviado",
           "agentReplied": "Agente respondeu",
           "inboxNudged": "Agente avisado",

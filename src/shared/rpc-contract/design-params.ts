@@ -177,6 +177,18 @@ export const DesignAnswerParams = z.object({
   note: z.string().trim().max(DESIGN_MESSAGE_MAX_CHARS).optional()
 })
 
+/** Agent side: a later user request changed what an answered decision says; parsed in the handler. */
+export const DesignReviseDecisionParams = z.object({
+  from: requiredString('Missing agent terminal'),
+  id: requiredString('Missing --id'),
+  revision: z.unknown()
+})
+
+export const DesignDecisionRevisionFileSchema = z.object({
+  decisionId: z.string().trim().min(1),
+  text: z.string().trim().min(1).max(DESIGN_MESSAGE_MAX_CHARS)
+})
+
 /** User side: a question or adjustment request on a block, or on the whole design without blockId. */
 export const DesignCommentParams = z.object({
   id: requiredString('Missing --id'),

@@ -176,6 +176,7 @@ import {
   DesignRenameParams,
   DesignReplyParams,
   DesignResendParams,
+  DesignReviseDecisionParams,
   DesignSetStatusParams,
   DesignShowParams,
   DesignStartParams
@@ -818,6 +819,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'design.rename': DesignRenameParams,
   'design.reply': DesignReplyParams,
   'design.resend': DesignResendParams,
+  'design.reviseDecision': DesignReviseDecisionParams,
   'design.setStatus': DesignSetStatusParams,
   'design.show': DesignShowParams,
   'design.start': DesignStartParams,

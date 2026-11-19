@@ -90,6 +90,50 @@ describe('DesignStore conversation', () => {
     expect(reloaded.delivery).toEqual({ nudges: 0 })
   })
 
+  it('revises only an answered decision, latest revision wins, and logs it', () => {
+    const designs = store()
+    const id = designWithCanvas(designs)
+    const [decision] = designs.addDecisions(id, [{ question: 'Fields?', options: OPTIONS }])
+    expect(() => designs.reviseDecision(id, { decisionId: decision!.id, text: 'x' })).toThrow(
+      expect.objectContaining({ code: 'design_decision_not_answered' })
+    )
+    expect(() => designs.reviseDecision(id, { decisionId: 'd-none', text: 'x' })).toThrow(
+      expect.objectContaining({ code: 'design_decision_not_found' })
+    )
+    designs.answerDecision(id, { decisionId: decision!.id, selected: ['Card'] })
+    designs.reviseDecision(id, { decisionId: decision!.id, text: 'Card and Pix' })
+    const revised = designs.reviseDecision(id, { decisionId: decision!.id, text: 'Pix only' })
+    expect(revised).toMatchObject({
+      answer: { selected: ['Card'] },
+      revision: { text: 'Pix only', at: expect.any(Number) }
+    })
+    const reloaded = store().get(id)!
+    expect(reloaded.decisions[0]?.revision?.text).toBe('Pix only')
+    expect(reloaded.events.at(-1)).toMatchObject({
+      kind: 'decision-revised',
+      actor: 'agent',
+      detail: decision!.id
+    })
+  })
+
+  it('drops a malformed or orphan revision on reload and keeps its decision', () => {
+    const designs = store()
+    const id = designWithCanvas(designs)
+    const [answered, open] = designs.addDecisions(id, [
+      { question: 'A?', options: OPTIONS },
+      { question: 'B?', options: OPTIONS }
+    ])
+    designs.answerDecision(id, { decisionId: answered!.id, selected: ['Pix'] })
+    const [stored] = JSON.parse(readFileSync(file, 'utf-8'))
+    stored.decisions[0].revision = { text: '', at: 'later' }
+    stored.decisions[1].revision = { text: 'orphan', at: 5 }
+    writeFileSync(file, JSON.stringify([stored]))
+    const reloaded = store().get(id)!
+    expect(reloaded.decisions.map((d) => d.id)).toEqual([answered!.id, open!.id])
+    expect(reloaded.decisions.map((d) => d.revision)).toEqual([undefined, undefined])
+    expect(reloaded.decisions[0]?.answer?.selected).toEqual(['Pix'])
+  })
+
   it('asks decisions, caps the open ones and logs the ask', () => {
     const designs = store()
     const id = designWithCanvas(designs)

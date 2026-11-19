@@ -41,6 +41,7 @@ export function DesignDecisionCard({
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const open = isDesignDecisionOpen(decision)
+  const revision = open ? undefined : decision.revision
 
   const submit = async (): Promise<void> => {
     const labels = selected.flatMap((index) => {
@@ -141,12 +142,28 @@ export function DesignDecisionCard({
         </>
       ) : (
         <div className="space-y-1 border-t border-border px-3.5 py-2.5">
-          {decision.answer?.selected.map((label) => (
-            <div key={label} className="flex items-start gap-2 text-sm text-foreground">
-              <Check className="mt-0.5 size-3.5 shrink-0 text-primary" strokeWidth={3} />
-              <span className="break-words">{label}</span>
-            </div>
-          ))}
+          {revision ? (
+            <p className="text-[11px] text-muted-foreground">
+              {translate('auto.components.design.decision.originalAnswer', 'Original answer')}
+            </p>
+          ) : null}
+          {decision.answer?.selected.map((label) =>
+            revision ? (
+              <div
+                key={label}
+                data-design-decision-superseded=""
+                className="flex items-start gap-2 text-sm text-muted-foreground line-through"
+              >
+                <Check className="mt-0.5 size-3.5 shrink-0" strokeWidth={3} />
+                <span className="break-words">{label}</span>
+              </div>
+            ) : (
+              <div key={label} className="flex items-start gap-2 text-sm text-foreground">
+                <Check className="mt-0.5 size-3.5 shrink-0 text-primary" strokeWidth={3} />
+                <span className="break-words">{label}</span>
+              </div>
+            )
+          )}
           {decision.answer?.note ? (
             <p className="whitespace-pre-wrap break-words text-xs text-muted-foreground">
               {decision.answer.note}
@@ -158,6 +175,23 @@ export function DesignDecisionCard({
                 value0: formatDesignTimestamp(decision.answer.at)
               })}
             </p>
+          ) : null}
+          {revision ? (
+            <div
+              data-design-decision-revision=""
+              className="mt-1.5 space-y-0.5 rounded-md bg-muted px-2.5 py-2"
+            >
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {translate(
+                  'auto.components.design.decision.revisedAt',
+                  'Updated later · {{value0}}',
+                  { value0: formatDesignTimestamp(revision.at) }
+                )}
+              </p>
+              <p className="whitespace-pre-wrap break-words text-sm text-foreground">
+                {revision.text}
+              </p>
+            </div>
           ) : null}
           {processing ? <DesignProcessingInline /> : null}
         </div>
