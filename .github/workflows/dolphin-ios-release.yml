@@ -31,6 +31,11 @@ on:
         description: 'Optional exact iOS marketing version override, e.g. 0.0.15'
         required: false
         type: string
+      skip_upload:
+        description: 'Build and sign the .ipa without uploading it to App Store Connect (toolchain checks).'
+        required: false
+        default: false
+        type: boolean
       shell:
         description: 'Which shell the binary mounts: native screens, or the web page delivered over the air.'
         required: false
@@ -50,8 +55,8 @@ concurrency:
 jobs:
   ios-build:
     if: github.repository == 'GussCloud/dolphin'
-    # Why macos-26: Expo SDK 55's expo-modules-core needs the Swift 6 toolchain in Xcode 26.
-    runs-on: macos-26
+    # Why xcode-27: App Store Connect requires the iOS 27 SDK for uploads from April 2027 (ITMS-90725).
+    runs-on: xcode-27
     timeout-minutes: 90
 
     env:
@@ -72,7 +77,7 @@ jobs:
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '26.5'
+          xcode-version: '27.2'
 
       - name: Setup pnpm
         uses: pnpm/setup@v2
@@ -165,12 +170,13 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Pushes and tags carry no inputs, so they build the native shell.
+          # Pushes and tags carry no inputs, so they build the native shell and upload.
           EXPO_PUBLIC_MOBILE_SHELL: ${{ inputs.shell || 'native' }}
+          SKIP_UPLOAD: ${{ inputs.skip_upload || false }}
         run: |
           set -euo pipefail
           echo "Mobile shell: $EXPO_PUBLIC_MOBILE_SHELL"
-          bundle exec fastlane ios build_and_upload
+          bundle exec fastlane ios build_and_upload skip_upload:"$SKIP_UPLOAD"
 
       - name: Upload .ipa artifact
         if: always() && steps.gate.outputs.skip != 'true'
