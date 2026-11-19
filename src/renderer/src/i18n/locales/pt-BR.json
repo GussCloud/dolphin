@@ -18188,6 +18188,7 @@
         "create": "Criar design",
         "description": "Escolha o projeto e o nome, descreva o que vamos criar e escolha o agente que desenha o design.",
         "stepRequest": "Pedido",
+        "baseLabel": "Criar a partir da branch",
         "nameLabel": "Nome do design",
         "namePlaceholder": "Dê um nome a este design",
         "requestLabel": "O que vamos criar hoje?",
