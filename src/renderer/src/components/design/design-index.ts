@@ -98,3 +98,28 @@ export async function setDesignStatus(id: string, status: DesignStatus): Promise
   await callRuntimeRpc(target(), 'design.setStatus', { id, status })
   await refreshDesignIndex()
 }
+
+/** Mutations only; the caller reloads with showDesign so a failed reload is not a failed action. */
+export async function answerDesignDecision(input: {
+  id: string
+  decisionId: string
+  selected: string[]
+  note?: string
+}): Promise<void> {
+  await callRuntimeRpc(target(), 'design.answer', input)
+  void refreshDesignIndex()
+}
+
+export async function commentOnDesign(input: {
+  id: string
+  blockId?: string
+  text: string
+}): Promise<void> {
+  await callRuntimeRpc(target(), 'design.comment', input)
+  void refreshDesignIndex()
+}
+
+export async function resendDesignInbox(id: string): Promise<void> {
+  await callRuntimeRpc(target(), 'design.resend', { id })
+  void refreshDesignIndex()
+}

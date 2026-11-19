@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
 import { useDesignIndex, useDesignIndexSubscription } from './design-index'
+import { useDesignMinuteClock } from './design-agent-missing'
 import {
   DEFAULT_DESIGN_LIST_FILTER,
   filterDesignList,
@@ -30,6 +31,7 @@ export default function DesignPage(): React.JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   // Why: period presets count back from when the page opened; a pure render can't read the clock.
   const [openedAt] = useState(() => Date.now())
+  const now = useDesignMinuteClock()
   const visible = useMemo(
     () => filterDesignList(index.designs, filter, openedAt),
     [index.designs, filter, openedAt]
@@ -131,7 +133,9 @@ export default function DesignPage(): React.JSX.Element {
                       )}
                 </EmptyState>
               ) : null}
-              {visible.length > 0 ? <DesignList designs={visible} onOpen={setSelectedId} /> : null}
+              {visible.length > 0 ? (
+                <DesignList designs={visible} now={now} onOpen={setSelectedId} />
+              ) : null}
             </div>
           </>
         )}

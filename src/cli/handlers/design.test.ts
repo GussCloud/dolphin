@@ -68,3 +68,94 @@ describe('design canvas-set', () => {
     )
   })
 })
+
+describe('design conversation commands', () => {
+  let dir: string
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'design-cli-conv-'))
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+    vi.restoreAllMocks()
+  })
+
+  function context(
+    flags: [string, string][],
+    call: ReturnType<typeof vi.fn>,
+    json = true
+  ): HandlerContext {
+    return {
+      flags: new Map<string, string | boolean>([['id', 'd1'], ...flags]),
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler only calls `call`.
+      client: { call } as unknown as RuntimeClient,
+      cwd: dir,
+      json
+    }
+  }
+
+  it('sends the decisions file as-is from the agent terminal', async () => {
+    const file = { decisions: [{ question: 'Q', options: [{ label: 'A' }, { label: 'B' }] }] }
+    writeFileSync(join(dir, 'ask.json'), JSON.stringify(file))
+    const call = vi.fn().mockResolvedValue({ id: '1', ok: true, result: { decisions: [] } })
+    await DESIGN_HANDLERS['design decide']!(context([['file', 'ask.json']], call))
+    expect(call).toHaveBeenCalledWith('design.decide', {
+      from: 'term_agent',
+      id: 'd1',
+      decisions: file
+    })
+  })
+
+  it('sends the reply file and splits ack items', async () => {
+    writeFileSync(join(dir, 'reply.json'), '{"replyTo":"m-1","text":"Done"}')
+    const call = vi
+      .fn()
+      .mockResolvedValue({ id: '1', ok: true, result: { message: { id: 'm-2' }, acked: 2 } })
+    await DESIGN_HANDLERS['design reply']!(context([['file', 'reply.json']], call))
+    expect(call).toHaveBeenLastCalledWith('design.reply', {
+      from: 'term_agent',
+      id: 'd1',
+      reply: { replyTo: 'm-1', text: 'Done' }
+    })
+    await DESIGN_HANDLERS['design ack']!(context([['items', ' i-1, ,i-2 ']], call))
+    expect(call).toHaveBeenLastCalledWith('design.ack', {
+      from: 'term_agent',
+      id: 'd1',
+      items: ['i-1', 'i-2']
+    })
+  })
+
+  it('prints each pending item and the ack command in text mode', async () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const call = vi.fn().mockResolvedValue({
+      id: '1',
+      ok: true,
+      result: {
+        items: [
+          {
+            id: 'i-1',
+            kind: 'answer',
+            createdAt: 1,
+            decisionId: 'd-1',
+            question: 'Pay how?',
+            selected: ['Pix'],
+            note: 'cheaper',
+            block: { id: 'b1', title: 'Click' }
+          },
+          { id: 'i-2', kind: 'comment', createdAt: 2, messageId: 'm-1', text: 'Why?' }
+        ],
+        ackCommand: 'dolphin design ack --id d1 --items i-1,i-2 --json'
+      }
+    })
+    await DESIGN_HANDLERS['design inbox']!(context([], call, false))
+    expect(call).toHaveBeenCalledWith('design.inbox', { from: 'term_agent', id: 'd1' })
+    const printed = log.mock.calls.flat().join('\n')
+    expect(printed).toContain('i-1 answer to d-1 on block b1 (Click): Pay how?')
+    expect(printed).toContain('selected: Pix')
+    expect(printed).toContain('note: cheaper')
+    expect(printed).toContain('i-2 comment m-1: Why?')
+    expect(printed).toContain('When done: dolphin design ack --id d1 --items i-1,i-2 --json')
+  })
+})

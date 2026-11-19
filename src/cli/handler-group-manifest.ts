@@ -145,7 +145,17 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
   },
   {
     name: 'design',
-    keys: ['design start', 'design canvas-set', 'design show', 'design list', 'design status'],
+    keys: [
+      'design start',
+      'design canvas-set',
+      'design decide',
+      'design inbox',
+      'design ack',
+      'design reply',
+      'design show',
+      'design list',
+      'design status'
+    ],
     load: async () => (await import('./handlers/design.js')).DESIGN_HANDLERS
   },
   {

@@ -2,13 +2,14 @@ import { resolve } from 'node:path'
 import { readArtifactFileWithinLimit } from '../shared/artifact-file-read'
 import { DISPATCHER_CONTROL_QUEUE_MAX_BYTES } from './dispatcher-writer-admission'
 import { remoteArtifactCliForwardingFrameBytes } from './remote-artifact-cli-forwarding'
+import { DESIGN_FILE_SUBCOMMANDS } from './remote-cli-stdin'
 
 export type PreparedRemoteDesignCliInput = { argv: string[]; stdin: string }
 
-// Why headroom: the frame also carries argv, cwd and env next to the canvas.
+// Why headroom: the frame also carries argv, cwd and env next to the file.
 const DESIGN_CANVAS_FILE_MAX_BYTES = DISPATCHER_CONTROL_QUEUE_MAX_BYTES - 64 * 1024
 
-/** Index of the `--file` value token (or the `--file=` token itself) in `design canvas-set`. */
+/** Index of the `--file` value token (or the `--file=` token itself) in a `design` file command. */
 function findCanvasFileArg(argv: string[]): { index: number; inline: boolean } | null {
   const positionals: string[] = []
   let found: { index: number; inline: boolean } | null = null
@@ -31,12 +32,14 @@ function findCanvasFileArg(argv: string[]): { index: number; inline: boolean } |
       index += 1
     }
   }
-  return positionals[0] === 'design' && positionals[1] === 'canvas-set' ? found : null
+  return positionals[0] === 'design' && DESIGN_FILE_SUBCOMMANDS.has(positionals[1] ?? '')
+    ? found
+    : null
 }
 
 /**
  * The bridged CLI runs on the Dolphin client, which cannot open a path on this SSH host, so the
- * relay reads the canvas here and forwards it as stdin with `--file -`, like `artifacts share`.
+ * relay reads the file here and forwards it as stdin with `--file -`, like `artifacts share`.
  * Mixed versions: an older relay forwards the path unchanged and the client fails with "Cannot read --file".
  */
 export async function prepareRemoteDesignCliInput(

@@ -57,6 +57,9 @@ export function designCanvasToFlow(canvas: DesignCanvas): {
       id: group.id,
       type: DESIGN_GROUP_NODE_TYPE,
       position: positions.get(group.id) ?? { x: 0, y: 0 },
+      // Why: xyflow sets pointer-events none inline on nodes that are neither draggable nor
+      // selectable; block rows must still take clicks to open their thread.
+      style: { pointerEvents: 'all' },
       data: {
         group,
         sourceBlockIds: outgoing.flatMap((edge) => (edge.fromBlockId ? [edge.fromBlockId] : [])),

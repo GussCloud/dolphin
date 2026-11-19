@@ -3,6 +3,7 @@ import { AI_VAULT_METHODS } from './ai-vault'
 import { AUTOMATION_METHODS } from './automations'
 import { AUTONOMOUS_GOAL_METHODS } from './autonomous-goals'
 import { DESIGN_METHODS } from './designs'
+import { DESIGN_CONVERSATION_METHODS } from './designs-conversation'
 import { REPO_METHODS } from './repo'
 import { WORKTREE_METHODS } from './worktree'
 import { TERMINAL_METHODS } from './terminal'
@@ -81,6 +82,7 @@ export const ALL_RPC_METHODS = [
   ...ORCHESTRATION_METHODS,
   ...AUTONOMOUS_GOAL_METHODS,
   ...DESIGN_METHODS,
+  ...DESIGN_CONVERSATION_METHODS,
   ...NOTIFICATION_METHODS,
   ...STATS_METHODS,
   ...DIAGNOSTICS_METHODS,

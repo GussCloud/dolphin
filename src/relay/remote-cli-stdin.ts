@@ -1,3 +1,10 @@
+/** `design` subcommands whose `--file` holds JSON the host needs. */
+export const DESIGN_FILE_SUBCOMMANDS: ReadonlySet<string> = new Set([
+  'canvas-set',
+  'decide',
+  'reply'
+])
+
 export function shouldReadRemoteCliStdin(argv: string[]): boolean {
   if (argv.includes('--help') || argv.includes('-h')) {
     return false
@@ -11,7 +18,7 @@ export function shouldReadRemoteCliStdin(argv: string[]): boolean {
   const commandPath = parseRemoteCliCommandPath(argv)
   const fileFlag = isLinearBodyWriteCommand(commandPath)
     ? 'body-file'
-    : commandPath[0] === 'design' && commandPath[1] === 'canvas-set'
+    : commandPath[0] === 'design' && DESIGN_FILE_SUBCOMMANDS.has(commandPath[1] ?? '')
       ? 'file'
       : null
   if (!fileFlag) {

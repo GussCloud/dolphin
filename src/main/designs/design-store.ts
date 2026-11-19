@@ -1,21 +1,32 @@
 import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { writeFileAtomically } from '../codex-accounts/fs-utils'
-import { DesignCanvasSchema } from '../../shared/rpc-contract/design-params'
 import {
-  DESIGN_EVENT_KINDS,
   DESIGN_MAX_CANVAS_VERSIONS,
   DESIGN_MAX_EVENTS,
   canTransitionDesign,
-  isDesignStatus,
+  isDesignDecisionOpen,
   latestDesignCanvas,
   type Design,
   type DesignCanvas,
-  type DesignCanvasVersion,
+  type DesignDecision,
   type DesignEvent,
   type DesignListEntry,
+  type DesignMessage,
   type DesignStatus
 } from '../../shared/design-types'
+import {
+  addComment,
+  addDecisions,
+  addReply,
+  answerDecision,
+  type DesignChange,
+  type DesignDecisionInput,
+  type DesignEventInput,
+  type DesignPatch
+} from './design-interaction'
+import { ackInbox, markDeliveryBlocked, recordNudge, resendDelivery } from './design-inbox'
+import { isStoredDesign, withValidHistory } from './design-store-validation'
 
 const MAX_DESIGNS = 200
 
@@ -52,6 +63,10 @@ export class DesignStore {
       paneKey: null,
       canvasVersions: [],
       events: [{ kind: 'created', at, actor: 'user' }],
+      decisions: [],
+      messages: [],
+      inbox: [],
+      delivery: { nudges: 0 },
       createdAt: at,
       updatedAt: at
     }
@@ -97,6 +112,45 @@ export class DesignStore {
     return this.mutate(this.require(id), { name }, { kind: 'renamed', actor: 'user' })
   }
 
+  addDecisions(id: string, inputs: DesignDecisionInput[]): DesignDecision[] {
+    return this.apply(id, (design, at) => addDecisions(design, inputs, at))
+  }
+
+  answerDecision(
+    id: string,
+    answer: { decisionId: string; selected: string[]; note?: string | undefined }
+  ): DesignDecision {
+    return this.apply(id, (design, at) => answerDecision(design, answer, at))
+  }
+
+  addComment(id: string, comment: { blockId?: string | undefined; text: string }): DesignMessage {
+    return this.apply(id, (design, at) => addComment(design, comment, at))
+  }
+
+  addReply(
+    id: string,
+    reply: { replyTo?: string | undefined; blockId?: string | undefined; text: string }
+  ): DesignMessage {
+    return this.apply(id, (design, at) => addReply(design, reply, at))
+  }
+
+  /** Returns how many items were pending and are now acked. */
+  ack(id: string, itemIds: string[]): number {
+    return this.apply(id, (design, at) => ackInbox(design, itemIds, at))
+  }
+
+  recordNudge(id: string): number {
+    return this.apply(id, (design, at) => recordNudge(design, at))
+  }
+
+  markDeliveryBlocked(id: string): void {
+    this.apply(id, (design, at) => markDeliveryBlocked(design, at))
+  }
+
+  resend(id: string): void {
+    this.apply(id, () => resendDelivery())
+  }
+
   subscribe(listener: DesignListener): () => void {
     this.listeners.add(listener)
     return () => {
@@ -112,11 +166,14 @@ export class DesignStore {
     return design
   }
 
-  private mutate(
-    design: Design,
-    patch: Partial<Pick<Design, 'name' | 'status' | 'paneKey' | 'worktreeId' | 'canvasVersions'>>,
-    event: Omit<DesignEvent, 'at' | 'detail'> & { detail?: string | undefined }
-  ): Design {
+  private apply<T>(id: string, change: (design: Design, at: number) => DesignChange<T>): T {
+    const design = this.require(id)
+    const { patch, event, result } = change(design, this.now())
+    this.mutate(design, patch, event)
+    return result
+  }
+
+  private mutate(design: Design, patch: DesignPatch, event: DesignEventInput): Design {
     const at = this.now()
     const logged: DesignEvent = {
       kind: event.kind,
@@ -176,88 +233,21 @@ function isDesignOpen(design: Design): boolean {
 }
 
 export function toDesignListEntry(design: Design): DesignListEntry {
-  const { canvasVersions: _versions, events: _events, ...entry } = design
+  const {
+    canvasVersions: _versions,
+    events: _events,
+    decisions,
+    messages: _messages,
+    inbox: _inbox,
+    delivery,
+    ...entry
+  } = design
   const latest = latestDesignCanvas(design)
   return {
     ...entry,
     canvasVersion: latest?.version ?? null,
-    groupCount: latest?.canvas.groups.length ?? 0
+    groupCount: latest?.canvas.groups.length ?? 0,
+    openDecisionCount: decisions.filter(isDesignDecisionOpen).length,
+    deliveryBlocked: delivery.blockedAt !== undefined
   }
-}
-
-/** A bad history entry is dropped on its own; the design and its other versions survive. */
-function withValidHistory(design: Design): Design {
-  const canvasVersions: DesignCanvasVersion[] = []
-  for (const entry of design.canvasVersions) {
-    const version = toStoredCanvasVersion(entry)
-    if (version) {
-      canvasVersions.push(version)
-    }
-  }
-  return { ...design, canvasVersions, events: design.events.filter(isStoredEvent) }
-}
-
-function toStoredCanvasVersion(value: unknown): DesignCanvasVersion | null {
-  if (
-    typeof value !== 'object' ||
-    value === null ||
-    !('version' in value) ||
-    typeof value.version !== 'number' ||
-    !('at' in value) ||
-    typeof value.at !== 'number' ||
-    !('canvas' in value)
-  ) {
-    return null
-  }
-  const canvas = DesignCanvasSchema.safeParse(value.canvas)
-  return canvas.success ? { version: value.version, at: value.at, canvas: canvas.data } : null
-}
-
-function isStoredEvent(value: unknown): value is DesignEvent {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'kind' in value &&
-    DESIGN_EVENT_KINDS.some((kind) => kind === value.kind) &&
-    'actor' in value &&
-    (value.actor === 'user' || value.actor === 'agent') &&
-    'at' in value &&
-    typeof value.at === 'number' &&
-    (!('detail' in value) || typeof value.detail === 'string')
-  )
-}
-
-function isNullableString(value: unknown): boolean {
-  return value === null || typeof value === 'string'
-}
-
-function isStoredDesign(value: unknown): value is Design {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    typeof value.id === 'string' &&
-    'name' in value &&
-    typeof value.name === 'string' &&
-    'request' in value &&
-    typeof value.request === 'string' &&
-    'status' in value &&
-    isDesignStatus(value.status) &&
-    'agent' in value &&
-    typeof value.agent === 'string' &&
-    'repoId' in value &&
-    isNullableString(value.repoId) &&
-    'worktreeId' in value &&
-    isNullableString(value.worktreeId) &&
-    'paneKey' in value &&
-    isNullableString(value.paneKey) &&
-    'canvasVersions' in value &&
-    Array.isArray(value.canvasVersions) &&
-    'events' in value &&
-    Array.isArray(value.events) &&
-    'createdAt' in value &&
-    typeof value.createdAt === 'number' &&
-    'updatedAt' in value &&
-    typeof value.updatedAt === 'number'
-  )
 }

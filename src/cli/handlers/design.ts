@@ -5,7 +5,14 @@ import { printResult } from '../format'
 import { getRequiredStringFlag } from '../flags'
 import { RuntimeClientError } from '../runtime-client'
 import { resolveCoordinatorTerminalHandle } from './orchestration/terminal-identity'
-import { latestDesignCanvas, type Design, type DesignListEntry } from '../../shared/design-types'
+import {
+  latestDesignCanvas,
+  type Design,
+  type DesignDecision,
+  type DesignInboxEntry,
+  type DesignListEntry,
+  type DesignMessage
+} from '../../shared/design-types'
 
 type DesignResult = { design: Design }
 
@@ -13,7 +20,7 @@ async function readProcessStdin(): Promise<string> {
   if (process.stdin.isTTY) {
     throw new RuntimeClientError(
       'invalid_argument',
-      '--file - reads the canvas from stdin, which is a TTY'
+      '--file - reads the JSON from stdin, which is a TTY'
     )
   }
   const chunks: Buffer[] = []
@@ -24,7 +31,7 @@ async function readProcessStdin(): Promise<string> {
 }
 
 /**
- * The canvas travels in a file, never argv: shells mangle JSON and argv length is bounded.
+ * Canvas, decisions and replies travel in a file, never argv: shells mangle JSON and argv length is bounded.
  * `-` reads stdin, which is how the SSH relay forwards a file it read on the remote host.
  */
 export async function readDesignCanvasFile(
@@ -49,6 +56,17 @@ export async function readDesignCanvasFile(
     const reason = error instanceof Error ? error.message : String(error)
     throw new RuntimeClientError('invalid_argument', `--file ${path} is not valid JSON: ${reason}`)
   }
+}
+
+function formatInboxEntry(entry: DesignInboxEntry): string {
+  const block = entry.block
+    ? ` on block ${entry.block.id}${entry.block.title ? ` (${entry.block.title})` : ''}`
+    : ''
+  if (entry.kind === 'comment') {
+    return `${entry.id} comment ${entry.messageId}${block}: ${entry.text}`
+  }
+  const note = entry.note ? `\n  note: ${entry.note}` : ''
+  return `${entry.id} answer to ${entry.decisionId}${block}: ${entry.question}\n  selected: ${entry.selected.join(', ')}${note}`
 }
 
 function formatDesign(design: Design): string {
@@ -76,6 +94,56 @@ export const DESIGN_HANDLERS: Record<string, CommandHandler> = {
     const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
     const result = await client.call<{ version: number }>('design.canvasSet', { from, id, canvas })
     printResult(result, json, (r) => `Canvas v${r.version} saved for ${id}.`)
+  },
+
+  'design decide': async ({ flags, client, cwd, json }) => {
+    const id = getRequiredStringFlag(flags, 'id')
+    const file = await readDesignCanvasFile(getRequiredStringFlag(flags, 'file'), cwd)
+    const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
+    const result = await client.call<{ decisions: DesignDecision[] }>('design.decide', {
+      from,
+      id,
+      decisions: file
+    })
+    printResult(result, json, (r) =>
+      r.decisions.map((d) => `Asked ${d.id}: ${d.question}`).join('\n')
+    )
+  },
+
+  'design inbox': async ({ flags, client, cwd, json }) => {
+    const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
+    const result = await client.call<{ items: DesignInboxEntry[]; ackCommand: string | null }>(
+      'design.inbox',
+      { from, id: getRequiredStringFlag(flags, 'id') }
+    )
+    printResult(result, json, (r) =>
+      r.items.length === 0
+        ? 'Inbox is empty.'
+        : [...r.items.map(formatInboxEntry), '', `When done: ${r.ackCommand}`].join('\n')
+    )
+  },
+
+  'design ack': async ({ flags, client, cwd, json }) => {
+    const id = getRequiredStringFlag(flags, 'id')
+    const items = getRequiredStringFlag(flags, 'items')
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+    const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
+    const result = await client.call<{ acked: number }>('design.ack', { from, id, items })
+    printResult(result, json, (r) => `Acked ${r.acked} item(s) on ${id}.`)
+  },
+
+  'design reply': async ({ flags, client, cwd, json }) => {
+    const id = getRequiredStringFlag(flags, 'id')
+    const reply = await readDesignCanvasFile(getRequiredStringFlag(flags, 'file'), cwd)
+    const from = await resolveCoordinatorTerminalHandle(flags, cwd, client)
+    const result = await client.call<{ message: DesignMessage }>('design.reply', {
+      from,
+      id,
+      reply
+    })
+    printResult(result, json, (r) => `Reply ${r.message.id} posted on ${id}.`)
   },
 
   'design show': async ({ flags, client, json }) => {

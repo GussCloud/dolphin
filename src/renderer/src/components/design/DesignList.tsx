@@ -1,17 +1,21 @@
-import { ChevronRight, PenTool } from 'lucide-react'
+import { AlertTriangle, ChevronRight, CircleHelp, PenTool } from 'lucide-react'
 import { AgentIcon } from '@/lib/agent-catalog'
 import { useRepoMap } from '@/store/selectors'
 import { translate } from '@/i18n/i18n'
 import { isTuiAgent } from '../../../../shared/tui-agent-config'
 import type { DesignListEntry } from '../../../../shared/design-types'
+import { isDesignAgentMissing } from './design-agent-missing'
+import { DesignAgentMissingActions, DesignAgentMissingBadge } from './DesignAgentMissing'
 import { DesignStatusBadge } from './DesignStatusBadge'
 import { designAgentLabel, formatDesignTimestamp } from './design-format'
 
 export function DesignList({
   designs,
+  now,
   onOpen
 }: {
   designs: readonly DesignListEntry[]
+  now: number
   onOpen: (id: string) => void
 }): React.JSX.Element {
   const repoMap = useRepoMap()
@@ -21,8 +25,9 @@ export function DesignList({
         const repoName = design.repoId
           ? (repoMap.get(design.repoId)?.displayName ?? design.repoId)
           : null
+        const agentMissing = isDesignAgentMissing(design, now)
         return (
-          <li key={design.id}>
+          <li key={design.id} data-design-row={design.id}>
             <button
               type="button"
               onClick={() => onOpen(design.id)}
@@ -33,6 +38,24 @@ export function DesignList({
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="truncate text-sm font-medium">{design.name}</span>
                   <DesignStatusBadge status={design.status} />
+                  {agentMissing ? <DesignAgentMissingBadge /> : null}
+                  {design.openDecisionCount > 0 ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-status-warning-border bg-status-warning-background px-2 py-0.5 text-[11px] font-medium leading-4 whitespace-nowrap text-status-warning">
+                      <CircleHelp className="size-3" />
+                      {translate('auto.components.design.list.decisions', '{{value0}} decisions', {
+                        value0: design.openDecisionCount
+                      })}
+                    </span>
+                  ) : null}
+                  {design.deliveryBlocked ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium whitespace-nowrap text-status-warning">
+                      <AlertTriangle className="size-3" />
+                      {translate(
+                        'auto.components.design.list.deliveryBlocked',
+                        'Agent not responding'
+                      )}
+                    </span>
+                  ) : null}
                 </div>
                 <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1">
@@ -56,6 +79,12 @@ export function DesignList({
               </div>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </button>
+            {/* Why: outside the row button, since buttons cannot nest. */}
+            {agentMissing ? (
+              <div className="px-4 pb-3 pl-11">
+                <DesignAgentMissingActions design={design} />
+              </div>
+            ) : null}
           </li>
         )
       })}

@@ -20,6 +20,39 @@ export const DESIGN_COMMAND_SPECS: CommandSpec[] = [
     ]
   },
   {
+    path: ['design', 'decide'],
+    summary: 'Ask the user to settle choices only they can make, shown on the Design screen',
+    usage: 'dolphin design decide --id <design_id> --file <path> [--from <handle>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'id', 'file', 'from'],
+    notes: [
+      'The file holds {"decisions":[{"question","header?","options":[{"label","description?"}],"multiSelect?","blockId?"}]}.',
+      'Pass --file - to read it from stdin. Answers arrive in `design inbox`; never poll for them.'
+    ]
+  },
+  {
+    path: ['design', 'inbox'],
+    summary: "Read the user's pending answers and block comments for a design",
+    usage: 'dolphin design inbox --id <design_id> [--from <handle>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'id', 'from'],
+    notes: ['Dolphin types a one-line notice into the agent terminal when new input arrives.']
+  },
+  {
+    path: ['design', 'ack'],
+    summary: 'Mark inbox items as handled so Dolphin stops announcing them',
+    usage:
+      'dolphin design ack --id <design_id> --items <item_id,item_id> [--from <handle>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'id', 'items', 'from']
+  },
+  {
+    path: ['design', 'reply'],
+    summary: "Answer a user's comment in its block thread",
+    usage: 'dolphin design reply --id <design_id> --file <path> [--from <handle>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'id', 'file', 'from'],
+    notes: [
+      'The file holds {"replyTo":"<message_id>","text"}; pass --file - to read it from stdin.'
+    ]
+  },
+  {
     path: ['design', 'show'],
     summary: 'Show a design with its canvas versions and event log',
     usage: 'dolphin design show --id <design_id> [--json]',

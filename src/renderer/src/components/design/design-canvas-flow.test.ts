@@ -41,6 +41,11 @@ describe('designCanvasToFlow', () => {
     expect(nodes.find((node) => node.id === 'home')?.data.hasIncoming).toBe(true)
   })
 
+  it('keeps nodes clickable although the canvas is read-only', () => {
+    const { nodes } = designCanvasToFlow(canvas)
+    expect(nodes.every((node) => node.style?.pointerEvents === 'all')).toBe(true)
+  })
+
   it('maps edges to block or group handles and drops edges off the canvas', () => {
     const { edges } = designCanvasToFlow(canvas)
     expect(edges.map((edge) => edge.id)).toEqual(['e1', 'e2', 'back'])
