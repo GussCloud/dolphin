@@ -58,8 +58,11 @@ export function selectTestsForChanges(changedFiles, allTestFiles) {
  * Why here too: tools run inside the worktree (PowerShell module caches, e2e profiles) can drop a
  * folder at the root that a broad `git add` then commits.
  */
+// Mirrors .github/scripts/check-root-directory-entries.mjs.
+const REVIEWED_ROOT_ENTRIES = ['.claude', 'cloud', 'dolphin.yaml']
+
 export function findNewRootEntries(changedFiles, baseRootEntries) {
-  const known = new Set(baseRootEntries)
+  const known = new Set([...baseRootEntries, ...REVIEWED_ROOT_ENTRIES])
   return [...new Set(changedFiles.map((file) => file.split('/')[0]))].filter(
     (entry) => !known.has(entry)
   )

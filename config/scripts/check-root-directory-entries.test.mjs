@@ -114,6 +114,15 @@ describe('root directory guard', () => {
     expect(result.status).toBe(0)
   })
 
+  it('allows the reviewed .claude skills directory', () => {
+    const fixture = makeFixture()
+    const head = commitFiles(fixture.root, [['.claude/skills/animate/SKILL.md', '---\n']])
+
+    const result = runGuard({ ...fixture, head })
+
+    expect(result.status).toBe(0)
+  })
+
   it('rejects a new top-level directory', () => {
     const fixture = makeFixture()
     const head = commitFiles(fixture.root, [['new-folder/file.txt', 'too prominent\n']])
