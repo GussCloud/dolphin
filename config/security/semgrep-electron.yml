@@ -60,10 +60,12 @@ rules:
     severity: ERROR
     languages: [typescript, javascript]
     patterns:
-      - pattern: '$FN(..., {..., shell: true, ...})'
+      - pattern-either:
+          - pattern: '$FN(..., {..., shell: true, ...})'
+          - pattern: '$OBJ.$FN(..., {..., shell: true, ...})'
       - metavariable-regex:
           metavariable: $FN
-          regex: (^|\.)(spawn|spawnSync|execFile|execFileSync|fork|spawnDetached|spawnProcess|runProcess)$
+          regex: ^(spawn|spawnSync|execFile|execFileSync|fork|spawnDetached|spawnProcess|runProcess)$
 
   - id: child-process-exec-dynamic-command
     message: >-
@@ -146,10 +148,15 @@ rules:
     pattern-sources:
       - patterns:
           - pattern-either:
-              - pattern-inside: '$IPC.handle($CH, ($EVENT, ..., $ARG, ...) => $BODY)'
-              - pattern-inside: '$IPC.on($CH, ($EVENT, ..., $ARG, ...) => $BODY)'
-              - pattern-inside: '$IPC.handle($CH, async ($EVENT, ..., $ARG, ...) => $BODY)'
-              - pattern-inside: '$IPC.on($CH, async ($EVENT, ..., $ARG, ...) => $BODY)'
+              - pattern-inside: '$IPC.$ON($CH, ($EVENT, ..., $ARG, ...) => $BODY)'
+              - pattern-inside: '$IPC.$ON($CH, ($EVENT, ..., $ARG, ...) => { ... })'
+              - pattern-inside: '$IPC.$ON($CH, async ($EVENT, ..., $ARG, ...) => $BODY)'
+              - pattern-inside: '$IPC.$ON($CH, async ($EVENT, ..., $ARG, ...) => { ... })'
+              - pattern-inside: '$IPC.$ON($CH, function ($EVENT, ..., $ARG, ...) { ... })'
+              - pattern-inside: '$IPC.$ON($CH, async function ($EVENT, ..., $ARG, ...) { ... })'
+          - metavariable-regex:
+              metavariable: $ON
+              regex: ^(handle|handleOnce|on|once)$
           - metavariable-regex:
               metavariable: $IPC
               regex: ^ipcMain$
