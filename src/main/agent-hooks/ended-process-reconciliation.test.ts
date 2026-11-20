@@ -144,7 +144,7 @@ describe('reconcileEndedProcessForPaneKeys', () => {
       const restarted = await startServer()
       expect(restarted.getStatusSnapshotForPane(PANE)[0]?.launchToken).toBeUndefined()
       expect(restarted.getHydratedAuthorityCommitments()).toHaveLength(0)
-      restarted.stop()
+      await restarted.stop()
     } finally {
       await server.stop()
     }

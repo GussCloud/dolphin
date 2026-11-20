@@ -23,14 +23,18 @@ const WORKING_CHILD: AgentSubagentSnapshot = {
 }
 
 let dir: string
+let startedServers: AgentHookServer[] = []
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'dolphin-restored-subagent-'))
+  startedServers = []
 })
 
-afterEach(() => {
+afterEach(async () => {
   vi.restoreAllMocks()
-  rmSync(dir, { recursive: true, force: true })
+  // Why: stop() flushes last-status into `dir`; a server left running (helper threw) would race rmSync.
+  await Promise.all(startedServers.map((server) => server.stop()))
+  rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 })
 })
 
 /** Persist a pane whose lead has finished but whose roster still holds a working
@@ -43,6 +47,7 @@ async function restartWithInFlightSubagent(options?: {
   additionalPaneKey?: string
 }): Promise<AgentHookServer> {
   const first = new AgentHookServer()
+  startedServers.push(first)
   await first.start({ env: 'production', userDataPath: dir })
   first.ingestTerminalStatus({
     paneKey: PANE,
@@ -74,6 +79,7 @@ async function restartWithInFlightSubagent(options?: {
   await first.stop()
 
   const restarted = new AgentHookServer()
+  startedServers.push(restarted)
   await restarted.start({ env: 'production', userDataPath: dir })
   return restarted
 }

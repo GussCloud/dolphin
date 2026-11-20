@@ -50,6 +50,7 @@ jobs:
       package: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package }}
       package_windows: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package_windows }}
       windows_boundaries: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.windows_boundaries }}
+      performance: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.performance }}
       e2e_should_run: ${{ steps.e2e_filter.outputs.should_run }}
       test_files: ${{ steps.e2e_filter.outputs.test_files }}
       ssh_source_changed: ${{ steps.e2e_filter.outputs.ssh_source_changed }}
@@ -855,6 +856,10 @@ jobs:
           done
           exit "$status"
 
+      # Why here: the renderer was just built; growth past the budget is a startup regression.
+      - name: Check renderer bundle budget
+        run: node config/scripts/check-renderer-bundle-budget.mjs
+
       - name: Project web client from renderer build
         id: web-client
         background: true
@@ -1157,6 +1162,36 @@ jobs:
     with:
       ref: ${{ github.event.pull_request.head.sha }}
 
+  # Why blocking on PRs: nightly-only runs failed unnoticed. These are serial,
+  # retry-free count/heap oracles (config/performance-audit.md), ~15 s after install.
+  performance:
+    name: performance contracts
+    needs: [code_paths]
+    if: needs.code_paths.outputs.performance == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # Why: the SQLite contracts load native modules built for plain Node.
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: node
+
+      - name: Run performance contracts
+        run: pnpm exec vitest run --config config/vitest.performance.config.ts
+
+      # Why: run even when a contract fails so one red step does not hide the other signal.
+      - name: Run memory audit reproductions
+        if: success() || failure()
+        run: node config/scripts/run-memory-audit-reproductions.mjs
+
   verify:
     if: ${{ !cancelled() }}
     needs:
@@ -1174,6 +1209,7 @@ jobs:
       - package
       - package_windows
       - windows_boundaries
+      - performance
     # Evaluating job results only needs the lightweight container runner.
     runs-on: ubuntu-slim
     timeout-minutes: 5
@@ -1217,6 +1253,8 @@ jobs:
           PACKAGE_WINDOWS_SHOULD_RUN: ${{ needs.code_paths.outputs.package_windows }}
           WINDOWS_BOUNDARIES: ${{ needs.windows_boundaries.result }}
           WINDOWS_BOUNDARIES_SHOULD_RUN: ${{ needs.code_paths.outputs.windows_boundaries }}
+          PERFORMANCE: ${{ needs.performance.result }}
+          PERFORMANCE_SHOULD_RUN: ${{ needs.code_paths.outputs.performance }}
         run: |
           if [ "$CODE_PATHS" != "success" ]; then
             exit 1
@@ -1253,4 +1291,5 @@ jobs:
           check_job package "$PACKAGE" "$PACKAGE_SHOULD_RUN"
           check_job package_windows "$PACKAGE_WINDOWS" "$PACKAGE_WINDOWS_SHOULD_RUN"
           check_job windows_boundaries "$WINDOWS_BOUNDARIES" "$WINDOWS_BOUNDARIES_SHOULD_RUN"
+          check_job performance "$PERFORMANCE" "$PERFORMANCE_SHOULD_RUN"
           exit "$failed"

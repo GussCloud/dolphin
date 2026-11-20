@@ -1,0 +1,21 @@
+{
+  "tolerance": 0.05,
+  "metrics": {
+    "bootJs": {
+      "raw": 4770515,
+      "gzip": 1435155
+    },
+    "entryCss": {
+      "raw": 597994,
+      "gzip": 84681
+    },
+    "totalJs": {
+      "raw": 39943125,
+      "gzip": 11060047
+    },
+    "totalCss": {
+      "raw": 1407019,
+      "gzip": 257391
+    }
+  }
+}
