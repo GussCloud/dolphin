@@ -52,13 +52,15 @@ The `resolve` job checks four things before anything is built:
 - the rc tag's commit is on `develop`;
 - the pull request that landed that commit has a successful `verify` check, which is `pr.yml`'s aggregate (`verify-release-commit.mjs`).
 
-After that, the run waits in the `production` environment until a reviewer approves it. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`:
+The owner's approval is the dispatch itself: only someone who can run workflows starts a promote (agents cannot). If the `production` environment has required reviewers, the run also waits there for one. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`:
 
 - **Desktop:** published as the latest stable release `vX.Y.Z`.
 - **Android:** `mobile-android-vX.Y.Z`, and `mobile-android-latest` is refreshed.
 - **iOS:** the fastlane `release` lane uploads a new build of `X.Y.Z` and distributes it to the external TestFlight group `peeps`.
 
-Last, the `fast-forward-main` job pushes the promoted commit to `main` (`git push origin <sha>:refs/heads/main`, never forced; with both apps, the newer of the two rc commits). If `main` already contains it, nothing moves. If the push is rejected, because `main` has commits that are not on `develop` or branch protection blocks `github-actions`, the job fails with an error: the release is published, and `main` must be moved by hand with the command the error prints. Nothing is undone.
+Last, the `fast-forward-main` job moves `main` to the promoted commit (with both apps, the newer of the two rc commits), never by force: a fast-forward when `main` is behind it, otherwise a merge commit on `main` (after a sync PR left one there). If `main` already contains it, nothing moves.
+
+`GITHUB_TOKEN` can never hold the `workflows` permission, so GitHub refuses the push whenever the range edits `.github/workflows/`. The job then ends with a warning, not a failure, because the release is already published, and its summary names the commit. To finish, point a branch at that commit, open a PR from it into `main` and merge it with the Claude GitHub App, which has that permission (the agent does this; nobody touches repository settings). Any other rejection fails the job with an error. Nothing is undone.
 
 ## How versions reach the build without a commit
 
@@ -74,13 +76,13 @@ The desktop release is assembled as a **draft**:
 
 The updater never sees a release that is missing a platform's manifest. If a leg fails, nothing is published: re-run the failed jobs. A later run for the same version deletes the stale draft before it starts.
 
-## One-time setup the owner must do
+## Repository settings
 
-These are repository settings that the workflows cannot set or check for themselves:
+The flow works with the repository as it is: nothing below has to be changed. Each item is an optional hardening:
 
-1. **Make `develop` the default branch.** Settings → General → Default branch → `develop`. New pull requests then target it, and scheduled workflows and Dependabot security updates run against it.
-2. **Create the `production` environment.** Settings → Environments → New environment `production` → enable **Required reviewers** and add yourself. Optionally turn on "Prevent self-review" (only if someone else approves) and restrict deployment branches to `develop` (promote is dispatched from it). Without required reviewers, promote runs **without** waiting for approval.
-3. **Let promote move `main`.** A ruleset or branch protection on `main` that requires pull requests or status checks rejects the workflow's push unless `github-actions` (the `GITHUB_TOKEN`) is on its bypass list. Keep force pushes and deletions blocked; the push is a fast-forward. GitHub may also refuse a `GITHUB_TOKEN` push whose range changes `.github/workflows/` (it lacks the `workflows` permission); when that happens, move `main` by hand. Protect `develop` with the `verify` check instead.
+1. **`develop` as the default branch.** With `main` as the default, pull requests are still aimed at `develop` explicitly, and Dependabot targets it in its config; scheduled workflows run the copies on `main`, which promote keeps current.
+2. **Required reviewers on `production`.** GitHub creates the environment on first use with no reviewers, so promote then runs as soon as it is dispatched. Adding yourself as a required reviewer adds a second confirmation.
+3. **Let promote move `main`.** `main` has no protection today, so the workflow's push goes through. If you add a ruleset or branch protection that requires pull requests or status checks, put `github-actions` (the `GITHUB_TOKEN`) on its bypass list, and keep force pushes and deletions blocked. Ranges that edit `.github/workflows/` always need the sync PR described above. Protect `develop` with the `verify` check instead.
 4. **Secrets the platform workflows already use**, which must stay set as repository secrets (`secrets: inherit` passes them through):
    - macOS: `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`.
    - iOS: `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`, `APPLE_TEAM_ID`, `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`.
