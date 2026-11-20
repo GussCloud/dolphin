@@ -138,6 +138,8 @@ docs/**
 !docs/reference/windows-daemon-host-relocation.md
 !docs/reference/windows-edr-posture.md
 !docs/reference/claude-agent-teams-windows.md
+!docs/reference/comparing-dolphin-with-other-tools.md
+!docs/reference/release-process.md
 !docs/reference/windows-msys-job-breakaway.md
 !docs/reference/windows-process-enumeration.md
 !docs/reference/wsl-runner-verification.md

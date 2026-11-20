@@ -12,8 +12,13 @@ const REPORTING_FLAGS_WITH_VALUE = new Set(['--format', '--reporter'])
 const REPORTING_FLAGS = new Set(['--quiet'])
 const PACKAGE_RUNNER_TOKENS = new Set(['pnpm', 'npm', 'yarn', 'npx', 'run', 'exec', 'node'])
 
+// Why strip `|| echo "::warning::…"`: report-only gates still run on every PR; the fallback only
+// turns their failure into an annotation, so the command itself must still count as present.
+const REPORT_ONLY_FALLBACK = /\s*\|\|\s*echo\s+"::warning::[^"]*"\s*$/gm
+
 function splitCommandChain(command) {
   return command
+    .replace(REPORT_ONLY_FALLBACK, '')
     .split(/\n|&&|;/)
     .map((part) => part.trim())
     .filter(Boolean)

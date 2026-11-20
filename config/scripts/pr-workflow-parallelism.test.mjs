@@ -115,11 +115,12 @@ describe('PR workflow parallelism', () => {
         .split(/\s+/)
         .filter((token) => !['apt-get', 'install', 'sudo', ''].includes(token))
         .filter((token) => !token.startsWith('-'))
-    const requiredShells = ['zsh', 'fish']
+    // zsh comes from apt; fish from its pinned static release (see the install step).
+    const installsFish = (step) => /fish-shell\/fish-shell\/releases\/download/.test(step.run ?? '')
     const jobsInstallingShells = Object.entries(workflow.jobs)
       .filter(([, job]) =>
-        (job.steps ?? []).some((step) =>
-          aptPackages(step).some((packageName) => requiredShells.includes(packageName))
+        (job.steps ?? []).some(
+          (step) => aptPackages(step).includes('zsh') || installsFish(step)
         )
       )
       .map(([name]) => name)
@@ -133,44 +134,31 @@ describe('PR workflow parallelism', () => {
     // Why each shell is asserted: the live tests skip themselves when the binary is
     // missing, so a dropped package silently empties this lane instead of failing it.
     const shellPackages = workflow.jobs.shell_contracts.steps.flatMap(aptPackages)
-    for (const shell of requiredShells) {
-      expect(shellPackages).toContain(shell)
-    }
+    expect(shellPackages).toContain('zsh')
+    expect(workflow.jobs.shell_contracts.steps.some(installsFish)).toBe(true)
     expect(shellInstall.with['native-runtime']).toBe('node')
     for (const testFile of nativeShellContractFiles) {
       expect(shellStep.run).toContain(testFile)
     }
   })
 
-  it('refreshes the apt index once while adding the fish PPA', () => {
+  it('installs fish from a pinned, checksum-verified release instead of a PPA', () => {
     const installStep = workflow.jobs.shell_contracts.steps.find(
       (step) => step.name === 'Install zsh and fish'
     )
-    // Comment lines mention both commands by name, so count the executed ones only.
+    // Comment lines name the old PPA, so judge the executed lines only.
     const commands = installStep.run
       .split('\n')
       .filter((line) => !line.trim().startsWith('#'))
       .join('\n')
-    const updates = commands.match(/apt-get update/g) ?? []
-    // Anchored to the start of a line so the retry message that names the command in
-    // prose is not mistaken for an invocation of it.
-    const addRepoCalls = commands
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => /^(sudo\s+)?add-apt-repository\b/.test(line))
-
-    // add-apt-repository refreshes every configured repo unless told not to, so an
-    // update on each side of it made this step pay for three full passes.
-    expect(updates).toHaveLength(1)
-    expect(addRepoCalls.length).toBeGreaterThan(0)
-    for (const call of addRepoCalls) {
-      expect(call.split(/\s+/)).toContain('-n')
-    }
-    // The one remaining update has to come after the PPA is on the list, or the fish
-    // index it exists to fetch would not be there yet.
-    expect(commands.lastIndexOf('add-apt-repository')).toBeLessThan(
-      commands.indexOf('apt-get update')
-    )
+    // Launchpad 503s made the PPA silently fall back to Ubuntu's fish 3.7 (7 of 8 failures).
+    expect(commands).not.toMatch(/add-apt-repository/)
+    expect(commands).toMatch(/^\s*FISH_VERSION=4\.\d+\.\d+$/m)
+    expect(commands).toMatch(/^\s*FISH_SHA256=[0-9a-f]{64}$/m)
+    expect(commands).toMatch(/sha256sum -c/)
+    // One index refresh only; the download has its own wall-clock bound.
+    expect(commands.match(/apt-get update/g) ?? []).toHaveLength(1)
+    expect(commands).toMatch(/curl -fsSL --max-time \d+/)
   })
 
   it('bounds the shell lane so a stalled apt mirror cannot hold the run open', () => {

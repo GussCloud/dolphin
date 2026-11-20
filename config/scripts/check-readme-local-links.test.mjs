@@ -167,7 +167,10 @@ describe('README local link check', () => {
     expect(guardJob.if).toBeUndefined()
     expect(guardJob.needs).toBeUndefined()
     expect(step.if).toBeUndefined()
-    expect(step.run).toBe('node config/scripts/check-readme-local-links.mjs')
+    // Report only: it runs on every PR but annotates instead of failing the job.
+    expect(step.run).toMatch(
+      /^node config\/scripts\/check-readme-local-links\.mjs \|\| echo "::warning::/
+    )
     expect(scripts['check:readme-local-links']).toBe(
       'node config/scripts/check-readme-local-links.mjs'
     )

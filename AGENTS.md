@@ -10,7 +10,7 @@ Never steal monitor focus or reveal test windows: no `show()`, `showInactive()`,
 visible-window tests paused on the user's desktop; run them on an isolated display or CI.
 Rebuild modified launch-policy code before running an app; stale build wrappers are not safe.
 
-Use the `$electron` skill and Playwright CDP for rendered Dolphin UI checks. Do not use computer-use for Dolphin UI validation.
+For rendered Dolphin UI checks use Playwright: the e2e harness (`tests/playwright.config.ts`, project `electron-headless`) or CDP screenshots of hidden renderers. Do not use computer-use for Dolphin UI validation.
 
 # Style
 
@@ -43,13 +43,7 @@ Avoid type assertions except `as const`. Unavoidable casts need a line-specific 
 
 # Comparing Dolphin With Other Tools
 
-When asked to compare Dolphin with another project and suggest what to adopt, judge each idea by its net gain over what Dolphin _already_ does, weighed against what it costs in performance and tokens — that trade-off is Dolphin's focus.
-
-- Map Dolphin's existing feature first (orchestration, Claude Agent Teams, subagents, injected terminal prompts, usage/rate-limit tracking, session search) and drop ideas it already covers or the agent CLIs already provide.
-- Separate what the other project implements from what it only claims in its README.
-- State the recurring cost of each idea: context tokens per session, plan quota, polling, IPC, or renderer work. Prefer zero-fixed-cost designs (on-demand, built from data already in memory).
-- Assume subscription plans with quota limits, not per-token API billing, unless told otherwise.
-- Recommend few ideas, ranked by gain/cost; say plainly when nothing is worth adopting.
+When asked to compare Dolphin with another project, follow [`docs/reference/comparing-dolphin-with-other-tools.md`](./docs/reference/comparing-dolphin-with-other-tools.md).
 
 # Verifying Changes
 
@@ -57,7 +51,7 @@ When asked to compare Dolphin with another project and suggest what to adopt, ju
 - **Test**: `pnpm test [path/to/file.test.ts]`
 - **Lint**: `oxlint`, or `pnpm run check:code-quality:changed` for changed files (full `pnpm lint` is slow); format with `pnpm format`
 - **Design system**: `pnpm run lint:design-system` for the full renderer report (not a gate); the changed-lines gate above is what CI enforces
-- **Before a PR**: run `node config/scripts/verify-pr-local.mjs` once (`--dry-run` lists the plan). It runs the PR-CI gates that apply to the diff plus the tests colocated with changed files, prints only failures, and leaves the full unit suite, e2e and packaging to CI. Do not run the whole suite or `vitest related` locally as a pre-PR gate: on Windows it mostly re-reports environment failures at many times the cost, and a `src/shared` change reaches thousands of files. Implementers run only their focused tests; the lead runs this script once on the final tree.
+- **Before a PR**: run `node config/scripts/verify-pr-local.mjs --fix` once (`--dry-run` lists the plan). `--fix` first regenerates catalogs and applies `oxlint --fix` and `oxfmt` to the changed files. It then runs the PR-CI gates that apply to the diff plus the tests colocated with changed files, prints only failures (style and size gates only warn, as in CI), and leaves the full unit suite, e2e and packaging to CI. Do not run the whole suite or `vitest related` locally as a pre-PR gate: on Windows it mostly re-reports environment failures at many times the cost, and a `src/shared` change reaches thousands of files. Implementers run only their focused tests; the lead runs this script once on the final tree.
 
 # Writing Pull Requests
 
@@ -83,17 +77,21 @@ Dolphin targets macOS, Linux, and Windows. Keep all platform-dependent behavior 
 - **Keyboard shortcuts**: Never hardcode `e.metaKey`. Use a platform check (`navigator.userAgent.includes('Mac')`) to pick `metaKey` on Mac and `ctrlKey` on Linux/Windows. Electron menu accelerators should use `CmdOrCtrl`.
 - **Shortcut labels in UI**: Display `⌘` / `⇧` on Mac and `Ctrl+` / `Shift+` on other platforms.
 - **File paths**: Use `path.join` or Electron/Node path utilities — never assume `/` or `\`.
-- **Windows terminal shells**: `--shell` picks the shell a terminal _is_; `--command` is typed into whatever shell the host spawned, so a shell choice routed through `command` silently becomes a child process. See [`docs/reference/windows-terminal-shell-selection.md`](./docs/reference/windows-terminal-shell-selection.md).
-- **Windows setup scripts**: the setup/issue-command runner is a `.cmd` batch file unless the script starts with a `#!` line — never derive that from the user's terminal-shell preference, and never launch a `.cmd` runner with a bare `cmd.exe /c` from a Git Bash pane (MSYS rewrites the `/c`). See [`docs/reference/windows-setup-shell.md`](./docs/reference/windows-setup-shell.md).
-- **Windows child processes**: start them through `runProcess`/`spawnProcess` in `src/shared/child-process/` — never `child_process` directly. It pins `windowsHide`, refuses `shell: true`, and encodes `.cmd`/`.bat` arguments so neither `CommandLineToArgvW` nor `cmd.exe` mangles them. A ratchet test fails on any new direct import. Recognised npm/pnpm `.cmd` shims are resolved to their real target so the spawn skips `cmd.exe` entirely; see [`docs/reference/windows-cmd-shim-resolution.md`](./docs/reference/windows-cmd-shim-resolution.md) before adding a shim shape or debugging one.
-- **Ripgrep**: Dolphin bundles `rg` for every platform, WSL, and SSH remotes. Spawn it through `spawnBundledRipgrep` (main) or `resolveRelayRipgrepCommand` (relay), never a bare `'rg'` — Windows resolves a bare name in the spawn cwd before PATH. Don't add git/readdir fallbacks locally; the relay's chain exists only for hosts an upload never reached.
-- **Claude Agent Teams on Windows**: teammate panes run in Git Bash behind a build-time `tmux.exe` shim and degrade to in-process teammates; WSL leaders run the distro's `claude` with a guest shim. See [`docs/reference/claude-agent-teams-windows.md`](./docs/reference/claude-agent-teams-windows.md).
-- **Windows process enumeration**: read the table through `src/main/windows/windows-process-table.ts`, never by forking `powershell.exe`. See [`docs/reference/windows-process-enumeration.md`](./docs/reference/windows-process-enumeration.md).
-- **Windows MSYS/Git Bash panes**: their children break away from the per-PTY job unless it is created without `JOB_OBJECT_LIMIT_BREAKAWAY_OK`, and a `conpty.node` built before that fix passes every existing gate. Before changing the per-PTY job or debugging `windows-msys-job.win32.test.ts`, read [`docs/reference/windows-msys-job-breakaway.md`](./docs/reference/windows-msys-job-breakaway.md).
-- **Windows daemon-host relocation**: the terminal daemon runs from a copy of the app runtime under `%LOCALAPPDATA%`, which is what survives an auto-update. Before touching that copy, its exe name, or the NSIS uninstall macro, read [`docs/reference/windows-daemon-host-relocation.md`](./docs/reference/windows-daemon-host-relocation.md).
-- **Windows EDR signal**: don't add `-ExecutionPolicy Bypass`, `-EncodedCommand`, `cmd.exe /c` with escaped free text, per-operation interpreter spawning, or runtime `Add-Type` compilation without reading [`docs/reference/windows-edr-posture.md`](./docs/reference/windows-edr-posture.md) first — behavioural EDR scores each of those, and being signed does not clear them.
-- **WSL commands**: build argv with `buildWslExecArgs` (always `--exec` — under `--`, `wsl.exe` expands `$name` in every argument and silently rewrites the script), and fence anything whose stdout you parse with `buildWslCapturedLoginShellCommand`, because the interactive login shell prints the distro banner to stdout. See [`docs/reference/wsl-command-execution.md`](./docs/reference/wsl-command-execution.md).
-- **Linux native modules**: keep the glibc floor at Ubuntu 20.04 / glibc 2.31. A module compiled from source on a newer runner can reference symbol versions absent on the floor and crash the app on startup. See [`docs/reference/linux-glibc-compatibility.md`](./docs/reference/linux-glibc-compatibility.md); packaging fails if a bundled native binary needs newer glibc.
+Before changing any of these, read the linked reference. The rule in the middle column is the one most often broken.
+
+| Area | Rule | Read first |
+| --- | --- | --- |
+| Windows terminal shells | `--shell` picks the shell a terminal _is_; `--command` is typed into the host's shell, so a shell choice routed through it becomes a child process | [`windows-terminal-shell-selection.md`](./docs/reference/windows-terminal-shell-selection.md) |
+| Windows setup scripts | The runner is a `.cmd` file unless the script starts with `#!`; never derive it from the terminal-shell preference, never launch it with a bare `cmd.exe /c` from Git Bash | [`windows-setup-shell.md`](./docs/reference/windows-setup-shell.md) |
+| Child processes | Only through `runProcess`/`spawnProcess` in `src/shared/child-process/`, never `child_process` (a ratchet test enforces it); `.cmd` shims resolve to their target | [`windows-cmd-shim-resolution.md`](./docs/reference/windows-cmd-shim-resolution.md) |
+| Ripgrep | Spawn via `spawnBundledRipgrep` (main) or `resolveRelayRipgrepCommand` (relay), never a bare `'rg'`; no local git/readdir fallbacks | — |
+| Claude Agent Teams on Windows | Teammates run in Git Bash behind a build-time `tmux.exe` shim; WSL leaders use the distro's `claude` with a guest shim | [`claude-agent-teams-windows.md`](./docs/reference/claude-agent-teams-windows.md) |
+| Windows process enumeration | Read the table through `src/main/windows/windows-process-table.ts`, never by forking `powershell.exe` | [`windows-process-enumeration.md`](./docs/reference/windows-process-enumeration.md) |
+| Windows MSYS/Git Bash panes | Create the per-PTY job without `JOB_OBJECT_LIMIT_BREAKAWAY_OK`; an old `conpty.node` passes every gate | [`windows-msys-job-breakaway.md`](./docs/reference/windows-msys-job-breakaway.md) |
+| Windows daemon host | The daemon runs from a runtime copy under `%LOCALAPPDATA%` that survives auto-update; mind its exe name and the NSIS uninstall macro | [`windows-daemon-host-relocation.md`](./docs/reference/windows-daemon-host-relocation.md) |
+| Windows EDR | No `-ExecutionPolicy Bypass`, `-EncodedCommand`, `cmd.exe /c` with escaped free text, per-operation interpreters or runtime `Add-Type` | [`windows-edr-posture.md`](./docs/reference/windows-edr-posture.md) |
+| WSL commands | Build argv with `buildWslExecArgs` (always `--exec`); fence parsed stdout with `buildWslCapturedLoginShellCommand` | [`wsl-command-execution.md`](./docs/reference/wsl-command-execution.md) |
+| Linux native modules | Keep the glibc floor at Ubuntu 20.04 / 2.31; packaging fails if a bundled binary needs newer | [`linux-glibc-compatibility.md`](./docs/reference/linux-glibc-compatibility.md) |
 
 ## Native Dependency Installs
 
@@ -109,7 +107,7 @@ All changes must consider folder workspaces as well as git worktrees. Don't assu
 
 ## Claude Account Profiles
 
-Every Dolphin-managed Claude account runs in its own isolated `CLAUDE_CONFIG_DIR` (instructions, MCP servers, skills, history, login); `~/.claude` is the user's system profile and Dolphin never writes managed credentials there. A launch that cannot use its account is refused, never degraded to another profile. Before touching account launches, profile layout, or anything that reads `~/.claude` (sessions, skills, trust, usage), read [`docs/reference/claude-account-profiles.md`](./docs/reference/claude-account-profiles.md).
+Every Dolphin-managed Claude account runs in its own isolated `CLAUDE_CONFIG_DIR` (instructions, MCP servers, skills, history, login); `~/.claude` is the user's system profile and Dolphin never writes managed credentials there. A launch that cannot use its account is refused, never degraded to another profile. Before touching account launches, profile layout, or anything that reads `~/.claude` (sessions, skills, trust, usage), read `src/main/claude-accounts/` and its tests, plus `tests/e2e/claude-account-profile.spec.ts`.
 
 ## DeepSeek Agent
 
