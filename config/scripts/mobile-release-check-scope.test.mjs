@@ -76,6 +76,7 @@ it('gates Ruby independently and retains mobile static validation', () => {
     'Setup Ruby and fastlane',
     'Test iOS release version resolution',
     'Test TestFlight lane arguments',
+    'Test altool upload result',
     'Smoke-check the Fastfile'
   ])
   for (const step of gated) {
