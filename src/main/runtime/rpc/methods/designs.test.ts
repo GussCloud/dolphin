@@ -193,6 +193,19 @@ describe('design.* RPC methods', () => {
       expect(status).toHaveBeenCalledWith('term_live')
     })
 
+    it('reports an agent that finished its turn and only runs watch loops as idle', async () => {
+      const id = await createDesign()
+      await call('design.start', { from: 'term_a', id })
+      vi.spyOn(ctx.runtime, 'getLiveTerminalHandleForPaneKey').mockReturnValue('term_live')
+      vi.spyOn(ctx.runtime, 'getTerminalAgentStatus').mockResolvedValue({
+        handle: 'term_live',
+        isRunningAgent: true,
+        status: 'working',
+        workingMode: 'monitoring'
+      })
+      expect(await call('design.agentStatus', { id })).toEqual({ live: true, status: 'idle' })
+    })
+
     it('reports an unreadable status as unverifiable, not as an exited pane', async () => {
       const id = await createDesign()
       await call('design.start', { from: 'term_a', id })

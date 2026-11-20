@@ -1,3 +1,4 @@
+import { designAgentStatusFromTerminal } from '../designs/design-agent-terminal-status'
 import { startDesignInboxWatchdog } from '../designs/design-inbox-watchdog'
 import { startDesignRendererBroadcast } from '../designs/design-renderer-broadcast'
 import { getDesignStore } from '../designs/design-store-instance'
@@ -27,7 +28,8 @@ export function startMainProcessDesigns(runtime: DolphinRuntimeService): () => v
     subscribe: (listener) => store.subscribe(listener),
     // Why no stale row-handle fallback: a pane the runtime no longer has live must not be typed into.
     resolveTerminalHandle: (paneKey) => runtime.getLiveTerminalHandleForPaneKey(paneKey),
-    readAgentStatus: async (terminal) => (await runtime.getTerminalAgentStatus(terminal)).status,
+    readAgentStatus: async (terminal) =>
+      designAgentStatusFromTerminal(await runtime.getTerminalAgentStatus(terminal)),
     readLastInputAt: (terminal) => {
       const ptyId = runtime.resolveLiveLeafForHandle(terminal)?.ptyId
       return ptyId ? readLatestTerminalInputAt(ptyId) : undefined

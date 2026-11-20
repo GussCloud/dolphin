@@ -17,6 +17,11 @@ import { detectTerminalWaitBlockedReason } from './terminal-wait-detection'
 import { getTerminalState } from './terminal-wait-results'
 import { buildTerminalWaitText } from './terminal-wait-tail-state'
 
+/** Host-side reading: `monitoring` qualifies a hook `working` whose main agent settled with only watch loops left. */
+export type RuntimeTerminalAgentStatusReading = RuntimeTerminalAgentStatus & {
+  workingMode?: 'monitoring'
+}
+
 export type RuntimeTerminalAgentStatusSnapshot = {
   waitText: string
   waitBlockedAt: number | null
@@ -31,9 +36,11 @@ type Dependencies = {
   getLiveLeaf(handle: string): { leaf: RuntimeLeafRecord }
   getPrimaryLeaf(ptyId: string): RuntimeLeafRecord | null
   getTabTitle(tabId: string): string | null
-  getExplicitStatus(
-    handle: string
-  ): { status: NonNullable<RuntimeTerminalAgentStatus['status']>; updatedAt: number } | null
+  getExplicitStatus(handle: string): {
+    status: NonNullable<RuntimeTerminalAgentStatus['status']>
+    updatedAt: number
+    workingMode?: 'monitoring'
+  } | null
   getLifecycleStatus(
     ptyId: string
   ): { status: AgentStatus | null; updatedAt: number } | null | undefined
@@ -41,11 +48,11 @@ type Dependencies = {
 }
 
 export class RuntimeTerminalAgentStatusQuery {
-  private readonly inFlight = new Map<string, Promise<RuntimeTerminalAgentStatus>>()
+  private readonly inFlight = new Map<string, Promise<RuntimeTerminalAgentStatusReading>>()
 
   constructor(private readonly deps: Dependencies) {}
 
-  async getStatus(handle: string): Promise<RuntimeTerminalAgentStatus> {
+  async getStatus(handle: string): Promise<RuntimeTerminalAgentStatusReading> {
     const existing = this.inFlight.get(handle)
     if (existing) {
       return existing
@@ -61,7 +68,7 @@ export class RuntimeTerminalAgentStatusQuery {
     }
   }
 
-  private async readStatus(handle: string): Promise<RuntimeTerminalAgentStatus> {
+  private async readStatus(handle: string): Promise<RuntimeTerminalAgentStatusReading> {
     const ptyId = this.getPtyId(handle)
     const terminal = this.getSnapshot(handle, ptyId)
     const explicitStatus = this.deps.getExplicitStatus(handle)
@@ -103,7 +110,10 @@ export class RuntimeTerminalAgentStatusQuery {
       return {
         handle,
         isRunningAgent,
-        status: isRunningAgent ? explicitStatus.status : null
+        status: isRunningAgent ? explicitStatus.status : null,
+        ...(isRunningAgent && explicitStatus.workingMode
+          ? { workingMode: explicitStatus.workingMode }
+          : {})
       }
     }
     if (terminal.titleStatus) {

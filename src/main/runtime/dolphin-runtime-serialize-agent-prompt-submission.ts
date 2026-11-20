@@ -2,7 +2,10 @@
 import { selectFreshExplicitAgentStatus } from './runtime-hook-agent-row-selection'
 import { DolphinRuntimeWithControllerKnowsPtyIsLive } from './dolphin-runtime-controller-knows-pty-is-live'
 import type { RuntimeTerminalAgentStatus } from '../../shared/runtime-types'
-import type { RuntimeTerminalAgentStatusSnapshot } from './runtime-terminal-agent-status-query'
+import type {
+  RuntimeTerminalAgentStatusReading,
+  RuntimeTerminalAgentStatusSnapshot
+} from './runtime-terminal-agent-status-query'
 import type { RuntimePtyWorktreeRecord } from './runtime-terminal-state-records'
 import { hasCompatibleAgentTitleIdentity } from '../../shared/agent-title-owner'
 import type { PtyForegroundProcessRead } from './runtime-terminal-contracts'
@@ -37,7 +40,7 @@ export class DolphinRuntimeWithSerializeAgentPromptSubmission extends DolphinRun
     }
   }
 
-  getTerminalAgentStatus(handle: string): Promise<RuntimeTerminalAgentStatus> {
+  getTerminalAgentStatus(handle: string): Promise<RuntimeTerminalAgentStatusReading> {
     return this.terminalAgentStatus.getStatus(handle)
   }
 
@@ -185,6 +188,7 @@ export class DolphinRuntimeWithSerializeAgentPromptSubmission extends DolphinRun
     status: NonNullable<RuntimeTerminalAgentStatus['status']>
     updatedAt: number
     stateStartedAt: number
+    workingMode?: 'monitoring'
   } | null {
     return selectFreshExplicitAgentStatus({
       handle,

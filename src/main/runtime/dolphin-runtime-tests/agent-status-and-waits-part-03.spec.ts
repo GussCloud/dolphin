@@ -1,8 +1,58 @@
 import { describe, expect, it, vi } from 'vitest'
-import { DolphinRuntimeService } from '../dolphin-runtime-test-mocks.spec'
+import { DolphinRuntimeService, makePaneKey } from '../dolphin-runtime-test-mocks.spec'
 import { TEST_WORKTREE_ID, store } from '../dolphin-runtime-test-fixtures.spec'
 
 describe('DolphinRuntimeService', () => {
+  it('reports a settled agent held open only by watch loops as working in monitoring mode', async () => {
+    const leafId = '11111111-1111-4111-8111-111111111111'
+    const runtime = new DolphinRuntimeService(store, undefined, {
+      getAgentStatusSnapshot: () => [
+        {
+          paneKey: makePaneKey('tab-1', leafId),
+          state: 'working',
+          workingMode: 'monitoring',
+          prompt: '',
+          agentType: 'claude',
+          connectionId: null,
+          receivedAt: Date.now(),
+          stateStartedAt: Date.now(),
+          tabId: 'tab-1',
+          worktreeId: TEST_WORKTREE_ID
+        }
+      ]
+    })
+    runtime.setPtyController({
+      spawn: vi.fn().mockResolvedValue({ id: 'pty-1' }),
+      write: () => true,
+      kill: () => true,
+      getForegroundProcess: async () => 'claude'
+    })
+    runtime.attachWindow(1)
+    runtime.syncWindowGraph(1, {
+      tabs: [
+        {
+          tabId: 'tab-1',
+          worktreeId: TEST_WORKTREE_ID,
+          title: 'Dolphin Design agent',
+          activeLeafId: leafId,
+          layout: null
+        }
+      ],
+      leaves: [
+        { tabId: 'tab-1', worktreeId: TEST_WORKTREE_ID, leafId, paneRuntimeId: 1, ptyId: 'pty-1' }
+      ]
+    })
+
+    const [terminal] = (await runtime.listTerminals()).terminals
+
+    await expect(runtime.getTerminalAgentStatus(terminal.handle)).resolves.toEqual({
+      handle: terminal.handle,
+      isRunningAgent: true,
+      status: 'working',
+      workingMode: 'monitoring'
+    })
+  })
+
   it('reports recognized foreground agents with unknown status as running with null status', async () => {
     const runtime = new DolphinRuntimeService(store)
     runtime.setPtyController({

@@ -37,13 +37,16 @@ export function selectFreshExplicitAgentStatus(args: {
   status: NonNullable<RuntimeTerminalAgentStatus['status']>
   updatedAt: number
   stateStartedAt: number
+  workingMode?: 'monitoring'
 } | null {
   const now = Date.now()
   let bestStatus: NonNullable<RuntimeTerminalAgentStatus['status']> | null = null
   let bestUpdatedAt = -1
   let bestStateStartedAt = -1
+  let bestMonitoring = false
   const consider = (
     state: AgentStatusEntry['state'] | undefined,
+    workingMode: AgentStatusEntry['workingMode'],
     updatedAt: number | null | undefined,
     evidenceObservedAt: number | null | undefined,
     restoredUnconfirmed = false,
@@ -61,6 +64,7 @@ export function selectFreshExplicitAgentStatus(args: {
       bestStatus = status
       bestUpdatedAt = updatedAt
       bestStateStartedAt = typeof stateStartedAt === 'number' ? stateStartedAt : updatedAt
+      bestMonitoring = status === 'working' && workingMode === 'monitoring'
     }
   }
   for (const row of args.hookRows) {
@@ -69,6 +73,7 @@ export function selectFreshExplicitAgentStatus(args: {
     }
     consider(
       row.state,
+      row.workingMode,
       row.receivedAt,
       row.evidenceObservedAt,
       row.restoredUnconfirmed,
@@ -80,7 +85,8 @@ export function selectFreshExplicitAgentStatus(args: {
     ? {
         status: bestStatus,
         updatedAt: bestUpdatedAt,
-        stateStartedAt: bestStateStartedAt
+        stateStartedAt: bestStateStartedAt,
+        ...(bestMonitoring ? { workingMode: 'monitoring' as const } : {})
       }
     : null
 }
