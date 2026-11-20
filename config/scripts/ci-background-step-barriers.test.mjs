@@ -107,7 +107,9 @@ describe('CI background step barriers', () => {
   it('joins package setup before reading outputs and preserves isolated native probes', () => {
     const steps = pr.jobs.package.steps
     // Parallel composites must not race to download their shared cache action on first use.
-    const cacheAction = steps.findIndex((step) => step.uses === 'actions/cache@caa296126883cff596d87d8935842f9db880ef25')
+    const cacheAction = steps.findIndex(
+      (step) => step.uses === 'actions/cache@caa296126883cff596d87d8935842f9db880ef25'
+    )
     expect(cacheAction).toBeGreaterThanOrEqual(0)
     expect(cacheAction).toBeLessThan(
       steps.findIndex((step) => step.id === 'shutdown-fixture-cache')

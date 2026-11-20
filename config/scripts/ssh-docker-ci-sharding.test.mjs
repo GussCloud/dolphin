@@ -53,7 +53,9 @@ it('runs all four isolated shards and the special SSH suites exactly once', () =
       (step) => step.name === 'Run Docker SSH terminal parking + startup readiness E2E'
     ).if
   ).toBe('always() && matrix.shard == 1')
-  const upload = job.steps.find((step) => step.uses === 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9')
+  const upload = job.steps.find(
+    (step) => step.uses === 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
+  )
   expect(upload.with.name).toContain('${{ matrix.shard }}')
 })
 

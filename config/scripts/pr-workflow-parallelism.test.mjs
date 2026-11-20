@@ -119,9 +119,7 @@ describe('PR workflow parallelism', () => {
     const installsFish = (step) => /fish-shell\/fish-shell\/releases\/download/.test(step.run ?? '')
     const jobsInstallingShells = Object.entries(workflow.jobs)
       .filter(([, job]) =>
-        (job.steps ?? []).some(
-          (step) => aptPackages(step).includes('zsh') || installsFish(step)
-        )
+        (job.steps ?? []).some((step) => aptPackages(step).includes('zsh') || installsFish(step))
       )
       .map(([name]) => name)
 
@@ -227,7 +225,9 @@ describe('PR workflow parallelism', () => {
     )
     const buildIndex = steps.findIndex((step) => step.run === 'pnpm run build:relay')
     const node18Index = steps.findIndex(
-      (step) => step.uses === 'actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38' && step.with['node-version'] === '18'
+      (step) =>
+        step.uses === 'actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38' &&
+        step.with['node-version'] === '18'
     )
     const smokeIndex = steps.findIndex(
       (step) => step.run === 'node config/scripts/smoke-managed-hook-runtime-node18.mjs'
@@ -264,7 +264,9 @@ describe('PR workflow parallelism', () => {
     expect(restoreIndex).toBeLessThan(
       steps.findIndex((step) => step.name === 'Install dependencies')
     )
-    expect(steps[restoreIndex].uses).toBe('actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25')
+    expect(steps[restoreIndex].uses).toBe(
+      'actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25'
+    )
   })
 
   it('uses the repository package-manager version for every direct pnpm setup', () => {

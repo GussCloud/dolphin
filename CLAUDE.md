@@ -9,10 +9,10 @@ Mensagens enviadas pelo app durante uma execução podem chegar atrasadas à ses
 
 # Antes de Implementar: Profundidade Proporcional ao Risco
 
-| Demanda | Exemplos | O que fazer |
-| --- | --- | --- |
-| Pequena | 1–2 arquivos, sem mudar contrato nem cruzar processos | Implemente direto e rode o teste focado |
-| Média | Uma feature dentro de uma camada | Plano curto no chat (fluxo, riscos, como verificar) e siga, salvo ambiguidade |
+| Demanda   | Exemplos                                                                                                                           | O que fazer                                                                                                                                     |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pequena   | 1–2 arquivos, sem mudar contrato nem cruzar processos                                                                              | Implemente direto e rode o teste focado                                                                                                         |
+| Média     | Uma feature dentro de uma camada                                                                                                   | Plano curto no chat (fluxo, riscos, como verificar) e siga, salvo ambiguidade                                                                   |
 | Arriscada | IPC/RPC e protocolo cliente-host, SSH/WSL, lançamento de agentes, contas, dados do usuário, CI/release, código nativo de `mobile/` | Siga o fluxo de ponta a ponta com `arquivo:linha`, liste onde pode falhar em silêncio e como será verificado, e apresente o mapa antes de codar |
 
 Bug fix, em qualquer tamanho: aponte a etapa exata da falha com evidência (não hipótese) antes de corrigir.

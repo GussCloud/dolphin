@@ -9,7 +9,9 @@ const action = read('.github/actions/install-node-dependencies/action.yml')
 describe('CI dependency download caches', () => {
   it('scopes desktop stores to the root lockfile and lets mixed installs opt in', () => {
     expect(action.inputs['cache-dependency-path'].default).toBe('pnpm-lock.yaml')
-    for (const step of action.runs.steps.filter((step) => step.uses === 'actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38')) {
+    for (const step of action.runs.steps.filter(
+      (step) => step.uses === 'actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38'
+    )) {
       expect(step.with.cache).toBe("${{ github.event_name != 'pull_request' && 'pnpm' || '' }}")
       expect(step.with['cache-dependency-path']).toBe('${{ inputs.cache-dependency-path }}')
       expect(step.with['package-manager-cache']).toBe(false)
@@ -47,7 +49,9 @@ describe('CI dependency download caches', () => {
     expect(action.runs.steps.indexOf(restore)).toBeLessThan(
       action.runs.steps.findIndex((step) => step.name === 'Install dependencies')
     )
-    const saves = action.runs.steps.filter((step) => step.uses === 'actions/cache/save@caa296126883cff596d87d8935842f9db880ef25')
+    const saves = action.runs.steps.filter(
+      (step) => step.uses === 'actions/cache/save@caa296126883cff596d87d8935842f9db880ef25'
+    )
     expect(saves).toEqual([])
   })
 })

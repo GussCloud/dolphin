@@ -1,7 +1,9 @@
 {
   "advisories": {
     "1240041": {
-      "findings": [{ "version": "7.29.0", "paths": [".>electron>@electron/get>undici"], "dev": false }],
+      "findings": [
+        { "version": "7.29.0", "paths": [".>electron>@electron/get>undici"], "dev": false }
+      ],
       "id": 1240041,
       "title": "undici high-severity fixture",
       "module_name": "undici",
@@ -49,5 +51,7 @@
       "url": "https://github.com/advisories/GHSA-rpw4-54j3-4h4q"
     }
   },
-  "metadata": { "vulnerabilities": { "info": 0, "low": 0, "moderate": 1, "high": 2, "critical": 1 } }
+  "metadata": {
+    "vulnerabilities": { "info": 0, "low": 0, "moderate": 1, "high": 2, "critical": 1 }
+  }
 }
