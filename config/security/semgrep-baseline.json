@@ -1,0 +1,80 @@
+{
+  "$comment": "Semgrep findings accepted on main. Regenerate only to remove fixed entries: node config/scripts/semgrep-baseline-gate.mjs update --semgrep <semgrep binary>",
+  "findings": [
+    {
+      "rule": "child-process-shell-true",
+      "path": "config/scripts/claude-account-windows-spawn-repro.mjs",
+      "snippet": "return spawn(command, args, { cwd: tempRoot, env, shell: true, windowsHide: true })"
+    },
+    {
+      "rule": "child-process-shell-true",
+      "path": "config/scripts/claude-account-windows-spawn-repro.mjs",
+      "snippet": "return spawn(quoteForCandidate(command), args, { cwd: tempRoot, env, shell: true, windowsHide: true })"
+    },
+    {
+      "rule": "child-process-shell-true",
+      "path": "src/cli/runtime/launch.ts",
+      "snippet": "spawnDetached(overrideCommand, [], { shell: true })"
+    },
+    {
+      "rule": "child-process-shell-true",
+      "path": "src/main/automations/precheck-runner.ts",
+      "snippet": "const child = spawn(precheck.command, { cwd: target.cwd, detached: process.platform !== 'win32', env: process.env, shell: true, windowsHide: true })"
+    },
+    {
+      "rule": "dynamic-code-evaluation",
+      "path": "config/scripts/command-code-transcript-scan-benchmark.mjs",
+      "snippet": "const value = Number(new Function(`return (${match[1]})`)())"
+    },
+    {
+      "rule": "dynamic-code-evaluation",
+      "path": "config/scripts/terminal-stream-byte-length-benchmark.mjs",
+      "snippet": "return Number(new Function(`return (${match[1].trim()})`)())"
+    },
+    {
+      "rule": "dynamic-code-evaluation",
+      "path": "mobile/src/terminal/terminal-webview-mouse-test-harness.ts",
+      "snippet": "runInThisContext(TERMINAL_DOCUMENT_SCRIPT)"
+    },
+    {
+      "rule": "dynamic-code-evaluation",
+      "path": "src/main/pi/agent-status-extension-test-harness.ts",
+      "snippet": "runInNewContext(output, context)"
+    },
+    {
+      "rule": "electron-ipc-input-to-dangerous-sink",
+      "path": "src/main/ipc/diagnostics.ts",
+      "snippet": "const errorMessage = await shell.openPath(previewFilePath)"
+    },
+    {
+      "rule": "electron-open-external-unvalidated",
+      "path": "src/main/browser/browser-manager-guest-popup-policy.ts",
+      "snippet": "void shell.openExternal(redactKagiSessionToken(externalUrl))"
+    },
+    {
+      "rule": "electron-open-external-unvalidated",
+      "path": "src/main/dolphin-profiles/profile-cloud-pkce.ts",
+      "snippet": "void shell.openExternal(authorizeUrl.toString()).catch((error) => {"
+    },
+    {
+      "rule": "electron-open-external-unvalidated",
+      "path": "src/main/ipc/developer-permissions.ts",
+      "snippet": "await shell.openExternal(url)"
+    },
+    {
+      "rule": "electron-open-external-unvalidated",
+      "path": "src/main/ipc/notification-system-settings-link.ts",
+      "snippet": "void shell.openExternal(getMacNotificationSettingsUrl())"
+    },
+    {
+      "rule": "electron-open-external-unvalidated",
+      "path": "src/main/window/privileged-window-navigation.ts",
+      "snippet": "void shell.openExternal(externalUrl)"
+    },
+    {
+      "rule": "electron-open-external-unvalidated",
+      "path": "src/main/window/privileged-window-navigation.ts",
+      "snippet": "void shell.openExternal(externalUrl)"
+    }
+  ]
+}

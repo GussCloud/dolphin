@@ -29,7 +29,7 @@ const expensiveJobs = [
   'performance'
 ]
 
-const ALWAYS_ON = ['static_analysis', 'typecheck', 'test']
+const ALWAYS_ON = ['static_analysis', 'typecheck', 'test', 'security']
 
 // The Windows lane runs on two runners; its boundary half always follows the package half.
 const PAIRED_JOBS = { windows_boundaries: 'package_windows' }

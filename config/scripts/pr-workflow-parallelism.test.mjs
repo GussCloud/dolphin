@@ -227,7 +227,7 @@ describe('PR workflow parallelism', () => {
     )
     const buildIndex = steps.findIndex((step) => step.run === 'pnpm run build:relay')
     const node18Index = steps.findIndex(
-      (step) => step.uses === 'actions/setup-node@v6' && step.with['node-version'] === '18'
+      (step) => step.uses === 'actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38' && step.with['node-version'] === '18'
     )
     const smokeIndex = steps.findIndex(
       (step) => step.run === 'node config/scripts/smoke-managed-hook-runtime-node18.mjs'
@@ -248,7 +248,7 @@ describe('PR workflow parallelism', () => {
     expect(pnpmIndex).toBeLessThan(requestedNodeIndex)
     const packageManagerVersion = /^pnpm@([^+]+)/.exec(packageJson.packageManager)?.[1]
     expect(packageManagerVersion).toBe('12.0.0')
-    expect(steps[pnpmIndex].uses).toBe('pnpm/setup@v2')
+    expect(steps[pnpmIndex].uses).toBe('pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b')
     expect(steps[pnpmIndex].with.version).toBeUndefined()
     expect(steps[pnpmIndex].with.install).toBe(false)
     const saveOutsidePrs = "${{ github.event_name != 'pull_request' && 'pnpm' || '' }}"
@@ -264,7 +264,7 @@ describe('PR workflow parallelism', () => {
     expect(restoreIndex).toBeLessThan(
       steps.findIndex((step) => step.name === 'Install dependencies')
     )
-    expect(steps[restoreIndex].uses).toBe('actions/cache/restore@v5')
+    expect(steps[restoreIndex].uses).toBe('actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25')
   })
 
   it('uses the repository package-manager version for every direct pnpm setup', () => {
@@ -272,7 +272,7 @@ describe('PR workflow parallelism', () => {
       const parsed = parse(readFileSync(workflowPath, 'utf8'))
       return Object.values(parsed.jobs ?? {}).flatMap((job) =>
         (job.steps ?? [])
-          .filter((step) => step.uses === 'pnpm/setup@v2')
+          .filter((step) => step.uses === 'pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b')
           .map((step) => ({ workflowPath, step }))
       )
     })
@@ -378,7 +378,7 @@ describe('PR workflow parallelism', () => {
     expect(restoreOnly.if).toBe(
       "inputs.native-runtime != 'none' && inputs.persist-native-cache == 'false'"
     )
-    expect(restoreOnly.uses).toBe('actions/cache/restore@v5')
+    expect(restoreOnly.uses).toBe('actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25')
     // Native artifacts are ABI-bound: a key missing either dimension serves a build
     // that cannot load, and ensure-native-runtime would recompile it anyway.
     for (const cacheStep of [steps[cacheIndex], restoreOnly]) {
@@ -423,7 +423,7 @@ describe('PR workflow parallelism', () => {
       "inputs.native-runtime == 'electron' || inputs.cache-electron-package == 'true'"
     )
     expect(electronCache.if).toBe(electronCacheResolution.if)
-    expect(electronCache.uses).toBe('actions/cache@v5')
+    expect(electronCache.uses).toBe('actions/cache@caa296126883cff596d87d8935842f9db880ef25')
     expect(electronCache.with.key).toContain('steps.electron-package-cache.outputs.version')
     expect(dependencyAction.inputs['cache-electron-package'].default).toBe('false')
   })
@@ -476,7 +476,8 @@ describe('PR workflow parallelism', () => {
       'package',
       'package_windows',
       'windows_boundaries',
-      'performance'
+      'performance',
+      'security'
     ])
     const verifyStep = workflow.jobs.verify.steps.find(
       (step) => step.name === 'Require successful checks'

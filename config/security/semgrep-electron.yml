@@ -9,6 +9,8 @@ rules:
       pages and agent output; keep the secure default.
     severity: ERROR
     languages: [typescript, javascript]
+    paths:
+      include: [src/**]
     metadata:
       category: security
       references: ['https://www.electronjs.org/docs/latest/tutorial/security']
@@ -47,6 +49,8 @@ rules:
     message: A <webview> with nodeintegration or disablewebsecurity gives guest content Node or cross-origin access.
     severity: ERROR
     languages: [typescript, javascript]
+    paths:
+      include: [src/**]
     pattern-either:
       - pattern: <webview ... nodeintegration ... />
       - pattern: <webview ... disablewebsecurity ... />
@@ -119,6 +123,8 @@ rules:
       ms-msdt:, custom schemes). Parse it with `new URL` and allow only expected protocols first.
     severity: WARNING
     languages: [typescript, javascript]
+    paths:
+      include: [src/**]
     patterns:
       - pattern: $SHELL.openExternal($URL, ...)
       - metavariable-regex:
@@ -144,6 +150,8 @@ rules:
       in the handler or pass it through a parser that rejects unexpected values.
     severity: ERROR
     languages: [typescript, javascript]
+    paths:
+      include: [src/main/**]
     mode: taint
     pattern-sources:
       - patterns:
@@ -174,9 +182,13 @@ rules:
       - pattern: eval($SINK)
       - pattern: new Function(..., $SINK)
       - pattern: $WC.loadURL($SINK, ...)
+      - pattern: exec($SINK, ...)
+      - pattern: execSync($SINK, ...)
       - patterns:
           - pattern-either:
               - pattern: $CP.exec($SINK, ...)
               - pattern: $CP.execSync($SINK, ...)
-              - pattern: exec($SINK, ...)
-              - pattern: execSync($SINK, ...)
+          # Not provider.exec(argv, ...): Dolphin's git providers take an argv array.
+          - metavariable-regex:
+              metavariable: $CP
+              regex: ^(cp|childProcess|child_process)$

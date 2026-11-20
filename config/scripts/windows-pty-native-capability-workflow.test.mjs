@@ -49,7 +49,7 @@ describe('packaged Windows PTY native capability routing', () => {
 
     expect(install.with['native-runtime']).toBe('node')
     expect(install.with['persist-native-cache']).toBe('false')
-    expect(nodeCacheSave.uses).toBe('actions/cache/save@v5')
+    expect(nodeCacheSave.uses).toBe('actions/cache/save@caa296126883cff596d87d8935842f9db880ef25')
     expect(nodeCacheSave.with.key).toContain('-node-node')
     expect(electronCache.with.key).toContain('-electron-node')
     for (const cache of [nodeCacheSave, electronCache]) {

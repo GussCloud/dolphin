@@ -39,7 +39,7 @@ runs:
   steps:
     # setup-node needs pnpm on PATH to locate and restore its store.
     - name: Setup pnpm
-      uses: pnpm/setup@v2
+      uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2
       with:
         install: false
 
@@ -47,7 +47,7 @@ runs:
     - name: Setup Node.js
       id: default-node
       if: inputs.node-version == ''
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
       with:
         node-version-file: package.json
         cache: ${{ github.event_name != 'pull_request' && 'pnpm' || '' }}
@@ -57,7 +57,7 @@ runs:
     - name: Setup requested Node.js
       id: requested-node
       if: inputs.node-version != ''
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
       with:
         node-version: ${{ inputs.node-version }}
         cache: ${{ github.event_name != 'pull_request' && 'pnpm' || '' }}
@@ -81,7 +81,7 @@ runs:
     # Match setup-node's key and path so existing default-branch stores remain reusable.
     - name: Restore pnpm download store without saving
       if: github.event_name == 'pull_request'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
       with:
         path: ${{ steps.pnpm-store.outputs.path }}
         key: node-cache-${{ runner.os }}-${{ steps.pnpm-store.outputs.arch }}-pnpm-${{ hashFiles(inputs.cache-dependency-path) }}
@@ -141,7 +141,7 @@ runs:
 
     - name: Cache Electron package archive
       if: inputs.native-runtime == 'electron' || inputs.cache-electron-package == 'true'
-      uses: actions/cache@v5
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
       with:
         path: ${{ steps.electron-package-cache.outputs.cache-root }}
         key: electron-package-${{ runner.os }}-${{ runner.arch }}-${{ steps.electron-package-cache.outputs.version }}
@@ -170,7 +170,7 @@ runs:
     - name: Restore compiled native modules
       id: native-cache-restore
       if: inputs.native-runtime != 'none' && inputs.persist-native-cache != 'false'
-      uses: actions/cache@v5
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
       with:
         path: |
           node_modules/.pnpm/node-pty@*/node_modules/node-pty/build
@@ -181,7 +181,7 @@ runs:
     - name: Restore compiled native modules without saving
       id: native-cache-restore-only
       if: inputs.native-runtime != 'none' && inputs.persist-native-cache == 'false'
-      uses: actions/cache/restore@v5
+      uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
       with:
         path: |
           node_modules/.pnpm/node-pty@*/node_modules/node-pty/build

@@ -31,10 +31,12 @@ export const PR_CHECK_JOBS = [
   'package',
   'package_windows',
   'windows_boundaries',
-  'performance'
+  'performance',
+  'security'
 ]
 
-const ALWAYS_ON_CODE_JOBS = new Set(['static_analysis', 'typecheck', 'test'])
+// Why security is always on: secrets, dependencies and SAST apply to every code-relevant PR.
+const ALWAYS_ON_CODE_JOBS = new Set(['static_analysis', 'typecheck', 'test', 'security'])
 
 const GLOBAL_FORCE_PREFIXES = [
   '.github/workflows/pr.yml',

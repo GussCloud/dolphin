@@ -61,8 +61,7 @@ export function validateAllowlist(allowlist) {
 
 function matchesEntry(finding, entry) {
   return (
-    entry.package === finding.package &&
-    (entry.id === finding.id || entry.id === finding.numericId)
+    entry.package === finding.package && (entry.id === finding.id || entry.id === finding.numericId)
   )
 }
 
@@ -96,7 +95,9 @@ export function evaluateAudit({ findingsByProject, allowlist, today }) {
   // Expired entries fail even when the advisory is gone, so the file cannot rot.
   for (const entry of entries) {
     if (!used.has(entry) && typeof entry.expires === 'string' && entry.expires < today) {
-      errors.push(`allowlist entry ${entry.id} ${entry.package} expired ${entry.expires}; remove it`)
+      errors.push(
+        `allowlist entry ${entry.id} ${entry.package} expired ${entry.expires}; remove it`
+      )
     }
   }
   const stale = entries.filter((entry) => !used.has(entry) && !(entry.expires < today))
@@ -115,7 +116,9 @@ export function formatResult({ failures, allowed, stale, errors }) {
     )
   }
   for (const entry of stale) {
-    lines.push(`::warning title=Dependency audit allowlist::${entry.id} ${entry.package} no longer reported; remove it`)
+    lines.push(
+      `::warning title=Dependency audit allowlist::${entry.id} ${entry.package} no longer reported; remove it`
+    )
   }
   lines.push(
     `Dependency audit: ${failures.length} blocking, ${allowed.length} allowlisted, ` +

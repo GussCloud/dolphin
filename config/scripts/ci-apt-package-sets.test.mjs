@@ -54,7 +54,7 @@ describe('CI apt package sets', () => {
     )
     expect(names.indexOf('Install apt packages')).toBeLessThan(names.indexOf('Save apt archives'))
     const save = action.runs.steps.find((step) => step.name === 'Save apt archives')
-    expect(save.uses).toBe('actions/cache/save@v5')
+    expect(save.uses).toBe('actions/cache/save@caa296126883cff596d87d8935842f9db880ef25')
     expect(save.if).toContain("steps.restore.outputs.cache-hit != 'true'")
   })
 
