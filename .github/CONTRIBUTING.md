@@ -80,9 +80,9 @@ Version bumps, tags, and releases are maintainer-managed. Do not include release
 
 ### Cutting a release (maintainers)
 
-Releases come from the [Dolphin Windows Release](../../actions/workflows/dolphin-windows-release.yml) workflow, which builds an unsigned Windows NSIS installer and publishes it with the repository's own token.
+Pull requests never change versions. Releases come from two manual workflows; [`docs/reference/release-process.md`](../docs/reference/release-process.md) is the operator guide.
 
-1. Bump `version` in `package.json` and merge it to `main`. A `main` push that lands a version with no release yet builds and publishes it.
-2. Or push a `v<version>` tag, or run the workflow by hand with the same version as `package.json`.
+1. **Beta:** run [Release Beta](../../actions/workflows/release-beta.yml). It computes the next `X.Y.Z-rc.N` from the last stable release, stamps it into the build, and publishes a desktop prerelease for the RC update channel plus a TestFlight build and an Android prerelease.
+2. **Official:** run [Release Promote](../../actions/workflows/release-promote.yml) on a validated rc. After approval in the `production` environment it rebuilds the rc's exact commit as `X.Y.Z` and publishes the stable release.
 
 The in-app updater reads `latest.yml` from these releases, so a release must be strictly newer than the latest published one.
