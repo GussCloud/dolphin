@@ -495,6 +495,21 @@ function isWindowsPackagePath(file) {
   return WINDOWS_PACKAGE_TESTS.includes(file) || isProductBundlePath(file, WINDOWS_PACKAGE_PREFIXES)
 }
 
+// Why its own list: CI-only package helpers (docker fixtures, smoke scripts) do not ship to users.
+const DESKTOP_SHIPPED_PREFIXES = [
+  ...SHARED_PACKAGE_PREFIXES,
+  'native/windows-cli-launcher/',
+  'native/computer-use-windows/',
+  'resources/win32/',
+  'package.json',
+  'pnpm-lock.yaml'
+]
+
+/** True when a change reaches the installed desktop app, so a desktop beta has something new. */
+export function isDesktopShippedPath(file) {
+  return isProductBundlePath(file, DESKTOP_SHIPPED_PREFIXES)
+}
+
 function isProductBundlePath(file, extraPrefixes) {
   if (isTestFile(file)) {
     return false

@@ -1,20 +1,30 @@
 # Release Process
 
-Pull requests never change a version: not `package.json`, not `mobile/app.json`'s `expo.version` or `android.versionCode`. Versions exist only in release builds. Two manual workflows produce them, and both build a commit that is already on `main`:
+Pull requests never change a version: not `package.json`, not `mobile/app.json`'s `expo.version` or `android.versionCode`. Versions exist only in release builds.
 
-| Workflow                                                       | Produces                                          | Gate                                                              |
-| -------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------- |
-| [Release Beta](../../.github/workflows/release-beta.yml)       | Desktop `vX.Y.Z-rc.N`, mobile `X.Y.Z` beta builds | The commit is on `main`                                           |
-| [Release Promote](../../.github/workflows/release-promote.yml) | Desktop `vX.Y.Z`, mobile `X.Y.Z` official builds  | `production` approval, commit on `main`, its PR's `verify` passed |
+Branches: every pull request targets `develop`. `main` is what is officially published, and only the promote workflow moves it. Two workflows produce versions, and both build a commit that is already on `develop`:
+
+| Workflow                                                       | Runs                                | Produces                                          | Gate                                                                 |
+| -------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
+| [Release Beta](../../.github/workflows/release-beta.yml)       | Every push to `develop`, or by hand | Desktop `vX.Y.Z-rc.N`, mobile `X.Y.Z` beta builds | The commit is on `develop`                                           |
+| [Release Promote](../../.github/workflows/release-promote.yml) | By hand                             | Desktop `vX.Y.Z`, mobile `X.Y.Z` official builds  | `production` approval, commit on `develop`, its PR's `verify` passed |
 
 Both call the per-platform workflows (`dolphin-windows-release.yml`, which also builds macOS; `dolphin-android-release.yml`; `dolphin-ios-release.yml`) through `workflow_call`. Those no longer run on a push or a tag; the desktop one cannot be dispatched by hand at all, and a manual Android or iOS dispatch never publishes a GitHub release.
 
 ## Cutting a beta
 
-Actions → **Release Beta** → Run workflow:
+**Automatically:** merging a pull request into `develop` runs Release Beta on that exact commit with `bump: patch`. `config/scripts/beta-release-scope.mjs` decides which apps get a beta, each against its own nearest release tag reachable from the commit (rc or stable):
 
-- `app`: `desktop`, `mobile` or `both`.
-- `ref`: a SHA or ref on `main`; empty means the tip of `main`.
+- **Desktop** (nearest `v*`): any changed path outside `mobile/` that is not docs-only (`isDocsOnlyPath` in `pr-code-change-scope.mjs`) and not a test (`*.test.*`, `tests/`, `__tests__/`, `__fixtures__/`). Workflow and build-script changes count.
+- **Mobile** (nearest `mobile-android-v*`, never `mobile-android-latest`): any changed path under `mobile/` that is not a test or a `.md` file.
+- An app with no tag yet counts as changed. If neither changed, the run succeeds and its summary says no beta was needed.
+
+Merges that arrive while a beta is building wait in the `release-beta` group. GitHub keeps only the newest waiting run, which is safe: its commit contains the skipped merges, and scope and rc are counted from the last tag. Promote runs have their own `release-promote` group, so a merge never replaces a waiting promote.
+
+**By hand:** Actions → **Release Beta** → Run workflow:
+
+- `app`: `desktop`, `mobile` or `both` (no scope detection).
+- `ref`: a SHA or ref on `develop`; empty means the tip of `develop`.
 - `bump`: `patch` (default), `minor` or `major`, counted from the last stable release.
 
 `config/scripts/next-release-version.mjs` computes the version:
@@ -39,7 +49,7 @@ The `resolve` job checks four things before anything is built:
 
 - the rc is a published release;
 - `X.Y.Z` does not exist yet and is newer than the last stable release;
-- the rc tag's commit is on `main`;
+- the rc tag's commit is on `develop`;
 - the pull request that landed that commit has a successful `verify` check, which is `pr.yml`'s aggregate (`verify-release-commit.mjs`).
 
 After that, the run waits in the `production` environment until a reviewer approves it. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`:
@@ -47,6 +57,8 @@ After that, the run waits in the `production` environment until a reviewer appro
 - **Desktop:** published as the latest stable release `vX.Y.Z`.
 - **Android:** `mobile-android-vX.Y.Z`, and `mobile-android-latest` is refreshed.
 - **iOS:** the fastlane `release` lane uploads a new build of `X.Y.Z` and distributes it to the external TestFlight group `peeps`.
+
+Last, the `fast-forward-main` job pushes the promoted commit to `main` (`git push origin <sha>:refs/heads/main`, never forced; with both apps, the newer of the two rc commits). If `main` already contains it, nothing moves. If the push is rejected, because `main` has commits that are not on `develop` or branch protection blocks `github-actions`, the job fails with an error: the release is published, and `main` must be moved by hand with the command the error prints. Nothing is undone.
 
 ## How versions reach the build without a commit
 
@@ -66,15 +78,17 @@ The updater never sees a release that is missing a platform's manifest. If a leg
 
 These are repository settings that the workflows cannot set or check for themselves:
 
-1. **Create the `production` environment.** Settings → Environments → New environment `production` → enable **Required reviewers** and add yourself. Optionally turn on "Prevent self-review" (only if someone else approves) and restrict deployment branches to `main`. Without required reviewers, promote runs **without** waiting for approval.
-2. **Secrets the platform workflows already use**, which must stay set as repository secrets (`secrets: inherit` passes them through):
+1. **Make `develop` the default branch.** Settings → General → Default branch → `develop`. New pull requests then target it, and scheduled workflows and Dependabot security updates run against it.
+2. **Create the `production` environment.** Settings → Environments → New environment `production` → enable **Required reviewers** and add yourself. Optionally turn on "Prevent self-review" (only if someone else approves) and restrict deployment branches to `develop` (promote is dispatched from it). Without required reviewers, promote runs **without** waiting for approval.
+3. **Let promote move `main`.** A ruleset or branch protection on `main` that requires pull requests or status checks rejects the workflow's push unless `github-actions` (the `GITHUB_TOKEN`) is on its bypass list. Keep force pushes and deletions blocked; the push is a fast-forward. GitHub may also refuse a `GITHUB_TOKEN` push whose range changes `.github/workflows/` (it lacks the `workflows` permission); when that happens, move `main` by hand. Protect `develop` with the `verify` check instead.
+4. **Secrets the platform workflows already use**, which must stay set as repository secrets (`secrets: inherit` passes them through):
    - macOS: `CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`.
    - iOS: `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_API_KEY_P8`, `APPLE_TEAM_ID`, `IOS_DIST_CERT_P12`, `IOS_DIST_CERT_PASSWORD`.
    - Android (optional but needed for in-place updates): `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
 
    If any of these are environment secrets rather than repository secrets, move them to repository secrets: the called jobs do not run in an environment.
 
-3. **Actions permissions.** Settings → Actions → General → Workflow permissions must allow `GITHUB_TOKEN` to create releases. The jobs request `contents: write`, so a read-only org policy blocks them.
+5. **Actions permissions.** Settings → Actions → General → Workflow permissions must allow `GITHUB_TOKEN` to create releases. The jobs request `contents: write`, so a read-only org policy blocks them.
 
 ## Still manual
 

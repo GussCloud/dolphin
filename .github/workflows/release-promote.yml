@@ -6,6 +6,7 @@ name: Release Promote
 # Desktop: vX.Y.Z, the latest stable GitHub release the in-app updater serves.
 # Mobile: APK as mobile-android-vX.Y.Z (and mobile-android-latest), and an iOS build distributed to
 # the external TestFlight group. App Store review submission stays manual.
+# Once published, main is fast-forwarded to the promoted commit: main is what was released.
 
 on:
   workflow_dispatch:
@@ -34,7 +35,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-cut
+  group: release-promote
   cancel-in-progress: false
 
 jobs:
@@ -52,10 +53,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Checkout main
+      - name: Checkout develop
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: main
+          ref: develop
           persist-credentials: false
 
       - name: Resolve the desktop release
@@ -74,7 +75,7 @@ jobs:
         run: |
           set -euo pipefail
           sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
-          node config/scripts/verify-release-commit.mjs "$sha" --require-checks
+          node config/scripts/verify-release-commit.mjs "$sha" --branch develop --require-checks
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
 
       - name: Resolve the mobile release
@@ -92,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
-          node config/scripts/verify-release-commit.mjs "$sha" --require-checks
+          node config/scripts/verify-release-commit.mjs "$sha" --branch develop --require-checks
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
 
       - name: Summary
@@ -157,3 +158,40 @@ jobs:
       release_version: ${{ needs.resolve.outputs.mobile_version }}
       distribute_external: true
     secrets: inherit
+
+  # Why after every build: main must only ever point at something that was actually published.
+  fast-forward-main:
+    needs: [resolve, desktop, android, ios]
+    if: ${{ !cancelled() && !failure() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # Why persisted credentials: this job's only write is the push below.
+      - name: Checkout develop
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      # Why the newest of the two: both rc commits are on develop, so one contains the other.
+      - name: Fast-forward main to the promoted commit
+        env:
+          DESKTOP_SHA: ${{ needs.resolve.outputs.desktop_sha }}
+          MOBILE_SHA: ${{ needs.resolve.outputs.mobile_sha }}
+        run: |
+          set -euo pipefail
+          target="${DESKTOP_SHA:-$MOBILE_SHA}"
+          if [[ -n "$MOBILE_SHA" ]] && git merge-base --is-ancestor "$target" "$MOBILE_SHA"; then
+            target="$MOBILE_SHA"
+          fi
+          if git merge-base --is-ancestor "$target" origin/main; then
+            echo "main already contains $target; nothing to move."
+            exit 0
+          fi
+          if ! git push origin "$target:refs/heads/main"; then
+            echo "::error::The release IS published, but main was not moved to $target (push rejected: main is not an ancestor of it, branch protection blocks github-actions, or the range edits .github/workflows, which GITHUB_TOKEN may not push). Move it by hand: git push origin $target:refs/heads/main"
+            exit 1
+          fi
+          echo "### main fast-forwarded to \`$target\`" >>"$GITHUB_STEP_SUMMARY"

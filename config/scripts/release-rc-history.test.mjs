@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { nextBetaVersion } from './next-release-version.mjs'
 import {
   highestRcForBase,
   rcNumberFromReleaseSubject,
@@ -96,6 +97,40 @@ describe('release RC history', () => {
       git(repo, ['checkout', 'HEAD~1'])
 
       expect(highestRcForBase('1.4.36', { cwd: repo })).toBe(6)
+    })
+  })
+
+  it('considers origin/develop when releasing from main', () => {
+    withGitRepo((repo) => {
+      commit(repo, 'initial')
+      git(repo, ['checkout', '-b', 'develop'])
+      commit(repo, 'release: v1.4.36-rc.3')
+      git(repo, ['update-ref', 'refs/remotes/origin/develop', 'HEAD'])
+      git(repo, ['checkout', 'main'])
+
+      expect(highestRcForBase('1.4.36', { cwd: repo })).toBe(3)
+    })
+  })
+
+  it('numbers two consecutive betas on develop rc.1 then rc.2', () => {
+    withGitRepo((repo) => {
+      commit(repo, 'initial')
+      git(repo, ['tag', 'v1.4.35'])
+      git(repo, ['checkout', '-b', 'develop'])
+      const next = () =>
+        nextBetaVersion({
+          latestStable: '1.4.35',
+          rcTags: [],
+          gitHighestRc: (base) => highestRcForBase(base, { cwd: repo })
+        }).version
+
+      commit(repo, 'feat: first merge')
+      const first = next()
+      git(repo, ['tag', `v${first}`])
+      commit(repo, 'feat: second merge')
+      const second = next()
+
+      expect([first, second]).toEqual(['1.4.36-rc.1', '1.4.36-rc.2'])
     })
   })
 })

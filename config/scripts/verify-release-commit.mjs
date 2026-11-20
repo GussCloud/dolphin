@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
-// Gate for release workflows: the commit must be on main, and (for promote) the pull request
-// that landed it must have a passing PR Checks aggregate.
+// Gate for release workflows: the commit must be on the release branch, and (for promote) the pull
+// request that landed it must have a passing PR Checks aggregate.
 
 import { pathToFileURL } from 'node:url'
 
 const API_VERSION = '2022-11-28'
 // Why `verify`: it is pr.yml's aggregate job, the one check that covers every other PR gate.
 export const DEFAULT_REQUIRED_CHECK = 'verify'
+// Why develop: every PR merges there and betas are cut from it; main only follows promotions.
+export const DEFAULT_RELEASE_BRANCH = 'develop'
 const PASSING_CONCLUSIONS = new Set(['success'])
 
 async function githubJson(fetchImpl, url, token) {
@@ -59,7 +61,7 @@ export async function verifyReleaseCommit({
   repo,
   sha,
   token,
-  branch = 'main',
+  branch = DEFAULT_RELEASE_BRANCH,
   requireChecks = false,
   checkName = DEFAULT_REQUIRED_CHECK,
   fetchImpl = fetch,
@@ -95,17 +97,32 @@ export async function verifyReleaseCommit({
   return { pull }
 }
 
-async function main() {
-  const args = process.argv.slice(2)
-  const sha = args.find((arg) => !arg.startsWith('--'))
-  if (!sha) {
-    throw new Error('Usage: verify-release-commit.mjs <sha> [--require-checks]')
+export function parseArgs(args) {
+  const options = { sha: '', branch: DEFAULT_RELEASE_BRANCH, requireChecks: false }
+  for (let index = 0; index < args.length; index += 1) {
+    const [key, inline] = args[index].split('=', 2)
+    if (key === '--require-checks') {
+      options.requireChecks = true
+    } else if (key === '--branch') {
+      options.branch = inline ?? args[++index] ?? ''
+    } else if (!key.startsWith('--') && !options.sha) {
+      options.sha = key
+    } else {
+      throw new Error(`Unknown argument ${args[index]}`)
+    }
   }
+  if (!options.sha || !options.branch) {
+    throw new Error('Usage: verify-release-commit.mjs <sha> [--branch <name>] [--require-checks]')
+  }
+  return options
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2))
   await verifyReleaseCommit({
+    ...options,
     repo: process.env.GITHUB_REPOSITORY || 'GussCloud/dolphin',
-    sha,
-    token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN,
-    requireChecks: args.includes('--require-checks')
+    token: process.env.GH_TOKEN || process.env.GITHUB_TOKEN
   })
 }
 

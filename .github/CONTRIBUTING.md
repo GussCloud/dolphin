@@ -80,9 +80,9 @@ Version bumps, tags, and releases are maintainer-managed. Do not include release
 
 ### Cutting a release (maintainers)
 
-Pull requests never change versions. Releases come from two manual workflows; [`docs/reference/release-process.md`](../docs/reference/release-process.md) is the operator guide.
+Pull requests never change versions and target `develop`; `main` holds what is officially published. [`docs/reference/release-process.md`](../docs/reference/release-process.md) is the operator guide.
 
-1. **Beta:** run [Release Beta](../../actions/workflows/release-beta.yml). It computes the next `X.Y.Z-rc.N` from the last stable release, stamps it into the build, and publishes a desktop prerelease for the RC update channel plus a TestFlight build and an Android prerelease.
-2. **Official:** run [Release Promote](../../actions/workflows/release-promote.yml) on a validated rc. After approval in the `production` environment it rebuilds the rc's exact commit as `X.Y.Z` and publishes the stable release.
+1. **Beta:** every merge to `develop` runs [Release Beta](../../actions/workflows/release-beta.yml) for the apps whose shipped files changed since their last release (docs and tests do not count). It computes the next `X.Y.Z-rc.N` from the last stable release, stamps it into the build, and publishes a desktop prerelease for the RC update channel and/or a TestFlight build and an Android prerelease. It can also be run by hand.
+2. **Official:** run [Release Promote](../../actions/workflows/release-promote.yml) on a validated rc. After approval in the `production` environment it rebuilds the rc's exact commit as `X.Y.Z`, publishes the stable release, and fast-forwards `main` to that commit.
 
 The in-app updater reads `latest.yml` from these releases, so a release must be strictly newer than the latest published one.

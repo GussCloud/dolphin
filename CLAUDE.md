@@ -32,12 +32,12 @@ O check obrigatório `verify` bloqueia só três coisas: **código quebrado** (t
 # Versão e Release
 
 - PR nunca altera versão (`package.json`, `mobile/app.json`).
-- Beta e versão oficial saem dos workflows `release-beta` e `release-promote`; a promoção para oficial é sempre manual e aprovada pelo dono. Veja [`docs/reference/release-process.md`](./docs/reference/release-process.md).
+- Beta sai do workflow `release-beta` a cada merge em `develop` (só do app que mudou); versão oficial sai do `release-promote`, sempre manual e aprovada pelo dono, que depois avança `main`. Veja [`docs/reference/release-process.md`](./docs/reference/release-process.md).
 
 # Encerramento de Demanda
 
 1. Rode `node config/scripts/verify-pr-local.mjs --fix` uma única vez na árvore final; a suíte completa, e2e e empacotamento ficam com o CI.
 2. Se a demanda teve mais de um pedido (inclusive complementos durante o trabalho), liste-os com o estado de cada um antes do PR.
-3. Abra o PR para `main` seguindo `.github/pull_request_template.md`.
+3. Abra o PR para `develop` (nunca `main`) seguindo `.github/pull_request_template.md`. O merge em `develop` gera o beta sozinho; a promoção para oficial segue manual e aprovada pelo dono, e só então `main` avança.
 4. Acompanhe o CI. Faça merge só com `verify` verde e com evidência real da camada de risco; senão, investigue e reporte.
    - Nunca pare esperando alguém re-executar um job. Se uma falha não é do PR e o re-run não é possível, dispare o CI de novo com um commit real e útil (ex.: um teste que faltava), nunca com commit vazio nem fechando e reabrindo o PR. Se falhar de novo, trate como falha real.

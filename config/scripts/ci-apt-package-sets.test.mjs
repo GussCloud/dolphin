@@ -58,8 +58,8 @@ describe('CI apt package sets', () => {
     expect(save.if).toContain("steps.restore.outputs.cache-hit != 'true'")
   })
 
-  it('warms on main and deletes only closed pull request caches', () => {
-    expect(warmup.on.push.branches).toEqual(['main'])
+  it('warms on develop and main and deletes only closed pull request caches', () => {
+    expect(warmup.on.push.branches).toEqual(['develop', 'main'])
     expect(warmup.on.schedule).toBeDefined()
     expect(warmup.jobs.warm.strategy.matrix.include).toBe(
       '${{ fromJSON(needs.discover.outputs.sets) }}'

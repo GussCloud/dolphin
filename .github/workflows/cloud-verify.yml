@@ -5,8 +5,9 @@ on:
     paths:
       - cloud/**
       - .github/workflows/cloud-*.yml
+  # Why develop: pull requests merge there, so it is where the merged tree is first verified.
   push:
-    branches: [main]
+    branches: [develop, main]
     paths:
       - cloud/**
       - .github/workflows/cloud-*.yml
