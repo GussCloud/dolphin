@@ -1,11 +1,15 @@
 name: Release Beta
 
-# Cuts a beta from a commit on main; docs/reference/release-process.md is the operator guide.
+# Cuts a beta from a commit on develop; docs/reference/release-process.md is the operator guide.
+# Every push to develop (a merged PR) cuts one for the apps that changed since their last release
+# tag (beta-release-scope.mjs); a manual run picks the app, commit and bump.
 # Desktop: vX.Y.Z-rc.N, a GitHub prerelease the in-app updater serves to the RC channel.
 # Mobile: an internal TestFlight build of X.Y.Z plus the APK as prerelease mobile-android-vX.Y.Z-rc.N.
-# Versions are computed here and stamped into each build's checkout; nothing is committed to main.
+# Versions are computed here and stamped into each build's checkout; nothing is committed.
 
 on:
+  push:
+    branches: [develop]
   workflow_dispatch:
     inputs:
       app:
@@ -18,7 +22,7 @@ on:
           - mobile
           - both
       ref:
-        description: 'Commit SHA or ref on main to build (default: the tip of main)'
+        description: 'Commit SHA or ref on develop to build (default: the tip of develop)'
         required: false
         type: string
       bump:
@@ -34,9 +38,11 @@ on:
 permissions:
   contents: read
 
-# Why one group: two concurrent cuts would compute the same rc number.
+# Why one group: two concurrent cuts would compute the same rc number. A burst of merges waits
+# here; GitHub keeps only the newest pending run, which is safe because scope and rc are counted
+# from the last release tag, so the newest commit's beta carries every skipped merge.
 concurrency:
-  group: release-cut
+  group: release-beta
   cancel-in-progress: false
 
 jobs:
@@ -46,6 +52,8 @@ jobs:
     timeout-minutes: 10
     outputs:
       sha: ${{ steps.commit.outputs.sha }}
+      desktop: ${{ steps.scope.outputs.desktop }}
+      mobile: ${{ steps.scope.outputs.mobile }}
       desktop_version: ${{ steps.desktop.outputs.version }}
       mobile_version: ${{ steps.mobile.outputs.marketing_version }}
       mobile_tag: ${{ steps.mobile.outputs.tag }}
@@ -53,34 +61,49 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       APP: ${{ inputs.app }}
-      BUMP: ${{ inputs.bump }}
+      BUMP: ${{ inputs.bump || 'patch' }}
     steps:
-      # Why full history: release-rc-history.mjs reads rc tags and release commits from git.
-      - name: Checkout main
+      # Why full history and tags: the scope and rc numbering read release tags and history from git.
+      - name: Checkout develop
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: main
+          ref: develop
           fetch-depth: 0
+          fetch-tags: true
           persist-credentials: false
 
+      # Why github.sha on push: later merges may already be on develop's tip; build the pushed one.
       - name: Resolve the commit
         id: commit
         env:
-          REF: ${{ inputs.ref || 'origin/main' }}
+          REF: ${{ github.event_name == 'push' && github.sha || inputs.ref || 'origin/develop' }}
         run: |
           set -euo pipefail
           sha="$(git rev-parse --verify "$REF^{commit}")"
-          node config/scripts/verify-release-commit.mjs "$sha"
+          node config/scripts/verify-release-commit.mjs "$sha" --branch develop
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
+
+      - name: Decide which apps get a beta
+        id: scope
+        env:
+          EVENT: ${{ github.event_name }}
+          SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT" == push ]]; then
+            node config/scripts/beta-release-scope.mjs "$SHA"
+          else
+            node config/scripts/beta-release-scope.mjs --app "$APP"
+          fi
 
       - name: Compute the desktop beta version
         id: desktop
-        if: inputs.app != 'mobile'
+        if: steps.scope.outputs.desktop == 'true'
         run: node config/scripts/next-release-version.mjs desktop --bump "$BUMP"
 
       - name: Compute the mobile beta version
         id: mobile
-        if: inputs.app != 'desktop'
+        if: steps.scope.outputs.mobile == 'true'
         run: node config/scripts/next-release-version.mjs mobile --bump "$BUMP"
 
       - name: Summary
@@ -94,12 +117,13 @@ jobs:
             echo "### Beta from \`$SHA\`"
             [[ -n "$DESKTOP" ]] && echo "- Desktop: \`$DESKTOP\` (prerelease, RC channel)"
             [[ -n "$MOBILE" ]] && echo "- Mobile: \`$MOBILE\` (Android versionCode $CODE), iOS TestFlight internal"
+            [[ -z "$DESKTOP$MOBILE" ]] && echo "No beta needed: only docs or tests changed since the last release of each app."
             true
           } >>"$GITHUB_STEP_SUMMARY"
 
   desktop:
     needs: resolve
-    if: inputs.app != 'mobile'
+    if: needs.resolve.outputs.desktop == 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/dolphin-windows-release.yml
@@ -111,7 +135,7 @@ jobs:
 
   android:
     needs: resolve
-    if: inputs.app != 'desktop'
+    if: needs.resolve.outputs.mobile == 'true'
     permissions:
       contents: write
     uses: ./.github/workflows/dolphin-android-release.yml
@@ -125,7 +149,7 @@ jobs:
 
   ios:
     needs: resolve
-    if: inputs.app != 'desktop'
+    if: needs.resolve.outputs.mobile == 'true'
     uses: ./.github/workflows/dolphin-ios-release.yml
     with:
       ref: ${{ needs.resolve.outputs.sha }}

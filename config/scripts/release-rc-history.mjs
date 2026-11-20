@@ -57,7 +57,8 @@ export function highestRcForBase(base, { cwd = process.cwd() } = {}) {
     }
   }
 
-  const logRefs = ['HEAD', 'origin/main'].filter(
+  // Why develop: betas are cut there, so its rc commits are missing from main until a promote.
+  const logRefs = ['HEAD', 'origin/develop', 'origin/main'].filter(
     (ref) => gitLines(['rev-parse', '--verify', '--quiet', ref], cwd).length > 0
   )
   if (logRefs.length > 0) {

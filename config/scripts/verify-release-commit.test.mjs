@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   findLandingPullRequest,
   isCommitOnBranch,
+  parseArgs,
   requiredCheckVerdict,
   verifyReleaseCommit
 } from './verify-release-commit.mjs'
@@ -50,7 +51,7 @@ describe('requiredCheckVerdict', () => {
 })
 
 describe('verifyReleaseCommit', () => {
-  it('checks main containment, then the landing PR checks', async () => {
+  it('checks develop containment, then the landing PR checks', async () => {
     const fetchImpl = vi
       .fn()
       .mockResolvedValueOnce(jsonResponse({ status: 'ahead' }))
@@ -74,17 +75,30 @@ describe('verifyReleaseCommit', () => {
     })
     expect(pull.number).toBe(9)
     expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([
-      'https://api.github.com/repos/o/r/compare/abc...main',
+      'https://api.github.com/repos/o/r/compare/abc...develop',
       'https://api.github.com/repos/o/r/commits/abc/pulls',
       'https://api.github.com/repos/o/r/commits/head9/check-runs?check_name=verify&per_page=100'
     ])
   })
 
-  it('refuses a commit that is not on main', async () => {
+  it('refuses a commit that is not on the release branch', async () => {
     const fetchImpl = vi.fn().mockResolvedValueOnce(jsonResponse({ status: 'diverged' }))
     await expect(
       verifyReleaseCommit({ repo: 'o/r', sha: 'abc', token: 't', fetchImpl, log: vi.fn() })
-    ).rejects.toThrow(/not on main/)
+    ).rejects.toThrow(/not on develop/)
+  })
+
+  it('compares against the branch it is given', async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(jsonResponse({ status: 'identical' }))
+    await verifyReleaseCommit({
+      repo: 'o/r',
+      sha: 'abc',
+      token: 't',
+      branch: 'main',
+      fetchImpl,
+      log: vi.fn()
+    })
+    expect(fetchImpl.mock.calls[0][0]).toBe('https://api.github.com/repos/o/r/compare/abc...main')
   })
 
   it('refuses a commit no merged PR landed', async () => {
@@ -102,5 +116,20 @@ describe('verifyReleaseCommit', () => {
         log: vi.fn()
       })
     ).rejects.toThrow(/not landed by a merged pull request/)
+  })
+})
+
+describe('parseArgs', () => {
+  it('reads the sha, the branch and the checks flag', () => {
+    expect(parseArgs(['abc'])).toEqual({ sha: 'abc', branch: 'develop', requireChecks: false })
+    expect(parseArgs(['abc', '--branch', 'main', '--require-checks'])).toEqual({
+      sha: 'abc',
+      branch: 'main',
+      requireChecks: true
+    })
+    expect(parseArgs(['abc', '--branch=develop']).branch).toBe('develop')
+    expect(() => parseArgs([])).toThrow(/Usage/)
+    expect(() => parseArgs(['abc', '--branch'])).toThrow(/Usage/)
+    expect(() => parseArgs(['abc', '--nope'])).toThrow(/Unknown argument/)
   })
 })

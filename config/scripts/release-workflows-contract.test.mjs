@@ -44,7 +44,9 @@ describe('release workflows', () => {
     ['release-promote', false]
   ])('%s calls the platform workflows (prerelease=%s)', (name, prerelease) => {
     const { jobs, on } = workflow(name)
-    expect(Object.keys(on)).toEqual(['workflow_dispatch'])
+    expect(Object.keys(on).sort()).toEqual(
+      name === 'release-beta' ? ['push', 'workflow_dispatch'] : ['workflow_dispatch']
+    )
     expect(on.workflow_dispatch.inputs.app.options).toEqual(['desktop', 'mobile', 'both'])
     for (const [job, uses] of Object.entries(CALLS)) {
       expect(jobs[job].uses).toBe(uses)
@@ -61,7 +63,9 @@ describe('release workflows', () => {
       expect(jobs[job].needs).toContain('approve')
     }
     const resolve = jobs.resolve.steps.map((step) => step.run ?? '').join('\n')
-    expect(resolve.match(/verify-release-commit\.mjs "\$sha" --require-checks/g)).toHaveLength(2)
+    expect(
+      resolve.match(/verify-release-commit\.mjs "\$sha" --branch develop --require-checks/g)
+    ).toHaveLength(2)
     expect(jobs.ios.with.distribute_external).toBe(true)
   })
 
@@ -78,5 +82,45 @@ describe('release workflows', () => {
         }
       }
     }
+  })
+
+  it('cuts a beta on every push to develop and on no other branch', () => {
+    const { on, concurrency, jobs } = workflow('release-beta')
+    expect(on.push).toEqual({ branches: ['develop'] })
+    expect(concurrency.cancel_in_progress ?? concurrency['cancel-in-progress']).toBe(false)
+    const resolve = jobs.resolve.steps.map((step) => step.run ?? '').join('\n')
+    expect(resolve).toContain('verify-release-commit.mjs "$sha" --branch develop')
+    const commit = jobs.resolve.steps.find((step) => step.id === 'commit')
+    expect(commit.env.REF).toContain("github.event_name == 'push' && github.sha")
+  })
+
+  it('gates each beta build on the scope script', () => {
+    const { jobs } = workflow('release-beta')
+    const scope = jobs.resolve.steps.find((step) => step.id === 'scope')
+    expect(scope.run).toContain('beta-release-scope.mjs "$SHA"')
+    expect(scope.run).toContain('beta-release-scope.mjs --app "$APP"')
+    expect(jobs.resolve.outputs.desktop).toBe('${{ steps.scope.outputs.desktop }}')
+    expect(jobs.resolve.outputs.mobile).toBe('${{ steps.scope.outputs.mobile }}')
+    expect(jobs.desktop.if).toBe("needs.resolve.outputs.desktop == 'true'")
+    expect(jobs.android.if).toBe("needs.resolve.outputs.mobile == 'true'")
+    expect(jobs.ios.if).toBe("needs.resolve.outputs.mobile == 'true'")
+    const versionSteps = jobs.resolve.steps.filter(
+      (step) => step.id === 'desktop' || step.id === 'mobile'
+    )
+    expect(versionSteps.map((step) => step.if)).toEqual([
+      "steps.scope.outputs.desktop == 'true'",
+      "steps.scope.outputs.mobile == 'true'"
+    ])
+  })
+
+  it('fast-forwards main after a promote, never by force', () => {
+    const { jobs } = workflow('release-promote')
+    const job = jobs['fast-forward-main']
+    expect(job.needs).toEqual(['resolve', 'desktop', 'android', 'ios'])
+    expect(job.permissions).toEqual({ contents: 'write' })
+    const run = job.steps.map((step) => step.run ?? '').join('\n')
+    expect(run).toContain('git push origin "$target:refs/heads/main"')
+    expect(run).not.toMatch(/--force|\s-f\b|\+\$target|\+refs/)
+    expect(run).toContain('::error::The release IS published, but main was not moved')
   })
 })

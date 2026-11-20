@@ -16,7 +16,7 @@ on:
   workflow_call:
     inputs:
       ref:
-        description: Full commit SHA on main to build
+        description: Full commit SHA on develop to build
         required: true
         type: string
       release_version:

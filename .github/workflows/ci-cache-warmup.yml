@@ -1,12 +1,12 @@
 name: CI cache warm-up
 
-# Why: a pull request can only restore caches saved on its own ref or on main, and nothing else
-# on main installs the apt sets or compiles the native modules the PR lanes need. Without this,
+# Why: a pull request can only restore caches saved on its own ref, its base branch (develop) or
+# the default branch, and nothing else on those installs the apt sets or compiles the native modules the PR lanes need. Without this,
 # every PR re-downloads apt packages from a mirror that has taken 20-45 minutes on bad days, and
 # every Windows package job spends ~90s per runtime rebuilding node-pty with node-gyp.
 on:
   push:
-    branches: [main]
+    branches: [develop, main]
     paths:
       - '.github/workflows/**'
       - '.github/actions/install-apt-packages/**'

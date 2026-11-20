@@ -1,8 +1,10 @@
 version: 2
+# Why develop: every PR targets it. Security updates ignore this and target the default branch.
 updates:
   # Why only ripgrep: the bundled rg ships in every artifact and to SSH remotes, and a bump is a
   # one-line pin change (the SSH cache keys on the binary's hash). Other dependencies stay manual.
   - package-ecosystem: npm
+    target-branch: develop
     directory: /
     schedule:
       interval: monthly
@@ -14,6 +16,7 @@ updates:
   # Dependabot security updates (repository setting) as the only PRs. The root lockfile's security
   # updates come from the same setting; its entry above stays limited to ripgrep version bumps.
   - package-ecosystem: npm
+    target-branch: develop
     directory: /mobile
     schedule:
       interval: weekly
@@ -25,6 +28,7 @@ updates:
 
   # Workflow and composite-action pins (tags or SHAs) in one weekly PR.
   - package-ecosystem: github-actions
+    target-branch: develop
     directories:
       - /
       - /.github/actions/*
