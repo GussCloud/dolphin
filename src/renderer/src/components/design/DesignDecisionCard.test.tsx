@@ -101,6 +101,17 @@ describe('DesignDecisionCard', () => {
     })
   })
 
+  it('sends a written answer when no option fits', async () => {
+    const onAnswer = vi.fn(async () => {})
+    render(base, onAnswer)
+    typeNote('   ')
+    expect(answerButton().disabled).toBe(true)
+    typeNote('  Passkey  ')
+    expect(answerButton().disabled).toBe(false)
+    await act(async () => answerButton().click())
+    expect(onAnswer).toHaveBeenCalledWith({ decisionId: 'd1', selected: [], note: 'Passkey' })
+  })
+
   it('keeps one choice on single-select and many on multi-select', async () => {
     const single = vi.fn(async () => {})
     render(base, single)

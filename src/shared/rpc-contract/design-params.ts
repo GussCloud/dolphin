@@ -169,13 +169,18 @@ export const DesignDecisionsFileSchema = z.object({
   decisions: z.array(DesignDecisionInputSchema).min(1).max(DESIGN_DECISION_MAX_OPEN)
 })
 
-/** User side. A note is free text sent with the chosen options. */
-export const DesignAnswerParams = z.object({
-  id: requiredString('Missing --id'),
-  decisionId: requiredString('Missing decision id'),
-  selected: z.array(z.string().trim().min(1)).min(1),
-  note: z.string().trim().max(DESIGN_MESSAGE_MAX_CHARS).optional()
-})
+/** User side. The note is free text: sent with the chosen options, or alone as the user's own answer. */
+export const DesignAnswerParams = z
+  .object({
+    id: requiredString('Missing --id'),
+    decisionId: requiredString('Missing decision id'),
+    selected: z.array(z.string().trim().min(1)),
+    note: z.string().trim().max(DESIGN_MESSAGE_MAX_CHARS).optional()
+  })
+  .refine((params) => params.selected.length > 0 || Boolean(params.note), {
+    message: 'Pick an option or write an answer',
+    path: ['selected']
+  })
 
 /** Agent side: a later user request changed what an answered decision says; parsed in the handler. */
 export const DesignReviseDecisionParams = z.object({

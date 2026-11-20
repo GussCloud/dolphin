@@ -69,7 +69,10 @@ function formatInboxEntry(entry: DesignInboxEntry): string {
     return `${entry.id} comment ${entry.messageId}${block}: ${entry.text}`
   }
   const note = entry.note ? `\n  note: ${entry.note}` : ''
-  return `${entry.id} answer to ${entry.decisionId}${block}: ${entry.question}\n  selected: ${entry.selected.join(', ')}${note}`
+  // Why: an answer with no option is the user's own; its note is the answer.
+  const selected =
+    entry.selected.length > 0 ? entry.selected.join(', ') : '(none, the note is the answer)'
+  return `${entry.id} answer to ${entry.decisionId}${block}: ${entry.question}\n  selected: ${selected}${note}`
 }
 
 function formatDesign(design: Design): string {

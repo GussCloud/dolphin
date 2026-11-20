@@ -41,6 +41,8 @@ export function DesignDecisionCard({
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const open = isDesignDecisionOpen(decision)
+  // Why the note alone counts: none of the agent's options may fit, and the user writes their own.
+  const canAnswer = selected.length > 0 || note.trim().length > 0
   const revision = open ? undefined : decision.revision
 
   const submit = async (): Promise<void> => {
@@ -48,12 +50,12 @@ export function DesignDecisionCard({
       const label = decision.options[index]?.label
       return label ? [label] : []
     })
-    if (labels.length === 0) {
+    const trimmed = note.trim()
+    if (labels.length === 0 && !trimmed) {
       return
     }
     setSubmitting(true)
     try {
-      const trimmed = note.trim()
       await onAnswer({
         decisionId: decision.id,
         selected: labels,
@@ -131,7 +133,7 @@ export function DesignDecisionCard({
               <Button
                 type="button"
                 size="sm"
-                disabled={submitting || selected.length === 0}
+                disabled={submitting || !canAnswer}
                 onClick={() => void submit()}
               >
                 {submitting ? <LoaderCircle className="size-4 animate-spin" /> : null}
