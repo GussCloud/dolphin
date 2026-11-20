@@ -115,10 +115,14 @@ function emitTurnLifecycle(state: 'running' | 'completed', ordinal: number): voi
 
 /** Eviction is a sequence, not an event: the child stops first and the session is forgotten last. */
 function waitForEviction(): Promise<void> {
-  return vi.waitFor(() => {
-    expect(closeSession).toHaveBeenCalledWith(SESSION)
-    expect(host.hasSession(SESSION)).toBe(false)
-  })
+  // Why 5s: the default 1s ran out on a loaded CI shard between the two steps (PR #211, shard 6/12).
+  return vi.waitFor(
+    () => {
+      expect(closeSession).toHaveBeenCalledWith(SESSION)
+      expect(host.hasSession(SESSION)).toBe(false)
+    },
+    { timeout: 5000 }
+  )
 }
 
 /** Long enough for several grace windows to elapse, so "not evicted" means the clock declined. */

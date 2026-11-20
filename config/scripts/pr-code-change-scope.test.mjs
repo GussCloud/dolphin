@@ -29,7 +29,9 @@ const expensiveJobs = [
   'performance'
 ]
 
-const ALWAYS_ON = ['static_analysis', 'typecheck', 'test', 'security']
+const ALWAYS_ON = ['static_analysis', 'typecheck', 'test']
+// Runs on every PR, whatever should_run says.
+const EVERY_PR = ['security']
 
 // The Windows lane runs on two runners; its boundary half always follows the package half.
 const PAIRED_JOBS = { windows_boundaries: 'package_windows' }
@@ -38,7 +40,9 @@ function expectedJobs(overrides, { alwaysOn = true } = {}) {
   return Object.fromEntries(
     PR_CHECK_JOBS.map((job) => [
       job,
-      (alwaysOn && ALWAYS_ON.includes(job)) || Boolean(overrides[PAIRED_JOBS[job] ?? job])
+      EVERY_PR.includes(job) ||
+        (alwaysOn && ALWAYS_ON.includes(job)) ||
+        Boolean(overrides[PAIRED_JOBS[job] ?? job])
     ])
   )
 }
@@ -52,6 +56,16 @@ function expectClassification(files, overrides) {
     ...expectedJobs(overrides, { alwaysOn: shouldRun })
   })
 }
+
+describe('security coverage', () => {
+  it('runs on mobile-only and docs-only PRs, which skip the desktop jobs', () => {
+    for (const files of [['mobile/src/App.tsx'], ['mobile/package.json'], ['docs/notes.md']]) {
+      const result = classifyPrJobs(files)
+      expect(result.should_run).toBe(false)
+      expect(result.security).toBe(true)
+    }
+  })
+})
 
 describe('docs-only path classification', () => {
   it('treats the WeChat README PR files as docs-only', () => {

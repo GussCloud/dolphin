@@ -35,8 +35,7 @@ export const PR_CHECK_JOBS = [
   'security'
 ]
 
-// Why security is always on: secrets, dependencies and SAST apply to every code-relevant PR.
-const ALWAYS_ON_CODE_JOBS = new Set(['static_analysis', 'typecheck', 'test', 'security'])
+const ALWAYS_ON_CODE_JOBS = new Set(['static_analysis', 'typecheck', 'test'])
 
 const GLOBAL_FORCE_PREFIXES = [
   '.github/workflows/pr.yml',
@@ -443,6 +442,9 @@ export function classifyPrJobs(changedFiles) {
   // that is exactly the diff that changes the page this job builds. Gated on should_run it would
   // skip on every PR that can break it and run on none.
   jobs.mobile_web_app = jobs.mobile_web_app || changesMobileWebApp(changedFiles)
+  // Why every PR, outside should_run: security covers the whole repository, mobile and docs
+  // included; a secret pasted into a doc or a mobile-only dependency is still a leak.
+  jobs.security = true
   // Why outside should_run: the memory reproductions live under docs/, which is docs-only.
   jobs.performance =
     jobs.performance || changedFiles.some((file) => matchesPrefix(file, PERFORMANCE_AUDIT_DIRS))
