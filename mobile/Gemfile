@@ -9,3 +9,9 @@
 source "https://rubygems.org"
 
 gem "fastlane", "2.238.0"
+
+# Why: Ruby 3.3 bundles minitest outside the default gems, so `bundle exec` hides it unless the
+# Gemfile names it; fastlane/altool_upload_result_test.rb needs both it and the pinned fastlane.
+group :test do
+  gem "minitest", "5.20.0"
+end
