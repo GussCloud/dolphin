@@ -1,18 +1,20 @@
-import { useCallback, useEffect, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { GripVertical } from 'lucide-react-native'
 import Animated, {
+  ReduceMotion,
   measure,
-  runOnJS,
   scrollTo,
   useAnimatedStyle,
   useFrameCallback,
+  useReducedMotion,
   useSharedValue,
   withSpring,
   type AnimatedRef,
   type SharedValue
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { colors, spacing } from '../theme/mobile-theme'
 import { triggerMediumImpact, triggerSelection } from '../platform/haptics'
 import {
@@ -25,7 +27,8 @@ import {
 import { componentsCatalog } from '../i18n/catalogs/components'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
-const ROW_SPRING = { damping: 28, stiffness: 350 }
+// Rows sliding into a new slot, and the dropped row settling into its own.
+const ROW_SPRING = { duration: 400, dampingRatio: 0.8, reduceMotion: ReduceMotion.System }
 const LONG_PRESS_ACTIVATION_MS = 200
 // Why: joins row keys into a change-detection signature; NUL cannot occur in
 // a key, so the joined string is unambiguous.
@@ -89,18 +92,31 @@ export function DragReorderList<ItemT>({
     )
   }, [keySignature, positions])
 
-  const updateDragPosition = (key: string): void => {
-    'worklet'
-    const rawTop =
-      dragStartTop.value + dragTranslationY.value + (scrollOffsetY.value - dragStartScrollY.value)
-    const top = Math.min(Math.max(rawTop, 0), Math.max(0, (count - 1) * rowHeight))
-    activeTop.value = top
-    const target = clampDragReorderIndex(Math.round(top / rowHeight), count)
-    if (positions.value[key] !== target) {
-      positions.value = moveDragReorderKey(positions.value, key, target)
-      runOnJS(triggerSelection)()
-    }
-  }
+  // Why: stable identity keeps each row's memoized gesture from rebuilding.
+  const updateDragPosition = useCallback(
+    (key: string): void => {
+      'worklet'
+      const rawTop =
+        dragStartTop.value + dragTranslationY.value + (scrollOffsetY.value - dragStartScrollY.value)
+      const top = Math.min(Math.max(rawTop, 0), Math.max(0, (count - 1) * rowHeight))
+      activeTop.value = top
+      const target = clampDragReorderIndex(Math.round(top / rowHeight), count)
+      if (positions.value[key] !== target) {
+        positions.value = moveDragReorderKey(positions.value, key, target)
+        scheduleOnRN(triggerSelection)
+      }
+    },
+    [
+      activeTop,
+      count,
+      dragStartScrollY,
+      dragStartTop,
+      dragTranslationY,
+      positions,
+      rowHeight,
+      scrollOffsetY
+    ]
+  )
 
   // Why: pan updates stop while the finger holds still at a screen edge, so a
   // frame callback keeps scrolling (and re-slotting the row) until it moves.
@@ -240,56 +256,79 @@ function DragReorderRow({
     dragPointerAbsY
   } = shared
 
-  const pan = Gesture.Pan()
-    .activateAfterLongPress(LONG_PRESS_ACTIVATION_MS)
-    .shouldCancelWhenOutside(false)
-    .onStart((event) => {
-      const index = positions.value[rowKey] ?? 0
-      dragStartTop.value = index * rowHeight
-      dragStartScrollY.value = scrollOffsetY.value
-      dragTranslationY.value = 0
-      dragPointerAbsY.value = event.absoluteY
-      activeTop.value = dragStartTop.value
-      activeKey.value = rowKey
-      runOnJS(onDragActiveChange)(true)
-      runOnJS(triggerMediumImpact)()
-    })
-    .onUpdate((event) => {
-      dragTranslationY.value = event.translationY
-      dragPointerAbsY.value = event.absoluteY
-      updateDragPosition(rowKey)
-    })
-    .onFinalize(() => {
-      if (activeKey.value !== rowKey) {
-        return
-      }
-      activeKey.value = null
-      const orderedKeys = orderedKeysFromDragReorderPositions(positions.value)
-      runOnJS(onCommit)(orderedKeys)
-      runOnJS(onDragActiveChange)(false)
-    })
+  // Why: the parent re-renders every row on any list change; a rebuilt gesture
+  // reattaches its recognizer and can drop a drag in flight.
+  const pan = useMemo(
+    () =>
+      Gesture.Pan()
+        .activateAfterLongPress(LONG_PRESS_ACTIVATION_MS)
+        .shouldCancelWhenOutside(false)
+        .onStart((event) => {
+          const index = positions.value[rowKey] ?? 0
+          dragStartTop.value = index * rowHeight
+          dragStartScrollY.value = scrollOffsetY.value
+          dragTranslationY.value = 0
+          dragPointerAbsY.value = event.absoluteY
+          activeTop.value = dragStartTop.value
+          activeKey.value = rowKey
+          scheduleOnRN(onDragActiveChange, true)
+          scheduleOnRN(triggerMediumImpact)
+        })
+        .onUpdate((event) => {
+          dragTranslationY.value = event.translationY
+          dragPointerAbsY.value = event.absoluteY
+          updateDragPosition(rowKey)
+        })
+        .onFinalize(() => {
+          if (activeKey.value !== rowKey) {
+            return
+          }
+          activeKey.value = null
+          const orderedKeys = orderedKeysFromDragReorderPositions(positions.value)
+          scheduleOnRN(onCommit, orderedKeys)
+          scheduleOnRN(onDragActiveChange, false)
+        }),
+    [
+      activeKey,
+      activeTop,
+      dragPointerAbsY,
+      dragStartScrollY,
+      dragStartTop,
+      dragTranslationY,
+      onCommit,
+      onDragActiveChange,
+      positions,
+      rowHeight,
+      rowKey,
+      scrollOffsetY,
+      updateDragPosition
+    ]
+  )
 
+  // Why: reduce motion keeps the raised colour and shadow but drops the lift scale.
+  const reducedMotion = useReducedMotion()
+  const liftScale = reducedMotion ? 1 : 1.02
+  // Why: rows move by translateY over a fixed top: 0, so neither the held row
+  // nor the siblings sliding past it cost a layout pass per frame.
   const rowStyle = useAnimatedStyle(() => {
     const index = positions.value[rowKey] ?? 0
     if (activeKey.value === rowKey) {
       return {
-        top: activeTop.value,
         zIndex: 2,
         elevation: 4,
         shadowOpacity: 0.3,
         backgroundColor: colors.bgRaised,
-        transform: [{ scale: 1.02 }]
+        transform: [{ translateY: activeTop.value }, { scale: liftScale }]
       }
     }
     return {
-      top: withSpring(index * rowHeight, ROW_SPRING),
       zIndex: 0,
       elevation: 0,
       shadowOpacity: 0,
       backgroundColor: colors.bgPanel,
-      transform: [{ scale: 1 }]
+      transform: [{ translateY: withSpring(index * rowHeight, ROW_SPRING) }, { scale: 1 }]
     }
-  }, [positions, activeKey, activeTop, rowKey, rowHeight])
+  }, [positions, activeKey, activeTop, rowKey, rowHeight, liftScale])
 
   return (
     <Animated.View style={[styles.row, { height: rowHeight }, rowStyle]}>
@@ -325,6 +364,7 @@ function DragReorderRow({
 const styles = StyleSheet.create({
   row: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',

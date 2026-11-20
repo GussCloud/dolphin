@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View,
   Pressable,
@@ -14,16 +14,17 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedScrollHandler,
-  withSpring,
+  useReducedMotion,
   withTiming,
-  runOnJS,
   interpolate,
   Extrapolation
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { spacing } from '../theme/mobile-theme'
 import { resolveBottomDrawerFillHeight } from './bottom-drawer-fill-height'
 import { resolveBottomDrawerKeyboardInset } from './bottom-drawer-keyboard-inset'
 import { BOTTOM_DRAWER_HIDE_DURATION_MS } from './bottom-drawer-constants'
+import { drawerDismiss, drawerProgressTiming, drawerSnapBack, grabDrawer } from './drawer-motion'
 import { bottomDrawerStyles as styles } from './bottom-drawer-styles'
 import { useInsideBottomDrawerModalHost } from './bottom-drawer-modal-host'
 import { useResponsiveLayout } from '../layout/responsive-layout'
@@ -33,7 +34,6 @@ import { componentsCatalog } from '../i18n/catalogs/components'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 
 const DISMISS_THRESHOLD = 80
-const SPRING_CONFIG = { damping: 28, stiffness: 400 }
 // Why: negative translateY (pulling up) is damped with a rubber-band factor
 // so the drawer resists upward dragging — a subtle polish touch that signals
 // the drawer cannot expand further.
@@ -73,6 +73,10 @@ export function MountedBottomDrawer({
   const scrollOffsetY = useSharedValue(0)
   const contentDragStartY = useSharedValue(0)
   const contentDragCanDismiss = useSharedValue(false)
+  // Where the sheet was when the finger took it, so a grab mid-settle doesn't jump.
+  const dragOrigin = useSharedValue(0)
+  // Why: reduce motion swaps the slide for a crossfade (see drawerStyle).
+  const reducedMotion = useReducedMotion()
   // Why: fill mode needs the keyboard inset in React layout (not only the
   // reanimated translate) so height shrinks as the sheet lifts and the top
   // edge stays under the status bar.
@@ -111,7 +115,7 @@ export function MountedBottomDrawer({
       return
     }
     translateY.value = 0
-    progress.value = withTiming(1, { duration: SHOW_DURATION })
+    progress.value = drawerProgressTiming(1, SHOW_DURATION)
     setWindowEpoch((epoch) => epoch + 1)
   }, [interactive, visible])
 
@@ -119,13 +123,13 @@ export function MountedBottomDrawer({
     if (visible) {
       translateY.value = 0
       scrollOffsetY.value = 0
-      progress.value = withTiming(1, { duration: SHOW_DURATION })
+      progress.value = drawerProgressTiming(1, SHOW_DURATION)
     } else {
       Keyboard.dismiss()
       setKeyboardInset(0)
-      progress.value = withTiming(0, { duration: BOTTOM_DRAWER_HIDE_DURATION_MS }, (finished) => {
+      progress.value = drawerProgressTiming(0, BOTTOM_DRAWER_HIDE_DURATION_MS, (finished) => {
         if (finished) {
-          runOnJS(onHidden)()
+          scheduleOnRN(onHidden)
         }
       })
     }
@@ -194,9 +198,9 @@ export function MountedBottomDrawer({
       return
     }
     Keyboard.dismiss()
-    progress.value = withTiming(0, { duration: BOTTOM_DRAWER_HIDE_DURATION_MS }, (finished) => {
+    progress.value = drawerProgressTiming(0, BOTTOM_DRAWER_HIDE_DURATION_MS, (finished) => {
       if (finished) {
-        runOnJS(onClose)()
+        scheduleOnRN(onClose)
       }
     })
   }, [onClose, progress, visible])
@@ -218,86 +222,102 @@ export function MountedBottomDrawer({
     scrollOffsetY.value = Math.max(event.contentOffset.y, 0)
   })
 
-  const scrollGesture = Gesture.Native()
-  const handlePanGesture = Gesture.Pan()
-    .activeOffsetY([-8, 8])
-    .simultaneousWithExternalGesture(scrollGesture)
-    .onUpdate((e) => {
-      if (e.translationY > 0) {
-        translateY.value = e.translationY
+  // Why: the backdrop already fades off translateY while the sheet springs away;
+  // progress drops only once it is gone, so the slide is one velocity-carrying spring.
+  const finishDragDismiss = useCallback(() => {
+    progress.value = 0
+    onClose()
+  }, [onClose, progress])
+
+  // Why: memoized so a re-render mid-drag (keyboard inset, parent state) cannot
+  // reattach the recognizers and drop the drag.
+  const scrollGesture = useMemo(() => Gesture.Native(), [])
+  const { handlePanGesture, contentPanGesture } = useMemo(() => {
+    const followFinger = (dragY: number): void => {
+      'worklet'
+      const next = dragOrigin.value + dragY
+      translateY.value = next > 0 ? next : next * RUBBER_BAND_FACTOR
+    }
+    const release = (velocityY: number): void => {
+      'worklet'
+      if (translateY.value > DISMISS_THRESHOLD || velocityY > 500) {
+        translateY.value = drawerDismiss(screenHeight, velocityY, finishDragDismiss)
       } else {
-        translateY.value = e.translationY * RUBBER_BAND_FACTOR
+        translateY.value = drawerSnapBack(velocityY)
       }
-    })
-    .onEnd((e) => {
-      if (e.translationY > DISMISS_THRESHOLD || e.velocityY > 500) {
-        const velocity = Math.max(e.velocityY, 800)
-        const remaining = screenHeight - e.translationY
-        const duration = Math.min(Math.max((remaining / velocity) * 1000, 120), 300)
-        translateY.value = withTiming(screenHeight, { duration })
-        progress.value = withTiming(0, { duration }, () => {
-          runOnJS(onClose)()
-        })
-      } else {
-        translateY.value = withSpring(0, SPRING_CONFIG)
-      }
-    })
-  const contentPanGesture = Gesture.Pan()
-    .activeOffsetY([-8, 8])
-    .simultaneousWithExternalGesture(scrollGesture)
-    .onBegin(() => {
-      contentDragStartY.value = 0
-      contentDragCanDismiss.value = scrollOffsetY.value <= TOP_SCROLL_EPSILON
-    })
-    .onUpdate((e) => {
-      // Why: action-sheet content can be taller than the drawer; downward drags
-      // should scroll back to the top before they start dismissing the sheet.
-      if (scrollOffsetY.value > TOP_SCROLL_EPSILON) {
-        contentDragCanDismiss.value = false
+    }
+    const handle = Gesture.Pan()
+      .activeOffsetY([-8, 8])
+      .simultaneousWithExternalGesture(scrollGesture)
+      .onStart(() => {
+        dragOrigin.value = grabDrawer(translateY)
+      })
+      .onUpdate((e) => {
+        followFinger(e.translationY)
+      })
+      .onEnd((e) => {
+        release(e.velocityY)
+      })
+    const content = Gesture.Pan()
+      .activeOffsetY([-8, 8])
+      .simultaneousWithExternalGesture(scrollGesture)
+      .onBegin(() => {
         contentDragStartY.value = 0
-        if (translateY.value !== 0) {
-          translateY.value = withSpring(0, SPRING_CONFIG)
+        contentDragCanDismiss.value = scrollOffsetY.value <= TOP_SCROLL_EPSILON
+      })
+      .onUpdate((e) => {
+        // Why: action-sheet content can be taller than the drawer; downward drags
+        // should scroll back to the top before they start dismissing the sheet.
+        if (scrollOffsetY.value > TOP_SCROLL_EPSILON) {
+          // Why: start the snap-back once; restarting it every frame would never let it settle.
+          const wasDismissing = contentDragCanDismiss.value
+          contentDragCanDismiss.value = false
+          contentDragStartY.value = 0
+          if (wasDismissing && translateY.value !== 0) {
+            translateY.value = drawerSnapBack(0)
+          }
+          return
         }
-        return
-      }
 
-      if (!contentDragCanDismiss.value) {
-        contentDragCanDismiss.value = true
-        contentDragStartY.value = e.translationY
-      }
+        if (!contentDragCanDismiss.value) {
+          contentDragCanDismiss.value = true
+          contentDragStartY.value = e.translationY
+          dragOrigin.value = grabDrawer(translateY)
+        }
 
-      const translationY = e.translationY - contentDragStartY.value
-      if (translationY > 0) {
-        translateY.value = translationY
-      } else {
-        translateY.value = translationY * RUBBER_BAND_FACTOR
-      }
-    })
-    .onEnd((e) => {
-      if (!contentDragCanDismiss.value || scrollOffsetY.value > TOP_SCROLL_EPSILON) {
-        return
-      }
-
-      const translationY = e.translationY - contentDragStartY.value
-      if (translationY > DISMISS_THRESHOLD || e.velocityY > 500) {
-        const velocity = Math.max(e.velocityY, 800)
-        const remaining = screenHeight - translationY
-        const duration = Math.min(Math.max((remaining / velocity) * 1000, 120), 300)
-        translateY.value = withTiming(screenHeight, { duration })
-        progress.value = withTiming(0, { duration }, () => {
-          runOnJS(onClose)()
-        })
-      } else {
-        translateY.value = withSpring(0, SPRING_CONFIG)
-      }
-    })
+        followFinger(e.translationY - contentDragStartY.value)
+      })
+      .onEnd((e) => {
+        if (!contentDragCanDismiss.value || scrollOffsetY.value > TOP_SCROLL_EPSILON) {
+          return
+        }
+        release(e.velocityY)
+      })
+    return { handlePanGesture: handle, contentPanGesture: content }
+  }, [
+    contentDragCanDismiss,
+    contentDragStartY,
+    dragOrigin,
+    finishDragDismiss,
+    screenHeight,
+    scrollGesture,
+    scrollOffsetY,
+    translateY
+  ])
 
   const drawerStyle = useAnimatedStyle(() => {
     // Why: fill mode already shrinks height by the keyboard inset and lifts via
     // marginBottom (layout). Also subtracting keyboardOffset here would double-
     // count and park the dock under the keys (input hidden).
     const keyboardShift = fillAvailable ? 0 : keyboardOffset.value
+    if (reducedMotion) {
+      return {
+        opacity: progress.value,
+        transform: [{ translateY: translateY.value - keyboardShift }]
+      }
+    }
     return {
+      opacity: 1,
       transform: [
         {
           translateY:
@@ -307,7 +327,7 @@ export function MountedBottomDrawer({
         }
       ]
     }
-  }, [progress, translateY, keyboardOffset, screenHeight, fillAvailable])
+  }, [progress, translateY, keyboardOffset, screenHeight, fillAvailable, reducedMotion])
 
   const backdropStyle = useAnimatedStyle(() => {
     const dragFade = interpolate(translateY.value, [0, 300], [1, 0], Extrapolation.CLAMP)

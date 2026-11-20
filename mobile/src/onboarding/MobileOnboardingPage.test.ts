@@ -26,7 +26,11 @@ vi.mock('react-native', async () => {
       sequence: vi.fn(() => ({ start: vi.fn(), stop: vi.fn() })),
       timing: vi.fn(() => ({ start: vi.fn(), stop: vi.fn() }))
     },
-    Easing: { cubic: (t: number) => t, in: (e: unknown) => e, out: (e: unknown) => e },
+    Easing: {
+      bezier: () => (t: number) => t,
+      cubic: (t: number) => t,
+      out: (e: unknown) => e
+    },
     Image: 'Image',
     Pressable: 'Pressable',
     ScrollView: ({ children, ...props }: { children?: unknown }) =>

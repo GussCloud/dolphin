@@ -51,7 +51,8 @@ export function NotificationOnboardingPreview({ active }: Props) {
       Animated.timing(value, {
         toValue: 0,
         duration: EXIT_MS,
-        easing: Easing.in(Easing.cubic),
+        // Why: an ease-in exit lingers then snaps; strong ease-out clears the banners at once.
+        easing: Easing.bezier(0.23, 1, 0.32, 1),
         useNativeDriver: true
       })
     const loop = Animated.loop(

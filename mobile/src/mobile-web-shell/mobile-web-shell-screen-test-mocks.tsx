@@ -9,7 +9,7 @@ export function screenModuleMocks(dependencies: ScreenDependencies) {
   return {
     'react-native': () => ({
       ActivityIndicator: 'ActivityIndicator',
-      Easing: { in: (fn: unknown) => fn, quad: 'quad' },
+      Easing: { bezier: () => (t: number) => t },
       // Enough of it for the cover to mount, fade and unmount. What the fade looks like is not this
       // test's business; that the cover is up until the page paints is, and that is the `visible` prop.
       Animated: {

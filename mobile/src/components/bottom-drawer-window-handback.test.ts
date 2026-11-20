@@ -32,6 +32,7 @@ vi.mock('react-native-gesture-handler', () => {
     'activeOffsetY',
     'simultaneousWithExternalGesture',
     'onBegin',
+    'onStart',
     'onUpdate',
     'onEnd'
   ]) {
@@ -43,6 +44,9 @@ vi.mock('react-native-gesture-handler', () => {
     GestureHandlerRootView: 'GestureHandlerRootView'
   }
 })
+vi.mock('react-native-worklets', () => ({
+  scheduleOnRN: (fn: () => void) => fn()
+}))
 vi.mock('react-native-reanimated', () => {
   function makeShared(key: string, initial: number) {
     let value = initial
@@ -67,7 +71,10 @@ vi.mock('react-native-reanimated', () => {
       withTimingCalls.push({ to, duration: config?.duration })
       return to
     },
-    runOnJS: (fn: () => void) => fn,
+    useReducedMotion: () => false,
+    cancelAnimation: () => {},
+    Easing: { bezier: () => (t: number) => t },
+    ReduceMotion: { System: 'system', Never: 'never' },
     interpolate: () => 0,
     Extrapolation: { CLAMP: 'clamp' }
   }

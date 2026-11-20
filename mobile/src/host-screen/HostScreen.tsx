@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { HostScreenView } from './host-screen-view'
 import { type HostScreenProps, useHostScreenController } from './use-host-screen-controller'
 
@@ -9,7 +10,9 @@ import { type HostScreenProps, useHostScreenController } from './use-host-screen
  * — that one reaches the native shell view, whose module calls `requireNativeViewManager` at import
  * and throws in a browser.
  */
-export function HostScreen(props: HostScreenProps = {}) {
+// Why memo: the wide-layout sidebar's parent re-renders on every route change, and this is the
+// whole worktree list; its props there are strings and a stable callback.
+export const HostScreen = memo(function HostScreen(props: HostScreenProps = {}) {
   const controller = useHostScreenController(props)
   return <HostScreenView controller={controller} />
-}
+})

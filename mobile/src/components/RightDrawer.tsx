@@ -1,26 +1,25 @@
-import { type ReactNode, useCallback, useEffect, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { View, Pressable, StyleSheet, Platform, useWindowDimensions, Keyboard } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
+  useReducedMotion,
   interpolate,
   Extrapolation
 } from 'react-native-reanimated'
+import { scheduleOnRN } from 'react-native-worklets'
 import { useBackClaim } from '../navigation/use-back-claim'
 import { colors, spacing } from '../theme/mobile-theme'
 // Why: mount-before-commit logic is anchor-agnostic, so the X-axis drawer reuses
 // the exact same gate as BottomDrawer rather than duplicating it.
 import { resolveBottomDrawerMounted } from './bottom-drawer-mount-state'
 import { resolveRightDrawerPanelWidth } from './right-drawer-panel-width'
+import { drawerDismiss, drawerProgressTiming, drawerSnapBack, grabDrawer } from './drawer-motion'
 import { useResponsiveLayout } from '../layout/responsive-layout'
 
 const DISMISS_THRESHOLD = 80
-const SPRING_CONFIG = { damping: 28, stiffness: 400 }
 // Why: leftward drags (negative translateX) pull the panel past its docked edge;
 // damp them with a rubber-band factor so the drawer resists over-pulling inward.
 const RUBBER_BAND_FACTOR = 0.25
@@ -78,6 +77,9 @@ function MountedRightDrawer({
 }: MountedRightDrawerProps) {
   const translateX = useSharedValue(0)
   const progress = useSharedValue(0)
+  const dragOrigin = useSharedValue(0)
+  // Why: reduce motion swaps the slide for a crossfade (see drawerStyle).
+  const reducedMotion = useReducedMotion()
   const { width: screenWidth } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const { isWideLayout } = useResponsiveLayout()
@@ -86,12 +88,12 @@ function MountedRightDrawer({
   useEffect(() => {
     if (visible) {
       translateX.value = 0
-      progress.value = withTiming(1, { duration: SHOW_DURATION })
+      progress.value = drawerProgressTiming(1, SHOW_DURATION)
     } else {
       Keyboard.dismiss()
-      progress.value = withTiming(0, { duration: HIDE_DURATION }, (finished) => {
+      progress.value = drawerProgressTiming(0, HIDE_DURATION, (finished) => {
         if (finished) {
-          runOnJS(onHidden)()
+          scheduleOnRN(onHidden)
         }
       })
     }
@@ -113,35 +115,45 @@ function MountedRightDrawer({
     onClose()
   }, [onClose])
 
-  const scrollGesture = Gesture.Native()
+  // Why: the backdrop fades off translateX while the panel springs away; progress
+  // drops only once it is gone, so the slide is one velocity-carrying spring.
+  const finishDragDismiss = useCallback(() => {
+    progress.value = 0
+    onClose()
+  }, [onClose, progress])
+
+  // Why: memoized so a parent re-render mid-drag cannot reattach the recognizer.
+  const scrollGesture = useMemo(() => Gesture.Native(), [])
   // Why: swipe-from-right (positive translationX) dismisses; the horizontal
   // activeOffset lets the inner vertical ScrollView keep its gestures.
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-8, 8])
-    .simultaneousWithExternalGesture(scrollGesture)
-    .onUpdate((e) => {
-      if (e.translationX > 0) {
-        translateX.value = e.translationX
-      } else {
-        translateX.value = e.translationX * RUBBER_BAND_FACTOR
-      }
-    })
-    .onEnd((e) => {
-      if (e.translationX > DISMISS_THRESHOLD || e.velocityX > 500) {
-        const velocity = Math.max(e.velocityX, 800)
-        const remaining = panelWidth - e.translationX
-        const duration = Math.min(Math.max((remaining / velocity) * 1000, 120), 300)
-        translateX.value = withTiming(panelWidth, { duration })
-        progress.value = withTiming(0, { duration }, () => {
-          runOnJS(dismiss)()
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-8, 8])
+        .simultaneousWithExternalGesture(scrollGesture)
+        .onStart(() => {
+          dragOrigin.value = grabDrawer(translateX)
         })
-      } else {
-        translateX.value = withSpring(0, SPRING_CONFIG)
-      }
-    })
+        .onUpdate((e) => {
+          const next = dragOrigin.value + e.translationX
+          translateX.value = next > 0 ? next : next * RUBBER_BAND_FACTOR
+        })
+        .onEnd((e) => {
+          if (translateX.value > DISMISS_THRESHOLD || e.velocityX > 500) {
+            translateX.value = drawerDismiss(panelWidth, e.velocityX, finishDragDismiss)
+          } else {
+            translateX.value = drawerSnapBack(e.velocityX)
+          }
+        }),
+    [dragOrigin, finishDragDismiss, panelWidth, scrollGesture, translateX]
+  )
 
-  const drawerStyle = useAnimatedStyle(
-    () => ({
+  const drawerStyle = useAnimatedStyle(() => {
+    if (reducedMotion) {
+      return { opacity: progress.value, transform: [{ translateX: translateX.value }] }
+    }
+    return {
+      opacity: 1,
       transform: [
         {
           translateX:
@@ -149,9 +161,8 @@ function MountedRightDrawer({
             translateX.value
         }
       ]
-    }),
-    [progress, translateX, panelWidth]
-  )
+    }
+  }, [progress, translateX, panelWidth, reducedMotion])
 
   const backdropStyle = useAnimatedStyle(() => {
     const dragFade = interpolate(translateX.value, [0, panelWidth], [1, 0], Extrapolation.CLAMP)

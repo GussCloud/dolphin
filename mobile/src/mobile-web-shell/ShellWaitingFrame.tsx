@@ -3,11 +3,13 @@ import { ActivityIndicator, Animated, Easing, StyleSheet, Text } from 'react-nat
 import { colors, spacing, typography } from '../theme/mobile-theme'
 
 /**
- * Eased in, so the cover holds near full opacity through the handover: the page reports its own
- * renderer's paint, and the compositor needs a frame or two more to put that on the app's surface.
- * A linear fade left two frames of bare surface between the two on an emulator.
+ * Held fully opaque through the handover, then faded out on a strong ease-out: the page reports
+ * its own renderer's paint, and the compositor needs a frame or two more to put that on the app's
+ * surface. A linear fade left two frames of bare surface between the two on an emulator; the hold
+ * covers those frames without the slow start an ease-in puts on the reveal itself.
  */
-export const SHELL_PAGE_COVER_FADE_MS = 220
+export const SHELL_PAGE_COVER_HOLD_MS = 34
+export const SHELL_PAGE_COVER_FADE_MS = 186
 
 /** The shell's neutral frame: one spinner and what it is waiting on. */
 export function ShellWaitingFrame({ label }: { label: string }) {
@@ -37,8 +39,9 @@ export function ShellPageCover({ label, visible }: { label: string; visible: boo
     }
     const fade = Animated.timing(opacity, {
       toValue: 0,
+      delay: SHELL_PAGE_COVER_HOLD_MS,
       duration: SHELL_PAGE_COVER_FADE_MS,
-      easing: Easing.in(Easing.quad),
+      easing: Easing.bezier(0.23, 1, 0.32, 1),
       useNativeDriver: true
     })
     // Unmounted on the callback rather than on a timer, so a fade the platform cut short does not
