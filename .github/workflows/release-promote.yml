@@ -6,7 +6,7 @@ name: Release Promote
 # Desktop: vX.Y.Z, the latest stable GitHub release the in-app updater serves.
 # Mobile: APK as mobile-android-vX.Y.Z (and mobile-android-latest), and an iOS build distributed to
 # the external TestFlight group. App Store review submission stays manual.
-# Once published, main is fast-forwarded to the promoted commit: main is what was released.
+# Once published, main is moved to the promoted commit: main is what was released.
 
 on:
   workflow_dispatch:
@@ -176,7 +176,7 @@ jobs:
           fetch-depth: 0
 
       # Why the newest of the two: both rc commits are on develop, so one contains the other.
-      - name: Fast-forward main to the promoted commit
+      - name: Move main to the promoted commit
         env:
           DESKTOP_SHA: ${{ needs.resolve.outputs.desktop_sha }}
           MOBILE_SHA: ${{ needs.resolve.outputs.mobile_sha }}
@@ -190,8 +190,28 @@ jobs:
             echo "main already contains $target; nothing to move."
             exit 0
           fi
-          if ! git push origin "$target:refs/heads/main"; then
-            echo "::error::The release IS published, but main was not moved to $target (push rejected: main is not an ancestor of it, branch protection blocks github-actions, or the range edits .github/workflows, which GITHUB_TOKEN may not push). Move it by hand: git push origin $target:refs/heads/main"
-            exit 1
+          # Why a merge when main is not an ancestor: a sync PR merged into main leaves a merge commit
+          # develop lacks, and main must keep moving without rewriting history.
+          new_main="$target"
+          if ! git merge-base --is-ancestor origin/main "$target"; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git checkout --quiet --detach origin/main
+            git merge --no-ff --no-edit -m "release: move main to $target" "$target"
+            new_main="$(git rev-parse HEAD)"
           fi
-          echo "### main fast-forwarded to \`$target\`" >>"$GITHUB_STEP_SUMMARY"
+          if git push origin "$new_main:refs/heads/main" 2>push.log; then
+            echo "### main moved to \`$target\`" >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          cat push.log >&2
+          # Why a warning: GITHUB_TOKEN can never hold the `workflows` permission, so a range that edits
+          # .github/workflows is always refused. The release is published; main is moved by a PR merged
+          # with the Claude GitHub App, which has that permission.
+          if grep -q 'without `workflows` permission' push.log; then
+            echo "::warning::The release IS published. main stays behind $target because the range edits .github/workflows, which GITHUB_TOKEN may not push. Merge a PR from a branch at $target into main (docs/reference/release-process.md)."
+            echo "### main NOT moved: the range edits workflows; merge a PR from \`$target\` into main" >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "::error::The release IS published, but main was not moved to $target (push rejected: branch protection blocks github-actions?). Merge a PR from a branch at $target into main."
+          exit 1

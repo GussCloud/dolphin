@@ -113,13 +113,13 @@ describe('release workflows', () => {
     ])
   })
 
-  it('fast-forwards main after a promote, never by force', () => {
+  it('moves main after a promote, never by force', () => {
     const { jobs } = workflow('release-promote')
     const job = jobs['fast-forward-main']
     expect(job.needs).toEqual(['resolve', 'desktop', 'android', 'ios'])
     expect(job.permissions).toEqual({ contents: 'write' })
     const run = job.steps.map((step) => step.run ?? '').join('\n')
-    expect(run).toContain('git push origin "$target:refs/heads/main"')
+    expect(run).toContain('git push origin "$new_main:refs/heads/main"')
     expect(run).not.toMatch(/--force|\s-f\b|\+\$target|\+refs/)
     expect(run).toContain('::error::The release IS published, but main was not moved')
   })
