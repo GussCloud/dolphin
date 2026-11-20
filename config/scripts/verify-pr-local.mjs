@@ -310,7 +310,7 @@ async function runAll(steps, concurrency) {
 
 async function main() {
   const argv = process.argv.slice(2)
-  const base = argv.find((arg) => !arg.startsWith('--')) ?? 'origin/main'
+  const base = argv.find((arg) => !arg.startsWith('--')) ?? 'origin/develop' // PRs target develop
   const dryRun = argv.includes('--dry-run')
   const fix = argv.includes('--fix')
   const mergeBase = resolveMergeBase(base)

@@ -16,8 +16,11 @@
 require "base64"
 require "json"
 require_relative "ios_release_version"
+require_relative "altool_upload_result"
 
 default_platform(:ios)
+
+AltoolUploadResult.install(FastlaneCore::AltoolTransporterExecutor)
 
 MOBILE_ROOT = File.expand_path("..", __dir__)
 # Why: fastlane executes lanes from mobile/fastlane even when GitHub Actions
