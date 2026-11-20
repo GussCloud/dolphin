@@ -4,5 +4,10 @@
   "semi": false,
   "printWidth": 100,
   "trailingComma": "none",
-  "ignorePatterns": ["cloud/**", "resources/licenses/**", ".anti-slop-plugin/**"]
+  "ignorePatterns": [
+    "cloud/**",
+    "resources/licenses/**",
+    ".anti-slop-plugin/**",
+    ".claude/skills/**"
+  ]
 }

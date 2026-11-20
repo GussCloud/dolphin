@@ -174,8 +174,30 @@ validation-screenshots/
 test-results/
 playwright-report/
 
-# Agent skill installations (machine-local, populated by agent tooling)
-/.claude/skills/
+# Agent skill installations (machine-local, populated by agent tooling), except the committed
+# design and motion set from emilkowalski/skills (see .claude/skills/LICENSE.emilkowalski).
+/.claude/skills/*
+!/.claude/skills/LICENSE.emilkowalski
+!/.claude/skills/animate/
+!/.claude/skills/animate-expo/
+!/.claude/skills/animation-performance/
+!/.claude/skills/animation-vocabulary/
+!/.claude/skills/apple-design/
+!/.claude/skills/ask-emil/
+!/.claude/skills/ask-sonner/
+!/.claude/skills/break-ui/
+!/.claude/skills/choreograph/
+!/.claude/skills/emil-design-eng/
+!/.claude/skills/find-animation-opportunities/
+!/.claude/skills/gestures/
+!/.claude/skills/improve-animations/
+!/.claude/skills/learn-taste/
+!/.claude/skills/mobile-native/
+!/.claude/skills/pick-ui-library/
+!/.claude/skills/prototype/
+!/.claude/skills/remove-animations/
+!/.claude/skills/review-animations/
+!/.claude/skills/write-swift/
 /.agents/skills/
 /skills-lock.json
 

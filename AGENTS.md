@@ -2,6 +2,10 @@
 
 All UI work — layout, color, typography, spacing, component selection, UX behavior — must follow [`docs/STYLEGUIDE.md`](./docs/STYLEGUIDE.md). Most of it is linted: `pnpm run check:code-quality:changed` fails on new restyles of a `components/ui/` primitive, raw palette colors, and computed `className` strings; `pnpm lint` fails on any class Tailwind cannot generate. See the Enforcement section of the style guide before suppressing either. Use the tokens defined in `src/renderer/src/assets/main.css` (the canonical source) and the shadcn primitives in `src/renderer/src/components/ui/`. Don't invent new color values, font sizes, or shadow tiers when a documented one already covers the role. When STYLEGUIDE.md is silent, follow the resolution order in its final section.
 
+## Design and Motion Skills
+
+`.claude/skills/` carries Emil Kowalski's design-engineering and motion skills (MIT, see `LICENSE.emilkowalski`). Use the one that fits any UI, visual polish, animation, gesture, toast, mobile-feel or Swift task: `animate` (web) or `animate-expo` (mobile), `review-animations`, `choreograph`, `gestures`, `break-ui`, `emil-design-eng`, and the rest by their descriptions. They decide how motion and interaction behave; `docs/STYLEGUIDE.md` and the tokens in `main.css` still decide colors, type, spacing and components, and win any conflict.
+
 ## Electron UI Validation
 
 Always run tests and agent-launched apps in the background with `DOLPHIN_BACKGROUND_LAUNCH=1`.

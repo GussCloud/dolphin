@@ -14,8 +14,9 @@ function readRootEntries(sha) {
 }
 
 // Why: reviewed root additions stay listed until they land on main, after which the base tree
-// carries them. `dolphin.yaml` is the renamed repo hook file, not a new entry.
-const REVIEWED_ROOT_ENTRIES = new Set(['cloud', 'dolphin.yaml'])
+// carries them. `dolphin.yaml` is the renamed repo hook file, not a new entry; `.claude` holds the
+// committed design and motion skills. Keep in sync with REVIEWED_ROOT_ENTRIES in verify-pr-local.
+const REVIEWED_ROOT_ENTRIES = new Set(['.claude', 'cloud', 'dolphin.yaml'])
 
 function checkRootDirectoryEntries(argv) {
   if (argv.length !== 2) {

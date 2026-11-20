@@ -133,4 +133,8 @@ describe('findNewRootEntries', () => {
   it('accepts changes under existing entries', () => {
     expect(findNewRootEntries(['src/a.ts', 'docs/x.md'], ['src', 'docs'])).toEqual([])
   })
+
+  it('accepts entries the CI guard already reviewed', () => {
+    expect(findNewRootEntries(['.claude/skills/animate/SKILL.md'], ['src'])).toEqual([])
+  })
 })
