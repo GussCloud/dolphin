@@ -1,0 +1,194 @@
+# Electron/Node rules for the PR security gate. Findings already on main live in
+# config/security/semgrep-baseline.json; config/scripts/semgrep-baseline-gate.mjs fails only on new ones.
+# Keep rules precise: a noisy rule trains reviewers to baseline everything.
+rules:
+  - id: electron-insecure-web-preferences
+    message: >-
+      This webPreferences value disables an Electron isolation boundary (node integration,
+      context isolation, sandbox, web security or insecure content). Dolphin renders untrusted
+      pages and agent output; keep the secure default.
+    severity: ERROR
+    languages: [typescript, javascript]
+    paths:
+      include: [src/**]
+    metadata:
+      category: security
+      references: ['https://www.electronjs.org/docs/latest/tutorial/security']
+    pattern-either:
+      - patterns:
+          - pattern-inside: '{..., webPreferences: {...}, ...}'
+          - pattern-either:
+              - pattern: '{..., nodeIntegration: true, ...}'
+              - pattern: '{..., nodeIntegrationInSubFrames: true, ...}'
+              - pattern: '{..., nodeIntegrationInWorker: true, ...}'
+              - pattern: '{..., contextIsolation: false, ...}'
+              - pattern: '{..., sandbox: false, ...}'
+              - pattern: '{..., webSecurity: false, ...}'
+              - pattern: '{..., allowRunningInsecureContent: true, ...}'
+              - pattern: '{..., experimentalFeatures: true, ...}'
+      # Shared preference constants and will-attach-webview mutations.
+      - patterns:
+          - pattern-either:
+              - pattern: '$WP = {..., nodeIntegration: true, ...}'
+              - pattern: '$WP = {..., nodeIntegrationInSubFrames: true, ...}'
+              - pattern: '$WP = {..., contextIsolation: false, ...}'
+              - pattern: '$WP = {..., sandbox: false, ...}'
+              - pattern: '$WP = {..., webSecurity: false, ...}'
+              - pattern: '$WP = {..., allowRunningInsecureContent: true, ...}'
+              - pattern: '$WP.nodeIntegration = true'
+              - pattern: '$WP.nodeIntegrationInSubFrames = true'
+              - pattern: '$WP.contextIsolation = false'
+              - pattern: '$WP.sandbox = false'
+              - pattern: '$WP.webSecurity = false'
+              - pattern: '$WP.allowRunningInsecureContent = true'
+          - metavariable-regex:
+              metavariable: $WP
+              regex: (?i).*web_?preferences$
+
+  - id: electron-webview-insecure-attribute
+    message: A <webview> with nodeintegration or disablewebsecurity gives guest content Node or cross-origin access.
+    severity: ERROR
+    languages: [typescript, javascript]
+    paths:
+      include: [src/**]
+    pattern-either:
+      - pattern: <webview ... nodeintegration ... />
+      - pattern: <webview ... disablewebsecurity ... />
+      - pattern: <webview ... nodeintegration ...>...</webview>
+      - pattern: <webview ... disablewebsecurity ...>...</webview>
+
+  - id: child-process-shell-true
+    message: >-
+      `shell: true` hands the command line to cmd.exe or /bin/sh, so any interpolated argument can
+      inject commands. Pass argv to runProcess/spawnProcess (src/shared/child-process) instead.
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern-either:
+          - pattern: '$FN(..., {..., shell: true, ...})'
+          - pattern: '$OBJ.$FN(..., {..., shell: true, ...})'
+      - metavariable-regex:
+          metavariable: $FN
+          regex: ^(spawn|spawnSync|execFile|execFileSync|fork|spawnDetached|spawnProcess|runProcess)$
+
+  - id: child-process-exec-dynamic-command
+    message: >-
+      exec/execSync always runs through a shell; a non-literal command string can inject commands.
+      Use execFile/runProcess with an argv array.
+    severity: ERROR
+    languages: [typescript, javascript]
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  import { ..., $EXEC, ... } from '$MOD'
+                  ...
+              - pattern: $EXEC($CMD, ...)
+          - patterns:
+              - pattern-inside: |
+                  import * as $CP from '$MOD'
+                  ...
+              - pattern: $CP.$EXEC($CMD, ...)
+          - pattern: require('$MOD').$EXEC($CMD, ...)
+      - metavariable-regex:
+          metavariable: $MOD
+          regex: ^(node:)?child_process$
+      - metavariable-regex:
+          metavariable: $EXEC
+          regex: ^(exec|execSync)$
+      - pattern-not: $F("...", ...)
+
+  - id: dynamic-code-evaluation
+    message: eval/new Function compile a string as code; with any non-constant input this is code injection.
+    severity: ERROR
+    languages: [typescript, javascript]
+    pattern-either:
+      - patterns:
+          - pattern: eval($X)
+          - pattern-not: eval("...")
+      - pattern: new Function(...)
+      - pattern: Function(...)
+      - patterns:
+          - pattern-either:
+              - pattern: $VM.runInThisContext($X, ...)
+              - pattern: $VM.runInNewContext($X, ...)
+              - pattern: $VM.runInContext($X, ...)
+              - pattern: new $VM.Script($X, ...)
+          - pattern-not: $VM.$F("...", ...)
+          - pattern-not: new $VM.Script("...", ...)
+
+  - id: electron-open-external-unvalidated
+    message: >-
+      shell.openExternal with a non-literal URL can launch arbitrary protocol handlers (file:,
+      ms-msdt:, custom schemes). Parse it with `new URL` and allow only expected protocols first.
+    severity: WARNING
+    languages: [typescript, javascript]
+    paths:
+      include: [src/**]
+    patterns:
+      - pattern: $SHELL.openExternal($URL, ...)
+      - metavariable-regex:
+          metavariable: $SHELL
+          regex: ^(shell|electron\.shell|electronShell)$
+      - pattern-not: $SHELL.openExternal("...", ...)
+      - pattern-not: $SHELL.openExternal(`...`, ...)
+      # A protocol check guarding the call (enclosing `if`, or an earlier early-return guard).
+      - pattern-not-inside: |
+          if (<... $P.protocol ...>) { ... }
+      - pattern-not-inside: |
+          if (<... $P.protocol ...>) $STMT;
+          ...
+      - pattern-not-inside: |
+          if (<... $P.protocol ...>) { ... }
+          ...
+      - pattern-not-inside: |
+          $C ? $SHELL.openExternal($URL, ...) : $ALT
+  - id: electron-ipc-input-to-dangerous-sink
+    message: >-
+      An ipcMain handler argument reaches a command, code, navigation or openExternal sink without
+      validation. Renderer input is untrusted (a compromised renderer can send anything); validate it
+      in the handler or pass it through a parser that rejects unexpected values.
+    severity: ERROR
+    languages: [typescript, javascript]
+    paths:
+      include: [src/main/**]
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern-inside: '$IPC.$ON($CH, ($EVENT, ..., $ARG, ...) => $BODY)'
+              - pattern-inside: '$IPC.$ON($CH, ($EVENT, ..., $ARG, ...) => { ... })'
+              - pattern-inside: '$IPC.$ON($CH, async ($EVENT, ..., $ARG, ...) => $BODY)'
+              - pattern-inside: '$IPC.$ON($CH, async ($EVENT, ..., $ARG, ...) => { ... })'
+              - pattern-inside: '$IPC.$ON($CH, function ($EVENT, ..., $ARG, ...) { ... })'
+              - pattern-inside: '$IPC.$ON($CH, async function ($EVENT, ..., $ARG, ...) { ... })'
+          - metavariable-regex:
+              metavariable: $ON
+              regex: ^(handle|handleOnce|on|once)$
+          - metavariable-regex:
+              metavariable: $IPC
+              regex: ^ipcMain$
+          - pattern: $ARG
+    pattern-sanitizers:
+      - pattern: new URL(...)
+      - patterns:
+          - pattern: $F(...)
+          - metavariable-regex:
+              metavariable: $F
+              regex: (?i)(^|\.)(parse|validate|assert|normalize|sanitize|is)[A-Za-z]*$
+    pattern-sinks:
+      - pattern: $SHELL.openExternal($SINK, ...)
+      - pattern: $SHELL.openPath($SINK)
+      - pattern: eval($SINK)
+      - pattern: new Function(..., $SINK)
+      - pattern: $WC.loadURL($SINK, ...)
+      - pattern: exec($SINK, ...)
+      - pattern: execSync($SINK, ...)
+      - patterns:
+          - pattern-either:
+              - pattern: $CP.exec($SINK, ...)
+              - pattern: $CP.execSync($SINK, ...)
+          # Not provider.exec(argv, ...): Dolphin's git providers take an argv array.
+          - metavariable-regex:
+              metavariable: $CP
+              regex: ^(cp|childProcess|child_process)$

@@ -4,22 +4,34 @@ name: Dolphin iOS Release
 # dolphin-android-release.yml. The internal group "dolphin-internal" has access to all builds, so
 # a build reaches its testers as soon as App Store Connect finishes processing it; no beta review.
 #
-# Cut a release: bump mobile/app.json "version" and merge to main. A main push that lands a version
-# with no TestFlight build yet uploads build 1 of it; a push tag mobile-ios-v<version> or a manual
-# dispatch upload the next build number of that version.
+# Releases come only from release-beta.yml (internal TestFlight build) and release-promote.yml
+# (same commit rebuilt, then distributed to the external TestFlight group); see
+# docs/reference/release-process.md. fastlane stamps the version and build number into the
+# checkout, so no app.json bump is committed. A manual dispatch still uploads an internal build.
 #
 # Signing: IOS_DIST_CERT_P12 is the team's Apple Distribution certificate; fastlane fetches the App
 # Store provisioning profile with the App Store Connect API key (ASC_*). See mobile/fastlane/Fastfile.
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - mobile/app.json
-      - .github/workflows/dolphin-ios-release.yml
-    tags:
-      - 'mobile-ios-v*'
+  workflow_call:
+    inputs:
+      ref:
+        description: Full commit SHA on main to build
+        required: true
+        type: string
+      release_version:
+        description: iOS marketing version, X.Y.Z
+        required: true
+        type: string
+      distribute_external:
+        description: Run the release lane, which also distributes the build to external TestFlight testers
+        required: false
+        default: false
+        type: boolean
+      shell:
+        required: false
+        default: native
+        type: string
   workflow_dispatch:
     inputs:
       bump_patch_version:
@@ -70,29 +82,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.ref || github.sha }}
           persist-credentials: false
 
       - name: Select Xcode
-        uses: maxim-lobanov/setup-xcode@v1
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: '27.2'
 
       - name: Setup pnpm
-        uses: pnpm/setup@v2
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2
         with:
           install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: package.json
           cache: pnpm
           cache-dependency-path: mobile/pnpm-lock.yaml
 
       - name: Setup Ruby and fastlane
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1
         with:
           ruby-version: '3.3'
           bundler-cache: true
@@ -104,23 +117,16 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
           MOBILE_IOS_RELEASE_VERSION: ${{ inputs.release_version }}
-          MOBILE_IOS_BUMP_PATCH_VERSION: ${{ inputs.bump_patch_version }}
+          MOBILE_IOS_BUMP_PATCH_VERSION: ${{ inputs.bump_patch_version || false }}
         run: bundle exec fastlane ios prepare_release_version version:"$MOBILE_IOS_RELEASE_VERSION" bump_patch:"$MOBILE_IOS_BUMP_PATCH_VERSION"
 
-      # Why skip on branch pushes past build 1: most main pushes that touch app.json change config
-      # or the Android versionCode, not the iOS version, and must not upload a duplicate build.
-      - name: Skip versions already on TestFlight
+      - name: Report the resolved build
         id: gate
         run: |
           set -euo pipefail
           read -r version build_number < <(node -p 'const { expo } = require("./app.json"); `${expo.version} ${expo.ios.buildNumber}`')
           echo "Dolphin Mobile iOS $version ($build_number)"
-          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* && "$build_number" != "1" ]]; then
-            echo "$version already has a TestFlight build; nothing to do."
-            echo "skip=true" >>"$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >>"$GITHUB_OUTPUT"
-          fi
+          echo "skip=false" >>"$GITHUB_OUTPUT"
 
       - name: Install dependencies
         if: steps.gate.outputs.skip != 'true'
@@ -170,17 +176,21 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Pushes and tags carry no inputs, so they build the native shell and upload.
           EXPO_PUBLIC_MOBILE_SHELL: ${{ inputs.shell || 'native' }}
           SKIP_UPLOAD: ${{ inputs.skip_upload || false }}
+          DISTRIBUTE_EXTERNAL: ${{ inputs.distribute_external || false }}
         run: |
           set -euo pipefail
           echo "Mobile shell: $EXPO_PUBLIC_MOBILE_SHELL"
-          bundle exec fastlane ios build_and_upload skip_upload:"$SKIP_UPLOAD"
+          if [[ "$DISTRIBUTE_EXTERNAL" == "true" ]]; then
+            bundle exec fastlane ios release
+          else
+            bundle exec fastlane ios build_and_upload skip_upload:"$SKIP_UPLOAD"
+          fi
 
       - name: Upload .ipa artifact
         if: always() && steps.gate.outputs.skip != 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: dolphin-mobile-ipa
           path: mobile/build/*.ipa

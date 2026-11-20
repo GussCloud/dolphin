@@ -157,7 +157,7 @@ describe('createDraftRelease', () => {
         method: 'POST',
         body: JSON.stringify({
           tag_name: 'v1.4.36',
-          target_commitish: 'v1.4.36',
+          target_commitish: 'abc123',
           previous_tag_name: 'v1.4.35'
         })
       })
@@ -352,7 +352,7 @@ describe('createDraftRelease', () => {
     })
 
     const generateNotesBody = JSON.parse(fetchImpl.mock.calls[1][1].body)
-    expect(generateNotesBody).toEqual({ tag_name: 'v1.4.36', target_commitish: 'v1.4.36' })
+    expect(generateNotesBody).toEqual({ tag_name: 'v1.4.36', target_commitish: 'abc123' })
     expect(generateNotesBody).not.toHaveProperty('previous_tag_name')
   })
 

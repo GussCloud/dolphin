@@ -7,35 +7,30 @@ name: Dolphin Windows Release
 # The build-mac job adds Developer ID-signed, notarized macOS dmg/zip builds and latest-mac.yml to
 # the same release.
 #
-# Cut a release: bump package.json "version" and merge to main. A main push that lands a version
-# with no release yet builds and publishes it; a push tag v<version> or a manual dispatch do too.
+# Only release-beta.yml (X.Y.Z-rc.N prerelease) and release-promote.yml (X.Y.Z stable) call this;
+# see docs/reference/release-process.md. The version is stamped into the checkout, never committed.
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - package.json
-      - .github/workflows/dolphin-windows-release.yml
-    tags:
-      - 'v*'
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
-        description: Version to release, without the leading v; must equal package.json
+        description: Version to release, without the leading v (X.Y.Z or X.Y.Z-rc.N)
+        required: true
+        type: string
+      ref:
+        description: Full commit SHA on main to build
         required: true
         type: string
       prerelease:
-        description: Mark the GitHub release as a prerelease
-        required: false
-        default: false
+        description: Publish as a GitHub prerelease (the rc update channel) instead of the latest stable
+        required: true
         type: boolean
 
 permissions:
   contents: read
 
 concurrency:
-  group: dolphin-windows-release-${{ inputs.version || github.ref_name }}-${{ github.sha }}
+  group: dolphin-windows-release-${{ inputs.version }}
   cancel-in-progress: false
 
 jobs:
@@ -51,56 +46,48 @@ jobs:
       tag: ${{ steps.version.outputs.tag }}
     env:
       NODE_OPTIONS: --max-old-space-size=4096
-      # Why three sources: a dispatch names the version, a tag push carries it in its ref, and a
-      # main push releases whatever package.json now says (resolved in the first step).
-      REQUESTED_VERSION: ${{ inputs.version || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || '' }}
+      REQUESTED_VERSION: ${{ inputs.version }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.ref }}
           persist-credentials: false
 
-      - name: Check the requested version
+      - name: Check and stamp the requested version
         id: version
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          packaged="$(node -p "require('./package.json').version")"
           VERSION="${REQUESTED_VERSION#v}"
-          VERSION="${VERSION:-$packaged}"
           echo "VERSION=$VERSION" >>"$GITHUB_ENV"
           echo "TAG=v$VERSION" >>"$GITHUB_ENV"
           echo "tag=v$VERSION" >>"$GITHUB_OUTPUT"
-          # Why skip rather than fail: most main pushes that touch package.json change deps, not the
-          # version, and must not error on a release that already exists.
-          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* ]] \
-            && gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "v$VERSION is already released; nothing to do."
-            echo "skip=true" >>"$GITHUB_OUTPUT"
-            exit 0
-          fi
           echo "skip=false" >>"$GITHUB_OUTPUT"
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "::error::version '$VERSION' is not semver."
-            exit 1
+          # Why a draft may be replaced: drafts carry no tag and no users, so one left by a failed
+          # run is debris; a published release is never overwritten.
+          if is_draft="$(gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            if [[ "$is_draft" != "true" ]]; then
+              echo "::error::release v$VERSION is already published; cut a new version instead of overwriting it."
+              exit 1
+            fi
+            echo "Deleting stale draft v$VERSION from an earlier failed run."
+            gh release delete "v$VERSION" --repo "$GITHUB_REPOSITORY" --yes
           fi
-          if [[ "$packaged" != "$VERSION" ]]; then
-            echo "::error::package.json is at $packaged, not $VERSION. Bump it on main first."
-            exit 1
-          fi
+          node config/scripts/stamp-release-version.mjs desktop "$VERSION"
 
       - name: Setup pnpm
         if: steps.version.outputs.skip != 'true'
-        uses: pnpm/setup@v2
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2
         with:
           install: false
 
       - name: Setup Node.js
         if: steps.version.outputs.skip != 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: package.json
           cache: pnpm
@@ -110,7 +97,7 @@ jobs:
 
       - name: Cache electron-builder downloads
         if: steps.version.outputs.skip != 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~\AppData\Local\electron\Cache
@@ -123,7 +110,7 @@ jobs:
       # returns transient 504s.
       - name: Install dependencies
         if: steps.version.outputs.skip != 'true'
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -158,7 +145,7 @@ jobs:
           pnpm exec electron-builder --config config/electron-builder.config.cjs --win --publish never
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         env:
-          DOLPHIN_BUILD_COMMIT: ${{ github.sha }}
+          DOLPHIN_BUILD_COMMIT: ${{ inputs.ref }}
 
       # Why assert before publishing: the updater resolves a tag, then fetches latest.yml from it;
       # a release with the installer but no manifest is one updates 404 on.
@@ -179,28 +166,21 @@ jobs:
           echo "Packaged:"
           ls -la dist/*.exe dist/*.blockmap dist/latest.yml
 
-      - name: Publish GitHub release
+      # Why a draft: the atom feed the updater walks hides drafts, so no platform sees the release
+      # until the publish job has checked every leg's assets.
+      - name: Create the draft GitHub release
         if: steps.version.outputs.skip != 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          PRERELEASE: ${{ inputs.prerelease || 'false' }}
+          RELEASE_TARGET_SHA: ${{ inputs.ref }}
         run: |
           set -euo pipefail
-          flags=(--target "$GITHUB_SHA" --title "Dolphin $TAG")
+          node config/scripts/create-draft-release.mjs "$TAG"
           if [[ -f "docs/releases/$TAG.md" ]]; then
-            flags+=(--notes-file "docs/releases/$TAG.md")
-          else
-            flags+=(--generate-notes)
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file "docs/releases/$TAG.md"
           fi
-          if [[ "$PRERELEASE" == "true" ]]; then
-            flags+=(--prerelease)
-          fi
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::release $TAG already exists; bump the version instead of overwriting it."
-            exit 1
-          fi
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" "${flags[@]}" \
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" \
             dist/dolphin-windows-setup.exe \
             dist/dolphin-windows-setup.exe.blockmap \
             dist/latest.yml
@@ -210,7 +190,7 @@ jobs:
   # (latest.yml) has no arch suffix. arm64 publishes latest-arm64.yml beside it, and only arm64
   # builds read it, so x64 installs see exactly the assets they did before.
   # Why after build-win rather than in parallel: it reuses that job's version check and uploads
-  # into the release build-win created, so a failed arm64 leg never blocks the x64 release.
+  # into the draft build-win created; the publish job waits for it.
   build-win-arm64:
     needs: build-win
     if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
@@ -226,17 +206,22 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.ref }}
           persist-credentials: false
 
+      - name: Stamp the release version
+        shell: bash
+        run: node config/scripts/stamp-release-version.mjs desktop "${TAG#v}"
+
       - name: Setup pnpm
-        uses: pnpm/setup@v2
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2
         with:
           install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: package.json
           cache: pnpm
@@ -245,7 +230,7 @@ jobs:
             mobile/pnpm-lock.yaml
 
       - name: Cache electron-builder downloads
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~\AppData\Local\electron\Cache
@@ -257,7 +242,7 @@ jobs:
       # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
       # returns transient 504s.
       - name: Install dependencies
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -286,7 +271,7 @@ jobs:
           pnpm exec electron-builder --config config/electron-builder.config.cjs --win --arm64 --publish never
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         env:
-          DOLPHIN_BUILD_COMMIT: ${{ github.sha }}
+          DOLPHIN_BUILD_COMMIT: ${{ inputs.ref }}
           DOLPHIN_WIN_ARM64_RELEASE: '1'
 
       # Why refuse latest.yml: uploading it would replace x64's manifest and move x64 users onto arm64.
@@ -322,8 +307,8 @@ jobs:
   # Why Developer ID + notarization: Squirrel.Mac installs an update only when its signature satisfies
   # the running app's designated requirement, so every build must carry the same team identity.
   # Installs from earlier ad-hoc releases carry the unsigned marker and still need one manual .dmg.
-  # Why after build-win: it reuses that job's version check and uploads into the release build-win
-  # created, so a failed macOS leg never blocks the Windows release.
+  # Why after build-win: it reuses that job's version check and uploads into the draft build-win
+  # created; the publish job waits for it.
   build-mac:
     needs: build-win
     if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
@@ -338,17 +323,22 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.ref }}
           persist-credentials: false
 
+      - name: Stamp the release version
+        shell: bash
+        run: node config/scripts/stamp-release-version.mjs desktop "${TAG#v}"
+
       - name: Setup pnpm
-        uses: pnpm/setup@v2
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2
         with:
           install: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: package.json
           cache: pnpm
@@ -357,7 +347,7 @@ jobs:
             mobile/pnpm-lock.yaml
 
       - name: Cache electron-builder downloads
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~/Library/Caches/electron
@@ -370,7 +360,7 @@ jobs:
       # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
       # returns transient 504s.
       - name: Install dependencies
-        uses: nick-fields/retry@v4
+        uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
           max_attempts: 3
@@ -396,7 +386,7 @@ jobs:
           node config/scripts/ensure-native-runtime.mjs --runtime=electron
           pnpm exec electron-builder --config config/electron-builder.config.cjs --mac --publish never
         env:
-          DOLPHIN_BUILD_COMMIT: ${{ github.sha }}
+          DOLPHIN_BUILD_COMMIT: ${{ inputs.ref }}
           DOLPHIN_MAC_RELEASE: '1'
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -443,3 +433,41 @@ jobs:
           files=(dist/dolphin-macos-x64.dmg dist/dolphin-macos-arm64.dmg dist/latest-mac.yml "${zips[@]}" dist/*.blockmap)
           ls -la "${files[@]}"
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "${files[@]}"
+
+  # Why one publish step for every leg: a release the updater can see must already carry each
+  # platform's manifest and installers (verify-release-required-assets), or that platform 404s.
+  publish:
+    needs: [build-win, build-win-arm64, build-mac]
+    if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.build-win.outputs.tag }}
+      PRERELEASE: ${{ inputs.prerelease }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Verify every platform's assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node config/scripts/verify-release-required-assets.mjs "$TAG" --platforms=mac,win,win-arm64
+
+      # Why --latest=false on an rc: /releases/latest is the stable fallback feed and download link.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ "$PRERELEASE" == "true" ]]; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
+          fi
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,url

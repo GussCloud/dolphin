@@ -30,10 +30,13 @@ export const PR_CHECK_JOBS = [
   'managed_hook_node18',
   'package',
   'package_windows',
-  'windows_boundaries'
+  'windows_boundaries',
+  'performance',
+  'security'
 ]
 
-const ALWAYS_ON_CODE_JOBS = new Set(['static_analysis', 'typecheck', 'test'])
+// Why security is always on: secrets, dependencies and SAST apply to every code-relevant PR.
+const ALWAYS_ON_CODE_JOBS = new Set(['static_analysis', 'typecheck', 'test', 'security'])
 
 const GLOBAL_FORCE_PREFIXES = [
   '.github/workflows/pr.yml',
@@ -283,6 +286,68 @@ const WINDOWS_PACKAGE_TESTS = [
   'src/relay/windows-port-scan.win32.test.ts'
 ]
 
+// Why static: this runs on a sparse, blob-less checkout and cannot walk imports. The
+// performance-contract-scope test walks the real import closure of every contract and
+// reproduction and fails when a reachable file falls outside these lists.
+export const PERFORMANCE_CONTRACT_TESTS = [
+  'src/main/sqlite/sync-database.test.ts',
+  'src/main/runtime/orchestration/db/row-column-lists.test.ts',
+  'src/relay/fs-path-metadata-symlink-concurrency.test.ts',
+  'src/renderer/src/components/editor/rich-markdown-list-tokenizers.test.ts',
+  'src/renderer/src/components/editor/rich-markdown-lowlight-cache.test.ts',
+  'src/renderer/src/components/terminal-pane/agent-completion-coordinator-queued-inspection-disposal.test.ts',
+  'src/renderer/src/lib/pane-manager/pane-terminal-output-scheduler-queue-retention.test.ts',
+  'src/renderer/src/store/store-identity-churn-probe.test.ts'
+]
+
+export const PERFORMANCE_CONTRACT_SOURCE_PREFIXES = [
+  'src/renderer/',
+  'src/shared/',
+  'src/preload/',
+  'src/main/runtime/orchestration/',
+  'src/main/runtime/agent-prompt-submission-verification',
+  'src/main/runtime/recent-pty-output-buffer',
+  'src/main/runtime/structured-worker-identity',
+  'src/main/sqlite/',
+  'src/main/providers/pty-process-info',
+  'src/main/ai-vault/session-scanner-service-entry',
+  'src/main/ports/advertised-url-',
+  'src/relay/context',
+  'src/relay/fs-path-metadata'
+]
+
+const PERFORMANCE_HARNESS_PREFIXES = [
+  'config/vitest.performance.config.ts',
+  'config/vitest.config.ts',
+  'config/scripts/happy-dom-',
+  'config/scripts/vitest-host-ports-setup',
+  'config/scripts/run-memory-audit-reproductions',
+  'config/scripts/oxlint-plugin-test-runner',
+  'config/scripts/app-store-performance-plugin',
+  'config/scripts/quadratic-buffer-concat-plugin',
+  'config/scripts/sort-comparator-performance-plugin',
+  'config/scripts/performance-contract-scope',
+  'config/oxlint-plugins/',
+  '.github/workflows/memory-contracts.yml'
+]
+
+// The reproductions MEMORY_AUDIT_REPRODUCTIONS runs; kept in step by its test.
+export const PERFORMANCE_AUDIT_DIRS = [
+  'docs/audits/scanner-late-cancel/',
+  'docs/audits/pty-detector-retention/',
+  'docs/audits/retained-text-slices/'
+]
+
+export function isPerformanceContractPath(file) {
+  if (PERFORMANCE_CONTRACT_TESTS.includes(file)) {
+    return true
+  }
+  if (matchesPrefix(file, PERFORMANCE_HARNESS_PREFIXES)) {
+    return true
+  }
+  return !isTestFile(file) && matchesPrefix(file, PERFORMANCE_CONTRACT_SOURCE_PREFIXES)
+}
+
 const DESKTOP_IRRELEVANT_PREFIXES = [
   'mobile/',
   'cloud/',
@@ -378,6 +443,9 @@ export function classifyPrJobs(changedFiles) {
   // that is exactly the diff that changes the page this job builds. Gated on should_run it would
   // skip on every PR that can break it and run on none.
   jobs.mobile_web_app = jobs.mobile_web_app || changesMobileWebApp(changedFiles)
+  // Why outside should_run: the memory reproductions live under docs/, which is docs-only.
+  jobs.performance =
+    jobs.performance || changedFiles.some((file) => matchesPrefix(file, PERFORMANCE_AUDIT_DIRS))
   return {
     should_run: shouldRun,
     native_cache_changed: shouldRun && (emptyDiff || changedFiles.some(isNativeCacheInputPath)),
@@ -404,6 +472,8 @@ function jobDetector(job) {
     // returns true, which would run this job on every desktop-relevant PR.
     case 'mobile_web_app':
       return changesMobileWebApp
+    case 'performance':
+      return (files) => files.some(isPerformanceContractPath)
     case 'managed_hook_node18':
       return (files) => files.some((file) => matchesPrefix(file, MANAGED_HOOK_PREFIXES))
     case 'package':

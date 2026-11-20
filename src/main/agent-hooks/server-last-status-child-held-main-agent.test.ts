@@ -323,7 +323,7 @@ describe('Claude rows held open by child agents', () => {
 
       expect(row(restarted)?.state).toBe('working')
     } finally {
-      restarted.stop()
+      await restarted.stop()
     }
   }
 

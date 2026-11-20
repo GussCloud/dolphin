@@ -1,0 +1,159 @@
+name: Release Promote
+
+# Promotes a published beta to the official release; docs/reference/release-process.md is the
+# operator guide. After approval in the `production` environment it rebuilds THE SAME COMMIT the rc
+# tag points at, versioned X.Y.Z:
+# Desktop: vX.Y.Z, the latest stable GitHub release the in-app updater serves.
+# Mobile: APK as mobile-android-vX.Y.Z (and mobile-android-latest), and an iOS build distributed to
+# the external TestFlight group. App Store review submission stays manual.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Which app to promote
+        required: true
+        default: both
+        type: choice
+        options:
+          - desktop
+          - mobile
+          - both
+      desktop_rc_tag:
+        description: Desktop rc tag to promote, e.g. v0.2.56-rc.2 (latest = newest published rc)
+        required: false
+        default: latest
+        type: string
+      mobile_rc_tag:
+        description: Mobile rc tag to promote, e.g. mobile-android-v0.0.66-rc.1 (latest = newest published rc)
+        required: false
+        default: latest
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-cut
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    if: github.repository == 'GussCloud/dolphin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      desktop_version: ${{ steps.desktop.outputs.version }}
+      desktop_sha: ${{ steps.desktop_commit.outputs.sha }}
+      mobile_version: ${{ steps.mobile.outputs.marketing_version }}
+      mobile_tag: ${{ steps.mobile.outputs.tag }}
+      android_version_code: ${{ steps.mobile.outputs.android_version_code }}
+      mobile_sha: ${{ steps.mobile_commit.outputs.sha }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Resolve the desktop release
+        id: desktop
+        if: inputs.app != 'mobile'
+        env:
+          RC_TAG: ${{ inputs.desktop_rc_tag || 'latest' }}
+        run: node config/scripts/next-release-version.mjs desktop --promote "$RC_TAG"
+
+      # Why the PR's checks: the rc was cut without them, and promote is the gate that requires them.
+      - name: Check the desktop rc commit
+        id: desktop_commit
+        if: inputs.app != 'mobile'
+        env:
+          RC_TAG: ${{ steps.desktop.outputs.rc_tag }}
+        run: |
+          set -euo pipefail
+          sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
+          node config/scripts/verify-release-commit.mjs "$sha" --require-checks
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+
+      - name: Resolve the mobile release
+        id: mobile
+        if: inputs.app != 'desktop'
+        env:
+          RC_TAG: ${{ inputs.mobile_rc_tag || 'latest' }}
+        run: node config/scripts/next-release-version.mjs mobile --promote "$RC_TAG"
+
+      - name: Check the mobile rc commit
+        id: mobile_commit
+        if: inputs.app != 'desktop'
+        env:
+          RC_TAG: ${{ steps.mobile.outputs.rc_tag }}
+        run: |
+          set -euo pipefail
+          sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
+          node config/scripts/verify-release-commit.mjs "$sha" --require-checks
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+
+      - name: Summary
+        env:
+          DESKTOP_RC: ${{ steps.desktop.outputs.rc_tag }}
+          DESKTOP: ${{ steps.desktop.outputs.tag }}
+          DESKTOP_SHA: ${{ steps.desktop_commit.outputs.sha }}
+          MOBILE_RC: ${{ steps.mobile.outputs.rc_tag }}
+          MOBILE: ${{ steps.mobile.outputs.tag }}
+          MOBILE_SHA: ${{ steps.mobile_commit.outputs.sha }}
+        run: |
+          {
+            echo "### Promotion awaiting approval"
+            [[ -n "$DESKTOP" ]] && echo "- Desktop: \`$DESKTOP_RC\` → \`$DESKTOP\` at \`$DESKTOP_SHA\`"
+            [[ -n "$MOBILE" ]] && echo "- Mobile: \`$MOBILE_RC\` → \`$MOBILE\` at \`$MOBILE_SHA\`"
+            true
+          } >>"$GITHUB_STEP_SUMMARY"
+
+  # Why a job of its own: a reusable-workflow call cannot take `environment`, so every build waits
+  # on this one. Its required reviewers are set in repository settings, not here.
+  approve:
+    needs: resolve
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - name: Approved
+        run: echo "Promotion approved by $GITHUB_TRIGGERING_ACTOR."
+
+  desktop:
+    needs: [resolve, approve]
+    if: inputs.app != 'mobile'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/dolphin-windows-release.yml
+    with:
+      version: ${{ needs.resolve.outputs.desktop_version }}
+      ref: ${{ needs.resolve.outputs.desktop_sha }}
+      prerelease: false
+    secrets: inherit
+
+  android:
+    needs: [resolve, approve]
+    if: inputs.app != 'desktop'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/dolphin-android-release.yml
+    with:
+      ref: ${{ needs.resolve.outputs.mobile_sha }}
+      version: ${{ needs.resolve.outputs.mobile_version }}
+      android_version_code: ${{ needs.resolve.outputs.android_version_code }}
+      release_tag: ${{ needs.resolve.outputs.mobile_tag }}
+      prerelease: false
+    secrets: inherit
+
+  ios:
+    needs: [resolve, approve]
+    if: inputs.app != 'desktop'
+    uses: ./.github/workflows/dolphin-ios-release.yml
+    with:
+      ref: ${{ needs.resolve.outputs.mobile_sha }}
+      release_version: ${{ needs.resolve.outputs.mobile_version }}
+      distribute_external: true
+    secrets: inherit

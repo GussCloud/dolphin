@@ -34,6 +34,21 @@ afterEach(() => {
 })
 
 describe('getRequiredReleaseAssetNames', () => {
+  it('checks only the platforms a release packages', () => {
+    const required = getRequiredReleaseAssetNames('v0.2.56-rc.1', ['mac', 'win', 'win-arm64'])
+    expect(required).toEqual(
+      expect.arrayContaining([
+        'latest.yml',
+        'latest-arm64.yml',
+        'latest-mac.yml',
+        'dolphin-windows-setup-arm64.exe',
+        'Dolphin-0.2.56-rc.1-arm64-mac.zip'
+      ])
+    )
+    expect(required.some((name) => name.includes('linux'))).toBe(false)
+    expect(() => getRequiredReleaseAssetNames('v1.0.0', ['solaris'])).toThrow(/Unknown/)
+  })
+
   it('includes both mac updater ZIP names for the tag version', () => {
     expect(getRequiredReleaseAssetNames('v1.4.27')).toEqual(
       expect.arrayContaining([

@@ -50,6 +50,8 @@ jobs:
       package: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package }}
       package_windows: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.package_windows }}
       windows_boundaries: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.windows_boundaries }}
+      performance: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.performance }}
+      security: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.security }}
       e2e_should_run: ${{ steps.e2e_filter.outputs.should_run }}
       test_files: ${{ steps.e2e_filter.outputs.test_files }}
       ssh_source_changed: ${{ steps.e2e_filter.outputs.ssh_source_changed }}
@@ -57,7 +59,7 @@ jobs:
       wsl_source_changed: ${{ steps.e2e_filter.outputs.wsl_source_changed }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           # Why blob:none: full history is needed for the merge-base diff, but historical
           # file contents are not. Blobs are ~89% of this repo's pack, and Git fetches the
@@ -83,8 +85,9 @@ jobs:
         run: node .github/scripts/check-root-directory-entries.mjs "$BASE_SHA" "$HEAD_SHA"
 
       # The full Git index retains link targets outside the sparse working tree.
+      # Why report only: docs hygiene never breaks the app; the warning stays visible on the PR.
       - name: Check README local links
-        run: node config/scripts/check-readme-local-links.mjs
+        run: node config/scripts/check-readme-local-links.mjs || echo "::warning::README local links found issues (report only, see log)"
 
       # Readiness changes eligibility for advisory tests, not the already-tested source.
       - name: Find identical successful required checks
@@ -152,7 +155,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           # Why blob:none: full history is needed for the merge-base diff, but historical
           # file contents are not. Blobs are ~89% of this repo's pack, and Git fetches the
@@ -174,8 +177,10 @@ jobs:
         background: true
         run: pnpm exec oxlint --format github
 
+      # Why report only (this step and the other style/size gates below): in 150 PR runs they
+      # never caught a defect, only style. Blocking gates are broken code, security, performance.
       - name: Reject low-evidence patterns
-        run: pnpm run audit:anti-slop
+        run: pnpm run audit:anti-slop || echo "::warning::anti-slop found issues (report only, see log)"
 
       - wait: root-lint
 
@@ -199,10 +204,10 @@ jobs:
       - name: Enforce changed-code quality
         id: changed-code-quality
         background: true
-        run: pnpm run check:code-quality:changed -- "${{ github.event.pull_request.base.sha }}"
+        run: pnpm run check:code-quality:changed -- "${{ github.event.pull_request.base.sha }}" || echo "::warning::changed-code quality found issues (report only, see log)"
 
       - name: Enforce React Doctor on changed lines
-        run: pnpm run check:react-doctor:changed -- "${{ github.event.pull_request.base.sha }}"
+        run: pnpm run check:react-doctor:changed -- "${{ github.event.pull_request.base.sha }}" || echo "::warning::React Doctor found issues (report only, see log)"
 
       - wait: changed-code-quality
 
@@ -216,7 +221,7 @@ jobs:
         run: pnpm run check:has-restyle-scope
 
       - name: Enforce dead design-system classes
-        run: pnpm run check:dead-classes
+        run: pnpm run check:dead-classes || echo "::warning::dead design-system classes found issues (report only, see log)"
 
       - name: Check VM runtime rollback compatibility
         env:
@@ -240,7 +245,7 @@ jobs:
             config/scripts/ephemeral-vm-runtime-store-cross-version.test.ts
 
       - name: Enforce max-lines ratchet
-        run: pnpm run check:max-lines-ratchet
+        run: pnpm run check:max-lines-ratchet || echo "::warning::max-lines ratchet found issues (report only, see log)"
 
       - name: Enforce ts-nocheck ratchet
         run: pnpm run check:ts-nocheck-ratchet
@@ -329,7 +334,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -340,7 +345,7 @@ jobs:
       # PR base stays stable; actions/cache keeps the first successful graph and the
       # compiler still invalidates stale files from its content hashes.
       - name: Cache TypeScript incremental state
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: config/*.tsbuildinfo
           key: tsbuildinfo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'config/tsconfig*.json') }}-${{ github.event.pull_request.base.sha }}
@@ -357,7 +362,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -419,7 +424,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -452,7 +457,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -465,7 +470,7 @@ jobs:
       # themselves; the key is the manifest, so a commit, package or toolchain bump
       # invalidates it.
       - name: Restore upstream xterm build inputs
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~/.npm
@@ -498,83 +503,50 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       # Why fish: shell-ready.test.ts gates its live fish test on the binary being
       # present, so without this the fish barrier is only covered by config-shape
       # assertions and never actually exercised.
-      # Why release-4: DECSET 2031 arming lives in the fish 4.0 Rust tty_handoff, and
+      # Why fish 4: DECSET 2031 arming lives in the fish 4.0 Rust tty_handoff, and
       # fish-color-scheme-child-stdin.node-pty.test.ts (#9993) needs it. Noble ships
-      # 3.7, so the PPA is what makes that lane real.
+      # 3.7, so the pinned release below is what makes that lane real.
       - name: Install zsh and fish
         id: shells
         background: true
         run: |
-          # Why the update/PPA/fish steps are tolerant: a repo the runner image already
-          # ships can lack a Release file for this suite, and a failed add-apt-repository
-          # still leaves its list entry behind — either makes `apt-get update` exit
-          # non-zero and would red this required check over something unrelated to the
-          # PR. Every fish outcome is judged by the version gate below instead, so only
-          # the zsh install (which has no such gate) stays fatal here.
-          # Why retry only here: adding the PPA is the network-flaky step, and the
-          # version gate below is fatal, so a transient Launchpad blip would
-          # otherwise red a required check on PRs unrelated to shells.
-          # Why -n: add-apt-repository refreshes every configured repo on its own. With
-          # an update on each side of it this step refreshed them three times over, and
-          # the Azure archive mirror alone costs ~15-30s a pass. The PPA index is the
-          # only thing the repo list gains here, and the single update below fetches it.
-          # Why bound acquisition: measured on a *passing* run, this step spent 40s
-          # fetching 11.4 MB of index and then 2m17s fetching 8.9 MB of packages at
-          # 65 kB/s — it is dominated by download throughput, not by work. apt applies
-          # no wall-clock bound to a stalled mirror, so a slow Launchpad or archive
-          # host wedges the step for tens of minutes. This job is a required check, so
-          # a wedge holds the entire run open and blocks `gh run rerun --failed`.
-          # Bounded timeouts plus retries turn an unbounded hang into a fast, legible
-          # failure. Set in apt.conf.d rather than on each command line so the two
-          # invocations below stay exactly as pr-workflow-parallelism.test.mjs parses
-          # them. Retries are 1, not 3: a first attempt at these bounds already multiplied
-          # 30s x 3 retries across every index file into a ~15 minute stall on a dead
-          # mirror, which is worse than failing once and moving on.
-          # Why no translations: a Launchpad 503 on the PPA's Translation-en made apt drop
-          # the whole PPA index and install Ubuntu's fish 3.7, failing the gate below.
+          # Why bound acquisition: apt applies no wall-clock bound to a stalled mirror, so a
+          # slow archive host wedged this step for tens of minutes. This job is a required
+          # check, so a wedge holds the entire run open. Bounded timeouts plus one retry turn
+          # an unbounded hang into a fast, legible failure; `timeout` bounds each command.
           sudo tee /etc/apt/apt.conf.d/99-dolphin-shell-contracts >/dev/null <<'APTCONF'
           Acquire::http::Timeout "15";
           Acquire::https::Timeout "15";
           Acquire::Retries "1";
           Acquire::Languages "none";
           APTCONF
-          for attempt in 1 2 3; do
-            sudo add-apt-repository -y -n ppa:fish-shell/release-4 && break
-            echo "add-apt-repository attempt ${attempt} failed; retrying" >&2
-            sudo add-apt-repository -y -n -r ppa:fish-shell/release-4 || true
-            sleep 5
-          done
-          # Why a wall-clock bound on each command: apt's Acquire timeouts are per-connection,
-          # so a dead mirror costs timeout x retries x every index file. Measured: the archive
-          # mirror stalled with zero bytes and the step burned 14m26s before the job bound
-          # killed it. `timeout` is the only thing that bounds the command as a whole.
-          # The update is already tolerant by design (see above), so bounding it just caps
-          # what a dead mirror can cost before the install runs against whatever index exists.
-          # Why loop on the candidate: a Launchpad 503 makes apt drop the PPA index with only
-          # a warning, and the archive's fish 3.7 then installs and fails the gate below. A
-          # healthy run still refreshes once; only a missing fish 4 index pays for another.
-          for attempt in 1 2 3; do
-            timeout 120 sudo apt-get update || true
-            apt-cache policy fish | grep -q 'Candidate: 4' && break
-            echo "fish 4 PPA index missing after index refresh ${attempt}" >&2
-            sleep 15
-          done
-          # Why both shells on one line: pr-workflow-parallelism.test.mjs parses only the
-          # first install command in this step to prove the lane really installs them.
-          # Why retried: Launchpad also 503s single .deb downloads; the job timeout above
-          # stays the hard bound on how long the retry can add.
+          timeout 120 sudo apt-get update || true
           for attempt in 1 2; do
-            timeout 300 sudo apt-get install -y zsh fish && break
+            timeout 300 sudo apt-get install -y zsh && break
             [ "${attempt}" = 2 ] && exit 1
             sleep 15
           done
+          # Why fish from its official static release, not ppa:fish-shell/release-4: 7 of the
+          # 8 failures of this job in 150 PR runs were Launchpad 503s that dropped the PPA index
+          # and installed Ubuntu's fish 3.7. A release asset pinned by version and checksum
+          # cannot drift or fall back. Bump both together.
+          FISH_VERSION=4.9.3
+          FISH_SHA256=8f643d10ad1abb0ef7072764c01ceb5cf61b2d373fda400cf60f0bad69b7e095
+          for attempt in 1 2 3; do
+            curl -fsSL --max-time 120 -o /tmp/fish.tar.xz \
+              "https://github.com/fish-shell/fish-shell/releases/download/${FISH_VERSION}/fish-${FISH_VERSION}-linux-x86_64.tar.xz" && break
+            [ "${attempt}" = 3 ] && exit 1
+            sleep 5
+          done
+          echo "${FISH_SHA256}  /tmp/fish.tar.xz" | sha256sum -c -
+          sudo tar -xJf /tmp/fish.tar.xz -C /usr/local/bin fish
 
       - uses: ./.github/actions/install-node-dependencies
         with:
@@ -593,7 +565,7 @@ jobs:
           case "$major" in '' | *[!0-9]*) major=0 ;; esac
           echo "${version:-<fish not installed>}"
           if [ "$major" -lt 4 ]; then
-            echo "::error::shell contracts needs fish 4+ (DECSET 2031 arming, #9993) but got '${version:-none}'. Fix the ppa:fish-shell/release-4 install rather than letting the fish lane skip." >&2
+            echo "::error::shell contracts needs fish 4+ (DECSET 2031 arming, #9993) but got '${version:-none}'. Fix the pinned fish release install rather than letting the fish lane skip." >&2
             exit 1
           fi
 
@@ -629,7 +601,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -660,7 +632,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -701,7 +673,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -779,7 +751,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -789,7 +761,7 @@ jobs:
         run: pnpm run build:relay
 
       - name: Setup Node 18 runtime
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '18'
 
@@ -808,12 +780,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Cache electron-builder downloads
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.cache/electron-builder
           key: electron-builder-linux-${{ hashFiles('pnpm-lock.yaml') }}
@@ -884,6 +856,10 @@ jobs:
             wait "$pid" || status=1
           done
           exit "$status"
+
+      # Why here: the renderer was just built; growth past the budget is a startup regression.
+      - name: Check renderer bundle budget
+        run: node config/scripts/check-renderer-bundle-budget.mjs
 
       - name: Project web client from renderer build
         id: web-client
@@ -957,12 +933,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
       - name: Cache electron-builder downloads
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~\AppData\Local\electron\Cache
@@ -989,7 +965,7 @@ jobs:
 
       - name: Save compiled Node native modules
         if: steps.deps.outputs.native-cache-hit != 'true'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             node_modules/.pnpm/node-pty@*/node_modules/node-pty/build
@@ -1001,7 +977,7 @@ jobs:
       # electron-vite targets overlap instead of running back to back. The Linux package
       # job already packages and smoke-tests an AppImage built that way.
       - name: Cache Windows CLI launcher
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: native/windows-cli-launcher/.build
           key: windows-cli-launcher-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('native/windows-cli-launcher/**', 'config/scripts/build-windows-cli-launcher.mjs') }}
@@ -1012,7 +988,7 @@ jobs:
         run: pnpm run build:release:parallel
 
       - name: Restore compiled Electron native modules
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             node_modules/.pnpm/node-pty@*/node_modules/node-pty/build
@@ -1048,7 +1024,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
 
@@ -1070,7 +1046,7 @@ jobs:
           exit 0
 
       - name: Cache electron-builder downloads
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
             ~\AppData\Local\electron\Cache
@@ -1187,6 +1163,112 @@ jobs:
     with:
       ref: ${{ github.event.pull_request.head.sha }}
 
+  # Why blocking on PRs: nightly-only runs failed unnoticed. These are serial,
+  # retry-free count/heap oracles (config/performance-audit.md), ~15 s after install.
+  performance:
+    name: performance contracts
+    needs: [code_paths]
+    if: needs.code_paths.outputs.performance == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      # Why: the SQLite contracts load native modules built for plain Node.
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: node
+
+      - name: Run performance contracts
+        run: pnpm exec vitest run --config config/vitest.performance.config.ts
+
+      # Why: run even when a contract fails so one red step does not hide the other signal.
+      - name: Run memory audit reproductions
+        if: success() || failure()
+        run: node config/scripts/run-memory-audit-reproductions.mjs
+
+  # Blocking security gate: every PR except docs-only (and identical ready_for_review reruns).
+  security:
+    name: security
+    needs: [code_paths]
+    if: needs.code_paths.outputs.security == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # Full history for base..head; gitleaks' `git log -p` fetches only the PR's blobs on demand.
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Install gitleaks
+        id: gitleaks-install
+        background: true
+        env:
+          GITLEAKS_VERSION: 8.28.0
+          GITLEAKS_SHA256: a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/gitleaks.tar.gz"
+          curl -fsSL -o "$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  $archive" | sha256sum -c -
+          tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
+
+      - name: Install semgrep
+        id: semgrep-install
+        background: true
+        run: |
+          python3 -m venv "$RUNNER_TEMP/semgrep"
+          "$RUNNER_TEMP/semgrep/bin/pip" install --quiet semgrep==1.186.0
+
+      # Why no dependency-review-action: it needs the repository's Dependency graph setting and
+      # failed the whole job without it. The audit below already fails any new high/critical package.
+      - name: Setup pnpm
+        uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: package.json
+          package-manager-cache: false
+
+      # Queries the registry from the lockfiles; no install needed.
+      - name: Audit dependencies (root and mobile)
+        run: node config/scripts/dependency-audit-gate.mjs
+
+      - wait: gitleaks-install
+
+      # Why a step bound: blobs are fetched on demand from the partial clone; a stalled fetch
+      # must fail this required check in minutes, not hold the run to the job timeout.
+      - name: Scan PR commits for secrets
+        timeout-minutes: 10
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: >-
+          "$RUNNER_TEMP/gitleaks" git .
+          --config config/security/gitleaks.toml
+          --log-opts="$BASE_SHA..$HEAD_SHA"
+          --redact --no-banner
+
+      - wait: semgrep-install
+
+      - name: Semgrep findings not in the baseline
+        run: node config/scripts/semgrep-baseline-gate.mjs check --semgrep "$RUNNER_TEMP/semgrep/bin/semgrep"
+
   verify:
     if: ${{ !cancelled() }}
     needs:
@@ -1204,6 +1286,8 @@ jobs:
       - package
       - package_windows
       - windows_boundaries
+      - performance
+      - security
     # Evaluating job results only needs the lightweight container runner.
     runs-on: ubuntu-slim
     timeout-minutes: 5
@@ -1247,6 +1331,10 @@ jobs:
           PACKAGE_WINDOWS_SHOULD_RUN: ${{ needs.code_paths.outputs.package_windows }}
           WINDOWS_BOUNDARIES: ${{ needs.windows_boundaries.result }}
           WINDOWS_BOUNDARIES_SHOULD_RUN: ${{ needs.code_paths.outputs.windows_boundaries }}
+          PERFORMANCE: ${{ needs.performance.result }}
+          PERFORMANCE_SHOULD_RUN: ${{ needs.code_paths.outputs.performance }}
+          SECURITY: ${{ needs.security.result }}
+          SECURITY_SHOULD_RUN: ${{ needs.code_paths.outputs.security }}
         run: |
           if [ "$CODE_PATHS" != "success" ]; then
             exit 1
@@ -1283,4 +1371,6 @@ jobs:
           check_job package "$PACKAGE" "$PACKAGE_SHOULD_RUN"
           check_job package_windows "$PACKAGE_WINDOWS" "$PACKAGE_WINDOWS_SHOULD_RUN"
           check_job windows_boundaries "$WINDOWS_BOUNDARIES" "$WINDOWS_BOUNDARIES_SHOULD_RUN"
+          check_job performance "$PERFORMANCE" "$PERFORMANCE_SHOULD_RUN"
+          check_job security "$SECURITY" "$SECURITY_SHOULD_RUN"
           exit "$failed"

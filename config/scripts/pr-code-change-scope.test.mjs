@@ -25,10 +25,11 @@ const expensiveJobs = [
   'dolphind_browser',
   'managed_hook_node18',
   'package',
-  'package_windows'
+  'package_windows',
+  'performance'
 ]
 
-const ALWAYS_ON = ['static_analysis', 'typecheck', 'test']
+const ALWAYS_ON = ['static_analysis', 'typecheck', 'test', 'security']
 
 // The Windows lane runs on two runners; its boundary half always follows the package half.
 const PAIRED_JOBS = { windows_boundaries: 'package_windows' }
@@ -118,7 +119,8 @@ describe('per-job path classification', () => {
   it('runs packaging and always-on jobs for product source, not git/xterm/shell lanes', () => {
     expectClassification(['src/renderer/src/components/tab-bar/TabBar.tsx'], {
       package: true,
-      package_windows: true
+      package_windows: true,
+      performance: true
     })
   })
 
@@ -126,7 +128,8 @@ describe('per-job path classification', () => {
     expectClassification(['src/shared/git-capability-cache.ts'], {
       git_compatibility: true,
       package: true,
-      package_windows: true
+      package_windows: true,
+      performance: true
     })
     expectClassification(['src/shared/git-binary-compatibility.test.ts'], {
       git_compatibility: true
@@ -145,7 +148,8 @@ describe('per-job path classification', () => {
     expectClassification(['src/main/sqlite/sync-database.ts'], {
       codex_index_heal_contract: true,
       package: true,
-      package_windows: true
+      package_windows: true,
+      performance: true
     })
     expectClassification(['src/main/codex/codex-app-server-session.ts'], {
       codex_index_heal_contract: true,
@@ -169,7 +173,8 @@ describe('per-job path classification', () => {
       expectClassification([file], {
         codex_index_heal_contract: true,
         package: true,
-        package_windows: true
+        package_windows: true,
+        performance: file.startsWith('src/shared/')
       })
     }
     // A neighbouring Codex module must not drag the real-binary job in.

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { findNewRootEntries, planGates, selectTestsForChanges } from './verify-pr-local.mjs'
+import {
+  findNewRootEntries,
+  planFixers,
+  planGates,
+  selectTestsForChanges
+} from './verify-pr-local.mjs'
 
 describe('selectTestsForChanges', () => {
   const allTests = [
@@ -60,6 +65,53 @@ describe('planGates', () => {
     expect(planGates(['src/shared/x.ts']).map((gate) => gate.label)).not.toContain(
       'RPC params catalog'
     )
+  })
+})
+
+describe('report-only gates', () => {
+  it('marks style and size gates as report-only and keeps correctness gates blocking', () => {
+    const gates = planGates(['src/renderer/src/A.tsx'])
+    const reportOnly = gates.filter((gate) => gate.report).map((gate) => gate.label)
+    const blocking = gates.filter((gate) => !gate.report).map((gate) => gate.label)
+    expect(reportOnly).toEqual(
+      expect.arrayContaining([
+        'changed-code quality',
+        'anti-slop',
+        'max-lines ratchet',
+        'React Doctor (changed lines)',
+        'dead design-system classes'
+      ])
+    )
+    expect(blocking).toEqual(
+      expect.arrayContaining(['typecheck', 'ts-nocheck ratchet', 'localization catalogs'])
+    )
+  })
+})
+
+describe('planFixers', () => {
+  const labels = (files) => planFixers(files).map((fixer) => fixer.label)
+
+  it('fixes nothing for a change no fixer covers', () => {
+    expect(labels(['LICENSE'])).toEqual([])
+  })
+
+  it('regenerates catalogs for their inputs and always formats last', () => {
+    expect(labels(['src/shared/rpc-contract/x.ts'])).toEqual([
+      'RPC params catalog',
+      'oxlint --fix',
+      'oxfmt'
+    ])
+    expect(labels(['src/renderer/src/A.tsx'])).toEqual([
+      'localization catalog',
+      'runtime English catalog',
+      'oxlint --fix',
+      'oxfmt'
+    ])
+    expect(labels(['skill-guides/orchestration.md'])).toEqual([
+      'bundled skill guides',
+      'skill bundle manifest',
+      'oxfmt'
+    ])
   })
 })
 

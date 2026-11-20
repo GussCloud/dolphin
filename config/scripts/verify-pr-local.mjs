@@ -8,11 +8,13 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { resolveOxcCliInvocation } from './oxc-cli-invocation.mjs'
 import { resolveOxlintInvocation } from './oxlint-cli-invocation.mjs'
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url))
 const TEST_FILE = /\.test\.(?:[cm]?[jt]sx?)$/
 const SOURCE_FILE = /\.(?:[cm]?[jt]sx?)$/
+const FORMATTABLE_FILE = /\.(?:[cm]?[jt]sx?|json|css|md|ya?ml)$/
 const LEFT_TO_CI = [
   'full unit suite (Linux, sharded)',
   'e2e',
@@ -77,9 +79,20 @@ export function planGates(changedFiles) {
       when: code,
       heavy: true
     },
-    { label: 'changed-code quality', script: 'check-changed-code-quality.mjs', when: code },
-    { label: 'anti-slop', anti: true, when: code },
-    { label: 'max-lines ratchet', script: 'check-max-lines-ratchet.mjs', when: code },
+    // Why report: style and size rules; CI reports them without blocking (see pr.yml).
+    {
+      label: 'changed-code quality',
+      script: 'check-changed-code-quality.mjs',
+      when: code,
+      report: true
+    },
+    { label: 'anti-slop', anti: true, when: code, report: true },
+    {
+      label: 'max-lines ratchet',
+      script: 'check-max-lines-ratchet.mjs',
+      when: code,
+      report: true
+    },
     { label: 'ts-nocheck ratchet', script: 'check-ts-nocheck-ratchet.mjs', when: code },
     {
       label: 'runtime Electron-import ratchet',
@@ -98,13 +111,15 @@ export function planGates(changedFiles) {
     {
       label: 'React Doctor (changed lines)',
       script: 'check-react-doctor-changed.mjs',
-      when: reactFiles
+      when: reactFiles,
+      report: true
     },
     {
       label: 'dead design-system classes',
       oxlintConfig: 'config/oxlint-dead-classes.json',
       target: 'src/renderer',
-      when: renderer
+      when: renderer,
+      report: true
     },
     {
       label: 'localization extraction',
@@ -130,6 +145,64 @@ export function planGates(changedFiles) {
     }
   ]
   return gates.filter((gate) => gate.when)
+}
+
+/**
+ * What `--fix` regenerates or rewrites before the gates run, so formatting, fixable lint and
+ * generated catalogs never reach CI stale. Order matters: generators first, formatter last.
+ */
+export function planFixers(changedFiles) {
+  const touches = (pattern) => changedFiles.some((file) => pattern.test(file))
+  const renderer = touches(/^src\/renderer\//)
+  const fixers = [
+    {
+      label: 'RPC params catalog',
+      script: 'generate-rpc-params-catalog.mjs',
+      when: touches(/^src\/shared\/rpc-contract\//)
+    },
+    {
+      label: 'localization catalog',
+      script: 'verify-localization-catalog.mjs',
+      args: ['--fix'],
+      when: renderer
+    },
+    {
+      label: 'runtime English catalog',
+      script: 'generate-runtime-required-english-catalog.mjs',
+      args: ['--fix'],
+      when: renderer
+    },
+    {
+      label: 'bundled skill guides',
+      script: 'generate-bundled-skill-guides.mjs',
+      args: ['--write'],
+      when: touches(/^(?:skills|skill-guides|skill-stubs)\//)
+    },
+    {
+      label: 'skill bundle manifest',
+      script: 'generate-skill-bundle-manifest.mjs',
+      args: ['--write'],
+      when: touches(/^(?:skills|skill-guides|skill-stubs)\//)
+    },
+    { label: 'oxlint --fix', lint: true, when: touches(SOURCE_FILE) },
+    { label: 'oxfmt', format: true, when: touches(FORMATTABLE_FILE) }
+  ]
+  return fixers.filter((fixer) => fixer.when)
+}
+
+function fixerCommands(fixer, changedFiles) {
+  const existing = changedFiles.filter((file) => existsSync(path.join(repoRoot, file)))
+  if (fixer.lint) {
+    const oxlint = resolveOxlintInvocation(repoRoot)
+    const files = existing.filter((file) => SOURCE_FILE.test(file))
+    return [{ command: oxlint.command, args: [...oxlint.prefixArgs, '--fix', ...files] }]
+  }
+  if (fixer.format) {
+    const oxfmt = resolveOxcCliInvocation('oxfmt', 'oxfmt', repoRoot)
+    const files = existing.filter((file) => FORMATTABLE_FILE.test(file))
+    return [{ command: oxfmt.command, args: [...oxfmt.prefixArgs, '--write', ...files] }]
+  }
+  return [scriptCommand(fixer.script, fixer.args)]
 }
 
 function git(args) {
@@ -225,10 +298,9 @@ async function runAll(steps, concurrency) {
   const worker = async () => {
     while (next < steps.length) {
       const step = steps[next++]
-      const result = await runStep(step.label, step.invocation)
-      console.log(
-        `${result.ok ? 'pass' : 'FAIL'}  ${result.label}  (${(result.ms / 1000).toFixed(1)}s)`
-      )
+      const result = { ...(await runStep(step.label, step.invocation)), report: step.report }
+      const status = result.ok ? 'pass' : result.report ? 'warn' : 'FAIL'
+      console.log(`${status}  ${result.label}  (${(result.ms / 1000).toFixed(1)}s)`)
       results.push(result)
     }
   }
@@ -240,8 +312,20 @@ async function main() {
   const argv = process.argv.slice(2)
   const base = argv.find((arg) => !arg.startsWith('--')) ?? 'origin/main'
   const dryRun = argv.includes('--dry-run')
+  const fix = argv.includes('--fix')
   const mergeBase = resolveMergeBase(base)
-  const changedFiles = listChangedFiles(mergeBase)
+  let changedFiles = listChangedFiles(mergeBase)
+  if (fix && !dryRun) {
+    for (const fixer of planFixers(changedFiles)) {
+      const result = await runStep(fixer.label, fixerCommands(fixer, changedFiles))
+      console.log(`${result.ok ? 'fixed' : 'FAIL '}  ${fixer.label}`)
+      if (!result.ok) {
+        console.log(result.output.trim())
+      }
+    }
+    // Why re-list: generators can add files the gates and test selection must see.
+    changedFiles = listChangedFiles(mergeBase)
+  }
   const newRootEntries = findNewRootEntries(
     changedFiles,
     git(['ls-tree', '--name-only', mergeBase]).split('\n').filter(Boolean)
@@ -264,8 +348,13 @@ async function main() {
     `${changedFiles.length} changed files vs ${base}; ${gates.length} gates; ${testFiles.length} test files`
   )
   if (dryRun) {
+    if (fix) {
+      for (const fixer of planFixers(changedFiles)) {
+        console.log(`fix   ${fixer.label}`)
+      }
+    }
     for (const gate of gates) {
-      console.log(`gate  ${gate.label}`)
+      console.log(`gate  ${gate.label}${gate.report ? ' (report only)' : ''}`)
     }
     for (const file of [...testFiles, ...mobileTests.map((test) => `mobile/${test}`)]) {
       console.log(`test  ${file}`)
@@ -275,7 +364,11 @@ async function main() {
   const startedAt = Date.now()
   // Why typecheck first and alone in its lane: it is the longest step and the most memory hungry.
   const steps = [
-    ...gates.map((gate) => ({ label: gate.label, invocation: gateCommands(gate) })),
+    ...gates.map((gate) => ({
+      label: gate.label,
+      invocation: gateCommands(gate),
+      report: gate.report === true
+    })),
     ...(testFiles.length > 0
       ? [{ label: `tests (${testFiles.length} files)`, invocation: [vitestCommand(testFiles)] }]
       : [])
@@ -306,7 +399,11 @@ async function main() {
       `SKIP  mobile tests (${mobileTests.length} files): run 'pnpm --dir mobile install' to check them before CI does`
     )
   }
-  const failures = results.filter((result) => !result.ok)
+  const failures = results.filter((result) => !result.ok && !result.report)
+  const warnings = results.filter((result) => !result.ok && result.report)
+  for (const warning of warnings) {
+    console.log(`\n----- ${warning.label} (report only) -----\n${warning.output.trim()}`)
+  }
   for (const failure of failures) {
     console.log(`\n===== ${failure.label} =====\n${failure.output.trim()}`)
   }

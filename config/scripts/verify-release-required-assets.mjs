@@ -4,30 +4,51 @@ import { pathToFileURL } from 'node:url'
 
 const API_VERSION = '2022-11-28'
 
-export function getRequiredReleaseAssetNames(tag) {
+// Why opt-in platforms: the fork publishes no Linux build, so its releases are checked against
+// the platforms its release workflow actually packages.
+export const DEFAULT_RELEASE_PLATFORMS = ['linux', 'mac', 'win']
+
+function releaseAssetNamesByPlatform(version) {
+  return {
+    linux: [
+      'latest-linux.yml',
+      'latest-linux-arm64.yml',
+      'dolphin-linux.AppImage',
+      'dolphin-linux-arm64.AppImage',
+      `dolphin-ide_${version}_amd64.deb`,
+      `dolphin-ide_${version}_arm64.deb`,
+      `dolphin-ide-${version}.x86_64.rpm`,
+      `dolphin-ide-${version}.aarch64.rpm`
+    ],
+    mac: [
+      'latest-mac.yml',
+      `Dolphin-${version}-mac.zip`,
+      `Dolphin-${version}-mac.zip.blockmap`,
+      `Dolphin-${version}-arm64-mac.zip`,
+      `Dolphin-${version}-arm64-mac.zip.blockmap`,
+      'dolphin-macos-x64.dmg',
+      'dolphin-macos-x64.dmg.blockmap',
+      'dolphin-macos-arm64.dmg',
+      'dolphin-macos-arm64.dmg.blockmap'
+    ],
+    win: ['latest.yml', 'dolphin-windows-setup.exe', 'dolphin-windows-setup.exe.blockmap'],
+    'win-arm64': [
+      'latest-arm64.yml',
+      'dolphin-windows-setup-arm64.exe',
+      'dolphin-windows-setup-arm64.exe.blockmap'
+    ]
+  }
+}
+
+export function getRequiredReleaseAssetNames(tag, platforms = DEFAULT_RELEASE_PLATFORMS) {
   const version = tag.replace(/^v/i, '')
-  return [
-    'latest-linux.yml',
-    'latest-linux-arm64.yml',
-    'latest-mac.yml',
-    'latest.yml',
-    'dolphin-linux.AppImage',
-    'dolphin-linux-arm64.AppImage',
-    `dolphin-ide_${version}_amd64.deb`,
-    `dolphin-ide_${version}_arm64.deb`,
-    `dolphin-ide-${version}.x86_64.rpm`,
-    `dolphin-ide-${version}.aarch64.rpm`,
-    'dolphin-windows-setup.exe',
-    'dolphin-windows-setup.exe.blockmap',
-    `Dolphin-${version}-mac.zip`,
-    `Dolphin-${version}-mac.zip.blockmap`,
-    `Dolphin-${version}-arm64-mac.zip`,
-    `Dolphin-${version}-arm64-mac.zip.blockmap`,
-    'dolphin-macos-x64.dmg',
-    'dolphin-macos-x64.dmg.blockmap',
-    'dolphin-macos-arm64.dmg',
-    'dolphin-macos-arm64.dmg.blockmap'
-  ]
+  const byPlatform = releaseAssetNamesByPlatform(version)
+  return platforms.flatMap((platform) => {
+    if (!byPlatform[platform]) {
+      throw new Error(`Unknown release platform '${platform}'`)
+    }
+    return byPlatform[platform]
+  })
 }
 
 export function extractManifestAssetNames(manifestText) {
@@ -85,17 +106,17 @@ async function fetchAssetText(repo, asset, token) {
   return res.text()
 }
 
-export async function verifyRequiredReleaseAssets({ repo, tag, token }) {
+export async function verifyRequiredReleaseAssets({
+  repo,
+  tag,
+  token,
+  platforms = DEFAULT_RELEASE_PLATFORMS
+}) {
   const release = await fetchRelease(repo, tag, token)
   const assetsByName = new Map(release.assets.map((asset) => [asset.name, asset]))
 
-  const requiredNames = new Set(getRequiredReleaseAssetNames(tag))
-  const manifestNames = [
-    'latest-linux.yml',
-    'latest-linux-arm64.yml',
-    'latest-mac.yml',
-    'latest.yml'
-  ]
+  const requiredNames = new Set(getRequiredReleaseAssetNames(tag, platforms))
+  const manifestNames = [...requiredNames].filter((name) => name.endsWith('.yml'))
 
   for (const manifestName of manifestNames) {
     const manifestAsset = assetsByName.get(manifestName)
@@ -144,14 +165,20 @@ export async function verifyRequiredReleaseAssets({ repo, tag, token }) {
 async function main() {
   const tag = process.argv[2]
   if (!tag) {
-    throw new Error('Usage: node config/scripts/verify-release-required-assets.mjs <tag>')
+    throw new Error(
+      'Usage: node config/scripts/verify-release-required-assets.mjs <tag> [--platforms=mac,win,win-arm64]'
+    )
   }
+  const platformsArg = process.argv.find((arg) => arg.startsWith('--platforms='))
+  const platforms = platformsArg
+    ? platformsArg.slice('--platforms='.length).split(',').filter(Boolean)
+    : DEFAULT_RELEASE_PLATFORMS
   const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
   if (!token) {
     throw new Error('GH_TOKEN or GITHUB_TOKEN must be set')
   }
   const repo = process.env.GITHUB_REPOSITORY || 'GussCloud/dolphin'
-  const result = await verifyRequiredReleaseAssets({ repo, tag, token })
+  const result = await verifyRequiredReleaseAssets({ repo, tag, token, platforms })
   console.log(`Verified ${result.checked.length} required release assets for ${repo}@${tag}`)
 }
 

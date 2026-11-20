@@ -1,6 +1,7 @@
 name: Memory contracts
 
-# Why: nightly memory/performance regression signal; never a PR gate. Contracts
+# Why: nightly memory/performance regression signal. PR Checks also run it when the contracts'
+# inputs change (`performance` job); nightly still catches drift from other paths. Contracts
 # are serial, retry-free, and the reproductions are deterministic heap/count
 # oracles (config/performance-audit.md).
 on:
@@ -30,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ inputs.ref || github.ref }}
           persist-credentials: false
@@ -47,3 +48,33 @@ jobs:
       - name: Run memory audit reproductions
         if: success() || failure()
         run: node config/scripts/run-memory-audit-reproductions.mjs
+
+  # Why: a red nightly is invisible unless someone opens Actions; three nights failed unnoticed.
+  # One open issue per streak: later failures comment on it instead of opening duplicates.
+  report-nightly-failure:
+    name: report nightly failure
+    needs: [memory-contracts]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: perf-nightly-failure
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Open or update the failure issue
+        run: |
+          set -euo pipefail
+          gh label create "$LABEL" --color B60205 \
+            --description 'Nightly performance contracts or memory reproductions failed' 2>/dev/null || true
+          body="Nightly memory contracts failed on \`${GITHUB_SHA}\`: ${RUN_URL}"
+          issue="$(gh api "repos/$GH_REPO/issues?state=open&labels=$LABEL&per_page=1" --jq '.[0].number // empty')"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$body"
+          else
+            gh issue create --label "$LABEL" --title 'Nightly memory contracts failing' \
+              --body "$body. Close this issue once the nightly run is green again."
+          fi

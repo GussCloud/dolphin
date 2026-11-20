@@ -115,12 +115,11 @@ describe('PR workflow parallelism', () => {
         .split(/\s+/)
         .filter((token) => !['apt-get', 'install', 'sudo', ''].includes(token))
         .filter((token) => !token.startsWith('-'))
-    const requiredShells = ['zsh', 'fish']
+    // zsh comes from apt; fish from its pinned static release (see the install step).
+    const installsFish = (step) => /fish-shell\/fish-shell\/releases\/download/.test(step.run ?? '')
     const jobsInstallingShells = Object.entries(workflow.jobs)
       .filter(([, job]) =>
-        (job.steps ?? []).some((step) =>
-          aptPackages(step).some((packageName) => requiredShells.includes(packageName))
-        )
+        (job.steps ?? []).some((step) => aptPackages(step).includes('zsh') || installsFish(step))
       )
       .map(([name]) => name)
 
@@ -133,44 +132,31 @@ describe('PR workflow parallelism', () => {
     // Why each shell is asserted: the live tests skip themselves when the binary is
     // missing, so a dropped package silently empties this lane instead of failing it.
     const shellPackages = workflow.jobs.shell_contracts.steps.flatMap(aptPackages)
-    for (const shell of requiredShells) {
-      expect(shellPackages).toContain(shell)
-    }
+    expect(shellPackages).toContain('zsh')
+    expect(workflow.jobs.shell_contracts.steps.some(installsFish)).toBe(true)
     expect(shellInstall.with['native-runtime']).toBe('node')
     for (const testFile of nativeShellContractFiles) {
       expect(shellStep.run).toContain(testFile)
     }
   })
 
-  it('refreshes the apt index once while adding the fish PPA', () => {
+  it('installs fish from a pinned, checksum-verified release instead of a PPA', () => {
     const installStep = workflow.jobs.shell_contracts.steps.find(
       (step) => step.name === 'Install zsh and fish'
     )
-    // Comment lines mention both commands by name, so count the executed ones only.
+    // Comment lines name the old PPA, so judge the executed lines only.
     const commands = installStep.run
       .split('\n')
       .filter((line) => !line.trim().startsWith('#'))
       .join('\n')
-    const updates = commands.match(/apt-get update/g) ?? []
-    // Anchored to the start of a line so the retry message that names the command in
-    // prose is not mistaken for an invocation of it.
-    const addRepoCalls = commands
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => /^(sudo\s+)?add-apt-repository\b/.test(line))
-
-    // add-apt-repository refreshes every configured repo unless told not to, so an
-    // update on each side of it made this step pay for three full passes.
-    expect(updates).toHaveLength(1)
-    expect(addRepoCalls.length).toBeGreaterThan(0)
-    for (const call of addRepoCalls) {
-      expect(call.split(/\s+/)).toContain('-n')
-    }
-    // The one remaining update has to come after the PPA is on the list, or the fish
-    // index it exists to fetch would not be there yet.
-    expect(commands.lastIndexOf('add-apt-repository')).toBeLessThan(
-      commands.indexOf('apt-get update')
-    )
+    // Launchpad 503s made the PPA silently fall back to Ubuntu's fish 3.7 (7 of 8 failures).
+    expect(commands).not.toMatch(/add-apt-repository/)
+    expect(commands).toMatch(/^\s*FISH_VERSION=4\.\d+\.\d+$/m)
+    expect(commands).toMatch(/^\s*FISH_SHA256=[0-9a-f]{64}$/m)
+    expect(commands).toMatch(/sha256sum -c/)
+    // One index refresh only; the download has its own wall-clock bound.
+    expect(commands.match(/apt-get update/g) ?? []).toHaveLength(1)
+    expect(commands).toMatch(/curl -fsSL --max-time \d+/)
   })
 
   it('bounds the shell lane so a stalled apt mirror cannot hold the run open', () => {
@@ -239,7 +225,9 @@ describe('PR workflow parallelism', () => {
     )
     const buildIndex = steps.findIndex((step) => step.run === 'pnpm run build:relay')
     const node18Index = steps.findIndex(
-      (step) => step.uses === 'actions/setup-node@v6' && step.with['node-version'] === '18'
+      (step) =>
+        step.uses === 'actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38' &&
+        step.with['node-version'] === '18'
     )
     const smokeIndex = steps.findIndex(
       (step) => step.run === 'node config/scripts/smoke-managed-hook-runtime-node18.mjs'
@@ -260,7 +248,7 @@ describe('PR workflow parallelism', () => {
     expect(pnpmIndex).toBeLessThan(requestedNodeIndex)
     const packageManagerVersion = /^pnpm@([^+]+)/.exec(packageJson.packageManager)?.[1]
     expect(packageManagerVersion).toBe('12.0.0')
-    expect(steps[pnpmIndex].uses).toBe('pnpm/setup@v2')
+    expect(steps[pnpmIndex].uses).toBe('pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b')
     expect(steps[pnpmIndex].with.version).toBeUndefined()
     expect(steps[pnpmIndex].with.install).toBe(false)
     const saveOutsidePrs = "${{ github.event_name != 'pull_request' && 'pnpm' || '' }}"
@@ -276,7 +264,9 @@ describe('PR workflow parallelism', () => {
     expect(restoreIndex).toBeLessThan(
       steps.findIndex((step) => step.name === 'Install dependencies')
     )
-    expect(steps[restoreIndex].uses).toBe('actions/cache/restore@v5')
+    expect(steps[restoreIndex].uses).toBe(
+      'actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25'
+    )
   })
 
   it('uses the repository package-manager version for every direct pnpm setup', () => {
@@ -284,7 +274,7 @@ describe('PR workflow parallelism', () => {
       const parsed = parse(readFileSync(workflowPath, 'utf8'))
       return Object.values(parsed.jobs ?? {}).flatMap((job) =>
         (job.steps ?? [])
-          .filter((step) => step.uses === 'pnpm/setup@v2')
+          .filter((step) => step.uses === 'pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b')
           .map((step) => ({ workflowPath, step }))
       )
     })
@@ -390,7 +380,7 @@ describe('PR workflow parallelism', () => {
     expect(restoreOnly.if).toBe(
       "inputs.native-runtime != 'none' && inputs.persist-native-cache == 'false'"
     )
-    expect(restoreOnly.uses).toBe('actions/cache/restore@v5')
+    expect(restoreOnly.uses).toBe('actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25')
     // Native artifacts are ABI-bound: a key missing either dimension serves a build
     // that cannot load, and ensure-native-runtime would recompile it anyway.
     for (const cacheStep of [steps[cacheIndex], restoreOnly]) {
@@ -435,7 +425,7 @@ describe('PR workflow parallelism', () => {
       "inputs.native-runtime == 'electron' || inputs.cache-electron-package == 'true'"
     )
     expect(electronCache.if).toBe(electronCacheResolution.if)
-    expect(electronCache.uses).toBe('actions/cache@v5')
+    expect(electronCache.uses).toBe('actions/cache@caa296126883cff596d87d8935842f9db880ef25')
     expect(electronCache.with.key).toContain('steps.electron-package-cache.outputs.version')
     expect(dependencyAction.inputs['cache-electron-package'].default).toBe('false')
   })
@@ -487,7 +477,9 @@ describe('PR workflow parallelism', () => {
       'managed_hook_node18',
       'package',
       'package_windows',
-      'windows_boundaries'
+      'windows_boundaries',
+      'performance',
+      'security'
     ])
     const verifyStep = workflow.jobs.verify.steps.find(
       (step) => step.name === 'Require successful checks'
