@@ -1232,12 +1232,8 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/semgrep"
           "$RUNNER_TEMP/semgrep/bin/pip" install --quiet semgrep==1.186.0
 
-      - name: Review new dependencies
-        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: never
-
+      # Why no dependency-review-action: it needs the repository's Dependency graph setting and
+      # failed the whole job without it. The audit below already fails any new high/critical package.
       - name: Setup pnpm
         uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
         with:
