@@ -3,34 +3,53 @@ name: Dolphin Android Release
 # Builds the Dolphin Mobile APK and publishes it as a GitHub release asset, the Android twin of
 # dolphin-windows-release.yml.
 #
-# Cut a release: bump mobile/app.json "version" and "versionCode" and merge to main. A main push
-# that lands a version with no release yet builds and publishes it; a push tag
-# mobile-android-v<version> or a manual dispatch do too.
+# Releases come only from release-beta.yml (prerelease mobile-android-vX.Y.Z-rc.N) and
+# release-promote.yml (mobile-android-vX.Y.Z); see docs/reference/release-process.md. They stamp
+# the version and versionCode into the checkout, so no app.json bump is committed. A manual dispatch
+# builds the APK artifact only and never publishes.
 #
 # Signing: with the ANDROID_KEYSTORE_* secrets set, the APK is re-signed with that key, so each
 # release installs over the previous one. Without them it ships Expo's per-runner debug key, and
 # Android refuses to update across two such builds (uninstall first).
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - mobile/app.json
-      - .github/workflows/dolphin-android-release.yml
-    tags:
-      - 'mobile-android-v*'
+  workflow_call:
+    inputs:
+      ref:
+        description: Full commit SHA on main to build
+        required: true
+        type: string
+      version:
+        description: Android versionName to stamp, X.Y.Z
+        required: true
+        type: string
+      android_version_code:
+        description: Android versionCode to stamp (config/scripts/next-release-version.mjs)
+        required: true
+        type: string
+      release_tag:
+        description: GitHub release tag, mobile-android-vX.Y.Z or mobile-android-vX.Y.Z-rc.N
+        required: true
+        type: string
+      prerelease:
+        description: Publish as a prerelease and leave mobile-android-latest on the last stable
+        required: true
+        type: boolean
+      publish_github_release:
+        description: Create the GitHub release (and refresh mobile-android-latest for a stable)
+        required: false
+        default: true
+        type: boolean
+      shell:
+        required: false
+        default: native
+        type: string
   workflow_dispatch:
     inputs:
       release_version:
         description: Optional mobile version assertion, e.g. 0.0.51; must equal mobile/app.json
         required: false
         type: string
-      publish_github_release:
-        description: Create the mobile-android-v<version> release and refresh mobile-android-latest
-        required: false
-        default: true
-        type: boolean
       shell:
         description: 'Which shell the binary mounts: native screens, or the web page delivered over the air.'
         required: false
@@ -44,7 +63,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dolphin-android-release-${{ github.ref_name }}-${{ github.sha }}
+  group: dolphin-android-release-${{ inputs.release_tag || github.ref_name }}-${{ inputs.ref || github.sha }}
   cancel-in-progress: false
 
 env:
@@ -66,6 +85,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Setup pnpm
         uses: pnpm/setup@v2
@@ -79,17 +100,30 @@ jobs:
           cache: pnpm
           cache-dependency-path: mobile/pnpm-lock.yaml
 
+      - name: Stamp the release version
+        if: inputs.release_tag
+        env:
+          VERSION: ${{ inputs.version }}
+          VERSION_CODE: ${{ inputs.android_version_code }}
+        run: node ../config/scripts/stamp-release-version.mjs mobile "$VERSION" "$VERSION_CODE"
+
       - name: Resolve release version and version code
         id: release
         env:
-          MOBILE_ANDROID_RELEASE_VERSION: ${{ inputs.release_version }}
-          # Why: a main push publishes like a tag push; only a dispatch can opt out.
-          MOBILE_ANDROID_PUBLISH_RELEASE: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_github_release }}
-        run: node scripts/prepare-android-release.mjs
+          MOBILE_ANDROID_RELEASE_VERSION: ${{ inputs.release_version || inputs.version }}
+          # Why release_tag: only release-beta/promote pass it, so a bare dispatch cannot publish.
+          MOBILE_ANDROID_PUBLISH_RELEASE: ${{ inputs.release_tag && inputs.publish_github_release }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          node scripts/prepare-android-release.mjs
+          # Why override: prepare-android-release names stable tags only; an rc carries its own.
+          if [[ -n "$RELEASE_TAG" ]]; then
+            echo "tag=$RELEASE_TAG" >>"$GITHUB_OUTPUT"
+          fi
 
-      # Why skip rather than fail on branch pushes: most main pushes that touch app.json change
-      # config, not the version. Tag pushes and dispatches that would publish fail here instead of
-      # after the ~25 min build.
+      # Why before the build: a run that would publish over an existing release fails here instead
+      # of after the ~25 min build.
       - name: Skip versions already released
         id: gate
         env:
@@ -100,11 +134,8 @@ jobs:
           set -euo pipefail
           if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "skip=false" >>"$GITHUB_OUTPUT"
-          elif [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == refs/heads/* ]]; then
-            echo "$TAG is already released; nothing to do."
-            echo "skip=true" >>"$GITHUB_OUTPUT"
           elif [[ "$PUBLISH_RELEASE" == "true" ]]; then
-            echo "::error::release $TAG already exists; bump mobile/app.json, or dispatch with publish_github_release=false to build the APK artifact only."
+            echo "::error::release $TAG already exists; cut a new beta instead of overwriting it."
             exit 1
           else
             echo "$TAG exists; building the APK artifact without publishing."
@@ -130,7 +161,7 @@ jobs:
         if: steps.gate.outputs.skip != 'true'
         env:
           # The build-time constant that decides whether the binary mounts the web page or the
-          # native screens. Pushes carry no inputs, so they read native.
+          # native screens.
           EXPO_PUBLIC_MOBILE_SHELL: ${{ inputs.shell || 'native' }}
         run: |
           set -euo pipefail
@@ -181,6 +212,8 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
           VERSION: ${{ steps.release.outputs.version }}
           VERSION_CODE: ${{ steps.release.outputs.android_version_code }}
+          PRERELEASE: ${{ inputs.prerelease }}
+          TARGET_SHA: ${{ inputs.ref || github.sha }}
         run: |
           set -euo pipefail
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -189,28 +222,35 @@ jobs:
           fi
           notes="$RUNNER_TEMP/android-release-notes.md"
           printf 'Dolphin Mobile Android %s (versionCode %s)\n\nDownload `%s` and open it on the phone to install.\n' \
-            "$VERSION" "$VERSION_CODE" "$APK_NAME" >"$notes"
+            "${TAG#mobile-android-v}" "$VERSION_CODE" "$APK_NAME" >"$notes"
+          flags=()
+          if [[ "$PRERELEASE" == "true" ]]; then
+            flags+=(--prerelease)
+          fi
           # Why --latest=false: "latest" belongs to the desktop release the in-app updater reads.
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "Dolphin Mobile Android $VERSION" \
+            --target "$TARGET_SHA" \
+            --title "Dolphin Mobile Android ${TAG#mobile-android-v}" \
             --latest=false \
             --notes-file "$notes" \
+            "${flags[@]}" \
             "$APK_PATH"
 
       # Why a rolling release: the desktop's "Download APK" link must not go stale on every bump.
+      # Why stable only: the link should not move testers' and users' phones onto a beta.
       - name: Refresh the latest Android download
-        if: steps.gate.outputs.skip != 'true' && steps.release.outputs.publish_release == 'true'
+        if: steps.gate.outputs.skip != 'true' && steps.release.outputs.publish_release == 'true' && !inputs.prerelease
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.release.outputs.version }}
+          TARGET_SHA: ${{ inputs.ref || github.sha }}
         run: |
           set -euo pipefail
           if gh release view "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release delete "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
           fi
           gh release create "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
+            --target "$TARGET_SHA" \
             --title "Dolphin Mobile Android (latest: $VERSION)" \
             --latest=false \
             --notes "Always the newest Dolphin Mobile Android build, currently $VERSION." \

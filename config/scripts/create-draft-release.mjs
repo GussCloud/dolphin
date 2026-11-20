@@ -141,9 +141,11 @@ export async function createDraftRelease({
   }
 
   const previousTag = latestPreviousPublishedDesktopReleaseTag(releases, tag)
+  // Why the commit, not the tag: a release workflow drafts before the tag exists, and GitHub
+  // ignores target_commitish once the tag does.
   const generateNotesBody = {
     tag_name: tag,
-    target_commitish: tag,
+    target_commitish: targetCommitish,
     ...(previousTag ? { previous_tag_name: previousTag } : {})
   }
 
@@ -270,7 +272,9 @@ async function main() {
   const tag = process.argv[2]
   const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
   const repo = process.env.GITHUB_REPOSITORY || 'GussCloud/dolphin'
-  const targetCommitish = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
+  const targetCommitish =
+    process.env.RELEASE_TARGET_SHA ||
+    execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
   await createDraftRelease({ repo, tag, token, targetCommitish })
 }
 

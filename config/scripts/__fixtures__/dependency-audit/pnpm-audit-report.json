@@ -1,0 +1,53 @@
+{
+  "advisories": {
+    "1240041": {
+      "findings": [{ "version": "7.29.0", "paths": [".>electron>@electron/get>undici"], "dev": false }],
+      "id": 1240041,
+      "title": "undici high-severity fixture",
+      "module_name": "undici",
+      "vulnerable_versions": "<7.29.1",
+      "patched_versions": ">=7.29.1",
+      "severity": "high",
+      "cwe": [],
+      "github_advisory_id": "GHSA-rfgv-xxqx-mfg5",
+      "url": "https://github.com/advisories/GHSA-rfgv-xxqx-mfg5"
+    },
+    "1240042": {
+      "findings": [{ "version": "6.21.0", "paths": [".>shadcn>undici"], "dev": true }],
+      "id": 1240042,
+      "title": "undici high-severity fixture (second range)",
+      "module_name": "undici",
+      "vulnerable_versions": "<6.21.4",
+      "patched_versions": ">=6.21.4",
+      "severity": "high",
+      "cwe": [],
+      "github_advisory_id": "GHSA-rfgv-xxqx-mfg5",
+      "url": "https://github.com/advisories/GHSA-rfgv-xxqx-mfg5"
+    },
+    "1241210": {
+      "findings": [{ "version": "2.0.7", "paths": [".>express>proxy-addr"], "dev": true }],
+      "id": 1241210,
+      "title": "proxy-addr critical fixture",
+      "module_name": "proxy-addr",
+      "vulnerable_versions": "<2.0.8",
+      "patched_versions": ">=2.0.8",
+      "severity": "critical",
+      "cwe": [],
+      "github_advisory_id": "GHSA-jqcg-44mw-7w3h",
+      "url": "https://github.com/advisories/GHSA-jqcg-44mw-7w3h"
+    },
+    "1239948": {
+      "findings": [{ "version": "9.0.5", "paths": [".>ip-address"], "dev": false }],
+      "id": 1239948,
+      "title": "ip-address moderate fixture",
+      "module_name": "ip-address",
+      "vulnerable_versions": "<10.0.0",
+      "patched_versions": ">=10.0.0",
+      "severity": "moderate",
+      "cwe": [],
+      "github_advisory_id": "GHSA-rpw4-54j3-4h4q",
+      "url": "https://github.com/advisories/GHSA-rpw4-54j3-4h4q"
+    }
+  },
+  "metadata": { "vulnerabilities": { "info": 0, "low": 0, "moderate": 1, "high": 2, "critical": 1 } }
+}

@@ -1,0 +1,81 @@
+# Repository-wide secret scan over a PR's commits (pr.yml `security` job). cloud/.gitleaks.toml stays
+# the Cloud history scan's config; its two fixtures are repeated here. Every allowlist was checked by
+# hand and names a fixture, a public identifier or a digest. Per-rule allowlists are used because
+# top-level `targetRules` is ignored for rules inherited through `useDefault`.
+[extend]
+useDefault = true
+
+# generic-api-key and jwt fire on any `key = '<random>'` in test data, so they get relief in test
+# files and recorded goldens only; provider-specific rules (AWS, GitHub, Slack, ...) still apply there.
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Test files and recorded goldens: synthetic tokens, ids and hashes"
+paths = [
+  '''\.(test|spec)\.(ts|tsx|mts|mjs|js)$''',
+  '''(^|/)__fixtures__/''',
+  '''^mobile/rpc-foundation/goldens/''',
+  '''^mobile/rpc-foundation/pilot-scenarios\.json$''',
+  '''^src/shared/mobile-e2ee-(legacy|v2)-fixtures\.ts$''',
+  '''^src/main/ipc/pty-ipc-test-constants\.ts$''',
+  '''^tests/e2e/[^/]+-fixtures\.ts$''',
+]
+
+[[rules.allowlists]]
+description = "Firebase client API key (see gcp-api-key below); generic-api-key reports it once gcp-api-key is allowed"
+paths = ['''^mobile/google-services\.json$''']
+
+[[rules.allowlists]]
+description = "Minified xterm identifiers inside vendored dependency patches"
+paths = ['''^config/patches/.+\.patch$''']
+
+[[rules]]
+id = "jwt"
+
+[[rules.allowlists]]
+description = "jwt.io sample tokens in redaction tests"
+paths = ['''\.(test|spec)\.(ts|tsx|mts|mjs|js)$''']
+
+[[rules]]
+id = "private-key"
+
+[[rules.allowlists]]
+description = "Static localhost-only TLS identity for browser test servers; truncated headers in redaction tests"
+paths = [
+  '''^src/main/browser/browser-local-https-test-certificate\.ts$''',
+  '''^src/main/observability/redactor\.test\.ts$''',
+  '''^src/shared/crash-reporting\.test\.ts$''',
+]
+
+# Firebase Android client config ships inside the APK and is public by design; abuse is bounded by
+# API-key restrictions in the Google Cloud console, not by secrecy.
+[[rules]]
+id = "gcp-api-key"
+
+[[rules.allowlists]]
+description = "Firebase client API key in mobile/google-services.json"
+paths = ['''^mobile/google-services\.json$''']
+
+# Audit evidence records sha256 source digests and git commit ids, which look like tokens.
+[[allowlists]]
+description = "Content digests and commit ids in docs/audits evidence"
+condition = "AND"
+paths = ['''^docs/audits/.+\.json$''']
+regexTarget = "secret"
+regexes = ['''^[0-9a-f]{40}$''', '''^[0-9a-f]{64}$''']
+
+[[allowlists]]
+description = "Public identifiers and non-secret literals in source"
+regexTarget = "secret"
+regexes = [
+  # Public Claude Code OAuth client id (src/main/claude-accounts/oauth-refresh.ts).
+  '''^9d1c250a-e61b-44d9-88ed-5944d1962f5e$''',
+  # localStorage key name (src/renderer/src/web/preload-api/web-storage.ts).
+  '''^dolphin\.web\.ui\.v1$''',
+  # Benchmark input mirroring raw-markdown-comment-scan.test.ts.
+  '''^0123456789abcdef0123456789abcdef$''',
+  # Relay test signing key and RFC 6455 sample nonce (see cloud/.gitleaks.toml).
+  '''^test-assignment-key-with-at-least-32-bytes$''',
+  '''^dGhlIHNhbXBsZSBub25jZQ==$''',
+]
