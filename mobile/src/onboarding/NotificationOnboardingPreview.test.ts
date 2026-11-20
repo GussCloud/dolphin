@@ -38,7 +38,11 @@ vi.mock('react-native', async () => {
       sequence: vi.fn(() => ({ start: vi.fn(), stop: vi.fn() })),
       timing: mocks.timing
     },
-    Easing: { cubic: (t: number) => t, in: (e: unknown) => e, out: (e: unknown) => e },
+    Easing: {
+      bezier: () => (t: number) => t,
+      cubic: (t: number) => t,
+      out: (e: unknown) => e
+    },
     StyleSheet: { create: (styles: unknown) => styles },
     Text: 'Text',
     View: 'View'

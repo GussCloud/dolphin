@@ -35,7 +35,13 @@ vi.mock('react-native-safe-area-context', () => ({
 }))
 vi.mock('react-native-gesture-handler', () => {
   const chain: Record<string, unknown> = {}
-  for (const method of ['activeOffsetX', 'simultaneousWithExternalGesture', 'onUpdate', 'onEnd']) {
+  for (const method of [
+    'activeOffsetX',
+    'simultaneousWithExternalGesture',
+    'onStart',
+    'onUpdate',
+    'onEnd'
+  ]) {
     chain[method] = () => chain
   }
   return {
@@ -44,6 +50,9 @@ vi.mock('react-native-gesture-handler', () => {
     GestureHandlerRootView: 'GestureHandlerRootView'
   }
 })
+vi.mock('react-native-worklets', () => ({
+  scheduleOnRN: (fn: () => void) => fn()
+}))
 vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView', ScrollView: 'AnimatedScrollView' },
   useSharedValue: (initial: number) => ({ value: initial }),
@@ -51,7 +60,10 @@ vi.mock('react-native-reanimated', () => ({
   useAnimatedScrollHandler: () => () => {},
   withSpring: (to: number) => to,
   withTiming: (to: number) => to,
-  runOnJS: (fn: () => void) => fn,
+  useReducedMotion: () => false,
+  cancelAnimation: () => {},
+  Easing: { bezier: () => (t: number) => t },
+  ReduceMotion: { System: 'system', Never: 'never' },
   interpolate: () => 0,
   Extrapolation: { CLAMP: 'clamp' }
 }))

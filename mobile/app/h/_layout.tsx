@@ -1,33 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { View, StyleSheet, PanResponder } from 'react-native'
+import { View, StyleSheet } from 'react-native'
+import { GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
+import Animated from 'react-native-reanimated'
 import { Stack, useGlobalSearchParams, usePathname } from 'expo-router'
 import { colors } from '../../src/theme/mobile-theme'
 import { useResponsiveLayout } from '../../src/layout/responsive-layout'
 import {
   HOST_SIDEBAR_DEFAULT_WIDTH,
-  HOST_SIDEBAR_MAX_WIDTH,
-  HOST_SIDEBAR_MIN_WIDTH,
   loadHostSidebarWidth,
   saveHostSidebarWidth
 } from '../../src/storage/preferences'
 import { HostProtocolGate } from '../../src/components/HostProtocolGate'
 import { HostScreen } from '../../src/host-screen/HostScreen'
+import { clampSidebarToWindow } from '../../src/host-screen/host-sidebar-width'
+import { useHostSidebarResize } from '../../src/host-screen/use-host-sidebar-resize'
 import { hostRoutesCatalog } from '../../src/i18n/catalogs/host-routes'
 import { useMobileTranslation } from '../../src/i18n/use-mobile-translation'
 
-// Keep at least this much room for the detail pane when resizing the sidebar.
-const MIN_DETAIL_WIDTH = 320
 const RESIZE_EDGE_WIDTH = 24
-
-// Clamp a sidebar width to the bounds and to the current window, so a width
-// saved on a larger device can't starve the detail pane on a narrower one.
-function clampSidebarToWindow(width: number, windowWidth: number): number {
-  const hardMax = Math.max(
-    HOST_SIDEBAR_MIN_WIDTH,
-    Math.min(HOST_SIDEBAR_MAX_WIDTH, windowWidth - MIN_DETAIL_WIDTH)
-  )
-  return Math.min(hardMax, Math.max(HOST_SIDEBAR_MIN_WIDTH, Math.round(width)))
-}
+const RESIZE_GUIDE_WIDTH = 2
 
 function HostStack({ animation }: { animation: 'none' | 'default' }) {
   const t = useMobileTranslation(hostRoutesCatalog)
@@ -75,13 +66,9 @@ export default function HostGroupLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sidebarWidth, setSidebarWidth] = useState(HOST_SIDEBAR_DEFAULT_WIDTH)
 
-  // Refs keep the once-created PanResponder reading live values without
-  // re-creating its handlers on every width/window change.
-  const widthRef = useRef(sidebarWidth)
-  widthRef.current = sidebarWidth
+  // Read by the one-shot restore below without re-running it on every window change.
   const windowWidthRef = useRef(windowWidth)
   windowWidthRef.current = windowWidth
-  const dragStartRef = useRef(sidebarWidth)
 
   // Restore the user's last sidebar width, clamped to the current window.
   useEffect(() => {
@@ -116,40 +103,27 @@ export default function HostGroupLayout() {
     }
   }, [detailHasContent, showSidebar])
 
+  // Why: React (and the worktree list under it) renders once per resize, on release.
+  const commitSidebarWidth = useCallback((width: number) => {
+    setSidebarWidth(width)
+    void saveHostSidebarWidth(width)
+  }, [])
   // Why: the resizer lives on a dedicated edge handle (a leaf overlay at the
-  // sidebar's right border), NOT on the sidebar container. On Android a child
-  // ScrollView/FlatList claims the native touch responder, so a parent-View
-  // PanResponder never sees the move events and the drag silently no-ops; a
-  // dedicated handle on top of the content captures the gesture on both
-  // platforms. It claims on start (capture too) since nothing sits under it.
-  const resizer = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => {
-        dragStartRef.current = widthRef.current
-      },
-      onPanResponderMove: (_evt, g) => {
-        setSidebarWidth(clampSidebarToWindow(dragStartRef.current + g.dx, windowWidthRef.current))
-      },
-      onPanResponderRelease: () => {
-        void saveHostSidebarWidth(widthRef.current)
-      },
-      onPanResponderTerminate: () => {
-        void saveHostSidebarWidth(widthRef.current)
-      }
-    })
-  ).current
+  // sidebar's right border), NOT on the sidebar container, so the worktree
+  // list's own scroll never competes with it for the touch.
+  const resize = useHostSidebarResize({
+    width: sidebarWidth,
+    windowWidth,
+    onResizeEnd: commitSidebarWidth
+  })
 
   // The detail Stack stays at a stable position in the tree across width
   // changes so a fold/rotation doesn't remount the navigator and reset the
   // navigation stack — only the sidebar pane toggles in and out.
   return (
     <HostProtocolGate hostId={hostId}>
-      <View style={styles.row}>
+      {/* Why here and not the app root: the web page mounts this tree without app/_layout. */}
+      <GestureHandlerRootView style={styles.row}>
         {showSidebar && sidebarOpen ? (
           <View style={[styles.sidebar, { width: sidebarWidth }]}>
             <HostScreen
@@ -159,13 +133,18 @@ export default function HostGroupLayout() {
               onHideSidebar={canCollapseSidebar ? hideSidebar : undefined}
             />
             {/* Dedicated drag handle straddling the right border — see resizer note. */}
-            <View style={styles.resizeHandle} {...resizer.panHandlers} />
+            <GestureDetector gesture={resize.gesture}>
+              <View style={styles.resizeHandle} />
+            </GestureDetector>
           </View>
         ) : null}
         <View style={styles.detail}>
           <HostStack animation={showSidebar ? 'none' : 'default'} />
         </View>
-      </View>
+        {showSidebar && sidebarOpen ? (
+          <Animated.View pointerEvents="none" style={[styles.resizeGuide, resize.guideStyle]} />
+        ) : null}
+      </GestureHandlerRootView>
     </HostProtocolGate>
   )
 }
@@ -194,5 +173,17 @@ const styles = StyleSheet.create({
   detail: {
     flex: 1,
     minWidth: 0
+  },
+  // Where the sidebar edge will land, shown only while dragging. Last in the row
+  // so it paints over the detail pane when the sidebar is widened.
+  resizeGuide: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: -RESIZE_GUIDE_WIDTH / 2,
+    width: RESIZE_GUIDE_WIDTH,
+    backgroundColor: colors.textMuted,
+    zIndex: 30,
+    elevation: 30
   }
 })
